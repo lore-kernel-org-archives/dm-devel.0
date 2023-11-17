@@ -1,44 +1,44 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B175146429
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED02D46447
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JkGneFgr"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dYAI+V55"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700254803;
+	s=mimecast20190719; t=1700254805;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=utUUHtiafNj648mSiiNEPrl4zxSAgHjAt+YTkVA+LZA=;
-	b=JkGneFgrVgD7VaikbSS65TRqIkm9qSXgRzRDJAQv8SKyBoKNeEDpYUFXCnlSQGVLVyLKuR
-	ej1xuTjw+vlKWTJFzxTYOoicBBXWuGbI36kT+O7GPYJg0VuzHdoIGh5MsPKj+c7Gdmx3Wy
-	dAUt1STYnpYgMrhk4Y7zN6qrot1Wxg4=
+	bh=317YCujQh6GFYB+b1UXPd3ONnm19vkD9Ib44/ITNsdE=;
+	b=dYAI+V55gBzCF9e0zjFeHdNR98sawlKaMApdiK0luF1q/ZvmEIczO8+2PoX8CLZyz8ARtP
+	XwhIO9Gteb2AJssbK0dmuBMWCNjdXjWQVFQIfc2YYpl5cnoP7BF7Qpu/x+8dvdiD3BSX6G
+	vg4VVTIuHIL+G/tD7K/5CwWS1/Mr8fc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-237-M0ffOxuuMhiC3C9n1tfK3Q-1; Fri, 17 Nov 2023 15:59:59 -0500
-X-MC-Unique: M0ffOxuuMhiC3C9n1tfK3Q-1
+ us-mta-217-aIBzIpguOsm2Mj-Km5y7Tg-1; Fri, 17 Nov 2023 16:00:03 -0500
+X-MC-Unique: aIBzIpguOsm2Mj-Km5y7Tg-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B274E185A781
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 20:59:59 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A9D1C185A783
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:03 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A86E940C6EB9;
-	Fri, 17 Nov 2023 20:59:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9FC6E40C6EB9;
+	Fri, 17 Nov 2023 21:00:03 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 691B73003C; Fri, 17 Nov 2023 15:59:59 -0500 (EST)
+	id 704DF3003B; Fri, 17 Nov 2023 16:00:03 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v5 10/40] dm vdo: add deduplication index storage interface
-Date: Fri, 17 Nov 2023 15:59:27 -0500
-Message-Id: <dcc854b9655f1a42cd8d1744e3409dff8981b191.1700250814.git.msakai@redhat.com>
+Subject: [PATCH v5 32/40] dm vdo: add repair of damaged vdo volumes
+Date: Fri, 17 Nov 2023 15:59:49 -0500
+Message-Id: <3ebfecb197e5bb4c7824bfe7b70831530d8873a9.1700250814.git.msakai@redhat.com>
 In-Reply-To: <cover.1700250814.git.msakai@redhat.com>
 References: <cover.1700250814.git.msakai@redhat.com>
 Precedence: bulk
@@ -53,2437 +53,1812 @@ X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-This patch adds infrastructure for managing reads and writes to the
-underlying storage layer for the deduplication index. The deduplication
-index uses dm-bufio for all of its reads and writes, so part of this
-infrastructure is managing the various dm-bufio clients required. It also
-adds the buffered reader and buffered writer abstractions, which simplify
-reading and writing metadata structures that span several blocks.
+When a vdo is restarted after a crash, it will automatically attempt to
+recover from its journals.
 
-This patch also includes structures and utilities for encoding and decoding
-all of the deduplication index metadata, collectively called the index
-layout.
+If a vdo encounters an unrecoverable error, it will enter read-only mode.
+This mode indicates that some previously acknowledged data may have been
+lost. The vdo may be instructed to rebuild as best it can in order to
+return to a writable state. Although some data may be lost, this process
+will ensure that the vdo's own metadata is self-consistent.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Co-developed-by: John Wiele <jwiele@redhat.com>
-Signed-off-by: John Wiele <jwiele@redhat.com>
+Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/index-layout.c | 1768 ++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/index-layout.h |   43 +
- drivers/md/dm-vdo/io-factory.c   |  415 +++++++
- drivers/md/dm-vdo/io-factory.h   |   64 ++
- drivers/md/dm-vdo/numeric.h      |   78 ++
- 5 files changed, 2368 insertions(+)
- create mode 100644 drivers/md/dm-vdo/index-layout.c
- create mode 100644 drivers/md/dm-vdo/index-layout.h
- create mode 100644 drivers/md/dm-vdo/io-factory.c
- create mode 100644 drivers/md/dm-vdo/io-factory.h
- create mode 100644 drivers/md/dm-vdo/numeric.h
+ drivers/md/dm-vdo/repair.c | 1757 ++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/repair.h |   14 +
+ 2 files changed, 1771 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/repair.c
+ create mode 100644 drivers/md/dm-vdo/repair.h
 
-diff --git a/drivers/md/dm-vdo/index-layout.c b/drivers/md/dm-vdo/index-layout.c
+diff --git a/drivers/md/dm-vdo/repair.c b/drivers/md/dm-vdo/repair.c
 new file mode 100644
-index 000000000000..4dffa82a3c43
+index 000000000000..2cf99a7ce958
 --- /dev/null
-+++ b/drivers/md/dm-vdo/index-layout.c
-@@ -0,0 +1,1768 @@
++++ b/drivers/md/dm-vdo/repair.c
+@@ -0,0 +1,1757 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "index-layout.h"
++#include "repair.h"
 +
-+#include <linux/random.h>
++#include <linux/min_heap.h>
++#include <linux/minmax.h>
 +
-+#include "config.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
-+#include "murmurhash3.h"
-+#include "numeric.h"
-+#include "open-chapter.h"
-+#include "time-utils.h"
-+#include "volume-index.h"
++#include "permassert.h"
++
++#include "block-map.h"
++#include "completion.h"
++#include "constants.h"
++#include "encodings.h"
++#include "int-map.h"
++#include "io-submitter.h"
++#include "recovery-journal.h"
++#include "slab-depot.h"
++#include "types.h"
++#include "vdo.h"
++#include "wait-queue.h"
 +
 +/*
-+ * The UDS layout on storage media is divided into a number of fixed-size regions, the sizes of
-+ * which are computed when the index is created. Every header and region begins on 4K block
-+ * boundary. Save regions are further sub-divided into regions of their own.
-+ *
-+ * Each region has a kind and an instance number. Some kinds only have one instance and therefore
-+ * use RL_SOLE_INSTANCE (-1) as the instance number. The RL_KIND_INDEX used to use instances to
-+ * represent sub-indices; now, however there is only ever one sub-index and therefore one instance.
-+ * The RL_KIND_VOLUME_INDEX uses instances to record which zone is being saved.
-+ *
-+ * Every region header has a type and version.
-+ *
-+ *     +-+-+---------+--------+--------+-+
-+ *     | | |   I N D E X  0   101, 0   | |
-+ *     |H|C+---------+--------+--------+S|
-+ *     |D|f| Volume  | Save   | Save   |e|
-+ *     |R|g| Region  | Region | Region |a|
-+ *     | | | 201, -1 | 202, 0 | 202, 1 |l|
-+ *     +-+-+--------+---------+--------+-+
-+ *
-+ * The header contains the encoded region layout table as well as some index configuration data.
-+ * The sub-index region and its subdivisions are maintained in the same table.
-+ *
-+ * There are two save regions to preserve the old state in case saving the new state is incomplete.
-+ * They are used in alternation. Each save region is further divided into sub-regions.
-+ *
-+ *     +-+-----+------+------+-----+-----+
-+ *     |H| IPM | MI   | MI   |     | OC  |
-+ *     |D|     | zone | zone | ... |     |
-+ *     |R| 301 | 302  | 302  |     | 303 |
-+ *     | | -1  |  0   |  1   |     | -1  |
-+ *     +-+-----+------+------+-----+-----+
-+ *
-+ * The header contains the encoded region layout table as well as index state data for that save.
-+ * Each save also has a unique nonce.
++ * An explicitly numbered block mapping. Numbering the mappings allows them to be sorted by logical
++ * block number during repair while still preserving the relative order of journal entries with
++ * the same logical block number.
 + */
++struct numbered_block_mapping {
++	struct block_map_slot block_map_slot;
++	struct block_map_entry block_map_entry;
++	/* A serial number to use during replay */
++	u32 number;
++} __packed;
 +
-+enum {
-+	MAGIC_SIZE = 32,
-+	NONCE_INFO_SIZE = 32,
-+	MAX_SAVES = 2,
++/*
++ * The absolute position of an entry in the recovery journal, including the sector number and the
++ * entry number within the sector.
++ */
++struct recovery_point {
++	/* Block sequence number */
++	sequence_number_t sequence_number;
++	/* Sector number */
++	u8 sector_count;
++	/* Entry number */
++	journal_entry_count_t entry_count;
++	/* Whether or not the increment portion of the current entry has been applied */
++	bool increment_applied;
 +};
 +
-+enum region_kind {
-+	RL_KIND_EMPTY = 0,
-+	RL_KIND_HEADER = 1,
-+	RL_KIND_CONFIG = 100,
-+	RL_KIND_INDEX = 101,
-+	RL_KIND_SEAL = 102,
-+	RL_KIND_VOLUME = 201,
-+	RL_KIND_SAVE = 202,
-+	RL_KIND_INDEX_PAGE_MAP = 301,
-+	RL_KIND_VOLUME_INDEX = 302,
-+	RL_KIND_OPEN_CHAPTER = 303,
-+};
++struct repair_completion {
++	/* The completion header */
++	struct vdo_completion completion;
 +
-+/* Some region types are historical and are no longer used. */
-+enum region_type {
-+	RH_TYPE_FREE = 0, /* unused */
-+	RH_TYPE_SUPER = 1,
-+	RH_TYPE_SAVE = 2,
-+	RH_TYPE_CHECKPOINT = 3, /* unused */
-+	RH_TYPE_UNSAVED = 4,
-+};
++	/* A buffer to hold the data read off disk */
++	char *journal_data;
 +
-+enum {
-+	RL_SOLE_INSTANCE = 65535,
++	/* For loading the journal */
++	data_vio_count_t vio_count;
++	data_vio_count_t vios_complete;
++	struct vio *vios;
++
++	/* The number of entries to be applied to the block map */
++	size_t block_map_entry_count;
++	/* The sequence number of the first valid block for block map recovery */
++	sequence_number_t block_map_head;
++	/* The sequence number of the first valid block for slab journal replay */
++	sequence_number_t slab_journal_head;
++	/* The sequence number of the last valid block of the journal (if known) */
++	sequence_number_t tail;
++	/*
++	 * The highest sequence number of the journal. During recovery (vs read-only rebuild), not
++	 * the same as the tail, since the tail ignores blocks after the first hole.
++	 */
++	sequence_number_t highest_tail;
++
++	/* The number of logical blocks currently known to be in use */
++	block_count_t logical_blocks_used;
++	/* The number of block map data blocks known to be allocated */
++	block_count_t block_map_data_blocks;
++
++	/* These fields are for playing the journal into the block map */
++	/* The entry data for the block map recovery */
++	struct numbered_block_mapping *entries;
++	/* The number of entries in the entry array */
++	size_t entry_count;
++	/* number of pending (non-ready) requests*/
++	page_count_t outstanding;
++	/* number of page completions */
++	page_count_t page_count;
++	bool launching;
++	/*
++	 * a heap wrapping journal_entries. It re-orders and sorts journal entries in ascending LBN
++	 * order, then original journal order. This permits efficient iteration over the journal
++	 * entries in order.
++	 */
++	struct min_heap replay_heap;
++	/* Fields tracking progress through the journal entries. */
++	struct numbered_block_mapping *current_entry;
++	struct numbered_block_mapping *current_unfetched_entry;
++	/* Current requested page's PBN */
++	physical_block_number_t pbn;
++
++	/* These fields are only used during recovery. */
++	/* A location just beyond the last valid entry of the journal */
++	struct recovery_point tail_recovery_point;
++	/* The location of the next recovery journal entry to apply */
++	struct recovery_point next_recovery_point;
++	/* The journal point to give to the next synthesized decref */
++	struct journal_point next_journal_point;
++	/* The number of entries played into slab journals */
++	size_t entries_added_to_slab_journals;
++
++	/* These fields are only used during read-only rebuild */
++	page_count_t page_to_fetch;
++	/* the number of leaf pages in the block map */
++	page_count_t leaf_pages;
++	/* the last slot of the block map */
++	struct block_map_slot last_slot;
++
++	/*
++	 * The page completions used for playing the journal into the block map, and, during
++	 * read-only rebuild, for rebuilding the reference counts from the block map.
++	 */
++	struct vdo_page_completion page_completions[];
 +};
 +
 +/*
-+ * Super block version 2 is the first released version.
-+ *
-+ * Super block version 3 is the normal version used from RHEL 8.2 onwards.
-+ *
-+ * Super block versions 4 through 6 were incremental development versions and
-+ * are not supported.
-+ *
-+ * Super block version 7 is used for volumes which have been reduced in size by one chapter in
-+ * order to make room to prepend LVM metadata to a volume originally created without lvm. This
-+ * allows the index to retain most its deduplication records.
++ * This is a min_heap callback function that orders numbered_block_mappings using the
++ * 'block_map_slot' field as the primary key and the mapping 'number' field as the secondary key.
++ * Using the mapping number preserves the journal order of entries for the same slot, allowing us
++ * to sort by slot while still ensuring we replay all entries with the same slot in the exact order
++ * as they appeared in the journal.
 + */
-+enum {
-+	SUPER_VERSION_MINIMUM = 3,
-+	SUPER_VERSION_CURRENT = 3,
-+	SUPER_VERSION_MAXIMUM = 7,
-+};
-+
-+static const u8 LAYOUT_MAGIC[MAGIC_SIZE] = "*ALBIREO*SINGLE*FILE*LAYOUT*001*";
-+static const u64 REGION_MAGIC = 0x416c6252676e3031; /* 'AlbRgn01' */
-+
-+struct region_header {
-+	u64 magic;
-+	u64 region_blocks;
-+	u16 type;
-+	/* Currently always version 1 */
-+	u16 version;
-+	u16 region_count;
-+	u16 payload;
-+};
-+
-+struct layout_region {
-+	u64 start_block;
-+	u64 block_count;
-+	u32 __unused;
-+	u16 kind;
-+	u16 instance;
-+};
-+
-+struct region_table {
-+	size_t encoded_size;
-+	struct region_header header;
-+	struct layout_region regions[];
-+};
-+
-+struct index_save_data {
-+	u64 timestamp;
-+	u64 nonce;
-+	/* Currently always version 1 */
-+	u32 version;
-+	u32 unused__;
-+};
-+
-+struct index_state_version {
-+	s32 signature;
-+	s32 version_id;
-+};
-+
-+static const struct index_state_version INDEX_STATE_VERSION_301 = {
-+	.signature  = -1,
-+	.version_id = 301,
-+};
-+
-+struct index_state_data301 {
-+	struct index_state_version version;
-+	u64 newest_chapter;
-+	u64 oldest_chapter;
-+	u64 last_save;
-+	u32 unused;
-+	u32 padding;
-+};
-+
-+struct index_save_layout {
-+	unsigned int zone_count;
-+	struct layout_region index_save;
-+	struct layout_region header;
-+	struct layout_region index_page_map;
-+	struct layout_region free_space;
-+	struct layout_region volume_index_zones[MAX_ZONES];
-+	struct layout_region open_chapter;
-+	struct index_save_data save_data;
-+	struct index_state_data301 state_data;
-+};
-+
-+struct sub_index_layout {
-+	u64 nonce;
-+	struct layout_region sub_index;
-+	struct layout_region volume;
-+	struct index_save_layout *saves;
-+};
-+
-+struct super_block_data {
-+	u8 magic_label[MAGIC_SIZE];
-+	u8 nonce_info[NONCE_INFO_SIZE];
-+	u64 nonce;
-+	u32 version;
-+	u32 block_size;
-+	u16 index_count;
-+	u16 max_saves;
-+	/* Padding reflects a blank field on permanent storage */
-+	u8 padding[4];
-+	u64 open_chapter_blocks;
-+	u64 page_map_blocks;
-+	u64 volume_offset;
-+	u64 start_offset;
-+};
-+
-+struct index_layout {
-+	struct io_factory *factory;
-+	size_t factory_size;
-+	off_t offset;
-+	struct super_block_data super;
-+	struct layout_region header;
-+	struct layout_region config;
-+	struct sub_index_layout index;
-+	struct layout_region seal;
-+	u64 total_blocks;
-+};
-+
-+struct save_layout_sizes {
-+	unsigned int save_count;
-+	size_t block_size;
-+	u64 volume_blocks;
-+	u64 volume_index_blocks;
-+	u64 page_map_blocks;
-+	u64 open_chapter_blocks;
-+	u64 save_blocks;
-+	u64 sub_index_blocks;
-+	u64 total_blocks;
-+	size_t total_size;
-+};
-+
-+static inline bool is_converted_super_block(struct super_block_data *super)
++static bool mapping_is_less_than(const void *item1, const void *item2)
 +{
-+	return super->version == 7;
++	const struct numbered_block_mapping *mapping1 =
++		(const struct numbered_block_mapping *) item1;
++	const struct numbered_block_mapping *mapping2 =
++		(const struct numbered_block_mapping *) item2;
++
++	if (mapping1->block_map_slot.pbn != mapping2->block_map_slot.pbn)
++		return mapping1->block_map_slot.pbn < mapping2->block_map_slot.pbn;
++
++	if (mapping1->block_map_slot.slot != mapping2->block_map_slot.slot)
++		return mapping1->block_map_slot.slot < mapping2->block_map_slot.slot;
++
++	if (mapping1->number != mapping2->number)
++		return mapping1->number < mapping2->number;
++
++	return 0;
 +}
 +
-+static int __must_check compute_sizes(const struct configuration *config,
-+				      struct save_layout_sizes *sls)
++static void swap_mappings(void *item1, void *item2)
 +{
-+	int result;
-+	struct geometry *geometry = config->geometry;
++	struct numbered_block_mapping *mapping1 = item1;
++	struct numbered_block_mapping *mapping2 = item2;
 +
-+	memset(sls, 0, sizeof(*sls));
-+	sls->save_count = MAX_SAVES;
-+	sls->block_size = UDS_BLOCK_SIZE;
-+	sls->volume_blocks = geometry->bytes_per_volume / sls->block_size;
-+
-+	result = uds_compute_volume_index_save_blocks(config, sls->block_size,
-+						      &sls->volume_index_blocks);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot compute index save size");
-+
-+	sls->page_map_blocks =
-+		DIV_ROUND_UP(uds_compute_index_page_map_save_size(geometry),
-+			     sls->block_size);
-+	sls->open_chapter_blocks =
-+		DIV_ROUND_UP(uds_compute_saved_open_chapter_size(geometry),
-+			     sls->block_size);
-+	sls->save_blocks =
-+		1 + (sls->volume_index_blocks + sls->page_map_blocks + sls->open_chapter_blocks);
-+	sls->sub_index_blocks = sls->volume_blocks + (sls->save_count * sls->save_blocks);
-+	sls->total_blocks = 3 + sls->sub_index_blocks;
-+	sls->total_size = sls->total_blocks * sls->block_size;
-+
-+	return UDS_SUCCESS;
++	swap(*mapping1, *mapping2);
 +}
 +
-+int uds_compute_index_size(const struct uds_parameters *parameters, u64 *index_size)
++static const struct min_heap_callbacks repair_min_heap = {
++	.elem_size = sizeof(struct numbered_block_mapping),
++	.less = mapping_is_less_than,
++	.swp = swap_mappings,
++};
++
++static struct numbered_block_mapping *sort_next_heap_element(struct repair_completion *repair)
 +{
-+	int result;
-+	struct configuration *index_config;
-+	struct save_layout_sizes sizes;
++	struct min_heap *heap = &repair->replay_heap;
++	struct numbered_block_mapping *last;
 +
-+	if (index_size == NULL) {
-+		uds_log_error("Missing output size pointer");
-+		return -EINVAL;
-+	}
++	if (heap->nr == 0)
++		return NULL;
 +
-+	result = uds_make_configuration(parameters, &index_config);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_error_strerror(result, "cannot compute index size");
-+		return uds_map_to_system_error(result);
-+	}
-+
-+	result = compute_sizes(index_config, &sizes);
-+	uds_free_configuration(index_config);
-+	if (result != UDS_SUCCESS)
-+		return uds_map_to_system_error(result);
-+
-+	*index_size = sizes.total_size;
-+	return UDS_SUCCESS;
++	/*
++	 * Swap the next heap element with the last one on the heap, popping it off the heap,
++	 * restore the heap invariant, and return a pointer to the popped element.
++	 */
++	last = &repair->entries[--heap->nr];
++	swap_mappings(heap->data, last);
++	min_heapify(heap, 0, &repair_min_heap);
++	return last;
 +}
 +
-+/* Create unique data using the current time and a pseudorandom number. */
-+static void create_unique_nonce_data(u8 *buffer)
-+{
-+	ktime_t now = current_time_ns(CLOCK_REALTIME);
-+	u32 rand;
-+	size_t offset = 0;
-+
-+	get_random_bytes(&rand, sizeof(u32));
-+	memcpy(buffer + offset, &now, sizeof(now));
-+	offset += sizeof(now);
-+	memcpy(buffer + offset, &rand, sizeof(rand));
-+	offset += sizeof(rand);
-+	while (offset < NONCE_INFO_SIZE) {
-+		size_t len = min(NONCE_INFO_SIZE - offset, offset);
-+
-+		memcpy(buffer + offset, buffer, len);
-+		offset += len;
-+	}
-+}
-+
-+static u64 hash_stuff(u64 start, const void *data, size_t len)
-+{
-+	u32 seed = start ^ (start >> 27);
-+	u8 hash_buffer[16];
-+
-+	murmurhash3_128(data, len, seed, hash_buffer);
-+	return get_unaligned_le64(hash_buffer + 4);
-+}
-+
-+/* Generate a primary nonce from the provided data. */
-+static u64 generate_primary_nonce(const void *data, size_t len)
-+{
-+	return hash_stuff(0xa1b1e0fc, data, len);
-+}
-+
-+/*
-+ * Deterministically generate a secondary nonce from an existing nonce and some arbitrary data by
-+ * hashing the original nonce and the data to produce a new nonce.
++/**
++ * as_repair_completion() - Convert a generic completion to a repair_completion.
++ * @completion: The completion to convert.
++ *
++ * Return: The repair_completion.
 + */
-+static u64 generate_secondary_nonce(u64 nonce, const void *data, size_t len)
++static inline struct repair_completion * __must_check
++as_repair_completion(struct vdo_completion *completion)
 +{
-+	return hash_stuff(nonce + 1, data, len);
++	vdo_assert_completion_type(completion, VDO_REPAIR_COMPLETION);
++	return container_of(completion, struct repair_completion, completion);
 +}
 +
-+static int __must_check open_layout_reader(struct index_layout *layout,
-+					   struct layout_region *lr, off_t offset,
-+					   struct buffered_reader **reader_ptr)
++static void prepare_repair_completion(struct repair_completion *repair,
++				      vdo_action_fn callback, enum vdo_zone_type zone_type)
 +{
-+	return uds_make_buffered_reader(layout->factory, lr->start_block + offset,
-+					lr->block_count, reader_ptr);
++	struct vdo_completion *completion = &repair->completion;
++	const struct thread_config *thread_config = &completion->vdo->thread_config;
++	thread_id_t thread_id;
++
++	/* All blockmap access is done on single thread, so use logical zone 0. */
++	thread_id = ((zone_type == VDO_ZONE_TYPE_LOGICAL) ?
++		     thread_config->logical_threads[0] :
++		     thread_config->admin_thread);
++	vdo_reset_completion(completion);
++	vdo_set_completion_callback(completion, callback, thread_id);
 +}
 +
-+static int open_region_reader(struct index_layout *layout, struct layout_region *region,
-+			      struct buffered_reader **reader_ptr)
++static void launch_repair_completion(struct repair_completion *repair,
++				     vdo_action_fn callback, enum vdo_zone_type zone_type)
 +{
-+	return open_layout_reader(layout, region, -layout->super.start_offset,
-+				  reader_ptr);
++	prepare_repair_completion(repair, callback, zone_type);
++	vdo_launch_completion(&repair->completion);
 +}
 +
-+static int __must_check open_layout_writer(struct index_layout *layout,
-+					   struct layout_region *lr, off_t offset,
-+					   struct buffered_writer **writer_ptr)
++static void uninitialize_vios(struct repair_completion *repair)
 +{
-+	return uds_make_buffered_writer(layout->factory, lr->start_block + offset,
-+					lr->block_count, writer_ptr);
++	while (repair->vio_count > 0)
++		free_vio_components(&repair->vios[--repair->vio_count]);
++
++	uds_free(uds_forget(repair->vios));
 +}
 +
-+static int open_region_writer(struct index_layout *layout, struct layout_region *region,
-+			      struct buffered_writer **writer_ptr)
++static void free_repair_completion(struct repair_completion *repair)
 +{
-+	return open_layout_writer(layout, region, -layout->super.start_offset,
-+				  writer_ptr);
++	if (repair == NULL)
++		return;
++
++	/*
++	 * We do this here because this function is the only common bottleneck for all clean up
++	 * paths.
++	 */
++	repair->completion.vdo->block_map->zones[0].page_cache.rebuilding = false;
++
++	uninitialize_vios(repair);
++	uds_free(uds_forget(repair->journal_data));
++	uds_free(uds_forget(repair->entries));
++	uds_free(repair);
 +}
 +
-+static void generate_super_block_data(struct save_layout_sizes *sls,
-+				      struct super_block_data *super)
++static void finish_repair(struct vdo_completion *completion)
 +{
-+	memset(super, 0, sizeof(*super));
-+	memcpy(super->magic_label, LAYOUT_MAGIC, MAGIC_SIZE);
-+	create_unique_nonce_data(super->nonce_info);
++	struct vdo_completion *parent = completion->parent;
++	struct vdo *vdo = completion->vdo;
++	struct repair_completion *repair = as_repair_completion(completion);
 +
-+	super->nonce = generate_primary_nonce(super->nonce_info,
-+					      sizeof(super->nonce_info));
-+	super->version = SUPER_VERSION_CURRENT;
-+	super->block_size = sls->block_size;
-+	super->index_count = 1;
-+	super->max_saves = sls->save_count;
-+	super->open_chapter_blocks = sls->open_chapter_blocks;
-+	super->page_map_blocks = sls->page_map_blocks;
-+	super->volume_offset = 0;
-+	super->start_offset = 0;
++	vdo_assert_on_admin_thread(vdo, __func__);
++
++	if (vdo->load_state != VDO_REBUILD_FOR_UPGRADE)
++		vdo->states.vdo.complete_recoveries++;
++
++	vdo_initialize_recovery_journal_post_repair(vdo->recovery_journal,
++						    vdo->states.vdo.complete_recoveries,
++						    repair->highest_tail,
++						    repair->logical_blocks_used,
++						    repair->block_map_data_blocks);
++	free_repair_completion(uds_forget(repair));
++
++	if (vdo_state_requires_read_only_rebuild(vdo->load_state)) {
++		uds_log_info("Read-only rebuild complete");
++		vdo_launch_completion(parent);
++		return;
++	}
++
++	/* FIXME: shouldn't this say either "recovery" or "repair"? */
++	uds_log_info("Rebuild complete");
++
++	/*
++	 * Now that we've freed the repair completion and its vast array of journal entries, we
++	 * can allocate refcounts.
++	 */
++	vdo_continue_completion(parent, vdo_allocate_reference_counters(vdo->depot));
 +}
 +
-+static void define_sub_index_nonce(struct index_layout *layout)
++/**
++ * abort_repair() - Handle a repair error.
++ * @completion: The repair completion.
++ */
++static void abort_repair(struct vdo_completion *completion)
 +{
-+	struct sub_index_nonce_data {
-+		u64 offset;
-+		u16 index_id;
-+	};
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 primary_nonce = layout->super.nonce;
-+	u8 buffer[sizeof(struct sub_index_nonce_data)] = { 0 };
-+	size_t offset = 0;
-+
-+	encode_u64_le(buffer, &offset, sil->sub_index.start_block);
-+	encode_u16_le(buffer, &offset, 0);
-+	sil->nonce = generate_secondary_nonce(primary_nonce, buffer, sizeof(buffer));
-+	if (sil->nonce == 0)
-+		sil->nonce = generate_secondary_nonce(~primary_nonce + 1, buffer,
-+						      sizeof(buffer));
-+}
-+
-+static void setup_sub_index(struct index_layout *layout, u64 start_block,
-+			    struct save_layout_sizes *sls)
-+{
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 next_block = start_block;
-+	unsigned int i;
-+
-+	sil->sub_index = (struct layout_region) {
-+		.start_block = start_block,
-+		.block_count = sls->sub_index_blocks,
-+		.kind = RL_KIND_INDEX,
-+		.instance = 0,
-+	};
-+
-+	sil->volume = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = sls->volume_blocks,
-+		.kind = RL_KIND_VOLUME,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	next_block += sls->volume_blocks;
-+
-+	for (i = 0; i < sls->save_count; i++) {
-+		sil->saves[i].index_save = (struct layout_region) {
-+			.start_block = next_block,
-+			.block_count = sls->save_blocks,
-+			.kind = RL_KIND_SAVE,
-+			.instance = i,
-+		};
-+
-+		next_block += sls->save_blocks;
-+	}
-+
-+	define_sub_index_nonce(layout);
-+}
-+
-+static void initialize_layout(struct index_layout *layout, struct save_layout_sizes *sls)
-+{
-+	u64 next_block = layout->offset / sls->block_size;
-+
-+	layout->total_blocks = sls->total_blocks;
-+	generate_super_block_data(sls, &layout->super);
-+	layout->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	layout->config = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_CONFIG,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	setup_sub_index(layout, next_block, sls);
-+	next_block += sls->sub_index_blocks;
-+
-+	layout->seal = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = 1,
-+		.kind = RL_KIND_SEAL,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+}
-+
-+static int __must_check make_index_save_region_table(struct index_save_layout *isl,
-+						     struct region_table **table_ptr)
-+{
-+	int result;
-+	unsigned int z;
-+	struct region_table *table;
-+	struct layout_region *lr;
-+	u16 region_count;
-+	size_t payload;
-+	size_t type;
-+
-+	if (isl->zone_count > 0) {
-+		/*
-+		 * Normal save regions: header, page map, volume index zones,
-+		 * open chapter, and possibly free space.
-+		 */
-+		region_count = 3 + isl->zone_count;
-+		if (isl->free_space.block_count > 0)
-+			region_count++;
-+
-+		payload = sizeof(isl->save_data) + sizeof(isl->state_data);
-+		type = RH_TYPE_SAVE;
-+	} else {
-+		/* Empty save regions: header, page map, free space. */
-+		region_count = 3;
-+		payload = sizeof(isl->save_data);
-+		type = RH_TYPE_UNSAVED;
-+	}
-+
-+	result = uds_allocate_extended(struct region_table, region_count,
-+				       struct layout_region,
-+				       "layout region table for ISL", &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	lr = &table->regions[0];
-+	*lr++ = isl->header;
-+	*lr++ = isl->index_page_map;
-+	for (z = 0; z < isl->zone_count; z++)
-+		*lr++ = isl->volume_index_zones[z];
-+
-+	if (isl->zone_count > 0)
-+		*lr++ = isl->open_chapter;
-+
-+	if (isl->free_space.block_count > 0)
-+		*lr++ = isl->free_space;
-+
-+	table->header = (struct region_header) {
-+		.magic = REGION_MAGIC,
-+		.region_blocks = isl->index_save.block_count,
-+		.type = type,
-+		.version = 1,
-+		.region_count = region_count,
-+		.payload = payload,
-+	};
-+
-+	table->encoded_size = (sizeof(struct region_header) + payload +
-+			       region_count * sizeof(struct layout_region));
-+	*table_ptr = table;
-+	return UDS_SUCCESS;
-+}
-+
-+static void encode_region_table(u8 *buffer, size_t *offset, struct region_table *table)
-+{
-+	unsigned int i;
-+
-+	encode_u64_le(buffer, offset, REGION_MAGIC);
-+	encode_u64_le(buffer, offset, table->header.region_blocks);
-+	encode_u16_le(buffer, offset, table->header.type);
-+	encode_u16_le(buffer, offset, table->header.version);
-+	encode_u16_le(buffer, offset, table->header.region_count);
-+	encode_u16_le(buffer, offset, table->header.payload);
-+
-+	for (i = 0; i < table->header.region_count; i++) {
-+		encode_u64_le(buffer, offset, table->regions[i].start_block);
-+		encode_u64_le(buffer, offset, table->regions[i].block_count);
-+		encode_u32_le(buffer, offset, 0);
-+		encode_u16_le(buffer, offset, table->regions[i].kind);
-+		encode_u16_le(buffer, offset, table->regions[i].instance);
-+	}
-+}
-+
-+static int __must_check write_index_save_header(struct index_save_layout *isl,
-+						struct region_table *table,
-+						struct buffered_writer *writer)
-+{
-+	int result;
-+	u8 *buffer;
-+	size_t offset = 0;
-+
-+	result = uds_allocate(table->encoded_size, u8, "index save data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	encode_region_table(buffer, &offset, table);
-+	encode_u64_le(buffer, &offset, isl->save_data.timestamp);
-+	encode_u64_le(buffer, &offset, isl->save_data.nonce);
-+	encode_u32_le(buffer, &offset, isl->save_data.version);
-+	encode_u32_le(buffer, &offset, 0);
-+	if (isl->zone_count > 0) {
-+		encode_u32_le(buffer, &offset, INDEX_STATE_VERSION_301.signature);
-+		encode_u32_le(buffer, &offset, INDEX_STATE_VERSION_301.version_id);
-+		encode_u64_le(buffer, &offset, isl->state_data.newest_chapter);
-+		encode_u64_le(buffer, &offset, isl->state_data.oldest_chapter);
-+		encode_u64_le(buffer, &offset, isl->state_data.last_save);
-+		encode_u64_le(buffer, &offset, 0);
-+	}
-+
-+	result = uds_write_to_buffered_writer(writer, buffer, offset);
-+	uds_free(buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return uds_flush_buffered_writer(writer);
-+}
-+
-+static int write_index_save_layout(struct index_layout *layout,
-+				   struct index_save_layout *isl)
-+{
-+	int result;
-+	struct region_table *table;
-+	struct buffered_writer *writer;
-+
-+	result = make_index_save_region_table(isl, &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_region_writer(layout, &isl->header, &writer);
-+	if (result != UDS_SUCCESS) {
-+		uds_free(table);
-+		return result;
-+	}
-+
-+	result = write_index_save_header(isl, table, writer);
-+	uds_free(table);
-+	uds_free_buffered_writer(writer);
-+
-+	return result;
-+}
-+
-+static void reset_index_save_layout(struct index_save_layout *isl, u64 page_map_blocks)
-+{
-+	u64 free_blocks;
-+	u64 next_block = isl->index_save.start_block;
-+
-+	isl->zone_count = 0;
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+
-+	isl->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	isl->index_page_map = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = page_map_blocks,
-+		.kind = RL_KIND_INDEX_PAGE_MAP,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	next_block += page_map_blocks;
-+
-+	free_blocks = isl->index_save.block_count - page_map_blocks - 1;
-+	isl->free_space = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = free_blocks,
-+		.kind = RL_KIND_EMPTY,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+}
-+
-+static int __must_check invalidate_old_save(struct index_layout *layout,
-+					    struct index_save_layout *isl)
-+{
-+	reset_index_save_layout(isl, layout->super.page_map_blocks);
-+	return write_index_save_layout(layout, isl);
-+}
-+
-+static int discard_index_state_data(struct index_layout *layout)
-+{
-+	int result;
-+	int saved_result = UDS_SUCCESS;
-+	unsigned int i;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		result = invalidate_old_save(layout, &layout->index.saves[i]);
-+		if (result != UDS_SUCCESS)
-+			saved_result = result;
-+	}
-+
-+	if (saved_result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "%s: cannot destroy all index saves",
-+					      __func__);
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check make_layout_region_table(struct index_layout *layout,
-+						 struct region_table **table_ptr)
-+{
-+	int result;
-+	unsigned int i;
-+	/* Regions: header, config, index, volume, saves, seal */
-+	u16 region_count = 5 + layout->super.max_saves;
-+	u16 payload;
-+	struct region_table *table;
-+	struct layout_region *lr;
-+
-+	result = uds_allocate_extended(struct region_table, region_count,
-+				       struct layout_region, "layout region table",
-+				       &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	lr = &table->regions[0];
-+	*lr++ = layout->header;
-+	*lr++ = layout->config;
-+	*lr++ = layout->index.sub_index;
-+	*lr++ = layout->index.volume;
-+
-+	for (i = 0; i < layout->super.max_saves; i++)
-+		*lr++ = layout->index.saves[i].index_save;
-+
-+	*lr++ = layout->seal;
-+
-+	if (is_converted_super_block(&layout->super)) {
-+		payload = sizeof(struct super_block_data);
-+	} else {
-+		payload = (sizeof(struct super_block_data) -
-+			   sizeof(layout->super.volume_offset) -
-+			   sizeof(layout->super.start_offset));
-+	}
-+
-+	table->header = (struct region_header) {
-+		.magic = REGION_MAGIC,
-+		.region_blocks = layout->total_blocks,
-+		.type = RH_TYPE_SUPER,
-+		.version = 1,
-+		.region_count = region_count,
-+		.payload = payload,
-+	};
-+
-+	table->encoded_size = (sizeof(struct region_header) + payload +
-+			       region_count * sizeof(struct layout_region));
-+	*table_ptr = table;
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check write_layout_header(struct index_layout *layout,
-+					    struct region_table *table,
-+					    struct buffered_writer *writer)
-+{
-+	int result;
-+	u8 *buffer;
-+	size_t offset = 0;
-+
-+	result = uds_allocate(table->encoded_size, u8, "layout data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	encode_region_table(buffer, &offset, table);
-+	memcpy(buffer + offset, &layout->super.magic_label, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	memcpy(buffer + offset, &layout->super.nonce_info, NONCE_INFO_SIZE);
-+	offset += NONCE_INFO_SIZE;
-+	encode_u64_le(buffer, &offset, layout->super.nonce);
-+	encode_u32_le(buffer, &offset, layout->super.version);
-+	encode_u32_le(buffer, &offset, layout->super.block_size);
-+	encode_u16_le(buffer, &offset, layout->super.index_count);
-+	encode_u16_le(buffer, &offset, layout->super.max_saves);
-+	encode_u32_le(buffer, &offset, 0);
-+	encode_u64_le(buffer, &offset, layout->super.open_chapter_blocks);
-+	encode_u64_le(buffer, &offset, layout->super.page_map_blocks);
-+
-+	if (is_converted_super_block(&layout->super)) {
-+		encode_u64_le(buffer, &offset, layout->super.volume_offset);
-+		encode_u64_le(buffer, &offset, layout->super.start_offset);
-+	}
-+
-+	result = uds_write_to_buffered_writer(writer, buffer, offset);
-+	uds_free(buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return uds_flush_buffered_writer(writer);
-+}
-+
-+static int __must_check write_uds_index_config(struct index_layout *layout,
-+					       struct configuration *config,
-+					       off_t offset)
-+{
-+	int result;
-+	struct buffered_writer *writer = NULL;
-+
-+	result = open_layout_writer(layout, &layout->config, offset, &writer);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "failed to open config region");
-+
-+	result = uds_write_config_contents(writer, config, layout->super.version);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return uds_log_error_strerror(result, "failed to write config region");
-+	}
-+
-+	result = uds_flush_buffered_writer(writer);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return uds_log_error_strerror(result, "cannot flush config writer");
-+	}
-+
-+	uds_free_buffered_writer(writer);
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check save_layout(struct index_layout *layout, off_t offset)
-+{
-+	int result;
-+	struct buffered_writer *writer = NULL;
-+	struct region_table *table;
-+
-+	result = make_layout_region_table(layout, &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_layout_writer(layout, &layout->header, offset, &writer);
-+	if (result != UDS_SUCCESS) {
-+		uds_free(table);
-+		return result;
-+	}
-+
-+	result = write_layout_header(layout, table, writer);
-+	uds_free(table);
-+	uds_free_buffered_writer(writer);
-+
-+	return result;
-+}
-+
-+static int create_index_layout(struct index_layout *layout, struct configuration *config)
-+{
-+	int result;
-+	struct save_layout_sizes sizes;
-+
-+	result = compute_sizes(config, &sizes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_allocate(sizes.save_count, struct index_save_layout, __func__,
-+			      &layout->index.saves);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	initialize_layout(layout, &sizes);
-+
-+	result = discard_index_state_data(layout);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = write_uds_index_config(layout, config, 0);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return save_layout(layout, 0);
-+}
-+
-+static u64 generate_index_save_nonce(u64 volume_nonce, struct index_save_layout *isl)
-+{
-+	struct save_nonce_data {
-+		struct index_save_data data;
-+		u64 offset;
-+	} nonce_data;
-+	u8 buffer[sizeof(nonce_data)];
-+	size_t offset = 0;
-+
-+	encode_u64_le(buffer, &offset, isl->save_data.timestamp);
-+	encode_u64_le(buffer, &offset, 0);
-+	encode_u32_le(buffer, &offset, isl->save_data.version);
-+	encode_u32_le(buffer, &offset, 0U);
-+	encode_u64_le(buffer, &offset, isl->index_save.start_block);
-+	ASSERT_LOG_ONLY(offset == sizeof(nonce_data),
-+			"%zu bytes encoded of %zu expected", offset, sizeof(nonce_data));
-+	return generate_secondary_nonce(volume_nonce, buffer, sizeof(buffer));
-+}
-+
-+static u64 validate_index_save_layout(struct index_save_layout *isl, u64 volume_nonce)
-+{
-+	if ((isl->zone_count == 0) || (isl->save_data.timestamp == 0))
-+		return 0;
-+
-+	if (isl->save_data.nonce != generate_index_save_nonce(volume_nonce, isl))
-+		return 0;
-+
-+	return isl->save_data.timestamp;
-+}
-+
-+static int find_latest_uds_index_save_slot(struct index_layout *layout,
-+					   struct index_save_layout **isl_ptr)
-+{
-+	struct index_save_layout *latest = NULL;
-+	struct index_save_layout *isl;
-+	unsigned int i;
-+	u64 save_time = 0;
-+	u64 latest_time = 0;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		isl = &layout->index.saves[i];
-+		save_time = validate_index_save_layout(isl, layout->index.nonce);
-+		if (save_time > latest_time) {
-+			latest = isl;
-+			latest_time = save_time;
-+		}
-+	}
-+
-+	if (latest == NULL) {
-+		uds_log_error("No valid index save found");
-+		return UDS_INDEX_NOT_SAVED_CLEANLY;
-+	}
-+
-+	*isl_ptr = latest;
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_discard_open_chapter(struct index_layout *layout)
-+{
-+	int result;
-+	struct index_save_layout *isl;
-+	struct buffered_writer *writer;
-+
-+	result = find_latest_uds_index_save_slot(layout, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_region_writer(layout, &isl->open_chapter, &writer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_write_to_buffered_writer(writer, NULL, UDS_BLOCK_SIZE);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return result;
-+	}
-+
-+	result = uds_flush_buffered_writer(writer);
-+	uds_free_buffered_writer(writer);
-+	return result;
-+}
-+
-+int uds_load_index_state(struct index_layout *layout, struct uds_index *index)
-+{
-+	int result;
-+	unsigned int zone;
-+	struct index_save_layout *isl;
-+	struct buffered_reader *readers[MAX_ZONES];
-+
-+	result = find_latest_uds_index_save_slot(layout, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	index->newest_virtual_chapter = isl->state_data.newest_chapter;
-+	index->oldest_virtual_chapter = isl->state_data.oldest_chapter;
-+	index->last_save = isl->state_data.last_save;
-+
-+	result = open_region_reader(layout, &isl->open_chapter, &readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_load_open_chapter(index, readers[0]);
-+	uds_free_buffered_reader(readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	for (zone = 0; zone < isl->zone_count; zone++) {
-+		result = open_region_reader(layout, &isl->volume_index_zones[zone],
-+					    &readers[zone]);
-+		if (result != UDS_SUCCESS) {
-+			for (; zone > 0; zone--)
-+				uds_free_buffered_reader(readers[zone - 1]);
-+
-+			return result;
-+		}
-+	}
-+
-+	result = uds_load_volume_index(index->volume_index, readers, isl->zone_count);
-+	for (zone = 0; zone < isl->zone_count; zone++)
-+		uds_free_buffered_reader(readers[zone]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_region_reader(layout, &isl->index_page_map, &readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_read_index_page_map(index->volume->index_page_map, readers[0]);
-+	uds_free_buffered_reader(readers[0]);
-+
-+	return result;
-+}
-+
-+static struct index_save_layout *select_oldest_index_save_layout(struct index_layout *layout)
-+{
-+	struct index_save_layout *oldest = NULL;
-+	struct index_save_layout *isl;
-+	unsigned int i;
-+	u64 save_time = 0;
-+	u64 oldest_time = 0;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		isl = &layout->index.saves[i];
-+		save_time = validate_index_save_layout(isl, layout->index.nonce);
-+		if (oldest == NULL || save_time < oldest_time) {
-+			oldest = isl;
-+			oldest_time = save_time;
-+		}
-+	}
-+
-+	return oldest;
-+}
-+
-+static void instantiate_index_save_layout(struct index_save_layout *isl,
-+					  struct super_block_data *super,
-+					  u64 volume_nonce, unsigned int zone_count)
-+{
-+	unsigned int z;
-+	u64 next_block;
-+	u64 free_blocks;
-+	u64 volume_index_blocks;
-+
-+	isl->zone_count = zone_count;
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+	isl->save_data.timestamp = ktime_to_ms(current_time_ns(CLOCK_REALTIME));
-+	isl->save_data.version = 1;
-+	isl->save_data.nonce = generate_index_save_nonce(volume_nonce, isl);
-+
-+	next_block = isl->index_save.start_block;
-+	isl->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	isl->index_page_map = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = super->page_map_blocks,
-+		.kind = RL_KIND_INDEX_PAGE_MAP,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+	next_block += super->page_map_blocks;
-+
-+	free_blocks = (isl->index_save.block_count - 1 -
-+		       super->page_map_blocks -
-+		       super->open_chapter_blocks);
-+	volume_index_blocks = free_blocks / isl->zone_count;
-+	for (z = 0; z < isl->zone_count; z++) {
-+		isl->volume_index_zones[z] = (struct layout_region) {
-+			.start_block = next_block,
-+			.block_count = volume_index_blocks,
-+			.kind = RL_KIND_VOLUME_INDEX,
-+			.instance = z,
-+		};
-+
-+		next_block += volume_index_blocks;
-+		free_blocks -= volume_index_blocks;
-+	}
-+
-+	isl->open_chapter = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = super->open_chapter_blocks,
-+		.kind = RL_KIND_OPEN_CHAPTER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	next_block += super->open_chapter_blocks;
-+
-+	isl->free_space = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = free_blocks,
-+		.kind = RL_KIND_EMPTY,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+}
-+
-+static int setup_uds_index_save_slot(struct index_layout *layout,
-+				     unsigned int zone_count,
-+				     struct index_save_layout **isl_ptr)
-+{
-+	int result;
-+	struct index_save_layout *isl;
-+
-+	isl = select_oldest_index_save_layout(layout);
-+	result = invalidate_old_save(layout, isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	instantiate_index_save_layout(isl, &layout->super, layout->index.nonce,
-+				      zone_count);
-+
-+	*isl_ptr = isl;
-+	return UDS_SUCCESS;
-+}
-+
-+static void cancel_uds_index_save(struct index_save_layout *isl)
-+{
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+	memset(&isl->state_data, 0, sizeof(isl->state_data));
-+	isl->zone_count = 0;
-+}
-+
-+int uds_save_index_state(struct index_layout *layout, struct uds_index *index)
-+{
-+	int result;
-+	unsigned int zone;
-+	struct index_save_layout *isl;
-+	struct buffered_writer *writers[MAX_ZONES];
-+
-+	result = setup_uds_index_save_slot(layout, index->zone_count, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	isl->state_data	= (struct index_state_data301) {
-+		.newest_chapter = index->newest_virtual_chapter,
-+		.oldest_chapter = index->oldest_virtual_chapter,
-+		.last_save = index->last_save,
-+	};
-+
-+	result = open_region_writer(layout, &isl->open_chapter, &writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = uds_save_open_chapter(index, writers[0]);
-+	uds_free_buffered_writer(writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	for (zone = 0; zone < index->zone_count; zone++) {
-+		result = open_region_writer(layout, &isl->volume_index_zones[zone],
-+					    &writers[zone]);
-+		if (result != UDS_SUCCESS) {
-+			for (; zone > 0; zone--)
-+				uds_free_buffered_writer(writers[zone - 1]);
-+
-+			cancel_uds_index_save(isl);
-+			return result;
-+		}
-+	}
-+
-+	result = uds_save_volume_index(index->volume_index, writers, index->zone_count);
-+	for (zone = 0; zone < index->zone_count; zone++)
-+		uds_free_buffered_writer(writers[zone]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = open_region_writer(layout, &isl->index_page_map, &writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = uds_write_index_page_map(index->volume->index_page_map, writers[0]);
-+	uds_free_buffered_writer(writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	return write_index_save_layout(layout, isl);
-+}
-+
-+static int __must_check load_region_table(struct buffered_reader *reader,
-+					  struct region_table **table_ptr)
-+{
-+	int result;
-+	unsigned int i;
-+	struct region_header header;
-+	struct region_table *table;
-+	u8 buffer[sizeof(struct region_header)];
-+	size_t offset = 0;
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot read region table header");
-+
-+	decode_u64_le(buffer, &offset, &header.magic);
-+	decode_u64_le(buffer, &offset, &header.region_blocks);
-+	decode_u16_le(buffer, &offset, &header.type);
-+	decode_u16_le(buffer, &offset, &header.version);
-+	decode_u16_le(buffer, &offset, &header.region_count);
-+	decode_u16_le(buffer, &offset, &header.payload);
-+
-+	if (header.magic != REGION_MAGIC)
-+		return UDS_NO_INDEX;
-+
-+	if (header.version != 1) {
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown region table version %hu",
-+					      header.version);
-+	}
-+
-+	result = uds_allocate_extended(struct region_table, header.region_count,
-+				       struct layout_region,
-+				       "single file layout region table", &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	table->header = header;
-+	for (i = 0; i < header.region_count; i++) {
-+		u8 region_buffer[sizeof(struct layout_region)];
-+
-+		offset = 0;
-+		result = uds_read_from_buffered_reader(reader, region_buffer,
-+						       sizeof(region_buffer));
-+		if (result != UDS_SUCCESS) {
-+			uds_free(table);
-+			return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+						      "cannot read region table layouts");
-+		}
-+
-+		decode_u64_le(region_buffer, &offset, &table->regions[i].start_block);
-+		decode_u64_le(region_buffer, &offset, &table->regions[i].block_count);
-+		offset += sizeof(u32);
-+		decode_u16_le(region_buffer, &offset, &table->regions[i].kind);
-+		decode_u16_le(region_buffer, &offset, &table->regions[i].instance);
-+	}
-+
-+	*table_ptr = table;
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check read_super_block_data(struct buffered_reader *reader,
-+					      struct index_layout *layout,
-+					      size_t saved_size)
-+{
-+	int result;
-+	struct super_block_data *super = &layout->super;
-+	u8 *buffer;
-+	size_t offset = 0;
-+
-+	result = uds_allocate(saved_size, u8, "super block data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, saved_size);
-+	if (result != UDS_SUCCESS) {
-+		uds_free(buffer);
-+		return uds_log_error_strerror(result, "cannot read region table header");
-+	}
-+
-+	memcpy(&super->magic_label, buffer, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	memcpy(&super->nonce_info, buffer + offset, NONCE_INFO_SIZE);
-+	offset += NONCE_INFO_SIZE;
-+	decode_u64_le(buffer, &offset, &super->nonce);
-+	decode_u32_le(buffer, &offset, &super->version);
-+	decode_u32_le(buffer, &offset, &super->block_size);
-+	decode_u16_le(buffer, &offset, &super->index_count);
-+	decode_u16_le(buffer, &offset, &super->max_saves);
-+	offset += sizeof(u32);
-+	decode_u64_le(buffer, &offset, &super->open_chapter_blocks);
-+	decode_u64_le(buffer, &offset, &super->page_map_blocks);
-+
-+	if (is_converted_super_block(super)) {
-+		decode_u64_le(buffer, &offset, &super->volume_offset);
-+		decode_u64_le(buffer, &offset, &super->start_offset);
-+	} else {
-+		super->volume_offset = 0;
-+		super->start_offset = 0;
-+	}
-+
-+	uds_free(buffer);
-+
-+	if (memcmp(super->magic_label, LAYOUT_MAGIC, MAGIC_SIZE) != 0)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unknown superblock magic label");
-+
-+	if ((super->version < SUPER_VERSION_MINIMUM) ||
-+	    (super->version == 4) ||
-+	    (super->version == 5) ||
-+	    (super->version == 6) ||
-+	    (super->version > SUPER_VERSION_MAXIMUM)) {
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown superblock version number %u",
-+					      super->version);
-+	}
-+
-+	if (super->volume_offset < super->start_offset) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "inconsistent offsets (start %llu, volume %llu)",
-+					      (unsigned long long) super->start_offset,
-+					      (unsigned long long) super->volume_offset);
-+	}
-+
-+	/* Sub-indexes are no longer used but the layout retains this field. */
-+	if (super->index_count != 1) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "invalid subindex count %u",
-+					      super->index_count);
-+	}
-+
-+	if (generate_primary_nonce(super->nonce_info, sizeof(super->nonce_info)) != super->nonce) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "inconsistent superblock nonce");
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check verify_region(struct layout_region *lr, u64 start_block,
-+				      enum region_kind kind, unsigned int instance)
-+{
-+	if (lr->start_block != start_block)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "incorrect layout region offset");
-+
-+	if (lr->kind != kind)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "incorrect layout region kind");
-+
-+	if (lr->instance != instance) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "incorrect layout region instance");
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check verify_sub_index(struct index_layout *layout, u64 start_block,
-+					 struct region_table *table)
-+{
-+	int result;
-+	unsigned int i;
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 next_block = start_block;
-+
-+	sil->sub_index = table->regions[2];
-+	result = verify_region(&sil->sub_index, next_block, RL_KIND_INDEX, 0);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	define_sub_index_nonce(layout);
-+
-+	sil->volume = table->regions[3];
-+	result = verify_region(&sil->volume, next_block, RL_KIND_VOLUME,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += sil->volume.block_count + layout->super.volume_offset;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		sil->saves[i].index_save = table->regions[i + 4];
-+		result = verify_region(&sil->saves[i].index_save, next_block,
-+				       RL_KIND_SAVE, i);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		next_block += sil->saves[i].index_save.block_count;
-+	}
-+
-+	next_block -= layout->super.volume_offset;
-+	if (next_block != start_block + sil->sub_index.block_count) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "sub index region does not span all saves");
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check reconstitute_layout(struct index_layout *layout,
-+					    struct region_table *table, u64 first_block)
-+{
-+	int result;
-+	u64 next_block = first_block;
-+
-+	result = uds_allocate(layout->super.max_saves, struct index_save_layout,
-+			      __func__, &layout->index.saves);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	layout->total_blocks = table->header.region_blocks;
-+
-+	layout->header = table->regions[0];
-+	result = verify_region(&layout->header, next_block++, RL_KIND_HEADER,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	layout->config = table->regions[1];
-+	result = verify_region(&layout->config, next_block++, RL_KIND_CONFIG,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = verify_sub_index(layout, next_block, table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += layout->index.sub_index.block_count;
-+
-+	layout->seal = table->regions[table->header.region_count - 1];
-+	result = verify_region(&layout->seal, next_block + layout->super.volume_offset,
-+			       RL_KIND_SEAL, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (++next_block != (first_block + layout->total_blocks)) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "layout table does not span total blocks");
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check load_super_block(struct index_layout *layout, size_t block_size,
-+					 u64 first_block, struct buffered_reader *reader)
-+{
-+	int result;
-+	struct region_table *table = NULL;
-+	struct super_block_data *super = &layout->super;
-+
-+	result = load_region_table(reader, &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (table->header.type != RH_TYPE_SUPER) {
-+		uds_free(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "not a superblock region table");
-+	}
-+
-+	result = read_super_block_data(reader, layout, table->header.payload);
-+	if (result != UDS_SUCCESS) {
-+		uds_free(table);
-+		return uds_log_error_strerror(result, "unknown superblock format");
-+	}
-+
-+	if (super->block_size != block_size) {
-+		uds_free(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "superblock saved block_size %u differs from supplied block_size %zu",
-+					      super->block_size, block_size);
-+	}
-+
-+	first_block -= (super->volume_offset - super->start_offset);
-+	result = reconstitute_layout(layout, table, first_block);
-+	uds_free(table);
-+	return result;
-+}
-+
-+static int __must_check read_index_save_data(struct buffered_reader *reader,
-+					     struct index_save_layout *isl,
-+					     size_t saved_size)
-+{
-+	int result;
-+	struct index_state_version file_version;
-+	u8 buffer[sizeof(struct index_save_data) + sizeof(struct index_state_data301)];
-+	size_t offset = 0;
-+
-+	if (saved_size != sizeof(buffer)) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save data size %zu",
-+					      saved_size);
-+	}
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot read index save data");
-+
-+	decode_u64_le(buffer, &offset, &isl->save_data.timestamp);
-+	decode_u64_le(buffer, &offset, &isl->save_data.nonce);
-+	decode_u32_le(buffer, &offset, &isl->save_data.version);
-+	offset += sizeof(u32);
-+
-+	if (isl->save_data.version > 1) {
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown index save version number %u",
-+					      isl->save_data.version);
-+	}
-+
-+	decode_s32_le(buffer, &offset, &file_version.signature);
-+	decode_s32_le(buffer, &offset, &file_version.version_id);
-+
-+	if ((file_version.signature != INDEX_STATE_VERSION_301.signature) ||
-+	    (file_version.version_id != INDEX_STATE_VERSION_301.version_id)) {
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "index state version %d,%d is unsupported",
-+					      file_version.signature,
-+					      file_version.version_id);
-+	}
-+
-+	decode_u64_le(buffer, &offset, &isl->state_data.newest_chapter);
-+	decode_u64_le(buffer, &offset, &isl->state_data.oldest_chapter);
-+	decode_u64_le(buffer, &offset, &isl->state_data.last_save);
-+	/* Skip past some historical fields that are now unused */
-+	offset += sizeof(u32) + sizeof(u32);
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check reconstruct_index_save(struct index_save_layout *isl,
-+					       struct region_table *table)
-+{
-+	int result;
-+	unsigned int z;
-+	struct layout_region *last_region;
-+	u64 next_block = isl->index_save.start_block;
-+	u64 last_block = next_block + isl->index_save.block_count;
-+
-+	isl->zone_count = table->header.region_count - 3;
-+
-+	last_region = &table->regions[table->header.region_count - 1];
-+	if (last_region->kind == RL_KIND_EMPTY) {
-+		isl->free_space = *last_region;
-+		isl->zone_count--;
-+	} else {
-+		isl->free_space = (struct layout_region) {
-+			.start_block = last_block,
-+			.block_count = 0,
-+			.kind = RL_KIND_EMPTY,
-+			.instance = RL_SOLE_INSTANCE,
-+		};
-+	}
-+
-+	isl->header = table->regions[0];
-+	result = verify_region(&isl->header, next_block++, RL_KIND_HEADER,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	isl->index_page_map = table->regions[1];
-+	result = verify_region(&isl->index_page_map, next_block, RL_KIND_INDEX_PAGE_MAP,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->index_page_map.block_count;
-+
-+	for (z = 0; z < isl->zone_count; z++) {
-+		isl->volume_index_zones[z] = table->regions[z + 2];
-+		result = verify_region(&isl->volume_index_zones[z], next_block,
-+				       RL_KIND_VOLUME_INDEX, z);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		next_block += isl->volume_index_zones[z].block_count;
-+	}
-+
-+	isl->open_chapter = table->regions[isl->zone_count + 2];
-+	result = verify_region(&isl->open_chapter, next_block, RL_KIND_OPEN_CHAPTER,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->open_chapter.block_count;
-+
-+	result = verify_region(&isl->free_space, next_block, RL_KIND_EMPTY,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->free_space.block_count;
-+	if (next_block != last_block) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "index save layout table incomplete");
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check load_index_save(struct index_save_layout *isl,
-+					struct buffered_reader *reader,
-+					unsigned int instance)
-+{
-+	int result;
-+	struct region_table *table = NULL;
-+
-+	result = load_region_table(reader, &table);
-+	if (result != UDS_SUCCESS) {
-+		return uds_log_error_strerror(result, "cannot read index save %u header",
-+					      instance);
-+	}
-+
-+	if (table->header.region_blocks != isl->index_save.block_count) {
-+		u64 region_blocks = table->header.region_blocks;
-+
-+		uds_free(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save %u region block count %llu",
-+					      instance,
-+					      (unsigned long long) region_blocks);
-+	}
-+
-+	if (table->header.type == RH_TYPE_UNSAVED) {
-+		uds_free(table);
-+		reset_index_save_layout(isl, 0);
-+		return UDS_SUCCESS;
-+	}
-+
-+
-+	if (table->header.type != RH_TYPE_SAVE) {
-+		uds_free(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save %u header type %u",
-+					      instance, table->header.type);
-+	}
-+
-+	result = read_index_save_data(reader, isl, table->header.payload);
-+	if (result != UDS_SUCCESS) {
-+		uds_free(table);
-+		return uds_log_error_strerror(result,
-+					      "unknown index save %u data format",
-+					      instance);
-+	}
-+
-+	result = reconstruct_index_save(isl, table);
-+	uds_free(table);
-+	if (result != UDS_SUCCESS) {
-+		return uds_log_error_strerror(result, "cannot reconstruct index save %u",
-+					      instance);
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check load_sub_index_regions(struct index_layout *layout)
-+{
-+	int result;
-+	unsigned int j;
-+	struct index_save_layout *isl;
-+	struct buffered_reader *reader;
-+
-+	for (j = 0; j < layout->super.max_saves; j++) {
-+		isl = &layout->index.saves[j];
-+		result = open_region_reader(layout, &isl->index_save, &reader);
-+
-+		if (result != UDS_SUCCESS) {
-+			uds_log_error_strerror(result,
-+					       "cannot get reader for index 0 save %u",
-+					       j);
-+			return result;
-+		}
-+
-+		result = load_index_save(isl, reader, j);
-+		uds_free_buffered_reader(reader);
-+		if (result != UDS_SUCCESS) {
-+			/* Another save slot might be valid. */
-+			reset_index_save_layout(isl, 0);
-+			continue;
-+		}
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check verify_uds_index_config(struct index_layout *layout,
-+						struct configuration *config)
-+{
-+	int result;
-+	struct buffered_reader *reader = NULL;
-+	u64 offset;
-+
-+	offset = layout->super.volume_offset - layout->super.start_offset;
-+	result = open_layout_reader(layout, &layout->config, offset, &reader);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "failed to open config reader");
-+
-+	result = uds_validate_config_contents(reader, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_reader(reader);
-+		return uds_log_error_strerror(result, "failed to read config region");
-+	}
-+
-+	uds_free_buffered_reader(reader);
-+	return UDS_SUCCESS;
-+}
-+
-+static int load_index_layout(struct index_layout *layout, struct configuration *config)
-+{
-+	int result;
-+	struct buffered_reader *reader;
-+
-+	result = uds_make_buffered_reader(layout->factory,
-+					  layout->offset / UDS_BLOCK_SIZE, 1, &reader);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "unable to read superblock");
-+
-+	result = load_super_block(layout, UDS_BLOCK_SIZE,
-+				  layout->offset / UDS_BLOCK_SIZE, reader);
-+	uds_free_buffered_reader(reader);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = verify_uds_index_config(layout, config);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return load_sub_index_regions(layout);
-+}
-+
-+static int create_layout_factory(struct index_layout *layout,
-+				 const struct configuration *config)
-+{
-+	int result;
-+	size_t writable_size;
-+	struct io_factory *factory = NULL;
-+
-+	result = uds_make_io_factory(config->bdev, &factory);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	writable_size = uds_get_writable_size(factory) & -UDS_BLOCK_SIZE;
-+	if (writable_size < config->size + config->offset) {
-+		uds_put_io_factory(factory);
-+		uds_log_error("index storage (%zu) is smaller than the requested size %zu",
-+			      writable_size, config->size + config->offset);
-+		return -ENOSPC;
-+	}
-+
-+	layout->factory = factory;
-+	layout->factory_size = (config->size > 0) ? config->size : writable_size;
-+	layout->offset = config->offset;
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_make_index_layout(struct configuration *config, bool new_layout,
-+			  struct index_layout **layout_ptr)
-+{
-+	int result;
-+	struct index_layout *layout = NULL;
-+	struct save_layout_sizes sizes;
-+
-+	result = compute_sizes(config, &sizes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_allocate(1, struct index_layout, __func__, &layout);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = create_layout_factory(layout, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_index_layout(layout);
-+		return result;
-+	}
-+
-+	if (layout->factory_size < sizes.total_size) {
-+		uds_log_error("index storage (%zu) is smaller than the required size %llu",
-+			      layout->factory_size,
-+			      (unsigned long long) sizes.total_size);
-+		uds_free_index_layout(layout);
-+		return -ENOSPC;
-+	}
-+
-+	if (new_layout)
-+		result = create_index_layout(layout, config);
++	struct vdo_completion *parent = completion->parent;
++	int result = completion->result;
++	struct repair_completion *repair = as_repair_completion(completion);
++
++	if (vdo_state_requires_read_only_rebuild(completion->vdo->load_state))
++		uds_log_info("Read-only rebuild aborted");
 +	else
-+		result = load_index_layout(layout, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_index_layout(layout);
-+		return result;
-+	}
++		uds_log_warning("Recovery aborted");
 +
-+	*layout_ptr = layout;
-+	return UDS_SUCCESS;
++	free_repair_completion(uds_forget(repair));
++	vdo_continue_completion(parent, result);
 +}
 +
-+void uds_free_index_layout(struct index_layout *layout)
-+{
-+	if (layout == NULL)
-+		return;
-+
-+	uds_free(layout->index.saves);
-+	if (layout->factory != NULL)
-+		uds_put_io_factory(layout->factory);
-+
-+	uds_free(layout);
-+}
-+
-+int uds_replace_index_layout_storage(struct index_layout *layout,
-+				     struct block_device *bdev)
-+{
-+	return uds_replace_storage(layout->factory, bdev);
-+}
-+
-+/* Obtain a dm_bufio_client for the volume region. */
-+int uds_open_volume_bufio(struct index_layout *layout, size_t block_size,
-+			  unsigned int reserved_buffers,
-+			  struct dm_bufio_client **client_ptr)
-+{
-+	off_t offset = (layout->index.volume.start_block +
-+			layout->super.volume_offset -
-+			layout->super.start_offset);
-+
-+	return uds_make_bufio(layout->factory, offset, block_size, reserved_buffers,
-+			      client_ptr);
-+}
-+
-+u64 uds_get_volume_nonce(struct index_layout *layout)
-+{
-+	return layout->index.nonce;
-+}
-diff --git a/drivers/md/dm-vdo/index-layout.h b/drivers/md/dm-vdo/index-layout.h
-new file mode 100644
-index 000000000000..ba5d8b004ebe
---- /dev/null
-+++ b/drivers/md/dm-vdo/index-layout.h
-@@ -0,0 +1,43 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_INDEX_LAYOUT_H
-+#define UDS_INDEX_LAYOUT_H
-+
-+#include "config.h"
-+#include "io-factory.h"
-+#include "uds.h"
-+
-+/*
-+ * The index layout describes the format of the index on the underlying storage, and is responsible
-+ * for creating those structures when the index is first created. It also validates the index data
-+ * when loading a saved index, and updates it when saving the index.
-+ */
-+
-+struct index_layout;
-+
-+int __must_check uds_make_index_layout(struct configuration *config, bool new_layout,
-+				       struct index_layout **layout_ptr);
-+
-+void uds_free_index_layout(struct index_layout *layout);
-+
-+int __must_check uds_replace_index_layout_storage(struct index_layout *layout,
-+						  struct block_device *bdev);
-+
-+int __must_check uds_load_index_state(struct index_layout *layout,
-+				      struct uds_index *index);
-+
-+int __must_check uds_save_index_state(struct index_layout *layout,
-+				      struct uds_index *index);
-+
-+int __must_check uds_discard_open_chapter(struct index_layout *layout);
-+
-+u64 __must_check uds_get_volume_nonce(struct index_layout *layout);
-+
-+int __must_check uds_open_volume_bufio(struct index_layout *layout, size_t block_size,
-+				       unsigned int reserved_buffers,
-+				       struct dm_bufio_client **client_ptr);
-+
-+#endif /* UDS_INDEX_LAYOUT_H */
-diff --git a/drivers/md/dm-vdo/io-factory.c b/drivers/md/dm-vdo/io-factory.c
-new file mode 100644
-index 000000000000..02242df94e37
---- /dev/null
-+++ b/drivers/md/dm-vdo/io-factory.c
-@@ -0,0 +1,415 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "io-factory.h"
-+
-+#include <linux/atomic.h>
-+#include <linux/blkdev.h>
-+#include <linux/err.h>
-+#include <linux/mount.h>
-+
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "numeric.h"
-+
-+/*
-+ * The I/O factory object manages access to index storage, which is a contiguous range of blocks on
-+ * a block device.
++/**
++ * abort_on_error() - Abort a repair if there is an error.
++ * @result: The result to check.
++ * @repair: The repair completion.
 + *
-+ * The factory holds the open device and is responsible for closing it. The factory has methods to
-+ * make helper structures that can be used to access sections of the index.
++ * Return: true if the result was an error.
 + */
-+struct io_factory {
-+	struct block_device *bdev;
-+	atomic_t ref_count;
-+};
++static bool __must_check abort_on_error(int result, struct repair_completion *repair)
++{
++	if (result == VDO_SUCCESS)
++		return false;
 +
-+/* The buffered reader allows efficient I/O by reading page-sized segments into a buffer. */
-+struct buffered_reader {
-+	struct io_factory *factory;
-+	struct dm_bufio_client *client;
-+	struct dm_buffer *buffer;
-+	sector_t limit;
-+	sector_t block_number;
-+	u8 *start;
-+	u8 *end;
-+};
++	vdo_fail_completion(&repair->completion, result);
++	return true;
++}
 +
-+enum { MAX_READ_AHEAD_BLOCKS = 4 };
-+
-+/*
-+ * The buffered writer allows efficient I/O by buffering writes and committing page-sized segments
-+ * to storage.
++/**
++ * drain_slab_depot() - Flush out all dirty refcounts blocks now that they have been rebuilt or
++ *                      recovered.
 + */
-+struct buffered_writer {
-+	struct io_factory *factory;
-+	struct dm_bufio_client *client;
-+	struct dm_buffer *buffer;
-+	sector_t limit;
-+	sector_t block_number;
-+	u8 *start;
-+	u8 *end;
-+	int error;
-+};
-+
-+static void uds_get_io_factory(struct io_factory *factory)
++static void drain_slab_depot(struct vdo_completion *completion)
 +{
-+	atomic_inc(&factory->ref_count);
++	struct vdo *vdo = completion->vdo;
++	struct repair_completion *repair = as_repair_completion(completion);
++	const struct admin_state_code *operation;
++
++	vdo_assert_on_admin_thread(vdo, __func__);
++
++	prepare_repair_completion(repair, finish_repair, VDO_ZONE_TYPE_ADMIN);
++	if (vdo_state_requires_read_only_rebuild(vdo->load_state)) {
++		uds_log_info("Saving rebuilt state");
++		operation = VDO_ADMIN_STATE_REBUILDING;
++	} else {
++		uds_log_info("Replayed %zu journal entries into slab journals",
++			     repair->entries_added_to_slab_journals);
++		operation = VDO_ADMIN_STATE_RECOVERING;
++	}
++
++	vdo_drain_slab_depot(vdo->depot, operation, completion);
 +}
 +
-+int uds_make_io_factory(struct block_device *bdev, struct io_factory **factory_ptr)
++/**
++ * flush_block_map_updates() - Flush the block map now that all the reference counts are rebuilt.
++ * @completion: The repair completion.
++ *
++ * This callback is registered in finish_if_done().
++ */
++static void flush_block_map_updates(struct vdo_completion *completion)
 +{
-+	int result;
-+	struct io_factory *factory;
++	vdo_assert_on_admin_thread(completion->vdo, __func__);
 +
-+	result = uds_allocate(1, struct io_factory, __func__, &factory);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	factory->bdev = bdev;
-+	atomic_set_release(&factory->ref_count, 1);
-+
-+	*factory_ptr = factory;
-+	return UDS_SUCCESS;
++	uds_log_info("Flushing block map changes");
++	prepare_repair_completion(as_repair_completion(completion), drain_slab_depot,
++				  VDO_ZONE_TYPE_ADMIN);
++	vdo_drain_block_map(completion->vdo->block_map, VDO_ADMIN_STATE_RECOVERING,
++			    completion);
 +}
 +
-+int uds_replace_storage(struct io_factory *factory, struct block_device *bdev)
++static bool fetch_page(struct repair_completion *repair,
++		       struct vdo_completion *completion);
++
++/**
++ * handle_page_load_error() - Handle an error loading a page.
++ * @completion: The vdo_page_completion.
++ */
++static void handle_page_load_error(struct vdo_completion *completion)
 +{
-+	factory->bdev = bdev;
-+	return UDS_SUCCESS;
++	struct repair_completion *repair = completion->parent;
++
++	repair->outstanding--;
++	vdo_set_completion_result(&repair->completion, completion->result);
++	vdo_release_page_completion(completion);
++	fetch_page(repair, completion);
 +}
 +
-+/* Free an I/O factory once all references have been released. */
-+void uds_put_io_factory(struct io_factory *factory)
++/**
++ * unmap_entry() - Unmap an invalid entry and indicate that its page must be written out.
++ * @page: The page containing the entries
++ * @completion: The page_completion for writing the page
++ * @slot: The slot to unmap
++ */
++static void unmap_entry(struct block_map_page *page, struct vdo_completion *completion,
++			slot_number_t slot)
 +{
-+	if (atomic_add_return(-1, &factory->ref_count) <= 0)
-+		uds_free(factory);
++	page->entries[slot] = UNMAPPED_BLOCK_MAP_ENTRY;
++	vdo_request_page_write(completion);
 +}
 +
-+size_t uds_get_writable_size(struct io_factory *factory)
++/**
++ * remove_out_of_bounds_entries() - Unmap entries which outside the logical space.
++ * @page: The page containing the entries
++ * @completion: The page_completion for writing the page
++ * @start: The first slot to check
++ */
++static void remove_out_of_bounds_entries(struct block_map_page *page,
++					 struct vdo_completion *completion,
++					 slot_number_t start)
 +{
-+	return i_size_read(factory->bdev->bd_inode);
-+}
++	slot_number_t slot;
 +
-+/* Create a struct dm_bufio_client for an index region starting at offset. */
-+int uds_make_bufio(struct io_factory *factory, off_t block_offset, size_t block_size,
-+		   unsigned int reserved_buffers, struct dm_bufio_client **client_ptr)
-+{
-+	struct dm_bufio_client *client;
++	for (slot = start; slot < VDO_BLOCK_MAP_ENTRIES_PER_PAGE; slot++) {
++		struct data_location mapping = vdo_unpack_block_map_entry(&page->entries[slot]);
 +
-+	client = dm_bufio_client_create(factory->bdev, block_size, reserved_buffers, 0,
-+					NULL, NULL, 0);
-+	if (IS_ERR(client))
-+		return -PTR_ERR(client);
-+
-+	dm_bufio_set_sector_offset(client, block_offset * SECTORS_PER_BLOCK);
-+	*client_ptr = client;
-+	return UDS_SUCCESS;
-+}
-+
-+static void read_ahead(struct buffered_reader *reader, sector_t block_number)
-+{
-+	if (block_number < reader->limit) {
-+		sector_t read_ahead = min((sector_t) MAX_READ_AHEAD_BLOCKS,
-+					  reader->limit - block_number);
-+
-+		dm_bufio_prefetch(reader->client, block_number, read_ahead);
++		if (vdo_is_mapped_location(&mapping))
++			unmap_entry(page, completion, slot);
 +	}
 +}
 +
-+void uds_free_buffered_reader(struct buffered_reader *reader)
++/**
++ * process_slot() - Update the reference counts for a single entry.
++ * @page: The page containing the entries
++ * @completion: The page_completion for writing the page
++ * @slot: The slot to check
++ *
++ * Return: true if the entry was a valid mapping
++ */
++static bool process_slot(struct block_map_page *page, struct vdo_completion *completion,
++			 slot_number_t slot)
 +{
-+	if (reader == NULL)
++	struct slab_depot *depot = completion->vdo->depot;
++	int result;
++	struct data_location mapping = vdo_unpack_block_map_entry(&page->entries[slot]);
++
++	if (!vdo_is_valid_location(&mapping)) {
++		/* This entry is invalid, so remove it from the page. */
++		unmap_entry(page, completion, slot);
++		return false;
++	}
++
++	if (!vdo_is_mapped_location(&mapping))
++		return false;
++
++
++	if (mapping.pbn == VDO_ZERO_BLOCK)
++		return true;
++
++	if (!vdo_is_physical_data_block(depot, mapping.pbn)) {
++		/*
++		 * This is a nonsense mapping. Remove it from the map so we're at least consistent
++		 * and mark the page dirty.
++		 */
++		unmap_entry(page, completion, slot);
++		return false;
++	}
++
++	result = vdo_adjust_reference_count_for_rebuild(depot, mapping.pbn,
++							VDO_JOURNAL_DATA_REMAPPING);
++	if (result == VDO_SUCCESS)
++		return true;
++
++	uds_log_error_strerror(result,
++			       "Could not adjust reference count for PBN %llu, slot %u mapped to PBN %llu",
++			       (unsigned long long) vdo_get_block_map_page_pbn(page),
++			       slot, (unsigned long long) mapping.pbn);
++	unmap_entry(page, completion, slot);
++	return false;
++}
++
++/**
++ * rebuild_reference_counts_from_page() - Rebuild reference counts from a block map page.
++ * @repair: The repair completion.
++ * @completion: The page completion holding the page.
++ */
++static void rebuild_reference_counts_from_page(struct repair_completion *repair,
++					       struct vdo_completion *completion)
++{
++	slot_number_t slot, last_slot;
++	struct block_map_page *page;
++	int result;
++
++	result = vdo_get_cached_page(completion, &page);
++	if (result != VDO_SUCCESS) {
++		vdo_set_completion_result(&repair->completion, result);
++		return;
++	}
++
++	if (!page->header.initialized)
 +		return;
 +
-+	if (reader->buffer != NULL)
-+		dm_bufio_release(reader->buffer);
-+
-+	dm_bufio_client_destroy(reader->client);
-+	uds_put_io_factory(reader->factory);
-+	uds_free(reader);
-+}
-+
-+/* Create a buffered reader for an index region starting at offset. */
-+int uds_make_buffered_reader(struct io_factory *factory, off_t offset, u64 block_count,
-+			     struct buffered_reader **reader_ptr)
-+{
-+	int result;
-+	struct dm_bufio_client *client = NULL;
-+	struct buffered_reader *reader = NULL;
-+
-+	result = uds_make_bufio(factory, offset, UDS_BLOCK_SIZE, 1, &client);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_allocate(1, struct buffered_reader, "buffered reader", &reader);
-+	if (result != UDS_SUCCESS) {
-+		dm_bufio_client_destroy(client);
-+		return result;
++	/* Remove any bogus entries which exist beyond the end of the logical space. */
++	if (vdo_get_block_map_page_pbn(page) == repair->last_slot.pbn) {
++		last_slot = repair->last_slot.slot;
++		remove_out_of_bounds_entries(page, completion, last_slot);
++	} else {
++		last_slot = VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
 +	}
 +
-+	*reader = (struct buffered_reader) {
-+		.factory = factory,
-+		.client = client,
-+		.buffer = NULL,
-+		.limit = block_count,
-+		.block_number = 0,
-+		.start = NULL,
-+		.end = NULL,
-+	};
-+
-+	read_ahead(reader, 0);
-+	uds_get_io_factory(factory);
-+	*reader_ptr = reader;
-+	return UDS_SUCCESS;
-+}
-+
-+static int position_reader(struct buffered_reader *reader, sector_t block_number,
-+			   off_t offset)
-+{
-+	struct dm_buffer *buffer = NULL;
-+	void *data;
-+
-+	if ((reader->end == NULL) || (block_number != reader->block_number)) {
-+		if (block_number >= reader->limit)
-+			return UDS_OUT_OF_RANGE;
-+
-+		if (reader->buffer != NULL)
-+			dm_bufio_release(uds_forget(reader->buffer));
-+
-+		data = dm_bufio_read(reader->client, block_number, &buffer);
-+		if (IS_ERR(data))
-+			return -PTR_ERR(data);
-+
-+		reader->buffer = buffer;
-+		reader->start = data;
-+		if (block_number == reader->block_number + 1)
-+			read_ahead(reader, block_number + 1);
++	/* Inform the slab depot of all entries on this page. */
++	for (slot = 0; slot < last_slot; slot++) {
++		if (process_slot(page, completion, slot))
++			repair->logical_blocks_used++;
 +	}
-+
-+	reader->block_number = block_number;
-+	reader->end = reader->start + offset;
-+	return UDS_SUCCESS;
 +}
 +
-+static size_t bytes_remaining_in_read_buffer(struct buffered_reader *reader)
-+{
-+	return (reader->end == NULL) ? 0 : reader->start + UDS_BLOCK_SIZE - reader->end;
-+}
-+
-+static int reset_reader(struct buffered_reader *reader)
-+{
-+	sector_t block_number;
-+
-+	if (bytes_remaining_in_read_buffer(reader) > 0)
-+		return UDS_SUCCESS;
-+
-+	block_number = reader->block_number;
-+	if (reader->end != NULL)
-+		block_number++;
-+
-+	return position_reader(reader, block_number, 0);
-+}
-+
-+int uds_read_from_buffered_reader(struct buffered_reader *reader, u8 *data,
-+				  size_t length)
-+{
-+	int result = UDS_SUCCESS;
-+	size_t chunk_size;
-+
-+	while (length > 0) {
-+		result = reset_reader(reader);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		chunk_size = min(length, bytes_remaining_in_read_buffer(reader));
-+		memcpy(data, reader->end, chunk_size);
-+		length -= chunk_size;
-+		data += chunk_size;
-+		reader->end += chunk_size;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+/*
-+ * Verify that the next data on the reader matches the required value. If the value matches, the
-+ * matching contents are consumed. If the value does not match, the reader state is unchanged.
++/**
++ * page_loaded() - Process a page which has just been loaded.
++ * @completion: The vdo_page_completion for the fetched page.
++ *
++ * This callback is registered by fetch_page().
 + */
-+int uds_verify_buffered_data(struct buffered_reader *reader, const u8 *value,
-+			     size_t length)
++static void page_loaded(struct vdo_completion *completion)
 +{
-+	int result = UDS_SUCCESS;
-+	size_t chunk_size;
-+	sector_t start_block_number = reader->block_number;
-+	int start_offset = reader->end - reader->start;
++	struct repair_completion *repair = completion->parent;
 +
-+	while (length > 0) {
-+		result = reset_reader(reader);
-+		if (result != UDS_SUCCESS) {
-+			result = UDS_CORRUPT_DATA;
-+			break;
-+		}
++	repair->outstanding--;
++	rebuild_reference_counts_from_page(repair, completion);
++	vdo_release_page_completion(completion);
 +
-+		chunk_size = min(length, bytes_remaining_in_read_buffer(reader));
-+		if (memcmp(value, reader->end, chunk_size) != 0) {
-+			result = UDS_CORRUPT_DATA;
-+			break;
-+		}
-+
-+		length -= chunk_size;
-+		value += chunk_size;
-+		reader->end += chunk_size;
-+	}
-+
-+	if (result != UDS_SUCCESS)
-+		position_reader(reader, start_block_number, start_offset);
-+
-+	return result;
++	/* Advance progress to the next page, and fetch the next page we haven't yet requested. */
++	fetch_page(repair, completion);
 +}
 +
-+/* Create a buffered writer for an index region starting at offset. */
-+int uds_make_buffered_writer(struct io_factory *factory, off_t offset, u64 block_count,
-+			     struct buffered_writer **writer_ptr)
++static physical_block_number_t get_pbn_to_fetch(struct repair_completion *repair,
++						struct block_map *block_map)
 +{
-+	int result;
-+	struct dm_bufio_client *client = NULL;
-+	struct buffered_writer *writer;
++	physical_block_number_t pbn = VDO_ZERO_BLOCK;
 +
-+	result = uds_make_bufio(factory, offset, UDS_BLOCK_SIZE, 1, &client);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	if (repair->completion.result != VDO_SUCCESS)
++		return VDO_ZERO_BLOCK;
 +
-+	result = uds_allocate(1, struct buffered_writer, "buffered writer", &writer);
-+	if (result != UDS_SUCCESS) {
-+		dm_bufio_client_destroy(client);
-+		return result;
++	while ((pbn == VDO_ZERO_BLOCK) && (repair->page_to_fetch < repair->leaf_pages))
++		pbn = vdo_find_block_map_page_pbn(block_map, repair->page_to_fetch++);
++
++	if (vdo_is_physical_data_block(repair->completion.vdo->depot, pbn))
++		return pbn;
++
++	vdo_set_completion_result(&repair->completion, VDO_BAD_MAPPING);
++	return VDO_ZERO_BLOCK;
++}
++
++/**
++ * fetch_page() - Fetch a page from the block map.
++ * @repair: The repair_completion.
++ * @completion: The page completion to use.
++ *
++ * Return true if the rebuild is complete
++ */
++static bool fetch_page(struct repair_completion *repair,
++		       struct vdo_completion *completion)
++{
++	struct vdo_page_completion *page_completion = (struct vdo_page_completion *) completion;
++	struct block_map *block_map = repair->completion.vdo->block_map;
++	physical_block_number_t pbn = get_pbn_to_fetch(repair, block_map);
++
++	if (pbn != VDO_ZERO_BLOCK) {
++		repair->outstanding++;
++		/*
++		 * We must set the requeue flag here to ensure that we don't blow the stack if all
++		 * the requested pages are already in the cache or get load errors.
++		 */
++		vdo_get_page(page_completion, &block_map->zones[0], pbn, true, repair,
++			     page_loaded, handle_page_load_error, true);
 +	}
 +
-+	*writer = (struct buffered_writer) {
-+		.factory = factory,
-+		.client = client,
-+		.buffer = NULL,
-+		.limit = block_count,
-+		.start = NULL,
-+		.end = NULL,
-+		.block_number = 0,
-+		.error = UDS_SUCCESS,
++	if (repair->outstanding > 0)
++		return false;
++
++	launch_repair_completion(repair, flush_block_map_updates, VDO_ZONE_TYPE_ADMIN);
++	return true;
++}
++
++/**
++ * rebuild_from_leaves() - Rebuild reference counts from the leaf block map pages.
++ * @completion: The repair completion.
++ *
++ * Rebuilds reference counts from the leaf block map pages now that reference counts have been
++ * rebuilt from the interior tree pages (which have been loaded in the process). This callback is
++ * registered in rebuild_reference_counts().
++ */
++static void rebuild_from_leaves(struct vdo_completion *completion)
++{
++	page_count_t i;
++	struct repair_completion *repair = as_repair_completion(completion);
++	struct block_map *map = completion->vdo->block_map;
++
++	repair->logical_blocks_used = 0;
++
++	/*
++	 * The PBN calculation doesn't work until the tree pages have been loaded, so we can't set
++	 * this value at the start of repair.
++	 */
++	repair->leaf_pages = vdo_compute_block_map_page_count(map->entry_count);
++	repair->last_slot = (struct block_map_slot) {
++		.slot = map->entry_count % VDO_BLOCK_MAP_ENTRIES_PER_PAGE,
++		.pbn = vdo_find_block_map_page_pbn(map, repair->leaf_pages - 1),
 +	};
++	if (repair->last_slot.slot == 0)
++		repair->last_slot.slot = VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
 +
-+	uds_get_io_factory(factory);
-+	*writer_ptr = writer;
-+	return UDS_SUCCESS;
-+}
-+
-+static size_t get_remaining_write_space(struct buffered_writer *writer)
-+{
-+	return writer->start + UDS_BLOCK_SIZE - writer->end;
-+}
-+
-+static int __must_check prepare_next_buffer(struct buffered_writer *writer)
-+{
-+	struct dm_buffer *buffer = NULL;
-+	void *data;
-+
-+	if (writer->block_number >= writer->limit) {
-+		writer->error = UDS_OUT_OF_RANGE;
-+		return UDS_OUT_OF_RANGE;
++	for (i = 0; i < repair->page_count; i++) {
++		if (fetch_page(repair, &repair->page_completions[i].completion)) {
++			/*
++			 * The rebuild has already moved on, so it isn't safe nor is there a need
++			 * to launch any more fetches.
++			 */
++			return;
++		}
 +	}
-+
-+	data = dm_bufio_new(writer->client, writer->block_number, &buffer);
-+	if (IS_ERR(data)) {
-+		writer->error = -PTR_ERR(data);
-+		return writer->error;
-+	}
-+
-+	writer->buffer = buffer;
-+	writer->start = data;
-+	writer->end = data;
-+	return UDS_SUCCESS;
 +}
 +
-+static int flush_previous_buffer(struct buffered_writer *writer)
++/**
++ * process_entry() - Process a single entry from the block map tree.
++ * @pbn: A pbn which holds a block map tree page.
++ * @completion: The parent completion of the traversal.
++ *
++ * Implements vdo_entry_callback_fn.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int process_entry(physical_block_number_t pbn, struct vdo_completion *completion)
 +{
-+	size_t available;
-+
-+	if (writer->buffer == NULL)
-+		return writer->error;
-+
-+	if (writer->error == UDS_SUCCESS) {
-+		available = get_remaining_write_space(writer);
-+
-+		if (available > 0)
-+			memset(writer->end, 0, available);
-+
-+		dm_bufio_mark_buffer_dirty(writer->buffer);
-+	}
-+
-+	dm_bufio_release(writer->buffer);
-+	writer->buffer = NULL;
-+	writer->start = NULL;
-+	writer->end = NULL;
-+	writer->block_number++;
-+	return writer->error;
-+}
-+
-+void uds_free_buffered_writer(struct buffered_writer *writer)
-+{
++	struct repair_completion *repair = as_repair_completion(completion);
++	struct slab_depot *depot = completion->vdo->depot;
 +	int result;
 +
-+	if (writer == NULL)
++	if ((pbn == VDO_ZERO_BLOCK) || !vdo_is_physical_data_block(depot, pbn)) {
++		return uds_log_error_strerror(VDO_BAD_CONFIGURATION,
++					      "PBN %llu out of range",
++					      (unsigned long long) pbn);
++	}
++
++	result = vdo_adjust_reference_count_for_rebuild(depot, pbn,
++							VDO_JOURNAL_BLOCK_MAP_REMAPPING);
++	if (result != VDO_SUCCESS) {
++		return uds_log_error_strerror(result,
++					      "Could not adjust reference count for block map tree PBN %llu",
++					      (unsigned long long) pbn);
++	}
++
++	repair->block_map_data_blocks++;
++	return VDO_SUCCESS;
++}
++
++static void rebuild_reference_counts(struct vdo_completion *completion)
++{
++	struct repair_completion *repair = as_repair_completion(completion);
++	struct vdo *vdo = completion->vdo;
++	struct vdo_page_cache *cache = &vdo->block_map->zones[0].page_cache;
++
++	/* We must allocate ref_counts before we can rebuild them. */
++	if (abort_on_error(vdo_allocate_reference_counters(vdo->depot), repair))
 +		return;
 +
-+	flush_previous_buffer(writer);
-+	result = -dm_bufio_write_dirty_buffers(writer->client);
-+	if (result != UDS_SUCCESS)
-+		uds_log_warning_strerror(result, "%s: failed to sync storage", __func__);
++	/*
++	 * Completion chaining from page cache hits can lead to stack overflow during the rebuild,
++	 * so clear out the cache before this rebuild phase.
++	 */
++	if (abort_on_error(vdo_invalidate_page_cache(cache), repair))
++		return;
 +
-+	dm_bufio_client_destroy(writer->client);
-+	uds_put_io_factory(writer->factory);
-+	uds_free(writer);
++	prepare_repair_completion(repair, rebuild_from_leaves, VDO_ZONE_TYPE_LOGICAL);
++	vdo_traverse_forest(vdo->block_map, process_entry, completion);
++}
++
++/**
++ * increment_recovery_point() - Move the given recovery point forward by one entry.
++ */
++static void increment_recovery_point(struct recovery_point *point)
++{
++	if (++point->entry_count < RECOVERY_JOURNAL_ENTRIES_PER_SECTOR)
++		return;
++
++	point->entry_count = 0;
++	if (point->sector_count < (VDO_SECTORS_PER_BLOCK - 1)) {
++		point->sector_count++;
++		return;
++	}
++
++	point->sequence_number++;
++	point->sector_count = 1;
++}
++
++/**
++ * advance_points() - Advance the current recovery and journal points.
++ * @repair: The repair_completion whose points are to be advanced.
++ * @entries_per_block: The number of entries in a recovery journal block.
++ */
++static void advance_points(struct repair_completion *repair,
++			   journal_entry_count_t entries_per_block)
++{
++	if (!repair->next_recovery_point.increment_applied) {
++		repair->next_recovery_point.increment_applied	= true;
++		return;
++	}
++
++	increment_recovery_point(&repair->next_recovery_point);
++	vdo_advance_journal_point(&repair->next_journal_point, entries_per_block);
++	repair->next_recovery_point.increment_applied	= false;
++}
++
++/**
++ * before_recovery_point() - Check whether the first point precedes the second point.
++ * @first: The first recovery point.
++ * @second: The second recovery point.
++ *
++ * Return: true if the first point precedes the second point.
++ */
++static bool __must_check before_recovery_point(const struct recovery_point *first,
++					       const struct recovery_point *second)
++{
++	if (first->sequence_number < second->sequence_number)
++		return true;
++
++	if (first->sequence_number > second->sequence_number)
++		return false;
++
++	if (first->sector_count < second->sector_count)
++		return true;
++
++	return ((first->sector_count == second->sector_count) &&
++		(first->entry_count < second->entry_count));
++}
++
++static struct packed_journal_sector * __must_check get_sector(struct recovery_journal *journal,
++							      char *journal_data,
++							      sequence_number_t sequence,
++							      u8 sector_number)
++{
++	off_t offset;
++
++	offset = ((vdo_get_recovery_journal_block_number(journal, sequence) * VDO_BLOCK_SIZE) +
++		  (VDO_SECTOR_SIZE * sector_number));
++	return (struct packed_journal_sector *) (journal_data + offset);
++}
++
++/**
++ * get_entry() - Unpack the recovery journal entry associated with the given recovery point.
++ * @repair: The repair completion.
++ * @point: The recovery point.
++ *
++ * Return: The unpacked contents of the matching recovery journal entry.
++ */
++static struct recovery_journal_entry get_entry(const struct repair_completion *repair,
++					       const struct recovery_point *point)
++{
++	struct packed_journal_sector *sector;
++
++	sector = get_sector(repair->completion.vdo->recovery_journal,
++			    repair->journal_data, point->sequence_number,
++			    point->sector_count);
++	return vdo_unpack_recovery_journal_entry(&sector->entries[point->entry_count]);
++}
++
++/**
++ * validate_recovery_journal_entry() - Validate a recovery journal entry.
++ * @vdo: The vdo.
++ * @entry: The entry to validate.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int validate_recovery_journal_entry(const struct vdo *vdo,
++					   const struct recovery_journal_entry *entry)
++{
++	if ((entry->slot.pbn >= vdo->states.vdo.config.physical_blocks) ||
++	    (entry->slot.slot >= VDO_BLOCK_MAP_ENTRIES_PER_PAGE) ||
++	    !vdo_is_valid_location(&entry->mapping) ||
++	    !vdo_is_valid_location(&entry->unmapping) ||
++	    !vdo_is_physical_data_block(vdo->depot, entry->mapping.pbn) ||
++	    !vdo_is_physical_data_block(vdo->depot, entry->unmapping.pbn)) {
++		return uds_log_error_strerror(VDO_CORRUPT_JOURNAL,
++					      "Invalid entry: %s (%llu, %u) from %llu to %llu is not within bounds",
++					      vdo_get_journal_operation_name(entry->operation),
++					      (unsigned long long) entry->slot.pbn,
++					      entry->slot.slot,
++					      (unsigned long long) entry->unmapping.pbn,
++					      (unsigned long long) entry->mapping.pbn);
++	}
++
++	if ((entry->operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING) &&
++	    (vdo_is_state_compressed(entry->mapping.state) ||
++	     (entry->mapping.pbn == VDO_ZERO_BLOCK) ||
++	     (entry->unmapping.state != VDO_MAPPING_STATE_UNMAPPED) ||
++	     (entry->unmapping.pbn != VDO_ZERO_BLOCK))) {
++		return uds_log_error_strerror(VDO_CORRUPT_JOURNAL,
++					      "Invalid entry: %s (%llu, %u) from %llu to %llu is not a valid tree mapping",
++					      vdo_get_journal_operation_name(entry->operation),
++					      (unsigned long long) entry->slot.pbn,
++					      entry->slot.slot,
++					      (unsigned long long) entry->unmapping.pbn,
++					      (unsigned long long) entry->mapping.pbn);
++	}
++
++	return VDO_SUCCESS;
++}
++
++/**
++ * add_slab_journal_entries() - Replay recovery journal entries into the slab journals of the
++ *                              allocator currently being recovered.
++ * @completion: The allocator completion.
++ *
++ * Waits for slab journal tailblock space when necessary. This method is its own callback.
++ */
++static void add_slab_journal_entries(struct vdo_completion *completion)
++{
++	struct recovery_point *recovery_point;
++	struct repair_completion *repair = completion->parent;
++	struct vdo *vdo = completion->vdo;
++	struct recovery_journal *journal = vdo->recovery_journal;
++	struct block_allocator *allocator = vdo_as_block_allocator(completion);
++
++	/* Get ready in case we need to enqueue again. */
++	vdo_prepare_completion(completion, add_slab_journal_entries,
++			       vdo_notify_slab_journals_are_recovered,
++			       completion->callback_thread_id, repair);
++	for (recovery_point = &repair->next_recovery_point;
++	     before_recovery_point(recovery_point, &repair->tail_recovery_point);
++	     advance_points(repair, journal->entries_per_block)) {
++		int result;
++		physical_block_number_t pbn;
++		struct vdo_slab *slab;
++		struct recovery_journal_entry entry = get_entry(repair, recovery_point);
++		bool increment = !repair->next_recovery_point.increment_applied;
++
++		if (increment) {
++			result = validate_recovery_journal_entry(vdo, &entry);
++			if (result != VDO_SUCCESS) {
++				vdo_enter_read_only_mode(vdo, result);
++				vdo_fail_completion(completion, result);
++				return;
++			}
++
++			pbn = entry.mapping.pbn;
++		} else {
++			pbn = entry.unmapping.pbn;
++		}
++
++		if (pbn == VDO_ZERO_BLOCK)
++			continue;
++
++		slab = vdo_get_slab(vdo->depot, pbn);
++		if (slab->allocator != allocator)
++			continue;
++
++		if (!vdo_attempt_replay_into_slab(slab, pbn, entry.operation, increment,
++						  &repair->next_journal_point,
++						  completion))
++			return;
++
++		repair->entries_added_to_slab_journals++;
++	}
++
++	vdo_notify_slab_journals_are_recovered(completion);
++}
++
++/**
++ * vdo_replay_into_slab_journals() - Replay recovery journal entries in the slab journals of slabs
++ *                                   owned by a given block_allocator.
++ * @allocator: The allocator whose slab journals are to be recovered.
++ * @context: The slab depot load context supplied by a recovery when it loads the depot.
++ */
++void vdo_replay_into_slab_journals(struct block_allocator *allocator, void *context)
++{
++	struct vdo_completion *completion = &allocator->completion;
++	struct repair_completion *repair = context;
++	struct vdo *vdo = completion->vdo;
++
++	vdo_assert_on_physical_zone_thread(vdo, allocator->zone_number, __func__);
++	if (repair->entry_count == 0) {
++		/* there's nothing to replay */
++		repair->logical_blocks_used = vdo->recovery_journal->logical_blocks_used;
++		repair->block_map_data_blocks = vdo->recovery_journal->block_map_data_blocks;
++		vdo_notify_slab_journals_are_recovered(completion);
++		return;
++	}
++
++	repair->next_recovery_point = (struct recovery_point) {
++		.sequence_number = repair->slab_journal_head,
++		.sector_count = 1,
++		.entry_count = 0,
++	};
++
++	repair->next_journal_point = (struct journal_point) {
++		.sequence_number = repair->slab_journal_head,
++		.entry_count = 0,
++	};
++
++	uds_log_info("Replaying entries into slab journals for zone %u",
++		     allocator->zone_number);
++	completion->parent = repair;
++	add_slab_journal_entries(completion);
++}
++
++static void load_slab_depot(struct vdo_completion *completion)
++{
++	struct repair_completion *repair = as_repair_completion(completion);
++	const struct admin_state_code *operation;
++
++	vdo_assert_on_admin_thread(completion->vdo, __func__);
++
++	if (vdo_state_requires_read_only_rebuild(completion->vdo->load_state)) {
++		prepare_repair_completion(repair, rebuild_reference_counts,
++					  VDO_ZONE_TYPE_LOGICAL);
++		operation = VDO_ADMIN_STATE_LOADING_FOR_REBUILD;
++	} else {
++		prepare_repair_completion(repair, drain_slab_depot, VDO_ZONE_TYPE_ADMIN);
++		operation = VDO_ADMIN_STATE_LOADING_FOR_RECOVERY;
++	}
++
++	vdo_load_slab_depot(completion->vdo->depot, operation, completion, repair);
++}
++
++static void flush_block_map(struct vdo_completion *completion)
++{
++	struct repair_completion *repair = as_repair_completion(completion);
++	const struct admin_state_code *operation;
++
++	vdo_assert_on_admin_thread(completion->vdo, __func__);
++
++	uds_log_info("Flushing block map changes");
++	prepare_repair_completion(repair, load_slab_depot, VDO_ZONE_TYPE_ADMIN);
++	operation = (vdo_state_requires_read_only_rebuild(completion->vdo->load_state) ?
++		     VDO_ADMIN_STATE_REBUILDING :
++		     VDO_ADMIN_STATE_RECOVERING);
++	vdo_drain_block_map(completion->vdo->block_map, operation, completion);
++}
++
++static bool finish_if_done(struct repair_completion *repair)
++{
++	/* Pages are still being launched or there is still work to do */
++	if (repair->launching || (repair->outstanding > 0))
++		return false;
++
++	if (repair->completion.result != VDO_SUCCESS) {
++		page_count_t i;
++
++		for (i = 0; i < repair->page_count; i++) {
++			struct vdo_page_completion *page_completion =
++				&repair->page_completions[i];
++
++			if (page_completion->ready)
++				vdo_release_page_completion(&page_completion->completion);
++		}
++
++		vdo_launch_completion(&repair->completion);
++		return true;
++	}
++
++	if (repair->current_entry >= repair->entries)
++		return false;
++
++	launch_repair_completion(repair, flush_block_map, VDO_ZONE_TYPE_ADMIN);
++	return true;
++}
++
++static void abort_block_map_recovery(struct repair_completion *repair, int result)
++{
++	vdo_set_completion_result(&repair->completion, result);
++	finish_if_done(repair);
++}
++
++/**
++ * find_entry_starting_next_page() - Find the first journal entry after a given entry which is not
++ *                                   on the same block map page.
++ * @current_entry: The entry to search from.
++ * @needs_sort: Whether sorting is needed to proceed.
++ *
++ * Return: Pointer to the first later journal entry on a different block map page, or a pointer to
++ *         just before the journal entries if no subsequent entry is on a different block map page.
++ */
++static struct numbered_block_mapping *
++find_entry_starting_next_page(struct repair_completion *repair,
++			      struct numbered_block_mapping *current_entry, bool needs_sort)
++{
++	size_t current_page;
++
++	/* If current_entry is invalid, return immediately. */
++	if (current_entry < repair->entries)
++		return current_entry;
++
++	current_page = current_entry->block_map_slot.pbn;
++
++	/* Decrement current_entry until it's out of bounds or on a different page. */
++	while ((current_entry >= repair->entries) &&
++	       (current_entry->block_map_slot.pbn == current_page)) {
++		if (needs_sort) {
++			struct numbered_block_mapping *just_sorted_entry =
++				sort_next_heap_element(repair);
++			ASSERT_LOG_ONLY(just_sorted_entry < current_entry,
++					"heap is returning elements in an unexpected order");
++		}
++
++		current_entry--;
++	}
++
++	return current_entry;
 +}
 +
 +/*
-+ * Append data to the buffer, writing as needed. If no data is provided, zeros are written instead.
-+ * If a write error occurs, it is recorded and returned on every subsequent write attempt.
++ * Apply a range of journal entries [starting_entry, ending_entry) journal
++ * entries to a block map page.
 + */
-+int uds_write_to_buffered_writer(struct buffered_writer *writer, const u8 *data,
-+				 size_t length)
++static void apply_journal_entries_to_page(struct block_map_page *page,
++					  struct numbered_block_mapping *starting_entry,
++					  struct numbered_block_mapping *ending_entry)
 +{
-+	int result = writer->error;
-+	size_t chunk_size;
++	struct numbered_block_mapping *current_entry = starting_entry;
 +
-+	while ((length > 0) && (result == UDS_SUCCESS)) {
-+		if (writer->buffer == NULL) {
-+			result = prepare_next_buffer(writer);
++	while (current_entry != ending_entry) {
++		page->entries[current_entry->block_map_slot.slot] = current_entry->block_map_entry;
++		current_entry--;
++	}
++}
++
++static void recover_ready_pages(struct repair_completion *repair,
++				struct vdo_completion *completion);
++
++static void block_map_page_loaded(struct vdo_completion *completion)
++{
++	struct repair_completion *repair = as_repair_completion(completion->parent);
++
++	repair->outstanding--;
++	if (!repair->launching)
++		recover_ready_pages(repair, completion);
++}
++
++static void handle_block_map_page_load_error(struct vdo_completion *completion)
++{
++	struct repair_completion *repair = as_repair_completion(completion->parent);
++
++	repair->outstanding--;
++	abort_block_map_recovery(repair, completion->result);
++}
++
++static void fetch_block_map_page(struct repair_completion *repair,
++				 struct vdo_completion *completion)
++{
++	physical_block_number_t pbn;
++
++	if (repair->current_unfetched_entry < repair->entries)
++		/* Nothing left to fetch. */
++		return;
++
++	/* Fetch the next page we haven't yet requested. */
++	pbn = repair->current_unfetched_entry->block_map_slot.pbn;
++	repair->current_unfetched_entry =
++		find_entry_starting_next_page(repair, repair->current_unfetched_entry,
++					      true);
++	repair->outstanding++;
++	vdo_get_page(((struct vdo_page_completion *) completion),
++		     &repair->completion.vdo->block_map->zones[0], pbn, true,
++		     &repair->completion, block_map_page_loaded,
++		     handle_block_map_page_load_error, false);
++}
++
++static struct vdo_page_completion *get_next_page_completion(struct repair_completion *repair,
++							    struct vdo_page_completion *completion)
++{
++	completion++;
++	if (completion == (&repair->page_completions[repair->page_count]))
++		completion = &repair->page_completions[0];
++	return completion;
++}
++
++static void recover_ready_pages(struct repair_completion *repair,
++				struct vdo_completion *completion)
++{
++	struct vdo_page_completion *page_completion = (struct vdo_page_completion *) completion;
++
++	if (finish_if_done(repair))
++		return;
++
++	if (repair->pbn != page_completion->pbn)
++		return;
++
++	while (page_completion->ready) {
++		struct numbered_block_mapping *start_of_next_page;
++		struct block_map_page *page;
++		int result;
++
++		result = vdo_get_cached_page(completion, &page);
++		if (result != VDO_SUCCESS) {
++			abort_block_map_recovery(repair, result);
++			return;
++		}
++
++		start_of_next_page =
++			find_entry_starting_next_page(repair, repair->current_entry,
++						      false);
++		apply_journal_entries_to_page(page, repair->current_entry,
++					      start_of_next_page);
++		repair->current_entry = start_of_next_page;
++		vdo_request_page_write(completion);
++		vdo_release_page_completion(completion);
++
++		if (finish_if_done(repair))
++			return;
++
++		repair->pbn = repair->current_entry->block_map_slot.pbn;
++		fetch_block_map_page(repair, completion);
++		page_completion = get_next_page_completion(repair, page_completion);
++		completion = &page_completion->completion;
++	}
++}
++
++static void recover_block_map(struct vdo_completion *completion)
++{
++	struct repair_completion *repair = as_repair_completion(completion);
++	struct vdo *vdo = completion->vdo;
++	struct numbered_block_mapping *first_sorted_entry;
++	page_count_t i;
++
++	vdo_assert_on_logical_zone_thread(vdo, 0, __func__);
++
++	/* Suppress block map errors. */
++	vdo->block_map->zones[0].page_cache.rebuilding =
++		vdo_state_requires_read_only_rebuild(vdo->load_state);
++
++	if (repair->block_map_entry_count == 0) {
++		uds_log_info("Replaying 0 recovery entries into block map");
++		uds_free(uds_forget(repair->journal_data));
++		launch_repair_completion(repair, load_slab_depot, VDO_ZONE_TYPE_ADMIN);
++		return;
++	}
++
++	/*
++	 * Organize the journal entries into a binary heap so we can iterate over them in sorted
++	 * order incrementally, avoiding an expensive sort call.
++	 */
++	repair->replay_heap = (struct min_heap) {
++		.data = repair->entries,
++		.nr = repair->block_map_entry_count,
++		.size = repair->block_map_entry_count,
++	};
++	min_heapify_all(&repair->replay_heap, &repair_min_heap);
++
++	uds_log_info("Replaying %zu recovery entries into block map",
++		     repair->block_map_entry_count);
++
++	repair->current_entry = &repair->entries[repair->block_map_entry_count - 1];
++	first_sorted_entry = sort_next_heap_element(repair);
++	ASSERT_LOG_ONLY(first_sorted_entry == repair->current_entry,
++			"heap is returning elements in an unexpected order");
++
++	/* Prevent any page from being processed until all pages have been launched. */
++	repair->launching = true;
++	repair->pbn = repair->current_entry->block_map_slot.pbn;
++	repair->current_unfetched_entry = repair->current_entry;
++	for (i = 0; i < repair->page_count; i++) {
++		if (repair->current_unfetched_entry < repair->entries)
++			break;
++
++		fetch_block_map_page(repair, &repair->page_completions[i].completion);
++	}
++	repair->launching = false;
++
++	/* Process any ready pages. */
++	recover_ready_pages(repair, &repair->page_completions[0].completion);
++}
++
++/**
++ * get_recovery_journal_block_header() - Get the block header for a block at a position in the
++ *                                       journal data and unpack it.
++ * @journal: The recovery journal.
++ * @data: The recovery journal data.
++ * @sequence: The sequence number.
++ *
++ * Return: The unpacked header.
++ */
++static struct recovery_block_header __must_check
++get_recovery_journal_block_header(struct recovery_journal *journal, char *data,
++				  sequence_number_t sequence)
++{
++	physical_block_number_t pbn =
++		vdo_get_recovery_journal_block_number(journal, sequence);
++	char *header = &data[pbn * VDO_BLOCK_SIZE];
++
++	return vdo_unpack_recovery_block_header((struct packed_journal_header *) header);
++}
++
++/**
++ * is_valid_recovery_journal_block() - Determine whether the given header describes a valid block
++ *                                     for the given journal.
++ * @journal: The journal to use.
++ * @header: The unpacked block header to check.
++ * @old_ok: Whether an old format header is valid.
++ *
++ * A block is not valid if it is unformatted, or if it is older than the last successful recovery
++ * or reformat.
++ *
++ * Return: True if the header is valid.
++ */
++static bool __must_check is_valid_recovery_journal_block(const struct recovery_journal *journal,
++							 const struct recovery_block_header *header,
++							 bool old_ok)
++{
++	if ((header->nonce != journal->nonce) ||
++	    (header->recovery_count != journal->recovery_count))
++		return false;
++
++	if (header->metadata_type == VDO_METADATA_RECOVERY_JOURNAL_2)
++		return (header->entry_count <= journal->entries_per_block);
++
++	return (old_ok &&
++		(header->metadata_type == VDO_METADATA_RECOVERY_JOURNAL) &&
++		(header->entry_count <= RECOVERY_JOURNAL_1_ENTRIES_PER_BLOCK));
++}
++
++/**
++ * is_exact_recovery_journal_block() - Determine whether the given header describes the exact block
++ *                                     indicated.
++ * @journal: The journal to use.
++ * @header: The unpacked block header to check.
++ * @sequence: The expected sequence number.
++ * @type: The expected metadata type.
++ *
++ * Return: True if the block matches.
++ */
++static bool __must_check is_exact_recovery_journal_block(const struct recovery_journal *journal,
++							 const struct recovery_block_header *header,
++							 sequence_number_t sequence,
++							 enum vdo_metadata_type type)
++{
++	return ((header->metadata_type == type) &&
++		(header->sequence_number == sequence) &&
++		(is_valid_recovery_journal_block(journal, header, true)));
++}
++
++/**
++ * find_recovery_journal_head_and_tail() - Find the tail and head of the journal.
++ *
++ * Return: True if there were valid journal blocks.
++ */
++static bool find_recovery_journal_head_and_tail(struct repair_completion *repair)
++{
++	struct recovery_journal *journal = repair->completion.vdo->recovery_journal;
++	bool found_entries = false;
++	physical_block_number_t i;
++
++	/*
++	 * Ensure that we don't replay old entries since we know the tail recorded in the super
++	 * block must be a lower bound. Not doing so can result in extra data loss by setting the
++	 * tail too early.
++	 */
++	repair->highest_tail = journal->tail;
++	for (i = 0; i < journal->size; i++) {
++		struct recovery_block_header header =
++			get_recovery_journal_block_header(journal, repair->journal_data, i);
++
++		if (!is_valid_recovery_journal_block(journal, &header, true)) {
++			/* This block is old or incorrectly formatted */
 +			continue;
 +		}
 +
-+		chunk_size = min(length, get_remaining_write_space(writer));
-+		if (data == NULL) {
-+			memset(writer->end, 0, chunk_size);
-+		} else {
-+			memcpy(writer->end, data, chunk_size);
-+			data += chunk_size;
++		if (vdo_get_recovery_journal_block_number(journal, header.sequence_number) != i) {
++			/* This block is in the wrong location */
++			continue;
 +		}
 +
-+		length -= chunk_size;
-+		writer->end += chunk_size;
++		if (header.sequence_number >= repair->highest_tail) {
++			found_entries = true;
++			repair->highest_tail = header.sequence_number;
++		}
 +
-+		if (get_remaining_write_space(writer) == 0)
-+			result = uds_flush_buffered_writer(writer);
++		if (!found_entries)
++			continue;
++
++		if (header.block_map_head > repair->block_map_head)
++			repair->block_map_head = header.block_map_head;
++
++		if (header.slab_journal_head > repair->slab_journal_head)
++			repair->slab_journal_head = header.slab_journal_head;
 +	}
++
++	return found_entries;
++}
++
++/**
++ * unpack_entry() - Unpack a recovery journal entry in either format.
++ * @vdo: The vdo.
++ * @packed: The entry to unpack.
++ * @format: The expected format of the entry.
++ * @entry: The unpacked entry.
++ *
++ * Return: true if the entry should be applied.3
++ */
++static bool unpack_entry(struct vdo *vdo, char *packed, enum vdo_metadata_type format,
++			 struct recovery_journal_entry *entry)
++{
++	if (format == VDO_METADATA_RECOVERY_JOURNAL_2) {
++		struct packed_recovery_journal_entry *packed_entry =
++			(struct packed_recovery_journal_entry *) packed;
++
++		*entry = vdo_unpack_recovery_journal_entry(packed_entry);
++	} else {
++		physical_block_number_t low32, high4;
++
++		struct packed_recovery_journal_entry_1 *packed_entry =
++			(struct packed_recovery_journal_entry_1 *) packed;
++
++		if (packed_entry->operation == VDO_JOURNAL_DATA_INCREMENT)
++			entry->operation = VDO_JOURNAL_DATA_REMAPPING;
++		else if (packed_entry->operation == VDO_JOURNAL_BLOCK_MAP_INCREMENT)
++			entry->operation = VDO_JOURNAL_BLOCK_MAP_REMAPPING;
++		else
++			return false;
++
++		low32 = __le32_to_cpu(packed_entry->pbn_low_word);
++		high4 = packed_entry->pbn_high_nibble;
++		entry->slot = (struct block_map_slot) {
++			.pbn = ((high4 << 32) | low32),
++			.slot = (packed_entry->slot_low | (packed_entry->slot_high << 6)),
++		};
++		entry->mapping = vdo_unpack_block_map_entry(&packed_entry->block_map_entry);
++		entry->unmapping = (struct data_location) {
++			.pbn = VDO_ZERO_BLOCK,
++			.state = VDO_MAPPING_STATE_UNMAPPED,
++		};
++	}
++
++	return (validate_recovery_journal_entry(vdo, entry) == VDO_SUCCESS);
++}
++
++/**
++ * append_sector_entries() - Append an array of recovery journal entries from a journal block
++ *                           sector to the array of numbered mappings in the repair completion,
++ *                           numbering each entry in the order they are appended.
++ * @repair: The repair completion.
++ * @entries: The entries in the sector.
++ * @format: The format of the sector.
++ * @entry_count: The number of entries to append.
++ */
++static void append_sector_entries(struct repair_completion *repair, char *entries,
++				  enum vdo_metadata_type format,
++				  journal_entry_count_t entry_count)
++{
++	journal_entry_count_t i;
++	struct vdo *vdo = repair->completion.vdo;
++	off_t increment = ((format == VDO_METADATA_RECOVERY_JOURNAL_2)
++			   ? sizeof(struct packed_recovery_journal_entry)
++			   : sizeof(struct packed_recovery_journal_entry_1));
++
++	for (i = 0; i < entry_count; i++, entries += increment) {
++		struct recovery_journal_entry entry;
++
++		if (!unpack_entry(vdo, entries, format, &entry))
++			/* When recovering from read-only mode, ignore damaged entries. */
++			continue;
++
++		repair->entries[repair->block_map_entry_count] =
++			(struct numbered_block_mapping) {
++			.block_map_slot = entry.slot,
++			.block_map_entry = vdo_pack_block_map_entry(entry.mapping.pbn,
++								    entry.mapping.state),
++			.number = repair->block_map_entry_count,
++		};
++		repair->block_map_entry_count++;
++	}
++}
++
++static journal_entry_count_t entries_per_sector(enum vdo_metadata_type format,
++						u8 sector_number)
++{
++	if (format == VDO_METADATA_RECOVERY_JOURNAL_2)
++		return RECOVERY_JOURNAL_ENTRIES_PER_SECTOR;
++
++	return ((sector_number == (VDO_SECTORS_PER_BLOCK - 1))
++		? RECOVERY_JOURNAL_1_ENTRIES_IN_LAST_SECTOR
++		: RECOVERY_JOURNAL_1_ENTRIES_PER_SECTOR);
++}
++
++static void extract_entries_from_block(struct repair_completion *repair,
++				       struct recovery_journal *journal,
++				       sequence_number_t sequence,
++				       enum vdo_metadata_type format,
++				       journal_entry_count_t entries)
++{
++	sector_count_t i;
++	struct recovery_block_header header =
++		get_recovery_journal_block_header(journal, repair->journal_data,
++						  sequence);
++
++	if (!is_exact_recovery_journal_block(journal, &header, sequence, format)) {
++		/* This block is invalid, so skip it. */
++		return;
++	}
++
++	entries = min(entries, header.entry_count);
++	for (i = 1; i < VDO_SECTORS_PER_BLOCK; i++) {
++		struct packed_journal_sector *sector =
++			get_sector(journal, repair->journal_data, sequence, i);
++		journal_entry_count_t sector_entries =
++			min(entries, entries_per_sector(format, i));
++
++		if (vdo_is_valid_recovery_journal_sector(&header, sector, i)) {
++			/* Only extract as many as the block header calls for. */
++			append_sector_entries(repair, (char *) sector->entries, format,
++					      min_t(journal_entry_count_t,
++						    sector->entry_count,
++						    sector_entries));
++		}
++
++		/*
++		 * Even if the sector wasn't full, count it as full when counting up to the
++		 * entry count the block header claims.
++		 */
++		entries -= sector_entries;
++	}
++}
++
++static int parse_journal_for_rebuild(struct repair_completion *repair)
++{
++	int result;
++	sequence_number_t i;
++	block_count_t count;
++	enum vdo_metadata_type format;
++	struct vdo *vdo = repair->completion.vdo;
++	struct recovery_journal *journal = vdo->recovery_journal;
++	journal_entry_count_t entries_per_block = journal->entries_per_block;
++
++	format = get_recovery_journal_block_header(journal, repair->journal_data,
++						   repair->highest_tail).metadata_type;
++	if (format == VDO_METADATA_RECOVERY_JOURNAL)
++		entries_per_block = RECOVERY_JOURNAL_1_ENTRIES_PER_BLOCK;
++
++	/*
++	 * Allocate an array of numbered_block_mapping structures large enough to transcribe every
++	 * packed_recovery_journal_entry from every valid journal block.
++	 */
++	count = ((repair->highest_tail - repair->block_map_head + 1) * entries_per_block);
++	result = uds_allocate(count, struct numbered_block_mapping, __func__,
++			      &repair->entries);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	for (i = repair->block_map_head; i <= repair->highest_tail; i++)
++		extract_entries_from_block(repair, journal, i, format, entries_per_block);
++
++	return VDO_SUCCESS;
++}
++
++static int validate_heads(struct repair_completion *repair)
++{
++	/* Both reap heads must be behind the tail. */
++	if ((repair->block_map_head <= repair->tail) &&
++	    (repair->slab_journal_head <= repair->tail))
++		return VDO_SUCCESS;
++
++
++	return uds_log_error_strerror(VDO_CORRUPT_JOURNAL,
++				      "Journal tail too early. block map head: %llu, slab journal head: %llu, tail: %llu",
++				      (unsigned long long) repair->block_map_head,
++				      (unsigned long long) repair->slab_journal_head,
++				      (unsigned long long) repair->tail);
++}
++
++/**
++ * extract_new_mappings() - Find all valid new mappings to be applied to the block map.
++ *
++ * The mappings are extracted from the journal and stored in a sortable array so that all of the
++ * mappings to be applied to a given block map page can be done in a single page fetch.
++ */
++static int extract_new_mappings(struct repair_completion *repair)
++{
++	int result;
++	struct vdo *vdo = repair->completion.vdo;
++	struct recovery_point recovery_point = {
++		.sequence_number = repair->block_map_head,
++		.sector_count = 1,
++		.entry_count = 0,
++	};
++
++	/*
++	 * Allocate an array of numbered_block_mapping structs just large enough to transcribe
++	 * every packed_recovery_journal_entry from every valid journal block.
++	 */
++	result = uds_allocate(repair->entry_count, struct numbered_block_mapping,
++			      __func__, &repair->entries);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	for (; before_recovery_point(&recovery_point, &repair->tail_recovery_point);
++	     increment_recovery_point(&recovery_point)) {
++		struct recovery_journal_entry entry = get_entry(repair, &recovery_point);
++
++		result = validate_recovery_journal_entry(vdo, &entry);
++		if (result != VDO_SUCCESS) {
++			vdo_enter_read_only_mode(vdo, result);
++			return result;
++		}
++
++		repair->entries[repair->block_map_entry_count] =
++			(struct numbered_block_mapping) {
++			.block_map_slot = entry.slot,
++			.block_map_entry = vdo_pack_block_map_entry(entry.mapping.pbn,
++								    entry.mapping.state),
++			.number = repair->block_map_entry_count,
++		};
++		repair->block_map_entry_count++;
++	}
++
++	result = ASSERT((repair->block_map_entry_count <= repair->entry_count),
++			"approximate entry count is an upper bound");
++	if (result != VDO_SUCCESS)
++		vdo_enter_read_only_mode(vdo, result);
 +
 +	return result;
 +}
 +
-+int uds_flush_buffered_writer(struct buffered_writer *writer)
++/**
++ * compute_usages() - Compute the lbns in use and block map data blocks counts from the tail of
++ *                    the journal.
++ */
++static noinline int compute_usages(struct repair_completion *repair)
 +{
-+	if (writer->error != UDS_SUCCESS)
-+		return writer->error;
++	/*
++	 * VDO-5182: function is declared noinline to avoid what is likely a spurious valgrind
++	 * error about this structure being uninitialized.
++	 */
++	struct recovery_point recovery_point = {
++		.sequence_number = repair->tail,
++		.sector_count = 1,
++		.entry_count = 0,
++	};
 +
-+	return flush_previous_buffer(writer);
++	struct vdo *vdo = repair->completion.vdo;
++	struct recovery_journal *journal = vdo->recovery_journal;
++	struct recovery_block_header header =
++		get_recovery_journal_block_header(journal, repair->journal_data,
++						  repair->tail);
++
++	repair->logical_blocks_used = header.logical_blocks_used;
++	repair->block_map_data_blocks = header.block_map_data_blocks;
++
++	for (; before_recovery_point(&recovery_point, &repair->tail_recovery_point);
++	     increment_recovery_point(&recovery_point)) {
++		struct recovery_journal_entry entry = get_entry(repair, &recovery_point);
++		int result;
++
++		result = validate_recovery_journal_entry(vdo, &entry);
++		if (result != VDO_SUCCESS) {
++			vdo_enter_read_only_mode(vdo, result);
++			return result;
++		}
++
++		if (entry.operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING) {
++			repair->block_map_data_blocks++;
++			continue;
++		}
++
++		if (vdo_is_mapped_location(&entry.mapping))
++			repair->logical_blocks_used++;
++
++		if (vdo_is_mapped_location(&entry.unmapping))
++			repair->logical_blocks_used--;
++	}
++
++	return VDO_SUCCESS;
 +}
-diff --git a/drivers/md/dm-vdo/io-factory.h b/drivers/md/dm-vdo/io-factory.h
++
++static int parse_journal_for_recovery(struct repair_completion *repair)
++{
++	int result;
++	sequence_number_t i, head;
++	bool found_entries = false;
++	struct recovery_journal *journal = repair->completion.vdo->recovery_journal;
++
++	head = min(repair->block_map_head, repair->slab_journal_head);
++	for (i = head; i <= repair->highest_tail; i++) {
++		struct recovery_block_header header;
++		journal_entry_count_t block_entries;
++		u8 j;
++
++		repair->tail = i;
++		repair->tail_recovery_point = (struct recovery_point) {
++			.sequence_number = i,
++			.sector_count = 0,
++			.entry_count = 0,
++		};
++
++		header = get_recovery_journal_block_header(journal, repair->journal_data, i);
++		if (header.metadata_type == VDO_METADATA_RECOVERY_JOURNAL) {
++			/* This is an old format block, so we need to upgrade */
++			uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
++					       "Recovery journal is in the old format, a read-only rebuild is required.");
++			vdo_enter_read_only_mode(repair->completion.vdo,
++						 VDO_UNSUPPORTED_VERSION);
++			return VDO_UNSUPPORTED_VERSION;
++		}
++
++		if (!is_exact_recovery_journal_block(journal, &header, i,
++						     VDO_METADATA_RECOVERY_JOURNAL_2)) {
++			/* A bad block header was found so this must be the end of the journal. */
++			break;
++		}
++
++		block_entries = header.entry_count;
++
++		/* Examine each sector in turn to determine the last valid sector. */
++		for (j = 1; j < VDO_SECTORS_PER_BLOCK; j++) {
++			struct packed_journal_sector *sector =
++				get_sector(journal, repair->journal_data, i, j);
++			journal_entry_count_t sector_entries =
++				min_t(journal_entry_count_t, sector->entry_count,
++				      block_entries);
++
++			/* A bad sector means that this block was torn. */
++			if (!vdo_is_valid_recovery_journal_sector(&header, sector, j))
++				break;
++
++			if (sector_entries > 0) {
++				found_entries = true;
++				repair->tail_recovery_point.sector_count++;
++				repair->tail_recovery_point.entry_count = sector_entries;
++				block_entries -= sector_entries;
++				repair->entry_count += sector_entries;
++			}
++
++			/* If this sector is short, the later sectors can't matter. */
++			if ((sector_entries < RECOVERY_JOURNAL_ENTRIES_PER_SECTOR) ||
++			    (block_entries == 0))
++				break;
++		}
++
++		/* If this block was not filled, or if it tore, no later block can matter. */
++		if ((header.entry_count != journal->entries_per_block) || (block_entries > 0))
++			break;
++	}
++
++	if (!found_entries)
++		return validate_heads(repair);
++
++	/* Set the tail to the last valid tail block, if there is one. */
++	if (repair->tail_recovery_point.sector_count == 0)
++		repair->tail--;
++
++	result = validate_heads(repair);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	uds_log_info("Highest-numbered recovery journal block has sequence number %llu, and the highest-numbered usable block is %llu",
++		     (unsigned long long) repair->highest_tail,
++		     (unsigned long long) repair->tail);
++
++	result = extract_new_mappings(repair);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	return compute_usages(repair);
++}
++
++static int parse_journal(struct repair_completion *repair)
++{
++	if (!find_recovery_journal_head_and_tail(repair))
++		return VDO_SUCCESS;
++
++	return (vdo_state_requires_read_only_rebuild(repair->completion.vdo->load_state) ?
++		parse_journal_for_rebuild(repair) :
++		parse_journal_for_recovery(repair));
++}
++
++static void finish_journal_load(struct vdo_completion *completion)
++{
++	struct repair_completion *repair = completion->parent;
++
++	if (++repair->vios_complete != repair->vio_count)
++		return;
++
++	uds_log_info("Finished reading recovery journal");
++	uninitialize_vios(repair);
++	prepare_repair_completion(repair, recover_block_map, VDO_ZONE_TYPE_LOGICAL);
++	vdo_continue_completion(&repair->completion, parse_journal(repair));
++}
++
++static void handle_journal_load_error(struct vdo_completion *completion)
++{
++	struct repair_completion *repair = completion->parent;
++
++	/* Preserve the error */
++	vdo_set_completion_result(&repair->completion, completion->result);
++	vio_record_metadata_io_error(as_vio(completion));
++	completion->callback(completion);
++}
++
++static void read_journal_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct vdo *vdo = vio->completion.vdo;
++
++	continue_vio_after_io(vio, finish_journal_load, vdo->thread_config.admin_thread);
++}
++
++/**
++ * vdo_repair() - Load the recovery journal and then recover or rebuild a vdo.
++ * @parent: The completion to notify when the operation is complete
++ */
++void vdo_repair(struct vdo_completion *parent)
++{
++	int result;
++	char *ptr;
++	struct repair_completion *repair;
++	struct vdo *vdo = parent->vdo;
++	struct recovery_journal *journal = vdo->recovery_journal;
++	physical_block_number_t pbn = journal->origin;
++	block_count_t remaining = journal->size;
++	block_count_t vio_count = DIV_ROUND_UP(remaining, MAX_BLOCKS_PER_VIO);
++	page_count_t page_count = min_t(page_count_t,
++					vdo->device_config->cache_size >> 1,
++					MAXIMUM_SIMULTANEOUS_VDO_BLOCK_MAP_RESTORATION_READS);
++
++	vdo_assert_on_admin_thread(vdo, __func__);
++
++	if (vdo->load_state == VDO_FORCE_REBUILD) {
++		uds_log_warning("Rebuilding reference counts to clear read-only mode");
++		vdo->states.vdo.read_only_recoveries++;
++	} else if (vdo->load_state == VDO_REBUILD_FOR_UPGRADE) {
++		uds_log_warning("Rebuilding reference counts for upgrade");
++	} else {
++		uds_log_warning("Device was dirty, rebuilding reference counts");
++	}
++
++	result = uds_allocate_extended(struct repair_completion, page_count,
++				       struct vdo_page_completion, __func__,
++				       &repair);
++	if (result != VDO_SUCCESS) {
++		vdo_fail_completion(parent, result);
++		return;
++	}
++
++	vdo_initialize_completion(&repair->completion, vdo, VDO_REPAIR_COMPLETION);
++	repair->completion.error_handler = abort_repair;
++	repair->completion.parent = parent;
++	prepare_repair_completion(repair, finish_repair, VDO_ZONE_TYPE_ADMIN);
++	repair->page_count = page_count;
++
++	result = uds_allocate(remaining * VDO_BLOCK_SIZE, char, __func__,
++			      &repair->journal_data);
++	if (abort_on_error(result, repair))
++		return;
++
++	result = uds_allocate(vio_count, struct vio, __func__, &repair->vios);
++	if (abort_on_error(result, repair))
++		return;
++
++	ptr = repair->journal_data;
++	for (repair->vio_count = 0; repair->vio_count < vio_count; repair->vio_count++) {
++		block_count_t blocks = min_t(block_count_t, remaining,
++					     MAX_BLOCKS_PER_VIO);
++
++		result = allocate_vio_components(vdo, VIO_TYPE_RECOVERY_JOURNAL,
++						 VIO_PRIORITY_METADATA,
++						 repair, blocks, ptr,
++						 &repair->vios[repair->vio_count]);
++		if (abort_on_error(result, repair))
++			return;
++
++		ptr += (blocks * VDO_BLOCK_SIZE);
++		remaining -= blocks;
++	}
++
++	for (vio_count = 0;
++	     vio_count < repair->vio_count;
++	     vio_count++, pbn += MAX_BLOCKS_PER_VIO) {
++		submit_metadata_vio(&repair->vios[vio_count], pbn, read_journal_endio,
++				    handle_journal_load_error, REQ_OP_READ);
++	}
++}
+diff --git a/drivers/md/dm-vdo/repair.h b/drivers/md/dm-vdo/repair.h
 new file mode 100644
-index 000000000000..7fb5a0616a79
+index 000000000000..ff255cf41486
 --- /dev/null
-+++ b/drivers/md/dm-vdo/io-factory.h
-@@ -0,0 +1,64 @@
++++ b/drivers/md/dm-vdo/repair.h
+@@ -0,0 +1,14 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_IO_FACTORY_H
-+#define UDS_IO_FACTORY_H
++#ifndef VDO_REPAIR_H
++#define VDO_REPAIR_H
 +
-+#include <linux/dm-bufio.h>
++#include "types.h"
 +
-+/*
-+ * The I/O factory manages all low-level I/O operations to the underlying storage device. Its main
-+ * clients are the index layout and the volume. The buffered reader and buffered writer interfaces
-+ * are helpers for accessing data in a contiguous range of storage blocks.
-+ */
++void vdo_replay_into_slab_journals(struct block_allocator *allocator, void *context);
++void vdo_repair(struct vdo_completion *parent);
 +
-+struct buffered_reader;
-+struct buffered_writer;
-+
-+struct io_factory;
-+
-+enum {
-+	UDS_BLOCK_SIZE = 4096,
-+	SECTORS_PER_BLOCK = UDS_BLOCK_SIZE >> SECTOR_SHIFT,
-+};
-+
-+int __must_check uds_make_io_factory(struct block_device *bdev,
-+				     struct io_factory **factory_ptr);
-+
-+int __must_check uds_replace_storage(struct io_factory *factory,
-+				     struct block_device *bdev);
-+
-+void uds_put_io_factory(struct io_factory *factory);
-+
-+size_t __must_check uds_get_writable_size(struct io_factory *factory);
-+
-+int __must_check uds_make_bufio(struct io_factory *factory, off_t block_offset,
-+				size_t block_size, unsigned int reserved_buffers,
-+				struct dm_bufio_client **client_ptr);
-+
-+int __must_check uds_make_buffered_reader(struct io_factory *factory, off_t offset,
-+					  u64 block_count,
-+					  struct buffered_reader **reader_ptr);
-+
-+void uds_free_buffered_reader(struct buffered_reader *reader);
-+
-+int __must_check uds_read_from_buffered_reader(struct buffered_reader *reader, u8 *data,
-+					       size_t length);
-+
-+int __must_check uds_verify_buffered_data(struct buffered_reader *reader, const u8 *value,
-+					  size_t length);
-+
-+int __must_check uds_make_buffered_writer(struct io_factory *factory, off_t offset,
-+					  u64 block_count,
-+					  struct buffered_writer **writer_ptr);
-+
-+void uds_free_buffered_writer(struct buffered_writer *buffer);
-+
-+int __must_check uds_write_to_buffered_writer(struct buffered_writer *writer,
-+					      const u8 *data, size_t length);
-+
-+int __must_check uds_flush_buffered_writer(struct buffered_writer *writer);
-+
-+#endif /* UDS_IO_FACTORY_H */
-diff --git a/drivers/md/dm-vdo/numeric.h b/drivers/md/dm-vdo/numeric.h
-new file mode 100644
-index 000000000000..dc8c400b21d2
---- /dev/null
-+++ b/drivers/md/dm-vdo/numeric.h
-@@ -0,0 +1,78 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_NUMERIC_H
-+#define UDS_NUMERIC_H
-+
-+#include <asm/unaligned.h>
-+#include <linux/kernel.h>
-+#include <linux/types.h>
-+
-+/*
-+ * These utilities encode or decode a number from an offset in a larger data buffer and then
-+ * advance the offset pointer to the next field in the buffer.
-+ */
-+
-+static inline void decode_s64_le(const u8 *buffer, size_t *offset, s64 *decoded)
-+{
-+	*decoded = get_unaligned_le64(buffer + *offset);
-+	*offset += sizeof(s64);
-+}
-+
-+static inline void encode_s64_le(u8 *data, size_t *offset, s64 to_encode)
-+{
-+	put_unaligned_le64(to_encode, data + *offset);
-+	*offset += sizeof(s64);
-+}
-+
-+static inline void decode_u64_le(const u8 *buffer, size_t *offset, u64 *decoded)
-+{
-+	*decoded = get_unaligned_le64(buffer + *offset);
-+	*offset += sizeof(u64);
-+}
-+
-+static inline void encode_u64_le(u8 *data, size_t *offset, u64 to_encode)
-+{
-+	put_unaligned_le64(to_encode, data + *offset);
-+	*offset += sizeof(u64);
-+}
-+
-+static inline void decode_s32_le(const u8 *buffer, size_t *offset, s32 *decoded)
-+{
-+	*decoded = get_unaligned_le32(buffer + *offset);
-+	*offset += sizeof(s32);
-+}
-+
-+static inline void encode_s32_le(u8 *data, size_t *offset, s32 to_encode)
-+{
-+	put_unaligned_le32(to_encode, data + *offset);
-+	*offset += sizeof(s32);
-+}
-+
-+static inline void decode_u32_le(const u8 *buffer, size_t *offset, u32 *decoded)
-+{
-+	*decoded = get_unaligned_le32(buffer + *offset);
-+	*offset += sizeof(u32);
-+}
-+
-+static inline void encode_u32_le(u8 *data, size_t *offset, u32 to_encode)
-+{
-+	put_unaligned_le32(to_encode, data + *offset);
-+	*offset += sizeof(u32);
-+}
-+
-+static inline void decode_u16_le(const u8 *buffer, size_t *offset, u16 *decoded)
-+{
-+	*decoded = get_unaligned_le16(buffer + *offset);
-+	*offset += sizeof(u16);
-+}
-+
-+static inline void encode_u16_le(u8 *data, size_t *offset, u16 to_encode)
-+{
-+	put_unaligned_le16(to_encode, data + *offset);
-+	*offset += sizeof(u16);
-+}
-+
-+#endif /* UDS_NUMERIC_H */
++#endif /* VDO_REPAIR_H */
 -- 
 2.40.0
 
