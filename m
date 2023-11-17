@@ -1,44 +1,44 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C90C45038
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:02 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CD0946425
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BxZoR6mq"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PpumZj2Z"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700254801;
+	s=mimecast20190719; t=1700254803;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=/q3kwBjRmsin0y5Fi17/LhPuCU78yt1y1s1+UpdsyRo=;
-	b=BxZoR6mq3YEc1Y0mBAAwbu2dFYLLNeQj5pky1c5yFJ9kPhEq9hs9v3wWdSQxTajWBqxeBe
-	8nK4TfsqtbdcxEqKPiI9ZSYqGiYZSBYN1cWktdalux3cxHJzP7vJz67bIGwzfw25uEc8Tv
-	xMCTxUwXpWv1a1ic3ZLsYR7PYI4p4mE=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-157-BKOn_OKiP9OSLPOc71uYXw-1; Fri,
- 17 Nov 2023 15:59:59 -0500
-X-MC-Unique: BKOn_OKiP9OSLPOc71uYXw-1
+	bh=g4uquzlUV9kYh861zhpOdJnKcQEFyv8oUV0zvPhk3wE=;
+	b=PpumZj2ZG5Uc13wDCtgqE2YKUi0dzAeMfRiDOZ+sMF6SRVXbd4cmEenjDItUUBWKIPga5V
+	ML27P86xjMqN36ZJKmHizF/yD+QSLkmGrVTW8vxBOWf3MypXhNDTJKi9pH0LeP/MMusCIk
+	xltI6naLHu4e3gNW1X8M+Z0hOTdBJiQ=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-517-dzdAn4chNa6cXkurx6Hctw-1; Fri, 17 Nov 2023 16:00:02 -0500
+X-MC-Unique: dzdAn4chNa6cXkurx6Hctw-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0C3BD3813BC3
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 20:59:59 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7B24810FC2
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:01 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 01CFF40C6EB9;
-	Fri, 17 Nov 2023 20:59:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9E8A540C6EB9;
+	Fri, 17 Nov 2023 21:00:01 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id B6BB23003C; Fri, 17 Nov 2023 15:59:58 -0500 (EST)
+	id 604BA3003B; Fri, 17 Nov 2023 16:00:01 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v5 06/40] dm vdo: add thread and synchronization utilities
-Date: Fri, 17 Nov 2023 15:59:23 -0500
-Message-Id: <dcc40e957fe8cde7238569079b2ac97787b62312.1700250814.git.msakai@redhat.com>
+Subject: [PATCH v5 21/40] dm vdo: add the vdo io_submitter
+Date: Fri, 17 Nov 2023 15:59:38 -0500
+Message-Id: <08aa2acba0c079216d590a3eb21eeb03f35b592a.1700250814.git.msakai@redhat.com>
 In-Reply-To: <cover.1700250814.git.msakai@redhat.com>
 References: <cover.1700250814.git.msakai@redhat.com>
 Precedence: bulk
@@ -53,604 +53,566 @@ X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-This patch adds utilities for managing and using named threads, as well as
-several locking and synchronization utilities. These utilities help dm-vdo
-minimize thread transitions and manage interactions between threads.
+The io_submitter handles bio submission from vdo data store to the storage
+below. It will merge bios when possible.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
 Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
 Co-developed-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/thread-cond-var.c |  46 +++++++
- drivers/md/dm-vdo/thread-device.c   |  36 ++++++
- drivers/md/dm-vdo/thread-device.h   |  20 +++
- drivers/md/dm-vdo/thread-registry.c |  92 ++++++++++++++
- drivers/md/dm-vdo/thread-registry.h |  32 +++++
- drivers/md/dm-vdo/uds-threads.c     | 183 ++++++++++++++++++++++++++++
- drivers/md/dm-vdo/uds-threads.h     | 115 +++++++++++++++++
- 7 files changed, 524 insertions(+)
- create mode 100644 drivers/md/dm-vdo/thread-cond-var.c
- create mode 100644 drivers/md/dm-vdo/thread-device.c
- create mode 100644 drivers/md/dm-vdo/thread-device.h
- create mode 100644 drivers/md/dm-vdo/thread-registry.c
- create mode 100644 drivers/md/dm-vdo/thread-registry.h
- create mode 100644 drivers/md/dm-vdo/uds-threads.c
- create mode 100644 drivers/md/dm-vdo/uds-threads.h
+ drivers/md/dm-vdo/io-submitter.c | 480 +++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/io-submitter.h |  47 +++
+ 2 files changed, 527 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/io-submitter.c
+ create mode 100644 drivers/md/dm-vdo/io-submitter.h
 
-diff --git a/drivers/md/dm-vdo/thread-cond-var.c b/drivers/md/dm-vdo/thread-cond-var.c
+diff --git a/drivers/md/dm-vdo/io-submitter.c b/drivers/md/dm-vdo/io-submitter.c
 new file mode 100644
-index 000000000000..ed7f0b79ca0a
+index 000000000000..ea27043f06e1
 --- /dev/null
-+++ b/drivers/md/dm-vdo/thread-cond-var.c
-@@ -0,0 +1,46 @@
++++ b/drivers/md/dm-vdo/io-submitter.c
+@@ -0,0 +1,480 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include <linux/jiffies.h>
-+#include <linux/minmax.h>
++#include "io-submitter.h"
 +
-+#include "errors.h"
-+#include "time-utils.h"
-+#include "uds-threads.h"
++#include <linux/bio.h>
++#include <linux/kernel.h>
++#include <linux/mutex.h>
 +
-+int uds_init_cond(struct cond_var *cv)
-+{
-+	init_waitqueue_head(&cv->wait_queue);
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_signal_cond(struct cond_var *cv)
-+{
-+	wake_up(&cv->wait_queue);
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_broadcast_cond(struct cond_var *cv)
-+{
-+	wake_up_all(&cv->wait_queue);
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_wait_cond(struct cond_var *cv, struct mutex *mutex)
-+{
-+	DEFINE_WAIT(__wait);
-+
-+	prepare_to_wait(&cv->wait_queue, &__wait, TASK_IDLE);
-+	uds_unlock_mutex(mutex);
-+	schedule();
-+	finish_wait(&cv->wait_queue, &__wait);
-+	uds_lock_mutex(mutex);
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_destroy_cond(struct cond_var *cv)
-+{
-+	return UDS_SUCCESS;
-+}
-diff --git a/drivers/md/dm-vdo/thread-device.c b/drivers/md/dm-vdo/thread-device.c
-new file mode 100644
-index 000000000000..b87de448a83b
---- /dev/null
-+++ b/drivers/md/dm-vdo/thread-device.c
-@@ -0,0 +1,36 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "thread-device.h"
-+
-+#include "thread-registry.h"
-+
-+/* A registry of threads associated with device id numbers. */
-+static struct thread_registry device_id_thread_registry;
-+
-+/* Any registered thread must be unregistered. */
-+void uds_register_thread_device_id(struct registered_thread *new_thread,
-+				   unsigned int *id_ptr)
-+{
-+	uds_register_thread(&device_id_thread_registry, new_thread, id_ptr);
-+}
-+
-+void uds_unregister_thread_device_id(void)
-+{
-+	uds_unregister_thread(&device_id_thread_registry);
-+}
-+
-+int uds_get_thread_device_id(void)
-+{
-+	const unsigned int *pointer;
-+
-+	pointer = uds_lookup_thread(&device_id_thread_registry);
-+	return (pointer != NULL) ? *pointer : -1;
-+}
-+
-+void uds_initialize_thread_device_registry(void)
-+{
-+	uds_initialize_thread_registry(&device_id_thread_registry);
-+}
-diff --git a/drivers/md/dm-vdo/thread-device.h b/drivers/md/dm-vdo/thread-device.h
-new file mode 100644
-index 000000000000..428b2908541d
---- /dev/null
-+++ b/drivers/md/dm-vdo/thread-device.h
-@@ -0,0 +1,20 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_THREAD_DEVICE_H
-+#define UDS_THREAD_DEVICE_H
-+
-+#include "thread-registry.h"
-+
-+void uds_register_thread_device_id(struct registered_thread *new_thread,
-+				   unsigned int *id_ptr);
-+
-+void uds_unregister_thread_device_id(void);
-+
-+int uds_get_thread_device_id(void);
-+
-+void uds_initialize_thread_device_registry(void);
-+
-+#endif /* UDS_THREAD_DEVICE_H */
-diff --git a/drivers/md/dm-vdo/thread-registry.c b/drivers/md/dm-vdo/thread-registry.c
-new file mode 100644
-index 000000000000..8c887158c224
---- /dev/null
-+++ b/drivers/md/dm-vdo/thread-registry.c
-@@ -0,0 +1,92 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "thread-registry.h"
-+
-+#include <linux/rculist.h>
-+
++#include "memory-alloc.h"
 +#include "permassert.h"
 +
-+/*
-+ * We need to be careful when using other facilities that may use thread registry functions in
-+ * their normal operation. For example, we do not want to invoke the logger while holding a lock.
-+ */
-+
-+void uds_initialize_thread_registry(struct thread_registry *registry)
-+{
-+	INIT_LIST_HEAD(&registry->links);
-+	spin_lock_init(&registry->lock);
-+}
-+
-+/* Register the current thread and associate it with a data pointer. */
-+void uds_register_thread(struct thread_registry *registry,
-+			 struct registered_thread *new_thread, const void *pointer)
-+{
-+	struct registered_thread *thread;
-+	bool found_it = false;
-+
-+	INIT_LIST_HEAD(&new_thread->links);
-+	new_thread->pointer = pointer;
-+	new_thread->task = current;
-+
-+	spin_lock(&registry->lock);
-+	list_for_each_entry(thread, &registry->links, links) {
-+		if (thread->task == current) {
-+			/* There should be no existing entry. */
-+			list_del_rcu(&thread->links);
-+			found_it = true;
-+			break;
-+		}
-+	}
-+	list_add_tail_rcu(&new_thread->links, &registry->links);
-+	spin_unlock(&registry->lock);
-+
-+	ASSERT_LOG_ONLY(!found_it, "new thread not already in registry");
-+	if (found_it) {
-+		/* Ensure no RCU iterators see it before re-initializing. */
-+		synchronize_rcu();
-+		INIT_LIST_HEAD(&thread->links);
-+	}
-+}
-+
-+void uds_unregister_thread(struct thread_registry *registry)
-+{
-+	struct registered_thread *thread;
-+	bool found_it = false;
-+
-+	spin_lock(&registry->lock);
-+	list_for_each_entry(thread, &registry->links, links) {
-+		if (thread->task == current) {
-+			list_del_rcu(&thread->links);
-+			found_it = true;
-+			break;
-+		}
-+	}
-+	spin_unlock(&registry->lock);
-+
-+	ASSERT_LOG_ONLY(found_it, "thread found in registry");
-+	if (found_it) {
-+		/* Ensure no RCU iterators see it before re-initializing. */
-+		synchronize_rcu();
-+		INIT_LIST_HEAD(&thread->links);
-+	}
-+}
-+
-+const void *uds_lookup_thread(struct thread_registry *registry)
-+{
-+	struct registered_thread *thread;
-+	const void *result = NULL;
-+
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(thread, &registry->links, links) {
-+		if (thread->task == current) {
-+			result = thread->pointer;
-+			break;
-+		}
-+	}
-+	rcu_read_unlock();
-+
-+	return result;
-+}
-diff --git a/drivers/md/dm-vdo/thread-registry.h b/drivers/md/dm-vdo/thread-registry.h
-new file mode 100644
-index 000000000000..f70f755568a1
---- /dev/null
-+++ b/drivers/md/dm-vdo/thread-registry.h
-@@ -0,0 +1,32 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_THREAD_REGISTRY_H
-+#define UDS_THREAD_REGISTRY_H
-+
-+#include <linux/list.h>
-+#include <linux/spinlock.h>
-+
-+struct thread_registry {
-+	struct list_head links;
-+	spinlock_t lock;
-+};
-+
-+struct registered_thread {
-+	struct list_head links;
-+	const void *pointer;
-+	struct task_struct *task;
-+};
-+
-+void uds_initialize_thread_registry(struct thread_registry *registry);
-+
-+void uds_register_thread(struct thread_registry *registry,
-+			 struct registered_thread *new_thread, const void *pointer);
-+
-+void uds_unregister_thread(struct thread_registry *registry);
-+
-+const void *uds_lookup_thread(struct thread_registry *registry);
-+
-+#endif /* UDS_THREAD_REGISTRY_H */
-diff --git a/drivers/md/dm-vdo/uds-threads.c b/drivers/md/dm-vdo/uds-threads.c
-new file mode 100644
-index 000000000000..e7524617f9f8
---- /dev/null
-+++ b/drivers/md/dm-vdo/uds-threads.c
-@@ -0,0 +1,183 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "uds-threads.h"
-+
-+#include <linux/completion.h>
-+#include <linux/err.h>
-+#include <linux/kthread.h>
-+#include <linux/sched.h>
-+
-+#include "errors.h"
++#include "data-vio.h"
 +#include "logger.h"
-+#include "memory-alloc.h"
++#include "types.h"
++#include "vdo.h"
++#include "vio.h"
 +
-+static struct hlist_head thread_list;
-+static struct mutex thread_mutex;
-+static atomic_t thread_once = ATOMIC_INIT(0);
-+
-+struct thread {
-+	void (*thread_function)(void *thread_data);
-+	void *thread_data;
-+	struct hlist_node thread_links;
-+	struct task_struct *thread_task;
-+	struct completion thread_done;
++/*
++ * Submission of bio operations to the underlying storage device will go through a separate work
++ * queue thread (or more than one) to prevent blocking in other threads if the storage device has a
++ * full queue. The plug structure allows that thread to do better batching of requests to make the
++ * I/O more efficient.
++ *
++ * When multiple worker threads are used, a thread is chosen for a I/O operation submission based
++ * on the PBN, so a given PBN will consistently wind up on the same thread. Flush operations are
++ * assigned round-robin.
++ *
++ * The map (protected by the mutex) collects pending I/O operations so that the worker thread can
++ * reorder them to try to encourage I/O request merging in the request queue underneath.
++ */
++struct bio_queue_data {
++	struct vdo_work_queue *queue;
++	struct blk_plug plug;
++	struct int_map *map;
++	struct mutex lock;
++	unsigned int queue_number;
 +};
 +
-+enum {
-+	ONCE_NOT_DONE = 0,
-+	ONCE_IN_PROGRESS = 1,
-+	ONCE_COMPLETE = 2,
++struct io_submitter {
++	unsigned int num_bio_queues_used;
++	unsigned int bio_queue_rotation_interval;
++	struct bio_queue_data bio_queue_data[];
 +};
 +
-+/* Run a function once only, and record that fact in the atomic value. */
-+void uds_perform_once(atomic_t *once, void (*function)(void))
++static void start_bio_queue(void *ptr)
 +{
-+	for (;;) {
-+		switch (atomic_cmpxchg(once, ONCE_NOT_DONE, ONCE_IN_PROGRESS)) {
-+		case ONCE_NOT_DONE:
-+			function();
-+			atomic_set_release(once, ONCE_COMPLETE);
-+			return;
-+		case ONCE_IN_PROGRESS:
-+			cond_resched();
-+			break;
-+		case ONCE_COMPLETE:
-+			return;
-+		default:
-+			return;
-+		}
++	struct bio_queue_data *bio_queue_data = ptr;
++
++	blk_start_plug(&bio_queue_data->plug);
++}
++
++static void finish_bio_queue(void *ptr)
++{
++	struct bio_queue_data *bio_queue_data = ptr;
++
++	blk_finish_plug(&bio_queue_data->plug);
++}
++
++static const struct vdo_work_queue_type bio_queue_type = {
++	.start = start_bio_queue,
++	.finish = finish_bio_queue,
++	.max_priority = BIO_Q_MAX_PRIORITY,
++	.default_priority = BIO_Q_DATA_PRIORITY,
++};
++
++/**
++ * count_all_bios() - Determine which bio counter to use.
++ * @vio: The vio associated with the bio.
++ * @bio: The bio to count.
++ */
++static void count_all_bios(struct vio *vio, struct bio *bio)
++{
++	struct atomic_statistics *stats = &vio->completion.vdo->stats;
++
++	if (is_data_vio(vio)) {
++		vdo_count_bios(&stats->bios_out, bio);
++		return;
++	}
++
++	vdo_count_bios(&stats->bios_meta, bio);
++	if (vio->type == VIO_TYPE_RECOVERY_JOURNAL)
++		vdo_count_bios(&stats->bios_journal, bio);
++	else if (vio->type == VIO_TYPE_BLOCK_MAP)
++		vdo_count_bios(&stats->bios_page_cache, bio);
++}
++
++/**
++ * assert_in_bio_zone() - Assert that a vio is in the correct bio zone and not in interrupt
++ *                        context.
++ * @vio: The vio to check.
++ */
++static void assert_in_bio_zone(struct vio *vio)
++{
++	ASSERT_LOG_ONLY(!in_interrupt(), "not in interrupt context");
++	assert_vio_in_bio_zone(vio);
++}
++
++/**
++ * send_bio_to_device() - Update stats and tracing info, then submit the supplied bio to the OS for
++ *                        processing.
++ * @vio: The vio associated with the bio.
++ * @bio: The bio to submit to the OS.
++ */
++static void send_bio_to_device(struct vio *vio, struct bio *bio)
++{
++	struct vdo *vdo = vio->completion.vdo;
++
++	assert_in_bio_zone(vio);
++	atomic64_inc(&vdo->stats.bios_submitted);
++	count_all_bios(vio, bio);
++	bio_set_dev(bio, vdo_get_backing_device(vdo));
++	submit_bio_noacct(bio);
++}
++
++static sector_t get_bio_sector(struct bio *bio)
++{
++	return bio->bi_iter.bi_sector;
++}
++
++/**
++ * process_vio_io() - Submits a vio's bio to the underlying block device. May block if the device
++ *                    is busy. This callback should be used by vios which did not attempt to merge.
++ */
++void process_vio_io(struct vdo_completion *completion)
++{
++	struct vio *vio = as_vio(completion);
++
++	send_bio_to_device(vio, vio->bio);
++}
++
++/**
++ * get_bio_list() - Extract the list of bios to submit from a vio.
++ * @vio: The vio submitting I/O.
++ *
++ * The list will always contain at least one entry (the bio for the vio on which it is called), but
++ * other bios may have been merged with it as well.
++ *
++ * Return: bio  The head of the bio list to submit.
++ */
++static struct bio *get_bio_list(struct vio *vio)
++{
++	struct bio *bio;
++	struct io_submitter *submitter = vio->completion.vdo->io_submitter;
++	struct bio_queue_data *bio_queue_data = &(submitter->bio_queue_data[vio->bio_zone]);
++
++	assert_in_bio_zone(vio);
++
++	mutex_lock(&bio_queue_data->lock);
++	vdo_int_map_remove(bio_queue_data->map, get_bio_sector(vio->bios_merged.head));
++	vdo_int_map_remove(bio_queue_data->map, get_bio_sector(vio->bios_merged.tail));
++	bio = vio->bios_merged.head;
++	bio_list_init(&vio->bios_merged);
++	mutex_unlock(&bio_queue_data->lock);
++
++	return bio;
++}
++
++/**
++ * process_data_vio_io() - Submit a data_vio's bio to the storage below along with any bios that
++ *                         have been merged with it.
++ *
++ * Context: This call may block and so should only be called from a bio thread.
++ */
++static void process_data_vio_io(struct vdo_completion *completion)
++{
++	struct bio *bio, *next;
++	struct vio *vio = as_vio(completion);
++
++	assert_in_bio_zone(vio);
++	for (bio = get_bio_list(vio); bio != NULL; bio = next) {
++		next = bio->bi_next;
++		bio->bi_next = NULL;
++		send_bio_to_device((struct vio *) bio->bi_private, bio);
 +	}
 +}
 +
-+static void thread_init(void)
++/**
++ * get_mergeable_locked() - Attempt to find an already queued bio that the current bio can be
++ *                          merged with.
++ * @map: The bio map to use for merging.
++ * @vio: The vio we want to merge.
++ * @back_merge: Set to true for a back merge, false for a front merge.
++ *
++ * There are two types of merging possible, forward and backward, which are distinguished by a flag
++ * that uses kernel elevator terminology.
++ *
++ * Return: the vio to merge to, NULL if no merging is possible.
++ */
++static struct vio *get_mergeable_locked(struct int_map *map, struct vio *vio,
++					bool back_merge)
 +{
-+	mutex_init(&thread_mutex);
++	struct bio *bio = vio->bio;
++	sector_t merge_sector = get_bio_sector(bio);
++	struct vio *vio_merge;
++
++	if (back_merge)
++		merge_sector -= VDO_SECTORS_PER_BLOCK;
++	else
++		merge_sector += VDO_SECTORS_PER_BLOCK;
++
++	vio_merge = vdo_int_map_get(map, merge_sector);
++
++	if (vio_merge == NULL)
++		return NULL;
++
++	if (vio->completion.priority != vio_merge->completion.priority)
++		return NULL;
++
++	if (bio_data_dir(bio) != bio_data_dir(vio_merge->bio))
++		return NULL;
++
++	if (bio_list_empty(&vio_merge->bios_merged))
++		return NULL;
++
++	if (back_merge) {
++		return (get_bio_sector(vio_merge->bios_merged.tail) == merge_sector ?
++			vio_merge : NULL);
++	}
++
++	return (get_bio_sector(vio_merge->bios_merged.head) == merge_sector ?
++		vio_merge : NULL);
 +}
 +
-+static int thread_starter(void *arg)
++static int map_merged_vio(struct int_map *bio_map, struct vio *vio)
 +{
-+	struct registered_thread allocating_thread;
-+	struct thread *thread = arg;
-+
-+	thread->thread_task = current;
-+	uds_perform_once(&thread_once, thread_init);
-+	mutex_lock(&thread_mutex);
-+	hlist_add_head(&thread->thread_links, &thread_list);
-+	mutex_unlock(&thread_mutex);
-+	uds_register_allocating_thread(&allocating_thread, NULL);
-+	thread->thread_function(thread->thread_data);
-+	uds_unregister_allocating_thread();
-+	complete(&thread->thread_done);
-+	return 0;
-+}
-+
-+int uds_create_thread(void (*thread_function)(void *), void *thread_data,
-+		      const char *name, struct thread **new_thread)
-+{
-+	char *name_colon = strchr(name, ':');
-+	char *my_name_colon = strchr(current->comm, ':');
-+	struct task_struct *task;
-+	struct thread *thread;
 +	int result;
 +
-+	result = uds_allocate(1, struct thread, __func__, &thread);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_warning("Error allocating memory for %s", name);
++	result = vdo_int_map_put(bio_map, get_bio_sector(vio->bios_merged.head), vio,
++				 true, NULL);
++	if (result != VDO_SUCCESS)
 +		return result;
-+	}
 +
-+	thread->thread_function = thread_function;
-+	thread->thread_data = thread_data;
-+	init_completion(&thread->thread_done);
++	return vdo_int_map_put(bio_map, get_bio_sector(vio->bios_merged.tail), vio, true,
++			       NULL);
++}
++
++static int merge_to_prev_tail(struct int_map *bio_map, struct vio *vio,
++			      struct vio *prev_vio)
++{
++	vdo_int_map_remove(bio_map, get_bio_sector(prev_vio->bios_merged.tail));
++	bio_list_merge(&prev_vio->bios_merged, &vio->bios_merged);
++	return map_merged_vio(bio_map, prev_vio);
++}
++
++static int merge_to_next_head(struct int_map *bio_map, struct vio *vio,
++			      struct vio *next_vio)
++{
 +	/*
-+	 * Start the thread, with an appropriate thread name.
-+	 *
-+	 * If the name supplied contains a colon character, use that name. This causes uds module
-+	 * threads to have names like "uds:callbackW" and the main test runner thread to be named
-+	 * "zub:runtest".
-+	 *
-+	 * Otherwise if the current thread has a name containing a colon character, prefix the name
-+	 * supplied with the name of the current thread up to (and including) the colon character.
-+	 * Thus when the "kvdo0:dedupeQ" thread opens an index session, all the threads associated
-+	 * with that index will have names like "kvdo0:foo".
-+	 *
-+	 * Otherwise just use the name supplied. This should be a rare occurrence.
++	 * Handle "next merge" and "gap fill" cases the same way so as to reorder bios in a way
++	 * that's compatible with using funnel queues in work queues. This avoids removing an
++	 * existing completion.
 +	 */
-+	if ((name_colon == NULL) && (my_name_colon != NULL)) {
-+		task = kthread_run(thread_starter, thread, "%.*s:%s",
-+				   (int) (my_name_colon - current->comm), current->comm,
-+				   name);
-+	} else {
-+		task = kthread_run(thread_starter, thread, "%s", name);
-+	}
-+
-+	if (IS_ERR(task)) {
-+		uds_free(thread);
-+		return PTR_ERR(task);
-+	}
-+
-+	*new_thread = thread;
-+	return UDS_SUCCESS;
++	vdo_int_map_remove(bio_map, get_bio_sector(next_vio->bios_merged.head));
++	bio_list_merge_head(&next_vio->bios_merged, &vio->bios_merged);
++	return map_merged_vio(bio_map, next_vio);
 +}
 +
-+int uds_join_threads(struct thread *thread)
-+{
-+	while (wait_for_completion_interruptible(&thread->thread_done) != 0)
-+		/* empty loop */
-+		;
-+
-+	mutex_lock(&thread_mutex);
-+	hlist_del(&thread->thread_links);
-+	mutex_unlock(&thread_mutex);
-+	uds_free(thread);
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_initialize_barrier(struct barrier *barrier, unsigned int thread_count)
++/**
++ * try_bio_map_merge() - Attempt to merge a vio's bio with other pending I/Os.
++ * @vio: The vio to merge.
++ *
++ * Currently this is only used for data_vios, but is broken out for future use with metadata vios.
++ *
++ * Return: whether or not the vio was merged.
++ */
++static bool try_bio_map_merge(struct vio *vio)
 +{
 +	int result;
++	bool merged = true;
++	struct bio *bio = vio->bio;
++	struct vio *prev_vio, *next_vio;
++	struct vdo *vdo = vio->completion.vdo;
++	struct bio_queue_data *bio_queue_data =
++		&vdo->io_submitter->bio_queue_data[vio->bio_zone];
 +
-+	result = uds_initialize_semaphore(&barrier->mutex, 1);
++	bio->bi_next = NULL;
++	bio_list_init(&vio->bios_merged);
++	bio_list_add(&vio->bios_merged, bio);
++
++	mutex_lock(&bio_queue_data->lock);
++	prev_vio = get_mergeable_locked(bio_queue_data->map, vio, true);
++	next_vio = get_mergeable_locked(bio_queue_data->map, vio, false);
++	if (prev_vio == next_vio)
++		next_vio = NULL;
++
++	if ((prev_vio == NULL) && (next_vio == NULL)) {
++		/* no merge. just add to bio_queue */
++		merged = false;
++		result = vdo_int_map_put(bio_queue_data->map,
++					 get_bio_sector(bio),
++					 vio, true, NULL);
++	} else if (next_vio == NULL) {
++		/* Only prev. merge to prev's tail */
++		result = merge_to_prev_tail(bio_queue_data->map, vio, prev_vio);
++	} else {
++		/* Only next. merge to next's head */
++		result = merge_to_next_head(bio_queue_data->map, vio, next_vio);
++	}
++
++	mutex_unlock(&bio_queue_data->lock);
++
++	/* We don't care about failure of int_map_put in this case. */
++	ASSERT_LOG_ONLY(result == UDS_SUCCESS, "bio map insertion succeeds");
++	return merged;
++}
++
++/**
++ * submit_data_vio_io() - Submit I/O for a data_vio.
++ * @data_vio: the data_vio for which to issue I/O.
++ *
++ * If possible, this I/O will be merged other pending I/Os. Otherwise, the data_vio will be sent to
++ * the appropriate bio zone directly.
++ */
++void submit_data_vio_io(struct data_vio *data_vio)
++{
++	if (try_bio_map_merge(&data_vio->vio))
++		return;
++
++	launch_data_vio_bio_zone_callback(data_vio, process_data_vio_io);
++}
++
++/**
++ * vdo_submit_metadata_io() - Submit I/O for a metadata vio.
++ * @vio: the vio for which to issue I/O
++ * @physical: the physical block number to read or write
++ * @callback: the bio endio function which will be called after the I/O completes
++ * @error_handler: the handler for submission or I/O errors (may be NULL)
++ * @operation: the type of I/O to perform
++ * @data: the buffer to read or write (may be NULL)
++ *
++ * The vio is enqueued on a vdo bio queue so that bio submission (which may block) does not block
++ * other vdo threads.
++ *
++ * That the error handler will run on the correct thread is only true so long as the thread calling
++ * this function, and the thread set in the endio callback are the same, as well as the fact that
++ * no error can occur on the bio queue. Currently this is true for all callers, but additional care
++ * will be needed if this ever changes.
++ */
++void vdo_submit_metadata_io(struct vio *vio, physical_block_number_t physical,
++			    bio_end_io_t callback, vdo_action_fn error_handler,
++			    unsigned int operation, char *data)
++{
++	struct vdo_completion *completion = &vio->completion;
++	int result;
++	const struct admin_state_code *code = vdo_get_admin_state(completion->vdo);
++
++
++	ASSERT_LOG_ONLY(!code->quiescent, "I/O not allowed in state %s", code->name);
++	ASSERT_LOG_ONLY(vio->bio->bi_next == NULL, "metadata bio has no next bio");
++
++	vdo_reset_completion(completion);
++	completion->error_handler = error_handler;
++	result = vio_reset_bio(vio, data, callback, operation | REQ_META, physical);
++	if (result != VDO_SUCCESS) {
++		continue_vio(vio, result);
++		return;
++	}
++
++	vdo_set_completion_callback(completion, process_vio_io,
++				    get_vio_bio_zone_thread_id(vio));
++	vdo_launch_completion_with_priority(completion, get_metadata_priority(vio));
++}
++
++/**
++ * vdo_make_io_submitter() - Create an io_submitter structure.
++ * @thread_count: Number of bio-submission threads to set up.
++ * @rotation_interval: Interval to use when rotating between bio-submission threads when enqueuing
++ *                     completions.
++ * @max_requests_active: Number of bios for merge tracking.
++ * @vdo: The vdo which will use this submitter.
++ * @io_submitter: pointer to the new data structure.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_make_io_submitter(unsigned int thread_count, unsigned int rotation_interval,
++			  unsigned int max_requests_active, struct vdo *vdo,
++			  struct io_submitter **io_submitter_ptr)
++{
++	unsigned int i;
++	struct io_submitter *io_submitter;
++	int result;
++
++	result = uds_allocate_extended(struct io_submitter, thread_count,
++				       struct bio_queue_data, "bio submission data",
++				       &io_submitter);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	barrier->arrived = 0;
-+	barrier->thread_count = thread_count;
-+	return uds_initialize_semaphore(&barrier->wait, 0);
-+}
++	io_submitter->bio_queue_rotation_interval = rotation_interval;
 +
-+int uds_destroy_barrier(struct barrier *barrier)
-+{
-+	int result;
++	/* Setup for each bio-submission work queue */
++	for (i = 0; i < thread_count; i++) {
++		struct bio_queue_data *bio_queue_data = &io_submitter->bio_queue_data[i];
 +
-+	result = uds_destroy_semaphore(&barrier->mutex);
-+	if (result != UDS_SUCCESS)
-+		return result;
++		mutex_init(&bio_queue_data->lock);
++		/*
++		 * One I/O operation per request, but both first & last sector numbers.
++		 *
++		 * If requests are assigned to threads round-robin, they should be distributed
++		 * quite evenly. But if they're assigned based on PBN, things can sometimes be very
++		 * uneven. So for now, we'll assume that all requests *may* wind up on one thread,
++		 * and thus all in the same map.
++		 */
++		result = vdo_make_int_map(max_requests_active * 2, 0,
++					  &bio_queue_data->map);
++		if (result != 0) {
++			/*
++			 * Clean up the partially initialized bio-queue entirely and indicate that
++			 * initialization failed.
++			 */
++			uds_log_error("bio map initialization failed %d", result);
++			vdo_cleanup_io_submitter(io_submitter);
++			vdo_free_io_submitter(io_submitter);
++			return result;
++		}
 +
-+	return uds_destroy_semaphore(&barrier->wait);
-+}
++		bio_queue_data->queue_number = i;
++		result = vdo_make_thread(vdo, vdo->thread_config.bio_threads[i],
++					 &bio_queue_type, 1, (void **) &bio_queue_data);
++		if (result != VDO_SUCCESS) {
++			/*
++			 * Clean up the partially initialized bio-queue entirely and indicate that
++			 * initialization failed.
++			 */
++			vdo_free_int_map(uds_forget(bio_queue_data->map));
++			uds_log_error("bio queue initialization failed %d", result);
++			vdo_cleanup_io_submitter(io_submitter);
++			vdo_free_io_submitter(io_submitter);
++			return result;
++		}
 +
-+int uds_enter_barrier(struct barrier *barrier)
-+{
-+	bool last_thread;
-+
-+	uds_acquire_semaphore(&barrier->mutex);
-+	last_thread = (++barrier->arrived == barrier->thread_count);
-+	if (last_thread) {
-+		int i;
-+
-+		for (i = 1; i < barrier->thread_count; i++)
-+			uds_release_semaphore(&barrier->wait);
-+
-+		barrier->arrived = 0;
-+		uds_release_semaphore(&barrier->mutex);
-+	} else {
-+		uds_release_semaphore(&barrier->mutex);
-+		uds_acquire_semaphore(&barrier->wait);
++		bio_queue_data->queue = vdo->threads[vdo->thread_config.bio_threads[i]].queue;
++		io_submitter->num_bio_queues_used++;
 +	}
 +
-+	return UDS_SUCCESS;
++	*io_submitter_ptr = io_submitter;
++
++	return VDO_SUCCESS;
 +}
-diff --git a/drivers/md/dm-vdo/uds-threads.h b/drivers/md/dm-vdo/uds-threads.h
++
++/**
++ * vdo_cleanup_io_submitter() - Tear down the io_submitter fields as needed for a physical layer.
++ * @io_submitter: The I/O submitter data to tear down (may be NULL).
++ */
++void vdo_cleanup_io_submitter(struct io_submitter *io_submitter)
++{
++	int i;
++
++	if (io_submitter == NULL)
++		return;
++
++	for (i = io_submitter->num_bio_queues_used - 1; i >= 0; i--)
++		vdo_finish_work_queue(io_submitter->bio_queue_data[i].queue);
++}
++
++/**
++ * vdo_free_io_submitter() - Free the io_submitter fields and structure as needed.
++ * @io_submitter: The I/O submitter data to destroy.
++ *
++ * This must be called after vdo_cleanup_io_submitter(). It is used to release resources late in
++ * the shutdown process to avoid or reduce the chance of race conditions.
++ */
++void vdo_free_io_submitter(struct io_submitter *io_submitter)
++{
++	int i;
++
++	if (io_submitter == NULL)
++		return;
++
++	for (i = io_submitter->num_bio_queues_used - 1; i >= 0; i--) {
++		io_submitter->num_bio_queues_used--;
++		/* vdo_destroy() will free the work queue, so just give up our reference to it. */
++		uds_forget(io_submitter->bio_queue_data[i].queue);
++		vdo_free_int_map(uds_forget(io_submitter->bio_queue_data[i].map));
++	}
++	uds_free(io_submitter);
++}
+diff --git a/drivers/md/dm-vdo/io-submitter.h b/drivers/md/dm-vdo/io-submitter.h
 new file mode 100644
-index 000000000000..9f3bf7991383
+index 000000000000..96befb3739e9
 --- /dev/null
-+++ b/drivers/md/dm-vdo/uds-threads.h
-@@ -0,0 +1,115 @@
++++ b/drivers/md/dm-vdo/io-submitter.h
+@@ -0,0 +1,47 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_THREADS_H
-+#define UDS_THREADS_H
++#ifndef VDO_IO_SUBMITTER_H
++#define VDO_IO_SUBMITTER_H
 +
-+#include <linux/atomic.h>
-+#include <linux/delay.h>
-+#include <linux/jiffies.h>
-+#include <linux/mutex.h>
-+#include <linux/semaphore.h>
-+#include <linux/wait.h>
++#include <linux/bio.h>
 +
-+#include "errors.h"
-+#include "time-utils.h"
++#include "types.h"
 +
-+/* Thread and synchronization utilities for UDS */
++struct io_submitter;
 +
-+struct cond_var {
-+	wait_queue_head_t wait_queue;
-+};
++int vdo_make_io_submitter(unsigned int thread_count, unsigned int rotation_interval,
++			  unsigned int max_requests_active, struct vdo *vdo,
++			  struct io_submitter **io_submitter);
 +
-+struct thread;
++void vdo_cleanup_io_submitter(struct io_submitter *io_submitter);
 +
-+struct barrier {
-+	/* Mutex for this barrier object */
-+	struct semaphore mutex;
-+	/* Semaphore for threads waiting at the barrier */
-+	struct semaphore wait;
-+	/* Number of threads which have arrived */
-+	int arrived;
-+	/* Total number of threads using this barrier */
-+	int thread_count;
-+};
++void vdo_free_io_submitter(struct io_submitter *io_submitter);
 +
-+int __must_check uds_create_thread(void (*thread_function)(void *), void *thread_data,
-+				   const char *name, struct thread **new_thread);
++void process_vio_io(struct vdo_completion *completion);
 +
-+void uds_perform_once(atomic_t *once_state, void (*function) (void));
++void submit_data_vio_io(struct data_vio *data_vio);
 +
-+int uds_join_threads(struct thread *thread);
++void vdo_submit_metadata_io(struct vio *vio, physical_block_number_t physical,
++			    bio_end_io_t callback, vdo_action_fn error_handler,
++			    unsigned int operation, char *data);
 +
-+int __must_check uds_initialize_barrier(struct barrier *barrier,
-+					unsigned int thread_count);
-+int uds_destroy_barrier(struct barrier *barrier);
-+int uds_enter_barrier(struct barrier *barrier);
-+
-+int __must_check uds_init_cond(struct cond_var *cond);
-+int uds_signal_cond(struct cond_var *cond);
-+int uds_broadcast_cond(struct cond_var *cond);
-+int uds_wait_cond(struct cond_var *cond, struct mutex *mutex);
-+int uds_destroy_cond(struct cond_var *cond);
-+
-+static inline int __must_check uds_init_mutex(struct mutex *mutex)
++static inline void submit_metadata_vio(struct vio *vio, physical_block_number_t physical,
++				       bio_end_io_t callback, vdo_action_fn error_handler,
++				       unsigned int operation)
 +{
-+	mutex_init(mutex);
-+	return UDS_SUCCESS;
++	vdo_submit_metadata_io(vio, physical, callback, error_handler,
++			       operation, vio->data);
 +}
 +
-+static inline int uds_destroy_mutex(struct mutex *mutex)
++static inline void submit_flush_vio(struct vio *vio, bio_end_io_t callback,
++				    vdo_action_fn error_handler)
 +{
-+	return UDS_SUCCESS;
++	/* FIXME: Can we just use REQ_OP_FLUSH? */
++	vdo_submit_metadata_io(vio, 0, callback, error_handler,
++			       REQ_OP_WRITE | REQ_PREFLUSH, NULL);
 +}
 +
-+static inline void uds_lock_mutex(struct mutex *mutex)
-+{
-+	mutex_lock(mutex);
-+}
-+
-+static inline void uds_unlock_mutex(struct mutex *mutex)
-+{
-+	mutex_unlock(mutex);
-+}
-+
-+static inline int __must_check uds_initialize_semaphore(struct semaphore *semaphore,
-+							unsigned int value)
-+{
-+	sema_init(semaphore, value);
-+	return UDS_SUCCESS;
-+}
-+
-+static inline int uds_destroy_semaphore(struct semaphore *semaphore)
-+{
-+	return UDS_SUCCESS;
-+}
-+
-+static inline void uds_acquire_semaphore(struct semaphore *semaphore)
-+{
-+	/*
-+	 * Do not use down(semaphore). Instead use down_interruptible so that
-+	 * we do not get 120 second stall messages in kern.log.
-+	 */
-+	while (down_interruptible(semaphore) != 0) {
-+		/*
-+		 * If we're called from a user-mode process (e.g., "dmsetup
-+		 * remove") while waiting for an operation that may take a
-+		 * while (e.g., UDS index save), and a signal is sent (SIGINT,
-+		 * SIGUSR2), then down_interruptible will not block. If that
-+		 * happens, sleep briefly to avoid keeping the CPU locked up in
-+		 * this loop. We could just call cond_resched, but then we'd
-+		 * still keep consuming CPU time slices and swamp other threads
-+		 * trying to do computational work. [VDO-4980]
-+		 */
-+		fsleep(1000);
-+	}
-+}
-+
-+static inline void uds_release_semaphore(struct semaphore *semaphore)
-+{
-+	up(semaphore);
-+}
-+
-+#endif /* UDS_THREADS_H */
++#endif /* VDO_IO_SUBMITTER_H */
 -- 
 2.40.0
 
