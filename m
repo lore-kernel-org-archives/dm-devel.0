@@ -1,44 +1,44 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C8D245037
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 401394642F
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Iz1Xkl4n"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="csmKiQn5"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700254801;
+	s=mimecast20190719; t=1700254803;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=T8lcnIGS14xOEoDAJUIz1BBAKtYAGsy7xke7R8lzMg4=;
-	b=Iz1Xkl4nV74f7H4JJ1IOv/JtsCfZDGG8/VtAzPARHkAN55PneAILnareRtYBvOLKe9haje
-	J0eAK6FYNg34pkniTWmnL31RPHolcxU6gK4oY5Kqi+XKTr/DyQNeQ9WB/3vdtqUvU2FFK/
-	4HDcXkpS5vrFf8gTTcDWf/MxKiUpFPE=
+	bh=hoK6CYFAyhoIdEXbFgbUbhuNMgiOapr2c2yRwha+RgE=;
+	b=csmKiQn5ezbzEwnkzqu1aRjs+nm6LUjCBLOGvtgRm1ETVFZCBjH10Inyy/38/awk06jVEC
+	gfNuagHJUEO+8OIQfMvHAURgoP/17SSa0H8REoVTKU0sY9A5NPvJf9Q2+QQCp74UXYOhM5
+	lxEdjUAKoEcQtrQtzBFHaWILprbOZso=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-668-Ash4WdA2Oa21DD2QIj-1tg-1; Fri, 17 Nov 2023 15:59:59 -0500
-X-MC-Unique: Ash4WdA2Oa21DD2QIj-1tg-1
+ us-mta-453-Jn7asYpdPSibhpbB6wxsow-1; Fri, 17 Nov 2023 16:00:01 -0500
+X-MC-Unique: Jn7asYpdPSibhpbB6wxsow-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C55768556E3
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 20:59:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 18959811E86
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:01 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id ADA0940C6EB9;
-	Fri, 17 Nov 2023 20:59:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0EFD140C6EB9;
+	Fri, 17 Nov 2023 21:00:01 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 63C7E3003F; Fri, 17 Nov 2023 15:59:58 -0500 (EST)
+	id C3F043003C; Fri, 17 Nov 2023 16:00:00 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v5 04/40] dm vdo: add basic logging and support utilities
-Date: Fri, 17 Nov 2023 15:59:21 -0500
-Message-Id: <20497ba2a8c309679cd02fb02ac8f0c46b085ca3.1700250814.git.msakai@redhat.com>
+Subject: [PATCH v5 18/40] dm vdo: add vio, the request object for vdo metadata
+Date: Fri, 17 Nov 2023 15:59:35 -0500
+Message-Id: <4c798134b1ee7e03147e5e0df8708803b571ff84.1700250814.git.msakai@redhat.com>
 In-Reply-To: <cover.1700250814.git.msakai@redhat.com>
 References: <cover.1700250814.git.msakai@redhat.com>
 Precedence: bulk
@@ -53,1034 +53,739 @@ X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Add various support utilities for the vdo target and deduplication index,
-including logging utilities, string and time management, and index-specific
-error codes.
+Add the data and methods that implement the vio object that is basic
+unit of I/O in vdo.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
+Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
 Co-developed-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/errors.c       | 312 +++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/errors.h       |  81 ++++++++
- drivers/md/dm-vdo/logger.c       | 291 ++++++++++++++++++++++++++++
- drivers/md/dm-vdo/logger.h       | 105 +++++++++++
- drivers/md/dm-vdo/permassert.c   |  26 +++
- drivers/md/dm-vdo/permassert.h   |  46 +++++
- drivers/md/dm-vdo/string-utils.c |  28 +++
- drivers/md/dm-vdo/string-utils.h |  23 +++
- drivers/md/dm-vdo/time-utils.h   |  28 +++
- 9 files changed, 940 insertions(+)
- create mode 100644 drivers/md/dm-vdo/errors.c
- create mode 100644 drivers/md/dm-vdo/errors.h
- create mode 100644 drivers/md/dm-vdo/logger.c
- create mode 100644 drivers/md/dm-vdo/logger.h
- create mode 100644 drivers/md/dm-vdo/permassert.c
- create mode 100644 drivers/md/dm-vdo/permassert.h
- create mode 100644 drivers/md/dm-vdo/string-utils.c
- create mode 100644 drivers/md/dm-vdo/string-utils.h
- create mode 100644 drivers/md/dm-vdo/time-utils.h
+ drivers/md/dm-vdo/vio.c | 501 ++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/vio.h | 199 ++++++++++++++++
+ 2 files changed, 700 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/vio.c
+ create mode 100644 drivers/md/dm-vdo/vio.h
 
-diff --git a/drivers/md/dm-vdo/errors.c b/drivers/md/dm-vdo/errors.c
+diff --git a/drivers/md/dm-vdo/vio.c b/drivers/md/dm-vdo/vio.c
 new file mode 100644
-index 000000000000..d19504a1445e
+index 000000000000..f83b56acc8e4
 --- /dev/null
-+++ b/drivers/md/dm-vdo/errors.c
-@@ -0,0 +1,312 @@
++++ b/drivers/md/dm-vdo/vio.c
+@@ -0,0 +1,501 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "errors.h"
-+
-+#include <linux/compiler.h>
-+#include <linux/errno.h>
-+
-+#include "logger.h"
-+#include "permassert.h"
-+#include "string-utils.h"
-+
-+static const struct error_info successful = { "UDS_SUCCESS", "Success" };
-+
-+static const char *const message_table[] = {
-+	[EPERM] = "Operation not permitted",
-+	[ENOENT] = "No such file or directory",
-+	[ESRCH] = "No such process",
-+	[EINTR] = "Interrupted system call",
-+	[EIO] = "Input/output error",
-+	[ENXIO] = "No such device or address",
-+	[E2BIG] = "Argument list too long",
-+	[ENOEXEC] = "Exec format error",
-+	[EBADF] = "Bad file descriptor",
-+	[ECHILD] = "No child processes",
-+	[EAGAIN] = "Resource temporarily unavailable",
-+	[ENOMEM] = "Cannot allocate memory",
-+	[EACCES] = "Permission denied",
-+	[EFAULT] = "Bad address",
-+	[ENOTBLK] = "Block device required",
-+	[EBUSY] = "Device or resource busy",
-+	[EEXIST] = "File exists",
-+	[EXDEV] = "Invalid cross-device link",
-+	[ENODEV] = "No such device",
-+	[ENOTDIR] = "Not a directory",
-+	[EISDIR] = "Is a directory",
-+	[EINVAL] = "Invalid argument",
-+	[ENFILE] = "Too many open files in system",
-+	[EMFILE] = "Too many open files",
-+	[ENOTTY] = "Inappropriate ioctl for device",
-+	[ETXTBSY] = "Text file busy",
-+	[EFBIG] = "File too large",
-+	[ENOSPC] = "No space left on device",
-+	[ESPIPE] = "Illegal seek",
-+	[EROFS] = "Read-only file system",
-+	[EMLINK] = "Too many links",
-+	[EPIPE] = "Broken pipe",
-+	[EDOM] = "Numerical argument out of domain",
-+	[ERANGE] = "Numerical result out of range"
-+};
-+
-+static const struct error_info error_list[] = {
-+	{ "UDS_OVERFLOW", "Index overflow" },
-+	{ "UDS_INVALID_ARGUMENT", "Invalid argument passed to internal routine" },
-+	{ "UDS_BAD_STATE", "UDS data structures are in an invalid state" },
-+	{ "UDS_DUPLICATE_NAME", "Attempt to enter the same name into a delta index twice" },
-+	{ "UDS_ASSERTION_FAILED", "Assertion failed" },
-+	{ "UDS_QUEUED", "Request queued" },
-+	{ "UDS_BUFFER_ERROR", "Buffer error" },
-+	{ "UDS_NO_DIRECTORY", "Expected directory is missing" },
-+	{ "UDS_ALREADY_REGISTERED", "Error range already registered" },
-+	{ "UDS_OUT_OF_RANGE", "Cannot access data outside specified limits" },
-+	{ "UDS_EMODULE_LOAD", "Could not load modules" },
-+	{ "UDS_DISABLED", "UDS library context is disabled" },
-+	{ "UDS_UNKNOWN_ERROR", "Unknown error" },
-+	{ "UDS_UNSUPPORTED_VERSION", "Unsupported version" },
-+	{ "UDS_CORRUPT_DATA", "Some index structure is corrupt" },
-+	{ "UDS_NO_INDEX", "No index found" },
-+	{ "UDS_INDEX_NOT_SAVED_CLEANLY", "Index not saved cleanly" },
-+};
-+
-+struct error_block {
-+	const char *name;
-+	int base;
-+	int last;
-+	int max;
-+	const struct error_info *infos;
-+};
-+
-+enum {
-+	MAX_ERROR_BLOCKS = 6,
-+};
-+
-+static struct {
-+	int allocated;
-+	int count;
-+	struct error_block blocks[MAX_ERROR_BLOCKS];
-+} registered_errors = {
-+	.allocated = MAX_ERROR_BLOCKS,
-+	.count = 1,
-+	.blocks = { {
-+			.name = "UDS Error",
-+			.base = UDS_ERROR_CODE_BASE,
-+			.last = UDS_ERROR_CODE_LAST,
-+			.max = UDS_ERROR_CODE_BLOCK_END,
-+			.infos = error_list,
-+		  } },
-+};
-+
-+/* Get the error info for an error number. Also returns the name of the error block, if known. */
-+static const char *get_error_info(int errnum, const struct error_info **info_ptr)
-+{
-+	struct error_block *block;
-+
-+	if (errnum == UDS_SUCCESS) {
-+		*info_ptr = &successful;
-+		return NULL;
-+	}
-+
-+	for (block = registered_errors.blocks;
-+	     block < registered_errors.blocks + registered_errors.count;
-+	     block++) {
-+		if ((errnum >= block->base) && (errnum < block->last)) {
-+			*info_ptr = block->infos + (errnum - block->base);
-+			return block->name;
-+		} else if ((errnum >= block->last) && (errnum < block->max)) {
-+			*info_ptr = NULL;
-+			return block->name;
-+		}
-+	}
-+
-+	return NULL;
-+}
-+
-+/* Return a string describing a system error message. */
-+static const char *system_string_error(int errnum, char *buf, size_t buflen)
-+{
-+	size_t len;
-+	const char *error_string = NULL;
-+
-+	if ((errnum > 0) && (errnum < ARRAY_SIZE(message_table)))
-+		error_string = message_table[errnum];
-+
-+	len = ((error_string == NULL) ?
-+		 snprintf(buf, buflen, "Unknown error %d", errnum) :
-+		 snprintf(buf, buflen, "%s", error_string));
-+	if (len < buflen)
-+		return buf;
-+
-+	buf[0] = '\0';
-+	return "System error";
-+}
-+
-+/* Convert an error code to a descriptive string. */
-+const char *uds_string_error(int errnum, char *buf, size_t buflen)
-+{
-+	char *buffer = buf;
-+	char *buf_end = buf + buflen;
-+	const struct error_info *info = NULL;
-+	const char *block_name;
-+
-+	if (buf == NULL)
-+		return NULL;
-+
-+	if (errnum < 0)
-+		errnum = -errnum;
-+
-+	block_name = get_error_info(errnum, &info);
-+	if (block_name != NULL) {
-+		if (info != NULL) {
-+			buffer = uds_append_to_buffer(buffer, buf_end, "%s: %s",
-+						      block_name, info->message);
-+		} else {
-+			buffer = uds_append_to_buffer(buffer, buf_end, "Unknown %s %d",
-+						      block_name, errnum);
-+		}
-+	} else if (info != NULL) {
-+		buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->message);
-+	} else {
-+		const char *tmp = system_string_error(errnum, buffer, buf_end - buffer);
-+
-+		if (tmp != buffer)
-+			buffer = uds_append_to_buffer(buffer, buf_end, "%s", tmp);
-+		else
-+			buffer += strlen(tmp);
-+	}
-+
-+	return buf;
-+}
-+
-+/* Convert an error code to its name. */
-+const char *uds_string_error_name(int errnum, char *buf, size_t buflen)
-+{
-+	char *buffer = buf;
-+	char *buf_end = buf + buflen;
-+	const struct error_info *info = NULL;
-+	const char *block_name;
-+
-+	if (errnum < 0)
-+		errnum = -errnum;
-+
-+	block_name = get_error_info(errnum, &info);
-+	if (block_name != NULL) {
-+		if (info != NULL) {
-+			buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->name);
-+		} else {
-+			buffer = uds_append_to_buffer(buffer, buf_end, "%s %d",
-+						      block_name, errnum);
-+		}
-+	} else if (info != NULL) {
-+		buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->name);
-+	} else {
-+		const char *tmp;
-+
-+		tmp = system_string_error(errnum, buffer, buf_end - buffer);
-+		if (tmp != buffer)
-+			buffer = uds_append_to_buffer(buffer, buf_end, "%s", tmp);
-+		else
-+			buffer += strlen(tmp);
-+	}
-+
-+	return buf;
-+}
-+
-+/*
-+ * Translate an error code into a value acceptable to the kernel. The input error code may be a
-+ * system-generated value (such as -EIO), or an internal UDS status code. The result will be a
-+ * negative errno value.
-+ */
-+int uds_map_to_system_error(int error)
-+{
-+	char error_name[UDS_MAX_ERROR_NAME_SIZE];
-+	char error_message[UDS_MAX_ERROR_MESSAGE_SIZE];
-+
-+	/* 0 is success, and negative values are already system error codes. */
-+	if (likely(error <= 0))
-+		return error;
-+
-+	if (error < 1024) {
-+		/* This is probably an errno from userspace. */
-+		return -error;
-+	}
-+
-+	/* Internal UDS errors */
-+	switch (error) {
-+	case UDS_NO_INDEX:
-+	case UDS_CORRUPT_DATA:
-+		/* The index doesn't exist or can't be recovered. */
-+		return -ENOENT;
-+
-+	case UDS_INDEX_NOT_SAVED_CLEANLY:
-+	case UDS_UNSUPPORTED_VERSION:
-+		/*
-+		 * The index exists, but can't be loaded. Tell the client it exists so they don't
-+		 * destroy it inadvertently.
-+		 */
-+		return -EEXIST;
-+
-+	case UDS_DISABLED:
-+		/* The session is unusable; only returned by requests. */
-+		return -EIO;
-+
-+	default:
-+		/* Translate an unexpected error into something generic. */
-+		uds_log_info("%s: mapping status code %d (%s: %s) to -EIO",
-+			     __func__, error,
-+			     uds_string_error_name(error, error_name,
-+						   sizeof(error_name)),
-+			     uds_string_error(error, error_message,
-+					      sizeof(error_message)));
-+		return -EIO;
-+	}
-+}
-+
-+/*
-+ * Register a block of error codes.
-+ *
-+ * @block_name: the name of the block of error codes
-+ * @first_error: the first error code in the block
-+ * @next_free_error: one past the highest possible error in the block
-+ * @infos: a pointer to the error info array for the block
-+ * @info_size: the size of the error info array
-+ */
-+int uds_register_error_block(const char *block_name, int first_error,
-+			     int next_free_error, const struct error_info *infos,
-+			     size_t info_size)
-+{
-+	int result;
-+	struct error_block *block;
-+	struct error_block new_block = {
-+		.name = block_name,
-+		.base = first_error,
-+		.last = first_error + (info_size / sizeof(struct error_info)),
-+		.max = next_free_error,
-+		.infos = infos,
-+	};
-+
-+	result = ASSERT(first_error < next_free_error, "well-defined error block range");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (registered_errors.count == registered_errors.allocated) {
-+		/* This should never happen. */
-+		return UDS_OVERFLOW;
-+	}
-+
-+	for (block = registered_errors.blocks;
-+	     block < registered_errors.blocks + registered_errors.count;
-+	     block++) {
-+		if (strcmp(block_name, block->name) == 0)
-+			return UDS_DUPLICATE_NAME;
-+
-+		/* Ensure error ranges do not overlap. */
-+		if ((first_error < block->max) && (next_free_error > block->base))
-+			return UDS_ALREADY_REGISTERED;
-+	}
-+
-+	registered_errors.blocks[registered_errors.count++] = new_block;
-+	return UDS_SUCCESS;
-+}
-diff --git a/drivers/md/dm-vdo/errors.h b/drivers/md/dm-vdo/errors.h
-new file mode 100644
-index 000000000000..0129fa37d8d8
---- /dev/null
-+++ b/drivers/md/dm-vdo/errors.h
-@@ -0,0 +1,81 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_ERRORS_H
-+#define UDS_ERRORS_H
-+
-+#include <linux/compiler.h>
-+#include <linux/types.h>
-+
-+/* Custom error codes and error-related utilities for UDS */
-+
-+/* Valid status codes for internal UDS functions. */
-+enum uds_status_codes {
-+	/* Successful return */
-+	UDS_SUCCESS = 0,
-+
-+	/* Used as a base value for reporting internal errors */
-+	UDS_ERROR_CODE_BASE = 1024,
-+	/* Index overflow */
-+	UDS_OVERFLOW = UDS_ERROR_CODE_BASE + 0,
-+	/* Invalid argument passed to internal routine */
-+	UDS_INVALID_ARGUMENT = UDS_ERROR_CODE_BASE + 1,
-+	/* UDS data structures are in an invalid state */
-+	UDS_BAD_STATE = UDS_ERROR_CODE_BASE + 2,
-+	/* Attempt to enter the same name into an internal structure twice */
-+	UDS_DUPLICATE_NAME = UDS_ERROR_CODE_BASE + 3,
-+	/* An assertion failed */
-+	UDS_ASSERTION_FAILED = UDS_ERROR_CODE_BASE + 4,
-+	/* A request has been queued for later processing (not an error) */
-+	UDS_QUEUED = UDS_ERROR_CODE_BASE + 5,
-+	/* A problem has occurred with a buffer */
-+	UDS_BUFFER_ERROR = UDS_ERROR_CODE_BASE + 6,
-+	/* No directory was found where one was expected */
-+	UDS_NO_DIRECTORY = UDS_ERROR_CODE_BASE + 7,
-+	/* This error range has already been registered */
-+	UDS_ALREADY_REGISTERED = UDS_ERROR_CODE_BASE + 8,
-+	/* Attempt to read or write data outside the valid range */
-+	UDS_OUT_OF_RANGE = UDS_ERROR_CODE_BASE + 9,
-+	/* Could not load modules */
-+	UDS_EMODULE_LOAD = UDS_ERROR_CODE_BASE + 10,
-+	/* The index session is disabled */
-+	UDS_DISABLED = UDS_ERROR_CODE_BASE + 11,
-+	/* Unknown error */
-+	UDS_UNKNOWN_ERROR = UDS_ERROR_CODE_BASE + 12,
-+	/* The index configuration or volume format is no longer supported */
-+	UDS_UNSUPPORTED_VERSION = UDS_ERROR_CODE_BASE + 13,
-+	/* Some index structure is corrupt */
-+	UDS_CORRUPT_DATA = UDS_ERROR_CODE_BASE + 14,
-+	/* No index state found */
-+	UDS_NO_INDEX = UDS_ERROR_CODE_BASE + 15,
-+	/* Attempt to access incomplete index save data */
-+	UDS_INDEX_NOT_SAVED_CLEANLY = UDS_ERROR_CODE_BASE + 16,
-+	/* One more than the last UDS_INTERNAL error code */
-+	UDS_ERROR_CODE_LAST,
-+	/* One more than the last error this block will ever use */
-+	UDS_ERROR_CODE_BLOCK_END = UDS_ERROR_CODE_BASE + 440,
-+};
-+
-+enum {
-+	UDS_MAX_ERROR_NAME_SIZE = 80,
-+	UDS_MAX_ERROR_MESSAGE_SIZE = 128,
-+};
-+
-+struct error_info {
-+	const char *name;
-+	const char *message;
-+};
-+
-+const char * __must_check uds_string_error(int errnum, char *buf, size_t buflen);
-+
-+const char *uds_string_error_name(int errnum, char *buf, size_t buflen);
-+
-+int uds_map_to_system_error(int error);
-+
-+int uds_register_error_block(const char *block_name, int first_error,
-+			     int last_reserved_error, const struct error_info *infos,
-+			     size_t info_size);
-+
-+#endif /* UDS_ERRORS_H */
-diff --git a/drivers/md/dm-vdo/logger.c b/drivers/md/dm-vdo/logger.c
-new file mode 100644
-index 000000000000..fe632f10b5d9
---- /dev/null
-+++ b/drivers/md/dm-vdo/logger.c
-@@ -0,0 +1,291 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "logger.h"
-+
-+#include <linux/delay.h>
-+#include <linux/hardirq.h>
-+#include <linux/module.h>
-+#include <linux/printk.h>
-+#include <linux/sched.h>
-+
-+#include "thread-device.h"
-+#include "uds-threads.h"
-+
-+struct priority_name {
-+	const char *name;
-+	const int priority;
-+};
-+
-+static const struct priority_name PRIORITIES[] = {
-+	{ "ALERT", UDS_LOG_ALERT },
-+	{ "CRITICAL", UDS_LOG_CRIT },
-+	{ "CRIT", UDS_LOG_CRIT },
-+	{ "DEBUG", UDS_LOG_DEBUG },
-+	{ "EMERGENCY", UDS_LOG_EMERG },
-+	{ "EMERG", UDS_LOG_EMERG },
-+	{ "ERROR", UDS_LOG_ERR },
-+	{ "ERR", UDS_LOG_ERR },
-+	{ "INFO", UDS_LOG_INFO },
-+	{ "NOTICE", UDS_LOG_NOTICE },
-+	{ "PANIC", UDS_LOG_EMERG },
-+	{ "WARN", UDS_LOG_WARNING },
-+	{ "WARNING", UDS_LOG_WARNING },
-+	{ NULL, -1 },
-+};
-+
-+static const char *const PRIORITY_STRINGS[] = {
-+	"EMERGENCY",
-+	"ALERT",
-+	"CRITICAL",
-+	"ERROR",
-+	"WARN",
-+	"NOTICE",
-+	"INFO",
-+	"DEBUG",
-+};
-+
-+static int log_level = UDS_LOG_INFO;
-+
-+int uds_get_log_level(void)
-+{
-+	return log_level;
-+}
-+
-+void uds_set_log_level(int new_log_level)
-+{
-+	log_level = new_log_level;
-+}
-+
-+int uds_log_string_to_priority(const char *string)
-+{
-+	int i;
-+
-+	for (i = 0; PRIORITIES[i].name != NULL; i++) {
-+		if (strcasecmp(string, PRIORITIES[i].name) == 0)
-+			return PRIORITIES[i].priority;
-+	}
-+
-+	return UDS_LOG_INFO;
-+}
-+
-+const char *uds_log_priority_to_string(int priority)
-+{
-+	if ((priority < 0) || (priority >= (int) ARRAY_SIZE(PRIORITY_STRINGS)))
-+		return "unknown";
-+
-+	return PRIORITY_STRINGS[priority];
-+}
-+
-+static const char *get_current_interrupt_type(void)
-+{
-+	if (in_nmi())
-+		return "NMI";
-+
-+	if (in_irq())
-+		return "HI";
-+
-+	if (in_softirq())
-+		return "SI";
-+
-+	return "INTR";
-+}
-+
-+/**
-+ * emit_log_message_to_kernel() - Emit a log message to the kernel at the specified priority.
-+ *
-+ * @priority: The priority at which to log the message
-+ * @fmt: The format string of the message
-+ */
-+static void emit_log_message_to_kernel(int priority, const char *fmt, ...)
-+{
-+	va_list args;
-+	struct va_format vaf;
-+
-+	if (priority > uds_get_log_level())
-+		return;
-+
-+	va_start(args, fmt);
-+	vaf.fmt = fmt;
-+	vaf.va = &args;
-+
-+	switch (priority) {
-+	case UDS_LOG_EMERG:
-+	case UDS_LOG_ALERT:
-+	case UDS_LOG_CRIT:
-+		printk(KERN_CRIT "%pV", &vaf);
-+		break;
-+	case UDS_LOG_ERR:
-+		printk(KERN_ERR "%pV", &vaf);
-+		break;
-+	case UDS_LOG_WARNING:
-+		printk(KERN_WARNING "%pV", &vaf);
-+		break;
-+	case UDS_LOG_NOTICE:
-+		printk(KERN_NOTICE "%pV", &vaf);
-+		break;
-+	case UDS_LOG_INFO:
-+		printk(KERN_INFO "%pV", &vaf);
-+		break;
-+	case UDS_LOG_DEBUG:
-+		printk(KERN_DEBUG "%pV", &vaf);
-+		break;
-+	default:
-+		printk(KERN_DEFAULT "%pV", &vaf);
-+		break;
-+	}
-+
-+	va_end(args);
-+}
-+
-+/**
-+ * emit_log_message() - Emit a log message to the kernel log in a format suited to the current
-+ *                      thread context.
-+ *
-+ * Context info formats:
-+ *
-+ * interrupt:           uds[NMI]: blah
-+ * kvdo thread:         kvdo12:foobarQ: blah
-+ * thread w/device id:  kvdo12:myprog: blah
-+ * other thread:        uds: myprog: blah
-+ *
-+ * Fields: module name, interrupt level, process name, device ID.
-+ *
-+ * @priority: the priority at which to log the message
-+ * @module: The name of the module doing the logging
-+ * @prefix: The prefix of the log message
-+ * @vaf1: The first message format descriptor
-+ * @vaf2: The second message format descriptor
-+ */
-+static void emit_log_message(int priority, const char *module, const char *prefix,
-+			     const struct va_format *vaf1, const struct va_format *vaf2)
-+{
-+	int device_instance;
-+
-+	/*
-+	 * In interrupt context, identify the interrupt type and module. Ignore the process/thread
-+	 * since it could be anything.
-+	 */
-+	if (in_interrupt()) {
-+		const char *type = get_current_interrupt_type();
-+
-+		emit_log_message_to_kernel(priority, "%s[%s]: %s%pV%pV\n", module, type,
-+					   prefix, vaf1, vaf2);
-+		return;
-+	}
-+
-+	/* Not at interrupt level; we have a process we can look at, and might have a device ID. */
-+	device_instance = uds_get_thread_device_id();
-+	if (device_instance >= 0) {
-+		emit_log_message_to_kernel(priority, "%s%u:%s: %s%pV%pV\n", module,
-+					   device_instance, current->comm, prefix, vaf1,
-+					   vaf2);
-+		return;
-+	}
-+
-+	/*
-+	 * If it's a kernel thread and the module name is a prefix of its name, assume it is ours
-+	 * and only identify the thread.
-+	 */
-+	if (((current->flags & PF_KTHREAD) != 0) &&
-+	    (strncmp(module, current->comm, strlen(module)) == 0)) {
-+		emit_log_message_to_kernel(priority, "%s: %s%pV%pV\n", current->comm,
-+					   prefix, vaf1, vaf2);
-+		return;
-+	}
-+
-+	/* Identify the module and the process. */
-+	emit_log_message_to_kernel(priority, "%s: %s: %s%pV%pV\n", module, current->comm,
-+				   prefix, vaf1, vaf2);
-+}
-+
-+/*
-+ * uds_log_embedded_message() - Log a message embedded within another message.
-+ * @priority: the priority at which to log the message
-+ * @module: the name of the module doing the logging
-+ * @prefix: optional string prefix to message, may be NULL
-+ * @fmt1: format of message first part (required)
-+ * @args1: arguments for message first part (required)
-+ * @fmt2: format of message second part
-+ */
-+void uds_log_embedded_message(int priority, const char *module, const char *prefix,
-+			      const char *fmt1, va_list args1, const char *fmt2, ...)
-+{
-+	va_list args1_copy;
-+	va_list args2;
-+	struct va_format vaf1, vaf2;
-+
-+	va_start(args2, fmt2);
-+
-+	if (module == NULL)
-+		module = UDS_LOGGING_MODULE_NAME;
-+
-+	if (prefix == NULL)
-+		prefix = "";
-+
-+	/*
-+	 * It is implementation dependent whether va_list is defined as an array type that decays
-+	 * to a pointer when passed as an argument. Copy args1 and args2 with va_copy so that vaf1
-+	 * and vaf2 get proper va_list pointers irrespective of how va_list is defined.
-+	 */
-+	va_copy(args1_copy, args1);
-+	vaf1.fmt = fmt1;
-+	vaf1.va = &args1_copy;
-+
-+	vaf2.fmt = fmt2;
-+	vaf2.va = &args2;
-+
-+	emit_log_message(priority, module, prefix, &vaf1, &vaf2);
-+
-+	va_end(args1_copy);
-+	va_end(args2);
-+}
-+
-+int uds_vlog_strerror(int priority, int errnum, const char *module, const char *format,
-+		      va_list args)
-+{
-+	char errbuf[UDS_MAX_ERROR_MESSAGE_SIZE];
-+	const char *message = uds_string_error(errnum, errbuf, sizeof(errbuf));
-+
-+	uds_log_embedded_message(priority, module, NULL, format, args, ": %s (%d)",
-+				 message, errnum);
-+	return errnum;
-+}
-+
-+int __uds_log_strerror(int priority, int errnum, const char *module, const char *format, ...)
-+{
-+	va_list args;
-+
-+	va_start(args, format);
-+	uds_vlog_strerror(priority, errnum, module, format, args);
-+	va_end(args);
-+	return errnum;
-+}
-+
-+void uds_log_backtrace(int priority)
-+{
-+	if (priority > uds_get_log_level())
-+		return;
-+
-+	dump_stack();
-+}
-+
-+void __uds_log_message(int priority, const char *module, const char *format, ...)
-+{
-+	va_list args;
-+
-+	va_start(args, format);
-+	uds_log_embedded_message(priority, module, NULL, format, args, "%s", "");
-+	va_end(args);
-+}
-+
-+/*
-+ * Sleep or delay a few milliseconds in an attempt to allow the log buffers to be flushed lest they
-+ * be overrun.
-+ */
-+void uds_pause_for_logger(void)
-+{
-+	fsleep(4000);
-+}
-diff --git a/drivers/md/dm-vdo/logger.h b/drivers/md/dm-vdo/logger.h
-new file mode 100644
-index 000000000000..246aa43db9ee
---- /dev/null
-+++ b/drivers/md/dm-vdo/logger.h
-@@ -0,0 +1,105 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_LOGGER_H
-+#define UDS_LOGGER_H
-+
-+#include <linux/module.h>
++#include "vio.h"
++
++#include <linux/bio.h>
++#include <linux/blkdev.h>
++#include <linux/kernel.h>
 +#include <linux/ratelimit.h>
 +
-+/* Custom logging utilities for UDS */
-+
-+#define UDS_LOG_EMERG 0
-+#define UDS_LOG_ALERT 1
-+#define UDS_LOG_CRIT 2
-+#define UDS_LOG_ERR 3
-+#define UDS_LOG_WARNING 4
-+#define UDS_LOG_NOTICE 5
-+#define UDS_LOG_INFO 6
-+#define UDS_LOG_DEBUG 7
-+
-+#if defined(MODULE)
-+#define UDS_LOGGING_MODULE_NAME THIS_MODULE->name
-+#else /* compiled into the kernel */
-+#define UDS_LOGGING_MODULE_NAME "vdo"
-+#endif
-+
-+/* Apply a rate limiter to a log method call. */
-+#define uds_log_ratelimit(log_fn, ...)                                    \
-+	do {                                                              \
-+		static DEFINE_RATELIMIT_STATE(_rs,                        \
-+					      DEFAULT_RATELIMIT_INTERVAL, \
-+					      DEFAULT_RATELIMIT_BURST);   \
-+		if (__ratelimit(&_rs)) {                                  \
-+			log_fn(__VA_ARGS__);                              \
-+		}                                                         \
-+	} while (0)
-+
-+int uds_get_log_level(void);
-+
-+void uds_set_log_level(int new_log_level);
-+
-+int uds_log_string_to_priority(const char *string);
-+
-+const char *uds_log_priority_to_string(int priority);
-+
-+void uds_log_embedded_message(int priority, const char *module, const char *prefix,
-+			      const char *fmt1, va_list args1, const char *fmt2, ...)
-+	__printf(4, 0) __printf(6, 7);
-+
-+void uds_log_backtrace(int priority);
-+
-+/* All log functions will preserve the caller's value of errno. */
-+
-+#define uds_log_strerror(priority, errnum, ...) \
-+	__uds_log_strerror(priority, errnum, UDS_LOGGING_MODULE_NAME, __VA_ARGS__)
-+
-+int __uds_log_strerror(int priority, int errnum, const char *module,
-+		       const char *format, ...)
-+	__printf(4, 5);
-+
-+int uds_vlog_strerror(int priority, int errnum, const char *module, const char *format,
-+		      va_list args)
-+	__printf(4, 0);
-+
-+/* Log an error prefixed with the string associated with the errnum. */
-+#define uds_log_error_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_ERR, errnum, __VA_ARGS__)
-+
-+#define uds_log_debug_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_DEBUG, errnum, __VA_ARGS__)
-+
-+#define uds_log_info_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_INFO, errnum, __VA_ARGS__)
-+
-+#define uds_log_notice_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_NOTICE, errnum, __VA_ARGS__)
-+
-+#define uds_log_warning_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_WARNING, errnum, __VA_ARGS__)
-+
-+#define uds_log_fatal_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_CRIT, errnum, __VA_ARGS__)
-+
-+#define uds_log_message(priority, ...) \
-+	__uds_log_message(priority, UDS_LOGGING_MODULE_NAME, __VA_ARGS__)
-+
-+void __uds_log_message(int priority, const char *module, const char *format, ...)
-+	__printf(3, 4);
-+
-+#define uds_log_debug(...) uds_log_message(UDS_LOG_DEBUG, __VA_ARGS__)
-+
-+#define uds_log_info(...) uds_log_message(UDS_LOG_INFO, __VA_ARGS__)
-+
-+#define uds_log_notice(...) uds_log_message(UDS_LOG_NOTICE, __VA_ARGS__)
-+
-+#define uds_log_warning(...) uds_log_message(UDS_LOG_WARNING, __VA_ARGS__)
-+
-+#define uds_log_error(...) uds_log_message(UDS_LOG_ERR, __VA_ARGS__)
-+
-+#define uds_log_fatal(...) uds_log_message(UDS_LOG_CRIT, __VA_ARGS__)
-+
-+void uds_pause_for_logger(void);
-+#endif /* UDS_LOGGER_H */
-diff --git a/drivers/md/dm-vdo/permassert.c b/drivers/md/dm-vdo/permassert.c
-new file mode 100644
-index 000000000000..3fa752ba0061
---- /dev/null
-+++ b/drivers/md/dm-vdo/permassert.c
-@@ -0,0 +1,26 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "permassert.h"
-+
-+#include "errors.h"
-+#include "logger.h"
-+
-+int uds_assertion_failed(const char *expression_string, const char *file_name,
-+			 int line_number, const char *format, ...)
-+{
-+	va_list args;
-+
-+	va_start(args, format);
-+
-+	uds_log_embedded_message(UDS_LOG_ERR, UDS_LOGGING_MODULE_NAME, "assertion \"",
-+				 format, args, "\" (%s) failed at %s:%d",
-+				 expression_string, file_name, line_number);
-+	uds_log_backtrace(UDS_LOG_ERR);
-+
-+	va_end(args);
-+
-+	return UDS_ASSERTION_FAILED;
-+}
-diff --git a/drivers/md/dm-vdo/permassert.h b/drivers/md/dm-vdo/permassert.h
-new file mode 100644
-index 000000000000..ee978bc115ec
---- /dev/null
-+++ b/drivers/md/dm-vdo/permassert.h
-@@ -0,0 +1,46 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef PERMASSERT_H
-+#define PERMASSERT_H
-+
-+#include <linux/compiler.h>
-+
-+#include "errors.h"
-+
-+/* Utilities for asserting that certain conditions are met */
-+
-+#define STRINGIFY(X) #X
-+#define STRINGIFY_VALUE(X) STRINGIFY(X)
-+
-+/*
-+ * A hack to apply the "warn if unused" attribute to an integral expression.
-+ *
-+ * Since GCC doesn't propagate the warn_unused_result attribute to conditional expressions
-+ * incorporating calls to functions with that attribute, this function can be used to wrap such an
-+ * expression. With optimization enabled, this function contributes no additional instructions, but
-+ * the warn_unused_result attribute still applies to the code calling it.
-+ */
-+static inline int __must_check uds_must_use(int value)
-+{
-+	return value;
-+}
-+
-+/* Assert that an expression is true and return an error if it is not. */
-+#define ASSERT(expr, ...) uds_must_use(__UDS_ASSERT(expr, __VA_ARGS__))
-+
-+/* Log a message if the expression is not true. */
-+#define ASSERT_LOG_ONLY(expr, ...) __UDS_ASSERT(expr, __VA_ARGS__)
-+
-+#define __UDS_ASSERT(expr, ...)				      \
-+	(likely(expr) ? UDS_SUCCESS			      \
-+		      : uds_assertion_failed(STRINGIFY(expr), __FILE__, __LINE__, __VA_ARGS__))
-+
-+/* Log an assertion failure message. */
-+int uds_assertion_failed(const char *expression_string, const char *file_name,
-+			 int line_number, const char *format, ...)
-+	__printf(4, 5);
-+
-+#endif /* PERMASSERT_H */
-diff --git a/drivers/md/dm-vdo/string-utils.c b/drivers/md/dm-vdo/string-utils.c
-new file mode 100644
-index 000000000000..a584b37bb70c
---- /dev/null
-+++ b/drivers/md/dm-vdo/string-utils.c
-@@ -0,0 +1,28 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "string-utils.h"
-+
-+#include "errors.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "permassert.h"
-+#include "uds.h"
 +
-+char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
++#include "constants.h"
++#include "io-submitter.h"
++#include "vdo.h"
++
++/* A vio_pool is a collection of preallocated vios. */
++struct vio_pool {
++	/** The number of objects managed by the pool */
++	size_t size;
++	/** The list of objects which are available */
++	struct list_head available;
++	/** The queue of requestors waiting for objects from the pool */
++	struct wait_queue waiting;
++	/** The number of objects currently in use */
++	size_t busy_count;
++	/** The list of objects which are in use */
++	struct list_head busy;
++	/** The ID of the thread on which this pool may be used */
++	thread_id_t thread_id;
++	/** The buffer backing the pool's vios */
++	char *buffer;
++	/** The pool entries */
++	struct pooled_vio vios[];
++};
++
++physical_block_number_t pbn_from_vio_bio(struct bio *bio)
 +{
++	struct vio *vio = bio->bi_private;
++	struct vdo *vdo = vio->completion.vdo;
++	physical_block_number_t pbn = bio->bi_iter.bi_sector / VDO_SECTORS_PER_BLOCK;
++
++	return ((pbn == VDO_GEOMETRY_BLOCK_LOCATION) ? pbn : pbn + vdo->geometry.bio_offset);
++}
++
++static int create_multi_block_bio(block_count_t size, struct bio **bio_ptr)
++{
++	struct bio *bio = NULL;
++	int result;
++
++	result = uds_allocate_extended(struct bio, size + 1, struct bio_vec,
++				       "bio", &bio);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	*bio_ptr = bio;
++	return VDO_SUCCESS;
++}
++
++int vdo_create_bio(struct bio **bio_ptr)
++{
++	return create_multi_block_bio(1, bio_ptr);
++}
++
++void vdo_free_bio(struct bio *bio)
++{
++	if (bio == NULL)
++		return;
++
++	bio_uninit(bio);
++	uds_free(uds_forget(bio));
++}
++
++int allocate_vio_components(struct vdo *vdo, enum vio_type vio_type,
++			    enum vio_priority priority, void *parent,
++			    unsigned int block_count, char *data, struct vio *vio)
++{
++	struct bio *bio;
++	int result;
++
++	result = ASSERT(block_count <= MAX_BLOCKS_PER_VIO,
++			"block count %u does not exceed maximum %u", block_count,
++			MAX_BLOCKS_PER_VIO);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = ASSERT(((vio_type != VIO_TYPE_UNINITIALIZED) && (vio_type != VIO_TYPE_DATA)),
++			"%d is a metadata type", vio_type);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = create_multi_block_bio(block_count, &bio);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	initialize_vio(vio, bio, block_count, vio_type, priority, vdo);
++	vio->completion.parent = parent;
++	vio->data = data;
++	return VDO_SUCCESS;
++}
++
++/**
++ * create_multi_block_metadata_vio() - Create a vio.
++ * @vdo: The vdo on which the vio will operate.
++ * @vio_type: The type of vio to create.
++ * @priority: The relative priority to assign to the vio.
++ * @parent: The parent of the vio.
++ * @block_count: The size of the vio in blocks.
++ * @data: The buffer.
++ * @vio_ptr: A pointer to hold the new vio.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int create_multi_block_metadata_vio(struct vdo *vdo, enum vio_type vio_type,
++				    enum vio_priority priority, void *parent,
++				    unsigned int block_count, char *data,
++				    struct vio **vio_ptr)
++{
++	struct vio *vio;
++	int result;
++
++	/* If struct vio grows past 256 bytes, we'll lose benefits of VDOSTORY-176. */
++	BUILD_BUG_ON(sizeof(struct vio) > 256);
++
++	/*
++	 * Metadata vios should use direct allocation and not use the buffer pool, which is
++	 * reserved for submissions from the linux block layer.
++	 */
++	result = uds_allocate(1, struct vio, __func__, &vio);
++	if (result != VDO_SUCCESS) {
++		uds_log_error("metadata vio allocation failure %d", result);
++		return result;
++	}
++
++	result = allocate_vio_components(vdo, vio_type, priority, parent, block_count,
++					 data, vio);
++	if (result != VDO_SUCCESS) {
++		uds_free(vio);
++		return result;
++	}
++
++	*vio_ptr  = vio;
++	return VDO_SUCCESS;
++}
++
++/**
++ * free_vio_components() - Free the components of a vio embedded in a larger structure.
++ * @vio: The vio to destroy
++ */
++void free_vio_components(struct vio *vio)
++{
++	if (vio == NULL)
++		return;
++
++	BUG_ON(is_data_vio(vio));
++	vdo_free_bio(uds_forget(vio->bio));
++}
++
++/**
++ * free_vio() - Destroy a vio.
++ * @vio: The vio to destroy.
++ */
++void free_vio(struct vio *vio)
++{
++	free_vio_components(vio);
++	uds_free(vio);
++}
++
++/* Set bio properties for a VDO read or write. */
++void vdo_set_bio_properties(struct bio *bio, struct vio *vio, bio_end_io_t callback,
++			    unsigned int bi_opf, physical_block_number_t pbn)
++{
++	struct vdo *vdo = vio->completion.vdo;
++	struct device_config *config = vdo->device_config;
++
++	pbn -= vdo->geometry.bio_offset;
++	vio->bio_zone = ((pbn / config->thread_counts.bio_rotation_interval) %
++			 config->thread_counts.bio_threads);
++
++	bio->bi_private = vio;
++	bio->bi_end_io = callback;
++	bio->bi_opf = bi_opf;
++	bio->bi_iter.bi_sector = pbn * VDO_SECTORS_PER_BLOCK;
++}
++
++/*
++ * Prepares the bio to perform IO with the specified buffer. May only be used on a VDO-allocated
++ * bio, as it assumes the bio wraps a 4k buffer that is 4k aligned, but there does not have to be a
++ * vio associated with the bio.
++ */
++int vio_reset_bio(struct vio *vio, char *data, bio_end_io_t callback,
++		  unsigned int bi_opf, physical_block_number_t pbn)
++{
++	int bvec_count, offset, len, i;
++	struct bio *bio = vio->bio;
++
++	bio_reset(bio, bio->bi_bdev, bi_opf);
++	vdo_set_bio_properties(bio, vio, callback, bi_opf, pbn);
++	if (data == NULL)
++		return VDO_SUCCESS;
++
++	bio->bi_io_vec = bio->bi_inline_vecs;
++	bio->bi_max_vecs = vio->block_count + 1;
++	len = VDO_BLOCK_SIZE * vio->block_count;
++	offset = offset_in_page(data);
++	bvec_count = DIV_ROUND_UP(offset + len, PAGE_SIZE);
++
++	/*
++	 * If we knew that data was always on one page, or contiguous pages, we wouldn't need the
++	 * loop. But if we're using vmalloc, it's not impossible that the data is in different
++	 * pages that can't be merged in bio_add_page...
++	 */
++	for (i = 0; (i < bvec_count) && (len > 0); i++) {
++		struct page *page;
++		int bytes_added;
++		int bytes = PAGE_SIZE - offset;
++
++		if (bytes > len)
++			bytes = len;
++
++		page = is_vmalloc_addr(data) ? vmalloc_to_page(data) : virt_to_page(data);
++		bytes_added = bio_add_page(bio, page, bytes, offset);
++
++		if (bytes_added != bytes) {
++			return uds_log_error_strerror(VDO_BIO_CREATION_FAILED,
++						      "Could only add %i bytes to bio",
++						      bytes_added);
++		}
++
++		data += bytes;
++		len -= bytes;
++		offset = 0;
++	}
++
++	return VDO_SUCCESS;
++}
++
++/**
++ * update_vio_error_stats() - Update per-vio error stats and log the error.
++ * @vio: The vio which got an error.
++ * @format: The format of the message to log (a printf style format).
++ */
++void update_vio_error_stats(struct vio *vio, const char *format, ...)
++{
++	static DEFINE_RATELIMIT_STATE(error_limiter, DEFAULT_RATELIMIT_INTERVAL,
++				      DEFAULT_RATELIMIT_BURST);
 +	va_list args;
-+	size_t n;
++	int priority;
++	struct vdo *vdo = vio->completion.vdo;
 +
-+	va_start(args, fmt);
-+	n = vsnprintf(buffer, buf_end - buffer, fmt, args);
-+	if (n >= (size_t) (buf_end - buffer))
-+		buffer = buf_end;
-+	else
-+		buffer += n;
++	switch (vio->completion.result) {
++	case VDO_READ_ONLY:
++		atomic64_inc(&vdo->stats.read_only_error_count);
++		return;
++
++	case VDO_NO_SPACE:
++		atomic64_inc(&vdo->stats.no_space_error_count);
++		priority = UDS_LOG_DEBUG;
++		break;
++
++	default:
++		priority = UDS_LOG_ERR;
++	}
++
++	if (!__ratelimit(&error_limiter))
++		return;
++
++	va_start(args, format);
++	uds_vlog_strerror(priority, vio->completion.result, UDS_LOGGING_MODULE_NAME,
++			  format, args);
 +	va_end(args);
-+
-+	return buffer;
 +}
-diff --git a/drivers/md/dm-vdo/string-utils.h b/drivers/md/dm-vdo/string-utils.h
++
++void vio_record_metadata_io_error(struct vio *vio)
++{
++	const char *description;
++	physical_block_number_t pbn = pbn_from_vio_bio(vio->bio);
++
++	if (bio_op(vio->bio) == REQ_OP_READ) {
++		description = "read";
++	} else if ((vio->bio->bi_opf & REQ_PREFLUSH) == REQ_PREFLUSH) {
++		description = (((vio->bio->bi_opf & REQ_FUA) == REQ_FUA) ?
++			       "write+preflush+fua" :
++			       "write+preflush");
++	} else if ((vio->bio->bi_opf & REQ_FUA) == REQ_FUA) {
++		description = "write+fua";
++	} else {
++		description = "write";
++	}
++
++	update_vio_error_stats(vio,
++			       "Completing %s vio of type %u for physical block %llu with error",
++			       description, vio->type, (unsigned long long) pbn);
++}
++
++/**
++ * make_vio_pool() - Create a new vio pool.
++ * @vdo: The vdo.
++ * @pool_size: The number of vios in the pool.
++ * @thread_id: The ID of the thread using this pool.
++ * @vio_type: The type of vios in the pool.
++ * @priority: The priority with which vios from the pool should be enqueued.
++ * @context: The context that each entry will have.
++ * @pool_ptr: The resulting pool.
++ *
++ * Return: A success or error code.
++ */
++int make_vio_pool(struct vdo *vdo, size_t pool_size, thread_id_t thread_id,
++		  enum vio_type vio_type, enum vio_priority priority, void *context,
++		  struct vio_pool **pool_ptr)
++{
++	struct vio_pool *pool;
++	char *ptr;
++	int result;
++
++	result = uds_allocate_extended(struct vio_pool, pool_size, struct pooled_vio,
++				       __func__, &pool);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	pool->thread_id = thread_id;
++	INIT_LIST_HEAD(&pool->available);
++	INIT_LIST_HEAD(&pool->busy);
++
++	result = uds_allocate(pool_size * VDO_BLOCK_SIZE, char,
++			      "VIO pool buffer", &pool->buffer);
++	if (result != VDO_SUCCESS) {
++		free_vio_pool(pool);
++		return result;
++	}
++
++	ptr = pool->buffer;
++	for (pool->size = 0; pool->size < pool_size; pool->size++, ptr += VDO_BLOCK_SIZE) {
++		struct pooled_vio *pooled = &pool->vios[pool->size];
++
++		result = allocate_vio_components(vdo, vio_type, priority, NULL, 1, ptr,
++						 &pooled->vio);
++		if (result != VDO_SUCCESS) {
++			free_vio_pool(pool);
++			return result;
++		}
++
++		pooled->context = context;
++		list_add_tail(&pooled->pool_entry, &pool->available);
++	}
++
++	*pool_ptr = pool;
++	return VDO_SUCCESS;
++}
++
++/**
++ * free_vio_pool() - Destroy a vio pool.
++ * @pool: The pool to free.
++ */
++void free_vio_pool(struct vio_pool *pool)
++{
++	struct pooled_vio *pooled, *tmp;
++
++	if (pool == NULL)
++		return;
++
++	/* Remove all available vios from the object pool. */
++	ASSERT_LOG_ONLY(!vdo_has_waiters(&pool->waiting),
++			"VIO pool must not have any waiters when being freed");
++	ASSERT_LOG_ONLY((pool->busy_count == 0),
++			"VIO pool must not have %zu busy entries when being freed",
++			pool->busy_count);
++	ASSERT_LOG_ONLY(list_empty(&pool->busy),
++			"VIO pool must not have busy entries when being freed");
++
++	list_for_each_entry_safe(pooled, tmp, &pool->available, pool_entry) {
++		list_del(&pooled->pool_entry);
++		free_vio_components(&pooled->vio);
++		pool->size--;
++	}
++
++	ASSERT_LOG_ONLY(pool->size == 0,
++			"VIO pool must not have missing entries when being freed");
++
++	uds_free(uds_forget(pool->buffer));
++	uds_free(pool);
++}
++
++/**
++ * is_vio_pool_busy() - Check whether an vio pool has outstanding entries.
++ *
++ * Return: true if the pool is busy.
++ */
++bool is_vio_pool_busy(struct vio_pool *pool)
++{
++	return (pool->busy_count != 0);
++}
++
++/**
++ * acquire_vio_from_pool() - Acquire a vio and buffer from the pool (asynchronous).
++ * @pool: The vio pool.
++ * @waiter: Object that is requesting a vio.
++ */
++void acquire_vio_from_pool(struct vio_pool *pool, struct waiter *waiter)
++{
++	struct pooled_vio *pooled;
++
++	ASSERT_LOG_ONLY((pool->thread_id == vdo_get_callback_thread_id()),
++			"acquire from active vio_pool called from correct thread");
++
++	if (list_empty(&pool->available)) {
++		vdo_enqueue_waiter(&pool->waiting, waiter);
++		return;
++	}
++
++	pooled = list_first_entry(&pool->available, struct pooled_vio, pool_entry);
++	pool->busy_count++;
++	list_move_tail(&pooled->pool_entry, &pool->busy);
++	(*waiter->callback)(waiter, pooled);
++}
++
++/**
++ * return_vio_to_pool() - Return a vio to the pool
++ * @pool: The vio pool.
++ * @vio: The pooled vio to return.
++ */
++void return_vio_to_pool(struct vio_pool *pool, struct pooled_vio *vio)
++{
++	ASSERT_LOG_ONLY((pool->thread_id == vdo_get_callback_thread_id()),
++			"vio pool entry returned on same thread as it was acquired");
++
++	vio->vio.completion.error_handler = NULL;
++	vio->vio.completion.parent = NULL;
++	if (vdo_has_waiters(&pool->waiting)) {
++		vdo_notify_next_waiter(&pool->waiting, NULL, vio);
++		return;
++	}
++
++	list_move_tail(&vio->pool_entry, &pool->available);
++	--pool->busy_count;
++}
++
++/*
++ * Various counting functions for statistics.
++ * These are used for bios coming into VDO, as well as bios generated by VDO.
++ */
++void vdo_count_bios(struct atomic_bio_stats *bio_stats, struct bio *bio)
++{
++	if (((bio->bi_opf & REQ_PREFLUSH) != 0) && (bio->bi_iter.bi_size == 0)) {
++		atomic64_inc(&bio_stats->empty_flush);
++		atomic64_inc(&bio_stats->flush);
++		return;
++	}
++
++	switch (bio_op(bio)) {
++	case REQ_OP_WRITE:
++		atomic64_inc(&bio_stats->write);
++		break;
++	case REQ_OP_READ:
++		atomic64_inc(&bio_stats->read);
++		break;
++	case REQ_OP_DISCARD:
++		atomic64_inc(&bio_stats->discard);
++		break;
++		/*
++		 * All other operations are filtered out in dmvdo.c, or not created by VDO, so
++		 * shouldn't exist.
++		 */
++	default:
++		ASSERT_LOG_ONLY(0, "Bio operation %d not a write, read, discard, or empty flush",
++				bio_op(bio));
++	}
++
++	if ((bio->bi_opf & REQ_PREFLUSH) != 0)
++		atomic64_inc(&bio_stats->flush);
++	if (bio->bi_opf & REQ_FUA)
++		atomic64_inc(&bio_stats->fua);
++}
++
++static void count_all_bios_completed(struct vio *vio, struct bio *bio)
++{
++	struct atomic_statistics *stats = &vio->completion.vdo->stats;
++
++	if (is_data_vio(vio)) {
++		vdo_count_bios(&stats->bios_out_completed, bio);
++		return;
++	}
++
++	vdo_count_bios(&stats->bios_meta_completed, bio);
++	if (vio->type == VIO_TYPE_RECOVERY_JOURNAL)
++		vdo_count_bios(&stats->bios_journal_completed, bio);
++	else if (vio->type == VIO_TYPE_BLOCK_MAP)
++		vdo_count_bios(&stats->bios_page_cache_completed, bio);
++}
++
++void vdo_count_completed_bios(struct bio *bio)
++{
++	struct vio *vio = (struct vio *) bio->bi_private;
++
++	atomic64_inc(&vio->completion.vdo->stats.bios_completed);
++	count_all_bios_completed(vio, bio);
++}
+diff --git a/drivers/md/dm-vdo/vio.h b/drivers/md/dm-vdo/vio.h
 new file mode 100644
-index 000000000000..8275af582cf7
+index 000000000000..3c72fded69b0
 --- /dev/null
-+++ b/drivers/md/dm-vdo/string-utils.h
-@@ -0,0 +1,23 @@
++++ b/drivers/md/dm-vdo/vio.h
+@@ -0,0 +1,199 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_STRING_UTILS_H
-+#define UDS_STRING_UTILS_H
++#ifndef VIO_H
++#define VIO_H
 +
++#include <linux/bio.h>
++#include <linux/blkdev.h>
++#include <linux/compiler.h>
 +#include <linux/kernel.h>
-+#include <linux/string.h>
++#include <linux/list.h>
 +
-+/* Utilities related to string manipulation */
++#include "completion.h"
++#include "constants.h"
++#include "types.h"
++#include "vdo.h"
 +
-+static inline const char *uds_bool_to_string(bool value)
-+{
-+	return value ? "true" : "false";
-+}
++enum {
++	MAX_BLOCKS_PER_VIO = (BIO_MAX_VECS << PAGE_SHIFT) / VDO_BLOCK_SIZE,
++};
 +
-+/* Append a formatted string to the end of a buffer. */
-+char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
-+	__printf(3, 4);
++struct pooled_vio {
++	/* The underlying vio */
++	struct vio vio;
++	/* The list entry for chaining pooled vios together */
++	struct list_head list_entry;
++	/* The context set by the pool */
++	void *context;
++	/* The list entry used by the pool */
++	struct list_head pool_entry;
++};
 +
-+#endif /* UDS_STRING_UTILS_H */
-diff --git a/drivers/md/dm-vdo/time-utils.h b/drivers/md/dm-vdo/time-utils.h
-new file mode 100644
-index 000000000000..5f1e850fd826
---- /dev/null
-+++ b/drivers/md/dm-vdo/time-utils.h
-@@ -0,0 +1,28 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
++/**
++ * as_vio() - Convert a generic vdo_completion to a vio.
++ * @completion: The completion to convert.
++ *
++ * Return: The completion as a vio.
 + */
-+
-+#ifndef UDS_TIME_UTILS_H
-+#define UDS_TIME_UTILS_H
-+
-+#include <linux/ktime.h>
-+#include <linux/time.h>
-+#include <linux/types.h>
-+
-+static inline s64 ktime_to_seconds(ktime_t reltime)
++static inline struct vio *as_vio(struct vdo_completion *completion)
 +{
-+	return reltime / NSEC_PER_SEC;
++	vdo_assert_completion_type(completion, VIO_COMPLETION);
++	return container_of(completion, struct vio, completion);
 +}
 +
-+static inline ktime_t current_time_ns(clockid_t clock)
++/**
++ * get_vio_bio_zone_thread_id() - Get the thread id of the bio zone in which a vio should submit
++ *                                its I/O.
++ * @vio: The vio.
++ *
++ * Return: The id of the bio zone thread the vio should use.
++ */
++static inline thread_id_t __must_check get_vio_bio_zone_thread_id(struct vio *vio)
 +{
-+	return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
++	return vio->completion.vdo->thread_config.bio_threads[vio->bio_zone];
 +}
 +
-+static inline ktime_t current_time_us(void)
++physical_block_number_t __must_check pbn_from_vio_bio(struct bio *bio);
++
++/**
++ * assert_vio_in_bio_zone() - Check that a vio is running on the correct thread for its bio zone.
++ * @vio: The vio to check.
++ */
++static inline void assert_vio_in_bio_zone(struct vio *vio)
 +{
-+	return current_time_ns(CLOCK_REALTIME) / NSEC_PER_USEC;
++	thread_id_t expected = get_vio_bio_zone_thread_id(vio);
++	thread_id_t thread_id = vdo_get_callback_thread_id();
++
++	ASSERT_LOG_ONLY((expected == thread_id),
++			"vio I/O for physical block %llu on thread %u, should be on bio zone thread %u",
++			(unsigned long long) pbn_from_vio_bio(vio->bio), thread_id,
++			expected);
 +}
 +
-+#endif /* UDS_TIME_UTILS_H */
++int vdo_create_bio(struct bio **bio_ptr);
++void vdo_free_bio(struct bio *bio);
++int allocate_vio_components(struct vdo *vdo, enum vio_type vio_type,
++			    enum vio_priority priority, void *parent,
++			    unsigned int block_count, char *data, struct vio *vio);
++int __must_check create_multi_block_metadata_vio(struct vdo *vdo, enum vio_type vio_type,
++						 enum vio_priority priority,
++						 void *parent, unsigned int block_count,
++						 char *data, struct vio **vio_ptr);
++
++static inline int __must_check create_metadata_vio(struct vdo *vdo, enum vio_type vio_type,
++						   enum vio_priority priority,
++						   void *parent, char *data,
++						   struct vio **vio_ptr)
++{
++	return create_multi_block_metadata_vio(vdo, vio_type, priority, parent, 1, data,
++					       vio_ptr);
++}
++
++void free_vio_components(struct vio *vio);
++void free_vio(struct vio *vio);
++
++/**
++ * initialize_vio() - Initialize a vio.
++ * @vio: The vio to initialize.
++ * @bio: The bio this vio should use for its I/O.
++ * @block_count: The size of this vio in vdo blocks.
++ * @vio_type: The vio type.
++ * @priority: The relative priority of the vio.
++ * @vdo: The vdo for this vio.
++ */
++static inline void initialize_vio(struct vio *vio, struct bio *bio,
++				  unsigned int block_count, enum vio_type vio_type,
++				  enum vio_priority priority, struct vdo *vdo)
++{
++	/* data_vio's may not span multiple blocks */
++	BUG_ON((vio_type == VIO_TYPE_DATA) && (block_count != 1));
++
++	vio->bio = bio;
++	vio->block_count = block_count;
++	vio->type = vio_type;
++	vio->priority = priority;
++	vdo_initialize_completion(&vio->completion, vdo, VIO_COMPLETION);
++}
++
++void vdo_set_bio_properties(struct bio *bio, struct vio *vio, bio_end_io_t callback,
++			    unsigned int bi_opf, physical_block_number_t pbn);
++
++int vio_reset_bio(struct vio *vio, char *data, bio_end_io_t callback,
++		  unsigned int bi_opf, physical_block_number_t pbn);
++
++void update_vio_error_stats(struct vio *vio, const char *format, ...)
++	__printf(2, 3);
++
++/**
++ * is_data_vio() - Check whether a vio is servicing an external data request.
++ * @vio: The vio to check.
++ */
++static inline bool is_data_vio(struct vio *vio)
++{
++	return (vio->type == VIO_TYPE_DATA);
++}
++
++/**
++ * get_metadata_priority() - Convert a vio's priority to a work item priority.
++ * @vio: The vio.
++ *
++ * Return: The priority with which to submit the vio's bio.
++ */
++static inline enum vdo_completion_priority get_metadata_priority(struct vio *vio)
++{
++	return ((vio->priority == VIO_PRIORITY_HIGH) ?
++		BIO_Q_HIGH_PRIORITY :
++		BIO_Q_METADATA_PRIORITY);
++}
++
++/**
++ * continue_vio() - Enqueue a vio to run its next callback.
++ * @vio: The vio to continue.
++ *
++ * Return: The result of the current operation.
++ */
++static inline void continue_vio(struct vio *vio, int result)
++{
++	if (unlikely(result != VDO_SUCCESS))
++		vdo_set_completion_result(&vio->completion, result);
++
++	vdo_enqueue_completion(&vio->completion, VDO_WORK_Q_DEFAULT_PRIORITY);
++}
++
++void vdo_count_bios(struct atomic_bio_stats *bio_stats, struct bio *bio);
++void vdo_count_completed_bios(struct bio *bio);
++
++/**
++ * continue_vio_after_io() - Continue a vio now that its I/O has returned.
++ */
++static inline void continue_vio_after_io(struct vio *vio, vdo_action_fn callback,
++					 thread_id_t thread)
++{
++	vdo_count_completed_bios(vio->bio);
++	vdo_set_completion_callback(&vio->completion, callback, thread);
++	continue_vio(vio, blk_status_to_errno(vio->bio->bi_status));
++}
++
++void vio_record_metadata_io_error(struct vio *vio);
++
++/* A vio_pool is a collection of preallocated vios used to write arbitrary metadata blocks. */
++
++static inline struct pooled_vio *vio_as_pooled_vio(struct vio *vio)
++{
++	return container_of(vio, struct pooled_vio, vio);
++}
++
++struct vio_pool;
++
++int __must_check make_vio_pool(struct vdo *vdo, size_t pool_size, thread_id_t thread_id,
++			       enum vio_type vio_type, enum vio_priority priority,
++			       void *context, struct vio_pool **pool_ptr);
++void free_vio_pool(struct vio_pool *pool);
++bool __must_check is_vio_pool_busy(struct vio_pool *pool);
++void acquire_vio_from_pool(struct vio_pool *pool, struct waiter *waiter);
++void return_vio_to_pool(struct vio_pool *pool, struct pooled_vio *vio);
++
++#endif /* VIO_H */
 -- 
 2.40.0
 
