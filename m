@@ -1,44 +1,44 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F021B4642A
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C8D245037
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="P98ZcA3Q"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Iz1Xkl4n"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700254803;
+	s=mimecast20190719; t=1700254801;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=5fu+PeivqoeFzYaHtBXg81CMXX3PDAQ5PkS0Je83vz0=;
-	b=P98ZcA3Q8fIhw9r9rSVzuGnaHBE/KyP8xQavTUpp+H0NiFkByyDQLru0PzFvxvm3flXMCP
-	zEpvn0xlf6SU2trT0LZxBN/p+7NzH2lmeXiUXCmH8P20wa4C3HHMg9edjHnJr60yiVzs4r
-	PPfpDYbFKFSrpyqol8SyoMV519wwPPw=
+	bh=T8lcnIGS14xOEoDAJUIz1BBAKtYAGsy7xke7R8lzMg4=;
+	b=Iz1Xkl4nV74f7H4JJ1IOv/JtsCfZDGG8/VtAzPARHkAN55PneAILnareRtYBvOLKe9haje
+	J0eAK6FYNg34pkniTWmnL31RPHolcxU6gK4oY5Kqi+XKTr/DyQNeQ9WB/3vdtqUvU2FFK/
+	4HDcXkpS5vrFf8gTTcDWf/MxKiUpFPE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-567-4VB-YGS7NYS-4TCBTQjHkA-1; Fri, 17 Nov 2023 16:00:02 -0500
-X-MC-Unique: 4VB-YGS7NYS-4TCBTQjHkA-1
+ us-mta-668-Ash4WdA2Oa21DD2QIj-1tg-1; Fri, 17 Nov 2023 15:59:59 -0500
+X-MC-Unique: Ash4WdA2Oa21DD2QIj-1tg-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3A41C810FC4
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C55768556E3
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 20:59:58 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3093240C6EB9;
-	Fri, 17 Nov 2023 21:00:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id ADA0940C6EB9;
+	Fri, 17 Nov 2023 20:59:58 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id E694D3003C; Fri, 17 Nov 2023 16:00:01 -0500 (EST)
+	id 63C7E3003F; Fri, 17 Nov 2023 15:59:58 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v5 23/40] dm vdo: add use of deduplication index in hash zones
-Date: Fri, 17 Nov 2023 15:59:40 -0500
-Message-Id: <e6003568928fc0f3edbc1f62823f0b5702a88313.1700250814.git.msakai@redhat.com>
+Subject: [PATCH v5 04/40] dm vdo: add basic logging and support utilities
+Date: Fri, 17 Nov 2023 15:59:21 -0500
+Message-Id: <20497ba2a8c309679cd02fb02ac8f0c46b085ca3.1700250814.git.msakai@redhat.com>
 In-Reply-To: <cover.1700250814.git.msakai@redhat.com>
 References: <cover.1700250814.git.msakai@redhat.com>
 Precedence: bulk
@@ -53,721 +53,1034 @@ X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Add the data and methods that manage queries to the deduplication
-index and the responses from the index.
+Add various support utilities for the vdo target and deduplication index,
+including logging utilities, string and time management, and index-specific
+error codes.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
-Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
+Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
 Co-developed-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/dedupe.c | 625 +++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/dedupe.h |  26 ++
- 2 files changed, 651 insertions(+)
+ drivers/md/dm-vdo/errors.c       | 312 +++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/errors.h       |  81 ++++++++
+ drivers/md/dm-vdo/logger.c       | 291 ++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/logger.h       | 105 +++++++++++
+ drivers/md/dm-vdo/permassert.c   |  26 +++
+ drivers/md/dm-vdo/permassert.h   |  46 +++++
+ drivers/md/dm-vdo/string-utils.c |  28 +++
+ drivers/md/dm-vdo/string-utils.h |  23 +++
+ drivers/md/dm-vdo/time-utils.h   |  28 +++
+ 9 files changed, 940 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/errors.c
+ create mode 100644 drivers/md/dm-vdo/errors.h
+ create mode 100644 drivers/md/dm-vdo/logger.c
+ create mode 100644 drivers/md/dm-vdo/logger.h
+ create mode 100644 drivers/md/dm-vdo/permassert.c
+ create mode 100644 drivers/md/dm-vdo/permassert.h
+ create mode 100644 drivers/md/dm-vdo/string-utils.c
+ create mode 100644 drivers/md/dm-vdo/string-utils.h
+ create mode 100644 drivers/md/dm-vdo/time-utils.h
 
-diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
-index f40cc9643b1c..4c4d697a4888 100644
---- a/drivers/md/dm-vdo/dedupe.c
-+++ b/drivers/md/dm-vdo/dedupe.c
-@@ -143,6 +143,48 @@
- #include "vdo.h"
- #include "wait-queue.h"
- 
-+struct uds_attribute {
-+	struct attribute attr;
-+	const char *(*show_string)(struct hash_zones *hash_zones);
+diff --git a/drivers/md/dm-vdo/errors.c b/drivers/md/dm-vdo/errors.c
+new file mode 100644
+index 000000000000..d19504a1445e
+--- /dev/null
++++ b/drivers/md/dm-vdo/errors.c
+@@ -0,0 +1,312 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "errors.h"
++
++#include <linux/compiler.h>
++#include <linux/errno.h>
++
++#include "logger.h"
++#include "permassert.h"
++#include "string-utils.h"
++
++static const struct error_info successful = { "UDS_SUCCESS", "Success" };
++
++static const char *const message_table[] = {
++	[EPERM] = "Operation not permitted",
++	[ENOENT] = "No such file or directory",
++	[ESRCH] = "No such process",
++	[EINTR] = "Interrupted system call",
++	[EIO] = "Input/output error",
++	[ENXIO] = "No such device or address",
++	[E2BIG] = "Argument list too long",
++	[ENOEXEC] = "Exec format error",
++	[EBADF] = "Bad file descriptor",
++	[ECHILD] = "No child processes",
++	[EAGAIN] = "Resource temporarily unavailable",
++	[ENOMEM] = "Cannot allocate memory",
++	[EACCES] = "Permission denied",
++	[EFAULT] = "Bad address",
++	[ENOTBLK] = "Block device required",
++	[EBUSY] = "Device or resource busy",
++	[EEXIST] = "File exists",
++	[EXDEV] = "Invalid cross-device link",
++	[ENODEV] = "No such device",
++	[ENOTDIR] = "Not a directory",
++	[EISDIR] = "Is a directory",
++	[EINVAL] = "Invalid argument",
++	[ENFILE] = "Too many open files in system",
++	[EMFILE] = "Too many open files",
++	[ENOTTY] = "Inappropriate ioctl for device",
++	[ETXTBSY] = "Text file busy",
++	[EFBIG] = "File too large",
++	[ENOSPC] = "No space left on device",
++	[ESPIPE] = "Illegal seek",
++	[EROFS] = "Read-only file system",
++	[EMLINK] = "Too many links",
++	[EPIPE] = "Broken pipe",
++	[EDOM] = "Numerical argument out of domain",
++	[ERANGE] = "Numerical result out of range"
 +};
 +
-+enum timer_state {
-+	DEDUPE_QUERY_TIMER_IDLE,
-+	DEDUPE_QUERY_TIMER_RUNNING,
-+	DEDUPE_QUERY_TIMER_FIRED,
++static const struct error_info error_list[] = {
++	{ "UDS_OVERFLOW", "Index overflow" },
++	{ "UDS_INVALID_ARGUMENT", "Invalid argument passed to internal routine" },
++	{ "UDS_BAD_STATE", "UDS data structures are in an invalid state" },
++	{ "UDS_DUPLICATE_NAME", "Attempt to enter the same name into a delta index twice" },
++	{ "UDS_ASSERTION_FAILED", "Assertion failed" },
++	{ "UDS_QUEUED", "Request queued" },
++	{ "UDS_BUFFER_ERROR", "Buffer error" },
++	{ "UDS_NO_DIRECTORY", "Expected directory is missing" },
++	{ "UDS_ALREADY_REGISTERED", "Error range already registered" },
++	{ "UDS_OUT_OF_RANGE", "Cannot access data outside specified limits" },
++	{ "UDS_EMODULE_LOAD", "Could not load modules" },
++	{ "UDS_DISABLED", "UDS library context is disabled" },
++	{ "UDS_UNKNOWN_ERROR", "Unknown error" },
++	{ "UDS_UNSUPPORTED_VERSION", "Unsupported version" },
++	{ "UDS_CORRUPT_DATA", "Some index structure is corrupt" },
++	{ "UDS_NO_INDEX", "No index found" },
++	{ "UDS_INDEX_NOT_SAVED_CLEANLY", "Index not saved cleanly" },
 +};
 +
-+enum dedupe_context_state {
-+	DEDUPE_CONTEXT_IDLE,
-+	DEDUPE_CONTEXT_PENDING,
-+	DEDUPE_CONTEXT_TIMED_OUT,
-+	DEDUPE_CONTEXT_COMPLETE,
-+	DEDUPE_CONTEXT_TIMED_OUT_COMPLETE,
++struct error_block {
++	const char *name;
++	int base;
++	int last;
++	int max;
++	const struct error_info *infos;
 +};
 +
-+/* Possible index states: closed, opened, or transitioning between those two. */
-+enum index_state {
-+	IS_CLOSED,
-+	IS_CHANGING,
-+	IS_OPENED,
-+};
-+
-+static const char *CLOSED = "closed";
-+static const char *CLOSING = "closing";
-+static const char *ERROR = "error";
-+static const char *OFFLINE = "offline";
-+static const char *ONLINE = "online";
-+static const char *OPENING = "opening";
-+static const char *SUSPENDED = "suspended";
-+static const char *UNKNOWN = "unknown";
-+
-+/* Version 2 uses the kernel space UDS index and is limited to 16 bytes */
 +enum {
-+	UDS_ADVICE_VERSION = 2,
-+	/* version byte + state byte + 64-bit little-endian PBN */
-+	UDS_ADVICE_SIZE = 1 + 1 + sizeof(u64),
++	MAX_ERROR_BLOCKS = 6,
 +};
 +
- enum hash_lock_state {
- 	/* State for locks that are not in use or are being initialized. */
- 	VDO_HASH_LOCK_INITIALIZING,
-@@ -264,6 +306,13 @@ struct hash_zones {
- 	struct hash_zone zones[];
- };
- 
-+/* These are in milliseconds. */
-+unsigned int vdo_dedupe_index_timeout_interval = 5000;
-+unsigned int vdo_dedupe_index_min_timer_interval = 100;
-+/* Same two variables, in jiffies for easier consumption. */
-+static u64 vdo_dedupe_index_timeout_jiffies;
-+static u64 vdo_dedupe_index_min_timer_jiffies;
-+
- static inline struct hash_zone *as_hash_zone(struct vdo_completion *completion)
- {
- 	vdo_assert_completion_type(completion, VDO_HASH_ZONE_COMPLETION);
-@@ -282,6 +331,16 @@ static inline void assert_in_hash_zone(struct hash_zone *zone, const char *name)
- 			"%s called on hash zone thread", name);
- }
- 
-+static inline bool change_context_state(struct dedupe_context *context, int old, int new)
-+{
-+	return (atomic_cmpxchg(&context->state, old, new) == old);
-+}
-+
-+static inline bool change_timer_state(struct hash_zone *zone, int old, int new)
-+{
-+	return (atomic_cmpxchg(&zone->timer_state, old, new) == old);
-+}
-+
- /**
-  * return_hash_lock_to_pool() - (Re)initialize a hash lock and return it to its pool.
-  * @zone: The zone from which the lock was borrowed.
-@@ -1968,6 +2027,379 @@ static u32 hash_key(const void *key)
- 	return get_unaligned_le32(&name->name[4]);
- }
- 
-+static void dedupe_kobj_release(struct kobject *directory)
-+{
-+	uds_free(container_of(directory, struct hash_zones, dedupe_directory));
-+}
-+
-+static ssize_t dedupe_status_show(struct kobject *directory, struct attribute *attr,
-+				  char *buf)
-+{
-+	struct uds_attribute *ua = container_of(attr, struct uds_attribute, attr);
-+	struct hash_zones *zones = container_of(directory, struct hash_zones,
-+						dedupe_directory);
-+
-+	if (ua->show_string != NULL)
-+		return sprintf(buf, "%s\n", ua->show_string(zones));
-+	else
-+		return -EINVAL;
-+}
-+
-+static ssize_t dedupe_status_store(struct kobject *kobj __always_unused,
-+				   struct attribute *attr __always_unused,
-+				   const char *buf __always_unused,
-+				   size_t length __always_unused)
-+{
-+	return -EINVAL;
-+}
-+
-+/*----------------------------------------------------------------------*/
-+
-+static const struct sysfs_ops dedupe_sysfs_ops = {
-+	.show = dedupe_status_show,
-+	.store = dedupe_status_store,
++static struct {
++	int allocated;
++	int count;
++	struct error_block blocks[MAX_ERROR_BLOCKS];
++} registered_errors = {
++	.allocated = MAX_ERROR_BLOCKS,
++	.count = 1,
++	.blocks = { {
++			.name = "UDS Error",
++			.base = UDS_ERROR_CODE_BASE,
++			.last = UDS_ERROR_CODE_LAST,
++			.max = UDS_ERROR_CODE_BLOCK_END,
++			.infos = error_list,
++		  } },
 +};
 +
-+static struct uds_attribute dedupe_status_attribute = {
-+	.attr = {.name = "status", .mode = 0444, },
-+	.show_string = vdo_get_dedupe_index_state_name,
-+};
-+
-+static struct attribute *dedupe_attrs[] = {
-+	&dedupe_status_attribute.attr,
-+	NULL,
-+};
-+ATTRIBUTE_GROUPS(dedupe);
-+
-+static const struct kobj_type dedupe_directory_type = {
-+	.release = dedupe_kobj_release,
-+	.sysfs_ops = &dedupe_sysfs_ops,
-+	.default_groups = dedupe_groups,
-+};
-+
-+static void start_uds_queue(void *ptr)
++/* Get the error info for an error number. Also returns the name of the error block, if known. */
++static const char *get_error_info(int errnum, const struct error_info **info_ptr)
 +{
-+	/*
-+	 * Allow the UDS dedupe worker thread to do memory allocations. It will only do allocations
-+	 * during the UDS calls that open or close an index, but those allocations can safely sleep
-+	 * while reserving a large amount of memory. We could use an allocations_allowed boolean
-+	 * (like the base threads do), but it would be an unnecessary embellishment.
-+	 */
-+	struct vdo_thread *thread = vdo_get_work_queue_owner(vdo_get_current_work_queue());
++	struct error_block *block;
 +
-+	uds_register_allocating_thread(&thread->allocating_thread, NULL);
-+}
++	if (errnum == UDS_SUCCESS) {
++		*info_ptr = &successful;
++		return NULL;
++	}
 +
-+static void finish_uds_queue(void *ptr __always_unused)
-+{
-+	uds_unregister_allocating_thread();
-+}
-+
-+static void close_index(struct hash_zones *zones)
-+{
-+	int result;
-+
-+	/*
-+	 * Change the index state so that get_index_statistics() will not try to use the index
-+	 * session we are closing.
-+	 */
-+	zones->index_state = IS_CHANGING;
-+	/* Close the index session, while not holding the lock. */
-+	spin_unlock(&zones->lock);
-+	result = uds_close_index(zones->index_session);
-+
-+	if (result != UDS_SUCCESS)
-+		uds_log_error_strerror(result, "Error closing index");
-+	spin_lock(&zones->lock);
-+	zones->index_state = IS_CLOSED;
-+	zones->error_flag |= result != UDS_SUCCESS;
-+	/* ASSERTION: We leave in IS_CLOSED state. */
-+}
-+
-+static void open_index(struct hash_zones *zones)
-+{
-+	/* ASSERTION: We enter in IS_CLOSED state. */
-+	int result;
-+	bool create_flag = zones->create_flag;
-+
-+	zones->create_flag = false;
-+	/*
-+	 * Change the index state so that the it will be reported to the outside world as
-+	 * "opening".
-+	 */
-+	zones->index_state = IS_CHANGING;
-+	zones->error_flag = false;
-+
-+	/* Open the index session, while not holding the lock */
-+	spin_unlock(&zones->lock);
-+	result = uds_open_index(create_flag ? UDS_CREATE : UDS_LOAD,
-+				&zones->parameters, zones->index_session);
-+	if (result != UDS_SUCCESS)
-+		uds_log_error_strerror(result, "Error opening index");
-+
-+	spin_lock(&zones->lock);
-+	if (!create_flag) {
-+		switch (result) {
-+		case -ENOENT:
-+			/*
-+			 * Either there is no index, or there is no way we can recover the index.
-+			 * We will be called again and try to create a new index.
-+			 */
-+			zones->index_state = IS_CLOSED;
-+			zones->create_flag = true;
-+			return;
-+		default:
-+			break;
++	for (block = registered_errors.blocks;
++	     block < registered_errors.blocks + registered_errors.count;
++	     block++) {
++		if ((errnum >= block->base) && (errnum < block->last)) {
++			*info_ptr = block->infos + (errnum - block->base);
++			return block->name;
++		} else if ((errnum >= block->last) && (errnum < block->max)) {
++			*info_ptr = NULL;
++			return block->name;
 +		}
 +	}
-+	if (result == UDS_SUCCESS) {
-+		zones->index_state = IS_OPENED;
-+	} else {
-+		zones->index_state = IS_CLOSED;
-+		zones->index_target = IS_CLOSED;
-+		zones->error_flag = true;
-+		spin_unlock(&zones->lock);
-+		uds_log_info("Setting UDS index target state to error");
-+		spin_lock(&zones->lock);
-+	}
-+	/*
-+	 * ASSERTION: On success, we leave in IS_OPENED state.
-+	 * ASSERTION: On failure, we leave in IS_CLOSED state.
-+	 */
++
++	return NULL;
 +}
 +
-+static void change_dedupe_state(struct vdo_completion *completion)
++/* Return a string describing a system error message. */
++static const char *system_string_error(int errnum, char *buf, size_t buflen)
 +{
-+	struct hash_zones *zones = as_hash_zones(completion);
++	size_t len;
++	const char *error_string = NULL;
 +
-+	spin_lock(&zones->lock);
++	if ((errnum > 0) && (errnum < ARRAY_SIZE(message_table)))
++		error_string = message_table[errnum];
 +
-+	/* Loop until the index is in the target state and the create flag is clear. */
-+	while (vdo_is_state_normal(&zones->state) &&
-+	       ((zones->index_state != zones->index_target) || zones->create_flag)) {
-+		if (zones->index_state == IS_OPENED)
-+			close_index(zones);
++	len = ((error_string == NULL) ?
++		 snprintf(buf, buflen, "Unknown error %d", errnum) :
++		 snprintf(buf, buflen, "%s", error_string));
++	if (len < buflen)
++		return buf;
++
++	buf[0] = '\0';
++	return "System error";
++}
++
++/* Convert an error code to a descriptive string. */
++const char *uds_string_error(int errnum, char *buf, size_t buflen)
++{
++	char *buffer = buf;
++	char *buf_end = buf + buflen;
++	const struct error_info *info = NULL;
++	const char *block_name;
++
++	if (buf == NULL)
++		return NULL;
++
++	if (errnum < 0)
++		errnum = -errnum;
++
++	block_name = get_error_info(errnum, &info);
++	if (block_name != NULL) {
++		if (info != NULL) {
++			buffer = uds_append_to_buffer(buffer, buf_end, "%s: %s",
++						      block_name, info->message);
++		} else {
++			buffer = uds_append_to_buffer(buffer, buf_end, "Unknown %s %d",
++						      block_name, errnum);
++		}
++	} else if (info != NULL) {
++		buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->message);
++	} else {
++		const char *tmp = system_string_error(errnum, buffer, buf_end - buffer);
++
++		if (tmp != buffer)
++			buffer = uds_append_to_buffer(buffer, buf_end, "%s", tmp);
 +		else
-+			open_index(zones);
++			buffer += strlen(tmp);
 +	}
 +
-+	zones->changing = false;
-+	spin_unlock(&zones->lock);
++	return buf;
 +}
 +
-+static void start_expiration_timer(struct dedupe_context *context)
++/* Convert an error code to its name. */
++const char *uds_string_error_name(int errnum, char *buf, size_t buflen)
 +{
-+	u64 start_time = context->submission_jiffies;
-+	u64 end_time;
++	char *buffer = buf;
++	char *buf_end = buf + buflen;
++	const struct error_info *info = NULL;
++	const char *block_name;
 +
-+	if (!change_timer_state(context->zone, DEDUPE_QUERY_TIMER_IDLE,
-+				DEDUPE_QUERY_TIMER_RUNNING))
-+		return;
++	if (errnum < 0)
++		errnum = -errnum;
 +
-+	end_time = max(start_time + vdo_dedupe_index_timeout_jiffies,
-+		       jiffies + vdo_dedupe_index_min_timer_jiffies);
-+	mod_timer(&context->zone->timer, end_time);
++	block_name = get_error_info(errnum, &info);
++	if (block_name != NULL) {
++		if (info != NULL) {
++			buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->name);
++		} else {
++			buffer = uds_append_to_buffer(buffer, buf_end, "%s %d",
++						      block_name, errnum);
++		}
++	} else if (info != NULL) {
++		buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->name);
++	} else {
++		const char *tmp;
++
++		tmp = system_string_error(errnum, buffer, buf_end - buffer);
++		if (tmp != buffer)
++			buffer = uds_append_to_buffer(buffer, buf_end, "%s", tmp);
++		else
++			buffer += strlen(tmp);
++	}
++
++	return buf;
 +}
 +
-+/**
-+ * report_dedupe_timeouts() - Record and eventually report that some dedupe requests reached their
-+ *                            expiration time without getting answers, so we timed them out.
-+ * @zones: the hash zones.
-+ * @timeouts: the number of newly timed out requests.
++/*
++ * Translate an error code into a value acceptable to the kernel. The input error code may be a
++ * system-generated value (such as -EIO), or an internal UDS status code. The result will be a
++ * negative errno value.
 + */
-+static void report_dedupe_timeouts(struct hash_zones *zones, unsigned int timeouts)
++int uds_map_to_system_error(int error)
 +{
-+	atomic64_add(timeouts, &zones->timeouts);
-+	spin_lock(&zones->lock);
-+	if (__ratelimit(&zones->ratelimiter)) {
-+		u64 unreported = atomic64_read(&zones->timeouts);
++	char error_name[UDS_MAX_ERROR_NAME_SIZE];
++	char error_message[UDS_MAX_ERROR_MESSAGE_SIZE];
 +
-+		unreported -= zones->reported_timeouts;
-+		uds_log_debug("UDS index timeout on %llu requests",
-+			      (unsigned long long) unreported);
-+		zones->reported_timeouts += unreported;
++	/* 0 is success, and negative values are already system error codes. */
++	if (likely(error <= 0))
++		return error;
++
++	if (error < 1024) {
++		/* This is probably an errno from userspace. */
++		return -error;
 +	}
-+	spin_unlock(&zones->lock);
++
++	/* Internal UDS errors */
++	switch (error) {
++	case UDS_NO_INDEX:
++	case UDS_CORRUPT_DATA:
++		/* The index doesn't exist or can't be recovered. */
++		return -ENOENT;
++
++	case UDS_INDEX_NOT_SAVED_CLEANLY:
++	case UDS_UNSUPPORTED_VERSION:
++		/*
++		 * The index exists, but can't be loaded. Tell the client it exists so they don't
++		 * destroy it inadvertently.
++		 */
++		return -EEXIST;
++
++	case UDS_DISABLED:
++		/* The session is unusable; only returned by requests. */
++		return -EIO;
++
++	default:
++		/* Translate an unexpected error into something generic. */
++		uds_log_info("%s: mapping status code %d (%s: %s) to -EIO",
++			     __func__, error,
++			     uds_string_error_name(error, error_name,
++						   sizeof(error_name)),
++			     uds_string_error(error, error_message,
++					      sizeof(error_message)));
++		return -EIO;
++	}
 +}
 +
-+static int initialize_index(struct vdo *vdo, struct hash_zones *zones)
++/*
++ * Register a block of error codes.
++ *
++ * @block_name: the name of the block of error codes
++ * @first_error: the first error code in the block
++ * @next_free_error: one past the highest possible error in the block
++ * @infos: a pointer to the error info array for the block
++ * @info_size: the size of the error info array
++ */
++int uds_register_error_block(const char *block_name, int first_error,
++			     int next_free_error, const struct error_info *infos,
++			     size_t info_size)
 +{
 +	int result;
-+	off_t uds_offset;
-+	struct volume_geometry geometry = vdo->geometry;
-+	static const struct vdo_work_queue_type uds_queue_type = {
-+		.start = start_uds_queue,
-+		.finish = finish_uds_queue,
-+		.max_priority = UDS_Q_MAX_PRIORITY,
-+		.default_priority = UDS_Q_PRIORITY,
++	struct error_block *block;
++	struct error_block new_block = {
++		.name = block_name,
++		.base = first_error,
++		.last = first_error + (info_size / sizeof(struct error_info)),
++		.max = next_free_error,
++		.infos = infos,
 +	};
 +
-+	vdo_set_dedupe_index_timeout_interval(vdo_dedupe_index_timeout_interval);
-+	vdo_set_dedupe_index_min_timer_interval(vdo_dedupe_index_min_timer_interval);
-+
-+	/*
-+	 * Since we will save up the timeouts that would have been reported but were ratelimited,
-+	 * we don't need to report ratelimiting.
-+	 */
-+	ratelimit_default_init(&zones->ratelimiter);
-+	ratelimit_set_flags(&zones->ratelimiter, RATELIMIT_MSG_ON_RELEASE);
-+	uds_offset = ((vdo_get_index_region_start(geometry) -
-+		       geometry.bio_offset) * VDO_BLOCK_SIZE);
-+	zones->parameters = (struct uds_parameters) {
-+		.bdev = vdo->device_config->owned_device->bdev,
-+		.offset = uds_offset,
-+		.size = (vdo_get_index_region_size(geometry) * VDO_BLOCK_SIZE),
-+		.memory_size = geometry.index_config.mem,
-+		.sparse = geometry.index_config.sparse,
-+		.nonce = (u64) geometry.nonce,
-+	};
-+
-+	result = uds_create_index_session(&zones->index_session);
++	result = ASSERT(first_error < next_free_error, "well-defined error block range");
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	result = vdo_make_thread(vdo, vdo->thread_config.dedupe_thread, &uds_queue_type,
-+				 1, NULL);
-+	if (result != VDO_SUCCESS) {
-+		uds_destroy_index_session(uds_forget(zones->index_session));
-+		uds_log_error("UDS index queue initialization failed (%d)", result);
-+		return result;
++	if (registered_errors.count == registered_errors.allocated) {
++		/* This should never happen. */
++		return UDS_OVERFLOW;
 +	}
 +
-+	vdo_initialize_completion(&zones->completion, vdo, VDO_HASH_ZONES_COMPLETION);
-+	vdo_set_completion_callback(&zones->completion, change_dedupe_state,
-+				    vdo->thread_config.dedupe_thread);
-+	kobject_init(&zones->dedupe_directory, &dedupe_directory_type);
-+	return VDO_SUCCESS;
++	for (block = registered_errors.blocks;
++	     block < registered_errors.blocks + registered_errors.count;
++	     block++) {
++		if (strcmp(block_name, block->name) == 0)
++			return UDS_DUPLICATE_NAME;
++
++		/* Ensure error ranges do not overlap. */
++		if ((first_error < block->max) && (next_free_error > block->base))
++			return UDS_ALREADY_REGISTERED;
++	}
++
++	registered_errors.blocks[registered_errors.count++] = new_block;
++	return UDS_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/errors.h b/drivers/md/dm-vdo/errors.h
+new file mode 100644
+index 000000000000..0129fa37d8d8
+--- /dev/null
++++ b/drivers/md/dm-vdo/errors.h
+@@ -0,0 +1,81 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_ERRORS_H
++#define UDS_ERRORS_H
++
++#include <linux/compiler.h>
++#include <linux/types.h>
++
++/* Custom error codes and error-related utilities for UDS */
++
++/* Valid status codes for internal UDS functions. */
++enum uds_status_codes {
++	/* Successful return */
++	UDS_SUCCESS = 0,
++
++	/* Used as a base value for reporting internal errors */
++	UDS_ERROR_CODE_BASE = 1024,
++	/* Index overflow */
++	UDS_OVERFLOW = UDS_ERROR_CODE_BASE + 0,
++	/* Invalid argument passed to internal routine */
++	UDS_INVALID_ARGUMENT = UDS_ERROR_CODE_BASE + 1,
++	/* UDS data structures are in an invalid state */
++	UDS_BAD_STATE = UDS_ERROR_CODE_BASE + 2,
++	/* Attempt to enter the same name into an internal structure twice */
++	UDS_DUPLICATE_NAME = UDS_ERROR_CODE_BASE + 3,
++	/* An assertion failed */
++	UDS_ASSERTION_FAILED = UDS_ERROR_CODE_BASE + 4,
++	/* A request has been queued for later processing (not an error) */
++	UDS_QUEUED = UDS_ERROR_CODE_BASE + 5,
++	/* A problem has occurred with a buffer */
++	UDS_BUFFER_ERROR = UDS_ERROR_CODE_BASE + 6,
++	/* No directory was found where one was expected */
++	UDS_NO_DIRECTORY = UDS_ERROR_CODE_BASE + 7,
++	/* This error range has already been registered */
++	UDS_ALREADY_REGISTERED = UDS_ERROR_CODE_BASE + 8,
++	/* Attempt to read or write data outside the valid range */
++	UDS_OUT_OF_RANGE = UDS_ERROR_CODE_BASE + 9,
++	/* Could not load modules */
++	UDS_EMODULE_LOAD = UDS_ERROR_CODE_BASE + 10,
++	/* The index session is disabled */
++	UDS_DISABLED = UDS_ERROR_CODE_BASE + 11,
++	/* Unknown error */
++	UDS_UNKNOWN_ERROR = UDS_ERROR_CODE_BASE + 12,
++	/* The index configuration or volume format is no longer supported */
++	UDS_UNSUPPORTED_VERSION = UDS_ERROR_CODE_BASE + 13,
++	/* Some index structure is corrupt */
++	UDS_CORRUPT_DATA = UDS_ERROR_CODE_BASE + 14,
++	/* No index state found */
++	UDS_NO_INDEX = UDS_ERROR_CODE_BASE + 15,
++	/* Attempt to access incomplete index save data */
++	UDS_INDEX_NOT_SAVED_CLEANLY = UDS_ERROR_CODE_BASE + 16,
++	/* One more than the last UDS_INTERNAL error code */
++	UDS_ERROR_CODE_LAST,
++	/* One more than the last error this block will ever use */
++	UDS_ERROR_CODE_BLOCK_END = UDS_ERROR_CODE_BASE + 440,
++};
++
++enum {
++	UDS_MAX_ERROR_NAME_SIZE = 80,
++	UDS_MAX_ERROR_MESSAGE_SIZE = 128,
++};
++
++struct error_info {
++	const char *name;
++	const char *message;
++};
++
++const char * __must_check uds_string_error(int errnum, char *buf, size_t buflen);
++
++const char *uds_string_error_name(int errnum, char *buf, size_t buflen);
++
++int uds_map_to_system_error(int error);
++
++int uds_register_error_block(const char *block_name, int first_error,
++			     int last_reserved_error, const struct error_info *infos,
++			     size_t info_size);
++
++#endif /* UDS_ERRORS_H */
+diff --git a/drivers/md/dm-vdo/logger.c b/drivers/md/dm-vdo/logger.c
+new file mode 100644
+index 000000000000..fe632f10b5d9
+--- /dev/null
++++ b/drivers/md/dm-vdo/logger.c
+@@ -0,0 +1,291 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "logger.h"
++
++#include <linux/delay.h>
++#include <linux/hardirq.h>
++#include <linux/module.h>
++#include <linux/printk.h>
++#include <linux/sched.h>
++
++#include "thread-device.h"
++#include "uds-threads.h"
++
++struct priority_name {
++	const char *name;
++	const int priority;
++};
++
++static const struct priority_name PRIORITIES[] = {
++	{ "ALERT", UDS_LOG_ALERT },
++	{ "CRITICAL", UDS_LOG_CRIT },
++	{ "CRIT", UDS_LOG_CRIT },
++	{ "DEBUG", UDS_LOG_DEBUG },
++	{ "EMERGENCY", UDS_LOG_EMERG },
++	{ "EMERG", UDS_LOG_EMERG },
++	{ "ERROR", UDS_LOG_ERR },
++	{ "ERR", UDS_LOG_ERR },
++	{ "INFO", UDS_LOG_INFO },
++	{ "NOTICE", UDS_LOG_NOTICE },
++	{ "PANIC", UDS_LOG_EMERG },
++	{ "WARN", UDS_LOG_WARNING },
++	{ "WARNING", UDS_LOG_WARNING },
++	{ NULL, -1 },
++};
++
++static const char *const PRIORITY_STRINGS[] = {
++	"EMERGENCY",
++	"ALERT",
++	"CRITICAL",
++	"ERROR",
++	"WARN",
++	"NOTICE",
++	"INFO",
++	"DEBUG",
++};
++
++static int log_level = UDS_LOG_INFO;
++
++int uds_get_log_level(void)
++{
++	return log_level;
++}
++
++void uds_set_log_level(int new_log_level)
++{
++	log_level = new_log_level;
++}
++
++int uds_log_string_to_priority(const char *string)
++{
++	int i;
++
++	for (i = 0; PRIORITIES[i].name != NULL; i++) {
++		if (strcasecmp(string, PRIORITIES[i].name) == 0)
++			return PRIORITIES[i].priority;
++	}
++
++	return UDS_LOG_INFO;
++}
++
++const char *uds_log_priority_to_string(int priority)
++{
++	if ((priority < 0) || (priority >= (int) ARRAY_SIZE(PRIORITY_STRINGS)))
++		return "unknown";
++
++	return PRIORITY_STRINGS[priority];
++}
++
++static const char *get_current_interrupt_type(void)
++{
++	if (in_nmi())
++		return "NMI";
++
++	if (in_irq())
++		return "HI";
++
++	if (in_softirq())
++		return "SI";
++
++	return "INTR";
 +}
 +
 +/**
-+ * finish_index_operation() - This is the UDS callback for index queries.
-+ * @request: The uds request which has just completed.
++ * emit_log_message_to_kernel() - Emit a log message to the kernel at the specified priority.
++ *
++ * @priority: The priority at which to log the message
++ * @fmt: The format string of the message
 + */
-+static void finish_index_operation(struct uds_request *request)
++static void emit_log_message_to_kernel(int priority, const char *fmt, ...)
 +{
-+	struct dedupe_context *context = container_of(request, struct dedupe_context,
-+						      request);
++	va_list args;
++	struct va_format vaf;
 +
-+	if (change_context_state(context, DEDUPE_CONTEXT_PENDING,
-+				 DEDUPE_CONTEXT_COMPLETE)) {
-+		/*
-+		 * This query has not timed out, so send its data_vio back to its hash zone to
-+		 * process the results.
-+		 */
-+		continue_data_vio(context->requestor);
++	if (priority > uds_get_log_level())
++		return;
++
++	va_start(args, fmt);
++	vaf.fmt = fmt;
++	vaf.va = &args;
++
++	switch (priority) {
++	case UDS_LOG_EMERG:
++	case UDS_LOG_ALERT:
++	case UDS_LOG_CRIT:
++		printk(KERN_CRIT "%pV", &vaf);
++		break;
++	case UDS_LOG_ERR:
++		printk(KERN_ERR "%pV", &vaf);
++		break;
++	case UDS_LOG_WARNING:
++		printk(KERN_WARNING "%pV", &vaf);
++		break;
++	case UDS_LOG_NOTICE:
++		printk(KERN_NOTICE "%pV", &vaf);
++		break;
++	case UDS_LOG_INFO:
++		printk(KERN_INFO "%pV", &vaf);
++		break;
++	case UDS_LOG_DEBUG:
++		printk(KERN_DEBUG "%pV", &vaf);
++		break;
++	default:
++		printk(KERN_DEFAULT "%pV", &vaf);
++		break;
++	}
++
++	va_end(args);
++}
++
++/**
++ * emit_log_message() - Emit a log message to the kernel log in a format suited to the current
++ *                      thread context.
++ *
++ * Context info formats:
++ *
++ * interrupt:           uds[NMI]: blah
++ * kvdo thread:         kvdo12:foobarQ: blah
++ * thread w/device id:  kvdo12:myprog: blah
++ * other thread:        uds: myprog: blah
++ *
++ * Fields: module name, interrupt level, process name, device ID.
++ *
++ * @priority: the priority at which to log the message
++ * @module: The name of the module doing the logging
++ * @prefix: The prefix of the log message
++ * @vaf1: The first message format descriptor
++ * @vaf2: The second message format descriptor
++ */
++static void emit_log_message(int priority, const char *module, const char *prefix,
++			     const struct va_format *vaf1, const struct va_format *vaf2)
++{
++	int device_instance;
++
++	/*
++	 * In interrupt context, identify the interrupt type and module. Ignore the process/thread
++	 * since it could be anything.
++	 */
++	if (in_interrupt()) {
++		const char *type = get_current_interrupt_type();
++
++		emit_log_message_to_kernel(priority, "%s[%s]: %s%pV%pV\n", module, type,
++					   prefix, vaf1, vaf2);
++		return;
++	}
++
++	/* Not at interrupt level; we have a process we can look at, and might have a device ID. */
++	device_instance = uds_get_thread_device_id();
++	if (device_instance >= 0) {
++		emit_log_message_to_kernel(priority, "%s%u:%s: %s%pV%pV\n", module,
++					   device_instance, current->comm, prefix, vaf1,
++					   vaf2);
 +		return;
 +	}
 +
 +	/*
-+	 * This query has timed out, so try to mark it complete and hence eligible for reuse. Its
-+	 * data_vio has already moved on.
++	 * If it's a kernel thread and the module name is a prefix of its name, assume it is ours
++	 * and only identify the thread.
 +	 */
-+	if (!change_context_state(context, DEDUPE_CONTEXT_TIMED_OUT,
-+				  DEDUPE_CONTEXT_TIMED_OUT_COMPLETE))
-+		ASSERT_LOG_ONLY(false, "uds request was timed out (state %d)",
-+				atomic_read(&context->state));
++	if (((current->flags & PF_KTHREAD) != 0) &&
++	    (strncmp(module, current->comm, strlen(module)) == 0)) {
++		emit_log_message_to_kernel(priority, "%s: %s%pV%pV\n", current->comm,
++					   prefix, vaf1, vaf2);
++		return;
++	}
 +
-+	uds_funnel_queue_put(context->zone->timed_out_complete, &context->queue_entry);
++	/* Identify the module and the process. */
++	emit_log_message_to_kernel(priority, "%s: %s: %s%pV%pV\n", module, current->comm,
++				   prefix, vaf1, vaf2);
 +}
 +
-+/**
-+ * check_for_drain_complete() - Check whether this zone has drained.
-+ * @zone: The zone to check.
++/*
++ * uds_log_embedded_message() - Log a message embedded within another message.
++ * @priority: the priority at which to log the message
++ * @module: the name of the module doing the logging
++ * @prefix: optional string prefix to message, may be NULL
++ * @fmt1: format of message first part (required)
++ * @args1: arguments for message first part (required)
++ * @fmt2: format of message second part
 + */
-+static void check_for_drain_complete(struct hash_zone *zone)
++void uds_log_embedded_message(int priority, const char *module, const char *prefix,
++			      const char *fmt1, va_list args1, const char *fmt2, ...)
 +{
-+	data_vio_count_t recycled = 0;
++	va_list args1_copy;
++	va_list args2;
++	struct va_format vaf1, vaf2;
 +
-+	if (!vdo_is_state_draining(&zone->state))
++	va_start(args2, fmt2);
++
++	if (module == NULL)
++		module = UDS_LOGGING_MODULE_NAME;
++
++	if (prefix == NULL)
++		prefix = "";
++
++	/*
++	 * It is implementation dependent whether va_list is defined as an array type that decays
++	 * to a pointer when passed as an argument. Copy args1 and args2 with va_copy so that vaf1
++	 * and vaf2 get proper va_list pointers irrespective of how va_list is defined.
++	 */
++	va_copy(args1_copy, args1);
++	vaf1.fmt = fmt1;
++	vaf1.va = &args1_copy;
++
++	vaf2.fmt = fmt2;
++	vaf2.va = &args2;
++
++	emit_log_message(priority, module, prefix, &vaf1, &vaf2);
++
++	va_end(args1_copy);
++	va_end(args2);
++}
++
++int uds_vlog_strerror(int priority, int errnum, const char *module, const char *format,
++		      va_list args)
++{
++	char errbuf[UDS_MAX_ERROR_MESSAGE_SIZE];
++	const char *message = uds_string_error(errnum, errbuf, sizeof(errbuf));
++
++	uds_log_embedded_message(priority, module, NULL, format, args, ": %s (%d)",
++				 message, errnum);
++	return errnum;
++}
++
++int __uds_log_strerror(int priority, int errnum, const char *module, const char *format, ...)
++{
++	va_list args;
++
++	va_start(args, format);
++	uds_vlog_strerror(priority, errnum, module, format, args);
++	va_end(args);
++	return errnum;
++}
++
++void uds_log_backtrace(int priority)
++{
++	if (priority > uds_get_log_level())
 +		return;
 +
-+	if ((atomic_read(&zone->timer_state) == DEDUPE_QUERY_TIMER_IDLE) ||
-+	    change_timer_state(zone, DEDUPE_QUERY_TIMER_RUNNING,
-+			       DEDUPE_QUERY_TIMER_IDLE)) {
-+		del_timer_sync(&zone->timer);
-+	} else {
-+		/*
-+		 * There is an in flight time-out, which must get processed before we can continue.
-+		 */
-+		return;
-+	}
-+
-+	for (;;) {
-+		struct dedupe_context *context;
-+		struct funnel_queue_entry *entry;
-+
-+		entry = uds_funnel_queue_poll(zone->timed_out_complete);
-+		if (entry == NULL)
-+			break;
-+
-+		context = container_of(entry, struct dedupe_context, queue_entry);
-+		atomic_set(&context->state, DEDUPE_CONTEXT_IDLE);
-+		list_add(&context->list_entry, &zone->available);
-+		recycled++;
-+	}
-+
-+	if (recycled > 0)
-+		WRITE_ONCE(zone->active, zone->active - recycled);
-+	ASSERT_LOG_ONLY(READ_ONCE(zone->active) == 0, "all contexts inactive");
-+	vdo_finish_draining(&zone->state);
++	dump_stack();
 +}
 +
-+static void timeout_index_operations_callback(struct vdo_completion *completion)
++void __uds_log_message(int priority, const char *module, const char *format, ...)
 +{
-+	struct dedupe_context *context, *tmp;
-+	struct hash_zone *zone = as_hash_zone(completion);
-+	u64 timeout_jiffies = msecs_to_jiffies(vdo_dedupe_index_timeout_interval);
-+	unsigned long cutoff = jiffies - timeout_jiffies;
-+	unsigned int timed_out = 0;
++	va_list args;
 +
-+	atomic_set(&zone->timer_state, DEDUPE_QUERY_TIMER_IDLE);
-+	list_for_each_entry_safe(context, tmp, &zone->pending, list_entry) {
-+		if (cutoff <= context->submission_jiffies) {
-+			/*
-+			 * We have reached the oldest query which has not timed out yet, so restart
-+			 * the timer.
-+			 */
-+			start_expiration_timer(context);
-+			break;
-+		}
-+
-+		if (!change_context_state(context, DEDUPE_CONTEXT_PENDING,
-+					  DEDUPE_CONTEXT_TIMED_OUT)) {
-+			/*
-+			 * This context completed between the time the timeout fired, and now. We
-+			 * can treat it as a a successful query, its requestor is already enqueued
-+			 * to process it.
-+			 */
-+			continue;
-+		}
-+
-+		/*
-+		 * Remove this context from the pending list so we won't look at it again on a
-+		 * subsequent timeout. Once the index completes it, it will be reused. Meanwhile,
-+		 * send its requestor on its way.
-+		 */
-+		list_del_init(&context->list_entry);
-+		continue_data_vio(context->requestor);
-+		timed_out++;
-+	}
-+
-+	if (timed_out > 0)
-+		report_dedupe_timeouts(completion->vdo->hash_zones, timed_out);
-+
-+	check_for_drain_complete(zone);
++	va_start(args, format);
++	uds_log_embedded_message(priority, module, NULL, format, args, "%s", "");
++	va_end(args);
 +}
 +
-+static void timeout_index_operations(struct timer_list *t)
++/*
++ * Sleep or delay a few milliseconds in an attempt to allow the log buffers to be flushed lest they
++ * be overrun.
++ */
++void uds_pause_for_logger(void)
 +{
-+	struct hash_zone *zone = from_timer(zone, t, timer);
-+
-+	if (change_timer_state(zone, DEDUPE_QUERY_TIMER_RUNNING,
-+			       DEDUPE_QUERY_TIMER_FIRED))
-+		vdo_launch_completion(&zone->completion);
++	fsleep(4000);
 +}
+diff --git a/drivers/md/dm-vdo/logger.h b/drivers/md/dm-vdo/logger.h
+new file mode 100644
+index 000000000000..246aa43db9ee
+--- /dev/null
++++ b/drivers/md/dm-vdo/logger.h
+@@ -0,0 +1,105 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
 +
- static int __must_check initialize_zone(struct vdo *vdo, struct hash_zones *zones,
- 					zone_count_t zone_number)
- {
-@@ -2441,3 +2873,196 @@ void vdo_dump_hash_zones(struct hash_zones *zones)
- 	for (zone = 0; zone < zones->zone_count; zone++)
- 		dump_hash_zone(&zones->zones[zone]);
- }
++#ifndef UDS_LOGGER_H
++#define UDS_LOGGER_H
 +
-+void vdo_set_dedupe_index_timeout_interval(unsigned int value)
++#include <linux/module.h>
++#include <linux/ratelimit.h>
++
++/* Custom logging utilities for UDS */
++
++#define UDS_LOG_EMERG 0
++#define UDS_LOG_ALERT 1
++#define UDS_LOG_CRIT 2
++#define UDS_LOG_ERR 3
++#define UDS_LOG_WARNING 4
++#define UDS_LOG_NOTICE 5
++#define UDS_LOG_INFO 6
++#define UDS_LOG_DEBUG 7
++
++#if defined(MODULE)
++#define UDS_LOGGING_MODULE_NAME THIS_MODULE->name
++#else /* compiled into the kernel */
++#define UDS_LOGGING_MODULE_NAME "vdo"
++#endif
++
++/* Apply a rate limiter to a log method call. */
++#define uds_log_ratelimit(log_fn, ...)                                    \
++	do {                                                              \
++		static DEFINE_RATELIMIT_STATE(_rs,                        \
++					      DEFAULT_RATELIMIT_INTERVAL, \
++					      DEFAULT_RATELIMIT_BURST);   \
++		if (__ratelimit(&_rs)) {                                  \
++			log_fn(__VA_ARGS__);                              \
++		}                                                         \
++	} while (0)
++
++int uds_get_log_level(void);
++
++void uds_set_log_level(int new_log_level);
++
++int uds_log_string_to_priority(const char *string);
++
++const char *uds_log_priority_to_string(int priority);
++
++void uds_log_embedded_message(int priority, const char *module, const char *prefix,
++			      const char *fmt1, va_list args1, const char *fmt2, ...)
++	__printf(4, 0) __printf(6, 7);
++
++void uds_log_backtrace(int priority);
++
++/* All log functions will preserve the caller's value of errno. */
++
++#define uds_log_strerror(priority, errnum, ...) \
++	__uds_log_strerror(priority, errnum, UDS_LOGGING_MODULE_NAME, __VA_ARGS__)
++
++int __uds_log_strerror(int priority, int errnum, const char *module,
++		       const char *format, ...)
++	__printf(4, 5);
++
++int uds_vlog_strerror(int priority, int errnum, const char *module, const char *format,
++		      va_list args)
++	__printf(4, 0);
++
++/* Log an error prefixed with the string associated with the errnum. */
++#define uds_log_error_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_ERR, errnum, __VA_ARGS__)
++
++#define uds_log_debug_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_DEBUG, errnum, __VA_ARGS__)
++
++#define uds_log_info_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_INFO, errnum, __VA_ARGS__)
++
++#define uds_log_notice_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_NOTICE, errnum, __VA_ARGS__)
++
++#define uds_log_warning_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_WARNING, errnum, __VA_ARGS__)
++
++#define uds_log_fatal_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_CRIT, errnum, __VA_ARGS__)
++
++#define uds_log_message(priority, ...) \
++	__uds_log_message(priority, UDS_LOGGING_MODULE_NAME, __VA_ARGS__)
++
++void __uds_log_message(int priority, const char *module, const char *format, ...)
++	__printf(3, 4);
++
++#define uds_log_debug(...) uds_log_message(UDS_LOG_DEBUG, __VA_ARGS__)
++
++#define uds_log_info(...) uds_log_message(UDS_LOG_INFO, __VA_ARGS__)
++
++#define uds_log_notice(...) uds_log_message(UDS_LOG_NOTICE, __VA_ARGS__)
++
++#define uds_log_warning(...) uds_log_message(UDS_LOG_WARNING, __VA_ARGS__)
++
++#define uds_log_error(...) uds_log_message(UDS_LOG_ERR, __VA_ARGS__)
++
++#define uds_log_fatal(...) uds_log_message(UDS_LOG_CRIT, __VA_ARGS__)
++
++void uds_pause_for_logger(void);
++#endif /* UDS_LOGGER_H */
+diff --git a/drivers/md/dm-vdo/permassert.c b/drivers/md/dm-vdo/permassert.c
+new file mode 100644
+index 000000000000..3fa752ba0061
+--- /dev/null
++++ b/drivers/md/dm-vdo/permassert.c
+@@ -0,0 +1,26 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "permassert.h"
++
++#include "errors.h"
++#include "logger.h"
++
++int uds_assertion_failed(const char *expression_string, const char *file_name,
++			 int line_number, const char *format, ...)
 +{
-+	u64 alb_jiffies;
++	va_list args;
 +
-+	/* Arbitrary maximum value is two minutes */
-+	if (value > 120000)
-+		value = 120000;
-+	/* Arbitrary minimum value is 2 jiffies */
-+	alb_jiffies = msecs_to_jiffies(value);
++	va_start(args, format);
 +
-+	if (alb_jiffies < 2) {
-+		alb_jiffies = 2;
-+		value = jiffies_to_msecs(alb_jiffies);
-+	}
-+	vdo_dedupe_index_timeout_interval = value;
-+	vdo_dedupe_index_timeout_jiffies = alb_jiffies;
++	uds_log_embedded_message(UDS_LOG_ERR, UDS_LOGGING_MODULE_NAME, "assertion \"",
++				 format, args, "\" (%s) failed at %s:%d",
++				 expression_string, file_name, line_number);
++	uds_log_backtrace(UDS_LOG_ERR);
++
++	va_end(args);
++
++	return UDS_ASSERTION_FAILED;
 +}
+diff --git a/drivers/md/dm-vdo/permassert.h b/drivers/md/dm-vdo/permassert.h
+new file mode 100644
+index 000000000000..ee978bc115ec
+--- /dev/null
++++ b/drivers/md/dm-vdo/permassert.h
+@@ -0,0 +1,46 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
 +
-+void vdo_set_dedupe_index_min_timer_interval(unsigned int value)
-+{
-+	u64 min_jiffies;
++#ifndef PERMASSERT_H
++#define PERMASSERT_H
 +
-+	/* Arbitrary maximum value is one second */
-+	if (value > 1000)
-+		value = 1000;
++#include <linux/compiler.h>
 +
-+	/* Arbitrary minimum value is 2 jiffies */
-+	min_jiffies = msecs_to_jiffies(value);
++#include "errors.h"
 +
-+	if (min_jiffies < 2) {
-+		min_jiffies = 2;
-+		value = jiffies_to_msecs(min_jiffies);
-+	}
++/* Utilities for asserting that certain conditions are met */
 +
-+	vdo_dedupe_index_min_timer_interval = value;
-+	vdo_dedupe_index_min_timer_jiffies = min_jiffies;
-+}
++#define STRINGIFY(X) #X
++#define STRINGIFY_VALUE(X) STRINGIFY(X)
 +
-+/**
-+ * acquire_context() - Acquire a dedupe context from a hash_zone if any are available.
-+ * @zone: the hash zone
++/*
++ * A hack to apply the "warn if unused" attribute to an integral expression.
 + *
-+ * Return: A dedupe_context or NULL if none are available
++ * Since GCC doesn't propagate the warn_unused_result attribute to conditional expressions
++ * incorporating calls to functions with that attribute, this function can be used to wrap such an
++ * expression. With optimization enabled, this function contributes no additional instructions, but
++ * the warn_unused_result attribute still applies to the code calling it.
 + */
-+static struct dedupe_context * __must_check acquire_context(struct hash_zone *zone)
++static inline int __must_check uds_must_use(int value)
 +{
-+	struct dedupe_context *context;
-+	struct funnel_queue_entry *entry;
-+
-+	assert_in_hash_zone(zone, __func__);
-+
-+	if (!list_empty(&zone->available)) {
-+		WRITE_ONCE(zone->active, zone->active + 1);
-+		context = list_first_entry(&zone->available, struct dedupe_context,
-+					   list_entry);
-+		list_del_init(&context->list_entry);
-+		return context;
-+	}
-+
-+	entry = uds_funnel_queue_poll(zone->timed_out_complete);
-+	return ((entry == NULL) ?
-+		NULL : container_of(entry, struct dedupe_context, queue_entry));
++	return value;
 +}
 +
-+static void prepare_uds_request(struct uds_request *request, struct data_vio *data_vio,
-+				enum uds_request_type operation)
-+{
-+	request->record_name = data_vio->record_name;
-+	request->type = operation;
-+	if ((operation == UDS_POST) || (operation == UDS_UPDATE)) {
-+		size_t offset = 0;
-+		struct uds_record_data *encoding = &request->new_metadata;
++/* Assert that an expression is true and return an error if it is not. */
++#define ASSERT(expr, ...) uds_must_use(__UDS_ASSERT(expr, __VA_ARGS__))
 +
-+		encoding->data[offset++] = UDS_ADVICE_VERSION;
-+		encoding->data[offset++] = data_vio->new_mapped.state;
-+		put_unaligned_le64(data_vio->new_mapped.pbn, &encoding->data[offset]);
-+		offset += sizeof(u64);
-+		BUG_ON(offset != UDS_ADVICE_SIZE);
-+	}
-+}
++/* Log a message if the expression is not true. */
++#define ASSERT_LOG_ONLY(expr, ...) __UDS_ASSERT(expr, __VA_ARGS__)
 +
++#define __UDS_ASSERT(expr, ...)				      \
++	(likely(expr) ? UDS_SUCCESS			      \
++		      : uds_assertion_failed(STRINGIFY(expr), __FILE__, __LINE__, __VA_ARGS__))
++
++/* Log an assertion failure message. */
++int uds_assertion_failed(const char *expression_string, const char *file_name,
++			 int line_number, const char *format, ...)
++	__printf(4, 5);
++
++#endif /* PERMASSERT_H */
+diff --git a/drivers/md/dm-vdo/string-utils.c b/drivers/md/dm-vdo/string-utils.c
+new file mode 100644
+index 000000000000..a584b37bb70c
+--- /dev/null
++++ b/drivers/md/dm-vdo/string-utils.c
+@@ -0,0 +1,28 @@
++// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * The index operation will inquire about data_vio.record_name, providing (if the operation is
-+ * appropriate) advice from the data_vio's new_mapped fields. The advice found in the index (or
-+ * NULL if none) will be returned via receive_data_vio_dedupe_advice(). dedupe_context.status is
-+ * set to the return status code of any asynchronous index processing.
++ * Copyright 2023 Red Hat
 + */
-+static void query_index(struct data_vio *data_vio, enum uds_request_type operation)
++
++#include "string-utils.h"
++
++#include "errors.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "uds.h"
++
++char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
 +{
-+	int result;
-+	struct dedupe_context *context;
-+	struct vdo *vdo = vdo_from_data_vio(data_vio);
-+	struct hash_zone *zone = data_vio->hash_zone;
++	va_list args;
++	size_t n;
 +
-+	assert_data_vio_in_hash_zone(data_vio);
++	va_start(args, fmt);
++	n = vsnprintf(buffer, buf_end - buffer, fmt, args);
++	if (n >= (size_t) (buf_end - buffer))
++		buffer = buf_end;
++	else
++		buffer += n;
++	va_end(args);
 +
-+	if (!READ_ONCE(vdo->hash_zones->dedupe_flag)) {
-+		continue_data_vio(data_vio);
-+		return;
-+	}
-+
-+	context = acquire_context(zone);
-+	if (context == NULL) {
-+		atomic64_inc(&vdo->hash_zones->dedupe_context_busy);
-+		continue_data_vio(data_vio);
-+		return;
-+	}
-+
-+	data_vio->dedupe_context = context;
-+	context->requestor = data_vio;
-+	context->submission_jiffies = jiffies;
-+	prepare_uds_request(&context->request, data_vio, operation);
-+	atomic_set(&context->state, DEDUPE_CONTEXT_PENDING);
-+	list_add_tail(&context->list_entry, &zone->pending);
-+	start_expiration_timer(context);
-+	result = uds_launch_request(&context->request);
-+	if (result != UDS_SUCCESS) {
-+		context->request.status = result;
-+		finish_index_operation(&context->request);
-+	}
++	return buffer;
 +}
-+
-+static void set_target_state(struct hash_zones *zones, enum index_state target,
-+			     bool change_dedupe, bool dedupe, bool set_create)
-+{
-+	const char *old_state, *new_state;
-+
-+	spin_lock(&zones->lock);
-+	old_state = index_state_to_string(zones, zones->index_target);
-+	if (change_dedupe)
-+		WRITE_ONCE(zones->dedupe_flag, dedupe);
-+
-+	if (set_create)
-+		zones->create_flag = true;
-+
-+	zones->index_target = target;
-+	launch_dedupe_state_change(zones);
-+	new_state = index_state_to_string(zones, zones->index_target);
-+	spin_unlock(&zones->lock);
-+
-+	if (old_state != new_state)
-+		uds_log_info("Setting UDS index target state to %s", new_state);
-+}
-+
-+const char *vdo_get_dedupe_index_state_name(struct hash_zones *zones)
-+{
-+	const char *state;
-+
-+	spin_lock(&zones->lock);
-+	state = index_state_to_string(zones, zones->index_state);
-+	spin_unlock(&zones->lock);
-+
-+	return state;
-+}
-+
-+/* Handle a dmsetup message relevant to the index. */
-+int vdo_message_dedupe_index(struct hash_zones *zones, const char *name)
-+{
-+	if (strcasecmp(name, "index-close") == 0) {
-+		set_target_state(zones, IS_CLOSED, false, false, false);
-+		return 0;
-+	} else if (strcasecmp(name, "index-create") == 0) {
-+		set_target_state(zones, IS_OPENED, false, false, true);
-+		return 0;
-+	} else if (strcasecmp(name, "index-disable") == 0) {
-+		set_target_state(zones, IS_OPENED, true, false, false);
-+		return 0;
-+	} else if (strcasecmp(name, "index-enable") == 0) {
-+		set_target_state(zones, IS_OPENED, true, true, false);
-+		return 0;
-+	}
-+
-+	return -EINVAL;
-+}
-+
-+int vdo_add_dedupe_index_sysfs(struct hash_zones *zones)
-+{
-+	int result = kobject_add(&zones->dedupe_directory,
-+				 &zones->completion.vdo->vdo_directory, "dedupe");
-+
-+	if (result == 0)
-+		vdo_set_admin_state_code(&zones->state,
-+					 VDO_ADMIN_STATE_NORMAL_OPERATION);
-+
-+	return result;
-+}
-+
-+/* If create_flag, create a new index without first attempting to load an existing index. */
-+void vdo_start_dedupe_index(struct hash_zones *zones, bool create_flag)
-+{
-+	set_target_state(zones, IS_OPENED, true, true, create_flag);
-+}
-diff --git a/drivers/md/dm-vdo/dedupe.h b/drivers/md/dm-vdo/dedupe.h
-index f4b091efc27e..90c5779bfe70 100644
---- a/drivers/md/dm-vdo/dedupe.h
-+++ b/drivers/md/dm-vdo/dedupe.h
-@@ -91,4 +91,30 @@ struct hash_zone * __must_check vdo_select_hash_zone(struct hash_zones *zones,
- 
- void vdo_dump_hash_zones(struct hash_zones *zones);
- 
-+const char *vdo_get_dedupe_index_state_name(struct hash_zones *zones);
-+
-+u64 vdo_get_dedupe_index_timeout_count(struct hash_zones *zones);
-+
-+int vdo_message_dedupe_index(struct hash_zones *zones, const char *name);
-+
-+int vdo_add_dedupe_index_sysfs(struct hash_zones *zones);
-+
-+void vdo_start_dedupe_index(struct hash_zones *zones, bool create_flag);
-+
-+void vdo_resume_hash_zones(struct hash_zones *zones, struct vdo_completion *parent);
-+
-+void vdo_finish_dedupe_index(struct hash_zones *zones);
-+
-+/* Interval (in milliseconds) from submission until switching to fast path and skipping UDS. */
-+extern unsigned int vdo_dedupe_index_timeout_interval;
-+
+diff --git a/drivers/md/dm-vdo/string-utils.h b/drivers/md/dm-vdo/string-utils.h
+new file mode 100644
+index 000000000000..8275af582cf7
+--- /dev/null
++++ b/drivers/md/dm-vdo/string-utils.h
+@@ -0,0 +1,23 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
-+ * Minimum time interval (in milliseconds) between timer invocations to check for requests waiting
-+ * for UDS that should now time out.
++ * Copyright 2023 Red Hat
 + */
-+extern unsigned int vdo_dedupe_index_min_timer_interval;
 +
-+void vdo_set_dedupe_index_timeout_interval(unsigned int value);
-+void vdo_set_dedupe_index_min_timer_interval(unsigned int value);
++#ifndef UDS_STRING_UTILS_H
++#define UDS_STRING_UTILS_H
 +
- #endif /* VDO_DEDUPE_H */
++#include <linux/kernel.h>
++#include <linux/string.h>
++
++/* Utilities related to string manipulation */
++
++static inline const char *uds_bool_to_string(bool value)
++{
++	return value ? "true" : "false";
++}
++
++/* Append a formatted string to the end of a buffer. */
++char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
++	__printf(3, 4);
++
++#endif /* UDS_STRING_UTILS_H */
+diff --git a/drivers/md/dm-vdo/time-utils.h b/drivers/md/dm-vdo/time-utils.h
+new file mode 100644
+index 000000000000..5f1e850fd826
+--- /dev/null
++++ b/drivers/md/dm-vdo/time-utils.h
+@@ -0,0 +1,28 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_TIME_UTILS_H
++#define UDS_TIME_UTILS_H
++
++#include <linux/ktime.h>
++#include <linux/time.h>
++#include <linux/types.h>
++
++static inline s64 ktime_to_seconds(ktime_t reltime)
++{
++	return reltime / NSEC_PER_SEC;
++}
++
++static inline ktime_t current_time_ns(clockid_t clock)
++{
++	return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
++}
++
++static inline ktime_t current_time_us(void)
++{
++	return current_time_ns(CLOCK_REALTIME) / NSEC_PER_USEC;
++}
++
++#endif /* UDS_TIME_UTILS_H */
 -- 
 2.40.0
 
