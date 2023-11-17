@@ -1,44 +1,44 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1277E4642D
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF60E46428
 	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hmJuaWmw"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="M3Uq7KRT"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700254804;
+	s=mimecast20190719; t=1700254803;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=e41+qsGUpvzAWZv2VLi6IP9d5J+5vBdIQmz0/pl5yNo=;
-	b=hmJuaWmwcgGYQCy6zrEgQCCipFViYDYW682dycfvSOkWG1kO2s8E5N3qhUqHZ6CGhVbUXB
-	jirKAOyEzLYQUnoeoOwaSJkB3OXxykbtWkdeSF3RBZzrdOYFPzMvfZXZFIwcTQZXDhxk2Y
-	BPENdKxH10L+wjcd/myTP5MDKV7L6Fc=
+	bh=Qp5TFfEhDtWQAtf5tvrKLj+tlbMJ5AVNkNdzbbyUxEc=;
+	b=M3Uq7KRT3CM9XLjMYkYM1NtOffYuvSxPSN6NCo/8wbRrAP2qxRikgcrh9qd6ABCMb7YITz
+	MiIcdv2QlnFSPx7BwKKAZcD8iyNUD7E65Kwu+g2OYOlINtMsqC3kNtFptmzs2TCF2po76F
+	a57vCin5JKG7SlRNMvyk275s+FxNqfI=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-538-FQJ_z0GINa2TmCkWXCxtfQ-1; Fri,
- 17 Nov 2023 16:00:02 -0500
-X-MC-Unique: FQJ_z0GINa2TmCkWXCxtfQ-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-443-kGAAGRpCMBSukGh9Yx1e-g-1; Fri,
+ 17 Nov 2023 15:59:59 -0500
+X-MC-Unique: kGAAGRpCMBSukGh9Yx1e-g-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DD993813BC9
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 602383813BC7
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 20:59:59 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5406E40C6EB9;
-	Fri, 17 Nov 2023 21:00:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 557C040C6EB9;
+	Fri, 17 Nov 2023 20:59:59 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 1AE003003B; Fri, 17 Nov 2023 16:00:01 -0500 (EST)
+	id 160D73003C; Fri, 17 Nov 2023 15:59:59 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v5 24/40] dm vdo: add the compressed block bin packer
-Date: Fri, 17 Nov 2023 15:59:41 -0500
-Message-Id: <5ac161177a31a6be28e2cd05e22ac6bb64528fab.1700250814.git.msakai@redhat.com>
+Subject: [PATCH v5 08/40] dm vdo: add basic hash map data structures
+Date: Fri, 17 Nov 2023 15:59:25 -0500
+Message-Id: <435ad2f7964dba57ea304b12b1cfbf54ab54f2bc.1700250814.git.msakai@redhat.com>
 In-Reply-To: <cover.1700250814.git.msakai@redhat.com>
 References: <cover.1700250814.git.msakai@redhat.com>
 Precedence: bulk
@@ -53,944 +53,1877 @@ X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-When blocks do not deduplicate, vdo will attempt to compress them. Up to 14
-compressed blocks may be packed into a single data block (this limitation
-is imposed by the block map). The packer implements a simple best-fit
-packing algorithm and also manages the formatting and writing of compressed
-blocks when bins fill.
+This patch adds two hash maps, one keyed by integers, the other by
+pointers, and also a priority heap. The integer map is used for locking of
+logical and physical addresses. The pointer map is used for managing
+concurrent writes of the same data, ensuring that those writes are
+deduplicated. The priority heap is used to minimize the search time for
+free blocks.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/packer.c | 784 +++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/packer.h | 122 ++++++
- 2 files changed, 906 insertions(+)
- create mode 100644 drivers/md/dm-vdo/packer.c
- create mode 100644 drivers/md/dm-vdo/packer.h
+ drivers/md/dm-vdo/int-map.c        | 718 +++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/int-map.h        |  40 ++
+ drivers/md/dm-vdo/pointer-map.c    | 696 ++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/pointer-map.h    |  81 ++++
+ drivers/md/dm-vdo/priority-table.c | 226 +++++++++
+ drivers/md/dm-vdo/priority-table.h |  47 ++
+ 6 files changed, 1808 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/int-map.c
+ create mode 100644 drivers/md/dm-vdo/int-map.h
+ create mode 100644 drivers/md/dm-vdo/pointer-map.c
+ create mode 100644 drivers/md/dm-vdo/pointer-map.h
+ create mode 100644 drivers/md/dm-vdo/priority-table.c
+ create mode 100644 drivers/md/dm-vdo/priority-table.h
 
-diff --git a/drivers/md/dm-vdo/packer.c b/drivers/md/dm-vdo/packer.c
+diff --git a/drivers/md/dm-vdo/int-map.c b/drivers/md/dm-vdo/int-map.c
 new file mode 100644
-index 000000000000..f09eb1ca4902
+index 000000000000..463a4951e0d1
 --- /dev/null
-+++ b/drivers/md/dm-vdo/packer.c
-@@ -0,0 +1,784 @@
++++ b/drivers/md/dm-vdo/int-map.c
+@@ -0,0 +1,718 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "packer.h"
++/**
++ * DOC:
++ *
++ * Hash table implementation of a map from integers to pointers, implemented using the Hopscotch
++ * Hashing algorithm by Herlihy, Shavit, and Tzafrir (see
++ * http://en.wikipedia.org/wiki/Hopscotch_hashing). This implementation does not contain any of the
++ * locking/concurrency features of the algorithm, just the collision resolution scheme.
++ *
++ * Hopscotch Hashing is based on hashing with open addressing and linear probing. All the entries
++ * are stored in a fixed array of buckets, with no dynamic allocation for collisions. Unlike linear
++ * probing, all the entries that hash to a given bucket are stored within a fixed neighborhood
++ * starting at that bucket. Chaining is effectively represented as a bit vector relative to each
++ * bucket instead of as pointers or explicit offsets.
++ *
++ * When an empty bucket cannot be found within a given neighborhood, subsequent neighborhoods are
++ * searched, and one or more entries will "hop" into those neighborhoods. When this process works,
++ * an empty bucket will move into the desired neighborhood, allowing the entry to be added. When
++ * that process fails (typically when the buckets are around 90% full), the table must be resized
++ * and the all entries rehashed and added to the expanded table.
++ *
++ * Unlike linear probing, the number of buckets that must be searched in the worst case has a fixed
++ * upper bound (the size of the neighborhood). Those entries occupy a small number of memory cache
++ * lines, leading to improved use of the cache (fewer misses on both successful and unsuccessful
++ * searches). Hopscotch hashing outperforms linear probing at much higher load factors, so even
++ * with the increased memory burden for maintaining the hop vectors, less memory is needed to
++ * achieve that performance. Hopscotch is also immune to "contamination" from deleting entries
++ * since entries are genuinely removed instead of being replaced by a placeholder.
++ *
++ * The published description of the algorithm used a bit vector, but the paper alludes to an offset
++ * scheme which is used by this implementation. Since the entries in the neighborhood are within N
++ * entries of the hash bucket at the start of the neighborhood, a pair of small offset fields each
++ * log2(N) bits wide is all that's needed to maintain the hops as a linked list. In order to encode
++ * "no next hop" (i.e. NULL) as the natural initial value of zero, the offsets are biased by one
++ * (i.e. 0 => NULL, 1 => offset=0, 2 => offset=1, etc.) We can represent neighborhoods of up to 255
++ * entries with just 8+8=16 bits per entry. The hop list is sorted by hop offset so the first entry
++ * in the list is always the bucket closest to the start of the neighborhood.
++ *
++ * While individual accesses tend to be very fast, the table resize operations are very, very
++ * expensive. If an upper bound on the latency of adding an entry to the table is needed, we either
++ * need to ensure the table is pre-sized to be large enough so no resize is ever needed, or we'll
++ * need to develop an approach to incrementally resize the table.
++ */
 +
-+#include <linux/atomic.h>
-+#include <linux/blkdev.h>
++#include "int-map.h"
 +
++#include <linux/minmax.h>
++
++#include "errors.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
++#include "numeric.h"
 +#include "permassert.h"
-+#include "string-utils.h"
-+
-+#include "admin-state.h"
-+#include "completion.h"
-+#include "constants.h"
-+#include "data-vio.h"
-+#include "dedupe.h"
-+#include "encodings.h"
-+#include "io-submitter.h"
-+#include "physical-zone.h"
-+#include "status-codes.h"
-+#include "vdo.h"
-+#include "vio.h"
-+
-+static const struct version_number COMPRESSED_BLOCK_1_0 = {
-+	.major_version = 1,
-+	.minor_version = 0,
-+};
 +
 +enum {
-+	COMPRESSED_BLOCK_1_0_SIZE = 4 + 4 + (2 * VDO_MAX_COMPRESSION_SLOTS),
++	DEFAULT_CAPACITY = 16, /* the number of neighborhoods in a new table */
++	NEIGHBORHOOD = 255,    /* the number of buckets in each neighborhood */
++	MAX_PROBES = 1024,     /* limit on the number of probes for a free bucket */
++	NULL_HOP_OFFSET = 0,   /* the hop offset value terminating the hop list */
++	DEFAULT_LOAD = 75      /* a compromise between memory use and performance */
 +};
 +
 +/**
-+ * vdo_get_compressed_block_fragment() - Get a reference to a compressed fragment from a compressed
-+ *                                       block.
-+ * @mapping_state [in] The mapping state for the look up.
-+ * @compressed_block [in] The compressed block that was read from disk.
-+ * @fragment_offset [out] The offset of the fragment within a compressed block.
-+ * @fragment_size [out] The size of the fragment.
++ * struct bucket - hash bucket
 + *
-+ * Return: If a valid compressed fragment is found, VDO_SUCCESS; otherwise, VDO_INVALID_FRAGMENT if
-+ *         the fragment is invalid.
++ * Buckets are packed together to reduce memory usage and improve cache efficiency. It would be
++ * tempting to encode the hop offsets separately and maintain alignment of key/value pairs, but
++ * it's crucial to keep the hop fields near the buckets that they use them so they'll tend to share
++ * cache lines.
 + */
-+int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
-+				      struct compressed_block *block,
-+				      u16 *fragment_offset, u16 *fragment_size)
++struct __packed bucket {
++	/**
++	 * @first_hop: The biased offset of the first entry in the hop list of the neighborhood
++	 *             that hashes to this bucket.
++	 */
++	u8 first_hop;
++	/** @next_hop: The biased offset of the next bucket in the hop list. */
++	u8 next_hop;
++	/** @key: The key stored in this bucket. */
++	u64 key;
++	/** @value: The value stored in this bucket (NULL if empty). */
++	void *value;
++};
++
++/**
++ * struct int_map - The concrete definition of the opaque int_map type.
++ *
++ * To avoid having to wrap the neighborhoods of the last entries back around to the start of the
++ * bucket array, we allocate a few more buckets at the end of the array instead, which is why
++ * capacity and bucket_count are different.
++ */
++struct int_map {
++	/** @size: The number of entries stored in the map. */
++	size_t size;
++	/** @capacity: The number of neighborhoods in the map. */
++	size_t capacity;
++	/* @bucket_count: The number of buckets in the bucket array. */
++	size_t bucket_count;
++	/** @buckets: The array of hash buckets. */
++	struct bucket *buckets;
++};
++
++/**
++ * mix() - The Google CityHash 16-byte hash mixing function.
++ * @input1: The first input value.
++ * @input2: The second input value.
++ *
++ * Return: A hash of the two inputs.
++ */
++static u64 mix(u64 input1, u64 input2)
 +{
-+	u16 compressed_size;
-+	u16 offset = 0;
-+	unsigned int i;
-+	u8 slot;
-+	struct version_number version;
++	static const u64 CITY_MULTIPLIER = 0x9ddfea08eb382d69ULL;
++	u64 hash = (input1 ^ input2);
 +
-+	if (!vdo_is_state_compressed(mapping_state))
-+		return VDO_INVALID_FRAGMENT;
++	hash *= CITY_MULTIPLIER;
++	hash ^= (hash >> 47);
++	hash ^= input2;
++	hash *= CITY_MULTIPLIER;
++	hash ^= (hash >> 47);
++	hash *= CITY_MULTIPLIER;
++	return hash;
++}
 +
-+	version = vdo_unpack_version_number(block->header.version);
-+	if (!vdo_are_same_version(version, COMPRESSED_BLOCK_1_0))
-+		return VDO_INVALID_FRAGMENT;
++/**
++ * hash_key() - Calculate a 64-bit non-cryptographic hash value for the provided 64-bit integer
++ *              key.
++ * @key: The mapping key.
++ *
++ * The implementation is based on Google's CityHash, only handling the specific case of an 8-byte
++ * input.
++ *
++ * Return: The hash of the mapping key.
++ */
++static u64 hash_key(u64 key)
++{
++	/*
++	 * Aliasing restrictions forbid us from casting pointer types, so use a union to convert a
++	 * single u64 to two u32 values.
++	 */
++	union {
++		u64 u64;
++		u32 u32[2];
++	} pun = {.u64 = key};
 +
-+	slot = mapping_state - VDO_MAPPING_STATE_COMPRESSED_BASE;
-+	if (slot >= VDO_MAX_COMPRESSION_SLOTS)
-+		return VDO_INVALID_FRAGMENT;
++	return mix(sizeof(key) + (((u64) pun.u32[0]) << 3), pun.u32[1]);
++}
 +
-+	compressed_size = __le16_to_cpu(block->header.sizes[slot]);
-+	for (i = 0; i < slot; i++) {
-+		offset += __le16_to_cpu(block->header.sizes[i]);
-+		if (offset >= VDO_COMPRESSED_BLOCK_DATA_SIZE)
-+			return VDO_INVALID_FRAGMENT;
++/**
++ * allocate_buckets() - Initialize an int_map.
++ * @map: The map to initialize.
++ * @capacity: The initial capacity of the map.
++ *
++ * Return: UDS_SUCCESS or an error code.
++ */
++static int allocate_buckets(struct int_map *map, size_t capacity)
++{
++	map->size = 0;
++	map->capacity = capacity;
++
++	/*
++	 * Allocate NEIGHBORHOOD - 1 extra buckets so the last bucket can have a full neighborhood
++	 * without have to wrap back around to element zero.
++	 */
++	map->bucket_count = capacity + (NEIGHBORHOOD - 1);
++	return uds_allocate(map->bucket_count, struct bucket,
++			    "struct int_map buckets", &map->buckets);
++}
++
++/**
++ * vdo_make_int_map() - Allocate and initialize an int_map.
++ * @initial_capacity: The number of entries the map should initially be capable of holding (zero
++ *                    tells the map to use its own small default).
++ * @initial_load: The load factor of the map, expressed as an integer percentage (typically in the
++ *                range 50 to 90, with zero telling the map to use its own default).
++ * @map_ptr: Output, a pointer to hold the new int_map.
++ *
++ * Return: UDS_SUCCESS or an error code.
++ */
++int vdo_make_int_map(size_t initial_capacity, unsigned int initial_load, struct int_map **map_ptr)
++{
++	struct int_map *map;
++	int result;
++	size_t capacity;
++
++	/* Use the default initial load if the caller did not specify one. */
++	if (initial_load == 0)
++		initial_load = DEFAULT_LOAD;
++	if (initial_load > 100)
++		return UDS_INVALID_ARGUMENT;
++
++	result = uds_allocate(1, struct int_map, "struct int_map", &map);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	/* Use the default capacity if the caller did not specify one. */
++	capacity = (initial_capacity > 0) ? initial_capacity : DEFAULT_CAPACITY;
++
++	/*
++	 * Scale up the capacity by the specified initial load factor. (i.e to hold 1000 entries at
++	 * 80% load we need a capacity of 1250)
++	 */
++	capacity = capacity * 100 / initial_load;
++
++	result = allocate_buckets(map, capacity);
++	if (result != UDS_SUCCESS) {
++		vdo_free_int_map(uds_forget(map));
++		return result;
 +	}
 +
-+	if ((offset + compressed_size) > VDO_COMPRESSED_BLOCK_DATA_SIZE)
-+		return VDO_INVALID_FRAGMENT;
-+
-+	*fragment_offset = offset;
-+	*fragment_size = compressed_size;
-+	return VDO_SUCCESS;
++	*map_ptr = map;
++	return UDS_SUCCESS;
 +}
 +
 +/**
-+ * assert_on_packer_thread() - Check that we are on the packer thread.
-+ * @packer: The packer.
-+ * @caller: The function which is asserting.
-+ */
-+static inline void assert_on_packer_thread(struct packer *packer, const char *caller)
-+{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == packer->thread_id),
-+			"%s() called from packer thread", caller);
-+}
-+
-+/**
-+ * insert_in_sorted_list() - Insert a bin to the list.
-+ * @packer: The packer.
-+ * @bin: The bin to move to its sorted position.
++ * vdo_free_int_map() - Free an int_map.
++ * @map: The int_map to free.
 + *
-+ * The list is in ascending order of free space. Since all bins are already in the list, this
-+ * actually moves the bin to the correct position in the list.
++ * NOTE: The map does not own the pointer values stored in the map and they are not freed by this
++ * call.
 + */
-+static void insert_in_sorted_list(struct packer *packer, struct packer_bin *bin)
++void vdo_free_int_map(struct int_map *map)
 +{
-+	struct packer_bin *active_bin;
++	if (map == NULL)
++		return;
 +
-+	list_for_each_entry(active_bin, &packer->bins, list)
-+		if (active_bin->free_space > bin->free_space) {
-+			list_move_tail(&bin->list, &active_bin->list);
++	uds_free(uds_forget(map->buckets));
++	uds_free(uds_forget(map));
++}
++
++/**
++ * vdo_int_map_size() - Get the number of entries stored in an int_map.
++ * @map: The int_map to query.
++ *
++ * Return: The number of entries in the map.
++ */
++size_t vdo_int_map_size(const struct int_map *map)
++{
++	return map->size;
++}
++
++/**
++ * dereference_hop() - Convert a biased hop offset within a neighborhood to a pointer to the bucket
++ *                     it references.
++ * @neighborhood: The first bucket in the neighborhood.
++ * @hop_offset: The biased hop offset to the desired bucket.
++ *
++ * Return: NULL if hop_offset is zero, otherwise a pointer to the bucket in the neighborhood at
++ *         hop_offset - 1.
++ */
++static struct bucket *dereference_hop(struct bucket *neighborhood, unsigned int hop_offset)
++{
++	BUILD_BUG_ON(NULL_HOP_OFFSET != 0);
++	if (hop_offset == NULL_HOP_OFFSET)
++		return NULL;
++
++	return &neighborhood[hop_offset - 1];
++}
++
++/**
++ * insert_in_hop_list() - Add a bucket into the hop list for the neighborhood.
++ * @neighborhood: The first bucket in the neighborhood.
++ * @new_bucket: The bucket to add to the hop list.
++ *
++ * The bucket is inserted it into the list so the hop list remains sorted by hop offset.
++ */
++static void insert_in_hop_list(struct bucket *neighborhood, struct bucket *new_bucket)
++{
++	/* Zero indicates a NULL hop offset, so bias the hop offset by one. */
++	int hop_offset = 1 + (new_bucket - neighborhood);
++
++	/* Handle the special case of adding a bucket at the start of the list. */
++	int next_hop = neighborhood->first_hop;
++
++	if ((next_hop == NULL_HOP_OFFSET) || (next_hop > hop_offset)) {
++		new_bucket->next_hop = next_hop;
++		neighborhood->first_hop = hop_offset;
++		return;
++	}
++
++	/* Search the hop list for the insertion point that maintains the sort order. */
++	for (;;) {
++		struct bucket *bucket = dereference_hop(neighborhood, next_hop);
++
++		next_hop = bucket->next_hop;
++
++		if ((next_hop == NULL_HOP_OFFSET) || (next_hop > hop_offset)) {
++			new_bucket->next_hop = next_hop;
++			bucket->next_hop = hop_offset;
 +			return;
 +		}
-+
-+	list_move_tail(&bin->list, &packer->bins);
-+}
-+
-+/**
-+ * make_bin() - Allocate a bin and put it into the packer's list.
-+ * @packer: The packer.
-+ */
-+static int __must_check make_bin(struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+	int result;
-+
-+	result = uds_allocate_extended(struct packer_bin, VDO_MAX_COMPRESSION_SLOTS,
-+				       struct vio *, __func__, &bin);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
-+	INIT_LIST_HEAD(&bin->list);
-+	list_add_tail(&bin->list, &packer->bins);
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_make_packer() - Make a new block packer.
-+ *
-+ * @vdo: The vdo to which this packer belongs.
-+ * @bin_count: The number of partial bins to keep in memory.
-+ * @packer_ptr: A pointer to hold the new packer.
-+ *
-+ * Return: VDO_SUCCESS or an error
-+ */
-+int vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr)
-+{
-+	struct packer *packer;
-+	block_count_t i;
-+	int result;
-+
-+	result = uds_allocate(1, struct packer, __func__, &packer);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	packer->thread_id = vdo->thread_config.packer_thread;
-+	packer->size = bin_count;
-+	INIT_LIST_HEAD(&packer->bins);
-+	vdo_set_admin_state_code(&packer->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+
-+	for (i = 0; i < bin_count; i++) {
-+		result = make_bin(packer);
-+		if (result != VDO_SUCCESS) {
-+			vdo_free_packer(packer);
-+			return result;
-+		}
 +	}
++}
++
++/**
++ * select_bucket() - Select and return the hash bucket for a given search key.
++ * @map: The map to search.
++ * @key: The mapping key.
++ */
++static struct bucket *select_bucket(const struct int_map *map, u64 key)
++{
++	/*
++	 * Calculate a good hash value for the provided key. We want exactly 32 bits, so mask the
++	 * result.
++	 */
++	u64 hash = hash_key(key) & 0xFFFFFFFF;
 +
 +	/*
-+	 * The canceled bin can hold up to half the number of user vios. Every canceled vio in the
-+	 * bin must have a canceler for which it is waiting, and any canceler will only have
-+	 * canceled one lock holder at a time.
++	 * Scale the 32-bit hash to a bucket index by treating it as a binary fraction and
++	 * multiplying that by the capacity. If the hash is uniformly distributed over [0 ..
++	 * 2^32-1], then (hash * capacity / 2^32) should be uniformly distributed over [0 ..
++	 * capacity-1]. The multiply and shift is much faster than a divide (modulus) on X86 CPUs.
 +	 */
-+	result = uds_allocate_extended(struct packer_bin, MAXIMUM_VDO_USER_VIOS / 2,
-+				       struct vio *, __func__, &packer->canceled_bin);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_packer(packer);
-+		return result;
-+	}
-+
-+	result = vdo_make_default_thread(vdo, packer->thread_id);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_packer(packer);
-+		return result;
-+	}
-+
-+	*packer_ptr = packer;
-+	return VDO_SUCCESS;
++	return &map->buckets[(hash * map->capacity) >> 32];
 +}
 +
 +/**
-+ * vdo_free_packer() - Free a block packer.
-+ * @packer: The packer to free.
-+ */
-+void vdo_free_packer(struct packer *packer)
-+{
-+	struct packer_bin *bin, *tmp;
-+
-+	if (packer == NULL)
-+		return;
-+
-+	list_for_each_entry_safe(bin, tmp, &packer->bins, list) {
-+		list_del_init(&bin->list);
-+		uds_free(bin);
-+	}
-+
-+	uds_free(uds_forget(packer->canceled_bin));
-+	uds_free(packer);
-+}
-+
-+/**
-+ * get_packer_from_data_vio() - Get the packer from a data_vio.
-+ * @data_vio: The data_vio.
++ * search_hop_list() - Search the hop list associated with given hash bucket for a given search
++ *                     key.
++ * @map: The map being searched.
++ * @bucket: The map bucket to search for the key.
++ * @key: The mapping key.
++ * @previous_ptr: Output. if not NULL, a pointer in which to store the bucket in the list preceding
++ *                the one that had the matching key
 + *
-+ * Return: The packer from the VDO to which the data_vio belongs.
-+ */
-+static inline struct packer *get_packer_from_data_vio(struct data_vio *data_vio)
-+{
-+	return vdo_from_data_vio(data_vio)->packer;
-+}
-+
-+/**
-+ * vdo_get_packer_statistics() - Get the current statistics from the packer.
-+ * @packer: The packer to query.
++ * If the key is found, returns a pointer to the entry (bucket or collision), otherwise returns
++ * NULL.
 + *
-+ * Return: a copy of the current statistics for the packer.
++ * Return: An entry that matches the key, or NULL if not found.
 + */
-+struct packer_statistics vdo_get_packer_statistics(const struct packer *packer)
++static struct bucket *search_hop_list(struct int_map *map __always_unused,
++				      struct bucket *bucket,
++				      u64 key,
++				      struct bucket **previous_ptr)
 +{
-+	const struct packer_statistics *stats = &packer->statistics;
++	struct bucket *previous = NULL;
++	unsigned int next_hop = bucket->first_hop;
 +
-+	return (struct packer_statistics) {
-+		.compressed_fragments_written = READ_ONCE(stats->compressed_fragments_written),
-+		.compressed_blocks_written = READ_ONCE(stats->compressed_blocks_written),
-+		.compressed_fragments_in_packer = READ_ONCE(stats->compressed_fragments_in_packer),
-+	};
-+}
++	while (next_hop != NULL_HOP_OFFSET) {
++		/*
++		 * Check the neighboring bucket indexed by the offset for the
++		 * desired key.
++		 */
++		struct bucket *entry = dereference_hop(bucket, next_hop);
 +
-+/**
-+ * abort_packing() - Abort packing a data_vio.
-+ * @data_vio: The data_vio to abort.
-+ */
-+static void abort_packing(struct data_vio *data_vio)
-+{
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+
-+	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
-+		   packer->statistics.compressed_fragments_in_packer - 1);
-+
-+	write_data_vio(data_vio);
-+}
-+
-+/**
-+ * release_compressed_write_waiter() - Update a data_vio for which a successful compressed write
-+ *                                     has completed and send it on its way.
-+
-+ * @data_vio: The data_vio to release.
-+ * @allocation: The allocation to which the compressed block was written.
-+ */
-+static void release_compressed_write_waiter(struct data_vio *data_vio,
-+					    struct allocation *allocation)
-+{
-+	data_vio->new_mapped = (struct zoned_pbn) {
-+		.pbn = allocation->pbn,
-+		.zone = allocation->zone,
-+		.state = data_vio->compression.slot + VDO_MAPPING_STATE_COMPRESSED_BASE,
-+	};
-+
-+	vdo_share_compressed_write_lock(data_vio, allocation->lock);
-+	update_metadata_for_data_vio_write(data_vio, allocation->lock);
-+}
-+
-+/**
-+ * finish_compressed_write() - Finish a compressed block write.
-+ * @completion: The compressed write completion.
-+ *
-+ * This callback is registered in continue_after_allocation().
-+ */
-+static void finish_compressed_write(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct data_vio *client, *next;
-+
-+	assert_data_vio_in_allocated_zone(agent);
-+
-+	/*
-+	 * Process all the non-agent waiters first to ensure that the pbn lock can not be released
-+	 * until all of them have had a chance to journal their increfs.
-+	 */
-+	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
-+		next = client->compression.next_in_batch;
-+		release_compressed_write_waiter(client, &agent->allocation);
-+	}
-+
-+	completion->error_handler = handle_data_vio_error;
-+	release_compressed_write_waiter(agent, &agent->allocation);
-+}
-+
-+static void handle_compressed_write_error(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct allocation *allocation = &agent->allocation;
-+	struct data_vio *client, *next;
-+
-+	if (vdo_requeue_completion_if_needed(completion, allocation->zone->thread_id))
-+		return;
-+
-+	update_vio_error_stats(as_vio(completion),
-+			       "Completing compressed write vio for physical block %llu with error",
-+			       (unsigned long long) allocation->pbn);
-+
-+	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
-+		next = client->compression.next_in_batch;
-+		write_data_vio(client);
-+	}
-+
-+	/* Now that we've released the batch from the packer, forget the error and continue on. */
-+	vdo_reset_completion(completion);
-+	completion->error_handler = handle_data_vio_error;
-+	write_data_vio(agent);
-+}
-+
-+/**
-+ * add_to_bin() - Put a data_vio in a specific packer_bin in which it will definitely fit.
-+ * @bin: The bin in which to put the data_vio.
-+ * @data_vio: The data_vio to add.
-+ */
-+static void add_to_bin(struct packer_bin *bin, struct data_vio *data_vio)
-+{
-+	data_vio->compression.bin = bin;
-+	data_vio->compression.slot = bin->slots_used;
-+	bin->incoming[bin->slots_used++] = data_vio;
-+}
-+
-+/**
-+ * remove_from_bin() - Get the next data_vio whose compression has not been canceled from a bin.
-+ * @packer: The packer.
-+ * @bin: The bin from which to get a data_vio.
-+ *
-+ * Any canceled data_vios will be moved to the canceled bin.
-+ * Return: An uncanceled data_vio from the bin or NULL if there are none.
-+ */
-+static struct data_vio *remove_from_bin(struct packer *packer, struct packer_bin *bin)
-+{
-+	while (bin->slots_used > 0) {
-+		struct data_vio *data_vio = bin->incoming[--bin->slots_used];
-+
-+		if (!advance_data_vio_compression_stage(data_vio).may_not_compress) {
-+			data_vio->compression.bin = NULL;
-+			return data_vio;
++		if ((key == entry->key) && (entry->value != NULL)) {
++			if (previous_ptr != NULL)
++				*previous_ptr = previous;
++			return entry;
 +		}
-+
-+		add_to_bin(packer->canceled_bin, data_vio);
++		next_hop = entry->next_hop;
++		previous = entry;
 +	}
 +
-+	/* The bin is now empty. */
-+	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
 +	return NULL;
 +}
 +
 +/**
-+ * initialize_compressed_block() - Initialize a compressed block.
-+ * @block: The compressed block to initialize.
-+ * @size: The size of the agent's fragment.
++ * vdo_int_map_get() - Retrieve the value associated with a given key from the int_map.
++ * @map: The int_map to query.
++ * @key: The key to look up.
 + *
-+ * This method initializes the compressed block in the compressed write agent. Because the
-+ * compressor already put the agent's compressed fragment at the start of the compressed block's
-+ * data field, it needn't be copied. So all we need do is initialize the header and set the size of
-+ * the agent's fragment.
++ * Return: The value associated with the given key, or NULL if the key is not mapped to any value.
 + */
-+static void initialize_compressed_block(struct compressed_block *block, u16 size)
++void *vdo_int_map_get(struct int_map *map, u64 key)
 +{
-+	/*
-+	 * Make sure the block layout isn't accidentally changed by changing the length of the
-+	 * block header.
-+	 */
-+	BUILD_BUG_ON(sizeof(struct compressed_block_header) != COMPRESSED_BLOCK_1_0_SIZE);
++	struct bucket *match = search_hop_list(map, select_bucket(map, key), key, NULL);
 +
-+	block->header.version = vdo_pack_version_number(COMPRESSED_BLOCK_1_0);
-+	block->header.sizes[0] = __cpu_to_le16(size);
++	return ((match != NULL) ? match->value : NULL);
 +}
 +
 +/**
-+ * pack_fragment() - Pack a data_vio's fragment into the compressed block in which it is already
-+ *                   known to fit.
-+ * @compression: The agent's compression_state to pack in to.
-+ * @data_vio: The data_vio to pack.
-+ * @offset: The offset into the compressed block at which to pack the fragment.
-+ * @compressed_block: The compressed block which will be written out when batch is fully packed.
++ * resize_buckets() - Increase the number of hash buckets.
++ * @map: The map to resize.
 + *
-+ * Return: The new amount of space used.
++ * Resizes and rehashes all the existing entries, storing them in the new buckets.
++ *
++ * Return: UDS_SUCCESS or an error code.
 + */
-+static block_size_t __must_check pack_fragment(struct compression_state *compression,
-+					       struct data_vio *data_vio,
-+					       block_size_t offset, slot_number_t slot,
-+					       struct compressed_block *block)
-+{
-+	struct compression_state *to_pack = &data_vio->compression;
-+	char *fragment = to_pack->block->data;
-+
-+	to_pack->next_in_batch = compression->next_in_batch;
-+	compression->next_in_batch = data_vio;
-+	to_pack->slot = slot;
-+	block->header.sizes[slot] = __cpu_to_le16(to_pack->size);
-+	memcpy(&block->data[offset], fragment, to_pack->size);
-+	return (offset + to_pack->size);
-+}
-+
-+/**
-+ * compressed_write_end_io() - The bio_end_io for a compressed block write.
-+ * @bio: The bio for the compressed write.
-+ */
-+static void compressed_write_end_io(struct bio *bio)
-+{
-+	struct data_vio *data_vio = vio_as_data_vio(bio->bi_private);
-+
-+	vdo_count_completed_bios(bio);
-+	set_data_vio_allocated_zone_callback(data_vio, finish_compressed_write);
-+	continue_data_vio_with_error(data_vio, blk_status_to_errno(bio->bi_status));
-+}
-+
-+/**
-+ * write_bin() - Write out a bin.
-+ * @packer: The packer.
-+ * @bin: The bin to write.
-+ */
-+static void write_bin(struct packer *packer, struct packer_bin *bin)
++static int resize_buckets(struct int_map *map)
 +{
 +	int result;
-+	block_size_t offset;
-+	slot_number_t slot = 1;
-+	struct compression_state *compression;
-+	struct compressed_block *block;
-+	struct data_vio *agent = remove_from_bin(packer, bin);
-+	struct data_vio *client;
-+	struct packer_statistics *stats;
++	size_t i;
 +
-+	if (agent == NULL)
-+		return;
++	/* Copy the top-level map data to the stack. */
++	struct int_map old_map = *map;
 +
-+	compression = &agent->compression;
-+	compression->slot = 0;
-+	block = compression->block;
-+	initialize_compressed_block(block, compression->size);
-+	offset = compression->size;
++	/* Re-initialize the map to be empty and 50% larger. */
++	size_t new_capacity = map->capacity / 2 * 3;
 +
-+	while ((client = remove_from_bin(packer, bin)) != NULL)
-+		offset = pack_fragment(compression, client, offset, slot++, block);
-+
-+	/*
-+	 * If the batch contains only a single vio, then we save nothing by saving the compressed
-+	 * form. Continue processing the single vio in the batch.
-+	 */
-+	if (slot == 1) {
-+		abort_packing(agent);
-+		return;
++	uds_log_info("%s: attempting resize from %zu to %zu, current size=%zu",
++		     __func__, map->capacity, new_capacity, map->size);
++	result = allocate_buckets(map, new_capacity);
++	if (result != UDS_SUCCESS) {
++		*map = old_map;
++		return result;
 +	}
 +
-+	if (slot < VDO_MAX_COMPRESSION_SLOTS) {
-+		/* Clear out the sizes of the unused slots */
-+		memset(&block->header.sizes[slot], 0,
-+		       (VDO_MAX_COMPRESSION_SLOTS - slot) * sizeof(__le16));
++	/* Populate the new hash table from the entries in the old bucket array. */
++	for (i = 0; i < old_map.bucket_count; i++) {
++		struct bucket *entry = &old_map.buckets[i];
++
++		if (entry->value == NULL)
++			continue;
++
++		result = vdo_int_map_put(map, entry->key, entry->value, true, NULL);
++		if (result != UDS_SUCCESS) {
++			/* Destroy the new partial map and restore the map from the stack. */
++			uds_free(uds_forget(map->buckets));
++			*map = old_map;
++			return result;
++		}
 +	}
 +
-+	agent->vio.completion.error_handler = handle_compressed_write_error;
-+	if (vdo_is_read_only(vdo_from_data_vio(agent))) {
-+		continue_data_vio_with_error(agent, VDO_READ_ONLY);
-+		return;
-+	}
-+
-+	result = vio_reset_bio(&agent->vio, (char *) block, compressed_write_end_io,
-+			       REQ_OP_WRITE, agent->allocation.pbn);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(agent, result);
-+		return;
-+	}
-+
-+	/*
-+	 * Once the compressed write is submitted, the fragments are no longer in the packer, so
-+	 * update stats now.
-+	 */
-+	stats = &packer->statistics;
-+	WRITE_ONCE(stats->compressed_fragments_in_packer,
-+		   (stats->compressed_fragments_in_packer - slot));
-+	WRITE_ONCE(stats->compressed_fragments_written,
-+		   (stats->compressed_fragments_written + slot));
-+	WRITE_ONCE(stats->compressed_blocks_written,
-+		   stats->compressed_blocks_written + 1);
-+
-+	submit_data_vio_io(agent);
++	/* Destroy the old bucket array. */
++	uds_free(uds_forget(old_map.buckets));
++	return UDS_SUCCESS;
 +}
 +
 +/**
-+ * add_data_vio_to_packer_bin() - Add a data_vio to a bin's incoming queue
-+ * @packer: The packer.
-+ * @bin: The bin to which to add the data_vio.
-+ * @data_vio: The data_vio to add to the bin's queue.
++ * find_empty_bucket() - Probe the bucket array starting at the given bucket for the next empty
++ *                       bucket, returning a pointer to it.
++ * @map: The map containing the buckets to search.
++ * @bucket: The bucket at which to start probing.
++ * @max_probes: The maximum number of buckets to search.
 + *
-+ * Adds a data_vio to a bin's incoming queue, handles logical space change, and calls physical
-+ * space processor.
++ * NULL will be returned if the search reaches the end of the bucket array or if the number of
++ * linear probes exceeds a specified limit.
++ *
++ * Return: The next empty bucket, or NULL if the search failed.
 + */
-+static void add_data_vio_to_packer_bin(struct packer *packer, struct packer_bin *bin,
-+				       struct data_vio *data_vio)
-+{
-+	/* If the selected bin doesn't have room, start a new batch to make room. */
-+	if (bin->free_space < data_vio->compression.size)
-+		write_bin(packer, bin);
-+
-+	add_to_bin(bin, data_vio);
-+	bin->free_space -= data_vio->compression.size;
-+
-+	/* If we happen to exactly fill the bin, start a new batch. */
-+	if ((bin->slots_used == VDO_MAX_COMPRESSION_SLOTS) ||
-+	    (bin->free_space == 0))
-+		write_bin(packer, bin);
-+
-+	/* Now that we've finished changing the free space, restore the sort order. */
-+	insert_in_sorted_list(packer, bin);
-+}
-+
-+/**
-+ * select_bin() - Select the bin that should be used to pack the compressed data in a data_vio with
-+ *                other data_vios.
-+ * @packer: The packer.
-+ * @data_vio: The data_vio.
-+ */
-+static struct packer_bin * __must_check select_bin(struct packer *packer,
-+						   struct data_vio *data_vio)
++static struct bucket *
++find_empty_bucket(struct int_map *map, struct bucket *bucket, unsigned int max_probes)
 +{
 +	/*
-+	 * First best fit: select the bin with the least free space that has enough room for the
-+	 * compressed data in the data_vio.
++	 * Limit the search to either the nearer of the end of the bucket array or a fixed distance
++	 * beyond the initial bucket.
 +	 */
-+	struct packer_bin *bin, *fullest_bin;
++	ptrdiff_t remaining = &map->buckets[map->bucket_count] - bucket;
++	struct bucket *sentinel = &bucket[min_t(ptrdiff_t, remaining, max_probes)];
++	struct bucket *entry;
 +
-+	list_for_each_entry(bin, &packer->bins, list) {
-+		if (bin->free_space >= data_vio->compression.size)
-+			return bin;
++	for (entry = bucket; entry < sentinel; entry++) {
++		if (entry->value == NULL)
++			return entry;
 +	}
 +
-+	/*
-+	 * None of the bins have enough space for the data_vio. We're not allowed to create new
-+	 * bins, so we have to overflow one of the existing bins. It's pretty intuitive to select
-+	 * the fullest bin, since that "wastes" the least amount of free space in the compressed
-+	 * block. But if the space currently used in the fullest bin is smaller than the compressed
-+	 * size of the incoming block, it seems wrong to force that bin to write when giving up on
-+	 * compressing the incoming data_vio would likewise "waste" the least amount of free space.
-+	 */
-+	fullest_bin = list_first_entry(&packer->bins, struct packer_bin, list);
-+	if (data_vio->compression.size >=
-+	    (VDO_COMPRESSED_BLOCK_DATA_SIZE - fullest_bin->free_space))
-+		return NULL;
-+
-+	/*
-+	 * The fullest bin doesn't have room, but writing it out and starting a new batch with the
-+	 * incoming data_vio will increase the packer's free space.
-+	 */
-+	return fullest_bin;
++	return NULL;
 +}
 +
 +/**
-+ * vdo_attempt_packing() - Attempt to rewrite the data in this data_vio as part of a compressed
-+ *                         block.
-+ * @data_vio: The data_vio to pack.
++ * move_empty_bucket() - Move an empty bucket closer to the start of the bucket array.
++ * @map: The map containing the bucket.
++ * @hole: The empty bucket to fill with an entry that precedes it in one of its enclosing
++ *        neighborhoods.
++ *
++ * This searches the neighborhoods that contain the empty bucket for a non-empty bucket closer to
++ * the start of the array. If such a bucket is found, this swaps the two buckets by moving the
++ * entry to the empty bucket.
++ *
++ * Return: The bucket that was vacated by moving its entry to the provided hole, or NULL if no
++ *         entry could be moved.
 + */
-+void vdo_attempt_packing(struct data_vio *data_vio)
++static struct bucket *move_empty_bucket(struct int_map *map __always_unused, struct bucket *hole)
 +{
-+	int result;
-+	struct packer_bin *bin;
-+	struct data_vio_compression_status status = get_data_vio_compression_status(data_vio);
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+
-+	assert_on_packer_thread(packer, __func__);
-+
-+	result = ASSERT((status.stage == DATA_VIO_COMPRESSING),
-+			"attempt to pack data_vio not ready for packing, stage: %u",
-+			status.stage);
-+	if (result != VDO_SUCCESS)
-+		return;
-+
 +	/*
-+	 * Increment whether or not this data_vio will be packed or not since abort_packing()
-+	 * always decrements the counter.
++	 * Examine every neighborhood that the empty bucket is part of, starting with the one in
++	 * which it is the last bucket. No boundary check is needed for the negative array
++	 * arithmetic since this function is only called when hole is at least NEIGHBORHOOD cells
++	 * deeper into the array than a valid bucket.
 +	 */
-+	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
-+		   packer->statistics.compressed_fragments_in_packer + 1);
++	struct bucket *bucket;
 +
-+	/*
-+	 * If packing of this data_vio is disallowed for administrative reasons, give up before
-+	 * making any state changes.
-+	 */
-+	if (!vdo_is_state_normal(&packer->state) ||
-+	    (data_vio->flush_generation < packer->flush_generation)) {
-+		abort_packing(data_vio);
-+		return;
-+	}
-+
-+	/*
-+	 * The check of may_vio_block_in_packer() here will set the data_vio's compression state to
-+	 * VIO_PACKING if the data_vio is allowed to be compressed (if it has already been
-+	 * canceled, we'll fall out here). Once the data_vio is in the VIO_PACKING state, it must
-+	 * be guaranteed to be put in a bin before any more requests can be processed by the packer
-+	 * thread. Otherwise, a canceling data_vio could attempt to remove the canceled data_vio
-+	 * from the packer and fail to rendezvous with it (VDO-2809). We must also make sure that
-+	 * we will actually bin the data_vio and not give up on it as being larger than the space
-+	 * used in the fullest bin. Hence we must call select_bin() before calling
-+	 * may_vio_block_in_packer() (VDO-2826).
-+	 */
-+	bin = select_bin(packer, data_vio);
-+	if ((bin == NULL) ||
-+	    (advance_data_vio_compression_stage(data_vio).stage != DATA_VIO_PACKING)) {
-+		abort_packing(data_vio);
-+		return;
-+	}
-+
-+	add_data_vio_to_packer_bin(packer, bin, data_vio);
-+}
-+
-+/**
-+ * check_for_drain_complete() - Check whether the packer has drained.
-+ * @packer: The packer.
-+ */
-+static void check_for_drain_complete(struct packer *packer)
-+{
-+	if (vdo_is_state_draining(&packer->state) && (packer->canceled_bin->slots_used == 0))
-+		vdo_finish_draining(&packer->state);
-+}
-+
-+/**
-+ * write_all_non_empty_bins() - Write out all non-empty bins on behalf of a flush or suspend.
-+ * @packer: The packer being flushed.
-+ */
-+static void write_all_non_empty_bins(struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		write_bin(packer, bin);
++	for (bucket = &hole[1 - NEIGHBORHOOD]; bucket < hole; bucket++) {
 +		/*
-+		 * We don't need to re-sort the bin here since this loop will make every bin have
-+		 * the same amount of free space, so every ordering is sorted.
++		 * Find the entry that is nearest to the bucket, which means it will be nearest to
++		 * the hash bucket whose neighborhood is full.
++		 */
++		struct bucket *new_hole = dereference_hop(bucket, bucket->first_hop);
++
++		if (new_hole == NULL) {
++			/*
++			 * There are no buckets in this neighborhood that are in use by this one
++			 * (they must all be owned by overlapping neighborhoods).
++			 */
++			continue;
++		}
++
++		/*
++		 * Skip this bucket if its first entry is actually further away than the hole that
++		 * we're already trying to fill.
++		 */
++		if (hole < new_hole)
++			continue;
++
++		/*
++		 * We've found an entry in this neighborhood that we can "hop" further away, moving
++		 * the hole closer to the hash bucket, if not all the way into its neighborhood.
 +		 */
 +
-+	check_for_drain_complete(packer);
-+}
++		/*
++		 * The entry that will be the new hole is the first bucket in the list, so setting
++		 * first_hop is all that's needed remove it from the list.
++		 */
++		bucket->first_hop = new_hole->next_hop;
++		new_hole->next_hop = NULL_HOP_OFFSET;
 +
-+/**
-+ * vdo_flush_packer() - Request that the packer flush asynchronously.
-+ * @packer: The packer to flush.
-+ *
-+ * All bins with at least two compressed data blocks will be written out, and any solitary pending
-+ * VIOs will be released from the packer. While flushing is in progress, any VIOs submitted to
-+ * vdo_attempt_packing() will be continued immediately without attempting to pack them.
-+ */
-+void vdo_flush_packer(struct packer *packer)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	if (vdo_is_state_normal(&packer->state))
-+		write_all_non_empty_bins(packer);
-+}
++		/* Move the entry into the original hole. */
++		hole->key = new_hole->key;
++		hole->value = new_hole->value;
++		new_hole->value = NULL;
 +
-+/**
-+ * vdo_remove_lock_holder_from_packer() - Remove a lock holder from the packer.
-+ * @completion: The data_vio which needs a lock held by a data_vio in the packer. The data_vio's
-+ *              compression.lock_holder field will point to the data_vio to remove.
-+ */
-+void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+	struct data_vio *lock_holder;
-+	struct packer_bin *bin;
-+	slot_number_t slot;
-+
-+	assert_data_vio_in_packer_zone(data_vio);
-+
-+	lock_holder = uds_forget(data_vio->compression.lock_holder);
-+	bin = lock_holder->compression.bin;
-+	ASSERT_LOG_ONLY((bin != NULL), "data_vio in packer has a bin");
-+
-+	slot = lock_holder->compression.slot;
-+	bin->slots_used--;
-+	if (slot < bin->slots_used) {
-+		bin->incoming[slot] = bin->incoming[bin->slots_used];
-+		bin->incoming[slot]->compression.slot = slot;
++		/* Insert the filled hole into the hop list for the neighborhood. */
++		insert_in_hop_list(bucket, hole);
++		return new_hole;
 +	}
 +
-+	lock_holder->compression.bin = NULL;
-+	lock_holder->compression.slot = 0;
++	/* We couldn't find an entry to relocate to the hole. */
++	return NULL;
++}
 +
-+	if (bin != packer->canceled_bin) {
-+		bin->free_space += lock_holder->compression.size;
-+		insert_in_sorted_list(packer, bin);
++/**
++ * update_mapping() - Find and update any existing mapping for a given key, returning the value
++ *                    associated with the key in the provided pointer.
++ * @map: The int_map to attempt to modify.
++ * @neighborhood: The first bucket in the neighborhood that would contain the search key
++ * @key: The key with which to associate the new value.
++ * @new_value: The value to be associated with the key.
++ * @update: Whether to overwrite an existing value.
++ * @old_value_ptr: a pointer in which to store the old value (unmodified if no mapping was found)
++ *
++ * Return: true if the map contains a mapping for the key, false if it does not.
++ */
++static bool update_mapping(struct int_map *map,
++			   struct bucket *neighborhood,
++			   u64 key,
++			   void *new_value,
++			   bool update,
++			   void **old_value_ptr)
++{
++	struct bucket *bucket = search_hop_list(map, neighborhood, key, NULL);
++
++	if (bucket == NULL) {
++		/* There is no bucket containing the key in the neighborhood. */
++		return false;
 +	}
-+
-+	abort_packing(lock_holder);
-+	check_for_drain_complete(packer);
-+}
-+
-+/**
-+ * vdo_increment_packer_flush_generation() - Increment the flush generation in the packer.
-+ * @packer: The packer.
-+ *
-+ * This will also cause the packer to flush so that any VIOs from previous generations will exit
-+ * the packer.
-+ */
-+void vdo_increment_packer_flush_generation(struct packer *packer)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	packer->flush_generation++;
-+	vdo_flush_packer(packer);
-+}
-+
-+/**
-+ * initiate_drain() - Initiate a drain.
-+ *
-+ * Implements vdo_admin_initiator_fn.
-+ */
-+static void initiate_drain(struct admin_state *state)
-+{
-+	struct packer *packer = container_of(state, struct packer, state);
-+
-+	write_all_non_empty_bins(packer);
-+}
-+
-+/**
-+ * vdo_drain_packer() - Drain the packer by preventing any more VIOs from entering the packer and
-+ *                      then flushing.
-+ * @packer: The packer to drain.
-+ * @completion: The completion to finish when the packer has drained.
-+ */
-+void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	vdo_start_draining(&packer->state, VDO_ADMIN_STATE_SUSPENDING, completion,
-+			   initiate_drain);
-+}
-+
-+/**
-+ * vdo_resume_packer() - Resume a packer which has been suspended.
-+ * @packer: The packer to resume.
-+ * @parent: The completion to finish when the packer has resumed.
-+ */
-+void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	vdo_continue_completion(parent, vdo_resume_if_quiescent(&packer->state));
-+}
-+
-+static void dump_packer_bin(const struct packer_bin *bin, bool canceled)
-+{
-+	if (bin->slots_used == 0)
-+		/* Don't dump empty bins. */
-+		return;
-+
-+	uds_log_info("	  %sBin slots_used=%u free_space=%zu",
-+		     (canceled ? "Canceled" : ""), bin->slots_used, bin->free_space);
 +
 +	/*
-+	 * FIXME: dump vios in bin->incoming? The vios should have been dumped from the vio pool.
-+	 * Maybe just dump their addresses so it's clear they're here?
++	 * Return the value of the current mapping (if desired) and update the mapping with the new
++	 * value (if desired).
 +	 */
++	if (old_value_ptr != NULL)
++		*old_value_ptr = bucket->value;
++	if (update)
++		bucket->value = new_value;
++	return true;
 +}
 +
 +/**
-+ * vdo_dump_packer() - Dump the packer.
-+ * @packer: The packer.
++ * find_or_make_vacancy() - Find an empty bucket.
++ * @map: The int_map to search or modify.
++ * @neighborhood: The first bucket in the neighborhood in which an empty bucket is needed for a new
++ *                mapping.
 + *
-+ * Context: dumps in a thread-unsafe fashion.
++ * Find an empty bucket in a specified neighborhood for a new mapping or attempt to re-arrange
++ * mappings so there is such a bucket. This operation may fail (returning NULL) if an empty bucket
++ * is not available or could not be relocated to the neighborhood.
++ *
++ * Return: a pointer to an empty bucket in the desired neighborhood, or NULL if a vacancy could not
++ *         be found or arranged.
 + */
-+void vdo_dump_packer(const struct packer *packer)
++static struct bucket *find_or_make_vacancy(struct int_map *map, struct bucket *neighborhood)
 +{
-+	struct packer_bin *bin;
++	/* Probe within and beyond the neighborhood for the first empty bucket. */
++	struct bucket *hole = find_empty_bucket(map, neighborhood, MAX_PROBES);
 +
-+	uds_log_info("packer");
-+	uds_log_info("	flushGeneration=%llu state %s  packer_bin_count=%llu",
-+		     (unsigned long long) packer->flush_generation,
-+		     vdo_get_admin_state_code(&packer->state)->name,
-+		     (unsigned long long) packer->size);
++	/*
++	 * Keep trying until the empty bucket is in the bucket's neighborhood or we are unable to
++	 * move it any closer by swapping it with a filled bucket.
++	 */
++	while (hole != NULL) {
++		int distance = hole - neighborhood;
 +
-+	list_for_each_entry(bin, &packer->bins, list)
-+		dump_packer_bin(bin, false);
++		if (distance < NEIGHBORHOOD) {
++			/*
++			 * We've found or relocated an empty bucket close enough to the initial
++			 * hash bucket to be referenced by its hop vector.
++			 */
++			return hole;
++		}
 +
-+	dump_packer_bin(packer->canceled_bin, true);
++		/*
++		 * The nearest empty bucket isn't within the neighborhood that must contain the new
++		 * entry, so try to swap it with bucket that is closer.
++		 */
++		hole = move_empty_bucket(map, hole);
++	}
++
++	return NULL;
 +}
-diff --git a/drivers/md/dm-vdo/packer.h b/drivers/md/dm-vdo/packer.h
++
++/**
++ * vdo_int_map_put() - Try to associate a value with an integer.
++ * @map: The int_map to attempt to modify.
++ * @key: The key with which to associate the new value.
++ * @new_value: The value to be associated with the key.
++ * @update: Whether to overwrite an existing value.
++ * @old_value_ptr: A pointer in which to store either the old value (if the key was already mapped)
++ *                 or NULL if the map did not contain the key; NULL may be provided if the caller
++ *                 does not need to know the old value
++ *
++ * Try to associate a value (a pointer) with an integer in an int_map. If the map already contains
++ * a mapping for the provided key, the old value is only replaced with the specified value if
++ * update is true. In either case the old value is returned. If the map does not already contain a
++ * value for the specified key, the new value is added regardless of the value of update.
++ *
++ * Return: UDS_SUCCESS or an error code.
++ */
++int vdo_int_map_put(struct int_map *map, u64 key, void *new_value, bool update, void **old_value_ptr)
++{
++	struct bucket *neighborhood, *bucket;
++
++	if (new_value == NULL)
++		return UDS_INVALID_ARGUMENT;
++
++	/*
++	 * Select the bucket at the start of the neighborhood that must contain any entry for the
++	 * provided key.
++	 */
++	neighborhood = select_bucket(map, key);
++
++	/*
++	 * Check whether the neighborhood already contains an entry for the key, in which case we
++	 * optionally update it, returning the old value.
++	 */
++	if (update_mapping(map, neighborhood, key, new_value, update, old_value_ptr))
++		return UDS_SUCCESS;
++
++	/*
++	 * Find an empty bucket in the desired neighborhood for the new entry or re-arrange entries
++	 * in the map so there is such a bucket. This operation will usually succeed; the loop body
++	 * will only be executed on the rare occasions that we have to resize the map.
++	 */
++	while ((bucket = find_or_make_vacancy(map, neighborhood)) == NULL) {
++		int result;
++
++		/*
++		 * There is no empty bucket in which to put the new entry in the current map, so
++		 * we're forced to allocate a new bucket array with a larger capacity, re-hash all
++		 * the entries into those buckets, and try again (a very expensive operation for
++		 * large maps).
++		 */
++		result = resize_buckets(map);
++		if (result != UDS_SUCCESS)
++			return result;
++
++		/*
++		 * Resizing the map invalidates all pointers to buckets, so recalculate the
++		 * neighborhood pointer.
++		 */
++		neighborhood = select_bucket(map, key);
++	}
++
++	/* Put the new entry in the empty bucket, adding it to the neighborhood. */
++	bucket->key = key;
++	bucket->value = new_value;
++	insert_in_hop_list(neighborhood, bucket);
++	map->size += 1;
++
++	/* There was no existing entry, so there was no old value to be returned. */
++	if (old_value_ptr != NULL)
++		*old_value_ptr = NULL;
++	return UDS_SUCCESS;
++}
++
++/**
++ * vdo_int_map_remove() - Remove the mapping for a given key from the int_map.
++ * @map: The int_map from which to remove the mapping.
++ * @key: The key whose mapping is to be removed.
++ *
++ * Return: the value that was associated with the key, or NULL if it was not mapped.
++ */
++void *vdo_int_map_remove(struct int_map *map, u64 key)
++{
++	void *value;
++
++	/* Select the bucket to search and search it for an existing entry. */
++	struct bucket *bucket = select_bucket(map, key);
++	struct bucket *previous;
++	struct bucket *victim = search_hop_list(map, bucket, key, &previous);
++
++	if (victim == NULL) {
++		/* There is no matching entry to remove. */
++		return NULL;
++	}
++
++	/*
++	 * We found an entry to remove. Save the mapped value to return later and empty the bucket.
++	 */
++	map->size -= 1;
++	value = victim->value;
++	victim->value = NULL;
++	victim->key = 0;
++
++	/* The victim bucket is now empty, but it still needs to be spliced out of the hop list. */
++	if (previous == NULL) {
++		/* The victim is the head of the list, so swing first_hop. */
++		bucket->first_hop = victim->next_hop;
++	} else {
++		previous->next_hop = victim->next_hop;
++	}
++
++	victim->next_hop = NULL_HOP_OFFSET;
++	return value;
++}
+diff --git a/drivers/md/dm-vdo/int-map.h b/drivers/md/dm-vdo/int-map.h
 new file mode 100644
-index 000000000000..2dcc40bd4417
+index 000000000000..e85f12b30edc
 --- /dev/null
-+++ b/drivers/md/dm-vdo/packer.h
-@@ -0,0 +1,122 @@
++++ b/drivers/md/dm-vdo/int-map.h
+@@ -0,0 +1,40 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef VDO_PACKER_H
-+#define VDO_PACKER_H
++#ifndef VDO_INT_MAP_H
++#define VDO_INT_MAP_H
++
++#include <linux/compiler.h>
++#include <linux/types.h>
++
++/**
++ * DOC: int_map
++ *
++ * An int_map associates pointers (void *) with integer keys (u64). NULL pointer values are
++ * not supported.
++ *
++ * The map is implemented as hash table, which should provide constant-time insert, query, and
++ * remove operations, although the insert may occasionally grow the table, which is linear in the
++ * number of entries in the map. The table will grow as needed to hold new entries, but will not
++ * shrink as entries are removed.
++ */
++
++struct int_map;
++
++int __must_check
++vdo_make_int_map(size_t initial_capacity, unsigned int initial_load, struct int_map **map_ptr);
++
++void vdo_free_int_map(struct int_map *map);
++
++size_t vdo_int_map_size(const struct int_map *map);
++
++void *vdo_int_map_get(struct int_map *map, u64 key);
++
++int __must_check
++vdo_int_map_put(struct int_map *map, u64 key, void *new_value, bool update, void **old_value_ptr);
++
++void *vdo_int_map_remove(struct int_map *map, u64 key);
++
++#endif /* VDO_INT_MAP_H */
+diff --git a/drivers/md/dm-vdo/pointer-map.c b/drivers/md/dm-vdo/pointer-map.c
+new file mode 100644
+index 000000000000..61eb2d3cd8e5
+--- /dev/null
++++ b/drivers/md/dm-vdo/pointer-map.c
+@@ -0,0 +1,696 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++/**
++ * DOC:
++ *
++ * Hash table implementation of a map from integers to pointers, implemented using the Hopscotch
++ * Hashing algorithm by Herlihy, Shavit, and Tzafrir (see
++ * http://en.wikipedia.org/wiki/Hopscotch_hashing). This implementation does not contain any of the
++ * locking/concurrency features of the algorithm, just the collision resolution scheme.
++ *
++ * Hopscotch Hashing is based on hashing with open addressing and linear probing. All the entries
++ * are stored in a fixed array of buckets, with no dynamic allocation for collisions. Unlike linear
++ * probing, all the entries that hash to a given bucket are stored within a fixed neighborhood
++ * starting at that bucket. Chaining is effectively represented as a bit vector relative to each
++ * bucket instead of as pointers or explicit offsets.
++ *
++ * When an empty bucket cannot be found within a given neighborhood, subsequent neighborhoods are
++ * searched, and one or more entries will "hop" into those neighborhoods. When this process works,
++ * an empty bucket will move into the desired neighborhood, allowing the entry to be added. When
++ * that process fails (typically when the buckets are around 90% full), the table must be resized
++ * and the all entries rehashed and added to the expanded table.
++ *
++ * Unlike linear probing, the number of buckets that must be searched in the worst case has a fixed
++ * upper bound (the size of the neighborhood). Those entries occupy a small number of memory cache
++ * lines, leading to improved use of the cache (fewer misses on both successful and unsuccessful
++ * searches). Hopscotch hashing outperforms linear probing at much higher load factors, so even
++ * with the increased memory burden for maintaining the hop vectors, less memory is needed to
++ * achieve that performance. Hopscotch is also immune to "contamination" from deleting entries
++ * since entries are genuinely removed instead of being replaced by a placeholder.
++ *
++ * The published description of the algorithm used a bit vector, but the paper alludes to an offset
++ * scheme which is used by this implementation. Since the entries in the neighborhood are within N
++ * entries of the hash bucket at the start of the neighborhood, a pair of small offset fields each
++ * log2(N) bits wide is all that's needed to maintain the hops as a linked list. In order to encode
++ * "no next hop" (i.e. NULL) as the natural initial value of zero, the offsets are biased by one
++ * (i.e. 0 => NULL, 1 => offset=0, 2 => offset=1, etc.) We can represent neighborhoods of up to 255
++ * entries with just 8+8=16 bits per entry. The hop list is sorted by hop offset so the first entry
++ * in the list is always the bucket closest to the start of the neighborhood.
++ *
++ * While individual accesses tend to be very fast, the table resize operations are very, very
++ * expensive. If an upper bound on the latency of adding an entry to the table is needed, we either
++ * need to ensure the table is pre-sized to be large enough so no resize is ever needed, or we'll
++ * need to develop an approach to incrementally resize the table.
++ */
++
++#include "pointer-map.h"
++
++#include <linux/minmax.h>
++
++#include "errors.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "numeric.h"
++#include "permassert.h"
++
++enum {
++	DEFAULT_CAPACITY = 16, /* the number of neighborhoods in a new table */
++	NEIGHBORHOOD = 255, /* the number of buckets in each neighborhood */
++	MAX_PROBES = 1024, /* limit on the number of probes for a free bucket */
++	NULL_HOP_OFFSET = 0, /* the hop offset value terminating the hop list */
++	DEFAULT_LOAD = 75 /* a compromise between memory use and performance */
++};
++
++/**
++ * struct bucket - Hash buckets.
++ *
++ * Buckets are packed together to reduce memory usage and improve cache efficiency. It would be
++ * tempting to encode the hop offsets separately and maintain alignment of key/value pairs, but
++ * it's crucial to keep the hop fields near the buckets that they use them so they'll tend to share
++ * cache lines.
++ */
++struct __packed bucket {
++	/**
++	 * @first_hop: The biased offset of the first entry in the hop list of the neighborhood
++	 * that hashes to this bucket.
++	 */
++	u8 first_hop;
++	/** @next_hop: the biased offset of the next bucket in the hop list. */
++	u8 next_hop;
++	/** @key: The key stored in this bucket. */
++	const void *key;
++	/** @value: The value stored in this bucket (NULL if empty). */
++	void *value;
++};
++
++/**
++ * struct pointer_map - The concrete definition of the opaque pointer_map type.
++ *
++ * To avoid having to wrap the neighborhoods of the last entries back around to the start of the
++ * bucket array, we allocate a few more buckets at the end of the array instead, which is why
++ * capacity and bucket_count are different.
++ */
++struct pointer_map {
++	/** @size: The number of entries stored in the map. */
++	size_t size;
++	/** @capacity: The number of neighborhoods in the map. */
++	size_t capacity;
++	/** @bucket_count: The number of buckets in the bucket array. */
++	size_t bucket_count;
++	/** @buckets: The array of hash buckets. */
++	struct bucket *buckets;
++	/** @comparator: The function for comparing keys for equality. */
++	pointer_key_comparator *comparator;
++	/** @hasher: The function for getting a hash code from a key. */
++	pointer_key_hasher *hasher;
++};
++
++/**
++ * allocate_buckets() - Initialize a pointer_map.
++ * @map: The map to initialize.
++ * @capacity: The initial capacity of the map.
++ *
++ * Return: UDS_SUCCESS or an error code.
++ */
++static int allocate_buckets(struct pointer_map *map, size_t capacity)
++{
++	map->size = 0;
++	map->capacity = capacity;
++
++	/*
++	 * Allocate NEIGHBORHOOD - 1 extra buckets so the last bucket can have a full neighborhood
++	 * without have to wrap back around to element zero.
++	 */
++	map->bucket_count = capacity + (NEIGHBORHOOD - 1);
++	return uds_allocate(map->bucket_count,
++			    struct bucket,
++			    "pointer_map buckets",
++			    &map->buckets);
++}
++
++/**
++ * vdo_make_pointer_map() - Allocate and initialize a pointer_map.
++ * @initial_capacity: The number of entries the map should initially be capable of holding (zero
++ *                    tells the map to use its own small default).
++ * @initial_load: The load factor of the map, expressed as an integer percentage (typically in the
++ * range 50 to 90, with zero telling the map to use its own default).
++ * @comparator: The function to use to compare the referents of two pointer keys for equality.
++ * @hasher: The function to use obtain the hash code associated with each pointer key
++ * @map_ptr: A pointer to hold the new pointer_map.
++ *
++ * Return: UDS_SUCCESS or an error code.
++ */
++int vdo_make_pointer_map(size_t initial_capacity,
++			 unsigned int initial_load,
++			 pointer_key_comparator comparator,
++			 pointer_key_hasher hasher,
++			 struct pointer_map **map_ptr)
++{
++	int result;
++	struct pointer_map *map;
++	size_t capacity;
++
++	/* Use the default initial load if the caller did not specify one. */
++	if (initial_load == 0)
++		initial_load = DEFAULT_LOAD;
++	if (initial_load > 100)
++		return UDS_INVALID_ARGUMENT;
++
++	result = uds_allocate(1, struct pointer_map, "pointer_map", &map);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	map->hasher = hasher;
++	map->comparator = comparator;
++
++	/* Use the default capacity if the caller did not specify one. */
++	capacity = (initial_capacity > 0) ? initial_capacity : DEFAULT_CAPACITY;
++
++	/*
++	 * Scale up the capacity by the specified initial load factor. (i.e to hold 1000 entries at
++	 * 80% load we need a capacity of 1250)
++	 */
++	capacity = capacity * 100 / initial_load;
++
++	result = allocate_buckets(map, capacity);
++	if (result != UDS_SUCCESS) {
++		vdo_free_pointer_map(uds_forget(map));
++		return result;
++	}
++
++	*map_ptr = map;
++	return UDS_SUCCESS;
++}
++
++/**
++ * vdo_free_pointer_map() - Free a pointer_map.
++ * @map: The pointer_map to free.
++ *
++ * The map does not own the pointer keys and values stored in the map and they are not freed by
++ * this call.
++ */
++void vdo_free_pointer_map(struct pointer_map *map)
++{
++	if (map == NULL)
++		return;
++
++	uds_free(uds_forget(map->buckets));
++	uds_free(uds_forget(map));
++}
++
++/**
++ * vdo_pointer_map_size() - Get the number of entries stored in a pointer_map.
++ * @map: The pointer_map to query.
++ *
++ * Return: The number of entries in the map.
++ */
++size_t vdo_pointer_map_size(const struct pointer_map *map)
++{
++	return map->size;
++}
++
++/**
++ * dereference_hop() - Convert a biased hop offset within a neighborhood to a pointer to the bucket
++ *                     it references.
++ * @neighborhood: The first bucket in the neighborhood.
++ * @hop_offset: The biased hop offset to the desired bucket.
++ *
++ * Return: NULL if hop_offset is zero, otherwise a pointer to the bucket in the neighborhood at
++ *         hop_offset - 1.
++ */
++static struct bucket *dereference_hop(struct bucket *neighborhood, unsigned int hop_offset)
++{
++	BUILD_BUG_ON(NULL_HOP_OFFSET != 0);
++	if (hop_offset == NULL_HOP_OFFSET)
++		return NULL;
++
++	return &neighborhood[hop_offset - 1];
++}
++
++/**
++ * insert_in_hop_list() - Add a bucket into the hop list for the neighborhood, inserting it into
++ *                        the list so the hop list remains sorted by hop offset.
++ * @neighborhood: The first bucket in the neighborhood.
++ * @new_bucket: The bucket to add to the hop list.
++ */
++static void insert_in_hop_list(struct bucket *neighborhood, struct bucket *new_bucket)
++{
++	/* Zero indicates a NULL hop offset, so bias the hop offset by one. */
++	int hop_offset = 1 + (new_bucket - neighborhood);
++
++	/* Handle the special case of adding a bucket at the start of the list. */
++	int next_hop = neighborhood->first_hop;
++
++	if ((next_hop == NULL_HOP_OFFSET) || (next_hop > hop_offset)) {
++		new_bucket->next_hop = next_hop;
++		neighborhood->first_hop = hop_offset;
++		return;
++	}
++
++	/* Search the hop list for the insertion point that maintains the sort order. */
++	for (;;) {
++		struct bucket *bucket = dereference_hop(neighborhood, next_hop);
++
++		next_hop = bucket->next_hop;
++
++		if ((next_hop == NULL_HOP_OFFSET) || (next_hop > hop_offset)) {
++			new_bucket->next_hop = next_hop;
++			bucket->next_hop = hop_offset;
++			return;
++		}
++	}
++}
++
++/**
++ * select_bucket() - Select and return the hash bucket for a given search key.
++ * @map: The map to search.
++ * @key: The mapping key.
++ */
++static struct bucket *select_bucket(const struct pointer_map *map, const void *key)
++{
++	/*
++	 * Scale the 32-bit hash to a bucket index by treating it as a binary fraction and
++	 * multiplying that by the capacity. If the hash is uniformly distributed over [0 ..
++	 * 2^32-1], then (hash * capacity / 2^32) should be uniformly distributed over [0 ..
++	 * capacity-1]. The multiply and shift is much faster than a divide (modulus) on X86 CPUs.
++	 */
++	u64 hash = map->hasher(key);
++
++	return &map->buckets[(hash * map->capacity) >> 32];
++}
++
++/**
++ * search_hop_list() - Search the hop list.
++ * @map: The map being searched.
++ * @bucket: The map bucket to search for the key.
++ * @key: The mapping key.
++ * @previous_ptr: if not NULL, a pointer in which to store the bucket in the list preceding the one
++ *                that had the matching key.
++ *
++ * Searches the hop list associated with given hash bucket for a given search key. If the key is
++ * found, returns a pointer to the entry (bucket or collision), otherwise returns NULL.
++ *
++ * Return: an entry that matches the key, or NULL if not found.
++ */
++static struct bucket *search_hop_list(struct pointer_map *map,
++				      struct bucket *bucket,
++				      const void *key,
++				      struct bucket **previous_ptr)
++{
++	struct bucket *previous = NULL;
++	unsigned int next_hop = bucket->first_hop;
++
++	while (next_hop != NULL_HOP_OFFSET) {
++		/* Check the neighboring bucket indexed by the offset for the desired key. */
++		struct bucket *entry = dereference_hop(bucket, next_hop);
++
++		if ((entry->value != NULL) && map->comparator(key, entry->key)) {
++			if (previous_ptr != NULL)
++				*previous_ptr = previous;
++			return entry;
++		}
++		next_hop = entry->next_hop;
++		previous = entry;
++	}
++	return NULL;
++}
++
++/**
++ * vdo_pointer_map_get() - Retrieve the value associated with a given key from the pointer_map.
++ * @map: The pointer_map to query.
++ * @key: The key to look up (may be NULL if the comparator and hasher functions support it).
++ *
++ * Return: the value associated with the given key, or NULL if the key is not mapped to any value.
++ */
++void *vdo_pointer_map_get(struct pointer_map *map, const void *key)
++{
++	struct bucket *match = search_hop_list(map, select_bucket(map, key), key, NULL);
++
++	return ((match != NULL) ? match->value : NULL);
++}
++
++/**
++ * resize_buckets() - Increase the number of hash buckets and rehash all the existing entries,
++ *                    storing them in the new buckets.
++ * @map: The map to resize.
++ */
++static int resize_buckets(struct pointer_map *map)
++{
++	int result;
++	size_t i;
++
++	/* Copy the top-level map data to the stack. */
++	struct pointer_map old_map = *map;
++
++	/* Re-initialize the map to be empty and 50% larger. */
++	size_t new_capacity = map->capacity / 2 * 3;
++
++	uds_log_info("%s: attempting resize from %zu to %zu, current size=%zu",
++		     __func__,
++		     map->capacity,
++		     new_capacity,
++		     map->size);
++	result = allocate_buckets(map, new_capacity);
++	if (result != UDS_SUCCESS) {
++		*map = old_map;
++		return result;
++	}
++
++	/* Populate the new hash table from the entries in the old bucket array. */
++	for (i = 0; i < old_map.bucket_count; i++) {
++		struct bucket *entry = &old_map.buckets[i];
++
++		if (entry->value == NULL)
++			continue;
++
++		result = vdo_pointer_map_put(map, entry->key, entry->value, true, NULL);
++		if (result != UDS_SUCCESS) {
++			/* Destroy the new partial map and restore the map from the stack. */
++			uds_free(uds_forget(map->buckets));
++			*map = old_map;
++			return result;
++		}
++	}
++
++	/* Destroy the old bucket array. */
++	uds_free(uds_forget(old_map.buckets));
++	return UDS_SUCCESS;
++}
++
++/**
++ * find_empty_bucket() - Probe the bucket array starting at the given bucket for the next empty
++ *                       bucket, returning a pointer to it.
++ * @map: The map containing the buckets to search.
++ * @bucket: The bucket at which to start probing.
++ * @max_probes: The maximum number of buckets to search.
++ *
++ * NULL will be returned if the search reaches the end of the bucket array or if the number of
++ * linear probes exceeds a specified limit.
++ *
++ * Return: The next empty bucket, or NULL if the search failed.
++ */
++static struct bucket *
++find_empty_bucket(struct pointer_map *map, struct bucket *bucket, unsigned int max_probes)
++{
++	/*
++	 * Limit the search to either the nearer of the end of the bucket array or a fixed distance
++	 * beyond the initial bucket.
++	 */
++	ptrdiff_t remaining = &map->buckets[map->bucket_count] - bucket;
++	struct bucket *sentinel = &bucket[min_t(ptrdiff_t, remaining, max_probes)];
++	struct bucket *entry;
++
++	for (entry = bucket; entry < sentinel; entry++)
++		if (entry->value == NULL)
++			return entry;
++	return NULL;
++}
++
++/**
++ * move_empty_bucket() - Move an empty bucket closer to the start of the bucket array.
++ * @map: The map containing the bucket.
++
++ * @hole: The empty bucket to fill with an entry that precedes it in one of its enclosing
++ *        neighborhoods.
++ *
++ * This searches the neighborhoods that contain the empty bucket for a non-empty bucket closer to
++ * the start of the array. If such a bucket is found, this swaps the two buckets by moving the
++ * entry to the empty bucket.
++ *
++ * Return: The bucket that was vacated by moving its entry to the provided hole, or NULL if no
++ *         entry could be moved.
++ */
++static struct bucket *
++move_empty_bucket(struct pointer_map *map __always_unused, struct bucket *hole)
++{
++	/*
++	 * Examine every neighborhood that the empty bucket is part of, starting with the one in
++	 * which it is the last bucket. No boundary check is needed for the negative array
++	 * arithmetic since this function is only called when hole is at least NEIGHBORHOOD cells
++	 * deeper into the array than a valid bucket.
++	 */
++	struct bucket *bucket;
++
++	for (bucket = &hole[1 - NEIGHBORHOOD]; bucket < hole; bucket++) {
++		/*
++		 * Find the entry that is nearest to the bucket, which means it will be nearest to
++		 * the hash bucket whose neighborhood is full.
++		 */
++		struct bucket *new_hole = dereference_hop(bucket, bucket->first_hop);
++
++		if (new_hole == NULL) {
++			/*
++			 * There are no buckets in this neighborhood that are in use by this one
++			 * (they must all be owned by overlapping neighborhoods).
++			 */
++			continue;
++		}
++
++		/*
++		 * Skip this bucket if its first entry is actually further away than the hole that
++		 * we're already trying to fill.
++		 */
++		if (hole < new_hole)
++			continue;
++
++		/*
++		 * We've found an entry in this neighborhood that we can "hop" further away, moving
++		 * the hole closer to the hash bucket, if not all the way into its neighborhood.
++		 */
++
++		/*
++		 * The entry that will be the new hole is the first bucket in the list, so setting
++		 * first_hop is all that's needed remove it from the list.
++		 */
++		bucket->first_hop = new_hole->next_hop;
++		new_hole->next_hop = NULL_HOP_OFFSET;
++
++		/* Move the entry into the original hole. */
++		hole->key = new_hole->key;
++		hole->value = new_hole->value;
++		new_hole->value = NULL;
++
++		/* Insert the filled hole into the hop list for the neighborhood. */
++		insert_in_hop_list(bucket, hole);
++		return new_hole;
++	}
++
++	/* We couldn't find an entry to relocate to the hole. */
++	return NULL;
++}
++
++/**
++ * update_mapping() - Find and update any existing mapping for a given key, returning the value
++ *                    associated with the key in the provided pointer.
++ * @map: The pointer_map to attempt to modify.
++ * @neighborhood: The first bucket in the neighborhood that would contain the search key.
++ * @key: The key with which to associate the new value.
++ * @new_value: The value to be associated with the key.
++ * @update: Whether to overwrite an existing value.
++ * @old_value_ptr: A pointer in which to store the old value (unmodified if no mapping was found).
++ *
++ * Return: true if the map contains a mapping for the key, false if it does not.
++ */
++static bool update_mapping(struct pointer_map *map,
++			   struct bucket *neighborhood,
++			   const void *key,
++			   void *new_value,
++			   bool update,
++			   void **old_value_ptr)
++{
++	struct bucket *bucket = search_hop_list(map, neighborhood, key, NULL);
++
++	if (bucket == NULL) {
++		/* There is no bucket containing the key in the neighborhood. */
++		return false;
++	}
++
++	/*
++	 * Return the value of the current mapping (if desired) and update the mapping with the new
++	 * value (if desired).
++	 */
++	if (old_value_ptr != NULL)
++		*old_value_ptr = bucket->value;
++	if (update) {
++		/*
++		 * We're dropping the old key pointer on the floor here, assuming it's a property
++		 * of the value or that it's otherwise safe to just forget.
++		 */
++		bucket->key = key;
++		bucket->value = new_value;
++	}
++	return true;
++}
++
++/**
++ * find_or_make_vacancy() - Find an empty bucket in a specified neighborhood for a new mapping or
++ *                          attempt to re-arrange mappings so there is such a bucket.
++ * @map: The pointer_map to search or modify.
++ * @neighborhood: The first bucket in the neighborhood in which an empty bucket is needed for a new
++ *                mapping.
++ *
++ * This operation may fail (returning NULL) if an empty bucket is not available or could not be
++ * relocated to the neighborhood.
++ *
++ * Return: A pointer to an empty bucket in the desired neighborhood, or NULL if a vacancy could not
++ *         be found or arranged.
++ */
++static struct bucket *find_or_make_vacancy(struct pointer_map *map, struct bucket *neighborhood)
++{
++	/* Probe within and beyond the neighborhood for the first empty bucket. */
++	struct bucket *hole = find_empty_bucket(map, neighborhood, MAX_PROBES);
++
++	/*
++	 * Keep trying until the empty bucket is in the bucket's neighborhood or we are unable to
++	 * move it any closer by swapping it with a filled bucket.
++	 */
++	while (hole != NULL) {
++		int distance = hole - neighborhood;
++
++		if (distance < NEIGHBORHOOD) {
++			/*
++			 * We've found or relocated an empty bucket close enough to the initial
++			 * hash bucket to be referenced by its hop vector.
++			 */
++			return hole;
++		}
++
++		/*
++		 * The nearest empty bucket isn't within the neighborhood that must contain the new
++		 * entry, so try to swap it with bucket that is closer.
++		 */
++		hole = move_empty_bucket(map, hole);
++	}
++
++	return NULL;
++}
++
++/**
++ * vdo_pointer_map_put() - Try to associate a value (a pointer) with an integer in a pointer_map.
++ * @map: The pointer_map to attempt to modify.
++ * @key: The key with which to associate the new value (may be NULL if the comparator and hasher
++ *       functions support it).
++ * @new_value: The value to be associated with the key.
++ * @update: Whether to overwrite an existing value.
++ * @old_value_ptr: A pointer in which to store either the old value (if the key was already mapped)
++ *                 or NULL if the map did not contain the key; NULL may be provided if the caller
++ *                 does not need to know the old value.
++ *
++ * If the map already contains a mapping for the provided key, the old value is only replaced with
++ * the specified value if update is true. In either case the old value is returned. If the map does
++ * not already contain a value for the specified key, the new value is added regardless of the
++ * value of update.
++ *
++ * If the value stored in the map is updated, then the key stored in the map will also be updated
++ * with the key provided by this call. The old key will not be returned due to the memory
++ * management assumptions described in the interface header comment.
++ *
++ * Return: UDS_SUCCESS or an error code.
++ */
++int vdo_pointer_map_put(struct pointer_map *map,
++			const void *key,
++			void *new_value,
++			bool update,
++			void **old_value_ptr)
++{
++	struct bucket *neighborhood, *bucket;
++
++	if (new_value == NULL)
++		return UDS_INVALID_ARGUMENT;
++
++	/*
++	 * Select the bucket at the start of the neighborhood that must contain any entry for the
++	 * provided key.
++	 */
++	neighborhood = select_bucket(map, key);
++
++	/*
++	 * Check whether the neighborhood already contains an entry for the key, in which case we
++	 * optionally update it, returning the old value.
++	 */
++	if (update_mapping(map, neighborhood, key, new_value, update, old_value_ptr))
++		return UDS_SUCCESS;
++
++	/*
++	 * Find an empty bucket in the desired neighborhood for the new entry or re-arrange entries
++	 * in the map so there is such a bucket. This operation will usually succeed; the loop body
++	 * will only be executed on the rare occasions that we have to resize the map.
++	 */
++	while ((bucket = find_or_make_vacancy(map, neighborhood)) == NULL) {
++		/*
++		 * There is no empty bucket in which to put the new entry in the current map, so
++		 * we're forced to allocate a new bucket array with a larger capacity, re-hash all
++		 * the entries into those buckets, and try again (a very expensive operation for
++		 * large maps).
++		 */
++		int result = resize_buckets(map);
++
++		if (result != UDS_SUCCESS)
++			return result;
++
++		/*
++		 * Resizing the map invalidates all pointers to buckets, so
++		 * recalculate the neighborhood pointer.
++		 */
++		neighborhood = select_bucket(map, key);
++	}
++
++	/* Put the new entry in the empty bucket, adding it to the neighborhood. */
++	bucket->key = key;
++	bucket->value = new_value;
++	insert_in_hop_list(neighborhood, bucket);
++	map->size += 1;
++
++	/*
++	 * There was no existing entry, so there was no old value to be
++	 * returned.
++	 */
++	if (old_value_ptr != NULL)
++		*old_value_ptr = NULL;
++	return UDS_SUCCESS;
++}
++
++/**
++ * vdo_pointer_map_remove() - Remove the mapping for a given key from the pointer_map.
++ * @map: The pointer_map from which to remove the mapping.
++ * @key: The key whose mapping is to be removed (may be NULL if the comparator and hasher functions
++ *       support it).
++ *
++ * Return: the value that was associated with the key, or NULL if it was not mapped.
++ */
++void *vdo_pointer_map_remove(struct pointer_map *map, const void *key)
++{
++	void *value;
++
++	/* Select the bucket to search and search it for an existing entry. */
++	struct bucket *bucket = select_bucket(map, key);
++	struct bucket *previous;
++	struct bucket *victim = search_hop_list(map, bucket, key, &previous);
++
++	if (victim == NULL) {
++		/* There is no matching entry to remove. */
++		return NULL;
++	}
++
++	/*
++	 * We found an entry to remove. Save the mapped value to return later and empty the bucket.
++	 */
++	map->size -= 1;
++	value = victim->value;
++	victim->value = NULL;
++	victim->key = 0;
++
++	/* The victim bucket is now empty, but it still needs to be spliced out of the hop list. */
++	if (previous == NULL) {
++		/* The victim is the head of the list, so swing first_hop. */
++		bucket->first_hop = victim->next_hop;
++	} else {
++		previous->next_hop = victim->next_hop;
++	}
++
++	victim->next_hop = NULL_HOP_OFFSET;
++	return value;
++}
+diff --git a/drivers/md/dm-vdo/pointer-map.h b/drivers/md/dm-vdo/pointer-map.h
+new file mode 100644
+index 000000000000..83465d01bfa7
+--- /dev/null
++++ b/drivers/md/dm-vdo/pointer-map.h
+@@ -0,0 +1,81 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef VDO_POINTER_MAP_H
++#define VDO_POINTER_MAP_H
++
++#include <linux/compiler.h>
++#include <linux/types.h>
++
++/*
++ * A pointer_map associates pointer values (<code>void *</code>) with the data referenced by
++ * pointer keys (<code>void *</code>). <code>NULL</code> pointer values are not supported. A
++ * <code>NULL</code> key value is supported when the instance's key comparator and hasher functions
++ * support it.
++ *
++ * The map is implemented as hash table, which should provide constant-time insert, query, and
++ * remove operations, although the insert may occasionally grow the table, which is linear in the
++ * number of entries in the map. The table will grow as needed to hold new entries, but will not
++ * shrink as entries are removed.
++ *
++ * The key and value pointers passed to the map are retained and used by the map, but are not owned
++ * by the map. Freeing the map does not attempt to free the pointers. The client is entirely
++ * responsible for the memory management of the keys and values. The current interface and
++ * implementation assume that keys will be properties of the values, or that keys will not be
++ * memory managed, or that keys will not need to be freed as a result of being replaced when a key
++ * is re-mapped.
++ */
++
++struct pointer_map;
++
++/**
++ * typedef pointer_key_comparator - The prototype of functions that compare the referents of two
++ *                                  pointer keys for equality.
++ * @this_key: The first element to compare.
++ * @that_key: The second element to compare.
++ *
++ * If two keys are equal, then both keys must have the same the hash code associated with them by
++ * the hasher function defined below.
++ *
++ * Return: true if and only if the referents of the two key pointers are to be treated as the same
++ *         key by the map.
++ */
++typedef bool pointer_key_comparator(const void *this_key, const void *that_key);
++
++/**
++ * typedef pointer_key_hasher - The prototype of functions that get or calculate a hash code
++ *                              associated with the referent of pointer key.
++ * @key: The pointer key to hash.
++ *
++ * The hash code must be uniformly distributed over all u32 values. The hash code associated
++ * with a given key must not change while the key is in the map. If the comparator function says
++ * two keys are equal, then this function must return the same hash code for both keys. This
++ * function may be called many times for a key while an entry is stored for it in the map.
++ *
++ * Return: The hash code for the key.
++ */
++typedef u32 pointer_key_hasher(const void *key);
++
++int __must_check vdo_make_pointer_map(size_t initial_capacity,
++				      unsigned int initial_load,
++				      pointer_key_comparator comparator,
++				      pointer_key_hasher hasher,
++				      struct pointer_map **map_ptr);
++
++void vdo_free_pointer_map(struct pointer_map *map);
++
++size_t vdo_pointer_map_size(const struct pointer_map *map);
++
++void *vdo_pointer_map_get(struct pointer_map *map, const void *key);
++
++int __must_check vdo_pointer_map_put(struct pointer_map *map,
++				     const void *key,
++				     void *new_value,
++				     bool update,
++				     void **old_value_ptr);
++
++void *vdo_pointer_map_remove(struct pointer_map *map, const void *key);
++
++#endif /* VDO_POINTER_MAP_H */
+diff --git a/drivers/md/dm-vdo/priority-table.c b/drivers/md/dm-vdo/priority-table.c
+new file mode 100644
+index 000000000000..9408219b5700
+--- /dev/null
++++ b/drivers/md/dm-vdo/priority-table.c
+@@ -0,0 +1,226 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "priority-table.h"
++
++#include <linux/log2.h>
++
++#include "errors.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++
++#include "status-codes.h"
++
++/* We use a single 64-bit search vector, so the maximum priority is 63 */
++enum {
++	MAX_PRIORITY = 63
++};
++
++/*
++ * All the entries with the same priority are queued in a circular list in a bucket for that
++ * priority. The table is essentially an array of buckets.
++ */
++struct bucket {
++	/*
++	 * The head of a queue of table entries, all having the same priority
++	 */
++	struct list_head queue;
++	/* The priority of all the entries in this bucket */
++	unsigned int priority;
++};
++
++/*
++ * A priority table is an array of buckets, indexed by priority. New entries are added to the end
++ * of the queue in the appropriate bucket. The dequeue operation finds the highest-priority
++ * non-empty bucket by searching a bit vector represented as a single 8-byte word, which is very
++ * fast with compiler and CPU support.
++ */
++struct priority_table {
++	/* The maximum priority of entries that may be stored in this table */
++	unsigned int max_priority;
++	/* A bit vector flagging all buckets that are currently non-empty */
++	u64 search_vector;
++	/* The array of all buckets, indexed by priority */
++	struct bucket buckets[];
++};
++
++/**
++ * vdo_make_priority_table() - Allocate and initialize a new priority_table.
++ * @max_priority: The maximum priority value for table entries.
++ * @table_ptr: A pointer to hold the new table.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++int vdo_make_priority_table(unsigned int max_priority, struct priority_table **table_ptr)
++{
++	struct priority_table *table;
++	int result;
++	unsigned int priority;
++
++	if (max_priority > MAX_PRIORITY)
++		return UDS_INVALID_ARGUMENT;
++
++	result = uds_allocate_extended(struct priority_table, max_priority + 1,
++				       struct bucket, __func__, &table);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	for (priority = 0; priority <= max_priority; priority++) {
++		struct bucket *bucket = &table->buckets[priority];
++
++		bucket->priority = priority;
++		INIT_LIST_HEAD(&bucket->queue);
++	}
++
++	table->max_priority = max_priority;
++	table->search_vector = 0;
++
++	*table_ptr = table;
++	return VDO_SUCCESS;
++}
++
++/**
++ * vdo_free_priority_table() - Free a priority_table.
++ * @table: The table to free.
++ *
++ * The table does not own the entries stored in it and they are not freed by this call.
++ */
++void vdo_free_priority_table(struct priority_table *table)
++{
++	if (table == NULL)
++		return;
++
++	/*
++	 * Unlink the buckets from any entries still in the table so the entries won't be left with
++	 * dangling pointers to freed memory.
++	 */
++	vdo_reset_priority_table(table);
++
++	uds_free(table);
++}
++
++/**
++ * vdo_reset_priority_table() - Reset a priority table, leaving it in the same empty state as when
++ *                          newly constructed.
++ * @table: The table to reset.
++ *
++ * The table does not own the entries stored in it and they are not freed (or even unlinked from
++ * each other) by this call.
++ */
++void vdo_reset_priority_table(struct priority_table *table)
++{
++	unsigned int priority;
++
++	table->search_vector = 0;
++	for (priority = 0; priority <= table->max_priority; priority++)
++		list_del_init(&table->buckets[priority].queue);
++}
++
++/**
++ * vdo_priority_table_enqueue() - Add a new entry to the priority table, appending it to the queue
++ *                                for entries with the specified priority.
++ * @table: The table in which to store the entry.
++ * @priority: The priority of the entry.
++ * @entry: The list_head embedded in the entry to store in the table (the caller must have
++ *         initialized it).
++ */
++void vdo_priority_table_enqueue(struct priority_table *table, unsigned int priority,
++				struct list_head *entry)
++{
++	ASSERT_LOG_ONLY((priority <= table->max_priority),
++			"entry priority must be valid for the table");
++
++	/* Append the entry to the queue in the specified bucket. */
++	list_move_tail(entry, &table->buckets[priority].queue);
++
++	/* Flag the bucket in the search vector since it must be non-empty. */
++	table->search_vector |= (1ULL << priority);
++}
++
++static inline void mark_bucket_empty(struct priority_table *table, struct bucket *bucket)
++{
++	table->search_vector &= ~(1ULL << bucket->priority);
++}
++
++/**
++ * vdo_priority_table_dequeue() - Find the highest-priority entry in the table, remove it from the
++ *                                table, and return it.
++ * @table: The priority table from which to remove an entry.
++ *
++ * If there are multiple entries with the same priority, the one that has been in the table with
++ * that priority the longest will be returned.
++ *
++ * Return: The dequeued entry, or NULL if the table is currently empty.
++ */
++struct list_head *vdo_priority_table_dequeue(struct priority_table *table)
++{
++	struct bucket *bucket;
++	struct list_head *entry;
++	int top_priority;
++
++	if (table->search_vector == 0) {
++		/* All buckets are empty. */
++		return NULL;
++	}
++
++	/*
++	 * Find the highest priority non-empty bucket by finding the highest-order non-zero bit in
++	 * the search vector.
++	 */
++	top_priority = ilog2(table->search_vector);
++
++	/* Dequeue the first entry in the bucket. */
++	bucket = &table->buckets[top_priority];
++	entry = bucket->queue.next;
++	list_del_init(entry);
++
++	/* Clear the bit in the search vector if the bucket has been emptied. */
++	if (list_empty(&bucket->queue))
++		mark_bucket_empty(table, bucket);
++
++	return entry;
++}
++
++/**
++ * vdo_priority_table_remove() - Remove a specified entry from its priority table.
++ * @table: The table from which to remove the entry.
++ * @entry: The entry to remove from the table.
++ */
++void vdo_priority_table_remove(struct priority_table *table, struct list_head *entry)
++{
++	struct list_head *next_entry;
++
++	/*
++	 * We can't guard against calls where the entry is on a list for a different table, but
++	 * it's easy to deal with an entry not in any table or list.
++	 */
++	if (list_empty(entry))
++		return;
++
++	/*
++	 * Remove the entry from the bucket list, remembering a pointer to another entry in the
++	 * ring.
++	 */
++	next_entry = entry->next;
++	list_del_init(entry);
++
++	/*
++	 * If the rest of the list is now empty, the next node must be the list head in the bucket
++	 * and we can use it to update the search vector.
++	 */
++	if (list_empty(next_entry))
++		mark_bucket_empty(table, list_entry(next_entry, struct bucket, queue));
++}
++
++/**
++ * vdo_is_priority_table_empty() - Return whether the priority table is empty.
++ * @table: The table to check.
++ *
++ * Return: true if the table is empty.
++ */
++bool vdo_is_priority_table_empty(struct priority_table *table)
++{
++	return (table->search_vector == 0);
++}
+diff --git a/drivers/md/dm-vdo/priority-table.h b/drivers/md/dm-vdo/priority-table.h
+new file mode 100644
+index 000000000000..8b060462e3e4
+--- /dev/null
++++ b/drivers/md/dm-vdo/priority-table.h
+@@ -0,0 +1,47 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef VDO_PRIORITY_TABLE_H
++#define VDO_PRIORITY_TABLE_H
 +
 +#include <linux/list.h>
 +
-+#include "admin-state.h"
-+#include "constants.h"
-+#include "encodings.h"
-+#include "statistics.h"
-+#include "types.h"
-+#include "wait-queue.h"
-+
-+enum {
-+	DEFAULT_PACKER_BINS = 16,
-+};
-+
-+/* The header of a compressed block. */
-+struct compressed_block_header {
-+	/* Unsigned 32-bit major and minor versions, little-endian */
-+	struct packed_version_number version;
-+
-+	/* List of unsigned 16-bit compressed block sizes, little-endian */
-+	__le16 sizes[VDO_MAX_COMPRESSION_SLOTS];
-+} __packed;
-+
-+enum {
-+	VDO_COMPRESSED_BLOCK_DATA_SIZE = VDO_BLOCK_SIZE - sizeof(struct compressed_block_header),
-+
-+	/*
-+	 * A compressed block is only written if we can pack at least two fragments into it, so a
-+	 * fragment which fills the entire data portion of a compressed block is too big.
-+	 */
-+	VDO_MAX_COMPRESSED_FRAGMENT_SIZE = VDO_COMPRESSED_BLOCK_DATA_SIZE - 1,
-+};
-+
-+/* * The compressed block overlay. */
-+struct compressed_block {
-+	struct compressed_block_header header;
-+	char data[VDO_COMPRESSED_BLOCK_DATA_SIZE];
-+} __packed;
-+
 +/*
-+ * Each packer_bin holds an incomplete batch of data_vios that only partially fill a compressed
-+ * block. The bins are kept in a ring sorted by the amount of unused space so the first bin with
-+ * enough space to hold a newly-compressed data_vio can easily be found. When the bin fills up or
-+ * is flushed, the first uncanceled data_vio in the bin is selected to be the agent for that bin.
-+ * Upon entering the packer, each data_vio already has its compressed data in the first slot of the
-+ * data_vio's compressed_block (overlaid on the data_vio's scratch_block). So the agent's fragment
-+ * is already in place. The fragments for the other uncanceled data_vios in the bin are packed into
-+ * the agent's compressed block. The agent then writes out the compressed block. If the write is
-+ * successful, the agent shares its pbn lock which each of the other data_vios in its compressed
-+ * block and sends each on its way. Finally the agent itself continues on the write path as before.
++ * A priority_table is a simple implementation of a priority queue for entries with priorities that
++ * are small non-negative integer values. It implements the obvious priority queue operations of
++ * enqueuing an entry and dequeuing an entry with the maximum priority. It also supports removing
++ * an arbitrary entry. The priority of an entry already in the table can be changed by removing it
++ * and re-enqueuing it with a different priority. All operations have O(1) complexity.
 + *
-+ * There is one special bin which is used to hold data_vios which have been canceled and removed
-+ * from their bin by the packer. These data_vios need to wait for the canceller to rendezvous with
-+ * them (VDO-2809) and so they sit in this special bin.
++ * The links for the table entries must be embedded in the entries themselves. Lists are used to
++ * link entries in the table and no wrapper type is declared, so an existing list entry in an
++ * object can also be used to queue it in a priority_table, assuming the field is not used for
++ * anything else while so queued.
++ *
++ * The table is implemented as an array of queues (circular lists) indexed by priority, along with
++ * a hint for which queues are non-empty. Steven Skiena calls a very similar structure a "bounded
++ * height priority queue", but given the resemblance to a hash table, "priority table" seems both
++ * shorter and more apt, if somewhat novel.
 + */
-+struct packer_bin {
-+	/* List links for packer.packer_bins */
-+	struct list_head list;
-+	/* The number of items in the bin */
-+	slot_number_t slots_used;
-+	/* The number of compressed block bytes remaining in the current batch */
-+	size_t free_space;
-+	/* The current partial batch of data_vios, waiting for more */
-+	struct data_vio *incoming[];
-+};
 +
-+struct packer {
-+	/* The ID of the packer's callback thread */
-+	thread_id_t thread_id;
-+	/* The number of bins */
-+	block_count_t size;
-+	/* A list of all packer_bins, kept sorted by free_space */
-+	struct list_head bins;
-+	/*
-+	 * A bin to hold data_vios which were canceled out of the packer and are waiting to
-+	 * rendezvous with the canceling data_vio.
-+	 */
-+	struct packer_bin *canceled_bin;
++struct priority_table;
 +
-+	/* The current flush generation */
-+	sequence_number_t flush_generation;
++int __must_check vdo_make_priority_table(unsigned int max_priority,
++					 struct priority_table **table_ptr);
 +
-+	/* The administrative state of the packer */
-+	struct admin_state state;
++void vdo_free_priority_table(struct priority_table *table);
 +
-+	/* Statistics are only updated on the packer thread, but are accessed from other threads */
-+	struct packer_statistics statistics;
-+};
++void vdo_priority_table_enqueue(struct priority_table *table, unsigned int priority,
++				struct list_head *entry);
 +
-+int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
-+				      struct compressed_block *block,
-+				      u16 *fragment_offset, u16 *fragment_size);
++void vdo_reset_priority_table(struct priority_table *table);
 +
-+int __must_check vdo_make_packer(struct vdo *vdo, block_count_t bin_count,
-+				 struct packer **packer_ptr);
++struct list_head * __must_check vdo_priority_table_dequeue(struct priority_table *table);
 +
-+void vdo_free_packer(struct packer *packer);
++void vdo_priority_table_remove(struct priority_table *table, struct list_head *entry);
 +
-+struct packer_statistics __must_check vdo_get_packer_statistics(const struct packer *packer);
++bool __must_check vdo_is_priority_table_empty(struct priority_table *table);
 +
-+void vdo_attempt_packing(struct data_vio *data_vio);
-+
-+void vdo_flush_packer(struct packer *packer);
-+
-+void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion);
-+
-+void vdo_increment_packer_flush_generation(struct packer *packer);
-+
-+void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion);
-+
-+void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent);
-+
-+void vdo_dump_packer(const struct packer *packer);
-+
-+#endif /* VDO_PACKER_H */
++#endif /* VDO_PRIORITY_TABLE_H */
 -- 
 2.40.0
 
