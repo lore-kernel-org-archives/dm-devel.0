@@ -1,44 +1,44 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 24EA245C09
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 24D724503C
 	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:02 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="c7F4RAWt"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q0RL8Blm"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700254802;
+	s=mimecast20190719; t=1700254801;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=PMprT0Aae3ZEFZiBDjQIFwUJuvv8rxG0fYnYPAU8FFw=;
-	b=c7F4RAWtrb1k2dh8ZHXCoxqR9c93YHdHK/BBUJmLLRYZLY4+pJzBOXbrpNDzvtF9n0imkT
-	wg2fE/iNljmqTwenH0dfa5r68/buk0kzmP0RnGmoVlu6ofk8Yr2Ao9KGvJo8oPBm6Wy37u
-	EBJDIy54NO5quT06zWr5HbEFvafR8uo=
+	bh=e1FQIqziXSHKCqx7GrH+1M/xCETJUEoSJfo6y25NOgE=;
+	b=Q0RL8BlmJ2Dsxvnl/gbLiwjvEBh1LizEbYy64yErTEpnJNKkZEi3Uc6Ht42Mb1ccyQGhSX
+	Kom/pByaWzvjY15DSfD58157+XW9FUrXEquwpGEW+tokvxwRmM51b78pCUesr4q4wLfNyf
+	B2S+Hw/QlAuKe+hvsZKRwfzgO5wCL7U=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-281-1jg2_S9QMrKaQxufN6Lp6w-1; Fri,
- 17 Nov 2023 16:00:00 -0500
-X-MC-Unique: 1jg2_S9QMrKaQxufN6Lp6w-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-237-K3vnp89_OPSLp3I7lWLOxQ-1; Fri,
+ 17 Nov 2023 15:59:59 -0500
+X-MC-Unique: K3vnp89_OPSLp3I7lWLOxQ-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3CC5B3813BCA
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A1EE3813BC9
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 20:59:59 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 32C5140C6EB9;
-	Fri, 17 Nov 2023 21:00:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7FA7440C6EB9;
+	Fri, 17 Nov 2023 20:59:59 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id E75533003B; Fri, 17 Nov 2023 15:59:59 -0500 (EST)
+	id 3FCB33003B; Fri, 17 Nov 2023 15:59:59 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v5 13/40] dm vdo: implement the open chapter and chapter indexes
-Date: Fri, 17 Nov 2023 15:59:30 -0500
-Message-Id: <872b5544d556643f2f8412281adf8b2a1c22bccc.1700250814.git.msakai@redhat.com>
+Subject: [PATCH v5 09/40] dm vdo: add deduplication configuration structures
+Date: Fri, 17 Nov 2023 15:59:26 -0500
+Message-Id: <a7228f95371a69be01770089f2f9be5f7d0e4dbd.1700250814.git.msakai@redhat.com>
 In-Reply-To: <cover.1700250814.git.msakai@redhat.com>
 References: <cover.1700250814.git.msakai@redhat.com>
 Precedence: bulk
@@ -53,15 +53,9 @@ X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Deduplication records are stored in groups called chapters. New records are
-collected in a structure called the open chapter, which is optimized for
-adding, removing, and sorting records.
-
-When a chapter fills, it is packed into a read-only structure called a
-closed chapter, which is optimized for searching and reading. The closed
-chapter includes a delta index, called the chapter index, which maps each
-record name to the record page containing the record and allows the index
-to read at most one record page when looking up a record.
+Add structures which record the configuration of various deduplication
+index parameters. This also includes facilities for saving and loading the
+configuration and validating its integrity.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -69,902 +63,885 @@ Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
 Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
 Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Co-developed-by: John Wiele <jwiele@redhat.com>
+Signed-off-by: John Wiele <jwiele@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/chapter-index.c | 291 ++++++++++++++++++++
- drivers/md/dm-vdo/chapter-index.h |  63 +++++
- drivers/md/dm-vdo/open-chapter.c  | 427 ++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/open-chapter.h  |  79 ++++++
- 4 files changed, 860 insertions(+)
- create mode 100644 drivers/md/dm-vdo/chapter-index.c
- create mode 100644 drivers/md/dm-vdo/chapter-index.h
- create mode 100644 drivers/md/dm-vdo/open-chapter.c
- create mode 100644 drivers/md/dm-vdo/open-chapter.h
+ drivers/md/dm-vdo/config.c   | 378 +++++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/config.h   | 124 ++++++++++++
+ drivers/md/dm-vdo/geometry.c | 201 +++++++++++++++++++
+ drivers/md/dm-vdo/geometry.h | 138 +++++++++++++
+ 4 files changed, 841 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/config.c
+ create mode 100644 drivers/md/dm-vdo/config.h
+ create mode 100644 drivers/md/dm-vdo/geometry.c
+ create mode 100644 drivers/md/dm-vdo/geometry.h
 
-diff --git a/drivers/md/dm-vdo/chapter-index.c b/drivers/md/dm-vdo/chapter-index.c
+diff --git a/drivers/md/dm-vdo/config.c b/drivers/md/dm-vdo/config.c
 new file mode 100644
-index 000000000000..27a2d95a2bef
+index 000000000000..96e27aeecc25
 --- /dev/null
-+++ b/drivers/md/dm-vdo/chapter-index.c
-@@ -0,0 +1,291 @@
++++ b/drivers/md/dm-vdo/config.c
+@@ -0,0 +1,378 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "chapter-index.h"
++#include "config.h"
 +
++#include "logger.h"
++#include "memory-alloc.h"
++#include "numeric.h"
++#include "string-utils.h"
++#include "uds-threads.h"
++
++static const u8 INDEX_CONFIG_MAGIC[] = "ALBIC";
++static const u8 INDEX_CONFIG_VERSION_6_02[] = "06.02";
++static const u8 INDEX_CONFIG_VERSION_8_02[] = "08.02";
++
++enum {
++	DEFAULT_VOLUME_READ_THREADS = 2,
++	MAX_VOLUME_READ_THREADS = 16,
++	INDEX_CONFIG_MAGIC_LENGTH = sizeof(INDEX_CONFIG_MAGIC) - 1,
++	INDEX_CONFIG_VERSION_LENGTH = sizeof(INDEX_CONFIG_VERSION_6_02) - 1,
++};
++
++static bool is_version(const u8 *version, u8 *buffer)
++{
++	return memcmp(version, buffer, INDEX_CONFIG_VERSION_LENGTH) == 0;
++}
++
++static bool are_matching_configurations(struct configuration *saved_config,
++					struct geometry *saved_geometry,
++					struct configuration *user)
++{
++	struct geometry *geometry = user->geometry;
++	bool result = true;
++
++	if (saved_geometry->record_pages_per_chapter != geometry->record_pages_per_chapter) {
++		uds_log_error("Record pages per chapter (%u) does not match (%u)",
++			      saved_geometry->record_pages_per_chapter,
++			      geometry->record_pages_per_chapter);
++		result = false;
++	}
++
++	if (saved_geometry->chapters_per_volume != geometry->chapters_per_volume) {
++		uds_log_error("Chapter count (%u) does not match (%u)",
++			      saved_geometry->chapters_per_volume,
++			      geometry->chapters_per_volume);
++		result = false;
++	}
++
++	if (saved_geometry->sparse_chapters_per_volume != geometry->sparse_chapters_per_volume) {
++		uds_log_error("Sparse chapter count (%u) does not match (%u)",
++			      saved_geometry->sparse_chapters_per_volume,
++			      geometry->sparse_chapters_per_volume);
++		result = false;
++	}
++
++	if (saved_config->cache_chapters != user->cache_chapters) {
++		uds_log_error("Cache size (%u) does not match (%u)",
++			      saved_config->cache_chapters, user->cache_chapters);
++		result = false;
++	}
++
++	if (saved_config->volume_index_mean_delta != user->volume_index_mean_delta) {
++		uds_log_error("Volume index mean delta (%u) does not match (%u)",
++			      saved_config->volume_index_mean_delta,
++			      user->volume_index_mean_delta);
++		result = false;
++	}
++
++	if (saved_geometry->bytes_per_page != geometry->bytes_per_page) {
++		uds_log_error("Bytes per page value (%zu) does not match (%zu)",
++			      saved_geometry->bytes_per_page, geometry->bytes_per_page);
++		result = false;
++	}
++
++	if (saved_config->sparse_sample_rate != user->sparse_sample_rate) {
++		uds_log_error("Sparse sample rate (%u) does not match (%u)",
++			      saved_config->sparse_sample_rate,
++			      user->sparse_sample_rate);
++		result = false;
++	}
++
++	if (saved_config->nonce != user->nonce) {
++		uds_log_error("Nonce (%llu) does not match (%llu)",
++			      (unsigned long long) saved_config->nonce,
++			      (unsigned long long) user->nonce);
++		result = false;
++	}
++
++	return result;
++}
++
++/* Read the configuration and validate it against the provided one. */
++int uds_validate_config_contents(struct buffered_reader *reader,
++				 struct configuration *user_config)
++{
++	int result;
++	struct configuration config;
++	struct geometry geometry;
++	u8 version_buffer[INDEX_CONFIG_VERSION_LENGTH];
++	u32 bytes_per_page;
++	u8 buffer[sizeof(struct uds_configuration_6_02)];
++	size_t offset = 0;
++
++	result = uds_verify_buffered_data(reader, INDEX_CONFIG_MAGIC,
++					  INDEX_CONFIG_MAGIC_LENGTH);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_read_from_buffered_reader(reader, version_buffer,
++					       INDEX_CONFIG_VERSION_LENGTH);
++	if (result != UDS_SUCCESS)
++		return uds_log_error_strerror(result, "cannot read index config version");
++
++	if (!is_version(INDEX_CONFIG_VERSION_6_02, version_buffer) &&
++	    !is_version(INDEX_CONFIG_VERSION_8_02, version_buffer)) {
++		return uds_log_error_strerror(UDS_CORRUPT_DATA,
++					      "unsupported configuration version: '%.*s'",
++					      INDEX_CONFIG_VERSION_LENGTH,
++					      version_buffer);
++	}
++
++	result = uds_read_from_buffered_reader(reader, buffer, sizeof(buffer));
++	if (result != UDS_SUCCESS)
++		return uds_log_error_strerror(result, "cannot read config data");
++
++	decode_u32_le(buffer, &offset, &geometry.record_pages_per_chapter);
++	decode_u32_le(buffer, &offset, &geometry.chapters_per_volume);
++	decode_u32_le(buffer, &offset, &geometry.sparse_chapters_per_volume);
++	decode_u32_le(buffer, &offset, &config.cache_chapters);
++	offset += sizeof(u32);
++	decode_u32_le(buffer, &offset, &config.volume_index_mean_delta);
++	decode_u32_le(buffer, &offset, &bytes_per_page);
++	geometry.bytes_per_page = bytes_per_page;
++	decode_u32_le(buffer, &offset, &config.sparse_sample_rate);
++	decode_u64_le(buffer, &offset, &config.nonce);
++
++	result = ASSERT(offset == sizeof(struct uds_configuration_6_02),
++			"%zu bytes read but not decoded",
++			sizeof(struct uds_configuration_6_02) - offset);
++	if (result != UDS_SUCCESS)
++		return UDS_CORRUPT_DATA;
++
++	if (is_version(INDEX_CONFIG_VERSION_6_02, version_buffer)) {
++		user_config->geometry->remapped_virtual = 0;
++		user_config->geometry->remapped_physical = 0;
++	} else {
++		u8 remapping[sizeof(u64) + sizeof(u64)];
++
++		result = uds_read_from_buffered_reader(reader, remapping,
++						       sizeof(remapping));
++		if (result != UDS_SUCCESS)
++			return uds_log_error_strerror(result, "cannot read converted config");
++
++		offset = 0;
++		decode_u64_le(remapping, &offset,
++			      &user_config->geometry->remapped_virtual);
++		decode_u64_le(remapping, &offset,
++			      &user_config->geometry->remapped_physical);
++	}
++
++	if (!are_matching_configurations(&config, &geometry, user_config)) {
++		uds_log_warning("Supplied configuration does not match save");
++		return UDS_NO_INDEX;
++	}
++
++	return UDS_SUCCESS;
++}
++
++/*
++ * Write the configuration to stable storage. If the superblock version is < 4, write the 6.02
++ * version; otherwise write the 8.02 version, indicating the configuration is for an index that has
++ * been reduced by one chapter.
++ */
++int uds_write_config_contents(struct buffered_writer *writer,
++			      struct configuration *config, u32 version)
++{
++	int result;
++	struct geometry *geometry = config->geometry;
++	u8 buffer[sizeof(struct uds_configuration_8_02)];
++	size_t offset = 0;
++
++	result = uds_write_to_buffered_writer(writer, INDEX_CONFIG_MAGIC,
++					      INDEX_CONFIG_MAGIC_LENGTH);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	/*
++	 * If version is < 4, the index has not been reduced by a chapter so it must be written out
++	 * as version 6.02 so that it is still compatible with older versions of UDS.
++	 */
++	if (version >= 4) {
++		result = uds_write_to_buffered_writer(writer, INDEX_CONFIG_VERSION_8_02,
++						      INDEX_CONFIG_VERSION_LENGTH);
++		if (result != UDS_SUCCESS)
++			return result;
++	} else {
++		result = uds_write_to_buffered_writer(writer, INDEX_CONFIG_VERSION_6_02,
++						      INDEX_CONFIG_VERSION_LENGTH);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	encode_u32_le(buffer, &offset, geometry->record_pages_per_chapter);
++	encode_u32_le(buffer, &offset, geometry->chapters_per_volume);
++	encode_u32_le(buffer, &offset, geometry->sparse_chapters_per_volume);
++	encode_u32_le(buffer, &offset, config->cache_chapters);
++	encode_u32_le(buffer, &offset, 0);
++	encode_u32_le(buffer, &offset, config->volume_index_mean_delta);
++	encode_u32_le(buffer, &offset, geometry->bytes_per_page);
++	encode_u32_le(buffer, &offset, config->sparse_sample_rate);
++	encode_u64_le(buffer, &offset, config->nonce);
++
++	result = ASSERT(offset == sizeof(struct uds_configuration_6_02),
++			"%zu bytes encoded, of %zu expected", offset,
++			sizeof(struct uds_configuration_6_02));
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (version >= 4) {
++		encode_u64_le(buffer, &offset, geometry->remapped_virtual);
++		encode_u64_le(buffer, &offset, geometry->remapped_physical);
++	}
++
++	return uds_write_to_buffered_writer(writer, buffer, offset);
++}
++
++/* Compute configuration parameters that depend on memory size. */
++static int compute_memory_sizes(uds_memory_config_size_t mem_gb, bool sparse,
++				u32 *chapters_per_volume, u32 *record_pages_per_chapter,
++				u32 *sparse_chapters_per_volume)
++{
++	u32 reduced_chapters = 0;
++	u32 base_chapters;
++
++	if (mem_gb == UDS_MEMORY_CONFIG_256MB) {
++		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
++		*record_pages_per_chapter = SMALL_RECORD_PAGES_PER_CHAPTER;
++	} else if (mem_gb == UDS_MEMORY_CONFIG_512MB) {
++		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
++		*record_pages_per_chapter = 2 * SMALL_RECORD_PAGES_PER_CHAPTER;
++	} else if (mem_gb == UDS_MEMORY_CONFIG_768MB) {
++		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
++		*record_pages_per_chapter = 3 * SMALL_RECORD_PAGES_PER_CHAPTER;
++	} else if ((mem_gb >= 1) && (mem_gb <= UDS_MEMORY_CONFIG_MAX)) {
++		base_chapters = mem_gb * DEFAULT_CHAPTERS_PER_VOLUME;
++		*record_pages_per_chapter = DEFAULT_RECORD_PAGES_PER_CHAPTER;
++	} else if (mem_gb == UDS_MEMORY_CONFIG_REDUCED_256MB) {
++		reduced_chapters = 1;
++		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
++		*record_pages_per_chapter = SMALL_RECORD_PAGES_PER_CHAPTER;
++	} else if (mem_gb == UDS_MEMORY_CONFIG_REDUCED_512MB) {
++		reduced_chapters = 1;
++		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
++		*record_pages_per_chapter = 2 * SMALL_RECORD_PAGES_PER_CHAPTER;
++	} else if (mem_gb == UDS_MEMORY_CONFIG_REDUCED_768MB) {
++		reduced_chapters = 1;
++		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
++		*record_pages_per_chapter = 3 * SMALL_RECORD_PAGES_PER_CHAPTER;
++	} else if ((mem_gb >= 1 + UDS_MEMORY_CONFIG_REDUCED) &&
++		   (mem_gb <= UDS_MEMORY_CONFIG_REDUCED_MAX)) {
++		reduced_chapters = 1;
++		base_chapters = ((mem_gb - UDS_MEMORY_CONFIG_REDUCED) *
++				 DEFAULT_CHAPTERS_PER_VOLUME);
++		*record_pages_per_chapter = DEFAULT_RECORD_PAGES_PER_CHAPTER;
++	} else {
++		uds_log_error("received invalid memory size");
++		return -EINVAL;
++	}
++
++	if (sparse) {
++		/* Make 95% of chapters sparse, allowing 10x more records. */
++		*sparse_chapters_per_volume = (19 * base_chapters) / 2;
++		base_chapters *= 10;
++	} else {
++		*sparse_chapters_per_volume = 0;
++	}
++
++	*chapters_per_volume = base_chapters - reduced_chapters;
++	return UDS_SUCCESS;
++}
++
++static unsigned int __must_check normalize_zone_count(unsigned int requested)
++{
++	unsigned int zone_count = requested;
++
++	if (zone_count == 0)
++		zone_count = num_online_cpus() / 2;
++
++	if (zone_count < 1)
++		zone_count = 1;
++
++	if (zone_count > MAX_ZONES)
++		zone_count = MAX_ZONES;
++
++	uds_log_info("Using %u indexing zone%s for concurrency.",
++		     zone_count, zone_count == 1 ? "" : "s");
++	return zone_count;
++}
++
++static unsigned int __must_check normalize_read_threads(unsigned int requested)
++{
++	unsigned int read_threads = requested;
++
++	if (read_threads < 1)
++		read_threads = DEFAULT_VOLUME_READ_THREADS;
++
++	if (read_threads > MAX_VOLUME_READ_THREADS)
++		read_threads = MAX_VOLUME_READ_THREADS;
++
++	return read_threads;
++}
++
++int uds_make_configuration(const struct uds_parameters *params,
++			   struct configuration **config_ptr)
++{
++	struct configuration *config;
++	u32 chapters_per_volume = 0;
++	u32 record_pages_per_chapter = 0;
++	u32 sparse_chapters_per_volume = 0;
++	int result;
++
++	result = compute_memory_sizes(params->memory_size, params->sparse,
++				      &chapters_per_volume, &record_pages_per_chapter,
++				      &sparse_chapters_per_volume);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_allocate(1, struct configuration, __func__, &config);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_make_geometry(DEFAULT_BYTES_PER_PAGE, record_pages_per_chapter,
++				   chapters_per_volume, sparse_chapters_per_volume, 0, 0,
++				   &config->geometry);
++	if (result != UDS_SUCCESS) {
++		uds_free_configuration(config);
++		return result;
++	}
++
++	config->zone_count = normalize_zone_count(params->zone_count);
++	config->read_threads = normalize_read_threads(params->read_threads);
++
++	config->cache_chapters = DEFAULT_CACHE_CHAPTERS;
++	config->volume_index_mean_delta = DEFAULT_VOLUME_INDEX_MEAN_DELTA;
++	config->sparse_sample_rate = (params->sparse ? DEFAULT_SPARSE_SAMPLE_RATE : 0);
++	config->nonce = params->nonce;
++	config->bdev = params->bdev;
++	config->offset = params->offset;
++	config->size = params->size;
++
++	*config_ptr = config;
++	return UDS_SUCCESS;
++}
++
++void uds_free_configuration(struct configuration *config)
++{
++	if (config != NULL) {
++		uds_free_geometry(config->geometry);
++		uds_free(config);
++	}
++}
++
++void uds_log_configuration(struct configuration *config)
++{
++	struct geometry *geometry = config->geometry;
++
++	uds_log_debug("Configuration:");
++	uds_log_debug("  Record pages per chapter:   %10u", geometry->record_pages_per_chapter);
++	uds_log_debug("  Chapters per volume:        %10u", geometry->chapters_per_volume);
++	uds_log_debug("  Sparse chapters per volume: %10u", geometry->sparse_chapters_per_volume);
++	uds_log_debug("  Cache size (chapters):      %10u", config->cache_chapters);
++	uds_log_debug("  Volume index mean delta:    %10u", config->volume_index_mean_delta);
++	uds_log_debug("  Bytes per page:             %10zu", geometry->bytes_per_page);
++	uds_log_debug("  Sparse sample rate:         %10u", config->sparse_sample_rate);
++	uds_log_debug("  Nonce:                      %llu", (unsigned long long) config->nonce);
++}
+diff --git a/drivers/md/dm-vdo/config.h b/drivers/md/dm-vdo/config.h
+new file mode 100644
+index 000000000000..72430d47f983
+--- /dev/null
++++ b/drivers/md/dm-vdo/config.h
+@@ -0,0 +1,124 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_CONFIG_H
++#define UDS_CONFIG_H
++
++#include "geometry.h"
++#include "io-factory.h"
++#include "uds.h"
++
++/*
++ * The configuration records a variety of parameters used to configure a new UDS index. Some
++ * parameters are provided by the client, while others are fixed or derived from user-supplied
++ * values. It is created when an index is created, and it is recorded in the index metadata.
++ */
++
++enum {
++	DEFAULT_VOLUME_INDEX_MEAN_DELTA = 4096,
++	DEFAULT_CACHE_CHAPTERS = 7,
++	DEFAULT_SPARSE_SAMPLE_RATE = 32,
++	MAX_ZONES = 16,
++};
++
++/* A set of configuration parameters for the indexer. */
++struct configuration {
++	/* Storage device for the index */
++	struct block_device *bdev;
++
++	/* The maximum allowable size of the index */
++	size_t size;
++
++	/* The offset where the index should start */
++	off_t offset;
++
++	/* Parameters for the volume */
++
++	/* The volume layout */
++	struct geometry *geometry;
++
++	/* Index owner's nonce */
++	u64 nonce;
++
++	/* The number of threads used to process index requests */
++	unsigned int zone_count;
++
++	/* The number of threads used to read volume pages */
++	unsigned int read_threads;
++
++	/* Size of the page cache and sparse chapter index cache in chapters */
++	u32 cache_chapters;
++
++	/* Parameters for the volume index */
++
++	/* The mean delta for the volume index */
++	u32 volume_index_mean_delta;
++
++	/* Sampling rate for sparse indexing */
++	u32 sparse_sample_rate;
++};
++
++/* On-disk structure of data for a version 8.02 index. */
++struct uds_configuration_8_02 {
++	/* Smaller (16), Small (64) or large (256) indices */
++	u32 record_pages_per_chapter;
++	/* Total number of chapters per volume */
++	u32 chapters_per_volume;
++	/* Number of sparse chapters per volume */
++	u32 sparse_chapters_per_volume;
++	/* Size of the page cache, in chapters */
++	u32 cache_chapters;
++	/* Unused field */
++	u32 unused;
++	/* The volume index mean delta to use */
++	u32 volume_index_mean_delta;
++	/* Size of a page, used for both record pages and index pages */
++	u32 bytes_per_page;
++	/* Sampling rate for sparse indexing */
++	u32 sparse_sample_rate;
++	/* Index owner's nonce */
++	u64 nonce;
++	/* Virtual chapter remapped from physical chapter 0 */
++	u64 remapped_virtual;
++	/* New physical chapter which remapped chapter was moved to */
++	u64 remapped_physical;
++} __packed;
++
++/* On-disk structure of data for a version 6.02 index. */
++struct uds_configuration_6_02 {
++	/* Smaller (16), Small (64) or large (256) indices */
++	u32 record_pages_per_chapter;
++	/* Total number of chapters per volume */
++	u32 chapters_per_volume;
++	/* Number of sparse chapters per volume */
++	u32 sparse_chapters_per_volume;
++	/* Size of the page cache, in chapters */
++	u32 cache_chapters;
++	/* Unused field */
++	u32 unused;
++	/* The volume index mean delta to use */
++	u32 volume_index_mean_delta;
++	/* Size of a page, used for both record pages and index pages */
++	u32 bytes_per_page;
++	/* Sampling rate for sparse indexing */
++	u32 sparse_sample_rate;
++	/* Index owner's nonce */
++	u64 nonce;
++} __packed;
++
++int __must_check uds_make_configuration(const struct uds_parameters *params,
++					struct configuration **config_ptr);
++
++void uds_free_configuration(struct configuration *config);
++
++int __must_check uds_validate_config_contents(struct buffered_reader *reader,
++					      struct configuration *config);
++
++int __must_check uds_write_config_contents(struct buffered_writer *writer,
++					   struct configuration *config, u32 version);
++
++void uds_log_configuration(struct configuration *config);
++
++#endif /* UDS_CONFIG_H */
+diff --git a/drivers/md/dm-vdo/geometry.c b/drivers/md/dm-vdo/geometry.c
+new file mode 100644
+index 000000000000..1ebbef75f842
+--- /dev/null
++++ b/drivers/md/dm-vdo/geometry.c
+@@ -0,0 +1,201 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "geometry.h"
++
++#include <linux/compiler.h>
++#include <linux/log2.h>
++
++#include "delta-index.h"
 +#include "errors.h"
-+#include "hash-utils.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "permassert.h"
 +#include "uds.h"
 +
-+int uds_make_open_chapter_index(struct open_chapter_index **chapter_index,
-+				const struct geometry *geometry, u64 volume_nonce)
-+{
-+	int result;
-+	size_t memory_size;
-+	struct open_chapter_index *index;
-+
-+	result = uds_allocate(1, struct open_chapter_index, "open chapter index",
-+			      &index);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	/*
-+	 * The delta index will rebalance delta lists when memory gets tight,
-+	 * so give the chapter index one extra page.
-+	 */
-+	memory_size = ((geometry->index_pages_per_chapter + 1) * geometry->bytes_per_page);
-+	index->geometry = geometry;
-+	index->volume_nonce = volume_nonce;
-+	result = uds_initialize_delta_index(&index->delta_index, 1,
-+					    geometry->delta_lists_per_chapter,
-+					    geometry->chapter_mean_delta,
-+					    geometry->chapter_payload_bits,
-+					    memory_size, 'm');
-+	if (result != UDS_SUCCESS) {
-+		uds_free(index);
-+		return result;
-+	}
-+
-+	index->memory_size = index->delta_index.memory_size + sizeof(struct open_chapter_index);
-+	*chapter_index = index;
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_free_open_chapter_index(struct open_chapter_index *chapter_index)
-+{
-+	if (chapter_index == NULL)
-+		return;
-+
-+	uds_uninitialize_delta_index(&chapter_index->delta_index);
-+	uds_free(chapter_index);
-+}
-+
-+/* Re-initialize an open chapter index for a new chapter. */
-+void uds_empty_open_chapter_index(struct open_chapter_index *chapter_index,
-+				  u64 virtual_chapter_number)
-+{
-+	uds_reset_delta_index(&chapter_index->delta_index);
-+	chapter_index->virtual_chapter_number = virtual_chapter_number;
-+}
-+
-+static inline bool was_entry_found(const struct delta_index_entry *entry, u32 address)
-+{
-+	return (!entry->at_end) && (entry->key == address);
-+}
-+
-+/* Associate a record name with the record page containing its metadata. */
-+int uds_put_open_chapter_index_record(struct open_chapter_index *chapter_index,
-+				      const struct uds_record_name *name,
-+				      u32 page_number)
-+{
-+	int result;
-+	struct delta_index_entry entry;
-+	u32 address;
-+	u32 list_number;
-+	const u8 *found_name;
-+	bool found;
-+	const struct geometry *geometry = chapter_index->geometry;
-+	u64 chapter_number = chapter_index->virtual_chapter_number;
-+	u32 record_pages = geometry->record_pages_per_chapter;
-+
-+	result = ASSERT(page_number < record_pages,
-+			"Page number within chapter (%u) exceeds the maximum value %u",
-+			page_number, record_pages);
-+	if (result != UDS_SUCCESS)
-+		return UDS_INVALID_ARGUMENT;
-+
-+	address = uds_hash_to_chapter_delta_address(name, geometry);
-+	list_number = uds_hash_to_chapter_delta_list(name, geometry);
-+	result = uds_get_delta_index_entry(&chapter_index->delta_index, list_number,
-+					   address, name->name, &entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	found = was_entry_found(&entry, address);
-+	result = ASSERT(!(found && entry.is_collision),
-+			"Chunk appears more than once in chapter %llu",
-+			(unsigned long long) chapter_number);
-+	if (result != UDS_SUCCESS)
-+		return UDS_BAD_STATE;
-+
-+	found_name = (found ? name->name : NULL);
-+	return uds_put_delta_index_entry(&entry, address, page_number, found_name);
-+}
-+
 +/*
-+ * Pack a section of an open chapter index into a chapter index page. A range of delta lists
-+ * (starting with a specified list index) is copied from the open chapter index into a memory page.
-+ * The number of lists copied onto the page is returned to the caller on success.
++ * An index volume is divided into a fixed number of fixed-size chapters, each consisting of a
++ * fixed number of fixed-size pages. The volume layout is defined by two constants and four
++ * parameters. The constants are that index records are 32 bytes long (16-byte block name plus
++ * 16-byte metadata) and that open chapter index hash slots are one byte long. The four parameters
++ * are the number of bytes in a page, the number of record pages in a chapter, the number of
++ * chapters in a volume, and the number of chapters that are sparse. From these parameters, we can
++ * derive the rest of the layout and other index properties.
 + *
-+ * @chapter_index: The open chapter index
-+ * @memory: The memory page to use
-+ * @first_list: The first delta list number to be copied
-+ * @last_page: If true, this is the last page of the chapter index and all the remaining lists must
-+ *             be packed onto this page
-+ * @lists_packed: The number of delta lists that were packed onto this page
++ * The index volume is sized by its maximum memory footprint. For a dense index, the persistent
++ * storage is about 10 times the size of the memory footprint. For a sparse index, the persistent
++ * storage is about 100 times the size of the memory footprint.
++ *
++ * For a small index with a memory footprint less than 1GB, there are three possible memory
++ * configurations: 0.25GB, 0.5GB and 0.75GB. The default geometry for each is 1024 index records
++ * per 32 KB page, 1024 chapters per volume, and either 64, 128, or 192 record pages per chapter
++ * (resulting in 6, 13, or 20 index pages per chapter) depending on the memory configuration. For
++ * the VDO default of a 0.25 GB index, this yields a deduplication window of 256 GB using about 2.5
++ * GB for the persistent storage and 256 MB of RAM.
++ *
++ * For a larger index with a memory footprint that is a multiple of 1 GB, the geometry is 1024
++ * index records per 32 KB page, 256 record pages per chapter, 26 index pages per chapter, and 1024
++ * chapters for every GB of memory footprint. For a 1 GB volume, this yields a deduplication window
++ * of 1 TB using about 9GB of persistent storage and 1 GB of RAM.
++ *
++ * The above numbers hold for volumes which have no sparse chapters. A sparse volume has 10 times
++ * as many chapters as the corresponding non-sparse volume, which provides 10 times the
++ * deduplication window while using 10 times as much persistent storage as the equivalent
++ * non-sparse volume with the same memory footprint.
++ *
++ * If the volume has been converted from a non-lvm format to an lvm volume, the number of chapters
++ * per volume will have been reduced by one by eliminating physical chapter 0, and the virtual
++ * chapter that formerly mapped to physical chapter 0 may be remapped to another physical chapter.
++ * This remapping is expressed by storing which virtual chapter was remapped, and which physical
++ * chapter it was moved to.
 + */
-+int uds_pack_open_chapter_index_page(struct open_chapter_index *chapter_index,
-+				     u8 *memory, u32 first_list, bool last_page,
-+				     u32 *lists_packed)
++
++int uds_make_geometry(size_t bytes_per_page,
++		      u32 record_pages_per_chapter,
++		      u32 chapters_per_volume,
++		      u32 sparse_chapters_per_volume,
++		      u64 remapped_virtual,
++		      u64 remapped_physical,
++		      struct geometry **geometry_ptr)
 +{
 +	int result;
-+	struct delta_index *delta_index = &chapter_index->delta_index;
-+	struct delta_index_stats stats;
-+	u64 nonce = chapter_index->volume_nonce;
-+	u64 chapter_number = chapter_index->virtual_chapter_number;
-+	const struct geometry *geometry = chapter_index->geometry;
-+	u32 list_count = geometry->delta_lists_per_chapter;
-+	unsigned int removals = 0;
-+	struct delta_index_entry entry;
-+	u32 next_list;
-+	s32 list_number;
++	struct geometry *geometry;
 +
-+	for (;;) {
-+		result = uds_pack_delta_index_page(delta_index, nonce, memory,
-+						   geometry->bytes_per_page,
-+						   chapter_number, first_list,
-+						   lists_packed);
-+		if (result != UDS_SUCCESS)
-+			return result;
++	result = uds_allocate(1, struct geometry, "geometry", &geometry);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+		if ((first_list + *lists_packed) == list_count) {
-+			/* All lists are packed. */
-+			break;
-+		} else if (*lists_packed == 0) {
-+			/*
-+			 * The next delta list does not fit on a page. This delta list will be
-+			 * removed.
-+			 */
-+		} else if (last_page) {
-+			/*
-+			 * This is the last page and there are lists left unpacked, but all of the
-+			 * remaining lists must fit on the page. Find a list that contains entries
-+			 * and remove the entire list. Try the first list that does not fit. If it
-+			 * is empty, we will select the last list that already fits and has any
-+			 * entries.
-+			 */
-+		} else {
-+			/* This page is done. */
-+			break;
-+		}
++	geometry->bytes_per_page = bytes_per_page;
++	geometry->record_pages_per_chapter = record_pages_per_chapter;
++	geometry->chapters_per_volume = chapters_per_volume;
++	geometry->sparse_chapters_per_volume = sparse_chapters_per_volume;
++	geometry->dense_chapters_per_volume = chapters_per_volume - sparse_chapters_per_volume;
++	geometry->remapped_virtual = remapped_virtual;
++	geometry->remapped_physical = remapped_physical;
 +
-+		if (removals == 0) {
-+			uds_get_delta_index_stats(delta_index, &stats);
-+			uds_log_warning("The chapter index for chapter %llu contains %llu entries with %llu collisions",
-+					(unsigned long long) chapter_number,
-+					(unsigned long long) stats.record_count,
-+					(unsigned long long) stats.collision_count);
-+		}
++	geometry->records_per_page = bytes_per_page / BYTES_PER_RECORD;
++	geometry->records_per_chapter = geometry->records_per_page * record_pages_per_chapter;
++	geometry->records_per_volume = (u64) geometry->records_per_chapter * chapters_per_volume;
 +
-+		list_number = *lists_packed;
-+		do {
-+			if (list_number < 0)
-+				return UDS_OVERFLOW;
-+
-+			next_list = first_list + list_number--,
-+			result = uds_start_delta_index_search(delta_index, next_list, 0,
-+							      &entry);
-+			if (result != UDS_SUCCESS)
-+				return result;
-+
-+			result = uds_next_delta_index_entry(&entry);
-+			if (result != UDS_SUCCESS)
-+				return result;
-+		} while (entry.at_end);
-+
-+		do {
-+			result = uds_remove_delta_index_entry(&entry);
-+			if (result != UDS_SUCCESS)
-+				return result;
-+
-+			removals++;
-+		} while (!entry.at_end);
-+	}
-+
-+	if (removals > 0)
-+		uds_log_warning("To avoid chapter index page overflow in chapter %llu, %u entries were removed from the chapter index",
-+				(unsigned long long) chapter_number, removals);
-+
-+	return UDS_SUCCESS;
-+}
-+
-+/* Make a new chapter index page, initializing it with the data from a given index_page buffer. */
-+int uds_initialize_chapter_index_page(struct delta_index_page *index_page,
-+				      const struct geometry *geometry, u8 *page_buffer,
-+				      u64 volume_nonce)
-+{
-+	return uds_initialize_delta_index_page(index_page, volume_nonce,
++	geometry->chapter_mean_delta = 1 << DEFAULT_CHAPTER_MEAN_DELTA_BITS;
++	geometry->chapter_payload_bits = bits_per(record_pages_per_chapter - 1);
++	/*
++	 * We want 1 delta list for every 64 records in the chapter.
++	 * The "| 077" ensures that the chapter_delta_list_bits computation
++	 * does not underflow.
++	 */
++	geometry->chapter_delta_list_bits =
++		bits_per((geometry->records_per_chapter - 1) | 077) - 6;
++	geometry->delta_lists_per_chapter = 1 << geometry->chapter_delta_list_bits;
++	/* We need enough address bits to achieve the desired mean delta. */
++	geometry->chapter_address_bits =
++		(DEFAULT_CHAPTER_MEAN_DELTA_BITS -
++		 geometry->chapter_delta_list_bits +
++		 bits_per(geometry->records_per_chapter - 1));
++	geometry->index_pages_per_chapter =
++		uds_get_delta_index_page_count(geometry->records_per_chapter,
++					       geometry->delta_lists_per_chapter,
 +					       geometry->chapter_mean_delta,
 +					       geometry->chapter_payload_bits,
-+					       page_buffer, geometry->bytes_per_page);
-+}
++					       bytes_per_page);
 +
-+/* Validate a chapter index page read during rebuild. */
-+int uds_validate_chapter_index_page(const struct delta_index_page *index_page,
-+				    const struct geometry *geometry)
-+{
-+	int result;
-+	const struct delta_index *delta_index = &index_page->delta_index;
-+	u32 first = index_page->lowest_list_number;
-+	u32 last = index_page->highest_list_number;
-+	u32 list_number;
++	geometry->pages_per_chapter = geometry->index_pages_per_chapter + record_pages_per_chapter;
++	geometry->pages_per_volume = geometry->pages_per_chapter * chapters_per_volume;
++	geometry->bytes_per_volume =
++		bytes_per_page * (geometry->pages_per_volume + HEADER_PAGES_PER_VOLUME);
 +
-+	/* We walk every delta list from start to finish. */
-+	for (list_number = first; list_number <= last; list_number++) {
-+		struct delta_index_entry entry;
-+
-+		result = uds_start_delta_index_search(delta_index, list_number - first,
-+						      0, &entry);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		for (;;) {
-+			result = uds_next_delta_index_entry(&entry);
-+			if (result != UDS_SUCCESS) {
-+				/*
-+				 * A random bit stream is highly likely to arrive here when we go
-+				 * past the end of the delta list.
-+				 */
-+				return result;
-+			}
-+
-+			if (entry.at_end)
-+				break;
-+
-+			/* Also make sure that the record page field contains a plausible value. */
-+			if (uds_get_delta_entry_value(&entry) >=
-+			    geometry->record_pages_per_chapter)
-+				/*
-+				 * Do not log this as an error. It happens in normal operation when
-+				 * we are doing a rebuild but haven't written the entire volume
-+				 * once.
-+				 */
-+				return UDS_CORRUPT_DATA;
-+		}
-+	}
++	*geometry_ptr = geometry;
 +	return UDS_SUCCESS;
 +}
 +
-+/*
-+ * Search a chapter index page for a record name, returning the record page number that may contain
-+ * the name.
-+ */
-+int uds_search_chapter_index_page(struct delta_index_page *index_page,
-+				  const struct geometry *geometry,
-+				  const struct uds_record_name *name,
-+				  u16 *record_page_ptr)
++int uds_copy_geometry(struct geometry *source, struct geometry **geometry_ptr)
 +{
-+	int result;
-+	struct delta_index *delta_index = &index_page->delta_index;
-+	u32 address = uds_hash_to_chapter_delta_address(name, geometry);
-+	u32 delta_list_number = uds_hash_to_chapter_delta_list(name, geometry);
-+	u32 sub_list_number = delta_list_number - index_page->lowest_list_number;
-+	struct delta_index_entry entry;
-+
-+	result = uds_get_delta_index_entry(delta_index, sub_list_number, address,
-+					   name->name, &entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (was_entry_found(&entry, address))
-+		*record_page_ptr = uds_get_delta_entry_value(&entry);
-+	else
-+		*record_page_ptr = NO_CHAPTER_INDEX_ENTRY;
-+
-+	return UDS_SUCCESS;
-+}
-diff --git a/drivers/md/dm-vdo/chapter-index.h b/drivers/md/dm-vdo/chapter-index.h
-new file mode 100644
-index 000000000000..ad1f61b6ab9a
---- /dev/null
-+++ b/drivers/md/dm-vdo/chapter-index.h
-@@ -0,0 +1,63 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_CHAPTER_INDEX_H
-+#define UDS_CHAPTER_INDEX_H
-+
-+#include <linux/limits.h>
-+
-+#include "delta-index.h"
-+#include "geometry.h"
-+
-+/*
-+ * A chapter index for an open chapter is a mutable structure that tracks all the records that have
-+ * been added to the chapter. A chapter index for a closed chapter is similar except that it is
-+ * immutable because the contents of a closed chapter can never change, and the immutable structure
-+ * is more efficient. Both types of chapter index are implemented with a delta index.
-+ */
-+
-+enum {
-+	/* The value returned when no entry is found in the chapter index. */
-+	NO_CHAPTER_INDEX_ENTRY = U16_MAX,
-+};
-+
-+struct open_chapter_index {
-+	const struct geometry *geometry;
-+	struct delta_index delta_index;
-+	u64 virtual_chapter_number;
-+	u64 volume_nonce;
-+	size_t memory_size;
-+};
-+
-+int __must_check uds_make_open_chapter_index(struct open_chapter_index **chapter_index,
-+					     const struct geometry *geometry,
-+					     u64 volume_nonce);
-+
-+void uds_free_open_chapter_index(struct open_chapter_index *chapter_index);
-+
-+void uds_empty_open_chapter_index(struct open_chapter_index *chapter_index,
-+				  u64 virtual_chapter_number);
-+
-+int __must_check uds_put_open_chapter_index_record(struct open_chapter_index *chapter_index,
-+						   const struct uds_record_name *name,
-+						   u32 page_number);
-+
-+int __must_check uds_pack_open_chapter_index_page(struct open_chapter_index *chapter_index,
-+						  u8 *memory, u32 first_list,
-+						  bool last_page, u32 *lists_packed);
-+
-+int __must_check uds_initialize_chapter_index_page(struct delta_index_page *index_page,
-+						   const struct geometry *geometry,
-+						   u8 *page_buffer, u64 volume_nonce);
-+
-+int __must_check uds_validate_chapter_index_page(const struct delta_index_page *index_page,
-+						 const struct geometry *geometry);
-+
-+int __must_check uds_search_chapter_index_page(struct delta_index_page *index_page,
-+					       const struct geometry *geometry,
-+					       const struct uds_record_name *name,
-+					       u16 *record_page_ptr);
-+
-+#endif /* UDS_CHAPTER_INDEX_H */
-diff --git a/drivers/md/dm-vdo/open-chapter.c b/drivers/md/dm-vdo/open-chapter.c
-new file mode 100644
-index 000000000000..45cec2c3edb2
---- /dev/null
-+++ b/drivers/md/dm-vdo/open-chapter.c
-@@ -0,0 +1,427 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "open-chapter.h"
-+
-+#include <linux/log2.h>
-+
-+#include "config.h"
-+#include "hash-utils.h"
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "numeric.h"
-+#include "permassert.h"
-+
-+/*
-+ * Each index zone has a dedicated open chapter zone structure which gets an equal share of the
-+ * open chapter space. Records are assigned to zones based on their record name. Within each zone,
-+ * records are stored in an array in the order they arrive. Additionally, a reference to each
-+ * record is stored in a hash table to help determine if a new record duplicates an existing one.
-+ * If new metadata for an existing name arrives, the record is altered in place. The array of
-+ * records is 1-based so that record number 0 can be used to indicate an unused hash slot.
-+ *
-+ * Deleted records are marked with a flag rather than actually removed to simplify hash table
-+ * management. The array of deleted flags overlays the array of hash slots, but the flags are
-+ * indexed by record number instead of by record name. The number of hash slots will always be a
-+ * power of two that is greater than the number of records to be indexed, guaranteeing that hash
-+ * insertion cannot fail, and that there are sufficient flags for all records.
-+ *
-+ * Once any open chapter zone fills its available space, the chapter is closed. The records from
-+ * each zone are interleaved to attempt to preserve temporal locality and assigned to record pages.
-+ * Empty or deleted records are replaced by copies of a valid record so that the record pages only
-+ * contain valid records. The chapter then constructs a delta index which maps each record name to
-+ * the record page on which that record can be found, which is split into index pages. These
-+ * structures are then passed to the volume to be recorded on storage.
-+ *
-+ * When the index is saved, the open chapter records are saved in a single array, once again
-+ * interleaved to attempt to preserve temporal locality. When the index is reloaded, there may be a
-+ * different number of zones than previously, so the records must be parcelled out to their new
-+ * zones. In addition, depending on the distribution of record names, a new zone may have more
-+ * records than it has space. In this case, the latest records for that zone will be discarded.
-+ */
-+
-+static const u8 OPEN_CHAPTER_MAGIC[] = "ALBOC";
-+static const u8 OPEN_CHAPTER_VERSION[] = "02.00";
-+
-+enum {
-+	OPEN_CHAPTER_MAGIC_LENGTH = sizeof(OPEN_CHAPTER_MAGIC) - 1,
-+	OPEN_CHAPTER_VERSION_LENGTH = sizeof(OPEN_CHAPTER_VERSION) - 1,
-+	LOAD_RATIO = 2,
-+};
-+
-+static inline size_t records_size(const struct open_chapter_zone *open_chapter)
-+{
-+	return sizeof(struct uds_volume_record) * (1 + open_chapter->capacity);
++	return uds_make_geometry(source->bytes_per_page,
++				 source->record_pages_per_chapter,
++				 source->chapters_per_volume,
++				 source->sparse_chapters_per_volume,
++				 source->remapped_virtual, source->remapped_physical,
++				 geometry_ptr);
 +}
 +
-+static inline size_t slots_size(size_t slot_count)
++void uds_free_geometry(struct geometry *geometry)
 +{
-+	return sizeof(struct open_chapter_zone_slot) * slot_count;
++	uds_free(geometry);
 +}
 +
-+int uds_make_open_chapter(const struct geometry *geometry, unsigned int zone_count,
-+			  struct open_chapter_zone **open_chapter_ptr)
++u32 __must_check uds_map_to_physical_chapter(const struct geometry *geometry,
++					     u64 virtual_chapter)
 +{
-+	int result;
-+	struct open_chapter_zone *open_chapter;
-+	size_t capacity = geometry->records_per_chapter / zone_count;
-+	size_t slot_count = (1 << bits_per(capacity * LOAD_RATIO));
++	u64 delta;
 +
-+	result = uds_allocate_extended(struct open_chapter_zone, slot_count,
-+				       struct open_chapter_zone_slot, "open chapter",
-+				       &open_chapter);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	if (!uds_is_reduced_geometry(geometry))
++		return virtual_chapter % geometry->chapters_per_volume;
 +
-+	open_chapter->slot_count = slot_count;
-+	open_chapter->capacity = capacity;
-+	result = uds_allocate_cache_aligned(records_size(open_chapter), "record pages",
-+					    &open_chapter->records);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_open_chapter(open_chapter);
-+		return result;
++	if (likely(virtual_chapter > geometry->remapped_virtual)) {
++		delta = virtual_chapter - geometry->remapped_virtual;
++		if (likely(delta > geometry->remapped_physical))
++			return delta % geometry->chapters_per_volume;
++		else
++			return delta - 1;
 +	}
 +
-+	*open_chapter_ptr = open_chapter;
-+	return UDS_SUCCESS;
++	if (virtual_chapter == geometry->remapped_virtual)
++		return geometry->remapped_physical;
++
++	delta = geometry->remapped_virtual - virtual_chapter;
++	if (delta < geometry->chapters_per_volume)
++		return geometry->chapters_per_volume - delta;
++
++	/* This chapter is so old the answer doesn't matter. */
++	return 0;
 +}
 +
-+void uds_reset_open_chapter(struct open_chapter_zone *open_chapter)
++/* Check whether any sparse chapters are in use. */
++bool uds_has_sparse_chapters(const struct geometry *geometry, u64 oldest_virtual_chapter,
++			     u64 newest_virtual_chapter)
 +{
-+	open_chapter->size = 0;
-+	open_chapter->deletions = 0;
-+
-+	memset(open_chapter->records, 0, records_size(open_chapter));
-+	memset(open_chapter->slots, 0, slots_size(open_chapter->slot_count));
++	return uds_is_sparse_geometry(geometry) &&
++	       ((newest_virtual_chapter - oldest_virtual_chapter + 1) >
++		geometry->dense_chapters_per_volume);
 +}
 +
-+static unsigned int probe_chapter_slots(struct open_chapter_zone *open_chapter,
-+					const struct uds_record_name *name)
++bool uds_is_chapter_sparse(const struct geometry *geometry, u64 oldest_virtual_chapter,
++			   u64 newest_virtual_chapter, u64 virtual_chapter_number)
 +{
-+	struct uds_volume_record *record;
-+	unsigned int slot_count = open_chapter->slot_count;
-+	unsigned int slot = uds_name_to_hash_slot(name, slot_count);
-+	unsigned int record_number;
-+	unsigned int attempts = 1;
-+
-+	while (true) {
-+		record_number = open_chapter->slots[slot].record_number;
-+
-+		/*
-+		 * If the hash slot is empty, we've reached the end of a chain without finding the
-+		 * record and should terminate the search.
-+		 */
-+		if (record_number == 0)
-+			return slot;
-+
-+		/*
-+		 * If the name of the record referenced by the slot matches and has not been
-+		 * deleted, then we've found the requested name.
-+		 */
-+		record = &open_chapter->records[record_number];
-+		if ((memcmp(&record->name, name, UDS_RECORD_NAME_SIZE) == 0) &&
-+		    !open_chapter->slots[record_number].deleted)
-+			return slot;
-+
-+		/*
-+		 * Quadratic probing: advance the probe by 1, 2, 3, etc. and try again. This
-+		 * performs better than linear probing and works best for 2^N slots.
-+		 */
-+		slot = (slot + attempts++) % slot_count;
-+	}
++	return uds_has_sparse_chapters(geometry, oldest_virtual_chapter,
++				       newest_virtual_chapter) &&
++	       ((virtual_chapter_number + geometry->dense_chapters_per_volume) <=
++		newest_virtual_chapter);
 +}
 +
-+void uds_search_open_chapter(struct open_chapter_zone *open_chapter,
-+			     const struct uds_record_name *name,
-+			     struct uds_record_data *metadata, bool *found)
++/* Calculate how many chapters to expire after opening the newest chapter. */
++u32 uds_chapters_to_expire(const struct geometry *geometry, u64 newest_chapter)
 +{
-+	unsigned int slot;
-+	unsigned int record_number;
-+
-+	slot = probe_chapter_slots(open_chapter, name);
-+	record_number = open_chapter->slots[slot].record_number;
-+	if (record_number == 0) {
-+		*found = false;
-+	} else {
-+		*found = true;
-+		*metadata = open_chapter->records[record_number].data;
-+	}
-+}
-+
-+/* Add a record to the open chapter zone and return the remaining space. */
-+int uds_put_open_chapter(struct open_chapter_zone *open_chapter,
-+			 const struct uds_record_name *name,
-+			 const struct uds_record_data *metadata)
-+{
-+	unsigned int slot;
-+	unsigned int record_number;
-+	struct uds_volume_record *record;
-+
-+	if (open_chapter->size >= open_chapter->capacity)
++	/* If the index isn't full yet, don't expire anything. */
++	if (newest_chapter < geometry->chapters_per_volume)
 +		return 0;
 +
-+	slot = probe_chapter_slots(open_chapter, name);
-+	record_number = open_chapter->slots[slot].record_number;
++	/* If a chapter is out of order... */
++	if (geometry->remapped_physical > 0) {
++		u64 oldest_chapter = newest_chapter - geometry->chapters_per_volume;
 +
-+	if (record_number == 0) {
-+		record_number = ++open_chapter->size;
-+		open_chapter->slots[slot].record_number = record_number;
++		/*
++		 * ... expire an extra chapter when expiring the moved chapter to free physical
++		 * space for the new chapter ...
++		 */
++		if (oldest_chapter == geometry->remapped_virtual)
++			return 2;
++
++		/*
++		 * ... but don't expire anything when the new chapter will use the physical chapter
++		 * freed by expiring the moved chapter.
++		 */
++		if (oldest_chapter == (geometry->remapped_virtual + geometry->remapped_physical))
++			return 0;
 +	}
 +
-+	record = &open_chapter->records[record_number];
-+	record->name = *name;
-+	record->data = *metadata;
-+
-+	return open_chapter->capacity - open_chapter->size;
++	/* Normally, just expire one. */
++	return 1;
 +}
-+
-+void uds_remove_from_open_chapter(struct open_chapter_zone *open_chapter,
-+				  const struct uds_record_name *name)
-+{
-+	unsigned int slot;
-+	unsigned int record_number;
-+
-+	slot = probe_chapter_slots(open_chapter, name);
-+	record_number = open_chapter->slots[slot].record_number;
-+
-+	if (record_number > 0) {
-+		open_chapter->slots[record_number].deleted = true;
-+		open_chapter->deletions += 1;
-+	}
-+}
-+
-+void uds_free_open_chapter(struct open_chapter_zone *open_chapter)
-+{
-+	if (open_chapter != NULL) {
-+		uds_free(open_chapter->records);
-+		uds_free(open_chapter);
-+	}
-+}
-+
-+/* Map each record name to its record page number in the delta chapter index. */
-+static int fill_delta_chapter_index(struct open_chapter_zone **chapter_zones,
-+				    unsigned int zone_count,
-+				    struct open_chapter_index *index,
-+				    struct uds_volume_record *collated_records)
-+{
-+	int result;
-+	unsigned int records_per_chapter;
-+	unsigned int records_per_page;
-+	unsigned int record_index;
-+	unsigned int records = 0;
-+	u32 page_number;
-+	unsigned int z;
-+	int overflow_count = 0;
-+	struct uds_volume_record *fill_record = NULL;
-+
-+	/*
-+	 * The record pages should not have any empty space, so find a record with which to fill
-+	 * the chapter zone if it was closed early, and also to replace any deleted records. The
-+	 * last record in any filled zone is guaranteed to not have been deleted, so use one of
-+	 * those.
-+	 */
-+	for (z = 0; z < zone_count; z++) {
-+		struct open_chapter_zone *zone = chapter_zones[z];
-+
-+		if (zone->size == zone->capacity) {
-+			fill_record = &zone->records[zone->size];
-+			break;
-+		}
-+	}
-+
-+	records_per_chapter = index->geometry->records_per_chapter;
-+	records_per_page = index->geometry->records_per_page;
-+
-+	for (records = 0; records < records_per_chapter; records++) {
-+		struct uds_volume_record *record = &collated_records[records];
-+		struct open_chapter_zone *open_chapter;
-+
-+		/* The record arrays in the zones are 1-based. */
-+		record_index = 1 + (records / zone_count);
-+		page_number = records / records_per_page;
-+		open_chapter = chapter_zones[records % zone_count];
-+
-+		/* Use the fill record in place of an unused record. */
-+		if (record_index > open_chapter->size ||
-+		    open_chapter->slots[record_index].deleted) {
-+			*record = *fill_record;
-+			continue;
-+		}
-+
-+		*record = open_chapter->records[record_index];
-+		result = uds_put_open_chapter_index_record(index, &record->name,
-+							   page_number);
-+		switch (result) {
-+		case UDS_SUCCESS:
-+			break;
-+		case UDS_OVERFLOW:
-+			overflow_count++;
-+			break;
-+		default:
-+			uds_log_error_strerror(result,
-+					       "failed to build open chapter index");
-+			return result;
-+		}
-+	}
-+
-+	if (overflow_count > 0)
-+		uds_log_warning("Failed to add %d entries to chapter index",
-+				overflow_count);
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_close_open_chapter(struct open_chapter_zone **chapter_zones,
-+			   unsigned int zone_count, struct volume *volume,
-+			   struct open_chapter_index *chapter_index,
-+			   struct uds_volume_record *collated_records,
-+			   u64 virtual_chapter_number)
-+{
-+	int result;
-+
-+	uds_empty_open_chapter_index(chapter_index, virtual_chapter_number);
-+	result = fill_delta_chapter_index(chapter_zones, zone_count, chapter_index,
-+					  collated_records);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return uds_write_chapter(volume, chapter_index, collated_records);
-+}
-+
-+int uds_save_open_chapter(struct uds_index *index, struct buffered_writer *writer)
-+{
-+	int result;
-+	struct open_chapter_zone *open_chapter;
-+	struct uds_volume_record *record;
-+	u8 record_count_data[sizeof(u32)];
-+	u32 record_count = 0;
-+	unsigned int record_index;
-+	unsigned int z;
-+
-+	result = uds_write_to_buffered_writer(writer, OPEN_CHAPTER_MAGIC,
-+					      OPEN_CHAPTER_MAGIC_LENGTH);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_write_to_buffered_writer(writer, OPEN_CHAPTER_VERSION,
-+					      OPEN_CHAPTER_VERSION_LENGTH);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	for (z = 0; z < index->zone_count; z++) {
-+		open_chapter = index->zones[z]->open_chapter;
-+		record_count += open_chapter->size - open_chapter->deletions;
-+	}
-+
-+	put_unaligned_le32(record_count, record_count_data);
-+	result = uds_write_to_buffered_writer(writer, record_count_data,
-+					      sizeof(record_count_data));
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	record_index = 1;
-+	while (record_count > 0) {
-+		for (z = 0; z < index->zone_count; z++) {
-+			open_chapter = index->zones[z]->open_chapter;
-+			if (record_index > open_chapter->size)
-+				continue;
-+
-+			if (open_chapter->slots[record_index].deleted)
-+				continue;
-+
-+			record = &open_chapter->records[record_index];
-+			result = uds_write_to_buffered_writer(writer, (u8 *) record,
-+							      sizeof(*record));
-+			if (result != UDS_SUCCESS)
-+				return result;
-+
-+			record_count--;
-+		}
-+
-+		record_index++;
-+	}
-+
-+	return uds_flush_buffered_writer(writer);
-+}
-+
-+u64 uds_compute_saved_open_chapter_size(struct geometry *geometry)
-+{
-+	unsigned int records_per_chapter = geometry->records_per_chapter;
-+
-+	return OPEN_CHAPTER_MAGIC_LENGTH + OPEN_CHAPTER_VERSION_LENGTH + sizeof(u32) +
-+		records_per_chapter * sizeof(struct uds_volume_record);
-+}
-+
-+static int load_version20(struct uds_index *index, struct buffered_reader *reader)
-+{
-+	int result;
-+	u32 record_count;
-+	u8 record_count_data[sizeof(u32)];
-+	struct uds_volume_record record;
-+
-+	/*
-+	 * Track which zones cannot accept any more records. If the open chapter had a different
-+	 * number of zones previously, some new zones may have more records than they have space
-+	 * for. These overflow records will be discarded.
-+	 */
-+	bool full_flags[MAX_ZONES] = {
-+		false,
-+	};
-+
-+	result = uds_read_from_buffered_reader(reader, (u8 *) &record_count_data,
-+					       sizeof(record_count_data));
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	record_count = get_unaligned_le32(record_count_data);
-+	while (record_count-- > 0) {
-+		unsigned int zone = 0;
-+
-+		result = uds_read_from_buffered_reader(reader, (u8 *) &record,
-+						       sizeof(record));
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		if (index->zone_count > 1)
-+			zone = uds_get_volume_index_zone(index->volume_index,
-+							 &record.name);
-+
-+		if (!full_flags[zone]) {
-+			struct open_chapter_zone *open_chapter;
-+			unsigned int remaining;
-+
-+			open_chapter = index->zones[zone]->open_chapter;
-+			remaining = uds_put_open_chapter(open_chapter, &record.name,
-+							 &record.data);
-+			/* Do not allow any zone to fill completely. */
-+			full_flags[zone] = (remaining <= 1);
-+		}
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_load_open_chapter(struct uds_index *index, struct buffered_reader *reader)
-+{
-+	u8 version[OPEN_CHAPTER_VERSION_LENGTH];
-+	int result;
-+
-+	result = uds_verify_buffered_data(reader, OPEN_CHAPTER_MAGIC,
-+					  OPEN_CHAPTER_MAGIC_LENGTH);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_read_from_buffered_reader(reader, version, sizeof(version));
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (memcmp(OPEN_CHAPTER_VERSION, version, sizeof(version)) != 0) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "Invalid open chapter version: %.*s",
-+					      (int) sizeof(version), version);
-+	}
-+
-+	return load_version20(index, reader);
-+}
-diff --git a/drivers/md/dm-vdo/open-chapter.h b/drivers/md/dm-vdo/open-chapter.h
+diff --git a/drivers/md/dm-vdo/geometry.h b/drivers/md/dm-vdo/geometry.h
 new file mode 100644
-index 000000000000..eb11d897f20a
+index 000000000000..cff69087cd79
 --- /dev/null
-+++ b/drivers/md/dm-vdo/open-chapter.h
-@@ -0,0 +1,79 @@
++++ b/drivers/md/dm-vdo/geometry.h
+@@ -0,0 +1,138 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_OPEN_CHAPTER_H
-+#define UDS_OPEN_CHAPTER_H
++#ifndef UDS_GEOMETRY_H
++#define UDS_GEOMETRY_H
 +
-+#include "chapter-index.h"
-+#include "geometry.h"
-+#include "index.h"
-+#include "volume.h"
++#include "uds.h"
 +
 +/*
-+ * The open chapter tracks the newest records in memory. Like the index as a whole, each open
-+ * chapter is divided into a number of independent zones which are interleaved when the chapter is
-+ * committed to the volume.
++ * The geometry records parameters that define the layout of a UDS index volume, and the size and
++ * shape of various index structures. It is created when the index is created, and is referenced by
++ * many index sub-components.
 + */
 +
++struct geometry {
++	/* Size of a chapter page, in bytes */
++	size_t bytes_per_page;
++	/* Number of record pages in a chapter */
++	u32 record_pages_per_chapter;
++	/* Total number of chapters in a volume */
++	u32 chapters_per_volume;
++	/* Number of sparsely-indexed chapters in a volume */
++	u32 sparse_chapters_per_volume;
++	/* Number of bits used to determine delta list numbers */
++	u8 chapter_delta_list_bits;
++	/* Virtual chapter remapped from physical chapter 0 */
++	u64 remapped_virtual;
++	/* New physical chapter where the remapped chapter can be found */
++	u64 remapped_physical;
++
++	/*
++	 * The following properties are derived from the ones above, but they are computed and
++	 * recorded as fields for convenience.
++	 */
++	/* Total number of pages in a volume, excluding the header */
++	u32 pages_per_volume;
++	/* Total number of bytes in a volume, including the header */
++	size_t bytes_per_volume;
++	/* Number of pages in a chapter */
++	u32 pages_per_chapter;
++	/* Number of index pages in a chapter index */
++	u32 index_pages_per_chapter;
++	/* Number of records that fit on a page */
++	u32 records_per_page;
++	/* Number of records that fit in a chapter */
++	u32 records_per_chapter;
++	/* Number of records that fit in a volume */
++	u64 records_per_volume;
++	/* Number of delta lists per chapter index */
++	u32 delta_lists_per_chapter;
++	/* Mean delta for chapter indexes */
++	u32 chapter_mean_delta;
++	/* Number of bits needed for record page numbers */
++	u8 chapter_payload_bits;
++	/* Number of bits used to compute addresses for chapter delta lists */
++	u8 chapter_address_bits;
++	/* Number of densely-indexed chapters in a volume */
++	u32 dense_chapters_per_volume;
++};
++
 +enum {
-+	OPEN_CHAPTER_RECORD_NUMBER_BITS = 23,
++	/* The number of bytes in a record (name + metadata) */
++	BYTES_PER_RECORD = (UDS_RECORD_NAME_SIZE + UDS_RECORD_DATA_SIZE),
++
++	/* The default length of a page in a chapter, in bytes */
++	DEFAULT_BYTES_PER_PAGE = 1024 * BYTES_PER_RECORD,
++
++	/* The default maximum number of records per page */
++	DEFAULT_RECORDS_PER_PAGE = DEFAULT_BYTES_PER_PAGE / BYTES_PER_RECORD,
++
++	/* The default number of record pages in a chapter */
++	DEFAULT_RECORD_PAGES_PER_CHAPTER = 256,
++
++	/* The default number of record pages in a chapter for a small index */
++	SMALL_RECORD_PAGES_PER_CHAPTER = 64,
++
++	/* The default number of chapters in a volume */
++	DEFAULT_CHAPTERS_PER_VOLUME = 1024,
++
++	/* The default number of sparsely-indexed chapters in a volume */
++	DEFAULT_SPARSE_CHAPTERS_PER_VOLUME = 0,
++
++	/* The log2 of the default mean delta */
++	DEFAULT_CHAPTER_MEAN_DELTA_BITS = 16,
++
++	/* The log2 of the number of delta lists in a large chapter */
++	DEFAULT_CHAPTER_DELTA_LIST_BITS = 12,
++
++	/* The log2 of the number of delta lists in a small chapter */
++	SMALL_CHAPTER_DELTA_LIST_BITS = 10,
++
++	/* The number of header pages per volume */
++	HEADER_PAGES_PER_VOLUME = 1,
 +};
 +
-+struct open_chapter_zone_slot {
-+	/* If non-zero, the record number addressed by this hash slot */
-+	unsigned int record_number : OPEN_CHAPTER_RECORD_NUMBER_BITS;
-+	/* If true, the record at the index of this hash slot was deleted */
-+	bool deleted : 1;
-+} __packed;
++int __must_check uds_make_geometry(size_t bytes_per_page, u32 record_pages_per_chapter,
++				   u32 chapters_per_volume,
++				   u32 sparse_chapters_per_volume, u64 remapped_virtual,
++				   u64 remapped_physical,
++				   struct geometry **geometry_ptr);
 +
-+struct open_chapter_zone {
-+	/* The maximum number of records that can be stored */
-+	unsigned int capacity;
-+	/* The number of records stored */
-+	unsigned int size;
-+	/* The number of deleted records */
-+	unsigned int deletions;
-+	/* Array of chunk records, 1-based */
-+	struct uds_volume_record *records;
-+	/* The number of slots in the hash table */
-+	unsigned int slot_count;
-+	/* The hash table slots, referencing virtual record numbers */
-+	struct open_chapter_zone_slot slots[];
-+};
++int __must_check uds_copy_geometry(struct geometry *source,
++				   struct geometry **geometry_ptr);
 +
-+int __must_check uds_make_open_chapter(const struct geometry *geometry,
-+				       unsigned int zone_count,
-+				       struct open_chapter_zone **open_chapter_ptr);
++void uds_free_geometry(struct geometry *geometry);
 +
-+void uds_reset_open_chapter(struct open_chapter_zone *open_chapter);
++u32 __must_check uds_map_to_physical_chapter(const struct geometry *geometry,
++					     u64 virtual_chapter);
 +
-+void uds_search_open_chapter(struct open_chapter_zone *open_chapter,
-+			     const struct uds_record_name *name,
-+			     struct uds_record_data *metadata, bool *found);
++/*
++ * Check whether this geometry is reduced by a chapter. This will only be true if the volume was
++ * converted from a non-lvm volume to an lvm volume.
++ */
++static inline bool __must_check uds_is_reduced_geometry(const struct geometry *geometry)
++{
++	return !!(geometry->chapters_per_volume & 1);
++}
 +
-+int __must_check uds_put_open_chapter(struct open_chapter_zone *open_chapter,
-+				      const struct uds_record_name *name,
-+				      const struct uds_record_data *metadata);
++static inline bool __must_check uds_is_sparse_geometry(const struct geometry *geometry)
++{
++	return geometry->sparse_chapters_per_volume > 0;
++}
 +
-+void uds_remove_from_open_chapter(struct open_chapter_zone *open_chapter,
-+				  const struct uds_record_name *name);
++bool __must_check uds_has_sparse_chapters(const struct geometry *geometry,
++					  u64 oldest_virtual_chapter,
++					  u64 newest_virtual_chapter);
 +
-+void uds_free_open_chapter(struct open_chapter_zone *open_chapter);
-+
-+int __must_check uds_close_open_chapter(struct open_chapter_zone **chapter_zones,
-+					unsigned int zone_count, struct volume *volume,
-+					struct open_chapter_index *chapter_index,
-+					struct uds_volume_record *collated_records,
++bool __must_check uds_is_chapter_sparse(const struct geometry *geometry,
++					u64 oldest_virtual_chapter,
++					u64 newest_virtual_chapter,
 +					u64 virtual_chapter_number);
 +
-+int __must_check uds_save_open_chapter(struct uds_index *index,
-+				       struct buffered_writer *writer);
++u32 __must_check uds_chapters_to_expire(const struct geometry *geometry,
++					u64 newest_chapter);
 +
-+int __must_check uds_load_open_chapter(struct uds_index *index,
-+				       struct buffered_reader *reader);
-+
-+u64 uds_compute_saved_open_chapter_size(struct geometry *geometry);
-+
-+#endif /* UDS_OPEN_CHAPTER_H */
++#endif /* UDS_GEOMETRY_H */
 -- 
 2.40.0
 
