@@ -1,117 +1,125 @@
-Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from APC01-SG2-obe.outbound.protection.outlook.com (mail-sgaapc01on2120.outbound.protection.outlook.com [40.107.215.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E1A43B79D
-	for <dm-devel@lists.linux.dev>; Tue, 21 Nov 2023 00:00:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=chromium.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chromium.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15903F518
+	for <dm-devel@lists.linux.dev>; Tue, 21 Nov 2023 08:46:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="dHTCexeS"
-Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-a00d5b0ec44so95989966b.0
-        for <dm-devel@lists.linux.dev>; Mon, 20 Nov 2023 16:00:00 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google; t=1700524799; x=1701129599; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=hvy2CV8CQ1z8xyF0eqyyieG0M3+ja1/tOprJQEZU3U0=;
-        b=dHTCexeST1Viep8cI9dwUh14FKO+NpGEzCpReL9xjd75rDChkbxZvqVcWco9aq2EqO
-         qiQuMECGqqhbPNL5KXBUSoBW2jBNNr3jLu9jnwb3DDTj2R056eWSyC/emE/1eOF23n1j
-         F3bhO7M3O+oRbaRnWqNETyjsqqG3KqIBbCu8E=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1700524799; x=1701129599;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=hvy2CV8CQ1z8xyF0eqyyieG0M3+ja1/tOprJQEZU3U0=;
-        b=hVVC2nWqPlEaKCFWC9bBVZ3jyuuVLhPqBw9jSOqUtisu5m+WoULEbXu72hN/hA+9q3
-         KsAxDkbz6oP4kv7bOECWRG3ylTiTBvjXDIksqWgFm5kouigilN0l47CI9Hp8Y7eaRM7R
-         df2RbDLmkdjENyKiHe2dSXgRxThGDGmhhhpFf3wdBqNWLmtfHzMEhhtOS4VxJTMOjvJJ
-         5FNT27vC3/2GT2HJ/Nth0N/Y408biDtzb8RuL561SLHfYONwT9/TRYS3TuKiN16UKE0D
-         Xeg+4svCQfgwtlxJPEDmIyD4zPHUqNt32NERFOAA6FZYi7kUDnghjAte2rm1tgTobzg1
-         c7mQ==
-X-Gm-Message-State: AOJu0YxUsW5WCapvrJK5u/O6UNOzXXK1wFA5IpaKuacw5RroAl+102C+
-	XLYN+dIdo/+edZVayQbPxKtaK6/RJEZ/4vXfE2edTg==
-X-Google-Smtp-Source: AGHT+IGS/DMjLcVARh7/W+3Xwjr7CBqtoFkp2YHIj8I+RchJwxdGIbnk77jU2LOk1Rw8ir/jKvddnwjVTa6iwN+tqTI=
-X-Received: by 2002:a17:906:5904:b0:9be:e90:5016 with SMTP id
- h4-20020a170906590400b009be0e905016mr6390836ejq.24.1700524799291; Mon, 20 Nov
- 2023 15:59:59 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="QQYDIQap"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=gHLjfZphRJ+AKHb0p9XW9uuOF+j7ObEK9fYoJO2APwbNu9XfspyvgvtEZ1b9pVcy8PsPgbPcUj6Hfs0Y/lHtojf78ZPTsSQAsKpF2/A9NtHAPYZuu7EQACd/mdis1z7vl2JimdKoi7eIkZ3HkfgqOlsszmmK2WK+g6yz3cv+OKb3l7ynzfujlu+OaNKSIQMRrdu1ofNJ2VRFKIKwYiptwkr8M2GnjfkzZWYWv8YEYuukbgvQGkmsTPKxsqmQUqDwCh9+Z7s/IKhpgz6TUw5rCUOGQtMvuq6HYwbBQLxqogGhjMWm7xxN6EyyhDBhGrO+r31qljD0cKA2r4TNDS7F0w==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=iaqQTlkIaJaCsKu2tp3KzrgrAGDXof2uu+Eep6sGojU=;
+ b=GzHHOlG+l2iSAmMBXlfKoHCw/1mpOlfDtEQEjABKvk/oTs2E9xozFUc+nNbGCnAhtd9SEQXjCZNcYcwBVIpLeyBn0cufhvvnSsxVKiNsV/fBJPnigt5iTX6tN29qrbdd4+qXpIdC8b7dolyx+EPjpgx+CoipYlfcUtfIGKsitwGkztxYcRbUNxpoNrfKChwsxMD1V3gwQHSioJUvMDG1O+AHaJ4f5PHxZFl3ffxl+SdzfpTAqkxW5rgC/5gPAgqZoxdwukU57U+5ys4fxmQrmODMSCpG1LRUvIMUWQc8LuOb4dDUW4/52Wn0IfaSeQbUqYddz+4cikLWh6BMF7Lo0g==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
+ dkim=pass header.d=vivo.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=iaqQTlkIaJaCsKu2tp3KzrgrAGDXof2uu+Eep6sGojU=;
+ b=QQYDIQaplwqf7PEJ/J5tAp0sfReONv317FiqFsp1sduMv0+r6wYHVbKXCDndN4zDCWdAsEr7v4rqfcsQVjyYdjLgACvZCuHbD2LR/FRIpXU56FY6x9BlrRMaxtyOHNWoMJY0qhoufYAmHH32U0qAJ+sUnM4Qo5wQ5hoen83yVRxjZRtSINhXH97zBu401/iTcQ9BTH5Vd5YF8lNmKpIqo1vI4ps55M4gGDOOcaAK6mp4EY9aIseld9kCE+6kh1uPEJaz0frA2FxJ3d4rkez50x/PuIEEPTqiJncdV91xZd7frK/lGUcKP2e0z1yrqZgpqLcG+o7BIoABZuN/iYPMdA==
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=vivo.com;
+Received: from PS2PR06MB3509.apcprd06.prod.outlook.com (2603:1096:300:67::17)
+ by TYZPR06MB4127.apcprd06.prod.outlook.com (2603:1096:400:6::6) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7002.28; Tue, 21 Nov
+ 2023 08:46:36 +0000
+Received: from PS2PR06MB3509.apcprd06.prod.outlook.com
+ ([fe80::863b:f0a1:3066:24d]) by PS2PR06MB3509.apcprd06.prod.outlook.com
+ ([fe80::863b:f0a1:3066:24d%6]) with mapi id 15.20.7002.027; Tue, 21 Nov 2023
+ 08:46:36 +0000
+From: Wu Bo <bo.wu@vivo.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Wu Bo <wubo.oduw@gmail.com>,
+	Wu Bo <bo.wu@vivo.com>
+Subject: [PATCH 0/2] dm verity: fix FEC stuck during lower dm suspend
+Date: Tue, 21 Nov 2023 01:55:27 -0700
+Message-Id: <cover.1700555778.git.bo.wu@vivo.com>
+X-Mailer: git-send-email 2.25.1
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: SI1PR02CA0047.apcprd02.prod.outlook.com
+ (2603:1096:4:1f5::15) To PS2PR06MB3509.apcprd06.prod.outlook.com
+ (2603:1096:300:67::17)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20231110010139.3901150-1-sarthakkukreti@chromium.org>
- <ZU7RVKJIzm8ExGGH@dread.disaster.area> <CAG9=OMPFEV9He+ggq2mcLULnUZ2jm8fGU=4ca8kBoWtvqYcGVg@mail.gmail.com>
- <ZVvCsPelezZesshx@dread.disaster.area>
-In-Reply-To: <ZVvCsPelezZesshx@dread.disaster.area>
-From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Date: Mon, 20 Nov 2023 15:59:48 -0800
-Message-ID: <CAG9=OMMar0shTijQfehFSktir2vsvRkvH8t69gREzVyLKyPH4A@mail.gmail.com>
-Subject: Re: [PATCH v9 0/3] [PATCH v9 0/3] Introduce provisioning primitives
-To: Dave Chinner <david@fromorbit.com>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>, 
-	"Darrick J . Wong" <djwong@kernel.org>, Christoph Hellwig <hch@lst.de>, Brian Foster <bfoster@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: PS2PR06MB3509:EE_|TYZPR06MB4127:EE_
+X-MS-Office365-Filtering-Correlation-Id: dcaa383b-1135-4ffa-e623-08dbea6e5e68
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info:
+	GeGJy0+o1qIUTlH0oZVJYnvmYqNVqN92CMgyLzAEq5Z8fJluPhi0Qo1steBwUXgxiq2xm02/IUig/pkN1HkQXqVIDKlOXbX6SrFSZbf/PgPtGiyoxUSRCa0X5ne3lO7rlddGycaE3bto7Ai9rFM9NFVR0ByCqZP99Extmd8qRXx69I56cMlpfxntgEFK2XYj5DUU0kNmqMM32oyIvfodpknzoGWeBWdVZB6s/W8H4PWjUJhhvet53QZIu0tciapXxBG+dK4iPjEjMnZ9ZaKvKK2PQ4qNiar5Az1NL7GquoIRK8LbhwYTnwU+09nbmOkHTHjXVUeU82c1b1rf70GG9VoTuANqiKlSm9ct/c3ns3NWd6uyaQ/zzw8xD1s7VRaVOYi7Q2EFR34wPQoK1w77cEq5eh0yW1r5Wc4YoF9hKbpd+8cqWXM6gMgOA9+xlDYpNxdn1c6NvTu/THq1JLptGEoKVlVVnW0XVa/xBuMf3p+z+IAywysZYqtden0xm5onoFjzY2JhJvSplOUT+DdgyAkmEhbjNr+fU+LHYpT4PK5B8RaQWIij1aOH6KAwOEy/Z/Zymw2rjPa6RCyo5Kre7VAlGcsLIlYW+zzeU2jMCgCDH9VH5tH2Vi1DV15aKEd3
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PS2PR06MB3509.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(346002)(376002)(39850400004)(136003)(396003)(366004)(230922051799003)(451199024)(64100799003)(186009)(1800799012)(316002)(110136005)(54906003)(66946007)(66476007)(66556008)(36756003)(52116002)(6512007)(6666004)(6506007)(2616005)(26005)(107886003)(6486002)(478600001)(38350700005)(38100700002)(83380400001)(86362001)(2906002)(4744005)(5660300002)(8936002)(4326008)(8676002)(41300700001);DIR:OUT;SFP:1102;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?Je89Ud2RFmGYQ8bOjO8JyxgRrY/OW05Muz7w2VpPMiNGpMw2a6B9/ioRdshl?=
+ =?us-ascii?Q?dRhSI8s30PejM/3bcOdc8LqwSCBy1ZMQxlcKzWc+da21KulBgbfxAAERK9uU?=
+ =?us-ascii?Q?S+y0Q02xEmcJQFth6E3iB6ZXGcadfCIdMoakI2801/W9AjfJD7I+J84GPcTx?=
+ =?us-ascii?Q?z8eD3rtHG4FDWAwKYPZtbZCytE0PjKNmzqqJezCBepl2h4Tem1Z9I1hmWWJ/?=
+ =?us-ascii?Q?7ZnlUvoO10fRiZYb86rmdHkKtQJ82A9h9WcV+C+vYaalBYmCGm911whS+kLc?=
+ =?us-ascii?Q?C9zg4Loag60uGUKTFBX4P4Xt46mNE3N9NzJrVdf7aOjhpkBwQxtxrnMrdo4A?=
+ =?us-ascii?Q?dkqwzJRJVWno3GrZh/rWK7ov6m102nE0+kEBssyItnt6+xWWxl4tmgjE3NMD?=
+ =?us-ascii?Q?PGuTN+0P3kzrXtvfTEzDkRhpWF7AnTJHe4SJkVg5H7+aHlzu5ipa5g15lvaH?=
+ =?us-ascii?Q?56ExMhnzMhurkIa2mP14xGBV81OcT8EHhHGPYzS//iJATZxSS9D4KMB4siCe?=
+ =?us-ascii?Q?qJamAJv4xYsAzaNIS65nnh4dnlgoWXW033TKep+3rVNKFz56K5cYy9thOqt7?=
+ =?us-ascii?Q?JYwLk/NNJigEv53ti55v7Opy6YVa4JiNuJRevuQ1rNHCpD6KKKvv+fF4JTEv?=
+ =?us-ascii?Q?+5WwCRtFsZmuRynNN8uuVvQJQuhlS/P8zCIvxA7OSYKIM6TJEVDy5DXwLaI1?=
+ =?us-ascii?Q?p7BbPHkHjge0X8w94+hVPXgcvQDYuQA7gjrt73GChrLM5uv3Mlq2seYDZLsf?=
+ =?us-ascii?Q?UWcWVqESSjQI1hMAtZjAywxyD0SX5VCXaUaS9RJnwqGUqnLMf1pWCeHUJ270?=
+ =?us-ascii?Q?p9cEW1RSosLfIy4jIhpue8vOlPEEL3SyYgP/vWdWuXMaYykOnkcsiQ4RlLbd?=
+ =?us-ascii?Q?hCNmtQIG9CGOVZZx9mR2uwT8oqGZagZvk2OmJh+eX1OYxSprfqrAPQuuxK1P?=
+ =?us-ascii?Q?MN3pJ3d0IS64ArO+M5rclNrp8Rw16zrnXmvf//Re6Zu6BNHDmskqmjIN7Ipu?=
+ =?us-ascii?Q?DoTpIn/u9d9mRyfXA6DmRP+/jmcYFugAIyKlazzNqJcJwhQIVz5+grT2pu6D?=
+ =?us-ascii?Q?wmL3wI2B0DMQAkHYVTh6a2ZOJRzXUbVC6cigLUYaneC5gVnRhnlLiEdJDWMU?=
+ =?us-ascii?Q?GSM6M2NBuoPz+TfXxSf04KFm9aqNyQ6HPNFSZUGJBX1Y/YxnXQ61lT5IoZhz?=
+ =?us-ascii?Q?sNNCXiMnh3hmPsL++0H+Ui4pKWrMEXOlrVcVCXFVl4JJ9Kt5DpQgibVljyqn?=
+ =?us-ascii?Q?6dLmY3+j0vNm29d/THF/rqNLYug1ts23MwlC3ho+mpXO/PJrXvQMTCh1Modw?=
+ =?us-ascii?Q?uDyTJHI0XONTEzYt+skeF2QEQ0eNFLA7RX/4xeOgg2i1L4EmWHPzPseq+05O?=
+ =?us-ascii?Q?RXEWQKMi0mMaSFhlf0jmKoBHUIw89M79ztTv42wCEWqgoFKl43e7HHtBrwsb?=
+ =?us-ascii?Q?ZthuDIZOaOYNibPp17xOZPPsWr7VjJ+Fhby9N8ky87vS7O13Pi8xjzkEgkcL?=
+ =?us-ascii?Q?SSTvWujUHUfXeDZomEBx1Q0zwmq5CkIGc3wZWp7PNPlejoTrR8KtZbudrxQ2?=
+ =?us-ascii?Q?UTdRikyKUQA9XfBhueQGDPfWJ42KRI4LUcUqbFg8?=
+X-OriginatorOrg: vivo.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: dcaa383b-1135-4ffa-e623-08dbea6e5e68
+X-MS-Exchange-CrossTenant-AuthSource: PS2PR06MB3509.apcprd06.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 21 Nov 2023 08:46:36.5129
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: G19+tr77f/oJjeQLnDU3ObApVc0T3fb2PH2kPi/K4+OvWcf4zJLNOc7u/p1qPBgzGAbuWzadllIQeSp/RdIJzQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYZPR06MB4127
 
-On Mon, Nov 20, 2023 at 12:33=E2=80=AFPM Dave Chinner <david@fromorbit.com>=
- wrote:
->
-> On Mon, Nov 13, 2023 at 01:26:51PM -0800, Sarthak Kukreti wrote:
-> > On Fri, Nov 10, 2023 at 4:56=E2=80=AFPM Dave Chinner <david@fromorbit.c=
-om> wrote:
-> > >
-> > > On Thu, Nov 09, 2023 at 05:01:35PM -0800, Sarthak Kukreti wrote:
-> > > > Hi,
-> > > >
-> > > > This patch series is version 9 of the patch series to introduce
-> > > > block-level provisioning mechanism (original [1]), which is useful =
-for
-> > > > provisioning space across thinly provisioned storage architectures =
-(loop
-> > > > devices backed by sparse files, dm-thin devices, virtio-blk). This
-> > > > series has minimal changes over v8[2], with a couple of patches dro=
-pped
-> > > > (suggested by Dave).
-> > > >
-> > > > This patch series is rebased from the linux-dm/dm-6.5-provision-sup=
-port
-> > > > [3] on to (a12deb44f973 Merge tag 'input-for-v6.7-rc0' ...). The fi=
-nal
-> > > > patch in the series is a blktest (suggested by Dave in 4) which was=
- used
-> > > > to test out the provisioning flow for loop devices on sparse files =
-on an
-> > > > ext4 filesystem.
-> > >
-> > > What happened to the XFS patch I sent to support provisioning for
-> > > fallocate() operations through XFS?
-> > >
-> > Apologies, I missed out on mentioning that the XFS patches work well
-> > with loop devices.
-> >
-> > I might have misunderstood: were those patches only for sanity testing
-> > or would you prefer that I send those out as a part of this series? I
-> > can whip up a quick v10 if so!
->
-> I was implying that if you are going to be adding support to random
-> block devices for people to actually test out, then you should be
-> adding support to filesystems and writing new -fstests- to ensure
-> that loop devices are actually provisioning blocks at exactly the
-> locations that correspond to the physical file extents the
-> filesystem provisioned, too.
->
+Hi,
 
-Fair enough, let me work on an additional fstests patch to validate that.
+We found an issue under Android OTA scenario that many readahead BIOs have
+to do FEC and caused system stuck. These 2 patches try to fix this issue.
 
-Best
-Sarthak
+Thanks
 
-> -Dave.
-> --
-> Dave Chinner
-> david@fromorbit.com
+Wu Bo (2):
+  dm verity: init fec io before cleaning it
+  dm verity: don't verity if readahead failed
+
+ drivers/md/dm-verity-target.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+-- 
+2.25.1
+
