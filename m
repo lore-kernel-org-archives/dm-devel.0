@@ -1,99 +1,73 @@
-Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com [209.85.218.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7542E20DCD
-	for <dm-devel@lists.linux.dev>; Tue, 21 Nov 2023 17:47:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0E3F54BE9
+	for <dm-devel@lists.linux.dev>; Tue, 21 Nov 2023 22:57:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="eIUvxWA5"
-Received: by mail-ej1-f50.google.com with SMTP id a640c23a62f3a-a0064353af8so2380366b.0
-        for <dm-devel@lists.linux.dev>; Tue, 21 Nov 2023 09:47:17 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google; t=1700588835; x=1701193635; darn=lists.linux.dev;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=GWpUH6i/TWiULkSXxy7JKYlrCmr9Zd67SZ1skaJHNkw=;
-        b=eIUvxWA54gDsZC83UZAFB+wQt6Xa90u0USR3e7+U/2QUeTsGFPh3OJK5PVcsIo1u4q
-         NsQM2QcXK6wHsQHmnpgWRf9tOHyJQQURavtRfIt44Prlb1kdkgMj//qiFQRbb+i1I0t2
-         e3fXD5sMIcdRCb2r39LmQvusEapac2R/AivPw=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1700588835; x=1701193635;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=GWpUH6i/TWiULkSXxy7JKYlrCmr9Zd67SZ1skaJHNkw=;
-        b=o9NwQEK9zFGmpPQ/LcvYKVJTf8Znyi9nt5yDtwf/2YwC35I8AK7FO6WABgT1wm00lj
-         JSJj1qcSV4PL4JhIDeT7rZmTvkuOSyeoEovG7uslmz086th8F8IcoEG0lwj35ocXnXXW
-         CgDOCpqk7yFGu4PzfyHQg27VsljWNEarTCIKQALmqyEsPmCEJb8Xwi33A7Ju39JiSHEU
-         BiYy6frA7Vh60hzpUDQWhsPtE4F+XaC3dqvrh5WLHUfBiIRIMoh312sPiFUunwdmY4T/
-         mHEeqeMMsLiv1epfbExPw9D9S5gUBNaTzlAVs/ewUr4dEP+MUR3D+y8NxQbBxVIZEpJQ
-         lQow==
-X-Gm-Message-State: AOJu0YzKfWdbuxHNZRJxaoEWE8w+nEE2tS3vIyyYMbVG+Mgdullzv7VV
-	bS08GdaKQxx12391JwGQc9gZENoCHJCzyxeKzeTQVw==
-X-Google-Smtp-Source: AGHT+IFInsgb6//zvQQ0ENKQCCAUuacBv97kFH7Zlmlt2DN8x9KBjG+uv+53Hk3taqN91m8qYWI4aQ==
-X-Received: by 2002:a17:906:4e57:b0:9e5:1db7:3199 with SMTP id g23-20020a1709064e5700b009e51db73199mr95260ejw.4.1700588835538;
-        Tue, 21 Nov 2023 09:47:15 -0800 (PST)
-Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com. [209.85.208.54])
-        by smtp.gmail.com with ESMTPSA id s10-20020a170906060a00b009efe6fdf615sm5387614ejb.150.2023.11.21.09.47.14
-        for <dm-devel@lists.linux.dev>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 21 Nov 2023 09:47:14 -0800 (PST)
-Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-547e7de7b6fso21028a12.0
-        for <dm-devel@lists.linux.dev>; Tue, 21 Nov 2023 09:47:14 -0800 (PST)
-X-Received: by 2002:a50:ec8d:0:b0:545:27f5:3bd8 with SMTP id
- e13-20020a50ec8d000000b0054527f53bd8mr33687edr.20.1700588834427; Tue, 21 Nov
- 2023 09:47:14 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="d0N0ke0u"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DD78FC433CA;
+	Tue, 21 Nov 2023 22:57:03 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1700607424;
+	bh=xo0rZfEH6XOgDU8QdntjZwVzF3RfcOmi68IeS+5BMbI=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=d0N0ke0u8nUKNqiGzOQVsNoUAQgSoLko6yZo8nn7CfW9Ie6BVukB6bX1ompRMlmE0
+	 1TkBNpBJeiJ9MIW+71vtUoP9c62rm9Ecr0o4Sq1umvYuiPaR6YE7fKsE7QGWsLfuGB
+	 t8M7ObSFtgwGknfFtn97LRq1uN1MV7ZKLB3sX5Ks6ilZEcTnWOeBbpOSnXQrzOEEA8
+	 gDs36YtK8AN/sF8VMTKBenqQlyrLvLmiT2D9Bik4vg25eUUivRUBUOcL5Fzt5Tuhes
+	 i/MtnhgzGE/bgcb9yOvEcrX0l0PUIX9azTL+9nw9ZeaVxcsrRbER9HQmBIBd8Er2aL
+	 jO2/rDb8+AHrQ==
+Date: Tue, 21 Nov 2023 14:57:02 -0800
+From: Eric Biggers <ebiggers@kernel.org>
+To: Wu Bo <bo.wu@vivo.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org, Wu Bo <wubo.oduw@gmail.com>
+Subject: Re: [PATCH 1/2] dm verity: init fec io before cleaning it
+Message-ID: <20231121225702.GA2172@sol.localdomain>
+References: <cover.1700555778.git.bo.wu@vivo.com>
+ <419e7aa58f67d90020512892f7652623e8c9f059.1700555778.git.bo.wu@vivo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20231120221735.k6iyr5t5wdlgpxui@box.shutemov.name> <20231121122712.31339-1-kirill.shutemov@linux.intel.com>
-In-Reply-To: <20231121122712.31339-1-kirill.shutemov@linux.intel.com>
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Date: Tue, 21 Nov 2023 09:46:57 -0800
-X-Gmail-Original-Message-ID: <CAHk-=wiqu14v=RdTYZwF60gpBb0gYdN++u-e-jnqkjEm0m6UdA@mail.gmail.com>
-Message-ID: <CAHk-=wiqu14v=RdTYZwF60gpBb0gYdN++u-e-jnqkjEm0m6UdA@mail.gmail.com>
-Subject: Re: [PATCH 1/2] mm, treewide: Introduce NR_PAGE_ORDERS
-To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-Cc: akpm@linux-foundation.org, agk@redhat.com, bmarzins@redhat.com, 
-	dm-devel@lists.linux.dev, linux-block@vger.kernel.org, mpatocka@redhat.com, 
-	mpe@ellerman.id.au, snitzer@kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <419e7aa58f67d90020512892f7652623e8c9f059.1700555778.git.bo.wu@vivo.com>
 
-On Tue, 21 Nov 2023 at 04:27, Kirill A. Shutemov
-<kirill.shutemov@linux.intel.com> wrote:
->
-> NR_PAGE_ORDERS defines the number of page orders supported by the page
-> allocator, ranging from 0 to MAX_ORDER, MAX_ORDER + 1 in total.
->
-> NR_PAGE_ORDERS assists in defining arrays of page orders and allows for
-> more natural iteration over them.
+On Tue, Nov 21, 2023 at 01:55:28AM -0700, Wu Bo wrote:
+> If BIO error, it may goto verity_finish_io() before
+> verity_fec_init_io(). Therefor, the fec_io->rs is not initialized and
+> may crash when doing memory freeing in verity_fec_finish_io().
+> 
+> Crash call stack:
+>  die+0x90/0x2b8
+>  __do_kernel_fault+0x260/0x298
+>  do_bad_area+0x2c/0xdc
+>  do_translation_fault+0x3c/0x54
+>  do_mem_abort+0x54/0x118
+>  el1_abort+0x38/0x5c
+>  el1h_64_sync_handler+0x50/0x90
+>  el1h_64_sync+0x64/0x6c
+>  free_rs+0x18/0xac
+>  fec_rs_free+0x10/0x24
+>  mempool_free+0x58/0x148
+>  verity_fec_finish_io+0x4c/0xb0
+>  verity_end_io+0xb8/0x150
+> 
+> Signed-off-by: Wu Bo <bo.wu@vivo.com>
 
-These two patches look much better to me, but I think you missed one area.
+What commit introduced this bug?  It looks like it was commit 5721d4e5a9cd ("dm
+verity: Add optional "try_verify_in_tasklet" feature"), which moved the call to
+verity_fec_init_io() from verity_map() to verity_work().  Do you agree?  Should
+the call to verity_fec_init_io() perhaps be moved back to verity_map(), instead
+of putting it in verity_end_io()?  Or maybe another call to verity_fec_init_io()
+should be added only just before the call to verity_finish_io() in
+verity_end_io(), given that it's not needed in the tasklet case?
 
-Most of the Kconfig changes by commit 23baf831a32c ("mm, treewide:
-redefine MAX_ORDER sanely") should also be basically reverted to use
-this new NR_PAGE_ORDERS.
+In any case, please also add a Fixes tag with the appropriate commit, as well as
+a "Cc stable" tag.
 
-IOW, I think the ARCH_FORCE_MAX_ORDER #defines etc should also be done
-in "number of page orders". I suspect from a documentation standpoint
-that also makes more sense in places, eg I think that right now your
-patch says
-
-                        amount of memory for normal system use. The maximum
--                       possible value is MAX_ORDER/2.  Setting this parameter
-+                       possible value is MAX_PAGE_ORDER/2.  Setting this
-
-and that's actually nonsensical, because it's NR_PAGE_ORDERS that was
-at least historically the boundary (and historically the one that was
-an even number that can be halved cleanly).
-
-So that kernel parameter should be in terms of NR_PAGE_ORDERS.
-
-But yes, I do think the naming now makes more sense, so other than
-that reaction I think these changes are good.
-
-                  Linus
+- Eric
