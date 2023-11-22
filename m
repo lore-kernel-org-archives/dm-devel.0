@@ -1,187 +1,162 @@
-Received: from APC01-TYZ-obe.outbound.protection.outlook.com (mail-tyzapc01on2093.outbound.protection.outlook.com [40.107.117.93])
+Received: from mgamail.intel.com (mgamail.intel.com [192.55.52.115])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30AF18BE8
-	for <dm-devel@lists.linux.dev>; Wed, 22 Nov 2023 03:43:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE6274C606
+	for <dm-devel@lists.linux.dev>; Wed, 22 Nov 2023 12:34:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="BdOjx6DH"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=P/j39i+ZhYo4aedxp2jW/800TuKlxXn9EJRh4eKKj1Evy5PHWgc8u0nmO52VxlBVbgipshuBgfnUOB6wwajn4cth1tvXlWjWM7eP88x38wcRrU3WohkD/o6gUDqtVw6pUh/AZxTu7/ltyZo7446NFWUABYulcowRc/IOP+Q6x5NJNgIiGoudVDg7ntbbILxb4DyZyJ3StSo/mVR9NpNGksJw0s9EpAcpeXzu1ljCEpR2fs967+6NcB1kF0BLGekd7bZZsgl98SE77mTO8dfYZliawSNPGzM8vJOgBG7oxbZbHZK+mDN1yT4JPNorjiipFvst3gs+KZ2oSNk1EJsHcA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=zF7zxYa/iqdjwNaBWqKo3n/cQt49pxvEUHoeuOhUTi4=;
- b=eU/RviAohldrHalEbEF9gD7zc6wf6C+MzyoLvjRacNP/LPCJef/Ows5jfPu604I0lcxPBzdpsmcIy1hSxSy3kObDcwDlbeIjIAoedGtZs68Fq8nDpAK2NCkXEZz7jTP9qMAIyyymUZ9An+ESI8bK8urxI4sufBXITPyrGaOhNGp6zdUaw2k6BuYazkH5/+ghxFA6SV/RRsD15+tTajmWQmoWbIdgbl3cyxrCHIRulg+lCImFN6y1HxzDXm6+oHg0oFbYGMKTBAYoHXwF11A4frfPDN0RuVErXavme3njVuHdgDHjDi28pk5neGyFtSay+isZ2lflTzqmMI/9X2TI/g==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
- dkim=pass header.d=vivo.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=zF7zxYa/iqdjwNaBWqKo3n/cQt49pxvEUHoeuOhUTi4=;
- b=BdOjx6DHWuzX4GjUJpZL/UR0awLzTlPPXbbD9ho5BgumwyFbX5HoKAn0biBs5ziehfvN7bLg5L2QxaK44q3UbqyteNsUY3RZcgJi2EET87xcF/gz1q3QY8tONUERyptLaLSAy56Z5LPHcpaOG7hZR4T1kaOBJkW+2ppUI0gNHpBAl+UH/7jj9c6RNPTU2y8/I5j3vacKKbJZukXPaFOqcd+qsdSkiwBfkN/CkMWRNnS3Nq5Hf+y7PHZpy31jRZycv4gcR/4POIRjPNHJgHQxuYHPP8/wK+Cfdw6N7JD/c7CAEWM+pB0Xrs+5qeYlT/OPb+kO+/wjNH70+UF3QvLn/Q==
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=vivo.com;
-Received: from PS2PR06MB3509.apcprd06.prod.outlook.com (2603:1096:300:67::17)
- by KL1PR0601MB3891.apcprd06.prod.outlook.com (2603:1096:820:2a::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7025.18; Wed, 22 Nov
- 2023 03:43:43 +0000
-Received: from PS2PR06MB3509.apcprd06.prod.outlook.com
- ([fe80::863b:f0a1:3066:24d]) by PS2PR06MB3509.apcprd06.prod.outlook.com
- ([fe80::863b:f0a1:3066:24d%7]) with mapi id 15.20.7025.017; Wed, 22 Nov 2023
- 03:43:43 +0000
-From: Wu Bo <bo.wu@vivo.com>
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	Wu Bo <wubo.oduw@gmail.com>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Wu Bo <bo.wu@vivo.com>,
-	stable@vger.kernel.org
-Subject: [PATCH v2 2/2] dm verity: don't verity if readahead failed
-Date: Tue, 21 Nov 2023 20:51:50 -0700
-Message-Id: <b23a4fc8baba99010c16059a236d2f72087199a1.1700623691.git.bo.wu@vivo.com>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <cover.1700623691.git.bo.wu@vivo.com>
-References: <cover.1700623691.git.bo.wu@vivo.com>
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: SG2P153CA0002.APCP153.PROD.OUTLOOK.COM (2603:1096::12) To
- PS2PR06MB3509.apcprd06.prod.outlook.com (2603:1096:300:67::17)
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="WC8BbURu"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1700656459; x=1732192459;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=ugWRVP4P3o4jitdEoqeyd6BAoTW/eKnM8rJuaoKbk3Y=;
+  b=WC8BbURuYfc+4CxKHNmCdjTu9eP/MAvry6tO8sydZoBDr+aJ+lVA2JbJ
+   jBcEgCwdkLoPg/rzrOaxrAoLHx3LNwmoflwPDrjnBuKGP2g8MZMWXtaTu
+   GvdSs3vuBTcmmOVBLDoCn3zma7kP1ZxjT4VXtcz9URdJ7z2Y/9oJBh7Ad
+   icCfMiEAEH6nmBNkS8KQU+ti/zzOsfzGqolTBu6Uymq0aw+EHgmNWHoze
+   U61MFIB6QhLJy1WgVvF0TjrEuuh3aWFdf8SRuAXymGz9OnAPXcfZxbNOM
+   NKoQ28MTxw8dt0A7kdG29hSo5Jk5h8y4C8Tlo7MkNfsEpsQjm/pGQ3Kb5
+   w==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10901"; a="391813658"
+X-IronPort-AV: E=Sophos;i="6.04,218,1695711600"; 
+   d="scan'208";a="391813658"
+Received: from fmsmga005.fm.intel.com ([10.253.24.32])
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Nov 2023 04:34:18 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10901"; a="1098384927"
+X-IronPort-AV: E=Sophos;i="6.04,218,1695711600"; 
+   d="scan'208";a="1098384927"
+Received: from yadappan-mobl.ger.corp.intel.com (HELO box.shutemov.name) ([10.251.221.198])
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Nov 2023 04:34:16 -0800
+Received: by box.shutemov.name (Postfix, from userid 1000)
+	id 8A75510A3DB; Wed, 22 Nov 2023 15:34:13 +0300 (+03)
+Date: Wed, 22 Nov 2023 15:34:13 +0300
+From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: akpm@linux-foundation.org, agk@redhat.com, bmarzins@redhat.com,
+	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	mpatocka@redhat.com, mpe@ellerman.id.au, snitzer@kernel.org
+Subject: Re: [PATCH 1/2] mm, treewide: Introduce NR_PAGE_ORDERS
+Message-ID: <20231122123413.y54fmmk65qoxarzg@box.shutemov.name>
+References: <20231120221735.k6iyr5t5wdlgpxui@box.shutemov.name>
+ <20231121122712.31339-1-kirill.shutemov@linux.intel.com>
+ <CAHk-=wiqu14v=RdTYZwF60gpBb0gYdN++u-e-jnqkjEm0m6UdA@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: PS2PR06MB3509:EE_|KL1PR0601MB3891:EE_
-X-MS-Office365-Filtering-Correlation-Id: 40514c59-c666-4e35-6059-08dbeb0d3966
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info:
-	9mgJeT2DMxqVMa5/YhRg1iDWgNPEWSInfEMEm7R79T2PPbh1L2g51df5ynB48ExZ+L/Z1asefSVV2ijj8iakLZZ+jnGnFWdrRIOqVr3M/LQOfst4Ffehx66S2Slmrr7lzRPHOHThETTSyqhyP/xJZbRAu+kOFYSEAEXTHxh6SdG/t8szIuiyQVdXhwCmGT/0IaVDih5LjPeMKIfypeuAOMfFOLeD46grtWK6rFW1u0Ffs83vEv6bJE4sLGARfcQYxllgbfPYAJfdE6OmLigE3hhA2iTSb61586IzCWqqVKyaPDT/GcHDyCl7QjPPI2TW1qQIkCbB568+y62tD8S/vz4t3RIe8fo34a0g82Lvg4Qo0jTJHh52WTveBoEwYFFYZZwlp1ZEo0kDc2fsZU5kPwkRYsAN8IvGJV3R+k2TXFdqC8z/x4giyKKG8C5u1RLcw8J3B4030ma1o1ilwbxejIg4YB58auRTEUwec3rA5yGdpbW7FBcnm2AbTjG70V6HVt+dPjz/WyRnM/rp77zN07fvdOgQX7AKns3VX89DgMULN6D7Y6NpAoIlBnUyx+7STEiqWOfBqJ8W2o9aWBKq9i4QcEa2QJ6dHlcGxlRrVkqYc2HhoY/JOCMLcTUhbKGC
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PS2PR06MB3509.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(39860400002)(366004)(396003)(346002)(376002)(136003)(230922051799003)(451199024)(64100799003)(186009)(1800799012)(41300700001)(38100700002)(5660300002)(2906002)(86362001)(6666004)(38350700005)(52116002)(6506007)(6512007)(36756003)(478600001)(6486002)(83380400001)(2616005)(26005)(54906003)(316002)(66556008)(110136005)(66946007)(4326008)(66476007)(8676002)(8936002);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?ptU2ksE2HAoQme9mEZ77rdVetDbehL6GAPQA8IdWnxCCvJZ4dEDycMSm2Lt8?=
- =?us-ascii?Q?3aichP6rRFaLkk0JHoMgbdTXUpitSuqyHAStQdsdrdfHpcr6kbHBdhoZ1Xs1?=
- =?us-ascii?Q?k1gozUDPr87vZyqI+WeF1Rd5seQD0j6RXGMFA6RHgeGXgpllEVfBzsSGeWD9?=
- =?us-ascii?Q?xgpNjh2YQxM+o5YFin3XhF4fX2yybIgbFBM7Dar4Y0JpbtCIZ37Rwt6OiJHy?=
- =?us-ascii?Q?elz6yYquuRetiWBR/h3fvv8zOUByhtVnGijTYHgjcByr/vzQNlBgf7tWGXMv?=
- =?us-ascii?Q?0I44lrAoPxd4xuhDyM/KBzRg/Txc9iPdQkVuB0GwM3OEhg9Fh2kbHvUQ1UgD?=
- =?us-ascii?Q?KJcMnaHma/SA5lX7i+NUs5NBLJCIwprs4VW4NA2Y/Fa+e0Bk2bEu/moWo7UW?=
- =?us-ascii?Q?ASGiliVVzZUnVS7Z1R/XNZcw6g7wH3B+e47WqNYaW5zUZzRa3d1K69xuqFul?=
- =?us-ascii?Q?euZeqZAOhRrxad+EPBKF1bipsv0aaBSP1Okr/asXPp4fLdHNqUVBLQAj8sZr?=
- =?us-ascii?Q?2wOJ48ose4vg/FY/GMgn8iAkiTvctHTt52edZ5YLXTJMZlOJNt6Tni5jLSOd?=
- =?us-ascii?Q?BE5xYsTOPytCcA2Gzsvacm3FggRL8xGkenrsjJ3F0OaCzhrDlqK7aKxwIe8P?=
- =?us-ascii?Q?D3c0oEK9lCG7AIeogcWPVDaecE13pJnxV8jaIpyKZ9Ovw5Tw2rPKrRGOv1ng?=
- =?us-ascii?Q?uA+mWS5+GhAyb+ctcUDbvLJIEm07G2BHcc1CWe12M+gXxolfWS4eZaAAm14t?=
- =?us-ascii?Q?8cQ0KaW7HK7U7hzsEie1oWDcxeD/efj2G2toV2Shf1R2+9UZjUs3+R79eVuI?=
- =?us-ascii?Q?hnbiGRfWFXoknM1D248m9kQeobZiLTeE0NTi64cdIdeFtEmddPvx9vZDFTlE?=
- =?us-ascii?Q?5k0jPX06SgD7RQREaz5lZpqs81eRulPq8g/HMb5F+8oQpbKt+1epCws3D+Xi?=
- =?us-ascii?Q?D4wU1tidKSVV1kIdJQ7QyMyMcL3XUjD7uLajG+CNevqpl26zuwhDspvDyn9C?=
- =?us-ascii?Q?/iIs5JP7YzMAaIkOtJArGt75yGEVQOfov1XAq9RKCErBtyK726HbK9qiJ75g?=
- =?us-ascii?Q?KCikSL7p7EuOUghhk4NUcpMRcXRptbM+nD8OYPk8pMFvSt7yeGsflVZksj7v?=
- =?us-ascii?Q?BeIrmZg++KYcXCXJxeYgoyBD52bnOpsjblFYHUFXyxitC9iMcpUo4xZTcy8b?=
- =?us-ascii?Q?jtyjOEmzH97iNDtVxH0kyF+mBlvTndFEIGfMzlzOFlvDVVSG8lkxDUJ13saD?=
- =?us-ascii?Q?8m89Rd/9MmQ1oBIEaEckrsdugIm8qwQ6yVcG8xBNrnUqIWKr895OM259n5kh?=
- =?us-ascii?Q?HnLNLASGlOZ7KuCSWhZ8tsHttloKOL/3aQIrhIeUm+wT2pHFG0rttN0Mh90F?=
- =?us-ascii?Q?yEe8LJAp28mY2DLMkQ7By63+tAT5BreuCVbfn6ndzXR9tFzDQ0WBFRrL/lyZ?=
- =?us-ascii?Q?Zi64Uhlhzd80PPkJ70Iokfs6oEg3JdVjfWmTQtvQrYh/URmNGRxdrz0jZgxS?=
- =?us-ascii?Q?KfYRaJmritrjrBCWOHhTFpMFnCalUQHpJiNoSj8LCZ/4tDS2HuJ+F2CQzKmf?=
- =?us-ascii?Q?zL9gQWGYvO/py6njVkpVmFLZMdfl+bBzcLWTGcFe?=
-X-OriginatorOrg: vivo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 40514c59-c666-4e35-6059-08dbeb0d3966
-X-MS-Exchange-CrossTenant-AuthSource: PS2PR06MB3509.apcprd06.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 22 Nov 2023 03:43:43.4965
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: S4U1xo8kz7MxwC+C4P9D6TMi5qpVWI9sp55pn/W8DXbjm00E/nCI2svgZEGRSNDAL/INf/SYuXt2vEV66nw5vw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: KL1PR0601MB3891
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAHk-=wiqu14v=RdTYZwF60gpBb0gYdN++u-e-jnqkjEm0m6UdA@mail.gmail.com>
 
-We found an issue under Android OTA scenario that many BIOs have to do
-FEC where the data under dm-verity is 100% complete and no corruption.
+On Tue, Nov 21, 2023 at 09:46:57AM -0800, Linus Torvalds wrote:
+> On Tue, 21 Nov 2023 at 04:27, Kirill A. Shutemov
+> <kirill.shutemov@linux.intel.com> wrote:
+> >
+> > NR_PAGE_ORDERS defines the number of page orders supported by the page
+> > allocator, ranging from 0 to MAX_ORDER, MAX_ORDER + 1 in total.
+> >
+> > NR_PAGE_ORDERS assists in defining arrays of page orders and allows for
+> > more natural iteration over them.
+> 
+> These two patches look much better to me, but I think you missed one area.
+> 
+> Most of the Kconfig changes by commit 23baf831a32c ("mm, treewide:
+> redefine MAX_ORDER sanely") should also be basically reverted to use
+> this new NR_PAGE_ORDERS.
 
-Android OTA has many dm-block layers, from upper to lower:
-dm-verity
-dm-snapshot
-dm-origin & dm-cow
-dm-linear
-ufs
+I am not convinced.
 
-Dm tables have to change 2 times during Android OTA merging process.
-When doing table change, the dm-snapshot will be suspended for a while.
-During this interval, we found there are many readahead IOs are
-submitted to dm_verity from filesystem. Then the kverity works are busy
-doing FEC process which cost too much time to finish dm-verity IO. And
-cause system stuck.
+Some architectures make this option user-visible and, in my view, user
+cares more about the largest page size buddy allocator can provide than
+size of the array inside the allocator.
 
-We add some debug log and find that each readahead IO need around 10s to
-finish when this situation occurred. Because here has a IO
-amplification:
+> IOW, I think the ARCH_FORCE_MAX_ORDER #defines etc should also be done
+> in "number of page orders". I suspect from a documentation standpoint
+> that also makes more sense in places, eg I think that right now your
+> patch says
+> 
+>                         amount of memory for normal system use. The maximum
+> -                       possible value is MAX_ORDER/2.  Setting this parameter
+> +                       possible value is MAX_PAGE_ORDER/2.  Setting this
+> 
+> and that's actually nonsensical, because it's NR_PAGE_ORDERS that was
+> at least historically the boundary (and historically the one that was
+> an even number that can be halved cleanly).
 
-dm-snapshot suspend
-erofs_readahead     // 300+ io is submitted
-	dm_submit_bio (dm_verity)
-		dm_submit_bio (dm_snapshot)
-		bio return EIO
-		bio got nothing, it's empty
-	verity_end_io
-	verity_verify_io
-	forloop range(0, io->n_blocks)    // each io->nblocks ~= 20
-		verity_fec_decode
-		fec_decode_rsb
-		fec_read_bufs
-		forloop range(0, v->fec->rsn) // v->fec->rsn = 253
-			new_read
-			submit_bio (dm_snapshot)
-		end loop
-	end loop
-dm-snapshot resume
+Maybe historically (I didn't check), but not now. It is all over the
+place. And it more even in MAX_PAGE_ORDER terms than in NR_PAGE_ORDERS:
 
-Readahead BIO got nothing during dm-snapshot suspended. So all of them
-will do FEC.
-Each readahead BIO need to do io->n_blocks ~= 20 times verify.
-Each block need to do fec, and every block need to do v->fec->rsn = 253
-times read.
-So during the suspend interval(~200ms), 300 readahead BIO make
-300*20*253 IOs on dm-snapshot.
+arch/arc/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/arc/Kconfig-	int "Maximum zone order"
+arch/arc/Kconfig-	default "11" if ARC_HUGEPAGE_16M
+arch/arc/Kconfig-	default "10"
+--
+arch/arm/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/arm/Kconfig-	int "Order of maximal physically contiguous allocations"
+arch/arm/Kconfig-	default "11" if SOC_AM33XX
+arch/arm/Kconfig-	default "8" if SA1111
+arch/arm/Kconfig-	default "10"
+--
+arch/arm64/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/arm64/Kconfig-	int
+arch/arm64/Kconfig-	default "13" if ARM64_64K_PAGES
+arch/arm64/Kconfig-	default "11" if ARM64_16K_PAGES
+arch/arm64/Kconfig-	default "10"
+--
+arch/loongarch/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/loongarch/Kconfig-	int "Maximum zone order"
+arch/loongarch/Kconfig-	default "13" if PAGE_SIZE_64KB
+arch/loongarch/Kconfig-	default "11" if PAGE_SIZE_16KB
+arch/loongarch/Kconfig-	default "10"
+--
+arch/m68k/Kconfig.cpu:config ARCH_FORCE_MAX_ORDER
+arch/m68k/Kconfig.cpu-	int "Order of maximal physically contiguous allocations" if ADVANCED
+arch/m68k/Kconfig.cpu-	depends on !SINGLE_MEMORY_CHUNK
+arch/m68k/Kconfig.cpu-	default "10"
+--
+arch/mips/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/mips/Kconfig-	int "Maximum zone order"
+arch/mips/Kconfig-	default "13" if MIPS_HUGE_TLB_SUPPORT && PAGE_SIZE_64KB
+arch/mips/Kconfig-	default "12" if MIPS_HUGE_TLB_SUPPORT && PAGE_SIZE_32KB
+arch/mips/Kconfig-	default "11" if MIPS_HUGE_TLB_SUPPORT && PAGE_SIZE_16KB
+arch/mips/Kconfig-	default "10"
+--
+arch/nios2/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/nios2/Kconfig-	int "Order of maximal physically contiguous allocations"
+arch/nios2/Kconfig-	default "10"
+--
+arch/powerpc/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/powerpc/Kconfig-	int "Order of maximal physically contiguous allocations"
+arch/powerpc/Kconfig-	range 7 8 if PPC64 && PPC_64K_PAGES
+arch/powerpc/Kconfig-	default "8" if PPC64 && PPC_64K_PAGES
+arch/powerpc/Kconfig-	range 12 12 if PPC64 && !PPC_64K_PAGES
+arch/powerpc/Kconfig-	default "12" if PPC64 && !PPC_64K_PAGES
+arch/powerpc/Kconfig-	range 8 10 if PPC32 && PPC_16K_PAGES
+arch/powerpc/Kconfig-	default "8" if PPC32 && PPC_16K_PAGES
+arch/powerpc/Kconfig-	range 6 10 if PPC32 && PPC_64K_PAGES
+arch/powerpc/Kconfig-	default "6" if PPC32 && PPC_64K_PAGES
+arch/powerpc/Kconfig-	range 4 10 if PPC32 && PPC_256K_PAGES
+--
+arch/sh/mm/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/sh/mm/Kconfig-	int "Order of maximal physically contiguous allocations"
+arch/sh/mm/Kconfig-	default "8" if PAGE_SIZE_16KB
+arch/sh/mm/Kconfig-	default "6" if PAGE_SIZE_64KB
+arch/sh/mm/Kconfig-	default "13" if !MMU
+arch/sh/mm/Kconfig-	default "10"
+--
+arch/sparc/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/sparc/Kconfig-	int "Order of maximal physically contiguous allocations"
+arch/sparc/Kconfig-	default "12"
+--
+arch/xtensa/Kconfig:config ARCH_FORCE_MAX_ORDER
+arch/xtensa/Kconfig-	int "Order of maximal physically contiguous allocations"
+arch/xtensa/Kconfig-	default "10"
 
-As readahead IO is not required by user space, and to fix this issue,
-I think it would be better to pass it to upper layer to handle it.
-
-Cc: stable@vger.kernel.org
-Fixes: a739ff3f543a ("dm verity: add support for forward error correction")
-Signed-off-by: Wu Bo <bo.wu@vivo.com>
----
- drivers/md/dm-verity-target.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index beec14b6b044..14e58ae70521 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -667,7 +667,9 @@ static void verity_end_io(struct bio *bio)
- 	struct dm_verity_io *io = bio->bi_private;
- 
- 	if (bio->bi_status &&
--	    (!verity_fec_is_enabled(io->v) || verity_is_system_shutting_down())) {
-+	    (!verity_fec_is_enabled(io->v) ||
-+	     verity_is_system_shutting_down() ||
-+	     (bio->bi_opf & REQ_RAHEAD))) {
- 		verity_finish_io(io, bio->bi_status);
- 		return;
- 	}
 -- 
-2.25.1
-
+  Kiryl Shutsemau / Kirill A. Shutemov
