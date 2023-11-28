@@ -1,132 +1,121 @@
-Received: from mail-io1-f48.google.com (mail-io1-f48.google.com [209.85.166.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C319232C84
-	for <dm-devel@lists.linux.dev>; Mon, 27 Nov 2023 22:07:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15D7D7F1
+	for <dm-devel@lists.linux.dev>; Tue, 28 Nov 2023 00:00:39 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="b1bnUtaf"
-Received: by mail-io1-f48.google.com with SMTP id ca18e2360f4ac-7b395875bb8so67449139f.1
-        for <dm-devel@lists.linux.dev>; Mon, 27 Nov 2023 14:07:57 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1701122877; x=1701727677; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=DzjD5HIQjqJ3WLRbAumDN9OSYQ6P8ovX6zoY930D8Qo=;
-        b=b1bnUtafee92o95bOcWHdVPlfwsvOcgx1xrgNYbsGNIYtn4tAbxUf+yLNDMM1NLSKL
-         z2aQv7ESkBVLI10oVvWoi/2rjPbe4F7/uD2YGHmgIB53mUEnKUdoQAKc4Ot2cQ3Vu/1g
-         gFWNrwBzLa9B6FUxFRZzc5eVq+RjvXjojx2eOolfFknO2tuWZ2blyGakkpYYlVe0zuf+
-         mE+f2m953FPHIOeRsE0VaA7GsG9K4+fvK9IB7xEP1AJs4hpAzz2chKobdJ+vU/WKkxKw
-         9Fy926TWRTnXJD45iD+JM+GZ7Te+sdg4MKhs4XXBKF03yIR6dY8WN4SsCg/sRHV78lxj
-         5p7g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1701122877; x=1701727677;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=DzjD5HIQjqJ3WLRbAumDN9OSYQ6P8ovX6zoY930D8Qo=;
-        b=OJEDyngXebRDpdWeAL90mEQz7CJd2h9tq+FsaIgJGEM7klDnduZfvMHKEylQppF5l2
-         qNCZIrbymYR4wwHDPwjZMxH1VswGU27hULAWFPQAud61qnywoGDOpnMcaN3fc4OhR379
-         dwh9rg5+G7XV3pqiHN/7e7PElJjIad10Z5aiJgzkiq2d1dgbVfjkmUYeQzazT4Ghonc8
-         UeuWJf2mwQw5/JptCV0+9WOECbeLBDz5ZWJlKdEe7z1t9Ee6XqBfgwjgCUlzuc9ZKk74
-         r5OYzH2ZCkWNt8sGpmg9pk0cRHX/CGMX37SIEHtrJX++8yA2j5tj1KyjHJxYo5bi8KzM
-         DoHQ==
-X-Gm-Message-State: AOJu0Yx+UwP+CF6Idvb2gH3cu19KEk0r658l1LOHq6XQbYDzQVKM7aNJ
-	+vXbeNiCef2Z3lEszjWutsTSZNKySfFUlXeeHfMABEsk
-X-Google-Smtp-Source: AGHT+IGrOQZy1oqS9pWA1DVSwabXSQeI5hN94PFsRANT0f2Mgs6lqTQ/k7MnjanJQ0A8ISoTLOW4qBpS+QTFh2Vw1YQ=
-X-Received: by 2002:a6b:510c:0:b0:7b3:9358:db2f with SMTP id
- f12-20020a6b510c000000b007b39358db2fmr9501081iob.17.1701122876713; Mon, 27
- Nov 2023 14:07:56 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Eifm4jkY"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A2A27C433C7
+	for <dm-devel@lists.linux.dev>; Tue, 28 Nov 2023 00:00:39 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1701129639;
+	bh=MFEYzA5mRp7AN8cKcjjH0SZ29aaBIB6cSEEMifvx+zw=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=Eifm4jkYBFRMkBOPOuob5rBVQ7w5SXk6nIyLpDUpZLLrIUNuI+qpRwDJD2/GbeTnz
+	 tONKnd+oiwb+AMT8veEAYETnAt85sducm8I3E9Yr/MzzADjwSaLrdKPYANbkrVcwyX
+	 8XdylOxWFR5FF6pb7qIs47BJkrNaW8y8Nj2395n5Ps0zGHd3eiMgf5JY6UAgXL+Eu9
+	 alXjK8+ZQuijh4/CjFcseJD2PXMg5BWhJSul8uN7bgZclS73FMMQHeco3e8NaxNjte
+	 At5doBMqxOUGU0M6mBAF1n9W+T/5NR8xRQ8uI7rG0+BHtvl6Xg2OLT/ASXYql4CPyi
+	 +HKlSojyUuVtA==
+Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-50abb83866bso6576357e87.3
+        for <dm-devel@lists.linux.dev>; Mon, 27 Nov 2023 16:00:39 -0800 (PST)
+X-Gm-Message-State: AOJu0Yz6V1koeReeCkBQijYC5X+m1K5q+DvWKfL9mk5D2yzXKL8ugFjm
+	P5XLcEisBWRj1s6vJkD9Ygsfb0m6mdJMSi6J81s=
+X-Google-Smtp-Source: AGHT+IEyxhwV57xREqVEVRtoPCW8vyDy/j2VuC8DuuHZeidKON0ZGwnmElAZKaE5wzBJzzYqQMbpK2tDy+55ue8AU+8=
+X-Received: by 2002:ac2:5973:0:b0:504:30eb:f2ac with SMTP id
+ h19-20020ac25973000000b0050430ebf2acmr7821132lfp.68.1701129637794; Mon, 27
+ Nov 2023 16:00:37 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20231127215418.271708-1-bmarzins@redhat.com>
-In-Reply-To: <20231127215418.271708-1-bmarzins@redhat.com>
-From: Roger Heflin <rogerheflin@gmail.com>
-Date: Mon, 27 Nov 2023 16:07:46 -0600
-Message-ID: <CAAMCDeer-7Nw72UBdQGeT_EsGfXUj=L5RshvDsPCp+5QNY2eyQ@mail.gmail.com>
-Subject: Re: [PATCH] multipathd: Make sure to disable queueing if recovery has failed.
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
-	device-mapper development <dm-devel@lists.linux.dev>, Martin Wilck <Martin.Wilck@suse.com>
+References: <20231124075953.1932764-1-yukuai1@huaweicloud.com> <20231124075953.1932764-7-yukuai1@huaweicloud.com>
+In-Reply-To: <20231124075953.1932764-7-yukuai1@huaweicloud.com>
+From: Song Liu <song@kernel.org>
+Date: Mon, 27 Nov 2023 16:00:25 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW5jDzOo=2NVHO17jfjmpR0LV9+Q1a9FkBA8NBshX9t=ig@mail.gmail.com>
+Message-ID: <CAPhsuW5jDzOo=2NVHO17jfjmpR0LV9+Q1a9FkBA8NBshX9t=ig@mail.gmail.com>
+Subject: Re: [PATCH v2 6/6] dm-raid: delay flushing event_work() after
+ reconfig_mutex is released
+To: Yu Kuai <yukuai1@huaweicloud.com>, dm-devel@lists.linux.dev
+Cc: yukuai3@huawei.com, xni@redhat.com, linux-kernel@vger.kernel.org, 
+	linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-How long does recovery take?     I am unclear on when the explictly
-set queue_if_no_path is being overridden, and why disabling it is
-useful.
++ dm-devel@lists.linux.dev
 
-Typically we are setting queue_if_no_path to forever with the intent
-that it will survive longer storage and/or disk issues without
-returning an error to the application and/or corrupting fses if the
-storage issue can be fixed.
-
-We generally expect it to recover when the storage comes back, but
-that the storage could be experiencing significant issues for a
-significant period of time >10 minutes.   Since the storage has to be
-fixed to get things working again, there is a lot of negative value
-that requires manual recovery steps when an error gets returned (fsck,
-loss of data).
-
-We also manually disable queueing if we need to remove the mpath
-devices (paths are already gone as they were non-responsive > 24 hours
-and removed via tmo_timeout), and/or forcible reboot the nodes when we
-determine storage is not coming back.
-
-
-On Mon, Nov 27, 2023 at 3:54=E2=80=AFPM Benjamin Marzinski <bmarzins@redhat=
-.com> wrote:
+On Fri, Nov 24, 2023 at 12:00=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> =
+wrote:
 >
-> If a multipath device has no_path_retry set to a number and has lost all
-> paths, gone into recovery mode, and timed out, it will disable
-> queue_if_no_paths. After that, if one of those failed paths is removed,
-> when the device is reloaded, queue_if_no_paths will be re-enabled.  When
-> set_no_path_retry() is then called to update the queueing state, it will
-> not disable queue_if_no_paths, since the device is still in the recovery
-> state, so it believes no work needs to be done. The device will remain
-> in the recovery state, with retry_ticks at 0, and queueing enabled,
-> even though there are no usable paths.
+> From: Yu Kuai <yukuai3@huawei.com>
 >
-> To fix this, in set_no_path_retry(), if no_path_retry is set to a number
-> and the device is queueing but it is in recovery mode and out of
-> retries with no usable paths, manually disable queue_if_no_path.
+> After commit db5e653d7c9f ("md: delay choosing sync action to
+> md_start_sync()"), md_start_sync() will hold 'reconfig_mutex', however,
+> in order to make sure event_work is done, __md_stop() will flush
+> workqueue with reconfig_mutex grabbed, hence if sync_work is still
+> pending, deadlock will be triggered.
 >
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Fortunately, former pacthes to fix stopping sync_thread already make sure
+> all sync_work is done already, hence such deadlock is not possible
+> anymore. However, in order not to cause confusions for people by this
+> implicit dependency, delay flushing event_work to dm-raid where
+> 'reconfig_mutex' is not held, and add some comments to emphasize that
+> the workqueue can't be flushed with 'reconfig_mutex'.
+>
+> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 > ---
->  libmultipath/structs_vec.c | 12 +++++++++++-
->  1 file changed, 11 insertions(+), 1 deletion(-)
+>  drivers/md/dm-raid.c |  3 +++
+>  drivers/md/md.c      | 11 ++++++++---
+>  2 files changed, 11 insertions(+), 3 deletions(-)
 >
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index 0e8a46e7..3cb23c73 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -627,8 +627,18 @@ void set_no_path_retry(struct multipath *mpp)
->                             !mpp->in_recovery)
->                                 dm_queue_if_no_path(mpp->alias, 1);
->                         leave_recovery_mode(mpp);
-> -               } else if (pathcount(mpp, PATH_PENDING) =3D=3D 0)
-> +               } else if (pathcount(mpp, PATH_PENDING) =3D=3D 0) {
-> +                       /*
-> +                        * If in_recovery is set, enter_recovery_mode doe=
-s
-> +                        * nothing. If the device is already in recovery
-> +                        * mode and has already timed out, manually call
-> +                        * dm_queue_if_no_path to stop it from queueing.
-> +                        */
-> +                       if ((!mpp->features || is_queueing) &&
-> +                           mpp->in_recovery && mpp->retry_tick =3D=3D 0)
-> +                               dm_queue_if_no_path(mpp->alias, 0);
->                         enter_recovery_mode(mpp);
-> +               }
->                 break;
->         }
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index a4692f8f98ee..51f15c20f621 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -3317,6 +3317,9 @@ static void raid_dtr(struct dm_target *ti)
+>         mddev_lock_nointr(&rs->md);
+>         md_stop(&rs->md);
+>         mddev_unlock(&rs->md);
+> +
+> +       if (work_pending(&rs->md.event_work))
+> +               flush_work(&rs->md.event_work);
+>         raid_set_free(rs);
 >  }
-> --
-> 2.41.0
 >
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index fb8a7d1eebee..86efc9c2ae56 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -82,6 +82,14 @@ static struct module *md_cluster_mod;
+>
+>  static DECLARE_WAIT_QUEUE_HEAD(resync_wait);
+>  static struct workqueue_struct *md_wq;
+> +
+> +/*
+> + * This workqueue is used for sync_work to register new sync_thread, and=
+ for
+> + * del_work to remove rdev, and for event_work that is only set by dm-ra=
+id.
+> + *
+> + * Noted that sync_work will grab reconfig_mutex, hence never flush this
+> + * workqueue whith reconfig_mutex grabbed.
+> + */
+>  static struct workqueue_struct *md_misc_wq;
+>  struct workqueue_struct *md_bitmap_wq;
+>
+> @@ -6328,9 +6336,6 @@ static void __md_stop(struct mddev *mddev)
+>         struct md_personality *pers =3D mddev->pers;
+>         md_bitmap_destroy(mddev);
+>         mddev_detach(mddev);
+> -       /* Ensure ->event_work is done */
+> -       if (mddev->event_work.func)
+> -               flush_workqueue(md_misc_wq);
+>         spin_lock(&mddev->lock);
+>         mddev->pers =3D NULL;
+>         spin_unlock(&mddev->lock);
+> --
+> 2.39.2
 >
