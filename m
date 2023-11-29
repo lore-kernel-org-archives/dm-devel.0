@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 70FF214AB9
-	for <dm-devel@lists.linux.dev>; Wed, 29 Nov 2023 20:00:48 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E42C5EE7D
+	for <dm-devel@lists.linux.dev>; Wed, 29 Nov 2023 20:00:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="lNwwr06A"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 93DACC433C7;
-	Wed, 29 Nov 2023 20:00:47 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="R7nV+UNk"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DD4E0C433C8;
+	Wed, 29 Nov 2023 20:00:56 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1701288048;
-	bh=mjFSBTkDKAN6MxQeuME7mCDqeGyR6s9FaPXh/riPWHc=;
+	s=k20201202; t=1701288057;
+	bh=bv76tmqA05sCyW76q6qU8GZgyTCz/K27WKVnNRmTBuk=;
 	h=From:To:Cc:Subject:Date:From;
-	b=lNwwr06AgQGUBp591BgtXtdO/DeHNUwIEgDr1xbgDZ/bw98Uesm+bh2pNeNJxhHIr
-	 j/nqscoiByFvdGelwO1QyAQtqoL+WzjgtKLzL+thiA9oit/V0kMjNoGz6bJVFRfcQf
-	 Jz2+npwsad7uVTi2NMhSInh7zLKD41uLTQkPrStcJv7N22yuhxbhvaExjL7o7YRYac
-	 npzuHhGJA3ii9FtxSBEedImql2fSB4bva5pQPvUVMoYX8udDRzbpQIy5hwRaax4CT/
-	 7eECHfFL2lWdnEp8s4sZlYSOwryY8qFEp7ZuM7fJyQUzqdc9QaB2KUVkiJ7mDmxkjM
-	 vVDweLKF/rObg==
+	b=R7nV+UNkKYX+/QWASuJYZLTsZTA3N9QpSQCdQgZxCSIcrdVNdceMiuIIjXFEisQpr
+	 oQIPUumkLV1ZiXu2NHkAhOzLeUVRn3ZJNbAag3aXwnWso7pH0s3A7eCm4+jJQC1Y5c
+	 P7oD9TwydFlLUOcckrnnuntquEGcyQMgD9X8LGm4kNGkuC45KOjeFm/WP7DOByyezF
+	 tP2MjD1aT2hUbPy8NU3EW3I5fr4+NFIAQUuFaY+msc+ecKv5XjD1qpE/HAz+mdUtsh
+	 pN/NAzL6NxXj6p13w9I+tPoWIjLRNx553SpR3WMF8OFmHBkv7s1v+Ct52zeAgSvsHC
+	 9OVWSwBP6cR8w==
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
 	mpatocka@redhat.com
 Cc: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	dm-devel@lists.linux.dev
-Subject: Patch "dm-delay: fix a race between delay_presuspend and delay_bio" has been added to the 5.4-stable tree
-Date: Wed, 29 Nov 2023 15:00:42 -0500
-Message-ID: <20231129200045.1246290-1-sashal@kernel.org>
+Subject: Patch "dm-delay: fix a race between delay_presuspend and delay_bio" has been added to the 4.19-stable tree
+Date: Wed, 29 Nov 2023 15:00:49 -0500
+Message-ID: <20231129200054.1246341-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.42.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -41,19 +41,19 @@ This is a note to let you know that I've just added the patch titled
 
     dm-delay: fix a race between delay_presuspend and delay_bio
 
-to the 5.4-stable tree which can be found at:
+to the 4.19-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      dm-delay-fix-a-race-between-delay_presuspend-and-del.patch
-and it can be found in the queue-5.4 subdirectory.
+and it can be found in the queue-4.19 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 58bd80650256206f1be211cc153e3e6d0492e21b
+commit 6d4ac18ce5263caf8368f49ae9dd0e171823015c
 Author: Mikulas Patocka <mpatocka@redhat.com>
 Date:   Wed Nov 29 13:38:43 2023 -0500
 
