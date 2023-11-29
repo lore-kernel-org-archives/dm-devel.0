@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F239B5C3E0
-	for <dm-devel@lists.linux.dev>; Wed, 29 Nov 2023 20:00:29 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 93C5A3454C
+	for <dm-devel@lists.linux.dev>; Wed, 29 Nov 2023 20:00:34 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="FAx+hkqT"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C0412C433C8;
-	Wed, 29 Nov 2023 20:00:28 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hodY7cN0"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C154AC433C8;
+	Wed, 29 Nov 2023 20:00:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1701288029;
-	bh=bUeeA0RNHrxehPdxqvAjcidrOuQqeHQ1d7q/QZvyLb0=;
+	s=k20201202; t=1701288034;
+	bh=vKLKmZe7TV9qnZhMg84AD2/UoxOuIUntajyVfYxsKas=;
 	h=From:To:Cc:Subject:Date:From;
-	b=FAx+hkqTlHHdqnN5JWeYm9E+ef8XymOGCDHfB3OwKkNZusl+HvgsX94iP/2dHq7rz
-	 qhRtUjCkL+03VVzr0e/aTr/3jWs37WJTH6KtD4bnWYDEkfwMADy1f6crKsjATuWD1K
-	 1azGGnuk8xPwQfh0CRYryy5xkNwdCjQisd+jUyrszFqtCcNVd50GLbM9gW5kWP5zmg
-	 HIycQHplBmXAv+xPlSzEqKOCHf5StgvaeqqEPR+Nfj0KCzSDjV3TccOUyxaaZ7iJ13
-	 oBe8fOzDM6htHTFGsmmQTB1cCu1+sLfuSjaFTjlxU/vHY53HFLgHdTmWZEODoy6HJn
-	 2s0juZew9eOGA==
+	b=hodY7cN0zA7LfOYmV1Zuya3sUlC3Xoo0wwqx13q14ULeJmAYe5pELaeUq4f9V+W4X
+	 ieoZp+p5rzrk1tKw6HHlKp1PNWqd3/HXChJzb7cdhKIw5I7F/yYr8Zq9IaU2/5BA5L
+	 Z6v6di/na7DbwmPjmS7C39b51rkdQ/iD99uNVsC3pyZvz05g/wHdZo9O6qPlBzZFCW
+	 /WP65i+edfO+6lkJZaHJ2fXXReVlJNpw2A6z6JtAs7Mor0xMcpdxs6Yh9/kuHXth3w
+	 VT4RxHk5buKj3F21+Y9tNomx0It2mmcd/E6FMWJPPhHJF053RKXvaK/i6zFLWD1JkA
+	 mAuggMpHLrSmA==
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
 	mpatocka@redhat.com
 Cc: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	dm-devel@lists.linux.dev
-Subject: Patch "dm-delay: fix a race between delay_presuspend and delay_bio" has been added to the 6.1-stable tree
-Date: Wed, 29 Nov 2023 15:00:24 -0500
-Message-ID: <20231129200026.1246108-1-sashal@kernel.org>
+Subject: Patch "dm-delay: fix a race between delay_presuspend and delay_bio" has been added to the 5.15-stable tree
+Date: Wed, 29 Nov 2023 15:00:30 -0500
+Message-ID: <20231129200031.1246157-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.42.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -41,19 +41,19 @@ This is a note to let you know that I've just added the patch titled
 
     dm-delay: fix a race between delay_presuspend and delay_bio
 
-to the 6.1-stable tree which can be found at:
+to the 5.15-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      dm-delay-fix-a-race-between-delay_presuspend-and-del.patch
-and it can be found in the queue-6.1 subdirectory.
+and it can be found in the queue-5.15 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
 
 
 
-commit f26d1c98b5333c59bc7b8cd11a683ee5c64b6a52
+commit 4ab1082df75134ee436f194692d5243ae8fdc7ec
 Author: Mikulas Patocka <mpatocka@redhat.com>
 Date:   Wed Nov 29 13:38:43 2023 -0500
 
@@ -82,7 +82,7 @@ Date:   Wed Nov 29 13:38:43 2023 -0500
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
 diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-index 02b8f4e818276..43541c8e2b43d 100644
+index 59e51d285b0e5..238028056d0cc 100644
 --- a/drivers/md/dm-delay.c
 +++ b/drivers/md/dm-delay.c
 @@ -30,7 +30,7 @@ struct delay_c {
@@ -103,7 +103,7 @@ index 02b8f4e818276..43541c8e2b43d 100644
  	dc->argc = argc;
  
  	ret = delay_class_ctr(ti, &dc->read, argv);
-@@ -246,7 +246,7 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
+@@ -245,7 +245,7 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
  	struct dm_delay_info *delayed;
  	unsigned long expires = 0;
  
@@ -112,7 +112,7 @@ index 02b8f4e818276..43541c8e2b43d 100644
  		return DM_MAPIO_REMAPPED;
  
  	delayed = dm_per_bio_data(bio, sizeof(struct dm_delay_info));
-@@ -255,6 +255,10 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
+@@ -254,6 +254,10 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
  	delayed->expires = expires = jiffies + msecs_to_jiffies(c->delay);
  
  	mutex_lock(&delayed_bios_lock);
@@ -123,7 +123,7 @@ index 02b8f4e818276..43541c8e2b43d 100644
  	c->ops++;
  	list_add_tail(&delayed->list, &dc->delayed_bios);
  	mutex_unlock(&delayed_bios_lock);
-@@ -268,7 +272,10 @@ static void delay_presuspend(struct dm_target *ti)
+@@ -267,7 +271,10 @@ static void delay_presuspend(struct dm_target *ti)
  {
  	struct delay_c *dc = ti->private;
  
@@ -135,7 +135,7 @@ index 02b8f4e818276..43541c8e2b43d 100644
  	del_timer_sync(&dc->delay_timer);
  	flush_bios(flush_delayed_bios(dc, 1));
  }
-@@ -277,7 +284,7 @@ static void delay_resume(struct dm_target *ti)
+@@ -276,7 +283,7 @@ static void delay_resume(struct dm_target *ti)
  {
  	struct delay_c *dc = ti->private;
  
