@@ -1,51 +1,51 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8FC211CB2
-	for <dm-devel@lists.linux.dev>; Wed, 29 Nov 2023 08:28:34 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BAFF911CAF
+	for <dm-devel@lists.linux.dev>; Wed, 29 Nov 2023 08:28:58 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RVCjidhu"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J9s9Xw6b"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1701246513;
+	s=mimecast20190719; t=1701246537;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=af7PS8UpfNMFNv7HZ0pRSHcT1GHQh+igTcvTJvlExHs=;
-	b=RVCjidhu7GD5GSHG83ibVxP+5c2U81G+c6oPp3NBFNg0ZHDeYIy4/VFX9TEZendQj8GtPg
-	B5mMSmQnGXyLKdmYc4/Sd2O0OQv8QRGykerYlO1eZbKJEL7KpJhDMaYqrdX0O0LsG0gYLn
-	HD6dQAc21x9c30100OT85BcKqu7WB3Q=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-652-bHSniCHSP8ylNlNky2_rZA-1; Wed, 29 Nov 2023 03:28:27 -0500
-X-MC-Unique: bHSniCHSP8ylNlNky2_rZA-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	bh=60z40RJpuxSZ8NCVURN5qPvc9dFTWX9DfwrHdVXCRDc=;
+	b=J9s9Xw6bORNFpN+oqJBZLgXofRQ4Xr/0NUM8GILCl6fooGpuogHylh7hDjgdxdTzdIfNF9
+	QrJFULuxJ8ahriJCsqW1pdqmGFpxi5g08nqRnpMYXnCH0PtdAdXkpGveG7huZLGXNwMPdi
+	mUurPAdBJeuqU4Me30+7nht4dsT+L9k=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-599-O1xQjS39N6S349DY_r9xKw-1; Wed,
+ 29 Nov 2023 03:28:53 -0500
+X-MC-Unique: O1xQjS39N6S349DY_r9xKw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 51C7D101A597;
-	Wed, 29 Nov 2023 08:28:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 69B2E2999B25;
+	Wed, 29 Nov 2023 08:28:53 +0000 (UTC)
 Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 42367492BE7;
-	Wed, 29 Nov 2023 08:28:27 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 62896492BFC;
+	Wed, 29 Nov 2023 08:28:53 +0000 (UTC)
 Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 24E6930C1A8C; Wed, 29 Nov 2023 08:28:27 +0000 (UTC)
+	id 5A03230C1A8C; Wed, 29 Nov 2023 08:28:53 +0000 (UTC)
 Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 21B183FB76;
-	Wed, 29 Nov 2023 09:28:27 +0100 (CET)
-Date: Wed, 29 Nov 2023 09:28:27 +0100 (CET)
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 58FC33FB76;
+	Wed, 29 Nov 2023 09:28:53 +0100 (CET)
+Date: Wed, 29 Nov 2023 09:28:53 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Sasha Levin <sashal@kernel.org>
 cc: stable-commits@vger.kernel.org, stable@vger.kernel.org, 
     christian.loehle@arm.com, Alasdair Kergon <agk@redhat.com>, 
     Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
 Subject: Re: Patch "dm delay: for short delays, use kthread instead of timers
- and wq" has been added to the 6.6-stable tree
-In-Reply-To: <20231129025441.892320-1-sashal@kernel.org>
-Message-ID: <cac7f5be-454c-5ae1-e025-9ad1d84999fc@redhat.com>
-References: <20231129025441.892320-1-sashal@kernel.org>
+ and wq" has been added to the 6.1-stable tree
+In-Reply-To: <20231129025709.894134-1-sashal@kernel.org>
+Message-ID: <d25080a5-c477-f952-f1c3-19e6815e32dc@redhat.com>
+References: <20231129025709.894134-1-sashal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -53,11 +53,11 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 
 Hi
 
-This patch doesn't fix any bug (and introduces several serious bugs), so 
+This patch doesn't fix any bug (and introduces several serious bugs), so
 it shouldn't be backported at all.
 
 Mikulas
@@ -69,19 +69,19 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 > 
 >     dm delay: for short delays, use kthread instead of timers and wq
 > 
-> to the 6.6-stable tree which can be found at:
+> to the 6.1-stable tree which can be found at:
 >     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 > 
 > The filename of the patch is:
 >      dm-delay-for-short-delays-use-kthread-instead-of-tim.patch
-> and it can be found in the queue-6.6 subdirectory.
+> and it can be found in the queue-6.1 subdirectory.
 > 
 > If you, or anyone else, feels it should not be added to the stable tree,
 > please let <stable@vger.kernel.org> know about it.
 > 
 > 
 > 
-> commit 976fd593415e170a8ed5db68683b280d5876982d
+> commit 8fc3662c0d81119ae3a7c3fc1c2cd441c3054905
 > Author: Christian Loehle <christian.loehle@arm.com>
 > Date:   Fri Oct 20 12:46:05 2023 +0100
 > 
@@ -151,10 +151,10 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >     Signed-off-by: Sasha Levin <sashal@kernel.org>
 > 
 > diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-> index 7433525e59856..efd510984e259 100644
+> index 02b8f4e818276..358e870a03a56 100644
 > --- a/drivers/md/dm-delay.c
 > +++ b/drivers/md/dm-delay.c
-> @@ -13,6 +13,7 @@
+> @@ -12,6 +12,7 @@
 >  #include <linux/blkdev.h>
 >  #include <linux/bio.h>
 >  #include <linux/slab.h>
@@ -162,7 +162,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  
 >  #include <linux/device-mapper.h>
 >  
-> @@ -31,6 +32,7 @@ struct delay_c {
+> @@ -30,6 +31,7 @@ struct delay_c {
 >  	struct workqueue_struct *kdelayd_wq;
 >  	struct work_struct flush_expired_bios;
 >  	struct list_head delayed_bios;
@@ -170,7 +170,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  	atomic_t may_delay;
 >  
 >  	struct delay_class read;
-> @@ -66,6 +68,44 @@ static void queue_timeout(struct delay_c *dc, unsigned long expires)
+> @@ -65,6 +67,44 @@ static void queue_timeout(struct delay_c *dc, unsigned long expires)
 >  	mutex_unlock(&dc->timer_lock);
 >  }
 >  
@@ -215,7 +215,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  static void flush_bios(struct bio *bio)
 >  {
 >  	struct bio *n;
-> @@ -78,7 +118,7 @@ static void flush_bios(struct bio *bio)
+> @@ -77,7 +117,7 @@ static void flush_bios(struct bio *bio)
 >  	}
 >  }
 >  
@@ -224,7 +224,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  {
 >  	struct dm_delay_info *delayed, *next;
 >  	unsigned long next_expires = 0;
-> @@ -115,7 +155,10 @@ static void flush_expired_bios(struct work_struct *work)
+> @@ -114,7 +154,10 @@ static void flush_expired_bios(struct work_struct *work)
 >  	struct delay_c *dc;
 >  
 >  	dc = container_of(work, struct delay_c, flush_expired_bios);
@@ -236,7 +236,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  }
 >  
 >  static void delay_dtr(struct dm_target *ti)
-> @@ -131,8 +174,11 @@ static void delay_dtr(struct dm_target *ti)
+> @@ -130,8 +173,11 @@ static void delay_dtr(struct dm_target *ti)
 >  		dm_put_device(ti, dc->write.dev);
 >  	if (dc->flush.dev)
 >  		dm_put_device(ti, dc->flush.dev);
@@ -249,7 +249,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  
 >  	kfree(dc);
 >  }
-> @@ -175,6 +221,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+> @@ -174,6 +220,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 >  {
 >  	struct delay_c *dc;
 >  	int ret;
@@ -257,7 +257,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  
 >  	if (argc != 3 && argc != 6 && argc != 9) {
 >  		ti->error = "Requires exactly 3, 6 or 9 arguments";
-> @@ -188,16 +235,14 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+> @@ -187,16 +234,14 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 >  	}
 >  
 >  	ti->private = dc;
@@ -275,7 +275,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  
 >  	if (argc == 3) {
 >  		ret = delay_class_ctr(ti, &dc->write, argv);
-> @@ -206,6 +251,8 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+> @@ -205,6 +250,8 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 >  		ret = delay_class_ctr(ti, &dc->flush, argv);
 >  		if (ret)
 >  			goto bad;
@@ -284,7 +284,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  		goto out;
 >  	}
 >  
-> @@ -216,19 +263,37 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+> @@ -215,19 +262,37 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 >  		ret = delay_class_ctr(ti, &dc->flush, argv + 3);
 >  		if (ret)
 >  			goto bad;
@@ -327,7 +327,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  	}
 >  
 >  	ti->num_flush_bios = 1;
-> @@ -260,7 +325,10 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
+> @@ -259,7 +324,10 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
 >  	list_add_tail(&delayed->list, &dc->delayed_bios);
 >  	mutex_unlock(&delayed_bios_lock);
 >  
@@ -339,7 +339,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  
 >  	return DM_MAPIO_SUBMITTED;
 >  }
-> @@ -270,8 +338,13 @@ static void delay_presuspend(struct dm_target *ti)
+> @@ -269,8 +337,13 @@ static void delay_presuspend(struct dm_target *ti)
 >  	struct delay_c *dc = ti->private;
 >  
 >  	atomic_set(&dc->may_delay, 0);
@@ -355,7 +355,7 @@ On Tue, 28 Nov 2023, Sasha Levin wrote:
 >  }
 >  
 >  static void delay_resume(struct dm_target *ti)
-> @@ -356,7 +429,7 @@ static int delay_iterate_devices(struct dm_target *ti,
+> @@ -355,7 +428,7 @@ static int delay_iterate_devices(struct dm_target *ti,
 >  
 >  static struct target_type delay_target = {
 >  	.name	     = "delay",
