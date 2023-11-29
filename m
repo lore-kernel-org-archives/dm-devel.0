@@ -1,146 +1,101 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 93C5A3454C
-	for <dm-devel@lists.linux.dev>; Wed, 29 Nov 2023 20:00:34 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 350361BDE4;
+	Wed, 29 Nov 2023 20:00:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hodY7cN0"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C154AC433C8;
-	Wed, 29 Nov 2023 20:00:33 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eAPr/pDM"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 82DC2C433CA;
+	Wed, 29 Nov 2023 20:00:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1701288034;
-	bh=vKLKmZe7TV9qnZhMg84AD2/UoxOuIUntajyVfYxsKas=;
-	h=From:To:Cc:Subject:Date:From;
-	b=hodY7cN0zA7LfOYmV1Zuya3sUlC3Xoo0wwqx13q14ULeJmAYe5pELaeUq4f9V+W4X
-	 ieoZp+p5rzrk1tKw6HHlKp1PNWqd3/HXChJzb7cdhKIw5I7F/yYr8Zq9IaU2/5BA5L
-	 Z6v6di/na7DbwmPjmS7C39b51rkdQ/iD99uNVsC3pyZvz05g/wHdZo9O6qPlBzZFCW
-	 /WP65i+edfO+6lkJZaHJ2fXXReVlJNpw2A6z6JtAs7Mor0xMcpdxs6Yh9/kuHXth3w
-	 VT4RxHk5buKj3F21+Y9tNomx0It2mmcd/E6FMWJPPhHJF053RKXvaK/i6zFLWD1JkA
-	 mAuggMpHLrSmA==
+	s=k20201202; t=1701288035;
+	bh=qWUQirFKWRiblfw3zPB4C99l56UyCJAjh7X5MpvzrTU=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=eAPr/pDMHuMHVgLcvpVTs3xRM2yiYGvuvaNrTm17Ed+WYZ6q48wSpdA//iHgvkT0i
+	 NEpX508bf6XsHKg57lJfI3nHE/eYGknPzb/MZeUiMwepXVZFeToG+HZMAaE4zPKyRi
+	 dtwO94COZ2rZiP1fRVWV/x7HXNzHIAvP4FSS/SABoUfTW+3oXE2Up9DEea0iNlCCd2
+	 sLPi7mSspQ7V1CPKmNnrFKzbNFnzpFuDFcKk3zI7IxDwDTyl3GHwAJmxrHsrNJsyJU
+	 MrO8ktQhiEAZlxE75tPbpEoftF88DhnFYsLmjLBfq/9zJma7EM9bBsgC3fMYWmyCLR
+	 J1dyAoz1kER1w==
+Date: Wed, 29 Nov 2023 15:00:34 -0500
 From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org,
-	mpatocka@redhat.com
-Cc: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Christian Loehle <christian.loehle@arm.com>,
+	stable-commits@vger.kernel.org, stable@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
 	dm-devel@lists.linux.dev
-Subject: Patch "dm-delay: fix a race between delay_presuspend and delay_bio" has been added to the 5.15-stable tree
-Date: Wed, 29 Nov 2023 15:00:30 -0500
-Message-ID: <20231129200031.1246157-1-sashal@kernel.org>
-X-Mailer: git-send-email 2.42.0
+Subject: Re: Patch "dm delay: for short delays, use kthread instead of timers
+ and wq" has been added to the 6.6-stable tree
+Message-ID: <ZWeYYodi5TeKlDw8@sashalap>
+References: <20231129025441.892320-1-sashal@kernel.org>
+ <cac7f5be-454c-5ae1-e025-9ad1d84999fc@redhat.com>
+ <bdf739ae-5e45-4192-b682-81f05982c220@arm.com>
+ <30e67bef-4aaf-31d6-483f-2ca6523099c3@redhat.com>
+ <ZWd3HCVNTkZYREGo@sashalap>
+ <b8d0fdf7-fca4-4a2d-3dd-94b2c97b7fb4@redhat.com>
+ <ZWeIiCcZXwZkY1_J@sashalap>
+ <ef29ecb1-5853-88cc-16c0-98cf17c2519@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Disposition: inline
+In-Reply-To: <ef29ecb1-5853-88cc-16c0-98cf17c2519@redhat.com>
 
-This is a note to let you know that I've just added the patch titled
+On Wed, Nov 29, 2023 at 08:02:23PM +0100, Mikulas Patocka wrote:
+>
+>
+>On Wed, 29 Nov 2023, Sasha Levin wrote:
+>
+>> On Wed, Nov 29, 2023 at 07:16:52PM +0100, Mikulas Patocka wrote:
+>> >
+>> >
+>> >On Wed, 29 Nov 2023, Sasha Levin wrote:
+>> >
+>> >> On Wed, Nov 29, 2023 at 06:28:16PM +0100, Mikulas Patocka wrote:
+>> >> >
+>> >> >
+>> >> >On Wed, 29 Nov 2023, Christian Loehle wrote:
+>> >> >
+>> >> >> Hi Mikulas,
+>> >> >> Agreed and thanks for fixing.
+>> >> >> Has this been selected for stable because of:
+>> >> >> 6fc45b6ed921 ("dm-delay: fix a race between delay_presuspend and
+>> >> >> delay_bio")
+>> >> >> If so, I would volunteer do the backports for that for you at least.
+>> >> >
+>> >> >I wouldn't backport this patch - it is an enhancement, not a bugfix, so it
+>> >> >doesn't qualify for the stable kernel backports.
+>> >>
+>> >> Right - this watch was selected as a dependency for 6fc45b6ed921
+>> >> ("dm-delay: fix a race between delay_presuspend and delay_bio").
+>> >>
+>> >> In general, unless it's impractical, we'd rather take a dependency chain
+>> >> rather than deal with a non-trivial backport as those tend to have
+>> >> issues longer term.
+>> >>
+>> >> --
+>> >> Thanks,
+>> >> Sasha
+>> >
+>> >The patch 70bbeb29fab0 ("dm delay: for short delays, use kthread instead
+>> >of timers and wq") changes behavior of dm-delay from using timers to
+>> >polling, so it may cause problems to people running legacy kernels - the
+>> >polling consumes more CPU time than the timers - so I think it shouldn't
+>> >go to the stable kernels where users expect that there will be no
+>> >functional change.
+>> >
+>> >Here I'm submitting the patch 6fc45b6ed921 backported for 6.6.3.
+>>
+>> Is this okay for 6.1 too?
+>
+>Yes, it is. It applies to kernels as old as 4.19.
 
-    dm-delay: fix a race between delay_presuspend and delay_bio
+Great, applied all the way back to 4.19. Thanks!
 
-to the 5.15-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
-
-The filename of the patch is:
-     dm-delay-fix-a-race-between-delay_presuspend-and-del.patch
-and it can be found in the queue-5.15 subdirectory.
-
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
-
-
-
-commit 4ab1082df75134ee436f194692d5243ae8fdc7ec
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Wed Nov 29 13:38:43 2023 -0500
-
-    dm-delay: fix a race between delay_presuspend and delay_bio
-    
-    [ Upstream commit 6fc45b6ed921dc00dfb264dc08c7d67ee63d2656 ]
-    
-    In delay_presuspend, we set the atomic variable may_delay and then stop
-    the timer and flush pending bios. The intention here is to prevent the
-    delay target from re-arming the timer again.
-    
-    However, this test is racy. Suppose that one thread goes to delay_bio,
-    sees that dc->may_delay is one and proceeds; now, another thread executes
-    delay_presuspend, it sets dc->may_delay to zero, deletes the timer and
-    flushes pending bios. Then, the first thread continues and adds the bio to
-    delayed->list despite the fact that dc->may_delay is false.
-    
-    Fix this bug by changing may_delay's type from atomic_t to bool and
-    only access it while holding the delayed_bios_lock mutex. Note that we
-    don't have to grab the mutex in delay_resume because there are no bios
-    in flight at this point.
-    
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Cc: stable@vger.kernel.org
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-    Signed-off-by: Sasha Levin <sashal@kernel.org>
-
-diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-index 59e51d285b0e5..238028056d0cc 100644
---- a/drivers/md/dm-delay.c
-+++ b/drivers/md/dm-delay.c
-@@ -30,7 +30,7 @@ struct delay_c {
- 	struct workqueue_struct *kdelayd_wq;
- 	struct work_struct flush_expired_bios;
- 	struct list_head delayed_bios;
--	atomic_t may_delay;
-+	bool may_delay;
- 
- 	struct delay_class read;
- 	struct delay_class write;
-@@ -191,7 +191,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	INIT_WORK(&dc->flush_expired_bios, flush_expired_bios);
- 	INIT_LIST_HEAD(&dc->delayed_bios);
- 	mutex_init(&dc->timer_lock);
--	atomic_set(&dc->may_delay, 1);
-+	dc->may_delay = true;
- 	dc->argc = argc;
- 
- 	ret = delay_class_ctr(ti, &dc->read, argv);
-@@ -245,7 +245,7 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
- 	struct dm_delay_info *delayed;
- 	unsigned long expires = 0;
- 
--	if (!c->delay || !atomic_read(&dc->may_delay))
-+	if (!c->delay)
- 		return DM_MAPIO_REMAPPED;
- 
- 	delayed = dm_per_bio_data(bio, sizeof(struct dm_delay_info));
-@@ -254,6 +254,10 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
- 	delayed->expires = expires = jiffies + msecs_to_jiffies(c->delay);
- 
- 	mutex_lock(&delayed_bios_lock);
-+	if (unlikely(!dc->may_delay)) {
-+		mutex_unlock(&delayed_bios_lock);
-+		return DM_MAPIO_REMAPPED;
-+	}
- 	c->ops++;
- 	list_add_tail(&delayed->list, &dc->delayed_bios);
- 	mutex_unlock(&delayed_bios_lock);
-@@ -267,7 +271,10 @@ static void delay_presuspend(struct dm_target *ti)
- {
- 	struct delay_c *dc = ti->private;
- 
--	atomic_set(&dc->may_delay, 0);
-+	mutex_lock(&delayed_bios_lock);
-+	dc->may_delay = false;
-+	mutex_unlock(&delayed_bios_lock);
-+
- 	del_timer_sync(&dc->delay_timer);
- 	flush_bios(flush_delayed_bios(dc, 1));
- }
-@@ -276,7 +283,7 @@ static void delay_resume(struct dm_target *ti)
- {
- 	struct delay_c *dc = ti->private;
- 
--	atomic_set(&dc->may_delay, 1);
-+	dc->may_delay = true;
- }
- 
- static int delay_map(struct dm_target *ti, struct bio *bio)
+-- 
+Thanks,
+Sasha
