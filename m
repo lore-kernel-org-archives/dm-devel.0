@@ -1,181 +1,94 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D449C17CF
-	for <dm-devel@lists.linux.dev>; Fri,  1 Dec 2023 02:03:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60F355953A
+	for <dm-devel@lists.linux.dev>; Fri,  1 Dec 2023 07:37:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="odgzA57X"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 11E81C433C8;
-	Fri,  1 Dec 2023 02:03:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1701396212;
-	bh=bCzSLVhkBJWwSKsZ0nT1dDKE3mFd0ANfKI6RYi+QuxE=;
-	h=From:To:Cc:Subject:Date:From;
-	b=odgzA57Xcz1b/t9dRzZFVlKa+sSE2sCr/8GutF/If3sDjOYLk/n8Q5ffdnjb3cUuF
-	 WffNO78qYgbMqrRpiKCclzTmLHfxbGp66o2GVUIPAd2KxIyIE0WQUd7ecbPDtknLJQ
-	 deDKhAhMCceaV3c1rsm6XDQZNfNCcWDJF90v6EasidUUkwha3Dk07mU0+OOjksMYMp
-	 MIi2/xok28mvzfB4N7uFA3j6nD2NkNe/82TZeCK1E15khfO+uOVCpUVvOP0j6sVj57
-	 lka7l7FpvAqk/TtPHHe6NpPTXv6qtFD4QIodxMzbkUUy0I62OlVj20JygfJ/CqjTUK
-	 FQShXaeqCQbFg==
-From: Damien Le Moal <dlemoal@kernel.org>
-To: dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>,
-	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
-	Naohiro Aota <naohiro.aota@wdc.com>
-Subject: [PATCH] dm: Validate zoned model of devices built with zoned targets
-Date: Fri,  1 Dec 2023 11:03:29 +0900
-Message-ID: <20231201020329.273592-1-dlemoal@kernel.org>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="heSvJ+lK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1701416237;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Hjq7eJtl/KBWzACD4CpZouOhHH/+sfSdtiLs30TuPCQ=;
+	b=heSvJ+lKpVsG4bHXqzBFZHGgz1WbdUqlPPEjdYK0XqLDQpTqKkWRrUhOMGH5bNisHEvUIW
+	2+Rvv03ppE/EFWPrvrstAIWn+8MPuliQo+W6sk6QSehab5eUnlQKAoEzGUBjFEHNm1HSCE
+	DFvvF+pPzvgX+tU3SU4fk1PY404rWVc=
+Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
+ [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-279-Q_aaYdOZMn-bjB_f6R__Vg-1; Fri, 01 Dec 2023 02:37:15 -0500
+X-MC-Unique: Q_aaYdOZMn-bjB_f6R__Vg-1
+Received: by mail-wm1-f71.google.com with SMTP id 5b1f17b1804b1-40b546fd830so13720975e9.3
+        for <dm-devel@lists.linux.dev>; Thu, 30 Nov 2023 23:37:14 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1701416233; x=1702021033;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=Hjq7eJtl/KBWzACD4CpZouOhHH/+sfSdtiLs30TuPCQ=;
+        b=rJ8qoCeF4EK5HW/hA74s334fsO/XiyxxX0ww7Ums9OPHumnJsh1SFXIzEVt2xak9KR
+         3016S1TipvdtvqeMDJoraEmn/FakOaDXhMwXI16XGJjdMQzfTlYMMgOFYhVBspAAPPNL
+         LdEk/N9tmwIjOtmgtBIwH8QjcvCkeHVLZ0e4RsQWjfaPA+LGhvrPQHLOMzH1OAOMIKT8
+         9spVjFmPGJaJHX8T+4ZcCzk/Yi9FNAV5vgu5cdRyrqR6UXVQ7xb3F+ItJTAsBAZoa48v
+         FIS2kGX97wwCrMYg89A+MvYSkUpe33/dL5zvt96uR4THKXY/kfFqpS5k6XOQA8410VNZ
+         rBzg==
+X-Gm-Message-State: AOJu0YwnPv7SiRMPZJALD7BR7PSrnbM5APqa19L3T4tAObmcqTt4o3/v
+	1wTTQB9eva9WsHtkNsu5UYOdqub15y56zQG5L/ejDZo/zRViYUgew4TKH60ndxdTIa8M2zv4N4X
+	Z5hu807wT5Qez3Mx0K8fqhnSSNPaqrsphJcQDQmkmSE8=
+X-Received: by 2002:adf:e681:0:b0:333:2fd2:8163 with SMTP id r1-20020adfe681000000b003332fd28163mr527915wrm.128.1701416233779;
+        Thu, 30 Nov 2023 23:37:13 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFM9qLZfWLSpEhHDbyDsbpH0fjcR3UsChJUFHx3kqfnkjOpD4jNm2In38cf4aoIyHS2okOsDtCkIGKvDaX0Boc=
+X-Received: by 2002:adf:e681:0:b0:333:2fd2:8163 with SMTP id
+ r1-20020adfe681000000b003332fd28163mr527909wrm.128.1701416233513; Thu, 30 Nov
+ 2023 23:37:13 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <fb4ae62-522-e262-df25-c82e8acf8baf@ewheeler.net>
+ <CAJ0trDaipa_80xqVpDkJdm-SSCaN7g_O-m9-StG10P_DUxmtEA@mail.gmail.com>
+ <CAJ0trDbP4BFjb0KQ+t4Lh1JdVjP9sbMiwJEOXPkGEV_R95rFoQ@mail.gmail.com>
+ <12d141ed-84d2-411f-3e61-7a8d5bc7f0dc@ewheeler.net> <CAJ0trDaRQaDicO9ho8Hokj68vEopaJwM8YKwPEjzYkWBXE0dWg@mail.gmail.com>
+ <cb3f4665-fcfc-c08-2dce-99c071c2a569@ewheeler.net> <bb6deb36-dd80-1649-11b6-bdcf24cb4e4@ewheeler.net>
+ <7bcbab39-9ad0-4e9-d49e-5c229689915f@ewheeler.net>
+In-Reply-To: <7bcbab39-9ad0-4e9-d49e-5c229689915f@ewheeler.net>
+From: Joe Thornber <thornber@redhat.com>
+Date: Fri, 1 Dec 2023 07:37:26 +0000
+Message-ID: <CAJ0trDZMorQJ4muW_DfbaQAsgG7=LbiOM0ZEcig4=qA8SE-Zbw@mail.gmail.com>
+Subject: Re: Stuck IOs with dm-integrity + md raid1 + dm-thin
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: dm-devel@lists.linux.dev
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Using dm-linear or dm-error, a user can craft a DM device using
-host-managed SMR disks by mapping only conventional zones. Currently,
-such DM device will be reported also as being host-managed, despite the
-fact that this zoned model mandated sequential-write-required zone are
-not present. This breaks the host-managed model and may confuse some
-applications, potentially resulting in unexpected behavior or bugs.
+On Fri, Dec 1, 2023 at 12:40=E2=80=AFAM Eric Wheeler
+<dm-devel@lists.ewheeler.net> wrote:
+>
+>
+> Here is a reproducer using ram disks, it hangs quickly on my test VM
+> with all the kernels I tested.  Here are a few example versions:
+>
+>  - 6.5.7 vanilla
+>  - 5.14.0-362.8.1.el9_3
+>  - 5.14.0-162.12.1.el9_1
+>
+> Watch dmesg and you'll eventually see errors like this:
+>
+>         device-mapper: integrity: dm-6: Checksum failed at sector 0x17d8
+>         md/raid1:md9: dm-6: rescheduling sector 3912
+>         md/raid1:md9: redirecting sector 3912 to other mirror: dm-6
+>         raid1_read_request: 18950 callbacks suppressed
+>
 
-A simple solution for such case is to expose a DM device built only
-using an SMR host managed disk conventional zones as a regular device.
-This is acceptable and possible because read and write accesses to
-conventional zones do not have any restrictions and can cross zone
-boundaries.
-
-This commit introduces the function dm_validate_zoned_model() to detect
-if a zoned DM device contains only conventional zones. If it does, this
-function calls disk_set_zoned() to change the DM device queue zoned
-model to BLK_ZONED_NONE, clearing in the process also the queue limits
-associated with zoned block devices (e.g. chunk_sectors for the zone
-size, number of zones, etc). dm_validate_zoned_model() is called from
-dm_table_set_restrictions() when the DM device request queue is set up.
-
-With this change, dm-linear and dm-error devices built using
-conventional zones are now exposed as regular block devices.
-
-Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
----
- drivers/md/dm-table.c | 13 +++++++++
- drivers/md/dm-zone.c  | 63 +++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm.h       |  1 +
- 3 files changed, 77 insertions(+)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 198d38b53322..9c7547da6171 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -2034,6 +2034,19 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	    dm_table_any_dev_attr(t, device_is_not_random, NULL))
- 		blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, q);
- 
-+	/*
-+	 * A zoned target may contain only conventional zones, in which case
-+	 * we must set the device queue zoned model to BLK_ZONED_NONE to
-+	 * expose the target as a regular block device, and thus avoiding
-+	 * breaking the host-managed zoned model as it mandates the presence
-+	 * of sequential write required zones.
-+	 */
-+	if (blk_queue_is_zoned(q)) {
-+		r = dm_validate_zoned_model(t, q);
-+		if (r)
-+			return r;
-+	}
-+
- 	/*
- 	 * For a zoned target, setup the zones related queue attributes
- 	 * and resources necessary for zone append emulation if necessary.
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index eb9832b22b14..452a59bfdc10 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -174,6 +174,69 @@ static unsigned int dm_get_zone_wp_offset(struct blk_zone *zone)
- 	}
- }
- 
-+struct dm_zone_count {
-+	unsigned long nr_conv;
-+	unsigned long nr_seq;
-+};
-+
-+static int dm_validate_zoned_model_cb(struct blk_zone *zone, unsigned int idx,
-+				      void *data)
-+{
-+	struct dm_zone_count *zc = data;
-+
-+	switch (zone->type) {
-+	case BLK_ZONE_TYPE_CONVENTIONAL:
-+		zc->nr_conv++;
-+		break;
-+	case BLK_ZONE_TYPE_SEQWRITE_REQ:
-+	case BLK_ZONE_TYPE_SEQWRITE_PREF:
-+		zc->nr_seq++;
-+		break;
-+	default:
-+		DMERR("Invalid zone type 0x%x at sectors %llu",
-+		      (int)zone->type, zone->start);
-+		return -ENODEV;
-+	}
-+
-+	return 0;
-+}
-+
-+/*
-+ * Validate the queue zoned model by counting the conventional and
-+ * sequential zones of the target. If no sequential zones are present, modify
-+ * the device queue to expose it as a regular block device.
-+ */
-+int dm_validate_zoned_model(struct dm_table *t, struct request_queue *q)
-+{
-+	struct mapped_device *md = t->md;
-+	struct gendisk *disk = md->disk;
-+	unsigned int nr_zones = bdev_nr_zones(disk->part0);
-+	struct dm_zone_count zc = { };
-+	unsigned int noio_flag;
-+	int ret;
-+
-+	/* Count conventional and sequential zones */
-+	noio_flag = memalloc_noio_save();
-+	ret = dm_blk_do_report_zones(md, t, 0, nr_zones,
-+				     dm_validate_zoned_model_cb, &zc);
-+	memalloc_noio_restore(noio_flag);
-+	if (ret != nr_zones ||
-+	    zc.nr_conv + zc.nr_seq != nr_zones)
-+		ret = -EIO;
-+	if (ret < 0)
-+		goto err;
-+
-+	if (!zc.nr_seq)
-+		disk_set_zoned(disk, BLK_ZONED_NONE);
-+
-+	return 0;
-+
-+err:
-+	DMERR("Validate zoned model failed %d", ret);
-+	dm_cleanup_zoned_dev(md);
-+	return ret;
-+}
-+
- static int dm_zone_revalidate_cb(struct blk_zone *zone, unsigned int idx,
- 				 void *data)
- {
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 7f1acbf6bd9e..c3e6afed3910 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -101,6 +101,7 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
- /*
-  * Zoned targets related functions.
-  */
-+int dm_validate_zoned_model(struct dm_table *t, struct request_queue *q);
- int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q);
- void dm_zone_endio(struct dm_io *io, struct bio *clone);
- #ifdef CONFIG_BLK_DEV_ZONED
--- 
-2.43.0
+Excellent, thanks.
+>
+>
 
