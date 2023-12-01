@@ -1,212 +1,120 @@
-Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 39E50633
-	for <dm-devel@lists.linux.dev>; Fri,  1 Dec 2023 00:40:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=lists.ewheeler.net
-Received: from localhost (localhost [127.0.0.1])
-	by mx.ewheeler.net (Postfix) with ESMTP id 3091985;
-	Thu, 30 Nov 2023 16:40:05 -0800 (PST)
-X-Virus-Scanned: amavisd-new at ewheeler.net
-Received: from mx.ewheeler.net ([127.0.0.1])
-	by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
-	with LMTP id l6pBSt9N_CLz; Thu, 30 Nov 2023 16:40:00 -0800 (PST)
-Received: from localhost (localhost [127.0.0.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97847387
+	for <dm-devel@lists.linux.dev>; Fri,  1 Dec 2023 00:54:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HtBkJ+Bx"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1701392098;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=1RqkUZ4a8hcttU9zAcb93Q61dtuGisWIOd3vyHzECKI=;
+	b=HtBkJ+BxZPod5nMcSzL51bXw4gb25iB/ezeH/yzuN5MbbUVV3/xG9GIM7h1+8usa4O+kJ7
+	/D7y9UAVfaF6QpOr2oGbNIMc+KNBd7uAwKyIfK7lvZVEtqaQ+da4Pa1pkqZi2dN5vfQYOl
+	IbKqDDcqS102k2snolRJOJa5HcRfIgI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-97-HeZ-g078ONe8EMuUjBUkog-1; Thu, 30 Nov 2023 19:54:56 -0500
+X-MC-Unique: HeZ-g078ONe8EMuUjBUkog-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx.ewheeler.net (Postfix) with ESMTPSA id 2BCC340;
-	Thu, 30 Nov 2023 16:40:00 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net 2BCC340
-Date: Thu, 30 Nov 2023 16:40:00 -0800 (PST)
-From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-To: Joe Thornber <thornber@redhat.com>
-cc: dm-devel@lists.linux.dev
-Subject: Re: Stuck IOs with dm-integrity + md raid1 + dm-thin
-In-Reply-To: <bb6deb36-dd80-1649-11b6-bdcf24cb4e4@ewheeler.net>
-Message-ID: <7bcbab39-9ad0-4e9-d49e-5c229689915f@ewheeler.net>
-References: <fb4ae62-522-e262-df25-c82e8acf8baf@ewheeler.net> <CAJ0trDaipa_80xqVpDkJdm-SSCaN7g_O-m9-StG10P_DUxmtEA@mail.gmail.com> <CAJ0trDbP4BFjb0KQ+t4Lh1JdVjP9sbMiwJEOXPkGEV_R95rFoQ@mail.gmail.com> <12d141ed-84d2-411f-3e61-7a8d5bc7f0dc@ewheeler.net>
- <CAJ0trDaRQaDicO9ho8Hokj68vEopaJwM8YKwPEjzYkWBXE0dWg@mail.gmail.com> <cb3f4665-fcfc-c08-2dce-99c071c2a569@ewheeler.net> <bb6deb36-dd80-1649-11b6-bdcf24cb4e4@ewheeler.net>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 95329811E7E;
+	Fri,  1 Dec 2023 00:54:56 +0000 (UTC)
+Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8FEB42166B26;
+	Fri,  1 Dec 2023 00:54:56 +0000 (UTC)
+Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
+	id 836BE52635; Thu, 30 Nov 2023 19:54:56 -0500 (EST)
+From: Matthew Sakai <msakai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Mike Snitzer <snitzer@kernel.org>,
+	Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm vdo: fix how dm_kcopyd_client_create() failure is checked
+Date: Thu, 30 Nov 2023 19:54:56 -0500
+Message-ID: <7e331c292fb28930e9a9a0062b179eb5797ad90e.1701391400.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="8323328-93319984-1701391200=:29635"
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+From: Mike Snitzer <snitzer@kernel.org>
 
---8323328-93319984-1701391200=:29635
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+dm_kcopyd_client_create() returns an ERR_PTR so its return must be
+checked with IS_ERR().
 
-On Thu, 30 Nov 2023, Eric Wheeler wrote:
-> On Thu, 30 Nov 2023, Eric Wheeler wrote:
-> > On Thu, 30 Nov 2023, Joe Thornber wrote:
-> > > On Wed, Nov 29, 2023 at 7:51 PM Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
-> > > 
-> > > Have you performed any long running tests with just dm-integrity and not dm-thin?
-> > 
-> > It ran fine for about 12 hours and then IOs hung shortly after we did a 
-> > reserve_metadata_snap.
-> 
-> More info:
-> 
-> Not only did it run for 12 hours just fine before IOs hung at 3:30am when 
-> we do metadata dumps, but this happened twice, on consecutive days at the 
-> same time of day (~3:30am), when cron does a reserve_metadata_snap for
-> metadata thin_dumps of inactive snapshots.
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+Signed-off-by: Chung Chung <cchung@redhat.com>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
+---
+ drivers/md/dm-vdo-target.c     | 8 ++++++--
+ drivers/md/dm-vdo/slab-depot.c | 7 +++++--
+ 2 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-vdo-target.c b/drivers/md/dm-vdo-target.c
+index 72d2291dd93f..4fbc148681e5 100644
+--- a/drivers/md/dm-vdo-target.c
++++ b/drivers/md/dm-vdo-target.c
+@@ -8,6 +8,7 @@
+ #include <linux/completion.h>
+ #include <linux/delay.h>
+ #include <linux/device-mapper.h>
++#include <linux/err.h>
+ #include <linux/module.h>
+ #include <linux/mutex.h>
+ #include <linux/spinlock.h>
+@@ -1683,8 +1684,11 @@ static int grow_layout(struct vdo *vdo, block_count_t old_size, block_count_t ne
+ 	/* Make a copy completion if there isn't one */
+ 	if (vdo->partition_copier == NULL) {
+ 		vdo->partition_copier = dm_kcopyd_client_create(NULL);
+-		if (vdo->partition_copier == NULL)
+-			return -ENOMEM;
++		if (IS_ERR(vdo->partition_copier)) {
++			result = PTR_ERR(vdo->partition_copier);
++			vdo->partition_copier = NULL;
++			return result;
++		}
+ 	}
  
-Here is a reproducer using ram disks, it hangs quickly on my test VM
-with all the kernels I tested.  Here are a few example versions:
+ 	/* Free any unused preparation. */
+diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
+index 2125e256aa86..56d975c98752 100644
+--- a/drivers/md/dm-vdo/slab-depot.c
++++ b/drivers/md/dm-vdo/slab-depot.c
+@@ -7,6 +7,7 @@
+ 
+ #include <linux/atomic.h>
+ #include <linux/bio.h>
++#include <linux/err.h>
+ #include <linux/log2.h>
+ #include <linux/min_heap.h>
+ #include <linux/minmax.h>
+@@ -3445,8 +3446,10 @@ static void initiate_load(struct admin_state *state)
+ 						   handle_operation_error,
+ 						   allocator->thread_id, NULL);
+ 		allocator->eraser = dm_kcopyd_client_create(NULL);
+-		if (allocator->eraser == NULL) {
+-			vdo_fail_completion(&allocator->completion, -ENOMEM);
++		if (IS_ERR(allocator->eraser)) {
++			vdo_fail_completion(&allocator->completion,
++					    PTR_ERR(allocator->eraser));
++			allocator->eraser = NULL;
+ 			return;
+ 		}
+ 		allocator->slabs_to_erase = get_slab_iterator(allocator);
+-- 
+2.42.0
 
- - 6.5.7 vanilla
- - 5.14.0-362.8.1.el9_3
- - 5.14.0-162.12.1.el9_1
-
-Watch dmesg and you'll eventually see errors like this:
-
-	device-mapper: integrity: dm-6: Checksum failed at sector 0x17d8
-	md/raid1:md9: dm-6: rescheduling sector 3912
-	md/raid1:md9: redirecting sector 3912 to other mirror: dm-6
-	raid1_read_request: 18950 callbacks suppressed
-
----------------------------------------------------------------
-#!/bin/bash
-
-# Notice: /dev/ram0 and /dev/ram1 will be wiped unconditionally.
-
-# Configure these if you need to:
-MD_DEV=/dev/md9
-VGNAME=testvg
-LVNAME=thin
-LVSIZE=$((10 * 1024*1024*1024/512))
-
-echo "NOTICE: THIS MAY BE UNSAFE. ONLY RUN THIS IN A TEST ENVIRONMENT!"
-echo "Press enter twice to continue or CTRL-C to abort."
-
-read
-read
-
-set -x
-
-# append disks into a linear target
-linear_add()
-{
-	name=$1
-	shift
-
-	prevsize=0
-	for vol in "$@"; do
-		size=`blockdev --getsize $vol`
-		echo "$prevsize $size linear $vol 0"
-		prevsize=$size
-	done \
-		| dmsetup create $name
-
-	echo /dev/mapper/$name
-}
-
-lvthin_add()
-{
-	id=$1
-	lvcreate -An -V $LVSIZE -n $LVNAME$id --thinpool pool0 $VGNAME >&2
-	echo /dev/$VGNAME/$LVNAME$id
-}
-
-lvthin_snapshot()
-{
-	origin=$1
-	id=$2
-
-	lvcreate -An -s $VGNAME/$LVNAME$origin -n $LVNAME$id >&2
-	echo /dev/$VGNAME/$LVNAME$id
-}
-
-fio()
-{
-	dev=$1
-	/bin/fio --name=$dev --rw=randrw --direct=1 --bs=512 --numjobs=1 --filename=$dev --time_based --runtime=$FIOTIME --ioengine=libaio --iodepth=1 &> /dev/null
-}
-
-do_reset()
-{
-	killall -9 fio
-	lvchange -an $VGNAME
-	rmdir /dev/$VGNAME
-	dmsetup remove ssd
-	dmsetup remove pv
-	lvmdevices --deldev /dev/mapper/ssd
-	lvmdevices --deldev /dev/mapper/pv
-	losetup -d /dev/loop?
-	mdadm --stop $MD_DEV
-	integritysetup close /dev/mapper/dm-integrity0
-	integritysetup close /dev/mapper/dm-integrity1
-	rmmod brd
-	rmmod null_blk
-	echo ==== reset done
-	sleep 1
-}
-
-do_init()
-{
-	modprobe null_blk gb=30000 bs=512
-
-	ramsize_gb=1
-	modprobe brd rd_size=$(($ramsize_gb * 1024*1024)) rd_nr=2
-
-	idev0=/dev/ram0
-	idev1=/dev/ram1
-
-	integritysetup format $idev0 --integrity xxhash64 --batch-mode
-	integritysetup format $idev1 --integrity xxhash64 --batch-mode
-
-	integritysetup open --integrity xxhash64 --allow-discards $idev0 dm-integrity0
-	integritysetup open --integrity xxhash64 --allow-discards $idev1 dm-integrity1
-
-	mdadm --create $MD_DEV --metadata=1.2 --assume-clean --level=1 --raid-devices=2 /dev/mapper/dm-integrity[01]
-
-	# 1. This should be enough to trigger it:
-	SSD_DEV=$MD_DEV
-
-	# 2. If not, then wrap /dev/md9 in a linear target:
-	#linear_add ssd $MD_DEV
-	#SSD_DEV=/dev/mapper/ssd
-
-	# Create a writable header for the PV meta:
-	dd if=/dev/zero bs=1M count=16 oflag=direct of=/tmp/pvheader
-	loop=`losetup -f --show /tmp/pvheader`
-	linear_add pv $loop /dev/nullb0
-
-	# Create the VG
-	lvmdevices --adddev $SSD_DEV
-	lvmdevices --adddev /dev/mapper/pv
-	vgcreate $VGNAME /dev/mapper/pv $SSD_DEV
-
-	# Create the pool:
-	lvcreate -n pool0 -L 1T $VGNAME /dev/mapper/pv
-	lvcreate -n meta0 -L 512m $VGNAME $SSD_DEV
-
-	# Make sure the meta volume is on the SSD (it should be already from above):
-	pvmove -n meta0 /dev/mapper/pv
-	lvconvert -y --force --force --chunksize 64k --type thin-pool --poolmetadata $VGNAME/meta0 $VGNAME/pool0
-}
-
-
-while true; do
-	do_reset
-	do_init
-
-	thin1=`lvthin_add 1`
-	fio $thin1 &
-
-	thin2=`lvthin_snapshot 1 2`
-	fio $thin2 &
-
-	wait
-
-done
-
---8323328-93319984-1701391200=:29635--
