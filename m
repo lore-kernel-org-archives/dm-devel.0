@@ -1,214 +1,63 @@
-Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50C7D15A3
-	for <dm-devel@lists.linux.dev>; Sat,  2 Dec 2023 02:18:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=lists.ewheeler.net
-Received: from localhost (localhost [127.0.0.1])
-	by mx.ewheeler.net (Postfix) with ESMTP id C142A85;
-	Fri,  1 Dec 2023 18:18:03 -0800 (PST)
-X-Virus-Scanned: amavisd-new at ewheeler.net
-Received: from mx.ewheeler.net ([127.0.0.1])
-	by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
-	with LMTP id 9Nb2Uhg6BZ_q; Fri,  1 Dec 2023 18:18:02 -0800 (PST)
-Received: from localhost (localhost [127.0.0.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mx.ewheeler.net (Postfix) with ESMTPSA id 9A25C46;
-	Fri,  1 Dec 2023 18:18:02 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net 9A25C46
-Date: Fri, 1 Dec 2023 18:18:02 -0800 (PST)
-From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-To: David Teigland <teigland@redhat.com>
-cc: Joe Thornber <thornber@redhat.com>, dm-devel@lists.linux.dev
-Subject: Re: Stuck IOs with dm-integrity + md raid1 + dm-thin
-In-Reply-To: <ZWolcKU3EIS55zO7@redhat.com>
-Message-ID: <4f19eefe-4c1e-3e42-2bc1-aa13dec61c@ewheeler.net>
-References: <fb4ae62-522-e262-df25-c82e8acf8baf@ewheeler.net> <CAJ0trDaipa_80xqVpDkJdm-SSCaN7g_O-m9-StG10P_DUxmtEA@mail.gmail.com> <CAJ0trDbP4BFjb0KQ+t4Lh1JdVjP9sbMiwJEOXPkGEV_R95rFoQ@mail.gmail.com> <12d141ed-84d2-411f-3e61-7a8d5bc7f0dc@ewheeler.net>
- <CAJ0trDaRQaDicO9ho8Hokj68vEopaJwM8YKwPEjzYkWBXE0dWg@mail.gmail.com> <cb3f4665-fcfc-c08-2dce-99c071c2a569@ewheeler.net> <bb6deb36-dd80-1649-11b6-bdcf24cb4e4@ewheeler.net> <7bcbab39-9ad0-4e9-d49e-5c229689915f@ewheeler.net> <ZWolcKU3EIS55zO7@redhat.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC8C018E
+	for <dm-devel@lists.linux.dev>; Mon,  4 Dec 2023 00:12:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="YqfdOmBh"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 43E8DC433C8;
+	Mon,  4 Dec 2023 00:12:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1701648776;
+	bh=dz/Xdg63emmZLkGWSy3nNn+93DZX198gQRe7eKfauiQ=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=YqfdOmBh0ZAZ59/GXjjqmh9PuBWZd2kx338OUvKo6b7ZhfOQqiNuFv3+nY8rXhE7n
+	 vcVkjdCsBIRUnQAX4oqjpAnS3zHQ21JWAIWlH8zstDTl3Rut32A4GR851RPz3OOsWC
+	 BOwnsgDmjeq3/sdQbDQ34PkQEFargihBiupW0auuZlDWBsFsxrxF3FNeyA8zMYTVUp
+	 Fb5FJKHE2m8HD7lJvSDWqY0DZQG1+sc7y3OkbTEqVze1GjDyQacx+WvEbymJ3cl2uR
+	 9nrqCDBq2KRmq2i2lFAyqOZrgU96HDBjXFPRHHInWJsHNG9BxtYHbPGl3+V7XB0X5a
+	 uBAgdTyWM1S2w==
+Message-ID: <0d40686e-786b-42f6-962b-e4806e3b7914@kernel.org>
+Date: Mon, 4 Dec 2023 09:12:53 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm: Validate zoned model of devices built with zoned
+ targets
+To: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
+ "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+ Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Naohiro Aota <Naohiro.Aota@wdc.com>
+References: <20231201020329.273592-1-dlemoal@kernel.org>
+ <53550076-f1ac-4f74-8d8f-6f3f8a05a230@wdc.com>
+Content-Language: en-US
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <53550076-f1ac-4f74-8d8f-6f3f8a05a230@wdc.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Fri, 1 Dec 2023, David Teigland wrote:
-> On Thu, Nov 30, 2023 at 04:40:00PM -0800, Eric Wheeler wrote:
-> > 	integritysetup format $idev0 --integrity xxhash64 --batch-mode
-> > 	integritysetup format $idev1 --integrity xxhash64 --batch-mode
-> > 
-> > 	integritysetup open --integrity xxhash64 --allow-discards $idev0 dm-integrity0
-> > 	integritysetup open --integrity xxhash64 --allow-discards $idev1 dm-integrity1
-> > 
-> > 	mdadm --create $MD_DEV --metadata=1.2 --assume-clean --level=1 --raid-devices=2 /dev/mapper/dm-integrity[01]
-> > 
-> > 	# 1. This should be enough to trigger it:
-> > 	SSD_DEV=$MD_DEV
-> > 
-> > 	# 2. If not, then wrap /dev/md9 in a linear target:
-> > 	#linear_add ssd $MD_DEV
-> > 	#SSD_DEV=/dev/mapper/ssd
+On 12/1/23 20:09, Johannes Thumshirn wrote:
+> On 01.12.23 03:03, Damien Le Moal wrote:
+>> +	/* Count conventional and sequential zones */
+>> +	noio_flag = memalloc_noio_save();
+>> +	ret = dm_blk_do_report_zones(md, t, 0, nr_zones,
+>> +				     dm_validate_zoned_model_cb, &zc);
+>> +	memalloc_noio_restore(noio_flag);
 > 
-> Interesting that just adding a linear layer there would have some effect.
+> Why do we need the memalloc_noio context here? I don't see an allocation 
+> in dm_validate_zoned_model_cb.
 
-Its seemed (sometimes) to be the difference between triggering on the 
-first instead of the second iteration.  Without the linear wrap, it would 
-sometimes not crash until the second loop, typically on `lvchange -an 
-testvg`.  Maybe the extra linear hop delayed the IO just enough to help 
-with the race, but that is only speculation.
+It is not for the callback but rather for the underlying target type and from
+there the underlying device drivers, which may all need to allocate memory for
+the report zone (e.g. there is at least a command buffer allocated for SCSI
+disks). So I prefer staying on the safe side of things here and use GFP_NOIO.
 
-> > 	# Create a writable header for the PV meta:
-> > 	dd if=/dev/zero bs=1M count=16 oflag=direct of=/tmp/pvheader
-> > 	loop=`losetup -f --show /tmp/pvheader`
-> > 	linear_add pv $loop /dev/nullb0
-> > 
-> > 	# Create the VG
-> > 	lvmdevices --adddev $SSD_DEV
-> > 	lvmdevices --adddev /dev/mapper/pv
-> > 	vgcreate $VGNAME /dev/mapper/pv $SSD_DEV
-> > 
-> > 	# Create the pool:
-> > 	lvcreate -n pool0 -L 1T $VGNAME /dev/mapper/pv
-> > 	lvcreate -n meta0 -L 512m $VGNAME $SSD_DEV
-> > 
-> > 	# Make sure the meta volume is on the SSD (it should be already from above):
-> > 	pvmove -n meta0 /dev/mapper/pv
-> 
-> I'd omit that pvmove if possible just in case it makes some unexpected
-> change.  You have more than enough layers to complicate things as it is
-> without pvmove adding dm-mirror to the mix.
-
-Good point. Since we specify the PV with `lvcreate ... $SSD_DEV`, the
-pvmove isn't necessary at all.  (Specifying the PV on lvcreate was added
-later, pvmove was leftover from earlier testing.)
-
-> 
-> > 	lvconvert -y --force --force --chunksize 64k --type thin-pool --poolmetadata $VGNAME/meta0 $VGNAME/pool0
-> 
-> It's not a bad idea to use mdraid over dm-integrity, but it would be
-> interesting to know if doing raid+integrity in lvm would have the same
-> problems. e.g.
->
-> 
-> lvcreate --type raid1 --raidintegrity y -m1 -L 512m -n meta0 $vg /dev/ram[01]
-> lvcreate -n pool0 -L 1T $vg /dev/nullb0
-> lvconvert --type thin-pool --poolmetadata meta0 $vg/pool0
-
-Good idea!  As it turns out, that crashes just as easily.  Here is the
-script with LVM based RAID1, which is somewhat simpler:
-
---------------------------------------------------------------------
-#!/bin/bash
-
-# Notice: /dev/ram0 and /dev/ram1 will be wiped unconditionally.
-
-# Configure these if you need to:
-VGNAME=testvg
-LVNAME=thin
-LVSIZE=$((10 * 1024*1024*1024/512))
-
-echo "NOTICE: THIS MAY BE UNSAFE. ONLY RUN THIS IN A TEST ENVIRONMENT!"
-echo "Press enter twice to continue or CTRL-C to abort."
-
-read
-read
-
-set -x
-
-
-# append disks into a linear target
-linear_add()
-{
-	name=$1
-	shift
-
-	prevsize=0
-	for vol in "$@"; do
-		size=`blockdev --getsize $vol`
-		echo "$prevsize $size linear $vol 0"
-		prevsize=$size
-	done \
-		| dmsetup create $name
-
-	echo /dev/mapper/$name
-}
-
-lvthin_add()
-{
-	id=$1
-	lvcreate -An -V $LVSIZE -n $LVNAME$id --thinpool pool0 $VGNAME >&2
-	echo /dev/$VGNAME/$LVNAME$id
-}
-
-lvthin_snapshot()
-{
-	origin=$1
-	id=$2
-
-	lvcreate -An -s $VGNAME/$LVNAME$origin -n $LVNAME$id >&2
-	echo /dev/$VGNAME/$LVNAME$id
-}
-
-fio()
-{
-	dev=$1
-	/bin/fio --name=$dev --rw=randrw --direct=1 --bs=512 --numjobs=1 --filename=$dev --time_based --runtime=$FIOTIME --ioengine=libaio --iodepth=1 &> /dev/null
-}
-
-do_reset()
-{
-	killall -9 fio
-	lvchange -an $VGNAME
-	rmdir /dev/$VGNAME
-	dmsetup remove pv
-	lvmdevices --deldev /dev/mapper/pv
-	losetup -d /dev/loop?
-	rmmod brd
-	rmmod null_blk
-	echo ==== reset done
-	sleep 1
-}
-
-do_init()
-{
-	modprobe null_blk gb=30000 bs=512
-
-	ramsize_gb=1
-	modprobe brd rd_size=$(($ramsize_gb * 1024*1024)) rd_nr=2
-
-	# Create a writable header for the PV meta:
-	dd if=/dev/zero bs=1M count=16 oflag=direct of=/tmp/pvheader
-	loop=`losetup -f --show /tmp/pvheader`
-	linear_add pv $loop /dev/nullb0
-
-	# Create the VG
-	lvmdevices --adddev /dev/ram0
-	lvmdevices --adddev /dev/ram1
-	lvmdevices --adddev /dev/mapper/pv
-	vgcreate $VGNAME /dev/mapper/pv /dev/ram[01]
-
-	# Create the pool:
-	lvcreate -n pool0 -L 1T $VGNAME /dev/mapper/pv
-	lvcreate --type raid1 --raidintegrity y -m1 -L 512m -n meta0 $VGNAME /dev/ram[01]
-
-	lvconvert -y --force --force --chunksize 64k --type thin-pool --poolmetadata $VGNAME/meta0 $VGNAME/pool0
-}
-
-
-while true; do
-	do_reset
-	do_init
-
-	thin1=`lvthin_add 1`
-	fio $thin1 &
-
-	thin2=`lvthin_snapshot 1 2`
-	fio $thin2 &
-
-	wait
-
-done
+-- 
+Damien Le Moal
+Western Digital Research
 
