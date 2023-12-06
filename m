@@ -1,114 +1,95 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yb1-f173.google.com (mail-yb1-f173.google.com [209.85.219.173])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAA6C675B5
-	for <dm-devel@lists.linux.dev>; Wed,  6 Dec 2023 17:25:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2AB627096C
+	for <dm-devel@lists.linux.dev>; Wed,  6 Dec 2023 21:52:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Sc/mjRZU"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5D8ECC433CA
-	for <dm-devel@lists.linux.dev>; Wed,  6 Dec 2023 17:25:08 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1701883508;
-	bh=cTsb/UUe/7c50IQGHlJ5frauXTjRzXHTTCqGuvYx7Ys=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=Sc/mjRZUJ3dnU4TEueWhY5Cesz7wCFYS63sbRpDT9rWZmeozgUxdqIpQNIGGCrPon
-	 8JIg3kcscEdyrOZAkrsHryihS8evbvVSgFuKEPDNZkOX7B3MT5S7HEl2iiO2ESNzfF
-	 0vuheCGXJXy0So23AgNzGz6vcXLexnSDoE+JVdCPYBhNzC91TFi780rWYqBgn6TtTz
-	 2FIedVRgbZr97ESDnjDa3M+0ZTybzcfdmHHiUzQg2u8kXPmnclQClq7MnOKkHELdaZ
-	 hAjaok80KERa/QERWVrN4nfhY0mf6EDOLM4vMJ5LVDW0xdJUUV4HiWSavZlRDMmQAN
-	 COSt6ZQYO48zg==
-Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-50bfa5a6cffso17660e87.0
-        for <dm-devel@lists.linux.dev>; Wed, 06 Dec 2023 09:25:08 -0800 (PST)
-X-Gm-Message-State: AOJu0YxdpBNDoeZzowgOdwA77lKDAKJfXrlbEtVO7NWC/RaDDwN3ZRcw
-	CS7SB4x56MsluHnT+6FBHjs3WER4XYRI8lcxsbk=
-X-Google-Smtp-Source: AGHT+IHT1kpTKlXAwY6gHfg8PdXTVmwgYffVePOsfH7VO3lnRkQcNzkn7H0RXNt5Jg6sS0YQO0gWte3wMHqntnZPKbU=
-X-Received: by 2002:a05:6512:33cf:b0:50b:eedd:edd0 with SMTP id
- d15-20020a05651233cf00b0050beeddedd0mr962504lfg.105.1701883506495; Wed, 06
- Dec 2023 09:25:06 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="WBaGNm4w"
+Received: by mail-yb1-f173.google.com with SMTP id 3f1490d57ef6-db5e5647c24so1252068276.1
+        for <dm-devel@lists.linux.dev>; Wed, 06 Dec 2023 13:52:53 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=paul-moore.com; s=google; t=1701899573; x=1702504373; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Ad4QKqllEurVWf/Pv2WnyL7sj04ktRUEA1KwimHLGBw=;
+        b=WBaGNm4wfsHMV3ctCr5WUIywVacaJnU56ryyv4A6wa/HwtaoxAmpsFuIkPLmgxUypc
+         YYQ3sYp4EBwoaecNan/OPJM8CIyj1xziS9YUqCcGlU6oBuFySBsEboejm/akXbC9IsIv
+         1bjHZSAeJ3yDJnA2uwgJbVfoLQXxyYSIM9NF63SvCIF+JBlEr7MNcUQ0DNNUi+49n0Cx
+         ch9dqtcmbMk2OvILKL3tcHwtVh4LIlAxRctUeb4DPKDrbYvLNwb3/ekCSgVp8YqmcjnQ
+         JkdwqPf3NvAk5mKP872boMkaPZ4Zgfp5tVdrQKzWURrY/t9CFAuVTX/8jJoYUHhg38n3
+         gziQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1701899573; x=1702504373;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=Ad4QKqllEurVWf/Pv2WnyL7sj04ktRUEA1KwimHLGBw=;
+        b=QhlgtF3BUVDQfzJCnRept23df7h1BOUIfa9vXkeTE9w0cESeVsWOYo1oHmEqMZ6fNG
+         ggzr068RwMJuV2dH+Ux5dqbcfFLyglISI8uUtB4Jt8t3V2JF7N0N7qtQOK9fUbXuMFhB
+         zQ0oO3KtojBYqZycYYLgty4FTcN1Ju4EwpA/kw6iMfEJSQdJlMKb80hB8BMEpVGRX+pg
+         WuGJ7VJuUHmb5SZlj4G+OhrpFMm6uonCLa2zF/VuCq0ctyuNMkqEjcSc2UHVc3g6RlA/
+         3SHUJTQsJQUZSur8v8451qTbPX47G64fAhYS/NScRYgMnDUSvJxaQCA2giJoUB8ZPiB0
+         pHtA==
+X-Gm-Message-State: AOJu0Yz0eNAyartA1ZUXSgQqoZzFVap7iygo6pGCgMLNafI6VdpGsE8g
+	Rt5OKyI8PplJP7wwMYO5eeQboaNH32n8Za6Fwxy+
+X-Google-Smtp-Source: AGHT+IEj7nPBQx69pTJuIU/DScLOgVaCvMx3IAuTkYQQJ5vMAh2Hehp1yFZ/6ct0anbgpUrLprVHp8nDNRkJVZqoN6c=
+X-Received: by 2002:a25:ab66:0:b0:db7:98ba:2468 with SMTP id
+ u93-20020a25ab66000000b00db798ba2468mr1505130ybi.28.1701899573074; Wed, 06
+ Dec 2023 13:52:53 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20231204031703.3102254-1-yukuai1@huaweicloud.com>
- <CAPhsuW4sF=jAyA+Q=2tFBBAApjcW=gWXndDNX6t3nrAfnk_zZA@mail.gmail.com> <269ac5cb-aa09-02ca-4150-c90cd5a72e06@huaweicloud.com>
-In-Reply-To: <269ac5cb-aa09-02ca-4150-c90cd5a72e06@huaweicloud.com>
-From: Song Liu <song@kernel.org>
-Date: Wed, 6 Dec 2023 09:24:54 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW7US8f7gR+Eo=hYU0RF+L8YkF6ebiWG+FDO6frAxoBarw@mail.gmail.com>
-Message-ID: <CAPhsuW7US8f7gR+Eo=hYU0RF+L8YkF6ebiWG+FDO6frAxoBarw@mail.gmail.com>
-Subject: Re: [PATCH -next] md: split MD_RECOVERY_NEEDED out of mddev_resume
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
-	dm-devel@lists.linux.dev, janpieter.sollie@edpnet.be, 
-	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, yi.zhang@huawei.com, 
-	yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
+References: <20231206060629.2827226-1-david@fromorbit.com> <20231206060629.2827226-6-david@fromorbit.com>
+In-Reply-To: <20231206060629.2827226-6-david@fromorbit.com>
+From: Paul Moore <paul@paul-moore.com>
+Date: Wed, 6 Dec 2023 16:52:42 -0500
+Message-ID: <CAHC9VhTP3hRAkmp7wOKGrEzY5OXXJpnuofTG_+KdXDku18vkeA@mail.gmail.com>
+Subject: Re: [PATCH 05/11] selinux: use dlist for isec inode list
+To: Dave Chinner <david@fromorbit.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, 
+	linux-cachefs@redhat.com, dhowells@redhat.com, gfs2@lists.linux.dev, 
+	dm-devel@lists.linux.dev, linux-security-module@vger.kernel.org, 
+	selinux@vger.kernel.org, linux-kernel@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Dec 6, 2023 at 3:36=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> wr=
-ote:
+On Wed, Dec 6, 2023 at 1:07=E2=80=AFAM Dave Chinner <david@fromorbit.com> w=
+rote:
 >
-> Hi,
+> From: Dave Chinner <dchinner@redhat.com>
 >
-> =E5=9C=A8 2023/12/06 16:30, Song Liu =E5=86=99=E9=81=93:
-> > On Sun, Dec 3, 2023 at 7:18=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com=
-> wrote:
-> >>
-> >> From: Yu Kuai <yukuai3@huawei.com>
-> >>
-> >> New mddev_resume() calls are added to synchroniza IO with array
-> >> reconfiguration, however, this introduce a regression while adding it =
-in
-> >> md_start_sync():
-> >>
-> >> 1) someone set MD_RECOVERY_NEEDED first;
-> >> 2) daemon thread grab reconfig_mutex, then clear MD_RECOVERY_NEEDED an=
-d
-> >>     queue a new sync work;
-> >> 3) daemon thread release reconfig_mutex;
-> >> 4) in md_start_sync
-> >>     a) check that there are spares that can be added/removed, then sus=
-pend
-> >>        the array;
-> >>     b) remove_and_add_spares may not be called, or called without real=
-ly
-> >>        add/remove spares;
-> >>     c) resume the array, then set MD_RECOVERY_NEEDED again!
-> >>
-> >> Loop between 2 - 4, then mddev_suspend() will be called quite often, f=
-or
-> >> consequence, normal IO will be quite slow.
-> >>
-> >> Fix this problem by spliting MD_RECOVERY_NEEDED out of mddev_resume(),=
- so
-> >> that md_start_sync() won't set such flag and hence the loop will be br=
-oken.
-> >
-> > I hope we don't leak set_bit MD_RECOVERY_NEEDED to all call
-> > sites of mddev_resume().
+> Because it's a horrible point of lock contention under heavily
+> concurrent directory traversals...
 >
-> There are also some other mddev_resume() that is added later and don't
-> need recovery, so md_start_sync() is not the only place:
+>   - 12.14% d_instantiate
+>      - 12.06% security_d_instantiate
+>         - 12.13% selinux_d_instantiate
+>            - 12.16% inode_doinit_with_dentry
+>               - 15.45% _raw_spin_lock
+>                  - do_raw_spin_lock
+>                       14.68% __pv_queued_spin_lock_slowpath
 >
->   - md_setup_drive
->   - rdev_attr_store
->   - suspend_lo_store
->   - suspend_hi_store
->   - autorun_devices
->   - md_ioct
->   - r5c_disable_writeback_async
->   - error path from new_dev_store(), ...
 >
-> I'm not sure add a new helper is a good idea, because all above apis
-> should use new helper as well.
+> Signed-off-by: Dave Chinner <dchinner@redhat.com>
+> ---
+>  include/linux/dlock-list.h        |  9 ++++
+>  security/selinux/hooks.c          | 72 +++++++++++++++----------------
+>  security/selinux/include/objsec.h |  6 +--
+>  3 files changed, 47 insertions(+), 40 deletions(-)
 
-I think for most of these call sites, it is OK to set MD_RECOVERY_NEEDED
-(although it is not needed), and md_start_sync() is the only one that may
-trigger "loop between 2 - 4" scenario. Did I miss something?
+In the cover letter you talk about testing, but I didn't see any
+mention of testing with SELinux enabled.  Given the lock contention
+stats in the description above I'm going to assume you did test this
+and pass along my ACK, but if you haven't tested the changes below
+please do before sending this anywhere important.
 
-It is already rc4, so we need to send the fix soon.
+Acked-by: Paul Moore <paul@paul-moore.com>
 
-Thanks,
-Song
+--=20
+paul-moore.com
