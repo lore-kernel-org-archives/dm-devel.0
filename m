@@ -1,54 +1,55 @@
-Received: from mail-pg1-f180.google.com (mail-pg1-f180.google.com [209.85.215.180])
+Received: from mail-oi1-f177.google.com (mail-oi1-f177.google.com [209.85.167.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29B241096F
-	for <dm-devel@lists.linux.dev>; Wed,  6 Dec 2023 06:06:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C360510978
+	for <dm-devel@lists.linux.dev>; Wed,  6 Dec 2023 06:06:36 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fromorbit.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fromorbit.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b="0CJfpOYQ"
-Received: by mail-pg1-f180.google.com with SMTP id 41be03b00d2f7-5c6734e0c22so1833311a12.0
-        for <dm-devel@lists.linux.dev>; Tue, 05 Dec 2023 22:06:35 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b="YYXiM2/s"
+Received: by mail-oi1-f177.google.com with SMTP id 5614622812f47-3b8b463c7c6so2594463b6e.3
+        for <dm-devel@lists.linux.dev>; Tue, 05 Dec 2023 22:06:36 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=fromorbit-com.20230601.gappssmtp.com; s=20230601; t=1701842795; x=1702447595; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=GQ4TkYRaggCJYZK2FV5jJyuJ3CMLuWDtaS8ek+7yiFo=;
-        b=0CJfpOYQNOiLVjKXxrvLTXrtgyc7GZ6/PXXrKmsiun48tUcF6XDNDFyepdTSuf6Aug
-         EH/F8mYjVdrJeEFvTjWVW9tyxU6+6QOhcpVuB05SXgw4ZHSQXvc2AKiuVWYgvJb9RvTo
-         0t3oVOeWf6KVVv/jK63hTbA1RrAoi6GlB0AAS9/34zM5kZXgTnQbOcRVG4+LhQ2pXw12
-         rj9bGrFJnWbSdZC6qLMFCOV+DXHfxq5ctXLh3iadWA6BPJykT/rUjvUU/b38StmgKW9b
-         rJYwz4/XwqRb6tM9ezGzDBvvxIpf9EiHc8vndP8R4eRTRzyzc5qcH6T66A2n3pE2ZGny
-         nEvA==
+        d=fromorbit-com.20230601.gappssmtp.com; s=20230601; t=1701842796; x=1702447596; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=I06elknjTKgnu51XMDSSIqaWSXzJw01Bc0WUn6qADWU=;
+        b=YYXiM2/sR6ixMPk6o1aizXkSYizFqrfhbEeYdbTwewe/90tVtZEO4hiIhv5Gi6Fhow
+         S8Jt5r1moyg/Ye5V/WLX9PrYuEhtTF0rcH8pEL9WYJLwYgTZ/7ZjIhc7LfYPErffyi0O
+         59kXRnz8l3VPB0DNlo48SGNGlbMF2Xb92qIaq7rofQRL/BiQr2sm8XMdLszFqJLRugb3
+         jBaVAJdBU1wFNvmDzFb7VCRiVr+IjoFA2dx7TJO2IqwsliLlSaw+55hUSiaQqFo7sZcY
+         ba8szODD7A7CjY7Y0kDBv8tv5xXaej7cUrK7IWJh/hjo74iYCHTc5Z0HaLJLq3tPvI0Y
+         TizA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1701842795; x=1702447595;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=GQ4TkYRaggCJYZK2FV5jJyuJ3CMLuWDtaS8ek+7yiFo=;
-        b=RjPl8Ort3c06bNHAl6yx2lnOE12r0f17xcPE9wCqOlhZkCk1wRvwH2KP0hTM7t9r3t
-         7eU3O+XRgW6szmTd2vzw8/d8z6PAu4LLthw38q+vu9TRNUmqAViG635cvCA22aidkJVk
-         vgcWXJdcofghCGIZ/kH4OSVEUfdX8lxOoxNF5zCyBEi48Eyh5Ct3rQ1U5y+AOn25DbJG
-         nuWhwV28/x0CqD93LArBw1nu0CFcVb5ODS99Ci2U9hrsO0ZGd95wRgqgQpKxM3MLg/7x
-         FHXczLRWYU8hEy4PgnOa8XuI04VxEfak9FoAOng3InWoagKlCqjfvcdcpEeFq4ha1vdD
-         mjLA==
-X-Gm-Message-State: AOJu0YySpEzILyikTkG6sk2sa6RoTTbMJb8grTEyBLdx4DRh1t4gMm7R
-	gg683Qdum9Wm1EAtpiSVpuEbLg==
-X-Google-Smtp-Source: AGHT+IHb/Qtsso0o+wVgpqf1pcApUheNiLjU522o042hStNIoB3lfZqrlikbyIfnnInfyFHBsFTr/w==
-X-Received: by 2002:a05:6a20:8f0e:b0:18f:d694:e899 with SMTP id b14-20020a056a208f0e00b0018fd694e899mr202540pzk.7.1701842795313;
+        d=1e100.net; s=20230601; t=1701842796; x=1702447596;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=I06elknjTKgnu51XMDSSIqaWSXzJw01Bc0WUn6qADWU=;
+        b=xCERW4q5KXEkYdogmIYiWd1KcoxW4qz34G32Zvs5epgeVb/cDT92/31FwNvVUVpAb5
+         +wj59pa5TcL1GDfbuJ3yC2hy3hp4pBPviClDlz8IKpEwtUGvbZuW0HHYO+iBYnhD9vLw
+         +jEWeiKFlZO0/APGe81UKArdgyN1otrp9Go1Ci04bEZPZu130TiNJ6ChEmhzjHREnBh2
+         R5r68Z8/IDqSif17EHz3fBkKUPMd1pSd5QyZb5OZKQS+oUle3XAS8VKfFzjZn3+h9U5A
+         lH4LDsVGRITRP1OCIp27+ehhx1YRPoHh5iXfiAXL9hVwg5spQNrMMRYw16fafLQR+gi8
+         P70w==
+X-Gm-Message-State: AOJu0YzSz7YGMO+Qa7lK8LlVpD0R1+H1llUW+4GAK2Sc5FYH7SaGVYFO
+	U4QO+thv7Ar+oPF0PFAsx4hfFg==
+X-Google-Smtp-Source: AGHT+IHg46YrWrDsKyEzgLgbWMIe2JdBMh/jkxRdtDbsgeZCFkTPl/hq1LWU5hHHTCSeMwm3TFAgdw==
+X-Received: by 2002:a05:6808:6507:b0:3b8:b063:5d82 with SMTP id fm7-20020a056808650700b003b8b0635d82mr684790oib.105.1701842795753;
         Tue, 05 Dec 2023 22:06:35 -0800 (PST)
 Received: from dread.disaster.area (pa49-180-125-5.pa.nsw.optusnet.com.au. [49.180.125.5])
-        by smtp.gmail.com with ESMTPSA id ju1-20020a170903428100b001cf7c07be50sm8347099plb.58.2023.12.05.22.06.33
+        by smtp.gmail.com with ESMTPSA id m18-20020a056a00081200b006ce64ebd2a0sm2297147pfk.99.2023.12.05.22.06.33
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Tue, 05 Dec 2023 22:06:34 -0800 (PST)
 Received: from [192.168.253.23] (helo=devoid.disaster.area)
 	by dread.disaster.area with esmtp (Exim 4.96)
 	(envelope-from <dave@fromorbit.com>)
-	id 1rAl3H-004VOX-2U;
+	id 1rAl3I-004VOr-0C;
 	Wed, 06 Dec 2023 17:06:31 +1100
 Received: from dave by devoid.disaster.area with local (Exim 4.97-RC0)
 	(envelope-from <dave@devoid.disaster.area>)
-	id 1rAl3H-0000000BrUz-1Ada;
+	id 1rAl3H-0000000BrVL-2XOR;
 	Wed, 06 Dec 2023 17:06:31 +1100
 From: Dave Chinner <david@fromorbit.com>
 To: linux-fsdevel@vger.kernel.org
@@ -60,10 +61,12 @@ Cc: linux-block@vger.kernel.org,
 	linux-security-module@vger.kernel.org,
 	selinux@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 0/11] vfs: inode cache scalability improvements
-Date: Wed,  6 Dec 2023 17:05:29 +1100
-Message-ID: <20231206060629.2827226-1-david@fromorbit.com>
+Subject: [PATCH 05/11] selinux: use dlist for isec inode list
+Date: Wed,  6 Dec 2023 17:05:34 +1100
+Message-ID: <20231206060629.2827226-6-david@fromorbit.com>
 X-Mailer: git-send-email 2.42.0
+In-Reply-To: <20231206060629.2827226-1-david@fromorbit.com>
+References: <20231206060629.2827226-1-david@fromorbit.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -72,192 +75,229 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-We all know that the global inode_hash_lock and the per-fs global 
-sb->s_inode_list_lock locks are contention points in filesystem workloads
-that stream inodes through memory, so it's about time we addressed these
-limitations.
+From: Dave Chinner <dchinner@redhat.com>
 
-The first part of the patchset address the sb->s_inode_list_lock.
-This was done a long time ago by Waiman Long by converting the
-global linked list to a per-cpu linked list - those infrastructure
-patches are pretty much unchanged from when Waiman first wrote them,
-and as such the still carry the RVB that Jan Kara gave for them. I
-have no idea if the problem that Waiman was trying to solve still
-exists, but that's largely irrelevant because there are other
-problems that I can easily reproduce.
+Because it's a horrible point of lock contention under heavily
+concurrent directory traversals...
 
-That is, once at ~16 threads trying to instantiate or tear down
-inodes at the same time in a filesystem, the sb->s_inode_list_lock
-becomes a single point of contention. Adding an inode to the inode
-cache requires adding it to the sb->s_inodes list, and removing an
-inode from the cache requires removing it from the sb->s_inodes
-list. That's two exclusive lock operations per inode we cycle
-through the inode cache.
+  - 12.14% d_instantiate
+     - 12.06% security_d_instantiate
+	- 12.13% selinux_d_instantiate
+	   - 12.16% inode_doinit_with_dentry
+	      - 15.45% _raw_spin_lock
+		 - do_raw_spin_lock
+		      14.68% __pv_queued_spin_lock_slowpath
 
-This creates a hard limit on the number of inodes we can cycle
-through memory in a single filesystem. It tops out at around
-600-700,000 inodes per second on XFS, and at that point we see
-catastrophic cacheline contention breakdown and nothing goes any
-faster. We can easily burn hundreds of CPUs on the sb->s_inodes list
-operations, yet we still can only get 600-700k inodes/s through the
-cache.
 
-Converting the sb->s_inodes list to a dlist gets rid of this single
-contention point and makes the sb->s_inodes list operations
-disappear from the profiles completely. Prior to this change, at 32
-threads XFS could pull 12.8 million inodes into cache in ~20s
-(that's ~600k inodes/s - sound familiar?). With this change, those
-12.8 million inodes are pulled into cache in ~10s. That's double the
-rate at which XFS can pull inodes into memory from the
-filesystem....
+Signed-off-by: Dave Chinner <dchinner@redhat.com>
+---
+ include/linux/dlock-list.h        |  9 ++++
+ security/selinux/hooks.c          | 72 +++++++++++++++----------------
+ security/selinux/include/objsec.h |  6 +--
+ 3 files changed, 47 insertions(+), 40 deletions(-)
 
-I'm talking about XFS here, because none of the other filesystem
-actually stress the sb->s_inode_list_lock at all. They all hit
-catastrophic cacheline contention on the inode_hash_lock long before
-they get anywhere near the sb->s_inodes limits. For ext4 and
-bcachefs, the inode_hash_lock becomes a limiting factor at 8
-threads. btrfs hits internal namespace tree contention limits at 2
-threads, so it's not even stressing the inode_hash_lock unless
-highly threaded workloads are manually sharded across subvolumes.
-
-So to bring the rest of the filesystems up, we need to fix the
-inode_hash_lock contention problems.  This patchset replaces the
-global inode_hash_lock with the same lock-per-chain implementation
-that the dentry cache uses. i.e. hash-bl lists. This is more complex
-than the dentry cache implementation, however, because we nest spin
-locks inside the inode_hash_lock. This conversion means we nest spin
-locks inside bit spin locks in the inode cache.
-
-Whilst this doesn't sound particularly problematic, the issue arises
-on CONFIG_PREEMPT_RT kernels, where spinlocks are converted to
-sleeping locks. We can't place sleeping locks inside spinning bit
-locks, and that's exactly what happens if we use hash-bl lists in
-the inode cache and then turn on CONFIG_PREEMPT_RT.
-
-The other downside to converting to hash-bl is that we lose lockdep
-coverage of the inode hash table - lockdep does not track bit locks
-at all.
-
-Both of these issues can be solved the same way: whenever either of
-these two config options are turned on, we change the hash-bl
-implementation from using a bit spin lock on th elowest bit of the
-chain head pointer to using as dedicated spinlock per chain. This
-trades off performance and memory footprint for configurations where
-correctness is more important than performance, but allows optimal
-implementations of hash-bl lists when performance is the primary
-concern.
-
-In making this conversion, we make all hash-bl implementations safe
-for PREEMPT_RT usage and gain lockdep coverage of all hash-bl lists.
-It also pointed out that several hash-bl list users did not actually
-initialise the hash list heads correctly - they elided the
-initialisation and only got away with it because they allocated
-zeroed memory and the hash list head would still work from empty.
-This needed fixing for lockdep....
-
-The result of this conversion is that inode cache lookup heavy
-workloads such as filesystem traversals and inode creation/removal
-no longer contend on the inode_hash_lock to stream inodes through
-the inode cache. This results in big performance improvements at
-thread counts of >= 8.
-
-I've run this through fstests with lockdep enabled on ext4 and XFS
-without discovering any issues except for dm-snapshot needing
-lockdep nesting annotations for list-bl locks. I've run a bunch of
-"will-it-scale" like tests across XFS, ext4, bcachefs and btrfs, and
-the raw table results for 6.7-rc4 are below.
-
-The tests runs a fixed number of files per thread, so as the thread
-count increases we should see runtimes stay constant if scalability
-is perfect. I'm not caring about operation rates, I'm not caring
-about which filesystems are faster, all I'm looking at is whether
-the scalability of individual filesytsems improves with the changes.
-
-base:  vanilla 6.7-rc4 kernel
-scale: 6.7-rc4 plus this patchset
-
-Filesystem      Files  Threads      Create             Walk             chmod            Unlink
-				base    scale	  base    scale     base    scale    base    scale
-       xfs     400000     1     11.217 10.477     11.621 11.570     14.980 14.797    18.314 18.248
-       xfs     800000     2     12.313 11.470     11.673 11.158     15.271 14.782    19.413 18.533
-       xfs    1600000     4     14.130 13.246      9.665  9.444     14.794 13.710    19.582 17.015
-       xfs    3200000     8     16.654 16.108     10.622  9.275     15.854 14.575    20.679 19.237
-       xfs    6400000    16     17.587 18.151     12.148  9.508     16.655 17.691    26.044 21.865
-       xfs   12800000    32     20.833 21.491     20.518 10.308     23.614 19.334    42.572 27.404
-
-All of the operations that require directory traversal show
-significant improvements at 16 or more threads on XFS. This is
-entirely from the sb->s_inodes modifications.
-
-Filesystem      Files  Threads      Create             Walk             chmod            Unlink
-				base    scale	  base    scale     base    scale    base     scale
-      ext4     400000     1      9.344  9.394      7.691  7.847      9.188  9.212    11.340  12.517
-      ext4     800000     2     10.445 10.375      7.923  7.358     10.158 10.114    14.366  14.093
-      ext4    1600000     4     11.008 10.948      8.152  7.530     11.140 11.150    18.093  17.153
-      ext4    3200000     8     23.348 12.134     13.090  7.871     15.437 12.824    30.806  31.968
-      ext4    6400000    16     17.343 29.112     24.602  9.540     31.034 22.057    60.538  57.636
-      ext4   12800000    32     40.125 44.638     49.536 19.314     63.183 38.905   138.688 138.632
-
-Walk on ext4 shows major improvements at 8 threads and above, as
-does the recursive chmod. This largely comes from the inode hash
-lock removal, but the full scalability improvements are not realised
-until the sb->s_inodes changes are added as well. 
-
-Note that unlink doesn't scale or improve because the mkfs.ext4
-binary in debian unstable does not support the orphan file option
-and so it is completely bottlenecked on orphan list scalability
-issues.
-
-Filesystem      Files  Threads      Create             Walk             chmod            Unlink
-				base    scale	  base    scale     base    scale    base     scale
-  bcachefs     400000     1     16.999 17.193      6.546  6.355    13.973  13.024    28.890  19.014
-  bcachefs     800000     2     20.133 19.597      8.003  7.276    22.042  20.070    28.959  29.141
-  bcachefs    1600000     4     22.836 23.764      9.097  8.506    58.827  56.108    38.955  37.435
-  bcachefs    3200000     8     27.932 27.545     11.752 10.015   192.802 185.834    64.402  77.188
-  bcachefs    6400000    16     32.389 32.021     24.614 13.989   409.873 408.098   243.757 249.220
-  bcachefs   12800000    32     39.809 40.221     49.179 25.982   879.721 821.497   501.357 485.781
-
-bcachefs walk shows major improvements at 16 threads and above, but
-chmod and unlink are drowned by internal contention problems.
-
-Filesystem      Files  Threads      Create             Walk             chmod            Unlink
-				base    scale	  base     scale    base     scale    base      scale
-     btrfs     400000     1     10.307  10.228    12.597  12.104    14.744  14.030    24.171   24.273
-     btrfs     800000     2     15.956  14.018    19.693  17.180    24.859  20.872    59.338   48.725
-     btrfs    1600000     4     22.441  20.951    32.855  29.013    37.975  33.575   140.601  125.305
-     btrfs    3200000     8     34.157  32.693    55.066  56.726    66.676  64.661   343.379  325.816
-     btrfs    6400000    16     60.847  59.123    90.097  89.340   116.994 114.280   683.244  681.953
-     btrfs   12800000    32    122.525 118.510   118.036 125.761   206.122 212.102  1612.940 1629.689
-
-There's little point in doing scalability testing on plain btrfs -
-it is entirely bottlenecked on internal algorithms long before
-anything in the VFS becomes a scalability limitation.
-
-Filesystem      Files  Threads      Create             Walk             chmod            Unlink
-				base    scale	  base    scale     base    scale    base     scale
-btrfs-svol     400000     1     10.417  9.830     12.011 12.154     14.894 14.913    24.157  23.447
-btrfs-svol     800000     2     12.079 11.681     12.596 12.208     16.535 15.310    28.031  26.412
-btrfs-svol    1600000     4     15.219 15.074     12.711 10.735     18.079 16.948    34.330  31.949
-btrfs-svol    3200000     8     23.140 21.307     14.706 10.934     22.580 21.907    53.183  52.129
-btrfs-svol    6400000    16     40.657 40.226     26.062 11.471     34.058 33.333   101.133  99.504
-btrfs-svol   12800000    32     81.516 79.412     50.320 12.406     65.691 58.229   193.847 200.050
-
-Once btrfs is running with a sharded namespace (i.e. subvol per
-thread) we results very similar in nature to bcachefs - walk
-improves dramatically at high thread counts, but nothing else
-changes as all the scalability limitations are internal to the
-filesystem.
-
-I have tested to 64 threads, but there's not a lot extra to add. The
-XFs walk was done in 14.1s, so scalability is falling off but I
-haven't spent any time looking at it in detail because there's just
-so much other internal stuff to fix up before the rest of this
-benchmark scales to 64 threads on XFS....
-
-Git tree containing this series can be pulled from:
-
-https://git.kernel.org/pub/scm/linux/kernel/git/dgc/linux-xfs.git vfs-scale
-
--Dave.
-
+diff --git a/include/linux/dlock-list.h b/include/linux/dlock-list.h
+index 327cb9edc7e3..7ad933b8875d 100644
+--- a/include/linux/dlock-list.h
++++ b/include/linux/dlock-list.h
+@@ -132,6 +132,15 @@ extern void dlock_lists_add(struct dlock_list_node *node,
+ 			    struct dlock_list_heads *dlist);
+ extern void dlock_lists_del(struct dlock_list_node *node);
+ 
++static inline void
++dlock_list_del_iter(struct dlock_list_iter *iter,
++		struct dlock_list_node *node)
++{
++	WARN_ON_ONCE((iter->entry != READ_ONCE(node->head)));
++	list_del_init(&node->list);
++	WRITE_ONCE(node->head, NULL);
++}
++
+ /*
+  * Find the first entry of the next available list.
+  */
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index feda711c6b7b..0358d7c66949 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -340,26 +340,11 @@ static struct inode_security_struct *backing_inode_security(struct dentry *dentr
+ static void inode_free_security(struct inode *inode)
+ {
+ 	struct inode_security_struct *isec = selinux_inode(inode);
+-	struct superblock_security_struct *sbsec;
+ 
+ 	if (!isec)
+ 		return;
+-	sbsec = selinux_superblock(inode->i_sb);
+-	/*
+-	 * As not all inode security structures are in a list, we check for
+-	 * empty list outside of the lock to make sure that we won't waste
+-	 * time taking a lock doing nothing.
+-	 *
+-	 * The list_del_init() function can be safely called more than once.
+-	 * It should not be possible for this function to be called with
+-	 * concurrent list_add(), but for better safety against future changes
+-	 * in the code, we use list_empty_careful() here.
+-	 */
+-	if (!list_empty_careful(&isec->list)) {
+-		spin_lock(&sbsec->isec_lock);
+-		list_del_init(&isec->list);
+-		spin_unlock(&sbsec->isec_lock);
+-	}
++	if (!list_empty(&isec->list.list))
++		dlock_lists_del(&isec->list);
+ }
+ 
+ struct selinux_mnt_opts {
+@@ -547,6 +532,8 @@ static int sb_finish_set_opts(struct super_block *sb)
+ 	struct superblock_security_struct *sbsec = selinux_superblock(sb);
+ 	struct dentry *root = sb->s_root;
+ 	struct inode *root_inode = d_backing_inode(root);
++	struct dlock_list_iter iter;
++	struct inode_security_struct *isec, *n;
+ 	int rc = 0;
+ 
+ 	if (sbsec->behavior == SECURITY_FS_USE_XATTR) {
+@@ -570,27 +557,28 @@ static int sb_finish_set_opts(struct super_block *sb)
+ 	/* Initialize the root inode. */
+ 	rc = inode_doinit_with_dentry(root_inode, root);
+ 
+-	/* Initialize any other inodes associated with the superblock, e.g.
+-	   inodes created prior to initial policy load or inodes created
+-	   during get_sb by a pseudo filesystem that directly
+-	   populates itself. */
+-	spin_lock(&sbsec->isec_lock);
+-	while (!list_empty(&sbsec->isec_head)) {
+-		struct inode_security_struct *isec =
+-				list_first_entry(&sbsec->isec_head,
+-					   struct inode_security_struct, list);
++	/*
++	 * Initialize any other inodes associated with the superblock, e.g.
++	 * inodes created prior to initial policy load or inodes created during
++	 * get_sb by a pseudo filesystem that directly populates itself.
++	 */
++	init_dlock_list_iter(&iter, &sbsec->isec_head);
++	dlist_for_each_entry_safe(isec, n, &iter, list) {
+ 		struct inode *inode = isec->inode;
+-		list_del_init(&isec->list);
+-		spin_unlock(&sbsec->isec_lock);
++
++		dlock_list_del_iter(&iter, &isec->list);
++		dlock_list_unlock(&iter);
++
+ 		inode = igrab(inode);
+ 		if (inode) {
+ 			if (!IS_PRIVATE(inode))
+ 				inode_doinit_with_dentry(inode, NULL);
+ 			iput(inode);
+ 		}
+-		spin_lock(&sbsec->isec_lock);
++
++		dlock_list_relock(&iter);
+ 	}
+-	spin_unlock(&sbsec->isec_lock);
++	WARN_ON_ONCE(!dlock_lists_empty(&sbsec->isec_head));
+ 	return rc;
+ }
+ 
+@@ -1428,10 +1416,8 @@ static int inode_doinit_with_dentry(struct inode *inode, struct dentry *opt_dent
+ 		/* Defer initialization until selinux_complete_init,
+ 		   after the initial policy is loaded and the security
+ 		   server is ready to handle calls. */
+-		spin_lock(&sbsec->isec_lock);
+-		if (list_empty(&isec->list))
+-			list_add(&isec->list, &sbsec->isec_head);
+-		spin_unlock(&sbsec->isec_lock);
++		if (list_empty(&isec->list.list))
++			dlock_lists_add(&isec->list, &sbsec->isec_head);
+ 		goto out_unlock;
+ 	}
+ 
+@@ -2548,9 +2534,10 @@ static int selinux_sb_alloc_security(struct super_block *sb)
+ {
+ 	struct superblock_security_struct *sbsec = selinux_superblock(sb);
+ 
++	if (alloc_dlock_list_heads(&sbsec->isec_head))
++		return -ENOMEM;
++
+ 	mutex_init(&sbsec->lock);
+-	INIT_LIST_HEAD(&sbsec->isec_head);
+-	spin_lock_init(&sbsec->isec_lock);
+ 	sbsec->sid = SECINITSID_UNLABELED;
+ 	sbsec->def_sid = SECINITSID_FILE;
+ 	sbsec->mntpoint_sid = SECINITSID_UNLABELED;
+@@ -2558,6 +2545,15 @@ static int selinux_sb_alloc_security(struct super_block *sb)
+ 	return 0;
+ }
+ 
++static void selinux_sb_free_security(struct super_block *sb)
++{
++	struct superblock_security_struct *sbsec = selinux_superblock(sb);
++
++	if (!sbsec)
++		return;
++	free_dlock_list_heads(&sbsec->isec_head);
++}
++
+ static inline int opt_len(const char *s)
+ {
+ 	bool open_quote = false;
+@@ -2841,7 +2837,7 @@ static int selinux_inode_alloc_security(struct inode *inode)
+ 	u32 sid = current_sid();
+ 
+ 	spin_lock_init(&isec->lock);
+-	INIT_LIST_HEAD(&isec->list);
++	init_dlock_list_node(&isec->list);
+ 	isec->inode = inode;
+ 	isec->sid = SECINITSID_UNLABELED;
+ 	isec->sclass = SECCLASS_FILE;
+@@ -2920,6 +2916,7 @@ static int selinux_inode_init_security(struct inode *inode, struct inode *dir,
+ 	if (rc)
+ 		return rc;
+ 
++
+ 	/* Possibly defer initialization to selinux_complete_init. */
+ 	if (sbsec->flags & SE_SBINITIALIZED) {
+ 		struct inode_security_struct *isec = selinux_inode(inode);
+@@ -7215,6 +7212,7 @@ static struct security_hook_list selinux_hooks[] __ro_after_init = {
+ 		      selinux_msg_queue_alloc_security),
+ 	LSM_HOOK_INIT(shm_alloc_security, selinux_shm_alloc_security),
+ 	LSM_HOOK_INIT(sb_alloc_security, selinux_sb_alloc_security),
++	LSM_HOOK_INIT(sb_free_security, selinux_sb_free_security),
+ 	LSM_HOOK_INIT(inode_alloc_security, selinux_inode_alloc_security),
+ 	LSM_HOOK_INIT(sem_alloc_security, selinux_sem_alloc_security),
+ 	LSM_HOOK_INIT(secid_to_secctx, selinux_secid_to_secctx),
+diff --git a/security/selinux/include/objsec.h b/security/selinux/include/objsec.h
+index 8159fd53c3de..e0709f429c56 100644
+--- a/security/selinux/include/objsec.h
++++ b/security/selinux/include/objsec.h
+@@ -24,6 +24,7 @@
+ #include <linux/spinlock.h>
+ #include <linux/lsm_hooks.h>
+ #include <linux/msg.h>
++#include <linux/dlock-list.h>
+ #include <net/net_namespace.h>
+ #include "flask.h"
+ #include "avc.h"
+@@ -45,7 +46,7 @@ enum label_initialized {
+ 
+ struct inode_security_struct {
+ 	struct inode *inode;	/* back pointer to inode object */
+-	struct list_head list;	/* list of inode_security_struct */
++	struct dlock_list_node list;	/* list of inode_security_struct */
+ 	u32 task_sid;		/* SID of creating task */
+ 	u32 sid;		/* SID of this object */
+ 	u16 sclass;		/* security class of this object */
+@@ -67,8 +68,7 @@ struct superblock_security_struct {
+ 	unsigned short behavior;	/* labeling behavior */
+ 	unsigned short flags;		/* which mount options were specified */
+ 	struct mutex lock;
+-	struct list_head isec_head;
+-	spinlock_t isec_lock;
++	struct dlock_list_heads isec_head;
+ };
+ 
+ struct msg_security_struct {
+-- 
+2.42.0
 
