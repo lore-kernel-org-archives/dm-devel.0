@@ -1,55 +1,55 @@
-Received: from mail-pg1-f170.google.com (mail-pg1-f170.google.com [209.85.215.170])
+Received: from mail-pj1-f53.google.com (mail-pj1-f53.google.com [209.85.216.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D676C1118D
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A8DB11196
 	for <dm-devel@lists.linux.dev>; Wed,  6 Dec 2023 06:06:38 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fromorbit.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fromorbit.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b="vzTSxL5E"
-Received: by mail-pg1-f170.google.com with SMTP id 41be03b00d2f7-5c68da9d639so2010697a12.3
+	dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b="27v6YtNc"
+Received: by mail-pj1-f53.google.com with SMTP id 98e67ed59e1d1-28659348677so436267a91.0
         for <dm-devel@lists.linux.dev>; Tue, 05 Dec 2023 22:06:38 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=fromorbit-com.20230601.gappssmtp.com; s=20230601; t=1701842798; x=1702447598; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=5fxgjHIY+i+wILRYpSYSEatYEwrJqDdx6PzPhkDcv2Y=;
-        b=vzTSxL5Ef9h7yuQMKG1tE3hX89TOGHyXIsXAsx4dyYWgR3tnDytVdiVANaFThmu7ow
-         Zqb5uyZrsgJNUGU9OpHO37ppuaOzyyaBhfmI/AnPA/H/1XrASeGbyj+507oZiD6lFocj
-         zZOeX5JoZ9V9P4b8leP0LfB7bG4qDgsb9GEKEsuaV+J4lHNK6b37uczVMWsQxEHoHnkS
-         DLkoWzdSkfZJRBOI25xHmY1I1BTea18mFZ0FC4eje5dl0RUlz1nCSm685Nujz8BaiV7a
-         A8iBKUCy04kcr+ZR5i2UTpgLT1BDye3KVVAiHuBka7MUp2yBoxqGVAHCBnvD5vR8XBXH
-         DFfw==
+        bh=d5c67p4Iwxfk8EXvTyIdbVdxswTm1LVGC6Ng7PTwCNc=;
+        b=27v6YtNcBv1zNiqwSoqMt37+8XVHcy6ZEMzfkcvOb+M26m8N1FNdMLr1zU2qWDvHHU
+         O8/G9cdpYsogMpwBeWKTJcjTTXykQYFIZAU+OZL7m2+RWvr44SUQ1Mey6KN8omRST6fO
+         FkLpqTkMTDlXsQ7CzT28NKtqOQpKViotPdvDb4uzW1R8yjl9oKnSNr8e809oVm8UQCKs
+         scNuDqYUniUliAWJQswtJlDk6mxDbdDsdJkrdu+ch7atq2Rsv4fvQWDsWSsrHfwP765g
+         AyCLFJe95yavu0xc5soLWX/VFfnS9KuphGNux1TBywUCWyBJfPzzHzAcsy4dv332V6p8
+         KkJQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1701842798; x=1702447598;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=5fxgjHIY+i+wILRYpSYSEatYEwrJqDdx6PzPhkDcv2Y=;
-        b=e9UIFqhWIAFauy7IuqXgHiJBPAqu20QsbP1JJpukSJOUlRk8rii4LyCzgJPaBv0/1Z
-         UnigD7gve62goIdGW/eAJH4yrSWUQnXE0ms3IiYj4XZAjR0UbQIjhmjzuc0CUysyH1GT
-         m18fdG98rBlpxRY1Wfqr1e/izSCPKywmLqOI7o2CERwbDTre9HTxvFhVAwF8mtTBi1Jo
-         Z+Oa4zJMkvXYmbKpy5jHFEN/f1GvmeGXYe1Qny9BvnKStsHQofnuvtshOLrcu0Y+Oyza
-         9YzvhzdxmrclDBFKvc6L9KoLxSVgA8XQqOzrkgaBcPTkx2V7aEO8d8ICO7KwUuGkXGmj
-         bYrQ==
-X-Gm-Message-State: AOJu0Yw0waxEZtWJTxp7JAh7mU9SnvM93DtjYEG+f7H7EziQlBjWHfUI
-	+FsGWk2xDUlvOJTaG9bVGnrv1A==
-X-Google-Smtp-Source: AGHT+IFaRusOCnlTqKyhQX2TmiINjReQS73wsX4XhW7l8zr6yWbnE5nsO3OQlJ5zjUwEdtZUgvxNGw==
-X-Received: by 2002:a05:6a20:a426:b0:18f:97c:823e with SMTP id z38-20020a056a20a42600b0018f097c823emr186921pzk.72.1701842797795;
-        Tue, 05 Dec 2023 22:06:37 -0800 (PST)
+        bh=d5c67p4Iwxfk8EXvTyIdbVdxswTm1LVGC6Ng7PTwCNc=;
+        b=YrjL+tFAYwBaMpE0daz6EV5FDUUXDqiq5ZqPFY8JsWDsnoaq7eMIBKAONv9CY2Mua2
+         utyEgLPSpLPh9/38KWqcBKPghuOUECRUdQf1GE+CQCHzx9X4spo/CVHXFnH3Q1GMJrHA
+         28ZTsTiYdEyvF6E1p5/xL+CKxhSVhkBolAKOB7/HbnuGsBhXuhEIopkKRurgfwTjt08Z
+         fmT++N5PPHi6E+2XpB6ZNinxMWu00Yl1vB7eIxi6WdfyoFFCAKAeg2wwaXBztQCOy8Y9
+         YjMIUd0iHrtmo50ebpOlNKdoldc5WTGh92l0ni+r5vC2HaLNMUMXKf/QmM1Ee8BOkqfX
+         ay0w==
+X-Gm-Message-State: AOJu0YxwjniAPsLusPlkz+6LYJEVqMP5bLYBxJ/fYe9c7Hc7dpanomUb
+	XWtwDg0ymn1qooAjLxsEwE6Kpw==
+X-Google-Smtp-Source: AGHT+IFkKuykeoJVAudwwmFujiDHfPEHX1oc2kW4nogWIOsi4Zh1ZmlEITbhHDDGN4q70xM8zZRpIg==
+X-Received: by 2002:a17:90a:d917:b0:286:b01d:88a6 with SMTP id c23-20020a17090ad91700b00286b01d88a6mr2839698pjv.6.1701842798242;
+        Tue, 05 Dec 2023 22:06:38 -0800 (PST)
 Received: from dread.disaster.area (pa49-180-125-5.pa.nsw.optusnet.com.au. [49.180.125.5])
-        by smtp.gmail.com with ESMTPSA id 13-20020a17090a08cd00b002868f5c2847sm2240355pjn.7.2023.12.05.22.06.34
+        by smtp.gmail.com with ESMTPSA id m13-20020a17090a858d00b00286920600a9sm5350682pjn.32.2023.12.05.22.06.34
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 05 Dec 2023 22:06:34 -0800 (PST)
+        Tue, 05 Dec 2023 22:06:35 -0800 (PST)
 Received: from [192.168.253.23] (helo=devoid.disaster.area)
 	by dread.disaster.area with esmtp (Exim 4.96)
 	(envelope-from <dave@fromorbit.com>)
-	id 1rAl3H-004VOm-3D;
+	id 1rAl3I-004VP3-0n;
 	Wed, 06 Dec 2023 17:06:31 +1100
 Received: from dave by devoid.disaster.area with local (Exim 4.97-RC0)
 	(envelope-from <dave@devoid.disaster.area>)
-	id 1rAl3H-0000000BrVG-2K9L;
+	id 1rAl3H-0000000BrVa-3MP5;
 	Wed, 06 Dec 2023 17:06:31 +1100
 From: Dave Chinner <david@fromorbit.com>
 To: linux-fsdevel@vger.kernel.org
@@ -61,9 +61,9 @@ Cc: linux-block@vger.kernel.org,
 	linux-security-module@vger.kernel.org,
 	selinux@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 04/11] lib/dlock-list: Make sibling CPUs share the same linked list
-Date: Wed,  6 Dec 2023 17:05:33 +1100
-Message-ID: <20231206060629.2827226-5-david@fromorbit.com>
+Subject: [PATCH 08/11] vfs: inode cache conversion to hash-bl
+Date: Wed,  6 Dec 2023 17:05:37 +1100
+Message-ID: <20231206060629.2827226-9-david@fromorbit.com>
 X-Mailer: git-send-email 2.42.0
 In-Reply-To: <20231206060629.2827226-1-david@fromorbit.com>
 References: <20231206060629.2827226-1-david@fromorbit.com>
@@ -75,164 +75,635 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Waiman Long <longman@redhat.com>
+From: Dave Chinner <dchinner@redhat.com>
 
-The dlock list needs one list for each of the CPUs available. However,
-for sibling CPUs, they are sharing the L2 and probably L1 caches
-too. As a result, there is not much to gain in term of avoiding
-cacheline contention while increasing the cacheline footprint of the
-L1/L2 caches as separate lists may need to be in the cache.
+Scalability of the global inode_hash_lock really sucks for
+filesystems that use the vfs inode cache (i.e. everything but XFS).
 
-This patch makes all the sibling CPUs share the same list, thus
-reducing the number of lists that need to be maintained in each
-dlock list without having any noticeable impact on performance. It
-also improves dlock list iteration performance as fewer lists need
-to be iterated.
+Profiles of a 32-way concurrent sharded directory walk (no contended
+directories) on a couple of different filesystems. All numbers from
+a 6.7-rc4 kernel.
 
-Signed-off-by: Waiman Long <longman@redhat.com>
-Reviewed-by: Jan Kara <jack@suse.cz>
+Bcachefs:
+
+  - 98.78% vfs_statx
+     - 97.74% filename_lookup
+	- 97.70% path_lookupat
+	   - 97.54% walk_component
+	      - 97.06% lookup_slow
+		 - 97.03% __lookup_slow
+		    - 96.21% bch2_lookup
+		       - 91.87% bch2_vfs_inode_get
+			  - 84.10% iget5_locked
+			     - 44.09% ilookup5
+				- 43.50% _raw_spin_lock
+				   - 43.49% do_raw_spin_lock
+					42.75% __pv_queued_spin_lock_slowpath
+			     - 39.06% inode_insert5
+				- 38.46% _raw_spin_lock
+				   - 38.46% do_raw_spin_lock
+					37.51% __pv_queued_spin_lock_slowpath
+
+ext4:
+
+  - 93.75% vfs_statx
+     - 92.39% filename_lookup
+	- 92.34% path_lookupat
+	   - 92.09% walk_component
+	      - 91.48% lookup_slow
+		 - 91.43% __lookup_slow
+		    - 90.18% ext4_lookup
+		       - 84.84% __ext4_iget
+			  - 83.67% iget_locked
+			     - 81.24% _raw_spin_lock
+				- 81.23% do_raw_spin_lock
+				   - 78.90% __pv_queued_spin_lock_slowpath
+
+
+Both bcachefs and ext4 demonstrate poor scaling at >=8 threads on
+concurrent lookup or create workloads.
+
+Hence convert the inode hash table to a RCU-aware hash-bl table just
+like the dentry cache. Note that we need to store a pointer to the
+hlist_bl_head the inode has been added to in the inode so that when
+it comes to unhash the inode we know what list to lock. We need to
+do this because, unlike the dentry cache, the hash value that is
+used to hash the inode is not generated from the inode itself. i.e.
+filesystems can provide this themselves so we have to either store
+the hashval or the hlist head pointer in the inode to be able to
+find the right list head for removal...
+
+Concurrent walk of 400k files per thread with varying thread count
+in seconds is as follows. Perfect scaling is an unchanged walk time
+as thread count increases.
+
+		ext4			bcachefs
+threads		vanilla	 patched	vanilla	patched
+2		 7.923	  7.358		 8.003	 7.276
+4		 8.152	  7.530		 9.097	 8.506
+8		13.090	  7.871		11.752	10.015
+16		24.602	  9.540		24.614	13.989
+32		49.536	 19.314		49.179	25.982
+
+The big wins here are at >= 8 threads, with both filesytsems now
+being limited by internal filesystem algorithms, not the VFS inode
+cache scalability.
+
+Ext4 contention moves to the buffer cache on directory block
+lookups:
+
+-   66.45%     0.44%  [kernel]              [k] __ext4_read_dirblock
+   - 66.01% __ext4_read_dirblock
+      - 66.01% ext4_bread
+         - ext4_getblk
+            - 64.77% bdev_getblk
+               - 64.69% __find_get_block
+                  - 63.01% _raw_spin_lock
+                     - 62.96% do_raw_spin_lock
+                          59.21% __pv_queued_spin_lock_slowpath
+
+bcachefs contention moves to internal btree traversal locks.
+
+ - 95.37% __lookup_slow
+    - 93.95% bch2_lookup
+       - 82.57% bch2_vfs_inode_get
+	  - 65.44% bch2_inode_find_by_inum_trans
+	     - 65.41% bch2_inode_peek_nowarn
+		- 64.60% bch2_btree_iter_peek_slot
+		   - 64.55% bch2_btree_path_traverse_one
+		      - bch2_btree_path_traverse_cached
+			 - 63.02% bch2_btree_path_traverse_cached_slowpath
+			    - 56.60% mutex_lock
+			       - 55.29% __mutex_lock_slowpath
+				  - 55.25% __mutex_lock
+				       50.29% osq_lock
+				       1.84% __raw_callee_save___kvm_vcpu_is_preempted
+				       0.54% mutex_spin_on_owner
+
+Signed-off-by: Dave Chinner <dchinner@redhat.com>
 ---
- lib/dlock-list.c | 74 ++++++++++++++++++++++++++++++++++++++----------
- 1 file changed, 59 insertions(+), 15 deletions(-)
+ fs/inode.c         | 200 ++++++++++++++++++++++++++++-----------------
+ include/linux/fs.h |   9 +-
+ 2 files changed, 132 insertions(+), 77 deletions(-)
 
-diff --git a/lib/dlock-list.c b/lib/dlock-list.c
-index f64ea4cc5e79..e2860944ec9f 100644
---- a/lib/dlock-list.c
-+++ b/lib/dlock-list.c
-@@ -25,31 +25,65 @@
-  * The distributed and locked list is a distributed set of lists each of
-  * which is protected by its own spinlock, but acts like a single
-  * consolidated list to the callers. For scaling purpose, the number of
-- * lists used is equal to the number of possible CPUs in the system to
-- * minimize contention.
-+ * lists used is equal to the number of possible cores in the system to
-+ * minimize contention. All threads of the same CPU core will share the
-+ * same list.
-  *
-- * However, it is possible that individual CPU numbers may be equal to
-- * or greater than the number of possible CPUs when there are holes in
-- * the CPU number list. As a result, we need to map the CPU number to a
-- * list index.
-+ * We need to map each CPU number to a list index.
-  */
- static DEFINE_PER_CPU_READ_MOSTLY(int, cpu2idx);
-+static int nr_dlock_lists __read_mostly;
+diff --git a/fs/inode.c b/fs/inode.c
+index fead81550cf4..3eb9c4e5b279 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -56,8 +56,7 @@
  
- /*
-- * Initialize cpu2idx mapping table
-+ * Initialize cpu2idx mapping table & nr_dlock_lists.
-  *
-  * It is possible that a dlock-list can be allocated before the cpu2idx is
-  * initialized. In this case, all the cpus are mapped to the first entry
-  * before initialization.
-  *
-+ * All the sibling CPUs of a sibling group will map to the same dlock list so
-+ * as to reduce the number of dlock lists to be maintained while minimizing
-+ * cacheline contention.
-+ *
-+ * As the sibling masks are set up in the core initcall phase, this function
-+ * has to be done in the postcore phase to get the right data.
-  */
- static int __init cpu2idx_init(void)
+ static unsigned int i_hash_mask __ro_after_init;
+ static unsigned int i_hash_shift __ro_after_init;
+-static struct hlist_head *inode_hashtable __ro_after_init;
+-static __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_hash_lock);
++static struct hlist_bl_head *inode_hashtable __ro_after_init;
+ 
+ static unsigned long hash(struct super_block *sb, unsigned long hashval)
  {
- 	int idx, cpu;
-+	struct cpumask *sibling_mask;
-+	static struct cpumask mask __initdata;
+@@ -69,7 +68,7 @@ static unsigned long hash(struct super_block *sb, unsigned long hashval)
+ 	return tmp & i_hash_mask;
+ }
  
-+	cpumask_clear(&mask);
- 	idx = 0;
--	for_each_possible_cpu(cpu)
--		per_cpu(cpu2idx, cpu) = idx++;
-+	for_each_possible_cpu(cpu) {
-+		int scpu;
+-static inline struct hlist_head *i_hash_head(struct super_block *sb,
++static inline struct hlist_bl_head *i_hash_head(struct super_block *sb,
+ 		unsigned int hashval)
+ {
+ 	return inode_hashtable + hash(sb, hashval);
+@@ -434,7 +433,7 @@ EXPORT_SYMBOL(address_space_init_once);
+ void inode_init_once(struct inode *inode)
+ {
+ 	memset(inode, 0, sizeof(*inode));
+-	INIT_HLIST_NODE(&inode->i_hash);
++	INIT_HLIST_BL_NODE(&inode->i_hash);
+ 	INIT_LIST_HEAD(&inode->i_devices);
+ 	INIT_LIST_HEAD(&inode->i_io_list);
+ 	INIT_LIST_HEAD(&inode->i_wb_list);
+@@ -518,6 +517,17 @@ static inline void inode_sb_list_del(struct inode *inode)
+ 		dlock_lists_del(&inode->i_sb_list);
+ }
+ 
++/*
++ * Ensure that we store the hash head in the inode when we insert the inode into
++ * the hlist_bl_head...
++ */
++static inline void
++__insert_inode_hash_head(struct inode *inode, struct hlist_bl_head *b)
++{
++	hlist_bl_add_head_rcu(&inode->i_hash, b);
++	inode->i_hash_head = b;
++}
 +
-+		if (cpumask_test_cpu(cpu, &mask))
-+			continue;
-+		per_cpu(cpu2idx, cpu) = idx;
-+		cpumask_set_cpu(cpu, &mask);
-+
-+		sibling_mask = topology_sibling_cpumask(cpu);
-+		if (sibling_mask) {
-+			for_each_cpu(scpu, sibling_mask) {
-+				per_cpu(cpu2idx, scpu) = idx;
-+				cpumask_set_cpu(scpu, &mask);
-+			}
-+		}
-+		idx++;
-+	}
+ /**
+  *	__insert_inode_hash - hash an inode
+  *	@inode: unhashed inode
+@@ -528,13 +538,13 @@ static inline void inode_sb_list_del(struct inode *inode)
+  */
+ void __insert_inode_hash(struct inode *inode, unsigned long hashval)
+ {
+-	struct hlist_head *b = inode_hashtable + hash(inode->i_sb, hashval);
++	struct hlist_bl_head *b = i_hash_head(inode->i_sb, hashval);
+ 
+-	spin_lock(&inode_hash_lock);
++	hlist_bl_lock(b);
+ 	spin_lock(&inode->i_lock);
+-	hlist_add_head_rcu(&inode->i_hash, b);
++	__insert_inode_hash_head(inode, b);
+ 	spin_unlock(&inode->i_lock);
+-	spin_unlock(&inode_hash_lock);
++	hlist_bl_unlock(b);
+ }
+ EXPORT_SYMBOL(__insert_inode_hash);
+ 
+@@ -546,11 +556,44 @@ EXPORT_SYMBOL(__insert_inode_hash);
+  */
+ void __remove_inode_hash(struct inode *inode)
+ {
+-	spin_lock(&inode_hash_lock);
+-	spin_lock(&inode->i_lock);
+-	hlist_del_init_rcu(&inode->i_hash);
+-	spin_unlock(&inode->i_lock);
+-	spin_unlock(&inode_hash_lock);
++	struct hlist_bl_head *b = inode->i_hash_head;
 +
 +	/*
-+	 * nr_dlock_lists can only be set after cpu2idx is properly
-+	 * initialized.
++	 * There are some callers that come through here without synchronisation
++	 * and potentially with multiple references to the inode. Hence we have
++	 * to handle the case that we might race with a remove and insert to a
++	 * different list. Coda, in particular, seems to have a userspace API
++	 * that can directly trigger "unhash/rehash to different list" behaviour
++	 * without any serialisation at all.
++	 *
++	 * Hence we have to handle the situation where the inode->i_hash_head
++	 * might point to a different list than what we expect, indicating that
++	 * we raced with another unhash and potentially a new insertion. This
++	 * means we have to retest the head once we have everything locked up
++	 * and loop again if it doesn't match.
 +	 */
-+	smp_mb();
-+	nr_dlock_lists = idx;
-+	WARN_ON(nr_dlock_lists > nr_cpu_ids);
++	while (b) {
++		hlist_bl_lock(b);
++		spin_lock(&inode->i_lock);
++		if (b != inode->i_hash_head) {
++			hlist_bl_unlock(b);
++			b = inode->i_hash_head;
++			spin_unlock(&inode->i_lock);
++			continue;
++		}
++		/*
++		 * Need to set the pprev pointer to NULL after list removal so
++		 * that both RCU traversals and hlist_bl_unhashed() work
++		 * correctly at this point.
++		 */
++		hlist_bl_del_rcu(&inode->i_hash);
++		inode->i_hash.pprev = NULL;
++		inode->i_hash_head = NULL;
++		spin_unlock(&inode->i_lock);
++		hlist_bl_unlock(b);
++		break;
++	}
 +
-+	pr_info("dlock-list: %d head entries per dlock list.\n",
-+		nr_dlock_lists);
- 	return 0;
  }
- postcore_initcall(cpu2idx_init);
-@@ -67,19 +101,23 @@ postcore_initcall(cpu2idx_init);
-  *
-  * Dynamically allocated locks need to have their own special lock class
-  * to avoid lockdep warning.
-+ *
-+ * Since nr_dlock_lists will always be <= nr_cpu_ids, having more lists
-+ * than necessary allocated is not a problem other than some wasted memory.
-+ * The extra lists will not be ever used as all the cpu2idx entries will be
-+ * 0 before initialization.
+ EXPORT_SYMBOL(__remove_inode_hash);
+ 
+@@ -886,26 +929,28 @@ long prune_icache_sb(struct super_block *sb, struct shrink_control *sc)
+ 	return freed;
+ }
+ 
+-static void __wait_on_freeing_inode(struct inode *inode);
++static void __wait_on_freeing_inode(struct hlist_bl_head *b,
++				struct inode *inode);
+ /*
+  * Called with the inode lock held.
   */
- int __alloc_dlock_list_heads(struct dlock_list_heads *dlist,
- 			     struct lock_class_key *key)
+ static struct inode *find_inode(struct super_block *sb,
+-				struct hlist_head *head,
++				struct hlist_bl_head *b,
+ 				int (*test)(struct inode *, void *),
+ 				void *data)
  {
--	int idx;
-+	int idx, cnt = nr_dlock_lists ? nr_dlock_lists : nr_cpu_ids;
++	struct hlist_bl_node *node;
+ 	struct inode *inode = NULL;
  
--	dlist->heads = kcalloc(nr_cpu_ids, sizeof(struct dlock_list_head),
--			       GFP_KERNEL);
-+	dlist->heads = kcalloc(cnt, sizeof(struct dlock_list_head), GFP_KERNEL);
- 
- 	if (!dlist->heads)
- 		return -ENOMEM;
- 
--	for (idx = 0; idx < nr_cpu_ids; idx++) {
-+	for (idx = 0; idx < cnt; idx++) {
- 		struct dlock_list_head *head = &dlist->heads[idx];
- 
- 		INIT_LIST_HEAD(&head->list);
-@@ -117,7 +155,10 @@ bool dlock_lists_empty(struct dlock_list_heads *dlist)
+ repeat:
+-	hlist_for_each_entry(inode, head, i_hash) {
++	hlist_bl_for_each_entry(inode, node, b, i_hash) {
+ 		if (inode->i_sb != sb)
+ 			continue;
+ 		if (!test(inode, data))
+ 			continue;
+ 		spin_lock(&inode->i_lock);
+ 		if (inode->i_state & (I_FREEING|I_WILL_FREE)) {
+-			__wait_on_freeing_inode(inode);
++			__wait_on_freeing_inode(b, inode);
+ 			goto repeat;
+ 		}
+ 		if (unlikely(inode->i_state & I_CREATING)) {
+@@ -924,19 +969,20 @@ static struct inode *find_inode(struct super_block *sb,
+  * iget_locked for details.
+  */
+ static struct inode *find_inode_fast(struct super_block *sb,
+-				struct hlist_head *head, unsigned long ino)
++				struct hlist_bl_head *b, unsigned long ino)
  {
- 	int idx;
++	struct hlist_bl_node *node;
+ 	struct inode *inode = NULL;
  
--	for (idx = 0; idx < nr_cpu_ids; idx++)
-+	/* Shouldn't be called before nr_dlock_lists is initialized */
-+	WARN_ON_ONCE(!nr_dlock_lists);
-+
-+	for (idx = 0; idx < nr_dlock_lists; idx++)
- 		if (!list_empty(&dlist->heads[idx].list))
- 			return false;
- 	return true;
-@@ -199,6 +240,9 @@ struct dlock_list_node *__dlock_list_next_list(struct dlock_list_iter *iter)
- 	struct dlock_list_node *next;
- 	struct dlock_list_head *head;
+ repeat:
+-	hlist_for_each_entry(inode, head, i_hash) {
++	hlist_bl_for_each_entry(inode, node, b, i_hash) {
+ 		if (inode->i_ino != ino)
+ 			continue;
+ 		if (inode->i_sb != sb)
+ 			continue;
+ 		spin_lock(&inode->i_lock);
+ 		if (inode->i_state & (I_FREEING|I_WILL_FREE)) {
+-			__wait_on_freeing_inode(inode);
++			__wait_on_freeing_inode(b, inode);
+ 			goto repeat;
+ 		}
+ 		if (unlikely(inode->i_state & I_CREATING)) {
+@@ -1186,25 +1232,25 @@ EXPORT_SYMBOL(unlock_two_nondirectories);
+  * return it locked, hashed, and with the I_NEW flag set. The file system gets
+  * to fill it in before unlocking it via unlock_new_inode().
+  *
+- * Note both @test and @set are called with the inode_hash_lock held, so can't
+- * sleep.
++ * Note both @test and @set are called with the inode hash chain lock held,
++ * so can't sleep.
+  */
+ struct inode *inode_insert5(struct inode *inode, unsigned long hashval,
+ 			    int (*test)(struct inode *, void *),
+ 			    int (*set)(struct inode *, void *), void *data)
+ {
+-	struct hlist_head *head = i_hash_head(inode->i_sb, hashval);
++	struct hlist_bl_head *b = i_hash_head(inode->i_sb, hashval);
+ 	struct inode *old;
  
-+	/* Shouldn't be called before nr_dlock_lists is initialized */
-+	WARN_ON_ONCE(!nr_dlock_lists);
-+
- restart:
- 	if (iter->entry) {
- 		spin_unlock(&iter->entry->lock);
-@@ -209,7 +253,7 @@ struct dlock_list_node *__dlock_list_next_list(struct dlock_list_iter *iter)
- 	/*
- 	 * Try next list
+ again:
+-	spin_lock(&inode_hash_lock);
+-	old = find_inode(inode->i_sb, head, test, data);
++	hlist_bl_lock(b);
++	old = find_inode(inode->i_sb, b, test, data);
+ 	if (unlikely(old)) {
+ 		/*
+ 		 * Uhhuh, somebody else created the same inode under us.
+ 		 * Use the old inode instead of the preallocated one.
+ 		 */
+-		spin_unlock(&inode_hash_lock);
++		hlist_bl_unlock(b);
+ 		if (IS_ERR(old))
+ 			return NULL;
+ 		wait_on_inode(old);
+@@ -1226,7 +1272,7 @@ struct inode *inode_insert5(struct inode *inode, unsigned long hashval,
  	 */
--	if (++iter->index >= nr_cpu_ids)
-+	if (++iter->index >= nr_dlock_lists)
- 		return NULL;	/* All the entries iterated */
+ 	spin_lock(&inode->i_lock);
+ 	inode->i_state |= I_NEW;
+-	hlist_add_head_rcu(&inode->i_hash, head);
++	__insert_inode_hash_head(inode, b);
+ 	spin_unlock(&inode->i_lock);
  
- 	if (list_empty(&iter->head[iter->index].list))
+ 	/*
+@@ -1236,7 +1282,7 @@ struct inode *inode_insert5(struct inode *inode, unsigned long hashval,
+ 	if (list_empty(&inode->i_sb_list.list))
+ 		inode_sb_list_add(inode);
+ unlock:
+-	spin_unlock(&inode_hash_lock);
++	hlist_bl_unlock(b);
+ 
+ 	return inode;
+ }
+@@ -1297,12 +1343,12 @@ EXPORT_SYMBOL(iget5_locked);
+  */
+ struct inode *iget_locked(struct super_block *sb, unsigned long ino)
+ {
+-	struct hlist_head *head = i_hash_head(sb, ino);
++	struct hlist_bl_head *b = i_hash_head(sb, ino);
+ 	struct inode *inode;
+ again:
+-	spin_lock(&inode_hash_lock);
+-	inode = find_inode_fast(sb, head, ino);
+-	spin_unlock(&inode_hash_lock);
++	hlist_bl_lock(b);
++	inode = find_inode_fast(sb, b, ino);
++	hlist_bl_unlock(b);
+ 	if (inode) {
+ 		if (IS_ERR(inode))
+ 			return NULL;
+@@ -1318,17 +1364,17 @@ struct inode *iget_locked(struct super_block *sb, unsigned long ino)
+ 	if (inode) {
+ 		struct inode *old;
+ 
+-		spin_lock(&inode_hash_lock);
++		hlist_bl_lock(b);
+ 		/* We released the lock, so.. */
+-		old = find_inode_fast(sb, head, ino);
++		old = find_inode_fast(sb, b, ino);
+ 		if (!old) {
+ 			inode->i_ino = ino;
+ 			spin_lock(&inode->i_lock);
+ 			inode->i_state = I_NEW;
+-			hlist_add_head_rcu(&inode->i_hash, head);
++			__insert_inode_hash_head(inode, b);
+ 			spin_unlock(&inode->i_lock);
+ 			inode_sb_list_add(inode);
+-			spin_unlock(&inode_hash_lock);
++			hlist_bl_unlock(b);
+ 
+ 			/* Return the locked inode with I_NEW set, the
+ 			 * caller is responsible for filling in the contents
+@@ -1341,7 +1387,7 @@ struct inode *iget_locked(struct super_block *sb, unsigned long ino)
+ 		 * us. Use the old inode instead of the one we just
+ 		 * allocated.
+ 		 */
+-		spin_unlock(&inode_hash_lock);
++		hlist_bl_unlock(b);
+ 		destroy_inode(inode);
+ 		if (IS_ERR(old))
+ 			return NULL;
+@@ -1365,10 +1411,11 @@ EXPORT_SYMBOL(iget_locked);
+  */
+ static int test_inode_iunique(struct super_block *sb, unsigned long ino)
+ {
+-	struct hlist_head *b = i_hash_head(sb, ino);
++	struct hlist_bl_head *b = i_hash_head(sb, ino);
++	struct hlist_bl_node *node;
+ 	struct inode *inode;
+ 
+-	hlist_for_each_entry_rcu(inode, b, i_hash) {
++	hlist_bl_for_each_entry_rcu(inode, node, b, i_hash) {
+ 		if (inode->i_ino == ino && inode->i_sb == sb)
+ 			return 0;
+ 	}
+@@ -1452,12 +1499,12 @@ EXPORT_SYMBOL(igrab);
+ struct inode *ilookup5_nowait(struct super_block *sb, unsigned long hashval,
+ 		int (*test)(struct inode *, void *), void *data)
+ {
+-	struct hlist_head *head = i_hash_head(sb, hashval);
++	struct hlist_bl_head *b = i_hash_head(sb, hashval);
+ 	struct inode *inode;
+ 
+-	spin_lock(&inode_hash_lock);
+-	inode = find_inode(sb, head, test, data);
+-	spin_unlock(&inode_hash_lock);
++	hlist_bl_lock(b);
++	inode = find_inode(sb, b, test, data);
++	hlist_bl_unlock(b);
+ 
+ 	return IS_ERR(inode) ? NULL : inode;
+ }
+@@ -1507,12 +1554,12 @@ EXPORT_SYMBOL(ilookup5);
+  */
+ struct inode *ilookup(struct super_block *sb, unsigned long ino)
+ {
+-	struct hlist_head *head = i_hash_head(sb, ino);
++	struct hlist_bl_head *b = i_hash_head(sb, ino);
+ 	struct inode *inode;
+ again:
+-	spin_lock(&inode_hash_lock);
+-	inode = find_inode_fast(sb, head, ino);
+-	spin_unlock(&inode_hash_lock);
++	hlist_bl_lock(b);
++	inode = find_inode_fast(sb, b, ino);
++	hlist_bl_unlock(b);
+ 
+ 	if (inode) {
+ 		if (IS_ERR(inode))
+@@ -1556,12 +1603,13 @@ struct inode *find_inode_nowait(struct super_block *sb,
+ 					     void *),
+ 				void *data)
+ {
+-	struct hlist_head *head = i_hash_head(sb, hashval);
++	struct hlist_bl_head *b = i_hash_head(sb, hashval);
++	struct hlist_bl_node *node;
+ 	struct inode *inode, *ret_inode = NULL;
+ 	int mval;
+ 
+-	spin_lock(&inode_hash_lock);
+-	hlist_for_each_entry(inode, head, i_hash) {
++	hlist_bl_lock(b);
++	hlist_bl_for_each_entry(inode, node, b, i_hash) {
+ 		if (inode->i_sb != sb)
+ 			continue;
+ 		mval = match(inode, hashval, data);
+@@ -1572,7 +1620,7 @@ struct inode *find_inode_nowait(struct super_block *sb,
+ 		goto out;
+ 	}
+ out:
+-	spin_unlock(&inode_hash_lock);
++	hlist_bl_unlock(b);
+ 	return ret_inode;
+ }
+ EXPORT_SYMBOL(find_inode_nowait);
+@@ -1601,13 +1649,14 @@ EXPORT_SYMBOL(find_inode_nowait);
+ struct inode *find_inode_rcu(struct super_block *sb, unsigned long hashval,
+ 			     int (*test)(struct inode *, void *), void *data)
+ {
+-	struct hlist_head *head = i_hash_head(sb, hashval);
++	struct hlist_bl_head *b = i_hash_head(sb, hashval);
++	struct hlist_bl_node *node;
+ 	struct inode *inode;
+ 
+ 	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+ 			 "suspicious find_inode_rcu() usage");
+ 
+-	hlist_for_each_entry_rcu(inode, head, i_hash) {
++	hlist_bl_for_each_entry_rcu(inode, node, b, i_hash) {
+ 		if (inode->i_sb == sb &&
+ 		    !(READ_ONCE(inode->i_state) & (I_FREEING | I_WILL_FREE)) &&
+ 		    test(inode, data))
+@@ -1639,13 +1688,14 @@ EXPORT_SYMBOL(find_inode_rcu);
+ struct inode *find_inode_by_ino_rcu(struct super_block *sb,
+ 				    unsigned long ino)
+ {
+-	struct hlist_head *head = i_hash_head(sb, ino);
++	struct hlist_bl_head *b = i_hash_head(sb, ino);
++	struct hlist_bl_node *node;
+ 	struct inode *inode;
+ 
+ 	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+ 			 "suspicious find_inode_by_ino_rcu() usage");
+ 
+-	hlist_for_each_entry_rcu(inode, head, i_hash) {
++	hlist_bl_for_each_entry_rcu(inode, node, b, i_hash) {
+ 		if (inode->i_ino == ino &&
+ 		    inode->i_sb == sb &&
+ 		    !(READ_ONCE(inode->i_state) & (I_FREEING | I_WILL_FREE)))
+@@ -1659,39 +1709,42 @@ int insert_inode_locked(struct inode *inode)
+ {
+ 	struct super_block *sb = inode->i_sb;
+ 	ino_t ino = inode->i_ino;
+-	struct hlist_head *head = i_hash_head(sb, ino);
++	struct hlist_bl_head *b = i_hash_head(sb, ino);
+ 
+ 	while (1) {
+-		struct inode *old = NULL;
+-		spin_lock(&inode_hash_lock);
+-		hlist_for_each_entry(old, head, i_hash) {
+-			if (old->i_ino != ino)
++		struct hlist_bl_node *node;
++		struct inode *old = NULL, *t;
++
++		hlist_bl_lock(b);
++		hlist_bl_for_each_entry(t, node, b, i_hash) {
++			if (t->i_ino != ino)
+ 				continue;
+-			if (old->i_sb != sb)
++			if (t->i_sb != sb)
+ 				continue;
+-			spin_lock(&old->i_lock);
+-			if (old->i_state & (I_FREEING|I_WILL_FREE)) {
+-				spin_unlock(&old->i_lock);
++			spin_lock(&t->i_lock);
++			if (t->i_state & (I_FREEING|I_WILL_FREE)) {
++				spin_unlock(&t->i_lock);
+ 				continue;
+ 			}
++			old = t;
+ 			break;
+ 		}
+ 		if (likely(!old)) {
+ 			spin_lock(&inode->i_lock);
+ 			inode->i_state |= I_NEW | I_CREATING;
+-			hlist_add_head_rcu(&inode->i_hash, head);
++			__insert_inode_hash_head(inode, b);
+ 			spin_unlock(&inode->i_lock);
+-			spin_unlock(&inode_hash_lock);
++			hlist_bl_unlock(b);
+ 			return 0;
+ 		}
+ 		if (unlikely(old->i_state & I_CREATING)) {
+ 			spin_unlock(&old->i_lock);
+-			spin_unlock(&inode_hash_lock);
++			hlist_bl_unlock(b);
+ 			return -EBUSY;
+ 		}
+ 		__iget(old);
+ 		spin_unlock(&old->i_lock);
+-		spin_unlock(&inode_hash_lock);
++		hlist_bl_unlock(b);
+ 		wait_on_inode(old);
+ 		if (unlikely(!inode_unhashed(old))) {
+ 			iput(old);
+@@ -2271,17 +2324,18 @@ EXPORT_SYMBOL(inode_needs_sync);
+  * wake_up_bit(&inode->i_state, __I_NEW) after removing from the hash list
+  * will DTRT.
+  */
+-static void __wait_on_freeing_inode(struct inode *inode)
++static void __wait_on_freeing_inode(struct hlist_bl_head *b,
++				struct inode *inode)
+ {
+ 	wait_queue_head_t *wq;
+ 	DEFINE_WAIT_BIT(wait, &inode->i_state, __I_NEW);
+ 	wq = bit_waitqueue(&inode->i_state, __I_NEW);
+ 	prepare_to_wait(wq, &wait.wq_entry, TASK_UNINTERRUPTIBLE);
+ 	spin_unlock(&inode->i_lock);
+-	spin_unlock(&inode_hash_lock);
++	hlist_bl_unlock(b);
+ 	schedule();
+ 	finish_wait(wq, &wait.wq_entry);
+-	spin_lock(&inode_hash_lock);
++	hlist_bl_lock(b);
+ }
+ 
+ static __initdata unsigned long ihash_entries;
+@@ -2307,7 +2361,7 @@ void __init inode_init_early(void)
+ 
+ 	inode_hashtable =
+ 		alloc_large_system_hash("Inode-cache",
+-					sizeof(struct hlist_head),
++					sizeof(struct hlist_bl_head),
+ 					ihash_entries,
+ 					14,
+ 					HASH_EARLY | HASH_ZERO,
+@@ -2333,7 +2387,7 @@ void __init inode_init(void)
+ 
+ 	inode_hashtable =
+ 		alloc_large_system_hash("Inode-cache",
+-					sizeof(struct hlist_head),
++					sizeof(struct hlist_bl_head),
+ 					ihash_entries,
+ 					14,
+ 					HASH_ZERO,
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index bb35591733f1..0ef1b72340c7 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -692,7 +692,8 @@ struct inode {
+ 	unsigned long		dirtied_when;	/* jiffies of first dirtying */
+ 	unsigned long		dirtied_time_when;
+ 
+-	struct hlist_node	i_hash;
++	struct hlist_bl_node	i_hash;
++	struct hlist_bl_head	*i_hash_head;
+ 	struct list_head	i_io_list;	/* backing dev IO list */
+ #ifdef CONFIG_CGROUP_WRITEBACK
+ 	struct bdi_writeback	*i_wb;		/* the associated cgroup wb */
+@@ -758,7 +759,7 @@ static inline unsigned int i_blocksize(const struct inode *node)
+ 
+ static inline int inode_unhashed(struct inode *inode)
+ {
+-	return hlist_unhashed(&inode->i_hash);
++	return hlist_bl_unhashed(&inode->i_hash);
+ }
+ 
+ /*
+@@ -769,7 +770,7 @@ static inline int inode_unhashed(struct inode *inode)
+  */
+ static inline void inode_fake_hash(struct inode *inode)
+ {
+-	hlist_add_fake(&inode->i_hash);
++	hlist_bl_add_fake(&inode->i_hash);
+ }
+ 
+ /*
+@@ -2946,7 +2947,7 @@ static inline void insert_inode_hash(struct inode *inode)
+ extern void __remove_inode_hash(struct inode *);
+ static inline void remove_inode_hash(struct inode *inode)
+ {
+-	if (!inode_unhashed(inode) && !hlist_fake(&inode->i_hash))
++	if (!inode_unhashed(inode) && !hlist_bl_fake(&inode->i_hash))
+ 		__remove_inode_hash(inode);
+ }
+ 
 -- 
 2.42.0
 
