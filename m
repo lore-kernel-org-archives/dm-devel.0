@@ -1,218 +1,214 @@
-Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com [209.85.218.50])
+Received: from mail-il1-f178.google.com (mail-il1-f178.google.com [209.85.166.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 59BA02AD30
-	for <dm-devel@lists.linux.dev>; Tue,  5 Dec 2023 21:01:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8896A1096A
+	for <dm-devel@lists.linux.dev>; Wed,  6 Dec 2023 06:06:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fromorbit.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fromorbit.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Zm3P2qOR"
-Received: by mail-ej1-f50.google.com with SMTP id a640c23a62f3a-a196f84d217so10726566b.3
-        for <dm-devel@lists.linux.dev>; Tue, 05 Dec 2023 13:01:06 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b="Vg9KQKLy"
+Received: by mail-il1-f178.google.com with SMTP id e9e14a558f8ab-35d7cc7cabcso10295745ab.1
+        for <dm-devel@lists.linux.dev>; Tue, 05 Dec 2023 22:06:35 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1701810065; x=1702414865; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:autocrypt
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=Vvk6G98iwDtRZNf78Z21bMAs1eP2eCE+1NjOFm2G6Zk=;
-        b=Zm3P2qORcibXS7+S9lzXVFelp/NGLsCr1dv1QwSIvwpvFemIb32bB38uyrKRr1oZD/
-         DRDoFsVMpKPyEXG4NFexWEIhu7M8eijKFYaWDmI8YatLC1Hxbgm8Afn85/WgwjYVCwHQ
-         dvXn4SgsGmuN0ORqA6vt8utc5lO27qR6ES3CVEISOIxnOkelywx4mSJfjF4mNE/ozeKl
-         /JX+f+HBSyTPBVXO7oUSRkUc6qGAzXKICIUIhFUORMl/whFaZ1dr2hhYSmXTjnaH2Ihx
-         sKHS3Ki9hviHOMSGzp4eb+8VrcYTs0IZ7holImms8Abi1xhQoSB8fjWzXnLF9Uw4ckvb
-         r4PQ==
+        d=fromorbit-com.20230601.gappssmtp.com; s=20230601; t=1701842794; x=1702447594; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=wHSvpgHbJd6Eu7qsv8V2o7uK7jb6cBWSzdjaYC45cFQ=;
+        b=Vg9KQKLyoQu2vCP1OAsk53niZbBb9yi7bH0qqUuFalJWn0mxnrJPyJPHKSBe7e98oR
+         63li+bnmyFehs98kc0qNFTb9C82I1FvHij7l74GQfBOu6mWquxD3i0TXjn3IMRybJU4N
+         myPAtIb5DyWQqNT8yUopxuh8Wp1FUID6FbecETrPWFe3jrQWwmKIG8saaG4VqwIdvaLg
+         fuBHi2QJECd+CNIQ4scrSzI5IlJqKngy4RT51VvsEnszsJSfp21OAPbIECqUeABl2FKP
+         ec6Lphto0avStuhOEoaFmlfJszQxElUY9EieHBX0lC3LrJf3jfIE9qrpqup9MDVTLAK9
+         srNw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1701810065; x=1702414865;
-        h=mime-version:user-agent:content-transfer-encoding:autocrypt
-         :references:in-reply-to:date:cc:to:from:subject:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Vvk6G98iwDtRZNf78Z21bMAs1eP2eCE+1NjOFm2G6Zk=;
-        b=kIShCByBgNgltn38z21JZw3MzXI5OVETFrQjDscN3IfIo4uM8LJadMYF6ak9flCPE8
-         B69Swp1DvW/UpzaE+gXyo8TI3x9Il3l21/IxdwSeUPdP9U30UcsQhAahzQvXB42xXWqn
-         qfrBHaG97UF6f3nne2wxyvMz3cQDi6aU5Gin/SB6eRX2IrXyPP0R+L6CYGunpUbLqBtU
-         RnXSf960OY+Kw+PswUONcsIMnJNh/e2DAPc7x4DbSGFVAqj23Wy5sg/wpVDXiT0Du2LW
-         SphYTJVrtLZpyebafa6rJzYvOh8cKVWW2v80yqiZcs06Bto3xbAaQGjEKecrndRpek8C
-         wo8A==
-X-Gm-Message-State: AOJu0Yxqlx1QrYKX7lrqjoKGegHgqFDhb/mg4YwDojKfdl31igb2yEHJ
-	hD0OA/epoSQj5ik5T/whIOh2xQ==
-X-Google-Smtp-Source: AGHT+IHJUy5jICkgDIwcs++mpCVe38aReKg3hFVXxCQG2ACby9NF0Pk8M0sWKSvEi3fjZGNoFWRUUA==
-X-Received: by 2002:a17:906:f0d4:b0:a18:ab2f:467f with SMTP id dk20-20020a170906f0d400b00a18ab2f467fmr3706726ejb.37.1701810065495;
-        Tue, 05 Dec 2023 13:01:05 -0800 (PST)
-Received: from apollon.wilcks.net (dslb-090-186-000-097.090.186.pools.vodafone-ip.de. [90.186.0.97])
-        by smtp.gmail.com with ESMTPSA id f23-20020a170906495700b00a19a40935a6sm6369594ejt.141.2023.12.05.13.01.04
+        d=1e100.net; s=20230601; t=1701842794; x=1702447594;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=wHSvpgHbJd6Eu7qsv8V2o7uK7jb6cBWSzdjaYC45cFQ=;
+        b=cBC8JhCty/wt1eP5eA+fgCbRcymyYh+p6OLgmrsfcXi4vR7KhorxdX+Dxuc2ll/wPL
+         ijTpOMxbfj835YcKToytTBXjg8+ykEgD4CAlfazazoLn1vMFgGmpX8OSM5cjcAj/mT8I
+         ZRq9jYGDIq8AfVH3VVvS4AkEZjk/wF82chf0BmfRDUG82m3oYlmFf3spjD6a5h2mBQ3P
+         DH+vHkIzMpT/9I1GxyK5Xylfr9D1CBLWAnHFYAgTkFeQRlIyicS/dAJifPVyNEB/IsCZ
+         TmtAnvTy3kMGOp9y5vY1ImIMSOIb+UL/j9b+gKaYI8KwGflNyUwbJG91nbBm45Oijw+9
+         wa4g==
+X-Gm-Message-State: AOJu0YwphV5vAW+rlSt4Gfh+462ROD24zNertCFNZQyE0j2PxsR+YoLE
+	6flt9ZCvk9QwcQryoSPq8KaC1w==
+X-Google-Smtp-Source: AGHT+IFyEkydutbRflbUebHhG6N121DmGV5SoFJedHB237+BvShkltfvd92qMh3rpX3+xBNwHz7Raw==
+X-Received: by 2002:a05:6e02:13e8:b0:35d:6a39:faeb with SMTP id w8-20020a056e0213e800b0035d6a39faebmr517082ilj.10.1701842794477;
+        Tue, 05 Dec 2023 22:06:34 -0800 (PST)
+Received: from dread.disaster.area (pa49-180-125-5.pa.nsw.optusnet.com.au. [49.180.125.5])
+        by smtp.gmail.com with ESMTPSA id i123-20020a639d81000000b005c662e103a1sm6488754pgd.41.2023.12.05.22.06.33
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 05 Dec 2023 13:01:05 -0800 (PST)
-Message-ID: <0cc5ec31586a1832a6c08d9bf608a68fe804663f.camel@suse.com>
-Subject: Re: [PATCH] multipathd: Make sure to disable queueing if recovery
- has failed.
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
-	development <dm-devel@lists.linux.dev>
-Date: Tue, 05 Dec 2023 22:01:04 +0100
-In-Reply-To: <ZW951oB3ANEs16z0@bmarzins-01.fast.rdu2.eng.redhat.com>
-References: <20231127215418.271708-1-bmarzins@redhat.com>
-	 <23fc863a947a0362e31e4cf685a4cb92f4e9178f.camel@suse.com>
-	 <ZW4v8bZSDSypdv42@bmarzins-01.fast.rdu2.eng.redhat.com>
-	 <094991ab4257ab76755d83a8738676f76327d1ec.camel@suse.com>
-	 <ZW5aQ7T+znP/3N56@bmarzins-01.fast.rdu2.eng.redhat.com>
-	 <00ea66aa2aa83176d6db9609f5173bbd5e294381.camel@suse.com>
-	 <ZW951oB3ANEs16z0@bmarzins-01.fast.rdu2.eng.redhat.com>
-Autocrypt: addr=martin.wilck@suse.com; prefer-encrypt=mutual; keydata=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
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.50.2 
+        Tue, 05 Dec 2023 22:06:33 -0800 (PST)
+Received: from [192.168.253.23] (helo=devoid.disaster.area)
+	by dread.disaster.area with esmtp (Exim 4.96)
+	(envelope-from <dave@fromorbit.com>)
+	id 1rAl3I-004VOv-0L;
+	Wed, 06 Dec 2023 17:06:31 +1100
+Received: from dave by devoid.disaster.area with local (Exim 4.97-RC0)
+	(envelope-from <dave@devoid.disaster.area>)
+	id 1rAl3H-0000000BrVQ-2oA0;
+	Wed, 06 Dec 2023 17:06:31 +1100
+From: Dave Chinner <david@fromorbit.com>
+To: linux-fsdevel@vger.kernel.org
+Cc: linux-block@vger.kernel.org,
+	linux-cachefs@redhat.com,
+	dhowells@redhat.com,
+	gfs2@lists.linux.dev,
+	dm-devel@lists.linux.dev,
+	linux-security-module@vger.kernel.org,
+	selinux@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 06/11] vfs: factor out inode hash head calculation
+Date: Wed,  6 Dec 2023 17:05:35 +1100
+Message-ID: <20231206060629.2827226-7-david@fromorbit.com>
+X-Mailer: git-send-email 2.42.0
+In-Reply-To: <20231206060629.2827226-1-david@fromorbit.com>
+References: <20231206060629.2827226-1-david@fromorbit.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-On Tue, 2023-12-05 at 14:28 -0500, Benjamin Marzinski wrote:
-> On Tue, Dec 05, 2023 at 03:57:13PM +0100, Martin Wilck wrote:
-> >=20
-> > You are right, I see. It's actually an inconsistency that I would
-> > like
-> > to get rid of. I suggest that we ditch mpp->features entirely, and
-> > just
-> > keep track of the map's features using an abstract representation
-> > using
-> > booleans and ints. We should never apply kernel status changes that
-> > are
-> > inconsistent with our own representation of the map's features,
-> > IMO.
->=20
-> I don't agree with ditching it entirely. The existance of mpp-
-> >features
-> allows people to use a kernel feature with a version of the userspace
-> tools that wasn't doesn't know about it. This means that if a new
-> feature is added to the kernel, the existing multipath userspace
-> tools
-> can be used to test it.
->=20
-> We need to provide users the option of setting features, and for
-> backwards compatibility, we need to accept strings in the feature
-> line
-> that we also have other options to set. And we still need to build up
-> a
-> features line to pass into the kernel. So we will still need the code
-> to
-> reconcile the features line with other options.=A0 I'm not sure we
-> would
-> gain much by converting it to a set of variables and then back again.
+From: Dave Chinner <dchinner@redhat.com>
 
-Fair enough, but consistency is very important. Let's work towards
-never setting anything in the kernel that doesn't match our notion of
-the desired state of a map.
+In preparation for changing the inode hash table implementation.
 
-> The one case where we really need to track our current value separate
-> from the features line is queue_if_no_path, and it does make sense to
-> track that as a variable, so we can easily update it when we make
-> changes to it. But even there, the current value is not necessarily
-> the
-> value we want to put in the features line we pass to the kernel. If
-> we
-> aren't queueing, and then add a working path, when we reload the
-> device
-> we want to use the configured no_path_retry value, and not our
-> current
-> queueing state.
->=20
-> One thing that would be nice would be tweaking the queue_if_no_path
-> value in the features string that we pass to the kernel based on the
-> current queueing state and the current path states. If we are
-> reloading
-> a device, and we know that all the paths in that device are down, and
-> we
-> currently aren't queueing, we shouldn't pass in a features string
-> that
-> tells the kernel to enable queueing, which is what we currently do.
+Signed-off-by: Dave Chinner <dchinner@redhat.com>
+---
+ fs/inode.c | 44 +++++++++++++++++++++++++-------------------
+ 1 file changed, 25 insertions(+), 19 deletions(-)
 
-Agreed.
-
-> The
-> patch I posted which started this conversation exists because we
-> don't
-> do this, and we need to fix the queueing state afterwards.
-> =A0
-> > Along a similar line of reasoning, let me emphasize again why I
-> > would
-> > like to have the logic for enabling or disabling queueing in one
-> > place.
-> > Your previous post nicely distinguished the various cases and call
-> > chains which change the queueing and recovery mode, but it would be
-> > better if that kind of assessment wasn't necessary, and instead it
-> > was
-> > possible to inspect the code in just a block of (say) 50 code lines
-> > that would decide whether or not a given map should be queueing and
-> > /
-> > or in recovery mode.
-> >=20
-> > It's an unfortunate property of the multipath-tools code base that
-> > important logic is dispersed over multiple functions and source
-> > files,
-> > making a correct assessment of the code flow difficult and
-> > cumbersome.
-> > It can't be completely avoided given the complexity of the subject,
-> > but
-> > it would be nice to try.
-> >=20
-> > I'm looking forward to your new patch set ;-)
->=20
-> Unfortunately, my new patchset doesn't change the first patch. It
-> just
-> builds on it to clean how the interactive client commands call
-> things, to
-> reduce the callers of some of our functions, and keep the client
-> commands from doing more work than they should be. After the changes,
-> the only things calling set_no_path_retry() are functions that are
-> updating the multipath device due to external events, and the
-> check_path
-> code.=A0=20
->=20
-> The update_queue_mode{add,del}_path() functions should be (and based
-> on
-> my code examination, are) able to assume a device in the correct
-> queuing
-> and recovery state, and just do the work of entering or leaving the
-> recovery mode, based on a change in the number of active paths.=20
-
-OK. Perhaps not what I was hoping for, but better than what we have
-now. Maybe you can add a few comment lines to explain the various
-cases, lest your analysis be forgotten.
-
-
-> If we move the code that checks if the our queuing state is wrong out
-> of
-> set_no_path_retry() into the update_queue_mode{add,del}_path(), then
-> we
-> add a requirement that callers of those functions refresh the current
-> queueing state. Otherwise we can't actually guarantee that they do
-> the
-> right thing. With the current callers, this doesn't really matter,
-> because we don't need them to fix the queueing state. But why not
-> keep
-> the code that fixes the queueing state in a function that's called
-> when
-> it could be wrong, and also is (after my new patchset) only called
-> after
-> we have refreshed the state so it will do the right thing.
->=20
-> So, I would prefer if we go with my first patch, as is.=A0 I'm open to
-> the
-> idea of moving this code into update_queue_mode{add,del}_path() as
-> part
-> of a future patchset where we switch to tracking the current queueing
-> state outside of mpp->features, and updating it whenever we actually
-> enable or disable queueing. I can work on this if you want.
-
-I'm fine with leaving your first patch as is, perhaps with some
-comments. Anyway please resubmit it as part of your new set.
-
-Regards
-Martin
+diff --git a/fs/inode.c b/fs/inode.c
+index 3426691fa305..fead81550cf4 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -59,6 +59,22 @@ static unsigned int i_hash_shift __ro_after_init;
+ static struct hlist_head *inode_hashtable __ro_after_init;
+ static __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_hash_lock);
+ 
++static unsigned long hash(struct super_block *sb, unsigned long hashval)
++{
++	unsigned long tmp;
++
++	tmp = (hashval * (unsigned long)sb) ^ (GOLDEN_RATIO_PRIME + hashval) /
++			L1_CACHE_BYTES;
++	tmp = tmp ^ ((tmp ^ GOLDEN_RATIO_PRIME) >> i_hash_shift);
++	return tmp & i_hash_mask;
++}
++
++static inline struct hlist_head *i_hash_head(struct super_block *sb,
++		unsigned int hashval)
++{
++	return inode_hashtable + hash(sb, hashval);
++}
++
+ /*
+  * Empty aops. Can be used for the cases where the user does not
+  * define any of the address_space operations.
+@@ -502,16 +518,6 @@ static inline void inode_sb_list_del(struct inode *inode)
+ 		dlock_lists_del(&inode->i_sb_list);
+ }
+ 
+-static unsigned long hash(struct super_block *sb, unsigned long hashval)
+-{
+-	unsigned long tmp;
+-
+-	tmp = (hashval * (unsigned long)sb) ^ (GOLDEN_RATIO_PRIME + hashval) /
+-			L1_CACHE_BYTES;
+-	tmp = tmp ^ ((tmp ^ GOLDEN_RATIO_PRIME) >> i_hash_shift);
+-	return tmp & i_hash_mask;
+-}
+-
+ /**
+  *	__insert_inode_hash - hash an inode
+  *	@inode: unhashed inode
+@@ -1187,7 +1193,7 @@ struct inode *inode_insert5(struct inode *inode, unsigned long hashval,
+ 			    int (*test)(struct inode *, void *),
+ 			    int (*set)(struct inode *, void *), void *data)
+ {
+-	struct hlist_head *head = inode_hashtable + hash(inode->i_sb, hashval);
++	struct hlist_head *head = i_hash_head(inode->i_sb, hashval);
+ 	struct inode *old;
+ 
+ again:
+@@ -1291,7 +1297,7 @@ EXPORT_SYMBOL(iget5_locked);
+  */
+ struct inode *iget_locked(struct super_block *sb, unsigned long ino)
+ {
+-	struct hlist_head *head = inode_hashtable + hash(sb, ino);
++	struct hlist_head *head = i_hash_head(sb, ino);
+ 	struct inode *inode;
+ again:
+ 	spin_lock(&inode_hash_lock);
+@@ -1359,7 +1365,7 @@ EXPORT_SYMBOL(iget_locked);
+  */
+ static int test_inode_iunique(struct super_block *sb, unsigned long ino)
+ {
+-	struct hlist_head *b = inode_hashtable + hash(sb, ino);
++	struct hlist_head *b = i_hash_head(sb, ino);
+ 	struct inode *inode;
+ 
+ 	hlist_for_each_entry_rcu(inode, b, i_hash) {
+@@ -1446,7 +1452,7 @@ EXPORT_SYMBOL(igrab);
+ struct inode *ilookup5_nowait(struct super_block *sb, unsigned long hashval,
+ 		int (*test)(struct inode *, void *), void *data)
+ {
+-	struct hlist_head *head = inode_hashtable + hash(sb, hashval);
++	struct hlist_head *head = i_hash_head(sb, hashval);
+ 	struct inode *inode;
+ 
+ 	spin_lock(&inode_hash_lock);
+@@ -1501,7 +1507,7 @@ EXPORT_SYMBOL(ilookup5);
+  */
+ struct inode *ilookup(struct super_block *sb, unsigned long ino)
+ {
+-	struct hlist_head *head = inode_hashtable + hash(sb, ino);
++	struct hlist_head *head = i_hash_head(sb, ino);
+ 	struct inode *inode;
+ again:
+ 	spin_lock(&inode_hash_lock);
+@@ -1550,7 +1556,7 @@ struct inode *find_inode_nowait(struct super_block *sb,
+ 					     void *),
+ 				void *data)
+ {
+-	struct hlist_head *head = inode_hashtable + hash(sb, hashval);
++	struct hlist_head *head = i_hash_head(sb, hashval);
+ 	struct inode *inode, *ret_inode = NULL;
+ 	int mval;
+ 
+@@ -1595,7 +1601,7 @@ EXPORT_SYMBOL(find_inode_nowait);
+ struct inode *find_inode_rcu(struct super_block *sb, unsigned long hashval,
+ 			     int (*test)(struct inode *, void *), void *data)
+ {
+-	struct hlist_head *head = inode_hashtable + hash(sb, hashval);
++	struct hlist_head *head = i_hash_head(sb, hashval);
+ 	struct inode *inode;
+ 
+ 	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+@@ -1633,7 +1639,7 @@ EXPORT_SYMBOL(find_inode_rcu);
+ struct inode *find_inode_by_ino_rcu(struct super_block *sb,
+ 				    unsigned long ino)
+ {
+-	struct hlist_head *head = inode_hashtable + hash(sb, ino);
++	struct hlist_head *head = i_hash_head(sb, ino);
+ 	struct inode *inode;
+ 
+ 	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+@@ -1653,7 +1659,7 @@ int insert_inode_locked(struct inode *inode)
+ {
+ 	struct super_block *sb = inode->i_sb;
+ 	ino_t ino = inode->i_ino;
+-	struct hlist_head *head = inode_hashtable + hash(sb, ino);
++	struct hlist_head *head = i_hash_head(sb, ino);
+ 
+ 	while (1) {
+ 		struct inode *old = NULL;
+-- 
+2.42.0
 
