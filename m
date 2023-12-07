@@ -1,127 +1,178 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from zeniv.linux.org.uk (zeniv.linux.org.uk [62.89.141.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 656CE1399
-	for <dm-devel@lists.linux.dev>; Thu,  7 Dec 2023 01:34:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Slxd95tc6z4f3lfV
-	for <dm-devel@lists.linux.dev>; Thu,  7 Dec 2023 09:34:05 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 912901A08EF
-	for <dm-devel@lists.linux.dev>; Thu,  7 Dec 2023 09:34:10 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgDX2hARIXFlMOPLCw--.6613S3;
-	Thu, 07 Dec 2023 09:34:10 +0800 (CST)
-Subject: Re: [PATCH -next] md: split MD_RECOVERY_NEEDED out of mddev_resume
-To: Song Liu <song@kernel.org>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
- dm-devel@lists.linux.dev, janpieter.sollie@edpnet.be,
- linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
- yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-References: <20231204031703.3102254-1-yukuai1@huaweicloud.com>
- <CAPhsuW4sF=jAyA+Q=2tFBBAApjcW=gWXndDNX6t3nrAfnk_zZA@mail.gmail.com>
- <269ac5cb-aa09-02ca-4150-c90cd5a72e06@huaweicloud.com>
- <CAPhsuW7US8f7gR+Eo=hYU0RF+L8YkF6ebiWG+FDO6frAxoBarw@mail.gmail.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <3befdaea-9365-b28e-b8f0-f70c33a1a79a@huaweicloud.com>
-Date: Thu, 7 Dec 2023 09:34:09 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B626E1FDA;
+	Thu,  7 Dec 2023 02:24:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zeniv.linux.org.uk
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=ftp.linux.org.uk
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linux.org.uk header.i=@linux.org.uk header.b="Ar1MDqmX"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=linux.org.uk; s=zeniv-20220401; h=Sender:In-Reply-To:Content-Type:
+	MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=VnNxPtULTHkI7+FJBFkxvuhGf4itUHcJaix/h4kMFWk=; b=Ar1MDqmXci7Shf383eNOiYpJEG
+	Xcy3OFqNU4GSO5sHlexxo6Frj3D0bdK7t+mK8aor2Jpel1HIT2ag9M92CZVM0cOjQo9Wnom0g3UGp
+	qx76DkqvBHRVUEP1ZUJKw+GvsKnrHxL5YjJ6SUVJMaeIIsGd5JuJlFvnpM0RIYLRjuRROrME0JNen
+	Amge3ULWWLEFE2Mh5jcjAbSVWVNTsgHByvrf/xDNoMfbt62eVJXxNcbY7h2IUvONyfrwyI6Nl0SLP
+	enz2SulFtL40+bB9YOQ9gbkdJzFPm8Zup2rbNIfhNAkSwgxkLHPAQuHR2xO0Sv6mD34zqUsZTX975
+	vhdOn4gg==;
+Received: from viro by zeniv.linux.org.uk with local (Exim 4.96 #2 (Red Hat Linux))
+	id 1rB43R-00831U-1R;
+	Thu, 07 Dec 2023 02:23:57 +0000
+Date: Thu, 7 Dec 2023 02:23:57 +0000
+From: Al Viro <viro@zeniv.linux.org.uk>
+To: Dave Chinner <david@fromorbit.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org,
+	linux-cachefs@redhat.com, dhowells@redhat.com, gfs2@lists.linux.dev,
+	dm-devel@lists.linux.dev, linux-security-module@vger.kernel.org,
+	selinux@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 01/11] lib/dlock-list: Distributed and lock-protected
+ lists
+Message-ID: <20231207022357.GS1674809@ZenIV>
+References: <20231206060629.2827226-1-david@fromorbit.com>
+ <20231206060629.2827226-2-david@fromorbit.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CAPhsuW7US8f7gR+Eo=hYU0RF+L8YkF6ebiWG+FDO6frAxoBarw@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgDX2hARIXFlMOPLCw--.6613S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7ZFy3KF48WryxZw4fGF4fGrg_yoW8uw15p3
-	yjqF4rKF4Duw1fArZF9wn7Ka9Yy3yxKr4rWr9xWF13C34qk34fKF13Wrn0gFWDtryfK3W7
-	tr4qka97AFy5trDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
-	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
-	67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6Fyj6rWU
-	JwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
-	nIWIevJa73UjIFyTuYvjfUF9a9DUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20231206060629.2827226-2-david@fromorbit.com>
+Sender: Al Viro <viro@ftp.linux.org.uk>
 
-Hi,
+On Wed, Dec 06, 2023 at 05:05:30PM +1100, Dave Chinner wrote:
 
-在 2023/12/07 1:24, Song Liu 写道:
-> On Wed, Dec 6, 2023 at 3:36 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>
->> Hi,
->>
->> 在 2023/12/06 16:30, Song Liu 写道:
->>> On Sun, Dec 3, 2023 at 7:18 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>
->>>> From: Yu Kuai <yukuai3@huawei.com>
->>>>
->>>> New mddev_resume() calls are added to synchroniza IO with array
->>>> reconfiguration, however, this introduce a regression while adding it in
->>>> md_start_sync():
->>>>
->>>> 1) someone set MD_RECOVERY_NEEDED first;
->>>> 2) daemon thread grab reconfig_mutex, then clear MD_RECOVERY_NEEDED and
->>>>      queue a new sync work;
->>>> 3) daemon thread release reconfig_mutex;
->>>> 4) in md_start_sync
->>>>      a) check that there are spares that can be added/removed, then suspend
->>>>         the array;
->>>>      b) remove_and_add_spares may not be called, or called without really
->>>>         add/remove spares;
->>>>      c) resume the array, then set MD_RECOVERY_NEEDED again!
->>>>
->>>> Loop between 2 - 4, then mddev_suspend() will be called quite often, for
->>>> consequence, normal IO will be quite slow.
->>>>
->>>> Fix this problem by spliting MD_RECOVERY_NEEDED out of mddev_resume(), so
->>>> that md_start_sync() won't set such flag and hence the loop will be broken.
->>>
->>> I hope we don't leak set_bit MD_RECOVERY_NEEDED to all call
->>> sites of mddev_resume().
->>
->> There are also some other mddev_resume() that is added later and don't
->> need recovery, so md_start_sync() is not the only place:
->>
->>    - md_setup_drive
->>    - rdev_attr_store
->>    - suspend_lo_store
->>    - suspend_hi_store
->>    - autorun_devices
->>    - md_ioct
->>    - r5c_disable_writeback_async
->>    - error path from new_dev_store(), ...
->>
->> I'm not sure add a new helper is a good idea, because all above apis
->> should use new helper as well.
-> 
-> I think for most of these call sites, it is OK to set MD_RECOVERY_NEEDED
-> (although it is not needed), and md_start_sync() is the only one that may
-> trigger "loop between 2 - 4" scenario. Did I miss something?
+> +static inline struct dlock_list_node *
+> +__dlock_list_next_entry(struct dlock_list_node *curr,
+> +			struct dlock_list_iter *iter)
+> +{
+> +	/*
+> +	 * Find next entry
+> +	 */
+> +	if (curr)
+> +		curr = list_next_entry(curr, list);
+> +
+> +	if (!curr || (&curr->list == &iter->entry->list)) {
 
-Yes, it's the only problematic one. I'll send v2.
+Hmm...  hlist, perhaps?  I mean, that way the thing becomes
+	if (curr)
+		curr = hlist_entry_safe(curr->node.next,
+					struct dlock_list_node, node);
+	if (!curr)
+		curr = __dlock_list_next_list(iter);
+	return curr;
 
-Thanks,
-Kuai
+BTW, does anybody have objections against
 
-> 
-> It is already rc4, so we need to send the fix soon.
-> 
-> Thanks,
-> Song
-> .
-> 
+#define hlist_first_entry(head, type, member)
+	hlist_entry_safe((head)->first, type, member)
 
+#define hlist_next_entry(pos, member)
+	hlist_entry_safe((pos)->member.next, typeof(*pos), member)
+
+added in list.h?
+
+> +static int __init cpu2idx_init(void)
+> +{
+> +	int idx, cpu;
+> +
+> +	idx = 0;
+> +	for_each_possible_cpu(cpu)
+> +		per_cpu(cpu2idx, cpu) = idx++;
+> +	return 0;
+> +}
+> +postcore_initcall(cpu2idx_init);
+
+Is it early enough?  Feels like that ought to be done from smp_init() or
+right after it...
+
+> +/**
+> + * dlock_lists_empty - Check if all the dlock lists are empty
+> + * @dlist: Pointer to the dlock_list_heads structure
+> + * Return: true if list is empty, false otherwise.
+> + *
+> + * This can be a pretty expensive function call. If this function is required
+> + * in a performance critical path, we may have to maintain a global count
+> + * of the list entries in the global dlock_list_heads structure instead.
+> + */
+> +bool dlock_lists_empty(struct dlock_list_heads *dlist)
+> +{
+> +	int idx;
+> +
+> +	for (idx = 0; idx < nr_cpu_ids; idx++)
+> +		if (!list_empty(&dlist->heads[idx].list))
+> +			return false;
+> +	return true;
+> +}
+
+Umm...  How would one use it, anyway?  You'd need to stop all insertions
+first, wouldn't you?
+
+> + */
+> +struct dlock_list_node *__dlock_list_next_list(struct dlock_list_iter *iter)
+> +{
+> +	struct dlock_list_node *next;
+> +	struct dlock_list_head *head;
+> +
+> +restart:
+> +	if (iter->entry) {
+> +		spin_unlock(&iter->entry->lock);
+> +		iter->entry = NULL;
+> +	}
+> +
+> +next_list:
+> +	/*
+> +	 * Try next list
+> +	 */
+> +	if (++iter->index >= nr_cpu_ids)
+> +		return NULL;	/* All the entries iterated */
+> +
+> +	if (list_empty(&iter->head[iter->index].list))
+> +		goto next_list;
+> +
+> +	head = iter->entry = &iter->head[iter->index];
+> +	spin_lock(&head->lock);
+> +	/*
+> +	 * There is a slight chance that the list may become empty just
+> +	 * before the lock is acquired. So an additional check is
+> +	 * needed to make sure that a valid node will be returned.
+> +	 */
+> +	if (list_empty(&head->list))
+> +		goto restart;
+> +
+> +	next = list_entry(head->list.next, struct dlock_list_node,
+> +			  list);
+> +	WARN_ON_ONCE(next->head != head);
+> +
+> +	return next;
+> +}
+
+Perhaps something like
+
+	if (iter->entry) {
+		spin_unlock(&iter->entry->lock);
+		iter->entry = NULL;
+	}
+	while (++iter->index < nr_cpu_ids) {
+		struct dlock_list_head *head = &iter->head[iter->index];
+
+		if (list_empty(head->list))
+			continue;
+
+		spin_lock(&head->lock);
+		// recheck under lock
+		if (unlikely(list_empty(&head->list))) {
+			spin_unlock(&head->lock);
+			continue;
+		}
+
+		iter->entry = head;
+		next = list_first_entry(&head->list,
+					struct dlock_list_node, list);
+		WARN_ON_ONCE(next->head != head);
+		return next;
+	}
+	return NULL;
