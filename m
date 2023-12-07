@@ -1,132 +1,127 @@
-Received: from mail-yb1-f172.google.com (mail-yb1-f172.google.com [209.85.219.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97EDA1846
-	for <dm-devel@lists.linux.dev>; Thu,  7 Dec 2023 00:37:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="bWNfkj8Z"
-Received: by mail-yb1-f172.google.com with SMTP id 3f1490d57ef6-dae0ab8ac3eso460640276.0
-        for <dm-devel@lists.linux.dev>; Wed, 06 Dec 2023 16:37:04 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1701909423; x=1702514223; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=ku2sfUBBqRmjOusEjPPKSg3scPnZYVUEi+HsErMF7+A=;
-        b=bWNfkj8ZkULN8l3rA9255DSRjcpPy4kSafU7efHQHUTAJ2fqeWWnyaH5nLsJZz4fXH
-         CNNtK5l/JKAycxYnhwVdkRKbmt/hTDf1Wl+9colnHSr22m8PFsbQax0bEzH158dtDql0
-         Ri6+qVVdKJfqx8bN77uTcXEKifElGp08dXl3fzlTm20rxUwtt0ssVHqTJrzQ8h7HUWdk
-         rRXQNoGRT0cGqxdwt4AXcI3TM4uT9M2np/jeke3OySxsxw4kynP7pZpC0+nza/gJ7OoE
-         79DmUo/62OCsgJ7ytkUAmKiVDYqAbM6Uey/lEcn41lsaxt47SBy8TU+n055ON7n4mu8C
-         g25A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1701909423; x=1702514223;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=ku2sfUBBqRmjOusEjPPKSg3scPnZYVUEi+HsErMF7+A=;
-        b=g4DTvEQE6YNAj5utg0Z6pLcrbNWTg/3aelzpR74BNTRzyskb6MFkrZvxC8ps0qAjpU
-         z0fLMn9dr2rbggi3YEorY4ysS6r474u65V4bgiGVPZwcYjoDb5rbVi9ZxQE5AfJNHij5
-         1vAcIeBnCn1Mx+NifAguoYpab6JGXjnMPFnUFLeVlOK7HhbYhmyPlInVOHdT4xvA8yfi
-         O+0W0iLTydTfAFMosP45ARzsEOyN/hIcAYnKoQRxY0bA1Z7X3qNFtJGrvF1N72hnkP5k
-         2umJr6LG0E6yj29NNwVjhfjD27LlEmd2RQOGNX55DD1L9AsQSri0lOOEa8MG3yb0N8Jn
-         irNQ==
-X-Gm-Message-State: AOJu0YwvjGN9epIDDULsO14i/Qt+AEpdWqqmCtNeVWSmaGkmBzauE26p
-	Y9FYT7BZ1BN3TnjYLVgRS2GY2yF5+C2oKPQxfaCh
-X-Google-Smtp-Source: AGHT+IG1iYIFG177+3bvYtnhfemiCuwpFKgg3syUJq0tO2kQMOa+CZIi7OJOUpuM/HHKxu3GBd4bnBcpq+XxZYKLOIM=
-X-Received: by 2002:a25:7714:0:b0:db7:8141:e65b with SMTP id
- s20-20020a257714000000b00db78141e65bmr1716451ybc.64.1701909423446; Wed, 06
- Dec 2023 16:37:03 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 656CE1399
+	for <dm-devel@lists.linux.dev>; Thu,  7 Dec 2023 01:34:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Slxd95tc6z4f3lfV
+	for <dm-devel@lists.linux.dev>; Thu,  7 Dec 2023 09:34:05 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 912901A08EF
+	for <dm-devel@lists.linux.dev>; Thu,  7 Dec 2023 09:34:10 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgDX2hARIXFlMOPLCw--.6613S3;
+	Thu, 07 Dec 2023 09:34:10 +0800 (CST)
+Subject: Re: [PATCH -next] md: split MD_RECOVERY_NEEDED out of mddev_resume
+To: Song Liu <song@kernel.org>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+ dm-devel@lists.linux.dev, janpieter.sollie@edpnet.be,
+ linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+ yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
+References: <20231204031703.3102254-1-yukuai1@huaweicloud.com>
+ <CAPhsuW4sF=jAyA+Q=2tFBBAApjcW=gWXndDNX6t3nrAfnk_zZA@mail.gmail.com>
+ <269ac5cb-aa09-02ca-4150-c90cd5a72e06@huaweicloud.com>
+ <CAPhsuW7US8f7gR+Eo=hYU0RF+L8YkF6ebiWG+FDO6frAxoBarw@mail.gmail.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <3befdaea-9365-b28e-b8f0-f70c33a1a79a@huaweicloud.com>
+Date: Thu, 7 Dec 2023 09:34:09 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20231206060629.2827226-1-david@fromorbit.com> <20231206060629.2827226-6-david@fromorbit.com>
- <CAHC9VhTP3hRAkmp7wOKGrEzY5OXXJpnuofTG_+KdXDku18vkeA@mail.gmail.com> <ZXD+F5N/3PPSGTya@dread.disaster.area>
-In-Reply-To: <ZXD+F5N/3PPSGTya@dread.disaster.area>
-From: Paul Moore <paul@paul-moore.com>
-Date: Wed, 6 Dec 2023 19:36:52 -0500
-Message-ID: <CAHC9VhRNS=DvbL_sY5Vi+7twd3uV+WhACaaeJMsBUTYmhjxjVA@mail.gmail.com>
-Subject: Re: [PATCH 05/11] selinux: use dlist for isec inode list
-To: Dave Chinner <david@fromorbit.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, 
-	linux-cachefs@redhat.com, dhowells@redhat.com, gfs2@lists.linux.dev, 
-	dm-devel@lists.linux.dev, linux-security-module@vger.kernel.org, 
-	selinux@vger.kernel.org, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <CAPhsuW7US8f7gR+Eo=hYU0RF+L8YkF6ebiWG+FDO6frAxoBarw@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgDX2hARIXFlMOPLCw--.6613S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7ZFy3KF48WryxZw4fGF4fGrg_yoW8uw15p3
+	yjqF4rKF4Duw1fArZF9wn7Ka9Yy3yxKr4rWr9xWF13C34qk34fKF13Wrn0gFWDtryfK3W7
+	tr4qka97AFy5trDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
+	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
+	67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
+	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6Fyj6rWU
+	JwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
+	nIWIevJa73UjIFyTuYvjfUF9a9DUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Wed, Dec 6, 2023 at 6:04=E2=80=AFPM Dave Chinner <david@fromorbit.com> w=
-rote:
-> On Wed, Dec 06, 2023 at 04:52:42PM -0500, Paul Moore wrote:
-> > On Wed, Dec 6, 2023 at 1:07=E2=80=AFAM Dave Chinner <david@fromorbit.co=
-m> wrote:
-> > >
-> > > From: Dave Chinner <dchinner@redhat.com>
-> > >
-> > > Because it's a horrible point of lock contention under heavily
-> > > concurrent directory traversals...
-> > >
-> > >   - 12.14% d_instantiate
-> > >      - 12.06% security_d_instantiate
-> > >         - 12.13% selinux_d_instantiate
-> > >            - 12.16% inode_doinit_with_dentry
-> > >               - 15.45% _raw_spin_lock
-> > >                  - do_raw_spin_lock
-> > >                       14.68% __pv_queued_spin_lock_slowpath
-> > >
-> > >
-> > > Signed-off-by: Dave Chinner <dchinner@redhat.com>
-> > > ---
-> > >  include/linux/dlock-list.h        |  9 ++++
-> > >  security/selinux/hooks.c          | 72 +++++++++++++++--------------=
---
-> > >  security/selinux/include/objsec.h |  6 +--
-> > >  3 files changed, 47 insertions(+), 40 deletions(-)
-> >
-> > In the cover letter you talk about testing, but I didn't see any
-> > mention of testing with SELinux enabled.  Given the lock contention
-> > stats in the description above I'm going to assume you did test this
-> > and pass along my ACK, but if you haven't tested the changes below
-> > please do before sending this anywhere important.
->
-> AFAIA, I've been testing with selinux enabled - I'm trying to run
-> these tests in an environment as close to typical production systems
-> as possible and that means selinux needs to be enabled.
->
-> As such, all the fstests and perf testing has been done with selinux
-> in permissive mode using "-o context=3Dsystem_u:object_r:root_t:s0" as
-> the default context for the mount.
->
-> I see this sort of thing in the profiles:
->
-> - 87.13% path_lookupat
->    - 86.46% walk_component
->       - 84.20% lookup_slow
->          - 84.05% __lookup_slow
->             - 80.81% xfs_vn_lookup
->                - 77.84% xfs_lookup
-> ....
->                - 2.91% d_splice_alias
->                   - 1.52% security_d_instantiate
->                      - 1.50% selinux_d_instantiate
->                         - 1.47% inode_doinit_with_dentry
->                            - 0.83% inode_doinit_use_xattr
->                                 0.52% __vfs_getxattr
->
-> Which tells me that selinux is definitely doing -something- on every
-> inode being instantiated, so I'm pretty sure the security and
-> selinux paths are getting exercised...
+Hi,
 
-That's great, thanks for the confirmation.  FWIW, for these patches it
-doesn't really matter if the system is in enforcing or permissive
-mode, or what label you use, the important bit is that you've got a
-system with SELinux enabled in the kernel and you have a reasonable
-policy loaded.
+在 2023/12/07 1:24, Song Liu 写道:
+> On Wed, Dec 6, 2023 at 3:36 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>
+>> Hi,
+>>
+>> 在 2023/12/06 16:30, Song Liu 写道:
+>>> On Sun, Dec 3, 2023 at 7:18 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>>>
+>>>> From: Yu Kuai <yukuai3@huawei.com>
+>>>>
+>>>> New mddev_resume() calls are added to synchroniza IO with array
+>>>> reconfiguration, however, this introduce a regression while adding it in
+>>>> md_start_sync():
+>>>>
+>>>> 1) someone set MD_RECOVERY_NEEDED first;
+>>>> 2) daemon thread grab reconfig_mutex, then clear MD_RECOVERY_NEEDED and
+>>>>      queue a new sync work;
+>>>> 3) daemon thread release reconfig_mutex;
+>>>> 4) in md_start_sync
+>>>>      a) check that there are spares that can be added/removed, then suspend
+>>>>         the array;
+>>>>      b) remove_and_add_spares may not be called, or called without really
+>>>>         add/remove spares;
+>>>>      c) resume the array, then set MD_RECOVERY_NEEDED again!
+>>>>
+>>>> Loop between 2 - 4, then mddev_suspend() will be called quite often, for
+>>>> consequence, normal IO will be quite slow.
+>>>>
+>>>> Fix this problem by spliting MD_RECOVERY_NEEDED out of mddev_resume(), so
+>>>> that md_start_sync() won't set such flag and hence the loop will be broken.
+>>>
+>>> I hope we don't leak set_bit MD_RECOVERY_NEEDED to all call
+>>> sites of mddev_resume().
+>>
+>> There are also some other mddev_resume() that is added later and don't
+>> need recovery, so md_start_sync() is not the only place:
+>>
+>>    - md_setup_drive
+>>    - rdev_attr_store
+>>    - suspend_lo_store
+>>    - suspend_hi_store
+>>    - autorun_devices
+>>    - md_ioct
+>>    - r5c_disable_writeback_async
+>>    - error path from new_dev_store(), ...
+>>
+>> I'm not sure add a new helper is a good idea, because all above apis
+>> should use new helper as well.
+> 
+> I think for most of these call sites, it is OK to set MD_RECOVERY_NEEDED
+> (although it is not needed), and md_start_sync() is the only one that may
+> trigger "loop between 2 - 4" scenario. Did I miss something?
 
---=20
-paul-moore.com
+Yes, it's the only problematic one. I'll send v2.
+
+Thanks,
+Kuai
+
+> 
+> It is already rc4, so we need to send the fix soon.
+> 
+> Thanks,
+> Song
+> .
+> 
+
