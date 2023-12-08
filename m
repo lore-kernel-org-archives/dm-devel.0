@@ -1,32 +1,34 @@
-Received: from out-185.mta0.migadu.com (out-185.mta0.migadu.com [91.218.175.185])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3FA53D0D4
-	for <dm-devel@lists.linux.dev>; Thu,  7 Dec 2023 17:08:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8B7F184F
+	for <dm-devel@lists.linux.dev>; Fri,  8 Dec 2023 01:54:05 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="puHq3JkW"
-Date: Thu, 7 Dec 2023 12:08:35 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1701968920;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=eUd3xjH2HF2EejUSWZhUOf3yJDKcu6pMWysVFu8RiZs=;
-	b=puHq3JkWtcBQNKbK5bAHnkin2RfTU367Wzc1OrpC+avd7p55JGJwuTXnTu5dsJFxD5ldDx
-	K6V9iF4AyslZAbVyNff4Y9Nf/U8Xw1NCt8ZIJEwr0O1wLkJaGCgAZIMJd7Ef0iHSMKdh2l
-	jxh5eUm5lg2fT0kvqSeerFEajefqv9k=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Dave Chinner <david@fromorbit.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org,
-	linux-cachefs@redhat.com, dhowells@redhat.com, gfs2@lists.linux.dev,
-	dm-devel@lists.linux.dev, linux-security-module@vger.kernel.org,
-	selinux@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 0/11] vfs: inode cache scalability improvements
-Message-ID: <20231207170835.yjpfpjy5or6bfkva@moria.home.lan>
-References: <20231206060629.2827226-1-david@fromorbit.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Zg1FE4qf"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B96A2C433C7;
+	Fri,  8 Dec 2023 01:54:04 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1702000445;
+	bh=IbytOVy5a5Ro3NMM8xBisbXuTVHMAHlkl7zTvD7m19A=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=Zg1FE4qf0sTdnrrs3eBPGg9iLNs4Vfd+Z3Iy4bb/6U5V57LH7phO3IzAnPvr4nWlE
+	 A1gbHxrIB6ERvp0KTHLhC3yOra9gljcNl3ge3qK7irtlTJaJCQVypSC0lYcdaP279F
+	 yzkjQR7DnFVviW/ErNQCSJppVa76cQ7tH8Ta1xNG5kZFdd2olxAeOaKIU8EYA+phuY
+	 Dt7/9qHxVxvhPxo/MmY+S5FDgmoABVLPHOBiGTUPART9eK+HCMtsjrC+cp/VDvaYAA
+	 th+81aDF71nnnkigmmdlqBDuDUfmlmCcIBKo85n64NbrBiDijS9PowaTRPW7TOrnw1
+	 WFxIvkhymekJA==
+Date: Thu, 7 Dec 2023 17:54:03 -0800
+From: Eric Biggers <ebiggers@kernel.org>
+To: Hongyu Jin <hongyu.jin.cn@gmail.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+	zhiguo.niu@unisoc.com, ke.wang@unisoc.com, yibin.ding@unisoc.com,
+	hongyu.jin@unisoc.com, linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH v2] dm verity: Inherit I/O priority from data I/O when
+ read FEC and hash from disk
+Message-ID: <20231208015403.GB1160@sol.localdomain>
+References: <83e8ea6c-1d9-36d5-1c23-da686dbfaf80@redhat.com>
+ <20231206113935.9705-1-hongyu.jin.cn@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,15 +37,102 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20231206060629.2827226-1-david@fromorbit.com>
-X-Migadu-Flow: FLOW_OUT
+In-Reply-To: <20231206113935.9705-1-hongyu.jin.cn@gmail.com>
 
-On Wed, Dec 06, 2023 at 05:05:29PM +1100, Dave Chinner wrote:
-...o
-> Git tree containing this series can be pulled from:
+On Wed, Dec 06, 2023 at 07:39:35PM +0800, Hongyu Jin wrote:
+> From: Hongyu Jin <hongyu.jin@unisoc.com>
 > 
-> https://git.kernel.org/pub/scm/linux/kernel/git/dgc/linux-xfs.git vfs-scale
+> when read FEC and hash from disk, I/O priority are inconsistent
+>  with data block and blocked by other I/O with low I/O priority.
+> 
+> Add dm_bufio_prefetch_by_ioprio() and dm_bufio_read_by_ioprio(),
+> can pecific I/O priority for some I/O.
+> Make I/O for FEC and hash has same I/O priority with data I/O.
+> 
+> Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
+> Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
+> Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
+> 
+> ---
+> Changes in v2:
+>   - Add ioprio field in struct dm_io_region
+>   - Initial struct dm_io_region::ioprio to IOPRIO_DEFAULT
+>   - Add two interface
+> ---
+>  drivers/md/dm-bufio.c           | 50 ++++++++++++++++++++++-----------
+>  drivers/md/dm-integrity.c       |  5 ++++
+>  drivers/md/dm-io.c              |  1 +
+>  drivers/md/dm-log.c             |  1 +
+>  drivers/md/dm-raid1.c           |  2 ++
+>  drivers/md/dm-snap-persistent.c |  2 ++
+>  drivers/md/dm-verity-fec.c      |  3 +-
+>  drivers/md/dm-verity-target.c   | 10 +++++--
+>  drivers/md/dm-writecache.c      |  4 +++
+>  include/linux/dm-bufio.h        |  6 ++++
+>  include/linux/dm-io.h           |  2 ++
+>  11 files changed, 66 insertions(+), 20 deletions(-)
 
-For the series:
+Changing so many things in one patch should be avoided if possible.  Is there a
+way to split this patch up?  Maybe first add ioprio support to dm-io, then add
+ioprio support to dm-bufio, then make dm-verity set the correct ioprio?
 
-Tested-by: Kent Overstreet <kent.overstreet@linux.dev>
+>  void *dm_bufio_read(struct dm_bufio_client *c, sector_t block,
+>  		    struct dm_buffer **bp)
+> +{
+> +	return dm_bufio_read_by_ioprio(c, block, bp, IOPRIO_DEFAULT);
+> +}
+> +EXPORT_SYMBOL_GPL(dm_bufio_read);
+> +
+> +void *dm_bufio_read_by_ioprio(struct dm_bufio_client *c, sector_t block,
+> +		    struct dm_buffer **bp, unsigned short ioprio)
+>  {
+>  	if (WARN_ON_ONCE(dm_bufio_in_request()))
+>  		return ERR_PTR(-EINVAL);
+>  
+> -	return new_read(c, block, NF_READ, bp);
+> +	return new_read(c, block, NF_READ, bp, ioprio);
+>  }
+> -EXPORT_SYMBOL_GPL(dm_bufio_read);
+> +EXPORT_SYMBOL_GPL(dm_bufio_read_by_ioprio);
+>  
+>  void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
+>  		   struct dm_buffer **bp)
+> @@ -1909,12 +1918,19 @@ void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
+>  	if (WARN_ON_ONCE(dm_bufio_in_request()))
+>  		return ERR_PTR(-EINVAL);
+>  
+> -	return new_read(c, block, NF_FRESH, bp);
+> +	return new_read(c, block, NF_FRESH, bp, IOPRIO_DEFAULT);
+>  }
+>  EXPORT_SYMBOL_GPL(dm_bufio_new);
+>  
+>  void dm_bufio_prefetch(struct dm_bufio_client *c,
+>  		       sector_t block, unsigned int n_blocks)
+> +{
+> +	return dm_bufio_prefetch_by_ioprio(c, block, n_blocks, IOPRIO_DEFAULT);
+> +}
+> +EXPORT_SYMBOL_GPL(dm_bufio_prefetch);
+> +
+> +void dm_bufio_prefetch_by_ioprio(struct dm_bufio_client *c,
+> +		       sector_t block, unsigned int n_blocks, unsigned short ioprio)
+
+I think it would be cleaner to just add the ioprio parameter to dm_bufio_read()
+and dm_bufio_prefetch(), instead of adding new functions.
+
+> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> index 26adcfea0302..5945ac1dfdff 100644
+> --- a/drivers/md/dm-verity-target.c
+> +++ b/drivers/md/dm-verity-target.c
+> @@ -51,6 +51,7 @@ static DEFINE_STATIC_KEY_FALSE(use_tasklet_enabled);
+>  struct dm_verity_prefetch_work {
+>  	struct work_struct work;
+>  	struct dm_verity *v;
+> +	struct dm_verity_io *io;
+>  	sector_t block;
+>  	unsigned int n_blocks;
+>  };
+
+Isn't it possible for 'io' to complete and be freed while the prefetch work is
+still running?
+
+- Eric
