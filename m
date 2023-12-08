@@ -1,87 +1,162 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7CE96125D3
-	for <dm-devel@lists.linux.dev>; Fri,  8 Dec 2023 10:06:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="X4qpkddb"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0D099C433C7;
-	Fri,  8 Dec 2023 10:06:15 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1702029976;
-	bh=j63Rn1Xs/cHUVcxaMmeOev/MtpgEjAnETLUjLKFcyq4=;
-	h=From:To:Cc:Subject:Date:From;
-	b=X4qpkddbCdUmbL9uoudDfqnfXVxYVpYy505XNLpDtpVF1BVgs39VmoN1BSBDHtYfL
-	 nl2JjF/BGyWtSRf4GTW/yzsFfNVVFhstDAd8++N3RKW7kg3y2lWZcECQeh2rG+I2LL
-	 aRhY9lhzU7E0YsFyzjnvryj18+5Csx5UmMrW5aaLiKPZfr5SdjuQda+tjxSnSNwbPU
-	 ctnfXs80MVmXZrX0BJtndkZj76P5CXmpIOj2U8G+UcthPwau8UY46ohKI8YQy7iEdP
-	 ygYfQV/pCzF5yeOcTaCCAXObEoBJXP3tR26GCNCf85WErExVIOl+FzdaeukXTG6u32
-	 BvlkB6zBimb0Q==
-From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org,
-	mpatocka@redhat.com
-Cc: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	dm-devel@lists.linux.dev
-Subject: Patch "dm-crypt: start allocating with MAX_ORDER" has been added to the 6.6-stable tree
-Date: Fri,  8 Dec 2023 05:06:13 -0500
-Message-ID: <20231208100613.2845631-1-sashal@kernel.org>
-X-Mailer: git-send-email 2.42.0
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10A0958AB4
+	for <dm-devel@lists.linux.dev>; Fri,  8 Dec 2023 20:34:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=lists.ewheeler.net
+Received: from localhost (localhost [127.0.0.1])
+	by mx.ewheeler.net (Postfix) with ESMTP id D933287;
+	Fri,  8 Dec 2023 12:34:24 -0800 (PST)
+X-Virus-Scanned: amavisd-new at ewheeler.net
+Received: from mx.ewheeler.net ([127.0.0.1])
+	by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id tbfFGu00FUj5; Fri,  8 Dec 2023 12:34:20 -0800 (PST)
+Received: from localhost (localhost [127.0.0.1])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx.ewheeler.net (Postfix) with ESMTPSA id 5E03440;
+	Fri,  8 Dec 2023 12:34:20 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net 5E03440
+Date: Fri, 8 Dec 2023 12:34:19 -0800 (PST)
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+To: Hongyu Jin <hongyu.jin.cn@gmail.com>
+cc: Eric Biggers <ebiggers@kernel.org>, agk@redhat.com, snitzer@kernel.org, 
+    mpatocka@redhat.com, zhiguo.niu@unisoc.com, ke.wang@unisoc.com, 
+    yibin.ding@unisoc.com, hongyu.jin@unisoc.com, linux-kernel@vger.kernel.org, 
+    dm-devel@lists.linux.dev
+Subject: Re: [PATCH v2] dm verity: Inherit I/O priority from data I/O when
+ read FEC and hash from disk
+In-Reply-To: <20231208015403.GB1160@sol.localdomain>
+Message-ID: <df68c38e-3e38-eaf1-5c32-66e43d68cae3@ewheeler.net>
+References: <83e8ea6c-1d9-36d5-1c23-da686dbfaf80@redhat.com> <20231206113935.9705-1-hongyu.jin.cn@gmail.com> <20231208015403.GB1160@sol.localdomain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 
-This is a note to let you know that I've just added the patch titled
+On Thu, 7 Dec 2023, Eric Biggers wrote:
+> On Wed, Dec 06, 2023 at 07:39:35PM +0800, Hongyu Jin wrote:
+> > From: Hongyu Jin <hongyu.jin@unisoc.com>
+> > 
+> > when read FEC and hash from disk, I/O priority are inconsistent
+> >  with data block and blocked by other I/O with low I/O priority.
+> > 
+> > Add dm_bufio_prefetch_by_ioprio() and dm_bufio_read_by_ioprio(),
+> > can pecific I/O priority for some I/O.
+> > Make I/O for FEC and hash has same I/O priority with data I/O.
 
-    dm-crypt: start allocating with MAX_ORDER
+Hi Hongyu,
 
-to the 6.6-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
++1 for the feature, thank you for cleaning up ioprio in device mapper! 
 
-The filename of the patch is:
-     dm-crypt-start-allocating-with-max_order.patch
-and it can be found in the queue-6.6 subdirectory.
+A few years ago we proposed a similar prior patch in dm-crypt; however, it 
+was never committed, and I did not have the time to shepherd it through.
+Maybe this has since been addressed in some other way, or perhaps your 
+work solves what we were doing with dm-crypt; either way, here is the 
+link to that thread incase it is relevant to your work:
+	https://www.mail-archive.com/dm-devel@redhat.com/msg03828.html
 
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
+I look forward to seeing all (or at least the most common) device mapper 
+targets cleanly support ioprio.
+
+Cheers,
+
+--
+Eric Wheeler
 
 
 
-commit 622358e7f48feee3351300a2af4163f1258fcc7b
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Fri Nov 17 18:38:33 2023 +0100
 
-    dm-crypt: start allocating with MAX_ORDER
-    
-    [ Upstream commit 13648e04a9b831b3dfa5cf3887dfa6cf8fe5fe69 ]
-    
-    Commit 23baf831a32c ("mm, treewide: redefine MAX_ORDER sanely")
-    changed the meaning of MAX_ORDER from exclusive to inclusive. So, we
-    can allocate compound pages with up to 1 << MAX_ORDER pages.
-    
-    Reflect this change in dm-crypt and start trying to allocate compound
-    pages with MAX_ORDER.
-    
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-    Signed-off-by: Sasha Levin <sashal@kernel.org>
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index cef9353370b20..17ffbf7fbe73e 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1679,7 +1679,7 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned int size)
- 	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
- 	gfp_t gfp_mask = GFP_NOWAIT | __GFP_HIGHMEM;
- 	unsigned int remaining_size;
--	unsigned int order = MAX_ORDER - 1;
-+	unsigned int order = MAX_ORDER;
- 
- retry:
- 	if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
+> > Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
+> > Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
+> > Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
+> > 
+> > ---
+> > Changes in v2:
+> >   - Add ioprio field in struct dm_io_region
+> >   - Initial struct dm_io_region::ioprio to IOPRIO_DEFAULT
+> >   - Add two interface
+> > ---
+> >  drivers/md/dm-bufio.c           | 50 ++++++++++++++++++++++-----------
+> >  drivers/md/dm-integrity.c       |  5 ++++
+> >  drivers/md/dm-io.c              |  1 +
+> >  drivers/md/dm-log.c             |  1 +
+> >  drivers/md/dm-raid1.c           |  2 ++
+> >  drivers/md/dm-snap-persistent.c |  2 ++
+> >  drivers/md/dm-verity-fec.c      |  3 +-
+> >  drivers/md/dm-verity-target.c   | 10 +++++--
+> >  drivers/md/dm-writecache.c      |  4 +++
+> >  include/linux/dm-bufio.h        |  6 ++++
+> >  include/linux/dm-io.h           |  2 ++
+> >  11 files changed, 66 insertions(+), 20 deletions(-)
+> 
+> Changing so many things in one patch should be avoided if possible.  Is there a
+> way to split this patch up?  Maybe first add ioprio support to dm-io, then add
+> ioprio support to dm-bufio, then make dm-verity set the correct ioprio?
+> 
+> >  void *dm_bufio_read(struct dm_bufio_client *c, sector_t block,
+> >  		    struct dm_buffer **bp)
+> > +{
+> > +	return dm_bufio_read_by_ioprio(c, block, bp, IOPRIO_DEFAULT);
+> > +}
+> > +EXPORT_SYMBOL_GPL(dm_bufio_read);
+> > +
+> > +void *dm_bufio_read_by_ioprio(struct dm_bufio_client *c, sector_t block,
+> > +		    struct dm_buffer **bp, unsigned short ioprio)
+> >  {
+> >  	if (WARN_ON_ONCE(dm_bufio_in_request()))
+> >  		return ERR_PTR(-EINVAL);
+> >  
+> > -	return new_read(c, block, NF_READ, bp);
+> > +	return new_read(c, block, NF_READ, bp, ioprio);
+> >  }
+> > -EXPORT_SYMBOL_GPL(dm_bufio_read);
+> > +EXPORT_SYMBOL_GPL(dm_bufio_read_by_ioprio);
+> >  
+> >  void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
+> >  		   struct dm_buffer **bp)
+> > @@ -1909,12 +1918,19 @@ void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
+> >  	if (WARN_ON_ONCE(dm_bufio_in_request()))
+> >  		return ERR_PTR(-EINVAL);
+> >  
+> > -	return new_read(c, block, NF_FRESH, bp);
+> > +	return new_read(c, block, NF_FRESH, bp, IOPRIO_DEFAULT);
+> >  }
+> >  EXPORT_SYMBOL_GPL(dm_bufio_new);
+> >  
+> >  void dm_bufio_prefetch(struct dm_bufio_client *c,
+> >  		       sector_t block, unsigned int n_blocks)
+> > +{
+> > +	return dm_bufio_prefetch_by_ioprio(c, block, n_blocks, IOPRIO_DEFAULT);
+> > +}
+> > +EXPORT_SYMBOL_GPL(dm_bufio_prefetch);
+> > +
+> > +void dm_bufio_prefetch_by_ioprio(struct dm_bufio_client *c,
+> > +		       sector_t block, unsigned int n_blocks, unsigned short ioprio)
+> 
+> I think it would be cleaner to just add the ioprio parameter to dm_bufio_read()
+> and dm_bufio_prefetch(), instead of adding new functions.
+> 
+> > diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> > index 26adcfea0302..5945ac1dfdff 100644
+> > --- a/drivers/md/dm-verity-target.c
+> > +++ b/drivers/md/dm-verity-target.c
+> > @@ -51,6 +51,7 @@ static DEFINE_STATIC_KEY_FALSE(use_tasklet_enabled);
+> >  struct dm_verity_prefetch_work {
+> >  	struct work_struct work;
+> >  	struct dm_verity *v;
+> > +	struct dm_verity_io *io;
+> >  	sector_t block;
+> >  	unsigned int n_blocks;
+> >  };
+> 
+> Isn't it possible for 'io' to complete and be freed while the prefetch work is
+> still running?
+> 
+> - Eric
+> 
+> 
