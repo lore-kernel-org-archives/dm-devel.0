@@ -1,162 +1,113 @@
-Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-io1-f44.google.com (mail-io1-f44.google.com [209.85.166.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10A0958AB4
-	for <dm-devel@lists.linux.dev>; Fri,  8 Dec 2023 20:34:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=lists.ewheeler.net
-Received: from localhost (localhost [127.0.0.1])
-	by mx.ewheeler.net (Postfix) with ESMTP id D933287;
-	Fri,  8 Dec 2023 12:34:24 -0800 (PST)
-X-Virus-Scanned: amavisd-new at ewheeler.net
-Received: from mx.ewheeler.net ([127.0.0.1])
-	by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
-	with LMTP id tbfFGu00FUj5; Fri,  8 Dec 2023 12:34:20 -0800 (PST)
-Received: from localhost (localhost [127.0.0.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mx.ewheeler.net (Postfix) with ESMTPSA id 5E03440;
-	Fri,  8 Dec 2023 12:34:20 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net 5E03440
-Date: Fri, 8 Dec 2023 12:34:19 -0800 (PST)
-From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-To: Hongyu Jin <hongyu.jin.cn@gmail.com>
-cc: Eric Biggers <ebiggers@kernel.org>, agk@redhat.com, snitzer@kernel.org, 
-    mpatocka@redhat.com, zhiguo.niu@unisoc.com, ke.wang@unisoc.com, 
-    yibin.ding@unisoc.com, hongyu.jin@unisoc.com, linux-kernel@vger.kernel.org, 
-    dm-devel@lists.linux.dev
-Subject: Re: [PATCH v2] dm verity: Inherit I/O priority from data I/O when
- read FEC and hash from disk
-In-Reply-To: <20231208015403.GB1160@sol.localdomain>
-Message-ID: <df68c38e-3e38-eaf1-5c32-66e43d68cae3@ewheeler.net>
-References: <83e8ea6c-1d9-36d5-1c23-da686dbfaf80@redhat.com> <20231206113935.9705-1-hongyu.jin.cn@gmail.com> <20231208015403.GB1160@sol.localdomain>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D5511EB46
+	for <dm-devel@lists.linux.dev>; Mon, 11 Dec 2023 09:00:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aTy9FfAB"
+Received: by mail-io1-f44.google.com with SMTP id ca18e2360f4ac-7b459364167so155710039f.2
+        for <dm-devel@lists.linux.dev>; Mon, 11 Dec 2023 01:00:29 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1702285229; x=1702890029; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=wju9poNbHmK4kTzadequgCrVsBMHqrILz+bPct1uH60=;
+        b=aTy9FfABkeMreYSQukMeN08UvDMrwBQ7oWXoe+L3QYytq79oVCb7jkJv685TpR+QwA
+         QiIGFVZi55WLrQipLIpwg+zZaARCZ1xxqL2DfzByHHCNKKkYYskbMpTcLNYaZBtHx24m
+         2fv0jw9dIuDmI2pR27WLEp7uSFa9+7xuPyHq9kOhX9VcH3skzU5cPiqf+Ij5xoxqtO1n
+         WmNW2wVIjy/b+jHugcyW6whhsFuCD8aDwIGtlea2MXWWIi9UQ54HdlOHLKnrBmjFODqI
+         +HgS4lWruaGnTtUKTYK5pZRSAGXrVO/Xk45Is5/HXLxnD08/kWnMWcdWzKoTnXikL/V3
+         CLsQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1702285229; x=1702890029;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=wju9poNbHmK4kTzadequgCrVsBMHqrILz+bPct1uH60=;
+        b=BHdmQV+uNO5TrIbcXxmgo4NyZjldXhHwmdNZnSEOlxFyb1RoafFOg/cQfDOEWCvIr/
+         H0R04+QVUZFI+tDialXMIsG4+Tz1rEHqz3oY+o5JFcawDa5P+7uvdn8ZtfY2MW5+aVzW
+         /tVaujMLkrDTPFzfrS6myPfM/IAcXnn+susJRGaBFIp4pp7uw+aFPVFprZD0I6JQVn/a
+         GljYSwu2jncFEZnyQda9iRPsuH2uMIL9TUOa68AwgzXN6LGuZH8N0R/cmTpHUdly8RAR
+         cEbbw10ViXQevBtsjkRWxbu3lBiwcktga6Okweoo05f2bST8JzN9nEdh5u2fWg2r54Qv
+         l9dQ==
+X-Gm-Message-State: AOJu0Yz5tdxJ9/2uVLugj227YOqxEnx7YZR+ef4f/V0dk5UiYuhus3ne
+	tn9bFeWljmnvMDxqQ5X9Zvw=
+X-Google-Smtp-Source: AGHT+IHIe+3rcfUvNTZxne5xKhXuPdaWNBjzuNkIH8cHvulBBZYJkOFjOqXZffDOmywwrKNKMPAmHA==
+X-Received: by 2002:a05:6e02:1e04:b0:35d:6d3a:7818 with SMTP id g4-20020a056e021e0400b0035d6d3a7818mr4353004ila.9.1702285229286;
+        Mon, 11 Dec 2023 01:00:29 -0800 (PST)
+Received: from ubuntu.. ([117.18.48.102])
+        by smtp.gmail.com with ESMTPSA id f14-20020a056e020b4e00b0035b0b05189bsm2211216ilu.38.2023.12.11.01.00.25
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 11 Dec 2023 01:00:28 -0800 (PST)
+From: Hongyu Jin <hongyu.jin.cn@gmail.com>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	axboe@kernel.dk,
+	ebiggers@kernel.org
+Cc: zhiguo.niu@unisoc.com,
+	ke.wang@unisoc.com,
+	yibin.ding@unisoc.com,
+	hongyu.jin@unisoc.com,
+	linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org
+Subject: [PATCH v3 0/5] Fix I/O priority lost in device-mapper
+Date: Mon, 11 Dec 2023 16:59:55 +0800
+Message-Id: <20231211090000.9578-1-hongyu.jin.cn@gmail.com>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <df68c38e-3e38-eaf1-5c32-66e43d68cae3@ewheeler.net>
+References: <df68c38e-3e38-eaf1-5c32-66e43d68cae3@ewheeler.net>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 
-On Thu, 7 Dec 2023, Eric Biggers wrote:
-> On Wed, Dec 06, 2023 at 07:39:35PM +0800, Hongyu Jin wrote:
-> > From: Hongyu Jin <hongyu.jin@unisoc.com>
-> > 
-> > when read FEC and hash from disk, I/O priority are inconsistent
-> >  with data block and blocked by other I/O with low I/O priority.
-> > 
-> > Add dm_bufio_prefetch_by_ioprio() and dm_bufio_read_by_ioprio(),
-> > can pecific I/O priority for some I/O.
-> > Make I/O for FEC and hash has same I/O priority with data I/O.
+From: Hongyu Jin <hongyu.jin@unisoc.com>
 
-Hi Hongyu,
+Changes in v3:
+  - Split patch for device-mapper
+  - Add patch to fix dm-crypy I/O priority question
+  - Add block patch to review together
+  - Fix some error in v2 patch
 
-+1 for the feature, thank you for cleaning up ioprio in device mapper! 
-
-A few years ago we proposed a similar prior patch in dm-crypt; however, it 
-was never committed, and I did not have the time to shepherd it through.
-Maybe this has since been addressed in some other way, or perhaps your 
-work solves what we were doing with dm-crypt; either way, here is the 
-link to that thread incase it is relevant to your work:
-	https://www.mail-archive.com/dm-devel@redhat.com/msg03828.html
-
-I look forward to seeing all (or at least the most common) device mapper 
-targets cleanly support ioprio.
-
-Cheers,
-
---
-Eric Wheeler
+Changes in v2:
+  - Add ioprio field in struct dm_io_region
+  - Initial struct dm_io_region::ioprio to IOPRIO_DEFAULT
+  - Add two interface
 
 
+Hongyu Jin (5):
+  block: Optimize bio io priority setting
+  dm: Support I/O priority for dm_io()
+  dm-bufio: Support I/O priority
+  dm verity: Fix I/O priority lost when read FEC and hash
+  dm-crypt: Fix lost ioprio when queuing write bios
 
+ block/blk-core.c                              | 10 ++++++
+ block/blk-mq.c                                | 11 ------
+ drivers/md/dm-bufio.c                         | 36 ++++++++++---------
+ drivers/md/dm-crypt.c                         |  1 +
+ drivers/md/dm-ebs-target.c                    |  8 ++---
+ drivers/md/dm-integrity.c                     |  7 +++-
+ drivers/md/dm-io.c                            |  1 +
+ drivers/md/dm-log.c                           |  1 +
+ drivers/md/dm-raid1.c                         |  2 ++
+ drivers/md/dm-snap-persistent.c               |  5 +--
+ drivers/md/dm-verity-fec.c                    |  5 +--
+ drivers/md/dm-verity-target.c                 |  8 +++--
+ drivers/md/dm-writecache.c                    |  4 +++
+ drivers/md/persistent-data/dm-block-manager.c |  6 ++--
+ include/linux/dm-bufio.h                      |  6 ++--
+ include/linux/dm-io.h                         |  2 ++
+ 16 files changed, 69 insertions(+), 44 deletions(-)
 
-> > Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
-> > Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
-> > Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
-> > 
-> > ---
-> > Changes in v2:
-> >   - Add ioprio field in struct dm_io_region
-> >   - Initial struct dm_io_region::ioprio to IOPRIO_DEFAULT
-> >   - Add two interface
-> > ---
-> >  drivers/md/dm-bufio.c           | 50 ++++++++++++++++++++++-----------
-> >  drivers/md/dm-integrity.c       |  5 ++++
-> >  drivers/md/dm-io.c              |  1 +
-> >  drivers/md/dm-log.c             |  1 +
-> >  drivers/md/dm-raid1.c           |  2 ++
-> >  drivers/md/dm-snap-persistent.c |  2 ++
-> >  drivers/md/dm-verity-fec.c      |  3 +-
-> >  drivers/md/dm-verity-target.c   | 10 +++++--
-> >  drivers/md/dm-writecache.c      |  4 +++
-> >  include/linux/dm-bufio.h        |  6 ++++
-> >  include/linux/dm-io.h           |  2 ++
-> >  11 files changed, 66 insertions(+), 20 deletions(-)
-> 
-> Changing so many things in one patch should be avoided if possible.  Is there a
-> way to split this patch up?  Maybe first add ioprio support to dm-io, then add
-> ioprio support to dm-bufio, then make dm-verity set the correct ioprio?
-> 
-> >  void *dm_bufio_read(struct dm_bufio_client *c, sector_t block,
-> >  		    struct dm_buffer **bp)
-> > +{
-> > +	return dm_bufio_read_by_ioprio(c, block, bp, IOPRIO_DEFAULT);
-> > +}
-> > +EXPORT_SYMBOL_GPL(dm_bufio_read);
-> > +
-> > +void *dm_bufio_read_by_ioprio(struct dm_bufio_client *c, sector_t block,
-> > +		    struct dm_buffer **bp, unsigned short ioprio)
-> >  {
-> >  	if (WARN_ON_ONCE(dm_bufio_in_request()))
-> >  		return ERR_PTR(-EINVAL);
-> >  
-> > -	return new_read(c, block, NF_READ, bp);
-> > +	return new_read(c, block, NF_READ, bp, ioprio);
-> >  }
-> > -EXPORT_SYMBOL_GPL(dm_bufio_read);
-> > +EXPORT_SYMBOL_GPL(dm_bufio_read_by_ioprio);
-> >  
-> >  void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
-> >  		   struct dm_buffer **bp)
-> > @@ -1909,12 +1918,19 @@ void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
-> >  	if (WARN_ON_ONCE(dm_bufio_in_request()))
-> >  		return ERR_PTR(-EINVAL);
-> >  
-> > -	return new_read(c, block, NF_FRESH, bp);
-> > +	return new_read(c, block, NF_FRESH, bp, IOPRIO_DEFAULT);
-> >  }
-> >  EXPORT_SYMBOL_GPL(dm_bufio_new);
-> >  
-> >  void dm_bufio_prefetch(struct dm_bufio_client *c,
-> >  		       sector_t block, unsigned int n_blocks)
-> > +{
-> > +	return dm_bufio_prefetch_by_ioprio(c, block, n_blocks, IOPRIO_DEFAULT);
-> > +}
-> > +EXPORT_SYMBOL_GPL(dm_bufio_prefetch);
-> > +
-> > +void dm_bufio_prefetch_by_ioprio(struct dm_bufio_client *c,
-> > +		       sector_t block, unsigned int n_blocks, unsigned short ioprio)
-> 
-> I think it would be cleaner to just add the ioprio parameter to dm_bufio_read()
-> and dm_bufio_prefetch(), instead of adding new functions.
-> 
-> > diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> > index 26adcfea0302..5945ac1dfdff 100644
-> > --- a/drivers/md/dm-verity-target.c
-> > +++ b/drivers/md/dm-verity-target.c
-> > @@ -51,6 +51,7 @@ static DEFINE_STATIC_KEY_FALSE(use_tasklet_enabled);
-> >  struct dm_verity_prefetch_work {
-> >  	struct work_struct work;
-> >  	struct dm_verity *v;
-> > +	struct dm_verity_io *io;
-> >  	sector_t block;
-> >  	unsigned int n_blocks;
-> >  };
-> 
-> Isn't it possible for 'io' to complete and be freed while the prefetch work is
-> still running?
-> 
-> - Eric
-> 
-> 
+-- 
+2.34.1
+
