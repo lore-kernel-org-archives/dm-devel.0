@@ -1,100 +1,131 @@
-Received: from mail-il1-f179.google.com (mail-il1-f179.google.com [209.85.166.179])
+Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com [209.85.214.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E1D354FB4
-	for <dm-devel@lists.linux.dev>; Mon, 11 Dec 2023 22:15:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-il1-f179.google.com with SMTP id e9e14a558f8ab-35d62401a3dso19998245ab.3
-        for <dm-devel@lists.linux.dev>; Mon, 11 Dec 2023 14:15:20 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702332919; x=1702937719;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 296575CD1F
+	for <dm-devel@lists.linux.dev>; Tue, 12 Dec 2023 11:12:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z5CCI+Pq"
+Received: by mail-pl1-f171.google.com with SMTP id d9443c01a7336-1d04c097e34so42873685ad.0
+        for <dm-devel@lists.linux.dev>; Tue, 12 Dec 2023 03:12:11 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1702379531; x=1702984331; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=i+NbavSPkNYuuLKazhVu/hAbx07laMBmOoTQUM0p47w=;
-        b=EL9XmoGVXeVVQfXaPd2H1W2jSZauYxUzSj4VZ2xNfJZGUpRDAQ9KZpQ7IteQ1OE5fE
-         traDYle7hFnOdvnkesJsxZrTBH768/gIvoPHulFf8teNByelGyvzoIpeOH5BEh78bpBK
-         IXliXUoP6scyJsFQxbbR+ZrBxAx1IxhBV09G0K8SCEC+X7RKdJ2bTSSxl/Q73DQH0Lj1
-         RowLcca3KlGIpiSr6TDYm2saQKQINrnpyhiT2U5D06z4fXvKfjoNPHJT2CTeOzjM7uqA
-         sNv7fq3Fzfgu112sQj546qOkg0YfP6lhJSE+Ox2Xy/Bz19BIcf1M7xi6HZoJq9qUY/Aw
-         tPEA==
-X-Gm-Message-State: AOJu0Yw0Tvf7eAWU90kmt8jvNryqIeQhq/y2IYUvVL8dvt3gSwi040Ud
-	V2Hep/AtmJvSaZMm5FyFgweS
-X-Google-Smtp-Source: AGHT+IHNeSpFqavSvNI7EouqNAWIqxS4EtGj5taHoZVkMX4FUv92lNAhynaV9F2HmvIyMA8Vl+7bmw==
-X-Received: by 2002:a05:6e02:148c:b0:35c:9b2c:b9d1 with SMTP id n12-20020a056e02148c00b0035c9b2cb9d1mr5497877ilk.32.1702332919461;
-        Mon, 11 Dec 2023 14:15:19 -0800 (PST)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id z10-20020a0cfeca000000b0067a788e258bsm3671868qvs.133.2023.12.11.14.15.18
+        bh=T/h+WfEQxtNqWLD65fthYDEoIBJTS6GEtAIchnOXQlY=;
+        b=Z5CCI+PqmL/NKkORQ7lPEbeVM2vGMSShM3awijbScCeLgp4ohJIm0vNWWuROBlZyZ+
+         +elbpp48IUBzWTDL58WXs7GFNndnkSaeRVc2pXOeduceZ3JdXnqBKHopWoGIQxKF2nwE
+         pkbF51Fgl6H6JR4k00Ivcp8lsmDweJEKAZIKtlcf6Azq66dPK3EBXeQiWO1Jt2XtLWMJ
+         hKlKJS1IbEGpZxMhaFnnm2BUMndy0o4CTGSfWUFYvJQb4i6NGbq2Om4c+uA97BCF/+EK
+         ukIUzl3XSKBhHgI1+8rNEvCjJS84YN9sYOcBpXiYBTwcfTMzF7T7ZVpjDmxn2z1IJHct
+         Cd2Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1702379531; x=1702984331;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=T/h+WfEQxtNqWLD65fthYDEoIBJTS6GEtAIchnOXQlY=;
+        b=u+VZL/zADuqtTIhGnAj5ZTqvZVknjtUe6H31mAXFgwLXb96RlvOcul0G867G1ne7iI
+         whvD0S1u6v7peraZ49pp9ldUgvYPEyk2cDGsk4DGrgAgZD0fmO5KiFtk1+aQmQnHvvtZ
+         TIlIEhd982A6tKkXm/MyGaW0iylKwAGT4tx+qDEV/ihb/NmRxkUP6dxB61c1B3p6PNEz
+         Ej4oFmo8Z6w5FI1f06upDd6md+BB4+rGWRe/0Q9klkhYVH1Wl9grvvFVZF16449NSjFv
+         RHD6eodVdWReGnkGMY7XZLAxkPMEB6qGk9YCICS5yMzQGufw7++21oL3kqT0hMkUa9z2
+         JILQ==
+X-Gm-Message-State: AOJu0YzhkVdf1pZA1oB/ZqzAACM4S/kGSNSAWMUdprvNqhtkjeyG6nlS
+	XFgKXvk6S1wiFU7IN+JDm1c=
+X-Google-Smtp-Source: AGHT+IGBiBDfitZYDKoB131GyaEEkPbtMG+AiK4V16DRcHToH+3lCj+wV3YCBPG1lcsUeZotqWYcAw==
+X-Received: by 2002:a17:902:ea0b:b0:1cf:b4bb:9bdc with SMTP id s11-20020a170902ea0b00b001cfb4bb9bdcmr7289304plg.9.1702379531377;
+        Tue, 12 Dec 2023 03:12:11 -0800 (PST)
+Received: from ubuntu.. ([117.18.48.102])
+        by smtp.gmail.com with ESMTPSA id 21-20020a170902ee5500b001d0511c990csm8345453plo.237.2023.12.12.03.12.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 11 Dec 2023 14:15:19 -0800 (PST)
-Date: Mon, 11 Dec 2023 17:15:18 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Hongyu Jin <hongyu.jin.cn@gmail.com>
-Cc: agk@redhat.com, mpatocka@redhat.com, axboe@kernel.dk,
-	ebiggers@kernel.org, zhiguo.niu@unisoc.com, ke.wang@unisoc.com,
-	yibin.ding@unisoc.com, hongyu.jin@unisoc.com,
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+        Tue, 12 Dec 2023 03:12:10 -0800 (PST)
+From: Hongyu Jin <hongyu.jin.cn@gmail.com>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	axboe@kernel.dk,
+	ebiggers@kernel.org
+Cc: zhiguo.niu@unisoc.com,
+	ke.wang@unisoc.com,
+	yibin.ding@unisoc.com,
+	hongyu.jin@unisoc.com,
+	linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
-Subject: Re: [PATCH v3 5/5] dm-crypt: Fix lost ioprio when queuing write bios
-Message-ID: <ZXeJ9jAKEQ31OXLP@redhat.com>
-References: <df68c38e-3e38-eaf1-5c32-66e43d68cae3@ewheeler.net>
- <20231211090000.9578-1-hongyu.jin.cn@gmail.com>
- <20231211090000.9578-6-hongyu.jin.cn@gmail.com>
+Subject: [PATCH v4 0/5] Fix I/O priority lost in device-mapper
+Date: Tue, 12 Dec 2023 19:11:45 +0800
+Message-Id: <20231212111150.18155-1-hongyu.jin.cn@gmail.com>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <ZXeJ9jAKEQ31OXLP@redhat.com>
+References: <ZXeJ9jAKEQ31OXLP@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20231211090000.9578-6-hongyu.jin.cn@gmail.com>
+Content-Transfer-Encoding: 8bit
 
-On Mon, Dec 11 2023 at  4:00P -0500,
-Hongyu Jin <hongyu.jin.cn@gmail.com> wrote:
+From: Hongyu Jin <hongyu.jin@unisoc.com>
 
-> From: Hongyu Jin <hongyu.jin@unisoc.com>
-> 
-> The original submitting bio->bi_ioprio setting can be retained by
-> struct dm_crypt_io::base_bio, we set the original bio's ioprio to
-> the cloned bio for write.
-> 
-> Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
-> ---
->  drivers/md/dm-crypt.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 6de107aff331..b67fec865f00 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -1683,6 +1683,7 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned int size)
->  				 GFP_NOIO, &cc->bs);
->  	clone->bi_private = io;
->  	clone->bi_end_io = crypt_endio;
-> +	clone->bi_ioprio = bio_prio(io->base_bio);
+A high-priority task obtains data from the dm-verity device using the
+RT IO priority, during the verification, the IO reading FEC and hash
+by kworker loses the RT priority and is blocked by the low-priority IO.
+dm-crypt has the same problem in the process of writing data.
 
-Weird use of bio_prio() wrapper given the assignment to
-clone->bi_ioprio.  I'd prefer:
-        clone->bi_ioprio = io->base_bio->bi_ioprio;
+This is because io_context and blkcg are missing.
 
-Some additional info to be mindful of:
+Move bio_set_ioprio() into submit_bio():
+1. Only call bio_set_ioprio() once to set the priority of original bio,
+   the bio that cloned and splited from original bio will auto inherit
+   the priority of original bio in clone process.
 
-This encryption bio has always been unique (ever since dm-crypt
-stopped using the block layer's methods for cloning with 2007's commit
-2f9941b6c55d7).
+2. Make the IO priority of the original bio to be passed to dm,
+   and the dm target inherits the IO priority as needed.
 
-Prior to commit 2f9941b6c55d7, dm-crypt used to call __bio_clone() to
-make sure not to miss cloning other capabilities -- and __bio_clone()
-does exist again as of commit a0e8de798dd67 but it is private to bio.c
-(in service to bio_alloc_clone, etc).
+Changes in v4:
+  - Modify commit message by Suggestion
+  - Modify patch for dm-crypt
+Changes in v3:
+  - Split patch for device-mapper
+  - Add patch to fix dm-crypy I/O priority question
+  - Add block patch to review together
+  - Fix some error in v2 patch
 
-My point: because we aren't using traditional bio cloning (due to not
-wanting to share the bio_vec) we also aren't transferring over the
-cgroup (via bio_clone_blkg_association), etc.
+Changes in v2:
+  - Add ioprio field in struct dm_io_region
+  - Initial struct dm_io_region::ioprio to IOPRIO_DEFAULT
+  - Add two interface
+**
 
-That can be a secondary concern that you don't need to worry about
-(but it is something Mikulas and I need to look at closer).
+Hongyu Jin (5):
+  block: Fix bio IO priority setting
+  dm: Support I/O priority for dm_io()
+  dm-bufio: Support I/O priority
+  dm verity: Fix I/O priority lost when read FEC and hash
+  dm-crypt: Fix lost ioprio when queuing write bios
 
-Mike
+ block/blk-core.c                              | 10 ++++++
+ block/blk-mq.c                                | 11 ------
+ drivers/md/dm-bufio.c                         | 36 ++++++++++---------
+ drivers/md/dm-crypt.c                         |  1 +
+ drivers/md/dm-ebs-target.c                    |  8 ++---
+ drivers/md/dm-integrity.c                     |  7 +++-
+ drivers/md/dm-io.c                            |  1 +
+ drivers/md/dm-log.c                           |  1 +
+ drivers/md/dm-raid1.c                         |  2 ++
+ drivers/md/dm-snap-persistent.c               |  5 +--
+ drivers/md/dm-verity-fec.c                    |  5 +--
+ drivers/md/dm-verity-target.c                 |  8 +++--
+ drivers/md/dm-writecache.c                    |  4 +++
+ drivers/md/persistent-data/dm-block-manager.c |  6 ++--
+ include/linux/dm-bufio.h                      |  6 ++--
+ include/linux/dm-io.h                         |  2 ++
+ 16 files changed, 69 insertions(+), 44 deletions(-)
+
+-- 
+2.34.1
+
