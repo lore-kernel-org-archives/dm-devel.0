@@ -1,47 +1,47 @@
-Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com [209.85.214.171])
+Received: from mail-pl1-f173.google.com (mail-pl1-f173.google.com [209.85.214.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 296575CD1F
-	for <dm-devel@lists.linux.dev>; Tue, 12 Dec 2023 11:12:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A0BB5CD22
+	for <dm-devel@lists.linux.dev>; Tue, 12 Dec 2023 11:12:16 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z5CCI+Pq"
-Received: by mail-pl1-f171.google.com with SMTP id d9443c01a7336-1d04c097e34so42873685ad.0
-        for <dm-devel@lists.linux.dev>; Tue, 12 Dec 2023 03:12:11 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dk6rsGb/"
+Received: by mail-pl1-f173.google.com with SMTP id d9443c01a7336-1d2eb06ab11so21599015ad.1
+        for <dm-devel@lists.linux.dev>; Tue, 12 Dec 2023 03:12:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1702379531; x=1702984331; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1702379536; x=1702984336; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=T/h+WfEQxtNqWLD65fthYDEoIBJTS6GEtAIchnOXQlY=;
-        b=Z5CCI+PqmL/NKkORQ7lPEbeVM2vGMSShM3awijbScCeLgp4ohJIm0vNWWuROBlZyZ+
-         +elbpp48IUBzWTDL58WXs7GFNndnkSaeRVc2pXOeduceZ3JdXnqBKHopWoGIQxKF2nwE
-         pkbF51Fgl6H6JR4k00Ivcp8lsmDweJEKAZIKtlcf6Azq66dPK3EBXeQiWO1Jt2XtLWMJ
-         hKlKJS1IbEGpZxMhaFnnm2BUMndy0o4CTGSfWUFYvJQb4i6NGbq2Om4c+uA97BCF/+EK
-         ukIUzl3XSKBhHgI1+8rNEvCjJS84YN9sYOcBpXiYBTwcfTMzF7T7ZVpjDmxn2z1IJHct
-         Cd2Q==
+        bh=kk71sp729csxdUViLno20l6lcdfkMyL/Wdv2yhvpzTA=;
+        b=dk6rsGb/pqxKuJb3o7ntdoVr7Xcw8wFXVLDxvhXxGSrxWOYbgaZdSGZBkBvtIIRENh
+         FC6H5Wy+rhc1S6jXS73zP3YGwUJWvgVQw9vYSYVOQ4YeRdzu7sAUxVFxqW0qjHGHdkao
+         VG1NxqoFbwOqUkZnDmwOcncFWNidGuc05CKNZ8lhi1XdRgSmkE1uxtDgx4lvXnc+zZdA
+         LNGGenBxQZY1fmUbeEs2q8I1RLKrKOESK1wjYUxqJP7dtZ/lKx7PWxJGAVsNJ/9mpnC0
+         +BZLV7JeemVRN76HBN3nWHYsmD55esWoLyFVM0QsIPL53jk/SxNgftorRwrQ9iJTBzhe
+         065A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702379531; x=1702984331;
+        d=1e100.net; s=20230601; t=1702379536; x=1702984336;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=T/h+WfEQxtNqWLD65fthYDEoIBJTS6GEtAIchnOXQlY=;
-        b=u+VZL/zADuqtTIhGnAj5ZTqvZVknjtUe6H31mAXFgwLXb96RlvOcul0G867G1ne7iI
-         whvD0S1u6v7peraZ49pp9ldUgvYPEyk2cDGsk4DGrgAgZD0fmO5KiFtk1+aQmQnHvvtZ
-         TIlIEhd982A6tKkXm/MyGaW0iylKwAGT4tx+qDEV/ihb/NmRxkUP6dxB61c1B3p6PNEz
-         Ej4oFmo8Z6w5FI1f06upDd6md+BB4+rGWRe/0Q9klkhYVH1Wl9grvvFVZF16449NSjFv
-         RHD6eodVdWReGnkGMY7XZLAxkPMEB6qGk9YCICS5yMzQGufw7++21oL3kqT0hMkUa9z2
-         JILQ==
-X-Gm-Message-State: AOJu0YzhkVdf1pZA1oB/ZqzAACM4S/kGSNSAWMUdprvNqhtkjeyG6nlS
-	XFgKXvk6S1wiFU7IN+JDm1c=
-X-Google-Smtp-Source: AGHT+IGBiBDfitZYDKoB131GyaEEkPbtMG+AiK4V16DRcHToH+3lCj+wV3YCBPG1lcsUeZotqWYcAw==
-X-Received: by 2002:a17:902:ea0b:b0:1cf:b4bb:9bdc with SMTP id s11-20020a170902ea0b00b001cfb4bb9bdcmr7289304plg.9.1702379531377;
-        Tue, 12 Dec 2023 03:12:11 -0800 (PST)
+        bh=kk71sp729csxdUViLno20l6lcdfkMyL/Wdv2yhvpzTA=;
+        b=UDy4cWHEtjaDoCa22VPFnqGGOWTTLexuRVy7glGEHiGTxkO01cQ3P6YJkvhRVypbUl
+         59VTsfa5q8J82vEYRPNwUDDrPzehB1bJCNLnsCwpXLO/TRxZV/VvOS+Gep/UJE69k3lQ
+         DLTo2ns/0sOhMui7y5m+cILHN4Y2WKZuE5kNRjm9oJUHQVpnHF9yHUS3mx3UEk/A3WeR
+         tuhsYWWcARzuFiAbNlOBirj7SjJEH5D5Oa4ac0brEs14yr54vvX0CCcoG7acwdjcBk8T
+         Ze3IEXsOlwgKi0o/CNVXLQk1hhcw6Uy+LAf3vvjzMaeb9pfKErq1elLqOACHump3N5Qu
+         56TA==
+X-Gm-Message-State: AOJu0YyaWNUuXiG1rBs6Hq2lhUr4Se94UvtHDu+MDbjIt+qJ5tpQ0LEf
+	tg+/w35x8U8IDx9ytNBfIBo=
+X-Google-Smtp-Source: AGHT+IH+ypC0oT6XrZH3uyP+6+iEZx9SsOkdE5qJlw+adVZmAWQ+SlcAzutITFQmVX46kV8vnEcdig==
+X-Received: by 2002:a17:902:6b02:b0:1d0:90bf:cbb7 with SMTP id o2-20020a1709026b0200b001d090bfcbb7mr2387161plk.66.1702379535806;
+        Tue, 12 Dec 2023 03:12:15 -0800 (PST)
 Received: from ubuntu.. ([117.18.48.102])
-        by smtp.gmail.com with ESMTPSA id 21-20020a170902ee5500b001d0511c990csm8345453plo.237.2023.12.12.03.12.07
+        by smtp.gmail.com with ESMTPSA id 21-20020a170902ee5500b001d0511c990csm8345453plo.237.2023.12.12.03.12.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 12 Dec 2023 03:12:10 -0800 (PST)
+        Tue, 12 Dec 2023 03:12:15 -0800 (PST)
 From: Hongyu Jin <hongyu.jin.cn@gmail.com>
 To: agk@redhat.com,
 	snitzer@kernel.org,
@@ -55,12 +55,13 @@ Cc: zhiguo.niu@unisoc.com,
 	linux-kernel@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
-Subject: [PATCH v4 0/5] Fix I/O priority lost in device-mapper
-Date: Tue, 12 Dec 2023 19:11:45 +0800
-Message-Id: <20231212111150.18155-1-hongyu.jin.cn@gmail.com>
+Subject: [PATCH v4 1/5] block: Fix bio IO priority setting
+Date: Tue, 12 Dec 2023 19:11:46 +0800
+Message-Id: <20231212111150.18155-2-hongyu.jin.cn@gmail.com>
 X-Mailer: git-send-email 2.34.1
-In-Reply-To: <ZXeJ9jAKEQ31OXLP@redhat.com>
+In-Reply-To: <20231212111150.18155-1-hongyu.jin.cn@gmail.com>
 References: <ZXeJ9jAKEQ31OXLP@redhat.com>
+ <20231212111150.18155-1-hongyu.jin.cn@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -71,61 +72,99 @@ Content-Transfer-Encoding: 8bit
 
 From: Hongyu Jin <hongyu.jin@unisoc.com>
 
-A high-priority task obtains data from the dm-verity device using the
-RT IO priority, during the verification, the IO reading FEC and hash
-by kworker loses the RT priority and is blocked by the low-priority IO.
-dm-crypt has the same problem in the process of writing data.
-
-This is because io_context and blkcg are missing.
-
 Move bio_set_ioprio() into submit_bio():
 1. Only call bio_set_ioprio() once to set the priority of original bio,
    the bio that cloned and splited from original bio will auto inherit
    the priority of original bio in clone process.
 
-2. Make the IO priority of the original bio to be passed to dm,
-   and the dm target inherits the IO priority as needed.
+2. The IO priority can be passed to module that implement
+   struct gendisk::fops::submit_bio, help resolve some
+   of the IO priority loss issues.
 
-Changes in v4:
-  - Modify commit message by Suggestion
-  - Modify patch for dm-crypt
-Changes in v3:
-  - Split patch for device-mapper
-  - Add patch to fix dm-crypy I/O priority question
-  - Add block patch to review together
-  - Fix some error in v2 patch
+This patch depends on commit 82b74cac2849 ("blk-ioprio: Convert from
+rqos policy to direct call")
 
-Changes in v2:
-  - Add ioprio field in struct dm_io_region
-  - Initial struct dm_io_region::ioprio to IOPRIO_DEFAULT
-  - Add two interface
-**
+Fixes: a78418e6a04c ("block: Always initialize bio IO priority on submit")
 
-Hongyu Jin (5):
-  block: Fix bio IO priority setting
-  dm: Support I/O priority for dm_io()
-  dm-bufio: Support I/O priority
-  dm verity: Fix I/O priority lost when read FEC and hash
-  dm-crypt: Fix lost ioprio when queuing write bios
+Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
+Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
+Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
+---
+ block/blk-core.c | 10 ++++++++++
+ block/blk-mq.c   | 11 -----------
+ 2 files changed, 10 insertions(+), 11 deletions(-)
 
- block/blk-core.c                              | 10 ++++++
- block/blk-mq.c                                | 11 ------
- drivers/md/dm-bufio.c                         | 36 ++++++++++---------
- drivers/md/dm-crypt.c                         |  1 +
- drivers/md/dm-ebs-target.c                    |  8 ++---
- drivers/md/dm-integrity.c                     |  7 +++-
- drivers/md/dm-io.c                            |  1 +
- drivers/md/dm-log.c                           |  1 +
- drivers/md/dm-raid1.c                         |  2 ++
- drivers/md/dm-snap-persistent.c               |  5 +--
- drivers/md/dm-verity-fec.c                    |  5 +--
- drivers/md/dm-verity-target.c                 |  8 +++--
- drivers/md/dm-writecache.c                    |  4 +++
- drivers/md/persistent-data/dm-block-manager.c |  6 ++--
- include/linux/dm-bufio.h                      |  6 ++--
- include/linux/dm-io.h                         |  2 ++
- 16 files changed, 69 insertions(+), 44 deletions(-)
-
+diff --git a/block/blk-core.c b/block/blk-core.c
+index fdf25b8d6e78..68158c327aea 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -49,6 +49,7 @@
+ #include "blk-pm.h"
+ #include "blk-cgroup.h"
+ #include "blk-throttle.h"
++#include "blk-ioprio.h"
+ 
+ struct dentry *blk_debugfs_root;
+ 
+@@ -809,6 +810,14 @@ void submit_bio_noacct(struct bio *bio)
+ }
+ EXPORT_SYMBOL(submit_bio_noacct);
+ 
++static void bio_set_ioprio(struct bio *bio)
++{
++	/* Nobody set ioprio so far? Initialize it based on task's nice value */
++	if (IOPRIO_PRIO_CLASS(bio->bi_ioprio) == IOPRIO_CLASS_NONE)
++		bio->bi_ioprio = get_current_ioprio();
++	blkcg_set_ioprio(bio);
++}
++
+ /**
+  * submit_bio - submit a bio to the block device layer for I/O
+  * @bio: The &struct bio which describes the I/O
+@@ -831,6 +840,7 @@ void submit_bio(struct bio *bio)
+ 		count_vm_events(PGPGOUT, bio_sectors(bio));
+ 	}
+ 
++	bio_set_ioprio(bio);
+ 	submit_bio_noacct(bio);
+ }
+ EXPORT_SYMBOL(submit_bio);
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index e2d11183f62e..a6e2609df9c9 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -40,7 +40,6 @@
+ #include "blk-stat.h"
+ #include "blk-mq-sched.h"
+ #include "blk-rq-qos.h"
+-#include "blk-ioprio.h"
+ 
+ static DEFINE_PER_CPU(struct llist_head, blk_cpu_done);
+ static DEFINE_PER_CPU(call_single_data_t, blk_cpu_csd);
+@@ -2922,14 +2921,6 @@ static inline struct request *blk_mq_get_cached_request(struct request_queue *q,
+ 	return rq;
+ }
+ 
+-static void bio_set_ioprio(struct bio *bio)
+-{
+-	/* Nobody set ioprio so far? Initialize it based on task's nice value */
+-	if (IOPRIO_PRIO_CLASS(bio->bi_ioprio) == IOPRIO_CLASS_NONE)
+-		bio->bi_ioprio = get_current_ioprio();
+-	blkcg_set_ioprio(bio);
+-}
+-
+ /**
+  * blk_mq_submit_bio - Create and send a request to block device.
+  * @bio: Bio pointer.
+@@ -2963,8 +2954,6 @@ void blk_mq_submit_bio(struct bio *bio)
+ 	if (!bio_integrity_prep(bio))
+ 		return;
+ 
+-	bio_set_ioprio(bio);
+-
+ 	rq = blk_mq_get_cached_request(q, plug, &bio, nr_segs);
+ 	if (!rq) {
+ 		if (!bio)
 -- 
 2.34.1
 
