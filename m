@@ -1,100 +1,81 @@
-Received: from mail-io1-f44.google.com (mail-io1-f44.google.com [209.85.166.44])
+Received: from mail-qk1-f173.google.com (mail-qk1-f173.google.com [209.85.222.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2889122EF6
-	for <dm-devel@lists.linux.dev>; Wed, 13 Dec 2023 10:43:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dg75IXOa"
-Received: by mail-io1-f44.google.com with SMTP id ca18e2360f4ac-7b435966249so297655039f.0
-        for <dm-devel@lists.linux.dev>; Wed, 13 Dec 2023 02:42:59 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1702464179; x=1703068979; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=fRWJvmM8+hpVsGJoyvu2YuvVcQVJUfQcuTmMveSE8/s=;
-        b=dg75IXOaiVwGYhhvdOsHYmS1cZqIE+a4zoR2f4lIgpVVe/E8gxpU/EyFJQGwhLXPJ3
-         dGvg2nRfyWzpxX4QSwS5uicDMBv6rAxDlPXCJKLYMK8lue9SlSuozVQCnY7wLyJ81Qma
-         iEqXRbluEJo07jz29zoQGQdW3M6Mjk1SSpzifDvpCtUxIhfOPieUXIX1N/wvi6wwxioB
-         gTRw3UipyFohX2rcZndSOYomqH0fybhxnJ/7fhrYepJf98+gFSnl0/4kFIVlMUh3aWZa
-         t1zANIxxR8v6rym09RkThOIy8wPHouy873xbMsGtXa0GE0RhC7VJdPlL9vn331TJv4Z+
-         3XIw==
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68D701D52D
+	for <dm-devel@lists.linux.dev>; Wed, 13 Dec 2023 16:58:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Received: by mail-qk1-f173.google.com with SMTP id af79cd13be357-77f3c84e0f6so442640285a.1
+        for <dm-devel@lists.linux.dev>; Wed, 13 Dec 2023 08:58:26 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702464179; x=1703068979;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=fRWJvmM8+hpVsGJoyvu2YuvVcQVJUfQcuTmMveSE8/s=;
-        b=kGwyGhZpyEp/oFJUjYMwQMFa7WdZV/ZoCudVNMKOlRgkp2e5O+Ofq+DKttIVkt1iCI
-         11A+UZGhLuwm72kJ+VfgPL1C16myILKS6bTIWDE6sRkBJKp6DkFk4Luy305tJzR1BJBm
-         Soi/W03176K01hpN+Hl7g7eymGGhYug/aHgkxhqTsCzGiSndKYkBb+EkoJHE87LyTnIg
-         ilguot1RPijYs0TE1t0iA7Poj6Uj1TVC1GZ9gsyhcLlR50xhF8Tb/xQnXwIbIBywiEVi
-         FxxV5Fjx56qmI8JTN7JkrtQyzN20PULzqkokCaH3SbEagI4v5e0p+ZMXuJf6AH9SFz6M
-         Yqyw==
-X-Gm-Message-State: AOJu0Yz9ACzojlUN0poWLCCOu+3OsvW9YrdtFTLw2UdevDZnIMyTV+N4
-	kHgFmsexOmwbdxQiY17LH/o=
-X-Google-Smtp-Source: AGHT+IFqnQH5xHRTW7lkDH3nUXotSoQk9CUeHU1CHahsXGxY0QsPY5pXBPOQ53OTwye2jv3CgtPipw==
-X-Received: by 2002:a5e:c742:0:b0:7b7:1717:693f with SMTP id g2-20020a5ec742000000b007b71717693fmr8044235iop.10.1702464179355;
-        Wed, 13 Dec 2023 02:42:59 -0800 (PST)
-Received: from ubuntu.. ([117.18.48.102])
-        by smtp.gmail.com with ESMTPSA id c11-20020a6b4e0b000000b0078647b08ab0sm3058186iob.6.2023.12.13.02.42.55
+        d=1e100.net; s=20230601; t=1702486705; x=1703091505;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Fko4jEZO7IcAc5n2WrXVozicqYAVH+5PpOz25KhjD+M=;
+        b=HLTinxH6pGiW20MHIieu1I4yYKlFY41R8mAqcEwfnolw7wFc6TSHUUXuZUisX49JY9
+         Yx0u/s1EdnDT8XUtBLz7cA0b8CBDb8pUWIbj5JPW1Kqb/f/nkVP+jiRoO/P5BAcBJL5B
+         IkHAgyXKpeK/xuB1QsU19YUhJkX7plEH8u7axxSPYJdfTyDXAWYDo+J/zAy0UuNNhhGy
+         llII4HlKA7PcfBcokvA31d+m1S1Te6J5yd3UDZufylq24CVnfWhUxlfn3d67OWlVLWMO
+         d00rasEK8su1yLehIXCulAsiVrcJTgxVk1oQRTCj63QlmacF3hfQNtdxMVvLofYR/24e
+         Nm5A==
+X-Gm-Message-State: AOJu0Yw2Gg5rSHg3wZuk2lJEolGHAhdajDYtaNB7xy6yNANHbaUjpCGh
+	Y8/r+SZkRXVgcdFb6MxXmfXf
+X-Google-Smtp-Source: AGHT+IFvVkIflp9TiGbkJvpAu1da6qN2nmcyxFmltt+dcHVJ2+E3ImsBHyyCd+RBhaSCAT0Tc+H6Gg==
+X-Received: by 2002:ad4:5046:0:b0:67e:f3e3:8291 with SMTP id m6-20020ad45046000000b0067ef3e38291mr2273884qvq.12.1702486705405;
+        Wed, 13 Dec 2023 08:58:25 -0800 (PST)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id mi14-20020a056214558e00b0067a276fd8d5sm131380qvb.54.2023.12.13.08.58.24
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 13 Dec 2023 02:42:59 -0800 (PST)
-From: Hongyu Jin <hongyu.jin.cn@gmail.com>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	axboe@kernel.dk,
-	ebiggers@kernel.org
-Cc: zhiguo.niu@unisoc.com,
-	ke.wang@unisoc.com,
-	yibin.ding@unisoc.com,
-	hongyu.jin@unisoc.com,
-	linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev,
+        Wed, 13 Dec 2023 08:58:24 -0800 (PST)
+Date: Wed, 13 Dec 2023 11:58:23 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: Hongyu Jin <hongyu.jin.cn@gmail.com>
+Cc: agk@redhat.com, mpatocka@redhat.com, axboe@kernel.dk,
+	ebiggers@kernel.org, zhiguo.niu@unisoc.com, ke.wang@unisoc.com,
+	yibin.ding@unisoc.com, hongyu.jin@unisoc.com,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
-Subject: [PATCH v5 5/5] dm-crypt: Fix lost ioprio when queuing write bios
-Date: Wed, 13 Dec 2023 18:42:16 +0800
-Message-Id: <20231213104216.27845-6-hongyu.jin.cn@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20231213104216.27845-1-hongyu.jin.cn@gmail.com>
+Subject: Re: [PATCH v5 1/5] block: Fix bio IO priority setting
+Message-ID: <ZXnir8x6127EW7Gp@redhat.com>
 References: <CAMQnb4MQUJ0VnA5XO-enrXTJvHbo6FJCVPGszGaq-R34hfbeeg@mail.gmail.com>
  <20231213104216.27845-1-hongyu.jin.cn@gmail.com>
+ <20231213104216.27845-2-hongyu.jin.cn@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20231213104216.27845-2-hongyu.jin.cn@gmail.com>
 
-From: Hongyu Jin <hongyu.jin@unisoc.com>
+On Wed, Dec 13 2023 at  5:42P -0500,
+Hongyu Jin <hongyu.jin.cn@gmail.com> wrote:
 
-The original submitting bio->bi_ioprio setting can be retained by
-struct dm_crypt_io::base_bio, we set the original bio's ioprio to
-the cloned bio for write.
+> From: Hongyu Jin <hongyu.jin@unisoc.com>
+> 
+> Move bio_set_ioprio() into submit_bio():
+> 1. Only call bio_set_ioprio() once to set the priority of original bio,
+>    the bio that cloned and splited from original bio will auto inherit
+>    the priority of original bio in clone process.
+> 
+> 2. The IO priority can be passed to module that implement
+>    struct gendisk::fops::submit_bio, help resolve some
+>    of the IO priority loss issues.
+> 
+> This patch depends on commit 82b74cac2849 ("blk-ioprio: Convert from
+> rqos policy to direct call")
+> 
+> Fixes: a78418e6a04c ("block: Always initialize bio IO priority on submit")
+> 
+> Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
+> Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
+> Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
 
-Link: https://lore.kernel.org/dm-devel/alpine.LRH.2.11.1612141049250.13402@mail.ewheeler.net
+Would be nice to get this block core fix upstream ASAP independent of
+your various DM changes.
 
-Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
----
- drivers/md/dm-crypt.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 6de107aff331..7149da6555b8 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1683,6 +1683,7 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned int size)
- 				 GFP_NOIO, &cc->bs);
- 	clone->bi_private = io;
- 	clone->bi_end_io = crypt_endio;
-+	clone->bi_ioprio = io->base_bio->bi_ioprio;
- 
- 	remaining_size = size;
- 
--- 
-2.34.1
-
+Please simplify this patch's header like was requested in review of v4:
+https://patchwork.kernel.org/project/dm-devel/patch/20231212111150.18155-2-hongyu.jin.cn@gmail.com/
