@@ -1,46 +1,44 @@
-Received: from mail-qk1-f173.google.com (mail-qk1-f173.google.com [209.85.222.173])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68D701D52D
-	for <dm-devel@lists.linux.dev>; Wed, 13 Dec 2023 16:58:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qk1-f173.google.com with SMTP id af79cd13be357-77f3c84e0f6so442640285a.1
-        for <dm-devel@lists.linux.dev>; Wed, 13 Dec 2023 08:58:26 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702486705; x=1703091505;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=Fko4jEZO7IcAc5n2WrXVozicqYAVH+5PpOz25KhjD+M=;
-        b=HLTinxH6pGiW20MHIieu1I4yYKlFY41R8mAqcEwfnolw7wFc6TSHUUXuZUisX49JY9
-         Yx0u/s1EdnDT8XUtBLz7cA0b8CBDb8pUWIbj5JPW1Kqb/f/nkVP+jiRoO/P5BAcBJL5B
-         IkHAgyXKpeK/xuB1QsU19YUhJkX7plEH8u7axxSPYJdfTyDXAWYDo+J/zAy0UuNNhhGy
-         llII4HlKA7PcfBcokvA31d+m1S1Te6J5yd3UDZufylq24CVnfWhUxlfn3d67OWlVLWMO
-         d00rasEK8su1yLehIXCulAsiVrcJTgxVk1oQRTCj63QlmacF3hfQNtdxMVvLofYR/24e
-         Nm5A==
-X-Gm-Message-State: AOJu0Yw2Gg5rSHg3wZuk2lJEolGHAhdajDYtaNB7xy6yNANHbaUjpCGh
-	Y8/r+SZkRXVgcdFb6MxXmfXf
-X-Google-Smtp-Source: AGHT+IFvVkIflp9TiGbkJvpAu1da6qN2nmcyxFmltt+dcHVJ2+E3ImsBHyyCd+RBhaSCAT0Tc+H6Gg==
-X-Received: by 2002:ad4:5046:0:b0:67e:f3e3:8291 with SMTP id m6-20020ad45046000000b0067ef3e38291mr2273884qvq.12.1702486705405;
-        Wed, 13 Dec 2023 08:58:25 -0800 (PST)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id mi14-20020a056214558e00b0067a276fd8d5sm131380qvb.54.2023.12.13.08.58.24
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 13 Dec 2023 08:58:24 -0800 (PST)
-Date: Wed, 13 Dec 2023 11:58:23 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Hongyu Jin <hongyu.jin.cn@gmail.com>
-Cc: agk@redhat.com, mpatocka@redhat.com, axboe@kernel.dk,
-	ebiggers@kernel.org, zhiguo.niu@unisoc.com, ke.wang@unisoc.com,
-	yibin.ding@unisoc.com, hongyu.jin@unisoc.com,
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org
-Subject: Re: [PATCH v5 1/5] block: Fix bio IO priority setting
-Message-ID: <ZXnir8x6127EW7Gp@redhat.com>
-References: <CAMQnb4MQUJ0VnA5XO-enrXTJvHbo6FJCVPGszGaq-R34hfbeeg@mail.gmail.com>
- <20231213104216.27845-1-hongyu.jin.cn@gmail.com>
- <20231213104216.27845-2-hongyu.jin.cn@gmail.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87FB9642;
+	Thu, 14 Dec 2023 01:11:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="lSq1uGLr"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7F6B2C433C8;
+	Thu, 14 Dec 2023 01:11:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1702516284;
+	bh=XwoFjsJDwQ9a2+DWM4rjeegVkzh/lxFGbWD3rYfyGcc=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=lSq1uGLrFIRUTnVT3AS20PIwVXDWLgO8ozWsfsDZWaPJjk8n3u8l/eWwAv50O0EMd
+	 u8lxxL9Y4sSkGifdgqH3/YI4+EmFlAIdAVSI/mgcQl9karZZTwtudxVBlp5VpjaMxu
+	 SjagbjSDOcAhlUiBn/nkeM13SGJb/wwTwxfblLge9zGFRonPJ2SBordG8cRqdYFNpI
+	 3vAf2yXumJqwsUhu2Qb2L2P3bTvd2tZKU5prXoqDMiIFx8b91cZLKRNAPDnqn2anJK
+	 4lsRsLROKyVu60uG6cdSuihgOfEcCuT+ZirEHhGzdijeXu7TpvPoxov1wnMfqIDbmI
+	 CMP4+mM/C2Qxg==
+Date: Wed, 13 Dec 2023 17:11:21 -0800
+From: Keith Busch <kbusch@kernel.org>
+To: Kanchan Joshi <joshi.k@samsung.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
+	Chaitanya Kulkarni <kch@nvidia.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>, martin.petersen@oracle.com,
+	linux-scsi@vger.kernel.org, nitheshshetty@gmail.com,
+	anuj1072538@gmail.com, gost.dev@samsung.com, mcgrof@kernel.org,
+	Nitesh Shetty <nj.shetty@samsung.com>,
+	Anuj Gupta <anuj20.g@samsung.com>, linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH v18 02/12] Add infrastructure for copy offload in block
+ and request layer.
+Message-ID: <ZXpWOaxCRoF7dFis@kbusch-mbp>
+References: <20231206100253.13100-1-joshi.k@samsung.com>
+ <CGME20231206101050epcas5p2c8233030bbf74cef0166c7dfc0f41be7@epcas5p2.samsung.com>
+ <20231206100253.13100-3-joshi.k@samsung.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -49,33 +47,35 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20231213104216.27845-2-hongyu.jin.cn@gmail.com>
+In-Reply-To: <20231206100253.13100-3-joshi.k@samsung.com>
 
-On Wed, Dec 13 2023 at  5:42P -0500,
-Hongyu Jin <hongyu.jin.cn@gmail.com> wrote:
+On Wed, Dec 06, 2023 at 03:32:34PM +0530, Kanchan Joshi wrote:
+>  static inline bool bio_has_data(struct bio *bio)
+>  {
+> -	if (bio &&
+> -	    bio->bi_iter.bi_size &&
+> -	    bio_op(bio) != REQ_OP_DISCARD &&
+> -	    bio_op(bio) != REQ_OP_SECURE_ERASE &&
+> -	    bio_op(bio) != REQ_OP_WRITE_ZEROES)
+> +	if (bio && (bio_op(bio) == REQ_OP_READ || bio_op(bio) == REQ_OP_WRITE))
+>  		return true;
 
-> From: Hongyu Jin <hongyu.jin@unisoc.com>
-> 
-> Move bio_set_ioprio() into submit_bio():
-> 1. Only call bio_set_ioprio() once to set the priority of original bio,
->    the bio that cloned and splited from original bio will auto inherit
->    the priority of original bio in clone process.
-> 
-> 2. The IO priority can be passed to module that implement
->    struct gendisk::fops::submit_bio, help resolve some
->    of the IO priority loss issues.
-> 
-> This patch depends on commit 82b74cac2849 ("blk-ioprio: Convert from
-> rqos policy to direct call")
-> 
-> Fixes: a78418e6a04c ("block: Always initialize bio IO priority on submit")
-> 
-> Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
-> Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
-> Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
+There are other ops besides READ and WRITE that have data, but this is
+might be fine by the fact that other ops with data currently don't call
+this function.
 
-Would be nice to get this block core fix upstream ASAP independent of
-your various DM changes.
+> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> index 7c2316c91cbd..bd821eaa7a02 100644
+> --- a/include/linux/blk_types.h
+> +++ b/include/linux/blk_types.h
+> @@ -393,6 +393,10 @@ enum req_op {
+>  	/* reset all the zone present on the device */
+>  	REQ_OP_ZONE_RESET_ALL	= (__force blk_opf_t)17,
+>  
+> +	/* copy offload dst and src operation */
+> +	REQ_OP_COPY_SRC		= (__force blk_opf_t)19,
 
-Please simplify this patch's header like was requested in review of v4:
-https://patchwork.kernel.org/project/dm-devel/patch/20231212111150.18155-2-hongyu.jin.cn@gmail.com/
+Should this be an even numbered OP? The odd ones are for data
+WRITEs.
+
+> +	REQ_OP_COPY_DST		= (__force blk_opf_t)21,
