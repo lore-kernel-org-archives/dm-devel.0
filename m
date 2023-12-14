@@ -1,142 +1,81 @@
-Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.65])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com [209.85.221.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A3392EB1C;
-	Thu, 14 Dec 2023 09:46:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69A2455C18
+	for <dm-devel@lists.linux.dev>; Thu, 14 Dec 2023 14:08:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="mJeOGHBJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1702547196; x=1734083196;
-  h=date:from:to:cc:subject:message-id:mime-version;
-  bh=XJwjkx2e4CWNy4ClwoaaTXWYdEEJvTrMchPCgsaob7M=;
-  b=mJeOGHBJB7TutnYsXY0DN9D6dsM2IzV6OX1JNpS+WwZUjn/Uk5K/0zkG
-   JPHVM1HJGQlZ2AXdTqnPjdSEHNZs5Q0a1uFpuv86FhdXlRN+Rc+l+Ugga
-   bUK/2ybeP6/LIPs8DfvEnBlbSugw+TfjfoyaZnWHLEINWGzghRe7cnggR
-   c94TF64A/+oVA8S9HgIZkD5XHbHylWOWZiOiRa6s6e51EVUpCHKRDv/e/
-   wLi/OD9LsPylc2uc/hqe05L8zwknuzomLEP/r17qU/70JQ0CrC1HAG65n
-   hPtlG/BGRhgX2OuOzVQ88WenYNQ3AKnSrDMbWhCBIQwTEMMzEV16rHYby
-   Q==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10923"; a="398931719"
-X-IronPort-AV: E=Sophos;i="6.04,275,1695711600"; 
-   d="scan'208";a="398931719"
-Received: from fmsmga008.fm.intel.com ([10.253.24.58])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 14 Dec 2023 01:46:34 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10923"; a="840222708"
-X-IronPort-AV: E=Sophos;i="6.04,275,1695711600"; 
-   d="scan'208";a="840222708"
-Received: from lkp-server02.sh.intel.com (HELO b07ab15da5fe) ([10.239.97.151])
-  by fmsmga008.fm.intel.com with ESMTP; 14 Dec 2023 01:46:32 -0800
-Received: from kbuild by b07ab15da5fe with local (Exim 4.96)
-	(envelope-from <lkp@intel.com>)
-	id 1rDiIY-000Ls5-1z;
-	Thu, 14 Dec 2023 09:46:30 +0000
-Date: Thu, 14 Dec 2023 17:45:51 +0800
-From: kernel test robot <lkp@intel.com>
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: oe-kbuild-all@lists.linux.dev, dm-devel@lists.linux.dev
-Subject: [device-mapper-dm:dm-vdo-wip 61/61]
- drivers/md/dm-vdo/thread-registry.c:32:28: error: 'current' undeclared
-Message-ID: <202312141731.XkQLyrNY-lkp@intel.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="NjtFIJ8h"
+Received: by mail-wr1-f44.google.com with SMTP id ffacd0b85a97d-336447100e9so1049922f8f.1
+        for <dm-devel@lists.linux.dev>; Thu, 14 Dec 2023 06:08:59 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1702562937; x=1703167737; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:autocrypt
+         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=JL5rYVWa/F/KU9CRiLUQ8oCGnou1Pf3SCIyKTXOWTPc=;
+        b=NjtFIJ8hxQ4uqyQtyZBtsoczMGU/SnIn3wCq281/R4e0+BvsKOlZ7yhZZFfsfPa6Hd
+         4D/cVjuoPngDntl/vgT2bIvByV0xSZpWAk2HFdFpJntjNX+mMW4BhKW7lbdKgfnyUmwc
+         fcxY+jtvhujuZ/c9bDgxGwNJRdM+lHfqxFztEQi+HtAscKM/J0fJRlQR8LhBiGAxUSY6
+         niWoYnuHsCPyLujKESvBXlluSP6gDz05iLXBA/Xk4JNZMNeuzORX7POMwWflQ2cIa5Z3
+         iSyjZSGSKPFFE5wGIH8bJ9SgJ9y81Pl/uQ40uXzBjDtVdX+J8RM+DxgNXEHvHeaj8ztb
+         KcXw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1702562937; x=1703167737;
+        h=mime-version:user-agent:content-transfer-encoding:autocrypt
+         :references:in-reply-to:date:cc:to:from:subject:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=JL5rYVWa/F/KU9CRiLUQ8oCGnou1Pf3SCIyKTXOWTPc=;
+        b=ighgRVEgSAnizwrwILi+BPacqW+YVPmt6DdCdSUA+hT5nWtfWKogXgtcEG31OHvwRB
+         r78CF/m8/CNKq1bwGDQQQSZv9I9sZX0kq42YKDGU/3bPmOsT3Aux/Ol2sOfr2nDEkPpF
+         rV2mdSi4eM9Ncibia7OAml03bxzFthmr0qpbQR5SMp/+xmYcAH2qgUkEVWann5UIJw/D
+         DdRyB7HmOn6aXx8bz55oIQSdD6A8aIi3y4/Ah2J83URedUfRzFWF3Nu8caW7qMYqmAoJ
+         klF6ukxvrAwJ3atIZ0oNZbtT3UMTD3KSTNCHOrF9puZ75gBlHrTr+M8/oil3I+hpuGKu
+         eRug==
+X-Gm-Message-State: AOJu0YzmZk8tNkzsdaXd9nw2OpPI2a8TtBOJ8TZckA5Lkd5zoX2O2r4L
+	n5wq+9mMc+jr8zlMl6XPrbmwLg==
+X-Google-Smtp-Source: AGHT+IFB9SP4BiJzKOS0mO3wu5cndWHB/iLbCxQzRBwr/3VZ106NAJ9tFb3Aj35sf+YP6iIM5Lgpdw==
+X-Received: by 2002:a05:600c:3411:b0:40b:36e9:bf4b with SMTP id y17-20020a05600c341100b0040b36e9bf4bmr4634504wmp.41.1702562937603;
+        Thu, 14 Dec 2023 06:08:57 -0800 (PST)
+Received: from apollon.wilcks.net (dslb-090-186-000-097.090.186.pools.vodafone-ip.de. [90.186.0.97])
+        by smtp.gmail.com with ESMTPSA id v23-20020adfa1d7000000b003364a5d1d20sm1270019wrv.16.2023.12.14.06.08.57
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 14 Dec 2023 06:08:57 -0800 (PST)
+Message-ID: <d7edef33da53de983d0c64bcf9c9270f10732761.camel@suse.com>
+Subject: Re: [PATCH 2/4] multipathd: remove reset option from
+ update_multipath
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Thu, 14 Dec 2023 15:08:55 +0100
+In-Reply-To: <20231205212343.354054-3-bmarzins@redhat.com>
+References: <20231205212343.354054-1-bmarzins@redhat.com>
+	 <20231205212343.354054-3-bmarzins@redhat.com>
+Autocrypt: addr=martin.wilck@suse.com; prefer-encrypt=mutual; keydata=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
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.50.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-vdo-wip
-head:   e64f626707d0a0b2908bf0d47705d755ada6fd2d
-commit: e64f626707d0a0b2908bf0d47705d755ada6fd2d [61/61] dm vdo: use a proper Makefile for dm-vdo
-config: loongarch-allmodconfig (https://download.01.org/0day-ci/archive/20231214/202312141731.XkQLyrNY-lkp@intel.com/config)
-compiler: loongarch64-linux-gcc (GCC) 13.2.0
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20231214/202312141731.XkQLyrNY-lkp@intel.com/reproduce)
+On Tue, 2023-12-05 at 16:23 -0500, Benjamin Marzinski wrote:
+> Since all callers now set the reset argument, it's unnecessary to
+> keep
+> it as an argument.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202312141731.XkQLyrNY-lkp@intel.com/
+This breaks the dmevents test, because __wrap_update_multipath() hasn't
+been updated. I'll fix it.
 
-All error/warnings (new ones prefixed by >>):
+Martin
 
-   In file included from drivers/md/dm-vdo/index.h:13,
-                    from drivers/md/dm-vdo/open-chapter.h:11,
-                    from drivers/md/dm-vdo/index-layout.c:15:
->> drivers/md/dm-vdo/volume-index.h:29:18: warning: 'NO_CHAPTER' defined but not used [-Wunused-const-variable=]
-      29 | static const u64 NO_CHAPTER = U64_MAX;
-         |                  ^~~~~~~~~~
---
-   drivers/md/dm-vdo/thread-registry.c: In function 'uds_register_thread':
->> drivers/md/dm-vdo/thread-registry.c:32:28: error: 'current' undeclared (first use in this function)
-      32 |         new_thread->task = current;
-         |                            ^~~~~~~
-   drivers/md/dm-vdo/thread-registry.c:32:28: note: each undeclared identifier is reported only once for each function it appears in
-   drivers/md/dm-vdo/thread-registry.c: In function 'uds_unregister_thread':
-   drivers/md/dm-vdo/thread-registry.c:61:37: error: 'current' undeclared (first use in this function)
-      61 |                 if (thread->task == current) {
-         |                                     ^~~~~~~
-   drivers/md/dm-vdo/thread-registry.c: In function 'uds_lookup_thread':
-   drivers/md/dm-vdo/thread-registry.c:84:37: error: 'current' undeclared (first use in this function)
-      84 |                 if (thread->task == current) {
-         |                                     ^~~~~~~
---
-   drivers/md/dm-vdo/vdo.c: In function 'vdo_make':
->> drivers/md/dm-vdo/vdo.c:566:19: warning: '%s' directive output may be truncated writing up to 55 bytes into a region of size 16 [-Wformat-truncation=]
-     566 |                  "%s%u", MODULE_NAME, instance);
-         |                   ^~
-   drivers/md/dm-vdo/vdo.c:565:9: note: 'snprintf' output between 2 and 66 bytes into a destination of size 16
-     565 |         snprintf(vdo->thread_name_prefix, sizeof(vdo->thread_name_prefix),
-         |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     566 |                  "%s%u", MODULE_NAME, instance);
-         |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-vim +/current +32 drivers/md/dm-vdo/thread-registry.c
-
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  22  
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  23  /* Register the current thread and associate it with a data pointer. */
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  24  void uds_register_thread(struct thread_registry *registry,
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  25  			 struct registered_thread *new_thread, const void *pointer)
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  26  {
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  27  	struct registered_thread *thread;
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  28  	bool found_it = false;
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  29  
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  30  	INIT_LIST_HEAD(&new_thread->links);
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  31  	new_thread->pointer = pointer;
-c7d79fd21a2c37 Matthew Sakai 2023-11-16 @32  	new_thread->task = current;
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  33  
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  34  	spin_lock(&registry->lock);
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  35  	list_for_each_entry(thread, &registry->links, links) {
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  36  		if (thread->task == current) {
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  37  			/* There should be no existing entry. */
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  38  			list_del_rcu(&thread->links);
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  39  			found_it = true;
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  40  			break;
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  41  		}
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  42  	}
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  43  	list_add_tail_rcu(&new_thread->links, &registry->links);
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  44  	spin_unlock(&registry->lock);
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  45  
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  46  	ASSERT_LOG_ONLY(!found_it, "new thread not already in registry");
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  47  	if (found_it) {
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  48  		/* Ensure no RCU iterators see it before re-initializing. */
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  49  		synchronize_rcu();
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  50  		INIT_LIST_HEAD(&thread->links);
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  51  	}
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  52  }
-c7d79fd21a2c37 Matthew Sakai 2023-11-16  53  
-
-:::::: The code at line 32 was first introduced by commit
-:::::: c7d79fd21a2c3776577f17e22747b38bb61b9563 dm vdo: add thread and synchronization utilities
-
-:::::: TO: Matthew Sakai <msakai@redhat.com>
-:::::: CC: Mike Snitzer <snitzer@kernel.org>
-
--- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
