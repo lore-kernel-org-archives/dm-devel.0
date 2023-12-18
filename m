@@ -1,47 +1,47 @@
-Received: from mail-pg1-f175.google.com (mail-pg1-f175.google.com [209.85.215.175])
+Received: from mail-ot1-f46.google.com (mail-ot1-f46.google.com [209.85.210.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAA7BF4FD
-	for <dm-devel@lists.linux.dev>; Mon, 18 Dec 2023 01:29:00 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D112C1170B
+	for <dm-devel@lists.linux.dev>; Mon, 18 Dec 2023 01:29:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SpR4OjPx"
-Received: by mail-pg1-f175.google.com with SMTP id 41be03b00d2f7-53fbf2c42bfso2133896a12.3
-        for <dm-devel@lists.linux.dev>; Sun, 17 Dec 2023 17:29:00 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NvoGaRon"
+Received: by mail-ot1-f46.google.com with SMTP id 46e09a7af769-6da5250357fso1979091a34.2
+        for <dm-devel@lists.linux.dev>; Sun, 17 Dec 2023 17:29:09 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1702862940; x=1703467740; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1702862949; x=1703467749; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=vN+RlAGZeGH2zMVmYb6ghj5GDWJcjTyD9/i+J4cSzo8=;
-        b=SpR4OjPxurOx1iFUdvRQ4gP0svIdzN/gTo7rUdF5RgG7l01TbnHCq9SUiuyndkQsZP
-         NT7M0j0stTfG07KW32u83zUiWmTGIpTjReOEHRTnomilKykp7bGpYdcWrpBJonjnX2Bm
-         LHcHJlNrE5XK60OwGq9paAbGhznuHW2GyoFMaru3FohPhq1tPXsSzpTuCUxDb3iI+LId
-         I6Gipy+x/cXZHG2R3zd/O7zZR7rDC8VzgavNhD1+mh/vFMs8/6DUNNseUPbRHGVcJbXz
-         CEtBFflKT2xbMhBqa3VptPysQ7V00DksFx55wNIJyifW+UFQhKX2Vhc4a0yg+4t4Uo1D
-         gfYQ==
+        bh=fRWJvmM8+hpVsGJoyvu2YuvVcQVJUfQcuTmMveSE8/s=;
+        b=NvoGaRonPCH3mElB0woLcMq/FfaEXTgYV0CkXS7HbV8xq6zxNdIvSsUCM92AGz2kSi
+         c0A8Lr+ayPzkhawB+uuNJqfV1i13M10lZSnLGzVRGxEgeYL8tpitnj7ZwRT4b4NbNRIi
+         uOAaUTju9JoHgxfK17M31YZO2SyctX5NOgc34b0bRJnVQBc0qm//NWkyJjpCdHU317Fh
+         A2icqifG8mmDkIUTUZgYa7bPN42H+0YWU/giEfWVAm61hRXQxREjt+kT/3IlD7iDvpb5
+         o+UirntFQFWh4RQ1CYfCZDHjTn8GQwoWg3TrezvRUcNRCUvO10UDqpwS/u6w4djNIxTl
+         Jiag==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702862940; x=1703467740;
+        d=1e100.net; s=20230601; t=1702862949; x=1703467749;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=vN+RlAGZeGH2zMVmYb6ghj5GDWJcjTyD9/i+J4cSzo8=;
-        b=IwfeZCSF1D5f91Ent8NhU6voOGYRvD8/fWTpGrqh4R9QltvtlroN1voedMHHRE483o
-         dfH7ZQFLI5+a/YucXyrhKHuy88AYpYgEvB6zhng/GSuSL91uMf2kY7HZvNEDnv9RbOPq
-         5P3B/+m+eMVIqswNZXff/wqRGLel9KQo3gKvZsWNginBJsQ9gUuCDlZ+K8Ms03f3JrYk
-         kPgkFAK/XaruU/YYvlO+ZlXmT+fuXdgrAcKkPC5AAgWyhYg39tJ5c+GC7Rtop1ftkqY1
-         WN/O3JemkpCT33k7t2njTbV21Si9dN/gWCD5wIxyEEIqdMEPhjBXwjqHFEpr2jWLnS2d
-         Mnsw==
-X-Gm-Message-State: AOJu0Yxf8a6VBDbpcB/umgZYQk90WTjrhVwm51jMxsUYQUq8TWo6BGvu
-	/d20106tiyXYZL9W9zhkrpU=
-X-Google-Smtp-Source: AGHT+IHNZOIZZK8St++v3NOH3K1OldeUEfUBj9J/bhUS13A0V8/odDR7LtT+dNzvkyYsPcVzipihwg==
-X-Received: by 2002:a05:6a20:2593:b0:190:8c90:c317 with SMTP id k19-20020a056a20259300b001908c90c317mr18839984pzd.79.1702862940240;
-        Sun, 17 Dec 2023 17:29:00 -0800 (PST)
+        bh=fRWJvmM8+hpVsGJoyvu2YuvVcQVJUfQcuTmMveSE8/s=;
+        b=PfEXPy9EL0onzMhQ/j456QykCQIoArz1ot/rxS9fM1M4FX+P8AHcsoD3DgSGaFvJ6w
+         1XtuajCv5+F56mExdpQGphuR5SMglQ3LKpBF/w2cAowo++6rQtAJvwJPRs6rywrMLgIZ
+         75/JyYX0iTWMCglQVEXtniT7/BnslXSSQMlZn9SeftPUWXK03E+YLBJ5CHldBxe0zpcb
+         2H7AVKBByXZqRUwSPabW5or+lSNuYUXzy8mO+qou7FvXJPWMb1GZNk+jHgxr6D+P0HS4
+         6dqbcnMBP/UGS/Z8LmXF1O79vvjPDfzI6xdKmPP+IfKEDo0lfjnpeHsDoQ3RpIBYG5VB
+         MSuw==
+X-Gm-Message-State: AOJu0YwqRY7sNJLny2H93Kl/PEzZ6EMox7loveUMMwGMYHaN77snuZ6Z
+	jkU5nOBLUQ48jwVt19Ushfo=
+X-Google-Smtp-Source: AGHT+IEtpmNJei4+QhmEPNWe2n/m3Ke0gpe8rMs2fyyBrNBnELNFolv2m2e5X0IjBTmhtfUH48Z6EQ==
+X-Received: by 2002:a9d:638a:0:b0:6d9:d44d:cf1e with SMTP id w10-20020a9d638a000000b006d9d44dcf1emr17069720otk.13.1702862948962;
+        Sun, 17 Dec 2023 17:29:08 -0800 (PST)
 Received: from ubuntu.. ([117.18.48.102])
-        by smtp.gmail.com with ESMTPSA id s6-20020a625e06000000b006d64c4cb661sm1414014pfb.200.2023.12.17.17.28.54
+        by smtp.gmail.com with ESMTPSA id s6-20020a625e06000000b006d64c4cb661sm1414014pfb.200.2023.12.17.17.29.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 17 Dec 2023 17:29:00 -0800 (PST)
+        Sun, 17 Dec 2023 17:29:08 -0800 (PST)
 From: Hongyu Jin <hongyu.jin.cn@gmail.com>
 To: agk@redhat.com,
 	snitzer@kernel.org,
@@ -55,9 +55,9 @@ Cc: zhiguo.niu@unisoc.com,
 	linux-kernel@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
-Subject: [PATCH v5 RESEND 4/5] dm verity: Fix I/O priority lost when read FEC and hash
-Date: Mon, 18 Dec 2023 09:27:45 +0800
-Message-Id: <20231218012746.24442-5-hongyu.jin.cn@gmail.com>
+Subject: [PATCH v5 RESEND 5/5] dm-crypt: Fix lost ioprio when queuing write bios
+Date: Mon, 18 Dec 2023 09:27:46 +0800
+Message-Id: <20231218012746.24442-6-hongyu.jin.cn@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20231218012746.24442-1-hongyu.jin.cn@gmail.com>
 References: <CAMQnb4O15c=JC-zkCJD0U9GWwWko+Hez1iU7+cc3vhNSG86p9w@mail.gmail.com>
@@ -72,94 +72,28 @@ Content-Transfer-Encoding: 8bit
 
 From: Hongyu Jin <hongyu.jin@unisoc.com>
 
-To fix this problem, when read FEC and hash from disk, I/O priority are
-inconsistent with data block and blocked by other I/O with low I/O
-priority.
+The original submitting bio->bi_ioprio setting can be retained by
+struct dm_crypt_io::base_bio, we set the original bio's ioprio to
+the cloned bio for write.
 
-Make I/O for FEC and hash has same I/O priority with original data I/O.
+Link: https://lore.kernel.org/dm-devel/alpine.LRH.2.11.1612141049250.13402@mail.ewheeler.net
 
-Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
-Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
 Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
 ---
- drivers/md/dm-verity-fec.c    | 3 ++-
- drivers/md/dm-verity-target.c | 8 ++++++--
- 2 files changed, 8 insertions(+), 3 deletions(-)
+ drivers/md/dm-crypt.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index 715173cbf0ee..6a5a679e7e8a 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -209,6 +209,7 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 	u8 *bbuf, *rs_block;
- 	u8 want_digest[HASH_MAX_DIGESTSIZE];
- 	unsigned int n, k;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 6de107aff331..7149da6555b8 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1683,6 +1683,7 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned int size)
+ 				 GFP_NOIO, &cc->bs);
+ 	clone->bi_private = io;
+ 	clone->bi_end_io = crypt_endio;
++	clone->bi_ioprio = io->base_bio->bi_ioprio;
  
- 	if (neras)
- 		*neras = 0;
-@@ -247,7 +248,7 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 			bufio = v->bufio;
- 		}
- 
--		bbuf = dm_bufio_read(bufio, block, &buf, IOPRIO_DEFAULT);
-+		bbuf = dm_bufio_read(bufio, block, &buf, bio_prio(bio));
- 		if (IS_ERR(bbuf)) {
- 			DMWARN_LIMIT("%s: FEC %llu: read failed (%llu): %ld",
- 				     v->data_dev->name,
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 0038e168f3d7..8c911b6722ce 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -51,6 +51,7 @@ static DEFINE_STATIC_KEY_FALSE(use_tasklet_enabled);
- struct dm_verity_prefetch_work {
- 	struct work_struct work;
- 	struct dm_verity *v;
-+	unsigned short ioprio;
- 	sector_t block;
- 	unsigned int n_blocks;
- };
-@@ -293,6 +294,7 @@ static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
- 	int r;
- 	sector_t hash_block;
- 	unsigned int offset;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
- 
- 	verity_hash_at_level(v, block, level, &hash_block, &offset);
- 
-@@ -307,7 +309,7 @@ static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
- 			return -EAGAIN;
- 		}
- 	} else
--		data = dm_bufio_read(v->bufio, hash_block, &buf, IOPRIO_DEFAULT);
-+		data = dm_bufio_read(v->bufio, hash_block, &buf, bio_prio(bio));
- 
- 	if (IS_ERR(data))
- 		return PTR_ERR(data);
-@@ -717,7 +719,7 @@ static void verity_prefetch_io(struct work_struct *work)
- 		}
- no_prefetch_cluster:
- 		dm_bufio_prefetch(v->bufio, hash_block_start,
--				  hash_block_end - hash_block_start + 1, IOPRIO_DEFAULT);
-+				  hash_block_end - hash_block_start + 1, pw->ioprio);
- 	}
- 
- 	kfree(pw);
-@@ -728,6 +730,7 @@ static void verity_submit_prefetch(struct dm_verity *v, struct dm_verity_io *io)
- 	sector_t block = io->block;
- 	unsigned int n_blocks = io->n_blocks;
- 	struct dm_verity_prefetch_work *pw;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
- 
- 	if (v->validated_blocks) {
- 		while (n_blocks && test_bit(block, v->validated_blocks)) {
-@@ -751,6 +754,7 @@ static void verity_submit_prefetch(struct dm_verity *v, struct dm_verity_io *io)
- 	pw->v = v;
- 	pw->block = block;
- 	pw->n_blocks = n_blocks;
-+	pw->ioprio = bio_prio(bio);
- 	queue_work(v->verify_wq, &pw->work);
- }
+ 	remaining_size = size;
  
 -- 
 2.34.1
