@@ -1,113 +1,50 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A60D3D54D
-	for <dm-devel@lists.linux.dev>; Mon, 18 Dec 2023 15:15:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 478E41FAE;
+	Tue, 19 Dec 2023 00:46:45 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TsvEsC1P"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1702912529;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=izS/IC0DmM7mAVkkRJhi5lj7qvWeAq5t5HTYJWiY8a8=;
-	b=TsvEsC1PWaQkuP0qaU60LLo/yyNGQwq3aSKMa+ibJ0+miPTeAaqz6NCMWXTr4ed34mCd5C
-	oUu0c6qLDuQe67E0kqcprde3prEvzFqOP/YsuSctB6K506Sj2TH9qBQLJ0iMmnNBiT8IsN
-	auhOAePiBDW8F+dceDtjJPyXM2irWRM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-390-7vC1SDkKNxiRJCk_pwFISA-1; Mon, 18 Dec 2023 10:15:24 -0500
-X-MC-Unique: 7vC1SDkKNxiRJCk_pwFISA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 07FE487A380;
-	Mon, 18 Dec 2023 15:15:24 +0000 (UTC)
-Received: from localhost (unknown [10.39.195.94])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7CED3C15968;
-	Mon, 18 Dec 2023 15:15:23 +0000 (UTC)
-Date: Mon, 18 Dec 2023 10:15:22 -0500
-From: Stefan Hajnoczi <stefanha@redhat.com>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Paolo Bonzini <pbonzini@redhat.com>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
-	virtualization@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org, linux-btrfs@vger.kernel.org,
-	linux-f2fs-devel@lists.sourceforge.net
-Subject: Re: [PATCH 2/5] virtio_blk: remove the broken zone revalidation
- support
-Message-ID: <20231218151522.GE12768@fedora>
-References: <20231217165359.604246-1-hch@lst.de>
- <20231217165359.604246-3-hch@lst.de>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="XYn1oNvd"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 58DA0C433C7;
+	Tue, 19 Dec 2023 00:46:45 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1702946805;
+	bh=xh1CgRit2zifGJ88VossMVAydGb8FG8d0kaCnxDe6Xs=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=XYn1oNvdK5Sxni1Hr9pyUL/VMSY8aMl+eHPY4/1lnW1xSVlZfKFtzVfvlrWIttU3T
+	 kOaqlp4LkHdoADlcHm+wk4L7oZ3fvnm/Mvkzd/btzZdiqkK2tL6P51FgyfjPxCq6r7
+	 LpVdwOSFIRFabE4IPPc/Llsq3saMk5LJW+nvrSnVfEsWA7osjZuNib1O6HAlSUywdp
+	 KF2Uk6CiJSuLnvwzG0dK/R7d0iALM3VDT9sITGwU87mZvLfdhKmm/pVvgys8AgJAh8
+	 IDSY+Od9X+rgHjSCha5mliInpyeNk7te7jNNItsHPCmj1iZDJxXL0G7SYn7dUXbtYt
+	 RxxvUrxIKumZQ==
+Date: Mon, 18 Dec 2023 16:46:41 -0800
+From: Eric Biggers <ebiggers@kernel.org>
+To: Hongyu Jin <hongyu.jin.cn@gmail.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+	axboe@kernel.dk, zhiguo.niu@unisoc.com, ke.wang@unisoc.com,
+	yibin.ding@unisoc.com, hongyu.jin@unisoc.com,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org
+Subject: Re: [PATCH v5 RESEND 0/5] Fix I/O priority lost in device-mapper
+Message-ID: <20231219004641.GA1961@sol.localdomain>
+References: <CAMQnb4O15c=JC-zkCJD0U9GWwWko+Hez1iU7+cc3vhNSG86p9w@mail.gmail.com>
+ <20231218012746.24442-1-hongyu.jin.cn@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="4eVxO+z2jfATvVXq"
-Content-Disposition: inline
-In-Reply-To: <20231217165359.604246-3-hch@lst.de>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
-
-
---4eVxO+z2jfATvVXq
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20231218012746.24442-1-hongyu.jin.cn@gmail.com>
 
-On Sun, Dec 17, 2023 at 05:53:56PM +0100, Christoph Hellwig wrote:
-> virtblk_revalidate_zones is called unconditionally from
-> virtblk_config_changed_work from the virtio config_changed callback.
->=20
-> virtblk_revalidate_zones is a bit odd in that it re-clears the zoned
-> state for host aware or non-zoned devices, which isn't needed unless the
-> zoned mode changed - but a zone mode change to a host managed model isn't
-> handled at all, and virtio_blk also doesn't handle any other config
-> change except for a capacity change is handled (and even if it was
-> the upper layers above virtio_blk wouldn't handle it very well).
->=20
-> But even the useful case of a size change that would add or remove
-> zones isn't handled properly as blk_revalidate_disk_zones expects the
-> device capacity to cover all zones, but the capacity is only updated
-> after virtblk_revalidate_zones.
->=20
-> As this code appears to be entirely untested and is getting in the way
-> remove it for now, but it can be readded in a fixed version with
-> proper test coverage if needed.
->=20
-> Fixes: 95bfec41bd3d ("virtio-blk: add support for zoned block devices")
-> Fixes: f1ba4e674feb ("virtio-blk: fix to match virtio spec")
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/block/virtio_blk.c | 26 --------------------------
->  1 file changed, 26 deletions(-)
+On Mon, Dec 18, 2023 at 09:27:41AM +0800, Hongyu Jin wrote:
+> All changes are based on commit 9bacdd8996c7 ("Merge tag 'for-6.7-rc1-tag'
+> of git://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux")
+> on the master branch.
 
-Fair enough.
+That's from last month, and the patchset does not apply to the latest mainline.
+Can you make sure to use an up-to-date tree?  Thanks.
 
-Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
-
---4eVxO+z2jfATvVXq
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmWAYgoACgkQnKSrs4Gr
-c8j5vwf6AvyDGx3q65J+QlDbrJwPqdAlJ2qDdjwPYSEIgUmM+viNseFP/3psEz2K
-7bz3oZ0XXwQatvou0SAiQE8KeXitxdlYFTgJGCtnkyxzaBPZzdfSerjifJNpZhYY
-5XC8qXs4ZnecdqeGnEkUS+E4DOlZWL/n4VXz3V0fJAgezdOWZe8u8kkQjy4rcFXl
-+UqpzgXjuXfTykIPkc0Ij4JFG8uuPCkkQdzTG4o4FcTQbtgS8i41Mp/4Ty1ft3B8
-PZTUAwJ8uEnRTwyLvTujtBinZOKg7EuosEoRjZJLIT0QwZFJGHJ4DxUyWwpy+Jso
-E9s7jtYaaslUg+4xTvCIUaaGuRBVkg==
-=W7fu
------END PGP SIGNATURE-----
-
---4eVxO+z2jfATvVXq--
-
+- Eric
