@@ -1,89 +1,100 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lj1-f177.google.com (mail-lj1-f177.google.com [209.85.208.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2F32405D3
-	for <dm-devel@lists.linux.dev>; Tue, 19 Dec 2023 23:52:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 154E6DDC6
+	for <dm-devel@lists.linux.dev>; Wed, 20 Dec 2023 01:15:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eUCdkkd6"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1703029940;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=GqhA9X76eFuF3/V/YOIbhI/HghnWuG9YwQtvXYPFAzw=;
-	b=eUCdkkd6wpLYDoX6hNsaACqHlpksg2Z+9YDvJbGFpBQdjE2+85VXVGO7gTXk712RU6HSHi
-	svqV1zYMA/sGTvgjy6izuPcYzbo/wldWT/gVLgoe9jVQ85iHN9hFQy35c7z96G5BOGjfGI
-	R4q1JoLVicWC569EPuiZDly3INIYB4I=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-619-2XTFsoEKNOqPI2KUuSi5rw-1; Tue, 19 Dec 2023 18:52:19 -0500
-X-MC-Unique: 2XTFsoEKNOqPI2KUuSi5rw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3113B803915;
-	Tue, 19 Dec 2023 23:52:19 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 289E3492BE6;
-	Tue, 19 Dec 2023 23:52:19 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 3BJNqIuA788082
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 19 Dec 2023 18:52:19 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 3BJNqISH788081;
-	Tue, 19 Dec 2023 18:52:18 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH] multipath-tools tests: fix dmevents test after update_multipath change
-Date: Tue, 19 Dec 2023 18:52:18 -0500
-Message-ID: <20231219235218.788073-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HK6I5EMl"
+Received: by mail-lj1-f177.google.com with SMTP id 38308e7fff4ca-2cc55698c81so57714571fa.0
+        for <dm-devel@lists.linux.dev>; Tue, 19 Dec 2023 17:15:08 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1703034907; x=1703639707; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=eTHm0I4P2zQ/TFgdn8ZGMyjYnErvDS5xEoA7hWb25I0=;
+        b=HK6I5EMli4Hki0dFaIXW5YitG9IPmjnhQurCLwteqNRkkH+ri9o7nuf2qSsEnA751N
+         FHwE0dt+rWu+U4fY5ArBT91Bu9heGg30tDePig+j+wyizKoO/7tqqmZ4S8xiZEBM6AcN
+         UYwUV0yRJSRErEWR5+eYlb/AYPrbYiZ22UlQw0NNCCRgtRN3IR6tlbHZ+N/lDzWjO0eM
+         GZQnklWHMwtTshstl6I3u2d5w+dXCYvx55fUn/Oy/Zi8Kzf88CQkkvsqTvuZWlAFBJlr
+         4ts7AMDUw3IFGNGlpjB8UZYJ4/KOLxyY/f0wSG97IurCGpiD+GYFkquOvML0kerXQIXn
+         TZTA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1703034907; x=1703639707;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=eTHm0I4P2zQ/TFgdn8ZGMyjYnErvDS5xEoA7hWb25I0=;
+        b=kbec35sFJbFHfUpI8L/d+08cpXohTy3XS7h9wDboQ3M4bpgLFASNQazSgywduN4ykr
+         GvcYVPM9l007LeJFeu1XMsCIsgLG4bg7lXLZXaIKTY9nccZLyHMJFyfOMEKTnumQ0o8K
+         4qcauQMZh+cnSaWKo+i3aXf0LPXzlXTt5CGNWvLRMaC73Xkx6t/Bk3VQrNIUEfKjkDpy
+         DDKlJj9/qajw7A9Frc40xK2mxJVXtpMQtftQWTnmc+Ne2elu4PTZeG47XYEJRnZeMCt/
+         cFlvET22tb4IWwfvJoALtU+I4gtkJwrLZd7Ll3JvXYO1aRRS4uUC0hprZHdq3j6wNB9i
+         Y6KQ==
+X-Gm-Message-State: AOJu0YywC+XWuXD2wRJQdwH64WNRIvaaYsbhqNPIa5xciWO9R9Gfp9me
+	cupY//ajSsWOyGWztTF1zgn6IztPOY2umk+svuK1siQNLaQ=
+X-Google-Smtp-Source: AGHT+IGT7FXmqN/LnGJ0bcuN3sr1aOtcttmmFmmkV3+z/Jn7fTUjMU1lAgsSYdDBcvrfflr1p5M9x18SekA1JHyJ7ag=
+X-Received: by 2002:a2e:b054:0:b0:2cc:56a9:32d7 with SMTP id
+ d20-20020a2eb054000000b002cc56a932d7mr3631186ljl.85.1703034906688; Tue, 19
+ Dec 2023 17:15:06 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
+References: <CAMQnb4O15c=JC-zkCJD0U9GWwWko+Hez1iU7+cc3vhNSG86p9w@mail.gmail.com>
+ <20231218012746.24442-1-hongyu.jin.cn@gmail.com> <20231218012746.24442-5-hongyu.jin.cn@gmail.com>
+ <20231219224821.GC38652@quark.localdomain>
+In-Reply-To: <20231219224821.GC38652@quark.localdomain>
+From: Hongyu Jin <hongyu.jin.cn@gmail.com>
+Date: Wed, 20 Dec 2023 09:14:56 +0800
+Message-ID: <CAMQnb4N=5jf5Hsq1Qtb-9dsPzB29-xEV3Wj_Fi1WgCuW_pv2pg@mail.gmail.com>
+Subject: Re: [PATCH v5 RESEND 4/5] dm verity: Fix I/O priority lost when read
+ FEC and hash
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, axboe@kernel.dk, 
+	zhiguo.niu@unisoc.com, ke.wang@unisoc.com, yibin.ding@unisoc.com, 
+	hongyu.jin@unisoc.com, linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+	linux-block@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-The commit ("multipathd: don't modify the multipath device on show
-commands") changed the paramters for update_multipath(). Update the
-test to match.
-
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- tests/dmevents.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/tests/dmevents.c b/tests/dmevents.c
-index 68c4ad46..f08e6499 100644
---- a/tests/dmevents.c
-+++ b/tests/dmevents.c
-@@ -332,13 +332,12 @@ void __wrap_remove_map_by_alias(const char *alias, struct vectors * vecs)
- /* pretend update the pretend dm devices. If fail is set, it
-  * simulates having the dm device removed. Otherwise it just sets
-  * update_nr to record when the update happened */
--int __wrap_update_multipath(struct vectors *vecs, char *mapname, int reset)
-+int __wrap_update_multipath(struct vectors *vecs, char *mapname)
- {
- 	int fail;
- 
- 	check_expected(mapname);
- 	assert_ptr_equal(vecs, waiter->vecs);
--	assert_int_equal(reset, 1);
- 	fail = mock_type(int);
- 	if (fail) {
- 		assert_int_equal(remove_dm_device_event(mapname), 0);
--- 
-2.41.0
-
+Eric Biggers <ebiggers@kernel.org> =E4=BA=8E2023=E5=B9=B412=E6=9C=8820=E6=
+=97=A5=E5=91=A8=E4=B8=89 06:48=E5=86=99=E9=81=93=EF=BC=9A
+>
+> On Mon, Dec 18, 2023 at 09:27:45AM +0800, Hongyu Jin wrote:
+> > From: Hongyu Jin <hongyu.jin@unisoc.com>
+> >
+> > To fix this problem, when read FEC and hash from disk, I/O priority are
+> > inconsistent with data block and blocked by other I/O with low I/O
+> > priority.
+> >
+> > Make I/O for FEC and hash has same I/O priority with original data I/O.
+>
+> "To fix this problem" is supposed to be in the second paragraph, not the =
+first,
+> right?
+Yes, The verification and error correction process takes effect after
+obtaining the data.
+>
+> > @@ -728,6 +730,7 @@ static void verity_submit_prefetch(struct dm_verity=
+ *v, struct dm_verity_io *io)
+> >       sector_t block =3D io->block;
+> >       unsigned int n_blocks =3D io->n_blocks;
+> >       struct dm_verity_prefetch_work *pw;
+> > +     struct bio *bio =3D dm_bio_from_per_bio_data(io, v->ti->per_io_da=
+ta_size);
+> >
+> >       if (v->validated_blocks) {
+> >               while (n_blocks && test_bit(block, v->validated_blocks)) =
+{
+>
+> The caller has the bio pointer already, so maybe just add it as a paramet=
+er to
+> verity_submit_prefetch()?
+>
+> - Eric
+ok, I will change it.
