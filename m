@@ -1,61 +1,55 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B28C048780;
-	Wed, 20 Dec 2023 18:33:02 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 89039487A9;
+	Wed, 20 Dec 2023 20:13:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="AC0Tyquj"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 748A1C433C8;
-	Wed, 20 Dec 2023 18:32:59 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jghUCq4x"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 5A3D4C433CB;
+	Wed, 20 Dec 2023 20:13:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1703097182;
-	bh=f144gnrYx3aALxmr2qylKbFvhC7hG8a5SPA1LFipwBw=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=AC0Tyquje3iOPa46ITKpWlffLd/0bqIOx25x9i7qR1UmMU5pjJ2BRehOgxhER8vnc
-	 Uqu7wCvhKOUR312AYXP4qUO1Km1xIcLTo0FvzjL5yH5r9AvRq/ftkOYwaLKDENDX/V
-	 Wes1AdBADinCi9dzeSAmKODWmJDd5W6kaRz7ulJDJ2PxxxlZKEVnCth1PomgStXSj7
-	 o+mgKJcr271dCo/gObr+1ic1hewS6iKeL/UupIYvSNPXNaybIPpyjKS0OljRnncYKw
-	 fxZgD2eWhXPVdhpV3fu4ddCiQzfxxxMKkYI/b7WSjKhUXhqw0ydNftEKe/LIDYuG+B
-	 CUr5uKV+qVCjw==
-Date: Wed, 20 Dec 2023 12:32:55 -0600
-From: Eric Biggers <ebiggers@kernel.org>
-To: Hongyu Jin <hongyu.jin.cn@gmail.com>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
-	axboe@kernel.dk, zhiguo.niu@unisoc.com, ke.wang@unisoc.com,
-	yibin.ding@unisoc.com, hongyu.jin@unisoc.com,
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org
-Subject: Re: [PATCH v6 4/5] dm verity: Fix I/O priority lost when read FEC
- and hash
-Message-ID: <20231220183255.GA119068@quark.localdomain>
-References: <20231213104216.27845-6-hongyu.jin.cn@gmail.com>
- <20231220100333.107049-1-hongyu.jin.cn@gmail.com>
- <20231220100333.107049-5-hongyu.jin.cn@gmail.com>
+	s=k20201202; t=1703103192;
+	bh=WbGwXAvqGOP3h5/gLrPtlOOHkYDGIuqOGejmanazRmQ=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=jghUCq4x0NBdKgUd0NQLG7pvf+8ZoZsHcg3I6/Lmah/N1vANh5OhCH6yZ/W1ZB91Z
+	 qfz4xMI5Snhw3+oxB+FiJ74++TngmDNMSM1gWSZOu305P1VqBSsFVEhSW0RPMgL2wn
+	 5VSsVpdCCC5om9z8t3LukbSm2Kj05lQjkc6Qtleo7hS/q7VGBslg+bF3OCa5OeUBdu
+	 ECLh4bWOjJe9mv66pChP8FVMUm5NNvV5cIWYX5Fn6aJpofOaZN9NDplmr1VMmz3Yih
+	 wmnNmVWDlAtS/V+P/dVe6FlPBELGAGJPfflUw+xznsQjMbKHedUGgPVKWcj9QjJ32i
+	 UMw8c+EX6oA0A==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 4362ED8C985;
+	Wed, 20 Dec 2023 20:13:12 +0000 (UTC)
+Subject: Re: [git pull] device mapper fixes for 6.7-rc7
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <ZYHo0kWJ/abSbCRF@redhat.com>
+References: <ZYHo0kWJ/abSbCRF@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <ZYHo0kWJ/abSbCRF@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-6.7/dm-fixes-3
+X-PR-Tracked-Commit-Id: 5d6f447b07d5432686ba69183af6e96ac58069c9
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 0a7a93d96d124bf252430090b15feb4239bcf752
+Message-Id: <170310319227.16038.12458478712789685201.pr-tracker-bot@kernel.org>
+Date: Wed, 20 Dec 2023 20:13:12 +0000
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@lists.linux.dev, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Yu Kuai <yukuai3@huawei.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20231220100333.107049-5-hongyu.jin.cn@gmail.com>
 
-On Wed, Dec 20, 2023 at 06:03:32PM +0800, Hongyu Jin wrote:
-> +static inline struct dm_verity_io *verity_io(struct dm_verity *v, struct dm_verity_fec_io *fio)
-> +{
-> +	return (struct dm_verity_io *)
-> +		((char *)fio + sizeof(struct dm_verity_fec_io) - v->ti->per_io_data_size);
-> +}
-[...]
-> @@ -129,8 +136,10 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio,
->  	struct dm_buffer *buf;
->  	unsigned int n, i, offset;
->  	u8 *par, *block;
-> +	struct dm_verity_io *io = verity_io(v, fio);
-> +	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+The pull request you sent on Tue, 19 Dec 2023 14:02:42 -0500:
 
-How about passing 'io' as an argument to fec_decode_bufs() instead of adding the
-verity_io() helper function?
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-6.7/dm-fixes-3
 
-- Eric
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/0a7a93d96d124bf252430090b15feb4239bcf752
+
+Thank you!
+
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
