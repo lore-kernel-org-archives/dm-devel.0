@@ -1,100 +1,101 @@
-Received: from mail-lj1-f177.google.com (mail-lj1-f177.google.com [209.85.208.177])
+Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com [209.85.214.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 154E6DDC6
-	for <dm-devel@lists.linux.dev>; Wed, 20 Dec 2023 01:15:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 52B9D8BF9
+	for <dm-devel@lists.linux.dev>; Wed, 20 Dec 2023 03:18:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HK6I5EMl"
-Received: by mail-lj1-f177.google.com with SMTP id 38308e7fff4ca-2cc55698c81so57714571fa.0
-        for <dm-devel@lists.linux.dev>; Tue, 19 Dec 2023 17:15:08 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="z4TBpj9f"
+Received: by mail-pl1-f176.google.com with SMTP id d9443c01a7336-1d3efb6bfa3so231705ad.0
+        for <dm-devel@lists.linux.dev>; Tue, 19 Dec 2023 19:18:12 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1703034907; x=1703639707; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1703042291; x=1703647091; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=eTHm0I4P2zQ/TFgdn8ZGMyjYnErvDS5xEoA7hWb25I0=;
-        b=HK6I5EMli4Hki0dFaIXW5YitG9IPmjnhQurCLwteqNRkkH+ri9o7nuf2qSsEnA751N
-         FHwE0dt+rWu+U4fY5ArBT91Bu9heGg30tDePig+j+wyizKoO/7tqqmZ4S8xiZEBM6AcN
-         UYwUV0yRJSRErEWR5+eYlb/AYPrbYiZ22UlQw0NNCCRgtRN3IR6tlbHZ+N/lDzWjO0eM
-         GZQnklWHMwtTshstl6I3u2d5w+dXCYvx55fUn/Oy/Zi8Kzf88CQkkvsqTvuZWlAFBJlr
-         4ts7AMDUw3IFGNGlpjB8UZYJ4/KOLxyY/f0wSG97IurCGpiD+GYFkquOvML0kerXQIXn
-         TZTA==
+        bh=kF+V1Jg1BXc6LruEx2QSeT3aVZaOhuhdq7yp1ywFjS8=;
+        b=z4TBpj9fzNkLIF0MtpRK0jaqq0IEqFIgjPNPhszlRJBDX9aV5lsarzC1v107ALarzd
+         qcJ8zvb1HLXlfHEJMR6Dibt8jp1Bufil9Arc6VVp+S3RiQZdHPggK5QRxt6dS8YVuHNN
+         nLKu0OCVn73BmYeOMUG9I2X9+gE+9+3BwfcdTGBm7m1yd02B9+hGJxGhZ1J2UgLl3Reg
+         YWvBqaDlh52vYNEoEarkxDmyGG4/ZMxrqTgByLGYcqzi+Yn55oxZ/eiv+juzUdtgMW6M
+         BPpCxr2EzdXAzzQnhiCtQDA9bjM7XyfxUjdy/sv3LNJ48E8SHjca0rhvGJXWi7bwSbu0
+         SPMA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1703034907; x=1703639707;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+        d=1e100.net; s=20230601; t=1703042291; x=1703647091;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=eTHm0I4P2zQ/TFgdn8ZGMyjYnErvDS5xEoA7hWb25I0=;
-        b=kbec35sFJbFHfUpI8L/d+08cpXohTy3XS7h9wDboQ3M4bpgLFASNQazSgywduN4ykr
-         GvcYVPM9l007LeJFeu1XMsCIsgLG4bg7lXLZXaIKTY9nccZLyHMJFyfOMEKTnumQ0o8K
-         4qcauQMZh+cnSaWKo+i3aXf0LPXzlXTt5CGNWvLRMaC73Xkx6t/Bk3VQrNIUEfKjkDpy
-         DDKlJj9/qajw7A9Frc40xK2mxJVXtpMQtftQWTnmc+Ne2elu4PTZeG47XYEJRnZeMCt/
-         cFlvET22tb4IWwfvJoALtU+I4gtkJwrLZd7Ll3JvXYO1aRRS4uUC0hprZHdq3j6wNB9i
-         Y6KQ==
-X-Gm-Message-State: AOJu0YywC+XWuXD2wRJQdwH64WNRIvaaYsbhqNPIa5xciWO9R9Gfp9me
-	cupY//ajSsWOyGWztTF1zgn6IztPOY2umk+svuK1siQNLaQ=
-X-Google-Smtp-Source: AGHT+IGT7FXmqN/LnGJ0bcuN3sr1aOtcttmmFmmkV3+z/Jn7fTUjMU1lAgsSYdDBcvrfflr1p5M9x18SekA1JHyJ7ag=
-X-Received: by 2002:a2e:b054:0:b0:2cc:56a9:32d7 with SMTP id
- d20-20020a2eb054000000b002cc56a932d7mr3631186ljl.85.1703034906688; Tue, 19
- Dec 2023 17:15:06 -0800 (PST)
+        bh=kF+V1Jg1BXc6LruEx2QSeT3aVZaOhuhdq7yp1ywFjS8=;
+        b=Fn+mnpG54GxfQC6FmXj+ja/yhzsNt+WcJXuAbv2ZRlrtO4qUdr59DQGqqIe/z/2GZa
+         4RJAtZjL5fVNeOw1ybHdxedKyVs7r4Dlh8LWiqBs5bULdStm8baSST1Yr7AbkHhUSWET
+         OBEiNfdUgMT/UHhBlwYvC+WlFcy2loidDVMiL+O6o/WPpVcAIpc2/cPsUxTmKGd1ubvg
+         9CUgTV/F8L9fLuZzHPL8zvVn91XNaZIuIIsO00d2jxFpvO4fQ1OVGesOIyfXmMD4qs6x
+         QWSAiEqAu3oPB6/1CsIAVrd7i0qYlNobg8nNTepCLHoDD18Gqz7xxY+nSYh/fuxJE433
+         5Umw==
+X-Gm-Message-State: AOJu0YwcFA1qDeBGtVDJUDQXW4c9EfhKmxocB0eZIqeKDmjOfn33SBYX
+	biM7UldjJOJBiZW3w82xfSRNkw==
+X-Google-Smtp-Source: AGHT+IGJy8KYnZyMHC+4fzSHET6hgmed+3GNH6+zA4QShlWQzZGtRyh4P66B+nvfNY4nmXMHOASd9w==
+X-Received: by 2002:a05:6a20:3c8d:b0:18b:2020:8cd1 with SMTP id b13-20020a056a203c8d00b0018b20208cd1mr42952817pzj.3.1703042291622;
+        Tue, 19 Dec 2023 19:18:11 -0800 (PST)
+Received: from [127.0.0.1] ([198.8.77.194])
+        by smtp.gmail.com with ESMTPSA id d6-20020aa78e46000000b006d088356541sm16958284pfr.104.2023.12.19.19.18.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 19 Dec 2023 19:18:11 -0800 (PST)
+From: Jens Axboe <axboe@kernel.dk>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Paolo Bonzini <pbonzini@redhat.com>, 
+ Stefan Hajnoczi <stefanha@redhat.com>, Damien Le Moal <dlemoal@kernel.org>, 
+ "Martin K. Petersen" <martin.petersen@oracle.com>, dm-devel@lists.linux.dev, 
+ linux-kernel@vger.kernel.org, virtualization@lists.linux.dev, 
+ linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, 
+ linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net
+In-Reply-To: <20231217165359.604246-1-hch@lst.de>
+References: <20231217165359.604246-1-hch@lst.de>
+Subject: Re: remove support for the host aware zoned model
+Message-Id: <170304229020.683808.16849978519505449769.b4-ty@kernel.dk>
+Date: Tue, 19 Dec 2023 20:18:10 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <CAMQnb4O15c=JC-zkCJD0U9GWwWko+Hez1iU7+cc3vhNSG86p9w@mail.gmail.com>
- <20231218012746.24442-1-hongyu.jin.cn@gmail.com> <20231218012746.24442-5-hongyu.jin.cn@gmail.com>
- <20231219224821.GC38652@quark.localdomain>
-In-Reply-To: <20231219224821.GC38652@quark.localdomain>
-From: Hongyu Jin <hongyu.jin.cn@gmail.com>
-Date: Wed, 20 Dec 2023 09:14:56 +0800
-Message-ID: <CAMQnb4N=5jf5Hsq1Qtb-9dsPzB29-xEV3Wj_Fi1WgCuW_pv2pg@mail.gmail.com>
-Subject: Re: [PATCH v5 RESEND 4/5] dm verity: Fix I/O priority lost when read
- FEC and hash
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, axboe@kernel.dk, 
-	zhiguo.niu@unisoc.com, ke.wang@unisoc.com, yibin.ding@unisoc.com, 
-	hongyu.jin@unisoc.com, linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
-	linux-block@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.13-dev-7edf1
 
-Eric Biggers <ebiggers@kernel.org> =E4=BA=8E2023=E5=B9=B412=E6=9C=8820=E6=
-=97=A5=E5=91=A8=E4=B8=89 06:48=E5=86=99=E9=81=93=EF=BC=9A
->
-> On Mon, Dec 18, 2023 at 09:27:45AM +0800, Hongyu Jin wrote:
-> > From: Hongyu Jin <hongyu.jin@unisoc.com>
-> >
-> > To fix this problem, when read FEC and hash from disk, I/O priority are
-> > inconsistent with data block and blocked by other I/O with low I/O
-> > priority.
-> >
-> > Make I/O for FEC and hash has same I/O priority with original data I/O.
->
-> "To fix this problem" is supposed to be in the second paragraph, not the =
-first,
-> right?
-Yes, The verification and error correction process takes effect after
-obtaining the data.
->
-> > @@ -728,6 +730,7 @@ static void verity_submit_prefetch(struct dm_verity=
- *v, struct dm_verity_io *io)
-> >       sector_t block =3D io->block;
-> >       unsigned int n_blocks =3D io->n_blocks;
-> >       struct dm_verity_prefetch_work *pw;
-> > +     struct bio *bio =3D dm_bio_from_per_bio_data(io, v->ti->per_io_da=
-ta_size);
-> >
-> >       if (v->validated_blocks) {
-> >               while (n_blocks && test_bit(block, v->validated_blocks)) =
-{
->
-> The caller has the bio pointer already, so maybe just add it as a paramet=
-er to
-> verity_submit_prefetch()?
->
-> - Eric
-ok, I will change it.
+
+On Sun, 17 Dec 2023 17:53:54 +0100, Christoph Hellwig wrote:
+> hen zones were first added the SCSI and ATA specs, two different
+> models were supported (in addition to the drive managed one that
+> is invisible to the host):
+> 
+>  - host managed where non-conventional zones there is strict requirement
+>    to write at the write pointer, or else an error is returned
+>  - host aware where a write point is maintained if writes always happen
+>    at it, otherwise it is left in an under-defined state and the
+>    sequential write preferred zones behave like conventional zones
+>    (probably very badly performing ones, though)
+> 
+> [...]
+
+Applied, thanks!
+
+[1/5] virtio_blk: cleanup zoned device probing
+      commit: 77360cadaae562f437b3e98dc3af748d8d75bdc2
+[2/5] virtio_blk: remove the broken zone revalidation support
+      commit: a971ed8002110f211899279cd7295756d263b771
+[3/5] block: remove support for the host aware zone model
+      commit: 7437bb73f087e5f216f9c6603f5149d354e315af
+[4/5] block: simplify disk_set_zoned
+      commit: d73e93b4dfab10c80688b061c30048df05585c7e
+[5/5] sd: only call disk_clear_zoned when needed
+      commit: 5cc99b89785c55430a5674b32ad0d9e57a8ec251
+
+Best regards,
+-- 
+Jens Axboe
+
+
+
