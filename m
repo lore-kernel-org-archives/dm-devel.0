@@ -1,101 +1,57 @@
-Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com [209.85.214.176])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 52B9D8BF9
-	for <dm-devel@lists.linux.dev>; Wed, 20 Dec 2023 03:18:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="z4TBpj9f"
-Received: by mail-pl1-f176.google.com with SMTP id d9443c01a7336-1d3efb6bfa3so231705ad.0
-        for <dm-devel@lists.linux.dev>; Tue, 19 Dec 2023 19:18:12 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1703042291; x=1703647091; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=kF+V1Jg1BXc6LruEx2QSeT3aVZaOhuhdq7yp1ywFjS8=;
-        b=z4TBpj9fzNkLIF0MtpRK0jaqq0IEqFIgjPNPhszlRJBDX9aV5lsarzC1v107ALarzd
-         qcJ8zvb1HLXlfHEJMR6Dibt8jp1Bufil9Arc6VVp+S3RiQZdHPggK5QRxt6dS8YVuHNN
-         nLKu0OCVn73BmYeOMUG9I2X9+gE+9+3BwfcdTGBm7m1yd02B9+hGJxGhZ1J2UgLl3Reg
-         YWvBqaDlh52vYNEoEarkxDmyGG4/ZMxrqTgByLGYcqzi+Yn55oxZ/eiv+juzUdtgMW6M
-         BPpCxr2EzdXAzzQnhiCtQDA9bjM7XyfxUjdy/sv3LNJ48E8SHjca0rhvGJXWi7bwSbu0
-         SPMA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1703042291; x=1703647091;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=kF+V1Jg1BXc6LruEx2QSeT3aVZaOhuhdq7yp1ywFjS8=;
-        b=Fn+mnpG54GxfQC6FmXj+ja/yhzsNt+WcJXuAbv2ZRlrtO4qUdr59DQGqqIe/z/2GZa
-         4RJAtZjL5fVNeOw1ybHdxedKyVs7r4Dlh8LWiqBs5bULdStm8baSST1Yr7AbkHhUSWET
-         OBEiNfdUgMT/UHhBlwYvC+WlFcy2loidDVMiL+O6o/WPpVcAIpc2/cPsUxTmKGd1ubvg
-         9CUgTV/F8L9fLuZzHPL8zvVn91XNaZIuIIsO00d2jxFpvO4fQ1OVGesOIyfXmMD4qs6x
-         QWSAiEqAu3oPB6/1CsIAVrd7i0qYlNobg8nNTepCLHoDD18Gqz7xxY+nSYh/fuxJE433
-         5Umw==
-X-Gm-Message-State: AOJu0YwcFA1qDeBGtVDJUDQXW4c9EfhKmxocB0eZIqeKDmjOfn33SBYX
-	biM7UldjJOJBiZW3w82xfSRNkw==
-X-Google-Smtp-Source: AGHT+IGJy8KYnZyMHC+4fzSHET6hgmed+3GNH6+zA4QShlWQzZGtRyh4P66B+nvfNY4nmXMHOASd9w==
-X-Received: by 2002:a05:6a20:3c8d:b0:18b:2020:8cd1 with SMTP id b13-20020a056a203c8d00b0018b20208cd1mr42952817pzj.3.1703042291622;
-        Tue, 19 Dec 2023 19:18:11 -0800 (PST)
-Received: from [127.0.0.1] ([198.8.77.194])
-        by smtp.gmail.com with ESMTPSA id d6-20020aa78e46000000b006d088356541sm16958284pfr.104.2023.12.19.19.18.10
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Dec 2023 19:18:11 -0800 (PST)
-From: Jens Axboe <axboe@kernel.dk>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Paolo Bonzini <pbonzini@redhat.com>, 
- Stefan Hajnoczi <stefanha@redhat.com>, Damien Le Moal <dlemoal@kernel.org>, 
- "Martin K. Petersen" <martin.petersen@oracle.com>, dm-devel@lists.linux.dev, 
- linux-kernel@vger.kernel.org, virtualization@lists.linux.dev, 
- linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, 
- linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net
-In-Reply-To: <20231217165359.604246-1-hch@lst.de>
-References: <20231217165359.604246-1-hch@lst.de>
-Subject: Re: remove support for the host aware zoned model
-Message-Id: <170304229020.683808.16849978519505449769.b4-ty@kernel.dk>
-Date: Tue, 19 Dec 2023 20:18:10 -0700
+Received: from 1wt.eu (ded1.1wt.eu [163.172.96.212])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id B762C18E08
+	for <dm-devel@lists.linux.dev>; Wed, 20 Dec 2023 06:44:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=1wt.eu
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=1wt.eu
+Received: (from willy@localhost)
+	by pcw.home.local (8.15.2/8.15.2/Submit) id 3BK6hl4H029479;
+	Wed, 20 Dec 2023 07:43:47 +0100
+Date: Wed, 20 Dec 2023 07:43:47 +0100
+From: Willy Tarreau <w@1wt.eu>
+To: "Yang, Chenyuan" <cy54@illinois.edu>
+Cc: "security@kernel.org" <security@kernel.org>,
+        "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+        "agk@redhat.com" <agk@redhat.com>,
+        "snitzer@kernel.org" <snitzer@kernel.org>,
+        "mpatocka@redhat.com" <mpatocka@redhat.com>,
+        "syzkaller@googlegroups.com" <syzkaller@googlegroups.com>,
+        "Zhang, Lingming" <lingming@illinois.edu>,
+        "Marinov, Darko" <marinov@illinois.edu>,
+        "Zhao, Zijie" <zijie4@illinois.edu>
+Subject: Re: [Linux Kernel Crash] "WARNING: kmalloc bug in dm_table_create"
+Message-ID: <20231220064347.GA29411@1wt.eu>
+References: <PH7PR11MB5768D4593870E9515DEE6334A097A@PH7PR11MB5768.namprd11.prod.outlook.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.13-dev-7edf1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <PH7PR11MB5768D4593870E9515DEE6334A097A@PH7PR11MB5768.namprd11.prod.outlook.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 
+Hello,
 
-On Sun, 17 Dec 2023 17:53:54 +0100, Christoph Hellwig wrote:
-> hen zones were first added the SCSI and ATA specs, two different
-> models were supported (in addition to the drive managed one that
-> is invisible to the host):
+On Tue, Dec 19, 2023 at 08:55:13PM +0000, Yang, Chenyuan wrote:
+> Hello,
 > 
->  - host managed where non-conventional zones there is strict requirement
->    to write at the write pointer, or else an error is returned
->  - host aware where a write point is maintained if writes always happen
->    at it, otherwise it is left in an under-defined state and the
->    sequential write preferred zones behave like conventional zones
->    (probably very badly performing ones, though)
+> We detected another crash bug for the `md` driver implemented in `drivers/md/dm-ioctl.c` and `dm-table.c` by using Syzkaller. This is kind of like "kmalloc bug in ctl_ioctl" but it is related to another CMD value and argument. (`DM_TABLE_LOAD_CMD` and `struct dm_ioctl.target_count`.
 > 
-> [...]
+> Based on our understanding, this bug is caused by ` n_highs = kvcalloc(num, sizeof(struct dm_target) + sizeof(sector_t), GFP_KERNEL); in `dm-table.c` (https://github.com/torvalds/linux/blob/3bd7d748816927202268cb335921f7f68b3ca723/drivers/md/dm-table.c#L112). This allocates an array with a size over INT_MAX.
+> 
+> A possible patch is to have a check for the `struct dm_ioctl.target_count`, which is the argument for the `ioctl` with ` DM_TABLE_LOAD_CMD` as the command value. Currently, there is no any check for this argument.
+> 
+> We reproduced this bug in the latest Linux Kernel (reproducible on 3bd7d748816927202268cb335921f7f68b3ca723 and found on d2f51b3516dade79269ff45eae2a7668ae711b25), and the config for the kernel is attached.
+> 
+> Here is the log and Syzkaller reproducer. C reproducer is also attached, which can compiled by `gcc -pthread`.
+(...)
 
-Applied, thanks!
+Quick note, there's no need to Cc the security list since this was
+cross-posted to a public list:
 
-[1/5] virtio_blk: cleanup zoned device probing
-      commit: 77360cadaae562f437b3e98dc3af748d8d75bdc2
-[2/5] virtio_blk: remove the broken zone revalidation support
-      commit: a971ed8002110f211899279cd7295756d263b771
-[3/5] block: remove support for the host aware zone model
-      commit: 7437bb73f087e5f216f9c6603f5149d354e315af
-[4/5] block: simplify disk_set_zoned
-      commit: d73e93b4dfab10c80688b061c30048df05585c7e
-[5/5] sd: only call disk_clear_zoned when needed
-      commit: 5cc99b89785c55430a5674b32ad0d9e57a8ec251
+   https://lore.kernel.org/dm-devel/PH7PR11MB5768D4593870E9515DEE6334A097A@PH7PR11MB5768.namprd11.prod.outlook.com/T/#u
 
-Best regards,
--- 
-Jens Axboe
-
-
-
+Thanks,
+Willy
