@@ -1,84 +1,193 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-io1-f47.google.com (mail-io1-f47.google.com [209.85.166.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98ACE200CC
-	for <dm-devel@lists.linux.dev>; Fri,  5 Jan 2024 21:52:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B0D5351015
+	for <dm-devel@lists.linux.dev>; Mon,  8 Jan 2024 15:52:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=chromium.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chromium.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZFHMnjcs"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1704491536;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=7HOuPBnrpa2tkKKFOqmPfGBQfbtjbn15Z9/huWFh0bg=;
-	b=ZFHMnjcsXGxtUjFPTbeAfONraibCZBp2GAOU7gGr4MnaRDbnbRifT86++b7ylkNE6+0A07
-	m3fDD7E8bmkTPbf2uPPbiS8VkX1kPB3LJwWtYUqxm3N4+gF35uxmytCzUF+g1EvwZ05VMp
-	pXoIrIyPhG/2fqQiCKTcgJFVQ4PvsHc=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-52-VoLVkETYNyC2PSJ7kI7mUQ-1; Fri,
- 05 Jan 2024 16:52:11 -0500
-X-MC-Unique: VoLVkETYNyC2PSJ7kI7mUQ-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A33103C000A5;
-	Fri,  5 Jan 2024 21:52:10 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9B5AB492BC7;
-	Fri,  5 Jan 2024 21:52:10 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 405LqAIA048359
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 5 Jan 2024 16:52:10 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 405LqAoR048358;
-	Fri, 5 Jan 2024 16:52:10 -0500
-Date: Fri, 5 Jan 2024 16:52:10 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: mwilck@suse.com
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev
-Subject: Re: [PATCH 0/3] multipath-tools: coverity defect fixes
-Message-ID: <ZZh6ChsMlph1lE6d@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <20240105184037.16518-1-mwilck@suse.com>
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="iP4YMZyV"
+Received: by mail-io1-f47.google.com with SMTP id ca18e2360f4ac-7bbec1d1c9dso129756139f.1
+        for <dm-devel@lists.linux.dev>; Mon, 08 Jan 2024 07:52:32 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=chromium.org; s=google; t=1704729152; x=1705333952; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=6GBbgEZxMK73I+u0rWWqcWUTaNoXXkyaD/xedgxGaCo=;
+        b=iP4YMZyVv+3k4cc2j5BaCIOaO4yh5P8Qjx7bI1NlNh7+fZVgXsbZacgF3KBEWX/aF+
+         jO9F2jxGV7O2yC6g9AIURsQqbAym3ULysce4WiFqWeniDT81xuRjKGvaNpwNwBo7VASA
+         zHmmqjSzIikRcexO0AF2BHiPH7aNtrV+aM8QQ=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1704729152; x=1705333952;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=6GBbgEZxMK73I+u0rWWqcWUTaNoXXkyaD/xedgxGaCo=;
+        b=xAld2yQCV/6AdKHr8jXoZsZvtbUfCKSL6PHiBoS1WebwmLl04qnlCiGgxcFUhQNgAR
+         ERoYPHobRiTEUzT/JGh5lBwCR34qawnou+kp1AOzky22lRDufaWuVlKpgTSc+/YGlnDY
+         gL+LbnakJkHtJ84WVoyc+W/pkpQ4Df4JAFuuD7iTj8xI3NfC9fxDjlATPTcrVrVP96Al
+         SBVjMeAWaMphiJ/xAzrWvVoPos7yfZMpg0sVjy6pFjQFdGufL0wNn+1/aKnxi2AKOIVJ
+         3mT5l0ySLKFFTE410aQfdoT6dYj0n7mfyV38aZCPfxxo9izNumMaKEhNseqynoJzJiw3
+         bpMw==
+X-Gm-Message-State: AOJu0YxhBAR5W/iDrhVqxIzYBngMEhZYUL2whH8SHVki4kn2dK0gSWDl
+	R1/avBMFp8w8ufxeo4nJ3GeqD6WMRZMr
+X-Google-Smtp-Source: AGHT+IHuOFZtXYg+/eVqVb36IvxigxV/OaCSD3GyT2YB1DGBkEd5FOV1m09dwHOcDmkJkhfPUcQhDQ==
+X-Received: by 2002:a5e:9810:0:b0:7bd:5c6b:115c with SMTP id s16-20020a5e9810000000b007bd5c6b115cmr2439727ioj.36.1704729151723;
+        Mon, 08 Jan 2024 07:52:31 -0800 (PST)
+Received: from localhost (110.41.72.34.bc.googleusercontent.com. [34.72.41.110])
+        by smtp.gmail.com with UTF8SMTPSA id b19-20020a0566380b9300b0046e0e9912e1sm26758jad.69.2024.01.08.07.52.31
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 08 Jan 2024 07:52:31 -0800 (PST)
+Date: Mon, 8 Jan 2024 15:52:30 +0000
+From: Matthias Kaehlcke <mka@chromium.org>
+To: Matthew Sakai <msakai@redhat.com>
+Cc: dm-devel@lists.linux.dev, Brian Geffon <bgeffon@google.com>
+Subject: Re: [PATCH v5 01/40] dm: add documentation for dm-vdo target
+Message-ID: <ZZwaPjBECFvs8F4i@google.com>
+References: <cover.1700250814.git.msakai@redhat.com>
+ <b89e2912cb24b311b4196bb5cc92f10efc396886.1700250814.git.msakai@redhat.com>
+ <ZY3JiwgHnbbL1vGF@google.com>
+ <8207e4fb-0ef0-50e8-5954-363a3723ffa6@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240105184037.16518-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
+In-Reply-To: <8207e4fb-0ef0-50e8-5954-363a3723ffa6@redhat.com>
 
-On Fri, Jan 05, 2024 at 07:40:33PM +0100, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> Fixes for defects reported by coverity (new defects in old code).
-> So far I haven't had time to test them thoroughly.
+Hi Matthew,
 
-For the set:
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Thanks for your reply!
 
+On Thu, Jan 04, 2024 at 09:07:07PM -0500, Matthew Sakai wrote:
 > 
-> Martin Wilck (3):
->   multipathd: init_unwinder: protect pthread_cond_wait() call with a
->     loop
->   libmultipath: is_uevent_busy(): check servicing_uev under lock
->   libmultipath: tur: protect pthread_cond_timedwait with a loop
 > 
->  libmultipath/checkers/tur.c | 9 ++++++---
->  libmultipath/uevent.c       | 5 +++--
->  multipathd/init_unwinder.c  | 6 +++++-
->  3 files changed, 14 insertions(+), 6 deletions(-)
+> On 12/28/23 14:16, Matthias Kaehlcke wrote:
+> > Hi,
+> > 
+> > On Fri, Nov 17, 2023 at 03:59:18PM -0500, Matthew Sakai wrote:
+> > > This adds the admin-guide documentation for dm-vdo.
+> > > 
+> > > vdo.rst is the guide to using dm-vdo. vdo-design is an overview of the
+> > > design of dm-vdo.
+> > > 
+> > > Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
+> > > Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
+> > > Signed-off-by: Matthew Sakai <msakai@redhat.com>
+> > > ---
+> > >   .../admin-guide/device-mapper/vdo-design.rst  | 415 ++++++++++++++++++
+> > >   .../admin-guide/device-mapper/vdo.rst         | 388 ++++++++++++++++
+> > >   2 files changed, 803 insertions(+)
+> > >   create mode 100644 Documentation/admin-guide/device-mapper/vdo-design.rst
+> > >   create mode 100644 Documentation/admin-guide/device-mapper/vdo.rst
+> > > 
+> > > diff --git a/Documentation/admin-guide/device-mapper/vdo-design.rst b/Documentation/admin-guide/device-mapper/vdo-design.rst
+> > > new file mode 100644
+> > > index 000000000000..c82d51071c7d
+> > > --- /dev/null
+> > > +++ b/Documentation/admin-guide/device-mapper/vdo-design.rst
+> > > @@ -0,0 +1,415 @@
+> > > +.. SPDX-License-Identifier: GPL-2.0-only
+> > > +
+> > > +================
+> > > +Design of dm-vdo
+> > > +================
+> > > +
+> > > +The dm-vdo (virtual data optimizer) target provides inline deduplication,
+> > > +compression, zero-block elimination, and thin provisioning. A dm-vdo target
+> > > +can be backed by up to 256TB of storage, and can present a logical size of
+> > > +up to 4PB.
 > 
-> -- 
-> 2.43.0
+> [snip]
+> 
+> > > +	block map cache size:
+> > > +		The size of the block map cache, as a number of 4096-byte
+> > > +		blocks. The minimum and recommended value is 32768 blocks.
+> > > +		If the logical thread count is non-zero, the cache size
+> > > +		must be at least 4096 blocks per logical thread.
+> > 
+> > If I understand correctly the minimum of 32768 blocks results in the 128 MB
+> > metadata cache mentioned in 'Tuning', which allows to access up to 100 GB
+> > of logical space.
+> > 
+> > Is there a strict reason for this minimum? I'm evaluating to use vdo on
+> > systems with a relatively small vdo volume (say 4GB) and 'only' 4-8 GB of
+> > RAM. The 128 MB of metadata cache would be a sizeable chunk of that, which
+> > could make the use of vdo infeasible.
+> 
+> The short answer is that VDO can often use a smaller cache than the default,
+> but it likely won't help in the way you want it to.
+> 
+> > > +Examples:
+> > > +
+> > > +Start a previously-formatted vdo volume with 1 GB logical space and 1 GB
+> > > +physical space, storing to /dev/dm-1 which has more than 1 GB of space.
+> > > +
+> > > +::
+> > > +
+> > > +	dmsetup create vdo0 --table \
+> > > +	"0 2097152 vdo V4 /dev/dm-1 262144 4096 32768 16380"
+> > 
+> > IIUC the backing device needs to be previously formatted. The formatting
+> > fails when the size of the backing device is < 5GB:
+> > 
+> > vdoformat /dev/loop8
+> >    Minimum required size for VDO volume: 5063921664 bytes
+> >    vdoformat: formatVDO failed on '/dev/loop8': VDO Status: Out of space
+> > 
+> > That was with 'vdoformat' from https://github.com/dm-vdo/vdo/
+> > 
+> > It would be great if somewhat smaller devices could be supported.
+> 
+> VDO was designed to handle the challenge of data deduplication in very large
+> storage pools. It generally is not very useful for very small pools. The
+> first question to ask is whether VDO can actually provide any value in the
+> sort of environment you're using. VDO generally takes the strategy of saving
+> storage space by using extra RAM and CPU cycles. In addition, VDO needs to
+> track a certain amount of metadata, which reduces the amount storage
+> available for actual user data.
+> 
+> For vdoformat, the biggest consideration is the deduplication index and
+> other metadata, which are basically a fixed cost of about 3.5GB. In order
+> for VDO to be useful, VDO would have to find enough deduplication to make up
+> for the storage lost to VDO's metadata, so the minimum useful size of a VDO
+> volume is in the 8-12GB range.
+> 
+> For the block map cache, decreasing the cache size may increase the
+> frequency of metadata writes, which generally decreases the write throughput
+> of the VDO device. So the tradeoff is between RAM and write speed.
+> 
+> Nothing about the generic structure of VDO would prevent us from producing a
+> smaller VDO (and in fact we do for some testing purposes), but in a scenario
+> where you can only expect to save a few gigabytes through deduplication, VDO
+> is generally more expensive than it is worth.
+> 
+> If you still think this might be worth pursuing, let me know and we can try
+> to work out a configuration which might suit your goals.
 
+Some more context about my use case:
+
+I'm evaluating the use of VDO for storing a hibernate image, the goal is to
+reduce hibernate resume time by loading less data from potentially slow
+storage. That's why the volume is relatively small. The image is only
+written once per hibernate cycle and generally after the system was idle
+for a longer time, so the lower write throughput due to a smaller cache
+size probably wouldn't be a major concern. The systems might not have huge
+amounts of free disk space, an overhead of ~3.5GB for the deduplication
+index would probably rule out the use of VDO.
+
+In the context of this use case the compression part of VDO seems more
+interesting than the deduplication. In the documentation of VDO I noticed
+a parameter to disable deduplication. With that I wonder if it would be
+feasible/reasonable to add an option to vdoformat to omit the deduplication
+index.
+
+Do you think VDO might be (made) suitable for this scenario or is it
+just not the right tool?
+
+Thanks
+
+Matthias
