@@ -1,233 +1,303 @@
-Received: from mail-qk1-f180.google.com (mail-qk1-f180.google.com [209.85.222.180])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45756524A4
-	for <dm-devel@lists.linux.dev>; Thu, 11 Jan 2024 17:07:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qk1-f180.google.com with SMTP id af79cd13be357-78338e90470so56216485a.0
-        for <dm-devel@lists.linux.dev>; Thu, 11 Jan 2024 09:07:59 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1704992878; x=1705597678;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=guvMy5on3EDR89/D3VOhm8VEzO50WLZGZFkTLRN1vR0=;
-        b=QbzAR7vrX3De/Lf+YswZYdSNVpIM8FdYptjuWl7jEfl5OcCjs82wx9mPk7ci0Fso2h
-         ZTWYWjnbxB5zNBLKo6U0Jb9ZqRGOQScCvus6IvFA8sVUN3cyp59tzBSkUMd0ztCBwDXP
-         OV8p+ULtJ8xEd9g/37d9IUy2L4WJsDtX7r65DFq7SX109w9zLENperLWeCrtaF02JoSe
-         XmlEOGUH7cWUwP4XtbxUlnfdCrtD1rWXgbmBwBp440NV/AcLM/4DbqR1ZiNszwW5XSD6
-         9hKfmINvsgDgummJi6guqmLoC3Ur+FJukTYbBtYyJQf8rLWn3O2oQfLX+r69OHSLX/x+
-         xXow==
-X-Gm-Message-State: AOJu0YxEzYP5q13XaAtFmAm2jM2ArCvG5jSMofK3Tg7+rwDHdvjQ9NLp
-	sZMmCFjyKazDg+SjALjwY0XBvmcT5kGk
-X-Google-Smtp-Source: AGHT+IFy7KWn7OYnpKc4xsjFWd5HOeE/9wvJj6iqmHRlz3hOcuXWmmWVKBPUuO8n2brsspLPp9VzuQ==
-X-Received: by 2002:ad4:5be5:0:b0:681:36e7:ee94 with SMTP id k5-20020ad45be5000000b0068136e7ee94mr1072238qvc.102.1704992878011;
-        Thu, 11 Jan 2024 09:07:58 -0800 (PST)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id ei19-20020ad45a13000000b006805bd3058asm425295qvb.75.2024.01.11.09.07.57
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 11 Jan 2024 09:07:57 -0800 (PST)
-Date: Thu, 11 Jan 2024 12:07:56 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>,
-	linux-block@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCHSET 0/3] Integrity cleanups and optimization
-Message-ID: <ZaAgbBCkLX5Ueq4l@redhat.com>
-References: <20240111160226.1936351-1-axboe@kernel.dk>
- <ZaASdg+NkFFy8Khx@infradead.org>
- <yq1o7dr6e09.fsf@ca-mkp.ca.oracle.com>
- <ZaAYgJ+xK6c5p1/L@redhat.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0063A5810C
+	for <dm-devel@lists.linux.dev>; Thu, 11 Jan 2024 20:51:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=lists.ewheeler.net
+Received: from localhost (localhost [127.0.0.1])
+	by mx.ewheeler.net (Postfix) with ESMTP id E472D4B;
+	Thu, 11 Jan 2024 12:44:44 -0800 (PST)
+X-Virus-Scanned: amavisd-new at ewheeler.net
+Received: from mx.ewheeler.net ([127.0.0.1])
+	by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id SLuhntzPRzcB; Thu, 11 Jan 2024 12:44:40 -0800 (PST)
+Received: from localhost (localhost [127.0.0.1])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx.ewheeler.net (Postfix) with ESMTPSA id 414AE45;
+	Thu, 11 Jan 2024 12:44:40 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net 414AE45
+Date: Thu, 11 Jan 2024 12:44:40 -0800 (PST)
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+To: Xiao Ni <xni@redhat.com>
+cc: Joe Thornber <thornber@redhat.com>, dm-devel@lists.linux.dev, 
+    Heinz Mauelshagen <heinzm@redhat.com>, 
+    Mikulas Patocka <mpatocka@redhat.com>, 
+    "Snitzer, Mike" <snitzer@redhat.com>, 
+    Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: Stuck IOs with dm-integrity + md raid1 + dm-thin
+In-Reply-To: <CALTww2-kBfJw2uNTp8JgMz5=MZKFKGP=ATAC42=Wf7hWJfPT1A@mail.gmail.com>
+Message-ID: <675735af-bee2-e448-bb77-40b91c83e29f@ewheeler.net>
+References: <fb4ae62-522-e262-df25-c82e8acf8baf@ewheeler.net> <CALTww2-kBfJw2uNTp8JgMz5=MZKFKGP=ATAC42=Wf7hWJfPT1A@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ZaAYgJ+xK6c5p1/L@redhat.com>
+Content-Type: multipart/mixed; boundary="8323328-436906490-1705005880=:26033"
 
-On Thu, Jan 11 2024 at 11:34P -0500,
-Mike Snitzer <snitzer@kernel.org> wrote:
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-> On Thu, Jan 11 2024 at 11:24P -0500,
-> Martin K. Petersen <martin.petersen@oracle.com> wrote:
+--8323328-436906490-1705005880=:26033
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+On Thu, 11 Jan 2024, Xiao Ni wrote:
+> On Wed, Nov 29, 2023 at 10:10 AM Eric Wheeler
+> <dm-devel@lists.ewheeler.net> wrote:
+> >
+> > Hi Joe,
+> >
+> > I'm not sure who else to CC on this issue, feel free to add others.
+> >
+> > Recently we tried putting dm-integrity on NVMe's under MD RAID1 with
+> > dm-thin metadata (tmeta) on that raid1 mirror (Linux v6.5.7).  It worked
+> > fine for ~12 hours and then, at ~3:30 am in the morning when we do a
+> > reserve_metadata_snap and thin_dump's, IO's began to hang.
+> >
+> > For reference, we have been using the same block device stack for years,
+> > and it is quite stable.  We've been running Linux v6.5.7 for about 6 weeks
+> > without issue until we tried dm-integrity under dm-thin.  The stack
+> > _without_ dm-integrity looks like this:
+> >
+> >     nvme{0,1} =>
+> >         raid mirror /dev/md0 =>
+> >             LVM PV for VG "data" =>
+> >                 tmeta for dm-thin
+> >
+> >     /dev/sda (LSI-based Hardware RAID)
+> >         bcache =>
+> >             LVM PV for VG "data" =>
+> >                 tdata for dm-thin "pool0" =>
+> >                     single thin volume from the pool =>
+> >                         drbd to another host over the network
+> >
+> > After adding dm-integrity, the stack is the same as above except that
+> > the RAID mirror is above dm-integrity:
+> >
+> >     nvme{0,1} =>
+> >         dm-integrity =>
+> >             raid mirror /dev/md0 =>
+> >                 LVM PV for VG "data" =>
+> >                     tmeta for dm-thin
+> >
+> > The first time we had the thindump+IO hang problem we thought that an
+> > underlying NVMe drive was bad, so we replaced both: We rebooted and did
+> > a `pvmove` of the tmeta volume to different NVMe+md-raid1+dm-integrity
+> > on disks that were brand new, but had the same issue that night during
+> > reserve_metadata_snap+thin_dump.
+> >
+> > Since we had the same problem on a different set of new NVMe disks, we
+> > rebooted, did a `pvmove` back to the original MD RAID1 mirror stack
+> > _without_ dm-integrity, and everything was back to normal.  Thus, I do not
+> > think it is a disk or tmeta corruption issue, but an obscure race or
+> > deadlock bug.
+> >
+> > We tried to reproduce this in a virtual environment, but so far it has not
+> > triggered. In about a week when we get downtime for this system, I will
+> > take a copy of its thin metadata to inspect further. For now, I have not
+> > yet been enable to reproduce problem outside our semi-production testing
+> > environment.
+> >
+> > So, this is what we see so far:
+> >
+> > We get _thousands_ of these lines in the kernel logs when IO hangs. The
+> > `dm-175` device is one of the the dm-integrity targets being mirrored.
+> > Note the "12924 callbacks suppressed" message:
+> >
+> >         [  +0.584816] raid1_end_read_request: 12924 callbacks suppressed
+> >         [  +0.000006] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.020011] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.019462] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.018672] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.006242] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.002399] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.000934] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.000688] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.001161] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +0.006404] md/raid1:md0: dm-175: rescheduling sector 1979682216
+> >         [  +3.594380] integrity_metadata: 13095 callbacks suppressed
+> >         [  +0.000006] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.001410] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.000824] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.003587] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.011065] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.004176] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.000604] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.006153] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.008797] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.002350] device-mapper: integrity: dm-175: Checksum failed at sector 0x760395b0
+> >         [  +0.668866] raid1_read_request: 12747 callbacks suppressed
+> >         [  +0.000005] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.024708] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.024441] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.018321] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.000850] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.004479] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.001225] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.001024] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.000741] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
+> >         [  +0.001094] md/raid1:md0: redirecting sector 1979682216 to other mirror: dm-175
 > 
-> > 
-> > > Bw, can someone help with what dm_integrity_profile is for?
-> > > It is basically identical to the no-op one, just with a different
-> > > name.  With the no-op removal it is the only one outside of the pi
-> > > once, and killing it would really help with some de-virtualization
-> > > I've looked at a while ago.
-> > 
-> > No particular objections from me wrt. using a flag.
-> > 
-> > However, I believe the no-op profile and associated plumbing was a
-> > requirement for DM. I forget the details. Mike?
+> Hi all
 > 
-> I'll have to take a closer look.. stacking device always complicates
-> things.
-
-The bulk of the following drivers/md/dm-table.c code snippets are from
-these 2 commits (first from me, 2nd from Martin):
-
-a63a5cf84dac dm: improve block integrity support
-25520d55cdb6 block: Inline blk_integrity in struct gendisk
-
-static bool integrity_profile_exists(struct gendisk *disk)
-{
-        return !!blk_get_integrity(disk);
-}
-
-/*
- * Get a disk whose integrity profile reflects the table's profile.
- * Returns NULL if integrity support was inconsistent or unavailable.
- */
-static struct gendisk *dm_table_get_integrity_disk(struct dm_table *t)
-{
-        struct list_head *devices = dm_table_get_devices(t);
-        struct dm_dev_internal *dd = NULL;
-        struct gendisk *prev_disk = NULL, *template_disk = NULL;
-
-        for (unsigned int i = 0; i < t->num_targets; i++) {
-                struct dm_target *ti = dm_table_get_target(t, i);
-
-                if (!dm_target_passes_integrity(ti->type))
-                        goto no_integrity;
-        }
-
-        list_for_each_entry(dd, devices, list) {
-                template_disk = dd->dm_dev->bdev->bd_disk;
-                if (!integrity_profile_exists(template_disk))
-                        goto no_integrity;
-                else if (prev_disk &&
-                         blk_integrity_compare(prev_disk, template_disk) < 0)
-                        goto no_integrity;
-                prev_disk = template_disk;
-        }
-
-        return template_disk;
-
-no_integrity:
-        if (prev_disk)
-                DMWARN("%s: integrity not set: %s and %s profile mismatch",
-                       dm_device_name(t->md),
-	               prev_disk->disk_name,
-                       template_disk->disk_name);
-        return NULL;
-}
-
-/*
- * Register the mapped device for blk_integrity support if the
- * underlying devices have an integrity profile.  But all devices may
- * not have matching profiles (checking all devices isn't reliable
- * during table load because this table may use other DM device(s) which
- * must be resumed before they will have an initialized integity
- * profile).  Consequently, stacked DM devices force a 2 stage integrity
- * profile validation: First pass during table load, final pass during
- * resume.
- */
-static int dm_table_register_integrity(struct dm_table *t)
-{
-	struct mapped_device *md = t->md;
-	struct gendisk *template_disk = NULL;
-
-	/* If target handles integrity itself do not register it here. */
-	if (t->integrity_added)
-		return 0;
-
-	template_disk = dm_table_get_integrity_disk(t);
-	if (!template_disk)
-		return 0;
-
-	if (!integrity_profile_exists(dm_disk(md))) {
-		t->integrity_supported = true;
-		/*
-		 * Register integrity profile during table load; we can do
-		 * this because the final profile must match during resume.
-		 */
-		blk_integrity_register(dm_disk(md),
-				       blk_get_integrity(template_disk));
-		return 0;
-	}
-
-	/*
-	 * If DM device already has an initialized integrity
-	 * profile the new profile should not conflict.
-	 */
-	if (blk_integrity_compare(dm_disk(md), template_disk) < 0) {
-		DMERR("%s: conflict with existing integrity profile: %s profile mismatch",
-		      dm_device_name(t->md),
-		      template_disk->disk_name);
-		return 1;
-	}
-
-	/* Preserve existing integrity profile */
-	t->integrity_supported = true;
-	return 0;
-}
-
-/*
- * Verify that all devices have an integrity profile that matches the
- * DM device's registered integrity profile.  If the profiles don't
- * match then unregister the DM device's integrity profile.
- */
-static void dm_table_verify_integrity(struct dm_table *t)
-{
-	struct gendisk *template_disk = NULL;
-
-	if (t->integrity_added)
-		return;
-
-	if (t->integrity_supported) {
-		/*
-		 * Verify that the original integrity profile
-		 * matches all the devices in this table.
-		 */
-		template_disk = dm_table_get_integrity_disk(t);
-		if (template_disk &&
-		    blk_integrity_compare(dm_disk(t->md), template_disk) >= 0)
-			return;
-	}
-
-	if (integrity_profile_exists(dm_disk(t->md))) {
-		DMWARN("%s: unable to establish an integrity profile",
-		       dm_device_name(t->md));
-		blk_integrity_unregister(dm_disk(t->md));
-	}
-}
-
-
-> But the dummy functions that got wired up with this commit are suspect:
-> 54d4e6ab91eb block: centralize PI remapping logic to the block layer
+> The process is as follows and I add some logs
+> 1. raid1_read_request submits bio to read data
+> 2. raid1_end_read finds the read request fails and try to fix the read error
+> 3. handle_read_error>fix_read_error tries to read data in 4K unit in
+> another disk, write to the failed disk in 4K unit and read from the
+> failed disk in 4K unit. fix_read_error finishes successfully.
+> 4. handle_read_error re-read data from the failed disk. And the read
+> request fails again.
+> [ 1067.149829] device-mapper: integrity: dm-3: Checksum failed at sector 0x17d8
+> [ 1067.149842] md/raid1:md9: dm-3: rescheduling sector 3912, sectors 248
+> [ 1067.150437] md/raid1:md9: dm-3: fix read error 3912, sectors 248
+> [ 1067.150439] md/raid1:md9: dm-3: re read 3912, sectors 248
 > 
-> Effectively the entirety of the dm_integrity_profile is "we don't do
-> anything special".. so yes it would be nice to not require indirect
-> calls to accomplish what dm-integrity needs from block core.
+> It looks like the bio size is suspicious. Because it reads
+> successfully when bio size is 4K.
 
-All said, if blk_get_integrity() can be made to handle the removal of
-the nop profile then all should "just work" right?  Here is how it has
-been:
+Hi Xiao, thanks for looking into this.  
 
-static inline struct blk_integrity *blk_get_integrity(struct gendisk *disk)
+It looks like the problem can be reproduced using 4k blocks as well, but
+I suppose its still possible that some 512-byte (4k-unaligned) IO is
+happening somewhere in the device stack.
+
+The script below changes the null_blk modprobe to set bs=4096 and uses
+zram instead of brd because zram only supports 4k blocks:
+
+# blockdev --getss /dev/mapper/pv /dev/zram[01]
+4096
+4096
+4096
+
+The script below has been added to the Jira ticket:
+	https://issues.redhat.com/browse/RHEL-20912
+
+--
+Eric Wheeler
+
+Script to trigger the bug with 4k blocks:
+
+# cat dm-integrity-thin-lvraid-zram-4k
+#!/bin/bash
+
+# Notice: /dev/zram0 and /dev/zram1 will be wiped unconditionally.
+
+# Configure these if you need to:
+VGNAME=testvg
+LVNAME=thin
+LVSIZE=$((10 * 1024*1024*1024/512))
+
+echo "NOTICE: THIS MAY BE UNSAFE. ONLY RUN THIS IN A TEST ENVIRONMENT!"
+echo "Press enter twice to continue or CTRL-C to abort."
+
+read
+read
+
+set -x
+
+
+# append disks into a linear target
+linear_add()
 {
-        struct blk_integrity *bi = &disk->queue->integrity;
+	name=$1
+	shift
 
-        if (!bi->profile)
-                return NULL;
+	prevsize=0
+	for vol in "$@"; do
+		size=`blockdev --getsize $vol`
+		echo "$prevsize $size linear $vol 0"
+		prevsize=$size
+	done \
+		| dmsetup create $name
 
-        return bi;
+	echo /dev/mapper/$name
 }
 
-Not looked closely at Jens' patchset (but will do), however it seems
-Jens missed updating blk_get_integrity() to deal with his new
-QUEUE_FLAG_INTG_PROFILE flag?
+lvthin_add()
+{
+	id=$1
+	lvcreate -An -V $LVSIZE -n $LVNAME$id --thinpool pool0 $VGNAME >&2
+	echo /dev/$VGNAME/$LVNAME$id
+}
 
-As for complete removal of integrity profiles entirely, DM needs a way
-to analyze integrity configurations to try to stack up a sane end
-result.
+lvthin_snapshot()
+{
+	origin=$1
+	id=$2
 
-Mike
+	lvcreate -An -s $VGNAME/$LVNAME$origin -n $LVNAME$id >&2
+	echo /dev/$VGNAME/$LVNAME$id
+}
+
+fio()
+{
+	dev=$1
+	/bin/fio --name=$dev --rw=randrw --direct=1 --bs=512 --numjobs=1 --filename=$dev --time_based --runtime=$FIOTIME --ioengine=libaio --iodepth=1 &> /dev/null
+}
+
+do_reset()
+{
+	killall -9 fio
+	lvchange -an $VGNAME
+	rmdir /dev/$VGNAME
+	dmsetup remove pv
+	dmsetup remove zram0
+	dmsetup remove zram1
+	lvmdevices --deldev /dev/mapper/pv
+	losetup -d /dev/loop?
+	rmmod zram
+	rmmod null_blk
+	echo ==== reset done
+	sleep 1
+}
+
+do_init()
+{
+	modprobe null_blk gb=30000 bs=4096
+
+	modprobe zram num_devices=2
+	echo 1g > /sys/block/zram0/disksize
+	echo 1g > /sys/block/zram1/disksize
+
+	# Create a writable header for the PV meta:
+	dd if=/dev/zero bs=1M count=16 oflag=direct of=/tmp/pvheader
+	loop=`losetup -f --show /tmp/pvheader`
+	linear_add pv $loop /dev/nullb0
+
+	# Create the VG
+	sleep 1
+	#linear_add zram0 /dev/zram0
+	#linear_add zram1 /dev/zram1
+	lvmdevices --adddev /dev/zram0
+	lvmdevices --adddev /dev/zram1
+	lvmdevices --adddev /dev/mapper/pv
+	vgcreate $VGNAME /dev/mapper/pv /dev/zram[01]
+
+	# Create the pool:
+	lvcreate -n pool0 -L 1T $VGNAME /dev/mapper/pv
+	lvcreate --type raid1 --raidintegrity y -m1 -L 512m -n meta0 $VGNAME /dev/zram[01]
+
+	lvconvert -y --force --force --chunksize 64k --type thin-pool --poolmetadata $VGNAME/meta0 $VGNAME/pool0
+}
+
+
+while true; do
+	do_reset
+	do_init
+
+	thin1=`lvthin_add 1`
+	fio $thin1 &
+
+	thin2=`lvthin_snapshot 1 2`
+	fio $thin2 &
+
+	wait
+
+done
+
+--8323328-436906490-1705005880=:26033--
