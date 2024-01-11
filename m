@@ -1,240 +1,413 @@
-Received: from mail-il1-f169.google.com (mail-il1-f169.google.com [209.85.166.169])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 336803DB80
-	for <dm-devel@lists.linux.dev>; Tue,  9 Jan 2024 21:03:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=chromium.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chromium.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E90C15AC5
+	for <dm-devel@lists.linux.dev>; Thu, 11 Jan 2024 12:34:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="A09mxoyc"
-Received: by mail-il1-f169.google.com with SMTP id e9e14a558f8ab-3608bdb484fso7760255ab.1
-        for <dm-devel@lists.linux.dev>; Tue, 09 Jan 2024 13:03:09 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google; t=1704834189; x=1705438989; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=6Xp+jSWNyDVNPrZ4o9pnDkGaguZvDQ9fIqaku88C5tc=;
-        b=A09mxoycRSkydhAlMZfnbxk4cwGKAW+dlYkRn5w+3xb1cR8WBkH8zi3pLCdQ6NunIL
-         tlolVz4r/p1FGDIEmefU+RfAFgaskEzYRYZlRMF1tc9NaYzsUbVVaaObEe4xhIA0trij
-         nxtjiaqXVXifry93WtBD531F5IUSPte/YuHFA=
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EgMIOZdJ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1704976480;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5s6koNfHDweClSoQ/u2NRjNboHHnIyBcRKHcSfcax14=;
+	b=EgMIOZdJXGydZmaeAQUP1i4qzU/AhZW9p4YohjRXYTm+0Mh9GwRjoz0sfUvr+T/UJZgNxs
+	mBOX+CXE5Ps1ehANJ5pkgm+E5AKmmcfFZ/nJl7IgvtcAMp33Z0wZsEaNUTE1LB6ySQH/vU
+	YPHKKTvxPyP/jwKz+KSCIosNVzpxIls=
+Received: from mail-pg1-f198.google.com (mail-pg1-f198.google.com
+ [209.85.215.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-86-UCf0ZP_aM6-NJnlMuKkqqA-1; Thu, 11 Jan 2024 07:34:39 -0500
+X-MC-Unique: UCf0ZP_aM6-NJnlMuKkqqA-1
+Received: by mail-pg1-f198.google.com with SMTP id 41be03b00d2f7-5cdbf9fd702so4578558a12.0
+        for <dm-devel@lists.linux.dev>; Thu, 11 Jan 2024 04:34:38 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1704834189; x=1705438989;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=6Xp+jSWNyDVNPrZ4o9pnDkGaguZvDQ9fIqaku88C5tc=;
-        b=JhfI4ugzSue6i5n8aDfz0WqQhIXUWgmJ5jgcoFBGxEXSsBy8Sjl4biq9lQ4W/rb1Dd
-         14XTuaBkKHDe6o9mgLd93M8K885DeSC/5kD8KPafZLjB1YxYwFkB030o29GePuxj2t3F
-         0i933KerSdo580ORsTjxFVw+xtjhDz+L9RApwgE0LBOGm8wSJE4aXhbRu6r3alVHyBpd
-         eBiiOK7N7ChDbMe80V/tLm+/4+OfjbyuGl42/XFTFBGyHLDyPCGEw/odV3Pqyupnf+r3
-         n1JtkoIK0Z6xkGr6qHi9QoIest55Xvo2VOcksBV2DX+i/TrazCRtIB1c9AhrjTaEt3vv
-         XSlQ==
-X-Gm-Message-State: AOJu0Yw3+5zx6sc61PKkGXCaKgTOYOKz97ERi3XeuntLsuALCcLN9IBj
-	oHYY88jc59eW9GUBfzo/ouuER1g30rkPpchWlCrPI5NBkQ==
-X-Google-Smtp-Source: AGHT+IEQQqPZTxFEKutfL8JwrvhSO22cj85Kple3x5sdC/vEcQKFuMEYftDmACTY1pTf+xrzFl9z9Q==
-X-Received: by 2002:a05:6e02:18c7:b0:360:83b5:aea3 with SMTP id s7-20020a056e0218c700b0036083b5aea3mr1291986ilu.15.1704834189204;
-        Tue, 09 Jan 2024 13:03:09 -0800 (PST)
-Received: from localhost (110.41.72.34.bc.googleusercontent.com. [34.72.41.110])
-        by smtp.gmail.com with UTF8SMTPSA id z13-20020a92d6cd000000b0036003f7ce61sm805891ilp.87.2024.01.09.13.03.08
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 09 Jan 2024 13:03:08 -0800 (PST)
-Date: Tue, 9 Jan 2024 21:03:08 +0000
-From: Matthias Kaehlcke <mka@chromium.org>
-To: Matthew Sakai <msakai@redhat.com>
-Cc: dm-devel@lists.linux.dev, Brian Geffon <bgeffon@google.com>
-Subject: Re: [PATCH v5 01/40] dm: add documentation for dm-vdo target
-Message-ID: <ZZ20jAw0E-bOCuSA@google.com>
-References: <cover.1700250814.git.msakai@redhat.com>
- <b89e2912cb24b311b4196bb5cc92f10efc396886.1700250814.git.msakai@redhat.com>
- <ZY3JiwgHnbbL1vGF@google.com>
- <8207e4fb-0ef0-50e8-5954-363a3723ffa6@redhat.com>
- <ZZwaPjBECFvs8F4i@google.com>
- <151f92c6-9bc9-d3b5-9123-1ba39beeec73@redhat.com>
+        d=1e100.net; s=20230601; t=1704976478; x=1705581278;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=5s6koNfHDweClSoQ/u2NRjNboHHnIyBcRKHcSfcax14=;
+        b=WRrsyNmoTY8A93AB5bXKnX+sL9IpEw7OFiI6Si3wWBVkrJ5F5VZn786caJiVA1v+aP
+         RV07dZJTARVFEXmPkx0o6tquG4Vhev2vHyXulOX2biI4yscdgwxw+QCdX70PboiO84Ta
+         4GxPZWAW7opvSL4zMIvPTjjL4MVa5mtnmjxXi+BrUxAZ7J9UthqUQXXNMOs5eKN0TONj
+         AjOr7dYYKrmZFH2ousNDUUZ3g53gLhPfn0wqNGTMlPGN7V4zW1EbrcVJnbWrJ4fpXe0H
+         rEE1O0BduOokheiP867g7h868cttLFjF87rbBkqSlQu94Flnf1S1SAOFtiWsEDUlAQDS
+         p7tw==
+X-Gm-Message-State: AOJu0YwG6jWY4I+vgcwprt3gyw7/mXdkyCTPqwszSxhAotnB8QH0U0yq
+	k/pQgR0rnUUW1SaZL0bWEThhMidXGwvlSq2aXurolm8R3mxAiB97yDZtFGDPoNv7knp4yBQurSa
+	F21BUaW7y3Hn6ZjNouljWakwXN7LFypcujFZgMecOOJg=
+X-Received: by 2002:a05:6a20:a105:b0:19a:5a57:5e17 with SMTP id q5-20020a056a20a10500b0019a5a575e17mr539689pzk.15.1704976478043;
+        Thu, 11 Jan 2024 04:34:38 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IF8qaiRdvCv9TWMTNTMv4XasUkG5QOH3L7u/L9HuBwqmtavB35RP0rSWl1r/8YOui34PWcePAgY3YixJjumGcA=
+X-Received: by 2002:a05:6a20:a105:b0:19a:5a57:5e17 with SMTP id
+ q5-20020a056a20a10500b0019a5a575e17mr539675pzk.15.1704976477675; Thu, 11 Jan
+ 2024 04:34:37 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <151f92c6-9bc9-d3b5-9123-1ba39beeec73@redhat.com>
+References: <fb4ae62-522-e262-df25-c82e8acf8baf@ewheeler.net>
+In-Reply-To: <fb4ae62-522-e262-df25-c82e8acf8baf@ewheeler.net>
+From: Xiao Ni <xni@redhat.com>
+Date: Thu, 11 Jan 2024 20:34:25 +0800
+Message-ID: <CALTww2-kBfJw2uNTp8JgMz5=MZKFKGP=ATAC42=Wf7hWJfPT1A@mail.gmail.com>
+Subject: Re: Stuck IOs with dm-integrity + md raid1 + dm-thin
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: Joe Thornber <thornber@redhat.com>, dm-devel@lists.linux.dev, 
+	Heinz Mauelshagen <heinzm@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, 
+	"Snitzer, Mike" <snitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Mon, Jan 08, 2024 at 10:17:49PM -0500, Matthew Sakai wrote:
-> 
-> 
-> On 1/8/24 10:52, Matthias Kaehlcke wrote:
-> > Hi Matthew,
-> > 
-> > Thanks for your reply!
-> > 
-> > On Thu, Jan 04, 2024 at 09:07:07PM -0500, Matthew Sakai wrote:
-> > > 
-> > > 
-> > > On 12/28/23 14:16, Matthias Kaehlcke wrote:
-> > > > Hi,
-> > > > 
-> > > > On Fri, Nov 17, 2023 at 03:59:18PM -0500, Matthew Sakai wrote:
-> > > > > This adds the admin-guide documentation for dm-vdo.
-> > > > > 
-> > > > > vdo.rst is the guide to using dm-vdo. vdo-design is an overview of the
-> > > > > design of dm-vdo.
-> > > > > 
-> > > > > Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
-> > > > > Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
-> > > > > Signed-off-by: Matthew Sakai <msakai@redhat.com>
-> > > > > ---
-> > > > >    .../admin-guide/device-mapper/vdo-design.rst  | 415 ++++++++++++++++++
-> > > > >    .../admin-guide/device-mapper/vdo.rst         | 388 ++++++++++++++++
-> > > > >    2 files changed, 803 insertions(+)
-> > > > >    create mode 100644 Documentation/admin-guide/device-mapper/vdo-design.rst
-> > > > >    create mode 100644 Documentation/admin-guide/device-mapper/vdo.rst
-> > > > > 
-> > > > > diff --git a/Documentation/admin-guide/device-mapper/vdo-design.rst b/Documentation/admin-guide/device-mapper/vdo-design.rst
-> > > > > new file mode 100644
-> > > > > index 000000000000..c82d51071c7d
-> > > > > --- /dev/null
-> > > > > +++ b/Documentation/admin-guide/device-mapper/vdo-design.rst
-> > > > > @@ -0,0 +1,415 @@
-> > > > > +.. SPDX-License-Identifier: GPL-2.0-only
-> > > > > +
-> > > > > +================
-> > > > > +Design of dm-vdo
-> > > > > +================
-> > > > > +
-> > > > > +The dm-vdo (virtual data optimizer) target provides inline deduplication,
-> > > > > +compression, zero-block elimination, and thin provisioning. A dm-vdo target
-> > > > > +can be backed by up to 256TB of storage, and can present a logical size of
-> > > > > +up to 4PB.
-> > > 
-> > > [snip]
-> > > 
-> > > > > +	block map cache size:
-> > > > > +		The size of the block map cache, as a number of 4096-byte
-> > > > > +		blocks. The minimum and recommended value is 32768 blocks.
-> > > > > +		If the logical thread count is non-zero, the cache size
-> > > > > +		must be at least 4096 blocks per logical thread.
-> > > > 
-> > > > If I understand correctly the minimum of 32768 blocks results in the 128 MB
-> > > > metadata cache mentioned in 'Tuning', which allows to access up to 100 GB
-> > > > of logical space.
-> > > > 
-> > > > Is there a strict reason for this minimum? I'm evaluating to use vdo on
-> > > > systems with a relatively small vdo volume (say 4GB) and 'only' 4-8 GB of
-> > > > RAM. The 128 MB of metadata cache would be a sizeable chunk of that, which
-> > > > could make the use of vdo infeasible.
-> > > 
-> > > The short answer is that VDO can often use a smaller cache than the default,
-> > > but it likely won't help in the way you want it to.
-> > > 
-> > > > > +Examples:
-> > > > > +
-> > > > > +Start a previously-formatted vdo volume with 1 GB logical space and 1 GB
-> > > > > +physical space, storing to /dev/dm-1 which has more than 1 GB of space.
-> > > > > +
-> > > > > +::
-> > > > > +
-> > > > > +	dmsetup create vdo0 --table \
-> > > > > +	"0 2097152 vdo V4 /dev/dm-1 262144 4096 32768 16380"
-> > > > 
-> > > > IIUC the backing device needs to be previously formatted. The formatting
-> > > > fails when the size of the backing device is < 5GB:
-> > > > 
-> > > > vdoformat /dev/loop8
-> > > >     Minimum required size for VDO volume: 5063921664 bytes
-> > > >     vdoformat: formatVDO failed on '/dev/loop8': VDO Status: Out of space
-> > > > 
-> > > > That was with 'vdoformat' from https://github.com/dm-vdo/vdo/
-> > > > 
-> > > > It would be great if somewhat smaller devices could be supported.
-> > > 
-> > > VDO was designed to handle the challenge of data deduplication in very large
-> > > storage pools. It generally is not very useful for very small pools. The
-> > > first question to ask is whether VDO can actually provide any value in the
-> > > sort of environment you're using. VDO generally takes the strategy of saving
-> > > storage space by using extra RAM and CPU cycles. In addition, VDO needs to
-> > > track a certain amount of metadata, which reduces the amount storage
-> > > available for actual user data.
-> > > 
-> > > For vdoformat, the biggest consideration is the deduplication index and
-> > > other metadata, which are basically a fixed cost of about 3.5GB. In order
-> > > for VDO to be useful, VDO would have to find enough deduplication to make up
-> > > for the storage lost to VDO's metadata, so the minimum useful size of a VDO
-> > > volume is in the 8-12GB range.
-> > > 
-> > > For the block map cache, decreasing the cache size may increase the
-> > > frequency of metadata writes, which generally decreases the write throughput
-> > > of the VDO device. So the tradeoff is between RAM and write speed.
-> > > 
-> > > Nothing about the generic structure of VDO would prevent us from producing a
-> > > smaller VDO (and in fact we do for some testing purposes), but in a scenario
-> > > where you can only expect to save a few gigabytes through deduplication, VDO
-> > > is generally more expensive than it is worth.
-> > > 
-> > > If you still think this might be worth pursuing, let me know and we can try
-> > > to work out a configuration which might suit your goals.
-> > 
-> > Some more context about my use case:
-> > 
-> > I'm evaluating the use of VDO for storing a hibernate image, the goal is to
-> > reduce hibernate resume time by loading less data from potentially slow
-> > storage. That's why the volume is relatively small. The image is only
-> > written once per hibernate cycle and generally after the system was idle
-> > for a longer time, so the lower write throughput due to a smaller cache
-> > size probably wouldn't be a major concern. The systems might not have huge
-> > amounts of free disk space, an overhead of ~3.5GB for the deduplication
-> > index would probably rule out the use of VDO.
-> > 
-> > In the context of this use case the compression part of VDO seems more
-> > interesting than the deduplication. In the documentation of VDO I noticed
-> > a parameter to disable deduplication. With that I wonder if it would be
-> > feasible/reasonable to add an option to vdoformat to omit the deduplication
-> > index.
-> > 
-> > Do you think VDO might be (made) suitable for this scenario or is it
-> > just not the right tool?
-> > 
-> > Thanks
-> > 
-> > Matthias
-> 
-> The primary reason for VDO is the deduplication capability.  You can disable
-> deduplication on a VDO target, but you would still be paying the overhead
-> costs of being able to enable it. Certainly I think VDO itself is not the
-> right tool here.
+On Wed, Nov 29, 2023 at 10:10=E2=80=AFAM Eric Wheeler
+<dm-devel@lists.ewheeler.net> wrote:
+>
+> Hi Joe,
+>
+> I'm not sure who else to CC on this issue, feel free to add others.
+>
+> Recently we tried putting dm-integrity on NVMe's under MD RAID1 with
+> dm-thin metadata (tmeta) on that raid1 mirror (Linux v6.5.7).  It worked
+> fine for ~12 hours and then, at ~3:30 am in the morning when we do a
+> reserve_metadata_snap and thin_dump's, IO's began to hang.
+>
+> For reference, we have been using the same block device stack for years,
+> and it is quite stable.  We've been running Linux v6.5.7 for about 6 week=
+s
+> without issue until we tried dm-integrity under dm-thin.  The stack
+> _without_ dm-integrity looks like this:
+>
+>     nvme{0,1} =3D>
+>         raid mirror /dev/md0 =3D>
+>             LVM PV for VG "data" =3D>
+>                 tmeta for dm-thin
+>
+>     /dev/sda (LSI-based Hardware RAID)
+>         bcache =3D>
+>             LVM PV for VG "data" =3D>
+>                 tdata for dm-thin "pool0" =3D>
+>                     single thin volume from the pool =3D>
+>                         drbd to another host over the network
+>
+> After adding dm-integrity, the stack is the same as above except that
+> the RAID mirror is above dm-integrity:
+>
+>     nvme{0,1} =3D>
+>         dm-integrity =3D>
+>             raid mirror /dev/md0 =3D>
+>                 LVM PV for VG "data" =3D>
+>                     tmeta for dm-thin
+>
+> The first time we had the thindump+IO hang problem we thought that an
+> underlying NVMe drive was bad, so we replaced both: We rebooted and did
+> a `pvmove` of the tmeta volume to different NVMe+md-raid1+dm-integrity
+> on disks that were brand new, but had the same issue that night during
+> reserve_metadata_snap+thin_dump.
+>
+> Since we had the same problem on a different set of new NVMe disks, we
+> rebooted, did a `pvmove` back to the original MD RAID1 mirror stack
+> _without_ dm-integrity, and everything was back to normal.  Thus, I do no=
+t
+> think it is a disk or tmeta corruption issue, but an obscure race or
+> deadlock bug.
+>
+> We tried to reproduce this in a virtual environment, but so far it has no=
+t
+> triggered. In about a week when we get downtime for this system, I will
+> take a copy of its thin metadata to inspect further. For now, I have not
+> yet been enable to reproduce problem outside our semi-production testing
+> environment.
+>
+> So, this is what we see so far:
+>
+> We get _thousands_ of these lines in the kernel logs when IO hangs. The
+> `dm-175` device is one of the the dm-integrity targets being mirrored.
+> Note the "12924 callbacks suppressed" message:
+>
+>         [  +0.584816] raid1_end_read_request: 12924 callbacks suppressed
+>         [  +0.000006] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.020011] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.019462] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.018672] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.006242] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.002399] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.000934] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.000688] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.001161] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +0.006404] md/raid1:md0: dm-175: rescheduling sector 197968221=
+6
+>         [  +3.594380] integrity_metadata: 13095 callbacks suppressed
+>         [  +0.000006] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.001410] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.000824] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.003587] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.011065] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.004176] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.000604] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.006153] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.008797] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.002350] device-mapper: integrity: dm-175: Checksum failed a=
+t sector 0x760395b0
+>         [  +0.668866] raid1_read_request: 12747 callbacks suppressed
+>         [  +0.000005] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.024708] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.024441] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.018321] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.000850] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.004479] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.001225] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.001024] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.000741] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
+>         [  +0.001094] md/raid1:md0: redirecting sector 1979682216 to othe=
+r mirror: dm-175
 
-Ok, that's good to know, thanks.
+Hi all
 
-> We have considered making a compression-only target, but realistically it
-> would be a completely separate dm target and not a version of VDO. A
-> compression-only target could remove all the complication of the
-> deduplication aspects of VDO, and it could potentially even get better
-> compression by removing some of the constraints imposed by supporting
-> deduplication. Conceptually it's not too hard, I think, but we haven't
-> really done any work developing it so it wouldn't come into being any time
-> soon. If you thought it would be helpful then we can consider prioritizing
-> that work.
+The process is as follows and I add some logs
+1. raid1_read_request submits bio to read data
+2. raid1_end_read finds the read request fails and try to fix the read erro=
+r
+3. handle_read_error>fix_read_error tries to read data in 4K unit in
+another disk, write to the failed disk in 4K unit and read from the
+failed disk in 4K unit. fix_read_error finishes successfully.
+4. handle_read_error re-read data from the failed disk. And the read
+request fails again.
+[ 1067.149829] device-mapper: integrity: dm-3: Checksum failed at sector 0x=
+17d8
+[ 1067.149842] md/raid1:md9: dm-3: rescheduling sector 3912, sectors 248
+[ 1067.150437] md/raid1:md9: dm-3: fix read error 3912, sectors 248
+[ 1067.150439] md/raid1:md9: dm-3: re read 3912, sectors 248
 
-Thanks for the offer to priorize a compression-only target, that migh be
-very useful! A decision about whether hibernate is a priority for Chrome OS
-in 2024 is still pending, there should be more clarity within a few weeks.
-Before that it's probably best not to ask others to do any significant
-development work related with that topic :)
+It looks like the bio size is suspicious. Because it reads
+successfully when bio size is 4K.
 
-> For the specific use case you described, it sounds like you've got a pretty
-> good idea of what you need to write already. Have you considered trying to
-> compress that image before writing it, just using file-level compression or
-> something similar?
+Best Regards
+Xiao
 
-Unfortunately that is not a (straightforward) option. We use uswsusp, but
-for the sake of security the kernel writes the image directly to a raw
-storage device (a dm-crypt target), so any compression would have to happen
-in the kernel.
+>
+> Here are two traces of hung tasks that the kernel reported in dmesg. The
+> decoded line numbers are at the bottom of this email.
+>
+> It looks like dmeventd is checking metadata transaction IDs, and then
+> hangs. We believe that is snapshot was being made at the moment that IOs
+> hung. This trace only appears once:
+>
+>         INFO: task dmeventd:3718459 blocked for more than 122 seconds.
+>              Tainted: G            E      6.5.7 #23
+>         "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this =
+message.
+>         task:dmeventd        state:D stack:0     pid:3718459 ppid:1      =
+flags:0x00000002
+>         Call Trace:
+>         <TASK>
+>         __schedule+0x2d7/0x800
+>         schedule+0x5e/0xe0
+>         schedule_preempt_disabled+0x15/0x30
+>         rwsem_down_read_slowpath+0x2c4/0x5f0
+>         ? lock_acquire+0x10b/0x120
+>         down_read+0xff/0x260
+>         dm_pool_get_metadata_transaction_id+0x24/0x60 [dm_thin_pool]
+>         pool_status+0x133/0x630 [dm_thin_pool]
+>         retrieve_status+0xc4/0x210 [dm_mod]
+>         table_status+0x9c/0x150 [dm_mod]
+>         ctl_ioctl+0x248/0x370 [dm_mod]
+>         ? __pfx_table_status+0x10/0x10 [dm_mod]
+>         dm_ctl_ioctl+0xe/0x20 [dm_mod]
+>         __x64_sys_ioctl+0x99/0xe0
+>         do_syscall_64+0x3f/0xa0
+>         entry_SYSCALL_64_after_hwframe+0x6e/0xd8
+>
+> In the next trace below, you can see that DRBD is trying to write to it's
+> thin volume backing device, and thin metadata is being manipulated it by
+> dm-thin (which is above md raid1 with dm-integrity), but hangs during
+> `dm_thin_find_block`:
+>
+> This trace appears several times for different DRBD volumes that are
+> backed by thin volumes in the same pool.  Except that the thin volume
+> differs, the traces are the same:
+>
+>         INFO: task drbd_r_secServe:1072212 blocked for more than 122 seco=
+nds.
+>              Tainted: G            E      6.5.7 #23
+>         "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this =
+message.
+>         task:drbd_r_secServe state:D stack:0     pid:1072212 ppid:2      =
+flags:0x00004000
+>         Call Trace:
+>         <TASK>
+>         __schedule+0x2d7/0x800
+>         schedule+0x5e/0xe0
+>         schedule_preempt_disabled+0x15/0x30
+>         rwsem_down_read_slowpath+0x2c4/0x5f0
+>         ? dm_thin_find_block+0x32/0x90 [dm_thin_pool]
+>         down_read+0xff/0x260
+>         dm_thin_find_block+0x32/0x90 [dm_thin_pool]
+>         thin_bio_map.isra.0+0x169/0x3a0 [dm_thin_pool]
+>         __map_bio+0x49/0x1d0 [dm_mod]
+>         dm_split_and_process_bio+0x21c/0x580 [dm_mod]
+>         dm_submit_bio+0x64/0x170 [dm_mod]
+>         __submit_bio+0x7e/0xd0
+>         __submit_bio_noacct+0x90/0x200
+>         drbd_submit_peer_request+0x138/0x2d0 [drbd]
+>         receive_DataRequest+0x244/0x710 [drbd]
+>         ? __pfx_receive_DataRequest+0x10/0x10 [drbd]
+>         drbdd+0x174/0x280 [drbd]
+>         ? __pfx_drbd_thread_setup+0x10/0x10 [drbd]
+>         drbd_receiver+0x51/0xd0 [drbd]
+>         drbd_thread_setup+0xa3/0x1b0 [drbd]
+>         kthread+0xe9/0x120
+>         ? __pfx_kthread+0x10/0x10
+>         ret_from_fork+0x34/0x50
+>         ? __pfx_kthread+0x10/0x10
+>         ret_from_fork_asm+0x1b/0x30
+>         </TASK>
+>
+> This is the call stack of the thin_dump command, its just waiting:
+>
+>         # thin_dump -f xml --dev-id 671125 -m /dev/mapper/data-pool0_tmet=
+a
+>         ...
+>
+>         # cat /proc/4016388/stack
+>         [<0>] submit_bio_wait+0x7a/0xc0
+>         [<0>] __blkdev_direct_IO_simple+0x130/0x280
+>         [<0>] blkdev_read_iter+0xb8/0x150
+>         [<0>] do_iter_readv_writev+0x14e/0x160
+>         [<0>] do_iter_read+0x125/0x1c0
+>         [<0>] vfs_readv+0xa8/0xf0
+>         [<0>] __x64_sys_preadv+0xc0/0x100
+>         [<0>] do_syscall_64+0x3f/0xa0
+>         [<0>] entry_SYSCALL_64_after_hwframe+0x6e/0xd8
+>
+>
+>
+> These are the line number decodes for the above traces:
+>
+> trace 1:
+>         kernel: INFO: task dmeventd:3718459 blocked for more than 122 sec=
+onds.
+>         __schedule (kernel/sched/core.c:5381 kernel/sched/core.c:6710)
+>         schedule (./arch/x86/include/asm/preempt.h:85 (discriminator 1) k=
+ernel/sched/core.c:6787 (discriminator 1))
+>         schedule_preempt_disabled (./arch/x86/include/asm/preempt.h:80 ke=
+rnel/sched/core.c:6846)
+>         rwsem_down_read_slowpath (kernel/locking/rwsem.c:1073)
+>         ? lock_acquire (./include/trace/events/lock.h:24 kernel/locking/l=
+ockdep.c:5724)
+>         down_read (kernel/locking/rwsem.c:1250 kernel/locking/rwsem.c:126=
+3 kernel/locking/rwsem.c:1522)
+>         dm_pool_get_metadata_transaction_id (drivers/md/dm-thin-metadata.=
+c:1323) dm_thin_pool
+>         pool_status (drivers/md/dm-thin.c:3944) dm_thin_pool
+>         retrieve_status (./include/linux/fortify-string.h:214 drivers/md/=
+dm-ioctl.c:1316) dm_mod
+>         table_status (drivers/md/dm-ioctl.c:1707) dm_mod
+>         ctl_ioctl (drivers/md/dm-ioctl.c:2083) dm_mod
+>         ? __pfx_table_status (drivers/md/dm-ioctl.c:1693) dm_mod
+>         dm_ctl_ioctl (drivers/md/dm-ioctl.c:2103) dm_mod
+>         __x64_sys_ioctl (fs/ioctl.c:52 fs/ioctl.c:870 fs/ioctl.c:856 fs/i=
+octl.c:856)
+>         do_syscall_64 (arch/x86/entry/common.c:50 arch/x86/entry/common.c=
+:80)
+>         entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)
+>
+>
+> trace 2:
+>         kernel: INFO: task drbd_r_secServe:1072212 blocked for more than =
+122 seconds.
+>         __schedule (kernel/sched/core.c:5381 kernel/sched/core.c:6710)
+>         schedule (./arch/x86/include/asm/preempt.h:85 (discriminator 1) k=
+ernel/sched/core.c:6787 (discriminator 1))
+>         schedule_preempt_disabled (./arch/x86/include/asm/preempt.h:80 ke=
+rnel/sched/core.c:6846)
+>         rwsem_down_read_slowpath (kernel/locking/rwsem.c:1073)
+>         ? dm_thin_find_block (drivers/md/dm-thin-metadata.c:1574) dm_thin=
+_pool
+>         down_read (kernel/locking/rwsem.c:1250 kernel/locking/rwsem.c:126=
+3 kernel/locking/rwsem.c:1522)
+>         dm_thin_find_block (drivers/md/dm-thin-metadata.c:1574) dm_thin_p=
+ool
+>         thin_bio_map.isra.0 (drivers/md/dm-thin.c:2764) dm_thin_pool
+>         __map_bio (drivers/md/dm.c:1427) dm_mod
+>         dm_split_and_process_bio (drivers/md/dm.c:1729 drivers/md/dm.c:17=
+82) dm_mod
+>         dm_submit_bio (drivers/md/dm.c:1835) dm_mod
+>         __submit_bio (block/blk-core.c:373 block/blk-core.c:603)
+>         __submit_bio_noacct (./include/linux/bio.h:624 block/blk-core.c:6=
+53)
+>         drbd_submit_peer_request (drivers/block/drbd/drbd_receiver.c:1723=
+) drbd
+>         receive_DataRequest (drivers/block/drbd/drbd_receiver.c:2993) drb=
+d
+>         ? __pfx_receive_DataRequest (drivers/block/drbd/drbd_receiver.c:2=
+803) drbd
+>         drbdd (drivers/block/drbd/drbd_receiver.c:5092) drbd
+>         ? __pfx_drbd_thread_setup (drivers/block/drbd/drbd_main.c:310) dr=
+bd
+>         drbd_receiver (drivers/block/drbd/drbd_receiver.c:5561) drbd
+>         drbd_thread_setup (drivers/block/drbd/drbd_main.c:325) drbd
+>         kthread (kernel/kthread.c:389)
+>         ? __pfx_kthread (kernel/kthread.c:342)
+>         ret_from_fork (arch/x86/kernel/process.c:151)
+>         ? __pfx_kthread (kernel/kthread.c:342)
+>         ret_from_fork_asm (arch/x86/entry/entry_64.S:312)
+>
+> trace 3:
+>         # thin_dump -f xml --dev-id 671125 -m /dev/mapper/data-pool0_tmet=
+a
+>         <hung>
+>
+>         # cat /proc/4016388/stack
+>         submit_bio_wait (block/bio.c:1370 (discriminator 1))
+>         __blkdev_direct_IO_simple (./include/linux/bio.h:495 block/fops.c=
+:99)
+>         blkdev_read_iter (block/fops.c:608)
+>         do_iter_readv_writev (./include/linux/fs.h:1871)
+>         do_iter_read (fs/read_write.c:795)
+>         vfs_readv (fs/read_write.c:916)
+>         __x64_sys_preadv (fs/read_write.c:1007 fs/read_write.c:1057 fs/re=
+ad_write.c:1052 fs/read_write.c:1052)
+>         do_syscall_64 (arch/x86/entry/common.c:50 arch/x86/entry/common.c=
+:80)
+>         entry_SYSCALL_64_after_hwframe (arch/x86/entry/entry_64.S:120)
+>
+>
+>
+> --
+> Eric Wheeler
+>
 
-> I wonder if being able to load less data from storage is actually a win
-> once you account for the extra computation you would need to decompress
-> the image.
-
-That's a good point, might be worth some prototyping.
-
-m.
