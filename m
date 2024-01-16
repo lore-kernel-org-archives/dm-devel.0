@@ -1,33 +1,33 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 549F318EA6;
-	Tue, 16 Jan 2024 10:49:25 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EBFC018EB3;
+	Tue, 16 Jan 2024 10:55:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="K6avwUiM"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6BE80C433C7;
-	Tue, 16 Jan 2024 10:49:24 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ApXV6RZ2"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 139CCC433F1;
+	Tue, 16 Jan 2024 10:55:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1705402165;
-	bh=vSOH9esmcWvp40wqyLJndc0hj2pjfVRmigUaCM2qBEQ=;
+	s=k20201202; t=1705402513;
+	bh=PBvNRXcu/41VvHuYAFHUnv/+4yFV2kcd/hK9mVaf/Is=;
 	h=From:To:Cc:Subject:Date:From;
-	b=K6avwUiMVhGJKtdJvbbGZqIGJWzTHNMwgVncV9AAzj1dybdkdwkNOGcFbFBeNG+kh
-	 SZ0iLDvddOMJsZ8c6MI8sflsmRw79yQVlovTdYI5dO07IfOIKfQb4lc5msSWgzagcD
-	 K94FpPse6JMA5m+JZl7PKfhfmMndQPVxErzEqc1+3wnzQN34fL1B6yxbkSJU3RrWm1
-	 nEkVXJuU4QukDfCuDpiNayGUevH5h8Xet2eFCArFxs9RRkjW+uiVt0yxH6wVKvNXHH
-	 MthtInwgqWjjrV2DmJvA4/kO8MmbStXBOBbiSLBULX5Wo+fyOj2RY9tLDJx1SLMWdq
-	 IDytB0F0lI7bQ==
+	b=ApXV6RZ2oZcNPYavf8QY6R5/i3GYxJFymq9djetC5CMV9aWRhPWIEBUS+Tut3IhZ2
+	 nuBVtoG+1J3/Idwu0qA+GrIykAaO54XZYsc8lmiULo0eb6eg/nCySA/vd7+7R0V/Nh
+	 W58sN2r+H/VW3rDElt6Pd/tTIV5Rcabfy0W/z7nxB8jMvnFEGhVj1y9WoFEcBYa9ma
+	 mvtdRPK/C6IXkQQBfpYlQcXq0O6AnfqXkIAYo+eJWOAtMiQA1YDF1SflQPcxG7oDZ9
+	 8ahK2AOGBt56gICvOU7WfrSsVetuWzmwq4gROAD0vediIRISX/1qj9uPti7XBDj71I
+	 uKTqCSf1H56Dg==
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
 	snitzer@kernel.org
-Cc: Alasdair Kergon <agk@redhat.com>,
+Cc: Song Liu <song@kernel.org>,
+	Yu Kuai <yukuai3@huawei.com>,
+	Alasdair Kergon <agk@redhat.com>,
 	Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel@lists.linux.dev,
-	Song Liu <song@kernel.org>,
-	Yu Kuai <yukuai3@huawei.com>
-Subject: Patch "dm audit: fix Kconfig so DM_AUDIT depends on BLK_DEV_DM" has been added to the 6.6-stable tree
-Date: Tue, 16 Jan 2024 05:49:22 -0500
-Message-ID: <20240116104922.233249-1-sashal@kernel.org>
+	dm-devel@lists.linux.dev
+Subject: Patch "dm audit: fix Kconfig so DM_AUDIT depends on BLK_DEV_DM" has been added to the 6.1-stable tree
+Date: Tue, 16 Jan 2024 05:55:10 -0500
+Message-ID: <20240116105511.237522-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -43,19 +43,19 @@ This is a note to let you know that I've just added the patch titled
 
     dm audit: fix Kconfig so DM_AUDIT depends on BLK_DEV_DM
 
-to the 6.6-stable tree which can be found at:
+to the 6.1-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      dm-audit-fix-kconfig-so-dm_audit-depends-on-blk_dev_.patch
-and it can be found in the queue-6.6 subdirectory.
+and it can be found in the queue-6.1 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
 
 
 
-commit abc49bbf199f088919bea1156eabc65e549fa698
+commit a4901842cd2699b969448ec2eb7bad34199a04d5
 Author: Mike Snitzer <snitzer@kernel.org>
 Date:   Wed Dec 13 14:46:19 2023 -0500
 
@@ -67,10 +67,10 @@ Date:   Wed Dec 13 14:46:19 2023 -0500
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
 diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 2a8b081bce7d..3ff87cb4dc49 100644
+index 662d219c39bf..db0e97020256 100644
 --- a/drivers/md/Kconfig
 +++ b/drivers/md/Kconfig
-@@ -660,6 +660,7 @@ config DM_ZONED
+@@ -650,6 +650,7 @@ config DM_ZONED
  
  config DM_AUDIT
  	bool "DM audit events"
