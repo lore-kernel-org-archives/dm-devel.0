@@ -1,144 +1,103 @@
-Received: from out4-smtp.messagingengine.com (out4-smtp.messagingengine.com [66.111.4.28])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E08691B297
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jan 2024 21:44:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=invisiblethingslab.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=invisiblethingslab.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3932111181
+	for <dm-devel@lists.linux.dev>; Tue, 16 Jan 2024 07:05:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=invisiblethingslab.com header.i=@invisiblethingslab.com header.b="s6dkEkB4";
-	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="RI0emmfr"
-Received: from compute5.internal (compute5.nyi.internal [10.202.2.45])
-	by mailout.nyi.internal (Postfix) with ESMTP id E863C5C0152;
-	Mon, 15 Jan 2024 16:44:46 -0500 (EST)
-Received: from mailfrontend2 ([10.202.2.163])
-  by compute5.internal (MEProxy); Mon, 15 Jan 2024 16:44:46 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	invisiblethingslab.com; h=cc:cc:content-type:content-type:date
-	:date:from:from:in-reply-to:in-reply-to:message-id:mime-version
-	:references:reply-to:subject:subject:to:to; s=fm2; t=1705355086;
-	 x=1705441486; bh=vb32ikTbV8B4PRo6vFNVRXKQ2keG7Fzf7jgqX0XjhAM=; b=
-	s6dkEkB4HwhLBAxPKJCvzReQFWAF2T5FV8vTDyR0oqTZCgZKaev8GGy0iwMkZgKa
-	OFKRNpAa0QPG+c+Lt44IJy0p+ecYsemt42Ry2Y9u01pAVAe3mkKkI5CHs23A5V08
-	+hn8JEVuC/Zes5VhXpBRlb6JiqxzzxBI/LJDfrznRuum/GIYyVYp46MVE08rrqU4
-	yWNsI/LpnO6Fw/tdQn30laAgk3p8IqoFrh/n7st8bnWfEkxxIGifAbqW48iXEKqp
-	BaHexfBRnGdDMLQryr/RIWG1X6rBN0patSgZEyJc3cUNJu1OTskuuby+IQ+yyQly
-	GPdRmH2PVT2VSaRFsYdKgw==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	messagingengine.com; h=cc:cc:content-type:content-type:date:date
-	:feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
-	:message-id:mime-version:references:reply-to:subject:subject:to
-	:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=
-	fm3; t=1705355086; x=1705441486; bh=vb32ikTbV8B4PRo6vFNVRXKQ2keG
-	7Fzf7jgqX0XjhAM=; b=RI0emmfrv2fKMyS058rhD5vfH07L7khAMDaak6s4utyv
-	q7JjhojZhovxRpWhFjqlukC3kj52nTYjy+JnfNVqGZS0zMH/JVlwTIHcED3jsfeL
-	KBggXMOLRg52B5Etmwe1Ho3qCfvde8R5krZA8XoTl+eMZnUxLu4hrbmmVNZdNxM3
-	eAWuAP1yIQ+NXo4swNx1ugL9YJXPAhb8Y7LbxV6FlxvoWTgneQq+7pUoAM/Q2KJV
-	uTaAgvuVC7pZcYAjfOE3LiyjwHt2aA3bQOLIQY1AGr3E422JGGyEcrRGGez/vUjl
-	G1Qgg8wgi1Jni8Fy/Dswf8zq1hkj3L6/rPKyexVIEQ==
-X-ME-Sender: <xms:TqelZUAOzwlSdTXX3Rx50n5tlEqnvlom_YFoXPJPPIDf1Y8PM1Dfcg>
-    <xme:TqelZWit7B4ReXIAcrArwURoRAEEfw1vymzQ48rA0Fb5FrDr1v9RYhccd1VLVCuI6
-    JdTWkMAHx664Kw>
-X-ME-Received: <xmr:TqelZXmd0dGbCWtydDv8XVa9odAQ_vV7qLFzOH8mKzGBgoPQtPQD9OeN42VrETAy55KPD2zswK7jVTGt8W5W5h6mEQsrMuFZ7nH_DwgNzJ5l_rzl>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvkedrvdejuddgudehgecutefuodetggdotefrod
-    ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
-    necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
-    enucfjughrpeffhffvvefukfhfgggtuggjsehgtdorredttdejnecuhfhrohhmpeffvghm
-    ihcuofgrrhhivgcuqfgsvghnohhurhcuoeguvghmihesihhnvhhishhisghlvghthhhinh
-    hgshhlrggsrdgtohhmqeenucggtffrrghtthgvrhhnpeeuueevleehvedvuedvhfeihfel
-    ffdtheeuvdefgfevgeefgfeihfduheevhedtfeenucevlhhushhtvghrufhiiigvpedtne
-    curfgrrhgrmhepmhgrihhlfhhrohhmpeguvghmihesihhnvhhishhisghlvghthhhinhhg
-    shhlrggsrdgtohhm
-X-ME-Proxy: <xmx:TqelZawuKgh1rQWQyg5dSN04dB7Vy34V_5TueOWMQz9WmTs3vyM2fA>
-    <xmx:TqelZZQruMpt1GEPlpGHVv2CbnX0vooHzdBT1Z06UWnDN4D07xK8ig>
-    <xmx:TqelZVYi6Mzdn9PBnHX6ZyNEyIe6GY06FQVUsVVPWpL7W3CQ0_YnfA>
-    <xmx:TqelZSIgNqXyxzOi0Q8-yeGKmGAdWfwDMFX33KrHUbwPVcb-ikbmYw>
-Feedback-ID: iac594737:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Mon,
- 15 Jan 2024 16:44:46 -0500 (EST)
-Date: Mon, 15 Jan 2024 16:44:29 -0500
-From: Demi Marie Obenour <demi@invisiblethingslab.com>
-To: Martin Wilck <mwilck@suse.com>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	Christoph Hellwig <hch@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
-	Franck Bui <fbui@suse.com>
-Subject: Re: [dm-devel] [PATCH v2 0/4] Diskseq support in device-mapper
-Message-ID: <ZaWnTTnCTkElYzQy@itl-email>
-References: <20230624230950.2272-1-demi@invisiblethingslab.com>
- <c09985f5efa9f2351f1ca22cbb286eff2b00d3ad.camel@suse.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NeuZSY+S"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1705388710;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ycWKmT9L6WD4D9x/TtnkEnSlxX4CSsS0nkKOKg4x+Yc=;
+	b=NeuZSY+SMiSFfuo6c2DWGS4gcxvWBzS0XrE1yLo1lubD2B5bmxUF3pth0jhr+dubHvANEO
+	ySn5q4t2N9fqQJ9yMsNtou2AavpiQhloI+bweR/VY6tDygFXfTZ5Y2wxQIXYZCX2Bf94Lb
+	9q3kXKXgXgsYlfcIIJXoXiSdrXjn0C4=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-556-V2uuz4yMNaaaRpdl6G5xkA-1; Tue,
+ 16 Jan 2024 02:05:08 -0500
+X-MC-Unique: V2uuz4yMNaaaRpdl6G5xkA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 49D29280FEC3;
+	Tue, 16 Jan 2024 07:05:08 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4463D492BC6;
+	Tue, 16 Jan 2024 07:05:08 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 40G758dw010582
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 16 Jan 2024 02:05:08 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 40G758di010581;
+	Tue, 16 Jan 2024 02:05:08 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH 2/2] multipathd: fix auto-resize configuration
+Date: Tue, 16 Jan 2024 02:05:07 -0500
+Message-ID: <20240116070507.10563-3-bmarzins@redhat.com>
+In-Reply-To: <20240116070507.10563-1-bmarzins@redhat.com>
+References: <20240116070507.10563-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="2sdyWD00hNa60O7L"
-Content-Disposition: inline
-In-Reply-To: <c09985f5efa9f2351f1ca22cbb286eff2b00d3ad.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
+The code acted like AUTO_RESIZE_UNDEFINED didn't exist, but since
+conf->auto_resize was never set to AUTO_RESIZE_NEVER, the default was in
+fact AUTO_RESIZE_UNDEFINED, which ended up getting treated like
+AUTO_RESIZE_GROW_SHRINK. Remove AUTO_RESIZE_UNDEFINED, so
+AUTO_RESIZE_NEVER really is the default.
 
---2sdyWD00hNa60O7L
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Mon, 15 Jan 2024 16:44:29 -0500
-From: Demi Marie Obenour <demi@invisiblethingslab.com>
-To: Martin Wilck <mwilck@suse.com>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	Christoph Hellwig <hch@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
-	Franck Bui <fbui@suse.com>
-Subject: Re: [dm-devel] [PATCH v2 0/4] Diskseq support in device-mapper
+Fixes: 981b83ad1 ("multipathd: Add auto_resize config option")
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/defaults.h | 1 -
+ libmultipath/structs.h  | 3 +--
+ 2 files changed, 1 insertion(+), 3 deletions(-)
 
-On Mon, Jan 15, 2024 at 06:56:16PM +0100, Martin Wilck wrote:
-> On Sat, 2023-06-24 at 19:09 -0400, Demi Marie Obenour wrote:
-> > This work aims to allow userspace to create and destroy device-mapper
-> > devices in a race-free way.
->=20
-> The discussion about this feature seems to have stalled ... will there
-> be a v3 of this series any time soon?
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 64b633f2..d01f9712 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -56,7 +56,6 @@
+ #define DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT 1
+ #define DEFAULT_ALL_TG_PT ALL_TG_PT_OFF
+ #define DEFAULT_RECHECK_WWID RECHECK_WWID_OFF
+-#define DEFAULT_AUTO_RESIZE AUTO_RESIZE_NEVER
+ /* Enable no foreign libraries by default */
+ #define DEFAULT_ENABLE_FOREIGN "NONE"
+ 
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index a1aac1b4..f133e78f 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -180,8 +180,7 @@ enum queue_mode_states {
+ };
+ 
+ enum auto_resize_state {
+-	AUTO_RESIZE_UNDEF = 0,
+-	AUTO_RESIZE_NEVER,
++	AUTO_RESIZE_NEVER = 0,
+ 	AUTO_RESIZE_GROW_ONLY,
+ 	AUTO_RESIZE_GROW_SHRINK,
+ };
+-- 
+2.43.0
 
-I=E2=80=99m still interested in a v3, but it might take a while.  If you are
-willing and able to do it first, I recommend that you do so.
-
-> Also, I am wondering what should happen if a device-mapper table is
-> changed in a SUSPEND/LOAD/RESUME cycle. Such operations can change the
-> content of the device, thus I assume that the diskseq should also
-> change. But AFAICS this wasn't part of your patch set.
->=20
-> In general, whether the content changes in a reload operation depends
-> on the target. The multipath target, for example, reloads frequently
-> without changing the content of the dm device. An ever-changing diskseq
-> wouldn't make a lot of sense for dm-multipath. But I doubt we want to
-> start making distinctions on this level, so I guess that diskseq and
-> multipath just won't go well together.
-
-Should this be controlled by userspace?
---=20
-Sincerely,
-Demi Marie Obenour (she/her/hers)
-Invisible Things Lab
-
---2sdyWD00hNa60O7L
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCgAdFiEEdodNnxM2uiJZBxxxsoi1X/+cIsEFAmWlp0wACgkQsoi1X/+c
-IsGsGhAAuE+6qw9jJcY56i383Lhpfzujp4nFd10fd8FLeDywlXNDrj78CGMk+4aL
-B0Oh2uiQR7kTjykRlreRUoOWtmKuikCOHKNzsCjmNgw64m5SODsLxv5YZvoA9+Jm
-NTHT75vzUqp2jwohs2v2pyPZD5pLmVzRrHywhkRxeR0kUkL/16qX9mqZ+LXYosJH
-GVewfh4+QA3ETuZ/z8kb11Iy6aS0ceWvfdeg8Uvb2L9Yf9rRDUvpMCvYHPNCgrYh
-cWuiuSMIJVLUq0Khtneyk6mpFCyS1r6Ak3lP7+TIawF7i09N8Ax5woybWzCa5GRX
-ZUhD6Alzw/35SvtraVZ1/beRUCvjiM0VhGrogGehcTQrq1o6Ljp8oz5c86JqRBgA
-Cv9maN5ShFqtFL1aAy42JxXr1pe+yvfj08MkDnmva177qMxJFsKix2Ww8aNZiKl3
-HkNZDiMN2MJWiFI03ZtLTnAbA76s0rAWKzu8tyOCGxAHKv88lrUdzTQXSMEqOvgV
-3ey0mfzEmaYNsQ+/5ext0ZIOWpMrp2IreislxJr0MgnZdwt3bh1jfrBkF0R0MuZQ
-ux/gVzp4uEOAZBzsu1P04okq+PavziqfWDcLMQMcHSxSZbEagFc0bwhuLGZDp8gs
-7Abn8siokY+Ci7c4TmV03/6lDNnQigqPOuqyOpcCMQB4ZB0UWdM=
-=6xif
------END PGP SIGNATURE-----
-
---2sdyWD00hNa60O7L--
