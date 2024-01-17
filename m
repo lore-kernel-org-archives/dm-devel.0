@@ -1,148 +1,98 @@
-Received: from mail-pf1-f178.google.com (mail-pf1-f178.google.com [209.85.210.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D45A11E889
-	for <dm-devel@lists.linux.dev>; Wed, 17 Jan 2024 22:51:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8EE9B225A1
+	for <dm-devel@lists.linux.dev>; Wed, 17 Jan 2024 23:56:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705531894; cv=none; b=uR6GAGUIdZ9Z23qMqEhE+LA/Ry/IpJuTwGnBIbzqSvzR8Epuj4tax43csJp9GmbEObahQo38rH5FJ+FI5jG3yw4HDPFuUsyYjWImmFD/6aBLakIbEiai5PMpOPCmKWZxyd+fCIP5p7OicogocAcfyxKvq0odWgsj2jDW9km9i7I=
+	t=1705535801; cv=none; b=hDM/DD+rvZ3UqYgeZceaFs0WXKd8ZeycNIo/5fXuXt85+F0P/16PG7FLz8TxHlVM1Km9/emOIHBH+BUVepWyi6vOXISOWN5hVQt3hE/qVt9CZSvvvbWZDxKv68oN2jUDpoR1jCtD1CpEZd7y9SGQEHUTk4kK99lPnlF+0/QqiEw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705531894; c=relaxed/simple;
-	bh=LNM1suIJHAziGAW09AfMCSecP1EWCk4HykV6ezwO3ew=;
-	h=Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Google-Smtp-Source:X-Received:Received:From:
-	 To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding; b=CO6pgrjbb4x0lLrZF5l/+MUQdIk1iZzjFuEz8IgKVOqaryZxhwJq1srD6FPGXye4UGTMgNoCYp0HP5o4iTBAzqv/c7cflrxYiS9sTXx9/r6OtOnV7HIaPi7Lq1g1R+EDbJPYaLrpEzy1VZF0FcmoRPBXJvin0OqEN8DJDOnwrxI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=Q33Fl1ER; arc=none smtp.client-ip=209.85.210.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
+	s=arc-20240116; t=1705535801; c=relaxed/simple;
+	bh=CntgxQaTxh0EgJQZSkevz0FGLV1FUcxwwWCbwLmDIFA=;
+	h=Received:DKIM-Signature:Received:X-Gm-Message-State:
+	 X-Google-Smtp-Source:X-Received:MIME-Version:References:
+	 In-Reply-To:From:Date:X-Gmail-Original-Message-ID:Message-ID:
+	 Subject:To:Cc:Content-Type:Content-Transfer-Encoding; b=ckbvi/YkBhvx7SMZRtAHluXydLEQLX1dQVwv7jSy5nhNFo+db9jMlPxwLz4ULMm/635HXPF/EISnGX36Dst0ExjXR3mmDd/TxpmYUSYaBPcNqg4BtbhbnyCi0z3lOtMFbCR9NwlFFoYdhjBXlk1LdEyKpxpR7vl+IFaVKto5buc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=NwCQw/Fj; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="Q33Fl1ER"
-Received: by mail-pf1-f178.google.com with SMTP id d2e1a72fcca58-6d9bee259c5so6819845b3a.1
-        for <dm-devel@lists.linux.dev>; Wed, 17 Jan 2024 14:51:32 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1705531891; x=1706136691; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=7vTgeIRkgSab6s1qP2tEbaKLn3w0odGN6BwuuHHwL1k=;
-        b=Q33Fl1ER9oYxCAkHLsvYhaRQIbTYYmsZBMLtICDXNcD64stejj9NroQhJQfnWKGZKc
-         fZHJnq81rH4/IGIAQsGLNwmMqTHvX14SgUA60DXxVGx0NVKjS47fTQJfmz70vUKKxFDT
-         Tsf++eXAsI2kPTIIBAVT5sHo15UnZagGrBhe5U84wvdJJUWVCfyivoeJeazDjTi9mEIY
-         Q6u9f9rdsMmNZ3EI4zm7cvO1KakPCKTDXHzaKypCrsvXgwtoJsZrXuMwJwJLry8t5ZVC
-         wY4ND7tdXHIo7x5MQgcCGuCrlHKIAI1OnOyqbD+m+5F1iHbERke4p78vU4IeH/EQ1avQ
-         S8GA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1705531891; x=1706136691;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=7vTgeIRkgSab6s1qP2tEbaKLn3w0odGN6BwuuHHwL1k=;
-        b=YfnhGQSwdjBhGNpXRUDTr+1TY7yVEojNNgneJoK/wLTtHJyvK/gLVmSgsKxqIbAbbT
-         tGDtlKwbmiSwknEdGV9CryOzVgzL3wH4y3QiIJ/82LBIBA0axgbCTqT/NDXozlGIJXwf
-         sNokQaqwGUpLiFCWFS2OcAvLZMCEcc/xoNSKYEwvCHvxGP3UttN5aN2TXoNnxpA9opSN
-         rCA54WOjcCaHCO0ms7mPZJfW5FRYsMx65WJHugP8wlKznKd6dsw31qOS2I/+eT4dpCRk
-         1ibBovirFnddVC+KlYQBFTgb/4K/U14+x2QyzDOlijPusqxL18ctDkiVWKnuYroXFHOJ
-         vhaw==
-X-Gm-Message-State: AOJu0YyAAJM0lmfZYkN+jQ7Q9qtapf3rSnTXjYBHW9MjMse1UykBR8kS
-	+YD8x2tFk1KWcPylnDLyT81unu2m+7SQTlUVpeMI4wTlvdeofuuDDdyGs2iwtmkTgMMXc+1txb5
-	5+xv5jDJo6Y2s9SabSvG3gi43hfuO3iX2TvjQ0X9OckWaGb82eEf16e3rloWHiPpt7TDi0dAhCZ
-	8Kbl+Vfw7EtIKomg==
-X-Google-Smtp-Source: AGHT+IE3bTx5xT3lPk1nQ6t+bd57aNWe18H2cUUXKDdGKvcJs6exWcOz4IR079NDd1MguV8QBv8ESQ==
-X-Received: by 2002:a62:cd04:0:b0:6d9:3b54:b37a with SMTP id o4-20020a62cd04000000b006d93b54b37amr5534335pfg.1.1705531891089;
-        Wed, 17 Jan 2024 14:51:31 -0800 (PST)
-Received: from brian--MacBookPro18.purestorage.com ([136.226.79.24])
-        by smtp.gmail.com with ESMTPSA id v2-20020a632f02000000b005cebb10e28fsm178642pgv.69.2024.01.17.14.51.30
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 17 Jan 2024 14:51:30 -0800 (PST)
-From: Brian Bunker <brian@purestorage.com>
-To: dm-devel@lists.linux.dev
-Cc: Brian Bunker <brian@purestorage.com>,
-	Seamus Connor <sconnor@purestorage.com>,
-	Krisha Kant <krishna.kant@purestorage.com>
-Subject: [PATCH] multipathd: the local path change is not considered
-Date: Wed, 17 Jan 2024 14:51:10 -0800
-Message-ID: <20240117225110.50072-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="NwCQw/Fj"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6798AC43394
+	for <dm-devel@lists.linux.dev>; Wed, 17 Jan 2024 23:56:41 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1705535801;
+	bh=CntgxQaTxh0EgJQZSkevz0FGLV1FUcxwwWCbwLmDIFA=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=NwCQw/FjHhdLsAIp1Zv22WICcwvjnrYCobWz1W5LVCAuRq1e3g78KR1Lslw2zVWu3
+	 UDjDVui6/8vMAryGsAYLTy8eLoshltIlNyF63vZIjiB2Zcag+aKegxf/X09adlAodh
+	 e/EaSKrj9c22e5AYp9wIJ2v6zdpQCFdfFXS3NwabtAP5K6KWunJQYk4yx/9kluLg2W
+	 Oyjs0tSs2RgFF+EiGyiOVQvpnR3gGcJ9qajpJFF9cd36gCnebVas0+L1by7mBhd6sS
+	 LRwazS5hByxbNOtzru6LFDIsx3wb1f3ktmd5UIATbF9158yod4ztnMBzfQbCc/MdmI
+	 zkvR1mHrz63cg==
+Received: by mail-lj1-f177.google.com with SMTP id 38308e7fff4ca-2cd0f4f306fso136440171fa.0
+        for <dm-devel@lists.linux.dev>; Wed, 17 Jan 2024 15:56:41 -0800 (PST)
+X-Gm-Message-State: AOJu0YyVx3xAFoBUMzMYBt39rHBVZxiT79QMr6L7tesoWZKTyiaVs40N
+	p06JtBn2zAT7wLoVaoKSCXMgCBJ+k1gDO52LpXCSPNJiINHBBRUUv88NlhKRvr+WMhOwasBXW8a
+	UcuBFT9CgEILFl/6EKgPVyfH/p+c=
+X-Google-Smtp-Source: AGHT+IFevecB3RKZJ082rjSepGH825X82msrGFOiERkUV6eFHKmnViXa2C1kjlzgGSRNjZ+s7Pu+Oeoq204euuGtsUo=
+X-Received: by 2002:a2e:9d99:0:b0:2cc:a72c:9d with SMTP id c25-20020a2e9d99000000b002cca72c009dmr20135ljj.37.1705535799617;
+ Wed, 17 Jan 2024 15:56:39 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com> <b725da99-d649-6f1d-af82-c3e482f7f6e@redhat.com>
+In-Reply-To: <b725da99-d649-6f1d-af82-c3e482f7f6e@redhat.com>
+From: Song Liu <song@kernel.org>
+Date: Wed, 17 Jan 2024 15:56:28 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW5xnJZWDg5XiD5-5z4312PUJipYq+H3q-V2A-N5+M7SzQ@mail.gmail.com>
+Message-ID: <CAPhsuW5xnJZWDg5XiD5-5z4312PUJipYq+H3q-V2A-N5+M7SzQ@mail.gmail.com>
+Subject: Re: [PATCH 6/7] md: partially revert "md/raid6: use valid sector
+ values to determine if an I/O should wait on the reshape"
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Yu Kuai <yukuai3@huawei.com>, David Jeffery <djeffery@redhat.com>, 
+	Li Nan <linan122@huawei.com>, dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, 
+	Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, 
+	Benjamin Marzinski <bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-When update_prio is called, there is a check to see if the local path
-has a priority change. Then all the remaining paths are simliarly
-checked.
+On Wed, Jan 17, 2024 at 10:22=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.c=
+om> wrote:
+>
+[...]
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: c467e97f079f ("md/raid6: use valid sector values to determine if a=
+n I/O should wait on the reshape")
+> Cc: stable@vger.kernel.org      # v6.1+
+>
+> ---
+>  drivers/md/raid5.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> Index: linux-2.6/drivers/md/raid5.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/drivers/md/raid5.c
+> +++ linux-2.6/drivers/md/raid5.c
+> @@ -5851,7 +5851,7 @@ static bool stripe_ahead_of_reshape(stru
+>                         continue;
+>
+>                 min_sector =3D min(min_sector, sh->dev[dd_idx].sector);
+> -               max_sector =3D max(max_sector, sh->dev[dd_idx].sector);
+> +               max_sector =3D min(max_sector, sh->dev[dd_idx].sector);
 
-Only the result of paths not matching the local path's priority are
-considered in the calculation of 'changed'. In the case of failed paths
-becoming again available this can lead to multipath not reloading.
+This looks wrong. max_sector was initialized to 0, so
+min(max_sector, sh->dev[dd_idx].sector) will always be 0.
 
-The result will look like this:
-3624a93703c9f34490f6140a100011010 dm-2 PURE,FlashArray
-size=3.0T features='1 retain_attached_hw_handler' hwhandler='1 alua' wp=rw
-|-+- policy='service-time 0' prio=50 status=active
-| |- 1:0:0:1  sdb 8:16  active ready running
-| |- 9:0:0:1  sdc 8:32  active ready running
-| |- 11:0:0:1 sdd 8:48  active ready running
-| `- 13:0:0:1 sdh 8:112 active ready running
-`-+- policy='service-time 0' prio=50 status=enabled
-  |- 8:0:0:1  sde 8:64  active ready running
-  |- 10:0:0:1 sdf 8:80  active ready running
-  |- 12:0:0:1 sdg 8:96  active ready running
-  `- 14:0:0:1 sdi 8:128 active ready running
+Did I miss/misread something here?
 
-Where the path's priorities are updated, but the path group is not
-activated.
+Thanks,
+Song
 
-Signed-off-by: Brian Bunker <brian@purestorage.com>
-Signed-off-by: Seamus Connor <sconnor@purestorage.com>
-Signed-off-by: Krisha Kant <krishna.kant@purestorage.com>
----
- multipathd/main.c | 13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 230c9d10..62b87bf8 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2127,7 +2127,7 @@ int update_prio(struct path *pp, int refresh_all)
- 	int oldpriority;
- 	struct path *pp1;
- 	struct pathgroup * pgp;
--	int i, j, changed = 0;
-+	int i, j, local_changed = 0, other_changed = 0;
- 	struct config *conf;
- 
- 	oldpriority = pp->priority;
-@@ -2138,8 +2138,11 @@ int update_prio(struct path *pp, int refresh_all)
- 		pthread_cleanup_pop(1);
- 	}
- 
--	if (pp->priority == oldpriority && !refresh_all)
--		return 0;
-+	if (pp->priority != oldpriority)
-+		local_changed = 1;
-+	else
-+		if (!refresh_all)
-+			return 0;
- 
- 	vector_foreach_slot (pp->mpp->pg, pgp, i) {
- 		vector_foreach_slot (pgp->paths, pp1, j) {
-@@ -2151,10 +2154,10 @@ int update_prio(struct path *pp, int refresh_all)
- 			pathinfo(pp1, conf, DI_PRIO);
- 			pthread_cleanup_pop(1);
- 			if (pp1->priority != oldpriority)
--				changed = 1;
-+				other_changed = 1;
- 		}
- 	}
--	return changed;
-+	return (local_changed || other_changed);
- }
- 
- static int reload_map(struct vectors *vecs, struct multipath *mpp,
--- 
-2.43.0
-
+>         }
+>
+>         spin_lock_irq(&conf->device_lock);
+>
