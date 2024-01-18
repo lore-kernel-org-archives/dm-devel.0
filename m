@@ -1,69 +1,70 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 38A5328E2D
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 08:30:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3AE014A9F
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 08:41:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705566616; cv=none; b=Q5wIyJnRNtrLG/nRE+fZgESrrzfJiiGT+SaRuyr/dEohPuCshzQW0EKQ5brkIf2zyZoQnr1cZHa1HpOTOPc2yjSvnZJPZFTXWBGLBiU7hNVQ2Mw05OSrGbPWMe7qjKn4E/phyVImigkTTvktX5ERbSg9QAcjqQW+xNk3/jEEc10=
+	t=1705567279; cv=none; b=Pi+8drcAGdOWAByhUgXi0Lncftj/3tcAliz1d+Y6mZccNokS+ZwGhBgQRZrVK2JKj1RyEXWcJKKAz08MammkkV67Dym5opIjgwXWNGwc7m4V91WKM0PnXJbN7UYDc4npzZ5leAG3J5BQsUmIsQn4teTKcDNODZLg3dK1big+uNM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705566616; c=relaxed/simple;
-	bh=v1m0iotlBVdyNAwi8ijfnYhBO+eLh3urhn1NsbV6muw=;
+	s=arc-20240116; t=1705567279; c=relaxed/simple;
+	bh=fvTGGswUGqGxntcQMS4M/Jy6PW/Le04Iv9/adM8XIos=;
 	h=Received:DKIM-Signature:DKIM-Signature:Received:Received:
 	 Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
 	 Autocrypt:Content-Type:Content-Transfer-Encoding:User-Agent:
-	 MIME-Version:X-Spam-Level:X-Spam-Score:X-Spamd-Result:X-Spam-Flag;
-	b=S0KYXEJ39iwPq+MWSAGIROARvRygy9znUOpAlFUQc+gTQ9H5BidUoh6Koh8GsCVlYlhKxdcYQdk4WYKmGsD8XRVezjQbXtznfSYw08asl4JhlENVQyVDUyBnVBh4Tz1XNcRA+ZxDGAy9vPxUL34s1h8plm7wllMEW/r4K0OE/TY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=V9Qx40SN; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=V9Qx40SN; arc=none smtp.client-ip=195.135.223.130
+	 MIME-Version:X-Spamd-Result:X-Rspamd-Server:X-Rspamd-Queue-Id:
+	 X-Spam-Level:X-Spam-Score:X-Spam-Flag; b=EeglQwujKRfpFnxh4PU+dpXXXrD6Tk5od8R0a60J3ob1gk29MmQWZfTMaV8GD50fYt2igRYy7PWEr/Pkfa1GJe5Y3ZRsvgU1hUiGNfFzqgNbQbN3uSUj4WseixEuKY2NE0JcpmPBJGNjWE334PPefc98Br/sEYwHWaqEwdNjTNU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=M9QIS1/N; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=M9QIS1/N; arc=none smtp.client-ip=195.135.223.131
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="V9Qx40SN";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="V9Qx40SN"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [10.150.64.97])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="M9QIS1/N";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="M9QIS1/N"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 33B2B222AE;
-	Thu, 18 Jan 2024 08:30:12 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id A58261F785;
+	Thu, 18 Jan 2024 08:41:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1705566612; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1705567275; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=/P79VEq+j0+UNkriCjreSPWnCIqhv8U7o3czxPyBIiU=;
-	b=V9Qx40SNfxon+jzO2JEId1xTvyKOipxjCWuI2H+tdT2P3gmlFlxHavHjkU7YZSxuO7vel/
-	dASjdo9u+hZuR66Qafo/tY6PvyNmQZSLhu1XD6cpF7fW/2r972YqNNL40+3/2gGvtLR6Pz
-	hsIyJZVw4jEGvfaSjomxv8ScstGj+c4=
+	bh=uIL2zmfvP+jekA1OBzpOmGusSQjLOMIlcEDu7M4lH58=;
+	b=M9QIS1/NR3XMO9ztypJh+/eYaL5Mcodwes1/f+eeLMeskfEVGe47ZnVpan9dwG6uJQ877m
+	t1ZSunMGzKimrqxAEV/HLZ8eHf+/aOH9jqSwjmExXeG7lPo6/jopsZEjTHVp+r4ZhpjAgd
+	me1ozuA/IwGRGOHetOpsxw4kV/W6Wf8=
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1705566612; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1705567275; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=/P79VEq+j0+UNkriCjreSPWnCIqhv8U7o3czxPyBIiU=;
-	b=V9Qx40SNfxon+jzO2JEId1xTvyKOipxjCWuI2H+tdT2P3gmlFlxHavHjkU7YZSxuO7vel/
-	dASjdo9u+hZuR66Qafo/tY6PvyNmQZSLhu1XD6cpF7fW/2r972YqNNL40+3/2gGvtLR6Pz
-	hsIyJZVw4jEGvfaSjomxv8ScstGj+c4=
+	bh=uIL2zmfvP+jekA1OBzpOmGusSQjLOMIlcEDu7M4lH58=;
+	b=M9QIS1/NR3XMO9ztypJh+/eYaL5Mcodwes1/f+eeLMeskfEVGe47ZnVpan9dwG6uJQ877m
+	t1ZSunMGzKimrqxAEV/HLZ8eHf+/aOH9jqSwjmExXeG7lPo6/jopsZEjTHVp+r4ZhpjAgd
+	me1ozuA/IwGRGOHetOpsxw4kV/W6Wf8=
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id E6934136F5;
-	Thu, 18 Jan 2024 08:30:11 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 58AE2136F5;
+	Thu, 18 Jan 2024 08:41:15 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([10.150.64.162])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id xtc4NpPhqGVIJwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Thu, 18 Jan 2024 08:30:11 +0000
-Message-ID: <e5384ae0b09d1af38c12966f338293ce7e41b45a.camel@suse.com>
+	id 6Iz4EivkqGVEKgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Thu, 18 Jan 2024 08:41:15 +0000
+Message-ID: <18bdad7d48e43957a6d7c37da54efa16209080f6.camel@suse.com>
 Subject: Re: [PATCH] multipathd: the local path change is not considered
 From: Martin Wilck <mwilck@suse.com>
 To: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
 Cc: Seamus Connor <sconnor@purestorage.com>, Krisha Kant
 	 <krishna.kant@purestorage.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Date: Thu, 18 Jan 2024 09:30:11 +0100
-In-Reply-To: <8af5a4e5aff3edf9511ebdd5244f65a8e1ecf875.camel@suse.com>
+Date: Thu, 18 Jan 2024 09:41:10 +0100
+In-Reply-To: <e5384ae0b09d1af38c12966f338293ce7e41b45a.camel@suse.com>
 References: <20240117225110.50072-1-brian@purestorage.com>
 	 <8af5a4e5aff3edf9511ebdd5244f65a8e1ecf875.camel@suse.com>
+	 <e5384ae0b09d1af38c12966f338293ce7e41b45a.camel@suse.com>
 Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
  keydata=mQINBF3mxsYBEACmOnQxWBCxCkTb3D4N8VAT8yNtIBZrmvomY7RLddBIT1yh2X7roOoJQ5KlmyjMmzrPr111poqmw8v4dUqc1SVqQoKHXv97BzlVIEKC5G2W29gse0oXhx3dhie0Z6ytkHVOY29VLsLhVXEz+p5xL71KYgIy3lmM/NaWvoqwwaXiv1TmLG96Uoitvj1vdXqqTv/R6/MBye+xQUacXpM8FA5k7OpmzCFjl4NVtGmo0VhIfXM/ldmyEJpg8a5LrZ4t5Qi32BWQjUHGmS8OXjUJ/n0QxLkymbcbY1KepP9UnLGPT+TmKJm1QlMDj69+WPKgMsif3iz4hZPoQ0Knp11ThYzBh7+AiRxE9FG2hTtZeKimkpjR12bytF4Y0aIM/HeLMHRvwykJuh5JxT9A68xF7hmqQZ7rsx/GoRBOA792kFgr5KdCZ1YoeVUkrohT1nfh/Y/Xfeq4E69mktE0R0Yxg/4CSiB7sLSzry8dyqk2sbGs+W/Ol7D7VOG45aZ5iTB08R2ji2xKArcH+Dmy48nwqIvdrppZG2tZEe+wtGPTzahE4OJdpZ3vS4ujdChynS47DVWa5JtBxfqopr0rPGoCyxmyvzJzHAUjlp7iSXpDZqfdu7F4HAC13mS41IVk/yHTXE28AKrZ4O+efZ6qgw5zJV9lAbWM7JjfdrTd+ofOc+GurQARAQABtCRNYXJ0aW4gV2lsY2sgPG1hcnRpbi53aWxja0BzdXNlLmNvbT6JAlEEEwEIADsCGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQR1Dq1LLt6xpUXU9fRnxYbmhVaXVAUCXebHhgIZAQAKCRBnxYbmhVaXVJ6+EACa5mbuH1dy2bKldy+bybUe4jFpJxflAPSrdpIlwkIfD/SgQRWUUm+BLLJMGJFSKiVC6oAHH6/mo3gdWAqBJ0LAOQDDR2BW31ERYqQQ7m01INQIvMlg+PXQ8HbWd
 	CNF1SOgjxiIs04DlB+u+DD5pgPtxKFN/jaJSx9oZ+GZpSd+eJeull3a+U/1+QpYmLbH34bxYZ16+cXfarkH3QQC65DH/iIZwcpxp+v/zrQVXnsZ81XmmbLD1vMkFCIU0ircIcaJoqloNJOA46P4mj9ETwC5OiSTs7vlyHP4Ni/86kmjmr41d/baY1cAXpAbtOGYd5K72B6qSP5EJI+Ci6rSbWInQaYzKuAOrDDyhW7ODd+hOtBcmUIH5GpKvzRjdfxEP/zlyecBszxycz7lOYNx86QWsyyRWITKzHzhdqKVZ9kvjVozTtcpb1RSqsj43qqMEQjcp1uXhbmwVmbzsWaPqmCx4xsIQoXfIzzffvw+nOiPLkxzGczprwNJasDUM1hcyEPv+5VzZpE4YjlDw/mtTayehb2EGzt2RfZIuPCBr88KlWUh2+nu9RfBJNdJ2vZ13Aun8NbqPKR2vfsE+BUJY14Ak9ZIzcyruHBHQ78dxD0J+HSC1bm9e4UOnW0PBbZwuPTRwyO3aXoExPabGgig6gcY34bsXvW9SDwOu+pzXMnVvbQeTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+iQJOBBMBCAA4FiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAl3mxz0CGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQZ8WG5oVWl1TdsA/6A0DZmGwreygUic5csLSLUm2ahdat3rRKfQVdlOdl0aWa/vS90PqpuDNGzXVzS/s4YXRjWesnYEdwQGSc4PnBYCitLKUwenII39RCyZLU3J95luWG2eOagFaerK+HvuNEH6RpYkqPpaDEwpblfi30xNNYLIR4HK0GTYwhbmBTrYgaKATNiplU08ZUvC23s00t2i7SBGmOue/0dIPMhO3EDYPP0RaDnKvHAOAywkI1J9Ey0xEslG9AFylOihcdaq9/7MlMWU8oNHK7EVE5OOZ2NiJv1sWSgM
@@ -82,140 +83,61 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Authentication-Results: smtp-out1.suse.de;
-	none
-X-Spam-Level: 
-X-Spam-Score: -4.30
-X-Spamd-Result: default: False [-4.30 / 50.00];
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b="M9QIS1/N"
+X-Spamd-Result: default: False [-5.12 / 50.00];
 	 ARC_NA(0.00)[];
 	 RCVD_VIA_SMTP_AUTH(0.00)[];
-	 BAYES_HAM(-3.00)[100.00%];
+	 R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	 SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
 	 FROM_HAS_DN(0.00)[];
 	 TO_DN_SOME(0.00)[];
 	 TO_MATCH_ENVRCPT_ALL(0.00)[];
-	 NEURAL_HAM_LONG(-1.00)[-1.000];
+	 BAYES_HAM(-2.81)[99.16%];
 	 MIME_GOOD(-0.10)[text/plain];
+	 DWL_DNSWL_MED(-2.00)[suse.com:dkim];
 	 RCPT_COUNT_FIVE(0.00)[5];
 	 RCVD_COUNT_THREE(0.00)[3];
 	 DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	 NEURAL_HAM_SHORT(-0.20)[-1.000];
-	 DBL_BLOCKED_OPENRESOLVER(0.00)[purestorage.com:email];
+	 DKIM_TRACE(0.00)[suse.com:+];
+	 MX_GOOD(-0.01)[];
+	 DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim];
 	 FUZZY_BLOCKED(0.00)[rspamd.com];
 	 FROM_EQ_ENVFROM(0.00)[];
 	 MIME_TRACE(0.00)[0:+];
 	 RCVD_TLS_ALL(0.00)[];
-	 MID_RHS_MATCH_FROM(0.00)[]
+	 MID_RHS_MATCH_FROM(0.00)[];
+	 RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from]
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+X-Rspamd-Queue-Id: A58261F785
+X-Spam-Level: 
+X-Spam-Score: -5.12
 X-Spam-Flag: NO
 
-On Thu, 2024-01-18 at 09:16 +0100, Martin Wilck wrote:
-> On Wed, 2024-01-17 at 14:51 -0800, Brian Bunker wrote:
-> > When update_prio is called, there is a check to see if the local
-> > path
-> > has a priority change. Then all the remaining paths are simliarly
-> > checked.
+On Thu, 2024-01-18 at 09:30 +0100, Martin Wilck wrote:
 > >=20
-> > Only the result of paths not matching the local path's priority are
-> > considered in the calculation of 'changed'. In the case of failed
-> > paths
-> > becoming again available this can lead to multipath not reloading.
-> >=20
-> > The result will look like this:
-> > 3624a93703c9f34490f6140a100011010 dm-2 PURE,FlashArray
-> > size=3D3.0T features=3D'1 retain_attached_hw_handler' hwhandler=3D'1
-> > alua'
-> > wp=3Drw
-> > > -+- policy=3D'service-time 0' prio=3D50 status=3Dactive
-> > > > - 1:0:0:1=C2=A0 sdb 8:16=C2=A0 active ready running
-> > > > - 9:0:0:1=C2=A0 sdc 8:32=C2=A0 active ready running
-> > > > - 11:0:0:1 sdd 8:48=C2=A0 active ready running
-> > > `- 13:0:0:1 sdh 8:112 active ready running
-> > `-+- policy=3D'service-time 0' prio=3D50 status=3Denabled
-> > =C2=A0 |- 8:0:0:1=C2=A0 sde 8:64=C2=A0 active ready running
-> > =C2=A0 |- 10:0:0:1 sdf 8:80=C2=A0 active ready running
-> > =C2=A0 |- 12:0:0:1 sdg 8:96=C2=A0 active ready running
-> > =C2=A0 `- 14:0:0:1 sdi 8:128 active ready running
-> >=20
-> > Where the path's priorities are updated, but the path group is not
-> > activated.
-> >=20
-> > Signed-off-by: Brian Bunker <brian@purestorage.com>
-> > Signed-off-by: Seamus Connor <sconnor@purestorage.com>
-> > Signed-off-by: Krisha Kant <krishna.kant@purestorage.com>
-> > ---
-> > =C2=A0multipathd/main.c | 13 ++++++++-----
-> > =C2=A01 file changed, 8 insertions(+), 5 deletions(-)
-> >=20
+> > > =C2=A0	struct config *conf;
+> > > =C2=A0
+> > > =C2=A0	oldpriority =3D pp->priority;
+> > > @@ -2138,8 +2138,11 @@ int update_prio(struct path *pp, int
+> > > refresh_all)
+> > > =C2=A0		pthread_cleanup_pop(1);
+> > > =C2=A0	}
+> > > =C2=A0
+> > > -	if (pp->priority =3D=3D oldpriority && !refresh_all)
+> > > -		return 0;
+> > > +	if (pp->priority !=3D oldpriority)
+> > > +		local_changed =3D 1;
+> > > +	else
+> > > +		if (!refresh_all)
+> > > +			return 0;
 >=20
-> Thanks for the report and fix!
->=20
-> > diff --git a/multipathd/main.c b/multipathd/main.c
-> > index 230c9d10..62b87bf8 100644
-> > --- a/multipathd/main.c
-> > +++ b/multipathd/main.c
-> > @@ -2127,7 +2127,7 @@ int update_prio(struct path *pp, int
-> > refresh_all)
-> > =C2=A0	int oldpriority;
-> > =C2=A0	struct path *pp1;
-> > =C2=A0	struct pathgroup * pgp;
-> > -	int i, j, changed =3D 0;
-> > +	int i, j, local_changed =3D 0, other_changed =3D 0;
->=20
-> Why use two variables here? AFAICS, you can implement the same logic
-> with just the "changed" variable.
->=20
-> Other than that, this looks good.
->=20
-> When you submit a v2, please add bmarzins@redhat.com=C2=A0and myself to
-> cc,
-> and add=20
->=20
-> Fixes: 6ccd7b8 ("multipathd: only refresh priorities in
-> update_prio()")
->=20
-> Regards,
-> Martin
->=20
-> > =C2=A0	struct config *conf;
-> > =C2=A0
-> > =C2=A0	oldpriority =3D pp->priority;
-> > @@ -2138,8 +2138,11 @@ int update_prio(struct path *pp, int
-> > refresh_all)
-> > =C2=A0		pthread_cleanup_pop(1);
-> > =C2=A0	}
-> > =C2=A0
-> > -	if (pp->priority =3D=3D oldpriority && !refresh_all)
-> > -		return 0;
-> > +	if (pp->priority !=3D oldpriority)
-> > +		local_changed =3D 1;
-> > +	else
-> > +		if (!refresh_all)
-> > +			return 0;
+> Just realized that this would unnecessarily run through the loop
+> below
+> if (pp->priority !=3D oldpriority && !refresh_all).
 
-Just realized that this would unnecessarily run through the loop below
-if (pp->priority !=3D oldpriority && !refresh_all).
-
-IMO the patch should simply look like this:
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index fbc3f8d..ca8e65c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2115,8 +2115,10 @@ int update_prio(struct path *pp, int
-refresh_all)
-                pthread_cleanup_pop(1);
-        }
-=20
--       if (pp->priority =3D=3D oldpriority && !refresh_all)
--               return 0;
-+       if (pp->priority !=3D oldpriority)
-+               changed =3D 1;
-+       if (!refresh_all)
-+               return changed;
-=20
-        vector_foreach_slot (pp->mpp->pg, pgp, i) {
-                vector_foreach_slot (pgp->paths, pp1, j) {
-
-If you don't object, I'll apply it in this form, leaving you as author.
+Sorry, this was nonsense. The commit msg of 6ccd7b8 explains that we
+must run the loop if "changed" is true, even if refresh_all is not set.
 
 Martin
 
