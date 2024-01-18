@@ -1,54 +1,55 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9611E259D
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 00:00:07 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E6DE370
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 00:19:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705536007; cv=none; b=HPm1Otv/SxGFn8gFv7oVNUpHt+3xs0BnkktxhOPou2TlQx0R9IvaElYPgzjb/TcL+ZNlkTX/koQEq62zWIn0XHmAFzaHPuxfd7eYjNZRBFJjdjQfC/FGIcK00UYh8ktOG5woBeNLq1wk1xSCUKoc4nF6wW4dKqvgTqII/tTjyss=
+	t=1705537166; cv=none; b=kAqTaQ+kmjlDxZJQf1olexzYRYJjcJ3erLwrJ9ifBMDGrtg8WZNaSb3G5x8s0spvQtbw+Zr6pVKJPXj8xUtNIg7YM+iuqyCwZ7KxFD0oHPag6gvjp1fZ1NkYY4BS0hMIpGlkO7nd7763eCUrOPvl++F38Mo7wHLyn2gbfbXLrWw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705536007; c=relaxed/simple;
-	bh=ICFaVXJJ9A1he9hLcACPLMMrvDJSPzIftgCzsWGeTWw=;
+	s=arc-20240116; t=1705537166; c=relaxed/simple;
+	bh=aJVJHY3NRnsPPDENMxonxmkWGceA7EJMSjcQ91JsQrk=;
 	h=Received:DKIM-Signature:Received:X-Gm-Message-State:
 	 X-Google-Smtp-Source:X-Received:MIME-Version:References:
 	 In-Reply-To:From:Date:X-Gmail-Original-Message-ID:Message-ID:
-	 Subject:To:Cc:Content-Type:Content-Transfer-Encoding; b=kU+F69EgxBy+/NwOfok98ZwFa2iDqgZOdmDOSk54yVSmcpi9ySkBqH69M9HlTlpTqIo1JaXjbVpaQTQNc1n1cdJ3CLeV6XbxHaTJcqiI9H5Rf9bpTmjswd0R0OJUutZVykJQ0P6Ye3NbPQ/Onftpj4Elg4Uilf3dWArvWoypGYA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=WgK23xia; arc=none smtp.client-ip=10.30.226.201
+	 Subject:To:Cc:Content-Type:Content-Transfer-Encoding; b=s9xIQt3qBjiMl8VgfUcjwdkfo79fFKauijfEZ7OAv75u7gKLBfvoHIiIZvOMWGE1PtQFl2w3FeXBD3Fm20byxJBycctmYOH97fGSvmFllrWUPdxHgkzWVk1PBPok3Z3Y0Cgs5vUMDhN59JGTqqgxqbkEz/xi53WpMcFDYJS/rog=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pqKwc09g; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="WgK23xia"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3AC38C43394
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 00:00:07 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pqKwc09g"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CE2FFC433C7
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 00:19:25 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1705536007;
-	bh=ICFaVXJJ9A1he9hLcACPLMMrvDJSPzIftgCzsWGeTWw=;
+	s=k20201202; t=1705537165;
+	bh=aJVJHY3NRnsPPDENMxonxmkWGceA7EJMSjcQ91JsQrk=;
 	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=WgK23xia1DyS2nG+zlYFA62dotRx5ZjWDGQMhp2kms4ig174ptXPTikHZKM3hLdf6
-	 ZPLQZqvZst+kuinKaPX7DTz4PSn7FJ90Kma1qj1842p2JtkCZ+EbNp3WDn6+0v2U89
-	 rvughSMLfMnmpx3JDnik7RCeEdRR3kyTJt1ws6Vs79ZH1gLH2KTJkAkZkdTAqjfHYx
-	 m74Y6Wvra6Uye29GaBGyZnkFPoU3fBsDtTsmOfeQ/FgeJ3PYB8uS6aW+qXiRpRORqZ
-	 SB9O4QXh/tZNnaT2BmK0YW0v+QQpzMPqv6POKmfoX5QvjKjxq6lY9zwp40tgpRhu/T
-	 FRnFBdXXXxR4w==
-Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-50e67f70f34so12338028e87.0
-        for <dm-devel@lists.linux.dev>; Wed, 17 Jan 2024 16:00:07 -0800 (PST)
-X-Gm-Message-State: AOJu0YyNzjq1uHIXtmbi5saZnQUEovyD0yjMZ5TmK6fQQEMqhnNY1djj
-	K86MFpfP0dbAR/LRrHQ/Xlj/ROP+BWeH9vc8eYI=
-X-Google-Smtp-Source: AGHT+IEN6uSKuaOOd+u3Zm2UegpNfsYM3sXu8V+5eNrWq7szR8UzCYeBQwECRslV+0A2d1f/5yrsvyk0CN92gUeek4M=
-X-Received: by 2002:ac2:4824:0:b0:50e:fe09:6597 with SMTP id
- 4-20020ac24824000000b0050efe096597mr2101436lft.69.1705536005411; Wed, 17 Jan
- 2024 16:00:05 -0800 (PST)
+	b=pqKwc09gEZYS8iBcS5Mr8Cnzlz8UUEcTOQ/EC5+Bplw22lQatRi2gOUP6BASDs/Ve
+	 0K5w6g/Ht37RJsqOdv/yv1ikk7mnXMiqDqy6UwdyrinaIEXQNaefUunXAgBZSgXc1+
+	 4U4lMbULPkBw22VgkO76KSl2Ed+u4/faXmiE1Cnkeen/jSXUuY7SBAmwNh2JwIzeoi
+	 ISLxBobJ+eRPMax4tDaLW372RTU1CQeE6u3OHYRXsphYqgZhI6WXe31SbLinQeX5Fa
+	 GFxa5kySa90PXsv6OqPTv+nmnPgSPggdrtDtiNyFGSWpklrORs875PTIsOJF+ldvy9
+	 U4Yd7HjOXWdag==
+Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-50eabd1c701so14541189e87.3
+        for <dm-devel@lists.linux.dev>; Wed, 17 Jan 2024 16:19:25 -0800 (PST)
+X-Gm-Message-State: AOJu0YzTXSNHnJj6+SyH8m2AFKCay7duHuLrgX1zXCtV92G8LwufT0aI
+	3MDfRt4IcYfjYQ6qIEthloFSb42UuZak98DVDwKwBboFw+d5R2FWePzhRIUMwqiul+m119LWVKq
+	TW4Z10FDNfAGtWRvYEQl1ZpCpqDI=
+X-Google-Smtp-Source: AGHT+IFE8zKt28H+maScGStQJ27xIRlnBq8ORNmVpdL3fYcb3DoqXrBkLzUDI/fPlbYaZCDNH/Kek17SlPkeWK7suG8=
+X-Received: by 2002:a05:6512:3c2:b0:50e:b3bb:12aa with SMTP id
+ w2-20020a05651203c200b0050eb3bb12aamr8556lfp.59.1705537163946; Wed, 17 Jan
+ 2024 16:19:23 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com> <51539879-e1ca-fde3-b8b4-8934ddedcbc@redhat.com>
-In-Reply-To: <51539879-e1ca-fde3-b8b4-8934ddedcbc@redhat.com>
+References: <e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com> <9801e40-8ac7-e225-6a71-309dcf9dc9aa@redhat.com>
+In-Reply-To: <9801e40-8ac7-e225-6a71-309dcf9dc9aa@redhat.com>
 From: Song Liu <song@kernel.org>
-Date: Wed, 17 Jan 2024 15:59:54 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW42XBw4nUWzssSMh7i=ULL++yF5twFB8d0digmVLXQ6AA@mail.gmail.com>
-Message-ID: <CAPhsuW42XBw4nUWzssSMh7i=ULL++yF5twFB8d0digmVLXQ6AA@mail.gmail.com>
-Subject: Re: [PATCH 7/7] md: fix a suspicious RCU usage warning
+Date: Wed, 17 Jan 2024 16:19:12 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW483DSEvgoT0c-Mo1gdpVKRRLkTxu+kuxYG6k-zew+FFA@mail.gmail.com>
+Message-ID: <CAPhsuW483DSEvgoT0c-Mo1gdpVKRRLkTxu+kuxYG6k-zew+FFA@mail.gmail.com>
+Subject: Re: [PATCH 3/7] md: test for MD_RECOVERY_DONE in stop_sync_thread
 To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Yu Kuai <yukuai3@huawei.com>, David Jeffery <djeffery@redhat.com>, 
 	Li Nan <linan122@huawei.com>, dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, 
@@ -57,82 +58,93 @@ Cc: Yu Kuai <yukuai3@huawei.com>, David Jeffery <djeffery@redhat.com>,
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Jan 17, 2024 at 10:22=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.c=
+On Wed, Jan 17, 2024 at 10:19=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.c=
 om> wrote:
 >
-> RCU protection was removed in the commit 2d32777d60de ("raid1: remove rcu
-> protection to access rdev from conf").
+> stop_sync_thread sets MD_RECOVERY_INTR and then waits for
+> MD_RECOVERY_RUNNING to be cleared. However, md_do_sync will not clear
+> MD_RECOVERY_RUNNING when exiting, it will set MD_RECOVERY_DONE instead.
 >
-> However, the code in fix_read_error does rcu_dereference outside
-> rcu_read_lock - this triggers the following warning. The warning is
-> triggered by a LVM2 test shell/integrity-caching.sh.
+> So, we must wait for MD_RECOVERY_DONE to be set as well.
 >
-> This commit removes rcu_dereference.
->
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D
-> WARNING: suspicious RCU usage
-> 6.7.0 #2 Not tainted
-> -----------------------------
-> drivers/md/raid1.c:2265 suspicious rcu_dereference_check() usage!
->
-> other info that might help us debug this:
->
-> rcu_scheduler_active =3D 2, debug_locks =3D 1
-> no locks held by mdX_raid1/1859.
->
-> stack backtrace:
-> CPU: 2 PID: 1859 Comm: mdX_raid1 Not tainted 6.7.0 #2
-> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.12.0-1 04/0=
-1/2014
-> Call Trace:
->  <TASK>
->  dump_stack_lvl+0x60/0x70
->  lockdep_rcu_suspicious+0x153/0x1b0
->  raid1d+0x1732/0x1750 [raid1]
->  ? lock_acquire+0x9f/0x270
->  ? finish_wait+0x3d/0x80
->  ? md_thread+0xf7/0x130 [md_mod]
->  ? lock_release+0xaa/0x230
->  ? md_register_thread+0xd0/0xd0 [md_mod]
->  md_thread+0xa0/0x130 [md_mod]
->  ? housekeeping_test_cpu+0x30/0x30
->  kthread+0xdc/0x110
->  ? kthread_complete_and_exit+0x20/0x20
->  ret_from_fork+0x28/0x40
->  ? kthread_complete_and_exit+0x20/0x20
->  ret_from_fork_asm+0x11/0x20
->  </TASK>
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Fixes: ca294b34aaf3 ("md/raid1: support read error check")
+> This patch fixes a deadlock in the LVM2 test shell/integrity-caching.sh.
 
-This makes sense to me.
+I am not able to reproduce the issue on 6.7 kernel with
+shell/integrity-caching.sh.
+I got:
 
-Li Nan, please review this fix.
+VERBOSE=3D0 ./lib/runner \
+        --testdir . --outdir results \
+        --flavours ndev-vanilla --only shell/integrity-caching.sh --skip @
+running 1 tests
+###       passed: [ndev-vanilla] shell/integrity-caching.sh  4:24.225
+
+### 1 tests: 1 passed, 0 skipped, 0 timed out, 0 warned, 0 failed   in  4:2=
+4.453
+make[1]: Leaving directory '/root/lvm2/test'
+
+Do you see the issue every time with shell/integrity-caching.sh?
 
 Thanks,
 Song
 
 >
-> ---
->  drivers/md/raid1.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+> sysrq: Show Blocked State
+> task:lvm             state:D stack:0     pid:11422  tgid:11422 ppid:1374 =
+  flags:0x00004002
+> Call Trace:
+>  <TASK>
+>  __schedule+0x228/0x570
+>  schedule+0x29/0xa0
+>  schedule_timeout+0x6a/0xd0
+>  ? timer_shutdown_sync+0x10/0x10
+>  stop_sync_thread+0x141/0x180 [md_mod]
+>  ? housekeeping_test_cpu+0x30/0x30
+>  __md_stop_writes+0x10/0xd0 [md_mod]
+>  md_stop+0x9/0x20 [md_mod]
+>  raid_dtr+0x1e/0x60 [dm_raid]
+>  dm_table_destroy+0x53/0x110 [dm_mod]
+>  __dm_destroy+0x10b/0x1e0 [dm_mod]
+>  ? table_clear+0xa0/0xa0 [dm_mod]
+>  dev_remove+0xd4/0x110 [dm_mod]
+>  ctl_ioctl+0x2e1/0x570 [dm_mod]
+>  dm_ctl_ioctl+0x5/0x10 [dm_mod]
+>  __x64_sys_ioctl+0x85/0xa0
+>  do_syscall_64+0x5d/0x1a0
+>  entry_SYSCALL_64_after_hwframe+0x46/0x4e
 >
-> Index: linux-2.6/drivers/md/raid1.c
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org      # v6.7
+> Fixes: 130443d60b1b ("md: refactor idle/frozen_sync_thread() to fix deadl=
+ock")
+>
+> ---
+>  drivers/md/md.c |    4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+>
+> Index: linux-2.6/drivers/md/md.c
 > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-2.6.orig/drivers/md/raid1.c
-> +++ linux-2.6/drivers/md/raid1.c
-> @@ -2262,7 +2262,7 @@ static void fix_read_error(struct r1conf
->         int sectors =3D r1_bio->sectors;
->         int read_disk =3D r1_bio->read_disk;
->         struct mddev *mddev =3D conf->mddev;
-> -       struct md_rdev *rdev =3D rcu_dereference(conf->mirrors[read_disk]=
-.rdev);
-> +       struct md_rdev *rdev =3D conf->mirrors[read_disk].rdev;
+> --- linux-2.6.orig/drivers/md/md.c
+> +++ linux-2.6/drivers/md/md.c
+> @@ -4881,7 +4881,8 @@ static void stop_sync_thread(struct mdde
+>         if (check_seq)
+>                 sync_seq =3D atomic_read(&mddev->sync_seq);
 >
->         if (exceed_read_errors(mddev, rdev)) {
->                 r1_bio->bios[r1_bio->read_disk] =3D IO_BLOCKED;
+> -       if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
+> +       if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
+> +           test_bit(MD_RECOVERY_DONE, &mddev->recovery)) {
+>                 if (!locked)
+>                         mddev_unlock(mddev);
+>                 return;
+> @@ -4901,6 +4902,7 @@ retry:
+>
+>         if (!wait_event_timeout(resync_wait,
+>                    !test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
+> +                  test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
+>                    (check_seq && sync_seq !=3D atomic_read(&mddev->sync_s=
+eq)),
+>                    HZ / 10))
+>                 goto retry;
 >
