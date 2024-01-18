@@ -1,41 +1,41 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C7AB468B
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 01:35:26 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46F3C184C
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 01:38:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705541728; cv=none; b=T2RlGuD3t8R+B3unuIpV3Dg0kBcFYgr6VkzJVGwl88Vag0NGdIkDarHq6ayyK3ONyAFfS9H2sn+owCJb1uJALuftyaw+BDmrNCavhHPxQla11p8s36evbp2vLNdvdPUnUTqejLYiQfbiragG9fExiIr7ZmOEDXddb+Xvkr87ips=
+	t=1705541911; cv=none; b=WVE/N9o7N60HnpOi7l9qaXjEGEdqxPSL868oBp2DppSRrebrq+dWAYp0MCJJw8vhMCZeVwfrUm+6c4kc7BoE0mHJwR4ADYvEOE6nIZQx56wa45fZZe3DKj+D93nAwXkyhkVNbnU3sGpqU3udAEk1SrLSkYRJcTaxmLdeBNo/cuY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705541728; c=relaxed/simple;
-	bh=2MN0UlIBDm7MZ9Wc3wnUkKXsVSGFjG89/DV+IREb3BU=;
+	s=arc-20240116; t=1705541911; c=relaxed/simple;
+	bh=kvY6aq6aiZTEhNJ/hVQmhim6tnXRmjCZLKqNocrwsEk=;
 	h=Received:Received:Received:Subject:To:Cc:References:From:
 	 Message-ID:Date:User-Agent:MIME-Version:In-Reply-To:Content-Type:
 	 Content-Transfer-Encoding:X-CM-TRANSID:X-Coremail-Antispam:
-	 X-CM-SenderInfo; b=KQeIkcsyXmZJxPWMMVY7gjtO6bSltC7DEk/xkSPsH+RhIaDb4f8nnvfFpCrWMQQPbYvened1Q0ASlje31f3ca/h70LNdUaIsot2V99sf+fC/gGaFICfJaz1oHqYYMEZKU+IHPK8VtDja9xtFTZBlaP43vVnhSXuRdfQXRQojvSQ=
+	 X-CM-SenderInfo; b=sHc+Gu4qkU71jAaoFfV+ecrQ6ulOkbqkM9Vcl/essxUgBesAUGYJTzz7dLFWzy1OSFJyfpv3KYyhtI1DwHh2mpygNHk7+4ooelhpFtfZgC9YQpgZrYwSCvurgpUSce91LVgcZb+sipL6qp+H0mFNtb5H7a6HssUxjMZ6zMjtj5Q=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TFlgC2dSRz4f3jR3
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 09:35:19 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TFlkk1qZMz4f3knc
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 09:38:22 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 208ED1A016E
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 09:35:23 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 061F51A017A
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 09:38:26 +0800 (CST)
 Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgBnOBFagKhlh2OsBA--.7256S3;
-	Thu, 18 Jan 2024 09:35:23 +0800 (CST)
-Subject: Re: [PATCH 3/7] md: test for MD_RECOVERY_DONE in stop_sync_thread
+	by APP1 (Coremail) with SMTP id cCh0CgBXKBEQgahl7ZqsBA--.6704S3;
+	Thu, 18 Jan 2024 09:38:25 +0800 (CST)
+Subject: Re: [PATCH 4/7] md: call md_reap_sync_thread from __md_stop_writes
 To: Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
  David Jeffery <djeffery@redhat.com>, Li Nan <linan122@huawei.com>
 Cc: dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
  Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>,
  Benjamin Marzinski <bmarzins@redhat.com>, "yukuai (C)" <yukuai3@huawei.com>
 References: <e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com>
- <9801e40-8ac7-e225-6a71-309dcf9dc9aa@redhat.com>
+ <ceeca667-ecc5-a776-8c89-9bf6facb93c9@redhat.com>
 From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <02ac54ff-dbd3-92c1-72ab-b742cafd93e4@huaweicloud.com>
-Date: Thu, 18 Jan 2024 09:35:22 +0800
+Message-ID: <e72fde6f-8556-a0ba-ecf4-c4b9102e8345@huaweicloud.com>
+Date: Thu, 18 Jan 2024 09:38:24 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
  Thunderbird/60.8.0
 Precedence: bulk
@@ -44,13 +44,13 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <9801e40-8ac7-e225-6a71-309dcf9dc9aa@redhat.com>
+In-Reply-To: <ceeca667-ecc5-a776-8c89-9bf6facb93c9@redhat.com>
 Content-Type: text/plain; charset=gbk; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBnOBFagKhlh2OsBA--.7256S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxuF4DKr1rJrW7tF4fWFW5GFg_yoW5GFW3pa
-	4kGasayr48Ary7ZayxKa4UAr95uF42q39rJrZ3W3s3AFn5tF47AF1UuF1UZFykG34fZa18
-	Aa45XFZxZr18Cw7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:cCh0CgBXKBEQgahl7ZqsBA--.6704S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7tF48uFW3try5urWkKw1DAwb_yoW8GrWrpa
+	yktFyfCr15ArW5Ary7W3WkZa4ru3W7trW7tryxC34rAr1UGwn8Jr1YgFW5XFyDCa48AF43
+	Jr4rJFs5Zr4kJrJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUv2b4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
 	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
 	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
@@ -68,80 +68,46 @@ X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 Hi,
 
-在 2024/01/18 2:19, Mikulas Patocka 写道:
-> stop_sync_thread sets MD_RECOVERY_INTR and then waits for
-> MD_RECOVERY_RUNNING to be cleared. However, md_do_sync will not clear
-> MD_RECOVERY_RUNNING when exiting, it will set MD_RECOVERY_DONE instead.
+在 2024/01/18 2:20, Mikulas Patocka 写道:
+> The commit f52f5c71f3d4 ("md: fix stopping sync thread") breaks the LVM2
+> test shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh
 > 
-> So, we must wait for MD_RECOVERY_DONE to be set as well.
+> There are many places that test for MD_RECOVERY_RUNNING or
+> mddev->sync_thread. If we don't reap the thread, they would be confused.
 
-You are missing how sync_thread() is stopped. md_do_sync() will set
-MD_RECOVERY_DONE first, and md_check_recovery() is responsible for
-clearing MD_RECOVERY_RUNNING.
-> 
-> This patch fixes a deadlock in the LVM2 test shell/integrity-caching.sh.
-
-It's still not clear about the root cause. Any way, this patch is really
-wrong, it breaks the foundation design of sync_thread.
+Please stop this... make sure you understand the lifetime of
+sync_thread before you send such patch. I already explained in
+f52f5c71f3d4 why md_reap_sync_thread() can't be called here.
 
 Thanks,
 Kuai
 
 > 
-> sysrq: Show Blocked State
-> task:lvm             state:D stack:0     pid:11422  tgid:11422 ppid:1374   flags:0x00004002
-> Call Trace:
->   <TASK>
->   __schedule+0x228/0x570
->   schedule+0x29/0xa0
->   schedule_timeout+0x6a/0xd0
->   ? timer_shutdown_sync+0x10/0x10
->   stop_sync_thread+0x141/0x180 [md_mod]
->   ? housekeeping_test_cpu+0x30/0x30
->   __md_stop_writes+0x10/0xd0 [md_mod]
->   md_stop+0x9/0x20 [md_mod]
->   raid_dtr+0x1e/0x60 [dm_raid]
->   dm_table_destroy+0x53/0x110 [dm_mod]
->   __dm_destroy+0x10b/0x1e0 [dm_mod]
->   ? table_clear+0xa0/0xa0 [dm_mod]
->   dev_remove+0xd4/0x110 [dm_mod]
->   ctl_ioctl+0x2e1/0x570 [dm_mod]
->   dm_ctl_ioctl+0x5/0x10 [dm_mod]
->   __x64_sys_ioctl+0x85/0xa0
->   do_syscall_64+0x5d/0x1a0
->   entry_SYSCALL_64_after_hwframe+0x46/0x4e
-> 
 > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
 > Cc: stable@vger.kernel.org	# v6.7
-> Fixes: 130443d60b1b ("md: refactor idle/frozen_sync_thread() to fix deadlock")
 > 
 > ---
->   drivers/md/md.c |    4 +++-
->   1 file changed, 3 insertions(+), 1 deletion(-)
+>   drivers/md/md.c |    6 ++++++
+>   1 file changed, 6 insertions(+)
 > 
 > Index: linux-2.6/drivers/md/md.c
 > ===================================================================
 > --- linux-2.6.orig/drivers/md/md.c
 > +++ linux-2.6/drivers/md/md.c
-> @@ -4881,7 +4881,8 @@ static void stop_sync_thread(struct mdde
->   	if (check_seq)
->   		sync_seq = atomic_read(&mddev->sync_seq);
+> @@ -6308,6 +6308,12 @@ static void md_clean(struct mddev *mddev
+>   static void __md_stop_writes(struct mddev *mddev)
+>   {
+>   	stop_sync_thread(mddev, true, false);
+> +
+> +	if (mddev->sync_thread) {
+> +		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+> +		md_reap_sync_thread(mddev);
+> +	}
+> +
+>   	del_timer_sync(&mddev->safemode_timer);
 >   
-> -	if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
-> +	if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
-> +	    test_bit(MD_RECOVERY_DONE, &mddev->recovery)) {
->   		if (!locked)
->   			mddev_unlock(mddev);
->   		return;
-> @@ -4901,6 +4902,7 @@ retry:
->   
->   	if (!wait_event_timeout(resync_wait,
->   		   !test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
-> +		   test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
->   		   (check_seq && sync_seq != atomic_read(&mddev->sync_seq)),
->   		   HZ / 10))
->   		goto retry;
-> 
+>   	if (mddev->pers && mddev->pers->quiesce) {
 > 
 > .
 > 
