@@ -1,42 +1,41 @@
 Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EBD8833E9
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 01:51:21 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F4B26124
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 01:56:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705542683; cv=none; b=Uo5L2byd7p0k83oA3bTDQ9W2tn2d+lG5VDBIPdJSLTX0uxDm/T4WL1YTU+R97mBM6IHeHRs+/U5uJtxbNKcFvOdu2RDJD4aOJo/1SDYaiyf37//ojXnDGljx3d1NSOS9lzKdj4JLZ6EHkEZUF05i2S1t5o0iml2VSnWsLRdVHQc=
+	t=1705543005; cv=none; b=r6Y80dKrSiUJO6ntkZJMXGNXt8TmGrgrF8cdvJ9/dYOZzsUW/y/OL0/I0DtPgdWucVhMkyXMp1HfNyT0ASW5MSVj3jcnc3rlJ1jvZKcZUeEtIG+L8Ave1g+h/fmIyp7qOpXITbr0MbZj+/uHw9hF4vCdAPk+dtfRyGoJAy8W5vQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705542683; c=relaxed/simple;
-	bh=qbj1SFJqRNgEbj+zKrEavXJrGKFgd4Lau9kD0laQI5o=;
+	s=arc-20240116; t=1705543005; c=relaxed/simple;
+	bh=F8cVZXu1p1igx8NIwwzoapTI0+v+eWG5jCdGP34rM6o=;
 	h=Received:Received:Received:Subject:To:Cc:References:From:
 	 Message-ID:Date:User-Agent:MIME-Version:In-Reply-To:Content-Type:
 	 Content-Transfer-Encoding:X-CM-TRANSID:X-Coremail-Antispam:
-	 X-CM-SenderInfo; b=hK+rwfiHOJme9LDXJuijWg+Hz1xrUPuau3Yb7tKLx+5btZfzfPdLbMDVewqmU8rKcRiZzpIs6nOv/59Evdk8bd98ejytHCS2zXbtlwgC2uWP3jYHOBgXaqO8xLGWMFNqC7nRApbDQaOalJ91zyzve9i1SiW/zfS8B4YndjkruQU=
+	 X-CM-SenderInfo; b=hSKKW/ssqYWZgy6ADnQxYsML6b/XLx5MFlajufrUEJJmYsOOlwNMv9c7ZGSjhNdVclzlsW60ZIzTusO5Tr14ODwAox9wI3dJ78vaZ+f038bnYSHxHNZZkMWJQTb5vZUHHIOpN7DGoITH2/tQbLNfYdEy+0mX5FNyHJrHFzBlxZg=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TFm1c2xtdz4f3jZ9
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 09:51:16 +0800 (CST)
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TFm7p0PWYz4f3k5n
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 09:56:38 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 91B181A016E
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 09:51:18 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 3A09F1A016E
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 09:56:40 +0800 (CST)
 Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgBnOBEUhKhlXIytBA--.8140S3;
-	Thu, 18 Jan 2024 09:51:18 +0800 (CST)
-Subject: Re: [PATCH 5/7] md: fix deadlock in
- shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh
+	by APP1 (Coremail) with SMTP id cCh0CgBHZQ5XhahlCPKtBA--.42624S3;
+	Thu, 18 Jan 2024 09:56:40 +0800 (CST)
+Subject: Re: [PATCH 7/7] md: fix a suspicious RCU usage warning
 To: Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
  David Jeffery <djeffery@redhat.com>, Li Nan <linan122@huawei.com>
 Cc: dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
  Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>,
  Benjamin Marzinski <bmarzins@redhat.com>, "yukuai (C)" <yukuai3@huawei.com>
 References: <e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com>
- <ece2b06f-d647-6613-a534-ff4c9bec1142@redhat.com>
+ <51539879-e1ca-fde3-b8b4-8934ddedcbc@redhat.com>
 From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <9ad9afa1-3fb1-b9f8-524b-15bec744b787@huaweicloud.com>
-Date: Thu, 18 Jan 2024 09:51:16 +0800
+Message-ID: <322e1306-6507-9707-7985-f460e2536cf0@huaweicloud.com>
+Date: Thu, 18 Jan 2024 09:56:39 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
  Thunderbird/60.8.0
 Precedence: bulk
@@ -45,13 +44,13 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <ece2b06f-d647-6613-a534-ff4c9bec1142@redhat.com>
+In-Reply-To: <51539879-e1ca-fde3-b8b4-8934ddedcbc@redhat.com>
 Content-Type: text/plain; charset=gbk; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBnOBEUhKhlXIytBA--.8140S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxXF1kAF1fJr4DAFyfuF1ftFb_yoW5Zw4Dpa
-	ykCF9ayr4rAry7ZrZFka4UXry5Cr40q39xCrZ3G348A3Z8K3W5AFyjkFyUGF1DC34vva10
-	q3Z8XFsxZw4UK3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:cCh0CgBHZQ5XhahlCPKtBA--.42624S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxJr13tw1ruF1kAFWrtw48tFb_yoW8KF18pa
+	n3Aa4xJr4UJryjyF4jyayUKFyruFy5JFW7Jr93Jw1xZas7A39xAa45KFyrWryDCr90y34U
+	X3W5KFs8Gwn8tFDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUvab4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
 	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
 	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
@@ -67,98 +66,73 @@ X-Coremail-Antispam: 1UD129KBjvJXoWxXF1kAF1fJr4DAFyfuF1ftFb_yoW5Zw4Dpa
 	uYvjxUOyCJDUUUU
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Hi,
-
-在 2024/01/18 2:21, Mikulas Patocka 写道:
-> This commit fixes a deadlock in the LVM2 test
-> shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh
+在 2024/01/18 2:22, Mikulas Patocka 写道:
+> RCU protection was removed in the commit 2d32777d60de ("raid1: remove rcu
+> protection to access rdev from conf").
 > 
-> When MD_RECOVERY_WAIT is set or when md_is_rdwr(mddev) is true, the
-> function md_do_sync would not set MD_RECOVERY_DONE. Thus, stop_sync_thread
-> would wait for the flag MD_RECOVERY_DONE indefinitely.
+> However, the code in fix_read_error does rcu_dereference outside
+> rcu_read_lock - this triggers the following warning. The warning is
+> triggered by a LVM2 test shell/integrity-caching.sh.
 > 
-> Also, md_wakeup_thread_directly does nothing if the thread is waiting in
-> md_thread on thread->wqueue (it wakes the thread up, the thread would
-> check THREAD_WAKEUP and go to sleep again without doing anything). So,
-> this commit introduces a call to md_wakeup_thread from
-> md_wakeup_thread_directly.
+> This commit removes rcu_dereference.
 > 
-> task:lvm             state:D stack:0     pid:46322 tgid:46322 ppid:46079  flags:0x00004002
+> =============================
+> WARNING: suspicious RCU usage
+> 6.7.0 #2 Not tainted
+> -----------------------------
+> drivers/md/raid1.c:2265 suspicious rcu_dereference_check() usage!
+> 
+> other info that might help us debug this:
+> 
+> rcu_scheduler_active = 2, debug_locks = 1
+> no locks held by mdX_raid1/1859.
+> 
+> stack backtrace:
+> CPU: 2 PID: 1859 Comm: mdX_raid1 Not tainted 6.7.0 #2
+> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.12.0-1 04/01/2014
 > Call Trace:
 >   <TASK>
->   __schedule+0x228/0x570
->   schedule+0x29/0xa0
->   schedule_timeout+0x6a/0xd0
->   ? timer_shutdown_sync+0x10/0x10
->   stop_sync_thread+0x197/0x1c0 [md_mod]
+>   dump_stack_lvl+0x60/0x70
+>   lockdep_rcu_suspicious+0x153/0x1b0
+>   raid1d+0x1732/0x1750 [raid1]
+>   ? lock_acquire+0x9f/0x270
+>   ? finish_wait+0x3d/0x80
+>   ? md_thread+0xf7/0x130 [md_mod]
+>   ? lock_release+0xaa/0x230
+>   ? md_register_thread+0xd0/0xd0 [md_mod]
+>   md_thread+0xa0/0x130 [md_mod]
 >   ? housekeeping_test_cpu+0x30/0x30
->   ? table_deps+0x1b0/0x1b0 [dm_mod]
->   __md_stop_writes+0x10/0xd0 [md_mod]
->   md_stop_writes+0x18/0x30 [md_mod]
->   raid_postsuspend+0x32/0x40 [dm_raid]
->   dm_table_postsuspend_targets+0x34/0x50 [dm_mod]
->   dm_suspend+0xc4/0xd0 [dm_mod]
->   dev_suspend+0x186/0x2d0 [dm_mod]
->   ? table_deps+0x1b0/0x1b0 [dm_mod]
->   ctl_ioctl+0x2e1/0x570 [dm_mod]
->   dm_ctl_ioctl+0x5/0x10 [dm_mod]
->   __x64_sys_ioctl+0x85/0xa0
->   do_syscall_64+0x5d/0x1a0
->   entry_SYSCALL_64_after_hwframe+0x46/0x4e
+>   kthread+0xdc/0x110
+>   ? kthread_complete_and_exit+0x20/0x20
+>   ret_from_fork+0x28/0x40
+>   ? kthread_complete_and_exit+0x20/0x20
+>   ret_from_fork_asm+0x11/0x20
+>   </TASK>
 > 
 > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
-> Cc: stable@vger.kernel.org	# v6.7
+> Fixes: ca294b34aaf3 ("md/raid1: support read error check")
+
+LGTM
+Reviewed-by: Yu Kuai <yukuai3@huawei.com>
+
 > 
 > ---
->   drivers/md/md.c    |    8 +++++++-
->   drivers/md/raid5.c |    4 ++++
->   2 files changed, 11 insertions(+), 1 deletion(-)
+>   drivers/md/raid1.c |    2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> Index: linux-2.6/drivers/md/md.c
+> Index: linux-2.6/drivers/md/raid1.c
 > ===================================================================
-> --- linux-2.6.orig/drivers/md/md.c
-> +++ linux-2.6/drivers/md/md.c
-> @@ -8029,6 +8029,8 @@ static void md_wakeup_thread_directly(st
->   	if (t)
->   		wake_up_process(t->tsk);
->   	rcu_read_unlock();
-> +
-> +	md_wakeup_thread(thread);
-
-This is not correct. I already explained(already in comments) what
-md_wakeup_thread_directly() is supposed to do.
->   }
+> --- linux-2.6.orig/drivers/md/raid1.c
+> +++ linux-2.6/drivers/md/raid1.c
+> @@ -2262,7 +2262,7 @@ static void fix_read_error(struct r1conf
+>   	int sectors = r1_bio->sectors;
+>   	int read_disk = r1_bio->read_disk;
+>   	struct mddev *mddev = conf->mddev;
+> -	struct md_rdev *rdev = rcu_dereference(conf->mirrors[read_disk].rdev);
+> +	struct md_rdev *rdev = conf->mirrors[read_disk].rdev;
 >   
->   void md_wakeup_thread(struct md_thread __rcu *thread)
-> @@ -8777,10 +8779,14 @@ void md_do_sync(struct md_thread *thread
->   
->   	/* just incase thread restarts... */
->   	if (test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
-> -	    test_bit(MD_RECOVERY_WAIT, &mddev->recovery))
-> +	    test_bit(MD_RECOVERY_WAIT, &mddev->recovery)) {
-> +		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
-> +			set_bit(MD_RECOVERY_DONE, &mddev->recovery);
-
-If you set MD_RECOVERY_DONE here, sync_thread will be unregistered, I
-don't think this is the expected behaviour. Only dm-raid is using this
-flag, and rs_start_reshape() already explains that it wants
-sync_thread to work later until the table gets reloaded.
-
->   		return;
-> +	}
->   	if (!md_is_rdwr(mddev)) {/* never try to sync a read-only array */
->   		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-> +		set_bit(MD_RECOVERY_DONE, &mddev->recovery);
-
-This change looks reasonable.
-
-Thanks,
-Kuai
-
->   		return;
->   	}
->   
+>   	if (exceed_read_errors(mddev, rdev)) {
+>   		r1_bio->bios[r1_bio->read_disk] = IO_BLOCKED;
 > 
 > .
 > 
