@@ -1,115 +1,125 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50A3314270
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 21:10:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC6411E862
+	for <dm-devel@lists.linux.dev>; Fri, 19 Jan 2024 08:42:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705612240; cv=none; b=RXU6UsxjExTitU8CkHC5itcdT7XQkHyb2lrCrVj4eCiLcMcF4pVh3k5XwmXMbgvNJRY50ZUWZzpaPolwa0F28aoHYFKBwulT9v0tCBeU/NmlpjmYDJXReEomlYld5F4sSXd1YcSD2OH3/K70Os40NnDzFElevH83ZQuQKEHqtic=
+	t=1705653733; cv=none; b=k30h/m72ZN2kLJL9sa64XG9ykRQI0dKhMjWg6dZixXpOfIkoNvlktEjCfgAPCLGDoOQQTgFxZly12YGkdgK3aidoWThD7vtaG+MULrzGY1Mst6yk8ehMrC2WSf0n09mPrxj4a3qV3hDQr2CXAbNot+WU0th8KEd9wsB4CWedIN4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705612240; c=relaxed/simple;
-	bh=E36lb9971gspdwHvqSU1/PsIOqT0FM9IV+e+X0oDMWM=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=UrUTzHa60ouXsz8T2ptovyJP7WfgyXDowfIE+VOUKfdFh6akBwo1SyaWTfG1mk4/mp6GJEy5s8rDnO6lWCu0lfDjQB97UZDnhs+IGn3CkfSMmDJ62t5i1d8NGESbTamvsI7/C8GTeSpzBFoQXDC6IZpBl4dg1fvBPD5lhS0pK+8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=i5v1G8oN; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1705653733; c=relaxed/simple;
+	bh=enRZTZ3A/5sPOqR7e0wgcPMlzxpsSHc7+zk9ab9y1H8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=DuZXCGOHz87qAUdpF1P6mAN/8J/ElKVTTkymu2rXxwbVz1rw2u7ohQ13Bw0mNA7e4cPTXVxQ8dVeBNpUOaGopXzmXYOMXdtwPN/tEq0wKNLtPd7dGFac+nJHwyJ2rTL9YrLQ2rXtESwTzZH67ycSGklPWc6BFjD6TIfEaOf2U1k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bEQRenmb; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="i5v1G8oN"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E52C0C433C7
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 21:10:39 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1705612239;
-	bh=E36lb9971gspdwHvqSU1/PsIOqT0FM9IV+e+X0oDMWM=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=i5v1G8oNmaA5WEwACNLCQTk8rygkE5SCUeM5hQNsuWpjX9O0oqIX93l5K7Cr8R2I+
-	 dAtaMSLPaRrf/Z9UeRBkdoE9gLwSpiVnEFE6Szky5jCWCU72rhhJdobKBtElvImYnu
-	 v8mCUVTxuE/7vGSJBz5MXvdArpQAhg4t6g4DFqIp3cCXIyGUb0AKsir3shRcuNqUID
-	 dp/+wBU5cKyQwIuh3KGVi41Fp5tSm+3IMaYNrPXHOFwgIGhtHI9873gKRhzVhuH/fx
-	 ICB3Dn+sSI5T1NOxhZQtsSwjkXdR3gMjS7yDsd3LPe/yIZlFZkPmVVRYDYWdyNVnZj
-	 Fpg1TEmAaBnuQ==
-Received: by mail-lf1-f50.google.com with SMTP id 2adb3069b0e04-50e7f58c5fbso40439e87.1
-        for <dm-devel@lists.linux.dev>; Thu, 18 Jan 2024 13:10:39 -0800 (PST)
-X-Gm-Message-State: AOJu0YxdAuX30OyX3Rd26n/w7n0knrNMk2Fx64yQMQPzivbek1HeEeNg
-	UPdtfszkt45aG2onQ7Vmt1IcUBpxPpX66/SQXXDSvpflxPtRmwTgZfd9iyPx+PErcg8/8tfLKhL
-	7LGa0zjMZg+aOcy7amqnd3nR1b7w=
-X-Google-Smtp-Source: AGHT+IFu2+ALYFAH2oZVTnMUCSYFs9LjmzHM81+AXJfESBRuaPMfDftzsau+nfNTcYukQe+XMXqBmRduns0x3HG4u1U=
-X-Received: by 2002:a19:5f0f:0:b0:50e:7cbf:7d82 with SMTP id
- t15-20020a195f0f000000b0050e7cbf7d82mr123238lfb.128.1705612238158; Thu, 18
- Jan 2024 13:10:38 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bEQRenmb"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1705653730;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=iZwuvLGmOYB4Vf9wQkXsFnJm7UNiZ3ky5C2IOeAmnx0=;
+	b=bEQRenmb1V0Wdyiwe7qTFn7SGplajTTHQYNZpcWnNW1MfWwY5tQDR2qw/a/yEIDO9oRwBk
+	F4CM9zfUxlmwW6/rho3w8pdsMuEkP+ie47AdfUyNU2xBJFv2rFszAE3mZY1uvdV/EC0vvo
+	aTD7A4t+xGlOTafz0gcs0J2dcUFAu2g=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-609-Sqz9YkkjMUu6uMmdzNElJQ-1; Fri, 19 Jan 2024 03:42:07 -0500
+X-MC-Unique: Sqz9YkkjMUu6uMmdzNElJQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C18E83535E;
+	Fri, 19 Jan 2024 08:42:06 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.42])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 61B8F40C1430;
+	Fri, 19 Jan 2024 08:42:02 +0000 (UTC)
+Date: Fri, 19 Jan 2024 16:41:58 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Li Nan <linan666@huaweicloud.com>,
+	Zdenek Kabelac <zkabelac@redhat.com>,
+	Christoph Hellwig <hch@infradead.org>,
+	Chaitanya Kulkarni <chaitanyak@nvidia.com>,
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+	ming.lei@redhat.com
+Subject: Re: [PATCH v3 0/4] brd discard patches
+Message-ID: <Zao1PNip1SRVB4Rp@fedora>
+References: <2dacc73-854-e71c-1746-99b017401c9a@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com>
- <9801e40-8ac7-e225-6a71-309dcf9dc9aa@redhat.com> <CAPhsuW483DSEvgoT0c-Mo1gdpVKRRLkTxu+kuxYG6k-zew+FFA@mail.gmail.com>
- <82e9b11f-e28-683-782d-aa5b8c62ff1a@redhat.com>
-In-Reply-To: <82e9b11f-e28-683-782d-aa5b8c62ff1a@redhat.com>
-From: Song Liu <song@kernel.org>
-Date: Thu, 18 Jan 2024 13:10:26 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW4YLVLhv2ii0UjiQOmiqR3mk6u8r94-SVZjMs6LVp+WaQ@mail.gmail.com>
-Message-ID: <CAPhsuW4YLVLhv2ii0UjiQOmiqR3mk6u8r94-SVZjMs6LVp+WaQ@mail.gmail.com>
-Subject: Re: [PATCH 3/7] md: test for MD_RECOVERY_DONE in stop_sync_thread
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Yu Kuai <yukuai3@huawei.com>, David Jeffery <djeffery@redhat.com>, 
-	Li Nan <linan122@huawei.com>, dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, 
-	Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, 
-	Benjamin Marzinski <bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <2dacc73-854-e71c-1746-99b017401c9a@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-On Thu, Jan 18, 2024 at 5:24=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
-m> wrote:
->
->
->
-> On Wed, 17 Jan 2024, Song Liu wrote:
->
-> > On Wed, Jan 17, 2024 at 10:19=E2=80=AFAM Mikulas Patocka <mpatocka@redh=
-at.com> wrote:
-> > >
-> > > stop_sync_thread sets MD_RECOVERY_INTR and then waits for
-> > > MD_RECOVERY_RUNNING to be cleared. However, md_do_sync will not clear
-> > > MD_RECOVERY_RUNNING when exiting, it will set MD_RECOVERY_DONE instea=
-d.
-> > >
-> > > So, we must wait for MD_RECOVERY_DONE to be set as well.
-> > >
-> > > This patch fixes a deadlock in the LVM2 test shell/integrity-caching.=
-sh.
-> >
-> > I am not able to reproduce the issue on 6.7 kernel with
-> > shell/integrity-caching.sh.
-> > I got:
-> >
-> > VERBOSE=3D0 ./lib/runner \
-> >         --testdir . --outdir results \
-> >         --flavours ndev-vanilla --only shell/integrity-caching.sh --ski=
-p @
-> > running 1 tests
-> > ###       passed: [ndev-vanilla] shell/integrity-caching.sh  4:24.225
-> >
-> > ### 1 tests: 1 passed, 0 skipped, 0 timed out, 0 warned, 0 failed   in =
- 4:24.453
-> > make[1]: Leaving directory '/root/lvm2/test'
-> >
-> > Do you see the issue every time with shell/integrity-caching.sh?
->
-> Hmm, that's strange - I get a hang with this stacktrace sometimes
-> instantly, sometimes in 30 seconds. I test it on the current kernel from
-> Linus' git - 052d534373b7ed33712a63d5e17b2b6cdbce84fd.
+Hi Mikulas,
 
-It works for me. I guess there is some difference in the config/system?
+On Thu, Aug 10, 2023 at 12:07:07PM +0200, Mikulas Patocka wrote:
+> Hi
+> 
+> Here I'm submitting the ramdisk discard patches for the next merge window. 
+> If you want to make some more changes, please let me now.
 
-VERBOSE=3D0 ./lib/runner \
-        --testdir . --outdir results \
-        --flavours ndev-vanilla --only shell/integrity-caching.sh --skip @
-running 1 tests
-###       passed: [ndev-vanilla] shell/integrity-caching.sh  4:18.360
+brd discard is removed in f09a06a193d9 ("brd: remove discard support")
+in 2017 because it is just driver private write_zero, and user can get same
+result with fallocate(FALLOC_FL_ZERO_RANGE).
 
-### 1 tests: 1 passed, 0 skipped, 0 timed out, 0 warned, 0 failed   in  4:1=
-8.749
-make[1]: Leaving directory '/root/lvm2/test'
+Also you only mentioned the motivation in V1 cover-letter:
 
-[root@ ~]# uname -r
-6.7.0-09928-g052d534373b7
+https://lore.kernel.org/linux-block/alpine.LRH.2.02.2209151604410.13231@file01.intranet.prod.int.rdu2.redhat.com/
+
+```
+Zdenek asked me to write it, because we use brd in the lvm2 testsuite and
+it would be benefical to run the testsuite with discard enabled in order
+to test discard handling.
+```
+
+But we have lots of test disks with discard support: loop, scsi_debug,
+null_blk, ublk, ..., so one requestion is that why brd discard is
+a must for lvm2 testsuite to cover (lvm)discard handling?
+
+The reason why brd didn't support discard by freeing pages is writeback
+deadlock risk, see:
+
+commit f09a06a193d9 ("brd: remove discard support")
+
+-static void discard_from_brd(struct brd_device *brd,
+-                       sector_t sector, size_t n)
+-{
+-       while (n >= PAGE_SIZE) {
+-               /*
+-                * Don't want to actually discard pages here because
+-                * re-allocating the pages can result in writeback
+-                * deadlocks under heavy load.
+-                */
+-               if (0)
+-                       brd_free_page(brd, sector);
+-               else
+-                       brd_zero_page(brd, sector);
+-               sector += PAGE_SIZE >> SECTOR_SHIFT;
+-               n -= PAGE_SIZE;
+-       }
+-}
+
+However, you didn't mention how your patches address this potential
+risk, care to document it? I can't find any related words about
+this problem.
+
+BTW, your patches looks more complicated than the original removed
+discard implementation. And if the above questions get addressed,
+I am happy to provide review on the following patches.
+
+
+Thanks,
+Ming
+
