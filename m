@@ -1,27 +1,27 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C59AED2FA
-	for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 10:41:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 904FF10962
+	for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 10:41:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705747283; cv=none; b=N6y3unfAxprhtjSJmaPfE2uZd3GgH7F49B9eRugfwc1QEHDmn1VZWvV0K8PSwyUBlkJ6mEC3JamepX5eqYCB6r28SJTAj2hoq5FpZiFAvLYXlVktnbjJ/fb7eNw+YHOaEkUIe/iFpsAZwSW/WN/Z5mzayjgnUuE3y7tHBDfM2sM=
+	t=1705747287; cv=none; b=I9m6xSGHuVQJU+a1ylQw/yE2Y46w58W/o+NfGVPWUJUQmnDSjv+pXGNNhpQrjwOpr3BEpNzzLaZ0/0ji7v2MIc123rp2PFipUr9mt6F3XaMOmU8ZbdNEnVOkbBCbmCZClPF/5N3+qXWc+xL0kOpUg3gCh7mitlKqPciGktBO1rI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705747283; c=relaxed/simple;
-	bh=7f5Ea4YOXZsVcffF1Kp4uocWgltKhjuUuA7JtCWrFY0=;
+	s=arc-20240116; t=1705747287; c=relaxed/simple;
+	bh=XWCMatNblyNOOG9ZYuVi232xYuylTRA2/wcziHuRmDA=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=b6vQLOH1Knyg5dpJHaM/BZk8h3LuPtTLJFesZZ1LsEJey6+h/uWCKVkHigVgHdFXfPBfGyJ1RZ2MZdPyB/ksm1PMlbTaslsEBfQKX5iS7dDqF2p6uM7OdLtTJWNwR1nEOlLZj4Is4Z6SYPCSkGpD1WXUnjxEEPJuTGv/jHJex60=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+	 MIME-Version; b=NIRe9Heu7+m70v6GJXEVFg0mMhfY8M5/N13cDVZkjuBGKOjO1CBhAUoSblOFBpPQEK903/p8OZvZstH8XWHLVIR9gC7y1GYQgiKsaBK201YDUACBH/K1XI94LcWs4wyii2IOfrliOmUWMEgZLCEgRSY5VAiQI5tfiGzBkWV+KVY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4THChC551xz4f3jql
-	for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 18:41:15 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4THCh94dmmz4f3jrj
+	for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 18:41:13 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id EAE071A0B3B
+	by mail.maildlp.com (Postfix) with ESMTP id 769341A09F2
 	for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 18:41:17 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgAn+RFKo6tlY4mmBQ--.38494S7;
+	by APP1 (Coremail) with SMTP id cCh0CgAn+RFKo6tlY4mmBQ--.38494S6;
 	Sat, 20 Jan 2024 18:41:17 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: mpatocka@redhat.com,
@@ -35,9 +35,9 @@ Cc: linux-raid@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH 3/5] md: make sure md_do_sync() will set MD_RECOVERY_DONE
-Date: Sat, 20 Jan 2024 18:37:32 +0800
-Message-Id: <20240120103734.4155446-4-yukuai1@huaweicloud.com>
+Subject: [PATCH 2/5] md: don't ignore read-only array in md_check_recovery()
+Date: Sat, 20 Jan 2024 18:37:31 +0800
+Message-Id: <20240120103734.4155446-3-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
 References: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
@@ -48,12 +48,12 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgAn+RFKo6tlY4mmBQ--.38494S7
-X-Coremail-Antispam: 1UD129KBjvJXoW7WF48JF18KF45Gw4rCFy7GFg_yoW8Ar1kpa
-	ykGF9IvrW8ArW3urW2qa4DXa45Aw1Ivry3CFyfuas8AF1fta1akFW5uF1UXaykta4fJayY
-	va15JF9xZF95C3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:cCh0CgAn+RFKo6tlY4mmBQ--.38494S6
+X-Coremail-Antispam: 1UD129KBjvJXoW7Zr1fXFy5AF1DCr1rAFWfuFg_yoW8Kw1rpa
+	yfKas8WrW8XF93ZrZrK3WDXay5uw10vrWjyry3u34fAw1rtr43C345uF1UAFWkJa4Fva1j
+	v3WrJF43ZFy8Gw7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUBK14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JrWl82xGYIkIc2
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jryl82xGYIkIc2
 	x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
 	Y4vE2Ix0cI8IcVAFwI0_Xr0_Ar1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Cr0_Gr1UM2
 	8EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s0DM2AI
@@ -64,57 +64,88 @@ X-Coremail-Antispam: 1UD129KBjvJXoW7WF48JF18KF45Gw4rCFy7GFg_yoW8Ar1kpa
 	Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUtVW8ZwCIc40Y0x
 	0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8
 	JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIx
-	AIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7VUbJ73DUUUUU=
+	AIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7VUbdOz7UUUUU=
 	=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-stop_sync_thread() will interrupt md_do_sync(), and md_do_sync() must
-set MD_RECOVERY_DONE, so that follow up md_check_recovery() will
-unregister sync_thread, clear MD_RECOVERY_RUNNING and wake up
-stop_sync_thread().
+If array is read-only and md_do_sync() is done. Currently
+md_check_recovery() ignore this case, henc sync_thread can't be
+unregistered.
 
-Before this patch, if MD_RECOVERY_WAIT is set or the array is read-only,
-md_do_sync() will return without setting MD_RECOVERY_DONE, hence use
-stop_sync_thread() directly will hang because md_check_recovery() can't
-clear MD_RECOVERY_RUNNING, which is possible for dm-raid.
+Before this patch, use stop_sync_thread() directly for read-only
+array will hang because md_check_recovery() can't clear
+MD_RECOVERY_RUNNING, which is possible for dm-raid.
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ drivers/md/md.c | 31 ++++++++++++++++++-------------
+ 1 file changed, 18 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 6906d023f1d6..ba45c7be3dbe 100644
+index 07b80278eaa5..6906d023f1d6 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -8788,12 +8788,13 @@ void md_do_sync(struct md_thread *thread)
- 	int ret;
+@@ -9445,6 +9445,20 @@ static void md_start_sync(struct work_struct *ws)
+ 		sysfs_notify_dirent_safe(mddev->sysfs_action);
+ }
  
- 	/* just incase thread restarts... */
--	if (test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
--	    test_bit(MD_RECOVERY_WAIT, &mddev->recovery))
-+	if (test_bit(MD_RECOVERY_DONE, &mddev->recovery))
- 		return;
--	if (!md_is_rdwr(mddev)) {/* never try to sync a read-only array */
++static void unregister_sync_thread(struct mddev *mddev)
++{
++	if (!test_bit(MD_RECOVERY_DONE, &mddev->recovery)) {
++		/* resync/recovery still happening */
++		clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
++		return;
++	}
 +
-+	if (test_bit(MD_RECOVERY_WAIT, &mddev->recovery) ||
-+	    !md_is_rdwr(mddev)) {/* never try to sync a read-only array */
- 		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
--		return;
-+		goto out;
++	if (WARN_ON_ONCE(!mddev->sync_thread))
++		return;
++
++	md_reap_sync_thread(mddev);
++}
++
+ /*
+  * This routine is regularly called by all per-raid-array threads to
+  * deal with generic issues like resync and super-block update.
+@@ -9482,7 +9496,8 @@ void md_check_recovery(struct mddev *mddev)
  	}
  
- 	if (mddev_is_clustered(mddev)) {
-@@ -9171,6 +9172,7 @@ void md_do_sync(struct md_thread *thread)
- 						mddev->array_sectors);
- 	}
+ 	if (!md_is_rdwr(mddev) &&
+-	    !test_bit(MD_RECOVERY_NEEDED, &mddev->recovery))
++	    !test_bit(MD_RECOVERY_NEEDED, &mddev->recovery) &&
++	    !test_bit(MD_RECOVERY_DONE, &mddev->recovery))
+ 		return;
+ 	if ( ! (
+ 		(mddev->sb_flags & ~ (1<<MD_SB_CHANGE_PENDING)) ||
+@@ -9504,8 +9519,7 @@ void md_check_recovery(struct mddev *mddev)
+ 			struct md_rdev *rdev;
  
-+out:
- 	spin_lock(&mddev->lock);
- 	if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery)) {
- 		/* We completed so min/max setting can be forgotten if used. */
+ 			if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
+-				/* sync_work already queued. */
+-				clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
++				unregister_sync_thread(mddev);
+ 				goto unlock;
+ 			}
+ 
+@@ -9568,16 +9582,7 @@ void md_check_recovery(struct mddev *mddev)
+ 		 * still set.
+ 		 */
+ 		if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
+-			if (!test_bit(MD_RECOVERY_DONE, &mddev->recovery)) {
+-				/* resync/recovery still happening */
+-				clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
+-				goto unlock;
+-			}
+-
+-			if (WARN_ON_ONCE(!mddev->sync_thread))
+-				goto unlock;
+-
+-			md_reap_sync_thread(mddev);
++			unregister_sync_thread(mddev);
+ 			goto unlock;
+ 		}
+ 
 -- 
 2.39.2
 
