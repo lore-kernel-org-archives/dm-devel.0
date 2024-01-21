@@ -1,91 +1,114 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9053710979
-	for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 10:41:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B701728E17
+	for <dm-devel@lists.linux.dev>; Sun, 21 Jan 2024 04:41:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705747287; cv=none; b=DkhLujt2Tq2+2Rty2zNd/pjn3O4JmUgHokjj6XkBZ1WhQTMaenBkrJrauy2q+9SeMoZdM944LM9NoDR6YQCIkG69e+sh11af65r5afkuaVchwvuJWU+sE0ZQXF7X7Gnb+rx7R6pVM7RjpNafqLZS9FQQA1HkVUOyjWp+FoIa5qQ=
+	t=1705812101; cv=none; b=ceBvmBvNwHXrAg8L6bVBrzeoA/SuCkGNNLzk4M3mACb4zlSOdVa9CW1WZxvQqDbDxjTnT90TMg53xE6SgMAQOJ36W2yZrS7SFk7SnlysCcgN/25Ul7CRP+QAkp82CqkhFEUBq55ZGDDbJORWX439TBsQQjNA2AEPDB4mdjUbqh8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705747287; c=relaxed/simple;
-	bh=fWSeSobJcb8/VlAKsgexEgZ0zygnoLBIO2J4LToYTbQ=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=BHvTIk73iP4ojX9hVrJ3WKQA9gaAS2lkyVzFdy2kdeq6SM1WQmBbBVh43Wu218f9DhN6TdwRihGROFKsEOUqxw+p5pG+3XIwQEm9eGTvj1hcbRA7m9iT08RcGl1GerCRnxyNyiey0EoUEPmEF7Mjmc4cdafWF0Ye+mqi/LIa/aI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4THCh85962z4f3js7
-	for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 18:41:12 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 883101A016E
-	for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 18:41:16 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgAn+RFKo6tlY4mmBQ--.38494S4;
-	Sat, 20 Jan 2024 18:41:16 +0800 (CST)
-From: Yu Kuai <yukuai1@huaweicloud.com>
-To: mpatocka@redhat.com,
-	dm-devel@lists.linux.dev,
-	msnitzer@redhat.com,
-	heinzm@redhat.com,
-	song@kernel.org,
-	yukuai3@huawei.com
-Cc: linux-raid@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	yukuai1@huaweicloud.com,
-	yi.zhang@huawei.com,
-	yangerkun@huawei.com
-Subject: [PATCH 0/5] md: fix/prevent dm-raid regressions
-Date: Sat, 20 Jan 2024 18:37:29 +0800
-Message-Id: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
-X-Mailer: git-send-email 2.39.2
+	s=arc-20240116; t=1705812101; c=relaxed/simple;
+	bh=CLoBcUg0M1rW7KdYcGww7VUJ+qhz8K1YgEbTrTVDmU4=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=rNVOmcVq+q+SeAgc8wzzzKNaSN8nsS6Va88eFLbU2JMpn84bb636crYgllFOYnZqGnxBDme6VFiaG1UMFgKGLnmtCHZvDlkaf28x8JiI3AZyQSqs3O9AlEN/04B0m6fAUKGz7kM/vty1mIXnklugIc4OA+wLiOgzBX2ZfNLnsVE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=uXMrvdUw; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="uXMrvdUw"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 54B4BC433C7
+	for <dm-devel@lists.linux.dev>; Sun, 21 Jan 2024 04:41:41 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1705812101;
+	bh=CLoBcUg0M1rW7KdYcGww7VUJ+qhz8K1YgEbTrTVDmU4=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=uXMrvdUwySsWCTlFCfNRpqxg2YIa4hG0aFEAw8+EG+U8xuWReAk1o2vuJ5J+MAY4I
+	 pR3nY8T+N19UbZ9l36z6UIbE7f+zoEGuQfsrLyj4bP1VDIQKN2S8M62G7AU7ojftbY
+	 TUGY1F8tSDxTneUjazIO4MAMar/jrqJbqQRm1tjjO7/1H99Ea9ydkJvWoXua9wRExS
+	 2ST0D63lrmPUWoYqPJBLMheaLJZLHJHv36wkwkWQq+svJlaxXlQLwro9hfsgF4abp2
+	 GOIsbfpC0dBbr5mZyehNr2ooi7fZ4unVF1SWnIIOzzdyfOOnuO5SpdoBdZGxRMjGVm
+	 uz4sW6E2lPPjw==
+Received: by mail-lf1-f47.google.com with SMTP id 2adb3069b0e04-50e835800adso2288557e87.0
+        for <dm-devel@lists.linux.dev>; Sat, 20 Jan 2024 20:41:41 -0800 (PST)
+X-Gm-Message-State: AOJu0Yy/TMOaVFQhuiO6wl0PqnBUR1YSbJBZTdoVwmCB1fWKlulJsKtd
+	1KEioZLNnFa3u1MH1Xgk7TTDsgj73pPd8bLa7pkVI1VClcjpIUqmlOtZUPGpkeITx/lH7OsMXK0
+	FWrVUUD0vVEodsdezm4pNAmWGyU8=
+X-Google-Smtp-Source: AGHT+IEwi8R/zySvtTMK4LGF0oiFWjRhGybo+7mnsI0ANF/O090kSSpksEK1uexddbW+BVMFtBTaMDYijmeHJ7NZSJg=
+X-Received: by 2002:a05:6512:2112:b0:50e:3fbb:e5e4 with SMTP id
+ q18-20020a056512211200b0050e3fbbe5e4mr525465lfr.164.1705812099509; Sat, 20
+ Jan 2024 20:41:39 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgAn+RFKo6tlY4mmBQ--.38494S4
-X-Coremail-Antispam: 1UD129KBjvdXoWruFW8Cry7KF4rCrWrJw4kCrg_yoWDWFbEka
-	yI9F97Gr1Uu3Z3WayUur4SyryUCFZrWayUXFWDKrW0qry7X34fuF4Dtr4F9ry7ZFWDKF1k
-	Cry8Z3yFv3sFvjkaLaAFLSUrUUUUUb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
-	9fnUUIcSsGvfJTRUUUbx8FF20E14v26r4j6ryUM7CY07I20VC2zVCF04k26cxKx2IYs7xG
-	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8w
-	A2z4x0Y4vE2Ix0cI8IcVAFwI0_Xr0_Ar1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr0_
-	Cr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_GcCE3s
-	1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E2Ix0
-	cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJVW8Jw
-	ACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67
-	AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43MIIY
-	rxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14
-	v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v26r1j
-	6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUdHU
-	DUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+References: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
+In-Reply-To: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
+From: Song Liu <song@kernel.org>
+Date: Sat, 20 Jan 2024 20:41:28 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW7trizGqWcBWQ1R1mrxyA6sNTuwXOK-0vxtCHO6fqcTbQ@mail.gmail.com>
+Message-ID: <CAPhsuW7trizGqWcBWQ1R1mrxyA6sNTuwXOK-0vxtCHO6fqcTbQ@mail.gmail.com>
+Subject: Re: [PATCH 0/5] md: fix/prevent dm-raid regressions
+To: Yu Kuai <yukuai1@huaweicloud.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, msnitzer@redhat.com, heinzm@redhat.com, 
+	yukuai3@huawei.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	yi.zhang@huawei.com, yangerkun@huawei.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-From: Yu Kuai <yukuai3@huawei.com>
+On Sat, Jan 20, 2024 at 2:41=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> w=
+rote:
+>
+> From: Yu Kuai <yukuai3@huawei.com>
+>
+> There are some problems that we fixed in md/raid, and some apis is change=
+d.
+> However, dm-raid rely the old apis(noted that old apis is problematic in
+> corner cases), and now there are regressions in lvm2 testsuite.
+>
+> This patchset fix some regressions(patch 1-3), and revert changes to
+> prevent regressions(patch 4,5). Noted that the problems in patch 4,5 is
+> not clear yet, and I'm not able to locate the root cause ASAP, hence I
+> decide to revert changes to prevent regressions first.
 
-There are some problems that we fixed in md/raid, and some apis is changed.
-However, dm-raid rely the old apis(noted that old apis is problematic in
-corner cases), and now there are regressions in lvm2 testsuite.
+Thanks for looking into this!
 
-This patchset fix some regressions(patch 1-3), and revert changes to
-prevent regressions(patch 4,5). Noted that the problems in patch 4,5 is
-not clear yet, and I'm not able to locate the root cause ASAP, hence I
-decide to revert changes to prevent regressions first.
+Patch 1-3 look good to me. But since we need to back port these fixes
+to 6.7 kernels, let's make it very clear what issues are being fixed.
+Please:
+1. Test on both Linus' master branch and 6.7.y, and explain which tests
+are failing before the fixes. (From my tests, the two branches don't have
+the same test results). We can put these results in the cover letter and
+include them in a merge commit.
+2. If possible, add Fixes tag to all patches.
+3. Add more details in the commit log, so it is clear what is being fixed.
+4. Add "reported-by" and maybe also "closes" tag.
 
-Yu Kuai (5):
-  md: don't ignore suspended array in md_check_recovery()
-  md: don't ignore read-only array in md_check_recovery()
-  md: make sure md_do_sync() will set MD_RECOVERY_DONE
-  md: revert commit fa2bbff7b0b4 ("md: synchronize flush io with array
-    reconfiguration") for dm-raid
-  md: use md_reap_sync_thread() directly for dm-raid
+For patch 4-5, especially 5, I wonder whether the same issue also
+happens with md. We can probably ship 4-5 now, with the same
+improvements as patch 1-3.
 
- drivers/md/md.c | 58 ++++++++++++++++++++++++++++++-------------------
- 1 file changed, 36 insertions(+), 22 deletions(-)
+I will run more tests on my side.
 
--- 
-2.39.2
+Mykulas, please also review and test these patches.
 
+Thanks,
+Song
+
+
+
+>
+> Yu Kuai (5):
+>   md: don't ignore suspended array in md_check_recovery()
+>   md: don't ignore read-only array in md_check_recovery()
+>   md: make sure md_do_sync() will set MD_RECOVERY_DONE
+>   md: revert commit fa2bbff7b0b4 ("md: synchronize flush io with array
+>     reconfiguration") for dm-raid
+>   md: use md_reap_sync_thread() directly for dm-raid
+>
+>  drivers/md/md.c | 58 ++++++++++++++++++++++++++++++-------------------
+>  1 file changed, 36 insertions(+), 22 deletions(-)
+>
+> --
+> 2.39.2
+>
+>
