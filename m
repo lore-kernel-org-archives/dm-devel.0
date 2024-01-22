@@ -1,28 +1,28 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3CC1736C
-	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 01:19:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6133520DE0
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 08:24:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705886364; cv=none; b=lVBVAidKivnyxx370r9O+5DD+a11Bt0FczyLLwxBGCVtKeumaCuU8kdUBX4xS9LzXfIRaxAu36O440i9J4BvtfZM6+rzx9vpY22AURbWc/unoXhwoeQ301RSgx429tE0Nw8yu+dyrQbzIX4v92XRKUas4ggs+zMSc2r+imuoKCQ=
+	t=1705911852; cv=none; b=rrCt4EhTEaXQdUBLsGDtnkLzYiAAtuiwJ0HhYePBAuhw6M8SXJVnXZJrsagnWmrPl0enyPw/YDZDpd5NWAUcFcLCjAjNMQwjkHzG5HES3jutRdYVciTW3GiwT4igNXSTvFEbvbE2ISadyDVZGCv52owtgzsBjBo/AhpK7qMghuM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705886364; c=relaxed/simple;
-	bh=zVK7nTI8nxKwUnzW9JfiUrl1UGCv4eWxbRSAefPPUn4=;
+	s=arc-20240116; t=1705911852; c=relaxed/simple;
+	bh=K5hQWVKenRGzozuAEV67IBXdrdoUFoxHuQ7gXOfXmuo=;
 	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=pV5a2pcGbqfNuJnleEtQjkPi788nNBvmWlXmuav1rWswfa09+dARgu6KXuhLu6Ish1UVApIkxu68mg+hgTfvIJ4xiSU8uZ1QMyRmCiur4kMZO5pYzwSbBVu/Rz82ALYSnFhAR5FsZ1JaUDGA+HVRs71mHObZI+dH39Vl8fPAMwE=
+	 In-Reply-To:Content-Type; b=EB5+wUsQZ8H27m1FWAqeBogZ73Rlckfo53RMWFYZmGRD8Lk2xaT41pbi5cqampOTPqoX2Wyc4wANy5ULFiQs8uCNvTyi4nOWme9BnzOvfZkazeZIzf7OKqYpbEP721LFNAk23MZ9/+U82K8QB8YQuQjxjRsTZJU990aQX+/EonI=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TJC6f63Czz4f3jYS
-	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 09:19:06 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TJNXy0ytGz4f3jHs
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 16:24:02 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id B24C81A0953
-	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 09:19:10 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 0576B1A016E
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 16:24:06 +0800 (CST)
 Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgDHlxCMwq1l_PdQBg--.64769S3;
-	Mon, 22 Jan 2024 09:19:10 +0800 (CST)
+	by APP1 (Coremail) with SMTP id cCh0CgAX5g4kJq5lFSVwBg--.15908S3;
+	Mon, 22 Jan 2024 16:24:05 +0800 (CST)
 Subject: Re: [PATCH 0/5] md: fix/prevent dm-raid regressions
 To: Song Liu <song@kernel.org>, Yu Kuai <yukuai1@huaweicloud.com>,
  Mikulas Patocka <mpatocka@redhat.com>
@@ -32,8 +32,8 @@ Cc: dm-devel@lists.linux.dev, msnitzer@redhat.com, heinzm@redhat.com,
 References: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
  <CAPhsuW7trizGqWcBWQ1R1mrxyA6sNTuwXOK-0vxtCHO6fqcTbQ@mail.gmail.com>
 From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <2e1e8e5d-b1c6-efc9-c783-06ce728cd12e@huaweicloud.com>
-Date: Mon, 22 Jan 2024 09:19:08 +0800
+Message-ID: <354941c2-17bd-ce04-f8c8-645d7c4de4cc@huaweicloud.com>
+Date: Mon, 22 Jan 2024 16:24:03 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
  Thunderbird/60.8.0
 Precedence: bulk
@@ -45,23 +45,23 @@ MIME-Version: 1.0
 In-Reply-To: <CAPhsuW7trizGqWcBWQ1R1mrxyA6sNTuwXOK-0vxtCHO6fqcTbQ@mail.gmail.com>
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgDHlxCMwq1l_PdQBg--.64769S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxur4DJF1rAr4xJrW7ArWfGrg_yoW5Xr4xpa
-	y3Ja4akr4DJrsFkrn3tFy8XFyFkFWrJrWrGr13Kry8A345Xryj9FWxKw48Wr98Cr9aq3WY
-	kF48Gr93Ga4jva7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+X-CM-TRANSID:cCh0CgAX5g4kJq5lFSVwBg--.15908S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxur4DJF1rAr4xJrW7ArWfGrg_yoWrGF15pF
+	ZxGa4avrW8AF4xtrnxJ3W8XFyFyr1fJFZ3Cay3Gry0yrZxGryktFs3Kw1Uuas0kr1S93W2
+	vayUJwn5GF18WFDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9014x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
-	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
-	67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E
-	3s1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcS
-	sGvfC2KfnxnUUI43ZEXa7VUbXdbUUUUUU==
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26rxl
+	6s0DM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s
+	0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xII
+	jxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr
+	1lF7xvr2IY64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2IY
+	04v7Mxk0xIA0c2IEe2xFo4CEbIxvr21l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7
+	v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF
+	1VAY17CE14v26r1q6r43MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIx
+	AIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWrZr1j6s0D
+	MIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIda
+	VFxhVjvjDU0xZFpf9x0JUdHUDUUUUU=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 Hi,
@@ -85,6 +85,52 @@ Hi,
 > Patch 1-3 look good to me. But since we need to back port these fixes
 > to 6.7 kernels, let's make it very clear what issues are being fixed.
 > Please:
+
+I'm attaching my test result here, before I send the next version.
+
+The tested patched add following changes for patch 5:
+
+@@ -9379,6 +9387,15 @@ static void md_start_sync(struct work_struct *ws)
+         suspend ? mddev_suspend_and_lock_nointr(mddev) :
+                   mddev_lock_nointr(mddev);
+
++       if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
++               /*
++                * dm-raid calls md_reap_sync_thread() directly to 
+unregister
++                * sync_thread, and md/raid should never trigger this.
++                */
++               WARN_ON_ONCE(mddev->gendisk);
++               goto not_running;;
++       }
++
+         if (!md_is_rdwr(mddev)) {
+
+Failed tests for v6.6:
+###       failed: [ndev-vanilla] shell/duplicate-vgid.sh
+###       failed: [ndev-vanilla] shell/fsadm-crypt.sh
+###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+###       failed: [ndev-vanilla] shell/lvconvert-cache-abort.sh
+###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
+###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+###       failed: [ndev-vanilla] shell/select-report.sh
+
+Failed tests for next-20240117(latest linux-next, between v6.7 to v6.8-rc1)
+###       failed: [ndev-vanilla] shell/duplicate-vgid.sh
+###       failed: [ndev-vanilla] shell/fsadm-crypt.sh
+###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+###       failed: [ndev-vanilla] shell/select-report.sh
+
+Please noted that the test lvconvert-raid-reshape.sh is still possible
+to fail due to commit c467e97f079f ("md/raid6: use valid sector values
+to determine if an I/O should wait on the reshape").
+
+Thanks,
+Kuai
+
 > 1. Test on both Linus' master branch and 6.7.y, and explain which tests
 > are failing before the fixes. (From my tests, the two branches don't have
 > the same test results). We can put these results in the cover letter and
@@ -93,27 +139,11 @@ Hi,
 > 3. Add more details in the commit log, so it is clear what is being fixed.
 > 4. Add "reported-by" and maybe also "closes" tag.
 > 
-
-Will do this is the next version. I verified that the following tests
-will pass now in my VM:
-
-shell/integrity-caching.sh
-shell/lvconvert-raid-reshape.sh
-
 > For patch 4-5, especially 5, I wonder whether the same issue also
 > happens with md. We can probably ship 4-5 now, with the same
 > improvements as patch 1-3.
-
-With patch 1-3, the test lvconvert-raid-reshape.sh won't hang anymore,
-however it still fails and complain that ext4 is corrupted, and I'm
-still trying to understand how reshape works in dm-raid. :(
 > 
 > I will run more tests on my side.
-
-Notice that the problem Mykulas mentioned in the patch md: partially
-revert "md/raid6: use valid sector values to determine if an I/O should
-wait on the reshape" still exist. And again, I'm stll trying to
-understand how raid5 works in detail.
 > 
 > Mykulas, please also review and test these patches.
 > 
