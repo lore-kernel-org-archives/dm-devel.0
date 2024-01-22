@@ -1,135 +1,203 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8527A39AF1
-	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 10:09:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB9BF3D96C
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 13:17:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1705918186; cv=none; b=fygt2uPejxhgNyLEbIBVz94wkMWb/W/qouCKuMXhOCT2YZTrvOg29dVsF6tf4bb8EWSO81sUvfTs41B0wPc+jegIJmuj8hGmVvM0WDEZEkmWWbeBbsEtWTQkva1xAQ2pDOcJP4S4W0BxHrGsbtOWDeVQJI7FkuDQO2wWGEt9ecI=
+	t=1705929441; cv=none; b=rhPmkv8BFZNjGYGaPDn+nroLSJmYptrWLcsjAWE7w5odBbBx54uKMN+BlLMvL+cKwcsC/pv1/YkReCW23XaQyhZz3kdri18MC08DIGV43q+sQCNC7+X3OyEh62uAal3Ts/O/8BhQwqd3snEJ0lSFpryycUJoonJQH97FRLs7/n4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1705918186; c=relaxed/simple;
-	bh=XE5sibT07MUtktKYn3gvfIB8/LptzZOVCxCJLPHfZrs=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=GbXYj9/m2l5tKNhgzaAhZdEWzLxYi5IH3N5NsyPpKCVTCdtKQnacV9bN2NcObZqjvzvVrgBaU/kTEjUQFtu1QBIZghZVluo5FVL7kdI1cc9YTrUfKDhtW7RiZ2A6TiJTDammpcKMHz2aphR0Vn/T2KAz+DWihOScxj0lu+WZnIs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pE6PNA+e; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pE6PNA+e"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2CB50C43394
-	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 10:09:46 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1705918186;
-	bh=XE5sibT07MUtktKYn3gvfIB8/LptzZOVCxCJLPHfZrs=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=pE6PNA+eLZyYw0TapmmcWDXjWfdMjlnLhXiY9/+R2rWvkRGdRh1DUl/DdvQ5+l7HP
-	 2e9+ak5ovFNBt2Tjti0K4KXWIOV6CN7CpPZhtp7T27LDUPcqnMTUroB81UDu6SJduo
-	 vGEq6FMMLuqq7jBGBRmDDpfod3dVbEO98BJdTp2ac0k+94fJtK/poI9i7UKJXZh2a/
-	 LirqchStvbjQdb7ArfZ10z7ouhBfXAhH8vpNnIuB7JwIS7e73yFxCB5B3hYNj++IEm
-	 K0Eo+aMRM3FIEohcby8udgcsK5LOm6EzCkkxl+VPEG/zO2ZW2jHS164fJHvtcctyFd
-	 bfZkzmqHtbmJw==
-Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-50edf4f478eso3754543e87.3
-        for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 02:09:46 -0800 (PST)
-X-Gm-Message-State: AOJu0YyMWC3pDCWjt2+0Mu25fidgcY2OcivrxJrmm/fesRV0Lvk8zUnX
-	FIftWawKzk4Dn6tFEDqc9pOtG36MtonICS7EZ29kHl5JsUvb4CREXFN81TZcVrsrxG//GL2KO8P
-	UIJklnx7qm2tVS+R2qcnzX/fwThI=
-X-Google-Smtp-Source: AGHT+IFTfhxWMWLtxGAHctQc939UBRXnunfcyPtj4pRi1fRakd+7q0rE30I0aMY6W+/fJlYYtH8KkeqTkMVR+zsnMYM=
-X-Received: by 2002:ac2:48a6:0:b0:50e:88d0:447b with SMTP id
- u6-20020ac248a6000000b0050e88d0447bmr1202146lfg.31.1705918184370; Mon, 22 Jan
- 2024 02:09:44 -0800 (PST)
+	s=arc-20240116; t=1705929441; c=relaxed/simple;
+	bh=4yECQoQNlH9bsEd+fvCW5ixKWErUNJAyZS+uhg6KZ+0=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=CLAQoSfLO0L77HJjLIse/lfAtwhHK5H3nFMJER7bIbuuIa5mzfmJ9hSTwCAhHvmV0C9olwPE/Iu2xd4U2PZW8VQFbzpEdZ/11B0VHIiSBCyhXzFSWt2CJo9KE6YTLGiaA9RBpnoESX+ha9vDK8IpJTbCjoWKyBVcMz+X6v0j3ak=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TJW3D55Kfz4f3jMD
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 21:17:12 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 07A211A017A
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jan 2024 21:17:15 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgDHlxDZaq5l3XaFBg--.39166S3;
+	Mon, 22 Jan 2024 21:17:14 +0800 (CST)
+Subject: Re: [PATCH RFC 5/5] md: use md_reap_sync_thread() directly for
+ dm-raid
+To: Yu Kuai <yukuai1@huaweicloud.com>, mpatocka@redhat.com,
+ dm-devel@lists.linux.dev, msnitzer@redhat.com, heinzm@redhat.com,
+ song@kernel.org
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org,
+ yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
+References: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
+ <20240120103734.4155446-6-yukuai1@huaweicloud.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <b8f80884-74e8-f294-3a84-713ecca88ea3@huaweicloud.com>
+Date: Mon, 22 Jan 2024 21:17:13 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
- <CAPhsuW7trizGqWcBWQ1R1mrxyA6sNTuwXOK-0vxtCHO6fqcTbQ@mail.gmail.com> <354941c2-17bd-ce04-f8c8-645d7c4de4cc@huaweicloud.com>
-In-Reply-To: <354941c2-17bd-ce04-f8c8-645d7c4de4cc@huaweicloud.com>
-From: Song Liu <song@kernel.org>
-Date: Mon, 22 Jan 2024 02:09:31 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW68RTGBSFpnyePTX5ydo+erh7mKJt2UD64VX5g6JfR4sA@mail.gmail.com>
-Message-ID: <CAPhsuW68RTGBSFpnyePTX5ydo+erh7mKJt2UD64VX5g6JfR4sA@mail.gmail.com>
-Subject: Re: [PATCH 0/5] md: fix/prevent dm-raid regressions
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
-	heinzm@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20240120103734.4155446-6-yukuai1@huaweicloud.com>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgDHlxDZaq5l3XaFBg--.39166S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxAFWfZw1rKFyrJFy5KFW3Jrb_yoW7Gr1Up3
+	y8JFn8Cr45trW5Xr17Ja4DuayYvwnIgFWDtry3GayfJ3Z3KrsxJF15uF1DZFykAa48G3WU
+	ta15Kay5ZFyIgF7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26ryj6F1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
+	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
+	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
+	17CEb7AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
+	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
+	3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
+	nIWIevJa73UjIFyTuYvjfUoOJ5UUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Mon, Jan 22, 2024 at 12:24=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> =
-wrote:
->
-> Hi,
->
-> =E5=9C=A8 2024/01/21 12:41, Song Liu =E5=86=99=E9=81=93:
-> > On Sat, Jan 20, 2024 at 2:41=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.co=
-m> wrote:
-> >>
-> >> From: Yu Kuai <yukuai3@huawei.com>
-> >>
-> >> There are some problems that we fixed in md/raid, and some apis is cha=
-nged.
-> >> However, dm-raid rely the old apis(noted that old apis is problematic =
-in
-> >> corner cases), and now there are regressions in lvm2 testsuite.
-> >>
-> >> This patchset fix some regressions(patch 1-3), and revert changes to
-> >> prevent regressions(patch 4,5). Noted that the problems in patch 4,5 i=
-s
-> >> not clear yet, and I'm not able to locate the root cause ASAP, hence I
-> >> decide to revert changes to prevent regressions first.
-> >
-> > Thanks for looking into this!
-> >
-> > Patch 1-3 look good to me. But since we need to back port these fixes
-> > to 6.7 kernels, let's make it very clear what issues are being fixed.
-> > Please:
->
-> I'm attaching my test result here, before I send the next version.
->
-> The tested patched add following changes for patch 5:
->
-> @@ -9379,6 +9387,15 @@ static void md_start_sync(struct work_struct *ws)
->          suspend ? mddev_suspend_and_lock_nointr(mddev) :
->                    mddev_lock_nointr(mddev);
->
-> +       if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
-> +               /*
-> +                * dm-raid calls md_reap_sync_thread() directly to
-> unregister
-> +                * sync_thread, and md/raid should never trigger this.
-> +                */
-> +               WARN_ON_ONCE(mddev->gendisk);
-> +               goto not_running;;
-> +       }
-> +
->          if (!md_is_rdwr(mddev)) {
->
-> Failed tests for v6.6:
-> ###       failed: [ndev-vanilla] shell/duplicate-vgid.sh
-> ###       failed: [ndev-vanilla] shell/fsadm-crypt.sh
-> ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-cache-abort.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
-> ###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
-> ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
-> ###       failed: [ndev-vanilla] shell/select-report.sh
->
-> Failed tests for next-20240117(latest linux-next, between v6.7 to v6.8-rc=
-1)
-> ###       failed: [ndev-vanilla] shell/duplicate-vgid.sh
-> ###       failed: [ndev-vanilla] shell/fsadm-crypt.sh
-> ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
-> ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
-> ###       failed: [ndev-vanilla] shell/select-report.sh
->
-> Please noted that the test lvconvert-raid-reshape.sh is still possible
-> to fail due to commit c467e97f079f ("md/raid6: use valid sector values
-> to determine if an I/O should wait on the reshape").
+Hi,
 
-Thanks for the information!
+ÔÚ 2024/01/20 18:37, Yu Kuai Ð´µÀ:
+> The root cause is still not clear yet, however, let's convert dm-raid
+> back to use md_reap_sync_thread() directly. This is not safe but at
+> least there won't be new regressions. We can decide what to do after
+> figuring out the root cause.
 
-I will look closer into the raid6 issue.
+I think I finally figure out the root cause here. This patch is no
+longer needed after following patch. I already verified in my VM for 3
+times that lvconvert-raid-reshape.sh won't fail(with raid6 patch
+2c265ac5ffde reverted).
 
-Song
+I'll run more tests in case there are new regression. Meanwhile I'll try
+to locate root cause of the problem decribed in patch 4.
+
+Thanks,
+Kuai
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index eb009d6bb03a..108e7e313631 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3241,7 +3241,7 @@ static int raid_ctr(struct dm_target *ti, unsigned 
+int argc, char **argv)
+         rs->md.in_sync = 1;
+
+         /* Keep array frozen until resume. */
+-       set_bit(MD_RECOVERY_FROZEN, &rs->md.recovery);
++       md_frozen_sync_thread(&rs->md);
+
+         /* Has to be held on running the array */
+         mddev_suspend_and_lock_nointr(&rs->md);
+@@ -3722,6 +3722,9 @@ static int raid_message(struct dm_target *ti, 
+unsigned int argc, char **argv,
+         if (!mddev->pers || !mddev->pers->sync_request)
+                 return -EINVAL;
+
++       if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
++               return -EBUSY;
++
+         if (!strcasecmp(argv[0], "frozen"))
+                 set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+         else
+@@ -3796,10 +3799,8 @@ static void raid_postsuspend(struct dm_target *ti)
+         struct raid_set *rs = ti->private;
+
+         if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
+-               /* Writes have to be stopped before suspending to avoid 
+deadlocks. */
+-               if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
+-                       md_stop_writes(&rs->md);
+-
++               md_frozen_sync_thread(&rs->md);
++               md_stop_writes(&rs->md);
+                 mddev_suspend(&rs->md, false);
+         }
+  }
+@@ -4011,9 +4012,6 @@ static int raid_preresume(struct dm_target *ti)
+                         DMERR("Failed to resize bitmap");
+         }
+
+-       /* Check for any resize/reshape on @rs and adjust/initiate */
+-       /* Be prepared for mddev_resume() in raid_resume() */
+-       set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+         if (mddev->recovery_cp && mddev->recovery_cp < MaxSector) {
+                 set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
+                 mddev->resync_min = mddev->recovery_cp;
+@@ -4056,10 +4054,11 @@ static void raid_resume(struct dm_target *ti)
+                         rs_set_capacity(rs);
+
+                 mddev_lock_nointr(mddev);
+-               clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+                 mddev->ro = 0;
+                 mddev->in_sync = 0;
+                 mddev_unlock_and_resume(mddev);
++
++               md_unfrozen_sync_thread(mddev);
+         }
+  }
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 9ef17a769cc2..0638d104fe26 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -4939,7 +4939,7 @@ static void idle_sync_thread(struct mddev *mddev)
+         mutex_unlock(&mddev->sync_mutex);
+  }
+
+-static void frozen_sync_thread(struct mddev *mddev)
++void md_frozen_sync_thread(struct mddev *mddev)
+  {
+         mutex_lock(&mddev->sync_mutex);
+         set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+@@ -4952,6 +4952,18 @@ static void frozen_sync_thread(struct mddev *mddev)
+         stop_sync_thread(mddev, false, false);
+         mutex_unlock(&mddev->sync_mutex);
+  }
++EXPORT_SYMBOL_GPL(md_frozen_sync_thread);
++
++void md_unfrozen_sync_thread(struct mddev *mddev)
++{
++       mutex_lock(&mddev->sync_mutex);
++       clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++       set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
++       md_wakeup_thread(mddev->thread);
++       sysfs_notify_dirent_safe(mddev->sysfs_action);
++       mutex_unlock(&mddev->sync_mutex);
++}
++EXPORT_SYMBOL_GPL(md_unfrozen_sync_thread);
+
+  static ssize_t
+  action_store(struct mddev *mddev, const char *page, size_t len)
+@@ -4963,7 +4975,7 @@ action_store(struct mddev *mddev, const char 
+*page, size_t len)
+         if (cmd_match(page, "idle"))
+                 idle_sync_thread(mddev);
+         else if (cmd_match(page, "frozen"))
+-               frozen_sync_thread(mddev);
++               md_frozen_sync_thread(mddev);
+         else if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+                 return -EBUSY;
+         else if (cmd_match(page, "resync"))
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 8d881cc59799..332520595ed8 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -781,6 +781,8 @@ extern void md_rdev_clear(struct md_rdev *rdev);
+  extern void md_handle_request(struct mddev *mddev, struct bio *bio);
+  extern int mddev_suspend(struct mddev *mddev, bool interruptible);
+  extern void mddev_resume(struct mddev *mddev);
++extern void md_frozen_sync_thread(struct mddev *mddev);
++extern void md_unfrozen_sync_thread(struct mddev *mddev);
+
+  extern void md_reload_sb(struct mddev *mddev, int raid_disk);
+  extern void md_update_sb(struct mddev *mddev, int force);
+
