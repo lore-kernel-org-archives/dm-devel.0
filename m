@@ -1,56 +1,56 @@
-Received: from mail-pf1-f181.google.com (mail-pf1-f181.google.com [209.85.210.181])
+Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 51547168DA
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 05:36:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D7A011754F
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 05:36:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706074582; cv=none; b=Def2htEySrvJr8arIofF6NCk+6lpIQ0MT73684y8sn9Cwq0FRJk2Bbsvnkp6p9yAtCM/ZBtzUVVT0/mDQE9l9WIMjD6Yck+aAh1xpAVQ68mR9VwI1O5UctfBJpcb3FQrEYlS+5lpJ9qoL2hW3ASu3p9HFiyncBqAsu8gclHsa7Y=
+	t=1706074586; cv=none; b=tSOvjiRmSt1PqalDXSTBZHb6R42GiLoY/n+DDBOBt3dHWIvUVIslnHeDO/5IPc+ISc+xYM+5AJOYW5eSZHC++qttgc2LKWzAY2uk4II/SvTLCZB5nIQNhEOA6mlp135l+pq4aSTHHl1YBrtWpkP+JG4xFbd5bBgzJgkZLUJpAew=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706074582; c=relaxed/simple;
-	bh=8feU4guz9hArhCl04Z9vzJaGKxbjXW+xRImH90hRomY=;
+	s=arc-20240116; t=1706074586; c=relaxed/simple;
+	bh=FTonyJYMrGMeqQkJelHx/h0+QUGv7Ul6tpIhRdwERfk=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=TFF7a0BGg6EBMhxSy4ar5ZjnLXD8E88csrcd9gE3ddobgv5ODK7/l49i4sTnVQ6JJpJVZk4j9fEeVCNG54tgrislCOjkRTxmr+ccYeegTyXsWpsIlds4GfjFEWEhtFX3+6M0SVuTcFCHu3mLL6+x1p/OfFTCH5w5ao2k5CmhtLQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aKmRYa5u; arc=none smtp.client-ip=209.85.210.181
+	 MIME-Version; b=pW0DRbnX7KJXu1EE9c/s0juMfZB/jVodJ8UzGmT1lM71V8DJcVG1NldPNlq0Bt7gk4zPWixYbbcd5stOdbGp/Kp3RMGyFjz24rjEB13AOygJWJeDj0xOuah17Hy7/z4mjDMdu5127TyVpIxlRPyGeaRp2zHley0MKw7J5IDDBVI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=BVleDxlg; arc=none smtp.client-ip=209.85.214.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aKmRYa5u"
-Received: by mail-pf1-f181.google.com with SMTP id d2e1a72fcca58-6dc6f47302bso2027200b3a.1
-        for <dm-devel@lists.linux.dev>; Tue, 23 Jan 2024 21:36:21 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BVleDxlg"
+Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-1d7859efea5so363365ad.0
+        for <dm-devel@lists.linux.dev>; Tue, 23 Jan 2024 21:36:24 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706074581; x=1706679381; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1706074584; x=1706679384; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=rQTsvHi1Xi8RfgpJ+r1gUAH45t6Iv3m0mcpAy4KCiow=;
-        b=aKmRYa5u4ZqD0hJlfe711B2xH5ywNT2xZPepY2egU/0fjJ94newPwFDZ2eFZ/z2SHs
-         sipgESxzIjkoKeQU8TGHl29jvKzhmSza8OX45N+zdjSI3n4Rx3KxBgnEDSVc9BPftwen
-         aGA7kZjNF6XRrDrKj+BEunB5rtwlKmS6CWJZE2Tq3A2SV8pOhz1lNYz/bsic2LFMuY7z
-         uatWHRtx3Y/6z7vByPyMUhDgG/3ab7ehJgGH7JrnKHuEHBObS9mpLQ3L2/bI488w+yie
-         CB9h/CKxwt5lD7T7D8UJefJ/7Kl875YKst94YJPq1M9eDqwJvfJTuoRzKTOUzfru0ZBE
-         Rp1Q==
+        bh=Cpy9sRZAItz627ZVJHW5k+R1D4QC+yLepEX4TtJReRw=;
+        b=BVleDxlg+FqLX3ZERZxq56+YZOrWzI/kiURuGM3CmiN+wAcFT70xKLTgcoNayY1wP/
+         XKfW5J7GmtDtJmCI5ijNFOuhMi11BA96/oQVhO/j7vga/18MpzdWwxuZ7QB6pu7m9qGJ
+         K1GJ0r4BUNVcCUZBJ6GgHHpDrjkBMVkcnbsyfr4x+P/kmNpVWwnox2fCCElHYhKZj5n+
+         cuRiukz2ItT9bVXkcAJ90hX2Ond8towhu42WZI3DrC5MLXxt3FQvgsWmqmf8lTlkorcO
+         yyBtatP2JEOi9+KDCRCzniUR0a3zEfSxtk2vrKuXA5fA5PjPp+ToiGHeH0f1BJdMOU7l
+         /0bg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706074581; x=1706679381;
+        d=1e100.net; s=20230601; t=1706074584; x=1706679384;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=rQTsvHi1Xi8RfgpJ+r1gUAH45t6Iv3m0mcpAy4KCiow=;
-        b=uyCZlJd51hKQLXceBpn8A79OC3PnH2aSAq9naQGN0s35Av8VeLrjCWp3Un8+cZy1NL
-         w0spiqD/U9VTsatDx9MAKyB0CTkJkThx0VdUuSLc46n3wXByj3iEcy8WvWYJ3P5Fucvy
-         VjlmlOYpqTTLiEPJSCIurP16BfgUqNP1G1vVm4oqe6hPLQaVczRsJ27gutBUL0uE96tH
-         s/i/4CDpNNsc5mv9ay1XDx1QNL/sws0U5MSw+TDWO9MMlTqLsINlQJh5X0pC0X9nRt4P
-         JKNkDDr8qwl+dKGDhI8oRA6NaTdToK2i6QciKmPujcdpmM7XuBpSeFITR1Vgsz/td1tT
-         cq3g==
-X-Gm-Message-State: AOJu0Yzd79mspNtr3Cb4Hb6sdwBUOKZ5ndgBGMltCqNsrCN3CLlQTjYz
-	W6B8QKZCCwDOqLXrAjLAmvMrWuxHJZ6eKwcP+Ls/5fiUwvYhsmtJwitXkeYS
-X-Google-Smtp-Source: AGHT+IHntzjpUgnHbgr1/r4YwxqErlErlGZTkG03JscxLq5XW6o243rQeVz/vwZto1taufEW0c3uPA==
-X-Received: by 2002:a05:6a20:ce96:b0:199:ddac:ad4f with SMTP id if22-20020a056a20ce9600b00199ddacad4fmr246977pzb.100.1706074580699;
-        Tue, 23 Jan 2024 21:36:20 -0800 (PST)
+        bh=Cpy9sRZAItz627ZVJHW5k+R1D4QC+yLepEX4TtJReRw=;
+        b=wFj4HhY5I6aSs4fIVoCG9EZTaZ6K5UpeGzMquZl8X57vLJMmatxeMj50zYS72Gc8al
+         k5512FaMKQvTlCETdgciGbU118pfABtd6JZypihkdv1zBjSBKS0iKqqsBcbeTplI8Wyi
+         Ina5xIAjJFuHV/R5m2soCKEVAugueeW6gpC1PDIGnJZkzB90pLTdQk2PoIh1gAqDz3ia
+         xNGj61NeyxeL+9eXtBt04oxGzt8ICyEeJbov0fjXup0IkPO+C7TqMOc0aylkkiG6xNWG
+         v3R89+pETyXRewKP91cCJCgBdZAWvj7IpN8DdJJvU5rIGsjSouHrUaTIrH31xbPmHupx
+         HDGA==
+X-Gm-Message-State: AOJu0YwkRAQOxq2KZ4Y5biWVctI9l7a5KzTv75SOTNiBX5RObrYx26bY
+	K9bPSk1XQL5Y6CVARvvQFKUaIdKNGB3K4FnwwBwHsWrKtMxhRStJ
+X-Google-Smtp-Source: AGHT+IEIOYQLu0dIgIPZVyXxKuK3uq5zhGh24Xtj2CiTZiBfSNhz+tQUUn79+VEaRwxYntSMRlyOXA==
+X-Received: by 2002:a17:903:2447:b0:1d4:7687:833a with SMTP id l7-20020a170903244700b001d47687833amr215421pls.17.1706074584135;
+        Tue, 23 Jan 2024 21:36:24 -0800 (PST)
 Received: from ubuntu.. ([117.18.48.102])
-        by smtp.gmail.com with ESMTPSA id kt6-20020a170903088600b001d755acec64sm4015663plb.189.2024.01.23.21.36.17
+        by smtp.gmail.com with ESMTPSA id kt6-20020a170903088600b001d755acec64sm4015663plb.189.2024.01.23.21.36.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 23 Jan 2024 21:36:20 -0800 (PST)
+        Tue, 23 Jan 2024 21:36:23 -0800 (PST)
 From: Hongyu Jin <hongyu.jin.cn@gmail.com>
 To: agk@redhat.com,
 	snitzer@kernel.org,
@@ -64,9 +64,9 @@ Cc: zhiguo.niu@unisoc.com,
 	linux-kernel@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
-Subject: [PATCH v8 4/5] dm verity: Fix I/O priority lost when read FEC and hash
-Date: Wed, 24 Jan 2024 13:35:55 +0800
-Message-Id: <20240124053556.126468-5-hongyu.jin.cn@gmail.com>
+Subject: [PATCH v8 5/5] dm-crypt: Fix lost ioprio when queuing write bios
+Date: Wed, 24 Jan 2024 13:35:56 +0800
+Message-Id: <20240124053556.126468-6-hongyu.jin.cn@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240124053556.126468-1-hongyu.jin.cn@gmail.com>
 References: <20231221103139.15699-6-hongyu.jin.cn@gmail.com>
@@ -81,164 +81,32 @@ Content-Transfer-Encoding: 8bit
 
 From: Hongyu Jin <hongyu.jin@unisoc.com>
 
-After obtaining the data, verification or error correction process may
-trigger a new I/O that loses the priority of the original I/O, that is,
-the verification of the higher priority IO may be blocked by the lower
-priority IO.
+Since dm-crypt queues writes to a different kernel thread (workqueue),
+the bios will dispatch from tasks with different io_context->ioprio
+settings and blkcg than the submitting task, thus giving incorrect
+ioprio to the io scheduler.
 
-Make the I/O of verification and error correction follow the
-priority of original I/O.
+Get the original io priority setting via struct dm_crypt_io::base_bio
+and set this priority to the bio for write.
 
-Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
-Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
+Link: https://lore.kernel.org/dm-devel/alpine.LRH.2.11.1612141049250.13402@mail.ewheeler.net
+
 Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
 ---
- drivers/md/dm-verity-fec.c    | 21 ++++++++++++---------
- drivers/md/dm-verity-target.c | 12 ++++++++----
- 2 files changed, 20 insertions(+), 13 deletions(-)
+ drivers/md/dm-crypt.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index 49db19e537f9..066521de08da 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -60,7 +60,8 @@ static int fec_decode_rs8(struct dm_verity *v, struct dm_verity_fec_io *fio,
-  * to the data block. Caller is responsible for releasing buf.
-  */
- static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
--			   unsigned int *offset, struct dm_buffer **buf)
-+			   unsigned int *offset, struct dm_buffer **buf,
-+			   unsigned short ioprio)
- {
- 	u64 position, block, rem;
- 	u8 *res;
-@@ -69,7 +70,7 @@ static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
- 	block = div64_u64_rem(position, v->fec->io_size, &rem);
- 	*offset = (unsigned int)rem;
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 855b482cbff1..e0804a86946f 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1683,6 +1683,7 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned int size)
+ 				 GFP_NOIO, &cc->bs);
+ 	clone->bi_private = io;
+ 	clone->bi_end_io = crypt_endio;
++	clone->bi_ioprio = io->base_bio->bi_ioprio;
  
--	res = dm_bufio_read(v->fec->bufio, block, buf, IOPRIO_DEFAULT);
-+	res = dm_bufio_read(v->fec->bufio, block, buf, ioprio);
- 	if (IS_ERR(res)) {
- 		DMERR("%s: FEC %llu: parity read failed (block %llu): %ld",
- 		      v->data_dev->name, (unsigned long long)rsb,
-@@ -121,16 +122,17 @@ static inline unsigned int fec_buffer_rs_index(unsigned int i, unsigned int j)
-  * Decode all RS blocks from buffers and copy corrected bytes into fio->output
-  * starting from block_offset.
-  */
--static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio,
--			   u64 rsb, int byte_index, unsigned int block_offset,
--			   int neras)
-+static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
-+			   struct dm_verity_fec_io *fio, u64 rsb, int byte_index,
-+			   unsigned int block_offset, int neras)
- {
- 	int r, corrected = 0, res;
- 	struct dm_buffer *buf;
- 	unsigned int n, i, offset;
- 	u8 *par, *block;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
- 
--	par = fec_read_parity(v, rsb, block_offset, &offset, &buf);
-+	par = fec_read_parity(v, rsb, block_offset, &offset, &buf, bio_prio(bio));
- 	if (IS_ERR(par))
- 		return PTR_ERR(par);
- 
-@@ -158,7 +160,7 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio,
- 		if (offset >= v->fec->io_size) {
- 			dm_bufio_release(buf);
- 
--			par = fec_read_parity(v, rsb, block_offset, &offset, &buf);
-+			par = fec_read_parity(v, rsb, block_offset, &offset, &buf, bio_prio(bio));
- 			if (IS_ERR(par))
- 				return PTR_ERR(par);
- 		}
-@@ -210,6 +212,7 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 	u8 *bbuf, *rs_block;
- 	u8 want_digest[HASH_MAX_DIGESTSIZE];
- 	unsigned int n, k;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
- 
- 	if (neras)
- 		*neras = 0;
-@@ -248,7 +251,7 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 			bufio = v->bufio;
- 		}
- 
--		bbuf = dm_bufio_read(bufio, block, &buf, IOPRIO_DEFAULT);
-+		bbuf = dm_bufio_read(bufio, block, &buf, bio_prio(bio));
- 		if (IS_ERR(bbuf)) {
- 			DMWARN_LIMIT("%s: FEC %llu: read failed (%llu): %ld",
- 				     v->data_dev->name,
-@@ -377,7 +380,7 @@ static int fec_decode_rsb(struct dm_verity *v, struct dm_verity_io *io,
- 		if (unlikely(r < 0))
- 			return r;
- 
--		r = fec_decode_bufs(v, fio, rsb, r, pos, neras);
-+		r = fec_decode_bufs(v, io, fio, rsb, r, pos, neras);
- 		if (r < 0)
- 			return r;
- 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 4758bfe2c156..8cbf81fc0031 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -51,6 +51,7 @@ static DEFINE_STATIC_KEY_FALSE(use_tasklet_enabled);
- struct dm_verity_prefetch_work {
- 	struct work_struct work;
- 	struct dm_verity *v;
-+	unsigned short ioprio;
- 	sector_t block;
- 	unsigned int n_blocks;
- };
-@@ -294,6 +295,7 @@ static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
- 	int r;
- 	sector_t hash_block;
- 	unsigned int offset;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
- 
- 	verity_hash_at_level(v, block, level, &hash_block, &offset);
- 
-@@ -308,7 +310,7 @@ static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
- 			return -EAGAIN;
- 		}
- 	} else
--		data = dm_bufio_read(v->bufio, hash_block, &buf, IOPRIO_DEFAULT);
-+		data = dm_bufio_read(v->bufio, hash_block, &buf, bio_prio(bio));
- 
- 	if (IS_ERR(data))
- 		return PTR_ERR(data);
-@@ -720,13 +722,14 @@ static void verity_prefetch_io(struct work_struct *work)
- no_prefetch_cluster:
- 		dm_bufio_prefetch(v->bufio, hash_block_start,
- 				  hash_block_end - hash_block_start + 1,
--				  IOPRIO_DEFAULT);
-+				  pw->ioprio);
- 	}
- 
- 	kfree(pw);
- }
- 
--static void verity_submit_prefetch(struct dm_verity *v, struct dm_verity_io *io)
-+static void verity_submit_prefetch(struct dm_verity *v, struct dm_verity_io *io,
-+				   unsigned short ioprio)
- {
- 	sector_t block = io->block;
- 	unsigned int n_blocks = io->n_blocks;
-@@ -754,6 +757,7 @@ static void verity_submit_prefetch(struct dm_verity *v, struct dm_verity_io *io)
- 	pw->v = v;
- 	pw->block = block;
- 	pw->n_blocks = n_blocks;
-+	pw->ioprio = ioprio;
- 	queue_work(v->verify_wq, &pw->work);
- }
- 
-@@ -796,7 +800,7 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
- 
- 	verity_fec_init_io(io);
- 
--	verity_submit_prefetch(v, io);
-+	verity_submit_prefetch(v, io, bio_prio(bio));
- 
- 	submit_bio_noacct(bio);
+ 	remaining_size = size;
  
 -- 
 2.34.1
