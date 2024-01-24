@@ -1,213 +1,235 @@
-Received: from szxga04-in.huawei.com (szxga04-in.huawei.com [45.249.212.190])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F0B571B27D
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 09:21:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.190
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B772C60DD7
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 12:19:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706088096; cv=none; b=AQt5M43r8I0zFze3sSdemqjrSVtyV5yBmMoYheLaOO7ZSNwyCmzqnNXTNhsRRQJ+FVsEPfve9QNlknsZtKr9Xw7RXd3c0Vas35GHalSDIKCEYvgghT02Vv4rhCR7m1ihsl8ZbHdRl8WNL/v9vz39Lm0g3YIGzIUh/ifPSicCuYo=
+	t=1706098765; cv=none; b=TIViz7RECI4MNtBxRxswNJL2mhlNo5ceaUD15025i3qILcz05rA2Pz7I2G7k55IT+Jks7az97BREZmIA++TxDspCx3eLPOppOE6RLJVF8K35IR27bu0uEZxHd94mVHcb21hHlLV9vMltXc5Sa3N1jvKYOsIHqIP89njCvrY1IHY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706088096; c=relaxed/simple;
-	bh=8VGBgzgDVrfglLO2JX9IIEqLDKT69ItgHmLnK4/ISbM=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=qIQ/nZoTaiq+gIS63oKRpzIA7RlOndYmRRrchILvrL5F/YmHo1WJQY/PC1h3UuQgbGuAh2nUM+pJHRTJagBtWvRvtiEgnKkB6ld9g/BHeIm2tUcaT8DUKacv+EDC8f2Br4VccLJjtz7z7Exi+aL3rV4SyZPDo62WqqnT0UUUhXs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.190
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
-Received: from mail.maildlp.com (unknown [172.19.88.214])
-	by szxga04-in.huawei.com (SkyGuard) with ESMTP id 4TKdjN43y5z1xmSd;
-	Wed, 24 Jan 2024 17:20:40 +0800 (CST)
-Received: from kwepemm600009.china.huawei.com (unknown [7.193.23.164])
-	by mail.maildlp.com (Postfix) with ESMTPS id E8A651A0177;
-	Wed, 24 Jan 2024 17:21:17 +0800 (CST)
-Received: from huawei.com (10.175.104.67) by kwepemm600009.china.huawei.com
- (7.193.23.164) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2507.35; Wed, 24 Jan
- 2024 17:18:28 +0800
-From: Yu Kuai <yukuai3@huawei.com>
-To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
-	<dm-devel@lists.linux.dev>, <xni@redhat.com>, <song@kernel.org>,
-	<yukuai3@huawei.com>, <jbrassow@f14.redhat.com>, <neilb@suse.de>,
-	<heinzm@redhat.com>, <shli@fb.com>, <akpm@osdl.org>
-CC: <linux-kernel@vger.kernel.org>, <linux-raid@vger.kernel.org>,
-	<yukuai1@huaweicloud.com>, <yi.zhang@huawei.com>, <yangerkun@huawei.com>
-Subject: [PATCH v2 11/11] md/raid456: fix a deadlock for dm-raid456 while io concurrent with reshape
-Date: Wed, 24 Jan 2024 17:14:21 +0800
-Message-ID: <20240124091421.1261579-12-yukuai3@huawei.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20240124091421.1261579-1-yukuai3@huawei.com>
-References: <20240124091421.1261579-1-yukuai3@huawei.com>
+	s=arc-20240116; t=1706098765; c=relaxed/simple;
+	bh=U5lEJVyFbxg2pmjnbrdPBL1BiT27zP7nzCU6tIyonv8=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=GtpJfLHxZO/BP83N994zxervGAIRzfhHyTCeg5wWa3T+wR8pnQMEq9dT3xXKvwkI5+2MdHoqrqBhFT7h2kijVPMEygFp+/uBCdgHNbYIFe/xkDWz2/Y42Lzqd67LRymELB+8cR+puTVcH+8XGzGV2zONUHKs/pbW2CMGBfRpgHo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DfDLwdM5; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DfDLwdM5"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1706098762;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=MPrykbxqTIv163rZLfh6MnbjAPqozUKt8gNIIqFn3No=;
+	b=DfDLwdM5YEOqossAztmE/p/d5h5cj7EyJ/CVUoB4KuqgDQTGG2qLRyaUHKGpJ47lhdwutZ
+	QyRrWF87BPcLoqrK6aKnViZrmAafqo2T9kVyc75fF3Cuj0HSBaGe7MQuyWGLNrNvUvU+I2
+	PYpne1e37KjGJu2N+XOb/6bccWlyg3Y=
+Received: from mail-pf1-f199.google.com (mail-pf1-f199.google.com
+ [209.85.210.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-611-62iogVLBOp-T4XspI7Q5FA-1; Wed, 24 Jan 2024 07:19:21 -0500
+X-MC-Unique: 62iogVLBOp-T4XspI7Q5FA-1
+Received: by mail-pf1-f199.google.com with SMTP id d2e1a72fcca58-6dd65194396so1584467b3a.0
+        for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 04:19:21 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706098760; x=1706703560;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=MPrykbxqTIv163rZLfh6MnbjAPqozUKt8gNIIqFn3No=;
+        b=G97vb8kgR5Zxc755Sr43JVxg50ysclc8PolDFQZ4Ke/LDrhiYtbKPfeZs/5H+1W083
+         DBfPYmAMFArj0+pQzu7pzojI74YTZf1l0gXBBa4lNjTQ0jA9LZfXtPh1/y279xONcvKj
+         RgptOhS31+v5LhhXx3J1HN/rILRN+n8zoaTsB7fBEqbbllcI1D2nN8c8V/cGodY2pe+6
+         6Eo14r4Vy7gydSk+034v3w2Dt+r50xMxQ8Zpti7D8v4txzLcbMd6jA/npeCrR/Uh+Zci
+         Ljq7YPh4H4vF/iGYvyqVimfZtFdNBzbWI10j64dwfQ8UesWaWGCi5f1t5vnWLFfZvNtC
+         6U+A==
+X-Gm-Message-State: AOJu0YxcP9iYXMmnpHN3KVSdUj7VExhaaS+3go6yASZrNyRkZMXSvxYl
+	Imds5YXmr/qkE4+d8awlqPZZyeFf7zhxUYUK5Z2JIMOb7+J1aUcoZGIuUbvJPl4/Zhi83c24TNr
+	aqwjIL6eaixan9e5Za5VTwql4BGpIVJYc1V3xEbyF5YN/iYBaivnoGsdlL6NrqP1t98dcU4KT4K
+	09rgG7lzATRy2ohaL3rU/W70LgVofLQ1E=
+X-Received: by 2002:a05:6a00:3315:b0:6dd:9f47:3d17 with SMTP id cq21-20020a056a00331500b006dd9f473d17mr1134103pfb.11.1706098760424;
+        Wed, 24 Jan 2024 04:19:20 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEdhwiWH5x8NPWwJR6QSRw9+Fue8W5iFWtDmYBFh8GLtEXPHE+KeIP0BmE5gL/bCFPrbIUEgLvmdEqM2Y0sxqg=
+X-Received: by 2002:a05:6a00:3315:b0:6dd:9f47:3d17 with SMTP id
+ cq21-20020a056a00331500b006dd9f473d17mr1134075pfb.11.1706098760109; Wed, 24
+ Jan 2024 04:19:20 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: dggems705-chm.china.huawei.com (10.3.19.182) To
- kwepemm600009.china.huawei.com (7.193.23.164)
+References: <20240124091421.1261579-1-yukuai3@huawei.com>
+In-Reply-To: <20240124091421.1261579-1-yukuai3@huawei.com>
+From: Xiao Ni <xni@redhat.com>
+Date: Wed, 24 Jan 2024 20:19:08 +0800
+Message-ID: <CALTww28G_CmSxzJZVDqHmPgdmT1e2X8+QcToiUOGV1msAisTcQ@mail.gmail.com>
+Subject: Re: [PATCH v2 00/11] dm-raid: fix v6.7 regressions
+To: Yu Kuai <yukuai3@huawei.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
+	dm-devel@lists.linux.dev, song@kernel.org, jbrassow@f14.redhat.com, 
+	neilb@suse.de, heinzm@redhat.com, shli@fb.com, akpm@osdl.org, 
+	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
+	yukuai1@huaweicloud.com, yi.zhang@huawei.com, yangerkun@huawei.com
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-For raid456, if reshape is still in progress, then IO across reshape
-position will wait for reshape to make progress. However, for dm-raid,
-in following cases reshape will never make progress hence IO will hang:
+On Wed, Jan 24, 2024 at 5:18=E2=80=AFPM Yu Kuai <yukuai3@huawei.com> wrote:
+>
+> First regression related to stop sync thread:
+>
+> The lifetime of sync_thread is designed as following:
+>
+> 1) Decide want to start sync_thread, set MD_RECOVERY_NEEDED, and wake up
+> daemon thread;
+> 2) Daemon thread detect that MD_RECOVERY_NEEDED is set, then set
+> MD_RECOVERY_RUNNING and register sync_thread;
+> 3) Execute md_do_sync() for the actual work, if it's done or
+> interrupted, it will set MD_RECOVERY_DONE and wake up daemone thread;
+> 4) Daemon thread detect that MD_RECOVERY_DONE is set, then clear
+> MD_RECOVERY_RUNNING and unregister sync_thread;
+>
+> In v6.7, we fix md/raid to follow this design by commit f52f5c71f3d4
+> ("md: fix stopping sync thread"), however, dm-raid is not considered at
+> that time, and following test will hang:
 
-1) the array is read-only;
-2) MD_RECOVERY_WAIT is set;
-3) MD_RECOVERY_FROZEN is set;
+Hi Kuai
 
-After commit c467e97f079f ("md/raid6: use valid sector values to determine
-if an I/O should wait on the reshape") fix the problem that IO across
-reshape position doesn't wait for reshape, the dm-raid test
-shell/lvconvert-raid-reshape.sh start to hang:
+Thanks very much for the patch set. I reported the dm raid deadlock
+when stopping dm raid and we had the patch set "[PATCH v5 md-fixes
+0/3] md: fix stopping sync thread" which has patch f52f5c71f3d4. So we
+indeed considered dm-raid that time. Because we want to resolve the
+deadlock problem. I re-look patch f52f5c71f3d4. It has two major
+changes. One is to use a common function stop_sync_thread for stopping
+sync thread. This can fix the deadlock problem. The second change
+changes the way to reap sync thread. mdraid and dmraid reap sync
+thread in __md_stop_writes. So the patch looks overweight.
 
-[root@fedora ~]# cat /proc/979/stack
-[<0>] wait_woken+0x7d/0x90
-[<0>] raid5_make_request+0x929/0x1d70 [raid456]
-[<0>] md_handle_request+0xc2/0x3b0 [md_mod]
-[<0>] raid_map+0x2c/0x50 [dm_raid]
-[<0>] __map_bio+0x251/0x380 [dm_mod]
-[<0>] dm_submit_bio+0x1f0/0x760 [dm_mod]
-[<0>] __submit_bio+0xc2/0x1c0
-[<0>] submit_bio_noacct_nocheck+0x17f/0x450
-[<0>] submit_bio_noacct+0x2bc/0x780
-[<0>] submit_bio+0x70/0xc0
-[<0>] mpage_readahead+0x169/0x1f0
-[<0>] blkdev_readahead+0x18/0x30
-[<0>] read_pages+0x7c/0x3b0
-[<0>] page_cache_ra_unbounded+0x1ab/0x280
-[<0>] force_page_cache_ra+0x9e/0x130
-[<0>] page_cache_sync_ra+0x3b/0x110
-[<0>] filemap_get_pages+0x143/0xa30
-[<0>] filemap_read+0xdc/0x4b0
-[<0>] blkdev_read_iter+0x75/0x200
-[<0>] vfs_read+0x272/0x460
-[<0>] ksys_read+0x7a/0x170
-[<0>] __x64_sys_read+0x1c/0x30
-[<0>] do_syscall_64+0xc6/0x230
-[<0>] entry_SYSCALL_64_after_hwframe+0x6c/0x74
+Before f52f5c71f3d4  do_md_stop release reconfig_mutex before waiting
+sync_thread to finish. So there should not be the deadlock problem
+which has been fixed in 130443d60b1b ("md: refactor
+idle/frozen_sync_thread() to fix deadlock"). So we only need to change
+__md_stop_writes to stop sync thread like do_md_stop and reap sync
+thread directly.
 
-This is because reshape can't make progress.
+Maybe this can avoid deadlock? I'll try this way and give the test result.
+>
+> shell/integrity-caching.sh
+> shell/lvconvert-raid-reshape.sh
+>
+> This patch set fix the broken test by patch 1-4;
+>  - patch 1 fix that step 4) is broken by suspended array;
+>  - patch 2 fix that step 4) is broken by read-only array;
+>  - patch 3 fix that step 3) is broken that md_do_sync() doesn't set
+>  MD_RECOVERY_DONE; Noted that this patch will introdece new problem that
+>  data will be corrupted, which will be fixed in later patches.
+>  - patch 4 fix that setp 1) is broken that sync_thread is register and
+>  MD_RECOVERY_RUNNING is set directly;
+>
+> With patch 1-4, the above test won't hang anymore, however, the test
+> will still fail and complain that ext4 is corrupted;
 
-For md/raid, the problem doesn't exist because register new sync_thread
-doesn't rely on the IO to be done any more:
+For patch3, as I mentioned today, the root cause is
+dm-raid->rs_start_reshape sets MD_RECOVERY_WAIT. So md_do_sync returns
+when MD_RECOVERY_WAIT is set. It's the reason why dm-raid can't stop
+sync thread when start a new reshape. . The way in patch3 looks like a
+workaround. We need to figure out if dm raid really needs to set
+MD_RECOVERY_WAIT. Because now we stop sync thread in an asynchronous
+way. So the deadlock problem which was fixed in 644e2537f (dm raid:
+fix stripe adding reshape deadlock) may disappear. Maybe we can revert
+the patch.
 
-1) If array is read-only, it can switch to read-write by ioctl/sysfs;
-2) md/raid never set MD_RECOVERY_WAIT;
-3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
-   'reconfig_mutex', hence it can be cleared and reshape can continue by
-   sysfs api 'sync_action'.
+Best Regards
+Xiao
 
-However, I'm not sure yet how to avoid the problem in dm-raid yet. This
-patch detect the above 3 cases in dm_suspend(), and fail those IO
-directly. If user really meet the IO error, then it means they're
-reading the wrong data before c467e97f079f. And it's safe to read/write
-the array after reshape make progress successfully.
-
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
----
- drivers/md/md.h    |  2 +-
- drivers/md/raid5.c | 32 +++++++++++++++++++++++++++++++-
- 2 files changed, 32 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 98da86d38ba8..8e81f9e2fb20 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -565,7 +565,7 @@ enum md_ro_state {
- 	MD_MAX_STATE
- };
- 
--static bool md_is_rdwr(struct mddev *mddev)
-+static inline bool md_is_rdwr(struct mddev *mddev)
- {
- 	return (mddev->ro == MD_RDWR);
- }
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 6a7a32f7fb91..812d7ec64da5 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -5915,6 +5915,13 @@ static int add_all_stripe_bios(struct r5conf *conf,
- 	return ret;
- }
- 
-+static bool reshape_disabled(struct mddev *mddev)
-+{
-+	return !md_is_rdwr(mddev) ||
-+	       test_bit(MD_RECOVERY_WAIT, &mddev->recovery) ||
-+	       test_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+}
-+
- static enum stripe_result make_stripe_request(struct mddev *mddev,
- 		struct r5conf *conf, struct stripe_request_ctx *ctx,
- 		sector_t logical_sector, struct bio *bi)
-@@ -5946,7 +5953,8 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
- 			if (ahead_of_reshape(mddev, logical_sector,
- 					     conf->reshape_safe)) {
- 				spin_unlock_irq(&conf->device_lock);
--				return STRIPE_SCHEDULE_AND_RETRY;
-+				ret = STRIPE_SCHEDULE_AND_RETRY;
-+				goto out;
- 			}
- 		}
- 		spin_unlock_irq(&conf->device_lock);
-@@ -6025,6 +6033,13 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
- 
- out_release:
- 	raid5_release_stripe(sh);
-+out:
-+	if (ret == STRIPE_SCHEDULE_AND_RETRY && !mddev->gendisk &&
-+	    reshape_disabled(mddev)) {
-+		bi->bi_status = BLK_STS_IOERR;
-+		ret = STRIPE_FAIL;
-+		pr_err("dm-raid456: io failed across reshape position while reshape can't make progress");
-+	}
- 	return ret;
- }
- 
-@@ -8909,6 +8924,18 @@ static int raid5_start(struct mddev *mddev)
- 	return r5l_start(conf->log);
- }
- 
-+/*
-+ * This is only used for dm-raid456, caller already frozen sync_thread, hence
-+ * if rehsape is still in progress, io that is waiting for reshape can never be
-+ * done now, hence wake up and handle those IO.
-+ */
-+static void raid5_prepare_suspend(struct mddev *mddev)
-+{
-+	struct r5conf *conf = mddev->private;
-+
-+	wake_up(&conf->wait_for_overlap);
-+}
-+
- static struct md_personality raid6_personality =
- {
- 	.name		= "raid6",
-@@ -8932,6 +8959,7 @@ static struct md_personality raid6_personality =
- 	.quiesce	= raid5_quiesce,
- 	.takeover	= raid6_takeover,
- 	.change_consistency_policy = raid5_change_consistency_policy,
-+	.prepare_suspend = raid5_prepare_suspend,
- };
- static struct md_personality raid5_personality =
- {
-@@ -8956,6 +8984,7 @@ static struct md_personality raid5_personality =
- 	.quiesce	= raid5_quiesce,
- 	.takeover	= raid5_takeover,
- 	.change_consistency_policy = raid5_change_consistency_policy,
-+	.prepare_suspend = raid5_prepare_suspend,
- };
- 
- static struct md_personality raid4_personality =
-@@ -8981,6 +9010,7 @@ static struct md_personality raid4_personality =
- 	.quiesce	= raid5_quiesce,
- 	.takeover	= raid4_takeover,
- 	.change_consistency_policy = raid5_change_consistency_policy,
-+	.prepare_suspend = raid5_prepare_suspend,
- };
- 
- static int __init raid5_init(void)
--- 
-2.39.2
+>
+> Second regression related to frozen sync thread:
+>
+> Noted that for raid456, if reshape is interrupted, then call
+> "pers->start_reshape" will corrupt data. This is because dm-raid rely on
+> md_do_sync() doesn't set MD_RECOVERY_DONE so that new sync_thread won't
+> be registered, and patch 3 just break this.
+>
+>  - Patch 5-6 fix this problem by interrupting reshape and frozen
+>  sync_thread in dm_suspend(), then unfrozen and continue reshape in
+> dm_resume(). It's verified that dm-raid tests won't complain that
+> ext4 is corrupted anymore.
+>  - Patch 7 fix the problem that raid_message() call
+>  md_reap_sync_thread() directly, without holding 'reconfig_mutex'.
+>
+> Last regression related to dm-raid456 IO concurrent with reshape:
+>
+> For raid456, if reshape is still in progress, then IO across reshape
+> position will wait for reshape to make progress. However, for dm-raid,
+> in following cases reshape will never make progress hence IO will hang:
+>
+> 1) the array is read-only;
+> 2) MD_RECOVERY_WAIT is set;
+> 3) MD_RECOVERY_FROZEN is set;
+>
+> After commit c467e97f079f ("md/raid6: use valid sector values to determin=
+e
+> if an I/O should wait on the reshape") fix the problem that IO across
+> reshape position doesn't wait for reshape, the dm-raid test
+> shell/lvconvert-raid-reshape.sh start to hang at raid5_make_request().
+>
+> For md/raid, the problem doesn't exist because:
+>
+> 1) If array is read-only, it can switch to read-write by ioctl/sysfs;
+> 2) md/raid never set MD_RECOVERY_WAIT;
+> 3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
+>    'reconfig_mutex' anymore, it can be cleared and reshape can continue b=
+y
+>    sysfs api 'sync_action'.
+>
+> However, I'm not sure yet how to avoid the problem in dm-raid yet.
+>
+>  - patch 9-11 fix this problem by detecting the above 3 cases in
+>  dm_suspend(), and fail those IO directly.
+>
+> If user really meet the IO error, then it means they're reading the wrong
+> data before c467e97f079f. And it's safe to read/write the array after
+> reshape make progress successfully.
+>
+> Tests:
+>
+> I already run the following two tests many times and verified that they
+> won't fail anymore:
+>
+> shell/integrity-caching.sh
+> shell/lvconvert-raid-reshape.sh
+>
+> For other tests, I'm still running. However, I'm sending this patchset
+> in case people think the fixes is not appropriate. Running the full
+> tests will cost lots of time in my VM, and I'll update full test results
+> soon.
+>
+> Yu Kuai (11):
+>   md: don't ignore suspended array in md_check_recovery()
+>   md: don't ignore read-only array in md_check_recovery()
+>   md: make sure md_do_sync() will set MD_RECOVERY_DONE
+>   md: don't register sync_thread for reshape directly
+>   md: export helpers to stop sync_thread
+>   dm-raid: really frozen sync_thread during suspend
+>   md/dm-raid: don't call md_reap_sync_thread() directly
+>   dm-raid: remove mddev_suspend/resume()
+>   dm-raid: add a new helper prepare_suspend() in md_personality
+>   md: export helper md_is_rdwr()
+>   md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+>     reshape
+>
+>  drivers/md/dm-raid.c |  76 +++++++++++++++++++++----------
+>  drivers/md/md.c      | 104 ++++++++++++++++++++++++++++---------------
+>  drivers/md/md.h      |  16 +++++++
+>  drivers/md/raid10.c  |  16 +------
+>  drivers/md/raid5.c   |  61 +++++++++++++------------
+>  5 files changed, 171 insertions(+), 102 deletions(-)
+>
+> --
+> 2.39.2
+>
 
