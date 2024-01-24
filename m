@@ -1,56 +1,56 @@
-Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
+Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com [209.85.214.169])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 669CAF9C2
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 05:36:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3529E1428F
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 05:36:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706074573; cv=none; b=G3CsRkT8YY3UJ9qIAoPiKfQbuejI+jIfhK6ZeYHw+E8hyfr1IPV1gT2QHNW28q4+8laH5v1/SeN0+i0DV3NrnYBO0r5LmGcAdTci20j1ZXQcsPYzjdX6SAT8719N+TFRKr+tLTjPzj2Ift+A7X2f/HHLXvBrJNwz/WvItVIi5I0=
+	t=1706074575; cv=none; b=RnqN839SW8ScGav+o5LfD9yYtXn5qjsxC8Qo0urFWurkKCXdWY3cDA1zNXH06PKwYXnpUSU3GbnOrEUyOr2wSC9oirQ3TtoQ6OEEJ805JukAgnWS3sO321DfXpF8vGsszdhFOCetfUtyZX7LQZM36XvrPdaZm8Kh1pPrxqiDF50=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706074573; c=relaxed/simple;
-	bh=vzhS6Yw0l/Z58XSVDLaOu78FXLMhzplmG4xTTfPt9C0=;
+	s=arc-20240116; t=1706074575; c=relaxed/simple;
+	bh=RSb8ofCplxTL8ip8T3FWryu5aP19sdrABfbwbkJSW2g=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=s41ZTpgcIjqYckfraVW3krSeUHVfXuVGPM3o/8gs9+Tuz5Sh6YJTw9C2C5T0UfvpudYgsN2MQ0yezFM+yUHD5x77YG/bzey4hk9Kp8yjFvSFTLClfRfY5zO+FbojAA4VpMju8bi+hKTiJeejb+M5ROKN7Uzt4aLxbQ20+u2Op78=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DakdbBVa; arc=none smtp.client-ip=209.85.214.182
+	 MIME-Version; b=FWdn4N8o8C6QdBa+6xdR2sU2zlHkxS03kloe4CRf01tk+0gtiJ9RHefqZoE/BSsUFXVLTZQKBf4wt1LO7HELqJGzo46Tcbn/2clfhA8TZWiRy+d4p6UjZk5zucEnjWj67dZpKHNH385cffJH8ZUlnoju3ShUrBXNW9HdijkM6l0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jDZfX0Af; arc=none smtp.client-ip=209.85.214.169
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DakdbBVa"
-Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-1d74678df08so17446005ad.1
-        for <dm-devel@lists.linux.dev>; Tue, 23 Jan 2024 21:36:10 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jDZfX0Af"
+Received: by mail-pl1-f169.google.com with SMTP id d9443c01a7336-1d74dce86f7so24180945ad.2
+        for <dm-devel@lists.linux.dev>; Tue, 23 Jan 2024 21:36:13 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706074569; x=1706679369; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1706074573; x=1706679373; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=WKyOiEcqJPFq+lUKHVHdFYPT0CvR+VKFddHQFhQnJeY=;
-        b=DakdbBVaStHWpChgqg/yOcjAr1fYs6hwEmPr9QJdDJNM+z3xLZ4QGncNYb8cFb855w
-         VqH12tAPpe8FjNU1ycXmuS4RGIzLXnwru4rdvQJ/XDCSDOriS2hiWpPVVR0m7Jox7Ntf
-         DScl1rEdvNSjH+Tpl59NNv8eD1xiLHjqr2x4CiUXUnZBXqZvPV3akUOlzNe4+c9pbps/
-         W0UD2m5NqnSMbvRG7fvrxSiV6ikywgRVvfnK317ONa6Koq9b6RlUX5+DnRQ65pIu4gde
-         1Q3mFQkIjjggKojrL1yKQqfWouIXhQ48jwvZcMqvrJruqk0ZoWUpUUmw5efBfdnm1TCq
-         iPcg==
+        bh=PWlPekndzAdbEMYM8Bw9A8Tj6tCf5ykzZFb2oYqndsg=;
+        b=jDZfX0Af/+IAtH0plDd1nfGq0FS44JLaxo8SZGWye2HGDvINEvL+E7KGZJXjZWMv9A
+         Oy9MCIwN6X1dOhrxaVAanAzJ3bRROV/3vlMva0t9UogBvoKpwFhZnjlt3v4m3XGZmafS
+         dpm/BUdeN1ZiNNMD6ton6mmuPOqB2ej6Y99IWmB3xC7Kvrp4Ot/U4F7DGPoGYR0DKp9P
+         QhaZCKBJEAMde5CZmovBdPviWsPEFawtwWOAPZ3Rvr3RvqQPbn5IV5kcYXwa34Te06fG
+         XQz785NSXppq1Ac4GOS2NJAAt+JnR9d6k9bWWZBxq74posl/usb8psAdW76EnsUML8JI
+         SNug==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706074569; x=1706679369;
+        d=1e100.net; s=20230601; t=1706074573; x=1706679373;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=WKyOiEcqJPFq+lUKHVHdFYPT0CvR+VKFddHQFhQnJeY=;
-        b=YQ1H4pgBLcFZKsgZZqi2ovwN0h8IeWbEOBMDRADVChEhbS1MW7JvtvjBIKUhcMwkwG
-         WLmxFIXn5IHjmVa69rXBrLLP58nGklRLfGWOGfUfPdu7fe1AZx+N38MLt6vZel2xgJBd
-         0dnRpXiKRboKRMzXuh/eEDoJytBvMB1YARoHYMKuTXK0G11ogBbvIBvUWDyrp+lvy3XP
-         jmhjrdWkWE1qt5jLQxWmbo1MikVU1I0hsQIa8RKnpSgpTPNWi0pP7IDpXg+ejyXlQwhB
-         LjQs658l4ZByzWoK3OwF/+Hu0tkZXE5ACFFAWn2XPqwLadoPju+hEFpr4QNTQKj2gAwZ
-         LxAw==
-X-Gm-Message-State: AOJu0YzWnn1O9Ejqlap9B0t+BuAvicYkDYDVHe++S8t9lT4k/CoG4y45
-	27LLxHYfS9Wg4+OjGRzptNA3GI5j9FGjP/Eh6TnZZp765xjq+gxU
-X-Google-Smtp-Source: AGHT+IFvPUKiLFPOToglddyZowKK8F5ajBLiJeYrmszzYx2ohL1cCnYFiS65XZxb9RVhy1DlScJb4A==
-X-Received: by 2002:a17:902:a982:b0:1d7:5bde:7c2f with SMTP id bh2-20020a170902a98200b001d75bde7c2fmr197526plb.21.1706074569565;
-        Tue, 23 Jan 2024 21:36:09 -0800 (PST)
+        bh=PWlPekndzAdbEMYM8Bw9A8Tj6tCf5ykzZFb2oYqndsg=;
+        b=DRMYJWS5MRN6zCjcd0nGYkYHhcmKuy+BzEMPxskCceQpomythmqearCBVOd4kh1Gyw
+         m6NawNEUAqthWbZYM7fyToU1LtZ02+eoFA54IjHtZhcEcQJ4wbijIAmiNiYTFujXioKa
+         jwzZQoCi5jP9dqETiOlw42jnwtyx/j7ibmIU+XcflUwHnUFphLzT1WrBfOzuHAMGs9l6
+         ZfNiId7PDptbwohD5YHjnIRHZvpdQXtGXZRLJlKv8huSA82h6MqChHsSu35kjOAXY9ML
+         4zaDVASqMhlXl7dThSMt6XZ5RfdwfyKCWfzAG2izwneiT0lAdAuRFgniOACGmNjol3RI
+         dqhQ==
+X-Gm-Message-State: AOJu0Yw5O2UMenc/Dc0oAMRFLrH5uZh5jdcPJoMkq4oDGMrVChtWJHPe
+	LvSTAUQHhYXZxXVO3ydtaV/UzAL/JOBjLPFvxynq6mIvWcpyoz6k
+X-Google-Smtp-Source: AGHT+IFPDQ5hlYayquFWpAE0oy884IoU2/GT9ynMR6S6AHz2iZjFp/A16Ygogw3z+22Ga06DnDfQfQ==
+X-Received: by 2002:a17:902:a3cd:b0:1d7:4821:b567 with SMTP id q13-20020a170902a3cd00b001d74821b567mr265313plb.139.1706074573308;
+        Tue, 23 Jan 2024 21:36:13 -0800 (PST)
 Received: from ubuntu.. ([117.18.48.102])
-        by smtp.gmail.com with ESMTPSA id kt6-20020a170903088600b001d755acec64sm4015663plb.189.2024.01.23.21.36.06
+        by smtp.gmail.com with ESMTPSA id kt6-20020a170903088600b001d755acec64sm4015663plb.189.2024.01.23.21.36.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 23 Jan 2024 21:36:09 -0800 (PST)
+        Tue, 23 Jan 2024 21:36:12 -0800 (PST)
 From: Hongyu Jin <hongyu.jin.cn@gmail.com>
 To: agk@redhat.com,
 	snitzer@kernel.org,
@@ -64,9 +64,9 @@ Cc: zhiguo.niu@unisoc.com,
 	linux-kernel@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
-Subject: [PATCH v8 1/5] block: Fix bio IO priority setting
-Date: Wed, 24 Jan 2024 13:35:52 +0800
-Message-Id: <20240124053556.126468-2-hongyu.jin.cn@gmail.com>
+Subject: [PATCH v8 2/5] dm: Support I/O priority for dm_io()
+Date: Wed, 24 Jan 2024 13:35:53 +0800
+Message-Id: <20240124053556.126468-3-hongyu.jin.cn@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240124053556.126468-1-hongyu.jin.cn@gmail.com>
 References: <20231221103139.15699-6-hongyu.jin.cn@gmail.com>
@@ -81,98 +81,352 @@ Content-Transfer-Encoding: 8bit
 
 From: Hongyu Jin <hongyu.jin@unisoc.com>
 
-Move bio_set_ioprio() into submit_bio():
-1. Only call bio_set_ioprio() once to set the priority of original bio,
-   the bio that cloned and splited from original bio will auto inherit
-   the priority of original bio in clone process.
+Some I/O will dispatch from kworker with different io_context settings
+than the submitting task, we may need to specify a priority to avoid
+losing priority.
 
-2. The IO priority can be passed to module that implement
-   struct gendisk::fops::submit_bio, help resolve some
-   of the IO priority loss issues.
-
-This patch depends on commit 82b74cac2849 ("blk-ioprio: Convert from
-rqos policy to direct call")
-
-Fixes: a78418e6a04c ("block: Always initialize bio IO priority on submit")
+Add I/O priority parameter for dm_io().
 
 Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
 Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
 Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
 ---
- block/blk-core.c | 10 ++++++++++
- block/blk-mq.c   | 10 ----------
- 2 files changed, 10 insertions(+), 10 deletions(-)
+ drivers/md/dm-bufio.c           |  6 +++---
+ drivers/md/dm-integrity.c       | 10 +++++-----
+ drivers/md/dm-io.c              | 23 +++++++++++++----------
+ drivers/md/dm-kcopyd.c          |  4 ++--
+ drivers/md/dm-log.c             |  4 ++--
+ drivers/md/dm-raid1.c           |  6 +++---
+ drivers/md/dm-snap-persistent.c |  4 ++--
+ drivers/md/dm-writecache.c      |  8 ++++----
+ include/linux/dm-io.h           |  3 ++-
+ 9 files changed, 36 insertions(+), 32 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 11342af420d0..de771093b526 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -49,6 +49,7 @@
- #include "blk-pm.h"
- #include "blk-cgroup.h"
- #include "blk-throttle.h"
-+#include "blk-ioprio.h"
- 
- struct dentry *blk_debugfs_root;
- 
-@@ -833,6 +834,14 @@ void submit_bio_noacct(struct bio *bio)
- }
- EXPORT_SYMBOL(submit_bio_noacct);
- 
-+static void bio_set_ioprio(struct bio *bio)
-+{
-+	/* Nobody set ioprio so far? Initialize it based on task's nice value */
-+	if (IOPRIO_PRIO_CLASS(bio->bi_ioprio) == IOPRIO_CLASS_NONE)
-+		bio->bi_ioprio = get_current_ioprio();
-+	blkcg_set_ioprio(bio);
-+}
-+
- /**
-  * submit_bio - submit a bio to the block device layer for I/O
-  * @bio: The &struct bio which describes the I/O
-@@ -855,6 +864,7 @@ void submit_bio(struct bio *bio)
- 		count_vm_events(PGPGOUT, bio_sectors(bio));
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 13c65b7e1ed6..f5541b8f6320 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -1315,7 +1315,7 @@ static void use_dmio(struct dm_buffer *b, enum req_op op, sector_t sector,
+ 		io_req.mem.ptr.vma = (char *)b->data + offset;
  	}
  
-+	bio_set_ioprio(bio);
- 	submit_bio_noacct(bio);
+-	r = dm_io(&io_req, 1, &region, NULL);
++	r = dm_io(&io_req, 1, &region, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		b->end_io(b, errno_to_blk_status(r));
  }
- EXPORT_SYMBOL(submit_bio);
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index aa87fcfda1ec..2dc01551e27c 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -40,7 +40,6 @@
- #include "blk-stat.h"
- #include "blk-mq-sched.h"
- #include "blk-rq-qos.h"
--#include "blk-ioprio.h"
+@@ -2167,7 +2167,7 @@ int dm_bufio_issue_flush(struct dm_bufio_client *c)
+ 	if (WARN_ON_ONCE(dm_bufio_in_request()))
+ 		return -EINVAL;
  
- static DEFINE_PER_CPU(struct llist_head, blk_cpu_done);
- static DEFINE_PER_CPU(call_single_data_t, blk_cpu_csd);
-@@ -2944,14 +2943,6 @@ static bool blk_mq_use_cached_rq(struct request *rq, struct blk_plug *plug,
- 	return true;
+-	return dm_io(&io_req, 1, &io_reg, NULL);
++	return dm_io(&io_req, 1, &io_reg, NULL, IOPRIO_DEFAULT);
+ }
+ EXPORT_SYMBOL_GPL(dm_bufio_issue_flush);
+ 
+@@ -2191,7 +2191,7 @@ int dm_bufio_issue_discard(struct dm_bufio_client *c, sector_t block, sector_t c
+ 	if (WARN_ON_ONCE(dm_bufio_in_request()))
+ 		return -EINVAL; /* discards are optional */
+ 
+-	return dm_io(&io_req, 1, &io_reg, NULL);
++	return dm_io(&io_req, 1, &io_reg, NULL, IOPRIO_DEFAULT);
+ }
+ EXPORT_SYMBOL_GPL(dm_bufio_issue_discard);
+ 
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index c5f03aab4552..ed45411eb68d 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -553,7 +553,7 @@ static int sync_rw_sb(struct dm_integrity_c *ic, blk_opf_t opf)
+ 		}
+ 	}
+ 
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		return r;
+ 
+@@ -1071,7 +1071,7 @@ static void rw_journal_sectors(struct dm_integrity_c *ic, blk_opf_t opf,
+ 	io_loc.sector = ic->start + SB_SECTORS + sector;
+ 	io_loc.count = n_sectors;
+ 
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r)) {
+ 		dm_integrity_io_error(ic, (opf & REQ_OP_MASK) == REQ_OP_READ ?
+ 				      "reading journal" : "writing journal", r);
+@@ -1188,7 +1188,7 @@ static void copy_from_journal(struct dm_integrity_c *ic, unsigned int section, u
+ 	io_loc.sector = target;
+ 	io_loc.count = n_sectors;
+ 
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r)) {
+ 		WARN_ONCE(1, "asynchronous dm_io failed: %d", r);
+ 		fn(-1UL, data);
+@@ -1517,7 +1517,7 @@ static void dm_integrity_flush_buffers(struct dm_integrity_c *ic, bool flush_dat
+ 		fr.io_reg.count = 0,
+ 		fr.ic = ic;
+ 		init_completion(&fr.comp);
+-		r = dm_io(&fr.io_req, 1, &fr.io_reg, NULL);
++		r = dm_io(&fr.io_req, 1, &fr.io_reg, NULL, IOPRIO_DEFAULT);
+ 		BUG_ON(r);
+ 	}
+ 
+@@ -2740,7 +2740,7 @@ static void integrity_recalc(struct work_struct *w)
+ 	io_loc.sector = get_data_sector(ic, area, offset);
+ 	io_loc.count = n_sectors;
+ 
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r)) {
+ 		dm_integrity_io_error(ic, "reading data", r);
+ 		goto err;
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index f053ce245814..7409490259d1 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -305,7 +305,7 @@ static void km_dp_init(struct dpages *dp, void *data)
+  */
+ static void do_region(const blk_opf_t opf, unsigned int region,
+ 		      struct dm_io_region *where, struct dpages *dp,
+-		      struct io *io)
++		      struct io *io, unsigned short ioprio)
+ {
+ 	struct bio *bio;
+ 	struct page *page;
+@@ -354,6 +354,7 @@ static void do_region(const blk_opf_t opf, unsigned int region,
+ 				       &io->client->bios);
+ 		bio->bi_iter.bi_sector = where->sector + (where->count - remaining);
+ 		bio->bi_end_io = endio;
++		bio->bi_ioprio = ioprio;
+ 		store_io_and_region_in_bio(bio, io, region);
+ 
+ 		if (op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES) {
+@@ -383,7 +384,7 @@ static void do_region(const blk_opf_t opf, unsigned int region,
+ 
+ static void dispatch_io(blk_opf_t opf, unsigned int num_regions,
+ 			struct dm_io_region *where, struct dpages *dp,
+-			struct io *io, int sync)
++			struct io *io, int sync, unsigned short ioprio)
+ {
+ 	int i;
+ 	struct dpages old_pages = *dp;
+@@ -400,7 +401,7 @@ static void dispatch_io(blk_opf_t opf, unsigned int num_regions,
+ 	for (i = 0; i < num_regions; i++) {
+ 		*dp = old_pages;
+ 		if (where[i].count || (opf & REQ_PREFLUSH))
+-			do_region(opf, i, where + i, dp, io);
++			do_region(opf, i, where + i, dp, io, ioprio);
+ 	}
+ 
+ 	/*
+@@ -425,7 +426,7 @@ static void sync_io_complete(unsigned long error, void *context)
+ 
+ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 		   struct dm_io_region *where, blk_opf_t opf, struct dpages *dp,
+-		   unsigned long *error_bits)
++		   unsigned long *error_bits, unsigned short ioprio)
+ {
+ 	struct io *io;
+ 	struct sync_io sio;
+@@ -447,7 +448,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
+-	dispatch_io(opf, num_regions, where, dp, io, 1);
++	dispatch_io(opf, num_regions, where, dp, io, 1, ioprio);
+ 
+ 	wait_for_completion_io(&sio.wait);
+ 
+@@ -459,7 +460,8 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 
+ static int async_io(struct dm_io_client *client, unsigned int num_regions,
+ 		    struct dm_io_region *where, blk_opf_t opf,
+-		    struct dpages *dp, io_notify_fn fn, void *context)
++		    struct dpages *dp, io_notify_fn fn, void *context,
++		    unsigned short ioprio)
+ {
+ 	struct io *io;
+ 
+@@ -479,7 +481,7 @@ static int async_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
+-	dispatch_io(opf, num_regions, where, dp, io, 0);
++	dispatch_io(opf, num_regions, where, dp, io, 0, ioprio);
+ 	return 0;
  }
  
--static void bio_set_ioprio(struct bio *bio)
--{
--	/* Nobody set ioprio so far? Initialize it based on task's nice value */
--	if (IOPRIO_PRIO_CLASS(bio->bi_ioprio) == IOPRIO_CLASS_NONE)
--		bio->bi_ioprio = get_current_ioprio();
--	blkcg_set_ioprio(bio);
--}
--
- /**
-  * blk_mq_submit_bio - Create and send a request to block device.
-  * @bio: Bio pointer.
-@@ -2976,7 +2967,6 @@ void blk_mq_submit_bio(struct bio *bio)
- 	blk_status_t ret;
+@@ -521,7 +523,8 @@ static int dp_init(struct dm_io_request *io_req, struct dpages *dp,
+ }
  
- 	bio = blk_queue_bounce(bio, q);
--	bio_set_ioprio(bio);
+ int dm_io(struct dm_io_request *io_req, unsigned int num_regions,
+-	  struct dm_io_region *where, unsigned long *sync_error_bits)
++	  struct dm_io_region *where, unsigned long *sync_error_bits,
++	  unsigned short ioprio)
+ {
+ 	int r;
+ 	struct dpages dp;
+@@ -532,11 +535,11 @@ int dm_io(struct dm_io_request *io_req, unsigned int num_regions,
  
- 	if (plug) {
- 		rq = rq_list_peek(&plug->cached_rq);
+ 	if (!io_req->notify.fn)
+ 		return sync_io(io_req->client, num_regions, where,
+-			       io_req->bi_opf, &dp, sync_error_bits);
++			       io_req->bi_opf, &dp, sync_error_bits, ioprio);
+ 
+ 	return async_io(io_req->client, num_regions, where,
+ 			io_req->bi_opf, &dp, io_req->notify.fn,
+-			io_req->notify.context);
++			io_req->notify.context, ioprio);
+ }
+ EXPORT_SYMBOL(dm_io);
+ 
+diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
+index 36bcfdccae04..6ea75436a433 100644
+--- a/drivers/md/dm-kcopyd.c
++++ b/drivers/md/dm-kcopyd.c
+@@ -578,9 +578,9 @@ static int run_io_job(struct kcopyd_job *job)
+ 	io_job_start(job->kc->throttle);
+ 
+ 	if (job->op == REQ_OP_READ)
+-		r = dm_io(&io_req, 1, &job->source, NULL);
++		r = dm_io(&io_req, 1, &job->source, NULL, IOPRIO_DEFAULT);
+ 	else
+-		r = dm_io(&io_req, job->num_dests, job->dests, NULL);
++		r = dm_io(&io_req, job->num_dests, job->dests, NULL, IOPRIO_DEFAULT);
+ 
+ 	return r;
+ }
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index f9f84236dfcd..f7f9c2100937 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -300,7 +300,7 @@ static int rw_header(struct log_c *lc, enum req_op op)
+ {
+ 	lc->io_req.bi_opf = op;
+ 
+-	return dm_io(&lc->io_req, 1, &lc->header_location, NULL);
++	return dm_io(&lc->io_req, 1, &lc->header_location, NULL, IOPRIO_DEFAULT);
+ }
+ 
+ static int flush_header(struct log_c *lc)
+@@ -313,7 +313,7 @@ static int flush_header(struct log_c *lc)
+ 
+ 	lc->io_req.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
+ 
+-	return dm_io(&lc->io_req, 1, &null_location, NULL);
++	return dm_io(&lc->io_req, 1, &null_location, NULL, IOPRIO_DEFAULT);
+ }
+ 
+ static int read_header(struct log_c *log)
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index ddcb2bc4a617..9511dae5b556 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -278,7 +278,7 @@ static int mirror_flush(struct dm_target *ti)
+ 	}
+ 
+ 	error_bits = -1;
+-	dm_io(&io_req, ms->nr_mirrors, io, &error_bits);
++	dm_io(&io_req, ms->nr_mirrors, io, &error_bits, IOPRIO_DEFAULT);
+ 	if (unlikely(error_bits != 0)) {
+ 		for (i = 0; i < ms->nr_mirrors; i++)
+ 			if (test_bit(i, &error_bits))
+@@ -554,7 +554,7 @@ static void read_async_bio(struct mirror *m, struct bio *bio)
+ 
+ 	map_region(&io, m, bio);
+ 	bio_set_m(bio, m);
+-	BUG_ON(dm_io(&io_req, 1, &io, NULL));
++	BUG_ON(dm_io(&io_req, 1, &io, NULL, IOPRIO_DEFAULT));
+ }
+ 
+ static inline int region_in_sync(struct mirror_set *ms, region_t region,
+@@ -681,7 +681,7 @@ static void do_write(struct mirror_set *ms, struct bio *bio)
+ 	 */
+ 	bio_set_m(bio, get_default_mirror(ms));
+ 
+-	BUG_ON(dm_io(&io_req, ms->nr_mirrors, io, NULL));
++	BUG_ON(dm_io(&io_req, ms->nr_mirrors, io, NULL, IOPRIO_DEFAULT));
+ }
+ 
+ static void do_writes(struct mirror_set *ms, struct bio_list *writes)
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index 15649921f2a9..568d10842b1f 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -223,7 +223,7 @@ static void do_metadata(struct work_struct *work)
+ {
+ 	struct mdata_req *req = container_of(work, struct mdata_req, work);
+ 
+-	req->result = dm_io(req->io_req, 1, req->where, NULL);
++	req->result = dm_io(req->io_req, 1, req->where, NULL, IOPRIO_DEFAULT);
+ }
+ 
+ /*
+@@ -247,7 +247,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, blk_opf_t opf,
+ 	struct mdata_req req;
+ 
+ 	if (!metadata)
+-		return dm_io(&io_req, 1, &where, NULL);
++		return dm_io(&io_req, 1, &where, NULL, IOPRIO_DEFAULT);
+ 
+ 	req.where = &where;
+ 	req.io_req = &io_req;
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 074cb785eafc..6a4279bfb1e7 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -531,7 +531,7 @@ static void ssd_commit_flushed(struct dm_writecache *wc, bool wait_for_ios)
+ 		req.notify.context = &endio;
+ 
+ 		/* writing via async dm-io (implied by notify.fn above) won't return an error */
+-		(void) dm_io(&req, 1, &region, NULL);
++		(void) dm_io(&req, 1, &region, NULL, IOPRIO_DEFAULT);
+ 		i = j;
+ 	}
+ 
+@@ -568,7 +568,7 @@ static void ssd_commit_superblock(struct dm_writecache *wc)
+ 	req.notify.fn = NULL;
+ 	req.notify.context = NULL;
+ 
+-	r = dm_io(&req, 1, &region, NULL);
++	r = dm_io(&req, 1, &region, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		writecache_error(wc, r, "error writing superblock");
+ }
+@@ -596,7 +596,7 @@ static void writecache_disk_flush(struct dm_writecache *wc, struct dm_dev *dev)
+ 	req.client = wc->dm_io;
+ 	req.notify.fn = NULL;
+ 
+-	r = dm_io(&req, 1, &region, NULL);
++	r = dm_io(&req, 1, &region, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		writecache_error(wc, r, "error flushing metadata: %d", r);
+ }
+@@ -990,7 +990,7 @@ static int writecache_read_metadata(struct dm_writecache *wc, sector_t n_sectors
+ 	req.client = wc->dm_io;
+ 	req.notify.fn = NULL;
+ 
+-	return dm_io(&req, 1, &region, NULL);
++	return dm_io(&req, 1, &region, NULL, IOPRIO_DEFAULT);
+ }
+ 
+ static void writecache_resume(struct dm_target *ti)
+diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
+index 7595142f3fc5..7b2968612b7e 100644
+--- a/include/linux/dm-io.h
++++ b/include/linux/dm-io.h
+@@ -80,7 +80,8 @@ void dm_io_client_destroy(struct dm_io_client *client);
+  * error occurred doing io to the corresponding region.
+  */
+ int dm_io(struct dm_io_request *io_req, unsigned int num_regions,
+-	  struct dm_io_region *region, unsigned int long *sync_error_bits);
++	  struct dm_io_region *region, unsigned int long *sync_error_bits,
++	  unsigned short ioprio);
+ 
+ #endif	/* __KERNEL__ */
+ #endif	/* _LINUX_DM_IO_H */
 -- 
 2.34.1
 
