@@ -1,134 +1,154 @@
-Received: from mail-yb1-f179.google.com (mail-yb1-f179.google.com [209.85.219.179])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8EA515D2
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 02:00:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2576746B4
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 02:58:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706061634; cv=none; b=ThVKOg3k/70ADKLRwEFKeWSwC56+RtnsfHOpScfYozc7fgda5buKs3b2v0Hg3YSujydpBoDL47Rjj0OfJaglIm7gVHX4ENYZQuctd/m7HhZfdOtQwklYJgCbd1UO/FLx9FTVotoAkkZqCWahyL4IDPQut4nqHSGWF4Mmh5V+pD0=
+	t=1706065119; cv=none; b=hXkuDp14y7mASznGvsSq6LSmikPW5tYO0j1WVx1xTbtWabcwtTNfcNV8Q5HhkBLe4IDYPOaMghktBe5i5/7XvouV32zFGpigEGG7r/vIAGmxVuIGrGsb6LoXSfwZG4lmafRcCiWDKTNqImZcA02brv8i+/8og9jmVWlU3wzkgWY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706061634; c=relaxed/simple;
-	bh=8d6WTmteQijPqRf83WskWT7kR/dWOXaY5i7rNx5+M/A=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=luVpP3wkdxfCTnOpzlSQG42PvTgLHcCujJMO51/b25ZB+Sf8zmxsg4pVVfashV6OCmfDc3yWi3zRZutsyX38CzVzBOds4QDy8S//j3QxYPk4/vfDmAJT5BRJnryqzQrf1UJ1ZAnFi0fDdTI8IMc0FUffHkLKxQK3K6H75A7dNkw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=PDCvyfuu; arc=none smtp.client-ip=209.85.219.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
+	s=arc-20240116; t=1706065119; c=relaxed/simple;
+	bh=g73w3oGcjQjPTuHwF8LT2kH6K2o25tSddbNO6vmK7OE=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=bfG41gg8rVJU/61qPJNYY/8wth3OhbPiXkqyTTVcysfSYor2BzdqDSGIQYB1ozErDETRqLflvVjR5ejcVr32ImSyWRWYvcEW75CDzDQCJYKXoA1J84YMmUpMMAC+bQ9A86yGy114awZZqSozJ02wXrCwiwIqkrlLLZnzC875UbE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fzyJ4vO8; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="PDCvyfuu"
-Received: by mail-yb1-f179.google.com with SMTP id 3f1490d57ef6-dc25099b084so3220107276.0
-        for <dm-devel@lists.linux.dev>; Tue, 23 Jan 2024 18:00:32 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1706061631; x=1706666431; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=hEwMS+oLOZw79k9q7PdNYGfvvcesUSJ0i3k8Uwv3yis=;
-        b=PDCvyfuumKpmworuToMZ0bnEPTp0a1FLahpXH+ddh4wDULlyrTTzF4KB/f5hHwXurR
-         piwaH1qwCRCIqFNeg6bifmogefu7IKPSXcAuu0whxNIgKbLbtHvgREcjIB0B/6QDOEqC
-         aTmjKbRguxuOI46Z+pQGOgy4YYsbYahL5pni1UIkLyk8D8zMuLaZn4mobsKGfjnKmt8V
-         BxZUHwyQ8wcYWs1Li7HjJrbBrYsy0tMjD2Txv0XmRvc7U7i/gUlD/vUk/8vspLHAS64F
-         8UUQWmt4NvDO4tNmMUXw6+NHCEh81qJJIzDKOXHiDZifgJDFMOToVKkKzFemvgadmjVB
-         yn1w==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fzyJ4vO8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1706065116;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Aa5lqsF1sJUt2zL2UVZScY7jse2XJ4+k4JV/JtcjRIQ=;
+	b=fzyJ4vO8HYuf3O5BQYcx4b4M/erhgwNwPiBBG4RS0pc2Z5l5gS9mtOp7FCvX7Qr6GouFHE
+	4UFf40WgphPhJRIqGC5EPf2A+fIZW/qMhi/BhTF75cUTett/cdD/L5nRPD2Dg2W2IVgK6U
+	r41op4Paxwp1PTMK3qSOxZx3GLDT/UQ=
+Received: from mail-oo1-f69.google.com (mail-oo1-f69.google.com
+ [209.85.161.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-392-766Qig5COEGEdlvEz1ryvA-1; Tue, 23 Jan 2024 21:58:33 -0500
+X-MC-Unique: 766Qig5COEGEdlvEz1ryvA-1
+Received: by mail-oo1-f69.google.com with SMTP id 006d021491bc7-598e30e7e8cso4908094eaf.3
+        for <dm-devel@lists.linux.dev>; Tue, 23 Jan 2024 18:58:33 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706061631; x=1706666431;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=hEwMS+oLOZw79k9q7PdNYGfvvcesUSJ0i3k8Uwv3yis=;
-        b=Tx8KoxlWY6oxxUMANNSpc26iX9Cbk3uk5jLQZ8JpHgq7+wijORoSc5euu8A62gKVcA
-         8Wz9iicanpnDOl+mqfLnoBHWBRxuRJPCtdCMlk+VDdbex2qpftmBdeziHMLwu/Ow1py9
-         wCkDAjSb60dy6Ekyl6x4BLUY/Gm9EVWJo6WmA+VXHBzyKpa6GvyJsuFmlFDlJgCs5FWs
-         HNN0ZJTO7ZQGf9/lHxvisdKuT05h/6j+yrOmhq0+QlnbHffwM6WADcwFB4lHqM/HMcyf
-         kZifWuSDAkCUAGdrIutlNflcpGjAinvORuEbsAFW3pGsf/pCVRhd3nhU4m50hJUJJZDv
-         QoLQ==
-X-Gm-Message-State: AOJu0Yy4eWRFlYpegy6h/lCkjcmIsBOUip0Czciz3z9Y4PfAjqkQZdUT
-	SoHwAYZioKOP/IQz4UrbQyWkYMvzXFnnz3p1RAcT2eL/gw+j0/8rdO+l3GVyyLr4BnoyF/oSS0X
-	S8gEouZxPQ1UoTalKWhNNfJQ5Z2mUwtf8ERn5lQqZSMKpwMPDAcov0dJlGG+n6DdQFXfkim3gr5
-	vVeKMpX1WCE/OiaiDv16qChg3PmztQotbm+XvyD85OrD8=
-X-Google-Smtp-Source: AGHT+IFr1j7Ai+JA+Vxb3oyjfqH6pQjPKZO9mgTLMOufjOrZ9AlS6d0O6mgLc5t+JsGsyDdfxAMX0w==
-X-Received: by 2002:a25:9cc8:0:b0:dc2:4357:ad09 with SMTP id z8-20020a259cc8000000b00dc24357ad09mr88413ybo.108.1706061628982;
-        Tue, 23 Jan 2024 18:00:28 -0800 (PST)
-Received: from brian--MacBookPro18.purestorage.com ([136.226.79.24])
-        by smtp.gmail.com with ESMTPSA id l38-20020a635726000000b005ce472f2d0fsm10481071pgb.66.2024.01.23.18.00.27
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Tue, 23 Jan 2024 18:00:28 -0800 (PST)
-From: Brian Bunker <brian@purestorage.com>
-To: dm-devel@lists.linux.dev
-Cc: mwilck@suse.com,
-	bmarzins@redhat.com,
-	Brian Bunker <brian@purestorage.com>,
-	Seamus Connor <sconnor@purestorage.com>
-Subject: [PATCH] multipathd: the sysfs prioritizer can return stale data
-Date: Tue, 23 Jan 2024 18:00:07 -0800
-Message-ID: <20240124020007.25259-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.43.0
+        d=1e100.net; s=20230601; t=1706065113; x=1706669913;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=Aa5lqsF1sJUt2zL2UVZScY7jse2XJ4+k4JV/JtcjRIQ=;
+        b=bSHHIqPiyKEeyL8iyYunhN/+aPgir889ApTS4+BtbDAV8IjNEd1u9yLgbKIyRgTs6V
+         P+gxOlL3I/lRlHik7tgDRiNnRQ6c7BVjIujKKakcUrfeiQsquPIv+V9ko22cLpBV95vy
+         drgvXJnzY5SQBoi5m6EYw4tzxOPOWj+ExmeypY5xrSrMmX8HmG4Et8Y9y0PjKuLIrnbH
+         oF4vZPS5TEqA/9Ptoj+JMjE1EX1bllNNx1SKOGCQPtacx4Zp82pmu3H/538C7hOxDXX1
+         B2oywR6xfxCqrKTYTb+nsm6pPfxZ8sskS30HDIwVneTyoLQ4QSdCICy1k/vUlp9sBIYr
+         wcQw==
+X-Gm-Message-State: AOJu0Yy7ENt7JrVxl1du/oeyImgesyZBfbWcLAnEC14X3Zvj++Wq7n3j
+	NQfaPYGgzg+m51fZ2VDRy1itxXr5OIuFirujxxyevP0Mas76Gke3I/K5dn4d7QC3QQr0/NO4PAD
+	KNcCOfF7/GloR2zVrzdaew61zcfElhKcRa76Mu3/hnCGPAndhtAJv6OsCkkxKl1CmqknYvCKh11
+	K65Cs5Ew3peh5TC08/shaqgVVsZ4KExKs=
+X-Received: by 2002:a05:6358:923:b0:176:91b9:831 with SMTP id r35-20020a056358092300b0017691b90831mr40197rwi.63.1706065113105;
+        Tue, 23 Jan 2024 18:58:33 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFo8UyiGnq660sIA/58wPfOKhfxUA+DUrZjXFWkRF4CkLydOzrbPoGAyKjtdHtH1xeZuO/K9Je3ZJf0U1SkUi0=
+X-Received: by 2002:a05:6358:923:b0:176:91b9:831 with SMTP id
+ r35-20020a056358092300b0017691b90831mr40183rwi.63.1706065112851; Tue, 23 Jan
+ 2024 18:58:32 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20240120103734.4155446-1-yukuai1@huaweicloud.com> <20240120103734.4155446-4-yukuai1@huaweicloud.com>
+In-Reply-To: <20240120103734.4155446-4-yukuai1@huaweicloud.com>
+From: Xiao Ni <xni@redhat.com>
+Date: Wed, 24 Jan 2024 10:58:21 +0800
+Message-ID: <CALTww28NL+yBT8bcL2=ATJr79eL45=TF-EXHUD8NsfCXXTG3Qw@mail.gmail.com>
+Subject: Re: [PATCH 3/5] md: make sure md_do_sync() will set MD_RECOVERY_DONE
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: mpatocka@redhat.com, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
+	heinzm@redhat.com, song@kernel.org, yukuai3@huawei.com, 
+	linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, yi.zhang@huawei.com, 
+	yangerkun@huawei.com
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-When a path is lost and then reinstated later, the ALUA
-device handler will not pick up this change and continue
-to possibly provide incorrect (stale) information about
-its ALUA state to the 'sysfs' prioritizer if the path's
-priorities were changed prior to the loss of those paths.
+Hi all
 
-On the loss of an I_T nexus, the path state should not
-continue to use its last known state. Many things and a lot
-of time could have passed between the path loss and its
-eventual reinstatemnt.
+MD_RECOVERY_WAIT was introduced in d5d885fd5. From this patch,
+MD_RECOVERY_WAIT only has one usage during creating raid device.
+resync job needs to wait until pers->start finishes(The only place
+which is checked). If we remove it from md_do_sync, will it break the
+logic? Or we don't need this flag anymore? If so can we remove this
+flag?
 
-The ALUA device handler didn't have this issue since it
-always got the ALUA state from the target by sending an RTPG
-request on the path and updated the priority. However with
-the detect priority set to true by default, the 'sysfs'
-prioritzier will be used on targets that support ALUA rather
-than the 'alua' prioritizer.
+dm-raid uses this bit in patch 644e2537f (dm raid: fix stripe adding
+reshape deadlock). It's the reason why md_do_sync can't set
+MD_RECOVERY_DONE. Now we stop sync thread asynchronously, can we
+revert this patch?
 
-Without re-evaluating the ALUA state when a path returns
-multipath is left with path states which do not reflect
-the actual ALUA states the target is providing.
+Best Regards
+Xiao
 
-3624a9370f0f545fc7c3e46a100011010 dm-2 PURE,FlashArray
-size=3.0T features='0' hwhandler='1 alua' wp=rw
-|-+- policy='service-time 0' prio=50 status=active
-| |- 13:0:0:1 sdg 8:96  active ready running
-| |- 12:0:0:1 sdf 8:80  active ready running
-| |- 9:0:0:1  sdc 8:32  active ready running
-| `- 1:0:0:1  sdb 8:16  active ready running
-`-+- policy='service-time 0' prio=10 status=enabled
-  |- 14:0:0:1 sdh 8:112 active ready running
-  |- 15:0:0:1 sdi 8:128 active ready running
-  |- 10:0:0:1 sdd 8:48  active ready running
-  `- 11:0:0:1 sde 8:64  active ready running
-
- # sg_rtpg /dev/sdh (Active/Optimized)
-target port group asymmetric access state : 0x00
-
-Signed-off-by: Brian Bunker <brian@purestorage.com>
-Signed-off-by: Seamus Connor <sconnor@purestorage.com>
----
- multipathd/main.c | 5 +++++
- 1 file changed, 5 insertions(+)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 230c9d10..dd48be74 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1937,6 +1937,11 @@ reinstate_path (struct path * pp)
- 	else {
- 		condlog(2, "%s: reinstated", pp->dev_t);
- 		update_queue_mode_add_path(pp->mpp);
-+		if (strcmp(pp->prio.name, PRIO_SYSFS) == 0) {
-+			condlog(2, "%s: rescan target to update priorities",
-+				pp->dev_t);
-+			rescan_path(pp->udev);
-+		}
- 	}
- }
- 
--- 
-2.43.0
+On Sat, Jan 20, 2024 at 6:41=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com> w=
+rote:
+>
+> From: Yu Kuai <yukuai3@huawei.com>
+>
+> stop_sync_thread() will interrupt md_do_sync(), and md_do_sync() must
+> set MD_RECOVERY_DONE, so that follow up md_check_recovery() will
+> unregister sync_thread, clear MD_RECOVERY_RUNNING and wake up
+> stop_sync_thread().
+>
+> Before this patch, if MD_RECOVERY_WAIT is set or the array is read-only,
+> md_do_sync() will return without setting MD_RECOVERY_DONE, hence use
+> stop_sync_thread() directly will hang because md_check_recovery() can't
+> clear MD_RECOVERY_RUNNING, which is possible for dm-raid.
+>
+> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+> ---
+>  drivers/md/md.c | 10 ++++++----
+>  1 file changed, 6 insertions(+), 4 deletions(-)
+>
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 6906d023f1d6..ba45c7be3dbe 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -8788,12 +8788,13 @@ void md_do_sync(struct md_thread *thread)
+>         int ret;
+>
+>         /* just incase thread restarts... */
+> -       if (test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
+> -           test_bit(MD_RECOVERY_WAIT, &mddev->recovery))
+> +       if (test_bit(MD_RECOVERY_DONE, &mddev->recovery))
+>                 return;
+> -       if (!md_is_rdwr(mddev)) {/* never try to sync a read-only array *=
+/
+> +
+> +       if (test_bit(MD_RECOVERY_WAIT, &mddev->recovery) ||
+> +           !md_is_rdwr(mddev)) {/* never try to sync a read-only array *=
+/
+>                 set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+> -               return;
+> +               goto out;
+>         }
+>
+>         if (mddev_is_clustered(mddev)) {
+> @@ -9171,6 +9172,7 @@ void md_do_sync(struct md_thread *thread)
+>                                                 mddev->array_sectors);
+>         }
+>
+> +out:
+>         spin_lock(&mddev->lock);
+>         if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery)) {
+>                 /* We completed so min/max setting can be forgotten if us=
+ed. */
+> --
+> 2.39.2
+>
+>
 
