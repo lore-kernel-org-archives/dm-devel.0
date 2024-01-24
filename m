@@ -1,154 +1,156 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21FEC46B4
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 03:14:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D35DE8475
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 05:36:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706066070; cv=none; b=bQs0h4DlYemul6NKH8l9kKI4HWHF+rdeM+CbEUct9hBUp1SAQ773z75hHwrFt0tNpt8kVe71RRiSJVTYRlGMwmk38S81yyguB5bupLlK5amENz6wb7yzrBqj2BNHizvW6GmpiNEzL6Nsf9fB9vNSwx7GdJECVtt8HDg7QHiqXM8=
+	t=1706074569; cv=none; b=N5FT067pPjHgj0Do9MuvvXL6SwUY/f4sAr7fNc3FZAUFXeOmA9lwGR2CJJnSBPTdLxBSxiMCNd/gAjfLKfPs7XtG+OzQjBoT91tI48AL0w2qpOqcELPjsN2pHwfnUlgvWtp+FxwMKU7f88rSYy4DoFor7mwFPbhYskN2Z9eCTJw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706066070; c=relaxed/simple;
-	bh=g3vDQVNYQHCfXhK9AZEZvl7enAqSQCJdQIj+M8vN8m8=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=h4xQ/2sbj9NAiPKYuIshH/s5Hrp2feA5nmLJlkhtBn4LDH0Pq6JnWwxP3QfXWD0S7Ro60sHAN3oEzY98LNSjM8kTCz5cuGwoHYuCgR4gTNtBiRRjhXqrvzpUUpxhc4lfV0IZqbB739h+fKFnTIfdY9KydUUSc2e2TmZEDHLqISI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TKTZd016Sz4f3lgM
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 11:14:16 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 4A0121A016E
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 11:14:23 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgBXKBGNgLBloWgsBw--.40402S3;
-	Wed, 24 Jan 2024 11:14:23 +0800 (CST)
-Subject: Re: [PATCH 3/5] md: make sure md_do_sync() will set MD_RECOVERY_DONE
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: mpatocka@redhat.com, dm-devel@lists.linux.dev, msnitzer@redhat.com,
- heinzm@redhat.com, song@kernel.org, linux-raid@vger.kernel.org,
- linux-kernel@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20240120103734.4155446-1-yukuai1@huaweicloud.com>
- <20240120103734.4155446-4-yukuai1@huaweicloud.com>
- <CALTww28NL+yBT8bcL2=ATJr79eL45=TF-EXHUD8NsfCXXTG3Qw@mail.gmail.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <c024a07e-0a93-aaad-a946-ac74ae3bdaeb@huaweicloud.com>
-Date: Wed, 24 Jan 2024 11:14:21 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1706074569; c=relaxed/simple;
+	bh=v/ix+cVRZOEdhWEOGitbvf7VzG2VcCJT99ME+jnSzMo=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=CGy+HhXmYa5A5K/vglOgj3neJfkaKRI8KYLNXBbL3BIPtKqvGyFdYXjOs+gQMNw8Zr4yTSqAapskgjYxAgWNOUjDUlX0ykrum24arNLg2WrnTUnej8d2eFQ9SDawg0hX/xagszsISLzeDZyf8CUwe9/k/rnVDfy2kg/P9vCObGw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PkRD4Nf2; arc=none smtp.client-ip=209.85.214.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PkRD4Nf2"
+Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-1d71e1d7c78so29027495ad.3
+        for <dm-devel@lists.linux.dev>; Tue, 23 Jan 2024 21:36:06 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1706074566; x=1706679366; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=VZ0sCmGXLP/qfV9K0ib2ZteYu2JlA9j0Rku1SRZce/Y=;
+        b=PkRD4Nf2+Ontvrd7un+1NEA1Wcx4hfLUW1/lgJb4dyZ9xt3nz27T+ZdhN9dufwGjbn
+         xopvgd2NPV2DjUhZyEDM6p35gcKRgHA17nE/QXiXiJNroSBd9nPS5QbKwJihWTh8KoFO
+         uL5hOFws8WZXzk6yic8MpefyxbpDq2h0+68THHG22YYvUkm6aGV8YSvMnsCXy0IWDxz1
+         7Z91xSiG27rUJUvYssooomLYV2gwpagBC+YRQEZE7P205Yx0m91pZTcwA+y2Q3PSxm37
+         XubLViGGjabG6YvN0A/wo3Uz/QE/OKKQiNDlJ/q2QiLKWTn9amQvC1M5ZW1pbNp853Th
+         PoJg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706074566; x=1706679366;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=VZ0sCmGXLP/qfV9K0ib2ZteYu2JlA9j0Rku1SRZce/Y=;
+        b=Iaf1KMMHNi8p0Ea7ZJhc5/j/wX3P+MAF+fvOcHiINiN44HICDiE/LiwjfOjfYJr4Yu
+         An7kpufkQ5p2tmGlmYkHnNWD8StXa38avvb1G//tYuarlx8XzqKpIF08lC8VnlkG1yb4
+         /F2EA6tldj2vPI5EQkFjdxtXbqPZ9YOibth4jQmZrHIyBf1y0/OZr9lnCYIK8ikfUJ+P
+         gpKgVZLRDHtVnRSGwVNB7QtQ/lEsIDXVU1ODyIKZ/zE8R2Gpj1S8hCacdj5y0skvV4X4
+         1b95eMfwEYGzqyrvbqnwSb1KPuXNMJZide0TfN3sBgFKVwZvfxFxxE8lmhW1n5KJcADv
+         HPQQ==
+X-Gm-Message-State: AOJu0YwTZ98SPXFidOUg12MIbBHnyNMhrQtWWTF2psCmYdnMFuJ+GrNl
+	GH2th4ga2WxJKBAyPODYl5RV/cywNrEJe0x/viFZtcKXTNg2QASD
+X-Google-Smtp-Source: AGHT+IF9xntCNFkSUHl3PujvHK/HRxkb9K/5UgfQmqV1GYtatOjVmSeH4Ik442zFBBKwdkB2ywPk4w==
+X-Received: by 2002:a17:902:d50e:b0:1d7:396a:2188 with SMTP id b14-20020a170902d50e00b001d7396a2188mr200652plg.12.1706074566033;
+        Tue, 23 Jan 2024 21:36:06 -0800 (PST)
+Received: from ubuntu.. ([117.18.48.102])
+        by smtp.gmail.com with ESMTPSA id kt6-20020a170903088600b001d755acec64sm4015663plb.189.2024.01.23.21.36.02
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 23 Jan 2024 21:36:05 -0800 (PST)
+From: Hongyu Jin <hongyu.jin.cn@gmail.com>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	axboe@kernel.dk,
+	ebiggers@kernel.org
+Cc: zhiguo.niu@unisoc.com,
+	ke.wang@unisoc.com,
+	yibin.ding@unisoc.com,
+	hongyu.jin@unisoc.com,
+	linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org
+Subject: [PATCH v8 0/5] Fix I/O priority lost in device-mapper
+Date: Wed, 24 Jan 2024 13:35:51 +0800
+Message-Id: <20240124053556.126468-1-hongyu.jin.cn@gmail.com>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20231221103139.15699-6-hongyu.jin.cn@gmail.com>
+References: <20231221103139.15699-6-hongyu.jin.cn@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CALTww28NL+yBT8bcL2=ATJr79eL45=TF-EXHUD8NsfCXXTG3Qw@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBXKBGNgLBloWgsBw--.40402S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxWF15Gw13GFWfWr18tFW5ZFb_yoW5Ww15p3
-	y8GFn0krW8Ary29F9Fqa4YqFyY9r4FyrZ8CFyfWwn8Ar93Kr13GFy0ka1UZFWDAF1fJa10
-	va15JF9xZFyFkFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4U
-	JVW0owA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
-	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
-	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
-	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
-	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
-	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
-	17CEb7AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
-	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
-	3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
-	nIWIevJa73UjIFyTuYvjfUoOJ5UUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Hi,
+From: Hongyu Jin <hongyu.jin@unisoc.com>
 
-在 2024/01/24 10:58, Xiao Ni 写道:
-> Hi all
-> 
-> MD_RECOVERY_WAIT was introduced in d5d885fd5. From this patch,
-> MD_RECOVERY_WAIT only has one usage during creating raid device.
-> resync job needs to wait until pers->start finishes(The only place
-> which is checked). If we remove it from md_do_sync, will it break the
-> logic? Or we don't need this flag anymore? If so can we remove this
-> flag?
-> 
-> dm-raid uses this bit in patch 644e2537f (dm raid: fix stripe adding
-> reshape deadlock). It's the reason why md_do_sync can't set
-> MD_RECOVERY_DONE. Now we stop sync thread asynchronously, can we
-> revert this patch?
+High-priority tasks get data from dm-verity devices via RT IO priority,
+I/O will lose RT priority when reading FEC and hash values via kworker
+submission IO during verification, and the verification phase may be
+blocked by low-priority IO.
 
-I made some changes that will be sent for v2 that sync_thread is frozen
-from dm suspend to resume, so I think the flag can be removed, and I
-actually tried that, howver, dm-raid tests failed because ext4 is
-corrupted. Anyway, let's focus on dm-raid regression for now and we can
-try to remove this flag later.
+Dm-crypt has the same problem in the data writing process.
 
-Thanks,
-Kuai
+This is because io_context and blkcg are missing.
 
-> 
-> Best Regards
-> Xiao
-> 
-> On Sat, Jan 20, 2024 at 6:41 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>
->> From: Yu Kuai <yukuai3@huawei.com>
->>
->> stop_sync_thread() will interrupt md_do_sync(), and md_do_sync() must
->> set MD_RECOVERY_DONE, so that follow up md_check_recovery() will
->> unregister sync_thread, clear MD_RECOVERY_RUNNING and wake up
->> stop_sync_thread().
->>
->> Before this patch, if MD_RECOVERY_WAIT is set or the array is read-only,
->> md_do_sync() will return without setting MD_RECOVERY_DONE, hence use
->> stop_sync_thread() directly will hang because md_check_recovery() can't
->> clear MD_RECOVERY_RUNNING, which is possible for dm-raid.
->>
->> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
->> ---
->>   drivers/md/md.c | 10 ++++++----
->>   1 file changed, 6 insertions(+), 4 deletions(-)
->>
->> diff --git a/drivers/md/md.c b/drivers/md/md.c
->> index 6906d023f1d6..ba45c7be3dbe 100644
->> --- a/drivers/md/md.c
->> +++ b/drivers/md/md.c
->> @@ -8788,12 +8788,13 @@ void md_do_sync(struct md_thread *thread)
->>          int ret;
->>
->>          /* just incase thread restarts... */
->> -       if (test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
->> -           test_bit(MD_RECOVERY_WAIT, &mddev->recovery))
->> +       if (test_bit(MD_RECOVERY_DONE, &mddev->recovery))
->>                  return;
->> -       if (!md_is_rdwr(mddev)) {/* never try to sync a read-only array */
->> +
->> +       if (test_bit(MD_RECOVERY_WAIT, &mddev->recovery) ||
->> +           !md_is_rdwr(mddev)) {/* never try to sync a read-only array */
->>                  set_bit(MD_RECOVERY_INTR, &mddev->recovery);
->> -               return;
->> +               goto out;
->>          }
->>
->>          if (mddev_is_clustered(mddev)) {
->> @@ -9171,6 +9172,7 @@ void md_do_sync(struct md_thread *thread)
->>                                                  mddev->array_sectors);
->>          }
->>
->> +out:
->>          spin_lock(&mddev->lock);
->>          if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery)) {
->>                  /* We completed so min/max setting can be forgotten if used. */
->> --
->> 2.39.2
->>
->>
-> 
-> .
-> 
+Move bio_set_ioprio() into submit_bio():
+1. Only call bio_set_ioprio() once to set the priority of original bio,
+   the bio that cloned and splited from original bio will auto inherit
+   the priority of original bio in clone process.
+
+2. Make the IO priority of the original bio to be passed to dm,
+   and the dm target inherits the IO priority as needed.
+
+Changes in v8:
+  - Rebase patch 1 on commit 7ed2632ec7d7
+Changes in v7:
+  - Modify patch 4: change dm-verity-fec.c
+Changes in v6:
+  - Rebase patch and resolve conflict for patch 1, 3, 4
+  - Modify patch 4: fec_read_parity() follow the priority of original
+    bio
+  - Update commit message
+Changes in v5:
+  - Rewrite patch 2, add ioprio parameter in dm_io();
+  - Modify dm_io() in patch 3
+Changes in v4:
+  - Modify commit message by Suggestion
+  - Modify patch for dm-crypt
+Changes in v3:
+  - Split patch for device-mapper
+  - Add patch to fix dm-crypy I/O priority question
+  - Add block patch to review together
+  - Fix some error in v2 patch
+Changes in v2:
+  - Add ioprio field in struct dm_io_region
+  - Initial struct dm_io_region::ioprio to IOPRIO_DEFAULT
+  - Add two interface
+
+
+Hongyu Jin (5):
+  block: Fix bio IO priority setting
+  dm: Support I/O priority for dm_io()
+  dm-bufio: Support I/O priority
+  dm verity: Fix I/O priority lost when read FEC and hash
+  dm-crypt: Fix lost ioprio when queuing write bios
+
+ block/blk-core.c                              | 10 +++++
+ block/blk-mq.c                                | 10 -----
+ drivers/md/dm-bufio.c                         | 43 +++++++++++--------
+ drivers/md/dm-crypt.c                         |  1 +
+ drivers/md/dm-ebs-target.c                    |  8 ++--
+ drivers/md/dm-integrity.c                     | 12 +++---
+ drivers/md/dm-io.c                            | 23 +++++-----
+ drivers/md/dm-kcopyd.c                        |  4 +-
+ drivers/md/dm-log.c                           |  4 +-
+ drivers/md/dm-raid1.c                         |  6 +--
+ drivers/md/dm-snap-persistent.c               |  8 ++--
+ drivers/md/dm-verity-fec.c                    | 21 +++++----
+ drivers/md/dm-verity-target.c                 | 13 ++++--
+ drivers/md/dm-writecache.c                    |  8 ++--
+ drivers/md/persistent-data/dm-block-manager.c |  6 +--
+ include/linux/dm-bufio.h                      |  5 ++-
+ include/linux/dm-io.h                         |  3 +-
+ 17 files changed, 102 insertions(+), 83 deletions(-)
+
+
+base-commit: 7ed2632ec7d72e926b9e8bcc9ad1bb0cd37274bf
+-- 
+2.34.1
 
