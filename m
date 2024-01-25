@@ -1,208 +1,165 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA3A9135412
-	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 18:30:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC629135A5F
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 19:51:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706207406; cv=none; b=l3Y3UErR7P2OOmqJr6kUOC6DiPDvLdribfc180HuvZopWqQeloFipOosL0f7y18SM4gzZq+Ka/b9xDIBYv8tBq0Y3qG9y6TaoNSJoOeoGsz3zzn6uFAodmOTjdBI5xWpEls9cS2TDtlS3SjUYxFm1CedEyJ0LurN7YaJU6sLyB0=
+	t=1706212310; cv=none; b=u1XRV/LNEY0IMPImfyLg6Xi9JQEtQRAZmmPAQZrs+5pAhbNwYL/8OXKwcufNilbt6saVCs0Q1EGEfxeYfyEbkfTsnaBwQwlJAgF3R7xBilwPajt3eWIDZQgRjwewmTfZRpoIQSSnmvXVJVHycuy6/IlKHFo1Dx753oJnmFxCrso=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706207406; c=relaxed/simple;
-	bh=OPA2cuzn5UAHEJ6wEIBW91lYRI0vxCC/ZWjzMFkOScQ=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=cAOajCMNFUchEBHuHA8lBYbiKxcLgkcX8ihcgwSr3MVtHywI1iC4fcE2HGuE+kqigDosD8bWjZ8R7rNwkX+/iNlQ+Rhj1INlEy4mZdP/LQE6ORGnpDbG4UsnYg8CwukqB1whSqBhO+Bu0r3l4KA6V7E/ra6zXFnNaFhlQ1zrBT8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ah9cpo2i; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1706212310; c=relaxed/simple;
+	bh=pbKdTDXTH8qIfvsvKPqheQLoN3wH8pNE8FMLGEpj3M0=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=XxMWZ8WkPbmtN+4H1wnyHEA+zWpbbZe3ZA57mR+ZZ8mlCnDWMpa7XnRyX0ZOvyt+hFjLBFEitSMIO6UxdjLYTPai7Wc+yd9UmXz3FTFaTlywinKgXXk2N5u0qEA6qaSbxeynTNfMEoqzmO6p4aFv8K4zRaNx0oQy2u1i0lJ0JiI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=hpFnm129; arc=none smtp.client-ip=209.85.128.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ah9cpo2i"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1706207403;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=bB4BbgukWG92dKMqbQfPWgXExA2ppJqUrBLC6EqUHro=;
-	b=Ah9cpo2ief1kDa9zsYE13HDLfWsrlEGRkQKIkykfA5ZXCnRC4dnzm4ZanEkyzZQF0YVdE/
-	ASWxfHrpsBLTWhZQh8b6cPBG2IS6dqKLbzwu5SOnlRByvp6om4TsCkBZXgMJgbpXD/OvOd
-	17ZSloHFsyigowzwhOPuNDrNWgpr7Rw=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-102-hSV-gnCWM_6XREPhKZJG2A-1; Thu,
- 25 Jan 2024 13:29:44 -0500
-X-MC-Unique: hSV-gnCWM_6XREPhKZJG2A-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AD0753C1E9C5;
-	Thu, 25 Jan 2024 18:29:43 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BFC6A2166B32;
-	Thu, 25 Jan 2024 18:29:42 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id A8F5830CAABD; Thu, 25 Jan 2024 18:29:42 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id A48F63FB4E;
-	Thu, 25 Jan 2024 19:29:42 +0100 (CET)
-Date: Thu, 25 Jan 2024 19:29:42 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>, 
-    Thomas Gleixner <tglx@linutronix.de>
-cc: linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
-    Mike Snitzer <msnitzer@redhat.com>, Ignat Korchagin <ignat@cloudflare.com>, 
-    Damien Le Moal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, 
-    Hou Tao <houtao1@huawei.com>, Nathan Huckleberry <nhuck@google.com>, 
-    Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@elte.hu>
-Subject: [PATCH] softirq: fix memory corruption when freeing tasklet_struct
-Message-ID: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com>
+	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="hpFnm129"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-40eacb4bfa0so52404445e9.1
+        for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 11:51:48 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linux-foundation.org; s=google; t=1706212307; x=1706817107; darn=lists.linux.dev;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=tE7eACK6kxfwaRTLe0GNK8zp8igHDm0V06Q+Q7zAa1w=;
+        b=hpFnm129fWt+kSR8cyZrMr9os78eQCIHowSG4fKSIj2LnFEGB8ncpWmT5ErOROy0MX
+         NsbUrl+QdZLOHZt0Nc8nH6w5ONVphgYhOnKzYFHlulI/DT1mVPHf5BrJxngpRtT9zM+z
+         qJ+Y3UR2IF2k01Otc8yhgzDVGH6l1XIwihjCg=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706212307; x=1706817107;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=tE7eACK6kxfwaRTLe0GNK8zp8igHDm0V06Q+Q7zAa1w=;
+        b=ZrXH2iZDi0GUVPsegU0L4IT7q13/p+tNt9nZ4GeEEoV2KG0xX3e+xhYyWUEyzT1xBr
+         0A9rgQpNYf+MBnqYZM7dFqdzvw1wjnoizAI3mnlrJILvZ65+0k9t/tXfpZyCeaus24ze
+         mDrw7F9x5+RN+vFpCE7AiCU8ALTgPusSU1kBVDBy+vPd7if/JjByYtrKhc/S4amYHbr8
+         oP5Cm3MuqR6Z3Zr2iHgOqE1XKaqd8+bPNep0Xgq4NZEe1z0HAnJogPa2GQhFW+dYTwnw
+         MGvajYyFu/L1n8rUuCjzZaF7EqJQRLQehvvdhC6VUnp20MhnC8dc5Ttc7AMGBoSa2P8z
+         3RaQ==
+X-Gm-Message-State: AOJu0YwiFtRisfqOvZ0zmEk6+bJviA0XA0yp9b7BwrlAcDNTcvZ2Q2bO
+	maMv7Bhp7ZkjayvOgjbIm/lgC/+HXtOawBDuXWxctKc/NzB7TNue8LkZ3Ub0g3v/FcpIjYdvBWD
+	+zvP9NQ==
+X-Google-Smtp-Source: AGHT+IHXgfWKmE3vft4wmReBI6HHeLio5TZNje33uSFSOBW/px8GqbdSdznuJxwpGdX84ByJbFUYeQ==
+X-Received: by 2002:a7b:c84a:0:b0:40e:c6b2:fb38 with SMTP id c10-20020a7bc84a000000b0040ec6b2fb38mr158761wml.182.1706212306648;
+        Thu, 25 Jan 2024 11:51:46 -0800 (PST)
+Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com. [209.85.208.49])
+        by smtp.gmail.com with ESMTPSA id s18-20020a170906169200b00a2e9f198cffsm1350277ejd.72.2024.01.25.11.51.45
+        for <dm-devel@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 25 Jan 2024 11:51:46 -0800 (PST)
+Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-55c2c90c67dso5741768a12.1
+        for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 11:51:45 -0800 (PST)
+X-Received: by 2002:aa7:d3c5:0:b0:55a:4959:a2e4 with SMTP id
+ o5-20020aa7d3c5000000b0055a4959a2e4mr81533edr.52.1706212305649; Thu, 25 Jan
+ 2024 11:51:45 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+References: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com>
+In-Reply-To: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Thu, 25 Jan 2024 11:51:28 -0800
+X-Gmail-Original-Message-ID: <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
+Message-ID: <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
+Subject: Re: [PATCH] softirq: fix memory corruption when freeing tasklet_struct
+To: Mikulas Patocka <mpatocka@redhat.com>, Tejun Heo <tj@kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, 
+	dm-devel@lists.linux.dev, Mike Snitzer <msnitzer@redhat.com>, 
+	Ignat Korchagin <ignat@cloudflare.com>, Damien Le Moal <damien.lemoal@wdc.com>, 
+	Bob Liu <bob.liu@oracle.com>, Hou Tao <houtao1@huawei.com>, 
+	Nathan Huckleberry <nhuck@google.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain; charset="UTF-8"
 
-Hi
+On Thu, 25 Jan 2024 at 10:30, Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+> There's a problem with the tasklet API - there is no reliable way how to
+> free a structure that contains tasklet_struct. The problem is that the
+> function tasklet_action_common calls task_unlock(t) after it called the
+> callback. If the callback does something that frees tasklet_struct,
+> task_unlock(t) would write into free memory.
 
-There's a problem with the tasklet API - there is no reliable way how to
-free a structure that contains tasklet_struct. The problem is that the
-function tasklet_action_common calls task_unlock(t) after it called the
-callback. If the callback does something that frees tasklet_struct,
-task_unlock(t) would write into free memory.
+Ugh.
 
-dm-crypt does this - it schedules a tasklet with tasklet_schedule, it does
-encryption inside the tasklet handler (because it performs better than
-doing the encryption in a workqueue), then it submits a workqueue entry
-and calls bio_endio from the workqueue entry.
+I see what you're doing, but I have to say, I dislike this patch
+immensely. It feels like a serious misdesign that is then papered over
+with a hack.
 
-However, if the workqueue preempts ksoftirqd, this race condition happens:
+I'd much rather see us trying to move away from tasklets entirely in
+cases like this. Just say "you cannot do that".
 
-ksoftirqd:
-* tasklet_action_common
-* t->func(t->data)	(that points to kcryptd_crypt_tasklet)
-* kcryptd_crypt_tasklet
-* kcryptd_crypt
-* kcryptd_crypt_read_convert
-* crypt_dec_pending
-* queue_work(cc->io_queue, &io->work);
-now we switch to the workqueue process:
-* kcryptd_io_bio_endio
-* bio_endio(io->base_bio)	(this calls clone_endio)
-* clone_endio
-* free_tio
-* bio_put(clone) - the bio is freed
-now we switch back to ksoftirqd:
-* tasklet_action_common calls task_unlock(t) 
-* task_unlock(t) touches memory that was already freed when the bio was freed
+In fact, of the two cases that want this new functionality, at least
+dm-verity already makes tasklets a conditional feature that isn't even
+enabled by default, and that was only introduced in the last couple of
+years.
 
-dm-verity has a similar problem.
+So I think dm-verity would be better off just removing tasklet use,
+and we should check whether there are better models for handling the
+latency issue.
 
-In order to fix this bug, I am proposing to add a new flag
-TASKLET_STATE_ONESHOT. The flag indicates that the tasklet will be
-submitted only once and it prevents tasklet_action_common from touching
-the tasklet after the callback completed.
+The dm-crypt.c case looks different, but similar. I'm not sure why it
+doesn't just use the workqueue for the "in interrupt" case. Like
+dm-verity, it already does have a workqueue option, and it's a
+setup-time option to say "don't use the workqueue for reads / writes".
+But it feels like the code should just say "tough luck, in interrupt
+context we *will* use workqueues".
 
-If you have another idea how to solve this bug, let me know.
+So honestly, both of the cases you bring up seem to be just BUGGY. The
+fix is not to extend tasklets to a new thing, the fix is to say "those
+two uses of tasklets were broken, and should go away".
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Fixes: 39d42fa96ba1 ("dm crypt: add flags to optionally bypass kcryptd workqueues")
-Fixes: 5721d4e5a9cd ("dm verity: Add optional "try_verify_in_tasklet" feature")
-Cc: stable@vger.kernel.org	# v5.9+
+End result: I would suggest:
 
----
- drivers/md/dm-crypt.c         |    1 +
- drivers/md/dm-verity-target.c |    1 +
- include/linux/interrupt.h     |    9 ++++++++-
- kernel/softirq.c              |   22 +++++++++++++++-------
- 4 files changed, 25 insertions(+), 8 deletions(-)
+ - just get rid of the actively buggy use of tasklets. It's not
+necessary in either case.
 
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c	2024-01-18 19:18:30.000000000 +0100
-+++ linux-2.6/drivers/md/dm-crypt.c	2024-01-25 16:42:17.000000000 +0100
-@@ -2265,6 +2265,7 @@ static void kcryptd_queue_crypt(struct d
- 		if (in_hardirq() || irqs_disabled()) {
- 			io->in_tasklet = true;
- 			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
-+			tasklet_set_oneshot(&io->tasklet);
- 			tasklet_schedule(&io->tasklet);
- 			return;
- 		}
-Index: linux-2.6/include/linux/interrupt.h
-===================================================================
---- linux-2.6.orig/include/linux/interrupt.h	2023-11-13 17:39:50.000000000 +0100
-+++ linux-2.6/include/linux/interrupt.h	2024-01-25 16:41:52.000000000 +0100
-@@ -684,7 +684,9 @@ struct tasklet_struct name = {				\
- enum
- {
- 	TASKLET_STATE_SCHED,	/* Tasklet is scheduled for execution */
--	TASKLET_STATE_RUN	/* Tasklet is running (SMP only) */
-+	TASKLET_STATE_RUN,	/* Tasklet is running (SMP only) */
-+	TASKLET_STATE_ONESHOT	/* Don't unlock the tasklet after the callback
-+				   to avoid writing to free memory */
- };
- 
- #if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
-@@ -756,6 +758,11 @@ extern void tasklet_init(struct tasklet_
- extern void tasklet_setup(struct tasklet_struct *t,
- 			  void (*callback)(struct tasklet_struct *));
- 
-+static inline void tasklet_set_oneshot(struct tasklet_struct *t)
-+{
-+	__set_bit(TASKLET_STATE_ONESHOT, &t->state);
-+}
-+
- /*
-  * Autoprobing for irqs:
-  *
-Index: linux-2.6/kernel/softirq.c
-===================================================================
---- linux-2.6.orig/kernel/softirq.c	2023-10-31 15:31:42.000000000 +0100
-+++ linux-2.6/kernel/softirq.c	2024-01-25 17:10:03.000000000 +0100
-@@ -774,18 +774,26 @@ static void tasklet_action_common(struct
- 
- 		if (tasklet_trylock(t)) {
- 			if (!atomic_read(&t->count)) {
-+				/*
-+				 * If oneshot is set, we must not touch the
-+				 * tasklet after the callback.
-+				 */
-+				bool oneshot = test_bit(TASKLET_STATE_ONESHOT, &t->state);
- 				if (tasklet_clear_sched(t)) {
- 					if (t->use_callback) {
--						trace_tasklet_entry(t, t->callback);
--						t->callback(t);
--						trace_tasklet_exit(t, t->callback);
-+						void (*callback)(struct tasklet_struct *) = t->callback;
-+						trace_tasklet_entry(t, callback);
-+						callback(t);
-+						trace_tasklet_exit(t, callback);
- 					} else {
--						trace_tasklet_entry(t, t->func);
--						t->func(t->data);
--						trace_tasklet_exit(t, t->func);
-+						void (*func)(unsigned long) = t->func;
-+						trace_tasklet_entry(t, func);
-+						func(t->data);
-+						trace_tasklet_exit(t, func);
- 					}
- 				}
--				tasklet_unlock(t);
-+				if (!oneshot)
-+					tasklet_unlock(t);
- 				continue;
- 			}
- 			tasklet_unlock(t);
-Index: linux-2.6/drivers/md/dm-verity-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-verity-target.c	2024-01-18 19:18:30.000000000 +0100
-+++ linux-2.6/drivers/md/dm-verity-target.c	2024-01-25 18:12:09.000000000 +0100
-@@ -676,6 +676,7 @@ static void verity_end_io(struct bio *bi
- 
- 	if (static_branch_unlikely(&use_tasklet_enabled) && io->v->use_tasklet) {
- 		tasklet_init(&io->tasklet, verity_tasklet, (unsigned long)io);
-+		tasklet_set_oneshot(&io->tasklet);
- 		tasklet_schedule(&io->tasklet);
- 	} else {
- 		INIT_WORK(&io->work, verity_work);
+ - look at introducing a "low-latency atomic workqueue" that looks
+*exactly* like a regular workqueue, but has the rule that it's per-cpu
+and functions on it cannot sleep
 
+because I think one common issue with workqueues - which are better
+designed than tasklets - is that scheduling latency.
+
+I think if we introduced a workqueue that worked more like a tasklet -
+in that it's run in softirq context - but doesn't have the interface
+mistakes of tasklets, a number of existing workqueue users might
+decide that that is exactly what they want.
+
+So we could have a per-cpu 'atomic_wq' that things can be scheduled
+on, and that runs from softirqs just like tasklets, and shares the
+workqueue queueing infrastructure but doesn't use the workqueue
+threads.
+
+Yes, the traditional use of workqueues is to be able to sleep and do
+things in process context, so that sounds a bit odd, but let's face
+it, we
+
+ (a) already have multiple classes of workqueues
+
+ (b) avoiding deep - and possibly recursive - stack depths is another
+reason people use workqueues
+
+ (c) avoiding interrupt context is a real concern, even if you don't
+want to sleep
+
+and I really *really* would like to get rid of tasklets entirely.
+
+They started as this very specific hardcoded softirq thing used by
+some drivers, and then the notion was generalized.
+
+And I think it was generalized badly, as shown by this example.
+
+I have added Tejun to the cc, so that he can throw his hands up in
+horror and say "Linus, you're crazy, your drug-fueled idea would be
+horrid because of Xyz".
+
+But *maybe* Tejun has been taking the same drugs I have, and goes
+"yeah, that would fit well".
+
+Tejun? Please tell me I'm not on some bad crack..
+
+               Linus
