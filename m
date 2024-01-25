@@ -1,52 +1,52 @@
-Received: from esa6.hgst.iphmx.com (esa6.hgst.iphmx.com [216.71.154.45])
+Received: from esa4.hgst.iphmx.com (esa4.hgst.iphmx.com [216.71.154.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D123135A45
-	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 16:53:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=216.71.154.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7540413DB9B
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 16:53:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=216.71.154.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706201622; cv=none; b=BLUl/qMaBEoS4SNsxqxUIgN2hJclaAZP5ZCVJTKzQY0jecF5vwFJxjG9PAGuAV0+L8WnvoOwgO7GIWmontW4CFwokyL8obKpcoXC7Y/uH/4yQTPZivceqO/jS5wHP1G9rSBg03SIhcg4ksl28zLZy9VQiTi0f5vWjTLQk6/xgYs=
+	t=1706201628; cv=none; b=ug+wtDo/CnhKwaNrhBuGmyKG7SxRW4jV6QTEJORjAsthfPV7eRQo7v/+VyfUqI4//tpZC06RvMJ+rlzKcoHaxyGSGCoKOC433TQdn9QgrAb4UetbZj+l5kfAxYaYxgjSdKQ2A6ppMo9CzDoLWaSxPN4buh6iwHABnVaBlQf35is=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706201622; c=relaxed/simple;
-	bh=0N4F/gjOaEHcA1EmZZhcmvU+dQFlqf6CupFhM16+QGk=;
-	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=ezU1zmJXENWuguN4aOCj0mi/kzB6AuIdlnm064NiymksMDqgexKHO5rPG3zbv7/w2w/dS7tdPpaMQ6ZgCsTvFnqyVrzcLm0PyVg1KjYb+TY9sbaPcoQov1KO+BmMZxUJnzgp+oe156WWGaY1ZJx3CoH4YvCSZatyWFrOpE+flnk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com; spf=pass smtp.mailfrom=wdc.com; dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b=H8RO9z9M; arc=none smtp.client-ip=216.71.154.45
+	s=arc-20240116; t=1706201628; c=relaxed/simple;
+	bh=eGx4McY1FmrYKhrAp3TTxFkfkbSfbNbdZDzzsYbn3SA=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=rTSl2+Glvc919VSmz2B5pnewybLJ8Ng0YMkGAYZ9Jw2Qet6DnsMLf9LA6EEa61psnNPPKFTIKGh0BwOaxb8xsx5sUihGZr/xTprkXpyE9v+ybuWudQWfJhXGJr6BUZR5PeO8t4Qtfo2lnE4qZ+ELjJDfoKozw0gXey3VkLG3H9Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com; spf=pass smtp.mailfrom=wdc.com; dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b=LlqRas+u; arc=none smtp.client-ip=216.71.154.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wdc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="H8RO9z9M"
+	dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="LlqRas+u"
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1706201620; x=1737737620;
-  h=from:subject:date:message-id:mime-version:
-   content-transfer-encoding:to:cc;
-  bh=0N4F/gjOaEHcA1EmZZhcmvU+dQFlqf6CupFhM16+QGk=;
-  b=H8RO9z9M4JzEsXfJ/iJwt16qt/EJEEE+a9KzFnTwCWXi0scmbnea/yXb
-   BvMZJnltkLVgWUpE923Jl5L0Qo57PBmRplh4ZTg/Gb5abidUp62TTqjB7
-   c/Q2nTwnwKzrxINkMtMErzucyJyAubobopAXhzVy7zXA2Fn1LXtgcBC3y
-   Go6pAOdAs0HD86N6ytNhJ8zR+IkRdLUN9RUEeMMDsczWKM0N/7vv+vGW6
-   3bbwtZK17GxgPpURCpOeLaBF7coERF1lhv0yZN7OoP0IY+uaKUge70M5V
-   ek2M9nZjC0snW/R09yr0jSh84L8MiezpnURfbXsUf3k0mtyyG0G/vQF0y
+  t=1706201627; x=1737737627;
+  h=from:date:subject:mime-version:content-transfer-encoding:
+   message-id:references:in-reply-to:to:cc;
+  bh=eGx4McY1FmrYKhrAp3TTxFkfkbSfbNbdZDzzsYbn3SA=;
+  b=LlqRas+ugzftRd8iMpoKGwUulBpND+QkJPOe5S/Xo+y5w4PcXehcL6lg
+   DRJ6h1Xxu1SBOpvlZnW/534bGMDuJo+b5Ng/C63A7lkzJuhF3Dr1brzDY
+   oQW6P8p1miIE8/rF6p580m4wuoIIGvAuVQh0HFeI9r8zfCKxk20ouUVdb
+   nvSps3qampcAQL5eOP+NNmETOa7YA7nt/MtZ1Jlr+RhgidSOpEAhcty0j
+   DsxhbXHFAoDfsCmv8hSHANQL58QPATU9IrEoJUVB9rrvIQF3hqHDLobGB
+   KmNGKRJrdzGxK4GqQKj+XBGFsmWBv7xFvTNF0I8cxmWFY8k5I4nHFxv+y
    A==;
-X-CSE-ConnectionGUID: ED5ujWl0Rk+LBXe0tVh9Pg==
-X-CSE-MsgGUID: ngptz0LoRhKUCbIrBhsbsw==
+X-CSE-ConnectionGUID: q5lYG/QeQXu+tHYtrUf2og==
+X-CSE-MsgGUID: FeOvoxtcQwSRfkf9RpL5vA==
 X-IronPort-AV: E=Sophos;i="6.05,216,1701100800"; 
-   d="scan'208";a="7804824"
-Received: from uls-op-cesaip02.wdc.com (HELO uls-op-cesaep02.wdc.com) ([199.255.45.15])
-  by ob1.hgst.iphmx.com with ESMTP; 26 Jan 2024 00:53:32 +0800
-IronPort-SDR: /NSbhqqb3QofBVqXOKKmYxCJvOdqprqHRTtZeH2lT8ueeUqbOLjDBaU3ilnR01JVYh44wcOc8n
- a+24k4B5eXAQ==
+   d="scan'208";a="7456548"
+Received: from h199-255-45-15.hgst.com (HELO uls-op-cesaep02.wdc.com) ([199.255.45.15])
+  by ob1.hgst.iphmx.com with ESMTP; 26 Jan 2024 00:53:39 +0800
+IronPort-SDR: hH5oHdZjlQUNMcN4jadiJ5wTWfIfkdTlFWnnV8LuGR/H8UaLUbN2AGmVQF7OJIJiAr4rVe+yfS
+ 0V4+o7F4JyhQ==
 Received: from uls-op-cesaip01.wdc.com ([10.248.3.36])
-  by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256; 25 Jan 2024 07:57:52 -0800
-IronPort-SDR: OE+tRkmMpFkhDRa1z/PeEZo8HAAoGZY5dfaVEn8/s2a64gELw2HyRSw+9hYcenKw2PYuCiSi5y
- qsHOshAr8N7g==
+  by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256; 25 Jan 2024 07:57:58 -0800
+IronPort-SDR: VOx0UIr5lbldPsjxQBhoPSsQoOEZNWGs3Yn004iQ+BbMXVrE9gDtrUz+juD/7EPs5IyZ7d6MAQ
+ oXv5yVO5EAbg==
 WDCIronportException: Internal
 Received: from unknown (HELO redsun91.ssa.fujisawa.hgst.com) ([10.149.66.6])
-  by uls-op-cesaip01.wdc.com with ESMTP; 25 Jan 2024 08:53:29 -0800
+  by uls-op-cesaip01.wdc.com with ESMTP; 25 Jan 2024 08:53:33 -0800
 From: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Subject: [PATCH v2 0/5] block: remove gfp_mask for blkdev_zone_mgmt()
-Date: Thu, 25 Jan 2024 08:53:23 -0800
-Message-Id: <20240125-zonefs_nofs-v2-0-2d975c8c1690@wdc.com>
+Date: Thu, 25 Jan 2024 08:53:24 -0800
+Subject: [PATCH v2 1/5] zonefs: pass GFP_KERNEL to blkdev_zone_mgmt() call
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -55,9 +55,9 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-B4-Tracking: v=1; b=H4sIAAOSsmUC/1XMywrCMBCF4VcpszYymVYRV76HFLHJxM7CRDISL
- 6XvbixuXP4HzjeBchZW2DcTZC6ikmINWjXgxnO8sBFfGwipQ2vRvFPkoKeYghrvLRMNxNhtoT5
- umYM8F+3Y1x5F7ym/FrzY7/pzqP1zijVonMMBW9xxoM3h4d3apSv08zx/AOnqE66kAAAA
+Message-Id: <20240125-zonefs_nofs-v2-1-2d975c8c1690@wdc.com>
+References: <20240125-zonefs_nofs-v2-0-2d975c8c1690@wdc.com>
+In-Reply-To: <20240125-zonefs_nofs-v2-0-2d975c8c1690@wdc.com>
 To: Damien Le Moal <dlemoal@kernel.org>, 
  Naohiro Aota <naohiro.aota@wdc.com>, Johannes Thumshirn <jth@kernel.org>, 
  Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
@@ -72,54 +72,41 @@ Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, 
  Johannes Thumshirn <johannes.thumshirn@wdc.com>
 X-Mailer: b4 0.12.3
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1706201608; l=1733;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1706201608; l=1041;
  i=johannes.thumshirn@wdc.com; s=20230613; h=from:subject:message-id;
- bh=0N4F/gjOaEHcA1EmZZhcmvU+dQFlqf6CupFhM16+QGk=;
- b=UDiRHl7vyONFeE/+Uc9h4ZkfV2sLDGr/bQXidpKeyTTKnEZ1boUAGnz1/g8SHkp2NIP1u8WfY
- k+ntypLEWF8Dk7T6KptUtV/AFpEKDBwUlfE02SJfrjkjKtMj15vuipc
+ bh=eGx4McY1FmrYKhrAp3TTxFkfkbSfbNbdZDzzsYbn3SA=;
+ b=7i7rSG5FOL3Y+GFA5rvmzOGA1LPZcNa6uQEcp9OZuAhx8o+EuzcMQlp/v7AQwfxAOFFlfDgdz
+ pJC/jmeDno3BoWXgTUVMLTNlb/W+P6XXYXlpj2p8o3WXeCGKXi91zBB
 X-Developer-Key: i=johannes.thumshirn@wdc.com; a=ed25519;
  pk=TGmHKs78FdPi+QhrViEvjKIGwReUGCfa+3LEnGoR2KM=
 
-Fueled by the LSFMM discussion on removing GFP_NOFS initiated by Willy,
-I've looked into the sole GFP_NOFS allocation in zonefs. As it turned out,
-it is only done for zone management commands and can be removed.
+Pass GFP_KERNEL instead of GFP_NOFS to the blkdev_zone_mgmt() call in
+zonefs_zone_mgmt().
 
-After digging into more callers of blkdev_zone_mgmt() I came to the
-conclusion that the gfp_mask parameter can be removed alltogether.
-
-So this series switches all callers of blkdev_zone_mgmt() to either use
-GFP_KERNEL where possible or grab a memalloc_no{fs,io} context.
-
-The final patch in this series is getting rid of the gfp_mask parameter.
+As as zonefs_zone_mgmt() and zonefs_inode_zone_mgmt() are never called
+from a place that can recurse back into the filesystem on memory reclaim,
+it is save to call blkdev_zone_mgmt() with GFP_KERNEL.
 
 Link: https://lore.kernel.org/all/ZZcgXI46AinlcBDP@casper.infradead.org/
-
+Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 ---
-Changes in v2:
-- guard blkdev_zone_mgmt in dm-zoned-metadata.c with memalloc_noio context
-- Link to v1: https://lore.kernel.org/r/20240123-zonefs_nofs-v1-0-cc0b0308ef25@wdc.com
+ fs/zonefs/super.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
----
-Johannes Thumshirn (5):
-      zonefs: pass GFP_KERNEL to blkdev_zone_mgmt() call
-      dm: dm-zoned: guard blkdev_zone_mgmt with noio scope
-      btrfs: zoned: call blkdev_zone_mgmt in nofs scope
-      f2fs: guard blkdev_zone_mgmt with nofs scope
-      block: remove gfp_flags from blkdev_zone_mgmt
+diff --git a/fs/zonefs/super.c b/fs/zonefs/super.c
+index 93971742613a..63fbac018c04 100644
+--- a/fs/zonefs/super.c
++++ b/fs/zonefs/super.c
+@@ -113,7 +113,7 @@ static int zonefs_zone_mgmt(struct super_block *sb,
+ 
+ 	trace_zonefs_zone_mgmt(sb, z, op);
+ 	ret = blkdev_zone_mgmt(sb->s_bdev, op, z->z_sector,
+-			       z->z_size >> SECTOR_SHIFT, GFP_NOFS);
++			       z->z_size >> SECTOR_SHIFT, GFP_KERNEL);
+ 	if (ret) {
+ 		zonefs_err(sb,
+ 			   "Zone management operation %s at %llu failed %d\n",
 
- block/blk-zoned.c              | 19 ++++++++-----------
- drivers/md/dm-zoned-metadata.c |  5 ++++-
- drivers/nvme/target/zns.c      |  5 ++---
- fs/btrfs/zoned.c               | 35 +++++++++++++++++++++++++----------
- fs/f2fs/segment.c              | 15 ++++++++++++---
- fs/zonefs/super.c              |  2 +-
- include/linux/blkdev.h         |  2 +-
- 7 files changed, 53 insertions(+), 30 deletions(-)
----
-base-commit: 615d300648869c774bd1fe54b4627bb0c20faed4
-change-id: 20240110-zonefs_nofs-dd1e22b2e046
-
-Best regards,
 -- 
-Johannes Thumshirn <johannes.thumshirn@wdc.com>
+2.43.0
 
