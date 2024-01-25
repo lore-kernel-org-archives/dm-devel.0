@@ -1,67 +1,163 @@
-Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com [209.85.219.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0129113175F
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 19:05:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 881727FB
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 00:47:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706123145; cv=none; b=b2tqo1dGfMHfaQdgDbUJopRy7ZpKQS11lYM6nloqKu4i6e8v+4UpE88rFXjLb2sEMIx+B3Ltux+gsXod0QEnHmeZmvaOV4X6k7BwLykPDbMYUOCHVR0IEGncntqoR4tkMImX4ExT4wDtd32H/rvXiERCqrGD6qSnteq+nyQEFUY=
+	t=1706143627; cv=none; b=V2k4veqdOh14aeEFeX0x+1iYZb3XZnaqGac/sz4fF4l3Fw3diR4vniyjjrmSKpsrtDdqIyV66qpFM4kH/FwtT5KIw7w99bDj0sfa+hNtQLD9SsWMY8pgtGv6nuDM7TNedahSPmCmSRE+YKgOXxDyl4Z62YCB1roBQez6z0qMh68=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706123145; c=relaxed/simple;
-	bh=pTtp92qCGvPYravaL+YYgJf3V63dnVeUgocRgZoJNkM=;
-	h=Content-Type:From:Mime-Version:Date:Message-Id:To; b=KFeHYgSEONMalVcGqdN4as+lFubTNo36+vQJF8ydrcExGC5ivNKJhThjXSbfuQ1rPpHGVB+5lCyy7ow257JjiwjAEb3PavEx7oD1HkURaH6UTSNEG00OI/KSn/sKwEEvCxXCYSWhOu0qUCMRLzHWsxLLtCxYaDEtnRUIV5ayCSs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RGsvKPos; arc=none smtp.client-ip=209.85.219.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1706143627; c=relaxed/simple;
+	bh=7uXYff/R4xEs2dtqwToxhzOjaflMcgu0xAQ7Ut93OX8=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=Uq1j8iHuXEiLfTpx2gwXkgVkTF5ilxoaqEngw7mONGmqlq2aoJcT70xNPIf6K66Z0wfXv7VuV9mskM1Hj5GlzIKu0PgBbLjKJ6gft8Ha5DoyfA/trF6pjU1UdRni7TQcYbVf62gw1ogk4ucBkShtpWp5lUls22tAQsFISN1Ea7w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eBVIOu4l; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RGsvKPos"
-Received: by mail-qv1-f48.google.com with SMTP id 6a1803df08f44-68192840641so25079896d6.1
-        for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 11:05:43 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706123143; x=1706727943; darn=lists.linux.dev;
-        h=to:message-id:date:mime-version:from:content-transfer-encoding:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=ORBc/fxSASPD7gQcyVkV1dzKlx4O/lvsxtuIgVAPYL0=;
-        b=RGsvKPosINL2oYxLN6iJQDmXkZQnADkfz+J2cpijQn9sEl8H1H+5nmgjgtnq7WUErV
-         iV9HCE+MK+M3s9gPDjUf3WOCuzvVUajyJksAnQEL4xq3jfWgwaRP9tph+ITUiWq5Kryq
-         IkD9euKWpEAUYezH+bDRVF6TIkUAHNGNSdsp4XEganIDwF8UgcZoEq8t6JOJbg7tdgUz
-         ey0+ATnzmtCAB257x1gpmEwosM+CbVMgMRR+n2WzOw7oRLnWxVPxKd6XoHrqnaCrlpU2
-         0JnEsDDdV/11IKgN/WrFbkzoTMysTyLcbe7ceG7MPuR2iz+9lO7t287jYP3nry5zV7yX
-         rq1A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706123143; x=1706727943;
-        h=to:message-id:date:mime-version:from:content-transfer-encoding
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ORBc/fxSASPD7gQcyVkV1dzKlx4O/lvsxtuIgVAPYL0=;
-        b=nV1HO0MkEZV+laLlN74syzbmD9wCTTWeQM1CNMqqlbnxwjW5fnh63F7XgMQ2SN2psD
-         RxY0SK6P67jaVS5wQOvw1PeH0fyUs6A2uOWBXTtgDx4ufbUUm0hyjL9tS7MqYkTVnoKP
-         kppai6X0aWIQXX/ER2YfaFOudNHHziD3q+FQEwJCuIavtU77AHZlU+Ayn5XjTzb3U5hR
-         CbU8ZAyZ3QfbPPtPedcSHWgHsRDcBA7MUth9pHTC9OHT1Mh8TvMiSt+/dAW+ABlD9wHX
-         8IO7SlMEkB0GuuIdyJZ56meolc0Iy/Hfm9PIDRYeVwriAFXg1csPxcQteHaNmtvRbuzb
-         fwSQ==
-X-Gm-Message-State: AOJu0YzsUU9VSgl4x4hG/0wXMvfsIAolPwlqpNBKXqef0e4JyF4NCJSj
-	b07AclSTdCkc0JILTYOQytNzf/CPn3Fimf+DzaMpy7QDjNUgC4bb0AG9IaNKJus=
-X-Google-Smtp-Source: AGHT+IHB30JI3gYQYghqDRg6om0ddXJwH4MVuKkXBRBZUHbN7h249K6yL3UttqAn1BXooBd+vxrUeQ==
-X-Received: by 2002:ad4:5c6e:0:b0:67f:85ff:3dfd with SMTP id i14-20020ad45c6e000000b0067f85ff3dfdmr2473030qvh.82.1706123142590;
-        Wed, 24 Jan 2024 11:05:42 -0800 (PST)
-Received: from smtpclient.apple (2603-7080-880d-3a4e-1147-da66-ae24-a5aa.res6.spectrum.com. [2603:7080:880d:3a4e:1147:da66:ae24:a5aa])
-        by smtp.gmail.com with ESMTPSA id x11-20020a0ce78b000000b00680d39626fcsm4723797qvn.47.2024.01.24.11.05.41
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 24 Jan 2024 11:05:42 -0800 (PST)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-From: Kathryn Warren <cococataffo@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eBVIOu4l"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 20F57C433B1
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 00:47:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1706143627;
+	bh=7uXYff/R4xEs2dtqwToxhzOjaflMcgu0xAQ7Ut93OX8=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=eBVIOu4lr73PpyuZ9Nc9P9YCA+ZlH+w+t6vUa52YspA+1Pp1+f67/UPjKm7q1itSR
+	 mDnyaFEG9BzZ5P0ObL9gIrXkR5+6R8hqa+vElUV9ZJF2Rez/PhMeyabtU9wX/a/yHS
+	 Y24S5qNbdnXzGtv7+elAy6Kz2BaLqaqEH0LVdWFbmCFi7Kw2kfzx4BoZ3m8HcDSoKv
+	 PLKobG5ebxUKZ7ZiUoQO7fa9ER5uZjnlKU/KVeWcBZANydKPeaw6CFDWFXhAtArxjn
+	 SnHxjvleyXYB/cQEGUzmhoLLm8dZIw0SqedKaYSuL9kbF/UwKD84S6A7sdjBZvbroX
+	 mXT4gjEzGrndw==
+Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-50e7ddd999bso6959776e87.1
+        for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 16:47:07 -0800 (PST)
+X-Gm-Message-State: AOJu0YxthezQer03gTM+D6DMx7vT4SyWyVaQzya3jmiCppKXKnkbxQll
+	sSGCsDbc4BR3FJldDCa4Gsx5UaCNQcPwyLDxehbncsQVU3y6iPqxkc/fuB6Bww3CGAsALfAxOr+
+	kvGu2fjq+wzlXzvAV1TXGzTbn6SY=
+X-Google-Smtp-Source: AGHT+IFJd/5OFokGofwIuti+Q3VsaUDwODFAyvNiJuRTaF0KHeEvyQNXTmIPWfQCx9uB2vBVnOPuF+ycykoEledk+tc=
+X-Received: by 2002:a19:ad45:0:b0:50e:50ac:2c84 with SMTP id
+ s5-20020a19ad45000000b0050e50ac2c84mr40890lfd.51.1706143625241; Wed, 24 Jan
+ 2024 16:47:05 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (1.0)
-Date: Wed, 24 Jan 2024 14:05:11 -0500
-Message-Id: <12E5FB5F-597F-4401-8BE0-52E4B41B0FE9@gmail.com>
-To: dm-devel@lists.linux.dev
-X-Mailer: iPhone Mail (20G81)
+MIME-Version: 1.0
+References: <20240124091421.1261579-1-yukuai3@huawei.com>
+In-Reply-To: <20240124091421.1261579-1-yukuai3@huawei.com>
+From: Song Liu <song@kernel.org>
+Date: Wed, 24 Jan 2024 16:46:53 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW4aqpQfQvBaeDaiJwOOOy-XspdDjAdvQVfFBEvHN-WUQA@mail.gmail.com>
+Message-ID: <CAPhsuW4aqpQfQvBaeDaiJwOOOy-XspdDjAdvQVfFBEvHN-WUQA@mail.gmail.com>
+Subject: Re: [PATCH v2 00/11] dm-raid: fix v6.7 regressions
+To: Yu Kuai <yukuai3@huawei.com>, mpatocka@redhat.com, dm-devel@lists.linux.dev, 
+	snitzer@kernel.org, agk@redhat.com
+Cc: xni@redhat.com, jbrassow@f14.redhat.com, neilb@suse.de, heinzm@redhat.com, 
+	shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org, 
+	linux-raid@vger.kernel.org, yukuai1@huaweicloud.com, yi.zhang@huawei.com, 
+	yangerkun@huawei.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Return path 
+On Wed, Jan 24, 2024 at 1:18=E2=80=AFAM Yu Kuai <yukuai3@huawei.com> wrote:
+>
+> First regression related to stop sync thread:
+>
+> The lifetime of sync_thread is designed as following:
+>
+> 1) Decide want to start sync_thread, set MD_RECOVERY_NEEDED, and wake up
+> daemon thread;
+> 2) Daemon thread detect that MD_RECOVERY_NEEDED is set, then set
+> MD_RECOVERY_RUNNING and register sync_thread;
+> 3) Execute md_do_sync() for the actual work, if it's done or
+> interrupted, it will set MD_RECOVERY_DONE and wake up daemone thread;
+> 4) Daemon thread detect that MD_RECOVERY_DONE is set, then clear
+> MD_RECOVERY_RUNNING and unregister sync_thread;
+>
+> In v6.7, we fix md/raid to follow this design by commit f52f5c71f3d4
+> ("md: fix stopping sync thread"), however, dm-raid is not considered at
+> that time, and following test will hang:
+>
+> shell/integrity-caching.sh
+> shell/lvconvert-raid-reshape.sh
+>
+> This patch set fix the broken test by patch 1-4;
+>  - patch 1 fix that step 4) is broken by suspended array;
+>  - patch 2 fix that step 4) is broken by read-only array;
+>  - patch 3 fix that step 3) is broken that md_do_sync() doesn't set
+>  MD_RECOVERY_DONE; Noted that this patch will introdece new problem that
+>  data will be corrupted, which will be fixed in later patches.
+>  - patch 4 fix that setp 1) is broken that sync_thread is register and
+>  MD_RECOVERY_RUNNING is set directly;
+>
+> With patch 1-4, the above test won't hang anymore, however, the test
+> will still fail and complain that ext4 is corrupted;
+>
+> Second regression related to frozen sync thread:
+>
+> Noted that for raid456, if reshape is interrupted, then call
+> "pers->start_reshape" will corrupt data. This is because dm-raid rely on
+> md_do_sync() doesn't set MD_RECOVERY_DONE so that new sync_thread won't
+> be registered, and patch 3 just break this.
+>
+>  - Patch 5-6 fix this problem by interrupting reshape and frozen
+>  sync_thread in dm_suspend(), then unfrozen and continue reshape in
+> dm_resume(). It's verified that dm-raid tests won't complain that
+> ext4 is corrupted anymore.
+>  - Patch 7 fix the problem that raid_message() call
+>  md_reap_sync_thread() directly, without holding 'reconfig_mutex'.
+>
+> Last regression related to dm-raid456 IO concurrent with reshape:
+>
+> For raid456, if reshape is still in progress, then IO across reshape
+> position will wait for reshape to make progress. However, for dm-raid,
+> in following cases reshape will never make progress hence IO will hang:
+>
+> 1) the array is read-only;
+> 2) MD_RECOVERY_WAIT is set;
+> 3) MD_RECOVERY_FROZEN is set;
+>
+> After commit c467e97f079f ("md/raid6: use valid sector values to determin=
+e
+> if an I/O should wait on the reshape") fix the problem that IO across
+> reshape position doesn't wait for reshape, the dm-raid test
+> shell/lvconvert-raid-reshape.sh start to hang at raid5_make_request().
+>
+> For md/raid, the problem doesn't exist because:
+>
+> 1) If array is read-only, it can switch to read-write by ioctl/sysfs;
+> 2) md/raid never set MD_RECOVERY_WAIT;
+> 3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
+>    'reconfig_mutex' anymore, it can be cleared and reshape can continue b=
+y
+>    sysfs api 'sync_action'.
+>
+> However, I'm not sure yet how to avoid the problem in dm-raid yet.
+>
+>  - patch 9-11 fix this problem by detecting the above 3 cases in
+>  dm_suspend(), and fail those IO directly.
+>
+> If user really meet the IO error, then it means they're reading the wrong
+> data before c467e97f079f. And it's safe to read/write the array after
+> reshape make progress successfully.
 
-Sent from my iPhone
+c467e97f079f got back ported to stable kernels (6.6.13, for example). We
+will need some fixes for them (to fix shell/lvconvert-raid-reshape.sh).
+
+Mikulas and folks, please help review the analysis above and dm-raid
+changes. The failure was triggered by c467e97f079f. However, the commit
+is doing the right thing, so we really shouldn't revert it.
+
+>
+> Tests:
+>
+> I already run the following two tests many times and verified that they
+> won't fail anymore:
+>
+> shell/integrity-caching.sh
+> shell/lvconvert-raid-reshape.sh
+
+shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh is failing
+with upstream + this set. (I need to fix some trivial compilation errors,
+which are probably last minute typos).
+
+Thanks,
+Song
