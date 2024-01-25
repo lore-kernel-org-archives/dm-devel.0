@@ -1,263 +1,184 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5D567F8
-	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 00:51:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B1AA563DD
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 01:09:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706143870; cv=none; b=h1Adn5JQCS4aKne+R758VrpZq7p6vDb3NL51gtEP/Q2OhIruhIIXnPqZcdLyTdzl6DEUyd2YnbUttY2iZYT339APa+zpVmzNw1K+Bh3CBZdhURMk9tYOfMisxpU6WlIyRsTu17d9E6hnKIEoZsZ3wz4bUiRUkXJPua4qz3DA1l0=
+	t=1706144954; cv=none; b=npk49PYi/YHAUKeFv/5NjHKGH16IKdYjaovn6vFLLHfN+7fdNwONr5qoJ6Lmedx2LQPuTGp9KrkCc1B5BQWkZbj2F5ow8RSaFAQ8zg0qSjYFn2alUhKmRBrz63gzqNEg4YZdAyht6f87iFaxOMq+36/vPtfQD6H9BscwntKaR9k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706143870; c=relaxed/simple;
-	bh=c2fjGalsLFeem+qwFcS0e2Y00bJme3JEbHPVemUaIZg=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=QjWbWMST6bPOtSvvaw7HHTKyWvkcTyLu5aD5WEpnHAI4Kh0wE7eL6U5vg+2IoeUKN00z5ooyqwTAY/dByUuk03GbneD8gi0z04aEuL5OPLFtYkhHMIjeO44qT3h+uFSq4xgihx8NPzwywjZs35f3QLqS7f7msCdvs7BKUFIn7rc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZNmpALb6; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZNmpALb6"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1706143868;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=qKGJNl2O8JOD0LA1Q2Y+fNkjTUD3jEbvdwB0OSzoS/o=;
-	b=ZNmpALb69ipgnVY5dgD7gQcjBZqsK0CbkF+pYjOcPthFi+FEoIO8dWPTu6akVgzcGrztGf
-	XtIrJzKBZefSfIanmAVY8hWv7SfgGUIgxQer2dtQ8xykyzOs2LH13LtIG4lYiRJ42jhN5s
-	kl82ED+w90jXu1Azi6A/ckhi7vqd0Hs=
-Received: from mail-pg1-f198.google.com (mail-pg1-f198.google.com
- [209.85.215.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-478-pgA4w9xmMhq7NzR7UBe8dg-1; Wed, 24 Jan 2024 19:51:06 -0500
-X-MC-Unique: pgA4w9xmMhq7NzR7UBe8dg-1
-Received: by mail-pg1-f198.google.com with SMTP id 41be03b00d2f7-5ce632b2adfso5739727a12.0
-        for <dm-devel@lists.linux.dev>; Wed, 24 Jan 2024 16:51:06 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706143865; x=1706748665;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=qKGJNl2O8JOD0LA1Q2Y+fNkjTUD3jEbvdwB0OSzoS/o=;
-        b=kmTYyymqJc7ju2sDP+x1xtTxn6hkvxCoaplWFml5QH1zN1UQbg6rmXLp/L/verUB4r
-         +xXsTEYVnTC6gaIIPebpqrk7I2FHc+gMbDo2ofPWF4Q7RMhqF9CvCeBiHPpcu135hBps
-         N2Ez5jybQleefv7IIu2VlmJQAJXO1SkM5Ohgy5QP/1IQEpXTtLD57SpCOkf+YHhs9T2B
-         T+pSjM7wN3aD8dnWaNM01Teaeooiblt4FxEKS9sjiUijVK1tXZRq2jaX7QOPcMOJ97Er
-         Wtkeg/LCzChqLV1mQ8R9uLSaARuMWQrTYWZXeGI4b3fXHGhZx2NHR5qCB2iEL+X4iVy9
-         e//A==
-X-Gm-Message-State: AOJu0YyJyra9cULcl7XcUfoj+r2FGHvLFvZcx6ZownlQuWCZC82l8OWG
-	J1v6/sAaHEv5dP0tpYQ4dJX0txDWAeFT27C/3oReDNEokKbRmU0eaDPDt+jYTOwzNP6uESxi2b1
-	H4TriGLllFQFeBWREceKrxu31LvEvoxtTIUHqFpJMhSCv0muNUu+7197EA2Smoxit+Kwel/rQJP
-	3jwGuHNXJFgdbAPl/3ojCVH5UtqHciagk=
-X-Received: by 2002:a05:6a20:42a1:b0:199:8ae6:6419 with SMTP id o33-20020a056a2042a100b001998ae66419mr429233pzj.1.1706143865526;
-        Wed, 24 Jan 2024 16:51:05 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEslbhODYYRMYKKvDHhLBAJWJBER5MC9tYxHRWekks7CcSWaN2wJe1Y6BN4Nnxn83BYoiZpVD0QWYJcZJr3NRU=
-X-Received: by 2002:a05:6a20:42a1:b0:199:8ae6:6419 with SMTP id
- o33-20020a056a2042a100b001998ae66419mr429218pzj.1.1706143865220; Wed, 24 Jan
- 2024 16:51:05 -0800 (PST)
+	s=arc-20240116; t=1706144954; c=relaxed/simple;
+	bh=DLKo5zqJOphP7s/xspolDgNhsyMTRKFCspsbqI7wfTA=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=R9zlyrlwNn5CbgW4IKz3eysC0+8G7zxo/TCTuYgq3zfcPMQkMvoLF8oDw+JSwRxWKBA0pCtyyu2mJibRoL8JtOJlQSyC0NZsQY665F9sLAw6LzwwLXDsSxo5Km3y4MaRV4XnpTaA1FHR2f0ReQpqIjexs+0jLNPTMRMzpLm+kK4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TL2lW6lSjz4f3l1B
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 09:08:55 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 41D631A0232
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 09:09:02 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgAX6RGstLFl0+SNBw--.50668S3;
+	Thu, 25 Jan 2024 09:09:02 +0800 (CST)
+Subject: Re: [PATCH v2 00/11] dm-raid: fix v6.7 regressions
+To: Song Liu <song@kernel.org>, mpatocka@redhat.com,
+ dm-devel@lists.linux.dev, snitzer@kernel.org, agk@redhat.com
+Cc: xni@redhat.com, jbrassow@f14.redhat.com, neilb@suse.de,
+ heinzm@redhat.com, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yukuai1@huaweicloud.com, yi.zhang@huawei.com,
+ yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
+References: <20240124091421.1261579-1-yukuai3@huawei.com>
+ <CAPhsuW4aqpQfQvBaeDaiJwOOOy-XspdDjAdvQVfFBEvHN-WUQA@mail.gmail.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <216fbc61-4f71-3796-5ec1-2e4cfa815ced@huaweicloud.com>
+Date: Thu, 25 Jan 2024 09:08:59 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240124091421.1261579-1-yukuai3@huawei.com> <CALTww28G_CmSxzJZVDqHmPgdmT1e2X8+QcToiUOGV1msAisTcQ@mail.gmail.com>
-In-Reply-To: <CALTww28G_CmSxzJZVDqHmPgdmT1e2X8+QcToiUOGV1msAisTcQ@mail.gmail.com>
-From: Xiao Ni <xni@redhat.com>
-Date: Thu, 25 Jan 2024 08:50:54 +0800
-Message-ID: <CALTww2-1oSCahsqouQv2WT1SDCYDGRepJyh9e_Ph=YjPEboqXQ@mail.gmail.com>
-Subject: Re: [PATCH v2 00/11] dm-raid: fix v6.7 regressions
-To: Yu Kuai <yukuai3@huawei.com>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
-	dm-devel@lists.linux.dev, song@kernel.org, jbrassow@f14.redhat.com, 
-	neilb@suse.de, heinzm@redhat.com, shli@fb.com, akpm@osdl.org, 
-	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
-	yukuai1@huaweicloud.com, yi.zhang@huawei.com, yangerkun@huawei.com
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <CAPhsuW4aqpQfQvBaeDaiJwOOOy-XspdDjAdvQVfFBEvHN-WUQA@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgAX6RGstLFl0+SNBw--.50668S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxCw15XryUJr13XF1fAr4ruFg_yoWrtF18pa
+	yj93WYqr48CrnavrZ7t3W0qFW0kF95Jr98GF95J34UA34FkF1IyrWxGayj9FWkCw15Gw4Y
+	vr45ta43ua4qyaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
+	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
+	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
+	17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
+	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
+	3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
+	nIWIevJa73UjIFyTuYvjfUOmhFUUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Wed, Jan 24, 2024 at 8:19=E2=80=AFPM Xiao Ni <xni@redhat.com> wrote:
->
-> On Wed, Jan 24, 2024 at 5:18=E2=80=AFPM Yu Kuai <yukuai3@huawei.com> wrot=
-e:
-> >
-> > First regression related to stop sync thread:
-> >
-> > The lifetime of sync_thread is designed as following:
-> >
-> > 1) Decide want to start sync_thread, set MD_RECOVERY_NEEDED, and wake u=
-p
-> > daemon thread;
-> > 2) Daemon thread detect that MD_RECOVERY_NEEDED is set, then set
-> > MD_RECOVERY_RUNNING and register sync_thread;
-> > 3) Execute md_do_sync() for the actual work, if it's done or
-> > interrupted, it will set MD_RECOVERY_DONE and wake up daemone thread;
-> > 4) Daemon thread detect that MD_RECOVERY_DONE is set, then clear
-> > MD_RECOVERY_RUNNING and unregister sync_thread;
-> >
-> > In v6.7, we fix md/raid to follow this design by commit f52f5c71f3d4
-> > ("md: fix stopping sync thread"), however, dm-raid is not considered at
-> > that time, and following test will hang:
->
-> Hi Kuai
->
-> Thanks very much for the patch set. I reported the dm raid deadlock
-> when stopping dm raid and we had the patch set "[PATCH v5 md-fixes
-> 0/3] md: fix stopping sync thread" which has patch f52f5c71f3d4. So we
-> indeed considered dm-raid that time. Because we want to resolve the
-> deadlock problem. I re-look patch f52f5c71f3d4. It has two major
-> changes. One is to use a common function stop_sync_thread for stopping
-> sync thread. This can fix the deadlock problem. The second change
-> changes the way to reap sync thread. mdraid and dmraid reap sync
-> thread in __md_stop_writes. So the patch looks overweight.
->
-> Before f52f5c71f3d4  do_md_stop release reconfig_mutex before waiting
-> sync_thread to finish. So there should not be the deadlock problem
-> which has been fixed in 130443d60b1b ("md: refactor
-> idle/frozen_sync_thread() to fix deadlock"). So we only need to change
-> __md_stop_writes to stop sync thread like do_md_stop and reap sync
-> thread directly.
->
-> Maybe this can avoid deadlock? I'll try this way and give the test result=
-.
+Hi,
 
-Please ignore my last comment. There is something wrong. Only dmraid
-calls reap_sync_thread directly in __md_stop_writes before.
+在 2024/01/25 8:46, Song Liu 写道:
+> On Wed, Jan 24, 2024 at 1:18 AM Yu Kuai <yukuai3@huawei.com> wrote:
+>>
+>> First regression related to stop sync thread:
+>>
+>> The lifetime of sync_thread is designed as following:
+>>
+>> 1) Decide want to start sync_thread, set MD_RECOVERY_NEEDED, and wake up
+>> daemon thread;
+>> 2) Daemon thread detect that MD_RECOVERY_NEEDED is set, then set
+>> MD_RECOVERY_RUNNING and register sync_thread;
+>> 3) Execute md_do_sync() for the actual work, if it's done or
+>> interrupted, it will set MD_RECOVERY_DONE and wake up daemone thread;
+>> 4) Daemon thread detect that MD_RECOVERY_DONE is set, then clear
+>> MD_RECOVERY_RUNNING and unregister sync_thread;
+>>
+>> In v6.7, we fix md/raid to follow this design by commit f52f5c71f3d4
+>> ("md: fix stopping sync thread"), however, dm-raid is not considered at
+>> that time, and following test will hang:
+>>
+>> shell/integrity-caching.sh
+>> shell/lvconvert-raid-reshape.sh
+>>
+>> This patch set fix the broken test by patch 1-4;
+>>   - patch 1 fix that step 4) is broken by suspended array;
+>>   - patch 2 fix that step 4) is broken by read-only array;
+>>   - patch 3 fix that step 3) is broken that md_do_sync() doesn't set
+>>   MD_RECOVERY_DONE; Noted that this patch will introdece new problem that
+>>   data will be corrupted, which will be fixed in later patches.
+>>   - patch 4 fix that setp 1) is broken that sync_thread is register and
+>>   MD_RECOVERY_RUNNING is set directly;
+>>
+>> With patch 1-4, the above test won't hang anymore, however, the test
+>> will still fail and complain that ext4 is corrupted;
+>>
+>> Second regression related to frozen sync thread:
+>>
+>> Noted that for raid456, if reshape is interrupted, then call
+>> "pers->start_reshape" will corrupt data. This is because dm-raid rely on
+>> md_do_sync() doesn't set MD_RECOVERY_DONE so that new sync_thread won't
+>> be registered, and patch 3 just break this.
+>>
+>>   - Patch 5-6 fix this problem by interrupting reshape and frozen
+>>   sync_thread in dm_suspend(), then unfrozen and continue reshape in
+>> dm_resume(). It's verified that dm-raid tests won't complain that
+>> ext4 is corrupted anymore.
+>>   - Patch 7 fix the problem that raid_message() call
+>>   md_reap_sync_thread() directly, without holding 'reconfig_mutex'.
+>>
+>> Last regression related to dm-raid456 IO concurrent with reshape:
+>>
+>> For raid456, if reshape is still in progress, then IO across reshape
+>> position will wait for reshape to make progress. However, for dm-raid,
+>> in following cases reshape will never make progress hence IO will hang:
+>>
+>> 1) the array is read-only;
+>> 2) MD_RECOVERY_WAIT is set;
+>> 3) MD_RECOVERY_FROZEN is set;
+>>
+>> After commit c467e97f079f ("md/raid6: use valid sector values to determine
+>> if an I/O should wait on the reshape") fix the problem that IO across
+>> reshape position doesn't wait for reshape, the dm-raid test
+>> shell/lvconvert-raid-reshape.sh start to hang at raid5_make_request().
+>>
+>> For md/raid, the problem doesn't exist because:
+>>
+>> 1) If array is read-only, it can switch to read-write by ioctl/sysfs;
+>> 2) md/raid never set MD_RECOVERY_WAIT;
+>> 3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
+>>     'reconfig_mutex' anymore, it can be cleared and reshape can continue by
+>>     sysfs api 'sync_action'.
+>>
+>> However, I'm not sure yet how to avoid the problem in dm-raid yet.
+>>
+>>   - patch 9-11 fix this problem by detecting the above 3 cases in
+>>   dm_suspend(), and fail those IO directly.
+>>
+>> If user really meet the IO error, then it means they're reading the wrong
+>> data before c467e97f079f. And it's safe to read/write the array after
+>> reshape make progress successfully.
+> 
+> c467e97f079f got back ported to stable kernels (6.6.13, for example). We
+> will need some fixes for them (to fix shell/lvconvert-raid-reshape.sh).
+> 
+> Mikulas and folks, please help review the analysis above and dm-raid
+> changes. The failure was triggered by c467e97f079f. However, the commit
+> is doing the right thing, so we really shouldn't revert it.
+> 
+>>
+>> Tests:
+>>
+>> I already run the following two tests many times and verified that they
+>> won't fail anymore:
+>>
+>> shell/integrity-caching.sh
+>> shell/lvconvert-raid-reshape.sh
+> 
+> shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh is failing
+> with upstream + this set. (I need to fix some trivial compilation errors,
+> which are probably last minute typos).
 
-130443d60b1b ("md: refactor idle/frozen_sync_thread() to fix
-deadlock") fixes a deadlock problem. sync io is running and user io
-comes. sync io needs to wait user io. user io needs to update
-suerblock and it needs mddev->reconfig_mutex. But user action happens
-with this lock to stop sync thread. So this is the deadlock. For
-dmraid, it doesn't update superblock like md. I'm not sure if dmraid
-has such deadlock problem. If not, dmraid can call md_reap_sync_thread
-directly, right?
+I'm running test for this patchset overnight in my vm, and this test has
+been ran for 9 times and all passed. Looks like I can't reporduce this
+in my vm.
 
-> >
-> > shell/integrity-caching.sh
-> > shell/lvconvert-raid-reshape.sh
-> >
-> > This patch set fix the broken test by patch 1-4;
-> >  - patch 1 fix that step 4) is broken by suspended array;
-> >  - patch 2 fix that step 4) is broken by read-only array;
-> >  - patch 3 fix that step 3) is broken that md_do_sync() doesn't set
-> >  MD_RECOVERY_DONE; Noted that this patch will introdece new problem tha=
-t
-> >  data will be corrupted, which will be fixed in later patches.
-> >  - patch 4 fix that setp 1) is broken that sync_thread is register and
-> >  MD_RECOVERY_RUNNING is set directly;
-> >
-> > With patch 1-4, the above test won't hang anymore, however, the test
-> > will still fail and complain that ext4 is corrupted;
->
-> For patch3, as I mentioned today, the root cause is
-> dm-raid->rs_start_reshape sets MD_RECOVERY_WAIT. So md_do_sync returns
-> when MD_RECOVERY_WAIT is set. It's the reason why dm-raid can't stop
-> sync thread when start a new reshape. . The way in patch3 looks like a
-> workaround. We need to figure out if dm raid really needs to set
-> MD_RECOVERY_WAIT. Because now we stop sync thread in an asynchronous
-> way. So the deadlock problem which was fixed in 644e2537f (dm raid:
-> fix stripe adding reshape deadlock) may disappear. Maybe we can revert
-> the patch.
+Thanks,
+Kuai
 
-After talking with Heinz, he mentioned dmraid needs this bit to avoid
-md sync thread to start during reshape. So patch3 looks good.
-
-Best Regards
-Xiao
->
-> Best Regards
-> Xiao
->
-> >
-> > Second regression related to frozen sync thread:
-> >
-> > Noted that for raid456, if reshape is interrupted, then call
-> > "pers->start_reshape" will corrupt data. This is because dm-raid rely o=
-n
-> > md_do_sync() doesn't set MD_RECOVERY_DONE so that new sync_thread won't
-> > be registered, and patch 3 just break this.
-> >
-> >  - Patch 5-6 fix this problem by interrupting reshape and frozen
-> >  sync_thread in dm_suspend(), then unfrozen and continue reshape in
-> > dm_resume(). It's verified that dm-raid tests won't complain that
-> > ext4 is corrupted anymore.
-> >  - Patch 7 fix the problem that raid_message() call
-> >  md_reap_sync_thread() directly, without holding 'reconfig_mutex'.
-> >
-> > Last regression related to dm-raid456 IO concurrent with reshape:
-> >
-> > For raid456, if reshape is still in progress, then IO across reshape
-> > position will wait for reshape to make progress. However, for dm-raid,
-> > in following cases reshape will never make progress hence IO will hang:
-> >
-> > 1) the array is read-only;
-> > 2) MD_RECOVERY_WAIT is set;
-> > 3) MD_RECOVERY_FROZEN is set;
-> >
-> > After commit c467e97f079f ("md/raid6: use valid sector values to determ=
-ine
-> > if an I/O should wait on the reshape") fix the problem that IO across
-> > reshape position doesn't wait for reshape, the dm-raid test
-> > shell/lvconvert-raid-reshape.sh start to hang at raid5_make_request().
-> >
-> > For md/raid, the problem doesn't exist because:
-> >
-> > 1) If array is read-only, it can switch to read-write by ioctl/sysfs;
-> > 2) md/raid never set MD_RECOVERY_WAIT;
-> > 3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
-> >    'reconfig_mutex' anymore, it can be cleared and reshape can continue=
- by
-> >    sysfs api 'sync_action'.
-> >
-> > However, I'm not sure yet how to avoid the problem in dm-raid yet.
-> >
-> >  - patch 9-11 fix this problem by detecting the above 3 cases in
-> >  dm_suspend(), and fail those IO directly.
-> >
-> > If user really meet the IO error, then it means they're reading the wro=
-ng
-> > data before c467e97f079f. And it's safe to read/write the array after
-> > reshape make progress successfully.
-> >
-> > Tests:
-> >
-> > I already run the following two tests many times and verified that they
-> > won't fail anymore:
-> >
-> > shell/integrity-caching.sh
-> > shell/lvconvert-raid-reshape.sh
-> >
-> > For other tests, I'm still running. However, I'm sending this patchset
-> > in case people think the fixes is not appropriate. Running the full
-> > tests will cost lots of time in my VM, and I'll update full test result=
-s
-> > soon.
-> >
-> > Yu Kuai (11):
-> >   md: don't ignore suspended array in md_check_recovery()
-> >   md: don't ignore read-only array in md_check_recovery()
-> >   md: make sure md_do_sync() will set MD_RECOVERY_DONE
-> >   md: don't register sync_thread for reshape directly
-> >   md: export helpers to stop sync_thread
-> >   dm-raid: really frozen sync_thread during suspend
-> >   md/dm-raid: don't call md_reap_sync_thread() directly
-> >   dm-raid: remove mddev_suspend/resume()
-> >   dm-raid: add a new helper prepare_suspend() in md_personality
-> >   md: export helper md_is_rdwr()
-> >   md/raid456: fix a deadlock for dm-raid456 while io concurrent with
-> >     reshape
-> >
-> >  drivers/md/dm-raid.c |  76 +++++++++++++++++++++----------
-> >  drivers/md/md.c      | 104 ++++++++++++++++++++++++++++---------------
-> >  drivers/md/md.h      |  16 +++++++
-> >  drivers/md/raid10.c  |  16 +------
-> >  drivers/md/raid5.c   |  61 +++++++++++++------------
-> >  5 files changed, 171 insertions(+), 102 deletions(-)
-> >
-> > --
-> > 2.39.2
-> >
+> 
+> Thanks,
+> Song
+> 
+> .
+> 
 
