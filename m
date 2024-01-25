@@ -1,42 +1,41 @@
-Received: from szxga08-in.huawei.com (szxga08-in.huawei.com [45.249.212.255])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6E8E2C69C
-	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 11:42:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.255
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A1FB32C68E
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 11:45:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706182961; cv=none; b=ArRxdid3gHT/IXI+jJ8MUFau9CIcfLru+j2r2qA46StA+Tg3G+4k+7iytAewiTuBAB33qzpse81sXxObuSF1poIc6AFj+K5n7YpP+OvZHFaW/XzZsOOTktUHu2we4CT4poemsJsZJC46dQyrNwv5RcyuCci5nMR8e46zuHzIxX8=
+	t=1706183117; cv=none; b=FQx6ZKP6KU+aYPvoP9a59qd1ELrItzUsaD9f4X57H41iMX16Yd8YRfWg9XYgLPgXCFmD8rgBlWboDKJUnXbcMXJ8YubiRk93Pj0jnt4kGsoF6Bd3vdHnuckNPT3KvbjvYrc6b842sa+Je8BaGYrgmNuVHKQw9CcLPE4Z9KF/9jE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706182961; c=relaxed/simple;
-	bh=4200f1qVc9nUnWxLTRgmUOlP3RJ0hwGAZtZceO/Y+bc=;
-	h=Subject:To:CC:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=Z+LqXGSdHiUGVA+tocQfcqG/oNUsgZhLMGWbdW2G+Hmu2ab7UXSJZIsOg3bn7srWHwaw/54Xk4iuWzXjIPiWZO+Yb0/8SR6R4njlGJLEsyOraWcBWC2GjzdtEG/GgHObBSwFAhf6i9SL9vmf5yqxAbyXS1o8BCoAd1qw3NVQB5I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.255
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
-Received: from mail.maildlp.com (unknown [172.19.88.105])
-	by szxga08-in.huawei.com (SkyGuard) with ESMTP id 4TLJnS2pg5z18LWF;
-	Thu, 25 Jan 2024 19:41:32 +0800 (CST)
-Received: from kwepemm600009.china.huawei.com (unknown [7.193.23.164])
-	by mail.maildlp.com (Postfix) with ESMTPS id 69C9A140487;
-	Thu, 25 Jan 2024 19:42:36 +0800 (CST)
-Received: from [10.174.176.73] (10.174.176.73) by
- kwepemm600009.china.huawei.com (7.193.23.164) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.35; Thu, 25 Jan 2024 19:42:35 +0800
+	s=arc-20240116; t=1706183117; c=relaxed/simple;
+	bh=/KlvnDkej06RFUIB4IDB8qeRoVJxxRl/FWR79xyazg8=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=C4gpMKNWT2CabYaQtk6K8MmK3/7wmUCgevrEnPjHsnMp9iU5E7dDrCL7wpL91pEHJMIt2dcg60JJDz+f9JkyXu+dxN0Jos5XIKRWBo3nrGkqNQLMqmfiPnDCaoq0XZDL7DP4UDfpsWySj0e7Ckyg/Ew/FAZN9vIOE8IFqnS6YaU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TLJsZ1lCYz4f3kFW
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 19:45:06 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 34C4D1A016E
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 19:45:10 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgCXaBHESbJlToa9Bw--.16693S3;
+	Thu, 25 Jan 2024 19:45:10 +0800 (CST)
 Subject: Re: [PATCH v2 05/11] md: export helpers to stop sync_thread
 To: Xiao Ni <xni@redhat.com>
-CC: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
-	<dm-devel@lists.linux.dev>, <song@kernel.org>, <neilb@suse.de>,
-	<heinzm@redhat.com>, <shli@fb.com>, <akpm@osdl.org>,
-	<linux-kernel@vger.kernel.org>, <linux-raid@vger.kernel.org>,
-	<yukuai1@huaweicloud.com>, <yi.zhang@huawei.com>, <yangerkun@huawei.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+ dm-devel@lists.linux.dev, song@kernel.org, neilb@suse.de, heinzm@redhat.com,
+ shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yukuai1@huaweicloud.com, yi.zhang@huawei.com,
+ yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
 References: <20240124091421.1261579-1-yukuai3@huawei.com>
  <20240124091421.1261579-6-yukuai3@huawei.com>
  <CALTww2_V6Cr4j7hMPnMMt-g2w_xfCHQvwBpwbyOk=5rGcap6YA@mail.gmail.com>
-From: Yu Kuai <yukuai3@huawei.com>
-Message-ID: <d7b8043e-c921-8769-f39f-5105f2e866b6@huawei.com>
-Date: Thu, 25 Jan 2024 19:42:34 +0800
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <22874ce7-6f21-1e64-eee0-dc67df367d42@huaweicloud.com>
+Date: Thu, 25 Jan 2024 19:45:08 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
  Thunderbird/60.8.0
 Precedence: bulk
@@ -46,10 +45,26 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 In-Reply-To: <CALTww2_V6Cr4j7hMPnMMt-g2w_xfCHQvwBpwbyOk=5rGcap6YA@mail.gmail.com>
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: dggems701-chm.china.huawei.com (10.3.19.178) To
- kwepemm600009.china.huawei.com (7.193.23.164)
+X-CM-TRANSID:cCh0CgCXaBHESbJlToa9Bw--.16693S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxXF4kury3tF4rXr45WFW5Awb_yoWrtFykpr
+	Z7tF95ArWayrZxXr12q3WDuayYqw1IgFWqyrWfCa4fJas2krn7tr1Y93WUCFykCa4xuw1q
+	ya1jqFsxuF18WF7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26ryj6F1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
+	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
+	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
+	17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
+	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
+	3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
+	nIWIevJa73UjIFyTuYvjfUOmhFUUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 Hi,
 
@@ -64,6 +79,8 @@ Hi,
 Are you testing with this patchset? 28 failed is much more than my
 test result in following:
 
+### 426 tests: 346 passed, 70 skipped, 0 timed out, 4 warned, 6 failed 
+in 118:31.437
 > make[1]: *** [Makefile:138: check] Error 1
 > make[1]: Leaving directory '/root/lvm2/test'
 > make: *** [Makefile:89: check] Error 2
@@ -73,8 +90,18 @@ test result in following:
 I saved logs and grep keyword "failed:", and the result will look like
 this:
 
+###       failed: [ndev-vanilla] shell/duplicate-vgid.sh
+###       failed: [ndev-vanilla] shell/fsadm-crypt.sh
+###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+###       failed: [ndev-vanilla] shell/select-report.sh
 
-You can find each test log in the dir test/result/
+BTW, you can find each test log in the dir（by default) test/result/.
+
+Thanks,
+Kuai
+
 > 
 > Best Regards
 > Xiao
@@ -182,3 +209,4 @@ You can find each test log in the dir test/result/
 > 
 > .
 > 
+
