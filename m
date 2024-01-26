@@ -1,115 +1,162 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ua1-f54.google.com (mail-ua1-f54.google.com [209.85.222.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8D8C20B21
-	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 18:09:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 186421E882
+	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 18:36:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706292581; cv=none; b=j5VmzaZ7TPIfy1v2GfYMw+fX2AZMaTZKOk8/+xZln9LbKjaEyvZYL2JeL7ncbzkY67+WaH350wRQ4vw/UsN25Q2p88JwlQaEQ/Yb0P4cGyg8QhfMV0kP6SVCWZnDJdD/yHagTmO6x8pO3woagYzUEQXmyhBhyK+DTZEgJo9Z6wQ=
+	t=1706294219; cv=none; b=ei1kFrASuhNkMo+SM5jeaygp2qPA5+Rw8RX5KtaKJwUz9BkiPENM+PGI61cCrdYrBHt7LDHSyiWS3w7kYYx5qgmZQ0SkdUPvJt1Zy/uuu5ks24Qw9TmeBHnLi6c10By9O8OzJ2WCjhppD/0eNtRW/CE+SkboLqI1aqDMbuNeqKI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706292581; c=relaxed/simple;
-	bh=PG4/aZR5ehNoaIXSCVLkh7AD4cNnfxBqq7Vn9VNuNN8=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=fZAFhnInlddESWAcWn9vRPIFzwSfCorwUnAFIGSPdxMuyILuWPHNyee64dp0jR6PUGfguBHGhr6Kd0J2WZiwvssW0/nPb87tIlLuM43Agcnl79XPqKDpi0uCiUWQgOKXb3Yo3/u7z8dBBIFZWASgs8vMlKhvDssbbOKrQVPH57s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jHsgZLgs; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1706294219; c=relaxed/simple;
+	bh=XbBNz5Xjkbj/AigQvzkQA0KxKZPt6W9V1ChoC5N95fg=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=s165kd/iwAC6Pw03ou05LqcVcmN1WahEaiGT/8zDbMam+Z7veURyof1QPkdO7/N+tLxyAgyFp3olsoUTdrNj6NH+eF0h9Lysi4HqcMGX9JRPVBdEFoWiOnBDi/+6Se8u8x8HjP2wswkPYHeZMPAi/6ySAEdTc51+Rv37bTsc1rI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cZHlHJbW; arc=none smtp.client-ip=209.85.222.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jHsgZLgs"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1706292578;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wO/GDAatG6A2816f5tEylmQBmDB7G8kJQQtaCJdUFO4=;
-	b=jHsgZLgsJV5mpd6dHu17up2IrTieyLe/HJKVDLPtfaAwgobBDx1RuiJY184aYTmsNv+QJX
-	dlnV97gqo+7CYFok5J+sMysjjkaX9dQZEOj+AgUQbXIt2hO18kCgxG/mrDyIS9H1Njk5jq
-	5weIaYYo7Msuhz7X/6kTqoEx9HC/lYw=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-536-hFFMn07mPBuMNb_mMsj6uA-1; Fri, 26 Jan 2024 13:09:34 -0500
-X-MC-Unique: hFFMn07mPBuMNb_mMsj6uA-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2EA0A1013661;
-	Fri, 26 Jan 2024 18:09:33 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 003CA492BFA;
-	Fri, 26 Jan 2024 18:09:31 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id DFEC030BFEFE; Fri, 26 Jan 2024 18:09:31 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id DB7CD3FB50;
-	Fri, 26 Jan 2024 19:09:31 +0100 (CET)
-Date: Fri, 26 Jan 2024 19:09:31 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Hannes Reinecke <hare@suse.de>
-cc: Damien Le Moal <dlemoal@kernel.org>, 
-    Linus Torvalds <torvalds@linux-foundation.org>, Tejun Heo <tj@kernel.org>, 
-    Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, 
-    dm-devel@lists.linux.dev, Mike Snitzer <msnitzer@redhat.com>, 
-    Ignat Korchagin <ignat@cloudflare.com>, 
-    Damien Le Moal <damien.lemoal@wdc.com>, Hou Tao <houtao1@huawei.com>, 
-    Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>
-Subject: Re: [PATCH] softirq: fix memory corruption when freeing
- tasklet_struct
-In-Reply-To: <d390d7ee-f142-44d3-822a-87949e14608b@suse.de>
-Message-ID: <d01a8554-10dd-1968-c9b0-f9ff16e6ac4@redhat.com>
-References: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com> <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com> <586ca4dd-f191-9ada-1bc3-e5672f17f7c@redhat.com> <5e2b5f23-94f0-4bf0-80a6-48380c7dc730@kernel.org>
- <d390d7ee-f142-44d3-822a-87949e14608b@suse.de>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cZHlHJbW"
+Received: by mail-ua1-f54.google.com with SMTP id a1e0cc1a2514c-7d2df857929so267513241.3
+        for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 10:36:57 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1706294217; x=1706899017; darn=lists.linux.dev;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=TqXd2LbuyI9Qqh/FQNpz2+SVm8Ny+cq215471CRHkUI=;
+        b=cZHlHJbWsIC4qyby0s0ou0nz2SWe3SUcEQL4HEYRSzZpAgY/mp+04emy87InmN3nNt
+         ayRLZ2R7RvLBHCtalmZADud8I/BRG9A1bVX9/ZS7J9gZhAVsBtL+PcTaQVgzopLJb00T
+         54JD0VIJBzkDKJoSBFlo+6ecS9mDWAx+LDBkqsbvuczFqoQgqIcj5odv7nNrENvqlupZ
+         TU7uKP4d8mT+7AbowJR2wCEiX1nCtc9/R8YOPm6Cjb4KFSTEJDjSUGn7IeG/FqtmUsZJ
+         b9Yaz7Rxeu8qU+oBO/wcDzLnLsILhFrjD1Pa++AtRKbSwbljWq92Mk4gAAnUh9UFKX8H
+         8quw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706294217; x=1706899017;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=TqXd2LbuyI9Qqh/FQNpz2+SVm8Ny+cq215471CRHkUI=;
+        b=UgGBXXWJ4fqrQe9kCc/cc80RHcFyY8/1WpnIPne52xbBo5AMqlexbcM+tgmhvfaGWF
+         +j1zinb7bSioP4sdPx3pBXZeoqkWvhU87XiQ6fwl5OWpzLUCBeFmp/XydbeliOL9kilh
+         vyqSDBf9OO7LGixDiSFvsH5aSOKK/xLcLoZRDwu2r9RMfuKkn0fYc3PnpGxhyPSrcInj
+         9GaSov7jS4mRPsGutOhiAqJKmBR4GWzCv9pbKVUUHNzVTrcWwAYyYrLQufMYWa/oue1C
+         ttbauRGhst7Ky8F2YKUB1N2F8Pqopp4ra7x4zzSUbMSoeL3/S7FdmC5A/5kcPXklOMV4
+         p3Ng==
+X-Gm-Message-State: AOJu0Yw65vKAV+aLXjz6xZERJFg29KEevOF7zVmbgdFB8lcCVhXz2iVo
+	mFNyx2v2lQAhTI/2AmLYxeQXHK2zqIZKp7n4BenUf/Akn0LFcxx6vCVmizl2OPylr8HxDFcBp7m
+	xruebpEJfJKT1EkzmS54ST2OAoZw=
+X-Google-Smtp-Source: AGHT+IE1MLjGKr2ux1azYw+58wmOiUvg8E5WXoQmTYbkOgivsJfz1JIsqBfE4B/XNtYEHyZgtl89a1r7kKpPcLkAmz0=
+X-Received: by 2002:a05:6122:4c0f:b0:4b6:e383:5f with SMTP id
+ ff15-20020a0561224c0f00b004b6e383005fmr235259vkb.25.1706294216914; Fri, 26
+ Jan 2024 10:36:56 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+References: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com> <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
+In-Reply-To: <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
+From: Allen <allen.lkml@gmail.com>
+Date: Fri, 26 Jan 2024 10:36:45 -0800
+Message-ID: <CAOMdWSKu9PhyjfWga-eMcAUiBF4Fg9dnt+husNRZgkL1rp_HFQ@mail.gmail.com>
+Subject: Re: [PATCH] softirq: fix memory corruption when freeing tasklet_struct
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Tejun Heo <tj@kernel.org>, 
+	Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+	Mike Snitzer <msnitzer@redhat.com>, Ignat Korchagin <ignat@cloudflare.com>, 
+	Damien Le Moal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, Hou Tao <houtao1@huawei.com>, 
+	Nathan Huckleberry <nhuck@google.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain; charset="UTF-8"
 
+> > There's a problem with the tasklet API - there is no reliable way how to
+> > free a structure that contains tasklet_struct. The problem is that the
+> > function tasklet_action_common calls task_unlock(t) after it called the
+> > callback. If the callback does something that frees tasklet_struct,
+> > task_unlock(t) would write into free memory.
+>
+> Ugh.
+>
+> I see what you're doing, but I have to say, I dislike this patch
+> immensely. It feels like a serious misdesign that is then papered over
+> with a hack.
+>
+> I'd much rather see us trying to move away from tasklets entirely in
+> cases like this. Just say "you cannot do that".
+>
+ The idea of moving away from using tasklets has been discussed several times.
+I am working on entirely moving away from using tasklets. Ofcourse, we have
+some subsystems(like DMA), where we need to do a little more.
 
-
-On Fri, 26 Jan 2024, Hannes Reinecke wrote:
-
-> Oh, it's this time of the year again?
-> (This topic regularly comes up ...)
-> 
-> The reason is not that it will disable dm-multipath (Mike Snitzer put in
-> bio-based multipathing as an additional code path); the reason is that
-> dm-multipath performance will suffer when you remove request-based DM.
-
-Is there some benchmark that says how much will it suffer?
-
-> DM-multipath schedules based on request (if you use the request-based
-> interface) or bios (if you use the bio-based interface).
-> Any merge decision is typically done by the block layer when combining bios
-> into requests; and you can only merge bios if the bvecs are adjacent.
-> So if you use bio-based multipathing you will spread sequential bios
-> across all paths, leaving the block layer unable to merge requests.
-
-The same problem exists in raid1 and there's a function read_balance that 
-solves it. If the starting sector of a new bio matches the ending sector 
-of a previous bio, then submit it for the same device.
-
-> For request based multipathing the requests are already fully-formed,
-> and scheduling across paths does not change them.
-> Things are slightly better with multi-page bvecs nowadays, but the
-> overall picture still stands.
-> 
-> Another thing is timeouts; bios don't do timeouts, so a bio can run
-> for an arbitrary time with no chance of interrupting it.
-> Requests do have a timeout, and will be aborted from the driver when
-> the timeout is hit.
-> Seeing that 99% of all I/O issues I've seen _are_ timeouts it becomes
-> a crucial feature if you want dm-multipath to control failover time.
-
-You can set timeout of the underlying physical devices.
-
-> Cheers,
-> 
-> Hannes
-
-Mikulas
-
+> In fact, of the two cases that want this new functionality, at least
+> dm-verity already makes tasklets a conditional feature that isn't even
+> enabled by default, and that was only introduced in the last couple of
+> years.
+>
+> So I think dm-verity would be better off just removing tasklet use,
+> and we should check whether there are better models for handling the
+> latency issue.
+>
+> The dm-crypt.c case looks different, but similar. I'm not sure why it
+> doesn't just use the workqueue for the "in interrupt" case. Like
+> dm-verity, it already does have a workqueue option, and it's a
+> setup-time option to say "don't use the workqueue for reads / writes".
+> But it feels like the code should just say "tough luck, in interrupt
+> context we *will* use workqueues".
+>
+> So honestly, both of the cases you bring up seem to be just BUGGY. The
+> fix is not to extend tasklets to a new thing, the fix is to say "those
+> two uses of tasklets were broken, and should go away".
+>
+> End result: I would suggest:
+>
+>  - just get rid of the actively buggy use of tasklets. It's not
+> necessary in either case.
+>
+>  - look at introducing a "low-latency atomic workqueue" that looks
+> *exactly* like a regular workqueue, but has the rule that it's per-cpu
+> and functions on it cannot sleep
+>
+> because I think one common issue with workqueues - which are better
+> designed than tasklets - is that scheduling latency.
+>
+> I think if we introduced a workqueue that worked more like a tasklet -
+> in that it's run in softirq context - but doesn't have the interface
+> mistakes of tasklets, a number of existing workqueue users might
+> decide that that is exactly what they want.
+>
+> So we could have a per-cpu 'atomic_wq' that things can be scheduled
+> on, and that runs from softirqs just like tasklets, and shares the
+> workqueue queueing infrastructure but doesn't use the workqueue
+> threads.
+>
+> Yes, the traditional use of workqueues is to be able to sleep and do
+> things in process context, so that sounds a bit odd, but let's face
+> it, we
+>
+>  (a) already have multiple classes of workqueues
+>
+>  (b) avoiding deep - and possibly recursive - stack depths is another
+> reason people use workqueues
+>
+>  (c) avoiding interrupt context is a real concern, even if you don't
+> want to sleep
+>
+> and I really *really* would like to get rid of tasklets entirely.
+>
+> They started as this very specific hardcoded softirq thing used by
+> some drivers, and then the notion was generalized.
+>
+> And I think it was generalized badly, as shown by this example.
+>
+> I have added Tejun to the cc, so that he can throw his hands up in
+> horror and say "Linus, you're crazy, your drug-fueled idea would be
+> horrid because of Xyz".
+>
+> But *maybe* Tejun has been taking the same drugs I have, and goes
+> "yeah, that would fit well".
+>
+> Tejun? Please tell me I'm not on some bad crack..
+>
+>                Linus
+>
+       - Allen
