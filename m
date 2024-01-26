@@ -1,92 +1,109 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 471BD12B8A;
-	Thu, 25 Jan 2024 23:15:18 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B44E517E
+	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 00:14:32 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706224520; cv=none; b=h8+QP7W7UwYinQK6wOjK5m/0cCqXDSCzhmNmLCOT9Gjlu6rmfo3lDWSdrDrN0sLWSDkrb71HeJRur2gu/VZ0NeurrCxMg6lpS4h7DnSTHDBOwPtQcelP5XOYo8aBh2vcVHLV4zVXZSG4c+hy9bR2devgrUuVcWeDXMdtn37EMlo=
+	t=1706228072; cv=none; b=K1WDjI0PRc21Q7bC/dkp/Sk0j6G/avHtk8Z7y7uamKRaokQxHPNbrufETAasmM0AeuyvKPGpHJOuWbbYh+Nr/qyGomMmjJWbCKdu146KB2cFbcDPRS0E7Kov1I9XyTbF15lQf9LAnK6CJ8lLMPZUQNLAD3JKG1qBHasuXiHc2q8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706224520; c=relaxed/simple;
-	bh=d+oT/WUNGWywn59+jNCEnCZSa3hl6Z/rNAKSjHlpy1I=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=LeZI064cggri9keXZsPO5QWgLkJ3bHdClYKQWDEGkOdNt4Fln4NWXuFTE+mm8Ox5FgZrT+6CVDlBwrPp+8sDlQdb6+kKZYalXw1+ovdoU/Kp9jZLDz0Nt+hJ5pDMJiiLzMbcL+udMSX17K77CM9E62hEgTLssVKHbRMMr+jRAMU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jDnlj2/Q; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1706228072; c=relaxed/simple;
+	bh=Qm9TZuL9HTa2j4FLC1XOdPmC6N+VcY2tavBjeFAxuxM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=FAePitCgCYiuojcahOp7SzU/2sR6QvIhwW6HB1PxkPJuchmNRnqanmksOla2QnS6Yaqga/LdfMHpTZ69BF7xLVWd9L6HhlnTCqwSdU9x8ch0wllA67CP23x+T+VtdCud3PRJ4JFuLdQuxiN3nQnEKD+xqjdvNHT/w7lIRDFSX2E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eCEcaTNX; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jDnlj2/Q"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F21B3C433C7;
-	Thu, 25 Jan 2024 23:15:16 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eCEcaTNX"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7B574C433A6
+	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 00:14:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1706224518;
-	bh=d+oT/WUNGWywn59+jNCEnCZSa3hl6Z/rNAKSjHlpy1I=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=jDnlj2/Qbq9OZq3roGlMPt9F2pstORi1pvBFFeM6oSpIVZ91jkVjXkJIegdjLHmJg
-	 Vg9ObUj1YOA84SkkgIVCHN5W0/PTTyBam0aYgZNJcSs1i36+XkYgYKej3WgW1KeVYv
-	 wqZ6VmUiOakGj31rkss/DyzLkcBVnJHRTQ9bC04crauN6Pi/n5730YnKfRp8l4KujL
-	 MX11SVPW9KVWbLt7X6KlfOU3tIEnkXr/Mimw4AIuoMKidkJIhI3PPAyq32kEuR5P7X
-	 Tx9ANdB/72rHNqVsF9wifuKRPFJbS9PgiF6uGu6IEXVXC7ECDTI07+wHRTTNndqC3l
-	 2u01xBXsHYAGw==
-Message-ID: <5e2b5f23-94f0-4bf0-80a6-48380c7dc730@kernel.org>
-Date: Fri, 26 Jan 2024 08:15:13 +0900
+	s=k20201202; t=1706228072;
+	bh=Qm9TZuL9HTa2j4FLC1XOdPmC6N+VcY2tavBjeFAxuxM=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=eCEcaTNXiNSoEbAtz/bVrD+OPWQMdE8uaZ2TlIpTbOwFiQpLtLJLR54n5zKLQNlUi
+	 SIO9KpHd1ukJQQKlt+k56I1yu8RFvzvLhLQ8JfiCRxLOv7sP4w6FgkeUwBG9COMoXb
+	 0RMbAw5yObcGhcoIat1xX4W84AqswkumhvPb5u7/PVx9rPXGdh3qPAOY1ZCcTIR604
+	 B6Loc6VuXEd6+RbyUcuMgUh750oxVHnRVlwMLQAQMEt0/WbiKmryDoeKcZhJdBcbT4
+	 vbgfZXYm99Hj3ihk6XIiAHgE4aklieGb6fIjJGzU2OWRztUy0C2BJyi8nYSlY1IT59
+	 9Cye0cSAZI40A==
+Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-51020e061b5so1024447e87.1
+        for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 16:14:32 -0800 (PST)
+X-Gm-Message-State: AOJu0YzWpJBDIOmokIJ7v/3NWcggDmM6x9kwIu4xEzi3TXh0NuOuISfO
+	hQlldGTq4zbZ2//keu/V3NdWfWBND8GVYjNQ86aUYVdTbkE7UWBZ+K5V/uzJzpInqHNV5yGCU6Z
+	+1MkVUBqWK9jvIgH7PHfi+dbd9ZA=
+X-Google-Smtp-Source: AGHT+IED9CJWsDJSk49BPkNStrwuc6tSM4rMBKOHwZqetFqvJrPjTD8O/vlKnTlptPI5eCGjFtZBcMGLEwtLw1lUEyY=
+X-Received: by 2002:a05:6512:3b2c:b0:50e:36ad:5f6e with SMTP id
+ f44-20020a0565123b2c00b0050e36ad5f6emr344390lfv.20.1706228070641; Thu, 25 Jan
+ 2024 16:14:30 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] softirq: fix memory corruption when freeing
- tasklet_struct
-Content-Language: en-US
-To: Mikulas Patocka <mpatocka@redhat.com>,
- Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>,
- linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
- Mike Snitzer <msnitzer@redhat.com>, Ignat Korchagin <ignat@cloudflare.com>,
- Damien Le Moal <damien.lemoal@wdc.com>, Hou Tao <houtao1@huawei.com>,
- Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>
-References: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com>
- <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
- <586ca4dd-f191-9ada-1bc3-e5672f17f7c@redhat.com>
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <586ca4dd-f191-9ada-1bc3-e5672f17f7c@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+References: <20240124091421.1261579-1-yukuai3@huawei.com> <20240124091421.1261579-6-yukuai3@huawei.com>
+ <CALTww291wiYYMWuqUdDf1t7cKkHFs9gGQSRw+iPhUCsNv-Y6yg@mail.gmail.com>
+In-Reply-To: <CALTww291wiYYMWuqUdDf1t7cKkHFs9gGQSRw+iPhUCsNv-Y6yg@mail.gmail.com>
+From: Song Liu <song@kernel.org>
+Date: Thu, 25 Jan 2024 16:14:18 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW4kauNB8jAsXYjRohCBMDvY15y0CzzWYqzGvNsqAJ59jQ@mail.gmail.com>
+Message-ID: <CAPhsuW4kauNB8jAsXYjRohCBMDvY15y0CzzWYqzGvNsqAJ59jQ@mail.gmail.com>
+Subject: Re: [PATCH v2 05/11] md: export helpers to stop sync_thread
+To: Xiao Ni <xni@redhat.com>
+Cc: Yu Kuai <yukuai3@huawei.com>, agk@redhat.com, snitzer@kernel.org, 
+	mpatocka@redhat.com, dm-devel@lists.linux.dev, jbrassow@f14.redhat.com, 
+	neilb@suse.de, heinzm@redhat.com, shli@fb.com, akpm@osdl.org, 
+	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
+	yukuai1@huaweicloud.com, yi.zhang@huawei.com, yangerkun@huawei.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On 1/26/24 07:04, Mikulas Patocka wrote:
-> 
-> 
-> On Thu, 25 Jan 2024, Linus Torvalds wrote:
-> 
->> On Thu, 25 Jan 2024 at 10:30, Mikulas Patocka <mpatocka@redhat.com> wrote:
->>>
->>> There's a problem with the tasklet API - there is no reliable way how to
->>> free a structure that contains tasklet_struct. The problem is that the
->>> function tasklet_action_common calls task_unlock(t) after it called the
->>> callback. If the callback does something that frees tasklet_struct,
->>> task_unlock(t) would write into free memory.
->>
->> Ugh.
->>
->> I see what you're doing, but I have to say, I dislike this patch
->> immensely. It feels like a serious misdesign that is then papered over
->> with a hack.
->>
->> I'd much rather see us trying to move away from tasklets entirely in
->> cases like this. Just say "you cannot do that".
-> 
-> OK. I will delete tasklets from both dm-crypt and dm-verity - it will 
-> simplify them quite a bit.
-> 
-> BTW. Do you think that we should get rid of request-based device mapper as 
-> well? (that's another thing that looks like code bloat to me)
+Hi Xiao,
 
-That would force removing dm-multipath, which is I think the only DM driver
-using requests. But given how widespread the use of dm-multipath is, killing it
-would likely make a lot of people unhappy...
+On Thu, Jan 25, 2024 at 5:33=E2=80=AFAM Xiao Ni <xni@redhat.com> wrote:
+>
+> Hi all
+>
+> I build the kernel 6.7.0-rc8 with this patch set. The lvm2 regression
+> test result:
 
--- 
-Damien Le Moal
-Western Digital Research
+I believe the patchset is built on top of upstream (6.8-rc1). There are
+quite some md and dm changes between 6.7-rc8 and 6.8-rc1. Could
+you please rerun the test on top of 6.8-rc1? Once we identify the right
+set of fixes, we will see which ones to back port to older kernels.
 
+Thanks,
+Song
+
+> ###       failed: [ndev-vanilla] shell/integrity.sh
+> ###       failed: [ndev-vanilla] shell/lvchange-partial-raid10.sh
+> ###       failed: [ndev-vanilla] shell/lvchange-raid-transient-failures.s=
+h
+> ###       failed: [ndev-vanilla] shell/lvchange-raid10.sh
+> ###       failed: [ndev-vanilla] shell/lvchange-rebuild-raid.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-cache-abort.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid-regionsize.sh
+> ###       failed: [ndev-vanilla]
+> shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid-reshape.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid-takeover-alloc-fail=
+ure.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid-takeover-thin.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid-takeover.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid0-striped.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid0_to_raid10.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid10.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-raid5_to_raid10.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+> ###       failed: [ndev-vanilla] shell/lvconvert-striped-raid0.sh
+> ###       failed: [ndev-vanilla] shell/lvcreate-large-raid10.sh
+> ###       failed: [ndev-vanilla] shell/lvcreate-raid-nosync.sh
+> ###       failed: [ndev-vanilla] shell/lvcreate-raid10.sh
+> ###       failed: [ndev-vanilla] shell/lvdisplay-raid.sh
+> ###       failed: [ndev-vanilla] shell/lvextend-thin-raid.sh
+> ###       failed: [ndev-vanilla] shell/lvresize-fs-crypt.sh
+> ###       failed: [ndev-vanilla] shell/lvresize-raid.sh
+> ###       failed: [ndev-vanilla] shell/lvresize-raid10.sh
+> ###       failed: [ndev-vanilla] shell/pvck-dump.sh
+> ###       failed: [ndev-vanilla] shell/pvmove-raid-segtypes.sh
+> ###       failed: [ndev-vanilla] shell/select-report.sh
