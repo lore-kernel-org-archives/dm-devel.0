@@ -1,109 +1,125 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f178.google.com (mail-pl1-f178.google.com [209.85.214.178])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B44E517E
-	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 00:14:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99CAC1C0F
+	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 00:34:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706228072; cv=none; b=K1WDjI0PRc21Q7bC/dkp/Sk0j6G/avHtk8Z7y7uamKRaokQxHPNbrufETAasmM0AeuyvKPGpHJOuWbbYh+Nr/qyGomMmjJWbCKdu146KB2cFbcDPRS0E7Kov1I9XyTbF15lQf9LAnK6CJ8lLMPZUQNLAD3JKG1qBHasuXiHc2q8=
+	t=1706229242; cv=none; b=XLbZL+FW6ZVDo683Ny6QYniSQqy7cQLm6havhQGVXNONCrNoW+bG036Bv/elvBvSOE8zaZVKR54RvN+94YSDNZPg9OPeF26dLRahuKJdPj04hdknGsDxFg4YnVVyTqap/cffey+h9IjkRrUjH+WZ3t3fqndNfkJlkvTraeJpJqk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706228072; c=relaxed/simple;
-	bh=Qm9TZuL9HTa2j4FLC1XOdPmC6N+VcY2tavBjeFAxuxM=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=FAePitCgCYiuojcahOp7SzU/2sR6QvIhwW6HB1PxkPJuchmNRnqanmksOla2QnS6Yaqga/LdfMHpTZ69BF7xLVWd9L6HhlnTCqwSdU9x8ch0wllA67CP23x+T+VtdCud3PRJ4JFuLdQuxiN3nQnEKD+xqjdvNHT/w7lIRDFSX2E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eCEcaTNX; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1706229242; c=relaxed/simple;
+	bh=FAQRl1q6MnMVV8np0W8lncH+zy9FvDuPzVQNBdoDOQg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=DCa0FxnaCABkx3uUNbgIysHG75Wk7uC49ifbo51gckpn5sDIT6Nh79tjZCfcBWBv7mof/Vw3bH0AArysnEueMlvlqTVgt98f0H/8fSBidZ7ppn9I1w0oaNTTE9vdPQGf6blR/MiRYsA/UHS3fE/8a+efdjZFQEJ1w6Y31fAM7dA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=D7YKdP8r; arc=none smtp.client-ip=209.85.214.178
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eCEcaTNX"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7B574C433A6
-	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 00:14:32 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1706228072;
-	bh=Qm9TZuL9HTa2j4FLC1XOdPmC6N+VcY2tavBjeFAxuxM=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=eCEcaTNXiNSoEbAtz/bVrD+OPWQMdE8uaZ2TlIpTbOwFiQpLtLJLR54n5zKLQNlUi
-	 SIO9KpHd1ukJQQKlt+k56I1yu8RFvzvLhLQ8JfiCRxLOv7sP4w6FgkeUwBG9COMoXb
-	 0RMbAw5yObcGhcoIat1xX4W84AqswkumhvPb5u7/PVx9rPXGdh3qPAOY1ZCcTIR604
-	 B6Loc6VuXEd6+RbyUcuMgUh750oxVHnRVlwMLQAQMEt0/WbiKmryDoeKcZhJdBcbT4
-	 vbgfZXYm99Hj3ihk6XIiAHgE4aklieGb6fIjJGzU2OWRztUy0C2BJyi8nYSlY1IT59
-	 9Cye0cSAZI40A==
-Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-51020e061b5so1024447e87.1
-        for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 16:14:32 -0800 (PST)
-X-Gm-Message-State: AOJu0YzWpJBDIOmokIJ7v/3NWcggDmM6x9kwIu4xEzi3TXh0NuOuISfO
-	hQlldGTq4zbZ2//keu/V3NdWfWBND8GVYjNQ86aUYVdTbkE7UWBZ+K5V/uzJzpInqHNV5yGCU6Z
-	+1MkVUBqWK9jvIgH7PHfi+dbd9ZA=
-X-Google-Smtp-Source: AGHT+IED9CJWsDJSk49BPkNStrwuc6tSM4rMBKOHwZqetFqvJrPjTD8O/vlKnTlptPI5eCGjFtZBcMGLEwtLw1lUEyY=
-X-Received: by 2002:a05:6512:3b2c:b0:50e:36ad:5f6e with SMTP id
- f44-20020a0565123b2c00b0050e36ad5f6emr344390lfv.20.1706228070641; Thu, 25 Jan
- 2024 16:14:30 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="D7YKdP8r"
+Received: by mail-pl1-f178.google.com with SMTP id d9443c01a7336-1d70a98c189so47468415ad.1
+        for <dm-devel@lists.linux.dev>; Thu, 25 Jan 2024 16:34:00 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1706229240; x=1706834040; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=4PulaV0cbKx4FOxtybdvesZKMhhcYdEXyXz4FJ1O5Yc=;
+        b=D7YKdP8rl+nt4gFTR3CzXTWh6OdaCylypdvSgCgEDxAMET2GLFkRAbAnddljiBXaR5
+         eECWyN/+WJjM+giPhKDNM9y58FcOb9cuxBT3mMCx+ciRejdiqHM3EMRvFjxZo5Lr/Lky
+         sofZKZWlCkbha8ZRnN73dELOXevCyxSzC18leG8uK/tHpX4FwV8f80Rmi1xHQ8OacPkm
+         UoI+cms+ds8VzzOYLzHDAL6+n4RwGVgGv7X+rcKYUz6kXIDkge6Aamt02cU4xf8R+U44
+         +SQawXjA7xd45boo9Ffd68/2sJMnsn19vy11l60/itZ30Ej6NHhCqkd8dAcQNt+W2/TX
+         /I3g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706229240; x=1706834040;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=4PulaV0cbKx4FOxtybdvesZKMhhcYdEXyXz4FJ1O5Yc=;
+        b=cZbZOx/D2aexVfAi2SZBrDJwC/4Pv7fXMZowVXtABYCAA0K8VN/3NPc2wxyS+0OszI
+         W8zqMrtTOabMRJZLcP4kGih3eTugLXEL4kTXBnzhaOzRmcW+ujuOGG4Q5h+iPpBWG7iM
+         pvGaQK0H/2WEuJ8ZTwEK1WcSR/CuEeUu21EuLKtiszxLyj98gZarAyKtEBUvpCA74At0
+         pj8TMoWcOL1u/k0SGK14es0aFJmvZh9Z36ZpLl1hdt7Fb31eLtwSS6vLa5/jI3MEPf8b
+         uQfw3RYeUfN4p9VC6rg30sxk4nP4WLjpXNiNCUmfy1aIyCPyDOKrNRDfZnknxVchlsBI
+         F/7A==
+X-Gm-Message-State: AOJu0YyNRSky9Utt3k9c1WO2lA5HMvVDXCDryhC27RkBVZxvBaDxIfBV
+	vAg6q0nq3DcOO2IJeIQ3dFPxp6wwrQ2Fbi+4m+HpP4rlBRrfCsFl
+X-Google-Smtp-Source: AGHT+IGsZ90XesWFH+F/pb8nvUEBzeH8/0SplhG0HyJjVfwXbaLRgNNljfHmxWpq7afN0SRUOMs9mw==
+X-Received: by 2002:a17:902:efca:b0:1d4:cb8c:fafe with SMTP id ja10-20020a170902efca00b001d4cb8cfafemr384611plb.74.1706229239570;
+        Thu, 25 Jan 2024 16:33:59 -0800 (PST)
+Received: from localhost (dhcp-141-239-144-21.hawaiiantel.net. [141.239.144.21])
+        by smtp.gmail.com with ESMTPSA id h1-20020a170902eec100b001d785fc6ec7sm79412plb.177.2024.01.25.16.33.58
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 25 Jan 2024 16:33:59 -0800 (PST)
+Sender: Tejun Heo <htejun@gmail.com>
+Date: Thu, 25 Jan 2024 14:33:57 -1000
+From: Tejun Heo <tj@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev, Mike Snitzer <msnitzer@redhat.com>,
+	Ignat Korchagin <ignat@cloudflare.com>,
+	Damien Le Moal <damien.lemoal@wdc.com>,
+	Bob Liu <bob.liu@oracle.com>, Hou Tao <houtao1@huawei.com>,
+	Nathan Huckleberry <nhuck@google.com>,
+	Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH] softirq: fix memory corruption when freeing
+ tasklet_struct
+Message-ID: <ZbL99b6ywZUqG3YK@slm.duckdns.org>
+References: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com>
+ <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240124091421.1261579-1-yukuai3@huawei.com> <20240124091421.1261579-6-yukuai3@huawei.com>
- <CALTww291wiYYMWuqUdDf1t7cKkHFs9gGQSRw+iPhUCsNv-Y6yg@mail.gmail.com>
-In-Reply-To: <CALTww291wiYYMWuqUdDf1t7cKkHFs9gGQSRw+iPhUCsNv-Y6yg@mail.gmail.com>
-From: Song Liu <song@kernel.org>
-Date: Thu, 25 Jan 2024 16:14:18 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW4kauNB8jAsXYjRohCBMDvY15y0CzzWYqzGvNsqAJ59jQ@mail.gmail.com>
-Message-ID: <CAPhsuW4kauNB8jAsXYjRohCBMDvY15y0CzzWYqzGvNsqAJ59jQ@mail.gmail.com>
-Subject: Re: [PATCH v2 05/11] md: export helpers to stop sync_thread
-To: Xiao Ni <xni@redhat.com>
-Cc: Yu Kuai <yukuai3@huawei.com>, agk@redhat.com, snitzer@kernel.org, 
-	mpatocka@redhat.com, dm-devel@lists.linux.dev, jbrassow@f14.redhat.com, 
-	neilb@suse.de, heinzm@redhat.com, shli@fb.com, akpm@osdl.org, 
-	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
-	yukuai1@huaweicloud.com, yi.zhang@huawei.com, yangerkun@huawei.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
 
-Hi Xiao,
+Hello, Linus.
 
-On Thu, Jan 25, 2024 at 5:33=E2=80=AFAM Xiao Ni <xni@redhat.com> wrote:
->
-> Hi all
->
-> I build the kernel 6.7.0-rc8 with this patch set. The lvm2 regression
-> test result:
+On Thu, Jan 25, 2024 at 11:51:28AM -0800, Linus Torvalds wrote:
+...
+> So we could have a per-cpu 'atomic_wq' that things can be scheduled
+> on, and that runs from softirqs just like tasklets, and shares the
+> workqueue queueing infrastructure but doesn't use the workqueue
+> threads.
+> 
+> Yes, the traditional use of workqueues is to be able to sleep and do
+> things in process context, so that sounds a bit odd, but let's face
+> it, we
+> 
+>  (a) already have multiple classes of workqueues
+> 
+>  (b) avoiding deep - and possibly recursive - stack depths is another
+> reason people use workqueues
+> 
+>  (c) avoiding interrupt context is a real concern, even if you don't
+> want to sleep
+> 
+> and I really *really* would like to get rid of tasklets entirely.
+> 
+> They started as this very specific hardcoded softirq thing used by
+> some drivers, and then the notion was generalized.
+> 
+> And I think it was generalized badly, as shown by this example.
+> 
+> I have added Tejun to the cc, so that he can throw his hands up in
+> horror and say "Linus, you're crazy, your drug-fueled idea would be
+> horrid because of Xyz".
+> 
+> But *maybe* Tejun has been taking the same drugs I have, and goes
+> "yeah, that would fit well".
+> 
+> Tejun? Please tell me I'm not on some bad crack..
 
-I believe the patchset is built on top of upstream (6.8-rc1). There are
-quite some md and dm changes between 6.7-rc8 and 6.8-rc1. Could
-you please rerun the test on top of 6.8-rc1? Once we identify the right
-set of fixes, we will see which ones to back port to older kernels.
+That doesn't sound too crazy to me. I need to think more about how flush /
+cancel paths would look but hopefully it won't be too bad. I'll hack up
+something and see how things look.
 
-Thanks,
-Song
+Thanks.
 
-> ###       failed: [ndev-vanilla] shell/integrity.sh
-> ###       failed: [ndev-vanilla] shell/lvchange-partial-raid10.sh
-> ###       failed: [ndev-vanilla] shell/lvchange-raid-transient-failures.s=
-h
-> ###       failed: [ndev-vanilla] shell/lvchange-raid10.sh
-> ###       failed: [ndev-vanilla] shell/lvchange-rebuild-raid.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-cache-abort.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid-regionsize.sh
-> ###       failed: [ndev-vanilla]
-> shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid-reshape.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid-takeover-alloc-fail=
-ure.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid-takeover-thin.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid-takeover.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid0-striped.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid0_to_raid10.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid10.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-raid5_to_raid10.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
-> ###       failed: [ndev-vanilla] shell/lvconvert-striped-raid0.sh
-> ###       failed: [ndev-vanilla] shell/lvcreate-large-raid10.sh
-> ###       failed: [ndev-vanilla] shell/lvcreate-raid-nosync.sh
-> ###       failed: [ndev-vanilla] shell/lvcreate-raid10.sh
-> ###       failed: [ndev-vanilla] shell/lvdisplay-raid.sh
-> ###       failed: [ndev-vanilla] shell/lvextend-thin-raid.sh
-> ###       failed: [ndev-vanilla] shell/lvresize-fs-crypt.sh
-> ###       failed: [ndev-vanilla] shell/lvresize-raid.sh
-> ###       failed: [ndev-vanilla] shell/lvresize-raid10.sh
-> ###       failed: [ndev-vanilla] shell/pvck-dump.sh
-> ###       failed: [ndev-vanilla] shell/pvmove-raid-segtypes.sh
-> ###       failed: [ndev-vanilla] shell/select-report.sh
+-- 
+tejun
