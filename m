@@ -1,69 +1,73 @@
-Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.65])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f48.google.com (mail-ot1-f48.google.com [209.85.210.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ABDBA25115;
-	Fri, 26 Jan 2024 22:04:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=134.134.136.65
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78AB154FA7
+	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 23:43:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706306681; cv=none; b=iJxhkvn0oBCU9qOuvITUXDWtGENL37qj5pLQkmqxLio1Bz0p07FaWe4uQ3KUcq/91SWEGgdrNsDb0JHywtw80PNtT/yHG7AW579erZuosHqFSRgpMADSq0FmDLC1EuxPKTfCJXuwnu3ozcSv3T5yxzaI7NpPpnaMysYsFTUIKzQ=
+	t=1706312610; cv=none; b=YmaFnpRQ4BOM26uFCka/2mgfEpL5D8KQ4/RBU+tptL6tNmMTvVoZd1iUi7BddkKzWEwBlgr6Xnz2UgJAxUK4uWjITOVZS3TvQO+viGfR4vZsh6MqoXXMrZ6L9pJTWA+hLfLFBhefq8iE9MSooNQxd48cYtVJ4ClL2foRbw7vsOU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706306681; c=relaxed/simple;
-	bh=PgTmG/yzGVqUhuwJ1i6jbTUkm8ADJwrhKbzlIpQ+M9M=;
+	s=arc-20240116; t=1706312610; c=relaxed/simple;
+	bh=nuc/phhauttCRVpL7/vgiK5DAH5udMyjtR0Tpxu2Hbc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=kaDXUV7rD1hpbzaLvi4LjfxwPOtVdAli57OFvo2BjUa+PQ5WprwWxwWf5nZhnLarewwQueGuAnFgkPBcHW2sCl2SgqY1XQALAaDCJQNSfshv4pPcPTamv6xOe/WEz56HTLbTcpSJ66xYIC78+roU0d0qmzMqgTfNrSrn6YebMe0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=nPpU/QPk; arc=none smtp.client-ip=134.134.136.65
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=o/f6pd1BnnVuUv1BXtjnKpRfJzBfdDG9Fo+xg/gz0rKmLYva3aXnMrUtH6B5s1u2q6UhfEW2YrZPUoHjVlk1Xn0LubrNqJhdTaPSm5P6LXSQIxzT3uGZcUR+jkS6tUbrvH9K/YFFK9XV5dxDPpkbDhDSfIwZ57n2cBYaXQIwAkk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MYgqDRoe; arc=none smtp.client-ip=209.85.210.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="nPpU/QPk"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1706306679; x=1737842679;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=PgTmG/yzGVqUhuwJ1i6jbTUkm8ADJwrhKbzlIpQ+M9M=;
-  b=nPpU/QPkyxw/o5eiMsb3YXl6z8u0ciuOUMG0pQu9t3k5rGKg2A2/+4Er
-   VDdOyjGVRbfJZKSaiGGhSYlDsfRI1IM3THnmKdVLIEpEVeZq6F0vD16lN
-   KY8JxjApB1X5uew6BZc2GJOR1tqyYRZNinkgZHjlFydJrwpBgaYHc8Dgz
-   Fa9zwfp7eSfstOqhvGdRCDWjzBr9z1DIbkzrGGJpzVf/CADNbD+bSRIq/
-   7EGFo+MugUuTDMkCtrUXBaEoHW+wG7QgDXOiDdGiZWTlNfkxUzgrrigUJ
-   rNb+coVcUvxXaVlYjaX8/C3D7gHIRo/+msyFFQs2gXMQxoDj1iBcByIVj
-   w==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10964"; a="406317863"
-X-IronPort-AV: E=Sophos;i="6.05,216,1701158400"; 
-   d="scan'208";a="406317863"
-Received: from fmviesa005.fm.intel.com ([10.60.135.145])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 26 Jan 2024 14:04:38 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.05,216,1701158400"; 
-   d="scan'208";a="2716758"
-Received: from lkp-server01.sh.intel.com (HELO 370188f8dc87) ([10.239.97.150])
-  by fmviesa005.fm.intel.com with ESMTP; 26 Jan 2024 14:04:33 -0800
-Received: from kbuild by 370188f8dc87 with local (Exim 4.96)
-	(envelope-from <lkp@intel.com>)
-	id 1rTUJL-0001NK-01;
-	Fri, 26 Jan 2024 22:04:31 +0000
-Date: Sat, 27 Jan 2024 06:03:58 +0800
-From: kernel test robot <lkp@intel.com>
-To: Johannes Thumshirn <johannes.thumshirn@wdc.com>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Naohiro Aota <naohiro.aota@wdc.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	Chris Mason <chris.mason@fusionio.com>,
-	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
-	Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>,
-	Chao Yu <chao@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
-	Chaitanya Kulkarni <kch@nvidia.com>
-Cc: llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev,
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
-	linux-block@vger.kernel.org, linux-nvme@lists.infradead.org,
-	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
-	"Matthew Wilcox (Oracle)" <willy@infradead.org>
-Subject: Re: [PATCH 5/5] block: remove gfp_flags from blkdev_zone_mgmt
-Message-ID: <202401270524.3SWUUYR8-lkp@intel.com>
-References: <20240123-zonefs_nofs-v1-5-cc0b0308ef25@wdc.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MYgqDRoe"
+Received: by mail-ot1-f48.google.com with SMTP id 46e09a7af769-6e114e247a2so216452a34.0
+        for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 15:43:28 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1706312607; x=1706917407; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=DpNMuuQiLgXnFWjnXaRz9wPEVYLhO4LWP1QktcM6GYc=;
+        b=MYgqDRoeuhrE+JCqymfp/dKQaJ8d5gJiTlQgobWFEI4FZICGsd84oFxmVjC6NbTJnV
+         NB5x0gbcq+I216GRBQEiqxMnBRi4rxue5C9zPiPK4jB0vRp4ugitHxOKvRGmpTviys+a
+         S3ipbebOgfLXgREQ0d2amC68lkjLxMt2ddhvgMvaKZ3nZ8Nsxb6Zu/yPlsjUHDj5pm3J
+         jneYqcB/Kjtok9Nr/WeL1U48TPsNyrxHCPn75hAy0REf2KS6MUYaAyMH+IYo8EEIi5/F
+         VwnSvXMtokLuvY9lyJcjSNsiW+OQ3u+kmmQxhT8LaSSo4mGdZ5RCHO1Raovc7tDePQuS
+         7BOg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706312607; x=1706917407;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=DpNMuuQiLgXnFWjnXaRz9wPEVYLhO4LWP1QktcM6GYc=;
+        b=sYiBegoq0/V582c5zpbeZ9rauRkz53hiMEIGr8asSjIkgvwo90cLiMZ1vjmF0nOFfV
+         jcBnSvO74mkJqNdT+joXrgjiVMb7kim+LgJ627Pz/kwZZQbgXhh1el9+Tl80GL+XNclS
+         sfpPh8hj8mj8/smEO0bprJc0V0WE9yNdSLLLlRiNIJPlzwB8eORtAygJpFTsb+4bX5Pw
+         w8pARmH0vR0du2+t/Rdv4jx/KuuG0RMvMRy10AUnlTtXPHJ7tOyhdfxrKMEv5P0VLKmh
+         6AlwUAG4NXKHLm/TRIz8HC+RGdCp4lGybcOq7fOO688l7buoarplHUNbicdCi3XuiLBF
+         x3Tg==
+X-Gm-Message-State: AOJu0Yz2cA18qmjTn2PjKNfarESfv2XlPuc/UZ3pHKL5IYX7qEs8VLWd
+	ONgy8+sPFZBEblQ56Fe2i/iBYoKsWXgk3t/3nXjTz0NPG3drdU4A
+X-Google-Smtp-Source: AGHT+IEEdZrBZzv+yhr6n8FCYlnGG0Z7cokwJtSUZzjjm+WDVpHOLxve2CcdSdvjdazVl0PDCLJ2ow==
+X-Received: by 2002:a05:6359:4114:b0:177:2e7:cd54 with SMTP id kh20-20020a056359411400b0017702e7cd54mr80323rwc.32.1706312607018;
+        Fri, 26 Jan 2024 15:43:27 -0800 (PST)
+Received: from localhost (dhcp-141-239-144-21.hawaiiantel.net. [141.239.144.21])
+        by smtp.gmail.com with ESMTPSA id se8-20020a17090b518800b0028d9fc97c29sm1726255pjb.14.2024.01.26.15.43.26
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 26 Jan 2024 15:43:26 -0800 (PST)
+Sender: Tejun Heo <htejun@gmail.com>
+Date: Fri, 26 Jan 2024 13:43:25 -1000
+From: Tejun Heo <tj@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev, Mike Snitzer <msnitzer@redhat.com>,
+	Ignat Korchagin <ignat@cloudflare.com>,
+	Damien Le Moal <damien.lemoal@wdc.com>,
+	Bob Liu <bob.liu@oracle.com>, Hou Tao <houtao1@huawei.com>,
+	Nathan Huckleberry <nhuck@google.com>,
+	Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH] softirq: fix memory corruption when freeing
+ tasklet_struct
+Message-ID: <ZbRDnSyiSE93puQL@slm.duckdns.org>
+References: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com>
+ <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -72,146 +76,556 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240123-zonefs_nofs-v1-5-cc0b0308ef25@wdc.com>
+In-Reply-To: <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
 
-Hi Johannes,
+Hello,
 
-kernel test robot noticed the following build errors:
+The following is a draft patch which implements atomic workqueues and
+convert dm-crypt to use it instead of tasklet. It's an early draft and very
+lightly tested but seems to work more or less. It's on top of wq/for6.9 + a
+pending patchset. The following git branch can be used for testing.
 
-[auto build test ERROR on 7ed2632ec7d72e926b9e8bcc9ad1bb0cd37274bf]
+  git://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git wq-atomic-draft
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Johannes-Thumshirn/zonefs-pass-GFP_KERNEL-to-blkdev_zone_mgmt-call/20240123-174911
-base:   7ed2632ec7d72e926b9e8bcc9ad1bb0cd37274bf
-patch link:    https://lore.kernel.org/r/20240123-zonefs_nofs-v1-5-cc0b0308ef25%40wdc.com
-patch subject: [PATCH 5/5] block: remove gfp_flags from blkdev_zone_mgmt
-config: hexagon-allmodconfig (https://download.01.org/0day-ci/archive/20240127/202401270524.3SWUUYR8-lkp@intel.com/config)
-compiler: clang version 18.0.0git (https://github.com/llvm/llvm-project a31a60074717fc40887cfe132b77eec93bedd307)
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20240127/202401270524.3SWUUYR8-lkp@intel.com/reproduce)
+I'll go over it to make sure all the pieces work. While it adds some
+complications, it doesn't seem too bad and conversion from tasklet should be
+straightforward too.
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202401270524.3SWUUYR8-lkp@intel.com/
+- It hooks into tasklet[_hi] for now but if we get to update all of tasklet
+  users, we can just repurpose the tasklet softirq slots directly.
 
-All errors (new ones prefixed by >>):
+- I thought about allowing busy-waits for flushes and cancels but it didn't
+  seem necessary. Keeping them blocking has the benefit of avoiding possible
+  nasty deadlocks. We can revisit if there's need.
 
-   In file included from drivers/md/dm-zoned-metadata.c:8:
-   In file included from drivers/md/dm-zoned.h:12:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:328:
-   include/asm-generic/io.h:547:31: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     547 |         val = __raw_readb(PCI_IOBASE + addr);
-         |                           ~~~~~~~~~~ ^
-   include/asm-generic/io.h:560:61: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     560 |         val = __le16_to_cpu((__le16 __force)__raw_readw(PCI_IOBASE + addr));
-         |                                                         ~~~~~~~~~~ ^
-   include/uapi/linux/byteorder/little_endian.h:37:51: note: expanded from macro '__le16_to_cpu'
-      37 | #define __le16_to_cpu(x) ((__force __u16)(__le16)(x))
-         |                                                   ^
-   In file included from drivers/md/dm-zoned-metadata.c:8:
-   In file included from drivers/md/dm-zoned.h:12:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:328:
-   include/asm-generic/io.h:573:61: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     573 |         val = __le32_to_cpu((__le32 __force)__raw_readl(PCI_IOBASE + addr));
-         |                                                         ~~~~~~~~~~ ^
-   include/uapi/linux/byteorder/little_endian.h:35:51: note: expanded from macro '__le32_to_cpu'
-      35 | #define __le32_to_cpu(x) ((__force __u32)(__le32)(x))
-         |                                                   ^
-   In file included from drivers/md/dm-zoned-metadata.c:8:
-   In file included from drivers/md/dm-zoned.h:12:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:328:
-   include/asm-generic/io.h:584:33: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     584 |         __raw_writeb(value, PCI_IOBASE + addr);
-         |                             ~~~~~~~~~~ ^
-   include/asm-generic/io.h:594:59: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     594 |         __raw_writew((u16 __force)cpu_to_le16(value), PCI_IOBASE + addr);
-         |                                                       ~~~~~~~~~~ ^
-   include/asm-generic/io.h:604:59: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     604 |         __raw_writel((u32 __force)cpu_to_le32(value), PCI_IOBASE + addr);
-         |                                                       ~~~~~~~~~~ ^
->> drivers/md/dm-zoned-metadata.c:1661:34: error: too many arguments to function call, expected 4, have 5
-    1659 |                 ret = blkdev_zone_mgmt(dev->bdev, REQ_OP_ZONE_RESET,
-         |                       ~~~~~~~~~~~~~~~~
-    1660 |                                        dmz_start_sect(zmd, zone),
-    1661 |                                        zmd->zone_nr_sectors, GFP_KERNEL);
-         |                                                              ^~~~~~~~~~
-   include/linux/gfp_types.h:327:20: note: expanded from macro 'GFP_KERNEL'
-     327 | #define GFP_KERNEL      (__GFP_RECLAIM | __GFP_IO | __GFP_FS)
-         |                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   include/linux/blkdev.h:327:5: note: 'blkdev_zone_mgmt' declared here
-     327 | int blkdev_zone_mgmt(struct block_device *bdev, enum req_op op,
-         |     ^                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     328 |                 sector_t sectors, sector_t nr_sectors);
-         |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   6 warnings and 1 error generated.
+- Compared to tasklet, each work item goes through a bit more management
+  code because I wanted to keep the code as unified as possible to regular
+  threaded workqueues. That said, it's not a huge amount and my bet is that
+  the difference is unlikely to be noticeable.
 
+Thanks.
 
-vim +1661 drivers/md/dm-zoned-metadata.c
+From 8224d2602ef454ca164f4added765dc4dddd5e16 Mon Sep 17 00:00:00 2001
+From: Tejun Heo <tj@kernel.org>
+Date: Fri, 26 Jan 2024 13:21:42 -1000
+Subject: [PATCH] workqueue: DRAFT: Implement atomic workqueue and convert
+ dmcrypt to use it
 
-3b1a94c88b798d Damien Le Moal     2017-06-07  1639  
-3b1a94c88b798d Damien Le Moal     2017-06-07  1640  /*
-3b1a94c88b798d Damien Le Moal     2017-06-07  1641   * Reset a zone write pointer.
-3b1a94c88b798d Damien Le Moal     2017-06-07  1642   */
-3b1a94c88b798d Damien Le Moal     2017-06-07  1643  static int dmz_reset_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
-3b1a94c88b798d Damien Le Moal     2017-06-07  1644  {
-3b1a94c88b798d Damien Le Moal     2017-06-07  1645  	int ret;
-3b1a94c88b798d Damien Le Moal     2017-06-07  1646  
-3b1a94c88b798d Damien Le Moal     2017-06-07  1647  	/*
-3b1a94c88b798d Damien Le Moal     2017-06-07  1648  	 * Ignore offline zones, read only zones,
-3b1a94c88b798d Damien Le Moal     2017-06-07  1649  	 * and conventional zones.
-3b1a94c88b798d Damien Le Moal     2017-06-07  1650  	 */
-3b1a94c88b798d Damien Le Moal     2017-06-07  1651  	if (dmz_is_offline(zone) ||
-3b1a94c88b798d Damien Le Moal     2017-06-07  1652  	    dmz_is_readonly(zone) ||
-3b1a94c88b798d Damien Le Moal     2017-06-07  1653  	    dmz_is_rnd(zone))
-3b1a94c88b798d Damien Le Moal     2017-06-07  1654  		return 0;
-3b1a94c88b798d Damien Le Moal     2017-06-07  1655  
-3b1a94c88b798d Damien Le Moal     2017-06-07  1656  	if (!dmz_is_empty(zone) || dmz_seq_write_err(zone)) {
-8f22272af7a727 Hannes Reinecke    2020-06-02  1657  		struct dmz_dev *dev = zone->dev;
-3b1a94c88b798d Damien Le Moal     2017-06-07  1658  
-6c1b1da58f8c7a Ajay Joshi         2019-10-27  1659  		ret = blkdev_zone_mgmt(dev->bdev, REQ_OP_ZONE_RESET,
-3b1a94c88b798d Damien Le Moal     2017-06-07  1660  				       dmz_start_sect(zmd, zone),
-c4d4977392621f Johannes Thumshirn 2024-01-23 @1661  				       zmd->zone_nr_sectors, GFP_KERNEL);
-3b1a94c88b798d Damien Le Moal     2017-06-07  1662  		if (ret) {
-3b1a94c88b798d Damien Le Moal     2017-06-07  1663  			dmz_dev_err(dev, "Reset zone %u failed %d",
-b71228739851a9 Hannes Reinecke    2020-05-11  1664  				    zone->id, ret);
-3b1a94c88b798d Damien Le Moal     2017-06-07  1665  			return ret;
-3b1a94c88b798d Damien Le Moal     2017-06-07  1666  		}
-3b1a94c88b798d Damien Le Moal     2017-06-07  1667  	}
-3b1a94c88b798d Damien Le Moal     2017-06-07  1668  
-3b1a94c88b798d Damien Le Moal     2017-06-07  1669  	/* Clear write error bit and rewind write pointer position */
-3b1a94c88b798d Damien Le Moal     2017-06-07  1670  	clear_bit(DMZ_SEQ_WRITE_ERR, &zone->flags);
-3b1a94c88b798d Damien Le Moal     2017-06-07  1671  	zone->wp_block = 0;
-3b1a94c88b798d Damien Le Moal     2017-06-07  1672  
-3b1a94c88b798d Damien Le Moal     2017-06-07  1673  	return 0;
-3b1a94c88b798d Damien Le Moal     2017-06-07  1674  }
-3b1a94c88b798d Damien Le Moal     2017-06-07  1675  
+---
+ drivers/md/dm-crypt.c       |  36 +-----
+ include/linux/workqueue.h   |   6 +
+ kernel/workqueue.c          | 234 +++++++++++++++++++++++++++---------
+ kernel/workqueue_internal.h |   3 +
+ 4 files changed, 186 insertions(+), 93 deletions(-)
 
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 855b482cbff1..d375285db202 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -73,11 +73,8 @@ struct dm_crypt_io {
+ 	struct bio *base_bio;
+ 	u8 *integrity_metadata;
+ 	bool integrity_metadata_from_pool:1;
+-	bool in_tasklet:1;
+ 
+ 	struct work_struct work;
+-	struct tasklet_struct tasklet;
+-
+ 	struct convert_context ctx;
+ 
+ 	atomic_t io_pending;
+@@ -1762,7 +1759,6 @@ static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
+ 	io->ctx.r.req = NULL;
+ 	io->integrity_metadata = NULL;
+ 	io->integrity_metadata_from_pool = false;
+-	io->in_tasklet = false;
+ 	atomic_set(&io->io_pending, 0);
+ }
+ 
+@@ -1771,13 +1767,6 @@ static void crypt_inc_pending(struct dm_crypt_io *io)
+ 	atomic_inc(&io->io_pending);
+ }
+ 
+-static void kcryptd_io_bio_endio(struct work_struct *work)
+-{
+-	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
+-
+-	bio_endio(io->base_bio);
+-}
+-
+ /*
+  * One of the bios was finished. Check for completion of
+  * the whole request and correctly clean up the buffer.
+@@ -1800,21 +1789,6 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+ 		kfree(io->integrity_metadata);
+ 
+ 	base_bio->bi_status = error;
+-
+-	/*
+-	 * If we are running this function from our tasklet,
+-	 * we can't call bio_endio() here, because it will call
+-	 * clone_endio() from dm.c, which in turn will
+-	 * free the current struct dm_crypt_io structure with
+-	 * our tasklet. In this case we need to delay bio_endio()
+-	 * execution to after the tasklet is done and dequeued.
+-	 */
+-	if (io->in_tasklet) {
+-		INIT_WORK(&io->work, kcryptd_io_bio_endio);
+-		queue_work(cc->io_queue, &io->work);
+-		return;
+-	}
+-
+ 	bio_endio(base_bio);
+ }
+ 
+@@ -2246,11 +2220,6 @@ static void kcryptd_crypt(struct work_struct *work)
+ 		kcryptd_crypt_write_convert(io);
+ }
+ 
+-static void kcryptd_crypt_tasklet(unsigned long work)
+-{
+-	kcryptd_crypt((struct work_struct *)work);
+-}
+-
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+ {
+ 	struct crypt_config *cc = io->cc;
+@@ -2263,9 +2232,8 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+ 		 * it is being executed with irqs disabled.
+ 		 */
+ 		if (in_hardirq() || irqs_disabled()) {
+-			io->in_tasklet = true;
+-			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
+-			tasklet_schedule(&io->tasklet);
++			INIT_WORK(&io->work, kcryptd_crypt);
++			queue_work(system_atomic_wq, &io->work);
+ 			return;
+ 		}
+ 
+diff --git a/include/linux/workqueue.h b/include/linux/workqueue.h
+index 232baea90a1d..1e4938b5b176 100644
+--- a/include/linux/workqueue.h
++++ b/include/linux/workqueue.h
+@@ -353,6 +353,7 @@ static inline unsigned int work_static(struct work_struct *work) { return 0; }
+  * Documentation/core-api/workqueue.rst.
+  */
+ enum wq_flags {
++	WQ_ATOMIC		= 1 << 0, /* execute in softirq context */
+ 	WQ_UNBOUND		= 1 << 1, /* not bound to any cpu */
+ 	WQ_FREEZABLE		= 1 << 2, /* freeze during suspend */
+ 	WQ_MEM_RECLAIM		= 1 << 3, /* may be used for memory reclaim */
+@@ -392,6 +393,9 @@ enum wq_flags {
+ 	__WQ_ORDERED		= 1 << 17, /* internal: workqueue is ordered */
+ 	__WQ_LEGACY		= 1 << 18, /* internal: create*_workqueue() */
+ 	__WQ_ORDERED_EXPLICIT	= 1 << 19, /* internal: alloc_ordered_workqueue() */
++
++	/* atomic wq only allows the following flags */
++	__WQ_ATOMIC_ALLOWS	= WQ_ATOMIC | WQ_HIGHPRI,
+ };
+ 
+ enum wq_consts {
+@@ -442,6 +446,8 @@ extern struct workqueue_struct *system_unbound_wq;
+ extern struct workqueue_struct *system_freezable_wq;
+ extern struct workqueue_struct *system_power_efficient_wq;
+ extern struct workqueue_struct *system_freezable_power_efficient_wq;
++extern struct workqueue_struct *system_atomic_wq;
++extern struct workqueue_struct *system_atomic_highpri_wq;
+ 
+ /**
+  * alloc_workqueue - allocate a workqueue
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 23740c9ed57a..2a8f21494676 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -73,7 +73,8 @@ enum worker_pool_flags {
+ 	 * wq_pool_attach_mutex to avoid changing binding state while
+ 	 * worker_attach_to_pool() is in progress.
+ 	 */
+-	POOL_MANAGER_ACTIVE	= 1 << 0,	/* being managed */
++	POOL_ATOMIC		= 1 << 0,	/* is an atomic pool */
++	POOL_MANAGER_ACTIVE	= 1 << 1,	/* being managed */
+ 	POOL_DISASSOCIATED	= 1 << 2,	/* cpu can't serve workers */
+ };
+ 
+@@ -115,6 +116,14 @@ enum wq_internal_consts {
+ 	WQ_NAME_LEN		= 32,
+ };
+ 
++/*
++ * We don't want to trap softirq for too long. See MAX_SOFTIRQ_TIME and
++ * MAX_SOFTIRQ_RESTART in kernel/softirq.c. These are macros because
++ * msecs_to_jiffies() can't be an initializer.
++ */
++#define ATOMIC_WORKER_JIFFIES	msecs_to_jiffies(2)
++#define ATOMIC_WORKER_RESTARTS	10
++
+ /*
+  * Structure fields follow one of the following exclusion rules.
+  *
+@@ -441,8 +450,13 @@ static bool wq_debug_force_rr_cpu = false;
+ #endif
+ module_param_named(debug_force_rr_cpu, wq_debug_force_rr_cpu, bool, 0644);
+ 
++/* the atomic worker pools */
++static DEFINE_PER_CPU_SHARED_ALIGNED(struct worker_pool [NR_STD_WORKER_POOLS],
++				     atomic_worker_pools);
++
+ /* the per-cpu worker pools */
+-static DEFINE_PER_CPU_SHARED_ALIGNED(struct worker_pool [NR_STD_WORKER_POOLS], cpu_worker_pools);
++static DEFINE_PER_CPU_SHARED_ALIGNED(struct worker_pool [NR_STD_WORKER_POOLS],
++				     cpu_worker_pools);
+ 
+ static DEFINE_IDR(worker_pool_idr);	/* PR: idr of all pools */
+ 
+@@ -476,8 +490,13 @@ struct workqueue_struct *system_power_efficient_wq __ro_after_init;
+ EXPORT_SYMBOL_GPL(system_power_efficient_wq);
+ struct workqueue_struct *system_freezable_power_efficient_wq __ro_after_init;
+ EXPORT_SYMBOL_GPL(system_freezable_power_efficient_wq);
++struct workqueue_struct *system_atomic_wq;
++EXPORT_SYMBOL_GPL(system_atomic_wq);
++struct workqueue_struct *system_atomic_highpri_wq;
++EXPORT_SYMBOL_GPL(system_atomic_highpri_wq);
+ 
+ static int worker_thread(void *__worker);
++static void atomic_worker_taskletfn(struct tasklet_struct *tasklet);
+ static void workqueue_sysfs_unregister(struct workqueue_struct *wq);
+ static void show_pwq(struct pool_workqueue *pwq);
+ static void show_one_worker_pool(struct worker_pool *pool);
+@@ -496,6 +515,11 @@ static void show_one_worker_pool(struct worker_pool *pool);
+ 			 !lockdep_is_held(&wq_pool_mutex),		\
+ 			 "RCU, wq->mutex or wq_pool_mutex should be held")
+ 
++#define for_each_atomic_worker_pool(pool, cpu)				\
++	for ((pool) = &per_cpu(atomic_worker_pools, cpu)[0];		\
++	     (pool) < &per_cpu(atomic_worker_pools, cpu)[NR_STD_WORKER_POOLS]; \
++	     (pool)++)
++
+ #define for_each_cpu_worker_pool(pool, cpu)				\
+ 	for ((pool) = &per_cpu(cpu_worker_pools, cpu)[0];		\
+ 	     (pool) < &per_cpu(cpu_worker_pools, cpu)[NR_STD_WORKER_POOLS]; \
+@@ -1184,6 +1208,14 @@ static bool kick_pool(struct worker_pool *pool)
+ 	if (!need_more_worker(pool) || !worker)
+ 		return false;
+ 
++	if (pool->flags & POOL_ATOMIC) {
++		if (pool->attrs->nice == HIGHPRI_NICE_LEVEL)
++			tasklet_hi_schedule(&worker->atomic_tasklet);
++		else
++			tasklet_schedule(&worker->atomic_tasklet);
++		return true;
++	}
++
+ 	p = worker->task;
+ 
+ #ifdef CONFIG_SMP
+@@ -1663,8 +1695,15 @@ static bool pwq_tryinc_nr_active(struct pool_workqueue *pwq, bool fill)
+ 	lockdep_assert_held(&pool->lock);
+ 
+ 	if (!nna) {
+-		/* per-cpu workqueue, pwq->nr_active is sufficient */
+-		obtained = pwq->nr_active < READ_ONCE(wq->max_active);
++		/*
++		 * An atomic workqueue always have a single worker per-cpu and
++		 * doesn't impose additional max_active limit. For a per-cpu
++		 * workqueue, checking pwq->nr_active is sufficient.
++		 */
++		if (wq->flags & WQ_ATOMIC)
++			obtained = true;
++		else
++			obtained = pwq->nr_active < READ_ONCE(wq->max_active);
+ 		goto out;
+ 	}
+ 
+@@ -2591,27 +2630,31 @@ static struct worker *create_worker(struct worker_pool *pool)
+ 
+ 	worker->id = id;
+ 
+-	if (pool->cpu >= 0)
+-		snprintf(id_buf, sizeof(id_buf), "%d:%d%s", pool->cpu, id,
+-			 pool->attrs->nice < 0  ? "H" : "");
+-	else
+-		snprintf(id_buf, sizeof(id_buf), "u%d:%d", pool->id, id);
+-
+-	worker->task = kthread_create_on_node(worker_thread, worker, pool->node,
+-					      "kworker/%s", id_buf);
+-	if (IS_ERR(worker->task)) {
+-		if (PTR_ERR(worker->task) == -EINTR) {
+-			pr_err("workqueue: Interrupted when creating a worker thread \"kworker/%s\"\n",
+-			       id_buf);
+-		} else {
+-			pr_err_once("workqueue: Failed to create a worker thread: %pe",
+-				    worker->task);
++	if (pool->flags & POOL_ATOMIC) {
++		tasklet_setup(&worker->atomic_tasklet, atomic_worker_taskletfn);
++	} else {
++		if (pool->cpu >= 0)
++			snprintf(id_buf, sizeof(id_buf), "%d:%d%s", pool->cpu, id,
++				 pool->attrs->nice < 0  ? "H" : "");
++		else
++			snprintf(id_buf, sizeof(id_buf), "u%d:%d", pool->id, id);
++
++		worker->task = kthread_create_on_node(worker_thread, worker,
++					pool->node, "kworker/%s", id_buf);
++		if (IS_ERR(worker->task)) {
++			if (PTR_ERR(worker->task) == -EINTR) {
++				pr_err("workqueue: Interrupted when creating a worker thread \"kworker/%s\"\n",
++				       id_buf);
++			} else {
++				pr_err_once("workqueue: Failed to create a worker thread: %pe",
++					    worker->task);
++			}
++			goto fail;
+ 		}
+-		goto fail;
+-	}
+ 
+-	set_user_nice(worker->task, pool->attrs->nice);
+-	kthread_bind_mask(worker->task, pool_allowed_cpus(pool));
++		set_user_nice(worker->task, pool->attrs->nice);
++		kthread_bind_mask(worker->task, pool_allowed_cpus(pool));
++	}
+ 
+ 	/* successful, attach the worker to the pool */
+ 	worker_attach_to_pool(worker, pool);
+@@ -2627,7 +2670,8 @@ static struct worker *create_worker(struct worker_pool *pool)
+ 	 * check if not woken up soon. As kick_pool() is noop if @pool is empty,
+ 	 * wake it up explicitly.
+ 	 */
+-	wake_up_process(worker->task);
++	if (worker->task)
++		wake_up_process(worker->task);
+ 
+ 	raw_spin_unlock_irq(&pool->lock);
+ 
+@@ -3043,25 +3087,35 @@ __acquires(&pool->lock)
+ 	lock_map_release(&lockdep_map);
+ 	lock_map_release(&pwq->wq->lockdep_map);
+ 
+-	if (unlikely(in_atomic() || lockdep_depth(current) > 0 ||
+-		     rcu_preempt_depth() > 0)) {
+-		pr_err("BUG: workqueue leaked lock or atomic: %s/0x%08x/%d/%d\n"
+-		       "     last function: %ps\n",
+-		       current->comm, preempt_count(), rcu_preempt_depth(),
+-		       task_pid_nr(current), worker->current_func);
+-		debug_show_held_locks(current);
+-		dump_stack();
+-	}
++	if (worker->task) {
++		if (unlikely(in_atomic() || lockdep_depth(current) > 0 ||
++			     rcu_preempt_depth() > 0)) {
++			pr_err("BUG: workqueue leaked lock or atomic: %s/0x%08x/%d/%d\n"
++			       "     last function: %ps\n",
++			       current->comm, preempt_count(),
++			       rcu_preempt_depth(), task_pid_nr(current),
++			       worker->current_func);
++			debug_show_held_locks(current);
++			dump_stack();
++		}
+ 
+-	/*
+-	 * The following prevents a kworker from hogging CPU on !PREEMPTION
+-	 * kernels, where a requeueing work item waiting for something to
+-	 * happen could deadlock with stop_machine as such work item could
+-	 * indefinitely requeue itself while all other CPUs are trapped in
+-	 * stop_machine. At the same time, report a quiescent RCU state so
+-	 * the same condition doesn't freeze RCU.
+-	 */
+-	cond_resched();
++		/*
++		 * The following prevents a kworker from hogging CPU on
++		 * !PREEMPTION kernels, where a requeueing work item waiting for
++		 * something to happen could deadlock with stop_machine as such
++		 * work item could indefinitely requeue itself while all other
++		 * CPUs are trapped in stop_machine. At the same time, report a
++		 * quiescent RCU state so the same condition doesn't freeze RCU.
++		 */
++		if (worker->task)
++			cond_resched();
++	} else {
++		if (unlikely(lockdep_depth(current) > 0)) {
++			pr_err("BUG: atomic workqueue leaked lock: last function: %ps\n",
++			       worker->current_func);
++			debug_show_held_locks(current);
++		}
++	}
+ 
+ 	raw_spin_lock_irq(&pool->lock);
+ 
+@@ -3344,6 +3398,44 @@ static int rescuer_thread(void *__rescuer)
+ 	goto repeat;
+ }
+ 
++void atomic_worker_taskletfn(struct tasklet_struct *tasklet)
++{
++	struct worker *worker =
++		container_of(tasklet, struct worker, atomic_tasklet);
++	struct worker_pool *pool = worker->pool;
++	int nr_restarts = ATOMIC_WORKER_RESTARTS;
++	unsigned long end = jiffies + ATOMIC_WORKER_JIFFIES;
++
++	raw_spin_lock_irq(&pool->lock);
++	worker_leave_idle(worker);
++
++	/*
++	 * This function follows the structure of worker_thread(). See there for
++	 * explanations on each step.
++	 */
++	if (need_more_worker(pool))
++		goto done;
++
++	WARN_ON_ONCE(!list_empty(&worker->scheduled));
++	worker_clr_flags(worker, WORKER_PREP | WORKER_REBOUND);
++
++	do {
++		struct work_struct *work =
++			list_first_entry(&pool->worklist,
++					 struct work_struct, entry);
++
++		if (assign_work(work, worker, NULL))
++			process_scheduled_works(worker);
++	} while (--nr_restarts && time_before(jiffies, end) &&
++		 keep_working(pool));
++
++	worker_set_flags(worker, WORKER_PREP);
++done:
++	worker_enter_idle(worker);
++	kick_pool(pool);
++	raw_spin_unlock_irq(&pool->lock);
++}
++
+ /**
+  * check_flush_dependency - check for flush dependency sanity
+  * @target_wq: workqueue being flushed
+@@ -5149,6 +5241,13 @@ struct workqueue_struct *alloc_workqueue(const char *fmt,
+ 	size_t wq_size;
+ 	int name_len;
+ 
++	if (flags & WQ_ATOMIC) {
++		if (WARN_ON_ONCE(flags & ~__WQ_ATOMIC_ALLOWS))
++			return NULL;
++		if (WARN_ON_ONCE(max_active))
++			return NULL;
++	}
++
+ 	/*
+ 	 * Unbound && max_active == 1 used to imply ordered, which is no longer
+ 	 * the case on many machines due to per-pod pools. While
+@@ -7094,6 +7193,22 @@ static void __init restrict_unbound_cpumask(const char *name, const struct cpuma
+ 	cpumask_and(wq_unbound_cpumask, wq_unbound_cpumask, mask);
+ }
+ 
++static void __init init_cpu_worker_pool(struct worker_pool *pool, int cpu, int nice)
++{
++	BUG_ON(init_worker_pool(pool));
++	pool->cpu = cpu;
++	cpumask_copy(pool->attrs->cpumask, cpumask_of(cpu));
++	cpumask_copy(pool->attrs->__pod_cpumask, cpumask_of(cpu));
++	pool->attrs->nice = nice;
++	pool->attrs->affn_strict = true;
++	pool->node = cpu_to_node(cpu);
++
++	/* alloc pool ID */
++	mutex_lock(&wq_pool_mutex);
++	BUG_ON(worker_pool_assign_id(pool));
++	mutex_unlock(&wq_pool_mutex);
++}
++
+ /**
+  * workqueue_init_early - early init for workqueue subsystem
+  *
+@@ -7149,25 +7264,19 @@ void __init workqueue_init_early(void)
+ 	pt->pod_node[0] = NUMA_NO_NODE;
+ 	pt->cpu_pod[0] = 0;
+ 
+-	/* initialize CPU pools */
++	/* initialize atomic and CPU pools */
+ 	for_each_possible_cpu(cpu) {
+ 		struct worker_pool *pool;
+ 
+ 		i = 0;
+-		for_each_cpu_worker_pool(pool, cpu) {
+-			BUG_ON(init_worker_pool(pool));
+-			pool->cpu = cpu;
+-			cpumask_copy(pool->attrs->cpumask, cpumask_of(cpu));
+-			cpumask_copy(pool->attrs->__pod_cpumask, cpumask_of(cpu));
+-			pool->attrs->nice = std_nice[i++];
+-			pool->attrs->affn_strict = true;
+-			pool->node = cpu_to_node(cpu);
+-
+-			/* alloc pool ID */
+-			mutex_lock(&wq_pool_mutex);
+-			BUG_ON(worker_pool_assign_id(pool));
+-			mutex_unlock(&wq_pool_mutex);
++		for_each_atomic_worker_pool(pool, cpu) {
++			init_cpu_worker_pool(pool, cpu, std_nice[i++]);
++			pool->flags |= POOL_ATOMIC;
+ 		}
++
++		i = 0;
++		for_each_cpu_worker_pool(pool, cpu)
++			init_cpu_worker_pool(pool, cpu, std_nice[i++]);
+ 	}
+ 
+ 	/* create default unbound and ordered wq attrs */
+@@ -7200,10 +7309,14 @@ void __init workqueue_init_early(void)
+ 	system_freezable_power_efficient_wq = alloc_workqueue("events_freezable_pwr_efficient",
+ 					      WQ_FREEZABLE | WQ_POWER_EFFICIENT,
+ 					      0);
++	system_atomic_wq = alloc_workqueue("system_atomic_wq", WQ_ATOMIC, 0);
++	system_atomic_highpri_wq = alloc_workqueue("system_atomic_highpri_wq",
++						   WQ_ATOMIC | WQ_HIGHPRI, 0);
+ 	BUG_ON(!system_wq || !system_highpri_wq || !system_long_wq ||
+ 	       !system_unbound_wq || !system_freezable_wq ||
+ 	       !system_power_efficient_wq ||
+-	       !system_freezable_power_efficient_wq);
++	       !system_freezable_power_efficient_wq ||
++	       !system_atomic_wq || !system_atomic_highpri_wq);
+ }
+ 
+ static void __init wq_cpu_intensive_thresh_init(void)
+@@ -7269,9 +7382,10 @@ void __init workqueue_init(void)
+ 	 * up. Also, create a rescuer for workqueues that requested it.
+ 	 */
+ 	for_each_possible_cpu(cpu) {
+-		for_each_cpu_worker_pool(pool, cpu) {
++		for_each_atomic_worker_pool(pool, cpu)
++			pool->node = cpu_to_node(cpu);
++		for_each_cpu_worker_pool(pool, cpu)
+ 			pool->node = cpu_to_node(cpu);
+-		}
+ 	}
+ 
+ 	list_for_each_entry(wq, &workqueues, list) {
+@@ -7284,6 +7398,8 @@ void __init workqueue_init(void)
+ 
+ 	/* create the initial workers */
+ 	for_each_online_cpu(cpu) {
++		for_each_atomic_worker_pool(pool, cpu)
++			BUG_ON(!create_worker(pool));
+ 		for_each_cpu_worker_pool(pool, cpu) {
+ 			pool->flags &= ~POOL_DISASSOCIATED;
+ 			BUG_ON(!create_worker(pool));
+diff --git a/kernel/workqueue_internal.h b/kernel/workqueue_internal.h
+index f6275944ada7..f65f204f38ea 100644
+--- a/kernel/workqueue_internal.h
++++ b/kernel/workqueue_internal.h
+@@ -10,6 +10,7 @@
+ 
+ #include <linux/workqueue.h>
+ #include <linux/kthread.h>
++#include <linux/interrupt.h>
+ #include <linux/preempt.h>
+ 
+ struct worker_pool;
+@@ -42,6 +43,8 @@ struct worker {
+ 	struct list_head	scheduled;	/* L: scheduled works */
+ 
+ 	struct task_struct	*task;		/* I: worker task */
++	struct tasklet_struct	atomic_tasklet;	/* I: tasklet for atomic pool */
++
+ 	struct worker_pool	*pool;		/* A: the associated pool */
+ 						/* L: for rescuers */
+ 	struct list_head	node;		/* A: anchored at pool->workers */
 -- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+2.43.0
+
