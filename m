@@ -1,162 +1,217 @@
-Received: from mail-ua1-f54.google.com (mail-ua1-f54.google.com [209.85.222.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.65])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 186421E882
-	for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 18:36:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ABDBA25115;
+	Fri, 26 Jan 2024 22:04:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=134.134.136.65
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706294219; cv=none; b=ei1kFrASuhNkMo+SM5jeaygp2qPA5+Rw8RX5KtaKJwUz9BkiPENM+PGI61cCrdYrBHt7LDHSyiWS3w7kYYx5qgmZQ0SkdUPvJt1Zy/uuu5ks24Qw9TmeBHnLi6c10By9O8OzJ2WCjhppD/0eNtRW/CE+SkboLqI1aqDMbuNeqKI=
+	t=1706306681; cv=none; b=iJxhkvn0oBCU9qOuvITUXDWtGENL37qj5pLQkmqxLio1Bz0p07FaWe4uQ3KUcq/91SWEGgdrNsDb0JHywtw80PNtT/yHG7AW579erZuosHqFSRgpMADSq0FmDLC1EuxPKTfCJXuwnu3ozcSv3T5yxzaI7NpPpnaMysYsFTUIKzQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706294219; c=relaxed/simple;
-	bh=XbBNz5Xjkbj/AigQvzkQA0KxKZPt6W9V1ChoC5N95fg=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=s165kd/iwAC6Pw03ou05LqcVcmN1WahEaiGT/8zDbMam+Z7veURyof1QPkdO7/N+tLxyAgyFp3olsoUTdrNj6NH+eF0h9Lysi4HqcMGX9JRPVBdEFoWiOnBDi/+6Se8u8x8HjP2wswkPYHeZMPAi/6ySAEdTc51+Rv37bTsc1rI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cZHlHJbW; arc=none smtp.client-ip=209.85.222.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1706306681; c=relaxed/simple;
+	bh=PgTmG/yzGVqUhuwJ1i6jbTUkm8ADJwrhKbzlIpQ+M9M=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=kaDXUV7rD1hpbzaLvi4LjfxwPOtVdAli57OFvo2BjUa+PQ5WprwWxwWf5nZhnLarewwQueGuAnFgkPBcHW2sCl2SgqY1XQALAaDCJQNSfshv4pPcPTamv6xOe/WEz56HTLbTcpSJ66xYIC78+roU0d0qmzMqgTfNrSrn6YebMe0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=nPpU/QPk; arc=none smtp.client-ip=134.134.136.65
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cZHlHJbW"
-Received: by mail-ua1-f54.google.com with SMTP id a1e0cc1a2514c-7d2df857929so267513241.3
-        for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 10:36:57 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706294217; x=1706899017; darn=lists.linux.dev;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=TqXd2LbuyI9Qqh/FQNpz2+SVm8Ny+cq215471CRHkUI=;
-        b=cZHlHJbWsIC4qyby0s0ou0nz2SWe3SUcEQL4HEYRSzZpAgY/mp+04emy87InmN3nNt
-         ayRLZ2R7RvLBHCtalmZADud8I/BRG9A1bVX9/ZS7J9gZhAVsBtL+PcTaQVgzopLJb00T
-         54JD0VIJBzkDKJoSBFlo+6ecS9mDWAx+LDBkqsbvuczFqoQgqIcj5odv7nNrENvqlupZ
-         TU7uKP4d8mT+7AbowJR2wCEiX1nCtc9/R8YOPm6Cjb4KFSTEJDjSUGn7IeG/FqtmUsZJ
-         b9Yaz7Rxeu8qU+oBO/wcDzLnLsILhFrjD1Pa++AtRKbSwbljWq92Mk4gAAnUh9UFKX8H
-         8quw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706294217; x=1706899017;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=TqXd2LbuyI9Qqh/FQNpz2+SVm8Ny+cq215471CRHkUI=;
-        b=UgGBXXWJ4fqrQe9kCc/cc80RHcFyY8/1WpnIPne52xbBo5AMqlexbcM+tgmhvfaGWF
-         +j1zinb7bSioP4sdPx3pBXZeoqkWvhU87XiQ6fwl5OWpzLUCBeFmp/XydbeliOL9kilh
-         vyqSDBf9OO7LGixDiSFvsH5aSOKK/xLcLoZRDwu2r9RMfuKkn0fYc3PnpGxhyPSrcInj
-         9GaSov7jS4mRPsGutOhiAqJKmBR4GWzCv9pbKVUUHNzVTrcWwAYyYrLQufMYWa/oue1C
-         ttbauRGhst7Ky8F2YKUB1N2F8Pqopp4ra7x4zzSUbMSoeL3/S7FdmC5A/5kcPXklOMV4
-         p3Ng==
-X-Gm-Message-State: AOJu0Yw65vKAV+aLXjz6xZERJFg29KEevOF7zVmbgdFB8lcCVhXz2iVo
-	mFNyx2v2lQAhTI/2AmLYxeQXHK2zqIZKp7n4BenUf/Akn0LFcxx6vCVmizl2OPylr8HxDFcBp7m
-	xruebpEJfJKT1EkzmS54ST2OAoZw=
-X-Google-Smtp-Source: AGHT+IE1MLjGKr2ux1azYw+58wmOiUvg8E5WXoQmTYbkOgivsJfz1JIsqBfE4B/XNtYEHyZgtl89a1r7kKpPcLkAmz0=
-X-Received: by 2002:a05:6122:4c0f:b0:4b6:e383:5f with SMTP id
- ff15-20020a0561224c0f00b004b6e383005fmr235259vkb.25.1706294216914; Fri, 26
- Jan 2024 10:36:56 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="nPpU/QPk"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1706306679; x=1737842679;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=PgTmG/yzGVqUhuwJ1i6jbTUkm8ADJwrhKbzlIpQ+M9M=;
+  b=nPpU/QPkyxw/o5eiMsb3YXl6z8u0ciuOUMG0pQu9t3k5rGKg2A2/+4Er
+   VDdOyjGVRbfJZKSaiGGhSYlDsfRI1IM3THnmKdVLIEpEVeZq6F0vD16lN
+   KY8JxjApB1X5uew6BZc2GJOR1tqyYRZNinkgZHjlFydJrwpBgaYHc8Dgz
+   Fa9zwfp7eSfstOqhvGdRCDWjzBr9z1DIbkzrGGJpzVf/CADNbD+bSRIq/
+   7EGFo+MugUuTDMkCtrUXBaEoHW+wG7QgDXOiDdGiZWTlNfkxUzgrrigUJ
+   rNb+coVcUvxXaVlYjaX8/C3D7gHIRo/+msyFFQs2gXMQxoDj1iBcByIVj
+   w==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10964"; a="406317863"
+X-IronPort-AV: E=Sophos;i="6.05,216,1701158400"; 
+   d="scan'208";a="406317863"
+Received: from fmviesa005.fm.intel.com ([10.60.135.145])
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 26 Jan 2024 14:04:38 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.05,216,1701158400"; 
+   d="scan'208";a="2716758"
+Received: from lkp-server01.sh.intel.com (HELO 370188f8dc87) ([10.239.97.150])
+  by fmviesa005.fm.intel.com with ESMTP; 26 Jan 2024 14:04:33 -0800
+Received: from kbuild by 370188f8dc87 with local (Exim 4.96)
+	(envelope-from <lkp@intel.com>)
+	id 1rTUJL-0001NK-01;
+	Fri, 26 Jan 2024 22:04:31 +0000
+Date: Sat, 27 Jan 2024 06:03:58 +0800
+From: kernel test robot <lkp@intel.com>
+To: Johannes Thumshirn <johannes.thumshirn@wdc.com>,
+	Damien Le Moal <dlemoal@kernel.org>,
+	Naohiro Aota <naohiro.aota@wdc.com>,
+	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
+	Chris Mason <chris.mason@fusionio.com>,
+	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
+	Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>,
+	Chao Yu <chao@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
+	Chaitanya Kulkarni <kch@nvidia.com>
+Cc: llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev,
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
+	linux-block@vger.kernel.org, linux-nvme@lists.infradead.org,
+	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
+	"Matthew Wilcox (Oracle)" <willy@infradead.org>
+Subject: Re: [PATCH 5/5] block: remove gfp_flags from blkdev_zone_mgmt
+Message-ID: <202401270524.3SWUUYR8-lkp@intel.com>
+References: <20240123-zonefs_nofs-v1-5-cc0b0308ef25@wdc.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com> <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
-In-Reply-To: <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com>
-From: Allen <allen.lkml@gmail.com>
-Date: Fri, 26 Jan 2024 10:36:45 -0800
-Message-ID: <CAOMdWSKu9PhyjfWga-eMcAUiBF4Fg9dnt+husNRZgkL1rp_HFQ@mail.gmail.com>
-Subject: Re: [PATCH] softirq: fix memory corruption when freeing tasklet_struct
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Tejun Heo <tj@kernel.org>, 
-	Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
-	Mike Snitzer <msnitzer@redhat.com>, Ignat Korchagin <ignat@cloudflare.com>, 
-	Damien Le Moal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, Hou Tao <houtao1@huawei.com>, 
-	Nathan Huckleberry <nhuck@google.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@elte.hu>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240123-zonefs_nofs-v1-5-cc0b0308ef25@wdc.com>
 
-> > There's a problem with the tasklet API - there is no reliable way how to
-> > free a structure that contains tasklet_struct. The problem is that the
-> > function tasklet_action_common calls task_unlock(t) after it called the
-> > callback. If the callback does something that frees tasklet_struct,
-> > task_unlock(t) would write into free memory.
->
-> Ugh.
->
-> I see what you're doing, but I have to say, I dislike this patch
-> immensely. It feels like a serious misdesign that is then papered over
-> with a hack.
->
-> I'd much rather see us trying to move away from tasklets entirely in
-> cases like this. Just say "you cannot do that".
->
- The idea of moving away from using tasklets has been discussed several times.
-I am working on entirely moving away from using tasklets. Ofcourse, we have
-some subsystems(like DMA), where we need to do a little more.
+Hi Johannes,
 
-> In fact, of the two cases that want this new functionality, at least
-> dm-verity already makes tasklets a conditional feature that isn't even
-> enabled by default, and that was only introduced in the last couple of
-> years.
->
-> So I think dm-verity would be better off just removing tasklet use,
-> and we should check whether there are better models for handling the
-> latency issue.
->
-> The dm-crypt.c case looks different, but similar. I'm not sure why it
-> doesn't just use the workqueue for the "in interrupt" case. Like
-> dm-verity, it already does have a workqueue option, and it's a
-> setup-time option to say "don't use the workqueue for reads / writes".
-> But it feels like the code should just say "tough luck, in interrupt
-> context we *will* use workqueues".
->
-> So honestly, both of the cases you bring up seem to be just BUGGY. The
-> fix is not to extend tasklets to a new thing, the fix is to say "those
-> two uses of tasklets were broken, and should go away".
->
-> End result: I would suggest:
->
->  - just get rid of the actively buggy use of tasklets. It's not
-> necessary in either case.
->
->  - look at introducing a "low-latency atomic workqueue" that looks
-> *exactly* like a regular workqueue, but has the rule that it's per-cpu
-> and functions on it cannot sleep
->
-> because I think one common issue with workqueues - which are better
-> designed than tasklets - is that scheduling latency.
->
-> I think if we introduced a workqueue that worked more like a tasklet -
-> in that it's run in softirq context - but doesn't have the interface
-> mistakes of tasklets, a number of existing workqueue users might
-> decide that that is exactly what they want.
->
-> So we could have a per-cpu 'atomic_wq' that things can be scheduled
-> on, and that runs from softirqs just like tasklets, and shares the
-> workqueue queueing infrastructure but doesn't use the workqueue
-> threads.
->
-> Yes, the traditional use of workqueues is to be able to sleep and do
-> things in process context, so that sounds a bit odd, but let's face
-> it, we
->
->  (a) already have multiple classes of workqueues
->
->  (b) avoiding deep - and possibly recursive - stack depths is another
-> reason people use workqueues
->
->  (c) avoiding interrupt context is a real concern, even if you don't
-> want to sleep
->
-> and I really *really* would like to get rid of tasklets entirely.
->
-> They started as this very specific hardcoded softirq thing used by
-> some drivers, and then the notion was generalized.
->
-> And I think it was generalized badly, as shown by this example.
->
-> I have added Tejun to the cc, so that he can throw his hands up in
-> horror and say "Linus, you're crazy, your drug-fueled idea would be
-> horrid because of Xyz".
->
-> But *maybe* Tejun has been taking the same drugs I have, and goes
-> "yeah, that would fit well".
->
-> Tejun? Please tell me I'm not on some bad crack..
->
->                Linus
->
-       - Allen
+kernel test robot noticed the following build errors:
+
+[auto build test ERROR on 7ed2632ec7d72e926b9e8bcc9ad1bb0cd37274bf]
+
+url:    https://github.com/intel-lab-lkp/linux/commits/Johannes-Thumshirn/zonefs-pass-GFP_KERNEL-to-blkdev_zone_mgmt-call/20240123-174911
+base:   7ed2632ec7d72e926b9e8bcc9ad1bb0cd37274bf
+patch link:    https://lore.kernel.org/r/20240123-zonefs_nofs-v1-5-cc0b0308ef25%40wdc.com
+patch subject: [PATCH 5/5] block: remove gfp_flags from blkdev_zone_mgmt
+config: hexagon-allmodconfig (https://download.01.org/0day-ci/archive/20240127/202401270524.3SWUUYR8-lkp@intel.com/config)
+compiler: clang version 18.0.0git (https://github.com/llvm/llvm-project a31a60074717fc40887cfe132b77eec93bedd307)
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20240127/202401270524.3SWUUYR8-lkp@intel.com/reproduce)
+
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202401270524.3SWUUYR8-lkp@intel.com/
+
+All errors (new ones prefixed by >>):
+
+   In file included from drivers/md/dm-zoned-metadata.c:8:
+   In file included from drivers/md/dm-zoned.h:12:
+   In file included from include/linux/blkdev.h:9:
+   In file included from include/linux/blk_types.h:10:
+   In file included from include/linux/bvec.h:10:
+   In file included from include/linux/highmem.h:12:
+   In file included from include/linux/hardirq.h:11:
+   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
+   In file included from include/asm-generic/hardirq.h:17:
+   In file included from include/linux/irq.h:20:
+   In file included from include/linux/io.h:13:
+   In file included from arch/hexagon/include/asm/io.h:328:
+   include/asm-generic/io.h:547:31: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
+     547 |         val = __raw_readb(PCI_IOBASE + addr);
+         |                           ~~~~~~~~~~ ^
+   include/asm-generic/io.h:560:61: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
+     560 |         val = __le16_to_cpu((__le16 __force)__raw_readw(PCI_IOBASE + addr));
+         |                                                         ~~~~~~~~~~ ^
+   include/uapi/linux/byteorder/little_endian.h:37:51: note: expanded from macro '__le16_to_cpu'
+      37 | #define __le16_to_cpu(x) ((__force __u16)(__le16)(x))
+         |                                                   ^
+   In file included from drivers/md/dm-zoned-metadata.c:8:
+   In file included from drivers/md/dm-zoned.h:12:
+   In file included from include/linux/blkdev.h:9:
+   In file included from include/linux/blk_types.h:10:
+   In file included from include/linux/bvec.h:10:
+   In file included from include/linux/highmem.h:12:
+   In file included from include/linux/hardirq.h:11:
+   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
+   In file included from include/asm-generic/hardirq.h:17:
+   In file included from include/linux/irq.h:20:
+   In file included from include/linux/io.h:13:
+   In file included from arch/hexagon/include/asm/io.h:328:
+   include/asm-generic/io.h:573:61: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
+     573 |         val = __le32_to_cpu((__le32 __force)__raw_readl(PCI_IOBASE + addr));
+         |                                                         ~~~~~~~~~~ ^
+   include/uapi/linux/byteorder/little_endian.h:35:51: note: expanded from macro '__le32_to_cpu'
+      35 | #define __le32_to_cpu(x) ((__force __u32)(__le32)(x))
+         |                                                   ^
+   In file included from drivers/md/dm-zoned-metadata.c:8:
+   In file included from drivers/md/dm-zoned.h:12:
+   In file included from include/linux/blkdev.h:9:
+   In file included from include/linux/blk_types.h:10:
+   In file included from include/linux/bvec.h:10:
+   In file included from include/linux/highmem.h:12:
+   In file included from include/linux/hardirq.h:11:
+   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
+   In file included from include/asm-generic/hardirq.h:17:
+   In file included from include/linux/irq.h:20:
+   In file included from include/linux/io.h:13:
+   In file included from arch/hexagon/include/asm/io.h:328:
+   include/asm-generic/io.h:584:33: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
+     584 |         __raw_writeb(value, PCI_IOBASE + addr);
+         |                             ~~~~~~~~~~ ^
+   include/asm-generic/io.h:594:59: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
+     594 |         __raw_writew((u16 __force)cpu_to_le16(value), PCI_IOBASE + addr);
+         |                                                       ~~~~~~~~~~ ^
+   include/asm-generic/io.h:604:59: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
+     604 |         __raw_writel((u32 __force)cpu_to_le32(value), PCI_IOBASE + addr);
+         |                                                       ~~~~~~~~~~ ^
+>> drivers/md/dm-zoned-metadata.c:1661:34: error: too many arguments to function call, expected 4, have 5
+    1659 |                 ret = blkdev_zone_mgmt(dev->bdev, REQ_OP_ZONE_RESET,
+         |                       ~~~~~~~~~~~~~~~~
+    1660 |                                        dmz_start_sect(zmd, zone),
+    1661 |                                        zmd->zone_nr_sectors, GFP_KERNEL);
+         |                                                              ^~~~~~~~~~
+   include/linux/gfp_types.h:327:20: note: expanded from macro 'GFP_KERNEL'
+     327 | #define GFP_KERNEL      (__GFP_RECLAIM | __GFP_IO | __GFP_FS)
+         |                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/blkdev.h:327:5: note: 'blkdev_zone_mgmt' declared here
+     327 | int blkdev_zone_mgmt(struct block_device *bdev, enum req_op op,
+         |     ^                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     328 |                 sector_t sectors, sector_t nr_sectors);
+         |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   6 warnings and 1 error generated.
+
+
+vim +1661 drivers/md/dm-zoned-metadata.c
+
+3b1a94c88b798d Damien Le Moal     2017-06-07  1639  
+3b1a94c88b798d Damien Le Moal     2017-06-07  1640  /*
+3b1a94c88b798d Damien Le Moal     2017-06-07  1641   * Reset a zone write pointer.
+3b1a94c88b798d Damien Le Moal     2017-06-07  1642   */
+3b1a94c88b798d Damien Le Moal     2017-06-07  1643  static int dmz_reset_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
+3b1a94c88b798d Damien Le Moal     2017-06-07  1644  {
+3b1a94c88b798d Damien Le Moal     2017-06-07  1645  	int ret;
+3b1a94c88b798d Damien Le Moal     2017-06-07  1646  
+3b1a94c88b798d Damien Le Moal     2017-06-07  1647  	/*
+3b1a94c88b798d Damien Le Moal     2017-06-07  1648  	 * Ignore offline zones, read only zones,
+3b1a94c88b798d Damien Le Moal     2017-06-07  1649  	 * and conventional zones.
+3b1a94c88b798d Damien Le Moal     2017-06-07  1650  	 */
+3b1a94c88b798d Damien Le Moal     2017-06-07  1651  	if (dmz_is_offline(zone) ||
+3b1a94c88b798d Damien Le Moal     2017-06-07  1652  	    dmz_is_readonly(zone) ||
+3b1a94c88b798d Damien Le Moal     2017-06-07  1653  	    dmz_is_rnd(zone))
+3b1a94c88b798d Damien Le Moal     2017-06-07  1654  		return 0;
+3b1a94c88b798d Damien Le Moal     2017-06-07  1655  
+3b1a94c88b798d Damien Le Moal     2017-06-07  1656  	if (!dmz_is_empty(zone) || dmz_seq_write_err(zone)) {
+8f22272af7a727 Hannes Reinecke    2020-06-02  1657  		struct dmz_dev *dev = zone->dev;
+3b1a94c88b798d Damien Le Moal     2017-06-07  1658  
+6c1b1da58f8c7a Ajay Joshi         2019-10-27  1659  		ret = blkdev_zone_mgmt(dev->bdev, REQ_OP_ZONE_RESET,
+3b1a94c88b798d Damien Le Moal     2017-06-07  1660  				       dmz_start_sect(zmd, zone),
+c4d4977392621f Johannes Thumshirn 2024-01-23 @1661  				       zmd->zone_nr_sectors, GFP_KERNEL);
+3b1a94c88b798d Damien Le Moal     2017-06-07  1662  		if (ret) {
+3b1a94c88b798d Damien Le Moal     2017-06-07  1663  			dmz_dev_err(dev, "Reset zone %u failed %d",
+b71228739851a9 Hannes Reinecke    2020-05-11  1664  				    zone->id, ret);
+3b1a94c88b798d Damien Le Moal     2017-06-07  1665  			return ret;
+3b1a94c88b798d Damien Le Moal     2017-06-07  1666  		}
+3b1a94c88b798d Damien Le Moal     2017-06-07  1667  	}
+3b1a94c88b798d Damien Le Moal     2017-06-07  1668  
+3b1a94c88b798d Damien Le Moal     2017-06-07  1669  	/* Clear write error bit and rewind write pointer position */
+3b1a94c88b798d Damien Le Moal     2017-06-07  1670  	clear_bit(DMZ_SEQ_WRITE_ERR, &zone->flags);
+3b1a94c88b798d Damien Le Moal     2017-06-07  1671  	zone->wp_block = 0;
+3b1a94c88b798d Damien Le Moal     2017-06-07  1672  
+3b1a94c88b798d Damien Le Moal     2017-06-07  1673  	return 0;
+3b1a94c88b798d Damien Le Moal     2017-06-07  1674  }
+3b1a94c88b798d Damien Le Moal     2017-06-07  1675  
+
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
