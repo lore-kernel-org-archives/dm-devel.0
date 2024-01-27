@@ -1,110 +1,80 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 340359475
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 02:35:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A9F665C
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 02:42:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706322955; cv=none; b=KqMTG8YA6Pkpr3bUJnCyJe4xakC3h66LpOo4oYUEAutXtU3UQKGDKQLHeF74bwRwqbgF+BF/APXxLC0yoBIgxPCUZljryun1LVwg/+nzaoaFF6Q0lrUjVToxR8v1RzNsBhu4AIDXIF0iGJHCjJ+aGzT8MO8NbM5YGaH5Z4QhXh0=
+	t=1706323354; cv=none; b=j9r2LBU0afCYsUdexGEBPYKMNkydjCOMfmNJt4DJtY4xicr8RWxNxEzAxW5VFYe+YhkJiclzQKW5Cbw/XdbT3XVMkMjAxKz7L8OElpVXEsCkV6arXRn9AQ8qBcQ7jwtfnW/B2ZwngItDDsExJqrthOMVZG+bMFVhz8rG8pGu6nk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706322955; c=relaxed/simple;
-	bh=OH3ve7NjkQj9p6qNtHcEMba1LUh3XjamBSno+bR35xs=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=pPUwoY3bNCXtgID2+mJgzYOSttk/SKwC2Gd21cS72AmRzJqL/DEGR6QNTCZYOyzGBWENtW/j8Ww91kpEHRPRULlKpTMqkRdnYG/5tdMFpXrLCBW+u1le4363kDxJOpdUmMc96bl/5GrJz2hN7ykW024yUzyZertEkUcShMBjBhM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RIzjB34l; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1706323354; c=relaxed/simple;
+	bh=C1NXq0wNEGZXTRLve3U9duWOCyq1HPyX2/PKutw2lmA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=sv90TBBEl8UZ5HUhM91eaq7N1Xxky+SZsyS2QOIAYI4l9JGHjWpdPSx79XApoocHCTyxJiw61STUPx+NvJotK28NH7imjhjXUB+ehDGyMeDaeVw62atl9HZosmQ4PtmzXbKIzCJ0V9k8zSp+XaN0qAZXo9LBhgu5d34EX1f9LyQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BvjCALW5; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RIzjB34l"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BvjCALW5"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1706322953;
+	s=mimecast20190719; t=1706323351;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=NzzGLrD8hQckS8ozwHpH7C97fefB70tFTutgnlboENg=;
-	b=RIzjB34ltm6ZIRx0467XvH9m6pSkLjLgrDLjqLaIa4UOgH4J1sBU2v2HIeoLbelWT/Q7rR
-	OBOqe94px9zaaBLgATmztAb1DACyrz/oSZZGcmDhzRaZIJTPzAOQ+qXPqo9e15oY/29Vhk
-	ka3Kht/871gEzko4YNybiDqsb/1yly4=
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Ejla0Vn6PfIb5stx8UX3ZRIbQPEd6956wqKwClTiOlk=;
+	b=BvjCALW57h4LKGokfSbQjs32iiiKd6vEb0mOt+mMlDWJwx/2CTqgrhwmU02udmSRtNnXEf
+	qGQvS+MhE4yKBHLBXEZAX5R80FIqMYNUUOZXU00xFaZ1jodhhS6oD0gK2KnHSEi2rXutfr
+	9kAnpuKCAHl4Oh0Lcz1E230U83e9xb4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-459-2JqvhwU3MhyCRw57nUEZmg-1; Fri, 26 Jan 2024 21:35:49 -0500
-X-MC-Unique: 2JqvhwU3MhyCRw57nUEZmg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-664-dGoZQM4zOMOp8klIgkbbsg-1; Fri, 26 Jan 2024 21:42:29 -0500
+X-MC-Unique: dGoZQM4zOMOp8klIgkbbsg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68508827D8C;
-	Sat, 27 Jan 2024 02:35:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 97E0D827D86
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 02:42:29 +0000 (UTC)
 Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 62BB0492BE3;
-	Sat, 27 Jan 2024 02:35:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 91C30900;
+	Sat, 27 Jan 2024 02:42:29 +0000 (UTC)
 Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 5F6C3560C7; Fri, 26 Jan 2024 21:35:49 -0500 (EST)
+	id 88BD5560D0; Fri, 26 Jan 2024 21:42:29 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
-Cc: Mike Snitzer <snitzer@kernel.org>,
-	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH 4/5] dm vdo block-map: avoid extra dereferences to access vdo object
-Date: Fri, 26 Jan 2024 21:35:48 -0500
-Message-ID: <5ccfb6d5622877f57b5f8329a42e7aaad7d9a997.1706322049.git.msakai@redhat.com>
-In-Reply-To: <cover.1706322049.git.msakai@redhat.com>
-References: <cover.1706322049.git.msakai@redhat.com>
+Cc: Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH 0/3] dm vdo: various error code improvements
+Date: Fri, 26 Jan 2024 21:42:26 -0500
+Message-ID: <cover.1706323002.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-From: Mike Snitzer <snitzer@kernel.org>
+Streamline error code handling.
 
-The vdo_page_cache's 'vdo' is the same as the block_map's vdo
-instance, so use that to save 2 extra dereferences.
+Mike Snitzer (3):
+  dm vdo: slight cleanup of UDS error codes
+  dm vdo: rename uds_map_to_system_error to uds_status_to_errno
+  dm vdo: rename vdo_map_to_system_error to vdo_status_to_errno
 
-Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
----
- drivers/md/dm-vdo/block-map.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/md/dm-vdo/data-vio.c      |  2 +-
+ drivers/md/dm-vdo/dm-vdo-target.c | 10 ++++-----
+ drivers/md/dm-vdo/errors.c        |  2 +-
+ drivers/md/dm-vdo/errors.h        | 37 +++++++++++++++----------------
+ drivers/md/dm-vdo/index-layout.c  |  4 ++--
+ drivers/md/dm-vdo/index-session.c | 20 ++++++++---------
+ drivers/md/dm-vdo/status-codes.c  |  4 ++--
+ drivers/md/dm-vdo/status-codes.h  |  6 ++---
+ 8 files changed, 41 insertions(+), 44 deletions(-)
 
-diff --git a/drivers/md/dm-vdo/block-map.c b/drivers/md/dm-vdo/block-map.c
-index eda42383a2c1..0ce136612869 100644
---- a/drivers/md/dm-vdo/block-map.c
-+++ b/drivers/md/dm-vdo/block-map.c
-@@ -562,7 +562,7 @@ static void set_persistent_error(struct vdo_page_cache *cache, const char *conte
- {
- 	struct page_info *info;
- 	/* If we're already read-only, there's no need to log. */
--	struct vdo *vdo = cache->zone->block_map->vdo;
-+	struct vdo *vdo = cache->vdo;
- 
- 	if ((result != VDO_READ_ONLY) && !vdo_is_read_only(vdo)) {
- 		uds_log_error_strerror(result, "VDO Page Cache persistent error: %s",
-@@ -1111,7 +1111,7 @@ static void write_pages(struct vdo_completion *flush_completion)
- 					 state_entry);
- 
- 		list_del_init(&info->state_entry);
--		if (vdo_is_read_only(info->cache->zone->block_map->vdo)) {
-+		if (vdo_is_read_only(info->cache->vdo)) {
- 			struct vdo_completion *completion = &info->vio->completion;
- 
- 			vdo_reset_completion(completion);
-@@ -1233,7 +1233,7 @@ void vdo_get_page(struct vdo_page_completion *page_completion,
- 			       cache->zone->thread_id, parent);
- 	completion->requeue = requeue;
- 
--	if (page_completion->writable && vdo_is_read_only(cache->zone->block_map->vdo)) {
-+	if (page_completion->writable && vdo_is_read_only(cache->vdo)) {
- 		vdo_fail_completion(completion, VDO_READ_ONLY);
- 		return;
- 	}
 -- 
 2.42.0
 
