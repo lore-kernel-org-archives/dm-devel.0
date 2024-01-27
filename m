@@ -1,103 +1,313 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37588443D
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 01:19:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99056B65C
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 02:18:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706318395; cv=none; b=nEGiJuhLBcW/1VACIkL2HATsEFXSzcKLRwLgrAvzCh513iEZq58I/wUCwAWUuxqheG6BDBkfqB81tBd7unw0rEM4dW/okmectgU7oXC4G/xuawaBnbZffGHalSrtnK5L7w3AW5BNwhhXoRmLHsJ83NUy4q5kfy9KG+FwL9Qs0XU=
+	t=1706321918; cv=none; b=mkNtbdtG2FpbauP4I+oOfbpaHnO510mI2QxPeeMmP9Gqube2v+edGkWNMWQrzlHPOq+7yGpOAzfySP5XElK9DZK38Rb4qR7ncCppzQ4b/lyD0XeLeHTlJF456LwoNFEtIq+PE381RNWgMGWzG3gYBtpOE0cfSKZbZMcxszlasNI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706318395; c=relaxed/simple;
-	bh=+j3Kt8OzmJvqq707AeYnQZtsKaG7YprJwUmuBavexLU=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=pu+weUsSnIcTPLaC03OmBh3FJuosV9kofpIiIa9S+vtswDBIiu6OcOewjU5hDgRB/+1REJ3OzsFEbVwIuENg0EXLWfQ/kZB835VWOGWaZP+Q2jJGjEHSxuI+0bQ2a7vEvFfAtK2ey7li23BfLUr8gHXrLamUqtjB9N7ntzTRqug=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TMGv55t6pz4f3jMX
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 09:19:45 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id CD7491A017A
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 09:19:49 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgBXKBE1WrRlDHdjCA--.15547S3;
-	Sat, 27 Jan 2024 09:19:49 +0800 (CST)
-Subject: Re: [PATCH 3/7] md: test for MD_RECOVERY_DONE in stop_sync_thread
-To: Yu Kuai <yukuai1@huaweicloud.com>, Zdenek Kabelac <zkabelac@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>
-Cc: Song Liu <song@kernel.org>, David Jeffery <djeffery@redhat.com>,
- Li Nan <linan122@huawei.com>, dm-devel@lists.linux.dev,
- linux-raid@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>,
- Heinz Mauelshagen <heinzm@redhat.com>, "yukuai (C)" <yukuai3@huawei.com>
-References: <e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com>
- <9801e40-8ac7-e225-6a71-309dcf9dc9aa@redhat.com>
- <CAPhsuW483DSEvgoT0c-Mo1gdpVKRRLkTxu+kuxYG6k-zew+FFA@mail.gmail.com>
- <82e9b11f-e28-683-782d-aa5b8c62ff1a@redhat.com>
- <CAPhsuW4YLVLhv2ii0UjiQOmiqR3mk6u8r94-SVZjMs6LVp+WaQ@mail.gmail.com>
- <56ff3ba-9a60-1930-a2a1-c2562ece1ec1@redhat.com>
- <Za8k8GityCXjSVJ-@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
- <08748e1b-e947-44d3-34dc-7dc0f9db1c04@huaweicloud.com>
- <166bea43-1d1e-3938-3af1-491e61d5bcf6@huaweicloud.com>
- <86a989b0-53ee-4915-8ff4-aafa3ad18d16@redhat.com>
- <82218127-8778-9fda-bbfd-30178760dc53@huaweicloud.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <cafb906e-dac5-0048-7582-35076ff1b779@huaweicloud.com>
-Date: Sat, 27 Jan 2024 09:19:48 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1706321918; c=relaxed/simple;
+	bh=3Nx7oCcvGQu7YKg69BWCqJ5+/6qM9TsT2K/uldZ8Px8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Sq4lQ4TCT8tfTWTOA71FnM1DkDF44DQto44MIjw1i3wYoNEVH0KGo11ooeIWjGmHkseXhxofT0+41SRljPCAkOxCZclUhPtObnxstURdEN/WEMe5ct6KW8IgvuIYNiGfIw4hjc1b9W6HWI9NMXrF0YXD+f/MK1r7rxWbs8yDzhE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=GwxwVPBR; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GwxwVPBR"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1706321915;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=U38w+Fn2Owzg1PP5i6gtth0CMu540KTNMDJXe/YmZ8I=;
+	b=GwxwVPBRk0Nbyacl3WSXlN9fxMI3o8zjNP5e5EtlUbCoXq25VcIN1j9c9KRvrQh8BtRVPe
+	Lg4DuVTGfeZ72NXtB0QZ5YNDJ52F7DseZlYHM6VEM979uOfhnxz8fPuLA5vpWe+vuzK15x
+	bZv80K/D8H3E9i16THdf3sIVShzZKiw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-128-3Gr54TECOh-4Lg4PbrrYGQ-1; Fri, 26 Jan 2024 21:18:33 -0500
+X-MC-Unique: 3Gr54TECOh-4Lg4PbrrYGQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7618C827D85;
+	Sat, 27 Jan 2024 02:18:33 +0000 (UTC)
+Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 67AEB40C95AD;
+	Sat, 27 Jan 2024 02:18:33 +0000 (UTC)
+Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
+	id 5C8F6560BA; Fri, 26 Jan 2024 21:18:33 -0500 (EST)
+From: Matthew Sakai <msakai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Mike Snitzer <snitzer@kernel.org>,
+	Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm vdo: use a proper Makefile for dm-vdo
+Date: Fri, 26 Jan 2024 21:18:33 -0500
+Message-ID: <a29b6ce2f2a0d7548227b6e11f818293d39e8a11.1706321430.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <82218127-8778-9fda-bbfd-30178760dc53@huaweicloud.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBXKBE1WrRlDHdjCA--.15547S3
-X-Coremail-Antispam: 1UD129KBjDUn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73
-	VFW2AGmfu7bjvjm3AaLaJ3UjIYCTnIWjp_UUUYk7AC8VAFwI0_Gr0_Xr1l1xkIjI8I6I8E
-	6xAIw20EY4v20xvaj40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28Cjx
-	kF64kEwVA0rcxSw2x7M28EF7xvwVC0I7IYx2IY67AKxVW7JVWDJwA2z4x0Y4vE2Ix0cI8I
-	cVCY1x0267AKxVW8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87
-	Iv6xkF7I0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE
-	6c02F40Ex7xfMcIj6xIIjxv20xvE14v26r106r15McIj6I8E87Iv67AKxVWUJVW8JwAm72
-	CE4IkC6x0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4II
-	rI8v6xkF7I0E8cxan2IY04v7Mxk0xIA0c2IEe2xFo4CEbIxvr21l42xK82IYc2Ij64vIr4
-	1l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK
-	67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI
-	8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAv
-	wI8IcIk0rVWrJr0_WFyUJwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I
-	0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfUF9a9DUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Hi,
+From: Mike Snitzer <snitzer@kernel.org>
 
-在 2024/01/27 9:13, Yu Kuai 写道:
-> Hi,
-> 
-> 在 2024/01/26 18:29, Zdenek Kabelac 写道:
->> make check_local T=raid
->>
-I just tried that, however, this just fond 65 tests. And look like it's
-just find test file name with 'raid'.
+Requires moving dm-vdo-target.c into drivers/md/dm-vdo/
 
-Thanks,
-Kuai
+This change adds a proper drivers/md/dm-vdo/Makefile and eliminates
+the abnormal use of patsubst in drivers/md/Makefile -- which was the
+cause of at least one build failure that was reported by the upstream
+build bot.
 
->>
->> will do the same thing.  With S=   you could even select list of tests 
->> you want to skip.
-> 
-> Thanks for the notice!
-> 
-> Kuai
-> 
->>
->> Regards
-> 
-> .
-> 
+Also, split out VDO's drivers/md/dm-vdo/Kconfig and include it from
+drivers/md/Kconfig
+
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
+---
+ MAINTAINERS                             |  1 -
+ drivers/md/Kconfig                      | 18 +-------
+ drivers/md/Makefile                     |  3 +-
+ drivers/md/dm-vdo/Kconfig               | 17 +++++++
+ drivers/md/dm-vdo/Makefile              | 61 +++++++++++++++++++++++++
+ drivers/md/{ => dm-vdo}/dm-vdo-target.c | 52 ++++++++++-----------
+ 6 files changed, 107 insertions(+), 45 deletions(-)
+ create mode 100644 drivers/md/dm-vdo/Kconfig
+ create mode 100644 drivers/md/dm-vdo/Makefile
+ rename drivers/md/{ => dm-vdo}/dm-vdo-target.c (99%)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 5357fbe1cc90..91254b134456 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -6007,7 +6007,6 @@ M:	dm-devel@lists.linux.dev
+ L:	dm-devel@lists.linux.dev
+ S:	Maintained
+ F:	Documentation/admin-guide/device-mapper/vdo*.rst
+-F:	drivers/md/dm-vdo-target.c
+ F:	drivers/md/dm-vdo/
+ 
+ DEVLINK
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 9c4039106384..e11659186fd0 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -532,22 +532,6 @@ config DM_FLAKEY
+ 	help
+ 	 A target that intermittently fails I/O for debugging purposes.
+ 
+-config DM_VDO
+-	tristate "VDO: deduplication and compression target"
+-	depends on 64BIT
+-	depends on BLK_DEV_DM
+-	select DM_BUFIO
+-	select LZ4_COMPRESS
+-	select LZ4_DECOMPRESS
+-	help
+-	  This device mapper target presents a block device with
+-	  deduplication, compression and thin-provisioning.
+-
+-	  To compile this code as a module, choose M here: the module will
+-	  be called dm-vdo.
+-
+-	  If unsure, say N.
+-
+ config DM_VERITY
+ 	tristate "Verity target support"
+ 	depends on BLK_DEV_DM
+@@ -683,4 +667,6 @@ config DM_AUDIT
+ 	  Enables audit logging of several security relevant events in the
+ 	  particular device-mapper targets, especially the integrity target.
+ 
++source "drivers/md/dm-vdo/Kconfig"
++
+ endif # MD
+diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+index 47444b393abb..64b8f4deed4a 100644
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -25,7 +25,6 @@ dm-ebs-y	+= dm-ebs-target.o
+ dm-era-y	+= dm-era-target.o
+ dm-clone-y	+= dm-clone-target.o dm-clone-metadata.o
+ dm-verity-y	+= dm-verity-target.o
+-dm-vdo-y	+= dm-vdo-target.o $(patsubst drivers/md/dm-vdo/%.c,dm-vdo/%.o,$(wildcard $(src)/dm-vdo/*.c))
+ dm-zoned-y	+= dm-zoned-target.o dm-zoned-metadata.o dm-zoned-reclaim.o
+ 
+ md-mod-y	+= md.o md-bitmap.o
+@@ -75,7 +74,7 @@ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
+ obj-$(CONFIG_DM_RAID)		+= dm-raid.o
+ obj-$(CONFIG_DM_THIN_PROVISIONING) += dm-thin-pool.o
+ obj-$(CONFIG_DM_VERITY)		+= dm-verity.o
+-obj-$(CONFIG_DM_VDO)            += dm-vdo.o
++obj-$(CONFIG_DM_VDO)            += dm-vdo/
+ obj-$(CONFIG_DM_CACHE)		+= dm-cache.o
+ obj-$(CONFIG_DM_CACHE_SMQ)	+= dm-cache-smq.o
+ obj-$(CONFIG_DM_EBS)		+= dm-ebs.o
+diff --git a/drivers/md/dm-vdo/Kconfig b/drivers/md/dm-vdo/Kconfig
+new file mode 100644
+index 000000000000..111ecd2c2a24
+--- /dev/null
++++ b/drivers/md/dm-vdo/Kconfig
+@@ -0,0 +1,17 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++config DM_VDO
++	tristate "VDO: deduplication and compression target"
++	depends on 64BIT
++	depends on BLK_DEV_DM
++	select DM_BUFIO
++	select LZ4_COMPRESS
++	select LZ4_DECOMPRESS
++	help
++	  This device mapper target presents a block device with
++	  deduplication, compression and thin-provisioning.
++
++	  To compile this code as a module, choose M here: the module will
++	  be called dm-vdo.
++
++	  If unsure, say N.
+diff --git a/drivers/md/dm-vdo/Makefile b/drivers/md/dm-vdo/Makefile
+new file mode 100644
+index 000000000000..8f8d161a6dbe
+--- /dev/null
++++ b/drivers/md/dm-vdo/Makefile
+@@ -0,0 +1,61 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++obj-$(CONFIG_DM_VDO) += dm-vdo.o
++
++dm-vdo-objs := \
++	action-manager.o \
++	admin-state.o \
++	block-map.o \
++	chapter-index.o \
++	completion.o \
++	config.o \
++	constants.o \
++	data-vio.o \
++	dedupe.o \
++	delta-index.o \
++	dm-vdo-target.o \
++	dump.o \
++	encodings.o \
++	errors.o \
++	flush.o \
++	funnel-queue.o \
++	funnel-requestqueue.o \
++	funnel-workqueue.o \
++	geometry.o \
++	index-layout.o \
++	index.o \
++	index-page-map.o \
++	index-session.o \
++	int-map.o \
++	io-factory.o \
++	io-submitter.o \
++	logger.o \
++	logical-zone.o \
++	memory-alloc.o \
++	message-stats.o \
++	murmurhash3.o \
++	open-chapter.o \
++	packer.o \
++	permassert.o \
++	physical-zone.o \
++	pool-sysfs.o \
++	pool-sysfs-stats.o \
++	priority-table.o \
++	radix-sort.o \
++	recovery-journal.o \
++	repair.o \
++	slab-depot.o \
++	sparse-cache.o \
++	status-codes.o \
++	string-utils.o \
++	sysfs.o \
++	thread-cond-var.o \
++	thread-device.o \
++	thread-registry.o \
++	uds-sysfs.o \
++	uds-threads.o \
++	vdo.o \
++	vio.o \
++	volume-index.o \
++	volume.o \
++	wait-queue.o
+diff --git a/drivers/md/dm-vdo-target.c b/drivers/md/dm-vdo/dm-vdo-target.c
+similarity index 99%
+rename from drivers/md/dm-vdo-target.c
+rename to drivers/md/dm-vdo/dm-vdo-target.c
+index 4fbc148681e5..fcba50d8d088 100644
+--- a/drivers/md/dm-vdo-target.c
++++ b/drivers/md/dm-vdo/dm-vdo-target.c
+@@ -13,32 +13,32 @@
+ #include <linux/mutex.h>
+ #include <linux/spinlock.h>
+ 
+-#include "dm-vdo/admin-state.h"
+-#include "dm-vdo/block-map.h"
+-#include "dm-vdo/completion.h"
+-#include "dm-vdo/constants.h"
+-#include "dm-vdo/data-vio.h"
+-#include "dm-vdo/dedupe.h"
+-#include "dm-vdo/dump.h"
+-#include "dm-vdo/encodings.h"
+-#include "dm-vdo/errors.h"
+-#include "dm-vdo/flush.h"
+-#include "dm-vdo/io-submitter.h"
+-#include "dm-vdo/logger.h"
+-#include "dm-vdo/memory-alloc.h"
+-#include "dm-vdo/message-stats.h"
+-#include "dm-vdo/pool-sysfs.h"
+-#include "dm-vdo/recovery-journal.h"
+-#include "dm-vdo/repair.h"
+-#include "dm-vdo/slab-depot.h"
+-#include "dm-vdo/status-codes.h"
+-#include "dm-vdo/string-utils.h"
+-#include "dm-vdo/thread-device.h"
+-#include "dm-vdo/thread-registry.h"
+-#include "dm-vdo/types.h"
+-#include "dm-vdo/uds-sysfs.h"
+-#include "dm-vdo/vdo.h"
+-#include "dm-vdo/vio.h"
++#include "admin-state.h"
++#include "block-map.h"
++#include "completion.h"
++#include "constants.h"
++#include "data-vio.h"
++#include "dedupe.h"
++#include "dump.h"
++#include "encodings.h"
++#include "errors.h"
++#include "flush.h"
++#include "io-submitter.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "message-stats.h"
++#include "pool-sysfs.h"
++#include "recovery-journal.h"
++#include "repair.h"
++#include "slab-depot.h"
++#include "status-codes.h"
++#include "string-utils.h"
++#include "thread-device.h"
++#include "thread-registry.h"
++#include "types.h"
++#include "uds-sysfs.h"
++#include "vdo.h"
++#include "vio.h"
+ 
+ #define	CURRENT_VERSION "8.3.0.65"
+ 
+-- 
+2.42.0
 
