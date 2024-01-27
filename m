@@ -1,697 +1,190 @@
-Received: from mail-ua1-f44.google.com (mail-ua1-f44.google.com [209.85.222.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D8D665C
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 03:13:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA4D31E863
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 07:52:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706325233; cv=none; b=uVnesDUplDjBkqdY5dQXvqdtMXaCkOlMT0bJPZHiU6K8Bl29k9egPj9ZH81ouXRIZSJPcj+Pg4iRBjvIAGMDgBN/5YKocYzTRB7rXV8CSHwkbCTFsmYxv5Fl+0mRZtlRKibnMDUr8IqSVZyMM4mGOQ0pZWxXRyLBQKWLGl8A9hQ=
+	t=1706341935; cv=none; b=thXBsx5YScCCuok+aPSgCEGhSRStCTsr9eLj/Y2359ieEi5TquiiNHqEZ5v3dfENqBq71uHEAfpR3UQ8pj8s9vbonQmMDbBZL9c+DUS6VHZmlm6qjB7vWgYuXkesuooT/2zy9Z4Fqt3uTjQY/mBnJ+deYsBwsqB3oZkH3M25Kok=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706325233; c=relaxed/simple;
-	bh=4SNdYzfNPyEvhWfg4axXyhN+pt43Y1+Dnb8yhhKKi7Q=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=aYsNBvLvUzEhHulY1t1gPcOpwBfR2bK7O8QGuBJeeIIDcQRt6xYlAINpTHcdxf6lZPThCIB0ciLWLgcGnGfhqjG7T5kbiKgkRzJ1bYxTjzxjCYkJ0liX5ywFsQXXyZPk9iWh2nhcZHZTaZ5R7F2Ihl06pjyGCfNmqsAO4/uKvZU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=glf7Ld11; arc=none smtp.client-ip=209.85.222.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="glf7Ld11"
-Received: by mail-ua1-f44.google.com with SMTP id a1e0cc1a2514c-7d2e007751eso415388241.1
-        for <dm-devel@lists.linux.dev>; Fri, 26 Jan 2024 19:13:51 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706325230; x=1706930030; darn=lists.linux.dev;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=CKjMxETk2BjuzBJG7zK6cr0INEMyPnGweJsjK1w0ZWg=;
-        b=glf7Ld117ObhBaEhR5d7b4v2O4BzogDUOjTb9//ya5dj6tGvK3SVEqVIOfe47Gc2eh
-         QXKQQfSz/Kq3xPLCmwE7A5/nBjOSdOHSezorZCl1SQeSlYDugSruUHl3Oc0wb+3rWMci
-         aw6j0uIcoplptM5jHSK0+JdJRriw+K/6ulbveNfVJEFQvERaw47LpnfAKa0fSZbNPDys
-         I4rHGGPUeoKwV0lFg9JibWhlj7MK7c663PhbuuwscrSChmA69z8RwBvzF8+M/U8nmxZP
-         g+sZ7fG3CcUd51rauXsw5Uwz8DDwDWqIzRGjXWuOHHR7jJQF3Ttl6IJSoHrNS5fkwIPT
-         rA8g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706325230; x=1706930030;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=CKjMxETk2BjuzBJG7zK6cr0INEMyPnGweJsjK1w0ZWg=;
-        b=j4siEqIACn74UTiqajsHOWBBddD7XKxJN11+MnkYzaj4g2xaRWfuCay4rkW2lJsead
-         M1tpHjT1C69cPFiUdgPUacSefpSUi/OKCTJjMvPsu0jzqpMheShFULXk+4jxn8hDv6Fw
-         cS77zcGja/qXqPiPZ+jymFsdYi/nBC/QEJhfwnt4WuzVxAjTE5wYJZAal8eCA1HBBCo6
-         K1ZusTiOXNOnMmezfAtYgKSzeXRriSQHjqQHuVvaNhEus1jW+faf72zEQRCekg1rvb3o
-         DWwRMe347urdSRpKdjcQmo68XBR6XcrcEy+V6yx4ZqUt+1e97W+pjC38sZmFpOPkFakq
-         7ALg==
-X-Gm-Message-State: AOJu0Yyz2C/WkMTjenyxq428HQq5PcjMhSC6Z3BICMvyHpMcNdxzDVs5
-	VFebDrOOHG/JsiB/MFdEQsS2hFdCPUKKrh2yOOyr80Zfu/F9g9oOdT8VZEGWVjbXkORp9N77PKd
-	eK3hv74cChrqIH/7DK/YcWPiE5us=
-X-Google-Smtp-Source: AGHT+IGymrwXrC0s7Kh9tYzFjuOvOcYPakBzBbjYI83c5zjY7JdMawKXD2X7cb4iLr41hnS8FONxdKDOzpGzbQHIiiA=
-X-Received: by 2002:a67:f888:0:b0:468:90e:2c88 with SMTP id
- h8-20020a67f888000000b00468090e2c88mr530178vso.35.1706325230337; Fri, 26 Jan
- 2024 19:13:50 -0800 (PST)
+	s=arc-20240116; t=1706341935; c=relaxed/simple;
+	bh=/Ybye6PWoySu8VSP7PYa3l3zDDKfQ8lhm0y1fIuw9iY=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=kwktI7YGDaiZ88QtXvOqOvJEyzZIN/HUDmsdeuJB0u7rhqGHkevM4L9U5Abq4uhEXGLvBi1sorK5PmGSD/Gzr4kduEnOqbop5FVHF5Q/ZvwJGdBmwt9I7ESVPLVZspIMepP4KPu8Kq8Zl++KG18wbO6xrbMo0zaID8fL0rbGoCA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TMRbj2f6Vz4f3k68
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 15:52:01 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id C6BE11A0272
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 15:52:03 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP1 (Coremail) with SMTP id cCh0CgDHlxAetrRlWjeACA--.31980S4;
+	Sat, 27 Jan 2024 15:52:00 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: mpatocka@redhat.com,
+	heinzm@redhat.com,
+	xni@redhat.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	dm-devel@lists.linux.dev,
+	song@kernel.org,
+	yukuai3@huawei.com,
+	jbrassow@f14.redhat.com,
+	neilb@suse.de,
+	shli@fb.com,
+	akpm@osdl.org
+Cc: linux-kernel@vger.kernel.org,
+	linux-raid@vger.kernel.org,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH v3 00/12] dm-raid: fix v6.7 regressions
+Date: Sat, 27 Jan 2024 15:47:42 +0800
+Message-Id: <20240127074754.2380890-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com>
- <CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com> <ZbRDnSyiSE93puQL@slm.duckdns.org>
-In-Reply-To: <ZbRDnSyiSE93puQL@slm.duckdns.org>
-From: Allen <allen.lkml@gmail.com>
-Date: Fri, 26 Jan 2024 19:13:39 -0800
-Message-ID: <CAOMdWSLZVXap0Lz7p7aFitFbmcornmSM0w+cuO1GMhiZ-OwzHg@mail.gmail.com>
-Subject: Re: [PATCH] softirq: fix memory corruption when freeing tasklet_struct
-To: Tejun Heo <tj@kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Mikulas Patocka <mpatocka@redhat.com>, 
-	Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
-	Mike Snitzer <msnitzer@redhat.com>, Ignat Korchagin <ignat@cloudflare.com>, 
-	Damien Le Moal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>, Hou Tao <houtao1@huawei.com>, 
-	Nathan Huckleberry <nhuck@google.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@elte.hu>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgDHlxAetrRlWjeACA--.31980S4
+X-Coremail-Antispam: 1UD129KBjvJXoWxur4xZw4rCr15WFyxXr1kZrb_yoW7Jry5pa
+	yakw13Xr4UCrn7urZ3J3W0qa45Kas5JrW5Gr9xJ34rAw1YyFyIyrW8GayUWFWDAFy3Jw45
+	tr45Ka4F9a4YyaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUv014x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628v
+	n2kIc2xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F4
+	0E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_Wryl
+	IxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxV
+	AFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E3s1lIxAIcVC2z280aVAFwI0_
+	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7VUb
+	QVy7UUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
->
-> The following is a draft patch which implements atomic workqueues and
-> convert dm-crypt to use it instead of tasklet. It's an early draft and very
-> lightly tested but seems to work more or less. It's on top of wq/for6.9 + a
-> pending patchset. The following git branch can be used for testing.
->
->   git://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git wq-atomic-draft
->
-> I'll go over it to make sure all the pieces work. While it adds some
-> complications, it doesn't seem too bad and conversion from tasklet should be
-> straightforward too.
->
-> - It hooks into tasklet[_hi] for now but if we get to update all of tasklet
->   users, we can just repurpose the tasklet softirq slots directly.
->
-> - I thought about allowing busy-waits for flushes and cancels but it didn't
->   seem necessary. Keeping them blocking has the benefit of avoiding possible
->   nasty deadlocks. We can revisit if there's need.
->
-> - Compared to tasklet, each work item goes through a bit more management
->   code because I wanted to keep the code as unified as possible to regular
->   threaded workqueues. That said, it's not a huge amount and my bet is that
->   the difference is unlikely to be noticeable.
->
+From: Yu Kuai <yukuai3@huawei.com>
 
-Tejun,
+Changes in v3:
+ - fix a problem in patch 5;
+ - add patch 12;
 
-  Thank you very much. I really like the approach you have taken in
-this patchset.
-My design/thought was very similar to the idea you have, tocreate a
-new workqueue specifically for bottom half execution.
-I missed this bit,   WQ_ATOMIC | WQ_HIGHPRI and many other cases that
-you have covered in your patch.
+Changes in v2:
+ - replace revert changes for dm-raid with real fixes;
+ - fix dm-raid5 deadlock that exist for a long time, this deadlock is
+ triggered because another problem is fixed in raid5, and instead of
+ deadlock, user will read wrong data before v6.7, patch 9-11;
 
-  Here's a partial diff of the idea:
+First regression related to stop sync thread:
 
-diff --git a/include/linux/workqueue.h b/include/linux/workqueue.h
-index 2cc0a9606175..3eaa80826b8d 100644
---- a/include/linux/workqueue.h
-+++ b/include/linux/workqueue.h
-@@ -348,6 +348,7 @@ static inline unsigned int work_static(struct
-work_struct *work) { return 0; }
-  * Documentation/core-api/workqueue.rst.
-  */
- enum {
-+       WQ_IRQ                  = 1 << 0, /* for bottom half */
-        WQ_UNBOUND              = 1 << 1, /* not bound to any cpu */
-        WQ_FREEZABLE            = 1 << 2, /* freeze during suspend */
-        WQ_MEM_RECLAIM          = 1 << 3, /* may be used for memory reclaim */
-@@ -426,6 +427,7 @@ extern struct workqueue_struct *system_highpri_wq;
- extern struct workqueue_struct *system_long_wq;
- extern struct workqueue_struct *system_unbound_wq;
- extern struct workqueue_struct *system_freezable_wq;
-+extern struct workqueue_struct *system_irq_wq;
- extern struct workqueue_struct *system_power_efficient_wq;
- extern struct workqueue_struct *system_freezable_power_efficient_wq;
+The lifetime of sync_thread is designed as following:
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 76e60faed892..64db4fc0d0c7 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -436,6 +436,8 @@ struct workqueue_struct *system_unbound_wq __ro_after_init;
- EXPORT_SYMBOL_GPL(system_unbound_wq);
- struct workqueue_struct *system_freezable_wq __ro_after_init;
- EXPORT_SYMBOL_GPL(system_freezable_wq);
-+struct workqueue_struct *system_irq_wq __ro_after_init;
-+EXPORT_SYMBOL_GPL(irq_bh_wq);
- struct workqueue_struct *system_power_efficient_wq __ro_after_init;
- EXPORT_SYMBOL_GPL(system_power_efficient_wq);
- struct workqueue_struct *system_freezable_power_efficient_wq __ro_after_init;
-@@ -6689,13 +6691,15 @@ void __init workqueue_init_early(void)
-                                            WQ_MAX_ACTIVE);
-        system_freezable_wq = alloc_workqueue("events_freezable",
-                                              WQ_FREEZABLE, 0);
-+       system_irq_wq = alloc_workqueue("events_irq",
-+                                       WQ_IRQ, 0);
-        system_power_efficient_wq = alloc_workqueue("events_power_efficient",
-                                              WQ_POWER_EFFICIENT, 0);
-        system_freezable_power_efficient_wq =
-alloc_workqueue("events_freezable_power_efficient",
-                                              WQ_FREEZABLE | WQ_POWER_EFFICIENT,
-                                              0);
-        BUG_ON(!system_wq || !system_highpri_wq || !system_long_wq ||
--              !system_unbound_wq || !system_freezable_wq ||
-+              !system_unbound_wq || !system_freezable_wq || !system_irq_wq ||
-               !system_power_efficient_wq ||
-               !system_freezable_power_efficient_wq);
+1) Decide want to start sync_thread, set MD_RECOVERY_NEEDED, and wake up
+daemon thread;
+2) Daemon thread detect that MD_RECOVERY_NEEDED is set, then set
+MD_RECOVERY_RUNNING and register sync_thread;
+3) Execute md_do_sync() for the actual work, if it's done or
+interrupted, it will set MD_RECOVERY_DONE and wake up daemone thread;
+4) Daemon thread detect that MD_RECOVERY_DONE is set, then clear
+MD_RECOVERY_RUNNING and unregister sync_thread;
 
+In v6.7, we fix md/raid to follow this design by commit f52f5c71f3d4
+("md: fix stopping sync thread"), however, dm-raid is not considered at
+that time, and following test will hang:
 
- This patchset makes a lot more sense to use as a base to list of
-patches that I have that move away
-from tasklets. I will rebase my work on top of your branch and test it.
+shell/integrity-caching.sh
+shell/lvconvert-raid-reshape.sh
 
-Thanks.
+This patch set fix the broken test by patch 1-4;
+ - patch 1 fix that step 4) is broken by suspended array;
+ - patch 2 fix that step 4) is broken by read-only array;
+ - patch 3 fix that step 3) is broken that md_do_sync() doesn't set
+ MD_RECOVERY_DONE; Noted that this patch will introdece new problem that
+ data will be corrupted, which will be fixed in later patches.
+ - patch 4 fix that setp 1) is broken that sync_thread is register and
+ MD_RECOVERY_RUNNING is set directly, md/raid behaviour, not related to
+ dm-raid;
 
-> Thanks.
->
-> From 8224d2602ef454ca164f4added765dc4dddd5e16 Mon Sep 17 00:00:00 2001
-> From: Tejun Heo <tj@kernel.org>
-> Date: Fri, 26 Jan 2024 13:21:42 -1000
-> Subject: [PATCH] workqueue: DRAFT: Implement atomic workqueue and convert
->  dmcrypt to use it
->
-> ---
->  drivers/md/dm-crypt.c       |  36 +-----
->  include/linux/workqueue.h   |   6 +
->  kernel/workqueue.c          | 234 +++++++++++++++++++++++++++---------
->  kernel/workqueue_internal.h |   3 +
->  4 files changed, 186 insertions(+), 93 deletions(-)
->
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 855b482cbff1..d375285db202 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -73,11 +73,8 @@ struct dm_crypt_io {
->         struct bio *base_bio;
->         u8 *integrity_metadata;
->         bool integrity_metadata_from_pool:1;
-> -       bool in_tasklet:1;
->
->         struct work_struct work;
-> -       struct tasklet_struct tasklet;
-> -
->         struct convert_context ctx;
->
->         atomic_t io_pending;
-> @@ -1762,7 +1759,6 @@ static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
->         io->ctx.r.req = NULL;
->         io->integrity_metadata = NULL;
->         io->integrity_metadata_from_pool = false;
-> -       io->in_tasklet = false;
->         atomic_set(&io->io_pending, 0);
->  }
->
-> @@ -1771,13 +1767,6 @@ static void crypt_inc_pending(struct dm_crypt_io *io)
->         atomic_inc(&io->io_pending);
->  }
->
-> -static void kcryptd_io_bio_endio(struct work_struct *work)
-> -{
-> -       struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
-> -
-> -       bio_endio(io->base_bio);
-> -}
-> -
->  /*
->   * One of the bios was finished. Check for completion of
->   * the whole request and correctly clean up the buffer.
-> @@ -1800,21 +1789,6 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
->                 kfree(io->integrity_metadata);
->
->         base_bio->bi_status = error;
-> -
-> -       /*
-> -        * If we are running this function from our tasklet,
-> -        * we can't call bio_endio() here, because it will call
-> -        * clone_endio() from dm.c, which in turn will
-> -        * free the current struct dm_crypt_io structure with
-> -        * our tasklet. In this case we need to delay bio_endio()
-> -        * execution to after the tasklet is done and dequeued.
-> -        */
-> -       if (io->in_tasklet) {
-> -               INIT_WORK(&io->work, kcryptd_io_bio_endio);
-> -               queue_work(cc->io_queue, &io->work);
-> -               return;
-> -       }
-> -
->         bio_endio(base_bio);
->  }
->
-> @@ -2246,11 +2220,6 @@ static void kcryptd_crypt(struct work_struct *work)
->                 kcryptd_crypt_write_convert(io);
->  }
->
-> -static void kcryptd_crypt_tasklet(unsigned long work)
-> -{
-> -       kcryptd_crypt((struct work_struct *)work);
-> -}
-> -
->  static void kcryptd_queue_crypt(struct dm_crypt_io *io)
->  {
->         struct crypt_config *cc = io->cc;
-> @@ -2263,9 +2232,8 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
->                  * it is being executed with irqs disabled.
->                  */
->                 if (in_hardirq() || irqs_disabled()) {
-> -                       io->in_tasklet = true;
-> -                       tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
-> -                       tasklet_schedule(&io->tasklet);
-> +                       INIT_WORK(&io->work, kcryptd_crypt);
-> +                       queue_work(system_atomic_wq, &io->work);
->                         return;
->                 }
->
-> diff --git a/include/linux/workqueue.h b/include/linux/workqueue.h
-> index 232baea90a1d..1e4938b5b176 100644
-> --- a/include/linux/workqueue.h
-> +++ b/include/linux/workqueue.h
-> @@ -353,6 +353,7 @@ static inline unsigned int work_static(struct work_struct *work) { return 0; }
->   * Documentation/core-api/workqueue.rst.
->   */
->  enum wq_flags {
-> +       WQ_ATOMIC               = 1 << 0, /* execute in softirq context */
->         WQ_UNBOUND              = 1 << 1, /* not bound to any cpu */
->         WQ_FREEZABLE            = 1 << 2, /* freeze during suspend */
->         WQ_MEM_RECLAIM          = 1 << 3, /* may be used for memory reclaim */
-> @@ -392,6 +393,9 @@ enum wq_flags {
->         __WQ_ORDERED            = 1 << 17, /* internal: workqueue is ordered */
->         __WQ_LEGACY             = 1 << 18, /* internal: create*_workqueue() */
->         __WQ_ORDERED_EXPLICIT   = 1 << 19, /* internal: alloc_ordered_workqueue() */
-> +
-> +       /* atomic wq only allows the following flags */
-> +       __WQ_ATOMIC_ALLOWS      = WQ_ATOMIC | WQ_HIGHPRI,
->  };
->
->  enum wq_consts {
-> @@ -442,6 +446,8 @@ extern struct workqueue_struct *system_unbound_wq;
->  extern struct workqueue_struct *system_freezable_wq;
->  extern struct workqueue_struct *system_power_efficient_wq;
->  extern struct workqueue_struct *system_freezable_power_efficient_wq;
-> +extern struct workqueue_struct *system_atomic_wq;
-> +extern struct workqueue_struct *system_atomic_highpri_wq;
->
->  /**
->   * alloc_workqueue - allocate a workqueue
-> diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-> index 23740c9ed57a..2a8f21494676 100644
-> --- a/kernel/workqueue.c
-> +++ b/kernel/workqueue.c
-> @@ -73,7 +73,8 @@ enum worker_pool_flags {
->          * wq_pool_attach_mutex to avoid changing binding state while
->          * worker_attach_to_pool() is in progress.
->          */
-> -       POOL_MANAGER_ACTIVE     = 1 << 0,       /* being managed */
-> +       POOL_ATOMIC             = 1 << 0,       /* is an atomic pool */
-> +       POOL_MANAGER_ACTIVE     = 1 << 1,       /* being managed */
->         POOL_DISASSOCIATED      = 1 << 2,       /* cpu can't serve workers */
->  };
->
-> @@ -115,6 +116,14 @@ enum wq_internal_consts {
->         WQ_NAME_LEN             = 32,
->  };
->
-> +/*
-> + * We don't want to trap softirq for too long. See MAX_SOFTIRQ_TIME and
-> + * MAX_SOFTIRQ_RESTART in kernel/softirq.c. These are macros because
-> + * msecs_to_jiffies() can't be an initializer.
-> + */
-> +#define ATOMIC_WORKER_JIFFIES  msecs_to_jiffies(2)
-> +#define ATOMIC_WORKER_RESTARTS 10
-> +
->  /*
->   * Structure fields follow one of the following exclusion rules.
->   *
-> @@ -441,8 +450,13 @@ static bool wq_debug_force_rr_cpu = false;
->  #endif
->  module_param_named(debug_force_rr_cpu, wq_debug_force_rr_cpu, bool, 0644);
->
-> +/* the atomic worker pools */
-> +static DEFINE_PER_CPU_SHARED_ALIGNED(struct worker_pool [NR_STD_WORKER_POOLS],
-> +                                    atomic_worker_pools);
-> +
->  /* the per-cpu worker pools */
-> -static DEFINE_PER_CPU_SHARED_ALIGNED(struct worker_pool [NR_STD_WORKER_POOLS], cpu_worker_pools);
-> +static DEFINE_PER_CPU_SHARED_ALIGNED(struct worker_pool [NR_STD_WORKER_POOLS],
-> +                                    cpu_worker_pools);
->
->  static DEFINE_IDR(worker_pool_idr);    /* PR: idr of all pools */
->
-> @@ -476,8 +490,13 @@ struct workqueue_struct *system_power_efficient_wq __ro_after_init;
->  EXPORT_SYMBOL_GPL(system_power_efficient_wq);
->  struct workqueue_struct *system_freezable_power_efficient_wq __ro_after_init;
->  EXPORT_SYMBOL_GPL(system_freezable_power_efficient_wq);
-> +struct workqueue_struct *system_atomic_wq;
-> +EXPORT_SYMBOL_GPL(system_atomic_wq);
-> +struct workqueue_struct *system_atomic_highpri_wq;
-> +EXPORT_SYMBOL_GPL(system_atomic_highpri_wq);
->
->  static int worker_thread(void *__worker);
-> +static void atomic_worker_taskletfn(struct tasklet_struct *tasklet);
->  static void workqueue_sysfs_unregister(struct workqueue_struct *wq);
->  static void show_pwq(struct pool_workqueue *pwq);
->  static void show_one_worker_pool(struct worker_pool *pool);
-> @@ -496,6 +515,11 @@ static void show_one_worker_pool(struct worker_pool *pool);
->                          !lockdep_is_held(&wq_pool_mutex),              \
->                          "RCU, wq->mutex or wq_pool_mutex should be held")
->
-> +#define for_each_atomic_worker_pool(pool, cpu)                         \
-> +       for ((pool) = &per_cpu(atomic_worker_pools, cpu)[0];            \
-> +            (pool) < &per_cpu(atomic_worker_pools, cpu)[NR_STD_WORKER_POOLS]; \
-> +            (pool)++)
-> +
->  #define for_each_cpu_worker_pool(pool, cpu)                            \
->         for ((pool) = &per_cpu(cpu_worker_pools, cpu)[0];               \
->              (pool) < &per_cpu(cpu_worker_pools, cpu)[NR_STD_WORKER_POOLS]; \
-> @@ -1184,6 +1208,14 @@ static bool kick_pool(struct worker_pool *pool)
->         if (!need_more_worker(pool) || !worker)
->                 return false;
->
-> +       if (pool->flags & POOL_ATOMIC) {
-> +               if (pool->attrs->nice == HIGHPRI_NICE_LEVEL)
-> +                       tasklet_hi_schedule(&worker->atomic_tasklet);
-> +               else
-> +                       tasklet_schedule(&worker->atomic_tasklet);
-> +               return true;
-> +       }
-> +
->         p = worker->task;
->
->  #ifdef CONFIG_SMP
-> @@ -1663,8 +1695,15 @@ static bool pwq_tryinc_nr_active(struct pool_workqueue *pwq, bool fill)
->         lockdep_assert_held(&pool->lock);
->
->         if (!nna) {
-> -               /* per-cpu workqueue, pwq->nr_active is sufficient */
-> -               obtained = pwq->nr_active < READ_ONCE(wq->max_active);
-> +               /*
-> +                * An atomic workqueue always have a single worker per-cpu and
-> +                * doesn't impose additional max_active limit. For a per-cpu
-> +                * workqueue, checking pwq->nr_active is sufficient.
-> +                */
-> +               if (wq->flags & WQ_ATOMIC)
-> +                       obtained = true;
-> +               else
-> +                       obtained = pwq->nr_active < READ_ONCE(wq->max_active);
->                 goto out;
->         }
->
-> @@ -2591,27 +2630,31 @@ static struct worker *create_worker(struct worker_pool *pool)
->
->         worker->id = id;
->
-> -       if (pool->cpu >= 0)
-> -               snprintf(id_buf, sizeof(id_buf), "%d:%d%s", pool->cpu, id,
-> -                        pool->attrs->nice < 0  ? "H" : "");
-> -       else
-> -               snprintf(id_buf, sizeof(id_buf), "u%d:%d", pool->id, id);
-> -
-> -       worker->task = kthread_create_on_node(worker_thread, worker, pool->node,
-> -                                             "kworker/%s", id_buf);
-> -       if (IS_ERR(worker->task)) {
-> -               if (PTR_ERR(worker->task) == -EINTR) {
-> -                       pr_err("workqueue: Interrupted when creating a worker thread \"kworker/%s\"\n",
-> -                              id_buf);
-> -               } else {
-> -                       pr_err_once("workqueue: Failed to create a worker thread: %pe",
-> -                                   worker->task);
-> +       if (pool->flags & POOL_ATOMIC) {
-> +               tasklet_setup(&worker->atomic_tasklet, atomic_worker_taskletfn);
-> +       } else {
-> +               if (pool->cpu >= 0)
-> +                       snprintf(id_buf, sizeof(id_buf), "%d:%d%s", pool->cpu, id,
-> +                                pool->attrs->nice < 0  ? "H" : "");
-> +               else
-> +                       snprintf(id_buf, sizeof(id_buf), "u%d:%d", pool->id, id);
-> +
-> +               worker->task = kthread_create_on_node(worker_thread, worker,
-> +                                       pool->node, "kworker/%s", id_buf);
-> +               if (IS_ERR(worker->task)) {
-> +                       if (PTR_ERR(worker->task) == -EINTR) {
-> +                               pr_err("workqueue: Interrupted when creating a worker thread \"kworker/%s\"\n",
-> +                                      id_buf);
-> +                       } else {
-> +                               pr_err_once("workqueue: Failed to create a worker thread: %pe",
-> +                                           worker->task);
-> +                       }
-> +                       goto fail;
->                 }
-> -               goto fail;
-> -       }
->
-> -       set_user_nice(worker->task, pool->attrs->nice);
-> -       kthread_bind_mask(worker->task, pool_allowed_cpus(pool));
-> +               set_user_nice(worker->task, pool->attrs->nice);
-> +               kthread_bind_mask(worker->task, pool_allowed_cpus(pool));
-> +       }
->
->         /* successful, attach the worker to the pool */
->         worker_attach_to_pool(worker, pool);
-> @@ -2627,7 +2670,8 @@ static struct worker *create_worker(struct worker_pool *pool)
->          * check if not woken up soon. As kick_pool() is noop if @pool is empty,
->          * wake it up explicitly.
->          */
-> -       wake_up_process(worker->task);
-> +       if (worker->task)
-> +               wake_up_process(worker->task);
->
->         raw_spin_unlock_irq(&pool->lock);
->
-> @@ -3043,25 +3087,35 @@ __acquires(&pool->lock)
->         lock_map_release(&lockdep_map);
->         lock_map_release(&pwq->wq->lockdep_map);
->
-> -       if (unlikely(in_atomic() || lockdep_depth(current) > 0 ||
-> -                    rcu_preempt_depth() > 0)) {
-> -               pr_err("BUG: workqueue leaked lock or atomic: %s/0x%08x/%d/%d\n"
-> -                      "     last function: %ps\n",
-> -                      current->comm, preempt_count(), rcu_preempt_depth(),
-> -                      task_pid_nr(current), worker->current_func);
-> -               debug_show_held_locks(current);
-> -               dump_stack();
-> -       }
-> +       if (worker->task) {
-> +               if (unlikely(in_atomic() || lockdep_depth(current) > 0 ||
-> +                            rcu_preempt_depth() > 0)) {
-> +                       pr_err("BUG: workqueue leaked lock or atomic: %s/0x%08x/%d/%d\n"
-> +                              "     last function: %ps\n",
-> +                              current->comm, preempt_count(),
-> +                              rcu_preempt_depth(), task_pid_nr(current),
-> +                              worker->current_func);
-> +                       debug_show_held_locks(current);
-> +                       dump_stack();
-> +               }
->
-> -       /*
-> -        * The following prevents a kworker from hogging CPU on !PREEMPTION
-> -        * kernels, where a requeueing work item waiting for something to
-> -        * happen could deadlock with stop_machine as such work item could
-> -        * indefinitely requeue itself while all other CPUs are trapped in
-> -        * stop_machine. At the same time, report a quiescent RCU state so
-> -        * the same condition doesn't freeze RCU.
-> -        */
-> -       cond_resched();
-> +               /*
-> +                * The following prevents a kworker from hogging CPU on
-> +                * !PREEMPTION kernels, where a requeueing work item waiting for
-> +                * something to happen could deadlock with stop_machine as such
-> +                * work item could indefinitely requeue itself while all other
-> +                * CPUs are trapped in stop_machine. At the same time, report a
-> +                * quiescent RCU state so the same condition doesn't freeze RCU.
-> +                */
-> +               if (worker->task)
-> +                       cond_resched();
-> +       } else {
-> +               if (unlikely(lockdep_depth(current) > 0)) {
-> +                       pr_err("BUG: atomic workqueue leaked lock: last function: %ps\n",
-> +                              worker->current_func);
-> +                       debug_show_held_locks(current);
-> +               }
-> +       }
->
->         raw_spin_lock_irq(&pool->lock);
->
-> @@ -3344,6 +3398,44 @@ static int rescuer_thread(void *__rescuer)
->         goto repeat;
->  }
->
-> +void atomic_worker_taskletfn(struct tasklet_struct *tasklet)
-> +{
-> +       struct worker *worker =
-> +               container_of(tasklet, struct worker, atomic_tasklet);
-> +       struct worker_pool *pool = worker->pool;
-> +       int nr_restarts = ATOMIC_WORKER_RESTARTS;
-> +       unsigned long end = jiffies + ATOMIC_WORKER_JIFFIES;
-> +
-> +       raw_spin_lock_irq(&pool->lock);
-> +       worker_leave_idle(worker);
-> +
-> +       /*
-> +        * This function follows the structure of worker_thread(). See there for
-> +        * explanations on each step.
-> +        */
-> +       if (need_more_worker(pool))
-> +               goto done;
-> +
-> +       WARN_ON_ONCE(!list_empty(&worker->scheduled));
-> +       worker_clr_flags(worker, WORKER_PREP | WORKER_REBOUND);
-> +
-> +       do {
-> +               struct work_struct *work =
-> +                       list_first_entry(&pool->worklist,
-> +                                        struct work_struct, entry);
-> +
-> +               if (assign_work(work, worker, NULL))
-> +                       process_scheduled_works(worker);
-> +       } while (--nr_restarts && time_before(jiffies, end) &&
-> +                keep_working(pool));
-> +
-> +       worker_set_flags(worker, WORKER_PREP);
-> +done:
-> +       worker_enter_idle(worker);
-> +       kick_pool(pool);
-> +       raw_spin_unlock_irq(&pool->lock);
-> +}
-> +
->  /**
->   * check_flush_dependency - check for flush dependency sanity
->   * @target_wq: workqueue being flushed
-> @@ -5149,6 +5241,13 @@ struct workqueue_struct *alloc_workqueue(const char *fmt,
->         size_t wq_size;
->         int name_len;
->
-> +       if (flags & WQ_ATOMIC) {
-> +               if (WARN_ON_ONCE(flags & ~__WQ_ATOMIC_ALLOWS))
-> +                       return NULL;
-> +               if (WARN_ON_ONCE(max_active))
-> +                       return NULL;
-> +       }
-> +
->         /*
->          * Unbound && max_active == 1 used to imply ordered, which is no longer
->          * the case on many machines due to per-pod pools. While
-> @@ -7094,6 +7193,22 @@ static void __init restrict_unbound_cpumask(const char *name, const struct cpuma
->         cpumask_and(wq_unbound_cpumask, wq_unbound_cpumask, mask);
->  }
->
-> +static void __init init_cpu_worker_pool(struct worker_pool *pool, int cpu, int nice)
-> +{
-> +       BUG_ON(init_worker_pool(pool));
-> +       pool->cpu = cpu;
-> +       cpumask_copy(pool->attrs->cpumask, cpumask_of(cpu));
-> +       cpumask_copy(pool->attrs->__pod_cpumask, cpumask_of(cpu));
-> +       pool->attrs->nice = nice;
-> +       pool->attrs->affn_strict = true;
-> +       pool->node = cpu_to_node(cpu);
-> +
-> +       /* alloc pool ID */
-> +       mutex_lock(&wq_pool_mutex);
-> +       BUG_ON(worker_pool_assign_id(pool));
-> +       mutex_unlock(&wq_pool_mutex);
-> +}
-> +
->  /**
->   * workqueue_init_early - early init for workqueue subsystem
->   *
-> @@ -7149,25 +7264,19 @@ void __init workqueue_init_early(void)
->         pt->pod_node[0] = NUMA_NO_NODE;
->         pt->cpu_pod[0] = 0;
->
-> -       /* initialize CPU pools */
-> +       /* initialize atomic and CPU pools */
->         for_each_possible_cpu(cpu) {
->                 struct worker_pool *pool;
->
->                 i = 0;
-> -               for_each_cpu_worker_pool(pool, cpu) {
-> -                       BUG_ON(init_worker_pool(pool));
-> -                       pool->cpu = cpu;
-> -                       cpumask_copy(pool->attrs->cpumask, cpumask_of(cpu));
-> -                       cpumask_copy(pool->attrs->__pod_cpumask, cpumask_of(cpu));
-> -                       pool->attrs->nice = std_nice[i++];
-> -                       pool->attrs->affn_strict = true;
-> -                       pool->node = cpu_to_node(cpu);
-> -
-> -                       /* alloc pool ID */
-> -                       mutex_lock(&wq_pool_mutex);
-> -                       BUG_ON(worker_pool_assign_id(pool));
-> -                       mutex_unlock(&wq_pool_mutex);
-> +               for_each_atomic_worker_pool(pool, cpu) {
-> +                       init_cpu_worker_pool(pool, cpu, std_nice[i++]);
-> +                       pool->flags |= POOL_ATOMIC;
->                 }
-> +
-> +               i = 0;
-> +               for_each_cpu_worker_pool(pool, cpu)
-> +                       init_cpu_worker_pool(pool, cpu, std_nice[i++]);
->         }
->
->         /* create default unbound and ordered wq attrs */
-> @@ -7200,10 +7309,14 @@ void __init workqueue_init_early(void)
->         system_freezable_power_efficient_wq = alloc_workqueue("events_freezable_pwr_efficient",
->                                               WQ_FREEZABLE | WQ_POWER_EFFICIENT,
->                                               0);
-> +       system_atomic_wq = alloc_workqueue("system_atomic_wq", WQ_ATOMIC, 0);
-> +       system_atomic_highpri_wq = alloc_workqueue("system_atomic_highpri_wq",
-> +                                                  WQ_ATOMIC | WQ_HIGHPRI, 0);
->         BUG_ON(!system_wq || !system_highpri_wq || !system_long_wq ||
->                !system_unbound_wq || !system_freezable_wq ||
->                !system_power_efficient_wq ||
-> -              !system_freezable_power_efficient_wq);
-> +              !system_freezable_power_efficient_wq ||
-> +              !system_atomic_wq || !system_atomic_highpri_wq);
->  }
->
->  static void __init wq_cpu_intensive_thresh_init(void)
-> @@ -7269,9 +7382,10 @@ void __init workqueue_init(void)
->          * up. Also, create a rescuer for workqueues that requested it.
->          */
->         for_each_possible_cpu(cpu) {
-> -               for_each_cpu_worker_pool(pool, cpu) {
-> +               for_each_atomic_worker_pool(pool, cpu)
-> +                       pool->node = cpu_to_node(cpu);
-> +               for_each_cpu_worker_pool(pool, cpu)
->                         pool->node = cpu_to_node(cpu);
-> -               }
->         }
->
->         list_for_each_entry(wq, &workqueues, list) {
-> @@ -7284,6 +7398,8 @@ void __init workqueue_init(void)
->
->         /* create the initial workers */
->         for_each_online_cpu(cpu) {
-> +               for_each_atomic_worker_pool(pool, cpu)
-> +                       BUG_ON(!create_worker(pool));
->                 for_each_cpu_worker_pool(pool, cpu) {
->                         pool->flags &= ~POOL_DISASSOCIATED;
->                         BUG_ON(!create_worker(pool));
-> diff --git a/kernel/workqueue_internal.h b/kernel/workqueue_internal.h
-> index f6275944ada7..f65f204f38ea 100644
-> --- a/kernel/workqueue_internal.h
-> +++ b/kernel/workqueue_internal.h
-> @@ -10,6 +10,7 @@
->
->  #include <linux/workqueue.h>
->  #include <linux/kthread.h>
-> +#include <linux/interrupt.h>
->  #include <linux/preempt.h>
->
->  struct worker_pool;
-> @@ -42,6 +43,8 @@ struct worker {
->         struct list_head        scheduled;      /* L: scheduled works */
->
->         struct task_struct      *task;          /* I: worker task */
-> +       struct tasklet_struct   atomic_tasklet; /* I: tasklet for atomic pool */
-> +
->         struct worker_pool      *pool;          /* A: the associated pool */
->                                                 /* L: for rescuers */
->         struct list_head        node;           /* A: anchored at pool->workers */
-> --
-> 2.43.0
->
->
+With patch 1-4, the above test won't hang anymore, however, the test
+will still fail and complain that ext4 is corrupted;
 
+Second regression related to frozen sync thread:
+
+Noted that for raid456, if reshape is interrupted, then call
+"pers->start_reshape" will corrupt data. And dm-raid rely on md_do_sync()
+doesn't set MD_RECOVERY_DONE so that new sync_thread won't be registered,
+and patch 3 just break this.
+
+ - Patch 5-6 fix this problem by interrupting reshape and frozen
+ sync_thread in dm_suspend(), then unfrozen and continue reshape in
+dm_resume(). It's verified that dm-raid tests won't complain that
+ext4 is corrupted anymore.
+ - Patch 7 fix the problem that raid_message() call
+ md_reap_sync_thread() directly, without holding 'reconfig_mutex'.
+
+Last regression related to dm-raid456 IO concurrent with reshape:
+
+For raid456, if reshape is still in progress, then IO across reshape
+position will wait for reshape to make progress. However, for dm-raid,
+in following cases reshape will never make progress hence IO will hang:
+
+1) the array is read-only;
+2) MD_RECOVERY_WAIT is set;
+3) MD_RECOVERY_FROZEN is set;
+
+After commit c467e97f079f ("md/raid6: use valid sector values to determine
+if an I/O should wait on the reshape") fix the problem that IO across
+reshape position doesn't wait for reshape, the dm-raid test
+shell/lvconvert-raid-reshape.sh start to hang at raid5_make_request().
+
+For md/raid, the problem doesn't exist because:
+
+1) If array is read-only, it can switch to read-write by ioctl/sysfs;
+2) md/raid never set MD_RECOVERY_WAIT;
+3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
+   'reconfig_mutex' anymore, it can be cleared and reshape can continue by
+   sysfs api 'sync_action'.
+
+However, I'm not sure yet how to avoid the problem in dm-raid yet.
+
+ - patch 9-11 fix this problem by detecting the above 3 cases in
+ dm_suspend(), and fail those IO directly.
+
+If user really meet the IO error, then it means they're reading the wrong
+data before c467e97f079f. And it's safe to read/write the array after
+reshape make progress successfully.
+
+There are also some other minor changes: patch 8 and patch 12;
+
+Yu Kuai (12):
+  md: don't ignore suspended array in md_check_recovery()
+  md: don't ignore read-only array in md_check_recovery()
+  md: make sure md_do_sync() will set MD_RECOVERY_DONE
+  md: don't register sync_thread for reshape directly
+  md: export helpers to stop sync_thread
+  dm-raid: really frozen sync_thread during suspend
+  md/dm-raid: don't call md_reap_sync_thread() directly
+  dm-raid: remove mddev_suspend/resume()
+  dm-raid: add a new helper prepare_suspend() in md_personality
+  md: export helper md_is_rdwr()
+  md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+    reshape
+  dm-raid: fix lockdep waring in "pers->hot_add_disk"
+
+ drivers/md/dm-raid.c | 78 ++++++++++++++++++++++++-----------
+ drivers/md/md.c      | 96 ++++++++++++++++++++++++++++----------------
+ drivers/md/md.h      | 16 ++++++++
+ drivers/md/raid10.c  | 16 +-------
+ drivers/md/raid5.c   | 61 +++++++++++++++-------------
+ 5 files changed, 167 insertions(+), 100 deletions(-)
 
 -- 
-       - Allen
+2.39.2
+
