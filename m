@@ -1,27 +1,27 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7D411DFEB
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 07:52:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B91892136A
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 07:52:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706341954; cv=none; b=j/OYH5KS5xgmHnYRb19O0AmNWU+KnfjO+FDfSzJFmrHOnW26VUAzjIdvb4mEdrYo+pcNisvbrWyug1/qK7KootvKlp5kS89DTFsEFdYZbdMFoSVIYSJg+5kijDFfXfrdfHmh4TK2KZqBL5dCSiG/MX1HgbbnIsQomyDuOL+BEsc=
+	t=1706341955; cv=none; b=huIjCAy3Sz5i5RWvmpRDVrh/5TQtZWYn1j9YDNzwwV7BzDWJJbgv+Eo/zNz68TrP8QMEAd/j7b38VG9MVosmbfFl2wPT6YEYn4/KU4ZaBQhWqfrijfhnIb/+ddMdk9VvzKSQbzVJABZu9CgfXGCWnNSCL7hfniaayEtYf4/ah0o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706341954; c=relaxed/simple;
-	bh=pAubPNXHPlM/0y/n8diT6F9qbOAS9X4ipmJVWOgC2Tk=;
+	s=arc-20240116; t=1706341955; c=relaxed/simple;
+	bh=QXQ0+F8evE2D3KqXW332EFOwbheuBZ0/b6C8srK6I/w=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=g1ojw/fKQIpUL1U98y2AgZlnCDFWpW17OndOGIJVvVa5eUoPyL17IcWH0Ga9qPTqQFJQ9iv00oNv59pRtD0EmlQdjkeLPhZAkJ/hH4zkiKbbDM1Nv5V1Ri2RdH4bo9kXNYrIWSmNzYhdJeNptV11Rh2OJ5OSfCEetadKP9ZjJ3I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+	 MIME-Version; b=dq6mPefrNblmFfB78+lrbtcr8h+pkl/1PxSmDeHFWPebUTXPsJH3HVivDa6iUN+ILAdfQ/DZkLL8dnQM/rMuLbbeLbYBTXzU5FPzKlGGbJgtHPYMpWcdorXclP8Cx1ZLTNHI3GnLrT949Q2NjsrjlKc+RDfiUCBzf07mtSQU2Z0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TMRc80Fwvz4f3lfF
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 15:52:24 +0800 (CST)
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TMRcC0QBjz4f3jsP
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 15:52:27 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 66DBB1A0171
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 15:52:30 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 1349E1A0172
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jan 2024 15:52:31 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgDHlxAetrRlWjeACA--.31980S12;
+	by APP1 (Coremail) with SMTP id cCh0CgDHlxAetrRlWjeACA--.31980S13;
 	Sat, 27 Jan 2024 15:52:30 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: mpatocka@redhat.com,
@@ -41,9 +41,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH v3 08/12] dm-raid: remove mddev_suspend/resume()
-Date: Sat, 27 Jan 2024 15:47:50 +0800
-Message-Id: <20240127074754.2380890-9-yukuai1@huaweicloud.com>
+Subject: [PATCH v3 09/12] dm-raid: add a new helper prepare_suspend() in md_personality
+Date: Sat, 27 Jan 2024 15:47:51 +0800
+Message-Id: <20240127074754.2380890-10-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240127074754.2380890-1-yukuai1@huaweicloud.com>
 References: <20240127074754.2380890-1-yukuai1@huaweicloud.com>
@@ -54,10 +54,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgDHlxAetrRlWjeACA--.31980S12
-X-Coremail-Antispam: 1UD129KBjvJXoW7CF4fCw4fWr1fCr4kZw4fKrg_yoW8XFykpr
-	4rWayYvw48JrWjq3WDAan2gFy3t3ZYgrWjyrZ3Gas3u3W3Kw1Sgry8tw4jqFWqyFWxJ3W5
-	Aa1Yyw4kuryUKrJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:cCh0CgDHlxAetrRlWjeACA--.31980S13
+X-Coremail-Antispam: 1UD129KBjvJXoW7Kr47Kr4xtrykGw13uF4fGrg_yoW8Wr48pa
+	yIqay5Ar4UJa9Iqw1DXF4kZa4aq3ZIgrWqyryfJayfZa4Igrn3W3WFqayDZrZ0kFy3CF13
+	Aa1Ut3ykuF109rDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUPI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -76,50 +76,49 @@ X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-dm_suspend() already make sure that no new IO can be issued and will
-wait for all dispatched IO to be done. There is no need to call
-mddev_suspend() to make sure that again.
+There are no functional changes for now, prepare to fix a deadlock for
+dm-raid456.
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/dm-raid.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ drivers/md/dm-raid.c | 10 +++++++---
+ drivers/md/md.h      |  1 +
+ 2 files changed, 8 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 6b6c011d9f69..f1637cf88559 100644
+index f1637cf88559..ede2e4574ee5 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -3241,7 +3241,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	rs->md.in_sync = 1;
- 
- 	/* Has to be held on running the array */
--	mddev_suspend_and_lock_nointr(&rs->md);
-+	mddev_lock_nointr(&rs->md);
- 
- 	/* Keep array frozen until resume. */
- 	md_frozen_sync_thread(&rs->md);
-@@ -3825,11 +3825,9 @@ static void raid_postsuspend(struct dm_target *ti)
+@@ -3806,10 +3806,14 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ static void raid_presuspend(struct dm_target *ti)
  {
  	struct raid_set *rs = ti->private;
++	struct mddev *mddev = &rs->md;
  
--	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
-+	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
- 		/* Writes have to be stopped before suspending to avoid deadlocks. */
- 		md_stop_writes(&rs->md);
--		mddev_suspend(&rs->md, false);
--	}
+-	mddev_lock_nointr(&rs->md);
+-	md_frozen_sync_thread(&rs->md);
+-	mddev_unlock(&rs->md);
++	mddev_lock_nointr(mddev);
++	md_frozen_sync_thread(mddev);
++	mddev_unlock(mddev);
++
++	if (mddev->pers && mddev->pers->prepare_suspend)
++		mddev->pers->prepare_suspend(mddev);
  }
  
- static void attempt_restore_of_faulty_devices(struct raid_set *rs)
-@@ -4085,7 +4083,7 @@ static void raid_resume(struct dm_target *ti)
- 		mddev->ro = 0;
- 		mddev->in_sync = 0;
- 		md_unfrozen_sync_thread(mddev);
--		mddev_unlock_and_resume(mddev);
-+		mddev_unlock(mddev);
- 	}
- }
- 
+ static void raid_presuspend_undo(struct dm_target *ti)
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 437ab70ce79b..29b476ff3b9f 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -617,6 +617,7 @@ struct md_personality
+ 	int (*start_reshape) (struct mddev *mddev);
+ 	void (*finish_reshape) (struct mddev *mddev);
+ 	void (*update_reshape_pos) (struct mddev *mddev);
++	void (*prepare_suspend) (struct mddev *mddev);
+ 	/* quiesce suspends or resumes internal processing.
+ 	 * 1 - stop new actions and wait for action io to complete
+ 	 * 0 - return to normal behaviour
 -- 
 2.39.2
 
