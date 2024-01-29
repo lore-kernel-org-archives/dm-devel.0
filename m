@@ -1,77 +1,128 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mgamail.intel.com (mgamail.intel.com [192.55.52.93])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 109F153E09;
-	Mon, 29 Jan 2024 23:29:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3DA7853803;
+	Mon, 29 Jan 2024 23:50:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.55.52.93
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706570948; cv=none; b=UNIYTUobrs/YwKh8gvX1BIuLKElGyYEX9vdRyF1/rzayvFT4yGBrdavNhaE0uquPUnvUZVFq6o1ucryTRCEIaOcNMx7FQFM1W9LhPEYWx4AKyaEtaB91N51xIaedIag6mJ8UxsqTcaNfgrZEmqQr8N9MxZvafGSTh8l3Ans87U0=
+	t=1706572223; cv=none; b=RVqr59/6Mc9vbBFjkL+npH9i7kJsWbjarhR/G/ixFfmcAAIgcpzbXy4O15Q/DTgm0n4t84Y4ck3WA62+KCsp9PKr02rLe6PyjFj6WXZqWhkJt+aJpFzAT8OpkV0CiPUyDqxIcLzC41rmu2J68saMTKPSUlLG1sWM+HYJhQvLmz0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706570948; c=relaxed/simple;
-	bh=ndf2vLbvZIQYQNE9pREjH50tsvV7CWwMiqHG6sTVNIc=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=bR6dpmPdpS6CoI5K3w8U6gJmtP7cJtroLRgJfJ8rvPPO6lsKpVzrTf1tHSZ1BzXObmWsSj94WSu8Ndby3+k7++EQTnYcsQc5lIp9B5dSFOkBiXSbjPuT+6KsVyHr2GP4V1z3NHo2spoY1QDr9RLZ0A1Josy7sZWqGUOT0VMuZH4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=JpBD0pkA; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1706572223; c=relaxed/simple;
+	bh=RytXXKcv0IxFeJkn4nM5nL9FjqFAoyustJPJPowNz04=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=D1wvOHNDnQ+OorrXkZdVfYffmhsva8X8qlnsN27THrXy+DFteOpgTaXzHn0k6/gKbcT7/fcpIInhhu1LVArGN2Po8o+H++zEPyCpW7DAlSt+r4I3kJISibtZMHPJWAppfCI9Mi8FgZXuorlyqv4eIUMrSlouc/9kRKClUyggo2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=Hr8qDwWd; arc=none smtp.client-ip=192.55.52.93
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="JpBD0pkA"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E688AC433C7;
-	Mon, 29 Jan 2024 23:29:04 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1706570947;
-	bh=ndf2vLbvZIQYQNE9pREjH50tsvV7CWwMiqHG6sTVNIc=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=JpBD0pkApJsK1Lg9ekUAGkwlA0Sbgqlz2H8WvXFr8iKhHM0b0IKbSZ6wD1tcoj01C
-	 DAovaEmy1aQXXzXMi2eQqUicPt4RfmG+am5adv7Qi73Q/sVjaPYxdHLM/Rpp9YOQON
-	 YTdmRNVd6ARkl6PESrOQRGLy3l7DrYzuvUwDAYFGOee7U+d69xlAmHUwcC6ekt+ocA
-	 V3sVhjRDUyF3KKAXV5sARfdzPALFpWl/tHwOykZZOkrIIIvezVsidD0NjebjuOmDUV
-	 +my52WioNda7fDaQyJSmIRUSaQKuHEje67Ngc6C13QyBYk96LdB9iPoJR7+jxg8N7w
-	 bB/k4NsdipxfQ==
-Message-ID: <100af933-2253-45df-9045-5bd8e273df12@kernel.org>
-Date: Tue, 30 Jan 2024 08:29:04 +0900
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="Hr8qDwWd"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1706572221; x=1738108221;
+  h=date:from:to:cc:subject:message-id:mime-version;
+  bh=RytXXKcv0IxFeJkn4nM5nL9FjqFAoyustJPJPowNz04=;
+  b=Hr8qDwWdWwwUq+M1iogKmpu4KnjIGp5BzIIyg5pfwgW7jBmkLNey6EPn
+   KAE5AHJHRQslY22Bbpv6PqbZ68rrzLioBNWgTI43dELXxAX45uaz3cZS+
+   uh4gXZqU3Wl9CgS8lgyJ7U+uVhC8W6OdkWcR/ZKpkw3LG5oI7E2G1euSt
+   QpPg5DxysDXPeTF55nkugd+rgaHGkmD0Gut++vTaUIox1flF6XKJ6gsEp
+   5ZBrYqFwGC3unjTTiIpb2uFeOtp2aGvteR2+xq0qWqc2HOsiNGxSgXM9q
+   zrdyXABMZA8d4yBeknX05NfD2WImcQnT5SJf7w3NmetMhlNamJ1YfTWiy
+   w==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10968"; a="400260448"
+X-IronPort-AV: E=Sophos;i="6.05,227,1701158400"; 
+   d="scan'208";a="400260448"
+Received: from orsmga003.jf.intel.com ([10.7.209.27])
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 29 Jan 2024 15:50:20 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10968"; a="737576914"
+X-IronPort-AV: E=Sophos;i="6.05,227,1701158400"; 
+   d="scan'208";a="737576914"
+Received: from lkp-server01.sh.intel.com (HELO 370188f8dc87) ([10.239.97.150])
+  by orsmga003.jf.intel.com with ESMTP; 29 Jan 2024 15:50:18 -0800
+Received: from kbuild by 370188f8dc87 with local (Exim 4.96)
+	(envelope-from <lkp@intel.com>)
+	id 1rUbOJ-0004iY-2X;
+	Mon, 29 Jan 2024 23:50:15 +0000
+Date: Tue, 30 Jan 2024 07:49:29 +0800
+From: kernel test robot <lkp@intel.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: oe-kbuild-all@lists.linux.dev, dm-devel@lists.linux.dev
+Subject: [device-mapper-dm:dm-vdo-wip 73/78]
+ drivers/md/dm-vdo/constants.h:100:28: warning:
+ 'MINIMUM_VDO_SLAB_JOURNAL_BLOCKS' defined but not used
+Message-ID: <202401300735.kFp2omKb-lkp@intel.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 5/5] block: remove gfp_flags from blkdev_zone_mgmt
-Content-Language: en-US
-To: Johannes Thumshirn <johannes.thumshirn@wdc.com>,
- Naohiro Aota <naohiro.aota@wdc.com>, Johannes Thumshirn <jth@kernel.org>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
- Chris Mason <clm@fb.com>, Josef Bacik <josef@toxicpanda.com>,
- David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>,
- Chao Yu <chao@kernel.org>, Jens Axboe <axboe@kernel.dk>,
- Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
- Chaitanya Kulkarni <kch@nvidia.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
- linux-block@vger.kernel.org, linux-nvme@lists.infradead.org
-References: <20240128-zonefs_nofs-v3-0-ae3b7c8def61@wdc.com>
- <20240128-zonefs_nofs-v3-5-ae3b7c8def61@wdc.com>
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <20240128-zonefs_nofs-v3-5-ae3b7c8def61@wdc.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On 1/29/24 16:52, Johannes Thumshirn wrote:
-> Now that all callers pass in GFP_KERNEL to blkdev_zone_mgmt() and use
-> memalloc_no{io,fs}_{save,restore}() to define the allocation scope, we can
-> drop the gfp_mask parameter from blkdev_zone_mgmt() as well as
-> blkdev_zone_reset_all() and blkdev_zone_reset_all_emulated().
-> 
-> Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-vdo-wip
+head:   4047b38a6b9963fea70002e5547dae1cb02914f7
+commit: 6e748cc6e193caaada6a4350a91882b5dbaaa635 [73/78] dm vdo: fix sparse warnings about missing statics
+config: s390-allmodconfig (https://download.01.org/0day-ci/archive/20240130/202401300735.kFp2omKb-lkp@intel.com/config)
+compiler: s390-linux-gcc (GCC) 13.2.0
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20240130/202401300735.kFp2omKb-lkp@intel.com/reproduce)
 
-Looks good to me.
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202401300735.kFp2omKb-lkp@intel.com/
 
-Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
+All warnings (new ones prefixed by >>):
 
-But let me check zonefs (patch 1).
+   In file included from drivers/md/dm-vdo/encodings.h:17,
+                    from drivers/md/dm-vdo/vdo.h:18,
+                    from drivers/md/dm-vdo/action-manager.c:15:
+>> drivers/md/dm-vdo/constants.h:100:28: warning: 'MINIMUM_VDO_SLAB_JOURNAL_BLOCKS' defined but not used [-Wunused-const-variable=]
+     100 | static const block_count_t MINIMUM_VDO_SLAB_JOURNAL_BLOCKS = 2;
+         |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+>> drivers/md/dm-vdo/constants.h:97:28: warning: 'MAXIMUM_VDO_PHYSICAL_BLOCKS' defined but not used [-Wunused-const-variable=]
+      97 | static const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
+         |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+>> drivers/md/dm-vdo/constants.h:94:28: warning: 'MAXIMUM_VDO_LOGICAL_BLOCKS' defined but not used [-Wunused-const-variable=]
+      94 | static const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
+         |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~
+--
+   In file included from drivers/md/dm-vdo/encodings.h:17,
+                    from drivers/md/dm-vdo/vdo.h:18,
+                    from drivers/md/dm-vdo/vdo.c:30:
+>> drivers/md/dm-vdo/constants.h:100:28: warning: 'MINIMUM_VDO_SLAB_JOURNAL_BLOCKS' defined but not used [-Wunused-const-variable=]
+     100 | static const block_count_t MINIMUM_VDO_SLAB_JOURNAL_BLOCKS = 2;
+         |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+>> drivers/md/dm-vdo/constants.h:97:28: warning: 'MAXIMUM_VDO_PHYSICAL_BLOCKS' defined but not used [-Wunused-const-variable=]
+      97 | static const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
+         |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+>> drivers/md/dm-vdo/constants.h:94:28: warning: 'MAXIMUM_VDO_LOGICAL_BLOCKS' defined but not used [-Wunused-const-variable=]
+      94 | static const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
+         |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~
+   drivers/md/dm-vdo/vdo.c: In function 'vdo_make':
+   drivers/md/dm-vdo/vdo.c:566:19: warning: '%s' directive output may be truncated writing up to 55 bytes into a region of size 16 [-Wformat-truncation=]
+     566 |                  "%s%u", MODULE_NAME, instance);
+         |                   ^~
+   drivers/md/dm-vdo/vdo.c:565:9: note: 'snprintf' output between 2 and 66 bytes into a destination of size 16
+     565 |         snprintf(vdo->thread_name_prefix, sizeof(vdo->thread_name_prefix),
+         |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     566 |                  "%s%u", MODULE_NAME, instance);
+         |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+vim +/MINIMUM_VDO_SLAB_JOURNAL_BLOCKS +100 drivers/md/dm-vdo/constants.h
+
+    92	
+    93	/** The maximum logical space is 4 petabytes, which is 1 terablock. */
+  > 94	static const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
+    95	
+    96	/** The maximum physical space is 256 terabytes, which is 64 gigablocks. */
+  > 97	static const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
+    98	
+    99	/** unit test minimum */
+ > 100	static const block_count_t MINIMUM_VDO_SLAB_JOURNAL_BLOCKS = 2;
+   101	
 
 -- 
-Damien Le Moal
-Western Digital Research
-
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
