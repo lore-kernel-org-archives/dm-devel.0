@@ -1,109 +1,236 @@
-Received: from mail-yw1-f172.google.com (mail-yw1-f172.google.com [209.85.128.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 544DB364DC
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 02:14:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFCF5364A5
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 02:23:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706580854; cv=none; b=rBJaBkdZVDwOvZQZ3WkFlGzrbiq5um1td7QWaPkoapMZcCmbOqtRc8x5QlzPMFPSGYUXQcF4yHEUAIC7iMIUoikIqYe1qeLb7A2RBReIlsS9jUQi7nv6TQsBCsJZw7LfrXlHxeMmUlqRLEmjw9rX4FUWcBiCYE5LwfuqiXhnqEg=
+	t=1706581386; cv=none; b=N5wznZtiV2q8AhaBXRovY/+cUU1qtpWnb9UV1EVPdbcHk+KaEK5QhgoRZdMPbBhYi+cBqXX8NX0tAIOqiKTfTgYqd91bKVcfZQQD8p92HYdEt3uPblZpTvRwk5jrRM88wD7vuZR9KkT4Np/nD+Pl/CVMVIBVI/Ok85peZ/9i7CI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706580854; c=relaxed/simple;
-	bh=IwEanimwTJYmtMfF9RyN9E4q0NxtOqmII2D84OiSFsk=;
-	h=Message-ID:Date:MIME-Version:To:Cc:From:Subject:Content-Type; b=SD4QqpeR6HSvNzHUYIiTeMF22sNgip3DCJxDEE3Iq5GmIfxzmoNt+F5RfkRc6zzMvYxLWnfFbRcL4Vtfd0C31Hnx0d3mO6IqOlbXe4Ww8VXkbD8fe3Y+pLdoNZg/4PnAGhBc5GM1WpoHhwMByj8d+kJOdGOhhJ8KplGwNH4RLxs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=m1wVSrOF; arc=none smtp.client-ip=209.85.128.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="m1wVSrOF"
-Received: by mail-yw1-f172.google.com with SMTP id 00721157ae682-602c91a76b1so44230687b3.2
-        for <dm-devel@lists.linux.dev>; Mon, 29 Jan 2024 18:14:12 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706580851; x=1707185651; darn=lists.linux.dev;
-        h=content-transfer-encoding:subject:from:cc:content-language:to
-         :user-agent:mime-version:date:message-id:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=e2SupoQE1x02Ku5Ly/mo1tWoqHbGHXYcCbk4MN0N1NQ=;
-        b=m1wVSrOFBi9M1AgEVXEwOVbaQspnIbhSYNS7HJBsLmmyNhqxkP/9u2Pk9oivJ7uZQg
-         HH5v2TxbqIw+rDuI6Cop3oJPoIXy8ZNMFDbMEVIUu4kNqMEX7R2l7BN3GntUq4ViIMLw
-         LcKaOiFmlDDz4rK9kiXFfuik/E/J/vJ2wnLlMpT8nQzJC1rYsYg4kDiPj+kP2blbP7uu
-         pZoLwdYvWZ0sMd6DWP8sYvY1ycYUNCmB2MP3RYajXUaWFSq8B/jkMhHPwrIlTo0jVXv5
-         1pFUaGskqubLLOYQflmoqeh4V695Ct9s5atjCBcLLopjDSmyIG+9h44dHVPPYVRXtruB
-         jN+Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706580851; x=1707185651;
-        h=content-transfer-encoding:subject:from:cc:content-language:to
-         :user-agent:mime-version:date:message-id:x-gm-message-state:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=e2SupoQE1x02Ku5Ly/mo1tWoqHbGHXYcCbk4MN0N1NQ=;
-        b=s/lxUS5G7mc+sz0UbGQViVCtH2YHQkWQFBm787pJKciXNB/H2yxzNMk/k2ZkswQcRS
-         dFR6T5blP98l9aqFLUsg2YAZ4/O+JoxDxoPLKpxUXgArZ8ovbEhcRRgCyedUk3jNmegP
-         kBY3h2BMCUAdRA64K1aIr+w3yPN5HE1to7+soM4UxGh59/gmwDon9zNlQ3pQR79qBloB
-         NPbtEv0J5mm7TE021Y2i8oM7GhjVHuyFE8hs2m88HkqTVhr4M/o9yPKUNCBZ4RrgHmGz
-         Nj1+yFyS4xcn9SPs2IZeisc2dGS5VY28uUwbDU1Z8DOFI13rotCc1oZe+KE7ixpsbFi2
-         Yu1Q==
-X-Gm-Message-State: AOJu0YwSPxXNBDcfEBdpm1JJGT82mHuOUP26ZWsqq4LWK95VRuD/hywx
-	DwOJ530l+YK+YaEHV9TtmOyTxtFDVEvEQv8Zwt/t862MekrMY/6vS66J8k5tw2uRjg==
-X-Google-Smtp-Source: AGHT+IEH6HrbRm2hcFFWV0x1WrnhrHn5xO1Kv+DxqZMwqoGP9M1NDyuQALiJx8gGAQ0HMmJooopoLQ==
-X-Received: by 2002:a81:af4e:0:b0:603:aa89:65b3 with SMTP id x14-20020a81af4e000000b00603aa8965b3mr6191088ywj.74.1706580851008;
-        Mon, 29 Jan 2024 18:14:11 -0800 (PST)
-Received: from [10.56.180.189] (184-057-057-014.res.spectrum.com. [184.57.57.14])
-        by smtp.gmail.com with ESMTPSA id br7-20020a05620a460700b00783f0df60c0sm2350146qkb.120.2024.01.29.18.14.10
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 29 Jan 2024 18:14:10 -0800 (PST)
-Message-ID: <8213bdcd-2b2f-48c9-86da-ce3feeb37774@gmail.com>
-Date: Mon, 29 Jan 2024 21:14:09 -0500
+	s=arc-20240116; t=1706581386; c=relaxed/simple;
+	bh=18vszlirQyD8TnYTZtJHEle4cUSQhFGzUuElgIUgXY0=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=RW2p0Su3xUuc0q1/zfa/ueY+D9hIrLpQTbSk4uK5Z3APwFe//9Yk91OWh6TJ3D0gA/eAmUkjvod6P+Gi64YuiRQHwWLJarLQbhIDh+5xkW1YOxahf+kUOg0bdAcaKN2XE9ScR3iVM1S3sA0kx1tojXiD7Hye/Hm7Ofp98leHGuw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TP88d0TDlz4f3k6R
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 10:22:57 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 933801A01E9
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 10:22:59 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP1 (Coremail) with SMTP id cCh0CgBHGBGBXbhlrAigCQ--.55484S4;
+	Tue, 30 Jan 2024 10:22:59 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: mpatocka@redhat.com,
+	heinzm@redhat.com,
+	xni@redhat.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	dm-devel@lists.linux.dev,
+	song@kernel.org,
+	yukuai3@huawei.com,
+	jbrassow@f14.redhat.com,
+	neilb@suse.de,
+	shli@fb.com,
+	akpm@osdl.org
+Cc: linux-kernel@vger.kernel.org,
+	linux-raid@vger.kernel.org,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH v4 00/14] dm-raid: fix v6.7 regressions
+Date: Tue, 30 Jan 2024 10:18:29 +0800
+Message-Id: <20240130021843.3608859-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-To: dm-devel@lists.linux.dev
-Content-Language: en-US
-Cc: ignat@cloudflare.com
-From: Adrian Vovk <adrianvovk@gmail.com>
-Subject: dm-crypt: Automatically enable no_{read,write}_workqueue on SSDs
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgBHGBGBXbhlrAigCQ--.55484S4
+X-Coremail-Antispam: 1UD129KBjvJXoW3WF4UAF1xZw47XF1fCF1kAFb_yoWxCw45pa
+	y3Ga4aqrW8CFn2grZxJ3W8XFy5KFyfJa98Ca43K3y8A345ta4IyrZ5Ka15Wa90kry3Aw4U
+	JrWUta45uF1jyFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvF14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4
+	xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r4a6rW5
+	MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I
+	0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWrJr0_WFyUJwCI42IY6I8E87Iv67AK
+	xVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvj
+	fUOmhFUUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Hello all,
+From: Yu Kuai <yukuai3@huawei.com>
 
-I am working as a contractor for the GNOME Foundation to integrate 
-systemd-homed into the GNOME desktop and related components, as part of 
-a grant by the Sovereign Tech Fund[1]. systemd-homed is a component of 
-systemd that, among other things, puts each user's home directory into a 
-separate LUKS volume so that each user can have their data encrypted 
-independently.
+Changes in v4:
+ - add patch 10 to fix a raid456 deadlock(for both md/raid and dm-raid);
+ - add patch 13 to wait for inflight IO completion while removing dm
+ device;
 
-I have recently come across a blog post from Cloudflare[2] that details 
-a significant (~2x) improvement to throughput and latency that they were 
-able to achieve on dm-crypt devices by implementing[3] and using the 
-no_read_workqueue and no_write_workqueue performance flags. These flags 
-bypass queuing that was in place to optimize for access patterns of 
-spinning media and work around limitations of kernel subsystems at the time.
+Changes in v3:
+ - fix a problem in patch 5;
+ - add patch 12;
 
-Thus, to me it looks like these flags should default to on for SSDs 
-(i.e. /sys/block/<name>/queue/rotational is 0). Such a distinction based 
-on the type of storage media has precedent (i.e. selecting the `none` IO 
-scheduler for SSDs to improve throughput). So, I was going to change 
-systemd to turn these flags on when it detected an SSD, but I spoke to 
-the maintainers first and they suggested that I try to implement this in 
-cryptsetup instead. So I reached out there[4], and they suggested that I 
-should write to you, and that the kernel should set optimal defaults in 
-cases like this. They also mentioned recalling some hardware 
-configurations where these flags shouldn't be on.
+Changes in v2:
+ - replace revert changes for dm-raid with real fixes;
+ - fix dm-raid5 deadlock that exist for a long time, this deadlock is
+ triggered because another problem is fixed in raid5, and instead of
+ deadlock, user will read wrong data before v6.7, patch 9-11;
 
-Is there some reason these two flags aren't on by default for SSDs?
+First regression related to stop sync thread:
 
-Thanks,
-Adrian
+The lifetime of sync_thread is designed as following:
 
-[1]: 
-https://foundation.gnome.org/2023/11/09/gnome-recognized-as-public-interest-infrastructure/ 
+1) Decide want to start sync_thread, set MD_RECOVERY_NEEDED, and wake up
+daemon thread;
+2) Daemon thread detect that MD_RECOVERY_NEEDED is set, then set
+MD_RECOVERY_RUNNING and register sync_thread;
+3) Execute md_do_sync() for the actual work, if it's done or
+interrupted, it will set MD_RECOVERY_DONE and wake up daemone thread;
+4) Daemon thread detect that MD_RECOVERY_DONE is set, then clear
+MD_RECOVERY_RUNNING and unregister sync_thread;
 
-[2]: https://blog.cloudflare.com/speeding-up-linux-disk-encryption/
-[3]: 
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/drivers/md/dm-crypt.c?id=39d42fa96ba1b7d2544db3f8ed5da8fb0d5cb877 
+In v6.7, we fix md/raid to follow this design by commit f52f5c71f3d4
+("md: fix stopping sync thread"), however, dm-raid is not considered at
+that time, and following test will hang:
 
-[4]: https://gitlab.com/cryptsetup/cryptsetup/-/issues/862
+shell/integrity-caching.sh
+shell/lvconvert-raid-reshape.sh
+
+This patch set fix the broken test by patch 1-4;
+ - patch 1 fix that step 4) is broken by suspended array;
+ - patch 2 fix that step 4) is broken by read-only array;
+ - patch 3 fix that step 3) is broken that md_do_sync() doesn't set
+ MD_RECOVERY_DONE; Noted that this patch will introdece new problem that
+ data will be corrupted, which will be fixed in later patches.
+ - patch 4 fix that setp 1) is broken that sync_thread is register and
+ MD_RECOVERY_RUNNING is set directly, md/raid behaviour, not related to
+ dm-raid;
+
+With patch 1-4, the above test won't hang anymore, however, the test
+will still fail and complain that ext4 is corrupted;
+
+Second regression related to frozen sync thread:
+
+Noted that for raid456, if reshape is interrupted, then call
+"pers->start_reshape" will corrupt data. And dm-raid rely on md_do_sync()
+doesn't set MD_RECOVERY_DONE so that new sync_thread won't be registered,
+and patch 3 just break this.
+
+ - Patch 5-6 fix this problem by interrupting reshape and frozen
+ sync_thread in dm_suspend(), then unfrozen and continue reshape in
+dm_resume(). It's verified that dm-raid tests won't complain that
+ext4 is corrupted anymore.
+ - Patch 7 fix the problem that raid_message() call
+ md_reap_sync_thread() directly, without holding 'reconfig_mutex'.
+
+Last regression related to dm-raid456 IO concurrent with reshape:
+
+For raid456, if reshape is still in progress, then IO across reshape
+position will wait for reshape to make progress. However, for dm-raid,
+in following cases reshape will never make progress hence IO will hang:
+
+1) the array is read-only;
+2) MD_RECOVERY_WAIT is set;
+3) MD_RECOVERY_FROZEN is set;
+
+After commit c467e97f079f ("md/raid6: use valid sector values to determine
+if an I/O should wait on the reshape") fix the problem that IO across
+reshape position doesn't wait for reshape, the dm-raid test
+shell/lvconvert-raid-reshape.sh start to hang at raid5_make_request().
+
+For md/raid, the problem doesn't exist because:
+
+1) If array is read-only, it can switch to read-write by ioctl/sysfs;
+2) md/raid never set MD_RECOVERY_WAIT;
+3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
+   'reconfig_mutex' anymore, it can be cleared and reshape can continue by
+   sysfs api 'sync_action'.
+
+However, I'm not sure yet how to avoid the problem in dm-raid yet.
+
+ - patch 9-11 fix this problem by detecting the above 3 cases in
+ dm_suspend(), and fail those IO directly.
+
+If user really meet the IO error, then it means they're reading the wrong
+data before c467e97f079f. And it's safe to read/write the array after
+reshape make progress successfully.
+
+There are also some other minor changes: patch 8 and patch 12;
+
+Test result:
+
+I apply this patchset on top of v6.8-rc1, and run lvm2 tests suite with
+folling cmd for 24 round(for about 2 days):
+
+for t in `ls test/shell`; do
+        if cat test/shell/$t | grep raid &> /dev/null; then
+                make check T=shell/$t
+        fi
+done
+
+failed count                             failed test
+      1 ###       failed: [ndev-vanilla] shell/dmsecuretest.sh
+      1 ###       failed: [ndev-vanilla] shell/dmsetup-integrity-keys.sh
+      1 ###       failed: [ndev-vanilla] shell/dmsetup-keyring.sh
+      5 ###       failed: [ndev-vanilla] shell/duplicate-pvs-md0.sh
+      1 ###       failed: [ndev-vanilla] shell/duplicate-vgid.sh
+      2 ###       failed: [ndev-vanilla] shell/duplicate-vgnames.sh
+      1 ###       failed: [ndev-vanilla] shell/fsadm-crypt.sh
+      1 ###       failed: [ndev-vanilla] shell/integrity.sh
+      6 ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+      2 ###       failed: [ndev-vanilla] shell/lvchange-rebuild-raid.sh
+      5 ###       failed: [ndev-vanilla] shell/lvconvert-raid-reshape-stripes-load-reload.sh
+      4 ###       failed: [ndev-vanilla] shell/lvconvert-raid-restripe-linear.sh
+      1 ###       failed: [ndev-vanilla] shell/lvconvert-raid1-split-trackchanges.sh
+     20 ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+     20 ###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
+     24 ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+
+And I ramdomly pick some tests verified by hand that these test will
+fail in v6.6 as well(not all tests, I don't have the time do do this yet):
+
+shell/lvextend-raid.sh
+shell/lvcreate-large-raid.sh
+shell/lvconvert-repair-raid.sh
+shell/lvchange-rebuild-raid.sh
+shell/lvchange-raid1-writemostly.sh
+
+Yu Kuai (14):
+  md: don't ignore suspended array in md_check_recovery()
+  md: don't ignore read-only array in md_check_recovery()
+  md: make sure md_do_sync() will set MD_RECOVERY_DONE
+  md: don't register sync_thread for reshape directly
+  md: export helpers to stop sync_thread
+  dm-raid: really frozen sync_thread during suspend
+  md/dm-raid: don't call md_reap_sync_thread() directly
+  dm-raid: add a new helper prepare_suspend() in md_personality
+  md: export helper md_is_rdwr()
+  md: don't suspend the array for interrupted reshape
+  md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+    reshape
+  dm-raid: fix lockdep waring in "pers->hot_add_disk"
+  dm: wait for IO completion before removing dm device
+  dm-raid: remove mddev_suspend/resume()
+
+ drivers/md/dm-raid.c |  78 +++++++++++++++++++---------
+ drivers/md/dm.c      |   3 ++
+ drivers/md/md.c      | 120 +++++++++++++++++++++++++++++--------------
+ drivers/md/md.h      |  16 ++++++
+ drivers/md/raid10.c  |  16 +-----
+ drivers/md/raid5.c   |  61 ++++++++++++----------
+ 6 files changed, 190 insertions(+), 104 deletions(-)
+
+-- 
+2.39.2
+
