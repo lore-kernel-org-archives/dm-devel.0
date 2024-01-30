@@ -1,68 +1,53 @@
-Received: from mail-oi1-f174.google.com (mail-oi1-f174.google.com [209.85.167.174])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C079758ADD
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 09:22:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B01DE60BA8
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 10:20:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706606543; cv=none; b=NiIQ5oOCQ5y7sBKqWZFYb7+PmBbLd+HrvYkAyEKX/o+OcYedACgJ4o/Q4aM41zN21t15NByZy+BAMiDZIHAP0lJOatBDwVnV1etYPqBtLOTewTo3lSmRYjLb+XyZS5Rb8z/0056fNv7jCB6uWaKT5wtLN27rmcjs6GLBshOYx8A=
+	t=1706610022; cv=none; b=dmKU2ink7UJ5bAfSH9KVRPm2YJDbt904E0L9trkqCKyvt/ryE+G0FKIW0M7bRSvq+LqEu5Y2KwbY1zhmLeqQ2aBHX9Wz7qYPNJs1is3XFIx22NnNbCtxRok1U7SyXg82Tbzds/6r/x200uI10Mx3sUga6nb0/MuUJB1Jc6xnLII=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706606543; c=relaxed/simple;
-	bh=bvMkPpAt6xQ1DlMmIig6BBKmp638o3n/5Mw6i1LY1rw=;
+	s=arc-20240116; t=1706610022; c=relaxed/simple;
+	bh=Vu3/rb2+o9A3xavD6zhieunf/6dYSlSau376+ZTpvg0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Tp8OX36joU2KyfxDZPExzfMN5Cn4IRQmvkDB2Ha7IMXZPhbNj+MLcx2Tm1uz9tD5zpqFZWnpHuaRg2eBI/tlGSfuqf7acut5ThvsSSqoc7qS9eNrtGLZQjG71oxc5vFm8zkxAdCTBk0NNSocdnWaPdeR3uF/ZKRtVIxkZYSa140=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JPXEBSH2; arc=none smtp.client-ip=209.85.167.174
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=N+nHkcKbfCsxZ7bKvT/Iw0TRXEask8woEHkbzuCJViu4CMkHNTQCMCudM4riomvJR0vz+aVffuQRxvKTWAd1Nr08IVWU1x1aKD+BJia0xTRSCLJsknV86zq3EH4VEdrtqif/G3LG1Oul48DflOlQDM2MNZSJhq9TjTAWVtY/69A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=dbeFUlKH; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=RmMuECqy; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JPXEBSH2"
-Received: by mail-oi1-f174.google.com with SMTP id 5614622812f47-3bbbc6bcc78so3040647b6e.1
-        for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 01:22:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706606541; x=1707211341; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=Ojw4Hr4df/GweRYxEO91+S9TfDRLzXvC4cCbQRxj8tk=;
-        b=JPXEBSH2JSbnjxNjWJbxCXSkb9xO1YMyMJPo6iaMztM18NbWe7aLBwOBB+VVshJ5oG
-         fh1NLFp3EnQBAlL8kU2VsFpihDJzUIFFFhcRJwhWh2yKh+WxzZvv7iRrXtZeXj+cmpEZ
-         oNxsmiVSz8ZKXaY+lhdKDar7dDyDzO6BcAlT8FKAowO4QNzdoEkEtZfuLoT4oJrqSrEN
-         EjIwTZupXc7TyApf5M2pfhzPJEFSfho/LM7oJIFLrYnyveEG3p0mqcWFlgRqXOwEQt+4
-         ARZFJRiP1M2WscN0LRYuAxQP56nO/Z0tWuniMlV38jOWwtDJlvWKgJu/ilb2RPVUElL3
-         A9yA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706606541; x=1707211341;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=Ojw4Hr4df/GweRYxEO91+S9TfDRLzXvC4cCbQRxj8tk=;
-        b=d14eOXU/j8V/2NQIjRulaumFHOgJnimgXr2nL4riWB33Zw86tIl0Eo/EJ1Q8PJylx7
-         YO/yfeVmCE9IpxrgkfI/uUHKXNgFVkxAl803XdW3AwFKMvZRbgggivoPNhGXQ1Ci8Hof
-         2h9s/Upp7OESjJ0FgLlpBawhuGLDDCBKibrsxbNBUSfkmG1Y9fMHiaTj4LcR7AqzVCMi
-         JOGZtrEn4Xsc/3V7k8oig8CW0qnkXL12uYPQCYagTcG9DLqjSJjyQoWG/edoJfzCZBHU
-         Q094gHFU9YN8Bhr/VpvTxUvsQN/ydaFYX8ewPnBiV4JQlRWidXr799JI7ISNtzWQtGAP
-         IxOg==
-X-Gm-Message-State: AOJu0YyWfGQ33lj25mvawR9/Hgsx2iaMOi/UuZXNptdQBclByZWvuQQA
-	Tatpy9GENENxJuIawZzIIRYDezlNQKHzapyGSp5wfNFmdPuPaj9Y
-X-Google-Smtp-Source: AGHT+IEkL5pgrSfa8TM8OZ01XwJdXDFMIKiv3P2F7VO+618JQ992jBf4ifR/kJLl6yusczD+b1QYBQ==
-X-Received: by 2002:a05:6358:2c86:b0:178:7598:7d7e with SMTP id l6-20020a0563582c8600b0017875987d7emr4010626rwm.40.1706606540687;
-        Tue, 30 Jan 2024 01:22:20 -0800 (PST)
-Received: from localhost (dhcp-141-239-144-21.hawaiiantel.net. [141.239.144.21])
-        by smtp.gmail.com with ESMTPSA id u4-20020aa78484000000b006dbd7e5bd1esm7278465pfn.52.2024.01.30.01.22.20
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 30 Jan 2024 01:22:20 -0800 (PST)
-Sender: Tejun Heo <htejun@gmail.com>
-Date: Mon, 29 Jan 2024 23:22:19 -1000
-From: Tejun Heo <tj@kernel.org>
-To: torvalds@linux-foundation.org, mpatocka@redhat.com,
-	Lai Jiangshan <jiangshanlai@gmail.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="dbeFUlKH";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="RmMuECqy"
+Date: Tue, 30 Jan 2024 11:20:11 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1706610013;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=33I6KUptN215uQ8/TCY4CSKquwhpzQOMErJY2s/Iee0=;
+	b=dbeFUlKHES4fesoAHnLXHJ+VSYqlpTZw1eJPWS31UM8nLcj3mswTX5ykMcL2FtN/QiNDD2
+	fYKdSvcPQLz33oL+y/Xj3PL2IBBqzAZq0GCAIOMAvIn0vHHkERJMr3BCoCvCB/bLp/cRFn
+	8hPmIJKDqlDM82IvxIlTSu39xkFreBDnB/Jl4+B5Y1YoIVRHTIR2yGonu4WdLUvmrDV1xq
+	GuHgWKh2dDJw77bwgVlUPXd56YEPBJyq1rRRTG+0U9w+Am3AdqiUynzZog8cejZDYibWmC
+	aSSFol7cgwyOHlyoL+iX5KN0uj7Y2A/njaw2KtTYqMxPrSpV5bCSFeq0NsF1Lw==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1706610013;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=33I6KUptN215uQ8/TCY4CSKquwhpzQOMErJY2s/Iee0=;
+	b=RmMuECqyH8DIcdQfe7Trm2myMgd3pEznT6Bm+Y1jq2PCdSuiRKCXyvehmLz1jJDFtmE4Av
+	KcY1D98rUSikL6DA==
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
 	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com,
-	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org,
-	netdev@vger.kernel.org, allen.lkml@gmail.com, kernel-team@meta.com
+	bob.liu@oracle.com, houtao1@huawei.com, peterz@infradead.org,
+	mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com,
+	kernel-team@meta.com, tglx@linutronix.de
 Subject: Re: [PATCHSET wq/for-6.9] workqueue: Implement BH workqueue and
  convert several tasklet users
-Message-ID: <Zbi_y9w6ze7qfxQ2@slm.duckdns.org>
+Message-ID: <20240130102011.rX9Qjnp1@linutronix.de>
 References: <20240130091300.2968534-1-tj@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -70,44 +55,40 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 In-Reply-To: <20240130091300.2968534-1-tj@kernel.org>
 
-Oops, forgot to cc Lai.
-
-On Mon, Jan 29, 2024 at 11:11:47PM -1000, Tejun Heo wrote:
+On 2024-01-29 23:11:47 [-1000], Tejun Heo wrote:
 > Hello,
-> 
-> The only generic interface to execute asynchronously in the BH context is
-> tasklet; however, it's marked deprecated and has some design flaws such as
-> the execution code accessing the tasklet item after the execution is
-> complete which can lead to subtle use-after-free in certain usage scenarios
-> and less-developed flush and cancel mechanisms.
-> 
-> Mikulas Patocka recently reported that dm-crypt and dm-crypt are affected by
-> the access-after-completion issue and suggested adding TASKLET_STATE_ONESHOT
-> flag which selectively removes post-completion access while significantly
-> limiting how the tasklet can be used in the following thread:
-> 
->  http://lkml.kernel.org/r/82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com
-> 
-> Linus didn't like the approach and suggested extending workqueue to support
-> execution from atomic context:
-> 
->  http://lkml.kernel.org/r/CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com
-> 
+Hi,
+
 > As suggested, this patchset implements BH workqueues which are like regular
 > workqueues but executes work items in the BH (softirq) context and converts
 > several tasklet users.
+> 
+> - The name bh is used instead of the suggested atomic as it's more in line
+>   with widely used execution context interface - local_bh_enable/disable()
+>   and friends.
+> 
+> - The system default BH workqueues - system_bh_wq and system_bh_highpri_wq -
+>   are provided. As queue-wide flushing doesn't exist in tasklet, all
+>   existing tasklet users should be able to use the system BH workqueues
+>   without creating their own.
+> 
+> - BH workqueues currently use tasklet to run the work items to avoid
+>   priority inversions involving tasklet_hi and WQ_BH | WQ_HIGHPRI. Once all
+>   tasklet users are converted, tasklet code can be removed and BH workqueues
+>   can take over its softirqs.
 
-Lai, the patchset is at:
+If one context creates multiple work item which are then moved to
+tasklet I don't see the difference vs workqueue with a bh_disable()
+around it.
+Looking at the USB changes, I would prefer to see it converted to
+threaded interrupts instead of using tasklet or workqueue. Both
+approaches (current tasklet, suggested workqueue) lose the original
+context where the request was created. Having threaded interrupts would
+allow to keep everything in the same "context" so you could prioritize
+according to your needs.
 
- http://lkml.kernel.org/r/20240130091300.2968534-1-tj@kernel.org
-
-I'd really appreciate if you can take a look.
-
-Thanks.
-
--- 
-tejun
+Sebastian
