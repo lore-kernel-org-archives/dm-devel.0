@@ -1,90 +1,121 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5D86266B22
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 10:46:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F04367A10
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 11:46:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706611610; cv=none; b=jUlIA0OQLxS+VnqO5N9atxjzGsYsSXmMZTa5VvSX9K4tGws+YfoJv3GXIYO41c6YDLrACAisbUiOop3a80MTxtFNhuxep6jyu6k1w0LfzxIEo9tM0EfDBj4ETsR8N2byXTpyfGd3GaaPhmyXZTitt/xdJ3W5EBBEeAdMSWYK3+U=
+	t=1706615175; cv=none; b=juIFEfmXVBJVfJC3s2wLqL4gDSED6nXZVNaDgh9okPLrQAh2/QEjVggCqDmFAnQI/YumPcuYCo8HflzPioYwGhhq/+nSQFXJgeegTl70LygP0N72iz2QXa5CgaWazLUhhvElGkY9lqt1aWyj0KJ/dSPclKlkLfnJtdZX7ziLOHc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706611610; c=relaxed/simple;
-	bh=z8HQZ1RIcZ9IQsXzY0ib1csxcJUvHVGeYNDGFA9KaCc=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Blru/OG4SMyzdU711AWTvPFjHbLWp4ZUzdnrKO5VFT0VWwzjIZ1t5nbzMCuw0PJdJZOJdFzp2WFZjFW2meH/ty9KQWiTePADFh41gehUBYrtSvqMfArXJ0+ZR+KzlYsgflNp2y4l++mQ2ljHOL+VJE5nPy5UDvNoHNzsA/+25EI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=WXJSp/EZ; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=g9jOMurh; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1706615175; c=relaxed/simple;
+	bh=s6N1gkYvyY3hDBDbP8HT9EefNkFyTfoHZIbsaI0LxsY=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=tKSyRuUVdVQfcts+5On/G/wHdhcOrgQIgXrX3sF/46dZWS+SlVY3NtZJHQxUcpbXDYq0KBa0j/YpF7hHJQArC4sfjxB1kV3ckQnUEqiEQGVdT2bHNSinpqEEEU4T2gcq8AmZefwM5H7Cqv31oT2uZBcYxeOVFf2Itw8D+dDt4Zs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XwsKpm5C; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="WXJSp/EZ";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="g9jOMurh"
-Date: Tue, 30 Jan 2024 11:46:45 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1706611607;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XwsKpm5C"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1706615173;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=jglZkCKiKZBorhtlJAzaJu8vNan4QCT2HLdU9knygeA=;
-	b=WXJSp/EZ1N/l9q1lUMdQ5hDV8/ys0TJGqlpxdzwZ7h1uL8kUAwDDr00WHuWUKbYOuUZ7KW
-	nL4s+XDYJJ6pISw5YftB8Km+Fqzs2AhqB5AO3JXlG6SZgpdt7RacnZ+5u7ptl7kdcNDgN9
-	gF7Lti8PkBNyJk0DmGY9p5y8aPRhsUYi1qRBsvMEn63w94ovc3QQuE1P7hXrPF1Zy9XrWp
-	qUh/YmqKqBYejBa49rNstydAg1DO/uKn0QOHuxP6aCTCgEdL6dbN4xNpCaFCX/oQs1FtAW
-	mVNvRmS31aHJ86KQepO7oj2p8ekzXnEvNX7VnMIQBcawMRb7POuRPVQmWRLKig==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1706611607;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=jglZkCKiKZBorhtlJAzaJu8vNan4QCT2HLdU9knygeA=;
-	b=g9jOMurhIPesxC/jgbn4sby1InW3YJmfL0KPXUeasEWNWb/AJmgVMipqcjLxe2GPieqSNA
-	fuIygHbIQZJ/ugCA==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Tejun Heo <tj@kernel.org>
-Cc: torvalds@linux-foundation.org, mpatocka@redhat.com,
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
-	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com,
-	bob.liu@oracle.com, houtao1@huawei.com, peterz@infradead.org,
-	mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com,
-	kernel-team@meta.com, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, tglx@linutronix.de
-Subject: Re: [PATCH 7/8] dm-crypt: Convert from tasklet to BH workqueue
-Message-ID: <20240130104645.Gvnx8KnC@linutronix.de>
-References: <20240130091300.2968534-1-tj@kernel.org>
- <20240130091300.2968534-8-tj@kernel.org>
+	bh=XNC4RnR1LP3JLZK3mU2j4+a+R8GFkfNE9wD4WslHeU4=;
+	b=XwsKpm5CYB4xXnh7LENaIjSlKjHBRZCAHnRyYILlu4i/KiYo8e9DU4ebQLkwX+/h4x7SG7
+	iBPjwjqH+er4aQMkfgHixJUWomATm2UghLnLDyyxMU6XjtSUSk6JjQqQsscB9UyGOP2VHv
+	yn0WnA+u/Jd8nDsD3mJGS4dzVwP+0rs=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-571-1fs-sfDbNryD18DHM1ANyA-1; Tue, 30 Jan 2024 06:46:09 -0500
+X-MC-Unique: 1fs-sfDbNryD18DHM1ANyA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 04E9B85A599;
+	Tue, 30 Jan 2024 11:46:09 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9C01640C95AD;
+	Tue, 30 Jan 2024 11:46:08 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 7F56B30C14EB; Tue, 30 Jan 2024 11:46:08 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 7A9C13FB4E;
+	Tue, 30 Jan 2024 12:46:08 +0100 (CET)
+Date: Tue, 30 Jan 2024 12:46:08 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+cc: heinzm@redhat.com, xni@redhat.com, agk@redhat.com, snitzer@kernel.org, 
+    dm-devel@lists.linux.dev, song@kernel.org, yukuai3@huawei.com, 
+    jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com, akpm@osdl.org, 
+    linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
+    yi.zhang@huawei.com, yangerkun@huawei.com
+Subject: Re: [PATCH RFC v4 13/14] dm: wait for IO completion before removing
+ dm device
+In-Reply-To: <20240130021843.3608859-14-yukuai1@huaweicloud.com>
+Message-ID: <fa4cd2f8-d0e8-5b6d-2ac6-1c5f1710a5ee@redhat.com>
+References: <20240130021843.3608859-1-yukuai1@huaweicloud.com> <20240130021843.3608859-14-yukuai1@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20240130091300.2968534-8-tj@kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-On 2024-01-29 23:11:54 [-1000], Tejun Heo wrote:
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -2263,9 +2232,8 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
 
-                /*
-                 * in_hardirq(): Crypto API's skcipher_walk_first() refuses to work in hard IRQ context.
-                 * irqs_disabled(): the kernel may run some IO completion from the idle thread, but
-                 * it is being executed with irqs disabled.
-                 */
->  		 * it is being executed with irqs disabled.
->  		 */
->  		if (in_hardirq() || irqs_disabled()) {
-> -			io->in_tasklet = true;
-> -			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
-> -			tasklet_schedule(&io->tasklet);
-> +			INIT_WORK(&io->work, kcryptd_crypt);
-> +			queue_work(system_bh_wq, &io->work);
 
-Why do we need the tasklet here in the first place? Couldn't we use
-workqueue? As per comment, the request originates in hardirq and then it
-is moved to tasklet. Couldn't it be moved to workqueue regardless?
+On Tue, 30 Jan 2024, Yu Kuai wrote:
 
->  			return;
->  		}
+> From: Yu Kuai <yukuai3@huawei.com>
+> 
+> __dm_destroy() guarantee that device openers is zero, and then
+> only call 'presuspend' and 'postsuspend' for the target. For
+> request-based dm, 'md->holders' will be grabbed for each rq and
+> __dm_destroy() will wait for 'md->holders' to be zero. However, for
+> bio-based device, __dm_destroy() doesn't wait for all bios to be done.
+> 
+> Fix this problem by calling dm_wait_for_completion() to wail for all
+> inflight IO to be done, like what dm_suspend() does.
+
+If the number of openers is zero, it is guaranteed that there are no bios 
+in flight. Therefore, we don't have to wait for them.
+
+If there are bios in flight, it is a bug in the code that issues the bios. 
+You can put WARN_ON(dm_in_flight_bios(md)) there.
+
+Mikulas
+
+> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+> ---
+>  drivers/md/dm.c | 3 +++
+>  1 file changed, 3 insertions(+)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 8dcabf84d866..2c0eae67d0f1 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -58,6 +58,7 @@ static DEFINE_IDR(_minor_idr);
+>  static DEFINE_SPINLOCK(_minor_lock);
 >  
+>  static void do_deferred_remove(struct work_struct *w);
+> +static int dm_wait_for_completion(struct mapped_device *md, unsigned int task_state);
+>  
+>  static DECLARE_WORK(deferred_remove_work, do_deferred_remove);
+>  
+> @@ -2495,6 +2496,8 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
+>  	if (!dm_suspended_md(md)) {
+>  		dm_table_presuspend_targets(map);
+>  		set_bit(DMF_SUSPENDED, &md->flags);
+> +		if (wait)
+> +			dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
+>  		set_bit(DMF_POST_SUSPENDING, &md->flags);
+>  		dm_table_postsuspend_targets(map);
+>  	}
+> -- 
+> 2.39.2
+> 
 
-Sebastian
