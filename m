@@ -1,154 +1,103 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f170.google.com (mail-pl1-f170.google.com [209.85.214.170])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2D1A629EF
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 13:05:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82F618613F
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 15:50:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706619934; cv=none; b=Fs5TrCprxoudz4+GjRnkMHJ2o2hcDvFS1kUuJpkJp4IEd/Qvc2suIthr1AgXSvNEP2kMzgk7N6UgqYQ/rbesJYe0PuyP9iy1tBf8AC8a2m9ttYExqOsYhLm6GS9BTjNYEsckc0ca6Uqeqq5YKj+l7YCkwrZfF0kc3q0tt6yZGZU=
+	t=1706629837; cv=none; b=sgv5Yd9V8DsMyFrV+D7KsF3QEefwtfuvNX+SIcejECPeh/Rwq96F5Pay6CtWJsk0P/bh4Ehv22D41etE+VAkHa1LrDGGGn59VyM4RXpbYdySkDf3WM0RyRPSEnyHHWLElh77gGTtO8ClL+tgcDfgpnUByCip+SApTI3sX5PPsC4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706619934; c=relaxed/simple;
-	bh=5pKt9gawZv7V3M8KB+8lfendOF6qiXRbOvon5VS3kOk=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=olKFawop7n63+VkMN/1rb37WveCPvyKXQjSE4lZv/nGE3xqN0/2gKyNZlgqZWm+4v5IS6H83SJd3scSi31QkCNp7eIboMfQVxaTrKZnJa/aaccmZ9whnciDOz/WsALUCnk9WLmnEAIGJa3lvrEDK4WlnXc7T0x2XRbc3WbkKAbk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TPQPw5fBhz4f3jq5
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 21:05:24 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 52D4D1A016E
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 21:05:27 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgBnOBEV9LhlrAXNCQ--.25794S3;
-	Tue, 30 Jan 2024 21:05:27 +0800 (CST)
-Subject: Re: [PATCH RFC v4 13/14] dm: wait for IO completion before removing
- dm device
-To: Mikulas Patocka <mpatocka@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: heinzm@redhat.com, xni@redhat.com, agk@redhat.com, snitzer@kernel.org,
- dm-devel@lists.linux.dev, song@kernel.org, jbrassow@f14.redhat.com,
- neilb@suse.de, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20240130021843.3608859-1-yukuai1@huaweicloud.com>
- <20240130021843.3608859-14-yukuai1@huaweicloud.com>
- <fa4cd2f8-d0e8-5b6d-2ac6-1c5f1710a5ee@redhat.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <bdeac016-f57d-f917-d605-342fe9856ccf@huaweicloud.com>
-Date: Tue, 30 Jan 2024 21:05:25 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1706629837; c=relaxed/simple;
+	bh=QvBaZsLh8DPvYcl3VO8X2y1UuYCG/UYWMaa3pZVysnI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=t0w1ePbXAJwX+MRP0pT0shgH5b1xZW/oOX474GLWCi884VAP4wRui2AX4nr+VZYt58Nl4e2oKxBoJerIgQSOezF6qqM6nfpfIPx8ZGsbcwVA3w7khCGRfC/EKrS5OGSUtC0q/vSnHjsk/Is5dI9io4UIep72sjmtyexie1Muinw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HsyA2wQb; arc=none smtp.client-ip=209.85.214.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HsyA2wQb"
+Received: by mail-pl1-f170.google.com with SMTP id d9443c01a7336-1d8da50bfd9so12414935ad.1
+        for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 07:50:35 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1706629834; x=1707234634; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=XL1Fflhk+Xb40dzgpJerE8E3hGMxHAI4xcbrdBQFd/M=;
+        b=HsyA2wQbjyHxQluady5sRLq++i3jNipsIYFdwyHUcLhjLtGRr1od4NM6RAt3BL+4l9
+         KNBZL3ygAQWDGrrji7ojw2xMw8dACdTEiJify3qHbx00PZ051Twfzwf8Dx5rSQGo/PSJ
+         KC7uZ7TXx7FrdDIrITyyKG4ez2EwLnSpb7/sXX9uR82QhaHmchGgkAgpKnihjUEbDPHE
+         Nzfyxd7eUHqJtRIAaO97DaVtbPkuURsl5o4xHZMUQyxuJq0knczKRUDNAPayFkS0viPG
+         I9M9ZsuruvBz/ZW+qRk9x+RbUDYBr0fn3u1nPyfuZMv5NjXsbtbncwIAGd/o3A9fPpnm
+         78Ww==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706629834; x=1707234634;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=XL1Fflhk+Xb40dzgpJerE8E3hGMxHAI4xcbrdBQFd/M=;
+        b=vqRMD48sQ/+uMosQp8qElnAJmkaY4CnuJjKO4aM7LJj3HYwmXtnw0Z8Js5SdwNfDua
+         XDsnaWwGcPKbMa6BbksnK/zFDyfR7MjD4y0qQ1bw2v3FZAHHqWhcoZm8g010RsbeGJM8
+         FehIWPwMhDmfbl6cobADqwBQInsM96jLXEGq8hp/qptaoURRCnM/DRChurrsCw3XWZHM
+         /TjpGvz3zS4uH1PIQ+Vws1Gp5m9cAe1/cCs50hpVkNpvzM6CYFl0RKNRhq33ooqtHaIu
+         txJd1hMIVJACxYpqVMO5ndezJgGKeVCN+tL4ckZFoScskaH72sv/r2/VPelwqL2jXZ3J
+         pqqA==
+X-Gm-Message-State: AOJu0YzQtJ0f5lw5gwfmolO99SPgro3OaOFDEquoX9yHb0qo7QSRbEhb
+	BsAVFP6EJwNK3EZkmmUSOyYtAiyH3+pKMZUoHMTnlXAKl1NNTekT
+X-Google-Smtp-Source: AGHT+IHIMCnEYaqIb4Pi3z0PuUNUYde12Aucu4qoHrB+Jeqg1FHSLC8058xLuEM1zdrmgWVouVt3kw==
+X-Received: by 2002:a17:903:40c3:b0:1d8:d2b8:446a with SMTP id t3-20020a17090340c300b001d8d2b8446amr5082317pld.27.1706629833562;
+        Tue, 30 Jan 2024 07:50:33 -0800 (PST)
+Received: from localhost (dhcp-141-239-144-21.hawaiiantel.net. [141.239.144.21])
+        by smtp.gmail.com with ESMTPSA id c6-20020a170902724600b001d8aadaa7easm6480425pll.96.2024.01.30.07.50.32
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 30 Jan 2024 07:50:33 -0800 (PST)
+Sender: Tejun Heo <htejun@gmail.com>
+Date: Tue, 30 Jan 2024 05:50:32 -1000
+From: Tejun Heo <tj@kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com,
+	bob.liu@oracle.com, houtao1@huawei.com, peterz@infradead.org,
+	mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com,
+	kernel-team@meta.com, tglx@linutronix.de
+Subject: Re: [PATCHSET wq/for-6.9] workqueue: Implement BH workqueue and
+ convert several tasklet users
+Message-ID: <ZbkayGEYJNJx3ohw@slm.duckdns.org>
+References: <20240130091300.2968534-1-tj@kernel.org>
+ <20240130102011.rX9Qjnp1@linutronix.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <fa4cd2f8-d0e8-5b6d-2ac6-1c5f1710a5ee@redhat.com>
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBnOBEV9LhlrAXNCQ--.25794S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxAr1DuFW5ur4rWF1kJw13urg_yoW5Cr4DpF
-	Wftay3tFZ8Zr13Kw4jqa1UKF1FyF4SqryfGryIvw1fA3Zxur98JF48tFWrtFWUCFyUWF13
-	AF1DXas5Gr4DJ3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
-	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
-	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
-	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
-	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
-	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
-	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
-	17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
-	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
-	3wCI42IY6I8E87Iv67AKxVW8JVWxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcS
-	sGvfC2KfnxnUUI43ZEXa7VUbQVy7UUUUU==
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240130102011.rX9Qjnp1@linutronix.de>
 
-Hi,
+Hello, Sebastian.
 
-ÔÚ 2024/01/30 19:46, Mikulas Patocka Ð´µÀ:
-> 
-> 
-> On Tue, 30 Jan 2024, Yu Kuai wrote:
-> 
->> From: Yu Kuai <yukuai3@huawei.com>
->>
->> __dm_destroy() guarantee that device openers is zero, and then
->> only call 'presuspend' and 'postsuspend' for the target. For
->> request-based dm, 'md->holders' will be grabbed for each rq and
->> __dm_destroy() will wait for 'md->holders' to be zero. However, for
->> bio-based device, __dm_destroy() doesn't wait for all bios to be done.
->>
->> Fix this problem by calling dm_wait_for_completion() to wail for all
->> inflight IO to be done, like what dm_suspend() does.
-> 
-> If the number of openers is zero, it is guaranteed that there are no bios
-> in flight. Therefore, we don't have to wait for them.
-> 
-> If there are bios in flight, it is a bug in the code that issues the bios.
-> You can put WARN_ON(dm_in_flight_bios(md)) there.
+On Tue, Jan 30, 2024 at 11:20:11AM +0100, Sebastian Andrzej Siewior wrote:
+> If one context creates multiple work item which are then moved to
+> tasklet I don't see the difference vs workqueue with a bh_disable()
+> around it.
 
-I add this patch because while testing, there is a problem that is
-hard to reporduce, as I mentioned in the other thread. I'll add BUG_ON()
-and try if I can still reporduce this problem without triggering it.
+The main difference is that it avoids scheduling latencies in scenarios
+where softirq isn't heavily loaded.
 
-Thanks,
-Kuai
+> Looking at the USB changes, I would prefer to see it converted to
+> threaded interrupts instead of using tasklet or workqueue. Both
+> approaches (current tasklet, suggested workqueue) lose the original
+> context where the request was created. Having threaded interrupts would
+> allow to keep everything in the same "context" so you could prioritize
+> according to your needs.
 
-[12504.959682] BUG bio-296 (Not tainted): Object already free
-[12504.960239] 
------------------------------------------------------------------------------
-[12504.960239]
-[12504.961209] Allocated in mempool_alloc+0xe8/0x270 age=30 cpu=1 pid=203288
-[12504.961905]  kmem_cache_alloc+0x36a/0x3b0
-[12504.962324]  mempool_alloc+0xe8/0x270
-[12504.962712]  bio_alloc_bioset+0x3b5/0x920
-[12504.963129]  bio_alloc_clone+0x3e/0x160
-[12504.963533]  alloc_io+0x3d/0x1f0
-[12504.963876]  dm_submit_bio+0x12f/0xa30
-[12504.964267]  __submit_bio+0x9c/0xe0
-[12504.964639]  submit_bio_noacct_nocheck+0x25a/0x570
-[12504.965136]  submit_bio_wait+0xc2/0x160
-[12504.965535]  blkdev_issue_zeroout+0x19b/0x2e0
-[12504.965991]  ext4_init_inode_table+0x246/0x560
-[12504.966462]  ext4_lazyinit_thread+0x750/0xbe0
-[12504.966922]  kthread+0x1b4/0x1f0
-> 
-> Mikulas
-> 
->> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
->> ---
->>   drivers/md/dm.c | 3 +++
->>   1 file changed, 3 insertions(+)
->>
->> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->> index 8dcabf84d866..2c0eae67d0f1 100644
->> --- a/drivers/md/dm.c
->> +++ b/drivers/md/dm.c
->> @@ -58,6 +58,7 @@ static DEFINE_IDR(_minor_idr);
->>   static DEFINE_SPINLOCK(_minor_lock);
->>   
->>   static void do_deferred_remove(struct work_struct *w);
->> +static int dm_wait_for_completion(struct mapped_device *md, unsigned int task_state);
->>   
->>   static DECLARE_WORK(deferred_remove_work, do_deferred_remove);
->>   
->> @@ -2495,6 +2496,8 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
->>   	if (!dm_suspended_md(md)) {
->>   		dm_table_presuspend_targets(map);
->>   		set_bit(DMF_SUSPENDED, &md->flags);
->> +		if (wait)
->> +			dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
->>   		set_bit(DMF_POST_SUSPENDING, &md->flags);
->>   		dm_table_postsuspend_targets(map);
->>   	}
->> -- 
->> 2.39.2
->>
-> 
-> .
-> 
+That's great. If threaded IRQs or even regular workqueues are suitable, that
+should be fine. This conversion is just targeted at the use cases which can
+benefit from executing in the softirq context.
 
+Thanks.
+
+-- 
+tejun
