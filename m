@@ -1,54 +1,56 @@
-Received: from mail-pg1-f177.google.com (mail-pg1-f177.google.com [209.85.215.177])
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com [209.85.214.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BF0859148
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 09:13:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3283159B49
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 09:13:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706605988; cv=none; b=GYQT0qFMqflTIYRFHlW3EN0yXYcxEbrrMVO3dn8ogoZWVs+JjPWzRTxNCvR60J34OYSfOA2hmvVvi+I8x/O3ywEGcfnymxWrG74Se4rbL/pW8RGlCh1VtV4krBX97g49cKP/kW+M+b0WNEu/DfQao8iSlO9qAs+J3jVOr5H5hhQ=
+	t=1706605988; cv=none; b=TTW/CTKlNfAeSIdNEPG92C4pr4Ekp1seYSkLeD9AI77a3oSdy4lQitcadenICrD94un2tEmn4NNv59tXWnaGqzuJCcJGTHy1V74mriQlo/keBxZ9HRZDTrzJjrB5K3iSoOHgiFUgwSNsHNNz91StmN3/nBmWyDr61RAX8eLyvLo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1706605988; c=relaxed/simple;
-	bh=BQgMw4kft6HibyH5hZoeL9BrKIi7CbOCh2ArBtsepu4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=HMQPWAh9IRhZPFMOwUgquNSBESOJB7EzuSmcv9NSTCF+OilL11qhghX/lG1/D6VIgSAx99It7CGcQkj749smKDxYO6W2kbTD9JpN2kHfMrOWjZHjxd6SWJ5E2ffkMzd+BUswBFBp9Ehmfex7o9jnhLQMDuhM2zSqPC+ePzRfg6A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Fe/JC0vE; arc=none smtp.client-ip=209.85.215.177
+	bh=cpO6m2Pr5p3n/qePucxFD1UXJhPW8vRxbzSH1keUjbw=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=j36elpotL/yFxuikaD74kn3u5Hk/pu3PoNRoJO/2V7h4Ow6GBeGiEbah6vb+zQusofnY9WTvRYYQBjLPo+CLCnEK9g6OuwH0A1dyvQ8w7jTzHOtc4hWOrxzriPM16cGJK7bOJL9QfptYKHdgC3ODpt8yw21dV4ineTJXIgHpBXA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TllUN9sF; arc=none smtp.client-ip=209.85.214.174
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Fe/JC0vE"
-Received: by mail-pg1-f177.google.com with SMTP id 41be03b00d2f7-5d7005ea1d0so2355018a12.1
-        for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 01:13:05 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TllUN9sF"
+Received: by mail-pl1-f174.google.com with SMTP id d9443c01a7336-1d8dc0172d7so10325135ad.1
+        for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 01:13:06 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706605985; x=1707210785; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:from:to:cc:subject:date:message-id:reply-to;
-        bh=2419AmMRLK1a8gM2JjFp9RCfwyGRI0AG4Y0NxPY7Sr8=;
-        b=Fe/JC0vEsoKNi2cc7uomksOHTkbnivk2poNlgIttIDH0SeAYblJIxmlSuMcikQX6AK
-         OYOW7p8e6oX/OwWAuAGR1ux+5ic8UJxu+7hzg1c2/MdjKvRcNVWrWZ1I9no7LgmS9hNn
-         y7QfNyJ13AIhU/VdUfYAlkGsk1gcCylPq8pAX334+TkhgI57Tn5ivod5iTZ4FAqp4otT
-         opgEPwRAOJHscYaiP60gWy6hsSRltlPbFRZ2k84dp8gDHP0LKSfqAxHEryyFmScvPY4R
-         xKH/KP80RHcQQ5/nUDV2QuncLjlogC0HPh+lQNB9Nm+omZ4mUA5+tuwgdKn1pHgwvNpO
-         ljjg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706605985; x=1707210785;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:sender:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1706605986; x=1707210786; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=2419AmMRLK1a8gM2JjFp9RCfwyGRI0AG4Y0NxPY7Sr8=;
-        b=kmaWu4iCFcLkPWj1hOG7WBx7E/yrCYYpcp4vmsX7jHIWl2Q3nYYd8QUo4YB3nu/H9f
-         4trFHp+riWwz1S3N0jfpfPk/iaB2HxMOXqBBqs8gOHC9OHrI5dgcP58g+wFE0r9zM5eh
-         zjS7izOkV+ztRUnn9fHl+rtLwc3qNIJEpf8fRreRzIP4CaXYJeJbkS203UIMaFu/yL1C
-         uDP4161P919uBb9W/MI1EtIe8wQwgi1b9tz61faKUN1K0C/8pKBXNBCc21DmyQFgrjqo
-         G83SZk4DdcVbCNV+PshahwUwVS+5xXaDTya6x2MPfJWeqHybEvOFVmwI/73juas6Hhj5
-         lLAQ==
-X-Gm-Message-State: AOJu0Yyc5K6xFgYHdrqPnjm9o62l4/Fgij4hTVF91rNp6HwMCUmKLs9o
-	MriQu0exhBBtN0FvyndVnmcRPMpaDSdZQnCmYNd4MdQchjFY/wjx
-X-Google-Smtp-Source: AGHT+IF+ENnioD53E4T34dqSWY4jx2ydBtNwJkgOEgDkPE6BjYRC7VhcjnQWsA29LbzRUKq+5ffnDA==
-X-Received: by 2002:a05:6a21:2d8c:b0:19a:2b15:2a2f with SMTP id ty12-20020a056a212d8c00b0019a2b152a2fmr686345pzb.28.1706605984525;
-        Tue, 30 Jan 2024 01:13:04 -0800 (PST)
+        bh=0f+E+7Yr7tZg5UZ5N5kXMlDMZoo9OCBh+FLJ8A0xtV0=;
+        b=TllUN9sFsT4hZc5vuXPN4nyrXOC1PM7oo+s4Tkcs1ULTaV1YfJcQbnZINtPnB9rCiQ
+         ANQXJs25MVth50bkPe9NIcHRcA6GtJ7ALIxr1axTXSbjM1NdWFwrAMXL5BeIC/9gQBKj
+         X56VSsPFC7K6qEneSWSqZWbPAgIvY+si15W7dSjLERbiokDh8m18eEDfIOXw6cIgpG8V
+         vpXTvIk+vtVQ1uDpC02r4a7Z+AFyF0DWHffMCNGI2TDmm6NamX3NMmoATVtN5PuRCtvz
+         kXUIzggntbD3JC55fFRBxOtATYrofVa7vx4VQa+U64YFpPk3lRS/ApBDD5M9SLUv4OXs
+         b9UQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706605986; x=1707210786;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:sender:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=0f+E+7Yr7tZg5UZ5N5kXMlDMZoo9OCBh+FLJ8A0xtV0=;
+        b=UEItX0iKNow13miqAC9nCx2AqcAxP8nZ8bcJXrOq6du+8TNgwgPhDrNiOUp2VACo7m
+         GlcZOQBJuXYbRDycOo6dNa+PNdrXEmEJnBEkPEkBSWgvfQDtfeUqXNrgvC81Hn8afnU4
+         5Gfehc0W9NAPReegazF0VujR+TitR2Foq9fWOym+HCxg45rUK8U97F2nki/GrjPPt9ax
+         mqnpvQq/egna70s0SEqMD/9Tza93euc1UYPaIVGcguBjN80/1jTTd31vHnztXVHguDsN
+         bY3T6RxYRSdzXjjMkE66xkGeG07M7oADVqCa3tTkHUiNJOq/SnbuiOwy+p6KTyTvETBE
+         5eWg==
+X-Gm-Message-State: AOJu0YwhshbQHqMK8oA9isdBWtIORFaUEmE/ClLrkdUtYvHnl98tSwiF
+	OalMWyumAWPMH8WfWo2btcJ3O0Uon4HeBs4LaZiuiIGeboFE4IcYVi7SLtfW
+X-Google-Smtp-Source: AGHT+IHW8nd6s3CduJC+/WZAHKizzZVidAfFEzNUZ1XDA7JjpE2326FNHUnbnisZAxd67Me78MzjWA==
+X-Received: by 2002:a17:903:491:b0:1d8:eb22:5f25 with SMTP id jj17-20020a170903049100b001d8eb225f25mr2684625plb.102.1706605986265;
+        Tue, 30 Jan 2024 01:13:06 -0800 (PST)
 Received: from localhost (dhcp-141-239-144-21.hawaiiantel.net. [141.239.144.21])
-        by smtp.gmail.com with ESMTPSA id gu2-20020a056a004e4200b006dde1781800sm7491336pfb.94.2024.01.30.01.13.04
+        by smtp.gmail.com with ESMTPSA id c3-20020a170902d90300b001d901e176afsm1171941plz.232.2024.01.30.01.13.05
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 30 Jan 2024 01:13:04 -0800 (PST)
+        Tue, 30 Jan 2024 01:13:05 -0800 (PST)
 Sender: Tejun Heo <htejun@gmail.com>
 From: Tejun Heo <tj@kernel.org>
 To: torvalds@linux-foundation.org,
@@ -64,11 +66,14 @@ Cc: linux-kernel@vger.kernel.org,
 	mingo@kernel.org,
 	netdev@vger.kernel.org,
 	allen.lkml@gmail.com,
-	kernel-team@meta.com
-Subject: [PATCHSET wq/for-6.9] workqueue: Implement BH workqueue and convert several tasklet users
-Date: Mon, 29 Jan 2024 23:11:47 -1000
-Message-ID: <20240130091300.2968534-1-tj@kernel.org>
+	kernel-team@meta.com,
+	Tejun Heo <tj@kernel.org>
+Subject: [PATCH 1/8] workqueue: Update lock debugging code
+Date: Mon, 29 Jan 2024 23:11:48 -1000
+Message-ID: <20240130091300.2968534-2-tj@kernel.org>
 X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20240130091300.2968534-1-tj@kernel.org>
+References: <20240130091300.2968534-1-tj@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -77,83 +82,147 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Hello,
+These changes are in preparation of BH workqueue which will execute work
+items from BH context.
 
-The only generic interface to execute asynchronously in the BH context is
-tasklet; however, it's marked deprecated and has some design flaws such as
-the execution code accessing the tasklet item after the execution is
-complete which can lead to subtle use-after-free in certain usage scenarios
-and less-developed flush and cancel mechanisms.
+- Update lock and RCU depth checks in process_one_work() so that it
+  remembers and checks against the starting depths and prints out the depth
+  changes.
 
-Mikulas Patocka recently reported that dm-crypt and dm-crypt are affected by
-the access-after-completion issue and suggested adding TASKLET_STATE_ONESHOT
-flag which selectively removes post-completion access while significantly
-limiting how the tasklet can be used in the following thread:
+- Factor out lockdep annotations in the flush paths into
+  touch_{wq|work}_lockdep_map(). The work->lockdep_map touching is moved
+  from __flush_work() to its callee - start_flush_work(). This brings it
+  closer to the wq counterpart and will allow testing the associated wq's
+  flags which will be needed to support BH workqueues. This is not expected
+  to cause any functional changes.
 
- http://lkml.kernel.org/r/82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com
+Signed-off-by: Tejun Heo <tj@kernel.org>
+---
+ kernel/workqueue.c | 51 ++++++++++++++++++++++++++++++----------------
+ 1 file changed, 34 insertions(+), 17 deletions(-)
 
-Linus didn't like the approach and suggested extending workqueue to support
-execution from atomic context:
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 9221a4c57ae1..3f2081bd05a4 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -2954,6 +2954,7 @@ __acquires(&pool->lock)
+ 	struct pool_workqueue *pwq = get_work_pwq(work);
+ 	struct worker_pool *pool = worker->pool;
+ 	unsigned long work_data;
++	int lockdep_start_depth, rcu_start_depth;
+ #ifdef CONFIG_LOCKDEP
+ 	/*
+ 	 * It is permissible to free the struct work_struct from
+@@ -3016,6 +3017,8 @@ __acquires(&pool->lock)
+ 	pwq->stats[PWQ_STAT_STARTED]++;
+ 	raw_spin_unlock_irq(&pool->lock);
+ 
++	rcu_start_depth = rcu_preempt_depth();
++	lockdep_start_depth = lockdep_depth(current);
+ 	lock_map_acquire(&pwq->wq->lockdep_map);
+ 	lock_map_acquire(&lockdep_map);
+ 	/*
+@@ -3051,12 +3054,15 @@ __acquires(&pool->lock)
+ 	lock_map_release(&lockdep_map);
+ 	lock_map_release(&pwq->wq->lockdep_map);
+ 
+-	if (unlikely(in_atomic() || lockdep_depth(current) > 0 ||
+-		     rcu_preempt_depth() > 0)) {
+-		pr_err("BUG: workqueue leaked lock or atomic: %s/0x%08x/%d/%d\n"
+-		       "     last function: %ps\n",
+-		       current->comm, preempt_count(), rcu_preempt_depth(),
+-		       task_pid_nr(current), worker->current_func);
++	if (unlikely((worker->task && in_atomic()) ||
++		     lockdep_depth(current) != lockdep_start_depth ||
++		     rcu_preempt_depth() != rcu_start_depth)) {
++		pr_err("BUG: workqueue leaked atomic, lock or RCU: %s[%d]\n"
++		       "     preempt=0x%08x lock=%d->%d RCU=%d->%d workfn=%ps\n",
++		       current->comm, task_pid_nr(current), preempt_count(),
++		       lockdep_start_depth, lockdep_depth(current),
++		       rcu_start_depth, rcu_preempt_depth(),
++		       worker->current_func);
+ 		debug_show_held_locks(current);
+ 		dump_stack();
+ 	}
+@@ -3538,6 +3544,19 @@ static bool flush_workqueue_prep_pwqs(struct workqueue_struct *wq,
+ 	return wait;
+ }
+ 
++static void touch_wq_lockdep_map(struct workqueue_struct *wq)
++{
++	lock_map_acquire(&wq->lockdep_map);
++	lock_map_release(&wq->lockdep_map);
++}
++
++static void touch_work_lockdep_map(struct work_struct *work,
++				   struct workqueue_struct *wq)
++{
++	lock_map_acquire(&work->lockdep_map);
++	lock_map_release(&work->lockdep_map);
++}
++
+ /**
+  * __flush_workqueue - ensure that any scheduled work has run to completion.
+  * @wq: workqueue to flush
+@@ -3557,8 +3576,7 @@ void __flush_workqueue(struct workqueue_struct *wq)
+ 	if (WARN_ON(!wq_online))
+ 		return;
+ 
+-	lock_map_acquire(&wq->lockdep_map);
+-	lock_map_release(&wq->lockdep_map);
++	touch_wq_lockdep_map(wq);
+ 
+ 	mutex_lock(&wq->mutex);
+ 
+@@ -3757,6 +3775,7 @@ static bool start_flush_work(struct work_struct *work, struct wq_barrier *barr,
+ 	struct worker *worker = NULL;
+ 	struct worker_pool *pool;
+ 	struct pool_workqueue *pwq;
++	struct workqueue_struct *wq;
+ 
+ 	might_sleep();
+ 
+@@ -3780,11 +3799,14 @@ static bool start_flush_work(struct work_struct *work, struct wq_barrier *barr,
+ 		pwq = worker->current_pwq;
+ 	}
+ 
+-	check_flush_dependency(pwq->wq, work);
++	wq = pwq->wq;
++	check_flush_dependency(wq, work);
+ 
+ 	insert_wq_barrier(pwq, barr, work, worker);
+ 	raw_spin_unlock_irq(&pool->lock);
+ 
++	touch_work_lockdep_map(work, wq);
++
+ 	/*
+ 	 * Force a lock recursion deadlock when using flush_work() inside a
+ 	 * single-threaded or rescuer equipped workqueue.
+@@ -3794,11 +3816,9 @@ static bool start_flush_work(struct work_struct *work, struct wq_barrier *barr,
+ 	 * workqueues the deadlock happens when the rescuer stalls, blocking
+ 	 * forward progress.
+ 	 */
+-	if (!from_cancel &&
+-	    (pwq->wq->saved_max_active == 1 || pwq->wq->rescuer)) {
+-		lock_map_acquire(&pwq->wq->lockdep_map);
+-		lock_map_release(&pwq->wq->lockdep_map);
+-	}
++	if (!from_cancel && (wq->saved_max_active == 1 || wq->rescuer))
++		touch_wq_lockdep_map(wq);
++
+ 	rcu_read_unlock();
+ 	return true;
+ already_gone:
+@@ -3817,9 +3837,6 @@ static bool __flush_work(struct work_struct *work, bool from_cancel)
+ 	if (WARN_ON(!work->func))
+ 		return false;
+ 
+-	lock_map_acquire(&work->lockdep_map);
+-	lock_map_release(&work->lockdep_map);
+-
+ 	if (start_flush_work(work, &barr, from_cancel)) {
+ 		wait_for_completion(&barr.done);
+ 		destroy_work_on_stack(&barr.work);
+-- 
+2.43.0
 
- http://lkml.kernel.org/r/CAHk-=wjDW53w4-YcSmgKC5RruiRLHmJ1sXeYdp_ZgVoBw=5byA@mail.gmail.com
-
-As suggested, this patchset implements BH workqueues which are like regular
-workqueues but executes work items in the BH (softirq) context and converts
-several tasklet users.
-
-- The name bh is used instead of the suggested atomic as it's more in line
-  with widely used execution context interface - local_bh_enable/disable()
-  and friends.
-
-- The system default BH workqueues - system_bh_wq and system_bh_highpri_wq -
-  are provided. As queue-wide flushing doesn't exist in tasklet, all
-  existing tasklet users should be able to use the system BH workqueues
-  without creating their own.
-
-- BH workqueues currently use tasklet to run the work items to avoid
-  priority inversions involving tasklet_hi and WQ_BH | WQ_HIGHPRI. Once all
-  tasklet users are converted, tasklet code can be removed and BH workqueues
-  can take over its softirqs.
-
-This patchset is on top of wq/for-6.9 (aae17ebb53c ("workqueue: Avoid using
-isolated cpus' timers on queue_delayed_work")) and contains the following
-eight patches.
-
- 0001-workqueue-Update-lock-debugging-code.patch
- 0002-workqueue-Factor-out-init_cpu_worker_pool.patch
- 0003-workqueue-Implement-BH-workqueues-to-eventually-repl.patch
- 0004-backtracetest-Convert-from-tasklet-to-BH-workqueue.patch
- 0005-usb-core-hcd-Convert-from-tasklet-to-BH-workqueue.patch
- 0006-net-tcp-tsq-Convert-from-tasklet-to-BH-workqueue.patch
- 0007-dm-crypt-Convert-from-tasklet-to-BH-workqueue.patch
- 0008-dm-verity-Convert-from-tasklet-to-BH-workqueue.patch
-
-0001-0003 prepare and implement BH workqueues.
-
-0004-0008 convert some tasklet users to BH workqueue. The conversions are
-relatively straightforward but are in descending order of confidence.
-
-The patchset is also available in the following git branch.
-
- git://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git wq-bh-v1
-
-diffstat follows. Thanks.
-
- Documentation/core-api/workqueue.rst |   29 ++++-
- drivers/md/dm-crypt.c                |   36 -------
- drivers/md/dm-verity-target.c        |    8 -
- drivers/md/dm-verity.h               |    2
- drivers/usb/core/hcd.c               |   23 ++--
- include/linux/usb/hcd.h              |    2
- include/linux/workqueue.h            |    9 +
- include/net/tcp.h                    |    2
- kernel/backtracetest.c               |   18 +--
- kernel/workqueue.c                   |  312 ++++++++++++++++++++++++++++++++++++++++++++++++--------------
- kernel/workqueue_internal.h          |    3
- net/ipv4/tcp.c                       |    2
- net/ipv4/tcp_output.c                |   36 +++----
- tools/workqueue/wq_dump.py           |   11 +-
- 14 files changed, 335 insertions(+), 158 deletions(-)
-
---
-tejun
