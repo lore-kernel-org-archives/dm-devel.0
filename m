@@ -1,121 +1,154 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F04367A10
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 11:46:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2D1A629EF
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 13:05:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706615175; cv=none; b=juIFEfmXVBJVfJC3s2wLqL4gDSED6nXZVNaDgh9okPLrQAh2/QEjVggCqDmFAnQI/YumPcuYCo8HflzPioYwGhhq/+nSQFXJgeegTl70LygP0N72iz2QXa5CgaWazLUhhvElGkY9lqt1aWyj0KJ/dSPclKlkLfnJtdZX7ziLOHc=
+	t=1706619934; cv=none; b=Fs5TrCprxoudz4+GjRnkMHJ2o2hcDvFS1kUuJpkJp4IEd/Qvc2suIthr1AgXSvNEP2kMzgk7N6UgqYQ/rbesJYe0PuyP9iy1tBf8AC8a2m9ttYExqOsYhLm6GS9BTjNYEsckc0ca6Uqeqq5YKj+l7YCkwrZfF0kc3q0tt6yZGZU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706615175; c=relaxed/simple;
-	bh=s6N1gkYvyY3hDBDbP8HT9EefNkFyTfoHZIbsaI0LxsY=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=tKSyRuUVdVQfcts+5On/G/wHdhcOrgQIgXrX3sF/46dZWS+SlVY3NtZJHQxUcpbXDYq0KBa0j/YpF7hHJQArC4sfjxB1kV3ckQnUEqiEQGVdT2bHNSinpqEEEU4T2gcq8AmZefwM5H7Cqv31oT2uZBcYxeOVFf2Itw8D+dDt4Zs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XwsKpm5C; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XwsKpm5C"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1706615173;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=XNC4RnR1LP3JLZK3mU2j4+a+R8GFkfNE9wD4WslHeU4=;
-	b=XwsKpm5CYB4xXnh7LENaIjSlKjHBRZCAHnRyYILlu4i/KiYo8e9DU4ebQLkwX+/h4x7SG7
-	iBPjwjqH+er4aQMkfgHixJUWomATm2UghLnLDyyxMU6XjtSUSk6JjQqQsscB9UyGOP2VHv
-	yn0WnA+u/Jd8nDsD3mJGS4dzVwP+0rs=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-571-1fs-sfDbNryD18DHM1ANyA-1; Tue, 30 Jan 2024 06:46:09 -0500
-X-MC-Unique: 1fs-sfDbNryD18DHM1ANyA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 04E9B85A599;
-	Tue, 30 Jan 2024 11:46:09 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9C01640C95AD;
-	Tue, 30 Jan 2024 11:46:08 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 7F56B30C14EB; Tue, 30 Jan 2024 11:46:08 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 7A9C13FB4E;
-	Tue, 30 Jan 2024 12:46:08 +0100 (CET)
-Date: Tue, 30 Jan 2024 12:46:08 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-cc: heinzm@redhat.com, xni@redhat.com, agk@redhat.com, snitzer@kernel.org, 
-    dm-devel@lists.linux.dev, song@kernel.org, yukuai3@huawei.com, 
-    jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com, akpm@osdl.org, 
-    linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
-    yi.zhang@huawei.com, yangerkun@huawei.com
+	s=arc-20240116; t=1706619934; c=relaxed/simple;
+	bh=5pKt9gawZv7V3M8KB+8lfendOF6qiXRbOvon5VS3kOk=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=olKFawop7n63+VkMN/1rb37WveCPvyKXQjSE4lZv/nGE3xqN0/2gKyNZlgqZWm+4v5IS6H83SJd3scSi31QkCNp7eIboMfQVxaTrKZnJa/aaccmZ9whnciDOz/WsALUCnk9WLmnEAIGJa3lvrEDK4WlnXc7T0x2XRbc3WbkKAbk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TPQPw5fBhz4f3jq5
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 21:05:24 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 52D4D1A016E
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 21:05:27 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgBnOBEV9LhlrAXNCQ--.25794S3;
+	Tue, 30 Jan 2024 21:05:27 +0800 (CST)
 Subject: Re: [PATCH RFC v4 13/14] dm: wait for IO completion before removing
  dm device
-In-Reply-To: <20240130021843.3608859-14-yukuai1@huaweicloud.com>
-Message-ID: <fa4cd2f8-d0e8-5b6d-2ac6-1c5f1710a5ee@redhat.com>
-References: <20240130021843.3608859-1-yukuai1@huaweicloud.com> <20240130021843.3608859-14-yukuai1@huaweicloud.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: heinzm@redhat.com, xni@redhat.com, agk@redhat.com, snitzer@kernel.org,
+ dm-devel@lists.linux.dev, song@kernel.org, jbrassow@f14.redhat.com,
+ neilb@suse.de, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20240130021843.3608859-1-yukuai1@huaweicloud.com>
+ <20240130021843.3608859-14-yukuai1@huaweicloud.com>
+ <fa4cd2f8-d0e8-5b6d-2ac6-1c5f1710a5ee@redhat.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <bdeac016-f57d-f917-d605-342fe9856ccf@huaweicloud.com>
+Date: Tue, 30 Jan 2024 21:05:25 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+In-Reply-To: <fa4cd2f8-d0e8-5b6d-2ac6-1c5f1710a5ee@redhat.com>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgBnOBEV9LhlrAXNCQ--.25794S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxAr1DuFW5ur4rWF1kJw13urg_yoW5Cr4DpF
+	Wftay3tFZ8Zr13Kw4jqa1UKF1FyF4SqryfGryIvw1fA3Zxur98JF48tFWrtFWUCFyUWF13
+	AF1DXas5Gr4DJ3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
+	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
+	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
+	17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
+	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
+	3wCI42IY6I8E87Iv67AKxVW8JVWxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcS
+	sGvfC2KfnxnUUI43ZEXa7VUbQVy7UUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
+Hi,
 
-
-On Tue, 30 Jan 2024, Yu Kuai wrote:
-
-> From: Yu Kuai <yukuai3@huawei.com>
+ÔÚ 2024/01/30 19:46, Mikulas Patocka Ð´µÀ:
 > 
-> __dm_destroy() guarantee that device openers is zero, and then
-> only call 'presuspend' and 'postsuspend' for the target. For
-> request-based dm, 'md->holders' will be grabbed for each rq and
-> __dm_destroy() will wait for 'md->holders' to be zero. However, for
-> bio-based device, __dm_destroy() doesn't wait for all bios to be done.
 > 
-> Fix this problem by calling dm_wait_for_completion() to wail for all
-> inflight IO to be done, like what dm_suspend() does.
-
-If the number of openers is zero, it is guaranteed that there are no bios 
-in flight. Therefore, we don't have to wait for them.
-
-If there are bios in flight, it is a bug in the code that issues the bios. 
-You can put WARN_ON(dm_in_flight_bios(md)) there.
-
-Mikulas
-
-> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-> ---
->  drivers/md/dm.c | 3 +++
->  1 file changed, 3 insertions(+)
+> On Tue, 30 Jan 2024, Yu Kuai wrote:
 > 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 8dcabf84d866..2c0eae67d0f1 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -58,6 +58,7 @@ static DEFINE_IDR(_minor_idr);
->  static DEFINE_SPINLOCK(_minor_lock);
->  
->  static void do_deferred_remove(struct work_struct *w);
-> +static int dm_wait_for_completion(struct mapped_device *md, unsigned int task_state);
->  
->  static DECLARE_WORK(deferred_remove_work, do_deferred_remove);
->  
-> @@ -2495,6 +2496,8 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
->  	if (!dm_suspended_md(md)) {
->  		dm_table_presuspend_targets(map);
->  		set_bit(DMF_SUSPENDED, &md->flags);
-> +		if (wait)
-> +			dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
->  		set_bit(DMF_POST_SUSPENDING, &md->flags);
->  		dm_table_postsuspend_targets(map);
->  	}
-> -- 
-> 2.39.2
+>> From: Yu Kuai <yukuai3@huawei.com>
+>>
+>> __dm_destroy() guarantee that device openers is zero, and then
+>> only call 'presuspend' and 'postsuspend' for the target. For
+>> request-based dm, 'md->holders' will be grabbed for each rq and
+>> __dm_destroy() will wait for 'md->holders' to be zero. However, for
+>> bio-based device, __dm_destroy() doesn't wait for all bios to be done.
+>>
+>> Fix this problem by calling dm_wait_for_completion() to wail for all
+>> inflight IO to be done, like what dm_suspend() does.
+> 
+> If the number of openers is zero, it is guaranteed that there are no bios
+> in flight. Therefore, we don't have to wait for them.
+> 
+> If there are bios in flight, it is a bug in the code that issues the bios.
+> You can put WARN_ON(dm_in_flight_bios(md)) there.
+
+I add this patch because while testing, there is a problem that is
+hard to reporduce, as I mentioned in the other thread. I'll add BUG_ON()
+and try if I can still reporduce this problem without triggering it.
+
+Thanks,
+Kuai
+
+[12504.959682] BUG bio-296 (Not tainted): Object already free
+[12504.960239] 
+-----------------------------------------------------------------------------
+[12504.960239]
+[12504.961209] Allocated in mempool_alloc+0xe8/0x270 age=30 cpu=1 pid=203288
+[12504.961905]  kmem_cache_alloc+0x36a/0x3b0
+[12504.962324]  mempool_alloc+0xe8/0x270
+[12504.962712]  bio_alloc_bioset+0x3b5/0x920
+[12504.963129]  bio_alloc_clone+0x3e/0x160
+[12504.963533]  alloc_io+0x3d/0x1f0
+[12504.963876]  dm_submit_bio+0x12f/0xa30
+[12504.964267]  __submit_bio+0x9c/0xe0
+[12504.964639]  submit_bio_noacct_nocheck+0x25a/0x570
+[12504.965136]  submit_bio_wait+0xc2/0x160
+[12504.965535]  blkdev_issue_zeroout+0x19b/0x2e0
+[12504.965991]  ext4_init_inode_table+0x246/0x560
+[12504.966462]  ext4_lazyinit_thread+0x750/0xbe0
+[12504.966922]  kthread+0x1b4/0x1f0
+> 
+> Mikulas
+> 
+>> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+>> ---
+>>   drivers/md/dm.c | 3 +++
+>>   1 file changed, 3 insertions(+)
+>>
+>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+>> index 8dcabf84d866..2c0eae67d0f1 100644
+>> --- a/drivers/md/dm.c
+>> +++ b/drivers/md/dm.c
+>> @@ -58,6 +58,7 @@ static DEFINE_IDR(_minor_idr);
+>>   static DEFINE_SPINLOCK(_minor_lock);
+>>   
+>>   static void do_deferred_remove(struct work_struct *w);
+>> +static int dm_wait_for_completion(struct mapped_device *md, unsigned int task_state);
+>>   
+>>   static DECLARE_WORK(deferred_remove_work, do_deferred_remove);
+>>   
+>> @@ -2495,6 +2496,8 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
+>>   	if (!dm_suspended_md(md)) {
+>>   		dm_table_presuspend_targets(map);
+>>   		set_bit(DMF_SUSPENDED, &md->flags);
+>> +		if (wait)
+>> +			dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
+>>   		set_bit(DMF_POST_SUSPENDING, &md->flags);
+>>   		dm_table_postsuspend_targets(map);
+>>   	}
+>> -- 
+>> 2.39.2
+>>
+> 
+> .
 > 
 
