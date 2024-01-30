@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id A6C1578661
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 22:37:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 8AC5D7995D
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 22:37:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706654246; cv=none; b=jLmDf59xpPtK6KV6XVwTiKR9+jOO5tLjx11TN6ox86Hu/1fU0EEu+ZZe5W2DJJpWpBtrVQYqwIvfF+Bg0xQnOgwpEb7XrnnpbLSbO5ATDdbkP215uPaEVXaNdAjAr9n3VdzfBdhNGyFguc4X0VYrOB3nGSIDc2bpV0wY/OsnO2U=
+	t=1706654246; cv=none; b=RxcDIhorftyXrxNl1JAhCW73//Qnog4pNGY1AlH+IcOg17GqcTLRf2NCl2Sj5bglhwnY0JzFlcSedTWwR5VJH14PVOmgPsqamELrgLhMiDeh9FDYdqIr6usY9wKoCwVIk3dMCHttjXnYI83rAh1mCvygulMW9cFsllMJHK33/Gs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1706654246; c=relaxed/simple;
-	bh=tFaUeER30hosoJ+OPdSsgr1pXSqyKZEV/QNpQ5VRXqE=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=I23Q1jfRwt2dmVhfeP+g6E1QJxe7ROeehlY/Nlg/zq5OTHSPN8TQLW7JW+ZZksbk1FQfvsMb4M/06bZNvQaqNK4da2AJtmrB0p3rkxeZIwyPZgZJ582MuKf43Hx2qbp+jaF6Je9OXKCIz3J0IJYh+3vUCchDYjbv7jr4mXbv2IA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=e4BMtpEv; arc=none smtp.client-ip=13.77.154.182
+	bh=0RImSfWDsuyQqbPQ7O0zuTEsVGxwEIfo2Pi/EPZFoTo=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=rRQY4y2lqRooVs5lNGlwxFznBEWsooVw8B2CVbqH2ugr9wIs+roDDr5g3xu9q872EJxdKdxiCGnjJ4RDmcboQCKgVWlMA2j1N7u9HDyZdJJ7QJCUPNET7uJObtBs8lj9BNG9pP5ZpwYtuhuEyLsmxYmM6kZATWw+rpvI8w39wl0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=kb3osDtA; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="e4BMtpEv"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="kb3osDtA"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id 1713F20B2003; Tue, 30 Jan 2024 14:37:21 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 1713F20B2003
+	id 3453420B2007; Tue, 30 Jan 2024 14:37:22 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 3453420B2007
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
 	s=default; t=1706654242;
-	bh=RI94jOT/R/a54qYYhDK+OanuSVzhv0ZoCkBytf6U4PQ=;
+	bh=EWbimXT3r5uH71kUC3HLmOsJ78VUidHK3BehWmfo0EE=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=e4BMtpEv0x+VEYI/SgN/yn03yyjnw6/RrRl9pcTgCG88Av9CPgpq1jn4UOma1aWxd
-	 fm1HEwyXtTEZY0K/YT05k3D/98mpVrPl737keon90rYs2PGhFAOqDBUhVqkFeV1VXz
-	 6cxJIbibPvjWhUUH5igN5jAd6ya8EPh4g6wWGxuI=
+	b=kb3osDtAmHwsOccuH9u6TwU95Jq8JuBfHnVuQZHYmd26ntOZz8M+uWn+Y3ybxzpAN
+	 B/hiT0nHXepAgKg417YnwMJC06UjaF8Wa03agztD+UqzRFqE2kvIp4nmlGHcftqHCP
+	 O0DOL0rH2JeRXb7Z/u9Z9gfBbUMXbJZ5LNMD40uI=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -43,11 +43,10 @@ Cc: linux-doc@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	audit@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
-	Deven Bowers <deven.desai@linux.microsoft.com>,
 	Fan Wu <wufan@linux.microsoft.com>
-Subject: [RFC PATCH v12 03/20] ipe: add evaluation loop
-Date: Tue, 30 Jan 2024 14:36:51 -0800
-Message-Id: <1706654228-17180-4-git-send-email-wufan@linux.microsoft.com>
+Subject: [RFC PATCH v12 05/20] initramfs|security: Add security hook to initramfs unpack
+Date: Tue, 30 Jan 2024 14:36:53 -0800
+Message-Id: <1706654228-17180-6-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1706654228-17180-1-git-send-email-wufan@linux.microsoft.com>
 References: <1706654228-17180-1-git-send-email-wufan@linux.microsoft.com>
@@ -57,219 +56,104 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
-From: Deven Bowers <deven.desai@linux.microsoft.com>
+This patch introduces a new hook to notify security system that the
+content of initramfs has been unpacked into the rootfs.
 
-IPE must have a centralized function to evaluate incoming callers
-against IPE's policy. This iteration of the policy for against the rules
-for that specific caller is known as the evaluation loop.
+Upon receiving this notification, the security system can activate
+a policy to allow only files that originated from the initramfs to
+execute or load into kernel during the early stages of booting.
 
-Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+This approach is crucial for minimizing the attack surface by
+ensuring that only trusted files from the initramfs are operational
+in the critical boot phase.
+
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
 ---
-v2:
-+ Split evaluation loop, access control hooks, and evaluation loop from policy parser and userspace interface to pass mailing list character limit
-
-v3:
-+ Move ipe_load_properties to patch 04.
-+ Remove useless 0-initializations Prefix extern variables with ipe_
-+ Remove kernel module parameters, as these are exposed through sysctls.
-+ Add more prose to the IPE base config option help text.
-+ Use GFP_KERNEL for audit_log_start.
-+ Remove unnecessary caching system.
-+ Remove comments from headers
-+ Use rcu_access_pointer for rcu-pointer null check
-+ Remove usage of reqprot; use prot only.
-+Move policy load and activation audit event to 03/12
-
-v4:
-+ Remove sysctls in favor of securityfs nodes
-+ Re-add kernel module parameters, as these are now exposed through securityfs.
-+ Refactor property audit loop to a separate function.
-
-v5:
-+ fix minor grammatical errors
-+ do not group rule by curly-brace in audit record,
-+ reconstruct the exact rule.
-
-v6:
-+ No changes
-
-v7:
-+ Further split lsm creation into a separate commit from the evaluation loop and audit system, for easier review.
-+ Propagating changes to support the new ipe_context structure in the evaluation loop.
-
-v8:
-+ Remove ipe_hook enumeration; hooks can be correlated via syscall record.
-
-v9:
-+ Remove ipe_context related code and simplify the evaluation loop.
-
-v10:
-+ Split eval part and boot_verified part
-
-v11:
-+ Fix code style issues
+v1-v11:
+  + Not present
 
 v12:
-+ Correct an rcu_read_unlock usage
-+ Add a WARN to unknown op during evaluation
+  + Introduced
 ---
- security/ipe/Makefile |   1 +
- security/ipe/eval.c   | 100 ++++++++++++++++++++++++++++++++++++++++++
- security/ipe/eval.h   |  24 ++++++++++
- 3 files changed, 125 insertions(+)
- create mode 100644 security/ipe/eval.c
- create mode 100644 security/ipe/eval.h
+ include/linux/lsm_hook_defs.h |  4 ++++
+ include/linux/security.h      | 10 ++++++++++
+ init/initramfs.c              |  3 +++
+ security/security.c           | 12 ++++++++++++
+ 4 files changed, 29 insertions(+)
 
-diff --git a/security/ipe/Makefile b/security/ipe/Makefile
-index c09aec4904f2..57fe922cf1fc 100644
---- a/security/ipe/Makefile
-+++ b/security/ipe/Makefile
-@@ -6,6 +6,7 @@
- #
+diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
+index 185924c56378..b247388786a9 100644
+--- a/include/linux/lsm_hook_defs.h
++++ b/include/linux/lsm_hook_defs.h
+@@ -425,3 +425,7 @@ LSM_HOOK(int, 0, uring_override_creds, const struct cred *new)
+ LSM_HOOK(int, 0, uring_sqpoll, void)
+ LSM_HOOK(int, 0, uring_cmd, struct io_uring_cmd *ioucmd)
+ #endif /* CONFIG_IO_URING */
++
++#ifdef CONFIG_BLK_DEV_INITRD
++LSM_HOOK(void, LSM_RET_VOID, unpack_initramfs_security, void)
++#endif /* CONFIG_BLK_DEV_INITRD */
+diff --git a/include/linux/security.h b/include/linux/security.h
+index d0eb20f90b26..1545c69edc1b 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -2167,4 +2167,14 @@ static inline int security_uring_cmd(struct io_uring_cmd *ioucmd)
+ #endif /* CONFIG_SECURITY */
+ #endif /* CONFIG_IO_URING */
  
- obj-$(CONFIG_SECURITY_IPE) += \
-+	eval.o \
- 	ipe.o \
- 	policy.o \
- 	policy_parser.o \
-diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-new file mode 100644
-index 000000000000..af56815ed0fa
---- /dev/null
-+++ b/security/ipe/eval.c
-@@ -0,0 +1,100 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+
-+#include <linux/fs.h>
-+#include <linux/types.h>
-+#include <linux/slab.h>
-+#include <linux/file.h>
-+#include <linux/sched.h>
-+#include <linux/rcupdate.h>
-+
-+#include "ipe.h"
-+#include "eval.h"
-+#include "policy.h"
-+
-+struct ipe_policy __rcu *ipe_active_policy;
-+
-+/**
-+ * evaluate_property - Analyze @ctx against a property.
-+ * @ctx: Supplies a pointer to the context to be evaluated.
-+ * @p: Supplies a pointer to the property to be evaluated.
-+ *
-+ * Return:
-+ * * true	- The current @ctx match the @p
-+ * * false	- The current @ctx doesn't match the @p
-+ */
-+static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
-+			      struct ipe_prop *p)
++#ifdef CONFIG_BLK_DEV_INITRD
++#ifdef CONFIG_SECURITY
++extern void security_unpack_initramfs(void);
++#else
++static inline void security_unpack_initramfs(void)
 +{
-+	return false;
 +}
++#endif /* CONFIG_SECURITY */
++#endif /* CONFIG_BLK_DEV_INITRD */
 +
+ #endif /* ! __LINUX_SECURITY_H */
+diff --git a/init/initramfs.c b/init/initramfs.c
+index 76deb48c38cb..075a5794cde5 100644
+--- a/init/initramfs.c
++++ b/init/initramfs.c
+@@ -18,6 +18,7 @@
+ #include <linux/init_syscalls.h>
+ #include <linux/task_work.h>
+ #include <linux/umh.h>
++#include <linux/security.h>
+ 
+ static __initdata bool csum_present;
+ static __initdata u32 io_csum;
+@@ -720,6 +721,8 @@ static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
+ #endif
+ 	}
+ 
++	security_unpack_initramfs();
++
+ done:
+ 	/*
+ 	 * If the initrd region is overlapped with crashkernel reserved region,
+diff --git a/security/security.c b/security/security.c
+index ddf2e69cf8f2..2a527d4c69bc 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -5581,3 +5581,15 @@ int security_uring_cmd(struct io_uring_cmd *ioucmd)
+ 	return call_int_hook(uring_cmd, 0, ioucmd);
+ }
+ #endif /* CONFIG_IO_URING */
++
++#ifdef CONFIG_BLK_DEV_INITRD
 +/**
-+ * ipe_evaluate_event - Analyze @ctx against the current active policy.
-+ * @ctx: Supplies a pointer to the context to be evaluated.
++ * security_unpack_initramfs() - Notify LSM that initramfs has been loaded
 + *
-+ * This is the loop where all policy evaluation happens against IPE policy.
-+ *
-+ * Return:
-+ * * 0		- OK
-+ * * -EACCES	- @ctx did not pass evaluation.
-+ * * !0		- Error
++ * Tells the LSM the initramfs has been unpacked into the rootfs.
 + */
-+int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
++void security_unpack_initramfs(void)
 +{
-+	bool match = false;
-+	enum ipe_action_type action;
-+	struct ipe_policy *pol = NULL;
-+	const struct ipe_rule *rule = NULL;
-+	const struct ipe_op_table *rules = NULL;
-+	struct ipe_prop *prop = NULL;
-+
-+	rcu_read_lock();
-+
-+	pol = rcu_dereference(ipe_active_policy);
-+	if (!pol) {
-+		rcu_read_unlock();
-+		return 0;
-+	}
-+
-+	if (ctx->op == IPE_OP_INVALID) {
-+		if (pol->parsed->global_default_action == IPE_ACTION_DENY) {
-+			rcu_read_unlock();
-+			return -EACCES;
-+		}
-+		if (pol->parsed->global_default_action == IPE_ACTION_INVALID)
-+			WARN(1, "no default rule set for unknown op, ALLOW it");
-+		rcu_read_unlock();
-+		return 0;
-+	}
-+
-+	rules = &pol->parsed->rules[ctx->op];
-+
-+	list_for_each_entry(rule, &rules->rules, next) {
-+		match = true;
-+
-+		list_for_each_entry(prop, &rule->props, next) {
-+			match = evaluate_property(ctx, prop);
-+			if (!match)
-+				break;
-+		}
-+
-+		if (match)
-+			break;
-+	}
-+
-+	if (match)
-+		action = rule->action;
-+	else if (rules->default_action != IPE_ACTION_INVALID)
-+		action = rules->default_action;
-+	else
-+		action = pol->parsed->global_default_action;
-+
-+	rcu_read_unlock();
-+	if (action == IPE_ACTION_DENY)
-+		return -EACCES;
-+
-+	return 0;
++	call_void_hook(unpack_initramfs_security);
 +}
-diff --git a/security/ipe/eval.h b/security/ipe/eval.h
-new file mode 100644
-index 000000000000..6b434515968f
---- /dev/null
-+++ b/security/ipe/eval.h
-@@ -0,0 +1,24 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+
-+#ifndef _IPE_EVAL_H
-+#define _IPE_EVAL_H
-+
-+#include <linux/file.h>
-+#include <linux/types.h>
-+
-+#include "policy.h"
-+
-+extern struct ipe_policy __rcu *ipe_active_policy;
-+
-+struct ipe_eval_ctx {
-+	enum ipe_op_type op;
-+
-+	const struct file *file;
-+};
-+
-+int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
-+
-+#endif /* _IPE_EVAL_H */
++#endif /* CONFIG_BLK_DEV_INITRD */
 -- 
 2.43.0
 
