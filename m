@@ -1,28 +1,28 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2F47383A9
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 02:23:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D90D381AD
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 02:23:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706581392; cv=none; b=N7AB7WJQa9HOuTRv6pbLqKwtURFRNg1qMREFI95b+NpAvmpVmlkRYgK6I1IYDrtx1ZFYUPJJKjDORYbQI3wboD+BDnj/pO9RElG1xLvVdu9lad1Ic9tN6VoumFldLE5xYPZBhiGsxTFgwGXW7hZiQTuN38lgQhR8T63bUzE5/5U=
+	t=1706581392; cv=none; b=DHN5oiHG5cTbRYByiKP+d0b5/t+PMHsS8K8YJViGIfYDwNKqrWlz4Obsf431kaQKySG2um5uALgMYt4Sxvy1PMN+4gVaAkwyhgkszJ+e4y1ATMlaLjcN2HBaqzZ43jOMeSoCy8qu1WnW5noeo+T8B6iEIdZ4E3oAxGJLQTKU1vU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1706581392; c=relaxed/simple;
-	bh=6YDQmrYqLiTMI1nBqXhhAgN5M0sQ1yDoPL9hqgOUqgk=;
+	bh=yeO1LGdlv/HUZdhkshDDNxzEa5t2WUEBZmRVtUU3LHw=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=SgzKMzdo4I1daiBAK7NbIQCNCE15QtZSCQFZRmetZhEFEoB+1H4SyZlLw0hj3HmqtnIzmxy0KJ2MmCB3D8Pv+7NnypvkjnpZ4pwzYy9I7EpBXys+YpAiQbbHAGMKumj7H3j2Yvch2VDXFYn8j7zuVB4K2bb54d1R3txeUNEjcTM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+	 MIME-Version; b=EhXuBN1IKLEwsMK8NQeBSgsGP3aH47phZUxZjWV65pwzwZpiFq0MrkWbvd1Eqk/wJz5nJpaEKZzrs4Y8vImX6iuWnOiHPYtZkUSRshl9KGhN4MnjmiPJezfEpeBJhFtmmco/37ZIgv/0+sfRZgYE3EGxr58L38VlKFws+Prp8v0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TP88l4QQNz4f3lwq
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 10:23:03 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TP88h0CNGz4f3m7d
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 10:23:00 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id B80CD1A01E9
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 10:23:07 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 7B9BB1A0171
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 10:23:06 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgBHGBGBXbhlrAigCQ--.55484S14;
-	Tue, 30 Jan 2024 10:23:07 +0800 (CST)
+	by APP1 (Coremail) with SMTP id cCh0CgBHGBGBXbhlrAigCQ--.55484S12;
+	Tue, 30 Jan 2024 10:23:06 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: mpatocka@redhat.com,
 	heinzm@redhat.com,
@@ -41,9 +41,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH v4 10/14] md: don't suspend the array for interrupted reshape
-Date: Tue, 30 Jan 2024 10:18:39 +0800
-Message-Id: <20240130021843.3608859-11-yukuai1@huaweicloud.com>
+Subject: [PATCH v4 08/14] dm-raid: add a new helper prepare_suspend() in md_personality
+Date: Tue, 30 Jan 2024 10:18:37 +0800
+Message-Id: <20240130021843.3608859-9-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240130021843.3608859-1-yukuai1@huaweicloud.com>
 References: <20240130021843.3608859-1-yukuai1@huaweicloud.com>
@@ -54,10 +54,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBHGBGBXbhlrAigCQ--.55484S14
-X-Coremail-Antispam: 1UD129KBjvJXoW7uF1fuFy3ZFWkArykCr17Jrb_yoW8ur13p3
-	yakF1ayrs8X39IvayUG3Z7KFyFk3s5trWYy3srG34UAw13Gr1fGr43Gr4q9FyY9ry3trs0
-	qr1Yq3s5GF1qkaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:cCh0CgBHGBGBXbhlrAigCQ--.55484S12
+X-Coremail-Antispam: 1UD129KBjvJXoW7Kr47Kr4xtrykGw13uF4fGrg_yoW8Wr48pa
+	yIqay5Ar4UJayavw1DXr4kZa4aq3ZIgrWqyryfJayfZa42grn5W3WFqayDZrZ0yFy3CF13
+	Aa1Utw4kuFy09rDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUPI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -68,71 +68,57 @@ X-Coremail-Antispam: 1UD129KBjvJXoW7uF1fuFy3ZFWkArykCr17Jrb_yoW8ur13p3
 	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
 	kIc2xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E
 	14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIx
-	kGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVW8JVW5JwCI42IY6xIIjxv20xvEc7CjxVAF
-	wI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Gr
-	0_Cr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUQ
+	kGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI42IY6xIIjxv20xvEc7CjxVAF
+	wI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr
+	0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUQ
 	SdkUUUUU=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-md_start_sync() will suspend the array if there are spares that can be
-added or removed from conf, however, if reshape is still in progress,
-this won't happen at all or data will be corrupted(remove_and_add_spares
-won't be called from md_choose_sync_action for reshape), hence there is
-no need to suspend the array if reshape is not done yet.
+There are no functional changes for now, prepare to fix a deadlock for
+dm-raid456.
 
-Meanwhile, there is a potential deadlock for raid456:
-
-1) reshape is interrupted;
-
-2) set one of the disk WantReplacement, and add a new disk to the array,
-   however, recovery won't start until the reshape is finished;
-
-3) then issue an IO across reshpae position, this IO will wait for
-   reshape to make progress;
-
-4) continue to reshape, then md_start_sync() found there is a spare disk
-   that can be added to conf, mddev_suspend() is called;
-
-Step 4 and step 3 is waiting for each other, deadlock triggered. Noted
-this problem is found by code review, and it's not reporduced yet.
-
-Fix this porblem by don't suspend the array for interrupted reshape,
-this is safe because conf won't be changed until reshape is done.
-
-Fixes: bc08041b32ab ("md: suspend array in md_start_sync() if array need reconfiguration")
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md.c | 13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
+ drivers/md/dm-raid.c | 10 +++++++---
+ drivers/md/md.h      |  1 +
+ 2 files changed, 8 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index b942cc126ce0..093abf3ce27b 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -9391,12 +9391,17 @@ static void md_start_sync(struct work_struct *ws)
- 	bool suspend = false;
- 	char *name;
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 6b6c011d9f69..16d3348abfed 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3806,10 +3806,14 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ static void raid_presuspend(struct dm_target *ti)
+ {
+ 	struct raid_set *rs = ti->private;
++	struct mddev *mddev = &rs->md;
  
--	if (md_spares_need_change(mddev))
-+	/*
-+	 * If reshape is still in progress, spares won't be added or removed
-+	 * from conf until reshape is done.
-+	 */
-+	if (mddev->reshape_position == MaxSector &&
-+	    md_spares_need_change(mddev)) {
- 		suspend = true;
-+		mddev_suspend(mddev, false);
-+	}
- 
--	suspend ? mddev_suspend_and_lock_nointr(mddev) :
--		  mddev_lock_nointr(mddev);
--
+-	mddev_lock_nointr(&rs->md);
+-	md_frozen_sync_thread(&rs->md);
+-	mddev_unlock(&rs->md);
 +	mddev_lock_nointr(mddev);
- 	if (!md_is_rdwr(mddev)) {
- 		/*
- 		 * On a read-only array we can:
++	md_frozen_sync_thread(mddev);
++	mddev_unlock(mddev);
++
++	if (mddev->pers && mddev->pers->prepare_suspend)
++		mddev->pers->prepare_suspend(mddev);
+ }
+ 
+ static void raid_presuspend_undo(struct dm_target *ti)
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 437ab70ce79b..29b476ff3b9f 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -617,6 +617,7 @@ struct md_personality
+ 	int (*start_reshape) (struct mddev *mddev);
+ 	void (*finish_reshape) (struct mddev *mddev);
+ 	void (*update_reshape_pos) (struct mddev *mddev);
++	void (*prepare_suspend) (struct mddev *mddev);
+ 	/* quiesce suspends or resumes internal processing.
+ 	 * 1 - stop new actions and wait for action io to complete
+ 	 * 0 - return to normal behaviour
 -- 
 2.39.2
 
