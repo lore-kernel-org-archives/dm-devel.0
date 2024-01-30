@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 8AC5D7995D
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 00B0B79DB0
 	for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 22:37:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706654246; cv=none; b=RxcDIhorftyXrxNl1JAhCW73//Qnog4pNGY1AlH+IcOg17GqcTLRf2NCl2Sj5bglhwnY0JzFlcSedTWwR5VJH14PVOmgPsqamELrgLhMiDeh9FDYdqIr6usY9wKoCwVIk3dMCHttjXnYI83rAh1mCvygulMW9cFsllMJHK33/Gs=
+	t=1706654247; cv=none; b=tgG5QAJbY61Zc0JwIKHWVskuKIuWFYoubi/IhvjeSpLu1ahNR47CfeugbUZumyth2xOcB2T9Is1dVJfpJfySTTQckvbhJTywwmeo8QUd/RGF9feoDK4awdMBXdlpUWqug9e7AbwsYV+9ZDA/KoYmupyMwXt6ycTDz0+gA0nvwGE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706654246; c=relaxed/simple;
-	bh=0RImSfWDsuyQqbPQ7O0zuTEsVGxwEIfo2Pi/EPZFoTo=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=rRQY4y2lqRooVs5lNGlwxFznBEWsooVw8B2CVbqH2ugr9wIs+roDDr5g3xu9q872EJxdKdxiCGnjJ4RDmcboQCKgVWlMA2j1N7u9HDyZdJJ7QJCUPNET7uJObtBs8lj9BNG9pP5ZpwYtuhuEyLsmxYmM6kZATWw+rpvI8w39wl0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=kb3osDtA; arc=none smtp.client-ip=13.77.154.182
+	s=arc-20240116; t=1706654247; c=relaxed/simple;
+	bh=q2N90IkYiMhawf/EMMMNOfHILynY5K1y2kARX2muhOM=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=g2NNPzgs5Xrdi0Iqd5dkM741E3WdN6aPgzNP/DjCObDkHqPEUIbcNc4XBl4F2Kff6rc0aM0aHA9exGYS0fS/1c1bPfzCcPEWBju+K92/Cx4SZD4a/59fFxERrGsp/U4LH+WUPesysSTz+AKhIB74pE3K4O55xCCgD5tIgZg8JEw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=eKRU4ybE; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="kb3osDtA"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="eKRU4ybE"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id 3453420B2007; Tue, 30 Jan 2024 14:37:22 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 3453420B2007
+	id 4F5A820B200B; Tue, 30 Jan 2024 14:37:22 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 4F5A820B200B
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
 	s=default; t=1706654242;
-	bh=EWbimXT3r5uH71kUC3HLmOsJ78VUidHK3BehWmfo0EE=;
+	bh=MZIUTiZ4IP2Ll7W/ScSzaJN4C5rYzK2zFEdobpZtunU=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=kb3osDtAmHwsOccuH9u6TwU95Jq8JuBfHnVuQZHYmd26ntOZz8M+uWn+Y3ybxzpAN
-	 B/hiT0nHXepAgKg417YnwMJC06UjaF8Wa03agztD+UqzRFqE2kvIp4nmlGHcftqHCP
-	 O0DOL0rH2JeRXb7Z/u9Z9gfBbUMXbJZ5LNMD40uI=
+	b=eKRU4ybEEAYVTcJ+3CYfX0iOCDUSsbZcW3FFJC+xe1rwPE9+Smgh+Gr0aUgZg/sc9
+	 hb6VrsDZyQTIM9lmiRP0Mbr1Jcxaf9g6H4Wc/37pmxHnBLwtj5vUz3czZT46sESPQR
+	 4A/MnsVD/6mdpkqr2P01SZpSgi6iQC4Mtj2mkdCc=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -44,9 +44,9 @@ Cc: linux-doc@vger.kernel.org,
 	audit@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	Fan Wu <wufan@linux.microsoft.com>
-Subject: [RFC PATCH v12 05/20] initramfs|security: Add security hook to initramfs unpack
-Date: Tue, 30 Jan 2024 14:36:53 -0800
-Message-Id: <1706654228-17180-6-git-send-email-wufan@linux.microsoft.com>
+Subject: [RFC PATCH v12 07/20] security: add new securityfs delete function
+Date: Tue, 30 Jan 2024 14:36:55 -0800
+Message-Id: <1706654228-17180-8-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1706654228-17180-1-git-send-email-wufan@linux.microsoft.com>
 References: <1706654228-17180-1-git-send-email-wufan@linux.microsoft.com>
@@ -56,104 +56,86 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
-This patch introduces a new hook to notify security system that the
-content of initramfs has been unpacked into the rootfs.
+When deleting a directory in the security file system, the existing
+securityfs_remove requires the directory to be empty, otherwise
+it will do nothing. This leads to a potential risk that the security
+file system might be in an unclean state when the intended deletion
+did not happen.
 
-Upon receiving this notification, the security system can activate
-a policy to allow only files that originated from the initramfs to
-execute or load into kernel during the early stages of booting.
+This commit introduces a new function securityfs_recursive_remove
+to recursively delete a directory without leaving an unclean state.
 
-This approach is crucial for minimizing the attack surface by
-ensuring that only trusted files from the initramfs are operational
-in the critical boot phase.
-
+Co-developed-by: Christian Brauner (Microsoft) <brauner@kernel.org>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
 ---
-v1-v11:
+v1-v8:
   + Not present
 
-v12:
+v9:
   + Introduced
----
- include/linux/lsm_hook_defs.h |  4 ++++
- include/linux/security.h      | 10 ++++++++++
- init/initramfs.c              |  3 +++
- security/security.c           | 12 ++++++++++++
- 4 files changed, 29 insertions(+)
 
-diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-index 185924c56378..b247388786a9 100644
---- a/include/linux/lsm_hook_defs.h
-+++ b/include/linux/lsm_hook_defs.h
-@@ -425,3 +425,7 @@ LSM_HOOK(int, 0, uring_override_creds, const struct cred *new)
- LSM_HOOK(int, 0, uring_sqpoll, void)
- LSM_HOOK(int, 0, uring_cmd, struct io_uring_cmd *ioucmd)
- #endif /* CONFIG_IO_URING */
-+
-+#ifdef CONFIG_BLK_DEV_INITRD
-+LSM_HOOK(void, LSM_RET_VOID, unpack_initramfs_security, void)
-+#endif /* CONFIG_BLK_DEV_INITRD */
+v10:
+  + No changes
+
+v11:
+  + Fix code style issues
+
+v12:
+  + No changes
+---
+ include/linux/security.h |  1 +
+ security/inode.c         | 25 +++++++++++++++++++++++++
+ 2 files changed, 26 insertions(+)
+
 diff --git a/include/linux/security.h b/include/linux/security.h
-index d0eb20f90b26..1545c69edc1b 100644
+index 1545c69edc1b..e994ac9cda91 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -2167,4 +2167,14 @@ static inline int security_uring_cmd(struct io_uring_cmd *ioucmd)
- #endif /* CONFIG_SECURITY */
- #endif /* CONFIG_IO_URING */
+@@ -2029,6 +2029,7 @@ struct dentry *securityfs_create_symlink(const char *name,
+ 					 const char *target,
+ 					 const struct inode_operations *iops);
+ extern void securityfs_remove(struct dentry *dentry);
++extern void securityfs_recursive_remove(struct dentry *dentry);
  
-+#ifdef CONFIG_BLK_DEV_INITRD
-+#ifdef CONFIG_SECURITY
-+extern void security_unpack_initramfs(void);
-+#else
-+static inline void security_unpack_initramfs(void)
-+{
-+}
-+#endif /* CONFIG_SECURITY */
-+#endif /* CONFIG_BLK_DEV_INITRD */
-+
- #endif /* ! __LINUX_SECURITY_H */
-diff --git a/init/initramfs.c b/init/initramfs.c
-index 76deb48c38cb..075a5794cde5 100644
---- a/init/initramfs.c
-+++ b/init/initramfs.c
-@@ -18,6 +18,7 @@
- #include <linux/init_syscalls.h>
- #include <linux/task_work.h>
- #include <linux/umh.h>
-+#include <linux/security.h>
+ #else /* CONFIG_SECURITYFS */
  
- static __initdata bool csum_present;
- static __initdata u32 io_csum;
-@@ -720,6 +721,8 @@ static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
- #endif
- 	}
- 
-+	security_unpack_initramfs();
-+
- done:
- 	/*
- 	 * If the initrd region is overlapped with crashkernel reserved region,
-diff --git a/security/security.c b/security/security.c
-index ddf2e69cf8f2..2a527d4c69bc 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -5581,3 +5581,15 @@ int security_uring_cmd(struct io_uring_cmd *ioucmd)
- 	return call_int_hook(uring_cmd, 0, ioucmd);
+diff --git a/security/inode.c b/security/inode.c
+index 9e7cde913667..f21847badb7d 100644
+--- a/security/inode.c
++++ b/security/inode.c
+@@ -313,6 +313,31 @@ void securityfs_remove(struct dentry *dentry)
  }
- #endif /* CONFIG_IO_URING */
-+
-+#ifdef CONFIG_BLK_DEV_INITRD
-+/**
-+ * security_unpack_initramfs() - Notify LSM that initramfs has been loaded
-+ *
-+ * Tells the LSM the initramfs has been unpacked into the rootfs.
-+ */
-+void security_unpack_initramfs(void)
+ EXPORT_SYMBOL_GPL(securityfs_remove);
+ 
++static void remove_one(struct dentry *victim)
 +{
-+	call_void_hook(unpack_initramfs_security);
++	simple_release_fs(&mount, &mount_count);
 +}
-+#endif /* CONFIG_BLK_DEV_INITRD */
++
++/**
++ * securityfs_recursive_remove - recursively removes a file or directory
++ *
++ * @dentry: a pointer to a the dentry of the file or directory to be removed.
++ *
++ * This function recursively removes a file or directory in securityfs that was
++ * previously created with a call to another securityfs function (like
++ * securityfs_create_file() or variants thereof.)
++ */
++void securityfs_recursive_remove(struct dentry *dentry)
++{
++	if (IS_ERR_OR_NULL(dentry))
++		return;
++
++	simple_pin_fs(&fs_type, &mount, &mount_count);
++	simple_recursive_removal(dentry, remove_one);
++	simple_release_fs(&mount, &mount_count);
++}
++EXPORT_SYMBOL_GPL(securityfs_recursive_remove);
++
+ #ifdef CONFIG_SECURITY
+ static struct dentry *lsm_dentry;
+ static ssize_t lsm_read(struct file *filp, char __user *buf, size_t count,
 -- 
 2.43.0
 
