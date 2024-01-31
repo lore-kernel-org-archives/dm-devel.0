@@ -1,68 +1,58 @@
-Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA2D03FB2F
-	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 11:48:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 95D6E12BE93;
+	Wed, 31 Jan 2024 16:25:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706701730; cv=none; b=dmyL2Rgk3hDWotEUd7LueqCiszHbCH9EDwbHKY//qe0k/WPSqqPRdBgM1xA5t2nb3/yI5xS9APvY67LCQ4UYkpIH0UlO8JfJJMIHAj/wR1e+purllpOeXeZG8qu1fPflI/ONssfl3/0bEUGZepd7hpQBtiQ0+uTph1C+d5St+8s=
+	t=1706718351; cv=none; b=c7JRGDPkMpq29Eth7Vo1wtZXBHoJpxAmo/U/VRjKGzS24xsBopHjkUZRJGG0D/WbmuN8ycP8OEzNqrxznc7fPYiru7gbrL93IEM54wxEELTC8opHIvU1rl2N052LQpDYmFYIqwAuWdcK5YMn7b2hXOqnrojMCbgz7i9nYPr7eqg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706701730; c=relaxed/simple;
-	bh=3nq02/OBnk2zvuDQtVO0yktuZSQ0cvGbGgEeygU8nUI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=uFWC3vmGi4apoI7xX/Nw/5tV+rhwZ3pxAjRT6xmjm5nUFFaYyzCrzeDDC+zUDuM1X4h1Q0pDBfwvfbtdQUYuTUjgh+QNfx3RWLkyjKCK2OuNDq+Ta7cLuV5klMXVbmNoIM5JwKpsHEtyJfZWXzhgUNasMzCT1vyYkGDkPb2cyOA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=d3goKryN; arc=none smtp.client-ip=209.85.208.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1706718351; c=relaxed/simple;
+	bh=QiUQHVE9OuD7A7XRfq4nHC+crkQnZ8+IZ0u7lnayc8c=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=i8eirmlNKK7qLXmLUEi6J2eyDudl6N0g54YdnTfSz5ed/0NLGdHzfMj/E64ezmPVPYjf20XNjeIS/wY9kFc6ccok0ZMzLimcgVvM6yrGV6HKQRM/sQRbcIVGMiQEaOHgO6x0Rte/VazBVms2kQ0LFt8NjZJcTycqGJLfwbX4pZY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=tPFOoGUC; arc=none smtp.client-ip=167.114.26.122
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="d3goKryN"
-Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-558f523c072so6302416a12.2
-        for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 03:48:47 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1706701726; x=1707306526; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=ee4hFTAB1vqmeEEdD7N1TlliPwBwfYX459Z3zfUqQ4I=;
-        b=d3goKryNekJGsnfZSPTZMd1bjl4i5Os7BC8OolQc2Rnm0u1yFt6gIugsIQfOddH3Vw
-         nH2Al4msnhhuaGw5sUpZ4QIGqf58jj0pzLktCEIc0p+M9blvBdnyX5StQ/tK/CyFglFa
-         pmtL4mrB+sDJw2H8+yvIQ828SpYw3WFeU4/FSsXiZpK9G8koqJYcrvRg8xyiJvpKG7lt
-         dhy6UvxlLvBOy8rjUpGX7LXUfur4HvGWGKRuoRMftRT/fMvvu4IFqvEwdnbY07qhfIBH
-         l1rCccTI4g6wk4pZ8wdh1ZzMTuXSeZsuwW3JLGUSOEO+UrSnJI/+0SaJG+Q4hzEwcDXT
-         6KxA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706701726; x=1707306526;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=ee4hFTAB1vqmeEEdD7N1TlliPwBwfYX459Z3zfUqQ4I=;
-        b=LPvOnW/lDpHts/GfvcXN0fglVYTBNHDDprHYS7Kcu7n3TPvp+Hciv0KOYyy3sxJRYo
-         UMsy85J/A9ETxv5ZYui9J/IY2AXpW3ekvGWu9eCzmesSi3rlgBpt+aeSzdVEmePLYqxw
-         mzbPD947z3NJusc1XOspqgD0rd5EeUlkLGQoFFSYBlQKIYLkn6HPwY7O/IvssbrZtBG5
-         k3mzs7Dn5bO82RgqE6XacTyO0tPKr9Pjc//bY/IlWTUiDS22AS64ldaA7CSevf688pZf
-         bE2yzon809Nu3aietZ7WaiwWuPD171B/oawmA5eQJNK5Qb3xo6IUzPaKljFCuZnU2ymZ
-         qLpg==
-X-Gm-Message-State: AOJu0YyhhVh7MtePcU4gDPUMlHA+fecEjstxGUo7OKfVhEUw2Sw0sXgY
-	VRehHj/NcWrIYptO/phwaApxOPQcLpvDNsP7acVduODcFtSo6EettBUij7WEWUY=
-X-Google-Smtp-Source: AGHT+IGmNgl/1br8YVLLzqjDDn+0dZC3L3GicV74tZ0kczf2FQsZ6nakpgjYDYSssEJHoN5HAPXIgQ==
-X-Received: by 2002:a05:6402:234b:b0:55f:6a35:b541 with SMTP id r11-20020a056402234b00b0055f6a35b541mr1201231eda.14.1706701725823;
-        Wed, 31 Jan 2024 03:48:45 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCXofa7wou1H064mFwDVZw0j/410TbiJJWG83l6FtFTgK6vstf+VUctR6f4ZWrJBYdO/0oSQJJDFxbSthCTSjKyh4lwya55x5pH3S/dWD5wg9p43PhCw+Z0c7R8QKIM2/aQUxjFu3ZDcfWlm5W/Hkmh09wgnhCFx6Td4BDTXFfguAfJ65t5FFBGieSWj3O4pny5SNbqtoiw4X+M=
-Received: from localhost (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
-        by smtp.gmail.com with UTF8SMTPSA id r3-20020aa7c143000000b0055f98c703easm46804edp.6.2024.01.31.03.48.45
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 31 Jan 2024 03:48:45 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Arnon Yaari <arnony@infinidat.com>,
-	Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Tom Abraham <tabraham@suse.com>,
-	Jiri Belka <jiri.belka@suse.com>
-Subject: [PATCH] libmultipath: hwtable: fix fast_io_fail for Infinibox
-Date: Wed, 31 Jan 2024 12:48:35 +0100
-Message-ID: <20240131114835.20982-1-mwilck@suse.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="tPFOoGUC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
+	s=smtpout1; t=1706718348;
+	bh=QiUQHVE9OuD7A7XRfq4nHC+crkQnZ8+IZ0u7lnayc8c=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=tPFOoGUCQpG6nbDTeV4EO+3l6CQr96GDzwrgBAkFN3BBXvvuVDa7KEgUQVhRO+9UJ
+	 OGBfhp6+IHWdIbnDgzb7rp6f5NoCAVT/MC/jdSqh/SbWXQai0GciSCZ5jGzJAZJFn9
+	 zdbBdntL/XW+dTsVqtKTP0pFMFrIkzMRY2EjvD3nxnNlRo8+GV97CGNQTyzuR04/Bv
+	 DnVLu22IZhi/FCEikncgvc+r9uRAQtDTq6OOUCYLLFl+SPLOZdSfK/om2/oxbsUHtn
+	 heRyE9JrDmR4Al+5f3ZW4R/iVTnsP1/2fKc1z18/UCX+ap0fXxxnWGMUegUer3Cath
+	 BZBJCCPLX8AoA==
+Received: from thinkos.internal.efficios.com (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
+	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TQ6ph3nMyzVny;
+	Wed, 31 Jan 2024 11:25:48 -0500 (EST)
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To: Dan Williams <dan.j.williams@intel.com>,
+	Arnd Bergmann <arnd@arndb.de>,
+	Dave Chinner <david@fromorbit.com>
+Cc: linux-kernel@vger.kernel.org,
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	linux-mm@kvack.org,
+	linux-arch@vger.kernel.org,
+	Vishal Verma <vishal.l.verma@intel.com>,
+	Dave Jiang <dave.jiang@intel.com>,
+	Matthew Wilcox <willy@infradead.org>,
+	Russell King <linux@armlinux.org.uk>,
+	nvdimm@lists.linux.dev,
+	linux-cxl@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: [RFC PATCH v3 2/4] dax: Check for data cache aliasing at runtime
+Date: Wed, 31 Jan 2024 11:25:31 -0500
+Message-Id: <20240131162533.247710-3-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20240131162533.247710-1-mathieu.desnoyers@efficios.com>
+References: <20240131162533.247710-1-mathieu.desnoyers@efficios.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -71,36 +61,69 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The Infinibox hwtable entry had fast_io_fail and dev_loss both set to 15,
-which has the effect that fast_io_fail is switched off (dev_loss timeout
-must be higher than fast_io_fail timeout).
+Replace the following fs/Kconfig:FS_DAX dependency:
 
-Remove the dev_loss value, which will cause the default of 600 to be used.
-Experience shows that dev_loss_tmo values below a few minutes are seldom
-helpful.
+  depends on !(ARM || MIPS || SPARC)
 
-Fixes: 55da608 ("libmultipath: update INFINIDAT builtin config")
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-Cc: Arnon Yaari <arnony@infinidat.com>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Tom Abraham <tabraham@suse.com>
-Cc: Jiri Belka <jiri.belka@suse.com>
+By a runtime check within alloc_dax().
+
+This is done in preparation for its use by each filesystem supporting
+the "dax" mount option to validate whether DAX is indeed supported.
+
+This is done in preparation for using cpu_dcache_is_aliasing() in a
+following change which will properly support architectures which detect
+data cache aliasing at runtime.
+
+Fixes: d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-mm@kvack.org
+Cc: linux-arch@vger.kernel.org
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Vishal Verma <vishal.l.verma@intel.com>
+Cc: Dave Jiang <dave.jiang@intel.com>
+Cc: Matthew Wilcox <willy@infradead.org>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Russell King <linux@armlinux.org.uk>
+Cc: nvdimm@lists.linux.dev
+Cc: linux-cxl@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org
+Cc: dm-devel@lists.linux.dev
 ---
- libmultipath/hwtable.c | 1 -
- 1 file changed, 1 deletion(-)
+ drivers/dax/super.c | 6 ++++++
+ fs/Kconfig          | 1 -
+ 2 files changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 808af54..9ef3e45 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1161,7 +1161,6 @@ static struct hwentry default_hw[] = {
- 		.minio_rq      = 1,
- 		.flush_on_last_del = FLUSH_ENABLED,
- 		.fast_io_fail  = 15,
--		.dev_loss      = 15,
- 	},
- 	/*
- 	 * Kaminario
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index 0da9232ea175..e9f397b8a5a3 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -445,6 +445,12 @@ struct dax_device *alloc_dax(void *private, const struct dax_operations *ops)
+ 	dev_t devt;
+ 	int minor;
+ 
++	/* Unavailable on architectures with virtually aliased data caches. */
++	if (IS_ENABLED(CONFIG_ARM) ||
++	    IS_ENABLED(CONFIG_MIPS) ||
++	    IS_ENABLED(CONFIG_SPARC))
++		return NULL;
++
+ 	if (WARN_ON_ONCE(ops && !ops->zero_page_range))
+ 		return ERR_PTR(-EINVAL);
+ 
+diff --git a/fs/Kconfig b/fs/Kconfig
+index 42837617a55b..e5efdb3b276b 100644
+--- a/fs/Kconfig
++++ b/fs/Kconfig
+@@ -56,7 +56,6 @@ endif # BLOCK
+ config FS_DAX
+ 	bool "File system based Direct Access (DAX) support"
+ 	depends on MMU
+-	depends on !(ARM || MIPS || SPARC)
+ 	depends on ZONE_DEVICE || FS_DAX_LIMITED
+ 	select FS_IOMAP
+ 	select DAX
 -- 
-2.43.0
+2.39.2
 
