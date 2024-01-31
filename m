@@ -1,387 +1,323 @@
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.11])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pg1-f171.google.com (mail-pg1-f171.google.com [209.85.215.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9673239FCF;
-	Wed, 31 Jan 2024 22:18:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=198.175.65.11
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706739493; cv=fail; b=ALj0Wa+J2kV7wEbagzSPbXIvHXG3LBgYmNBPLY/Qw4x7bGJISk6rnxHYp7CvGgDgmFrF5skisXYfvv2KWYppubpc/hqh4PN9RwNZ3EuEyjABFEJ7ZKQyF12GSZsPR+BEcsJYkl3D7skqR1eE7jIYjLrtkecvS7iX6H/6UKq+6rI=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706739493; c=relaxed/simple;
-	bh=USRaBffgPeqnDNrIn6txtH9hkV6FYYB+QVuxMQ6k1LU=;
-	h=Date:From:To:CC:Subject:Message-ID:References:Content-Type:
-	 Content-Disposition:In-Reply-To:MIME-Version; b=WSY6GCZRyvKKkRQ9huwfO9aKR0gf7zAa3d6N0+QBXOmSMwTYsFcF+jVp+CDhkR78UnjuhKFwUOA61Fg6bEKY/bIpDD5gNLT6AHbtNcwmQXVtNjexsLIRPEWQ/UdIhlHDc42npK4aFL0z7GG5TYxoUoeNX7aQbaDqPxtH4Ii0IIA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=kJ2zcxFg; arc=fail smtp.client-ip=198.175.65.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A7DC3A8FD
+	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 22:23:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.171
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1706739831; cv=none; b=QY4zL1cManoBsm2VewxqtOml345LQSo8zNVNhFE5jExN9dJMLSr7ROi6juyNQbGIyfYIzd8abz7CCGP993Wn9Qk5kSEDgpho0cG5TCy5Ui9HTeq45XPXd2MvS/SsjfZIoGZMgA19hyD4JJxcx5djZBRu/0BFYFBLuhcjOsWq+8I=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1706739831; c=relaxed/simple;
+	bh=wlk4tMkm/t9v2iLPAl/okhAdKSDMrlQM3KOLchvuG/g=;
+	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
+	 Message-Id:References:To; b=DbPWwj1/jTd93WQpRgo99x3FchW8bSqSyfHkz0FK5YBtIgWjgyx39WMwPH4k5ybNDkA4V4ENjLnr2R2UHO2M/b4yaOzCkJk6PHhLMqKen/LpNey4socbiaAyRMTWcMG+Nt+41ntlO4Mjj0/LDZUzclkhim4EOGWPds/CnXp2a/4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=FduRfii+; arc=none smtp.client-ip=209.85.215.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="kJ2zcxFg"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1706739492; x=1738275492;
-  h=date:from:to:cc:subject:message-id:references:
-   in-reply-to:mime-version;
-  bh=USRaBffgPeqnDNrIn6txtH9hkV6FYYB+QVuxMQ6k1LU=;
-  b=kJ2zcxFg6GODssnnJQCiSFjBx1etXW/zV9y1CmLidF7sYEW419l7JMAW
-   3aY+V5oT0HQ/v4XMWfGNB/vR5az2fKPaVPgTrUuEYW4SBes/8VFZW64R9
-   rve1hT1mub21+n2PMXzSP/qKDrLuekFlWBsoSVP4rY30GsQwemfg9CCCw
-   vVCs5WwV7Vr2NPhuQss06K4df/V0Pj93Sqe3TTA6H7FZ1IwRE8gZTZj2X
-   znz8vThyPsSAp6h7HChkMJex8sZyiN9RjkpaT8in7yeMh2K/m/Sl9CHXj
-   SRdnN2LXrYqThv9bcY5bHAs2YLorDjLvZ3ECoRda3XYnogZfcibsZuo9B
-   g==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10969"; a="10377646"
-X-IronPort-AV: E=Sophos;i="6.05,233,1701158400"; 
-   d="scan'208";a="10377646"
-Received: from orsmga001.jf.intel.com ([10.7.209.18])
-  by orvoesa103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 31 Jan 2024 14:18:10 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10969"; a="822731682"
-X-IronPort-AV: E=Sophos;i="6.05,233,1701158400"; 
-   d="scan'208";a="822731682"
-Received: from fmsmsx603.amr.corp.intel.com ([10.18.126.83])
-  by orsmga001.jf.intel.com with ESMTP/TLS/AES256-GCM-SHA384; 31 Jan 2024 14:18:09 -0800
-Received: from fmsmsx612.amr.corp.intel.com (10.18.126.92) by
- fmsmsx603.amr.corp.intel.com (10.18.126.83) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.35; Wed, 31 Jan 2024 14:18:09 -0800
-Received: from fmsmsx610.amr.corp.intel.com (10.18.126.90) by
- fmsmsx612.amr.corp.intel.com (10.18.126.92) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.35; Wed, 31 Jan 2024 14:18:08 -0800
-Received: from fmsedg601.ED.cps.intel.com (10.1.192.135) by
- fmsmsx610.amr.corp.intel.com (10.18.126.90) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.35 via Frontend Transport; Wed, 31 Jan 2024 14:18:08 -0800
-Received: from NAM11-CO1-obe.outbound.protection.outlook.com (104.47.56.169)
- by edgegateway.intel.com (192.55.55.70) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.1.2507.35; Wed, 31 Jan 2024 14:18:08 -0800
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=KHvtR3iihjouZEnxNoILeZwb1XYdUC7E6ZKxVxQjtB9dTcbIERCW0RqOkyh2m/cB44vNwjPagXoXAwV05TVf3mzfm36SLFL/Y0ttx4HF5h2xE79IU1AyqkcTdXsbfPAzSOBc9CZWkyiybeMIBiUoZZksqsIIOq52IVKSmg++oCbCxmuE8LXXUgUYhYKebmiD7ITRBQznLhqt29UiVvPLWN3Ij/BQWZcRg9abH0LVj4dWBixDO3BEjsgp8pmldKkwD/jE6wGN2C14x0Lm1i/TnkafjiX5/3UkSfhrH0qX78pVqjgha18TzyICuHeDcxXYSeuDoFKZnHxtZaGRZ3/6qA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=t9obXNdC5gV2QDYEOS6jLGF6bsxk7kqkjBWvJxoW8iA=;
- b=izNzQRdDy2IysDrNGCRDUFyNOeXFzO0BxWda9rcWB1gGIsiiEjmk5XcYWTUAJ9WWoebhf9UXeeYO2XoQTgHfRxve4Oo0/hCdVWXjTOFfKrake9JuwkD0Rw2WkQP/gSeBhxtD3dyh15F10Eg9ngAZerJJQ6HCyQNXhC48mmlMALUoWjUH6Qa3zsUFIwwEplPIlW1CtMvF8ylHIjjsXBQ1LTfe/WxBizQeXn8Joq8FrimGndxxHAunaGkQ+fi90V5yLSoSrGKN6ugWj5nmGvCm+72IDs5xZj02JkDBKhQkf14V5TKL3FE3Ctk9vkoBaRZBkiBGk30YCXKDFGQIsqiltA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=intel.com; dmarc=pass action=none header.from=intel.com;
- dkim=pass header.d=intel.com; arc=none
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=intel.com;
-Received: from PH8PR11MB8107.namprd11.prod.outlook.com (2603:10b6:510:256::6)
- by CO1PR11MB5140.namprd11.prod.outlook.com (2603:10b6:303:9e::21) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7249.26; Wed, 31 Jan
- 2024 22:18:06 +0000
-Received: from PH8PR11MB8107.namprd11.prod.outlook.com
- ([fe80::6257:f90:c7dd:f0b2]) by PH8PR11MB8107.namprd11.prod.outlook.com
- ([fe80::6257:f90:c7dd:f0b2%4]) with mapi id 15.20.7228.029; Wed, 31 Jan 2024
- 22:18:05 +0000
-Date: Wed, 31 Jan 2024 14:18:02 -0800
-From: Dan Williams <dan.j.williams@intel.com>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Dan Williams
-	<dan.j.williams@intel.com>, Arnd Bergmann <arnd@arndb.de>, Dave Chinner
-	<david@fromorbit.com>
-CC: <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>, <linux-mm@kvack.org>,
-	<linux-arch@vger.kernel.org>, Vishal Verma <vishal.l.verma@intel.com>, "Dave
- Jiang" <dave.jiang@intel.com>, Matthew Wilcox <willy@infradead.org>, "Russell
- King" <linux@armlinux.org.uk>, <nvdimm@lists.linux.dev>,
-	<linux-cxl@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
-	<dm-devel@lists.linux.dev>
-Subject: Re: [RFC PATCH v3 2/4] dax: Check for data cache aliasing at runtime
-Message-ID: <65bac71a9659b_37ad29428@dwillia2-xfh.jf.intel.com.notmuch>
-References: <20240131162533.247710-1-mathieu.desnoyers@efficios.com>
- <20240131162533.247710-3-mathieu.desnoyers@efficios.com>
- <65bab567665f3_37ad2943c@dwillia2-xfh.jf.intel.com.notmuch>
- <0a38176b-c453-4be0-be83-f3e1bb897973@efficios.com>
-Content-Type: text/plain; charset="us-ascii"
-Content-Disposition: inline
-In-Reply-To: <0a38176b-c453-4be0-be83-f3e1bb897973@efficios.com>
-X-ClientProxiedBy: MW4PR03CA0204.namprd03.prod.outlook.com
- (2603:10b6:303:b8::29) To PH8PR11MB8107.namprd11.prod.outlook.com
- (2603:10b6:510:256::6)
+	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="FduRfii+"
+Received: by mail-pg1-f171.google.com with SMTP id 41be03b00d2f7-5dbcfa0eb5dso275018a12.3
+        for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 14:23:49 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=purestorage.com; s=google2022; t=1706739829; x=1707344629; darn=lists.linux.dev;
+        h=to:references:message-id:content-transfer-encoding:cc:date
+         :in-reply-to:from:subject:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=9P09YXiyS5vordml/wYX11BZjdO4vKJB4Zsqr+JKCJU=;
+        b=FduRfii+p+0jbUtGWP4/tXBom784JZyZuE979R5KDa4ITAoZKfOSYUN2zcpipL6Eij
+         wXmdxTnVN2gbr6S5IGN9/V62XNlc0uBTWS21oF2FaNNtcnyJgmaeB53oYp/Mt6P8pm5B
+         ubnfb2nyLgeldvKS6bmsStTBn0zZU90gECkzyqafvl3NQSepPl/fanYqz9QcNbMjhs8Q
+         8zYc/KJ/k+ueIwatT4YWYc46NbqoqAlVg54qhpsg/H/Xvp8V5kS7sJn7HiXjlcpCRGTZ
+         mk8mXmuWCzVzTi1xsYZRvZ0Gc7WnbQoPNFlbCdMUh6p6wTHu0rh/9o+QrWI46VzYDCVL
+         yEnw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706739829; x=1707344629;
+        h=to:references:message-id:content-transfer-encoding:cc:date
+         :in-reply-to:from:subject:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=9P09YXiyS5vordml/wYX11BZjdO4vKJB4Zsqr+JKCJU=;
+        b=MksAynJEZflT/ixsQLSE2bpnGXpzcFCDKiGBP1UZa76Ro+ZDyRdCB/w2W/PODBXR+r
+         6xXpshZ6fTP+H36s5yta5VsHSiMDEll7A2Lf4U1qypHeKzLnK11LPugPb0FlpKKOZu4K
+         nLlwwSjDUZaVU2k2NfSrGd51ge2xxxdk+A6r2g7P2edW8I4qyXYhGqycNY/ykGwt2xZ9
+         2aEmgF3V/eDHkFnziflSgVzXCFB6PdmsvSg9QZRCgg0i3Q7VZolcBdPL0esXEREUr0Sz
+         FKSI13nfICXfc5ip3WBIc9UKyiz6CTpyeLIlj5j0bOYuwDPQDJEG2M1XHyeeK6s2eN1x
+         JR1w==
+X-Gm-Message-State: AOJu0Yx6UAPCQsjfEZazy4ZMjD+xJ/BmI+edesIZiE09FQc8/teAplk3
+	en/PFQgZdxAWF7sKEvte4Sas4dQ4G9z32MrYYhMoqMMJhQ+gaspuU0mmqu925o4=
+X-Google-Smtp-Source: AGHT+IG9JTSRjAasSVCzU4YxNzM1ScmUmMgK/ZPM0nyofDfgWcGn62eDroizkxDY9tp08sv2Qb1Y8Q==
+X-Received: by 2002:a05:6a20:2d06:b0:19e:365f:bd2b with SMTP id g6-20020a056a202d0600b0019e365fbd2bmr2984885pzl.25.1706739828730;
+        Wed, 31 Jan 2024 14:23:48 -0800 (PST)
+Received: from smtpclient.apple ([136.226.79.24])
+        by smtp.gmail.com with ESMTPSA id r25-20020aa78b99000000b006dbda9a4e6bsm10400105pfd.44.2024.01.31.14.23.47
+        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 31 Jan 2024 14:23:48 -0800 (PST)
+Content-Type: text/plain;
+	charset=utf-8
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: PH8PR11MB8107:EE_|CO1PR11MB5140:EE_
-X-MS-Office365-Filtering-Correlation-Id: 16607945-ed0c-4da7-9bbf-08dc22aa7f40
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: Uu8hbMoBxFuihGSn7uLry6e8wUXmUWiKfgkJTJRK8zeUo1HyTI39O/QWn3T8hhhtlMFsu1Kl3UPI3CUk+xBZQARi63FeaM96RlWkVxFUY1vU2yFG8YjQMmsb7A92Pok2sTSYTBZj8RjQDSQXPUiATJasgb7REMdgCKtUjupGbaPxFsDyDFhju5sisriONPJmjhwYPSZebD9LyvNkBtdBdpPt9wBViHDflQgcAtpb4toPT6xZ1Udfvm1Jw8v89E/xnYdBC2J7q5CVaOVfgJnZb1SFJjEfNVk6t1rlgt0l6jPfOaamElb8gKe5IHQUU3gwf4X+qcvnOj1DE+vISidT7LSzeQH9Ka3QuGxXJ3hxHRJOz+g/EaBQC+D2XGi9UtXinofQHa7yl4bLo8K45jdHOx9FTtpE0Q0rGx5MQqQkES1Si0agfu7J0uurTqk/gxiavOKFygjMKYI5mnleQ54pmg8S0XgBFgQQKDzEXdhbYG3fPLfjJIU0RQ8hUepO8BZf6p2TzzMWM61lYtN4Pe/dcNrBCjgSPzc5msNVjtyj3mMDD8su0rfu8KoMn0p1Mf4M
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PH8PR11MB8107.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(396003)(376002)(136003)(346002)(39860400002)(366004)(230922051799003)(451199024)(186009)(64100799003)(1800799012)(26005)(8936002)(4326008)(110136005)(8676002)(5660300002)(7416002)(54906003)(86362001)(2906002)(316002)(66476007)(66946007)(66556008)(38100700002)(82960400001)(53546011)(6506007)(6512007)(9686003)(478600001)(6666004)(83380400001)(6486002)(41300700001);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?BloBaanuO4qsgN4n6m2PjArWrvJKg0ChGs1MfLpShd2l0XhBUsGR2hAfK2T4?=
- =?us-ascii?Q?+VJ5+k1NJYW+0KvDkATizAd1/buZUNirzuiVWbm3I/o2WK8xMfO8VmcCBvY2?=
- =?us-ascii?Q?nY6ImC8NxT1nn+RHsKMfkPJqJD6OcVy+DT0/ZrnvtGU/RVUGmlTT5dYBUCeU?=
- =?us-ascii?Q?hLwaE5NfZeoEnx487Zmw4ELZHLruW34ALUsWIUMos6JmIQCoL8Ih1D+BpsZm?=
- =?us-ascii?Q?GiHvByC9U7xYGc8MQByjQI4mNstQHqUH2/4Rh281qzxOI2Sn9NzYKhn2SXis?=
- =?us-ascii?Q?IdrsbMKjmhihVS2QN3r1wd/aGvNovskR9taD7iFqc5swpYC2+eRRqhdPDk+S?=
- =?us-ascii?Q?GSRPT1958Qj5OQRkkHBTr6ARd4RZOMCu3GHnZ5UZYe3FAEXlU6+s2Ny1i1Ab?=
- =?us-ascii?Q?JtW/AKO9lFmZwl3CzEl0tAg6ojEOhpd15N+SDiPRQ6yErVrpKxyfcRoj476n?=
- =?us-ascii?Q?d4QQbeSSx7LLts/KhEztmmtMRdtI9pG6DekEHPtakMZl1vBO+cb3nIYWZkQG?=
- =?us-ascii?Q?1jLjxI63KuQ5lNs0KnOxEZUg2TRTlxRpKxslbxdUuUp987tAfoCoqa9q8ITz?=
- =?us-ascii?Q?f8FKqW9lexx8W9+hgVDM3f0TVY+4NBx4uw4OY5Lc90N6zmm/So1K/w+r7HH2?=
- =?us-ascii?Q?L8jEuuMTS/RSi7S2KTQsk8EoRwquFQ35MJOSzGjJOyNbA/ljK2PTnhgJpdO2?=
- =?us-ascii?Q?k8RwK++haR32eF+KkT/HDkxuvrQUSy6osENqUl3rsvqhCwCPT5XQY/VjZN0u?=
- =?us-ascii?Q?pJQe3UrB00CwjNYQOOpEtyF/Q95Je4ucw5An1Ak6gYwmKjnJLcMtNZecCVX8?=
- =?us-ascii?Q?+xncJ0UliPH5azBfdM5VSRvntT86fTd8wC1xvXyUX8dYDm5z3iXYU7W2t69J?=
- =?us-ascii?Q?f87g0iP9d64NVciPBdIgc5aDTQvtpgxwcgAAGkCHL0Pl4tDplOVhT/JFzXSz?=
- =?us-ascii?Q?bkf0yLLwT/2xVNeAFvqjcu4Rhh/TYzAy0U5QVGCGalhLN4Ba9+Q3nigvPIHa?=
- =?us-ascii?Q?ieyhoJzprTPWpWpmKOFYzJFFtcfF4hQB3sUL8hDcInYKkwErkJadPSRiluh5?=
- =?us-ascii?Q?9g+g9WCF3wBucdQh8HfSKADL7cjcFiaW70MJQ8ZnrIYswTHbgNzjXEuNRYtV?=
- =?us-ascii?Q?gR3r3BAap7sn8H9ZQE+4UAspHIxrW7lyJMhn05HR/rFi8ccu5x09H3djxO7C?=
- =?us-ascii?Q?jHz94VWt8t6/VGSOrOx9cJUplyoRDbC6LhBdkQd35f9DGsRoirB9G5cuK4ks?=
- =?us-ascii?Q?UVA8VjUUff4xCuAYzsWJVY7M9aS1K8Wg/FVQ4vHuXKZ8SXcAyOEa+r5eV8wH?=
- =?us-ascii?Q?fVFLowtEoajltrAaRXalk+sItaKAHmGjKUyXLOcENi2Q6+J8v5y8QU4Tt/b2?=
- =?us-ascii?Q?3NkkjiP4hVmN6Ap5QD/1SGq6nelQdHeiNRQRKgL/y/oGuXp73hBp9aJ2B8Ea?=
- =?us-ascii?Q?Y1MJMfkU8s3UBWdz9H5qNlWECurDvxO5A0hzPrQXTVR4eU7VCP3GGWly52pR?=
- =?us-ascii?Q?LkCmvZK0R2M5kMmhzw+58T9IZFD1GKRqbIs6PzFrtCS00HRGKE86DI/xOlZb?=
- =?us-ascii?Q?jn/DjCm5MXS9Cvcjku/84EN8YSGDqAdeKgmLHMcudpMEutd4mvJYBAbkxJHh?=
- =?us-ascii?Q?dQ=3D=3D?=
-X-MS-Exchange-CrossTenant-Network-Message-Id: 16607945-ed0c-4da7-9bbf-08dc22aa7f40
-X-MS-Exchange-CrossTenant-AuthSource: PH8PR11MB8107.namprd11.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 31 Jan 2024 22:18:05.6158
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 46c98d88-e344-4ed4-8496-4ed7712e255d
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: hJbrUCk6PabsxaM4q6FqLtOZtVVfGSkrEecsHcs4WQZc1AW5cKruSBCHBY7DT9LjIyftGBAE5sIFf0A7QbW0n1nr/TEJ+k0pNePI0WuLQ4Y=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CO1PR11MB5140
-X-OriginatorOrg: intel.com
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3774.400.31\))
+Subject: Re: [PATCH] multipathd: the sysfs prioritizer can return stale data
+From: Brian Bunker <brian@purestorage.com>
+In-Reply-To: <cae20ba154c77d7ba99f8eab0b47b93d76a9c953.camel@suse.com>
+Date: Wed, 31 Jan 2024 14:23:36 -0800
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+ dm-devel@lists.linux.dev,
+ Seamus Connor <sconnor@purestorage.com>
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <8FC66028-0596-4C6F-B73D-4645767CD1C9@purestorage.com>
+References: <20240124020007.25259-1-brian@purestorage.com>
+ <ZbkmuqWetsaOPMkC@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <4dd466445f477e1991267edf30b16364af021f53.camel@suse.com>
+ <22BFA8ED-7AA4-41C4-9253-3B2846301BFF@purestorage.com>
+ <2f0e15e5672f3d9f665491b40cfdada4cd9c36c2.camel@suse.com>
+ <9F411A14-251E-42B3-BF1B-7EAFE860B6CF@purestorage.com>
+ <cae20ba154c77d7ba99f8eab0b47b93d76a9c953.camel@suse.com>
+To: Martin Wilck <mwilck@suse.com>
+X-Mailer: Apple Mail (2.3774.400.31)
 
-Mathieu Desnoyers wrote:
-> On 2024-01-31 16:02, Dan Williams wrote:
-> > Mathieu Desnoyers wrote:
-> >> Replace the following fs/Kconfig:FS_DAX dependency:
-> >>
-> >>    depends on !(ARM || MIPS || SPARC)
-> >>
-> >> By a runtime check within alloc_dax().
-> >>
-> >> This is done in preparation for its use by each filesystem supporting
-> >> the "dax" mount option to validate whether DAX is indeed supported.
-> >>
-> >> This is done in preparation for using cpu_dcache_is_aliasing() in a
-> >> following change which will properly support architectures which detect
-> >> data cache aliasing at runtime.
-> >>
-> >> Fixes: d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
-> >> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> >> Cc: Andrew Morton <akpm@linux-foundation.org>
-> >> Cc: Linus Torvalds <torvalds@linux-foundation.org>
-> >> Cc: linux-mm@kvack.org
-> >> Cc: linux-arch@vger.kernel.org
-> >> Cc: Dan Williams <dan.j.williams@intel.com>
-> >> Cc: Vishal Verma <vishal.l.verma@intel.com>
-> >> Cc: Dave Jiang <dave.jiang@intel.com>
-> >> Cc: Matthew Wilcox <willy@infradead.org>
-> >> Cc: Arnd Bergmann <arnd@arndb.de>
-> >> Cc: Russell King <linux@armlinux.org.uk>
-> >> Cc: nvdimm@lists.linux.dev
-> >> Cc: linux-cxl@vger.kernel.org
-> >> Cc: linux-fsdevel@vger.kernel.org
-> >> Cc: dm-devel@lists.linux.dev
-> >> ---
-> >>   drivers/dax/super.c | 6 ++++++
-> >>   fs/Kconfig          | 1 -
-> >>   2 files changed, 6 insertions(+), 1 deletion(-)
-> >>
-> >> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-> >> index 0da9232ea175..e9f397b8a5a3 100644
-> >> --- a/drivers/dax/super.c
-> >> +++ b/drivers/dax/super.c
-> >> @@ -445,6 +445,12 @@ struct dax_device *alloc_dax(void *private, const struct dax_operations *ops)
-> >>   	dev_t devt;
-> >>   	int minor;
-> >>   
-> >> +	/* Unavailable on architectures with virtually aliased data caches. */
-> >> +	if (IS_ENABLED(CONFIG_ARM) ||
-> >> +	    IS_ENABLED(CONFIG_MIPS) ||
-> >> +	    IS_ENABLED(CONFIG_SPARC))
-> >> +		return NULL;
-> > 
-> > This function returns ERR_PTR(), not NULL on failure.
-> 
-> Except that it returns NULL in the CONFIG_DAX=n case as you
-> noticed below.
-> 
-> > 
-> > ...and I notice this mistake is also made in include/linux/dax.h in the
-> > CONFIG_DAX=n case. That function also mentions:
-> > 
-> >      static inline struct dax_device *alloc_dax(void *private,
-> >                      const struct dax_operations *ops)
-> >      {
-> >              /*
-> >               * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
-> >               * NULL is an error or expected.
-> >               */
-> >              return NULL;
-> >      }
-> > 
-> > ...and none of the callers validate the result, but now runtime
-> > validation is necessary. I.e. it is not enough to check
-> > IS_ENABLED(CONFIG_DAX) it also needs to check cpu_dcache_is_aliasing().
-> 
-> If the callers select DAX in their Kconfig, then they don't have to
-> explicitly check for IS_ENABLED(CONFIG_DAX). Things change for the
-> introduced runtime check though.
-> 
-> > 
-> > With that, there are a few more fixup places needed, pmem_attach_disk(),
-> > dcssblk_add_store(), and virtio_fs_setup_dax().
-> 
-> Which approach should we take then ? Should we:
-> 
-> A) Keep returning NULL from alloc_dax() for both
->     cpu_dcache_is_aliasing() and CONFIG_DAX=n, and use IS_ERR_OR_NULL()
->     in the caller. If we do this, then the callers need to somehow
->     translate this NULL into a negative error value, or
-> 
-> B) Replace this NULL return value in both cases by a ERR_PTR() (which
->     error value should we return ?).
-> 
-> I would favor approach B) which appears more robust and introduces
-> fewer changes. If we go for that approach do we still need to change
-> the callers ?
 
-I agree approach B is the way to go, but that still requires these
-fixups, feel free to steal these hunks and split them into patches:
+> On Jan 31, 2024, at 12:12=E2=80=AFPM, Martin Wilck <mwilck@suse.com> =
+wrote:
+>=20
+> Hi Brian,
+>=20
+> On Wed, 2024-01-31 at 09:45 -0800, Brian Bunker wrote:
+>>=20
+>>=20
+>>> On Jan 31, 2024, at 2:19=E2=80=AFAM, Martin Wilck <mwilck@suse.com> =
+wrote:
+>>>=20
+>>> Hi Brian,
+>>>=20
+>>> On Tue, 2024-01-30 at 10:43 -0800, Brian Bunker wrote:
+>>>>>=20
+>>>>> A full rescan shouldn't be necessary. All that's needed is that
+>>>>> the
+>>>>> kernel issue another RTPG. AFAICS that should happen as soon as
+>>>>> the
+>>>>> target responds to any command with a sense key of UNIT
+>>>>> ATTENTION
+>>>>> with
+>>>>> ASC=3D0x2a and ascq=3D6 or 7 (ALUA state change, ALUA state
+>>>>> transition
+>>>>> failed).
+>>>>>=20
+>>>>> @Brian, does your storage unit not do this? If so, I suggest we
+>>>>> disable
+>>>>> the sysfs prioritizer for pure storage.
+>>>>>=20
+>>>>> Otherwise, as far as multipathd is concerned, when a path is
+>>>>> reinstated, it should be sufficient to send any IO command to
+>>>>> trigger
+>>>>> an RTPG. Or am I missing something here?
+>>>>>=20
+>>>>> Martin
+>>>>=20
+>>>> Martin,
+>>>>=20
+>>>> What I am gaining with the rescan is exactly that. You are
+>>>> correct
+>>>> the ALUA device handler the kernel has to send an RTPG to the
+>>>> target.
+>>>>=20
+>>>> We do set a unit attention to have the initiator paths go into
+>>>> the
+>>>> ANO state before we reboot leading to the path loss, but we do
+>>>> not
+>>>> set a unit attention when the paths come back up.
+>>>>=20
+>>>> We have relied on the initiator=E2=80=99s polling to pick up the =
+ALUA
+>>>> state
+>>>> change which they always have in the past and the =E2=80=98alua=E2=80=
+=99
+>>>> prioritizer
+>>>> still will. For us to add a unit attention would work, but there
+>>>> are
+>>>> couple of issues with that.
+>>>>=20
+>>>> 1. Unit attentions may not get back to the initiator. It is not
+>>>> guaranteed.
+>>>=20
+>>> That's news for me. If that happens, wouldn't it mean that the
+>>> initiator sees a timeout (no response) to some command, IOW that
+>>> there's still something very wrong with this I_T nexus?
+>> Probably. My point is just that any individual response could be lost
+>> wherever and there is no burden on the target to ensure the initiator
+>> got the unit attention.
+>=20
+> Right. In the specific case of the ALUA-related UAs that we've been
+> discussing, the storage *might* implement a logic to repeat responding
+> with UA until an RTPG is received. But that may have  unwanted side
+> effects; I haven't thought it through.
+>=20
+>>>=20
+>>>> 2. Paths could take a very long time to come back. We might not
+>>>> get
+>>>> these paths back for a very long time. Sometimes it is just a
+>>>> reboot.
+>>>> Other times it is a hardware replacement. It is possible for us
+>>>> to
+>>>> keep this state forever and post when when that I_T nexus returns
+>>>> but
+>>>> we haven=E2=80=99t had to.
+>>>=20
+>>> No offense, that sounds somewhat lazy ;-) Note that it's also kind
+>>> of
+>>> dangerous. You are hiding the state change from the initiator. If
+>>> the
+>>> Linux kernel decided to use the access_state device attribute for
+>>> anything else but feeding the sysfs attribute, things might go
+>>> badly
+>>> wrong.
+>> That is fair. We definitely could do better here. In general, that
+>> unit
+>> attention coming out of the preferred state didn=E2=80=99t buy us any =
+speed.
+>> Those non-preferred paths weren=E2=80=99t serving I/O so the first =
+I/O that
+>> would pick up the unit attention on those paths would be the path
+>> checker. The same run of the path checker picked up the new ALUA
+>> state. When going into the preferred state, there is read and write
+>> I/O which means those unit attentions are picked up very quickly and
+>> the ALUA state change is picked up in the kernel before the checker
+>> runs again.
+>>=20
+>> Have you ever considered a checker of RTPG as opposed to TUR?
+>> That would seeming solve a lot of this too since you would be getting
+>> path state and priority in the same trip.
+>=20
+> Interesting idea. AFAICT, noone has thought about it so far. In the
+> past I've invested some thought in tieing  checker and prioritizer =
+more
+> closely together. Unfortunately, the current multipathd architecture
+> treats them as entirely separate, which makes it complicated to =
+achieve
+> This.
+Yeah. It would be a re-do of the separation between checkers and
+prioritizers and might leave you with a mess if you had to keep =
+everything
+functioning the same way wasn=E2=80=99t ALUA. I think it might make =
+check_path
+much cleaner though.
+>>>=20
+>>>> If we did post the unit attention, everything works as expected.
+>>>> I
+>>>> have verified this, but I would also hope that the polling of the
+>>>> checkers would also unstick my stale ALUA state and we won=E2=80=99t =
+have
+>>>> to.
+>>>>=20
+>>>> I put this rescan_path inline to show the problem and the fix. I
+>>>> wasn=E2=80=99t sure the =E2=80=98right=E2=80=99 place to put it. I =
+get that it would be
+>>>> better not to block on this. It should be possible to put this in
+>>>> a
+>>>> thread so that it does not. The other caller of rescan_path I
+>>>> guess
+>>>> is also doing the same thing when it is handling the wwid change.
+>>>=20
+>>> That's true and not optimal, but wwid changes are rare events and
+>>> an
+>>> error condition in its own right. Patches converting moving
+>>> rescan_path() into a thread would receive sympathetic reviews :-)
+>>> The big benefit of the sysfs prioritizer is that it never blocks,
+>>> without needing pthreads complexity.
+>>>=20
+>>> Btw, I think you'd need to wait for the RTPG to finish after
+>>> triggering
+>>> the rescan, if you want to obtain the right priority (alua_rescan()
+>>> ->
+>>> alua_initialize() -> alua_check_vpd() will only queue an RTPG and
+>>> not
+>>> wait for the result).
+>> For our purposes we didn=E2=80=99t really need to wait for the =
+rescan. As
+>> long as
+>> it happened. The next time the checker ran it would pick it up. These
+>> paths
+>> returning for us are redundant paths. We want them back as soon as
+>> possible
+>> but we have other paths that can serve I/O while waiting for the HA
+>> paths.
+>>=20
+>> I can create a patch in the sysfs prioritizer to do the rescan_path
+>> in a thread
+>> that the checker and priority run doesn=E2=80=99t wait on. Would that =
+be well
+>> received
+>> or I am better served by either posting a unit attention or just
+>> using detect_prio
+>> set to no and leaving the =E2=80=99sysfs=E2=80=99 prioritizer alone?
+>=20
+> I am not sure. Like I said, the beauty of the sysfs prioritizer is =
+that
+> it doesn't do any IO. rescanning a device from this prioritizer
+> basically voids this benefit. You might as well just use alua.
+> As I said, we do it for RDAC as well.
+>=20
+> But if you want to invest more effort, feel free to submit patches ;-)
+> You can do this any time on top of the hwtable change.
+OK I will submit the hwtable change first since there is no controversy
+there at all.
 
-Co-developed-by: Dan Williams <dan.j.williams@intel.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+My change only affects the reinstate path so it is isn=E2=80=99t like
+=E2=80=98alua=E2=80=99 where priority is evaluated with RTPG at each =
+checker instance.
+The rescan should be rare since I_T nexus loss shouldn=E2=80=99t be too =
+common.
+>=20
+>>> Unfortunately, the kernel has no API for manually triggering an
+>>> update
+>>> of the access_state. I believe that would be useful elsewhere, too.
+>>> We
+>>> can consider adding it, but it won't help with current kernels.
+>>>=20
+>>> IMO the best option for your storage arrays would is to force using
+>>> the
+>>> alua prioritizer rather than the sysfs one. You are not alone,
+>>> we're
+>>> doing this for RDAC already (see check_rdac() call in
+>>> detect_prio()).
+>>> This can be configured in multipath.conf right now by setting
+>>> "detect_prio no" and "prio alua", and we can make it the default
+>>> for
+>>> your storage with a trivial patch for hwtable.c.
+>> This is what we are doing now in our recommended configuration. I
+>> will
+>> probably add a patch for our hw table entry soon. It is a bit strange
+>> to
+>> me still that detect_prio would mean replace the one that I am
+>> explicitly
+>> stating in the device section. To me detect_prio would be if I =
+didn=E2=80=99t
+>> provide one and wanted multipath to choose for me.
+>=20
+> True. The design of the "detect_prio" option is awkward and confusing.
+> It happens all the time that people set "prio" and wonder why the
+> setting isn't applied. Or worse, they think it is applied but it's =
+not.
+> I think the original idea was to use ALUA whenever supported, even if
+> historically the hwtable contained something else for a given storage.
+> It has been this way for a long time, I don't think we can change the
+> semantics easily.
+I saw Ben=E2=80=99s later comment explaining the history of how it =
+became the
+way it became.=20
+>=20
+> Regards
+> Martin
+Thanks,
+Brian
+>=20
+>>>=20
+>>> Regards
+>>> Martin
+>>>=20
+>> Thanks,
+>> Brian
 
-...but note they are compile-tested only. They assume that alloc_dax()
-returns ERR_PTR(-EOPNOTSUPP) when the arch support is missing, and I
-wrote them quickly so I might have missed something.
 
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index f4b635526345..254d3b1e420e 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -322,7 +322,7 @@ EXPORT_SYMBOL_GPL(dax_alive);
-  */
- void kill_dax(struct dax_device *dax_dev)
- {
--	if (!dax_dev)
-+	if (IS_ERR_OR_NULL(dax_dev))
- 		return;
- 
- 	if (dax_dev->holder_data != NULL)
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 4e8fdcb3f1c8..b69c9e442cf4 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -560,17 +560,19 @@ static int pmem_attach_disk(struct device *dev,
- 	dax_dev = alloc_dax(pmem, &pmem_dax_ops);
- 	if (IS_ERR(dax_dev)) {
- 		rc = PTR_ERR(dax_dev);
--		goto out;
-+		if (rc != -EOPNOTSUPP)
-+			goto out;
-+	} else {
-+		set_dax_nocache(dax_dev);
-+		set_dax_nomc(dax_dev);
-+		if (is_nvdimm_sync(nd_region))
-+			set_dax_synchronous(dax_dev);
-+		rc = dax_add_host(dax_dev, disk);
-+		if (rc)
-+			goto out_cleanup_dax;
-+		dax_write_cache(dax_dev, nvdimm_has_cache(nd_region));
-+		pmem->dax_dev = dax_dev;
- 	}
--	set_dax_nocache(dax_dev);
--	set_dax_nomc(dax_dev);
--	if (is_nvdimm_sync(nd_region))
--		set_dax_synchronous(dax_dev);
--	rc = dax_add_host(dax_dev, disk);
--	if (rc)
--		goto out_cleanup_dax;
--	dax_write_cache(dax_dev, nvdimm_has_cache(nd_region));
--	pmem->dax_dev = dax_dev;
- 
- 	rc = device_add_disk(dev, disk, pmem_attribute_groups);
- 	if (rc)
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index 4b7ecd4fd431..f911e58a24dd 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -681,12 +681,14 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
- 	if (IS_ERR(dev_info->dax_dev)) {
- 		rc = PTR_ERR(dev_info->dax_dev);
- 		dev_info->dax_dev = NULL;
--		goto put_dev;
-+		if (rc != -EOPNOTSUPP)
-+			goto put_dev;
-+	} else {
-+		set_dax_synchronous(dev_info->dax_dev);
-+		rc = dax_add_host(dev_info->dax_dev, dev_info->gd);
-+		if (rc)
-+			goto out_dax;
- 	}
--	set_dax_synchronous(dev_info->dax_dev);
--	rc = dax_add_host(dev_info->dax_dev, dev_info->gd);
--	if (rc)
--		goto out_dax;
- 
- 	get_device(&dev_info->dev);
- 	rc = device_add_disk(&dev_info->dev, dev_info->gd, NULL);
-diff --git a/fs/fuse/virtio_fs.c b/fs/fuse/virtio_fs.c
-index 5f1be1da92ce..11053a70f5ab 100644
---- a/fs/fuse/virtio_fs.c
-+++ b/fs/fuse/virtio_fs.c
-@@ -16,6 +16,7 @@
- #include <linux/fs_context.h>
- #include <linux/fs_parser.h>
- #include <linux/highmem.h>
-+#include <linux/cleanup.h>
- #include <linux/uio.h>
- #include "fuse_i.h"
- 
-@@ -795,8 +796,11 @@ static void virtio_fs_cleanup_dax(void *data)
- 	put_dax(dax_dev);
- }
- 
-+DEFINE_FREE(cleanup_dax, struct dax_dev *, if (!IS_ERR_OR_NULL(_T)) virtio_fs_cleanup_dax(_T))
-+
- static int virtio_fs_setup_dax(struct virtio_device *vdev, struct virtio_fs *fs)
- {
-+	struct dax_device *dax_dev __free(cleanup_dax) = NULL;
- 	struct virtio_shm_region cache_reg;
- 	struct dev_pagemap *pgmap;
- 	bool have_cache;
-@@ -804,6 +808,15 @@ static int virtio_fs_setup_dax(struct virtio_device *vdev, struct virtio_fs *fs)
- 	if (!IS_ENABLED(CONFIG_FUSE_DAX))
- 		return 0;
- 
-+	dax_dev = alloc_dax(fs, &virtio_fs_dax_ops);
-+	if (IS_ERR(dax_dev)) {
-+		int rc = PTR_ERR(dax_dev);
-+
-+		if (rc == -EOPNOTSUPP)
-+			return 0;
-+		return rc;
-+	}
-+
- 	/* Get cache region */
- 	have_cache = virtio_get_shm_region(vdev, &cache_reg,
- 					   (u8)VIRTIO_FS_SHMCAP_ID_CACHE);
-@@ -849,10 +862,7 @@ static int virtio_fs_setup_dax(struct virtio_device *vdev, struct virtio_fs *fs)
- 	dev_dbg(&vdev->dev, "%s: window kaddr 0x%px phys_addr 0x%llx len 0x%llx\n",
- 		__func__, fs->window_kaddr, cache_reg.addr, cache_reg.len);
- 
--	fs->dax_dev = alloc_dax(fs, &virtio_fs_dax_ops);
--	if (IS_ERR(fs->dax_dev))
--		return PTR_ERR(fs->dax_dev);
--
-+	fs->dax_dev = no_free_ptr(dax_dev);
- 	return devm_add_action_or_reset(&vdev->dev, virtio_fs_cleanup_dax,
- 					fs->dax_dev);
- }
