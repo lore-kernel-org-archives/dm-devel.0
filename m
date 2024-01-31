@@ -1,163 +1,113 @@
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07F9639AD0;
-	Wed, 31 Jan 2024 21:39:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F26C43984A
+	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 22:02:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706737202; cv=none; b=Med52YRVgbd/V8TIAyZ7qIY2u/Z9sMEwQQvkM+A1RP9vNYIMoKVlFtkzAspUlObJ34PwswfV+YF9kRKwlcDumUjPAffc8wnZAtdd4EYkAH0yUg5RkWNNUhMgRXUA68txyoY6TtwdeTZTJ/e9clz2U83a/g1EwM0dJ7c8amLj6NU=
+	t=1706738571; cv=none; b=A739YWAussTNlwPn0vVhYmpfJaJKrjLGz5RNekuWfXKr8GjKD3VIVV0WcV1RJzQGt8YBXdDuoOxPFWZbU3KY/3Zwx1R1h2pLipa8fIgctYMO5e923L2e79o6ZeClPFcfa657Vug2mFHnCIfGW+UfOnS81oDugEyDMFHlV4Q5X1w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706737202; c=relaxed/simple;
-	bh=mE6IlMP08TpBgXOVDJUm71vva4w7+fEDZV65jtPKtXc=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=grFcDi8LB2jptG493f31JwhdQg41Oxz6haU6WGuxNY+mHy8pqKLXp2WdDIcX+BkggyN+etYn7Of0TdlgK5AF4Az+5DWKGT5MMT5mVlj24bsbqfPswL7LIDPM5B8ZbxFYhyM448giVNM33bOCMfPKtvWg2MvaXkpfecRiCspU1x8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=fOC//W4u; arc=none smtp.client-ip=167.114.26.122
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
+	s=arc-20240116; t=1706738571; c=relaxed/simple;
+	bh=zYpL4lqLZcMZwHPGsHutXjfMxMqLdIP4q+lWTgr3/5g=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=cjdC6Ch5u5+rinoM5HrPW6EQspdvKXBgJ7I/IhrEGrba8yPzlk0kM0LeYHXbYH3IvA/Lm5wr1oXmCwmUTYljw+S0Qsd79CNG3a9aWFdV6UEwr4lsciCAFo9Nw02paMFSMqQQIyUirm/s3adeLN0A7R/Qb9KfLwHB6PXAQWt8lhs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WbWcdndM; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="fOC//W4u"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-	s=smtpout1; t=1706737197;
-	bh=mE6IlMP08TpBgXOVDJUm71vva4w7+fEDZV65jtPKtXc=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=fOC//W4u0F5vbdt+tU+rP15v/l0o/+CnIg+Ydp5bcNwGYw9ud2JP/HNwuD+X2eYWY
-	 AXE0QkkFuowfQF/N5KDNWKA1OtehwKwu++g42TntpSKmR0HWSQ8OE00hj0DK1lZL18
-	 0noEqFv4pzYCqQ+J9lGKMSW8o44r71joP5nDgCjEpRokBxY0mzIcRAvO9I+M5X6Nje
-	 0/WsjNt0cTRRaf74shtLNuDJXD/6td2e/pOr42o6HxQ8MWLaI1gQRslqQNLtk7faOo
-	 2+zPZgyGqKquMsySa1E3H6j3vwxgx0Tn5FOmPizhrqqkpYnf8Hg+OKkQ2KbcVBQ7P1
-	 HUgiw7TX/NJTg==
-Received: from [172.16.0.134] (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
-	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TQFn93W8xzX1V;
-	Wed, 31 Jan 2024 16:39:57 -0500 (EST)
-Message-ID: <0a38176b-c453-4be0-be83-f3e1bb897973@efficios.com>
-Date: Wed, 31 Jan 2024 16:39:57 -0500
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WbWcdndM"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1706738568;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=fdbEKrpyLSr/XfltsGu0Y6emup0IET0jljTchC3c+Yk=;
+	b=WbWcdndMJehrT+L/tP7GJeC/Q5isShjuDt/AarCHDhavjRsCULOcNVnn4wJAxvgDjTOxqC
+	ts/4JatOc+DFq3wL2DLiL50ZnJgzLpHZQdlBtAT81N23TtEMSXf404XxReFxjIiViEgoEH
+	lF+t8sJizfz6Rxp3MXO59R8K1oMNENo=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-173-HIqzZnzXPwy0fqocRmRlKw-1; Wed, 31 Jan 2024 17:02:44 -0500
+X-MC-Unique: HIqzZnzXPwy0fqocRmRlKw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E29BD85A58C;
+	Wed, 31 Jan 2024 22:02:43 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9776F40C1231;
+	Wed, 31 Jan 2024 22:02:43 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 7F50730C14EB; Wed, 31 Jan 2024 22:02:43 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 7CA4A3F7DC;
+	Wed, 31 Jan 2024 23:02:43 +0100 (CET)
+Date: Wed, 31 Jan 2024 23:02:43 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Tejun Heo <tj@kernel.org>
+cc: torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, 
+    dm-devel@lists.linux.dev, msnitzer@redhat.com, ignat@cloudflare.com, 
+    damien.lemoal@wdc.com, bob.liu@oracle.com, houtao1@huawei.com, 
+    peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org, 
+    allen.lkml@gmail.com, kernel-team@meta.com, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+Subject: Re: [PATCH 8/8] dm-verity: Convert from tasklet to BH workqueue
+In-Reply-To: <Zbq8cE3Y2ZL6dl8r@slm.duckdns.org>
+Message-ID: <f48626b7-d1c-d696-7138-39fbc1c9cebd@redhat.com>
+References: <20240130091300.2968534-1-tj@kernel.org> <20240130091300.2968534-9-tj@kernel.org> <c2539f87-b4fe-ac7d-64d9-cbf8db929c7@redhat.com> <Zbq8cE3Y2ZL6dl8r@slm.duckdns.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH v3 2/4] dax: Check for data cache aliasing at runtime
-To: Dan Williams <dan.j.williams@intel.com>, Arnd Bergmann <arnd@arndb.de>,
- Dave Chinner <david@fromorbit.com>
-Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>,
- Linus Torvalds <torvalds@linux-foundation.org>, linux-mm@kvack.org,
- linux-arch@vger.kernel.org, Vishal Verma <vishal.l.verma@intel.com>,
- Dave Jiang <dave.jiang@intel.com>, Matthew Wilcox <willy@infradead.org>,
- Russell King <linux@armlinux.org.uk>, nvdimm@lists.linux.dev,
- linux-cxl@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- dm-devel@lists.linux.dev
-References: <20240131162533.247710-1-mathieu.desnoyers@efficios.com>
- <20240131162533.247710-3-mathieu.desnoyers@efficios.com>
- <65bab567665f3_37ad2943c@dwillia2-xfh.jf.intel.com.notmuch>
-Content-Language: en-US
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-In-Reply-To: <65bab567665f3_37ad2943c@dwillia2-xfh.jf.intel.com.notmuch>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-On 2024-01-31 16:02, Dan Williams wrote:
-> Mathieu Desnoyers wrote:
->> Replace the following fs/Kconfig:FS_DAX dependency:
->>
->>    depends on !(ARM || MIPS || SPARC)
->>
->> By a runtime check within alloc_dax().
->>
->> This is done in preparation for its use by each filesystem supporting
->> the "dax" mount option to validate whether DAX is indeed supported.
->>
->> This is done in preparation for using cpu_dcache_is_aliasing() in a
->> following change which will properly support architectures which detect
->> data cache aliasing at runtime.
->>
->> Fixes: d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
->> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
->> Cc: Andrew Morton <akpm@linux-foundation.org>
->> Cc: Linus Torvalds <torvalds@linux-foundation.org>
->> Cc: linux-mm@kvack.org
->> Cc: linux-arch@vger.kernel.org
->> Cc: Dan Williams <dan.j.williams@intel.com>
->> Cc: Vishal Verma <vishal.l.verma@intel.com>
->> Cc: Dave Jiang <dave.jiang@intel.com>
->> Cc: Matthew Wilcox <willy@infradead.org>
->> Cc: Arnd Bergmann <arnd@arndb.de>
->> Cc: Russell King <linux@armlinux.org.uk>
->> Cc: nvdimm@lists.linux.dev
->> Cc: linux-cxl@vger.kernel.org
->> Cc: linux-fsdevel@vger.kernel.org
->> Cc: dm-devel@lists.linux.dev
->> ---
->>   drivers/dax/super.c | 6 ++++++
->>   fs/Kconfig          | 1 -
->>   2 files changed, 6 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
->> index 0da9232ea175..e9f397b8a5a3 100644
->> --- a/drivers/dax/super.c
->> +++ b/drivers/dax/super.c
->> @@ -445,6 +445,12 @@ struct dax_device *alloc_dax(void *private, const struct dax_operations *ops)
->>   	dev_t devt;
->>   	int minor;
->>   
->> +	/* Unavailable on architectures with virtually aliased data caches. */
->> +	if (IS_ENABLED(CONFIG_ARM) ||
->> +	    IS_ENABLED(CONFIG_MIPS) ||
->> +	    IS_ENABLED(CONFIG_SPARC))
->> +		return NULL;
+
+
+On Wed, 31 Jan 2024, Tejun Heo wrote:
+
+> Hello,
 > 
-> This function returns ERR_PTR(), not NULL on failure.
-
-Except that it returns NULL in the CONFIG_DAX=n case as you
-noticed below.
-
+> On Wed, Jan 31, 2024 at 10:19:07PM +0100, Mikulas Patocka wrote:
+> > > @@ -83,7 +83,7 @@ struct dm_verity_io {
+> > >  	struct bvec_iter iter;
+> > >  
+> > >  	struct work_struct work;
+> > > -	struct tasklet_struct tasklet;
+> > > +	struct work_struct bh_work;
+> > >  
+> > >  	/*
+> > >  	 * Three variably-size fields follow this struct:
+> > 
+> > Do we really need two separate work_structs here? They are never submitted 
+> > concurrently, so I think that one would be enough. Or, am I missing 
+> > something?
 > 
-> ...and I notice this mistake is also made in include/linux/dax.h in the
-> CONFIG_DAX=n case. That function also mentions:
+> I don't know, so just did the dumb thing. If the caller always guarantees
+> that the work items are never queued at the same time, reusing is fine.
+> However, the followings might be useful to keep on mind:
 > 
->      static inline struct dax_device *alloc_dax(void *private,
->                      const struct dax_operations *ops)
->      {
->              /*
->               * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
->               * NULL is an error or expected.
->               */
->              return NULL;
->      }
+> - work_struct is pretty small - 4 pointers.
 > 
-> ...and none of the callers validate the result, but now runtime
-> validation is necessary. I.e. it is not enough to check
-> IS_ENABLED(CONFIG_DAX) it also needs to check cpu_dcache_is_aliasing().
-
-If the callers select DAX in their Kconfig, then they don't have to
-explicitly check for IS_ENABLED(CONFIG_DAX). Things change for the
-introduced runtime check though.
-
+> - INIT_WORK() on a queued work item isn't gonna be pretty.
 > 
-> With that, there are a few more fixup places needed, pmem_attach_disk(),
-> dcssblk_add_store(), and virtio_fs_setup_dax().
+> - Flushing and no-concurrent-execution guarantee are broken on INIT_WORK().
+>   e.g. If you queue_work(), INIT_WORK(), flush_work(), the flush isn't
+>   actually going to wait for the work item to finish. Also, if you do
+>   queue_work(), INIT_WORK(), queue_work(), the two queued work item
+>   instances may end up running concurrently.
+> 
+> Muxing a single work item carries more risks of subtle bugs, but in some
+> cases, the way it's used is clear (e.g. sequential chaining) and that's
+> fine.
 
-Which approach should we take then ? Should we:
+The code doesn't call INIT_WORK() on a queued work item and it doesn't 
+flush the workqueue (it destroys it only in a situation when there are no 
+work items running) so I think it's safe to use just one work_struct.
 
-A) Keep returning NULL from alloc_dax() for both
-    cpu_dcache_is_aliasing() and CONFIG_DAX=n, and use IS_ERR_OR_NULL()
-    in the caller. If we do this, then the callers need to somehow
-    translate this NULL into a negative error value, or
-
-B) Replace this NULL return value in both cases by a ERR_PTR() (which
-    error value should we return ?).
-
-I would favor approach B) which appears more robust and introduces
-fewer changes. If we go for that approach do we still need to change
-the callers ?
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-https://www.efficios.com
+Mikulas
 
