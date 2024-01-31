@@ -1,231 +1,223 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.10])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F19D38DD2
-	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 20:57:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706734654; cv=none; b=cGyfU3vCMN9lQmzrB8S+JTYox/Z707M4mNaO3b3JSCtRPI30XhB//0Z8+kn5wRjF1cgmr+clYm28fM+6SPIEhmcJmaFOMr9I9eo2MhU8B2rqL10KG3sTUNw6mDkQbQ0s5CieTeLdI17rhPoq9tBYrMX0b4iFqc+u4ALqkMXYCRk=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706734654; c=relaxed/simple;
-	bh=bHSLlOv7tz2D+FTDdd+KoqCmmDd3SghVB2j9p+O8lqk=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=QiNI6kBdy2vH2CZoFrOgikkFm0U3ToipH7lzPRhoKiUz964ICg8BIXyvaE7N6sSitT9rGZNWdcVuhcBjaibjxni5VBdPPnzB7e4Tz/yv7Od6hjX70H1Qv/yavp8n5a82d2XcZBtFyL6N485JcIzXnBXE0DpokgK5b3JY+V4XwJQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WWvXcRtd; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6034538FA4;
+	Wed, 31 Jan 2024 21:02:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=198.175.65.10
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1706734965; cv=fail; b=PiavFRvlj768RoQSjCD9MkgvgTN5GlQmlkxP5xjNvhuVY7DCPAPDbpFvsttoJJRSUSqslRdBY4AN6xoWnWSgUQAmI0Oa9Crju1B2kktOhZJmA5tPuijm8a491nMLLBb37hjA/wXeMDoBNH4mSH/vkEt4cmKtbwHeHzAfVcnBGSs=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1706734965; c=relaxed/simple;
+	bh=a8KrKIWFalgBAC9gxi/aWImn2TjPttRO4oRESyH5lts=;
+	h=Date:From:To:CC:Subject:Message-ID:References:Content-Type:
+	 Content-Disposition:In-Reply-To:MIME-Version; b=LGoLoDdKMpOF/mMI/EKTpWTS18nMs6S0kvwpJIWqipSQRJO6Fi9qZwPWB2RboNzxe1c39iB7bmhr1WaqBG5wLP7/HXmM17i0ieSbyaqu3ZuBB+t/H+yz+5iwf36koN+NTuxo+xIh3WUJdjv9gSqNfjc2j4pZguVDvnwbiyoq2JU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=V0ivjRjN; arc=fail smtp.client-ip=198.175.65.10
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WWvXcRtd"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1706734650;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=+FNDUwepPKNN49tQfd2gqfob3Qg4/8wYY7E6pc+D6jg=;
-	b=WWvXcRtdZxmzwdKmVfoNLualD4CKn13ERcQp6ZeEJ5hZ7+hg+8UR5NvYUazcqaMuxNxl7z
-	l8kXLWgn9Wj5BWTIvlWcGG5a7bibQtwRSi05MkG2ntAU51CXt4fBEe/hG9L5DNB1wnoLLl
-	MXyN62m8FBFPVOjlym9HnhbzgPBAepI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-527-tQWo7KhyNyGIF5cY-pth2g-1; Wed, 31 Jan 2024 15:57:28 -0500
-X-MC-Unique: tQWo7KhyNyGIF5cY-pth2g-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 443AA87A9E1;
-	Wed, 31 Jan 2024 20:57:28 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 242AE492BE2;
-	Wed, 31 Jan 2024 20:57:28 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 0CB3D30C14EB; Wed, 31 Jan 2024 20:57:28 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 080393F7DC;
-	Wed, 31 Jan 2024 21:57:28 +0100 (CET)
-Date: Wed, 31 Jan 2024 21:57:27 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, 
-    Benjamin Marzinski <bmarzins@redhat.com>
-cc: dm-devel@lists.linux.dev, Tejun Heo <tj@kernel.org>, 
-    Ignat Korchagin <ignat@cloudflare.com>, 
-    Damien Le Moal <damien.lemoal@wdc.com>, Bob Liu <bob.liu@oracle.com>
-Subject: [PATCH] dm-crypt, dm-verity: disable tasklets
-Message-ID: <fb74448e-1ae2-193b-8b11-dfb91974963@redhat.com>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="V0ivjRjN"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1706734963; x=1738270963;
+  h=date:from:to:cc:subject:message-id:references:
+   in-reply-to:mime-version;
+  bh=a8KrKIWFalgBAC9gxi/aWImn2TjPttRO4oRESyH5lts=;
+  b=V0ivjRjN8RypYPmmW4TmHXnGgRMNe0+72cLlGJKsSOGvOoinR1yjRaBX
+   1+tLngXUeiZj5Qvxsz58q+eSHmzcERwaHaUGERjgxPB2IQmIss5SscnFg
+   pgXVH6oACpUV9Okjo+tMOxW5lU1a6U6GJZzi4rRak7UU9TtyOadLxWwjT
+   Dpy9L0Td7wklEFr/XNGjP/ZB7CTdSMpJS3G6HjyqzIaGjNv/4CHjdaqUm
+   zwb2ajKBQReUwdg8QFRY/twQONwZ8jbFwKgWN7kH5eKfLGfS0Zbx7+vFf
+   Q8ZvH82xa6P8Nfb/CanS8cUJlFBMm3XbxW+waiYrKrkB+n8FDZu1dA18f
+   w==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10969"; a="17109198"
+X-IronPort-AV: E=Sophos;i="6.05,233,1701158400"; 
+   d="scan'208";a="17109198"
+Received: from fmsmga003.fm.intel.com ([10.253.24.29])
+  by orvoesa102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 31 Jan 2024 13:02:40 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10969"; a="878896221"
+X-IronPort-AV: E=Sophos;i="6.05,233,1701158400"; 
+   d="scan'208";a="878896221"
+Received: from orsmsx603.amr.corp.intel.com ([10.22.229.16])
+  by FMSMGA003.fm.intel.com with ESMTP/TLS/AES256-GCM-SHA384; 31 Jan 2024 13:02:39 -0800
+Received: from orsmsx610.amr.corp.intel.com (10.22.229.23) by
+ ORSMSX603.amr.corp.intel.com (10.22.229.16) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.35; Wed, 31 Jan 2024 13:02:38 -0800
+Received: from ORSEDG601.ED.cps.intel.com (10.7.248.6) by
+ orsmsx610.amr.corp.intel.com (10.22.229.23) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.35 via Frontend Transport; Wed, 31 Jan 2024 13:02:38 -0800
+Received: from NAM11-BN8-obe.outbound.protection.outlook.com (104.47.58.169)
+ by edgegateway.intel.com (134.134.137.102) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.1.2507.35; Wed, 31 Jan 2024 13:02:37 -0800
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=cvjo/KbuuQHHp78c9L2xJM0UwPY0FqRMH42dIb5Svv/+OKEcOG/FMcsqWpKY3WeBVatVoWo4bFg/sRapVzv50l/Sy5h0n4tkA7zpH2GAqJpMHGaMFimPWbvBiOwKPSa+6Dy/bMO55Fhih1V4V4QweGpbT77bXQt6V283jHCU040JnOi22xMFPw+1EPs8U/nZ7AXozIZKLqWFv6KtbH8RrDcdada8ULcyy1YqDfnyQ6mUoOvaHFan71sL0AM7mUjkOqNtnqw/yJVUt44ng1kc82/Z4iRF36B5X4nDZOmTQnWI26k45cNsoHaaqzKEDZLbnVz+OdJAiHrS89BN8BF6rw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=1zr6IXfXIDFKRkqsZalTnOGJWkx072CyAb0yn8eUdr4=;
+ b=mwi2j6R++30rEnHxR9i4zd1ILyyGH6dLs+l1qaNXDhLlHin49ais1R1QRexmtpyTb01kJMJd8PhcZbAXuMZWF4ZHnbAvZYZutp7IEGVUD52JyysAjRYWt4WwqfAVChoY8RlJX3IFo0nTCI7G8NRTsq0cE0I/NxRkP1brueKxmPW/rho+YwbPUN01Nod/mw9tSi3wzqEUVUrn7eEva/Xnc7xw0kc6RVN7khGw5/Xk6tg3+8D4/NZnEZwilSezxU6MViQz+UlazBCXhz2hn+XIFt7zntV120oKSvUerIZxnkflZor3HxnO93/TCLjZK9PlWR89EnhubAkMh90DY9ZrTg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=intel.com; dmarc=pass action=none header.from=intel.com;
+ dkim=pass header.d=intel.com; arc=none
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=intel.com;
+Received: from PH8PR11MB8107.namprd11.prod.outlook.com (2603:10b6:510:256::6)
+ by PH0PR11MB5880.namprd11.prod.outlook.com (2603:10b6:510:143::14) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7249.22; Wed, 31 Jan
+ 2024 21:02:35 +0000
+Received: from PH8PR11MB8107.namprd11.prod.outlook.com
+ ([fe80::6257:f90:c7dd:f0b2]) by PH8PR11MB8107.namprd11.prod.outlook.com
+ ([fe80::6257:f90:c7dd:f0b2%4]) with mapi id 15.20.7228.029; Wed, 31 Jan 2024
+ 21:02:35 +0000
+Date: Wed, 31 Jan 2024 13:02:31 -0800
+From: Dan Williams <dan.j.williams@intel.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Dan Williams
+	<dan.j.williams@intel.com>, Arnd Bergmann <arnd@arndb.de>, Dave Chinner
+	<david@fromorbit.com>
+CC: <linux-kernel@vger.kernel.org>, Mathieu Desnoyers
+	<mathieu.desnoyers@efficios.com>, Andrew Morton <akpm@linux-foundation.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>, <linux-mm@kvack.org>,
+	<linux-arch@vger.kernel.org>, Vishal Verma <vishal.l.verma@intel.com>, "Dave
+ Jiang" <dave.jiang@intel.com>, Matthew Wilcox <willy@infradead.org>, "Russell
+ King" <linux@armlinux.org.uk>, <nvdimm@lists.linux.dev>,
+	<linux-cxl@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
+	<dm-devel@lists.linux.dev>
+Subject: RE: [RFC PATCH v3 2/4] dax: Check for data cache aliasing at runtime
+Message-ID: <65bab567665f3_37ad2943c@dwillia2-xfh.jf.intel.com.notmuch>
+References: <20240131162533.247710-1-mathieu.desnoyers@efficios.com>
+ <20240131162533.247710-3-mathieu.desnoyers@efficios.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: inline
+In-Reply-To: <20240131162533.247710-3-mathieu.desnoyers@efficios.com>
+X-ClientProxiedBy: MW4PR02CA0015.namprd02.prod.outlook.com
+ (2603:10b6:303:16d::6) To PH8PR11MB8107.namprd11.prod.outlook.com
+ (2603:10b6:510:256::6)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: PH8PR11MB8107:EE_|PH0PR11MB5880:EE_
+X-MS-Office365-Filtering-Correlation-Id: d7a1ea31-f14c-4307-fa17-08dc229ff2e0
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: Ukuos4hW0e9u9CRsOX0aHXJ4OglysIkG6wJCuTos36K/pqM7Xl1Hs/MJW82P1N/59SLaFbhLqkA4dELGtdEXa+NJdy5oJrw0mc7bdZ5mtTpeQ1n1128N8ItTcIDvoQJBPR5aVLfdgLxQpdIle80ZrGGY8qhn//RyIdlnu10C6F4WWubUeDTSdGw1EzC6eAAGt8pRiXglFGY9Rqppjr/Gul46OJkkZ90xeHtJNhLLK56L4rHX3DatTVgQYHNQUWSwuFzkFsICrQ+QV2VOjGoyzri+LonsSGl6J2b0jYXs00sYfP2rM5PODhV5p1gL0B3HTJ8UXgwRa5JuxJzPxLucCLQ9fc8jvXvUO0GQ+tM1X6IY2yNIHie0N9ioe7Rs7qouyas6v7D9nZYjhOE+ivREN7U7TRUFT4iNsWgzNvVx0flaRJ1vf7TvETpLZZC91JzIiiweeLrO7FpxETwAy1jLTiIW1cvkkSqLo8aieYB4riUJpqbUrWrud8Erd/nDVbzO7FoOObiry7rfzhqHyeWLNUqyGyCaXSXHPY20VXoZYa2yYsJAsrkF2IK4ZLEh3ee4
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PH8PR11MB8107.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376002)(136003)(396003)(366004)(346002)(39860400002)(230922051799003)(1800799012)(64100799003)(451199024)(186009)(41300700001)(83380400001)(38100700002)(6512007)(9686003)(26005)(4326008)(8676002)(5660300002)(8936002)(7416002)(2906002)(478600001)(110136005)(6506007)(66946007)(6666004)(54906003)(66476007)(66556008)(6486002)(316002)(86362001)(82960400001);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?I0JTBq8UYMS5ThZbO5MlAc1c78GE68vnfbQv8yCHdxVpKjhr2jnzVTq2d22n?=
+ =?us-ascii?Q?5YLZWIsJqX6DgBjeM38sgvpmnyFYRc2YyKFH9kWfToBrpfjLM2w+P9K+6oVh?=
+ =?us-ascii?Q?IEzxfIzb+TydjAx2R5jG0xsmU0y+JQp4vOwx8Mrr3PzTpSfNi+V/mVB9zAuT?=
+ =?us-ascii?Q?uURVfhfV7LonrDhfzVXBPZF3mSjEHp/5Utgf9mqC7oRKtWdGIPbvoMR6z/K0?=
+ =?us-ascii?Q?Ef73VxG49QGfFkPOmvpKPLPhCWAEVhJjiXE0jwyIN/uuD1Md37cTCzwtNrJP?=
+ =?us-ascii?Q?OTEhzqakSU4Fy/z9kK2OpxsBb2dJi+6U5BA51oFvuMw+0xR7I6a34y7fGAtD?=
+ =?us-ascii?Q?Av2AH4SfUs4sZZ0dhJRt+Bz2Lo5/9Z9udgOGXqaD5DZluuWslbrYfKhEZZe3?=
+ =?us-ascii?Q?6pRUXo3ScBM3Of2tD+fIb1V5KRHYTNa1T6rEh7/cu6Uh52uiq2IrBMObIjfd?=
+ =?us-ascii?Q?JLE9vdwAZKqYyrLD7zZZAuviQZGuWMzDGRq7VdwyU9Xf5wcugwKHbrj6v+M1?=
+ =?us-ascii?Q?y3tvgE2CX4pXE+6S+3AYpHfJ2ctd4LJY85R1nCGAYq8kGygOuEgASXJaTVeR?=
+ =?us-ascii?Q?Vx4aIF3tQJHZ4rs3g9Tjv5eIYSMLRRqpyRrRuHxz41XhEuvGsjoNVAm4riwK?=
+ =?us-ascii?Q?uOF0eqpIiuhk4WSXYGRIgMJNhIWFa9MMhUVlAWGxpwWNNJnZkYvO8Nemirx3?=
+ =?us-ascii?Q?o/xjbsK8PQrlGnNMWyKT+qaClFX6Zd36Bxt+HTs5wQLUR+BFnHJBqUKdayOL?=
+ =?us-ascii?Q?8awSWTwXmr2a2lI8i9Xx37TCeL1KWIWWrYIQ7Z4+rsLuaNU6dqwkDMlTWuZr?=
+ =?us-ascii?Q?ebZJPCtN8MQ+K45L3EVhhOMJBJ1dYsE3pSeEItahKL/0FSMR6uwDKGJZZ6AT?=
+ =?us-ascii?Q?eQXGAgL+qrKr3Q9meVVdFcITfYpSR1pu30vzYYiTGXq95rKyCWjz+rgSfKyM?=
+ =?us-ascii?Q?p6LrgsIWKs6Hc79KIg7KoWSqvzXDpwKiqNTr1IgkJoGM5fj0HAzlMHz9TiWY?=
+ =?us-ascii?Q?GcXfaUiXvSHEriALTN7c5DukTIyfaQaRGYpmP6D+X4BoycDwbKvEwPaCePO3?=
+ =?us-ascii?Q?/uET9EZkvnCiH6F0LKRrAG5Kjp1+x0esCOjzBSRHKVJIaNr8PDZ4xv9IHcir?=
+ =?us-ascii?Q?Z4LZHt9aa384Rj4sXDhrZ596pDA2b+mM9lgvOEfTg3HsRNLLv497yR3rQ2DN?=
+ =?us-ascii?Q?U3BInMmn4tyfroSaR/FgLxD4hafpoEHciwogWukwmgU9AeC8G/J+/ReC+qqi?=
+ =?us-ascii?Q?nzkWYow09VuItwWRBHCjQ/6z193bJbhNRYoAsN7yN/qXiDxbQEQAbCBZmJ2d?=
+ =?us-ascii?Q?seiLp4Ya3Xw561i+4Pj3AajX4bNfKxB725yzOj+MTmEZezkNeQoUhyzl1L/3?=
+ =?us-ascii?Q?PSqTicIENAoNt7VL7nQ03J07zglU6TPTP/X5bk1qqVMeISX+a90NNCPAjDVt?=
+ =?us-ascii?Q?1r8BJn8nonj2CMB1yK1qcX0HnqSsOQZc4W1XHOZRCuQWTrNIc/5cFRWPEw73?=
+ =?us-ascii?Q?XyX9mkJi++JeTs8Z6Fc18VUTv+mcPLyQ9iyvEqMos2uiUGoGiOOQkCeaHIQw?=
+ =?us-ascii?Q?5+d96freP5F1FNcjRQwniiV4+xXNwzICqeaq3E5nKlVBpay9aI621LHppIeF?=
+ =?us-ascii?Q?vg=3D=3D?=
+X-MS-Exchange-CrossTenant-Network-Message-Id: d7a1ea31-f14c-4307-fa17-08dc229ff2e0
+X-MS-Exchange-CrossTenant-AuthSource: PH8PR11MB8107.namprd11.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 31 Jan 2024 21:02:35.1249
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 46c98d88-e344-4ed4-8496-4ed7712e255d
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: edDio51DKHDj5cgPCqMWSpRVpzEbDLN1Pq29QX2IfOj5cTFgrxvCGkityzaMJTTWSSvIp8rKGBiItC6bIDCspyUZIZDbDV2wiB0kApnV+JI=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH0PR11MB5880
+X-OriginatorOrg: intel.com
 
-Tasklets have an inherent problem with memory corruption. The function
-tasklet_action_common calls tasklet_trylock, then it calls the tasklet
-callback and then it calls tasklet_unlock. If the tasklet callback frees
-the structure that contains the tasklet or if it calls some code that may
-free it, tasklet_unlock will write into free memory.
+Mathieu Desnoyers wrote:
+> Replace the following fs/Kconfig:FS_DAX dependency:
+> 
+>   depends on !(ARM || MIPS || SPARC)
+> 
+> By a runtime check within alloc_dax().
+> 
+> This is done in preparation for its use by each filesystem supporting
+> the "dax" mount option to validate whether DAX is indeed supported.
+> 
+> This is done in preparation for using cpu_dcache_is_aliasing() in a
+> following change which will properly support architectures which detect
+> data cache aliasing at runtime.
+> 
+> Fixes: d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: Linus Torvalds <torvalds@linux-foundation.org>
+> Cc: linux-mm@kvack.org
+> Cc: linux-arch@vger.kernel.org
+> Cc: Dan Williams <dan.j.williams@intel.com>
+> Cc: Vishal Verma <vishal.l.verma@intel.com>
+> Cc: Dave Jiang <dave.jiang@intel.com>
+> Cc: Matthew Wilcox <willy@infradead.org>
+> Cc: Arnd Bergmann <arnd@arndb.de>
+> Cc: Russell King <linux@armlinux.org.uk>
+> Cc: nvdimm@lists.linux.dev
+> Cc: linux-cxl@vger.kernel.org
+> Cc: linux-fsdevel@vger.kernel.org
+> Cc: dm-devel@lists.linux.dev
+> ---
+>  drivers/dax/super.c | 6 ++++++
+>  fs/Kconfig          | 1 -
+>  2 files changed, 6 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+> index 0da9232ea175..e9f397b8a5a3 100644
+> --- a/drivers/dax/super.c
+> +++ b/drivers/dax/super.c
+> @@ -445,6 +445,12 @@ struct dax_device *alloc_dax(void *private, const struct dax_operations *ops)
+>  	dev_t devt;
+>  	int minor;
+>  
+> +	/* Unavailable on architectures with virtually aliased data caches. */
+> +	if (IS_ENABLED(CONFIG_ARM) ||
+> +	    IS_ENABLED(CONFIG_MIPS) ||
+> +	    IS_ENABLED(CONFIG_SPARC))
+> +		return NULL;
 
-The commits 8e14f610159d and d9a02e016aaf try to fix it for dm-crypt, but
-it is not a sufficient fix and the data corruption can still happen [1].
-There is no fix for dm-verity and dm-verity will write into free memory
-with every tasklet-processed bio.
+This function returns ERR_PTR(), not NULL on failure.
 
-There will be atomic workqueues implemented in the kernel 6.9 [2]. They
-will have better interface and they will not suffer from the memory
-corruption problem.
+...and I notice this mistake is also made in include/linux/dax.h in the
+CONFIG_DAX=n case. That function also mentions:
 
-But we need something that stops the memory corruption now and that can be
-backported to the stable kernels. So, I'm proposing this commit that
-disables tasklets in both dm-crypt and dm-verity. This commit doesn't
-remove the tasklet support, because the tasklet code will be reused when
-atomic workqueues will be implemented.
+    static inline struct dax_device *alloc_dax(void *private,
+                    const struct dax_operations *ops)
+    {
+            /*
+             * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
+             * NULL is an error or expected.
+             */     
+            return NULL;
+    }               
 
-[1] https://lore.kernel.org/all/d390d7ee-f142-44d3-822a-87949e14608b@suse.de/T/
-[2] https://lore.kernel.org/lkml/20240130091300.2968534-1-tj@kernel.org/
+...and none of the callers validate the result, but now runtime
+validation is necessary. I.e. it is not enough to check
+IS_ENABLED(CONFIG_DAX) it also needs to check cpu_dcache_is_aliasing().
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-Fixes: 39d42fa96ba1b ("dm crypt: add flags to optionally bypass kcryptd workqueues")
-Fixes: 5721d4e5a9cdb ("dm verity: Add optional "try_verify_in_tasklet" feature")
-
----
- drivers/md/dm-crypt.c         |   38 ++------------------------------------
- drivers/md/dm-verity-target.c |   26 ++------------------------
- 2 files changed, 4 insertions(+), 60 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c	2024-01-31 18:58:46.000000000 +0100
-+++ linux-2.6/drivers/md/dm-crypt.c	2024-01-31 19:00:05.000000000 +0100
-@@ -73,10 +73,8 @@ struct dm_crypt_io {
- 	struct bio *base_bio;
- 	u8 *integrity_metadata;
- 	bool integrity_metadata_from_pool:1;
--	bool in_tasklet:1;
- 
- 	struct work_struct work;
--	struct tasklet_struct tasklet;
- 
- 	struct convert_context ctx;
- 
-@@ -1762,7 +1760,6 @@ static void crypt_io_init(struct dm_cryp
- 	io->ctx.r.req = NULL;
- 	io->integrity_metadata = NULL;
- 	io->integrity_metadata_from_pool = false;
--	io->in_tasklet = false;
- 	atomic_set(&io->io_pending, 0);
- }
- 
-@@ -1771,13 +1768,6 @@ static void crypt_inc_pending(struct dm_
- 	atomic_inc(&io->io_pending);
- }
- 
--static void kcryptd_io_bio_endio(struct work_struct *work)
--{
--	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
--
--	bio_endio(io->base_bio);
--}
--
- /*
-  * One of the bios was finished. Check for completion of
-  * the whole request and correctly clean up the buffer.
-@@ -1801,20 +1791,6 @@ static void crypt_dec_pending(struct dm_
- 
- 	base_bio->bi_status = error;
- 
--	/*
--	 * If we are running this function from our tasklet,
--	 * we can't call bio_endio() here, because it will call
--	 * clone_endio() from dm.c, which in turn will
--	 * free the current struct dm_crypt_io structure with
--	 * our tasklet. In this case we need to delay bio_endio()
--	 * execution to after the tasklet is done and dequeued.
--	 */
--	if (io->in_tasklet) {
--		INIT_WORK(&io->work, kcryptd_io_bio_endio);
--		queue_work(cc->io_queue, &io->work);
--		return;
--	}
--
- 	bio_endio(base_bio);
- }
- 
-@@ -2246,11 +2222,6 @@ static void kcryptd_crypt(struct work_st
- 		kcryptd_crypt_write_convert(io);
- }
- 
--static void kcryptd_crypt_tasklet(unsigned long work)
--{
--	kcryptd_crypt((struct work_struct *)work);
--}
--
- static void kcryptd_queue_crypt(struct dm_crypt_io *io)
- {
- 	struct crypt_config *cc = io->cc;
-@@ -2262,15 +2233,10 @@ static void kcryptd_queue_crypt(struct d
- 		 * irqs_disabled(): the kernel may run some IO completion from the idle thread, but
- 		 * it is being executed with irqs disabled.
- 		 */
--		if (in_hardirq() || irqs_disabled()) {
--			io->in_tasklet = true;
--			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
--			tasklet_schedule(&io->tasklet);
-+		if (!(in_hardirq() || irqs_disabled())) {
-+			kcryptd_crypt(&io->work);
- 			return;
- 		}
--
--		kcryptd_crypt(&io->work);
--		return;
- 	}
- 
- 	INIT_WORK(&io->work, kcryptd_crypt);
-Index: linux-2.6/drivers/md/dm-verity-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-verity-target.c	2024-01-31 18:58:46.000000000 +0100
-+++ linux-2.6/drivers/md/dm-verity-target.c	2024-01-31 19:03:14.000000000 +0100
-@@ -645,23 +645,6 @@ static void verity_work(struct work_stru
- 	verity_finish_io(io, errno_to_blk_status(verity_verify_io(io)));
- }
- 
--static void verity_tasklet(unsigned long data)
--{
--	struct dm_verity_io *io = (struct dm_verity_io *)data;
--	int err;
--
--	io->in_tasklet = true;
--	err = verity_verify_io(io);
--	if (err == -EAGAIN || err == -ENOMEM) {
--		/* fallback to retrying with work-queue */
--		INIT_WORK(&io->work, verity_work);
--		queue_work(io->v->verify_wq, &io->work);
--		return;
--	}
--
--	verity_finish_io(io, errno_to_blk_status(err));
--}
--
- static void verity_end_io(struct bio *bio)
- {
- 	struct dm_verity_io *io = bio->bi_private;
-@@ -674,13 +657,8 @@ static void verity_end_io(struct bio *bi
- 		return;
- 	}
- 
--	if (static_branch_unlikely(&use_tasklet_enabled) && io->v->use_tasklet) {
--		tasklet_init(&io->tasklet, verity_tasklet, (unsigned long)io);
--		tasklet_schedule(&io->tasklet);
--	} else {
--		INIT_WORK(&io->work, verity_work);
--		queue_work(io->v->verify_wq, &io->work);
--	}
-+	INIT_WORK(&io->work, verity_work);
-+	queue_work(io->v->verify_wq, &io->work);
- }
- 
- /*
-
+With that, there are a few more fixup places needed, pmem_attach_disk(),
+dcssblk_add_store(), and virtio_fs_setup_dax().
