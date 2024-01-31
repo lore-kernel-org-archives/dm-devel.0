@@ -1,81 +1,108 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A974D4C65
-	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 01:25:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8239EBB
+	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 01:29:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706664333; cv=none; b=cdHK3MUJ56sjIgtfGlVkXvnni3v7Xdd3RO0P2fEbx6n9VAcRJ0wKtWHYcgbv5QAQN5ROmCTm2gKVqb1DBtGI9dA6V3P9nKzNXIIdjrD7VaStcFFm+3QqzKUZ4IQaXXK1BZ2QbQb4ioFTwYItji/+ut8WvIcw3O0GwceK/OzM3mU=
+	t=1706664556; cv=none; b=J6GQxY9yasHCU1HG3VRlFTEfYFegWegyiGIQAHriCScWzYTMpdfKDQ3IeyNIJQ65IAKuFAtXHoRDlOpSZi5dNS6NFzEhvaG1HuxvGbNL8UUF5iu+kqdIKWvomcWBqLIvDnqYK6K49dswv7TqEt+Ln8+ydkBNL8jGMWfsvON36I0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706664333; c=relaxed/simple;
-	bh=YJjGhb4/po+FCNdk93cGZ4/UCbNXgvqg2/wnZtmxk4U=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=opbwWJxIbxxd6edwXQBhEnsAzMtHp4asYnjDe9evWkfpy/zgjq/cMP02KuJL7w4TBkqZGlgXzE7BGhAxoPVD4wBu+6Sx/khuy6C6TTQDLTtr1oEjVs9ZVGY8uoAT2nj3mMc3RnR8qXcPG6YGsHvb5TWORGEaHXqWm9f1wPbeUpk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TPkqf1WqFz4f3l2R
-	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 09:25:18 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 5D4E81A0272
-	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 09:25:22 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgCXaBGAoblluYABCg--.64614S3;
-	Wed, 31 Jan 2024 09:25:22 +0800 (CST)
-Subject: Re: [PATCH v4 00/14] dm-raid: fix v6.7 regressions
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: mpatocka@redhat.com, heinzm@redhat.com, agk@redhat.com,
- snitzer@kernel.org, dm-devel@lists.linux.dev, song@kernel.org,
- jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com, akpm@osdl.org,
- linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
- yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-References: <20240130021843.3608859-1-yukuai1@huaweicloud.com>
- <CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <78016a94-737a-af4d-446b-c9fbef967895@huaweicloud.com>
-Date: Wed, 31 Jan 2024 09:25:20 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1706664556; c=relaxed/simple;
+	bh=aJlhUnCAcl/yigpRuUE3FKFXJmobkfI0YtXFMKt6Ne4=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=kvvRqTVLqqNNKyXo9r5FSLu32mShNJ4K+IzzVNADv9yQvkWCGqu1Ey3kxDhsYnaKVreNK9TnBMqewtJTpstyltyPZG0069Xdwy5vb24FH32NcHPTC2eUmzMsbCL2JHeKjt3qYsOR6zaEir8vEaoJ8CCLAkqPuxrWz9b0Or/VXmk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=b+ShOc2V; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="b+ShOc2V"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1706664553;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=JNqnrWYNhsbLxXIHidmeYKuJLzR8cqpFCLs5iG5NUIg=;
+	b=b+ShOc2VM6S90hwqJVTQUVDw+akx0n3xxYQV/x4aCvn0t/aHRTD02HeoF+wZ8KDsZJVz28
+	lcuR0J1xlXxEBe0+2xC6ggYfuGhr0gOZxwfV86YXe8jGUKeaCFZxQ2n4pOZ92SqidrsUsm
+	BQr7PeqqmjxRcYJK6/NWJc6xFICMjYo=
+Received: from mail-pf1-f198.google.com (mail-pf1-f198.google.com
+ [209.85.210.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-378-wTWJRYUjP7CSwB2tVPeZPg-1; Tue, 30 Jan 2024 20:29:11 -0500
+X-MC-Unique: wTWJRYUjP7CSwB2tVPeZPg-1
+Received: by mail-pf1-f198.google.com with SMTP id d2e1a72fcca58-6dde04e1b6aso2661582b3a.2
+        for <dm-devel@lists.linux.dev>; Tue, 30 Jan 2024 17:29:11 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706664551; x=1707269351;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=JNqnrWYNhsbLxXIHidmeYKuJLzR8cqpFCLs5iG5NUIg=;
+        b=fi6OTOMqoAazeOsRvhI1b+IifG6msauU4tCqjwScDZ/OaORXwpn96JVq3m8dTzXRFj
+         ClbglolY+MIpNCSSPr/kRPnc4wIImIFuMuh0irXw0JPNj358/IE098KoZE2zRUH6Uoa6
+         wmYXESrBtkvB/LDTqCCOwncRwW0zE0k68/8NsaBDCUsh4dOhGF3cT1j8hgGhyz24z10X
+         LsU2zz9PLQNeMrmT2nrR4tbuhZevZ6SER91tmDIs6mFgWZiOxbVULjBDpqUjmm5UX847
+         LCzOwYhcGyj/M25kyYzgYvl24cbElrJHvrS4h/xtedFQGAe2K7noIQ5G/h+a11B4DQXv
+         Ou1A==
+X-Gm-Message-State: AOJu0YzzKhWAqPm6z1T6rPhTJMfFASf1A1Upo1Ghu3zX5e3lwpQoaRol
+	EebrBHEZfGGKREckhU8Z6pr4s1/T9hTPGDZD3+8xysahnfbJGlyq5TJbDTmXJ/uduUYbJCCgYcx
+	WZfT9k2S3JcMLHDVmmmI9E+sDq3OF/7nEnQsEYyutYtohaI++Hnfsy9wtMVECtP8dYW0dFDJ9/Z
+	yLFLWJWfT3s2njAxCFY7EX4HF2s6Wu0ME=
+X-Received: by 2002:a05:6a00:c8b:b0:6db:d4f8:bb1d with SMTP id a11-20020a056a000c8b00b006dbd4f8bb1dmr431524pfv.2.1706664550904;
+        Tue, 30 Jan 2024 17:29:10 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFr+2mKU7NfBaA1rJF29186UvNGqzXqI+b2lGNzCcEvEyxDyhvBbMJiH6oHf82morLlvpAekP+aQ15hJyqjlbo=
+X-Received: by 2002:a05:6a00:c8b:b0:6db:d4f8:bb1d with SMTP id
+ a11-20020a056a000c8b00b006dbd4f8bb1dmr431511pfv.2.1706664550628; Tue, 30 Jan
+ 2024 17:29:10 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgCXaBGAoblluYABCg--.64614S3
-X-Coremail-Antispam: 1UD129KBjDUn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73
-	VFW2AGmfu7bjvjm3AaLaJ3UjIYCTnIWjp_UUUYy7AC8VAFwI0_Xr0_Wr1l1xkIjI8I6I8E
-	6xAIw20EY4v20xvaj40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28Cjx
-	kF64kEwVA0rcxSw2x7M28EF7xvwVC0I7IYx2IY67AKxVW7JVWDJwA2z4x0Y4vE2Ix0cI8I
-	cVCY1x0267AKxVW8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87
-	Iv6xkF7I0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE
-	6c02F40Ex7xfMcIj6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72
-	CE4IkC6x0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4II
-	rI8v6xkF7I0E8cxan2IY04v7Mxk0xIA0c2IEe2xFo4CEbIxvr21l42xK82IYc2Ij64vIr4
-	1l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK
-	67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r4a6rW5MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI
-	8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAv
-	wI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxV
-	AFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUQvtAUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+References: <20240130021843.3608859-1-yukuai1@huaweicloud.com>
+ <CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com> <78016a94-737a-af4d-446b-c9fbef967895@huaweicloud.com>
+In-Reply-To: <78016a94-737a-af4d-446b-c9fbef967895@huaweicloud.com>
+From: Xiao Ni <xni@redhat.com>
+Date: Wed, 31 Jan 2024 09:28:59 +0800
+Message-ID: <CALTww29UKCJcvJB2BvGTbCcpvD4Y-J+Bg1WgE0nOijLNMv=RGg@mail.gmail.com>
+Subject: Re: [PATCH v4 00/14] dm-raid: fix v6.7 regressions
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: mpatocka@redhat.com, heinzm@redhat.com, agk@redhat.com, snitzer@kernel.org, 
+	dm-devel@lists.linux.dev, song@kernel.org, jbrassow@f14.redhat.com, 
+	neilb@suse.de, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org, 
+	linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com, 
+	"yukuai (C)" <yukuai3@huawei.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi, Xiao Ni!
+On Wed, Jan 31, 2024 at 9:25=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> w=
+rote:
+>
+> Hi, Xiao Ni!
+>
+> =E5=9C=A8 2024/01/31 8:29, Xiao Ni =E5=86=99=E9=81=93:
+> > In my environment, the lvm2 regression test has passed. There are only
+> > three failed cases which also fail in kernel 6.6.
+> >
+> > ###       failed: [ndev-vanilla] shell/lvresize-fs-crypt.sh
+> > ###       failed: [ndev-vanilla] shell/pvck-dump.sh
+> > ###       failed: [ndev-vanilla] shell/select-report.sh
+> > ### 426 tests: 346 passed, 70 skipped, 0 timed out, 7 warned, 3 failed
+> >    in 89:26.073
+>
+> Thanks for the test, this is greate news.
+>
+> Kuai
+>
 
-在 2024/01/31 8:29, Xiao Ni 写道:
-> In my environment, the lvm2 regression test has passed. There are only
-> three failed cases which also fail in kernel 6.6.
-> 
-> ###       failed: [ndev-vanilla] shell/lvresize-fs-crypt.sh
-> ###       failed: [ndev-vanilla] shell/pvck-dump.sh
-> ###       failed: [ndev-vanilla] shell/select-report.sh
-> ### 426 tests: 346 passed, 70 skipped, 0 timed out, 7 warned, 3 failed
->    in 89:26.073
+Hi Kuai
 
-Thanks for the test, this is greate news.
+Have you run mdadm regression tests based on this patch set?
 
-Kuai
+Regards
+Xiao
 
