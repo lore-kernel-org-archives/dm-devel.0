@@ -1,97 +1,101 @@
-Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com [209.85.210.173])
+Received: from mail-ej1-f46.google.com (mail-ej1-f46.google.com [209.85.218.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 31B4237712
-	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 22:46:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 439F53A8DB
+	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 23:19:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706741202; cv=none; b=oTKM/FEEFXeIs19+KanAK2Vpj8Uhn/L9waNWOpLATwwLpXlnQ6SItnEic2cN86qc3As1H1bl/QGrFWea9ZLoGJU5y6AwUCqjH/5PZr6SfsC/3pNoYkE5QKpJ2VfglT1zUWt2qg7/itTkljAIne0zG/2YKpOAGEUkeqd/JnKs3BQ=
+	t=1706743164; cv=none; b=uGWXk0OtCkMewBOvGOTom4fjTzcDAR8NoYuoV3mPkpyERj6Ga3H2IjrKYDQeraMv5bLxuriViSfWxW8tufNbkRJsz53QeSRck2PLLdCbndydSROB733/FR+gBANg+/c6F5W58kk/a0rNxRPINgZA2uTQ3TtHtO2+wC+dwdN9WU0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706741202; c=relaxed/simple;
-	bh=BsHeep2hbO8/IGYveSJ5DN0n8fIDEHXMfAbYaO4jAWE=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=CikK4T9hjZexIBAQhK/ORW/gy0WOLXUMT2Y6aRS7cwqgNXvVdrwhyslvvmXc98KmTUZSozYAWtDLziPpG7Z9iY9hWlq5VltjaFotH1bx9yMt3HGNk76PLfhDs7tgfjwncHepWtgVt/GtTgdDbs2W7cn5+DPVy2Z908ruE0vCZJE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=VIniv2ly; arc=none smtp.client-ip=209.85.210.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
+	s=arc-20240116; t=1706743164; c=relaxed/simple;
+	bh=xblL+yrpEo1gb8xzx/6pV+ZF6z63Q7arn5+fxeove9Y=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=cz/YXpu/G6THrx366Vppz+sw9zZQeBH5mJt8D6Ak4wd5s6IySHYpXgLEq3+U3rQ5UWxlwSDQ0V8jFzJp1G3WiKoGaAf7UlSwMLMHBaCofF1DmBV09tRat3ebW5dArlDoBd03DjEO284Z48lGCcnoPrBMb0YHPwF0hIY4NjdV+9U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=RaNe/nmH; arc=none smtp.client-ip=209.85.218.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="VIniv2ly"
-Received: by mail-pf1-f173.google.com with SMTP id d2e1a72fcca58-6ddcfda697cso200193b3a.2
-        for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 14:46:39 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="RaNe/nmH"
+Received: by mail-ej1-f46.google.com with SMTP id a640c23a62f3a-a35e65df2d8so30183666b.0
+        for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 15:19:21 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1706741198; x=1707345998; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=fuu2FvAUa6aOiw2cmLsoW7+qgXEqKrk1an1C0sJdQYE=;
-        b=VIniv2lyeXVNr1kZDgF/mi4Al6sZ46qHqwopt6ub7Qh/yTeBO6rUYjtyuCCFWWFL6L
-         sF4h+GHDxb+n0eknuIiWn4H0yX72QsN0fFL3IF3d8J3KaSdHMlR8kQbca8yCk0aC4hDU
-         GQ0SH77yBK3dQnMSSEDZzG1RELzxLJuq6LEy7ayyQR1lFA5cFYipc+s2gSDVDkeJjxDF
-         +FPB4lSEvrEnm9eUxvHtetrECVy2g1PgQg95IlpSPz510IMccanrvZVp+VgwDHiJUagC
-         zV/iqcLbjS+Gqd8xKygUFcHvsOeZzgqJ2Nmc3Ggw1hVPc3nW1kmZvK+vehRtr3FPFUYQ
-         z0cg==
+        d=linux-foundation.org; s=google; t=1706743160; x=1707347960; darn=lists.linux.dev;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=LFVGRon0CDQR02O+c0btFX180m2QPPnDAgbj2eP6Q1I=;
+        b=RaNe/nmHkXvVw4ERXzSnMju0kXBT/fMChP2tZZkuM0SYa51+I2xBK4QIgPvJlQFgUp
+         LYBxkZE3IU9GtKghmovoONQC6LbpFfKhj/Nw/QoMarXso86tcdEeLoyxk/Brp0XhYseI
+         nvVz/WycGJy7y4QPyTnRyZFUd8jXloF8zqH/M=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706741198; x=1707345998;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+        d=1e100.net; s=20230601; t=1706743160; x=1707347960;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=fuu2FvAUa6aOiw2cmLsoW7+qgXEqKrk1an1C0sJdQYE=;
-        b=SsXUQ+kPZAf99126pLNGNGLOAvGeYmqtDszg2o6Zfod+g+T3HfD0EUKBnnGf0Uf/WF
-         ilmd9brNn9XO/SzgUJu7x/MtpojmVMLnzEzDl9sAeEmpgG/Q9ZDSFFYXmgrvlzIa+sjD
-         5ZgQln0CvU7zXzTv+b8pvuG8npjv1O7XGgyEnaDfxFkOMRFm5p3hhPl+sIMgegwc8aYN
-         NS6fCvkGrs3xvFP8trcsY6wnGUFVvKYHu7uXHH7ojzxgiq0SWNj6ODHGdhXL4nawqZ0U
-         e6kmhMrNFvCP0WxOEpz+QQMZDHXHMXH3qUk4tjDBaCItavmax3DHlBZNRpVFCYS3n436
-         o8bw==
-X-Gm-Message-State: AOJu0Yx8MV1ce6Fd03R0ADx1nF1t0ow04JXpU/gOTOnf1XnoIBhZpQmV
-	aoO07dcQ9P8g5GwDMK03a2O0aK8e17DzWY+YmW9jChwMP10pTvLOIj3H1pqkIfQyOZdeO9qp0R1
-	sqHX2ZceX72KeiIIDSXXCGGXUscFyMeMjkwM4H1Ty4mUolIDSUQlyd5BBIC+9uuKUun28kTtQDI
-	xZsM6kmJvOpL4tc3mzQI2AC8JlABDFe9W8G652WCEt
-X-Google-Smtp-Source: AGHT+IH/izIukTDrmtCMNr/wR2mfEBXxwQUwXIhRVc0A8FMmzW+lIrAgaYMkIJgXGErHZk72VkG53Q==
-X-Received: by 2002:a05:6a20:6608:b0:19c:7f7c:25f4 with SMTP id n8-20020a056a20660800b0019c7f7c25f4mr2822644pzh.2.1706741198400;
-        Wed, 31 Jan 2024 14:46:38 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCU3Sp6hheXHBgz48u/Vz+6eGCLhqPN/6NPHEQ4Yo0N/am86vLYsEZBvMglraucfIbv6JRAKcoiRuOc2z1SXaOZiYLCy2V4=
-Received: from brian--MacBookPro18.purestorage.com ([136.226.79.24])
-        by smtp.gmail.com with ESMTPSA id sw5-20020a17090b2c8500b00295c8bc35e1sm2064072pjb.38.2024.01.31.14.46.37
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 31 Jan 2024 14:46:38 -0800 (PST)
-From: Brian Bunker <brian@purestorage.com>
-To: dm-devel@lists.linux.dev
-Cc: mwilck@suse.com,
-	Brian Bunker <brian@purestorage.com>
-Subject: [PATCH] libmultipath: stop PURE FlashArray from detecting priority
-Date: Wed, 31 Jan 2024 14:45:56 -0800
-Message-ID: <20240131224556.84931-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.43.0
+        bh=LFVGRon0CDQR02O+c0btFX180m2QPPnDAgbj2eP6Q1I=;
+        b=BZXOqy2Mbhf4HMKHiFDcwz86GhPE9/8aF3L5VT+i/SwAHHtWmLKVSApmHZ+ocvB5Nf
+         IPR0aW4FvIQXh4TKV5I0VRwgPl5JQqX5GU8qLdRTEW/dyTUQ1DjqE2CO5QL9bT2pqGq3
+         6Bosld+2rVN56ouGUVgCa026gXLwBJz0ol8/Nbk9bJAMAlAndxHxzgIA84a5WC5MqIw0
+         6ZbnzgjBgvt1IeMjd5G7el5yhn4MIWblGS2BTNCGEbOdyEFzfkokgssOUMlHaxpbqTMf
+         rYxB1EgwHbXXcxITjvatVcgQbyUDRlr+sX9PgJ+2HeUFVqe38vTAa3O5DzcRZBVRcvXT
+         OZ8g==
+X-Gm-Message-State: AOJu0YwYMY9IKQ1/Cc9tgKtngYy5qcV/Ag+WppLJd3+ptpCOHU+bDY0U
+	HHM5IyOm/mTtFP4Tvz9ILNip/kVG7/t4JYjqS92Vgy0B8hjMvz5hSQ2cZSAyMQYDRSz+vzDYIR7
+	S1x54jw==
+X-Google-Smtp-Source: AGHT+IHTQ735mds5A6UPXGwuemT0L85wjF7z3O8+X0LtXt8zF5FoJU5u1RXuX58jvH4ae7CmhnzSLQ==
+X-Received: by 2002:a17:906:e0cd:b0:a35:6b83:2a0a with SMTP id gl13-20020a170906e0cd00b00a356b832a0amr1791744ejb.36.1706743160268;
+        Wed, 31 Jan 2024 15:19:20 -0800 (PST)
+Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com. [209.85.208.44])
+        by smtp.gmail.com with ESMTPSA id hu19-20020a170907a09300b00a31c5caa750sm5849031ejc.177.2024.01.31.15.19.18
+        for <dm-devel@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 31 Jan 2024 15:19:18 -0800 (PST)
+Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-55f50cf2021so369794a12.1
+        for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 15:19:18 -0800 (PST)
+X-Received: by 2002:a05:6402:895:b0:55f:aa1e:2a2e with SMTP id
+ e21-20020a056402089500b0055faa1e2a2emr474082edy.8.1706743158122; Wed, 31 Jan
+ 2024 15:19:18 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20240130091300.2968534-1-tj@kernel.org> <20240130091300.2968534-9-tj@kernel.org>
+ <c2539f87-b4fe-ac7d-64d9-cbf8db929c7@redhat.com> <Zbq8cE3Y2ZL6dl8r@slm.duckdns.org>
+In-Reply-To: <Zbq8cE3Y2ZL6dl8r@slm.duckdns.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Wed, 31 Jan 2024 15:19:01 -0800
+X-Gmail-Original-Message-ID: <CAHk-=wjMz_1mb+WJsPhfp5VBNrM=o8f-x2=6UW2eK5n4DHff9g@mail.gmail.com>
+Message-ID: <CAHk-=wjMz_1mb+WJsPhfp5VBNrM=o8f-x2=6UW2eK5n4DHff9g@mail.gmail.com>
+Subject: Re: [PATCH 8/8] dm-verity: Convert from tasklet to BH workqueue
+To: Tejun Heo <tj@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, 
+	dm-devel@lists.linux.dev, msnitzer@redhat.com, ignat@cloudflare.com, 
+	damien.lemoal@wdc.com, bob.liu@oracle.com, houtao1@huawei.com, 
+	peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org, 
+	allen.lkml@gmail.com, kernel-team@meta.com, Alasdair Kergon <agk@redhat.com>, 
+	Mike Snitzer <snitzer@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 
-If 'detect_prio' is set to 'yes', the 'sysfs' prioritizer will be used
-instead of the 'alua' prioritizer. The 'sysfs' prioritizer can leave
-paths in the Active/Non-optimized ALUA state after a successful
-upgrade of a PURE FlashArray. Explicitly use the 'alua' prioritizer
-instead for PURE FlashArray rather than the default of 'detect_prio'
-which is 'yes'.
+On Wed, 31 Jan 2024 at 13:32, Tejun Heo <tj@kernel.org> wrote:
+>
+> I don't know, so just did the dumb thing. If the caller always guarantees
+> that the work items are never queued at the same time, reusing is fine.
 
-Signed-off-by: Brian Bunker <brian@purestorage.com>
----
- libmultipath/hwtable.c | 1 +
- 1 file changed, 1 insertion(+)
+So the reason I thought it would be a good cleanup to introduce that
+"atomic" workqueue thing (now "bh") was that this case literally has a
+switch between "use tasklets' or "use workqueues".
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index ae6aac79..715f0fd6 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1106,6 +1106,7 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.hwhandler     = "1 alua",
- 		.prio_name     = PRIO_ALUA,
-+		.detect_prio   = DETECT_PRIO_OFF,
- 		.fast_io_fail  = 10,
- 		.max_sectors_kb = 4096,
- 	},
--- 
-2.43.0
+So it's not even about "reusing" the workqueue, it's literally a
+matter of making it always just use workqueues, and the switch then
+becomes just *which* workqueue to use - system or bh.
 
+In fact, I suspect there is very little reason ever to *not* just use
+the bh one, and even the switch could be removed.
+
+Because I think the only reason the "workqueue of tasklet" choice
+existed in the first place was that workqueues were the "proper" data
+structure, and the tasklet case was added later as a latency hack, and
+everybody knew that tasklets were deprecated.
+
+             Linus
