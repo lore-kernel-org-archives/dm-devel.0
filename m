@@ -1,62 +1,62 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 508E23AC01
-	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 21:19:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C105539AE1
+	for <dm-devel@lists.linux.dev>; Wed, 31 Jan 2024 21:23:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706735958; cv=none; b=ayL/I0oncPKmrGNuQKog4bukE5blzuAd+aZCML3/RGwR9617tw9m8SS2sCbbfw6K4IK7pvB48iLPhROB+JCJp/Ysq95UIA7qtD996NfCY21SEHsmvJS/dWwN6fW+vFtT74Q/oK5VH2J4575q2xjuMYbh6sa6gMZl1IflbgryOn8=
+	t=1706736202; cv=none; b=M0Mr1Tos/HuHYA633/ZI5kLY2coF821uK3W7+fB30aZe+fzO6Yrs4TWpnSqFFisaAHeqpNBG/djomxsQjbFTM93ubEqbxVfq6He6qBks9fwFkldjtz+5s6GN3BjiRctWh4IwqxQC7ajW7HeLuOAZ4uIN3yML6OtnhR11Krv/vhc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706735958; c=relaxed/simple;
-	bh=SYBVg46mpR9dnqUTZa2ISnJH6f7rQy4RHOcA7fPx4io=;
+	s=arc-20240116; t=1706736202; c=relaxed/simple;
+	bh=sAhbOlDb44L9hk5QBq3xACN+xKKAzLYllfmyUp+p388=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=bMLiVa661GeZ+KyUtoOFE9hd4cEelSC+S4r0Nr0hcJzDr9imOaS0qKvZDuMGwtzYEQGnnjzwcx0e06PLpTo2mwkViA0314nwHJuR9/fmSuTg/wLJ9y/l6sl86FgvbvSCFpuXAMuTp3YuctNPyqWTvKx2U17VqTGrXIoK02+3Cq0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Zn4GEdl1; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=L8ybwqQaR6suIcPoQzk0z8LDdi147rYQokLS/xgx+qNoA7N4/QDxgvrEUyb84Wi6EPu7Ts/xiagnSpb52lNup8AM0S70uX6Cwpayh5u/cUF7VeNZ7xutYLNgvke5jNuSFpQ9g3KPg805LLeUAdBSMIVshXvPxRJItawI1CqgPDk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FCp9fJEk; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Zn4GEdl1"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FCp9fJEk"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1706735954;
+	s=mimecast20190719; t=1706736198;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=O3yB2kiqifBKKvpAzdxq2rUj6YaIk0/NcCYZRh82k7I=;
-	b=Zn4GEdl1CdmBVs2ZilJqFkYp3dAHivAuQrdZ6/dyvjvOMVlxiFQfvA4r97bs5owmGptL+X
-	+hxYbxRiXhZRLfzJzFErOl+LrmiSDpH0St73cxBPWnFdxPKpJm9kpp77gjJysWAaouVRwL
-	6m30h2TL9hHuHaOhXgBp1hhsKprAXCY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-488-7dlXrQnzMXqKhRHckdmUCA-1; Wed, 31 Jan 2024 16:19:08 -0500
-X-MC-Unique: 7dlXrQnzMXqKhRHckdmUCA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+	bh=p1ekHVDWh5pLVrV01J8vyQc6iY2OOdwz+cigb0lu9YY=;
+	b=FCp9fJEkVPWnzIbeTtkUXXCx08L/oZowTJgzBRaXQ/PInGk2TPw2Bubg/aiLZP1j0D8f1S
+	B5sqxQMbBbipRXa/6KxGVQgAsgDcNw9WUXDLn9Eu1iCYQVYMsuwqRUaqx/tQpftrCWz2yu
+	YaKzxqS5cyG1IFOBGC21OB2ZBCmul+8=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-192-KRYTsgRtPTSdorN9K2R9-A-1; Wed,
+ 31 Jan 2024 16:23:15 -0500
+X-MC-Unique: KRYTsgRtPTSdorN9K2R9-A-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8CF6C85A588;
-	Wed, 31 Jan 2024 21:19:07 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6D5E61C04346;
+	Wed, 31 Jan 2024 21:23:14 +0000 (UTC)
 Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 598E81BDB1;
-	Wed, 31 Jan 2024 21:19:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5F1BD2026D66;
+	Wed, 31 Jan 2024 21:23:14 +0000 (UTC)
 Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 45C2230C14EB; Wed, 31 Jan 2024 21:19:07 +0000 (UTC)
+	id 4A64C30C14EB; Wed, 31 Jan 2024 21:23:14 +0000 (UTC)
 Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 41C463F7DC;
-	Wed, 31 Jan 2024 22:19:07 +0100 (CET)
-Date: Wed, 31 Jan 2024 22:19:07 +0100 (CET)
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 466B93F7DC;
+	Wed, 31 Jan 2024 22:23:14 +0100 (CET)
+Date: Wed, 31 Jan 2024 22:23:14 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Tejun Heo <tj@kernel.org>
 cc: torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, 
     dm-devel@lists.linux.dev, msnitzer@redhat.com, ignat@cloudflare.com, 
-    damien.lemoal@wdc.com, bob.liu@oracle.com, houtao1@huawei.com, 
-    peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org, 
-    allen.lkml@gmail.com, kernel-team@meta.com, 
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>
-Subject: Re: [PATCH 8/8] dm-verity: Convert from tasklet to BH workqueue
-In-Reply-To: <20240130091300.2968534-9-tj@kernel.org>
-Message-ID: <c2539f87-b4fe-ac7d-64d9-cbf8db929c7@redhat.com>
-References: <20240130091300.2968534-1-tj@kernel.org> <20240130091300.2968534-9-tj@kernel.org>
+    damien.lemoal@wdc.com, houtao1@huawei.com, peterz@infradead.org, 
+    mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com, 
+    kernel-team@meta.com, Alasdair Kergon <agk@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>
+Subject: Re: [PATCH 7/8] dm-crypt: Convert from tasklet to BH workqueue
+In-Reply-To: <20240130091300.2968534-8-tj@kernel.org>
+Message-ID: <ddf2e764-a6e5-1024-4ae9-ef42f7a86cbe@redhat.com>
+References: <20240130091300.2968534-1-tj@kernel.org> <20240130091300.2968534-8-tj@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -64,7 +64,11 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+
+This seems OK.
+
+Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
 
 
 
@@ -76,73 +80,112 @@ On Mon, 29 Jan 2024, Tejun Heo wrote:
 > behaves similarly to regular workqueues except that the queued work items
 > are executed in the BH context.
 > 
-> This patch converts dm-verity from tasklet to BH workqueue.
+> This patch converts dm-crypt from tasklet to BH workqueue.
 > 
-> This is a minimal conversion which doesn't rename the related names
-> including the "try_verify_in_tasklet" option. If this patch is applied, a
-> follow-up patch would be necessary. I couldn't decide whether the option
-> name would need to be updated too.
+> Like a regular workqueue, a BH workqueue allows freeing the currently
+> executing work item. Converting from tasklet to BH workqueue removes the
+> need for deferring bio_endio() again to a work item, which was buggy anyway.
 > 
-> Only compile tested. I don't know how to verity.
-
-Download the cryptsetup package with "git clone 
-https://gitlab.com/cryptsetup/cryptsetup" and run the testsuite: 
-./autogen.sh && ./configure && make && make check
-
+> I tested this lightly with "--perf-no_read_workqueue
+> --perf-no_write_workqueue" + some code modifications, but would really
+> -appreciate if someone who knows the code base better could take a look.
+> 
 > Signed-off-by: Tejun Heo <tj@kernel.org>
+> Link: http://lkml.kernel.org/r/82b964f0-c2c8-a2c6-5b1f-f3145dc2c8e5@redhat.com
+> Cc: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: Linus Torvalds <torvalds@linux-foundation.org>
 > Cc: Alasdair Kergon <agk@redhat.com>
 > Cc: Mike Snitzer <snitzer@kernel.org>
-> Cc: Mikulas Patocka <mpatocka@redhat.com>
 > Cc: dm-devel@lists.linux.dev
 > ---
->  drivers/md/dm-verity-target.c | 8 ++++----
->  drivers/md/dm-verity.h        | 2 +-
->  2 files changed, 5 insertions(+), 5 deletions(-)
+>  drivers/md/dm-crypt.c | 36 ++----------------------------------
+>  1 file changed, 2 insertions(+), 34 deletions(-)
 > 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index 14e58ae70521..911261de2d08 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -645,9 +645,9 @@ static void verity_work(struct work_struct *w)
->  	verity_finish_io(io, errno_to_blk_status(verity_verify_io(io)));
->  }
->  
-> -static void verity_tasklet(unsigned long data)
-> +static void verity_bh_work(struct work_struct *w)
->  {
-> -	struct dm_verity_io *io = (struct dm_verity_io *)data;
-> +	struct dm_verity_io *io = container_of(w, struct dm_verity_io, bh_work);
->  	int err;
->  
->  	io->in_tasklet = true;
-> @@ -675,8 +675,8 @@ static void verity_end_io(struct bio *bio)
->  	}
->  
->  	if (static_branch_unlikely(&use_tasklet_enabled) && io->v->use_tasklet) {
-> -		tasklet_init(&io->tasklet, verity_tasklet, (unsigned long)io);
-> -		tasklet_schedule(&io->tasklet);
-> +		INIT_WORK(&io->bh_work, verity_bh_work);
-> +		queue_work(system_bh_wq, &io->bh_work);
->  	} else {
->  		INIT_WORK(&io->work, verity_work);
->  		queue_work(io->v->verify_wq, &io->work);
-> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-> index f9d522c870e6..7c16f834f31a 100644
-> --- a/drivers/md/dm-verity.h
-> +++ b/drivers/md/dm-verity.h
-> @@ -83,7 +83,7 @@ struct dm_verity_io {
->  	struct bvec_iter iter;
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 855b482cbff1..619c762d4072 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -73,11 +73,8 @@ struct dm_crypt_io {
+>  	struct bio *base_bio;
+>  	u8 *integrity_metadata;
+>  	bool integrity_metadata_from_pool:1;
+> -	bool in_tasklet:1;
 >  
 >  	struct work_struct work;
 > -	struct tasklet_struct tasklet;
-> +	struct work_struct bh_work;
+> -
+>  	struct convert_context ctx;
 >  
->  	/*
->  	 * Three variably-size fields follow this struct:
-
-Do we really need two separate work_structs here? They are never submitted 
-concurrently, so I think that one would be enough. Or, am I missing 
-something?
-
-Mikulas
+>  	atomic_t io_pending;
+> @@ -1762,7 +1759,6 @@ static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
+>  	io->ctx.r.req = NULL;
+>  	io->integrity_metadata = NULL;
+>  	io->integrity_metadata_from_pool = false;
+> -	io->in_tasklet = false;
+>  	atomic_set(&io->io_pending, 0);
+>  }
+>  
+> @@ -1771,13 +1767,6 @@ static void crypt_inc_pending(struct dm_crypt_io *io)
+>  	atomic_inc(&io->io_pending);
+>  }
+>  
+> -static void kcryptd_io_bio_endio(struct work_struct *work)
+> -{
+> -	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
+> -
+> -	bio_endio(io->base_bio);
+> -}
+> -
+>  /*
+>   * One of the bios was finished. Check for completion of
+>   * the whole request and correctly clean up the buffer.
+> @@ -1800,21 +1789,6 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+>  		kfree(io->integrity_metadata);
+>  
+>  	base_bio->bi_status = error;
+> -
+> -	/*
+> -	 * If we are running this function from our tasklet,
+> -	 * we can't call bio_endio() here, because it will call
+> -	 * clone_endio() from dm.c, which in turn will
+> -	 * free the current struct dm_crypt_io structure with
+> -	 * our tasklet. In this case we need to delay bio_endio()
+> -	 * execution to after the tasklet is done and dequeued.
+> -	 */
+> -	if (io->in_tasklet) {
+> -		INIT_WORK(&io->work, kcryptd_io_bio_endio);
+> -		queue_work(cc->io_queue, &io->work);
+> -		return;
+> -	}
+> -
+>  	bio_endio(base_bio);
+>  }
+>  
+> @@ -2246,11 +2220,6 @@ static void kcryptd_crypt(struct work_struct *work)
+>  		kcryptd_crypt_write_convert(io);
+>  }
+>  
+> -static void kcryptd_crypt_tasklet(unsigned long work)
+> -{
+> -	kcryptd_crypt((struct work_struct *)work);
+> -}
+> -
+>  static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+>  {
+>  	struct crypt_config *cc = io->cc;
+> @@ -2263,9 +2232,8 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+>  		 * it is being executed with irqs disabled.
+>  		 */
+>  		if (in_hardirq() || irqs_disabled()) {
+> -			io->in_tasklet = true;
+> -			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
+> -			tasklet_schedule(&io->tasklet);
+> +			INIT_WORK(&io->work, kcryptd_crypt);
+> +			queue_work(system_bh_wq, &io->work);
+>  			return;
+>  		}
+>  
+> -- 
+> 2.43.0
+> 
 
