@@ -1,136 +1,258 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E21EA1586EF
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 07:47:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C35915B0F5
+	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 09:30:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706773679; cv=none; b=DBh7TwA9+DsIrjX5MJuhVqbeijYB7fy3z0tajSWLB2S8ojZwYdvvF4tw0IOMEac3sTl4F9eXxm2MZk/hQv9qUw3eSL9GMrk9ySyOEgg8ygg0Bqc47XTlVgpycjl9PlUuU11ZaK3YF7nXspXF7GkPb/nF+rtzKb5yUzyDFzoidEk=
+	t=1706779830; cv=none; b=ABfpHjwXKL2v0/gd0eUYco5qsnz4FnSeHTZ6TL6vW7ODpJW4IwbT0E3cGMfFM7UAabc2pGIs2paT4D/ID+utSESWqHsRheyC/YjgcXYHyP9YCb6krV8WsgXioKzwi0tlUMt/7ydtxQary5N3tzlk8QS6y3ysZjVh9uiXz0BIWtM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706773679; c=relaxed/simple;
-	bh=M7TtCOtsIcvj7Zmmb790uYom1xQOEi6vRRTugvchqzM=;
-	h=Message-ID:Subject:From:To:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=sTSMIy21MjQ44uYRC0YYEyiSJQlnHhoEIEQrzeV+lurkCVD4rCd6cN35yY7q5Y4MdkJwZWk+BnqXQk46tgwt0DniJ4KWn3/aDzs8CFln96cuI4a2jV37dX0c/9uKyMT/dkZvCdbJjfL5DsifUplPWfXBvHJ4LDuKLUWG7v0KN18=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=VKNtyGv8; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=VKNtyGv8; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="VKNtyGv8";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="VKNtyGv8"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 5D5F822166;
-	Thu,  1 Feb 2024 07:47:49 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1706773669; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=QA2Sjc22o9RGYPqu/ogu2gJKNbF48+lmr9wCsmbH5lI=;
-	b=VKNtyGv8pQjpnbYa+zSKl9Q7GyPvbpbRxWyxRb9Muzairz+TrLLLIuszjqpI0JC5l25NZd
-	AukWVZ5+XD9kEFuClKAlhd7eyavLvj4wBMWH36eGqLThWXjF7bTiM/n+Ae85nO4dKw/acJ
-	CDgpcpJcx9oGEyoF2Qf+SW2MQHTf88c=
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1706773669; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=QA2Sjc22o9RGYPqu/ogu2gJKNbF48+lmr9wCsmbH5lI=;
-	b=VKNtyGv8pQjpnbYa+zSKl9Q7GyPvbpbRxWyxRb9Muzairz+TrLLLIuszjqpI0JC5l25NZd
-	AukWVZ5+XD9kEFuClKAlhd7eyavLvj4wBMWH36eGqLThWXjF7bTiM/n+Ae85nO4dKw/acJ
-	CDgpcpJcx9oGEyoF2Qf+SW2MQHTf88c=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 3867313672;
-	Thu,  1 Feb 2024 07:47:49 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([10.150.64.162])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id z8SqC6VMu2XmYwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Thu, 01 Feb 2024 07:47:49 +0000
-Message-ID: <dd17d4598a6618276ff13b796be01e21155c8a05.camel@suse.com>
-Subject: Re: [PATCH] libmultipath: stop PURE FlashArray from detecting
- priority
-From: Martin Wilck <mwilck@suse.com>
-To: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
-Date: Thu, 01 Feb 2024 08:47:48 +0100
-In-Reply-To: <20240131224556.84931-1-brian@purestorage.com>
-References: <20240131224556.84931-1-brian@purestorage.com>
-Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
- keydata=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
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.50.3 
+	s=arc-20240116; t=1706779830; c=relaxed/simple;
+	bh=3M4jn+ZjDFHK3gQZdTFsiMbMkBoqW8n/JywSDAejL4U=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=c7t3oiE4YYtTp3SGEmQ8BbW3EI6+AGDK8d8ed7LZ05c6PYivHwc8jEQ71j9ZGI0wvD0gs/B04/UYz7kdA9JeskOb0LPTITO79mAqLRBqfScx2PrUcY12kg0ng6HNBoFDn94zRSt7No8FuC9tOdeHZkoTLy8Uf62H1zJSc721Ue8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TQYXr3vw8z4f3l2W
+	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:20 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id BD5841A016E
+	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:24 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP1 (Coremail) with SMTP id cCh0CgCXaBGtZLtl8V6KCg--.33515S4;
+	Thu, 01 Feb 2024 17:30:23 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: mpatocka@redhat.com,
+	heinzm@redhat.com,
+	xni@redhat.com,
+	blazej.kucman@linux.intel.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	dm-devel@lists.linux.dev,
+	song@kernel.org,
+	yukuai3@huawei.com,
+	jbrassow@f14.redhat.com,
+	neilb@suse.de,
+	shli@fb.com,
+	akpm@osdl.org
+Cc: linux-kernel@vger.kernel.org,
+	linux-raid@vger.kernel.org,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
+Date: Thu,  1 Feb 2024 17:25:45 +0800
+Message-Id: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=VKNtyGv8
-X-Spamd-Result: default: False [-0.31 / 50.00];
-	 RCVD_VIA_SMTP_AUTH(0.00)[];
-	 TO_DN_SOME(0.00)[];
-	 RCVD_COUNT_THREE(0.00)[3];
-	 DKIM_TRACE(0.00)[suse.com:+];
-	 RCPT_COUNT_TWO(0.00)[2];
-	 MX_GOOD(-0.01)[];
-	 FROM_EQ_ENVFROM(0.00)[];
-	 MIME_TRACE(0.00)[0:+];
-	 MID_RHS_MATCH_FROM(0.00)[];
-	 ARC_NA(0.00)[];
-	 R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	 FROM_HAS_DN(0.00)[];
-	 TO_MATCH_ENVRCPT_ALL(0.00)[];
-	 MIME_GOOD(-0.10)[text/plain];
-	 DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	 FUZZY_BLOCKED(0.00)[rspamd.com];
-	 RCVD_TLS_ALL(0.00)[]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spam-Score: -0.31
-X-Rspamd-Queue-Id: 5D5F822166
-X-Spam-Level: 
-X-Spam-Flag: NO
-X-Spamd-Bar: /
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgCXaBGtZLtl8V6KCg--.33515S4
+X-Coremail-Antispam: 1UD129KBjvJXoW3WF4UAF1xZw47Xw17Aw1UJrb_yoW3Gr47pa
+	y3G3WSqrW8CFn2grZxJ3W8XFyYkFyfJa98Ca4fK3yUA345ta4Iyrs3Kay5Wa90kr1akw4U
+	ZrWUta4ruF1jyFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvY14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4
+	xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r4a6rW5
+	MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I
+	0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v2
+	6r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0J
+	UQvtAUUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Wed, 2024-01-31 at 14:45 -0800, Brian Bunker wrote:
-> If 'detect_prio' is set to 'yes', the 'sysfs' prioritizer will be
-> used
-> instead of the 'alua' prioritizer. The 'sysfs' prioritizer can leave
-> paths in the Active/Non-optimized ALUA state after a successful
-> upgrade of a PURE FlashArray. Explicitly use the 'alua' prioritizer
-> instead for PURE FlashArray rather than the default of 'detect_prio'
-> which is 'yes'.
->=20
-> Signed-off-by: Brian Bunker <brian@purestorage.com>
+From: Yu Kuai <yukuai3@huawei.com>
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Changes in v5:
+ - remove the patch to wait for bio completion while removing dm disk;
+ - add patch 6;
+ - reorder the patches, patch 1-8 is for md/raid, and patch 9-14 is
+ related to dm-raid;
 
-> ---
-> =C2=A0libmultipath/hwtable.c | 1 +
-> =C2=A01 file changed, 1 insertion(+)
->=20
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index ae6aac79..715f0fd6 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -1106,6 +1106,7 @@ static struct hwentry default_hw[] =3D {
-> =C2=A0		.pgfailback=C2=A0=C2=A0=C2=A0 =3D -FAILBACK_IMMEDIATE,
-> =C2=A0		.hwhandler=C2=A0=C2=A0=C2=A0=C2=A0 =3D "1 alua",
-> =C2=A0		.prio_name=C2=A0=C2=A0=C2=A0=C2=A0 =3D PRIO_ALUA,
-> +		.detect_prio=C2=A0=C2=A0 =3D DETECT_PRIO_OFF,
-> =C2=A0		.fast_io_fail=C2=A0 =3D 10,
-> =C2=A0		.max_sectors_kb =3D 4096,
-> =C2=A0	},
+Changes in v4:
+ - add patch 10 to fix a raid456 deadlock(for both md/raid and dm-raid);
+ - add patch 13 to wait for inflight IO completion while removing dm
+ device;
+
+Changes in v3:
+ - fix a problem in patch 5;
+ - add patch 12;
+
+Changes in v2:
+ - replace revert changes for dm-raid with real fixes;
+ - fix dm-raid5 deadlock that exist for a long time, this deadlock is
+ triggered because another problem is fixed in raid5, and instead of
+ deadlock, user will read wrong data before v6.7, patch 9-11;
+
+First regression related to stop sync thread:
+
+The lifetime of sync_thread is designed as following:
+
+1) Decide want to start sync_thread, set MD_RECOVERY_NEEDED, and wake up
+daemon thread;
+2) Daemon thread detect that MD_RECOVERY_NEEDED is set, then set
+MD_RECOVERY_RUNNING and register sync_thread;
+3) Execute md_do_sync() for the actual work, if it's done or
+interrupted, it will set MD_RECOVERY_DONE and wake up daemone thread;
+4) Daemon thread detect that MD_RECOVERY_DONE is set, then clear
+MD_RECOVERY_RUNNING and unregister sync_thread;
+
+In v6.7, we fix md/raid to follow this design by commit f52f5c71f3d4
+("md: fix stopping sync thread"), however, dm-raid is not considered at
+that time, and following test will hang:
+
+shell/integrity-caching.sh
+shell/lvconvert-raid-reshape.sh
+
+This patch set fix the broken test by patch 1-4;
+ - patch 1 fix that step 4) is broken by suspended array;
+ - patch 2 fix that step 4) is broken by read-only array;
+ - patch 3 fix that step 3) is broken that md_do_sync() doesn't set
+ MD_RECOVERY_DONE; Noted that this patch will introdece new problem that
+ data will be corrupted, which will be fixed in later patches.
+ - patch 4 fix that setp 1) is broken that sync_thread is register and
+ MD_RECOVERY_RUNNING is set directly, md/raid behaviour, not related to
+ dm-raid;
+
+With patch 1-4, the above test won't hang anymore, however, the test
+will still fail and complain that ext4 is corrupted;
+
+
+Second regression is found by code review, interrupted reshape
+concurrent with IO can deadlock, patch 5;
+
+
+Third regression fix 'active_io' leakage, patch 6;
+
+
+The fifth regression related to frozen sync thread:
+
+Noted that for raid456, if reshape is interrupted, then call
+"pers->start_reshape" will corrupt data. And dm-raid rely on md_do_sync()
+doesn't set MD_RECOVERY_DONE so that new sync_thread won't be registered,
+and patch 3 just break this.
+
+ - Patch 9 fix this problem by interrupting reshape and frozen
+ sync_thread in dm_suspend(), then unfrozen and continue reshape in
+dm_resume(). It's verified that dm-raid tests won't complain that
+ext4 is corrupted anymore.
+ - Patch 10 fix the problem that raid_message() call
+ md_reap_sync_thread() directly, without holding 'reconfig_mutex'.
+
+
+Last regression related to dm-raid456 IO concurrent with reshape:
+
+For raid456, if reshape is still in progress, then IO across reshape
+position will wait for reshape to make progress. However, for dm-raid,
+in following cases reshape will never make progress hence IO will hang:
+
+1) the array is read-only;
+2) MD_RECOVERY_WAIT is set;
+3) MD_RECOVERY_FROZEN is set;
+
+After commit c467e97f079f ("md/raid6: use valid sector values to determine
+if an I/O should wait on the reshape") fix the problem that IO across
+reshape position doesn't wait for reshape, the dm-raid test
+shell/lvconvert-raid-reshape.sh start to hang at raid5_make_request().
+
+For md/raid, the problem doesn't exist because:
+
+1) If array is read-only, it can switch to read-write by ioctl/sysfs;
+2) md/raid never set MD_RECOVERY_WAIT;
+3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
+   'reconfig_mutex' anymore, it can be cleared and reshape can continue by
+   sysfs api 'sync_action'.
+
+However, I'm not sure yet how to avoid the problem in dm-raid yet.
+
+ - patch 11,12 fix this problem by detecting the above 3 cases in
+ dm_suspend(), and fail those IO directly.
+
+If user really meet the IO error, then it means they're reading the wrong
+data before c467e97f079f. And it's safe to read/write the array after
+reshape make progress successfully.
+
+There are also some other minor changes: patch 8 and patch 12;
+
+
+Test result (for v4, I don't think it's necessary to test this patchset
+again for v5, except for a new fix, patch 6, which is tested separately,
+there are no other functional changes):
+
+I apply this patchset on top of v6.8-rc1, and run lvm2 tests suite with
+folling cmd for 24 round(for about 2 days):
+
+for t in `ls test/shell`; do
+        if cat test/shell/$t | grep raid &> /dev/null; then
+                make check T=shell/$t
+        fi
+done
+
+failed count                             failed test
+      1 ###       failed: [ndev-vanilla] shell/dmsecuretest.sh
+      1 ###       failed: [ndev-vanilla] shell/dmsetup-integrity-keys.sh
+      1 ###       failed: [ndev-vanilla] shell/dmsetup-keyring.sh
+      5 ###       failed: [ndev-vanilla] shell/duplicate-pvs-md0.sh
+      1 ###       failed: [ndev-vanilla] shell/duplicate-vgid.sh
+      2 ###       failed: [ndev-vanilla] shell/duplicate-vgnames.sh
+      1 ###       failed: [ndev-vanilla] shell/fsadm-crypt.sh
+      1 ###       failed: [ndev-vanilla] shell/integrity.sh
+      6 ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+      2 ###       failed: [ndev-vanilla] shell/lvchange-rebuild-raid.sh
+      5 ###       failed: [ndev-vanilla] shell/lvconvert-raid-reshape-stripes-load-reload.sh
+      4 ###       failed: [ndev-vanilla] shell/lvconvert-raid-restripe-linear.sh
+      1 ###       failed: [ndev-vanilla] shell/lvconvert-raid1-split-trackchanges.sh
+     20 ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+     20 ###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
+     24 ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+
+And I ramdomly pick some tests verified by hand that these test will
+fail in v6.6 as well(not all tests):
+
+shell/lvextend-raid.sh
+shell/lvcreate-large-raid.sh
+shell/lvconvert-repair-raid.sh
+shell/lvchange-rebuild-raid.sh
+shell/lvchange-raid1-writemostly.sh
+
+Xiao Ni also test the last version on a real machine, see [1].
+
+[1] https://lore.kernel.org/all/CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com/
+
+Yu Kuai (14):
+  md: don't ignore suspended array in md_check_recovery()
+  md: don't ignore read-only array in md_check_recovery()
+  md: make sure md_do_sync() will set MD_RECOVERY_DONE
+  md: don't register sync_thread for reshape directly
+  md: don't suspend the array for interrupted reshape
+  md: fix missing release of 'active_io' for flush
+  md: export helpers to stop sync_thread
+  md: export helper md_is_rdwr()
+  dm-raid: really frozen sync_thread during suspend
+  md/dm-raid: don't call md_reap_sync_thread() directly
+  dm-raid: add a new helper prepare_suspend() in md_personality
+  md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+    reshape
+  dm-raid: fix lockdep waring in "pers->hot_add_disk"
+  dm-raid: remove mddev_suspend/resume()
+
+ drivers/md/dm-raid.c |  78 +++++++++++++++++++--------
+ drivers/md/md.c      | 126 +++++++++++++++++++++++++++++--------------
+ drivers/md/md.h      |  16 ++++++
+ drivers/md/raid10.c  |  16 +-----
+ drivers/md/raid5.c   |  61 +++++++++++----------
+ 5 files changed, 192 insertions(+), 105 deletions(-)
+
+-- 
+2.39.2
 
