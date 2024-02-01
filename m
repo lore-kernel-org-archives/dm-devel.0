@@ -1,225 +1,461 @@
-Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com [209.85.216.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 989791586E0
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 11:02:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A305A626CC;
+	Thu,  1 Feb 2024 15:44:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706785361; cv=none; b=SYwVQHmXYFPPmTIj3eryxyA64twIB66Jz8KV+Hijtk3ZjySOVAYTTDRS223QuSx7vsDy54MkeQmMSzcKze7JaZiLbu013yx4sih8W+YqL2PpPj/BXtWQzXFp9YWm3Mp6+/a7GWJ+BdYhge2aP+JjDWja0DzAQYKkR5NJw/eWr6g=
+	t=1706802284; cv=none; b=LsyJz0MhAlOxDzJ7AynG8DTrwFCg9PGTMDC1qT+QewcPv5iaocrVGg2YaP7BH/rmiAc6Hf+oXpKF5tJBaG87VhOQXwDPV5lLAyfMstRlcfbCWBPk/YGdrp2uw4jACIsLYlceDea3COaQ9q61D6vuxdmWzv4mbBgvYqM6AKQhVIE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706785361; c=relaxed/simple;
-	bh=2dmWPDQ5R9c2LqdULlWOzHh+4gSCveh9QCyYtMdRJ/g=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=jYPLpqXTYuCEUZSqH5ihe29AHwFHiWvtP739asksJmH9tu+8hewJzU+PS1uT8SqBR52u+3J4//sgyIhZHhVdxsA3BcdhVLPssV9Rjm34hgyPuytSeF9ozskCzxFSH1QMj1+SRXgxwbVIHWFg1U5Q/biLl5hMFqTID7P8PySP0KE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ec2mJMha; arc=none smtp.client-ip=209.85.216.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1706802284; c=relaxed/simple;
+	bh=EljNSqSB9iVaTjOX0NliJSa73mINvXkzk5RZOGwGe/o=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=B3rUOrXcN2qWBZ5LaK3ZlJ695NUe+C/5+nbdVLuCwTr59koRnKLX2Ibn2sfK9cPfRsBxzN7APO3PD0yCrAXwUmE+b4sSJITZw4x8f6V7anHdGBTKoCYJJCb99DG6pM/xRs5nJshekiXRO+ekxzgc8MxEIjwYHBh04y9au8Zsmck=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=jQAlq7p5; arc=none smtp.client-ip=167.114.26.122
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ec2mJMha"
-Received: by mail-pj1-f41.google.com with SMTP id 98e67ed59e1d1-290da27f597so525898a91.2
-        for <dm-devel@lists.linux.dev>; Thu, 01 Feb 2024 03:02:39 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1706785359; x=1707390159; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=pusx3ThehDtkCFeS2uzDn/v0Hqy5t7nRhzEa+erThAA=;
-        b=ec2mJMhaIJBaSQt0Ct1ZTKVJfT1QRgJB9MzKGToe17kT4EJ6+pxRwHE2gYN9ni9gjJ
-         N+fQ953WPyOLpr3YGfzg8M5wixfdIK2knQ3fdcy5oC6YS23O02LWbYwgF92qCG1QfE3H
-         27FVtVqSJ0WsKcvuSwi9ddtUuvRZlb1Kq3CyLUPpc8vzVKEX4ipO77gVxt0cTi8zsSfy
-         BC2JKmm7TiHrmgYbRm7smg2hzVZQUgm+Y1qSfN/ObvjXHYUKWZFgXJI04v9AjWRegfKK
-         jaYNIGOSFlERmFvrx6f2k8YcFQVwYCvmrA0t5s5DUspjrOxCxniNnhXGspmMZ9lQmYIM
-         +94g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706785359; x=1707390159;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=pusx3ThehDtkCFeS2uzDn/v0Hqy5t7nRhzEa+erThAA=;
-        b=cnYR33cw0ViNX5e3/4vqEQV3aeijqoqBr8OR/dtcgbgSVchoWjo0tm6gC2EWP9Eear
-         YrQTXEWh+jJxZS4oN6hhZ13xdhqfBJo0LjfoJ8gUZJ9vxYNlWEtX8WJZ52PIqoF5WEra
-         0+u1xoW0BBLeTwb71JUupt2aOK0kViuMDrfgqOxcObkVfynvPKks1qfGQ5L4I72jdrTY
-         FS5LE6IwEz6aP8msfSn2EEB3q0qUzlNV7I+78hcJXA3rr/8wOB3yb0q/wT9wwaBhg1Bw
-         P8Ehh8x1PFr/UZFwoy5ez+qogDFhF3mnrnfkYtZN38V73ZlVMokMXfbYAj3NCXhbAxwy
-         9viQ==
-X-Gm-Message-State: AOJu0Ywj06qKmdjxhYwhuDwcdYwW28CXa8DFTZ9T0HyDvOkJ0X6nzQe4
-	md93olBDLRv+4T8zDiQjB9mz/zlUUdteyodyidTECXXRXGgEWayC3mtVkyxR8ZA8cEy/NwPq0as
-	UfvTydRIXnSvErMoUUjbNEtz1aKY=
-X-Google-Smtp-Source: AGHT+IEyOBR5rhazGcXT0AFdr/77EP9PwleE87hbxB6CnvNhsXAa3JubOu6hYljwx9jkzhREXz4N6POR/eedfM/ufao=
-X-Received: by 2002:a17:90a:f0c4:b0:296:2578:a54c with SMTP id
- fa4-20020a17090af0c400b002962578a54cmr305349pjb.38.1706785358686; Thu, 01 Feb
- 2024 03:02:38 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="jQAlq7p5"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
+	s=smtpout1; t=1706802275;
+	bh=EljNSqSB9iVaTjOX0NliJSa73mINvXkzk5RZOGwGe/o=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=jQAlq7p5Aki9VtnDZh8ca4Nxw/cE0yyURJAvjdBSGJXumay1z/Hord4yXay6x3QCC
+	 k1CQbMx6g/A5i3aj4sqKkG4QuG8WMezkkoRV9N3LpLSczPSVx7ovus2tv0kgf54uEH
+	 zMl3BkCbRhUb0xmqKXX20vrvVEdX8aYvuYDi5DByWSOhjk+p4oXvB0IXlDZ3bkEA2j
+	 bemU0Z4BrTRKmwQQIEBwTd3LKgtOeRbZfMyu46OQTlF/ZhmVMR/rmGKsplTw742Uez
+	 YfXAnM3zR7TLCZBCS1x5rPGvzDCplh/Cru2fgabUQvFZfIVOsD6rEaEJp/mRAyEBpm
+	 pGdLaHNdxt7xA==
+Received: from [172.16.0.134] (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
+	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TQjrg1SwlzWlV;
+	Thu,  1 Feb 2024 10:44:35 -0500 (EST)
+Message-ID: <f1d14941-2d22-452a-99e6-42db806b6d7f@efficios.com>
+Date: Thu, 1 Feb 2024 10:44:35 -0500
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240130091300.2968534-1-tj@kernel.org> <20240130091300.2968534-4-tj@kernel.org>
-In-Reply-To: <20240130091300.2968534-4-tj@kernel.org>
-From: Lai Jiangshan <jiangshanlai@gmail.com>
-Date: Thu, 1 Feb 2024 19:02:27 +0800
-Message-ID: <CAJhGHyCk_cjD-Ex_OAd=DrBkTEe0Xvs81=On65Sp7sS8zNBfGQ@mail.gmail.com>
-Subject: Re: [PATCH 3/8] workqueue: Implement BH workqueues to eventually
- replace tasklets
-To: Tejun Heo <tj@kernel.org>
-Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
-	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
-	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, 
-	netdev@vger.kernel.org, allen.lkml@gmail.com, kernel-team@meta.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH v3 2/4] dax: Check for data cache aliasing at runtime
+Content-Language: en-US
+To: Dan Williams <dan.j.williams@intel.com>, Arnd Bergmann <arnd@arndb.de>,
+ Dave Chinner <david@fromorbit.com>
+Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>,
+ Linus Torvalds <torvalds@linux-foundation.org>, linux-mm@kvack.org,
+ linux-arch@vger.kernel.org, Vishal Verma <vishal.l.verma@intel.com>,
+ Dave Jiang <dave.jiang@intel.com>, Matthew Wilcox <willy@infradead.org>,
+ Russell King <linux@armlinux.org.uk>, nvdimm@lists.linux.dev,
+ linux-cxl@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ dm-devel@lists.linux.dev
+References: <20240131162533.247710-1-mathieu.desnoyers@efficios.com>
+ <20240131162533.247710-3-mathieu.desnoyers@efficios.com>
+ <65bab567665f3_37ad2943c@dwillia2-xfh.jf.intel.com.notmuch>
+ <0a38176b-c453-4be0-be83-f3e1bb897973@efficios.com>
+ <65bac71a9659b_37ad29428@dwillia2-xfh.jf.intel.com.notmuch>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+In-Reply-To: <65bac71a9659b_37ad29428@dwillia2-xfh.jf.intel.com.notmuch>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hello, Tejun
+On 2024-01-31 17:18, Dan Williams wrote:
+> Mathieu Desnoyers wrote:
+>> On 2024-01-31 16:02, Dan Williams wrote:
+>>> Mathieu Desnoyers wrote:
+>>>> Replace the following fs/Kconfig:FS_DAX dependency:
+>>>>
+>>>>     depends on !(ARM || MIPS || SPARC)
+>>>>
+>>>> By a runtime check within alloc_dax().
+>>>>
+>>>> This is done in preparation for its use by each filesystem supporting
+>>>> the "dax" mount option to validate whether DAX is indeed supported.
+>>>>
+>>>> This is done in preparation for using cpu_dcache_is_aliasing() in a
+>>>> following change which will properly support architectures which detect
+>>>> data cache aliasing at runtime.
+>>>>
+>>>> Fixes: d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
+>>>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+>>>> Cc: Andrew Morton <akpm@linux-foundation.org>
+>>>> Cc: Linus Torvalds <torvalds@linux-foundation.org>
+>>>> Cc: linux-mm@kvack.org
+>>>> Cc: linux-arch@vger.kernel.org
+>>>> Cc: Dan Williams <dan.j.williams@intel.com>
+>>>> Cc: Vishal Verma <vishal.l.verma@intel.com>
+>>>> Cc: Dave Jiang <dave.jiang@intel.com>
+>>>> Cc: Matthew Wilcox <willy@infradead.org>
+>>>> Cc: Arnd Bergmann <arnd@arndb.de>
+>>>> Cc: Russell King <linux@armlinux.org.uk>
+>>>> Cc: nvdimm@lists.linux.dev
+>>>> Cc: linux-cxl@vger.kernel.org
+>>>> Cc: linux-fsdevel@vger.kernel.org
+>>>> Cc: dm-devel@lists.linux.dev
+>>>> ---
+>>>>    drivers/dax/super.c | 6 ++++++
+>>>>    fs/Kconfig          | 1 -
+>>>>    2 files changed, 6 insertions(+), 1 deletion(-)
+>>>>
+>>>> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+>>>> index 0da9232ea175..e9f397b8a5a3 100644
+>>>> --- a/drivers/dax/super.c
+>>>> +++ b/drivers/dax/super.c
+>>>> @@ -445,6 +445,12 @@ struct dax_device *alloc_dax(void *private, const struct dax_operations *ops)
+>>>>    	dev_t devt;
+>>>>    	int minor;
+>>>>    
+>>>> +	/* Unavailable on architectures with virtually aliased data caches. */
+>>>> +	if (IS_ENABLED(CONFIG_ARM) ||
+>>>> +	    IS_ENABLED(CONFIG_MIPS) ||
+>>>> +	    IS_ENABLED(CONFIG_SPARC))
+>>>> +		return NULL;
+>>>
+>>> This function returns ERR_PTR(), not NULL on failure.
+>>
+>> Except that it returns NULL in the CONFIG_DAX=n case as you
+>> noticed below.
+>>
+>>>
+>>> ...and I notice this mistake is also made in include/linux/dax.h in the
+>>> CONFIG_DAX=n case. That function also mentions:
+>>>
+>>>       static inline struct dax_device *alloc_dax(void *private,
+>>>                       const struct dax_operations *ops)
+>>>       {
+>>>               /*
+>>>                * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
+>>>                * NULL is an error or expected.
+>>>                */
+>>>               return NULL;
+>>>       }
+>>>
+>>> ...and none of the callers validate the result, but now runtime
+>>> validation is necessary. I.e. it is not enough to check
+>>> IS_ENABLED(CONFIG_DAX) it also needs to check cpu_dcache_is_aliasing().
+>>
+>> If the callers select DAX in their Kconfig, then they don't have to
+>> explicitly check for IS_ENABLED(CONFIG_DAX). Things change for the
+>> introduced runtime check though.
+>>
+>>>
+>>> With that, there are a few more fixup places needed, pmem_attach_disk(),
+>>> dcssblk_add_store(), and virtio_fs_setup_dax().
+>>
+>> Which approach should we take then ? Should we:
+>>
+>> A) Keep returning NULL from alloc_dax() for both
+>>      cpu_dcache_is_aliasing() and CONFIG_DAX=n, and use IS_ERR_OR_NULL()
+>>      in the caller. If we do this, then the callers need to somehow
+>>      translate this NULL into a negative error value, or
+>>
+>> B) Replace this NULL return value in both cases by a ERR_PTR() (which
+>>      error value should we return ?).
+>>
+>> I would favor approach B) which appears more robust and introduces
+>> fewer changes. If we go for that approach do we still need to change
+>> the callers ?
+> 
+> I agree approach B is the way to go, but that still requires these
+> fixups, feel free to steal these hunks and split them into patches:
+> 
+> Co-developed-by: Dan Williams <dan.j.williams@intel.com>
+> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+> 
+> ...but note they are compile-tested only. They assume that alloc_dax()
+> returns ERR_PTR(-EOPNOTSUPP) when the arch support is missing, and I
+> wrote them quickly so I might have missed something.
 
-On Tue, Jan 30, 2024 at 5:16=E2=80=AFPM Tejun Heo <tj@kernel.org> wrote:
+The change for -EOPNOTSUPP in header and implementation would look like
+this (more questions below):
 
-> @@ -1184,6 +1211,14 @@ static bool kick_pool(struct worker_pool *pool)
->         if (!need_more_worker(pool) || !worker)
->                 return false;
->
-> +       if (pool->flags & POOL_BH) {
-> +               if (pool->attrs->nice =3D=3D HIGHPRI_NICE_LEVEL)
-> +                       tasklet_hi_schedule(&worker->bh_tasklet);
-> +               else
-> +                       tasklet_schedule(&worker->bh_tasklet);
-> +               return true;
-> +       }
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index b463502b16e1..df2d52b8a245 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -86,11 +86,7 @@ static inline void *dax_holder(struct dax_device *dax_dev)
+  static inline struct dax_device *alloc_dax(void *private,
+  		const struct dax_operations *ops)
+  {
+-	/*
+-	 * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
+-	 * NULL is an error or expected.
+-	 */
+-	return NULL;
++	return ERR_PTR(-EOPNOTSUPP);
+  }
+  static inline void put_dax(struct dax_device *dax_dev)
+  {
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index 8c3a6e8e6334..c1cf6f0bbe12 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -448,7 +448,7 @@ struct dax_device *alloc_dax(void *private, const struct dax_operations *ops)
+  
+  	/* Unavailable on architectures with virtually aliased data caches. */
+  	if (cpu_dcache_is_aliasing())
+-		return NULL;
++		return ERR_PTR(-EOPNOTSUPP);
+  
+  	if (WARN_ON_ONCE(ops && !ops->zero_page_range))
+  		return ERR_PTR(-EINVAL);
 
-I think it is more straightforward to call bh_worker_taskletfn[_hi]()
-in tasklet_action() and tasklet_hi_action() rather than add a
-worker->bh_tasklet.
+> 
+> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+> index f4b635526345..254d3b1e420e 100644
+> --- a/drivers/dax/super.c
+> +++ b/drivers/dax/super.c
+> @@ -322,7 +322,7 @@ EXPORT_SYMBOL_GPL(dax_alive);
+>    */
+>   void kill_dax(struct dax_device *dax_dev)
+>   {
+> -	if (!dax_dev)
+> +	if (IS_ERR_OR_NULL(dax_dev))
 
-raise_softirq_irqoff() can be used here (kick_pool()) instead.
+I am tempted to just leave the "if (!dax_dev)" check here, because
+many other functions of this API are only protected by a NULL
+pointer check. I would hate to forget to convert one check in this
+change, and I don't think it simplifies anything.
 
-As the changelog said, once the conversion is complete, tasklet can be
-removed and BH workqueues can directly take over the tasklet softirqs,
-in which case, then, bh_worker_taskletfn[_hi]() can directly take over
-the tasklet_action() and tasklet_hi_action().
+The alternative route I intend to take is to audit all callers
+of alloc_dax() and make sure they all save the alloc_dax() return
+value in a struct dax_device * local variable first for the sake
+of checking for IS_ERR(). This will leave the xyz->dax_dev pointer
+initialized to NULL in the error case and simplify the rest of
+error checking.
 
+
+>   		return;
+>   
+>   	if (dax_dev->holder_data != NULL)
+> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+> index 4e8fdcb3f1c8..b69c9e442cf4 100644
+> --- a/drivers/nvdimm/pmem.c
+> +++ b/drivers/nvdimm/pmem.c
+> @@ -560,17 +560,19 @@ static int pmem_attach_disk(struct device *dev,
+>   	dax_dev = alloc_dax(pmem, &pmem_dax_ops);
+>   	if (IS_ERR(dax_dev)) {
+>   		rc = PTR_ERR(dax_dev);
+> -		goto out;
+> +		if (rc != -EOPNOTSUPP)
+> +			goto out;
+
+If I compare the before / after this change, if previously
+pmem_attach_disk() was called in a configuration with FS_DAX=n, it would
+result in a NULL pointer dereference.
+
+This would be an error handling fix all by itself. Do we really want
+to return successfully if dax is unsupported, or should we return
+an error here ?
+
+
+> +	} else {
+> +		set_dax_nocache(dax_dev);
+> +		set_dax_nomc(dax_dev);
+> +		if (is_nvdimm_sync(nd_region))
+> +			set_dax_synchronous(dax_dev);
+> +		rc = dax_add_host(dax_dev, disk);
+> +		if (rc)
+> +			goto out_cleanup_dax;
+> +		dax_write_cache(dax_dev, nvdimm_has_cache(nd_region));
+> +		pmem->dax_dev = dax_dev;
+>   	}
+> -	set_dax_nocache(dax_dev);
+> -	set_dax_nomc(dax_dev);
+> -	if (is_nvdimm_sync(nd_region))
+> -		set_dax_synchronous(dax_dev);
+> -	rc = dax_add_host(dax_dev, disk);
+> -	if (rc)
+> -		goto out_cleanup_dax;
+> -	dax_write_cache(dax_dev, nvdimm_has_cache(nd_region));
+> -	pmem->dax_dev = dax_dev;
+>   
+>   	rc = device_add_disk(dev, disk, pmem_attribute_groups);
+>   	if (rc)
+> diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+> index 4b7ecd4fd431..f911e58a24dd 100644
+> --- a/drivers/s390/block/dcssblk.c
+> +++ b/drivers/s390/block/dcssblk.c
+> @@ -681,12 +681,14 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
+>   	if (IS_ERR(dev_info->dax_dev)) {
+>   		rc = PTR_ERR(dev_info->dax_dev);
+>   		dev_info->dax_dev = NULL;
+> -		goto put_dev;
+> +		if (rc != -EOPNOTSUPP)
+> +			goto put_dev;
+
+config DCSSBLK selects FS_DAX_LIMITED and DAX.
+
+I'm not sure what selecting DAX is trying to achieve here, because the
+Kconfig option is "FS_DAX".
+
+So depending on the real motivation behind this select, we may want to
+consider failure rather than success in the -EOPNOTSUPP case.
+
+> +	} else {
+> +		set_dax_synchronous(dev_info->dax_dev);
+> +		rc = dax_add_host(dev_info->dax_dev, dev_info->gd);
+> +		if (rc)
+> +			goto out_dax;
+>   	}
+> -	set_dax_synchronous(dev_info->dax_dev);
+> -	rc = dax_add_host(dev_info->dax_dev, dev_info->gd);
+> -	if (rc)
+> -		goto out_dax;
+>   
+>   	get_device(&dev_info->dev);
+>   	rc = device_add_disk(&dev_info->dev, dev_info->gd, NULL);
+
+My own changes, if we want failure on -EOPNOTSUPP:
+
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index 4b7ecd4fd431..f363c1d51d9a 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -549,6 +549,7 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
+  	int rc, i, j, num_of_segments;
+  	struct dcssblk_dev_info *dev_info;
+  	struct segment_info *seg_info, *temp;
++	struct dax_device *dax_dev;
+  	char *local_buf;
+  	unsigned long seg_byte_size;
+  
+@@ -677,13 +678,13 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
+  	if (rc)
+  		goto put_dev;
+  
+-	dev_info->dax_dev = alloc_dax(dev_info, &dcssblk_dax_ops);
+-	if (IS_ERR(dev_info->dax_dev)) {
+-		rc = PTR_ERR(dev_info->dax_dev);
+-		dev_info->dax_dev = NULL;
++	dax_dev = alloc_dax(dev_info, &dcssblk_dax_ops);
++	if (IS_ERR(dax_dev)) {
++		rc = PTR_ERR(dax_dev);
+  		goto put_dev;
+  	}
+-	set_dax_synchronous(dev_info->dax_dev);
++	set_dax_synchronous(dax_dev);
++	dev_info->dax_dev = dax_dev;
+  	rc = dax_add_host(dev_info->dax_dev, dev_info->gd);
+  	if (rc)
+  		goto out_dax;
+
+
+> diff --git a/fs/fuse/virtio_fs.c b/fs/fuse/virtio_fs.c
+> index 5f1be1da92ce..11053a70f5ab 100644
+> --- a/fs/fuse/virtio_fs.c
+> +++ b/fs/fuse/virtio_fs.c
+> @@ -16,6 +16,7 @@
+>   #include <linux/fs_context.h>
+>   #include <linux/fs_parser.h>
+>   #include <linux/highmem.h>
+> +#include <linux/cleanup.h>
+>   #include <linux/uio.h>
+>   #include "fuse_i.h"
+>   
+> @@ -795,8 +796,11 @@ static void virtio_fs_cleanup_dax(void *data)
+>   	put_dax(dax_dev);
+>   }
+>   
+> +DEFINE_FREE(cleanup_dax, struct dax_dev *, if (!IS_ERR_OR_NULL(_T)) virtio_fs_cleanup_dax(_T))
+> +
+>   static int virtio_fs_setup_dax(struct virtio_device *vdev, struct virtio_fs *fs)
+
+So either I'm completely missing how ownership works in this function, or
+we should be really concerned about the fact that it does no actual
+cleanup of anything on any error.
+
+I would be tempted to first refactor this function without using cleanup.h
+so those fixes can be easily backported to older kernels (?)
+
+Here what I'm seeing so far:
+
+- devm_release_mem_region() is never called after devm_request_mem_region(). Not
+   on error, neither on teardown,
+- pgmap is never freed on error after devm_kzalloc.
+
+>   {
+> +	struct dax_device *dax_dev __free(cleanup_dax) = NULL;
+>   	struct virtio_shm_region cache_reg;
+>   	struct dev_pagemap *pgmap;
+>   	bool have_cache;
+> @@ -804,6 +808,15 @@ static int virtio_fs_setup_dax(struct virtio_device *vdev, struct virtio_fs *fs)
+>   	if (!IS_ENABLED(CONFIG_FUSE_DAX))
+>   		return 0;
+>   
+> +	dax_dev = alloc_dax(fs, &virtio_fs_dax_ops);
+> +	if (IS_ERR(dax_dev)) {
+> +		int rc = PTR_ERR(dax_dev);
+> +
+> +		if (rc == -EOPNOTSUPP)
+> +			return 0;
+> +		return rc;
+> +	}
+
+What is gained by moving this allocation here ?
 
 > +
->         p =3D worker->task;
->
->  #ifdef CONFIG_SMP
-> @@ -1663,8 +1698,16 @@ static bool pwq_tryinc_nr_active(struct pool_workq=
-ueue *pwq, bool fill)
->         lockdep_assert_held(&pool->lock);
->
->         if (!nna) {
-> -               /* per-cpu workqueue, pwq->nr_active is sufficient */
-> -               obtained =3D pwq->nr_active < READ_ONCE(wq->max_active);
-> +               /*
-> +                * BH workqueues always share a single execution context =
-per CPU
-> +                * and don't impose any max_active limit, so tryinc alway=
-s
-> +                * succeeds. For a per-cpu workqueue, checking pwq->nr_ac=
-tive is
-> +                * sufficient.
-> +                */
-> +               if (wq->flags & WQ_BH)
-> +                       obtained =3D true;
-> +               else
-> +                       obtained =3D pwq->nr_active < READ_ONCE(wq->max_a=
-ctive);
-
-I think wq->max_active can be forced to be UINT_MAX or ULONG_MAX
-in the max_active management code to avoid a branch here.
-
->                 goto out;
->         }
->
-> @@ -2599,27 +2642,31 @@ static struct worker *create_worker(struct worker=
-_pool *pool)
->
->         worker->id =3D id;
->
-> -       if (pool->cpu >=3D 0)
-> -               snprintf(id_buf, sizeof(id_buf), "%d:%d%s", pool->cpu, id=
-,
-> -                        pool->attrs->nice < 0  ? "H" : "");
-> -       else
-> -               snprintf(id_buf, sizeof(id_buf), "u%d:%d", pool->id, id);
+>   	/* Get cache region */
+>   	have_cache = virtio_get_shm_region(vdev, &cache_reg,
+>   					   (u8)VIRTIO_FS_SHMCAP_ID_CACHE);
+> @@ -849,10 +862,7 @@ static int virtio_fs_setup_dax(struct virtio_device *vdev, struct virtio_fs *fs)
+>   	dev_dbg(&vdev->dev, "%s: window kaddr 0x%px phys_addr 0x%llx len 0x%llx\n",
+>   		__func__, fs->window_kaddr, cache_reg.addr, cache_reg.len);
+>   
+> -	fs->dax_dev = alloc_dax(fs, &virtio_fs_dax_ops);
+> -	if (IS_ERR(fs->dax_dev))
+> -		return PTR_ERR(fs->dax_dev);
 > -
-> -       worker->task =3D kthread_create_on_node(worker_thread, worker, po=
-ol->node,
-> -                                             "kworker/%s", id_buf);
-> -       if (IS_ERR(worker->task)) {
-> -               if (PTR_ERR(worker->task) =3D=3D -EINTR) {
-> -                       pr_err("workqueue: Interrupted when creating a wo=
-rker thread \"kworker/%s\"\n",
-> -                              id_buf);
-> -               } else {
-> -                       pr_err_once("workqueue: Failed to create a worker=
- thread: %pe",
-> -                                   worker->task);
-> +       if (pool->flags & POOL_BH) {
-> +               tasklet_setup(&worker->bh_tasklet, bh_worker_taskletfn);
-> +       } else {
-> +               if (pool->cpu >=3D 0)
-> +                       snprintf(id_buf, sizeof(id_buf), "%d:%d%s", pool-=
->cpu, id,
-> +                                pool->attrs->nice < 0  ? "H" : "");
-> +               else
-> +                       snprintf(id_buf, sizeof(id_buf), "u%d:%d", pool->=
-id, id);
-> +
-> +               worker->task =3D kthread_create_on_node(worker_thread, wo=
-rker,
-> +                                       pool->node, "kworker/%s", id_buf)=
-;
-> +               if (IS_ERR(worker->task)) {
-> +                       if (PTR_ERR(worker->task) =3D=3D -EINTR) {
-> +                               pr_err("workqueue: Interrupted when creat=
-ing a worker thread \"kworker/%s\"\n",
-> +                                      id_buf);
-> +                       } else {
-> +                               pr_err_once("workqueue: Failed to create =
-a worker thread: %pe",
-> +                                           worker->task);
-> +                       }
-> +                       goto fail;
->                 }
-> -               goto fail;
-> -       }
->
-> -       set_user_nice(worker->task, pool->attrs->nice);
-> -       kthread_bind_mask(worker->task, pool_allowed_cpus(pool));
-> +               set_user_nice(worker->task, pool->attrs->nice);
-> +               kthread_bind_mask(worker->task, pool_allowed_cpus(pool));
-> +       }
->
->         /* successful, attach the worker to the pool */
->         worker_attach_to_pool(worker, pool);
+> +	fs->dax_dev = no_free_ptr(dax_dev);
+>   	return devm_add_action_or_reset(&vdev->dev, virtio_fs_cleanup_dax,
+>   					fs->dax_dev);
+>   }
 
-worker_attach_to_pool() and worker_detach_from_pool also access to
-worker->task with kthread_set_per_cpu() and luckily to_kthread()
-checks the NULL pointer for it.
+In addition I have:
 
-IMO, it is better to avoid calling kthread_set_per_cpu() for bh workers.
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index f90743a94da9..86de91b35f4d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2054,6 +2054,7 @@ static void cleanup_mapped_device(struct mapped_device *md)
+  static struct mapped_device *alloc_dev(int minor)
+  {
+  	int r, numa_node_id = dm_get_numa_node();
++	struct dax_device *dax_dev;
+  	struct mapped_device *md;
+  	void *old_md;
+  
+@@ -2122,16 +2123,13 @@ static struct mapped_device *alloc_dev(int minor)
+  	md->disk->private_data = md;
+  	sprintf(md->disk->disk_name, "dm-%d", minor);
+  
+-	if (IS_ENABLED(CONFIG_FS_DAX)) {
+-		md->dax_dev = alloc_dax(md, &dm_dax_ops);
+-		if (IS_ERR(md->dax_dev)) {
+-			md->dax_dev = NULL;
+-		} else {
+-			set_dax_nocache(md->dax_dev);
+-			set_dax_nomc(md->dax_dev);
+-			if (dax_add_host(md->dax_dev, md->disk))
+-				goto bad;
+-		}
++	dax_dev = alloc_dax(md, &dm_dax_ops);
++	if (!IS_ERR(dax_dev)) {
++		set_dax_nocache(dax_dev);
++		set_dax_nomc(dax_dev);
++		md->dax_dev = dax_dev;
++		if (dax_add_host(dax_dev, md->disk))
++			goto bad;
+  	}
+  
+  	format_dev_t(md->name, MKDEV(_major, minor));
 
+Thanks,
 
+Mathieu
 
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+https://www.efficios.com
 
-> @@ -5605,7 +5731,12 @@ static void pr_cont_pool_info(struct worker_pool *=
-pool)
->         pr_cont(" cpus=3D%*pbl", nr_cpumask_bits, pool->attrs->cpumask);
->         if (pool->node !=3D NUMA_NO_NODE)
->                 pr_cont(" node=3D%d", pool->node);
-> -       pr_cont(" flags=3D0x%x nice=3D%d", pool->flags, pool->attrs->nice=
-);
-> +       pr_cont(" flags=3D0x%x", pool->flags);
-> +       if (pool->flags & POOL_BH)
-> +               pr_cont(" bh%s",
-> +                       pool->attrs->nice =3D=3D HIGHPRI_NICE_LEVEL ? "-h=
-i" : "");
-> +       else
-> +               pr_cont(" nice=3D%d", pool->attrs->nice);
-
-There are also some "worker->task" in show_pwq(), show_one_worker_pool(),
-and show_cpu_pool_hog() needing taking care of.
-
-Thanks
-Lai
