@@ -1,28 +1,28 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F64515AAAA
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E12CB15B0F2
 	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 09:30:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706779831; cv=none; b=guonD9HoegDK4ZkhheMeVS3yLbKGowm6d1kujdYbyyRCP9qhpWOnwDU4cPXBaQRtpBB1fZzZoPJLW+ImGMiJBAbTP9MJqyitWnrI3izB1mg7myzkdg9pGgByp5tynnOhBmVTvSAOlDmb9PofiJUVw0Y40KkIiU2F1oQJe62YMtU=
+	t=1706779831; cv=none; b=bOhMOK6YM6krIHwHCvuwPGW1XIIk0kHnLFWQ9Tnz10x1cLkDNo9+TsXKYmNucsUTcLYWAwWdlTOAYBM549mlwCx3Tud2XYSs27JGl+j/jqOpzQNxszE4TCsdh2fiQIMu3duoalDU7msQXJjJLe512ElfjWSz62hs5ZoTvPwUO00=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1706779831; c=relaxed/simple;
-	bh=niaIFrprWvPwC2Lv0RN5Cl1tFCytXopzeriQpGSoAMg=;
+	bh=uuJ8tRuvIPDNbFzYKdOhbv8+B/r7ZvglzLK7hF7sQ34=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=b4mpg9q1FujBK6Nz2161MO/M3lcCM0kKEG+jq56xf0aydjnCy0hlSghYACdEqP5cgyegN2giEuhVgK2NAq0yEj62MWJ1y7oH49KGjPS6Jgf0dEu6sTi9ynFERSxrQxP3r7Y/ZjYcixkGSrKDltyQ7x0uM0gwyg9K6QMqVPhtWJs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+	 MIME-Version; b=OpMwR6YWypnG6JASc5bGPdEnWw+1D/Vpiq5ythovAFZ8QgibxaauU9rJxAN4Kle7QleLs5KcDTvCVEuideCST4BD+o7uYFceXEtf39gUXUY+Js4iDBV8XHM31zv06iuVOfCRV/IUEOG8E9mkJ5q3svyLFptI4ocQ6D8aWKNAf0Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TQYXt6fn6z4f3kjd
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TQYXt63yDz4f3l6y
 	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:22 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 835451A0172
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:25 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 123451A0172
+	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:27 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgCXaBGtZLtl8V6KCg--.33515S5;
-	Thu, 01 Feb 2024 17:30:25 +0800 (CST)
+	by APP1 (Coremail) with SMTP id cCh0CgCXaBGtZLtl8V6KCg--.33515S7;
+	Thu, 01 Feb 2024 17:30:26 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: mpatocka@redhat.com,
 	heinzm@redhat.com,
@@ -42,9 +42,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH v5 01/14] md: don't ignore suspended array in md_check_recovery()
-Date: Thu,  1 Feb 2024 17:25:46 +0800
-Message-Id: <20240201092559.910982-2-yukuai1@huaweicloud.com>
+Subject: [PATCH v5 03/14] md: make sure md_do_sync() will set MD_RECOVERY_DONE
+Date: Thu,  1 Feb 2024 17:25:48 +0800
+Message-Id: <20240201092559.910982-4-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240201092559.910982-1-yukuai1@huaweicloud.com>
 References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
@@ -55,14 +55,14 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgCXaBGtZLtl8V6KCg--.33515S5
-X-Coremail-Antispam: 1UD129KBjvJXoWxJryDAF43ArW7JrWrZr1xGrg_yoW8ZFy7pa
-	yIkF1YyrWjyFZ7Aa4qka4UZa4rAr1jqrW5AFy3u34rCa4fKw43CrWYgFyDXFyqkFyxKrZY
-	vw4rJa15uw18KF7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUBE14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jr4l82xGYIkIc2
-	x26xkF7I0E14v26r4j6ryUM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
-	Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJw
+X-CM-TRANSID:cCh0CgCXaBGtZLtl8V6KCg--.33515S7
+X-Coremail-Antispam: 1UD129KBjvJXoW7WF48JF18KF48Xr1fZFW7twb_yoW8tr1rpF
+	WkCF98ZrW8ArW7urW2qa4UZFy5Ar10qrW7CFyfW34rAF13Kw4akryjkFyUXFWqkFWxJw4F
+	vFs8JFZ8uF95C3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUPj14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JrWl82xGYIkIc2
+	x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
+	Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJw
 	A2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq3wAS
 	0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2
 	IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4UM4x0
@@ -70,73 +70,64 @@ X-Coremail-Antispam: 1UD129KBjvJXoWxJryDAF43ArW7JrWrZr1xGrg_yoW8ZFy7pa
 	xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v2
 	6r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2
 	Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_
-	Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMI
-	IF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JU4T5dUUUUU
-	=
+	Cr0_Gr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJVW8Jw
+	CI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfUojjgUUUU
+	U
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-mddev_suspend() never stop sync_thread, hence it doesn't make sense to
-ignore suspended array in md_check_recovery(), which might cause
-sync_thread can't be unregistered.
+stop_sync_thread() will interrupt md_do_sync(), and md_do_sync() must
+set MD_RECOVERY_DONE, so that follow up md_check_recovery() will
+unregister sync_thread, clear MD_RECOVERY_RUNNING and wake up
+stop_sync_thread().
 
-After commit f52f5c71f3d4 ("md: fix stopping sync thread"), following
-hang can be triggered by test shell/integrity-caching.sh:
+If MD_RECOVERY_WAIT is set or the array is read-only, md_do_sync() will
+return without setting MD_RECOVERY_DONE, and after commit f52f5c71f3d4
+("md: fix stopping sync thread"), dm-raid switch from
+md_reap_sync_thread() to stop_sync_thread() to unregister sync_thread
+from md_stop() and md_stop_writes(), causing the test
+shell/lvconvert-raid-reshape.sh hang.
 
-1) suspend the array:
-raid_postsuspend
- mddev_suspend
-
-2) stop the array:
-raid_dtr
- md_stop
-  __md_stop_writes
-   stop_sync_thread
-    set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-    md_wakeup_thread_directly(mddev->sync_thread);
-    wait_event(..., !test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
-
-3) sync thread done:
-md_do_sync
- set_bit(MD_RECOVERY_DONE, &mddev->recovery);
- md_wakeup_thread(mddev->thread);
-
-4) daemon thread can't unregister sync thread:
-md_check_recovery
- if (mddev->suspended)
-   return; -> return directly
- md_read_sync_thread
- clear_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
- -> MD_RECOVERY_RUNNING can't be cleared, hence step 2 hang;
-
-This problem is not just related to dm-raid, fix it by ignoring
-suspended array in md_check_recovery(). And follow up patches will
-improve dm-raid better to frozen sync thread during suspend.
+We shouldn't switch back to md_reap_sync_thread() because it's
+problematic in the first place. Fix the problem by making sure
+md_do_sync() will set MD_RECOVERY_DONE.
 
 Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-Closes: https://lore.kernel.org/all/8fb335e-6d2c-dbb5-d7-ded8db5145a@redhat.com/
-Fixes: 68866e425be2 ("MD: no sync IO while suspended")
+Closes: https://lore.kernel.org/all/ece2b06f-d647-6613-a534-ff4c9bec1142@redhat.com/
+Fixes: d5d885fd514f ("md: introduce new personality funciton start()")
+Fixes: 5fd6c1dce06e ("[PATCH] md: allow checkpoint of recovery with version-1 superblock")
 Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md.c | 3 ---
- 1 file changed, 3 deletions(-)
+ drivers/md/md.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 2266358d8074..07b80278eaa5 100644
+index 6906d023f1d6..c65dfd156090 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -9469,9 +9469,6 @@ static void md_start_sync(struct work_struct *ws)
-  */
- void md_check_recovery(struct mddev *mddev)
- {
--	if (READ_ONCE(mddev->suspended))
--		return;
--
- 	if (mddev->bitmap)
- 		md_bitmap_daemon_work(mddev);
+@@ -8788,12 +8788,16 @@ void md_do_sync(struct md_thread *thread)
+ 	int ret;
  
+ 	/* just incase thread restarts... */
+-	if (test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
+-	    test_bit(MD_RECOVERY_WAIT, &mddev->recovery))
++	if (test_bit(MD_RECOVERY_DONE, &mddev->recovery))
+ 		return;
+-	if (!md_is_rdwr(mddev)) {/* never try to sync a read-only array */
++
++	if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
++		goto skip;
++
++	if (test_bit(MD_RECOVERY_WAIT, &mddev->recovery) ||
++	    !md_is_rdwr(mddev)) {/* never try to sync a read-only array */
+ 		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+-		return;
++		goto skip;
+ 	}
+ 
+ 	if (mddev_is_clustered(mddev)) {
 -- 
 2.39.2
 
