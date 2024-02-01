@@ -1,159 +1,225 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com [209.85.216.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 599A41649AB
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 09:30:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 989791586E0
+	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 11:02:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706779843; cv=none; b=cS+r96GcXzHOFxwYtdZ9Q3udmSso4vJfLoDCt55Dlsfn71D3aU5tsRQhwydacCK4GW5YxzJidbF0AJJ5H4UQh0E6cTD83UPYZiA2Gd3ZLS6BG6brFQZUI6oEyqFYKXxiqAuppKEDYFT3Gctr7+yaiTh46iDa2s87xqnEsNHKxkc=
+	t=1706785361; cv=none; b=SYwVQHmXYFPPmTIj3eryxyA64twIB66Jz8KV+Hijtk3ZjySOVAYTTDRS223QuSx7vsDy54MkeQmMSzcKze7JaZiLbu013yx4sih8W+YqL2PpPj/BXtWQzXFp9YWm3Mp6+/a7GWJ+BdYhge2aP+JjDWja0DzAQYKkR5NJw/eWr6g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706779843; c=relaxed/simple;
-	bh=Pw8nxEepj3SW3fuzUXlVu8OndBo1SbgV3fSER76rjfk=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=ivz8vl+5acLGcqxweoSlnOR39eiPstaE/3RqCXdu0G6/fcY7Ty67Npx/jJFQI/7TwUyYzZkaW0r0S2ppdLG0LD+0gfQ7XBXQiZsIfluxfGbJj6m6LLJfT2eXrNg46/blzg6v7K5AuO0aM1XqRBonuD8vuBKrNK8dqGUjjAaMXS0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TQYY42FKlz4f3l7k
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:32 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 81B361A0390
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:36 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgCXaBGtZLtl8V6KCg--.33515S18;
-	Thu, 01 Feb 2024 17:30:36 +0800 (CST)
-From: Yu Kuai <yukuai1@huaweicloud.com>
-To: mpatocka@redhat.com,
-	heinzm@redhat.com,
-	xni@redhat.com,
-	blazej.kucman@linux.intel.com,
-	agk@redhat.com,
-	snitzer@kernel.org,
-	dm-devel@lists.linux.dev,
-	song@kernel.org,
-	yukuai3@huawei.com,
-	jbrassow@f14.redhat.com,
-	neilb@suse.de,
-	shli@fb.com,
-	akpm@osdl.org
-Cc: linux-kernel@vger.kernel.org,
-	linux-raid@vger.kernel.org,
-	yukuai1@huaweicloud.com,
-	yi.zhang@huawei.com,
-	yangerkun@huawei.com
-Subject: [PATCH v5 14/14] dm-raid: remove mddev_suspend/resume()
-Date: Thu,  1 Feb 2024 17:25:59 +0800
-Message-Id: <20240201092559.910982-15-yukuai1@huaweicloud.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20240201092559.910982-1-yukuai1@huaweicloud.com>
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+	s=arc-20240116; t=1706785361; c=relaxed/simple;
+	bh=2dmWPDQ5R9c2LqdULlWOzHh+4gSCveh9QCyYtMdRJ/g=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=jYPLpqXTYuCEUZSqH5ihe29AHwFHiWvtP739asksJmH9tu+8hewJzU+PS1uT8SqBR52u+3J4//sgyIhZHhVdxsA3BcdhVLPssV9Rjm34hgyPuytSeF9ozskCzxFSH1QMj1+SRXgxwbVIHWFg1U5Q/biLl5hMFqTID7P8PySP0KE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ec2mJMha; arc=none smtp.client-ip=209.85.216.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ec2mJMha"
+Received: by mail-pj1-f41.google.com with SMTP id 98e67ed59e1d1-290da27f597so525898a91.2
+        for <dm-devel@lists.linux.dev>; Thu, 01 Feb 2024 03:02:39 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1706785359; x=1707390159; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=pusx3ThehDtkCFeS2uzDn/v0Hqy5t7nRhzEa+erThAA=;
+        b=ec2mJMhaIJBaSQt0Ct1ZTKVJfT1QRgJB9MzKGToe17kT4EJ6+pxRwHE2gYN9ni9gjJ
+         N+fQ953WPyOLpr3YGfzg8M5wixfdIK2knQ3fdcy5oC6YS23O02LWbYwgF92qCG1QfE3H
+         27FVtVqSJ0WsKcvuSwi9ddtUuvRZlb1Kq3CyLUPpc8vzVKEX4ipO77gVxt0cTi8zsSfy
+         BC2JKmm7TiHrmgYbRm7smg2hzVZQUgm+Y1qSfN/ObvjXHYUKWZFgXJI04v9AjWRegfKK
+         jaYNIGOSFlERmFvrx6f2k8YcFQVwYCvmrA0t5s5DUspjrOxCxniNnhXGspmMZ9lQmYIM
+         +94g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706785359; x=1707390159;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=pusx3ThehDtkCFeS2uzDn/v0Hqy5t7nRhzEa+erThAA=;
+        b=cnYR33cw0ViNX5e3/4vqEQV3aeijqoqBr8OR/dtcgbgSVchoWjo0tm6gC2EWP9Eear
+         YrQTXEWh+jJxZS4oN6hhZ13xdhqfBJo0LjfoJ8gUZJ9vxYNlWEtX8WJZ52PIqoF5WEra
+         0+u1xoW0BBLeTwb71JUupt2aOK0kViuMDrfgqOxcObkVfynvPKks1qfGQ5L4I72jdrTY
+         FS5LE6IwEz6aP8msfSn2EEB3q0qUzlNV7I+78hcJXA3rr/8wOB3yb0q/wT9wwaBhg1Bw
+         P8Ehh8x1PFr/UZFwoy5ez+qogDFhF3mnrnfkYtZN38V73ZlVMokMXfbYAj3NCXhbAxwy
+         9viQ==
+X-Gm-Message-State: AOJu0Ywj06qKmdjxhYwhuDwcdYwW28CXa8DFTZ9T0HyDvOkJ0X6nzQe4
+	md93olBDLRv+4T8zDiQjB9mz/zlUUdteyodyidTECXXRXGgEWayC3mtVkyxR8ZA8cEy/NwPq0as
+	UfvTydRIXnSvErMoUUjbNEtz1aKY=
+X-Google-Smtp-Source: AGHT+IEyOBR5rhazGcXT0AFdr/77EP9PwleE87hbxB6CnvNhsXAa3JubOu6hYljwx9jkzhREXz4N6POR/eedfM/ufao=
+X-Received: by 2002:a17:90a:f0c4:b0:296:2578:a54c with SMTP id
+ fa4-20020a17090af0c400b002962578a54cmr305349pjb.38.1706785358686; Thu, 01 Feb
+ 2024 03:02:38 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgCXaBGtZLtl8V6KCg--.33515S18
-X-Coremail-Antispam: 1UD129KBjvJXoWxCF4UXw48Cw4kXrW8Cw4DJwb_yoW5GrWDpw
-	4IqFWayw4UtFZrXwsrA3WvgFy5twn5KrWjkrZxW34fWa43Gr13Wr18Gay5XFWDKFWfJF1D
-	Aa1Utw48uryIgrJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUP214x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
-	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
-	z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Cr1j6r
-	xdM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s0D
-	M2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xIIjx
-	v20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr1l
-	F7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2
-	IY04v7MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAF
-	wI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWrXwCIc4
-	0Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r4j6ryUMIIF0xvE2Ix0cI8IcVCY1x0267AK
-	xVW8Jr0_Cr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVW8JV
-	WxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcSsGvfC2KfnxnUUI43ZEXa7VUbmZ
-	X7UUUUU==
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+References: <20240130091300.2968534-1-tj@kernel.org> <20240130091300.2968534-4-tj@kernel.org>
+In-Reply-To: <20240130091300.2968534-4-tj@kernel.org>
+From: Lai Jiangshan <jiangshanlai@gmail.com>
+Date: Thu, 1 Feb 2024 19:02:27 +0800
+Message-ID: <CAJhGHyCk_cjD-Ex_OAd=DrBkTEe0Xvs81=On65Sp7sS8zNBfGQ@mail.gmail.com>
+Subject: Re: [PATCH 3/8] workqueue: Implement BH workqueues to eventually
+ replace tasklets
+To: Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
+	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
+	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, 
+	netdev@vger.kernel.org, allen.lkml@gmail.com, kernel-team@meta.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-From: Yu Kuai <yukuai3@huawei.com>
+Hello, Tejun
 
-dm layer will make sure that no new IO can be issued and will wait for
-all dispatched IO to be done during suspend or before removing the
-device. Hence there is no need to call mddev_suspend/resume() again.
+On Tue, Jan 30, 2024 at 5:16=E2=80=AFPM Tejun Heo <tj@kernel.org> wrote:
 
-BTW, mddev_suspend/resume() can't gurantee that there are no sync IO,
-and previous patch make sure that presuspend will stop sync thread.
+> @@ -1184,6 +1211,14 @@ static bool kick_pool(struct worker_pool *pool)
+>         if (!need_more_worker(pool) || !worker)
+>                 return false;
+>
+> +       if (pool->flags & POOL_BH) {
+> +               if (pool->attrs->nice =3D=3D HIGHPRI_NICE_LEVEL)
+> +                       tasklet_hi_schedule(&worker->bh_tasklet);
+> +               else
+> +                       tasklet_schedule(&worker->bh_tasklet);
+> +               return true;
+> +       }
 
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
----
- drivers/md/dm-raid.c |  8 +++-----
- drivers/md/md.c      | 11 +++++++++++
- 2 files changed, 14 insertions(+), 5 deletions(-)
+I think it is more straightforward to call bh_worker_taskletfn[_hi]()
+in tasklet_action() and tasklet_hi_action() rather than add a
+worker->bh_tasklet.
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 5f78cc19d6f3..ed8c28952b14 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3241,7 +3241,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	rs->md.in_sync = 1;
- 
- 	/* Has to be held on running the array */
--	mddev_suspend_and_lock_nointr(&rs->md);
-+	mddev_lock_nointr(&rs->md);
- 
- 	/* Keep array frozen until resume. */
- 	md_frozen_sync_thread(&rs->md);
-@@ -3829,11 +3829,9 @@ static void raid_postsuspend(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
- 
--	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
-+	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
- 		/* Writes have to be stopped before suspending to avoid deadlocks. */
- 		md_stop_writes(&rs->md);
--		mddev_suspend(&rs->md, false);
--	}
- }
- 
- static void attempt_restore_of_faulty_devices(struct raid_set *rs)
-@@ -4091,7 +4089,7 @@ static void raid_resume(struct dm_target *ti)
- 		mddev->ro = 0;
- 		mddev->in_sync = 0;
- 		md_unfrozen_sync_thread(mddev);
--		mddev_unlock_and_resume(mddev);
-+		mddev_unlock(mddev);
- 	}
- }
- 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 2c245341148a..a8db84c200fe 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -437,6 +437,10 @@ int mddev_suspend(struct mddev *mddev, bool interruptible)
- {
- 	int err = 0;
- 
-+	/* Array is supended from dm_suspend() for dm-raid. */
-+	if (!mddev->gendisk)
-+		return 0;
-+
- 	/*
- 	 * hold reconfig_mutex to wait for normal io will deadlock, because
- 	 * other context can't update super_block, and normal io can rely on
-@@ -488,6 +492,13 @@ EXPORT_SYMBOL_GPL(mddev_suspend);
- 
- static void __mddev_resume(struct mddev *mddev, bool recovery_needed)
- {
-+	/*
-+	 * Array is supended from dm_suspend() and resumed from dm_resume() for
-+	 * dm-raid.
-+	 */
-+	if (!mddev->gendisk)
-+		return;
-+
- 	lockdep_assert_not_held(&mddev->reconfig_mutex);
- 
- 	mutex_lock(&mddev->suspend_mutex);
--- 
-2.39.2
+raise_softirq_irqoff() can be used here (kick_pool()) instead.
 
+As the changelog said, once the conversion is complete, tasklet can be
+removed and BH workqueues can directly take over the tasklet softirqs,
+in which case, then, bh_worker_taskletfn[_hi]() can directly take over
+the tasklet_action() and tasklet_hi_action().
+
+
+> +
+>         p =3D worker->task;
+>
+>  #ifdef CONFIG_SMP
+> @@ -1663,8 +1698,16 @@ static bool pwq_tryinc_nr_active(struct pool_workq=
+ueue *pwq, bool fill)
+>         lockdep_assert_held(&pool->lock);
+>
+>         if (!nna) {
+> -               /* per-cpu workqueue, pwq->nr_active is sufficient */
+> -               obtained =3D pwq->nr_active < READ_ONCE(wq->max_active);
+> +               /*
+> +                * BH workqueues always share a single execution context =
+per CPU
+> +                * and don't impose any max_active limit, so tryinc alway=
+s
+> +                * succeeds. For a per-cpu workqueue, checking pwq->nr_ac=
+tive is
+> +                * sufficient.
+> +                */
+> +               if (wq->flags & WQ_BH)
+> +                       obtained =3D true;
+> +               else
+> +                       obtained =3D pwq->nr_active < READ_ONCE(wq->max_a=
+ctive);
+
+I think wq->max_active can be forced to be UINT_MAX or ULONG_MAX
+in the max_active management code to avoid a branch here.
+
+>                 goto out;
+>         }
+>
+> @@ -2599,27 +2642,31 @@ static struct worker *create_worker(struct worker=
+_pool *pool)
+>
+>         worker->id =3D id;
+>
+> -       if (pool->cpu >=3D 0)
+> -               snprintf(id_buf, sizeof(id_buf), "%d:%d%s", pool->cpu, id=
+,
+> -                        pool->attrs->nice < 0  ? "H" : "");
+> -       else
+> -               snprintf(id_buf, sizeof(id_buf), "u%d:%d", pool->id, id);
+> -
+> -       worker->task =3D kthread_create_on_node(worker_thread, worker, po=
+ol->node,
+> -                                             "kworker/%s", id_buf);
+> -       if (IS_ERR(worker->task)) {
+> -               if (PTR_ERR(worker->task) =3D=3D -EINTR) {
+> -                       pr_err("workqueue: Interrupted when creating a wo=
+rker thread \"kworker/%s\"\n",
+> -                              id_buf);
+> -               } else {
+> -                       pr_err_once("workqueue: Failed to create a worker=
+ thread: %pe",
+> -                                   worker->task);
+> +       if (pool->flags & POOL_BH) {
+> +               tasklet_setup(&worker->bh_tasklet, bh_worker_taskletfn);
+> +       } else {
+> +               if (pool->cpu >=3D 0)
+> +                       snprintf(id_buf, sizeof(id_buf), "%d:%d%s", pool-=
+>cpu, id,
+> +                                pool->attrs->nice < 0  ? "H" : "");
+> +               else
+> +                       snprintf(id_buf, sizeof(id_buf), "u%d:%d", pool->=
+id, id);
+> +
+> +               worker->task =3D kthread_create_on_node(worker_thread, wo=
+rker,
+> +                                       pool->node, "kworker/%s", id_buf)=
+;
+> +               if (IS_ERR(worker->task)) {
+> +                       if (PTR_ERR(worker->task) =3D=3D -EINTR) {
+> +                               pr_err("workqueue: Interrupted when creat=
+ing a worker thread \"kworker/%s\"\n",
+> +                                      id_buf);
+> +                       } else {
+> +                               pr_err_once("workqueue: Failed to create =
+a worker thread: %pe",
+> +                                           worker->task);
+> +                       }
+> +                       goto fail;
+>                 }
+> -               goto fail;
+> -       }
+>
+> -       set_user_nice(worker->task, pool->attrs->nice);
+> -       kthread_bind_mask(worker->task, pool_allowed_cpus(pool));
+> +               set_user_nice(worker->task, pool->attrs->nice);
+> +               kthread_bind_mask(worker->task, pool_allowed_cpus(pool));
+> +       }
+>
+>         /* successful, attach the worker to the pool */
+>         worker_attach_to_pool(worker, pool);
+
+worker_attach_to_pool() and worker_detach_from_pool also access to
+worker->task with kthread_set_per_cpu() and luckily to_kthread()
+checks the NULL pointer for it.
+
+IMO, it is better to avoid calling kthread_set_per_cpu() for bh workers.
+
+
+
+
+> @@ -5605,7 +5731,12 @@ static void pr_cont_pool_info(struct worker_pool *=
+pool)
+>         pr_cont(" cpus=3D%*pbl", nr_cpumask_bits, pool->attrs->cpumask);
+>         if (pool->node !=3D NUMA_NO_NODE)
+>                 pr_cont(" node=3D%d", pool->node);
+> -       pr_cont(" flags=3D0x%x nice=3D%d", pool->flags, pool->attrs->nice=
+);
+> +       pr_cont(" flags=3D0x%x", pool->flags);
+> +       if (pool->flags & POOL_BH)
+> +               pr_cont(" bh%s",
+> +                       pool->attrs->nice =3D=3D HIGHPRI_NICE_LEVEL ? "-h=
+i" : "");
+> +       else
+> +               pr_cont(" nice=3D%d", pool->attrs->nice);
+
+There are also some "worker->task" in show_pwq(), show_one_worker_pool(),
+and show_cpu_pool_hog() needing taking care of.
+
+Thanks
+Lai
