@@ -1,28 +1,28 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63FE915B10E
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 09:30:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50E5B15B963
+	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 09:30:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706779832; cv=none; b=vGbW48nPq4hwfVW6VoKQoA4Eu4PYJruE7dWwjO8xXmDD11QkcPCNDx1oTCeoxMDZZu7CNj4fhQBxIoONVK4+NGBCEP5ULq4sF9ft3adKhH0w9HKFgYy4kRQgAXqZmAyJqhsinwyQSZNIWVgMwT33T4gvxrM//u9Qpj+KvtsqiWQ=
+	t=1706779833; cv=none; b=Gj4b7rRARc1DDtgPPgg5qfSvGNB9nsnd/aa/iNnaRiMaXUYju87ljRoUpxfs71FY6kD55u9p6bSiQa8CD1AME8g464S8cD1R7iwVUQvECs3ZpEipxtRzKAc7cmQLSsKQJf9yzuMwA6ZFUL1qbqgVk5ytoHCCsZJi0E4VMDLMTYA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706779832; c=relaxed/simple;
-	bh=h4mAM5munNDh64f9BT7eKjkJVG7xHUqubnznwxYlHRM=;
+	s=arc-20240116; t=1706779833; c=relaxed/simple;
+	bh=dZCpGLgs1JsjUcuAOwp41TG3RiXfam80H98EBcaCbRk=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=YN3mow2QnGKulmWShuvi2DwD8K52V5gKvZg5UlkTnrLK4I0PZLh+Ucy5GVpMoKVzfCO/Ph3IxyopvrDt/nb1Z9BAlWHta9koobG6rvSLyCtmMEwT1aOuOpnkY1ARBgWD+LOf4UZ+rSIyZH1uPXJghG4ejnpfGKFMkWufYY5iRzY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+	 MIME-Version; b=mfea+NlYlnnKesC84Bxk5Tdl6GxRZLwTqk1pOVQwZupVbKM1gUiJyegLB456HeUyUOl2xlMG34NYZFR3FK5Mb872571jgCydJVDpV0pOlmzW+79Jw9bvDHiRCCbzxjyUpG25WrxtEjor9qz00OsQa3g0Lv2dyn204OM+TDiXyXE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TQYXt0qKKz4f3l6n
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:22 +0800 (CST)
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TQYXx1mTDz4f3jZ0
+	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:25 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 526BE1A038B
-	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:26 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id CFD261A0199
+	for <dm-devel@lists.linux.dev>; Thu,  1 Feb 2024 17:30:27 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgCXaBGtZLtl8V6KCg--.33515S6;
-	Thu, 01 Feb 2024 17:30:26 +0800 (CST)
+	by APP1 (Coremail) with SMTP id cCh0CgCXaBGtZLtl8V6KCg--.33515S8;
+	Thu, 01 Feb 2024 17:30:27 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: mpatocka@redhat.com,
 	heinzm@redhat.com,
@@ -42,9 +42,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH v5 02/14] md: don't ignore read-only array in md_check_recovery()
-Date: Thu,  1 Feb 2024 17:25:47 +0800
-Message-Id: <20240201092559.910982-3-yukuai1@huaweicloud.com>
+Subject: [PATCH v5 04/14] md: don't register sync_thread for reshape directly
+Date: Thu,  1 Feb 2024 17:25:49 +0800
+Message-Id: <20240201092559.910982-5-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240201092559.910982-1-yukuai1@huaweicloud.com>
 References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
@@ -55,148 +55,179 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgCXaBGtZLtl8V6KCg--.33515S6
-X-Coremail-Antispam: 1UD129KBjvJXoWxCF1xZw47XF4fCr17tFyUGFg_yoWrXw45pa
-	yfKas8Cr4UtFy3urZrK3WDXayYvr10qrZ0yFy3u34fAw1rtr4Sk34ruFyUJFWDtFyFqw4Y
-	vw4rJF43ZFy8Kw7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUPj14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jryl82xGYIkIc2
-	x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
-	Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJw
-	A2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq3wAS
-	0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2
-	IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4UM4x0
-	Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kIc2
-	xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v2
-	6r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2
-	Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_
-	Cr0_Gr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJVW8Jw
-	CI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfUOJPEUUUU
-	U
+X-CM-TRANSID:cCh0CgCXaBGtZLtl8V6KCg--.33515S8
+X-Coremail-Antispam: 1UD129KBjvJXoW3Xry3Kw4kuF1xAry3KryrCrg_yoW7KF1fpa
+	yfKF9xJr48A343ZrWUta4DXFW5uw1jqrWqyry3W3s5A3ZYyrZ3JFy5uFyUJFWkAa4kta15
+	ta45tFWDZFyFgw7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUPF14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
+	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
+	z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Cr1j6r
+	xdM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s0D
+	M2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xIIjx
+	v20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr1l
+	F7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2
+	IY04v7MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAF
+	wI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWrXwCIc4
+	0Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AK
+	xVWxJVW8Jr1lIxAIcVCF04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r
+	4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr1j6F4UJbIYCTnIWIevJa73UjIFyTuYvjfUOBTY
+	UUUUU
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-Usually if the array is not read-write, md_check_recovery() won't
-register new sync_thread in the first place. And if the array is
-read-write and sync_thread is registered, md_set_readonly() will
-unregister sync_thread before setting the array read-only. md/raid
-follow this behavior hence there is no problem.
+Currently, if reshape is interrupted, then reassemble the array will
+register sync_thread directly from pers->run(), in this case
+'MD_RECOVERY_RUNNING' is set directly, however, there is no guarantee
+that md_do_sync() will be executed, hence stop_sync_thread() will hang
+because 'MD_RECOVERY_RUNNING' can't be cleared.
 
-After commit f52f5c71f3d4 ("md: fix stopping sync thread"), following
-hang can be triggered by test shell/integrity-caching.sh:
+Last patch make sure that md_do_sync() will set MD_RECOVERY_DONE,
+however, following hang can still be triggered by dm-raid test
+shell/lvconvert-raid-reshape.sh occasionally:
 
-1) array is read-only. dm-raid update super block:
-rs_update_sbs
- ro = mddev->ro
- mddev->ro = 0
-  -> set array read-write
- md_update_sb
+[root@fedora ~]# cat /proc/1982/stack
+[<0>] stop_sync_thread+0x1ab/0x270 [md_mod]
+[<0>] md_frozen_sync_thread+0x5c/0xa0 [md_mod]
+[<0>] raid_presuspend+0x1e/0x70 [dm_raid]
+[<0>] dm_table_presuspend_targets+0x40/0xb0 [dm_mod]
+[<0>] __dm_destroy+0x2a5/0x310 [dm_mod]
+[<0>] dm_destroy+0x16/0x30 [dm_mod]
+[<0>] dev_remove+0x165/0x290 [dm_mod]
+[<0>] ctl_ioctl+0x4bb/0x7b0 [dm_mod]
+[<0>] dm_ctl_ioctl+0x11/0x20 [dm_mod]
+[<0>] vfs_ioctl+0x21/0x60
+[<0>] __x64_sys_ioctl+0xb9/0xe0
+[<0>] do_syscall_64+0xc6/0x230
+[<0>] entry_SYSCALL_64_after_hwframe+0x6c/0x74
 
-2) register new sync thread concurrently.
+Meanwhile mddev->recovery is:
+MD_RECOVERY_RUNNING |
+MD_RECOVERY_INTR |
+MD_RECOVERY_RESHAPE |
+MD_RECOVERY_FROZEN
 
-3) dm-raid set array back to read-only:
-rs_update_sbs
- mddev->ro = ro
+Fix this problem by remove the code to register sync_thread directly
+from raid10 and raid5. And let md_check_recovery() to register
+sync_thread.
 
-4) stop the array:
-raid_dtr
- md_stop
-  stop_sync_thread
-    set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-    md_wakeup_thread_directly(mddev->sync_thread);
-    wait_event(..., !test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
-
-5) sync thread done:
- md_do_sync
- set_bit(MD_RECOVERY_DONE, &mddev->recovery);
- md_wakeup_thread(mddev->thread);
-
-6) daemon thread can't unregister sync thread:
- md_check_recovery
-  if (!md_is_rdwr(mddev) &&
-      !test_bit(MD_RECOVERY_NEEDED, &mddev->recovery))
-   return;
-  -> -> MD_RECOVERY_RUNNING can't be cleared, hence step 4 hang;
-
-The root cause is that dm-raid manipulate 'mddev->ro' by itself,
-however, dm-raid really should stop sync thread before setting the
-array read-only. Unfortunately, I need to read more code before I
-can refacter the handler of 'mddev->ro' in dm-raid, hence let's fix
-the problem the easy way for now to prevent dm-raid regression.
-
-Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-Closes: https://lore.kernel.org/all/9801e40-8ac7-e225-6a71-309dcf9dc9aa@redhat.com/
-Fixes: ecbfb9f118bc ("dm raid: add raid level takeover support")
+Fixes: f67055780caa ("[PATCH] md: Checkpoint and allow restart of raid5 reshape")
 Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md.c | 31 ++++++++++++++++++-------------
- 1 file changed, 18 insertions(+), 13 deletions(-)
+ drivers/md/md.c     |  5 ++++-
+ drivers/md/raid10.c | 16 ++--------------
+ drivers/md/raid5.c  | 29 ++---------------------------
+ 3 files changed, 8 insertions(+), 42 deletions(-)
 
 diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 07b80278eaa5..6906d023f1d6 100644
+index c65dfd156090..6c5d0a372927 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -9445,6 +9445,20 @@ static void md_start_sync(struct work_struct *ws)
- 		sysfs_notify_dirent_safe(mddev->sysfs_action);
- }
+@@ -9372,6 +9372,7 @@ static void md_start_sync(struct work_struct *ws)
+ 	struct mddev *mddev = container_of(ws, struct mddev, sync_work);
+ 	int spares = 0;
+ 	bool suspend = false;
++	char *name;
  
-+static void unregister_sync_thread(struct mddev *mddev)
-+{
-+	if (!test_bit(MD_RECOVERY_DONE, &mddev->recovery)) {
-+		/* resync/recovery still happening */
-+		clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-+		return;
-+	}
-+
-+	if (WARN_ON_ONCE(!mddev->sync_thread))
-+		return;
-+
-+	md_reap_sync_thread(mddev);
-+}
-+
- /*
-  * This routine is regularly called by all per-raid-array threads to
-  * deal with generic issues like resync and super-block update.
-@@ -9482,7 +9496,8 @@ void md_check_recovery(struct mddev *mddev)
+ 	if (md_spares_need_change(mddev))
+ 		suspend = true;
+@@ -9404,8 +9405,10 @@ static void md_start_sync(struct work_struct *ws)
+ 	if (spares)
+ 		md_bitmap_write_all(mddev->bitmap);
+ 
++	name = test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) ?
++			"reshape" : "resync";
+ 	rcu_assign_pointer(mddev->sync_thread,
+-			   md_register_thread(md_do_sync, mddev, "resync"));
++			   md_register_thread(md_do_sync, mddev, name));
+ 	if (!mddev->sync_thread) {
+ 		pr_warn("%s: could not start resync thread...\n",
+ 			mdname(mddev));
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index 7412066ea22c..a5f8419e2df1 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -4175,11 +4175,7 @@ static int raid10_run(struct mddev *mddev)
+ 		clear_bit(MD_RECOVERY_SYNC, &mddev->recovery);
+ 		clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
+ 		set_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
+-		set_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
+-		rcu_assign_pointer(mddev->sync_thread,
+-			md_register_thread(md_do_sync, mddev, "reshape"));
+-		if (!mddev->sync_thread)
+-			goto out_free_conf;
++		set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
  	}
  
- 	if (!md_is_rdwr(mddev) &&
--	    !test_bit(MD_RECOVERY_NEEDED, &mddev->recovery))
-+	    !test_bit(MD_RECOVERY_NEEDED, &mddev->recovery) &&
-+	    !test_bit(MD_RECOVERY_DONE, &mddev->recovery))
- 		return;
- 	if ( ! (
- 		(mddev->sb_flags & ~ (1<<MD_SB_CHANGE_PENDING)) ||
-@@ -9504,8 +9519,7 @@ void md_check_recovery(struct mddev *mddev)
- 			struct md_rdev *rdev;
- 
- 			if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
--				/* sync_work already queued. */
--				clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-+				unregister_sync_thread(mddev);
- 				goto unlock;
- 			}
- 
-@@ -9568,16 +9582,7 @@ void md_check_recovery(struct mddev *mddev)
- 		 * still set.
- 		 */
- 		if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
--			if (!test_bit(MD_RECOVERY_DONE, &mddev->recovery)) {
--				/* resync/recovery still happening */
--				clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
--				goto unlock;
--			}
+ 	return 0;
+@@ -4573,16 +4569,8 @@ static int raid10_start_reshape(struct mddev *mddev)
+ 	clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
+ 	clear_bit(MD_RECOVERY_DONE, &mddev->recovery);
+ 	set_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
+-	set_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
 -
--			if (WARN_ON_ONCE(!mddev->sync_thread))
--				goto unlock;
--
--			md_reap_sync_thread(mddev);
-+			unregister_sync_thread(mddev);
- 			goto unlock;
- 		}
+-	rcu_assign_pointer(mddev->sync_thread,
+-			   md_register_thread(md_do_sync, mddev, "reshape"));
+-	if (!mddev->sync_thread) {
+-		ret = -EAGAIN;
+-		goto abort;
+-	}
++	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
+ 	conf->reshape_checkpoint = jiffies;
+-	md_wakeup_thread(mddev->sync_thread);
+ 	md_new_event();
+ 	return 0;
  
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 8497880135ee..6a7a32f7fb91 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -7936,11 +7936,7 @@ static int raid5_run(struct mddev *mddev)
+ 		clear_bit(MD_RECOVERY_SYNC, &mddev->recovery);
+ 		clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
+ 		set_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
+-		set_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
+-		rcu_assign_pointer(mddev->sync_thread,
+-			md_register_thread(md_do_sync, mddev, "reshape"));
+-		if (!mddev->sync_thread)
+-			goto abort;
++		set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
+ 	}
+ 
+ 	/* Ok, everything is just fine now */
+@@ -8506,29 +8502,8 @@ static int raid5_start_reshape(struct mddev *mddev)
+ 	clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
+ 	clear_bit(MD_RECOVERY_DONE, &mddev->recovery);
+ 	set_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
+-	set_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
+-	rcu_assign_pointer(mddev->sync_thread,
+-			   md_register_thread(md_do_sync, mddev, "reshape"));
+-	if (!mddev->sync_thread) {
+-		mddev->recovery = 0;
+-		spin_lock_irq(&conf->device_lock);
+-		write_seqcount_begin(&conf->gen_lock);
+-		mddev->raid_disks = conf->raid_disks = conf->previous_raid_disks;
+-		mddev->new_chunk_sectors =
+-			conf->chunk_sectors = conf->prev_chunk_sectors;
+-		mddev->new_layout = conf->algorithm = conf->prev_algo;
+-		rdev_for_each(rdev, mddev)
+-			rdev->new_data_offset = rdev->data_offset;
+-		smp_wmb();
+-		conf->generation --;
+-		conf->reshape_progress = MaxSector;
+-		mddev->reshape_position = MaxSector;
+-		write_seqcount_end(&conf->gen_lock);
+-		spin_unlock_irq(&conf->device_lock);
+-		return -EAGAIN;
+-	}
++	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
+ 	conf->reshape_checkpoint = jiffies;
+-	md_wakeup_thread(mddev->sync_thread);
+ 	md_new_event();
+ 	return 0;
+ }
 -- 
 2.39.2
 
