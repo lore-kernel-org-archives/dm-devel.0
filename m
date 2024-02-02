@@ -1,33 +1,36 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B367117BA8;
-	Fri,  2 Feb 2024 07:37:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19D2246441;
+	Fri,  2 Feb 2024 14:40:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706859424; cv=none; b=Mzy1+dbnJnTTi4ViCheTQkLliMoksCUpPK6qJwvKlxGtGLOQ4XaDvE/cG1wCgZGZ45/mdk2gOGmiW3VT1znYbYksIhm9NB4fv5CD3rtac9182NDmJzvbkHAHYChN44GQO6fytuH1rZ+kxkWUo/eFOa7YjDz+OWtXuDS51MXXd44=
+	t=1706884832; cv=none; b=Zlvwn+FpwNr67q5zASIOaI2fefgEFsjnwMU4ho8rd70M9me7FnKB1qdHRzns36hFNYqWgugpJpCf6mrlqlXgA8XKMFyJTHSkDrJmbBiL3beRbQOhnvcYZa1o49rMJtOAXfwHDLP1osA9qhNzs+E1Qkar7ozH12OggmB987iINrM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706859424; c=relaxed/simple;
-	bh=83WGbh1aToa6xi3fv5tKlsygqJtHRUyxX2N/eR8Pm00=;
+	s=arc-20240116; t=1706884832; c=relaxed/simple;
+	bh=75xRr+Hh8XvCcTnldScx3u7vNNKbiPCXSVT3faG9PZY=;
 	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
-	 In-Reply-To:Content-Type; b=GOsr22dYu7LnVmHVbDg1TZiJAPl/R6qdcTsNpBGYximGiT0+THVB2a3XUamNlFDDEwpsFicEax5//gg0h8wCjavOzFb2MZtPsHnwMvCIuJLiAD0+7CTTL3zNB5VYS8njkaeB9fvqyqrM/730GYwf90GKFMZPK+zlxrF5gK9A9/g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hBofjTGv; arc=none smtp.client-ip=10.30.226.201
+	 In-Reply-To:Content-Type; b=cv1DeIGP1uEp3fGrOF/Z0wvODBDYETfBez2SgkNnT7pPTs4PBNJfvfpb3ifHetXGzrEqHVT0BkIWuNsbbphVbD324OzfHjWYR6MKBr1EKFhnCjuqAYN4GwYRQ3WBLpXSbMyaCiVR2OMfl7nnPDi59x9oQt1LC2FK3/RNx7NktIs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=vygKGwH5; arc=none smtp.client-ip=167.114.26.122
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hBofjTGv"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E61B4C433F1;
-	Fri,  2 Feb 2024 07:37:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1706859424;
-	bh=83WGbh1aToa6xi3fv5tKlsygqJtHRUyxX2N/eR8Pm00=;
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="vygKGwH5"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
+	s=smtpout1; t=1706884819;
+	bh=75xRr+Hh8XvCcTnldScx3u7vNNKbiPCXSVT3faG9PZY=;
 	h=Date:Subject:From:To:Cc:References:In-Reply-To:From;
-	b=hBofjTGvqJqMfDFMCUncIls9Rf45LctEb+HRwieN9UfdYIQCKL23EdENkpPpjuciQ
-	 DVA3lQVZMfZXihQ2gzu3VYnZZMmJVm9yCR/K+zPQc/gZ0fHnIt99l4Wnk2gw/hAph2
-	 mxyvGhhgjbmF1MvIaMXVRo+X++fxxjV1UfguyiaM8vtSGh+PwJK+r5xeLKxWKzqbxe
-	 wQ+W4/NE38zCGK+QQhOBUW04W+A/whbEzT+lMwNRZn9+ZZybUHPVjG0Z4Yh8pzhxgO
-	 NYo736ACYzrS7Ai84UF5YaoFS1vH2ZreZUglze5ss/mBnXYhZL9/ymxuABRxwt3QQc
-	 qBvOAwKkgJ19Q==
-Message-ID: <147de7c4-7050-4b1d-a48c-c0316a81baee@kernel.org>
-Date: Fri, 2 Feb 2024 16:37:01 +0900
+	b=vygKGwH5Oj72Vz0Ai3eQ8qhTXUCVBw5yan0ZsVxgZNCeP0yq73w6MH+HpicWZy5+u
+	 BmL+qoc9jn/GD6Z+9V3g0sT5hZ4XR3tZG3tfcWPRfIiUKsDPGohjfGYtUZjUm+BIM9
+	 byIhaYQlDp21cpVnX/T3UJmO3PfQL20DCBolr0waUkft+ctCw4B1JBsJOv5hT0aaHF
+	 +ljaSkBLFUZu8Tl4qP7asELPgGvp3aoPRhBDBoNvOoxaTaOCu6bAzyIUHIZLbvCaiL
+	 vzxr77H44QWgZDV6ev2C9Y7tEQsIBZgUxnbWnfgiR4yCILQdkzipROCj16VedDYrbT
+	 +4YNXnsiyAjnw==
+Received: from [172.16.0.134] (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
+	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TRJN2717NzXBc;
+	Fri,  2 Feb 2024 09:40:18 -0500 (EST)
+Message-ID: <b28819f3-890f-4eac-befd-f9da1c77e34a@efficios.com>
+Date: Fri, 2 Feb 2024 09:40:20 -0500
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,68 +38,99 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 00/26] Zone write plugging
+Subject: Re: [RFC PATCH v3 2/4] dax: Check for data cache aliasing at runtime
 Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
- linux-scsi@vger.kernel.org, "Martin K . Petersen"
- <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
- Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-References: <20240202073104.2418230-1-dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <20240202073104.2418230-1-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To: Dan Williams <dan.j.williams@intel.com>, Arnd Bergmann <arnd@arndb.de>,
+ Dave Chinner <david@fromorbit.com>
+Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>,
+ Linus Torvalds <torvalds@linux-foundation.org>, linux-mm@kvack.org,
+ linux-arch@vger.kernel.org, Vishal Verma <vishal.l.verma@intel.com>,
+ Dave Jiang <dave.jiang@intel.com>, Matthew Wilcox <willy@infradead.org>,
+ Russell King <linux@armlinux.org.uk>, nvdimm@lists.linux.dev,
+ linux-cxl@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ dm-devel@lists.linux.dev
+References: <20240131162533.247710-1-mathieu.desnoyers@efficios.com>
+ <20240131162533.247710-3-mathieu.desnoyers@efficios.com>
+ <65bab567665f3_37ad2943c@dwillia2-xfh.jf.intel.com.notmuch>
+ <0a38176b-c453-4be0-be83-f3e1bb897973@efficios.com>
+ <65bac71a9659b_37ad29428@dwillia2-xfh.jf.intel.com.notmuch>
+ <f1d14941-2d22-452a-99e6-42db806b6d7f@efficios.com>
+In-Reply-To: <f1d14941-2d22-452a-99e6-42db806b6d7f@efficios.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On 2/2/24 16:30, Damien Le Moal wrote:
-> The patch series introduces zone write plugging (ZWP) as the new
-> mechanism to control the ordering of writes to zoned block devices.
-> ZWP replaces zone write locking (ZWL) which is implemented only by
-> mq-deadline today. ZWP also allows emulating zone append operations
-> using regular writes for zoned devices that do not natively support this
-> operation (e.g. SMR HDDs). This patch series removes the scsi disk
-> driver and device mapper zone append emulation to use ZWP emulation.
+On 2024-02-01 10:44, Mathieu Desnoyers wrote:
+[...]
+>> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+>> index 4e8fdcb3f1c8..b69c9e442cf4 100644
+>> --- a/drivers/nvdimm/pmem.c
+>> +++ b/drivers/nvdimm/pmem.c
+>> @@ -560,17 +560,19 @@ static int pmem_attach_disk(struct device *dev,
+>>       dax_dev = alloc_dax(pmem, &pmem_dax_ops);
+>>       if (IS_ERR(dax_dev)) {
+>>           rc = PTR_ERR(dax_dev);
+>> -        goto out;
+>> +        if (rc != -EOPNOTSUPP)
+>> +            goto out;
 > 
-> Unlike ZWL which operates on requests, ZWP operates on BIOs. A zone
-> write plug is simply a BIO list that is atomically manipulated using a
-> spinlock and a kblockd submission work. A write BIO to a zone is
-> "plugged" to delay its execution if a write BIO for the same zone was
-> already issued, that is, if a write request for the same zone is being
-> executed. The next plugged BIO is unplugged and issued once the write
-> request completes.
-> 
-> This mechanism allows to:
->  - Untangle zone write ordering from the block IO schedulers. This
->    allows removing the restriction on using only mq-deadline for zoned
->    block devices. Any block IO scheduler, including "none" can be used.
->  - Zone write plugging operates on BIOs instead of requests. Plugged
->    BIOs waiting for execution thus do not hold scheduling tags and thus
->    do not prevent other BIOs from being submitted to the device (reads
->    or writes to other zones). Depending on the workload, this can
->    significantly improve the device use and the performance.
->  - Both blk-mq (request) based zoned devices and BIO-based devices (e.g.
->    device mapper) can use ZWP. It is mandatory for the
->    former but optional for the latter: BIO-based driver can use zone
->    write plugging to implement write ordering guarantees, or the drivers
->    can implement their own if needed.
->  - The code is less invasive in the block layer and in device drivers.
->    ZWP implementation is mostly limited to blk-zoned.c, with some small
->    changes in blk-mq.c, blk-merge.c and bio.c.
-> 
-> Performance evaluation results are shown below.
-> 
-> The series is organized as follows:
+> If I compare the before / after this change, if previously
+> pmem_attach_disk() was called in a configuration with FS_DAX=n, it would
+> result in a NULL pointer dereference.
 
-I forgot to mention that the patches are against Jens block/for-next branch with
-the addition of Christoph's "clean up blk_mq_submit_bio" patches [1] and my
-patch "null_blk: Always split BIOs to respect queue limits" [2].
+I was wrong. drivers/nvdimm/Kconfig has:
 
-[1] https://lore.kernel.org/linux-block/20240124092658.2258309-1-hch@lst.de/
-[2] https://lore.kernel.org/linux-block/20240126005032.1985245-1-dlemoal@kernel.org/
+config BLK_DEV_PMEM
+         select DAX
+
+and
+
+drivers/nvdimm/Makefile has:
+
+obj-$(CONFIG_BLK_DEV_PMEM) += nd_pmem.o
+nd_pmem-y := pmem.o
+
+which means that anything in pmem.c can assume that alloc_dax() is
+implemented.
+
+[...]
+>> diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+>> index 4b7ecd4fd431..f911e58a24dd 100644
+>> --- a/drivers/s390/block/dcssblk.c
+>> +++ b/drivers/s390/block/dcssblk.c
+>> @@ -681,12 +681,14 @@ dcssblk_add_store(struct device *dev, struct 
+>> device_attribute *attr, const char
+>>       if (IS_ERR(dev_info->dax_dev)) {
+>>           rc = PTR_ERR(dev_info->dax_dev);
+>>           dev_info->dax_dev = NULL;
+>> -        goto put_dev;
+>> +        if (rc != -EOPNOTSUPP)
+>> +            goto put_dev;
+> 
+> config DCSSBLK selects FS_DAX_LIMITED and DAX.
+> 
+> I'm not sure what selecting DAX is trying to achieve here, because the
+> Kconfig option is "FS_DAX".
+> 
+> So depending on the real motivation behind this select, we may want to
+> consider failure rather than success in the -EOPNOTSUPP case.
+> 
+
+I missed that alloc_dax() is implemented as not supported based on
+CONFIG_DAX (not CONFIG_FS_DAX).
+
+Therefore DCSSBLK Kconfig does the right thing and always selects DAX,
+and thus an implemented version of alloc_dax().
+
+This takes care of two of my open questions at least. :)
+
+Thanks,
+
+Mathieu
 
 
 -- 
-Damien Le Moal
-Western Digital Research
+Mathieu Desnoyers
+EfficiOS Inc.
+https://www.efficios.com
 
