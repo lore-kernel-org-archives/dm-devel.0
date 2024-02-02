@@ -1,105 +1,63 @@
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5EB8E8063B;
-	Fri,  2 Feb 2024 20:18:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 075571754B;
+	Fri,  2 Feb 2024 20:43:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706905118; cv=none; b=eeRRj65/jCR9kgA431PXhj3EadDJmAW8VhalV6d6UgZqV6s3tKAAQWmxh/+vSj9fQjimePLM/7KaGlKKb+qAtkIRwDch+ylyetwprkmzbZL5/ga/NGX15h2Dy4o9FYmJd/ka3S9e4Oqs7HIKOlagCVPBy5CapRu3LwF0Lrvx2io=
+	t=1706906611; cv=none; b=HEN4YYEInJz7IQ9kuzY2cKexpnf4LMa2pzegTWyHhKCDwH7GNHJSESWEQKBqyU5875kocqTF63q2CSxVBXFGkabwXoHWaFhA+xqk0aYJ/zn/BSfUp3QNga6NlioQkV2Iw9AI5e0y+Vor3TQaLCEbIaToCMZYvsuQ1Y7hvXCW4V0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706905118; c=relaxed/simple;
-	bh=mh+mo38fsEQgb9l3Kuwv1eN4wevPn1ndoe/G9f1R3Wg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Tnw5WnM8whykWK6aE81wDrB28g+914ZAY76SRLI5BOuBuVEG2WhttJtMYzZL6s8/VAVd8KGsdlBuQUKXlncVRNHvCaUROhoInnf/GEjj396xy5NjNDbdODCXdKoH1Bua6ohcmZF0TudGMuvKj2XFLXutNT2/swPBl2muVspS7uQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=j0YbsdI3; arc=none smtp.client-ip=167.114.26.122
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
+	s=arc-20240116; t=1706906611; c=relaxed/simple;
+	bh=DLuDMpCPPrKDyYAtyBFK8Wy9rQ6rfmQJ25hjH+ShDBE=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=OrBQe3yn72Guw7Ehy7CpRl1zkEse/qDrQ5gZsPGYc+GVT1qzmaUnlwJr5PzENBGnikk4G2pyVZKTBv9HPBd+K+pnO6Q1MNALojQs4EjoWo8Ji6jmymL/NnwkOSRPuVrQVe7whIPymfs364rGwzI486doJeGvVWas135m0G2GvfA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TU9FLAnh; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="j0YbsdI3"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-	s=smtpout1; t=1706905115;
-	bh=mh+mo38fsEQgb9l3Kuwv1eN4wevPn1ndoe/G9f1R3Wg=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=j0YbsdI3y6vCPgWvcLlBfSENnF1fM18wQKlrQ47Z6vS/Lu+5uXdTUXoJtf3p1E10p
-	 20YTd4Yysds9Fc8+0b6V+OsfbT17mhbkv37sH0RogmtvLcyJvkNXvcbLGe74TWbrhS
-	 HUx5JRvOie7xZ1Qqhc3oXMoE8WJJLhi/VkVjuI8CQ7qNhPK+No8OaIzt+DQfEKdgYt
-	 woV0Cd/riDC8CadDDjBDCpwxlRatUyiNLEwFXzLL03k+hlFBnEBK1c1gytA7iBfe3e
-	 AMPZTBIMrqrQGCYQEWxcSx259uC6FjHPECXXrtL/pbBU/8IJthIyCDSvplBrQc2OEO
-	 hD2B6tCO0gM5A==
-Received: from [172.16.0.134] (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
-	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TRRtM1f6yzXBq;
-	Fri,  2 Feb 2024 15:18:35 -0500 (EST)
-Message-ID: <f3ec50a5-ff5e-41ae-ab2f-7319a18381e2@efficios.com>
-Date: Fri, 2 Feb 2024 15:18:36 -0500
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TU9FLAnh"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id CCAD3C433F1;
+	Fri,  2 Feb 2024 20:43:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1706906610;
+	bh=DLuDMpCPPrKDyYAtyBFK8Wy9rQ6rfmQJ25hjH+ShDBE=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=TU9FLAnhSHsc/n/vawBb3CUCGDmgzFkBauF8awEQxpoP/q68F9vAkWB6eVpIOA2ok
+	 BKcYLCcGDlZsaltjOThdFCe+lC2mLSgk79tmjhxGIOum+2v1u4yKWrTJZCo3Cm7YsW
+	 vgiWhwqKL9S22eonLdJW2aX/SEVTEDiRHVsOw9039xjgga+J9RWx8tf6y5dsmLhEh2
+	 YJyIfkQPRWp6IpKc2z4ux68NQvSJ4+5qwybGpLvrnGrQoRLcsvo5R+XqhC6Hl3e5Mz
+	 xPoXGSnhDIVcUXdhUl3KAOUMZ7+TQI7glccFXpFIRxRfx39RppzticOFi6WIBKB/jc
+	 UIttMkoSKL3LA==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id AAC83C04E27;
+	Fri,  2 Feb 2024 20:43:30 +0000 (UTC)
+Subject: Re: [git pull] device mapper fixes for 6.8-rc3
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <Zb0txmt9K4MMHst3@redhat.com>
+References: <Zb0txmt9K4MMHst3@redhat.com>
+X-PR-Tracked-List-Id: <linux-block.vger.kernel.org>
+X-PR-Tracked-Message-Id: <Zb0txmt9K4MMHst3@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.8/dm-fixes
+X-PR-Tracked-Commit-Id: 0a9bab391e336489169b95cb0d4553d921302189
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 6897cea7183762b4bc97b0ed1b75274ece9d518b
+Message-Id: <170690661069.32059.3542305549821282474.pr-tracker-bot@kernel.org>
+Date: Fri, 02 Feb 2024 20:43:30 +0000
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@lists.linux.dev, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH v3 2/4] dax: Check for data cache aliasing at runtime
-Content-Language: en-US
-To: Dan Williams <dan.j.williams@intel.com>, Arnd Bergmann <arnd@arndb.de>,
- Dave Chinner <david@fromorbit.com>
-Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>,
- Linus Torvalds <torvalds@linux-foundation.org>, linux-mm@kvack.org,
- linux-arch@vger.kernel.org, Vishal Verma <vishal.l.verma@intel.com>,
- Dave Jiang <dave.jiang@intel.com>, Matthew Wilcox <willy@infradead.org>,
- Russell King <linux@armlinux.org.uk>, nvdimm@lists.linux.dev,
- linux-cxl@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- dm-devel@lists.linux.dev
-References: <20240131162533.247710-1-mathieu.desnoyers@efficios.com>
- <20240131162533.247710-3-mathieu.desnoyers@efficios.com>
- <65bab567665f3_37ad2943c@dwillia2-xfh.jf.intel.com.notmuch>
- <0a38176b-c453-4be0-be83-f3e1bb897973@efficios.com>
- <65bac71a9659b_37ad29428@dwillia2-xfh.jf.intel.com.notmuch>
- <f1d14941-2d22-452a-99e6-42db806b6d7f@efficios.com>
- <65bd284165177_2d43c29443@dwillia2-mobl3.amr.corp.intel.com.notmuch>
- <6bdf6085-101d-47ef-86f4-87936622345a@efficios.com>
- <65bd457460fb1_719322942@dwillia2-mobl3.amr.corp.intel.com.notmuch>
- <5e838147-524c-40e5-b106-e388bf4e549b@efficios.com>
- <65bd4d18cab98_7193229421@dwillia2-mobl3.amr.corp.intel.com.notmuch>
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-In-Reply-To: <65bd4d18cab98_7193229421@dwillia2-mobl3.amr.corp.intel.com.notmuch>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
 
-On 2024-02-02 15:14, Dan Williams wrote:
-> Mathieu Desnoyers wrote:
-> [..]
->>> Thanks for that. All of those need to be done before the fs goes live
->>> later in virtio_device_ready(), but before that point nothing should be
->>> calling into virtio_fs_dax_ops, so as far as I can see it is safe to
->>> change the order.
->>
->> Sounds good, I'll do that.
->>
->> I will soon be ready to send out a RFC v4, which is still only
->> compiled-tested. Do you happen to have some kind of test suite
->> you can use to automate some of the runtime testing ?
-> 
-> There is a test suite for the pmem, dm, and dax changes
-> (https://github.com/pmem/ndctl?tab=readme-ov-file#unit-tests), but not
-> automated unfortunately. The NVDIMM maintainer team will run that before
-> pushing patches out to the fixes branch if you just want to lean on
-> that. For the rest I think we will need to depend on tested-by's from
-> s390 + virtio_fs folks, and / or sufficient soak time in linux-next.
+The pull request you sent on Fri, 2 Feb 2024 13:00:38 -0500:
 
-I suspect this will be necessary. There are just so many combinations
-of architectures, drivers and filesystems involved here that I don't
-think it is realistic to try to do all this testing manually on my own.
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.8/dm-fixes
 
-I prefer to voice this up front, so there are no misplaced expectations
-about testing.
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/6897cea7183762b4bc97b0ed1b75274ece9d518b
 
-Thanks,
-
-Mathieu
-
+Thank you!
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-https://www.efficios.com
-
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
