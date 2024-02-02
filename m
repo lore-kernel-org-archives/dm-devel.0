@@ -1,63 +1,120 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 075571754B;
-	Fri,  2 Feb 2024 20:43:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DF1981746;
+	Fri,  2 Feb 2024 21:00:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706906611; cv=none; b=HEN4YYEInJz7IQ9kuzY2cKexpnf4LMa2pzegTWyHhKCDwH7GNHJSESWEQKBqyU5875kocqTF63q2CSxVBXFGkabwXoHWaFhA+xqk0aYJ/zn/BSfUp3QNga6NlioQkV2Iw9AI5e0y+Vor3TQaLCEbIaToCMZYvsuQ1Y7hvXCW4V0=
+	t=1706907630; cv=none; b=nAthDv7G4Tbhk/TdfVVXvKAgBuk6KTJIa+wDINVuBggpl7unx5qsCCzWh8kCbXkaIaBK7j9p9TPG89zcx82Tm5UbwJFfnhAl8njrewvyTfTgYsN8KnK97r61BV4S53BmlSD4QRYvIJUHJXu4Vo55b5EudyCHJGv7g+30AvxQwjE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706906611; c=relaxed/simple;
-	bh=DLuDMpCPPrKDyYAtyBFK8Wy9rQ6rfmQJ25hjH+ShDBE=;
-	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=OrBQe3yn72Guw7Ehy7CpRl1zkEse/qDrQ5gZsPGYc+GVT1qzmaUnlwJr5PzENBGnikk4G2pyVZKTBv9HPBd+K+pnO6Q1MNALojQs4EjoWo8Ji6jmymL/NnwkOSRPuVrQVe7whIPymfs364rGwzI486doJeGvVWas135m0G2GvfA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TU9FLAnh; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1706907630; c=relaxed/simple;
+	bh=C9trdHKUBo0wvYK5DBzsNfOU9QCkPyPGO5T7CJRyOKU=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=FHR6He9pjXOluKumrZhRv+VE+B/tFThGYwg02/YxcZCzXULwzbzh2uXJ3ZCaXDMrv9Sb53yQPeTbgvCIQ3YDBm6M2b7Jzzoxs3d4EtHGgY8nVufni5/F2ImscVsYHQNdySiWXuBNXvtW6CN98eDUxggqr4nsO5wdCqPBQUAi2SQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=olkQ8vHB; arc=none smtp.client-ip=167.114.26.122
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TU9FLAnh"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id CCAD3C433F1;
-	Fri,  2 Feb 2024 20:43:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1706906610;
-	bh=DLuDMpCPPrKDyYAtyBFK8Wy9rQ6rfmQJ25hjH+ShDBE=;
-	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
-	b=TU9FLAnhSHsc/n/vawBb3CUCGDmgzFkBauF8awEQxpoP/q68F9vAkWB6eVpIOA2ok
-	 BKcYLCcGDlZsaltjOThdFCe+lC2mLSgk79tmjhxGIOum+2v1u4yKWrTJZCo3Cm7YsW
-	 vgiWhwqKL9S22eonLdJW2aX/SEVTEDiRHVsOw9039xjgga+J9RWx8tf6y5dsmLhEh2
-	 YJyIfkQPRWp6IpKc2z4ux68NQvSJ4+5qwybGpLvrnGrQoRLcsvo5R+XqhC6Hl3e5Mz
-	 xPoXGSnhDIVcUXdhUl3KAOUMZ7+TQI7glccFXpFIRxRfx39RppzticOFi6WIBKB/jc
-	 UIttMkoSKL3LA==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id AAC83C04E27;
-	Fri,  2 Feb 2024 20:43:30 +0000 (UTC)
-Subject: Re: [git pull] device mapper fixes for 6.8-rc3
-From: pr-tracker-bot@kernel.org
-In-Reply-To: <Zb0txmt9K4MMHst3@redhat.com>
-References: <Zb0txmt9K4MMHst3@redhat.com>
-X-PR-Tracked-List-Id: <linux-block.vger.kernel.org>
-X-PR-Tracked-Message-Id: <Zb0txmt9K4MMHst3@redhat.com>
-X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.8/dm-fixes
-X-PR-Tracked-Commit-Id: 0a9bab391e336489169b95cb0d4553d921302189
-X-PR-Merge-Tree: torvalds/linux.git
-X-PR-Merge-Refname: refs/heads/master
-X-PR-Merge-Commit-Id: 6897cea7183762b4bc97b0ed1b75274ece9d518b
-Message-Id: <170690661069.32059.3542305549821282474.pr-tracker-bot@kernel.org>
-Date: Fri, 02 Feb 2024 20:43:30 +0000
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@lists.linux.dev, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="olkQ8vHB"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
+	s=smtpout1; t=1706907627;
+	bh=C9trdHKUBo0wvYK5DBzsNfOU9QCkPyPGO5T7CJRyOKU=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=olkQ8vHBDWpgDSm0PdwKANERNaZOsyNCOuQxCFFGVBsLD7Ag/CgydWr3+PnCboGWb
+	 +hIPSsfeUgy6KlyuCCuiuPfERsK/mtMVZeN3F6hj24iXvLlqHKvWVMnhN+ewVfA/AA
+	 9dSCFnRtTxiVUJqwb3fx9CGtZtzDHf3fYXJLNUajd1vzr7dv1k2M3iWpfI25zwFG2Y
+	 1sm0tOKrJZdLKX/2FhGszkqnQD/SyOyzGMpy77l8cbhKZDwxeWGl8+MLyS8GNQ1C4F
+	 KSQLZfAtqgBbSQzv5qJelyGnvDGQfHgCKVKnpkAWAutmUaRMOzjk4YKBMbe1yJBvkG
+	 KJbJ7UojvG1Ww==
+Received: from thinkos.internal.efficios.com (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
+	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TRSpg0YQmzWvD;
+	Fri,  2 Feb 2024 16:00:27 -0500 (EST)
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To: Dan Williams <dan.j.williams@intel.com>,
+	Arnd Bergmann <arnd@arndb.de>,
+	Dave Chinner <david@fromorbit.com>
+Cc: linux-kernel@vger.kernel.org,
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Vishal Verma <vishal.l.verma@intel.com>,
+	Dave Jiang <dave.jiang@intel.com>,
+	Matthew Wilcox <willy@infradead.org>,
+	Russell King <linux@armlinux.org.uk>,
+	linux-arch@vger.kernel.org,
+	linux-cxl@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-mm@kvack.org,
+	linux-xfs@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	nvdimm@lists.linux.dev,
+	linux-s390@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: [RFC PATCH v4 01/12] nvdimm/pmem: Fix leak on dax_add_host() failure
+Date: Fri,  2 Feb 2024 16:00:08 -0500
+Message-Id: <20240202210019.88022-2-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20240202210019.88022-1-mathieu.desnoyers@efficios.com>
+References: <20240202210019.88022-1-mathieu.desnoyers@efficios.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-The pull request you sent on Fri, 2 Feb 2024 13:00:38 -0500:
+Fix a leak on dax_add_host() error, where "goto out_cleanup_dax" is done
+before setting pmem->dax_dev, which therefore issues the two following
+calls on NULL pointers:
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.8/dm-fixes
+out_cleanup_dax:
+        kill_dax(pmem->dax_dev);
+        put_dax(pmem->dax_dev);
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/6897cea7183762b4bc97b0ed1b75274ece9d518b
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Vishal Verma <vishal.l.verma@intel.com>
+Cc: Dave Jiang <dave.jiang@intel.com>
+Cc: Matthew Wilcox <willy@infradead.org>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Russell King <linux@armlinux.org.uk>
+Cc: linux-arch@vger.kernel.org
+Cc: linux-cxl@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: linux-xfs@vger.kernel.org
+Cc: dm-devel@lists.linux.dev
+Cc: nvdimm@lists.linux.dev
+---
+ drivers/nvdimm/pmem.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-Thank you!
-
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 4e8fdcb3f1c8..9fe358090720 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -566,12 +566,11 @@ static int pmem_attach_disk(struct device *dev,
+ 	set_dax_nomc(dax_dev);
+ 	if (is_nvdimm_sync(nd_region))
+ 		set_dax_synchronous(dax_dev);
++	pmem->dax_dev = dax_dev;
+ 	rc = dax_add_host(dax_dev, disk);
+ 	if (rc)
+ 		goto out_cleanup_dax;
+ 	dax_write_cache(dax_dev, nvdimm_has_cache(nd_region));
+-	pmem->dax_dev = dax_dev;
+-
+ 	rc = device_add_disk(dev, disk, pmem_attribute_groups);
+ 	if (rc)
+ 		goto out_remove_host;
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/prtracker.html
+2.39.2
+
