@@ -1,32 +1,45 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 85571F9C1
-	for <dm-devel@lists.linux.dev>; Sat,  3 Feb 2024 03:56:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from mail-pj1-f49.google.com (mail-pj1-f49.google.com [209.85.216.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A0B1A12B60
+	for <dm-devel@lists.linux.dev>; Sat,  3 Feb 2024 04:09:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706932615; cv=none; b=DgCtXBXctJDf4OVkiqNCZX+T6iIwt2pNvR7KTE3NCOzHmYIlKvX5+MbGhK8UXF3x/9A8qY/IhIj9zbFE31QQBQ6jaILgQKzvn0C3rOv22+YNW+Z54c/EcS1DNqHTRjL2FVONpttcCW5f8Kt32IVwkJriY/o2d+ylay/PErrCNVk=
+	t=1706933353; cv=none; b=SRy4fBmsRIMiANovuNj+1SbhWBECjONgFk/lAerMfjVkTpHwJ7To9TR+t7bpoXOmcStmt0ryVLmDqcRGSxHhTb8NjieEMfOTT7DLU/gEGZ6UWxsqCBtgK7DkZ8O8orsLemGlAuQ4fmFAhirHpfex/v2FUAv/zuDBJdXJHceiiKU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706932615; c=relaxed/simple;
-	bh=ZxPkhkdkh/qzOmQ6tzCINtYqo1Amarn570/0hPuCEws=;
+	s=arc-20240116; t=1706933353; c=relaxed/simple;
+	bh=Sd839QDrFGVIVEc2Tq2it3jl+Ag+qEE1WIjYvmCvaNE=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=UStBvtmQ/wopxjlV5H+YUxYq59dhQIC9Q8OIOqgUfZGWFwtyVPy8NINvdX3ERrqWbnwv6jawFe9ao64s0mURfk2YhapDQqMt/GUj02ctDVvmQrmGaH0wwZUFsiijQI7omQkc5MzARyKVdSq3OVD94Vpt0FyWZ6pD/eFLGxigIVg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=m/clajfx; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="m/clajfx"
-Received: from [10.137.106.151] (unknown [131.107.8.87])
-	by linux.microsoft.com (Postfix) with ESMTPSA id E44F1206FD0D;
-	Fri,  2 Feb 2024 19:56:53 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com E44F1206FD0D
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1706932614;
-	bh=0jiNLQIjYZrK1snHh4U7Lo4wv1LyM7JCqFc7TqpIT2U=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=m/clajfxDfxFvAcTDd46NYouM6uhFugKVWR8uHm4sE6EFTynnuvqsAFU7GTarPWIH
-	 y7EQZ7z1rcxftAwNX6cuTOp1ixL13ykPZ5kzqZcWa3CA9w9UEpQl0TTQWWnYBc/fAu
-	 sCvZECuOFeoyIVWglZe2vjeuBACkQz0fknf7owY4=
-Message-ID: <dd6f4726-692b-4537-8bb4-a0466f24d713@linux.microsoft.com>
-Date: Fri, 2 Feb 2024 19:56:53 -0800
+	 In-Reply-To:Content-Type; b=jOmOoLGtghnQiwF4WR1c3r8+dEoe25+yb3s4xkTMET2OjchgCSSkPC4D/KSGVCTe1jxlovbIhJJUrwUk99Ihkpx28KMagaDfCTfBlfmyX7Vcm3xc6SzwrU5K8BT4ut0eLvigHTYJp7y3nwC+8mexIX7/FM+dKEG7EI0kTl3szjY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.216.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-pj1-f49.google.com with SMTP id 98e67ed59e1d1-296658e6545so115648a91.3
+        for <dm-devel@lists.linux.dev>; Fri, 02 Feb 2024 20:09:11 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1706933351; x=1707538151;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=H3xNjxAc7RvjEF8zQJCF+Dz0udROGOGKCMXAfjzIDs0=;
+        b=unQhmN4XGH3azCIVNSwTbX+tw4B44k4Av56ExFsrYgNDsULAPmPEMv/Ju/Gpj/UN0i
+         puUN8KApWwaohK3rAv3dCNDIQTFbPxKFJiU8w16i09wmd0oamRIpQ2uDagWwCdFDLd+h
+         M97EIP6hQQxHQZWF/81nMObyg89r8BRtaYN9ZGGgVYaYarumDU/3O6UTF1b2gxssomrw
+         WbTR5eH20pzHUayHCaIPBtwMe6oTsMKS89VkiSq1HE5tQH185XBeJX8wtC3fhJ2NuTWn
+         GUS1uV/Okei04Q86nv26JzaQPGwF9UPpK2X9s5NN16Gv9qIwRwq0F+n+WqfYMo/iVy+a
+         ArIA==
+X-Gm-Message-State: AOJu0YwUmOLmtOrb3NyJsSY54Ul/TKb7YTWX29CSW1yiKPlxWbR/0We/
+	HOGhUNAB0k4nb2WgvSExPesORGE/iqMwigRkPoND1qhLAI+tMUpU
+X-Google-Smtp-Source: AGHT+IFtrJAHFkRzXhfegN5ot9PSsokgayx5PV+Ui66N6omkZ+Dckp+J0tEWSC4T+PBA4FqJveeLCw==
+X-Received: by 2002:a17:90b:4d11:b0:296:4fc5:9982 with SMTP id mw17-20020a17090b4d1100b002964fc59982mr2384531pjb.37.1706933350701;
+        Fri, 02 Feb 2024 20:09:10 -0800 (PST)
+X-Forwarded-Encrypted: i=0; AJvYcCXvftWDj7zTmOV7xhmVCvwZmF4ZQ/RMiSVlWnE8yNQjA7jaa2dsrJkBWre8Hqkm3sHyOX0V30/wyqAVudhMKVhRfgw0IPL7n/ZMUqij5b6VZGaOh1Ge+2+zlX5fEql959CXSZJ4vsYpWfzpBHipnQBxUhYvxHV6W8ZF5jJNPo3gW8SiemFlNs2NsChM8xZPEnUcEtvqcpDlONI1ZYGhQXgKZIjG0g6IyOQWVXlkabNmOa76i2/ocuizLxZOBjKHvek7NA==
+Received: from [192.168.51.14] (c-73-231-117-72.hsd1.ca.comcast.net. [73.231.117.72])
+        by smtp.gmail.com with ESMTPSA id nd6-20020a17090b4cc600b00295c60991dasm866496pjb.8.2024.02.02.20.09.09
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 02 Feb 2024 20:09:10 -0800 (PST)
+Message-ID: <9da5baed-acb6-4402-8123-0874c7a08bd7@acm.org>
+Date: Fri, 2 Feb 2024 20:09:06 -0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -34,91 +47,39 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH v12 12/20] dm verity: set DM_TARGET_SINGLETON feature
- flag
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
- tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
- eparis@redhat.com, paul@paul-moore.com, linux-doc@vger.kernel.org,
- linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org,
- linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org
-References: <1706654228-17180-1-git-send-email-wufan@linux.microsoft.com>
- <1706654228-17180-13-git-send-email-wufan@linux.microsoft.com>
- <Zb05y2cl3T9rxRJZ@redhat.com>
+Subject: Re: [PATCH 03/26] block: Introduce bio_straddle_zones() and
+ bio_offset_from_zone_start()
 Content-Language: en-US
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <Zb05y2cl3T9rxRJZ@redhat.com>
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>
+References: <20240202073104.2418230-1-dlemoal@kernel.org>
+ <20240202073104.2418230-4-dlemoal@kernel.org>
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20240202073104.2418230-4-dlemoal@kernel.org>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
+On 2/1/24 23:30, Damien Le Moal wrote:
+> Implement the inline helper functions bio_straddle_zones() and
+> bio_offset_from_zone_start() to respectively test if a BIO crosses a
+> zone boundary (the start sector and last sector belong to different
+> zones) and to obtain the oofset from a zone starting sector of a BIO.
 
+oofset -> offset
+> +static inline bool bio_straddle_zones(struct bio *bio)
+> +{
+> +	return bio_zone_no(bio) !=
+> +		disk_zone_no(bio->bi_bdev->bd_disk, bio_end_sector(bio) - 1);
+> +}
 
-On 2/2/2024 10:51 AM, Mike Snitzer wrote:
-> On Tue, Jan 30 2024 at  5:37P -0500,
-> Fan Wu <wufan@linux.microsoft.com> wrote:
-> 
->> The device-mapper has a flag to mark targets as singleton, which is a
->> required flag for immutable targets. Without this flag, multiple
->> dm-verity targets can be added to a mapped device, which has no
->> practical use cases and will let dm_table_get_immutable_target return
->> NULL. This patch adds the missing flag, restricting only one
->> dm-verity target per mapped device.
->>
->> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
->>
->> ---
->> v1-v10:
->>    + Not present
->>
->> v11:
->>    + Introduced
->>
->> v12:
->>    + No changes
->> ---
->>   drivers/md/dm-verity-target.c | 2 +-
->>   1 file changed, 1 insertion(+), 1 deletion(-)
->>
->> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
->> index 14e58ae70521..66a850c02be4 100644
->> --- a/drivers/md/dm-verity-target.c
->> +++ b/drivers/md/dm-verity-target.c
->> @@ -1507,7 +1507,7 @@ int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest, unsigned i
->>   
->>   static struct target_type verity_target = {
->>   	.name		= "verity",
->> -	.features	= DM_TARGET_IMMUTABLE,
->> +	.features	= DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
->>   	.version	= {1, 9, 0},
->>   	.module		= THIS_MODULE,
->>   	.ctr		= verity_ctr,
->> -- 
->> 2.43.0
->>
->>
-> 
-> It is true this change will cause dm_table_get_immutable_target() to
-> not return NULL, but: I'm curious how that is meaningful in the
-> context of dm-verity? (given the only caller of
-> dm_table_get_immutable_target() is request-based DM code in DM core.)
-> 
-> Thanks,
-> Mike
-
-Sorry for the confusion. The reference of 
-dm_table_get_immutable_target() is only to justify an immutable target 
-should also be a 
-singleton(https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/drivers/md/dm-table.c#n982). 
-It is not directly related to dm-verity.
-
-In the context of dm-verity. I found although veritysetup does ensure 
-the dm-verity target as a singleton, users can still use dmsetup to 
-configure multiple dm-verity targets within a single map table. This 
-leads to a situation where only the first target can be accessed. 
-Therefore to prevent this and similar misuse, I propose introducing 
-DM_TARGET_SINGLETON to allow the kernel to enforce dm-verity targets as 
-singletons.
+It seems to me that the above code is not intended to handle the case
+where bi_size == 0, as is the case for an empty flush request. Should a
+comment be added above this function or do we perhaps need to add a
+WARN_ON_ONCE() statement?
 
 Thanks,
-Fan
+
+Bart.
