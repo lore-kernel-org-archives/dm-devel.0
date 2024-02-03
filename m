@@ -1,59 +1,59 @@
-Received: from mail-qt1-f170.google.com (mail-qt1-f170.google.com [209.85.160.170])
+Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com [209.85.219.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 426F217593
-	for <dm-devel@lists.linux.dev>; Sat,  3 Feb 2024 22:25:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30D8817BC4
+	for <dm-devel@lists.linux.dev>; Sat,  3 Feb 2024 22:25:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706999118; cv=none; b=kUBRbG/S5ax+KvQPwNU+Hzu3G8l2CcZCo16sQb1r3mn/tjOWdklsRGxgfGefo27sV0JvV7sBotmineTvgZefhuLnLvTCa6EsW6lFbqtC6kZJ9JVgQraAFhPadHu9Tf5Gg/YI25K4HgDP/RVsmlUmyCa26PJ8KSA/+gfQevtDncA=
+	t=1706999120; cv=none; b=GIms3LGURGb9YOVf+bP0sQ9aC6O9Fqx04F7pTCfjCOZfmKJxdHpKPHTsHheyqCtLbzw2MWImIGbTjXasJpq7NwQ22c3KS8+iP24b4jaOKLp8gEVW1oJo2VlzpfTkadMMdFDsvomuC0KY/OQufD4a/KwegLWhjnh8rZxIUSx5QgU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706999118; c=relaxed/simple;
-	bh=+fSeNkwdSlLWMIl3lzfyk6Ik8ik57S7jL/iU5RejReE=;
+	s=arc-20240116; t=1706999120; c=relaxed/simple;
+	bh=SfIYK1su40Btbzwh9h/WPttvVQMpLhlqw0vBaWGjdhM=;
 	h=Date:Message-ID:MIME-Version:Content-Type:Content-Disposition:
-	 From:To:Cc:Subject:References:In-Reply-To; b=QzLAGYvwufShTgPVic2WpQQ0Xx9RiKyskjzKQPUbMAU6HzgpHGoAAHP+/7FPssPyyANlO2rjDIjiww/qBapXpqNQqoQ2Ncgwc5xeAuXOXyQKLwgzUDPXQSmPT/WtCF+dQFVJR+8bp4QbrS8QS9ScHBkZSk2SAeNg/+op9PLheP8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=StIlXd2V; arc=none smtp.client-ip=209.85.160.170
+	 From:To:Cc:Subject:References:In-Reply-To; b=OQt6uBJmYfrqv+2uVYZ9Ajk4XRpH+3L/HEh9AvG3sCWF6m8vcqPnw7RotkSMd96J+Gv8p4IBZjSyohPVXhbwgxy81r/U7sXXfwTk0qfwlelUUbhkNK7UOyBcVWoJmxRV2XZAQAp6HldujUfXt1HTQ6XkcacdhqBf/C+UU9yjXro=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=ATSy99A3; arc=none smtp.client-ip=209.85.219.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="StIlXd2V"
-Received: by mail-qt1-f170.google.com with SMTP id d75a77b69052e-42aadddeaf8so24875301cf.3
-        for <dm-devel@lists.linux.dev>; Sat, 03 Feb 2024 14:25:14 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="ATSy99A3"
+Received: by mail-qv1-f47.google.com with SMTP id 6a1803df08f44-6869233d472so17813326d6.2
+        for <dm-devel@lists.linux.dev>; Sat, 03 Feb 2024 14:25:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1706999113; x=1707603913; darn=lists.linux.dev;
+        d=paul-moore.com; s=google; t=1706999115; x=1707603915; darn=lists.linux.dev;
         h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
          :content-disposition:mime-version:message-id:date:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=gzyXztQxdq2bE3Xby4PIQ2YJXTmtNHMMsda74TWMo30=;
-        b=StIlXd2VGXWJuHVXHSRP4KWOXjT55IVBqdLtj/aTs2H3GYFEwJBh2atHDJnwHvJ20/
-         rDnECraufsWEylRz4vrEoTFgTWvbWqn8qUs+vCpwfLyu/wAbwMiUWN+Dn5DV/M/Rwmja
-         7FYyF//ysRu2aa0mBmsAWni5pRCSHF69+2hgnGNAxHfzDp0/ZXKPIJKpmDpphf4HDODf
-         mmf8g5fdkGvyu3B4a3JBKnG5YGoOpRv+UCE2PS09CvG5IqPJBlhSjDh9+th/jza/2o9l
-         pHWdrnZ1l7A/o0XID1l9EWXHNiuazEg1P+mIwWjfJTUlzcuneEneMAbwUp3/t7zh9UO6
-         3KHQ==
+        bh=eYMBgL8MVRc+c8Obik/r6XMkhyTvtmEMtGv6GQz3E8M=;
+        b=ATSy99A3qJfALTqD98LamEHVqKdHrlE7RH9OxX4uB13wKaL0p31JpFS22Qa8hCA+d6
+         3mY4sswe/2gi6HTczbNlfIYexAk8Oc1WhvqUoKVW8HwztQNdgihpZqSjL6R7U2yA1/E4
+         UW1lWNeK82zjIpNBG8RfZRTw8X5J23KGs5f9yNYH5lJkzZkxlU9g9ij3CBAPJRprw5lk
+         PAfQcR8bSc7aPr1BYej55XD6kru5SJlkqNP2hZ9pN46aQlAM6WBv6OgxGQoRc0cZY3ow
+         Te75XgxLozdsPuQxSFX8S2wegYqqrKPvoCwwFi056VXTc9uiZS3w1PDRySIvsvP1gUA+
+         qtZg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706999113; x=1707603913;
+        d=1e100.net; s=20230601; t=1706999115; x=1707603915;
         h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
          :content-disposition:mime-version:message-id:date:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=gzyXztQxdq2bE3Xby4PIQ2YJXTmtNHMMsda74TWMo30=;
-        b=BIsMJbvxMZse/Iy2QT2NuUwBNZfOZ9eayOdF/zWoSAQ+r6Jia+3o9RgoMlHdFxZZq0
-         WvHfkHRt3N2Ljp1JqGWEa3UouWZjecY4J7D5hb8fmVeapRQWRVfcR4OQmOEa3GBQn6Wr
-         WjA7NnoA8IhrGo+9xCRiRF2EgY/0GhncXjIN/vwH2V2l3k004ldmYGJzw5bUlMyr/Kk/
-         bjIbLO1YcDk1e5YDXvcZFLsp8QC6ZeGbPf/3Rm51DxOwOTbtD26EN6cqsaa7mvkeu7/n
-         QafY/USz4Y3NoeyOYUmNjHaJT+I7KiX9ZNINV3FwUsT4Uuwrj1OWDxl32P0EZ5zM2Sr6
-         FYbQ==
-X-Gm-Message-State: AOJu0Yxv4uQrhNDveXHwayapzLIguOshKUHW1FdqMWUqU+un6L4Fgeyg
-	zDgQbPGyVyk19a0r2qA/zh2bgg+key0tD8QEE3L47vV3+iTXBpBTQfoo6gTN0Q==
-X-Google-Smtp-Source: AGHT+IHeV0TTBdPvDJGP0j5TZ9xTE9saBj3M/xPKvbrqZXiCbyvSYP52bdso1f7HHS95Gz7TqHO/GA==
-X-Received: by 2002:a05:622a:24f:b0:42c:c26:78f5 with SMTP id c15-20020a05622a024f00b0042c0c2678f5mr2911367qtx.46.1706999113409;
-        Sat, 03 Feb 2024 14:25:13 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCVuY0T3ip8Fsoc4YOXsxEiSML+PXXAj7BdcQERzWW7YMnNONZ7M6to4B/uXE6/Q2IM9ijQ16YLuMXfn6iwWxGIX1ywdnqnYWflhqV1XouK2Irav754ejbgfiIVI2DLhZQPNulUp9qVHD8e+4B2fq+atfCTExNLldLSVwSGfyMIvarJJTv30NFr3ntoR3iqHnex23Jm7vWUEAddJXXnlITb6S9PKA625NAXJfBa/iBszvAsCpgg1O7m9MP1rsTT+qYHN6TsNkLFIlUpfWsCo6hF3kYwVjCMWh0zzqqfG6hM0+cCI7mRqZKZRdbo0f57rmoX8x4usfqtgebxmGD0+bmGLeFqdaMVJSV7ADTG1asx+XPfamgIMQae75XkpYXrNAu6/4o+eHD1J746/OiQIpMJwhz8C/6fHh+bL+cBWQ8qoIr5Cx1Hd6rswKRawTC0U95+t0O+DIO4SUeO7nzDW8NIQp5leTSzNkIlPH4y4ZBGmgZYseDBvFSxuIVQcL+yH5tOyDeW7sGBFRkyup+3VY/OQ3ihjS1empZSwya8w5sKY5Mp8UZebToJ7jsHYmBxKjwzgk2S9874rUdk6CwfUbOJ2GKoQUhjX8UBpJ9vzOvTP5AbOjb/ZvJfH
+        bh=eYMBgL8MVRc+c8Obik/r6XMkhyTvtmEMtGv6GQz3E8M=;
+        b=d6PEUfjkpQ183QRkC6s4SPBBTdUqMXJSm3SBLMjUE9BSf+uGtvpz9NgOHKp862YGbJ
+         aCnzkdgKYeaVZnVqm/Xss7WcuMg8ZqbqIFKzzQrp1074F9cfuppHyqq9p6nBy1Hi497q
+         qonz14hUBhtRq/apSqW6pqOD52bvQQ9znRizooURyHPQGhD/0PEUxge2+0bF9cZ6oZce
+         Cpk5oLct6yA8TC1hkAE8HRpF/IDBJCTxBjDzu3I9Q2UpY8zNwfIAwwKKVxfw0NrB1LiK
+         BdE89wN0pBWuwnCS5WtZKayZerbw0I3iiOJ0iR0TIpAzywlOkEMNlOsZ38RABM8C1JlB
+         zGyw==
+X-Gm-Message-State: AOJu0Yy1CdfoVzRmLcOc5FMcfCj2lCqoA2v9KAx9IRkhnVq9QLJTsLs2
+	SM4IkqK8LR9Ma75Tv7sqSsKuDa4IWfZNTuHme6Y4MLR1wPDMWRon94PWqsQjbA==
+X-Google-Smtp-Source: AGHT+IFonCheK9ok4vSWJlZhijrFa0a0OwwetL207sTElMhHj+g0ohLs2URRe9XQtpkgkwCWh7FbGQ==
+X-Received: by 2002:ad4:4ea1:0:b0:68c:92cb:31d1 with SMTP id ed1-20020ad44ea1000000b0068c92cb31d1mr3563850qvb.22.1706999115350;
+        Sat, 03 Feb 2024 14:25:15 -0800 (PST)
+X-Forwarded-Encrypted: i=0; AJvYcCVeTtSs7m2zq+X4vVccPH0Lh0uJFawcGHKNxhIksdLH3uIcDXBjnU7CFZiYLkws0aqU9yqs6KO/2dF1WPwe2mbE/wIR2jKgeYsdvQi4Cgh5cFbpr2u0pHh1j58dsGoxmrtS2VKy1TQhsd6MdZr+m0otcAq69IGsJncSYNzGlDj9ZarrbPqTmvGQzB5ttBfL9Ek9JteSJYEzdhm9NHXzIve6Lbu9X3oHaaxVEVMG9utY7OFCe1bBV2NcNtCrM53YTVBPkfW1guTVLmXV+O/Ih1o8LXBK8GWk4ltLYvN2K5aEgItmvB6FAEBYmn8CkIdY1pipwUSx6J3E5DB+NjVK++DJMplUINL2OdXHKM4sK0yZLj/OatW/uGk4ubWqf01+KC2pRcUlLF8uuaILJ2AUB8Cq+ar1NAExM2V2ydZ+XVPaBc1CDcWSv2y0JvX1mZLpReRfzWMx9tgBB+E3ScOyb439LZGVLJSksqIrns9bU1VYIb8MWW8TxRRYgQ0XHoq1bBqW9B+UrEXYzDwM2QV5R+9HQDTxYl8GbPSOj59Ps6o5YUnEpd3OqqVFIh03bXVpcDgihZ3LJSXzj830Oj5popwCoaGM24jW07UMSEaIWKdR4wJLx1gTnt2T
 Received: from localhost ([70.22.175.108])
-        by smtp.gmail.com with ESMTPSA id j13-20020ac84f8d000000b0042ab59ccd6csm2163130qtw.4.2024.02.03.14.25.13
+        by smtp.gmail.com with ESMTPSA id pc5-20020a056214488500b0068c968c3b33sm637500qvb.20.2024.02.03.14.25.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 03 Feb 2024 14:25:13 -0800 (PST)
-Date: Sat, 03 Feb 2024 17:25:12 -0500
-Message-ID: <1e8f6bbac94d62da330262af871aaa98@paul-moore.com>
+        Sat, 03 Feb 2024 14:25:14 -0800 (PST)
+Date: Sat, 03 Feb 2024 17:25:14 -0500
+Message-ID: <f57cb0772ff39a00ec578e178e1b8c38@paul-moore.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -65,163 +65,138 @@ Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 From: Paul Moore <paul@paul-moore.com>
 To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>, Fan Wu <wufan@linux.microsoft.com>
-Subject: Re: [PATCH RFC v12 10/20] ipe: add permissive toggle
-References: <1706654228-17180-11-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1706654228-17180-11-git-send-email-wufan@linux.microsoft.com>
+Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>, Deven Bowers <deven.desai@linux.microsoft.com>
+Subject: Re: [PATCH RFC v12 17/20] ipe: enable support for fs-verity as a trust  provider
+References: <1706654228-17180-18-git-send-email-wufan@linux.microsoft.com>
+In-Reply-To: <1706654228-17180-18-git-send-email-wufan@linux.microsoft.com>
 
 On Jan 30, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
 > 
-> IPE, like SELinux, supports a permissive mode. This mode allows policy
-> authors to test and evaluate IPE policy without it effecting their
-> programs. When the mode is changed, a 1404 AUDIT_MAC_STATUS
-> be reported.
+> Enable IPE policy authors to indicate trust for a singular fsverity
+> file, identified by the digest information, through "fsverity_digest"
+> and all files using fsverity's builtin signatures via
+> "fsverity_signature".
 > 
-> This patch adds the following audit records:
+> This enables file-level integrity claims to be expressed in IPE,
+> allowing individual files to be authorized, giving some flexibility
+> for policy authors. Such file-level claims are important to be expressed
+> for enforcing the integrity of packages, as well as address some of the
+> scalability issues in a sole dm-verity based solution (# of loop back
+> devices, etc).
 > 
->     audit: MAC_STATUS enforcing=0 old_enforcing=1 auid=4294967295
->       ses=4294967295 enabled=1 old-enabled=1 lsm=ipe res=1
->     audit: MAC_STATUS enforcing=1 old_enforcing=0 auid=4294967295
->       ses=4294967295 enabled=1 old-enabled=1 lsm=ipe res=1
-> 
-> The audit record only emit when the value from the user input is
-> different from the current enforce value.
+> This solution cannot be done in userspace as the minimum threat that
+> IPE should mitigate is an attacker downloads malicious payload with
+> all required dependencies. These dependencies can lack the userspace
+> check, bypassing the protection entirely. A similar attack succeeds if
+> the userspace component is replaced with a version that does not
+> perform the check. As a result, this can only be done in the common
+> entry point - the kernel.
 > 
 > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 > ---
-> v2:
->   + Split evaluation loop, access control hooks,
->     and evaluation loop from policy parser and userspace
->     interface to pass mailing list character limit
-> 
-> v3:
->   + Move ipe_load_properties to patch 04.
->   + Remove useless 0-initializations
->   + Prefix extern variables with ipe_
->   + Remove kernel module parameters, as these are
->     exposed through sysctls.
->   + Add more prose to the IPE base config option
->     help text.
->   + Use GFP_KERNEL for audit_log_start.
->   + Remove unnecessary caching system.
->   + Remove comments from headers
->   + Use rcu_access_pointer for rcu-pointer null check
->   + Remove usage of reqprot; use prot only.
->   + Move policy load and activation audit event to 03/12
-> 
-> v4:
->   + Remove sysctls in favor of securityfs nodes
->   + Re-add kernel module parameters, as these are now
->     exposed through securityfs.
->   + Refactor property audit loop to a separate function.
-> 
-> v5:
->   + fix minor grammatical errors
->   + do not group rule by curly-brace in audit record,
->     reconstruct the exact rule.
-> 
-> v6:
->   + No changes
+> v1-v6:
+>   + Not present
 > 
 > v7:
->   + Further split lsm creation into a separate commit from the
->     evaluation loop and audit system, for easier review.
->   + Propagating changes to support the new ipe_context structure in the
->     evaluation loop.
->   + Split out permissive functionality into a separate patch for easier
->     review.
->   + Remove permissive switch compile-time configuration option - this
->     is trivial to add later.
+>   Introduced
 > 
 > v8:
->   + Remove "IPE" prefix from permissive audit record
->   + align fields to the linux-audit field dictionary. This causes the
->     following fields to change:
->       enforce -> permissive
-> 
->   + Remove duplicated information correlated with syscall record, that
->     will always be present in the audit event.
->   + Change audit types:
->     + AUDIT_TRUST_STATUS -> AUDIT_MAC_STATUS
->       + There is no significant difference in meaning between
->         these types.
+>   * Undo squash of 08/12, 10/12 - separating drivers/md/ from security/
+>   * Use common-audit function for fsverity_signature.
+>   + Change fsverity implementation to use fsverity_get_digest
+>   + prevent unnecessary copy of fs-verity signature data, instead
+>     just check for presence of signature data.
+>   + Remove free_inode_security hook, as the digest is now acquired
+>     at runtime instead of via LSM blob.
 > 
 > v9:
->   + Clean up ipe_context related code
+>   + Adapt to the new parser
 > 
 > v10:
->   + Change audit format to comform with the existing format selinux is
->     using
->   + Remove the audit record emission during init to align with selinux,
->     which does not perform this action.
+>   + Update the fsverity get digest call
 > 
 > v11:
->   + Remove redundant code
+>   + No changes
 > 
 > v12:
->   + Remove redundant code
+>   + Fix audit format
+>   + Simplify property evaluation
 > ---
->  security/ipe/audit.c | 27 ++++++++++++++++--
->  security/ipe/audit.h |  1 +
->  security/ipe/eval.c  | 11 +++++--
->  security/ipe/eval.h  |  1 +
->  security/ipe/fs.c    | 68 ++++++++++++++++++++++++++++++++++++++++++++
->  5 files changed, 104 insertions(+), 4 deletions(-)
+>  security/ipe/Kconfig         |  13 +++++
+>  security/ipe/audit.c         |  25 ++++++++
+>  security/ipe/eval.c          | 108 ++++++++++++++++++++++++++++++++++-
+>  security/ipe/eval.h          |  10 ++++
+>  security/ipe/hooks.c         |  30 ++++++++++
+>  security/ipe/hooks.h         |   7 +++
+>  security/ipe/ipe.c           |  13 +++++
+>  security/ipe/ipe.h           |   3 +
+>  security/ipe/policy.h        |   3 +
+>  security/ipe/policy_parser.c |   8 +++
+>  10 files changed, 219 insertions(+), 1 deletion(-)
 > 
+> diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+> index 7afb1ce0cb99..9dd5c4769d79 100644
+> --- a/security/ipe/Kconfig
+> +++ b/security/ipe/Kconfig
+> @@ -30,6 +30,19 @@ config IPE_PROP_DM_VERITY
+>  	  that was mounted with a signed root-hash or the volume's
+>  	  root hash matches the supplied value in the policy.
+>  
+> +	  If unsure, answer Y.
+> +
+> +config IPE_PROP_FS_VERITY
+> +	bool "Enable property for fs-verity files"
+> +	depends on FS_VERITY && FS_VERITY_BUILTIN_SIGNATURES
+> +	help
+> +	  This option enables the usage of properties "fsverity_signature"
+> +	  and "fsverity_digest". These properties evaluates to TRUE when
+> +	  a file is fsverity enabled and with a signed digest or its
+> +	  diegst matches the supplied value in the policy.
+> +
+> +	  if unsure, answer Y.
+> +
+>  endmenu
+>  
+>  endif
 > diff --git a/security/ipe/audit.c b/security/ipe/audit.c
-> index 79b7af25085c..ed390d32c641 100644
+> index a4ad8e888df0..7e3372be3214 100644
 > --- a/security/ipe/audit.c
 > +++ b/security/ipe/audit.c
-> @@ -27,6 +27,9 @@
->  				    "new_active_pol_version=%hu.%hu.%hu "\
->  				    "new_policy_digest=" IPE_AUDIT_HASH_ALG ":"
+> @@ -60,6 +60,11 @@ static const char *const audit_prop_names[__IPE_PROP_MAX] = {
+>  	"dmverity_signature=FALSE",
+>  	"dmverity_signature=TRUE",
+>  #endif /* CONFIG_IPE_PROP_DM_VERITY */
+> +#ifdef CONFIG_IPE_PROP_FS_VERITY
+> +	"fsverity_digest=",
+> +	"fsverity_signature=FALSE",
+> +	"fsverity_signature=TRUE",
+> +#endif /* CONFIG_IPE_PROP_FS_VERITY */
+>  };
 >  
-> +#define AUDIT_ENFORCE_CHANGE_FMT "enforcing=%d old_enforcing=%d auid=%u ses=%u "\
-> +				 "enabled=1 old-enabled=1 lsm=ipe res=1"
-
-It looks like you only ever use this in one place, it would probably be
-better to skip the macro definition in this case as it can make it
-easier to have a disconnect between the format string and the data.
-
->  static const char *const audit_op_names[__IPE_OP_MAX + 1] = {
->  	"EXECUTE",
->  	"FIRMWARE",
-> @@ -95,8 +98,8 @@ void ipe_audit_match(const struct ipe_eval_ctx *const ctx,
->  	if (!ab)
->  		return;
->  
-> -	audit_log_format(ab, "ipe_op=%s ipe_hook=%s pid=%d comm=",
-> -			 op, audit_hook_names[ctx->hook],
-> +	audit_log_format(ab, "ipe_op=%s ipe_hook=%s enforcing=%d pid=%d comm=",
-> +			 op, audit_hook_names[ctx->hook], READ_ONCE(enforce),
->  			 task_tgid_nr(current));
->  	audit_log_untrustedstring(ab, get_task_comm(comm, current));
->  
-> @@ -210,3 +213,23 @@ void ipe_audit_policy_load(const struct ipe_policy *const p)
->  
->  	audit_log_end(ab);
+>  #ifdef CONFIG_IPE_PROP_DM_VERITY
+> @@ -79,6 +84,23 @@ static void audit_dmv_roothash(struct audit_buffer *ab, const void *rh)
 >  }
-> +
+>  #endif /* CONFIG_IPE_PROP_DM_VERITY */
+>  
+> +#ifdef CONFIG_IPE_PROP_FS_VERITY
 > +/**
-> + * ipe_audit_enforce - Audit a change in IPE's enforcement state.
-> + * @new_enforce: The new value enforce to be set.
-> + * @old_enforce: The old value currently in enforce.
+> + * audit_fsv_digest - audit a digest of a fsverity file.
+> + * @ab: Supplies a pointer to the audit_buffer to append to.
+> + * @d: Supplies a pointer to the digest structure.
 > + */
-> +void ipe_audit_enforce(bool new_enforce, bool old_enforce)
+> +static void audit_fsv_digest(struct audit_buffer *ab, const void *d)
 > +{
-> +	struct audit_buffer *ab;
-> +
-> +	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_MAC_STATUS);
-> +	if (!ab)
-> +		return;
-> +
-> +	audit_log_format(ab, AUDIT_ENFORCE_CHANGE_FMT, new_enforce, old_enforce,
-> +			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
-> +			 audit_get_sessionid(current));
-> +
-> +	audit_log_end(ab);
+> +	audit_log_format(ab, "%s", audit_prop_names[IPE_PROP_FSV_DIGEST]);
+> +	ipe_digest_audit(ab, d);
 > +}
+> +#else
+> +static void audit_fsv_digest(struct audit_buffer *ab, const void *d)
+> +{
+> +}
+> +#endif /* CONFIG_IPE_PROP_FS_VERITY */
+
+The related dm-verify comments also apply here.
 
 --
 paul-moore.com
