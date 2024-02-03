@@ -1,59 +1,59 @@
-Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com [209.85.219.47])
+Received: from mail-oo1-f49.google.com (mail-oo1-f49.google.com [209.85.161.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30D8817BC4
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 516C9179A7
 	for <dm-devel@lists.linux.dev>; Sat,  3 Feb 2024 22:25:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706999120; cv=none; b=GIms3LGURGb9YOVf+bP0sQ9aC6O9Fqx04F7pTCfjCOZfmKJxdHpKPHTsHheyqCtLbzw2MWImIGbTjXasJpq7NwQ22c3KS8+iP24b4jaOKLp8gEVW1oJo2VlzpfTkadMMdFDsvomuC0KY/OQufD4a/KwegLWhjnh8rZxIUSx5QgU=
+	t=1706999121; cv=none; b=tBzIHowq8Lp7bf47/Y/xBiRLDBLp4+MwahuPiu6O4VLGfcuJiGO4GPpDwVwsL4uiM5G+VtFHh0A/6aSs+Wj5IDcfNUxO2Brh2jEFqjmP57Rx2W6o7ZTjdpdqdSpNcnWkMLmho39aVa6WyEp+m2QSKzsDaHonyhApjSjJUqJsCoI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706999120; c=relaxed/simple;
-	bh=SfIYK1su40Btbzwh9h/WPttvVQMpLhlqw0vBaWGjdhM=;
+	s=arc-20240116; t=1706999121; c=relaxed/simple;
+	bh=Mgd0u5tkUKnC3XiMM2wsuztMqfdG+aVuxVigaiQxwoA=;
 	h=Date:Message-ID:MIME-Version:Content-Type:Content-Disposition:
-	 From:To:Cc:Subject:References:In-Reply-To; b=OQt6uBJmYfrqv+2uVYZ9Ajk4XRpH+3L/HEh9AvG3sCWF6m8vcqPnw7RotkSMd96J+Gv8p4IBZjSyohPVXhbwgxy81r/U7sXXfwTk0qfwlelUUbhkNK7UOyBcVWoJmxRV2XZAQAp6HldujUfXt1HTQ6XkcacdhqBf/C+UU9yjXro=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=ATSy99A3; arc=none smtp.client-ip=209.85.219.47
+	 From:To:Cc:Subject:References:In-Reply-To; b=ab+48nZ7oBuFWuwmBT5f+SOKwN0mVF44M8OD0VK48bu3exv2krXH31noFdhvBp58rbi9u1+gzU8bfX630MfB1Rjd5xwAhxHMKabZ05fXqrHAsLN/y+TI9Bz38/nG1TDRKo3PPbH6RwIKkoyOLScCi5ZpFo4UWfvoekVqc7aPaB8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=K486TlbO; arc=none smtp.client-ip=209.85.161.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="ATSy99A3"
-Received: by mail-qv1-f47.google.com with SMTP id 6a1803df08f44-6869233d472so17813326d6.2
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="K486TlbO"
+Received: by mail-oo1-f49.google.com with SMTP id 006d021491bc7-59a45d8ec91so1295229eaf.3
         for <dm-devel@lists.linux.dev>; Sat, 03 Feb 2024 14:25:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1706999115; x=1707603915; darn=lists.linux.dev;
+        d=paul-moore.com; s=google; t=1706999114; x=1707603914; darn=lists.linux.dev;
         h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
          :content-disposition:mime-version:message-id:date:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=eYMBgL8MVRc+c8Obik/r6XMkhyTvtmEMtGv6GQz3E8M=;
-        b=ATSy99A3qJfALTqD98LamEHVqKdHrlE7RH9OxX4uB13wKaL0p31JpFS22Qa8hCA+d6
-         3mY4sswe/2gi6HTczbNlfIYexAk8Oc1WhvqUoKVW8HwztQNdgihpZqSjL6R7U2yA1/E4
-         UW1lWNeK82zjIpNBG8RfZRTw8X5J23KGs5f9yNYH5lJkzZkxlU9g9ij3CBAPJRprw5lk
-         PAfQcR8bSc7aPr1BYej55XD6kru5SJlkqNP2hZ9pN46aQlAM6WBv6OgxGQoRc0cZY3ow
-         Te75XgxLozdsPuQxSFX8S2wegYqqrKPvoCwwFi056VXTc9uiZS3w1PDRySIvsvP1gUA+
-         qtZg==
+        bh=qFFaUGbOsQ16jf+HNvToc8VuaSYvDv+YsUz/HxsHr8o=;
+        b=K486TlbOS9I01bNsale1dRnIb4fO6OiuHKt/1M3OtrEFSlATb0Yo9yZjiVt4WMaf0S
+         Afxmc9gv8vPje4Ybt28up4+LDH73VnhYDKZ23fozJoHSciIwaUMCAKE/MLyN6euk+Ro0
+         guzvXVXR2157KjsNNd5wVu0f235zgsbEAIZ++ugBXGLp04A2xEsooz/aM+b9pEVLzqM9
+         PAXeX7R+mvgjvMUss02tsxAOFJ8WGO/vXT/FpeY3fGMZdXq8brUfgihqQVRidhBiNx9S
+         A+vvgh4AMPJe0PBiaIJXcipjqIELfRXBqOwXlufhBhmlF8xNFjtM9aWEQAZ+/T5t9agK
+         egrg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706999115; x=1707603915;
+        d=1e100.net; s=20230601; t=1706999114; x=1707603914;
         h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
          :content-disposition:mime-version:message-id:date:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=eYMBgL8MVRc+c8Obik/r6XMkhyTvtmEMtGv6GQz3E8M=;
-        b=d6PEUfjkpQ183QRkC6s4SPBBTdUqMXJSm3SBLMjUE9BSf+uGtvpz9NgOHKp862YGbJ
-         aCnzkdgKYeaVZnVqm/Xss7WcuMg8ZqbqIFKzzQrp1074F9cfuppHyqq9p6nBy1Hi497q
-         qonz14hUBhtRq/apSqW6pqOD52bvQQ9znRizooURyHPQGhD/0PEUxge2+0bF9cZ6oZce
-         Cpk5oLct6yA8TC1hkAE8HRpF/IDBJCTxBjDzu3I9Q2UpY8zNwfIAwwKKVxfw0NrB1LiK
-         BdE89wN0pBWuwnCS5WtZKayZerbw0I3iiOJ0iR0TIpAzywlOkEMNlOsZ38RABM8C1JlB
-         zGyw==
-X-Gm-Message-State: AOJu0Yy1CdfoVzRmLcOc5FMcfCj2lCqoA2v9KAx9IRkhnVq9QLJTsLs2
-	SM4IkqK8LR9Ma75Tv7sqSsKuDa4IWfZNTuHme6Y4MLR1wPDMWRon94PWqsQjbA==
-X-Google-Smtp-Source: AGHT+IFonCheK9ok4vSWJlZhijrFa0a0OwwetL207sTElMhHj+g0ohLs2URRe9XQtpkgkwCWh7FbGQ==
-X-Received: by 2002:ad4:4ea1:0:b0:68c:92cb:31d1 with SMTP id ed1-20020ad44ea1000000b0068c92cb31d1mr3563850qvb.22.1706999115350;
-        Sat, 03 Feb 2024 14:25:15 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCVeTtSs7m2zq+X4vVccPH0Lh0uJFawcGHKNxhIksdLH3uIcDXBjnU7CFZiYLkws0aqU9yqs6KO/2dF1WPwe2mbE/wIR2jKgeYsdvQi4Cgh5cFbpr2u0pHh1j58dsGoxmrtS2VKy1TQhsd6MdZr+m0otcAq69IGsJncSYNzGlDj9ZarrbPqTmvGQzB5ttBfL9Ek9JteSJYEzdhm9NHXzIve6Lbu9X3oHaaxVEVMG9utY7OFCe1bBV2NcNtCrM53YTVBPkfW1guTVLmXV+O/Ih1o8LXBK8GWk4ltLYvN2K5aEgItmvB6FAEBYmn8CkIdY1pipwUSx6J3E5DB+NjVK++DJMplUINL2OdXHKM4sK0yZLj/OatW/uGk4ubWqf01+KC2pRcUlLF8uuaILJ2AUB8Cq+ar1NAExM2V2ydZ+XVPaBc1CDcWSv2y0JvX1mZLpReRfzWMx9tgBB+E3ScOyb439LZGVLJSksqIrns9bU1VYIb8MWW8TxRRYgQ0XHoq1bBqW9B+UrEXYzDwM2QV5R+9HQDTxYl8GbPSOj59Ps6o5YUnEpd3OqqVFIh03bXVpcDgihZ3LJSXzj830Oj5popwCoaGM24jW07UMSEaIWKdR4wJLx1gTnt2T
-Received: from localhost ([70.22.175.108])
-        by smtp.gmail.com with ESMTPSA id pc5-20020a056214488500b0068c968c3b33sm637500qvb.20.2024.02.03.14.25.14
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        bh=qFFaUGbOsQ16jf+HNvToc8VuaSYvDv+YsUz/HxsHr8o=;
+        b=SaPwsAwghRiEjyeiiCxuve+2xqLnG4YPa2rb0kB/C2NF8tj5cq9kPOWGD4KWWuSKst
+         CRG8jAj3wB/yeF9sKfGFKZr8D/dEtq+j0A4MJNuurwrd2ZDR0fO4Xjcz7KMXP7TeSJsK
+         RuN0a+elmGLWAZCYFa0JbBPP8xUUhS7t54RpLzDOtA3puatAssHbBXNChCMzoP+5Rriw
+         5AYxkEKOmugsWEB3dXm0kGij1Ys1mBBHCwWusB0USliiydH9dnTYDucXllm7iISc+wum
+         mbcnznujg2isPnkLDIh0RLfnuQrio4hXxv69VuvFYTyWLDuRhMzGTPfIUr0NB3SW2Wk7
+         /znw==
+X-Gm-Message-State: AOJu0YzWseIwsL7DjMYkxSc+ugDJdrb86p3vY2zaFKPvJyrD7AXuc4Ud
+	zBPSWdqpMSedBqy4lIcIfJ0VL1ZtPfvGgFNiQ3qlHbDXopY5GIHTyXD8RRKKXA==
+X-Google-Smtp-Source: AGHT+IGibUxIAlfdTw0D137+/Rjp2BMWHq+IIdkOBDUg96gKU55ljncPPbo5+Pfo7zHqH7ErAWGh9Q==
+X-Received: by 2002:a05:6358:27a6:b0:176:8263:9a71 with SMTP id l38-20020a05635827a600b0017682639a71mr14634327rwb.13.1706999114397;
         Sat, 03 Feb 2024 14:25:14 -0800 (PST)
-Date: Sat, 03 Feb 2024 17:25:14 -0500
-Message-ID: <f57cb0772ff39a00ec578e178e1b8c38@paul-moore.com>
+X-Forwarded-Encrypted: i=0; AJvYcCVlGEsKMF3Jc8mYvIXVcUJhYiq8OC51LGduNT/nJdwuRMr+6T3ph4HayYERVnLHHB+8lImr/GAtqkSA7qlUM43GJqNC4o7zd/Hb/YG0KuDoYyUZu4iRkl0z3eQ1MM9lefCAtIGXlG2P5WSLMWRWr5K7hMUMDvNJmg+TRf2sKLxQeuIdWxJgRY7DIAeJylRuEiSYYmzpO5NG5EgH0MMAVg0Z3eYuhjCvwVDTsGMHtwK+/vEbE9E2Zody29XwAxl3lz6+BkagLPx7K6etm7pqzpnCbhiJhGopgqp7c3+/ylFUf0agoao/Nf/xAIUTNdvjxOJDNNFdIOtFw+o/y2rZxOgyyIfswKBclu+fjAiIAkFfDwwA33qOZFwdtBwDQqf15BptGQFpFAdYDGhg1Z/BgvghmRGSA53G2TtU9Pibjm/5xEFyWm3JeHxfj1Elrq5/8cEqq4xA5zSgjZnK8GL0CaoCxMTx1naa0eZtdmBnWp4N/a1iRTgINECVBHJeZ21MsHUEKK61khOwUDE4NmT/5Awqqm2uO3wF9fU6iIqwmi4bIsHF/dPlouD41zOG2I2ioBq/nVsIPBPvUjIMK1qKS5pkjQB2wVGYNlrOv3hpvgsQo/3T1Bqsm/zD
+Received: from localhost ([70.22.175.108])
+        by smtp.gmail.com with ESMTPSA id lb24-20020a056214319800b0068c926dd11asm947381qvb.43.2024.02.03.14.25.13
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 03 Feb 2024 14:25:13 -0800 (PST)
+Date: Sat, 03 Feb 2024 17:25:13 -0500
+Message-ID: <6ac3cca9d1d3505f3ed9c7196512f2db@paul-moore.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -65,138 +65,179 @@ Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 From: Paul Moore <paul@paul-moore.com>
 To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>, Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [PATCH RFC v12 17/20] ipe: enable support for fs-verity as a trust  provider
-References: <1706654228-17180-18-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1706654228-17180-18-git-send-email-wufan@linux.microsoft.com>
+Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>, Fan Wu <wufan@linux.microsoft.com>
+Subject: Re: [PATCH RFC v12 15/20] ipe: add support for dm-verity as a trust  provider
+References: <1706654228-17180-16-git-send-email-wufan@linux.microsoft.com>
+In-Reply-To: <1706654228-17180-16-git-send-email-wufan@linux.microsoft.com>
 
 On Jan 30, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
 > 
-> Enable IPE policy authors to indicate trust for a singular fsverity
-> file, identified by the digest information, through "fsverity_digest"
-> and all files using fsverity's builtin signatures via
-> "fsverity_signature".
-> 
-> This enables file-level integrity claims to be expressed in IPE,
-> allowing individual files to be authorized, giving some flexibility
-> for policy authors. Such file-level claims are important to be expressed
-> for enforcing the integrity of packages, as well as address some of the
-> scalability issues in a sole dm-verity based solution (# of loop back
-> devices, etc).
-> 
-> This solution cannot be done in userspace as the minimum threat that
-> IPE should mitigate is an attacker downloads malicious payload with
-> all required dependencies. These dependencies can lack the userspace
-> check, bypassing the protection entirely. A similar attack succeeds if
-> the userspace component is replaced with a version that does not
-> perform the check. As a result, this can only be done in the common
-> entry point - the kernel.
+> Allows author of IPE policy to indicate trust for a singular dm-verity
+> volume, identified by roothash, through "dmverity_roothash" and all
+> signed dm-verity volumes, through "dmverity_signature".
 > 
 > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 > ---
-> v1-v6:
->   + Not present
+> v2:
+>   + No Changes
+> 
+> v3:
+>   + No changes
+> 
+> v4:
+>   + No changes
+> 
+> v5:
+>   + No changes
+> 
+> v6:
+>   + Fix an improper cleanup that can result in
+>     a leak
 > 
 > v7:
->   Introduced
+>   + Squash patch 08/12, 10/12 to [11/16]
 > 
 > v8:
->   * Undo squash of 08/12, 10/12 - separating drivers/md/ from security/
->   * Use common-audit function for fsverity_signature.
->   + Change fsverity implementation to use fsverity_get_digest
->   + prevent unnecessary copy of fs-verity signature data, instead
->     just check for presence of signature data.
->   + Remove free_inode_security hook, as the digest is now acquired
->     at runtime instead of via LSM blob.
+>   + Undo squash of 08/12, 10/12 - separating drivers/md/ from security/
+>     & block/
+>   + Use common-audit function for dmverity_signature.
+>   + Change implementation for storing the dm-verity digest to use the
+>     newly introduced dm_verity_digest structure introduced in patch
+>     14/20.
 > 
 > v9:
 >   + Adapt to the new parser
 > 
 > v10:
->   + Update the fsverity get digest call
+>   + Select the Kconfig when all dependencies are enabled
 > 
 > v11:
 >   + No changes
 > 
 > v12:
->   + Fix audit format
->   + Simplify property evaluation
+>   + Refactor to use struct digest_info* instead of void*
+>   + Correct audit format
 > ---
->  security/ipe/Kconfig         |  13 +++++
->  security/ipe/audit.c         |  25 ++++++++
->  security/ipe/eval.c          | 108 ++++++++++++++++++++++++++++++++++-
->  security/ipe/eval.h          |  10 ++++
->  security/ipe/hooks.c         |  30 ++++++++++
->  security/ipe/hooks.h         |   7 +++
->  security/ipe/ipe.c           |  13 +++++
->  security/ipe/ipe.h           |   3 +
+>  security/ipe/Kconfig         |  18 ++++++
+>  security/ipe/Makefile        |   1 +
+>  security/ipe/audit.c         |  37 ++++++++++-
+>  security/ipe/digest.c        | 120 +++++++++++++++++++++++++++++++++++
+>  security/ipe/digest.h        |  26 ++++++++
+>  security/ipe/eval.c          |  90 +++++++++++++++++++++++++-
+>  security/ipe/eval.h          |  10 +++
+>  security/ipe/hooks.c         |  67 +++++++++++++++++++
+>  security/ipe/hooks.h         |   8 +++
+>  security/ipe/ipe.c           |  15 +++++
+>  security/ipe/ipe.h           |   4 ++
 >  security/ipe/policy.h        |   3 +
->  security/ipe/policy_parser.c |   8 +++
->  10 files changed, 219 insertions(+), 1 deletion(-)
+>  security/ipe/policy_parser.c |  26 +++++++-
+>  13 files changed, 421 insertions(+), 4 deletions(-)
+>  create mode 100644 security/ipe/digest.c
+>  create mode 100644 security/ipe/digest.h
 > 
 > diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
-> index 7afb1ce0cb99..9dd5c4769d79 100644
+> index ac4d558e69d5..7afb1ce0cb99 100644
 > --- a/security/ipe/Kconfig
 > +++ b/security/ipe/Kconfig
-> @@ -30,6 +30,19 @@ config IPE_PROP_DM_VERITY
->  	  that was mounted with a signed root-hash or the volume's
->  	  root hash matches the supplied value in the policy.
+> @@ -8,6 +8,7 @@ menuconfig SECURITY_IPE
+>  	depends on SECURITY && SECURITYFS && AUDIT && AUDITSYSCALL
+>  	select PKCS7_MESSAGE_PARSER
+>  	select SYSTEM_DATA_VERIFICATION
+> +	select IPE_PROP_DM_VERITY if DM_VERITY && DM_VERITY_VERIFY_ROOTHASH_SIG
+>  	help
+>  	  This option enables the Integrity Policy Enforcement LSM
+>  	  allowing users to define a policy to enforce a trust-based access
+> @@ -15,3 +16,20 @@ menuconfig SECURITY_IPE
+>  	  admins to reconfigure trust requirements on the fly.
 >  
-> +	  If unsure, answer Y.
+>  	  If unsure, answer N.
 > +
-> +config IPE_PROP_FS_VERITY
-> +	bool "Enable property for fs-verity files"
-> +	depends on FS_VERITY && FS_VERITY_BUILTIN_SIGNATURES
+> +if SECURITY_IPE
+> +menu "IPE Trust Providers"
+> +
+> +config IPE_PROP_DM_VERITY
+> +	bool "Enable support for dm-verity volumes"
+> +	depends on DM_VERITY && DM_VERITY_VERIFY_ROOTHASH_SIG
 > +	help
-> +	  This option enables the usage of properties "fsverity_signature"
-> +	  and "fsverity_digest". These properties evaluates to TRUE when
-> +	  a file is fsverity enabled and with a signed digest or its
-> +	  diegst matches the supplied value in the policy.
+> +	  This option enables the properties 'dmverity_signature' and
+> +	  'dmverity_roothash' in IPE policy. These properties evaluates
+> +	  to TRUE when a file is evaluated against a dm-verity volume
+> +	  that was mounted with a signed root-hash or the volume's
+> +	  root hash matches the supplied value in the policy.
 > +
-> +	  if unsure, answer Y.
+> +endmenu
 > +
->  endmenu
+> +endif
+> diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+> index 2279eaa3cea3..66de53687d11 100644
+> --- a/security/ipe/Makefile
+> +++ b/security/ipe/Makefile
+> @@ -6,6 +6,7 @@
+>  #
 >  
->  endif
+>  obj-$(CONFIG_SECURITY_IPE) += \
+> +	digest.o \
+>  	eval.o \
+>  	hooks.o \
+>  	fs.o \
 > diff --git a/security/ipe/audit.c b/security/ipe/audit.c
-> index a4ad8e888df0..7e3372be3214 100644
+> index ed390d32c641..a4ad8e888df0 100644
 > --- a/security/ipe/audit.c
 > +++ b/security/ipe/audit.c
-> @@ -60,6 +60,11 @@ static const char *const audit_prop_names[__IPE_PROP_MAX] = {
->  	"dmverity_signature=FALSE",
->  	"dmverity_signature=TRUE",
->  #endif /* CONFIG_IPE_PROP_DM_VERITY */
-> +#ifdef CONFIG_IPE_PROP_FS_VERITY
-> +	"fsverity_digest=",
-> +	"fsverity_signature=FALSE",
-> +	"fsverity_signature=TRUE",
-> +#endif /* CONFIG_IPE_PROP_FS_VERITY */
+> @@ -13,6 +13,7 @@
+>  #include "hooks.h"
+>  #include "policy.h"
+>  #include "audit.h"
+> +#include "digest.h"
+>  
+>  #define ACTSTR(x) ((x) == IPE_ACTION_ALLOW ? "ALLOW" : "DENY")
+>  
+> @@ -54,8 +55,30 @@ static const char *const audit_prop_names[__IPE_PROP_MAX] = {
+>  	"boot_verified=FALSE",
+>  	"boot_verified=TRUE",
+>  #endif /* CONFIG_BLK_DEV_INITRD */
+> +#ifdef CONFIG_IPE_PROP_DM_VERITY
+> +	"dmverity_roothash=",
+> +	"dmverity_signature=FALSE",
+> +	"dmverity_signature=TRUE",
+> +#endif /* CONFIG_IPE_PROP_DM_VERITY */
 >  };
 >  
->  #ifdef CONFIG_IPE_PROP_DM_VERITY
-> @@ -79,6 +84,23 @@ static void audit_dmv_roothash(struct audit_buffer *ab, const void *rh)
->  }
->  #endif /* CONFIG_IPE_PROP_DM_VERITY */
->  
-> +#ifdef CONFIG_IPE_PROP_FS_VERITY
+> +#ifdef CONFIG_IPE_PROP_DM_VERITY
 > +/**
-> + * audit_fsv_digest - audit a digest of a fsverity file.
+> + * audit_dmv_roothash - audit a roothash of a dmverity volume.
 > + * @ab: Supplies a pointer to the audit_buffer to append to.
-> + * @d: Supplies a pointer to the digest structure.
+> + * @rh: Supplies a pointer to the digest structure.
 > + */
-> +static void audit_fsv_digest(struct audit_buffer *ab, const void *d)
+> +static void audit_dmv_roothash(struct audit_buffer *ab, const void *rh)
 > +{
-> +	audit_log_format(ab, "%s", audit_prop_names[IPE_PROP_FSV_DIGEST]);
-> +	ipe_digest_audit(ab, d);
+> +	audit_log_format(ab, "%s", audit_prop_names[IPE_PROP_DMV_ROOTHASH]);
+> +	ipe_digest_audit(ab, rh);
 > +}
 > +#else
-> +static void audit_fsv_digest(struct audit_buffer *ab, const void *d)
+> +static void audit_dmv_roothash(struct audit_buffer *ab, const void *rh)
 > +{
 > +}
-> +#endif /* CONFIG_IPE_PROP_FS_VERITY */
+> +#endif /* CONFIG_IPE_PROP_DM_VERITY */
 
-The related dm-verify comments also apply here.
+I talked about this back in my review of the v11 patchset and I'm
+guessing you may have missed it ... the problem with the above code is
+that the fields in an audit record should remain constant, even if
+there is no data for that particular field.  In cases where there is no
+data to record for a given field, a "?" should be used as the field's
+value, for example:
+
+  dmverify_roothash=?
+
+My guess is that you would want to do something like this:
+
+  #else  /* !CONFIG_IPE_PROP_DM_VERITY */
+  static void audit_dmv_roothash(...)
+  {
+    audit_log_format(ab, "%s=?", audit_prop_names[...]);
+  }
+  #endif /* CONFIG_IPE_PROP_DM_VERITY */
 
 --
 paul-moore.com
