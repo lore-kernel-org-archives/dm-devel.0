@@ -1,232 +1,167 @@
-Received: from mail-oo1-f50.google.com (mail-oo1-f50.google.com [209.85.161.50])
+Received: from mail-qk1-f176.google.com (mail-qk1-f176.google.com [209.85.222.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9CFB5FEFD
-	for <dm-devel@lists.linux.dev>; Sat,  3 Feb 2024 17:58:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9BFD216419
+	for <dm-devel@lists.linux.dev>; Sat,  3 Feb 2024 22:25:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706983134; cv=none; b=FNOso7FyiO33grVBGxvivi4cAVXw6y54QVRnuKP9oJib6odazC9CGaikqpm3c3rER5bR2YMhYF1awUpIHUo1vIUtro0smnY8q/bNzexEaNHLCwMzh9YMN1uMuHKYWkh2Rm8qnBZ7xHpDNZeqZEruorkT0d1RFlHOCiunEuOclws=
+	t=1706999112; cv=none; b=UAsBRW5OAlEedyzG7oVa3OWqU7g9m9b2G1w1o31pYPcCU32/dZnWq7PQ5T4+cyIHxcgK/pyh4o6iyKkD9oTxXNfx5hdVQvCYlXFo+RaBlf5isny6LGbDrMHWVLJnZxNF/zIeGb7ck6Lj6lS7CWh5WqDS4niFY+vKJna6Ekj/AuM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706983134; c=relaxed/simple;
-	bh=GMR9eTy07E8pepEiT1I2Ci94pv1fx2XZ3jo3DIztS5M=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=iZyZvqyqyBaKHNGECItnYIboxtmmyL2FNsXVKJudEiVK8WisrxVkKog66JROSMclElrIPQb9e/ovoVcu54THgJrgcp3ZbwXmTk1PlGbiPPnE9/jWaycA6MMm30QoiTU75ygsJjiA4Y04CDymaWs9qpSUmTzJOFGl2ueAHoc1wtQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.161.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-oo1-f50.google.com with SMTP id 006d021491bc7-59cb1e24e91so174092eaf.0
-        for <dm-devel@lists.linux.dev>; Sat, 03 Feb 2024 09:58:51 -0800 (PST)
+	s=arc-20240116; t=1706999112; c=relaxed/simple;
+	bh=Akk3yfd0skBsyfpDvBuTijI4DTSE1uDMrPs5axVSpcY=;
+	h=Date:Message-ID:MIME-Version:Content-Type:Content-Disposition:
+	 From:To:Cc:Subject:References:In-Reply-To; b=fYdnHq/LfuPA2FZ5wJlniTJdTXmV6m3IzQNXMho4+4azVxPM1N34yAF9Ye5C2seI01vr9HxpVZRlExhvstNd9Qp+pObJPBKWrha3MfMe19ctInSRvBLvt8u0FXzyAsKAaWR317iXFnrMEkDTbrY1MDd3wpURlU7oKx7zhzpxaX0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=YxC5hYTu; arc=none smtp.client-ip=209.85.222.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="YxC5hYTu"
+Received: by mail-qk1-f176.google.com with SMTP id af79cd13be357-7853fcc314bso218479385a.1
+        for <dm-devel@lists.linux.dev>; Sat, 03 Feb 2024 14:25:10 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=paul-moore.com; s=google; t=1706999109; x=1707603909; darn=lists.linux.dev;
+        h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
+         :content-disposition:mime-version:message-id:date:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=DnWesDs8xRNqrKgsSJ7fCUj/XnlBG4IvaiEQPBxCK/I=;
+        b=YxC5hYTuUtUTKD7kb92+bY47s3rkH7kUOV3XCqsLFlUvM8nWticEx2YkHpDlx3D427
+         Jp40tLjcCQwHrxvcl3yYFhD6XCyQxaPWqmf7edm2qE4xhB2sBYuG/oWJXuwb5O68pTIt
+         Oe+HgPyj+881aAtbLdUn4nd+mvLfx52/0UYMIuVaje2Sw9NEBthtT7XZPDGlAC54lGcj
+         FoeFea51JsWW8jI3yV5Xy90ZfZA8bQRGXejPq0kLBGLZMf0rzPfHaYLrW+dj1ot6g8nt
+         dFu2OYo/DssmsIPTdrBD1Xl8QI5QpNbXX6FKDkPBSoC/V3y4QxxiyJRl+kb1jJ93myNi
+         T8kQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706983131; x=1707587931;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=DOliNUqI71qLaQZn8VZTphk7egJbvCAyLqPvDh9Lh3w=;
-        b=ssh8KFHilNVwmfFnAqbrVqyzSmscPsfkTS9qUUpLeM7W5FW2rqwTARZVjNqQ0zI+MU
-         uwmHdjod1qAQ9z8rfT+Tl/v6BHEfvrM8TPEIcRgS5/YhHitJSuCuDZztN0tYKtpCRLqW
-         4PPxzvKHihsp9TD/21tq1M275KWugz5MY9NkPNYHC/UhuOPSFQilkzek4Ft0Q523k4yS
-         ED8uQ82sHtewf8p8wO1gWr7ItkkI2PODK3iHcKSsFauDd9IvXzRoCUOmIOHkUwiBvwMs
-         OljO7K6v7gk0/ymLqVBUYt0Z8qrkLgDiLQN9A/+flSfSZkrpw/Niv7sihAKYbyD15m43
-         nkvw==
-X-Gm-Message-State: AOJu0Yxx91dfupYq6Rl0NelNw66ohuDWXT+oooEIGiKmKqzjd7VySKxE
-	JmciNEVO8JKuNmqOkuMy+Y/S3VucT4e1KzPVdiUBZWve2pKSGzruh4mYFXoZjg==
-X-Google-Smtp-Source: AGHT+IGTtt7bhSSQCWu93iUoruII8M21I1KuWYt41Al2/26tOAVs7IfkYmE1K/wOoyn5Wimk46x5RQ==
-X-Received: by 2002:a05:6870:2006:b0:219:44bb:ba93 with SMTP id o6-20020a056870200600b0021944bbba93mr2442939oab.17.1706983129580;
-        Sat, 03 Feb 2024 09:58:49 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCUSr51JqyMhwRKWtGx14yO6OQu0fv9MTwI870NV93oAbFWcKw3iTQxO8+vfSVxwYWzVvUIdlZ5E04renrZVX8eL037w8l7kFY4K7N6/XfLArJ42kF2g+uHTZ4KE5qOLqHiht2k2hXkfHZ7WifloEBRtkDYr27GdO0P8v4bPpfownyxiHvvFXHD7xA+eU6c7AOL13B+LjLFSMY3oLEBy
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id l22-20020ac87256000000b0042bf0b37b5csm1974371qtp.28.2024.02.03.09.58.48
+        d=1e100.net; s=20230601; t=1706999109; x=1707603909;
+        h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
+         :content-disposition:mime-version:message-id:date:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=DnWesDs8xRNqrKgsSJ7fCUj/XnlBG4IvaiEQPBxCK/I=;
+        b=CC6eeeymRjsqlJIb/b08D5sFU2ZRfPmavej6KfauLYm5sM2ToFU3d4XcOZZx8n9We9
+         fztwO/ppT3Ux0WIPAdPGDbqrBDfyQCc7VbcoXPT69KNbc2upoE3QI5Sd8miln6O9brYJ
+         LT/V7SbgEmuXERedK0KiAACrfYoY+l7UJex5ruh3KywqiDOuKlfxPZfc7InulcLEKLrm
+         wMQLGpZAjWrsfzAn+FbuOaUuw5RjU0C4dPIQ6oOH3EkbWMYm3fHkZq+wSQ8XZGoMmL7Z
+         vbpRMubvxmZFsX1jGe4A8Y5UoEaaNPIDH2ijkcnyrRZdBqnTcfxEyW26HkXMvUr9cpY7
+         quHg==
+X-Gm-Message-State: AOJu0YxZYF7eniRxnna2wdgpc1v5Z1Y7dwoXXHyXSHb6V5Rp3Yyat647
+	p64Hlad3PIreZ9OF9qcF5GxP7H3i9cnQ/sGLw+HWglGK9Zf48Jba4AFBn90mEQ==
+X-Google-Smtp-Source: AGHT+IFtZe+Q8W1ePYytw7UeC4Jf2MOnkQ6RcSuccAbbwyK+ZuVbp0rOxBJSIWscsGRZX7r4oaJh+g==
+X-Received: by 2002:a05:620a:2e3:b0:783:b038:d1a1 with SMTP id a3-20020a05620a02e300b00783b038d1a1mr9095773qko.39.1706999109324;
+        Sat, 03 Feb 2024 14:25:09 -0800 (PST)
+X-Forwarded-Encrypted: i=0; AJvYcCVwYaZbKyqip0VIR8GONQxXUcX8op8aMPNo2Ap1p+jdcI0F9O4QdFtfkXUh2izlay/UPxQX4uTdUnml1eWFaVIu3sl4cZN0o9MEZYPtDzuPUBt8ISFeQUgk//7oOgSqTo+LWz7pHI783WZUe7avWlFl2g4RV0ALfs6fSYnt9PmcP3V5e5UUC9OHfUN1hGOhFCEIHdwZdid79pfUdFyuN0HQ1asimEWyLDwYPGdfmyK0n3vX204PQ6L6I7qS+XYcc2+4FDbFfrLjHojE/EkYwAYSDsPcTayfqX5R0GGth4PTwEABerphUsn9JY6Cz1DdD0rhuTOjEi/XLpHp1AvDca0BRlY13p7V9uUBl5XxTmPDaaLTbmdbuj1e2I3b+GHRn4+Guw1TVTp0wlUYUAdXRnJPf1jp9/Mte8sgyYSGDJVgBLodRU8oGcMpA5MLWsHMPY5+8w5xv6eKGe3vsfBvHJH92nrGbL7ODZl7dWe1CNUDc7uQPTJqnToEqjD5Yl1fzWFBuCEy7dobme80FhUuQ9F8QqZX8GC19w5DGqXnrHRf6FF81Ob58I7Z4V+OoQ0FbylAMRBpa+pH
+Received: from localhost ([70.22.175.108])
+        by smtp.gmail.com with ESMTPSA id g4-20020a37e204000000b00783f534706esm1734412qki.61.2024.02.03.14.25.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 03 Feb 2024 09:58:49 -0800 (PST)
-Date: Sat, 3 Feb 2024 12:58:48 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
-	linux-scsi@vger.kernel.org,
-	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	dm-devel@lists.linux.dev, Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 10/26] dm: Use the block layer zone append emulation
-Message-ID: <Zb5-2LsnQtJHV2mL@redhat.com>
-References: <20240202073104.2418230-1-dlemoal@kernel.org>
- <20240202073104.2418230-11-dlemoal@kernel.org>
+        Sat, 03 Feb 2024 14:25:08 -0800 (PST)
+Date: Sat, 03 Feb 2024 17:25:08 -0500
+Message-ID: <b9ca171301d5abeb78922dd79d65136a@paul-moore.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240202073104.2418230-11-dlemoal@kernel.org>
+MIME-Version: 1.0 
+Content-Type: text/plain; charset=utf-8 
+Content-Disposition: inline 
+Content-Transfer-Encoding: 8bit
+From: Paul Moore <paul@paul-moore.com>
+To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
+Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>
+Subject: Re: [PATCH RFC v12 5/20] initramfs|security: Add security hook to  initramfs unpack
+References: <1706654228-17180-6-git-send-email-wufan@linux.microsoft.com>
+In-Reply-To: <1706654228-17180-6-git-send-email-wufan@linux.microsoft.com>
 
-On Fri, Feb 02 2024 at  2:30P -0500,
-Damien Le Moal <dlemoal@kernel.org> wrote:
-
-> For targets requiring zone append operation emulation with regular
-> writes (e.g. dm-crypt), we can use the block layer emulation provided by
-> zone write plugging. Remove DM implemented zone append emulation and
-> enable the block layer one.
+On Jan 30, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
 > 
-> This is done by setting the max_zone_append_sectors limit of the
-> mapped device queue to 0 for mapped devices that have a target table
-> that cannot support native zone append operations. These includes
-> mixed zoned and non-zoned targets, or targets that explicitly requested
-> emulation of zone append (e.g. dm-crypt). For these mapped devices, the
-> new field emulate_zone_append is set to true. dm_split_and_process_bio()
-> is modified to call blk_zone_write_plug_bio() for such device to let the
-> block layer transform zone append operations into regular writes. This
-> is done after ensuring that the submitted BIO is split if it straddles
-> zone boundaries.
+> This patch introduces a new hook to notify security system that the
+> content of initramfs has been unpacked into the rootfs.
 > 
-> dm_revalidate_zones() is also modified to use the block layer provided
-> function blk_revalidate_disk_zones() so that all zone resources needed
-> for zone append emulation are allocated and initialized by the block
-> layer without DM core needing to do anything. Since the device table is
-> not yet live when dm_revalidate_zones() is executed, enabling the use of
-> blk_revalidate_disk_zones() requires adding a pointer to the device
-> table in struct mapped_device. This avoids errors in
-> dm_blk_report_zones() trying to get the table with dm_get_live_table().
-> The mapped device table pointer is set to the table passed as argument
-> to dm_revalidate_zones() before calling blk_revalidate_disk_zones() and
-> reset to NULL after this function returns to restore the live table
-> handling for user call of report zones.
+> Upon receiving this notification, the security system can activate
+> a policy to allow only files that originated from the initramfs to
+> execute or load into kernel during the early stages of booting.
 > 
-> All the code related to zone append emulation is removed from
-> dm-zone.c. This leads to simplifications of the functions __map_bio()
-> and dm_zone_endio(). This later function now only needs to deal with
-> completions of real zone append operations for targets that support it.
+> This approach is crucial for minimizing the attack surface by
+> ensuring that only trusted files from the initramfs are operational
+> in the critical boot phase.
 > 
-> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-
-Love the overall improvement to the DM core code and the broader block
-layer by switching to this bio-based ZWP approach.
-
-Reviewed-by: Mike Snitzer <snitzer@kernel.org>
-
-But one incremental suggestion inlined below.
-
+> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 > ---
->  drivers/md/dm-core.h |  11 +-
->  drivers/md/dm-zone.c | 470 ++++---------------------------------------
->  drivers/md/dm.c      |  44 ++--
->  drivers/md/dm.h      |   7 -
->  4 files changed, 68 insertions(+), 464 deletions(-)
+> v1-v11:
+>   + Not present
 > 
-
-<snip>
-
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 8dcabf84d866..92ce3b2eb4ae 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1419,25 +1419,12 @@ static void __map_bio(struct bio *clone)
->  		down(&md->swap_bios_semaphore);
->  	}
->  
-> -	if (static_branch_unlikely(&zoned_enabled)) {
-> -		/*
-> -		 * Check if the IO needs a special mapping due to zone append
-> -		 * emulation on zoned target. In this case, dm_zone_map_bio()
-> -		 * calls the target map operation.
-> -		 */
-> -		if (unlikely(dm_emulate_zone_append(md)))
-> -			r = dm_zone_map_bio(tio);
-> -		else
-> -			goto do_map;
-> -	} else {
-> -do_map:
-> -		if (likely(ti->type->map == linear_map))
-> -			r = linear_map(ti, clone);
-> -		else if (ti->type->map == stripe_map)
-> -			r = stripe_map(ti, clone);
-> -		else
-> -			r = ti->type->map(ti, clone);
-> -	}
-> +	if (likely(ti->type->map == linear_map))
-> +		r = linear_map(ti, clone);
-> +	else if (ti->type->map == stripe_map)
-> +		r = stripe_map(ti, clone);
-> +	else
-> +		r = ti->type->map(ti, clone);
->  
->  	switch (r) {
->  	case DM_MAPIO_SUBMITTED:
-> @@ -1774,19 +1761,33 @@ static void dm_split_and_process_bio(struct mapped_device *md,
->  	struct clone_info ci;
->  	struct dm_io *io;
->  	blk_status_t error = BLK_STS_OK;
-> -	bool is_abnormal;
-> +	bool is_abnormal, need_split;
->  
->  	is_abnormal = is_abnormal_io(bio);
-> -	if (unlikely(is_abnormal)) {
-> +	if (likely(!md->emulate_zone_append))
-> +		need_split = is_abnormal;
-> +	else
-> +		need_split = is_abnormal || bio_straddle_zones(bio);
-> +	if (unlikely(need_split)) {
->  		/*
->  		 * Use bio_split_to_limits() for abnormal IO (e.g. discard, etc)
->  		 * otherwise associated queue_limits won't be imposed.
-> +		 * Also split the BIO for mapped devices needing zone append
-> +		 * emulation to ensure that the BIO does not cross zone
-> +		 * boundaries.
->  		 */
->  		bio = bio_split_to_limits(bio);
->  		if (!bio)
->  			return;
->  	}
->  
-> +	/*
-> +	 * Use the block layer zone write plugging for mapped devices that
-> +	 * need zone append emulation (e.g. dm-crypt).
-> +	 */
-> +	if (md->emulate_zone_append && blk_zone_write_plug_bio(bio, 0))
-> +		return;
+> v12:
+>   + Introduced
+> ---
+>  include/linux/lsm_hook_defs.h |  4 ++++
+>  include/linux/security.h      | 10 ++++++++++
+>  init/initramfs.c              |  3 +++
+>  security/security.c           | 12 ++++++++++++
+>  4 files changed, 29 insertions(+)
+> 
+> diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
+> index 185924c56378..b247388786a9 100644
+> --- a/include/linux/lsm_hook_defs.h
+> +++ b/include/linux/lsm_hook_defs.h
+> @@ -425,3 +425,7 @@ LSM_HOOK(int, 0, uring_override_creds, const struct cred *new)
+>  LSM_HOOK(int, 0, uring_sqpoll, void)
+>  LSM_HOOK(int, 0, uring_cmd, struct io_uring_cmd *ioucmd)
+>  #endif /* CONFIG_IO_URING */
 > +
->  	/* Only support nowait for normal IO */
->  	if (unlikely(bio->bi_opf & REQ_NOWAIT) && !is_abnormal) {
->  		io = alloc_io(md, bio, GFP_NOWAIT);
+> +#ifdef CONFIG_BLK_DEV_INITRD
+> +LSM_HOOK(void, LSM_RET_VOID, unpack_initramfs_security, void)
+> +#endif /* CONFIG_BLK_DEV_INITRD */
 
-Would prefer to see this incremental change included from the start:
+Let's just call it "unpack_initramfs", the "_security" part is somewhat
+implied since we are talking about a LSM hook ;)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 92ce3b2eb4ae..1fd9bbf35db3 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1763,11 +1763,10 @@ static void dm_split_and_process_bio(struct mapped_device *md,
- 	blk_status_t error = BLK_STS_OK;
- 	bool is_abnormal, need_split;
- 
--	is_abnormal = is_abnormal_io(bio);
--	if (likely(!md->emulate_zone_append))
--		need_split = is_abnormal;
--	else
-+	need_split = is_abnormal = is_abnormal_io(bio);
-+	if (static_branch_unlikely(&zoned_enabled) && unlikely(md->emulate_zone_append))
- 		need_split = is_abnormal || bio_straddle_zones(bio);
-+
- 	if (unlikely(need_split)) {
- 		/*
- 		 * Use bio_split_to_limits() for abnormal IO (e.g. discard, etc)
-@@ -1781,12 +1780,14 @@ static void dm_split_and_process_bio(struct mapped_device *md,
- 			return;
- 	}
- 
--	/*
--	 * Use the block layer zone write plugging for mapped devices that
--	 * need zone append emulation (e.g. dm-crypt).
--	 */
--	if (md->emulate_zone_append && blk_zone_write_plug_bio(bio, 0))
--		return;
-+	if (static_branch_unlikely(&zoned_enabled)) {
-+		/*
-+		 * Use the block layer zone write plugging for mapped devices that
-+		 * need zone append emulation (e.g. dm-crypt).
-+		 */
-+		if (unlikely(md->emulate_zone_append) && blk_zone_write_plug_bio(bio, 0))
-+			return;
-+	}
- 
- 	/* Only support nowait for normal IO */
- 	if (unlikely(bio->bi_opf & REQ_NOWAIT) && !is_abnormal) {
+> diff --git a/init/initramfs.c b/init/initramfs.c
+> index 76deb48c38cb..075a5794cde5 100644
+> --- a/init/initramfs.c
+> +++ b/init/initramfs.c
+> @@ -18,6 +18,7 @@
+>  #include <linux/init_syscalls.h>
+>  #include <linux/task_work.h>
+>  #include <linux/umh.h>
+> +#include <linux/security.h>
+>  
+>  static __initdata bool csum_present;
+>  static __initdata u32 io_csum;
+> @@ -720,6 +721,8 @@ static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
+>  #endif
+>  	}
+>  
+> +	security_unpack_initramfs();
+
+Given the caller, what do you think of changing the hook name to
+"security_initramfs_populated()"?  I think this not only matches up
+better with the caller, "do_populate_rootfs()", but since in using the
+past tense we help indicate that this hook happens *after* the rootfs
+is populated with the initramfs data.
+
+>  done:
+>  	/*
+>  	 * If the initrd region is overlapped with crashkernel reserved region,
+> diff --git a/security/security.c b/security/security.c
+> index ddf2e69cf8f2..2a527d4c69bc 100644
+> --- a/security/security.c
+> +++ b/security/security.c
+> @@ -5581,3 +5581,15 @@ int security_uring_cmd(struct io_uring_cmd *ioucmd)
+>  	return call_int_hook(uring_cmd, 0, ioucmd);
+>  }
+>  #endif /* CONFIG_IO_URING */
+> +
+> +#ifdef CONFIG_BLK_DEV_INITRD
+> +/**
+> + * security_unpack_initramfs() - Notify LSM that initramfs has been loaded
+> + *
+> + * Tells the LSM the initramfs has been unpacked into the rootfs.
+> + */
+> +void security_unpack_initramfs(void)
+> +{
+> +	call_void_hook(unpack_initramfs_security);
+> +}
+> +#endif /* CONFIG_BLK_DEV_INITRD */
+> -- 
+> 2.43.0
+
+--
+paul-moore.com
