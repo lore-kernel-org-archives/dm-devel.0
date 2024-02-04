@@ -1,243 +1,233 @@
-Received: from mail-oo1-f49.google.com (mail-oo1-f49.google.com [209.85.161.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 516C9179A7
-	for <dm-devel@lists.linux.dev>; Sat,  3 Feb 2024 22:25:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E8CEA32
+	for <dm-devel@lists.linux.dev>; Sun,  4 Feb 2024 01:35:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706999121; cv=none; b=tBzIHowq8Lp7bf47/Y/xBiRLDBLp4+MwahuPiu6O4VLGfcuJiGO4GPpDwVwsL4uiM5G+VtFHh0A/6aSs+Wj5IDcfNUxO2Brh2jEFqjmP57Rx2W6o7ZTjdpdqdSpNcnWkMLmho39aVa6WyEp+m2QSKzsDaHonyhApjSjJUqJsCoI=
+	t=1707010527; cv=none; b=Csn7z2LdGhUfpsQ2CR8XNPmYundG1Q4K6GXGoUmDLE0z3OQrpPFXKLpYyVbaW/JstXdlb0nEqotYB0YWXvylNNlmoP6sjDMOAW6oFGzJidZGtTP/BAu2actSOlrZLCJieTIiU2gjXSbLZCroNTWDNCnp2bvwD0WbYX8opkRHQYo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706999121; c=relaxed/simple;
-	bh=Mgd0u5tkUKnC3XiMM2wsuztMqfdG+aVuxVigaiQxwoA=;
-	h=Date:Message-ID:MIME-Version:Content-Type:Content-Disposition:
-	 From:To:Cc:Subject:References:In-Reply-To; b=ab+48nZ7oBuFWuwmBT5f+SOKwN0mVF44M8OD0VK48bu3exv2krXH31noFdhvBp58rbi9u1+gzU8bfX630MfB1Rjd5xwAhxHMKabZ05fXqrHAsLN/y+TI9Bz38/nG1TDRKo3PPbH6RwIKkoyOLScCi5ZpFo4UWfvoekVqc7aPaB8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=K486TlbO; arc=none smtp.client-ip=209.85.161.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="K486TlbO"
-Received: by mail-oo1-f49.google.com with SMTP id 006d021491bc7-59a45d8ec91so1295229eaf.3
-        for <dm-devel@lists.linux.dev>; Sat, 03 Feb 2024 14:25:16 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1706999114; x=1707603914; darn=lists.linux.dev;
-        h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
-         :content-disposition:mime-version:message-id:date:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=qFFaUGbOsQ16jf+HNvToc8VuaSYvDv+YsUz/HxsHr8o=;
-        b=K486TlbOS9I01bNsale1dRnIb4fO6OiuHKt/1M3OtrEFSlATb0Yo9yZjiVt4WMaf0S
-         Afxmc9gv8vPje4Ybt28up4+LDH73VnhYDKZ23fozJoHSciIwaUMCAKE/MLyN6euk+Ro0
-         guzvXVXR2157KjsNNd5wVu0f235zgsbEAIZ++ugBXGLp04A2xEsooz/aM+b9pEVLzqM9
-         PAXeX7R+mvgjvMUss02tsxAOFJ8WGO/vXT/FpeY3fGMZdXq8brUfgihqQVRidhBiNx9S
-         A+vvgh4AMPJe0PBiaIJXcipjqIELfRXBqOwXlufhBhmlF8xNFjtM9aWEQAZ+/T5t9agK
-         egrg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1706999114; x=1707603914;
-        h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
-         :content-disposition:mime-version:message-id:date:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=qFFaUGbOsQ16jf+HNvToc8VuaSYvDv+YsUz/HxsHr8o=;
-        b=SaPwsAwghRiEjyeiiCxuve+2xqLnG4YPa2rb0kB/C2NF8tj5cq9kPOWGD4KWWuSKst
-         CRG8jAj3wB/yeF9sKfGFKZr8D/dEtq+j0A4MJNuurwrd2ZDR0fO4Xjcz7KMXP7TeSJsK
-         RuN0a+elmGLWAZCYFa0JbBPP8xUUhS7t54RpLzDOtA3puatAssHbBXNChCMzoP+5Rriw
-         5AYxkEKOmugsWEB3dXm0kGij1Ys1mBBHCwWusB0USliiydH9dnTYDucXllm7iISc+wum
-         mbcnznujg2isPnkLDIh0RLfnuQrio4hXxv69VuvFYTyWLDuRhMzGTPfIUr0NB3SW2Wk7
-         /znw==
-X-Gm-Message-State: AOJu0YzWseIwsL7DjMYkxSc+ugDJdrb86p3vY2zaFKPvJyrD7AXuc4Ud
-	zBPSWdqpMSedBqy4lIcIfJ0VL1ZtPfvGgFNiQ3qlHbDXopY5GIHTyXD8RRKKXA==
-X-Google-Smtp-Source: AGHT+IGibUxIAlfdTw0D137+/Rjp2BMWHq+IIdkOBDUg96gKU55ljncPPbo5+Pfo7zHqH7ErAWGh9Q==
-X-Received: by 2002:a05:6358:27a6:b0:176:8263:9a71 with SMTP id l38-20020a05635827a600b0017682639a71mr14634327rwb.13.1706999114397;
-        Sat, 03 Feb 2024 14:25:14 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCVlGEsKMF3Jc8mYvIXVcUJhYiq8OC51LGduNT/nJdwuRMr+6T3ph4HayYERVnLHHB+8lImr/GAtqkSA7qlUM43GJqNC4o7zd/Hb/YG0KuDoYyUZu4iRkl0z3eQ1MM9lefCAtIGXlG2P5WSLMWRWr5K7hMUMDvNJmg+TRf2sKLxQeuIdWxJgRY7DIAeJylRuEiSYYmzpO5NG5EgH0MMAVg0Z3eYuhjCvwVDTsGMHtwK+/vEbE9E2Zody29XwAxl3lz6+BkagLPx7K6etm7pqzpnCbhiJhGopgqp7c3+/ylFUf0agoao/Nf/xAIUTNdvjxOJDNNFdIOtFw+o/y2rZxOgyyIfswKBclu+fjAiIAkFfDwwA33qOZFwdtBwDQqf15BptGQFpFAdYDGhg1Z/BgvghmRGSA53G2TtU9Pibjm/5xEFyWm3JeHxfj1Elrq5/8cEqq4xA5zSgjZnK8GL0CaoCxMTx1naa0eZtdmBnWp4N/a1iRTgINECVBHJeZ21MsHUEKK61khOwUDE4NmT/5Awqqm2uO3wF9fU6iIqwmi4bIsHF/dPlouD41zOG2I2ioBq/nVsIPBPvUjIMK1qKS5pkjQB2wVGYNlrOv3hpvgsQo/3T1Bqsm/zD
-Received: from localhost ([70.22.175.108])
-        by smtp.gmail.com with ESMTPSA id lb24-20020a056214319800b0068c926dd11asm947381qvb.43.2024.02.03.14.25.13
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 03 Feb 2024 14:25:13 -0800 (PST)
-Date: Sat, 03 Feb 2024 17:25:13 -0500
-Message-ID: <6ac3cca9d1d3505f3ed9c7196512f2db@paul-moore.com>
+	s=arc-20240116; t=1707010527; c=relaxed/simple;
+	bh=KQkZtPc3Eys4j6v8gCXCHGDmJyPKKgZ3gFxxf0iZbT4=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=gPpvXcPWM+tPwwp/nGWHPz5/eKIm3cjCB4ZW8wHQt9ob5rck97Gk5OAXll9zP6MNg/Gj816IwDMqZ00BvS6rA9cZtHDJ80LVCwL3ue5a+9Ke//cUDFrFSlpvPsdLY7R0XTzh6vCiBOEYTOkysrmDrqGrkd1O9xqlxCQ0zsPTUyY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TSBs91Q5Kz4f3jMc
+	for <dm-devel@lists.linux.dev>; Sun,  4 Feb 2024 09:35:09 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 84A131A038B
+	for <dm-devel@lists.linux.dev>; Sun,  4 Feb 2024 09:35:13 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgAn9g7N6b5lt1WeCw--.38132S3;
+	Sun, 04 Feb 2024 09:35:11 +0800 (CST)
+Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
+To: Benjamin Marzinski <bmarzins@redhat.com>,
+ Yu Kuai <yukuai1@huaweicloud.com>
+Cc: mpatocka@redhat.com, heinzm@redhat.com, xni@redhat.com,
+ blazej.kucman@linux.intel.com, agk@redhat.com, snitzer@kernel.org,
+ dm-devel@lists.linux.dev, song@kernel.org, jbrassow@f14.redhat.com,
+ neilb@suse.de, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+ <Zb2wxIpf7uYV6Vya@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <528ce926-6f17-c1ea-8e77-c7d5d7f56022@huaweicloud.com>
+Date: Sun, 4 Feb 2024 09:35:09 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0 
-Content-Type: text/plain; charset=utf-8 
-Content-Disposition: inline 
+MIME-Version: 1.0
+In-Reply-To: <Zb2wxIpf7uYV6Vya@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+Content-Type: text/plain; charset=gbk; format=flowed
 Content-Transfer-Encoding: 8bit
-From: Paul Moore <paul@paul-moore.com>
-To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>, Fan Wu <wufan@linux.microsoft.com>
-Subject: Re: [PATCH RFC v12 15/20] ipe: add support for dm-verity as a trust  provider
-References: <1706654228-17180-16-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1706654228-17180-16-git-send-email-wufan@linux.microsoft.com>
+X-CM-TRANSID:cCh0CgAn9g7N6b5lt1WeCw--.38132S3
+X-Coremail-Antispam: 1UD129KBjvJXoW3WF4UXw47GryUGFy8AryrWFg_yoW3tFWDpa
+	9xKa1ft340kw1IqrnxAa40qrWftF13J395Ca1fWr4xAry5u392yrs3tF1F9FnIy3sY9a42
+	q3yDJryrCF12gFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
+	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
+	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
+	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E
+	3s1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcS
+	sGvfC2KfnxnUUI43ZEXa7VUbQVy7UUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Jan 30, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
-> 
-> Allows author of IPE policy to indicate trust for a singular dm-verity
-> volume, identified by roothash, through "dmverity_roothash" and all
-> signed dm-verity volumes, through "dmverity_signature".
-> 
-> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-> ---
-> v2:
->   + No Changes
-> 
-> v3:
->   + No changes
-> 
-> v4:
->   + No changes
-> 
-> v5:
->   + No changes
-> 
-> v6:
->   + Fix an improper cleanup that can result in
->     a leak
-> 
-> v7:
->   + Squash patch 08/12, 10/12 to [11/16]
-> 
-> v8:
->   + Undo squash of 08/12, 10/12 - separating drivers/md/ from security/
->     & block/
->   + Use common-audit function for dmverity_signature.
->   + Change implementation for storing the dm-verity digest to use the
->     newly introduced dm_verity_digest structure introduced in patch
->     14/20.
-> 
-> v9:
->   + Adapt to the new parser
-> 
-> v10:
->   + Select the Kconfig when all dependencies are enabled
-> 
-> v11:
->   + No changes
-> 
-> v12:
->   + Refactor to use struct digest_info* instead of void*
->   + Correct audit format
-> ---
->  security/ipe/Kconfig         |  18 ++++++
->  security/ipe/Makefile        |   1 +
->  security/ipe/audit.c         |  37 ++++++++++-
->  security/ipe/digest.c        | 120 +++++++++++++++++++++++++++++++++++
->  security/ipe/digest.h        |  26 ++++++++
->  security/ipe/eval.c          |  90 +++++++++++++++++++++++++-
->  security/ipe/eval.h          |  10 +++
->  security/ipe/hooks.c         |  67 +++++++++++++++++++
->  security/ipe/hooks.h         |   8 +++
->  security/ipe/ipe.c           |  15 +++++
->  security/ipe/ipe.h           |   4 ++
->  security/ipe/policy.h        |   3 +
->  security/ipe/policy_parser.c |  26 +++++++-
->  13 files changed, 421 insertions(+), 4 deletions(-)
->  create mode 100644 security/ipe/digest.c
->  create mode 100644 security/ipe/digest.h
-> 
-> diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
-> index ac4d558e69d5..7afb1ce0cb99 100644
-> --- a/security/ipe/Kconfig
-> +++ b/security/ipe/Kconfig
-> @@ -8,6 +8,7 @@ menuconfig SECURITY_IPE
->  	depends on SECURITY && SECURITYFS && AUDIT && AUDITSYSCALL
->  	select PKCS7_MESSAGE_PARSER
->  	select SYSTEM_DATA_VERIFICATION
-> +	select IPE_PROP_DM_VERITY if DM_VERITY && DM_VERITY_VERIFY_ROOTHASH_SIG
->  	help
->  	  This option enables the Integrity Policy Enforcement LSM
->  	  allowing users to define a policy to enforce a trust-based access
-> @@ -15,3 +16,20 @@ menuconfig SECURITY_IPE
->  	  admins to reconfigure trust requirements on the fly.
->  
->  	  If unsure, answer N.
-> +
-> +if SECURITY_IPE
-> +menu "IPE Trust Providers"
-> +
-> +config IPE_PROP_DM_VERITY
-> +	bool "Enable support for dm-verity volumes"
-> +	depends on DM_VERITY && DM_VERITY_VERIFY_ROOTHASH_SIG
-> +	help
-> +	  This option enables the properties 'dmverity_signature' and
-> +	  'dmverity_roothash' in IPE policy. These properties evaluates
-> +	  to TRUE when a file is evaluated against a dm-verity volume
-> +	  that was mounted with a signed root-hash or the volume's
-> +	  root hash matches the supplied value in the policy.
-> +
-> +endmenu
-> +
-> +endif
-> diff --git a/security/ipe/Makefile b/security/ipe/Makefile
-> index 2279eaa3cea3..66de53687d11 100644
-> --- a/security/ipe/Makefile
-> +++ b/security/ipe/Makefile
-> @@ -6,6 +6,7 @@
->  #
->  
->  obj-$(CONFIG_SECURITY_IPE) += \
-> +	digest.o \
->  	eval.o \
->  	hooks.o \
->  	fs.o \
-> diff --git a/security/ipe/audit.c b/security/ipe/audit.c
-> index ed390d32c641..a4ad8e888df0 100644
-> --- a/security/ipe/audit.c
-> +++ b/security/ipe/audit.c
-> @@ -13,6 +13,7 @@
->  #include "hooks.h"
->  #include "policy.h"
->  #include "audit.h"
-> +#include "digest.h"
->  
->  #define ACTSTR(x) ((x) == IPE_ACTION_ALLOW ? "ALLOW" : "DENY")
->  
-> @@ -54,8 +55,30 @@ static const char *const audit_prop_names[__IPE_PROP_MAX] = {
->  	"boot_verified=FALSE",
->  	"boot_verified=TRUE",
->  #endif /* CONFIG_BLK_DEV_INITRD */
-> +#ifdef CONFIG_IPE_PROP_DM_VERITY
-> +	"dmverity_roothash=",
-> +	"dmverity_signature=FALSE",
-> +	"dmverity_signature=TRUE",
-> +#endif /* CONFIG_IPE_PROP_DM_VERITY */
->  };
->  
-> +#ifdef CONFIG_IPE_PROP_DM_VERITY
-> +/**
-> + * audit_dmv_roothash - audit a roothash of a dmverity volume.
-> + * @ab: Supplies a pointer to the audit_buffer to append to.
-> + * @rh: Supplies a pointer to the digest structure.
-> + */
-> +static void audit_dmv_roothash(struct audit_buffer *ab, const void *rh)
-> +{
-> +	audit_log_format(ab, "%s", audit_prop_names[IPE_PROP_DMV_ROOTHASH]);
-> +	ipe_digest_audit(ab, rh);
-> +}
-> +#else
-> +static void audit_dmv_roothash(struct audit_buffer *ab, const void *rh)
-> +{
-> +}
-> +#endif /* CONFIG_IPE_PROP_DM_VERITY */
+Hi,
 
-I talked about this back in my review of the v11 patchset and I'm
-guessing you may have missed it ... the problem with the above code is
-that the fields in an audit record should remain constant, even if
-there is no data for that particular field.  In cases where there is no
-data to record for a given field, a "?" should be used as the field's
-value, for example:
+ÔÚ 2024/02/03 11:19, Benjamin Marzinski Ð´µÀ:
+> On Thu, Feb 01, 2024 at 05:25:45PM +0800, Yu Kuai wrote:
+>> From: Yu Kuai <yukuai3@huawei.com>
+>> I apply this patchset on top of v6.8-rc1, and run lvm2 tests suite with
+>> folling cmd for 24 round(for about 2 days):
+>>
+>> for t in `ls test/shell`; do
+>>          if cat test/shell/$t | grep raid &> /dev/null; then
+>>                  make check T=shell/$t
+>>          fi
+>> done
+>>
+>> failed count                             failed test
+>>        1 ###       failed: [ndev-vanilla] shell/dmsecuretest.sh
+>>        1 ###       failed: [ndev-vanilla] shell/dmsetup-integrity-keys.sh
+>>        1 ###       failed: [ndev-vanilla] shell/dmsetup-keyring.sh
+>>        5 ###       failed: [ndev-vanilla] shell/duplicate-pvs-md0.sh
+>>        1 ###       failed: [ndev-vanilla] shell/duplicate-vgid.sh
+>>        2 ###       failed: [ndev-vanilla] shell/duplicate-vgnames.sh
+>>        1 ###       failed: [ndev-vanilla] shell/fsadm-crypt.sh
+>>        1 ###       failed: [ndev-vanilla] shell/integrity.sh
+>>        6 ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+>>        2 ###       failed: [ndev-vanilla] shell/lvchange-rebuild-raid.sh
+>>        5 ###       failed: [ndev-vanilla] shell/lvconvert-raid-reshape-stripes-load-reload.sh
+>>        4 ###       failed: [ndev-vanilla] shell/lvconvert-raid-restripe-linear.sh
+>>        1 ###       failed: [ndev-vanilla] shell/lvconvert-raid1-split-trackchanges.sh
+>>       20 ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+>>       20 ###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
+>>       24 ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+>>
+>> And I ramdomly pick some tests verified by hand that these test will
+>> fail in v6.6 as well(not all tests):
+>>
+>> shell/lvextend-raid.sh
+>> shell/lvcreate-large-raid.sh
+>> shell/lvconvert-repair-raid.sh
+>> shell/lvchange-rebuild-raid.sh
+>> shell/lvchange-raid1-writemostly.sh
+> 
+> In my testing with this patchset on top of the head of linus's tree
+> (5c24e4e9e708) I am seeing failures in
+> shell/lvconvert-raid-reshape-stripes-load-reload.sh and
+> shell/lvconvert-repair-raid.sh in about 20% of my runs. I have never
+> seen either of these these fail running on the 6.6 kernel (ffc253263a13).
 
-  dmverify_roothash=?
+This sounds quite different in my testing, as I said, the test
 
-My guess is that you would want to do something like this:
+shell/lvconvert-repair-raid.sh is very likely to fail in v6.6 already,
+I don't know why it never fail in your testing, test log in v6.6:
 
-  #else  /* !CONFIG_IPE_PROP_DM_VERITY */
-  static void audit_dmv_roothash(...)
-  {
-    audit_log_format(ab, "%s=?", audit_prop_names[...]);
-  }
-  #endif /* CONFIG_IPE_PROP_DM_VERITY */
+| [ 1:38.162] #lvconvert-repair-raid.sh:1+ aux teardown
+| [ 1:38.162] ## teardown.......## removing stray mapped devices with 
+names beginning with LVMTEST3474:
+| [ 1:39.207] .set +vx; STACKTRACE; set -vx
+| [ 1:41.448] ##lvconvert-repair-raid.sh:1+ set +vx
+| [ 1:41.448] ## - /mnt/test/lvm2/test/shell/lvconvert-repair-raid.sh:1
+| [ 1:41.449] ## 1 STACKTRACE() called from 
+/mnt/test/lvm2/test/shell/lvconvert-repair-raid.sh:1
+| [ 1:41.449] ## ERROR: The test started dmeventd (3718) unexpectedly.
 
---
-paul-moore.com
+And the same in v6.8-rc1. Perhaps do you know how to fix this error?
+
+Thanks,
+Kuai
+
+> 
+> lvconvert-repair-raid.sh creates a raid array and then disables one if
+> its drives before there's enough time to finish the initial sync and
+> tries to repair it. This is supposed to fail (it uses dm-delay devices
+> to slow down the sync). When the test succeeds, I see things like this:
+> 
+> [ 0:13.469] #lvconvert-repair-raid.sh:161+ lvcreate --type raid10 -m 1 -i 2 -L 64 -n LV1 LVMTEST191946vg /tmp/LVMTEST191946.ImUMG6dyqB/dev/mapper/LVMTEST191946pv1 /tmp/LVMTEST191946.ImUMG6dyqB/dev/mapper/LVMTEST191946pv2 /tmp/LVMTEST191946.ImUMG6dyqB/dev/mapper/LVMTEST191946pv3 /tmp/LVMTEST191946.ImUMG6dyqB/dev/mapper/LVMTEST191946pv4
+> [ 0:13.469]   Using default stripesize 64.00 KiB.
+> [ 0:13.483]   Logical volume "LV1" created.
+> [ 0:14.042] 6,8908,1194343108,-;device-mapper: raid: Superblocks created for new raid set
+> [ 0:14.042] 5,8909,1194348704,-;md/raid10:mdX: not clean -- starting background reconstruction
+> [ 0:14.042] 6,8910,1194349443,-;md/raid10:mdX: active with 4 out of 4 devices
+> [ 0:14.042] 4,8911,1194459161,-;mdX: bitmap file is out of date, doing full recovery
+> [ 0:14.042] 6,8912,1194563810,-;md: resync of RAID array mdX
+> [ 0:14.042]   WARNING: This metadata update is NOT backed up.
+> [ 0:14.042] aux disable_dev "$dev4"
+> [ 0:14.058] #lvconvert-repair-raid.sh:163+ aux disable_dev /tmp/LVMTEST191946.ImUMG6dyqB/dev/mapper/LVMTEST191946pv4
+> [ 0:14.058] Disabling device /tmp/LVMTEST191946.ImUMG6dyqB/dev/mapper/LVMTEST191946pv4 (253:5)
+> [ 0:14.101] not lvconvert -y --repair $vg/$lv1
+> 
+> When it fails, I see:
+> 
+> [ 0:13.831] #lvconvert-repair-raid.sh:161+ lvcreate --type raid10 -m 1 -i 2 -L 64 -n LV1 LVMTEST192248vg /tmp/LVMTEST192248.ATcecgSGfE/dev/mapper/LVMTEST192248pv1 /tmp/LVMTEST192248.ATcecgSGfE/dev/mapper/LVMTEST192248pv2 /tmp/LVMTEST192248.ATcecgSGfE/dev/mapper/LVMTEST192248pv3 /tmp/LVMTEST192248.ATcecgSGfE/dev/mapper/LVMTEST192248pv4
+> [ 0:13.831]   Using default stripesize 64.00 KiB.
+> [ 0:13.847]   Logical volume "LV1" created.
+> [ 0:14.499]   WARNING: This metadata update is NOT backed up.
+> [ 0:14.499] 6,8925,1187444256,-;device-mapper: raid: Superblocks created for new raid set
+> [ 0:14.499] 5,8926,1187449525,-;md/raid10:mdX: not clean -- starting background reconstruction
+> [ 0:14.499] 6,8927,1187450148,-;md/raid10:mdX: active with 4 out of 4 devices
+> [ 0:14.499] 6,8928,1187452472,-;md: resync of RAID array mdX
+> [ 0:14.499] 6,8929,1187453016,-;md: mdX: resync done.
+> [ 0:14.499] 4,8930,1187555486,-;mdX: bitmap file is out of date, doing full recovery
+> [ 0:14.499] aux disable_dev "$dev4"
+> [ 0:14.515] #lvconvert-repair-raid.sh:163+ aux disable_dev /tmp/LVMTEST192248.AT
+> cecgSGfE/dev/mapper/LVMTEST192248pv4
+> [ 0:14.515] Disabling device /tmp/LVMTEST192248.ATcecgSGfE/dev/mapper/LVMTEST192
+> 248pv4 (253:5)
+> [ 0:14.554] not lvconvert -y --repair $vg/$lv1
+> 
+> To me the important looking difference (and I admit, I'm no RAID expert), is that in the
+> case where the test passes (where lvconvert fails as expected), I see
+> 
+> [ 0:14.042] 4,8911,1194459161,-;mdX: bitmap file is out of date, doing full recovery
+> [ 0:14.042] 6,8912,1194563810,-;md: resync of RAID array mdX
+> 
+> When it fails I see:
+> 
+> [ 0:14.499] 6,8928,1187452472,-;md: resync of RAID array mdX
+> [ 0:14.499] 6,8929,1187453016,-;md: mdX: resync done.
+> [ 0:14.499] 4,8930,1187555486,-;mdX: bitmap file is out of date, doing full recovery
+> 
+> Which appears to show a resync that takes no time, presumable because it happens before
+> the device notices that the bitmaps are wrong and schedules a full recovery.
+> 
+> 
+> lvconvert-raid-reshape-stripes-load-reload.sh repeatedly reloads the
+> device table during a raid reshape, and then tests the filesystem for
+> corruption afterwards. With this patchset, the filesystem is
+> occasionally corrupted.  I do not see this with the 6.6 kernel.
+> 
+> -Ben
+>   
+>> Xiao Ni also test the last version on a real machine, see [1].
+>>
+>> [1] https://lore.kernel.org/all/CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com/
+>>
+>> Yu Kuai (14):
+>>    md: don't ignore suspended array in md_check_recovery()
+>>    md: don't ignore read-only array in md_check_recovery()
+>>    md: make sure md_do_sync() will set MD_RECOVERY_DONE
+>>    md: don't register sync_thread for reshape directly
+>>    md: don't suspend the array for interrupted reshape
+>>    md: fix missing release of 'active_io' for flush
+>>    md: export helpers to stop sync_thread
+>>    md: export helper md_is_rdwr()
+>>    dm-raid: really frozen sync_thread during suspend
+>>    md/dm-raid: don't call md_reap_sync_thread() directly
+>>    dm-raid: add a new helper prepare_suspend() in md_personality
+>>    md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+>>      reshape
+>>    dm-raid: fix lockdep waring in "pers->hot_add_disk"
+>>    dm-raid: remove mddev_suspend/resume()
+>>
+>>   drivers/md/dm-raid.c |  78 +++++++++++++++++++--------
+>>   drivers/md/md.c      | 126 +++++++++++++++++++++++++++++--------------
+>>   drivers/md/md.h      |  16 ++++++
+>>   drivers/md/raid10.c  |  16 +-----
+>>   drivers/md/raid5.c   |  61 +++++++++++----------
+>>   5 files changed, 192 insertions(+), 105 deletions(-)
+>>
+>> -- 
+>> 2.39.2
+>>
+> 
+> .
+> 
+
