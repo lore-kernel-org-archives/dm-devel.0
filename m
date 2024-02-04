@@ -1,95 +1,120 @@
-Received: from mail-pf1-f170.google.com (mail-pf1-f170.google.com [209.85.210.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9BDB2286BC
-	for <dm-devel@lists.linux.dev>; Sun,  4 Feb 2024 21:33:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E743F10A24;
+	Sun,  4 Feb 2024 23:57:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707082433; cv=none; b=ZpKmQoF4A0WJSPNUXM+/J/vOeXZKOdQyIf1Ku9zOA53+sR8x+PXd4ztztRsHLGjQQAJ2hFt0+S9VFJY+944SLJ2xppWf2TT7vVYx3MH6zmhi0NzrPyXi5DhOGkqHXiSt3m/Gr25TZ9Qi8GOHCaZ1+tdovlQ7I+pvBPr3B7rLTXM=
+	t=1707091023; cv=none; b=NqZTFrZcx9tPD3LG3Vykc0laYE6TBnZb0KY1obs45I5GV66KKzRqnkJnJIRwHswhmKROorWbRt1fCczfGXOnhAt6cWD07+cm/+69TZ4Is8yH5iNW5OLaJNd02WCm3BdfdTQq3HgT4geuASJWvUBafube8536X67juJMeWmwhjfI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707082433; c=relaxed/simple;
-	bh=FViAgGY9+E6nqcFOV1iUFPe+Yh9doxfR37J2aoGnWp4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=XF63JSxhiuHYLsq0WcqCD7a9s8olIbRBts2dDxSDDNCt81bAJxe3qpwYMWZLzNkdkvPqYYsvHi3dzdurPVPdP+rrInt17odbCkzY1vSxfPWuZ7fE5TeQ9g++6B4m1TJEhRlNccYnV6tf8Z1aoCdzNlR00YBDfvMz1+em5JQYXtI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Jot8PSqn; arc=none smtp.client-ip=209.85.210.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1707091023; c=relaxed/simple;
+	bh=S7nsiTZ7OTv6LdLKs4GQYVpY3LYxbY4DLEPqqT+OjO8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=J/ihAOC6VuZdNiHNsNoTcKsY5Xy+KPbRpGnqTRwon3nzjD/gwp0hK/jiPULr1+jZ1o3iVDI1Kaji3ouHvHyHxwUA3aQGeltNz8e26/TXO/F7FZEPK/JGkxOqUGBI2yjRI0cbOJJ8xIxuXjF+f6ywnX8jTxHa/Q3ulF4+ZNNOmx0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=p5L+D697; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Jot8PSqn"
-Received: by mail-pf1-f170.google.com with SMTP id d2e1a72fcca58-6e03b583904so400517b3a.2
-        for <dm-devel@lists.linux.dev>; Sun, 04 Feb 2024 13:33:51 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1707082431; x=1707687231; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=K05b5VLfrvxMvlDj2Oam+kbl/YvHi9sQJ4OaJmwSdN0=;
-        b=Jot8PSqnr0STvR8aOvufk4qxiHnySq6pQUE0HovQhYF/NVzW9vphRgKzTbTlkH2uI1
-         gaVQ8eA9fgALsWFAsUZpLGiXESTRR0OAHgPiUTdKFn0ft4Y/gGtG6gZIM5DXVfdBNdr2
-         Y/me7nbWgeInA0OvOctGUZtHtm2WOSP6EWL2EC/GI0uCHzjoT+Z1Vd1nMxEThD/X9IZi
-         wffwTnbTXyRyfkYaGjHl7unIILduksvciyZsVV/HLMtc9aEEQBHtUkMqK7x2GfS74CRW
-         miJp2Dkf1PLYN0G5vhC3y6eNokXiB9v7+cCAL52rMKfoHPVUA11KK0Vw1Ka9AM0iIzW2
-         bUAw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707082431; x=1707687231;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=K05b5VLfrvxMvlDj2Oam+kbl/YvHi9sQJ4OaJmwSdN0=;
-        b=KQ5NCrapZJ8fw6/tBQgPuM/PNE6UP51s8ap+g78T3lN8DawAhpb1hUnKamlXu5UP6N
-         r3rp9Nk0emQkLDSM+4os/690CvAnY+mnfFSBYoTYwBC3izZypzg795pP/c/j/Ngr3/Rq
-         3spBGNIOx/T4PD9aVSCEIguNxhT+vM0+MsEw9lyoXleA2cqSpLtUXccyJHfqsuSBr9OA
-         l3NV/F4nF2aIA44oqbDJAGxKT6sPCxhY/71sj+ojNlYWDvDDyBY9tYFPJpe4oMuwToD1
-         +HC+t+itL2ddQgt7gXQ1Z9PEyOrXpWwAT0U5Konv3+t/5dj5X5+mhgw5cP5rvv748bAH
-         ngQw==
-X-Gm-Message-State: AOJu0YxEiiE3hw2AwS7bVXGyo1iT7UIDtEYxRNZi+/22B7VqkY0e5bmY
-	iB8kweJtWEmWaRUD+0jti0U89RFqQoiZC0oql5dbHc47FmDuqvOC
-X-Google-Smtp-Source: AGHT+IEq90LVf9NXSqesU3tg2TwrDGP9MmY7XpUK9YJk1kiC567+EGK2eUNBHUpKMXWiuE5BEyLP7A==
-X-Received: by 2002:a05:6a00:d4b:b0:6e0:3aa3:e163 with SMTP id n11-20020a056a000d4b00b006e03aa3e163mr2375756pfv.7.1707082430891;
-        Sun, 04 Feb 2024 13:33:50 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCXTiaHeupoEVMkrMvapOSp8j4tlU0hr+rODA/5RPybihfYgmEsZTeFryROCxlOh+Hi9+lc49Z1JMO176gJFmryueU/qz5k25REqmLyWBvF7jVvLXBfWl4HxpajvW0KZP6ITyyat3d30fhdX5nfiDIUwisaj8COgExEYK/hOXNroNhEVc7pVC1YOOyRrGsOKSeI6QhXPM57V/O5NIoeXfjCL6KSAPpH4iO0eHg1AIARHRl/LUAaV2PInGvGs3HkSf+t9TYVIJhvs8FimNNZquCSVnVDAQ5ScFlENEBV7/IpleXqz+RBYBwOKXINFZbN4ltvCDlJyQ3mWOh7UShmmHF7ZvAk6qQbHQ2y0wkHGMAO+tOgRneKx80HOrSOgFn25endVqmRhOv2X6W7/teGxb5nDr77q6EhltTl9P56/0TJQMbrVNFiI
-Received: from localhost (dhcp-141-239-144-21.hawaiiantel.net. [141.239.144.21])
-        by smtp.gmail.com with ESMTPSA id p22-20020aa78616000000b006db3149eacasm5177979pfn.104.2024.02.04.13.33.50
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 04 Feb 2024 13:33:50 -0800 (PST)
-Sender: Tejun Heo <htejun@gmail.com>
-Date: Sun, 4 Feb 2024 11:33:49 -1000
-From: Tejun Heo <tj@kernel.org>
-To: torvalds@linux-foundation.org, mpatocka@redhat.com
-Cc: linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
-	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com,
-	bob.liu@oracle.com, houtao1@huawei.com, peterz@infradead.org,
-	mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com,
-	kernel-team@meta.com
-Subject: Re: [PATCHSET wq/for-6.9] workqueue: Implement BH workqueue and
- convert several tasklet users
-Message-ID: <ZcACvVz83QFuSLR6@slm.duckdns.org>
-References: <20240130091300.2968534-1-tj@kernel.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="p5L+D697"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 320B1C433C7;
+	Sun,  4 Feb 2024 23:57:01 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1707091022;
+	bh=S7nsiTZ7OTv6LdLKs4GQYVpY3LYxbY4DLEPqqT+OjO8=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=p5L+D6974ZXTtslyrvxOaJlVx/CMzUcdCoF2EjHla75uZwO3+bF0YMs1DErY5nNoG
+	 cUl0jMpZoMIooWdJLVe9RH7RWXSzsCXTarYz6aqspNQEleo4wRIv/3wr5q0jhuGkA2
+	 zkbA5X1wWbyjVNxU2GuQ5itTydWfJ48i2eB39lyVJurpZyw7fx+3ejGU/9ws3rliGa
+	 sBiWT+rNLFXrTKoiD5jesVpGakkbFHCjE4G07rW3noCf67U+B/fzbKwzjMhqJ0FQdl
+	 t9gQ5QbKkIaKOK8FLxeRjlAtmF5QJ/h6U4Mj1BFdgDLlUfkLwvbuapyXU7oRSzL/zM
+	 DttBF1ZnCLOLQ==
+Message-ID: <a3f17ffb-872b-49cf-a1a7-553ca4a272c0@kernel.org>
+Date: Mon, 5 Feb 2024 08:57:00 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240130091300.2968534-1-tj@kernel.org>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 06/26] block: Introduce zone write plugging
+Content-Language: en-US
+To: Ming Lei <ming.lei@redhat.com>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+ linux-scsi@vger.kernel.org, "Martin K . Petersen"
+ <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
+ Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>
+References: <20240202073104.2418230-1-dlemoal@kernel.org>
+ <20240202073104.2418230-7-dlemoal@kernel.org> <Zb8K4uSN3SNeqrPI@fedora>
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <Zb8K4uSN3SNeqrPI@fedora>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Mon, Jan 29, 2024 at 11:11:47PM -1000, Tejun Heo wrote:
->  0001-workqueue-Update-lock-debugging-code.patch
->  0002-workqueue-Factor-out-init_cpu_worker_pool.patch
->  0003-workqueue-Implement-BH-workqueues-to-eventually-repl.patch
->  0004-backtracetest-Convert-from-tasklet-to-BH-workqueue.patch
->  0005-usb-core-hcd-Convert-from-tasklet-to-BH-workqueue.patch
->  0006-net-tcp-tsq-Convert-from-tasklet-to-BH-workqueue.patch
->  0007-dm-crypt-Convert-from-tasklet-to-BH-workqueue.patch
->  0008-dm-verity-Convert-from-tasklet-to-BH-workqueue.patch
+On 2/4/24 12:56, Ming Lei wrote:
+> On Fri, Feb 02, 2024 at 04:30:44PM +0900, Damien Le Moal wrote:
+>> +/*
+>> + * Zone write plug flags bits:
+>> + *  - BLK_ZONE_WPLUG_CONV: Indicate that the zone is a conventional one. Writes
+>> + *    to these zones are never plugged.
+>> + *  - BLK_ZONE_WPLUG_PLUGGED: Indicate that the zone write plug is plugged,
+>> + *    that is, that write BIOs are being throttled due to a write BIO already
+>> + *    being executed or the zone write plug bio list is not empty.
+>> + */
+>> +#define BLK_ZONE_WPLUG_CONV	(1U << 0)
+>> +#define BLK_ZONE_WPLUG_PLUGGED	(1U << 1)
+> 
+> BLK_ZONE_WPLUG_PLUGGED == !bio_list_empty(&zwplug->bio_list), so looks
+> this flag isn't necessary.
 
-Applied 0001-0003 to wq/for-6.9. Applied 0004-0005 to
-wq/for-6.9-bh-conversions. Will proceed on 0006 and other conversions after
-more perf testing.
+No, it is. As the description says, the flag not only indicates that there are
+plugged BIOs, but it also indicates that there is a write for the zone
+in-flight. And that can happen even with the BIO list being empty. E.g. for a
+qd=1 workload of small BIOs, no BIO will ever be added to the BIO list, but the
+zone still must be marked as "plugged" when a write BIO is issued for it.
 
-Thanks.
+>> +static inline void blk_zone_wplug_add_bio(struct blk_zone_wplug *zwplug,
+>> +					  struct bio *bio, unsigned int nr_segs)
+>> +{
+>> +	/*
+>> +	 * Keep a reference on the BIO request queue usage. This reference will
+>> +	 * be dropped either if the BIO is failed or after it is issued and
+>> +	 * completes.
+>> +	 */
+>> +	percpu_ref_get(&bio->bi_bdev->bd_disk->queue->q_usage_counter);
+> 
+> It is fragile to get nested usage_counter, and same with grabbing/releasing it
+> from different contexts or even functions, and it could be much better to just
+> let block layer maintain it.
+> 
+> From patch 23's change:
+> 
+> +	 * Zoned block device information. Reads of this information must be
+> +	 * protected with blk_queue_enter() / blk_queue_exit(). Modifying this
+> 
+> Anytime if there is in-flight bio, the block device is opened, so both gendisk and
+> request_queue are live, so not sure if this .q_usage_counter protection
+> is needed.
+
+Hannes also commented about this. Let me revisit this.
+
+>> +	/*
+>> +	 * blk-mq devices will reuse the reference on the request queue usage
+>> +	 * we took when the BIO was plugged, but the submission path for
+>> +	 * BIO-based devices will not do that. So drop this reference here.
+>> +	 */
+>> +	if (bio->bi_bdev->bd_has_submit_bio)
+>> +		blk_queue_exit(bio->bi_bdev->bd_disk->queue);
+> 
+> But I don't see where this reference is reused for blk-mq in this patch,
+> care to point it out?
+
+This patch modifies blk_mq_submit_bio() to add a "goto new_request" at the top
+for any BIO flagged with BIO_FLAG_ZONE_WRITE_PLUGGING. So when a plugged BIO is
+unplugged and submitted again, the reference that was taken in
+blk_zone_wplug_add_bio() is reused for the new request for that BIO.
+
 
 -- 
-tejun
+Damien Le Moal
+Western Digital Research
+
