@@ -1,108 +1,76 @@
-Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com [209.85.214.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78B7D28E0D
-	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 12:46:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06AAA482EC
+	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 17:21:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707137216; cv=none; b=GbLL/hk/ciJRFKzv9OD0J28yZISJcrjtVlnjvMb1eR7hKXvxNextt0YC0g2rJRERXognpKY2k3eaLRuuWlAtJuRmw5s22W28KhBIIEEYEYrIq5t70PCxELzdMZCyddDiUIeNYd3mPKLHTSqOjkfTGZdEgDoqw1it1ZolkqHS89A=
+	t=1707153678; cv=none; b=m3dSB2Brt+livfLLCLJW2AMZ8uhG1gSvCWiohpdsvV39UabQC/4gSXEYkHpQv76gshTsD5XXBL+Xo6ogoZnwxXOex8c8HeKyj0WzA3y3ierNtpyItjSt+V0fPwcnO0xM8bMVMm8cMJzfLkdj8UsXnUl0Cdw1hdM4fynxmBFdwJ0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707137216; c=relaxed/simple;
-	bh=uCHwYtcqJvKd0vl1r4shZl0zfIqS2AF7bW4iDLZRD6E=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=QIGmJBU+KdLEjpkB2e6f9NwgKZHfRZIfnG1EjG6RZfGUlrSAr3cuIHScIgqJPrngZHqszWbXnP9XFvWZqbPTQlEMP50RHKnoF10FaDlNP16e9jvphDZYNlk30DgrTFFi5S+7P6KIM4nR+ck+cSp1Nj/ICiJTjW/0igT0lb9ujhI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Xsbbi34h; arc=none smtp.client-ip=209.85.128.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Xsbbi34h"
-Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-40f02b8d176so38222775e9.1
-        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 04:46:54 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1707137213; x=1707742013; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=TS6RPL1ziCGOnuiUbiIHJtHOa3zWHBq75Wkktv9HZ/k=;
-        b=Xsbbi34hTFx1HO/gQ1Xc2FgxvLPXzZ4m6Gz9jC4/vxF8G7THmVcreLM86v+IrR6U+t
-         Vesy+VjDI+FM3J3tNnTjdox7T0XTQi8AxkRioNC2NrqJ/6LifqbavkbncRFEO6pUPkGZ
-         jx/XoiIex7zdKZCfImocGD9H0xlkZhdMYGt3N19AlUaO+0pIxTtRrWcKmcAOL5x9hPfX
-         91m8mxCz5gdGfSwV395i3CYOOlOMDNcpP+osBdTugNrKp3omzdraON4uKmBEPSdee2D/
-         jo92qZyZLHtWpRn3xA9HSr49purcpATp/FH3fAvTYV8PVNHB2m0nX8HzQJZ/q91kdwqY
-         vDKw==
+	s=arc-20240116; t=1707153678; c=relaxed/simple;
+	bh=+s4G4yE224/ZsT8tVQV8ZetJjGuXRmqMB/KHzuIt7JE=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=A0NoR6Dq3WnIk/nqSG2n1mL2upeu3lH3eq1/UijRIM3WqRmKvULQMPeju6ykm285cF9RGEfmSWtspfuPsdxRrUYneLbK7KbEcWDHLkFU//WFWG4qhum7mLtZOBLxT6P93BJqOPmkes+rx/GW+09F4Ra7HjHI2imIHgjIwH7hOpU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.214.180
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-pl1-f180.google.com with SMTP id d9443c01a7336-1d93ddd76adso33583245ad.2
+        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 09:21:16 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707137213; x=1707742013;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=TS6RPL1ziCGOnuiUbiIHJtHOa3zWHBq75Wkktv9HZ/k=;
-        b=mMSNy3ahqyTKaG8Nv86M1ftF2CtiZ3zUYh/C1BacMKjhOwVlE/cA6do1aUjgKUfnN6
-         M8adLob9wYlRCtTwrt+EMT8MYCIOywOpHFyZTLz15UuY6Cqwbh2useXCeUBKTHEKIUnd
-         niF9wMnt7eQ4YZrbyGbD2EaCkNXsiA8Sa4gjLFRrEeREa96uvS7Wo0m82SV1q+UfErMP
-         p0kmajcIDLKT/E0gqoBMIZSSJIT4cs1B9T4PdQzm8QUVIMP/R3zDc77ldul53pDehf3D
-         glp+C3m+8mkbLJSfb5Es6uG0bHxfSJpxY6xRkX0Q0maZuD7Pvcg7JvFBe5koBoc5bAaz
-         DtQw==
-X-Gm-Message-State: AOJu0YzW3AegYKPVr+bD9mEa3sjCnEm4dvGr8xFrn9f2SzSE4GLUDEFX
-	x2voi2q/s1AiGZgZ0egE2dGW1d59+n/V9gDCZ0QFw3+AT3Glg+COvWLH+3WfHas=
-X-Google-Smtp-Source: AGHT+IEyBSh7/mcrMvtcAFb0iUUFQNfJAkDR9dHyjEisZ8h4ikt+VTBryf7aHog49AftJP4To04maA==
-X-Received: by 2002:a05:600c:35c7:b0:40e:fc29:f527 with SMTP id r7-20020a05600c35c700b0040efc29f527mr4912104wmq.31.1707137212820;
-        Mon, 05 Feb 2024 04:46:52 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCU+aDRcP0sy2EzKUgYgs8p4qL9EBmvPfsvTEu9dU5B4U0saWyjDNZ8BBGCGG6nsSTX2ekSEai6txJxm5lTsvfxNYZvC29D/8pOWxEhSI98RcKEMrCoyd4zHZWEowlX3Toxg+v06H8mqi5dUq5w5RqBePL7U/A9UVbmpRjb1ZSIOBwTUXBk/nZgENA2mjXQJTeDbbTp450fBTBOp2PSNndOhMsHiUDGHbFxhnAzg5RwjMA==
-Received: from localhost (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
-        by smtp.gmail.com with UTF8SMTPSA id fm16-20020a05600c0c1000b0040ef67bd244sm8571313wmb.17.2024.02.05.04.46.52
+        d=1e100.net; s=20230601; t=1707153676; x=1707758476;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=+s4G4yE224/ZsT8tVQV8ZetJjGuXRmqMB/KHzuIt7JE=;
+        b=Q7Kr2VpnmDEoCCxWbVlj/bgOtBfPzpeHL7d/UDC09tnCQ3IDAVAg6e5OtIX1tWGvLq
+         gNpOUsSJKuoc5ePSx733rn1Hc8vjbyX7644DE4dZZQpqbAHeBzxZogaEUNDNJWcnCaUr
+         k+sSUJzR5KAsiNz4Oegt3ehYiG7+R3FncLy2XhcpijIZp8UPOdTSDJXbv75XNAzN9Fij
+         cNWk4QZP27rOkk32cLJPbLA0WcRj2d/TA+dDMDeLQwxN6Z5ytgMXGYncLL/yNu/ucWtp
+         /0Y3f43l9miwjY9E6JSojz8HZsrjWiv90+wFiPzV/8TMx6nbecmv2MfqkpLimXUgnEwu
+         mjmw==
+X-Gm-Message-State: AOJu0YxDb6qnt9jmafyAUAiAj8BfovCorRsukZirLObghYK/NQ1hLHWr
+	kXxXknPguxpyzKnt714UrfLK5SFM3+5NDJxWHny6HnsIS+FcqP+k
+X-Google-Smtp-Source: AGHT+IH6DGakhIlE1JJ4QYIdlK2j575hUSRaZDT03chyXNlT1fTCvhZ09RO4hsAqM2SS3pXeLK8meg==
+X-Received: by 2002:a17:903:94e:b0:1d9:c534:62c6 with SMTP id ma14-20020a170903094e00b001d9c53462c6mr191749plb.1.1707153676139;
+        Mon, 05 Feb 2024 09:21:16 -0800 (PST)
+X-Forwarded-Encrypted: i=0; AJvYcCVY+oC3Hl8G47MOwoLbDao2WE/eTVtHUdLDX9zXqfv4mgXvddcObQx2EBvLZDidgYdOm0Ib2eELeShQD5b760hX553hZp9Uppw/CThVchHIBgX3SeAl7XUNxLLanEFQDEQSzWE1x20zxLkMa+BV/DIeFuQ70XyjwshjIb6PEZViF5p+E7WXkTBx3luu59kDsbo4p/FKYPAKlnY5RpwNpFXTGh95xEPAqBzYX/mQIum/pgdo/slusULBMqpjCUAkpt9f7Q==
+Received: from ?IPV6:2620:0:1000:8411:be2a:6ac0:4203:7316? ([2620:0:1000:8411:be2a:6ac0:4203:7316])
+        by smtp.gmail.com with ESMTPSA id r20-20020a170903411400b001d8ec844fe7sm103169pld.283.2024.02.05.09.21.14
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 05 Feb 2024 04:46:52 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	linux-lvm@lists.linux.dev,
-	Zdenek Kabelac <zkabelac@redhat.com>,
-	Peter Rajnoha <prajnoha@redhat.com>,
-	Sergio Durigan Junior <sergiodj@sergiodj.net>,
-	Chris Hofstaedtler <zeha@debian.org>
-Subject: [PATCH 6/6] multipathd: don't activate socket activation by default
-Date: Mon,  5 Feb 2024 13:46:38 +0100
-Message-ID: <20240205124638.17877-7-mwilck@suse.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20240205124638.17877-1-mwilck@suse.com>
-References: <20240205124638.17877-1-mwilck@suse.com>
+        Mon, 05 Feb 2024 09:21:15 -0800 (PST)
+Message-ID: <7c98aae0-46d1-473d-8d60-8252a96c414a@acm.org>
+Date: Mon, 5 Feb 2024 09:21:14 -0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 00/26] Zone write plugging
+Content-Language: en-US
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>
+References: <20240202073104.2418230-1-dlemoal@kernel.org>
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20240202073104.2418230-1-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Socket activation will start multipathd on systems that don't have multipath
-hardware. This is often not desired.  On systems that do have multipath
-hardware, OTOH, it is highly recommended to enable multipathd.service directly
-rather than have it started via socket activation.  Therefore don't activate
-the socket by default.  multipathd still supports socket activation, so users
-who find it useful can disable multipathd.service and activate the socket.
+On 2/1/24 23:30, Damien Le Moal wrote:
+> The patch series introduces zone write plugging (ZWP) as the new
+> mechanism to control the ordering of writes to zoned block devices.
+> ZWP replaces zone write locking (ZWL) which is implemented only by
+> mq-deadline today. ZWP also allows emulating zone append operations
+> using regular writes for zoned devices that do not natively support this
+> operation (e.g. SMR HDDs). This patch series removes the scsi disk
+> driver and device mapper zone append emulation to use ZWP emulation.
 
-Fixes: https://github.com/opensvc/multipath-tools/issues/76
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-Cc: Sergio Durigan Junior <sergiodj@sergiodj.net>
-Cc: Chris Hofstaedtler <zeha@debian.org>
----
- multipathd/multipathd.socket | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+How are SCSI unit attention conditions handled?
 
-diff --git a/multipathd/multipathd.socket b/multipathd/multipathd.socket
-index c777e5e..6a62f5f 100644
---- a/multipathd/multipathd.socket
-+++ b/multipathd/multipathd.socket
-@@ -10,4 +10,6 @@ Before=sockets.target
- ListenStream=@/org/kernel/linux/storage/multipathd
- 
- [Install]
--WantedBy=sockets.target
-+# Socket activation for multipathd is disabled by default.
-+# Activate it here if you find it useful.
-+# WantedBy=sockets.target
--- 
-2.43.0
+Thanks,
 
+Bart.
