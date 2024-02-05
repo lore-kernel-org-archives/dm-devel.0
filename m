@@ -1,32 +1,33 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 2EA1D482E6
-	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 23:21:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE3684CB41;
+	Mon,  5 Feb 2024 23:40:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707175270; cv=none; b=op9hMrcIa7cG7IszkDPJTKR/Tkm6w2LSiAs0y58Z+6DBkbfuecX0nx3crLms3uy4/NlcW2jdKK6Fb3GYKU6hG7O+hmHAvCiAkA7+akUYu8HYLFRz4wgkEViPvQualnqMBI8HNd8+B4BPR2bDdF6FqOowQU4z5dAa3lh7/aa2eNk=
+	t=1707176432; cv=none; b=cUxYsDmIurLfqy7YbAg514HjYcThoe2WJLI0G2WZK6tcDX8fPRpC2k8I44JMPq3RUd/Y/50xbv4YOfWH9qUVqcMovPAiHW58b48tjFGuHmIFiQV7kZa8TPCpa+06EjjSSJW4AJrzWe8t/PFOAWZUcqMgWb3oyj8aog7zZVmBF7E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707175270; c=relaxed/simple;
-	bh=zNL2ywjKJssZ5pRTlZYgka+6y+zGk61/qvBAu5YB1YU=;
+	s=arc-20240116; t=1707176432; c=relaxed/simple;
+	bh=h+gnqVD2ATNthbjte0KY6e0m1YspY1vOlChihcpNHP8=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=ElX/mlT6EWN1wEbMptDhTEZu8L04x/Ic95MsnaupgPAtVi9i7cjJ565LIbX7m08r/KK7lyp18624XE1+6KfhIc0M3SkdU3PoV0ZIb09ljA14ePBwLLLkbHBcfUg/5mL4QdTYMDDXmcoKqaPtYidqKSP3qsDIt6U/+mUhD3NVf7E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=gI6cjtkm; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
+	 In-Reply-To:Content-Type; b=Wv25z6MHRxJo9vFdB3JMnFnS6PJ/72PflFFeVGfnYnV9GSqZ5uXiYIReISbhC+S483mYA6oDV8BvnpdfWdx1cdCSiCFxXlfgg712LdCjJRr3eu7pHLADyUbyxzjjipuGmAosPJUjEPS4p+P1uCfnakDW62NlR3fSKQFsuqtIcFE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=kBS0b4eC; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="gI6cjtkm"
-Received: from [10.137.106.151] (unknown [131.107.8.87])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 7AEC4207D846;
-	Mon,  5 Feb 2024 15:21:08 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 7AEC4207D846
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1707175268;
-	bh=Qg5yL0/Namb3YNGXwn7cLAEyy/A44S+ELEwtmFhQ+RU=;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="kBS0b4eC"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 83821C433C7;
+	Mon,  5 Feb 2024 23:40:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1707176430;
+	bh=h+gnqVD2ATNthbjte0KY6e0m1YspY1vOlChihcpNHP8=;
 	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=gI6cjtkm4cibm2DUJ9mtikbVu9hHSNKlrL01rbV0Y8abl/91KTJ8r5LlGcVKm9npe
-	 EPhMJHhHGPNgNk3rT65weiExV4D+LnWH+FHKY7HJV0KPaLDujK5Oaas9kgHlsRJkAo
-	 o4qOBdinDv8keS6+bkjw5zNNXTTm+m7Xl1UsGhi0=
-Message-ID: <695f5fc3-446d-4f18-88cf-a95b3287fe7f@linux.microsoft.com>
-Date: Mon, 5 Feb 2024 15:21:08 -0800
+	b=kBS0b4eCPgni1Iu9vWOrJi8VPyJGcON3gi6uuUTl15ZgcfYGdtESN8S7QEOjZycwJ
+	 IDdv6lW4zzhOs2ZITMWNsayll67VV9jQdgI64DzkHIOGP0nx48ss/8nb3LfJVLpj8P
+	 MhfVPX8J8mE3BHZ3cKruKT4vCh740yQos/NBkEfkZV4Tww1dcmTe01Xkb63a2cx5X1
+	 +gjG73URzIeYifgSe65b7VmZ0dY2jTpQ6/MF7VlsWPinOKretqxNb08BQWsoZLnU7F
+	 ewHVQCzftzZv3bokALyhkK4LFOlaIUtJL8IIn5bPGDlrTgNOOyacUOtDah6rgd9dTJ
+	 l5L0YQJr8Shgg==
+Message-ID: <ce23dd28-50d3-4650-993d-351cbcb45a80@kernel.org>
+Date: Tue, 6 Feb 2024 08:40:27 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -34,206 +35,86 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH RFC v12 8/20] ipe: add userspace interface
+Subject: Re: [PATCH 10/26] dm: Use the block layer zone append emulation
 Content-Language: en-US
-To: Paul Moore <paul@paul-moore.com>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
- tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
- snitzer@kernel.org, eparis@redhat.com, linux-doc@vger.kernel.org,
- linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org,
- linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, audit@vger.kernel.org,
- linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>
-References: <1706654228-17180-9-git-send-email-wufan@linux.microsoft.com>
- <737a8ea0323b3db38044813041215bac@paul-moore.com>
- <6e7c707c-28cd-42ec-a617-6f8d2ce9da4f@linux.microsoft.com>
- <CAHC9VhSX4iNHEw89-mpF07cSqgGd1myQ6CUfiQnA9pgg3QS7Tw@mail.gmail.com>
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <CAHC9VhSX4iNHEw89-mpF07cSqgGd1myQ6CUfiQnA9pgg3QS7Tw@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+ linux-scsi@vger.kernel.org, "Martin K . Petersen"
+ <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
+ Christoph Hellwig <hch@lst.de>
+References: <20240202073104.2418230-1-dlemoal@kernel.org>
+ <20240202073104.2418230-11-dlemoal@kernel.org> <Zb5-2LsnQtJHV2mL@redhat.com>
+ <4eb920d7-e2fc-49d0-9eec-5fc152fa21de@kernel.org>
+ <ZcFGGdVc7mqCpU7a@redhat.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <ZcFGGdVc7mqCpU7a@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-
-
-On 2/5/2024 3:10 PM, Paul Moore wrote:
-> On Mon, Feb 5, 2024 at 6:01 PM Fan Wu <wufan@linux.microsoft.com> wrote:
->> On 2/3/2024 2:25 PM, Paul Moore wrote:
->>> On Jan 30, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
->>>>
->>>> As is typical with LSMs, IPE uses securityfs as its interface with
->>>> userspace. for a complete list of the interfaces and the respective
->>>> inputs/outputs, please see the documentation under
->>>> admin-guide/LSM/ipe.rst
->>>>
->>>> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
->>>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
->>>> ---
->>>> v2:
->>>>     + Split evaluation loop, access control hooks,
->>>>       and evaluation loop from policy parser and userspace
->>>>       interface to pass mailing list character limit
->>>>
->>>> v3:
->>>>     + Move policy load and activation audit event to 03/12
->>>>     + Fix a potential panic when a policy failed to load.
->>>>     + use pr_warn for a failure to parse instead of an
->>>>       audit record
->>>>     + Remove comments from headers
->>>>     + Add lockdep assertions to ipe_update_active_policy and
->>>>       ipe_activate_policy
->>>>     + Fix up warnings with checkpatch --strict
->>>>     + Use file_ns_capable for CAP_MAC_ADMIN for securityfs
->>>>       nodes.
->>>>     + Use memdup_user instead of kzalloc+simple_write_to_buffer.
->>>>     + Remove strict_parse command line parameter, as it is added
->>>>       by the sysctl command line.
->>>>     + Prefix extern variables with ipe_
->>>>
->>>> v4:
->>>>     + Remove securityfs to reverse-dependency
->>>>     + Add SHA1 reverse dependency.
->>>>     + Add versioning scheme for IPE properties, and associated
->>>>       interface to query the versioning scheme.
->>>>     + Cause a parser to always return an error on unknown syntax.
->>>>     + Remove strict_parse option
->>>>     + Change active_policy interface from sysctl, to securityfs,
->>>>       and change scheme.
->>>>
->>>> v5:
->>>>     + Cause an error if a default action is not defined for each
->>>>       operation.
->>>>     + Minor function renames
->>>>
->>>> v6:
->>>>     + No changes
->>>>
->>>> v7:
->>>>     + Propagating changes to support the new ipe_context structure in the
->>>>       evaluation loop.
->>>>
->>>>     + Further split the parser and userspace interface changes into
->>>>       separate commits.
->>>>
->>>>     + "raw" was renamed to "pkcs7" and made read only
->>>>     + "raw"'s write functionality (update a policy) moved to "update"
->>>>     + introduced "version", "policy_name" nodes.
->>>>     + "content" renamed to "policy"
->>>>     + changes to allow the compiled-in policy to be treated
->>>>       identical to deployed-after-the-fact policies.
->>>>
->>>> v8:
->>>>     + Prevent securityfs initialization if the LSM is disabled
->>>>
->>>> v9:
->>>>     + Switch to securityfs_recursive_remove for policy folder deletion
->>>>
->>>> v10:
->>>>     + Simplify and correct concurrency
->>>>     + Fix typos
->>>>
->>>> v11:
->>>>     + Correct code comments
->>>>
->>>> v12:
->>>>     + Correct locking and remove redundant code
->>>> ---
->>>>    security/ipe/Makefile    |   2 +
->>>>    security/ipe/fs.c        | 101 +++++++++
->>>>    security/ipe/fs.h        |  16 ++
->>>>    security/ipe/ipe.c       |   3 +
->>>>    security/ipe/ipe.h       |   2 +
->>>>    security/ipe/policy.c    | 123 ++++++++++
->>>>    security/ipe/policy.h    |   9 +
->>>>    security/ipe/policy_fs.c | 469 +++++++++++++++++++++++++++++++++++++++
->>>>    8 files changed, 725 insertions(+)
->>>>    create mode 100644 security/ipe/fs.c
->>>>    create mode 100644 security/ipe/fs.h
->>>>    create mode 100644 security/ipe/policy_fs.c
->>>
->>> ...
->>>
->>>> diff --git a/security/ipe/policy.c b/security/ipe/policy.c
->>>> index f22a576a6d68..61fea3e38e11 100644
->>>> --- a/security/ipe/policy.c
->>>> +++ b/security/ipe/policy.c
->>>> @@ -43,6 +71,68 @@ static int set_pkcs7_data(void *ctx, const void *data, size_t len,
->>>>       return 0;
->>>>    }
->>>>
->>>> +/**
->>>> + * ipe_update_policy - parse a new policy and replace old with it.
->>>> + * @root: Supplies a pointer to the securityfs inode saved the policy.
->>>> + * @text: Supplies a pointer to the plain text policy.
->>>> + * @textlen: Supplies the length of @text.
->>>> + * @pkcs7: Supplies a pointer to a buffer containing a pkcs7 message.
->>>> + * @pkcs7len: Supplies the length of @pkcs7len.
->>>> + *
->>>> + * @text/@textlen is mutually exclusive with @pkcs7/@pkcs7len - see
->>>> + * ipe_new_policy.
->>>> + *
->>>> + * Context: Requires root->i_rwsem to be held.
->>>> + * Return:
->>>> + * * !IS_ERR        - The existing policy saved in the inode before update
->>>> + * * -ENOENT        - Policy doesn't exist
->>>> + * * -EINVAL        - New policy is invalid
->>>> + */
->>>> +struct ipe_policy *ipe_update_policy(struct inode *root,
->>>> +                                 const char *text, size_t textlen,
->>>> +                                 const char *pkcs7, size_t pkcs7len)
->>>> +{
->>>> +    int rc = 0;
->>>> +    struct ipe_policy *old, *ap, *new = NULL;
->>>> +
->>>> +    old = (struct ipe_policy *)root->i_private;
->>>> +    if (!old)
->>>> +            return ERR_PTR(-ENOENT);
->>>> +
->>>> +    new = ipe_new_policy(text, textlen, pkcs7, pkcs7len);
->>>> +    if (IS_ERR(new))
->>>> +            return new;
->>>> +
->>>> +    if (strcmp(new->parsed->name, old->parsed->name)) {
->>>> +            rc = -EINVAL;
->>>> +            goto err;
->>>> +    }
->>>> +
->>>> +    if (ver_to_u64(old) > ver_to_u64(new)) {
->>>> +            rc = -EINVAL;
->>>> +            goto err;
->>>> +    }
->>>> +
->>>> +    root->i_private = new;
->>>> +    swap(new->policyfs, old->policyfs);
->>>
->>> Should the swap() take place with @ipe_policy_lock held?
->>>
->> I think we are safe here because root->i_rwsem is held. Other two
->> operations set_active and delete are also depending on the inode lock.
->>>> +    mutex_lock(&ipe_policy_lock);
->>>> +    ap = rcu_dereference_protected(ipe_active_policy,
->>>> +                                   lockdep_is_held(&ipe_policy_lock));
->>>> +    if (old == ap) {
->>>> +            rcu_assign_pointer(ipe_active_policy, new);
->>>> +            mutex_unlock(&ipe_policy_lock);
->>>> +            synchronize_rcu();
->>>
->>> I'm guessing you are forcing a synchronize_rcu() here because you are
->>> free()'ing @old in the caller, yes?  Looking at the code, I only see
->>> one caller, update_policy().  With only one caller, why not free @old
->>> directly in ipe_update_policy()?  Do you see others callers that would
->>> do something different?
->>>
->> The call of synchronize_rcu() is because we are updating the current
->> active policy so we need to set the new policy as active.
+On 2/6/24 05:33, Mike Snitzer wrote:
+> On Mon, Feb 05 2024 at 12:38P -0500,
+> Damien Le Moal <dlemoal@kernel.org> wrote:
 > 
-> Unless I'm mistaken, a syncronize_rcu() call only ensures that the
-> current task will see the updated value by waiting until all current
-> RCU critical sections have finished.  Given the mutex involved here I
-> don't believe this is necessary, but please correct me if I'm wrong.
+>> On 2/4/24 02:58, Mike Snitzer wrote:
+>>> Love the overall improvement to the DM core code and the broader block
+>>> layer by switching to this bio-based ZWP approach.
+>>>
+>>> Reviewed-by: Mike Snitzer <snitzer@kernel.org>
+>>
+>> Thanks Mike !
+>>
+>>> But one incremental suggestion inlined below.
+>>
+>> I made this change, but in a lightly different form as I noticed that I was
+>> getting compile errors when CONFIG_BLK_DEV_ZONED is disabled.
+>> The change look like this now:
+>>
+>> static void dm_split_and_process_bio(struct mapped_device *md,
+>> 				     struct dm_table *map, struct bio *bio)
+>> {
+>> 	...
+>> 	need_split = is_abnormal = is_abnormal_io(bio);
+>> 	if (static_branch_unlikely(&zoned_enabled))
+>> 		need_split = is_abnormal || dm_zone_bio_needs_split(md, bio);
+>>
+>> 	...
+>>
+>> 	/*
+>> 	 * Use the block layer zone write plugging for mapped devices that
+>> 	 * need zone append emulation (e.g. dm-crypt).
+>> 	 */
+>> 	if (static_branch_unlikely(&zoned_enabled) &&
+>> 	    dm_zone_write_plug_bio(md, bio))
+>> 		return;
+>>
+>> 	...
+>>
+>> with these added to dm-core.h:
+>>
+>> static inline bool dm_zone_bio_needs_split(struct mapped_device *md,
+>> 					   struct bio *bio)
+>> {
+>> 	return md->emulate_zone_append && bio_straddle_zones(bio);
+>> }
+>> static inline bool dm_zone_write_plug_bio(struct mapped_device *md,
+>> 					  struct bio *bio)
+>> {
+>> 	return md->emulate_zone_append && blk_zone_write_plug_bio(bio, 0);
+>> }
+>>
+>> These 2 helpers define to "return false" for !CONFIG_BLK_DEV_ZONED.
+>> I hope this works for you. Otherwise, I will drop your review tag when posting V2.
 > 
-Sorry for the confusion. I think your previous comment was right, the 
-call of synchronize_rcu() is to free the old one. And I should put the 
-free of old just after the synchronize_rcu() call.
+> Why expose them in dm-core.h ?
+> 
+> Just have what you point in dm-core.h above dm_split_and_process_bio in dm.c ?
 
-Thanks,
-Fan
+I wanted to avoid "#ifdef CONFIG_BLK_DEV_ZONED" in the .c files. But if you are
+OK with that, I can move these inline functions in dm.c.
+
+
+-- 
+Damien Le Moal
+Western Digital Research
+
