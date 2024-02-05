@@ -1,126 +1,108 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-vk1-f180.google.com (mail-vk1-f180.google.com [209.85.221.180])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9249B13664A
-	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 20:44:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B08974A99C
+	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 20:50:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707165898; cv=none; b=ketf3iWhkKVOFTUh44g4QLcJ21zvfTe0moqSkz3YU80lX4XpXtk6emvwLVCU+jqIvhXMQFnVYKMbYdZUD9qGk7IsATv6sAcFyNs3kHPbSATwg9lfYBSfBjNpPeEDuiwmDPl770v1CVWBKIcGqobprVFgpr0WmAGNomUy6eWQJAQ=
+	t=1707166245; cv=none; b=jlUauaJ1MSrB5rt1cHNO7dxi1riM4jNOljVoBY2i3otmf6ctzPbt1utAY14DWEstP7w+H7/NSlV2xgwpQhjhNZi2GDPUDdW04vkO2VD+IRJr4JCthLg1oYDUT/3+AQU2sF/yL8CDeCmLnPH6o7gf0q5teqToO8uqG8R8BrYmyQ4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707165898; c=relaxed/simple;
-	bh=DpsRFjG/5qxs4II7JFR1SDVySSbzXY4guMZPklnKRo8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=RyN1x+jcBkkQ8uG2gMUsusNK8I5ql/5GqebiWCwZdD953Zuyh2KD224EEj7L3hzcWuULy4yykkNC7A68vtE/V0kubma8WL7vb8qTbI8bFIgQ+LuYEF0vVygFFfm7IAIiDq+4vQM81AX0xFkPQuPb/qgrqcDqJOCMXFepB3950JY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=avtRw9I0; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1707166245; c=relaxed/simple;
+	bh=lUkPMd5XHACLufFZ79Zzokj1SM1sqqtoROpSlvJd930=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=TInkNa7y8NTeMqx/Y1/KWeIsfZ8NcmVLy71zNHKdiZpuYkqjN/o0ma6DtnhcC4ZE09uWSmvzh7u760xrqpYTEsNKFlUd+uiOLLw1duExAciOVvHSgGgK8bNVrMKUI5ARk1duM/8EDxdXVekD6QScLKWFRly7o1qfCyJHwVyNvUc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SahZlund; arc=none smtp.client-ip=209.85.221.180
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="avtRw9I0"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1707165895;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=m+Z//jw/W2CaAqree39ZtErtBXjWuv8DT9RzfVjNNgc=;
-	b=avtRw9I0SBZSFG5RdrUOTml1gY94xS1YmX7sc5Cax/2xbPy8VucezAtxoRUpC4GTWh7FV5
-	jNlsKD3dLMvoZmkjPwhZQZLmnu+0VNww1ZJaaCXcAdzac54uhDwu5m2sW5FKqZG9x4EPhP
-	X1afNWgcHdTt0eX1Fx0xv/JLiG2RuF0=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-441-sTzZHA_EME6cpzbVRb-7wg-1; Mon,
- 05 Feb 2024 15:44:52 -0500
-X-MC-Unique: sTzZHA_EME6cpzbVRb-7wg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C0D8E1C05AD2;
-	Mon,  5 Feb 2024 20:44:50 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A54E22028CD2;
-	Mon,  5 Feb 2024 20:44:50 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 415KiogA139428
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 5 Feb 2024 15:44:50 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 415Kiobe139427;
-	Mon, 5 Feb 2024 15:44:50 -0500
-Date: Mon, 5 Feb 2024 15:44:50 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev, linux-lvm@lists.linux.dev,
-        Zdenek Kabelac <zkabelac@redhat.com>,
-        Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [PATCH 1/6] 11-dm-mpath.rules: don't import properties that are
- already set
-Message-ID: <ZcFIwjEhKAVijIQb@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <20240205124638.17877-1-mwilck@suse.com>
- <20240205124638.17877-2-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SahZlund"
+Received: by mail-vk1-f180.google.com with SMTP id 71dfb90a1353d-4b739b49349so1592492e0c.1
+        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 12:50:43 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1707166242; x=1707771042; darn=lists.linux.dev;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=b5yztHDEz5ryVDr2lFRitQEpPkarGvjyutYElBOoSfQ=;
+        b=SahZlundLwCMnaVlBU6fRM15ia4+bs0iiJCRPK7F6vOYdx0Tktq2Kh7kJFFxyjTbGj
+         nQ4+DzGiWM+xvejQWnmjWe89yKW8KNWw/FjzW20YsncATPfjdXPJAzKAHwQHtbiArVQ3
+         pzr3j4iVh69ZkUJk/3XhpAa4lY7GaNgQTkvj0kDouMN3BUsQ4Yr1KKVLN7jYACuOMAFO
+         mxm0rmd1AGe6sDqUnbfgBL2vMCoGKSFKSr43XTbHG/ncwOEiWzTYHoFdLYfli65hLiVD
+         GtAFt9whqBtsOHIIKoL8UiGx/SmH9vMTHkWKQIc3oJICwGEDyUDraQ7s7dPYGqIty6cu
+         QE9Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707166242; x=1707771042;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=b5yztHDEz5ryVDr2lFRitQEpPkarGvjyutYElBOoSfQ=;
+        b=R+FvnD1/9msmXC2GQDs7X2VkxsagiVLIZ40Z0u0KAthS1Sli8mip/a2TeCE9ug5DTa
+         Mno3Re8mC0Av9eBT+LDP1YlgQObI7I8eBEJW/bDbESLralZlXkhz1XeJ+u2bzx3CGNWE
+         z1DG9VhUDUd3odK/KERvhrSR7QIW7Mf6n8Fvf0B534jP5IoJxao/egiINyySldMD1nK6
+         95kP+LNoLtnlhv9z/DaKdnWapTqAWIg6pjN4Fr/8tn4K6FynmnbceqQjTWo3RtdKugfi
+         z1X4lehsZzbIAyqXeS3Uzu9kKv0UY41Na6k8rkced3/wT/OooplTtEnKbtfpbxBtigAO
+         ZWaA==
+X-Gm-Message-State: AOJu0YwkLwzr6qJ9oT6ZUU1QEBvsrv5ZbbGYD9Au2FkTbPKyw3iZznxT
+	u7N5mNcblb0a3PKL0QJ87r6eoOSPctd7HktQkZmCOFj3zSc8h4N4P0TXdu4ziafaSjzOfvuCkV6
+	+2LZi+JsGQi51JImZZ2wvjlu1zWE=
+X-Google-Smtp-Source: AGHT+IGcTxkm6GLg4DTYAnRBYG+ywiXp6c9pDzORkTwj5jst1Jo0ekpU2xdI4zbfCGteDDo0jOxw5hTKH+089BOk2LE=
+X-Received: by 2002:ac5:cf11:0:b0:4c0:3545:285 with SMTP id
+ y17-20020ac5cf11000000b004c035450285mr657728vke.5.1707166242440; Mon, 05 Feb
+ 2024 12:50:42 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240205124638.17877-2-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+References: <20240130091300.2968534-1-tj@kernel.org> <ZcACvVz83QFuSLR6@slm.duckdns.org>
+In-Reply-To: <ZcACvVz83QFuSLR6@slm.duckdns.org>
+From: Allen <allen.lkml@gmail.com>
+Date: Mon, 5 Feb 2024 12:50:28 -0800
+Message-ID: <CAOMdWSLNMqsZNJ-oCLN2RjckZmJSvdU_Yq0F0frmqMqa67Oy1g@mail.gmail.com>
+Subject: Re: [PATCHSET wq/for-6.9] workqueue: Implement BH workqueue and
+ convert several tasklet users
+To: Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
+	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
+	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, 
+	netdev@vger.kernel.org, kernel-team@meta.com
+Content-Type: text/plain; charset="UTF-8"
 
-On Mon, Feb 05, 2024 at 01:46:33PM +0100, Martin Wilck wrote:
-> DM_UDEV_DISABLE_OTHER_RULES_FLAG and DM_NOSCAN may be already set
-> from previous rules, e.g. if the device is suspended. Make sure
-> we don't overwrite them.
-> 
-> DM_DISABLE_OTHER_RULES_FLAG_OLD and MPATH_DEVICE_READY are only
-> used in this file, and not used in the scan_import code path.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipath/11-dm-mpath.rules | 15 +++++++++++----
->  1 file changed, 11 insertions(+), 4 deletions(-)
-> 
-> diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-> index c339f52..2c4d006 100644
-> --- a/multipath/11-dm-mpath.rules
-> +++ b/multipath/11-dm-mpath.rules
-> @@ -2,12 +2,19 @@ ACTION!="add|change", GOTO="mpath_end"
->  ENV{DM_UDEV_RULES_VSN}!="?*", GOTO="mpath_end"
->  ENV{DM_UUID}!="mpath-?*", GOTO="mpath_end"
->  
-> -IMPORT{db}="DM_DISABLE_OTHER_RULES_FLAG_OLD"
-> -IMPORT{db}="MPATH_DEVICE_READY"
-> -
->  # If this uevent didn't come from dm, don't try to update the
->  # device state
-> -ENV{DM_COOKIE}!="?*", ENV{DM_ACTION}!="PATH_*", IMPORT{db}="DM_UDEV_DISABLE_OTHER_RULES_FLAG", IMPORT{db}="DM_NOSCAN", GOTO="scan_import"
-> +ENV{DM_COOKIE}=="?*", GOTO="check_ready"
-> +ENV{DM_ACTION}=="PATH_*", GOTO="check_ready"
-> +
-> +ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}!="?*", IMPORT{db}="DM_UDEV_DISABLE_OTHER_RULES_FLAG"
-> +ENV{DM_NOSCAN}!="?*", IMPORT{db}="DM_NOSCAN"
-> +GOTO="scan_import"
-> +
+> On Mon, Jan 29, 2024 at 11:11:47PM -1000, Tejun Heo wrote:
+> >  0001-workqueue-Update-lock-debugging-code.patch
+> >  0002-workqueue-Factor-out-init_cpu_worker_pool.patch
+> >  0003-workqueue-Implement-BH-workqueues-to-eventually-repl.patch
+> >  0004-backtracetest-Convert-from-tasklet-to-BH-workqueue.patch
+> >  0005-usb-core-hcd-Convert-from-tasklet-to-BH-workqueue.patch
+> >  0006-net-tcp-tsq-Convert-from-tasklet-to-BH-workqueue.patch
+> >  0007-dm-crypt-Convert-from-tasklet-to-BH-workqueue.patch
+> >  0008-dm-verity-Convert-from-tasklet-to-BH-workqueue.patch
+>
+> Applied 0001-0003 to wq/for-6.9. Applied 0004-0005 to
+> wq/for-6.9-bh-conversions. Will proceed on 0006 and other conversions after
+> more perf testing.
+>
+> Thanks.
+>
 
-If we do this, don't we forget the values for
-DM_DISABLE_OTHER_RULES_FLAG_OLD and MPATH_DEVICE_READY whenever we get a
-non-dm uevent? If we skip importing them for a uevent, they're dropped
-from the database, which means that on the next dm-originated uevent we
-won't be able to get the old values. right?
+Thank you. I am basing my work on the branch you have
+pushed.(or-6.9-bh-conversions)
+https://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git/log/?h=for-6.9-bh-conversions
 
--Ben
+In the order of priority, I have started converting drivers/media/*,
+drivers/dma/* followed by drivers/net/*
+which constitutes the majority. Putting my plan out here so that the
+work is not duplicated.
+I will write back in a day and share the branch for review.
 
-> +LABEL="check_ready"
-> +
-> +IMPORT{db}="DM_DISABLE_OTHER_RULES_FLAG_OLD"
-> +IMPORT{db}="MPATH_DEVICE_READY"
->  
->  ENV{.MPATH_DEVICE_READY_OLD}="$env{MPATH_DEVICE_READY}"
->  
-> -- 
-> 2.43.0
+W.r.t the conversion, there are drivers which call
+tasklet_[disable/enable](), which I suppose
+can be ignored in the case of workqueues, I am not entirely sure if
+this is the right approach.
+Please correct me if I am wrong.
 
+
+Thanks,
+
+  - Allen
