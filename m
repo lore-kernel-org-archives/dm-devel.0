@@ -1,45 +1,45 @@
-Received: from mail-pf1-f178.google.com (mail-pf1-f178.google.com [209.85.210.178])
+Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com [209.85.216.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55B633D98E
-	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 17:28:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E93C47A76
+	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 17:48:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707154101; cv=none; b=sRl36tsXBbe9N310kELjzt29QRpZ+dJhk+CTyIIAcRpCisd5OLPbViupISr5UgQF7iJGruCCRpc1nQcUgD6pbcQOAa83iPA2KquGSwUsdcJGloToWQiOPZu0qaVCYgNCd3fKmQeE7fk1PsDuReXzTpn89TL1uwPDDZkY/LfKNYY=
+	t=1707155290; cv=none; b=iC63PmPT9hUw5TX5hJM9rQ/f62KUiX6CBUsPWSSkO9t/0rktSTR+AFPDuydwnWm5CTqnOlwqYmcXU+nJmocawfhQWbJOHor4EUS8vu6HNg4VI8hVcCnwSgVgZBUdky9cODqiYIanbKHV73vgZCCAvE8JKmEzq0/g8eFpXUgERGs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707154101; c=relaxed/simple;
-	bh=dK9jTty3a/n9QrRTMZUnz5n67yM6a7EfZx1/O/w4oKo=;
+	s=arc-20240116; t=1707155290; c=relaxed/simple;
+	bh=vkzFtbQdZjZispo3UhXXd/LLFzbR7QJ0hX/0RA5jzWc=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=d6+ZtD9T46HmcZ1Wy90zszw4ZIDamVK4Ks8E/x08UlXgbOiQtCFV9dJgYnrLd1uxWN8nHB6tcati88/y1hxyjKpkCpdeolDCVVxj4cGLfxafqSSp9r1zq6O2MJkW7ZcC1uRJXP1WW9yY4iaieJAktJz50AAfdT9uadafARZvEV0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.210.178
+	 In-Reply-To:Content-Type; b=uaWbE3U/heDV6j3+PFcpNskAabAnGBw1eEK1+NR6beCP7eQRA/7npMNYMfb80RIrzPD8jNRkEBwxprDusAI634i62UJUA86t7Txno7fnXAMt9GBzDXs2MVtLIkBqTlopsM9Mnu2Fy9QPdEeMk+zRWoUmIz7ZxEcuW+t5rieQ4Ts=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.216.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-pf1-f178.google.com with SMTP id d2e1a72fcca58-6e03b3f7286so732805b3a.3
-        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 09:28:20 -0800 (PST)
+Received: by mail-pj1-f43.google.com with SMTP id 98e67ed59e1d1-295cfe8f199so2711981a91.2
+        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 09:48:09 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707154099; x=1707758899;
+        d=1e100.net; s=20230601; t=1707155289; x=1707760089;
         h=content-transfer-encoding:in-reply-to:from:references:cc:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=QjTDlLbEeGu+oelqaYSRULrHfqn6Ec8MRZebJau3TpY=;
-        b=RgtZ9T1t1CJxLGp9FSu1+R/oZCAR7WPhiuadNbvIxgQNd2GpjZ89rYvWRcLCKKuC5X
-         i96/LBvliVbhJsA2OYech6rxSUr581g8dOejlua/NM0xl+aqJNldHjGbCOHhM1eyPaYb
-         f6VHY5uxXrrtsTdNFhhfnCVWBtwkisqZyt6m8+UZ6E8BEVtSFVBZrr/jM49P0J5nspCh
-         RX+/zzHnEC8V/z0yAQt0uVALxXpmrY6wY0bxSUcQsm8laZbXRxSi/i/cK7SIrluv6tLp
-         0XYR2yRXD4fHuotRz7AUAXHwCFiiWbT6udSoWHApNdhAf+aJt1nHQE4QFfFyOFq9lXDL
-         hWnA==
-X-Gm-Message-State: AOJu0YyvopzwG3sdNmYm9032ECYohHoodnD6RzfO+5lU7xFIc2UgTWQr
-	nqe27EiEaZ4ugsMlqs9sMkUr4NuDg/bOlMLyI0VYyL+/elc4wxeN
-X-Google-Smtp-Source: AGHT+IEGbnnigQCEx4bnoRaokXj2byd63v8qcsr6KkiHF5ZTtHGQ65fRilhC8f93iBKS6IjQ2Kn+IA==
-X-Received: by 2002:a05:6a00:179a:b0:6db:e6b9:4ccf with SMTP id s26-20020a056a00179a00b006dbe6b94ccfmr302204pfg.5.1707154099547;
-        Mon, 05 Feb 2024 09:28:19 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCWuRk2VwT2NKwo1BMYgTBUC7L8V85X0dLoY0YbSLQ+vsjtcfdcTWiKmcoFqtG3UBMukLmoM6+/1qcAf5CULkl5tN8WlflkBG2dze2sjg/KDCPTvEVsc3VyxP1Aoya8zHfo7ZyQadjC/AT7FsT6b00tb90+MEOSXGfstw2CiCMaGTQAFon7dwmuGkeY/cc4sONexXwBkyI2cI8QgJ5qTg3EMjv30iaeTzQ2cyiNiKX7GDjVBz9qZen+ftsn/jIwyRLKltg==
+        bh=8KQNkaBYtky5goRSRqnguxMPyZfEM+iuBXnubHYKQgQ=;
+        b=J08CL/Lz6reykW91STo/g7rOH9nYdiIwlbExISfA2JXsV6JrSMckgdC4Dz89b0Bt+s
+         +iDx6gUlA1HKcE+rAB1wq4wmEt0fwz9edSiDecKI4K7raxBb0dymU4xOl1Lb26IXfHQJ
+         D5LoRJYSp2VW9CkXa+qCxeQ6r49AQWV0OujaC5jBvF3tBAtlX5cIuCTDB8IbitnAU7kA
+         4v0BKzrlSl7o670TtD4nkjI70OKwhbdLtPvEJ8GRjyF1Qx7xAN9VWHKfgbjoFrHWP5MA
+         VW4WiDydDrjezJ31i9TrvooRxtZowSzVLa/YStwo4li/jB78bx7ye87tJfu2PJS2LAaY
+         4BKg==
+X-Gm-Message-State: AOJu0YwirbpkvrofF89WgXMdSh1jraehRT96KRO/ttHNWdzt8ZLArrHP
+	MivyNWcVe12J37kOKI5EdhWisqrWtf9ekK6LF8MjdC8ZmW/sHgSK
+X-Google-Smtp-Source: AGHT+IHJ6X721LPg5ymb106McyTY3TAqyEhjwf8OoCqL3uFxp9vZq3y33y8cNUFTPur97MHRgILPvA==
+X-Received: by 2002:a17:90a:1783:b0:296:36d9:eefe with SMTP id q3-20020a17090a178300b0029636d9eefemr148467pja.14.1707155288649;
+        Mon, 05 Feb 2024 09:48:08 -0800 (PST)
+X-Forwarded-Encrypted: i=0; AJvYcCXp9H2B9362zCrRqE+aCiaIyQmDdtmgVlEEttzF4TzrvV+FUdGUg2IgG0N8HNjRoOTwihRwOWD4iKuLYRSb0Wxyi56dhFmKLPDySsPP0suKmLXmf2tnF7a0wOgmKcr4cIJEEbnLG/iMJXMK/OvK6JlCtv4YxUAGKUZ0B4qa+/r9UReMEYNW2bvMaumxKiS04uAZCg8NSNzM9bLM80jYuzaN5PBeroDMLYnQxOuvJEGWWZxl1Mbq75DcTz31D3bsL8LGsg==
 Received: from ?IPV6:2620:0:1000:8411:be2a:6ac0:4203:7316? ([2620:0:1000:8411:be2a:6ac0:4203:7316])
-        by smtp.gmail.com with ESMTPSA id c24-20020a62e818000000b006dff3ca9e26sm89724pfi.102.2024.02.05.09.28.18
+        by smtp.gmail.com with ESMTPSA id jx15-20020a17090b46cf00b00296540086a5sm5488814pjb.23.2024.02.05.09.48.07
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 05 Feb 2024 09:28:19 -0800 (PST)
-Message-ID: <f7dd57a7-1612-457e-aec0-5cf2c4d98b78@acm.org>
-Date: Mon, 5 Feb 2024 09:28:17 -0800
+        Mon, 05 Feb 2024 09:48:08 -0800 (PST)
+Message-ID: <12bbbfe9-6304-495b-a60b-821becd1f326@acm.org>
+Date: Mon, 5 Feb 2024 09:48:06 -0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -47,7 +47,7 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 02/26] block: Remove req_bio_endio()
+Subject: Re: [PATCH 06/26] block: Introduce zone write plugging
 Content-Language: en-US
 To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
  Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
@@ -55,44 +55,54 @@ To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
  dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>
 References: <20240202073104.2418230-1-dlemoal@kernel.org>
- <20240202073104.2418230-3-dlemoal@kernel.org>
+ <20240202073104.2418230-7-dlemoal@kernel.org>
 From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20240202073104.2418230-3-dlemoal@kernel.org>
+In-Reply-To: <20240202073104.2418230-7-dlemoal@kernel.org>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
 On 2/1/24 23:30, Damien Le Moal wrote:
-> @@ -916,9 +888,8 @@ bool blk_update_request(struct request *req, blk_status_t error,
->   	if (blk_crypto_rq_has_keyslot(req) && nr_bytes >= blk_rq_bytes(req))
->   		__blk_crypto_rq_put_keyslot(req);
->   
-> -	if (unlikely(error && !blk_rq_is_passthrough(req) &&
-> -		     !(req->rq_flags & RQF_QUIET)) &&
-> -		     !test_bit(GD_DEAD, &req->q->disk->state)) {
-> +	if (unlikely(error && !blk_rq_is_passthrough(req) && !quiet) &&
-> +	    !test_bit(GD_DEAD, &req->q->disk->state)) {
+> The next plugged BIO is unplugged and issued once the write request completes.
 
-The new indentation of !test_bit(GD_DEAD, &req->q->disk->state) looks odd to me ...
+So this patch series is orthogonal to my patch series that implements zoned
+write pipelining?
 
->   		blk_print_req_error(req, error);
->   		trace_block_rq_error(req, error, nr_bytes);
->   	}
-> @@ -930,12 +901,37 @@ bool blk_update_request(struct request *req, blk_status_t error,
->   		struct bio *bio = req->bio;
->   		unsigned bio_bytes = min(bio->bi_iter.bi_size, nr_bytes);
->   
-> -		if (bio_bytes == bio->bi_iter.bi_size)
-> +		if (unlikely(error))
-> +			bio->bi_status = error;
+> This mechanism allows to:
+>   - Untangles zone write ordering from block IO schedulers. This allows
+
+Untangles -> Untangle
+
+> Zone write plugging is implemented using struct blk_zone_wplug. This
+> structurei includes a spinlock, a BIO list and a work structure to
+
+structurei -> structure
+
+> This ensures that at any time, at most one request (blk-mq devices) or
+> one BIO (BIO-based devices) are being executed for any zone. The
+> handling of zone write plug using a per-zone plug spinlock maximizes
+> parrallelism and device usage by allowing multiple zones to be writen
+
+parrallelism -> parallelism
+
+> simultaneously without lock contention.
+
+This is not correct. Device usage is not maximized since zone write bios
+are serialized. Pipelining zoned writes results in higher device
+utilization.
+
+> +	/*
+> +	 * For BIOs handled through a zone write plugs, signal the end of the
+
+plugs -> plug
+
+> +#define blk_zone_wplug_lock(zwplug, flags) \
+> +	spin_lock_irqsave(&zwplug->lock, flags)
 > +
-> +		if (bio_bytes == bio->bi_iter.bi_size) {
->   			req->bio = bio->bi_next;
+> +#define blk_zone_wplug_unlock(zwplug, flags) \
+> +	spin_unlock_irqrestore(&zwplug->lock, flags)
 
-The behavior has been changed compared to the original code: the original code
-only tests bio_bytes if error == 0. The new code tests bio_bytes no matter what
-value the 'error' variable has. Is this behavior change intentional?
-
-Otherwise this patch looks good to me.
+Hmm ... these macros may make code harder to read rather than improve
+readability of the code.
 
 Thanks,
 
