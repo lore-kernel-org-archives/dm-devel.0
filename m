@@ -1,195 +1,123 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com [209.85.167.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 279F41CA84;
-	Mon,  5 Feb 2024 12:43:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3AE0322EF0
+	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 12:46:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707136997; cv=none; b=DJThBelrkn6LcnYv3s5vl+y8n4GrOM8foUZkt7CdJB0buVHNze2PjJW47dAqHIHuloN0X1QVdIrvJKr6u8apYWOBEu/yuoKpfriy03BRnxznLzoIT9A9v74qK1g8apkm0lZpUshrru4BVFKa9LgvnqYjOzzE51U4L47hufypovI=
+	t=1707137211; cv=none; b=QKRdjD2ot4inN4XdUm1FAsCrtypaQswrj1eEyshjrko35NoQkXtely8aNSsKvJxMIaNfxpXmqL5MOY8bu/Ydd/UxG99H+lWYkQ9dPhQU+Ku2nYOyc1Ey794/F9psi/jEBXOjbtAX/1M1YxlF8hd+6233Kul2Wb0cFQbOEqvAgMw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707136997; c=relaxed/simple;
-	bh=FnVbhOqZgLm2kMDLTxNYG44F87BpohHkM7/k1t9mA30=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
-	 In-Reply-To:Content-Type; b=eOwjzJfJbdPWkC4Hw7YhxCIeAGdsMIbdGdaCz+bBtE8ejchN1JlGcqJmBgltpMDB4ZFYtKL0ezEUg+FRmYYp8J5tgKUmmdMLxWv5/WevA7Tt94QBZ59f5m6hAJmlC905Mz33A5rx8YjASO24RUvjoNyQfkjRd9J8CfpAdkM+Bzw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=JdeG1Dtd; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1707137211; c=relaxed/simple;
+	bh=C6j1GOtK/b4SZynpfqmg+CPFzh/76smc05t7/E0NIX4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=cYHX6pPwOg+vBsoMK4gQcsiv1mHqfLC6OgDrXz2Sqn/qzh/XFLpwgE2w+ghzcY9w/Xgfw5FgdUBIAedz47upn1F/2VbNvF6tnp+7QEHBFdx2dripwzZOhHxHPOiGRU/deOcnpuHwDOY3FsFcIvkZvoQns1UL5n3q3CNcAlfj7qo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=O/Yo/rT+; arc=none smtp.client-ip=209.85.167.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="JdeG1Dtd"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 529F5C433F1;
-	Mon,  5 Feb 2024 12:43:15 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1707136996;
-	bh=FnVbhOqZgLm2kMDLTxNYG44F87BpohHkM7/k1t9mA30=;
-	h=Date:Subject:From:To:Cc:References:In-Reply-To:From;
-	b=JdeG1DtdRGOw0HS1f8QNsNsCE7pYfqnjQSt5B0xTAabbXpIaCZFIz7UeG/rE+5dVg
-	 X5RfIkTdi2SrwWWXkv09+f7r19dPWjM0SqjmZVFs9pjD5NQst6hy3HhV2TmDdBFY50
-	 eXNcl83FKC1A/Su8OjeRJTCDywxitdnVtIh5NE/LP6DDaDtH4p4xYN7nCz9pxfV2Dm
-	 YZtY04/6GlCmLOA9AAjxN2+p8pro4B/Aq3hLDQa1L5InGNNVoHWYBThC1uJiGZ6IZ4
-	 Tm5FBTydKliWfGhzugozL07ID5BrUcUo41Yks7k7LLN0VqwsIovpeFzIBoDFCwD6wI
-	 nBm1sLpXAx03A==
-Message-ID: <93aa5cdd-0ab4-413c-bb18-b1109c7f4f9d@kernel.org>
-Date: Mon, 5 Feb 2024 21:43:14 +0900
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="O/Yo/rT+"
+Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-5101cd91017so5652775e87.2
+        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 04:46:47 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1707137206; x=1707742006; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=ioQdq1v4nm5awpqcrNZUpLmq1a65Z05XymoIOU6TeXw=;
+        b=O/Yo/rT+ipfcTZue/AFOhoJttUJ1mu/rluPfG1XVoFkC9a7K4KTZxNXskFHwIaMRXZ
+         IvdIp+9OINy0H09jCCQK7ZMQPNROpjk2tcEw0gxUNN3lGJ1GmQqRoqfKtt0QZ6vBbUTV
+         miImQ3jVNuTqbELu42GhwYrhuCUqRlYmEG29XSmWCfc91RffOdoH3kZHc6UcVQoyfYOV
+         Qxs6lCb6ydgRyfIT6Q5E92D7UKWzlv86y3quoT5pE6rHeFfTLBZ7nmQDmGYhL0Whl60+
+         4BGgepXKdAvK6a8O963Asji/YyGcnN0p51uE9Bl7jqul7Ejernr7Yp6aZM1269WSVd91
+         AqCA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707137206; x=1707742006;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=ioQdq1v4nm5awpqcrNZUpLmq1a65Z05XymoIOU6TeXw=;
+        b=VbjF01EjVXT1tmrusO+bU0Zs37J8fIBF9IGHXd5FlYXBQiq0k98qKwQ/0IQ2DdC6nk
+         YG8HJI6qaNS1ylhtvsU5Z/nYo7OCS+Q5FKy82Fr7n9EpV5MVe9p54OFi0rKueZ2tbwSz
+         zY4q6A6oX450LGI+4DDuFU2ARdlQ3TrpEGkgMnjOBn8cEOODJBRE5I/pqrTOP/LUULjs
+         bimTjq03rD49gXZfqbPyREeVO9zy2mlp94IFX30IgAbD/yZZQ79Q9TuWzkKqvozes1bU
+         vHZi1ykdpEy+dK4xwX1UCsEP/+9sXkHKQU2Bem8fkMsfzf+rUrCZxLKJFWmfV9tGadgN
+         J83A==
+X-Gm-Message-State: AOJu0YzDG8LMdMmp5dsSwl5/c1Xk1AU0Zc+Fuxc05E+xVygSCs72ncDc
+	VqxzMes0Gtn0FokjlqT0BjMUm0hoKT3kdGAqnSMWJH1Agm9IBu5yASEEEBftvcg=
+X-Google-Smtp-Source: AGHT+IEmzSbuI4VsJhZwguwPXEJso4yzM/cR+a1FEjpiQazB1JLgAD/aYhGTRgRxeevENp0M4Q2nfg==
+X-Received: by 2002:a05:6512:508:b0:511:3a96:e385 with SMTP id o8-20020a056512050800b005113a96e385mr4730965lfb.30.1707137206185;
+        Mon, 05 Feb 2024 04:46:46 -0800 (PST)
+X-Forwarded-Encrypted: i=0; AJvYcCVCTauppcN+fLqy0/e0TEySvGs9DNuWSHqvads6hHwTUXgYyEnVxSKGC7ox9I8PbE6Pp0JZxqwWVQSZ+By6a+ZMzHQMnNVXSvI8DLsqswX6xYNqO7DpHBZ+R+lfKiUNUHJH4gVUN5FXDC+iDC6u4o4seVe//lWHYwgBExkxsCI8eZKSLibUihf0
+Received: from localhost (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
+        by smtp.gmail.com with UTF8SMTPSA id bh11-20020a05600c3d0b00b0040fd24653d4sm7018323wmb.36.2024.02.05.04.46.45
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 05 Feb 2024 04:46:45 -0800 (PST)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-lvm@lists.linux.dev,
+	Zdenek Kabelac <zkabelac@redhat.com>,
+	Peter Rajnoha <prajnoha@redhat.com>
+Subject: [PATCH 0/6] multipath-tools: udev rules and service improvements
+Date: Mon,  5 Feb 2024 13:46:32 +0100
+Message-ID: <20240205124638.17877-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 06/26] block: Introduce zone write plugging
-Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-To: Ming Lei <ming.lei@redhat.com>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
- linux-scsi@vger.kernel.org, "Martin K . Petersen"
- <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
- Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>
-References: <20240202073104.2418230-1-dlemoal@kernel.org>
- <20240202073104.2418230-7-dlemoal@kernel.org> <Zb8K4uSN3SNeqrPI@fedora>
- <a3f17ffb-872b-49cf-a1a7-553ca4a272c0@kernel.org> <ZcBFoqweG+okoTN6@fedora>
- <58fa0123-e884-4321-9b9b-8575cc7b4e1d@kernel.org> <ZcCzLfocp4VcScOb@fedora>
- <ac52010e-c97b-43cf-baa7-0566185bc410@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <ac52010e-c97b-43cf-baa7-0566185bc410@kernel.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 2/5/24 21:20, Damien Le Moal wrote:
-> On 2/5/24 19:06, Ming Lei wrote:
->> On Mon, Feb 05, 2024 at 11:41:04AM +0900, Damien Le Moal wrote:
->>> On 2/5/24 11:19, Ming Lei wrote:
->>>>>>> +static inline void blk_zone_wplug_add_bio(struct blk_zone_wplug *zwplug,
->>>>>>> +					  struct bio *bio, unsigned int nr_segs)
->>>>>>> +{
->>>>>>> +	/*
->>>>>>> +	 * Keep a reference on the BIO request queue usage. This reference will
->>>>>>> +	 * be dropped either if the BIO is failed or after it is issued and
->>>>>>> +	 * completes.
->>>>>>> +	 */
->>>>>>> +	percpu_ref_get(&bio->bi_bdev->bd_disk->queue->q_usage_counter);
->>>>>>
->>>>>> It is fragile to get nested usage_counter, and same with grabbing/releasing it
->>>>>> from different contexts or even functions, and it could be much better to just
->>>>>> let block layer maintain it.
->>>>>>
->>>>>> From patch 23's change:
->>>>>>
->>>>>> +	 * Zoned block device information. Reads of this information must be
->>>>>> +	 * protected with blk_queue_enter() / blk_queue_exit(). Modifying this
->>>>>>
->>>>>> Anytime if there is in-flight bio, the block device is opened, so both gendisk and
->>>>>> request_queue are live, so not sure if this .q_usage_counter protection
->>>>>> is needed.
->>>>>
->>>>> Hannes also commented about this. Let me revisit this.
->>>>
->>>> I think only queue re-configuration(blk_revalidate_zone) requires the
->>>> queue usage counter. Otherwise, bdev open()/close() should work just
->>>> fine.
->>>
->>> I want to check FS case though. No clear if mounting FS that supports zone
->>> (btrfs) also uses bdev open ?
->>
->> I feel the following delta change might be cleaner and easily documented:
->>
->> - one IO takes single reference for both bio based and blk-mq,
->> - no drop & re-grab
->> - only grab extra reference for bio based
->> - two code paths share same pattern
->>
->> diff --git a/block/blk-core.c b/block/blk-core.c
->> index 9520ccab3050..118dd789beb5 100644
->> --- a/block/blk-core.c
->> +++ b/block/blk-core.c
->> @@ -597,6 +597,10 @@ static void __submit_bio(struct bio *bio)
->>  
->>  	if (!bio->bi_bdev->bd_has_submit_bio) {
->>  		blk_mq_submit_bio(bio);
->> +	} else if (bio_zone_write_plugging(bio)) {
->> +		struct gendisk *disk = bio->bi_bdev->bd_disk;
->> +
->> +		disk->fops->submit_bio(bio);
+The first 3 patches and patch 5 are minor fixes for the udev rules.
 
-Actually, no, that is not correct. This would not stop BIO submission if
-blk_queue_freeze() was called by another context. So we cannot do that here
-without calling blk_queue_enter()...
+Patch 4 fixes an issue that was observed in partner tests. Since we dropped
+the dependency on systemd-udev-settle.service, it's more common that
+multipath sees paths being added to existing maps during boot and reloads
+the maps. If this happens while udev is executing rules for an uevent
+related to the map in question (most importantly, a coldplug event),
+the rules may see the map as suspended, and will refrain from scanning
+the device content.
 
->>  	} else if (likely(bio_queue_enter(bio) == 0)) {
->>  		struct gendisk *disk = bio->bi_bdev->bd_disk;
->>  
->> diff --git a/block/blk-mq.c b/block/blk-mq.c
->> index f0fc61a3ec81..fc6d792747dc 100644
->> --- a/block/blk-mq.c
->> +++ b/block/blk-mq.c
->> @@ -3006,8 +3006,12 @@ void blk_mq_submit_bio(struct bio *bio)
->>  	if (blk_mq_attempt_bio_merge(q, bio, nr_segs))
->>  		goto queue_exit;
->>  
->> +	/*
->> +	 * Grab one reference for plugged zoned write and it will be reused in
->> +	 * next real submission
->> +	 */
->>  	if (blk_queue_is_zoned(q) && blk_zone_write_plug_bio(bio, nr_segs))
->> -		goto queue_exit;
->> +		return;
+https://systemd.io/BLOCK_DEVICE_LOCKING/ doesn't help us here. We would need
+to take an exclusive lock an lock_multipath() to achieve that, but since
+5ec07b3 ("libmultipath: use a shared lock to co-operate with udev") we
+don't. We _might_ consider re-introducing exclusive locking, because the main
+reason we don't was that udev would discard events for which it couldn't
+obtain the lock. Since systemd 250, udev has a retry logic for such events
+which would avoid this problem. We would also need to implement similar retry
+logic in multipathd, though. For now, and because we need to support systemd
+< 250 anyway, I've come up with the workaround in patch 4 (first tests went
+well, but more testing is still needed).
 
-...and this one is not correct because of the cached request: if there was a
-cached request, blk_mq_submit_bio() did not call blk_queue_enter() because the
-cached request already had a reference. But we cannot reuse that reference as
-the next BIO may be a read or a write to a zone that is not plugged, and these
-would use the cached request and so need the usage counter reference. So we
-would still need to grab an extra reference in such case.
+Patch 5 is a partial fix for the the problem that multipathd socket activation
+starts multipathd also on systems that don't need it. See
+https://github.com/opensvc/multipath-tools/issues/76. More far-reaching
+approaches have been discussed to avoid that the user needs to enable
+multipathd explicitly if multipath hardware is present
+(https://github.com/opensvc/multipath-tools/pull/78) but no solid solution
+for that has emerged yet.
 
-So in the end, it feels a lot simpler to keep the reference counting as it was
-as it makes things a lot less messier in blk_mq_submit_bio(). I will though try
-to improve the comments to make it clear how this is working.
+Reviews and comments welcome.
 
->>  
->>  	if (!rq) {
->>  new_request:
->> diff --git a/block/blk-zoned.c b/block/blk-zoned.c
->> index f6d4f511b664..87abb3f7ef30 100644
->> --- a/block/blk-zoned.c
->> +++ b/block/blk-zoned.c
->> @@ -514,7 +514,8 @@ static inline void blk_zone_wplug_add_bio(struct blk_zone_wplug *zwplug,
->>  	 * be dropped either if the BIO is failed or after it is issued and
->>  	 * completes.
->>  	 */
->> -	percpu_ref_get(&bio->bi_bdev->bd_disk->queue->q_usage_counter);
->> +	if (bio->bi_bdev->bd_has_submit_bio)
->> +		percpu_ref_get(&bio->bi_bdev->bd_disk->queue->q_usage_counter);
->>  
->>  	/*
->>  	 * The BIO is being plugged and thus will have to wait for the on-going
->> @@ -760,15 +761,10 @@ static void blk_zone_wplug_bio_work(struct work_struct *work)
->>  
->>  	blk_zone_wplug_unlock(zwplug, flags);
->>  
->> -	/*
->> -	 * blk-mq devices will reuse the reference on the request queue usage
->> -	 * we took when the BIO was plugged, but the submission path for
->> -	 * BIO-based devices will not do that. So drop this reference here.
->> -	 */
->> +	submit_bio_noacct_nocheck(bio);
->> +
->>  	if (bio->bi_bdev->bd_has_submit_bio)
->>  		blk_queue_exit(bio->bi_bdev->bd_disk->queue);
-> 
-> Hmm... As-is, this is a potential use-after-free of the bio. But I get the idea.
-> This is indeed a little better. I will integrate this.
-> 
->> -
->> -	submit_bio_noacct_nocheck(bio);
->>  }
->>  
->>  static struct blk_zone_wplug *blk_zone_alloc_write_plugs(unsigned int nr_zones)
->>
->> Thanks,
->> Ming
->>
->>
-> 
+Martin Wilck (6):
+  11-dm-mpath.rules: don't import properties that are already set
+  11-dm-mpath.rules: fix list of imported properties
+  11-dm-mpath.rules: use import logic like 13-dm-disk.rules
+  11-dm-mpath.rules: handle reloads during coldplug events
+  multipath: udev rules: use configured $(bindir) in udev rules
+  multipathd: don't activate socket activation by default
+
+ .gitignore                                    |  1 +
+ Makefile.inc                                  |  2 +-
+ ...11-dm-mpath.rules => 11-dm-mpath.rules.in} | 49 ++++++++++++++-----
+ multipath/Makefile                            |  2 +-
+ multipath/multipath.rules.in                  |  5 +-
+ multipathd/multipathd.socket                  |  4 +-
+ 6 files changed, 45 insertions(+), 18 deletions(-)
+ rename multipath/{11-dm-mpath.rules => 11-dm-mpath.rules.in} (73%)
 
 -- 
-Damien Le Moal
-Western Digital Research
+2.43.0
 
