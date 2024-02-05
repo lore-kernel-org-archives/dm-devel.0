@@ -1,155 +1,120 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 4ED7B1AB806
-	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 21:18:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from mail-vk1-f169.google.com (mail-vk1-f169.google.com [209.85.221.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D791F58106
+	for <dm-devel@lists.linux.dev>; Mon,  5 Feb 2024 21:32:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707167885; cv=none; b=NXr3hwdCHpzIW+fj6a1pQ1myxallHAiuK7AYuVvi0Gk2kXxaQPCdC7QzLCTDiFKhMDHUn91kctFgJCpTL2BH4Hi3U6yOz7uU/EFk7976CtlYEol28YuNCmHiGbjdTDXquPCVS/uUIN7qwaxmM++GMl3PIy/+eym2oj0x1P+Dzu8=
+	t=1707168727; cv=none; b=AyMhbir/iIXj787thheTXgbkvnyd3+FLiIxtN3VA2EtnZ2aeWlE2ckJetjL4eh5lvzxGudSjhS7WRMMdg2m/9pZ3vhEUrUZAaRL9uhRF6p7/N1N4dwyUMpV4GNhk0Ozbm8/6Vo5umsyJzZR0lS4zxm9fI5sj93QQiVvXPBra+m0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707167885; c=relaxed/simple;
-	bh=/Enu6bwQmdx49axHA/1lmJJgKYU6G8zyTZPbq9OH+ck=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=CH7Uxpf3Cez8k7ZdIDuPUiiMg1kLZg5cecEHRLfRZ7OEIDG4p/8d5BYOvoOxnO9ebiuiBCez4yzN0H7+C9rP2x9koyqw/0Iz5sRxCbwgnXPwMryetGmJ1XlScJNKjJx/WDTPlDZTPff+sbwZ7Xn7w5VdP6NWOFKbwJOqid+IFX0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=W8TAC/No; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
+	s=arc-20240116; t=1707168727; c=relaxed/simple;
+	bh=iZASGz5Z5rm1aG0lLGE6OGbes9D4mJXmBzxTO9ghwcU=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=doXtefVuQFz846oKcKp1XtE2e5q1Uza2/C0DKZJtfngDjcX/cA0XxAkjpMf6co61q9Qfe6xFBWy64VKAHlYKq0CihnxHtq+o4dBtWyWu85lVtpxp0NbRhm45aJV7ukZEiAxDUsqVZJ0cFjjkjio/pGruQqkHQpn9qIP5i2AEFlA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dqJQZ6e6; arc=none smtp.client-ip=209.85.221.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="W8TAC/No"
-Received: from [10.137.106.151] (unknown [131.107.8.87])
-	by linux.microsoft.com (Postfix) with ESMTPSA id B65FB20B2000;
-	Mon,  5 Feb 2024 13:18:03 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com B65FB20B2000
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1707167883;
-	bh=H595nLqKN1iU7O92UiJT9PEuwtk7Rd1yCbWBC1ZA8Dk=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=W8TAC/No1VdGRZqMNpbRyarbJ0N1ksbo6q9VDwms6JAikfNWLiPh8pBpJItN4CS23
-	 IfusA0S7VmJXlzwz6fInL7nOKKj4xPLnLwKrHbC0DxeKFY9uDlKLJYrmJTNL3IsRxQ
-	 NhwWoikC1Q5N62rvYtOFqHGPmfxebEyKNmpVRN1s=
-Message-ID: <13daca32-ee3f-46f5-a6ca-66bb02726e5c@linux.microsoft.com>
-Date: Mon, 5 Feb 2024 13:18:03 -0800
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dqJQZ6e6"
+Received: by mail-vk1-f169.google.com with SMTP id 71dfb90a1353d-4c02af52a21so639062e0c.3
+        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 13:32:05 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1707168724; x=1707773524; darn=lists.linux.dev;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=JiHlMRBtTUoGCPlkucZ3M1GzAWqR70W8aj3H555n2D0=;
+        b=dqJQZ6e6OiE0/WtFG0PvTD9JT5mclmMM9qqJRVEKMNdDy7u7Mz/MrU78tzwIM/sNwP
+         3NeWjNhhpmxDa58s4/6hGZ35ZMUxJqa+i3RyEeDfNTQ6Kf6yc48gRckJc6rk/cuxa9xJ
+         Fve8UVXLED0vdbEFusNln5F9mCW0tTjwvLxvMDDxyz8wTs/y57qhJEMPvG/x7YhoinGM
+         RQ22qaDETyXiyoRBPF2WAb7Vel8VwX1I/v4NoDYV5CWpurC/sfzDLd4KCeAkJp6vfOaN
+         GshVw3xdjXQXwJOUarpJQfFaS9MZPj3yNBlSUGupGALO8ieAfhddopzqtV2KM8yTb8SB
+         f3Ew==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707168724; x=1707773524;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=JiHlMRBtTUoGCPlkucZ3M1GzAWqR70W8aj3H555n2D0=;
+        b=MyWKzgnx9Fa9Wm8sBeZKxHWcw0tpxNOXurCRQ/kuw4Fmw2mNE+0viY7YvsG9gOQuSL
+         5dwGLzFT31RwW4yeENVbpsZUpQ6w325TUveUxK/yFdPpDIcZr/FXXitkWpl6nbKY3NVF
+         e5Yu6mUKpiV4tMmG4hSaIDPr9cLrFsHoYfN3bm5pihVpJm+5gmGr6A2HUzi8tiXP4umH
+         ydMQxMJ+x0e8Gm0FS/dO9mkl28mTYQM0q2UxnNQ5SJSEZ8uTdGufu+bz4NaE8nFIyd2i
+         lg6EojQoBK+/FQS81WhuuqgS8KLgT9FaiE9+rv3ydFy5NUaA65VQ6Ph+pEWadTOU0+Is
+         UjGA==
+X-Gm-Message-State: AOJu0Yynda3uPDAHOdpD8cANZcH3Mav6zbpq0iHHNH4KYCy36EYueP9S
+	QF5Blc76AWfrmARsHhGmgsH0OT/JO3m3j4nKi8ooBAKzlq6QPngNAOq+yeYlwFzy+VZKFpGL4Y6
+	qtOj+u2QCGfjc1Hxstvt92lmIThI=
+X-Google-Smtp-Source: AGHT+IFAPAEBv4SxXrw9QXtxsPmPBONJ9K2vokDXIug8vw/xA6OukvoHu9dDYGWxR+zA6Klp4z162ZXW/vH/q0w/rbM=
+X-Received: by 2002:a05:6122:16a4:b0:4c0:2af5:bb70 with SMTP id
+ 36-20020a05612216a400b004c02af5bb70mr209268vkl.4.1707168724324; Mon, 05 Feb
+ 2024 13:32:04 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH RFC v12 5/20] initramfs|security: Add security hook to
- initramfs unpack
-To: Paul Moore <paul@paul-moore.com>, corbet@lwn.net, zohar@linux.ibm.com,
- jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
- axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
- linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
- audit@vger.kernel.org, linux-kernel@vger.kernel.org
-References: <1706654228-17180-6-git-send-email-wufan@linux.microsoft.com>
- <b9ca171301d5abeb78922dd79d65136a@paul-moore.com>
-Content-Language: en-US
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <b9ca171301d5abeb78922dd79d65136a@paul-moore.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+References: <20240130091300.2968534-1-tj@kernel.org> <ZcACvVz83QFuSLR6@slm.duckdns.org>
+ <CAOMdWSLNMqsZNJ-oCLN2RjckZmJSvdU_Yq0F0frmqMqa67Oy1g@mail.gmail.com> <ZcFPKaWwxJhgy8HQ@slm.duckdns.org>
+In-Reply-To: <ZcFPKaWwxJhgy8HQ@slm.duckdns.org>
+From: Allen <allen.lkml@gmail.com>
+Date: Mon, 5 Feb 2024 13:31:50 -0800
+Message-ID: <CAOMdWSKQC4UWXp57qubcSOHmPj0E7wHZWWbCz+yCZqROhoPSGw@mail.gmail.com>
+Subject: Re: [PATCHSET wq/for-6.9] workqueue: Implement BH workqueue and
+ convert several tasklet users
+To: Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
+	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
+	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, 
+	netdev@vger.kernel.org, kernel-team@meta.com
+Content-Type: text/plain; charset="UTF-8"
 
+Tejun,
+> On Mon, Feb 05, 2024 at 12:50:28PM -0800, Allen wrote:
+> > Thank you. I am basing my work on the branch you have
+> > pushed.(or-6.9-bh-conversions)
+> > https://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git/log/?h=for-6.9-bh-conversions
+> >
+> > In the order of priority, I have started converting drivers/media/*,
+> > drivers/dma/* followed by drivers/net/*
+> > which constitutes the majority. Putting my plan out here so that the
+> > work is not duplicated.
+> > I will write back in a day and share the branch for review.
+>
+> That's great. Thanks.
+>
+> > W.r.t the conversion, there are drivers which call
+> > tasklet_[disable/enable](), which I suppose
+> > can be ignored in the case of workqueues, I am not entirely sure if
+> > this is the right approach.
+> > Please correct me if I am wrong.
+>
+> I don't think we can ignore them. I was just looking at tasklet_kill() and
+> thought we're good because that seemed to map well to cancel_work_sync().
+> workqueue doesn't have the counterpart for tasklet_[disable/enable](). I'll
+> look through them and think on it.
+>
 
+Okay, I will look into it too. I have these rough and completely untested
+functions. All I am trying to do is to match what tasklets are currently doing.
 
-On 2/3/2024 2:25 PM, Paul Moore wrote:
-> On Jan 30, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
->>
->> This patch introduces a new hook to notify security system that the
->> content of initramfs has been unpacked into the rootfs.
->>
->> Upon receiving this notification, the security system can activate
->> a policy to allow only files that originated from the initramfs to
->> execute or load into kernel during the early stages of booting.
->>
->> This approach is crucial for minimizing the attack surface by
->> ensuring that only trusted files from the initramfs are operational
->> in the critical boot phase.
->>
->> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
->> ---
->> v1-v11:
->>    + Not present
->>
->> v12:
->>    + Introduced
->> ---
->>   include/linux/lsm_hook_defs.h |  4 ++++
->>   include/linux/security.h      | 10 ++++++++++
->>   init/initramfs.c              |  3 +++
->>   security/security.c           | 12 ++++++++++++
->>   4 files changed, 29 insertions(+)
->>
->> diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
->> index 185924c56378..b247388786a9 100644
->> --- a/include/linux/lsm_hook_defs.h
->> +++ b/include/linux/lsm_hook_defs.h
->> @@ -425,3 +425,7 @@ LSM_HOOK(int, 0, uring_override_creds, const struct cred *new)
->>   LSM_HOOK(int, 0, uring_sqpoll, void)
->>   LSM_HOOK(int, 0, uring_cmd, struct io_uring_cmd *ioucmd)
->>   #endif /* CONFIG_IO_URING */
->> +
->> +#ifdef CONFIG_BLK_DEV_INITRD
->> +LSM_HOOK(void, LSM_RET_VOID, unpack_initramfs_security, void)
->> +#endif /* CONFIG_BLK_DEV_INITRD */
-> 
-> Let's just call it "unpack_initramfs", the "_security" part is somewhat
-> implied since we are talking about a LSM hook ;)
-> 
->> diff --git a/init/initramfs.c b/init/initramfs.c
->> index 76deb48c38cb..075a5794cde5 100644
->> --- a/init/initramfs.c
->> +++ b/init/initramfs.c
->> @@ -18,6 +18,7 @@
->>   #include <linux/init_syscalls.h>
->>   #include <linux/task_work.h>
->>   #include <linux/umh.h>
->> +#include <linux/security.h>
->>   
->>   static __initdata bool csum_present;
->>   static __initdata u32 io_csum;
->> @@ -720,6 +721,8 @@ static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
->>   #endif
->>   	}
->>   
->> +	security_unpack_initramfs();
-> 
-> Given the caller, what do you think of changing the hook name to
-> "security_initramfs_populated()"?  I think this not only matches up
-> better with the caller, "do_populate_rootfs()", but since in using the
-> past tense we help indicate that this hook happens *after* the rootfs
-> is populated with the initramfs data.
-> 
+static inline void workqueue_disable(struct work_struct *work)
+{
+     cancel_work_sync(work);
+     flush_workqueue(system_bh_wq);
+     smp_mb();
+}
 
-Yeah, I agree this sounds better. I will update this part.
+static inline void workqueue_enable(struct work_struct *work)
+{
+    smp_mb__before_atomic();
+  //  atomic_inc(&work->data);
+}
 
--Fan
->>   done:
->>   	/*
->>   	 * If the initrd region is overlapped with crashkernel reserved region,
->> diff --git a/security/security.c b/security/security.c
->> index ddf2e69cf8f2..2a527d4c69bc 100644
->> --- a/security/security.c
->> +++ b/security/security.c
->> @@ -5581,3 +5581,15 @@ int security_uring_cmd(struct io_uring_cmd *ioucmd)
->>   	return call_int_hook(uring_cmd, 0, ioucmd);
->>   }
->>   #endif /* CONFIG_IO_URING */
->> +
->> +#ifdef CONFIG_BLK_DEV_INITRD
->> +/**
->> + * security_unpack_initramfs() - Notify LSM that initramfs has been loaded
->> + *
->> + * Tells the LSM the initramfs has been unpacked into the rootfs.
->> + */
->> +void security_unpack_initramfs(void)
->> +{
->> +	call_void_hook(unpack_initramfs_security);
->> +}
->> +#endif /* CONFIG_BLK_DEV_INITRD */
->> -- 
->> 2.43.0
-> 
-> --
-> paul-moore.com
+I have to figure out a better way to handle atomic_inc() in the enable
+function.
+
+Thanks.
+
+      - Allen
