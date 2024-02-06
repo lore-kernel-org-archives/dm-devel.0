@@ -1,79 +1,275 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yb1-f173.google.com (mail-yb1-f173.google.com [209.85.219.173])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E4D81CF80
-	for <dm-devel@lists.linux.dev>; Tue,  6 Feb 2024 21:47:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D0C21B95A
+	for <dm-devel@lists.linux.dev>; Tue,  6 Feb 2024 21:53:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707256030; cv=none; b=kVuFyXLcVT0E19eAzRfbwJtF30AoFIislMY8jSDvFHRUGkWV37y/JTerkf3t85j3dQTBQ3T4lg89RkbBMxszvz76XfWQVPOoRe0Qab8yuBLJBKbBsQeDdExhNPwgelP+eFOTNuIsDxxQYLMpbE02YO5xo2ZfeTUtugTn2QFMGiw=
+	t=1707256418; cv=none; b=RyWM6N4EX3ZS+MDvWIri+rRmu0jiPbv3MhfuClsJDT94pJRTmqrOLk4jnWrxnz//9RMgfGTHL4rkUyyZRzDNp1GyDgJBK4mU0/d+0wwXuGbDeTRFVw0AA8jvhQ+P2su8LfU+EcHzz8EuL7wJFIpIPVAixWJiLe2jEiRQFksR1Sk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707256030; c=relaxed/simple;
-	bh=7ywXEtr/UZE4POA2+/UNbLOVQXFOQtlQe2TNaTzprEw=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=rUJu8jgy/obXyufkbOHMENlqjPophiecddKz7OAVejV54FbtRDbE9SrS5mPq2Qx1ASq4FinmdNCdz74NYi1c+S35aoNSu3O3lCKRLr1WPA9ze8zTj5iqMkqUBDXr5Fz+KJQVfFfEsr9d/2WzzOhVijmnk+tUJdDrv5K1iQcNXh8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UI/NpDlP; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1707256418; c=relaxed/simple;
+	bh=lEXEftvc8USQ5Sq5o5lp81iZXZA1RVqdMSS6fDyVwYE=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=QI0zYDO3DGEpRk9Z1V/McBEUcROgmNpCdE51o+L4TzlXmbjxdjrQuKBANSpYtGiKjl/F8BCTMfIKUbR1YSZxOxiFeolhtc4nYpXNFfFxltC28y6S+jvfob2EQJWT7GB7oY+MJLXNhaZfKwKKdRNNL8wP7hVhpYqU7VI0XqjaqH4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=fiUYGroC; arc=none smtp.client-ip=209.85.219.173
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UI/NpDlP"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1707256027;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=zGjMP1IOUXwVMDC5kAkBaxijYMamXyALIeSRPPpA03c=;
-	b=UI/NpDlPlr3hOkW4NrHMejzXnINi5PJg6ddE6tkXqnhsaiOtozRNy9ODyhHJTh40KUh5tc
-	RTFFpH7x4Gy4aDg7kfXay851DKnuP+LX6Og09vLkc2+VdIpnv5cuXKfWTMk4of1fcYMBPu
-	KrskF00kkSU+wiLbPebaMufGQ40pBq4=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-651-VGXLBbFcMYGSkHF3tpgSIg-1; Tue, 06 Feb 2024 16:47:00 -0500
-X-MC-Unique: VGXLBbFcMYGSkHF3tpgSIg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 63C58828CE2;
-	Tue,  6 Feb 2024 21:47:00 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1DEC740C9444;
-	Tue,  6 Feb 2024 21:47:00 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id EEC6930C1B8F; Tue,  6 Feb 2024 21:46:59 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id EBCA03FFC5;
-	Tue,  6 Feb 2024 22:46:59 +0100 (CET)
-Date: Tue, 6 Feb 2024 22:46:59 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Herbert Xu <herbert@gondor.apana.org.au>, 
-    "David S. Miller" <davem@davemloft.net>
-cc: linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev
-Subject: A question about modifying the buffer under authenticated
- encryption
-Message-ID: <f22dae2c-9cac-a63-fff-3b0b7305be6@redhat.com>
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="fiUYGroC"
+Received: by mail-yb1-f173.google.com with SMTP id 3f1490d57ef6-dc6dcd91364so1382008276.2
+        for <dm-devel@lists.linux.dev>; Tue, 06 Feb 2024 13:53:35 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=paul-moore.com; s=google; t=1707256414; x=1707861214; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=E8VjUURyKl+tDea7fU1YfuA8k7lBdd08O4dfl2Z6+qs=;
+        b=fiUYGroCOdXQeVMngy8cvUXng15HYRrIfq04vERIx1+h2VDzniu63J+R5WiXO40+8x
+         u52hCpr4IAKCo2KxtNuL18XnsUtFq8k6z/FH0zQDzt0iLcoaMrSy4cePGsVwSMdoZBE0
+         Oqu1g47lBOLfx4FPGi/n8fj1zKrlgwmzV9d82f102Rp09wNFQMnlyvz2gtRPWjEJZ5I2
+         9j9ZB4pFekFg+zKhKOagv5RuMkhIBVeP4GspJuRwJiGDC73GIDT4CwUCoaynSaGKnz/U
+         MDKGBaBI/AY/K/XEeO6I0/4sYJjyp4IulT+RuSX+NgJX1FYbiu4HsWwHD+8O+jEuyO4G
+         yoHA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707256414; x=1707861214;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=E8VjUURyKl+tDea7fU1YfuA8k7lBdd08O4dfl2Z6+qs=;
+        b=jIAXLqnd8793IW7F1I3g65FWyJzOKoa9m4HB4OH2ZeBdAMA3WiggHZFo50Hkfs8pEq
+         c/Q6pt2DyTXkUR0v+6gakun3aXIMA2n6gVH8934ueLTfFYF6fLdG/YSi6WQtzwOePcxZ
+         /ZscZkYU7lWUjEQwWOs9X5HiHVdSCXOMwUEcsgEhRTbRgM2XXPl3T0lr5MSjJ4FtjtE0
+         mnz4UIg0+i6DLls0j0IofpkBGWUS8qFddJBq+BrczY2h9NsGTiZ2Dx2VXn7rnC6ywHBy
+         bBYyCLx5cItyz7wUGS1l8ec0TUt3kksh9anBl7+UNx2tv0jBSZ7dB4c8lvPrhI5S31tv
+         QOAw==
+X-Gm-Message-State: AOJu0Ywh/O2MQ2ZD8k2LkLEvat6U422Wt/7d143zkNE/Jd+XGXI/QRas
+	9RGz1iNXLtkT+OU09xlYp+xdE+aDtAcOV+vvBkuS+85tgftQ1LQFbS4+7jzE9BvL3+UeVw6k/lw
+	gsMaYlQczPPnW1IUAF4TuSFHKHTekGcVzStgY
+X-Google-Smtp-Source: AGHT+IEO4hTUbTAAn40GVh6bVY5MjCMuUK0Go+sNf1Zs+luw8FRTbTUb/aYdCk/1t8fccmSNm68UjpBMUgzFkT5lF5I=
+X-Received: by 2002:a25:84d2:0:b0:dc2:32e6:d1b1 with SMTP id
+ x18-20020a2584d2000000b00dc232e6d1b1mr2686889ybm.18.1707256414268; Tue, 06
+ Feb 2024 13:53:34 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+References: <1706654228-17180-16-git-send-email-wufan@linux.microsoft.com>
+ <6ac3cca9d1d3505f3ed9c7196512f2db@paul-moore.com> <05cb5f03-9236-47b7-8dd4-1741c289efdc@linux.microsoft.com>
+In-Reply-To: <05cb5f03-9236-47b7-8dd4-1741c289efdc@linux.microsoft.com>
+From: Paul Moore <paul@paul-moore.com>
+Date: Tue, 6 Feb 2024 16:53:23 -0500
+Message-ID: <CAHC9VhS3Yb9QE3spJjFn2Mef-6m5Jxk6Yr80O1VkLp-yudp62w@mail.gmail.com>
+Subject: Re: [PATCH RFC v12 15/20] ipe: add support for dm-verity as a trust provider
+To: Fan Wu <wufan@linux.microsoft.com>
+Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, 
+	tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com, 
+	snitzer@kernel.org, eparis@redhat.com, linux-doc@vger.kernel.org, 
+	linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, 
+	linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org, 
+	dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	Deven Bowers <deven.desai@linux.microsoft.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi
+On Mon, Feb 5, 2024 at 6:11=E2=80=AFPM Fan Wu <wufan@linux.microsoft.com> w=
+rote:
+> On 2/3/2024 2:25 PM, Paul Moore wrote:
+> > On Jan 30, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
+> >>
+> >> Allows author of IPE policy to indicate trust for a singular dm-verity
+> >> volume, identified by roothash, through "dmverity_roothash" and all
+> >> signed dm-verity volumes, through "dmverity_signature".
+> >>
+> >> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+> >> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> >> ---
+> >> v2:
+> >>    + No Changes
+> >>
+> >> v3:
+> >>    + No changes
+> >>
+> >> v4:
+> >>    + No changes
+> >>
+> >> v5:
+> >>    + No changes
+> >>
+> >> v6:
+> >>    + Fix an improper cleanup that can result in
+> >>      a leak
+> >>
+> >> v7:
+> >>    + Squash patch 08/12, 10/12 to [11/16]
+> >>
+> >> v8:
+> >>    + Undo squash of 08/12, 10/12 - separating drivers/md/ from securit=
+y/
+> >>      & block/
+> >>    + Use common-audit function for dmverity_signature.
+> >>    + Change implementation for storing the dm-verity digest to use the
+> >>      newly introduced dm_verity_digest structure introduced in patch
+> >>      14/20.
+> >>
+> >> v9:
+> >>    + Adapt to the new parser
+> >>
+> >> v10:
+> >>    + Select the Kconfig when all dependencies are enabled
+> >>
+> >> v11:
+> >>    + No changes
+> >>
+> >> v12:
+> >>    + Refactor to use struct digest_info* instead of void*
+> >>    + Correct audit format
+> >> ---
+> >>   security/ipe/Kconfig         |  18 ++++++
+> >>   security/ipe/Makefile        |   1 +
+> >>   security/ipe/audit.c         |  37 ++++++++++-
+> >>   security/ipe/digest.c        | 120 +++++++++++++++++++++++++++++++++=
+++
+> >>   security/ipe/digest.h        |  26 ++++++++
+> >>   security/ipe/eval.c          |  90 +++++++++++++++++++++++++-
+> >>   security/ipe/eval.h          |  10 +++
+> >>   security/ipe/hooks.c         |  67 +++++++++++++++++++
+> >>   security/ipe/hooks.h         |   8 +++
+> >>   security/ipe/ipe.c           |  15 +++++
+> >>   security/ipe/ipe.h           |   4 ++
+> >>   security/ipe/policy.h        |   3 +
+> >>   security/ipe/policy_parser.c |  26 +++++++-
+> >>   13 files changed, 421 insertions(+), 4 deletions(-)
+> >>   create mode 100644 security/ipe/digest.c
+> >>   create mode 100644 security/ipe/digest.h
+> >>
+> >> diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+> >> index ac4d558e69d5..7afb1ce0cb99 100644
+> >> --- a/security/ipe/Kconfig
+> >> +++ b/security/ipe/Kconfig
+> >> @@ -8,6 +8,7 @@ menuconfig SECURITY_IPE
+> >>      depends on SECURITY && SECURITYFS && AUDIT && AUDITSYSCALL
+> >>      select PKCS7_MESSAGE_PARSER
+> >>      select SYSTEM_DATA_VERIFICATION
+> >> +    select IPE_PROP_DM_VERITY if DM_VERITY && DM_VERITY_VERIFY_ROOTHA=
+SH_SIG
+> >>      help
+> >>        This option enables the Integrity Policy Enforcement LSM
+> >>        allowing users to define a policy to enforce a trust-based acce=
+ss
+> >> @@ -15,3 +16,20 @@ menuconfig SECURITY_IPE
+> >>        admins to reconfigure trust requirements on the fly.
+> >>
+> >>        If unsure, answer N.
+> >> +
+> >> +if SECURITY_IPE
+> >> +menu "IPE Trust Providers"
+> >> +
+> >> +config IPE_PROP_DM_VERITY
+> >> +    bool "Enable support for dm-verity volumes"
+> >> +    depends on DM_VERITY && DM_VERITY_VERIFY_ROOTHASH_SIG
+> >> +    help
+> >> +      This option enables the properties 'dmverity_signature' and
+> >> +      'dmverity_roothash' in IPE policy. These properties evaluates
+> >> +      to TRUE when a file is evaluated against a dm-verity volume
+> >> +      that was mounted with a signed root-hash or the volume's
+> >> +      root hash matches the supplied value in the policy.
+> >> +
+> >> +endmenu
+> >> +
+> >> +endif
+> >> diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+> >> index 2279eaa3cea3..66de53687d11 100644
+> >> --- a/security/ipe/Makefile
+> >> +++ b/security/ipe/Makefile
+> >> @@ -6,6 +6,7 @@
+> >>   #
+> >>
+> >>   obj-$(CONFIG_SECURITY_IPE) +=3D \
+> >> +    digest.o \
+> >>      eval.o \
+> >>      hooks.o \
+> >>      fs.o \
+> >> diff --git a/security/ipe/audit.c b/security/ipe/audit.c
+> >> index ed390d32c641..a4ad8e888df0 100644
+> >> --- a/security/ipe/audit.c
+> >> +++ b/security/ipe/audit.c
+> >> @@ -13,6 +13,7 @@
+> >>   #include "hooks.h"
+> >>   #include "policy.h"
+> >>   #include "audit.h"
+> >> +#include "digest.h"
+> >>
+> >>   #define ACTSTR(x) ((x) =3D=3D IPE_ACTION_ALLOW ? "ALLOW" : "DENY")
+> >>
+> >> @@ -54,8 +55,30 @@ static const char *const audit_prop_names[__IPE_PRO=
+P_MAX] =3D {
+> >>      "boot_verified=3DFALSE",
+> >>      "boot_verified=3DTRUE",
+> >>   #endif /* CONFIG_BLK_DEV_INITRD */
+> >> +#ifdef CONFIG_IPE_PROP_DM_VERITY
+> >> +    "dmverity_roothash=3D",
+> >> +    "dmverity_signature=3DFALSE",
+> >> +    "dmverity_signature=3DTRUE",
+> >> +#endif /* CONFIG_IPE_PROP_DM_VERITY */
+> >>   };
+> >>
+> >> +#ifdef CONFIG_IPE_PROP_DM_VERITY
+> >> +/**
+> >> + * audit_dmv_roothash - audit a roothash of a dmverity volume.
+> >> + * @ab: Supplies a pointer to the audit_buffer to append to.
+> >> + * @rh: Supplies a pointer to the digest structure.
+> >> + */
+> >> +static void audit_dmv_roothash(struct audit_buffer *ab, const void *r=
+h)
+> >> +{
+> >> +    audit_log_format(ab, "%s", audit_prop_names[IPE_PROP_DMV_ROOTHASH=
+]);
+> >> +    ipe_digest_audit(ab, rh);
+> >> +}
+> >> +#else
+> >> +static void audit_dmv_roothash(struct audit_buffer *ab, const void *r=
+h)
+> >> +{
+> >> +}
+> >> +#endif /* CONFIG_IPE_PROP_DM_VERITY */
+> >
+> > I talked about this back in my review of the v11 patchset and I'm
+> > guessing you may have missed it ... the problem with the above code is
+> > that the fields in an audit record should remain constant, even if
+> > there is no data for that particular field.  In cases where there is no
+> > data to record for a given field, a "?" should be used as the field's
+> > value, for example:
+> >
+> >    dmverify_roothash=3D?
+> >
+> > My guess is that you would want to do something like this:
+> >
+> >    #else  /* !CONFIG_IPE_PROP_DM_VERITY */
+> >    static void audit_dmv_roothash(...)
+> >    {
+> >      audit_log_format(ab, "%s=3D?", audit_prop_names[...]);
+> >    }
+> >    #endif /* CONFIG_IPE_PROP_DM_VERITY */
+> >
+> > --
+> > paul-moore.com
+>
+> These code are used for auditing a policy rule, which the parser will
+> guarantee the property will always have a valid value. The comments
+> might be misleading which sounds like it's auditing a file's state. I
+> will correct them.
+>
+> Also as we previously discussed, the policy grammar shouldn't depend on
+> any kernel switch so these preprocessor statement will be removed.
+>
+> However, as an audit record should remain constant, I guess we should do
+> some special treatment to anonymous files? Like audit record for them
+> should include "path=3D? dev=3D? ino=3D?"
 
-I'm trying to fix some problems in dm-crypt that it may report 
-authentication failures when the user reads data with O_DIRECT and 
-modifies the read buffer while it is being read.
+Yes, if the record type includes those fields just once, the record
+type should *always* include those fields.
 
-I'd like to ask you:
-
-1. If the authenticated encryption encrypts a message, reading from 
-   buffer1 and writing to buffer2 - and buffer1 changes while reading from 
-   it - is it possible that it generates invalid authentication tag?
-
-2. If the authenticated encryption decrypts a message, reading from 
-   buffer1 and writing to buffer2 - and buffer2 changes while writing to 
-   it - is is possible that it reports authentication tag mismatch?
-
-Mikulas
-
+--=20
+paul-moore.com
