@@ -1,45 +1,45 @@
-Received: from mail-pg1-f177.google.com (mail-pg1-f177.google.com [209.85.215.177])
+Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com [209.85.214.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF5F6137E
-	for <dm-devel@lists.linux.dev>; Tue,  6 Feb 2024 00:57:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 191FF1367
+	for <dm-devel@lists.linux.dev>; Tue,  6 Feb 2024 01:25:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707181060; cv=none; b=n+BsIr2ovVJOGEyWvwonpOcemmkNcUEWmgmfHG6cRWVKbmqJoU5Qwez60ip1gp1j3fnyFLCC20/54l8uqdvHWWjb5iacuRBr6bVA3kTTP+GTmb13UV3KA4Eba3jszuNChoLXsmUtvhyDqxGgifIQsKvLtReypGydUv98Zy+NyuM=
+	t=1707182749; cv=none; b=L5J8dlU2HkuRni+KBQnVbIQipqtY/+HOJ+bBVhcIvvIjMitmfWPa4fuqp5Wr34Xm1UTJqu8XbyHp9df/Yv+aaKyGKhDhd/pTNKhBoRcaD1M4rZMYIM+iRIN8UuztjRK5XX7lh/oTxOLrdg2wea+BIZ7iZ6AF0XIHgwJVOgbv+x0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707181060; c=relaxed/simple;
-	bh=YWNKKmsMv/jBqFoU7Yl6BOcdIWeoPqHd7UeMGcgtxRo=;
+	s=arc-20240116; t=1707182749; c=relaxed/simple;
+	bh=xPhVl2iyOivm3Z8E/ftGw19JdA9+2hfmNugZ8ePuDhY=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=BhasSDsPPdrPiEm1zq1FFKeJFuQm4AjtDabKmKP7U/dpVrlmCwxZhGImelm91wMzEOxMLhFT2YMKY+jTfLozANypoGndv4gFJOEW4F/kqJiNomVYnqTSUgcbpooLQgIZMP+pdvY/v7IUmx7MwpJhjPDNkN1x2pleA+FVfVVTgGE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.215.177
+	 In-Reply-To:Content-Type; b=uo+KxHvsFl8v6fiNYaIMlNeaqjWw1+HKoU9d+BXz0kbQJYgS7dzij0b0SavdO/OjOu3NLbijimRGVxWJFVwk9h15LOAfWFayFb6uqAwSek3JvyMzo+9pvi6nQTkwzo7CX5qacbI/CbvjAxuc2LxqX/XJZU90vhJwS5Ciupr1D8I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.214.176
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-pg1-f177.google.com with SMTP id 41be03b00d2f7-5dbcfa0eb5dso368326a12.3
-        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 16:57:38 -0800 (PST)
+Received: by mail-pl1-f176.google.com with SMTP id d9443c01a7336-1d746ce7d13so41486185ad.0
+        for <dm-devel@lists.linux.dev>; Mon, 05 Feb 2024 17:25:47 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707181058; x=1707785858;
+        d=1e100.net; s=20230601; t=1707182747; x=1707787547;
         h=content-transfer-encoding:in-reply-to:from:references:cc:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=opHqb+C62MdhDCBurOh6qgNf+dB4dwPStmEHHYjGuQs=;
-        b=oRXcqmbdeDNkYAEmmTOf6v5uUIjWrlT/G1+9BOi4RT2tPdweRVAFe+/doARWumhZBo
-         IorXQLCZakORz3ymVQJcX7UAakAZqzs8g9tg0NPkaPf7388ho/fnWZByPcuyUcmPoNL8
-         3e3NE/T2Ppva4DkCH8lwLnYIE5CYVsayMGM3g5JRaFRiOt7xbY5Q2WreyExEthpb4znx
-         h9dtFr99hxW5nr/Uf9hf/b2wEYAbJIG1fPKInYAulpfUAJrJ+VJASbJcUmtKS/lhydvj
-         FOE2oSDwZodVZDIqSbNV6AwiImrLEMmDFIwf1mszTQCifQI84d67jvmSMKKlXU1b6Zg+
-         O7ew==
-X-Gm-Message-State: AOJu0YyGu0rB18hpNItBkjV3KdgZ/nUKVnlIFQkdGyGm7BWp8xZZM9B7
-	7eWBy6pHHuI3r0L28c6bBG9+JRr4OEqVaoL2MfZ20qornvmKnloC
-X-Google-Smtp-Source: AGHT+IFgEqpD+F+h/zwX8mI4dzAdSsOBPqzDR+llq5TTnQWnncz39XzUg62UjYTHQWYfuWai2I6HIQ==
-X-Received: by 2002:a05:6a20:3d8a:b0:19c:b3ea:27ba with SMTP id s10-20020a056a203d8a00b0019cb3ea27bamr171383pzi.52.1707181057909;
-        Mon, 05 Feb 2024 16:57:37 -0800 (PST)
-X-Forwarded-Encrypted: i=0; AJvYcCVKRXhnFahbWUq+nAQAqMtfCnJ7Tna9OqKRm2WnZQL/Mh5NLT+yd4LyWd45ZL/gFFccK1p0jgZ6exFt5sKlJF9XXLDZ7H5vGvW/D+vwZF8TVFngxA4ndfQnfveeb3wcoJt2OpO89Y3qoO2ST0mB5zveFC4mmw+BbRODmQmKziPuxaj3qqU42L+IH8OkBATSwYY4fze9qcAsix4syv+MIWKaLNdp4kla1uxEMZPDjVLIcObSkKOvs+gN6FKTjhBJtq1y8Q==
+        bh=EfH74TYuZGZBD3gnqL6oIjRHEvMXzZ6fQIQB4Pz4Ego=;
+        b=m9LQBlOBMpFn97YCa1y1wo5mF4aiYlJZTNhqM5KKk3AOrM919ncZlWA+tMSiBv4jKy
+         U+QAZDiJymurpsxeM+eNqt9B9NvbpAfP4bj5szDtGWQsRuhvoJ7Uub65yF+7s3B6zFQa
+         qrwXjxKKeN1d4MV7Jh/1RK3Ynqwhf4Nv32/tjBhCYKrAQro0V8NvXfZTXPCKf/ID5YdZ
+         CAlViZ+qEQTIOzAfzfT2bJVyIHnxhhFGFzKTYU5Pozv1n029+wjCTOh837G2OmjJ2YX3
+         lnl4m6Ino6k0MQfPuKtfFV+UJ/K7gEu6YEnmHhMJsbxkZF4WjwNJZ6ZJ63XRtG3muHEk
+         LpVQ==
+X-Gm-Message-State: AOJu0YwSv1tR0MR19mbbFKCm/7ql2V/YI3b0+oaAN0Juef/Xv2qQRIX6
+	XTX8H8a5L/SFPQK6cJSxc540Qx9gWNeeqSgG0b6DkChEjfWadm14
+X-Google-Smtp-Source: AGHT+IGeXKRtT9W1LJG6mPRgiHjBJ4zC8hNfCDVBubWzCzv6teg3jEEUa51cp9v1QpDpzST//Kmftw==
+X-Received: by 2002:a17:902:7ec2:b0:1d9:ca7e:f0b4 with SMTP id p2-20020a1709027ec200b001d9ca7ef0b4mr233109plb.16.1707182747168;
+        Mon, 05 Feb 2024 17:25:47 -0800 (PST)
+X-Forwarded-Encrypted: i=0; AJvYcCU9x8L+y+lWN/r9zFUjKzGBPv9YXMGwNjJzW3oy8qIiBoJWDTsmispFFCYlcLYR1sAiYqqQJ0WJsFHMlfW3RKzpB3W9aIDQpgK9dP7/crIJ3PJEX9TDM8DAXz9WiNdg6gVYxtfzI4xeCHULYhC08XODtY85eARSYOmJlSoN31aMs0eJp540BUpzQHGE7efN/YWOQ3MYBh6kFVuNjPaX5skz/XkNIMLyDoC5HREP+XvKw1/frqAlnqPRedln62lT0AKH6A==
 Received: from ?IPV6:2601:647:4d7e:54f3:667:4981:ffa1:7be1? ([2601:647:4d7e:54f3:667:4981:ffa1:7be1])
-        by smtp.gmail.com with ESMTPSA id e3-20020a635443000000b0058901200bbbsm696647pgm.40.2024.02.05.16.57.36
+        by smtp.gmail.com with ESMTPSA id o9-20020a17090323c900b001d94a3f3987sm522408plh.184.2024.02.05.17.25.46
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 05 Feb 2024 16:57:37 -0800 (PST)
-Message-ID: <38c39245-3dbb-4683-8dd0-b5aabb672583@acm.org>
-Date: Mon, 5 Feb 2024 16:57:36 -0800
+        Mon, 05 Feb 2024 17:25:46 -0800 (PST)
+Message-ID: <04fb99e4-3e67-4c69-b1ff-d8563dc3098d@acm.org>
+Date: Mon, 5 Feb 2024 17:25:45 -0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -55,38 +55,28 @@ To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
  dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>
 References: <20240202073104.2418230-1-dlemoal@kernel.org>
- <7c98aae0-46d1-473d-8d60-8252a96c414a@acm.org>
- <ee72eeb6-f929-4879-906a-a628faa1c374@kernel.org>
+ <fc7ab626-58ed-49bd-b692-4875d17c6556@acm.org>
+ <548aa284-6c80-4f01-a5ce-bb16f64e9c85@kernel.org>
 From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <ee72eeb6-f929-4879-906a-a628faa1c374@kernel.org>
+In-Reply-To: <548aa284-6c80-4f01-a5ce-bb16f64e9c85@kernel.org>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 2/5/24 15:42, Damien Le Moal wrote:
-> On 2/6/24 02:21, Bart Van Assche wrote:
->> On 2/1/24 23:30, Damien Le Moal wrote:
->>> The patch series introduces zone write plugging (ZWP) as the new
->>> mechanism to control the ordering of writes to zoned block devices.
->>> ZWP replaces zone write locking (ZWL) which is implemented only by
->>> mq-deadline today. ZWP also allows emulating zone append operations
->>> using regular writes for zoned devices that do not natively support this
->>> operation (e.g. SMR HDDs). This patch series removes the scsi disk
->>> driver and device mapper zone append emulation to use ZWP emulation.
->>
->> How are SCSI unit attention conditions handled?
+On 2/5/24 16:07, Damien Le Moal wrote:
+> On 2/6/24 03:18, Bart Van Assche wrote:
+>> Are there numbers available about the performance differences (bandwidth
+>> and latency) between plugging zoned write bios and zoned write plugging
+>> requests?
 > 
-> ???? How does that have anything to do with this series ?
-> Whatever SCSI sd is doing with unit attention conditions remains the same. I did
-> not touch that.
+> Finish reading the cover letter. It has lots of measurements with rc2, Jens
+> block/for-next and ZWP...
+Hmm ... as far as I know nobody ever implemented zoned write plugging
+for requests in the block layer core so these numbers can't be in the
+cover letter.
 
-I wrote my question before I had realized that this patch series
-restricts the number of outstanding writes to one per zone. Hence,
-there is no risk of unaligned write pointer errors due to reordering
-of writes due to unit attention conditions. Hence, my question can
-be ignored :-)
+Has the bio plugging approach perhaps been chosen because it works
+better for bio-based device mapper drivers?
 
 Thanks,
 
 Bart.
-
-
