@@ -1,101 +1,106 @@
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.16])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-vk1-f179.google.com (mail-vk1-f179.google.com [209.85.221.179])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C429F7E57A;
-	Wed,  7 Feb 2024 14:36:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.16
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 619E484FC1
+	for <dm-devel@lists.linux.dev>; Wed,  7 Feb 2024 19:02:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707316564; cv=none; b=Cv/tX8VC2VNGmQMvn2TPlh85sgFy5sFfX17Umy472fQboTZMWN6cx6LxwoV6dT3OmKjtwEmqrOuTZab+Zv6bUvM2i9CVOQYXcwRlzHr6n6b6MEEZOABBIhFFdnoKM3nIj3mT2xRyTjys6TvHIW8LAK0T4D6epeRPhaTNmiPbhh0=
+	t=1707332572; cv=none; b=QUVeNAWOb1FxDQLQCRS7BgwQwTGeG7mwtzNOd/otsqmviVUVnBHqAEvznGBWVpuCSfyfenydP9QlZrlTCqeaUefe1k2ZNzGQQKvVjKpNyDiTom9zzfwBJCVsWTcyTxHobrqwwpj5ngr9Yj5E4snZBnBWbU0H2eGT787M6AFcpIk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707316564; c=relaxed/simple;
-	bh=jtSkTs2LDY3fE47Hj8oArTD/Pq1/eKWD+gRWpP+Zi+c=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=dRV1mUiZcazje4+575JmYlDg7MnTlA9A4dsj6DoHrrFFVwpTP/9IoEdT+OM6CKW9QkSHjkqL67n+lRrpL7z3ESt57Gmfxt/ivblHnOVFV6kFhxqP4duUOWVH9Kdgm342JfIUsI4XjTT++oEc5oorQ0hgvQTN4XhHrIIKb5ZayyE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=OWw3zLAo; arc=none smtp.client-ip=192.198.163.16
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	s=arc-20240116; t=1707332572; c=relaxed/simple;
+	bh=0WP3GhnoPTDV0+joY1N49lbD3qna4WrhBLUKcV4NQ7I=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=VFo9IYavE+xDSFpwERMWw35hoAeCCsneLe9qWsAlEZ33tkGb81YKp3yrSEOtgyDceD96EwqFYMMAl+JaFKg/hbnhEB9CSDKebPWf2E31/9E2sCpliM3SQnBljCQwyR+D6kKA82CX50m4XMrvbLAredtSJHDnUileC6B88T3xh0g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GtYuFI3n; arc=none smtp.client-ip=209.85.221.179
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="OWw3zLAo"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1707316563; x=1738852563;
-  h=date:from:to:cc:subject:message-id:mime-version;
-  bh=jtSkTs2LDY3fE47Hj8oArTD/Pq1/eKWD+gRWpP+Zi+c=;
-  b=OWw3zLAo2iFnHBL5W5yLHTN04dwjf+061joO7wNcgDjfHicSCTouVLDO
-   4HpxoPnNLZp1/mXRbpLVyo794vlM06/A8HXGUlTF8uBSH/Dx/Y/Llda8F
-   ml4BsEFj57SXNl4nfbu6MIQNiBt2MAZ7suc/AonjEv08uumVaMuP8clW/
-   j/fG91nxIGcBsEqiCYNfzKCU9s54hzXlClOeydAWQeqvwUEYbjx9uDKg4
-   RwPHWnL2YkxREvuoB8A4PVKktK4arUm2ZrH/8FllfeT5PbGn+cMzDOzb8
-   izuUu9LF7gibmTVfeR/+SfjcVQKvuRJmhOhYM9mYeaytYtigjOIR+P5hB
-   Q==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10976"; a="1278009"
-X-IronPort-AV: E=Sophos;i="6.05,251,1701158400"; 
-   d="scan'208";a="1278009"
-Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmvoesa110.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 07 Feb 2024 06:36:00 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10976"; a="933791570"
-X-IronPort-AV: E=Sophos;i="6.05,251,1701158400"; 
-   d="scan'208";a="933791570"
-Received: from lkp-server01.sh.intel.com (HELO 01f0647817ea) ([10.239.97.150])
-  by fmsmga001.fm.intel.com with ESMTP; 07 Feb 2024 06:35:58 -0800
-Received: from kbuild by 01f0647817ea with local (Exim 4.96)
-	(envelope-from <lkp@intel.com>)
-	id 1rXj1o-0002iS-0M;
-	Wed, 07 Feb 2024 14:35:56 +0000
-Date: Wed, 7 Feb 2024 22:35:43 +0800
-From: kernel test robot <lkp@intel.com>
-To: Susan LeGendre-McGhee <slegendr@redhat.com>
-Cc: oe-kbuild-all@lists.linux.dev, dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@kernel.org>,
-	Matthew Sakai <msakai@redhat.com>
-Subject: [device-mapper-dm:for-next 83/83]
- drivers/md/dm-vdo/encodings.h:616:28: warning: 'MAXIMUM_VDO_PHYSICAL_BLOCKS'
- defined but not used
-Message-ID: <202402072259.v3h88Ogl-lkp@intel.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GtYuFI3n"
+Received: by mail-vk1-f179.google.com with SMTP id 71dfb90a1353d-4c009d2053fso412930e0c.3
+        for <dm-devel@lists.linux.dev>; Wed, 07 Feb 2024 11:02:51 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1707332570; x=1707937370; darn=lists.linux.dev;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=ujAb35RnTLt8ZUbzta1x6PdsdJ+WhetZSVI49IXzaL4=;
+        b=GtYuFI3nUm9dG8f+ypSpQj7q2nZ1+pUUkHOrhSOwQ6vS2r1gl8DuBfLs+Lu9n814lL
+         XbcwEMBD+JGPjP72R4h4TvqsMGCU9+NR4dpF9t/6IW0yU+f/M+FD00SbAxbuw82bAh+c
+         Xer6vLn67+ZlTyU6nkxUC5McAJqvWZi+E8TT1NecOTD7xTa9h+4x3QizQiOiv5tJ7YOK
+         nziAyMxQ1Llk/2fBzwCK18tDLaruHr8Fywx4kT42nVVxs+uIyOY8okSF0WbSC1tvbXFs
+         HMAfGYqWG/u3Hsw9N2g1nweC8e7tbLks3Wzq1PSNTI7OYVHfuqeLTx29s4Nu9pftis10
+         sqrQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707332570; x=1707937370;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=ujAb35RnTLt8ZUbzta1x6PdsdJ+WhetZSVI49IXzaL4=;
+        b=oUyFyBw/2zrvRRScJvjC/1vHPr8//VQSdkVTdOQsboIqsavKcMnxj44MIuBqSNzZr6
+         wxvxYxxCrvsBLx8dPYu9VL5SOdel6eZT48IavlWr0B54J9VNNV2KPTR7wcX5eLo1b6wN
+         iBvFptW4cXrdsJk+keP0eNOHC/MXryC94B31WVIV7lh0V+NTHoqCj0XmbY3HU2TmNClC
+         uUAwXBx2rfN5isGKHKZK/m6/SIGOyuT8lCZjVRErXWtFTefxhpVG3RWYwm22oMcRApHQ
+         +fhhby57jZ02BFtbQTnLU1YnxNdHxckk7PnIBBbtyTU5+A7w64Efiv9a1LrCg0YDTTO8
+         cV5w==
+X-Forwarded-Encrypted: i=1; AJvYcCU+iFweW+mDH5sNF9yTub0QTskc8GiOkdG4u4Xi7iv3ObidTeshYZUfF6UT9j3mVzDmvAnSTxvlx4SzHguiVbJ4aoW2bj1I2C8=
+X-Gm-Message-State: AOJu0YwY2xG8I2+COgOir4tFmvXvbJhlKpNi34XXa9v5EJjk3g8fo+/5
+	V4RScxfesrbDAzTpAutYEL+sF5/DXe6nJ748oNo1kI2rcanqhD0ZxksOrnisaLuxqWlwNX/KXEf
+	+Izj6xxgLzL+LK83tIhnL8/KNF+M=
+X-Google-Smtp-Source: AGHT+IEGjaS2wfaJL/3N0IjNMSRVZR1yOOmxYjAVKnt3O04KW4cnozm5HRpUgMBIQTf4a+F1nGQe1OZy405NekISujs=
+X-Received: by 2002:a05:6122:1699:b0:4c0:2553:3b19 with SMTP id
+ 25-20020a056122169900b004c025533b19mr3739687vkl.13.1707332569959; Wed, 07 Feb
+ 2024 11:02:49 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+References: <20240130091300.2968534-1-tj@kernel.org> <ZcACvVz83QFuSLR6@slm.duckdns.org>
+ <CAOMdWSLNMqsZNJ-oCLN2RjckZmJSvdU_Yq0F0frmqMqa67Oy1g@mail.gmail.com>
+ <ZcFPKaWwxJhgy8HQ@slm.duckdns.org> <CAOMdWSKQC4UWXp57qubcSOHmPj0E7wHZWWbCz+yCZqROhoPSGw@mail.gmail.com>
+In-Reply-To: <CAOMdWSKQC4UWXp57qubcSOHmPj0E7wHZWWbCz+yCZqROhoPSGw@mail.gmail.com>
+From: Allen <allen.lkml@gmail.com>
+Date: Wed, 7 Feb 2024 11:02:37 -0800
+Message-ID: <CAOMdWSLF9AaQF0ux03-tonw-Jy+4rXdKEZGzPrp_v+fnas6SnQ@mail.gmail.com>
+Subject: Re: [PATCHSET wq/for-6.9] workqueue: Implement BH workqueue and
+ convert several tasklet users
+To: Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
+	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
+	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, 
+	netdev@vger.kernel.org, kernel-team@meta.com
+Content-Type: text/plain; charset="UTF-8"
 
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-head:   076f0dbc1ae258e8a872499b84e65bb10aa5c5f3
-commit: 076f0dbc1ae258e8a872499b84e65bb10aa5c5f3 [83/83] dm vdo: move encoding constants to encodings.h
-config: alpha-allyesconfig (https://download.01.org/0day-ci/archive/20240207/202402072259.v3h88Ogl-lkp@intel.com/config)
-compiler: alpha-linux-gcc (GCC) 13.2.0
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20240207/202402072259.v3h88Ogl-lkp@intel.com/reproduce)
+Tejun,
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202402072259.v3h88Ogl-lkp@intel.com/
+> > On Mon, Feb 05, 2024 at 12:50:28PM -0800, Allen wrote:
+> > > Thank you. I am basing my work on the branch you have
+> > > pushed.(or-6.9-bh-conversions)
+> > > https://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git/log/?h=for-6.9-bh-conversions
+> > >
+> > > In the order of priority, I have started converting drivers/media/*,
+> > > drivers/dma/* followed by drivers/net/*
+> > > which constitutes the majority. Putting my plan out here so that the
+> > > work is not duplicated.
+> > > I will write back in a day and share the branch for review.
+> >
+> > That's great. Thanks.
+> >
 
-All warnings (new ones prefixed by >>):
+  I have the first set of conversions ready. Kindly review the patchset
+before I post it to the list. These convert drivers/dma/* to use the new
+Atomic WQ mechanism.
 
-   In file included from drivers/md/dm-vdo/vdo.h:18,
-                    from drivers/md/dm-vdo/action-manager.c:15:
->> drivers/md/dm-vdo/encodings.h:616:28: warning: 'MAXIMUM_VDO_PHYSICAL_BLOCKS' defined but not used [-Wunused-const-variable=]
-     616 | static const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
-         |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
->> drivers/md/dm-vdo/encodings.h:613:28: warning: 'MAXIMUM_VDO_LOGICAL_BLOCKS' defined but not used [-Wunused-const-variable=]
-     613 | static const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
-         |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~
+Based on
+https://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git for-6.9-bh-conversions
 
 
-vim +/MAXIMUM_VDO_PHYSICAL_BLOCKS +616 drivers/md/dm-vdo/encodings.h
+https://github.com/allenpais/for-6.9-bh-conversions
 
-   611	
-   612	/** The maximum logical space is 4 petabytes, which is 1 terablock. */
- > 613	static const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
-   614	
-   615	/** The maximum physical space is 256 terabytes, which is 64 gigablocks. */
- > 616	static const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
-   617	
+ I am holding on to the patch that converts drivers/media/*, as I haven't found
+a right way to replace tasklet_[disable/enable] api's. The rest should be ready
+in a day or two.
 
--- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+Thanks,
+  - Allen
