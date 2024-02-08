@@ -1,97 +1,111 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A833C69319
-	for <dm-devel@lists.linux.dev>; Thu,  8 Feb 2024 07:48:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2E466A00D
+	for <dm-devel@lists.linux.dev>; Thu,  8 Feb 2024 08:04:59 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707378486; cv=none; b=SgIWApc7BZiJRpjvK7yIBdUC10Zee8w9oGCoJIq3sWhnmoWlZRTYie9uTZoK85hMY5QfEXpWvmyIMqhghKYLKeY8zgjsmnt4B3m+PUl8R7vsRvQuVAHYgGx/9gUo5TWuUZ0KIQZlcpAyzfyR/UAM2jf8c2ZIVnydCAvNAIt7lMc=
+	t=1707379499; cv=none; b=iVZ+XzGAIZk4najzX85ZnMI+Q9zZRayAgHkfPFvM2SlDyrB7DVUbS6Qhi9StQ1PLDjIy3pMCm5/TFQpMmG1cb9sUd5g+20ZG8HJq7s8caq98fywtK2zDt+22xo+fmtC20cuwOeRt45XIMAuBQCIJF0tCe4jWNxT6HxfN/L2A2xU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707378486; c=relaxed/simple;
-	bh=jZMUdWHkmuyiccRDiX/XmlwP+EtJ+UC+ZfMpRO0yzuk=;
+	s=arc-20240116; t=1707379499; c=relaxed/simple;
+	bh=987LamE2hoEYsIxcVaDf9AVrqwlJJKTBlW3xcybR3jg=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=FOivRFwZZRSpTQhhuCgor5FEg68Sb5msxmj+xSa3jrod4pr6keMrDVSYJH5Z7ovzmH9tz4ioe8mBwyy+GViIL2UHFr0jqAKOajvpUUCPqECeweNbvmWmGguLImMGtBBY/JDZUEHUamnlFO4+BtZTLSwN2xGgI87FmNwqqU+y0rw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LvjZ/H0P; arc=none smtp.client-ip=10.30.226.201
+	 To:Cc:Content-Type; b=PPPbJYiC+KSoa6aMYprxU5kPq3uMtOLsQZCHSW6Gcc5oplobUmQacz4uvzYwKk+fTLz/siXeSduqr8Dcbuoj0p7ZNixWddqgdmdzxY/ZxnWtZ+ZoRiDyGeL3kgG5Ocrlp/7GBh10smfFRDmjDJbOpOKMG3niTLJp+eKBzemzWOI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=C1kKwziR; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LvjZ/H0P"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3F209C43390
-	for <dm-devel@lists.linux.dev>; Thu,  8 Feb 2024 07:48:06 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="C1kKwziR"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 309DDC433A6
+	for <dm-devel@lists.linux.dev>; Thu,  8 Feb 2024 08:04:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1707378486;
-	bh=jZMUdWHkmuyiccRDiX/XmlwP+EtJ+UC+ZfMpRO0yzuk=;
+	s=k20201202; t=1707379499;
+	bh=987LamE2hoEYsIxcVaDf9AVrqwlJJKTBlW3xcybR3jg=;
 	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=LvjZ/H0PJ6PA4kDstJNrec15gNE3xSexlVYX7ujuCwsJuDDwWbawTa47UBqgtJSIl
-	 hML+ldKEX9GG0PZHwHvuD37GaaiPn7lKZJGDQ9yIOUcyqZ9RxgHuv3GhoiA9nn9YKo
-	 MGidCyXuJNlGrEYB2ykIridRtoMnquBDoViy7mwo1FgQXCc6DUD3nVShfVsXD6Doya
-	 MlA2qMCbxCDYYPTAUrwypD3W6HJsp4Oa8XuU9315kwjiYR6nXrFjAK4gqW0K9rMdmn
-	 C9GJFyGQxL5VoQ7WNpDvM9Zo7LjtOTi7e+bx+NIgn+HSa+tmubFT8+m//FnHb3z/00
-	 XV9rXpf27UPPQ==
-Received: by mail-lj1-f171.google.com with SMTP id 38308e7fff4ca-2d073b54359so20942101fa.0
-        for <dm-devel@lists.linux.dev>; Wed, 07 Feb 2024 23:48:06 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCXXi5BDqW0VdsUVvGYF4yWnapgOD/U59Wj3zjJqQyH1Bmg6Y7LpNZLePtlTO30uHbVrMxiZG2+l60BNXFTpbg3YD/e2VYKc2n0=
-X-Gm-Message-State: AOJu0YxLyLo0pRAvigM550HKlHvW8UqK7QInQ4alJaG77NP/5k2XBk90
-	FVOoZFYDVZAGXDgCtgnbFvOZ13meKRBq5pNo38Bl8vdYp7ndJB4dqV1tP+AnKUidkAnxuLKIGx2
-	/sl+L//q6E4UT1UCfdaVNlSm3RG0=
-X-Google-Smtp-Source: AGHT+IF3sWZiN3bsyBbnY4+tH54sqgYqWfPyT3iTjpzFJGcA1tg87m0ypveXEyQBCA21Y/zCuAluTdcHEAHmGjE/oHo=
-X-Received: by 2002:a2e:870f:0:b0:2d0:cb13:652 with SMTP id
- m15-20020a2e870f000000b002d0cb130652mr2273964lji.12.1707378484457; Wed, 07
- Feb 2024 23:48:04 -0800 (PST)
+	b=C1kKwziRE6HLVhmLLbdOQ3JMdqicW+jaEj3q+lJ05NQnFdvYOLaItsZQlpE61LS6S
+	 w+ApCHpbSVO/5Ll9XC/tDvBPyXsO9CxRHzzpEnYKYqPO1dgl9nKq45vA7EhwuuUKvk
+	 aWjNsK83+i6lvTPF0DYAz9lwDp/s7lyBxtu/wJCUivAs9hmQ4GXJs/5JMrXhRpNgR5
+	 vW8a9Lj2Kwoq+c1B/S0mC25j2vNv/j38ELT3gN6P/uUVYVFFckOzVBkIxaN7XXIiVA
+	 NdmZTHHfxgHV6KhD5A1/JnwGtrGSs7DdpO6x5yCWYTf2MTJdcIV9SeQ/Ib/JtWFgbr
+	 ttgQ5YcqKVosA==
+Received: by mail-lj1-f180.google.com with SMTP id 38308e7fff4ca-2d0a0873404so16253951fa.2
+        for <dm-devel@lists.linux.dev>; Thu, 08 Feb 2024 00:04:59 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCXqeodawZkVc8AeRM0ig4Fb7I6ovZb70hNfs3mQnid4UMA5JoNZGhgy7tgfRrObsAhAmmD5RTRUAEP8wjB85XXg1bu2Ukxi00g=
+X-Gm-Message-State: AOJu0YyzN1j+bxQGXhJ8Xyv3BIM+Um+4gXdZbZb8LdwdkM/dvwewVcqh
+	FKrXIejG1K0E4exSHYtAzEMm7fRAYE7quDZZ03mAefX92Le1k3fxxyrwtCs0x4PY8jl6XojfkFK
+	vtC1IlfEETvmnKxZQ8pSY9dqpLiM=
+X-Google-Smtp-Source: AGHT+IHhd7nYhLwZxzPnQ41aIE/TXjpjTzflGJ8ROY9ZKiYoUkmqdPeIHXnD3Bvvo4wnv41GIfnQ9bykXZu4mR1vI84=
+X-Received: by 2002:a05:651c:210d:b0:2d0:bf38:d2d6 with SMTP id
+ a13-20020a05651c210d00b002d0bf38d2d6mr5970301ljq.48.1707379497350; Thu, 08
+ Feb 2024 00:04:57 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com> <20240201092559.910982-7-yukuai1@huaweicloud.com>
-In-Reply-To: <20240201092559.910982-7-yukuai1@huaweicloud.com>
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+ <Zb2wxIpf7uYV6Vya@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <528ce926-6f17-c1ea-8e77-c7d5d7f56022@huaweicloud.com> <ZcE4mGXCDwjqBXgf@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <1fdbfcf8-1ee9-4079-e84e-6e2c1121491b@huaweicloud.com> <ZcGuRIrZJaEtXjPh@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+In-Reply-To: <ZcGuRIrZJaEtXjPh@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
 From: Song Liu <song@kernel.org>
-Date: Wed, 7 Feb 2024 23:47:52 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW51gFwRdCNmoLuwmCuofAKetV2-gj-5Hb3fNGgu+5yUyA@mail.gmail.com>
-Message-ID: <CAPhsuW51gFwRdCNmoLuwmCuofAKetV2-gj-5Hb3fNGgu+5yUyA@mail.gmail.com>
-Subject: Re: [PATCH v5 06/14] md: fix missing release of 'active_io' for flush
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: mpatocka@redhat.com, heinzm@redhat.com, xni@redhat.com, 
-	blazej.kucman@linux.intel.com, agk@redhat.com, snitzer@kernel.org, 
-	dm-devel@lists.linux.dev, yukuai3@huawei.com, jbrassow@f14.redhat.com, 
+Date: Thu, 8 Feb 2024 00:04:45 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW6arbEmRUK3xG1XVjra3BtSx9_wFe+QKDBbTgb3DgYXig@mail.gmail.com>
+Message-ID: <CAPhsuW6arbEmRUK3xG1XVjra3BtSx9_wFe+QKDBbTgb3DgYXig@mail.gmail.com>
+Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Yu Kuai <yukuai1@huaweicloud.com>, mpatocka@redhat.com, heinzm@redhat.com, 
+	xni@redhat.com, blazej.kucman@linux.intel.com, agk@redhat.com, 
+	snitzer@kernel.org, dm-devel@lists.linux.dev, jbrassow@f14.redhat.com, 
 	neilb@suse.de, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org, 
-	linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com
+	linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com, 
+	"yukuai (C)" <yukuai3@huawei.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Feb 1, 2024 at 1:30=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> wr=
-ote:
->
-> From: Yu Kuai <yukuai3@huawei.com>
->
-> submit_flushes
->  atomic_set(&mddev->flush_pending, 1);
->  rdev_for_each_rcu(rdev, mddev)
->   atomic_inc(&mddev->flush_pending);
->   bi->bi_end_io =3D md_end_flush
->   submit_bio(bi);
->                         /* flush io is done first */
->                         md_end_flush
->                          if (atomic_dec_and_test(&mddev->flush_pending))
->                           percpu_ref_put(&mddev->active_io)
->                           -> active_io is not released
->
->  if (atomic_dec_and_test(&mddev->flush_pending))
->   -> missing release of active_io
->
-> For consequence, mddev_suspend() will wait for 'active_io' to be zero
-> forever.
->
-> Fix this problem by releasing 'active_io' in submit_flushes() if
-> 'flush_pending' is decreased to zero.
->
-> Fixes: fa2bbff7b0b4 ("md: synchronize flush io with array reconfiguration=
-")
-> Reported-by: Blazej Kucman <blazej.kucman@linux.intel.com>
-> Closes: https://lore.kernel.org/lkml/20240130172524.0000417b@linux.intel.=
-com/
-> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+Hi Benjamin,
 
-Applied this patch to md-6.8.
+On Mon, Feb 5, 2024 at 7:58=E2=80=AFPM Benjamin Marzinski <bmarzins@redhat.=
+com> wrote:
+>
+> On Tue, Feb 06, 2024 at 09:36:18AM +0800, Yu Kuai wrote:
+> > Hi!
+> >
+> > =E5=9C=A8 2024/02/06 3:35, Benjamin Marzinski =E5=86=99=E9=81=93:
+> > > Could you run the test with something like
+> > >
+> > > # make check_local T=3Dlvconvert-repair-raid.sh VERBOSE=3D1 > out 2>&=
+1
+> > >
+> > > and post the output.
+> >
+> > Attached is the output from my VM.
+>
+> Instead of running the tests from the lvm2 git repo, if you run
+>
+> # make -C test install
+>
+> to install the tests, and then create a results directory and run the
+> test from there, do you still see the error in the 6.6 kernel?
+>
+> # make ~/results
+> # cd ~/results
+> # lvm2-testsuite --only lvconvert-repair-raid.sh
+>
+> Running the tests this way will test the installed lvm2 binaries on your
+> system, instead of the ones in the lvm2 git repo. They may be compiled
+> differently.
+
+I am not able to get reliable results from shell/lvconvert-repair-raid.sh
+either. For 6.6.0 kernel, the test fails. On 6.8-rc1 kernel, the test fails
+sometimes.
+
+Could you please share more information about your test setup?
+Specifically:
+1. Which tree/branch/tag are you testing?
+2. What's the .config used in the tests?
+3. How do you run the test suite? One test at a time, or all of them
+together?
+4. How do you handle "test passes sometimes" cases?
 
 Thanks,
 Song
