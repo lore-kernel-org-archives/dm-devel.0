@@ -1,113 +1,99 @@
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oi1-f182.google.com (mail-oi1-f182.google.com [209.85.167.182])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB4FE364B4;
-	Thu,  8 Feb 2024 18:49:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E0D125628
+	for <dm-devel@lists.linux.dev>; Thu,  8 Feb 2024 19:07:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707418180; cv=none; b=OK2Dfuc9x9dZ7Q1cut/3CB1aOoPXOwbIGGRB1C6N/CEYAyR7PfpojTc1KrGT0Mu2PHbeXKSx8zGFv4oahj2Mn0/TWnAEAmXFanZtO9UUuI+acFdTwzwknHMUZ1FZpGvOyOnqz67794Mej2LZq4yv9/3U9pclT2e1J4o6m3K8q5g=
+	t=1707419242; cv=none; b=JJzZjazVzX0aqF/qXUs963vp9NbpdCvnC/GvMiESksMoGujEuEjmoE039mOZ3LFAo5VtBmhGOJPbGeyaTVcA+HV6p9ZhJj86dQfX4fB+vHEGoadeaZS4r/qRDlU9ZKjOXa+NEAbU8SeJtPA3BnUtT3m3J7HVkmLSvhEOuRmsxuo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707418180; c=relaxed/simple;
-	bh=oenQ3E1qB1jTPZO/gOZI9CMarWIZCEOT7s/3o23TNGM=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=XWNtSP3NKXRdQZJ+AfTDd9soJ+iUO18XUX0nSUycAKVxw6tWBGRwdCv/4etY5b6Lw9NynOSvZGjleG5LBq+ROd8i7WjUJYaZAFC0ciuh4dySVd0mr/EKy90p2O4VkUSCQ0ZtL1KWbOWwOD5VmUW2WISCLYG5vn/vHSdgjok+wMM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=bRoE/7ia; arc=none smtp.client-ip=167.114.26.122
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
+	s=arc-20240116; t=1707419242; c=relaxed/simple;
+	bh=AZ6nQb+M1vD/2zX5upW9ouxqeYE6QGKcCE/8DY0UebQ=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=Wst6HFgdfQKja+5yM+pEqcU4pN9446gke8AYKiCpQiEUmYMRF8GAJfMjecXX7J2Q1RoN/c9WI5nAFtVVM8ZROsSPovZdopksDQTO5uTlx0ZmbyzzVhBrHMiQXp1yX/aW56HgiQ2Kzoidhrou8yqeG91v3CmJkYU7Gnm/2XeJyJs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=X8UJjf2k; arc=none smtp.client-ip=209.85.167.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="bRoE/7ia"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-	s=smtpout1; t=1707418167;
-	bh=oenQ3E1qB1jTPZO/gOZI9CMarWIZCEOT7s/3o23TNGM=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=bRoE/7ia1+B9bPI5yF1PR2T1XA93zIRBnTcH0eC3l0F5DKqYSeR5Nk0tY93pHHcMe
-	 SB173/Unk3i9YjDHq2INIyynyUJBpjhZxr/0L5wI/UAMDPahLp/TVB7Y5vIH5N5AE5
-	 crMulQ2zXJos7wtuG6cN1nQG0cu1edkRYscl6pnAbz3KIhoZ8H50j2WoCr0/ks/Omt
-	 UUlXIcysLpTzkhjiT5Iptlazn5vqIFc3f+yfGuUzmScLfFjYAiJ1vOAPY4DDm2eyWC
-	 3cTHV3qAZzEPVR6WjB/op0ynHNQPoZFIweA7jAiVScoeq13l0Lfy00tVuzsdsZm7a2
-	 9S+WBZwfWHPmQ==
-Received: from thinkos.internal.efficios.com (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
-	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TW5cl1F3pzY5T;
-	Thu,  8 Feb 2024 13:49:27 -0500 (EST)
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To: Dan Williams <dan.j.williams@intel.com>,
-	Arnd Bergmann <arnd@arndb.de>,
-	Dave Chinner <david@fromorbit.com>
-Cc: linux-kernel@vger.kernel.org,
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Vishal Verma <vishal.l.verma@intel.com>,
-	Dave Jiang <dave.jiang@intel.com>,
-	Matthew Wilcox <willy@infradead.org>,
-	Russell King <linux@armlinux.org.uk>,
-	linux-arch@vger.kernel.org,
-	linux-cxl@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org,
-	linux-mm@kvack.org,
-	linux-xfs@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	nvdimm@lists.linux.dev,
-	linux-s390@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH v4 11/12] dcssblk: Cleanup alloc_dax() error handling
-Date: Thu,  8 Feb 2024 13:49:12 -0500
-Message-Id: <20240208184913.484340-12-mathieu.desnoyers@efficios.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20240208184913.484340-1-mathieu.desnoyers@efficios.com>
-References: <20240208184913.484340-1-mathieu.desnoyers@efficios.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="X8UJjf2k"
+Received: by mail-oi1-f182.google.com with SMTP id 5614622812f47-3beb504c985so45716b6e.0
+        for <dm-devel@lists.linux.dev>; Thu, 08 Feb 2024 11:07:21 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1707419240; x=1708024040; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=202GKaA8C1i5cx4LlHBZXcPKNf6nXe/ES82zbqrpd+0=;
+        b=X8UJjf2kOHt1/pz//iseSqcaJeMn2Rx2l/+whbfgKw1oLo0ex1USqXftnJbqe5SJEJ
+         UBjQzUa1Rq/Mm7l3txQjREMVSfUumo2w4vJxYZ3O4xrP6NWlyXAcG4ECstkwDyDygvXF
+         FxIbK+969OQmGx/VU4Cfs3PPZRxXOfaya99I7+EMZuS9oWcMvOk98Ipktc92BVa7sIvF
+         bTFkz3SiuWxgERK5QI3oQ73vjfbgNnKtzEBwWq7dsJ4LRGZetfRXosrOceAN78bWO6ND
+         nrPgKipovr3q0Qjv+QFB0QwKupNIMFdcP4UJA4yQ9Ad9NqeNeYULg7gOlkGOf+v1+oY0
+         o5ug==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707419240; x=1708024040;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=202GKaA8C1i5cx4LlHBZXcPKNf6nXe/ES82zbqrpd+0=;
+        b=QNEMYj4RMxYx/S1UFgy1oJ2B2HqbYfsQPrEZEr8KS7pkzjxeAqnxjhR6zMPN29PlLo
+         4FVYvdsR8F1aSm1X0dUexpB2EwolDwzFK7Ey3zcDbDCmKXdNyfjME+J+iJ3d+t4C9sSx
+         c2RqAdoQEgQIPhrqQgWlUF6CK2OVP8Lmi+gL/Wx78MiI7VUCuIbqGKSQSwVakaNpeHLp
+         1kk8O9OUJQ28UpIBnc0Qbq5Io9EkTBYNiXVvXM0i6+sSW0i9GdO8O//+v7lsvWckHN1Z
+         VhQpx3q9Ko+/vc0Z0z8fjl/UuefdH7AUmQyFGiyl0h28o0z9TOOZGNVkRXkDOhobtlS6
+         DERA==
+X-Gm-Message-State: AOJu0Yx7NKDiGBrBJNB0aEgdJCJ24Mg/KbgLOgMtLljRJZ3rtG/o/c4p
+	Hq2h8ta/eHIDvlbv+a40n1Y6Pu/0jHjitH0lDZVO/WGNQsReTWcprbbNnfzG2sEl8EEVndPPiUu
+	LK5Pf3jLC1GkguaaV60/48yK1a3w=
+X-Google-Smtp-Source: AGHT+IF9hg109QvfX/FVAlSXVFZcAMD4vHPe8lrRCgMgpJ1NJrDk5BP2mYMHYbEPaTJSq92jJEG9nWdXOHPoWqKh+5s=
+X-Received: by 2002:a05:6808:1524:b0:3bf:f3a2:cd8f with SMTP id
+ u36-20020a056808152400b003bff3a2cd8fmr279809oiw.41.1707419240598; Thu, 08 Feb
+ 2024 11:07:20 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20240130091300.2968534-1-tj@kernel.org> <ZcACvVz83QFuSLR6@slm.duckdns.org>
+ <CAOMdWSLNMqsZNJ-oCLN2RjckZmJSvdU_Yq0F0frmqMqa67Oy1g@mail.gmail.com>
+ <ZcFPKaWwxJhgy8HQ@slm.duckdns.org> <CAOMdWSKQC4UWXp57qubcSOHmPj0E7wHZWWbCz+yCZqROhoPSGw@mail.gmail.com>
+ <CAOMdWSLF9AaQF0ux03-tonw-Jy+4rXdKEZGzPrp_v+fnas6SnQ@mail.gmail.com> <ZcUHsHzlLpE7meaW@slm.duckdns.org>
+In-Reply-To: <ZcUHsHzlLpE7meaW@slm.duckdns.org>
+From: Allen <allen.lkml@gmail.com>
+Date: Thu, 8 Feb 2024 11:07:09 -0800
+Message-ID: <CAOMdWSLP1HxnD9JsQMk7ZU6fvLfUmWz1CywqY5ZkyiUFUTALoQ@mail.gmail.com>
+Subject: Re: [PATCHSET wq/for-6.9] workqueue: Implement BH workqueue and
+ convert several tasklet users
+To: Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
+	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
+	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, 
+	netdev@vger.kernel.org, kernel-team@meta.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Now that alloc_dax() returns ERR_PTR(-EOPNOTSUPP) rather than NULL,
-the callers do not have to handle NULL return values anymore.
+On Thu, Feb 8, 2024 at 8:56=E2=80=AFAM Tejun Heo <tj@kernel.org> wrote:
+>
+> On Wed, Feb 07, 2024 at 11:02:37AM -0800, Allen wrote:
+> > https://github.com/allenpais/for-6.9-bh-conversions
+> >
+> >  I am holding on to the patch that converts drivers/media/*, as I haven=
+'t found
+> > a right way to replace tasklet_[disable/enable] api's. The rest should =
+be ready
+> > in a day or two.
+>
+> Yeah, we'll need to add something to workqueue to support that. As for th=
+e
+> rest, looking at the code, I think tasklet_kill() should be converted to
+> cancel_work_sync(), not flush_work().
+>
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Dan Williams <dan.j.williams@intel.com>
-Cc: Vishal Verma <vishal.l.verma@intel.com>
-Cc: Dave Jiang <dave.jiang@intel.com>
-Cc: Matthew Wilcox <willy@infradead.org>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: Russell King <linux@armlinux.org.uk>
-Cc: linux-arch@vger.kernel.org
-Cc: linux-cxl@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org
-Cc: linux-mm@kvack.org
-Cc: linux-xfs@vger.kernel.org
-Cc: dm-devel@lists.linux.dev
-Cc: nvdimm@lists.linux.dev
-Cc: linux-s390@vger.kernel.org
----
- drivers/s390/block/dcssblk.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+  Ah, Thanks for pointing that out. I will update it and get that fixed.
 
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index a3010849bfed..f363c1d51d9a 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -679,8 +679,8 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
- 		goto put_dev;
- 
- 	dax_dev = alloc_dax(dev_info, &dcssblk_dax_ops);
--	if (IS_ERR_OR_NULL(dax_dev)) {
--		rc = IS_ERR(dax_dev) ? PTR_ERR(dax_dev) : -EOPNOTSUPP;
-+	if (IS_ERR(dax_dev)) {
-+		rc = PTR_ERR(dax_dev);
- 		goto put_dev;
- 	}
- 	set_dax_synchronous(dax_dev);
--- 
-2.39.2
+Thanks for the review.
 
+--=20
+       - Allen
