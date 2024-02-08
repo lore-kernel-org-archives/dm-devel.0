@@ -1,97 +1,198 @@
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B11B4F5E5;
-	Thu,  8 Feb 2024 22:42:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 95BD1535B3
+	for <dm-devel@lists.linux.dev>; Thu,  8 Feb 2024 23:17:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707432138; cv=none; b=PTt41BpMgeb7vFopj0rb8uqaxl8ZbzT3X6gSQbSu4m5MQ1tD9dOUJGm5zzYnaOW0KQ1R04advO4v30FCc4L1Cfp7FWdmChf5Hnj233e23vW/o+rV9mMjxVxN4f1EbMzFA5K5AOi3bkLQ7whAB/4E9/hFVYK/tCY8wTsKT/mu9n0=
+	t=1707434253; cv=none; b=Nkq/JLrbDBSEQxsAXbjP21SC9d6lIV+EeOIn+QZtv2iz3boFUTEuy8V8Zwt7xNi266NtOdG/3fdBW46tuBSql4I8p2x4VNCLM0ZoflF3/6QNEzIEDL1mVhA7P5iHZIm1CY3LR3ZqOE6PM3DKXWXdd352Uqrbea66OY5vJOs58go=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707432138; c=relaxed/simple;
-	bh=NhfI9CxiogmvQ0tMHv4XKQ/4Wsf7q5uvmw1GU45BQKQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=JPRFqCefM5P1nvpyhXYD7Ic0QFEpY44dsBi/Z8nqems9HJK4w3fPSmAAMs2nvDSnwIAz2ccCzEocSQv/3Y59xNwnoLFPBimJgSYaUiio6N3qa0xhLyPy9fpbdegFbb+K1ODgUotWbULk4HLQQBMwbkw5O3hJ5IYctanlzoCZ+TI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=AeGeX7kQ; arc=none smtp.client-ip=167.114.26.122
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
+	s=arc-20240116; t=1707434253; c=relaxed/simple;
+	bh=pozcPawVgen/slB+DQSUq4+jkGQPdUpUTJU8TxQhDug=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=e+FubeWqtWLuYwKLhFNfsgwibh2ZfVrrvFzCxgRKF1KGB8/zmJVlvq7HfDcMWdr/zjB7Af8GFxcqMmjaQsar1FcvDDWjlX0wnFM3yiJhZWqxXWqtffzByk5+0YhW4iH0pxKsY+aEyTWw8yfSsGU3xUFDRh5oUdq+/1/vqWpFeYk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Y+V7o4Iq; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="AeGeX7kQ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-	s=smtpout1; t=1707432135;
-	bh=NhfI9CxiogmvQ0tMHv4XKQ/4Wsf7q5uvmw1GU45BQKQ=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=AeGeX7kQ49yC5AcFerxBLe7y0eJHatSpT7NcXeuTVU3oluYj8errrXmqswmseoPDt
-	 D3ah1MieEHfNwBYykfLwXfXMMJbWeH5Zqo33eaidaJZ1q+zAH9sZN2YmfxvMKEjwHu
-	 5j2FukA0KclYpCmLbg7kz7Wjwu5xKanWlKr6Bk8cW+OSlDRriqz7L6zshIVtQRAyp9
-	 ZO2cU55CX/E18xCLyVCPeykZB4Mg1jf69kP7nxVaPDwcPX1LiA+FTLz4/TivoHzyJo
-	 3vmVzcWJiVPjogNnn1zBLhuRHyDt53WwNUxVQ31iSPU5xO5LMeNLKZljKT5OBcmDB6
-	 j43QH2gh7IKEQ==
-Received: from [172.16.0.134] (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
-	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TWBnM0z5GzY2Z;
-	Thu,  8 Feb 2024 17:42:15 -0500 (EST)
-Message-ID: <5328e7f0-0864-4626-aa6c-fef5f3f62dc8@efficios.com>
-Date: Thu, 8 Feb 2024 17:42:21 -0500
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Y+V7o4Iq"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1707434249;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=cjac+eipC+C+UjoWLsy7Pmzz3w7dmXMlA58gqW1bI9Q=;
+	b=Y+V7o4IqgjTkoyuEg9MhuUEDYKuDhGPYMWj3YkmgTQjOP3u2Z8uuuqxxR74JNjO3lf9Dng
+	aK9CI9SW/Xg2gY3ZG+/b4vIQhVRbpyxi6d81g9NXSMB0ZBb8gk5FyqJNm33qY7FOSKanYf
+	72LEXuXdQF5h4MsgUrmSQDxtJe/f0OM=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-422-ijqHMpqCN2Cd0cVNi816Hg-1; Thu, 08 Feb 2024 18:17:26 -0500
+X-MC-Unique: ijqHMpqCN2Cd0cVNi816Hg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AAE41848C05;
+	Thu,  8 Feb 2024 23:17:25 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 06A23400D783;
+	Thu,  8 Feb 2024 23:17:25 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 418NHOAi337731
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 8 Feb 2024 18:17:24 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 418NHNh6337729;
+	Thu, 8 Feb 2024 18:17:23 -0500
+Date: Thu, 8 Feb 2024 18:17:23 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Song Liu <song@kernel.org>
+Cc: Yu Kuai <yukuai1@huaweicloud.com>, mpatocka@redhat.com, heinzm@redhat.com,
+        xni@redhat.com, blazej.kucman@linux.intel.com, agk@redhat.com,
+        snitzer@kernel.org, dm-devel@lists.linux.dev, jbrassow@f14.redhat.com,
+        neilb@suse.de, shli@fb.com, akpm@osdl.org,
+        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+        yi.zhang@huawei.com, yangerkun@huawei.com,
+        "yukuai (C)" <yukuai3@huawei.com>
+Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
+Message-ID: <ZcVhA_IqXH2Pg79t@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+ <Zb2wxIpf7uYV6Vya@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <528ce926-6f17-c1ea-8e77-c7d5d7f56022@huaweicloud.com>
+ <ZcE4mGXCDwjqBXgf@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <1fdbfcf8-1ee9-4079-e84e-6e2c1121491b@huaweicloud.com>
+ <ZcGuRIrZJaEtXjPh@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <CAPhsuW6arbEmRUK3xG1XVjra3BtSx9_wFe+QKDBbTgb3DgYXig@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 06/12] dax: Check for data cache aliasing at runtime
-Content-Language: en-US
-To: Dan Williams <dan.j.williams@intel.com>, Arnd Bergmann <arnd@arndb.de>,
- Dave Chinner <david@fromorbit.com>
-Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>,
- Linus Torvalds <torvalds@linux-foundation.org>,
- Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>,
- Matthew Wilcox <willy@infradead.org>, Russell King <linux@armlinux.org.uk>,
- linux-arch@vger.kernel.org, linux-cxl@vger.kernel.org,
- linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
- linux-xfs@vger.kernel.org, dm-devel@lists.linux.dev, nvdimm@lists.linux.dev,
- linux-s390@vger.kernel.org
-References: <20240208184913.484340-1-mathieu.desnoyers@efficios.com>
- <20240208184913.484340-7-mathieu.desnoyers@efficios.com>
- <65c54a13c52e_afa429444@dwillia2-xfh.jf.intel.com.notmuch>
- <0e6792eb-7504-464a-aefd-d2a803adb440@efficios.com>
- <65c557a2e77f7_afa429490@dwillia2-xfh.jf.intel.com.notmuch>
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-In-Reply-To: <65c557a2e77f7_afa429490@dwillia2-xfh.jf.intel.com.notmuch>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CAPhsuW6arbEmRUK3xG1XVjra3BtSx9_wFe+QKDBbTgb3DgYXig@mail.gmail.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-On 2024-02-08 17:37, Dan Williams wrote:
-> Mathieu Desnoyers wrote:
->> On 2024-02-08 16:39, Dan Williams wrote:
->> [...]
->>>
->>> So per other feedback on earlier patches, I think this hunk deserves to
->>> be moved to its own patch earlier in the series as a standalone fixup.
->>
->> Done.
->>
->>>
->>> Rest of this patch looks good to me.
->>
->> Adding your Acked-by to what is left of this patch if OK with you.
+On Thu, Feb 08, 2024 at 12:04:45AM -0800, Song Liu wrote:
+> Hi Benjamin,
 > 
-> You can add:
+> On Mon, Feb 5, 2024 at 7:58 PM Benjamin Marzinski <bmarzins@redhat.com> wrote:
+> >
+> > On Tue, Feb 06, 2024 at 09:36:18AM +0800, Yu Kuai wrote:
+> > > Hi!
+> > >
+> > > 在 2024/02/06 3:35, Benjamin Marzinski 写道:
+> > > > Could you run the test with something like
+> > > >
+> > > > # make check_local T=lvconvert-repair-raid.sh VERBOSE=1 > out 2>&1
+> > > >
+> > > > and post the output.
+> > >
+> > > Attached is the output from my VM.
+> >
+> > Instead of running the tests from the lvm2 git repo, if you run
+> >
+> > # make -C test install
+> >
+> > to install the tests, and then create a results directory and run the
+> > test from there, do you still see the error in the 6.6 kernel?
+> >
+> > # make ~/results
+> > # cd ~/results
+> > # lvm2-testsuite --only lvconvert-repair-raid.sh
+> >
+> > Running the tests this way will test the installed lvm2 binaries on your
+> > system, instead of the ones in the lvm2 git repo. They may be compiled
+> > differently.
 > 
-> Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+> I am not able to get reliable results from shell/lvconvert-repair-raid.sh
+> either. For 6.6.0 kernel, the test fails. On 6.8-rc1 kernel, the test fails
+> sometimes.
 > 
-> ...after that re-org.
+> Could you please share more information about your test setup?
+> Specifically:
+> 1. Which tree/branch/tag are you testing?
+> 2. What's the .config used in the tests?
+> 3. How do you run the test suite? One test at a time, or all of them
+> together?
+> 4. How do you handle "test passes sometimes" cases?
 
-Just to make sure: are you OK with me adding your Reviewed-by
-only for what is left of this patch, or also to the other driver
-patches after integrating your requested changes ?
-
-Thanks,
-
-Mathieu
+So, I have been able to recreate the case where lvconvert-repair-raid.sh
+keeps failing. It happens when I tried running the reproducer on a virtual
+machine made using a cloud image, instead of one that I manually
+installed. I'm not sure why there is a difference. But I can show you
+how I can reliably recreate the errors I'm seeing.
 
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-https://www.efficios.com
+Create a new Fedora 39 virtual machine with the following commands (I'm
+not sure if it is possible to reproduce this on a machine using less
+memory and cpus, but I can try that if you need me to. You probably also
+want to pick a faster Fedora Mirror for the image location):
+# virt-install --name repair-test --memory 8192 --vcpus 8 --disk size=40 --graphics none --extra-args "console=ttyS0" --osinfo detect=on,name=fedora-unknown --location https://download.fedoraproject.org/pub/fedora/linux/releases/39/Server/x86_64/os/
+
+Install to the whole virtual drive, using the default LVM partitioning.
+Then ssh into the VM and run the following commands to setup the
+lvm2-testsuite and 6.6.0 kernel:
+
+# dnf upgrade grub2
+# dnf install -y git gcc bc flex make bison openssl openssl-devel dwarves zstd elfutils-libelf-devel libaio-devel lvm2 g++
+# git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+# git clone git://sourceware.org/git/lvm2.git
+# cd ~/lvm2
+# ./configure
+# make
+# cd ~/linux
+# git checkout -b ver6.6 v6.6
+# cp /boot/config-`uname -r` .config
+# make olddefconfig
+# modprobe -a dm_raid dm_delay ext4 raid1 raid10 brd
+# yes "" | make localmodconfig
+# make -j8
+# make modules_install
+# make install
+# reboot
+
+ssh back into the VM, and run the following commands to run
+lvm2-testsuite:
+
+# mount -o remount,dev /tmp
+# cd ~/lvm2
+# make check T=lvconvert-repair-raid.sh
+
+This should always pass. I ran it 100 times without failure.
+
+To test the patched kernel, run:
+
+# cd ~/linux
+# git checkout -b dmraid-fix-v5 v6.8-rc3
+# git am ~/dmraid-fix-v5.mbox  ***Apply the v5 patches***
+# make olddefconfig
+# make -j8
+# make modules_install
+# make install
+# reboot
+
+Rerun the lvm2-testsuite with the same commands as before:
+
+# mount -o remount,dev /tmp
+# cd ~/lvm2
+# make check T=lvconvert-repair-raid.sh
+
+This fails about 20% of the time, usually at either line 146 or 164. You
+can check by running the following command when the test fails.
+
+# grep "STACKTRACE()" ~/lvm2/test/results/ndev-vanilla\:shell_lvconvert-repair-raid.sh.txt
+[ 0:13.152] ## 1 STACKTRACE() called from /root/lvm2/test/shell/lvconvert-repair-raid.sh:146
+
+Let me know if you have any questions, or if this doesn't work for you.
+
+-Ben
+
+> Thanks,
+> Song
 
