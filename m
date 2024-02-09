@@ -1,198 +1,208 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 95BD1535B3
-	for <dm-devel@lists.linux.dev>; Thu,  8 Feb 2024 23:17:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19D7B393
+	for <dm-devel@lists.linux.dev>; Fri,  9 Feb 2024 00:30:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707434253; cv=none; b=Nkq/JLrbDBSEQxsAXbjP21SC9d6lIV+EeOIn+QZtv2iz3boFUTEuy8V8Zwt7xNi266NtOdG/3fdBW46tuBSql4I8p2x4VNCLM0ZoflF3/6QNEzIEDL1mVhA7P5iHZIm1CY3LR3ZqOE6PM3DKXWXdd352Uqrbea66OY5vJOs58go=
+	t=1707438652; cv=none; b=eSvZI0cVgfV8+CdHMHa7XwnrT4olYyrJdtrq43cbh3WpcvA5iHrk0iJNFQECU4j/bxvoLuQGf850ee/4JHkMpt6XT8UwFnUMjUSdmrFXqXO4UmjVBE30d342iCx8olie/DJ61oql3BDtwEjoYWN1MPJo3BVKKbWeiDXTHkxeoKc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707434253; c=relaxed/simple;
-	bh=pozcPawVgen/slB+DQSUq4+jkGQPdUpUTJU8TxQhDug=;
+	s=arc-20240116; t=1707438652; c=relaxed/simple;
+	bh=KmUGrXoONTDHLs9Cy14FlciJu5n2XTRQ0YjeoQNAFOc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=e+FubeWqtWLuYwKLhFNfsgwibh2ZfVrrvFzCxgRKF1KGB8/zmJVlvq7HfDcMWdr/zjB7Af8GFxcqMmjaQsar1FcvDDWjlX0wnFM3yiJhZWqxXWqtffzByk5+0YhW4iH0pxKsY+aEyTWw8yfSsGU3xUFDRh5oUdq+/1/vqWpFeYk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Y+V7o4Iq; arc=none smtp.client-ip=170.10.133.124
+	 In-Reply-To:Content-Type:Content-Disposition; b=QdhUYrhcyMThtvXu391dv6iy5rzpbFEKWfmTO3BSkc+JnQMJ4DBgh+7MZ+2qemt7cxGgUUvZDBo4GpOCbSZbPqSeV8hZSIlWIecO6mtE0c07wGBRwzncbhBOaZcwnP3hNqkben8+RoiMtayBvGbSVNWZ0A317CaZ2PI9mmboFhY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=N4o1NWZO; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Y+V7o4Iq"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N4o1NWZO"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1707434249;
+	s=mimecast20190719; t=1707438649;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=cjac+eipC+C+UjoWLsy7Pmzz3w7dmXMlA58gqW1bI9Q=;
-	b=Y+V7o4IqgjTkoyuEg9MhuUEDYKuDhGPYMWj3YkmgTQjOP3u2Z8uuuqxxR74JNjO3lf9Dng
-	aK9CI9SW/Xg2gY3ZG+/b4vIQhVRbpyxi6d81g9NXSMB0ZBb8gk5FyqJNm33qY7FOSKanYf
-	72LEXuXdQF5h4MsgUrmSQDxtJe/f0OM=
+	bh=SSb6zviJpQ/IGw5G7DClWzoH7eoz33BIwAur+hok1jk=;
+	b=N4o1NWZOOj4ZnnwQ57Vxj9yO7+OWuULSTaBm0lekEaSoig3O6BGyDba6DeC6xhwMgqka3Z
+	ffoMzbWGLnU2sn0aJNr0+oshSCeqmABXYvwvRs5Sj3WZN+sTIRJM50WV1xyyWZ0Mz5o2hr
+	nR6DppD36IwTbWbcC9wBieWexoc+J7U=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-422-ijqHMpqCN2Cd0cVNi816Hg-1; Thu, 08 Feb 2024 18:17:26 -0500
-X-MC-Unique: ijqHMpqCN2Cd0cVNi816Hg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-539-X-NS3YlqOnu0DiWibjXYbw-1; Thu, 08 Feb 2024 19:30:46 -0500
+X-MC-Unique: X-NS3YlqOnu0DiWibjXYbw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AAE41848C05;
-	Thu,  8 Feb 2024 23:17:25 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8B44583B828;
+	Fri,  9 Feb 2024 00:30:46 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 06A23400D783;
-	Thu,  8 Feb 2024 23:17:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6E15B2166B31;
+	Fri,  9 Feb 2024 00:30:46 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 418NHOAi337731
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 4190Ukmx338357
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 8 Feb 2024 18:17:24 -0500
+	Thu, 8 Feb 2024 19:30:46 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 418NHNh6337729;
-	Thu, 8 Feb 2024 18:17:23 -0500
-Date: Thu, 8 Feb 2024 18:17:23 -0500
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 4190UjOe338356;
+	Thu, 8 Feb 2024 19:30:45 -0500
+Date: Thu, 8 Feb 2024 19:30:45 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Song Liu <song@kernel.org>
-Cc: Yu Kuai <yukuai1@huaweicloud.com>, mpatocka@redhat.com, heinzm@redhat.com,
-        xni@redhat.com, blazej.kucman@linux.intel.com, agk@redhat.com,
-        snitzer@kernel.org, dm-devel@lists.linux.dev, jbrassow@f14.redhat.com,
-        neilb@suse.de, shli@fb.com, akpm@osdl.org,
-        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
-        yi.zhang@huawei.com, yangerkun@huawei.com,
-        "yukuai (C)" <yukuai3@huawei.com>
-Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
-Message-ID: <ZcVhA_IqXH2Pg79t@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
- <Zb2wxIpf7uYV6Vya@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
- <528ce926-6f17-c1ea-8e77-c7d5d7f56022@huaweicloud.com>
- <ZcE4mGXCDwjqBXgf@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
- <1fdbfcf8-1ee9-4079-e84e-6e2c1121491b@huaweicloud.com>
- <ZcGuRIrZJaEtXjPh@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
- <CAPhsuW6arbEmRUK3xG1XVjra3BtSx9_wFe+QKDBbTgb3DgYXig@mail.gmail.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>,
+        Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, linux-lvm@lists.linux.dev
+Subject: Re: [PATCH 1/6] 11-dm-mpath.rules: don't import properties that are
+ already set
+Message-ID: <ZcVyNWizAbRC0OAd@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+References: <20240205124638.17877-1-mwilck@suse.com>
+ <20240205124638.17877-2-mwilck@suse.com>
+ <ZcFIwjEhKAVijIQb@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <db27d762e517489df2828f1c530f3125f4b7f1aa.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+In-Reply-To: <db27d762e517489df2828f1c530f3125f4b7f1aa.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAPhsuW6arbEmRUK3xG1XVjra3BtSx9_wFe+QKDBbTgb3DgYXig@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-On Thu, Feb 08, 2024 at 12:04:45AM -0800, Song Liu wrote:
-> Hi Benjamin,
+On Tue, Feb 06, 2024 at 11:50:46AM +0100, Martin Wilck wrote:
+> On Mon, 2024-02-05 at 15:44 -0500, Benjamin Marzinski wrote:
+> > On Mon, Feb 05, 2024 at 01:46:33PM +0100, Martin Wilck wrote:
+> > > DM_UDEV_DISABLE_OTHER_RULES_FLAG and DM_NOSCAN may be already set
+> > > from previous rules, e.g. if the device is suspended. Make sure
+> > > we don't overwrite them.
+> > > 
+> > > DM_DISABLE_OTHER_RULES_FLAG_OLD and MPATH_DEVICE_READY are only
+> > > used in this file, and not used in the scan_import code path.
+> > > 
+> > > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > > ---
+> > >  multipath/11-dm-mpath.rules | 15 +++++++++++----
+> > >  1 file changed, 11 insertions(+), 4 deletions(-)
+> > > 
+> > > diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-
+> > > mpath.rules
+> > > index c339f52..2c4d006 100644
+> > > --- a/multipath/11-dm-mpath.rules
+> > > +++ b/multipath/11-dm-mpath.rules
+> > > @@ -2,12 +2,19 @@ ACTION!="add|change", GOTO="mpath_end"
+> > >  ENV{DM_UDEV_RULES_VSN}!="?*", GOTO="mpath_end"
+> > >  ENV{DM_UUID}!="mpath-?*", GOTO="mpath_end"
+> > >  
+> > > -IMPORT{db}="DM_DISABLE_OTHER_RULES_FLAG_OLD"
+> > > -IMPORT{db}="MPATH_DEVICE_READY"
+> > > -
+> > >  # If this uevent didn't come from dm, don't try to update the
+> > >  # device state
+> > > -ENV{DM_COOKIE}!="?*", ENV{DM_ACTION}!="PATH_*",
+> > > IMPORT{db}="DM_UDEV_DISABLE_OTHER_RULES_FLAG",
+> > > IMPORT{db}="DM_NOSCAN", GOTO="scan_import"
+> > > +ENV{DM_COOKIE}=="?*", GOTO="check_ready"
+> > > +ENV{DM_ACTION}=="PATH_*", GOTO="check_ready"
+> > > +
+> > > +ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}!="?*",
+> > > IMPORT{db}="DM_UDEV_DISABLE_OTHER_RULES_FLAG"
+> > > +ENV{DM_NOSCAN}!="?*", IMPORT{db}="DM_NOSCAN"
+> > > +GOTO="scan_import"
+> > > +
+> > 
+> > If we do this, don't we forget the values for
+> > DM_DISABLE_OTHER_RULES_FLAG_OLD and MPATH_DEVICE_READY whenever we
+> > get a
+> > non-dm uevent? If we skip importing them for a uevent, they're
+> > dropped
+> > from the database, which means that on the next dm-originated uevent
+> > we
+> > won't be able to get the old values. right?
 > 
-> On Mon, Feb 5, 2024 at 7:58â€¯PM Benjamin Marzinski <bmarzins@redhat.com> wrote:
-> >
-> > On Tue, Feb 06, 2024 at 09:36:18AM +0800, Yu Kuai wrote:
-> > > Hi!
-> > >
-> > > åœ¨ 2024/02/06 3:35, Benjamin Marzinski å†™é“:
-> > > > Could you run the test with something like
-> > > >
-> > > > # make check_local T=lvconvert-repair-raid.sh VERBOSE=1 > out 2>&1
-> > > >
-> > > > and post the output.
-> > >
-> > > Attached is the output from my VM.
-> >
-> > Instead of running the tests from the lvm2 git repo, if you run
-> >
-> > # make -C test install
-> >
-> > to install the tests, and then create a results directory and run the
-> > test from there, do you still see the error in the 6.6 kernel?
-> >
-> > # make ~/results
-> > # cd ~/results
-> > # lvm2-testsuite --only lvconvert-repair-raid.sh
-> >
-> > Running the tests this way will test the installed lvm2 binaries on your
-> > system, instead of the ones in the lvm2 git repo. They may be compiled
-> > differently.
+> Right, I didn't consider that. It makes sense for MPATH_DEVICE_READY.
 > 
-> I am not able to get reliable results from shell/lvconvert-repair-raid.sh
-> either. For 6.6.0 kernel, the test fails. On 6.8-rc1 kernel, the test fails
-> sometimes.
+> However, while at it, I wonder about our rationale for saving
+> DM_UDEV_DISABLE_OTHER_RULES_FLAG in DM_DISABLE_OTHER_RULES_FLAG_OLD.
 > 
-> Could you please share more information about your test setup?
-> Specifically:
-> 1. Which tree/branch/tag are you testing?
-> 2. What's the .config used in the tests?
-> 3. How do you run the test suite? One test at a time, or all of them
-> together?
-> 4. How do you handle "test passes sometimes" cases?
+> In 10-dm.rules, DM_DISABLE_OTHER_RULES_FLAG changes its value only
+>  - in DM_UDEV_PRIMARY_SOURCE_FLAG=1 events, according to the value of
+> DM_SUSPENDED
+>  - for DISK_RO=1 events (switches the flag on) 
+> 
+> (11-dm-lvm.rules has some additional logic that doesn't matter for
+> multipath).
+> 
+> For all other events, the flag is restored from the udev db in 10-
+> dm.rules. Ignoring DISK_RO, it always has the value that DM_SUSPENDED
+> had in the last DM_UDEV_PRIMARY_SOURCE_FLAG=1 (aka map reload) event.
+> 
+> The logic in 11-dm-mpath.rules adds a check for unusable arrays
+> on top, setting DM_DISABLE_OTHER_RULES_FLAG if MPATH_DEVICE_READY
+> switches from 1 to 0. In this case we save the previous value in
+> DM_DISABLE_OTHER_RULES_FLAG_OLD, and restore it from there in a later
+> event if MPATH_DEVICE_READY switches back from 0 to 1.
+> 
+> IMO the following can happen:
+> 
+>  1. an event arrives while DM_SUSPENDED=1, causing 
+> DM_DISABLE_OTHER_RULES_FLAG=1 to be set
+>  2. 11-dm-mpath.rules sees no paths and saves
+> DM_DISABLE_OTHER_RULES_FLAG=1 to DM_DISABLE_OTHER_RULES_FLAG_OLD
+>  3. an event arrives after the device has resumed, DM_SUSPENDED and
+> DM_DISABLE_OTHER_RULES_FLAG are cleared in 10-dm.rules
+>  4. 11-dm-mpath.rules sees MPATH_DEVICE_READY=1 and restores
+> DM_DISABLE_OTHER_RULES_FLAG, setting it to 1
+> 
+> ... and this would be wrong, no?
+> 
+> It seems to me that we should not save DM_DISABLE_OTHER_RULES_FLAG_OLD
+> between uevents. We must set DM_DISABLE_OTHER_RULES_FLAG=1 to avoid
+> upper layer probing if there are no paths, but I suppose we should
+> restore the previous value after udev rule execution, e.g. in 99-dm-
+> mpath.rules:
+> 
+> ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}=="?*", \
+>    ENV{DM_DISABLE_OTHER_RULES_FLAG}=$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}, \
+>    ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}=""
+> 
+> Am I confusing stuff here?
 
-So, I have been able to recreate the case where lvconvert-repair-raid.sh
-keeps failing. It happens when I tried running the reproducer on a virtual
-machine made using a cloud image, instead of one that I manually
-installed. I'm not sure why there is a difference. But I can show you
-how I can reliably recreate the errors I'm seeing.
+Nope. That makes a lot of sense.
+ 
+> Unfortunately, testing of my patch series has shown that it's an
+> improvement, but it isn't sufficient for completely avoiding races
+> between multipathd and udev. DM_SUSPENDED=1 can be avoided, but it's
+> still possible that the device gets suspended after the udev rules test
+> for supended state and before they run kpartx, blkid, pvscan, or other
+> similar commands.
+> 
+> I am quite clueless about this right now, and would be grateful for
+> ideas. Re-implementing LOCK_EX locking would be a possibility for
+> systemd >= 250, as noted in the cover letter of the series. But for
+> systemd <= 249, I don't see good options. We can't use LOCK_EX, because
+> when we release the lock, we have no means to know whether or not a
+> race with udev occurred (iow, whether udev tried to access the device
+> while we held the lock, failed, and dropped the event). Thus we'd need
+> to assume that this was the case, and force a reload after each reload,
+> which is obvious nonsense. We also have no means to know whether the
+> full set of rules has ever been run by udev for the device at hand,
+> because we don't know the set of rules that follow after 11-dm-
+> mpath.rules.
 
-
-Create a new Fedora 39 virtual machine with the following commands (I'm
-not sure if it is possible to reproduce this on a machine using less
-memory and cpus, but I can try that if you need me to. You probably also
-want to pick a faster Fedora Mirror for the image location):
-# virt-install --name repair-test --memory 8192 --vcpus 8 --disk size=40 --graphics none --extra-args "console=ttyS0" --osinfo detect=on,name=fedora-unknown --location https://download.fedoraproject.org/pub/fedora/linux/releases/39/Server/x86_64/os/
-
-Install to the whole virtual drive, using the default LVM partitioning.
-Then ssh into the VM and run the following commands to setup the
-lvm2-testsuite and 6.6.0 kernel:
-
-# dnf upgrade grub2
-# dnf install -y git gcc bc flex make bison openssl openssl-devel dwarves zstd elfutils-libelf-devel libaio-devel lvm2 g++
-# git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
-# git clone git://sourceware.org/git/lvm2.git
-# cd ~/lvm2
-# ./configure
-# make
-# cd ~/linux
-# git checkout -b ver6.6 v6.6
-# cp /boot/config-`uname -r` .config
-# make olddefconfig
-# modprobe -a dm_raid dm_delay ext4 raid1 raid10 brd
-# yes "" | make localmodconfig
-# make -j8
-# make modules_install
-# make install
-# reboot
-
-ssh back into the VM, and run the following commands to run
-lvm2-testsuite:
-
-# mount -o remount,dev /tmp
-# cd ~/lvm2
-# make check T=lvconvert-repair-raid.sh
-
-This should always pass. I ran it 100 times without failure.
-
-To test the patched kernel, run:
-
-# cd ~/linux
-# git checkout -b dmraid-fix-v5 v6.8-rc3
-# git am ~/dmraid-fix-v5.mbox  ***Apply the v5 patches***
-# make olddefconfig
-# make -j8
-# make modules_install
-# make install
-# reboot
-
-Rerun the lvm2-testsuite with the same commands as before:
-
-# mount -o remount,dev /tmp
-# cd ~/lvm2
-# make check T=lvconvert-repair-raid.sh
-
-This fails about 20% of the time, usually at either line 146 or 164. You
-can check by running the following command when the test fails.
-
-# grep "STACKTRACE()" ~/lvm2/test/results/ndev-vanilla\:shell_lvconvert-repair-raid.sh.txt
-[ 0:13.152] ## 1 STACKTRACE() called from /root/lvm2/test/shell/lvconvert-repair-raid.sh:146
-
-Let me know if you have any questions, or if this doesn't work for you.
+multipathd already refuses to reload newly created devices before it
+sees the creation uevents to try to avoid this.  I assume that the
+problem you are seeing is on the coldplug after the pivot root, where
+the devices already exist, or am I confused here.  I wonder if we can do
+something similar where we would ideally delay all device reloads until
+after the coldplug.  The problem is figuring out when it's finished.
 
 -Ben
 
 > Thanks,
-> Song
+> Martin
 
