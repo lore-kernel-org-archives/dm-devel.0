@@ -1,153 +1,120 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47C7F6F06C
-	for <dm-devel@lists.linux.dev>; Fri,  9 Feb 2024 16:15:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA7D87CF3E
+	for <dm-devel@lists.linux.dev>; Fri,  9 Feb 2024 16:55:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707495332; cv=none; b=OxheXlhhv5b0rBuYp/o3K90cpoaZCZKVVivy5qBCctUEbCrvufh4h8lUQvtIQ/EJove/BgH0My/qboFHpTZ46Y/E24qrn5f1JupXcCfaWaiaeWcbAsH+GYy4c5z05YqegS9k6B7ScAniO9PJm5+1B+cMJUUkY6qigTW3qq53qfs=
+	t=1707497729; cv=none; b=VyOIE5NmP+HbnV2dxdquaz5toW7/mCXrhOMVoZq977bJXFtXI/n2ys/QuVmzIcYcaEov553YZwbASRFQbX5avXBXi1ZfZ6pU+56XjsIbX7xRUNvQcrpRJO9Ah2CSugD0CWkU2CsOQwzEGUDFJWv+Lg0Z7OVf7h0rZuxIuS4t588=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707495332; c=relaxed/simple;
-	bh=cjEzihlfFpCHufP1Rt1lHKcgDNjqxQgGdS7EX/F1z5M=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=VsWGf94IPP6YJ2DJ+ho7uff3GTSZyQA53dWlJmIBcl4z2WmXhfd8gXGbvK8qR6KeG5fTdRpZeAOWilFJUXvwXweFmSkMNxaqTr1X1RIoNFQaywpnEtDlu40Bqn7NVZm1lQvkWghnCD5OnV/kAiY1JJueFD+8k4Nxegbg5MkVTj0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XCZjhUJp; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1707497729; c=relaxed/simple;
+	bh=OTMO5pAk1lH2WLVvL3IIz0M7+IYcDuWACtRciFPIros=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=n6pJTd5oz3cHdsiCeDPg8Tv96nuYrxj2bC3rCA6EDjWe7A4T78G38+O1ANRyF+KceX5A7GUthbMUliI/jQ9WOdthtxgOrfJ16r1CFKNWNPquZW1zxIH8B8PX/nWtXiDQevdsuy9Ep5afWdKsYDH/gIqTBNh4vgnZFn4seNG6Urw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Ol/CfWt6; arc=none smtp.client-ip=209.85.128.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XCZjhUJp"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1707495329;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=vCoH5GbZFYm5seoWMRWg+T4PnGNfKUX4qDdjJ58QCNM=;
-	b=XCZjhUJpBymGWR5howw9Pj3pTq0quTd8eBYmNzzKr8Z8rI+0VgGFqm9vplLAhSNkyIZWf9
-	+8uaYCpKIIqOzm5IU9T/xzbq02hzyg0uf/JA9GhqXLdrqQtJQMVoOLxv+Qn8ADQ7K/arRF
-	1jBPQXYmyom4104z10txVVe3hJjIsVc=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-66-KUTs_p6KNEyyXNSaLa2w_w-1; Fri,
- 09 Feb 2024 11:15:25 -0500
-X-MC-Unique: KUTs_p6KNEyyXNSaLa2w_w-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3DEA43830089;
-	Fri,  9 Feb 2024 16:15:25 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 360C72166B31;
-	Fri,  9 Feb 2024 16:15:25 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 419GFORw346580
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 9 Feb 2024 11:15:25 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 419GFOfP346579;
-	Fri, 9 Feb 2024 11:15:24 -0500
-Date: Fri, 9 Feb 2024 11:15:24 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev, linux-lvm@lists.linux.dev,
-        Zdenek Kabelac <zkabelac@redhat.com>,
-        Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [PATCH 4/6] 11-dm-mpath.rules: handle reloads during coldplug
- events
-Message-ID: <ZcZPnHkOJUWrvp1e@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <20240205124638.17877-1-mwilck@suse.com>
- <20240205124638.17877-5-mwilck@suse.com>
- <ZcV5-kpJ2ZylDGBP@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
- <7fc6996c93def8360d27c60f6503ff2dc42d073c.camel@suse.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Ol/CfWt6"
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-40f02b8d176so9950425e9.1
+        for <dm-devel@lists.linux.dev>; Fri, 09 Feb 2024 08:55:26 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1707497725; x=1708102525; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=6VYB2KssSF4+eXuIqiXomrk8wK960twQgqDzbRGZw/U=;
+        b=Ol/CfWt6Rke004mduONx/GXbOZ7/pQLdoRjvtl9aIpfRNqJNHXlm8M4MdkDPPH35su
+         7bh7sOrW0Vm7zUZljMt04kzK/ANf6ICNfLD3ioBLhy7IFMSBNjzwwsPsnCzbnwD1x2Rk
+         5T7pw+zllTH6C86ztXRULoURfIhHIreNb3ETYKTMt4qusxCLBttIe3+8Eaz7vul61Cqp
+         v5l3zmGiLqPhR2EcePoO6MnY/6eNYB16rz1GlfloeQ8qvjVa4BCPSq7O1qoeKbsyd7xj
+         lQ0MRrlX0lqH7Gol1mHkEuVSYjq9VL0MW6boofJW5FaSk4kQgUIaoq3+W2LynH26Qr0e
+         UtHg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1707497725; x=1708102525;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=6VYB2KssSF4+eXuIqiXomrk8wK960twQgqDzbRGZw/U=;
+        b=qhGNFjPhS3ZI/f7sToFyl6qiQblO5Qwki4cdd0Vrr33SGiD4Em6HyQT5Nb2/dRaphy
+         OEsLQ0xMQ8ASJNGWd56DV36WiQflL8WPYsAzWBbesC3gC7KKkKMCgdGVjZQC6g5HeE1j
+         VXxdNgGm+r33vocNrCIh06e0MO/xBIdVBLoQaB47VDKgN+xbfF14Tfui4Dimr1zmWX/T
+         Fxbj0KNGrAc+MojdZy/7/aaW+1i7aUSXTd8ZGEY2aTCdAY3i5/xF0wCehErTBy6E0HqA
+         +77MP2cKPB89aDdqxGeTS4Qr+RS13pltgzwSFVaIiLmFeh1BRVWFwaafZnP8MUXfMEoD
+         LKEQ==
+X-Gm-Message-State: AOJu0YyWdcuerHj74T3BMws9jy9sgURSLumjzXS52ETfMMXhntlqRBcC
+	2e6ct5QMx2xyctvDKhm+aRd7R4+cyU/CKUv9xYZuxFEZ0DXI/ozwphq7oSsASnI=
+X-Google-Smtp-Source: AGHT+IE7HryLd0eMaLKB8aIE2i9GaaNVjDH73W0teTDsDqwUQf7onodwqK4w8aqpLx9RXXA9izVfAQ==
+X-Received: by 2002:a5d:608e:0:b0:33b:1c2a:dd75 with SMTP id w14-20020a5d608e000000b0033b1c2add75mr1550960wrt.19.1707497724920;
+        Fri, 09 Feb 2024 08:55:24 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCWd0Br9oFV3rrM+X8lEmTEPrXm/6qfitH52H2ynsx1JhtW1f64gzcj2nTRed0t92FnTsnqYmOsDX3BPWMye/p7U0LhHevhwlVR9CzNPrbLhuxaftVUcdaW7KDXqLFXgEiM4jrwTI8IWXON0ZaaB64dp9fG5/ReXLmdnw35ePJXFQF2A4pPPMIvi
+Received: from localhost (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
+        by smtp.gmail.com with UTF8SMTPSA id a17-20020a5d4571000000b0033af5716a7fsm2226906wrc.61.2024.02.09.08.55.24
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 09 Feb 2024 08:55:24 -0800 (PST)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-lvm@lists.linux.dev,
+	Zdenek Kabelac <zkabelac@redhat.com>,
+	Peter Rajnoha <prajnoha@redhat.com>
+Subject: [PATCH 0/6] udev rule and CI improvements
+Date: Fri,  9 Feb 2024 17:55:07 +0100
+Message-ID: <20240209165513.7661-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <7fc6996c93def8360d27c60f6503ff2dc42d073c.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 
-On Fri, Feb 09, 2024 at 04:53:50PM +0100, Martin Wilck wrote:
-> On Thu, 2024-02-08 at 20:03 -0500, Benjamin Marzinski wrote:
-> > On Mon, Feb 05, 2024 at 01:46:36PM +0100, Martin Wilck wrote:
-> > > If a map reload happens while udev is processing rules for a
-> > > coldplug
-> > > event, DM_SUSPENDED may be set if the respective test in 10-
-> > > dm.rules
-> > > happens while the device is suspened. This will cause the rules for
-> > > all
-> > > higher block device layers to be skipped. Record this situation in
-> > > an udev
-> > > property. The reload operation will trigger another "change" uevent
-> > > later,
-> > > which would normally be treated as a reload, and be ignored without
-> > > rescanning the device. If a previous "coldplug while suspended"
-> > > situation is
-> > > detected, perform a full device rescan instead.
-> > 
-> > For what it's worth, this seems reasonable. 
-> 
-> If that's so, I'd appreciate a Reviewed-by: :-)
-> See below.
-> 
-> > But I do see the issue you
-> > pointed out where we can't trust DM_SUSPENDED.
-> 
-> That was my suspicion originally, but the actual problem that was
-> observed was different, see my recent response to 1/6.
-> 
-> Yes, it can happen any time that a device gets suspended between the
-> DM_SUSPENDED check and an attempt to do actual I/O in later udev rules,
-> but that is much less likely than the other case. So far I haven't been
-> able to actually observe it.
-> 
-> Btw am I understanding correctly that you don't like the idea of going
-> back to exclusive locking?
+Patch 1-3 of this series are a v2 of my previous series "multipath-tools:
+udev rules and service improvements" posted on Feb 5th.
 
-Oh, and yeah, I'd rather avoid exclusive locking if possible, just out
-of a hunch that it could lead to other unexpected problems.
+Changes wrt v1:
+ 1/6: fix logic as pointed out by Ben Marzinski
+ 2/6: Keep importing MPATH_DEVICE_READY as suggested by Ben Marzinski.
+      Don't import DM_UDEV_DISABLE_OTHER_RULES_FLAG any more.
 
--Ben
+Patch 4-6 are new. 4/6 implements new logic for setting
+DM_UDEV_DISABLE_OTHER_RULES_FLAG_OLD, as discussed in the thread about 1/6
+of the v1 series. 5/6 fixes a variant of the race condition that 3/6
+addresses. Meanwhile I got positive test feedback about these patches; the
+partner isn't observing any more errors with these patches applied. Thus
+while certain types of race conditions (reload happening between
+DM_SUSPENDED test in 10-dm.rules and blkid or pvscan calls in later rules)
+are still possible, they seem to be rare enough to be handled in a separate
+patch set.
 
-> 
-> >   Perhaps we could track
-> > in multipathd if an add event occured for a path between when we
-> > issued
-> > a reload, and when we got the change event (unfortunately, change
-> > events
-> > can occur for things other than reloads that multipathd triggers, and
-> > the only way I know to accurately associate a uevent with a reload is
-> > by
-> > using dm udev cookies. We have those turned off in multipathd and I
-> > think it would be a good bit of work to turn them back on without
-> > causing lots of waiting with locks held in multipathd). 
-> 
-> IMO doing this right in multipathd will be hard. We must be careful not
-> to trigger too many additional uevents just because something *might*
-> have gone wrong during udev handling (most of the time all is well,
-> even if a reload happens). I believe to do this properly we must listen
-> for *kernel* uevents, too, and that's something we've been trying to
-> avoid for good reason.
-> 
-> I had a different idea: to track a "reload count" for a map somehow
-> (e.g. in a file under /run/multipath) and checking that at the
-> beginning and end of uevent handling in order to see if a reload
-> occurred while the uevent was being processed (which would be detected
-> by seeing a different the reload count change during the uevent).
-> 
-> For now, I hope that this change plus my latest addition will make the
-> practical issue go away. All else can be discussed later.
-> We haven't got any reports about this sort of race for years, so it's
-> safe to assume that happens very rarely.
-> 
-> Regards
-> Martin
+6/6 is an unrelated new patch which is necessary to make CI for arm/v7
+environments work.
+
+Martin Wilck (6):
+  11-dm-mpath.rules: use import logic like 13-dm-disk.rules
+  11-dm-mpath.rules: don't import properties that are already set
+  11-dm-mpath.rules: handle reloads during coldplug events
+  11-dm-mpath.rules: don't save DM_UDEV_DISABLE_OTHER_RULES_FLAG_OLD
+  11-dm-mpath.rules: clear DM_DISABLE_OTHER_RULES_FLAG for coldplug
+    events
+  multipath-tools: Makefile.inc: set _FILE_OFFSET_BITS=64
+
+ Makefile.inc                     |  1 +
+ multipath/11-dm-mpath.rules.in   | 50 ++++++++++++++++++++++++----
+ multipath/Makefile               |  2 ++
+ multipath/z0-dm-mpath-late.rules |  4 +++
+ tests/Makefile                   |  5 ++-
+ tests/alias.c                    |  4 +--
+ tests/directio.c                 |  7 ++--
+ tests/dmevents.c                 |  8 ++---
+ tests/sysfs.c                    | 57 ++++++++++++++++----------------
+ tests/test-lib.c                 |  9 +++--
+ tests/wrap64.h                   | 48 +++++++++++++++++++++++++++
+ 11 files changed, 147 insertions(+), 48 deletions(-)
+ create mode 100644 multipath/z0-dm-mpath-late.rules
+ create mode 100644 tests/wrap64.h
+
+-- 
+2.43.0
 
