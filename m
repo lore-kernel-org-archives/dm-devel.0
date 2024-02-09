@@ -1,61 +1,61 @@
-Received: from mail-ed1-f47.google.com (mail-ed1-f47.google.com [209.85.208.47])
+Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6627664A2
-	for <dm-devel@lists.linux.dev>; Fri,  9 Feb 2024 08:48:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 073462031E
+	for <dm-devel@lists.linux.dev>; Fri,  9 Feb 2024 13:05:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707468518; cv=none; b=Xw8Jjnqqwih7ZFj3TxmxcNJHNL5d48FEVSfEvvLdXiQiJLepE1dDI9k5+uJru7dKrJpT/iQCN0WFzNECI4iSQ/5oEXWC3vCBIJ0arVHB8IGyxbILNx8YsRa1E92qf0FEO+je+/lvCK2NXWJ8kHStoWezYKVnjuEi7CxJuddL2Yo=
+	t=1707483953; cv=none; b=kItgyshrCuM9dQeszUl9gmoB32Sq2VfC0nJ68wGvbCOpf+tUeatQ9LliVYE97UWiFE9xRlRt6p+cGvqMlTzZvRmsZP4wDQZ4Wz/GaDIspB34Cp8ALSX85EaAtx1CF6ZziC5A0+/S+XPKj8gKMrC/1eozCwTBCecnXhddWl7qKrE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707468518; c=relaxed/simple;
-	bh=Mq6BFCfR6BDYDeHetr86ogMkPu4jZPzZwvmvbBPyP7c=;
+	s=arc-20240116; t=1707483953; c=relaxed/simple;
+	bh=aoGSTVHAxbmzAXiR6jLkYXUUTSrenrqvXRzTO3yTIIo=;
 	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=WhZIuvfw+N/Znjo33d1QMR70FICbkUpc70af2uC80/Xi131TDywJf2JQv8epLe93k/PaPlSCJtBf7YY3mXybAfrC3WoAzaDeL66uK9hoRIWj0RT+RmRf08hnEddk7Ope6kpcY9smyffuNznl+9Or3c237tTd0pK4oVN97Ns76/w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=uXG417Ht; arc=none smtp.client-ip=209.85.208.47
+	 Content-Disposition; b=d1i5xN6cwRuuKcZ7cz2gl/2L3i31aes2A8m3Yg+TVC4q5UnXlGTXVRWwEsjrTo+0KHEr64ld/0qInPW/ENLsVCziaynW1HjWfHdKC05OJ0gkPP8MBOaA2yLKkrmQwP4L32/n6zYsphTI+9aLV3Img5JW6UC6lJU70WnbgaONq58=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=LIs658os; arc=none smtp.client-ip=209.85.208.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="uXG417Ht"
-Received: by mail-ed1-f47.google.com with SMTP id 4fb4d7f45d1cf-55ee686b5d5so1047473a12.0
-        for <dm-devel@lists.linux.dev>; Fri, 09 Feb 2024 00:48:36 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="LIs658os"
+Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-55f0b2c79cdso1584675a12.3
+        for <dm-devel@lists.linux.dev>; Fri, 09 Feb 2024 05:05:51 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1707468515; x=1708073315; darn=lists.linux.dev;
+        d=linaro.org; s=google; t=1707483950; x=1708088750; darn=lists.linux.dev;
         h=content-disposition:mime-version:message-id:subject:cc:to:from:date
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=IrDLzyu7aPX7JQqBSW32uMQttYeUKv2kX92GhSyHAGQ=;
-        b=uXG417HtMzIb/HR/8tXuAo1SMvCCnH+QEViqsJ4Rgd7j1bywqC6n21s+NkrBvW70gs
-         fTIuZkvC5QuENxAiQa2GsMtpq9B5xkNGJH3hpoLdQjK7ZLxr1MkZbNqycym6rpGccRqx
-         +6652uc09k41ETv/ZMNr47CNew1dPwwN21DyaF9d8Mi7MUjdY2+QnaW8ytlcafR+zKKv
-         HV2BRy6IIOSROM+gUx9Yg1S3TGF2ayiB9U4824aMr7XPaJVJi/yA+4sQSspYfYnyqgsm
-         UfxTIJiHwh4mad6VysjuLlaurE7S1pslnP6tAWOo0tR35qeJNK6W2PMFtyns26CIt/jz
-         Sz3Q==
+        bh=w2MceeLozljmoGM18+gVNMUZR77v0XxADYATh3hH+64=;
+        b=LIs658osmE50rQ2f/Y/KiYNyYLNZl5emJxYT49LkEYSVL8HjRfTOCmo1YrJC5rVX0W
+         rhlL1yOYa4xYc79quGpnGk+vYiqimZPh+NBEfhf00cRnQn1xP2cgCpzJberid37zoFrp
+         8E6gEfciiErpsT4fwdqUKXZIS6QANDvgk2ebWxiooq6p9E0nr081gfzRQZx8aC7Kj/C1
+         UxQNrjxL4QaN/dTqyYnRJTsHIHfZAXRHaQeS88W5kUGFH/A6kBD4et1aBSGuz/ull468
+         hSKYHTQs2egkN0YMTRtIPgbcx5nNs7DgyP7fOShhWY6pRgDTfh3ELiVEaUiQfmuWX1Kc
+         ATSw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707468515; x=1708073315;
+        d=1e100.net; s=20230601; t=1707483950; x=1708088750;
         h=content-disposition:mime-version:message-id:subject:cc:to:from:date
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=IrDLzyu7aPX7JQqBSW32uMQttYeUKv2kX92GhSyHAGQ=;
-        b=vQ0zsHuBUeDgB5nugL+LMCDfWyfzXk+YjcMLRQDzUUK9AcSY+jes0Qev5E31T8wRUH
-         6fXruXZYDWUu0xmesNJf+ATzNfZ7g6D4GUB3G01GXocUjKPBNrRcEJvukoWg1s9/qm6J
-         2gte9AJ2GfElI04Un0sLCbY9qx63get9Br1R04sT5gRdRO/9M2UhjVM6tp35YVaX6sw3
-         6t/KhhIv/+yaHvQIQKGWAvWnGhIJwTIQ5jfwglS6p/lzspnVlUDW9+Aa6pIxDMqBAO+Z
-         U9reol3PqrNNDyzc5xYDRTFaZVdgHRwYqic5zupnZorTKRn9Gf1+jkfb5ZbFLX3Y6hnY
-         Cegw==
-X-Gm-Message-State: AOJu0YxXTz28/bQ8om6TEXF5wz1tlLyV0jR5TIumASDXYCS7ex3gpod0
-	LWvK68REltMc1wCowJTBBDdfqtEvHKskX6tGTOIJ3vSb4Xc7ejaWHu2a9kuWEog=
-X-Google-Smtp-Source: AGHT+IFB8P3PLIRcH6ZKHx0Cb4iE2sTPU94Lf3r31ke0iTQslO8t+LI/DeOSCJvpSLfruXnT9yr7cQ==
-X-Received: by 2002:aa7:c2cf:0:b0:561:1917:eb9e with SMTP id m15-20020aa7c2cf000000b005611917eb9emr858434edp.35.1707468514918;
-        Fri, 09 Feb 2024 00:48:34 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCXEPJsXOE4QqX9e+TceyJsixu3WeKTp78zdBB9U86WVGmlD2iMKPy9TI41Q12q5hZm7GvC55zTDOIR6GEKuJqE3yC/bh11OiXg=
+        bh=w2MceeLozljmoGM18+gVNMUZR77v0XxADYATh3hH+64=;
+        b=X3K7h8HJaAbPzpcSzB3q3Akbb8YOEHg/uaauDHuzYvchjAvYC6vHjY1h12M1j3Vd6z
+         M33fuWPyiQThobaKBZlVzBq3qpBq8xTNLKT97PL456tJFTsXfvNohWo/7C5Cu/chddRM
+         5xYGpy4dD9spQzF3bws+T7F84+oAFaRg8nENGlALS2ynNefKW6525rY/CgHgmN/C6eBk
+         NirEuVJFZUzcsPAxAmbNLxWMwPN8qh+UNVq1iJtKXlb0Snczyk8ocYqoo6WOYJeAwntQ
+         FMom3A/xmMstpjnDRqZkBPKzqZFuTb3GdF6Xtpzg2FhdD0Fbc2IJ+hE53ogNRkkcCHsw
+         A7qw==
+X-Gm-Message-State: AOJu0Yz24DxN0pBeUI9/IFiPFJ7YlcMqtDvPV1CRHL+MPcq/PoaKUKm3
+	CcwMU7X5vu8tSjLgJqEAw6Qxh62UX0myo1WYWvz1G6u8epH0M/zPgQvueYevrCI=
+X-Google-Smtp-Source: AGHT+IG80j4qI9SZlAvEVpJo6d7OxGL1ciUogD2mdfhFmOanbnKCHkeUlOWVykYjwGkkzZvQhLkAdw==
+X-Received: by 2002:a05:6402:649:b0:55f:f1f5:1a41 with SMTP id u9-20020a056402064900b0055ff1f51a41mr1231791edx.15.1707483950317;
+        Fri, 09 Feb 2024 05:05:50 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCW2LTx/qO88o48WhjP5gprSCd39Ujqh7Q5K29TjVPlp5TNZpIV/gasNpqbam1zYmS/3eB9pTDNgcQRkt+O0bfV6D9ZRwuJPGXE=
 Received: from localhost ([102.222.70.76])
-        by smtp.gmail.com with ESMTPSA id b14-20020a0564021f0e00b00560651808a6sm570055edb.67.2024.02.09.00.48.33
+        by smtp.gmail.com with ESMTPSA id k24-20020aa7d8d8000000b00560e72d22b8sm763241eds.2.2024.02.09.05.05.49
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 Feb 2024 00:48:34 -0800 (PST)
-Date: Fri, 9 Feb 2024 11:48:30 +0300
+        Fri, 09 Feb 2024 05:05:50 -0800 (PST)
+Date: Fri, 9 Feb 2024 16:05:46 +0300
 From: Dan Carpenter <dan.carpenter@linaro.org>
 To: msakai@redhat.com
 Cc: dm-devel@lists.linux.dev
-Subject: [bug report] dm vdo: add flush support
-Message-ID: <c91e8c15-d418-419c-aebe-078bd8f12687@moroto.mountain>
+Subject: [bug report] dm vdo: add statistics reporting
+Message-ID: <f7f19be8-4a86-415d-a995-22d030d35e93@moroto.mountain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -67,39 +67,71 @@ Content-Disposition: inline
 
 Hello Matthew Sakai,
 
-The patch 7d7084389ab3: "dm vdo: add flush support" from Nov 16, 2023
-(linux-next), leads to the following Smatch static checker warning:
+The patch 25479d97b12c: "dm vdo: add statistics reporting" from Nov
+16, 2023 (linux-next), leads to the following (unpublished) Smatch
+static checker warning:
 
-	drivers/md/dm-vdo/flush.c:114 allocate_flush()
-	error: uninitialized symbol 'flush'.
+drivers/md/dm-vdo/funnel-workqueue.c:545 vdo_dump_completion_to_buffer() warn: why check scnprintf return value?
+drivers/md/dm-vdo/message-stats.c:26 write_u64() warn: why check scnprintf return value?
+drivers/md/dm-vdo/message-stats.c:43 write_u32() warn: why check scnprintf return value?
+drivers/md/dm-vdo/message-stats.c:60 write_block_count_t() warn: why check scnprintf return value?
+drivers/md/dm-vdo/message-stats.c:77 write_string() warn: why check scnprintf return value?
+drivers/md/dm-vdo/message-stats.c:94 write_bool() warn: why check scnprintf return value?
+drivers/md/dm-vdo/message-stats.c:111 write_u8() warn: why check scnprintf return value?
 
-drivers/md/dm-vdo/flush.c
-    101 static void *allocate_flush(gfp_t gfp_mask, void *pool_data)
-    102 {
-    103         struct vdo_flush *flush;
-    104 
-    105         if ((gfp_mask & GFP_NOWAIT) == GFP_NOWAIT) {
-    106                 flush = uds_allocate_memory_nowait(sizeof(struct vdo_flush), __func__);
-    107         } else {
-    108                 int result = uds_allocate(1, struct vdo_flush, __func__, &flush);
-    109 
-    110                 if (result != VDO_SUCCESS)
-    111                         uds_log_error_strerror(result, "failed to allocate spare flush");
+drivers/md/dm-vdo/message-stats.c
+    99 static int write_u8(char *prefix,
+    100                     u8 value,
+    101                     char *suffix,
+    102                     char **buf,
+    103                     unsigned int *maxlen)
+    104 {
+    105         int count = scnprintf(*buf, *maxlen, "%s%u%s",
+    106                               prefix == NULL ? "" : prefix,
+    107                               value,
+    108                               suffix == NULL ? "" : suffix);
+    109         *buf += count;
+    110         *maxlen -= count;
+--> 111         if (count >= *maxlen)
+                    ^^^^^^^^^^^^^^^^
+snprintf() returns the number of bytes that would have been printed if
+we had enough space and scnprintf() returns the number of bytes that
+were printed.  (Both functions exclude the NUL terminator from the
+returned count).
 
-In real life, uds_allocate_memory() isn't going to fail here, but
-if it did then "flush" isn't initialized...
+It seldom makes sense to check the return from scnprintf().  In this
+case count can never be >= *maxlen.  The most it can be is *maxlen - 1.
 
-    112         }
-    113 
---> 114         if (flush != NULL) {
-    115                 struct flusher *flusher = pool_data;
-    116 
-    117                 vdo_initialize_completion(&flush->completion, flusher->vdo,
-    118                                           VDO_FLUSH_COMPLETION);
-    119         }
-    120 
-    121         return flush;
-    122 }
+    112                 return VDO_UNEXPECTED_EOF;
+    113         return VDO_SUCCESS;
+    114 }
+
+The code in vdo_dump_completion_to_buffer() is almost basically correct.
+It's just off by one in a totally harmless way and I wouldn't have
+reported it if not for these other impossible conditions.
+
+drivers/md/dm-vdo/funnel-workqueue.c
+   538  void vdo_dump_completion_to_buffer(struct vdo_completion *completion, char *buffer,
+   539                                     size_t length)
+   540  {
+   541          size_t current_length =
+   542                  scnprintf(buffer, length, "%.*s/", TASK_COMM_LEN,
+   543                            (completion->my_queue == NULL ? "-" : completion->my_queue->name));
+   544  
+   545          if (current_length < length - 1) {
+
+The highest valid return is current_length == length - 1 but that's
+treated as invalid.  If we changed to snprintf() then we could fix the
+condition to allow the final character:
+
+	current_length = snprintf(...);
+	if (current_length <= length - 1) {
+                          ^^^^
+
+   546                  get_function_name((void *) completion->callback, buffer + current_length,
+   547                                    length - current_length);
+   548          }
+   549  }
 
 regards,
 dan carpenter
