@@ -1,114 +1,110 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 24FAC2119
-	for <dm-devel@lists.linux.dev>; Sat, 10 Feb 2024 02:19:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB18663C
+	for <dm-devel@lists.linux.dev>; Sat, 10 Feb 2024 02:38:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707531582; cv=none; b=tP9TF6yWQ5C/ibYrs9OxbalwWOEDjP2zVQnhMEmAXS0FeXr2jEbZkcyrrcqBO2aQo9xmreHcaCYqQdcvKXGmGBqJpRllf1F+M1gqBSdoMpWPXbzzr6lqGuzS7iwClrlT/ag9kowDxHOK62CfOrBROzSCe7TMQlBomp0+J5yuV+s=
+	t=1707532731; cv=none; b=SWqov2s+adOuvruT39eAq28pH2rJDbiC3wn11KfL7rHNWSKtgzGYYVxXgKq/dZoe8MbfWGgDu/MP+7xXHS8tcVI+T/11K0GlAGB8vjv8DR5bBPk6rAZGif4MbWwFssRN7H9iWhlD3LbuDeCoo5y45dJp19+mQnluSyw1SO5+Kk4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707531582; c=relaxed/simple;
-	bh=dmRZ4bBlHRc7KTD/rVFEi7QdPg9USnt00pLk3+bkUJA=;
+	s=arc-20240116; t=1707532731; c=relaxed/simple;
+	bh=ip4WYhM1sK0AkPKu4HzbXzSKKQ3cthk6rcc4SadmULs=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=F4+XcdRvGAjkYVlQCu4beosLuWjfaUXBmL5dw5bykZ3yUczbZwgN+IL4h/89szgZJsWpitii14CF8xEXa6G2rwgikb/NUOgt2gh3gFZXzoEIj5tE4D/jX6E6/TEbTJWieCrJBRjqIiP5TgSY40zGiLsyrRZcX4JSCsTYuWuxM94=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FdYg9Hzj; arc=none smtp.client-ip=170.10.129.124
+	 In-Reply-To:Content-Type:Content-Disposition; b=O6CrBqbuq3LNiCqWR3zP4I3d1OVOAdBG18xufa+Ea78ZmlH7lO1vNZCzR2IDDxIuLlESlhcHWbaS7xtpSay8WMez95SPhBcIfy9AkbiLKze0B0xD6ovYx1kr7xYmqD4Kxk45auJ5co5Uko7MzvHZrJJqyYCeoKKOgfzNkFS9bqU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Z2nfFj6H; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FdYg9Hzj"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Z2nfFj6H"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1707531580;
+	s=mimecast20190719; t=1707532728;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=hgriPsIPASUgIkcBhsA97t9DltNN45/NStkkH3dWDP0=;
-	b=FdYg9HzjEQdRbnEWGa3GLf4FacPqdAdC7NLLHwkkQOcmhRBAo9HXwi9WOP/0MdpJ78I7eE
-	FBJA54znpKrPGq8uFN2atR5W1p4ACnEguyyoK8hFO5gCtx1b/67XLUJPbiAzAv37K2JZcC
-	fmH5ssqYqhxh0vNqGlRU9RBG8UlKYeo=
+	bh=2MzcuDW1npGjwzn2gtIcmk+rLC2k83t1aJC1hL49vQs=;
+	b=Z2nfFj6HDkR8IEJjhJBmCtCqqHGrJp9yAaevEZsHWcZjnrwJxSY3Ex6DbfW4vPrJlgmdu5
+	W96LDlkRIVgVje94yFyeZY4gZsEh33dWrYZGUtS8kJoGWLz4iZnR6oBGX5NGFySia1C8Eq
+	FkCeiA66ME1KtZLeX44lfrxCijzVBEg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-611-ZTeG2fwRN9OWS1tDP3vdYg-1; Fri, 09 Feb 2024 21:19:36 -0500
-X-MC-Unique: ZTeG2fwRN9OWS1tDP3vdYg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-640-hz4AdJrCPi2U9ZgLGAtLlg-1; Fri, 09 Feb 2024 21:38:45 -0500
+X-MC-Unique: hz4AdJrCPi2U9ZgLGAtLlg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 85BFD85A589;
-	Sat, 10 Feb 2024 02:19:36 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0787B828CE2;
+	Sat, 10 Feb 2024 02:38:45 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7E3761C02EB3;
-	Sat, 10 Feb 2024 02:19:36 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F1C10AD69;
+	Sat, 10 Feb 2024 02:38:44 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 41A2JaGo352571
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 41A2cieL352722
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 9 Feb 2024 21:19:36 -0500
+	Fri, 9 Feb 2024 21:38:44 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 41A2JaGS352570;
-	Fri, 9 Feb 2024 21:19:36 -0500
-Date: Fri, 9 Feb 2024 21:19:36 -0500
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 41A2ciFM352721;
+	Fri, 9 Feb 2024 21:38:44 -0500
+Date: Fri, 9 Feb 2024 21:38:44 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Martin Wilck <martin.wilck@suse.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
         dm-devel@lists.linux.dev, linux-lvm@lists.linux.dev,
         Zdenek Kabelac <zkabelac@redhat.com>,
         Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [PATCH v2 5/7] 11-dm-mpath.rules: clear
- DM_DISABLE_OTHER_RULES_FLAG for coldplug events
-Message-ID: <ZcbdOB4iB7P4JF5K@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+Subject: Re: [PATCH v2 6/7] 11-dm-mpath.rules: Don't force activation while
+ device is suspended
+Message-ID: <ZcbhtFJkq2syENL4@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
 References: <20240209232735.9791-1-mwilck@suse.com>
- <20240209232735.9791-6-mwilck@suse.com>
+ <20240209232735.9791-7-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240209232735.9791-6-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
+In-Reply-To: <20240209232735.9791-7-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-On Sat, Feb 10, 2024 at 12:27:33AM +0100, Martin Wilck wrote:
-> For all "spurious" events, which includes coldplug events,
-> DM_DISABLE_OTHER_RULES_FLAG will be read from the udev DB in
-> 10-dm.rules. Thus if a previous event saw the device in suspended
-> state, the flag will be set even if the device has meanwhile
-> resumed. Reset the flag if none of the conditions hold that
-> would cause it to be set in a genuine uevent in 10-dm.rules.
-> 
-> It would be cleaner to do this in 10-dm.rules directly, but it
-> cannot be done easily, because the flag can also have an origin
-> inside lvm itself; lvm sets it for various kinds of logical
-> volumes. For generic (non-LVM) dm devices, the flag is only set
-> in 10-dm.rules though, so doing this is safe for multipath.
+On Sat, Feb 10, 2024 at 12:27:34AM +0100, Martin Wilck wrote:
+> If paths become available while the device is suspended, don't
+> activate. Another uevent will arrive when the device is resumed.
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipath/11-dm-mpath.rules.in | 7 +++++++
->  1 file changed, 7 insertions(+)
+>  multipath/11-dm-mpath.rules.in | 12 +++++++++---
+>  1 file changed, 9 insertions(+), 3 deletions(-)
 > 
 > diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
-> index e31107b..8e8741a 100644
+> index 8e8741a..4141833 100644
 > --- a/multipath/11-dm-mpath.rules.in
 > +++ b/multipath/11-dm-mpath.rules.in
-> @@ -9,6 +9,13 @@ ACTION=="add", ENV{DM_ACTIVATION}=="1", ENV{DM_SUSPENDED}=="1", \
->  	PROGRAM="/bin/logger -t 11-dm-mpath.rules -p daemon.warning \"Coldplug event for suspended device\"", \
->  	ENV{DM_COLDPLUG_SUSPENDED}="1", GOTO="scan_import"
->  
-> +# Coldplug event. DM_UDEV_DISABLE_OTHER_RULES_FLAG has been restored
-> +# from DB in 10-dm.rules. If the device is not suspended, clear the flag.
-> +# This is safe for multipath where DM_UDEV_DISABLE_OTHER_RULES_FLAG is basically
-> +# equivalent to DM_SUSPENDED==1 || DISK_RO==1
-> +ACTION=="add", ENV{DM_ACTIVATION}=="1", ENV{DM_SUSPENDED}!="1", ENV{DISK_RO}!="1", \
-> +	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="", GOTO="scan_import"
+> @@ -92,10 +92,16 @@ ENV{MPATH_DEVICE_READY}=="0", ENV{DM_NOSCAN}="1"
+>  ENV{MPATH_DEVICE_READY}=="0", \
+>  	ENV{.MPATH_SAVE_DISABLE_OTHER_RULES_FLAG}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}", \
+>  	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
 > +
->  # If this uevent didn't come from dm, don't try to update the
->  # device state
->  ENV{DM_COOKIE}!="?*", ENV{DM_ACTION}!="PATH_*", IMPORT{db}="DM_NOSCAN", GOTO="scan_import"
+>  # If the device comes back online, set DM_ACTIVATION so that
+> -# upper layers do a rescan.
+> -ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0", \
+> -	ENV{DM_ACTIVATION}="1", ENV{MPATH_UNCHANGED}="0"
+> +# upper layers do a rescan. If the device is currently suspended,
+> +# we have to postpone the activation until the next event.
+> +ENV{MPATH_DEVICE_READY}=="0", GOTO="dont_activate"
+> +ENV{.MPATH_DEVICE_READY_OLD}!="0", GOTO="dont_activate"
+> +ENV{DM_SUSPENDED}==1, ENV{MPATH_DEVICE_READY}="0", GOTO="dont_activate"
+> +
+> +ENV{DM_ACTIVATION}="1", ENV{MPATH_UNCHANGED}="0"
+> +LABEL="dont_activate"
+>  
+>  # The code to check multipath state ends here. We need to set
+>  # properties and symlinks regardless whether the map is usable or
 > -- 
 > 2.43.0
 
