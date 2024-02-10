@@ -1,105 +1,99 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79D2B365;
-	Sat, 10 Feb 2024 00:06:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 40247210D
+	for <dm-devel@lists.linux.dev>; Sat, 10 Feb 2024 01:38:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707523618; cv=none; b=sXehWZ+J/xVJ2xO4mtj9L0JgiXPHjB56foXbP8U0Vv5GrV6p4BkCIw3aU+X2JjvZUj9aorsFlL4m6YoeHiZXlh7LDdN49hZhnEH0AllxhCiOSrlEGsqz7PvsRvWI7QuBLeomMmGAAehLE+TKuyk1eq3dqjOvXlyMgoAvPAvpeWM=
+	t=1707529114; cv=none; b=fI7Rw8IrPflyhx14wbkC4IZAuWNCdAP+DhidW9kQa/54IXodytZZR+V4k2ZVrUdWb75rgOfifAZfwRxz9RoPaifDk5PYi/IbwPx8k/pOxtk/OoGO7udG3xc3yG8ns+SvUt7ZXYp5nEAgMIWzca2nQHmqElIup04IOgwMnQhgYTM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707523618; c=relaxed/simple;
-	bh=2Zw5SzbJLhz1l16efyBAgdXp5PCq1WwBZxnR19de37U=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=h5um7paKTSsKag68flHAICJhZyrjCD0fy4TtjuRXWOq3iq8fD1m4QBMp3wNWaTYJXJIcRnHEbWn9kUj69WTEWXzBmwGGBmw4WUxOuMhxA6LIqqPhRUfOz9jdmf5XHca1e1q1oIik1DXe3ggtrgbbsZconiC+6+flodpi8CnUELU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VB8cxc+T; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1707529114; c=relaxed/simple;
+	bh=z1qEhsTYctlek62gOvc4mqGG1JwPBUDQhjWjIlCqfaE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=kx1XYWSXgUssmowjOoFEg7QKEV0a2Dcb5gmmdlHqotnwa//fPdRqrNzQdiSGyJgvJrGjWmqmZDng/Vk0pn+ufstXkAowGmfC6plFM0IelH1fAyvrcmgPPrv6SxLJoaYS3WfkAF9ZZf7cCyCbWJS66vnt+f6lSfUJhF2h2w2o4k8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KbfRNc0S; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VB8cxc+T"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6F182C433F1;
-	Sat, 10 Feb 2024 00:06:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1707523617;
-	bh=2Zw5SzbJLhz1l16efyBAgdXp5PCq1WwBZxnR19de37U=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=VB8cxc+TYRhkfc+O6h5ij5L/vLQCo0jtjx3wlcNC4YVpl7+WtQcSC0U5DWP2YHy3k
-	 taQklacNMoSR6BOEaEJXpIGvbqiJ1qmW7D6H5pBn7VTh98iR6iCBBMiPVA6rFeJ/oX
-	 Q6EzpjGhpHCAERU4dXf1wcHY+enVxaQUwOL/GyS6Sv7okORFZKGyOINVxTD+CPq8Lt
-	 1bwkROckISr/6bhLtHquTH+zOl/vMt3vEtI7D4L6OZqmPYcpbbuAm7qDscoEjdSd0G
-	 QOIlKMoKT31h//cqF39QIvzSqNRj1x4LMWq73W+h/lgzWwKyFzSJQdlmBilC0B2Tga
-	 OpaiGSvS4Tuug==
-Message-ID: <c03735f3-c036-4f78-ac0b-8f394e947d86@kernel.org>
-Date: Sat, 10 Feb 2024 09:06:54 +0900
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KbfRNc0S"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1707529111;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=FipqGNPI2jhye6boWHZQO27XPmOCbhPNtBGNn7krYfw=;
+	b=KbfRNc0SJKUvKH5X19lpT8w910w+ncuNXsHgKEPxwrzcB0MQH8AF7/Jz4R6x9HgNLdLmo1
+	D0CZF3tQvCzArX4uTv00Q2dmaNsL4mx7HhEMGigRdeQo/rH8jXIxzs8uscbjygLDv4mC13
+	MTUM7Y8EN6JKaisT4OqXLMucrXxssuo=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-251-4bwsxKe9MWSk-KFaNHGK1g-1; Fri, 09 Feb 2024 20:38:27 -0500
+X-MC-Unique: 4bwsxKe9MWSk-KFaNHGK1g-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1ECAF185A781;
+	Sat, 10 Feb 2024 01:38:27 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D8F77492BE3;
+	Sat, 10 Feb 2024 01:38:26 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 41A1cQxh351999
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 9 Feb 2024 20:38:26 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 41A1cQUG351998;
+	Fri, 9 Feb 2024 20:38:26 -0500
+Date: Fri, 9 Feb 2024 20:38:26 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, linux-lvm@lists.linux.dev,
+        Zdenek Kabelac <zkabelac@redhat.com>,
+        Peter Rajnoha <prajnoha@redhat.com>
+Subject: Re: [PATCH v2 2/7] 11-dm-mpath.rules: don't import
+ DM_UDEV_DISABLE_OTHER_RULES_FLAG
+Message-ID: <ZcbTknkTT6j3VjTy@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+References: <20240209232735.9791-1-mwilck@suse.com>
+ <20240209232735.9791-3-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 25/26] block: Reduce zone write plugging memory usage
-Content-Language: en-US
-To: Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.de>,
- linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
- linux-scsi@vger.kernel.org, "Martin K . Petersen"
- <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
- Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-References: <20240202073104.2418230-1-dlemoal@kernel.org>
- <20240202073104.2418230-26-dlemoal@kernel.org>
- <09d99780-8311-4ea9-8f48-cf84043d23f6@suse.de>
- <f3a2f8b8-32d2-4e42-ba78-1f668d69033f@acm.org>
- <a324beda-7651-4881-aea9-99a339e2b9eb@kernel.org>
- <2e246189-a450-4061-b94c-73637859d073@acm.org>
- <75240a9d-1862-4d09-9721-fd5463c5d4e5@kernel.org>
- <e2a1a020-39e3-4b02-a841-3d53bd854106@acm.org>
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <e2a1a020-39e3-4b02-a841-3d53bd854106@acm.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+In-Reply-To: <20240209232735.9791-3-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On 2/10/24 04:36, Bart Van Assche wrote:
-> On 2/8/24 19:58, Damien Le Moal wrote:
->> We still need to keep in memory the write pointer offset of zones that are not
->> being actively written to but have been previously partially written. So I do
->> not see how excluding empty and full zones from that tracking simplifies
->> anything at all. And the union of wp offset+zone capacity with a pointer to the
->> active zone plug structure is not *that* complicated to handle...
+On Sat, Feb 10, 2024 at 12:27:30AM +0100, Martin Wilck wrote:
+> DM_UDEV_DISABLE_OTHER_RULES_FLAG is handled by 10-dm.rules, which imports
+> it from db if necessary. There is no need to do this again here.
 > 
-> Multiple zoned storage device have 1000 or more zones. The number of partially
-
-Try multiplying that by 100... 28TB SMR drives have 104000 zones.
-
-> written zones is typically less than 10. Hence, tracking the partially written
-
-That is far from guaranteed, especially with devices that have no active zone
-limits like SMR drives.
-
-> zones only will result in significantly less memory being used, fewer CPU cache
-> misses and fewer MMU TLB lookup misses. I expect that this will matter since the
-> zone information data structure will be accessed every time a zoned write bio is
-> processed.
-
-May be. The performance numbers I have suggest that this is not an issue.
-
-But in any case, what exactly is your idea here ? Can you actually suggest
-something ? Are you suggesting that a sparse array of zone plugs be used, with
-an rb-tree or an xarray ? If that is what you are thinking, I can already tell
-you that this is the first thing I tried to do. Early versions of this work used
-a sparse xarray of zone plugs. But the problem with such approach is that it is
-a lot more complicated and there is a need for a single lock to manage that
-structure (which is really not good for performance).
-
-Hence this series which used a statically allocated array of zone plugs to
-simplify things. Overall, this series is a significant change to the zone write
-path and I wanted something simple/reliable that is not a nightmare to debug and
-test. I believe that an xarray based optimization can be re-tried as an
-incremental change on top of this series. The nice thing about it is that the
-API should not need to change, meaning that all changes can be contained within
-blk-zone.c.
-
-But I may be missing entirely your point. So clarify please.
-
--- 
-Damien Le Moal
-Western Digital Research
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  multipath/11-dm-mpath.rules.in | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
+> index e7be12d..fd8d202 100644
+> --- a/multipath/11-dm-mpath.rules.in
+> +++ b/multipath/11-dm-mpath.rules.in
+> @@ -7,7 +7,7 @@ IMPORT{db}="MPATH_DEVICE_READY"
+>  
+>  # If this uevent didn't come from dm, don't try to update the
+>  # device state
+> -ENV{DM_COOKIE}!="?*", ENV{DM_ACTION}!="PATH_*", IMPORT{db}="DM_UDEV_DISABLE_OTHER_RULES_FLAG", IMPORT{db}="DM_NOSCAN", GOTO="scan_import"
+> +ENV{DM_COOKIE}!="?*", ENV{DM_ACTION}!="PATH_*", IMPORT{db}="DM_NOSCAN", GOTO="scan_import"
+>  
+>  ENV{.MPATH_DEVICE_READY_OLD}="$env{MPATH_DEVICE_READY}"
+>  
+> -- 
+> 2.43.0
 
