@@ -1,46 +1,38 @@
-Received: from mail-oa1-f44.google.com (mail-oa1-f44.google.com [209.85.160.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mout.web.de (mout.web.de [212.227.15.4])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C201F523E
-	for <dm-devel@lists.linux.dev>; Sun, 11 Feb 2024 03:40:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27A385D497;
+	Sun, 11 Feb 2024 18:30:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.15.4
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707622822; cv=none; b=cRBoPKAvJMpcS0/XWChRV6ixsEzk/Kor9V7pARupNQAmNMFFqb0/8fRzVNBosB01aHGrUVG9d9xtl4/QDNx/pZdkDnwWfzb/NRRDcjUCedRDorccqLFGr3Z6tdvfWgHLWOS8ggyZDFQNekocvxUXHEZxjTCjrWcB0qaKliweJtw=
+	t=1707676205; cv=none; b=IaKWrfo5BjMfExw3XlLTsHboDr1wSky+zIUJlSjG3TzY3Te4CMGMVR88A5lHXhF8YoOUZ3fNEnYL0IQfX8dVvDe52whGrDJ3C+CtO2JE/KMZJjw354gKlNHv3JbPos/jUGyVtDjqkEoo9UAGpW3JttNYDv0GDK1xxG5N4DryPug=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707622822; c=relaxed/simple;
-	bh=qAofQFRNn5JOYKBu3rH93zn1we+MRS407FLoTMBaCVU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=QqMqkawxrdFNcVLgqBOEgR7ggj63bpaVgtdlqgLsFGMR6vlKmfPjZ8F81hcwxwPMclrYM/W7XjMzUkPKPRLQC3HwHIoNcGhm81+trJpXrbA7KPaJuVIfabh59LPx6azbZV6Z1/3I/Y0WSSYFdF3XtSpYK6aebyor1AWVHZ/RJ90=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.160.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-oa1-f44.google.com with SMTP id 586e51a60fabf-214ca209184so1442394fac.1
-        for <dm-devel@lists.linux.dev>; Sat, 10 Feb 2024 19:40:20 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707622820; x=1708227620;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=hMYgiHBEDavj7uIzhw2tvkbewX2cx77PDc9OLk7jn/k=;
-        b=dWmXlt/i0alM8dGZzvCrHPhvRGk/QiUqyGd65KQpCCctKTmVe4uBpgbdQKRE1o0zTx
-         MxrA9iUdWNKHrRsmFCjKaVpN9ugHewzBIr9kbC8isWqtwZIKRjfXDpQsPVtgsLNehHV/
-         kK1gelc4wxpbzY9U6Nl51DOcLmeYZvHSQyrIX4uOVP4sTJCyk3+/xBsgJmNQLpsFVmfp
-         aFvsTpNLRWEThlUXaHir51adxzjFNuOIz72buTzQ2ruy9EZyCIxvMbIqohB7MwPrMnS9
-         LQFPz+eB20On/fp7hCUQ4eEaFVUVw0PQHKGz9/Sx3byvfef4BXKiYV2sSFinu7vLmCz6
-         TWwA==
-X-Forwarded-Encrypted: i=1; AJvYcCXJp/qHshAqHGrNcIwj2hamoI48vWqaAYH6szXRFmzi1/1NuEO0qJmputP9O5ivlPaJeAenPlKjJJn0A12dFIFHBavAwzc1rKY=
-X-Gm-Message-State: AOJu0YyDONy5H70akKnrGBEi3+VL1P4xKdtB0iqXLs2CVrbsMbWyEVJb
-	kAfQyN0uQLZmNwke7DFNyeSXpFPuQI8Zg5W7XD1c3XUtlYp/o9yf
-X-Google-Smtp-Source: AGHT+IGR4P8pGKs+ctCklf4XqK/ylZuLJWQJ0EO9ZKQtD/TUh1WRmTCeAUQBhkgAkZGaHUs1ZTNcFQ==
-X-Received: by 2002:a05:6870:b48a:b0:212:42f4:82f4 with SMTP id y10-20020a056870b48a00b0021242f482f4mr4817221oap.4.1707622819693;
-        Sat, 10 Feb 2024 19:40:19 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCUxEhV9yJrJ24Jyyy7aLZmf4V0fw6ZPd0WLNVjRFQC0RNX0R/GJhy4LpgeDgqciTtru6g0MOUXaR8Ga/dHnufxYziotVgVhT7uDVDgHENPtV/8lmpUDW4+3cD4WDEsmUyk0UuB2xWPtYMtgXbQ3QL3YlN6r3o9rhY8wndYroVE7atBeIlK07Bj+4Dl1c7VrlLS5wMkP2OLfTS7ttwjlsoF63B2nsTmd3egehKOvbv5hsqTrr9CRf/kV+wCluc3QOt6fclBcIcyBHCvQy3l88Vq3
-Received: from [192.168.51.14] (c-73-231-117-72.hsd1.ca.comcast.net. [73.231.117.72])
-        by smtp.gmail.com with ESMTPSA id w13-20020a17090ad60d00b00296a7ac8b5fsm4361773pju.6.2024.02.10.19.40.18
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sat, 10 Feb 2024 19:40:19 -0800 (PST)
-Message-ID: <a1531631-dce4-49a6-a589-76fa86e88aeb@acm.org>
-Date: Sat, 10 Feb 2024 19:40:17 -0800
+	s=arc-20240116; t=1707676205; c=relaxed/simple;
+	bh=74YHyaDhJLXssD4iP9ahFOyAatWAfcQ49coXo35cm18=;
+	h=Message-ID:Date:MIME-Version:To:Cc:References:Subject:From:
+	 In-Reply-To:Content-Type; b=upfB20QbcfxiVC9MGO3l/1j/lZhx7E5yIblXrJYmYusrtk8x12NjLHZ9fuYgTnhTGtQ5U4/3f4iM/gxa+4lr/LA+AJcKhaGCa9jcpRg09DRp7S2eC99TNqxMmYGHxfeVjtQQl56Ndn+y1F10HuVhL0Le3Baccl+LrosWg/DAdag=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de; spf=pass smtp.mailfrom=web.de; dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b=kqYKgoh0; arc=none smtp.client-ip=212.227.15.4
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=web.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b="kqYKgoh0"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=web.de; s=s29768273;
+	t=1707676174; x=1708280974; i=markus.elfring@web.de;
+	bh=74YHyaDhJLXssD4iP9ahFOyAatWAfcQ49coXo35cm18=;
+	h=X-UI-Sender-Class:Date:To:Cc:References:Subject:From:
+	 In-Reply-To;
+	b=kqYKgoh0Hs7D5bhjC02lOcuXQVIYV/9CxN3yWqJWhRSY/KhVvF4qLkDe2QSStatR
+	 sR/jRBgcsqErHEjCUt6f1ZYyS1C4TJrbRG8NZYR4aJ2SBCWYaLWLAn4Xvs83QicIv
+	 HOzXSRNMwQ34XwqRK0FrdnKGCbKg09/obu72qUDeegySthjghdu2HOUgbtCT5SqOc
+	 Pgxx3nDXrQ7FxcdBvf1cV06Cv483SSkeeqkN3ohLX6123iUI4Eojxe+W6OmAWZ2P3
+	 syujlUf0LAWuDY9V2UelxSXgjc6SwQaheFuALrp4zxJNTCGPSIbr2RCu8ZJcvLiGr
+	 8ZqD2OoAgweLFzG5oA==
+X-UI-Sender-Class: 814a7b36-bfc1-4dae-8640-3722d8ec6cd6
+Received: from [192.168.178.21] ([94.31.80.95]) by smtp.web.de (mrweb006
+ [213.165.67.108]) with ESMTPSA (Nemesis) id 1Mv3Ya-1qie1m1ySG-00r3IB; Sun, 11
+ Feb 2024 19:29:34 +0100
+Message-ID: <bc60c33e-c268-4e7e-94f9-e573545ffe98@web.de>
+Date: Sun, 11 Feb 2024 19:29:28 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -48,57 +40,50 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 25/26] block: Reduce zone write plugging memory usage
-Content-Language: en-US
-To: Damien Le Moal <dlemoal@kernel.org>, Hannes Reinecke <hare@suse.de>,
- linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
- linux-scsi@vger.kernel.org, "Martin K . Petersen"
- <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
- Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-References: <20240202073104.2418230-1-dlemoal@kernel.org>
- <20240202073104.2418230-26-dlemoal@kernel.org>
- <09d99780-8311-4ea9-8f48-cf84043d23f6@suse.de>
- <f3a2f8b8-32d2-4e42-ba78-1f668d69033f@acm.org>
- <a324beda-7651-4881-aea9-99a339e2b9eb@kernel.org>
- <2e246189-a450-4061-b94c-73637859d073@acm.org>
- <75240a9d-1862-4d09-9721-fd5463c5d4e5@kernel.org>
- <e2a1a020-39e3-4b02-a841-3d53bd854106@acm.org>
- <c03735f3-c036-4f78-ac0b-8f394e947d86@kernel.org>
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <c03735f3-c036-4f78-ac0b-8f394e947d86@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+To: Dan Carpenter <dan.carpenter@linaro.org>,
+ Matthew Sakai <msakai@redhat.com>, "J. corwin Coburn"
+ <corwin@hurlbutnet.net>, Sweet Tea Dorminy <sweettea-kernel@dorminy.me>,
+ Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
+ kernel-janitors@vger.kernel.org
+Cc: LKML <linux-kernel@vger.kernel.org>
+References: <16ffd614-48a9-42b8-961d-2dc8a69c48d6@moroto.mountain>
+Subject: Re: dm vdo slab-depot: delete unnecessary check
+Content-Language: en-GB
+From: Markus Elfring <Markus.Elfring@web.de>
+In-Reply-To: <16ffd614-48a9-42b8-961d-2dc8a69c48d6@moroto.mountain>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:o5C86Z9n5z4X2YsnFMlMnGSSfF15aQxmj9OgobzQ3XBKbZz+Dru
+ HJOlK4fIAoOl5ReAteu7vc6S4gzCSVPcf00uYHZ8YmUNVWdOMAq7trdjq7xUsSBgTzWb484
+ MH3YyzbNzqWjhgqpCbOlpOzIK799asb7cdj+YkEV8mP0hpqtsyCsLSnIQHEtkfT8IxBHPCQ
+ NdmoIGr5zJkfyFpPehLsQ==
+X-Spam-Flag: NO
+UI-OutboundReport: notjunk:1;M01:P0:7nZPYxQdON4=;fHrT4ZFPZ6VGtdo5GteLvoqy77w
+ fZO5DenF+Zif5rIahUiQEyTbq43jvCnLgGxcaJ/Ii6iRIc4So43poG7UQpOVAka6RTZDbgTzp
+ ZbYCIrmibi5VW+ByCvWZULwCA0bfWG+hXLqnM5XuZUDqfv0337mRJmTNoNN/dQvidK8WFVL0Q
+ uaD/YNKJvcmx76ZARUT90eFHDwTLAihBsMXPJdpe16FcIbChChU9yiYKWEqNtO9408ZP/ZrJ8
+ OR28pLGNGTlTHeIJYCMhdm0hq2WQ8rasHuOPllVuyrGcAvLuUvxsaMjHRF3RkESNgFSmy2Jzy
+ n4mcUk2b3HLoT+tLjGYT0v8EjjOi14fm5QuOwLjP7FqE4I8Y3dTQDT/IVVPGuTMgJ25iUgdty
+ UB/12EDfbZcpmsiSnrSaXlMkdoR34r3BeiGvQ4zZB7EWT+DiPkFqnd8ngxhNJv8/8dcPKCZxk
+ gwo3TP76IiCn7c51Ubu8UenDQBjmyULtmGCNs942zR3ESu57OO/9rF0x6peMShiji4XHqoDXG
+ IYJrVx5UrYT5wn1enml8YH9KB7ikskhRfwp65sJhO4z4LQKFIQykW7F5UxqJOyA+CmGCh9Jud
+ yDNESGh237ymZT4+Wdc2LKYLEw9/Sjqar6LLpDIRkXLSUquXvEsTjG57v0CgcgYalb1Gw+68e
+ Ly4JuU0SdP+TlRK7tFX8lQnJT/FcOb3d2ZvLEvTsM3665HoH7J+gSP91a7J6DaYpdGLSObrjx
+ 3YPuf5j0Ytp4tGTVi3zNvE9mMAGBw7v9JHfRPCZzm1/4oIOHSJ54JYCOKJ+kceZYYzI+IbYHN
+ 6WuxoJBpf1MkzS+zqXaaGeE0mL3bT1H2gHGZX0QkYUCFw=
 
-On 2/9/24 16:06, Damien Le Moal wrote:
-> On 2/10/24 04:36, Bart Van Assche wrote:
->> written zones is typically less than 10. Hence, tracking the partially written
-> 
-> That is far from guaranteed, especially with devices that have no active zone
-> limits like SMR drives.
+> This is a duplicate check
 
-Interesting. The zoned devices I'm working with try to keep data in memory
-for all zones that are neither empty nor full and hence impose an upper limit
-on the number of open zones.
+Was this implementation detail detected with any known source code analysi=
+s tool?
 
-> But in any case, what exactly is your idea here ? Can you actually suggest
-> something ? Are you suggesting that a sparse array of zone plugs be used, with
-> an rb-tree or an xarray ? If that is what you are thinking, I can already tell
-> you that this is the first thing I tried to do. Early versions of this work used
-> a sparse xarray of zone plugs. But the problem with such approach is that it is
-> a lot more complicated and there is a need for a single lock to manage that
-> structure (which is really not good for performance).
 
-Hmm ... since the xarray data structure supports RCU I think that locking the
-entire xarray is only required if the zone condition changes from empty into
-not empty or from neither empty nor full into full?
+> so it can't be true. =E2=80=A6
 
-For the use cases I'm interested in a hash table implementation that supports
-RCU-lookups probably will work better than an xarray. I think that the hash
-table implementation in <linux/hashtable.h> supports RCU for lookups, insertion
-and removal.
+I suggest to reconsider this information a bit more.
+Would you usually expect the outcome =E2=80=9Cresult =3D=3D VDO_SUCCESS=E2=
+=80=9D from a call
+of the function =E2=80=9Cuds_allocate=E2=80=9D?
 
-Thanks,
-
-Bart.
-
+Regards,
+Markus
