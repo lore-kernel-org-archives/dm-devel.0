@@ -1,52 +1,50 @@
-Received: from mail-qk1-f174.google.com (mail-qk1-f174.google.com [209.85.222.174])
+Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com [209.85.222.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2A825C5EB
-	for <dm-devel@lists.linux.dev>; Sun, 11 Feb 2024 18:55:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B8461DFC4
+	for <dm-devel@lists.linux.dev>; Sun, 11 Feb 2024 19:59:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707677711; cv=none; b=RhFMUko5bssyIJqgGdTRefw3YH6dRYCCTCuRj2/3aeRuzxQkoPQlRnM1lxDSa1BnS7iuTQLu0yB8dfbQM252u4hcKuynRa1AicZ9Kq+CmVl9LreLx03sTC3POwIMM3Mgky8SQ5jI0w0M9HKNlSB+YpdxeoWnno3T0XZdRCYK2Wg=
+	t=1707681547; cv=none; b=LmmXpgYbtS6s5JBs5nPh+ucBVOnTFQuv9S6XPu/CIACC0KO/65aTK8P/IvIVFGdVixhfh2mzdDMhAYE2bAO1ZQSInBocFt/xB7iT954LC9Whnd9jjvrxsrdk/Gysiw+h54yIOxz8cLngmeg+YW02iwJakK5Ua6LWbuiAh6PuD+0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707677711; c=relaxed/simple;
-	bh=zOMiltPoLSaPVXQpX+AyhP1tWAB8q+YFG5onf3ColLs=;
+	s=arc-20240116; t=1707681547; c=relaxed/simple;
+	bh=T+Y3yC0v173QxskFME6F+TyQjW3CbY53cxL4I1VK5A8=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=d/hgoxH0ZSzahOYmWTc4yvjSle9bvjywMLrQxccNQyQ7iZvqZYf3YjU+KMm53Y5nQTNiM0ESnz1R90o+y2rZx+L1kz/ewxMDRuB406zpWGzJYgajrug1KLSTKTQiNf0CayNAOV4rqh9WLa+ZzeMNt/FkDKvlP5qOQpOYELJLLqs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.174
+	 Content-Type:Content-Disposition:In-Reply-To; b=pfK6ASkPJZPvz09Ivdth0f6W2/PM5VRspx1q/qzr8ARIZ2YCUgKAx4ldTJ5zWNOLptXR8KTuVFmabAxInsMwmLLSU+IitpoUZhgdjmMuxFeRke9PiXxI3mfhfW+mgFBP9+z+gaHYGYD2FWtJlopa3Tytvq8saooupuCEIDHLB0M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.171
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qk1-f174.google.com with SMTP id af79cd13be357-783ef8ae70aso172001085a.2
-        for <dm-devel@lists.linux.dev>; Sun, 11 Feb 2024 10:55:09 -0800 (PST)
+Received: by mail-qk1-f171.google.com with SMTP id af79cd13be357-783dc658bd9so126285185a.1
+        for <dm-devel@lists.linux.dev>; Sun, 11 Feb 2024 11:59:05 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707677708; x=1708282508;
+        d=1e100.net; s=20230601; t=1707681545; x=1708286345;
         h=in-reply-to:content-disposition:mime-version:references:message-id
          :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=ZYaFnPH4T57xbODxsrD1uA/JRSAy3nBPFfHDTo1ipmE=;
-        b=Cvg7Xj2w/SmdNbWFDQXLNNlQ1ru5W4072+CRxccIqblzWVETvdHQoKpQSLwke+6Kye
-         1Wwu0Eyr603KlWXPqKEnS3SVAi2BUoweJ1Sb8aoVDFsbImpDOyHE0infAoNiuskCxreG
-         iqoOhfFFynnS3/3C2wE0m3jiKafspo0xuV7cet8VSELT4eqKrTIIqlokB7P7TVQR6Kr7
-         Ar0di/b/60fwKx3M24MlqY7zwPBM2zQ1dQ+9uOnkYEIyvVElnhh+i+aXI2P3qyxogwco
-         FIQhTKXW2NT1tPYsUQwEQNKUBBU/XmTPxWvqo7eydaMau0im7REATBY8e4TDNi3Qs2xO
-         OVJg==
-X-Gm-Message-State: AOJu0YwbxZAZc6O3yDQPGHQr2mmhzhSbS+RZEPphed7G9VVNrF1yYmE+
-	+NxYWUb033XhLM5Yun/cCy5hEMVM1/VaBblPp3hKkzbQ5+KVTgHHVEOW00rBQ4muFdL9uhSY3B8
-	=
-X-Google-Smtp-Source: AGHT+IEpVYQgDizFElfNgxxrxcQYJwrK2TguA2ymoGhXLUMM6BM6g4VnY8a5QEGnidAYziFgxvHqig==
-X-Received: by 2002:a0c:dd08:0:b0:68c:48fd:4441 with SMTP id u8-20020a0cdd08000000b0068c48fd4441mr5088279qvk.64.1707677708614;
-        Sun, 11 Feb 2024 10:55:08 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCUN17KHbxG10s+yxCtcs3OdW+Xkyi+j12gZmyMIv8GAHSnYGoSY4HE9hwNcdGiorsU8NTu+jVS/XyFjRSfwsSAoH1fHgR3wyBbxKRyqKN35MPBaBUG6gQVbISVPBRikukhUy1XefK4QGMevRepkn0rmKH+phaIL7Sg9NxV67STQkMKJyC0Cckw=
+        bh=nqNjkt1HFR0hujdDQvGjKA90RZsyD+WBrok5zBF9+dI=;
+        b=dH74XOC/0c+mzHiR+mikAbZ/h0lP0XXLdF8+CIqifOVe0uJJXhU6O/Hs7kKPco+upM
+         lEaoToB4O1+u1duqJBaAiVz1NYIjBJ+hDnWQM58YBJl2tEHiLi8NZjeLqXMvBx8jmkpA
+         KGNhnEuUlP0pn0sOp8u0rJGHZMBUgWwSsuW594G/XOxN/A+RZZ87zV4h1SZk43rnDopZ
+         ea/QdESYkJZ2J5zP0abe6o7XOBwJ+rYqVH2UEPia2jZ0ci0yk735eyww+7/D47/F+5OO
+         ox5Pienq5fPTTs7N5ctGhGdkrk7BRQKqMIuts6ZR/5Hxdx8KPXD9SJb7YUq7V7xu4Qnd
+         F2jQ==
+X-Gm-Message-State: AOJu0Yy2k58KOeBC4SiqF9w9NgHO0AqgIr/R+WuPio/ytZpgT5S/+1oY
+	Q3ZuZyvrpRZqsTEjzbDE8XVX6jHpEte7SGiojridbI6o6YFuLNzNf1c8CVPDNg==
+X-Google-Smtp-Source: AGHT+IFE8/v4vPRnBfQlKGQlP/Acrgy3R3PG2bUWQ6oe13RSP0K1j/aq4e1oTIdwgdtpJmjT5s3f2w==
+X-Received: by 2002:a05:620a:a03:b0:785:9236:6947 with SMTP id i3-20020a05620a0a0300b0078592366947mr5898496qka.57.1707681544816;
+        Sun, 11 Feb 2024 11:59:04 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCXIOQ0CI9zzM/6AcTVchlhxodzrT40xxJoLktobnRyh8iM3A90QZTaLKI5SMFf5UFVV4HM3p424EjHlqLGaZHewDCjM1POy0k4=
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id nh6-20020a056214390600b0068c6dd9af10sm2685704qvb.64.2024.02.11.10.55.07
+        by smtp.gmail.com with ESMTPSA id v15-20020a05620a122f00b00785d3729eb0sm473484qkj.41.2024.02.11.11.59.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 11 Feb 2024 10:55:08 -0800 (PST)
-Date: Sun, 11 Feb 2024 13:55:07 -0500
+        Sun, 11 Feb 2024 11:59:04 -0800 (PST)
+Date: Sun, 11 Feb 2024 14:59:03 -0500
 From: Mike Snitzer <snitzer@kernel.org>
 To: Dan Carpenter <dan.carpenter@linaro.org>
-Cc: Matthew Sakai <msakai@redhat.com>, dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
-Subject: Re: dm vdo slab-depot: delete unnecessary check
-Message-ID: <ZckYC4wyzbX2870P@redhat.com>
-References: <16ffd614-48a9-42b8-961d-2dc8a69c48d6@moroto.mountain>
+Cc: msakai@redhat.com, dm-devel@lists.linux.dev
+Subject: Re: [bug report] dm vdo: add flush support
+Message-ID: <ZcknB66hlxVFOBi4@redhat.com>
+References: <c91e8c15-d418-419c-aebe-078bd8f12687@moroto.mountain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -55,38 +53,52 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <16ffd614-48a9-42b8-961d-2dc8a69c48d6@moroto.mountain>
+In-Reply-To: <c91e8c15-d418-419c-aebe-078bd8f12687@moroto.mountain>
 
-On Fri, Feb 09 2024 at  8:06P -0500,
+On Fri, Feb 09 2024 at  3:48P -0500,
 Dan Carpenter <dan.carpenter@linaro.org> wrote:
 
-> This is a duplicate check so it can't be true.  Delete it.
+> Hello Matthew Sakai,
 > 
-> Signed-off-by: Dan Carpenter <dan.carpenter@linaro.org>
-> ---
->  drivers/md/dm-vdo/slab-depot.c | 3 ---
->  1 file changed, 3 deletions(-)
+> The patch 7d7084389ab3: "dm vdo: add flush support" from Nov 16, 2023
+> (linux-next), leads to the following Smatch static checker warning:
 > 
-> diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
-> index 42126bd60242..2f4a2ae5e082 100644
-> --- a/drivers/md/dm-vdo/slab-depot.c
-> +++ b/drivers/md/dm-vdo/slab-depot.c
-> @@ -4100,9 +4100,6 @@ static int allocate_components(struct slab_depot *depot,
->  		};
->  	}
->  
-> -	if (result != VDO_SUCCESS)
-> -		return result;
-> -
->  	slab_count = vdo_compute_slab_count(depot->first_block, depot->last_block,
->  					    depot->slab_size_shift);
->  	if (thread_config->physical_zone_count > slab_count) {
-> -- 
-> 2.43.0
+> 	drivers/md/dm-vdo/flush.c:114 allocate_flush()
+> 	error: uninitialized symbol 'flush'.
 > 
+> drivers/md/dm-vdo/flush.c
+>     101 static void *allocate_flush(gfp_t gfp_mask, void *pool_data)
+>     102 {
+>     103         struct vdo_flush *flush;
+>     104 
+>     105         if ((gfp_mask & GFP_NOWAIT) == GFP_NOWAIT) {
+>     106                 flush = uds_allocate_memory_nowait(sizeof(struct vdo_flush), __func__);
+>     107         } else {
+>     108                 int result = uds_allocate(1, struct vdo_flush, __func__, &flush);
+>     109 
+>     110                 if (result != VDO_SUCCESS)
+>     111                         uds_log_error_strerror(result, "failed to allocate spare flush");
+> 
+> In real life, uds_allocate_memory() isn't going to fail here, but
+> if it did then "flush" isn't initialized...
+> 
+>     112         }
+>     113 
+> --> 114         if (flush != NULL) {
+>     115                 struct flusher *flusher = pool_data;
+>     116 
+>     117                 vdo_initialize_completion(&flush->completion, flusher->vdo,
+>     118                                           VDO_FLUSH_COMPLETION);
+>     119         }
+>     120 
+>     121         return flush;
+>     122 }
+> 
+> regards,
+> dan carpenter
 > 
 
-Looks good, I've picked this up.
+I've fixed this and added your Reported-by
 
 Thanks,
 Mike
