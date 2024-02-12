@@ -1,46 +1,37 @@
-Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com [209.85.210.169])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D4184174F
-	for <dm-devel@lists.linux.dev>; Mon, 12 Feb 2024 18:58:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE22AA48;
+	Mon, 12 Feb 2024 20:33:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707764297; cv=none; b=PbQxp2r+qin5/bawMDRHEliFF2MeKMo2klHX4WPuSm5pYvgUgerFXAngZhZTu91RL1Dx9k9znnrvqAx8/jIk0un/wmFJ8z151bSHmUDY/PDeL8DjW0Tqe3pB3FFYMzUf+xBrJJuij+KMpzaiwtkpl2PF8x+cJaQ1xZQl8hafId4=
+	t=1707769992; cv=none; b=C7qa7LgHhTEOvSSmNJVFJHXOWjMYWBZFpJxdkRr4yZDRRiHMtNNY+ozxindsTD/A1d+m7rnBi4jN4+LiaaCiLdsczFM2yveAgi7ZYoG56VcKADn5XADDrQYPCi7l1nIXBfYsqLBtJSv+O06GskyCUkTTPBF+QRHz/NG9nWg8664=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707764297; c=relaxed/simple;
-	bh=oBORXUPQB4yrjvrk+2g91gv98knQnBzlsSlJv9Oz4Vo=;
+	s=arc-20240116; t=1707769992; c=relaxed/simple;
+	bh=nJUt4pHJ8BpD1u4EJKsxi9gTeO8e+eSF+KEnrBvsl7k=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=BAuGJY2N4weLCfXvdU1Y+vdKWYWNiubotGOqigL8BzMS+MXQu9chh6bn16Rt6qdNCzc441ix/V7D91HRqgfEdrdx0zxKzSQD+PRNVQTgqxaUSmJRHWAhe34yHS165x80wLLxhkVx8AHtdMAYy1h5pnedAQMQJu5bPGo4KuISnzc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.210.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-pf1-f169.google.com with SMTP id d2e1a72fcca58-6e096229192so2711862b3a.1
-        for <dm-devel@lists.linux.dev>; Mon, 12 Feb 2024 10:58:16 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707764296; x=1708369096;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=FMiKDshhm4Ns7d1XVPONNwU0zO4lYi41plmErazUVpQ=;
-        b=pyIX91u1mzjN/YDwWGSj+ME6XLLLVXo1lqO/R4W4ygeX/R6D7Wfn0Kq+4DULNhYkOI
-         lFeJR9Wj+LCAu3eapfDckOIMiLPFp2HGIWOzfokbTymGRH6uZ62fiNyLVurxmuCO3Hg3
-         o9+bioKOpkWpjript9q+Mra9hF4dEIb7YbYgXc8xsIj4pPQ56sTYTZbWso13Uqy4ma+k
-         PUANnDXHZL/Y94TPBmOPXt7+gLJdmzeTxzqLsxbN0MLql/Q4nlDMbllNyxMqWjGRpZpH
-         0cUMQrZD5HmEjk9Uour82EQcrm1Qyehz3x8VvDNLOz7uMJZIOpEFfMgoLT/AXt8GhbE9
-         d7Ig==
-X-Forwarded-Encrypted: i=1; AJvYcCWSzaMrIzRvV4MOb8z/jwmxaRma7yh7LnrTUDgV7HdsA2OUwp+Vihjc1fDXXXtnx5btCCFTLuSDWAyRdyujGkxTNltkJWSy6os=
-X-Gm-Message-State: AOJu0YzIjkLgp2neSOqdxBTYS0NpS1LAuTqrIRnKuoiNTqsR4UrMA7ui
-	1yujbR3dKGzGH1/daI1qXH/OSmyZBGEoYviAhfDl3WoxB3XSeHMk
-X-Google-Smtp-Source: AGHT+IHj+V0InCmmwC3gd1/7mIX2MORi4sT6njdKxQe6B6o4ScdwOLvKUrib+HycVmyBoj444q5hDA==
-X-Received: by 2002:a05:6a21:3993:b0:19e:c777:5c60 with SMTP id ad19-20020a056a21399300b0019ec7775c60mr9251719pzc.21.1707764295685;
-        Mon, 12 Feb 2024 10:58:15 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCXAbMmvukj5Tps4Q/3BK2orBYiT9Qa5/0zMcijZHtkn56W+UhN/UKDUyFsdydY7rqbpdoV3APLzkDMBSQUx3x3IQWVH/RV5gmPctO/49tu+GNh4RX8HigfH6t7juTfPe8+51qendpWMZ99sR1AobSi4ty8hhJ37DCcdIWzWEYY1AuKuA26W1Xa3Kr63oKpdzFcWz9Zd2IVGXgQupRs1usOCc+MC8TKIYDiVPAI9NRu/pkznJFL+svGcbCuhkzWsKBtBSDhWZoBHNWF309UNh4zk
-Received: from ?IPV6:2620:0:1000:8411:dfc4:6edd:16dd:210a? ([2620:0:1000:8411:dfc4:6edd:16dd:210a])
-        by smtp.gmail.com with ESMTPSA id u18-20020a62d452000000b006da1d9f4adcsm6122771pfl.127.2024.02.12.10.58.14
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 12 Feb 2024 10:58:15 -0800 (PST)
-Message-ID: <25d2f9b4-113d-4967-bbdb-24cb6ca62c2b@acm.org>
-Date: Mon, 12 Feb 2024 10:58:14 -0800
+	 In-Reply-To:Content-Type; b=BDbJ8ApbmC75cnIfLBkkhHat1GHKUNkUM6ZwG6UZTh9rifMsjEtwz+yTX2tjxBYRdmeUw7JWiIRXi7Z9JvZWOlnURhyXByvCcs9ycRcrKyJRFMzQXgzOjp6GyLpxmtNkcOwSbVE8MTwY8br2oeItEpCym4cjxo+BJVWNAlTBSsY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=tbTxPzGp; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="tbTxPzGp"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	Content-Type:In-Reply-To:From:References:Cc:To:Subject:MIME-Version:Date:
+	Message-ID:Sender:Reply-To:Content-ID:Content-Description;
+	bh=cB5uI6Uc3sHMEabW/GpnBNsAvTUG2EhVDqN17ZdYZDk=; b=tbTxPzGpCT6Xm4uWLt66esQI+h
+	mFce4aLnEh2/erOnvVwfiyz28Tt5b8YTC9hta3yy3mpw+VlZX7SeOtCnjtQGqbt21zyOYI3d6eM1g
+	TqGC7/P0Vb7wlEx92mv6xOWHIvJcvUfxdMZ9agb+gAXj5sKS1RAZF6z6kDCnjlnmapjPNIEuM2MVK
+	m1tG/nk2OhaXrY1wDOyvWt5C1yA2zmVsBG12NNF8mxA+C0P65GVL4JZVaxpPQByQ4HBL+y6E4CgMZ
+	cfR28tIH/X+8JnzCm4Pglev3Fl1GhAkjI7Mr5OYxjufZ64N3LohcZfrB1aw9stQ3lPxURYNR+Uhdi
+	9+Zaziew==;
+Received: from [50.53.50.0] (helo=[192.168.254.15])
+	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rZczF-00000006sNd-18m4;
+	Mon, 12 Feb 2024 20:33:09 +0000
+Message-ID: <ea0554f6-e0f6-44eb-b98a-d25772273f6e@infradead.org>
+Date: Mon, 12 Feb 2024 12:33:08 -0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -48,56 +39,46 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 25/26] block: Reduce zone write plugging memory usage
+Subject: Re: linux-next: Tree for Feb 12 (drivers/md/dm-vdo/thread-registry.c
+ on arch/loongarch/)
 Content-Language: en-US
-To: Damien Le Moal <dlemoal@kernel.org>, Hannes Reinecke <hare@suse.de>,
- linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
- linux-scsi@vger.kernel.org, "Martin K . Petersen"
- <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
- Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-References: <20240202073104.2418230-1-dlemoal@kernel.org>
- <20240202073104.2418230-26-dlemoal@kernel.org>
- <09d99780-8311-4ea9-8f48-cf84043d23f6@suse.de>
- <f3a2f8b8-32d2-4e42-ba78-1f668d69033f@acm.org>
- <a324beda-7651-4881-aea9-99a339e2b9eb@kernel.org>
- <2e246189-a450-4061-b94c-73637859d073@acm.org>
- <75240a9d-1862-4d09-9721-fd5463c5d4e5@kernel.org>
- <e2a1a020-39e3-4b02-a841-3d53bd854106@acm.org>
- <c03735f3-c036-4f78-ac0b-8f394e947d86@kernel.org>
- <a1531631-dce4-49a6-a589-76fa86e88aeb@acm.org>
- <028b77ed-d6a9-44e6-a603-3558914381a1@kernel.org>
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <028b77ed-d6a9-44e6-a603-3558914381a1@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+To: Stephen Rothwell <sfr@canb.auug.org.au>,
+ Linux Next Mailing List <linux-next@vger.kernel.org>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+ "open list:LOONGARCH" <loongarch@lists.linux.dev>,
+ Huacai Chen <chenhuacai@kernel.org>, Xuerui Wang <kernel@xen0n.name>,
+ dm-devel@lists.linux.dev, Matthew Sakai <msakai@redhat.com>
+References: <20240212153137.2c37f7e6@canb.auug.org.au>
+From: Randy Dunlap <rdunlap@infradead.org>
+In-Reply-To: <20240212153137.2c37f7e6@canb.auug.org.au>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
-On 2/11/24 17:09, Damien Le Moal wrote:
-> On 2/11/24 12:40, Bart Van Assche wrote:
->> For the use cases I'm interested in a hash table implementation that supports
->> RCU-lookups probably will work better than an xarray. I think that the hash
->> table implementation in <linux/hashtable.h> supports RCU for lookups, insertion
->> and removal.
+
+
+On 2/11/24 20:31, Stephen Rothwell wrote:
+> Hi all,
 > 
-> It does, but the API for it is not the easiest, and I do not see how that could
-> be faster than an xarray, especially as the number of zones grows with high
-> capacity devices (read: potentially more collisions which will slow zone plug
-> lookups).
+> Changes since 20240209:
+> 
+> The mm tree lost its boot failure.
 
- From the xarray documentation: "The XArray implementation is efficient when the
-indices used are densely clustered". I think we are dealing with a sparse array
-and hence that an xarray may not be the best suited data structure. How about
-using a hash table and making the hash table larger if the number of open zones
-equals the hash table size? That is possible as follows:
-* Instead of using DEFINE_HASHTABLE() or DECLARE_HASHTABLE(), allocate the hash
-   table dynamically and use the  struct hlist_head __rcu * data type.
-* Use rcu_assign_pointer() to modify that pointer and kfree_rcu() to free old
-   versions of the hash table.
-* Use rcu_dereference_protected() for hash table lookups.
+on loongarch:
 
-For an example, see also the output of the following command:
-$ git grep -nHw state_bydst
+../drivers/md/dm-vdo/thread-registry.c: In function 'vdo_register_thread':
+../drivers/md/dm-vdo/thread-registry.c:32:28: error: 'current' undeclared (first use in this function)
+   32 |         new_thread->task = current;
+      |                            ^~~~~~~
+../drivers/md/dm-vdo/thread-registry.c:32:28: note: each undeclared identifier is reported only once for each function it appears in
+../drivers/md/dm-vdo/thread-registry.c: In function 'vdo_unregister_thread':
+../drivers/md/dm-vdo/thread-registry.c:61:37: error: 'current' undeclared (first use in this function)
+   61 |                 if (thread->task == current) {
+      |                                     ^~~~~~~
+../drivers/md/dm-vdo/thread-registry.c: In function 'vdo_lookup_thread':
+../drivers/md/dm-vdo/thread-registry.c:84:37: error: 'current' undeclared (first use in this function)
+   84 |                 if (thread->task == current) {
+      |                                     ^~~~~~~
 
-Thanks,
 
-Bart.
+-- 
+#Randy
