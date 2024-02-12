@@ -1,113 +1,116 @@
-Received: from mail-il1-f175.google.com (mail-il1-f175.google.com [209.85.166.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 370843C46E
-	for <dm-devel@lists.linux.dev>; Mon, 12 Feb 2024 15:41:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B6933D570;
+	Mon, 12 Feb 2024 16:27:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=167.114.26.122
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707752501; cv=none; b=jxG2sNEB+060PCWuFNPWv7maI7fIbWH6TqNvOPh2NqPRg5iZJY3DAU2yEKeSOZk/RrGcIy/Wenpi8bxu81eM1Lfpn7ebExn3MeN2ZfzOYz2DOWMh9bfWvufuzPnnfZR30vwG86hoQeEQiQRKqcbq3uMH+HQuKMmuop3CVSHWW+I=
+	t=1707755255; cv=none; b=JL9yEIENi5IRjh3uscPehQpgm5ahUgo4F0ZsULpIZlOBIEn0YvBq+9TJnb237wN9iFYGyJ9woQ54NmysdQAz2gkHIu1hfsXOY/v16EgJB7xMcr228GHmXZ3pAJ04H4B9eG3lW1iBx92kN1zaOZzCUdlza12kqcbpOxJILO25oZw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707752501; c=relaxed/simple;
-	bh=rvBLEOBpcb9d59U2CHqDALH8dS8IUh6n3YOhvzkSpgs=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=t/7KHlLgzPjn1gxIWcRv3BMRQlO6J9oK41uQaWyYKyRkOIXlCgtJRdhWDXSaKVsqd2Z5DluOIXX7Q5WgtPCa0EtmilPpIbH8OaMug3fYaExQNV9CuYXQXcTipk5CTBB4eNodTxc0ASklkEtcdKOa5Hm/2Bu0uQcww2XmPtp0lKs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=cfpXyu50; arc=none smtp.client-ip=209.85.166.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1707755255; c=relaxed/simple;
+	bh=k2sz/frCWDb4R4mtAgpiLkGT+g8hxxE7Hdk6DHyuU2A=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=Gvnidb1WN/3NfekWsa9/OW5KfSDhH1wQqQytot/hXWqBgRGE27qsoUJJa2CopRj0poZkc2yCKwZlDrCzVs+399LINJc9A0rgiGD9/QXiwVxCNYme/J0RHzILsJVzYtZdBnCrir4s0d3vpojA/pjhZibFDDjyDLfyHgpDJQ4ABbU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com; spf=pass smtp.mailfrom=efficios.com; dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b=ZZrr1DQ1; arc=none smtp.client-ip=167.114.26.122
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=efficios.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=efficios.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="cfpXyu50"
-Received: by mail-il1-f175.google.com with SMTP id e9e14a558f8ab-363f0a9cf87so5403255ab.0
-        for <dm-devel@lists.linux.dev>; Mon, 12 Feb 2024 07:41:38 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1707752498; x=1708357298; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=G0mXhrpRS+p0F3dgHMjFx7EMsz8T+uz8plxGpEvyFag=;
-        b=cfpXyu50Wdrf2vRcT82tk11VLIE+cfe4W2DB5miEF0lgMe1Zp594AqZkFciej19+Di
-         pI+oSCwJDGR+LS0BMAU4TMihiWlnwyGrApt+HWNDnKchvnmnDyz+0c2Qv6PNXSpMSrN6
-         YO0UiBdV9xOsfV85bf69a9axthQkOc9cZLXJbe1iHQl5WU7Rd7O5zHGy15wow80JqW/g
-         bHWzcreqh5FVFpaKgA9QwBHwTi0qTrT50PuiABQYAbJ41qMLWk9s9FSQCBkmnnq8r4w+
-         6ynR4kE2ilnK2VKQiZnMvwCoYsSH3OwFzluoCl+nXoD5Z+46YGugu/gSHjiLLbnOwZJf
-         gSWg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707752498; x=1708357298;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=G0mXhrpRS+p0F3dgHMjFx7EMsz8T+uz8plxGpEvyFag=;
-        b=RQg2jqVvn5OCKPWOQco/hsQATSD9WkyRBlR/ZiYrHKfjIM4on6TexsqgHVol5FbKzI
-         rjdvEoB07FymTXBn9G81u7xEHuEXi/xaqqm9AhhbZ0uqNeB5Yj4j48+qWWeSWv/t/WPQ
-         aAAKiBXmTqJFtb63WQ35NSZwYgjXMkB1DuZPlLmJb75nSm0MbL9ZhHDklxY8AHjfyOl3
-         21Hln6TmaHNwjol6bs4c4O6djCwKpME9GJQYjd7HoMDJlHEtDqn5NWGdJTspJUMkPQeD
-         z0Fga3ka1HjJwFraYqK7EKKpti3iTrBRjbzagiMhjjIDKmY061NzUYHBTRFyc+6iiKLU
-         exDg==
-X-Forwarded-Encrypted: i=1; AJvYcCWoqybUpQGCRLXAPdHqEt5Y+RoLsnST3rw3yQ03yeqE3y3Pl5ZdO31SWMWFpJQcGugI0V0st+yX0TUYpodh2SfIfswLsLitGHE=
-X-Gm-Message-State: AOJu0YznpgfRhQtjgNDdD1OEVkBGaNdJ3E+Sm/VFRppoDZL0d09WoW70
-	sVyMgHxPud1GbBgHT+2glx1q+gxYU7dilyeqQK0cdGX3KYnwtQUF4GIXIhCQCeo=
-X-Google-Smtp-Source: AGHT+IEnm3ePbL8fRCn1bW7XxydRwFQeu0nYxrSBLL9n45bkvISdrumwN+YpZk9VT+q4F3sMK0GEkg==
-X-Received: by 2002:a05:6602:1235:b0:7c4:4e3d:36ce with SMTP id z21-20020a056602123500b007c44e3d36cemr6321073iot.0.1707752498059;
-        Mon, 12 Feb 2024 07:41:38 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCWnVzGOtmdX7AszrJhRBwMaathZlE7sOIhhmBCZ172Waj/mNt1jVoILjXxsGEIpU2TQcVluLp7cNz/UtFbkni0EEdCOEBsy/xjyiNN/ght5OTEHQGRjxcAlTGlfhtrYbg3hw+98adb+8nL6IVMAAdlU5lTU5EMAAbXgYb1397xO6lrjdnnTP69LWHcEoBVSq9uifg1lQQ9Ljz/8jHJ3IKlWa5Mx1nZXHyLPSF1uiYtAt13KF5itfaSyN9/vDJFXPojaV54onxtzBNZLDWpmBUHVv6moas9okmEo0rIUPz456FSRkUNBLBCQlDnRzZMpsaO/RZkw+TBhPRGJA1oLMS5He4v/Ih2pvl6T9uB988xPxT+TKw7HrN6VyXeP2HkOu+x92KwNyb1cX7tCV7BZ8axVukDGWSvzLjHyfNghSq6t5+2VF2GvOLv8pcXWDwCiqCxajdZ8jKz0iLniEYWXEpLOzgVKGnWA5Kl1UiZvYR8PslSJ7A6DIv7vFdsrJOdn/B9UWWWz2VH4LT+taUOVnIfIddOSfNHB78L9qrXbAmYHMPq7wmT7+C8mZQVNJDyqZwF0UBwGVxnx11Jn9i4gYo/B389dXczXZ8oahlKZYLTMuN0na4Xb4SUUEogYLcOT+oFjiYIu7JWMeiTv
-Received: from [127.0.0.1] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id d62-20020a0285c4000000b0047148f44e27sm1464516jai.2.2024.02.12.07.41.36
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 12 Feb 2024 07:41:37 -0800 (PST)
-From: Jens Axboe <axboe@kernel.dk>
-To: Damien Le Moal <dlemoal@kernel.org>, 
- Naohiro Aota <naohiro.aota@wdc.com>, Johannes Thumshirn <jth@kernel.org>, 
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
- Chris Mason <clm@fb.com>, Josef Bacik <josef@toxicpanda.com>, 
- David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>, 
- Chao Yu <chao@kernel.org>, Christoph Hellwig <hch@lst.de>, 
- Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>, 
- Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
- linux-btrfs@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, 
- linux-block@vger.kernel.org, linux-nvme@lists.infradead.org
-In-Reply-To: <20240128-zonefs_nofs-v3-0-ae3b7c8def61@wdc.com>
-References: <20240128-zonefs_nofs-v3-0-ae3b7c8def61@wdc.com>
-Subject: Re: [PATCH v3 0/5] block: remove gfp_mask for blkdev_zone_mgmt()
-Message-Id: <170775249673.1914864.6863373275533824749.b4-ty@kernel.dk>
-Date: Mon, 12 Feb 2024 08:41:36 -0700
+	dkim=pass (2048-bit key) header.d=efficios.com header.i=@efficios.com header.b="ZZrr1DQ1"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
+	s=smtpout1; t=1707755245;
+	bh=k2sz/frCWDb4R4mtAgpiLkGT+g8hxxE7Hdk6DHyuU2A=;
+	h=From:To:Cc:Subject:Date:From;
+	b=ZZrr1DQ1AtimJocfUuWW9YjFO9Ko886wHKEZj/b/t3qVbPBnd3jlc1BxgqEPzBNRz
+	 CGLO3sSlYjlGi8OaD+jQWSzCM2lpa0rPlh5j2lfN4pHDTet9YqNN8aPWzIc4BcaGNm
+	 VTIWQI+Rlf/jGcB8TKe6i+zqeaBwQ0RuMxVMC85yXi2qOhJGUQMrIgP4Rr0B/4nxWx
+	 cOQ0eQGELKalLtEIqY0Ee4UhXQulAQY7bcXrw+oWU4f8IslM/3NK5r9ZDDjYJOeu/b
+	 bTK0UrdwmtePTqwwtSKUKQs6QQ2cETWBMpZmShYyehQrckpNvzGInZwhmX9gzAyrCq
+	 lrTir9cna9tcg==
+Received: from thinkos.internal.efficios.com (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
+	by smtpout.efficios.com (Postfix) with ESMTPSA id 4TYVH11GRXzYWC;
+	Mon, 12 Feb 2024 11:27:25 -0500 (EST)
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To: 
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Dan Williams <dan.j.williams@intel.com>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Vishal Verma <vishal.l.verma@intel.com>,
+	Dave Jiang <dave.jiang@intel.com>,
+	Matthew Wilcox <willy@infradead.org>,
+	Arnd Bergmann <arnd@arndb.de>,
+	Russell King <linux@armlinux.org.uk>,
+	linux-arch@vger.kernel.org,
+	linux-cxl@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-mm@kvack.org,
+	linux-xfs@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	nvdimm@lists.linux.dev
+Subject: [PATCH] nvdimm/pmem: Fix leak on dax_add_host() failure
+Date: Mon, 12 Feb 2024 11:27:22 -0500
+Message-Id: <20240212162722.19080-1-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.12.5-dev-2aabd
+Content-Transfer-Encoding: 8bit
 
+Fix a leak on dax_add_host() error, where "goto out_cleanup_dax" is done
+before setting pmem->dax_dev, which therefore issues the two following
+calls on NULL pointers:
 
-On Sun, 28 Jan 2024 23:52:15 -0800, Johannes Thumshirn wrote:
-> Fueled by the LSFMM discussion on removing GFP_NOFS initiated by Willy,
-> I've looked into the sole GFP_NOFS allocation in zonefs. As it turned out,
-> it is only done for zone management commands and can be removed.
-> 
-> After digging into more callers of blkdev_zone_mgmt() I came to the
-> conclusion that the gfp_mask parameter can be removed alltogether.
-> 
-> [...]
+out_cleanup_dax:
+        kill_dax(pmem->dax_dev);
+        put_dax(pmem->dax_dev);
 
-Applied, thanks!
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Vishal Verma <vishal.l.verma@intel.com>
+Cc: Dave Jiang <dave.jiang@intel.com>
+Cc: Matthew Wilcox <willy@infradead.org>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Russell King <linux@armlinux.org.uk>
+Cc: linux-arch@vger.kernel.org
+Cc: linux-cxl@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: linux-xfs@vger.kernel.org
+Cc: dm-devel@lists.linux.dev
+Cc: nvdimm@lists.linux.dev
+---
+ drivers/nvdimm/pmem.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-[1/5] zonefs: pass GFP_KERNEL to blkdev_zone_mgmt() call
-      commit: 9105ce591b424771b1502ef9836ca7953c3e0af4
-[2/5] dm: dm-zoned: guard blkdev_zone_mgmt with noio scope
-      commit: 218082010aceb40b5495ebc30028ede6e30ee755
-[3/5] btrfs: zoned: call blkdev_zone_mgmt in nofs scope
-      commit: d9d556755f16f6af8d1d8ebac38b83a9263394c5
-[4/5] f2fs: guard blkdev_zone_mgmt with nofs scope
-      commit: 147ec1c60e3273d21ea1f212c6636f231d6d2771
-[5/5] block: remove gfp_flags from blkdev_zone_mgmt
-      commit: 71f4ecdbb42addf82b01b734b122a02707fed521
-
-Best regards,
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 4e8fdcb3f1c8..9fe358090720 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -566,12 +566,11 @@ static int pmem_attach_disk(struct device *dev,
+ 	set_dax_nomc(dax_dev);
+ 	if (is_nvdimm_sync(nd_region))
+ 		set_dax_synchronous(dax_dev);
++	pmem->dax_dev = dax_dev;
+ 	rc = dax_add_host(dax_dev, disk);
+ 	if (rc)
+ 		goto out_cleanup_dax;
+ 	dax_write_cache(dax_dev, nvdimm_has_cache(nd_region));
+-	pmem->dax_dev = dax_dev;
+-
+ 	rc = device_add_disk(dev, disk, pmem_attribute_groups);
+ 	if (rc)
+ 		goto out_remove_host;
 -- 
-Jens Axboe
-
-
+2.39.2
 
