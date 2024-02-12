@@ -1,108 +1,177 @@
-Received: from mail-ej1-f49.google.com (mail-ej1-f49.google.com [209.85.218.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3DAE4D131
-	for <dm-devel@lists.linux.dev>; Mon, 12 Feb 2024 22:08:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 418D13E47A;
+	Mon, 12 Feb 2024 22:30:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707775722; cv=none; b=lcWToLFIgw6rMrJYnRGx5kCd8E49klR7awau0mm86IkbZpWn0YjzdxW6bgPvQ3llORGtgaKiKQ4xO6zg9ZysO+cpflwZt1bAMyElEotTyECHmbB01e46xjmGF0odKad0qZ9BUpyulj8+KPIot/ZrXgeaecROnwrH1d7nFNa9P9Y=
+	t=1707777036; cv=none; b=V6Bt+MdfNnyTJSUWFNR/FKv0yQJQecABOa568o/5LwYzLcRvB0YgIFKtE/8UAudWlurqLts0QhI6CgZiFtUwxDWvZR6yeUPrvQeuw4jYxyxNxtiy7Fm6lrHIq9ju2raNYIOxs/hXETxqKTdH1xQaOPU/czzN2F6v9Ig82vwybXM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707775722; c=relaxed/simple;
-	bh=gAbe+DaZz7ho9Xs/O1+sZUd+Q7Ss16k+L7gT59qsNpo=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=upOp+tUY4eV4eKn5hRVmTo38Zh1wb/rGRwrSWtg82mRSsmjv4MDtUc8FbUWRcRpZ6FccPkM9lfZBzeA9AOswD5EiDzuh62/jOIsfke4HVs8btus6C1Ntx8saWzGX5XAXsipfYH2nzexTO52+FoEZAYn/GPXmpZbp8CZybG0edHY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=PlF0RXF3; arc=none smtp.client-ip=209.85.218.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
+	s=arc-20240116; t=1707777036; c=relaxed/simple;
+	bh=kUnMr+SNCT9jlr8T8ZVUvbY0SD55vOhjIGfsTQjt3r4=;
+	h=Date:To:From:Subject:Message-Id; b=aSRf2bMaPP8UX5Tco/K+17KTsp6A23PHherPgh7WhU2xCi52/k5973X7Eshi/BlRgUrlvKlihFeV08DzuiR83hDq9M+5yMdBaOYKYQRXgbuyZGminUVGbsPKCtVHassc3ksJTznzXX4ISclkZbFWpk1Ejc3TR8Bpxk5HnctBHOU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=ktaxdCEb; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="PlF0RXF3"
-Received: by mail-ej1-f49.google.com with SMTP id a640c23a62f3a-a3ce44c5ac0so77986466b.1
-        for <dm-devel@lists.linux.dev>; Mon, 12 Feb 2024 14:08:40 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google; t=1707775719; x=1708380519; darn=lists.linux.dev;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=uavn2lIFtdjKttrhD59+foSMVfR1WVZExe9j9lqEZVs=;
-        b=PlF0RXF3TqDw+qfB97zaNoQoHVdoEm52PnYDwAdPUbvHS2NuPKGQ3ehBsMQb6HM//E
-         yTsNsCH+NyeFpkrLqEcDDmb1BiUmPNlkeA+LHROJ05wkGyMEYBUfbBGzZZNmTcxRkQne
-         EyUfF+7oD7a6wrW26ofzUpPNA+ZpflyWnuZDg=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1707775719; x=1708380519;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=uavn2lIFtdjKttrhD59+foSMVfR1WVZExe9j9lqEZVs=;
-        b=SweI5rFmSJftTDVILJXIWimflG3yEmFUunZO67LRvtLFKKjLK3ZQGtS4aJ2njlrZwG
-         8Z6xRW7edlRxXnRuwWktdtNfxdBPPjVfjtc3OvmmOafxW7ddy98W0FZtBDAtiJZ3mqnZ
-         BEdVBgpzGkjuorIp00T/pcNzUd9jy+Ej1U5SK8yB/WkfOO4hgUyT2mzXq73JrY+1OY9c
-         w5xvpy+ytO/WB/NgoUHDNooCbBMgKpRzokRIUGYtbjVQCAs+HnVxboe3B9KrKblaLpBo
-         IqVcE3vuZlLO+km3RoFgSaETVWcQQtxyk2C+81z2+8Sr8pEfG+PmlcOrTpUxhhO8P2sR
-         aJiQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUkkOt/UqEjzib9LK7V72S8MLAym0CmVmQm03pdDFEGoAzbisge4XOKqUX8B+QL4DqD+zCy1JZaByocH+VcJlU5DSAEDe6yquA=
-X-Gm-Message-State: AOJu0YxF9SCswYlAcF/oIyMe83s2+w3CcCIE+NBQaQI9u6YE/Q1J1uLy
-	wL9pyKReSm/179yQdfDasasy5JwdPRg63vUq/PUU8JgX4NQPBUPcO/C0DQ2BAdegvgiu0KyclMb
-	n6GA=
-X-Google-Smtp-Source: AGHT+IG3Lfw+QtWzXVSxYRTdDEshLI6XH+F88bx7gIQ3N5PiD37Av+a9cCj87bijUoUL/HmBCu0vMg==
-X-Received: by 2002:a17:906:2794:b0:a3c:c228:7560 with SMTP id j20-20020a170906279400b00a3cc2287560mr1938872ejc.29.1707775718728;
-        Mon, 12 Feb 2024 14:08:38 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCXoCWqsAtuWGvReYzS781R6OYjWATspNrc2JPI4CwVvwa2EqaQ7ErOZD7kngJRnBfzjFeFZaRZmguGx/Hc+HaqDN1RQxLXggc4=
-Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com. [209.85.208.52])
-        by smtp.gmail.com with ESMTPSA id cu3-20020a170906ba8300b00a3cb30d6271sm620458ejd.143.2024.02.12.14.08.37
-        for <dm-devel@lists.linux.dev>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 12 Feb 2024 14:08:38 -0800 (PST)
-Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-5600d950442so4125549a12.1
-        for <dm-devel@lists.linux.dev>; Mon, 12 Feb 2024 14:08:37 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCVzPXoVbk6VteudjTERxfIdmxqJpwshWbEBB8zTU5e98MINIqwbtv5V7mGxN+8WCISeHkaBK+lTYZjbV3iCrqOA893L4z4B2Pk=
-X-Received: by 2002:aa7:cd66:0:b0:561:f173:6611 with SMTP id
- ca6-20020aa7cd66000000b00561f1736611mr60172edb.35.1707775717604; Mon, 12 Feb
- 2024 14:08:37 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="ktaxdCEb"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 94A83C433F1;
+	Mon, 12 Feb 2024 22:30:35 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
+	s=korg; t=1707777035;
+	bh=kUnMr+SNCT9jlr8T8ZVUvbY0SD55vOhjIGfsTQjt3r4=;
+	h=Date:To:From:Subject:From;
+	b=ktaxdCEb9it2CmaPYzBiUQ+84pXJMr2y4AcBCX2DHvY+4sf5EJf2IeMtk77SXYhZs
+	 Ba05gtlghbJ1GrVcTkInufemBYJgawt8B+PIqeHaFkd0BmsUAZcS7f27Fx7D6d0QhK
+	 3RQHj5H+ovkIrwJfVC+Uosiev26PyDcrHkHd5TUM=
+Date: Mon, 12 Feb 2024 14:30:35 -0800
+To: mm-commits@vger.kernel.org,willy@infradead.org,vishal.l.verma@intel.com,torvalds@linux-foundation.org,snitzer@kernel.org,mpatocka@redhat.com,linux@armlinux.org.uk,dm-devel@lists.linux.dev,david@fromorbit.com,dave.jiang@intel.com,dan.j.williams@intel.com,arnd@arndb.de,agk@redhat.com,mathieu.desnoyers@efficios.com,akpm@linux-foundation.org
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: + dax-alloc_dax-return-err_ptr-eopnotsupp-for-config_dax=n.patch added to mm-unstable branch
+Message-Id: <20240212223035.94A83C433F1@smtp.kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-References: <20240212163101.19614-1-mathieu.desnoyers@efficios.com>
- <20240212163101.19614-6-mathieu.desnoyers@efficios.com> <65ca95d086dfd_d2d429470@dwillia2-xfh.jf.intel.com.notmuch>
-In-Reply-To: <65ca95d086dfd_d2d429470@dwillia2-xfh.jf.intel.com.notmuch>
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Date: Mon, 12 Feb 2024 14:08:20 -0800
-X-Gmail-Original-Message-ID: <CAHk-=wiqaENZFBiAihFxdLr2E+kSM4P64M3uPzwT4-K9NiVSmw@mail.gmail.com>
-Message-ID: <CAHk-=wiqaENZFBiAihFxdLr2E+kSM4P64M3uPzwT4-K9NiVSmw@mail.gmail.com>
-Subject: Re: [PATCH v5 5/8] virtio: Treat alloc_dax() -EOPNOTSUPP failure as non-fatal
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Arnd Bergmann <arnd@arndb.de>, 
-	Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, 
-	Andrew Morton <akpm@linux-foundation.org>, Vishal Verma <vishal.l.verma@intel.com>, 
-	Dave Jiang <dave.jiang@intel.com>, Matthew Wilcox <willy@infradead.org>, 
-	Russell King <linux@armlinux.org.uk>, linux-arch@vger.kernel.org, 
-	linux-cxl@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, 
-	linux-xfs@vger.kernel.org, dm-devel@lists.linux.dev, nvdimm@lists.linux.dev, 
-	linux-s390@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
 
-On Mon, 12 Feb 2024 at 14:04, Dan Williams <dan.j.williams@intel.com> wrote:
->
-> This works because the internals of virtio_fs_cleanup_dax(), "kill_dax()
-> and put_dax()", know how to handle a NULL @dax_dev. It is still early
-> days with the "cleanup" helpers, but I wonder if anyone else cares that
-> the DEFINE_FREE() above does not check for NULL?
 
-Well, the main reason for DEFINE_FREE() to check for NULL is not
-correctness, but code generation. See the comment about kfree() in
-<linux/cleanup.h>:
+The patch titled
+     Subject: dax: alloc_dax() return ERR_PTR(-EOPNOTSUPP) for CONFIG_DAX=n
+has been added to the -mm mm-unstable branch.  Its filename is
+     dax-alloc_dax-return-err_ptr-eopnotsupp-for-config_dax=n.patch
 
- * NOTE: the DEFINE_FREE()'s @free expression includes a NULL test even though
- * kfree() is fine to be called with a NULL value. This is on purpose. This way
- * the compiler sees the end of our alloc_obj() function as [...]
+This patch will shortly appear at
+     https://git.kernel.org/pub/scm/linux/kernel/git/akpm/25-new.git/tree/patches/dax-alloc_dax-return-err_ptr-eopnotsupp-for-config_dax=n.patch
 
-with the full explanation there.
+This patch will later appear in the mm-unstable branch at
+    git://git.kernel.org/pub/scm/linux/kernel/git/akpm/mm
 
-Now, whether the code wants to actually use the cleanup() helpers for
-a single use-case is debatable.
+Before you just go and hit "reply", please:
+   a) Consider who else should be cc'ed
+   b) Prefer to cc a suitable mailing list as well
+   c) Ideally: find the original patch on the mailing list and do a
+      reply-to-all to that, adding suitable additional cc's
 
-But yes, if it does, I suspect it should use !IS_ERR_OR_NULL(ptr).
+*** Remember to use Documentation/process/submit-checklist.rst when testing your code ***
 
-            Linus
+The -mm tree is included into linux-next via the mm-everything
+branch at git://git.kernel.org/pub/scm/linux/kernel/git/akpm/mm
+and is updated there every 2-3 working days
+
+------------------------------------------------------
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: dax: alloc_dax() return ERR_PTR(-EOPNOTSUPP) for CONFIG_DAX=n
+Date: Mon, 12 Feb 2024 11:30:54 -0500
+
+Patch series "Introduce cpu_dcache_is_aliasing() to fix DAX regression",
+v5.
+
+This commit introduced in v4.0 prevents building FS_DAX on 32-bit ARM,
+even on ARMv7 which does not have virtually aliased data caches:
+
+commit d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
+
+It used to work fine before: I have customers using DAX over pmem on
+ARMv7, but this regression will likely prevent them from upgrading their
+kernel.
+
+The root of the issue here is the fact that DAX was never designed to
+handle virtually aliasing data caches (VIVT and VIPT with aliasing data
+cache).  It touches the pages through their linear mapping, which is not
+consistent with the userspace mappings with virtually aliasing data
+caches.
+
+This patch series introduces cpu_dcache_is_aliasing() with the new Kconfig
+option ARCH_HAS_CPU_CACHE_ALIASING and implements it for all
+architectures.  The implementation of cpu_dcache_is_aliasing() is either
+evaluated to a constant at compile-time or a runtime check, which is what
+is needed on ARM.
+
+With this we can basically narrow down the list of architectures which are
+unsupported by DAX to those which are really affected.
+
+Testing done so far:
+
+- Compile allyesconfig on x86-64,
+- Compile allyesconfig on x86-64, with FS_DAX=n.
+- Compile allyesconfig on x86-64, with DAX=n.
+- Boot test after modifying alloc_dax() to force returning -EOPNOTSUPP
+  even on x86-64, thus simulating the behavior expected on an
+  architecture with data cache aliasing.
+
+
+This patch (of 5):
+
+Change the return value from NULL to PTR_ERR(-EOPNOTSUPP) for CONFIG_DAX=n
+to be consistent with the fact that CONFIG_DAX=y never returns NULL.
+
+This is done in preparation for using cpu_dcache_is_aliasing() in a
+following change which will properly support architectures which detect
+data cache aliasing at runtime.
+
+Link: https://lkml.kernel.org/r/20240212163101.19614-1-mathieu.desnoyers@efficios.com
+Link: https://lkml.kernel.org/r/20240212163101.19614-2-mathieu.desnoyers@efficios.com
+Fixes: d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Vishal Verma <vishal.l.verma@intel.com>
+Cc: Dave Jiang <dave.jiang@intel.com>
+Cc: Matthew Wilcox <willy@infradead.org>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Russell King <linux@armlinux.org.uk>
+Cc: Dave Chinner <david@fromorbit.com>
+Cc: Michael Sclafani <dm-devel@lists.linux.dev>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+ drivers/dax/super.c |    5 +++++
+ include/linux/dax.h |    6 +-----
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+--- a/drivers/dax/super.c~dax-alloc_dax-return-err_ptr-eopnotsupp-for-config_dax=n
++++ a/drivers/dax/super.c
+@@ -319,6 +319,11 @@ EXPORT_SYMBOL_GPL(dax_alive);
+  * that any fault handlers or operations that might have seen
+  * dax_alive(), have completed.  Any operations that start after
+  * synchronize_srcu() has run will abort upon seeing !dax_alive().
++ *
++ * Note, because alloc_dax() returns an ERR_PTR() on error, callers
++ * typically store its result into a local variable in order to check
++ * the result. Therefore, care must be taken to populate the struct
++ * device dax_dev field make sure the dax_dev is not leaked.
+  */
+ void kill_dax(struct dax_device *dax_dev)
+ {
+--- a/include/linux/dax.h~dax-alloc_dax-return-err_ptr-eopnotsupp-for-config_dax=n
++++ a/include/linux/dax.h
+@@ -86,11 +86,7 @@ static inline void *dax_holder(struct da
+ static inline struct dax_device *alloc_dax(void *private,
+ 		const struct dax_operations *ops)
+ {
+-	/*
+-	 * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
+-	 * NULL is an error or expected.
+-	 */
+-	return NULL;
++	return ERR_PTR(-EOPNOTSUPP);
+ }
+ static inline void put_dax(struct dax_device *dax_dev)
+ {
+_
+
+Patches currently in -mm which might be from mathieu.desnoyers@efficios.com are
+
+nvdimm-pmem-fix-leak-on-dax_add_host-failure.patch
+dax-alloc_dax-return-err_ptr-eopnotsupp-for-config_dax=n.patch
+nvdimm-pmem-treat-alloc_dax-eopnotsupp-failure-as-non-fatal.patch
+dm-treat-alloc_dax-eopnotsupp-failure-as-non-fatal.patch
+dcssblk-handle-alloc_dax-eopnotsupp-failure.patch
+virtio-treat-alloc_dax-eopnotsupp-failure-as-non-fatal.patch
+dax-check-for-data-cache-aliasing-at-runtime.patch
+introduce-cpu_dcache_is_aliasing-across-all-architectures.patch
+dax-fix-incorrect-list-of-data-cache-aliasing-architectures.patch
+
