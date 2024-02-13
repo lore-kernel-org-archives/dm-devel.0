@@ -1,103 +1,470 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5539C17E;
-	Tue, 13 Feb 2024 00:05:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1631C12E42;
+	Tue, 13 Feb 2024 05:15:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.15
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707782759; cv=none; b=R0J+JiWd1zJLYiJhKDyei8l1Xb53HpypFC5dZ+O7UAqIJbYjRMRL4DmGW8a1rs2Si1hHK5sqm465gfOB6ckoPik2hWHp/5BGWRR4h7hsndcLE7UxfP2I8f3CxuI3nf8E0VQj2cduj24NPoxCzbSzcN+Bdn/ETqnDFzpkXRi1Eco=
+	t=1707801325; cv=none; b=nK5Drs7hZzxQeSDTG66cbk+h9tmfbXDPdAHR0sVjiHRiklSd71dpKFIVJDjkqHI4U9btfadwH4YQVmy2NBSgMiyIYcXuo6iMyf7OVZf84YxrSTuhwvqOE+eDx1RfKSkI+SlmXf+fHviBD0RxkH/1faa1KI07F+wWq6EqpGipLX8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707782759; c=relaxed/simple;
-	bh=KXepePgD9sxv2u2ZKdU/Y+qtxJSXw5zEaJKBohhsn5c=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=eq0Z0DDufGgWs+ElT+Jv4kThr1AhWmwJPTvT2pTzlBiek5AvwUs3P8OiReqsPE3hH1IWqxpP8C/S2XFUF+Lv+k9NKAMPDr1ycm+kcRoMm3XLtux5H0dom68PAPlZS8rp/QgP9E/Ly5ebbOkS1VSY0jf/8TATQcLvPQCAHyMiNKE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=IepsTpxO; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1707801325; c=relaxed/simple;
+	bh=UrzG/qRsqvvZ7Octi6WWYLNThe61GWEaDCTqCpXMM1Y=;
+	h=Date:From:To:Cc:Subject:Message-ID; b=n4m1OCmCW6RkxS1x6NNdQLTg5lHE1TqQNVPwXdE4B/cVDYBozow0hohxbJYxk5s0d8jQ0zutdvw8IBya0CH5wTA9O4O1+UOec5pdiy6/iKnW5iHUtzFlB0AJ6eNG10lHkMWl0scfR2SeKfRMBoVoPiMLDlLuaUEfoEarOUJFkkQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=MZeA2LOm; arc=none smtp.client-ip=198.175.65.15
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="IepsTpxO"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 71D67C433C7;
-	Tue, 13 Feb 2024 00:05:57 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1707782758;
-	bh=KXepePgD9sxv2u2ZKdU/Y+qtxJSXw5zEaJKBohhsn5c=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=IepsTpxO/DlN9uPD4xRpW+NkqfFswku/8xmd5ShoEZrHIvc/p+HBOq1M7qbeuq0eh
-	 LsLY9w+5c+y8FtyRh/LPWqKtiLp4cN/xcO7BPWneYtybpSi+smmao3lutQ0cZr4cT2
-	 uMw4BGP/KosRVXB3pYKA01uuBqsUwiOXyVNsvKy9BPoVbnPDnqVD1OA4EShjuMNk/e
-	 AAGLCvybyg/QuuUGMqDcf0BxTd2CXOhVAsYDB75O0jFgzY3fnRv5NVK6bRYY8Habnw
-	 onQFwnlU2mA2tSVa2JDTPHJn0odokqRdeyE0Vb0uuj4KJ6e+U6z8OC/+J8keaBlIVO
-	 yIe2SBacxxndQ==
-Message-ID: <5d5ae964-0bc3-452f-98ff-c355bdf50203@kernel.org>
-Date: Tue, 13 Feb 2024 09:05:55 +0900
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="MZeA2LOm"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1707801323; x=1739337323;
+  h=date:from:to:cc:subject:message-id;
+  bh=UrzG/qRsqvvZ7Octi6WWYLNThe61GWEaDCTqCpXMM1Y=;
+  b=MZeA2LOmsqtx6R/B3kvazVdHdffpOcv1TFtXbWVL4UgpTtG9VxrRJOav
+   6f+Bz9No4ShShTMczTKqsEr/zMHTGqQMP382E4U+DY5lSDHyk000V4Knh
+   Hugy0rPFEi9ojWCnmPoyUUtlEPIlxpG8OTcuf+huAssyn8ubif/iSfo+4
+   SMFE+g85pz8jvhnaZWWqDk5ujJcqBqFsAGq1g5r+KH7vYj+/J7+NQPs19
+   5uvoNrN0P4uD9WEO8EH5GN0+aqwzMKldPylLStCR4axjTKR69IilMViF0
+   Z0SdWIeWFLQEdnMW82i7nOMqDPl6Dg/C2+rBONZMraNAiqvXbrh6DI6VP
+   A==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10982"; a="5632107"
+X-IronPort-AV: E=Sophos;i="6.06,156,1705392000"; 
+   d="scan'208";a="5632107"
+Received: from orviesa007.jf.intel.com ([10.64.159.147])
+  by orvoesa107.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Feb 2024 21:15:23 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.06,156,1705392000"; 
+   d="scan'208";a="3110659"
+Received: from lkp-server01.sh.intel.com (HELO 01f0647817ea) ([10.239.97.150])
+  by orviesa007.jf.intel.com with ESMTP; 12 Feb 2024 21:15:19 -0800
+Received: from kbuild by 01f0647817ea with local (Exim 4.96)
+	(envelope-from <lkp@intel.com>)
+	id 1rZl8W-0007XC-25;
+	Tue, 13 Feb 2024 05:15:16 +0000
+Date: Tue, 13 Feb 2024 13:15:11 +0800
+From: kernel test robot <lkp@intel.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linux Memory Management List <linux-mm@kvack.org>,
+ dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org,
+ kunit-dev@googlegroups.com, linux-bcachefs@vger.kernel.org,
+ linux-bluetooth@vger.kernel.org, linux-kselftest@vger.kernel.org,
+ linux-pm@vger.kernel.org, nouveau@lists.freedesktop.org,
+ ntfs3@lists.linux.dev
+Subject: [linux-next:master] BUILD REGRESSION
+ ae00c445390b349e070a64dc62f08aa878db7248
+Message-ID: <202402131307.QAKvYq3Z-lkp@intel.com>
+User-Agent: s-nail v14.9.24
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 25/26] block: Reduce zone write plugging memory usage
-To: Bart Van Assche <bvanassche@acm.org>, Hannes Reinecke <hare@suse.de>,
- linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
- linux-scsi@vger.kernel.org, "Martin K . Petersen"
- <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
- Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-References: <20240202073104.2418230-1-dlemoal@kernel.org>
- <20240202073104.2418230-26-dlemoal@kernel.org>
- <09d99780-8311-4ea9-8f48-cf84043d23f6@suse.de>
- <f3a2f8b8-32d2-4e42-ba78-1f668d69033f@acm.org>
- <a324beda-7651-4881-aea9-99a339e2b9eb@kernel.org>
- <2e246189-a450-4061-b94c-73637859d073@acm.org>
- <75240a9d-1862-4d09-9721-fd5463c5d4e5@kernel.org>
- <e2a1a020-39e3-4b02-a841-3d53bd854106@acm.org>
- <c03735f3-c036-4f78-ac0b-8f394e947d86@kernel.org>
- <a1531631-dce4-49a6-a589-76fa86e88aeb@acm.org>
- <c582fc6c-618e-4052-9f15-3045df819389@kernel.org>
- <2b45ee45-5f2e-4923-9ef6-a7f03bcb65bf@kernel.org>
- <768a184f-c921-40fc-8405-2777f03e1668@acm.org>
-Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <768a184f-c921-40fc-8405-2777f03e1668@acm.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
 
-On 2/13/24 03:40, Bart Van Assche wrote:
-> On 2/12/24 00:47, Damien Le Moal wrote:
->> Replying to myself as I had an idea:
->> 1) Store the zone capacity in a separate array: 4B * nr_zones needed. Storing
->> "0" as a value for a zone in that array would indicate that the zone is
->> conventional. No additional zone bitmap needed.
->> 2) Use a sparse xarray for managing allocated zone write plugs: 64B per
->> allocated zone write plug needed, which for an SMR drive would generally be at
->> most 128 * 64B = 8K.
->>
->> So for an SMR drive with 100,000 zones, that would be a total of 408 KB, instead
->> of the current 1.6 MB. Will try to prototype this to see how performance goes (I
->> am worried about the xarray lookup overhead in the hot path).
-> 
-> Hi Damien,
-> 
-> Are there any zoned devices where the sequential write required zones occur before
-> the conventional zones? If not, does this mean that the conventional zones always
-> occur before the write pointer zones and also that storing the number of conventional
-> zones is sufficient?
+tree/branch: https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git master
+branch HEAD: ae00c445390b349e070a64dc62f08aa878db7248  Add linux-next specific files for 20240212
 
-Not sure where you want to go with this... In any case, there are SMR drives
-which have conventional zones before and after the bulk of the capacity as
-sequential write required zones. Conventional zones can be anywhere.
+Error/Warning reports:
 
-> Are there zoned storage devices where each zone has a different capacity? I have
-> not yet encountered any such device. I'm wondering whether a single capacity
-> variable would be sufficient for the entire device.
+https://lore.kernel.org/oe-kbuild-all/202402122047.yDhRZmM4-lkp@intel.com
+https://lore.kernel.org/oe-kbuild-all/202402130633.bfNCWVeh-lkp@intel.com
+https://lore.kernel.org/oe-kbuild-all/202402131351.a0FZOgEG-lkp@intel.com
 
-Yes, I did this optimization. Right now, for the 28TB SMR disk case, I am down
-to a bitmap for conventional zones (16KB) plus max-open-zones * 64 B for the
-zone write plugs. Cannot go lower than that. I am still looking into xarray vs
-hash table for the zone write plugs for the overhead/performance.
+Error/Warning: (recently discovered and may have been fixed)
 
+drivers/md/dm.c:2131:(.text+0x9f34): relocation truncated to fit: R_OR1K_INSN_REL_26 against undefined symbol `set_dax_nocache'
+drivers/md/dm.c:2131:(.text+0x9f34): undefined reference to `set_dax_nocache'
+drivers/md/dm.c:2132:(.text+0x9f3c): relocation truncated to fit: R_OR1K_INSN_REL_26 against undefined symbol `set_dax_nomc'
+misc.c:(.text+0x14f0): undefined reference to `__ubsan_handle_load_invalid_value'
+or1k-linux-ld: drivers/md/dm.c:2132:(.text+0x9f3c): undefined reference to `set_dax_nomc'
+sh4-linux-ld: misc.c:(.text+0x1698): undefined reference to `__ubsan_handle_load_invalid_value'
+
+Error/Warning ids grouped by kconfigs:
+
+gcc_recent_errors
+|-- alpha-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arc-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arc-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arc-randconfig-002-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- arm-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arm-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arm-randconfig-001-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arm64-defconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- csky-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- csky-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- csky-randconfig-001-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- csky-randconfig-002-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- csky-randconfig-r061-20240212
+|   |-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- i386-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- i386-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- i386-buildonly-randconfig-002-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- i386-randconfig-013-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- i386-randconfig-015-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- loongarch-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- loongarch-randconfig-002-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- microblaze-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- microblaze-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- mips-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- nios2-randconfig-001-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- openrisc-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- openrisc-randconfig-r011-20221209
+|   |-- drivers-md-dm.c:(.text):relocation-truncated-to-fit:R_OR1K_INSN_REL_26-against-undefined-symbol-set_dax_nocache
+|   |-- drivers-md-dm.c:(.text):relocation-truncated-to-fit:R_OR1K_INSN_REL_26-against-undefined-symbol-set_dax_nomc
+|   |-- drivers-md-dm.c:(.text):undefined-reference-to-set_dax_nocache
+|   `-- or1k-linux-ld:drivers-md-dm.c:(.text):undefined-reference-to-set_dax_nomc
+|-- parisc-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- parisc-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- parisc-defconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- parisc-randconfig-002-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- parisc64-defconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- powerpc-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- riscv-randconfig-002-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- s390-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- sh-randconfig-002-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- sh-randconfig-m031-20221009
+|   |-- misc.c:(.text):undefined-reference-to-__ubsan_handle_load_invalid_value
+|   `-- sh4-linux-ld:misc.c:(.text):undefined-reference-to-__ubsan_handle_load_invalid_value
+|-- sparc-allmodconfig
+|   |-- Error:vdso-image-contains-dynamic-relocations
+|   |-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|   |-- sparc64-linux-ld:vclock_gettime.c:(.text):undefined-reference-to-__ubsan_handle_shift_out_of_bounds
+|   |-- sparc64-linux-objcopy:arch-sparc-vdso-vdso64.so.dbg:No-such-file
+|   `-- vclock_gettime.c:(.text):undefined-reference-to-__ubsan_handle_shift_out_of_bounds
+|-- sparc-randconfig-001-20240212
+|   |-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- sparc-randconfig-002-20240212
+|   |-- (.head.text):relocation-truncated-to-fit:R_SPARC_WDISP22-against-init.text
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- sparc64-allmodconfig
+|   |-- Error:vdso-image-contains-dynamic-relocations
+|   |-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|   |-- sparc64-linux-ld:vclock_gettime.c:(.text):undefined-reference-to-__ubsan_handle_shift_out_of_bounds
+|   |-- sparc64-linux-objcopy:arch-sparc-vdso-vdso64.so.dbg:No-such-file
+|   `-- vclock_gettime.c:(.text):undefined-reference-to-__ubsan_handle_shift_out_of_bounds
+|-- sparc64-allyesconfig
+|   |-- Error:vdso-image-contains-dynamic-relocations
+|   |-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|   |-- sparc64-linux-ld:vclock_gettime.c:(.text):undefined-reference-to-__ubsan_handle_shift_out_of_bounds
+|   |-- sparc64-linux-objcopy:arch-sparc-vdso-vdso64.so.dbg:No-such-file
+|   `-- vclock_gettime.c:(.text):undefined-reference-to-__ubsan_handle_shift_out_of_bounds
+|-- sparc64-randconfig-001-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- um-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- um-randconfig-r052-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-randconfig-001-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- x86_64-randconfig-002-20240212
+|   |-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-randconfig-011-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- x86_64-randconfig-012-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- x86_64-randconfig-014-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-randconfig-015-20240212
+|   |-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|   `-- include-kunit-test.h:warning:s-directive-argument-is-null
+|-- x86_64-randconfig-071-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- x86_64-randconfig-072-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-randconfig-076-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- x86_64-randconfig-102-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-randconfig-104-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-randconfig-122-20240211
+|   |-- kernel-power-energy_model.c:sparse:sparse:incorrect-type-in-argument-(different-address-spaces)-expected-struct-em_perf_state-table-got-struct-em_perf_state-noderef-__rcu
+|   `-- kernel-power-energy_model.c:sparse:sparse:incorrect-type-in-argument-(different-address-spaces)-expected-struct-kref-kref-got-struct-kref-noderef-__rcu
+|-- xtensa-randconfig-001-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+`-- xtensa-randconfig-002-20240212
+    `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+clang_recent_errors
+|-- arm-defconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arm-randconfig-r051-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arm64-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arm64-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arm64-randconfig-003-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- arm64-randconfig-004-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- hexagon-randconfig-001-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- hexagon-randconfig-002-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- i386-buildonly-randconfig-006-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- i386-randconfig-002-20240212
+|   |-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- i386-randconfig-005-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- i386-randconfig-054-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- i386-randconfig-141-20240212
+|   |-- drivers-bluetooth-btintel.c-btintel_read_version()-warn:passing-zero-to-PTR_ERR
+|   |-- fs-bcachefs-btree_locking.c-bch2_trans_relock()-warn:passing-zero-to-PTR_ERR
+|   `-- fs-bcachefs-buckets.c-bch2_trans_account_disk_usage_change()-error:we-previously-assumed-trans-disk_res-could-be-null-(see-line-)
+|-- powerpc-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- powerpc-randconfig-001-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- powerpc64-randconfig-001-20240212
+|   |-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- powerpc64-randconfig-003-20240212
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- riscv-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- riscv-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- riscv-defconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- s390-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- x86_64-allmodconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- x86_64-allyesconfig
+|   `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+|-- x86_64-buildonly-randconfig-001-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-buildonly-randconfig-003-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-buildonly-randconfig-004-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-buildonly-randconfig-005-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+|-- x86_64-randconfig-013-20240212
+|   `-- fs-ntfs3-frecord.c:warning:unused-variable-i_size
+`-- x86_64-randconfig-073-20240212
+    `-- drivers-gpu-drm-nouveau-nvkm-subdev-gsp-r535.c:warning:Function-parameter-or-struct-member-gsp-not-described-in-nvkm_gsp_radix3_sg
+
+elapsed time: 1451m
+
+configs tested: 175
+configs skipped: 4
+
+tested configs:
+alpha                             allnoconfig   gcc  
+alpha                            allyesconfig   gcc  
+alpha                               defconfig   gcc  
+arc                              allmodconfig   gcc  
+arc                               allnoconfig   gcc  
+arc                              allyesconfig   gcc  
+arc                                 defconfig   gcc  
+arc                        nsimosci_defconfig   gcc  
+arc                   randconfig-001-20240212   gcc  
+arc                   randconfig-002-20240212   gcc  
+arm                              allmodconfig   gcc  
+arm                               allnoconfig   clang
+arm                              allyesconfig   gcc  
+arm                       aspeed_g5_defconfig   gcc  
+arm                                 defconfig   clang
+arm                        mvebu_v5_defconfig   gcc  
+arm                        mvebu_v7_defconfig   clang
+arm                          pxa910_defconfig   gcc  
+arm                   randconfig-001-20240212   gcc  
+arm                   randconfig-002-20240212   clang
+arm                   randconfig-003-20240212   clang
+arm                   randconfig-004-20240212   clang
+arm64                            allmodconfig   clang
+arm64                             allnoconfig   gcc  
+arm64                               defconfig   gcc  
+arm64                 randconfig-001-20240212   clang
+arm64                 randconfig-002-20240212   clang
+arm64                 randconfig-003-20240212   clang
+arm64                 randconfig-004-20240212   clang
+csky                             allmodconfig   gcc  
+csky                              allnoconfig   gcc  
+csky                             allyesconfig   gcc  
+csky                                defconfig   gcc  
+csky                  randconfig-001-20240212   gcc  
+csky                  randconfig-002-20240212   gcc  
+hexagon                          allmodconfig   clang
+hexagon                           allnoconfig   clang
+hexagon                          allyesconfig   clang
+hexagon                             defconfig   clang
+hexagon               randconfig-001-20240212   clang
+hexagon               randconfig-002-20240212   clang
+i386                             allmodconfig   gcc  
+i386                              allnoconfig   gcc  
+i386                             allyesconfig   gcc  
+i386         buildonly-randconfig-001-20240212   clang
+i386         buildonly-randconfig-002-20240212   gcc  
+i386         buildonly-randconfig-003-20240212   gcc  
+i386         buildonly-randconfig-004-20240212   clang
+i386         buildonly-randconfig-005-20240212   gcc  
+i386         buildonly-randconfig-006-20240212   clang
+i386                                defconfig   clang
+i386                  randconfig-001-20240212   gcc  
+i386                  randconfig-002-20240212   clang
+i386                  randconfig-003-20240212   clang
+i386                  randconfig-004-20240212   gcc  
+i386                  randconfig-005-20240212   clang
+i386                  randconfig-006-20240212   gcc  
+i386                  randconfig-011-20240212   gcc  
+i386                  randconfig-012-20240212   gcc  
+i386                  randconfig-013-20240212   gcc  
+i386                  randconfig-014-20240212   gcc  
+i386                  randconfig-015-20240212   gcc  
+i386                  randconfig-016-20240212   clang
+loongarch                        allmodconfig   gcc  
+loongarch                         allnoconfig   gcc  
+loongarch                           defconfig   gcc  
+loongarch             randconfig-001-20240212   gcc  
+loongarch             randconfig-002-20240212   gcc  
+m68k                             allmodconfig   gcc  
+m68k                              allnoconfig   gcc  
+m68k                             allyesconfig   gcc  
+m68k                                defconfig   gcc  
+microblaze                       allmodconfig   gcc  
+microblaze                        allnoconfig   gcc  
+microblaze                       allyesconfig   gcc  
+microblaze                          defconfig   gcc  
+mips                              allnoconfig   gcc  
+mips                             allyesconfig   gcc  
+mips                         bigsur_defconfig   gcc  
+mips                  cavium_octeon_defconfig   gcc  
+nios2                            allmodconfig   gcc  
+nios2                             allnoconfig   gcc  
+nios2                            allyesconfig   gcc  
+nios2                               defconfig   gcc  
+nios2                 randconfig-001-20240212   gcc  
+nios2                 randconfig-002-20240212   gcc  
+openrisc                          allnoconfig   gcc  
+openrisc                         allyesconfig   gcc  
+openrisc                            defconfig   gcc  
+parisc                           allmodconfig   gcc  
+parisc                            allnoconfig   gcc  
+parisc                           allyesconfig   gcc  
+parisc                              defconfig   gcc  
+parisc                randconfig-001-20240212   gcc  
+parisc                randconfig-002-20240212   gcc  
+parisc64                            defconfig   gcc  
+powerpc                          allmodconfig   gcc  
+powerpc                           allnoconfig   gcc  
+powerpc                          allyesconfig   clang
+powerpc                  mpc866_ads_defconfig   clang
+powerpc                     ppa8548_defconfig   gcc  
+powerpc               randconfig-001-20240212   clang
+powerpc               randconfig-002-20240212   gcc  
+powerpc               randconfig-003-20240212   clang
+powerpc                     tqm8548_defconfig   clang
+powerpc64             randconfig-001-20240212   clang
+powerpc64             randconfig-002-20240212   gcc  
+powerpc64             randconfig-003-20240212   clang
+riscv                            allmodconfig   clang
+riscv                             allnoconfig   gcc  
+riscv                            allyesconfig   clang
+riscv                               defconfig   clang
+riscv                 randconfig-001-20240212   gcc  
+riscv                 randconfig-002-20240212   gcc  
+s390                             allmodconfig   clang
+s390                              allnoconfig   clang
+s390                             allyesconfig   gcc  
+s390                                defconfig   clang
+s390                  randconfig-001-20240212   clang
+s390                  randconfig-002-20240212   clang
+sh                               allmodconfig   gcc  
+sh                                allnoconfig   gcc  
+sh                               allyesconfig   gcc  
+sh                                  defconfig   gcc  
+sh                    randconfig-001-20240212   gcc  
+sh                    randconfig-002-20240212   gcc  
+sh                              ul2_defconfig   gcc  
+sparc                            allmodconfig   gcc  
+sparc                             allnoconfig   gcc  
+sparc                               defconfig   gcc  
+sparc64                          allmodconfig   gcc  
+sparc64                          allyesconfig   gcc  
+sparc64                             defconfig   gcc  
+sparc64               randconfig-001-20240212   gcc  
+sparc64               randconfig-002-20240212   gcc  
+um                               allmodconfig   clang
+um                                allnoconfig   clang
+um                               allyesconfig   gcc  
+um                                  defconfig   clang
+um                    randconfig-001-20240212   clang
+um                    randconfig-002-20240212   clang
+um                           x86_64_defconfig   clang
+x86_64                            allnoconfig   clang
+x86_64                           allyesconfig   clang
+x86_64       buildonly-randconfig-001-20240212   clang
+x86_64       buildonly-randconfig-002-20240212   clang
+x86_64       buildonly-randconfig-003-20240212   clang
+x86_64       buildonly-randconfig-004-20240212   clang
+x86_64       buildonly-randconfig-005-20240212   clang
+x86_64       buildonly-randconfig-006-20240212   clang
+x86_64                              defconfig   gcc  
+x86_64                randconfig-001-20240212   gcc  
+x86_64                randconfig-002-20240212   gcc  
+x86_64                randconfig-003-20240212   gcc  
+x86_64                randconfig-004-20240212   gcc  
+x86_64                randconfig-005-20240212   gcc  
+x86_64                randconfig-006-20240212   gcc  
+x86_64                randconfig-011-20240212   gcc  
+x86_64                randconfig-012-20240212   gcc  
+x86_64                randconfig-013-20240212   clang
+x86_64                randconfig-014-20240212   gcc  
+x86_64                randconfig-015-20240212   gcc  
+x86_64                randconfig-016-20240212   clang
+x86_64                randconfig-071-20240212   gcc  
+x86_64                randconfig-072-20240212   gcc  
+x86_64                randconfig-073-20240212   clang
+x86_64                randconfig-074-20240212   gcc  
+x86_64                randconfig-075-20240212   gcc  
+x86_64                randconfig-076-20240212   gcc  
+x86_64                          rhel-8.3-rust   clang
+xtensa                            allnoconfig   gcc  
+xtensa                  audio_kc705_defconfig   gcc  
+xtensa                generic_kc705_defconfig   gcc  
+xtensa                randconfig-001-20240212   gcc  
+xtensa                randconfig-002-20240212   gcc  
 
 -- 
-Damien Le Moal
-Western Digital Research
-
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
