@@ -1,118 +1,109 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E16079E4
-	for <dm-devel@lists.linux.dev>; Wed, 14 Feb 2024 01:24:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8AB238F47
+	for <dm-devel@lists.linux.dev>; Wed, 14 Feb 2024 01:24:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707873868; cv=none; b=ZC60fBIXm6HjM2RmT7fEK1Pof9zq6DVJBB/JHW6mE7TA+aBujdQLQZdpv7xLIC3TDsEEPC0ZIxOHRlx9jNpiOS+1CuGGfZw5Ke5GG82frcZ+oejrN15AHM2rUwh+cltiSQ3zYA+rQA1MBh9QlWb9fA0r6z0GERnC70uBXgq5iYA=
+	t=1707873869; cv=none; b=eQl0PZQu91vIiYGG8SvmFH0p8zhWKp7OmmWEot9prM3l6U+dAEOX51/8I/7ZllWeQ9Tt4gAr+0Lu1Ysxn7kxcMjF0uu3YP7q+U+RQdQmeKzMgLRumisMoizoDyQPmC5yFayp7QPrv9/i4VyIKdq9XZ35Ef+GJ4MB9rN6+jXC0Bo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707873868; c=relaxed/simple;
-	bh=OF8vVNzDTXYfxYfgkTScyIWN34EjpcxtuY9WDemVbVI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=iwbQv2xfXNpKfnuA6TcgK+9JTuTeuYYElNK/viok5fRZtGxmtzPXB+g+7qxC6G34B/7f4RlYBZfagqHxVGCwRYEnYnX+IbubS1DVOsj+9Omv7cflN9HnFDk3OQftZf2HH6GQgyXHF1CpfU973lsGRhEGY7g8AqgiBIefBcB5dl8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Dkgq5wRI; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1707873869; c=relaxed/simple;
+	bh=A1ZMLtkc4CZYBkzDCry0TPPaN1G6dAJsZzudUawd0M4=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=RfP+QVzoZCNRbUlr2bhNLfoBrRdWWBDX3vBOk0CIbWDGImVfxdl2AOQrTIVM39MSLE5fp+xCryPICBB20R0otW/E4kOGXLjrt+3Jj0+qBzT20z/6NXL2KtnyY0eeY9yNJeSzUMse0LjwkCe71A16FmdZ5xyhaXoV14mgiwbysAM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UWy0gTT4; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Dkgq5wRI"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UWy0gTT4"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1707873865;
+	s=mimecast20190719; t=1707873866;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=fsqo0GyZFuztPrpoCsAQU2h75rOo+Caj2MpKurdG7po=;
-	b=Dkgq5wRIZG+aRHLMKGq/g43jYuF53QIBeTdTK+0T1kduXu+nXqxcVdbuJyD9K2BKUmw5Ix
-	QE4blUdLQeJMdy+SRvQn350NTwarUL9vtGE5K1VtikZvstIttf2vddfHCzKLE2devMuR87
-	AezGADLRNSEuRgPtnf8wyn9ao6zu6cQ=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-121-W7ZxHHLDNtOfabtV_p-GUA-1; Tue,
- 13 Feb 2024 20:24:24 -0500
-X-MC-Unique: W7ZxHHLDNtOfabtV_p-GUA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=O++COqTvcBluhw4nTuDxosb7zfrdc3oS4K0H99Mrasc=;
+	b=UWy0gTT4cVTAC/PpXSaYEzEoTHeUUtGR0GIG7rhLIDRgvsjqxZ82ATXJDVhkzuGEI0S5Rd
+	idWDZnsTPKnVlkHGTeW4SQz9WRdCvCcI9NWwhtus1yLqyaQgJ6ryFbo2QczHIz55gXmff6
+	fwvuPw2oXCIVtgP/IrXTaIw8sPhJdJ8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-696-OIBwiY08POq-TG3fMX_BVA-1; Tue, 13 Feb 2024 20:24:24 -0500
+X-MC-Unique: OIBwiY08POq-TG3fMX_BVA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E80741C05AB1
-	for <dm-devel@lists.linux.dev>; Wed, 14 Feb 2024 01:24:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E34031025625;
+	Wed, 14 Feb 2024 01:24:23 +0000 (UTC)
 Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D88E31BDD1;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DE09D492BC9;
 	Wed, 14 Feb 2024 01:24:23 +0000 (UTC)
 Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id D02A357134; Tue, 13 Feb 2024 20:24:23 -0500 (EST)
+	id D39F057136; Tue, 13 Feb 2024 20:24:23 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
-Cc: Susan LeGendre-McGhee <slegendr@redhat.com>,
+Cc: Mike Snitzer <snitzer@kernel.org>,
 	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH 1/2] dm vdo: move encoding constants to encodings.c
-Date: Tue, 13 Feb 2024 20:24:22 -0500
-Message-ID: <c3fc28d4bbf040549c0c6cf574d729fa5737b937.1707873765.git.msakai@redhat.com>
+Subject: [PATCH 2/2] dm vdo: use #define for NO_CHAPTER and NO_CHAPTER_INDEX_ENTRY
+Date: Tue, 13 Feb 2024 20:24:23 -0500
+Message-ID: <c87c66f1d8d056b5049ec8d0d15661be0b6d27c6.1707873765.git.msakai@redhat.com>
+In-Reply-To: <c3fc28d4bbf040549c0c6cf574d729fa5737b937.1707873765.git.msakai@redhat.com>
+References: <c3fc28d4bbf040549c0c6cf574d729fa5737b937.1707873765.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-From: Susan LeGendre-McGhee <slegendr@redhat.com>
+From: Mike Snitzer <snitzer@kernel.org>
 
-Signed-off-by: Susan LeGendre-McGhee <slegendr@redhat.com>
+Avoids unconventional use of 'static const' and enum in headers.
+
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/constants.h | 12 +++---------
- drivers/md/dm-vdo/encodings.c |  6 ++++++
- 2 files changed, 9 insertions(+), 9 deletions(-)
+ drivers/md/dm-vdo/chapter-index.h | 6 ++----
+ drivers/md/dm-vdo/volume-index.h  | 2 +-
+ 2 files changed, 3 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-vdo/constants.h b/drivers/md/dm-vdo/constants.h
-index 3a997dd7d0b1..24237bc29f87 100644
---- a/drivers/md/dm-vdo/constants.h
-+++ b/drivers/md/dm-vdo/constants.h
-@@ -44,6 +44,9 @@ enum {
- 	/** The default size of each slab journal, in blocks */
- 	DEFAULT_VDO_SLAB_JOURNAL_SIZE = 224,
+diff --git a/drivers/md/dm-vdo/chapter-index.h b/drivers/md/dm-vdo/chapter-index.h
+index e1bc7e31a2a5..be8bf2b675b1 100644
+--- a/drivers/md/dm-vdo/chapter-index.h
++++ b/drivers/md/dm-vdo/chapter-index.h
+@@ -18,10 +18,8 @@
+  * is more efficient. Both types of chapter index are implemented with a delta index.
+  */
  
-+	/** Unit test minimum */
-+	MINIMUM_VDO_SLAB_JOURNAL_BLOCKS = 2,
-+
- 	/*
- 	 * The initial size of lbn_operations and pbn_operations, which is based upon the expected
- 	 * maximum number of outstanding VIOs. This value was chosen to make it highly unlikely
-@@ -90,13 +93,4 @@ enum {
- 	VDO_ZERO_BLOCK = 0,
- };
+-enum {
+-	/* The value returned when no entry is found in the chapter index. */
+-	NO_CHAPTER_INDEX_ENTRY = U16_MAX,
+-};
++/* The value returned when no entry is found in the chapter index. */
++#define NO_CHAPTER_INDEX_ENTRY U16_MAX
  
--/** The maximum logical space is 4 petabytes, which is 1 terablock. */
--static const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
--
--/** The maximum physical space is 256 terabytes, which is 64 gigablocks. */
--static const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
--
--/** unit test minimum */
--static const block_count_t MINIMUM_VDO_SLAB_JOURNAL_BLOCKS = 2;
--
- #endif /* VDO_CONSTANTS_H */
-diff --git a/drivers/md/dm-vdo/encodings.c b/drivers/md/dm-vdo/encodings.c
-index 6b3e9a5b3a91..9e45411fe816 100644
---- a/drivers/md/dm-vdo/encodings.c
-+++ b/drivers/md/dm-vdo/encodings.c
-@@ -15,6 +15,12 @@
- #include "status-codes.h"
- #include "types.h"
+ struct open_chapter_index {
+ 	const struct index_geometry *geometry;
+diff --git a/drivers/md/dm-vdo/volume-index.h b/drivers/md/dm-vdo/volume-index.h
+index 0f08acf29435..537e9947cf4a 100644
+--- a/drivers/md/dm-vdo/volume-index.h
++++ b/drivers/md/dm-vdo/volume-index.h
+@@ -26,7 +26,7 @@
+  * managed with volume_index_record structures.
+  */
  
-+/** The maximum logical space is 4 petabytes, which is 1 terablock. */
-+static const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
-+
-+/** The maximum physical space is 256 terabytes, which is 64 gigablocks. */
-+static const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
-+
- struct geometry_block {
- 	char magic_number[VDO_GEOMETRY_MAGIC_NUMBER_SIZE];
- 	struct packed_header header;
+-static const u64 NO_CHAPTER = U64_MAX;
++#define NO_CHAPTER U64_MAX
+ 
+ struct volume_index_stats {
+ 	/* Nanoseconds spent rebalancing */
 -- 
 2.42.0
 
