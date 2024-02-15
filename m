@@ -1,149 +1,103 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46C8513A26F;
-	Thu, 15 Feb 2024 20:06:30 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8589A1420D1
+	for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 22:24:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708027590; cv=none; b=FA65OjT5K2PH9HBT9PHfLkAIz4uG88lTrv9T9QNgYDpv3h2xP8bI6+pmq2+ZshQjPwXjnqLpUo4MiWsU1mXBmTL7g437UZqVuZyVJKFTm/7j7SfEyGxupqJWjjtvPmqp5epZcGwlaNAoaehW7OyBqRfCM0TEnCJcCmuDJZv69CM=
+	t=1708035888; cv=none; b=mGOMHC7PUe2q6ci2nympFzggrZowyRa9a9VFeEXIwrGJ3l3Xqnw5XM09wFpafTI63vOc4QjTicI8zK0fXjtIakWPOfMflBT8hpaIOHoUcDhFLUtm/O4wJVNAWjIHjZOqzJUwDSaEGoXhkrbqZaLHV2WntdfgWr3LkAi+7nL3fKU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708027590; c=relaxed/simple;
-	bh=MJaOaon/ohp6nse7LRs0P+QUP38k21B+kasLNUvoSXM=;
-	h=Date:To:From:Subject:Message-Id; b=S5DDtIxCcu5zc6O54uq5WI7DNiqPHopnW2vUCFKI4hp45wgollOZ3P1FdgA6bMkMYhagecIhEHqeyoCgpv2HCxNKo8Zu4EASwG4Cwq2nPGpTorWd4attAXdu4fnpirkUdg4jUu+6tqZoWuxCSTRQ2HBwfwlPdZBEE2kI7YfNtw8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=XpHbBSwk; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1708035888; c=relaxed/simple;
+	bh=f76X0AcaJVYW7+cjrWNquEpcNbSHpUPoRnOE346GUTY=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=cWHhdLq2TgHvcLSUoU3xYj3q1M/CprpOk6DG1jiV1lhmiUGL9raS5RzExoEB+C8+HTzAQgbdy0W13gEIqTYzhpnCqOodR+tQOwElzbfmQ7rYrLyujlCzZ041oG9wDQHuEpZnTam8Yd82ojMY4axomqlCHPGInBWhL4PwvAOTR8E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=gBTp26tU; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="XpHbBSwk"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 121ACC433C7;
-	Thu, 15 Feb 2024 20:06:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
-	s=korg; t=1708027590;
-	bh=MJaOaon/ohp6nse7LRs0P+QUP38k21B+kasLNUvoSXM=;
-	h=Date:To:From:Subject:From;
-	b=XpHbBSwktwOtFH5Q1ee4MVu9P0+LeYxHTw+AROKP0MuA42GrBzMoIXyK+z82ef1P8
-	 K9nUlKNgKMDsW8qTEK0dqkWuOuwbiygUvjtH6jkqj2arpOcTMohTJ/v0P4rgDTJqgh
-	 iDSVrfsX9ALsVCas9glKWx4u3moIkA1DEknatTo0=
-Date: Thu, 15 Feb 2024 12:06:29 -0800
-To: mm-commits@vger.kernel.org,willy@infradead.org,vishal.l.verma@intel.com,snitzer@kernel.org,mpatocka@redhat.com,lkp@intel.com,linux@armlinux.org.uk,hch@lst.de,hca@linux.ibm.com,dm-devel@lists.linux.dev,david@fromorbit.com,dave.jiang@intel.com,dan.j.williams@intel.com,arnd@arndb.de,agk@redhat.com,mathieu.desnoyers@efficios.com,akpm@linux-foundation.org
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: + dax-fix-incorrect-list-of-data-cache-aliasing-architectures.patch added to mm-unstable branch
-Message-Id: <20240215200630.121ACC433C7@smtp.kernel.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="gBTp26tU"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 11467C43390
+	for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 22:24:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1708035888;
+	bh=f76X0AcaJVYW7+cjrWNquEpcNbSHpUPoRnOE346GUTY=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=gBTp26tUwNk41M6xgvz8ZeU+B1zWTnfMr1YmwnI31pxXz1qMOONUC74vsh5069YNm
+	 mQsL4VLz2NDt0r5EZIuJgP0QSetIzPW1qKT0NzXVFUxqgp7ZbUrCZMFyIkkTkR4rWC
+	 5b4qxquRmT5tPuSgrLlM5D4dcKi8rKfWFhQyetp3UeCHWsavaAFw7porbIGeX+hDsr
+	 Cyc6nNScZaYH820pDa7GUD3QatVYqsCtQj95rmCTQ1K7v5+JKcNoVQa7fyksnnf9k9
+	 bjI8S6/nuM2ZidZmspuimsilt72f/IkSu/kcFRUC/ULfphRDoEYSqx8slvom8p2CCd
+	 Nu9Stq09QufVw==
+Received: by mail-lj1-f182.google.com with SMTP id 38308e7fff4ca-2d094bc2244so18163501fa.1
+        for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 14:24:47 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCXB8U54/nMAlMPYdm4W0s2/wJW941QMAZ5Zr1CAHN4IxDtkwXLswxAeETumO1LIq2bozPCfxVI2/UEGEv0r2PGtUQ2pYVlXgXc=
+X-Gm-Message-State: AOJu0Yx8tTW5KLTEv/W+t5vX+gQghON+5QaTRspjUSSwNoY5+bMy1h2T
+	91shR2A2nFBt1QAL5E2rhrt+1lJtkwuOLujMo0k/dxjPmktu5h8DrWHYYTpNsbIpSCFTe83mDGa
+	z1z8h63lHjfWzvR+38EjgDg0E5XA=
+X-Google-Smtp-Source: AGHT+IGmAosyPljzB5tpeW+wijXZ0l9rjM3TdMArpY/0JumvOxRKdXT6vWsamHhqT8Y9VwNQwEXiPmSBIbFwMthAbN0=
+X-Received: by 2002:ac2:46c6:0:b0:511:7202:3938 with SMTP id
+ p6-20020ac246c6000000b0051172023938mr2220592lfo.63.1708035886253; Thu, 15 Feb
+ 2024 14:24:46 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+In-Reply-To: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+From: Song Liu <song@kernel.org>
+Date: Thu, 15 Feb 2024 14:24:34 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
+Message-ID: <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
+Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: mpatocka@redhat.com, heinzm@redhat.com, xni@redhat.com, 
+	blazej.kucman@linux.intel.com, agk@redhat.com, snitzer@kernel.org, 
+	dm-devel@lists.linux.dev, yukuai3@huawei.com, jbrassow@f14.redhat.com, 
+	neilb@suse.de, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org, 
+	linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+On Thu, Feb 1, 2024 at 1:30=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> wr=
+ote:
+>
+[...]
+>
+> [1] https://lore.kernel.org/all/CALTww29QO5kzmN6Vd+jT=3D-8W5F52tJjHKSgrfU=
+c1Z1ZAeRKHHA@mail.gmail.com/
+>
+> Yu Kuai (14):
+>   md: don't ignore suspended array in md_check_recovery()
+>   md: don't ignore read-only array in md_check_recovery()
+>   md: make sure md_do_sync() will set MD_RECOVERY_DONE
+>   md: don't register sync_thread for reshape directly
+>   md: don't suspend the array for interrupted reshape
+>   md: fix missing release of 'active_io' for flush
+
+Applied 1/14-5/14 to md-6.8 branch (6/14 was applied earlier).
+
+Thanks,
+Song
 
 
-The patch titled
-     Subject: dax: Fix incorrect list of data cache aliasing architectures
-has been added to the -mm mm-unstable branch.  Its filename is
-     dax-fix-incorrect-list-of-data-cache-aliasing-architectures.patch
-
-This patch will shortly appear at
-     https://git.kernel.org/pub/scm/linux/kernel/git/akpm/25-new.git/tree/patches/dax-fix-incorrect-list-of-data-cache-aliasing-architectures.patch
-
-This patch will later appear in the mm-unstable branch at
-    git://git.kernel.org/pub/scm/linux/kernel/git/akpm/mm
-
-Before you just go and hit "reply", please:
-   a) Consider who else should be cc'ed
-   b) Prefer to cc a suitable mailing list as well
-   c) Ideally: find the original patch on the mailing list and do a
-      reply-to-all to that, adding suitable additional cc's
-
-*** Remember to use Documentation/process/submit-checklist.rst when testing your code ***
-
-The -mm tree is included into linux-next via the mm-everything
-branch at git://git.kernel.org/pub/scm/linux/kernel/git/akpm/mm
-and is updated there every 2-3 working days
-
-------------------------------------------------------
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: dax: Fix incorrect list of data cache aliasing architectures
-Date: Thu, 15 Feb 2024 09:46:33 -0500
-
-commit d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
-prevents DAX from building on architectures with virtually aliased
-dcache with:
-
-  depends on !(ARM || MIPS || SPARC)
-
-This check is too broad (e.g. recent ARMv7 don't have virtually aliased
-dcaches), and also misses many other architectures with virtually
-aliased data cache.
-
-This is a regression introduced in the v4.0 Linux kernel where the
-dax mount option is removed for 32-bit ARMv7 boards which have no data
-cache aliasing, and therefore should work fine with FS_DAX.
-
-This was turned into the following check in alloc_dax() by a preparatory
-change:
-
-        if (ops && (IS_ENABLED(CONFIG_ARM) ||
-            IS_ENABLED(CONFIG_MIPS) ||
-            IS_ENABLED(CONFIG_SPARC)))
-                return NULL;
-
-Use cpu_dcache_is_aliasing() instead to figure out whether the environment
-has aliasing data caches.
-
-Link: https://lkml.kernel.org/r/20240215144633.96437-10-mathieu.desnoyers@efficios.com
-Fixes: d92576f1167c ("dax: does not work correctly with virtual aliasing caches")
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Reviewed-by: Dan Williams <dan.j.williams@intel.com>
-Cc: Dan Williams <dan.j.williams@intel.com>
-Cc: Vishal Verma <vishal.l.verma@intel.com>
-Cc: Dave Jiang <dave.jiang@intel.com>
-Cc: Matthew Wilcox <willy@infradead.org>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: Russell King <linux@armlinux.org.uk>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Dave Chinner <david@fromorbit.com>
-Cc: Heiko Carstens <hca@linux.ibm.com>
-Cc: kernel test robot <lkp@intel.com>
-Cc: Michael Sclafani <dm-devel@lists.linux.dev>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
----
-
- drivers/dax/super.c |    5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
-
---- a/drivers/dax/super.c~dax-fix-incorrect-list-of-data-cache-aliasing-architectures
-+++ a/drivers/dax/super.c
-@@ -13,6 +13,7 @@
- #include <linux/uio.h>
- #include <linux/dax.h>
- #include <linux/fs.h>
-+#include <linux/cacheinfo.h>
- #include "dax-private.h"
- 
- /**
-@@ -456,9 +457,7 @@ struct dax_device *alloc_dax(void *priva
- 	 * except for device-dax (NULL operations pointer), which does
- 	 * not use aliased mappings from the kernel.
- 	 */
--	if (ops && (IS_ENABLED(CONFIG_ARM) ||
--	    IS_ENABLED(CONFIG_MIPS) ||
--	    IS_ENABLED(CONFIG_SPARC)))
-+	if (ops && cpu_dcache_is_aliasing())
- 		return ERR_PTR(-EOPNOTSUPP);
- 
- 	if (WARN_ON_ONCE(ops && !ops->zero_page_range))
-_
-
-Patches currently in -mm which might be from mathieu.desnoyers@efficios.com are
-
-nvdimm-pmem-fix-leak-on-dax_add_host-failure.patch
-dax-add-empty-static-inline-for-config_dax=n.patch
-dax-alloc_dax-return-err_ptr-eopnotsupp-for-config_dax=n.patch
-nvdimm-pmem-treat-alloc_dax-eopnotsupp-failure-as-non-fatal.patch
-dm-treat-alloc_dax-eopnotsupp-failure-as-non-fatal.patch
-dcssblk-handle-alloc_dax-eopnotsupp-failure.patch
-virtio-treat-alloc_dax-eopnotsupp-failure-as-non-fatal.patch
-dax-check-for-data-cache-aliasing-at-runtime.patch
-introduce-cpu_dcache_is_aliasing-across-all-architectures.patch
-dax-fix-incorrect-list-of-data-cache-aliasing-architectures.patch
-
+>   md: export helpers to stop sync_thread
+>   md: export helper md_is_rdwr()
+>   dm-raid: really frozen sync_thread during suspend
+>   md/dm-raid: don't call md_reap_sync_thread() directly
+>   dm-raid: add a new helper prepare_suspend() in md_personality
+>   md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+>     reshape
+>   dm-raid: fix lockdep waring in "pers->hot_add_disk"
+>   dm-raid: remove mddev_suspend/resume()
+>
+>  drivers/md/dm-raid.c |  78 +++++++++++++++++++--------
+>  drivers/md/md.c      | 126 +++++++++++++++++++++++++++++--------------
+>  drivers/md/md.h      |  16 ++++++
+>  drivers/md/raid10.c  |  16 +-----
+>  drivers/md/raid5.c   |  61 +++++++++++----------
+>  5 files changed, 192 insertions(+), 105 deletions(-)
+>
+> --
+> 2.39.2
+>
+>
