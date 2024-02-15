@@ -1,54 +1,54 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8589A1420D1
-	for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 22:24:48 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C589013DBA4
+	for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 22:27:50 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708035888; cv=none; b=mGOMHC7PUe2q6ci2nympFzggrZowyRa9a9VFeEXIwrGJ3l3Xqnw5XM09wFpafTI63vOc4QjTicI8zK0fXjtIakWPOfMflBT8hpaIOHoUcDhFLUtm/O4wJVNAWjIHjZOqzJUwDSaEGoXhkrbqZaLHV2WntdfgWr3LkAi+7nL3fKU=
+	t=1708036070; cv=none; b=f3lL4PIv5QNfK9tbM/LMsT4DQt45J0007+lqZgMCe9lj/JDIJRuHLvV7rqiBXcCkM13J0pfPLoJxsDmfAsKBs3U9UTvisECxHL7XKptryfMnbId4FXtD0QObXN0/mBA9+sUu0zpqSpz+4Nb+3WaBPsQWyVGV41oCymrcY50iboE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708035888; c=relaxed/simple;
-	bh=f76X0AcaJVYW7+cjrWNquEpcNbSHpUPoRnOE346GUTY=;
+	s=arc-20240116; t=1708036070; c=relaxed/simple;
+	bh=uvH2i4SVPliKwq4Y+bHK5L9Eh/vCMiyg9iLCm0F+h3U=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=cWHhdLq2TgHvcLSUoU3xYj3q1M/CprpOk6DG1jiV1lhmiUGL9raS5RzExoEB+C8+HTzAQgbdy0W13gEIqTYzhpnCqOodR+tQOwElzbfmQ7rYrLyujlCzZ041oG9wDQHuEpZnTam8Yd82ojMY4axomqlCHPGInBWhL4PwvAOTR8E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=gBTp26tU; arc=none smtp.client-ip=10.30.226.201
+	 To:Cc:Content-Type; b=lXcHQJZBtimynxKY57EbvJe6E9EumWmoA/1wIpI66jYGiKvU7ETTkKH9PpXcwBAKaz9YJ+CxZ9/YzvGfrFln/cf9HilB8kYPFQgwmUtP6pSt/61qKS9A4jU8uX4yM3Xez9icA9FjnjYQBITljL1OPAAoLBcsvH7uGhMUQj4JPTA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MV1Uofan; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="gBTp26tU"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 11467C43390
-	for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 22:24:48 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MV1Uofan"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 62B1CC43394
+	for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 22:27:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1708035888;
-	bh=f76X0AcaJVYW7+cjrWNquEpcNbSHpUPoRnOE346GUTY=;
+	s=k20201202; t=1708036070;
+	bh=uvH2i4SVPliKwq4Y+bHK5L9Eh/vCMiyg9iLCm0F+h3U=;
 	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=gBTp26tUwNk41M6xgvz8ZeU+B1zWTnfMr1YmwnI31pxXz1qMOONUC74vsh5069YNm
-	 mQsL4VLz2NDt0r5EZIuJgP0QSetIzPW1qKT0NzXVFUxqgp7ZbUrCZMFyIkkTkR4rWC
-	 5b4qxquRmT5tPuSgrLlM5D4dcKi8rKfWFhQyetp3UeCHWsavaAFw7porbIGeX+hDsr
-	 Cyc6nNScZaYH820pDa7GUD3QatVYqsCtQj95rmCTQ1K7v5+JKcNoVQa7fyksnnf9k9
-	 bjI8S6/nuM2ZidZmspuimsilt72f/IkSu/kcFRUC/ULfphRDoEYSqx8slvom8p2CCd
-	 Nu9Stq09QufVw==
-Received: by mail-lj1-f182.google.com with SMTP id 38308e7fff4ca-2d094bc2244so18163501fa.1
-        for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 14:24:47 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCXB8U54/nMAlMPYdm4W0s2/wJW941QMAZ5Zr1CAHN4IxDtkwXLswxAeETumO1LIq2bozPCfxVI2/UEGEv0r2PGtUQ2pYVlXgXc=
-X-Gm-Message-State: AOJu0Yx8tTW5KLTEv/W+t5vX+gQghON+5QaTRspjUSSwNoY5+bMy1h2T
-	91shR2A2nFBt1QAL5E2rhrt+1lJtkwuOLujMo0k/dxjPmktu5h8DrWHYYTpNsbIpSCFTe83mDGa
-	z1z8h63lHjfWzvR+38EjgDg0E5XA=
-X-Google-Smtp-Source: AGHT+IGmAosyPljzB5tpeW+wijXZ0l9rjM3TdMArpY/0JumvOxRKdXT6vWsamHhqT8Y9VwNQwEXiPmSBIbFwMthAbN0=
-X-Received: by 2002:ac2:46c6:0:b0:511:7202:3938 with SMTP id
- p6-20020ac246c6000000b0051172023938mr2220592lfo.63.1708035886253; Thu, 15 Feb
- 2024 14:24:46 -0800 (PST)
+	b=MV1UofanRyw8U9jIb/tAYn/gCTMFLFpe/Tf8TO3gruCTWMKmqwN0RqYdEX0l0kyh2
+	 IYkwFtVf0+JZhFkdZINhevE2TjEOH0VGex7vjqeZ4K9dhcgnIrJZjLaGnRdJIAneml
+	 pPrIbsGqfQtctANE0p6aI5hwSwAOheLElkTfHZTLgvrMC9ye3cetJspnQfAJLjIGJ4
+	 40Q9Bgjfjxrp13PErn/1Eotuko7CTn8+rQOx2WaG2cbYFXaW5Q1CFTU2+YE3zuTwJ3
+	 uJchtg0B6/Ra6ztXvGVKy7HiTL1jZmd4/mLJ8IChvSU435opBUARdiHWZmZzzohzNi
+	 tIsSVBOgNfbLQ==
+Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-51178bbb5d9so162533e87.2
+        for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 14:27:50 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCWsBVBSxKHp4ZK6L1cB4CrgYcpZTxFOtlXTVGo+Klu3m+vs/qy1Y9NcbkRxMEIIXE7edt96aOp5EBfNq78Wlmill59OfvFML64=
+X-Gm-Message-State: AOJu0YwGtx6GxMrd3nh/6Q0k4I+3mJl9ikpgtcZrZMrfeKEB6LDA68pJ
+	Du7lTMM3AxaIgElILNaWNTNULYpsGIDk9EIsFbqEW5GSaplvd1Jk2QK5JESpn4vIXAnBJvlwrnE
+	gHSE8e1Vj/MoQMr1Dks9qBOX536w=
+X-Google-Smtp-Source: AGHT+IGC59CIx+18FvhmoXIg3RlOVJ/oIazfClCL//AhJ/1+PEr2ep6lZAuyT2j7MQwdoyVKmli2wj5EYwsFFLYYAfo=
+X-Received: by 2002:a05:6512:613:b0:511:62f7:14fa with SMTP id
+ b19-20020a056512061300b0051162f714famr2579567lfe.29.1708036068658; Thu, 15
+ Feb 2024 14:27:48 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
-In-Reply-To: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com> <20240201092559.910982-8-yukuai1@huaweicloud.com>
+In-Reply-To: <20240201092559.910982-8-yukuai1@huaweicloud.com>
 From: Song Liu <song@kernel.org>
-Date: Thu, 15 Feb 2024 14:24:34 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
-Message-ID: <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
-Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
+Date: Thu, 15 Feb 2024 14:27:37 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW6+Sc9VSWoyQ=ydEo+PPNV1Z+1VOBJqhZ3GZTY0UrPKig@mail.gmail.com>
+Message-ID: <CAPhsuW6+Sc9VSWoyQ=ydEo+PPNV1Z+1VOBJqhZ3GZTY0UrPKig@mail.gmail.com>
+Subject: Re: [PATCH v5 07/14] md: export helpers to stop sync_thread
 To: Yu Kuai <yukuai1@huaweicloud.com>
 Cc: mpatocka@redhat.com, heinzm@redhat.com, xni@redhat.com, 
 	blazej.kucman@linux.intel.com, agk@redhat.com, snitzer@kernel.org, 
@@ -62,42 +62,40 @@ On Thu, Feb 1, 2024 at 1:30=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> wr=
 ote:
 >
 [...]
+> +
+>  static void idle_sync_thread(struct mddev *mddev)
+>  {
+>         mutex_lock(&mddev->sync_mutex);
+> -       clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 >
-> [1] https://lore.kernel.org/all/CALTww29QO5kzmN6Vd+jT=3D-8W5F52tJjHKSgrfU=
-c1Z1ZAeRKHHA@mail.gmail.com/
+>         if (mddev_lock(mddev)) {
+>                 mutex_unlock(&mddev->sync_mutex);
+>                 return;
+>         }
 >
-> Yu Kuai (14):
->   md: don't ignore suspended array in md_check_recovery()
->   md: don't ignore read-only array in md_check_recovery()
->   md: make sure md_do_sync() will set MD_RECOVERY_DONE
->   md: don't register sync_thread for reshape directly
->   md: don't suspend the array for interrupted reshape
->   md: fix missing release of 'active_io' for flush
+> +       clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+>         stop_sync_thread(mddev, false, true);
+>         mutex_unlock(&mddev->sync_mutex);
+>  }
+> @@ -4936,13 +4965,13 @@ static void idle_sync_thread(struct mddev *mddev)
+>  static void frozen_sync_thread(struct mddev *mddev)
+>  {
+>         mutex_lock(&mddev->sync_mutex);
+> -       set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+>
+>         if (mddev_lock(mddev)) {
+>                 mutex_unlock(&mddev->sync_mutex);
+>                 return;
+>         }
+>
+> +       set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+>         stop_sync_thread(mddev, false, false);
+>         mutex_unlock(&mddev->sync_mutex);
+>  }
 
-Applied 1/14-5/14 to md-6.8 branch (6/14 was applied earlier).
+The two changes above (moving set_bit) don't seem to belong
+to this patch. If they are still needed, please submit a separate
+patch.
 
 Thanks,
 Song
-
-
->   md: export helpers to stop sync_thread
->   md: export helper md_is_rdwr()
->   dm-raid: really frozen sync_thread during suspend
->   md/dm-raid: don't call md_reap_sync_thread() directly
->   dm-raid: add a new helper prepare_suspend() in md_personality
->   md/raid456: fix a deadlock for dm-raid456 while io concurrent with
->     reshape
->   dm-raid: fix lockdep waring in "pers->hot_add_disk"
->   dm-raid: remove mddev_suspend/resume()
->
->  drivers/md/dm-raid.c |  78 +++++++++++++++++++--------
->  drivers/md/md.c      | 126 +++++++++++++++++++++++++++++--------------
->  drivers/md/md.h      |  16 ++++++
->  drivers/md/raid10.c  |  16 +-----
->  drivers/md/raid5.c   |  61 +++++++++++----------
->  5 files changed, 192 insertions(+), 105 deletions(-)
->
-> --
-> 2.39.2
->
->
