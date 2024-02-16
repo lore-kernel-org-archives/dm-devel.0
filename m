@@ -1,119 +1,143 @@
-Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
+Received: from mail-io1-f42.google.com (mail-io1-f42.google.com [209.85.166.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 95FCE12CD81
-	for <dm-devel@lists.linux.dev>; Fri, 16 Feb 2024 14:29:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64A2A12F58A
+	for <dm-devel@lists.linux.dev>; Fri, 16 Feb 2024 15:52:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708093774; cv=none; b=NBOaERpqii+JW88XO/OoAEIMX+9JXTU1C82Un1Y1XI2DtP9fSASfZBUxGaqfT6X66JJXVytcRaxRUHdyrpGz1VYHDWqoaeN4il6LAp5wzT/fChR/8elzWrGlffHbKNgZ1TlP7hoxb+2WbXY7qBR3oBynfFyCbFzOnnAjFV6yssU=
+	t=1708098749; cv=none; b=HglzDBYaDareEn/P6FooeYyCjJDa1M15JIkKz8WzCEKN+UGXCAoQrI6fnd883NHm4RaUUr2ELbTTicUelhpoaUpO29/zRKm5Gx5tz4/JjXR63bZjEjr115rctyqXWyNYq45QS3zn7A1XjZELGmaTIwCcB6PccF+ekyauS87K2EU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708093774; c=relaxed/simple;
-	bh=0gqs/Fd2PzVQgkvt2pj9wMwEd718+C0xIW9Ukp4Svlc=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=nhF3Ixs9EZDa1icu0ZMGVbe03iXgaVv/V8IPBlTmBXZR3VvmlYr55/JI5lQKWvXSsffqvmGfS+HhuRGQhwOUlnIAV0rpXFyzd3NQfhKQqzbqV8Vz9k1klfp87cfrDn7cqDowT+wgL7Ghy5ReZIfHNmdbL9x7tky8E+RISq/EVk0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=WPAo1gZI; arc=none smtp.client-ip=209.85.221.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1708098749; c=relaxed/simple;
+	bh=zQHxIDjjwvENEklHG5+P+nAsCfKvOL33RSYN/au5iDk=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=heWooLIbrDat5d2m+zv6LxoLST47cN+OTGUmMhdmygANxn01dbXGxIcAEGy2lH30yNRq6v5scO4R8Wd6m/6zQSUHJfaXk1T5zmh3Kalq9gkzWvrz8f/h3PPB4hceJeYg/P0RdbDzedyrFsPlDD6bOXrfOq7KzADCRTtP+LzTGIQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=davidwei.uk; spf=none smtp.mailfrom=davidwei.uk; dkim=pass (2048-bit key) header.d=davidwei-uk.20230601.gappssmtp.com header.i=@davidwei-uk.20230601.gappssmtp.com header.b=Et9XXUmw; arc=none smtp.client-ip=209.85.166.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=davidwei.uk
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=davidwei.uk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="WPAo1gZI"
-Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-33d10936af1so1172204f8f.1
-        for <dm-devel@lists.linux.dev>; Fri, 16 Feb 2024 06:29:31 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=davidwei-uk.20230601.gappssmtp.com header.i=@davidwei-uk.20230601.gappssmtp.com header.b="Et9XXUmw"
+Received: by mail-io1-f42.google.com with SMTP id ca18e2360f4ac-7c3e01a7fdeso81185539f.1
+        for <dm-devel@lists.linux.dev>; Fri, 16 Feb 2024 07:52:28 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1708093770; x=1708698570; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:autocrypt
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=0gqs/Fd2PzVQgkvt2pj9wMwEd718+C0xIW9Ukp4Svlc=;
-        b=WPAo1gZI7auAe1yqrcmK6ka2GGX6HOL2LegN2v9WJMBfghCT4/J2ZW/k50OatnSa3l
-         esijd3QpeGclsneUkXP1a32kygHxUHl1o33Q+pEh5IOOJsy35i4b16Ub/dCsD1joOoYd
-         Kc69BiT6pGksOO+oD+KkkCiMv5OxNA6lM4rbi3WiDSMba0Blpd+OmdiebaS9q5mH+9WC
-         ogqpsHigVGaOpLTO0n2auqZOG3rg8onZNjCcTVyykYlmS5/LiuzH/38q17WTlPnAFZ3q
-         e5sGLw+ACQU7ebZNCZTfzkC1EtHeNyQ9Qx9zSRE602TLYH4og616kJmCNW50hF56lwsM
-         wWSg==
+        d=davidwei-uk.20230601.gappssmtp.com; s=20230601; t=1708098747; x=1708703547; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=4UuLv5UoKgwS5Sbj+Drkana4tgYiAyfKFVJYKCmoJVg=;
+        b=Et9XXUmwFM69WBtibIxAwc4l0IonKvK1vSpi8tziiZ0WAkgfjyIQ/5iIrJ/zrjnEUa
+         PTzxBPsavGFpsBKBSUOUIPkvwXQa8D0Qjlkh9Oz5v4lG0sBUA2sEV4XwBtKldnm1JM/N
+         iodFlwBN/M4gO56ybkicDN9uIdTWFiKL7JpBYC9GvQp/2QMmaLiq9X0jlCf0ev8LPcoE
+         e2WA2S4w4Ihn0BoofSRkqp/DzY7T7dTqoINAF3P9iPcYmCnFRbi4bBOq7e4GqZBtqwHD
+         jObNNf0DZlaZtxLeh+fFG4O7ikiQwCKukUecR9q0G1cbaxxaSFvM/7WxWExk5MoAKcUN
+         1hrA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708093770; x=1708698570;
-        h=mime-version:user-agent:content-transfer-encoding:autocrypt
-         :references:in-reply-to:date:cc:to:from:subject:message-id
+        d=1e100.net; s=20230601; t=1708098747; x=1708703547;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=0gqs/Fd2PzVQgkvt2pj9wMwEd718+C0xIW9Ukp4Svlc=;
-        b=gRJheUyJMzNn3BCKZYmSz50KDgKGUEQSE4dLuKSO1J9DYBP/faeWDAYucS10XupP7T
-         5hcEiAqIhhNNcgyCFbRSj7v2ryi6X8REXOAFA0nCHe9P1XAN+u8BeU/Xn1IH6sDScMIh
-         cVFSVBckPfGMYA9SD3do3dGsVvPDS+Ve6XdD9Ujhupw5iDP7tEM3wJKWRvIfHESQCgnX
-         1Z1iSOp0euiyN15uvWXYCAVK9Atdgue9KRfc5S0TrB7m2JKlmhdYtZubTrmpTDZaNDFq
-         NdSj2RLSZtT7qLYS+DUP7bR+s+6sPefUOD03YFALbfC8uh9l/UOvaI4gNiSl82lhatdx
-         da1g==
-X-Forwarded-Encrypted: i=1; AJvYcCVd6mF67yJnrMvSyg60EaJeG4bjQbYeqMGuY/88hzj085ldVPEHwieQYzolyps2Zm2KZf+7F6bhXo+2nhG+oCgIhV49VoqchZc=
-X-Gm-Message-State: AOJu0YxrwH9rpu7VU8VwMqS5FgPaSkICZ+2tnyrldBgqokdVZsWC8y9o
-	TV/OuxFahj05SwHq5Fzis7EY1Y2VwhkVLOi+ofFSgnctbYBWhmUjM8JSOYqyRXs=
-X-Google-Smtp-Source: AGHT+IFyiQ4FuzQNLg10lOF4elv0WsvixoWL8S+M4dpSEqAG239CZpCR342zrnR2eRmHqTovZeaLyg==
-X-Received: by 2002:a5d:4d04:0:b0:33d:2012:a2a7 with SMTP id z4-20020a5d4d04000000b0033d2012a2a7mr945816wrt.64.1708093769788;
-        Fri, 16 Feb 2024 06:29:29 -0800 (PST)
-Received: from apollon.fritz.box (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
-        by smtp.gmail.com with ESMTPSA id ay5-20020a5d6f05000000b0033d1ef15821sm1797034wrb.25.2024.02.16.06.29.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 16 Feb 2024 06:29:29 -0800 (PST)
-Message-ID: <b38d9ae7b49ec1569b25c5f5a55afbc47df4b09d.camel@suse.com>
-Subject: Re: About DM_UDEV_DISABLE_OTHER_RULES_FLAG and DM_NOSCAN
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Peter Rajnoha <prajnoha@redhat.com>, Zdenek Kabelac
- <zkabelac@redhat.com>,  David Teigland <teigland@redhat.com>,
- linux-lvm@lists.linux.dev, dm-devel@lists.linux.dev, Heming Zhao
- <heming.zhao@suse.com>
-Date: Fri, 16 Feb 2024 15:29:27 +0100
-In-Reply-To: <Zc6UEKsce2ppaP62@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <61638dc821c08cd97f6ac53150c5b0120f732deb.camel@suse.com>
-	 <4a9e62ec-f93a-4739-a406-2c6d2138258a@redhat.com>
-	 <9b1475e2fa5982dd508d58975b8e6eb58cad95e2.camel@suse.com>
-	 <f3e3db2b-8077-48b6-b507-4a9c4793affb@redhat.com>
-	 <8e7a574fffaded39825a01bf33482cea94507289.camel@suse.com>
-	 <Zc6UEKsce2ppaP62@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-Autocrypt: addr=martin.wilck@suse.com; prefer-encrypt=mutual; keydata=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
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.50.3 
+        bh=4UuLv5UoKgwS5Sbj+Drkana4tgYiAyfKFVJYKCmoJVg=;
+        b=HTcj/vkheSRMGukEtO0mKgSI8AIOzEHxueogs7uFpiwNoTAWFIIdvK5apy4vbulMSO
+         VJf25Qbw31cgjZb43E3+v9vZPjdWBCJhKfIlVHYoYcQeu6rFCQmXOGgcp5y6TBGfLppQ
+         yQmUGqonT2LSzuGRvI9Rc2p6DPbZRE23RoV8Cyn7Diigjv+BfvQwMlWMLcaasBxiX2rs
+         3CWNYnpcSc/8qEnMGDxFpm0GQjfTkGp579mmyz5l8gmpjCzv7XRfnqeHBnUtp3O7NSBz
+         1Iv1vFsZa6a1TxM2PH2CMlXqqev+7UK39eGoOhd2wWWOnz+euZmarfVIwpl8VByiTie4
+         NsAw==
+X-Forwarded-Encrypted: i=1; AJvYcCUYFHC/STaqB02Ve4TI4zLxj8WGdpfYi7Vstnuqu6vPbI25imzVMiDyscp2FLTSkoMxUwivw5dDGougioIRNNvFOb1GX8TpYnk=
+X-Gm-Message-State: AOJu0YxuzK/ee4TV348ASzVRlU3Kl3Uty5r8kCKBBD9jthWiSdQTGu2t
+	qVgjU20WtAqqWZ+3Rs7KEJsFCMUI5DG7AEWdb6zkaLCUNY2fzT06DAyRztlMg/g=
+X-Google-Smtp-Source: AGHT+IHrUiej7yFWlHnP9s7250iMaB2JeyRPBgFUS7lY1WV3rbY8kPKQiQ+iQejR4JASuqBjKZnwyQ==
+X-Received: by 2002:a05:6602:1302:b0:7c4:5529:5818 with SMTP id h2-20020a056602130200b007c455295818mr5979560iov.4.1708098747464;
+        Fri, 16 Feb 2024 07:52:27 -0800 (PST)
+Received: from [192.168.1.132] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id z26-20020a02ceba000000b0047401a9b8cesm32736jaq.106.2024.02.16.07.52.26
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 16 Feb 2024 07:52:27 -0800 (PST)
+Message-ID: <f0c51f71-dae8-447f-bbdb-73d2ce607893@davidwei.uk>
+Date: Fri, 16 Feb 2024 08:52:25 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 6/8] net: tcp: tsq: Convert from tasklet to BH workqueue
+Content-Language: en-GB
+To: Eric Dumazet <edumazet@google.com>, Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com,
+ linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com,
+ ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com,
+ houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org,
+ netdev@vger.kernel.org, allen.lkml@gmail.com, kernel-team@meta.com,
+ "David S. Miller" <davem@davemloft.net>, David Ahern <dsahern@kernel.org>,
+ Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
+ David Wei <davidhwei@meta.com>
+References: <20240130091300.2968534-1-tj@kernel.org>
+ <20240130091300.2968534-7-tj@kernel.org> <Zc7zLsEhDzGkCH9m@slm.duckdns.org>
+ <CANn89iKDsJPY=QQrTHK0Jw=s=A_G_GzcOA0WsqXaytWAVV3R4Q@mail.gmail.com>
+From: David Wei <dw@davidwei.uk>
+In-Reply-To: <CANn89iKDsJPY=QQrTHK0Jw=s=A_G_GzcOA0WsqXaytWAVV3R4Q@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-On Thu, 2024-02-15 at 17:45 -0500, Benjamin Marzinski wrote:
-> On Mon, Feb 12, 2024 at 03:16:27PM +0100, Martin Wilck wrote:
-> > On Mon, 2024-02-12 at 13:32 +0100, Peter Rajnoha wrote:
-> >=20
-> > >=20
-> > > What do you think about keeping a single
-> > > DM_UDEV_DISABLE_OTHER_RULES_FLAG for this, just having a
-> > > different
-> > > value, say "2" to denote the B case? Otherwise, we need 2
-> > > distinct
-> > > variables (which is harder for others to accept I bet).
-> >=20
-> > Yes, that could work, if the save / restore is implemented cleanly.
->=20
-> What if we never read DM_UDEV_DISABLE_OTHER_RULES_FLAG from the
-> database. Instead how about, if DM_UDEV_DISABLE_OTHER_RULES_FLAG is
-> set
-> by "dmsetup udevflags", we save it as something like
-> DM_IGNORE_DEVICE.
-> Otherwise, if it's a spurious event, we read DM_IGNORE_DEVICE from
-> the
-> database. After "dm_flags_done", if DM_IGNORE_DEVICE is set, we set
-> DM_UDEV_DISABLE_OTHER_RULES_FLAG. This leaves the other rules free to
-> mess with DM_UDEV_DISABLE_OTHER_RULES_FLAG all they want.
+On 2024-02-16 01:23, Eric Dumazet wrote:
+> !-------------------------------------------------------------------|
+>   This Message Is From an External Sender
+> 
+> |-------------------------------------------------------------------!
+> 
+> On Fri, Feb 16, 2024 at 6:31 AM Tejun Heo <tj@kernel.org> wrote:
+>>
+>> Hello,
+>>
+>> On Mon, Jan 29, 2024 at 11:11:53PM -1000, Tejun Heo wrote:
+>>> The only generic interface to execute asynchronously in the BH context is
+>>> tasklet; however, it's marked deprecated and has some design flaws. To
+>>> replace tasklets, BH workqueue support was recently added. A BH workqueue
+>>> behaves similarly to regular workqueues except that the queued work items
+>>> are executed in the BH context.
+>>>
+>>> This patch converts TCP Small Queues implementation from tasklet to BH
+>>> workqueue.
+>>>
+>>> Semantically, this is an equivalent conversion and there shouldn't be any
+>>> user-visible behavior changes. While workqueue's queueing and execution
+>>> paths are a bit heavier than tasklet's, unless the work item is being queued
+>>> every packet, the difference hopefully shouldn't matter.
+>>>
+>>> My experience with the networking stack is very limited and this patch
+>>> definitely needs attention from someone who actually understands networking.
+>>
+>> On Jakub's recommendation, I asked David Wei to perform production memcache
+>> benchmark on the backported conversion patch. There was no discernible
+>> difference before and after. Given that this is likely as hot as it gets for
+>> the path on a real workloal, the conversions shouldn't hopefully be
+>> noticeable in terms of performance impact.
+>>
+>> Jakub, I'd really appreciate if you could ack. David, would it be okay if I
+>> add your Tested-by?
 
-That sounds good and aligns with what I'd thought by myself. But we
-should use a less suggestive name. DM_IGNORE_DEVICE would again make
-users think that they should consume this variable, like DM_NOSCAN.
+Yes, that's fine.
 
-Martin
+> 
+> I presume memcache benchmark is using small RPC ?
 
+It is not a benchmark but a prod shadow, but yes the requests are small.
+
+> 
+> TSQ matters for high BDP, and is very time sensitive.
+> 
+> Things like slow TX completions (firing from napi poll, BH context)
+> can hurt TSQ.
+> 
+> If we add on top of these slow TX completions, an additional work
+> queue overhead, I really am not sure...
+> 
+> I would recommend tests with pfifo_fast qdisc (not FQ which has a
+> special override for TSQ limits)
+> 
+> Eventually we could add in TCP a measure of the time lost because of
+> TSQ, regardless of the kick implementation (tasklet or workqueue).
+> Measuring the delay between when a tcp socket got tcp_wfree approval
+> to deliver more packets, and time it finally delivered these packets
+> could be implemented with a bpftrace program.
