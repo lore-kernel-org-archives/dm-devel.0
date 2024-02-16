@@ -1,113 +1,163 @@
-Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com [209.85.216.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7ABE812E68
-	for <dm-devel@lists.linux.dev>; Fri, 16 Feb 2024 05:31:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7FE5514A8D
+	for <dm-devel@lists.linux.dev>; Fri, 16 Feb 2024 05:46:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708061490; cv=none; b=n1arUynGO0FmbF/F8+ayhfoFKyIIkltYRKGD212VaD0zCZX+3iPSAMMRMPims002Dc0201gozwLfCKfKSOA2YGB29w7cNjSRkB+zImyMjYU28CfrnG1ToRKimdgO0bb4hygSPoofyhaNn+2Be1ZNRaEuWQ91arfpQXkCkLZ+w+I=
+	t=1708062404; cv=none; b=hNujOve6tNo1j8zdqrgXt6B3zidg+HPJJfqxxzvC0buq09UXdj2xb/RxWyrx0u2Xpi35YICEpEFuZ/12MGBtt5ZHZJqFyIla1rahSWOVzaMoB+x7q2LSLDgCjq3MMYNa4lTLvBemUl9PlRTVdbe64jzuKwH1j7UepyhoWVhGuZY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708061490; c=relaxed/simple;
-	bh=IO6wXrWgnOjdRNHYOyVqjCgY14opWEM+FIcIepTxP2A=;
+	s=arc-20240116; t=1708062404; c=relaxed/simple;
+	bh=xnES3SSIK1U2gP1DxNv1Vj/LpwvbOrQvXcC7yiLSyIc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JlCl4B4P+ip47/mzFdPIgnkxjsoG3Scqc+TuIGgbPFYgUJ910FCrnNDjmMG+lG44glB33yHaLpfYwCtkW2aY7iz9nykT0wiH9NgKnqnn6dCwiC2FKKa61s8vr6dUprB2ecsueixEPiKgC33DJL+hdxUj1Ow3qsFrMffzdeMstCw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=O0B4Wp6u; arc=none smtp.client-ip=209.85.216.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=JNG4zioEukeRZOuETNFdvJ7B+STqQdHBPyKWHwpREx7DxZAiRJGNv2zslJG0lskqcfiSzxryiiPSIpnQ+rbN4JPwQt1HJC9ou3dXPjGFFzLCWorIlFPLJ6wHm7yFIYYXf8oOscAx2ssBoSDKWVcBEe/eOalQN/EB6ZlcuocBQaM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=U5JEpbJC; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="O0B4Wp6u"
-Received: by mail-pj1-f43.google.com with SMTP id 98e67ed59e1d1-290d59df3f0so1328708a91.2
-        for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 21:31:29 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1708061489; x=1708666289; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=tjqvFkfM5Lfa1Uthf+wvZFrrDCYAGzM+X3+/QDBtjEM=;
-        b=O0B4Wp6u8ofjpCMvYxfbfJ0nxSXAInOGseeT0KtEOcKR1hS8B8pPIPiuGDmvx4jUK0
-         ewt0Fn8qzJSnbenFZe5TX5dAPLpLbuSxU2sBNdiU3PbV0//be6pPAgP7iFuh3BkMdj3Q
-         wQ4lItl3GSpz1sZuonYWj+h/6l9IZYlpvfUrQ+kuagTrZOO6kOQ0huR0A7BGGf3XpkxD
-         oJn3jIc/e7lpullaCKIvkOb1tw/01TWNqQ7IuwyE+ufWZiU8y+H3DnWoOzt83EmuDr1E
-         Yp2fJOSbRNIpxyXvv6bYnfMhhXBywTvcx6ef3ll4f9u79/lrP+eCGe2f5N7qUOYJNqPl
-         S3YA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708061489; x=1708666289;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=tjqvFkfM5Lfa1Uthf+wvZFrrDCYAGzM+X3+/QDBtjEM=;
-        b=euxvf1f/3PQ8CRQNup0DUeusAWTnbpwVvFh0kQm58Risr+p644oxxl+obECAqXnHF8
-         Nua62tpZXvgvQhVrgDMkHx0pA5PZTgqeD2eg4SfBRyN/q7fx7+K34D2mxEvt1X1vQgng
-         zvg8wRnehOF6eGV4y/sF5IQJB7NOZ4OQ6+tN/WtvANTCEHUVU8zLO9z0eeba86GYe4a1
-         xFvheBF/F26TJQaC3O7emKJMgjXV93hedmd70eaSmeA6JnJu89egWVGjtQZY4THx8D/o
-         A1hSS5GwCCmxGwFPWxCM+Lv1FeJ0a+d2b8yl14FROaVm61mAeLKGc48BGgF9ZZM86GGR
-         MC/Q==
-X-Forwarded-Encrypted: i=1; AJvYcCWVe+BGbWTJet3E7zQ//bEPjoJQM9rSIMyyi8t+xObWIrrlfGqFVKiy4BqhohUNHH1BRPbL0wkcxsb7w/TubdJzQTmHG6m5oeM=
-X-Gm-Message-State: AOJu0YzLkPyd8DtLzSK3UnBVaPKPeIiKBlpnY083nGPGl8N7qek4bJbI
-	C6rdaVThnvM9sEU2Dwsuk9eccbftoyXIVzSmMTfv2eCIPTQ0VreG
-X-Google-Smtp-Source: AGHT+IF3YmN1qawIPxNBZ267l/ivRrJxf0WqB2STpKTxG3GPCe2BMlVFVyRTIk7pohrmWgR5uF5SPQ==
-X-Received: by 2002:a17:90b:fca:b0:299:3007:ad13 with SMTP id gd10-20020a17090b0fca00b002993007ad13mr1404504pjb.32.1708061488696;
-        Thu, 15 Feb 2024 21:31:28 -0800 (PST)
-Received: from localhost (dhcp-141-239-158-86.hawaiiantel.net. [141.239.158.86])
-        by smtp.gmail.com with ESMTPSA id t22-20020a17090a1c9600b00298e639d17esm2647645pjt.22.2024.02.15.21.31.27
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 15 Feb 2024 21:31:28 -0800 (PST)
-Sender: Tejun Heo <htejun@gmail.com>
-Date: Thu, 15 Feb 2024 19:31:26 -1000
-From: Tejun Heo <tj@kernel.org>
-To: torvalds@linux-foundation.org, mpatocka@redhat.com
-Cc: linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
-	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com,
-	bob.liu@oracle.com, houtao1@huawei.com, peterz@infradead.org,
-	mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com,
-	kernel-team@meta.com, Eric Dumazet <edumazet@google.com>,
-	"David S. Miller" <davem@davemloft.net>,
-	David Ahern <dsahern@kernel.org>, Jakub Kicinski <kuba@kernel.org>,
-	Paolo Abeni <pabeni@redhat.com>, David Wei <davidhwei@meta.com>
-Subject: Re: [PATCH 6/8] net: tcp: tsq: Convert from tasklet to BH workqueue
-Message-ID: <Zc7zLsEhDzGkCH9m@slm.duckdns.org>
-References: <20240130091300.2968534-1-tj@kernel.org>
- <20240130091300.2968534-7-tj@kernel.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="U5JEpbJC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1708062401;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Ec9GQsV+tymXJStq1MxqZ2ua4Wrdy4hZxhXXYKvTEEw=;
+	b=U5JEpbJCPK+skg6zIE7a+WdrIz3+Mu8luqx3dWtV9BUTNeKWUr5nmpwg935KBaTTX4J6Lg
+	EQCjd8WG4KylG7rDheNDhhdxhD6pWUNhOfxC5xDvWkDptBEULLe5pZrSztaeYX/OrHwXwT
+	xctnh+surx2q8NRvPFZy3ZRvPpEUIEc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-599-ia91x7MMNMygHbE1etbllg-1; Fri, 16 Feb 2024 00:46:36 -0500
+X-MC-Unique: ia91x7MMNMygHbE1etbllg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 323D710201E7;
+	Fri, 16 Feb 2024 05:46:36 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9ADC8C1596E;
+	Fri, 16 Feb 2024 05:46:35 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 41G5kZ5K434328
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 16 Feb 2024 00:46:35 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 41G5kXiI434326;
+	Fri, 16 Feb 2024 00:46:33 -0500
+Date: Fri, 16 Feb 2024 00:46:33 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Song Liu <song@kernel.org>
+Cc: Yu Kuai <yukuai1@huaweicloud.com>, mpatocka@redhat.com, heinzm@redhat.com,
+        xni@redhat.com, blazej.kucman@linux.intel.com, agk@redhat.com,
+        snitzer@kernel.org, dm-devel@lists.linux.dev, yukuai3@huawei.com,
+        jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com, akpm@osdl.org,
+        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+        yi.zhang@huawei.com, yangerkun@huawei.com
+Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
+Message-ID: <Zc72uQln4bXothru@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+ <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20240130091300.2968534-7-tj@kernel.org>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
 
-Hello,
-
-On Mon, Jan 29, 2024 at 11:11:53PM -1000, Tejun Heo wrote:
-> The only generic interface to execute asynchronously in the BH context is
-> tasklet; however, it's marked deprecated and has some design flaws. To
-> replace tasklets, BH workqueue support was recently added. A BH workqueue
-> behaves similarly to regular workqueues except that the queued work items
-> are executed in the BH context.
+On Thu, Feb 15, 2024 at 02:24:34PM -0800, Song Liu wrote:
+> On Thu, Feb 1, 2024 at 1:30 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+> >
+> [...]
+> >
+> > [1] https://lore.kernel.org/all/CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com/
+> >
+> > Yu Kuai (14):
+> >   md: don't ignore suspended array in md_check_recovery()
+> >   md: don't ignore read-only array in md_check_recovery()
+> >   md: make sure md_do_sync() will set MD_RECOVERY_DONE
+> >   md: don't register sync_thread for reshape directly
+> >   md: don't suspend the array for interrupted reshape
+> >   md: fix missing release of 'active_io' for flush
 > 
-> This patch converts TCP Small Queues implementation from tasklet to BH
-> workqueue.
+> Applied 1/14-5/14 to md-6.8 branch (6/14 was applied earlier).
 > 
-> Semantically, this is an equivalent conversion and there shouldn't be any
-> user-visible behavior changes. While workqueue's queueing and execution
-> paths are a bit heavier than tasklet's, unless the work item is being queued
-> every packet, the difference hopefully shouldn't matter.
+> Thanks,
+> Song
+
+I'm still seeing new failures that I can't reproduce in the 6.6 kernel,
+specifically:
+
+lvconvert-raid-reshape-stripes-load-reload.sh
+lvconvert-repair-raid.sh
+
+with lvconvert-raid-reshape-stripes-load-reload.sh Patch 12/14
+("md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+reshape") is changing a hang to a corruption. The issues is that we
+can't simply fail IO that crosses the reshape position. I assume that
+the correct thing to do is have dm-raid reissue it after the suspend,
+when the reshape can make progress again. Perhaps something like this,
+only less naive (although this patch does make the test pass for me).
+Heinz, any thoughts on this? Otherwise, I'll look into this a little
+more and post a RFC patch.
+
+=========================================================
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index ed8c28952b14..ff481d494b04 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3345,6 +3345,14 @@ static int raid_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_SUBMITTED;
+ }
+ 
++static int raid_end_io(struct dm_target *ti, struct bio *bio,
++		       blk_status_t *error)
++{
++	if (*error != BLK_STS_IOERR || !dm_noflush_suspending(ti))
++		return DM_ENDIO_DONE;
++	return DM_ENDIO_REQUEUE;
++}
++
+ /* Return sync state string for @state */
+ enum sync_state { st_frozen, st_reshape, st_resync, st_check, st_repair, st_recover, st_idle };
+ static const char *sync_str(enum sync_state state)
+@@ -4100,6 +4108,7 @@ static struct target_type raid_target = {
+ 	.ctr = raid_ctr,
+ 	.dtr = raid_dtr,
+ 	.map = raid_map,
++	.end_io = raid_end_io,
+ 	.status = raid_status,
+ 	.message = raid_message,
+ 	.iterate_devices = raid_iterate_devices,
+=========================================================
 > 
-> My experience with the networking stack is very limited and this patch
-> definitely needs attention from someone who actually understands networking.
+> 
+> >   md: export helpers to stop sync_thread
+> >   md: export helper md_is_rdwr()
+> >   dm-raid: really frozen sync_thread during suspend
+> >   md/dm-raid: don't call md_reap_sync_thread() directly
+> >   dm-raid: add a new helper prepare_suspend() in md_personality
+> >   md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+> >     reshape
+> >   dm-raid: fix lockdep waring in "pers->hot_add_disk"
+> >   dm-raid: remove mddev_suspend/resume()
+> >
+> >  drivers/md/dm-raid.c |  78 +++++++++++++++++++--------
+> >  drivers/md/md.c      | 126 +++++++++++++++++++++++++++++--------------
+> >  drivers/md/md.h      |  16 ++++++
+> >  drivers/md/raid10.c  |  16 +-----
+> >  drivers/md/raid5.c   |  61 +++++++++++----------
+> >  5 files changed, 192 insertions(+), 105 deletions(-)
+> >
+> > --
+> > 2.39.2
+> >
+> >
 
-On Jakub's recommendation, I asked David Wei to perform production memcache
-benchmark on the backported conversion patch. There was no discernible
-difference before and after. Given that this is likely as hot as it gets for
-the path on a real workloal, the conversions shouldn't hopefully be
-noticeable in terms of performance impact.
-
-Jakub, I'd really appreciate if you could ack. David, would it be okay if I
-add your Tested-by?
-
-Thanks.
-
--- 
-tejun
