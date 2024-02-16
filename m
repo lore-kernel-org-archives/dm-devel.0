@@ -1,163 +1,168 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7FE5514A8D
-	for <dm-devel@lists.linux.dev>; Fri, 16 Feb 2024 05:46:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D812D179AB
+	for <dm-devel@lists.linux.dev>; Fri, 16 Feb 2024 06:58:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708062404; cv=none; b=hNujOve6tNo1j8zdqrgXt6B3zidg+HPJJfqxxzvC0buq09UXdj2xb/RxWyrx0u2Xpi35YICEpEFuZ/12MGBtt5ZHZJqFyIla1rahSWOVzaMoB+x7q2LSLDgCjq3MMYNa4lTLvBemUl9PlRTVdbe64jzuKwH1j7UepyhoWVhGuZY=
+	t=1708066737; cv=none; b=aw2Kt8dUO2+SO9AQ1wqMRs1GyG3z4bf6ZS9FFgujFyrF5gKrQO+uL0qUicEZ5gwpo7iHgymISZXDU3IgbBxJT07dF1du1NsmsReRvU2Jo5FUjy7xF9XQsLBGWRLI7qcxTSf1zp0XgXNCoz9r+azvojRaVNj2nOlvHsyWFKdkElU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708062404; c=relaxed/simple;
-	bh=xnES3SSIK1U2gP1DxNv1Vj/LpwvbOrQvXcC7yiLSyIc=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JNG4zioEukeRZOuETNFdvJ7B+STqQdHBPyKWHwpREx7DxZAiRJGNv2zslJG0lskqcfiSzxryiiPSIpnQ+rbN4JPwQt1HJC9ou3dXPjGFFzLCWorIlFPLJ6wHm7yFIYYXf8oOscAx2ssBoSDKWVcBEe/eOalQN/EB6ZlcuocBQaM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=U5JEpbJC; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1708066737; c=relaxed/simple;
+	bh=YROb+eaJNu6/59TKOvdKSLmQg7w+kXyN6IwLF2JJH4s=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=g03S8/ZeWoOBniL40JezqyLPCnvJJVxCkNvfeFvUzumr5Hso3W3vklg0nWWAYkVJf8/Fobl++XxknFKm89k1oceULMFX3+/zUefQj6z8FmvTdGigm2asROcDq6ZZ+KIRj4mW3zOe/I/cruRCSVWWp7FhAexoaPDXo5xNTR1/wOw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BlrJsITI; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="U5JEpbJC"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BlrJsITI"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708062401;
+	s=mimecast20190719; t=1708066734;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Ec9GQsV+tymXJStq1MxqZ2ua4Wrdy4hZxhXXYKvTEEw=;
-	b=U5JEpbJCPK+skg6zIE7a+WdrIz3+Mu8luqx3dWtV9BUTNeKWUr5nmpwg935KBaTTX4J6Lg
-	EQCjd8WG4KylG7rDheNDhhdxhD6pWUNhOfxC5xDvWkDptBEULLe5pZrSztaeYX/OrHwXwT
-	xctnh+surx2q8NRvPFZy3ZRvPpEUIEc=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=BNMvTmeWJ1ziFBp7Mx8IpeakAHCa+fvWpYKZaRcTpWg=;
+	b=BlrJsITIvMgsXd9YFdy2p2nydycBakcFo90DKTq+I3KNLnJibmzGRTzgDobwz9Hkl+wF2+
+	9nMTb4Oy3zqbJPnElF0Ti0b/8zn4KgiEz8cmpv8xIUOhG0h0I3wvMc08BoV4XMkj9d2JnR
+	v8yaYufstArdEL8xZ1ed0Y1FD3M0ue4=
+Received: from mail-ot1-f71.google.com (mail-ot1-f71.google.com
+ [209.85.210.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-599-ia91x7MMNMygHbE1etbllg-1; Fri, 16 Feb 2024 00:46:36 -0500
-X-MC-Unique: ia91x7MMNMygHbE1etbllg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 323D710201E7;
-	Fri, 16 Feb 2024 05:46:36 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9ADC8C1596E;
-	Fri, 16 Feb 2024 05:46:35 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 41G5kZ5K434328
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 16 Feb 2024 00:46:35 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 41G5kXiI434326;
-	Fri, 16 Feb 2024 00:46:33 -0500
-Date: Fri, 16 Feb 2024 00:46:33 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Song Liu <song@kernel.org>
-Cc: Yu Kuai <yukuai1@huaweicloud.com>, mpatocka@redhat.com, heinzm@redhat.com,
-        xni@redhat.com, blazej.kucman@linux.intel.com, agk@redhat.com,
-        snitzer@kernel.org, dm-devel@lists.linux.dev, yukuai3@huawei.com,
-        jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com, akpm@osdl.org,
-        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
-        yi.zhang@huawei.com, yangerkun@huawei.com
-Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
-Message-ID: <Zc72uQln4bXothru@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
- <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
+ us-mta-194-XdQmTu4_PFSBWqoEdyOjqw-1; Fri, 16 Feb 2024 01:58:52 -0500
+X-MC-Unique: XdQmTu4_PFSBWqoEdyOjqw-1
+Received: by mail-ot1-f71.google.com with SMTP id 46e09a7af769-6e103d403c4so2003896a34.0
+        for <dm-devel@lists.linux.dev>; Thu, 15 Feb 2024 22:58:52 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1708066732; x=1708671532;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=BNMvTmeWJ1ziFBp7Mx8IpeakAHCa+fvWpYKZaRcTpWg=;
+        b=Uu7xuxLeZkCM+V5A+wT3hGPC3ObVAuahbYpm7xvc+rjbY4OB+y441PKTB5djH2gxvx
+         prip8EjG3ugmcvMDFZ56RTZ44A3cSYiP/tCBjmiFzI+xuuz9s1GPAIuNNul4dPo3A0My
+         Vp5cc5SMk+ts6yOuX18BHEeFyVwp7RrOU6HGrUAl+V3IEPkQnmYEaSmuKDxGA9GzOwwJ
+         2HHQeFAyHA9NjffW1oqyzdH9Uv/7QPViCAEh6og0w4shjKqTPvQmS4kGV4k0txLY7gtq
+         5eUgE8K3BapB8JvBzKvxrzeCcfEf+jTPngbhszD8GsdV/N/8RYROqG2UKdUG4pon4DXV
+         nDOQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUkxooyWzDuY93fkbjt3IDRMSVxs/t8wNcexkk0Y3r8DdzFOz0DSxTd16fznL6fujwv0Qr/ki3QNRgYZsKL3WdYhEMTghD8OVs=
+X-Gm-Message-State: AOJu0YwA/6epMSy9fGye3cb5ZmLuFPdLqGGtvUKV43+M0prxFtRhBqz1
+	Rd6aF6wpuejQSzEiCDXGTRlWzP1gvRyS6ywfc8Cwmt/pGdmT+6d2XSnMtG2f9K9NDb4xAflejv9
+	YiGg86vW+3m6ZIbr6SV5mwjeBKbQi5Wb0xkNu+1g2oOHUBXPqEGDhIazsDBTEVOd2yRbbJ1d9qA
+	9MiXaivqq6KaJB5mWyyAnNWIGpgRy4Fgc=
+X-Received: by 2002:a05:6358:d04c:b0:178:7c7b:77bd with SMTP id jb12-20020a056358d04c00b001787c7b77bdmr4796304rwb.27.1708066732244;
+        Thu, 15 Feb 2024 22:58:52 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEIS1mWsDcddpPxFekpeD1h3hjt8dIDVsyUqaSy4AgJ7AmFMXEA/DB1AOZvjCvNo30ZSH6kg0YD0Di4qNWMKJg=
+X-Received: by 2002:a05:6358:d04c:b0:178:7c7b:77bd with SMTP id
+ jb12-20020a056358d04c00b001787c7b77bdmr4796292rwb.27.1708066731962; Thu, 15
+ Feb 2024 22:58:51 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com> <20240201092559.910982-2-yukuai1@huaweicloud.com>
+In-Reply-To: <20240201092559.910982-2-yukuai1@huaweicloud.com>
+From: Xiao Ni <xni@redhat.com>
+Date: Fri, 16 Feb 2024 14:58:40 +0800
+Message-ID: <CALTww2-ZhRBJOD3jXs=xKFaD=iR=dtoC9h2rUQi5Stpi+tJ9Bw@mail.gmail.com>
+Subject: Re: [PATCH v5 01/14] md: don't ignore suspended array in md_check_recovery()
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: mpatocka@redhat.com, heinzm@redhat.com, blazej.kucman@linux.intel.com, 
+	agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev, song@kernel.org, 
+	yukuai3@huawei.com, jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com, 
+	akpm@osdl.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
+	yi.zhang@huawei.com, yangerkun@huawei.com
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Thu, Feb 15, 2024 at 02:24:34PM -0800, Song Liu wrote:
-> On Thu, Feb 1, 2024 at 1:30 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
-> >
-> [...]
-> >
-> > [1] https://lore.kernel.org/all/CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com/
-> >
-> > Yu Kuai (14):
-> >   md: don't ignore suspended array in md_check_recovery()
-> >   md: don't ignore read-only array in md_check_recovery()
-> >   md: make sure md_do_sync() will set MD_RECOVERY_DONE
-> >   md: don't register sync_thread for reshape directly
-> >   md: don't suspend the array for interrupted reshape
-> >   md: fix missing release of 'active_io' for flush
-> 
-> Applied 1/14-5/14 to md-6.8 branch (6/14 was applied earlier).
-> 
-> Thanks,
-> Song
+On Thu, Feb 1, 2024 at 5:30=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com> wr=
+ote:
+>
+> From: Yu Kuai <yukuai3@huawei.com>
+>
+> mddev_suspend() never stop sync_thread, hence it doesn't make sense to
+> ignore suspended array in md_check_recovery(), which might cause
+> sync_thread can't be unregistered.
+>
+> After commit f52f5c71f3d4 ("md: fix stopping sync thread"), following
+> hang can be triggered by test shell/integrity-caching.sh:
 
-I'm still seeing new failures that I can't reproduce in the 6.6 kernel,
-specifically:
+Hi Kuai
 
-lvconvert-raid-reshape-stripes-load-reload.sh
-lvconvert-repair-raid.sh
+After applying this patch, it's still stuck at mddev_suspend. Maybe
+the deadlock can be fixed by other patches from the patch set. But
+this patch can't fix this issue. If so, the comment is not right.
 
-with lvconvert-raid-reshape-stripes-load-reload.sh Patch 12/14
-("md/raid456: fix a deadlock for dm-raid456 while io concurrent with
-reshape") is changing a hang to a corruption. The issues is that we
-can't simply fail IO that crosses the reshape position. I assume that
-the correct thing to do is have dm-raid reissue it after the suspend,
-when the reshape can make progress again. Perhaps something like this,
-only less naive (although this patch does make the test pass for me).
-Heinz, any thoughts on this? Otherwise, I'll look into this a little
-more and post a RFC patch.
+>
+> 1) suspend the array:
+> raid_postsuspend
+>  mddev_suspend
+>
+> 2) stop the array:
+> raid_dtr
+>  md_stop
+>   __md_stop_writes
+>    stop_sync_thread
+>     set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+>     md_wakeup_thread_directly(mddev->sync_thread);
+>     wait_event(..., !test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+>
+> 3) sync thread done:
+> md_do_sync
+>  set_bit(MD_RECOVERY_DONE, &mddev->recovery);
+>  md_wakeup_thread(mddev->thread);
+>
+> 4) daemon thread can't unregister sync thread:
+> md_check_recovery
+>  if (mddev->suspended)
+>    return; -> return directly
+>  md_read_sync_thread
+>  clear_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
+>  -> MD_RECOVERY_RUNNING can't be cleared, hence step 2 hang;
 
-=========================================================
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index ed8c28952b14..ff481d494b04 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3345,6 +3345,14 @@ static int raid_map(struct dm_target *ti, struct bio *bio)
- 	return DM_MAPIO_SUBMITTED;
- }
- 
-+static int raid_end_io(struct dm_target *ti, struct bio *bio,
-+		       blk_status_t *error)
-+{
-+	if (*error != BLK_STS_IOERR || !dm_noflush_suspending(ti))
-+		return DM_ENDIO_DONE;
-+	return DM_ENDIO_REQUEUE;
-+}
-+
- /* Return sync state string for @state */
- enum sync_state { st_frozen, st_reshape, st_resync, st_check, st_repair, st_recover, st_idle };
- static const char *sync_str(enum sync_state state)
-@@ -4100,6 +4108,7 @@ static struct target_type raid_target = {
- 	.ctr = raid_ctr,
- 	.dtr = raid_dtr,
- 	.map = raid_map,
-+	.end_io = raid_end_io,
- 	.status = raid_status,
- 	.message = raid_message,
- 	.iterate_devices = raid_iterate_devices,
-=========================================================
-> 
-> 
-> >   md: export helpers to stop sync_thread
-> >   md: export helper md_is_rdwr()
-> >   dm-raid: really frozen sync_thread during suspend
-> >   md/dm-raid: don't call md_reap_sync_thread() directly
-> >   dm-raid: add a new helper prepare_suspend() in md_personality
-> >   md/raid456: fix a deadlock for dm-raid456 while io concurrent with
-> >     reshape
-> >   dm-raid: fix lockdep waring in "pers->hot_add_disk"
-> >   dm-raid: remove mddev_suspend/resume()
-> >
-> >  drivers/md/dm-raid.c |  78 +++++++++++++++++++--------
-> >  drivers/md/md.c      | 126 +++++++++++++++++++++++++++++--------------
-> >  drivers/md/md.h      |  16 ++++++
-> >  drivers/md/raid10.c  |  16 +-----
-> >  drivers/md/raid5.c   |  61 +++++++++++----------
-> >  5 files changed, 192 insertions(+), 105 deletions(-)
-> >
-> > --
-> > 2.39.2
-> >
-> >
+I add some debug logs when stopping dmraid with lvremove command. The
+step you mentioned are sequential but not async. The process is :
+dev_remove->dm_destroy->__dm_destroy->dm_table_postsuspend_targets(raid_pos=
+tsuspend)
+-> dm_table_destroy(raid_dtr). It looks like mddev_suspend is waiting
+for active_io to be zero.
+
+Best Regards
+Xiao
+
+> This problem is not just related to dm-raid, fix it by ignoring
+> suspended array in md_check_recovery(). And follow up patches will
+> improve dm-raid better to frozen sync thread during suspend.
+>
+> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+> Closes: https://lore.kernel.org/all/8fb335e-6d2c-dbb5-d7-ded8db5145a@redh=
+at.com/
+> Fixes: 68866e425be2 ("MD: no sync IO while suspended")
+> Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
+> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+> ---
+>  drivers/md/md.c | 3 ---
+>  1 file changed, 3 deletions(-)
+>
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 2266358d8074..07b80278eaa5 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -9469,9 +9469,6 @@ static void md_start_sync(struct work_struct *ws)
+>   */
+>  void md_check_recovery(struct mddev *mddev)
+>  {
+> -       if (READ_ONCE(mddev->suspended))
+> -               return;
+> -
+>         if (mddev->bitmap)
+>                 md_bitmap_daemon_work(mddev);
+>
+> --
+> 2.39.2
+>
 
