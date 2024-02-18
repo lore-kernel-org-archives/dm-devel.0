@@ -1,125 +1,131 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D6F1EDD
-	for <dm-devel@lists.linux.dev>; Sun, 18 Feb 2024 02:27:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1648737E
+	for <dm-devel@lists.linux.dev>; Sun, 18 Feb 2024 02:34:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708223275; cv=none; b=p11iPG0MAokU45k9TQGSEBf2QfklC+hb8SjOyAILldOteVdlZXkVu1cW4NI/ZBJO3LqeyriVooKF2mj0fsenrlbw0J9LopWh+pcSsdpdobcmsV7DtsKZ9b+wQpgo9UOAaLsPIlzJqymqEdTalfDegua7+XWiGPnGrBb0DoWaOoc=
+	t=1708223657; cv=none; b=lS96x2/gv23y7yB7tgYEbjEZsHnJFOsNf+EMcI1/HamGBC7S/rF/dLpsSev/i2WSdOifvyYIESULJk0fFqx6Ue8a7iV+OThGC6o/DBMHfIkf6Qe2J2EIhIkE9qonKb9LiQiB2XLdnAXaS0k5Mezh24eOg/LZDsH8p073lixnXkY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708223275; c=relaxed/simple;
-	bh=nKsx+TvlDRCfg/EURkIhikZLmq+YLEYvNN++aBLHASQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=LiuzPgRdy4+IlVyUMDT6NXVJrYjcdvv3jP+pUDXm3DcySWD5iBCy1AVOWINbar0shehnw57ncrkH2wBgj2doF05+A7xKukKKg0iXQhOQh4/8UXgBih4vglN1+xo29xTaEGKOwidwlIps5kAyFFCUesjMjNRpeMi1Yc3hcxY5gHY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=N84lRDD1; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N84lRDD1"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708223272;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=nKsx+TvlDRCfg/EURkIhikZLmq+YLEYvNN++aBLHASQ=;
-	b=N84lRDD15aXus10mUmm7eVvxpS0Y0UUttX98ym/kcUf77eltjBaOlqtt7yKINqdHKV2hz6
-	3KM5LuqjgBRk25ERopWMtYKwAaozZ0+lSQ+1wbtpX1IERzxBnZNSnNn2GpAzwCXkzQOhPH
-	cT0z80TNoztXbI0aFKz2AFvIYY7gAPA=
-Received: from mail-pj1-f71.google.com (mail-pj1-f71.google.com
- [209.85.216.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-453-NmGypL1LMw2Ad1oNq-bO5g-1; Sat, 17 Feb 2024 21:27:50 -0500
-X-MC-Unique: NmGypL1LMw2Ad1oNq-bO5g-1
-Received: by mail-pj1-f71.google.com with SMTP id 98e67ed59e1d1-29955bf2116so541368a91.2
-        for <dm-devel@lists.linux.dev>; Sat, 17 Feb 2024 18:27:50 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708223270; x=1708828070;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=nKsx+TvlDRCfg/EURkIhikZLmq+YLEYvNN++aBLHASQ=;
-        b=IbZUIUJr2yAw/6UCZZnbDoXv1jfVFtwwaEuzbcx41Q7TrXIuYAEwrZUYDk8sRM2k3D
-         ivlKPHi0fCh+k5ISzoxetFhuJ7jn4E+/a2LkXumvBToxI0Qtpk2HD1oLwC0h6bdYiQ3a
-         LfR0mHnAdWokz7Ug+l4euYEM41X7TAoYX0E3YQtRLqaFa5/oDDISrII5pG86ndp/l1KC
-         I82g7xYWNmM53PVj/wiEoCG/VIw8+kD9GAKDq23Nyd7fljzkoLKKfw93/SbIlfj7NVIf
-         kO8UQYzMF6fVK6esQVNShNK62Zg4Zs9+eXygIaNdGJlaDVRXLZhiiydITQRdwAoxWCK6
-         6mzw==
-X-Forwarded-Encrypted: i=1; AJvYcCUhKXKaAymSExMs4PFqKrnmGoxjWieLHsXq0zHPLeiT4bFeV7qWdKCVIHI/nLYi29twdwPfN05Tilru45BEpOclwR+jzbl2CS8=
-X-Gm-Message-State: AOJu0YzqLGCPSOlsqfmD+UznV0d/bmuHv1Q9XcRoq55EaLcTnLpWpR4Z
-	ws4WZJl1J+lOX1MMEylfVv4Xqemym6p7T6QY5aUBk5egcOGyKW44j0TmJboAM/dV9N8cvv/WBpK
-	F0Vwv0l/3aio5xc+fiZvOHyy16x82QvlgErNmkJRM/UJ+AWH89nSQc9FyAHXRHyREi1NueVg9LC
-	yjgGOMhgKjxyQZrUCWih7p4yCaogRG09s=
-X-Received: by 2002:a17:90b:78e:b0:299:3e54:83fe with SMTP id l14-20020a17090b078e00b002993e5483femr3558426pjz.36.1708223269829;
-        Sat, 17 Feb 2024 18:27:49 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IGO+Z325KAFI0GSZHw8iD5qIOQx10QeQ1N76fEOCkdUvi6n8sFtZCH4pi9EU3V0YpRBSBxKSb8bnmRvh9gR8PM=
-X-Received: by 2002:a17:90b:78e:b0:299:3e54:83fe with SMTP id
- l14-20020a17090b078e00b002993e5483femr3558413pjz.36.1708223269552; Sat, 17
- Feb 2024 18:27:49 -0800 (PST)
+	s=arc-20240116; t=1708223657; c=relaxed/simple;
+	bh=Ugvg8t9WYayZSxLRPxos4Dl4AVqyS7pRUpFqPxEHeII=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=Qrj3FuYCNmA1huXbfbYqT/9TZ1LZFzAGfYgu8sSTPAXwGJ2/NK5p1e4R7mXmTryLZY7KTYawN0MUbHSdMQMLUuf9CXgv2VUu5GPP1wcsezv1vvqBvYsF8rYtFpOlQnI5lsw4Oa72c9b5/5KcPTb8DWmn5Ss7xu+TJdJgRWD7ktk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TcqVl37rbz4f3jZL
+	for <dm-devel@lists.linux.dev>; Sun, 18 Feb 2024 10:34:07 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 7F5C21A016E
+	for <dm-devel@lists.linux.dev>; Sun, 18 Feb 2024 10:34:10 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgAn+RGgbNFlAXhqEQ--.56890S3;
+	Sun, 18 Feb 2024 10:34:10 +0800 (CST)
+Subject: Re: [PATCH v5 01/14] md: don't ignore suspended array in
+ md_check_recovery()
+To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: mpatocka@redhat.com, heinzm@redhat.com, blazej.kucman@linux.intel.com,
+ agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev,
+ song@kernel.org, jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com,
+ akpm@osdl.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+ yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+ <20240201092559.910982-2-yukuai1@huaweicloud.com>
+ <CALTww2-ZhRBJOD3jXs=xKFaD=iR=dtoC9h2rUQi5Stpi+tJ9Bw@mail.gmail.com>
+ <64d27757-9387-09dc-48e8-a9eedd67f075@huaweicloud.com>
+ <CALTww28E=k6fXJURG77KwHb7M2OByLrcE8g7GNkQDTtcOV48hQ@mail.gmail.com>
+ <d4a2689e-b5cc-f268-9fb2-84c10e5eb0f4@huaweicloud.com>
+ <CALTww28bUzmQASme3XOz0CY=o86f1EUU23ENmnf42UVyuGzQ4Q@mail.gmail.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <c1195efd-dd83-317e-3067-cd4891ae013e@huaweicloud.com>
+Date: Sun, 18 Feb 2024 10:34:08 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
- <20240201092559.910982-2-yukuai1@huaweicloud.com> <CALTww2-ZhRBJOD3jXs=xKFaD=iR=dtoC9h2rUQi5Stpi+tJ9Bw@mail.gmail.com>
- <64d27757-9387-09dc-48e8-a9eedd67f075@huaweicloud.com> <CALTww28E=k6fXJURG77KwHb7M2OByLrcE8g7GNkQDTtcOV48hQ@mail.gmail.com>
- <d4a2689e-b5cc-f268-9fb2-84c10e5eb0f4@huaweicloud.com>
-In-Reply-To: <d4a2689e-b5cc-f268-9fb2-84c10e5eb0f4@huaweicloud.com>
-From: Xiao Ni <xni@redhat.com>
-Date: Sun, 18 Feb 2024 10:27:38 +0800
-Message-ID: <CALTww28bUzmQASme3XOz0CY=o86f1EUU23ENmnf42UVyuGzQ4Q@mail.gmail.com>
-Subject: Re: [PATCH v5 01/14] md: don't ignore suspended array in md_check_recovery()
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: mpatocka@redhat.com, heinzm@redhat.com, blazej.kucman@linux.intel.com, 
-	agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev, song@kernel.org, 
-	jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com, akpm@osdl.org, 
-	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, yi.zhang@huawei.com, 
-	yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <CALTww28bUzmQASme3XOz0CY=o86f1EUU23ENmnf42UVyuGzQ4Q@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgAn+RGgbNFlAXhqEQ--.56890S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7Kr1kJr48uryUJFy7tr48Crg_yoW8Xryfpa
+	48ta1rKr4UAr17Aw12va10q34Sya1FgrWUAr97tr18C3s8Za4fAFWSqFW5AFyDGFZ3GanI
+	9w4Utwn5uw4UZaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9214x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
+	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
+	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
+	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWr
+	Zr1UMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYx
+	BIdaVFxhVjvjDU0xZFpf9x0JUQvtAUUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Sun, Feb 18, 2024 at 9:46=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> w=
-rote:
->
-> Hi,
->
-> =E5=9C=A8 2024/02/18 9:33, Xiao Ni =E5=86=99=E9=81=93:
-> > The deadlock problem mentioned in this patch should not be right?
->
-> No, I think it's right. Looks like you are expecting other problems,
-> like mentioned in patch 6, to be fixed by this patch.
+Hi,
 
-Hi Kuai
+在 2024/02/18 10:27, Xiao Ni 写道:
+> On Sun, Feb 18, 2024 at 9:46 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>
+>> Hi,
+>>
+>> 在 2024/02/18 9:33, Xiao Ni 写道:
+>>> The deadlock problem mentioned in this patch should not be right?
+>>
+>> No, I think it's right. Looks like you are expecting other problems,
+>> like mentioned in patch 6, to be fixed by this patch.
+> 
+> Hi Kuai
+> 
+> Could you explain why step1 and step2 from this comment can happen
+> simultaneously? From the log, the process should be
+> The process is :
+> dev_remove->dm_destroy->__dm_destroy->dm_table_postsuspend_targets(raid_postsuspend)
+> -> dm_table_destroy(raid_dtr).
+> After suspending the array, it calls raid_dtr. So these two functions
+> can't happen simultaneously.
 
-Could you explain why step1 and step2 from this comment can happen
-simultaneously? From the log, the process should be
-The process is :
-dev_remove->dm_destroy->__dm_destroy->dm_table_postsuspend_targets(raid_pos=
-tsuspend)
--> dm_table_destroy(raid_dtr).
-After suspending the array, it calls raid_dtr. So these two functions
-can't happen simultaneously.
+You're removing the target directly, however, dm can suspend the disk
+directly, you can simplily:
 
+1) dmsetup suspend xxx
+2) dmsetup remove xxx
 
->
-> Noted that this patch just fix one case that MD_RECOVERY_RUNNING can't
-> be cleared, I you are testing this patch alone, please make sure that
-> you still triggered the exactly same case:
->
-> - MD_RCOVERY_RUNNING can't be cleared while array is suspended.
+Please also take a look at other patches, why step 1) can't stop sync
+thread.
 
-I'm not testing this patch. I want to understand the patch well. So I
-need to understand the issue first. I can't understand how this
-deadlock (step1,step2) happens.
+Thanks,
+Kuai
 
-Regards
-Xiao
->
-> Thanks,
-> Kuai
->
+> 
+> 
+>>
+>> Noted that this patch just fix one case that MD_RECOVERY_RUNNING can't
+>> be cleared, I you are testing this patch alone, please make sure that
+>> you still triggered the exactly same case:
+>>
+>> - MD_RCOVERY_RUNNING can't be cleared while array is suspended.
+> 
+> I'm not testing this patch. I want to understand the patch well. So I
+> need to understand the issue first. I can't understand how this
+> deadlock (step1,step2) happens.
+> 
+> Regards
+> Xiao
+>>
+>> Thanks,
+>> Kuai
+>>
+> 
+> .
+> 
 
