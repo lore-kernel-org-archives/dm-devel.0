@@ -1,246 +1,99 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B13A114A9E
-	for <dm-devel@lists.linux.dev>; Sun, 18 Feb 2024 08:59:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F9AE200A8
+	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 06:26:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708246770; cv=none; b=EZPRiPrvRvwI+D8T1NowjE552OpoL/zOA/iTvFhXIuc6x90cOfKt/elblaMClgEF7ooFBK2I1R3jjlOblUu7yiiZfNospZuG7TmcQM44XWw1G6hBDnl1fh1LOYvWLM5Hl4Myz3fENUazNyUptUhLI1kRRglGAkjdLdV03chDWeU=
+	t=1708323994; cv=none; b=JNXaP5xtbvw8nQWCroEhbRV2/sGZ5pc1X6opHwOrw+fm2XILK1/ao0txZYD/0Vp/sy7X1Mv3nHrhtISquxnz2Jfe94mowzL3YBAVCuUCffN95yo/RLP8R7EYC8XNxrRZgFw/AaUpxz9q4h+7PPJDuyPywRX5v6JgUnVLf9DN8ZI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708246770; c=relaxed/simple;
-	bh=ZZ+H8LVg2IFQHCdjKmyzTCPevikSQnQ+JapriyhXgfo=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=bHReWB09yPZkrMAd1cEg15Pxf/5y856vSB0Yo1cWTLyppYRXImxjkCCdOsIpNEv2hpzrrJGcX2HcaK9BsNBTDrK5oLVlK0O/R6G0AZGJUrCt3qUyot291uUcORJPEZ74UFJ8T3SQmTUfWQahjckQ0z9FBT7rJ/TBeA6rliWzuRI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Td0360Lbjz4f3jdh
-	for <dm-devel@lists.linux.dev>; Sun, 18 Feb 2024 16:59:14 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id E0B1E1A0232
-	for <dm-devel@lists.linux.dev>; Sun, 18 Feb 2024 16:59:18 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgAn+RHjxtFldH+GEQ--.13072S3;
-	Sun, 18 Feb 2024 16:59:17 +0800 (CST)
-Subject: Re: [PATCH v5 03/14] md: make sure md_do_sync() will set
- MD_RECOVERY_DONE
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: mpatocka@redhat.com, heinzm@redhat.com, blazej.kucman@linux.intel.com,
- agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev,
- song@kernel.org, jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com,
- akpm@osdl.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
- yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
- <20240201092559.910982-4-yukuai1@huaweicloud.com>
- <CALTww283nysUDy=jmW4w45GbS6O2nS0XLYX=KEiO2BUp5+cLaA@mail.gmail.com>
- <15f0f260-3a2f-6d9b-e60e-c534a9a4d7d0@huaweicloud.com>
- <CALTww2-jfLXfOSHfBTUk9iMUZfHprmQ56bp2XFPbQaj401nSKg@mail.gmail.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <eb7c3bce-54ee-afbc-cea5-1e19c09d14f8@huaweicloud.com>
-Date: Sun, 18 Feb 2024 16:59:15 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1708323994; c=relaxed/simple;
+	bh=YLhEMtoeiV/LirzX2fuQwIm9rfOZ1xB/cPj+FcFrQjI=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=jj+fS7EJxcCGeTBd3uChPUutGu1/kVxqZXgQo0dLzCpSCcSqz2wBihHG4a9cb7WrcLQs4LgScU4Rh8dkZpHh2/6JV7ScZesQZ+sFg4fYxnnTlgNehs/fGwu5e6OETYufzGHdXmUYn9S+1f/g3lgGDPINe5z6J0cENM1w2hzWFNI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EVZZVBCO; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EVZZVBCO"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1708323990;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=/rj+13vEWq/GDSNCN4fIT8jzOM//quFijZG/CjtnC/4=;
+	b=EVZZVBCOnR5vrpej8WG6N6K0IhwFGEQZR/X58BtWadAbxglwE1mvnT05Y/eTzXt0Z6tY4b
+	2Wje7rqcilea0JDI8z223TRqqlN51kdIaPJEB7k+LpL6UQ4u3sUTX5QVZkg4kJjcDAdmUb
+	9QBHSTMIO1MT2zWFvREAOZcu1PqQqDs=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-311-6-z1N8GxNxC4JtLq0DCgoQ-1; Mon, 19 Feb 2024 01:26:28 -0500
+X-MC-Unique: 6-z1N8GxNxC4JtLq0DCgoQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3E84E830D37;
+	Mon, 19 Feb 2024 06:26:28 +0000 (UTC)
+Received: from localhost.localdomain (unknown [10.72.120.2])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 96AC348B;
+	Mon, 19 Feb 2024 06:26:23 +0000 (UTC)
+From: Xiao Ni <xni@redhat.com>
+To: song@kernel.org
+Cc: yukuai1@huaweicloud.com,
+	bmarzins@redhat.com,
+	heinzm@redhat.com,
+	snitzer@kernel.org,
+	ncroxon@redhat.com,
+	neilb@suse.de,
+	linux-raid@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: [PATCH RFC 0/3] Fix regression bugs
+Date: Mon, 19 Feb 2024 14:26:18 +0800
+Message-Id: <20240219062621.92960-1-xni@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CALTww2-jfLXfOSHfBTUk9iMUZfHprmQ56bp2XFPbQaj401nSKg@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgAn+RHjxtFldH+GEQ--.13072S3
-X-Coremail-Antispam: 1UD129KBjvJXoW3AFykCFy7Gry8tFW8tryUtrb_yoWxXryrpF
-	W8JF90vr48Zry7ZrZFq3WqqFyFyw1jqryUuFy3W34rAa4DK3WfWFW8CFyUCFWvyF97Jw4j
-	vF45JFZ3uFyYk3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9I14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r4j6F4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
-	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
-	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWr
-	Zr1UMIIF0xvEx4A2jsIE14v26r4j6F4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr1j6F4UJb
-	IYCTnIWIevJa73UjIFyTuYvjfUO73vUUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 
-Hi,
+Hi all
 
-在 2024/02/18 16:41, Xiao Ni 写道:
-> On Sun, Feb 18, 2024 at 2:51 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>
->> Hi,
->>
->> 在 2024/02/18 13:56, Xiao Ni 写道:
->>> On Thu, Feb 1, 2024 at 5:30 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>
->>>> From: Yu Kuai <yukuai3@huawei.com>
->>>>
->>>> stop_sync_thread() will interrupt md_do_sync(), and md_do_sync() must
->>>> set MD_RECOVERY_DONE, so that follow up md_check_recovery() will
->>>> unregister sync_thread, clear MD_RECOVERY_RUNNING and wake up
->>>> stop_sync_thread().
->>>>
->>>> If MD_RECOVERY_WAIT is set or the array is read-only, md_do_sync() will
->>>> return without setting MD_RECOVERY_DONE, and after commit f52f5c71f3d4
->>>> ("md: fix stopping sync thread"), dm-raid switch from
->>>> md_reap_sync_thread() to stop_sync_thread() to unregister sync_thread
->>>> from md_stop() and md_stop_writes(), causing the test
->>>> shell/lvconvert-raid-reshape.sh hang.
->>>>
->>>> We shouldn't switch back to md_reap_sync_thread() because it's
->>>> problematic in the first place. Fix the problem by making sure
->>>> md_do_sync() will set MD_RECOVERY_DONE.
->>>>
->>>> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
->>>> Closes: https://lore.kernel.org/all/ece2b06f-d647-6613-a534-ff4c9bec1142@redhat.com/
->>>> Fixes: d5d885fd514f ("md: introduce new personality funciton start()")
->>>> Fixes: 5fd6c1dce06e ("[PATCH] md: allow checkpoint of recovery with version-1 superblock")
->>>> Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
->>>> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
->>>> ---
->>>>    drivers/md/md.c | 12 ++++++++----
->>>>    1 file changed, 8 insertions(+), 4 deletions(-)
->>>>
->>>> diff --git a/drivers/md/md.c b/drivers/md/md.c
->>>> index 6906d023f1d6..c65dfd156090 100644
->>>> --- a/drivers/md/md.c
->>>> +++ b/drivers/md/md.c
->>>> @@ -8788,12 +8788,16 @@ void md_do_sync(struct md_thread *thread)
->>>>           int ret;
->>>>
->>>>           /* just incase thread restarts... */
->>>> -       if (test_bit(MD_RECOVERY_DONE, &mddev->recovery) ||
->>>> -           test_bit(MD_RECOVERY_WAIT, &mddev->recovery))
->>>> +       if (test_bit(MD_RECOVERY_DONE, &mddev->recovery))
->>>>                   return;
->>>> -       if (!md_is_rdwr(mddev)) {/* never try to sync a read-only array */
->>>> +
->>>> +       if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
->>>> +               goto skip;
->>>> +
->>>> +       if (test_bit(MD_RECOVERY_WAIT, &mddev->recovery) ||
->>>> +           !md_is_rdwr(mddev)) {/* never try to sync a read-only array */
->>>>                   set_bit(MD_RECOVERY_INTR, &mddev->recovery);
->>>> -               return;
->>>> +               goto skip;
->>>>           }
->>>
->>> Hi all
->>>
->>> I have a question here. The codes above means if MD_RECOVERY_WAIT is
->>> set, it sets MD_RECOVERY_INTR. If so, the sync thread can't happen.
->>> But from the codes in md_start function:
->>>
->>>                   set_bit(MD_RECOVERY_WAIT, &mddev->recovery);
->>>                   md_wakeup_thread(mddev->thread);
->>>                   ret = mddev->pers->start(mddev);
->>>                   clear_bit(MD_RECOVERY_WAIT, &mddev->recovery);
->>>                   md_wakeup_thread(mddev->sync_thread);
->>>
->>> MD_RECOVERY_WAIT means "it'll run sync thread later not interrupt it".
->>> I guess this patch can introduce a new bug for raid5 journal?
->>
->> I'm not sure what kind of problem you're talking about. After patch 4,
->> md_start_sync() should be the only place to register sync_thread, hence
->> md_start() should not see registered sync_thread. Perhaps
->> MD_RECOVERY_WAIT and md_wakeup_thread(mddev->sync_thread) can be removed
->> after patch 4?
-> 
-> Hi Kuai
-> 
-> Before this patch, the process is:
-> 1. set MD_RECOVERY_WAIT
-> 2. start sync thread, sync thread can't run until MD_RECOVERY_WAIT is cleared
+Sorry, I know this patch set conflict with Yu Kuai's patch set. But
+I have to send out this patch set. Now we're facing some deadlock
+regression problems. So it's better to figure out the root cause and
+fix them. But Kuai's patch set looks too complicate for me. And like
+we're talking in the emails, Kuai's patch set breaks some rules. It's
+not good to fix some problem by breaking the original logic. If we really
+need to break some logic. It's better to use a distinct patch set to
+describe why we need them.
 
-Do you take a look at patch 4 and patch 9? sync thread will not start
-before step 4 now.
-> 3. do something
-> 4. clear MD_RECOVERY_WAIT
-> 5. sync thread (md_do_sync) can run
-> 
-> After this patch, step2 returns directly because MD_RECOVERY_INTR is
-> set. By this patch, MD_RECOVERY_WAIT has the same meaning as
-> MD_RECOVERY_INTR.  So this patch breaks one logic.
+This patch is based on linus's tree. The tag is 6.8-rc5. If this patch set
+can be accepted. We need to revert Kuai's patches which have been merged
+in Song's tree (md-6.8-20240216 tag). This patch set has three patches.
+The first two resolves deadlock problems. With these two patches, it can
+resolve most deadlock problem. The third one fixes active_io counter bug.
 
-And nothing is broke here.
-> 
-> MD_RECOVERY_WAIT is introduced by patch
-> d5d885fd514fcebc9da5503c88aa0112df7514ef (md: introduce new
-> personality funciton start()). Then dm raid uses it to delay sync
-> thread too.
-> 
-> Back to the deadlock which this patch tries to fix.
-> The original report is reshape is stuck and can be reproduced easily
-> by these commands:
-> modprobe brd rd_size=34816 rd_nr=5
-> vgcreate test_vg /dev/ram*
-> lvcreate --type raid5 -L 16M -n test_lv test_vg
-> lvconvert -y --stripes 4 /dev/test_vg/test_lv
-> vgremove test_vg -ff
-> 
+I have run lvm2 regression test. lvconvert-raid-reshape.sh is failed. This
+patch set doesn't plan to fix it. Kuai's patch set has a patch which should
+fix it. And there are other 4 failed cases:
+shell/dmsetup-integrity-keys.sh
+shell/lvresize-fs-crypt.sh
+shell/pvck-dump.sh
+shell/select-report.sh
 
-And can you still reporduce this problem after this patchset?
+Xiao Ni (3):
+  Clear MD_RECOVERY_WAIT when stopping dmraid
+  Set MD_RECOVERY_FROZEN before stop sync thread
+  Missing decrease active_io for flush io
 
-> The root cause is that dm raid stopped the sync thread directly
-> before. It works even MD_RECOVERY_WAIT is set. Now we stop sync thread
-> asynchronously. Because MD_RECOVERY_WAIT is set, when stopping dm
-> raid, it can't set MD_RECOVERY_DONE in md_do_sync. It's the reason
-> it's stuck at stop_sync_thread. So to fix this deadlock, dm raid
-> should clear MD_RECOVERY_WAIT before stopping the sync thread.
+ drivers/md/dm-raid.c | 2 ++
+ drivers/md/md.c      | 8 +++++++-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
 
-Or are you saying that it's better to fix this problem this way? You
-dind't explain that what's the problem to set MD_RECOVERY_DONE in
-md_so_sync().
-> 
-> dm raid stop process:
-> 1. dm_table_postsuspend_targets -> raid_postsuspend -> md_stop_writes.
-> 2. dm_table_destroy -> raid_dtr
-> 
-> So we need to clear MD_RECOVERY_WAIT before calling md_stop_writes.
-> 
->>
->>>
->>> And to resolve this deadlock, we can use this patch:
->>>
->>> --- a/drivers/md/dm-raid.c
->>> +++ b/drivers/md/dm-raid.c
->>> @@ -3796,8 +3796,10 @@ static void raid_postsuspend(struct dm_target *ti)
->>>           struct raid_set *rs = ti->private;
->>>
->>>           if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
->>> +               if (test_bit(MD_RECOVERY_WAIT, &rs->md.recovery))
->>> +                       clear_bit(MD_RECOVERY_WAIT, &rs->md.recovery);
->>
->> You must make sure md_do_sync() is called after this if sync_thread is
->> already registered, and I don't understand yet how this is guranteed. :(
-> 
-> md_stop_writes -> __md_stop_writes -> stop_sync_thread guarantee this.
-> 
-> Best Regards
-> Xiao
->>
->> Thanks,
->> Kuai
->>
->>>
->>> Regards
->>> Xiao
->>>>
->>>>           if (mddev_is_clustered(mddev)) {
->>>> --
->>>> 2.39.2
->>>>
->>>
->>> .
->>>
->>
-> 
-> .
-> 
+-- 
+2.32.0 (Apple Git-132)
 
