@@ -1,57 +1,57 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 239C2524B1
-	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 20:28:50 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8CFAE44C94
+	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 20:30:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708374532; cv=none; b=tx6uZ71UHoPOBdg4m2h1B+wXXxjNa6QPXtxVtKENbo6bXOH8zPUIVRHTXtRUl/UcYX08Dn6tOoq1gwIfkD4/LdwMsK4056NthBhdgtryb83tkzs7ZAZiw8f0GlI3kPRbPoYcA8yGjo6reIyELvavRZbKNWm22+TDSB0Q2p7vak8=
+	t=1708374615; cv=none; b=WUpBT9gMix+ONC8ZOWUUhiyMffDTwn3j4hafeG+M8TFifC0EmGines93W7ZbO1ki/nCpUo2dxvPYR2TameERYHC/4V2QUn8aFC9kfBQcO7DrB3/u/GG/akRgTTeY2fTmJdgqxV11wNMvyDIKhvOMZ1oF6agwyLcW011kUMrpeEI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708374532; c=relaxed/simple;
-	bh=wWjCnLolROVbQdhkDuavG2U/rqNADSbZT0/USP+jD/0=;
+	s=arc-20240116; t=1708374615; c=relaxed/simple;
+	bh=7rlhbm+zccqHGK4ShnoV4ckZJecpZ34KqYaIdzRNIYE=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=o37ugcwRs8itjRLIArTh40htPul5zr0eahXOGdHlhPoAyJmTeDawlFld/YI5l2MI43wek9JDfBonh4+IV/zvCcslqWefLHlLCUwgXrv0NSUZWAmfYBAsIW4U8pvrVYx+5giEmyU6v3a94DJJMzn0zq6XsJN5Jiq+43On3QaRbiY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=g3jKWAsG; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=pWV/YmrUVkJjbFPY/EFzgUb2/+QUJT0xiPfl9TT9ZcR1YF/Pwhs6VHCsqR6+E9WGnAnVzQSJm2vj3p7EYGuPaX/DZ9ILI9hK3slh5Lggbcehvw25/ucCcjex9qLA4Y30Ypilk1iObdu0JFM9nNoGp27vo2OV5aLm0TLipAr0Wsk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Nx02f3Nc; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="g3jKWAsG"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Nx02f3Nc"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708374530;
+	s=mimecast20190719; t=1708374612;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=d92HVd2Av4o1o1NscjhvcRlI0+WRtb6I/jsVspmHbZA=;
-	b=g3jKWAsGGEH/IawhRLMApVmSdRo4EeYLzVfOvggQYyHfXQr6LEjWcHbC2ijkNVBGrRp+xq
-	YCzqPL0ZsYHutjdF87qCVAGQKNxW+oyFlBB3xvM7IUy/HM08RfuUhzoxrBYRhUmKO5SLrH
-	+z2xW7z99BS1CAu0AN/YwtQlwEQ4vyI=
+	bh=HXx4athjB8A8yEEpa4LwVYBisOfoAJyi/l4owabqxTU=;
+	b=Nx02f3NcevnpcJxn3dtCDyqbXqylJV4l2yUyiNHFAwIk7uLwQZqIVy1oLgzu5nR+4386K5
+	n2ZflV8RKmMSf/yqda7ecPxCjFFIgUH6mOPtGeEQxIXUmq6dKRLJIgwvfAtJ4rxMsF4KBi
+	yb6RxUFekzO2aVizf/1RcKbJkaDQYqs=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-607-7EMsrZG0PzKDykRaTZLmcA-1; Mon, 19 Feb 2024 15:28:48 -0500
-X-MC-Unique: 7EMsrZG0PzKDykRaTZLmcA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-103-wa6uExKpNymaIypsctMysg-1; Mon, 19 Feb 2024 15:30:11 -0500
+X-MC-Unique: wa6uExKpNymaIypsctMysg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1AF8385A589
-	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 20:28:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B3D6C85A589
+	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 20:30:10 +0000 (UTC)
 Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 156002022AAC;
-	Mon, 19 Feb 2024 20:28:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AEE8F14F0;
+	Mon, 19 Feb 2024 20:30:10 +0000 (UTC)
 Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 0D6E430C1B8F; Mon, 19 Feb 2024 20:28:48 +0000 (UTC)
+	id A834C30C1B8F; Mon, 19 Feb 2024 20:30:10 +0000 (UTC)
 Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 0C3203FB4E;
-	Mon, 19 Feb 2024 21:28:48 +0100 (CET)
-Date: Mon, 19 Feb 2024 21:28:48 +0100 (CET)
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id A76A43FB4E;
+	Mon, 19 Feb 2024 21:30:10 +0100 (CET)
+Date: Mon, 19 Feb 2024 21:30:10 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Mike Snitzer <msnitzer@redhat.com>
 cc: dm-devel@lists.linux.dev
-Subject: [PATCH 3/5] dm-verity: revert e9307e3deb52 ("dm verity: only copy
- bvec_iter in verity_verify_io if in_tasklet")
+Subject: [PATCH 4/5] dm-crypt: don't modify the data when using authenticated
+ encryption
 In-Reply-To: <ab6d4358-3430-e2c9-bb93-c1e8cf72395@redhat.com>
-Message-ID: <657d9cad-c5b7-2cef-bf5a-9fe3df46296@redhat.com>
+Message-ID: <c0fb19b6-8ff9-99b1-e9fe-2e86abf33dd7@redhat.com>
 References: <ab6d4358-3430-e2c9-bb93-c1e8cf72395@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -59,76 +59,44 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
-The patch e9307e3deb52 was supposed to be an optimization, but it actually
-increases the size of the function verity_verify_io (by 112 bytes), so
-let's revert it.
+It was said that authenticated encryption could produce invalid tag when
+the data that is being encrypted is modified [1]. So, fix this problem by
+copying the data into the clone bio first and then encrypt them inside the
+clone bio.
+
+This may reduce performance, but it is needed to prevent the user from
+corrupting the device by writing data with O_DIRECT and modifying them at
+the same time.
+
+[1] https://lore.kernel.org/all/20240207004723.GA35324@sol.localdomain/T/
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
 ---
- drivers/md/dm-verity-target.c |   21 +++++----------------
- 1 file changed, 5 insertions(+), 16 deletions(-)
+ drivers/md/dm-crypt.c |    6 ++++++
+ 1 file changed, 6 insertions(+)
 
-Index: linux-2.6/drivers/md/dm-verity-target.c
+Index: linux-2.6/drivers/md/dm-crypt.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-verity-target.c	2024-02-06 14:46:59.000000000 +0100
-+++ linux-2.6/drivers/md/dm-verity-target.c	2024-02-06 14:50:50.000000000 +0100
-@@ -565,22 +565,11 @@ static int verity_verify_io(struct dm_ve
- 	bool is_zero;
- 	struct dm_verity *v = io->v;
- 	struct bvec_iter start;
--	struct bvec_iter iter_copy;
--	struct bvec_iter *iter;
-+	struct bvec_iter iter_copy = io->iter;
- 	struct crypto_wait wait;
- 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
- 	unsigned int b;
+--- linux-2.6.orig/drivers/md/dm-crypt.c	2024-02-05 10:58:03.000000000 +0100
++++ linux-2.6/drivers/md/dm-crypt.c	2024-02-08 14:50:08.000000000 +0100
+@@ -2071,6 +2071,12 @@ static void kcryptd_crypt_write_convert(
+ 	io->ctx.bio_out = clone;
+ 	io->ctx.iter_out = clone->bi_iter;
  
--	if (static_branch_unlikely(&use_tasklet_enabled) && io->in_tasklet) {
--		/*
--		 * Copy the iterator in case we need to restart
--		 * verification in a work-queue.
--		 */
--		iter_copy = io->iter;
--		iter = &iter_copy;
--	} else
--		iter = &io->iter;
--
- 	for (b = 0; b < io->n_blocks; b++) {
- 		int r;
- 		sector_t cur_block = io->block + b;
-@@ -588,7 +577,7 @@ static int verity_verify_io(struct dm_ve
++	if (crypt_integrity_aead(cc)) {
++		bio_copy_data(clone, io->base_bio);
++		io->ctx.bio_in = clone;
++		io->ctx.iter_in = clone->bi_iter;
++	}
++
+ 	sector += bio_sectors(clone);
  
- 		if (v->validated_blocks && bio->bi_status == BLK_STS_OK &&
- 		    likely(test_bit(cur_block, v->validated_blocks))) {
--			verity_bv_skip_block(v, io, iter);
-+			verity_bv_skip_block(v, io, &iter_copy);
- 			continue;
- 		}
- 
-@@ -603,7 +592,7 @@ static int verity_verify_io(struct dm_ve
- 			 * If we expect a zero block, don't validate, just
- 			 * return zeros.
- 			 */
--			r = verity_for_bv_block(v, io, iter,
-+			r = verity_for_bv_block(v, io, &iter_copy,
- 						verity_bv_zero);
- 			if (unlikely(r < 0))
- 				return r;
-@@ -615,8 +604,8 @@ static int verity_verify_io(struct dm_ve
- 		if (unlikely(r < 0))
- 			return r;
- 
--		start = *iter;
--		r = verity_for_io_block(v, io, iter, &wait);
-+		start = iter_copy;
-+		r = verity_for_io_block(v, io, &iter_copy, &wait);
- 		if (unlikely(r < 0))
- 			return r;
- 
+ 	crypt_inc_pending(io);
 
