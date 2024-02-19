@@ -1,263 +1,140 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B1AD22318
-	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 08:19:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F08921370
+	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 08:36:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708330778; cv=none; b=BWK/6hkWWxy580z1syv+dCiUzlHMDEV0im3RsdIuYU1faVtaPqBcHJrGcsrivXkemKmyCshqPtVLr/FV+seqhswynrKfOd/QLp6W0n5wNiUSvKclhntueJSRdIgz+RmVavUWpAY0lC9zmdmTlxEtCPstMBmiBUXlbmUaLfxB7Tc=
+	t=1708331812; cv=none; b=mUq1wzyevhUCnpLSZOlZILOzJO8oQtaWdUep9byIBCgIHbenxMiC80/WZXJYSseaDJXuTdioScV9ASoo1J3rUC8xXzUxhid4UPIB12iD9jES9RiqxsVeZGBiBwPC2YFXhAUG70ICOk58tqwqaihsDFLe0t1jGDTyGSCIF6XFnDI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708330778; c=relaxed/simple;
-	bh=vkLzCrh177pn7FeNoCcpYSH2qphDaHpzwq8ELAXbFUI=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=EcN4FEOWRTdt+TdAwxw7P79zlOoipNw/3NcqJNrdYCfMLvGIIThw325enHy9xOXUMb2C06eOAC4Nhun2+MmyCCnHuDtUy8M/7BRp6Q6H+7My/KtKCAAzGbceGJ9LT0PwaWNJItWeA6oZBjjBZignvS49Gc0dV2/Icd+VxE0Kjas=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Tdb6j11Kgz4f3m7W
-	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 16:19:25 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 336781A0283
-	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 16:19:32 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgBHZQ4SD9NlIbjsEQ--.23876S3;
-	Mon, 19 Feb 2024 16:19:32 +0800 (CST)
-Subject: Re: [PATCH v5 01/14] md: don't ignore suspended array in
- md_check_recovery()
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: mpatocka@redhat.com, heinzm@redhat.com, blazej.kucman@linux.intel.com,
- agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev,
- song@kernel.org, neilb@suse.de, shli@fb.com, akpm@osdl.org,
- linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
- yi.zhang@huawei.com, yangerkun@huawei.com,
- Jonathan Brassow <jbrassow@redhat.com>, "yukuai (C)" <yukuai3@huawei.com>
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
- <20240201092559.910982-2-yukuai1@huaweicloud.com>
- <CALTww2-ZhRBJOD3jXs=xKFaD=iR=dtoC9h2rUQi5Stpi+tJ9Bw@mail.gmail.com>
- <64d27757-9387-09dc-48e8-a9eedd67f075@huaweicloud.com>
- <CALTww28E=k6fXJURG77KwHb7M2OByLrcE8g7GNkQDTtcOV48hQ@mail.gmail.com>
- <d4a2689e-b5cc-f268-9fb2-84c10e5eb0f4@huaweicloud.com>
- <CALTww28bUzmQASme3XOz0CY=o86f1EUU23ENmnf42UVyuGzQ4Q@mail.gmail.com>
- <c1195efd-dd83-317e-3067-cd4891ae013e@huaweicloud.com>
- <CALTww2-7tTMdf_XZ60pNKH_QCq3OUX2P==VPXZo3f-dHzVhmnw@mail.gmail.com>
- <2fa01c30-2ee7-7c01-6833-bf74142e6d7c@huaweicloud.com>
- <CALTww2-HngEJ9z9cYZ0=kcfuKMpziH3utSgk_8u3dxc553ZNeg@mail.gmail.com>
- <5480b350-efe3-2be7-cf3b-3a62bb0e012b@huaweicloud.com>
- <CALTww2-_uvkB7M=_J_6DgW1kfzW2rpQgp0vyKt7EYvON41adGw@mail.gmail.com>
- <ed1fc73d-57f8-6862-76f4-2e6ff0cd5fc8@huaweicloud.com>
- <CALTww28cvDpLxUGinFOz=wJJBo7BOT8D9VBLEiQ8L+Kwka7d2Q@mail.gmail.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <4bac586b-17ff-16b6-b4b3-8d61acc9ed59@huaweicloud.com>
-Date: Mon, 19 Feb 2024 16:19:29 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1708331812; c=relaxed/simple;
+	bh=BrpXzltbjGA+nbeqv1oqWoboeZ60CpfhH6jPRTng6dg=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=tCRfiblKApfDCHjvEJvTyVxSAzdF1S1bXgQ9x989dzk/zKLfR0ctFZprZTjxiPLxVqggUx/66+YMcDxTsfK0tETGb5SijZR7i3WRkVQRaVuoYadARHDWHsZ74ETLQlEWwpDoLfyqgJ2dROWrInlxSaUJAHW1zC2e/RySD/n24PE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IPqPxqSg; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IPqPxqSg"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1708331809;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=fv6aRDO6Js09h9BTDicI9/jIrJAhCI1gKmwSr35xlX8=;
+	b=IPqPxqSgdyqcDLTgPTHjzWhO9Gz82c7UeGv5F+R+9nlbyXBNGZjZlqaNKRyi8yBpyT4N+E
+	9+SoSA3FylE0BAPomGwH8zOj7gVu1/borFL90UfHr33GacITWihBoWA8J01wzAemHBRphu
+	30p73S7AthzsHE7E4jt2JqHHs53D5xo=
+Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
+ [209.85.221.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-447-suI0xzE0Pa-G59Pctkr7Dg-1; Mon, 19 Feb 2024 03:36:48 -0500
+X-MC-Unique: suI0xzE0Pa-G59Pctkr7Dg-1
+Received: by mail-wr1-f71.google.com with SMTP id ffacd0b85a97d-33d516a8026so241820f8f.3
+        for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 00:36:47 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1708331807; x=1708936607;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from:references:cc
+         :to:content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=fv6aRDO6Js09h9BTDicI9/jIrJAhCI1gKmwSr35xlX8=;
+        b=OXYfWFnVc7klBFeTQ32Pt3OOryPjmZtCl1jOCQQ06LRhQDHkY1DFgnhj/mYIGSeW1c
+         SN9NKo5X5n1/GfIWH4l65ga0X63mDyrblhpa6l2m0+umSGHJ9RrWYfhsgGHFGagP+XqA
+         2TaiIMxVVFLFBLJIgxhtJiuP3H/J0H0Ny5Zd9q4NSVTeJsMXhuNxs1AkqpUvK47xMD+n
+         LCUKUdhnT18i2sT0/Ni7wV8HNVzOFW6JTB3gWeynRAz+tqUu1MZi1/BJnPJg70OdXlqg
+         kIGlbAH+2sd8MDQx2jFPUssLu9i5rYTFZmuve6cMo2mZfSsm1S5/ICU3Gzo/2uKVJa/Z
+         f2Fg==
+X-Forwarded-Encrypted: i=1; AJvYcCU66mu+wKqIW/SWnTPZEWZlxtcevvvP/d8ZqJwYXT6Nk4g72DCt23hjWn+zMITJN5rKqBlwbz07puZPYfUwmGOa32pT44M5YOc=
+X-Gm-Message-State: AOJu0YzBtkNjzWGtdNlDa+rtQglAZpW6vgdsenC9mh7Ilrr6FdbtJSnc
+	XXgDrZLiFj5fooeS9nhvk2oRlXEgSt8z4ziYPtY7yWCdnvh7+naKxLzQWpCx/SMwDn8onzDgAZY
+	diGuAIAB9zBEe8gmh7qrjWAhEoF2aA+cjbkXGhS5NM1kLQUTp4bx5u3AW
+X-Received: by 2002:a5d:4ecb:0:b0:33d:277b:1ef1 with SMTP id s11-20020a5d4ecb000000b0033d277b1ef1mr4028586wrv.31.1708331807062;
+        Mon, 19 Feb 2024 00:36:47 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHjDG5yZB2iB5Rfe3IPkRx/ksv19bItcOgGW0WXvNG5HCP6RZfTIPjws3Qs0U6lAfEX7JWv2A==
+X-Received: by 2002:a5d:4ecb:0:b0:33d:277b:1ef1 with SMTP id s11-20020a5d4ecb000000b0033d277b1ef1mr4028574wrv.31.1708331806732;
+        Mon, 19 Feb 2024 00:36:46 -0800 (PST)
+Received: from [10.43.17.17] (nat-pool-brq-t.redhat.com. [213.175.37.10])
+        by smtp.gmail.com with ESMTPSA id d2-20020adfef82000000b0033b75b39aebsm9674031wro.11.2024.02.19.00.36.46
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 19 Feb 2024 00:36:46 -0800 (PST)
+Message-ID: <9d50edb0-baa4-4a01-a2f0-136dfdb79937@redhat.com>
+Date: Mon, 19 Feb 2024 09:36:45 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CALTww28cvDpLxUGinFOz=wJJBo7BOT8D9VBLEiQ8L+Kwka7d2Q@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBHZQ4SD9NlIbjsEQ--.23876S3
-X-Coremail-Antispam: 1UD129KBjvJXoW3Ar15Kw18Gw15try3uF13twb_yoW3Jryfpa
-	48ta15tr4UAr1UA3sFy3W8Xa48tw1YqrWUWry5Gr15C3sxtrn3JF48Ka15CFyUArnrua12
-	qr4UJa4fXr98J3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9214x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
-	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
-	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWr
-	Zr1UMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYx
-	BIdaVFxhVjvjDU0xZFpf9x0JUQvtAUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+User-Agent: Mozilla Thunderbird
+Subject: Re: About DM_UDEV_DISABLE_OTHER_RULES_FLAG and DM_NOSCAN
+To: Martin Wilck <martin.wilck@suse.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, David Teigland
+ <teigland@redhat.com>, linux-lvm@lists.linux.dev, dm-devel@lists.linux.dev,
+ Heming Zhao <heming.zhao@suse.com>
+References: <61638dc821c08cd97f6ac53150c5b0120f732deb.camel@suse.com>
+ <4a9e62ec-f93a-4739-a406-2c6d2138258a@redhat.com>
+ <9b1475e2fa5982dd508d58975b8e6eb58cad95e2.camel@suse.com>
+ <f3e3db2b-8077-48b6-b507-4a9c4793affb@redhat.com>
+ <8e7a574fffaded39825a01bf33482cea94507289.camel@suse.com>
+ <Zc6UEKsce2ppaP62@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <b38d9ae7b49ec1569b25c5f5a55afbc47df4b09d.camel@suse.com>
+From: Peter Rajnoha <prajnoha@redhat.com>
+Autocrypt: addr=prajnoha@redhat.com; keydata=
+ xjMEY7QY9hYJKwYBBAHaRw8BAQdADIHZn5yeZYFV18ewwf4iudpl1ARfj4rnxX5xiSoJ15vN
+ I1BldGVyIFJham5vaGEgPHByYWpub2hhQHJlZGhhdC5jb20+wpYEExYKAD4CGwMFCwkIBwIC
+ IgIGFQoJCAsCBBYCAwECHgcCF4AWIQQhe3cZL8e9dSzFIwXndmZANt+EqwUCY7QZ9wIZAQAK
+ CRDndmZANt+EqzosAQDXhWudIjLSGoWGPKgluEWw5B5LtAX+kW2OG7loCDzI2AD/fp3Xec8K
+ JY7HrSqO98YMPbT98+YRjiopJSk75TcAogzOOARjtBj2EgorBgEEAZdVAQUBAQdALfG8fuls
+ uqLPtrJ5tYb36UtqNlu6Bw9ME/Ou+FRGG1cDAQgHwngEGBYKACAWIQQhe3cZL8e9dSzFIwXn
+ dmZANt+EqwUCY7QY9gIbDAAKCRDndmZANt+Eq22lAQDXlKMGQxkD0FZes94uihIZlhFwGjrX
+ dVfZsxfwEvuJfAD/XLGDegnKVERbF6YTfdsbVngSlOX/Tu/fxAFTg0JfdQU=
+In-Reply-To: <b38d9ae7b49ec1569b25c5f5a55afbc47df4b09d.camel@suse.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Hi,
-
-在 2024/02/19 15:10, Xiao Ni 写道:
-> On Sun, Feb 18, 2024 at 4:48 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>
->> Hi,
->>
->> 在 2024/02/18 16:07, Xiao Ni 写道:
->>> On Sun, Feb 18, 2024 at 2:22 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>
->>>> Hi,
->>>>
->>>> 在 2024/02/18 13:07, Xiao Ni 写道:
->>>>> On Sun, Feb 18, 2024 at 11:24 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>>>
->>>>>> Hi,
->>>>>>
->>>>>> 在 2024/02/18 11:15, Xiao Ni 写道:
->>>>>>> On Sun, Feb 18, 2024 at 10:34 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>>>>>
->>>>>>>> Hi,
->>>>>>>>
->>>>>>>> 在 2024/02/18 10:27, Xiao Ni 写道:
->>>>>>>>> On Sun, Feb 18, 2024 at 9:46 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>>>>>>>
->>>>>>>>>> Hi,
->>>>>>>>>>
->>>>>>>>>> 在 2024/02/18 9:33, Xiao Ni 写道:
->>>>>>>>>>> The deadlock problem mentioned in this patch should not be right?
->>>>>>>>>>
->>>>>>>>>> No, I think it's right. Looks like you are expecting other problems,
->>>>>>>>>> like mentioned in patch 6, to be fixed by this patch.
->>>>>>>>>
->>>>>>>>> Hi Kuai
->>>>>>>>>
->>>>>>>>> Could you explain why step1 and step2 from this comment can happen
->>>>>>>>> simultaneously? From the log, the process should be
->>>>>>>>> The process is :
->>>>>>>>> dev_remove->dm_destroy->__dm_destroy->dm_table_postsuspend_targets(raid_postsuspend)
->>>>>>>>> -> dm_table_destroy(raid_dtr).
->>>>>>>>> After suspending the array, it calls raid_dtr. So these two functions
->>>>>>>>> can't happen simultaneously.
->>>>>>>>
->>>>>>>> You're removing the target directly, however, dm can suspend the disk
->>>>>>>> directly, you can simplily:
->>>>>>>>
->>>>>>>> 1) dmsetup suspend xxx
->>>>>>>> 2) dmsetup remove xxx
->>>>>>>
->>>>>>> For dm-raid, the design of suspend stops sync thread first and then it
->>>>>>> calls mddev_suspend to suspend array. So I'm curious why the sync
->>>>>>> thread can still exit when array is suspended. I know the reason now.
->>>>>>> Because before f52f5c71f (md: fix stopping sync thread), the process
->>>>>>> is raid_postsuspend->md_stop_writes->__md_stop_writes
->>>>>>> (__md_stop_writes sets MD_RECOVERY_FROZEN). In patch f52f5c71f, it
->>>>>>> doesn't set MD_RECOVERY_FROZEN in __md_stop_writes anymore.
->>>>>>>
->>>>>>> The process changes to
->>>>>>> 1. raid_postsuspend->md_stop_writes->__md_stop_writes->stop_sync_thread
->>>>>>> (wait until MD_RECOVERY_RUNNING clears)
->>>>>>> 2. md thread -> md_check_recovery -> unregister_sync_thread ->
->>>>>>> md_reap_sync_thread (clears MD_RECOVERY_RUNNING, stop_sync_thread
->>>>>>> returns, md_reap_sync_thread sets MD_RECOVERY_NEEDED)
->>>>>>> 3. raid_postsuspend->mddev_suspend
->>>>>>> 4. md sync thread starts again because __md_stop_writes doesn't set
->>>>>>> MD_RECOVERY_FROZEN.
->>>>>>> It's the reason why we can see sync thread still happens when raid is suspended.
->>>>>>>
->>>>>>> So the patch fix this problem should:
->>>>>>
->>>>>> As I said, this is really a different problem from this patch, and it is
->>>>>> fixed seperately by patch 9. Please take a look at that patch.
->>>>>
->>>>> I think we're talking about the same problem. In patch07 it has a new
->>>>> api md_frozen_sync_thread. It sets MD_RECOVERY_FROZEN before
->>>>> stop_sync_thread. This is right. If we use this api in
->>>>> raid_postsuspend, sync thread can't restart. So the deadlock can't
->>>>> happen anymore?
->>>>
->>>> We are not talking about the same problem at all. This patch just fix a
->>>> simple problem in md/raid(not dm-raid). And the deadlock can also be
->>>> triggered for md/raid the same.
->>>>
->>>> - mddev_suspend() doesn't handle sync_thread at all;
->>>> - md_check_recovery() ignore suspended array;
->>>>
->>>> Please keep in mind this patch just fix the above case. The deadlock in
->>>> dm-raid is just an example of problems caused by this. Fix the deadlock
->>>> other way doesn't mean this case is fine.
+On 2/16/24 15:29, Martin Wilck wrote:
+> On Thu, 2024-02-15 at 17:45 -0500, Benjamin Marzinski wrote:
+>> On Mon, Feb 12, 2024 at 03:16:27PM +0100, Martin Wilck wrote:
+>>> On Mon, 2024-02-12 at 13:32 +0100, Peter Rajnoha wrote:
 >>>
->>> Because this patch set is used to fix dm raid deadlocks. But this
->>> patch changes logic, it looks like more a feature - "we can start/stop
->>> sync thread when array is suspended". Because this patch is added many
->>> years ago and dm raid works well. If we change this, there is
->>> possibilities to introduce new problems. Now we should try to walk
->>> slowly.
+>>>>
+>>>> What do you think about keeping a single
+>>>> DM_UDEV_DISABLE_OTHER_RULES_FLAG for this, just having a
+>>>> different
+>>>> value, say "2" to denote the B case? Otherwise, we need 2
+>>>> distinct
+>>>> variables (which is harder for others to accept I bet).
+>>>
+>>> Yes, that could work, if the save / restore is implemented cleanly.
 >>
->> This patch itself really is quite simple, it fixes problems for md/raid,
->> and can be triggered by dm-raid as well. This patch will be needed
->> regardless of dm-raid, and it's absolutely not a feature.
+>> What if we never read DM_UDEV_DISABLE_OTHER_RULES_FLAG from the
+>> database. Instead how about, if DM_UDEV_DISABLE_OTHER_RULES_FLAG is
+>> set
+>> by "dmsetup udevflags", we save it as something like
+>> DM_IGNORE_DEVICE.
+>> Otherwise, if it's a spurious event, we read DM_IGNORE_DEVICE from
+>> the
+>> database. After "dm_flags_done", if DM_IGNORE_DEVICE is set, we set
+>> DM_UDEV_DISABLE_OTHER_RULES_FLAG. This leaves the other rules free to
+>> mess with DM_UDEV_DISABLE_OTHER_RULES_FLAG all they want.
 > 
-> Hi Kuai
+> That sounds good and aligns with what I'd thought by myself. But we
+> should use a less suggestive name. DM_IGNORE_DEVICE would again make
+> users think that they should consume this variable, like DM_NOSCAN.
 > 
-> Yes, this patch is simple. But it changes the original logic. Do we
-> really need to do this? And as the title of the patch set, it's used
 
-Nothing is changed, this patch itself fix a long term regression. And I
-already change the title to fix dm-raid and md/raid regressions.
+Yup, that looks reasonable and clean.
 
-> to fix regression problems. We need to avoid much changes, find out
-> the root cause and fix them. It's better to use another patch set to
-> do more jobs. For example, allow sync request when array is suspended
-> (But I don't want to do this change).
+Though, the DM_UDEV_DISABLE_OTHER_RULES_FLAG is only one flag from the
+whole set. To avoid handling only a single selected flag in a special
+way and to avoid issues raising from that, we might as well apply that
+logic to all the other flags decoded by `dmsetup udevflags`.
 
-Following behaviour is not changed with this patchset:
-
-1. dm-raid should stop and frozen sync_thread during suspend;
-2. sync_thread can still runing while md/raid is suspended; And my point
-is that if you want to forbit new sync_thread, use MD_REOCVERY_FROZEN
-instead of suspended;
-
->>
->> For dm-raid, there is no doubt that sync_thread should be stopped before
->> suspend, and keep frozen until resume, and this behaviour is not changed
-> 
-> Agree with this
->> at all and will never change. Other patches actually tries to gurantee
-> 
-> In fact, we only need to use one line code to do this. We don't need
-> so many patches. It only needs to set MD_RECOVERY_FROZEN before stop
-> sync thread.
-> 
->          set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-
-I agree this make sense, but as I said in the other thread, this is not
-enough.
-
->          __md_stop_writes(mddev);
-> 
->> this. If you think this patch can introduce new problems for dm-raid,
->> please be more specific.
->>
->> The problem in dm-raid is that it relies on __md_stop_writes() to stop
->> and frozen sync_thread, while it also relies that MD_RECOVERY_FROZEN is
->> not set, and this is abuse of MD_RECOVERY_FROZEN. And if you still think
->> there are problems with considering of the entire patchset, feel free to
->> discuss. :)
-> 
-> In fact, dmraid sets MD_RECOVERY_FROZEN before f52f5c71f3d4 (md: fix
-> stopping sync thread).  It calls __md_stop_writes and this function
-> sets MD_RECOVERY_FROZEN. Thanks for your patience :)
-
-I know that, and f52f5c71f3d4 really should set MD_RECOVERY_FROZEN. But
-looks like you want to keep the way it used to be, and you don't want to
-fix problems that exist in dm-raid for a long term.
-
-If you send your patches before this, I'll be happy to accept them.
-However, I know this patchest might be complicated, but I already did
-the hard work, and I think this patchset fix the regressions in a better
-way, and I'm trying to let dm-raid and md/raid to manage sync_thread the
-same safer way.
-
-So far, I think all problems that you concerned are all fixed with this
-patchset, and as I said, I'll be happy to dissuss if you think there are
-other problems with this patchset.
-
-Thanks,
-Kuai
-
-
-> 
-> Regards
-> Xiao
->>
->> Thanks,
->> Kuai
->>
-> 
-> .
-> 
+-- 
+Peter
 
