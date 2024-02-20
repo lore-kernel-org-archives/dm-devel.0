@@ -1,142 +1,133 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f169.google.com (mail-qk1-f169.google.com [209.85.222.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DBF08768F1
-	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 18:52:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92D25133983
+	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 19:44:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708455165; cv=none; b=Y9ihpXCPPi9HVDS7Matv7ZNAXyaCIjZYqhJTkRhmZOjdhdaGsPytG++BsewJavcjNaGpx8Drj1Nmdz8gy4Ztb5a/JWJxn2RKe24tqPhsshk2OqZmUFxUbyPBUy6GcYoZcfZdTNjCGZj+jQLNRqjrlsUyN03tgzN9wWdvoCO1myY=
+	t=1708458274; cv=none; b=QGIeqOC7DW3QO8S0i8kpix9/t6tHmKYNssUXIdnloJ4qeijCMxAXB4z/w0Ocirvoc8TeFSKaph+wwxAMBldozG9Ejd99gVJ/eOIShLZd9Yx82xlux9MN2MhmvMfVUdlFL6NC7tgLWrA69imHsR9TejjEzJrubgvn7G/NgK33/1Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708455165; c=relaxed/simple;
-	bh=jVGlv+puRHszhkwzwsU0lyp/wfAVHZq/GVIMR/loB8o=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=G0T9Ufo31PcVZLOg5Y3eRRpGhsHfeEoTChdsnaCN0+95SEE1J6/iuFXFRGnytki2oCAK+TKhfkInKuvwD6FHSF1noKiICnnST0p2e5JH7soDvUjD+9LuW10g6INZxHRn6X8YDe5b5a+n93/AfHqnIhFK/xliocGTt9YlVDhGZHc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=aSC94msO; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	s=arc-20240116; t=1708458274; c=relaxed/simple;
+	bh=egCrOOr50znuDik3a84ddfinZziKeyqdeCwPLOkPRHY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=lgcFsoelzF8iez43c47CLZvbO/1XimWaAwHz21wts5ePNZsHqnG6FF5QGVBX1BPxOMg4dVllyQsdsA+cdWTQJ2lV+xipL98GhKuRwnTOICcm5r5vqXAvXbbukvA+AZ0TbtskTgsbZBOpGuiOvOQAg6QInPWrhY2jd4fi6V/2WWI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aSC94msO"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708455162;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=P2wYttr5YYkjy1PbxuIXEie9EtBh3ZDzD6Qej/FpcCQ=;
-	b=aSC94msOY7zvqbxD1BOy0mOcyQo1+1SdRCblxVXb0hUIwvpm/+cIoO6aAC2+vYfwpobECH
-	RHbhUelnVF21R7gMZxtfn0CJ/A86Xk8X1NZ9/qZ4fNRIPs1uPc8Nd+ut43B2JDEwecteK8
-	UzAB47PPueEigE7G1ElbYGL+DLJfLL0=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-350-g2orAwwTOmKlrqpKxLWZ0Q-1; Tue,
- 20 Feb 2024 13:52:39 -0500
-X-MC-Unique: g2orAwwTOmKlrqpKxLWZ0Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA8ED38212C1;
-	Tue, 20 Feb 2024 18:52:38 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 96EC210800;
-	Tue, 20 Feb 2024 18:52:38 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 7D8CE30C1B8F; Tue, 20 Feb 2024 18:52:38 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 7A3253FB4E;
-	Tue, 20 Feb 2024 19:52:38 +0100 (CET)
-Date: Tue, 20 Feb 2024 19:52:38 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: =?ISO-8859-15?Q?Simone_Wei=DF?= <simone.weiss@elektrobit.com>
-cc: lukas.bulwahn@gmail.com, simone.p.weiss@posteo.net, 
-    Kai Tomerius <kai.tomerius@elektrobit.com>, 
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    dm-devel@lists.linux.dev, Song Liu <song@kernel.org>, 
-    Yu Kuai <yukuai3@huawei.com>, linux-raid@vger.kernel.org, 
-    linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] [RFQ] dm-integrity: Add a lazy commit mode for journal
-In-Reply-To: <20240209192542.449367-1-simone.weiss@elektrobit.com>
-Message-ID: <8a485b9-6dbb-78c-9a84-ed3ba65d9cb3@redhat.com>
-References: <20240209192542.449367-1-simone.weiss@elektrobit.com>
+Received: by mail-qk1-f169.google.com with SMTP id af79cd13be357-7876f2a2e62so94751485a.3
+        for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 11:44:32 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1708458271; x=1709063071;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=tf7nxv/yoeRZAIg/mVYOoRIe0Oc63BJnhI64NvPgd3U=;
+        b=qSkwtX3rDzuPNIKmg+dC9O3aKoDQ7NirCr0t6dN72iZl6P4K56SnecnbR6mtVx5EYD
+         niQHV43Iiqqf5/LtO48qatqCnEdJ89r/bPuMcAOaYCCjHq9tvxzpbFSlmoXNDHUVEn4m
+         sfKKGIRV8CKwOvV4bY519WExaR5fG2Xs4EpvlL384hVKFHQ+vb50YNZBJK0g75gM/B3g
+         W7nkGpPMBj5smtOuBefKOKOp71i9VY0HidMWLCjEHqrOoKVYOnqBgHYsz2yIfguEYPiz
+         +ybxOmEscdUcy1wXpyLnTimM4eW49HgQ84qQpf5DuXoZWs9RAKS21lepkud9v31Tsyy3
+         SK9Q==
+X-Forwarded-Encrypted: i=1; AJvYcCUj5zUP6GWjuaP3Ylen9vv6Bs4GbzjpiUDYUQgaNdHZDg444iGFEIPX9wTZVl9Aed7ftd0EguET/nQHJDifWoseOd22l5hhxUc=
+X-Gm-Message-State: AOJu0YzDJcUVKd+aySLXO/yjxieGaLxW4GJTQcezacgctaGtc1IMItq9
+	g02faO7LBfpyepEM2K2E7RzO1Y/lT5KkUC2ek/pmQqFTuxzRolrcgzP10fSUZg==
+X-Google-Smtp-Source: AGHT+IEegqxXmIvsjTN0+qK/zSYbjr1IoWgnZe1NVExgdR7HP3eQ5gheVb9ulNmXqL4KYReh+e0t+w==
+X-Received: by 2002:a05:620a:201c:b0:787:6c11:7d76 with SMTP id c28-20020a05620a201c00b007876c117d76mr6064988qka.10.1708458271439;
+        Tue, 20 Feb 2024 11:44:31 -0800 (PST)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id x1-20020ae9f801000000b007873c82f0easm2905146qkh.113.2024.02.20.11.44.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 20 Feb 2024 11:44:30 -0800 (PST)
+Date: Tue, 20 Feb 2024 14:44:29 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: Tejun Heo <tj@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev, msnitzer@redhat.com, ignat@cloudflare.com,
+	damien.lemoal@wdc.com, bob.liu@oracle.com, houtao1@huawei.com,
+	peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org,
+	allen.lkml@gmail.com, kernel-team@meta.com,
+	Alasdair Kergon <agk@redhat.com>
+Subject: Re: [PATCH 8/8] dm-verity: Convert from tasklet to BH workqueue
+Message-ID: <ZdUBHQQEN5-9AHBe@redhat.com>
+References: <20240130091300.2968534-1-tj@kernel.org>
+ <20240130091300.2968534-9-tj@kernel.org>
+ <c2539f87-b4fe-ac7d-64d9-cbf8db929c7@redhat.com>
+ <Zbq8cE3Y2ZL6dl8r@slm.duckdns.org>
+ <CAHk-=wjMz_1mb+WJsPhfp5VBNrM=o8f-x2=6UW2eK5n4DHff9g@mail.gmail.com>
+ <ZbrgCPEolPJNfg1x@slm.duckdns.org>
+ <ZbrjhJFMttj8lh3X@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="185210117-1528542385-1708454829=:2837266"
-Content-ID: <19bdaab-220-364a-26ef-b7e1f6447b7a@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ZbrjhJFMttj8lh3X@redhat.com>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Wed, Jan 31 2024 at  7:19P -0500,
+Mike Snitzer <snitzer@kernel.org> wrote:
 
---185210117-1528542385-1708454829=:2837266
-Content-Type: text/plain; CHARSET=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
-Content-ID: <31b6218e-52d4-9728-16-da4e5e2dce77@redhat.com>
-
-
-
-On Fri, 9 Feb 2024, Simone Weiﬂ wrote:
-
-> Extend the dm-integrity driver to omit writing unused journal data sectors.
-> Instead of filling up the whole journal section, mark the last used
-> sector with a special commit ID. The commit ID still uses the same base value,
-> but section number and sector number are inverted. At replay when commit IDs
-> are analyzed this special commit ID is detected as end of valid data for this
-> section. The main goal is to prolong the live times of e.g. eMMCs by avoiding
-> to write the whole journal data sectors.
+> On Wed, Jan 31 2024 at  7:04P -0500,
+> Tejun Heo <tj@kernel.org> wrote:
 > 
-> The change is right now to be seen as experimental and gets applied if
-> CONFIG_DMINT_LAZY_COMMIT is set to y. Note please that this is NOT
-> planned for a final version of the changes. I would make it configurable
-> via flags passed e.g. via dmsetup and stored in the superblock.
+> > Hello, Linus.
+> > 
+> > On Wed, Jan 31, 2024 at 03:19:01PM -0800, Linus Torvalds wrote:
+> > > On Wed, 31 Jan 2024 at 13:32, Tejun Heo <tj@kernel.org> wrote:
+> > > >
+> > > > I don't know, so just did the dumb thing. If the caller always guarantees
+> > > > that the work items are never queued at the same time, reusing is fine.
+> > > 
+> > > So the reason I thought it would be a good cleanup to introduce that
+> > > "atomic" workqueue thing (now "bh") was that this case literally has a
+> > > switch between "use tasklets' or "use workqueues".
+> > > 
+> > > So it's not even about "reusing" the workqueue, it's literally a
+> > > matter of making it always just use workqueues, and the switch then
+> > > becomes just *which* workqueue to use - system or bh.
+> > 
+> > Yeah, that's how the dm-crypt got converted. The patch just before this one.
+> > This one probably can be converted the same way. I don't see the work item
+> > being re-initialized. It probably is better to initialize the work item
+> > together with the enclosing struct and then just queue it when needed.
 > 
-> Architectural Limitations:
-> - A dm-integrity partition, that was previously used with lazy commit,
->  can't be replayed with a dm-integrity driver not using lazy commit.
-> - A dm-integrity driver that uses lazy commit is expected
->  to be able to cope with a partition that was created and used without
->  lazy commit.
-> - With dm-integrity lazy commit, a partially written journal (e.g. due to a
->  power cut) can cause a tag mismatch during replay if the journal entry marking
->  the end of the journal section is missing. Due to lazy commit, older journal
->  entries are not erased and might be processed if they have the same commit ID
->  as adjacent newer journal entries.
-
-Hi
-
-I was thinking about it and I think that this problem is a showstopper.
-
-Suppose that a journal section contains these commit IDs:
-
-	2	2	2	2(EOF)	3	3	3	3
-
-The IDs "3" are left over from previous iterations. The IDs "2" contain 
-the current data. And now, the journal rolls over and we attempt to write 
-all 8 pages with the ID "3". However, a power failure happens and we only 
-write 4 pages with the ID "3". So, the journal will look like:
-
-	3(new)	3(new)	3(new)	3(new)	3(old)	3(old)	3(old)	3(old)
-
-After a reboot, the journal-replay logic will falsely believe that the 
-whole journal section is consistent and it will attempt to replay it.
-
-This could be fixed by having always increasing commit IDs - the commit 
-IDs have 8 bytes, so we can assume that they never roll-over and it would 
-prevent us from mixing old IDs into the current transaction.
-
-Mikulas
-
->  If dm-integrity detects bad sections while
->  replaying the journal, keep track about those sections and try to at least
->  replay older, good sections.
->  This is based on the assumption that most likely the newest
->  section(s) will be damaged, which might have been only partially written
->  due to a sudden reset. Previously, the whole journal would be cleared in
->  such a case.
+> Sounds good.
+>  
+> > Mikulas, I couldn't decide what to do with the "try_verify_in_tasklet"
+> > option and just decided to do the minimal thing hoping that someone more
+> > familiar with the code can take over the actual conversion. How much of user
+> > interface commitment is that? Should it be renamed or would it be better to
+> > leave it be?
 > 
-> Signed-off-by: Simone Weiﬂ <simone.weiss@elektrobit.com>
-> Signed-off-by: Kai Tomerius <kai.tomerius@elektrobit.com>
---185210117-1528542385-1708454829=:2837266--
+> cryptsetup did add support for it, so I think it worthwhile to
+> preserve the option; but it'd be fine to have it just be a backward
+> compatible alias for a more appropriately named option?
 
+Hey Tejun,
+
+I'm not sure where things stand with the 6.9 workqueue changes to add
+BH workqueue.  I had a look at your various branches and I'm not
+seeing where you might have staged any conversion patches (like this
+dm-verity one).
+
+I just staged various unrelated dm-verity and dm-crypt 6.8 fixes from
+Mikulas that I'll be sending to Linus later this week (for v6.8-rc6).
+Those changes required rebasing 'dm-6.9' because of conflicts, here is
+the dm-6.9 branch:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-6.9
+
+So we'll definitely need to rebase your changes on dm-6.9 to convert
+dm-crypt and dm-verity over to your BH workqueue.  Are you OK with
+doing that or would you prefer I merge some 6.9 workqueue branch that
+you have into dm-6.9? And then Mikulas and I work to make the required
+DM target conversion changes?
+
+However you'd like to do it: please let me know where you have the
+latest 6.9 code the adds BH workqueue (and if you have DM target
+conversion code that reflects your latest).
+
+Thanks,
+Mike
