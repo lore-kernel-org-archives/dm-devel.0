@@ -1,133 +1,130 @@
-Received: from mail-qk1-f169.google.com (mail-qk1-f169.google.com [209.85.222.169])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from skyblue.cherry.relay.mailchannels.net (skyblue.cherry.relay.mailchannels.net [23.83.223.167])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92D25133983
-	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 19:44:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.169
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708458274; cv=none; b=QGIeqOC7DW3QO8S0i8kpix9/t6tHmKYNssUXIdnloJ4qeijCMxAXB4z/w0Ocirvoc8TeFSKaph+wwxAMBldozG9Ejd99gVJ/eOIShLZd9Yx82xlux9MN2MhmvMfVUdlFL6NC7tgLWrA69imHsR9TejjEzJrubgvn7G/NgK33/1Q=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708458274; c=relaxed/simple;
-	bh=egCrOOr50znuDik3a84ddfinZziKeyqdeCwPLOkPRHY=;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED32076914
+	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 19:54:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=23.83.223.167
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1708458852; cv=pass; b=WD2WxoeuCfYl058YOtSqGVOMA+y61vKea1i/gPFkS8MQF6JXco/kzwzk4MJj1B5gnuSdnup9ssFpvCQo1Ukj0xNZfuF1ggDGiDI5Zt5CS5+Cd/YOnSdTVOBuNfq+DGHyfCdQpoqEVFLtQCrAwGjwrUmqsskdDMuJJA4OR4hFHjk=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1708458852; c=relaxed/simple;
+	bh=hJt/IYVb0eRDuwpPuHvdH7KdNxea+aTwmt9C56h0Cws=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=lgcFsoelzF8iez43c47CLZvbO/1XimWaAwHz21wts5ePNZsHqnG6FF5QGVBX1BPxOMg4dVllyQsdsA+cdWTQJ2lV+xipL98GhKuRwnTOICcm5r5vqXAvXbbukvA+AZ0TbtskTgsbZBOpGuiOvOQAg6QInPWrhY2jd4fi6V/2WWI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qk1-f169.google.com with SMTP id af79cd13be357-7876f2a2e62so94751485a.3
-        for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 11:44:32 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708458271; x=1709063071;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=tf7nxv/yoeRZAIg/mVYOoRIe0Oc63BJnhI64NvPgd3U=;
-        b=qSkwtX3rDzuPNIKmg+dC9O3aKoDQ7NirCr0t6dN72iZl6P4K56SnecnbR6mtVx5EYD
-         niQHV43Iiqqf5/LtO48qatqCnEdJ89r/bPuMcAOaYCCjHq9tvxzpbFSlmoXNDHUVEn4m
-         sfKKGIRV8CKwOvV4bY519WExaR5fG2Xs4EpvlL384hVKFHQ+vb50YNZBJK0g75gM/B3g
-         W7nkGpPMBj5smtOuBefKOKOp71i9VY0HidMWLCjEHqrOoKVYOnqBgHYsz2yIfguEYPiz
-         +ybxOmEscdUcy1wXpyLnTimM4eW49HgQ84qQpf5DuXoZWs9RAKS21lepkud9v31Tsyy3
-         SK9Q==
-X-Forwarded-Encrypted: i=1; AJvYcCUj5zUP6GWjuaP3Ylen9vv6Bs4GbzjpiUDYUQgaNdHZDg444iGFEIPX9wTZVl9Aed7ftd0EguET/nQHJDifWoseOd22l5hhxUc=
-X-Gm-Message-State: AOJu0YzDJcUVKd+aySLXO/yjxieGaLxW4GJTQcezacgctaGtc1IMItq9
-	g02faO7LBfpyepEM2K2E7RzO1Y/lT5KkUC2ek/pmQqFTuxzRolrcgzP10fSUZg==
-X-Google-Smtp-Source: AGHT+IEegqxXmIvsjTN0+qK/zSYbjr1IoWgnZe1NVExgdR7HP3eQ5gheVb9ulNmXqL4KYReh+e0t+w==
-X-Received: by 2002:a05:620a:201c:b0:787:6c11:7d76 with SMTP id c28-20020a05620a201c00b007876c117d76mr6064988qka.10.1708458271439;
-        Tue, 20 Feb 2024 11:44:31 -0800 (PST)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id x1-20020ae9f801000000b007873c82f0easm2905146qkh.113.2024.02.20.11.44.30
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 20 Feb 2024 11:44:30 -0800 (PST)
-Date: Tue, 20 Feb 2024 14:44:29 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Tejun Heo <tj@kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev, msnitzer@redhat.com, ignat@cloudflare.com,
-	damien.lemoal@wdc.com, bob.liu@oracle.com, houtao1@huawei.com,
-	peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org,
-	allen.lkml@gmail.com, kernel-team@meta.com,
-	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [PATCH 8/8] dm-verity: Convert from tasklet to BH workqueue
-Message-ID: <ZdUBHQQEN5-9AHBe@redhat.com>
+	 Content-Type:Content-Disposition:In-Reply-To; b=J8tSCrP55nUFG/iplK04pOML0QrhLJdlHil1erxk/eq8OUL9pXcrFD2DmBQIJxoMqA8Gv/DHhmbJxfTJyWeToVSJH1VzVZtJDZiUoLIwZOwF9F+TsmBqecwALBGyZO7Z1vbhqZmpvM7dxzwysjYFk766lxT8eWb9l59EIXGJ/sc=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=stgolabs.net; spf=pass smtp.mailfrom=stgolabs.net; dkim=pass (2048-bit key) header.d=stgolabs.net header.i=@stgolabs.net header.b=bCLKgtoF; arc=pass smtp.client-ip=23.83.223.167
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=stgolabs.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stgolabs.net
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=stgolabs.net header.i=@stgolabs.net header.b="bCLKgtoF"
+X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
+Received: from relay.mailchannels.net (localhost [127.0.0.1])
+	by relay.mailchannels.net (Postfix) with ESMTP id 795DBC2827;
+	Tue, 20 Feb 2024 19:36:19 +0000 (UTC)
+Received: from pdx1-sub0-mail-a209.dreamhost.com (unknown [127.0.0.6])
+	(Authenticated sender: dreamhost)
+	by relay.mailchannels.net (Postfix) with ESMTPA id B5A33C3498;
+	Tue, 20 Feb 2024 19:36:18 +0000 (UTC)
+ARC-Seal: i=1; s=arc-2022; d=mailchannels.net; t=1708457778; a=rsa-sha256;
+	cv=none;
+	b=rq8hwytgf7mfKXDi/jrMKsK0qeveLAg+21O1J0OqhR26kVBhVXZpEGmDShPL2sbwzfNo6h
+	TOij+q/41S3xbwvyQmMUZWWwKl79hgkJLCDytUeNkr4uxA3GoOIz+Tf6KsXRh/6cSwGXGZ
+	/n7dR7MpEmHeReoGt6od0xgWFfWyUyTKdF7/8Mlkckg8Pz3f3hQTIYNnb8oWQsKzcugKYE
+	zWY+VjWD9g/y3Z214qhJDNj1k3/r5Tt8O1qhRLuxCfy5nNGqFNVVGA9we6+8j/v2uUFCk4
+	wHBkbz+6txUL6d/cZlFMdvj6NB/tsJ4Hu8Y1DoSUzTFqBsJcy/HQ2dAro1VWGw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=mailchannels.net;
+	s=arc-2022; t=1708457778;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references:dkim-signature;
+	bh=hJt/IYVb0eRDuwpPuHvdH7KdNxea+aTwmt9C56h0Cws=;
+	b=5+WwerzT6sexvjUn0gTAv/2v9cuIVnWsu4m7u04KPJQNZNiTO+oqugObIxEwNEQY+bU6fF
+	R01G+Kb7dtW6+uXHYrlzbKMtWHJ8vMPq6EpBOArjSr7OWtQZ2pCMPvjl8J4mQC2hx+hpwb
+	0pcCAbJ1mAARqW8m6LCRWqhmcSGZFuRW3gGUusvSlKeCZdOiGbvsE34J9VZDmivr9Ff6OJ
+	3KuabrbMYstSyB6R9I7IsFO3h9iWiOSPAqCNY4+SqIpFF49BcwLBKEVZpo+0LsrkVZp38n
+	NXh5a8C268Cohfyu2wttF45L4Xas/g49ul8i9S2pVTPFxw363AevUfl8FF+TKQ==
+ARC-Authentication-Results: i=1;
+	rspamd-6bdc45795d-cxkcq;
+	auth=pass smtp.auth=dreamhost smtp.mailfrom=dave@stgolabs.net
+X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
+X-MC-Relay: Neutral
+X-MailChannels-SenderId: dreamhost|x-authsender|dave@stgolabs.net
+X-MailChannels-Auth-Id: dreamhost
+X-Tank-Keen: 21cbfddf12f86fe0_1708457779192_187779232
+X-MC-Loop-Signature: 1708457779192:1768560798
+X-MC-Ingress-Time: 1708457779192
+Received: from pdx1-sub0-mail-a209.dreamhost.com (pop.dreamhost.com
+ [64.90.62.162])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
+	by 100.127.149.162 (trex/6.9.2);
+	Tue, 20 Feb 2024 19:36:19 +0000
+Received: from offworld (ip72-199-50-187.sd.sd.cox.net [72.199.50.187])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: dave@stgolabs.net)
+	by pdx1-sub0-mail-a209.dreamhost.com (Postfix) with ESMTPSA id 4TfV5F37s1zKk;
+	Tue, 20 Feb 2024 11:36:17 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=stgolabs.net;
+	s=dreamhost; t=1708457778;
+	bh=hJt/IYVb0eRDuwpPuHvdH7KdNxea+aTwmt9C56h0Cws=;
+	h=Date:From:To:Cc:Subject:Content-Type;
+	b=bCLKgtoFrIDxE9TulzKX03YtzRwqsgpaiO1i9BXGIp+M/aijYBAeHDzbbNlnPTFyc
+	 ejaeFhjJd/gZ7Cdex0mXbkKVupxsDRzUyRQfjUFr4a+TS9h85+ECcC0H8pO18k8uIO
+	 n70U1MC5zJ7leo2cLL5eCevDb2kcBF+KXkdk7N2r+uAyWDj4anHZheabv8ot3oWU2g
+	 2skaS3Y9t+PA+jyqDxj9kc8s/6SB6r6MnCR8wcc9xqDEnQpZIshjC77ywO5yv0tG/A
+	 VBCyvesPDEDOfUr+GoumHVd47XY3MrRVlMCopA/GxdHrGfbBklxsCikci5TlS3T+P0
+	 Q/tNRI2Y7uAJA==
+Date: Tue, 20 Feb 2024 11:36:14 -0800
+From: Davidlohr Bueso <dave@stgolabs.net>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Tejun Heo <tj@kernel.org>, mpatocka@redhat.com,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com,
+	bob.liu@oracle.com, houtao1@huawei.com, peterz@infradead.org,
+	mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com,
+	kernel-team@meta.com,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Alan Stern <stern@rowland.harvard.edu>, linux-usb@vger.kernel.org,
+	mchehab@kernel.org
+Subject: Re: [PATCH 5/8] usb: core: hcd: Convert from tasklet to BH workqueue
+Message-ID: <20240220193614.b2rbzxmbobp3cbv2@offworld>
+Mail-Followup-To: Linus Torvalds <torvalds@linux-foundation.org>,
+	Tejun Heo <tj@kernel.org>, mpatocka@redhat.com,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com,
+	bob.liu@oracle.com, houtao1@huawei.com, peterz@infradead.org,
+	mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com,
+	kernel-team@meta.com,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Alan Stern <stern@rowland.harvard.edu>, linux-usb@vger.kernel.org,
+	mchehab@kernel.org
 References: <20240130091300.2968534-1-tj@kernel.org>
- <20240130091300.2968534-9-tj@kernel.org>
- <c2539f87-b4fe-ac7d-64d9-cbf8db929c7@redhat.com>
- <Zbq8cE3Y2ZL6dl8r@slm.duckdns.org>
- <CAHk-=wjMz_1mb+WJsPhfp5VBNrM=o8f-x2=6UW2eK5n4DHff9g@mail.gmail.com>
- <ZbrgCPEolPJNfg1x@slm.duckdns.org>
- <ZbrjhJFMttj8lh3X@redhat.com>
+ <20240130091300.2968534-6-tj@kernel.org>
+ <bckroyio6l2nt54refuord4pm6mqylt3adx6z2bg6iczxkbnyk@bb5447rqahj5>
+ <CAHk-=whqae-+7Q7wbtnEj7YmR8vsx6skTj6j-srV2Fz7cBZ2ag@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Disposition: inline
-In-Reply-To: <ZbrjhJFMttj8lh3X@redhat.com>
+In-Reply-To: <CAHk-=whqae-+7Q7wbtnEj7YmR8vsx6skTj6j-srV2Fz7cBZ2ag@mail.gmail.com>
+User-Agent: NeoMutt/20220429
 
-On Wed, Jan 31 2024 at  7:19P -0500,
-Mike Snitzer <snitzer@kernel.org> wrote:
+On Tue, 20 Feb 2024, Linus Torvalds wrote:
 
-> On Wed, Jan 31 2024 at  7:04P -0500,
-> Tejun Heo <tj@kernel.org> wrote:
-> 
-> > Hello, Linus.
-> > 
-> > On Wed, Jan 31, 2024 at 03:19:01PM -0800, Linus Torvalds wrote:
-> > > On Wed, 31 Jan 2024 at 13:32, Tejun Heo <tj@kernel.org> wrote:
-> > > >
-> > > > I don't know, so just did the dumb thing. If the caller always guarantees
-> > > > that the work items are never queued at the same time, reusing is fine.
-> > > 
-> > > So the reason I thought it would be a good cleanup to introduce that
-> > > "atomic" workqueue thing (now "bh") was that this case literally has a
-> > > switch between "use tasklets' or "use workqueues".
-> > > 
-> > > So it's not even about "reusing" the workqueue, it's literally a
-> > > matter of making it always just use workqueues, and the switch then
-> > > becomes just *which* workqueue to use - system or bh.
-> > 
-> > Yeah, that's how the dm-crypt got converted. The patch just before this one.
-> > This one probably can be converted the same way. I don't see the work item
-> > being re-initialized. It probably is better to initialize the work item
-> > together with the enclosing struct and then just queue it when needed.
-> 
-> Sounds good.
->  
-> > Mikulas, I couldn't decide what to do with the "try_verify_in_tasklet"
-> > option and just decided to do the minimal thing hoping that someone more
-> > familiar with the code can take over the actual conversion. How much of user
-> > interface commitment is that? Should it be renamed or would it be better to
-> > leave it be?
-> 
-> cryptsetup did add support for it, so I think it worthwhile to
-> preserve the option; but it'd be fine to have it just be a backward
-> compatible alias for a more appropriately named option?
+>Mauro - the BH workqueue should provide the same kind of latency as
+>the tasklets, and it would be good to validate early that yes, this
+>workqueue conversion works well in practice. Since you have an actual
+>real-life test-case, could you give it a try?
 
-Hey Tejun,
-
-I'm not sure where things stand with the 6.9 workqueue changes to add
-BH workqueue.  I had a look at your various branches and I'm not
-seeing where you might have staged any conversion patches (like this
-dm-verity one).
-
-I just staged various unrelated dm-verity and dm-crypt 6.8 fixes from
-Mikulas that I'll be sending to Linus later this week (for v6.8-rc6).
-Those changes required rebasing 'dm-6.9' because of conflicts, here is
-the dm-6.9 branch:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-6.9
-
-So we'll definitely need to rebase your changes on dm-6.9 to convert
-dm-crypt and dm-verity over to your BH workqueue.  Are you OK with
-doing that or would you prefer I merge some 6.9 workqueue branch that
-you have into dm-6.9? And then Mikulas and I work to make the required
-DM target conversion changes?
-
-However you'd like to do it: please let me know where you have the
-latest 6.9 code the adds BH workqueue (and if you have DM target
-conversion code that reflects your latest).
+In general I think it's worth pointing out that future conversions should
+still aim for an equivalent in task context, and now with disable/enable_work
+a lot opens up for regular wq conversions. If users/maintainers shout about
+latency, then use BH wq.
 
 Thanks,
-Mike
+Davidlohr
