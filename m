@@ -1,278 +1,100 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 673964CE00
-	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 03:09:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D92F6A8B7
+	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 15:31:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708398557; cv=none; b=GLugwVS1ywupELG/vA0YxMrB+ZqfieQgnjup0duDvaKOsR+zr/IiCRYIL0SUcmcXRia0vLXjPbbczNQh5d6SVjwr3y3DPxF4yIAzR3TdB1aUO+B4kvrzZtBMTD6+3zdHRCLCr3p3EzjWscSd/MpwXTkmdeE7+Bh7jOhw+srqEPE=
+	t=1708443074; cv=none; b=Ba6Bk9EK75gXJ25jAC0rkht9e3ioXq4px1whK/CSZ19Kw+TU5q+SlvCh23BF0nnYdYUQLrNRTr2nQ7KlYJyvFyTYyHzug1uxvkKAKhpFzVk4+0y4lEmKs5vKBRMObfadI9Y1Apbzz7htWZWLxtCCb0SivCH1HTJkR5EMJkb4tPI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708398557; c=relaxed/simple;
-	bh=yBsgM+sIUq10lZUQwkyMIv8az/ZvECypyV+q4wGM93w=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=ZXKrMK13r1n2ws9FL/iAcsdGpgPWppM0jlzVlnnc/p5kxfltaNC0smBlpMl0cEJKQC5lsR0Lo1VRT36q5D3J8JEsGdtaM5nJjiFG1V3ihDL4W+3pVg7NusG0dgOyjkmK4FP6iWjhFXop9PX0gGk/vPbKdnmNQucugOFpqyRp2W8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Tf4B71d0cz4f3nJw
-	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 11:09:03 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 4E2B71A0283
-	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 11:09:10 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgBHGBHSF9Rlk6w+Eg--.52537S3;
-	Tue, 20 Feb 2024 11:09:08 +0800 (CST)
-Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
-To: Benjamin Marzinski <bmarzins@redhat.com>,
- Yu Kuai <yukuai1@huaweicloud.com>
-Cc: Song Liu <song@kernel.org>, mpatocka@redhat.com, heinzm@redhat.com,
- xni@redhat.com, blazej.kucman@linux.intel.com, agk@redhat.com,
- snitzer@kernel.org, dm-devel@lists.linux.dev, jbrassow@f14.redhat.com,
- neilb@suse.de, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
- <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
- <Zc72uQln4bXothru@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
- <b969c17d-3330-49c9-fb32-60156325949e@huaweicloud.com>
- <ZdN8USOlyKRLVNgj@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <dafd3e61-a033-4c4b-bcf6-70ccd0f4ff63@huaweicloud.com>
-Date: Tue, 20 Feb 2024 11:09:06 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1708443074; c=relaxed/simple;
+	bh=8iH2sCj+sBdk4P7RGoQLMzwHYYIrWPzQ9Ew+aPPgQzI=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=LbfPgl3q/a3Hy9W7tpyodVTZz3FWKfcyN2r38uYp0AFVSI5030OKgGFH/TxZj+m339qdPPDsiQ+h9HqTg4d2X2cnCcjbFsFBR0GnwLokgpa/TLJtd1nSIMV/Q8XnIaJEke/BGAbMbe7TA86hniPJiAHUbnHjt5Cxs6a1IwQELb0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YJhlBOL/; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YJhlBOL/"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1708443071;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=JM/6/mvtcBs5QkNQCS4CWF9Aa8TY5CUdynAMOiCaQgs=;
+	b=YJhlBOL/6bCxXBiPHLSOrlUUIZLCjWot+iY+9/XkJCv3O/hcn4pPMWG37idYh2yS/xemN7
+	Fkz1oqpJ1HT/rYusqUbS7efTvV5y7wwqOiCAe9O+0J7jjHzIHm8hvx/pT8UwhZ6HPx/m3u
+	AXxaxSJhMsUyvtJe/WPx6THM52G9TlM=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-380-ioPcnDBcPeKrOj92Pp9dzw-1; Tue,
+ 20 Feb 2024 10:31:09 -0500
+X-MC-Unique: ioPcnDBcPeKrOj92Pp9dzw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F386C3816444;
+	Tue, 20 Feb 2024 15:31:04 +0000 (UTC)
+Received: from localhost.localdomain (unknown [10.72.120.2])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E7E302022AAC;
+	Tue, 20 Feb 2024 15:31:00 +0000 (UTC)
+From: Xiao Ni <xni@redhat.com>
+To: song@kernel.org
+Cc: yukuai1@huaweicloud.com,
+	bmarzins@redhat.com,
+	heinzm@redhat.com,
+	snitzer@kernel.org,
+	ncroxon@redhat.com,
+	neilb@suse.de,
+	linux-raid@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: [PATCH RFC V2 0/4] Fix regression bugs
+Date: Tue, 20 Feb 2024 23:30:55 +0800
+Message-Id: <20240220153059.11233-1-xni@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <ZdN8USOlyKRLVNgj@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBHGBHSF9Rlk6w+Eg--.52537S3
-X-Coremail-Antispam: 1UD129KBjvJXoW3Jr18JFWDXr1fGr1UArWrKrg_yoW3tr1fpF
-	ZxGFySyryUJr93G3sFva1jqFy5t3Z5try5Xr97Jw1fArn0vrn3Jr47JFyrWFyUCryUCr1j
-	qF1Utr9rWr1jyaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
-	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
-	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E
-	3s1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcS
-	sGvfC2KfnxnUUI43ZEXa7VUbQVy7UUUUU==
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-Hi,
+Hi all
 
-在 2024/02/20 0:05, Benjamin Marzinski 写道:
-> On Sun, Feb 18, 2024 at 09:24:31AM +0800, Yu Kuai wrote:
->> Hi,
->>
->> 在 2024/02/16 13:46, Benjamin Marzinski 写道:
->>> On Thu, Feb 15, 2024 at 02:24:34PM -0800, Song Liu wrote:
->>>> On Thu, Feb 1, 2024 at 1:30 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>>
->>>> [...]
->>>>>
->>>>> [1] https://lore.kernel.org/all/CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com/
->>>>>
->>>>> Yu Kuai (14):
->>>>>     md: don't ignore suspended array in md_check_recovery()
->>>>>     md: don't ignore read-only array in md_check_recovery()
->>>>>     md: make sure md_do_sync() will set MD_RECOVERY_DONE
->>>>>     md: don't register sync_thread for reshape directly
->>>>>     md: don't suspend the array for interrupted reshape
->>>>>     md: fix missing release of 'active_io' for flush
->>>>
->>>> Applied 1/14-5/14 to md-6.8 branch (6/14 was applied earlier).
->>>>
->>>> Thanks,
->>>> Song
->>>
->>> I'm still seeing new failures that I can't reproduce in the 6.6 kernel,
->>> specifically:
->>>
->>> lvconvert-raid-reshape-stripes-load-reload.sh
->>> lvconvert-repair-raid.sh
->>>
->>> with lvconvert-raid-reshape-stripes-load-reload.sh Patch 12/14
->>> ("md/raid456: fix a deadlock for dm-raid456 while io concurrent with
->>> reshape") is changing a hang to a corruption. The issues is that we
->>> can't simply fail IO that crosses the reshape position. I assume that
->>> the correct thing to do is have dm-raid reissue it after the suspend,
->>> when the reshape can make progress again. Perhaps something like this,
->>> only less naive (although this patch does make the test pass for me).
->>> Heinz, any thoughts on this? Otherwise, I'll look into this a little
->>> more and post a RFC patch.
->>
->> Does the corruption looks like below?
-> 
-> There isn't a kernel stack trace.  The test
-> lvconvert-raid-reshape-stripes-load-reload.sh does some IO to a
-> filesytem on top of a raid device, and then starts a reshape, and
-> repeatedly suspends the device. After all that, it runs fsck to see if
-> the filesystem is clean, and on runs where I see "dm-raid456: io failed
-> across reshape position while reshape can't make progress" I see
-> filesystem errors:
-> 
-> ------------------------------------------------------------------
-> [ 0:25.219] fsck from util-linux 2.39.2
-> [ 0:25.224] e2fsck 1.47.0 (5-Feb-2023)
-> [ 0:25.232] Warning: skipping journal recovery because doing a read-only
-> filesystem check.
-> [ 0:25.233] Pass 1: Checking inodes, blocks, and sizes
-> [ 0:25.233] Pass 2: Checking directory structure
-> [ 0:25.234] Pass 3: Checking directory connectivity
-> [ 0:25.234] Pass 4: Checking reference counts
-> [ 0:25.234] Pass 5: Checking group summary information
-> [ 0:25.234] Feature orphan_present is set but orphan file is clean.
-> [ 0:25.235] Clear? no
-> [ 0:25.235]
-> [ 0:25.235]
-> [ 0:25.235] /tmp/LVMTEST35943.Iuo9Ro5tCY/dev/mapper/LVMTEST35943vg-LV1:
-> ********** WARNING: Filesystem still has errors **********
-> [ 0:25.235]
-> [ 0:25.235] /tmp/LVMTEST35943.Iuo9Ro5tCY/dev/mapper/LVMTEST35943vg-LV1:
-> 13/2560 files (0.0% non-contiguous), 5973/10240 blocks
-> ------------------------------------------------------------------
-> 
-> O.k. corruption is too strong a word. Lets just call it a filesystem
-> that got a write error, and now is in an unclean state according to
-> fsck. I'm pretty sure that this is recoverable.
+Sorry, I know this patch set conflict with Yu Kuai's patch set. But
+I have to send out this patch set. Now we're facing some deadlock
+regression problems. So it's better to figure out the root cause and
+fix them. But Kuai's patch set looks too complicate for me. And like
+we're talking in the emails, Kuai's patch set breaks some rules. It's
+not good to fix some problem by breaking the original logic. If we really
+need to break some logic. It's better to use a distinct patch set to
+describe why we need them.
 
-Yes, I thought this can be acceptable because everything should be good
-again once reshape continues.
+This patch is based on linus's tree. The tag is 6.8-rc5. If this patch set
+can be accepted. We need to revert Kuai's patches which have been merged
+in Song's tree (md-6.8-20240216 tag). This patch set has four patches.
+The first two resolves deadlock problems. With these two patches, it can
+resolve most deadlock problem. The third one fixes active_io counter bug.
+The fouth one fixes the raid5 reshape deadlock problem.
 
-> 
->> [12504.959682] BUG bio-296 (Not tainted): Object already free
->> [12504.960239]
->> -----------------------------------------------------------------------------
->> [12504.960239]
->> [12504.961209] Allocated in mempool_alloc+0xe8/0x270 age=30 cpu=1 pid=203288
->> [12504.961905]  kmem_cache_alloc+0x36a/0x3b0
->> [12504.962324]  mempool_alloc+0xe8/0x270
->> [12504.962712]  bio_alloc_bioset+0x3b5/0x920
->> [12504.963129]  bio_alloc_clone+0x3e/0x160
->> [12504.963533]  alloc_io+0x3d/0x1f0
->> [12504.963876]  dm_submit_bio+0x12f/0xa30
->> [12504.964267]  __submit_bio+0x9c/0xe0
->> [12504.964639]  submit_bio_noacct_nocheck+0x25a/0x570
->> [12504.965136]  submit_bio_wait+0xc2/0x160
->> [12504.965535]  blkdev_issue_zeroout+0x19b/0x2e0
->> [12504.965991]  ext4_init_inode_table+0x246/0x560
->> [12504.966462]  ext4_lazyinit_thread+0x750/0xbe0
->> [12504.966922]  kthread+0x1b4/0x1f0
->>
->> I assum that this is a dm problem and I'm still trying to debug it.
->> Can you explain more why IO that crosses the reshape position can't
->> fail directly?
-> 
-> Maybe I'm missing something here, but if the filesystem is trying to
-> write out data to the device, and we fail that IO, why would that not
-> cause problems, whatever we call it?
+I have run lvm2 regression test. There are 4 failed cases:
+shell/dmsetup-integrity-keys.sh
+shell/lvresize-fs-crypt.sh
+shell/pvck-dump.sh
+shell/select-report.sh
 
-And the root cause is the logical in raid456:
+Xiao Ni (4):
+  Clear MD_RECOVERY_WAIT when stopping dmraid
+  Set MD_RECOVERY_FROZEN before stop sync thread
+  md: Missing decrease active_io for flush io
+  Don't check crossing reshape when reshape hasn't started
 
-Reshape will reconstruct data, and data accross reshape position can't
-be reachable until reshape make progress.
+ drivers/md/dm-raid.c |  2 ++
+ drivers/md/md.c      |  8 +++++++-
+ drivers/md/raid5.c   | 22 ++++++++++------------
+ 3 files changed, 19 insertions(+), 13 deletions(-)
 
-The point is that before c467e97f079f, data could be corrupted sliently,
-because c467e97f079f fix that IO across reshape position is submitted
-directly.
-
-I'm not sure yet how to completely fix this, we can let the IO wait for
-reshape(in the upper layer, wait in raid456 will deadlock) to make
-progress instead of fail it directly, however, continue the reshape
-relies on user, and this way IO may wait forever.
-
-Thanks,
-Kuai
-> 
-> [ 0:18.792] 3,6342,47220996156,-;dm-raid456: io failed across reshape
-> position while reshape can't make progress
-> [ 0:18.792] 3,6343,47220996182,-;Aborting journal on device dm-39-8.
-> [ 0:18.792] 3,6344,47221411730,-;dm-raid456: io failed across reshape
-> position while reshape can't make progress
-> [ 0:18.792] 3,6345,47221411746,-;Buffer I/O error on dev dm-39, logical
-> block 740, lost sync page write
-> [ 0:18.792] 3,6346,47221416194,-;JBD2: I/O error when updating journal
-> superblock for dm-39-8.
-> 
-> Does this test not fail for you? Or does it simply also fail in the 6.6
-> kernel.
-
-Yes, this test failed as well. And it also fail in 6.6.
-> 
-> -Ben
->   
->> Thanks,
->> Kuai
->>
->>>
->>> =========================================================
->>> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
->>> index ed8c28952b14..ff481d494b04 100644
->>> --- a/drivers/md/dm-raid.c
->>> +++ b/drivers/md/dm-raid.c
->>> @@ -3345,6 +3345,14 @@ static int raid_map(struct dm_target *ti, struct bio *bio)
->>>    	return DM_MAPIO_SUBMITTED;
->>>    }
->>> +static int raid_end_io(struct dm_target *ti, struct bio *bio,
->>> +		       blk_status_t *error)
->>> +{
->>> +	if (*error != BLK_STS_IOERR || !dm_noflush_suspending(ti))
->>> +		return DM_ENDIO_DONE;
->>> +	return DM_ENDIO_REQUEUE;
->>> +}
->>
->>> +
->>>    /* Return sync state string for @state */
->>>    enum sync_state { st_frozen, st_reshape, st_resync, st_check, st_repair, st_recover, st_idle };
->>>    static const char *sync_str(enum sync_state state)
->>> @@ -4100,6 +4108,7 @@ static struct target_type raid_target = {
->>>    	.ctr = raid_ctr,
->>>    	.dtr = raid_dtr,
->>>    	.map = raid_map,
->>> +	.end_io = raid_end_io,
->>>    	.status = raid_status,
->>>    	.message = raid_message,
->>>    	.iterate_devices = raid_iterate_devices,
->>> =========================================================
->>>>
->>>>
->>>>>     md: export helpers to stop sync_thread
->>>>>     md: export helper md_is_rdwr()
->>>>>     dm-raid: really frozen sync_thread during suspend
->>>>>     md/dm-raid: don't call md_reap_sync_thread() directly
->>>>>     dm-raid: add a new helper prepare_suspend() in md_personality
->>>>>     md/raid456: fix a deadlock for dm-raid456 while io concurrent with
->>>>>       reshape
->>>>>     dm-raid: fix lockdep waring in "pers->hot_add_disk"
->>>>>     dm-raid: remove mddev_suspend/resume()
->>>>>
->>>>>    drivers/md/dm-raid.c |  78 +++++++++++++++++++--------
->>>>>    drivers/md/md.c      | 126 +++++++++++++++++++++++++++++--------------
->>>>>    drivers/md/md.h      |  16 ++++++
->>>>>    drivers/md/raid10.c  |  16 +-----
->>>>>    drivers/md/raid5.c   |  61 +++++++++++----------
->>>>>    5 files changed, 192 insertions(+), 105 deletions(-)
->>>>>
->>>>> --
->>>>> 2.39.2
->>>>>
->>>>>
->>>
->>> .
->>>
-> 
-> .
-> 
+-- 
+2.32.0 (Apple Git-132)
 
