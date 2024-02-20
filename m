@@ -1,279 +1,278 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DA0E3E470
-	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 20:31:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 673964CE00
+	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 03:09:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708374677; cv=none; b=M4w7YHn8lnY3+MayKsYw0Jy3wPUa1uz7FqD6s1Dr0wGqXUQuUInJI/Xtr18vB+jrggpl8Ce94O1Thp8Bl/71N5xDLsLeOcJsgxwr4xnZtuauAYSkn8qJ0e27sG0jsgWz2zab91CvJtU66+y5/1kPt0AHZBhWFF6NFIHKg4Y7xv8=
+	t=1708398557; cv=none; b=GLugwVS1ywupELG/vA0YxMrB+ZqfieQgnjup0duDvaKOsR+zr/IiCRYIL0SUcmcXRia0vLXjPbbczNQh5d6SVjwr3y3DPxF4yIAzR3TdB1aUO+B4kvrzZtBMTD6+3zdHRCLCr3p3EzjWscSd/MpwXTkmdeE7+Bh7jOhw+srqEPE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708374677; c=relaxed/simple;
-	bh=k9ibS4MjBKAt5EA77xj37GOB1GY+HKxuix8vHE4ecsY=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=sovSwARkKX5OB97zUpcC57X3VO+VdWZPJe2+Uzdr+g499ZI8/zw8Cct5oJ+N42+HtWMFTgKr+sMqMTXOK+X9phL2AkBX7+uH2/nUbwXcz3Mt8I9LtMl7nGAI2ky0yWc4h4MQ6RM047eI9v9LIpxkVraeD4bAOTXLApyrrdw/jgU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=imxBBDkZ; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="imxBBDkZ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708374674;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=kAjtG3DynyKh4HULEJu2aSkVl6pZfRAdugHK9xWpBe0=;
-	b=imxBBDkZpdv7uFR5V2BUJN0roQ1iqQS+JcDmQQabIDDx/HvuBFzlOQzJoA+Xv1tJo9eZSf
-	BPOK1LfDXgUzDDQ43KG4cmdd3R+/cDDuNxaAcBn/iRAXWZkxr4lBp0d6QGFxUzxumyYWIt
-	YafYg76bRT2Lhbub4BN7pbnlu1Tpjj8=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-639-xqWIv7B-POqvxk9EDklnMg-1; Mon,
- 19 Feb 2024 15:31:12 -0500
-X-MC-Unique: xqWIv7B-POqvxk9EDklnMg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D71341C04182
-	for <dm-devel@lists.linux.dev>; Mon, 19 Feb 2024 20:31:11 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D1DF0AD76;
-	Mon, 19 Feb 2024 20:31:11 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id CA88730C1B8F; Mon, 19 Feb 2024 20:31:11 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id C97823FB4E;
-	Mon, 19 Feb 2024 21:31:11 +0100 (CET)
-Date: Mon, 19 Feb 2024 21:31:11 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Mike Snitzer <msnitzer@redhat.com>
-cc: dm-devel@lists.linux.dev
-Subject: [PATCH 5/5] dm-crypt: recheck the integrity tag after a failure
-In-Reply-To: <ab6d4358-3430-e2c9-bb93-c1e8cf72395@redhat.com>
-Message-ID: <7641d5f-ebe-f7db-35b7-d64e6d65476@redhat.com>
-References: <ab6d4358-3430-e2c9-bb93-c1e8cf72395@redhat.com>
+	s=arc-20240116; t=1708398557; c=relaxed/simple;
+	bh=yBsgM+sIUq10lZUQwkyMIv8az/ZvECypyV+q4wGM93w=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=ZXKrMK13r1n2ws9FL/iAcsdGpgPWppM0jlzVlnnc/p5kxfltaNC0smBlpMl0cEJKQC5lsR0Lo1VRT36q5D3J8JEsGdtaM5nJjiFG1V3ihDL4W+3pVg7NusG0dgOyjkmK4FP6iWjhFXop9PX0gGk/vPbKdnmNQucugOFpqyRp2W8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Tf4B71d0cz4f3nJw
+	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 11:09:03 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 4E2B71A0283
+	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 11:09:10 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgBHGBHSF9Rlk6w+Eg--.52537S3;
+	Tue, 20 Feb 2024 11:09:08 +0800 (CST)
+Subject: Re: [PATCH v5 00/14] dm-raid/md/raid: fix v6.7 regressions
+To: Benjamin Marzinski <bmarzins@redhat.com>,
+ Yu Kuai <yukuai1@huaweicloud.com>
+Cc: Song Liu <song@kernel.org>, mpatocka@redhat.com, heinzm@redhat.com,
+ xni@redhat.com, blazej.kucman@linux.intel.com, agk@redhat.com,
+ snitzer@kernel.org, dm-devel@lists.linux.dev, jbrassow@f14.redhat.com,
+ neilb@suse.de, shli@fb.com, akpm@osdl.org, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
+ <CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com>
+ <Zc72uQln4bXothru@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+ <b969c17d-3330-49c9-fb32-60156325949e@huaweicloud.com>
+ <ZdN8USOlyKRLVNgj@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <dafd3e61-a033-4c4b-bcf6-70ccd0f4ff63@huaweicloud.com>
+Date: Tue, 20 Feb 2024 11:09:06 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+In-Reply-To: <ZdN8USOlyKRLVNgj@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgBHGBHSF9Rlk6w+Eg--.52537S3
+X-Coremail-Antispam: 1UD129KBjvJXoW3Jr18JFWDXr1fGr1UArWrKrg_yoW3tr1fpF
+	ZxGFySyryUJr93G3sFva1jqFy5t3Z5try5Xr97Jw1fArn0vrn3Jr47JFyrWFyUCryUCr1j
+	qF1Utr9rWr1jyaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
+	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
+	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
+	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E
+	3s1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcS
+	sGvfC2KfnxnUUI43ZEXa7VUbQVy7UUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-If a userspace process reads (with O_DIRECT) multiple blocks into the same
-buffer, dm-crypt reports an authentication error [1]. The error is
-reported in a log and it may cause RAID leg being kicked out of the
-array.
+Hi,
 
-This commit fixes dm-crypt, so that if integrity verification fails, the
-data is read again into a kernel buffer (where userspace can't modify it)
-and the integrity tag is rechecked. If the recheck succeeds, the content
-of the kernel buffer is copied into the user buffer; if the recheck fails,
-an integrity error is reported.
+在 2024/02/20 0:05, Benjamin Marzinski 写道:
+> On Sun, Feb 18, 2024 at 09:24:31AM +0800, Yu Kuai wrote:
+>> Hi,
+>>
+>> 在 2024/02/16 13:46, Benjamin Marzinski 写道:
+>>> On Thu, Feb 15, 2024 at 02:24:34PM -0800, Song Liu wrote:
+>>>> On Thu, Feb 1, 2024 at 1:30 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>>>>
+>>>> [...]
+>>>>>
+>>>>> [1] https://lore.kernel.org/all/CALTww29QO5kzmN6Vd+jT=-8W5F52tJjHKSgrfUc1Z1ZAeRKHHA@mail.gmail.com/
+>>>>>
+>>>>> Yu Kuai (14):
+>>>>>     md: don't ignore suspended array in md_check_recovery()
+>>>>>     md: don't ignore read-only array in md_check_recovery()
+>>>>>     md: make sure md_do_sync() will set MD_RECOVERY_DONE
+>>>>>     md: don't register sync_thread for reshape directly
+>>>>>     md: don't suspend the array for interrupted reshape
+>>>>>     md: fix missing release of 'active_io' for flush
+>>>>
+>>>> Applied 1/14-5/14 to md-6.8 branch (6/14 was applied earlier).
+>>>>
+>>>> Thanks,
+>>>> Song
+>>>
+>>> I'm still seeing new failures that I can't reproduce in the 6.6 kernel,
+>>> specifically:
+>>>
+>>> lvconvert-raid-reshape-stripes-load-reload.sh
+>>> lvconvert-repair-raid.sh
+>>>
+>>> with lvconvert-raid-reshape-stripes-load-reload.sh Patch 12/14
+>>> ("md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+>>> reshape") is changing a hang to a corruption. The issues is that we
+>>> can't simply fail IO that crosses the reshape position. I assume that
+>>> the correct thing to do is have dm-raid reissue it after the suspend,
+>>> when the reshape can make progress again. Perhaps something like this,
+>>> only less naive (although this patch does make the test pass for me).
+>>> Heinz, any thoughts on this? Otherwise, I'll look into this a little
+>>> more and post a RFC patch.
+>>
+>> Does the corruption looks like below?
+> 
+> There isn't a kernel stack trace.  The test
+> lvconvert-raid-reshape-stripes-load-reload.sh does some IO to a
+> filesytem on top of a raid device, and then starts a reshape, and
+> repeatedly suspends the device. After all that, it runs fsck to see if
+> the filesystem is clean, and on runs where I see "dm-raid456: io failed
+> across reshape position while reshape can't make progress" I see
+> filesystem errors:
+> 
+> ------------------------------------------------------------------
+> [ 0:25.219] fsck from util-linux 2.39.2
+> [ 0:25.224] e2fsck 1.47.0 (5-Feb-2023)
+> [ 0:25.232] Warning: skipping journal recovery because doing a read-only
+> filesystem check.
+> [ 0:25.233] Pass 1: Checking inodes, blocks, and sizes
+> [ 0:25.233] Pass 2: Checking directory structure
+> [ 0:25.234] Pass 3: Checking directory connectivity
+> [ 0:25.234] Pass 4: Checking reference counts
+> [ 0:25.234] Pass 5: Checking group summary information
+> [ 0:25.234] Feature orphan_present is set but orphan file is clean.
+> [ 0:25.235] Clear? no
+> [ 0:25.235]
+> [ 0:25.235]
+> [ 0:25.235] /tmp/LVMTEST35943.Iuo9Ro5tCY/dev/mapper/LVMTEST35943vg-LV1:
+> ********** WARNING: Filesystem still has errors **********
+> [ 0:25.235]
+> [ 0:25.235] /tmp/LVMTEST35943.Iuo9Ro5tCY/dev/mapper/LVMTEST35943vg-LV1:
+> 13/2560 files (0.0% non-contiguous), 5973/10240 blocks
+> ------------------------------------------------------------------
+> 
+> O.k. corruption is too strong a word. Lets just call it a filesystem
+> that got a write error, and now is in an unclean state according to
+> fsck. I'm pretty sure that this is recoverable.
 
-[1] https://people.redhat.com/~mpatocka/testcases/blk-auth-modify/read2.c
+Yes, I thought this can be acceptable because everything should be good
+again once reshape continues.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
+> 
+>> [12504.959682] BUG bio-296 (Not tainted): Object already free
+>> [12504.960239]
+>> -----------------------------------------------------------------------------
+>> [12504.960239]
+>> [12504.961209] Allocated in mempool_alloc+0xe8/0x270 age=30 cpu=1 pid=203288
+>> [12504.961905]  kmem_cache_alloc+0x36a/0x3b0
+>> [12504.962324]  mempool_alloc+0xe8/0x270
+>> [12504.962712]  bio_alloc_bioset+0x3b5/0x920
+>> [12504.963129]  bio_alloc_clone+0x3e/0x160
+>> [12504.963533]  alloc_io+0x3d/0x1f0
+>> [12504.963876]  dm_submit_bio+0x12f/0xa30
+>> [12504.964267]  __submit_bio+0x9c/0xe0
+>> [12504.964639]  submit_bio_noacct_nocheck+0x25a/0x570
+>> [12504.965136]  submit_bio_wait+0xc2/0x160
+>> [12504.965535]  blkdev_issue_zeroout+0x19b/0x2e0
+>> [12504.965991]  ext4_init_inode_table+0x246/0x560
+>> [12504.966462]  ext4_lazyinit_thread+0x750/0xbe0
+>> [12504.966922]  kthread+0x1b4/0x1f0
+>>
+>> I assum that this is a dm problem and I'm still trying to debug it.
+>> Can you explain more why IO that crosses the reshape position can't
+>> fail directly?
+> 
+> Maybe I'm missing something here, but if the filesystem is trying to
+> write out data to the device, and we fail that IO, why would that not
+> cause problems, whatever we call it?
 
----
- drivers/md/dm-crypt.c |   91 ++++++++++++++++++++++++++++++++++++++++----------
- 1 file changed, 74 insertions(+), 17 deletions(-)
+And the root cause is the logical in raid456:
 
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c	2024-02-19 17:23:43.000000000 +0100
-+++ linux-2.6/drivers/md/dm-crypt.c	2024-02-19 17:23:48.000000000 +0100
-@@ -62,6 +62,8 @@ struct convert_context {
- 		struct skcipher_request *req;
- 		struct aead_request *req_aead;
- 	} r;
-+	bool aead_recheck;
-+	bool aead_failed;
- 
- };
- 
-@@ -82,6 +84,8 @@ struct dm_crypt_io {
- 	blk_status_t error;
- 	sector_t sector;
- 
-+	struct bvec_iter saved_bi_iter;
-+
- 	struct rb_node rb_node;
- } CRYPTO_MINALIGN_ATTR;
- 
-@@ -1370,10 +1374,13 @@ static int crypt_convert_block_aead(stru
- 	if (r == -EBADMSG) {
- 		sector_t s = le64_to_cpu(*sector);
- 
--		DMERR_LIMIT("%pg: INTEGRITY AEAD ERROR, sector %llu",
--			    ctx->bio_in->bi_bdev, s);
--		dm_audit_log_bio(DM_MSG_PREFIX, "integrity-aead",
--				 ctx->bio_in, s, 0);
-+		ctx->aead_failed = true;
-+		if (ctx->aead_recheck) {
-+			DMERR_LIMIT("%pg: INTEGRITY AEAD ERROR, sector %llu",
-+				    ctx->bio_in->bi_bdev, s);
-+			dm_audit_log_bio(DM_MSG_PREFIX, "integrity-aead",
-+					 ctx->bio_in, s, 0);
-+		}
- 	}
- 
- 	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
-@@ -1757,6 +1764,8 @@ static void crypt_io_init(struct dm_cryp
- 	io->base_bio = bio;
- 	io->sector = sector;
- 	io->error = 0;
-+	io->ctx.aead_recheck = false;
-+	io->ctx.aead_failed = false;
- 	io->ctx.r.req = NULL;
- 	io->integrity_metadata = NULL;
- 	io->integrity_metadata_from_pool = false;
-@@ -1768,6 +1777,8 @@ static void crypt_inc_pending(struct dm_
- 	atomic_inc(&io->io_pending);
- }
- 
-+static void kcryptd_queue_read(struct dm_crypt_io *io);
-+
- /*
-  * One of the bios was finished. Check for completion of
-  * the whole request and correctly clean up the buffer.
-@@ -1781,6 +1792,15 @@ static void crypt_dec_pending(struct dm_
- 	if (!atomic_dec_and_test(&io->io_pending))
- 		return;
- 
-+	if (likely(!io->ctx.aead_recheck) && unlikely(io->ctx.aead_failed) &&
-+	    cc->on_disk_tag_size && bio_data_dir(base_bio) == READ) {
-+		io->ctx.aead_recheck = true;
-+		io->ctx.aead_failed = false;
-+		io->error = 0;
-+		kcryptd_queue_read(io);
-+		return;
-+	}
-+
- 	if (io->ctx.r.req)
- 		crypt_free_req(cc, io->ctx.r.req, base_bio);
- 
-@@ -1816,15 +1836,19 @@ static void crypt_endio(struct bio *clon
- 	struct dm_crypt_io *io = clone->bi_private;
- 	struct crypt_config *cc = io->cc;
- 	unsigned int rw = bio_data_dir(clone);
--	blk_status_t error;
-+	blk_status_t error = clone->bi_status;
-+
-+	if (io->ctx.aead_recheck && !error) {
-+		kcryptd_queue_crypt(io);
-+		return;
-+	}
- 
- 	/*
- 	 * free the processed pages
- 	 */
--	if (rw == WRITE)
-+	if (rw == WRITE || io->ctx.aead_recheck)
- 		crypt_free_buffer_pages(cc, clone);
- 
--	error = clone->bi_status;
- 	bio_put(clone);
- 
- 	if (rw == READ && !error) {
-@@ -1845,6 +1869,22 @@ static int kcryptd_io_read(struct dm_cry
- 	struct crypt_config *cc = io->cc;
- 	struct bio *clone;
- 
-+	if (io->ctx.aead_recheck) {
-+		if (!(gfp & __GFP_DIRECT_RECLAIM))
-+			return 1;
-+		crypt_inc_pending(io);
-+		clone = crypt_alloc_buffer(io, io->base_bio->bi_iter.bi_size);
-+		if (unlikely(!clone)) {
-+			crypt_dec_pending(io);
-+			return 1;
-+		}
-+		clone->bi_iter.bi_sector = cc->start + io->sector;
-+		crypt_convert_init(cc, &io->ctx, clone, clone, io->sector);
-+		io->saved_bi_iter = clone->bi_iter;
-+		dm_submit_bio_remap(io->base_bio, clone);
-+		return 0;
-+	}
-+
- 	/*
- 	 * We need the original biovec array in order to decrypt the whole bio
- 	 * data *afterwards* -- thanks to immutable biovecs we don't need to
-@@ -2113,6 +2153,14 @@ dec:
- 
- static void kcryptd_crypt_read_done(struct dm_crypt_io *io)
- {
-+	if (io->ctx.aead_recheck) {
-+		if (!io->error) {
-+			io->ctx.bio_in->bi_iter = io->saved_bi_iter;
-+			bio_copy_data(io->base_bio, io->ctx.bio_in);
-+		}
-+		crypt_free_buffer_pages(io->cc, io->ctx.bio_in);
-+		bio_put(io->ctx.bio_in);
-+	}
- 	crypt_dec_pending(io);
- }
- 
-@@ -2142,11 +2190,17 @@ static void kcryptd_crypt_read_convert(s
- 
- 	crypt_inc_pending(io);
- 
--	crypt_convert_init(cc, &io->ctx, io->base_bio, io->base_bio,
--			   io->sector);
-+	if (io->ctx.aead_recheck) {
-+		io->ctx.cc_sector = io->sector + cc->iv_offset;
-+		r = crypt_convert(cc, &io->ctx,
-+				  test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags), true);
-+	} else {
-+		crypt_convert_init(cc, &io->ctx, io->base_bio, io->base_bio,
-+				   io->sector);
- 
--	r = crypt_convert(cc, &io->ctx,
--			  test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags), true);
-+		r = crypt_convert(cc, &io->ctx,
-+				  test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags), true);
-+	}
- 	/*
- 	 * Crypto API backlogged the request, because its queue was full
- 	 * and we're in softirq context, so continue from a workqueue
-@@ -2188,10 +2242,13 @@ static void kcryptd_async_done(void *dat
- 	if (error == -EBADMSG) {
- 		sector_t s = le64_to_cpu(*org_sector_of_dmreq(cc, dmreq));
- 
--		DMERR_LIMIT("%pg: INTEGRITY AEAD ERROR, sector %llu",
--			    ctx->bio_in->bi_bdev, s);
--		dm_audit_log_bio(DM_MSG_PREFIX, "integrity-aead",
--				 ctx->bio_in, s, 0);
-+		ctx->aead_failed = true;
-+		if (ctx->aead_recheck) {
-+			DMERR_LIMIT("%pg: INTEGRITY AEAD ERROR, sector %llu",
-+				    ctx->bio_in->bi_bdev, s);
-+			dm_audit_log_bio(DM_MSG_PREFIX, "integrity-aead",
-+					 ctx->bio_in, s, 0);
-+		}
- 		io->error = BLK_STS_PROTECTION;
- 	} else if (error < 0)
- 		io->error = BLK_STS_IOERR;
-@@ -3116,7 +3173,7 @@ static int crypt_ctr_optional(struct dm_
- 			sval = strchr(opt_string + strlen("integrity:"), ':') + 1;
- 			if (!strcasecmp(sval, "aead")) {
- 				set_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags);
--			} else  if (strcasecmp(sval, "none")) {
-+			} else if (strcasecmp(sval, "none")) {
- 				ti->error = "Unknown integrity profile";
- 				return -EINVAL;
- 			}
-@@ -3645,7 +3702,7 @@ static void crypt_io_hints(struct dm_tar
- 
- static struct target_type crypt_target = {
- 	.name   = "crypt",
--	.version = {1, 24, 0},
-+	.version = {1, 25, 0},
- 	.module = THIS_MODULE,
- 	.ctr    = crypt_ctr,
- 	.dtr    = crypt_dtr,
+Reshape will reconstruct data, and data accross reshape position can't
+be reachable until reshape make progress.
+
+The point is that before c467e97f079f, data could be corrupted sliently,
+because c467e97f079f fix that IO across reshape position is submitted
+directly.
+
+I'm not sure yet how to completely fix this, we can let the IO wait for
+reshape(in the upper layer, wait in raid456 will deadlock) to make
+progress instead of fail it directly, however, continue the reshape
+relies on user, and this way IO may wait forever.
+
+Thanks,
+Kuai
+> 
+> [ 0:18.792] 3,6342,47220996156,-;dm-raid456: io failed across reshape
+> position while reshape can't make progress
+> [ 0:18.792] 3,6343,47220996182,-;Aborting journal on device dm-39-8.
+> [ 0:18.792] 3,6344,47221411730,-;dm-raid456: io failed across reshape
+> position while reshape can't make progress
+> [ 0:18.792] 3,6345,47221411746,-;Buffer I/O error on dev dm-39, logical
+> block 740, lost sync page write
+> [ 0:18.792] 3,6346,47221416194,-;JBD2: I/O error when updating journal
+> superblock for dm-39-8.
+> 
+> Does this test not fail for you? Or does it simply also fail in the 6.6
+> kernel.
+
+Yes, this test failed as well. And it also fail in 6.6.
+> 
+> -Ben
+>   
+>> Thanks,
+>> Kuai
+>>
+>>>
+>>> =========================================================
+>>> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+>>> index ed8c28952b14..ff481d494b04 100644
+>>> --- a/drivers/md/dm-raid.c
+>>> +++ b/drivers/md/dm-raid.c
+>>> @@ -3345,6 +3345,14 @@ static int raid_map(struct dm_target *ti, struct bio *bio)
+>>>    	return DM_MAPIO_SUBMITTED;
+>>>    }
+>>> +static int raid_end_io(struct dm_target *ti, struct bio *bio,
+>>> +		       blk_status_t *error)
+>>> +{
+>>> +	if (*error != BLK_STS_IOERR || !dm_noflush_suspending(ti))
+>>> +		return DM_ENDIO_DONE;
+>>> +	return DM_ENDIO_REQUEUE;
+>>> +}
+>>
+>>> +
+>>>    /* Return sync state string for @state */
+>>>    enum sync_state { st_frozen, st_reshape, st_resync, st_check, st_repair, st_recover, st_idle };
+>>>    static const char *sync_str(enum sync_state state)
+>>> @@ -4100,6 +4108,7 @@ static struct target_type raid_target = {
+>>>    	.ctr = raid_ctr,
+>>>    	.dtr = raid_dtr,
+>>>    	.map = raid_map,
+>>> +	.end_io = raid_end_io,
+>>>    	.status = raid_status,
+>>>    	.message = raid_message,
+>>>    	.iterate_devices = raid_iterate_devices,
+>>> =========================================================
+>>>>
+>>>>
+>>>>>     md: export helpers to stop sync_thread
+>>>>>     md: export helper md_is_rdwr()
+>>>>>     dm-raid: really frozen sync_thread during suspend
+>>>>>     md/dm-raid: don't call md_reap_sync_thread() directly
+>>>>>     dm-raid: add a new helper prepare_suspend() in md_personality
+>>>>>     md/raid456: fix a deadlock for dm-raid456 while io concurrent with
+>>>>>       reshape
+>>>>>     dm-raid: fix lockdep waring in "pers->hot_add_disk"
+>>>>>     dm-raid: remove mddev_suspend/resume()
+>>>>>
+>>>>>    drivers/md/dm-raid.c |  78 +++++++++++++++++++--------
+>>>>>    drivers/md/md.c      | 126 +++++++++++++++++++++++++++++--------------
+>>>>>    drivers/md/md.h      |  16 ++++++
+>>>>>    drivers/md/raid10.c  |  16 +-----
+>>>>>    drivers/md/raid5.c   |  61 +++++++++++----------
+>>>>>    5 files changed, 192 insertions(+), 105 deletions(-)
+>>>>>
+>>>>> --
+>>>>> 2.39.2
+>>>>>
+>>>>>
+>>>
+>>> .
+>>>
+> 
+> .
+> 
 
