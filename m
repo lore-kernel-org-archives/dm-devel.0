@@ -1,238 +1,105 @@
-Received: from skyblue.cherry.relay.mailchannels.net (skyblue.cherry.relay.mailchannels.net [23.83.223.167])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f51.google.com (mail-ej1-f51.google.com [209.85.218.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E39A74E0C
-	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 17:35:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=23.83.223.167
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708450530; cv=pass; b=EbSYYygKXm4kZ6p96yz0KqSDVkhbY39a00Qp1UDsr3fA/f+eW/CBdHCiQYwkQbWy7d4v5j89re7Ln5+wdO5b1nSA0/E7l3z9H8sb5zQoQ2albuAqSvrSE4EBH+7q3gznmlN05mILKvfAqWwC5GZtZbrDV+huTQesly1rjDNXMR0=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708450530; c=relaxed/simple;
-	bh=dwqFzFtF67bmHYRFe9jtxHDVVpBai0q7JDsGwgGIvXA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=c9s/COrQYG9UnqJmNHK1d3FzQ5mpWSMCpDssa+CClxLgIi3Sn7TAauGmUnHrjwWr8ZBJEPG6VtkK5zgl/+1cbifzZIcC22jPeIUyqejD6nSQ8iIe9Zg1jva7m33CjMuMDv9mmhUnajcVyFx7uPMMgMOoV4ZYAa6MOWM6fUgXA8M=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=stgolabs.net; spf=pass smtp.mailfrom=stgolabs.net; dkim=pass (2048-bit key) header.d=stgolabs.net header.i=@stgolabs.net header.b=LCJcHreW; arc=pass smtp.client-ip=23.83.223.167
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=stgolabs.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stgolabs.net
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78EE177621
+	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 17:55:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.51
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1708451751; cv=none; b=nB27wm2AO1zwWRmCXt3eJw2L3uWvBistsDaKL8xjlsJKlLO6BY/6CGcLa3f/5erYBF/SEpHMPMWeW/VZ7DSgogQS8VZVhKmj+xMLGRy37DngpmSfz1gQ9794uFxvLsPVTTGeI6zKoYLtkH31BjLloSsFh6XGhCfIINeXW/YDYzA=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1708451751; c=relaxed/simple;
+	bh=hqb1KpK8idTkVHw05D9DaOecFdA77V8n0hYYGqZ4o2Y=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Content-Type; b=qsUQN1CTyB76sfwuVnsClpyfwuq3bxvBdZAu2LMlbLLv1lH8sO7+je3eXjw3R3syBl502OcfdeRJhThz+IHbaJMagjB58082FMOl8caPHyXQ+4v3CWSFGcg8pR0yBOckCJl+zGqTv8YSETXlJqyiQD5YWmI0CCL2pTl0fvJYPY4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=CC3VJNLF; arc=none smtp.client-ip=209.85.218.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=stgolabs.net header.i=@stgolabs.net header.b="LCJcHreW"
-X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
-Received: from relay.mailchannels.net (localhost [127.0.0.1])
-	by relay.mailchannels.net (Postfix) with ESMTP id EE593101C9F;
-	Tue, 20 Feb 2024 17:25:46 +0000 (UTC)
-Received: from pdx1-sub0-mail-a278.dreamhost.com (unknown [127.0.0.6])
-	(Authenticated sender: dreamhost)
-	by relay.mailchannels.net (Postfix) with ESMTPA id 16D1F1017D8;
-	Tue, 20 Feb 2024 17:25:46 +0000 (UTC)
-ARC-Seal: i=1; s=arc-2022; d=mailchannels.net; t=1708449946; a=rsa-sha256;
-	cv=none;
-	b=uFe0KtnQTNcohrldk3TsLrZze9jjJapsfc7cERSpDdANNiIXo7KhsZXWLBLX9iabTuK98i
-	7THSEXCa1OzhjtZ44i+nuDPeLKibyxmNpjY/0ZLTT6jqjouQHumaLHLDdAVzZyeyNU5DHj
-	rcJUaRTC/u8s1i2T8eGBpHRgW7YSZVFqwVHgUsKjY+0XEvZzUd8fOsvvrFTtp+UyJZHpTe
-	SpaRAW05PkrMidQtaBQ6++L+6mJgoAvlkw3/Rd6PqC5Hq0eEqu3Vxg2YY1YzuonCsZ9hkZ
-	w6yKQ5ZL7Cxi1081S40duwxoXRG0Kn8YxOcofaoVS+BHK9HP07FrMPE2d4EcGg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
- d=mailchannels.net;
-	s=arc-2022; t=1708449946;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references:dkim-signature;
-	bh=QzN7EVnZPsjMJ5YLCF9u7H6lIgeQ/8GdiwxTEbneVZE=;
-	b=4iPejISHCraxmp9j7OIq12cswL/0fAVnjKKNrTYMnH+z/SKDCTSKE1ezYZQV0czZpULyhw
-	P0p0uVfw2GbSqA/WBAxiXtqXYdPLO2qw/FlZUKZJaU9XcqdCzBN8mZ63B1p1ChOViQc5pA
-	64A87EVijTYfR+/sl41y2ibevWLoQxfjY8bYPAPLgEnfj+iQl3W/l4uvKmciKMYaDK7+u5
-	EDxt499O2fE2L5vHVibDMBuYR5r+yQwj3LhKbnG0Vkq5gM3mOpoXdFQd1Z+tldeOHIUSD9
-	vuCFNU8EcwcGi4daOTaCw2NmHbv0yu7w2CbgqLENnXUF7wRJFClW8u/BG+OXKQ==
-ARC-Authentication-Results: i=1;
-	rspamd-55b4bfd7cb-5kjb7;
-	auth=pass smtp.auth=dreamhost smtp.mailfrom=dave@stgolabs.net
-X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
-X-MC-Relay: Neutral
-X-MailChannels-SenderId: dreamhost|x-authsender|dave@stgolabs.net
-X-MailChannels-Auth-Id: dreamhost
-X-Bored-Bored: 4c241a466fe9111b_1708449946834_2238152251
-X-MC-Loop-Signature: 1708449946834:2999301632
-X-MC-Ingress-Time: 1708449946834
-Received: from pdx1-sub0-mail-a278.dreamhost.com (pop.dreamhost.com
- [64.90.62.162])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
-	by 100.108.238.155 (trex/6.9.2);
-	Tue, 20 Feb 2024 17:25:46 +0000
-Received: from offworld (ip72-199-50-187.sd.sd.cox.net [72.199.50.187])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: dave@stgolabs.net)
-	by pdx1-sub0-mail-a278.dreamhost.com (Postfix) with ESMTPSA id 4TfRBc0N57z3M;
-	Tue, 20 Feb 2024 09:25:43 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=stgolabs.net;
-	s=dreamhost; t=1708449945;
-	bh=QzN7EVnZPsjMJ5YLCF9u7H6lIgeQ/8GdiwxTEbneVZE=;
-	h=Date:From:To:Cc:Subject:Content-Type;
-	b=LCJcHreWz34d/c9pRfqoxFZWgNst+zT0EUA1YG9/FERYgaaC3azBl3iejiECE66pY
-	 j88hAXfKyMZRiOEg49791CkFdnnixXaHKb4swQPcgERl5SZwuFidDpof3ROOAFxSo2
-	 93ww1byZYHE5WQz2yjnG2LtRjHxGGdy3fcTwxm32DIxs9rF2HKJF0DMHQ1kx4N0mDL
-	 rSEhNa1oAdZJUs5nwacM84pa+MlVxaD/XTIl5LI+Hhw+Jvzn1vVrpifdICm3P5p8L9
-	 LcioJjNeNmQgfEcQWBE7yM+5+o7OSt3znCIU9hgg1aRuQzI0r1OzSrRRtV3a2UM4nH
-	 T3AuYAFzxWpng==
-Date: Tue, 20 Feb 2024 09:25:40 -0800
-From: Davidlohr Bueso <dave@stgolabs.net>
-To: Tejun Heo <tj@kernel.org>
-Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
-	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, houtao1@huawei.com, 
-	peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com, 
-	kernel-team@meta.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, 
-	Alan Stern <stern@rowland.harvard.edu>, linux-usb@vger.kernel.org, mchehab@kernel.org
-Subject: Re: [PATCH 5/8] usb: core: hcd: Convert from tasklet to BH workqueue
-Message-ID: <bckroyio6l2nt54refuord4pm6mqylt3adx6z2bg6iczxkbnyk@bb5447rqahj5>
-Mail-Followup-To: Tejun Heo <tj@kernel.org>, torvalds@linux-foundation.org, 
-	mpatocka@redhat.com, linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
-	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
-	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org, 
-	allen.lkml@gmail.com, kernel-team@meta.com, 
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alan Stern <stern@rowland.harvard.edu>, 
-	linux-usb@vger.kernel.org, mchehab@kernel.org
-References: <20240130091300.2968534-1-tj@kernel.org>
- <20240130091300.2968534-6-tj@kernel.org>
+	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="CC3VJNLF"
+Received: by mail-ej1-f51.google.com with SMTP id a640c23a62f3a-a36126ee41eso763748466b.2
+        for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 09:55:49 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linux-foundation.org; s=google; t=1708451747; x=1709056547; darn=lists.linux.dev;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=cs7a6JxSri8UPMBfIFAC6zzBgd9E4B30piovcQly+DY=;
+        b=CC3VJNLFf0Re1k+Bx8oPg2czuiCr2p284evecJrT5TUUcB1dpRMum4QbHkL1z4g+Gn
+         Yzy4lLvLQKJzudW0y2QX7sMJ6orMgzHF7b6ziKckPfWDeg3VVNK+UPiA4vfuUxj6z12z
+         ZzsSIS66J7d4AOr1OWBOVhJU0hxUBFVQxZrVs=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1708451747; x=1709056547;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=cs7a6JxSri8UPMBfIFAC6zzBgd9E4B30piovcQly+DY=;
+        b=tcldkM6cPnVvAqdPx6VGeIvfhiVIiktTSi47v6zHkWtQepjQZ4bwTiq6b4S/muHNVo
+         hycHkO5hNmO5/2HebH4UdmoKpBriGoyjVbBQa5V/F4/zsbv9oLfRe1DI7KiA08Vm4IIe
+         +Je6ZafqWlsY1svIAVBdZGlftVWH0XmSlwb2n4ZQRTrHwI16MRj0QwhAxZ+e1bLOC/OY
+         OZzJ1hHZHb4yonYZtoPoJelbsoDjMF/GoxChQAmqwknMnvTpQ/kgMcLy05FBLFa5+Oy0
+         oKw3ZLK123CZJ7nRv2FT6IZ+2Rf05oViUrKyo3DJMfP4d/niaHlHPAA30u11gsLkoK2w
+         Cjow==
+X-Forwarded-Encrypted: i=1; AJvYcCXvoDDCZvOjokR8k1hw+zS3zMRLTYeVnn0eLkKrXTe7LHUbTKq2hsDEY+MBGQVz3lgLhKCxB2GJ7OTLSf2UsQRdqghOLJuEf0U=
+X-Gm-Message-State: AOJu0YzUgt2xIfti7Qr43c1XIeEPepT37NbF74wJJMWlWxatYjeuK0Lk
+	eIGzWo4XC6rKEhuDRCv9iew46GEXwYNLJPyqyQBSfVv2oFaSFC/Fr6ZlhZB+M2BrOiyYAOfLNOX
+	zCjLYwQ==
+X-Google-Smtp-Source: AGHT+IGD+7B3yF/n5iul/YxM8QjOd01e3saNAJ7+tDmMf+o4N/ZIZH5dOHkC11IROfG5rzuCcrJR0Q==
+X-Received: by 2002:a17:906:354a:b0:a3f:2597:f90b with SMTP id s10-20020a170906354a00b00a3f2597f90bmr328945eja.9.1708451747684;
+        Tue, 20 Feb 2024 09:55:47 -0800 (PST)
+Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com. [209.85.208.46])
+        by smtp.gmail.com with ESMTPSA id tj9-20020a170907c24900b00a3ca56e9bcfsm4182063ejc.187.2024.02.20.09.55.46
+        for <dm-devel@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 20 Feb 2024 09:55:46 -0800 (PST)
+Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-563c0f13cabso7132777a12.3
+        for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 09:55:46 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCV5pWa0OOpqQnQmYWQRz/V7b5rl9bo5qrrZ4T0d+7Lul5Ao2GbSE9Fgnkxwxsdb1Xm5lciA2QzkI4WS8N8O7zFBOmgGIDhpUuI=
+X-Received: by 2002:aa7:d393:0:b0:564:3d68:55f5 with SMTP id
+ x19-20020aa7d393000000b005643d6855f5mr5518556edq.5.1708451746591; Tue, 20 Feb
+ 2024 09:55:46 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Disposition: inline
-In-Reply-To: <20240130091300.2968534-6-tj@kernel.org>
-User-Agent: NeoMutt/20231221
+References: <20240130091300.2968534-1-tj@kernel.org> <20240130091300.2968534-6-tj@kernel.org>
+ <bckroyio6l2nt54refuord4pm6mqylt3adx6z2bg6iczxkbnyk@bb5447rqahj5>
+In-Reply-To: <bckroyio6l2nt54refuord4pm6mqylt3adx6z2bg6iczxkbnyk@bb5447rqahj5>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Tue, 20 Feb 2024 09:55:30 -0800
+X-Gmail-Original-Message-ID: <CAHk-=whqae-+7Q7wbtnEj7YmR8vsx6skTj6j-srV2Fz7cBZ2ag@mail.gmail.com>
+Message-ID: <CAHk-=whqae-+7Q7wbtnEj7YmR8vsx6skTj6j-srV2Fz7cBZ2ag@mail.gmail.com>
+Subject: Re: [PATCH 5/8] usb: core: hcd: Convert from tasklet to BH workqueue
+To: Tejun Heo <tj@kernel.org>, torvalds@linux-foundation.org, mpatocka@redhat.com, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
+	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
+	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, 
+	netdev@vger.kernel.org, allen.lkml@gmail.com, kernel-team@meta.com, 
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alan Stern <stern@rowland.harvard.edu>, 
+	linux-usb@vger.kernel.org, mchehab@kernel.org
+Content-Type: text/plain; charset="UTF-8"
 
-On Mon, 29 Jan 2024, Tejun Heo wrote:
+On Tue, 20 Feb 2024 at 09:25, Davidlohr Bueso <dave@stgolabs.net> wrote:
+>
+> In the past this tasklet removal was held up by Mauro's device not properly
+> streaming - hopefully this no longer the case. Cc'ing.
+>
+> https://lore.kernel.org/all/20180216170450.yl5owfphuvltstnt@breakpoint.cc/
 
->The only generic interface to execute asynchronously in the BH context is
->tasklet; however, it's marked deprecated and has some design flaws. To
->replace tasklets, BH workqueue support was recently added. A BH workqueue
->behaves similarly to regular workqueues except that the queued work items
->are executed in the BH context.
->
->This patch converts usb hcd from tasklet to BH workqueue.
+Oh, lovely - an actual use-case where the old tasklet code has known
+requirements.
 
-In the past this tasklet removal was held up by Mauro's device not properly
-streaming - hopefully this no longer the case. Cc'ing.
+Mauro - the BH workqueue should provide the same kind of latency as
+the tasklets, and it would be good to validate early that yes, this
+workqueue conversion works well in practice. Since you have an actual
+real-life test-case, could you give it a try?
 
-https://lore.kernel.org/all/20180216170450.yl5owfphuvltstnt@breakpoint.cc/
+You can find the work in
 
->
->Signed-off-by: Tejun Heo <tj@kernel.org>
->Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
->Cc: Alan Stern <stern@rowland.harvard.edu>
->Cc: linux-usb@vger.kernel.org
+   git://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git
+refs/heads/for-6.9-bh-conversions
 
-Acked-by: Davidlohr Bueso <dave@stgolabs.net>
+although it's possible that Tejun has a newer version in some other
+branch. Tejun - maybe point Mauro at something he can try out if you
+have updated the conversion since?
 
->---
-> drivers/usb/core/hcd.c  | 23 ++++++++++++-----------
-> include/linux/usb/hcd.h |  2 +-
-> 2 files changed, 13 insertions(+), 12 deletions(-)
->
->diff --git a/drivers/usb/core/hcd.c b/drivers/usb/core/hcd.c
->index 12b6dfeaf658..edf74458474a 100644
->--- a/drivers/usb/core/hcd.c
->+++ b/drivers/usb/core/hcd.c
->@@ -1664,9 +1664,10 @@ static void __usb_hcd_giveback_urb(struct urb *urb)
->	usb_put_urb(urb);
-> }
->
->-static void usb_giveback_urb_bh(struct tasklet_struct *t)
->+static void usb_giveback_urb_bh(struct work_struct *work)
-> {
->-	struct giveback_urb_bh *bh = from_tasklet(bh, t, bh);
->+	struct giveback_urb_bh *bh =
->+		container_of(work, struct giveback_urb_bh, bh);
->	struct list_head local_list;
->
->	spin_lock_irq(&bh->lock);
->@@ -1691,9 +1692,9 @@ static void usb_giveback_urb_bh(struct tasklet_struct *t)
->	spin_lock_irq(&bh->lock);
->	if (!list_empty(&bh->head)) {
->		if (bh->high_prio)
->-			tasklet_hi_schedule(&bh->bh);
->+			queue_work(system_bh_highpri_wq, &bh->bh);
->		else
->-			tasklet_schedule(&bh->bh);
->+			queue_work(system_bh_wq, &bh->bh);
->	}
->	bh->running = false;
->	spin_unlock_irq(&bh->lock);
->@@ -1706,7 +1707,7 @@ static void usb_giveback_urb_bh(struct tasklet_struct *t)
->  * @status: completion status code for the URB.
->  *
->  * Context: atomic. The completion callback is invoked in caller's context.
->- * For HCDs with HCD_BH flag set, the completion callback is invoked in tasklet
->+ * For HCDs with HCD_BH flag set, the completion callback is invoked in BH
->  * context (except for URBs submitted to the root hub which always complete in
->  * caller's context).
->  *
->@@ -1725,7 +1726,7 @@ void usb_hcd_giveback_urb(struct usb_hcd *hcd, struct urb *urb, int status)
->	struct giveback_urb_bh *bh;
->	bool running;
->
->-	/* pass status to tasklet via unlinked */
->+	/* pass status to BH via unlinked */
->	if (likely(!urb->unlinked))
->		urb->unlinked = status;
->
->@@ -1747,9 +1748,9 @@ void usb_hcd_giveback_urb(struct usb_hcd *hcd, struct urb *urb, int status)
->	if (running)
->		;
->	else if (bh->high_prio)
->-		tasklet_hi_schedule(&bh->bh);
->+		queue_work(system_bh_highpri_wq, &bh->bh);
->	else
->-		tasklet_schedule(&bh->bh);
->+		queue_work(system_bh_wq, &bh->bh);
-> }
-> EXPORT_SYMBOL_GPL(usb_hcd_giveback_urb);
->
->@@ -2540,7 +2541,7 @@ static void init_giveback_urb_bh(struct giveback_urb_bh *bh)
->
->	spin_lock_init(&bh->lock);
->	INIT_LIST_HEAD(&bh->head);
->-	tasklet_setup(&bh->bh, usb_giveback_urb_bh);
->+	INIT_WORK(&bh->bh, usb_giveback_urb_bh);
-> }
->
-> struct usb_hcd *__usb_create_hcd(const struct hc_driver *driver,
->@@ -2926,7 +2927,7 @@ int usb_add_hcd(struct usb_hcd *hcd,
->			&& device_can_wakeup(&hcd->self.root_hub->dev))
->		dev_dbg(hcd->self.controller, "supports USB remote wakeup\n");
->
->-	/* initialize tasklets */
->+	/* initialize BHs */
->	init_giveback_urb_bh(&hcd->high_prio_bh);
->	hcd->high_prio_bh.high_prio = true;
->	init_giveback_urb_bh(&hcd->low_prio_bh);
->@@ -3036,7 +3037,7 @@ void usb_remove_hcd(struct usb_hcd *hcd)
->	mutex_unlock(&usb_bus_idr_lock);
->
->	/*
->-	 * tasklet_kill() isn't needed here because:
->+	 * flush_work() isn't needed here because:
->	 * - driver's disconnect() called from usb_disconnect() should
->	 *   make sure its URBs are completed during the disconnect()
->	 *   callback
->diff --git a/include/linux/usb/hcd.h b/include/linux/usb/hcd.h
->index 00724b4f6e12..f698aac71de3 100644
->--- a/include/linux/usb/hcd.h
->+++ b/include/linux/usb/hcd.h
->@@ -55,7 +55,7 @@ struct giveback_urb_bh {
->	bool high_prio;
->	spinlock_t lock;
->	struct list_head  head;
->-	struct tasklet_struct bh;
->+	struct work_struct bh;
->	struct usb_host_endpoint *completing_ep;
-> };
->
->--
->2.43.0
->
+                Linus
