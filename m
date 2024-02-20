@@ -1,146 +1,238 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from skyblue.cherry.relay.mailchannels.net (skyblue.cherry.relay.mailchannels.net [23.83.223.167])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A613762D3
-	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 15:31:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708443090; cv=none; b=Gvr+tMJ3vPDItuKPQYtWIBaqrnIYQVzPpXegnM14R+K+Ic5GfIXfG6m067Adyl+6iMcG9jyuOWY4gQY/2rRqR/Dpm6/l8+25ZAnmaJU22HpZBZnZKZsEom+3lUO+tOB9+JrX3VyOQwOor5u6oRGoSHB346vmipCLBJEFFFTowZc=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708443090; c=relaxed/simple;
-	bh=YQgRhjJnmOdq6hzxnwElyN0M+rhLrw16jErkKXYFXnw=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=jcmpQzDSYPdi18rgf+BpZw6VvlKf35e+GztfwA37bXq1OeoHrnsVRu1nuLKOtO6pf7J4M9sJcdX+G/zGJW7/rbkbbmd1TXXQgXi6At+gZOksbfjJQUBQgsQNhdUeYhif62ahdQmGomAgKam64qw3MqoWihNFu1Qg3VXR62xukzc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TBNIJOwZ; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E39A74E0C
+	for <dm-devel@lists.linux.dev>; Tue, 20 Feb 2024 17:35:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=23.83.223.167
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1708450530; cv=pass; b=EbSYYygKXm4kZ6p96yz0KqSDVkhbY39a00Qp1UDsr3fA/f+eW/CBdHCiQYwkQbWy7d4v5j89re7Ln5+wdO5b1nSA0/E7l3z9H8sb5zQoQ2albuAqSvrSE4EBH+7q3gznmlN05mILKvfAqWwC5GZtZbrDV+huTQesly1rjDNXMR0=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1708450530; c=relaxed/simple;
+	bh=dwqFzFtF67bmHYRFe9jtxHDVVpBai0q7JDsGwgGIvXA=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=c9s/COrQYG9UnqJmNHK1d3FzQ5mpWSMCpDssa+CClxLgIi3Sn7TAauGmUnHrjwWr8ZBJEPG6VtkK5zgl/+1cbifzZIcC22jPeIUyqejD6nSQ8iIe9Zg1jva7m33CjMuMDv9mmhUnajcVyFx7uPMMgMOoV4ZYAa6MOWM6fUgXA8M=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=stgolabs.net; spf=pass smtp.mailfrom=stgolabs.net; dkim=pass (2048-bit key) header.d=stgolabs.net header.i=@stgolabs.net header.b=LCJcHreW; arc=pass smtp.client-ip=23.83.223.167
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=stgolabs.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stgolabs.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TBNIJOwZ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708443087;
+	dkim=pass (2048-bit key) header.d=stgolabs.net header.i=@stgolabs.net header.b="LCJcHreW"
+X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
+Received: from relay.mailchannels.net (localhost [127.0.0.1])
+	by relay.mailchannels.net (Postfix) with ESMTP id EE593101C9F;
+	Tue, 20 Feb 2024 17:25:46 +0000 (UTC)
+Received: from pdx1-sub0-mail-a278.dreamhost.com (unknown [127.0.0.6])
+	(Authenticated sender: dreamhost)
+	by relay.mailchannels.net (Postfix) with ESMTPA id 16D1F1017D8;
+	Tue, 20 Feb 2024 17:25:46 +0000 (UTC)
+ARC-Seal: i=1; s=arc-2022; d=mailchannels.net; t=1708449946; a=rsa-sha256;
+	cv=none;
+	b=uFe0KtnQTNcohrldk3TsLrZze9jjJapsfc7cERSpDdANNiIXo7KhsZXWLBLX9iabTuK98i
+	7THSEXCa1OzhjtZ44i+nuDPeLKibyxmNpjY/0ZLTT6jqjouQHumaLHLDdAVzZyeyNU5DHj
+	rcJUaRTC/u8s1i2T8eGBpHRgW7YSZVFqwVHgUsKjY+0XEvZzUd8fOsvvrFTtp+UyJZHpTe
+	SpaRAW05PkrMidQtaBQ6++L+6mJgoAvlkw3/Rd6PqC5Hq0eEqu3Vxg2YY1YzuonCsZ9hkZ
+	w6yKQ5ZL7Cxi1081S40duwxoXRG0Kn8YxOcofaoVS+BHK9HP07FrMPE2d4EcGg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=mailchannels.net;
+	s=arc-2022; t=1708449946;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=3O/l03CW7RpLup6cJbwXZ5GvVgqZNdwKAG705VYtdgA=;
-	b=TBNIJOwZsIyoJSOuGNmK+eDNTdVoJN6/WM6TO31F9GyDi0m6qtis2OVGDtB5H1hDCFwgIf
-	whb8VViBf/9o/4kgP7/+rudP1syzvf8s8A9PXlxiPC91PDlYOPLQBR3WMTyi7hXWv5hH+E
-	LmltCAwBYri4VHR3kSNB7oWuCBfhuAY=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-54-4YJFml8aPvaP5-_Lkmn2GA-1; Tue,
- 20 Feb 2024 10:31:23 -0500
-X-MC-Unique: 4YJFml8aPvaP5-_Lkmn2GA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references:dkim-signature;
+	bh=QzN7EVnZPsjMJ5YLCF9u7H6lIgeQ/8GdiwxTEbneVZE=;
+	b=4iPejISHCraxmp9j7OIq12cswL/0fAVnjKKNrTYMnH+z/SKDCTSKE1ezYZQV0czZpULyhw
+	P0p0uVfw2GbSqA/WBAxiXtqXYdPLO2qw/FlZUKZJaU9XcqdCzBN8mZ63B1p1ChOViQc5pA
+	64A87EVijTYfR+/sl41y2ibevWLoQxfjY8bYPAPLgEnfj+iQl3W/l4uvKmciKMYaDK7+u5
+	EDxt499O2fE2L5vHVibDMBuYR5r+yQwj3LhKbnG0Vkq5gM3mOpoXdFQd1Z+tldeOHIUSD9
+	vuCFNU8EcwcGi4daOTaCw2NmHbv0yu7w2CbgqLENnXUF7wRJFClW8u/BG+OXKQ==
+ARC-Authentication-Results: i=1;
+	rspamd-55b4bfd7cb-5kjb7;
+	auth=pass smtp.auth=dreamhost smtp.mailfrom=dave@stgolabs.net
+X-Sender-Id: dreamhost|x-authsender|dave@stgolabs.net
+X-MC-Relay: Neutral
+X-MailChannels-SenderId: dreamhost|x-authsender|dave@stgolabs.net
+X-MailChannels-Auth-Id: dreamhost
+X-Bored-Bored: 4c241a466fe9111b_1708449946834_2238152251
+X-MC-Loop-Signature: 1708449946834:2999301632
+X-MC-Ingress-Time: 1708449946834
+Received: from pdx1-sub0-mail-a278.dreamhost.com (pop.dreamhost.com
+ [64.90.62.162])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
+	by 100.108.238.155 (trex/6.9.2);
+	Tue, 20 Feb 2024 17:25:46 +0000
+Received: from offworld (ip72-199-50-187.sd.sd.cox.net [72.199.50.187])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EB2803816448;
-	Tue, 20 Feb 2024 15:31:22 +0000 (UTC)
-Received: from localhost.localdomain (unknown [10.72.120.2])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2681D20229A4;
-	Tue, 20 Feb 2024 15:31:18 +0000 (UTC)
-From: Xiao Ni <xni@redhat.com>
-To: song@kernel.org
-Cc: yukuai1@huaweicloud.com,
-	bmarzins@redhat.com,
-	heinzm@redhat.com,
-	snitzer@kernel.org,
-	ncroxon@redhat.com,
-	neilb@suse.de,
-	linux-raid@vger.kernel.org,
-	dm-devel@lists.linux.dev
-Subject: [PATCH RFC V2 4/4] md/raid5: Don't check crossing reshape when reshape hasn't started
-Date: Tue, 20 Feb 2024 23:30:59 +0800
-Message-Id: <20240220153059.11233-5-xni@redhat.com>
-In-Reply-To: <20240220153059.11233-1-xni@redhat.com>
-References: <20240220153059.11233-1-xni@redhat.com>
+	(Authenticated sender: dave@stgolabs.net)
+	by pdx1-sub0-mail-a278.dreamhost.com (Postfix) with ESMTPSA id 4TfRBc0N57z3M;
+	Tue, 20 Feb 2024 09:25:43 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=stgolabs.net;
+	s=dreamhost; t=1708449945;
+	bh=QzN7EVnZPsjMJ5YLCF9u7H6lIgeQ/8GdiwxTEbneVZE=;
+	h=Date:From:To:Cc:Subject:Content-Type;
+	b=LCJcHreWz34d/c9pRfqoxFZWgNst+zT0EUA1YG9/FERYgaaC3azBl3iejiECE66pY
+	 j88hAXfKyMZRiOEg49791CkFdnnixXaHKb4swQPcgERl5SZwuFidDpof3ROOAFxSo2
+	 93ww1byZYHE5WQz2yjnG2LtRjHxGGdy3fcTwxm32DIxs9rF2HKJF0DMHQ1kx4N0mDL
+	 rSEhNa1oAdZJUs5nwacM84pa+MlVxaD/XTIl5LI+Hhw+Jvzn1vVrpifdICm3P5p8L9
+	 LcioJjNeNmQgfEcQWBE7yM+5+o7OSt3znCIU9hgg1aRuQzI0r1OzSrRRtV3a2UM4nH
+	 T3AuYAFzxWpng==
+Date: Tue, 20 Feb 2024 09:25:40 -0800
+From: Davidlohr Bueso <dave@stgolabs.net>
+To: Tejun Heo <tj@kernel.org>
+Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
+	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, houtao1@huawei.com, 
+	peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org, allen.lkml@gmail.com, 
+	kernel-team@meta.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, 
+	Alan Stern <stern@rowland.harvard.edu>, linux-usb@vger.kernel.org, mchehab@kernel.org
+Subject: Re: [PATCH 5/8] usb: core: hcd: Convert from tasklet to BH workqueue
+Message-ID: <bckroyio6l2nt54refuord4pm6mqylt3adx6z2bg6iczxkbnyk@bb5447rqahj5>
+Mail-Followup-To: Tejun Heo <tj@kernel.org>, torvalds@linux-foundation.org, 
+	mpatocka@redhat.com, linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
+	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org, 
+	allen.lkml@gmail.com, kernel-team@meta.com, 
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alan Stern <stern@rowland.harvard.edu>, 
+	linux-usb@vger.kernel.org, mchehab@kernel.org
+References: <20240130091300.2968534-1-tj@kernel.org>
+ <20240130091300.2968534-6-tj@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Disposition: inline
+In-Reply-To: <20240130091300.2968534-6-tj@kernel.org>
+User-Agent: NeoMutt/20231221
 
-stripe_ahead_of_reshape is used to check if a stripe region cross the
-reshape position. So first, change the function name to
-stripe_across_reshape to describe the usage of this function.
+On Mon, 29 Jan 2024, Tejun Heo wrote:
 
-For reshape backwards, it starts reshape from the end of array and conf->
-reshape_progress is init to raid5_size. During reshape, if previous is true
-(set in make_stripe_request) and max_sector >= conf->reshape_progress, ios
-should wait until reshape window moves forward. But ios don't need to wait
-if max_sector is raid5_size.
+>The only generic interface to execute asynchronously in the BH context is
+>tasklet; however, it's marked deprecated and has some design flaws. To
+>replace tasklets, BH workqueue support was recently added. A BH workqueue
+>behaves similarly to regular workqueues except that the queued work items
+>are executed in the BH context.
+>
+>This patch converts usb hcd from tasklet to BH workqueue.
 
-And put the conditions into the function directly to make understand the
-codes easily.
+In the past this tasklet removal was held up by Mauro's device not properly
+streaming - hopefully this no longer the case. Cc'ing.
 
-This can be reproduced easily by lvm2 test shell/lvconvert-raid-reshape.sh
-For dm raid reshape, before starting sync thread, it needs to reload table
-some times. In one time dm raid uses MD_RECOVERY_WAIT to delay reshape and
-it doesn't start sync thread this time. Then one io comes in and it waits
-because stripe_ahead_of_reshape returns true because it's a backward
-reshape and max_sectors > conf->reshape_progress. But the reshape hasn't
-started. So skip this check when reshape_progress is raid5_size
+https://lore.kernel.org/all/20180216170450.yl5owfphuvltstnt@breakpoint.cc/
 
-Fixes: 486f60558607 ("md/raid5: Check all disks in a stripe_head for reshape progress")
-Signed-off-by: Xiao Ni <xni@redhat.com>
----
- drivers/md/raid5.c | 22 ++++++++++------------
- 1 file changed, 10 insertions(+), 12 deletions(-)
+>
+>Signed-off-by: Tejun Heo <tj@kernel.org>
+>Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+>Cc: Alan Stern <stern@rowland.harvard.edu>
+>Cc: linux-usb@vger.kernel.org
 
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 8497880135ee..4c71df4e2370 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -5832,17 +5832,12 @@ static bool ahead_of_reshape(struct mddev *mddev, sector_t sector,
- 					  sector >= reshape_sector;
- }
- 
--static bool range_ahead_of_reshape(struct mddev *mddev, sector_t min,
--				   sector_t max, sector_t reshape_sector)
--{
--	return mddev->reshape_backwards ? max < reshape_sector :
--					  min >= reshape_sector;
--}
--
--static bool stripe_ahead_of_reshape(struct mddev *mddev, struct r5conf *conf,
-+static sector_t raid5_size(struct mddev *mddev, sector_t sectors, int raid_disks);
-+static bool stripe_across_reshape(struct mddev *mddev, struct r5conf *conf,
- 				    struct stripe_head *sh)
- {
- 	sector_t max_sector = 0, min_sector = MaxSector;
-+	sector_t reshape_pos = 0;
- 	bool ret = false;
- 	int dd_idx;
- 
-@@ -5856,9 +5851,12 @@ static bool stripe_ahead_of_reshape(struct mddev *mddev, struct r5conf *conf,
- 
- 	spin_lock_irq(&conf->device_lock);
- 
--	if (!range_ahead_of_reshape(mddev, min_sector, max_sector,
--				     conf->reshape_progress))
--		/* mismatch, need to try again */
-+	reshape_pos = conf->reshape_progress;
-+	if (mddev->reshape_backwards) {
-+		if (max_sector >= reshape_pos &&
-+		    reshape_pos != raid5_size(mddev, 0, 0))
-+			ret = true;
-+	} else if (min_sector < reshape_pos)
- 		ret = true;
- 
- 	spin_unlock_irq(&conf->device_lock);
-@@ -5969,7 +5967,7 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
- 	}
- 
- 	if (unlikely(previous) &&
--	    stripe_ahead_of_reshape(mddev, conf, sh)) {
-+	    stripe_across_reshape(mddev, conf, sh)) {
- 		/*
- 		 * Expansion moved on while waiting for a stripe.
- 		 * Expansion could still move past after this
--- 
-2.32.0 (Apple Git-132)
+Acked-by: Davidlohr Bueso <dave@stgolabs.net>
 
+>---
+> drivers/usb/core/hcd.c  | 23 ++++++++++++-----------
+> include/linux/usb/hcd.h |  2 +-
+> 2 files changed, 13 insertions(+), 12 deletions(-)
+>
+>diff --git a/drivers/usb/core/hcd.c b/drivers/usb/core/hcd.c
+>index 12b6dfeaf658..edf74458474a 100644
+>--- a/drivers/usb/core/hcd.c
+>+++ b/drivers/usb/core/hcd.c
+>@@ -1664,9 +1664,10 @@ static void __usb_hcd_giveback_urb(struct urb *urb)
+>	usb_put_urb(urb);
+> }
+>
+>-static void usb_giveback_urb_bh(struct tasklet_struct *t)
+>+static void usb_giveback_urb_bh(struct work_struct *work)
+> {
+>-	struct giveback_urb_bh *bh = from_tasklet(bh, t, bh);
+>+	struct giveback_urb_bh *bh =
+>+		container_of(work, struct giveback_urb_bh, bh);
+>	struct list_head local_list;
+>
+>	spin_lock_irq(&bh->lock);
+>@@ -1691,9 +1692,9 @@ static void usb_giveback_urb_bh(struct tasklet_struct *t)
+>	spin_lock_irq(&bh->lock);
+>	if (!list_empty(&bh->head)) {
+>		if (bh->high_prio)
+>-			tasklet_hi_schedule(&bh->bh);
+>+			queue_work(system_bh_highpri_wq, &bh->bh);
+>		else
+>-			tasklet_schedule(&bh->bh);
+>+			queue_work(system_bh_wq, &bh->bh);
+>	}
+>	bh->running = false;
+>	spin_unlock_irq(&bh->lock);
+>@@ -1706,7 +1707,7 @@ static void usb_giveback_urb_bh(struct tasklet_struct *t)
+>  * @status: completion status code for the URB.
+>  *
+>  * Context: atomic. The completion callback is invoked in caller's context.
+>- * For HCDs with HCD_BH flag set, the completion callback is invoked in tasklet
+>+ * For HCDs with HCD_BH flag set, the completion callback is invoked in BH
+>  * context (except for URBs submitted to the root hub which always complete in
+>  * caller's context).
+>  *
+>@@ -1725,7 +1726,7 @@ void usb_hcd_giveback_urb(struct usb_hcd *hcd, struct urb *urb, int status)
+>	struct giveback_urb_bh *bh;
+>	bool running;
+>
+>-	/* pass status to tasklet via unlinked */
+>+	/* pass status to BH via unlinked */
+>	if (likely(!urb->unlinked))
+>		urb->unlinked = status;
+>
+>@@ -1747,9 +1748,9 @@ void usb_hcd_giveback_urb(struct usb_hcd *hcd, struct urb *urb, int status)
+>	if (running)
+>		;
+>	else if (bh->high_prio)
+>-		tasklet_hi_schedule(&bh->bh);
+>+		queue_work(system_bh_highpri_wq, &bh->bh);
+>	else
+>-		tasklet_schedule(&bh->bh);
+>+		queue_work(system_bh_wq, &bh->bh);
+> }
+> EXPORT_SYMBOL_GPL(usb_hcd_giveback_urb);
+>
+>@@ -2540,7 +2541,7 @@ static void init_giveback_urb_bh(struct giveback_urb_bh *bh)
+>
+>	spin_lock_init(&bh->lock);
+>	INIT_LIST_HEAD(&bh->head);
+>-	tasklet_setup(&bh->bh, usb_giveback_urb_bh);
+>+	INIT_WORK(&bh->bh, usb_giveback_urb_bh);
+> }
+>
+> struct usb_hcd *__usb_create_hcd(const struct hc_driver *driver,
+>@@ -2926,7 +2927,7 @@ int usb_add_hcd(struct usb_hcd *hcd,
+>			&& device_can_wakeup(&hcd->self.root_hub->dev))
+>		dev_dbg(hcd->self.controller, "supports USB remote wakeup\n");
+>
+>-	/* initialize tasklets */
+>+	/* initialize BHs */
+>	init_giveback_urb_bh(&hcd->high_prio_bh);
+>	hcd->high_prio_bh.high_prio = true;
+>	init_giveback_urb_bh(&hcd->low_prio_bh);
+>@@ -3036,7 +3037,7 @@ void usb_remove_hcd(struct usb_hcd *hcd)
+>	mutex_unlock(&usb_bus_idr_lock);
+>
+>	/*
+>-	 * tasklet_kill() isn't needed here because:
+>+	 * flush_work() isn't needed here because:
+>	 * - driver's disconnect() called from usb_disconnect() should
+>	 *   make sure its URBs are completed during the disconnect()
+>	 *   callback
+>diff --git a/include/linux/usb/hcd.h b/include/linux/usb/hcd.h
+>index 00724b4f6e12..f698aac71de3 100644
+>--- a/include/linux/usb/hcd.h
+>+++ b/include/linux/usb/hcd.h
+>@@ -55,7 +55,7 @@ struct giveback_urb_bh {
+>	bool high_prio;
+>	spinlock_t lock;
+>	struct list_head  head;
+>-	struct tasklet_struct bh;
+>+	struct work_struct bh;
+>	struct usb_host_endpoint *completing_ep;
+> };
+>
+>--
+>2.43.0
+>
