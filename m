@@ -1,54 +1,53 @@
-Received: from mail-qk1-f177.google.com (mail-qk1-f177.google.com [209.85.222.177])
+Received: from mail-oi1-f173.google.com (mail-oi1-f173.google.com [209.85.167.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A69DA12C523
-	for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 17:30:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9963A12EBCD
+	for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 17:36:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708709461; cv=none; b=prQo7NT2Prh3Xv0IA88CXOKC5PtLDXoH1PnrFzNuep6FFpXavQp8k4VlAfhjWyaVMhg/MqfrNWrezKownml/Og0oCD+JEY7S8umMMWlzoex0cnk8OPOYTVmMn9yohcpehEapMOEcb9WfQVjtfowEwAQidZ/KWTRRFsScC6hCScQ=
+	t=1708709815; cv=none; b=FJvkGWcSmelymh9zSWzfoYYF/Tjz/QVxDkgiqX9+u7O2m6d9myQoWonmBEH/ULU7JutNBvmUF0ieZz/7PgletMClh3MTJNz7Ku7dItUZFCxTSukM4Vm4NUuuMpWjSTaq7R+V9icx6AMO4l6ppEePVznlxytpfB/FBwNUo4rJZf4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708709461; c=relaxed/simple;
-	bh=kk9USHa3Igm+4RJya8josHopx6Qb1FmJAPmqrV6cP8Q=;
+	s=arc-20240116; t=1708709815; c=relaxed/simple;
+	bh=SEK03gUgsAHVyBKTF0SeCekKr9R3NEdzFcCnlWlT1bw=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=BfoaO9CIx0h5iiZPUG17BeknV9x5jXBtQ+Vypg5PiBVSew7FPQ8QBhnb1Sce7M72NNeAfyFB1KkIEFPjY3KjnWQkJO4QfFWJSQkopD48cPqNLfyU3j0mKVPER0dXHPnGX/w+AWU0AgK8O0MSAYfTMKPtdHzOfcnV1FYugi61CJY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.177
+	 Content-Type:Content-Disposition:In-Reply-To; b=k0q7CIlSoQ9aewW0gdGyN/hLCfOXhuaCrJwjcRrvwTOqGcW02/AmdUd/j4rkvQEnS8tOeHX4RVX2n5s+eDxz9uvBQiT9ZO7i69shWEx1u0AwR5xo/wTEQg6VhI7kr8jvdbmeyG6FOm42UTbPs5kjJ34CQHMaLpj+GZjEO5Lkyeg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.167.173
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qk1-f177.google.com with SMTP id af79cd13be357-787a2a14d9cso76988985a.2
-        for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 09:30:59 -0800 (PST)
+Received: by mail-oi1-f173.google.com with SMTP id 5614622812f47-3c18190000aso891113b6e.0
+        for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 09:36:52 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708709458; x=1709314258;
+        d=1e100.net; s=20230601; t=1708709812; x=1709314612;
         h=in-reply-to:content-disposition:mime-version:references:message-id
          :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=VVdmESG4PxkwASoqLragfY2GZJ2QdcB8GuhgUXgWRzg=;
-        b=ubtyM4mcfjP1ZLK4TdjpgMYgH0QvANLPxSUoY+XBwb+Yf+BaqBDFlJjCw4RFbM/c09
-         k7BEwR9pUXki2v4ethTbVcdWtRUWBp2Q9chUk3XUG+m+iNmfKnLQ4hPR7LI1boNdgFot
-         SnBIgz/3G7B0uc94SxmdG2FPDKvCuTweriSmojIrqIIosdtTCJj/I6ga9kk4Cj9SzVgR
-         XHdkwsF6oQEW9zYLJFAaM7EwmUpphQoTInBp5OIxvo/xoG+4KMJuMNdZ2GueJZsCu0oR
-         YNB8uPDM5nZFLNDtc21TFvN3KSLc/hHecBMwqI0Zp8rACgRoHVzSAKyrq54Pty808Ccs
-         1wew==
-X-Forwarded-Encrypted: i=1; AJvYcCVWQ3zdy2Kcy+ELeRTHJvnOsiMLYycxU75JtEQ5x+GIgBfWLwQpRs8RNTWme5T//w+2I0u1lHpa5TBjYZG2qUwhLOnt047sdws=
-X-Gm-Message-State: AOJu0Yx3AVWbcK43DBsxyhegt6Tihi+/V2YAOoM+36um6aHdyWrCU2yy
-	VcOsim+KJORB8QfV3Gk4/8xrAzVB1RS6ghzkAM/rAAHpSAt0542bJsaAPoMNDQ==
-X-Google-Smtp-Source: AGHT+IEiN2DRNfZ9o9l6t4npd0H7WRs0vXB44XzHTTVVeoGiXBOzkyqAnD2/8Y1Y40PYCiOWrBICOg==
-X-Received: by 2002:a0c:e113:0:b0:68f:3452:584 with SMTP id w19-20020a0ce113000000b0068f34520584mr377462qvk.59.1708709458689;
-        Fri, 23 Feb 2024 09:30:58 -0800 (PST)
+        bh=LBgb3133dWWVi2hhB7h7NHIAti/ExYEzD/m6pD+d9CI=;
+        b=bwvVg8gUvCkg/9a735LTvek/MZmAQJGGVMVIAX2XJ97TOvsVL52MFbz2aQENjWvMDL
+         YgwJY4Go81pBY7dRlcu5p8SeQpKTthU5AKtFMoEqqmi/OL3mao5+0sTw6V16K9EFUJYn
+         EnVoVSjlx0feLjCFycG2ZJ4bpgtFo81nJAN75YDinv7DOf6IkwsKX59hUellQdu0dwmK
+         OUFkuhSg85zha0UdRjYx0/VTNU9OqA7Y38CbHmU99RfvCqqIvIH0cJN/fwepyOMNTBBM
+         ObugeeT9yCBT/MegFoFymxMOHGU+tucsqVO/3+hfk1tztUjB0j8Z89fYsthFrkKWMdoI
+         gaxg==
+X-Forwarded-Encrypted: i=1; AJvYcCUCMn11Gvg/Qj+8jTc2K1oRkCeUyXDmu/xCC30pjKxRnftc6c+LO8d8asnWbo+4uLhu7sKXFbfPjnd/YfJTHmB1kCr61nWc0Mg=
+X-Gm-Message-State: AOJu0YyBr7KwkUZbuLSV0pZXm76rtxPbPLhBZN5M7RqcKC3zNcKbKfdl
+	FjLH/cLglk7Rc15wAWVxQH1ST94OOYvNtQZx3Z9Nscf0rUxs3GpTWl70nRYnKQ==
+X-Google-Smtp-Source: AGHT+IGbYpIhPAaa+76bZP9NfoGjlH58apihqp1Jeh57mXakscWDl1A1EkXzjkZJgYEtNoSB+kRJHw==
+X-Received: by 2002:a05:6808:15a0:b0:3c1:4b06:7ac2 with SMTP id t32-20020a05680815a000b003c14b067ac2mr637798oiw.12.1708709811740;
+        Fri, 23 Feb 2024 09:36:51 -0800 (PST)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id nw5-20020a0562143a0500b0068d38023e35sm7035400qvb.112.2024.02.23.09.30.58
+        by smtp.gmail.com with ESMTPSA id qj9-20020a056214320900b0068f914ac80bsm4751610qvb.50.2024.02.23.09.36.51
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Feb 2024 09:30:58 -0800 (PST)
-Date: Fri, 23 Feb 2024 12:30:57 -0500
+        Fri, 23 Feb 2024 09:36:51 -0800 (PST)
+Date: Fri, 23 Feb 2024 12:36:50 -0500
 From: Mike Snitzer <snitzer@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
 Cc: Jens Axboe <axboe@kernel.dk>, Mikulas Patocka <mpatocka@redhat.com>,
 	Song Liu <song@kernel.org>, Yu Kuai <yukuai3@huawei.com>,
 	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
 	linux-raid@vger.kernel.org
-Subject: Re: [PATCH 3/9] dm: use queue_limits_set
-Message-ID: <ZdjWUdwrwmPT0mX1@redhat.com>
+Subject: Re: atomic queue limit updates for stackable devices
+Message-ID: <ZdjXsm9jwQlKpM87@redhat.com>
 References: <20240223161247.3998821-1-hch@lst.de>
- <20240223161247.3998821-4-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -57,18 +56,26 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240223161247.3998821-4-hch@lst.de>
+In-Reply-To: <20240223161247.3998821-1-hch@lst.de>
 
 On Fri, Feb 23 2024 at 11:12P -0500,
 Christoph Hellwig <hch@lst.de> wrote:
 
-> Use queue_limits_set which validates the limits and takes care of
-> updating the readahead settings instead of directly assigning them to
-> the queue.  For that make sure all limits are actually updated before
-> the assignment.
+> Hi all,
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> this series adds new helpers for the atomic queue limit update
+> functionality and then switches dm and md over to it.  The dm switch is
+> pretty trivial as it was basically implementing the model by hand
+> already, md is a bit more work.
+> 
+> I've run the mdadm testsuite, and it has the same (rather large) number
+> of failures as the baseline.  I've still not managed to get the dm
+> testuite running unfortunately, but it survives xfstests which exercises
+> quite a few dm targets and blktests.
 
-Looks good,
+Which DM testsuite are you trying?  There is the old ruby-based
+"device-mapper-test-suite", and a newer one written in python which
+should hopefully be less hassle to setup and run, see:
+https://github.com/jthornber/dmtest-python
 
-Reviewed-by: Mike Snitzer <snitzer@kernel.org>
+Mike
