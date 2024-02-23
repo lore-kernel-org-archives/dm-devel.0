@@ -1,35 +1,35 @@
 Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B114823C5;
-	Fri, 23 Feb 2024 16:13:07 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC80F81ACE;
+	Fri, 23 Feb 2024 16:13:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708704788; cv=none; b=gBUI63iYgPVe7UzBpnCE2Gqi1SKPAO42Wjd8NwwZ4VqH9F8+P8PNWeBe43bQM91X7jr3mv/1YCa02aT1e/TvA+TgTB/OlbZ8tAjGoG2whxqmv9hkut8NyeIL6kf0ebHpzxGtPJUf013BzVS/QPBdUIZJNaVZZjiuSLU5DtKFm7I=
+	t=1708704793; cv=none; b=PFYh0fK0z74avMLkiWk6HEiMSL2vajOZfNWt9+vNzsWeI/CnJ/0wJejbSNUCAeK/HD2UUFJgut1SGqLLzAIVKfFBY7ARvvENF8/x04xZU0jV/42kvAcjiOf40huBpWjd60vjB7Ci/MJN2R94ihWm4lSgSDV0hsgrLdhC9QR/q4w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708704788; c=relaxed/simple;
-	bh=CtypFnQPMSf6cTJp+3omQp0mUZrVL+FWefDyt1O5jo0=;
+	s=arc-20240116; t=1708704793; c=relaxed/simple;
+	bh=qpx5ZfsXN/PL+1OUdl1bDP6qACVTtOCO66trsr+igSI=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=BC7/WvsR2IZFb5IbeC1GqSWXZRKG3beJ8hc5OeFZ5VuhlS38quO39OZeYljxUyp09CuG0Ziq+/M/c19D8i6Yo6ylbnOM71U5Ly4ZV6sJ/DcxjrjSs8Csw59H8jV8zxGpVTlq3IZCjHwEZ6FKEAu4TKrIWpZBMft0mwONGk+V6wE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Ztmztu1q; arc=none smtp.client-ip=198.137.202.133
+	 MIME-Version; b=Xa/FDW86GL4AOEt+fhi/gkpCbz2HCtWDwadCOTT0jmjaUFGhDDUlQfg+cvN5ZtkpOcxWeqrrYqjBU1iJMr5xpZTQ2luLTOgMRKFIl9dNKo+6rw7WKA8bwX8qPS/g1qBOjE0FxivrspMBYDyWn4bYRs5vmeIxz59fOoyh41XvlEI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=mCavDDXd; arc=none smtp.client-ip=198.137.202.133
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Ztmztu1q"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="mCavDDXd"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
 	MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
 	:Reply-To:Content-Type:Content-ID:Content-Description;
-	bh=3IGcs6hbpkpzypLQ9cJmuxoia8QbDd1hniPlxwkl9Zc=; b=Ztmztu1qh5UdEsyQQBPgwnBb0Y
-	f4vTMtHjfDEt2xlO6nR6Yrr7tn5wHGKDCCsT2kt6v2VHRT3g4SBsQsJFwtOKTSjkSB+4SM6FzTh3U
-	3L09a3usY9FEdV+2sKeVJzIFfM0lBmWZBhfUp/IVUNk86ssa2zpEcyE0Rd05TANEhRLqv1QNkr+nG
-	98A3wxvJhTJLZjWwIFy1ZS7HjkyiWMweGSei83QQpk8yY976ZHUDSlTWM43AzMFWn8jLr/YO1uzlb
-	F45Epklh5HHoYALdXyTp7WQGB0npYk3gOeu70eYKpA5CE9WRxhdqpxSaXLYCgx1umzbdSB1uLZRry
-	NPWe+84Q==;
+	bh=58hQxzCOBh09HYswQ4p4ZVLnJZqyofksZjan/0dqSg4=; b=mCavDDXdHuHwdJUogbCk//k9SD
+	a81mbbYTtPnTNXdGxP4QVMAJ24LgdaScMzxUzx6kRpqD2DPVg3j+22ODiaiiu4c9izvnnwggB9GMG
+	ttcsXF1e5qWclwqoSw3feMCKSVRc47AubeB4EUkpDrjzWUt9A3pZCs/iESFxaAXSnQ0d9UM2jYm3K
+	fmsuUmgFPIy1T5+VsZcqziB4SwdlqCDEhZNQDetqGJGd1baRQBU3ichLP97/T94SbqszcR74ph8SV
+	iG368x+DZNK/JLsdZyAX0yNayJJxHV6hp7+rSZ+k28F4Mdurz5giR5KJlbVMK5maRrNNjrwxtw8Ro
+	j+Md2EWg==;
 Received: from [2001:4bb8:19a:62b2:c70:4a89:bc61:3] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rdYAb-0000000AAi6-1Zkp;
-	Fri, 23 Feb 2024 16:13:05 +0000
+	id 1rdYAd-0000000AAkD-4BEM;
+	Fri, 23 Feb 2024 16:13:08 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>,
 	Mike Snitzer <snitzer@kernel.org>,
@@ -39,9 +39,9 @@ To: Jens Axboe <axboe@kernel.dk>,
 Cc: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org,
 	linux-raid@vger.kernel.org
-Subject: [PATCH 3/9] dm: use queue_limits_set
-Date: Fri, 23 Feb 2024 17:12:41 +0100
-Message-Id: <20240223161247.3998821-4-hch@lst.de>
+Subject: [PATCH 4/9] md: add queue limit helpers
+Date: Fri, 23 Feb 2024 17:12:42 +0100
+Message-Id: <20240223161247.3998821-5-hch@lst.de>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240223161247.3998821-1-hch@lst.de>
 References: <20240223161247.3998821-1-hch@lst.de>
@@ -54,77 +54,76 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-Use queue_limits_set which validates the limits and takes care of
-updating the readahead settings instead of directly assigning them to
-the queue.  For that make sure all limits are actually updated before
-the assignment.
+Add a few helpers that wrap the block queue limits API for use in MD.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-table.c | 27 ++++++++++++---------------
- 1 file changed, 12 insertions(+), 15 deletions(-)
+ drivers/md/md.c | 37 +++++++++++++++++++++++++++++++++++++
+ drivers/md/md.h |  3 +++
+ 2 files changed, 40 insertions(+)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 41f1d731ae5ac2..88114719fe187a 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1963,26 +1963,27 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	bool wc = false, fua = false;
- 	int r;
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 75266c34b1f99b..23823823f80c6b 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -5699,6 +5699,43 @@ static const struct kobj_type md_ktype = {
  
--	/*
--	 * Copy table's limits to the DM device's request_queue
--	 */
--	q->limits = *limits;
--
- 	if (dm_table_supports_nowait(t))
- 		blk_queue_flag_set(QUEUE_FLAG_NOWAIT, q);
- 	else
- 		blk_queue_flag_clear(QUEUE_FLAG_NOWAIT, q);
+ int mdp_major = 0;
  
- 	if (!dm_table_supports_discards(t)) {
--		q->limits.max_discard_sectors = 0;
--		q->limits.max_hw_discard_sectors = 0;
--		q->limits.discard_granularity = 0;
--		q->limits.discard_alignment = 0;
--		q->limits.discard_misaligned = 0;
-+		limits->max_hw_discard_sectors = 0;
-+		limits->discard_granularity = 0;
-+		limits->discard_alignment = 0;
-+		limits->discard_misaligned = 0;
- 	}
- 
-+	if (!dm_table_supports_write_zeroes(t))
-+		limits->max_write_zeroes_sectors = 0;
++/* stack the limit for all rdevs into lim */
++void mddev_stack_rdev_limits(struct mddev *mddev, struct queue_limits *lim)
++{
++	struct md_rdev *rdev;
 +
- 	if (!dm_table_supports_secure_erase(t))
--		q->limits.max_secure_erase_sectors = 0;
-+		limits->max_secure_erase_sectors = 0;
++	rdev_for_each(rdev, mddev) {
++		queue_limits_stack_bdev(lim, rdev->bdev, rdev->data_offset,
++					mddev->gendisk->disk_name);
++	}
++}
++EXPORT_SYMBOL_GPL(mddev_stack_rdev_limits);
 +
-+	r = queue_limits_set(q, limits);
-+	if (r)
-+		return r;
++/* apply the extra stacking limits from a new rdev into mddev */
++int mddev_stack_new_rdev(struct mddev *mddev, struct md_rdev *rdev)
++{
++	struct queue_limits lim = queue_limits_start_update(mddev->queue);
++
++	queue_limits_stack_bdev(&lim, rdev->bdev, rdev->data_offset,
++				mddev->gendisk->disk_name);
++	return queue_limits_commit_update(mddev->queue, &lim);
++}
++EXPORT_SYMBOL_GPL(mddev_stack_new_rdev);
++
++/* update the optimal I/O size after a reshape */
++void mddev_update_io_opt(struct mddev *mddev, unsigned int nr_stripes)
++{
++	struct queue_limits lim;
++	int ret;
++
++	blk_mq_freeze_queue(mddev->queue);
++	lim = queue_limits_start_update(mddev->queue);
++	lim.io_opt = lim.io_min * nr_stripes;
++	ret = queue_limits_commit_update(mddev->queue, &lim);
++	blk_mq_unfreeze_queue(mddev->queue);
++}
++EXPORT_SYMBOL_GPL(mddev_update_io_opt);
++
+ static void mddev_delayed_delete(struct work_struct *ws)
+ {
+ 	struct mddev *mddev = container_of(ws, struct mddev, del_work);
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 8d881cc597992f..25b19614aa3239 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -860,6 +860,9 @@ void md_autostart_arrays(int part);
+ int md_set_array_info(struct mddev *mddev, struct mdu_array_info_s *info);
+ int md_add_new_disk(struct mddev *mddev, struct mdu_disk_info_s *info);
+ int do_md_run(struct mddev *mddev);
++void mddev_stack_rdev_limits(struct mddev *mddev, struct queue_limits *lim);
++int mddev_stack_new_rdev(struct mddev *mddev, struct md_rdev *rdev);
++void mddev_update_io_opt(struct mddev *mddev, unsigned int nr_stripes);
  
- 	if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) {
- 		wc = true;
-@@ -2007,9 +2008,6 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	else
- 		blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
+ extern const struct block_device_operations md_fops;
  
--	if (!dm_table_supports_write_zeroes(t))
--		q->limits.max_write_zeroes_sectors = 0;
--
- 	dm_table_verify_integrity(t);
- 
- 	/*
-@@ -2047,7 +2045,6 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	}
- 
- 	dm_update_crypto_profile(q, t);
--	disk_update_readahead(t->md->disk);
- 
- 	/*
- 	 * Check for request-based device is left to
 -- 
 2.39.2
 
