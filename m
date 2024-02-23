@@ -1,35 +1,35 @@
 Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E681385638;
-	Fri, 23 Feb 2024 16:13:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FF1284FA1;
+	Fri, 23 Feb 2024 16:13:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708704793; cv=none; b=jNakNND9K/HXs5jLdOzTJoJiwymS6Dn0a1P9OAvtb+fWcqtonQ1Kuag/IRHNZ+7ld4p8CFvvb7bRaD7AX+w+WA+ivslatL/VEs3GrXZNUKWrO2VrkLxQo8wW072kO8rzkH2BC5tXX6NNJIo34pjGuy/p/BHe/pcAf25UIHbUQ0M=
+	t=1708704796; cv=none; b=EnOslIaMbq8usIFPGfB78GnuHpD1sRgD0U5AKGBFxNozC4bVNxN/1jT9xjWGbvrEPd8kRxh+8SDYEBKLf0UbV4Rg/q0DxJfDXrXrjczRQf+bKDLer3g0Qc4QQZU1wR0nkyGkPXt+vQFZ5qo4NZaiidQnGICAhbXlGt2CzXrvp+Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708704793; c=relaxed/simple;
-	bh=zCBk/PqWZLZGFEBjfM2iuYUXRJ2akvHWBPqC0vjBMw0=;
+	s=arc-20240116; t=1708704796; c=relaxed/simple;
+	bh=mKwRPZU/UQcXEo3px/D5v/7XwWRHrzVu9x2yDVPti1U=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=GXf06uPjgxCUUnjoZFF+ucBHzlRv4pgLHgoacAjtcuHUXAY/S2BiEEGXzflgT32OcD2EuyVrHUp1y2w11VDTBZmUHNzc9HLH1Mf5XJDsAZgIsUHE69bWVyX1MxQiKwsprpkgiH7CkhWPsgPUK3wWQSi4Bh8f5FfzzBRXd99BDGk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Z9gFGMjk; arc=none smtp.client-ip=198.137.202.133
+	 MIME-Version; b=UMFxjdPUuyODwzjcHy3CJBe9ycO6e1gryX7QV8Fl3Ggw2Th7ZvbJfFFFyNXpfcXYBHxXZ3DheQPvFK66zEjEcrAjLw8KnMlrEES5rMBTfX8e4LUEQD5rmuGsdwfFGI83NMzsx1OG0UT58rK6X3qMXBu2xdJlwqDnQ9q47sM68e4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=QFnbwKTX; arc=none smtp.client-ip=198.137.202.133
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Z9gFGMjk"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="QFnbwKTX"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
 	MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
 	:Reply-To:Content-Type:Content-ID:Content-Description;
-	bh=sguSj+eaTMBTK7hMcvpX41ZMewjfbPx9/+19uC/WjPk=; b=Z9gFGMjkqNdTvip6KFBzKAIU2/
-	nOBFS1DErdHLhyQY/MtYazmYuvwDaTmr/weBhfgjI+GAUGs548gTDK0p1AI/Pzh7g8UJjK9cfpPik
-	gxeibVIY04sKgoun1Uv0r6meCxgCH5pruXcnjDL9KPi1CSTjZiFuiFSPw+nRqvqCGc8b1HQcV9pFU
-	ERT9sQ65ghLNp1NLZzBLSVwBO+JFxpV3eN9S8h9ih1Y3jUoHX4XiV8PD5n7myENujdNNg7WqDlizS
-	6kqJ86Sso9tvKcD3sOPGQ+C2d/+KZvCeEt6e+cVkmDaipwRqUDjaG9XG9KIMl9jPe60s/wElYF0Hj
-	575EDYsw==;
+	bh=GyO6JLPvWJHWdBIq99b9W/Hc0Q12PjuJv1kdwaFNu7o=; b=QFnbwKTXgIvAWMHYsoXyH3RHtP
+	5e4E3tf6kzowePkmnMFg3EnEh/0LqWQL1HvSwJCVAQwMrm3+mqIgLd3T7lATcsUpqrS4zWSfZODjH
+	yPFWWCPzFqCWB04r8iYawITZ4jNFy/IWtOTg06VgWS7ng7oxQeeGlI/yADUrjaN/UTxgFlpyialri
+	6q46Pl1H8f14bUg9WiYULQQ9yq7b1C/SNnl/V9hCKZZ3ZuioGLP4t7Z4M6Q2jD4wH5AG0zc4/ty7q
+	mbRFctOZ7SViJXiDl11IU/eOcm990a152gHq+NIvN/qU+P+nytAkR/WkPtc/K2K3pLYpGMdjjGnBI
+	rmo9hvdg==;
 Received: from [2001:4bb8:19a:62b2:c70:4a89:bc61:3] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rdYAg-0000000AAmE-2WzM;
-	Fri, 23 Feb 2024 16:13:11 +0000
+	id 1rdYAj-0000000AAmh-1QA0;
+	Fri, 23 Feb 2024 16:13:14 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>,
 	Mike Snitzer <snitzer@kernel.org>,
@@ -39,9 +39,9 @@ To: Jens Axboe <axboe@kernel.dk>,
 Cc: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org,
 	linux-raid@vger.kernel.org
-Subject: [PATCH 5/9] md/raid0: use the atomic queue limit update APIs
-Date: Fri, 23 Feb 2024 17:12:43 +0100
-Message-Id: <20240223161247.3998821-6-hch@lst.de>
+Subject: [PATCH 6/9] md/raid1: use the atomic queue limit update APIs
+Date: Fri, 23 Feb 2024 17:12:44 +0100
+Message-Id: <20240223161247.3998821-7-hch@lst.de>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240223161247.3998821-1-hch@lst.de>
 References: <20240223161247.3998821-1-hch@lst.de>
@@ -60,75 +60,60 @@ checks in the are while touching it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/raid0.c | 35 ++++++++++++++++-------------------
- 1 file changed, 16 insertions(+), 19 deletions(-)
+ drivers/md/raid1.c | 24 ++++++++++--------------
+ 1 file changed, 10 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index c50a7abda744ad..f7d78ee5338bd3 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -381,6 +381,7 @@ static void raid0_free(struct mddev *mddev, void *priv)
- 
- static int raid0_run(struct mddev *mddev)
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 286f8b16c7bde7..752ff99736a636 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -1791,10 +1791,9 @@ static int raid1_add_disk(struct mddev *mddev, struct md_rdev *rdev)
+ 	for (mirror = first; mirror <= last; mirror++) {
+ 		p = conf->mirrors + mirror;
+ 		if (!p->rdev) {
+-			if (mddev->gendisk)
+-				disk_stack_limits(mddev->gendisk, rdev->bdev,
+-						  rdev->data_offset << 9);
+-
++			err = mddev_stack_new_rdev(mddev, rdev);
++			if (err)
++				return err;
+ 			p->head_position = 0;
+ 			rdev->raid_disk = mirror;
+ 			err = 0;
+@@ -3089,9 +3088,9 @@ static struct r1conf *setup_conf(struct mddev *mddev)
+ static void raid1_free(struct mddev *mddev, void *priv);
+ static int raid1_run(struct mddev *mddev)
  {
 +	struct queue_limits lim;
- 	struct r0conf *conf;
+ 	struct r1conf *conf;
+ 	int i;
+-	struct md_rdev *rdev;
  	int ret;
  
-@@ -391,29 +392,23 @@ static int raid0_run(struct mddev *mddev)
- 	if (md_check_no_bitmap(mddev))
- 		return -EINVAL;
+ 	if (mddev->level != 1) {
+@@ -3118,15 +3117,12 @@ static int raid1_run(struct mddev *mddev)
+ 	if (IS_ERR(conf))
+ 		return PTR_ERR(conf);
  
--	/* if private is not null, we are here after takeover */
--	if (mddev->private == NULL) {
-+	/* if conf is not null, we are here after takeover */
-+	if (!conf) {
- 		ret = create_strip_zones(mddev, &conf);
- 		if (ret < 0)
- 			return ret;
- 		mddev->private = conf;
- 	}
--	conf = mddev->private;
--	if (mddev->queue) {
--		struct md_rdev *rdev;
+-	if (mddev->queue)
+-		blk_queue_max_write_zeroes_sectors(mddev->queue, 0);
 -
--		blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
--		blk_queue_max_write_zeroes_sectors(mddev->queue, mddev->chunk_sectors);
--
--		blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
--		blk_queue_io_opt(mddev->queue,
--				 (mddev->chunk_sectors << 9) * mddev->raid_disks);
- 
--		rdev_for_each(rdev, mddev) {
--			disk_stack_limits(mddev->gendisk, rdev->bdev,
--					  rdev->data_offset << 9);
--		}
+-	rdev_for_each(rdev, mddev) {
+-		if (!mddev->gendisk)
+-			continue;
+-		disk_stack_limits(mddev->gendisk, rdev->bdev,
+-				  rdev->data_offset << 9);
 -	}
 +	blk_set_stacking_limits(&lim);
-+	lim.max_hw_sectors = mddev->chunk_sectors;
-+	lim.max_write_zeroes_sectors = mddev->chunk_sectors;
-+	lim.io_min = mddev->chunk_sectors << 9;
-+	lim.io_opt = lim.io_min * mddev->raid_disks;
++	lim.max_write_zeroes_sectors = 0;
 +	mddev_stack_rdev_limits(mddev, &lim);
 +	ret = queue_limits_set(mddev->queue, &lim);
 +	if (ret)
-+		goto out_free_conf;
++		goto abort;
  
- 	/* calculate array device size */
- 	md_set_array_sectors(mddev, raid0_size(mddev, 0, 0));
-@@ -426,8 +421,10 @@ static int raid0_run(struct mddev *mddev)
- 
- 	ret = md_integrity_register(mddev);
- 	if (ret)
--		free_conf(mddev, conf);
--
-+		goto out_free_conf;
-+	return 0;
-+out_free_conf:
-+	free_conf(mddev, conf);
- 	return ret;
- }
- 
+ 	mddev->degraded = 0;
+ 	for (i = 0; i < conf->raid_disks; i++)
 -- 
 2.39.2
 
