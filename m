@@ -1,61 +1,61 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86FAE7E78B
-	for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 13:20:54 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00E567F7CC
+	for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 13:40:44 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708694457; cv=none; b=X4UD9iyXmdRl+jJYh1bLwCqWuo7XYuGyUqIfDP18gC0z3eZiyjmxgZUqz1bPMdcD+jIpT20D51ik41NwlVKFopj9HGq5FkZZprs41xpFN8ZF9ZWc3UbKjhRkS/VLe4Bk08Md02P3TcyW0nBZIce8uxPPL3I9ZhRsSOEATZbU1Sk=
+	t=1708695646; cv=none; b=CqcBipG1Tm5nSHkh6EKlCbCEEk7V11cw43iAM9i/2BysHnkNcEz/WkrVUIAmpXlW/lCdI9VsBdKqixUrWZo+KBwo2fSMheIITdcEX12gF3XUFH6nA+jsi1YZMYlLhnOggYFFzlVJdTG8mJ5f9f8PaBbURqbQEPRRNqKgFw2+ZwQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708694457; c=relaxed/simple;
-	bh=gWuRgZKbISrsOUxx4DI0wL7M/qTJ8zP6W3B6ttagXW4=;
+	s=arc-20240116; t=1708695646; c=relaxed/simple;
+	bh=1ou7BhyvNlU3XvogfIYPfZodfgPLE2RBYZF3lttgIos=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=Uon+jbhGK2IQTGqwkgEOnKic9mbWwEPVWsqopyaSViXcOPU3nB7xSZmeqyT4aCQyTKUSOcGFQdKb/WvltgVeTePxPe2HIz9MOum4PdVoRUO5N2Y/o0WNHJPxU+ha8rZiL3sjiIdmhBtfKvzT0Q2Y9Vm9Am1BHm03g8xyxbTyPlc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NIEOmgzr; arc=none smtp.client-ip=170.10.129.124
+	 To:Cc:Content-Type; b=qVHFcR0BcekCzj9se/Zp4nYgVhEDqoPLH6psQCFPRW5qxdo8yJJsDce7RXsRDDRdM0dM+RfYwkafQDzWbp/BnSuh9ftmZ5iQj8bumCXnbpY7ZQhgW1XwF6VygwQ6+W2/k2CS7uIq5pBBSwvvOuhIRfoQ/BtvZ6SHkn4pgcvmuu0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XMMBXoic; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NIEOmgzr"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XMMBXoic"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708694453;
+	s=mimecast20190719; t=1708695643;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=tWiyGY1k8fErfSxXaJlrYF3F4fWiFw8cllnBWF7U1zQ=;
-	b=NIEOmgzrnRsCX8O4c3aXoVRc/jfqnTJX3BOOeSLeuTBHznfDS4jZk/WqAMS8RhguTtSseA
-	km74OpSASJsBSO8pWJil3DT6ghUUc7MgFnItiLWoDerRSochBfwum31rCFapooL2sS5u20
-	aOwC7HfY40pEzbqGyS+/fh1nRk0gP2o=
-Received: from mail-pf1-f199.google.com (mail-pf1-f199.google.com
- [209.85.210.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=G0j/O6Ew6fqh8G6KJcM/Z5pMwANBcroeKujeolrgUNY=;
+	b=XMMBXoic4WmRPsJH+BREMYkRBnkLgCgMWHKS6EE1AzspbM9SLa92Ofch0oWYEGwiVc/xso
+	cQkBWLi1RspWWrLTV6qea0iu/VDEi/YegeKZvHPyhKTzZLDSZLA/qFn+L+ibhHJ67hBpcj
+	xzyTpyd//buO8fTMgObf15H/N5vwAFM=
+Received: from mail-pf1-f200.google.com (mail-pf1-f200.google.com
+ [209.85.210.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-297-KvVyFLMoM2eXf9yxfHJw5Q-1; Fri, 23 Feb 2024 08:20:52 -0500
-X-MC-Unique: KvVyFLMoM2eXf9yxfHJw5Q-1
-Received: by mail-pf1-f199.google.com with SMTP id d2e1a72fcca58-6e48d81109eso603932b3a.1
-        for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 05:20:51 -0800 (PST)
+ us-mta-633-JU5GKAYbO42Dq-naXRiE7w-1; Fri, 23 Feb 2024 08:40:42 -0500
+X-MC-Unique: JU5GKAYbO42Dq-naXRiE7w-1
+Received: by mail-pf1-f200.google.com with SMTP id d2e1a72fcca58-6da57e2d2b9so677365b3a.2
+        for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 05:40:42 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708694451; x=1709299251;
+        d=1e100.net; s=20230601; t=1708695642; x=1709300442;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=tWiyGY1k8fErfSxXaJlrYF3F4fWiFw8cllnBWF7U1zQ=;
-        b=GBvy+7rbUkQQimF8DQNq07o/gLXXhYTZFLmhVVj3cIgwcVYCu24wnvNrEGt/dCe4eH
-         m5QVwhsxFiAA24Kn1NR9FFtclQPM3J5kgzIaFlFtZo1Se+7P9Ubcdjyb7eO4He1DJ8lC
-         d2Jv3WSAQ9pr9IFBGmaF1DdOhaRQnH4uA/OCck/3cXEnWHB2HepjJEXkIV5v9EBzRkYy
-         Rh4zBIMUleFqJW2l4bQLFmKglB32VrHLTLxv8xfB7d6S1ILq7potrir9+i6nV9tAzAac
-         2aDVXg3cBBaXZbKiZe23Y1prNdaWhqHQqNoR05IiCu2qHKh9VdTysSbF+YyG9UXt2l/t
-         fRCA==
-X-Forwarded-Encrypted: i=1; AJvYcCW4YwjMTzeb9FMA9XtS7Lw2aCAw5yYd3vVr5TRcwbIE8EbvJDbBVod4AdRBxwze30bx4GdBxbiNLITUccJHwHjp3DDtHgOjGTs=
-X-Gm-Message-State: AOJu0YwzR2wTvglwFu6Die3srF4O4t068ric7sF9tohBmZxPsLaBuosE
-	o1xtfnms0ZM6cHTvnRxdJ7jBjqCgwNxG1x5W225FtJKb0x+5BevakjjuOb2nKjrUcm+3qKsGND8
-	W7/XYHgys5pp/7bODCBhqMl1sSdpiF6MfI0C35WnPXTEYvFV/EF127GzwpqWIZb7+fAd4Lji5QO
-	/AuWTgM8n+riLdiNKV2pcuCTdnAseEmU4=
-X-Received: by 2002:a05:6a21:9808:b0:1a0:ddbb:76e with SMTP id ue8-20020a056a21980800b001a0ddbb076emr1349750pzb.33.1708694450925;
-        Fri, 23 Feb 2024 05:20:50 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IG3u0rAdVy1do38iVNK3ps8vGftvxf5SQZOg5L4YtecFfe2FjBogYhZavwnrNzJkwAkcMA3TxixU4g7JwXZr1U=
-X-Received: by 2002:a05:6a21:9808:b0:1a0:ddbb:76e with SMTP id
- ue8-20020a056a21980800b001a0ddbb076emr1349735pzb.33.1708694450643; Fri, 23
- Feb 2024 05:20:50 -0800 (PST)
+        bh=G0j/O6Ew6fqh8G6KJcM/Z5pMwANBcroeKujeolrgUNY=;
+        b=qszuQpppx+dVzgskqwc2fV+pj/fb6CVh/QXTkRT+dixtIZUtUB6EhJGfWWDfjIwwHf
+         uN2y4hWdasd36NJFJjf/Xk87JvwFGguWXHA8V2uFe9mq0prp1iEz5iNcwfLuYz2WowrG
+         nf3Tap4uEImgQx+XX/xqH0y6ifuH8cot3LzQVusYJ/jUIHBlJS25PrRizpsekd6eVbcr
+         E4sKJ9mAY0/KLZKue8liSWZ8GY118No9EzTE/TIKe9tmobNQbvFnOc0+JhtjXJtZ+/kG
+         E0NtzJWwcZxejfzzmVChMJvV1Vw9PAA98ssrzPjhnIF8bvcv5m5voM6NY5rOU+HkjIqq
+         Em5A==
+X-Forwarded-Encrypted: i=1; AJvYcCUJk5X3PoQDhnzMftIpvGZvQUpalXUbzAN3yvRTvwxdQuaxjLguh4oCPPpizktUHWKPtNqVhwHxu9jlNSgINK6iKrxsihlncZw=
+X-Gm-Message-State: AOJu0YzkKhMV9nPHVNUfe44Gthu0AUtE5QDSLLJTcWAijyRIr/NlczsP
+	MH/ngecrYinBnQOKhArYIdKgmpLFnwpHApU6HZMIldkBb+vSb3yZTqPHxo369B+3UnKP8xivuIh
+	7gB7lcZXv8+SYnp9leXJ6XVhQ2lKJIBg+NoR8olWcho2N9X5SMVbfpoWta4PBPMBvwuW0qdOnKJ
+	AGDkGe+Wc556WneJqQJaLC7Gs13T2WhVU=
+X-Received: by 2002:a05:6a20:2a05:b0:1a0:708a:4f6e with SMTP id e5-20020a056a202a0500b001a0708a4f6emr1504304pzh.41.1708695641771;
+        Fri, 23 Feb 2024 05:40:41 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEXWwDm3g9FQSEqhJkyVdAyr4rC/jfSQoPzodrg7crjOZiI4IINTTVuiKepxVJuyPmDEoUxw8ej7RxpQzmHPWI=
+X-Received: by 2002:a05:6a20:2a05:b0:1a0:708a:4f6e with SMTP id
+ e5-20020a056a202a0500b001a0708a4f6emr1504288pzh.41.1708695641466; Fri, 23 Feb
+ 2024 05:40:41 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -63,11 +63,11 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 References: <20240220153059.11233-1-xni@redhat.com> <20240220153059.11233-2-xni@redhat.com>
- <aa0859d5-6e1c-76f0-284d-9d1c21497f28@huaweicloud.com>
-In-Reply-To: <aa0859d5-6e1c-76f0-284d-9d1c21497f28@huaweicloud.com>
+ <6e5a98ae-1e7d-ea1f-521d-893d9207a132@huaweicloud.com>
+In-Reply-To: <6e5a98ae-1e7d-ea1f-521d-893d9207a132@huaweicloud.com>
 From: Xiao Ni <xni@redhat.com>
-Date: Fri, 23 Feb 2024 21:20:39 +0800
-Message-ID: <CALTww2-3WgtGMDpeDphcfkdCxORf5bTSFZATSZ=m3S4VbPv26w@mail.gmail.com>
+Date: Fri, 23 Feb 2024 21:40:30 +0800
+Message-ID: <CALTww298cV9JbwjO9a4U=06ET1KWHx6ot9aGiZuVqeTRLLybaQ@mail.gmail.com>
 Subject: Re: [PATCH RFC 1/4] dm-raid/md: Clear MD_RECOVERY_WAIT when stopping dmraid
 To: Yu Kuai <yukuai1@huaweicloud.com>
 Cc: song@kernel.org, bmarzins@redhat.com, heinzm@redhat.com, 
@@ -79,8 +79,8 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, Feb 23, 2024 at 11:32=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> =
-wrote:
+On Fri, Feb 23, 2024 at 6:31=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com> w=
+rote:
 >
 > Hi,
 >
@@ -130,25 +130,6 @@ c
 > > Fixes: 644e2537fdc7 ("dm raid: fix stripe adding reshape deadlock")
 > > Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
 > > Signed-off-by: Xiao Ni <xni@redhat.com>
->
-> I'm not sure about this change, I think MD_RECOVERY_WAIT is hacky and
-> really breaks how sync_thread is working, it should just go away soon,
-> once we make sure sync_thread can't be registered before pers->start()
-> is done.
-
-Hi Kuai
-
-I just want to get to a stable state without changing any existing
-logic. After fixing these regressions, we can consider other changes.
-(e.g. remove MD_RECOVERY_WAIT. allow sync thread start/stop when array
-is suspend. )  I talked with Heinz yesterday, for dm-raid, it can't
-allow any io to happen including sync thread when array is suspended.
-
-Regards
-Xiao
->
-> Thanks,
-> Kuai
 > > ---
 > >   drivers/md/dm-raid.c | 2 ++
 > >   drivers/md/md.c      | 1 +
@@ -166,6 +147,42 @@ Xiao
 {
 > > +             if (test_bit(MD_RECOVERY_WAIT, &rs->md.recovery))
 > > +                     clear_bit(MD_RECOVERY_WAIT, &rs->md.recovery);
+>
+> Notice that 'MD_RECOVERY_WAIT' will never be cleared, hence sync_thread
+> will never make progress until table reload for dm-raid.
+
+Hi Kuai
+
+After this patch, it indeed fix the problem mentioned in this patch.
+So it can be cleared before stopping sync thread. I don't know why you
+say it never be cleared.
+>
+> And other than stopping dm-raid, raid_postsuspend() call also be called
+> by ioctl to suspend dm-raid, hence this change is wrong.
+
+From code review, raid_postsuspend is used to stop sync thread and
+suspend array. Maybe I don't understand right. If I'm right, it needs
+to clear MD_RECOVERY_WAIT before stopping sync thread.
+
+>
+> I think we can never clear 'MD_RECOVERY_FROZEN' in this case so that
+> 'MD_RECOVERY_WAIT' can be removed, or use '!MD_RECOVERY_WAIT' as a
+> condition to register new sync_thread.
+
+I don't understand you here.  From debug, there are three reloads
+during dmraidd reshape. In the second reload, it doesn't want to start
+sync thread. It's the reason that it sets MD_RECOVERY_WAIT because
+dmraid is still not ready. In the third reload, it stops the mddev
+which is created in the second reload and create a new mddev. During
+this process, MD_RECOVERY_WAIT always works until suspend mddev which
+is created in the second mddev. It has no relationship with
+MD_RECOVERY_FROZEN.
+
+Regards
+Xiao
+>
+> Thanks,
+> Kuai
 > >               /* Writes have to be stopped before suspending to avoid d=
 eadlocks. */
 > >               if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
