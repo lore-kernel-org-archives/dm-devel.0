@@ -1,207 +1,78 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EACD576039
-	for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 14:00:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1DB7E84A49;
+	Fri, 23 Feb 2024 16:12:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708696830; cv=none; b=Cmxs53RsggKxLuuH7l6/KCPvtPD53rmF5t0OHwiiNrKK5GKdSN3qlGgCbMbIOaPdZ5HLylnjCFhQVPnTU0IQbcaMx8NY4Thq2EE7tAHaNudfTf2KEsq1GfI9q4Q7cvkWN3BQ/FYLdPNBwWP4aCRm/HhCDRn+x/c3iPGw+hIMf7Q=
+	t=1708704779; cv=none; b=SgmZU+5MqXPkVMAeA/Qc+2Q2h6ajpFnpyaD5g3Bj/DAeRKWQBAybcDa2edV86ULe8yPMXNSeUSHnv2v975c2L0tPgN8THMm5obflhS9fRBAb6J6Ta3+mBSMHZNsXLpwAEyptFKSzjATdH3UZ/ZtwCNPrKcxVpPQZbhhzwU7C7Vo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708696830; c=relaxed/simple;
-	bh=PfnXk2r22NN/m0sUCieEBeSFfoHRGT8yZvHO55Hg7TI=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=EKTPYzPnF9PxbeYig1jz26lxgGcWzn3VMOzSPWEcGvzzgRY+UTk2GJ03U6kLzLAxyyLACxkfzIDVQUixrR58EU3t0ZWLPV3O1WLdwpxaw5+I2rf6/MgXATn832wiFzUP3tC0qEaDCrvb2e/lT2V2NjWq5nBp8ZXU0r/6upwfEAE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=N4g6/EzN; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1708704779; c=relaxed/simple;
+	bh=iQyOkottnsrAwDoRlhsKzDtzCHTrvfsby3H8Wp/Af64=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=M8XucyWbdD1qevn5LwR5fwsRE5WY1Q/kMcp3xJ4kBBNoa8CtcU/EsVRsVL43AVm1qpB/0Cqeq7HBSgFGjnbBXGJS4fOYM3J16dc7wrlfhjNOTWqC833ev6/ZL0GFh9EU90+mEVFK1+wbnizr+runKAAEDcp3nwjOx7NihcisIg0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=26+axJut; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N4g6/EzN"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708696828;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=eoJldDMvKw/Jo139YUjehPtpro91AmBrg8GEUEOvUtg=;
-	b=N4g6/EzN294bNsroepJYdT+kvYq0/xbRlW8ennEku9URGD0d6onu4dM7jIRlsK7hiLrEug
-	L5BJPI3Knkrvs6On+stw1W86DASLgVKIdF0yJhHLG9pithccFNRDHXH9TCoXw8/HZGj6da
-	nd6VcaoiawQylz2m80cjnKBzyrFTJcc=
-Received: from mail-pl1-f199.google.com (mail-pl1-f199.google.com
- [209.85.214.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-590-rEDAoYgpNHiIZ-kE6Zuk-Q-1; Fri, 23 Feb 2024 09:00:26 -0500
-X-MC-Unique: rEDAoYgpNHiIZ-kE6Zuk-Q-1
-Received: by mail-pl1-f199.google.com with SMTP id d9443c01a7336-1dc685df4adso1536605ad.2
-        for <dm-devel@lists.linux.dev>; Fri, 23 Feb 2024 06:00:26 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1708696824; x=1709301624;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=eoJldDMvKw/Jo139YUjehPtpro91AmBrg8GEUEOvUtg=;
-        b=Ps7X77AdDxs2IqLsMNkG8saaAuPpoHoRNPLHdFeZhGxFai7WZBFWnQPRchxdlMmI85
-         AmDEHYcriy9MwUl+RWbhZPtUyqTqRdG7f3DtpfoazWzNgEs3kOxggBDvpc736g57JXX6
-         5GgkaHmXpDKF9gvvEulzyTLioBlp9D01PAX5o0ICNhttXvoniuy+q2674+FLW9S/zrO4
-         PMUARhqhnjAxzh/n3ckevVIVwKLTEJ6k2xNsUSp8NzEpvHVkg+12XPK/61K8B/VX8iBH
-         sPlYTX8jLM3s9DpBslLdInjYxfkrEWRDTUn0If0W5nyR6K6XX1auzyKAh3quHTWmXzL2
-         nOcw==
-X-Forwarded-Encrypted: i=1; AJvYcCWeg2qBEAiSNY//iImgpkXAyj2M1KKchKvJgj4VnGcWfBrxETOcqwpedmpm1eXFRnBQs1RlqQgmKvJdWRybu8rGjciqRO227m0=
-X-Gm-Message-State: AOJu0Yy/bYye+xGKMa2a81fKr2lpM+sp7RNAspT1dG2rTLeHIVc2lqEq
-	gG75xDLBh2qJhQJvtkMLl3i/jQ/eHA2wKLxykViUVzUFaduiWPm2shLUH/4b+dUgLrCZbyukjFf
-	Bbg2OBUywWyC5DvmKJj0+nUw8o7d6JgQTvbWSTKTZRUsltMX6ivu0ZFi2A6gj/d/nIj8Xh7TQlb
-	npt35TMxX6oeB2ByWeZzOVmE/ilEQ+tPI=
-X-Received: by 2002:a17:902:9a07:b0:1db:6338:63cf with SMTP id v7-20020a1709029a0700b001db633863cfmr1654365plp.49.1708696824636;
-        Fri, 23 Feb 2024 06:00:24 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IFG2pdC0Epz6d0vvQWxI+0aZn/vdp1PJ/tEdIUeGgcmSfWFnkVptXG4g7NkDLCKrWCofRa9P6VGB3GVl9eHF2I=
-X-Received: by 2002:a17:902:9a07:b0:1db:6338:63cf with SMTP id
- v7-20020a1709029a0700b001db633863cfmr1654307plp.49.1708696823834; Fri, 23 Feb
- 2024 06:00:23 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="26+axJut"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:In-Reply-To:References;
+	bh=k3HOQnbWtGh3BvZkNVjW58+PG2/qlXYQEbUShSEwg/A=; b=26+axJutulMlpbxUK89etwpfKi
+	k4WJiaojYBAaRMrpEI+P9ZApbx13xNEPJHobtXfKhD28rTyePdjhQbE4QYUzxxhb9bUWgkXjgWlro
+	FTpdqDBZiyiTXnm4tlmI1j0lgUsr1UNUe/TQt8QKg0LPeJhU+A5RKOekO52GX26mwxhHIbLEXLq5K
+	gbIK/Zg931ZkYvZhkxzQgxc8w09VHbFhDHlVPfNpXa6+rAeyT+66yZuSiCuR/sdhAiuT0eA1sN3go
+	QA2CYd/kLNVdqrvL6+njEmPMZ6X84H3wGUCAPrZkgn7hkoCzqFMdBjTz1g8suSedKaW0zyMtYxOnM
+	lfBYH1/w==;
+Received: from [2001:4bb8:19a:62b2:c70:4a89:bc61:3] (helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rdYAL-0000000AAdM-46Ca;
+	Fri, 23 Feb 2024 16:12:50 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Song Liu <song@kernel.org>,
+	Yu Kuai <yukuai3@huawei.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org,
+	linux-raid@vger.kernel.org
+Subject: atomic queue limit updates for stackable devices
+Date: Fri, 23 Feb 2024 17:12:38 +0100
+Message-Id: <20240223161247.3998821-1-hch@lst.de>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240220153059.11233-1-xni@redhat.com> <20240220153059.11233-5-xni@redhat.com>
- <d87923c7-ec76-e8c1-7420-3d89728c96f5@huaweicloud.com>
-In-Reply-To: <d87923c7-ec76-e8c1-7420-3d89728c96f5@huaweicloud.com>
-From: Xiao Ni <xni@redhat.com>
-Date: Fri, 23 Feb 2024 22:00:12 +0800
-Message-ID: <CALTww2_YO=aowddDTr4rP+Y9cuo8LnsM_xVUdBgHbnT5Y2qMiA@mail.gmail.com>
-Subject: Re: [PATCH RFC V2 4/4] md/raid5: Don't check crossing reshape when
- reshape hasn't started
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: song@kernel.org, bmarzins@redhat.com, heinzm@redhat.com, 
-	snitzer@kernel.org, ncroxon@redhat.com, neilb@suse.de, 
-	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
-	"yukuai (C)" <yukuai3@huawei.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Fri, Feb 23, 2024 at 11:09=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> =
-wrote:
->
-> Hi,
->
-> =E5=9C=A8 2024/02/20 23:30, Xiao Ni =E5=86=99=E9=81=93:
-> > stripe_ahead_of_reshape is used to check if a stripe region cross the
-> > reshape position. So first, change the function name to
-> > stripe_across_reshape to describe the usage of this function.
-> >
-> > For reshape backwards, it starts reshape from the end of array and conf=
-->
-> > reshape_progress is init to raid5_size. During reshape, if previous is =
-true
-> > (set in make_stripe_request) and max_sector >=3D conf->reshape_progress=
-, ios
-> > should wait until reshape window moves forward. But ios don't need to w=
-ait
-> > if max_sector is raid5_size.
-> >
-> > And put the conditions into the function directly to make understand th=
-e
-> > codes easily.
-> >
-> > This can be reproduced easily by lvm2 test shell/lvconvert-raid-reshape=
-.sh
-> > For dm raid reshape, before starting sync thread, it needs to reload ta=
-ble
-> > some times. In one time dm raid uses MD_RECOVERY_WAIT to delay reshape =
-and
-> > it doesn't start sync thread this time. Then one io comes in and it wai=
-ts
-> > because stripe_ahead_of_reshape returns true because it's a backward
-> > reshape and max_sectors > conf->reshape_progress. But the reshape hasn'=
-t
-> > started. So skip this check when reshape_progress is raid5_size
->
-> Like I said before, after following merged patch:
->
-> ad39c08186f8 md: Don't register sync_thread for reshape directly
+Hi all,
 
-Hi Kuai
+this series adds new helpers for the atomic queue limit update
+functionality and then switches dm and md over to it.  The dm switch is
+pretty trivial as it was basically implementing the model by hand
+already, md is a bit more work.
 
-The reason I send this patch set is I don't agree the patch 01 of your
-patch set. Does the patch (md: Don't register sync_thread for reshape
-directly) rely on patch 01 from your patch set? Because your patch 01
-only changes one logic and other patches rely on it. So it's the
-reason I can't accept the following patches.
+I've run the mdadm testsuite, and it has the same (rather large) number
+of failures as the baseline.  I've still not managed to get the dm
+testuite running unfortunately, but it survives xfstests which exercises
+quite a few dm targets and blktests.
 
-Regards
-Xiao
->
-> You should not see that sync_thread fo reshape is registered while
-> MD_RECOVERY_WAIT is set, so this patch should not be needed.
->
-> Thanks,
-> Kuai
->
-> >
-> > Fixes: 486f60558607 ("md/raid5: Check all disks in a stripe_head for re=
-shape progress")
-> > Signed-off-by: Xiao Ni <xni@redhat.com>
-> > ---
-> >   drivers/md/raid5.c | 22 ++++++++++------------
-> >   1 file changed, 10 insertions(+), 12 deletions(-)
-> >
-> > diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> > index 8497880135ee..4c71df4e2370 100644
-> > --- a/drivers/md/raid5.c
-> > +++ b/drivers/md/raid5.c
-> > @@ -5832,17 +5832,12 @@ static bool ahead_of_reshape(struct mddev *mdde=
-v, sector_t sector,
-> >                                         sector >=3D reshape_sector;
-> >   }
-> >
-> > -static bool range_ahead_of_reshape(struct mddev *mddev, sector_t min,
-> > -                                sector_t max, sector_t reshape_sector)
-> > -{
-> > -     return mddev->reshape_backwards ? max < reshape_sector :
-> > -                                       min >=3D reshape_sector;
-> > -}
-> > -
-> > -static bool stripe_ahead_of_reshape(struct mddev *mddev, struct r5conf=
- *conf,
-> > +static sector_t raid5_size(struct mddev *mddev, sector_t sectors, int =
-raid_disks);
-> > +static bool stripe_across_reshape(struct mddev *mddev, struct r5conf *=
-conf,
-> >                                   struct stripe_head *sh)
-> >   {
-> >       sector_t max_sector =3D 0, min_sector =3D MaxSector;
-> > +     sector_t reshape_pos =3D 0;
-> >       bool ret =3D false;
-> >       int dd_idx;
-> >
-> > @@ -5856,9 +5851,12 @@ static bool stripe_ahead_of_reshape(struct mddev=
- *mddev, struct r5conf *conf,
-> >
-> >       spin_lock_irq(&conf->device_lock);
-> >
-> > -     if (!range_ahead_of_reshape(mddev, min_sector, max_sector,
-> > -                                  conf->reshape_progress))
-> > -             /* mismatch, need to try again */
-> > +     reshape_pos =3D conf->reshape_progress;
-> > +     if (mddev->reshape_backwards) {
-> > +             if (max_sector >=3D reshape_pos &&
-> > +                 reshape_pos !=3D raid5_size(mddev, 0, 0))
-> > +                     ret =3D true;
-> > +     } else if (min_sector < reshape_pos)
-> >               ret =3D true;
-> >
-> >       spin_unlock_irq(&conf->device_lock);
-> > @@ -5969,7 +5967,7 @@ static enum stripe_result make_stripe_request(str=
-uct mddev *mddev,
-> >       }
-> >
-> >       if (unlikely(previous) &&
-> > -         stripe_ahead_of_reshape(mddev, conf, sh)) {
-> > +         stripe_across_reshape(mddev, conf, sh)) {
-> >               /*
-> >                * Expansion moved on while waiting for a stripe.
-> >                * Expansion could still move past after this
-> >
->
+drbd and nvme-multipath will be handled separately.
 
+Diffstat:
+ block/blk-settings.c   |   46 ++++++++++++------
+ drivers/md/dm-table.c  |   27 ++++------
+ drivers/md/md.c        |   37 ++++++++++++++
+ drivers/md/md.h        |    3 +
+ drivers/md/raid0.c     |   35 ++++++-------
+ drivers/md/raid1.c     |   24 +++------
+ drivers/md/raid10.c    |   52 +++++++++-----------
+ drivers/md/raid5.c     |  123 ++++++++++++++++++++++---------------------------
+ include/linux/blkdev.h |    5 +
+ 9 files changed, 193 insertions(+), 159 deletions(-)
