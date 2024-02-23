@@ -1,35 +1,35 @@
 Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC80F81ACE;
-	Fri, 23 Feb 2024 16:13:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E681385638;
+	Fri, 23 Feb 2024 16:13:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708704793; cv=none; b=PFYh0fK0z74avMLkiWk6HEiMSL2vajOZfNWt9+vNzsWeI/CnJ/0wJejbSNUCAeK/HD2UUFJgut1SGqLLzAIVKfFBY7ARvvENF8/x04xZU0jV/42kvAcjiOf40huBpWjd60vjB7Ci/MJN2R94ihWm4lSgSDV0hsgrLdhC9QR/q4w=
+	t=1708704793; cv=none; b=jNakNND9K/HXs5jLdOzTJoJiwymS6Dn0a1P9OAvtb+fWcqtonQ1Kuag/IRHNZ+7ld4p8CFvvb7bRaD7AX+w+WA+ivslatL/VEs3GrXZNUKWrO2VrkLxQo8wW072kO8rzkH2BC5tXX6NNJIo34pjGuy/p/BHe/pcAf25UIHbUQ0M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1708704793; c=relaxed/simple;
-	bh=qpx5ZfsXN/PL+1OUdl1bDP6qACVTtOCO66trsr+igSI=;
+	bh=zCBk/PqWZLZGFEBjfM2iuYUXRJ2akvHWBPqC0vjBMw0=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=Xa/FDW86GL4AOEt+fhi/gkpCbz2HCtWDwadCOTT0jmjaUFGhDDUlQfg+cvN5ZtkpOcxWeqrrYqjBU1iJMr5xpZTQ2luLTOgMRKFIl9dNKo+6rw7WKA8bwX8qPS/g1qBOjE0FxivrspMBYDyWn4bYRs5vmeIxz59fOoyh41XvlEI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=mCavDDXd; arc=none smtp.client-ip=198.137.202.133
+	 MIME-Version; b=GXf06uPjgxCUUnjoZFF+ucBHzlRv4pgLHgoacAjtcuHUXAY/S2BiEEGXzflgT32OcD2EuyVrHUp1y2w11VDTBZmUHNzc9HLH1Mf5XJDsAZgIsUHE69bWVyX1MxQiKwsprpkgiH7CkhWPsgPUK3wWQSi4Bh8f5FfzzBRXd99BDGk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Z9gFGMjk; arc=none smtp.client-ip=198.137.202.133
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="mCavDDXd"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Z9gFGMjk"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
 	MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
 	:Reply-To:Content-Type:Content-ID:Content-Description;
-	bh=58hQxzCOBh09HYswQ4p4ZVLnJZqyofksZjan/0dqSg4=; b=mCavDDXdHuHwdJUogbCk//k9SD
-	a81mbbYTtPnTNXdGxP4QVMAJ24LgdaScMzxUzx6kRpqD2DPVg3j+22ODiaiiu4c9izvnnwggB9GMG
-	ttcsXF1e5qWclwqoSw3feMCKSVRc47AubeB4EUkpDrjzWUt9A3pZCs/iESFxaAXSnQ0d9UM2jYm3K
-	fmsuUmgFPIy1T5+VsZcqziB4SwdlqCDEhZNQDetqGJGd1baRQBU3ichLP97/T94SbqszcR74ph8SV
-	iG368x+DZNK/JLsdZyAX0yNayJJxHV6hp7+rSZ+k28F4Mdurz5giR5KJlbVMK5maRrNNjrwxtw8Ro
-	j+Md2EWg==;
+	bh=sguSj+eaTMBTK7hMcvpX41ZMewjfbPx9/+19uC/WjPk=; b=Z9gFGMjkqNdTvip6KFBzKAIU2/
+	nOBFS1DErdHLhyQY/MtYazmYuvwDaTmr/weBhfgjI+GAUGs548gTDK0p1AI/Pzh7g8UJjK9cfpPik
+	gxeibVIY04sKgoun1Uv0r6meCxgCH5pruXcnjDL9KPi1CSTjZiFuiFSPw+nRqvqCGc8b1HQcV9pFU
+	ERT9sQ65ghLNp1NLZzBLSVwBO+JFxpV3eN9S8h9ih1Y3jUoHX4XiV8PD5n7myENujdNNg7WqDlizS
+	6kqJ86Sso9tvKcD3sOPGQ+C2d/+KZvCeEt6e+cVkmDaipwRqUDjaG9XG9KIMl9jPe60s/wElYF0Hj
+	575EDYsw==;
 Received: from [2001:4bb8:19a:62b2:c70:4a89:bc61:3] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rdYAd-0000000AAkD-4BEM;
-	Fri, 23 Feb 2024 16:13:08 +0000
+	id 1rdYAg-0000000AAmE-2WzM;
+	Fri, 23 Feb 2024 16:13:11 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>,
 	Mike Snitzer <snitzer@kernel.org>,
@@ -39,9 +39,9 @@ To: Jens Axboe <axboe@kernel.dk>,
 Cc: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org,
 	linux-raid@vger.kernel.org
-Subject: [PATCH 4/9] md: add queue limit helpers
-Date: Fri, 23 Feb 2024 17:12:42 +0100
-Message-Id: <20240223161247.3998821-5-hch@lst.de>
+Subject: [PATCH 5/9] md/raid0: use the atomic queue limit update APIs
+Date: Fri, 23 Feb 2024 17:12:43 +0100
+Message-Id: <20240223161247.3998821-6-hch@lst.de>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240223161247.3998821-1-hch@lst.de>
 References: <20240223161247.3998821-1-hch@lst.de>
@@ -54,75 +54,80 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-Add a few helpers that wrap the block queue limits API for use in MD.
+Build the queue limits outside the queue and apply them using
+queue_limits_set.  Also remove the bogus ->gendisk and ->queue NULL
+checks in the are while touching it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/md.c | 37 +++++++++++++++++++++++++++++++++++++
- drivers/md/md.h |  3 +++
- 2 files changed, 40 insertions(+)
+ drivers/md/raid0.c | 35 ++++++++++++++++-------------------
+ 1 file changed, 16 insertions(+), 19 deletions(-)
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 75266c34b1f99b..23823823f80c6b 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -5699,6 +5699,43 @@ static const struct kobj_type md_ktype = {
+diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
+index c50a7abda744ad..f7d78ee5338bd3 100644
+--- a/drivers/md/raid0.c
++++ b/drivers/md/raid0.c
+@@ -381,6 +381,7 @@ static void raid0_free(struct mddev *mddev, void *priv)
  
- int mdp_major = 0;
- 
-+/* stack the limit for all rdevs into lim */
-+void mddev_stack_rdev_limits(struct mddev *mddev, struct queue_limits *lim)
-+{
-+	struct md_rdev *rdev;
-+
-+	rdev_for_each(rdev, mddev) {
-+		queue_limits_stack_bdev(lim, rdev->bdev, rdev->data_offset,
-+					mddev->gendisk->disk_name);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(mddev_stack_rdev_limits);
-+
-+/* apply the extra stacking limits from a new rdev into mddev */
-+int mddev_stack_new_rdev(struct mddev *mddev, struct md_rdev *rdev)
-+{
-+	struct queue_limits lim = queue_limits_start_update(mddev->queue);
-+
-+	queue_limits_stack_bdev(&lim, rdev->bdev, rdev->data_offset,
-+				mddev->gendisk->disk_name);
-+	return queue_limits_commit_update(mddev->queue, &lim);
-+}
-+EXPORT_SYMBOL_GPL(mddev_stack_new_rdev);
-+
-+/* update the optimal I/O size after a reshape */
-+void mddev_update_io_opt(struct mddev *mddev, unsigned int nr_stripes)
-+{
-+	struct queue_limits lim;
-+	int ret;
-+
-+	blk_mq_freeze_queue(mddev->queue);
-+	lim = queue_limits_start_update(mddev->queue);
-+	lim.io_opt = lim.io_min * nr_stripes;
-+	ret = queue_limits_commit_update(mddev->queue, &lim);
-+	blk_mq_unfreeze_queue(mddev->queue);
-+}
-+EXPORT_SYMBOL_GPL(mddev_update_io_opt);
-+
- static void mddev_delayed_delete(struct work_struct *ws)
+ static int raid0_run(struct mddev *mddev)
  {
- 	struct mddev *mddev = container_of(ws, struct mddev, del_work);
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 8d881cc597992f..25b19614aa3239 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -860,6 +860,9 @@ void md_autostart_arrays(int part);
- int md_set_array_info(struct mddev *mddev, struct mdu_array_info_s *info);
- int md_add_new_disk(struct mddev *mddev, struct mdu_disk_info_s *info);
- int do_md_run(struct mddev *mddev);
-+void mddev_stack_rdev_limits(struct mddev *mddev, struct queue_limits *lim);
-+int mddev_stack_new_rdev(struct mddev *mddev, struct md_rdev *rdev);
-+void mddev_update_io_opt(struct mddev *mddev, unsigned int nr_stripes);
++	struct queue_limits lim;
+ 	struct r0conf *conf;
+ 	int ret;
  
- extern const struct block_device_operations md_fops;
+@@ -391,29 +392,23 @@ static int raid0_run(struct mddev *mddev)
+ 	if (md_check_no_bitmap(mddev))
+ 		return -EINVAL;
+ 
+-	/* if private is not null, we are here after takeover */
+-	if (mddev->private == NULL) {
++	/* if conf is not null, we are here after takeover */
++	if (!conf) {
+ 		ret = create_strip_zones(mddev, &conf);
+ 		if (ret < 0)
+ 			return ret;
+ 		mddev->private = conf;
+ 	}
+-	conf = mddev->private;
+-	if (mddev->queue) {
+-		struct md_rdev *rdev;
+-
+-		blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
+-		blk_queue_max_write_zeroes_sectors(mddev->queue, mddev->chunk_sectors);
+-
+-		blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
+-		blk_queue_io_opt(mddev->queue,
+-				 (mddev->chunk_sectors << 9) * mddev->raid_disks);
+ 
+-		rdev_for_each(rdev, mddev) {
+-			disk_stack_limits(mddev->gendisk, rdev->bdev,
+-					  rdev->data_offset << 9);
+-		}
+-	}
++	blk_set_stacking_limits(&lim);
++	lim.max_hw_sectors = mddev->chunk_sectors;
++	lim.max_write_zeroes_sectors = mddev->chunk_sectors;
++	lim.io_min = mddev->chunk_sectors << 9;
++	lim.io_opt = lim.io_min * mddev->raid_disks;
++	mddev_stack_rdev_limits(mddev, &lim);
++	ret = queue_limits_set(mddev->queue, &lim);
++	if (ret)
++		goto out_free_conf;
+ 
+ 	/* calculate array device size */
+ 	md_set_array_sectors(mddev, raid0_size(mddev, 0, 0));
+@@ -426,8 +421,10 @@ static int raid0_run(struct mddev *mddev)
+ 
+ 	ret = md_integrity_register(mddev);
+ 	if (ret)
+-		free_conf(mddev, conf);
+-
++		goto out_free_conf;
++	return 0;
++out_free_conf:
++	free_conf(mddev, conf);
+ 	return ret;
+ }
  
 -- 
 2.39.2
