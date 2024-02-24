@@ -1,151 +1,98 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f176.google.com (mail-qk1-f176.google.com [209.85.222.176])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D6D445C15
-	for <dm-devel@lists.linux.dev>; Sat, 24 Feb 2024 13:48:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 76E9A3E493
+	for <dm-devel@lists.linux.dev>; Sat, 24 Feb 2024 16:05:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708782491; cv=none; b=U7zAarwOxNdy4PZ2nRK/r6jpDXbKAgteOm/NszoZy8f074KeH4O97sOyzOnMcSvB5m3xi5wPQl5XmihEg/0vytlA3CJgB5+Fa8DGGMizbLEa4HdFjRjbPi4vX/2LkzQu5wCPABi+TbBt7+l0H/Ngyq04zc/KkISl3lL1sV2niNk=
+	t=1708790759; cv=none; b=fqCEjYkz/kz/LAq2RgqOaba5z/k8sMfL3tLdyZRPNMWx2wm4qsZYhXvsUnfjrLzT5SHuVFOTSkD8ArvrJ6zdHWjXFgQZas9aa00AWrwoVK4Lt+UCeO+VIv7uiYvOCZhJEFwQsO7PA5Ijz97g/co6oNC18Ac8dC8nqnsKs8vCYlM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708782491; c=relaxed/simple;
-	bh=uslCR6xIQ8gDe1woXzL0AS9BNpN7HRFFLfmLa1PMqmE=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Ps38H+vB1mXrC22DXdFz4YgInuFlj8DEBxTS9BBNey1mWEDQozp0668VOh4BfVgu8GPgBg85e379r7JYzfpE6S2rrYnMrsZ94tZxctCTkh0ia7MvKxOZuc4eIawQoKvJjB/wOkBzfdfOTcikO3w1EuMREuy6gQuOIclEl0Cq3ZE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iFkp3rpn; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	s=arc-20240116; t=1708790759; c=relaxed/simple;
+	bh=E59Ge2iof5touRWs6VPVO6mhrKT3Lkb/h6XiZDAiOCo=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=rpKd2dlr3JrRptSfh58CBhrbUwB00McUnWfu2ak/Co+720h/o7ngMYTUd8hsIPUlnHXbBzlQ6bxBgvlnvI2ReNiC+Fc2u9G+kCxeCdpt7co9eEb93uyjcV/t90+l+Qews5eFXbuTz4o1zHViUJI4IZXfIsIL25XGpaX8qFqobQc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iFkp3rpn"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1708782487;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=tQGHJ/Uox2/MreygoVm4hqlwrCJbOV6priRfkP9HzFM=;
-	b=iFkp3rpnVskO9mUWsg9mPvC7MaK764OAPWHTu9INoWIXjTr9s5m67mrQ129xbF2kTnxER0
-	aaYKizMMmYP4pd2ExixjBAglcb7wxVbzk/Olb255+abL8n78Sydzo9xlRx1yzHQ5fqd38R
-	gUdEytztgxJRNC/6yCvKDofpi71Abl8=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-27-JY0Nyy--NKOCkikVaOKUIg-1; Sat, 24 Feb 2024 08:48:04 -0500
-X-MC-Unique: JY0Nyy--NKOCkikVaOKUIg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ADE3F862CC1;
-	Sat, 24 Feb 2024 13:48:03 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9A032A20;
-	Sat, 24 Feb 2024 13:48:03 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 87D4630C1B8F; Sat, 24 Feb 2024 13:48:03 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 86F6C3FB4E;
-	Sat, 24 Feb 2024 14:48:03 +0100 (CET)
-Date: Sat, 24 Feb 2024 14:48:03 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
+Received: by mail-qk1-f176.google.com with SMTP id af79cd13be357-7872614af89so98131285a.0
+        for <dm-devel@lists.linux.dev>; Sat, 24 Feb 2024 08:05:57 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1708790756; x=1709395556;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=1xgfDfdFhOROV3arv9/Dp8sUl3kpSHJJYA7cwc0URRY=;
+        b=u4HxfWYzPTSPl4n7EwckAfpt+CWgPW3gJzW7+Y/kj+L0DEaDnNeNO+pDFvLuygdiil
+         bsiNn+xVFeOajtsdVdG7AKHQpAu/GOW1iroyNn7MAJyc9RvWk04QTv7WtOHv1CBITnSe
+         WdT7LfEQ4xg42cIQfCgjD2JAu59DwDy0pRq4KG6b+0c/aBE0bO6LR3Pcpc21E8v/Vrfc
+         ny88oy6CIsRIYCmNvHOug22Mx/t19iHobLLbjE6DR0UOGkpGFcjZAWsPhchtBKVGnbxr
+         Dd8hieHNWOpBYBXRp8ouXZpwjydiXs5uByjq7NtIardacD2ewKvr7fR6ojAe4OrKagCj
+         LA2w==
+X-Gm-Message-State: AOJu0YwiJz3jNhrrr5y7KRZmd3TA0MjiM9ldrj0m/cDRrl2/83odPvV1
+	G/ZU4FvIwLAA/x5qVYJmv27ex3BoxTaQFWVfzVmxb6p8XfO70C3V1n/WTZyPfQ==
+X-Google-Smtp-Source: AGHT+IFlY3V9dD4ZOCgndCWM7fAJphAAD9qoawkqEXjWLsdnhS2+O0oxz9RzLRekhSvnxdcKqsxjqQ==
+X-Received: by 2002:a05:620a:2086:b0:787:b5c2:6aa8 with SMTP id e6-20020a05620a208600b00787b5c26aa8mr4069839qka.30.1708790756453;
+        Sat, 24 Feb 2024 08:05:56 -0800 (PST)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id c20-20020a37e114000000b007872affb7d9sm709203qkm.45.2024.02.24.08.05.55
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 24 Feb 2024 08:05:55 -0800 (PST)
+Date: Sat, 24 Feb 2024 11:05:54 -0500
+From: Mike Snitzer <snitzer@kernel.org>
 To: Linus Torvalds <torvalds@linux-foundation.org>
-cc: Alasdair Kergon <agk@redhat.com>, Arnd Bergmann <arnd@kernel.org>, 
-    Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, 
-    Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, 
-    Yu Zhe <yuzhe@nfschina.com>, linux-kernel@vger.kernel.org
-Subject: [PATCH] dm-integrity: reduce stack usage for recheck
-In-Reply-To: <b36796cd-e6f-b964-fe0-5a77114aa710@redhat.com>
-Message-ID: <32883d32-afa6-78fb-d431-93bbb3a9fce8@redhat.com>
-References: <20240224121228.1904859-1-arnd@kernel.org> <b36796cd-e6f-b964-fe0-5a77114aa710@redhat.com>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	Alasdair G Kergon <agk@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Arnd Bergmann <arnd@arndb.de>
+Subject: [git pull] device mapper fix for 6.8-rc6
+Message-ID: <ZdoT4rC0f5MkY6NQ@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-From: Arnd Bergmann <arnd@arndb.de>
+Hi Linus,
 
-The newly added integrity_recheck() function has another larger stack
-allocation, just like its caller integrity_metadata(). When it gets
-inlined, the combination of the two exceeds the warning limit for 32-bit
-architectures and possibly risks an overflow when this is called from
-a deep call chain through a file system:
+A fix for changes from yesterday's DM pull request.
 
-drivers/md/dm-integrity.c:1767:13: error: stack frame size (1048) exceeds limit (1024) in 'integrity_metadata' [-Werror,-Wframe-larger-than]
- 1767 | static void integrity_metadata(struct work_struct *w)
+The following changes since commit 0e0c50e85a364bb7f1c52c84affe7f9e88c57da7:
 
-Since the caller at this point is done using its checksum buffer,
-just reuse the same buffer in the new function to avoid the double
-allocation.
+  dm-crypt, dm-integrity, dm-verity: bump target version (2024-02-20 13:35:47 -0500)
 
-Mikulas: I also added "noinline" to integrity_recheck and verity_recheck. 
-These functions are only called on error, so they shouldn't bloat the 
-stack frame or code size of the caller.
+are available in the Git repository at:
 
-Fixes: c88f5e553fe3 ("dm-integrity: recheck the integrity tag after a failure")
-Cc: stable@vger.kernel.org
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.8/dm-fix-3
 
----
- drivers/md/dm-integrity.c     |    9 ++++-----
- drivers/md/dm-verity-target.c |    4 ++--
- 2 files changed, 6 insertions(+), 7 deletions(-)
+for you to fetch changes up to 66ad2fbcdbeab0edfd40c5d94f32f053b98c2320:
 
-Index: linux-2.6/drivers/md/dm-integrity.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2024-02-24 13:53:02.000000000 +0100
-+++ linux-2.6/drivers/md/dm-integrity.c	2024-02-24 13:54:17.000000000 +0100
-@@ -1691,14 +1691,13 @@ failed:
- 	get_random_bytes(result, ic->tag_size);
- }
- 
--static void integrity_recheck(struct dm_integrity_io *dio)
-+static noinline void integrity_recheck(struct dm_integrity_io *dio, char *checksum)
- {
- 	struct bio *bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
- 	struct dm_integrity_c *ic = dio->ic;
- 	struct bvec_iter iter;
- 	struct bio_vec bv;
- 	sector_t sector, logical_sector, area, offset;
--	char checksum_onstack[max_t(size_t, HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
- 	struct page *page;
- 	void *buffer;
- 
-@@ -1735,8 +1734,8 @@ static void integrity_recheck(struct dm_
- 			}
- 
- 			integrity_sector_checksum(ic, logical_sector, buffer,
--						  checksum_onstack);
--			r = dm_integrity_rw_tag(ic, checksum_onstack, &dio->metadata_block,
-+						  checksum);
-+			r = dm_integrity_rw_tag(ic, checksum, &dio->metadata_block,
- 						&dio->metadata_offset, ic->tag_size, TAG_CMP);
- 			if (r) {
- 				if (r > 0) {
-@@ -1851,7 +1850,7 @@ again:
- 						checksums_ptr - checksums, dio->op == REQ_OP_READ ? TAG_CMP : TAG_WRITE);
- 			if (unlikely(r)) {
- 				if (r > 0) {
--					integrity_recheck(dio);
-+					integrity_recheck(dio, checksums);
- 					goto skip_io;
- 				}
- 				if (likely(checksums != checksums_onstack))
-Index: linux-2.6/drivers/md/dm-verity-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-verity-target.c	2024-02-24 13:52:21.000000000 +0100
-+++ linux-2.6/drivers/md/dm-verity-target.c	2024-02-24 13:55:42.000000000 +0100
-@@ -491,8 +491,8 @@ static int verity_recheck_copy(struct dm
- 	return 0;
- }
- 
--static int verity_recheck(struct dm_verity *v, struct dm_verity_io *io,
--			  struct bvec_iter start, sector_t cur_block)
-+static noinline int verity_recheck(struct dm_verity *v, struct dm_verity_io *io,
-+				   struct bvec_iter start, sector_t cur_block)
- {
- 	struct page *page;
- 	void *buffer;
+  dm-integrity, dm-verity: reduce stack usage for recheck (2024-02-24 10:53:57 -0500)
 
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Fix DM integrity and verity targets to not use excessive stack when
+  they recheck in the error path.
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmXaEswACgkQxSPxCi2d
+A1oT2Qf/c1opgjRUe+yY/v7nWf4paufSj2O4LYAy/qQBU7IS9CcXQPzi/pKlfEo8
+60OZfa5gfrCAla79se7hHI/mxReq7CI5nFvYDyqQ1JZQ/djG/4cN/oWf5fQ12pon
+/ET1IzaZ+Mom+5wDBeQBLoQwXTA1ru5Bi1OiUe9Ed3wzadZQQks5s65fPnc0emGJ
+ClyaXiiCt4Dy36E5GmuPpmPB4ZJ57SwcnFWDFIeCHEbIQk36APkZ22z7lqGObjw2
+ANO1l59k6ojzmaXLi9pw/J/o/qyfNR0MpeI7SpmtJzhSZKeGKsUX2GlJ9QBhViJp
+XL/+7MbSRJ43IY1lomoHZm1vxe0aPg==
+=sQPX
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Arnd Bergmann (1):
+      dm-integrity, dm-verity: reduce stack usage for recheck
+
+ drivers/md/dm-integrity.c     | 10 ++++------
+ drivers/md/dm-verity-target.c |  4 ++--
+ 2 files changed, 6 insertions(+), 8 deletions(-)
