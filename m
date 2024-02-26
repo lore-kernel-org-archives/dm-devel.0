@@ -1,154 +1,112 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 568D54F1E3
-	for <dm-devel@lists.linux.dev>; Mon, 26 Feb 2024 11:38:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A25112BEA1
+	for <dm-devel@lists.linux.dev>; Mon, 26 Feb 2024 14:44:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.165.32
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708947504; cv=none; b=MpLAuOLtGBFA5CanC6Igyl5wAUP0uTdXO1LyI+lR+MZUtH22LKKOsVVMaXR+Oqm0bM86PicmBVdDmjwq93dDjiwt2Yte5YSCnn4ufiWXnixxnv1YMRmjKUOB+2KqDoCwnQ0ghVyxx9TatMWA0SITNuThYlYxOalxJg/0i7CDAMc=
+	t=1708958663; cv=none; b=OHj8l9sNtKBNs1bycoTLo+9dcc8XBegKsuf1BW627liCXItMnhOQpiAqmZ7AjSdc2ClfPW7ikl1CGNdO98DOuMPGmkjZrt9B5Kkmnfbo73CHboQ/6JTJa2OUU2AkpOTugwy6UJt4dHpoao7rJVz6X7zPwi9Bh0lDv65DxBmREmk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708947504; c=relaxed/simple;
-	bh=9G5Z6URZU2U6zHC2q28i4aqmfKZtrRY8udUCfyTx/m0=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=uZ1GdAW9DGm7rYIDZV+S0ake2VsXWWf1JvgSMq86qY/ze2Zd8uep6O1JSJmh7fRNhG0/di2y/3O6t5MJ2S765iJ0V1jOsikZpYxzqtNBekgqkPXiYOdrtd23HhnO42cg1J5pC2jXqmwRT3ynAh5VWjzODlEDSkmt7r/1PZ0MwxQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TjzBq4DqGz4f3lWH
-	for <dm-devel@lists.linux.dev>; Mon, 26 Feb 2024 19:38:11 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id D88391A04BC
-	for <dm-devel@lists.linux.dev>; Mon, 26 Feb 2024 19:38:18 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgAX6REpeNxlSUnXFA--.55021S3;
-	Mon, 26 Feb 2024 19:38:18 +0800 (CST)
-Subject: Re: [PATCH 04/16] md: add queue limit helpers
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- Song Liu <song@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>,
- Lars Ellenberg <lars.ellenberg@linbit.com>,
- =?UTF-8?Q?Christoph_B=c3=b6hmwalder?= <christoph.boehmwalder@linbit.com>
-Cc: drbd-dev@lists.linbit.com, dm-devel@lists.linux.dev,
- linux-block@vger.kernel.org, linux-raid@vger.kernel.org,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20240226103004.281412-1-hch@lst.de>
- <20240226103004.281412-5-hch@lst.de>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <6eb1741e-f336-bfb1-6549-21374ee667fc@huaweicloud.com>
-Date: Mon, 26 Feb 2024 19:38:17 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1708958663; c=relaxed/simple;
+	bh=WS8wGXmQM2s1gH1iYfEEVs4FsClq44BPDrBK14QrVOA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=YslmxFpgMf/FGIzhqUMVCgWuKf38WZB1CdHDJ9lTjcBYcIIbzZnL/+wLM4ElAv07V8Ije7Tak/D6zPoZBecw/Vcgv1Os1NRNBe2Nu9zg7cdkk8LVpdOWWT/0dpmlA8n/sbkSxI3fn4zrRTBlZkFodNdbgG9be/ueT9QG+dpAC/0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=DCHsz+Gk; arc=none smtp.client-ip=205.220.165.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="DCHsz+Gk"
+Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id 41QDLLdF031418;
+	Mon, 26 Feb 2024 14:43:58 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to : cc :
+ subject : date : message-id : mime-version : content-transfer-encoding;
+ s=corp-2023-11-20; bh=vEUYPk/vTjUcosp4mayE+HEMCQCXiWr8F/WnC06iTYQ=;
+ b=DCHsz+GkTt9rNVCCdVmhEAkA5ZrezQMCfGL0y2w6tT5OrubfWdR3EMvzYZY3RbpxEZnk
+ barjTYcrSibPx4+EHS/o4v7vcubTQDkDZ+RxzYFxbu2UuWmpFp7dZPmzteWCRvCrx9CK
+ JM9cvc7kJtJlPsKCkCVOxaUZUiphApUhgywD4gP+oyE3KrdxaXAVg8uQOtFrI6V7YCpH
+ qXMXCXCqm8Ym2+iNcby3Nxdnwd6mrTdSnqnfT9dGs2iYdyUTw8iNQUvzdk1vmBNBCHWj
+ bN1sv7j7+ATNc8+eV9AD6pWoZochj9pYZZ2YdfB8onjtjQ0a+T5Dpv7yIH0LnZfssE+z Qw== 
+Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3wf90v4njc-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Mon, 26 Feb 2024 14:43:58 +0000
+Received: from pps.filterd (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.19/8.17.1.19) with ESMTP id 41QESwwd001840;
+	Mon, 26 Feb 2024 14:43:56 GMT
+Received: from pps.reinject (localhost [127.0.0.1])
+	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 3wf6w5n9ry-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Mon, 26 Feb 2024 14:43:56 +0000
+Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+	by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 41QEhuwF030519;
+	Mon, 26 Feb 2024 14:43:56 GMT
+Received: from ca-dev112.us.oracle.com (ca-dev112.us.oracle.com [10.129.136.47])
+	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTP id 3wf6w5n9qa-1;
+	Mon, 26 Feb 2024 14:43:55 +0000
+From: Harshit Mogalapalli <harshit.m.mogalapalli@oracle.com>
+To: Matthew Sakai <msakai@redhat.com>, dm-devel@lists.linux.dev,
+        Mike Snitzer <snitzer@kernel.org>, Ken Raeburn <raeburn@redhat.com>,
+        Chung Chung <cchung@redhat.com>, Thomas Jaskiewicz <tom@jaskiewicz.us>,
+        Harshit Mogalapalli <harshit.m.mogalapalli@oracle.com>,
+        John Wiele <jwiele@redhat.com>,
+        "J. corwin Coburn" <corwin@hurlbutnet.net>,
+        linux-kernel@vger.kernel.org
+Cc: kernel-janitors@vger.kernel.org, dan.carpenter@linaro.org
+Subject: [PATCH] dm vdo: Fix a use-after-free in load_index_save()
+Date: Mon, 26 Feb 2024 06:41:35 -0800
+Message-ID: <20240226144155.2101066-1-harshit.m.mogalapalli@oracle.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240226103004.281412-5-hch@lst.de>
-Content-Type: text/plain; charset=gbk; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgAX6REpeNxlSUnXFA--.55021S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxJF1DJFW7Xr4fKw18tr4ruFg_yoW5AF4rpa
-	yIqa4fGr4Iqayag343Ga1DCa4agw1kKrZrKry3A3yfWF13trn7GF13GF15Jrn5JFZ5Zw17
-	Xa1YgF4DCa1xuFDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUvIb4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Xr0_Ar1l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Cr0_Gr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I
-	0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40E
-	x7xfMcIj6xIIjxv20xvE14v26r106r15McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x
-	0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lFIxGxcIEc7CjxVA2Y2ka0xkIwI1lc7I2V7IY0VAS
-	07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c
-	02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_Jw0_
-	GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7
-	CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWrZr1UMIIF0xvEx4A2jsIE
-	14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf
-	9x07UQzVbUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.272,Aquarius:18.0.1011,Hydra:6.0.619,FMLib:17.11.176.26
+ definitions=2024-02-26_10,2024-02-26_01,2023-05-22_02
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0 malwarescore=0 adultscore=0
+ mlxscore=0 mlxlogscore=999 phishscore=0 suspectscore=0 spamscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2311290000
+ definitions=main-2402260111
+X-Proofpoint-GUID: 4v26zrTyEdjYF7bZ2CgOZzmIitR6aBNZ
+X-Proofpoint-ORIG-GUID: 4v26zrTyEdjYF7bZ2CgOZzmIitR6aBNZ
 
-  Hi,
+Smatch warns:
+	drivers/md/dm-vdo/indexer/index-layout.c:1570
+	load_index_save() warn: 'table' was already freed.
 
-ÔÚ 2024/02/26 18:29, Christoph Hellwig Ð´µÀ:
-> Add a few helpers that wrap the block queue limits API for use in MD.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->   drivers/md/md.c | 37 +++++++++++++++++++++++++++++++++++++
->   drivers/md/md.h |  3 +++
->   2 files changed, 40 insertions(+)
-> 
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 75266c34b1f99b..23823823f80c6b 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -5699,6 +5699,43 @@ static const struct kobj_type md_ktype = {
->   
->   int mdp_major = 0;
->   
-> +/* stack the limit for all rdevs into lim */
-> +void mddev_stack_rdev_limits(struct mddev *mddev, struct queue_limits *lim)
-> +{
-> +	struct md_rdev *rdev;
-> +
-> +	rdev_for_each(rdev, mddev) {
-> +		queue_limits_stack_bdev(lim, rdev->bdev, rdev->data_offset,
-> +					mddev->gendisk->disk_name);
-> +	}
-> +}
-> +EXPORT_SYMBOL_GPL(mddev_stack_rdev_limits);
-> +
-> +/* apply the extra stacking limits from a new rdev into mddev */
-> +int mddev_stack_new_rdev(struct mddev *mddev, struct md_rdev *rdev)
-> +{
-> +	struct queue_limits lim = queue_limits_start_update(mddev->queue);
-> +
-> +	queue_limits_stack_bdev(&lim, rdev->bdev, rdev->data_offset,
-> +				mddev->gendisk->disk_name);
-> +	return queue_limits_commit_update(mddev->queue, &lim);
-> +}
-> +EXPORT_SYMBOL_GPL(mddev_stack_new_rdev);
-> +
-> +/* update the optimal I/O size after a reshape */
-> +void mddev_update_io_opt(struct mddev *mddev, unsigned int nr_stripes)
-> +{
-> +	struct queue_limits lim;
-> +	int ret;
-> +
-> +	blk_mq_freeze_queue(mddev->queue);
-> +	lim = queue_limits_start_update(mddev->queue);
-> +	lim.io_opt = lim.io_min * nr_stripes;
-> +	ret = queue_limits_commit_update(mddev->queue, &lim);
-> +	blk_mq_unfreeze_queue(mddev->queue);
+Store the error value in result and then free the table before
+returning.
 
-Any reason to use blk_mq_freeze/unfreeze_queue ? I don't think this is
-meaningful for raid, this only wait for IO submission, not IO done.
+Fixes: b46d79bdb82a ("dm vdo: add deduplication index storage interface")
+Signed-off-by: Harshit Mogalapalli <harshit.m.mogalapalli@oracle.com>
+---
+This is based on static analysis and only compile tested.
+---
+ drivers/md/dm-vdo/indexer/index-layout.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-raid should already handle concurrent IO with reshape, so I think this
-can just be removed.
-
-Thanks,
-Kuai
-
-> +}
-> +EXPORT_SYMBOL_GPL(mddev_update_io_opt);
-> +
->   static void mddev_delayed_delete(struct work_struct *ws)
->   {
->   	struct mddev *mddev = container_of(ws, struct mddev, del_work);
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index 8d881cc597992f..25b19614aa3239 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -860,6 +860,9 @@ void md_autostart_arrays(int part);
->   int md_set_array_info(struct mddev *mddev, struct mdu_array_info_s *info);
->   int md_add_new_disk(struct mddev *mddev, struct mdu_disk_info_s *info);
->   int do_md_run(struct mddev *mddev);
-> +void mddev_stack_rdev_limits(struct mddev *mddev, struct queue_limits *lim);
-> +int mddev_stack_new_rdev(struct mddev *mddev, struct md_rdev *rdev);
-> +void mddev_update_io_opt(struct mddev *mddev, unsigned int nr_stripes);
->   
->   extern const struct block_device_operations md_fops;
->   
-> 
+diff --git a/drivers/md/dm-vdo/indexer/index-layout.c b/drivers/md/dm-vdo/indexer/index-layout.c
+index 1453fddaa656..18fac999e3e4 100644
+--- a/drivers/md/dm-vdo/indexer/index-layout.c
++++ b/drivers/md/dm-vdo/indexer/index-layout.c
+@@ -1566,10 +1566,11 @@ static int __must_check load_index_save(struct index_save_layout *isl,
+ 
+ 
+ 	if (table->header.type != RH_TYPE_SAVE) {
++		result = vdo_log_error_strerror(UDS_CORRUPT_DATA,
++						"unexpected index save %u header type %u",
++						instance, table->header.type);
+ 		vdo_free(table);
+-		return vdo_log_error_strerror(UDS_CORRUPT_DATA,
+-					      "unexpected index save %u header type %u",
+-					      instance, table->header.type);
++		return result;
+ 	}
+ 
+ 	result = read_index_save_data(reader, isl, table->header.payload);
+-- 
+2.39.3
 
