@@ -1,35 +1,35 @@
 Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E34D458132;
-	Mon, 26 Feb 2024 10:31:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A78E1DFD1;
+	Mon, 26 Feb 2024 10:31:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708943466; cv=none; b=Zmg4dh5gzMhgYnDxzEfIYZWTsmyaEMy8M3vTP9EPa6dVnoDcx2543GSeunSMkwO/7zcXPJ5c+B244uxeKWmCbfftFH4ssqC/FK9R9QbDoIcrhsWXA/o4VsZ8OCdU92zI+sZK1QymqkKklOrAl2KjeLQn4/RkTHGfANn/54rkWBE=
+	t=1708943471; cv=none; b=NugomMVpUS4r/WKS+4wgj8Y8VWwilnaAbb+DJnKL16fjl1YE9NKE1Ch1XbWxz1/waTdLEDezy3mKq7tvKJ6Rsf3Kv1+aWJ+rgg4lHHUVIVVyG/y4dS7PZHc8t1Niem7+2pmspUV4Pq2j0mgqDbjtoRq2nh6q6aqLUMsNK9cKp7w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708943466; c=relaxed/simple;
-	bh=rjrBsSeN4TvfsIeude8FJjx7Vee0SyykGlyHSUvPlkU=;
+	s=arc-20240116; t=1708943471; c=relaxed/simple;
+	bh=XpLAWU/T29R3Tx7M5y0bBtN8HvoYCHtVCtBpYdyGND0=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=HoBBtu0uAIbihsgxoGEntsjGu27fx3FCTNC/TOkLFI/FoqeYN4rtPIQBMqN7rSxjCzfhqSLbUOLNAUBlHzckn0bLZ/k1zBhbkJUmnZq1Z6PbIoF8CJlCbQc3Om/OVbGXagI7g/lTe1tJ+RMpk4UPigsmMFcfJDHBWINIwTz5TwQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=CaiDPLJH; arc=none smtp.client-ip=198.137.202.133
+	 MIME-Version; b=TQcVRdnct60vZ+Ip/qn+aTPXZxZzjJxWJVloxNl0icq9ohM6501gkAzUjpJx48PqKsZJtfkguDHbnfiKkW8M3Ep0C4RFgNSAjemqbDHlwU3VRFUcVO0SMSnFa+/irEhxOagOGxRUoge7fHWU5bY4XCO1qIIjTNIw6qXhn8gUXIE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=NsXMOweT; arc=none smtp.client-ip=198.137.202.133
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="CaiDPLJH"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="NsXMOweT"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
 	MIME-Version:References:In-Reply-To:Message-Id:Date:Subject:Cc:To:From:Sender
 	:Reply-To:Content-Type:Content-ID:Content-Description;
-	bh=s9Pu6ieiVUWU70yfnx7yKzpl91lyIUDqJOc53o+My9E=; b=CaiDPLJHzFCmDHSc+Mx/pvIeky
-	zwcsrnu0CSMPxozxPbn1+L3cXr6qMDKSJvUz4nQ8UPISIdQccGI5w1vlmgXltWXiWJpRqgJ6jV1cJ
-	AKziYg6vQh33tJLm83DZbbeA67hbEWNHxrhe3VjuoA+i5pq+G1dLEgEyJRjuWYMTn5fKJ7uSq/9Bl
-	E18C8f8d2HzDfsMXFeH56jUJn1WB8qv0F7zaU0S+XN2D8JWEpeC26JBRxC+6RS51290oO5L75a1oy
-	n2Gh1YIC6Uhgu9cbiA2X/7pafimy9XNIsQ+ghB+QnF4svWoPi2nfxo3ktE26Cqd5y5IE+ahkOVYiM
-	34bBEG7w==;
+	bh=f3zgMPRzyEaVBtSoLHLNya392ZrbcPY31mEsET5i7T0=; b=NsXMOweTN1zS7Pd9VMsqipxzkm
+	WQCkFR0uW4gfG05h6igL8Aez15SL5DsmtoT+mzzhtgHs3ispfG8En18092R8f8pvAP5SD4hjLvoj6
+	QkzSQGIBZ/nZM5bkfT9gShIJKmq/x1s8jd5LlItju1ZVbxwbtEKSwCPs4hpYViKCL6pQ7nU5ES49X
+	Tv2AHWT5VVTuLW7vt1+MlqU1WxHXhOjjNnuCdvIX1m2vqzF7Am/fnwJHNDeXcGqMvg2c0mKmfNERZ
+	iGEioZQ4ZGh1/XSajE4ymFsB/52MHXtnWAfnz+0k4x4SfMszX6LLhGgFwbzXL2dIeUogPQZREvp9E
+	lkiCK0zg==;
 Received: from 213-147-167-65.nat.highway.webapn.at ([213.147.167.65] helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1reYGD-000000004sb-495B;
-	Mon, 26 Feb 2024 10:31:03 +0000
+	id 1reYGJ-000000004ud-2AFt;
+	Mon, 26 Feb 2024 10:31:08 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>,
 	Mike Snitzer <snitzer@kernel.org>,
@@ -43,9 +43,9 @@ Cc: drbd-dev@lists.linbit.com,
 	dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org,
 	linux-raid@vger.kernel.org
-Subject: [PATCH 09/16] block: remove disk_stack_limits
-Date: Mon, 26 Feb 2024 11:29:57 +0100
-Message-Id: <20240226103004.281412-10-hch@lst.de>
+Subject: [PATCH 10/16] drbd: pass the max_hw_sectors limit to blk_alloc_disk
+Date: Mon, 26 Feb 2024 11:29:58 +0100
+Message-Id: <20240226103004.281412-11-hch@lst.de>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240226103004.281412-1-hch@lst.de>
 References: <20240226103004.281412-1-hch@lst.de>
@@ -58,62 +58,52 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-disk_stack_limits is unused now, remove it.
+Pass a queue_limits structure with the max_hw_sectors limit to
+blk_alloc_disk instead of updating the limit on the allocated gendisk.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-settings.c   | 24 ------------------------
- include/linux/blkdev.h |  2 --
- 2 files changed, 26 deletions(-)
+ drivers/block/drbd/drbd_main.c | 13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
 
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index 13865a9f89726c..3c7d8d638ab59d 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -916,30 +916,6 @@ void queue_limits_stack_bdev(struct queue_limits *t, struct block_device *bdev,
- }
- EXPORT_SYMBOL_GPL(queue_limits_stack_bdev);
+diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+index cea1e537fd56c1..113b441d4d3670 100644
+--- a/drivers/block/drbd/drbd_main.c
++++ b/drivers/block/drbd/drbd_main.c
+@@ -2690,6 +2690,14 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 	int id;
+ 	int vnr = adm_ctx->volume;
+ 	enum drbd_ret_code err = ERR_NOMEM;
++	struct queue_limits lim = {
++		/*
++		 * Setting the max_hw_sectors to an odd value of 8kibyte here.
++		 * This triggers a max_bio_size message upon first attach or
++		 * connect.
++		 */
++		.max_hw_sectors		= DRBD_MAX_BIO_SIZE_SAFE >> 8,
++	};
  
--/**
-- * disk_stack_limits - adjust queue limits for stacked drivers
-- * @disk:  MD/DM gendisk (top)
-- * @bdev:  the underlying block device (bottom)
-- * @offset:  offset to beginning of data within component device
-- *
-- * Description:
-- *    Merges the limits for a top level gendisk and a bottom level
-- *    block_device.
-- */
--void disk_stack_limits(struct gendisk *disk, struct block_device *bdev,
--		       sector_t offset)
--{
--	struct request_queue *t = disk->queue;
--
--	if (blk_stack_limits(&t->limits, &bdev_get_queue(bdev)->limits,
--			get_start_sect(bdev) + (offset >> 9)) < 0)
--		pr_notice("%s: Warning: Device %pg is misaligned\n",
--			disk->disk_name, bdev);
--
--	disk_update_readahead(disk);
--}
--EXPORT_SYMBOL(disk_stack_limits);
--
- /**
-  * blk_queue_update_dma_pad - update pad mask
-  * @q:     the request queue for the device
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 285e82723d641f..75c909865a8b7b 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -926,8 +926,6 @@ extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 			    sector_t offset);
- void queue_limits_stack_bdev(struct queue_limits *t, struct block_device *bdev,
- 		sector_t offset, const char *pfx);
--extern void disk_stack_limits(struct gendisk *disk, struct block_device *bdev,
--			      sector_t offset);
- extern void blk_queue_update_dma_pad(struct request_queue *, unsigned int);
- extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
- extern void blk_queue_virt_boundary(struct request_queue *, unsigned long);
+ 	device = minor_to_device(minor);
+ 	if (device)
+@@ -2708,7 +2716,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 
+ 	drbd_init_set_defaults(device);
+ 
+-	disk = blk_alloc_disk(NULL, NUMA_NO_NODE);
++	disk = blk_alloc_disk(&lim, NUMA_NO_NODE);
+ 	if (IS_ERR(disk)) {
+ 		err = PTR_ERR(disk);
+ 		goto out_no_disk;
+@@ -2729,9 +2737,6 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
+ 
+ 	blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES, disk->queue);
+ 	blk_queue_write_cache(disk->queue, true, true);
+-	/* Setting the max_hw_sectors to an odd value of 8kibyte here
+-	   This triggers a max_bio_size message upon first attach or connect */
+-	blk_queue_max_hw_sectors(disk->queue, DRBD_MAX_BIO_SIZE_SAFE >> 8);
+ 
+ 	device->md_io.page = alloc_page(GFP_KERNEL);
+ 	if (!device->md_io.page)
 -- 
 2.39.2
 
