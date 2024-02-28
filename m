@@ -1,64 +1,94 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E774C5E070;
-	Wed, 28 Feb 2024 19:56:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B3B2363;
+	Wed, 28 Feb 2024 22:56:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709150204; cv=none; b=AZVegzw/e4JD6/9238fb+xQMzO0vDR1BepTyLxK216B6ZuT473m8coLyA8P5LNvrJHjmb9/vHYhTTIEV2uV2G7WkNXBh3EE6VtjDFNQyYuomb2Ij8s7egtb5bKrctpN7aVEw8AHXInNpOvqBUVynMcMOzkghSlG4I+Csk7d9cLI=
+	t=1709161017; cv=none; b=W/8scN0ono2l2kIWxZKsimLnclBbq53IaTbmXj4ejKeS/NqGK7PbLU551zzZuLLFG71Bd966XnHCLFoEx3yEW65f99sfunORqYk7h8gGwRSVeQ2EVnAedha9CXjFdaz08abSiPXnysg+kktJ5dzHL3R1mcktc1lOjaDyB5knH8k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709150204; c=relaxed/simple;
-	bh=HDh1ILBZ0Iw5s11JkdJ26MeMnFxuyM5gEXdWewJTJTU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=OdZ5zIiNFuQqez23/JAZiDo5exKdvtgqIbCidFZRZiejNR7DXk38BmJ1hFgXZMa4Z1bzCyQisS+t4vgbfm1d1HnS6QMI/BQUTti6WLhBrV+oN1IJF1ZSSEi5h+eyi7UKDVBxJuyx3qljSGfg3bXS7qI+O9S7vY4KeflBgE8bZQo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+	s=arc-20240116; t=1709161017; c=relaxed/simple;
+	bh=f0TMfuFnHxnS6RLPrCGmyX5DIkMTOjG4kcDX8m3H6e4=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=aELiw7O35Zvcd0LXFMKCJdbKDxpDOZIgDYrkG4ZJqvlLVv0JC/z4l0/p/TwA0IT4pG7zuQ/cOYsMIH4dHvdy+QWETV9z7XVjgDJXbKI//SlZgcYXNdD5CKB8vG4TiZV4ABMDgbJdWdFy4NvFMieJc675Vh85ejlTeJwgMuEwoS8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=T86vCPuY; arc=none smtp.client-ip=198.137.202.133
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 694AB68D05; Wed, 28 Feb 2024 20:56:32 +0100 (CET)
-Date: Wed, 28 Feb 2024 20:56:32 +0100
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="T86vCPuY"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:In-Reply-To:References;
+	bh=8mTDEq7YgrLRtB4NmOsw107E6gy3/MmCkonhSVhgMbs=; b=T86vCPuY9f5yn4XzAFOwAdPqW/
+	cJvKJFeZW+YF3lNqn/15CMiMUQALh4oaV+VQ/Pi1x88CFfNBt14LYOdbJ79etmC+I0pu+qHZCJTRZ
+	ZYOk7gvD12xglRqzv99TDj6GVQDg++9K5yzh0rjsX102c1zpY+GbrsWK/SxDHnQG5+k0MFXyFPFwd
+	65E01If7wEjfc/RbBQq10gJ6Zef1UBIYsYIlb0nh2xaHGXrVoTS3/30mfwzItoq0yDDp0Bo6YKD1K
+	uUZg29Gre25VbH0ebkhujnGWAxnFLoKcT2ubSRSqKfYyFFs/gVhUJLWu9DfYvSUB/N2tbjgb5WN5Q
+	2jM7AoOA==;
+Received: from [4.28.11.157] (helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rfSr7-0000000BCNW-2AL1;
+	Wed, 28 Feb 2024 22:56:53 +0000
 From: Christoph Hellwig <hch@lst.de>
-To: Song Liu <song@kernel.org>
-Cc: Mike Snitzer <snitzer@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>, Xiao Ni <xni@redhat.com>,
-	Zdenek Kabelac <zkabelac@redhat.com>,
-	Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
-	Mikulas Patocka <mpatocka@redhat.com>, Yu Kuai <yukuai3@huawei.com>,
-	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	linux-raid@vger.kernel.org, lvm-devel@lists.linux.dev
-Subject: Re: atomic queue limit updates for stackable devices
-Message-ID: <20240228195632.GA20077@lst.de>
-References: <20240223161247.3998821-1-hch@lst.de> <ZdjXsm9jwQlKpM87@redhat.com> <ZdjYJrKCLBF8Gw8D@redhat.com> <20240227151016.GC14335@lst.de> <Zd38193LQCpF3-D0@redhat.com> <20240227151734.GA14628@lst.de> <Zd4BhQ66dC_d7Mn0@redhat.com> <CAPhsuW69mM3tEBR=SgKy_SYE+NUsNO+8H6toyk+5mKcSfGMjmg@mail.gmail.com>
+To: Jens Axboe <axboe@kernel.dk>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Song Liu <song@kernel.org>,
+	Yu Kuai <yukuai3@huawei.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org,
+	linux-raid@vger.kernel.org
+Subject: atomic queue limit updates for stackable devices v3
+Date: Wed, 28 Feb 2024 14:56:39 -0800
+Message-Id: <20240228225653.947152-1-hch@lst.de>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAPhsuW69mM3tEBR=SgKy_SYE+NUsNO+8H6toyk+5mKcSfGMjmg@mail.gmail.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Tue, Feb 27, 2024 at 01:50:19PM -0800, Song Liu wrote:
-> I think we can do something like:
-> 
-> make check S=<list of test to skip>
-> 
-> I don't have a reliable list to skip at the moment, as some of the tests
-> fail on some systems but not on others. However, per early report,
-> I guess we can start with the following skip list:
-> 
-> shell/integrity-caching.sh
-> shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh
-> shell/lvconvert-raid-reshape.sh
+Hi all,
 
-Thanks.  I've been iterating over it this morning, eventually growing
-to:
+this series adds new helpers for the atomic queue limit update
+functionality and then switches dm and md over to it.  The dm switch is
+pretty trivial as it was basically implementing the model by hand
+already, md is a bit more work.
 
-make check
-S=shell/integrity-caching.sh,shell/lvconvert-raid-reshape-linear_to_raid6-single-type.sh,shell/lvconvert-raid-reshape.sh,shell/lvconvert-raid-reshape-linear_to_striped-single-type.sh,shell/lvconvert-raid-reshape-linear_to_striped.sh,shell/lvchange-raid456.sh,shell/component-raid.sh,shell/lvconvert-raid-reshape-load.sh,shell/lvchange-raid-transient-failures.sh,shell/lvconvert-raid-reshape-striped_to_linear-single-type.sh,shell/lvconvert-raid-reshape-striped_to_linear.sh,shell/lvconvert-raid-reshape-stripes-load-fail.sh,shell/lvconvert-raid-reshape-stripes-load-reload.sh,shell/lvconvert-raid-reshape-stripes-load.sh,lvconvert-raid-reshape.sh,shell/lvconvert-raid-restripe-linear.sh,shell/lvconvert-raid-status-validation.sh,shell/lvconvert-raid-takeover-linear_to_raid4.sh,shell/lvconvert-raid-takeover-raid4_to_linear.sh,shell/lvconvert-raid-takeover-alloc-failure.sh
+I've run the mdadm testsuite, and it has the same (rather large) number
+of failures as the baseline, and the lvm2 test suite goes as far as
+the baseline before handing in __md_stop_writes.
 
-before giving up.  I then tried to run the md-6.9 branch that's
-supposed to have the fixes, but I still see the same md_stop_writes
-hangs.
+nvme-multipath will be handled separately as it is too tightly integrated
+with the rest of nvme.
+
+Changes since v2:
+ - drop drbd from this series again for now as we've not made any
+   review progress
+ - keep the NULL gendisk checks for DM-mapped MD devices, and add a few
+   helpers to better document and abstract them
+ - use mddev_suspend instead of blk_mq_freeze_queue around updating
+   io_opt
+
+Changes since v1:
+ - a few kerneldoc fixes
+ - fix a line remove after testing in raid0
+ - also add drbd
+
+Diffstat:
+ block/blk-mq.c         |   14 ++-
+ block/blk-settings.c   |   47 +++++++++----
+ drivers/md/dm-table.c  |   27 +++----
+ drivers/md/md-bitmap.c |    9 --
+ drivers/md/md.c        |   89 ++++++++++++++++++-------
+ drivers/md/md.h        |   28 +++++++
+ drivers/md/raid0.c     |   42 ++++++-----
+ drivers/md/raid1.c     |   51 ++++++--------
+ drivers/md/raid10.c    |   85 +++++++++++------------
+ drivers/md/raid5-ppl.c |    3 
+ drivers/md/raid5.c     |  174 +++++++++++++++++++++++--------------------------
+ include/linux/blkdev.h |    5 -
+ 12 files changed, 321 insertions(+), 253 deletions(-)
