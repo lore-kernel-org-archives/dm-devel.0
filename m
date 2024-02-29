@@ -1,117 +1,57 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 86B2A13441F
-	for <dm-devel@lists.linux.dev>; Thu, 29 Feb 2024 18:59:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3CC6A1E499;
+	Thu, 29 Feb 2024 19:39:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709233168; cv=none; b=f2ojDmvB7MfFVI1RGI+jJixmsH/tnGvt71d82THI8nrGYYwwDyQXaIfI2/GD2TEPyWYalkQQfLvxBKqrvXOsKFMuKDpcw5PIMPBNmUHE0uqy2k0eRIzMAHgBnz9+YI+atFw5eCSXStNM6kl1I42FKBlNvyg+YKQCfkQxeZjuUMQ=
+	t=1709235560; cv=none; b=expLZCMvWVnchM/g1EMC85OA8fxu9Bb6R4MGFaLj20UQkqFbEqmTR+9rw4Mylepu8RG/eWgsXoCrCchpYdupFY8ixTcXKqEgyAXiVGS2B+QvwrL0jvcFy7Yq6Rz3DFfEdJy5FYore61CNzc8eAbgzMGGK7URQ79Kg0NU6zE0rDo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709233168; c=relaxed/simple;
-	bh=03wrvTX4PmazfhRynJz8dIwWNCpXUtctCoHli5CWq3k=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=q4Iz/fg3Ngk4ljtx3IkYdVdkMg99dbrK7cdPvnBhg365qbU7wp7cYCDIrCEaxn/+nCZVfQycp/sWbfcZmo/ab0mmFoW6qbG8FAMNDD7sIC1Kj4RwHoTcgDYPeW+P4kwBDMue4vy7BP756Aw/273x+NOjBZLbS0J1KonFKKmGPko=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=Chwd/gWh; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
+	s=arc-20240116; t=1709235560; c=relaxed/simple;
+	bh=ONwQZhWdYcui5wN34nN0cw2UqdUK4Eh09LySWF65hWE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=fMjUTNU3jV/2TLgk2eKSW+j8XMBNAF+FH8Tj0F+CF6791eU9+ZRrGN5Y3tJOkq5hBdJrt7EjkbRyxrJ3jdHUtCSfWt187IWaUGF2ipJ/13uxYxEJGfhRCuMwI+WcjUN5Rn8RHSLtUn5+067w4SYWEnlaZSN+hG1LNvn+vvcfBEE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=pSFBh26/; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="Chwd/gWh"
-Received: from [10.137.106.151] (unknown [131.107.8.87])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 67BEC20B74C1;
-	Thu, 29 Feb 2024 10:59:21 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 67BEC20B74C1
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1709233161;
-	bh=JV+3tSiFvjDV+NVnRDenCsHCjaCafQUqnYHRslOz/Is=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=Chwd/gWhaBwu6cGDHeTQLShmFSuRlHjpipSjMmiY+uPVfP9m8FVNjLOHiAxx+ZPF/
-	 mebhxmfmUfYNWYgKAjhshktx0kymWEOFVKFUkQGBgOaJ0lidTIXk/2OEIuZ/FtL46I
-	 mzpviYdU/EUUFj7yvd/zQgv5h89QqsFhP/icO91I=
-Message-ID: <b73e3387-558f-4f40-8741-c6ed7965b25f@linux.microsoft.com>
-Date: Thu, 29 Feb 2024 10:59:21 -0800
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="pSFBh26/"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=ldDF0uFnhLM0pX4TkhBHDEP6wvmAk+l0peU5Oz8t14Q=; b=pSFBh26/VtE5g3CLLMhC/vpyfT
+	ZG/n5u3pHh8YXJdUHOZsp0tvb2Q7R13SZDqDLtyZTZ7xViBqt9wkvhlR2N7eVpmHrE9Oxpzoz/N89
+	gHyO6ihI2OVNCewmgkHPEZ9uczYEsxrrRawJVDwO9qHGho+KHnZm3w2uqHAL370mbrcUopHrKuhAh
+	s53fpFROmBujJI1I5Z61h4YN03KeKnJyTIA6mIzgoq2Sj3zcLZGe25B2qbFXHB5NbgVqeM8YvVWxM
+	rcBodK3VQ2pU58rCQ7oSWqK3IO/o47+XTLZZKQVkjBpq1fxUbxWyHZ/JY6B+cC8f3KaGBxrfgBiK0
+	KXrNreIA==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rfmFM-0000000Ev1J-2N5H;
+	Thu, 29 Feb 2024 19:39:12 +0000
+Date: Thu, 29 Feb 2024 11:39:12 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Xiao Ni <xni@redhat.com>
+Cc: song@kernel.org, yukuai1@huaweicloud.com, bmarzins@redhat.com,
+	heinzm@redhat.com, snitzer@kernel.org, ncroxon@redhat.com,
+	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: Re: [PATCH 0/6] Fix dmraid regression bugs
+Message-ID: <ZeDdYLdWav6yWWwo@infradead.org>
+References: <20240229154941.99557-1-xni@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH v13 17/20] ipe: enable support for fs-verity as a
- trust provider
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
- tytso@mit.edu, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org,
- eparis@redhat.com, paul@paul-moore.com, linux-doc@vger.kernel.org,
- linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org,
- linux-fscrypt@vger.kernel.org, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, audit@vger.kernel.org,
- linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>
-References: <1709168102-7677-1-git-send-email-wufan@linux.microsoft.com>
- <1709168102-7677-18-git-send-email-wufan@linux.microsoft.com>
- <20240229044625.GA1946@sol.localdomain>
-Content-Language: en-CA
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <20240229044625.GA1946@sol.localdomain>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240229154941.99557-1-xni@redhat.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
+If I rund this on the md/md-6.9-for-hch branch all the hangs I was
+previously seeing in the lvm2 test suite are gone.  Still a bunchof
+failures, though:
 
+### 427 tests: 284 passed, 127 skipped, 0 timed out, 3 warned, 13 failed 
 
-On 2/28/2024 8:46 PM, Eric Biggers wrote:
-> On Wed, Feb 28, 2024 at 04:54:59PM -0800, Fan Wu wrote:
->> diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
->> index f5190a1347a6..ca1573ff21b7 100644
->> --- a/security/ipe/hooks.c
->> +++ b/security/ipe/hooks.c
->> @@ -254,3 +254,33 @@ int ipe_bdev_setsecurity(struct block_device *bdev, const char *key,
->>   	return -EOPNOTSUPP;
->>   }
->>   #endif /* CONFIG_IPE_PROP_DM_VERITY */
->> +
->> +#ifdef CONFIG_IPE_PROP_FS_VERITY
->> +/**
->> + * ipe_inode_setsecurity - Sets fields of a inode security blob from @key.
->> + * @inode: The inode to source the security blob from.
->> + * @name: The name representing the information to be stored.
->> + * @value: The value to be stored.
->> + * @size: The size of @value.
->> + * @flags: unused
->> + *
->> + * Saves fsverity signature & digest into inode security blob
->> + *
->> + * Return:
->> + * * 0	- OK
->> + * * !0	- Error
->> + */
->> +int ipe_inode_setsecurity(struct inode *inode, const char *name,
->> +			  const void *value, size_t size,
->> +			  int flags)
->> +{
->> +	struct ipe_inode *inode_sec = ipe_inode(inode);
->> +
->> +	if (!strcmp(name, FS_VERITY_INODE_SEC_NAME)) {
->> +		inode_sec->fs_verity_signed = size > 0 && value;
->> +		return 0;
->> +	}
->> +
->> +	return -EOPNOTSUPP;
->> +}
-> 
-> So IPE is interested in whether a file has an fsverity builtin signature, but it
-> doesn't care what the signature is or whether it has been checked.  What is the
-> point?
-> 
-> - Eric
-
-It does make sure the signature is checked. This hook call can only be 
-triggered after fsverity_verify_signature() succeed. Therefore, for 
-files that are marked with the security blob inode_sec->fs_verity_sign 
-as true, they must successfully pass the fsverity_verify_signature() check.
-
-Regarding the other question, the current version does not support 
-defining policies to trust files based on the inner content of their 
-signatures because the current patch set is already too large.
-
-We plan to introduce new policy grammars to enable the policy to define 
-which certificate of the signature can be trusted after this version is 
-accepted.
-
--Fan
