@@ -1,128 +1,99 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 823497E599;
-	Thu, 29 Feb 2024 13:21:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D6967580A
+	for <dm-devel@lists.linux.dev>; Thu, 29 Feb 2024 15:49:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709212862; cv=none; b=pkClSgMqpI2joxksHnbHhQVLx7yJipX/dc3qLLoJu7vJk/A9EBOf2MtA/+UBVWOzLz0afcVc8rzxBcl+8THMmV9dggVcv9rOAHJMoNi8ostO3nYvw2D58vdxj/pW+nl6UsqebNtIOfc5I/EI9ZA39HhvprkPTKgmduzdkmoGdKI=
+	t=1709221793; cv=none; b=JPxr7xw899CTr54HgHef5PWVwkokToF9tBoWdK9ErmWqgev9bJwAqoIUML0xwRO4bmN1PaM7GsJCKtd3B94E5TCT96o4GFqK8d2mvezLWSU6X1F9h3GBnSGChX+Gm7dfejm9zCPHxoXVUuZqxE2I9HX9UAAC0BrzEmiMNqHDQ00=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709212862; c=relaxed/simple;
-	bh=M3sRBoBSnkBK96U6qK6wazB9MSGZuSvjzJj0jFQvm4c=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=MdMevmIAbOp9f1cFH+1z3s+scUe1XT1wEQVizSpSi9VFaozQWsPSGnwNd6O+mwsRXj2JvguDPho4usdALsI96QlihbY08ukXTw4GTUrTyVeN5h1zU8IaFbzoW8kifBEUgn8PrtLQEdnN+1e5S1dHEZod6ScMtNBLtEifB7/xcYg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id CC6AD68BEB; Thu, 29 Feb 2024 14:20:52 +0100 (CET)
-Date: Thu, 29 Feb 2024 14:20:52 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Song Liu <song@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>, Xiao Ni <xni@redhat.com>,
-	Zdenek Kabelac <zkabelac@redhat.com>, Jens Axboe <axboe@kernel.dk>,
-	Mikulas Patocka <mpatocka@redhat.com>, Yu Kuai <yukuai3@huawei.com>,
-	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	linux-raid@vger.kernel.org, lvm-devel@lists.linux.dev
-Subject: Re: atomic queue limit updates for stackable devices
-Message-ID: <20240229132052.GA6858@lst.de>
-References: <20240223161247.3998821-1-hch@lst.de> <ZdjXsm9jwQlKpM87@redhat.com> <ZdjYJrKCLBF8Gw8D@redhat.com> <20240227151016.GC14335@lst.de> <Zd38193LQCpF3-D0@redhat.com> <20240227151734.GA14628@lst.de> <Zd4BhQ66dC_d7Mn0@redhat.com> <CAPhsuW69mM3tEBR=SgKy_SYE+NUsNO+8H6toyk+5mKcSfGMjmg@mail.gmail.com> <20240228195632.GA20077@lst.de> <CAPhsuW5c5o8JS9T8CCGU811jpxrbepjJHnYpDbge+1rT6j8NbA@mail.gmail.com>
+	s=arc-20240116; t=1709221793; c=relaxed/simple;
+	bh=NeF1Wj4Z8RuiIMhD3ZuUvpWzo6wuLdeZq2a6YTe4VPY=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=BoAHps+EJM6x3hH9Qo+ZmPLIIc17iy3/34psSCcbon92xkA0KhDFDLD4RajQ1lgDMFX4OvNOCTyH9xJ5yc2zpOIyk2il5fkX1ZgEA/FcKYXg/tKH8jGg4TBb+072jraZdxptpXW48deZwzMQlpq1+5OK1+JDEJAC08Mo77rlm2c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SziXS7X0; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SziXS7X0"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1709221791;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Wfu0sWlqCO6LDuKxM9Us8IsB5MFpZq4BxE/BhqUnMpE=;
+	b=SziXS7X0q4LUz5gD3Cpn/RMLPjTvEkFzC+bump+PSxwGHWBT3Ox3eC8gAxIFf7WpKm76HC
+	FpuNnlv3fXsV65nuWpwSjVFUoshMvNQnUsM/GVf/gKq21N4mLsb4U6HNforLbjz8rwWwWz
+	n5PM2xIDPG2A8FVNWvK2laQwuK9gKiE=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-83-3U-MKXusOH-zL4_-X4MgOg-1; Thu, 29 Feb 2024 10:49:47 -0500
+X-MC-Unique: 3U-MKXusOH-zL4_-X4MgOg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3FDA2845DC1;
+	Thu, 29 Feb 2024 15:49:47 +0000 (UTC)
+Received: from localhost.localdomain (unknown [10.72.120.8])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6C278C0348C;
+	Thu, 29 Feb 2024 15:49:43 +0000 (UTC)
+From: Xiao Ni <xni@redhat.com>
+To: song@kernel.org
+Cc: yukuai1@huaweicloud.com,
+	bmarzins@redhat.com,
+	heinzm@redhat.com,
+	snitzer@kernel.org,
+	ncroxon@redhat.com,
+	linux-raid@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: [PATCH 0/6] Fix dmraid regression bugs
+Date: Thu, 29 Feb 2024 23:49:35 +0800
+Message-Id: <20240229154941.99557-1-xni@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAPhsuW5c5o8JS9T8CCGU811jpxrbepjJHnYpDbge+1rT6j8NbA@mail.gmail.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
 
-On Wed, Feb 28, 2024 at 06:02:33PM -0800, Song Liu wrote:
-> md-6.9 branch doesn't have all the fixes, as some recent fixes
-> are routed via the md-6.8 branch. You can try on this branch, which
-> should provide a better base line. The set applies cleanly on this
-> branch.
-> 
-> https://git.kernel.org/pub/scm/linux/kernel/git/song/md.git/log/?h=md-6.9-for-hch
+Hi all
 
-This branch crashes for me when running the lvm2 test suite:
+This patch set tries to fix dmraid regression problems when we recently.
+After talking with Kuai who also sent a patch set which is used to fix
+dmraid regression problems, we decide to use a small patch set to fix
+these regression problems. This patch is based on song's md-6.8 branch. 
 
-###      running: [ndev-vanilla] shell/lvconvert-raid-reshape.sh  0:26.281[
-1108.566441] md: mdX: re.
-[ 1108.694826] md/raid:mdX: device dm-67 operational as raid disk 0
-[ 1108.695034] md/raid:mdX: device dm-69 operational as raid disk 1
-[ 1108.695360] md/raid:mdX: device dm-71 operational as raid disk 2
-[ 1108.695532] md/raid:mdX: device dm-73 operational as raid disk 3
-[ 1108.696468] md/raid:mdX: raid level 5 active with 4 out of 4 devices,
-algorithm 2
-[ 1108.696801] device-mapper: raid: raid456 discard support disabled due to
-discard_zeroes_data unce.
-[ 1108.697059] device-mapper: raid: Set dm-raid.devices_handle_discard_safely=Y
-to override.
-[ 1109.129345] md/raid:mdX: device dm-67 operational as raid disk 0
-[ 1109.129550] md/raid:mdX: device dm-69 operational as raid disk 1
-[ 1109.129720] md/raid:mdX: device dm-71 operational as raid disk 2
-[ 1109.129887] md/raid:mdX: device dm-73 operational as raid disk 3
-[ 1109.130775] md/raid:mdX: raid level 5 active with 4 out of 4 devices,
-algorithm 5
-[ 1109.134517] device-mapper: raid: raid456 discard support disabled due to
-discard_zeroes_data unce.
-[ 1109.135207] device-mapper: raid: Set dm-raid.devices_handle_discard_safely=Y
-to override.
-[ 1112.713392] md: reshape of RAID array mdX
-[ 1112.828252] BUG: kernel NULL pointer dereference, address: 0000000000000088
-[ 1112.828467] #PF: supervisor read access in kernel mode
-[ 1112.828613] #PF: error_code(0x0000) - not-present page
-[ 1112.828755] PGD 0 P4D 0 
-[ 1112.828829] Oops: 0000 [#2] PREEMPT SMP NOPTI
-[ 1112.828955] CPU: 1 PID: 1785 Comm: kworker/1:2 Tainted: G      D W
-6.8.0-rc3+ #2235
-[ 1112.829181] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS
-1.16.2-debian-1.16.2-1 04/014
-[ 1112.829422] Workqueue: md_misc md_start_sync
-[ 1112.829542] RIP: 0010:md_start_sync+0x66/0x2e0
-[ 1112.829666] Code: c0 0f 85 ef 00 00 00 48 83 bb 50 fd ff ff ff 0f 84 9d 01
-00 00 48 8b 83 90 fb f5
-[ 1112.830197] RSP: 0018:ffffc900016dbe28 EFLAGS: 00010213
-[ 1112.830337] RAX: 0000000000000000 RBX: ffff888115a224d0 RCX:
-0000000000000000
-[ 1112.830527] RDX: 0000000000000000 RSI: ffffffff8301a09e RDI:
-00000000ffffffff
-[ 1112.830717] RBP: ffff888115a222b0 R08: 0000000000000001 R09:
-0000000000000000
-[ 1112.830906] R10: ffffc900016dbe28 R11: 0000000000000001 R12:
-ffff888115a222b1
-[ 1112.831094] R13: ffff888115a22058 R14: 0000000000000000 R15:
-ffffffff81190681
-[ 1112.831285] FS:  0000000000000000(0000) GS:ffff8881f9d00000(0000)
-knlGS:0000000000000000
-[ 1112.831497] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[ 1112.831653] CR2: 0000000000000088 CR3: 000000010426c000 CR4:
-0000000000750ef0
-[ 1112.831879] PKRU: 55555554
-[ 1112.831954] Call Trace:
-[ 1112.832024]  <TASK>
-[ 1112.832085]  ? __die+0x1e/0x60
-[ 1112.832173]  ? page_fault_oops+0x154/0x450
-[ 1112.832286]  ? do_user_addr_fault+0x69/0x7e0
-[ 1112.832403]  ? exc_page_fault+0x6d/0x1c0
-[ 1112.832512]  ? asm_exc_page_fault+0x26/0x30
-[ 1112.832628]  ? process_one_work+0x171/0x4a0
-[ 1112.832743]  ? md_start_sync+0x66/0x2e0
-[ 1112.832849]  ? md_start_sync+0x35/0x2e0
-[ 1112.832957]  process_one_work+0x1d8/0x4a0
-[ 1112.833066]  worker_thread+0x1ce/0x3b0
-[ 1112.833169]  ? wq_sysfs_prep_attrs+0x90/0x90
-[ 1112.833285]  kthread+0xf2/0x120
-[ 1112.833374]  ? kthread_complete_and_exit+0x20/0x20
-[ 1112.833504]  ret_from_fork+0x2c/0x40
-[ 1112.833616]  ? kthread_complete_and_exit+0x20/0x20
-[ 1112.833746]  ret_from_fork_asm+0x11/0x20
-[ 1112.833855]  </TASK>
-[ 1112.833918] Modules linked in: dm_raid i2c_i801 crc32_pclmul i2c_smbus [last
-unloaded: scsi_debug]
-[ 1112.834156] CR2: 0000000000000088
-[ 1112.834248] ---[ end trace 0000000000000000 ]---
-[ 1112.834373] RIP: 0010:remove_and_add_spares+0x72/0x2f0
+This patch set has six patches. It reverts three patches. The fourth one
+and the fifth one resolve deadlock problems. With these two patches, it
+can resolve most deadlock problem. The last one fixes the raid5 reshape
+deadlock problem.
+
+I have run lvm2 regression test. There are 4 failed cases:
+shell/dmsetup-integrity-keys.sh
+shell/lvresize-fs-crypt.sh
+shell/pvck-dump.sh
+shell/select-report.sh
+
+And lvconvert-raid-reshape.sh can fail sometimes. But it fails in 6.6
+kernel too. So it can return back to the same state with 6.6 kernel.
+
+Xiao Ni (6):
+  Revert "md: Don't register sync_thread for reshape directly"
+  Revert "md: Make sure md_do_sync() will set MD_RECOVERY_DONE"
+  Revert "md: Don't ignore suspended array in md_check_recovery()"
+  dm-raid/md: Clear MD_RECOVERY_WAIT when stopping dmraid
+  md: Set MD_RECOVERY_FROZEN before stop sync thread
+  md/raid5: Don't check crossing reshape when reshape hasn't started
+
+ drivers/md/dm-raid.c |  2 ++
+ drivers/md/md.c      | 22 +++++++++----------
+ drivers/md/raid10.c  | 16 ++++++++++++--
+ drivers/md/raid5.c   | 51 ++++++++++++++++++++++++++++++++------------
+ 4 files changed, 63 insertions(+), 28 deletions(-)
+
+-- 
+2.32.0 (Apple Git-132)
+
