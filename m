@@ -1,161 +1,89 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A61202D638
-	for <dm-devel@lists.linux.dev>; Thu, 29 Feb 2024 02:14:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AAA9E364D8;
+	Thu, 29 Feb 2024 04:01:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709172862; cv=none; b=lQZ8TmDbvGtEz9M6k8MIvWYaqvIxlzh37pA2gkO0d6lHtDaARMKhOcwS77FGGNk9S3Dz36XD32R+SeKQ1yce/ppCEhv6sRdAeRcx6Z5bJRldlvJBw1nT4RzeFLhLYKOnGx+9OI9JygZSbG4Y6kztDJXIRINbbAYW4fIapkZ9+U4=
+	t=1709179288; cv=none; b=FZMkEqOMMWzfDzZrKtoZs0/LD4LwtfSFAJkHCuMGyFdxPam0x3y9hJhmWVQuHcKtmCtON5UCflpP9VpeXwJ2jBgmiSMDrXJEzc4S1yvHB4+kBb+Y4sl/o1raGBxhXFL86AUr5uVgsaF1a0wDN3JGTra3dSRWu/UYcg7E/Dg+pMY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709172862; c=relaxed/simple;
-	bh=YTYbyy3+UTYewtVzLjaJat1vjlG10V1fAJH99Lsa9Pk=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=dN9HQnXFzpa2hck9BcZyekDHt4dQVsZXnwJwL5p9Q6MsKiSe30GQt7dYoeLeqayi36pHQUKA1pa6tcog3mBU9+Em8MUJAKskoQ3uIjmD3hDKfk6QIlTKUxfkVsa9feDC1gAThQqj5bkxsQipnJ3vPiBk6DCttQSfCx5XxL/uGwY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TlZXc3pqwz4f3mJH
-	for <dm-devel@lists.linux.dev>; Thu, 29 Feb 2024 10:14:08 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id DAFA11A0175
-	for <dm-devel@lists.linux.dev>; Thu, 29 Feb 2024 10:14:15 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgAn9g526N9ld_rlFQ--.55635S3;
-	Thu, 29 Feb 2024 10:14:15 +0800 (CST)
-Subject: Re: [PATCH v5 05/14] md: don't suspend the array for interrupted
- reshape
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>,
- mpatocka@redhat.com, heinzm@redhat.com, blazej.kucman@linux.intel.com,
- agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev,
- song@kernel.org, jbrassow@f14.redhat.com, neilb@suse.de, shli@fb.com,
- akpm@osdl.org
-Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
- yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-References: <20240201092559.910982-1-yukuai1@huaweicloud.com>
- <20240201092559.910982-6-yukuai1@huaweicloud.com>
- <60d75867-8fb7-4c67-96f7-3e5ba65bdbd9@redhat.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <0f768b3d-d0a2-92ff-e854-74acc9d0ad7a@huaweicloud.com>
-Date: Thu, 29 Feb 2024 10:14:14 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1709179288; c=relaxed/simple;
+	bh=jXQXz+PeGueyYtvLDE3yOIBci2d2WEXu0s/u7WCNEZ0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=AXVm8+sd0RB/YFPifLc5fIIgfreezUSap/w/vqXzaLUGlaolZXqEmTdqyt5O4BQ0lwLHxazltDJrnIHD40/vYYXZLSNY5B6YAKD7dbPBvNdiq+BwvZ/4pQV4uNTvL3WGURtM081N3XVq5lYi+5z5g8IkU8RaCJCYqszPZmP0Oqs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=kuP5Y7E0; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="kuP5Y7E0"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	Content-Type:In-Reply-To:From:References:Cc:To:Subject:MIME-Version:Date:
+	Message-ID:Sender:Reply-To:Content-ID:Content-Description;
+	bh=IkaDFHzSJFvHKVuhr/vGVExR1dL16usQzaOTDa83SZU=; b=kuP5Y7E0UEVVvoc4oBQW9X5uCp
+	78BOH0TZU/YqS5GDK/mP3UJn1iH7u1777o24iLj1DiLnc+FW2KT1HTnoAZGjH/FLZ5Y5fq+04Dw/a
+	8ARxAHD5MksdRmCRZKP6DTdwpNNS95g8cDLdt3d9P39iOFm8rNjlvcdCOopxiw8KBDKOl8WqcWXJr
+	Y+iuI+pNr6CJ0noV1digXsts+JLu+IsxNjEl9Go0sRwhnsEHfLqi2Ldef34MzZ8HMhkqqKdDNimxU
+	Fi+Wx2Rsx7JeVSNJH+m0ceaasHOXSIAi3QWLUOenkUToasyCVbNPctbeQu/U+2mSk8XWb5+Y4k3Cb
+	290yUPhw==;
+Received: from [50.53.50.0] (helo=[192.168.254.15])
+	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rfXbh-0000000Bz2k-2ADm;
+	Thu, 29 Feb 2024 04:01:17 +0000
+Message-ID: <193bd5e5-2263-4e67-b7c6-bb25dc9a6854@infradead.org>
+Date: Wed, 28 Feb 2024 20:01:16 -0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <60d75867-8fb7-4c67-96f7-3e5ba65bdbd9@redhat.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgAn9g526N9ld_rlFQ--.55635S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxZr4DXr4kAw4rKr4rCryUZFb_yoW5AF45pa
-	97ta45CrWDA3s3tw4jqry8KFyYkrZ5t398A3s7Ja4UAr13Jr1FgrW3WrWq9F1j9rWxtw4D
-	tr1Yq3s3uF1q9aDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
-	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
-	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6Fyj6rWU
-	JwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
-	nIWIevJa73UjIFyTuYvjfUF0eHDUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH v13 17/20] ipe: enable support for fs-verity as a
+ trust provider
+Content-Language: en-US
+To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
+ jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
+ axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com,
+ paul@paul-moore.com
+Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
+ linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+ audit@vger.kernel.org, linux-kernel@vger.kernel.org,
+ Deven Bowers <deven.desai@linux.microsoft.com>
+References: <1709168102-7677-1-git-send-email-wufan@linux.microsoft.com>
+ <1709168102-7677-18-git-send-email-wufan@linux.microsoft.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+In-Reply-To: <1709168102-7677-18-git-send-email-wufan@linux.microsoft.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Hi,
 
-在 2024/02/29 10:10, Xiao Ni 写道:
-> 
-> 在 2024/2/1 下午5:25, Yu Kuai 写道:
->> From: Yu Kuai <yukuai3@huawei.com>
->>
->> md_start_sync() will suspend the array if there are spares that can be
->> added or removed from conf, however, if reshape is still in progress,
-> 
-> 
-> Hi Kuai
-> 
-> Why md_start_sync can run when reshape is still in progress? 
-> md_check_recovery should return without queue sync_work, right?
-> 
->> this won't happen at all or data will be corrupted(remove_and_add_spares
->> won't be called from md_choose_sync_action for reshape), hence there is
->> no need to suspend the array if reshape is not done yet.
->>
->> Meanwhile, there is a potential deadlock for raid456:
->>
->> 1) reshape is interrupted;
->>
->> 2) set one of the disk WantReplacement, and add a new disk to the array,
->>     however, recovery won't start until the reshape is finished;
->>
->> 3) then issue an IO across reshpae position, this IO will wait for
->>     reshape to make progress;
->>
->> 4) continue to reshape, then md_start_sync() found there is a spare disk
->>     that can be added to conf, mddev_suspend() is called;
-> 
-> 
-> I c. The answer for my above question is reshape is interrupted and then 
-> it continues the reshape, right?
-> 
 
-Yes, reshape is interrupted and sync_thread is unregister, then
-sync_thread can be registered again to continue reshape.
+On 2/28/24 16:54, Fan Wu wrote:
+> diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+> index 7afb1ce0cb99..9dd5c4769d79 100644
+> --- a/security/ipe/Kconfig
+> +++ b/security/ipe/Kconfig
+> @@ -30,6 +30,19 @@ config IPE_PROP_DM_VERITY
+>  	  that was mounted with a signed root-hash or the volume's
+>  	  root hash matches the supplied value in the policy.
+>  
+> +	  If unsure, answer Y.
+> +
+> +config IPE_PROP_FS_VERITY
+> +	bool "Enable property for fs-verity files"
+> +	depends on FS_VERITY && FS_VERITY_BUILTIN_SIGNATURES
+> +	help
+> +	  This option enables the usage of properties "fsverity_signature"
+> +	  and "fsverity_digest". These properties evaluates to TRUE when
+> +	  a file is fsverity enabled and with a signed digest or its
+> +	  diegst matches the supplied value in the policy.
 
-Thanks,
-Kuai
+	  digest
 
-> 
-> Best Regards
-> 
-> Xiao
-> 
->>
->> Step 4 and step 3 is waiting for each other, deadlock triggered. Noted
->> this problem is found by code review, and it's not reporduced yet.
->>
->> Fix this porblem by don't suspend the array for interrupted reshape,
->> this is safe because conf won't be changed until reshape is done.
->>
->> Fixes: bc08041b32ab ("md: suspend array in md_start_sync() if array 
->> need reconfiguration")
->> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
->> ---
->>   drivers/md/md.c | 13 +++++++++----
->>   1 file changed, 9 insertions(+), 4 deletions(-)
->>
->> diff --git a/drivers/md/md.c b/drivers/md/md.c
->> index 6c5d0a372927..85fde05c37dd 100644
->> --- a/drivers/md/md.c
->> +++ b/drivers/md/md.c
->> @@ -9374,12 +9374,17 @@ static void md_start_sync(struct work_struct *ws)
->>       bool suspend = false;
->>       char *name;
->> -    if (md_spares_need_change(mddev))
->> +    /*
->> +     * If reshape is still in progress, spares won't be added or removed
->> +     * from conf until reshape is done.
->> +     */
->> +    if (mddev->reshape_position == MaxSector &&
->> +        md_spares_need_change(mddev)) {
->>           suspend = true;
->> +        mddev_suspend(mddev, false);
->> +    }
->> -    suspend ? mddev_suspend_and_lock_nointr(mddev) :
->> -          mddev_lock_nointr(mddev);
->> -
->> +    mddev_lock_nointr(mddev);
->>       if (!md_is_rdwr(mddev)) {
->>           /*
->>            * On a read-only array we can:
-> 
-> .
-> 
+> +
+> +	  if unsure, answer Y.
 
+-- 
+#Randy
