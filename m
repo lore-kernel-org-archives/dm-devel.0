@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 563E916F0B8;
-	Thu, 29 Feb 2024 20:42:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D742716FF2F;
+	Thu, 29 Feb 2024 20:42:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709239322; cv=none; b=ndkZ13xHRlH7YztQ/2gzw6Fh6sbvlBK6ZdItvDBulRvEqJbW745vxiblIZjk3ojaG/rARLPi0yU1YIWMZDnDKkBxolXC70tD40uYLjB8QPh7fEh/n+0hBVApmksqeUHNsxpQj8PrGjgeSK0/PCa4OhzAP+HzxrxqidExXvvzcvs=
+	t=1709239334; cv=none; b=MFymk+pfHUdgrPLnVkczgM2qxWfd/nIP21F6OXo0QBMQbIuUZRG3J7lFXAvmHNF2QgEn5HcmyU8nbz+3vpFfz4hTwIGaUpe6lf99U/rL6nwXLpnxRfpV+G6IBcGBTTfXu6xJaME0NthQrMqiOCdIDfMbIfZWk1G+lCcEEbvb2sY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709239322; c=relaxed/simple;
-	bh=X1byIlXeIz167Amrt02P8NABM5QDhaNslmYNbZSOmCA=;
+	s=arc-20240116; t=1709239334; c=relaxed/simple;
+	bh=TPoEWdsLsO5MgKxk/CGhcQr3scilYGPhI2nKziaOJO0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=VPWKMNN/JV+dK2iSgx9MdAfcBax6h99GeJtsVE6aYvXdVoQyFGEbwct04y1U7a4p/Psi/Gq5l98J91SYkeseHmEFH3EVXOB/O9rDvUfwMpqN/I2XRpWgQL+LZhFw62eE3yQeQmBOOrT+b8pU4gYaMKNLd5v9cJJ3WZxBHzrnGEc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pvm6vBCl; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=tuc9uJ9OtfLjm7Vshw/0qngaK/xcmwy7M/B7ZvANZiO9AY3/LzQfhBQ1KRGZjqckWy9MWBHQCuzvidGao5wa417SZouwekLDb4/U4+4UZZxnpdR+o8YD2Z1COsrbV+gaFAhpUPBdoe8sfbRbPCqYbi0n0dTm5hDpoXxLAcHsa8c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=HQkzByet; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pvm6vBCl"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E6D5BC433A6;
-	Thu, 29 Feb 2024 20:42:00 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="HQkzByet"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C9119C43394;
+	Thu, 29 Feb 2024 20:42:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1709239321;
-	bh=X1byIlXeIz167Amrt02P8NABM5QDhaNslmYNbZSOmCA=;
+	s=k20201202; t=1709239334;
+	bh=TPoEWdsLsO5MgKxk/CGhcQr3scilYGPhI2nKziaOJO0=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=pvm6vBCluo2Dh+IqLcpLQVGzLpTOSbnd0smGDIipAvT9PabsG1H6/1MB4higBbAPh
-	 xWJSs9ZAw2pLy6a9hmym5Ugrt2Xci85ksirIqzpC9JIXmP3ZwlCT9jXBaosB7nXbkq
-	 7WBrsQx6rb7qf65Le1Z0ejMnq+vTjHPrMLLcG26iYeejAezZUQnQf+XqcnKXSM6U2k
-	 FA1f/QtWVB+VBMb1lA8PDPCCEo4ChF8m1PlmNPv7zviryOYGDCtk5E5goi1c3yORqp
-	 MN8FU6hx3CZjl5XAzn6T0sMYBf9rf+eVILKBQwCn6GhGmyu/E2hbkfcFsQQaWW66jc
-	 FUMqRRxXZG54g==
+	b=HQkzByetWDnsoa4ofUfqBbGY4lzFaPJpAQe1ixKn8HCJjXaYXgvITzEGBFaUtc3CJ
+	 GCil8vEFz9IcSV8WtpQ0hNAuYJpCZtC87dTB/9dXIW0b4Cz7qKfs7h+UeAhEzIdf1i
+	 MF3HOcxs9PBvcC+reKZg+7yOs6T50ocUFkEWBOkpJ+5wW7s40Vk1Q5ijFSLgliOpt8
+	 gyxfV8+x1Uz/LJR036EwC8DXwvMasPXS2+YDXIIDhkn1oq1GpycqHvTmASofRVZW2c
+	 iqpYAzqsRJlH1gmVwl/MWZNZw5rch/wIwQUg0g+g52db4dmUYw6jHVXGSZSbpArLOn
+	 IqXizZ1ksRRcA==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org
@@ -34,12 +34,12 @@ Cc: Mikulas Patocka <mpatocka@redhat.com>,
 	Sasha Levin <sashal@kernel.org>,
 	agk@redhat.com,
 	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 5.4 6/6] dm-verity, dm-crypt: align "struct bvec_iter" correctly
-Date: Thu, 29 Feb 2024 15:41:46 -0500
-Message-ID: <20240229204150.2862196-6-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.19 4/4] dm-verity, dm-crypt: align "struct bvec_iter" correctly
+Date: Thu, 29 Feb 2024 15:42:04 -0500
+Message-ID: <20240229204208.2862333-4-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20240229204150.2862196-1-sashal@kernel.org>
-References: <20240229204150.2862196-1-sashal@kernel.org>
+In-Reply-To: <20240229204208.2862333-1-sashal@kernel.org>
+References: <20240229204208.2862333-1-sashal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -48,7 +48,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
-X-stable-base: Linux 5.4.269
+X-stable-base: Linux 4.19.307
 Content-Transfer-Encoding: 8bit
 
 From: Mikulas Patocka <mpatocka@redhat.com>
@@ -78,7 +78,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  2 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 4301f22bbfa6c..41647cb576bd0 100644
+index 908bf07688275..d094dd274c461 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
 @@ -46,11 +46,11 @@
@@ -96,10 +96,10 @@ index 4301f22bbfa6c..41647cb576bd0 100644
  		struct skcipher_request *req;
  		struct aead_request *req_aead;
 diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index 74ad36b6dbf53..fee7c7a81ce4e 100644
+index 6e65ec0e627a6..04ef89e318564 100644
 --- a/drivers/md/dm-verity.h
 +++ b/drivers/md/dm-verity.h
-@@ -73,11 +73,11 @@ struct dm_verity_io {
+@@ -72,11 +72,11 @@ struct dm_verity_io {
  	/* original value of bio->bi_end_io */
  	bio_end_io_t *orig_bi_end_io;
  
