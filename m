@@ -1,97 +1,141 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 417A250A65
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 04:17:47 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55F7B4CB4A
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 04:17:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709266675; cv=none; b=gOmNdvgawg6evzki6l/4nRb8Q8CtqvsW05smfRVHm5zckdklICVsI11vYDQ0tj6wf/Y/sg+EYmN+7bnAEFjFgWjEQ4q7Iv9k/NSMbHOKKBtbrn0U92BjzHViKf8+10BQcsEDt8Fcc4XdeL7FV7prC6NU+5Dn6h5GV9K4gPu0ZDk=
+	t=1709266676; cv=none; b=mrb9jcEIGthIMO/K6zybl25CSVRksYUY3RwR/j3GweR307Qcls4CJLqcj6L1NUIye7lmMuc6pKrm51ZY7SbWCw7IxBdcCbROcMI6rFdsj/Jw4diWi2FtO52GQJrsDa4MV3OlLV1X1YrO8LKYYaHyDF6ceHdAgIaPFKWjLxbtiBE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709266675; c=relaxed/simple;
-	bh=ouHt5jusMQJOw+YxKASJkjoIHLByRfG6eOhHZm13bcg=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=jPmKqBG5rK01h4SQOHDlVte9D9XN318Gg4/ZI0O6bD+qfqnN3wg2TJmuZo0SIVL7OPKuVMR8GqIGpsbSfOshNpyh47XUcUKGYEbC/zKf8x8cF1I1liEpPgDTJEpbxsx/yuDdjTj21qzWLUBRvhI45V7I/SXYxAuFvrTjy5AqqXA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=OVG5DzYg; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1709266676; c=relaxed/simple;
+	bh=HXFNVEet74q6VN41B0Tc49Qaa+vqf1nqhQEJWLpTyss=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=nVoUTnmcuOWX6zA4LbfRk9prDkIdD50aX9E25LA1qEEOR4PN3GuBrla5L6HoQVGbYUg8cX4le4V4pIqIMgEAcBkx5DLv07Zp9xiLyWwMItCyrdLgzFxk/Y7hRLxZft8boXy2a2wSSPdm0d8UwWpTiUsvYVtEr9hLlF6Rxmbv66g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iBzxpC0Y; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OVG5DzYg"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iBzxpC0Y"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1709266665;
+	s=mimecast20190719; t=1709266664;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=6XTpQ8TELOyfJtPjkrs96xvE6+UkimxTo5bVzVNqTU0=;
-	b=OVG5DzYgjZEdDvRCZGVkBC8sP7lWcusj8bwOjih9de3nlVtmlrTW/mtkg83RpWdrB65nAE
-	zY4SZTocn6iKOxdY2vTG/BxJ76YULRwikzYl2bq4sOJnetrtYV7cyOIKcKJvkxlFxHoc8b
-	jIhOUZTYVCslBv0/fKdzxXHO5lQOI3w=
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=wwQM/8vjuAoy2MAB+UCjY4ZzCSSP73N08s5mRIVghVU=;
+	b=iBzxpC0YF9deNQPR5ugM6Qg4YBa9yg+PYsjC1N/hdBMVmjCwEPp5amSfFwjeccF//r+6Ow
+	s9KErKEwKcjbwUICugcS0v/gMLRlc41Nh2Fzzo2VPdJltozGdTN+t1tkGEhDeztvf6TPp2
+	OXplOdtSJgOTAMdkHiSnNP5IVynRnzw=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-663-BozabHR0MjaW6QC3QY5viQ-1; Thu,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-653-YOC4qidqNc-whFI0P4iHHA-1; Thu,
  29 Feb 2024 23:17:43 -0500
-X-MC-Unique: BozabHR0MjaW6QC3QY5viQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+X-MC-Unique: YOC4qidqNc-whFI0P4iHHA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C9CC429AC011
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CA1F53806107
 	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 04:17:42 +0000 (UTC)
 Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C4B9540C6EBA;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C4265492C25;
 	Fri,  1 Mar 2024 04:17:42 +0000 (UTC)
 Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id BF192A15C1; Thu, 29 Feb 2024 23:17:42 -0500 (EST)
+	id BBBAAA15BF; Thu, 29 Feb 2024 23:17:42 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH 1/2] dm vdo: remove unnecessary indexer.h includes
-Date: Thu, 29 Feb 2024 23:17:41 -0500
-Message-ID: <b8d042b133b6aa9953fd170abef46876a4aaafd9.1709266548.git.msakai@redhat.com>
-In-Reply-To: <cover.1709266547.git.msakai@redhat.com>
-References: <cover.1709266547.git.msakai@redhat.com>
+Subject: [PATCH 0/2] dm vdo: move indexer to sub-directory
+Date: Thu, 29 Feb 2024 23:17:40 -0500
+Message-ID: <cover.1709266547.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
----
- drivers/md/dm-vdo/encodings.h | 1 -
- drivers/md/dm-vdo/vdo.h       | 1 -
- 2 files changed, 2 deletions(-)
+Matthew Sakai (1):
+  dm vdo: remove unnecessary indexer.h includes
 
-diff --git a/drivers/md/dm-vdo/encodings.h b/drivers/md/dm-vdo/encodings.h
-index 18794fd59b0b..e5ff2b0aaa79 100644
---- a/drivers/md/dm-vdo/encodings.h
-+++ b/drivers/md/dm-vdo/encodings.h
-@@ -11,7 +11,6 @@
- #include <linux/limits.h>
- #include <linux/uuid.h>
- 
--#include "indexer.h"
- #include "numeric.h"
- 
- #include "constants.h"
-diff --git a/drivers/md/dm-vdo/vdo.h b/drivers/md/dm-vdo/vdo.h
-index 3938e519ae6a..01558fc67f24 100644
---- a/drivers/md/dm-vdo/vdo.h
-+++ b/drivers/md/dm-vdo/vdo.h
-@@ -17,7 +17,6 @@
- #include "admin-state.h"
- #include "encodings.h"
- #include "funnel-workqueue.h"
--#include "indexer.h"
- #include "packer.h"
- #include "physical-zone.h"
- #include "statistics.h"
+Mike Snitzer (1):
+  dm vdo: move indexer files into sub-directory
+
+ drivers/md/dm-vdo/Makefile                    | 34 ++++++++++---------
+ drivers/md/dm-vdo/data-vio.h                  |  3 +-
+ drivers/md/dm-vdo/dedupe.c                    |  3 +-
+ drivers/md/dm-vdo/encodings.h                 |  1 -
+ .../md/dm-vdo/{ => indexer}/chapter-index.c   |  5 +--
+ .../md/dm-vdo/{ => indexer}/chapter-index.h   |  0
+ drivers/md/dm-vdo/{ => indexer}/config.c      |  0
+ drivers/md/dm-vdo/{ => indexer}/config.h      |  0
+ drivers/md/dm-vdo/{ => indexer}/delta-index.c |  5 +--
+ drivers/md/dm-vdo/{ => indexer}/delta-index.h |  5 +--
+ .../{ => indexer}/funnel-requestqueue.c       |  0
+ .../{ => indexer}/funnel-requestqueue.h       |  0
+ drivers/md/dm-vdo/{ => indexer}/geometry.c    |  5 +--
+ drivers/md/dm-vdo/{ => indexer}/geometry.h    |  0
+ drivers/md/dm-vdo/{ => indexer}/hash-utils.h  |  3 +-
+ .../md/dm-vdo/{ => indexer}/index-layout.c    |  5 +--
+ .../md/dm-vdo/{ => indexer}/index-layout.h    |  0
+ .../md/dm-vdo/{ => indexer}/index-page-map.c  |  5 +--
+ .../md/dm-vdo/{ => indexer}/index-page-map.h  |  0
+ .../md/dm-vdo/{ => indexer}/index-session.c   |  7 ++--
+ .../md/dm-vdo/{ => indexer}/index-session.h   |  3 +-
+ drivers/md/dm-vdo/{ => indexer}/index.c       |  5 +--
+ drivers/md/dm-vdo/{ => indexer}/index.h       |  0
+ drivers/md/dm-vdo/{ => indexer}/indexer.h     |  0
+ drivers/md/dm-vdo/{ => indexer}/io-factory.c  |  0
+ drivers/md/dm-vdo/{ => indexer}/io-factory.h  |  0
+ .../md/dm-vdo/{ => indexer}/open-chapter.c    |  5 +--
+ .../md/dm-vdo/{ => indexer}/open-chapter.h    |  0
+ drivers/md/dm-vdo/{ => indexer}/radix-sort.c  |  0
+ drivers/md/dm-vdo/{ => indexer}/radix-sort.h  |  0
+ .../md/dm-vdo/{ => indexer}/sparse-cache.c    |  7 ++--
+ .../md/dm-vdo/{ => indexer}/sparse-cache.h    |  0
+ .../md/dm-vdo/{ => indexer}/volume-index.c    |  9 ++---
+ .../md/dm-vdo/{ => indexer}/volume-index.h    |  3 +-
+ drivers/md/dm-vdo/{ => indexer}/volume.c      | 13 +++----
+ drivers/md/dm-vdo/{ => indexer}/volume.h      |  5 +--
+ drivers/md/dm-vdo/uds-sysfs.c                 |  3 +-
+ drivers/md/dm-vdo/vdo.h                       |  1 -
+ 38 files changed, 77 insertions(+), 58 deletions(-)
+ rename drivers/md/dm-vdo/{ => indexer}/chapter-index.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/chapter-index.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/config.c (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/config.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/delta-index.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/delta-index.h (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/funnel-requestqueue.c (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/funnel-requestqueue.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/geometry.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/geometry.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/hash-utils.h (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/index-layout.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/index-layout.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/index-page-map.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/index-page-map.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/index-session.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/index-session.h (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/index.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/index.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/indexer.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/io-factory.c (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/io-factory.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/open-chapter.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/open-chapter.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/radix-sort.c (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/radix-sort.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/sparse-cache.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/sparse-cache.h (100%)
+ rename drivers/md/dm-vdo/{ => indexer}/volume-index.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/volume-index.h (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/volume.c (99%)
+ rename drivers/md/dm-vdo/{ => indexer}/volume.h (99%)
+
 -- 
 2.42.0
 
