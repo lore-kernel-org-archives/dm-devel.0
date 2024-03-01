@@ -1,90 +1,88 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BAC764D584
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 03:37:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED56F44379
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 03:38:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709264253; cv=none; b=S9I37Er0ObDHbBZEOb+JSioP0Q4ev0Wh87+2aQBIq/DTyfuwDn5nze2Q3eAD6J6egeWkw7Znnik12jZ44CmMO9O8tA0XNFuoQ41OGdrgq6LeVuTKWYXmOMLFlBCyFco150AsIVjftcxluP4EK6ykA3paPJiSyBCV4Pf1sKfu0s0=
+	t=1709264322; cv=none; b=dh/46dYTZZEbzQOSD7AMtSpjouQAcRTdAtH7r+M3Tq1hQ37wcLQjkOwoVgfDyGhJ2Bt/mPv3jrFeCPOi84zvB1h/aI8t6KYXXvyiGd3AyqeAxpi/W9V6Fl6uqTMsCjyXKe6jh1kPOpyfT62G95gbfpIpils2gQ6PUSk/9/GEeMQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709264253; c=relaxed/simple;
-	bh=svC8KsUFzeYabgVGDQ/Y4Uh52yj9FUt/5nD/0AhLXAM=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=KJFYkbjeuAmY6AShXPA28WepOKpaZNAap6Wu0tSxdz6jJF5AZ7GeKENYQM9RqOrKJZYPYqgeHotJYVr+QJwzQX7GH3YAAZiMHEZrnQ5Wj9ZcO4bUmdNtskunwmwVefvvtCSn6Fb5RKuZrzde+CATO1D81Pb5teabB1/STyPzPYA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NlmBFTQ4; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1709264322; c=relaxed/simple;
+	bh=sGi1Nid5j8NqlfwnelIptPGgaOFsYwnNnr33/R91IEo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=GLI8jEMrw0Joxl3lz/XB1mcxO0XSmi+Ypr/ZzrNsEZEvJV1etHOyHTfqmPwwzH3rIY4AxhLd+AS+Vda2L/7TeJlGMdc73f9oDToKyshFiWQ88sMMhbJZoztbi7MSx5mXwnYGNe4VRvdHHkSsz/HQqO+kywT4/o7PJ5c7+vOh6kA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=i0pwrruy; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NlmBFTQ4"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="i0pwrruy"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1709264250;
+	s=mimecast20190719; t=1709264319;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding;
-	bh=OZJa6Cq/rL111B7TTssFwvNHDLqlVYFgZkqpssScdfs=;
-	b=NlmBFTQ4uGHEqRDfxfJ0m8mVKUivURgPbCBhec8HCn/8CaIL0OBjUhChx82dlpKoAL/K8a
-	OuwhMD6hTPSTUk+VKDawiMDG93bxeynUyE/rq1jQ+Xb+BDCNLWlTR25FGab4NhAwC8OWEz
-	vTs3yTRPy+53N92UYFfIADSQbkVJ6+0=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-283-90XaUSMsO3eTafw24kzXcA-1; Thu,
- 29 Feb 2024 22:37:25 -0500
-X-MC-Unique: 90XaUSMsO3eTafw24kzXcA-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	bh=zwimxuouAbhTQIPhjjMND6f83YNC7jKsdKx9MW3aoLA=;
+	b=i0pwrruyKPPgktBs1/6LIXc9wBwKYW10u/wB/EM7czNRrrwa98dtgmT+eCDb0+cS8Gg53e
+	1taj5KabL43aFqjX/Cvr9CQph0rz7HxiQlI9YcH6rJ+3letS79yaykl6uioUvk2uNyRsLq
+	6CMXhXvm81oDh1gnuvhmVvw+mZS06RM=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-144-Z5nZSZFDOty2pjFFgJ3e3Q-1; Thu, 29 Feb 2024 22:38:36 -0500
+X-MC-Unique: Z5nZSZFDOty2pjFFgJ3e3Q-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9F5E31C05AC9;
-	Fri,  1 Mar 2024 03:37:25 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D0D6F185A785;
+	Fri,  1 Mar 2024 03:38:35 +0000 (UTC)
 Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 98171492BC7;
-	Fri,  1 Mar 2024 03:37:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CC46E492BE2;
+	Fri,  1 Mar 2024 03:38:35 +0000 (UTC)
 Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 8E2A19C2BD; Thu, 29 Feb 2024 22:37:25 -0500 (EST)
+	id C87939CD3C; Thu, 29 Feb 2024 22:38:35 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
-Cc: Harshit Mogalapalli <harshit.m.mogalapalli@oracle.com>,
+Cc: Mike Snitzer <snitzer@kernel.org>,
 	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH] dm vdo volume-index: fix an assert statement in start_restoring_volume_sub_index()
-Date: Thu, 29 Feb 2024 22:37:25 -0500
-Message-ID: <71a5091805b2defc74545a0e80bcb576f6bdae28.1709263751.git.msakai@redhat.com>
+Subject: [PATCH] dm vdo block-map: rename page state name from "UDS_FREE" to "FREE"
+Date: Thu, 29 Feb 2024 22:38:35 -0500
+Message-ID: <417ef622c5b4622fd970f9681d9b9f0cc2af70e2.1709264221.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-From: Harshit Mogalapalli <harshit.m.mogalapalli@oracle.com>
+From: Mike Snitzer <snitzer@kernel.org>
 
-Use "==" instead of "=" in ASSERT() statement.
+Only used for log message, but no need for "UDS_" prefix.
 
-Fixes: ef074a31e88e ("dm vdo: implement the volume index")
-Signed-off-by: Harshit Mogalapalli <harshit.m.mogalapalli@oracle.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 Signed-off-by: Susan LeGendre-McGhee <slegendr@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/volume-index.c | 2 +-
+ drivers/md/dm-vdo/block-map.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-vdo/volume-index.c b/drivers/md/dm-vdo/volume-index.c
-index 8731ea1662b1..eebc19fe7d6f 100644
---- a/drivers/md/dm-vdo/volume-index.c
-+++ b/drivers/md/dm-vdo/volume-index.c
-@@ -834,7 +834,7 @@ static int start_restoring_volume_sub_index(struct volume_sub_index *sub_index,
- 		decode_u32_le(buffer, &offset, &header.first_list);
- 		decode_u32_le(buffer, &offset, &header.list_count);
+diff --git a/drivers/md/dm-vdo/block-map.c b/drivers/md/dm-vdo/block-map.c
+index cc87e1ac72b6..e3fadb5f2c2d 100644
+--- a/drivers/md/dm-vdo/block-map.c
++++ b/drivers/md/dm-vdo/block-map.c
+@@ -284,7 +284,7 @@ static const char * __must_check get_page_state_name(enum vdo_page_buffer_state
+ {
+ 	int result;
+ 	static const char * const state_names[] = {
+-		"UDS_FREE", "INCOMING", "FAILED", "RESIDENT", "DIRTY", "OUTGOING"
++		"FREE", "INCOMING", "FAILED", "RESIDENT", "DIRTY", "OUTGOING"
+ 	};
  
--		result = ASSERT(offset = sizeof(buffer),
-+		result = ASSERT(offset == sizeof(buffer),
- 				"%zu bytes decoded of %zu expected", offset,
- 				sizeof(buffer));
- 		if (result != UDS_SUCCESS)
+ 	BUILD_BUG_ON(ARRAY_SIZE(state_names) != PAGE_STATE_COUNT);
 -- 
 2.42.0
 
