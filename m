@@ -1,145 +1,102 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-io1-f52.google.com (mail-io1-f52.google.com [209.85.166.52])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC07D39AC4
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 15:21:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 452FA70CAF
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 15:55:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709306520; cv=none; b=XCSCzCIDlHal8DOCQ7XnMUEv6i1q14tZxByFG52154NbNFD02L2NhiMkDcs+EwRZe2/vW1f64cEER+wf7lRIYS9u47HM5iP2PRJHOf/pJCm1uFXH6aOY0toVcmB+6ZEYFWzTOuXD8OwaAc/L50S59Ziwlx3DV6ZQHQ6VCrmGLJU=
+	t=1709308547; cv=none; b=MtzmyjOv1nYdq0kmu7b9rLHV/Ywu4ixobJjKGOI4l3ttTLVIobWIqStbpeVKNfNhNHVdFgj24AQi1cBgubcHh6QeSvh7MnTRYTJAiH06PZow5cxzzW8DK/6jb8piZxZwRlnovIGDhXKATuwVjAmRdAQptGmxZGwC9tRcbmMREvM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709306520; c=relaxed/simple;
-	bh=6e+1jXXtCepzK8hrhCWjn2kM/sSuASqeVbE240TKykY=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=Xg+Q9mr64JFcYMkS8+/S8YnXEHqyxEY67oC0N07kAt+pQ5GLBmFdmykzUkDSXAxDx1gc8NaiwuJ3nonJGdKL1wqPN/QL/jYOJO3+pA9l13vcWDICHlDZxEkFba0N5h5r6P/sEjdHwfzrWiJW/4M7HpBR8RppxLVo8Qvv35k03Ds=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KhM+WAn3; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1709308547; c=relaxed/simple;
+	bh=z8bQj4nyX9I35XGiew42GRrnNPiJWRmDuZYCF6ZKJPY=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type; b=j4vLnIqHViVAQjTSqrqlAA5eSr6AUNOwALW7p+3pnIe8VBCqMlWzsi54gU4GdMfnupN6MVlFrskgFC7yCPDSX9eM6rKv2vX/XO4vO3vxCDDkztZLmDkUpMWdIC/N7O5ziVbZM7f537sUJybcArzcFaRH1G6qqA93sULHPt7Ap8o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=mdn8PnvV; arc=none smtp.client-ip=209.85.166.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KhM+WAn3"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1709306518;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=69y1pCQHT5Ls9fEh8AKza2wRDYR+w4p2us5TEx1Nugk=;
-	b=KhM+WAn3Sd37C/Qcd9WQ69GHS+UyUuRlABA7AQZPZ/wUHNe82T4g9PuYcUTea8mCJmGGvJ
-	L1N5b9HC+AWhM6jEpUE9eErkf8vU+oFEVlyQr5AL+RJWpxQULxjU0ZF8X9axRCenO0oYCk
-	fS9howrRyOSuZNIHnAXa79qN2xZIU2g=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-314-hYSBQMa6OL64K-R_5dIP5Q-1; Fri,
- 01 Mar 2024 10:21:52 -0500
-X-MC-Unique: hYSBQMa6OL64K-R_5dIP5Q-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 142BC1C05EB7;
-	Fri,  1 Mar 2024 15:21:51 +0000 (UTC)
-Received: from localhost.localdomain (unknown [10.72.120.8])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5AB051121312;
-	Fri,  1 Mar 2024 15:21:47 +0000 (UTC)
-From: Xiao Ni <xni@redhat.com>
-To: song@kernel.org
-Cc: yukuai1@huaweicloud.com,
-	bmarzins@redhat.com,
-	heinzm@redhat.com,
-	snitzer@kernel.org,
-	ncroxon@redhat.com,
-	linux-raid@vger.kernel.org,
-	dm-devel@lists.linux.dev
-Subject: [PATCH 4/4] md/raid5: Don't check crossing reshape when reshape hasn't started
-Date: Fri,  1 Mar 2024 23:21:28 +0800
-Message-Id: <20240301152128.13465-5-xni@redhat.com>
-In-Reply-To: <20240301152128.13465-1-xni@redhat.com>
-References: <20240301152128.13465-1-xni@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="mdn8PnvV"
+Received: by mail-io1-f52.google.com with SMTP id ca18e2360f4ac-7c82d2bdc31so1688839f.0
+        for <dm-devel@lists.linux.dev>; Fri, 01 Mar 2024 07:55:45 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1709308544; x=1709913344; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=LgjI9uub3d3zJshf48T+jDOY7FDzlEqVwK3scHxIK08=;
+        b=mdn8PnvVmY1Gp3xYZeG0SJea9vi8R+N93JZ8AZbkaHDBdw5vNHpc7ybvUo0k6oEa6C
+         PMiuvaF4BOMvYxyIqBmLg8lhZA+Xhkc7JSt6sm5XkDNPqxWMGJWS6pHE2LmvpQZZY2TI
+         zOzUuxD701yLdib0qheXUa7D8TIL7uEv75o13JulsninaXFbQjDlgp4YOBXoF8gPkj1H
+         rqaGQ39EV9plwSQtonx1fysgzBVYOMkdWeAF7Fc6nCRxeZCilWCPWZ6b65qj9JPFxRDb
+         uhgBoT6IasEoavh5svxhfAlk71Uftr5DMY7uaDqAUk8EQDe88xsmDWbO4oB5Kdl2LIwT
+         UBGA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1709308544; x=1709913344;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=LgjI9uub3d3zJshf48T+jDOY7FDzlEqVwK3scHxIK08=;
+        b=h+Kj9oxd8sTA03l6z82d3IvQCdaBolAbebCBYpDEDlPtah0oYqBAgkUC9ZDdy47siG
+         gaDAV9ry6gYPMDqkz9M3UXE9FII5ObvoJfEdLW0riERfG9kJ7JTrc/QulooqFPe6Wb+m
+         6TudNbce5NOQjkrQMyVl20bpmOQmHAzrR9bUY4ybsvOv7eZ/N0LkZuCZ1f792dhUfkNT
+         G/G/VclSxHw2LWvqltjjFAL9JsnPhDA4kzLpcQKfQkajFVG2hon6Djdxvhd3X5uS290U
+         Yj2eV3LRQzXYMa1QVHmA4VeAVfHbhBupA280DaukU3K/rqnbig28mpQRozJBN9t0l1D0
+         IPgw==
+X-Gm-Message-State: AOJu0Yx+06UXrZsuN583Dfbi+yvy27WxvCB92gmA4s0wUiLV1Fv2JoXM
+	ydPDgngE3IvTRo5l8lckhGarXdcSL0RrBTgKgbbtXQx+p6+Z8HVdQnp00eJgR5s=
+X-Google-Smtp-Source: AGHT+IGSixrXiLDrWM02T9EQx2sINQe1SZ1K5RuRsjIz22eppz96SZfKq161wqvSZyqsqoDy96ZtOw==
+X-Received: by 2002:a6b:6615:0:b0:7c8:1ede:72ea with SMTP id a21-20020a6b6615000000b007c81ede72eamr2022129ioc.0.1709308544451;
+        Fri, 01 Mar 2024 07:55:44 -0800 (PST)
+Received: from [127.0.0.1] ([99.196.129.26])
+        by smtp.gmail.com with ESMTPSA id b4-20020a02c984000000b004745e754b73sm894609jap.176.2024.03.01.07.55.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 01 Mar 2024 07:55:43 -0800 (PST)
+From: Jens Axboe <axboe@kernel.dk>
+To: Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>, 
+ Yu Kuai <yukuai3@huawei.com>, Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
+ linux-raid@vger.kernel.org
+In-Reply-To: <20240228225653.947152-1-hch@lst.de>
+References: <20240228225653.947152-1-hch@lst.de>
+Subject: Re: (subset) atomic queue limit updates for stackable devices v3
+Message-Id: <170930853640.1084422.8284935730781819597.b4-ty@kernel.dk>
+Date: Fri, 01 Mar 2024 08:55:36 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.12.5-dev-2aabd
 
-stripe_ahead_of_reshape is used to check if a stripe region cross the
-reshape position. So first, change the function name to
-stripe_across_reshape to describe the usage of this function.
 
-For reshape backwards, it starts reshape from the end of array and conf->
-reshape_progress is init to raid5_size. During reshape, if previous is true
-(set in make_stripe_request) and max_sector >= conf->reshape_progress, ios
-should wait until reshape window moves forward. But ios don't need to wait
-if max_sector is raid5_size.
+On Wed, 28 Feb 2024 14:56:39 -0800, Christoph Hellwig wrote:
+> this series adds new helpers for the atomic queue limit update
+> functionality and then switches dm and md over to it.  The dm switch is
+> pretty trivial as it was basically implementing the model by hand
+> already, md is a bit more work.
+> 
+> I've run the mdadm testsuite, and it has the same (rather large) number
+> of failures as the baseline, and the lvm2 test suite goes as far as
+> the baseline before handing in __md_stop_writes.
+> 
+> [...]
 
-And put the conditions into the function directly to make understand the
-codes easily.
+Applied, thanks!
 
-This can be reproduced easily by lvm2 test shell/lvconvert-raid-reshape.sh
-For dm raid reshape, before starting sync thread, it needs to reload table
-some times. In one time dm raid uses MD_RECOVERY_WAIT to delay reshape and
-it doesn't start sync thread this time. Then one io comes in and it waits
-because stripe_ahead_of_reshape returns true because it's a backward
-reshape and max_sectors > conf->reshape_progress. But the reshape hasn't
-started. So skip this check when reshape_progress is raid5_size
+[01/14] block: add a queue_limits_set helper
+        commit: 631d4efb8009df64deae8c1382b8cf43879a4e22
+[02/14] block: add a queue_limits_stack_bdev helper
+        commit: c1373f1cf452e4c7553a9d3bc05d87ec15c4f85f
+[03/14] dm: use queue_limits_set
+        commit: 8e0ef412869430d114158fc3b9b1fb111e247bd3
 
-Fixes: 486f60558607 ("md/raid5: Check all disks in a stripe_head for reshape progress")
-Signed-off-by: Xiao Ni <xni@redhat.com>
----
- drivers/md/raid5.c | 22 ++++++++++------------
- 1 file changed, 10 insertions(+), 12 deletions(-)
-
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 4c1f572cc00f..8d562c1344f4 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -5832,17 +5832,12 @@ static bool ahead_of_reshape(struct mddev *mddev, sector_t sector,
- 					  sector >= reshape_sector;
- }
- 
--static bool range_ahead_of_reshape(struct mddev *mddev, sector_t min,
--				   sector_t max, sector_t reshape_sector)
--{
--	return mddev->reshape_backwards ? max < reshape_sector :
--					  min >= reshape_sector;
--}
--
--static bool stripe_ahead_of_reshape(struct mddev *mddev, struct r5conf *conf,
-+static sector_t raid5_size(struct mddev *mddev, sector_t sectors, int raid_disks);
-+static bool stripe_across_reshape(struct mddev *mddev, struct r5conf *conf,
- 				    struct stripe_head *sh)
- {
- 	sector_t max_sector = 0, min_sector = MaxSector;
-+	sector_t reshape_pos = 0;
- 	bool ret = false;
- 	int dd_idx;
- 
-@@ -5856,9 +5851,12 @@ static bool stripe_ahead_of_reshape(struct mddev *mddev, struct r5conf *conf,
- 
- 	spin_lock_irq(&conf->device_lock);
- 
--	if (!range_ahead_of_reshape(mddev, min_sector, max_sector,
--				     conf->reshape_progress))
--		/* mismatch, need to try again */
-+	reshape_pos = conf->reshape_progress;
-+	if (mddev->reshape_backwards) {
-+		if (max_sector >= reshape_pos &&
-+		    reshape_pos != raid5_size(mddev, 0, 0))
-+			ret = true;
-+	} else if (min_sector < reshape_pos)
- 		ret = true;
- 
- 	spin_unlock_irq(&conf->device_lock);
-@@ -5969,7 +5967,7 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
- 	}
- 
- 	if (unlikely(previous) &&
--	    stripe_ahead_of_reshape(mddev, conf, sh)) {
-+	    stripe_across_reshape(mddev, conf, sh)) {
- 		/*
- 		 * Expansion moved on while waiting for a stripe.
- 		 * Expansion could still move past after this
+Best regards,
 -- 
-2.32.0 (Apple Git-132)
+Jens Axboe
+
+
 
