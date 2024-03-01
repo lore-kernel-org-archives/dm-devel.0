@@ -1,93 +1,94 @@
-Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF6D56FC8
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 17:25:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF60722092
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 18:16:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709313925; cv=none; b=Lchv5ka6+i5V+P7Asw9T2a+M9HQg406/hHKq8F4qLs0Z1skTz7jp/u0juiAu8hSshVE8eP++JGAo/NoK9ioTmu3bnFkDUh4qeH3rsuy4cARv5XCmVvs16WXMt3ouC4907ue/cbGA8404XR3iFP2W5ZVzC+MO/Hrbx6D/6pBIT/U=
+	t=1709316969; cv=none; b=SUxKMCbjBbVBKO0T7cqZYiXPwZUzD1weINJ8jT38SUa5JmPVnE9GtklXT9NBsY6etG65qBEOL3R1qxYaDjAzAsEIaUHG5W6uPuMjXOHAJ7pih2atVEbBN1zql1zcifeN7rQyLtS5mOvJfeleHcXAVrud+HkrvSYM54f8nQT+7Wc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709313925; c=relaxed/simple;
-	bh=DnAdJBk1C/k2uFUO9U8zgwM2eM4Fgt5Sgt81UaljBE8=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=K0r3PcxiocA2sEzELgbH1WFphPyDMoyNQ9xjFSgRz5E4e4kfGyhzyH5DV6gOn/E/Zmi9Cnr0iZzZez2IKZSoyP4iR+yDLdbt2jicmP/XeVo6GhOSH3Q3+gIGN3s/inlqpZnjMKnnVWZKpd4+uddKdLPf+LY6cpJJXhCcETurZ+w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Tgk6xB6o; arc=none smtp.client-ip=209.85.208.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1709316969; c=relaxed/simple;
+	bh=RQJaeeLteVEUuSlUbNrmb8wJ3giZw5CwDHw8fBUDCdk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=qRlwvRBLZWRQgAwODTFKGm8brSz6ktnLgNOulhbw4vXbakZnExfMgXzln5zVbUq+DjhFqOq4E9dDexIGjIdY/8x7ABjeoDijV14RvAHeAoTb9ix4T5R8k0lIGKGTKucpi0WXgjGibuJYZuGPQ28+Nll405G7xHqOwLymbqOcEAI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VhbeI7KT; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Tgk6xB6o"
-Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-563cb3ba9daso3237300a12.3
-        for <dm-devel@lists.linux.dev>; Fri, 01 Mar 2024 09:25:22 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1709313921; x=1709918721; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=iYWfWq8xPZZBQLR2dyDFXLx79MhPdZaka8rU6WPuA9U=;
-        b=Tgk6xB6oBUnm2XHWTbqQ/t12ktq2//zryAMMHJr6i7LZzGNrCA0TQ9KBFHnrKw9kIz
-         6+cpT3RZV+I5TOm924LrSOs/RqeBi+DvZvJyZ/EvUA0/q4EM6SA26ZhS1Y9YqOGXI8JM
-         J7nRWuO060PX8VPXBr9O7bXjSOn8XD/2vtNbyJjISlfKiKTab9VtiFxsMvs8vhvauIn0
-         V0D+F7BgpdQJoAeaprgQJwMeG69be/WxBI0vFnz/S/cwlfWq3x2WtafGJ7QKJLKI8GeF
-         InJi6iki6Ru3+igB5bfNrGvmZbO0DQol5r2dcBwqqKpllRp/3qgyzjNwG5NHyd0rLCLG
-         VhFw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709313921; x=1709918721;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=iYWfWq8xPZZBQLR2dyDFXLx79MhPdZaka8rU6WPuA9U=;
-        b=vTlb+vBWxA7uyMH2rliLfD52QRS/LU9oaLJ6TsmFw0RDiqC8EHoAWmYkYQ3hFGF6Au
-         Viwz9RQ8wmaM3NKnWaVPuTbpvSq5haoxhcfPHDzdg+EJ7rrHyV81s7mWP4oZ1pnv9r7o
-         tjm1/OuzNOeKA5HBnRbWPmccWBsUfb3i6t0J9dIs5jMpYghTDuCeJ9q9o2FJOB/5zata
-         XRqUazPVW5lQiqz+hDTNtrglu6PYnFgGUnExGR/RVZfZ5wW1aD30MMMuXBquXAdDpZKC
-         KfzBam8qrl9SoZlAOrJqyhMARKG5QrkFPlPF06CJg9Y4v+8IOJVv2q82Nb+44Z+hVenb
-         ZhCg==
-X-Forwarded-Encrypted: i=1; AJvYcCU+r0OvdVubj79gWSeUU3/QXFlBFQpqxBboCxqbKdP9XYB9XT+c6f2UZEMyJ0o5AE+1pbOAd8DbpuGu89lgvKs+AxbP/5OuIyo=
-X-Gm-Message-State: AOJu0YyOibep+7zlML/xuRcxHzYu0gg6M9a1lIQKw5+FjGqX7VG5aDvP
-	/trWV2njQypIGRtaNpAS4wbfUR5rqY7/+5mzykCKobiQsj4/WzscDBAIYizfvo/WNMSQ3lSWN18
-	L
-X-Google-Smtp-Source: AGHT+IGwtHcxzGu4nUUxA+Qsz7xhvyrDVJ5J5Vj3zPyxdcbYthTJV+sVUSPvswy+GuBWLBp4C2wnXg==
-X-Received: by 2002:a17:906:d92d:b0:a43:fa38:901d with SMTP id rn13-20020a170906d92d00b00a43fa38901dmr1729370ejb.45.1709313921115;
-        Fri, 01 Mar 2024 09:25:21 -0800 (PST)
-Received: from localhost (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
-        by smtp.gmail.com with UTF8SMTPSA id bq5-20020a170906d0c500b00a43bf243342sm1887087ejb.24.2024.03.01.09.25.20
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 01 Mar 2024 09:25:20 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>,
-	dm-devel@lists.linux.dev
-Subject: [PATCH] 11-dm-mpath.rules: fix misspelled DM_UDEV_DISABLE_OTHER_RULES_FLAG
-Date: Fri,  1 Mar 2024 18:25:14 +0100
-Message-ID: <20240301172514.7262-1-mwilck@suse.com>
-X-Mailer: git-send-email 2.43.2
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VhbeI7KT"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1709316964;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3gFs7J5CWhe+Ez/eMKYuDcA2y/r3mN/yCJ1aMKLB7LM=;
+	b=VhbeI7KTE6d05R/WurYKz/qW1wf5CDv2KDNWat+CtSkN11ozp1OGC9leNhuPur35UMCvBy
+	0/hx2cXSGvpneyqwQM3nCYoJv5MoycIE8Rs4GwvmduZvZ0joYDn/YCYleFL+/bVkdbgLMd
+	yiyrvIr0s6/GigfWlSBB36wWUddKJvs=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-458-JrevmDS8Nf2GLO9ex9rD7w-1; Fri, 01 Mar 2024 13:16:01 -0500
+X-MC-Unique: JrevmDS8Nf2GLO9ex9rD7w-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 10C2A868901;
+	Fri,  1 Mar 2024 18:16:01 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E9008492BE2;
+	Fri,  1 Mar 2024 18:16:00 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 421IG0D6776233
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 1 Mar 2024 13:16:00 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 421IG0fr776232;
+	Fri, 1 Mar 2024 13:16:00 -0500
+Date: Fri, 1 Mar 2024 13:16:00 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        Martin Wilck <mwilck@suse.com>, dm-devel@lists.linux.dev
+Subject: Re: [PATCH] 11-dm-mpath.rules: fix misspelled
+ DM_UDEV_DISABLE_OTHER_RULES_FLAG
+Message-ID: <ZeIbYETl5FIvfNxA@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+References: <20240301172514.7262-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20240301172514.7262-1-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Fixes: b3582da ("11-dm-mpath.rules: use import logic like 13-dm-disk.rules")
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipath/11-dm-mpath.rules.in | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
-index d364f9b..d9585ab 100644
---- a/multipath/11-dm-mpath.rules.in
-+++ b/multipath/11-dm-mpath.rules.in
-@@ -116,7 +116,7 @@ LABEL="scan_import"
- ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!="1", GOTO="import_end"
- 
- # Don't import the properties from db if we will run blkid later.
--ENV{DM_NOSCAN}!="1", ENV{DM_DISABLE_OTHER_RULES_FLAG}!="1", GOTO="import_end"
-+ENV{DM_NOSCAN}!="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}!="1", GOTO="import_end"
- 
- IMPORT{db}="ID_FS_TYPE"
- IMPORT{db}="ID_FS_USAGE"
--- 
-2.43.2
+On Fri, Mar 01, 2024 at 06:25:14PM +0100, Martin Wilck wrote:
+> Fixes: b3582da ("11-dm-mpath.rules: use import logic like 13-dm-disk.rules")
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/11-dm-mpath.rules.in | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
+> index d364f9b..d9585ab 100644
+> --- a/multipath/11-dm-mpath.rules.in
+> +++ b/multipath/11-dm-mpath.rules.in
+> @@ -116,7 +116,7 @@ LABEL="scan_import"
+>  ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!="1", GOTO="import_end"
+>  
+>  # Don't import the properties from db if we will run blkid later.
+> -ENV{DM_NOSCAN}!="1", ENV{DM_DISABLE_OTHER_RULES_FLAG}!="1", GOTO="import_end"
+> +ENV{DM_NOSCAN}!="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}!="1", GOTO="import_end"
+>  
+>  IMPORT{db}="ID_FS_TYPE"
+>  IMPORT{db}="ID_FS_USAGE"
+> -- 
+> 2.43.2
 
