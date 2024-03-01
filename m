@@ -1,54 +1,54 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B2954776F
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C13947A66
 	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 03:53:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709265190; cv=none; b=dn7PYjRGLA4dufa4zTOteG6Fm68vryCXrvZRujOE0ZNnti1C8gNlc+uTLyIluvoAB2t+fqo+AXPZ4h79Lpy4erqhbMQtOLQtadl6L8DRk1ozH5qlj+/0k9M4qAqAqCy1b0HX0LCZzh7I15cyDq0usvbKpngv/3sRVwvPwanexDI=
+	t=1709265190; cv=none; b=iRzQkhoLt9sPWoGokhm3W18f+LhtaW2Fc5QuWOF0Am1DYVZwglf8vGsGqLT/ZMekPnymiY4LJzA1pLTFaDGeiDtAjTzzEFUjZYdBpcSVQOWxiBJWlilPs/TShStv67i8gdtI3+a3YB0h6q3M+8tJIeDneO5WcI32Fx3ka3xc+1M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1709265190; c=relaxed/simple;
-	bh=BuusVIOQhqXevUKQsajY+IYQyczcPAKl1u3sgh6/hNQ=;
+	bh=pGEyrAtMHFfP+cCqGHnKQb3ZfJoRtvi6HnyUhPcpL9o=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=RMS6HAxArJXKqjPoF6FPuFu6hoMnDcy0dT28J/XIiejJmkZyWqV2n0RjQPEVfrn753L9GJSvYNYLsfMqpmKaRXjMtfyjCyp6xpmrTSDwnyZKW3z0yr+zvUm+EzEvv+FRrodz+c2nmHYuMKd0SsVly6HX4m+QE62Au+psV5yWsUY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hivk0ReJ; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=CJ45JJKeSt8dNpTOc359BlCkp3lAdAlPpPIQsYyxYfDoLP64h9N2yMY/TpcYmLpPI0yqmLwKLlXUwYsBh0F3O44RhWTLd3oPb23jWa1CTmJB/9tlNu3qhI90b5InMoRGqHkuoJBBsxFfg5OTSmFHckfPXBDq4HIZkBzPxFRCq7g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Mis3dyA+; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hivk0ReJ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Mis3dyA+"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1709265187;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=oKautf/gT3LLV6qTZmonhDS/2IRA2liUxESgcUd4vJ8=;
-	b=hivk0ReJYPmKvv/71volBFiIAfDE2vkDfiL2P3fG/AbXZx5W1t4GrXgq94ywapS96LW2Ka
-	nkO50foaVAn/hLNPuaWb7pJuhy6evESpIvAjZDJIOWs4aui7zw4OlnCCh7/IZHsZyqwoYI
-	+foztat0Qlvv8W6IGAS9EjunpljP4Tk=
+	bh=ZzjZHJha2yTLcPas/bMVcnd8wYcJ2pYzdL06V00ifDQ=;
+	b=Mis3dyA+4/IWgNFx5f3zPEMB+Vt0BzyTFm6czP8eNP9UORxov85jb8dGzF628LAa01Q6Ww
+	U5nFS/V+j5xGLdl+lMYpVEySFk+gb5YfEz0h0bjDeKqrWBlh7326wn99UDDOavPp3j+AmA
+	q/2zmm8Vm4T2fyqOyFMVlaTWMeTpTME=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-70-IX-MPu2hO3y1088eKH89sA-1; Thu, 29 Feb 2024 22:53:05 -0500
-X-MC-Unique: IX-MPu2hO3y1088eKH89sA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-518-7AnrN_TkNeSrjnc9LYtcTQ-1; Thu, 29 Feb 2024 22:53:05 -0500
+X-MC-Unique: 7AnrN_TkNeSrjnc9LYtcTQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F783859701;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DB3510201FD;
 	Fri,  1 Mar 2024 03:53:05 +0000 (UTC)
 Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6940E2166B33;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5886F492BC7;
 	Fri,  1 Mar 2024 03:53:05 +0000 (UTC)
 Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 66C289EB2F; Thu, 29 Feb 2024 22:53:05 -0500 (EST)
+	id 56E519EB29; Thu, 29 Feb 2024 22:53:05 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Mike Snitzer <snitzer@kernel.org>,
 	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH 07/13] dm vdo: fold thread-cond-var.c into thread-utils
-Date: Thu, 29 Feb 2024 22:52:59 -0500
-Message-ID: <c7ee6402475696f93f21613bfd7d7ecca4744b40.1709264538.git.msakai@redhat.com>
+Subject: [PATCH 04/13] dm vdo indexer sparse-cache: cleanup threads_barrier code
+Date: Thu, 29 Feb 2024 22:52:56 -0500
+Message-ID: <814f277ae6e7f9eae76c67b31e8e5f191b977472.1709264538.git.msakai@redhat.com>
 In-Reply-To: <cover.1709264538.git.msakai@redhat.com>
 References: <cover.1709264538.git.msakai@redhat.com>
 Precedence: bulk
@@ -57,7 +57,7 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
@@ -65,142 +65,163 @@ Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
 From: Mike Snitzer <snitzer@kernel.org>
 
-Further cleanup is needed for thread-utils interfaces given many
-functions should return void or be removed entirely because they
-amount to obfuscation via wrappers.
+Rename 'barrier' to 'threads_barrier', remove useless
+uds_destroy_barrier(), return void from remaining methods and
+clean up uds_make_sparse_cache() accordingly.
+
+Also remove uds_ prefix from the 2 remaining threads_barrier
+functions.
 
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/Makefile          |  1 -
- drivers/md/dm-vdo/thread-cond-var.c | 46 -----------------------------
- drivers/md/dm-vdo/thread-utils.c    | 11 +++++++
- drivers/md/dm-vdo/thread-utils.h    | 28 ++++++++++++++----
- 4 files changed, 34 insertions(+), 52 deletions(-)
- delete mode 100644 drivers/md/dm-vdo/thread-cond-var.c
+ drivers/md/dm-vdo/sparse-cache.c | 60 ++++++++++----------------------
+ 1 file changed, 19 insertions(+), 41 deletions(-)
 
-diff --git a/drivers/md/dm-vdo/Makefile b/drivers/md/dm-vdo/Makefile
-index be5020b81c47..32266ab04cc1 100644
---- a/drivers/md/dm-vdo/Makefile
-+++ b/drivers/md/dm-vdo/Makefile
-@@ -48,7 +48,6 @@ dm-vdo-objs := \
- 	status-codes.o \
- 	string-utils.o \
- 	sysfs.o \
--	thread-cond-var.o \
- 	thread-device.o \
- 	thread-registry.o \
- 	thread-utils.o \
-diff --git a/drivers/md/dm-vdo/thread-cond-var.c b/drivers/md/dm-vdo/thread-cond-var.c
-deleted file mode 100644
-index 82b80338b448..000000000000
---- a/drivers/md/dm-vdo/thread-cond-var.c
-+++ /dev/null
-@@ -1,46 +0,0 @@
--// SPDX-License-Identifier: GPL-2.0-only
--/*
-- * Copyright 2023 Red Hat
-- */
--
--#include <linux/jiffies.h>
--#include <linux/minmax.h>
--
--#include "errors.h"
--#include "thread-utils.h"
--#include "time-utils.h"
--
--int uds_init_cond(struct cond_var *cv)
--{
--	init_waitqueue_head(&cv->wait_queue);
--	return UDS_SUCCESS;
--}
--
--int uds_signal_cond(struct cond_var *cv)
--{
--	wake_up(&cv->wait_queue);
--	return UDS_SUCCESS;
--}
--
--int uds_broadcast_cond(struct cond_var *cv)
--{
--	wake_up_all(&cv->wait_queue);
--	return UDS_SUCCESS;
--}
--
--int uds_wait_cond(struct cond_var *cv, struct mutex *mutex)
--{
--	DEFINE_WAIT(__wait);
--
--	prepare_to_wait(&cv->wait_queue, &__wait, TASK_IDLE);
--	uds_unlock_mutex(mutex);
--	schedule();
--	finish_wait(&cv->wait_queue, &__wait);
--	uds_lock_mutex(mutex);
--	return UDS_SUCCESS;
--}
--
--int uds_destroy_cond(struct cond_var *cv)
--{
--	return UDS_SUCCESS;
--}
-diff --git a/drivers/md/dm-vdo/thread-utils.c b/drivers/md/dm-vdo/thread-utils.c
-index 1a1eb9ae9e33..5d371bfba8ff 100644
---- a/drivers/md/dm-vdo/thread-utils.c
-+++ b/drivers/md/dm-vdo/thread-utils.c
-@@ -135,3 +135,14 @@ int uds_join_threads(struct thread *thread)
- 	uds_free(thread);
- 	return UDS_SUCCESS;
- }
-+
-+void uds_wait_cond(struct cond_var *cv, struct mutex *mutex)
-+{
-+	DEFINE_WAIT(__wait);
-+
-+	prepare_to_wait(&cv->wait_queue, &__wait, TASK_IDLE);
-+	uds_unlock_mutex(mutex);
-+	schedule();
-+	finish_wait(&cv->wait_queue, &__wait);
-+	uds_lock_mutex(mutex);
-+}
-diff --git a/drivers/md/dm-vdo/thread-utils.h b/drivers/md/dm-vdo/thread-utils.h
-index 30637dd264cc..c7a5d2d948a4 100644
---- a/drivers/md/dm-vdo/thread-utils.h
-+++ b/drivers/md/dm-vdo/thread-utils.h
-@@ -31,11 +31,29 @@ void uds_perform_once(atomic_t *once_state, void (*function) (void));
+diff --git a/drivers/md/dm-vdo/sparse-cache.c b/drivers/md/dm-vdo/sparse-cache.c
+index dcd5ef25b360..216c8d6256a9 100644
+--- a/drivers/md/dm-vdo/sparse-cache.c
++++ b/drivers/md/dm-vdo/sparse-cache.c
+@@ -141,7 +141,7 @@ struct search_list {
+ 	struct cached_chapter_index *entries[];
+ };
  
- int uds_join_threads(struct thread *thread);
+-struct barrier {
++struct threads_barrier {
+ 	/* Lock for this barrier object */
+ 	struct semaphore lock;
+ 	/* Semaphore for threads waiting at this barrier */
+@@ -161,25 +161,19 @@ struct sparse_cache {
+ 	struct search_list *search_lists[MAX_ZONES];
+ 	struct cached_chapter_index **scratch_entries;
  
--int __must_check uds_init_cond(struct cond_var *cond);
--int uds_signal_cond(struct cond_var *cond);
--int uds_broadcast_cond(struct cond_var *cond);
--int uds_wait_cond(struct cond_var *cond, struct mutex *mutex);
--int uds_destroy_cond(struct cond_var *cond);
-+static inline int __must_check uds_init_cond(struct cond_var *cv)
-+{
-+	init_waitqueue_head(&cv->wait_queue);
-+	return UDS_SUCCESS;
-+}
-+
-+static inline void uds_signal_cond(struct cond_var *cv)
-+{
-+	wake_up(&cv->wait_queue);
-+}
-+
-+static inline void uds_broadcast_cond(struct cond_var *cv)
-+{
-+	wake_up_all(&cv->wait_queue);
-+}
-+
-+void uds_wait_cond(struct cond_var *cv, struct mutex *mutex);
-+
-+/* FIXME: all below wrappers should be removed! */
-+
-+static inline void uds_destroy_cond(struct cond_var *cv)
-+{
-+}
+-	struct barrier begin_update_barrier;
+-	struct barrier end_update_barrier;
++	struct threads_barrier begin_update_barrier;
++	struct threads_barrier end_update_barrier;
  
- static inline int __must_check uds_init_mutex(struct mutex *mutex)
+ 	struct cached_chapter_index chapters[];
+ };
+ 
+-static int uds_initialize_barrier(struct barrier *barrier, unsigned int thread_count)
++static void initialize_threads_barrier(struct threads_barrier *barrier,
++				       unsigned int thread_count)
  {
+ 	sema_init(&barrier->lock, 1);
+ 	barrier->arrived = 0;
+ 	barrier->thread_count = thread_count;
+ 	sema_init(&barrier->wait, 0);
+-
+-	return UDS_SUCCESS;
+-}
+-
+-static int uds_destroy_barrier(struct barrier *barrier)
+-{
+-	return UDS_SUCCESS;
+ }
+ 
+ static inline void __down(struct semaphore *semaphore)
+@@ -203,7 +197,7 @@ static inline void __down(struct semaphore *semaphore)
+ 	}
+ }
+ 
+-static int uds_enter_barrier(struct barrier *barrier)
++static void enter_threads_barrier(struct threads_barrier *barrier)
+ {
+ 	__down(&barrier->lock);
+ 	if (++barrier->arrived == barrier->thread_count) {
+@@ -219,8 +213,6 @@ static int uds_enter_barrier(struct barrier *barrier)
+ 		up(&barrier->lock);
+ 		__down(&barrier->wait);
+ 	}
+-
+-	return UDS_SUCCESS;
+ }
+ 
+ static int __must_check initialize_cached_chapter_index(struct cached_chapter_index *chapter,
+@@ -287,44 +279,32 @@ int uds_make_sparse_cache(const struct index_geometry *geometry, unsigned int ca
+ 	 */
+ 	cache->skip_threshold = (SKIP_SEARCH_THRESHOLD / zone_count);
+ 
+-	result = uds_initialize_barrier(&cache->begin_update_barrier, zone_count);
+-	if (result != UDS_SUCCESS) {
+-		uds_free_sparse_cache(cache);
+-		return result;
+-	}
+-
+-	result = uds_initialize_barrier(&cache->end_update_barrier, zone_count);
+-	if (result != UDS_SUCCESS) {
+-		uds_free_sparse_cache(cache);
+-		return result;
+-	}
++	initialize_threads_barrier(&cache->begin_update_barrier, zone_count);
++	initialize_threads_barrier(&cache->end_update_barrier, zone_count);
+ 
+ 	for (i = 0; i < capacity; i++) {
+ 		result = initialize_cached_chapter_index(&cache->chapters[i], geometry);
+-		if (result != UDS_SUCCESS) {
+-			uds_free_sparse_cache(cache);
+-			return result;
+-		}
++		if (result != UDS_SUCCESS)
++			goto out;
+ 	}
+ 
+ 	for (i = 0; i < zone_count; i++) {
+ 		result = make_search_list(cache, &cache->search_lists[i]);
+-		if (result != UDS_SUCCESS) {
+-			uds_free_sparse_cache(cache);
+-			return result;
+-		}
++		if (result != UDS_SUCCESS)
++			goto out;
+ 	}
+ 
+ 	/* purge_search_list() needs some temporary lists for sorting. */
+ 	result = uds_allocate(capacity * 2, struct cached_chapter_index *,
+ 			      "scratch entries", &cache->scratch_entries);
+-	if (result != UDS_SUCCESS) {
+-		uds_free_sparse_cache(cache);
+-		return result;
+-	}
++	if (result != UDS_SUCCESS)
++		goto out;
+ 
+ 	*cache_ptr = cache;
+ 	return UDS_SUCCESS;
++out:
++	uds_free_sparse_cache(cache);
++	return result;
+ }
+ 
+ static inline void set_skip_search(struct cached_chapter_index *chapter,
+@@ -381,8 +361,6 @@ void uds_free_sparse_cache(struct sparse_cache *cache)
+ 		uds_free(cache->chapters[i].page_buffers);
+ 	}
+ 
+-	uds_destroy_barrier(&cache->begin_update_barrier);
+-	uds_destroy_barrier(&cache->end_update_barrier);
+ 	uds_free(cache);
+ }
+ 
+@@ -525,7 +503,7 @@ int uds_update_sparse_cache(struct index_zone *zone, u64 virtual_chapter)
+ 	 * Wait for every zone thread to reach its corresponding barrier request and invoke this
+ 	 * function before starting to modify the cache.
+ 	 */
+-	uds_enter_barrier(&cache->begin_update_barrier);
++	enter_threads_barrier(&cache->begin_update_barrier);
+ 
+ 	/*
+ 	 * This is the start of the critical section: the zone zero thread is captain, effectively
+@@ -553,7 +531,7 @@ int uds_update_sparse_cache(struct index_zone *zone, u64 virtual_chapter)
+ 	/*
+ 	 * This is the end of the critical section. All cache invariants must have been restored.
+ 	 */
+-	uds_enter_barrier(&cache->end_update_barrier);
++	enter_threads_barrier(&cache->end_update_barrier);
+ 	return result;
+ }
+ 
 -- 
 2.42.0
 
