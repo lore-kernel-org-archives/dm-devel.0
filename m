@@ -1,38 +1,48 @@
-Received: from out30-133.freemail.mail.aliyun.com (out30-133.freemail.mail.aliyun.com [115.124.30.133])
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3F316A330
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 08:54:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=115.124.30.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 874D86A8D2
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 10:03:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709283293; cv=none; b=dR2A+3iWCYICFi7ehGMTOy/8AvlHzq8Wx8bXUWzhS7UITc73dA0qqxgGwkJgMGkyenSNEK+Ohd1YFcQo65iWNhI3Nyp93Egap6xxYj6TO3AJRtrF7Uc5aEFItMvPJvHeYZu+iv/WU3lY3CoRFydrR0e40UGk+jQdJWbU16VpN+U=
+	t=1709287389; cv=none; b=rc4O7xg5QiP4JO9OvFxHQI3n4o918vBBKsePx8G+DIlEfJ5tBycaqKPlmHoz2mz0eH0dMRu+P7jLxTHNP9vaGTxCqSXtQVZSavu2SPfjAN7RyYx7psLFD3+xiaAxwn6rip8aT5+F3t6So/RmP+SL9c5LRPpenWxg3C25ckhk0rk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709283293; c=relaxed/simple;
-	bh=78R0hTFd1L1D+1TwAPXwdv5e5//ZSYxzJCbiOleQUrI=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=Cd0J3MaV3N16HGknafGqdKZFNiz08E9Lb2Uf4us+a2Fp9WhRFn+iaB7uEqECpxPh+6AGeFn1+lphlyrY1RkzfOL+OWJYTQSjaPm1J7X4AhXnfPaqOHFWoutLMWdSpkO78kSZSBDfM1qMSIcYZDrFiR7PIpYnOYX4a8+Bfx60klE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com; spf=pass smtp.mailfrom=linux.alibaba.com; dkim=pass (1024-bit key) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.b=DPiTcMdl; arc=none smtp.client-ip=115.124.30.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.alibaba.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.b="DPiTcMdl"
-DKIM-Signature:v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=linux.alibaba.com; s=default;
-	t=1709283283; h=From:To:Subject:Date:Message-Id:MIME-Version;
-	bh=PMW1G5gR++CtOAeD29pBWv3v1d4NWeli+yzFyyvGrsg=;
-	b=DPiTcMdlUctrzIEtRVwJhrqr5PrNyC1E4NZOkjmvnIXKkaEY0Z3IGChOs7Y5b954oKcJXM2ePNbPXa68KyJhvTaZM/+EAagDI0r8haGb4g0+dRlFxOgp83n1xmpwbxmm5QuCaq+mBQb+0bCTU4ZgzymuhX49nFKExXyQQ4Jxg5c=
-X-Alimail-AntiSpam:AC=PASS;BC=-1|-1;BR=01201311R491e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=ay29a033018046060;MF=yang.lee@linux.alibaba.com;NM=1;PH=DS;RN=4;SR=0;TI=SMTPD_---0W1azfxv_1709283281;
-Received: from localhost(mailfrom:yang.lee@linux.alibaba.com fp:SMTPD_---0W1azfxv_1709283281)
-          by smtp.aliyun-inc.com;
-          Fri, 01 Mar 2024 16:54:42 +0800
-From: Yang Li <yang.lee@linux.alibaba.com>
-To: msakai@redhat.com,
-	dm-devel@lists.linux.dev
+	s=arc-20240116; t=1709287389; c=relaxed/simple;
+	bh=J52L3K3Rhj2ycHk6q4bGsLwgKiV0fudWxJabzPa7F64=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=ayZT+ddJ254U1SoIYYJdaZ4G6dwkbYOXfhJsIE8PoGkrGL8vksNynOS675QcEEjmnAhirQUpeVUp5NNRNJc6BvTOIBV0w5SV+OosxN7V3wzPrdxh1/+hIX6TwdY8T4sCtIZ3pvhwdG3NNmXZ8Vqw5NaQy1kqa1TdVGYrx8Cto+8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TmNv74zXzz4f3jqW
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 18:02:59 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 1BC6F1A08EB
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 18:03:03 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP1 (Coremail) with SMTP id cCh0CgCXaBHTp+FlqmBuFg--.36874S4;
+	Fri, 01 Mar 2024 18:03:01 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: zkabelac@redhat.com,
+	xni@redhat.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	dm-devel@lists.linux.dev,
+	song@kernel.org,
+	yukuai3@huawei.com,
+	heinzm@redhat.com,
+	neilb@suse.de,
+	jbrassow@redhat.com
 Cc: linux-kernel@vger.kernel.org,
-	Yang Li <yang.lee@linux.alibaba.com>
-Subject: [PATCH -next] dm vdo: Remove unneeded semicolon
-Date: Fri,  1 Mar 2024 16:54:40 +0800
-Message-Id: <20240301085440.64541-1-yang.lee@linux.alibaba.com>
-X-Mailer: git-send-email 2.20.1.7.g153144c
+	linux-raid@vger.kernel.org,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH -next 0/9] dm-raid, md/raid: fix v6.7 regressions part2
+Date: Fri,  1 Mar 2024 17:56:48 +0800
+Message-Id: <20240301095657.662111-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -40,29 +50,76 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgCXaBHTp+FlqmBuFg--.36874S4
+X-Coremail-Antispam: 1UD129KBjvJXoW7try8GFy8Zry5Xr1rCFyDZFb_yoW8CFW3pF
+	ZxGa4av34kAF17XrnxJ3WjqF15ta1fGFWDA343Gw4rAr4UJry0yrn8tr15Was8CryrZanr
+	JFW5t3W5GF1jqFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvY14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26ryj6F1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4
+	xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r4a6rW5
+	MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I
+	0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v2
+	6r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0J
+	UQvtAUUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-This patch removes the unnecessary semicolons at the end of the
-for statements which cleans up the code and ensures consistency
-with the rest of the kernel coding style.
+From: Yu Kuai <yukuai3@huawei.com>
 
-Signed-off-by: Yang Li <yang.lee@linux.alibaba.com>
----
- drivers/md/dm-vdo/block-map.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+link to part1: https://lore.kernel.org/all/CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com/
 
-diff --git a/drivers/md/dm-vdo/block-map.c b/drivers/md/dm-vdo/block-map.c
-index 42ec3a252e73..4389df8c9271 100644
---- a/drivers/md/dm-vdo/block-map.c
-+++ b/drivers/md/dm-vdo/block-map.c
-@@ -2707,7 +2707,7 @@ void vdo_traverse_forest(struct block_map *map, vdo_entry_callback_fn callback,
- 
- 		cursor->waiter.callback = launch_cursor;
- 		acquire_vio_from_pool(cursors->pool, &cursor->waiter);
--	};
-+	}
- }
- 
- /**
+part1 contains fixes for deadlocks for stopping sync_thread
+
+This set contains fixes:
+ - reshape can start unexpected, cause data corruption, patch 1,5,6;
+ - deadlocks that reshape concurrent with IO, patch 8;
+ - a lockdep warning, patch 9;
+
+I'm runing lvm2 tests with following scripts with a few rounds now,
+
+for t in `ls test/shell`; do
+        if cat test/shell/$t | grep raid &> /dev/null; then
+                make check T=shell/$t
+        fi
+done
+
+There are no deadlock and no fs corrupt now, however, there are still four
+failed tests:
+
+###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
+###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+
+And failed reasons are the same:
+
+## ERROR: The test started dmeventd (147856) unexpectedly
+
+I have no clue yet, and it seems other folks doesn't have this issue.
+
+Yu Kuai (9):
+  md: don't clear MD_RECOVERY_FROZEN for new dm-raid until resume
+  md: export helpers to stop sync_thread
+  md: export helper md_is_rdwr()
+  md: add a new helper reshape_interrupted()
+  dm-raid: really frozen sync_thread during suspend
+  md/dm-raid: don't call md_reap_sync_thread() directly
+  dm-raid: add a new helper prepare_suspend() in md_personality
+  dm-raid456, md/raid456: fix a deadlock for dm-raid456 while io
+    concurrent with reshape
+  dm-raid: fix lockdep waring in "pers->hot_add_disk"
+
+ drivers/md/dm-raid.c | 93 ++++++++++++++++++++++++++++++++++----------
+ drivers/md/md.c      | 73 ++++++++++++++++++++++++++--------
+ drivers/md/md.h      | 38 +++++++++++++++++-
+ drivers/md/raid5.c   | 32 ++++++++++++++-
+ 4 files changed, 196 insertions(+), 40 deletions(-)
+
 -- 
-2.20.1.7.g153144c
+2.39.2
 
