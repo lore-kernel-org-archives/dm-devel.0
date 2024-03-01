@@ -1,28 +1,28 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77D006BB41
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 10:03:07 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A9E5A6A8D5
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 10:03:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709287389; cv=none; b=or1xWsY1WwUnn7JjuNkdb8mhpIT19QeoxHtFogDoxUuPavBMNqS+qPLHGzYt9TbhUKO/jm8vniKsXKYZnw1FDo1kKKuR7NE/Du89diNYwcbT2SYI1w7XEyfoYgCXDgX4Ejzr0dr5771eloe0untOsFzfyUEuapNQwvxDGhoYh1Y=
+	t=1709287389; cv=none; b=cLkI2OdBTBA/85CYfld1S54LC2mVCgH4c1/DKK4g439kub5JlOJoX6lu9osw9wlHQS1WCR1sw4mDvvKa9AtD34ZIaFkpmUPrtEkUFAlQfEg7XUM4jEGR60PADsff+pIo429zJBGzsWY0GiEf+JHcT+C9tSCCj/fGWJN23gErstQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1709287389; c=relaxed/simple;
-	bh=NkhE9vZydeEeuRLbuxoEqrW0HRh9CMnEfpP62kWndPc=;
+	bh=u3t3DKW3x7GgosZFCclGCU3l8cfElCExYBTh1wR4y2g=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=oos8E+1oLhXn21Vhktm32U0YNVn8TTW2gBHtVjnm4XwWsVvlbIwBjWhRQ3dpx4Mu2q0bGc40HjIrpA0lcx+PdwZvRrn2oX5SGThNSCFiq1osrIWXtIFxQ+dnKcy2Q6z2E6mXnAPqOVHYLYa7g8o7cXdrDgCppsrn6qW6hCHMNGA=
+	 MIME-Version; b=R0Rt166PLtPaBDUPYfI3qnFCyZDOKXVkNnxMnpYyK9KQDO+N60mj+QUJ3YH0D8aqXu5QvTBtViVghidzF06mtkBuV/8xDdOHL9OL//ulKuwLISJtiU77p0Fw2gkkOFpSCN35CJVWSe4kt03Xgl4XGPvOjpC4tDNXVOpDPZ3yQes=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TmNv46jsjz4f3nbl
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TmNv42LCPz4f3nbP
 	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 18:02:56 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 52A891A0838
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 18:03:04 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id B09011A07FA
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 18:03:03 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgCXaBHTp+FlqmBuFg--.36874S6;
-	Fri, 01 Mar 2024 18:03:04 +0800 (CST)
+	by APP1 (Coremail) with SMTP id cCh0CgCXaBHTp+FlqmBuFg--.36874S5;
+	Fri, 01 Mar 2024 18:03:03 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: zkabelac@redhat.com,
 	xni@redhat.com,
@@ -40,9 +40,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH -next 2/9] md: export helpers to stop sync_thread
-Date: Fri,  1 Mar 2024 17:56:50 +0800
-Message-Id: <20240301095657.662111-3-yukuai1@huaweicloud.com>
+Subject: [PATCH -next 1/9] md: don't clear MD_RECOVERY_FROZEN for new dm-raid until resume
+Date: Fri,  1 Mar 2024 17:56:49 +0800
+Message-Id: <20240301095657.662111-2-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240301095657.662111-1-yukuai1@huaweicloud.com>
 References: <20240301095657.662111-1-yukuai1@huaweicloud.com>
@@ -53,13 +53,13 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgCXaBHTp+FlqmBuFg--.36874S6
-X-Coremail-Antispam: 1UD129KBjvJXoW7WF43Gr45Wry5CF1kXr4ktFb_yoW8KF4fpr
-	W2qFn5Cr4YyrW3Z347Ga4Dua4Yvwn2gFyktry3C3yfJ3WfJryDGF15Z3WUAFyDGa4fJr1q
-	q3W5Kay3ury8Kr7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:cCh0CgCXaBHTp+FlqmBuFg--.36874S5
+X-Coremail-Antispam: 1UD129KBjvJXoW7Zw4ktrW3uFy7uFyfZw1UJrb_yoW8Gr4Dpa
+	n7Gr1S9rWkArWaka1Dta4q9ayYqa9xJrW0kry3u3y5Xr13Xrn7K3yYg3ZxZryqkF4a9as0
+	yFyUArWrC3WFkw7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUBE14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jryl82xGYIkIc2
-	x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jr4l82xGYIkIc2
+	x26xkF7I0E14v26r4j6ryUM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
 	Y4vE2Ix0cI8IcVAFwI0_Xr0_Ar1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJw
 	A2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq3wAS
 	0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2
@@ -69,75 +69,47 @@ X-Coremail-Antispam: 1UD129KBjvJXoW7WF43Gr45Wry5CF1kXr4ktFb_yoW8KF4fpr
 	6r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2
 	Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_
 	Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMI
-	IF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUHbyAUUUUU
+	IF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JU4T5dUUUUU
 	=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-The new heleprs will be used in dm-raid in later patches to fix
-regressions and prevent calling md_reap_sync_thread() directly.
+After commit 9dbd1aa3a81c ("dm raid: add reshaping support to the
+target") raid_ctr() will set MD_RECOVERY_FROZEN before md_run() and
+expect to keep array frozen until resume. However, md_run() will clear
+the flag by setting mddev->recovery to 0.
 
+Before commit 1baae052cccd ("md: Don't ignore suspended array in
+md_check_recovery()"), dm-raid actually relied on suspending to prevent
+starting new sync_thread.
+
+Fix this problem by keeping 'MD_RECOVERY_FROZEN' for dm-raid in
+md_run().
+
+Fixes: 1baae052cccd ("md: Don't ignore suspended array in md_check_recovery()")
+Fixes: 9dbd1aa3a81c ("dm raid: add reshaping support to the target")
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md.c | 29 +++++++++++++++++++++++++++++
- drivers/md/md.h |  3 +++
- 2 files changed, 32 insertions(+)
+ drivers/md/md.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 7156e765d027..5f6496cf43f5 100644
+index 3bd42d76e95f..7156e765d027 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -4912,6 +4912,35 @@ static void stop_sync_thread(struct mddev *mddev, bool locked, bool check_seq)
- 		mddev_lock_nointr(mddev);
- }
+@@ -6032,7 +6032,10 @@ int md_run(struct mddev *mddev)
+ 			pr_warn("True protection against single-disk failure might be compromised.\n");
+ 	}
  
-+void md_idle_sync_thread(struct mddev *mddev)
-+{
-+	lockdep_assert_held(&mddev->reconfig_mutex);
+-	mddev->recovery = 0;
++	/* dm-raid expect sync_thread to be frozen until resume */
++	if (mddev->gendisk)
++		mddev->recovery = 0;
 +
-+	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	stop_sync_thread(mddev, true, true);
-+}
-+EXPORT_SYMBOL_GPL(md_idle_sync_thread);
-+
-+void md_frozen_sync_thread(struct mddev *mddev)
-+{
-+	lockdep_assert_held(&mddev->reconfig_mutex);
-+
-+	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	stop_sync_thread(mddev, true, false);
-+}
-+EXPORT_SYMBOL_GPL(md_frozen_sync_thread);
-+
-+void md_unfrozen_sync_thread(struct mddev *mddev)
-+{
-+	lockdep_assert_held(&mddev->reconfig_mutex);
-+
-+	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-+	md_wakeup_thread(mddev->thread);
-+	sysfs_notify_dirent_safe(mddev->sysfs_action);
-+}
-+EXPORT_SYMBOL_GPL(md_unfrozen_sync_thread);
-+
- static void idle_sync_thread(struct mddev *mddev)
- {
- 	mutex_lock(&mddev->sync_mutex);
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index a079ee9b6190..a6d33f10b107 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -781,6 +781,9 @@ extern void md_rdev_clear(struct md_rdev *rdev);
- extern void md_handle_request(struct mddev *mddev, struct bio *bio);
- extern int mddev_suspend(struct mddev *mddev, bool interruptible);
- extern void mddev_resume(struct mddev *mddev);
-+extern void md_idle_sync_thread(struct mddev *mddev);
-+extern void md_frozen_sync_thread(struct mddev *mddev);
-+extern void md_unfrozen_sync_thread(struct mddev *mddev);
+ 	/* may be over-ridden by personality */
+ 	mddev->resync_max_sectors = mddev->dev_sectors;
  
- extern void md_reload_sb(struct mddev *mddev, int raid_disk);
- extern void md_update_sb(struct mddev *mddev, int force);
 -- 
 2.39.2
 
