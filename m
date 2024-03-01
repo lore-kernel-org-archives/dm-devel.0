@@ -1,51 +1,55 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D08376EB79
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 10:03:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4138E69E18
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 15:21:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709287393; cv=none; b=Af99MDBZL6RyT4sGiRLz9eMJAk4JEEPst19EdbIiq33mx5UmlvWDqr9eFzDC8YojL3FA8+1b61lJHYT2BnAfpRBAHPFrVpjiNUk/nFNVQfsLjfKqFpLdxORcR34xrfXD3uaQY9gBxta8SKdewo6LQ4m/tFlUlzQf9TvFIRsRxMo=
+	t=1709306501; cv=none; b=ueQDmKOGkRfYcwayzwxuliR5ILbjmQ1uLHlWp8xb9CKdkF7pdis2cCVz8DTIdQS41UkxWRfdluOIhAsIu3WfRc48h3OfBmwZmYUHbTG59tLqFqD/9mgXZkIOTsHIm0K+oBjUu9j/BZkit+c/nDwZfZLsBzOratEpOyhh2KJKr6o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709287393; c=relaxed/simple;
-	bh=onAHmWHOFK44kLVqIEXDfulGJQSbQfzZEfxypjLQPns=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=Z/nlJzUVxRQx/Zwi+WjKuy+6li20C1V//1SLJSKsVaXIVPxkpnq8PGyA/iYW7LFcmwRCvWsu+6L83gSihzjOqED+Rq4NR7tyPkMagg/ZyqPw8mBGAMax4XLj7MDEyu8nViUC45sX9a0mb0B1GR5rDCHgnTpgiER8pb6Ur1LfkY0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TmNvD4R6sz4f3k69
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 18:03:04 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 098A91A07FA
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 18:03:08 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgCXaBHTp+FlqmBuFg--.36874S12;
-	Fri, 01 Mar 2024 18:03:07 +0800 (CST)
-From: Yu Kuai <yukuai1@huaweicloud.com>
-To: zkabelac@redhat.com,
-	xni@redhat.com,
-	agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	dm-devel@lists.linux.dev,
-	song@kernel.org,
-	yukuai3@huawei.com,
+	s=arc-20240116; t=1709306501; c=relaxed/simple;
+	bh=xkqXRIKO1Ah68D1vo/V3KJZHVg+/5YhMOP+p4NXVta8=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=MI6uVVjjhkDooNpj23XLMXfVAu+fsBe4P46l7CCOJqJftXUVMMKqQXoZgDW7LcVZBd8iIR3HaPkGYYcPGCRLuipmK3ENDalujC6TbFjBX/FYGFxBccJ1kyaTAlZVue7qAgf2sQeKigcKLJ0eoKYMWeFn4EZR+7GEbtteNNOVvRM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YaRgotBH; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YaRgotBH"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1709306498;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=It4KpMBO8RKD2qu9V9Jn/iyXf0RO2wRJAeStTLcykfk=;
+	b=YaRgotBHuq02zbseQujHJh3RjiVI17wVstI7EaoLPaxTqpnXmi8COIsisu59+Bkjpmapxi
+	lUBArz3IxJBq9tCBHj1miAnDfBKqusFmvmjmG+KbP49BRIuO0+RCVIqvkOFoLO8eLYLAMt
+	KkIHDZKtDYUkczHfFEFXi/97QY9fTs4=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-552-Ejvc4LqKMIiXRWUtny8ymg-1; Fri,
+ 01 Mar 2024 10:21:34 -0500
+X-MC-Unique: Ejvc4LqKMIiXRWUtny8ymg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DFCAE3C14955;
+	Fri,  1 Mar 2024 15:21:33 +0000 (UTC)
+Received: from localhost.localdomain (unknown [10.72.120.8])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0C59E1121312;
+	Fri,  1 Mar 2024 15:21:29 +0000 (UTC)
+From: Xiao Ni <xni@redhat.com>
+To: song@kernel.org
+Cc: yukuai1@huaweicloud.com,
+	bmarzins@redhat.com,
 	heinzm@redhat.com,
-	neilb@suse.de,
-	jbrassow@redhat.com
-Cc: linux-kernel@vger.kernel.org,
+	snitzer@kernel.org,
+	ncroxon@redhat.com,
 	linux-raid@vger.kernel.org,
-	yukuai1@huaweicloud.com,
-	yi.zhang@huawei.com,
-	yangerkun@huawei.com
-Subject: [PATCH -next 8/9] dm-raid456, md/raid456: fix a deadlock for dm-raid456 while io concurrent with reshape
-Date: Fri,  1 Mar 2024 17:56:56 +0800
-Message-Id: <20240301095657.662111-9-yukuai1@huaweicloud.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20240301095657.662111-1-yukuai1@huaweicloud.com>
-References: <20240301095657.662111-1-yukuai1@huaweicloud.com>
+	dm-devel@lists.linux.dev
+Subject: [PATCH V2 0/4] Fix dmraid regression bugs
+Date: Fri,  1 Mar 2024 23:21:24 +0800
+Message-Id: <20240301152128.13465-1-xni@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -53,347 +57,42 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgCXaBHTp+FlqmBuFg--.36874S12
-X-Coremail-Antispam: 1UD129KBjvJXoW3CFy3GFyfCF1DKw15Xr4UCFg_yoWkAryDpa
-	y7tas8Zr4jq3yY9w4DAFWkWa4a9Fn7KrZFyFZ3J34fA3W3trn5C3W5Xa1Yvrn8AFyrury5
-	Aa15tayDurWSgFDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUPI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
-	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
-	z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
-	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
-	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
-	IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
-	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
-	kIc2xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E
-	14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIx
-	kGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI42IY6xIIjxv20xvEc7CjxVAF
-	wI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Gr
-	0_Cr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUQ
-	SdkUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
 
-From: Yu Kuai <yukuai3@huawei.com>
+Hi all
 
-For raid456, if reshape is still in progress, then IO across reshape
-position will wait for reshape to make progress. However, for dm-raid,
-in following cases reshape will never make progress hence IO will hang:
+This patch set tries to fix dmraid regression problems we face
+recently. This patch is based on song's md-6.8 branch. 
 
-1) the array is read-only;
-2) MD_RECOVERY_WAIT is set;
-3) MD_RECOVERY_FROZEN is set;
+This patch set has four patches. The first two patches revert two patches.
+The third one and the fourth one resolve deadlock problems.
 
-After commit c467e97f079f ("md/raid6: use valid sector values to determine
-if an I/O should wait on the reshape") fix the problem that IO across
-reshape position doesn't wait for reshape, the dm-raid test
-shell/lvconvert-raid-reshape.sh start to hang:
+I have run lvm2 regression test 5 times. There are 4 failed cases:
+shell/dmsetup-integrity-keys.sh
+shell/lvresize-fs-crypt.sh
+shell/pvck-dump.sh
+shell/select-report.sh
 
-[root@fedora ~]# cat /proc/979/stack
-[<0>] wait_woken+0x7d/0x90
-[<0>] raid5_make_request+0x929/0x1d70 [raid456]
-[<0>] md_handle_request+0xc2/0x3b0 [md_mod]
-[<0>] raid_map+0x2c/0x50 [dm_raid]
-[<0>] __map_bio+0x251/0x380 [dm_mod]
-[<0>] dm_submit_bio+0x1f0/0x760 [dm_mod]
-[<0>] __submit_bio+0xc2/0x1c0
-[<0>] submit_bio_noacct_nocheck+0x17f/0x450
-[<0>] submit_bio_noacct+0x2bc/0x780
-[<0>] submit_bio+0x70/0xc0
-[<0>] mpage_readahead+0x169/0x1f0
-[<0>] blkdev_readahead+0x18/0x30
-[<0>] read_pages+0x7c/0x3b0
-[<0>] page_cache_ra_unbounded+0x1ab/0x280
-[<0>] force_page_cache_ra+0x9e/0x130
-[<0>] page_cache_sync_ra+0x3b/0x110
-[<0>] filemap_get_pages+0x143/0xa30
-[<0>] filemap_read+0xdc/0x4b0
-[<0>] blkdev_read_iter+0x75/0x200
-[<0>] vfs_read+0x272/0x460
-[<0>] ksys_read+0x7a/0x170
-[<0>] __x64_sys_read+0x1c/0x30
-[<0>] do_syscall_64+0xc6/0x230
-[<0>] entry_SYSCALL_64_after_hwframe+0x6c/0x74
+And lvconvert-raid-reshape.sh can fail sometimes. But it fails in 6.6
+kernel too. So it can return back to the same state with 6.6 kernel.
 
-This is because reshape can't make progress.
+V2:
+It doesn't revert commit 82ec0ae59d02
+("md: Make sure md_do_sync() will set MD_RECOVERY_DONE")
+It doesn't clear MD_RECOVERY_WAIT before stopping dmraid
+Re-write patch01 comment
 
-For md/raid, the problem doesn't exist because register new sync_thread
-doesn't rely on the IO to be done any more:
+Xiao Ni (4):
+  md: Revert "md: Don't register sync_thread for reshape directly"
+  md: Revert "md: Don't ignore suspended array in md_check_recovery()"
+  md: Set MD_RECOVERY_FROZEN before stop sync thread
+  md/raid5: Don't check crossing reshape when reshape hasn't started
 
-1) If array is read-only, it can switch to read-write by ioctl/sysfs;
-2) md/raid never set MD_RECOVERY_WAIT;
-3) If MD_RECOVERY_FROZEN is set, mddev_suspend() doesn't hold
-   'reconfig_mutex', hence it can be cleared and reshape can continue by
-   sysfs api 'sync_action'.
+ drivers/md/md.c     |  9 ++++----
+ drivers/md/raid10.c | 16 ++++++++++++--
+ drivers/md/raid5.c  | 51 ++++++++++++++++++++++++++++++++-------------
+ 3 files changed, 56 insertions(+), 20 deletions(-)
 
-However, I'm not sure yet how to avoid the problem in dm-raid yet. This
-patch one the one hand make sure raid_message() can't change
-sync_thread() through raid_message() after presuspend(), on the other
-hand detect the above 3 cases before wait for IO do be done in
-dm_suspend(), and let dm-raid requeue those IO.
-
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
----
- drivers/md/dm-raid.c | 22 ++++++++++++++++++++--
- drivers/md/md.c      | 24 ++++++++++++++++++++++--
- drivers/md/md.h      |  3 ++-
- drivers/md/raid5.c   | 32 ++++++++++++++++++++++++++++++--
- 4 files changed, 74 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 002dcac20403..64d381123ce3 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -213,6 +213,7 @@ struct raid_dev {
- #define RT_FLAG_RS_IN_SYNC		6
- #define RT_FLAG_RS_RESYNCING		7
- #define RT_FLAG_RS_GROW			8
-+#define RT_FLAG_RS_FROZEN		9
- 
- /* Array elements of 64 bit needed for rebuild/failed disk bits */
- #define DISKS_ARRAY_ELEMS ((MAX_RAID_DEVICES + (sizeof(uint64_t) * 8 - 1)) / sizeof(uint64_t) / 8)
-@@ -3340,7 +3341,8 @@ static int raid_map(struct dm_target *ti, struct bio *bio)
- 	if (unlikely(bio_end_sector(bio) > mddev->array_sectors))
- 		return DM_MAPIO_REQUEUE;
- 
--	md_handle_request(mddev, bio);
-+	if (unlikely(!md_handle_request(mddev, bio)))
-+		return DM_MAPIO_REQUEUE;
- 
- 	return DM_MAPIO_SUBMITTED;
- }
-@@ -3724,7 +3726,8 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
- 	if (!mddev->pers || !mddev->pers->sync_request)
- 		return -EINVAL;
- 
--	if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
-+	if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags) ||
-+	    test_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags))
- 		return -EBUSY;
- 
- 	if (!strcasecmp(argv[0], "frozen")) {
-@@ -3808,6 +3811,12 @@ static void raid_presuspend(struct dm_target *ti)
- 	struct raid_set *rs = ti->private;
- 	struct mddev *mddev = &rs->md;
- 
-+	/*
-+	 * From now on, disallow raid_message() to change sync_thread until
-+	 * resume, raid_postsuspend() is too late.
-+	 */
-+	set_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
-+
- 	if (!reshape_interrupted(mddev))
- 		return;
- 
-@@ -3820,6 +3829,13 @@ static void raid_presuspend(struct dm_target *ti)
- 		mddev->pers->prepare_suspend(mddev);
- }
- 
-+static void raid_presuspend_undo(struct dm_target *ti)
-+{
-+	struct raid_set *rs = ti->private;
-+
-+	clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
-+}
-+
- static void raid_postsuspend(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
-@@ -4085,6 +4101,7 @@ static void raid_resume(struct dm_target *ti)
- 
- 		WARN_ON_ONCE(!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery));
- 		WARN_ON_ONCE(test_bit(MD_RECOVERY_RUNNING, &mddev->recovery));
-+		clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
- 		mddev_lock_nointr(mddev);
- 		mddev->ro = 0;
- 		mddev->in_sync = 0;
-@@ -4105,6 +4122,7 @@ static struct target_type raid_target = {
- 	.iterate_devices = raid_iterate_devices,
- 	.io_hints = raid_io_hints,
- 	.presuspend = raid_presuspend,
-+	.presuspend_undo = raid_presuspend_undo,
- 	.postsuspend = raid_postsuspend,
- 	.preresume = raid_preresume,
- 	.resume = raid_resume,
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 94dff077fbf4..f37903786fc5 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -366,7 +366,7 @@ static bool is_suspended(struct mddev *mddev, struct bio *bio)
- 	return true;
- }
- 
--void md_handle_request(struct mddev *mddev, struct bio *bio)
-+bool md_handle_request(struct mddev *mddev, struct bio *bio)
- {
- check_suspended:
- 	if (is_suspended(mddev, bio)) {
-@@ -374,7 +374,7 @@ void md_handle_request(struct mddev *mddev, struct bio *bio)
- 		/* Bail out if REQ_NOWAIT is set for the bio */
- 		if (bio->bi_opf & REQ_NOWAIT) {
- 			bio_wouldblock_error(bio);
--			return;
-+			return true;
- 		}
- 		for (;;) {
- 			prepare_to_wait(&mddev->sb_wait, &__wait,
-@@ -390,10 +390,13 @@ void md_handle_request(struct mddev *mddev, struct bio *bio)
- 
- 	if (!mddev->pers->make_request(mddev, bio)) {
- 		percpu_ref_put(&mddev->active_io);
-+		if (!mddev->gendisk && mddev->pers->prepare_suspend)
-+			return false;
- 		goto check_suspended;
- 	}
- 
- 	percpu_ref_put(&mddev->active_io);
-+	return true;
- }
- EXPORT_SYMBOL(md_handle_request);
- 
-@@ -8738,6 +8741,23 @@ void md_account_bio(struct mddev *mddev, struct bio **bio)
- }
- EXPORT_SYMBOL_GPL(md_account_bio);
- 
-+void md_free_cloned_bio(struct bio *bio)
-+{
-+	struct md_io_clone *md_io_clone = bio->bi_private;
-+	struct bio *orig_bio = md_io_clone->orig_bio;
-+	struct mddev *mddev = md_io_clone->mddev;
-+
-+	if (bio->bi_status && !orig_bio->bi_status)
-+		orig_bio->bi_status = bio->bi_status;
-+
-+	if (md_io_clone->start_time)
-+		bio_end_io_acct(orig_bio, md_io_clone->start_time);
-+
-+	bio_put(bio);
-+	percpu_ref_put(&mddev->active_io);
-+}
-+EXPORT_SYMBOL_GPL(md_free_cloned_bio);
-+
- /* md_allow_write(mddev)
-  * Calling this ensures that the array is marked 'active' so that writes
-  * may proceed without blocking.  It is important to call this before
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 23080727e75b..588381fa25de 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -782,6 +782,7 @@ extern void md_finish_reshape(struct mddev *mddev);
- void md_submit_discard_bio(struct mddev *mddev, struct md_rdev *rdev,
- 			struct bio *bio, sector_t start, sector_t size);
- void md_account_bio(struct mddev *mddev, struct bio **bio);
-+void md_free_cloned_bio(struct bio *bio);
- 
- extern bool __must_check md_flush_request(struct mddev *mddev, struct bio *bio);
- extern void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
-@@ -810,7 +811,7 @@ extern void md_stop_writes(struct mddev *mddev);
- extern int md_rdev_init(struct md_rdev *rdev);
- extern void md_rdev_clear(struct md_rdev *rdev);
- 
--extern void md_handle_request(struct mddev *mddev, struct bio *bio);
-+extern bool md_handle_request(struct mddev *mddev, struct bio *bio);
- extern int mddev_suspend(struct mddev *mddev, bool interruptible);
- extern void mddev_resume(struct mddev *mddev);
- extern void md_idle_sync_thread(struct mddev *mddev);
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index edf368fdc733..f1c41fd0f636 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -760,6 +760,7 @@ enum stripe_result {
- 	STRIPE_RETRY,
- 	STRIPE_SCHEDULE_AND_RETRY,
- 	STRIPE_FAIL,
-+	STRIPE_WAIT_RESHAPE,
- };
- 
- struct stripe_request_ctx {
-@@ -5946,7 +5947,8 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
- 			if (ahead_of_reshape(mddev, logical_sector,
- 					     conf->reshape_safe)) {
- 				spin_unlock_irq(&conf->device_lock);
--				return STRIPE_SCHEDULE_AND_RETRY;
-+				ret = STRIPE_SCHEDULE_AND_RETRY;
-+				goto out;
- 			}
- 		}
- 		spin_unlock_irq(&conf->device_lock);
-@@ -6025,6 +6027,12 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
- 
- out_release:
- 	raid5_release_stripe(sh);
-+out:
-+	if (ret == STRIPE_SCHEDULE_AND_RETRY && reshape_interrupted(mddev)) {
-+		bi->bi_status = BLK_STS_RESOURCE;
-+		ret = STRIPE_WAIT_RESHAPE;
-+		pr_err_ratelimited("dm-raid456: io across reshape position while reshape can't make progress");
-+	}
- 	return ret;
- }
- 
-@@ -6146,7 +6154,7 @@ static bool raid5_make_request(struct mddev *mddev, struct bio * bi)
- 	while (1) {
- 		res = make_stripe_request(mddev, conf, &ctx, logical_sector,
- 					  bi);
--		if (res == STRIPE_FAIL)
-+		if (res == STRIPE_FAIL || res == STRIPE_WAIT_RESHAPE)
- 			break;
- 
- 		if (res == STRIPE_RETRY)
-@@ -6184,6 +6192,11 @@ static bool raid5_make_request(struct mddev *mddev, struct bio * bi)
- 
- 	if (rw == WRITE)
- 		md_write_end(mddev);
-+	if (res == STRIPE_WAIT_RESHAPE) {
-+		md_free_cloned_bio(bi);
-+		return false;
-+	}
-+
- 	bio_endio(bi);
- 	return true;
- }
-@@ -8907,6 +8920,18 @@ static int raid5_start(struct mddev *mddev)
- 	return r5l_start(conf->log);
- }
- 
-+/*
-+ * This is only used for dm-raid456, caller already frozen sync_thread, hence
-+ * if rehsape is still in progress, io that is waiting for reshape can never be
-+ * done now, hence wake up and handle those IO.
-+ */
-+static void raid5_prepare_suspend(struct mddev *mddev)
-+{
-+	struct r5conf *conf = mddev->private;
-+
-+	wake_up(&conf->wait_for_overlap);
-+}
-+
- static struct md_personality raid6_personality =
- {
- 	.name		= "raid6",
-@@ -8930,6 +8955,7 @@ static struct md_personality raid6_personality =
- 	.quiesce	= raid5_quiesce,
- 	.takeover	= raid6_takeover,
- 	.change_consistency_policy = raid5_change_consistency_policy,
-+	.prepare_suspend = raid5_prepare_suspend,
- };
- static struct md_personality raid5_personality =
- {
-@@ -8954,6 +8980,7 @@ static struct md_personality raid5_personality =
- 	.quiesce	= raid5_quiesce,
- 	.takeover	= raid5_takeover,
- 	.change_consistency_policy = raid5_change_consistency_policy,
-+	.prepare_suspend = raid5_prepare_suspend,
- };
- 
- static struct md_personality raid4_personality =
-@@ -8979,6 +9006,7 @@ static struct md_personality raid4_personality =
- 	.quiesce	= raid5_quiesce,
- 	.takeover	= raid4_takeover,
- 	.change_consistency_policy = raid5_change_consistency_policy,
-+	.prepare_suspend = raid5_prepare_suspend,
- };
- 
- static int __init raid5_init(void)
 -- 
-2.39.2
+2.32.0 (Apple Git-132)
 
