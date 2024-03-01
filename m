@@ -1,735 +1,467 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFCD3524BE
-	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 04:17:52 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 02DDA4F1F5
+	for <dm-devel@lists.linux.dev>; Fri,  1 Mar 2024 04:18:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709266685; cv=none; b=Nqk33U5Pv50tOuxwNxNiYbG2ik2V7HEpGIRDzhvYdsbqBC5WTca/UZ5R8h76B/0arizbywZKDDnmCTdOLN/cDRt5NT0aGL/9PIODLWNEE17Uj8tWJpKdLnWVWzysOG0OUvf+UifUxuTpVCSzJrKJIFGgv1+6lbKR6WElrTiTZdI=
+	t=1709266701; cv=none; b=Tntl5XiY0EfihxnkuHMwHWHcpQH+v2ttm2skMPZyZQvbwKWksY5ppJL31BV1yAIOxW2TJ+80PWXG1lm99f+qOc/ElEPF7bkrfo/K19AqSaKOEnsx169xZ13I67DbqSqsdfICnnCDsikgJRT4An0JFLQq+KxqLKN8MSFJ180oCb8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709266685; c=relaxed/simple;
-	bh=eyZmYfiyPOIkNKefVjB65uq2KS+/Obr7rul6pMw3Mtg=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=LI2MODDVZEwU1B7/ZljTV1lbzj0qTICLJhDTvb9DkUH5uNu6BeD/+trxjy2cAjaSheortvNKnjvB14nT/8zz9kWekLaWU6pF9oxKKdoA3SjvHYHWc652Z+CCisHM1kBZ3G6X6M8DMjmbW74GRp6IrGnTyh6tczOezN3pb7VWYeU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CWZW+rpI; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1709266701; c=relaxed/simple;
+	bh=Mdk/QI9tBC3Eoldt62sYl1aOkGpE7n9DbytHxQIYOB8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Tj6yVo2OVIWWRuyZGnXUH2ZAr3fng4MbX/OSqZxLTQfRZJ35WXjK7UhCGvpnR9/t3ySatN47pWx68/RAwjkedD8oDxlsODa6UtkbB3hiB8dGheXbyK2XvMiFc6ad90hG+1n4MOX6hxz0HV7x9HZnMeKiNos0/tcR5XMR2Rn+nAI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZH8ylcGx; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CWZW+rpI"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZH8ylcGx"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1709266667;
+	s=mimecast20190719; t=1709266688;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=rbU6o8qAe1L5xsJ3hrWi4JqL3EcCgZ0a0ns2Zo1MaHk=;
-	b=CWZW+rpIo27Dect03pkqvgw9uuDAbOymKzwPLGV0a7ZuX20biAThuTsq6IfrhEwppC22Aq
-	zWjwJWfvLGMGOWhpkiguHG0/+BKqxMJQiU42lWVcZLUQo5VQt7XXXm995RqLwHV4Wulh81
-	UiC7PH7ZIHjkd5s52wWvNJj68cROlLM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=akc0sxDgRM1fxGlxxGLtxgIQ+d6BcAfp3Zh5U5+vkAw=;
+	b=ZH8ylcGxvitBsxvYGrWRTgvMF26/ucNd+HspXYA9ANdt3xiZ1H/mcwaBNold2i7tFs8tML
+	mZ3DItyviJKfiHVuEyemLpqJspuYsgN8wkXk0/e17Z47rZ1SwfHb4+BrTIg4dTCvOmRcSk
+	b0CvoQ0k1e+gsEeiUUtEPlPJfFMjLzo=
+Received: from mail-pl1-f200.google.com (mail-pl1-f200.google.com
+ [209.85.214.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-596-NydiRMTIM5SR_RUNtzI7XQ-1; Thu, 29 Feb 2024 23:17:43 -0500
-X-MC-Unique: NydiRMTIM5SR_RUNtzI7XQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D216A832BCB;
-	Fri,  1 Mar 2024 04:17:42 +0000 (UTC)
-Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CB9522026D0A;
-	Fri,  1 Mar 2024 04:17:42 +0000 (UTC)
-Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id C4B71A15C3; Thu, 29 Feb 2024 23:17:42 -0500 (EST)
-From: Matthew Sakai <msakai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: Mike Snitzer <snitzer@kernel.org>,
-	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH 2/2] dm vdo: move indexer files into sub-directory
-Date: Thu, 29 Feb 2024 23:17:42 -0500
-Message-ID: <d90aa1f37ee6f4c34178f6ba2bde8fc1e7477390.1709266548.git.msakai@redhat.com>
-In-Reply-To: <cover.1709266547.git.msakai@redhat.com>
-References: <cover.1709266547.git.msakai@redhat.com>
+ us-mta-92-GI24uyqJN1Cff64934AR6w-1; Thu, 29 Feb 2024 23:18:06 -0500
+X-MC-Unique: GI24uyqJN1Cff64934AR6w-1
+Received: by mail-pl1-f200.google.com with SMTP id d9443c01a7336-1dc7392a883so17750585ad.2
+        for <dm-devel@lists.linux.dev>; Thu, 29 Feb 2024 20:18:06 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1709266685; x=1709871485;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to:subject
+         :user-agent:mime-version:date:message-id:x-gm-message-state:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=akc0sxDgRM1fxGlxxGLtxgIQ+d6BcAfp3Zh5U5+vkAw=;
+        b=j+YMKUrjaNw1zjMJPE0uwo8Q2r0Bxu1sHf3QPHYUxvyKWv0T4h93Mn7Lmwqvsrqq+z
+         /UzrJLTDlb92xAp20GDcjIdLl7+Pci+S5YDDueSR2xQG9QLZuKLUX7P4oOgi6lUkDfn+
+         VWUSkjROrKIf+aFoaxstQOaj5wOetLgtxnkHN4/ZSkfkoEMLJOWzv2OjukdIVEnFLkX5
+         /uF3DotcQo8NuK1SKeyOSONHOHAFyAPu9HtSlHX1R1XRNflTlaMLsyEne6Jj+z4Z22aJ
+         NX9J1ph5/8gVrMNFHzt3uIHU9mAVwPPzOeZQkp6rb6zruaI9jXyaJhau43b031lWNrO7
+         28Dw==
+X-Forwarded-Encrypted: i=1; AJvYcCVAJ+KyceVhRPL9dVkwbwEipL89SEX5VDINqlFOL82qXQ7BDkMxFQqsXjCJKF8inqAdykK2x2Tw8eSzQ2lh3bYj6SxlB75ZpmQ=
+X-Gm-Message-State: AOJu0Yyh24k1Fau7giyyRyxWOBaEUUs3+RjVqIiGKVSDZNojvWsrG9cJ
+	jDba5CIgwL723pZMLePAyqFQz36i3n0vYKiB5DFWNzvYwbeRXGubpDvXcmcpE4ZYci7NgZLuoV8
+	KD2W81EH1LlFrjwKh8CK7lhBQwWFOf1m/bGGW6IYakXTAxiAb8Hm6AxEA
+X-Received: by 2002:a17:903:41c8:b0:1dc:a5fd:6dd3 with SMTP id u8-20020a17090341c800b001dca5fd6dd3mr804702ple.29.1709266685221;
+        Thu, 29 Feb 2024 20:18:05 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEPc1O2eMeAjOQppqFxxAmhOFAtJ8ZA42PfHXLj3f8c+fWt0WK5FaJOugeMt+XO66WBQk+BAA==
+X-Received: by 2002:a17:903:41c8:b0:1dc:a5fd:6dd3 with SMTP id u8-20020a17090341c800b001dca5fd6dd3mr804686ple.29.1709266684825;
+        Thu, 29 Feb 2024 20:18:04 -0800 (PST)
+Received: from [10.72.120.8] ([43.228.180.230])
+        by smtp.gmail.com with ESMTPSA id f4-20020a170902684400b001dc2d1bd4dasm2378770pln.80.2024.02.29.20.18.01
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 29 Feb 2024 20:18:04 -0800 (PST)
+Message-ID: <2e7c9c1f-5ea1-48fd-b371-934deea4808c@redhat.com>
+Date: Fri, 1 Mar 2024 12:18:00 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH RFC 1/4] dm-raid/md: Clear MD_RECOVERY_WAIT when stopping
+ dmraid
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: song@kernel.org, bmarzins@redhat.com, heinzm@redhat.com,
+ snitzer@kernel.org, ncroxon@redhat.com, neilb@suse.de,
+ linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20240220153059.11233-1-xni@redhat.com>
+ <20240220153059.11233-2-xni@redhat.com>
+ <aa0859d5-6e1c-76f0-284d-9d1c21497f28@huaweicloud.com>
+ <CALTww2-3WgtGMDpeDphcfkdCxORf5bTSFZATSZ=m3S4VbPv26w@mail.gmail.com>
+ <15439a9b-1170-09a3-caf0-e1020e78b713@huaweicloud.com>
+ <CALTww29H7+kau-V-wx9kPM4Beu9niUaYcDt+DvXGrQdUNP_Aag@mail.gmail.com>
+ <380b448c-32f9-4bf3-8626-4f8086047fca@huaweicloud.com>
+From: Xiao Ni <xni@redhat.com>
+In-Reply-To: <380b448c-32f9-4bf3-8626-4f8086047fca@huaweicloud.com>
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-From: Mike Snitzer <snitzer@kernel.org>
 
-The goal is to assist high-level understanding of which code is
-conceptually specific to VDO's indexer.
+在 2024/2/26 下午5:36, Yu Kuai 写道:
+> Hi,
+>
+> 在 2024/02/26 13:12, Xiao Ni 写道:
+>> On Mon, Feb 26, 2024 at 9:31 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>>
+>>> Hi,
+>>>
+>>> 在 2024/02/23 21:20, Xiao Ni 写道:
+>>>> On Fri, Feb 23, 2024 at 11:32 AM Yu Kuai <yukuai1@huaweicloud.com> 
+>>>> wrote:
+>>>>>
+>>>>> Hi,
+>>>>>
+>>>>> 在 2024/02/20 23:30, Xiao Ni 写道:
+>>>>>> MD_RECOVERY_WAIT is used by dmraid to delay reshape process by patch
+>>>>>> commit 644e2537fdc7 ("dm raid: fix stripe adding reshape deadlock").
+>>>>>> Before patch commit f52f5c71f3d4b ("md: fix stopping sync thread")
+>>>>>> dmraid stopped sync thread directy by calling md_reap_sync_thread.
+>>>>>> After this patch dmraid stops sync thread asynchronously as md does.
+>>>>>> This is right. Now the dmraid stop process is like this:
+>>>>>>
+>>>>>> 1. 
+>>>>>> raid_postsuspend->md_stop_writes->__md_stop_writes->stop_sync_thread.
+>>>>>> stop_sync_thread sets MD_RECOVERY_INTR and wait until 
+>>>>>> MD_RECOVERY_RUNNING
+>>>>>> is cleared
+>>>>>> 2. md_do_sync finds MD_RECOVERY_WAIT is set and return. (This is the
+>>>>>> root cause for this deadlock. We hope md_do_sync can set 
+>>>>>> MD_RECOVERY_DONE)
+>>>>>> 3. md thread calls md_check_recovery (This is the place to reap sync
+>>>>>> thread. Because MD_RECOVERY_DONE is not set. md thread can't reap 
+>>>>>> sync
+>>>>>> thread)
+>>>>>> 4. raid_dtr stops/free struct mddev and release dmraid related 
+>>>>>> resources
+>>>>>>
+>>>>>> dmraid only sets MD_RECOVERY_WAIT but doesn't clear it. It needs 
+>>>>>> to clear
+>>>>>> this bit when stopping the dmraid before stopping sync thread.
+>>>>>>
+>>>>>> But the deadlock still can happen sometimes even MD_RECOVERY_WAIT is
+>>>>>> cleared before stopping sync thread. It's the reason 
+>>>>>> stop_sync_thread only
+>>>>>> wakes up task. If the task isn't running, it still needs to wake 
+>>>>>> up sync
+>>>>>> thread too.
+>>>>>>
+>>>>>> This deadlock can be reproduced 100% by these commands:
+>>>>>> modprobe brd rd_size=34816 rd_nr=5
+>>>>>> while [ 1 ]; do
+>>>>>> vgcreate test_vg /dev/ram*
+>>>>>> lvcreate --type raid5 -L 16M -n test_lv test_vg
+>>>>>> lvconvert -y --stripes 4 /dev/test_vg/test_lv
+>>>>>> vgremove test_vg -ff
+>>>>>> sleep 1
+>>>>>> done
+>>>>>>
+>>>>>> Fixes: 644e2537fdc7 ("dm raid: fix stripe adding reshape deadlock")
+>>>>>> Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
+>>>>>> Signed-off-by: Xiao Ni <xni@redhat.com>
+>>>>>
+>>>>> I'm not sure about this change, I think MD_RECOVERY_WAIT is hacky and
+>>>>> really breaks how sync_thread is working, it should just go away 
+>>>>> soon,
+>>>>> once we make sure sync_thread can't be registered before 
+>>>>> pers->start()
+>>>>> is done.
+>>>>
+>>>> Hi Kuai
+>>>>
+>>>> I just want to get to a stable state without changing any existing
+>>>> logic. After fixing these regressions, we can consider other changes.
+>>>> (e.g. remove MD_RECOVERY_WAIT. allow sync thread start/stop when array
+>>>> is suspend. )  I talked with Heinz yesterday, for dm-raid, it can't
+>>>> allow any io to happen including sync thread when array is suspended.
+>>>
+>>
+>> Hi Kuai
+>>
+>>> So, are you still thinking that my patchset will allow this for 
+>>> dm-raid?
+>>>
+>>> I already explain a lot why patch 1 from my set is okay, and why the 
+>>> set
+>>> doesn't introduce any behaviour change like you said in this patch 0:
+>>
+>>
+>> I'll read all your patches to understand you well.
+>>
+>> But as I mentioned many times too, we're fixing regression problems.
+>> It's better for us to fix them with the smallest change. As you can
+>> see, in my patch set, we can fix these regression problems with small
+>> changes (Sorry I didn't notice your patch set has some changes which
+>> are the same with mine).  So why don't we need such a big change to
+>> fix the regression problems? Now with my patch set I can reproduce a
+>> problem by lvm2 test suit which happens in 6.6 too. It means with this
+>> patch set we can back to a state same with 6.6.
+>
+> For complexity, I agree that we can go back to the same state with v6.6,
+> and then fix other problems on the top of that. I don't have preference
+> for this, I'll post my patchset anyhow. But other than the test suite,
+> you still need to make sure nothing is broken from the big picture.
+>
+> For example, in the following 3 cases, can MD_RECOVERY_WAIT be cleared
+> as expected, and new sync_thread will not start after a reload?
+>
+> 1)
+> ioctl suspend
+> ioctl reload
+> ioctl resume
+>
+> 2)
+> ioctl reload
+> ioctl resume
+>
+> 3)
+> ioctl suspend
+> // without a reload.
+> ioctl resume
 
-Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
----
- drivers/md/dm-vdo/Makefile                    | 34 ++++++++++---------
- drivers/md/dm-vdo/data-vio.h                  |  3 +-
- drivers/md/dm-vdo/dedupe.c                    |  3 +-
- .../md/dm-vdo/{ => indexer}/chapter-index.c   |  5 +--
- .../md/dm-vdo/{ => indexer}/chapter-index.h   |  0
- drivers/md/dm-vdo/{ => indexer}/config.c      |  0
- drivers/md/dm-vdo/{ => indexer}/config.h      |  0
- drivers/md/dm-vdo/{ => indexer}/delta-index.c |  5 +--
- drivers/md/dm-vdo/{ => indexer}/delta-index.h |  5 +--
- .../{ => indexer}/funnel-requestqueue.c       |  0
- .../{ => indexer}/funnel-requestqueue.h       |  0
- drivers/md/dm-vdo/{ => indexer}/geometry.c    |  5 +--
- drivers/md/dm-vdo/{ => indexer}/geometry.h    |  0
- drivers/md/dm-vdo/{ => indexer}/hash-utils.h  |  3 +-
- .../md/dm-vdo/{ => indexer}/index-layout.c    |  5 +--
- .../md/dm-vdo/{ => indexer}/index-layout.h    |  0
- .../md/dm-vdo/{ => indexer}/index-page-map.c  |  5 +--
- .../md/dm-vdo/{ => indexer}/index-page-map.h  |  0
- .../md/dm-vdo/{ => indexer}/index-session.c   |  7 ++--
- .../md/dm-vdo/{ => indexer}/index-session.h   |  3 +-
- drivers/md/dm-vdo/{ => indexer}/index.c       |  5 +--
- drivers/md/dm-vdo/{ => indexer}/index.h       |  0
- drivers/md/dm-vdo/{ => indexer}/indexer.h     |  0
- drivers/md/dm-vdo/{ => indexer}/io-factory.c  |  0
- drivers/md/dm-vdo/{ => indexer}/io-factory.h  |  0
- .../md/dm-vdo/{ => indexer}/open-chapter.c    |  5 +--
- .../md/dm-vdo/{ => indexer}/open-chapter.h    |  0
- drivers/md/dm-vdo/{ => indexer}/radix-sort.c  |  0
- drivers/md/dm-vdo/{ => indexer}/radix-sort.h  |  0
- .../md/dm-vdo/{ => indexer}/sparse-cache.c    |  7 ++--
- .../md/dm-vdo/{ => indexer}/sparse-cache.h    |  0
- .../md/dm-vdo/{ => indexer}/volume-index.c    |  9 ++---
- .../md/dm-vdo/{ => indexer}/volume-index.h    |  3 +-
- drivers/md/dm-vdo/{ => indexer}/volume.c      | 13 +++----
- drivers/md/dm-vdo/{ => indexer}/volume.h      |  5 +--
- drivers/md/dm-vdo/uds-sysfs.c                 |  3 +-
- 36 files changed, 77 insertions(+), 56 deletions(-)
- rename drivers/md/dm-vdo/{ => indexer}/chapter-index.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/chapter-index.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/config.c (100%)
- rename drivers/md/dm-vdo/{ => indexer}/config.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/delta-index.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/delta-index.h (99%)
- rename drivers/md/dm-vdo/{ => indexer}/funnel-requestqueue.c (100%)
- rename drivers/md/dm-vdo/{ => indexer}/funnel-requestqueue.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/geometry.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/geometry.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/hash-utils.h (99%)
- rename drivers/md/dm-vdo/{ => indexer}/index-layout.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/index-layout.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/index-page-map.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/index-page-map.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/index-session.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/index-session.h (99%)
- rename drivers/md/dm-vdo/{ => indexer}/index.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/index.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/indexer.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/io-factory.c (100%)
- rename drivers/md/dm-vdo/{ => indexer}/io-factory.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/open-chapter.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/open-chapter.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/radix-sort.c (100%)
- rename drivers/md/dm-vdo/{ => indexer}/radix-sort.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/sparse-cache.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/sparse-cache.h (100%)
- rename drivers/md/dm-vdo/{ => indexer}/volume-index.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/volume-index.h (99%)
- rename drivers/md/dm-vdo/{ => indexer}/volume.c (99%)
- rename drivers/md/dm-vdo/{ => indexer}/volume.h (99%)
 
-diff --git a/drivers/md/dm-vdo/Makefile b/drivers/md/dm-vdo/Makefile
-index 32266ab04cc1..502a7a0acbdb 100644
---- a/drivers/md/dm-vdo/Makefile
-+++ b/drivers/md/dm-vdo/Makefile
-@@ -1,50 +1,39 @@
- # SPDX-License-Identifier: GPL-2.0-only
- 
-+ccflags-y := -I$(srctree)/$(src) -I$(srctree)/$(src)/indexer
-+
- obj-$(CONFIG_DM_VDO) += dm-vdo.o
- 
- dm-vdo-objs := \
- 	action-manager.o \
- 	admin-state.o \
- 	block-map.o \
--	chapter-index.o \
- 	completion.o \
--	config.o \
- 	data-vio.o \
- 	dedupe.o \
--	delta-index.o \
- 	dm-vdo-target.o \
- 	dump.o \
- 	encodings.o \
- 	errors.o \
- 	flush.o \
- 	funnel-queue.o \
--	funnel-requestqueue.o \
- 	funnel-workqueue.o \
--	geometry.o \
--	index-layout.o \
--	index.o \
--	index-page-map.o \
--	index-session.o \
- 	int-map.o \
--	io-factory.o \
- 	io-submitter.o \
- 	logger.o \
- 	logical-zone.o \
- 	memory-alloc.o \
- 	message-stats.o \
- 	murmurhash3.o \
--	open-chapter.o \
- 	packer.o \
- 	permassert.o \
- 	physical-zone.o \
- 	pool-sysfs.o \
- 	pool-sysfs-stats.o \
- 	priority-table.o \
--	radix-sort.o \
- 	recovery-journal.o \
- 	repair.o \
- 	slab-depot.o \
--	sparse-cache.o \
- 	status-codes.o \
- 	string-utils.o \
- 	sysfs.o \
-@@ -54,6 +43,19 @@ dm-vdo-objs := \
- 	uds-sysfs.o \
- 	vdo.o \
- 	vio.o \
--	volume-index.o \
--	volume.o \
--	wait-queue.o
-+	wait-queue.o \
-+	indexer/chapter-index.o \
-+	indexer/config.o \
-+	indexer/delta-index.o \
-+	indexer/funnel-requestqueue.o \
-+	indexer/geometry.o \
-+	indexer/index.o \
-+	indexer/index-layout.o \
-+	indexer/index-page-map.o \
-+	indexer/index-session.o \
-+	indexer/io-factory.o \
-+	indexer/open-chapter.o \
-+	indexer/radix-sort.o \
-+	indexer/sparse-cache.o \
-+	indexer/volume.o \
-+	indexer/volume-index.o
-diff --git a/drivers/md/dm-vdo/data-vio.h b/drivers/md/dm-vdo/data-vio.h
-index e7729623a6bb..44fd0d8ccb76 100644
---- a/drivers/md/dm-vdo/data-vio.h
-+++ b/drivers/md/dm-vdo/data-vio.h
-@@ -10,9 +10,10 @@
- #include <linux/bio.h>
- #include <linux/list.h>
- 
--#include "indexer.h"
- #include "permassert.h"
- 
-+#include "indexer.h"
-+
- #include "block-map.h"
- #include "completion.h"
- #include "constants.h"
-diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
-index 942a50ef8b0d..9468d7fad443 100644
---- a/drivers/md/dm-vdo/dedupe.c
-+++ b/drivers/md/dm-vdo/dedupe.c
-@@ -126,13 +126,14 @@
- #include <linux/spinlock.h>
- #include <linux/timer.h>
- 
--#include "indexer.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "numeric.h"
- #include "permassert.h"
- #include "string-utils.h"
- 
-+#include "indexer.h"
-+
- #include "action-manager.h"
- #include "admin-state.h"
- #include "completion.h"
-diff --git a/drivers/md/dm-vdo/chapter-index.c b/drivers/md/dm-vdo/indexer/chapter-index.c
-similarity index 99%
-rename from drivers/md/dm-vdo/chapter-index.c
-rename to drivers/md/dm-vdo/indexer/chapter-index.c
-index 9b9185c2c237..6487825ada90 100644
---- a/drivers/md/dm-vdo/chapter-index.c
-+++ b/drivers/md/dm-vdo/indexer/chapter-index.c
-@@ -6,12 +6,13 @@
- #include "chapter-index.h"
- 
- #include "errors.h"
--#include "hash-utils.h"
--#include "indexer.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "permassert.h"
- 
-+#include "hash-utils.h"
-+#include "indexer.h"
-+
- int uds_make_open_chapter_index(struct open_chapter_index **chapter_index,
- 				const struct index_geometry *geometry, u64 volume_nonce)
- {
-diff --git a/drivers/md/dm-vdo/chapter-index.h b/drivers/md/dm-vdo/indexer/chapter-index.h
-similarity index 100%
-rename from drivers/md/dm-vdo/chapter-index.h
-rename to drivers/md/dm-vdo/indexer/chapter-index.h
-diff --git a/drivers/md/dm-vdo/config.c b/drivers/md/dm-vdo/indexer/config.c
-similarity index 100%
-rename from drivers/md/dm-vdo/config.c
-rename to drivers/md/dm-vdo/indexer/config.c
-diff --git a/drivers/md/dm-vdo/config.h b/drivers/md/dm-vdo/indexer/config.h
-similarity index 100%
-rename from drivers/md/dm-vdo/config.h
-rename to drivers/md/dm-vdo/indexer/config.h
-diff --git a/drivers/md/dm-vdo/delta-index.c b/drivers/md/dm-vdo/indexer/delta-index.c
-similarity index 99%
-rename from drivers/md/dm-vdo/delta-index.c
-rename to drivers/md/dm-vdo/indexer/delta-index.c
-index 66f51b5f8fd2..4aace707545a 100644
---- a/drivers/md/dm-vdo/delta-index.c
-+++ b/drivers/md/dm-vdo/indexer/delta-index.c
-@@ -10,10 +10,8 @@
- #include <linux/limits.h>
- #include <linux/log2.h>
- 
--#include "config.h"
- #include "cpu.h"
- #include "errors.h"
--#include "indexer.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "numeric.h"
-@@ -21,6 +19,9 @@
- #include "string-utils.h"
- #include "time-utils.h"
- 
-+#include "config.h"
-+#include "indexer.h"
-+
- /*
-  * The entries in a delta index could be stored in a single delta list, but to reduce search times
-  * and update costs it uses multiple delta lists. These lists are stored in a single chunk of
-diff --git a/drivers/md/dm-vdo/delta-index.h b/drivers/md/dm-vdo/indexer/delta-index.h
-similarity index 99%
-rename from drivers/md/dm-vdo/delta-index.h
-rename to drivers/md/dm-vdo/indexer/delta-index.h
-index b3b38fb440bf..3d2ea19aef61 100644
---- a/drivers/md/dm-vdo/delta-index.h
-+++ b/drivers/md/dm-vdo/indexer/delta-index.h
-@@ -8,11 +8,12 @@
- 
- #include <linux/cache.h>
- 
--#include "config.h"
--#include "io-factory.h"
- #include "numeric.h"
- #include "time-utils.h"
- 
-+#include "config.h"
-+#include "io-factory.h"
-+
- /*
-  * A delta index is a key-value store, where each entry maps an address (the key) to a payload (the
-  * value). The entries are sorted by address, and only the delta between successive addresses is
-diff --git a/drivers/md/dm-vdo/funnel-requestqueue.c b/drivers/md/dm-vdo/indexer/funnel-requestqueue.c
-similarity index 100%
-rename from drivers/md/dm-vdo/funnel-requestqueue.c
-rename to drivers/md/dm-vdo/indexer/funnel-requestqueue.c
-diff --git a/drivers/md/dm-vdo/funnel-requestqueue.h b/drivers/md/dm-vdo/indexer/funnel-requestqueue.h
-similarity index 100%
-rename from drivers/md/dm-vdo/funnel-requestqueue.h
-rename to drivers/md/dm-vdo/indexer/funnel-requestqueue.h
-diff --git a/drivers/md/dm-vdo/geometry.c b/drivers/md/dm-vdo/indexer/geometry.c
-similarity index 99%
-rename from drivers/md/dm-vdo/geometry.c
-rename to drivers/md/dm-vdo/indexer/geometry.c
-index 04c07195a01c..38c18283cdde 100644
---- a/drivers/md/dm-vdo/geometry.c
-+++ b/drivers/md/dm-vdo/indexer/geometry.c
-@@ -8,13 +8,14 @@
- #include <linux/compiler.h>
- #include <linux/log2.h>
- 
--#include "delta-index.h"
- #include "errors.h"
--#include "indexer.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "permassert.h"
- 
-+#include "delta-index.h"
-+#include "indexer.h"
-+
- /*
-  * An index volume is divided into a fixed number of fixed-size chapters, each consisting of a
-  * fixed number of fixed-size pages. The volume layout is defined by two constants and four
-diff --git a/drivers/md/dm-vdo/geometry.h b/drivers/md/dm-vdo/indexer/geometry.h
-similarity index 100%
-rename from drivers/md/dm-vdo/geometry.h
-rename to drivers/md/dm-vdo/indexer/geometry.h
-diff --git a/drivers/md/dm-vdo/hash-utils.h b/drivers/md/dm-vdo/indexer/hash-utils.h
-similarity index 99%
-rename from drivers/md/dm-vdo/hash-utils.h
-rename to drivers/md/dm-vdo/indexer/hash-utils.h
-index e3b865bbe9b2..6a8dd8ffea6c 100644
---- a/drivers/md/dm-vdo/hash-utils.h
-+++ b/drivers/md/dm-vdo/indexer/hash-utils.h
-@@ -6,9 +6,10 @@
- #ifndef UDS_HASH_UTILS_H
- #define UDS_HASH_UTILS_H
- 
-+#include "numeric.h"
-+
- #include "geometry.h"
- #include "indexer.h"
--#include "numeric.h"
- 
- /* Utilities for extracting portions of a request name for various uses. */
- 
-diff --git a/drivers/md/dm-vdo/index-layout.c b/drivers/md/dm-vdo/indexer/index-layout.c
-similarity index 99%
-rename from drivers/md/dm-vdo/index-layout.c
-rename to drivers/md/dm-vdo/indexer/index-layout.c
-index 2da507b26fd5..af533aa270a8 100644
---- a/drivers/md/dm-vdo/index-layout.c
-+++ b/drivers/md/dm-vdo/indexer/index-layout.c
-@@ -7,13 +7,14 @@
- 
- #include <linux/random.h>
- 
--#include "config.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "murmurhash3.h"
- #include "numeric.h"
--#include "open-chapter.h"
- #include "time-utils.h"
-+
-+#include "config.h"
-+#include "open-chapter.h"
- #include "volume-index.h"
- 
- /*
-diff --git a/drivers/md/dm-vdo/index-layout.h b/drivers/md/dm-vdo/indexer/index-layout.h
-similarity index 100%
-rename from drivers/md/dm-vdo/index-layout.h
-rename to drivers/md/dm-vdo/indexer/index-layout.h
-diff --git a/drivers/md/dm-vdo/index-page-map.c b/drivers/md/dm-vdo/indexer/index-page-map.c
-similarity index 99%
-rename from drivers/md/dm-vdo/index-page-map.c
-rename to drivers/md/dm-vdo/indexer/index-page-map.c
-index 1bb12066ad1a..90d97c33a9c3 100644
---- a/drivers/md/dm-vdo/index-page-map.c
-+++ b/drivers/md/dm-vdo/indexer/index-page-map.c
-@@ -6,8 +6,6 @@
- #include "index-page-map.h"
- 
- #include "errors.h"
--#include "hash-utils.h"
--#include "indexer.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "numeric.h"
-@@ -15,6 +13,9 @@
- #include "string-utils.h"
- #include "thread-utils.h"
- 
-+#include "hash-utils.h"
-+#include "indexer.h"
-+
- /*
-  * The index page map is conceptually a two-dimensional array indexed by chapter number and index
-  * page number within the chapter. Each entry contains the number of the last delta list on that
-diff --git a/drivers/md/dm-vdo/index-page-map.h b/drivers/md/dm-vdo/indexer/index-page-map.h
-similarity index 100%
-rename from drivers/md/dm-vdo/index-page-map.h
-rename to drivers/md/dm-vdo/indexer/index-page-map.h
-diff --git a/drivers/md/dm-vdo/index-session.c b/drivers/md/dm-vdo/indexer/index-session.c
-similarity index 99%
-rename from drivers/md/dm-vdo/index-session.c
-rename to drivers/md/dm-vdo/indexer/index-session.c
-index a482ccd3981e..07b478f57c68 100644
---- a/drivers/md/dm-vdo/index-session.c
-+++ b/drivers/md/dm-vdo/indexer/index-session.c
-@@ -7,13 +7,14 @@
- 
- #include <linux/atomic.h>
- 
--#include "funnel-requestqueue.h"
--#include "index.h"
--#include "index-layout.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "time-utils.h"
- 
-+#include "funnel-requestqueue.h"
-+#include "index.h"
-+#include "index-layout.h"
-+
- /*
-  * The index session contains a lock (the request_mutex) which ensures that only one thread can
-  * change the state of its index at a time. The state field indicates the current state of the
-diff --git a/drivers/md/dm-vdo/index-session.h b/drivers/md/dm-vdo/indexer/index-session.h
-similarity index 99%
-rename from drivers/md/dm-vdo/index-session.h
-rename to drivers/md/dm-vdo/indexer/index-session.h
-index 733d10f8a56c..066648f6e062 100644
---- a/drivers/md/dm-vdo/index-session.h
-+++ b/drivers/md/dm-vdo/indexer/index-session.h
-@@ -9,9 +9,10 @@
- #include <linux/atomic.h>
- #include <linux/cache.h>
- 
-+#include "thread-utils.h"
-+
- #include "config.h"
- #include "indexer.h"
--#include "thread-utils.h"
- 
- /*
-  * The index session mediates all interactions with a UDS index. Once the index session is created,
-diff --git a/drivers/md/dm-vdo/index.c b/drivers/md/dm-vdo/indexer/index.c
-similarity index 99%
-rename from drivers/md/dm-vdo/index.c
-rename to drivers/md/dm-vdo/indexer/index.c
-index 9d4a8e5cbaad..35e3b45cdb71 100644
---- a/drivers/md/dm-vdo/index.c
-+++ b/drivers/md/dm-vdo/indexer/index.c
-@@ -6,10 +6,11 @@
- 
- #include "index.h"
- 
--#include "funnel-requestqueue.h"
--#include "hash-utils.h"
- #include "logger.h"
- #include "memory-alloc.h"
-+
-+#include "funnel-requestqueue.h"
-+#include "hash-utils.h"
- #include "sparse-cache.h"
- 
- static const u64 NO_LAST_SAVE = U64_MAX;
-diff --git a/drivers/md/dm-vdo/index.h b/drivers/md/dm-vdo/indexer/index.h
-similarity index 100%
-rename from drivers/md/dm-vdo/index.h
-rename to drivers/md/dm-vdo/indexer/index.h
-diff --git a/drivers/md/dm-vdo/indexer.h b/drivers/md/dm-vdo/indexer/indexer.h
-similarity index 100%
-rename from drivers/md/dm-vdo/indexer.h
-rename to drivers/md/dm-vdo/indexer/indexer.h
-diff --git a/drivers/md/dm-vdo/io-factory.c b/drivers/md/dm-vdo/indexer/io-factory.c
-similarity index 100%
-rename from drivers/md/dm-vdo/io-factory.c
-rename to drivers/md/dm-vdo/indexer/io-factory.c
-diff --git a/drivers/md/dm-vdo/io-factory.h b/drivers/md/dm-vdo/indexer/io-factory.h
-similarity index 100%
-rename from drivers/md/dm-vdo/io-factory.h
-rename to drivers/md/dm-vdo/indexer/io-factory.h
-diff --git a/drivers/md/dm-vdo/open-chapter.c b/drivers/md/dm-vdo/indexer/open-chapter.c
-similarity index 99%
-rename from drivers/md/dm-vdo/open-chapter.c
-rename to drivers/md/dm-vdo/indexer/open-chapter.c
-index d9d6e5d45bfb..da16afaec07f 100644
---- a/drivers/md/dm-vdo/open-chapter.c
-+++ b/drivers/md/dm-vdo/indexer/open-chapter.c
-@@ -7,13 +7,14 @@
- 
- #include <linux/log2.h>
- 
--#include "config.h"
--#include "hash-utils.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "numeric.h"
- #include "permassert.h"
- 
-+#include "config.h"
-+#include "hash-utils.h"
-+
- /*
-  * Each index zone has a dedicated open chapter zone structure which gets an equal share of the
-  * open chapter space. Records are assigned to zones based on their record name. Within each zone,
-diff --git a/drivers/md/dm-vdo/open-chapter.h b/drivers/md/dm-vdo/indexer/open-chapter.h
-similarity index 100%
-rename from drivers/md/dm-vdo/open-chapter.h
-rename to drivers/md/dm-vdo/indexer/open-chapter.h
-diff --git a/drivers/md/dm-vdo/radix-sort.c b/drivers/md/dm-vdo/indexer/radix-sort.c
-similarity index 100%
-rename from drivers/md/dm-vdo/radix-sort.c
-rename to drivers/md/dm-vdo/indexer/radix-sort.c
-diff --git a/drivers/md/dm-vdo/radix-sort.h b/drivers/md/dm-vdo/indexer/radix-sort.h
-similarity index 100%
-rename from drivers/md/dm-vdo/radix-sort.h
-rename to drivers/md/dm-vdo/indexer/radix-sort.h
-diff --git a/drivers/md/dm-vdo/sparse-cache.c b/drivers/md/dm-vdo/indexer/sparse-cache.c
-similarity index 99%
-rename from drivers/md/dm-vdo/sparse-cache.c
-rename to drivers/md/dm-vdo/indexer/sparse-cache.c
-index b43a626a42de..f2141de6ed00 100644
---- a/drivers/md/dm-vdo/sparse-cache.c
-+++ b/drivers/md/dm-vdo/indexer/sparse-cache.c
-@@ -9,13 +9,14 @@
- #include <linux/delay.h>
- #include <linux/dm-bufio.h>
- 
--#include "chapter-index.h"
--#include "config.h"
--#include "index.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "permassert.h"
- 
-+#include "chapter-index.h"
-+#include "config.h"
-+#include "index.h"
-+
- /*
-  * Since the cache is small, it is implemented as a simple array of cache entries. Searching for a
-  * specific virtual chapter is implemented as a linear search. The cache replacement policy is
-diff --git a/drivers/md/dm-vdo/sparse-cache.h b/drivers/md/dm-vdo/indexer/sparse-cache.h
-similarity index 100%
-rename from drivers/md/dm-vdo/sparse-cache.h
-rename to drivers/md/dm-vdo/indexer/sparse-cache.h
-diff --git a/drivers/md/dm-vdo/volume-index.c b/drivers/md/dm-vdo/indexer/volume-index.c
-similarity index 99%
-rename from drivers/md/dm-vdo/volume-index.c
-rename to drivers/md/dm-vdo/indexer/volume-index.c
-index 36e3c2e3d799..8cbd9280c4bd 100644
---- a/drivers/md/dm-vdo/volume-index.c
-+++ b/drivers/md/dm-vdo/indexer/volume-index.c
-@@ -10,17 +10,18 @@
- #include <linux/compiler.h>
- #include <linux/log2.h>
- 
--#include "config.h"
- #include "errors.h"
--#include "geometry.h"
--#include "hash-utils.h"
--#include "indexer.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "numeric.h"
- #include "permassert.h"
- #include "thread-utils.h"
- 
-+#include "config.h"
-+#include "geometry.h"
-+#include "hash-utils.h"
-+#include "indexer.h"
-+
- /*
-  * The volume index is a combination of two separate subindexes, one containing sparse hook entries
-  * (retained for all chapters), and one containing the remaining entries (retained only for the
-diff --git a/drivers/md/dm-vdo/volume-index.h b/drivers/md/dm-vdo/indexer/volume-index.h
-similarity index 99%
-rename from drivers/md/dm-vdo/volume-index.h
-rename to drivers/md/dm-vdo/indexer/volume-index.h
-index 66bf14fddc90..583998c547b7 100644
---- a/drivers/md/dm-vdo/volume-index.h
-+++ b/drivers/md/dm-vdo/indexer/volume-index.h
-@@ -8,10 +8,11 @@
- 
- #include <linux/limits.h>
- 
-+#include "thread-utils.h"
-+
- #include "config.h"
- #include "delta-index.h"
- #include "indexer.h"
--#include "thread-utils.h"
- 
- /*
-  * The volume index is the primary top-level index for UDS. It contains records which map a record
-diff --git a/drivers/md/dm-vdo/volume.c b/drivers/md/dm-vdo/indexer/volume.c
-similarity index 99%
-rename from drivers/md/dm-vdo/volume.c
-rename to drivers/md/dm-vdo/indexer/volume.c
-index 60416dc8a9d7..eca83b6cab35 100644
---- a/drivers/md/dm-vdo/volume.c
-+++ b/drivers/md/dm-vdo/indexer/volume.c
-@@ -9,19 +9,20 @@
- #include <linux/dm-bufio.h>
- #include <linux/err.h>
- 
--#include "chapter-index.h"
--#include "config.h"
- #include "errors.h"
--#include "geometry.h"
--#include "hash-utils.h"
--#include "index.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "permassert.h"
--#include "sparse-cache.h"
- #include "string-utils.h"
- #include "thread-utils.h"
- 
-+#include "chapter-index.h"
-+#include "config.h"
-+#include "geometry.h"
-+#include "hash-utils.h"
-+#include "index.h"
-+#include "sparse-cache.h"
-+
- /*
-  * The first block of the volume layout is reserved for the volume header, which is no longer used.
-  * The remainder of the volume is divided into chapters consisting of several pages of records, and
-diff --git a/drivers/md/dm-vdo/volume.h b/drivers/md/dm-vdo/indexer/volume.h
-similarity index 99%
-rename from drivers/md/dm-vdo/volume.h
-rename to drivers/md/dm-vdo/indexer/volume.h
-index 290de5cbf9ec..8679a5e55347 100644
---- a/drivers/md/dm-vdo/volume.h
-+++ b/drivers/md/dm-vdo/indexer/volume.h
-@@ -11,16 +11,17 @@
- #include <linux/dm-bufio.h>
- #include <linux/limits.h>
- 
-+#include "permassert.h"
-+#include "thread-utils.h"
-+
- #include "chapter-index.h"
- #include "config.h"
- #include "geometry.h"
- #include "indexer.h"
- #include "index-layout.h"
- #include "index-page-map.h"
--#include "permassert.h"
- #include "radix-sort.h"
- #include "sparse-cache.h"
--#include "thread-utils.h"
- 
- /*
-  * The volume manages deduplication records on permanent storage. The term "volume" can also refer
-diff --git a/drivers/md/dm-vdo/uds-sysfs.c b/drivers/md/dm-vdo/uds-sysfs.c
-index 1548092e7de1..2c4fb277ba38 100644
---- a/drivers/md/dm-vdo/uds-sysfs.c
-+++ b/drivers/md/dm-vdo/uds-sysfs.c
-@@ -9,11 +9,12 @@
- #include <linux/module.h>
- #include <linux/slab.h>
- 
--#include "indexer.h"
- #include "logger.h"
- #include "memory-alloc.h"
- #include "string-utils.h"
- 
-+#include "indexer.h"
-+
- #define UDS_SYSFS_NAME "uds"
- 
- static struct {
--- 
-2.42.0
+Hi Kuai
+
+Is it the place that you think clearing MD_RECOVERY_WAIT is not safe? 
+For the above three cases, I didn't do tests with dmsetup commands. 
+Because lvm2 tests use lv commands, so I only checked the logs which I 
+use printk to follow the functions calling sequence. l can make sure 
+MD_RECOVERY_WAIT can be cleared when running lvconvert command. I'm not 
+familiar with dmsetup commands. Could you give some examples fot the 
+three above cases? I can do test myself here.
+
+Best Regards
+
+Xiao
+
+>
+>>
+>>
+>>
+>>>
+>>> "Kuai's patch set breaks some rules".
+>>>
+>>> The only thing that will change is that for md/raid, sync_thrad can
+>>> start for suspended array, however, I don't think this will be a 
+>>> problem
+>>> because sync_thread can be running for suspended array already, and
+>>> 'MD_RECOVERY_FROZEN' is already used to prevent sync_thread to start.
+>>
+>> We can't allow sync thread happen for dmraid when it's suspended.
+>> Because it needs to switch table when suspended. It's a base design.
+>> If it can happen now. We should fix this.
+>
+> Yes, and my patchset also fix this, and other problems related to
+> sync_thread by managing sync_thread the same as md/raid.
+>
+> BTW, on the top my patchset, I already made some change locally to
+> expand MD_RECOVERY_FROZEN and remove MD_RECOVERY_WAIT, if you're going
+> to review my patchset, you can take a look at following change later,
+> I already tested the change.
+>
+> Thanks,
+> Kuai
+>
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index e1b3b1917627..a0c8a5b92aab 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -213,6 +213,7 @@ struct raid_dev {
+>  #define RT_FLAG_RS_IN_SYNC             6
+>  #define RT_FLAG_RS_RESYNCING           7
+>  #define RT_FLAG_RS_GROW                        8
+> +#define RT_FLAG_WAIT_RELOAD            9
+>
+>  /* Array elements of 64 bit needed for rebuild/failed disk bits */
+>  #define DISKS_ARRAY_ELEMS ((MAX_RAID_DEVICES + (sizeof(uint64_t) * 8 
+> - 1)) / sizeof(uint64_t) / 8)
+> @@ -3728,6 +3729,9 @@ static int raid_message(struct dm_target *ti, 
+> unsigned int argc, char **argv,
+>         if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
+>                 return -EBUSY;
+>
+> +       if (test_bit(RT_FLAG_WAIT_RELOAD, &rs->runtime_flags))
+> +               return -EINVAL;
+> +
+>         if (!strcasecmp(argv[0], "frozen")) {
+>                 ret = mddev_lock(mddev);
+>                 if (ret)
+> @@ -3809,21 +3813,25 @@ static void raid_presuspend(struct dm_target *ti)
+>         struct raid_set *rs = ti->private;
+>         struct mddev *mddev = &rs->md;
+>
+> -       mddev_lock_nointr(mddev);
+> -       md_frozen_sync_thread(mddev);
+> -       mddev_unlock(mddev);
+> +       if (!test_bit(RT_FLAG_WAIT_RELOAD, &rs->runtime_flags)) {
+> +               mddev_lock_nointr(mddev);
+> +               md_frozen_sync_thread(mddev);
+> +               mddev_unlock(mddev);
+>
+> -       if (mddev->pers && mddev->pers->prepare_suspend)
+> -               mddev->pers->prepare_suspend(mddev);
+> +               if (mddev->pers && mddev->pers->prepare_suspend)
+> +                       mddev->pers->prepare_suspend(mddev);
+> +       }
+>  }
+>
+>  static void raid_presuspend_undo(struct dm_target *ti)
+>  {
+>         struct raid_set *rs = ti->private;
+>
+> -       mddev_lock_nointr(&rs->md);
+> -       md_unfrozen_sync_thread(&rs->md);
+> -       mddev_unlock(&rs->md);
+> +       if (!test_bit(RT_FLAG_WAIT_RELOAD, &rs->runtime_flags)) {
+> +               mddev_lock_nointr(&rs->md);
+> +               md_unfrozen_sync_thread(&rs->md);
+> +               mddev_unlock(&rs->md);
+> +       }
+>  }
+>
+>  static void raid_postsuspend(struct dm_target *ti)
+> @@ -3958,9 +3966,6 @@ static int rs_start_reshape(struct raid_set *rs)
+>         struct mddev *mddev = &rs->md;
+>         struct md_personality *pers = mddev->pers;
+>
+> -       /* Don't allow the sync thread to work until the table gets 
+> reloaded. */
+> -       set_bit(MD_RECOVERY_WAIT, &mddev->recovery);
+> -
+>         r = rs_setup_reshape(rs);
+>         if (r)
+>                 return r;
+> @@ -4055,6 +4060,7 @@ static int raid_preresume(struct dm_target *ti)
+>                 /* Initiate a reshape. */
+>                 rs_set_rdev_sectors(rs);
+>                 mddev_lock_nointr(mddev);
+> +               set_bit(RT_FLAG_WAIT_RELOAD, &rs->runtime_flags);
+>                 r = rs_start_reshape(rs);
+>                 mddev_unlock(mddev);
+>                 if (r)
+> @@ -4089,7 +4095,8 @@ static void raid_resume(struct dm_target *ti)
+>                 mddev_lock_nointr(mddev);
+>                 mddev->ro = 0;
+>                 mddev->in_sync = 0;
+> -               md_unfrozen_sync_thread(mddev);
+> +               if (!test_bit(RT_FLAG_WAIT_RELOAD, &rs->runtime_flags))
+> +                       md_unfrozen_sync_thread(mddev);
+>                 mddev_unlock(mddev);
+>         }
+>  }
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 81e6f49a14fc..595b1fbdce20 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -6064,7 +6064,8 @@ int md_run(struct mddev *mddev)
+>                         pr_warn("True protection against single-disk 
+> failure might be compromised.\n");
+>         }
+>
+> -       mddev->recovery = 0;
+> +       /* dm-raid expect sync_thread to be frozen until resume */
+> +       mddev->recovery &= BIT_ULL_MASK(MD_RECOVERY_FROZEN);
+>         /* may be over-ridden by personality */
+>         mddev->resync_max_sectors = mddev->dev_sectors;
+>
+> @@ -6237,10 +6238,8 @@ int md_start(struct mddev *mddev)
+>         int ret = 0;
+>
+>         if (mddev->pers->start) {
+> -               set_bit(MD_RECOVERY_WAIT, &mddev->recovery);
+>                 ret = mddev->pers->start(mddev);
+> -               clear_bit(MD_RECOVERY_WAIT, &mddev->recovery);
+> -               md_wakeup_thread(mddev->sync_thread);
+> +               WARN_ON_ONCE(test_bit(MD_RECOVERY_RUNNING, 
+> &mddev->recovery));
+>         }
+>         return ret;
+>  }
+> @@ -8827,8 +8825,7 @@ void md_do_sync(struct md_thread *thread)
+>         if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
+>                 goto skip;
+>
+> -       if (test_bit(MD_RECOVERY_WAIT, &mddev->recovery) ||
+> -           !md_is_rdwr(mddev)) {/* never try to sync a read-only 
+> array */
+> +       if (!md_is_rdwr(mddev)) {/* never try to sync a read-only 
+> array */
+>                 set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+>                 goto skip;
+>         }
+> diff --git a/drivers/md/md.h b/drivers/md/md.h
+> index c17b7e68c533..eb00cdadc9c5 100644
+> --- a/drivers/md/md.h
+> +++ b/drivers/md/md.h
+> @@ -554,7 +554,6 @@ enum recovery_flags {
+>         MD_RECOVERY_RESHAPE,    /* A reshape is happening */
+>         MD_RECOVERY_FROZEN,     /* User request to abort, and not 
+> restart, any action */
+>         MD_RECOVERY_ERROR,      /* sync-action interrupted because 
+> io-error */
+> -       MD_RECOVERY_WAIT,       /* waiting for pers->start() to finish */
+>         MD_RESYNCING_REMOTE,    /* remote node is running resync 
+> thread */
+>  };
+>
+> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+> index acce2868e491..530a7f0b120b 100644
+> --- a/drivers/md/raid5.c
+> +++ b/drivers/md/raid5.c
+> @@ -5919,7 +5919,6 @@ static int add_all_stripe_bios(struct r5conf *conf,
+>  static bool reshape_disabled(struct mddev *mddev)
+>  {
+>         return !md_is_rdwr(mddev) ||
+> -              test_bit(MD_RECOVERY_WAIT, &mddev->recovery) ||
+>                test_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+>  }
+>
+>>
+>> Best Regards
+>> Xiao
+>>>
+>>> Thanks,
+>>> Kuai
+>>>
+>>>>
+>>>> Regards
+>>>> Xiao
+>>>>>
+>>>>> Thanks,
+>>>>> Kuai
+>>>>>> ---
+>>>>>>     drivers/md/dm-raid.c | 2 ++
+>>>>>>     drivers/md/md.c      | 1 +
+>>>>>>     2 files changed, 3 insertions(+)
+>>>>>>
+>>>>>> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+>>>>>> index eb009d6bb03a..325767c1140f 100644
+>>>>>> --- a/drivers/md/dm-raid.c
+>>>>>> +++ b/drivers/md/dm-raid.c
+>>>>>> @@ -3796,6 +3796,8 @@ static void raid_postsuspend(struct 
+>>>>>> dm_target *ti)
+>>>>>>         struct raid_set *rs = ti->private;
+>>>>>>
+>>>>>>         if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, 
+>>>>>> &rs->runtime_flags)) {
+>>>>>> +             if (test_bit(MD_RECOVERY_WAIT, &rs->md.recovery))
+>>>>>> +                     clear_bit(MD_RECOVERY_WAIT, &rs->md.recovery);
+>>>>>>                 /* Writes have to be stopped before suspending to 
+>>>>>> avoid deadlocks. */
+>>>>>>                 if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
+>>>>>>                         md_stop_writes(&rs->md);
+>>>>>> diff --git a/drivers/md/md.c b/drivers/md/md.c
+>>>>>> index 2266358d8074..54790261254d 100644
+>>>>>> --- a/drivers/md/md.c
+>>>>>> +++ b/drivers/md/md.c
+>>>>>> @@ -4904,6 +4904,7 @@ static void stop_sync_thread(struct mddev 
+>>>>>> *mddev, bool locked, bool check_seq)
+>>>>>>          * never happen
+>>>>>>          */
+>>>>>> md_wakeup_thread_directly(mddev->sync_thread);
+>>>>>> +     md_wakeup_thread(mddev->sync_thread);
+>>>>>>         if (work_pending(&mddev->sync_work))
+>>>>>>                 flush_work(&mddev->sync_work);
+>>>>>>
+>>>>>>
+>>>>>
+>>>>
+>>>> .
+>>>>
+>>>
+>>
+>> .
+>>
+>
 
