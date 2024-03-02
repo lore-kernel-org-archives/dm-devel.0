@@ -1,85 +1,140 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com [209.85.219.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D52318F5C
-	for <dm-devel@lists.linux.dev>; Sat,  2 Mar 2024 04:14:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E94977E8
+	for <dm-devel@lists.linux.dev>; Sat,  2 Mar 2024 15:56:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709352900; cv=none; b=GzPDsAU6EbmPLloccuXL02QgtuqmI9DNIpgX18p1vKju6/5Tc8PReuhffnMUJJfJlaCIgzhkqAwNj0gOQ+mywBf4acCPulgmb2jZVUgduayaEvXl4rY4/BYJ5ZP5LN7NO4YWHojT5bleWn8ABzqTipPD74JsK/eJFICdhlQR8wo=
+	t=1709395001; cv=none; b=Mo4TP038O872UxX7WRfzj0z82r5jM8jLHjia0k93eefh/TSAhY9obNo8Cb15kPF67O6PAshn12siWX24bVtrPIihitUAbNzH/5BXG+XoECQwC9ZjMCzWSMc+UF3mgs3IrCXs8bgswudiPQrdAoB35ay+KKxj5MoL8uSzy/cvQeU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709352900; c=relaxed/simple;
-	bh=/1+GOGhh+pVjrKvmZWdMRnJ91uk2nvheq4wiSCQYdMY=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=YBRHMlG8Bx8R+4NLlqwY8pUgp0Bv5m2Eqp/f5Nkgs5CGwtLUDDWd8PST0YQa/sLzJjFjnTKPhtgs1jzEwzqqUVLBI0FGNk63qlSG9xxEv46t/iEJHN1EFSU/99QO6NnPlkLa40TaWqk4SIm5vBQ63rRYYo/1G2GDKJvZmcz35RA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=nOTZReGK; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="nOTZReGK"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 77AA4C43390
-	for <dm-devel@lists.linux.dev>; Sat,  2 Mar 2024 04:14:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1709352899;
-	bh=/1+GOGhh+pVjrKvmZWdMRnJ91uk2nvheq4wiSCQYdMY=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=nOTZReGKSzi46GnWESuSiAim8aTJzO7UDdGbSfbm5qita/gb1tzyb9Day0lkdLfYs
-	 dlfutUE5oqOrSWgayPBOPqCRKYeymwqg0/h+JpaUHBADzSyQF27LflN2qabFvnqycV
-	 PB2lbFI5Ou5lpZDU6orZvuAeZqSqcLHCup9t4KPJ2nAZo7oyPz9LE4JL4GDQxTubjw
-	 GkTl4jxtHWHCFimI5LdHVvh7p6LTACfMLKaNi8uSgpHkK4jHhqNfYNUGY3m4Fqe0eo
-	 4s6lH75cH3H4mgZAOwCkb7K3D+Sl0W4IRli9iza/HAhcA9wSSVmeOvcsGWeECrIKnI
-	 SINjPiwmgjA5A==
-Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-5131c0691feso3411200e87.1
-        for <dm-devel@lists.linux.dev>; Fri, 01 Mar 2024 20:14:59 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCW0uTZRAAtRy7zXHkFecFPLmuqAW2qyLbfygZq8qeLPv51BqbQqtROxJBAq4fIZ7qbX2mUrLBUKUACNnBXSYQuefd1OXEh5b0A=
-X-Gm-Message-State: AOJu0YzD7eZH3uCpVkk9AhKFJx3BccMbiZA1rXXSTseAx4Yy2QfsOITd
-	LpLVSdt4Q54XDYIb1lDpItNVSWJ154D1Hw8JB2jDTrJ0tJGuMEgqVp9iKJsdo2qJYncPnVGXMbH
-	X3ORLrzZBf3zbFmvird/y744pT1I=
-X-Google-Smtp-Source: AGHT+IGzEkC5phCMWP3/j+3P3V24f16c/9JVEIf7Pd9qN24XJAbpvsiezaeJP0xwK+jVMwA4q3BEa5NX2LLpUHf2eI8=
-X-Received: by 2002:a19:6446:0:b0:512:fb30:aade with SMTP id
- b6-20020a196446000000b00512fb30aademr2447959lfj.3.1709352897565; Fri, 01 Mar
- 2024 20:14:57 -0800 (PST)
+	s=arc-20240116; t=1709395001; c=relaxed/simple;
+	bh=tOzXpNQWLz0juiDSZXUtTc4HgdtWNEWArA6UdqSXuKw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=HUOp5syT294BmTYKzCsY3G2qZQOZNFE1rgTHO3ifu1RYI6M6bpo+iOPfLmIGD++Yhu3UNIIoBi2IkAmtsX5Y+BQO6+GAXaI5fyWq/4Z0d/KjVQNPuyryAAy7KmL4ogPB3P63FF6y1VS0klEbOUrODZfD2fZqCye8ZJNtzHCIJaY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.219.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Received: by mail-qv1-f53.google.com with SMTP id 6a1803df08f44-68f571be9ddso25828076d6.0
+        for <dm-devel@lists.linux.dev>; Sat, 02 Mar 2024 07:56:39 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1709394999; x=1709999799;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=icKYTn52wa+mcprh0aki+jO+Yd8UpG0vdGaXhjIHp5s=;
+        b=VPXjAuVPo3R04QEny77MJcMwtGH6I7QlT/kDKe8eNXjkvRjLwYo3CS/IPhchA9ItMB
+         LPAbDDcWabphFd7aaxyZ03bmqe/RPLmNI+dgyR9TWLIy+c7H66fljq1IPxs370NQ2n9p
+         HG6oNkG6jzafQ82ZWHDnTOyNtIDfAWMgP8X5jawMcJRQ+BxdP7/t4R9Yg4kkG6gyQkPP
+         MgfS5nwaiWJp080cR435jgNaOBUgPysUNEMxx0M8kMVBulHQvNbfd7Ov98mNK/nma1nV
+         XnD+BzlA77WwyBQ4QJxoPgXxje9X0Uy347POH5fOQCCuP8mNGSqr6MgRCBuvf+9YRPq1
+         7Yew==
+X-Forwarded-Encrypted: i=1; AJvYcCUDq1m8JT3RxnGkiKDzEuYK7252qQUpE8Exfg1HyOM8T+5I7X6gvp2Vx3f8gi1D5sMUyYVnbVNsU0AAzIu276y00gZbKalUtU0=
+X-Gm-Message-State: AOJu0Yw1syXOAU8aYyPT/f1+za2L8hnN09DrObzdPd1dA84b0hAjq0N1
+	cwLMuxUeNmP+Cwz2nX3M//rzWBwUsnjtAjPpLuJNmEfylViGfPnzpELhYiF+9g==
+X-Google-Smtp-Source: AGHT+IEAn6vl09QtIrIrE2pXAETZzU5zEPKFbADR7msfSHAsTteuTr1kQ0suhD2aw3ZxwvOgvWJIdw==
+X-Received: by 2002:a0c:9c49:0:b0:690:4c7f:7d57 with SMTP id w9-20020a0c9c49000000b006904c7f7d57mr4795316qve.29.1709394998966;
+        Sat, 02 Mar 2024 07:56:38 -0800 (PST)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id pa7-20020a056214480700b0068f8a21a065sm3103794qvb.13.2024.03.02.07.56.38
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 02 Mar 2024 07:56:38 -0800 (PST)
+Date: Sat, 2 Mar 2024 10:56:35 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: Song Liu <song@kernel.org>
+Cc: Yu Kuai <yukuai1@huaweicloud.com>, Jens Axboe <axboe@kernel.dk>,
+	zkabelac@redhat.com, xni@redhat.com, agk@redhat.com,
+	mpatocka@redhat.com, dm-devel@lists.linux.dev, yukuai3@huawei.com,
+	heinzm@redhat.com, neilb@suse.de, jbrassow@redhat.com,
+	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+	yi.zhang@huawei.com, yangerkun@huawei.com
+Subject: Re: [PATCH -next 0/9] dm-raid, md/raid: fix v6.7 regressions part2
+Message-ID: <ZeNMM5mt5Tgpg3MP@redhat.com>
+References: <20240301095657.662111-1-yukuai1@huaweicloud.com>
+ <CAPhsuW5B8EOakkqeewNL7jXHH-wa=7b=ko3zZ_zcigTV9ptCoA@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240228225653.947152-1-hch@lst.de> <170930853640.1084422.8284935730781819597.b4-ty@kernel.dk>
-In-Reply-To: <170930853640.1084422.8284935730781819597.b4-ty@kernel.dk>
-From: Song Liu <song@kernel.org>
-Date: Fri, 1 Mar 2024 20:14:45 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW7c1dBJYP6=xG2z8_neODpM6bRuCKzNQ6H+zM1-EwGioQ@mail.gmail.com>
-Message-ID: <CAPhsuW7c1dBJYP6=xG2z8_neODpM6bRuCKzNQ6H+zM1-EwGioQ@mail.gmail.com>
-Subject: Re: (subset) atomic queue limit updates for stackable devices v3
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
-	Yu Kuai <yukuai3@huawei.com>, Christoph Hellwig <hch@lst.de>, dm-devel@lists.linux.dev, 
-	linux-block@vger.kernel.org, linux-raid@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CAPhsuW5B8EOakkqeewNL7jXHH-wa=7b=ko3zZ_zcigTV9ptCoA@mail.gmail.com>
 
-On Fri, Mar 1, 2024 at 7:55=E2=80=AFAM Jens Axboe <axboe@kernel.dk> wrote:
->
->
-> On Wed, 28 Feb 2024 14:56:39 -0800, Christoph Hellwig wrote:
-> > this series adds new helpers for the atomic queue limit update
-> > functionality and then switches dm and md over to it.  The dm switch is
-> > pretty trivial as it was basically implementing the model by hand
-> > already, md is a bit more work.
+On Fri, Mar 01 2024 at  5:36P -0500,
+Song Liu <song@kernel.org> wrote:
+
+> On Fri, Mar 1, 2024 at 2:03 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
 > >
-> > I've run the mdadm testsuite, and it has the same (rather large) number
-> > of failures as the baseline, and the lvm2 test suite goes as far as
-> > the baseline before handing in __md_stop_writes.
+> > From: Yu Kuai <yukuai3@huawei.com>
 > >
-> > [...]
->
-> Applied, thanks!
->
-> [01/14] block: add a queue_limits_set helper
->         commit: 631d4efb8009df64deae8c1382b8cf43879a4e22
-> [02/14] block: add a queue_limits_stack_bdev helper
->         commit: c1373f1cf452e4c7553a9d3bc05d87ec15c4f85f
-> [03/14] dm: use queue_limits_set
->         commit: 8e0ef412869430d114158fc3b9b1fb111e247bd3
+> > link to part1: https://lore.kernel.org/all/CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com/
+> >
+> > part1 contains fixes for deadlocks for stopping sync_thread
+> >
+> > This set contains fixes:
+> >  - reshape can start unexpected, cause data corruption, patch 1,5,6;
+> >  - deadlocks that reshape concurrent with IO, patch 8;
+> >  - a lockdep warning, patch 9;
+> >
+> > I'm runing lvm2 tests with following scripts with a few rounds now,
+> >
+> > for t in `ls test/shell`; do
+> >         if cat test/shell/$t | grep raid &> /dev/null; then
+> >                 make check T=shell/$t
+> >         fi
+> > done
+> >
+> > There are no deadlock and no fs corrupt now, however, there are still four
+> > failed tests:
+> >
+> > ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+> > ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+> > ###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
+> > ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+> >
+> > And failed reasons are the same:
+> >
+> > ## ERROR: The test started dmeventd (147856) unexpectedly
+> >
+> > I have no clue yet, and it seems other folks doesn't have this issue.
+> >
+> > Yu Kuai (9):
+> >   md: don't clear MD_RECOVERY_FROZEN for new dm-raid until resume
+> >   md: export helpers to stop sync_thread
+> >   md: export helper md_is_rdwr()
+> >   md: add a new helper reshape_interrupted()
+> >   dm-raid: really frozen sync_thread during suspend
+> >   md/dm-raid: don't call md_reap_sync_thread() directly
+> >   dm-raid: add a new helper prepare_suspend() in md_personality
+> >   dm-raid456, md/raid456: fix a deadlock for dm-raid456 while io
+> >     concurrent with reshape
+> >   dm-raid: fix lockdep waring in "pers->hot_add_disk"
+> 
+> This set looks good to me and passes the tests: reshape tests from
+> lvm2, mdadm tests, and the reboot test that catches some issue in
+> Xiao's version.
+> 
+> DM folks, please help review and test this set. If it looks good, we
+> can route it either via the md tree (I am thinking about md-6.8
+> branch) or the dm tree.
 
-For the set:
+Please send these changes through md-6.8.
 
-Reviewed-and-tested-by: Song Liu <song@kernel.org>
+There are a few typos in patch subjects and headers but:
+
+Acked-by: Mike Snitzer <snitzer@kernel.org>
+
+> CC Jens,
+> 
+> I understand it is already late in the release cycle for 6.8 kernel.
+> Please let us know your thoughts on this set. These patches fixes
+> a crash when running lvm2 tests that are related to md-raid
+> reshape.
+
+Would be good to get these into 6.8, but worst case if they slip to
+the 6.9 merge is they'll go to relevant stable kernels (due to
+"Fixes:" tags, though not all commits have Fixes).
+
+Mike
