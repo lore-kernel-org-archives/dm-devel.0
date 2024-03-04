@@ -1,69 +1,51 @@
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C93B22C18D;
-	Mon,  4 Mar 2024 15:17:57 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4ABB014ABC;
+	Mon,  4 Mar 2024 15:21:30 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709565481; cv=none; b=jIlRBavEJSRIwFhGcq9bzMjXJujbeQGGkPwD1lwMT9lypObGmbd/5F5gWGt8t8dp3YeRNWoQN4OSKp0ou3LM4XIZ/+kRFhnPP8QpMM9u0kHpdbHUqXpPIyGB2RDAl3rIBNXX3vcqptY0IML9SV5hKl54keNP2U59ia5As2aKjuo=
+	t=1709565692; cv=none; b=IYq7tEtwan4dGVh5zDObHsU3F2GFZC5gQrKh43YbZbXvfD5txfkkrRS2biHYlUVByTZ+2VMLALdDhVIPrWR3ANywScz708U/NA0f9I4Efrc8MyzkUhZA6eAmCUOMGD4oqYAYyum1pxOZx9wTLGzdL1eGGH9p4LP7rIIWREnXstU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709565481; c=relaxed/simple;
-	bh=ryHZAp9Glx4QxhNnVz2qoDgQ48WwTqNfMuLQUFS3HFs=;
+	s=arc-20240116; t=1709565692; c=relaxed/simple;
+	bh=P/SKGFtrX4Tc5Z2A5yO2yniMFTudD0bKgLOUhhK6Gmk=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=PBl3Cvd+4PzYVDBPaW1sbcXCn2wpu2LtR3+o6V7jnpGVkXMAW2ynZNsd5BZ0Du8ALscGPV44VkAmCUgtbQB+KkN4u9B9vW8w1s48J+f5fKExdlLoV7Agy6IJeKJYHoYbuhClQ149XIjsKfPwo/E9L3uej08fku9sMQhEeuhXbow=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=IheKwaN2; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=IheKwaN2; arc=none smtp.client-ip=195.135.223.131
+	 Content-Type:MIME-Version; b=ixoTKWPTHj/xdKJ2b9s77TFoqqNuwJ4nOC7OyTvV+du5HHNkR/flbQA+GUHO4pgylsEfRIFeeIdAH7KRDh4VZzKz8FkqgVnIHXdnmvS1gJFf18lg70U2nfTlTu6L4mPFaOQoa5tHMpwe0/x7Ea3vARD6ainzn5t2inu4QK+E/9M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; arc=none smtp.client-ip=195.135.223.131
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="IheKwaN2";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="IheKwaN2"
 Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id C7FAE766AB;
-	Mon,  4 Mar 2024 15:17:54 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1709565474; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=ryHZAp9Glx4QxhNnVz2qoDgQ48WwTqNfMuLQUFS3HFs=;
-	b=IheKwaN2mrg2q5mO+UFH+3HLf/8/dhEG88arW0EwNoH6MdJbx/mC+0XwPkrvLjSMK9HE0R
-	Nbgd4Mi3etPvvTJYhhvJ8yqpzUWC1lAino9GNca67y1e/1py01rDDptisFE44RF4HTh8sh
-	SDNMgTgLImBb0lzLtOaxX8YM/AqNJSI=
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1709565474; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=ryHZAp9Glx4QxhNnVz2qoDgQ48WwTqNfMuLQUFS3HFs=;
-	b=IheKwaN2mrg2q5mO+UFH+3HLf/8/dhEG88arW0EwNoH6MdJbx/mC+0XwPkrvLjSMK9HE0R
-	Nbgd4Mi3etPvvTJYhhvJ8yqpzUWC1lAino9GNca67y1e/1py01rDDptisFE44RF4HTh8sh
-	SDNMgTgLImBb0lzLtOaxX8YM/AqNJSI=
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 90FBD75A23;
+	Mon,  4 Mar 2024 15:21:28 +0000 (UTC)
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 61FD913A5B;
-	Mon,  4 Mar 2024 15:17:54 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 251EA13A5B;
+	Mon,  4 Mar 2024 15:21:28 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([10.150.64.162])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id tSaaFSLm5WUrZwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 04 Mar 2024 15:17:54 +0000
-Message-ID: <2148e09214fd1d33d9eeadcf763c710eb739b46e.camel@suse.com>
-Subject: Re: [RFC PATCH 1/7] 13-dm-disk.rules: import ID_FS_TYPE
+	id HwnnBvjm5WVWaAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 04 Mar 2024 15:21:28 +0000
+Message-ID: <1ff87d2d43f8c91b3486b7d26514528a532f671f.camel@suse.com>
+Subject: Re: [RFC PATCH 2/7] 10-dm.rules: don't deactivate devices for
+ DISK_RO=1
 From: Martin Wilck <mwilck@suse.com>
 To: Peter Rajnoha <prajnoha@redhat.com>, Zdenek Kabelac
  <zkabelac@redhat.com>,  Benjamin Marzinski <bmarzins@redhat.com>, David
  Teigland <teigland@redhat.com>
 Cc: linux-lvm@lists.linux.dev, dm-devel@lists.linux.dev, Hannes Reinecke
 	 <hare@suse.de>
-Date: Mon, 04 Mar 2024 16:17:53 +0100
-In-Reply-To: <f82c786b-4b8e-4e5a-a049-bd4cfba668bd@redhat.com>
+Date: Mon, 04 Mar 2024 16:21:27 +0100
+In-Reply-To: <9c68e2b7-64e6-4e3d-83ea-5229ea7eff60@redhat.com>
 References: <20240301224011.11117-1-mwilck@suse.com>
-	 <20240301224011.11117-2-mwilck@suse.com>
-	 <f82c786b-4b8e-4e5a-a049-bd4cfba668bd@redhat.com>
+	 <20240301224011.11117-3-mwilck@suse.com>
+	 <b884374b-2f6f-4c7f-acba-b4c730ae03ff@redhat.com>
+	 <537880de-21ad-4dcc-92a7-a80092757ba7@redhat.com>
+	 <9c68e2b7-64e6-4e3d-83ea-5229ea7eff60@redhat.com>
 Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
  keydata=mQINBF3mxsYBEACmOnQxWBCxCkTb3D4N8VAT8yNtIBZrmvomY7RLddBIT1yh2X7roOoJQ5KlmyjMmzrPr111poqmw8v4dUqc1SVqQoKHXv97BzlVIEKC5G2W29gse0oXhx3dhie0Z6ytkHVOY29VLsLhVXEz+p5xL71KYgIy3lmM/NaWvoqwwaXiv1TmLG96Uoitvj1vdXqqTv/R6/MBye+xQUacXpM8FA5k7OpmzCFjl4NVtGmo0VhIfXM/ldmyEJpg8a5LrZ4t5Qi32BWQjUHGmS8OXjUJ/n0QxLkymbcbY1KepP9UnLGPT+TmKJm1QlMDj69+WPKgMsif3iz4hZPoQ0Knp11ThYzBh7+AiRxE9FG2hTtZeKimkpjR12bytF4Y0aIM/HeLMHRvwykJuh5JxT9A68xF7hmqQZ7rsx/GoRBOA792kFgr5KdCZ1YoeVUkrohT1nfh/Y/Xfeq4E69mktE0R0Yxg/4CSiB7sLSzry8dyqk2sbGs+W/Ol7D7VOG45aZ5iTB08R2ji2xKArcH+Dmy48nwqIvdrppZG2tZEe+wtGPTzahE4OJdpZ3vS4ujdChynS47DVWa5JtBxfqopr0rPGoCyxmyvzJzHAUjlp7iSXpDZqfdu7F4HAC13mS41IVk/yHTXE28AKrZ4O+efZ6qgw5zJV9lAbWM7JjfdrTd+ofOc+GurQARAQABtCRNYXJ0aW4gV2lsY2sgPG1hcnRpbi53aWxja0BzdXNlLmNvbT6JAlEEEwEIADsCGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQR1Dq1LLt6xpUXU9fRnxYbmhVaXVAUCXebHhgIZAQAKCRBnxYbmhVaXVJ6+EACa5mbuH1dy2bKldy+bybUe4jFpJxflAPSrdpIlwkIfD/SgQRWUUm+BLLJMGJFSKiVC6oAHH6/mo3gdWAqBJ0LAOQDDR2BW31ERYqQQ7m01INQIvMlg+PXQ8HbWd
 	CNF1SOgjxiIs04DlB+u+DD5pgPtxKFN/jaJSx9oZ+GZpSd+eJeull3a+U/1+QpYmLbH34bxYZ16+cXfarkH3QQC65DH/iIZwcpxp+v/zrQVXnsZ81XmmbLD1vMkFCIU0ircIcaJoqloNJOA46P4mj9ETwC5OiSTs7vlyHP4Ni/86kmjmr41d/baY1cAXpAbtOGYd5K72B6qSP5EJI+Ci6rSbWInQaYzKuAOrDDyhW7ODd+hOtBcmUIH5GpKvzRjdfxEP/zlyecBszxycz7lOYNx86QWsyyRWITKzHzhdqKVZ9kvjVozTtcpb1RSqsj43qqMEQjcp1uXhbmwVmbzsWaPqmCx4xsIQoXfIzzffvw+nOiPLkxzGczprwNJasDUM1hcyEPv+5VzZpE4YjlDw/mtTayehb2EGzt2RfZIuPCBr88KlWUh2+nu9RfBJNdJ2vZ13Aun8NbqPKR2vfsE+BUJY14Ak9ZIzcyruHBHQ78dxD0J+HSC1bm9e4UOnW0PBbZwuPTRwyO3aXoExPabGgig6gcY34bsXvW9SDwOu+pzXMnVvbQeTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+iQJOBBMBCAA4FiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAl3mxz0CGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQZ8WG5oVWl1TdsA/6A0DZmGwreygUic5csLSLUm2ahdat3rRKfQVdlOdl0aWa/vS90PqpuDNGzXVzS/s4YXRjWesnYEdwQGSc4PnBYCitLKUwenII39RCyZLU3J95luWG2eOagFaerK+HvuNEH6RpYkqPpaDEwpblfi30xNNYLIR4HK0GTYwhbmBTrYgaKATNiplU08ZUvC23s00t2i7SBGmOue/0dIPMhO3EDYPP0RaDnKvHAOAywkI1J9Ey0xEslG9AFylOihcdaq9/7MlMWU8oNHK7EVE5OOZ2NiJv1sWSgM
@@ -82,102 +64,36 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Level: 
 Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=IheKwaN2
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	 ARC_NA(0.00)[];
-	 RCVD_VIA_SMTP_AUTH(0.00)[];
-	 R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	 SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	 FROM_HAS_DN(0.00)[];
-	 TO_DN_SOME(0.00)[];
-	 TO_MATCH_ENVRCPT_ALL(0.00)[];
-	 BAYES_HAM(-3.00)[100.00%];
-	 MIME_GOOD(-0.10)[text/plain];
-	 NEURAL_HAM_LONG(-1.00)[-1.000];
-	 DWL_DNSWL_BLOCKED(0.00)[suse.com:dkim];
-	 RCVD_COUNT_THREE(0.00)[3];
-	 DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	 DKIM_TRACE(0.00)[suse.com:+];
-	 MX_GOOD(-0.01)[];
-	 RCPT_COUNT_SEVEN(0.00)[7];
-	 DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:email];
-	 FUZZY_BLOCKED(0.00)[rspamd.com];
-	 FROM_EQ_ENVFROM(0.00)[];
-	 MIME_TRACE(0.00)[0:+];
-	 NEURAL_HAM_SHORT(-0.20)[-1.000];
-	 RCVD_TLS_ALL(0.00)[];
-	 MID_RHS_MATCH_FROM(0.00)[]
-X-Spam-Score: -4.51
-X-Rspamd-Queue-Id: C7FAE766AB
+	none
+X-Spamd-Result: default: False [-4.00 / 50.00];
+	 REPLY(-4.00)[]
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+X-Rspamd-Queue-Id: 90FBD75A23
+X-Spam-Level: 
+X-Spam-Score: -4.00
 X-Spam-Flag: NO
 
-On Mon, 2024-03-04 at 11:37 +0100, Peter Rajnoha wrote:
-> On 3/1/24 23:40, Martin Wilck wrote:
-> > ID_FS_TYPE is the most important udev property for most follow-up
-> > rules. It must be imported from the udev db if blkid can't be run.
+On Mon, 2024-03-04 at 12:27 +0100, Peter Rajnoha wrote:
+> On 3/4/24 12:19, Peter Rajnoha wrote:
 > >=20
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> > =C2=A0udev/13-dm-disk.rules.in | 1 +
-> > =C2=A01 file changed, 1 insertion(+)
+> > Now, I'm asking myself why we have the 'ACTION=3D"add"' in the
+> > systemd
+> > rule at all. Why is it not just checking=C2=A0
+> > DM_UDEV_DISABLE_OTHER_RULES_FLAG?
 > >=20
-> > diff --git a/udev/13-dm-disk.rules.in b/udev/13-dm-disk.rules.in
-> > index dca00bc..eaad972 100644
-> > --- a/udev/13-dm-disk.rules.in
-> > +++ b/udev/13-dm-disk.rules.in
-> > @@ -26,6 +26,7 @@ ENV{DM_NOSCAN}=3D=3D"1", GOTO=3D"dm_watch"
-> > =C2=A0GOTO=3D"dm_link"
-> > =C2=A0
-> > =C2=A0LABEL=3D"dm_import"
-> > +IMPORT{db}=3D"ID_FS_TYPE"
-> > =C2=A0IMPORT{db}=3D"ID_FS_USAGE"
-> > =C2=A0IMPORT{db}=3D"ID_FS_UUID_ENC"
-> > =C2=A0IMPORT{db}=3D"ID_FS_LABEL_ENC"
 >=20
-> I think this one was left out deliberately. The original intention
-> was
-> to import only the minimal set of "blkid" variables needed to
-> properly
-> keep the symlinks based on these values in place (patch 94f77a4). And
-> the "ID_FS_TYPE" is not actually needed for this.
-
-Why would we want to maintain the symlinks, but not other properties?
-ID_FS_TYPE is the blkid property with the highest number of consumers
-in a standard rule set. It is interpreted by most rule sets which build
-additional layers on top of dm devices.
-
-> Though, importing even the "ID_FS_TYPE" together with other blkid
-> variables should not be an issue because this "import from previous
-> state" happens only if we have DM_SUSPENDED or DM_NOSCAN set for
-> current
-> event, in which case any other rules should be also disabled with
-> DM_UDEV_DISABLE_OTHER_RULES_FLAG=3D"1".
+> Oh! :)
 >=20
-> So even if some other rule fires based on ID_FS_TYPE value, the
-> DM_UDEV_DISABLE_OTHER_RULES_FLAG should stop it anyway.
+> https://github.com/systemd/systemd/commit/35a6750d9e26b26b423fbe815bead7d=
+750210d8d
+>=20
 
-Exactly.
+This systemd rule is wrong, and I will to post a PR for it, but as
+I said in the cover letter, I want to address these issues one by one.
 
-> Then, the question is whether we really need to
-> 'IMPORT{db}=3D"ID_FS_TYPE'?
+If DM_UDEV_DISABLE_OTHER_RULES_FLAG=3D1, systemd should import
+SYSTEMD_READY from the db rather than set it to 0.
 
-I believe the question to ask rather "why should we not?". What harm do
-you think could be done by importing ID_FS_TYPE from the db?
-
-If we don't import ID_FS_TYPE, a later rule set could justly assume
-that the fstype had changed, and in the worst case, might even take
-some destructive action in response. AFAICS no rule set currently does,
-but there's no guarantee for that. We should provide the follow-up
-rules as much information as we can about the device, and if a device
-is suspended, or the NOSCAN flag is set, there is no reason to assume
-that the device has changed it fstype, or is about to change it.
-
-The multipath rules have imported ID_FS_TYPE since 2014, and we've seen
-no issues with it.
-
-Regards
 Martin
 
