@@ -1,236 +1,113 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com [209.85.208.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F2AE3A8D8
-	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 11:52:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F30CC1DFF9
+	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 14:52:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709553182; cv=none; b=irFYtfOC8ORklrRnrOsc3ugdxoXEabmyvTt4bIWCqRFXQ71Qx9F7co2m7Zeok8poSaiw7p9Kfps4dmFswQ5uTFjVGAf8uTIIQVeYLSbpzPIYxcbTCiyjVfIoG9AsWLDBKbP6nu+ym7y/EaOj7NcXfoF0evJQtjkurYBlKfZHtDM=
+	t=1709563968; cv=none; b=ebwoEIrIT5NkpxwANbxXgtzkTX5AzXS0y1KldwJAnGVnmIjTmuwbz1DgqbhOokdVtC6INF6upfPts012/crcrSnjqf4v8qPIAkUTn706Q1p+tKfYMOWe464zGFxtaAB3sFM4YCtqpwC6p1cgDPe07YYKU/G3vVCikwde6FJVx7o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709553182; c=relaxed/simple;
-	bh=pZT/hr6mBggspJXxi4E4wJk2Pr47pzN497vLsA1740c=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=g2Zd5w3K8qDA7ky1p3Ee8NWjl6ErGDk/eiVU+JAezfkNAgdT4U+DaWGxAdcBgZfTNh+R1HbzUNNm6Yrfn0W7ch5dlIUyRL3cYDiMA0rVm91bcP5lvA5Bqlng/xx5u2XpUGbO+d8vZbhtDEh5S1ic8QNUug4y8/K82bLNv+DFjSo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TpHBW0Z62z4f3jsK
-	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 19:52:51 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 6F9741A0232
-	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 19:52:56 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgAn+REVtuVlZGyqFw--.53448S3;
-	Mon, 04 Mar 2024 19:52:55 +0800 (CST)
-Subject: Re: [PATCH -next 0/9] dm-raid, md/raid: fix v6.7 regressions part2
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: zkabelac@redhat.com, agk@redhat.com, snitzer@kernel.org,
- mpatocka@redhat.com, dm-devel@lists.linux.dev, song@kernel.org,
- heinzm@redhat.com, neilb@suse.de, jbrassow@redhat.com,
- linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
- yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-References: <20240301095657.662111-1-yukuai1@huaweicloud.com>
- <CALTww2-GV-YBX1ey4juaVHjHz-wNS0xRBqBn=ucDXEb4WNbSOg@mail.gmail.com>
- <0091f7d1-2273-16ff-8285-5fa3f7e2e0f7@huaweicloud.com>
- <35feaa54-db9e-f0d6-d5a5-a10a45bb90a5@huaweicloud.com>
- <CALTww2-BmudurHbsbbqBMq+KgZs+hokqOJnovS5KDGEidHqZzA@mail.gmail.com>
- <CALTww2_tP9kZEeReystMVLT+UqE7gpHvLO6yrSJ_bjsfTOuaxQ@mail.gmail.com>
- <CALTww2_8B1XMaFEBtPeWae0Gse7ngqZuuRZMn32BdfW2-M8uYA@mail.gmail.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <c87f249a-2bfd-edd2-887d-87413bd044d7@huaweicloud.com>
-Date: Mon, 4 Mar 2024 19:52:52 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1709563968; c=relaxed/simple;
+	bh=soBJDQnTqnFL4Oz2qrwEh41f/PnzSOGeWRlvd2AVCDM=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=gIUt2j2FHd8AZ2eFQm8QYOGCuygLqIuergsjkIo+n3bDs5UttD0SRqdUL3et3KK/gc0fl0PR9WaU7cURxIIKm5ElbKQXCR4tHP2ZkopAaZhVr5FerNM1Nehf8i9IBQw3+uTt9dGv8FkPBpiPvTXmDIXniFqhi1HSxNqU3ilq0Mg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=X69z+nPs; arc=none smtp.client-ip=209.85.208.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="X69z+nPs"
+Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-55a179f5fa1so6842419a12.0
+        for <dm-devel@lists.linux.dev>; Mon, 04 Mar 2024 06:52:44 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1709563963; x=1710168763; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:autocrypt
+         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=soBJDQnTqnFL4Oz2qrwEh41f/PnzSOGeWRlvd2AVCDM=;
+        b=X69z+nPsskIKlrOW5+aAldpWPhiveIg0h9+/Xn6BDS8UJFDZ/jaMCyznOLg9kuiPgE
+         BW2PBW4pCQhcV9PG8EabXKCbD9hc0UGb0ARDMY8E2l3uyYDvpCL/rkV4XgoLRH36NQMi
+         V5BAPMlLgdlCZH7lpl4eGHE6PcxFx7p+e3IADTo4OCDLwJlgFCEdNpPkuV4U8/krlrq5
+         bJZdJoVCPvcNKPmYc0/h+ymqq55lX5v3PSlew06wqHyD1/hdcAYex/Ojxl5Mu7v8qwlX
+         AtE54Vy9x1tCsc4zfIC6X53oqe63fAxxUJTblsORP9WrCKA6oAKyOtYmwl4wTc30I/v9
+         e39w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1709563963; x=1710168763;
+        h=mime-version:user-agent:content-transfer-encoding:autocrypt
+         :references:in-reply-to:date:cc:to:from:subject:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=soBJDQnTqnFL4Oz2qrwEh41f/PnzSOGeWRlvd2AVCDM=;
+        b=nM+l/hgudroqARW9sEXN7LVoF+fw1tOK0QmB8zaq9FNEg278vsVgr7/DVql1KItQW5
+         tOwEKGeXAZjXscblvWPai3ndG4Sfh1GVwrxlRUpdlGqW7XvgE+2IQXMH3Zh0GDoFmUJd
+         smFhiRtOlmTOOZxi/vs9i5KVLpICkwO1vtzbuuo+pnpQBdF4fFeocGIFS8xCwxlhe3wO
+         RH7YqT2Xm+o1yY7DE4wveoN1w0vZ9FZJl5jdQkWZbCzlNRW3z/T3u1TG9aGUYRuc8n4c
+         3VpucjtonlZhuX46oMTujkRQiKAwDUmjFsm839bXWRthNo7szm/B5t1XnT0sO2E613vX
+         zuTw==
+X-Gm-Message-State: AOJu0YzTvTFYfEN7p0e0iKlltvVDoN/y1dRh/7nvVkZ22Q4VfkJwXLcA
+	k75Y4/ymweXUw3YkY8aFN+sl9uEdp0LR6KgbnJXh20Vl2Dgc0VVxjoNIs2py4UrTesbZjtjF3VU
+	K6Vs=
+X-Google-Smtp-Source: AGHT+IEubU24r3bIxxFcgAF6rK2OzbMHWEOD0VjW4s1/G3W/MHVXh2BbI895EtLLw9gbfvl0Ar82ig==
+X-Received: by 2002:a17:907:100a:b0:a3e:b869:11b3 with SMTP id ox10-20020a170907100a00b00a3eb86911b3mr6438239ejb.55.1709563963303;
+        Mon, 04 Mar 2024 06:52:43 -0800 (PST)
+Received: from ?IPv6:2001:470:6d:10f7:9114:d168:fb53:9a37? ([2001:470:6d:10f7:9114:d168:fb53:9a37])
+        by smtp.gmail.com with ESMTPSA id ch14-20020a170906c2ce00b00a42ea946917sm4899608ejb.130.2024.03.04.06.52.42
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 04 Mar 2024 06:52:42 -0800 (PST)
+Message-ID: <25b3aa5f3e4fb7af34093e538cd1a702d3106e74.camel@suse.com>
+Subject: Re: [PATCH v2 0/2] make multipathd scheduling configurable
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>, sushmbha
+	 <sushmita.bhattacharya@oracle.com>
+Date: Mon, 04 Mar 2024 15:52:41 +0100
+In-Reply-To: <20240302003730.782685-1-bmarzins@redhat.com>
+References: <20240302003730.782685-1-bmarzins@redhat.com>
+Autocrypt: addr=martin.wilck@suse.com; prefer-encrypt=mutual; keydata=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
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.50.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CALTww2_8B1XMaFEBtPeWae0Gse7ngqZuuRZMn32BdfW2-M8uYA@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgAn+REVtuVlZGyqFw--.53448S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxuFW5uryfXw1kZFWkWrykXwb_yoW7Xr4Dpr
-	W7Ja13tr4UAr13ArnIqw1UXFyYyw4xJryUXwnrJw1UZryDtr17Jr4Utr1UCFyDXr15Cw1U
-	Jr4UJa43Gr1UtaDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
-	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
-	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
-	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
-	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
-	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
-	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
-	17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
-	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
-	3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
-	nIWIevJa73UjIFyTuYvjfUOmhFUUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Hi,
+On Fri, 2024-03-01 at 19:37 -0500, Benjamin Marzinski wrote:
+> This patchset is based on discussions at:
+> https://github.com/opensvc/multipath-tools/issues/82
+>=20
+> The first patch fixes a condlog logging level, and the second patch
+> makes it possible to turn off realtime scheduling or adjust the
+> priority
+> at compile time. After we do some testing with multipathd not using a
+> realtime policy, I think we can probably change the defaults
+>=20
+> Changes from v1 (suggested by Martin Wilck):
+> 02: make scheduling configurable at compile time, instead of by a
+> config
+> =C2=A0=C2=A0=C2=A0 option.
+>=20
+> Benjamin Marzinski (2):
+> =C2=A0 multipathd: use condlog level for setscheduler error message
+> =C2=A0 multipathd: make multipathd scheduling configurable
+>=20
+> =C2=A0Makefile.inc=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 6 ++++++
+> =C2=A0README.md=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 | 3 +++
+> =C2=A0multipathd/Makefile | 3 +++
+> =C2=A0multipathd/main.c=C2=A0=C2=A0 | 7 ++++---
+> =C2=A04 files changed, 16 insertions(+), 3 deletions(-)
+>=20
 
-在 2024/03/04 19:06, Xiao Ni 写道:
-> On Mon, Mar 4, 2024 at 4:27 PM Xiao Ni <xni@redhat.com> wrote:
->>
->> On Mon, Mar 4, 2024 at 9:25 AM Xiao Ni <xni@redhat.com> wrote:
->>>
->>> On Mon, Mar 4, 2024 at 9:24 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>
->>>> Hi,
->>>>
->>>> 在 2024/03/04 9:07, Yu Kuai 写道:
->>>>> Hi,
->>>>>
->>>>> 在 2024/03/03 21:16, Xiao Ni 写道:
->>>>>> Hi all
->>>>>>
->>>>>> There is a error report from lvm regression tests. The case is
->>>>>> lvconvert-raid-reshape-stripes-load-reload.sh. I saw this error when I
->>>>>> tried to fix dmraid regression problems too. In my patch set,  after
->>>>>> reverting ad39c08186f8a0f221337985036ba86731d6aafe (md: Don't register
->>>>>> sync_thread for reshape directly), this problem doesn't appear.
->>>>>
->>>
->>> Hi Kuai
->>>>> How often did you see this tes failed? I'm running the tests for over
->>>>> two days now, for 30+ rounds, and this test never fail in my VM.
->>>
->>> I ran 5 times and it failed 2 times just now.
->>>
->>>>
->>>> Take a quick look, there is still a path from raid10 that
->>>> MD_RECOVERY_FROZEN can be cleared, and in theroy this problem can be
->>>> triggered. Can you test the following patch on the top of this set?
->>>> I'll keep running the test myself.
->>>
->>> Sure, I'll give the result later.
->>
->> Hi all
->>
->> It's not stable to reproduce this. After applying this raid10 patch it
->> failed once 28 times. Without the raid10 patch, it failed once 30
->> times, but it failed frequently this morning.
-> 
-> Hi all
-> 
-> After running 152 times with kernel 6.6, the problem can appear too.
-> So it can return the state of 6.6. This patch set can make this
-> problem appear quickly.
+For the set:
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-I verified in my VM that after testing 100+ times, this problem can both
-triggered with v6.6 and v6.8-rc5 + this set.
-
-I think we can merge this patchset, and figure out why the test can fail
-later.
-
-Thanks,
-Kuai
-
-
-> 
-> Best Regards
-> Xiao
-> 
-> 
->>
->> Regards
->> Xiao
->>>
->>> Regards
->>> Xiao
->>>>
->>>> diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
->>>> index a5f8419e2df1..7ca29469123a 100644
->>>> --- a/drivers/md/raid10.c
->>>> +++ b/drivers/md/raid10.c
->>>> @@ -4575,7 +4575,8 @@ static int raid10_start_reshape(struct mddev *mddev)
->>>>           return 0;
->>>>
->>>>    abort:
->>>> -       mddev->recovery = 0;
->>>> +       if (mddev->gendisk)
->>>> +               mddev->recovery = 0;
->>>>           spin_lock_irq(&conf->device_lock);
->>>>           conf->geo = conf->prev;
->>>>           mddev->raid_disks = conf->geo.raid_disks;
->>>>
->>>> Thanks,
->>>> Kuai
->>>>>
->>>>> Thanks,
->>>>> Kuai
->>>>>
->>>>>>
->>>>>> I put the log in the attachment.
->>>>>>
->>>>>> On Fri, Mar 1, 2024 at 6:03 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>>>>
->>>>>>> From: Yu Kuai <yukuai3@huawei.com>
->>>>>>>
->>>>>>> link to part1:
->>>>>>> https://lore.kernel.org/all/CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com/
->>>>>>>
->>>>>>>
->>>>>>> part1 contains fixes for deadlocks for stopping sync_thread
->>>>>>>
->>>>>>> This set contains fixes:
->>>>>>>    - reshape can start unexpected, cause data corruption, patch 1,5,6;
->>>>>>>    - deadlocks that reshape concurrent with IO, patch 8;
->>>>>>>    - a lockdep warning, patch 9;
->>>>>>>
->>>>>>> I'm runing lvm2 tests with following scripts with a few rounds now,
->>>>>>>
->>>>>>> for t in `ls test/shell`; do
->>>>>>>           if cat test/shell/$t | grep raid &> /dev/null; then
->>>>>>>                   make check T=shell/$t
->>>>>>>           fi
->>>>>>> done
->>>>>>>
->>>>>>> There are no deadlock and no fs corrupt now, however, there are still
->>>>>>> four
->>>>>>> failed tests:
->>>>>>>
->>>>>>> ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
->>>>>>> ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
->>>>>>> ###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
->>>>>>> ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
->>>>>>>
->>>>>>> And failed reasons are the same:
->>>>>>>
->>>>>>> ## ERROR: The test started dmeventd (147856) unexpectedly
->>>>>>>
->>>>>>> I have no clue yet, and it seems other folks doesn't have this issue.
->>>>>>>
->>>>>>> Yu Kuai (9):
->>>>>>>     md: don't clear MD_RECOVERY_FROZEN for new dm-raid until resume
->>>>>>>     md: export helpers to stop sync_thread
->>>>>>>     md: export helper md_is_rdwr()
->>>>>>>     md: add a new helper reshape_interrupted()
->>>>>>>     dm-raid: really frozen sync_thread during suspend
->>>>>>>     md/dm-raid: don't call md_reap_sync_thread() directly
->>>>>>>     dm-raid: add a new helper prepare_suspend() in md_personality
->>>>>>>     dm-raid456, md/raid456: fix a deadlock for dm-raid456 while io
->>>>>>>       concurrent with reshape
->>>>>>>     dm-raid: fix lockdep waring in "pers->hot_add_disk"
->>>>>>>
->>>>>>>    drivers/md/dm-raid.c | 93 ++++++++++++++++++++++++++++++++++----------
->>>>>>>    drivers/md/md.c      | 73 ++++++++++++++++++++++++++--------
->>>>>>>    drivers/md/md.h      | 38 +++++++++++++++++-
->>>>>>>    drivers/md/raid5.c   | 32 ++++++++++++++-
->>>>>>>    4 files changed, 196 insertions(+), 40 deletions(-)
->>>>>>>
->>>>>>> --
->>>>>>> 2.39.2
->>>>>>>
->>>>>
->>>>>
->>>>> .
->>>>>
->>>>
-> 
-> .
-> 
 
