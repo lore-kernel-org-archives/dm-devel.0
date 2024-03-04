@@ -1,30 +1,30 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16BAB621
-	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 01:07:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E37B233D5
+	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 01:24:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709514452; cv=none; b=Egkpd8nkjdgnsvYUWshbPRqtRGabObSZb91ldNp9lLWbb5IcMwe6LDkp/7G49r0Pfp7jF/SXEvgFUcHYmqh5r1Nz+3smFzTD67+Gbx0FbAvYbO2myvwmgtKzdWYom8NzSyMiyoNFptmbhtjfYnpQtngaq7o8vT8VNHYQavtQpgI=
+	t=1709515452; cv=none; b=JUmWsJlCAn8qNsOQXdJPFlXBmI2fWtRs67XUvo2E40RCpHS8G7KDTKOjR0IZ8RRTAbL/tkoJwrN1Y9HNytrGGTG7K0g1TGioeYdVJVJGw5fDsIGkJp23Dqn7bsQNzoKmgW4Ak7G70/afBNicNtXQmuHdMKqqz+kAIjSsg7h+wXc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709514452; c=relaxed/simple;
-	bh=OeOQ9qXRKo1gUGHgjeGD/3w7HENXksQQj7EJPsDWECg=;
+	s=arc-20240116; t=1709515452; c=relaxed/simple;
+	bh=ObNZbjO3XsX0lJ50+lckhWcAILjCQwKhcAXSOgwVk7o=;
 	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=X7rI81Kp2SntyKjaw6fufGWg0JZDqSTyn610eEYE4pWDTzObw0pRrl4gHa+khinAw232qkvn4kAVytiseg7EyRg6IgCJJF92p4MZozfwwR3qSkVCQ/F+JjqWX0BFiF5CoVCzq3q7GA9yX0lf79LzammQhi1szizs97sTNJivWTk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+	 In-Reply-To:Content-Type; b=Nzr5hpxBoKyBQCqhQZVyZ+0K86VQiAB4JboM3ym1JLW1YoOt8niTDGitiqArrTpiShhQj5z0kqNDqL4Y3y0h66y40XEg51BL36m7QeIO8/pqD1X4ERbaoq7PpBpe2ObO/nFpqtx9X0rwr53y4Nl1Wz07LOwXYsPpybVnghU2dxw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Tp0sY1zZ1z4f3lfp
-	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 09:07:13 +0800 (CST)
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Tp1Dq3yllz4f3kFj
+	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 09:23:55 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id B32A61A0232
-	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 09:07:20 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id E286C1A0232
+	for <dm-devel@lists.linux.dev>; Mon,  4 Mar 2024 09:24:00 +0800 (CST)
 Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgAX6RG+HuVlfU98Fw--.60504S3;
-	Mon, 04 Mar 2024 09:07:12 +0800 (CST)
+	by APP1 (Coremail) with SMTP id cCh0CgCXaBGtIuVlE4J9Fw--.56824S3;
+	Mon, 04 Mar 2024 09:23:59 +0800 (CST)
 Subject: Re: [PATCH -next 0/9] dm-raid, md/raid: fix v6.7 regressions part2
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
+To: Yu Kuai <yukuai1@huaweicloud.com>, Xiao Ni <xni@redhat.com>
 Cc: zkabelac@redhat.com, agk@redhat.com, snitzer@kernel.org,
  mpatocka@redhat.com, dm-devel@lists.linux.dev, song@kernel.org,
  heinzm@redhat.com, neilb@suse.de, jbrassow@redhat.com,
@@ -32,9 +32,10 @@ Cc: zkabelac@redhat.com, agk@redhat.com, snitzer@kernel.org,
  yi.zhang@huawei.com, yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
 References: <20240301095657.662111-1-yukuai1@huaweicloud.com>
  <CALTww2-GV-YBX1ey4juaVHjHz-wNS0xRBqBn=ucDXEb4WNbSOg@mail.gmail.com>
+ <0091f7d1-2273-16ff-8285-5fa3f7e2e0f7@huaweicloud.com>
 From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <0091f7d1-2273-16ff-8285-5fa3f7e2e0f7@huaweicloud.com>
-Date: Mon, 4 Mar 2024 09:07:10 +0800
+Message-ID: <35feaa54-db9e-f0d6-d5a5-a10a45bb90a5@huaweicloud.com>
+Date: Mon, 4 Mar 2024 09:23:56 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
  Thunderbird/60.8.0
 Precedence: bulk
@@ -43,14 +44,14 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CALTww2-GV-YBX1ey4juaVHjHz-wNS0xRBqBn=ucDXEb4WNbSOg@mail.gmail.com>
+In-Reply-To: <0091f7d1-2273-16ff-8285-5fa3f7e2e0f7@huaweicloud.com>
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgAX6RG+HuVlfU98Fw--.60504S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxWw48AFWrtF4Dur47CFy5CFg_yoW5XrWfpa
-	9xGa1av3yvkF13Xrsxta4jqFyYyw4fG3y5A3sxJw4rAryUXr92yFsrKr15uas8Ar1rZw47
-	Kr4Uta45WF1jqFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+X-CM-TRANSID:cCh0CgCXaBGtIuVlE4J9Fw--.56824S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxWw4UuF1rtr1DWF1fXrWDArb_yoWrGryxpF
+	Z3Gay3ZrWUCrn3ZrsIq34UZFyYyw4xG3yUAw17Ja18ArZFqryIqr4jgr1q9F98Xr4rAw1U
+	tr45tay3ur1UtFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9214x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
 	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
 	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
@@ -60,85 +61,118 @@ X-Coremail-Antispam: 1UD129KBjvJXoWxWw48AFWrtF4Dur47CFy5CFg_yoW5XrWfpa
 	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
 	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
 	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E
-	3s1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcS
-	sGvfC2KfnxnUUI43ZEXa7VUbQVy7UUUUU==
+	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWr
+	Zr1UMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYx
+	BIdaVFxhVjvjDU0xZFpf9x0JUQvtAUUUUU=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 Hi,
 
-在 2024/03/03 21:16, Xiao Ni 写道:
-> Hi all
+在 2024/03/04 9:07, Yu Kuai 写道:
+> Hi,
 > 
-> There is a error report from lvm regression tests. The case is
-> lvconvert-raid-reshape-stripes-load-reload.sh. I saw this error when I
-> tried to fix dmraid regression problems too. In my patch set,  after
-> reverting ad39c08186f8a0f221337985036ba86731d6aafe (md: Don't register
-> sync_thread for reshape directly), this problem doesn't appear.
+> 在 2024/03/03 21:16, Xiao Ni 写道:
+>> Hi all
+>>
+>> There is a error report from lvm regression tests. The case is
+>> lvconvert-raid-reshape-stripes-load-reload.sh. I saw this error when I
+>> tried to fix dmraid regression problems too. In my patch set,  after
+>> reverting ad39c08186f8a0f221337985036ba86731d6aafe (md: Don't register
+>> sync_thread for reshape directly), this problem doesn't appear.
+> 
+> How often did you see this tes failed? I'm running the tests for over
+> two days now, for 30+ rounds, and this test never fail in my VM.
 
-How often did you see this tes failed? I'm running the tests for over
-two days now, for 30+ rounds, and this test never fail in my VM.
+Take a quick look, there is still a path from raid10 that
+MD_RECOVERY_FROZEN can be cleared, and in theroy this problem can be
+triggered. Can you test the following patch on the top of this set?
+I'll keep running the test myself.
+
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index a5f8419e2df1..7ca29469123a 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -4575,7 +4575,8 @@ static int raid10_start_reshape(struct mddev *mddev)
+         return 0;
+
+  abort:
+-       mddev->recovery = 0;
++       if (mddev->gendisk)
++               mddev->recovery = 0;
+         spin_lock_irq(&conf->device_lock);
+         conf->geo = conf->prev;
+         mddev->raid_disks = conf->geo.raid_disks;
 
 Thanks,
 Kuai
-
 > 
-> I put the log in the attachment.
+> Thanks,
+> Kuai
 > 
-> On Fri, Mar 1, 2024 at 6:03 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
 >>
->> From: Yu Kuai <yukuai3@huawei.com>
+>> I put the log in the attachment.
 >>
->> link to part1: https://lore.kernel.org/all/CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com/
->>
->> part1 contains fixes for deadlocks for stopping sync_thread
->>
->> This set contains fixes:
->>   - reshape can start unexpected, cause data corruption, patch 1,5,6;
->>   - deadlocks that reshape concurrent with IO, patch 8;
->>   - a lockdep warning, patch 9;
->>
->> I'm runing lvm2 tests with following scripts with a few rounds now,
->>
->> for t in `ls test/shell`; do
->>          if cat test/shell/$t | grep raid &> /dev/null; then
->>                  make check T=shell/$t
->>          fi
->> done
->>
->> There are no deadlock and no fs corrupt now, however, there are still four
->> failed tests:
->>
->> ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
->> ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
->> ###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
->> ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
->>
->> And failed reasons are the same:
->>
->> ## ERROR: The test started dmeventd (147856) unexpectedly
->>
->> I have no clue yet, and it seems other folks doesn't have this issue.
->>
->> Yu Kuai (9):
->>    md: don't clear MD_RECOVERY_FROZEN for new dm-raid until resume
->>    md: export helpers to stop sync_thread
->>    md: export helper md_is_rdwr()
->>    md: add a new helper reshape_interrupted()
->>    dm-raid: really frozen sync_thread during suspend
->>    md/dm-raid: don't call md_reap_sync_thread() directly
->>    dm-raid: add a new helper prepare_suspend() in md_personality
->>    dm-raid456, md/raid456: fix a deadlock for dm-raid456 while io
->>      concurrent with reshape
->>    dm-raid: fix lockdep waring in "pers->hot_add_disk"
->>
->>   drivers/md/dm-raid.c | 93 ++++++++++++++++++++++++++++++++++----------
->>   drivers/md/md.c      | 73 ++++++++++++++++++++++++++--------
->>   drivers/md/md.h      | 38 +++++++++++++++++-
->>   drivers/md/raid5.c   | 32 ++++++++++++++-
->>   4 files changed, 196 insertions(+), 40 deletions(-)
->>
->> --
->> 2.39.2
->>
+>> On Fri, Mar 1, 2024 at 6:03 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>>
+>>> From: Yu Kuai <yukuai3@huawei.com>
+>>>
+>>> link to part1: 
+>>> https://lore.kernel.org/all/CAPhsuW7u1UKHCDOBDhD7DzOVtkGemDz_QnJ4DUq_kSN-Q3G66Q@mail.gmail.com/ 
+>>>
+>>>
+>>> part1 contains fixes for deadlocks for stopping sync_thread
+>>>
+>>> This set contains fixes:
+>>>   - reshape can start unexpected, cause data corruption, patch 1,5,6;
+>>>   - deadlocks that reshape concurrent with IO, patch 8;
+>>>   - a lockdep warning, patch 9;
+>>>
+>>> I'm runing lvm2 tests with following scripts with a few rounds now,
+>>>
+>>> for t in `ls test/shell`; do
+>>>          if cat test/shell/$t | grep raid &> /dev/null; then
+>>>                  make check T=shell/$t
+>>>          fi
+>>> done
+>>>
+>>> There are no deadlock and no fs corrupt now, however, there are still 
+>>> four
+>>> failed tests:
+>>>
+>>> ###       failed: [ndev-vanilla] shell/lvchange-raid1-writemostly.sh
+>>> ###       failed: [ndev-vanilla] shell/lvconvert-repair-raid.sh
+>>> ###       failed: [ndev-vanilla] shell/lvcreate-large-raid.sh
+>>> ###       failed: [ndev-vanilla] shell/lvextend-raid.sh
+>>>
+>>> And failed reasons are the same:
+>>>
+>>> ## ERROR: The test started dmeventd (147856) unexpectedly
+>>>
+>>> I have no clue yet, and it seems other folks doesn't have this issue.
+>>>
+>>> Yu Kuai (9):
+>>>    md: don't clear MD_RECOVERY_FROZEN for new dm-raid until resume
+>>>    md: export helpers to stop sync_thread
+>>>    md: export helper md_is_rdwr()
+>>>    md: add a new helper reshape_interrupted()
+>>>    dm-raid: really frozen sync_thread during suspend
+>>>    md/dm-raid: don't call md_reap_sync_thread() directly
+>>>    dm-raid: add a new helper prepare_suspend() in md_personality
+>>>    dm-raid456, md/raid456: fix a deadlock for dm-raid456 while io
+>>>      concurrent with reshape
+>>>    dm-raid: fix lockdep waring in "pers->hot_add_disk"
+>>>
+>>>   drivers/md/dm-raid.c | 93 ++++++++++++++++++++++++++++++++++----------
+>>>   drivers/md/md.c      | 73 ++++++++++++++++++++++++++--------
+>>>   drivers/md/md.h      | 38 +++++++++++++++++-
+>>>   drivers/md/raid5.c   | 32 ++++++++++++++-
+>>>   4 files changed, 196 insertions(+), 40 deletions(-)
+>>>
+>>> -- 
+>>> 2.39.2
+>>>
+> 
+> 
+> .
+> 
 
