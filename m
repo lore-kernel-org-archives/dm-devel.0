@@ -1,70 +1,70 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D5AB0482FA;
-	Mon,  4 Mar 2024 16:09:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F8EE47A6C;
+	Mon,  4 Mar 2024 16:21:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709568568; cv=none; b=gs4rFvPvmcC1hKAU/nGyT7G98vgkGuSfCmiW34GHxc7iT3fKsi5yQ35yRJ24oUjfJTewg5J1aLQFTtfp04tLL7iSOAhG+TFKo8BxttreTcuXaDQnlLOwvjvJK1wwUZ+7yO2r0GIRz2meV02Goo4UJsGdiJzuB2nXPxf5g3H2hfo=
+	t=1709569319; cv=none; b=klXPEeeprAIWM1hoQZZ6Fc9+6UUyx7wwuCC2RrFalQclj2Rou3uUrru9VC1YR6ixAQkSciA50x4pkEUAW0vM/7iV0MvzwSNj6EW4UuqZsybAF58hiogwYZGQJUy7SMLbF5fz+6/VEJchHFa5M+A6iUZqp4dV8EP6rnKMGunbcjg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709568568; c=relaxed/simple;
-	bh=EmbcuzK5RZ9VBydxL5q/xcPOc8pIkZHhfJV9L7MAOPE=;
+	s=arc-20240116; t=1709569319; c=relaxed/simple;
+	bh=IMryXinEYZESqZoAODWE9odYyqRp7SUdGSOsTAdrB5o=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=APK4ok7lhGfAC49zJ03n19wZBJ2h9uPz6dJZrhRKlytem4SMczxY65Znn59YwOgK12v7bwzUWJdHCBq0rqPbqorzGEj5sicQUOIIll1mBp2ls7JVF0dJdLg7dqx0ssTeIIf/wM+PYzWjtSRhESJKezabJOy7qfn4S1BUwQXctHA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=iWxFbrQL; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=iWxFbrQL; arc=none smtp.client-ip=195.135.223.131
+	 Content-Type:MIME-Version; b=ZW5dh5fw8EmJjX/U/iUvBRFYNeAhESZIZq6e/3qBxeSlW8tzqo81ogYIhJkgZYzdUZfKTd34KBj4A2xGMcX0HEAJ8CVlZ7tHo66eYYx6CMNuUtAFjY4dykZo+drVWD5Bv2VXytITTQOhl0WGyFTjBchGIoptcCyaGC+2/Y6ZegY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=mO6CGkmc; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=mO6CGkmc; arc=none smtp.client-ip=195.135.223.130
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="iWxFbrQL";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="iWxFbrQL"
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="mO6CGkmc";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="mO6CGkmc"
 Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 19B9576758;
-	Mon,  4 Mar 2024 16:09:24 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id BB190337AF;
+	Mon,  4 Mar 2024 16:21:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1709568564; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1709569314; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=EmbcuzK5RZ9VBydxL5q/xcPOc8pIkZHhfJV9L7MAOPE=;
-	b=iWxFbrQLC5jc1wqjfELn5msEXnr7ZIglfBVVbfhexYHsALi2iaXhEUTMIuSOukmu1kFOfa
-	aizBVbozbcwOpPhXz6+NSi5K+4G4ZHtUqBMiOpgUwFUosv6A+MieXnT39FZFP8J7471Vt8
-	Ef0aPl9gk4uGvZS//eUzCOoZUMrD5mQ=
+	bh=IMryXinEYZESqZoAODWE9odYyqRp7SUdGSOsTAdrB5o=;
+	b=mO6CGkmcJqLKUfgP81I6lgvNlGX3Yr0S3klvZ1qz9LdbYAjrjCnvIfEPOCU+/t2Hp/YHmt
+	XPXId+aeH/9sKuYJmjlv5j//N314GsOGXb4do7iF1AxndSQopMY3LGtijD9jqzGMMQsM0O
+	uBUse0RbDg18b6NPqcvlTMOydcD+wGk=
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1709568564; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1709569314; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=EmbcuzK5RZ9VBydxL5q/xcPOc8pIkZHhfJV9L7MAOPE=;
-	b=iWxFbrQLC5jc1wqjfELn5msEXnr7ZIglfBVVbfhexYHsALi2iaXhEUTMIuSOukmu1kFOfa
-	aizBVbozbcwOpPhXz6+NSi5K+4G4ZHtUqBMiOpgUwFUosv6A+MieXnT39FZFP8J7471Vt8
-	Ef0aPl9gk4uGvZS//eUzCOoZUMrD5mQ=
+	bh=IMryXinEYZESqZoAODWE9odYyqRp7SUdGSOsTAdrB5o=;
+	b=mO6CGkmcJqLKUfgP81I6lgvNlGX3Yr0S3klvZ1qz9LdbYAjrjCnvIfEPOCU+/t2Hp/YHmt
+	XPXId+aeH/9sKuYJmjlv5j//N314GsOGXb4do7iF1AxndSQopMY3LGtijD9jqzGMMQsM0O
+	uBUse0RbDg18b6NPqcvlTMOydcD+wGk=
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id A579713A58;
-	Mon,  4 Mar 2024 16:09:23 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 385F913A58;
+	Mon,  4 Mar 2024 16:21:54 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([10.150.64.162])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id 67QfJjPy5WVmdgAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 04 Mar 2024 16:09:23 +0000
-Message-ID: <044ce4d6dad7873de1104568e5bd86361997d073.camel@suse.com>
-Subject: Re: [RFC PATCH 2/7] 10-dm.rules: don't deactivate devices for
- DISK_RO=1
+	id kck0CyL15WX2eQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 04 Mar 2024 16:21:54 +0000
+Message-ID: <0404fc2e69aea20c74f8a1a258b98dafd6ae0fec.camel@suse.com>
+Subject: Re: [RFC PATCH 5/7] dm udev rules: don't export and save
+ DM_SUSPENDED
 From: Martin Wilck <mwilck@suse.com>
 To: Peter Rajnoha <prajnoha@redhat.com>, Zdenek Kabelac
  <zkabelac@redhat.com>,  Benjamin Marzinski <bmarzins@redhat.com>, David
  Teigland <teigland@redhat.com>
 Cc: linux-lvm@lists.linux.dev, dm-devel@lists.linux.dev, Hannes Reinecke
 	 <hare@suse.de>
-Date: Mon, 04 Mar 2024 17:09:22 +0100
-In-Reply-To: <b884374b-2f6f-4c7f-acba-b4c730ae03ff@redhat.com>
+Date: Mon, 04 Mar 2024 17:21:53 +0100
+In-Reply-To: <2b6bfa53-dfcb-4fe8-859c-8d99a5eadcbf@redhat.com>
 References: <20240301224011.11117-1-mwilck@suse.com>
-	 <20240301224011.11117-3-mwilck@suse.com>
-	 <b884374b-2f6f-4c7f-acba-b4c730ae03ff@redhat.com>
+	 <20240301224011.11117-6-mwilck@suse.com>
+	 <2b6bfa53-dfcb-4fe8-859c-8d99a5eadcbf@redhat.com>
 Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
  keydata=mQINBF3mxsYBEACmOnQxWBCxCkTb3D4N8VAT8yNtIBZrmvomY7RLddBIT1yh2X7roOoJQ5KlmyjMmzrPr111poqmw8v4dUqc1SVqQoKHXv97BzlVIEKC5G2W29gse0oXhx3dhie0Z6ytkHVOY29VLsLhVXEz+p5xL71KYgIy3lmM/NaWvoqwwaXiv1TmLG96Uoitvj1vdXqqTv/R6/MBye+xQUacXpM8FA5k7OpmzCFjl4NVtGmo0VhIfXM/ldmyEJpg8a5LrZ4t5Qi32BWQjUHGmS8OXjUJ/n0QxLkymbcbY1KepP9UnLGPT+TmKJm1QlMDj69+WPKgMsif3iz4hZPoQ0Knp11ThYzBh7+AiRxE9FG2hTtZeKimkpjR12bytF4Y0aIM/HeLMHRvwykJuh5JxT9A68xF7hmqQZ7rsx/GoRBOA792kFgr5KdCZ1YoeVUkrohT1nfh/Y/Xfeq4E69mktE0R0Yxg/4CSiB7sLSzry8dyqk2sbGs+W/Ol7D7VOG45aZ5iTB08R2ji2xKArcH+Dmy48nwqIvdrppZG2tZEe+wtGPTzahE4OJdpZ3vS4ujdChynS47DVWa5JtBxfqopr0rPGoCyxmyvzJzHAUjlp7iSXpDZqfdu7F4HAC13mS41IVk/yHTXE28AKrZ4O+efZ6qgw5zJV9lAbWM7JjfdrTd+ofOc+GurQARAQABtCRNYXJ0aW4gV2lsY2sgPG1hcnRpbi53aWxja0BzdXNlLmNvbT6JAlEEEwEIADsCGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQR1Dq1LLt6xpUXU9fRnxYbmhVaXVAUCXebHhgIZAQAKCRBnxYbmhVaXVJ6+EACa5mbuH1dy2bKldy+bybUe4jFpJxflAPSrdpIlwkIfD/SgQRWUUm+BLLJMGJFSKiVC6oAHH6/mo3gdWAqBJ0LAOQDDR2BW31ERYqQQ7m01INQIvMlg+PXQ8HbWd
 	CNF1SOgjxiIs04DlB+u+DD5pgPtxKFN/jaJSx9oZ+GZpSd+eJeull3a+U/1+QpYmLbH34bxYZ16+cXfarkH3QQC65DH/iIZwcpxp+v/zrQVXnsZ81XmmbLD1vMkFCIU0ircIcaJoqloNJOA46P4mj9ETwC5OiSTs7vlyHP4Ni/86kmjmr41d/baY1cAXpAbtOGYd5K72B6qSP5EJI+Ci6rSbWInQaYzKuAOrDDyhW7ODd+hOtBcmUIH5GpKvzRjdfxEP/zlyecBszxycz7lOYNx86QWsyyRWITKzHzhdqKVZ9kvjVozTtcpb1RSqsj43qqMEQjcp1uXhbmwVmbzsWaPqmCx4xsIQoXfIzzffvw+nOiPLkxzGczprwNJasDUM1hcyEPv+5VzZpE4YjlDw/mtTayehb2EGzt2RfZIuPCBr88KlWUh2+nu9RfBJNdJ2vZ13Aun8NbqPKR2vfsE+BUJY14Ak9ZIzcyruHBHQ78dxD0J+HSC1bm9e4UOnW0PBbZwuPTRwyO3aXoExPabGgig6gcY34bsXvW9SDwOu+pzXMnVvbQeTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+iQJOBBMBCAA4FiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAl3mxz0CGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQZ8WG5oVWl1TdsA/6A0DZmGwreygUic5csLSLUm2ahdat3rRKfQVdlOdl0aWa/vS90PqpuDNGzXVzS/s4YXRjWesnYEdwQGSc4PnBYCitLKUwenII39RCyZLU3J95luWG2eOagFaerK+HvuNEH6RpYkqPpaDEwpblfi30xNNYLIR4HK0GTYwhbmBTrYgaKATNiplU08ZUvC23s00t2i7SBGmOue/0dIPMhO3EDYPP0RaDnKvHAOAywkI1J9Ey0xEslG9AFylOihcdaq9/7MlMWU8oNHK7EVE5OOZ2NiJv1sWSgM
@@ -83,22 +83,23 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Authentication-Results: smtp-out2.suse.de;
+Authentication-Results: smtp-out1.suse.de;
 	none
 X-Spam-Level: 
-X-Spam-Score: -4.30
-X-Spamd-Result: default: False [-4.30 / 50.00];
+X-Spam-Score: -7.32
+X-Spamd-Result: default: False [-7.32 / 50.00];
 	 ARC_NA(0.00)[];
 	 RCVD_VIA_SMTP_AUTH(0.00)[];
-	 BAYES_HAM(-3.00)[100.00%];
+	 BAYES_HAM(-2.02)[95.18%];
 	 FROM_HAS_DN(0.00)[];
 	 TO_DN_SOME(0.00)[];
 	 TO_MATCH_ENVRCPT_ALL(0.00)[];
 	 NEURAL_HAM_LONG(-1.00)[-1.000];
 	 MIME_GOOD(-0.10)[text/plain];
+	 REPLY(-4.00)[];
 	 RCVD_COUNT_THREE(0.00)[3];
 	 DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	 NEURAL_HAM_SHORT(-0.20)[-1.000];
+	 NEURAL_HAM_SHORT(-0.20)[-0.998];
 	 RCPT_COUNT_SEVEN(0.00)[7];
 	 FUZZY_BLOCKED(0.00)[rspamd.com];
 	 FROM_EQ_ENVFROM(0.00)[];
@@ -107,72 +108,39 @@ X-Spamd-Result: default: False [-4.30 / 50.00];
 	 MID_RHS_MATCH_FROM(0.00)[]
 X-Spam-Flag: NO
 
-On Mon, 2024-03-04 at 11:48 +0100, Peter Rajnoha wrote:
+On Mon, 2024-03-04 at 12:00 +0100, Peter Rajnoha wrote:
 >=20
-> Yes, I'd like to get rid of this rule, but, unfortunately, there's
-> one
-> issue during the DM device creation/activation.
+> OK, makes sense. But I haven't looked at what implications this might
+> have for 99-systemd.rules yet, but we surely need to have that
+> covered
+> somehow.
 >=20
-> For example, if I try:
+> Maybe, now, I would probably even remove the mention about
+> DM_SUSPENDED
+> in 12-dm-permissions.rules, it looks superfluous there. We normally
+> set
+> perms based on names, not on DM_SUSPENDED state. I'm not sure why we
+> mentioned it there before.
 >=20
-> =C2=A0 dmsetup create --readonly --table "0 1 zero"
->=20
-> Then I get these uevents:
->=20
-> 1)
-> ACTION=3Dadd
-> DM_UDEV_DISABLE_OTHER_RULES_FLAG=3D1
-> DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG=3D1
-> DM_UDEV_DISABLE_DISK_RULES_FLAG=3D1
-> SYSTEMD_READY=3D0
->=20
->=20
-> 2)
-> ACTION=3Dchange
-> DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG=3D1
-> DM_UDEV_DISABLE_DISK_RULES_FLAG=3D1
-> DM_UDEV_DISABLE_OTHER_RULES_FLAG=3D
->=20
->=20
-> 3)
-> ACTION=3Dchange
-> DM_COOKIE=3D6335392
-> DM_COOKIE_DISABLE_OTHER_RULES_FLAG=3D
->=20
->=20
-> The uevent 3) coming with the DM_COOKIE is the actual event when the
-> device is ready for use (that's the uevent notifying the DM device
-> resume/activation).
->=20
-> If we remove the DISK_RO rule, then the
-> DM_UDEV_DISABLE_OTHER_RULES_FLAG
-> is unset for uevent 2), which in turn causes the SYSTEMD_READY=3D0 to
-> get
-> dropped, which in turn will start all the systemd hooks because the
-> device is considered "ready" for systemd then.
-> But the DM dev is ready only after uevent 3) that comes with the
-> DM_COOKIE. So we still need to cover this scenario.
+> Do mpath rules still need to look at DM_SUSPENDED?
 
-As event 2) doesn't have DM_COOKIE, I don't think we need to bother
-about it much.=C2=A0IMO we should treat it like a synthetic "change" event,
-which has almost no effect as far as dm is concerned.
-Event 3) doesn't have DISK_RO=3D1 set. If any later rules are interested
-in the state of write protection, they need to check the "ro" sysfs
-attribute instead.
+No, and yes :-)
 
-It would make some sense to be able tell later rules that they don't
-need to bother with a given uevent because (from device mapper PoV)
-nothing relevant has changed.=C2=A0I am not sure if we should use
-DM_UDEV_DISABLE_OTHER_RULES_FLAG=3D1 for this purpose. "Don't bother,
-nothing has changed" is not the same thing as "don't bother, you can't
-access this device right now", which to my understanding is the meaning
-of DM_UDEV_DISABLE_OTHER_RULES_FLAG=3D1.
+If we remove the DISK_RO clause, DM_SUSPENDED and
+DM_UDEV_DISABLE_OTHER_RULES_FLAG (as input from 10-dm.rules) are
+equivalent for multipath. We'd be able to modify 11-dm-mpath.rules such
+that DM_SUSPENDED isn't used any more. The downside is that 11-dm-
+mpath.rules needs to modify DM_UDEV_DISABLE_OTHER_RULES_FLAG under
+certain conditions, and that DM_SUSPENDED is shorter and expresses the
+actual situation more intuitively. Therefore I don't love the idea to=20
+replace use of DM_SUSPENDED with "DUDORF" in 11-dm-mpath.rules.
 
-Actually we have DM_ACTIVATION=3D1 to tell other rules that they do need
-to take action. Later rules only need to rescan a DM device if
-DM_ACTIVATION=3D1; in all other cases they could just import properties
-from the db.=C2=A0Currently kpartx and lvm are the only rules that check
-DM_ACTIVATION.
+My personal take on this is that 11-dm-mpath.rules actually belongs to
+device-mapper (being executed before 13-dm-disk.rules), even though
+it's not maintained in the lvm2 repository. As such, it should be
+allowed to access dm-internal flags like DM_SUSPENDED.=C2=A0
+Not that's not a problem with this patch; the multipath rules can just
+access .DM_SUSPENDED instead of DM_SUSPENDED.
 
 Regards
 Martin
