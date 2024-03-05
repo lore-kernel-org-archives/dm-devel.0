@@ -1,55 +1,57 @@
-Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com [209.85.221.50])
+Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 455BD5917C
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 12:06:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEAAF54916
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 12:06:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709640368; cv=none; b=dD13hYUHjxhqmq0JNLQ8EbXTuvk7cHZ0un9q9Mvr5mXjlQqVTUSvERo/mdqEzh6M8oidBS8bn87Kz6cd9AO+AWyQqKnQkbOWF2SuiFrGfPJf1u73WvsHqie61e6kf+lrHEIimOcXN1Gg/STMpTuxsGzxqBFIrjdGlT1e2P8gXcI=
+	t=1709640370; cv=none; b=QEuu7+QxsXPen+GTmTXZvi4tUTHw5/GvtW/mdKmfuoOBM2VpgjjA9Yj73MGD4/XiqDB+0soeYaAUSR1O6tJvoVFOF0O4Vfm0uLCkYpUIy7ZDtKn68iMZqK8QnnrQX5Tc7D/wPXQAnQ4Hc0uhDg4IhQrO/1c4cU4auVg6mgc2onU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709640368; c=relaxed/simple;
-	bh=yTzY1xpzbxSGRCcokv7/eLnviPM1FiGbLtqSiqZh3nw=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=BIe5VJ/4CQRpJkA+hqd4Gq3sn8GmFNWSI7zrTGqXr1fDg8KdvGauuuWGwYHsW61p0htH7XbUrl+9f61lQg+7zgT+RnY8JlWheYHGJtyyJSxCmgcWB2rPK6RW1EmF6nkGXmu+4KW1RrCbM6DdToxl81/ukbC0WinCdbaEBz6f7u8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=VmrUFhbQ; arc=none smtp.client-ip=209.85.221.50
+	s=arc-20240116; t=1709640370; c=relaxed/simple;
+	bh=q88AYD/alrtOPqwXRC5pFf8wi0MZs6r0G61o6jbCxtc=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=BnZq8JVt3IWJVWqdC2YWR93kaBAMLtaOqPRCrPSTXIzmjYPdmqI34lxDmxe7r52tRN1p05CH/BRtmr1N5J2PE5/JJY2QgCzfAwZpK/H1jT3ENMCvGxKcJHhINuiscG73G5XtC+uqCDR25xMi3v896WIC2KWIcIKoSc16sTCDCxQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=I68crrst; arc=none smtp.client-ip=209.85.221.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="VmrUFhbQ"
-Received: by mail-wr1-f50.google.com with SMTP id ffacd0b85a97d-33e1207bba1so4463080f8f.1
-        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 04:06:06 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="I68crrst"
+Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-33e383546c1so1054063f8f.2
+        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 04:06:07 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1709640364; x=1710245164; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=4kZh7uLGQSho7Rt2DgmbosTZaAQU2EoNrSMPkA/kqfA=;
-        b=VmrUFhbQlypXJlCeEKeXmJn52LAO+UDsU9AISKn2qNfxmJNObfvBv6/CU5BUn9oLRA
-         Jf1F8k8XKn6An/KG/uyxs8JUQIPoXuIwS15QHDbJo9QJXa3cqCjuzbwoBDGlWkfATnAD
-         y1xQSuy3AA6AQ5u2GhLc36vHB7K+qf2puOLdEsNPMBtcKF8f9v8o/fQhGE8rsCHy1cd2
-         82UJJ/n9fWHJTLFGWhxQKTPd30wYAKVeNbmJYUSCZdp6UzoyiBXWfpJIL5j6HKEfdq0k
-         kyeintVUc+v4L8OploJlniOMeU7xCWzP5Y/XFu5tTovA68aag11HgqJ2jW9PPmfEnI/T
-         hudQ==
+        d=suse.com; s=google; t=1709640366; x=1710245166; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=PrPpIRlMpe62OymWcz7BCmTnufGdGNbV1lkhPbWpNUM=;
+        b=I68crrstmh0uNA/GyNvFfonMJ0MVCT0yckdoozP/smFvcgFwbtlHnQTxwZcxuI/T5/
+         b4woTRpF5OZjNS563kYUvmyn0yHsbBUgmro3Adob92rIpVFY39b9GrakPaQS7KY9H0b/
+         qidY8otqgkpxA92G0E/A8li4rBmV+lN13Ylka0xv456V9pjXVqIAz2nRRN08XuDQi44Z
+         NUlOZ0AfuJnDyziBKZh2MeztiHQpa9282kABEV8NUmn2UAGLUljwoTSpSYq+lMak0TF8
+         Dg09ZrhGXNe5LX+ytSZqO6/d+jqBLVJPeq+rxFtmT0zmlVOOF8+V5Us5IiLR9eMzY40X
+         3g/A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709640364; x=1710245164;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=4kZh7uLGQSho7Rt2DgmbosTZaAQU2EoNrSMPkA/kqfA=;
-        b=g/t5oHca9cQEab18d9aBmHY94CjaG9PRiwAeTR4iYR2vz9gAa2OHj2Ue5+wuMyhi0d
-         0o1U4HgyGkRAgLNHl+CzNs1Fm4UNKFTdIsdentnzNQVjgn68UTVK7E2ZyzoUUy782QiV
-         moYbM/n8Ck9G6jR8s3FqKqVAhIwnwjylhkpZd54A0a2tcP5buzvTjSGmb+8ZCj2wv5xR
-         GMA0+9ktJDEZShQxFyyBWw5i52jxNYHDxfKtkRh3ZaAM4RNMVJtbjLdtBezCVBf1sePx
-         CFcnRg+RRz7pmgmiWR1D2Y/YfBVUmVpPfIAzWWqaz8hirK2INYYkVgtvcJWHuJzio/kA
-         7Vbg==
-X-Forwarded-Encrypted: i=1; AJvYcCVlGAc3OjAKGYMCMGzULFOIUGQkW+08j1YQYF2ZeeT9l7A0h10KIokIixiyBC12DOQNutJUfoW7LjBu9nLo86ucWMQHqfObqPo=
-X-Gm-Message-State: AOJu0YxykRh6Ruo9MEqfOQrpcrVQPKyloSqmz5BPmhSM5SKeIwJvQFfQ
-	IfDVznkG7N8l/B1FzL3SN368/Dsd5ySNbH/kCabBDGUq/tthNajtYku/hUnC3B0=
-X-Google-Smtp-Source: AGHT+IFoI1Dp751Bg2vhqOMff5eS/u7euK2vKQ/vrF5lmMF9I0Xg5mGCt+cgp4blz9+t6c3WC8m8Jg==
-X-Received: by 2002:adf:ea0c:0:b0:33d:5350:6700 with SMTP id q12-20020adfea0c000000b0033d53506700mr8513433wrm.6.1709640364529;
-        Tue, 05 Mar 2024 04:06:04 -0800 (PST)
+        d=1e100.net; s=20230601; t=1709640366; x=1710245166;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=PrPpIRlMpe62OymWcz7BCmTnufGdGNbV1lkhPbWpNUM=;
+        b=TMTYmO01F3ArNcoeQRwE93A33rbHGIdQZOVJu2TgzqGQqb3HJd3tLB0qeE7ecV1IGm
+         w9gpeqRSZoC2qe/w4gRji2fVwAX78NsuZitlhPAyMT8KHOjFp7tG9GCZ9tJ3NDx+dHH9
+         Z3Y7qzCCSJtsN+cpFbAI0sfruIcMklMuWFod83yT7qpsh5BwWE5aAsagsCBhbfdqi5Fz
+         FMuzxGt875roLtnz4XYTsQj7M03YOg9TAYP6DUuhBtT77xS9VhM4vzVEwNDoiZrDxmS9
+         htoXDPLeK8oX5e41O8ntwWHLLD9DeErpP7PsBEZ5zLukPdAt0iawyZZyiZufoc5yjwpt
+         99ew==
+X-Forwarded-Encrypted: i=1; AJvYcCUOlm2w5CJNWbAfJksBH4o/g8HfpGiIBSA/uSjwZz9PKBx+hhJslyLRGBWHYH+usl4Oc9Zjrc5BPrWj4avfZKVpSlkw2yxTPf4=
+X-Gm-Message-State: AOJu0YzvML1NHSHHc2+AM4cMeeH0mvl0S3IElth4W0HAMAQRLhKvj7fU
+	LdlpnEHEefvwtq/gTi5DU+y+U5wUsv/B73hPDrpy5rhwx9C1cuSRCLC7nqCHFrY=
+X-Google-Smtp-Source: AGHT+IGTQ/kTzjprM1YKCSlk90efqzFAUHsOTxtWSGkCHHeDdihwDjv28BcmF0yEJsaieVkyIAd3QQ==
+X-Received: by 2002:a05:6000:4e9:b0:33d:f3c4:6002 with SMTP id cr9-20020a05600004e900b0033df3c46002mr8703086wrb.1.1709640366347;
+        Tue, 05 Mar 2024 04:06:06 -0800 (PST)
 Received: from localhost ([2001:470:6d:10f7:9114:d168:fb53:9a37])
-        by smtp.gmail.com with UTF8SMTPSA id cr14-20020a05600004ee00b0033dd06e628asm14810894wrb.27.2024.03.05.04.06.03
+        by smtp.gmail.com with UTF8SMTPSA id n13-20020a5d4c4d000000b0033cfa00e497sm14757266wrt.64.2024.03.05.04.06.05
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 05 Mar 2024 04:06:04 -0800 (PST)
+        Tue, 05 Mar 2024 04:06:06 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Peter Rajnoha <prajnoha@redhat.com>,
@@ -60,10 +62,12 @@ Cc: linux-lvm@lists.linux.dev,
 	dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>,
 	Hannes Reinecke <hare@suse.de>
-Subject: [PATCH v2 0/7] device mapper udev rules rework
-Date: Tue,  5 Mar 2024 13:05:43 +0100
-Message-ID: <20240305120550.11617-1-mwilck@suse.com>
+Subject: [PATCH v2 1/7] 13-dm-disk.rules: import ID_FS_TYPE
+Date: Tue,  5 Mar 2024 13:05:44 +0100
+Message-ID: <20240305120550.11617-2-mwilck@suse.com>
 X-Mailer: git-send-email 2.43.2
+In-Reply-To: <20240305120550.11617-1-mwilck@suse.com>
+References: <20240305120550.11617-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -72,57 +76,26 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-All,
+ID_FS_TYPE is the most important udev property for most follow-up
+rules. It must be imported from the udev db if blkid can't be run.
 
-here is a rewrite of the device mapper udev rules, as follow up
-to the previous thread "About DM_UDEV_DISABLE_OTHER_RULES_FLAG and
-DM_NOSCAN" [1]. While I have taken care to minimize the impact on
-other udev rule sets, some changes to both the multipath-tools and
-systemd rules will be necessary. Patches for these are in preparation.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ udev/13-dm-disk.rules.in | 1 +
+ 1 file changed, 1 insertion(+)
 
-In short, the effect of this patch set is as follows:
-
-- As before, DM_UDEV_DISABLE_OTHER_RULES_FLAG is used as general flag to
-  indicate to follow-up rules that they should avoid probing the device, and
-  should import device properties from the udev db if necessary.  The flag
-  does not imply that existing device stacks must be destructed.  -
-- DM_UDEV_DISABLE_OTHER_RULES_FLAG represents the combination of multiple
-  conditions that may make it impossible to probe the device just now.  As
-  such, it isn't restored from the udev db, but determined anew for every
-  uevent. For saving the DM_COOKIE variable of the same name in the udev db,
-  a new variable DM_COOKIE_DISABLE_OTHER_RULES_FLAG is introduced.
-- The properties DM_SUSPENDED and DM_NOSCAN, which have always been considered
-  internal to device-mapper and its subsystems, are renamed to .DM_SUSPENDED
-  and .DM_NOSCAN, respectively. Thus they aren't saved in the udev db any
-  more, and it becomes more obvious that they are not supposed to be used
-  by non-dm udev rules.
-- ID_FS_TYPE is imported from the db for "spurious" events.
-- Properties are imported for DISK_RO="?" events, too.
-
-Changes from v1 ("RFC") patch set:
-
-- Instead of removing the DISK_RO clause entirely, just moved it further down
-  (after the property import), and apply it for DISK_RO==0, too.
-- Updated comments about device properties at the top of 10-dm.rules.
-
-[1] https://lore.kernel.org/linux-lvm/9d50edb0-baa4-4a01-a2f0-136dfdb79937@redhat.com/T/#t
-
-Martin Wilck (7):
-  13-dm-disk.rules: import ID_FS_TYPE
-  10-dm.rules: test DISK_RO after importing properties
-  10-dm-rules: don't restore DM_UDEV_DISABLE_OTHER_RULES_FLAG from db
-  11-dm-lvm.rules: don't restore DM_UDEV_DISABLE_OTHER_RULES_FLAG from
-    db
-  dm udev rules: don't export and save DM_SUSPENDED
-  dm udev rules: don't export and save DM_NOSCAN
-  10-dm.rules: bump DM_UDEV_RULES_VSN to 3
-
- udev/10-dm.rules.in          | 43 +++++++++++++++++++++++++++---------
- udev/11-dm-lvm.rules.in      | 13 +++++------
- udev/12-dm-permissions.rules |  2 +-
- udev/13-dm-disk.rules.in     |  9 ++++----
- 4 files changed, 43 insertions(+), 24 deletions(-)
-
+diff --git a/udev/13-dm-disk.rules.in b/udev/13-dm-disk.rules.in
+index dca00bc..eaad972 100644
+--- a/udev/13-dm-disk.rules.in
++++ b/udev/13-dm-disk.rules.in
+@@ -26,6 +26,7 @@ ENV{DM_NOSCAN}=="1", GOTO="dm_watch"
+ GOTO="dm_link"
+ 
+ LABEL="dm_import"
++IMPORT{db}="ID_FS_TYPE"
+ IMPORT{db}="ID_FS_USAGE"
+ IMPORT{db}="ID_FS_UUID_ENC"
+ IMPORT{db}="ID_FS_LABEL_ENC"
 -- 
 2.43.2
 
