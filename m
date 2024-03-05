@@ -1,57 +1,57 @@
-Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 194D35A11B
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 12:06:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13CED59B5C
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 12:06:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709640372; cv=none; b=KzXLhhtbBQb0CUFC3Lz6vUqghl4qtvMZ7uGjYW+Rz0iF47dwTXt04sVlhgFNzZ+4IVSxdU4pKOA4eUrXvdrtHWYt31zVVWjuZV6S9Xz2XE2+4Bu60TT6aWpHGdn/vXC3J9leFn2nd05HA1MBV251g0ID5uM39Pzx3OxfnPIgztw=
+	t=1709640374; cv=none; b=kcRGMps2F3lD72GfWPWWBuDVR3RJXFZxKJDcuHcgZ+rCavWRa8IXiXxPPxTBMc0GKQyYWyYLooH8KIHCfjUQmGuUMkzfH6lgyp3ZjL8fB3Lle1LDUF41eagYpWQjXoPc9vZkT3aiBNAOD95m5SeWuezlpf2a5Pe7rP9um16H66w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709640372; c=relaxed/simple;
-	bh=lfPPztJSU8i6PsrnDFEgaFR33/L2AhHRnuO2C8qKK44=;
+	s=arc-20240116; t=1709640374; c=relaxed/simple;
+	bh=h87Ur7G/Y4jKEacfNU48rg1JaHg9qYFEuSMfZOYYFCE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=e5cPEvU13sn+TUG3up1HWECcm9bbL+zKpHsCPjP9wXMeeosSjITUO09qfDqU9W2TwO7GI1NZgt8Zxx7/kiLkPNGwBOXnnxtdd952pxdZguwEuAhuPflfStWe8IBSE5HMpA2PWkktNhM3OIWZzuqsDTf8iEm+mtpopGBfZ9mPucg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=az/SN6MU; arc=none smtp.client-ip=209.85.128.53
+	 MIME-Version; b=lPrfmRW0SlTgxrWrB1082vShN8hgG67OrjvEMERygvut0xCEBrYa/WYxP0pB9OFr/oCYY6p2ZZRHOo2RYcw+AHlleZwzs49OsFlGebEXVlgFnL+6FmJpppDbCqSMPd+FaNLjTjiTFEzjwP+d94gs/BD3YzdWMg87Y9lQCmGyrp4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=D0+ycs73; arc=none smtp.client-ip=209.85.167.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="az/SN6MU"
-Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-412eddd165eso2873005e9.1
-        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 04:06:09 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="D0+ycs73"
+Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-5133d276cbaso4295578e87.2
+        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 04:06:11 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1709640368; x=1710245168; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1709640370; x=1710245170; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=mLLG4u3ZUc3JsevxgnlE3EEFCImXDxYAkZZZX7kFVkg=;
-        b=az/SN6MUIS0SJbIlOHQrrAlOYrn0QNc4IDq59NEJF2Rw7AIlhKvpbF5X9OOx9Lgn9O
-         /+qtw7AVt/S+KMc2d7o8qu307sFKYNPOZz9kWASct0ZX7PvVQ1dwqWVmfyguxwRK9B1S
-         oKdrixFyodLLMNMhdPtnagBM682zUYsz6yV5PiTe9FiOb0AydKF3Tgc8GnbbX6/y13kR
-         pU7bgwKwryPqV1Zy9lBbmWTA9kUG5aENV1jlSLW/M+sJbmxUvxzK+hs7bAajI/b+q+A7
-         BehuYkIYKsH4FCYMQJKOk3El7Zhc1cBc4v5mrsOPzv66VKDVcM70s3npKJQz2NPWzVo5
-         bbOQ==
+        bh=9gra59CEdOdjH+awRNYyYaZsgl4i35ArARZaV4qrZPQ=;
+        b=D0+ycs73BnXr77tG2Lc2I5nv0W5nbR4KdGwnUjg5pQp0DOQvNj7z4hzOI6epbqaKPt
+         sbNBiweSz/34dF23vhsiweu0boODKBSVOh6WRRJF0GEWzGUW0Ci2wnsqgobIwtlxX9Ut
+         biK4Bd9StrKIOTVkJUDMOTd172em1HgFQnWqIuhLZz48GBLG87QRYkDJKxlAWbUM1jLQ
+         aiGt1ArtBfJ5e5bvbCliH3jKTq1kKplqqKHYj32WU7lSiseImsqyk9CdmT10Qq8t6KtC
+         fzU5ZliEJft5TMrra0AUR2LgrOVcQEiKyLawp+KbY/Bs0kSL3To+d1ZS+8s41QgetEYT
+         JDFQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709640368; x=1710245168;
+        d=1e100.net; s=20230601; t=1709640370; x=1710245170;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=mLLG4u3ZUc3JsevxgnlE3EEFCImXDxYAkZZZX7kFVkg=;
-        b=io6Sv3OV5uPGiX4/ARUi2yxRmt2QN0TspiyjX6qxldYmKAYmQnO1U7r5HtsgHOMVsb
-         expU7rYUjGtT+YFdRVA13VVuOAsT/Zsn4VT7obYtf518SAX7q3PAhvhKqLb41+pYHZ0B
-         l3RTHCQ5Nif2goQ1JIjIhcJHLG8M8WNheXNaFeRvDTvyzeXOzdY8sA0rADZLVMX/wQoy
-         osy5P2hzP9rsrH4arebO20OYHIsFXxwakfn+y/M+5BmSuH7iiKdbwiBb/szWNlL3ptfy
-         UGTz3/ca7dckLi5QxE4+eOjx/zU3zKBdg3/qmhqNE6ckm8Pv9Tr2zdKHG8aMdKz9zHtn
-         h+ew==
-X-Forwarded-Encrypted: i=1; AJvYcCXGRF5uzIA2tDPLLwFZtI72b2Wg2H+SgCWLM4exTA8Y6B7p1LhlsFmZ2bsC/2L/vtFmVJ/PoizTYXWNBZB0zeFP1AGRqzsGPTI=
-X-Gm-Message-State: AOJu0YzWFd02IW1iF4wKQz8f3lbMmqOzEP5+kN71iRfU27COWajaCnj7
-	oduB4ODtcSmTiL7DyDgNJQTSzXEmE8WNKx/Aq6XrdYtGPjDS4Q+ZPBCboRxA0cM=
-X-Google-Smtp-Source: AGHT+IH3R2HyyNiBsP+BSGsIiTmJU9kd4BGJlOdJ2dhAWJAZBfptzgA08b36FN7bTpAhGaCPMO6wGg==
-X-Received: by 2002:adf:cc03:0:b0:33e:dd4:ca44 with SMTP id x3-20020adfcc03000000b0033e0dd4ca44mr5586991wrh.2.1709640368544;
-        Tue, 05 Mar 2024 04:06:08 -0800 (PST)
+        bh=9gra59CEdOdjH+awRNYyYaZsgl4i35ArARZaV4qrZPQ=;
+        b=Nbm9KfxQ2QvDWfTTFdr2LQXLCub8CbQ5smLAhey8wOiLUvWIWiQzA6RpMSWg7qyKqs
+         gYcFvVxUFgvPvemk5kS6yaKE0NGwGGxj1jRosgde4+tQthmmpoHY9sDhScT/JdDLIhh7
+         1ZH5MegXlXPlKcpizQWWUD8HJGofN+uVr5ndQBzVTQoUIwSMNufMjLxbnHnPDZnllRsv
+         AkEgQmETDu/Wvxw5txK5U0M3AO4H5UQxILzufZ8DMLekmhReQUsupRNR1bTbid/k5D78
+         UFBXUPBKzRS0bcWrmnwTfkkzyz8TFFCH8r/d34QrlMZZI8cX48y/qlpNj60OuTajrBww
+         CfMQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWZcDDXuoH9NYYb1oWJWtB4zv5yglAOpUkw6ZnxPh1w0nGMh9BZHV9t61niaWwpg4VMjIp4eRdjmR6zPdPFPjFmL8gr1lesT8A=
+X-Gm-Message-State: AOJu0YzQuoqGbXTwHND5Fhcq0qOlk0fEZfJmtkjhe9WBzW8jWGivAeCA
+	lnVtN5Y/m4u8ykmGAGN/DpZ6hF3muaoW0SaYCM54+7OUEMHW/Nd1XyIioYGlQiU=
+X-Google-Smtp-Source: AGHT+IFfM6Y+4a08smpeFUGCYwp0YHIcoOOis/u6Mgr+qJsPQ/ZZiCWyKp8oubHyI86E8w3lR6VHjQ==
+X-Received: by 2002:ac2:4c16:0:b0:513:26b5:139a with SMTP id t22-20020ac24c16000000b0051326b5139amr1256347lfq.23.1709640370267;
+        Tue, 05 Mar 2024 04:06:10 -0800 (PST)
 Received: from localhost ([2001:470:6d:10f7:9114:d168:fb53:9a37])
-        by smtp.gmail.com with UTF8SMTPSA id co17-20020a0560000a1100b0033e3ca55a4esm5800201wrb.21.2024.03.05.04.06.07
+        by smtp.gmail.com with UTF8SMTPSA id iv16-20020a05600c549000b00412ea92f1b4sm2555533wmb.19.2024.03.05.04.06.09
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 05 Mar 2024 04:06:08 -0800 (PST)
+        Tue, 05 Mar 2024 04:06:10 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Peter Rajnoha <prajnoha@redhat.com>,
@@ -62,9 +62,9 @@ Cc: linux-lvm@lists.linux.dev,
 	dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>,
 	Hannes Reinecke <hare@suse.de>
-Subject: [PATCH v2 2/7] 10-dm.rules: test DISK_RO after importing properties
-Date: Tue,  5 Mar 2024 13:05:45 +0100
-Message-ID: <20240305120550.11617-3-mwilck@suse.com>
+Subject: [PATCH v2 3/7] 10-dm-rules: don't restore DM_UDEV_DISABLE_OTHER_RULES_FLAG from db
+Date: Tue,  5 Mar 2024 13:05:46 +0100
+Message-ID: <20240305120550.11617-4-mwilck@suse.com>
 X-Mailer: git-send-email 2.43.2
 In-Reply-To: <20240305120550.11617-1-mwilck@suse.com>
 References: <20240305120550.11617-1-mwilck@suse.com>
@@ -76,46 +76,56 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-DISK_RO is set in the environment of a block-device uevent if and only if
-the read-only (ro) attribute of the device just changed (the kernel
-function set_disk_ro() was called). It is not synoymous with the "ro" sysfs
-attribute; the device could very well be write-protected if DISK_RO is not
-set. Device mapper-level probing is possible for DISK_RO events, but it makes
-little sense, because the device propreties haven't changed as far as dm is
-concerned. But we should import possible previously set device properties
-to avoid confusing follow-up rules. We should do this for both DISK_RO=1
-and DISK_RO=0 events.
+We use DM_UDEV_DISABLE_OTHER_RULES_FLAG to tell upper non-DM layers
+to keep their hands off the device in question, for any reason.
+One possible reason is that the device is supended; another is that
+the cookie carries the flag of the same name.
+
+DM_SUSPENDED is not restored from the db, but evaluated anew for every
+uevent. Therefore DM_UDEV_DISABLE_OTHER_RULES_FLAG shouldn't be
+restored, either. Use a new variable DM_COOKIE_DISABLE_OTHER_RULES_FLAG
+to save and restore the original value from the cookie.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- udev/10-dm.rules.in | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ udev/10-dm.rules.in | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
 
 diff --git a/udev/10-dm.rules.in b/udev/10-dm.rules.in
-index 4ffd3e2..f83fbec 100644
+index f83fbec..e5cc10f 100644
 --- a/udev/10-dm.rules.in
 +++ b/udev/10-dm.rules.in
-@@ -50,9 +50,6 @@ ACTION!="add|change", GOTO="dm_end"
+@@ -48,7 +48,14 @@ ACTION!="add|change", GOTO="dm_end"
+ # These flags are encoded in DM_COOKIE variable that was introduced in
+ # kernel version 2.6.31. Therefore, we can use this feature with
  # kernels >= 2.6.31 only. Cookie is not decoded for remove event.
- ENV{DM_COOKIE}=="?*", IMPORT{program}="(DM_EXEC)/dmsetup udevflags $env{DM_COOKIE}"
+-ENV{DM_COOKIE}=="?*", IMPORT{program}="(DM_EXEC)/dmsetup udevflags $env{DM_COOKIE}"
++ENV{DM_COOKIE}!="?*", GOTO="dm_no_cookie"
++IMPORT{program}="(DM_EXEC)/dmsetup udevflags $env{DM_COOKIE}"
++
++# Store the original flag from the cookie as DM_COOKIE_DISABLE_OTHER_RULES_FLAG
++# in the udev db. DM_UDEV_DISABLE_OTHER_RULES_FLAG will be or'd with other
++# conditions for use by upper, non-dm layers.
++ENV{DM_COOKIE_DISABLE_OTHER_RULES_FLAG}="%E{DM_UDEV_DISABLE_OTHER_RULES_FLAG}"
++LABEL="dm_no_cookie"
  
--# Rule out easy-to-detect inappropriate events first.
--ENV{DISK_RO}=="1", GOTO="dm_disable"
--
  # There is no cookie set nor any flags encoded in events not originating
  # in libdevmapper so we need to detect this and try to behave correctly.
- # For such spurious events, regenerate all flags from current udev database content
-@@ -69,6 +66,10 @@ IMPORT{db}="DM_UDEV_FLAG7"
+@@ -58,12 +65,13 @@ ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}=="1", ENV{DM_ACTIVATION}="1", GOTO="dm_flags_do
+ IMPORT{db}="DM_UDEV_DISABLE_DM_RULES_FLAG"
+ IMPORT{db}="DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG"
+ IMPORT{db}="DM_UDEV_DISABLE_DISK_RULES_FLAG"
+-IMPORT{db}="DM_UDEV_DISABLE_OTHER_RULES_FLAG"
++IMPORT{db}="DM_COOKIE_DISABLE_OTHER_RULES_FLAG"
+ IMPORT{db}="DM_UDEV_LOW_PRIORITY_FLAG"
+ IMPORT{db}="DM_UDEV_DISABLE_LIBRARY_FALLBACK_FLAG"
+ IMPORT{db}="DM_UDEV_PRIMARY_SOURCE_FLAG"
+ IMPORT{db}="DM_UDEV_FLAG7"
  IMPORT{db}="DM_UDEV_RULES_VSN"
++ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="%E{DM_COOKIE_DISABLE_OTHER_RULES_FLAG}"
  LABEL="dm_flags_done"
  
-+# If DISK_RO is set, it's an uevent that changes the ro attribute of the device.
-+# The event should be ignored as far as dm is concerned.
-+ENV{DISK_RO}=="0|1", GOTO="dm_disable"
-+
- # Normally, we operate on "change" events. But when coldplugging, there's an
- # "add" event present. We have to recognize this and do our actions in this
- # particular situation, too. Also, we don't want the nodes to be created
+ # If DISK_RO is set, it's an uevent that changes the ro attribute of the device.
 -- 
 2.43.2
 
