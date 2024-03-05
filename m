@@ -1,28 +1,28 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4BDC7E78A
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 07:29:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAFF37F471
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 07:29:33 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709623774; cv=none; b=EQz1GctOhjOXifHGyVE+tycrHPxSUIZn564eA+/XjYUZ7Lz7heUnrvfXV4iSNXCOywzb+ItTYxYP5XRQG5XiZ5L+JRh6SO1P1gpxULyX4gBHs/QVglcAQkTTtjrA2OCir4MUe+6jRljxT2WKEltqmL8a+JiJO8pMagER2Z0WUUs=
+	t=1709623775; cv=none; b=CN6qqHbbqe6mggZJM8Nq3cZKP2cXFIqNu4Fh6J+zl9uc+rBy7SACV7eqejKxKk/m9LNXSLDtT+zsPyRmFTZgKFU4/cN/3BmlfsTB4kG64p/ByzpwVF1kr1mxVj0liX6vn/6UUppFJy52ABdgQiEc6NGTic54CoZj5JGCrOSbqvs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709623774; c=relaxed/simple;
-	bh=c7vtsLwByVaJ/kOv3+/pS6rhbOr70p9cvZ23xJScbOc=;
+	s=arc-20240116; t=1709623775; c=relaxed/simple;
+	bh=KEW/XJoqhjDOxQSQ1eSle9j1tLlHhzVv3KI/rIzFYbI=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=mpDleHF+3XngCPbY4BvO0uBpIAAtKjWwOJ3Sq5kyDh/4oe4ufYUmHj1O06UM997PbkA6+our9NjbWE2myU2igBBOeoPcimaZwkuSY48b1vl8/VVWPf9qoiSic4ixRd0m+yTZoGTinoHWwpZKMOfPX7yzm+08YaFkHDEu0sdzKwM=
+	 MIME-Version; b=aIDws2jn+A/F6F/i5tPCn7SjwqGnhf/K6/0kVoL6xzFiG8CzD0VuUCBUKekcd6yevhB05SinbrgczXzTIeMeVzj5hrXP5lik/pZM3O+WOdPL9q1mtKDWXkaPWri60CvfKZFuD1nqxYnaDMlH3fUYlxoDmWxbPzSaDdu/GIFeDPU=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TpnJ23fyTz4f3m6q
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:22 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TpnJ35JbYz4f3m6s
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:23 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 016D81A0232
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:30 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 3A4121A016E
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:31 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgBHGBHRyeZlGnf+Fw--.17927S11;
-	Tue, 05 Mar 2024 15:29:29 +0800 (CST)
+	by APP1 (Coremail) with SMTP id cCh0CgBHGBHRyeZlGnf+Fw--.17927S13;
+	Tue, 05 Mar 2024 15:29:31 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: xni@redhat.com,
 	zkabelac@redhat.com,
@@ -40,9 +40,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH md-6.8 v2 7/9] dm-raid: add a new helper prepare_suspend() in md_personality
-Date: Tue,  5 Mar 2024 15:23:04 +0800
-Message-Id: <20240305072306.2562024-8-yukuai1@huaweicloud.com>
+Subject: [PATCH md-6.8 v2 9/9] dm-raid: fix lockdep waring in "pers->hot_add_disk"
+Date: Tue,  5 Mar 2024 15:23:06 +0800
+Message-Id: <20240305072306.2562024-10-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240305072306.2562024-1-yukuai1@huaweicloud.com>
 References: <20240305072306.2562024-1-yukuai1@huaweicloud.com>
@@ -53,10 +53,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBHGBHRyeZlGnf+Fw--.17927S11
-X-Coremail-Antispam: 1UD129KBjvJXoW7Kr47Kr4xtrykGw13uF4fGrg_yoW8uFW7pa
-	yIq34Yvr4UJFZI93WDJF4kua4aq3Z3KrWjyr9xJayfZFy2gryrGa4ftayYqrZ8CF15K3W7
-	AF4Ut34UWr109FDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:cCh0CgBHGBHRyeZlGnf+Fw--.17927S13
+X-Coremail-Antispam: 1UD129KBjvJXoW7Cr45Jw1UZF45JF13GFW5GFg_yoW8GFy3p3
+	ZrK343Kw4DJr48Z3Wqvw1q9a45tan8K3ySyrZxG3s5ZFy2vrZI9wn8Ka1agFWDZFyftFW5
+	AF43J3yrW3Z8t3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUPI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -75,65 +75,39 @@ X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-There are no functional changes for now, prepare to fix a deadlock for
-dm-raid456.
+The lockdep assert is added by commit a448af25becf ("md/raid10: remove
+rcu protection to access rdev from conf") in print_conf(). And I didn't
+notice that dm-raid is calling "pers->hot_add_disk" without holding
+'reconfig_mutex'.
 
+"pers->hot_add_disk" read and write many fields that is protected by
+'reconfig_mutex', and raid_resume() already grab the lock in other
+contex. Hence fix this problem by protecting "pers->host_add_disk"
+with the lock.
+
+Fixes: 9092c02d9435 ("DM RAID: Add ability to restore transiently failed devices on resume")
+Fixes: a448af25becf ("md/raid10: remove rcu protection to access rdev from conf")
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 Signed-off-by: Xiao Ni <xni@redhat.com>
 Acked-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-raid.c | 18 ++++++++++++++++++
- drivers/md/md.h      |  1 +
- 2 files changed, 19 insertions(+)
+ drivers/md/dm-raid.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 47c4b1b6e532..7d48943acd57 100644
+index ea45f777691c..17e9af60bbf7 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -3803,6 +3803,23 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	blk_limits_io_opt(limits, chunk_size_bytes * mddev_data_stripes(rs));
- }
+@@ -4091,7 +4091,9 @@ static void raid_resume(struct dm_target *ti)
+ 		 * Take this opportunity to check whether any failed
+ 		 * devices are reachable again.
+ 		 */
++		mddev_lock_nointr(mddev);
+ 		attempt_restore_of_faulty_devices(rs);
++		mddev_unlock(mddev);
+ 	}
  
-+static void raid_presuspend(struct dm_target *ti)
-+{
-+	struct raid_set *rs = ti->private;
-+	struct mddev *mddev = &rs->md;
-+
-+	if (!reshape_interrupted(mddev))
-+		return;
-+
-+	/*
-+	 * For raid456, if reshape is interrupted, IO across reshape position
-+	 * will never make progress, while caller will wait for IO to be done.
-+	 * Inform raid456 to handle those IO to prevent deadlock.
-+	 */
-+	if (mddev->pers && mddev->pers->prepare_suspend)
-+		mddev->pers->prepare_suspend(mddev);
-+}
-+
- static void raid_postsuspend(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
-@@ -4087,6 +4104,7 @@ static struct target_type raid_target = {
- 	.message = raid_message,
- 	.iterate_devices = raid_iterate_devices,
- 	.io_hints = raid_io_hints,
-+	.presuspend = raid_presuspend,
- 	.postsuspend = raid_postsuspend,
- 	.preresume = raid_preresume,
- 	.resume = raid_resume,
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 7f955115d78d..2db0a75febf9 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -648,6 +648,7 @@ struct md_personality
- 	int (*start_reshape) (struct mddev *mddev);
- 	void (*finish_reshape) (struct mddev *mddev);
- 	void (*update_reshape_pos) (struct mddev *mddev);
-+	void (*prepare_suspend) (struct mddev *mddev);
- 	/* quiesce suspends or resumes internal processing.
- 	 * 1 - stop new actions and wait for action io to complete
- 	 * 0 - return to normal behaviour
+ 	if (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
 -- 
 2.39.2
 
