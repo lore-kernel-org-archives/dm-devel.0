@@ -1,198 +1,163 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3A3052F6A;
-	Tue,  5 Mar 2024 09:04:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FA034DA1F
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 09:10:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709629480; cv=none; b=nRVCbAnDzDyhexQ9NhLlsD2AvFlj8M9T04JyGYZh+G4B8tRs/k+hx7k5Un02oNa8VHldJ22a7iMc70x7yewFP1glPds06R/BUb/twpzokq7zWhzeilcjjy3hfEY3VyQWo2btTdCy9UZbkeI2twN+8qLltloRtXzqwCXsU90QoPM=
+	t=1709629847; cv=none; b=YcAUdjt+chUt8zgKgHzaSVY+kVcb5/5KDoZ4w5CriMbvinwN6p0q8KKYmSk9mohvpU2vOqqMMUGf9tFV2K/2Q5ocuCHtYuwA9HR0tbBTScop3DshVbgipfSiDgMBaTBv3JVhKXSZoaFO573BESSYuc+dquOXmFM6yPCY+FOQPWA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709629480; c=relaxed/simple;
-	bh=iWVKsyH0v7kVRqE02QsYFm5CrzUMlw795s5x34CHAD8=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=rA01maFViRfb188yMeOZnxVoQWix3XaIpTcbaHTo1a7a7Ixm2ecX63Uny1a8oSf5iRe5fFbRsl1vh2U5TU6DBrD2NtaoceFuD3+iO2VRvtubgZv74KqnGdCF8frSCGHIXCqvj3JaNL3+3bLCDlpAm84/iYtlut/p7geb9c5QoWg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=abEsLkKs; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=abEsLkKs; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1709629847; c=relaxed/simple;
+	bh=fUIGm53vhhY0a45gWtUnpm0vdCa5q11YxgjoTCgx/tY=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=DDIS/cggh53fGsQ9Qlc4o+VlHsUCBg3RWsBf9DqbWRWOf1mumqW5SHP7qXcChlKeqMA7MtSTrQXGhOuHh5yPcWAc9KaeBKhW47/Ck9SRUODVtRAw3jPtaMcxxxlV8iT4vgCpooh391ZeDnlAnRb1gVYDVexrVxR/VnTedJE+ulg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gPy+wsZa; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="abEsLkKs";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="abEsLkKs"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id F2C4676631;
-	Tue,  5 Mar 2024 09:04:36 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1709629477; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gPy+wsZa"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1709629844;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=iWVKsyH0v7kVRqE02QsYFm5CrzUMlw795s5x34CHAD8=;
-	b=abEsLkKsBJbZAPFPJc6if3FxVFP5rtWbcFBntfme1Ctd6ivITijz851eHPpg1imW1725JQ
-	eZ/9w64xlc4TdcpMnse1y+rm67LuCjvbytReYEH6ZP5SwR+DD/clZpwzXuH0WpPy+hO2pd
-	stSWh8qPaWtej08oMZoXFGd0ynxDbDI=
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1709629477; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=iWVKsyH0v7kVRqE02QsYFm5CrzUMlw795s5x34CHAD8=;
-	b=abEsLkKsBJbZAPFPJc6if3FxVFP5rtWbcFBntfme1Ctd6ivITijz851eHPpg1imW1725JQ
-	eZ/9w64xlc4TdcpMnse1y+rm67LuCjvbytReYEH6ZP5SwR+DD/clZpwzXuH0WpPy+hO2pd
-	stSWh8qPaWtej08oMZoXFGd0ynxDbDI=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 89C2313A5B;
-	Tue,  5 Mar 2024 09:04:36 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([10.150.64.162])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id x2FfHyTg5mUwAgAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 05 Mar 2024 09:04:36 +0000
-Message-ID: <bce0b7c62e1f65286fd433ce4da864b7d5b4825f.camel@suse.com>
-Subject: Re: [RFC PATCH 7/7] 10-dm.rules: bump DM_UDEV_RULES_VSN to 3
-From: Martin Wilck <mwilck@suse.com>
-To: Peter Rajnoha <prajnoha@redhat.com>, Zdenek Kabelac
- <zkabelac@redhat.com>,  Benjamin Marzinski <bmarzins@redhat.com>, David
- Teigland <teigland@redhat.com>
-Cc: linux-lvm@lists.linux.dev, dm-devel@lists.linux.dev, Hannes Reinecke
-	 <hare@suse.de>
-Date: Tue, 05 Mar 2024 10:04:35 +0100
-In-Reply-To: <a23a5d51-32fd-4e6e-a79b-901d37734d5e@redhat.com>
-References: <20240301224011.11117-1-mwilck@suse.com>
-	 <20240301224011.11117-8-mwilck@suse.com>
-	 <dfb7c85c-81fb-493b-a897-dae355d22d82@redhat.com>
-	 <1bfb001084b17ab60c57f4819711c7d91c461536.camel@suse.com>
-	 <a23a5d51-32fd-4e6e-a79b-901d37734d5e@redhat.com>
-Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
- keydata=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
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.50.3 
+	bh=fpJJ5XODZpWKHE7pUK7/Bv8s8N2PLayKtZIKNSYeSrc=;
+	b=gPy+wsZaHoBEzEp2mWQMEfaiWEtsdQse25wfEo/QDBGJIGdpyVqmLE0kAf9fOUAvqss1Wm
+	XFba3PNsZpCn0OmIezCxd2aIzV9+FEviVstfc9NhbjxC/yjC75wcPbFtciiuGkPEab2+R/
+	ZKIexGryScOyC1OX9UyhlERwNHB8SBU=
+Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
+ [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-644-9sfHf0oYNH-Um7qSl5mcFQ-1; Tue, 05 Mar 2024 04:10:43 -0500
+X-MC-Unique: 9sfHf0oYNH-Um7qSl5mcFQ-1
+Received: by mail-wm1-f71.google.com with SMTP id 5b1f17b1804b1-412d433bba5so16060155e9.0
+        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 01:10:43 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1709629842; x=1710234642;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from:references:cc
+         :to:content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=fpJJ5XODZpWKHE7pUK7/Bv8s8N2PLayKtZIKNSYeSrc=;
+        b=DsBwGvhTIGuPFXFlVDie5Wpzi0v00Ty5lEh+88ywiZJiSenHXLgG+iiYIHrCSA0hff
+         8E4ous0RgdAE4SHotQ6bUnI+QrcGS2Kl3mndyN4R8oF4EusLyEz3jYhWRrGV3xCUmvpN
+         sGBKjnKgtaiPrWfA68JHKxpsqO7O89BOoichDmCr0N5kZjO91hKRQjoPoO53flE2xd26
+         asmiWpOk1JNEX4w3w4uF1XaL5r52P3PlClVkZ0Tl4zHhmEV28Wo4fg82LliNjCjp623n
+         HDBy2EED6Psfco3AM0xp4/1IxTPbtWCvD8ZkGxgirreFrUv8nlxa/VAz2faBjG17Z2Xw
+         uIvQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXp/qDLpFWqR9fsomkmnHIIKle22hU7Nwc3wWL8vo+mO7plhTiY5K5zCUq97PB5+kqh2WnGM/XeUqhSMtq6PectDDHr8wH9n5w=
+X-Gm-Message-State: AOJu0YyWGHzrLG8gos5LNXNBvWq9YH9LFuiXTOTiO1RslGmF8NkQNhaF
+	DB6J7+6zbZXnPpcGyK9OWC42rEXbGtkmVYVJNNJnVVTJE3zrMxsCPxb7WghgzHarwc1pPZOY5FU
+	QZmPrtTMTMIDSEB1mIZcS3s55APxszmcdky96cH0y50UnAr9IWIRPNNYd
+X-Received: by 2002:a05:600c:4e91:b0:412:b489:14f9 with SMTP id f17-20020a05600c4e9100b00412b48914f9mr9439382wmq.15.1709629842511;
+        Tue, 05 Mar 2024 01:10:42 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IH8UworSviWLD0RK59mbjlW82Ko5oJUCMYGpq+uHeDbjSUTJv7LWSeyv7l2fX53294hfWMWaQ==
+X-Received: by 2002:a05:600c:4e91:b0:412:b489:14f9 with SMTP id f17-20020a05600c4e9100b00412b48914f9mr9439365wmq.15.1709629842127;
+        Tue, 05 Mar 2024 01:10:42 -0800 (PST)
+Received: from [10.43.17.192] (nat-pool-brq-t.redhat.com. [213.175.37.10])
+        by smtp.gmail.com with ESMTPSA id s6-20020a05600c45c600b004129e8af6absm17187894wmo.33.2024.03.05.01.10.41
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 05 Mar 2024 01:10:41 -0800 (PST)
+Message-ID: <5b9fb513-3510-4bae-b0f3-f7d558d4ed58@redhat.com>
+Date: Tue, 5 Mar 2024 10:10:41 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Level: 
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=abEsLkKs
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	 ARC_NA(0.00)[];
-	 RCVD_VIA_SMTP_AUTH(0.00)[];
-	 R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	 SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	 FROM_HAS_DN(0.00)[];
-	 TO_DN_SOME(0.00)[];
-	 TO_MATCH_ENVRCPT_ALL(0.00)[];
-	 BAYES_HAM(-3.00)[100.00%];
-	 MIME_GOOD(-0.10)[text/plain];
-	 NEURAL_HAM_LONG(-1.00)[-1.000];
-	 RCVD_COUNT_THREE(0.00)[3];
-	 DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	 DKIM_TRACE(0.00)[suse.com:+];
-	 MX_GOOD(-0.01)[];
-	 RCPT_COUNT_SEVEN(0.00)[7];
-	 DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim];
-	 FUZZY_BLOCKED(0.00)[rspamd.com];
-	 FROM_EQ_ENVFROM(0.00)[];
-	 MIME_TRACE(0.00)[0:+];
-	 NEURAL_HAM_SHORT(-0.20)[-1.000];
-	 RCVD_TLS_ALL(0.00)[];
-	 MID_RHS_MATCH_FROM(0.00)[]
-X-Spam-Score: -4.51
-X-Rspamd-Queue-Id: F2C4676631
-X-Spam-Flag: NO
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH 5/7] dm udev rules: don't export and save DM_SUSPENDED
+To: Martin Wilck <mwilck@suse.com>, Zdenek Kabelac <zkabelac@redhat.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>,
+ David Teigland <teigland@redhat.com>
+Cc: linux-lvm@lists.linux.dev, dm-devel@lists.linux.dev,
+ Hannes Reinecke <hare@suse.de>
+References: <20240301224011.11117-1-mwilck@suse.com>
+ <20240301224011.11117-6-mwilck@suse.com>
+ <2b6bfa53-dfcb-4fe8-859c-8d99a5eadcbf@redhat.com>
+ <0404fc2e69aea20c74f8a1a258b98dafd6ae0fec.camel@suse.com>
+ <6e36545a-42e3-4bfc-945c-77d07b6ab484@redhat.com>
+ <1fb575095f094244b6b35e7da79af81728014588.camel@suse.com>
+From: Peter Rajnoha <prajnoha@redhat.com>
+Autocrypt: addr=prajnoha@redhat.com; keydata=
+ xjMEY7QY9hYJKwYBBAHaRw8BAQdADIHZn5yeZYFV18ewwf4iudpl1ARfj4rnxX5xiSoJ15vN
+ I1BldGVyIFJham5vaGEgPHByYWpub2hhQHJlZGhhdC5jb20+wpYEExYKAD4CGwMFCwkIBwIC
+ IgIGFQoJCAsCBBYCAwECHgcCF4AWIQQhe3cZL8e9dSzFIwXndmZANt+EqwUCY7QZ9wIZAQAK
+ CRDndmZANt+EqzosAQDXhWudIjLSGoWGPKgluEWw5B5LtAX+kW2OG7loCDzI2AD/fp3Xec8K
+ JY7HrSqO98YMPbT98+YRjiopJSk75TcAogzOOARjtBj2EgorBgEEAZdVAQUBAQdALfG8fuls
+ uqLPtrJ5tYb36UtqNlu6Bw9ME/Ou+FRGG1cDAQgHwngEGBYKACAWIQQhe3cZL8e9dSzFIwXn
+ dmZANt+EqwUCY7QY9gIbDAAKCRDndmZANt+Eq22lAQDXlKMGQxkD0FZes94uihIZlhFwGjrX
+ dVfZsxfwEvuJfAD/XLGDegnKVERbF6YTfdsbVngSlOX/Tu/fxAFTg0JfdQU=
+In-Reply-To: <1fb575095f094244b6b35e7da79af81728014588.camel@suse.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Tue, 2024-03-05 at 09:26 +0100, Peter Rajnoha wrote:
-> On 3/4/24 17:46, Martin Wilck wrote:
-> > On Mon, 2024-03-04 at 12:09 +0100, Peter Rajnoha wrote:
-> > > One thing that comes to my mind here is cooperation between the
-> > > rules
-> > > from initrd/initramfs and rootfs - the initrd/initramfs can have
-> > > different versions of the rules installed.
-> >=20
-> > Yes, that's a source of pain. Are there current initramfs tools
-> > that
-> > user DM_UDEV_RULES_VSN!=3D2? I think "2" should be the standard
-> > today,
-> > given that it has existed since 2009. dracut just installs the
-> > upstream
-> > rules it finds, at least for dm, AFAICT.
-> >=20
-> > I've reviewed other rule sets I'm aware of, and the only one in
-> > which I
-> > needed to check DM_UDEV_RULES_VSN was 11-dm-mpath.rules. I didn't
-> > have
-> > a close look at the rule sets that dracut ships yet, let alone
-> > other
-> > tools for initramfs maintenance.
-> >=20
-> > Regardless, my patch set changes the availability and semantics of
-> > the=20
-> > device-mapper udev properties, and thus we should bump the version,
-> > no?
->=20
-> Sure, that is expected if we do such changes to rules.
->=20
-> I just meant to be cautious about a situation where we have initramfs
-> running a different version of rules, then keeping the udev database
-> over the pivot-to-rootfs (which happens with dracut, not sure about
-> others). Then, on coldplug running from rootfs, refreshing the state
-> with the other version of rules.
->=20
-> Important here is that the rules running from rootfs do not get
-> mislead
-> with the state that was taken over from the initrams.
+On 3/5/24 09:47, Martin Wilck wrote:
+> On Tue, 2024-03-05 at 09:19 +0100, Peter Rajnoha wrote:
+>> Within DM and DM-subsystem rules, it's OK to use DM_SUSPENDED, if
+>> needed.
+> 
+> I gather that you agree that 11-dm-mpath.rules represents a "DM
+> subsystem" rule set?
+> 
 
-For udev rules, that can't happen. If any udev rules were running after
-switching root, they'd be running in the context of a new uevent,=20
-which means that the device-mapper rules from the root FS would already
-be in place. We don't import DM_SUSPENDED from the db, so this property
-wouldn't survive switching root, even if it had been set pre-pivot.
+Sure, of course.
 
-Other (non-udev) system components might be confused if they read
-properties directly from udev data base using
-udev_device_get_property_value(). But we can't do anything about this.
-For multipathd, which is one of the prime suspects in this area, I can
-confirm that it doesn't use libudev to access any device=E2=80=93mapper
-internal properties.
+>>
+>> We should just hide it from all the "other" rules so they don't need
+>> to
+>> bother. For them (right now), it's either "usable" or "unusable"
+>> device
+>> for whatever reason behind and we (DM+DM-subystem) should reimport
+>> whatever is needed for the state/set of variables that others may
+>> use,
+>> to stay sane. Of course, we can do this only for the state that we
+>> own.
+>>
+>> As we discussed before, this can be extended to making a difference
+>> among "usable", "temporarily unusable" (so reimport the
+>> state/variables
+>> needed) and "completely unusable" state for others.
+> 
+> Yeah, but that's future work, and I doubt that it makes sense to invest
+> much effort into it. I definitely wouldn't want to tie this to the
+> current patch set.
+> 
 
-In general, I can't conceive any danger arising from an older dm
-ruleset (e.g. in the initramfs) that still sets DM_SUSPENDED or
-DM_NOSCAN. In the worst case, some rule would be triggered that's also
-triggered with today's rule set. That's not optimal, but it can hardly
-be fatal.
+I agree.
 
-FTR, summarizing the effect of my patch set for follow-up rules:
+> As mentioned previously, it might make sense to introduce a flag that
+> expresses something like "you can access this device, but you don't
+> need to" (DISK_RO={0,1} case, for example). But then, we already have
+> DM_ACTIVATION to express the opposite ("you must have a look at this
+> device, its properties have changed"). I wonder if you consider
+> DM_ACTIVATION a dm-internal property?
 
-- it slightly changes the meaning of DM_UDEV_DISABLE_OTHER_RULES FLAG,
-- it renames DM_SUSPENDED to .DM_SUSPENDED,
-- it renames DM_NOSCAN to .DM_NOSCAN.
+Well, we added DM_ACTIVATION as a helper primarily for DM and DM-subsys
+rules to have a way to identify when the actual (re)activation happens,
+or the "add" trigger on coldplug.
 
-Technically, the renames just have the effect that these variables
-aren't saved in the udev db. "Psychologically", the intention is that
-people realize they are meant to be "dm internal", knowing that unless
-we add more rules to unset these properties, we can't prevent later
-rules from reading and using them.
+I think it was 69-dm-lvm.rules (or 69-dm-lvm-metad.rules at that time)
+where we needed to run pvscan only right after the DM dev is activated
+and hence avoiding running costly pvscan uselessly where it doesn't matter.
 
-With this patch set, later rules that depend on DM_SUSPENDED or
-DM_NOSCAN won't trigger any more. The only rule outside of dm and
-multipath that I am aware of is the broken rule in 99-systemd.rules.
+If there's anyone else out there with similar use case, I think that
+checking DM_ACTIVATION might be useful. But it's true it is not
+advertised and shouted out somehow publicly yet.
 
-Regards
-Martin
+Usually, all the other rules are interested in rescanning all the other
+"foreign" state and attributes that is out of DM's hands, which means
+they know exactly when to do the scan or not or any other actions, it
+depends on what attributes are they watching for.
 
+DM_ACTIVATION is very useful to know when stacking devices on top of DM
+though, so a time when to activate the layer above. So yes, this
+variable might be useful for other to look for too.
 
+-- 
+Peter
 
