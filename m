@@ -1,57 +1,58 @@
-Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13CED59B5C
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 12:06:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9124259B70
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 12:06:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709640374; cv=none; b=kcRGMps2F3lD72GfWPWWBuDVR3RJXFZxKJDcuHcgZ+rCavWRa8IXiXxPPxTBMc0GKQyYWyYLooH8KIHCfjUQmGuUMkzfH6lgyp3ZjL8fB3Lle1LDUF41eagYpWQjXoPc9vZkT3aiBNAOD95m5SeWuezlpf2a5Pe7rP9um16H66w=
+	t=1709640375; cv=none; b=CHGCTjCca+HjUQiiBypSAm295BLLpmUY9FmRVoDRAwVGOA0zQjujMC+VtjRnzBJ3cRQU72SbiZhVRro/BMuLJnX0wb1Ta5TzAOoBdGt0I209uUdYgEOxIvvjN75jQOLN7v70pD0aI158GLsdg02o7p8UXt/wbcM6DxMGP3l6UTU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709640374; c=relaxed/simple;
-	bh=h87Ur7G/Y4jKEacfNU48rg1JaHg9qYFEuSMfZOYYFCE=;
+	s=arc-20240116; t=1709640375; c=relaxed/simple;
+	bh=XwLouIOkyoFFCY/NijAavYEmB65ECJZxxV2Smeki4qo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lPrfmRW0SlTgxrWrB1082vShN8hgG67OrjvEMERygvut0xCEBrYa/WYxP0pB9OFr/oCYY6p2ZZRHOo2RYcw+AHlleZwzs49OsFlGebEXVlgFnL+6FmJpppDbCqSMPd+FaNLjTjiTFEzjwP+d94gs/BD3YzdWMg87Y9lQCmGyrp4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=D0+ycs73; arc=none smtp.client-ip=209.85.167.44
+	 MIME-Version; b=TuKXys3YJ+CMntU4fuYdHl2YNC+kDnCSNaWp2K1BnmZcXbgyHmiRJ+9/5VqHTvPEZFSpG1eLzit04Z0yb9frkcGZKHwky8y67ocPy+KX+I6J+Hz/tBQ6ElK5fDIxTdkFGMOOUAAKMDAig24o/kXzJm0sUZVf/eoKFCLTf3Q1GQY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UojizwN8; arc=none smtp.client-ip=209.85.128.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="D0+ycs73"
-Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-5133d276cbaso4295578e87.2
-        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 04:06:11 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UojizwN8"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-412e6ba32easo12279045e9.0
+        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 04:06:13 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1709640370; x=1710245170; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1709640372; x=1710245172; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=9gra59CEdOdjH+awRNYyYaZsgl4i35ArARZaV4qrZPQ=;
-        b=D0+ycs73BnXr77tG2Lc2I5nv0W5nbR4KdGwnUjg5pQp0DOQvNj7z4hzOI6epbqaKPt
-         sbNBiweSz/34dF23vhsiweu0boODKBSVOh6WRRJF0GEWzGUW0Ci2wnsqgobIwtlxX9Ut
-         biK4Bd9StrKIOTVkJUDMOTd172em1HgFQnWqIuhLZz48GBLG87QRYkDJKxlAWbUM1jLQ
-         aiGt1ArtBfJ5e5bvbCliH3jKTq1kKplqqKHYj32WU7lSiseImsqyk9CdmT10Qq8t6KtC
-         fzU5ZliEJft5TMrra0AUR2LgrOVcQEiKyLawp+KbY/Bs0kSL3To+d1ZS+8s41QgetEYT
-         JDFQ==
+        bh=6q7Z+JuTjKNCARoW6XoPy3jitO6RjQKV6tGuor3jKWM=;
+        b=UojizwN8UQBpyoNSDrSg3B8hQ0queKKjihhjkl+U5elMV2P3zuCdYg54mZULYLZsoT
+         tOATcQazQ1DHWh97jLBqwceQqJzQfdCpi0VYQkWXvHLteZKUutXbAbw1H0INXhCip7ac
+         18ajoFqjdHGI/mI9vdAZgL6w5DcZJU0pf45K4roYgYbyS4YGh/Za4FMlwKx0LX8ntdv8
+         jZAaMXaw3dg9v9allXGVvH6BuMJjjkpxEgzk2X5e+NjUZM7/9TN+uzzwVu6KmEeaAtYm
+         25mdAcCgiLhD4DTpqRv0vmNP+5npSKU9X2bc665qfMMcla/iskYuwd4gtyM4a/VGaRTF
+         ngpg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709640370; x=1710245170;
+        d=1e100.net; s=20230601; t=1709640372; x=1710245172;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=9gra59CEdOdjH+awRNYyYaZsgl4i35ArARZaV4qrZPQ=;
-        b=Nbm9KfxQ2QvDWfTTFdr2LQXLCub8CbQ5smLAhey8wOiLUvWIWiQzA6RpMSWg7qyKqs
-         gYcFvVxUFgvPvemk5kS6yaKE0NGwGGxj1jRosgde4+tQthmmpoHY9sDhScT/JdDLIhh7
-         1ZH5MegXlXPlKcpizQWWUD8HJGofN+uVr5ndQBzVTQoUIwSMNufMjLxbnHnPDZnllRsv
-         AkEgQmETDu/Wvxw5txK5U0M3AO4H5UQxILzufZ8DMLekmhReQUsupRNR1bTbid/k5D78
-         UFBXUPBKzRS0bcWrmnwTfkkzyz8TFFCH8r/d34QrlMZZI8cX48y/qlpNj60OuTajrBww
-         CfMQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWZcDDXuoH9NYYb1oWJWtB4zv5yglAOpUkw6ZnxPh1w0nGMh9BZHV9t61niaWwpg4VMjIp4eRdjmR6zPdPFPjFmL8gr1lesT8A=
-X-Gm-Message-State: AOJu0YzQuoqGbXTwHND5Fhcq0qOlk0fEZfJmtkjhe9WBzW8jWGivAeCA
-	lnVtN5Y/m4u8ykmGAGN/DpZ6hF3muaoW0SaYCM54+7OUEMHW/Nd1XyIioYGlQiU=
-X-Google-Smtp-Source: AGHT+IFfM6Y+4a08smpeFUGCYwp0YHIcoOOis/u6Mgr+qJsPQ/ZZiCWyKp8oubHyI86E8w3lR6VHjQ==
-X-Received: by 2002:ac2:4c16:0:b0:513:26b5:139a with SMTP id t22-20020ac24c16000000b0051326b5139amr1256347lfq.23.1709640370267;
-        Tue, 05 Mar 2024 04:06:10 -0800 (PST)
+        bh=6q7Z+JuTjKNCARoW6XoPy3jitO6RjQKV6tGuor3jKWM=;
+        b=i9ohvIMmaPDcUZ2GXDb1aaaVarwE0jkcln+0gAyHPrn6ZVjuByUFwQZrC46RSFijyq
+         szi5eHQ09ZLaU9JReaZEiOjGq3Wuf4jpL/7qHc7xZKGgti5NsaAoM5e+oC7uPHgUesFa
+         YL/sIzNeVLUPeNCACtrLUCdFLFcr2apZANl9LJzHMGtLwXdWG+vzKFbg4ZZxMVdN73mG
+         aFwZ0WpZSK1xjDCu7JVzLqTNKSlLBND35zpqOxG8cE+VHVEPWSWUSc3H1dmvgHW/SB3u
+         Ar3vPel2GHUgJz8n0v1CNSvihQXW7/NTL39lfGuLs/WklTVwu183HP0U6AM1kWwWuXtA
+         W98w==
+X-Forwarded-Encrypted: i=1; AJvYcCWKz8xjKOBLcnKf5n0PVHKrAoqEwpxVvye4keTxo5FlUh3EF8fBBfsQqTP8Usw4rxbjgJyD5nPVoaZh1TKz57Iwk5CVOvPyRqQ=
+X-Gm-Message-State: AOJu0Yy4HADY43Va+wHyZktEFdvYV1V+nWbUI0cuN39CKQfjR7hfGvKL
+	ZQHLql/Xde7ygevVOR3uyywmdKKpVH4aqsxPw9lxDR+2BJh69JvBpR/p8vAZwKWsZVHnO5uH+ei
+	d
+X-Google-Smtp-Source: AGHT+IHwXUoVPl0c2/fvNQh3sNLnXRcBKhO3QXtsVMfmZLCCllwZh7hRcWRi1pNoRzIMPk/V3mNDCQ==
+X-Received: by 2002:a05:600c:19d1:b0:412:c8cc:d9eb with SMTP id u17-20020a05600c19d100b00412c8ccd9ebmr8965632wmq.23.1709640372141;
+        Tue, 05 Mar 2024 04:06:12 -0800 (PST)
 Received: from localhost ([2001:470:6d:10f7:9114:d168:fb53:9a37])
-        by smtp.gmail.com with UTF8SMTPSA id iv16-20020a05600c549000b00412ea92f1b4sm2555533wmb.19.2024.03.05.04.06.09
+        by smtp.gmail.com with UTF8SMTPSA id az23-20020adfe197000000b0033e4403c6a9sm3862656wrb.22.2024.03.05.04.06.11
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 05 Mar 2024 04:06:10 -0800 (PST)
+        Tue, 05 Mar 2024 04:06:12 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Peter Rajnoha <prajnoha@redhat.com>,
@@ -62,9 +63,9 @@ Cc: linux-lvm@lists.linux.dev,
 	dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>,
 	Hannes Reinecke <hare@suse.de>
-Subject: [PATCH v2 3/7] 10-dm-rules: don't restore DM_UDEV_DISABLE_OTHER_RULES_FLAG from db
-Date: Tue,  5 Mar 2024 13:05:46 +0100
-Message-ID: <20240305120550.11617-4-mwilck@suse.com>
+Subject: [PATCH v2 4/7] 11-dm-lvm.rules: don't restore DM_UDEV_DISABLE_OTHER_RULES_FLAG from db
+Date: Tue,  5 Mar 2024 13:05:47 +0100
+Message-ID: <20240305120550.11617-5-mwilck@suse.com>
 X-Mailer: git-send-email 2.43.2
 In-Reply-To: <20240305120550.11617-1-mwilck@suse.com>
 References: <20240305120550.11617-1-mwilck@suse.com>
@@ -76,56 +77,45 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-We use DM_UDEV_DISABLE_OTHER_RULES_FLAG to tell upper non-DM layers
-to keep their hands off the device in question, for any reason.
-One possible reason is that the device is supended; another is that
-the cookie carries the flag of the same name.
+DM_UDEV_DISABLE_OTHER_RULES_FLAG is used as the "output" flag of the
+device-mapper rules, to be consumed by non-dm rules. It is a logical OR of
+several conditions that might make dm devices inaccessible. 10-dm.rules
+calculates it for every uevent, whether it's genuine or spurious.
 
-DM_SUSPENDED is not restored from the db, but evaluated anew for every
-uevent. Therefore DM_UDEV_DISABLE_OTHER_RULES_FLAG shouldn't be
-restored, either. Use a new variable DM_COOKIE_DISABLE_OTHER_RULES_FLAG
-to save and restore the original value from the cookie.
+DM_SUBSYSTEM_UDEV_FLAG0 is just another flag that needs to be or'd in. We
+don't need to restore the previous state of DM_UDEV_DISABLE_OTHER_RULES_FLAG.
+Actually, doing so is wrong if the flag has previously been set because the
+device was suspended, and the device isn't suspended anymore.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- udev/10-dm.rules.in | 12 ++++++++++--
- 1 file changed, 10 insertions(+), 2 deletions(-)
+ udev/11-dm-lvm.rules.in | 13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
 
-diff --git a/udev/10-dm.rules.in b/udev/10-dm.rules.in
-index f83fbec..e5cc10f 100644
---- a/udev/10-dm.rules.in
-+++ b/udev/10-dm.rules.in
-@@ -48,7 +48,14 @@ ACTION!="add|change", GOTO="dm_end"
- # These flags are encoded in DM_COOKIE variable that was introduced in
- # kernel version 2.6.31. Therefore, we can use this feature with
- # kernels >= 2.6.31 only. Cookie is not decoded for remove event.
--ENV{DM_COOKIE}=="?*", IMPORT{program}="(DM_EXEC)/dmsetup udevflags $env{DM_COOKIE}"
-+ENV{DM_COOKIE}!="?*", GOTO="dm_no_cookie"
-+IMPORT{program}="(DM_EXEC)/dmsetup udevflags $env{DM_COOKIE}"
-+
-+# Store the original flag from the cookie as DM_COOKIE_DISABLE_OTHER_RULES_FLAG
-+# in the udev db. DM_UDEV_DISABLE_OTHER_RULES_FLAG will be or'd with other
-+# conditions for use by upper, non-dm layers.
-+ENV{DM_COOKIE_DISABLE_OTHER_RULES_FLAG}="%E{DM_UDEV_DISABLE_OTHER_RULES_FLAG}"
-+LABEL="dm_no_cookie"
+diff --git a/udev/11-dm-lvm.rules.in b/udev/11-dm-lvm.rules.in
+index 7c58994..0b77fe2 100644
+--- a/udev/11-dm-lvm.rules.in
++++ b/udev/11-dm-lvm.rules.in
+@@ -26,14 +26,11 @@ IMPORT{program}="(DM_EXEC)/dmsetup splitname --nameprefixes --noheadings --rows
+ # to zero any stale metadata found within the LV data area. Such stale
+ # metadata could cause false claim of the LV device, keeping it open etc.
+ #
+-# If the NOSCAN flag is present, backup selected existing flags used to
+-# disable rules, then set them firmly so those selected rules are surely skipped.
+-# Restore these flags once the NOSCAN flag is dropped (which is normally any
+-# uevent that follows for this LV, even an artificially generated one).
+-ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", ENV{DM_NOSCAN}="1", ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
+-ENV{DM_SUBSYSTEM_UDEV_FLAG0}!="1", IMPORT{db}="DM_NOSCAN", IMPORT{db}="DM_DISABLE_OTHER_RULES_FLAG_OLD"
+-ENV{DM_SUBSYSTEM_UDEV_FLAG0}!="1", ENV{DM_NOSCAN}=="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}", \
+-				   ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="", ENV{DM_NOSCAN}=""
++# If the NOSCAN flag is present, set DM_UDEV_DISABLE_OTHER_RULES_FLAG
++# so those selected rules are surely skipped.
++# We don't need to save and restore the previous of DM_UDEV_DISABLE_OTHER_RULES_FLAG,
++# that's taken care of in 10-dm.rules.
++ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", ENV{DM_NOSCAN}="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
  
- # There is no cookie set nor any flags encoded in events not originating
- # in libdevmapper so we need to detect this and try to behave correctly.
-@@ -58,12 +65,13 @@ ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}=="1", ENV{DM_ACTIVATION}="1", GOTO="dm_flags_do
- IMPORT{db}="DM_UDEV_DISABLE_DM_RULES_FLAG"
- IMPORT{db}="DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG"
- IMPORT{db}="DM_UDEV_DISABLE_DISK_RULES_FLAG"
--IMPORT{db}="DM_UDEV_DISABLE_OTHER_RULES_FLAG"
-+IMPORT{db}="DM_COOKIE_DISABLE_OTHER_RULES_FLAG"
- IMPORT{db}="DM_UDEV_LOW_PRIORITY_FLAG"
- IMPORT{db}="DM_UDEV_DISABLE_LIBRARY_FALLBACK_FLAG"
- IMPORT{db}="DM_UDEV_PRIMARY_SOURCE_FLAG"
- IMPORT{db}="DM_UDEV_FLAG7"
- IMPORT{db}="DM_UDEV_RULES_VSN"
-+ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="%E{DM_COOKIE_DISABLE_OTHER_RULES_FLAG}"
- LABEL="dm_flags_done"
+ ENV{DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG}=="1", GOTO="lvm_end"
  
- # If DISK_RO is set, it's an uevent that changes the ro attribute of the device.
 -- 
 2.43.2
 
