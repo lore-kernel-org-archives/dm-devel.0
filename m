@@ -1,28 +1,28 @@
 Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D2781612E2
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 07:29:29 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 542BE7E59F
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 07:29:32 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709623772; cv=none; b=F7WYlTsZDNbmBt5PTEOLHUP51/IqK4tlasRwAQ++RVB6TiKQDdhQmoc482HB7qLARnErjTC2c8kLUqnvjxtiQXNceTPN9kvmgTXmlDc+qUxP1X9hiKlp1/NfedoAQdLsPoa/PKffp65ksQRDw6zyCWG3OtnE9QKniYnshB+hZ/s=
+	t=1709623774; cv=none; b=s6D1rejJecjiposQNfvouLvr3Q1MLCzmeDTGZe6HrU/T4T9NLSuNXSeuQPlRislFXsNrsXnjAqI6YKK9q9pyJ31aQI7F28X+NScsZKCvUnBs+oBW8YK3WfuwzMfH9ZIvK3iqHjPrdB0TLTo7RhmQRQB+jIq1BOPIgZi2ErGsT7I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709623772; c=relaxed/simple;
-	bh=R2YXfoOPVIp/T74tk6RMErRlgJH831cBMUKOY5WBfuU=;
+	s=arc-20240116; t=1709623774; c=relaxed/simple;
+	bh=wdrKCSawGx8VEqyGWfPkhEjDBA0pBVGNi+vB2GWEzzE=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=H9g4IlGA5+mc7XNMR5RId8KDJ6zE8garZj4PZicrCkrEzwTw5gHA1qlyKnPcEr7k9kwi1Zp042O6dGIj02gP9x+Zw2OzhPQ4w6gIzcudBFfNH04oLE0wwJluECF+nSRMo7NlzugeF8lnVQ58Y8BhQDU5IwY/XySth9Gp8u2QQqc=
+	 MIME-Version; b=LAjbNKq+ZT02FO58LVO3VdqhQjIL/uJNnvcUpnp3h3Yk96mlGE1Ioh+HfYXSZ68j/yHGTZaUxYJw86f6WHT2L8R8RCpvXzOsvHDUGkOlsu+lL+3Ce4U0x+X5TeEbJzlGkjZWbOUzuRUymZEO2JGtBtqfu0FxBO9DsjH5WmjEPeY=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TpnJ337GNz4f3jZX
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:23 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4TpnJ16Q9Wz4f3lfy
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:21 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id E664B1A0283
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:26 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 604111A016E
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:29 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgBHGBHRyeZlGnf+Fw--.17927S6;
-	Tue, 05 Mar 2024 15:29:26 +0800 (CST)
+	by APP1 (Coremail) with SMTP id cCh0CgBHGBHRyeZlGnf+Fw--.17927S10;
+	Tue, 05 Mar 2024 15:29:29 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: xni@redhat.com,
 	zkabelac@redhat.com,
@@ -40,9 +40,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH md-6.8 v2 2/9] md: export helpers to stop sync_thread
-Date: Tue,  5 Mar 2024 15:22:59 +0800
-Message-Id: <20240305072306.2562024-3-yukuai1@huaweicloud.com>
+Subject: [PATCH md-6.8 v2 6/9] md/dm-raid: don't call md_reap_sync_thread() directly
+Date: Tue,  5 Mar 2024 15:23:03 +0800
+Message-Id: <20240305072306.2562024-7-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240305072306.2562024-1-yukuai1@huaweicloud.com>
 References: <20240305072306.2562024-1-yukuai1@huaweicloud.com>
@@ -53,93 +53,95 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBHGBHRyeZlGnf+Fw--.17927S6
-X-Coremail-Antispam: 1UD129KBjvJXoW7WF43Gr45Xw4kury8Kr1kuFg_yoW5JrWrpr
-	W2qFn5Ar4YyFW3Zry7Ga4Dua4Yvwn2gFyktry3C3yfJ3WfKryDGF15Z3WUAFyDCa4rJr1q
-	q3W5KFW3ury8Kr7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUBE14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jryl82xGYIkIc2
-	x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
-	Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJw
-	A2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq3wAS
-	0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2
-	IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4UM4x0
-	Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kIc2
-	xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v2
-	6r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2
-	Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_
-	Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMI
-	IF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUHbyAUUUUU
-	=
+X-CM-TRANSID:cCh0CgBHGBHRyeZlGnf+Fw--.17927S10
+X-Coremail-Antispam: 1UD129KBjvJXoW7AF1xAF18KFyDZF15tw4UXFb_yoW5JFWrpa
+	yakas8Ar48JrW3ZFsrt3Wq9ayFv3ZFgrWqyrWfG343JF1fKr13Wryj9a17ZFWDXFWrta45
+	XFZ8tF45uF4YqFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUPI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
+	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
+	z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
+	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
+	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
+	IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
+	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
+	kIc2xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E
+	14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIx
+	kGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI42IY6xIIjxv20xvEc7CjxVAF
+	wI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr
+	0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUQ
+	SdkUUUUU=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-The new heleprs will be used in dm-raid in later patches to fix
-regressions and prevent calling md_reap_sync_thread() directly.
+Currently md_reap_sync_thread() is called from raid_message() directly
+without holding 'reconfig_mutex', this is definitely unsafe because
+md_reap_sync_thread() can change many fields that is protected by
+'reconfig_mutex'.
 
+However, hold 'reconfig_mutex' here is still problematic because this
+will cause deadlock, for example, commit 130443d60b1b ("md: refactor
+idle/frozen_sync_thread() to fix deadlock").
+
+Fix this problem by using stop_sync_thread() to unregister sync_thread,
+like md/raid did.
+
+Fixes: be83651f0050 ("DM RAID: Add message/status support for changing sync action")
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 Signed-off-by: Xiao Ni <xni@redhat.com>
 Acked-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/md.c | 29 +++++++++++++++++++++++++++++
- drivers/md/md.h |  3 +++
- 2 files changed, 32 insertions(+)
+ drivers/md/dm-raid.c | 28 ++++++++++++++++++----------
+ 1 file changed, 18 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 23f31fd1d024..22e7512a5b1e 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -4919,6 +4919,35 @@ static void stop_sync_thread(struct mddev *mddev, bool locked, bool check_seq)
- 		mddev_lock_nointr(mddev);
- }
- 
-+void md_idle_sync_thread(struct mddev *mddev)
-+{
-+	lockdep_assert_held(&mddev->reconfig_mutex);
-+
-+	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	stop_sync_thread(mddev, true, true);
-+}
-+EXPORT_SYMBOL_GPL(md_idle_sync_thread);
-+
-+void md_frozen_sync_thread(struct mddev *mddev)
-+{
-+	lockdep_assert_held(&mddev->reconfig_mutex);
-+
-+	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	stop_sync_thread(mddev, true, false);
-+}
-+EXPORT_SYMBOL_GPL(md_frozen_sync_thread);
-+
-+void md_unfrozen_sync_thread(struct mddev *mddev)
-+{
-+	lockdep_assert_held(&mddev->reconfig_mutex);
-+
-+	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-+	md_wakeup_thread(mddev->thread);
-+	sysfs_notify_dirent_safe(mddev->sysfs_action);
-+}
-+EXPORT_SYMBOL_GPL(md_unfrozen_sync_thread);
-+
- static void idle_sync_thread(struct mddev *mddev)
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index e2d7a73c0f87..47c4b1b6e532 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3719,6 +3719,7 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
  {
- 	mutex_lock(&mddev->sync_mutex);
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 8d881cc59799..437ab70ce79b 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -781,6 +781,9 @@ extern void md_rdev_clear(struct md_rdev *rdev);
- extern void md_handle_request(struct mddev *mddev, struct bio *bio);
- extern int mddev_suspend(struct mddev *mddev, bool interruptible);
- extern void mddev_resume(struct mddev *mddev);
-+extern void md_idle_sync_thread(struct mddev *mddev);
-+extern void md_frozen_sync_thread(struct mddev *mddev);
-+extern void md_unfrozen_sync_thread(struct mddev *mddev);
+ 	struct raid_set *rs = ti->private;
+ 	struct mddev *mddev = &rs->md;
++	int ret = 0;
  
- extern void md_reload_sb(struct mddev *mddev, int raid_disk);
- extern void md_update_sb(struct mddev *mddev, int force);
+ 	if (!mddev->pers || !mddev->pers->sync_request)
+ 		return -EINVAL;
+@@ -3726,17 +3727,24 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 	if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
+ 		return -EBUSY;
+ 
+-	if (!strcasecmp(argv[0], "frozen"))
+-		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+-	else
+-		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++	if (!strcasecmp(argv[0], "frozen")) {
++		ret = mddev_lock(mddev);
++		if (ret)
++			return ret;
+ 
+-	if (!strcasecmp(argv[0], "idle") || !strcasecmp(argv[0], "frozen")) {
+-		if (mddev->sync_thread) {
+-			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+-			md_reap_sync_thread(mddev);
+-		}
+-	} else if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
++		md_frozen_sync_thread(mddev);
++		mddev_unlock(mddev);
++	} else if (!strcasecmp(argv[0], "idle")) {
++		ret = mddev_lock(mddev);
++		if (ret)
++			return ret;
++
++		md_idle_sync_thread(mddev);
++		mddev_unlock(mddev);
++	}
++
++	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++	if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
+ 		return -EBUSY;
+ 	else if (!strcasecmp(argv[0], "resync"))
+ 		; /* MD_RECOVERY_NEEDED set below */
 -- 
 2.39.2
 
