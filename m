@@ -1,211 +1,220 @@
-Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 93B848062F
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 07:29:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C186F6025A
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 08:09:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709623779; cv=none; b=EVO78rne2BWM6SSClgji6w+PCMBsbkCKb8TafoHpQImprWb+49J7NWOPdMHGyg3KvLKVyof8+YzVJB4pUB9uVN1Y9HrRr78M1nUbr5vfpTwC46Wu916OsCPHi++72YuVem+iCdL4DQTL/nKtQaPCMfyLedw8ylHc6iYgQvXpFME=
+	t=1709626147; cv=none; b=hyN2+oyrmCfiMdJFRHKzNQMTFucEOGyHDg+dixAf5YaRG/Xm0PCJTPWtLY6JoGOiWICV+5eSqCRY2RRyG00vPW5Yt0vTpYfQcQ8CPdU1YegMNJkAXwnkvT1bnZaX1ggQI2cpwoHdFGyXKc71s+DasYF5hF1/1znKKCKvipt/MwE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709623779; c=relaxed/simple;
-	bh=XvvAbpEePZjEC0cSUPQ2s2dg9t4q+qLsBBKfup6+WvE=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=GjaVc6EfVR5vinqQR7kDiVeHNv4MYgQrC/sa7Ja0tCdUUX3RqN9KFtFq91OIooqjbfIswJWUSoPF0aRf+PJ0o0Z8RIU+uR4mBVu0Y+fVq6OvS3DrsqwZuPABz1xOCGJJM8B11AQ0LpbLw5zKuUSvKrbz9r3a5lg1Ch6zhM45fno=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TpnJ32f2qz4f3jrc
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:23 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id BE63C1A0568
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 15:29:28 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgBHGBHRyeZlGnf+Fw--.17927S9;
-	Tue, 05 Mar 2024 15:29:28 +0800 (CST)
-From: Yu Kuai <yukuai1@huaweicloud.com>
-To: xni@redhat.com,
-	zkabelac@redhat.com,
-	agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	dm-devel@lists.linux.dev,
-	song@kernel.org,
-	yukuai3@huawei.com,
-	heinzm@redhat.com,
-	jbrassow@redhat.com,
-	neilb@suse.de
-Cc: linux-kernel@vger.kernel.org,
-	linux-raid@vger.kernel.org,
-	yukuai1@huaweicloud.com,
-	yi.zhang@huawei.com,
-	yangerkun@huawei.com
-Subject: [PATCH md-6.8 v2 5/9] dm-raid: really frozen sync_thread during suspend
-Date: Tue,  5 Mar 2024 15:23:02 +0800
-Message-Id: <20240305072306.2562024-6-yukuai1@huaweicloud.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20240305072306.2562024-1-yukuai1@huaweicloud.com>
-References: <20240305072306.2562024-1-yukuai1@huaweicloud.com>
+	s=arc-20240116; t=1709626147; c=relaxed/simple;
+	bh=QalZe5onIdTUXomDbTm8PZ7zhYJHP7+tOWgHbk9yTJM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=e45TC7OOnk9wE+XqVtE/vytb4BgvDvGZL1byIRfE+1R+vewyvbncm4ySUpDcSEusVMbTHXoSrAUgKq5k2nqj4aPTDxLenUQ7LXlrVbH3rNZfROYjzQJ3VN5ZJEIvMEzIl0RLztuoBs0dcYIqN4GHBgIgr7vOM72GYckzmHma/Ok=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HqILTfF9; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HqILTfF9"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1709626144;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=20eC+L1veBMZB9eTgC7k6yzvOieUX+/Euc9ArRQoBvM=;
+	b=HqILTfF9Y9+3qyvpGq6tOAaqXVu879/5nNvNEtG03n35S5zT5hBrLhxLVgTLNez9vTpgij
+	F+KWqeA9bqUozw2YTmXcr/+X97ffsKc7Zh2YzR8bvfEACv0eBmGkZ5lR6ZfWDtHsesJtqM
+	B6fne8lovdCf0YtZ/NyZb67A3teJHK8=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-407-HS7GwaE2MUa613C5WRPW_w-1; Tue, 05 Mar 2024 03:09:03 -0500
+X-MC-Unique: HS7GwaE2MUa613C5WRPW_w-1
+Received: by mail-wm1-f69.google.com with SMTP id 5b1f17b1804b1-412dbc77740so16853885e9.2
+        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 00:09:03 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1709626142; x=1710230942;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=20eC+L1veBMZB9eTgC7k6yzvOieUX+/Euc9ArRQoBvM=;
+        b=EOHdWw7dDNvuNZ3hdgwbiuPMcJDrc25KOgSdzqzUDEMt6eNC6IJwKba6HpwNYA2aDF
+         vb+v9D/Mn2U6d7LqIIHtgW/EjNJsjy/JOBF1YTs/MOuaqVYWN4NEcq7Nvc1GRE7FS9y6
+         QlgR0P8dyaS+whmE60Ty3G9PRp1qsy9LcR2tzF5Cs4Y3pJtHjQLJFhXpbeqjzgI01lKe
+         4/HhjIT+ScW3aBX19nujrTVMpLTF4g8SaYP2xucq6xoTQBxGrqgrohpdzjPxE2SO/I+g
+         AkQqTYN4J5U7woDg5PH99LTyNconxvGZW/p99IC5OyRLVoGjewQvaFIFFVHtY0bZX7VH
+         xonw==
+X-Forwarded-Encrypted: i=1; AJvYcCWtFpNTaok331Kn3IhKj3XybRneMpMepEpn37USa8YBy5cQCTZ18SdcDguXVgvdai4gO83vLQAvodiHXbWvHGStUKQvPeSDg5c=
+X-Gm-Message-State: AOJu0Yy1+H6lQBL3AE1Sg78HwcvtVTm+HE5HfNJSUvrrGUs3SEcvs5kz
+	FSctjzCKQkjuLhTz+a5afzsmm5tCHFK9qecUKJq3Jhk+uj8qhWU7lQbUvYeuuSafylJiTmWLN0v
+	nk3PI5BYhJ4eFmvYc5Oz9vyN8SawmiOkDJoip1NZkSxoLmSqU6tPp+ne0
+X-Received: by 2002:a05:600c:1f18:b0:412:dda9:102a with SMTP id bd24-20020a05600c1f1800b00412dda9102amr5294077wmb.21.1709626142246;
+        Tue, 05 Mar 2024 00:09:02 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEseAMcfTRsVuqMTQ/TiEO4FU1u9Sreklk4NSTEbSdYE2ZkUzsf24vlOzBd4b00YaB62bwYyw==
+X-Received: by 2002:a05:600c:1f18:b0:412:dda9:102a with SMTP id bd24-20020a05600c1f1800b00412dda9102amr5294059wmb.21.1709626141802;
+        Tue, 05 Mar 2024 00:09:01 -0800 (PST)
+Received: from [10.43.17.192] (nat-pool-brq-t.redhat.com. [213.175.37.10])
+        by smtp.gmail.com with ESMTPSA id jl24-20020a05600c6a9800b004126732390asm19904357wmb.37.2024.03.05.00.09.01
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 05 Mar 2024 00:09:01 -0800 (PST)
+Message-ID: <ea76e097-2ced-4052-9ba5-eb9dac9f412b@redhat.com>
+Date: Tue, 5 Mar 2024 09:09:00 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH 2/7] 10-dm.rules: don't deactivate devices for
+ DISK_RO=1
+To: Martin Wilck <mwilck@suse.com>, Zdenek Kabelac <zkabelac@redhat.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>,
+ David Teigland <teigland@redhat.com>
+Cc: linux-lvm@lists.linux.dev, dm-devel@lists.linux.dev,
+ Hannes Reinecke <hare@suse.de>
+References: <20240301224011.11117-1-mwilck@suse.com>
+ <20240301224011.11117-3-mwilck@suse.com>
+ <b884374b-2f6f-4c7f-acba-b4c730ae03ff@redhat.com>
+ <044ce4d6dad7873de1104568e5bd86361997d073.camel@suse.com>
+From: Peter Rajnoha <prajnoha@redhat.com>
+Autocrypt: addr=prajnoha@redhat.com; keydata=
+ xjMEY7QY9hYJKwYBBAHaRw8BAQdADIHZn5yeZYFV18ewwf4iudpl1ARfj4rnxX5xiSoJ15vN
+ I1BldGVyIFJham5vaGEgPHByYWpub2hhQHJlZGhhdC5jb20+wpYEExYKAD4CGwMFCwkIBwIC
+ IgIGFQoJCAsCBBYCAwECHgcCF4AWIQQhe3cZL8e9dSzFIwXndmZANt+EqwUCY7QZ9wIZAQAK
+ CRDndmZANt+EqzosAQDXhWudIjLSGoWGPKgluEWw5B5LtAX+kW2OG7loCDzI2AD/fp3Xec8K
+ JY7HrSqO98YMPbT98+YRjiopJSk75TcAogzOOARjtBj2EgorBgEEAZdVAQUBAQdALfG8fuls
+ uqLPtrJ5tYb36UtqNlu6Bw9ME/Ou+FRGG1cDAQgHwngEGBYKACAWIQQhe3cZL8e9dSzFIwXn
+ dmZANt+EqwUCY7QY9gIbDAAKCRDndmZANt+Eq22lAQDXlKMGQxkD0FZes94uihIZlhFwGjrX
+ dVfZsxfwEvuJfAD/XLGDegnKVERbF6YTfdsbVngSlOX/Tu/fxAFTg0JfdQU=
+In-Reply-To: <044ce4d6dad7873de1104568e5bd86361997d073.camel@suse.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBHGBHRyeZlGnf+Fw--.17927S9
-X-Coremail-Antispam: 1UD129KBjvJXoWxtry3CryrWw1rXw13tw13Arb_yoW7Zr1rpr
-	WrtFs8Ar4UJrW7ZFZFy3WvqFW5ZwnIqrZrtry3W3yrA3WfKwsakFy09a47ZFWDGas7Ja4Y
-	yan8tFW3u3WDKrJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUPF14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
-	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
-	z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
-	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
-	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
-	IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
-	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
-	kIc2xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E
-	14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIx
-	kGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI42IY6xIIjxv20xvEc7CjxVAF
-	wI0_Cr0_Gr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJV
-	W8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfUOBTY
-	UUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-From: Yu Kuai <yukuai3@huawei.com>
+On 3/4/24 17:09, Martin Wilck wrote:
+> On Mon, 2024-03-04 at 11:48 +0100, Peter Rajnoha wrote:
+>>
+>> Yes, I'd like to get rid of this rule, but, unfortunately, there's
+>> one
+>> issue during the DM device creation/activation.
+>>
+>> For example, if I try:
+>>
+>>   dmsetup create --readonly --table "0 1 zero"
+>>
+>> Then I get these uevents:
+>>
+>> 1)
+>> ACTION=add
+>> DM_UDEV_DISABLE_OTHER_RULES_FLAG=1
+>> DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG=1
+>> DM_UDEV_DISABLE_DISK_RULES_FLAG=1
+>> SYSTEMD_READY=0
+>>
+>>
+>> 2)
+>> ACTION=change
+>> DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG=1
+>> DM_UDEV_DISABLE_DISK_RULES_FLAG=1
+>> DM_UDEV_DISABLE_OTHER_RULES_FLAG=
+>>
+>>
+>> 3)
+>> ACTION=change
+>> DM_COOKIE=6335392
+>> DM_COOKIE_DISABLE_OTHER_RULES_FLAG=
+>>
+>>
+>> The uevent 3) coming with the DM_COOKIE is the actual event when the
+>> device is ready for use (that's the uevent notifying the DM device
+>> resume/activation).
+>>
+>> If we remove the DISK_RO rule, then the
+>> DM_UDEV_DISABLE_OTHER_RULES_FLAG
+>> is unset for uevent 2), which in turn causes the SYSTEMD_READY=0 to
+>> get
+>> dropped, which in turn will start all the systemd hooks because the
+>> device is considered "ready" for systemd then.
+>> But the DM dev is ready only after uevent 3) that comes with the
+>> DM_COOKIE. So we still need to cover this scenario.
+> 
+> As event 2) doesn't have DM_COOKIE, I don't think we need to bother
+> about it much. IMO we should treat it like a synthetic "change" event,
+> which has almost no effect as far as dm is concerned.
 
-1) commit f52f5c71f3d4 ("md: fix stopping sync thread") remove
-   MD_RECOVERY_FROZEN from __md_stop_writes() and doesn't realize that
-   dm-raid relies on __md_stop_writes() to frozen sync_thread
-   indirectly. Fix this problem by adding MD_RECOVERY_FROZEN in
-   md_stop_writes(), and since stop_sync_thread() is only used for
-   dm-raid in this case, also move stop_sync_thread() to
-   md_stop_writes().
-2) The flag MD_RECOVERY_FROZEN doesn't mean that sync thread is frozen,
-   it only prevent new sync_thread to start, and it can't stop the
-   running sync thread; In order to frozen sync_thread, after seting the
-   flag, stop_sync_thread() should be used.
-3) The flag MD_RECOVERY_FROZEN doesn't mean that writes are stopped, use
-   it as condition for md_stop_writes() in raid_postsuspend() doesn't
-   look correct. Consider that reentrant stop_sync_thread() do nothing,
-   always call md_stop_writes() in raid_postsuspend().
-4) raid_message can set/clear the flag MD_RECOVERY_FROZEN at anytime,
-   and if MD_RECOVERY_FROZEN is cleared while the array is suspended,
-   new sync_thread can start unexpected. Fix this by disallow
-   raid_message() to change sync_thread status during suspend.
+Well, partly yes, but the important thing here is that the other rules
+don not consider this as something they should react on. Here, it's like
+the (genuine) "add" event for a DM device that has almost zero value to
+others (we still need the table to get loaded and the device resumed for
+it to be usable).
 
-Note that after commit f52f5c71f3d4 ("md: fix stopping sync thread"), the
-test shell/lvconvert-raid-reshape.sh start to hang in stop_sync_thread(),
-and with previous fixes, the test won't hang there anymore, however, the
-test will still fail and complain that ext4 is corrupted. And with this
-patch, the test won't hang due to stop_sync_thread() or fail due to ext4
-is corrupted anymore. However, there is still a deadlock related to
-dm-raid456 that will be fixed in following patches.
+That's why the DISK_RO uevent was marked with DUDORF flag in the
+original 10-dm.rules as anything before the activation mark is simply
+considered spurious.
 
-Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-Closes: https://lore.kernel.org/all/e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com/
-Fixes: 1af2048a3e87 ("dm raid: fix deadlock caused by premature md_stop_writes()")
-Fixes: 9dbd1aa3a81c ("dm raid: add reshaping support to the target")
-Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-Signed-off-by: Xiao Ni <xni@redhat.com>
-Acked-by: Mike Snitzer <snitzer@kernel.org>
----
- drivers/md/dm-raid.c | 25 +++++++++++++++----------
- drivers/md/md.c      |  3 ++-
- 2 files changed, 17 insertions(+), 11 deletions(-)
+> Event 3) doesn't have DISK_RO=1 set. If any later rules are interested
+> in the state of write protection, they need to check the "ro" sysfs
+> attribute instead.
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index eb009d6bb03a..e2d7a73c0f87 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3240,11 +3240,12 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	rs->md.ro = 1;
- 	rs->md.in_sync = 1;
- 
--	/* Keep array frozen until resume. */
--	set_bit(MD_RECOVERY_FROZEN, &rs->md.recovery);
--
- 	/* Has to be held on running the array */
- 	mddev_suspend_and_lock_nointr(&rs->md);
-+
-+	/* Keep array frozen until resume. */
-+	md_frozen_sync_thread(&rs->md);
-+
- 	r = md_run(&rs->md);
- 	rs->md.in_sync = 0; /* Assume already marked dirty */
- 	if (r) {
-@@ -3722,6 +3723,9 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
- 	if (!mddev->pers || !mddev->pers->sync_request)
- 		return -EINVAL;
- 
-+	if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
-+		return -EBUSY;
-+
- 	if (!strcasecmp(argv[0], "frozen"))
- 		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- 	else
-@@ -3796,10 +3800,11 @@ static void raid_postsuspend(struct dm_target *ti)
- 	struct raid_set *rs = ti->private;
- 
- 	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
--		/* Writes have to be stopped before suspending to avoid deadlocks. */
--		if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
--			md_stop_writes(&rs->md);
--
-+		/*
-+		 * sync_thread must be stopped during suspend, and writes have
-+		 * to be stopped before suspending to avoid deadlocks.
-+		 */
-+		md_stop_writes(&rs->md);
- 		mddev_suspend(&rs->md, false);
- 	}
- }
-@@ -4012,8 +4017,6 @@ static int raid_preresume(struct dm_target *ti)
- 	}
- 
- 	/* Check for any resize/reshape on @rs and adjust/initiate */
--	/* Be prepared for mddev_resume() in raid_resume() */
--	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- 	if (mddev->recovery_cp && mddev->recovery_cp < MaxSector) {
- 		set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
- 		mddev->resync_min = mddev->recovery_cp;
-@@ -4055,10 +4058,12 @@ static void raid_resume(struct dm_target *ti)
- 		if (mddev->delta_disks < 0)
- 			rs_set_capacity(rs);
- 
-+		WARN_ON_ONCE(!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery));
-+		WARN_ON_ONCE(test_bit(MD_RECOVERY_RUNNING, &mddev->recovery));
- 		mddev_lock_nointr(mddev);
--		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- 		mddev->ro = 0;
- 		mddev->in_sync = 0;
-+		md_unfrozen_sync_thread(mddev);
- 		mddev_unlock_and_resume(mddev);
- 	}
- }
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 306cbbf92fcf..e9e666240e9f 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -6335,7 +6335,6 @@ static void md_clean(struct mddev *mddev)
- 
- static void __md_stop_writes(struct mddev *mddev)
- {
--	stop_sync_thread(mddev, true, false);
- 	del_timer_sync(&mddev->safemode_timer);
- 
- 	if (mddev->pers && mddev->pers->quiesce) {
-@@ -6360,6 +6359,8 @@ static void __md_stop_writes(struct mddev *mddev)
- void md_stop_writes(struct mddev *mddev)
- {
- 	mddev_lock_nointr(mddev);
-+	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	stop_sync_thread(mddev, true, false);
- 	__md_stop_writes(mddev);
- 	mddev_unlock(mddev);
- }
+The unfortunate thing about the DISK_RO, unlike other events, is that it
+is triggered *before* that DM activation (DM activation == table load +
+resume). Also, frankly, I don't like this event at all - it's just
+notifying about one of the many device attributes. A question then
+arises: "Why don't we have uevents for changes in other attributes?",
+but that's how it is for now and it's probably for a separate debate.
+
+Till now, we've been marking that DISK_RO uevent as spurious completely.
+But yes, we should have probably done that only in case it happens
+before the activation, not if the device is already activated, if that's
+the case too.
+
+> 
+> It would make some sense to be able tell later rules that they don't
+> need to bother with a given uevent because (from device mapper PoV)
+> nothing relevant has changed. I am not sure if we should use
+> DM_UDEV_DISABLE_OTHER_RULES_FLAG=1 for this purpose. "Don't bother,
+> nothing has changed" is not the same thing as "don't bother, you can't
+> access this device right now", which to my understanding is the meaning
+> of DM_UDEV_DISABLE_OTHER_RULES_FLAG=1.
+
+Actually, depending on the perspective, the DISK_RO uevent happening
+before the activation is that kind of "you can't access this device
+right now" (because it has not been activated fully yet).
+
+> 
+> Actually we have DM_ACTIVATION=1 to tell other rules that they do need
+> to take action. Later rules only need to rescan a DM device if
+> DM_ACTIVATION=1; in all other cases they could just import properties
+> from the db. Currently kpartx and lvm are the only rules that check
+> DM_ACTIVATION.
+
+Yes, indeed, good point, the DM_ACTIVATION=1 is a little helper so the
+rules which need to react *only on the event where the DM device has
+just been activated/reactivated* with a new table.
+
+It is set in two cases, IIRC:
+
+  - on genuine "change" event where a new DM table is activated (a
+resume after table load)
+
+  - on synthetic "add" event *after* the device has already been
+activated before (to cover the coldplug/udevadm trigger --action=add)
+
+If there's a case where other rules do care about reacting only on this
+particular event, then they should check DM_ACTIVATION, yes. But is
+there such a case for other (non-dm, non-dm-subysystem) rules?
+
+For the DISK_RO, it's about whether it comes before or after the
+activation, not whether the DISK_RO is set with the activation at the
+same time (which is not, it's a separate event). For this case, we don't
+have anything to check right now - we just simply "disable" all the
+events coming before the activation.
+
 -- 
-2.39.2
+Peter
 
