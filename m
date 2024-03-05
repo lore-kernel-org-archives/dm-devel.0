@@ -1,128 +1,199 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f45.google.com (mail-qv1-f45.google.com [209.85.219.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8492B8664C
-	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 14:42:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B107417581
+	for <dm-devel@lists.linux.dev>; Tue,  5 Mar 2024 17:45:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709649751; cv=none; b=VLx4dlq3H5jo6oMfcyAagCZvNfqhlUKFpYVqb37l9Wge6BYxrCxdDNGbsGj08LoCZ3hvhGvkh/0uTO/nEv21UwMb4A7ACPYTofIrma+gYE0vifYDTAabWxkd2TommmsYa/AOE1Xh5TZP1b7priqwgCbvhnWvjGVnLgbPwjFjP7s=
+	t=1709660717; cv=none; b=cjse8HiTWEBinOk9H+Tg3j+6Ls6QvXPwCA1cIl9tszYQpBHH3VMQKA8NnbCeftMX2pmTAfZ8KSigWUO5y0RgS3A4pSFkBbQ1KL7XQydowRGVFBMO6PAi5ZdxJzYHP2KYb1onw25rH2XM8kb0pFykXTtSKFj2pI8UNri/50+N+EM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709649751; c=relaxed/simple;
-	bh=rrUs/1+bDGj9wKgLjOjtYbA9vOHJh6dgN224Vnn0njY=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=AMuKL4s2Dt7jB1Y0qmzs9fJK1rzzwUjdCvJyTE5JKZDqsAyRrVMu7BN2zkS7fhehpI6QtTM/NZkG1uZTorcwKptLZYyJACOGDpnNT80GxNpecuwyIzUpKZO0N4GYRMnVnicuxis1ag7uqjrRbTqu2cujLgbPkKNgwlvWVMlPS7U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WgEFfB2j; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	s=arc-20240116; t=1709660717; c=relaxed/simple;
+	bh=IsePTlOOrrY+PtgSBJ/oAdEDQA2yIEUijGkssqsdR4o=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Qx7zk0JPUo3Gy0IWXVPj5TGTzmJFO5yHp8Ny709zADMjz79pZbNt/8Ce/5nQwHu2GHnvk7Gx/g/WD6iWTSzJRRj0Re8q3xuKcNNiVG3eo0tUpP2DQgHsJyt6P2kWh7n+ZJu/MkrzziMy3hSmE/5XuAOVg/Pylfi1/zpf0HluXxc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.219.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WgEFfB2j"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1709649748;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=hkCvxYrhFUqX5aN39YiixsoelylphZU5rJpwKC/MjcA=;
-	b=WgEFfB2jebdB2/ogGabEXuX4NPT6zZAtq349IK0R4vl6agYQizWE009FN67vVC66hYOD28
-	f13o7nU+hKSu9Hk1n+6UPVPDkSbEza0qIm7idza6laoA4gYO0JqBLSLc1GfDSVl5bWBVWe
-	bXIZzgxPYJh014EYrwtLf5eUyVaxcQE=
-Received: from mail-wm1-f70.google.com (mail-wm1-f70.google.com
- [209.85.128.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-659-fKEbL7qsPC6JAo7gSyG3oQ-1; Tue, 05 Mar 2024 09:42:27 -0500
-X-MC-Unique: fKEbL7qsPC6JAo7gSyG3oQ-1
-Received: by mail-wm1-f70.google.com with SMTP id 5b1f17b1804b1-412e99244dbso6906315e9.2
-        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 06:42:26 -0800 (PST)
+Received: by mail-qv1-f45.google.com with SMTP id 6a1803df08f44-6908b5037d5so3119866d6.3
+        for <dm-devel@lists.linux.dev>; Tue, 05 Mar 2024 09:45:15 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709649746; x=1710254546;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from:references:cc
-         :to:content-language:subject:user-agent:mime-version:date:message-id
+        d=1e100.net; s=20230601; t=1709660715; x=1710265515;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=hkCvxYrhFUqX5aN39YiixsoelylphZU5rJpwKC/MjcA=;
-        b=vJ0G9ZdmE9KYtbmeZvi6bKi91LPpNIUt1bhXbGjoKWpZLpAZH6HpfngaJ3VsGtbx3J
-         ml4Pwy3Pu9bydBcMMaPeuNHYrMUclGGx7kCYnQchacSK0rVRaD7I9Jsam3W8TGV3lLPQ
-         Sl/Oi3nfBjZZODjrb5zX89/Xx06h0TcV0MBwg0Y+02HaMi/PMzR/6hvS0EFuCzhbuTyH
-         BEhtMggDwbWjuflHtXoVmKfJlwxtQ7tJ8fuoxNsa2gF4hSgKo3jzr2bzFQcedVsa9sUe
-         /Xl1pPmrk5qnUwqRGQvzprgxZvDEvqfZjephyTUi1YzWRVu9wIUAFjlj2a6KZUEf9Ful
-         /hXQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUWq5HfL5zUiiPr3W0aLpLRceBvnqE4PjH9c5o65ZgQs9j+6hqabmS+0m9YYcbM0jB67F+XYFU5/jcmBbRs2AgusP8VEdV+1IY=
-X-Gm-Message-State: AOJu0Yxk8VDd7g7hoDdxeWgw/3vRDvEeYaL8+nbG7GjQkJJYAWqcGLXL
-	9A4Hew10JQ7zDyPOJytWd7P86puQKBVzw4tg1GxDpFBp0B5kmCsv2Sc1LJhoxV5+fArlYX8yGz1
-	4op7/PUXFdOyD3VoJTF1cEdViGPhzTr7yaBc9e2mefmRWotWLqWxJYKPN
-X-Received: by 2002:a05:600c:a005:b0:412:ef3c:f86e with SMTP id jg5-20020a05600ca00500b00412ef3cf86emr922915wmb.17.1709649745905;
-        Tue, 05 Mar 2024 06:42:25 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IHPVzy8OkYU7nRb4Y8+l1K6zVEUAa+oC3MfrE/SSQxotu9ySbkUW0fORvZTSTjjdOe1mYkPww==
-X-Received: by 2002:a05:600c:a005:b0:412:ef3c:f86e with SMTP id jg5-20020a05600ca00500b00412ef3cf86emr922901wmb.17.1709649745613;
-        Tue, 05 Mar 2024 06:42:25 -0800 (PST)
-Received: from [10.43.17.192] (nat-pool-brq-t.redhat.com. [213.175.37.10])
-        by smtp.gmail.com with ESMTPSA id d8-20020a05600c3ac800b00412e84e59d8sm4217354wms.44.2024.03.05.06.42.24
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 05 Mar 2024 06:42:25 -0800 (PST)
-Message-ID: <b605f50c-700a-40a7-b8a0-f5c05400161c@redhat.com>
-Date: Tue, 5 Mar 2024 15:42:24 +0100
+        bh=gge8MXN2cBaJhAIuFm/jj/2ek2UAvG5SbyWzw+LqrLU=;
+        b=CoC79oYkqB5tGaYMgnaqDGg9aDWLm6irxEJb42tyGmPfL+F4WtuC5GBPl82uTduzc+
+         bno+sQLFrmB1IcP8CeBUT1E2Up6LM9dc/zTX+xHR4s2vDMUBAEXHoFwpfogw51YaQJZW
+         YeUc0Ym5bA0Vm2LBNdHW7rlS2b5OgbJvStSxTcDygDQ+D43BaN5A0PN5mvHfvROfr7iQ
+         tEDNNwiWodeI1mdhGwgFj1mNsdbALRskcg9DsFz3PSh9xFV6cpBfVWYUQhka6Juds5/8
+         Jfj+fLQZj+PGfGPnVHqKk89cjbjHgtKLSCdI0UA3uVPFCCoHaKHpV/oP99GPNDYu50ZR
+         mpEg==
+X-Forwarded-Encrypted: i=1; AJvYcCX9aPGvoIZG0B2NSNrj4RZDhacF7c77iXJztBptVU1MitKWeq6OmHr5dJem3BbO4MUDuVu8AFkPzTM8UhrMr3Q6HVMT4vpkan8=
+X-Gm-Message-State: AOJu0YwtE4jVwIv1dYfBoJG/jeV9uUVp2fgNkYO6/qlYU4QxtIRGSR53
+	v5jNYoe4ocIcWiXoN/38HFowYQr7rybLxkPMUhbsixZMTE6On2Hb2ShLUynzKw==
+X-Google-Smtp-Source: AGHT+IEGQenmJZKbs3r2wugRgZMmiHwHXfXTF7+9Vyf8Oe9KTMxb0vnDidm2CHu6mpJiWDFoJRg7Vw==
+X-Received: by 2002:ad4:4045:0:b0:690:7770:e6d4 with SMTP id r5-20020ad44045000000b006907770e6d4mr3044733qvp.34.1709660714673;
+        Tue, 05 Mar 2024 09:45:14 -0800 (PST)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id ny4-20020a056214398400b0068fe4669e71sm6425247qvb.91.2024.03.05.09.45.13
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 05 Mar 2024 09:45:14 -0800 (PST)
+Date: Tue, 5 Mar 2024 12:45:13 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: Patrick Plenefisch <simonpatp@gmail.com>
+Cc: Goffredo Baroncelli <kreijack@inwind.it>, linux-kernel@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>, Chris Mason <clm@fb.com>,
+	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
+	regressions@lists.linux.dev, dm-devel@lists.linux.dev,
+	linux-btrfs@vger.kernel.org, ming.lei@redhat.com
+Subject: Re: LVM-on-LVM: error while submitting device barriers
+Message-ID: <ZedaKUge-EBo4CuT@redhat.com>
+References: <CAOCpoWc_HQy4UJzTi9pqtJdO740Wx5Yd702O-mwXBE6RVBX1Eg@mail.gmail.com>
+ <CAOCpoWf3TSQkUUo-qsj0LVEOm-kY0hXdmttLE82Ytc0hjpTSPw@mail.gmail.com>
+ <CAOCpoWeNYsMfzh8TSnFqwAG1BhAYnNt_J+AcUNqRLF7zmJGEFA@mail.gmail.com>
+ <672e88f2-8ac3-45fe-a2e9-730800017f53@libero.it>
+ <CAOCpoWexiuYLu0fpPr71+Uzxw_tw3q4HGF9tKgx5FM4xMx9fWA@mail.gmail.com>
+ <a1e30dab-dfde-418e-a0dd-3e294838e839@inwind.it>
+ <CAOCpoWeB=2j+n+5K5ytj2maZxdrV80cxJcM5CL=z1bZKgpXPWQ@mail.gmail.com>
+ <a783e5ed-db56-4100-956a-353170b1b7ed@inwind.it>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 0/7] device mapper udev rules rework
-To: Martin Wilck <martin.wilck@suse.com>, Zdenek Kabelac
- <zkabelac@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>,
- David Teigland <teigland@redhat.com>
-Cc: linux-lvm@lists.linux.dev, dm-devel@lists.linux.dev,
- Martin Wilck <mwilck@suse.com>, Hannes Reinecke <hare@suse.de>
-References: <20240305120550.11617-1-mwilck@suse.com>
-From: Peter Rajnoha <prajnoha@redhat.com>
-Autocrypt: addr=prajnoha@redhat.com; keydata=
- xjMEY7QY9hYJKwYBBAHaRw8BAQdADIHZn5yeZYFV18ewwf4iudpl1ARfj4rnxX5xiSoJ15vN
- I1BldGVyIFJham5vaGEgPHByYWpub2hhQHJlZGhhdC5jb20+wpYEExYKAD4CGwMFCwkIBwIC
- IgIGFQoJCAsCBBYCAwECHgcCF4AWIQQhe3cZL8e9dSzFIwXndmZANt+EqwUCY7QZ9wIZAQAK
- CRDndmZANt+EqzosAQDXhWudIjLSGoWGPKgluEWw5B5LtAX+kW2OG7loCDzI2AD/fp3Xec8K
- JY7HrSqO98YMPbT98+YRjiopJSk75TcAogzOOARjtBj2EgorBgEEAZdVAQUBAQdALfG8fuls
- uqLPtrJ5tYb36UtqNlu6Bw9ME/Ou+FRGG1cDAQgHwngEGBYKACAWIQQhe3cZL8e9dSzFIwXn
- dmZANt+EqwUCY7QY9gIbDAAKCRDndmZANt+Eq22lAQDXlKMGQxkD0FZes94uihIZlhFwGjrX
- dVfZsxfwEvuJfAD/XLGDegnKVERbF6YTfdsbVngSlOX/Tu/fxAFTg0JfdQU=
-In-Reply-To: <20240305120550.11617-1-mwilck@suse.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <a783e5ed-db56-4100-956a-353170b1b7ed@inwind.it>
 
-On 3/5/24 13:05, Martin Wilck wrote:
-> Martin Wilck (7):
->   13-dm-disk.rules: import ID_FS_TYPE
->   10-dm.rules: test DISK_RO after importing properties
->   10-dm-rules: don't restore DM_UDEV_DISABLE_OTHER_RULES_FLAG from db
->   11-dm-lvm.rules: don't restore DM_UDEV_DISABLE_OTHER_RULES_FLAG from
->     db
->   dm udev rules: don't export and save DM_SUSPENDED
->   dm udev rules: don't export and save DM_NOSCAN
->   10-dm.rules: bump DM_UDEV_RULES_VSN to 3
+On Thu, Feb 29 2024 at  5:05P -0500,
+Goffredo Baroncelli <kreijack@inwind.it> wrote:
+
+> On 29/02/2024 21.22, Patrick Plenefisch wrote:
+> > On Thu, Feb 29, 2024 at 2:56 PM Goffredo Baroncelli <kreijack@inwind.it> wrote:
+> > > 
+> > > > Your understanding is correct. The only thing that comes to my mind to
+> > > > cause the problem is asymmetry of the SATA devices. I have one 8TB
+> > > > device, plus a 1.5TB, 3TB, and 3TB drives. Doing math on the actual
+> > > > extents, lowerVG/single spans (3TB+3TB), and
+> > > > lowerVG/lvmPool/lvm/brokenDisk spans (3TB+1.5TB). Both obviously have
+> > > > the other leg of raid1 on the 8TB drive, but my thought was that the
+> > > > jump across the 1.5+3TB drive gap was at least "interesting"
+> > > 
+> > > 
+> > > what about lowerVG/works ?
+> > > 
+> > 
+> > That one is only on two disks, it doesn't span any gaps
 > 
->  udev/10-dm.rules.in          | 43 +++++++++++++++++++++++++++---------
->  udev/11-dm-lvm.rules.in      | 13 +++++------
->  udev/12-dm-permissions.rules |  2 +-
->  udev/13-dm-disk.rules.in     |  9 ++++----
->  4 files changed, 43 insertions(+), 24 deletions(-)
+> Sorry, but re-reading the original email I found something that I missed before:
 > 
+> > BTRFS error (device dm-75): bdev /dev/mapper/lvm-brokenDisk errs: wr
+> > 0, rd 0, flush 1, corrupt 0, gen 0
+> > BTRFS warning (device dm-75): chunk 13631488 missing 1 devices, max
+>                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> > tolerance is 0 for writable mount
+> > BTRFS: error (device dm-75) in write_all_supers:4379: errno=-5 IO
+> > failure (errors while submitting device barriers.)
+> 
+> Looking at the code, it seems that if a FLUSH commands fails, btrfs
+> considers that the disk is missing. The it cannot mount RW the device.
+> 
+> I would investigate with the LVM developers, if it properly passes
+> the flush/barrier command through all the layers, when we have an
+> lvm over lvm (raid1). The fact that the lvm is a raid1, is important because
+> a flush command to be honored has to be honored by all the
+> devices involved.
 
-Only really minor and cosmetic things:
-  - we're using $env instead of %E to reference the variables,
-  - maybe let's dump the mention about DM_SUSPENDED in
-12-dm-permissions.rules if we're at it
+Hi Patrick,
 
-But functionality-wise looks good as already discussed in the RFC
-version of the patchset. Thank you!
+Your initial report (start of this thread) mentioned that the
+regression occured with 5.19. The DM changes that landed during the
+5.19 merge window refactored quite a bit of DM core's handling for bio
+splitting (to simplify DM's newfound support for bio polling) -- Ming
+Lei (now cc'd) and I wrote these changes:
 
-(You can also create an MR in lvm2's gitlab upstream repo
-https://gitlab.com/lvmteam/lvm2 if you have an account there.)
+e86f2b005a51 dm: simplify basic targets
+bdb34759a0db dm: use bio_sectors in dm_aceept_partial_bio
+b992b40dfcc1 dm: don't pass bio to __dm_start_io_acct and dm_end_io_acct
+e6926ad0c988 dm: pass dm_io instance to dm_io_acct directly
+d3de6d12694d dm: switch to bdev based IO accounting interfaces
+7dd76d1feec7 dm: improve bio splitting and associated IO accounting
+2e803cd99ba8 dm: don't grab target io reference in dm_zone_map_bio
+0f14d60a023c dm: improve dm_io reference counting
+ec211631ae24 dm: put all polled dm_io instances into a single list
+9d20653fe84e dm: simplify bio-based IO accounting further
+4edadf6dcb54 dm: improve abnormal bio processing
 
-For the whole patchset:
-Reviewed-by: Peter Rajnoha <prajnoha@redhat.com>
+I'll have a closer look at these DM commits (especially relative to
+flush bios and your stacked device usage).
 
--- 
-Peter
+The last commit (4edadf6dcb54) is marginally relevant (but likely most
+easily reverted from v5.19-rc2, as a simple test to see if it somehow
+a problem... doubtful to be cause but worth a try).
 
+(FYI, not relevant because it is specific to REQ_NOWAIT but figured I'd
+ mention it, this commit earlier in the 5.19 DM changes was bogus:
+ 563a225c9fd2 dm: introduce dm_{get,put}_live_table_bio called from dm_submit_bio
+ Jens fixed it with this stable@ commit:
+ a9ce385344f9 dm: don't attempt to queue IO under RCU protection)
+
+> > > However yes, I agree that the pair of disks involved may be the answer
+> > > of the problem.
+> > > 
+> > > Could you show us the output of
+> > > 
+> > > $ sudo pvdisplay -m
+> > > 
+> > > 
+> > 
+> > I trimmed it, but kept the relevant bits (Free PE is thus not correct):
+> > 
+> > 
+> >    --- Physical volume ---
+> >    PV Name               /dev/lowerVG/lvmPool
+> >    VG Name               lvm
+> >    PV Size               <3.00 TiB / not usable 3.00 MiB
+> >    Allocatable           yes
+> >    PE Size               4.00 MiB
+> >    Total PE              786431
+> >    Free PE               82943
+> >    Allocated PE          703488
+> >    PV UUID               7p3LSU-EAHd-xUg0-r9vT-Gzkf-tYFV-mvlU1M
+> > 
+> >    --- Physical Segments ---
+> >    Physical extent 0 to 159999:
+> >      Logical volume      /dev/lvm/brokenDisk
+> >      Logical extents     0 to 159999
+> >    Physical extent 160000 to 339199:
+> >      Logical volume      /dev/lvm/a
+> >      Logical extents     0 to 179199
+> >    Physical extent 339200 to 349439:
+> >      Logical volume      /dev/lvm/brokenDisk
+> >      Logical extents     160000 to 170239
+> >    Physical extent 349440 to 351999:
+> >      FREE
+> >    Physical extent 352000 to 460026:
+> >      Logical volume      /dev/lvm/brokenDisk
+> >      Logical extents     416261 to 524287
+> >    Physical extent 460027 to 540409:
+> >      FREE
+> >    Physical extent 540410 to 786430:
+> >      Logical volume      /dev/lvm/brokenDisk
+> >      Logical extents     170240 to 416260
+
+Please provide the following from guest that activates /dev/lvm/brokenDisk:
+
+lsblk
+dmsetup table
+
+Please also provide the same from the host (just for completeness).
+
+Also, I didn't see any kernel logs that show DM-specific errors.  I
+doubt you'd have left any DM-specific errors out in your report.  So
+is btrfs the canary here?  To be clear: You're only seeing btrfs
+errors in the kernel log?
+
+Mike
