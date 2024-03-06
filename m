@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 7676E1CAA1
-	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 23:34:54 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id BB0082137E
+	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 23:34:55 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709768097; cv=none; b=QarWqvpX7LgTuZODOouWpfnomBuIxotgKTepmjGlWjs6wUpiMAIUcFdGWWRHqAHpeAQSOFRCiAdEHSTaUuzW5PaI9/ihEGPPT4pEQvBPfwyftyzdcLGIfYasoLOu8HH45RD+PYHHAUViYIPtGp/Go+iONbqk1amfbtnjWNZnCsc=
+	t=1709768098; cv=none; b=FUJAQO+Slp5RwNAUIY5QYWMU9snOjaCgR0bBiXwKzkFk8EYIUpEPB6bidYsQrKtJpl/nBbSIpraw/1yIWDcN/gM7EyH+KJdnXCCzvVKFDKNm8zm15jetChTk4wqzEoThTeZrCgoPLtsIUAB31Cn94KmrC2v55bY0FAiMzGLTxz8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709768097; c=relaxed/simple;
-	bh=klX14BQwjFQ95FQfpO/Ae3KhPmcIy/lqA8vgXYeSqqc=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=iWlsypjrlabyqkDomibGp2x49mQt+9S2tT6a3zR8yAhKE7lmjfG5p6MfRLoVOwxgLujORHwtHtGSvHlTxy+OhmUAgslkM24F9ewH0YEgMXI3AWmh2/SinFWIHTXcPnZcMTQ7DSUq86iKR/quNCWQUXGXhPVL64Bh6ROGsc6PHs8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=lGAMKjDC; arc=none smtp.client-ip=13.77.154.182
+	s=arc-20240116; t=1709768098; c=relaxed/simple;
+	bh=5ciSuXFcPAqlMScKCh/OLg/cYFaZ/I5HXIYem2MOpQ8=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=CqbV3IcuBYmxSs9nG8cIYcm+EC68zYyXB7Up6aWK/kOWJa4c46y4zkVbbQ37FxlPyv5cpBkK9PQ6EsKhuW/MXy6+AOvFcAm1m6yaiB7gA6nOslV4kcblqZ8pjL4Jfhtuss+W7ILeUGaXkKdPNP9kJ/gfK5lDgGhufIGRfvyh2BQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=aVX0wA0t; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="lGAMKjDC"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="aVX0wA0t"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id 4501C20B74CB; Wed,  6 Mar 2024 15:34:52 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 4501C20B74CB
+	id 9FE1320B74D7; Wed,  6 Mar 2024 15:34:52 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 9FE1320B74D7
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
 	s=default; t=1709768092;
-	bh=QKLQ4KfqX5flO8Tlg42p9JhkRBZ9Yn7dZP1ihujT1pw=;
+	bh=DP7pJ46XQmOmQeW5xINRR1Wcr/qDmQzA4z6vIZOePrk=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=lGAMKjDC3TlCZLzvNQhVfXafSf8ZP5cFE85fSL1FvySH6YECQB88ZU3FB8+i5OJyt
-	 LL9VF7+ztwiGD6+mXD8So6vUfZrFcC+cr74WOCcIBMXr6QVMPfrCXM4aoWFN9cWqtO
-	 dMlotOvE08kE9YPAfaP2Ti+fEMM9Wo+nHyNeY2dk=
+	b=aVX0wA0thVq0M9WLE3ctF1SL4Cx9hIEG6176FnFX85NIowWRkdGTa4HOkTxT71rlV
+	 lkDHDtJ0j0EhXbYUUByy44Hhbo5l58M0UusieEu+RZn8E5090qoyhlycgoSQ6PY/n3
+	 Oge/4bG/F9OR5wWsfUdJ/9lHRW9LXNIF0tGICSik=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -43,11 +43,10 @@ Cc: linux-doc@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	audit@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
-	Fan Wu <wufan@linux.microsoft.com>,
-	Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: [RFC PATCH v14 06/19] ipe: introduce 'boot_verified' as a trust provider
-Date: Wed,  6 Mar 2024 15:34:31 -0800
-Message-Id: <1709768084-22539-7-git-send-email-wufan@linux.microsoft.com>
+	Fan Wu <wufan@linux.microsoft.com>
+Subject: [RFC PATCH v14 12/19] dm: add finalize hook to target_type
+Date: Wed,  6 Mar 2024 15:34:37 -0800
+Message-Id: <1709768084-22539-13-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1709768084-22539-1-git-send-email-wufan@linux.microsoft.com>
 References: <1709768084-22539-1-git-send-email-wufan@linux.microsoft.com>
@@ -57,317 +56,86 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
-IPE is designed to provide system level trust guarantees, this usually
-implies that trust starts from bootup with a hardware root of trust,
-which validates the bootloader. After this, the bootloader verifies
-the kernel and the initramfs.
+This patch adds a target finalize hook.
 
-As there's no currently supported integrity method for initramfs, and
-it's typically already verified by the bootloader. This patch introduces
-a new IPE property `boot_verified` which allows author of IPE policy to
-indicate trust for files from initramfs.
+The hook is triggered just before activating an inactive table of a
+mapped device. If it returns an error the __bind get cancelled.
 
-The implementation of this feature utilizes the newly added
-`initramfs_populated` hook. This hook marks the superblock of the rootfs
-after the initramfs has been unpacked into it.
+The dm-verity target will use this hook to attach the dm-verity's
+roothash metadata to the block_device struct of the mapped device.
 
-Before mounting the real rootfs on top of the initramfs, initramfs
-script will recursively remove all files and directories on the
-initramfs. This is typically implemented by using switch_root(8)
-(https://man7.org/linux/man-pages/man8/switch_root.8.html).
-Therefore the initramfs will be empty and not accessible after the real
-rootfs takes over. It is advised to switch to a different policy
-that doesn't rely on the `boot_verified` property after this point.
-This ensures that the trust policies remain relevant and effective
-throughout the system's operation.
-
-Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
 ---
-v2:
-  +No Changes
-
-v3:
-  + Remove useless caching system
-  + Move ipe_load_properties to this match
-  + Minor changes from checkpatch --strict warnings
-
-v4:
-  + Remove comments from headers that was missed previously.
-  + Grammatical corrections.
-
-v5:
-  + No significant changes
-
-v6:
-  + No changes
-
-v7:
-  + Reword and refactor patch 04/12 to [09/16], based on changes in
-the underlying system.
-  + Add common audit function for boolean values
-  + Use common audit function as implementation.
-
-v8:
-  + No changes
-
-v9:
-  + No changes
-
-v10:
-  + Replace struct file with struct super_block
+v1-v10:
+  + Not present
 
 v11:
-  + Fix code style issues
+  + Introduced
 
 v12:
-  + Switch to use unpack_initramfs hook and security blob
+  + No changes
 
 v13:
-  + Update the hook name
-  + Rename the security blob field to initramfs
-  + Remove the dependency on CONFIG_BLK_DEV_INITRD
+  + No changes
 
 v14:
-  + No changes
+  + Add documentation
 ---
- security/ipe/eval.c          | 37 +++++++++++++++++++++++++++++++++++-
- security/ipe/eval.h          |  5 +++++
- security/ipe/hooks.c         |  6 ++++++
- security/ipe/hooks.h         |  2 ++
- security/ipe/ipe.c           |  8 ++++++++
- security/ipe/ipe.h           |  1 +
- security/ipe/policy.h        |  2 ++
- security/ipe/policy_parser.c | 35 +++++++++++++++++++++++++++++++++-
- 8 files changed, 94 insertions(+), 2 deletions(-)
+ drivers/md/dm.c               | 12 ++++++++++++
+ include/linux/device-mapper.h |  9 +++++++++
+ 2 files changed, 21 insertions(+)
 
-diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-index 4f425afffcad..bef204decbbf 100644
---- a/security/ipe/eval.c
-+++ b/security/ipe/eval.c
-@@ -16,6 +16,18 @@
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8dcabf84d866..15b46edae49f 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2266,6 +2266,18 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 		goto out;
+ 	}
  
- struct ipe_policy __rcu *ipe_active_policy;
- 
-+#define FILE_SUPERBLOCK(f) ((f)->f_path.mnt->mnt_sb)
++	for (unsigned int i = 0; i < t->num_targets; i++) {
++		struct dm_target *ti = dm_table_get_target(t, i);
 +
-+/**
-+ * build_ipe_sb_ctx - Build initramfs field of an evaluation context.
-+ * @ctx: Supplies a pointer to the context to be populated.
-+ * @file: Supplies the file struct of the file triggered IPE event.
-+ */
-+static void build_ipe_sb_ctx(struct ipe_eval_ctx *ctx, const struct file *const file)
-+{
-+	ctx->initramfs = ipe_sb(FILE_SUPERBLOCK(file))->initramfs;
-+}
-+
- /**
-  * build_eval_ctx - Build an evaluation context.
-  * @ctx: Supplies a pointer to the context to be populated.
-@@ -28,6 +40,22 @@ void build_eval_ctx(struct ipe_eval_ctx *ctx,
- {
- 	ctx->file = file;
- 	ctx->op = op;
-+
-+	if (file)
-+		build_ipe_sb_ctx(ctx, file);
-+}
-+
-+/**
-+ * evaluate_boot_verified - Evaluate @ctx for the boot verified property.
-+ * @ctx: Supplies a pointer to the context being evaluated.
-+ *
-+ * Return:
-+ * * true	- The current @ctx match the @p
-+ * * false	- The current @ctx doesn't match the @p
-+ */
-+static bool evaluate_boot_verified(const struct ipe_eval_ctx *const ctx)
-+{
-+	return ctx->initramfs;
- }
- 
- /**
-@@ -42,7 +70,14 @@ void build_eval_ctx(struct ipe_eval_ctx *ctx,
- static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
- 			      struct ipe_prop *p)
- {
--	return false;
-+	switch (p->type) {
-+	case IPE_PROP_BOOT_VERIFIED_FALSE:
-+		return !evaluate_boot_verified(ctx);
-+	case IPE_PROP_BOOT_VERIFIED_TRUE:
-+		return evaluate_boot_verified(ctx);
-+	default:
-+		return false;
++		if (ti->type->finalize) {
++			ret = ti->type->finalize(ti);
++			if (ret) {
++				old_map = ERR_PTR(ret);
++				goto out;
++			}
++		}
 +	}
- }
- 
- /**
-diff --git a/security/ipe/eval.h b/security/ipe/eval.h
-index cfdf3c8dfe8a..884821494525 100644
---- a/security/ipe/eval.h
-+++ b/security/ipe/eval.h
-@@ -15,10 +15,15 @@
- 
- extern struct ipe_policy __rcu *ipe_active_policy;
- 
-+struct ipe_superblock {
-+	bool initramfs;
-+};
 +
- struct ipe_eval_ctx {
- 	enum ipe_op_type op;
- 
- 	const struct file *file;
-+	bool initramfs;
- };
- 
- void build_eval_ctx(struct ipe_eval_ctx *ctx, const struct file *file, enum ipe_op_type op);
-diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
-index 3aec88c074e1..23cf070438fa 100644
---- a/security/ipe/hooks.c
-+++ b/security/ipe/hooks.c
-@@ -4,6 +4,7 @@
+ 	old_map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
+ 	rcu_assign_pointer(md->map, (void *)t);
+ 	md->immutable_target_type = dm_table_get_immutable_target_type(t);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 772ab4d74d94..d7a0ba1fa19e 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -160,6 +160,14 @@ typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
   */
+ typedef size_t (*dm_dax_recovery_write_fn)(struct dm_target *ti, pgoff_t pgoff,
+ 		void *addr, size_t bytes, struct iov_iter *i);
++/*
++ * This hook allows DM targets in an inactive table to complete their setup
++ * before the table is made active.
++ * Returns:
++ *  < 0 : error
++ *  = 0 : success
++ */
++typedef int (*dm_finalize_fn) (struct dm_target *target);
  
- #include <linux/fs.h>
-+#include <linux/fs_struct.h>
- #include <linux/types.h>
- #include <linux/binfmts.h>
- #include <linux/mman.h>
-@@ -181,3 +182,8 @@ int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents)
- 	build_eval_ctx(&ctx, NULL, op);
- 	return ipe_evaluate_event(&ctx);
- }
-+
-+void ipe_unpack_initramfs(void)
-+{
-+	ipe_sb(current->fs->root.mnt->mnt_sb)->initramfs = true;
-+}
-diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
-index 23205452f758..21f49cdc2fcd 100644
---- a/security/ipe/hooks.h
-+++ b/security/ipe/hooks.h
-@@ -22,4 +22,6 @@ int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
+ void dm_error(const char *message);
  
- int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents);
+@@ -210,6 +218,7 @@ struct target_type {
+ 	dm_dax_direct_access_fn direct_access;
+ 	dm_dax_zero_page_range_fn dax_zero_page_range;
+ 	dm_dax_recovery_write_fn dax_recovery_write;
++	dm_finalize_fn finalize;
  
-+void ipe_unpack_initramfs(void);
-+
- #endif /* _IPE_HOOKS_H */
-diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-index 22bd95116087..3bf7c1331d5e 100644
---- a/security/ipe/ipe.c
-+++ b/security/ipe/ipe.c
-@@ -5,9 +5,11 @@
- #include <uapi/linux/lsm.h>
- 
- #include "ipe.h"
-+#include "eval.h"
- #include "hooks.h"
- 
- static struct lsm_blob_sizes ipe_blobs __ro_after_init = {
-+	.lbs_superblock = sizeof(struct ipe_superblock),
- };
- 
- static const struct lsm_id ipe_lsmid = {
-@@ -15,12 +17,18 @@ static const struct lsm_id ipe_lsmid = {
- 	.id = LSM_ID_IPE,
- };
- 
-+struct ipe_superblock *ipe_sb(const struct super_block *sb)
-+{
-+	return sb->s_security + ipe_blobs.lbs_superblock;
-+}
-+
- static struct security_hook_list ipe_hooks[] __ro_after_init = {
- 	LSM_HOOK_INIT(bprm_check_security, ipe_bprm_check_security),
- 	LSM_HOOK_INIT(mmap_file, ipe_mmap_file),
- 	LSM_HOOK_INIT(file_mprotect, ipe_file_mprotect),
- 	LSM_HOOK_INIT(kernel_read_file, ipe_kernel_read_file),
- 	LSM_HOOK_INIT(kernel_load_data, ipe_kernel_load_data),
-+	LSM_HOOK_INIT(initramfs_populated, ipe_unpack_initramfs),
- };
- 
- /**
-diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
-index a1c68d0fc2e0..fb8f0ad168b3 100644
---- a/security/ipe/ipe.h
-+++ b/security/ipe/ipe.h
-@@ -12,5 +12,6 @@
- #define pr_fmt(fmt) "IPE: " fmt
- 
- #include <linux/lsm_hooks.h>
-+struct ipe_superblock *ipe_sb(const struct super_block *sb);
- 
- #endif /* _IPE_H */
-diff --git a/security/ipe/policy.h b/security/ipe/policy.h
-index fb906f41522b..fb48024bb63e 100644
---- a/security/ipe/policy.h
-+++ b/security/ipe/policy.h
-@@ -30,6 +30,8 @@ enum ipe_action_type {
- #define IPE_ACTION_INVALID __IPE_ACTION_MAX
- 
- enum ipe_prop_type {
-+	IPE_PROP_BOOT_VERIFIED_FALSE,
-+	IPE_PROP_BOOT_VERIFIED_TRUE,
- 	__IPE_PROP_MAX
- };
- 
-diff --git a/security/ipe/policy_parser.c b/security/ipe/policy_parser.c
-index 612839b405f4..3fc8fea55b95 100644
---- a/security/ipe/policy_parser.c
-+++ b/security/ipe/policy_parser.c
-@@ -265,6 +265,12 @@ static enum ipe_action_type parse_action(char *t)
- 	return match_token(t, action_tokens, args);
- }
- 
-+static const match_table_t property_tokens = {
-+	{IPE_PROP_BOOT_VERIFIED_FALSE,	"boot_verified=FALSE"},
-+	{IPE_PROP_BOOT_VERIFIED_TRUE,	"boot_verified=TRUE"},
-+	{IPE_PROP_INVALID,		NULL}
-+};
-+
- /**
-  * parse_property - Parse the property type given a token string.
-  * @t: Supplies the token string to be parsed.
-@@ -277,7 +283,34 @@ static enum ipe_action_type parse_action(char *t)
-  */
- static int parse_property(char *t, struct ipe_rule *r)
- {
--	return -EBADMSG;
-+	substring_t args[MAX_OPT_ARGS];
-+	struct ipe_prop *p = NULL;
-+	int rc = 0;
-+	int token;
-+
-+	p = kzalloc(sizeof(*p), GFP_KERNEL);
-+	if (!p)
-+		return -ENOMEM;
-+
-+	token = match_token(t, property_tokens, args);
-+
-+	switch (token) {
-+	case IPE_PROP_BOOT_VERIFIED_FALSE:
-+	case IPE_PROP_BOOT_VERIFIED_TRUE:
-+		p->type = token;
-+		break;
-+	default:
-+		rc = -EBADMSG;
-+		break;
-+	}
-+	if (rc)
-+		goto err;
-+	list_add_tail(&p->next, &r->props);
-+
-+	return rc;
-+err:
-+	kfree(p);
-+	return rc;
- }
- 
- /**
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
 -- 
 2.43.1
 
