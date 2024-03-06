@@ -1,105 +1,122 @@
-Received: from mail-oa1-f45.google.com (mail-oa1-f45.google.com [209.85.160.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9278113475A
-	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 17:25:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9EDBF135401
+	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 17:27:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709745946; cv=none; b=ZLPzuNJzHyLk1LkP3YQtoPdQYotSf7wyfou7gYmfqEVEunDjNTLeNcW0PbvzBWqTaD4O20LHb6ro81k71HrT9J3NeRqbPlqwtXzR9OOXeJKakdLtfQ8c9iQhP7Pskb7vDZ+XcYG+QRBXoRlWJzE963yYJYr5uQg4SwN63La6GHc=
+	t=1709746038; cv=none; b=jOePBtHu8J7qO9q+QgU/4ZNgXsi43cYBtGE4Htggsw5d+BAKOrewOHu02jI+RQyE3vZTMwJzqof5+6aLfHWExIcL6iEc2Q4uVUrRZdPkbgmjhGnITYiRBaEu4Lxe06leqVHKmST5oaApw7yYkiXKSEP4HGV9f5Nu/MY/DXrwzcw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709745946; c=relaxed/simple;
-	bh=8p2opZvkqwz13/KE3xtrCvYEBGR5Menz1ZsHlu33loo=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=jyZgMLXg0mWAS0a/qq1ymJ18Vdv2vAa/sNqNOrmPGq23xq0wDOPU1OjS5bJNxTbM2Qxdq4APRdRxj2lttOGPP7OPNgTlMmcneD8xzsLxTvr4+HDnh5pT0vBfFba4+fIEhTL0ULOCgJI3VxO5hn4q5N5KHSfAFCqUyamrzJKaXQg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.160.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-oa1-f45.google.com with SMTP id 586e51a60fabf-21e6be74db4so728269fac.2
-        for <dm-devel@lists.linux.dev>; Wed, 06 Mar 2024 09:25:44 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709745943; x=1710350743;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=lICbiutwJIIAg+5ET7ThLgtawqmnV2P0QQDIe0xrltM=;
-        b=NNDqbmEcE0vzEBBxlkiYSaLtXqZYquGBpl9Me1fo03gfegV6VyoNwHqhqvauw/TFx1
-         GT+fUC7jI+D9J1FhEaUHgvlHoq96buJkIBJIAVNp//OpNHziE3pdeDp3bgMVWHklgb0J
-         DzcRYjuEHsHQjOd1tVlNQpeqCxNgutlsyPKyY3o5bEpgslPIBH41Ol3zOj2X7sq7aZUS
-         uKV7vkhspVD6I8Rg9kEOD0rsQF4NCAbE1hvJ9b4m49WzYvPRh/ihs6kbR+/lZbURc9B9
-         9cttAEGV6MnRKauqaBMjKPljV3p9IdzW7kKcuiJj5YRX1GYCDQA6G/cAMfwBdHtp/Rtj
-         0QBw==
-X-Forwarded-Encrypted: i=1; AJvYcCUo8xjlR2Dm62WPTpC/1nhCOsxPnHEvTWqpudB9iJUMNX17LUk2ukGdxO6y3WNJTt7T2SX1DrcUZ+NwiyYWJZXqJxMqlXBOR/A=
-X-Gm-Message-State: AOJu0YyHNXinrl6eg/eoJt0pCmymQAy03xRQUVpK4IipjgI2DdMNZKqd
-	yeaAmSvs+LAn/wwv2vii/3iglAmSPB4LLwWWyGqT7OuvLf+OJb0MTkB+lhlQ5g==
-X-Google-Smtp-Source: AGHT+IEdsnL3H44CitlVgXc79s74rTtqtEN4ML5+/b1ZAmEVQMCdoGLTdYY8JEGFQDrqRWcv7J2kZw==
-X-Received: by 2002:a05:6870:ac12:b0:221:42a1:9457 with SMTP id kw18-20020a056870ac1200b0022142a19457mr5265846oab.9.1709745943643;
-        Wed, 06 Mar 2024 09:25:43 -0800 (PST)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id i8-20020a05620a0a0800b007883c9be0a9sm1108184qka.80.2024.03.06.09.25.42
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 06 Mar 2024 09:25:43 -0800 (PST)
-Date: Wed, 6 Mar 2024 12:25:42 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Mikulas Patocka <mpatocka@redhat.com>,
-	Vishal Verma <vishal.l.verma@intel.com>,
-	Dan Williams <dan.j.williams@intel.com>,
-	Dave Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>,
-	dm-devel@lists.linux.dev, nvdimm@lists.linux.dev,
-	linux-block@vger.kernel.org
-Subject: Re: [PATCH 3/3] dm-integrity: set max_integrity_segments in
- dm_integrity_io_hints
-Message-ID: <ZeinFsPEsajU__Iv@redhat.com>
-References: <20240306142739.237234-1-hch@lst.de>
- <20240306142739.237234-4-hch@lst.de>
+	s=arc-20240116; t=1709746038; c=relaxed/simple;
+	bh=NXr0AnHeJ97mB7/cLYhgjSBhdHMvpbRYcBqUDM/Rcxg=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=bYJJpSqRfUlfzyxMKuZ80k71/lrztZwoD4c3ILpHo2LDbHCyFurJXyVg8V4UWj9/5WDad1zmko4UkTqXzell66eSCCpkSFhognXGWWsE68+xvLzg0cdU/bQwQDEUUfC7oP3F+rrD01MWSxNTjCbBs83hQPlPr+d6jByXm8Hrlzw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=aAvmeXFZ; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="aAvmeXFZ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3ACE8C43390
+	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 17:27:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1709746038;
+	bh=NXr0AnHeJ97mB7/cLYhgjSBhdHMvpbRYcBqUDM/Rcxg=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=aAvmeXFZTMCSFMo8tueh0lySo+/H3qW1q88gVuWrTUqfcdoGg4ChCqnjZDAX0gOaK
+	 ogtbS9VxYSXmMXjnwq+xbENT6Y5miMlgz+m0uuuqrO9oVpLtBYmwrN8GKwn8EMr/Yw
+	 WijZibmq/j+lJB6yp4uaSJJfMalXr+SoPLpRGYuQNUonbPr2OPksYhxK5iubghP4Yq
+	 5JVPZF3Dettyoyk1b3ZHYHfLA6IFHobB9AVSs8fNlMqkBmnVzAi/uhXH6KDWdY946i
+	 PywyV96jvXpyTzl/cS7dveJh3OKumoX5I0Ltg88gEIjRY5r+H6ccRAYkI+hjdlhtLe
+	 DjGUgQ0MijgoA==
+Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-51340e89df1so4792219e87.1
+        for <dm-devel@lists.linux.dev>; Wed, 06 Mar 2024 09:27:18 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCUypMTiBzVQ7BUmKiQXaCeejDkuCTnFmSYWzZVsK9u9RUtQBp7kcP/+1Gq46c/E5XqzTOtPENkmWSiIle/XfDIYQSU99a/kVFk=
+X-Gm-Message-State: AOJu0YwM9udHXZNtM4E592sIO/T6rb4uV/8TEoPKVPQT+pUHXgLAb5Yg
+	d1C6q7b8/VL7BIVduQ9uYrIYdwHxv859jpAcAe+OxBAQ+CJDYX3iXAaTa5VJCWNUreuKGB4tOVF
+	vSjdfxA7fnviPID4QqkS/8Ksy5cQ=
+X-Google-Smtp-Source: AGHT+IEoGIeRZKhGAs5/mTEr+/WPXdIJNReO22W+FhvXB3BN0aift3eTu8KVTFOVIBGJRT7VKnE39JfEE5ocXmXXWu4=
+X-Received: by 2002:a19:f014:0:b0:512:f892:4985 with SMTP id
+ p20-20020a19f014000000b00512f8924985mr3568248lfc.0.1709746036370; Wed, 06 Mar
+ 2024 09:27:16 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240306142739.237234-4-hch@lst.de>
+References: <1C22EE73-62D9-43B0-B1A2-2D3B95F774AC@fb.com> <Zehh9BvpfsG0tAEs@infradead.org>
+In-Reply-To: <Zehh9BvpfsG0tAEs@infradead.org>
+From: Song Liu <song@kernel.org>
+Date: Wed, 6 Mar 2024 09:27:04 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW4jfcYqpoPGT8gtyZsuYjLsWodC8UM9pL0dtnc4GSoumQ@mail.gmail.com>
+Message-ID: <CAPhsuW4jfcYqpoPGT8gtyZsuYjLsWodC8UM9pL0dtnc4GSoumQ@mail.gmail.com>
+Subject: Re: [GIT PULL] md-6.9 20240305
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Song Liu <songliubraving@meta.com>, Jens Axboe <axboe@kernel.dk>, 
+	linux-raid <linux-raid@vger.kernel.org>, 
+	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, Xiao Ni <xni@redhat.com>, 
+	Mike Snitzer <snitzer@kernel.org>, Yu Kuai <yukuai3@huawei.com>, 
+	Yu Kuai <yukuai1@huaweicloud.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
+	Mikulas Patocka <mpatocka@redhat.com>, Junxiao Bi <junxiao.bi@oracle.com>, Dan Moulding <dan@danm.net>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Wed, Mar 06 2024 at  9:27P -0500,
-Christoph Hellwig <hch@lst.de> wrote:
+Hi Christoph,
 
-> Set max_integrity_segments with the other queue limits instead
-> of updating it later.  This also uncovered that the driver is trying
-> to set the limit to UINT_MAX while max_integrity_segments is an
-> unsigned short, so fix it up to use USHRT_MAX instead.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/md/dm-integrity.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index c5f03aab455256..a2e5cfe84565ae 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -3419,6 +3419,7 @@ static void dm_integrity_io_hints(struct dm_target *ti, struct queue_limits *lim
->  		blk_limits_io_min(limits, ic->sectors_per_block << SECTOR_SHIFT);
->  		limits->dma_alignment = limits->logical_block_size - 1;
->  	}
-> +	limits->max_integrity_segments = USHRT_MAX;
->  }
->  
->  static void calculate_journal_section_size(struct dm_integrity_c *ic)
-> @@ -3586,7 +3587,6 @@ static void dm_integrity_set(struct dm_target *ti, struct dm_integrity_c *ic)
->  	bi.interval_exp = ic->sb->log2_sectors_per_block + SECTOR_SHIFT;
->  
->  	blk_integrity_register(disk, &bi);
-> -	blk_queue_max_integrity_segments(disk->queue, UINT_MAX);
->  }
->  
->  static void dm_integrity_free_page_list(struct page_list *pl)
-> -- 
-> 2.39.2
-> 
+On Wed, Mar 6, 2024 at 4:30=E2=80=AFAM Christoph Hellwig <hch@infradead.org=
+> wrote:
+>
+> Hi Song,
+>
+> can you also send the queue limits changes on?  I'd really like to
+> have all non-scsi queue limits updates in 6.9 and have been working
+> hard on that.
 
-I've picked this up for 6.9:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.9&id=f30e5ed1306be8a900b33317bc429dd3794d81a1
+Sure! Here it is.
 
-Thanks.
+Jens, could you please also pull the following changes.
+
+This set by Christoph converts md to the atomic queue limits update API.
+
+Thanks,
+Song
+
+
+The following changes since commit 3a889fdce7e8927a7d81d11ca3d26608b3be1c31=
+:
+
+  Merge branch 'dmraid-fix-6.9' into md-6.9 (2024-03-05 12:53:55 -0800)
+
+are available in the Git repository at:
+
+  https://git.kernel.org/pub/scm/linux/kernel/git/song/md.git
+tags/md-6.9-20240306
+
+for you to fetch changes up to dd27a84b06aa9ea6a94b0f3e59dc768f981962e1:
+
+  block: remove disk_stack_limits (2024-03-06 08:59:54 -0800)
+
+----------------------------------------------------------------
+Christoph Hellwig (11):
+      md: add a mddev_trace_remap helper
+      md: add a mddev_add_trace_msg helper
+      md: add a mddev_is_dm helper
+      md: add queue limit helpers
+      md/raid0: use the atomic queue limit update APIs
+      md/raid1: use the atomic queue limit update APIs
+      md/raid5: use the atomic queue limit update APIs
+      md/raid10: use the atomic queue limit update APIs
+      md: don't initialize queue limits
+      md: remove mddev->queue
+      block: remove disk_stack_limits
+
+ block/blk-settings.c   |  24 --------
+ drivers/md/md-bitmap.c |   9 +--
+ drivers/md/md.c        |  89 +++++++++++++++++++++--------
+ drivers/md/md.h        |  28 ++++++++-
+ drivers/md/raid0.c     |  42 +++++++-------
+ drivers/md/raid1.c     |  51 ++++++++---------
+ drivers/md/raid10.c    |  85 ++++++++++++++-------------
+ drivers/md/raid5-ppl.c |   3 +-
+ drivers/md/raid5.c     | 174
++++++++++++++++++++++++++++-----------------------------
+ include/linux/blkdev.h |   2 -
+ 10 files changed, 265 insertions(+), 242 deletions(-)
