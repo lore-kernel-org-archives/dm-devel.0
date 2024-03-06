@@ -1,105 +1,51 @@
-Received: from mail-io1-f50.google.com (mail-io1-f50.google.com [209.85.166.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DEAB13BADA
-	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 18:16:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF3411B279;
+	Wed,  6 Mar 2024 21:57:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709748994; cv=none; b=i7sF/sW7AMK3XrL0zkWpS8LKSOurfFTKwPFnNS07jwJF3btO731FRTxoWiZbZcfEUbyFsEkcycZzvOun4YhjmnmNXjVHgQK3hT48IdDH2Ilus8NhbTp3HwWxOB9MEoD98IwOOSjMrtIyMahw7vcRTMYYIXPCVyI0gzayC3TnhWk=
+	t=1709762253; cv=none; b=oEM0QWYRTgbRR0JPvQGPLRifThrtuMPGrVFNhebDVbxIfN/8fPsc1WUjaElJcw5Ox8+QYUXBpzrwkTZRzIHpLKsutaYdZPwwXAHgCZKZWKuqoIR4wSk/7t39+jHORS8pMOt5xbX1X+siMebr+kMn2CAlYkNCozewv+pVc4x4RkI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709748994; c=relaxed/simple;
-	bh=pbEvCseieK6L2c3rcEGEsvWRILJg0nDOUunX4PpiElE=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=RQ/ObZIuQK06Sc9S43bARRyNEIm2Fis95xLiaQQoNxOzIGio/pNsGUNcxQDYclHbdXHf//2QG3sNh8Ffp6RN2Zo+rj+7YtX9W+S+o086Yv6bIYTnpx90smeKRrL64qIfpnlBirABZAnskzo5smdWRc4zx6FCldZIKdAI4nEEq04=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=ScXyIBZY; arc=none smtp.client-ip=209.85.166.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="ScXyIBZY"
-Received: by mail-io1-f50.google.com with SMTP id ca18e2360f4ac-7c876b9d070so1450339f.0
-        for <dm-devel@lists.linux.dev>; Wed, 06 Mar 2024 10:16:31 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1709748990; x=1710353790; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=+l/MrEAlbBKrCNbsFNy2QYcZrNF0TaMhrFqasjtFp7E=;
-        b=ScXyIBZYIhTGzwQWALesciYTdVaMpSTrxsxp6SjhPjMGkXE3oh9aq/YzklO/enEuhy
-         nAW1IuQjpPJ8QuEr2+iJIUZT8P8dIzMJfvz7+kviBHcm8LDEsRw8QUg00ZSFmcOG7uCD
-         TJ7oPAzD6tdD02XzfZwnDOqMdbzR+aFq1eBST97gcqlzT81uPxBp2TAKZcQhOjcfJ4ZY
-         2AsU7RICVOgke3Cv2oQ4iQpJCXP3jU73fNeKOz/3SzJ2rN++BomU+NozXydahzI80E5I
-         Owss2hjQiurB6yAw2LCR56ZQojD0Mm0jpZgy7YKQFhZ2DZ7v96tvn+aNH4Ylaj99+zxk
-         f8bA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709748990; x=1710353790;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=+l/MrEAlbBKrCNbsFNy2QYcZrNF0TaMhrFqasjtFp7E=;
-        b=bI9SojHjcQU2sFOeQOrkRFNyR81O7aMTkAX9G7741rddroa+aZQK1Ah+K51Y5S6DcD
-         L6ie0WcbVTI+trFSYRVgiNdxiB3e6TNsBrhKiWPl1rYukuu9PTVuzPAUOR33x4jbDKj5
-         tMhZSCOqq5ojG2rdMkhVFBIcJeBTu/Uzb7U9v0RvLmVUKt+sMNkNtFULpkNRXFOMzGFo
-         vqjHn6aU6/bqkW9BpVNxh2KxO9dBcl3tq3uV3liKKcqX87Z+vNq4H3oI4Q/efuQ4X0F0
-         2bsE48Ops5xkhiVVZ3y/R40XIcb4EJGzveagHeMlbAwxXyGfk3rZxF8Qv3Lz5FILrZB6
-         E8+Q==
-X-Forwarded-Encrypted: i=1; AJvYcCUmsPBfKwUr+TUFPPmd9BkjbV00pqrQ5CBWMgQaAJBCLze1G8XOy4xUN2erZSTrxPiCfEGL0a81E96vQlm2hEIju7cxlyL8E1U=
-X-Gm-Message-State: AOJu0YyKaWIVMMZo6kztTBwLux4cZ+n+9m/LWJnpgZn0wl4pEWtqpflL
-	/k+3jA/IK5BG98L91GLYxcpSoHlIFQLn7d4wFkZJFO+NeApu9Orv5LCBn2lr/Q0=
-X-Google-Smtp-Source: AGHT+IGMyqTag7tmYNyL6UvZ56l5Z8viSUuBX/9fvmY/Jvy4SmbtZSycErlRsDHsaibl8qfkfSpXww==
-X-Received: by 2002:a05:6e02:19cd:b0:365:fe09:6431 with SMTP id r13-20020a056e0219cd00b00365fe096431mr298093ill.3.1709748990595;
-        Wed, 06 Mar 2024 10:16:30 -0800 (PST)
-Received: from [192.168.1.116] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id v4-20020a056e020f8400b00365cdc51c7esm3507366ilo.30.2024.03.06.10.16.29
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 06 Mar 2024 10:16:30 -0800 (PST)
-Message-ID: <ba70eba5-a23c-4364-824b-83a70e26d0cc@kernel.dk>
-Date: Wed, 6 Mar 2024 11:16:29 -0700
+	s=arc-20240116; t=1709762253; c=relaxed/simple;
+	bh=Z7iU/ZzNOLLbK3i/Dg9ssyRtd9kA3yaWRFZz6DBw2DY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Rf5FiV/m2JpTvfr67pdvCaiBhEXkd2+MfZ6rf5H8BrTvNlk3b0lEhu6a6AMOEp/1N1GhpEGaLvktMjj1B132Fzl6CsjqHHjd1UYG79eMGJPAzkt5HAOpXIEY096VszjCiyVfv5LRIKkrmnuzNCh8GtghpX/JK2zbfbXqOwhW7tw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 4B71C68C4E; Wed,  6 Mar 2024 22:57:26 +0100 (CET)
+Date: Wed, 6 Mar 2024 22:57:26 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Vishal Verma <vishal.l.verma@intel.com>,
+	Dan Williams <dan.j.williams@intel.com>,
+	Dave Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>,
+	dm-devel@lists.linux.dev, nvdimm@lists.linux.dev,
+	linux-block@vger.kernel.org
+Subject: Re: [PATCH 3/3] dm-integrity: set max_integrity_segments in
+ dm_integrity_io_hints
+Message-ID: <20240306215726.GA8529@lst.de>
+References: <20240306142739.237234-1-hch@lst.de> <20240306142739.237234-4-hch@lst.de> <ZeinFsPEsajU__Iv@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [GIT PULL] md-6.9 20240305
-Content-Language: en-US
-To: Song Liu <song@kernel.org>, Christoph Hellwig <hch@infradead.org>
-Cc: Song Liu <songliubraving@meta.com>,
- linux-raid <linux-raid@vger.kernel.org>,
- "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
- Xiao Ni <xni@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Yu Kuai <yukuai3@huawei.com>, Yu Kuai <yukuai1@huaweicloud.com>,
- Benjamin Marzinski <bmarzins@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>, Junxiao Bi <junxiao.bi@oracle.com>,
- Dan Moulding <dan@danm.net>
-References: <1C22EE73-62D9-43B0-B1A2-2D3B95F774AC@fb.com>
- <Zehh9BvpfsG0tAEs@infradead.org>
- <CAPhsuW4jfcYqpoPGT8gtyZsuYjLsWodC8UM9pL0dtnc4GSoumQ@mail.gmail.com>
-From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <CAPhsuW4jfcYqpoPGT8gtyZsuYjLsWodC8UM9pL0dtnc4GSoumQ@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ZeinFsPEsajU__Iv@redhat.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On 3/6/24 10:27 AM, Song Liu wrote:
-> Hi Christoph,
-> 
-> On Wed, Mar 6, 2024 at 4:30?AM Christoph Hellwig <hch@infradead.org> wrote:
->>
->> Hi Song,
->>
->> can you also send the queue limits changes on?  I'd really like to
->> have all non-scsi queue limits updates in 6.9 and have been working
->> hard on that.
-> 
-> Sure! Here it is.
-> 
-> Jens, could you please also pull the following changes.
-> 
-> This set by Christoph converts md to the atomic queue limits update API.
+On Wed, Mar 06, 2024 at 12:25:42PM -0500, Mike Snitzer wrote:
+> I've picked this up for 6.9:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.9&id=f30e5ed1306be8a900b33317bc429dd3794d81a1
 
-You could've just replied to the thread with "Reviewed-by" like I
-suggested, would've saved both of us some time! Anyway, pulled.
-
--- 
-Jens Axboe
+A yes, dm was already passing the limits around so there is no
+dependency on the block changes.  The dm tree is defintively the
+better place then.
 
