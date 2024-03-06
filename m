@@ -1,167 +1,107 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B1D82135A5F
-	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 16:00:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F0D5D111A3
+	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 16:39:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709740815; cv=none; b=aDrWinCwrvqW+MXtbvT42V7nJBGoyq/WLgY/J6YEGtSGb7QYwUvGMXJ+KrJxexCrDH2cENNzFleKbBr/FMQezA3AjNvCmBH9eUugL1JsMGwJsUbIDz4MceX9hVNT7jRUEG6kyI/XVS00hw0h6wKX0ELfIwKEakUSngXv5brRF4w=
+	t=1709743200; cv=none; b=A9j8yj4IvexJYZTJv+pAJ4TV4cRDjEaFqVlI5fc9d+8cqmyOKa6uDiOAlH7jHnxdq4XTn1uIYGOuNKd5kPXhGaXM4IkgXBE2V4sEjUAr2UiltlyEgzhBqtRRxvJDt/hSUzz6aapQQFDPLXTu4KF55TxJ3947XUf6xEmpdEgISd4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709740815; c=relaxed/simple;
-	bh=yErQmxsqshrBcM8l6AwNJI7JsDiBKwPq6xd5fRjHqwk=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Tz++eTxHwgnosbvPRCO4FiignpoRgLCNEB1lxoiAkNdP5AN4cDfol+tXm5CCozCFIQC2d8Mrzb4VPPcCrNLnV8fcyZ+UN1NjXUhhK2c/2x5aGssSvN7vqlCPluN80Fl5h/hLHA5BQcA2PmEifQqzIxzTn+0/gOko11ztAW666A0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KFuvvBpI; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1709743200; c=relaxed/simple;
+	bh=f2HncGmBSaycsoO1hVr4ckiuD3QmlN8sKiSzANUFi4s=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=LquKz55gSZrHXG7RppXZzpQHY/RHTc3mNM/7Y2OF/PMPjOwXGIzEAcT7dQ5GhgAADPZr/X4o0XJ+wHEgMq//vWl9leG8nifjfBASkvFGHZG9xXPb3vleNcJBKxt439Y+SZ6I83PBNB+46E6Kg3XFswn/TreNWJU2OAfy+ke94do=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=l2//RLvO; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KFuvvBpI"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1709740812;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wIIdw8ckHvVn5igXTzUjHRLg6rvzXoUvv9uYoYgw/8Q=;
-	b=KFuvvBpItsmhlG2GTAcjhb1Mno05fHv1PWnvcXvp0Ef/A+2qi3NoUsOUB6Nypfkn/M086K
-	RKK3jvQWTvGV1saLTWJ3z/yhyqAQONPzkaAC2E8U6tbvSgS+KDi3lA1zz8KGdseXLev7nZ
-	+eGOYk5HSAi65PuYngOGzjUjTtHATc4=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-318-VkHvEyVUPY-rUx7UgScF8w-1; Wed,
- 06 Mar 2024 11:00:08 -0500
-X-MC-Unique: VkHvEyVUPY-rUx7UgScF8w-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 184761C54062;
-	Wed,  6 Mar 2024 16:00:08 +0000 (UTC)
-Received: from fedora (unknown [10.72.116.47])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6165D200AD5B;
-	Wed,  6 Mar 2024 16:00:01 +0000 (UTC)
-Date: Wed, 6 Mar 2024 23:59:57 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Mike Snitzer <snitzer@kernel.org>,
-	Patrick Plenefisch <simonpatp@gmail.com>
-Cc: Goffredo Baroncelli <kreijack@inwind.it>, linux-kernel@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>, Chris Mason <clm@fb.com>,
-	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
-	regressions@lists.linux.dev, dm-devel@lists.linux.dev,
-	linux-btrfs@vger.kernel.org
-Subject: Re: LVM-on-LVM: error while submitting device barriers
-Message-ID: <ZeiS/bjJaRcrerWW@fedora>
-References: <CAOCpoWc_HQy4UJzTi9pqtJdO740Wx5Yd702O-mwXBE6RVBX1Eg@mail.gmail.com>
- <CAOCpoWf3TSQkUUo-qsj0LVEOm-kY0hXdmttLE82Ytc0hjpTSPw@mail.gmail.com>
- <CAOCpoWeNYsMfzh8TSnFqwAG1BhAYnNt_J+AcUNqRLF7zmJGEFA@mail.gmail.com>
- <672e88f2-8ac3-45fe-a2e9-730800017f53@libero.it>
- <CAOCpoWexiuYLu0fpPr71+Uzxw_tw3q4HGF9tKgx5FM4xMx9fWA@mail.gmail.com>
- <a1e30dab-dfde-418e-a0dd-3e294838e839@inwind.it>
- <CAOCpoWeB=2j+n+5K5ytj2maZxdrV80cxJcM5CL=z1bZKgpXPWQ@mail.gmail.com>
- <a783e5ed-db56-4100-956a-353170b1b7ed@inwind.it>
- <ZedaKUge-EBo4CuT@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="l2//RLvO"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 90061C43399
+	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 16:39:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1709743199;
+	bh=f2HncGmBSaycsoO1hVr4ckiuD3QmlN8sKiSzANUFi4s=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=l2//RLvO+FP5yOMMBdksci8jS3e1c3vrbsnRNekaD60yrh9AO1oKZUk8wryDw8ibS
+	 +GHbDMPAXZu3PtuD3PzTQrDjE4SLTsVbHie5UPNKjHQ9k0vMM/vhONh9+YeeJsMSRw
+	 IV5tVZn502X++dVY0R2em9HNPNBnUBp/xr1sJi1/pATeikwsb+fQ83GiAOXNZyMaJp
+	 9UbW9lJVyfmmDhSiZKmtdKve7OPpraCEdgQZEcubdBw/VABDBuv7gT4SD3H2FaTUcU
+	 D4U/LFOYiX4BGjhbfGoxeeRR6aEIQFTNHpYIRYkcNi3f/fKHcs/gypxHCLRQ5H/5tk
+	 NKZKhPIKrGRvg==
+Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-51320ca689aso8618155e87.2
+        for <dm-devel@lists.linux.dev>; Wed, 06 Mar 2024 08:39:59 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCVWhI136cgTspAkvOaOgnwys/nEtFSZldR8B4mv6j1kHd1NtuDkxFgg2ECKwczlZogxMPp0cnaozzBhpfuzPQzNoQ0mORjVVvw=
+X-Gm-Message-State: AOJu0YwQLmgpO8exfn4N3v2FHyR3tlftqnyrglVAwfH9ImnSzJ9q1oz4
+	M6BSECgbDj31T5z1reYXKTj0frG/SDOyG0GvA1xyFHBwLtxJW26TjpjdLsjIcqCVHFOwCa94Sez
+	VK5Bkv9i06pLMuMoFW2bRvJ1KYVo=
+X-Google-Smtp-Source: AGHT+IGwwONob6k6UH3ndcbEHIe+4OP8oSPbZ3RrDc/odjWz6ggdxosj2uvVJehSNDacTwM3tomgiciaJXqEBTtXc1Y=
+X-Received: by 2002:a05:6512:48c3:b0:512:a9b7:c637 with SMTP id
+ er3-20020a05651248c300b00512a9b7c637mr3568369lfb.29.1709743197678; Wed, 06
+ Mar 2024 08:39:57 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <ZedaKUge-EBo4CuT@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+References: <20240305072306.2562024-1-yukuai1@huaweicloud.com>
+ <20240305072306.2562024-3-yukuai1@huaweicloud.com> <c0e648ea-d73e-4805-a2bb-b02ddd3ca4e2@molgen.mpg.de>
+ <9950cb96-ac8b-d7dd-56a0-133709f51b5f@huaweicloud.com> <f9d3cad9-6d7d-4aa1-9592-79300812dce4@molgen.mpg.de>
+In-Reply-To: <f9d3cad9-6d7d-4aa1-9592-79300812dce4@molgen.mpg.de>
+From: Song Liu <song@kernel.org>
+Date: Wed, 6 Mar 2024 08:39:45 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW5KC1Xnz1xkN8A+beu_j+Qumf3f+d9eA2pFzd4WAsMdyw@mail.gmail.com>
+Message-ID: <CAPhsuW5KC1Xnz1xkN8A+beu_j+Qumf3f+d9eA2pFzd4WAsMdyw@mail.gmail.com>
+Subject: Re: [PATCH md-6.8 v2 2/9] md: export helpers to stop sync_thread
+To: Paul Menzel <pmenzel@molgen.mpg.de>
+Cc: Yu Kuai <yukuai1@huaweicloud.com>, xni@redhat.com, zkabelac@redhat.com, 
+	agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
+	dm-devel@lists.linux.dev, heinzm@redhat.com, jbrassow@redhat.com, 
+	neilb@suse.de, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
+	yi.zhang@huawei.com, yangerkun@huawei.com, yukuai3@huawei.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, Mar 05, 2024 at 12:45:13PM -0500, Mike Snitzer wrote:
-> On Thu, Feb 29 2024 at  5:05P -0500,
-> Goffredo Baroncelli <kreijack@inwind.it> wrote:
-> 
-> > On 29/02/2024 21.22, Patrick Plenefisch wrote:
-> > > On Thu, Feb 29, 2024 at 2:56 PM Goffredo Baroncelli <kreijack@inwind.it> wrote:
-> > > > 
-> > > > > Your understanding is correct. The only thing that comes to my mind to
-> > > > > cause the problem is asymmetry of the SATA devices. I have one 8TB
-> > > > > device, plus a 1.5TB, 3TB, and 3TB drives. Doing math on the actual
-> > > > > extents, lowerVG/single spans (3TB+3TB), and
-> > > > > lowerVG/lvmPool/lvm/brokenDisk spans (3TB+1.5TB). Both obviously have
-> > > > > the other leg of raid1 on the 8TB drive, but my thought was that the
-> > > > > jump across the 1.5+3TB drive gap was at least "interesting"
-> > > > 
-> > > > 
-> > > > what about lowerVG/works ?
-> > > > 
-> > > 
-> > > That one is only on two disks, it doesn't span any gaps
-> > 
-> > Sorry, but re-reading the original email I found something that I missed before:
-> > 
-> > > BTRFS error (device dm-75): bdev /dev/mapper/lvm-brokenDisk errs: wr
-> > > 0, rd 0, flush 1, corrupt 0, gen 0
-> > > BTRFS warning (device dm-75): chunk 13631488 missing 1 devices, max
-> >                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> > > tolerance is 0 for writable mount
-> > > BTRFS: error (device dm-75) in write_all_supers:4379: errno=-5 IO
-> > > failure (errors while submitting device barriers.)
-> > 
-> > Looking at the code, it seems that if a FLUSH commands fails, btrfs
-> > considers that the disk is missing. The it cannot mount RW the device.
-> > 
-> > I would investigate with the LVM developers, if it properly passes
-> > the flush/barrier command through all the layers, when we have an
-> > lvm over lvm (raid1). The fact that the lvm is a raid1, is important because
-> > a flush command to be honored has to be honored by all the
-> > devices involved.
+Hi Paul,
 
-Hello Patrick & Goffredo,
+Thanks for reviewing the patch!
 
-I can trigger this kind of btrfs complaint by simulating one FLUSH failure.
+On Wed, Mar 6, 2024 at 7:10=E2=80=AFAM Paul Menzel <pmenzel@molgen.mpg.de> =
+wrote:
+>
+> Dear Kuai,
+>
+>
+> Am 05.03.24 um 09:13 schrieb Yu Kuai:
+>
+> > =E5=9C=A8 2024/03/05 16:08, Paul Menzel =E5=86=99=E9=81=93:
+>
+> >> Am 05.03.24 um 08:22 schrieb Yu Kuai:
+> >>> From: Yu Kuai <yukuai3@huawei.com>
+> >>>
+> >>> The new heleprs will be used in dm-raid in later patches to fix
+> >>
+> >> hel*pe*rs
+> >>
+> >>> regressions and prevent calling md_reap_sync_thread() directly.
+> >>
+> >> Please list the new functions.
+> >>
+> >> 1.  md_idle_sync_thread(struct mddev *mddev);
+> >> 2.  md_frozen_sync_thread(struct mddev *mddev);
+> >> 3.  md_unfrozen_sync_thread(struct mddev *mddev);
+> >>
+> >> I do not like the naming so much. `md_reap_sync_thread()` has the verb
+> >> in imperative mood. At least myself, I would not know what the
+> >> functions do exactly without looking at the implementation.
+> >
+> > Thanks for the suggestions, I'm not that good at naming :(
+> >
+> > Usually I'll send a new version with updated naming, however, we must
+> > merge this set ASAP now, perhaps can we live with this for now?
+>
+> Fine by me. Maybe when applying the typo can be fixed, and the naming
+> than later.
 
-If you can reproduce this issue easily, please collect log by the
-following bpftrace script, which may show where the flush failure is,
-and maybe it can help to narrow down the issue in the whole stack.
+Yes, I did exactly this when applying the patches, but forgot to mention it
+here.
 
-
-#!/usr/bin/bpftrace
-
-#ifndef BPFTRACE_HAVE_BTF
-#include <linux/blkdev.h>
-#endif
-
-kprobe:submit_bio_noacct,
-kprobe:submit_bio
-/ (((struct bio *)arg0)->bi_opf & (1 << __REQ_PREFLUSH)) != 0 /
-{
-	$bio = (struct bio *)arg0;
-	@submit_stack[arg0] = kstack;
-	@tracked[arg0] = 1;
-}
-
-kprobe:bio_endio
-/@tracked[arg0] != 0/
-{
-	$bio = (struct bio *)arg0;
-
-	if (($bio->bi_flags & (1 << BIO_CHAIN)) && $bio->__bi_remaining.counter > 1) {
-		return;
-	}
-
-	if ($bio->bi_status != 0) {
-		printf("dev %s bio failed %d, submitter %s completion %s\n",
-			$bio->bi_bdev->bd_disk->disk_name,
-			$bio->bi_status, @submit_stack[arg0], kstack);
-	} 
-	delete(@submit_stack[arg0]);
-	delete(@tracked[arg0]);
-}
-
-END {
-	clear(@submit_stack);
-	clear(@tracked);
-}
-
-
-
-Thanks, 
-Ming
-
+Song
