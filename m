@@ -1,106 +1,167 @@
-Received: from mail-io1-f50.google.com (mail-io1-f50.google.com [209.85.166.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA4171E488
-	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 15:29:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B1D82135A5F
+	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 16:00:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709738947; cv=none; b=hV2A40PdEsX5hgKyMT+P/N9LCi1TRDYDNWUNezVhv2ourWZhHyCtx28Q2cRrxh74xGJuCBGdrKZInNoFtjR73DdO+4EsXCSaOl9Ng5snwCIMAIeYNnoynDISs2isjblkeyRPlBiK4pwb/oJVTNCfhngP6HYPNYk7tFqyWVCBenw=
+	t=1709740815; cv=none; b=aDrWinCwrvqW+MXtbvT42V7nJBGoyq/WLgY/J6YEGtSGb7QYwUvGMXJ+KrJxexCrDH2cENNzFleKbBr/FMQezA3AjNvCmBH9eUugL1JsMGwJsUbIDz4MceX9hVNT7jRUEG6kyI/XVS00hw0h6wKX0ELfIwKEakUSngXv5brRF4w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709738947; c=relaxed/simple;
-	bh=VhXw0RGdwJ3yBwNfC77fS+QJ5ba/tqo/u1fSxdI9gVs=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=CMeMNuiqtZDeMzfCgpLpmYrfS3O7n+r3yKVEbBX1D2124KcE0pplzcz4WQxsauU7GuQ5Z+40/+s3DBpK005rPr17mMQAaGt4MJSewG3PuV7Rd+RH6PlWa4ssPZ7q+H6NuHvrLYCdJDvMBazwACXnL3Tl4kwpgSvE3qB6d2EQVG4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=cIqTOVew; arc=none smtp.client-ip=209.85.166.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1709740815; c=relaxed/simple;
+	bh=yErQmxsqshrBcM8l6AwNJI7JsDiBKwPq6xd5fRjHqwk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Tz++eTxHwgnosbvPRCO4FiignpoRgLCNEB1lxoiAkNdP5AN4cDfol+tXm5CCozCFIQC2d8Mrzb4VPPcCrNLnV8fcyZ+UN1NjXUhhK2c/2x5aGssSvN7vqlCPluN80Fl5h/hLHA5BQcA2PmEifQqzIxzTn+0/gOko11ztAW666A0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KFuvvBpI; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="cIqTOVew"
-Received: by mail-io1-f50.google.com with SMTP id ca18e2360f4ac-7c49c979b5dso102478639f.1
-        for <dm-devel@lists.linux.dev>; Wed, 06 Mar 2024 07:29:05 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1709738945; x=1710343745; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=HuiHolB1Euh2agtRTRDo+ej1B7ApR1A/nMWa1zjFtyM=;
-        b=cIqTOVewhegz+MTVq69YQyW7uMlOWaW5mpmVcYt/OCj9a+bScpu86WMrRbxV8pv9Td
-         CjHUufGoRSDS/utpl+uAs59X1O23bh4wEQ4Iy7kRO9efnH2Hy12uwGB+RclhCqGZn/rn
-         oGUClxkGX9SzbNiH9OuZusLao3HPGzGWa379r1FUxVz8dO4jn5jY9qFt1BejP57rCaxz
-         9QA4BlMktxU9THgIfKHKSLJeW5kOv6iu4f8bdEd93Q3yb5AI3innf54mh+q4AXGHeved
-         b2fdsO70il1Fb825lKMGdY4IJ7yJ7CQ2HXv8kb7MDKLdekNf2Iq5AyFoiTDaFp221BN/
-         M9bQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1709738945; x=1710343745;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=HuiHolB1Euh2agtRTRDo+ej1B7ApR1A/nMWa1zjFtyM=;
-        b=Dz9sxm0LysK3HeoSoKHy+e02fybW01PVhhqBWQsnnuV/5FofSrsF7QV/EvbF8n4qxq
-         IBaCiSn3FEmfo80JoG+V+L/rCaU18EreW/RDIm/d6LorCRxytylIDQX1H+M7m+XSvLjq
-         Y8b6Q6DSpBcKhin7RUubVaYTTcTTMxnlYrgPr4Y2nMasMc7bSQO2y6uOwsYozrek0dOI
-         CDlueAk7Mhz4hpHD74NxB+Usf6lxM/1uYbRg+31cKw11BDznBpQFUBA/UvETq48Wc7q6
-         HbMbAzyVbdp5vdbTyde6NovKdXSDatvHXoF12BGFeg9Sz7Ald4RateqkgSgbXZp7mjhy
-         QFag==
-X-Forwarded-Encrypted: i=1; AJvYcCV0Nuv//ZK3ZNDd1KfcXct4HUxeS3XED72P1e7h4KI8bGDbuMlanBu6o9vHYz46Wypu4gKltfkEQsltolgxB9F66ois9P113qY=
-X-Gm-Message-State: AOJu0YyiYmqVblOg0gcCy0NADcUyE9DDnW9Hksi5G9P8m5KM4v1rvSa2
-	5/zx4Y8+ZsQjM3EGMuViNVdzJ84tREmGhL3PCuQYDT9ikQGF36cyX/fWQ6llTzY=
-X-Google-Smtp-Source: AGHT+IFfFfT6TfzD8hpsFF9DRyNIvUMsP7yklx651z5MiIECpjaDta7a2YFi5GznQsk+b7UFUUVBlQ==
-X-Received: by 2002:a5d:990c:0:b0:7c8:789b:b3d8 with SMTP id x12-20020a5d990c000000b007c8789bb3d8mr1868870iol.0.1709738945072;
-        Wed, 06 Mar 2024 07:29:05 -0800 (PST)
-Received: from [192.168.1.116] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id z20-20020a056638241400b00474e0c312acsm2291532jat.49.2024.03.06.07.29.03
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 06 Mar 2024 07:29:04 -0800 (PST)
-Message-ID: <b4731092-7028-4852-8186-5bc805bd1ba6@kernel.dk>
-Date: Wed, 6 Mar 2024 08:29:03 -0700
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KFuvvBpI"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1709740812;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=wIIdw8ckHvVn5igXTzUjHRLg6rvzXoUvv9uYoYgw/8Q=;
+	b=KFuvvBpItsmhlG2GTAcjhb1Mno05fHv1PWnvcXvp0Ef/A+2qi3NoUsOUB6Nypfkn/M086K
+	RKK3jvQWTvGV1saLTWJ3z/yhyqAQONPzkaAC2E8U6tbvSgS+KDi3lA1zz8KGdseXLev7nZ
+	+eGOYk5HSAi65PuYngOGzjUjTtHATc4=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-318-VkHvEyVUPY-rUx7UgScF8w-1; Wed,
+ 06 Mar 2024 11:00:08 -0500
+X-MC-Unique: VkHvEyVUPY-rUx7UgScF8w-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 184761C54062;
+	Wed,  6 Mar 2024 16:00:08 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.47])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6165D200AD5B;
+	Wed,  6 Mar 2024 16:00:01 +0000 (UTC)
+Date: Wed, 6 Mar 2024 23:59:57 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>,
+	Patrick Plenefisch <simonpatp@gmail.com>
+Cc: Goffredo Baroncelli <kreijack@inwind.it>, linux-kernel@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>, Chris Mason <clm@fb.com>,
+	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
+	regressions@lists.linux.dev, dm-devel@lists.linux.dev,
+	linux-btrfs@vger.kernel.org
+Subject: Re: LVM-on-LVM: error while submitting device barriers
+Message-ID: <ZeiS/bjJaRcrerWW@fedora>
+References: <CAOCpoWc_HQy4UJzTi9pqtJdO740Wx5Yd702O-mwXBE6RVBX1Eg@mail.gmail.com>
+ <CAOCpoWf3TSQkUUo-qsj0LVEOm-kY0hXdmttLE82Ytc0hjpTSPw@mail.gmail.com>
+ <CAOCpoWeNYsMfzh8TSnFqwAG1BhAYnNt_J+AcUNqRLF7zmJGEFA@mail.gmail.com>
+ <672e88f2-8ac3-45fe-a2e9-730800017f53@libero.it>
+ <CAOCpoWexiuYLu0fpPr71+Uzxw_tw3q4HGF9tKgx5FM4xMx9fWA@mail.gmail.com>
+ <a1e30dab-dfde-418e-a0dd-3e294838e839@inwind.it>
+ <CAOCpoWeB=2j+n+5K5ytj2maZxdrV80cxJcM5CL=z1bZKgpXPWQ@mail.gmail.com>
+ <a783e5ed-db56-4100-956a-353170b1b7ed@inwind.it>
+ <ZedaKUge-EBo4CuT@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [GIT PULL] md-6.9 20240305
-Content-Language: en-US
-To: Song Liu <songliubraving@meta.com>,
- linux-raid <linux-raid@vger.kernel.org>,
- "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
-Cc: Xiao Ni <xni@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Yu Kuai <yukuai3@huawei.com>, Yu Kuai <yukuai1@huaweicloud.com>,
- Benjamin Marzinski <bmarzins@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>, Junxiao Bi <junxiao.bi@oracle.com>,
- Dan Moulding <dan@danm.net>, Song Liu <song@kernel.org>
-References: <1C22EE73-62D9-43B0-B1A2-2D3B95F774AC@fb.com>
-From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <1C22EE73-62D9-43B0-B1A2-2D3B95F774AC@fb.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <ZedaKUge-EBo4CuT@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-On 3/5/24 4:42 PM, Song Liu wrote:
-> Hi Jens, 
+On Tue, Mar 05, 2024 at 12:45:13PM -0500, Mike Snitzer wrote:
+> On Thu, Feb 29 2024 at  5:05P -0500,
+> Goffredo Baroncelli <kreijack@inwind.it> wrote:
 > 
-> Please consider pulling the following fixes for md-6.9 on top of your 
-> for-6.9/block branch. This set fixes two issues:
-> 
-> 1. dmraid regression since 6.7 kernels. This issue was initially 
->   reported in [1]. This set of fix has been reviewed and tested by
->   md and dm folks. 
-> 
-> 2. raid5 hang since 6.7 kernel, reported in [2]. We haven't got a 
->   better fix for this issue yet. This revert is a workaround. It has
->   been applied to 6.7 stable kernels [3], and proved to be affective.
->   We will look more into this issue for a better fix. 
-> 
-> Note: Some recent fixes were shipped via the md-6.8 branch, so the 
-> md-6.9 branch doesn't have all the fixes. I tested that there is no 
-> conflict between these fixes and those shipped earlier. I run the 
-> tests with upstream kernel and changes in block tree and md tree 
-> (v6.8-rc7 + for-6.9/block + md-6.9).
+> > On 29/02/2024 21.22, Patrick Plenefisch wrote:
+> > > On Thu, Feb 29, 2024 at 2:56 PM Goffredo Baroncelli <kreijack@inwind.it> wrote:
+> > > > 
+> > > > > Your understanding is correct. The only thing that comes to my mind to
+> > > > > cause the problem is asymmetry of the SATA devices. I have one 8TB
+> > > > > device, plus a 1.5TB, 3TB, and 3TB drives. Doing math on the actual
+> > > > > extents, lowerVG/single spans (3TB+3TB), and
+> > > > > lowerVG/lvmPool/lvm/brokenDisk spans (3TB+1.5TB). Both obviously have
+> > > > > the other leg of raid1 on the 8TB drive, but my thought was that the
+> > > > > jump across the 1.5+3TB drive gap was at least "interesting"
+> > > > 
+> > > > 
+> > > > what about lowerVG/works ?
+> > > > 
+> > > 
+> > > That one is only on two disks, it doesn't span any gaps
+> > 
+> > Sorry, but re-reading the original email I found something that I missed before:
+> > 
+> > > BTRFS error (device dm-75): bdev /dev/mapper/lvm-brokenDisk errs: wr
+> > > 0, rd 0, flush 1, corrupt 0, gen 0
+> > > BTRFS warning (device dm-75): chunk 13631488 missing 1 devices, max
+> >                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> > > tolerance is 0 for writable mount
+> > > BTRFS: error (device dm-75) in write_all_supers:4379: errno=-5 IO
+> > > failure (errors while submitting device barriers.)
+> > 
+> > Looking at the code, it seems that if a FLUSH commands fails, btrfs
+> > considers that the disk is missing. The it cannot mount RW the device.
+> > 
+> > I would investigate with the LVM developers, if it properly passes
+> > the flush/barrier command through all the layers, when we have an
+> > lvm over lvm (raid1). The fact that the lvm is a raid1, is important because
+> > a flush command to be honored has to be honored by all the
+> > devices involved.
 
-Pulled, thanks.
+Hello Patrick & Goffredo,
 
--- 
-Jens Axboe
+I can trigger this kind of btrfs complaint by simulating one FLUSH failure.
 
+If you can reproduce this issue easily, please collect log by the
+following bpftrace script, which may show where the flush failure is,
+and maybe it can help to narrow down the issue in the whole stack.
+
+
+#!/usr/bin/bpftrace
+
+#ifndef BPFTRACE_HAVE_BTF
+#include <linux/blkdev.h>
+#endif
+
+kprobe:submit_bio_noacct,
+kprobe:submit_bio
+/ (((struct bio *)arg0)->bi_opf & (1 << __REQ_PREFLUSH)) != 0 /
+{
+	$bio = (struct bio *)arg0;
+	@submit_stack[arg0] = kstack;
+	@tracked[arg0] = 1;
+}
+
+kprobe:bio_endio
+/@tracked[arg0] != 0/
+{
+	$bio = (struct bio *)arg0;
+
+	if (($bio->bi_flags & (1 << BIO_CHAIN)) && $bio->__bi_remaining.counter > 1) {
+		return;
+	}
+
+	if ($bio->bi_status != 0) {
+		printf("dev %s bio failed %d, submitter %s completion %s\n",
+			$bio->bi_bdev->bd_disk->disk_name,
+			$bio->bi_status, @submit_stack[arg0], kstack);
+	} 
+	delete(@submit_stack[arg0]);
+	delete(@tracked[arg0]);
+}
+
+END {
+	clear(@submit_stack);
+	clear(@tracked);
+}
+
+
+
+Thanks, 
+Ming
 
