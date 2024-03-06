@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 3C7EF249F3
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id B984C25763
 	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 23:34:56 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709768099; cv=none; b=u5EMr41NsihW5X4a3zgLSt9KGvYR+fFxkhKhhQleQO5wZUGIfhzq4mN/ha/2XV1FwfO2RvD6SLMvLuOEaBS9T14RY0VNRDJ1OoQQ81YV06VAIReEWb4o1iuv04LA1lvzqSKurf/lFL2yxi9cWFM2ZQkITU+ksLbXQtDNoSNt9Ts=
+	t=1709768100; cv=none; b=bluWoZ3G64Ej90QfWMiFHSS26Km6gvv3yR2gpBfd1a/d9bL0AOV0STLADpiamaCg9x2I9wXuMq/uqjXOKA9iWlzs09dZdK7n29ANk0Mp34abw2ol69JHgvZ8k8ZAieCUcF3y2ByghUO5LwhEE8qqXH30S/uARdBUwYfQsA6J95Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709768099; c=relaxed/simple;
-	bh=GrKq8ymriuiadx9PDQCUJHaJ/66TQU//3YGYMxRzvik=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=JE+zPp6GgOutFjacodTz3/z8Gg4LJk7GSi1Em2ncDf+YSb86kVpfaX4sdtIp8njZWBGkCJ8jS7wPyxtel2lYzV1t8qtKSmEiKFtbyc/UUEui8i3nmkpuNWPFIK6HG8iE0O02tZJ2EdUB//xCYpmCicsokMNO5zfMJtnu3XvntGg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=a7Lzb6rD; arc=none smtp.client-ip=13.77.154.182
+	s=arc-20240116; t=1709768100; c=relaxed/simple;
+	bh=JMGFzxzJSuX8HTzW3/y9gmlqQwTGf542nsFK190Y+i4=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=PvYXhI3C3IlGHMvYskBB4Vzz/6m1TN/C6QI4PpQqDAQGwfQrvtMrUfCd3ZyDDOcGp5WQf1mVUV/rTiU+3k6Bkl1jw+dZDkhgoeQehYj7dfjFi4HYFDVNT1gC3PYI/rsIxIyBz/mQJisyWQ72L+0bARC1mBGy+u2sgt8EoDrj5pg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=tA1BCOWi; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="a7Lzb6rD"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="tA1BCOWi"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id AF4A720B74D9; Wed,  6 Mar 2024 15:34:52 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com AF4A720B74D9
+	id 05AD320B74E2; Wed,  6 Mar 2024 15:34:52 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 05AD320B74E2
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1709768092;
-	bh=Xqz4NvBeLtDdW7aVILuWPhN5pB/70n5TgRI2nDilboI=;
+	s=default; t=1709768093;
+	bh=KN8yiKPI7h4k5IV/Ds1qGJWY0tuHJk5+XQgL6E7JT+E=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=a7Lzb6rDZHe33Dyd+PFC/dLSXZ9Pv25+U93VxOpX+2NoUdIWtwcYxXnJRoz1/HoKY
-	 qZGIS9SDtdD0cgeqKqKBWf1vMKMz8Fx5FAusMQ2l1LVcYcs+/1e9g0JAE8Kc/WDqSW
-	 0Vc4gZdw8QeR1uhlQtuxFxeIJL/YFnScRaaLV+e4=
+	b=tA1BCOWijbSd6/cD3MuPcSClMx98QWJiDucrtQ/wkO9jwpO2E/9MSxNph2xTg1TVz
+	 terqU6cPyouL7GF/116iNQein0whOv3P2BgOXFjaP/in9nzVZGW9JSShTVQaIgu/cS
+	 EEJ7mmL4BQlr4xHoEqDidiYjHkcw8D8k+v5BNsSU=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -45,9 +45,9 @@ Cc: linux-doc@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	Deven Bowers <deven.desai@linux.microsoft.com>,
 	Fan Wu <wufan@linux.microsoft.com>
-Subject: [RFC PATCH v14 13/19] dm verity: consume root hash digest and signature data via LSM hook
-Date: Wed,  6 Mar 2024 15:34:38 -0800
-Message-Id: <1709768084-22539-14-git-send-email-wufan@linux.microsoft.com>
+Subject: [RFC PATCH v14 18/19] ipe: kunit test for parser
+Date: Wed,  6 Mar 2024 15:34:43 -0800
+Message-Id: <1709768084-22539-19-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1709768084-22539-1-git-send-email-wufan@linux.microsoft.com>
 References: <1709768084-22539-1-git-send-email-wufan@linux.microsoft.com>
@@ -59,75 +59,34 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-dm-verity provides a strong guarantee of a block device's integrity. As
-a generic way to check the integrity of a block device, it provides
-those integrity guarantees to its higher layers, including the filesystem
-level.
+Add various happy/unhappy unit tests for both IPE's policy parser.
 
-An LSM that control access to a resource on the system based on the
-available integrity claims can use this transitive property of
-dm-verity, by querying the underlying block_device of a particular
-file.
-
-The digest and signature information need to be stored in the block
-device to fulfill the next requirement of authorization via LSM policy.
-This will enable the LSM to perform revocation of devices that are still
-mounted, prohibiting execution of files that are no longer authorized
-by the LSM in question.
-
-This patch added two security hook calls in dm-verity to save the
-dm-verity roothash and the roothash signature to the block device's
-LSM blobs. The hook calls are depended on CONFIG_IPE_PROP_DM_VERITY,
-which will be introduced in the next commit.
+Besides, a test suite for IPE functionality is available at
+https://github.com/microsoft/ipe/tree/test-suite
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+
 ---
-v2:
-  + No Changes
-
-v3:
-  + No changes
-
-v4:
-  + No changes
-
-v5:
-  + No changes
-
-v6:
-  + Fix an improper cleanup that can result in
-    a leak
+v1-v6:
+  + Not present
 
 v7:
-  + Squash patch 08/12, 10/12 to [11/16]
-  + Use part0 for block_device, to retrieve the block_device, when
-    calling security_bdev_setsecurity
+  Introduced
 
 v8:
-  + Undo squash of 08/12, 10/12 - separating drivers/md/ from
-    security/ & block/
-  + Use common-audit function for dmverity_signature.
-  + Change implementation for storing the dm-verity digest to use the
-    newly introduced dm_verity_digest structure introduced in patch
-    14/20.
-  + Create new structure, dm_verity_digest, containing digest algorithm,
-    size, and digest itself to pass to the LSM layer. V7 was missing the
-    algorithm.
-  + Create an associated public header containing this new structure and
-    the key values for the LSM hook, specific to dm-verity.
-  + Additional information added to commit, discussing the layering of
-    the changes and how the information passed will be used.
+  + Remove the kunit tests with respect to the fsverity digest, as these
+    require significant changes to work with the new method of acquiring
+    the digest at runtime.
 
 v9:
-  + No changes
+  + Remove the kunit tests related to ipe_context
 
 v10:
   + No changes
 
 v11:
-  + Add an optional field to save signature
-  + Move the security hook call to the new finalize hook
+  + No changes
 
 v12:
   + No changes
@@ -136,184 +95,351 @@ v13:
   + No changes
 
 v14:
-  + Correct code format
-  + Remove unnecessary header and switch to dm_disk()
+  + No changes
 ---
- drivers/md/dm-verity-target.c | 74 +++++++++++++++++++++++++++++++++++
- drivers/md/dm-verity.h        |  6 +++
- include/linux/dm-verity.h     | 19 +++++++++
- 3 files changed, 99 insertions(+)
- create mode 100644 include/linux/dm-verity.h
+ security/ipe/Kconfig        |  17 +++
+ security/ipe/Makefile       |   3 +
+ security/ipe/policy_tests.c | 294 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 314 insertions(+)
+ create mode 100644 security/ipe/policy_tests.c
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 1b591bfa90d5..810daa24a2c5 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -22,6 +22,9 @@
- #include <linux/scatterlist.h>
- #include <linux/string.h>
- #include <linux/jump_label.h>
-+#include <linux/security.h>
-+#include <linux/dm-verity.h>
-+#include <crypto/hash_info.h>
+diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+index bf3b9ff0c913..216a9b340caa 100644
+--- a/security/ipe/Kconfig
++++ b/security/ipe/Kconfig
+@@ -55,4 +55,21 @@ config IPE_PROP_FS_VERITY
  
- #define DM_MSG_PREFIX			"verity"
+ endmenu
  
-@@ -990,6 +993,38 @@ static void verity_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	blk_limits_io_min(limits, limits->logical_block_size);
- }
++config SECURITY_IPE_KUNIT_TEST
++	bool "Build KUnit tests for IPE" if !KUNIT_ALL_TESTS
++	depends on KUNIT=y
++	default KUNIT_ALL_TESTS
++	help
++	  This builds the IPE KUnit tests.
++
++	  KUnit tests run during boot and output the results to the debug log
++	  in TAP format (https://testanything.org/). Only useful for kernel devs
++	  running KUnit test harness and are not for inclusion into a
++	  production build.
++
++	  For more information on KUnit and unit tests in general please refer
++	  to the KUnit documentation in Documentation/dev-tools/kunit/.
++
++	  If unsure, say N.
++
+ endif
+diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+index ce23101b66ba..def674e09e84 100644
+--- a/security/ipe/Makefile
++++ b/security/ipe/Makefile
+@@ -26,3 +26,6 @@ obj-$(CONFIG_SECURITY_IPE) += \
+ 	audit.o \
  
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
+ clean-files := boot-policy.c \
 +
-+static int verity_init_sig(struct dm_verity *v, const void *sig,
-+			   size_t sig_size)
-+{
-+	v->sig_size = sig_size;
-+	v->root_digest_sig = kmalloc(v->sig_size, GFP_KERNEL);
-+	if (!v->root_digest)
-+		return -ENOMEM;
-+
-+	return 0;
-+}
-+
-+static void verity_free_sig(struct dm_verity *v)
-+{
-+	kfree(v->root_digest_sig);
-+}
-+
-+#else
-+
-+static inline int verity_init_sig(struct dm_verity *v, const void *sig,
-+				  size_t sig_size)
-+{
-+	return 0;
-+}
-+
-+static inline void verity_free_sig(struct dm_verity *v)
-+{
-+}
-+
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
-+
- static void verity_dtr(struct dm_target *ti)
- {
- 	struct dm_verity *v = ti->private;
-@@ -1008,6 +1043,7 @@ static void verity_dtr(struct dm_target *ti)
- 	kfree(v->salt);
- 	kfree(v->root_digest);
- 	kfree(v->zero_digest);
-+	verity_free_sig(v);
- 
- 	if (v->tfm)
- 		crypto_free_ahash(v->tfm);
-@@ -1407,6 +1443,13 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		ti->error = "Root hash verification failed";
- 		goto bad;
- 	}
-+
-+	r = verity_init_sig(v, verify_args.sig, verify_args.sig_size);
-+	if (r < 0) {
-+		ti->error = "Cannot allocate root digest signature";
-+		goto bad;
-+	}
-+
- 	v->hash_per_block_bits =
- 		__fls((1 << v->hash_dev_block_bits) / v->digest_size);
- 
-@@ -1557,6 +1600,34 @@ int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest, unsigned i
- 	return 0;
- }
- 
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+
-+static int verity_finalize(struct dm_target *ti)
-+{
-+	struct block_device *bdev;
-+	struct dm_verity_digest root_digest;
-+	struct dm_verity *v;
-+	int r;
-+
-+	v = ti->private;
-+	bdev = dm_disk(dm_table_get_md(ti->table))->part0;
-+	root_digest.digest = v->root_digest;
-+	root_digest.digest_len = v->digest_size;
-+	root_digest.alg = v->alg_name;
-+
-+	r = security_bdev_setsecurity(bdev, DM_VERITY_ROOTHASH_SEC_NAME, &root_digest,
-+				      sizeof(root_digest));
-+	if (r)
-+		return r;
-+
-+	return security_bdev_setsecurity(bdev,
-+					 DM_VERITY_SIGNATURE_SEC_NAME,
-+					 v->root_digest_sig,
-+					 v->sig_size);
-+}
-+
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
-+
- static struct target_type verity_target = {
- 	.name		= "verity",
- 	.features	= DM_TARGET_IMMUTABLE,
-@@ -1569,6 +1640,9 @@ static struct target_type verity_target = {
- 	.prepare_ioctl	= verity_prepare_ioctl,
- 	.iterate_devices = verity_iterate_devices,
- 	.io_hints	= verity_io_hints,
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+	.finalize	= verity_finalize,
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
- };
- module_dm(verity);
- 
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index db93a91169d5..4da3d2811aba 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -43,6 +43,9 @@ struct dm_verity {
- 	u8 *root_digest;	/* digest of the root block */
- 	u8 *salt;		/* salt: its size is salt_size */
- 	u8 *zero_digest;	/* digest for a zero block */
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+	u8 *root_digest_sig;	/* digest signature of the root block */
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
- 	unsigned int salt_size;
- 	sector_t data_start;	/* data offset in 512-byte sectors */
- 	sector_t hash_start;	/* hash start in blocks */
-@@ -56,6 +59,9 @@ struct dm_verity {
- 	bool hash_failed:1;	/* set if hash of any block failed */
- 	bool use_tasklet:1;	/* try to verify in tasklet before work-queue */
- 	unsigned int digest_size;	/* digest size for the current hash algorithm */
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+	unsigned int sig_size;	/* digest signature size */
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
- 	unsigned int ahash_reqsize;/* the size of temporary space for crypto */
- 	enum verity_mode mode;	/* mode for handling verification errors */
- 	unsigned int corrupted_errs;/* Number of errors for corrupted blocks */
-diff --git a/include/linux/dm-verity.h b/include/linux/dm-verity.h
++obj-$(CONFIG_SECURITY_IPE_KUNIT_TEST) += \
++	policy_tests.o \
+diff --git a/security/ipe/policy_tests.c b/security/ipe/policy_tests.c
 new file mode 100644
-index 000000000000..7d9753445534
+index 000000000000..d67c42c9ca59
 --- /dev/null
-+++ b/include/linux/dm-verity.h
-@@ -0,0 +1,19 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
++++ b/security/ipe/policy_tests.c
+@@ -0,0 +1,294 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
 +
-+#ifndef _LINUX_DM_VERITY_H
-+#define _LINUX_DM_VERITY_H
-+
++#include <linux/slab.h>
 +#include <linux/types.h>
-+#include <crypto/hash_info.h>
-+#include <linux/device-mapper.h>
-+
-+struct dm_verity_digest {
-+	const char *alg;
-+	const u8 *digest;
-+	size_t digest_len;
++#include <linux/list.h>
++#include <kunit/test.h>
++#include "policy.h"
++struct policy_case {
++	const char *const policy;
++	int errno;
++	const char *const desc;
 +};
 +
-+#define DM_VERITY_SIGNATURE_SEC_NAME DM_NAME	".verity-signature"
-+#define DM_VERITY_ROOTHASH_SEC_NAME  DM_NAME	".verity-roothash"
++static const struct policy_case policy_cases[] = {
++	{
++		"policy_name=allowall policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW",
++		0,
++		"basic",
++	},
++	{
++		"policy_name=trailing_comment policy_version=152.0.0 #This is comment\n"
++		"DEFAULT action=ALLOW",
++		0,
++		"trailing comment",
++	},
++	{
++		"policy_name=allowallnewline policy_version=0.2.0\n"
++		"DEFAULT action=ALLOW\n"
++		"\n",
++		0,
++		"trailing newline",
++	},
++	{
++		"policy_name=carriagereturnlinefeed policy_version=0.0.1\n"
++		"DEFAULT action=ALLOW\n"
++		"\r\n",
++		0,
++		"clrf newline",
++	},
++	{
++		"policy_name=whitespace policy_version=0.0.0\n"
++		"DEFAULT\taction=ALLOW\n"
++		"     \t     DEFAULT \t    op=EXECUTE      action=DENY\n"
++		"op=EXECUTE boot_verified=TRUE action=ALLOW\n"
++		"# this is a\tcomment\t\t\t\t\n"
++		"DEFAULT \t op=KMODULE\t\t\t  action=DENY\r\n"
++		"op=KMODULE boot_verified=TRUE action=ALLOW\n",
++		0,
++		"various whitespaces and nested default",
++	},
++	{
++		"policy_name=boot_verified policy_version=-1236.0.0\n"
++		"DEFAULT\taction=ALLOW\n",
++		-EINVAL,
++		"negative version",
++	},
++	{
++		"policy_name=$@!*&^%%\\:;{}() policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW",
++		0,
++		"special characters",
++	},
++	{
++		"policy_name=test policy_version=999999.0.0\n"
++		"DEFAULT action=ALLOW",
++		-ERANGE,
++		"overflow version",
++	},
++	{
++		"policy_name=test policy_version=255.0\n"
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"incomplete version",
++	},
++	{
++		"policy_name=test policy_version=111.0.0.0\n"
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"extra version",
++	},
++	{
++		"",
++		-EBADMSG,
++		"0-length policy",
++	},
++	{
++		"policy_name=test\0policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"random null in header",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"\0DEFAULT action=ALLOW",
++		-EBADMSG,
++		"incomplete policy from NULL",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=DENY\n\0"
++		"op=EXECUTE dmverity_signature=TRUE action=ALLOW\n",
++		0,
++		"NULL truncates policy",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_signature=abc action=ALLOW",
++		-EBADMSG,
++		"invalid property type",
++	},
++	{
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"missing policy header",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n",
++		-EBADMSG,
++		"missing default definition",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"dmverity_signature=TRUE op=EXECUTE action=ALLOW",
++		-EBADMSG,
++		"invalid rule ordering"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"action=ALLOW op=EXECUTE dmverity_signature=TRUE",
++		-EBADMSG,
++		"invalid rule ordering (2)",
++	},
++	{
++		"policy_name=test policy_version=0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_signature=TRUE action=ALLOW",
++		-EBADMSG,
++		"invalid version",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=UNKNOWN dmverity_signature=TRUE action=ALLOW",
++		-EBADMSG,
++		"unknown operation",
++	},
++	{
++		"policy_name=asdvpolicy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n",
++		-EBADMSG,
++		"missing space after policy name",
++	},
++	{
++		"policy_name=test\xFF\xEF policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_signature=TRUE action=ALLOW",
++		0,
++		"expanded ascii",
++	},
++	{
++		"policy_name=test\xFF\xEF policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_roothash=GOOD_DOG action=ALLOW",
++		-EBADMSG,
++		"invalid property value (2)",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"policy_name=test policy_version=0.1.0\n"
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"double header"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"DEFAULT action=ALLOW\n",
++		-EBADMSG,
++		"double default"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"DEFAULT op=EXECUTE action=DENY\n"
++		"DEFAULT op=EXECUTE action=ALLOW\n",
++		-EBADMSG,
++		"double operation default"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"DEFAULT op=EXECUTE action=DEN\n",
++		-EBADMSG,
++		"invalid action value"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"DEFAULT op=EXECUTE action\n",
++		-EBADMSG,
++		"invalid action value (2)"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"UNKNOWN value=true\n",
++		-EBADMSG,
++		"unrecognized statement"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_roothash=1c0d7ee1f8343b7fbe418378e8eb22c061d7dec7 action=DENY\n",
++		-EBADMSG,
++		"old-style digest"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE fsverity_digest=1c0d7ee1f8343b7fbe418378e8eb22c061d7dec7 action=DENY\n",
++		-EBADMSG,
++		"old-style digest"
++	}
++};
 +
-+#endif /* _LINUX_DM_VERITY_H */
++static void pol_to_desc(const struct policy_case *c, char *desc)
++{
++	strscpy(desc, c->desc, KUNIT_PARAM_DESC_SIZE);
++}
++
++KUNIT_ARRAY_PARAM(ipe_policies, policy_cases, pol_to_desc);
++
++/**
++ * ipe_parser_unsigned_test - Test the parser by passing unsigned policies.
++ * @test: Supplies a pointer to a kunit structure.
++ *
++ * This is called by the kunit harness. This test does not check the correctness
++ * of the policy, but ensures that errors are handled correctly.
++ */
++static void ipe_parser_unsigned_test(struct kunit *test)
++{
++	const struct policy_case *p = test->param_value;
++	struct ipe_policy *pol = ipe_new_policy(p->policy, strlen(p->policy), NULL, 0);
++
++	if (p->errno) {
++		KUNIT_EXPECT_EQ(test, PTR_ERR(pol), p->errno);
++		return;
++	}
++
++	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, pol);
++	KUNIT_EXPECT_NOT_ERR_OR_NULL(test, pol->parsed);
++	KUNIT_EXPECT_STREQ(test, pol->text, p->policy);
++	KUNIT_EXPECT_PTR_EQ(test, NULL, pol->pkcs7);
++	KUNIT_EXPECT_EQ(test, 0, pol->pkcs7len);
++
++	ipe_free_policy(pol);
++}
++
++/**
++ * ipe_parser_widestring_test - Ensure parser fail on a wide string policy.
++ * @test: Supplies a pointer to a kunit structure.
++ *
++ * This is called by the kunit harness.
++ */
++static void ipe_parser_widestring_test(struct kunit *test)
++{
++	struct ipe_policy *pol = NULL;
++	const unsigned short policy[] = L"policy_name=Test policy_version=0.0.0\n"
++					L"DEFAULT action=ALLOW";
++
++	pol = ipe_new_policy((const char *)policy, (ARRAY_SIZE(policy) - 1) * 2, NULL, 0);
++	KUNIT_EXPECT_TRUE(test, IS_ERR_OR_NULL(pol));
++
++	ipe_free_policy(pol);
++}
++
++static struct kunit_case ipe_parser_test_cases[] = {
++	KUNIT_CASE_PARAM(ipe_parser_unsigned_test, ipe_policies_gen_params),
++	KUNIT_CASE(ipe_parser_widestring_test),
++};
++
++static struct kunit_suite ipe_parser_test_suite = {
++	.name = "ipe-parser",
++	.test_cases = ipe_parser_test_cases,
++};
++
++kunit_test_suite(ipe_parser_test_suite);
 -- 
 2.43.1
 
