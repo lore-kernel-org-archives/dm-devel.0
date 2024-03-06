@@ -1,28 +1,59 @@
-Received: from mx3.molgen.mpg.de (mx3.molgen.mpg.de [141.14.17.11])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-io1-f50.google.com (mail-io1-f50.google.com [209.85.166.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8DC6F135A40
-	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 15:10:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=141.14.17.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA4171E488
+	for <dm-devel@lists.linux.dev>; Wed,  6 Mar 2024 15:29:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709737852; cv=none; b=D4+9fslbK1Zr9GnxC+TgPKE2lF9EdYjG8NQikl2U+SkjF3rZydfI579wjZWZDcJfCXYxDkAbCES9YobxWttJTBZd5feSi43V3SCbs/7fJ4C4FHR2yvajKOFIZjGNMZfvggq9EahyAmf5CuyN6ffnsVWUUU4tzgaALM7uXG9T2dU=
+	t=1709738947; cv=none; b=hV2A40PdEsX5hgKyMT+P/N9LCi1TRDYDNWUNezVhv2ourWZhHyCtx28Q2cRrxh74xGJuCBGdrKZInNoFtjR73DdO+4EsXCSaOl9Ng5snwCIMAIeYNnoynDISs2isjblkeyRPlBiK4pwb/oJVTNCfhngP6HYPNYk7tFqyWVCBenw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709737852; c=relaxed/simple;
-	bh=JYpMEoOzZQs3yAFQY3yegUBgCw5BXctmdMIzmY4XVNU=;
+	s=arc-20240116; t=1709738947; c=relaxed/simple;
+	bh=VhXw0RGdwJ3yBwNfC77fS+QJ5ba/tqo/u1fSxdI9gVs=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=mzXfeadWaenrcYxZ1MFx3ZwKhBGF665Rr4Ai+3eHBrv9X2w0ddvLHm5epvVVaik9dgoSgTTKOMya2/PqK1MMg+5kf5ii2ChbIns0qYMo1Px+iPMGpDt4VRfEPYgiCTy16qpgnvUJEVLBiqOliX8XJgsUxORkDftUewx/nJy5uB0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=molgen.mpg.de; spf=pass smtp.mailfrom=molgen.mpg.de; arc=none smtp.client-ip=141.14.17.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=molgen.mpg.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=molgen.mpg.de
-Received: from [192.168.0.224] (ip5f5aedd4.dynamic.kabel-deutschland.de [95.90.237.212])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: pmenzel)
-	by mx.molgen.mpg.de (Postfix) with ESMTPSA id 96BB861E5FE01;
-	Wed,  6 Mar 2024 16:10:05 +0100 (CET)
-Message-ID: <f9d3cad9-6d7d-4aa1-9592-79300812dce4@molgen.mpg.de>
-Date: Wed, 6 Mar 2024 16:10:04 +0100
+	 In-Reply-To:Content-Type; b=CMeMNuiqtZDeMzfCgpLpmYrfS3O7n+r3yKVEbBX1D2124KcE0pplzcz4WQxsauU7GuQ5Z+40/+s3DBpK005rPr17mMQAaGt4MJSewG3PuV7Rd+RH6PlWa4ssPZ7q+H6NuHvrLYCdJDvMBazwACXnL3Tl4kwpgSvE3qB6d2EQVG4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=cIqTOVew; arc=none smtp.client-ip=209.85.166.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="cIqTOVew"
+Received: by mail-io1-f50.google.com with SMTP id ca18e2360f4ac-7c49c979b5dso102478639f.1
+        for <dm-devel@lists.linux.dev>; Wed, 06 Mar 2024 07:29:05 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1709738945; x=1710343745; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=HuiHolB1Euh2agtRTRDo+ej1B7ApR1A/nMWa1zjFtyM=;
+        b=cIqTOVewhegz+MTVq69YQyW7uMlOWaW5mpmVcYt/OCj9a+bScpu86WMrRbxV8pv9Td
+         CjHUufGoRSDS/utpl+uAs59X1O23bh4wEQ4Iy7kRO9efnH2Hy12uwGB+RclhCqGZn/rn
+         oGUClxkGX9SzbNiH9OuZusLao3HPGzGWa379r1FUxVz8dO4jn5jY9qFt1BejP57rCaxz
+         9QA4BlMktxU9THgIfKHKSLJeW5kOv6iu4f8bdEd93Q3yb5AI3innf54mh+q4AXGHeved
+         b2fdsO70il1Fb825lKMGdY4IJ7yJ7CQ2HXv8kb7MDKLdekNf2Iq5AyFoiTDaFp221BN/
+         M9bQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1709738945; x=1710343745;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=HuiHolB1Euh2agtRTRDo+ej1B7ApR1A/nMWa1zjFtyM=;
+        b=Dz9sxm0LysK3HeoSoKHy+e02fybW01PVhhqBWQsnnuV/5FofSrsF7QV/EvbF8n4qxq
+         IBaCiSn3FEmfo80JoG+V+L/rCaU18EreW/RDIm/d6LorCRxytylIDQX1H+M7m+XSvLjq
+         Y8b6Q6DSpBcKhin7RUubVaYTTcTTMxnlYrgPr4Y2nMasMc7bSQO2y6uOwsYozrek0dOI
+         CDlueAk7Mhz4hpHD74NxB+Usf6lxM/1uYbRg+31cKw11BDznBpQFUBA/UvETq48Wc7q6
+         HbMbAzyVbdp5vdbTyde6NovKdXSDatvHXoF12BGFeg9Sz7Ald4RateqkgSgbXZp7mjhy
+         QFag==
+X-Forwarded-Encrypted: i=1; AJvYcCV0Nuv//ZK3ZNDd1KfcXct4HUxeS3XED72P1e7h4KI8bGDbuMlanBu6o9vHYz46Wypu4gKltfkEQsltolgxB9F66ois9P113qY=
+X-Gm-Message-State: AOJu0YyiYmqVblOg0gcCy0NADcUyE9DDnW9Hksi5G9P8m5KM4v1rvSa2
+	5/zx4Y8+ZsQjM3EGMuViNVdzJ84tREmGhL3PCuQYDT9ikQGF36cyX/fWQ6llTzY=
+X-Google-Smtp-Source: AGHT+IFfFfT6TfzD8hpsFF9DRyNIvUMsP7yklx651z5MiIECpjaDta7a2YFi5GznQsk+b7UFUUVBlQ==
+X-Received: by 2002:a5d:990c:0:b0:7c8:789b:b3d8 with SMTP id x12-20020a5d990c000000b007c8789bb3d8mr1868870iol.0.1709738945072;
+        Wed, 06 Mar 2024 07:29:05 -0800 (PST)
+Received: from [192.168.1.116] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id z20-20020a056638241400b00474e0c312acsm2291532jat.49.2024.03.06.07.29.03
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 06 Mar 2024 07:29:04 -0800 (PST)
+Message-ID: <b4731092-7028-4852-8186-5bc805bd1ba6@kernel.dk>
+Date: Wed, 6 Mar 2024 08:29:03 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -30,121 +61,46 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH md-6.8 v2 2/9] md: export helpers to stop sync_thread
+Subject: Re: [GIT PULL] md-6.9 20240305
 Content-Language: en-US
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: xni@redhat.com, zkabelac@redhat.com, agk@redhat.com, snitzer@kernel.org,
- mpatocka@redhat.com, dm-devel@lists.linux.dev, song@kernel.org,
- heinzm@redhat.com, jbrassow@redhat.com, neilb@suse.de,
- linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
- yi.zhang@huawei.com, yangerkun@huawei.com, yukuai3@huawei.com
-References: <20240305072306.2562024-1-yukuai1@huaweicloud.com>
- <20240305072306.2562024-3-yukuai1@huaweicloud.com>
- <c0e648ea-d73e-4805-a2bb-b02ddd3ca4e2@molgen.mpg.de>
- <9950cb96-ac8b-d7dd-56a0-133709f51b5f@huaweicloud.com>
-From: Paul Menzel <pmenzel@molgen.mpg.de>
-In-Reply-To: <9950cb96-ac8b-d7dd-56a0-133709f51b5f@huaweicloud.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+To: Song Liu <songliubraving@meta.com>,
+ linux-raid <linux-raid@vger.kernel.org>,
+ "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
+Cc: Xiao Ni <xni@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Yu Kuai <yukuai3@huawei.com>, Yu Kuai <yukuai1@huaweicloud.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>,
+ Mikulas Patocka <mpatocka@redhat.com>, Junxiao Bi <junxiao.bi@oracle.com>,
+ Dan Moulding <dan@danm.net>, Song Liu <song@kernel.org>
+References: <1C22EE73-62D9-43B0-B1A2-2D3B95F774AC@fb.com>
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <1C22EE73-62D9-43B0-B1A2-2D3B95F774AC@fb.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Dear Kuai,
-
-
-Am 05.03.24 um 09:13 schrieb Yu Kuai:
-
-> 在 2024/03/05 16:08, Paul Menzel 写道:
-
->> Am 05.03.24 um 08:22 schrieb Yu Kuai:
->>> From: Yu Kuai <yukuai3@huawei.com>
->>>
->>> The new heleprs will be used in dm-raid in later patches to fix
->>
->> hel*pe*rs
->>
->>> regressions and prevent calling md_reap_sync_thread() directly.
->>
->> Please list the new functions.
->>
->> 1.  md_idle_sync_thread(struct mddev *mddev);
->> 2.  md_frozen_sync_thread(struct mddev *mddev);
->> 3.  md_unfrozen_sync_thread(struct mddev *mddev);
->>
->> I do not like the naming so much. `md_reap_sync_thread()` has the verb 
->> in imperative mood. At least myself, I would not know what the 
->> functions do exactly without looking at the implementation.
->
-> Thanks for the suggestions, I'm not that good at naming :(
+On 3/5/24 4:42 PM, Song Liu wrote:
+> Hi Jens, 
 > 
-> Usually I'll send a new version with updated naming, however, we must
-> merge this set ASAP now, perhaps can we live with this for now?
+> Please consider pulling the following fixes for md-6.9 on top of your 
+> for-6.9/block branch. This set fixes two issues:
+> 
+> 1. dmraid regression since 6.7 kernels. This issue was initially 
+>   reported in [1]. This set of fix has been reviewed and tested by
+>   md and dm folks. 
+> 
+> 2. raid5 hang since 6.7 kernel, reported in [2]. We haven't got a 
+>   better fix for this issue yet. This revert is a workaround. It has
+>   been applied to 6.7 stable kernels [3], and proved to be affective.
+>   We will look more into this issue for a better fix. 
+> 
+> Note: Some recent fixes were shipped via the md-6.8 branch, so the 
+> md-6.9 branch doesn't have all the fixes. I tested that there is no 
+> conflict between these fixes and those shipped earlier. I run the 
+> tests with upstream kernel and changes in block tree and md tree 
+> (v6.8-rc7 + for-6.9/block + md-6.9).
 
-Fine by me. Maybe when applying the typo can be fixed, and the naming 
-than later.
+Pulled, thanks.
+
+-- 
+Jens Axboe
 
 
-Kind regards,
-
-Paul
-
-
->>> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
->>> Signed-off-by: Xiao Ni <xni@redhat.com>
->>> Acked-by: Mike Snitzer <snitzer@kernel.org>
->>> ---
->>>   drivers/md/md.c | 29 +++++++++++++++++++++++++++++
->>>   drivers/md/md.h |  3 +++
->>>   2 files changed, 32 insertions(+)
->>>
->>> diff --git a/drivers/md/md.c b/drivers/md/md.c
->>> index 23f31fd1d024..22e7512a5b1e 100644
->>> --- a/drivers/md/md.c
->>> +++ b/drivers/md/md.c
->>> @@ -4919,6 +4919,35 @@ static void stop_sync_thread(struct mddev 
->>> *mddev, bool locked, bool check_seq)
->>>           mddev_lock_nointr(mddev);
->>>   }
->>> +void md_idle_sync_thread(struct mddev *mddev)
->>> +{
->>> +    lockdep_assert_held(&mddev->reconfig_mutex);
->>> +
->>> +    clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
->>> +    stop_sync_thread(mddev, true, true);
->>> +}
->>> +EXPORT_SYMBOL_GPL(md_idle_sync_thread);
->>> +
->>> +void md_frozen_sync_thread(struct mddev *mddev)
->>> +{
->>> +    lockdep_assert_held(&mddev->reconfig_mutex);
->>> +
->>> +    set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
->>> +    stop_sync_thread(mddev, true, false);
->>> +}
->>> +EXPORT_SYMBOL_GPL(md_frozen_sync_thread);
->>> +
->>> +void md_unfrozen_sync_thread(struct mddev *mddev)
->>> +{
->>> +    lockdep_assert_held(&mddev->reconfig_mutex);
->>> +
->>> +    clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
->>> +    set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
->>> +    md_wakeup_thread(mddev->thread);
->>> +    sysfs_notify_dirent_safe(mddev->sysfs_action);
->>> +}
->>> +EXPORT_SYMBOL_GPL(md_unfrozen_sync_thread);
->>> +
->>>   static void idle_sync_thread(struct mddev *mddev)
->>>   {
->>>       mutex_lock(&mddev->sync_mutex);
->>> diff --git a/drivers/md/md.h b/drivers/md/md.h
->>> index 8d881cc59799..437ab70ce79b 100644
->>> --- a/drivers/md/md.h
->>> +++ b/drivers/md/md.h
->>> @@ -781,6 +781,9 @@ extern void md_rdev_clear(struct md_rdev *rdev);
->>>   extern void md_handle_request(struct mddev *mddev, struct bio *bio);
->>>   extern int mddev_suspend(struct mddev *mddev, bool interruptible);
->>>   extern void mddev_resume(struct mddev *mddev);
->>> +extern void md_idle_sync_thread(struct mddev *mddev);
->>> +extern void md_frozen_sync_thread(struct mddev *mddev);
->>> +extern void md_unfrozen_sync_thread(struct mddev *mddev);
->>>   extern void md_reload_sb(struct mddev *mddev, int raid_disk);
->>>   extern void md_update_sb(struct mddev *mddev, int force);
