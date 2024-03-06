@@ -1,62 +1,70 @@
 Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B77A38286D;
-	Wed,  6 Mar 2024 12:30:48 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAB1F132492;
+	Wed,  6 Mar 2024 14:27:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1709728252; cv=none; b=d7DknvwfSdQhTaHcjU+OsgwrBk+u4NiyvfyvULTKSpvsCSaalOcDgNbYBFhON6M6rF5iKGFGieykjdfonHGkLEZyQPPHR3Ppu9rv4jB/W5gGJPuIb3AfhGLRMbYVko+a/I3UObmaFtptjYVV5QVbVZKqaknSeP/CQx7pwwluDGI=
+	t=1709735264; cv=none; b=Of8Sq3mV4cwuORdWKXPIsRbhhvmKNrccDCrXMNTeuOd1u35HDFlw0AgWfDWb/+G/Ab/SRf9haW1re9cmgUCd9AFDWVAQeGH6LDno/2NJ3tKR4r6xSt74dWgrvqmRuAsYLn/k0ZJgplL6IgwnWAcc4ET9BFi+c0rPDOgbCYwQ7DE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1709728252; c=relaxed/simple;
-	bh=YTQMSi5VEBYMAjYoAugbfmrBeKrUxScCjHhU9xssM5Q=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=NCrBBFwZI73V90FU9ajr6S67KxcIgSvSMWQL3WPbFHwWPS2x0AfkmK2oZtnHCR0zBRnPuqCnfgSWrLmduX5otrozRBAYuVf7LGhbAgS7yEQtT7yKzUROQO+8nOoNIGq9tkgVFIuK1kOthgsj+BJxk+Pxdmm7v6bOEJGB7zkPIFg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=lys72Odz; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+	s=arc-20240116; t=1709735264; c=relaxed/simple;
+	bh=XL6QE58M1iFe/XIAe7ruihw5Zk7dX/36Cwcp5BY2dQg=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=euAdQfyv3WiPL1TM9kn5m5D9FKeOL7X5JTy/z5cq0cnJ+M7zYPygwuIKquxeg0I3a95vIRPQX/O7qKbItRvt7rl8tGctUYPrV99CjGbp+Cvl+UtYiM1aYYLQaEcHPRVu4C93xJt1jU+/dVG3teVNeZIBSDiV+zIQyQJyFvqaTn4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=W1sBNu6L; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="lys72Odz"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="W1sBNu6L"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=wCkQR4cHA9xuvHKzS90uHmsTZqSi2S1HI/0MEmerI9A=; b=lys72OdzLB0W3a+SwSVRceozRO
-	coEThVxWBncsGydoGUBJnHh42gpphGT/yVt8pSlYPqMC701HmqbU5OqC7i8i6ET0MpLLSy2ruwEb3
-	c/u5MdhWpyLCIkrEiUbsfnISeiEmhfYEZce6h+09mi++o3eaIkI9igHdkZAEBgcVtMktj2T4INYju
-	Z/V9kP0fQLFWmmy7qSSW+Fg/VNmrlOv4/5ZM1lEPabrtgB4kcge7j9ZZ9I8+r7b7rKDNzVPSpy0PT
-	cwpCw5DHNoRlhTcbBCd3qgJdiXYY30D7wiaxrEcwJ6I5guWQMcomMRiHR0vfBISA/lfDvTWb5NOYb
-	VkHQR5Xg==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rhqQ0-00000000C9P-1Vg4;
-	Wed, 06 Mar 2024 12:30:44 +0000
-Date: Wed, 6 Mar 2024 04:30:44 -0800
-From: Christoph Hellwig <hch@infradead.org>
-To: Song Liu <songliubraving@meta.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-raid <linux-raid@vger.kernel.org>,
-	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
-	Xiao Ni <xni@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Yu Kuai <yukuai3@huawei.com>, Yu Kuai <yukuai1@huaweicloud.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:Message-Id:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:In-Reply-To:References;
+	bh=sK1ki9ofpn+/NZBKJibcoYH2pOB6nC2QnO5+csns/+M=; b=W1sBNu6L6KRdBf7oxRfOzAriSR
+	EB79TAa4Z9V7jikeI+3UVSoU/st7Nvx8/vMaVLdh7q4uX3hxlbCtAGcwSXPoGyjqfnHkxfo1p4L5H
+	QBkYHc1s7pGWKmGsH5Tx8w0j+67eH+J94VXdaAWVSmm0I1wtZ+a0u612MUpt8uxiEknB6cNqLF2W0
+	Tp5268kurqE3lrf4C0CH6o9+lAHftMlnpHqRYdW/Nq1nI/ouGCbnJhHm+Fcn+FnO1R2ITVCzkiO30
+	MZFHKuWVrJqPi9e0oVC4OgUI0zGiRNfvJKeg+w6gvSYwSl52FDU47Vpd0qq2IakxRPzRDftK0rjdw
+	dxV1utoQ==;
+Received: from [66.60.99.14] (helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rhsFB-00000000ZYJ-1cBR;
+	Wed, 06 Mar 2024 14:27:41 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>,
+	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
-	Junxiao Bi <junxiao.bi@oracle.com>, Dan Moulding <dan@danm.net>,
-	Song Liu <song@kernel.org>
-Subject: Re: [GIT PULL] md-6.9 20240305
-Message-ID: <Zehh9BvpfsG0tAEs@infradead.org>
-References: <1C22EE73-62D9-43B0-B1A2-2D3B95F774AC@fb.com>
+	Vishal Verma <vishal.l.verma@intel.com>,
+	Dan Williams <dan.j.williams@intel.com>,
+	Dave Jiang <dave.jiang@intel.com>,
+	Ira Weiny <ira.weiny@intel.com>
+Cc: dm-devel@lists.linux.dev,
+	nvdimm@lists.linux.dev,
+	linux-block@vger.kernel.org
+Subject: remove calls to blk_queue_max_integrity_segments
+Date: Wed,  6 Mar 2024 07:27:36 -0700
+Message-Id: <20240306142739.237234-1-hch@lst.de>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1C22EE73-62D9-43B0-B1A2-2D3B95F774AC@fb.com>
+Content-Transfer-Encoding: 8bit
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-Hi Song,
+Hi all,
 
-can you also send the queue limits changes on?  I'd really like to
-have all non-scsi queue limits updates in 6.9 and have been working
-hard on that.
+I forgot to convert two callers of blk_queue_max_integrity_segments to
+the atomic queue_limits API.  This series fixes that and also cleans up
+the nvdimm code a bit.
 
+The patches are against Jens' for-6.9/block tree and it would be good if
+we could still get them into the 6.9 merge window.
+
+Diffstat:
+ md/dm-integrity.c |    2 +-
+ nvdimm/btt.c      |   12 ++++++++----
+ nvdimm/core.c     |   30 ------------------------------
+ nvdimm/nd.h       |    1 -
+ 4 files changed, 9 insertions(+), 36 deletions(-)
