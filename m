@@ -1,113 +1,168 @@
-Received: from mail-yw1-f174.google.com (mail-yw1-f174.google.com [209.85.128.174])
+Received: from mail-qk1-f182.google.com (mail-qk1-f182.google.com [209.85.222.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 20DB85914E
-	for <dm-devel@lists.linux.dev>; Tue, 12 Mar 2024 13:12:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 714F757307
+	for <dm-devel@lists.linux.dev>; Tue, 12 Mar 2024 13:36:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710249138; cv=none; b=cDfa3eHvsm6uE9N8jKm43M6kNO4ZcH8n9APFLoH2zQn67PbKyTtEFuyd5pprwh8ZwZsyFi4Sa6K0z4LbPlw7e3M4/wt73WoagTL74I1lQYp1iDdAEE45Ke8U/8ByEPCd9PccIHBWPRz13JtFA12VqCZl1lmi5zeklx+ytDm8nLw=
+	t=1710250583; cv=none; b=RqAaBbqOu3Od8WtrE8ZCr0BxQaLnT15L0n4qrBnUGOx8ts3aEe9KT3Kn3ysgek6gycCUSXvLZUNF71p3O8hRkpRme9REqVKmyK0QknqnBb+PkgPfTmIE+zMjPgZfv2+M+6MwXzRCpzRfo0P0bRqSxPXpfrbfCx7HQfC/qLWTDbQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710249138; c=relaxed/simple;
-	bh=5rt+RWbBJPhAUl1uqDwh5UWlve/OPz4PeCvfGqj3MHQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=e/zlkqerQTb7Qpi6qkoKzvhwiFb2z0A4/v8a2Bev2Qa1oQl/xsJ7jYW4k6R1K5ytQFe+AIIbk80CcNSrpSqHHlQu/r6gsK+SAErWltzVmCv+Znid2etSCIljmdnPBYn8QASeq3iKwb4DtU5gVFoHNHrPj+KoCgRQPTv2bDPwy/s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=B38L9QAr; arc=none smtp.client-ip=209.85.128.174
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="B38L9QAr"
-Received: by mail-yw1-f174.google.com with SMTP id 00721157ae682-60a0a54869bso30250477b3.1
-        for <dm-devel@lists.linux.dev>; Tue, 12 Mar 2024 06:12:16 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1710249136; x=1710853936; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=xGm6l1YRLh5BPGXSeJhTa5Xkczn4uT6yuT0rED+ytkk=;
-        b=B38L9QArwuM3zaqtqMJ/lSQw3AOOMHP3BK9KaJmy4eq3SKrOXIwCkwariHF6oZzItU
-         lmlmTOY2fmDiufC+peCFuyXX4XWNqZvdAYPdcHFQhwqWAvms1D5fqmp6kyPxbwmr40OG
-         bst3X8QODJSBuGt+y3FQB97TJhawZ2LxVtVRVJw/ToJ0qkDLcZ2UjkV/v7m1EexRDXym
-         fzAnzX6Q0NWuSFQwUeL3+o4bqQjU0vNRenw7bKGgDoWKBlPH6oBe/94UdbBATAPzJ8L3
-         qxZnWJ+DkHwOeH/xaGdCHD1408wzGNRtbNjRqv4yupN/77Y7IKXD8nivx4NcXq/xSBPv
-         p5TQ==
+	s=arc-20240116; t=1710250583; c=relaxed/simple;
+	bh=bmUuuvESusiy+pZhS6PXrmBShssfghLGuwHkuPDQrwU=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=duRdIYObBmVY+GEd0jEEU+omfT7oF2AW7fXwzJ4NpWa2bzaJIKs8uXXMwTelDpqqAEqb9SmOQgpvD8wJmhAqep4YUctS7nmvLlSC+wog+HpnsEBGW0+TFxL9spAHxpgYAO6eDuTnqjrs20Q2v+D47ri3wQ+CjBh7F9Ra7K3Vb7s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Received: by mail-qk1-f182.google.com with SMTP id af79cd13be357-781753f52afso389835385a.2
+        for <dm-devel@lists.linux.dev>; Tue, 12 Mar 2024 06:36:21 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710249136; x=1710853936;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=xGm6l1YRLh5BPGXSeJhTa5Xkczn4uT6yuT0rED+ytkk=;
-        b=r5XAkO32QoNlHm4GpAPbnlgWPV/qVzZrurcktSVp9mWNUKH9RlVJolFTRmY/q9u/WV
-         o0osP4xyHOj4qDQgd3i4/r2H1WVbw9gi9U3LzJpfg6DAJexogPFII7Bk0UgSdv4jOLbK
-         W1r6bpLy7ZdSMLFpQtpKfhhIiT1AxYVjU1BVVwVI0PZtWaAGbwcfErt9KNNC//8dVwgV
-         LqDasowUWgWgEXtJz0Uv1/GT42hhhXdpXBGoyO4lFni5IbLyDq2zCiMTU7rMGgaCrUiF
-         gM3DIf9+XbqCbjc2KiiJxeXDyMcksrMYXS1lxt4Wb+IXxH40FUK5ETlW4DxvKmA28YP5
-         uEIA==
-X-Forwarded-Encrypted: i=1; AJvYcCUhxVZD3VeFEh4KZLoLz6hocBFnlJvA5dc/y4bfo824GNUlhN+3q+ZW2gUdupYsPkK4cYcb+aYxDkdOA+wACiNdvcDM1SMa8gE=
-X-Gm-Message-State: AOJu0YxwgGAPCO63r6OMYqTzbwUF/yQc8I3i5pci9+7iYkNxM7Iw8VDW
-	CX28Wlg9IR7kh56XqPKH2XiQlFn08JBwWSv9Vb8KdIlI3s8VzwwQU6uG9YMjqdgMA9zruWvHz9t
-	NXF91/nj5smkZzJso1l+c33Ld69PifB7N80kY
-X-Google-Smtp-Source: AGHT+IEdiOBkJ+adeSqv+rNybEPwNkGGa7iFCLcf94f4++BXPp1TK3JUSZqCbU2Yvqne0MvrzB+F7Mt8oGlgCeTEfL8=
-X-Received: by 2002:a05:6902:2841:b0:dcd:b806:7446 with SMTP id
- ee1-20020a056902284100b00dcdb8067446mr6722695ybb.1.1710249136161; Tue, 12 Mar
- 2024 06:12:16 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1710250580; x=1710855380;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=wRVwJfy2hVyEpKZtYOibpDw9Qz3j4RUWpPkp2OvpVok=;
+        b=e8yrJEr+3ZvlABNzj5Cnm2sjCR3/ix0WnZRqa27W9HBe8aIR/yyrFVedgI3s6PHwm6
+         fNmvYx1CmD5U4tbVAj9tjKJIpflS+YO0pSEJQD0fHWdv9p5BE85At/Ug+bI3xC2YaAQr
+         IIZVMzktScRt0P4WGtFlvBhihh7R5aC3HwbXAX6HZYzxTavzwaXktm00zDvgXm3F2ZZm
+         3YbTX+PnFXdCRripfU/DrDOzF+j1dTSh6VSwXPchwMnZFhmf+G+S4fvl3sEO4Dj7Zax+
+         ZrIb0bsSbSfj1W8YoDSjNuo/1xQuR2znqQlMkEWOgUhpnL604tRa/SC63ld8r5eXxD7y
+         bfuw==
+X-Gm-Message-State: AOJu0YwNXqdGHyFUo0sHKQu7jtN4GHf9f3Z5Ca5nq2y//l/vB/VrDqtp
+	Fsc8YXtRctavz+TrQ6WdugKGJfdW9FoyD17gh6q8zVT5gheYFHsZ63qa4M+QTg==
+X-Google-Smtp-Source: AGHT+IGic3n9G3deCfgl0GmCPYG7YSpk6/GbuhN9Nf0ggiFI3GIT7wH3RIyrRlJ9Acz/oTP2NNPTgA==
+X-Received: by 2002:a05:620a:2225:b0:788:6632:20e with SMTP id n5-20020a05620a222500b007886632020emr7245002qkh.34.1710250580232;
+        Tue, 12 Mar 2024 06:36:20 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id v18-20020a05620a091200b0078812f8a042sm3701092qkv.90.2024.03.12.06.36.19
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 12 Mar 2024 06:36:19 -0700 (PDT)
+Date: Tue, 12 Mar 2024 09:36:18 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	Alasdair G Kergon <agk@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christoph Hellwig <hch@lst.de>, Fan Wu <wufan@linux.microsoft.com>,
+	Hongyu Jin <hongyu.jin@unisoc.com>, Lizhe <sensor1010@163.com>,
+	Ming Lei <ming.lei@redhat.com>
+Subject: [git pull v2] device mapper changes for 6.9
+Message-ID: <ZfBaUu2O0J9ST3PY@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <1709768084-22539-1-git-send-email-wufan@linux.microsoft.com>
- <1709768084-22539-16-git-send-email-wufan@linux.microsoft.com>
- <20240312025712.GE1182@sol.localdomain> <20240312030712.GF1182@sol.localdomain>
-In-Reply-To: <20240312030712.GF1182@sol.localdomain>
-From: Paul Moore <paul@paul-moore.com>
-Date: Tue, 12 Mar 2024 09:12:05 -0400
-Message-ID: <CAHC9VhSSWNa1qwZrWtj-ERFjN9QKR7fz17yb9903P_a2k6ewaQ@mail.gmail.com>
-Subject: Re: [RFC PATCH v14 15/19] fsverity: consume builtin signature via LSM hook
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, 
-	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, axboe@kernel.dk, 
-	agk@redhat.com, snitzer@kernel.org, eparis@redhat.com, 
-	linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
-	linux-security-module@vger.kernel.org, linux-fscrypt@vger.kernel.org, 
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Mon, Mar 11, 2024 at 11:07=E2=80=AFPM Eric Biggers <ebiggers@kernel.org>=
- wrote:
-> On Mon, Mar 11, 2024 at 07:57:12PM -0700, Eric Biggers wrote:
-> >
-> > As I've said before, this commit message needs some work.  It currently=
- doesn't
-> > say anything about what the patch actually does.
-> >
-> > BTW, please make sure you're Cc'ing the fsverity mailing list
-> > (fsverity@lists.linux.dev), not fscrypt (linux-fscrypt@vger.kernel.org)=
-.
->
-> Also, I thought this patch was using a new LSM hook, but I now see that y=
-ou're
-> actually abusing the existing security_inode_setsecurity() LSM hook.  Cur=
-rently
-> that hook is called when an xattr is set.  I don't see any precedent for
-> overloading it for other purposes.
+Hi Linus,
 
-I'm not really bothered by this, and if it proves to be a problem in
-the future we can swap it for a new hook; we don't include the LSM
-in-kernel API in any stable API guarantees.
+I dropped this patch because it is only needed with the change you
+reverted (commit 8e0ef4128694 dm: use queue_limits_set):
+https://patchwork.kernel.org/project/dm-devel/patch/20240309164140.719752-1-hch@lst.de/
 
-> This seems problematic, as it means that a
-> request to set an xattr with the name you chose ("fsverity.builtin-sig") =
-will be
-> interpreted by LSMs as the fsverity builtin signature.  A dedicated LSM h=
-ook may
-> be necessary to avoid issues with overloading the existing xattr hook lik=
-e this.
+The following changes since commit 0e0c50e85a364bb7f1c52c84affe7f9e88c57da7:
 
-Would you be more comfortable if the name was in an IPE related space,
-for example something like "ipe.fsverity-sig"?
+  dm-crypt, dm-integrity, dm-verity: bump target version (2024-02-20 13:35:47 -0500)
 
---=20
-paul-moore.com
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.9/dm-changes
+
+for you to fetch changes up to 65e8fbde64520001abf1c8d0e573561b4746ef38:
+
+  dm: call the resume method on internal suspend (2024-03-12 09:27:42 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Fix DM core's IO submission (which include dm-io and dm-bufio) such
+  that a bio's IO priority is propagated. Work focused on enabling
+  both DM crypt and verity targets to retain the appropriate IO
+  priority.
+
+- Fix DM raid reshape logic to not allow an empty flush bio to be
+  requeued due to false concern about the bio, which doesn't have a
+  data payload, accessing beyond the end of the device.
+
+- Fix DM core's internal resume so that it properly calls both presume
+  and resume methods, which fixes the potential for a postsuspend and
+  resume imbalance.
+
+- Update DM verity target to set DM_TARGET_SINGLETON flag because it
+  doesn't make sense to have a DM table with a mix of targets that
+  include dm-verity.
+
+- Small cleanups in DM crypt, thin, and integrity targets.
+
+- Fix references to dm-devel mailing list to use latest list address.
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmXwWHkACgkQxSPxCi2d
+A1oavggAtmftaoAXUJNdiYgIDm6/gKPa0CDyQEoD5cTyQ32R7c6SYNN7u2wrltHX
+af36lzoksfsOra8uMa4+Q46/XFeqlRzvfu29bhmfAWMkMT3MMq7iGtTFG/SluD7b
+NWjXhsUT8Fv2Q7BKglUc6cXUIbCZNwNUs5cxx2QobdrD57qxVKDz5HkH5/EggptA
+cA6dpD7DbpWQhHWm0UN6cOmYNh4kGLiQs4S50N5hc7zlbXfJhhVzflecsVPY+MVN
+wS/iv/hNenlLuJ7gzIPBwmxRgBbjHHbrbFNVa2yFrPQ8m/AuRbAUqYQO1sOXNOMZ
+Mkk2G0IB7sJtpnEm+6l0x7A4VmSWvg==
+=Eoxd
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Christoph Hellwig (1):
+      dm-integrity: set max_integrity_segments in dm_integrity_io_hints
+
+Fan Wu (1):
+      dm verity: set DM_TARGET_SINGLETON feature flag
+
+Hongyu Jin (4):
+      dm io: Support IO priority
+      dm bufio: Support IO priority
+      dm verity: Fix IO priority lost when reading FEC and hash
+      dm crypt: Fix IO priority lost when queuing write bios
+
+Lizhe (1):
+      dm crypt: remove redundant state settings after waking up
+
+Mike Snitzer (3):
+      dm thin: add braces around conditional code that spans lines
+      dm ioctl: update DM_DRIVER_EMAIL to new dm-devel mailing list
+      dm: update relevant MODULE_AUTHOR entries to latest dm-devel mailing list
+
+Mikulas Patocka (1):
+      dm: call the resume method on internal suspend
+
+Ming Lei (1):
+      dm raid: fix false positive for requeue needed during reshape
+
+ drivers/md/dm-bio-prison-v1.c                 |  2 +-
+ drivers/md/dm-bufio.c                         | 76 +++++++++++++++++++--------
+ drivers/md/dm-cache-policy-smq.c              |  2 +-
+ drivers/md/dm-crypt.c                         |  2 +-
+ drivers/md/dm-dust.c                          |  2 +-
+ drivers/md/dm-ebs-target.c                    |  2 +-
+ drivers/md/dm-flakey.c                        |  2 +-
+ drivers/md/dm-integrity.c                     | 14 ++---
+ drivers/md/dm-io.c                            | 23 ++++----
+ drivers/md/dm-ioctl.c                         |  2 +-
+ drivers/md/dm-kcopyd.c                        |  4 +-
+ drivers/md/dm-log-userspace-base.c            |  2 +-
+ drivers/md/dm-log.c                           |  6 +--
+ drivers/md/dm-mpath.c                         |  2 +-
+ drivers/md/dm-ps-round-robin.c                |  2 +-
+ drivers/md/dm-raid.c                          |  8 +--
+ drivers/md/dm-raid1.c                         |  6 +--
+ drivers/md/dm-region-hash.c                   |  2 +-
+ drivers/md/dm-snap-persistent.c               |  4 +-
+ drivers/md/dm-thin.c                          | 22 ++++----
+ drivers/md/dm-verity-fec.c                    | 21 ++++----
+ drivers/md/dm-verity-target.c                 | 23 +++++---
+ drivers/md/dm-writecache.c                    | 10 ++--
+ drivers/md/dm.c                               | 28 +++++++---
+ drivers/md/persistent-data/dm-block-manager.c |  2 +-
+ include/linux/dm-bufio.h                      |  7 +++
+ include/linux/dm-io.h                         |  3 +-
+ 27 files changed, 174 insertions(+), 105 deletions(-)
