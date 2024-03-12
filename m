@@ -1,53 +1,59 @@
-Received: from mail-qk1-f182.google.com (mail-qk1-f182.google.com [209.85.222.182])
+Received: from mail-qv1-f54.google.com (mail-qv1-f54.google.com [209.85.219.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 714F757307
-	for <dm-devel@lists.linux.dev>; Tue, 12 Mar 2024 13:36:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 577397A71D
+	for <dm-devel@lists.linux.dev>; Tue, 12 Mar 2024 15:22:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710250583; cv=none; b=RqAaBbqOu3Od8WtrE8ZCr0BxQaLnT15L0n4qrBnUGOx8ts3aEe9KT3Kn3ysgek6gycCUSXvLZUNF71p3O8hRkpRme9REqVKmyK0QknqnBb+PkgPfTmIE+zMjPgZfv2+M+6MwXzRCpzRfo0P0bRqSxPXpfrbfCx7HQfC/qLWTDbQ=
+	t=1710256978; cv=none; b=YIrViwvVhYzVSHIGwsi05rbTvRuyN43CcSnST6wBE11vFGx2QOthICsL/dqshXGIvNtGzwgs0RpiAP5CSe3VGsTFYXonHncfhzvUZ1t3E6W+BhdMpfUhghxv1UWEhUpsQSYp3b1ZxYY6CTb3oa6vAL3SZmc3ibUYXXVN7Piy+yg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710250583; c=relaxed/simple;
-	bh=bmUuuvESusiy+pZhS6PXrmBShssfghLGuwHkuPDQrwU=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=duRdIYObBmVY+GEd0jEEU+omfT7oF2AW7fXwzJ4NpWa2bzaJIKs8uXXMwTelDpqqAEqb9SmOQgpvD8wJmhAqep4YUctS7nmvLlSC+wog+HpnsEBGW0+TFxL9spAHxpgYAO6eDuTnqjrs20Q2v+D47ri3wQ+CjBh7F9Ra7K3Vb7s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.182
+	s=arc-20240116; t=1710256978; c=relaxed/simple;
+	bh=0vAcxSLi4l6fH5H4bviOsVgBTA4mchz310ZUv7aGtbw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=n5mXh65VV9x+bVTWhAiPO1Q+sMDZn/tfqbam32UmtAgdNIYb3HaAaw2JOrO1i/oWtD59ZZFaeRcc7UcACOZkvgOwSg33LS4/dTdIx87311vZokO+I/cRhrMKwbjdmpU2WDz6xN8TkpjoDSO49mENGMKfj0oA6BM6WP0HJSORsx8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.219.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qk1-f182.google.com with SMTP id af79cd13be357-781753f52afso389835385a.2
-        for <dm-devel@lists.linux.dev>; Tue, 12 Mar 2024 06:36:21 -0700 (PDT)
+Received: by mail-qv1-f54.google.com with SMTP id 6a1803df08f44-690d7a8f904so708796d6.1
+        for <dm-devel@lists.linux.dev>; Tue, 12 Mar 2024 08:22:56 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710250580; x=1710855380;
-        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=wRVwJfy2hVyEpKZtYOibpDw9Qz3j4RUWpPkp2OvpVok=;
-        b=e8yrJEr+3ZvlABNzj5Cnm2sjCR3/ix0WnZRqa27W9HBe8aIR/yyrFVedgI3s6PHwm6
-         fNmvYx1CmD5U4tbVAj9tjKJIpflS+YO0pSEJQD0fHWdv9p5BE85At/Ug+bI3xC2YaAQr
-         IIZVMzktScRt0P4WGtFlvBhihh7R5aC3HwbXAX6HZYzxTavzwaXktm00zDvgXm3F2ZZm
-         3YbTX+PnFXdCRripfU/DrDOzF+j1dTSh6VSwXPchwMnZFhmf+G+S4fvl3sEO4Dj7Zax+
-         ZrIb0bsSbSfj1W8YoDSjNuo/1xQuR2znqQlMkEWOgUhpnL604tRa/SC63ld8r5eXxD7y
-         bfuw==
-X-Gm-Message-State: AOJu0YwNXqdGHyFUo0sHKQu7jtN4GHf9f3Z5Ca5nq2y//l/vB/VrDqtp
-	Fsc8YXtRctavz+TrQ6WdugKGJfdW9FoyD17gh6q8zVT5gheYFHsZ63qa4M+QTg==
-X-Google-Smtp-Source: AGHT+IGic3n9G3deCfgl0GmCPYG7YSpk6/GbuhN9Nf0ggiFI3GIT7wH3RIyrRlJ9Acz/oTP2NNPTgA==
-X-Received: by 2002:a05:620a:2225:b0:788:6632:20e with SMTP id n5-20020a05620a222500b007886632020emr7245002qkh.34.1710250580232;
-        Tue, 12 Mar 2024 06:36:20 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1710256975; x=1710861775;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=NbU/Lvz7BQx5TO6vgoeKsNgZwne0imjTwQjOCDWQeDY=;
+        b=Q7+Hbi7Xaj6X3KDkEe+pi3cwcVdSFrNrmG7kLLUoxJGurCFzFa6HHuFo0T6LOisFWK
+         3KF7x25gk9nOJoq/EDsr5DxShUKG/Ue3o6WU5GnZC6ciBLGy8C/9k2DHGJhDakQkz8DG
+         6yMgSTcbgWSA+aV3mvjTGaihOxCw77Uj0YL7euAw3+aynSQeSGzAVwtZ6x1fxepMdgZs
+         39wIixjwZeA09/hGWPXZq+3z3n2L/bjtLwJ0Wu6r8fAUXpFkk0tnuZW8tlkks5WculQX
+         npjtcssx8bjTGBkiadOBEZUpZ9wlg6KnCnCiAkJPYHweqnhTMtDpO/9k1+oguiG+fnEN
+         /OJg==
+X-Forwarded-Encrypted: i=1; AJvYcCW0dwzeEzOfeQ4zZbWNNFzF0TiPHo2gJ0CDvqdKiNpwa2csnTvxnfe0vwazzeQL5SqI6Bt69ESaT1GRxNlnpNIIjfqtzcMCodc=
+X-Gm-Message-State: AOJu0Yz4Dr21vgxfGp08uooDCtq7bvtirKI0WnuPIx19vMqxxYnHKK0Q
+	yi+hIsX4xve9UYtypONoZfr8Vrg4pqACwqhg0A/uaY9wV+JpzfKAud2vgRuJlw==
+X-Google-Smtp-Source: AGHT+IGtVWgFY7B4+YAvxT4k6duzuHD1e1UcI/bjxCc7plFQt62r5xk0tRu1KWZhE5pXeQVZsOUyYg==
+X-Received: by 2002:ad4:5de9:0:b0:690:2069:d413 with SMTP id jn9-20020ad45de9000000b006902069d413mr17952899qvb.6.1710256975288;
+        Tue, 12 Mar 2024 08:22:55 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id v18-20020a05620a091200b0078812f8a042sm3701092qkv.90.2024.03.12.06.36.19
+        by smtp.gmail.com with ESMTPSA id ek19-20020ad45993000000b006907e34d029sm3771891qvb.2.2024.03.12.08.22.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 12 Mar 2024 06:36:19 -0700 (PDT)
-Date: Tue, 12 Mar 2024 09:36:18 -0400
+        Tue, 12 Mar 2024 08:22:54 -0700 (PDT)
+Date: Tue, 12 Mar 2024 11:22:53 -0400
 From: Mike Snitzer <snitzer@kernel.org>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	Alasdair G Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christoph Hellwig <hch@lst.de>, Fan Wu <wufan@linux.microsoft.com>,
-	Hongyu Jin <hongyu.jin@unisoc.com>, Lizhe <sensor1010@163.com>,
-	Ming Lei <ming.lei@redhat.com>
-Subject: [git pull v2] device mapper changes for 6.9
-Message-ID: <ZfBaUu2O0J9ST3PY@redhat.com>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>,
+	Jens Axboe <axboe@kernel.dk>, Johannes Weiner <hannes@cmpxchg.org>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	dm-devel@lists.linux.dev
+Subject: Re: [GIT PULL] Block updates for 6.9-rc1
+Message-ID: <ZfBzTWM7NBbGymsY@redhat.com>
+References: <eaeec3b6-75c2-4b65-8c50-2d37450ccdd9@kernel.dk>
+ <20240311235023.GA1205@cmpxchg.org>
+ <CAHk-=wgOfw8NBQ2Qyh8QUjhp5z4v--PuciLE7drn5LJkTtgPVw@mail.gmail.com>
+ <e3fea6c3-7704-46cd-b078-0c6e8d966474@kernel.dk>
+ <CAHk-=wgXZ6dE1yHK_jQmnSjbEbndyzZHC5dJNsmQYTD2K-m61w@mail.gmail.com>
+ <Ze-hwnd3ocfJc9xU@redhat.com>
+ <Ze-rRvKpux44ueao@infradead.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -56,113 +62,81 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <Ze-rRvKpux44ueao@infradead.org>
 
-Hi Linus,
+On Mon, Mar 11 2024 at  9:09P -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
-I dropped this patch because it is only needed with the change you
-reverted (commit 8e0ef4128694 dm: use queue_limits_set):
-https://patchwork.kernel.org/project/dm-devel/patch/20240309164140.719752-1-hch@lst.de/
+> On Mon, Mar 11, 2024 at 08:28:50PM -0400, Mike Snitzer wrote:
+> > All for Jens being made to suffer with dm-crypt but I think we need a
+> > proper root cause of what is happening for you and Johannes ;)
+> 
+> I'm going to try to stay out of the cranking, but I think the reason is
+> that the limits stacking inherits the max_segment_size, nvme has weird
+> rules for them due their odd PRPs, and dm-crypt set it's own
+> max_segment_size to split out each page.  The regression here is
+> that we now actually verify that conflict.
+> 
+> So this happens only for dm-crypt on nvme.  The fix is probably
+> to not inherit low-level limits like max_segment_size, but I need
+> to think about it a bit more and come up with an automated test case
+> using say nvme-loop.
 
-The following changes since commit 0e0c50e85a364bb7f1c52c84affe7f9e88c57da7:
+Yeah, I generally agree.
 
-  dm-crypt, dm-integrity, dm-verity: bump target version (2024-02-20 13:35:47 -0500)
+I looked at the latest code to more fully understand why this failed.
 
-are available in the Git repository at:
+1) dm-crypt.c:crypt_io_hints() sets limits->max_segment_size = PAGE_SIZE;
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.9/dm-changes
+2) drivers/nvme/host/core.c:nvme_set_ctrl_limits() sets:
+   lim->virt_boundary_mask = NVME_CTRL_PAGE_SIZE - 1;
+   lim->max_segment_size = UINT_MAX;
 
-for you to fetch changes up to 65e8fbde64520001abf1c8d0e573561b4746ef38:
+3) blk_stack_limits(t=dm-crypt, b=nvme-pci) will combine limits:
+        t->virt_boundary_mask = min_not_zero(t->virt_boundary_mask,
+                                            b->virt_boundary_mask);
+        t->max_segment_size = min_not_zero(t->max_segment_size,
+                                           b->max_segment_size);
 
-  dm: call the resume method on internal suspend (2024-03-12 09:27:42 -0400)
+4) blk_validate_limits() will reject the limits that
+   blk_stack_limits() created:
+        /*
+         * Devices that require a virtual boundary do not support scatter/gather
+         * I/O natively, but instead require a descriptor list entry for each
+         * page (which might not be identical to the Linux PAGE_SIZE).  Because
+         * of that they are not limited by our notion of "segment size".
+         */
+	if (lim->virt_boundary_mask) {
+                if (WARN_ON_ONCE(lim->max_segment_size &&
+                                 lim->max_segment_size != UINT_MAX))
+                        return -EINVAL;
+                lim->max_segment_size = UINT_MAX;
+	} else {
+                /*
+                 * The maximum segment size has an odd historic 64k default that
+                 * drivers probably should override.  Just like the I/O size we
+                 * require drivers to at least handle a full page per segment.
+                 */
+		if (!lim->max_segment_size)
+                        lim->max_segment_size = BLK_MAX_SEGMENT_SIZE;
+                if (WARN_ON_ONCE(lim->max_segment_size < PAGE_SIZE))
+                	return -EINVAL;
+        }
 
-Please pull, thanks.
+blk_validate_limits() is currently very pedantic. I discussed with Jens
+briefly and we're thinking it might make sense for blk_validate_limits()
+to be more forgiving by _not_ imposing hard -EINVAL failure.  That in
+the interim, during this transition to more curated and atomic limits, a
+WARN_ON_ONCE() splat should serve as enough notice to developers (be it
+lower level nvme or higher-level virtual devices like DM).
+
+BUT for this specific max_segment_size case, the constraints of dm-crypt
+are actually more conservative due to crypto requirements. Yet nvme's
+more general "don't care, but will care if non-nvme driver does" for
+this particular max_segment_size limit is being imposed when validating
+the combined limits that dm-crypt will impose at the top-level.
+
+All said, the above "if (lim->virt_boundary_mask)" check in
+blk_validate_limits() looks bogus for stacked device limits.
+
 Mike
-
-----------------------------------------------------------------
-- Fix DM core's IO submission (which include dm-io and dm-bufio) such
-  that a bio's IO priority is propagated. Work focused on enabling
-  both DM crypt and verity targets to retain the appropriate IO
-  priority.
-
-- Fix DM raid reshape logic to not allow an empty flush bio to be
-  requeued due to false concern about the bio, which doesn't have a
-  data payload, accessing beyond the end of the device.
-
-- Fix DM core's internal resume so that it properly calls both presume
-  and resume methods, which fixes the potential for a postsuspend and
-  resume imbalance.
-
-- Update DM verity target to set DM_TARGET_SINGLETON flag because it
-  doesn't make sense to have a DM table with a mix of targets that
-  include dm-verity.
-
-- Small cleanups in DM crypt, thin, and integrity targets.
-
-- Fix references to dm-devel mailing list to use latest list address.
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmXwWHkACgkQxSPxCi2d
-A1oavggAtmftaoAXUJNdiYgIDm6/gKPa0CDyQEoD5cTyQ32R7c6SYNN7u2wrltHX
-af36lzoksfsOra8uMa4+Q46/XFeqlRzvfu29bhmfAWMkMT3MMq7iGtTFG/SluD7b
-NWjXhsUT8Fv2Q7BKglUc6cXUIbCZNwNUs5cxx2QobdrD57qxVKDz5HkH5/EggptA
-cA6dpD7DbpWQhHWm0UN6cOmYNh4kGLiQs4S50N5hc7zlbXfJhhVzflecsVPY+MVN
-wS/iv/hNenlLuJ7gzIPBwmxRgBbjHHbrbFNVa2yFrPQ8m/AuRbAUqYQO1sOXNOMZ
-Mkk2G0IB7sJtpnEm+6l0x7A4VmSWvg==
-=Eoxd
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Christoph Hellwig (1):
-      dm-integrity: set max_integrity_segments in dm_integrity_io_hints
-
-Fan Wu (1):
-      dm verity: set DM_TARGET_SINGLETON feature flag
-
-Hongyu Jin (4):
-      dm io: Support IO priority
-      dm bufio: Support IO priority
-      dm verity: Fix IO priority lost when reading FEC and hash
-      dm crypt: Fix IO priority lost when queuing write bios
-
-Lizhe (1):
-      dm crypt: remove redundant state settings after waking up
-
-Mike Snitzer (3):
-      dm thin: add braces around conditional code that spans lines
-      dm ioctl: update DM_DRIVER_EMAIL to new dm-devel mailing list
-      dm: update relevant MODULE_AUTHOR entries to latest dm-devel mailing list
-
-Mikulas Patocka (1):
-      dm: call the resume method on internal suspend
-
-Ming Lei (1):
-      dm raid: fix false positive for requeue needed during reshape
-
- drivers/md/dm-bio-prison-v1.c                 |  2 +-
- drivers/md/dm-bufio.c                         | 76 +++++++++++++++++++--------
- drivers/md/dm-cache-policy-smq.c              |  2 +-
- drivers/md/dm-crypt.c                         |  2 +-
- drivers/md/dm-dust.c                          |  2 +-
- drivers/md/dm-ebs-target.c                    |  2 +-
- drivers/md/dm-flakey.c                        |  2 +-
- drivers/md/dm-integrity.c                     | 14 ++---
- drivers/md/dm-io.c                            | 23 ++++----
- drivers/md/dm-ioctl.c                         |  2 +-
- drivers/md/dm-kcopyd.c                        |  4 +-
- drivers/md/dm-log-userspace-base.c            |  2 +-
- drivers/md/dm-log.c                           |  6 +--
- drivers/md/dm-mpath.c                         |  2 +-
- drivers/md/dm-ps-round-robin.c                |  2 +-
- drivers/md/dm-raid.c                          |  8 +--
- drivers/md/dm-raid1.c                         |  6 +--
- drivers/md/dm-region-hash.c                   |  2 +-
- drivers/md/dm-snap-persistent.c               |  4 +-
- drivers/md/dm-thin.c                          | 22 ++++----
- drivers/md/dm-verity-fec.c                    | 21 ++++----
- drivers/md/dm-verity-target.c                 | 23 +++++---
- drivers/md/dm-writecache.c                    | 10 ++--
- drivers/md/dm.c                               | 28 +++++++---
- drivers/md/persistent-data/dm-block-manager.c |  2 +-
- include/linux/dm-bufio.h                      |  7 +++
- include/linux/dm-io.h                         |  3 +-
- 27 files changed, 174 insertions(+), 105 deletions(-)
