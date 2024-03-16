@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id B50161799F;
-	Sat, 16 Mar 2024 03:35:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 9BCB418C08;
+	Sat, 16 Mar 2024 03:36:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710560164; cv=none; b=ObB1DOrkZ9nNnrYz1WNeoo9sA1M8Mpwov/wVqZwlfDgeLhN3u2rh9QEEsOCFRVSbsyTwU8JI9k3ReCcsQVPZoHrMfecMO58IvyfMkQ1KYHYS4lNj2dw0QIL6HCWpMZmjU2hOlD3/9ibU6gCEeYLNwBAgejOZB1dxOwxD6Joc7N8=
+	t=1710560164; cv=none; b=FyggUsyECwYliHzldqOqLzboBeF/Na8BBp0ps5F+7MEQ+o3eJ1UIv++6EHCEjYwm12nQj+GFOZh5cyrLa/jTCR0pyTnyTRibKcOnMn6IrnAS9Xd3C2x181Qx/8TQKcCrRbTW2O1NSbJ1hSu/Ea9wMnvb/En0xZNzQPit54Fr/do=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1710560164; c=relaxed/simple;
-	bh=BHHU7wvU0GqKpQRx06XB0p34Say4ghpWWe3Jz/hiOL0=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=BnHHvEXUQhJd7V7kAjcs00OVH11q4G1oHqEwJa3OHV6T7xHdSAGkxgGFivOiD2mitC7hOhd/2cvHGB8/BGnSvJyTHl7OPA/kEi/Fr+NIvNl2qjSsGz8OkUi8kqUStbT6xsiyU1lj4uhh2ZoEF0elzh1UKKjHZxlXfFOTpE79fY0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=VmhtGbNR; arc=none smtp.client-ip=13.77.154.182
+	bh=k8JAW3DM9vthYNlDI+O5hSqVOSLNue4bWm7JLzUosv8=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=LbWUSrzhTTMi4RhPRVH74VCTsuqK4I2yZJ9/kUbtBQPZy5OLAuR0dwvq0oYVwOjOzmxHIhpJTkqlL/FBzGUFSnL05av0ES4MyPRL44E6qw6mI6O25v9bm41+CUyXqdC13ARv8alVspoFUasKy3PhyiTcKEeSHVLauMoJGLyQ/Qg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=pTh/ooQb; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="VmhtGbNR"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="pTh/ooQb"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id 2052920B74DE; Fri, 15 Mar 2024 20:35:53 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 2052920B74DE
+	id 5A20120B57B4; Fri, 15 Mar 2024 20:35:53 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 5A20120B57B4
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
 	s=default; t=1710560154;
-	bh=iM4/1054yOxiNSzxSvLQETyTfgkCu2ikMbtUNs7hwkA=;
+	bh=Kbaa0pr2wchQmBrI7lEwdYsu9IBGsjQ+qhFJ1bS6PfA=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=VmhtGbNRsuClkQXsLOQmq2aebij4g7UAnzP6RF/MHSBqS79SmvINTLXQpXi/SaRsK
-	 SSAnlQYSS8ilfGWZ9SS+vZbWZIbBAiL0zBBK61qZ92to6GmzNMjvLOQWnQxz83fL4F
-	 dmyI1UIlb7cQ5/mO+nuqMd5Ox11ZmsamVTDhQ23E=
+	b=pTh/ooQbVeoXbZHK3iT+cbqtux6Cd6ppolJM/vpAaN+qjUNCFuY/CDrTLW2v3siq1
+	 PEo33cgQ6ajv3seHBB5ZDRg7RYkbJJQFv65jhn3NBBuOP16KjfqDd1HDTagHCFpAnb
+	 6o8Ah9tytF3eK5D1c8MKLxFEonirRciEe5ZlxEhU=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -43,10 +43,11 @@ Cc: linux-doc@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	audit@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
+	Deven Bowers <deven.desai@linux.microsoft.com>,
 	Fan Wu <wufan@linux.microsoft.com>
-Subject: [RFC PATCH v15 16/21] security: add security_inode_setintegrity() hook
-Date: Fri, 15 Mar 2024 20:35:46 -0700
-Message-Id: <1710560151-28904-17-git-send-email-wufan@linux.microsoft.com>
+Subject: [RFC PATCH v15 20/21] ipe: kunit test for parser
+Date: Fri, 15 Mar 2024 20:35:50 -0700
+Message-Id: <1710560151-28904-21-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1710560151-28904-1-git-send-email-wufan@linux.microsoft.com>
 References: <1710560151-28904-1-git-send-email-wufan@linux.microsoft.com>
@@ -56,107 +57,392 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
-This patch introduces a new hook to save inode's integrity
-data. For example, for fsverity enabled files, LSMs can use this hook to save
-the verified fsverity builtin signature into the inode's security blob,
-and LSMs can make access decisions based on the data inside the signature,
-like the signer certificate.
+From: Deven Bowers <deven.desai@linux.microsoft.com>
 
+Add various happy/unhappy unit tests for both IPE's policy parser.
+
+Besides, a test suite for IPE functionality is available at
+https://github.com/microsoft/ipe/tree/test-suite
+
+Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
---
-v1-v14:
+---
+v1-v6:
   + Not present
 
-v15:
-  + Introduced
----
- include/linux/lsm_hook_defs.h |  3 +++
- include/linux/security.h      | 10 ++++++++++
- security/security.c           | 28 ++++++++++++++++++++++++++++
- 3 files changed, 41 insertions(+)
+v7:
+  Introduced
 
-diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-index 6808ae763913..c88587fc3691 100644
---- a/include/linux/lsm_hook_defs.h
-+++ b/include/linux/lsm_hook_defs.h
-@@ -177,6 +177,9 @@ LSM_HOOK(int, 0, inode_listsecurity, struct inode *inode, char *buffer,
- LSM_HOOK(void, LSM_RET_VOID, inode_getsecid, struct inode *inode, u32 *secid)
- LSM_HOOK(int, 0, inode_copy_up, struct dentry *src, struct cred **new)
- LSM_HOOK(int, -EOPNOTSUPP, inode_copy_up_xattr, const char *name)
-+LSM_HOOK(int, 0, inode_setintegrity, struct inode *inode,
-+	 enum lsm_intgr_type type, const void *value, size_t size)
-+
- LSM_HOOK(int, 0, kernfs_init_security, struct kernfs_node *kn_dir,
- 	 struct kernfs_node *kn)
- LSM_HOOK(int, 0, file_permission, struct file *file, int mask)
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 60b40b523d57..0885866b261e 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -405,6 +405,9 @@ int security_inode_listsecurity(struct inode *inode, char *buffer, size_t buffer
- void security_inode_getsecid(struct inode *inode, u32 *secid);
- int security_inode_copy_up(struct dentry *src, struct cred **new);
- int security_inode_copy_up_xattr(const char *name);
-+int security_inode_setintegrity(struct inode *inode,
-+				enum lsm_intgr_type type, const void *value,
-+				size_t size);
- int security_kernfs_init_security(struct kernfs_node *kn_dir,
- 				  struct kernfs_node *kn);
- int security_file_permission(struct file *file, int mask);
-@@ -1021,6 +1024,13 @@ static inline int security_inode_copy_up(struct dentry *src, struct cred **new)
- 	return 0;
- }
+v8:
+  + Remove the kunit tests with respect to the fsverity digest, as these
+    require significant changes to work with the new method of acquiring
+    the digest at runtime.
+
+v9:
+  + Remove the kunit tests related to ipe_context
+
+v10:
+  + No changes
+
+v11:
+  + No changes
+
+v12:
+  + No changes
+
+v13:
+  + No changes
+
+v14:
+  + No changes
+
+v15:
+  + No changes
+---
+ security/ipe/Kconfig        |  17 +++
+ security/ipe/Makefile       |   3 +
+ security/ipe/policy_tests.c | 294 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 314 insertions(+)
+ create mode 100644 security/ipe/policy_tests.c
+
+diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+index a18c5915b723..1b2a306155ae 100644
+--- a/security/ipe/Kconfig
++++ b/security/ipe/Kconfig
+@@ -55,4 +55,21 @@ config IPE_PROP_FS_VERITY
  
-+static inline int security_inode_setintegrity(struct inode *inode,
-+					      enum lsm_intgr_type, type,
-+					      const void *value, size_t size)
+ endmenu
+ 
++config SECURITY_IPE_KUNIT_TEST
++	bool "Build KUnit tests for IPE" if !KUNIT_ALL_TESTS
++	depends on KUNIT=y
++	default KUNIT_ALL_TESTS
++	help
++	  This builds the IPE KUnit tests.
++
++	  KUnit tests run during boot and output the results to the debug log
++	  in TAP format (https://testanything.org/). Only useful for kernel devs
++	  running KUnit test harness and are not for inclusion into a
++	  production build.
++
++	  For more information on KUnit and unit tests in general please refer
++	  to the KUnit documentation in Documentation/dev-tools/kunit/.
++
++	  If unsure, say N.
++
+ endif
+diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+index ce23101b66ba..def674e09e84 100644
+--- a/security/ipe/Makefile
++++ b/security/ipe/Makefile
+@@ -26,3 +26,6 @@ obj-$(CONFIG_SECURITY_IPE) += \
+ 	audit.o \
+ 
+ clean-files := boot-policy.c \
++
++obj-$(CONFIG_SECURITY_IPE_KUNIT_TEST) += \
++	policy_tests.o \
+diff --git a/security/ipe/policy_tests.c b/security/ipe/policy_tests.c
+new file mode 100644
+index 000000000000..d67c42c9ca59
+--- /dev/null
++++ b/security/ipe/policy_tests.c
+@@ -0,0 +1,294 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/list.h>
++#include <kunit/test.h>
++#include "policy.h"
++struct policy_case {
++	const char *const policy;
++	int errno;
++	const char *const desc;
++};
++
++static const struct policy_case policy_cases[] = {
++	{
++		"policy_name=allowall policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW",
++		0,
++		"basic",
++	},
++	{
++		"policy_name=trailing_comment policy_version=152.0.0 #This is comment\n"
++		"DEFAULT action=ALLOW",
++		0,
++		"trailing comment",
++	},
++	{
++		"policy_name=allowallnewline policy_version=0.2.0\n"
++		"DEFAULT action=ALLOW\n"
++		"\n",
++		0,
++		"trailing newline",
++	},
++	{
++		"policy_name=carriagereturnlinefeed policy_version=0.0.1\n"
++		"DEFAULT action=ALLOW\n"
++		"\r\n",
++		0,
++		"clrf newline",
++	},
++	{
++		"policy_name=whitespace policy_version=0.0.0\n"
++		"DEFAULT\taction=ALLOW\n"
++		"     \t     DEFAULT \t    op=EXECUTE      action=DENY\n"
++		"op=EXECUTE boot_verified=TRUE action=ALLOW\n"
++		"# this is a\tcomment\t\t\t\t\n"
++		"DEFAULT \t op=KMODULE\t\t\t  action=DENY\r\n"
++		"op=KMODULE boot_verified=TRUE action=ALLOW\n",
++		0,
++		"various whitespaces and nested default",
++	},
++	{
++		"policy_name=boot_verified policy_version=-1236.0.0\n"
++		"DEFAULT\taction=ALLOW\n",
++		-EINVAL,
++		"negative version",
++	},
++	{
++		"policy_name=$@!*&^%%\\:;{}() policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW",
++		0,
++		"special characters",
++	},
++	{
++		"policy_name=test policy_version=999999.0.0\n"
++		"DEFAULT action=ALLOW",
++		-ERANGE,
++		"overflow version",
++	},
++	{
++		"policy_name=test policy_version=255.0\n"
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"incomplete version",
++	},
++	{
++		"policy_name=test policy_version=111.0.0.0\n"
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"extra version",
++	},
++	{
++		"",
++		-EBADMSG,
++		"0-length policy",
++	},
++	{
++		"policy_name=test\0policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"random null in header",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"\0DEFAULT action=ALLOW",
++		-EBADMSG,
++		"incomplete policy from NULL",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=DENY\n\0"
++		"op=EXECUTE dmverity_signature=TRUE action=ALLOW\n",
++		0,
++		"NULL truncates policy",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_signature=abc action=ALLOW",
++		-EBADMSG,
++		"invalid property type",
++	},
++	{
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"missing policy header",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n",
++		-EBADMSG,
++		"missing default definition",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"dmverity_signature=TRUE op=EXECUTE action=ALLOW",
++		-EBADMSG,
++		"invalid rule ordering"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"action=ALLOW op=EXECUTE dmverity_signature=TRUE",
++		-EBADMSG,
++		"invalid rule ordering (2)",
++	},
++	{
++		"policy_name=test policy_version=0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_signature=TRUE action=ALLOW",
++		-EBADMSG,
++		"invalid version",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=UNKNOWN dmverity_signature=TRUE action=ALLOW",
++		-EBADMSG,
++		"unknown operation",
++	},
++	{
++		"policy_name=asdvpolicy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n",
++		-EBADMSG,
++		"missing space after policy name",
++	},
++	{
++		"policy_name=test\xFF\xEF policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_signature=TRUE action=ALLOW",
++		0,
++		"expanded ascii",
++	},
++	{
++		"policy_name=test\xFF\xEF policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_roothash=GOOD_DOG action=ALLOW",
++		-EBADMSG,
++		"invalid property value (2)",
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"policy_name=test policy_version=0.1.0\n"
++		"DEFAULT action=ALLOW",
++		-EBADMSG,
++		"double header"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"DEFAULT action=ALLOW\n",
++		-EBADMSG,
++		"double default"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"DEFAULT op=EXECUTE action=DENY\n"
++		"DEFAULT op=EXECUTE action=ALLOW\n",
++		-EBADMSG,
++		"double operation default"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"DEFAULT op=EXECUTE action=DEN\n",
++		-EBADMSG,
++		"invalid action value"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"DEFAULT op=EXECUTE action\n",
++		-EBADMSG,
++		"invalid action value (2)"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"UNKNOWN value=true\n",
++		-EBADMSG,
++		"unrecognized statement"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE dmverity_roothash=1c0d7ee1f8343b7fbe418378e8eb22c061d7dec7 action=DENY\n",
++		-EBADMSG,
++		"old-style digest"
++	},
++	{
++		"policy_name=test policy_version=0.0.0\n"
++		"DEFAULT action=ALLOW\n"
++		"op=EXECUTE fsverity_digest=1c0d7ee1f8343b7fbe418378e8eb22c061d7dec7 action=DENY\n",
++		-EBADMSG,
++		"old-style digest"
++	}
++};
++
++static void pol_to_desc(const struct policy_case *c, char *desc)
 +{
-+	return 0;
++	strscpy(desc, c->desc, KUNIT_PARAM_DESC_SIZE);
 +}
 +
- static inline int security_kernfs_init_security(struct kernfs_node *kn_dir,
- 						struct kernfs_node *kn)
- {
-diff --git a/security/security.c b/security/security.c
-index 8d88529ac904..c5d426d084ab 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -2681,6 +2681,34 @@ int security_inode_copy_up_xattr(const char *name)
- }
- EXPORT_SYMBOL(security_inode_copy_up_xattr);
- 
-+/**
-+ * security_inode_setintegrity() - Set the inode's integrity data
-+ * @inode: inode
-+ * @type: type of integrity, e.g. hash digest, signature, etc
-+ * @value: the integrity value
-+ * @size: size of the integrity value
-+ *
-+ * Register a verified integrity measurement of a inode with the LSM.
-+ *
-+ * Return: Returns 0 on success, negative values on failure.
-+ */
-+int security_inode_setintegrity(struct inode *inode,
-+				enum lsm_intgr_type type, const void *value,
-+				size_t size)
-+{
-+	int rc = 0;
-+	struct security_hook_list *p;
++KUNIT_ARRAY_PARAM(ipe_policies, policy_cases, pol_to_desc);
 +
-+	hlist_for_each_entry(p, &security_hook_heads.inode_setintegrity, list) {
-+		rc = p->hook.inode_setintegrity(inode, type, value, size);
-+		if (rc)
-+			return rc;
++/**
++ * ipe_parser_unsigned_test - Test the parser by passing unsigned policies.
++ * @test: Supplies a pointer to a kunit structure.
++ *
++ * This is called by the kunit harness. This test does not check the correctness
++ * of the policy, but ensures that errors are handled correctly.
++ */
++static void ipe_parser_unsigned_test(struct kunit *test)
++{
++	const struct policy_case *p = test->param_value;
++	struct ipe_policy *pol = ipe_new_policy(p->policy, strlen(p->policy), NULL, 0);
++
++	if (p->errno) {
++		KUNIT_EXPECT_EQ(test, PTR_ERR(pol), p->errno);
++		return;
 +	}
 +
-+	return LSM_RET_DEFAULT(inode_setintegrity);
-+}
-+EXPORT_SYMBOL(security_inode_setintegrity);
++	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, pol);
++	KUNIT_EXPECT_NOT_ERR_OR_NULL(test, pol->parsed);
++	KUNIT_EXPECT_STREQ(test, pol->text, p->policy);
++	KUNIT_EXPECT_PTR_EQ(test, NULL, pol->pkcs7);
++	KUNIT_EXPECT_EQ(test, 0, pol->pkcs7len);
 +
- /**
-  * security_kernfs_init_security() - Init LSM context for a kernfs node
-  * @kn_dir: parent kernfs node
++	ipe_free_policy(pol);
++}
++
++/**
++ * ipe_parser_widestring_test - Ensure parser fail on a wide string policy.
++ * @test: Supplies a pointer to a kunit structure.
++ *
++ * This is called by the kunit harness.
++ */
++static void ipe_parser_widestring_test(struct kunit *test)
++{
++	struct ipe_policy *pol = NULL;
++	const unsigned short policy[] = L"policy_name=Test policy_version=0.0.0\n"
++					L"DEFAULT action=ALLOW";
++
++	pol = ipe_new_policy((const char *)policy, (ARRAY_SIZE(policy) - 1) * 2, NULL, 0);
++	KUNIT_EXPECT_TRUE(test, IS_ERR_OR_NULL(pol));
++
++	ipe_free_policy(pol);
++}
++
++static struct kunit_case ipe_parser_test_cases[] = {
++	KUNIT_CASE_PARAM(ipe_parser_unsigned_test, ipe_policies_gen_params),
++	KUNIT_CASE(ipe_parser_widestring_test),
++};
++
++static struct kunit_suite ipe_parser_test_suite = {
++	.name = "ipe-parser",
++	.test_cases = ipe_parser_test_cases,
++};
++
++kunit_test_suite(ipe_parser_test_suite);
 -- 
 2.44.0
 
