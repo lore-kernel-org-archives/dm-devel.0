@@ -1,192 +1,143 @@
-Received: from sonic304-28.consmr.mail.ne1.yahoo.com (sonic304-28.consmr.mail.ne1.yahoo.com [66.163.191.154])
+Received: from mail-yb1-f176.google.com (mail-yb1-f176.google.com [209.85.219.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 233C2F4FB
-	for <dm-devel@lists.linux.dev>; Mon, 18 Mar 2024 00:29:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.163.191.154
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B42621CFBC
+	for <dm-devel@lists.linux.dev>; Mon, 18 Mar 2024 01:59:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710721771; cv=none; b=czwGus4P+Wo1poQzTwyKz8Bnz9ZJneP3NVfbSZfLEQTRQIeW5p7lxRooZM6sPOHyt+3/fH8oA0gBu8ypYZo/bXv3WMw80uUNNBC+pRmhL8Du31a3cplGWsw2nP6fpn0URBKttR9Frq/Y9nj57YVyWNyuyVJHboUEDn99DOtkYns=
+	t=1710727152; cv=none; b=DsWYmpx/Ub9KdV55+FRt/PAuLjFB1lL0Agvo8/Sr6PsJMoNSwc+2DISsEShqGtNNfMUBRjojsr4a4b+/HLmNFOi9SZJxgXWoUmF+F5G6I57uc63pRK9wUEeOuzmmZp1fJy4hhCjY4Y/fN6EbX6a9pAh5Eri3PyOzXqIUh6xQvHA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710721771; c=relaxed/simple;
-	bh=XDO8/d0iz2V7sZELfeXZrkyddM4LNSpiyQLIYgDR2lU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=txbOIp8Bwt3P2C1m1dSIPK4m9tr4MPGdqR2OyNe0SPOlnHq9AlDD269f6XngUQ8cyMDLWnXg1s+UXdfjfQ80nKS6WHc5EqVv6kn2e4FTri9ct907Y5+Ov96VyCbgkXj8uxT1hanL+e4J2fTZK93GYdll/B78+cBBUfIALDAAc4w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=schaufler-ca.com; spf=none smtp.mailfrom=schaufler-ca.com; dkim=pass (2048-bit key) header.d=yahoo.com header.i=@yahoo.com header.b=AvS44cfC; arc=none smtp.client-ip=66.163.191.154
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=schaufler-ca.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=schaufler-ca.com
+	s=arc-20240116; t=1710727152; c=relaxed/simple;
+	bh=FqUgQgxrfZtI2qk5V+CbuvudPfEzb8SHu5+APKjhAeY=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=Ic4tFSKcWd73kA0nrK5HZgr6A9Sn0Tj0bV2qDezHZ7SRtxgNihVMWvyDNkEcPqcGkhDHFGtZM6m4rXeL5vrmF1vFs7CBWU5jND9yVIzdQDRWOnO97bBjpP6vIVVBnBQ8MbKm04j3mV3uC7VqrpSOcK+VzgRXNZRh8UErTAhgenE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=OBvQFOu6; arc=none smtp.client-ip=209.85.219.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=yahoo.com header.i=@yahoo.com header.b="AvS44cfC"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1710721762; bh=ur7+Dkhuv0fZsBGL1hE8C24/tID4EaLfwPGhqZvAJgY=; h=Date:Subject:To:Cc:References:From:In-Reply-To:From:Subject:Reply-To; b=AvS44cfChNQDHKTVOFAQfgNG/A8vna6dU8MYOobY0i7HWjfsR5ZMJglv9F0HU5ocfGpqL+AphJoq0uEjrJ4calYHiMv5L/ViYpBMf+MVOH2RaCEL9D/GKBinNvbavW/A/gaieH+ncH+oZRzSL+0+mRztn/10xVg90HNGRzx4P/Dj4bZEte5eVQxA+DdQu3cWOFAmx71BOMG2r53m/1MDGp9vlIxJESSrGkbuuaXk8F8vo6yci/4rb6dbgGFS8Uz+qMYV2h0Rsq8itRFfIXtujyLXNQ6tiSEoH3/byld8U9bz7RpGCt8hZeUjELNsRzxrm8VDCavJ9n1YQg1mmOuR3Q==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1710721762; bh=7OGIpH70jZ/hB8P3wZb0f6KkrqJ6y5lJnl9p6axDTmd=; h=X-Sonic-MF:Date:Subject:To:From:From:Subject; b=SHqSvTJ9C5caI+YU7dNEocpRu3399l41rC85PBn/yVVdmx5//RmRtJHAmH+WDFE4v0eUPMl2OMRkOs962kgJV1u/3XsG/P6Ns8qN9SMPi2n8gAQVwVqd5PZZPBkXKxjGuwthR2XUbdQ9oMWXiRpzPmx0CIWg/6xLd56o62RR5mNGyKmHefDX19CLRMdoV9BL3zuiLYUgmLOC43PrvSkYRbzPlf5y9Misk2txdlTV63uYNH0BD+qS7CCKWguaHrXApaJqqUQwWhiM/y2v3K24hssAEO6PMfZUwovnAZvQZZAmNCPX5iHKva7Tcp3AbqLWsxl23uj7tgEoSMY2+K0hjw==
-X-YMail-OSG: waeWX9kVM1kChxFe64VzLjBz9sv1R5rKfCT4V4ptBO_lda.ol45fdlkGTy4P.OF
- R_XhFht3m6K3UV48QOjt6dEAoCP.Dj9OPDxGhOjGduy9aIb6VqvOlnhfrExAiCgx_dNwGbqV6nHI
- Lg8w0pp30_Y6lJ2VeONHYhP8Cook_pd3dQhO46cazukTHlIZMIk15fbyUbvYFe4W7i98cPs7T7Kp
- cxvt19FBYl4zpq5N5p0xYuGo6nsTm__jR68eAhbVlqJ_RNMUP2aEHYCLWU9JHeP7Z7Yj2KPiVC4E
- YCCOyK7Qrx9ZAPAW4luxpPVE7YBStWoYIIa6vocGCvAoFzjL9egXHHZkxfpIokU_Am7IszUpIpQp
- Oyiu50lSC69OZEHQe_uWJfx80CFNOtnvcKAe0GhH3AJmHVZDuLPp4RFvBm3RKmJ2VZ4fik5jX1u8
- 5t5BU8twOWTH0efac3HItgKZoiar2ppGdGZNWVAaJjOlLxuqOa_.fAPfFtHAjTxxCOm.xfJ38HNL
- vD4SQBkPEUAqL2Odddm0ueAY9TXmRtMhnCNOxxGNSITMsUuXjDqPL89Vrw98NCWB2vvzu7AQjxtj
- iVwb6tLBm9dxPmA6qga92Zmpy0z3U5O442u0174wwkDp3cLJ5EmXIyMOiOU8g1fdxrfXbuv7PSTn
- O9ktdwD4Rfhasl0eVEd.voxNeKM9y8qKFQOSH2wfTRPbSBPwgDcx_GT_Xner9ucrxHL8kdHWFH8p
- lj8vOAL5m.nld3q4ttrbE5o5V.H84Q9OWWqo9g39AKO5iJ3Mxb_7WcczrAUZFBFRqoSaVeFkdoFt
- iIcpr2FXyIuXbv89Z2CB8u6uGaybvpS5r723teOZR8_E0jTu8xmvTSI4AjMHm6CVmjOGCJKsxXlr
- r.K2rSYi1v2HSBbkjXdZabje1U5FyHx11Xmawf4dbCuioxWl97Yz6yGSanhTK137dZCkD5o8RESa
- CgzvSt7EpaETOB97_BX.FgDjMzm.A8oldcjPgExI5YTvU1j.fQXrw5iKq2Lo_RLSvG2q.lr0D2zN
- iWB5HBS3mdB5joadSS7EskB7sxTu6utUh83PGP3nFm0gwJ8fM63MkCMJ7r4_MHTJvhmEpZ5FWjjf
- kMrSPcs0imyt22ooV5TS7GEv1CiNbDCpCSdATLTkJ04tIwLGzK0bDPlK_ZiVXsYK3QNrilg8AwxF
- ePr9PsjzID5nxknkl_ym.LH6m03Rm_s8gzWejnPxmFUQ4a48UIUip2NRQSviAZLSUFfh_PgtbA_r
- 4lYWGYuwZbH48x8Qr.iXy5FKJq4I_UcCcXVHtrJ9S010mewL4EO0svvggqnL24MDjXRr0C497XWR
- F31dag4KTXx0jmixitgWWH4vSbh3644OV6PmwDkiBKQTKuF.o5JOzDP05z0HkOGsKQuRCz8yoDkV
- YdpROOgrKpgLr8JN2YI5eTf84JKZx9gDPu0BZ61oPHK7q9AYkX59I5ll1AoXKPUfp0m6XReh6t6g
- XZph7HyV8E0.IAF5LelBFRJMRrcUwcYPaQRf2k1jfvHGYSAAmQVfbY8U1SFnpHhzsSpzwoSIFJuX
- WnXZ5kKxYqJBjasw6diSqxtjEGwdOVVNk52wUoFtfGSC5qIvJIEagVpxqRhsIbj3jPxi2f.qRpwY
- bqMqGXwoIP12aACemy5DL5ZcrTelzxdnird.IwcF9BDiznxtD28xRqSME3l8VLxRN9T_coOVIhYT
- 4NVfsF8AJtP9QP319kQBIilJsFJLDG7Eb9fdaWW8RG.LEdZWSrEihSND.FwYdt_bUG5ClNCUHxFx
- QeCS1t3zl7F6MiBKPyx2Z5nlufBfrTjVyqFafmNERLWYFT2r.mlSrfvRbnvQ0fLwbShFs1xpMuVU
- cW3vSrTLj3ayjOOAL2F7KDmFOJ_lEmVgSa.cpFXttipQPRsgeeyzkZJB_yE6vDrApYbYheIF5sPz
- 1efZ2e_rLD9dHgNLFUSdEKu4OjB8odHU6tJpATafJwMmLb_LGrme2uX2cBg_kGhCdaPp.tJWOmLv
- e5FRdNMFANZYjUFIXRPLeIhs4eal7j4jwY1GcUDorn2t8UB0jlN1_PNFrk1o93yRiPV5bhDylEgJ
- 1fLlExIQyyI0x0f_Vull_IWVjNfyIUC1qwA3gyWcSD6WvDpmEGwejsw4MP7oWNC0xP.vE3wPAeGk
- gsWyOU1OfqXuoPuKaCFOAWtb.pQqspU7GjJ_61IhRL7lLGIoCP.InxJfhPChgU4wkKbzTjWu7L8D
- KpqzGwiJKwRR9vU2ds6GlhM5cW1pwm427KEqbEgVV9J8rM5mV6HA5st1YDa57qCg-
-X-Sonic-MF: <casey@schaufler-ca.com>
-X-Sonic-ID: 4dceb0cb-286e-4bb1-86ec-98cee84315d7
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic304.consmr.mail.ne1.yahoo.com with HTTP; Mon, 18 Mar 2024 00:29:22 +0000
-Received: by hermes--production-gq1-5c57879fdf-p26ct (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID a7bd0b665c9e1192bb72e35953a758c0;
-          Mon, 18 Mar 2024 00:29:16 +0000 (UTC)
-Message-ID: <43958767-32db-4c53-8408-8367cfc14d2f@schaufler-ca.com>
-Date: Sun, 17 Mar 2024 17:29:14 -0700
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="OBvQFOu6"
+Received: by mail-yb1-f176.google.com with SMTP id 3f1490d57ef6-dc74e33fe1bso3074606276.0
+        for <dm-devel@lists.linux.dev>; Sun, 17 Mar 2024 18:59:09 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=paul-moore.com; s=google; t=1710727149; x=1711331949; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=k+xmMKXEK467msfGN/zI+NTXm1eyrFZs4w/DgUrLeb0=;
+        b=OBvQFOu6Ea7UYrXyude2PgrQJeBDgWILEQlIV1pPwlnLXExz/Ut4CJTncG1j91SLSb
+         5AYmUZFBQsegCqtmqScyDzUjzxWPNFoTyQoROmwCj7RS1BajaS57GBCvsQUBi+/zNwoz
+         SvuBxRlHZGNMkxEQOC2M7sDEp8RUL9DF6HjKuuzIUTrpvZavLtUNv6YpEasD18VTDjM1
+         +AQr+/c05Jsdbe3OtalDBfio9+Z5vOeQX2fRzBubQE+wUtdk3lfEKfFV8s+Eo3/Mqgcd
+         G+7zRMsbF40hC/KPrZsRil275LfOpEtnkuStUguRl/8o7ioB+Q0FP4tETYAjw7jh4yZE
+         +7jQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1710727149; x=1711331949;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=k+xmMKXEK467msfGN/zI+NTXm1eyrFZs4w/DgUrLeb0=;
+        b=arlIWQS9MBkP/ibGCQyn+5oC1Xnqnx/LCsnGTZNHUXzyRsWU5em1lpjMJpUwyUAFPT
+         JOrJh2czQD2v1MEjjQCtWGclc6CivN4I58L2zoCT7X03w8Txmieco4mBFgexMAMSV9SU
+         EN2Mr3nV+YTdnwyumIGW6TDHCJQc9IaF8TegOYiApJr103nLF23774/FQ3JOJPCtQNR6
+         3P59JytR6Vu636KSTFikrVp/5Zq6ETbZsaG42rSur1aH6BselcwDlKKTjWlk/CBRNQxw
+         eWPARxpzGiozqI2Gd6INu8XrbzfvxVVioAvnX99RW2Tx2vuieMI0tIBIXe78TmDlmC+y
+         vaaA==
+X-Forwarded-Encrypted: i=1; AJvYcCXV5zQkrbPZRSEOQYUBXZYzLocMTTiv275Uq6nl0X0J8vWkT1u1RwcYcCg5A4Nkp6zayS/ZEx1XSwjceTGzRoX9B+X5II/kpLc=
+X-Gm-Message-State: AOJu0Yz5ZAMXb/NvuU3V7AECfflKeiesNyK9VFuFHkNQXGIPLwD80sVB
+	agYWyllERH9FJbqShgyKi5UdThv0QOsqWpGjem8GKrLfTcPQsbCcNwXXe4vGWxc4cMJ7tRhfSt6
+	hzcvGQj/Sae561KHD7Q2ekDKnBxp9rI6pWEhS
+X-Google-Smtp-Source: AGHT+IFvxqCFh/zzQZhmtHVeJ4wKXtt8mxhTmxAcg93TKyWxNqDHIDARX3X+xrhcmbPvVzgaKwOoMXL4saPB2bh9WMY=
+X-Received: by 2002:a25:abef:0:b0:dcc:e854:d454 with SMTP id
+ v102-20020a25abef000000b00dcce854d454mr8541158ybi.14.1710727148753; Sun, 17
+ Mar 2024 18:59:08 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH v15 05/21] initramfs|security: Add a security hook to
- do_populate_rootfs()
-Content-Language: en-US
-To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
- jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
- axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com,
- paul@paul-moore.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
- linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
- linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
- audit@vger.kernel.org, linux-kernel@vger.kernel.org,
- Casey Schaufler <casey@schaufler-ca.com>
 References: <1710560151-28904-1-git-send-email-wufan@linux.microsoft.com>
- <1710560151-28904-6-git-send-email-wufan@linux.microsoft.com>
-From: Casey Schaufler <casey@schaufler-ca.com>
-In-Reply-To: <1710560151-28904-6-git-send-email-wufan@linux.microsoft.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-Mailer: WebService/1.1.22129 mail.backend.jedi.jws.acl:role.jedi.acl.token.atz.jws.hermes.yahoo
+ <1710560151-28904-6-git-send-email-wufan@linux.microsoft.com> <43958767-32db-4c53-8408-8367cfc14d2f@schaufler-ca.com>
+In-Reply-To: <43958767-32db-4c53-8408-8367cfc14d2f@schaufler-ca.com>
+From: Paul Moore <paul@paul-moore.com>
+Date: Sun, 17 Mar 2024 21:58:58 -0400
+Message-ID: <CAHC9VhRsOp8-C+bEH+NnRrBu_NRjJongAXZu_P2+c_OkDBs9rw@mail.gmail.com>
+Subject: Re: [RFC PATCH v15 05/21] initramfs|security: Add a security hook to do_populate_rootfs()
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, 
+	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
+	axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com, 
+	linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
+	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, 
+	linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On 3/15/2024 8:35 PM, Fan Wu wrote:
-> This patch introduces a new hook to notify security system that the
-> content of initramfs has been unpacked into the rootfs.
+On Sun, Mar 17, 2024 at 8:29=E2=80=AFPM Casey Schaufler <casey@schaufler-ca=
+.com> wrote:
+> On 3/15/2024 8:35 PM, Fan Wu wrote:
+> > This patch introduces a new hook to notify security system that the
+> > content of initramfs has been unpacked into the rootfs.
+> >
+> > Upon receiving this notification, the security system can activate
+> > a policy to allow only files that originated from the initramfs to
+> > execute or load into kernel during the early stages of booting.
+> >
+> > This approach is crucial for minimizing the attack surface by
+> > ensuring that only trusted files from the initramfs are operational
+> > in the critical boot phase.
+> >
+> > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> >
+> > ---
+> > v1-v11:
+> >   + Not present
+> >
+> > v12:
+> >   + Introduced
+> >
+> > v13:
+> >   + Rename the hook name to initramfs_populated()
+> >
+> > v14:
+> >   + No changes
+> >
+> > v15:
+> >   + No changes
+> > ---
+> >  include/linux/lsm_hook_defs.h |  2 ++
+> >  include/linux/security.h      |  8 ++++++++
+> >  init/initramfs.c              |  3 +++
+> >  security/security.c           | 10 ++++++++++
+> >  4 files changed, 23 insertions(+)
+> >
+> > diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_def=
+s.h
+> > index 334e00efbde4..7db99ae75651 100644
+> > --- a/include/linux/lsm_hook_defs.h
+> > +++ b/include/linux/lsm_hook_defs.h
+> > @@ -450,3 +450,5 @@ LSM_HOOK(int, 0, uring_override_creds, const struct=
+ cred *new)
+> >  LSM_HOOK(int, 0, uring_sqpoll, void)
+> >  LSM_HOOK(int, 0, uring_cmd, struct io_uring_cmd *ioucmd)
+> >  #endif /* CONFIG_IO_URING */
+> > +
+> > +LSM_HOOK(void, LSM_RET_VOID, initramfs_populated, void)
 >
-> Upon receiving this notification, the security system can activate
-> a policy to allow only files that originated from the initramfs to
-> execute or load into kernel during the early stages of booting.
->
-> This approach is crucial for minimizing the attack surface by
-> ensuring that only trusted files from the initramfs are operational
-> in the critical boot phase.
->
-> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
->
-> ---
-> v1-v11:
->   + Not present
->
-> v12:
->   + Introduced
->
-> v13:
->   + Rename the hook name to initramfs_populated()
->
-> v14:
->   + No changes
->
-> v15:
->   + No changes
-> ---
->  include/linux/lsm_hook_defs.h |  2 ++
->  include/linux/security.h      |  8 ++++++++
->  init/initramfs.c              |  3 +++
->  security/security.c           | 10 ++++++++++
->  4 files changed, 23 insertions(+)
->
-> diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-> index 334e00efbde4..7db99ae75651 100644
-> --- a/include/linux/lsm_hook_defs.h
-> +++ b/include/linux/lsm_hook_defs.h
-> @@ -450,3 +450,5 @@ LSM_HOOK(int, 0, uring_override_creds, const struct cred *new)
->  LSM_HOOK(int, 0, uring_sqpoll, void)
->  LSM_HOOK(int, 0, uring_cmd, struct io_uring_cmd *ioucmd)
->  #endif /* CONFIG_IO_URING */
-> +
-> +LSM_HOOK(void, LSM_RET_VOID, initramfs_populated, void)
+> This is an awfully expensive way to set a flag. Adding a LSM hook list
+> isn't free. Isn't there a way to capture this state change through one of
+> the mount hooks?
 
-This is an awfully expensive way to set a flag. Adding a LSM hook list
-isn't free. Isn't there a way to capture this state change through one of
-the mount hooks?
+Unfortunately no, the initramfs isn't mounted like a traditional
+filesystem, it is "populated" by unpacking the cpio into the initramfs
+at early boot.  This LSM hook should be called exactly once during
+boot, and the performance impact should be minimal; I should also be
+wildly more performant than earlier revisions of this patchset that
+required grabbing a single spinlock on every file access.
 
-> diff --git a/include/linux/security.h b/include/linux/security.h
-> index 41a8f667bdfa..14fff542f2e3 100644
-> --- a/include/linux/security.h
-> +++ b/include/linux/security.h
-> @@ -2255,4 +2255,12 @@ static inline int security_uring_cmd(struct io_uring_cmd *ioucmd)
->  #endif /* CONFIG_SECURITY */
->  #endif /* CONFIG_IO_URING */
->  
-> +#ifdef CONFIG_SECURITY
-> +extern void security_initramfs_populated(void);
-> +#else
-> +static inline void security_initramfs_populated(void)
-> +{
-> +}
-> +#endif /* CONFIG_SECURITY */
-> +
->  #endif /* ! __LINUX_SECURITY_H */
-> diff --git a/init/initramfs.c b/init/initramfs.c
-> index da79760b8be3..cc9115117896 100644
-> --- a/init/initramfs.c
-> +++ b/init/initramfs.c
-> @@ -17,6 +17,7 @@
->  #include <linux/namei.h>
->  #include <linux/init_syscalls.h>
->  #include <linux/umh.h>
-> +#include <linux/security.h>
->  
->  #include "do_mounts.h"
->  
-> @@ -719,6 +720,8 @@ static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
->  #endif
->  	}
->  
-> +	security_initramfs_populated();
-> +
->  done:
->  	/*
->  	 * If the initrd region is overlapped with crashkernel reserved region,
-> diff --git a/security/security.c b/security/security.c
-> index 287bfac6b471..b10230c51c0b 100644
-> --- a/security/security.c
-> +++ b/security/security.c
-> @@ -5675,3 +5675,13 @@ int security_uring_cmd(struct io_uring_cmd *ioucmd)
->  	return call_int_hook(uring_cmd, ioucmd);
->  }
->  #endif /* CONFIG_IO_URING */
-> +
-> +/**
-> + * security_initramfs_populated() - Notify LSMs that initramfs has been loaded
-> + *
-> + * Tells the LSMs the initramfs has been unpacked into the rootfs.
-> + */
-> +void security_initramfs_populated(void)
-> +{
-> +	call_void_hook(initramfs_populated);
-> +}
+Of course if you have an idea on how this could be done
+differently/better I think we're all open to new ideas ...
+
+--=20
+paul-moore.com
