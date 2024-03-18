@@ -1,98 +1,126 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 8CA011862C;
-	Mon, 18 Mar 2024 20:58:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62DE15B1F4;
+	Mon, 18 Mar 2024 22:59:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710795505; cv=none; b=BaoB8yFOiD5yy8PL6/Ug3CyzAw+E/Be3ZGTBW+PZiqpPMm3KgbifQCAcQ7N5/4+9dWG7otwgvjbDIidQKJyDBbRBX9qPsyHy2tqeY9dBNXxQlAM5olOcmX/3+GLpV0qUxq5k/d0jm8E7JWOVe9NfmRc3BL+owgoQMntaA4aSayM=
+	t=1710802785; cv=none; b=Hjw40XR/q7uyWyThQRRI5BOcTTQMTfB9lVS1Jv5XHJBnbZM+aVEoKld2upQgYSj2QiiJ8B7LBE2LfvAV93yeja+CJaFdHA5+QuyzXVpDdg0NTiOvOyMw7GZ/dcx3JPYWEpa47GYsho633Jb8QLFztbPrORexDeseAXH6KO2FZeI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710795505; c=relaxed/simple;
-	bh=iBeE7+uw1+a5Vgld1wKCLp+1aV7VFk9n2FjdtnYxOC8=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=jCHPhUjKWIrZUWrQjBB4BERlc/lnUzvqSwlxphw98J9RdUQuhsQbbo0qr6X758+gOd2SLG3qygotasAfw21UUwGVkmhbAAC7jfwnxtkIeld8fp+j6Ol/Xqk/ZTW7IFw7wkHL7e1lY2GIrD9anboM6N/hNYksNlEGlWwQeNhYJ8I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=onnCPRbH; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
+	s=arc-20240116; t=1710802785; c=relaxed/simple;
+	bh=Mqgr8pSxX3ownNFBFbcCdlAeie6Gx23DTOfbsRIiT3g=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=lRSeDsoESWLJOqZFxTwFdwD0kK4N1JWgsK5PJkIVm8YEsPXKbc1ucvBu9KL2kSl1f0j+dGzeOSJuPhDghUhoI1Zs8FDmknXsdgQUJIz0MSaM8R9JB9HUaGpFfWgSpCoQJoJmpX2KRBRm0V5+j/a1ujTtbwQ/JaF4VYdoZO2295Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=A3Y201O9; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="onnCPRbH"
-Received: from [10.137.106.151] (unknown [167.220.2.23])
-	by linux.microsoft.com (Postfix) with ESMTPSA id E7B8820B74C0;
-	Mon, 18 Mar 2024 13:58:23 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com E7B8820B74C0
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1710795504;
-	bh=VwjmcstDx+NgU9BBFPDxpbqSu2gppqDHoUWpsVz/Th0=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=onnCPRbHf1Ctws2/MdDiXWRWVU/AtpyiqTCWaP9IGfzEKNsiBab2QiD70n2xNWdiE
-	 +iMmKlhUXXPx2YJll5Q9m9B6+1hqBB2jN6iRC/N/plU/BbpF12cOc5b4kBRfN/EhVJ
-	 FocQoZ2pW//0/MyUBBIDG10lyLap3A58o8x5R6ow=
-Message-ID: <02453956-46d0-40f4-9e20-1bb0808996bb@linux.microsoft.com>
-Date: Mon, 18 Mar 2024 13:58:23 -0700
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="A3Y201O9"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 35E89C433C7;
+	Mon, 18 Mar 2024 22:59:44 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1710802784;
+	bh=Mqgr8pSxX3ownNFBFbcCdlAeie6Gx23DTOfbsRIiT3g=;
+	h=From:To:Cc:Subject:Date:From;
+	b=A3Y201O9yL+Q4ex8OK9z9VvyYkmG93ZyIDYuJW2/TmZiNCkz47p9KcIgo8booGzsP
+	 4ZXigKCYfqARmzt/Msn4X60PWIToDv1BjObOKhrGgt5WgqLgu0dSUKq20BugR7PoSw
+	 BI4E4oRb2XiSpMzezPpGifo5pwWBT8CVpt7G1csncaMUpxdve6hy8Uv/A23U7w0VLy
+	 kCgDOosYb1KBQeUyY9QyHCRHFvFt5Nc4lr4YZbYmlhawVbw3JjNkmvNclB73UU5R30
+	 9Z/7xsKHrE7BwHOzYBNM87XTw3IOeIlnkUFT1RuM4wdjjWrzWvN256CDpj3GaQRr+E
+	 iHwth8ST0ySIQ==
+From: Sasha Levin <sashal@kernel.org>
+To: stable-commits@vger.kernel.org,
+	mpatocka@redhat.com
+Cc: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	dm-devel@lists.linux.dev
+Subject: Patch "dm-verity, dm-crypt: align "struct bvec_iter" correctly" has been added to the 6.7-stable tree
+Date: Mon, 18 Mar 2024 18:59:42 -0400
+Message-ID: <20240318225942.2161179-1-sashal@kernel.org>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH v15 18/21] ipe: enable support for fs-verity as a
- trust provider
-Content-Language: en-CA
-To: Roberto Sassu <roberto.sassu@huaweicloud.com>,
- Eric Biggers <ebiggers@kernel.org>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
- tytso@mit.edu, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org,
- eparis@redhat.com, paul@paul-moore.com, linux-doc@vger.kernel.org,
- linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org,
- fsverity@lists.linux.dev, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, audit@vger.kernel.org,
- linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>
-References: <1710560151-28904-1-git-send-email-wufan@linux.microsoft.com>
- <1710560151-28904-19-git-send-email-wufan@linux.microsoft.com>
- <20240318051703.GB63337@sol.localdomain>
- <53a067f80db2e53ae29dc811515ab51c6ef86aed.camel@huaweicloud.com>
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <53a067f80db2e53ae29dc811515ab51c6ef86aed.camel@huaweicloud.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Patchwork-Hint: ignore
+X-stable: review
+Content-Transfer-Encoding: 8bit
+
+This is a note to let you know that I've just added the patch titled
+
+    dm-verity, dm-crypt: align "struct bvec_iter" correctly
+
+to the 6.7-stable tree which can be found at:
+    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+
+The filename of the patch is:
+     dm-verity-dm-crypt-align-struct-bvec_iter-correctly.patch
+and it can be found in the queue-6.7 subdirectory.
+
+If you, or anyone else, feels it should not be added to the stable tree,
+please let <stable@vger.kernel.org> know about it.
 
 
 
-On 3/18/2024 1:08 AM, Roberto Sassu wrote:
-> On Sun, 2024-03-17 at 22:17 -0700, Eric Biggers wrote:
->> On Fri, Mar 15, 2024 at 08:35:48PM -0700, Fan Wu wrote:
->>> +config IPE_PROP_FS_VERITY
->>> +	bool "Enable property for fs-verity files"
->>> +	depends on FS_VERITY && FS_VERITY_BUILTIN_SIGNATURES
->>> +	help
->>> +	  This option enables the usage of properties "fsverity_signature"
->>> +	  and "fsverity_digest". These properties evaluate to TRUE when
->>> +	  a file is fsverity enabled and with a signed digest
->>
->> Again: why would anyone care if there is a signature, if that signature is not
->> checked.
->>
->> I think you meant to write something like: "when a file is fsverity enabled and
->> has a valid builtin signature whose signing cert is in the .fs-verity keyring".
-> 
-> I was also thinking the same. I didn't follow the recent development
-> closely, but unless IPE locks somehow the .fs-verity keyring, the
-> property you suggested would not be immutable. Meaning that someone can
-> add/remove a key in that keyring, making the property true or false.
-> 
-> Roberto
+commit cd786f8debe865b168e35b2ce0ae1723e3b04ba9
+Author: Mikulas Patocka <mpatocka@redhat.com>
+Date:   Tue Feb 20 19:11:51 2024 +0100
 
-Yes, the .fs-verity keyring's mutability could affect the property's 
-immutability. However, we are not planing to "lock" the keyrings, but we 
-would like to use policies languages to express what certificate can be 
-trusted.
+    dm-verity, dm-crypt: align "struct bvec_iter" correctly
+    
+    [ Upstream commit 787f1b2800464aa277236a66eb3c279535edd460 ]
+    
+    "struct bvec_iter" is defined with the __packed attribute, so it is
+    aligned on a single byte. On X86 (and on other architectures that support
+    unaligned addresses in hardware), "struct bvec_iter" is accessed using the
+    8-byte and 4-byte memory instructions, however these instructions are less
+    efficient if they operate on unaligned addresses.
+    
+    (on RISC machines that don't have unaligned access in hardware, GCC
+    generates byte-by-byte accesses that are very inefficient - see [1])
+    
+    This commit reorders the entries in "struct dm_verity_io" and "struct
+    convert_context", so that "struct bvec_iter" is aligned on 8 bytes.
+    
+    [1] https://lore.kernel.org/all/ZcLuWUNRZadJr0tQ@fedora/T/
+    
+    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+    Signed-off-by: Sasha Levin <sashal@kernel.org>
 
-For example, we can have a rule like this:
-
-#Certificate declaration
-CERTIFICATE=MyCertificate CertThumbprint=DummyThumbprint
-op=EXECUTE fsverity_signature=MyCertificate action=ALLOW
-
-This will be our immediate next work after the initial version is accepted.
-
--Fan
-
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 4ab4e8dcfd3e2..35f50193959e0 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -53,11 +53,11 @@
+ struct convert_context {
+ 	struct completion restart;
+ 	struct bio *bio_in;
+-	struct bio *bio_out;
+ 	struct bvec_iter iter_in;
++	struct bio *bio_out;
+ 	struct bvec_iter iter_out;
+-	u64 cc_sector;
+ 	atomic_t cc_pending;
++	u64 cc_sector;
+ 	union {
+ 		struct skcipher_request *req;
+ 		struct aead_request *req_aead;
+diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
+index 4620a98c99561..db93a91169d5e 100644
+--- a/drivers/md/dm-verity.h
++++ b/drivers/md/dm-verity.h
+@@ -80,12 +80,12 @@ struct dm_verity_io {
+ 	/* original value of bio->bi_end_io */
+ 	bio_end_io_t *orig_bi_end_io;
+ 
++	struct bvec_iter iter;
++
+ 	sector_t block;
+ 	unsigned int n_blocks;
+ 	bool in_tasklet;
+ 
+-	struct bvec_iter iter;
+-
+ 	struct work_struct work;
+ 
+ 	char *recheck_buffer;
