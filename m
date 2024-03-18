@@ -1,39 +1,39 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78AEE5B690;
-	Mon, 18 Mar 2024 23:03:14 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57CBF5C5EF;
+	Mon, 18 Mar 2024 23:06:05 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710802994; cv=none; b=qgrPyzt8/jrlciS3OpNSF2DBbwsC5sZvRgLCctvN+/InGDLvwTcOlChjqXafiCwBKd6t6iLC11Pn4yolpazVc7Y5x/CpQGAu/Vfk6XBkhhbZRrJq/rPEsmOF8dNZNjG3L6eIjI03wWseHKGOx0XiOnhPBw/PtqY3rH52XpK2eZU=
+	t=1710803165; cv=none; b=J+992UIyUr9O2XJhc1kzEVcGFgP4ozqVdVNfkHRhtqK0hWjARVBbekl+RVDb3JPZ2FCzHynPd3UBRFiwEgIy6aVjwskv60stMPCmR3Lqjj0gIOzikxPgmPG1X+lP4XQ0G/b5SUs+O/CIY871rCzGHXWpSJuuFyycGE0xKHIQZkA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710802994; c=relaxed/simple;
-	bh=JjeQNM3N4FIlQYug99YL1wXe05XtJU5QDnkGhmoC63c=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=u+k8xPJzqFMYjK1/HEXsiGUOV8ou/lCvbzh4ZvviImHLINwFSvH+QYbe6MNMt8PTt52BsMt2AROreFQfMAoNUW7DS4xwwrCKkCOZWHEiEtl3Sha9sViXswkAPi37MY8LsSFPb/2Fhw4FvHBPmpYp7C4cngIjTCXF/IO+X9fX974=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jwdvkd6i; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1710803165; c=relaxed/simple;
+	bh=77+N20XvSBRvT1QG1ca+bNzo/GxIQl5H1aUG14dPSTU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ACFKDJMCIWu/chUymaLCcizRk1mQzMFtDabqHP8mOaHx82UZ2k1WY5L4CXeOf3HzvH7bFmFG5AYDlvom+mQZDrF/7wpxF5BiCljpwGD835eL30nKhDZC3i72pF/PsCN8qS8AFAJMq4xojx9m/2ALm108zGXz9eKFnNiMwAEOTR8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=roQUwKEA; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jwdvkd6i"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9CE04C433F1;
-	Mon, 18 Mar 2024 23:03:13 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="roQUwKEA"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 78809C433F1;
+	Mon, 18 Mar 2024 23:06:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1710802994;
-	bh=JjeQNM3N4FIlQYug99YL1wXe05XtJU5QDnkGhmoC63c=;
+	s=k20201202; t=1710803165;
+	bh=77+N20XvSBRvT1QG1ca+bNzo/GxIQl5H1aUG14dPSTU=;
 	h=From:To:Cc:Subject:Date:From;
-	b=jwdvkd6iDQVdCixF/tQVL0RWyg0kqJyD8P83xMmk3peD1Ds/zXGzx7qDWw5fRlNga
-	 Q0ML3n6XNBs/tEkQK4HNN+GKNuGKs5NF56+cUx5hTair7ne2rKsRw2rrWicETt70JR
-	 pEOPn7VPKvPsParl4hucWDypr8Bxsm7aOC0Ie0usxSy99qAK3YaVPmz04zm69pL7VU
-	 3T92ELArUELweenrZUj/YBny9pQFsd3Ip5GmO+7vswlJhKzgM1enYV95JaQZ7qdCNj
-	 a/b4TwjXFQQYhgUdDdkdV4KnJR+xy7q/vRlexL9bet/hEnH8IpMN7QKYgLI7VCfRV4
-	 9KIN3qT9n3YMA==
+	b=roQUwKEAPfTRlQUt0Om8jwBTfHtiqxx3Qezndo4XCU14J0QFlmfjSiiz07Zj2AhV1
+	 F0S+50NiiD3gFUdE4AgJ3rhKv0736yd4AfyUiWQLgz5PPmpiWTWCnBptH7ruUeGIL/
+	 kvcKOLEMw+iq+ZSLt3bXdBCQe6HpHBNNx6KSooQxzm9feSNadrUfcFt5al8Eau59vV
+	 p8VWHh8uNCIoSRAWQvALF84N0cOxDg4BpiSHmGO3+WXPJLl4uy7eljUJnpwMsoPCKE
+	 u9sZNBomUzi9rY2+M5d1ZQLPj7Q/4m122wZFD2kNNR4BlHhB28dhWilSeajf51Z0+j
+	 W+maigYOnKNfw==
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
 	mpatocka@redhat.com
 Cc: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	dm-devel@lists.linux.dev
-Subject: Patch "dm-verity, dm-crypt: align "struct bvec_iter" correctly" has been added to the 6.6-stable tree
-Date: Mon, 18 Mar 2024 19:03:12 -0400
-Message-ID: <20240318230312.2164309-1-sashal@kernel.org>
+Subject: Patch "dm-verity, dm-crypt: align "struct bvec_iter" correctly" has been added to the 6.1-stable tree
+Date: Mon, 18 Mar 2024 19:06:02 -0400
+Message-ID: <20240318230603.2174314-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -49,19 +49,19 @@ This is a note to let you know that I've just added the patch titled
 
     dm-verity, dm-crypt: align "struct bvec_iter" correctly
 
-to the 6.6-stable tree which can be found at:
+to the 6.1-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      dm-verity-dm-crypt-align-struct-bvec_iter-correctly.patch
-and it can be found in the queue-6.6 subdirectory.
+and it can be found in the queue-6.1 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 833fa53b7154fc172b264066368ad7c527b225a0
+commit 320d818da76028188f19af4d0232c4bc2f4785f5
 Author: Mikulas Patocka <mpatocka@redhat.com>
 Date:   Tue Feb 20 19:11:51 2024 +0100
 
@@ -88,10 +88,10 @@ Date:   Tue Feb 20 19:11:51 2024 +0100
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 5a296db23feb3..aa6bb5b4704ba 100644
+index 3e215aa85b99a..e8c534b5870ac 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -53,11 +53,11 @@
+@@ -52,11 +52,11 @@
  struct convert_context {
  	struct completion restart;
  	struct bio *bio_in;
