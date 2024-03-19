@@ -1,125 +1,126 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A8885F841;
-	Mon, 18 Mar 2024 23:30:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3CD458465
+	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 01:14:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710804612; cv=none; b=VXNj9NefY7s5VUZuD/pVSqD4+JChncmvjqHjM4HpYtlgRFCCUlPX6zDsVcA9bYFH2vFTf0kRE3pbE3/v+ZGf+Wr9K3rd+NyTvd4eJFRbDWYFeY3Wr6FLOdFVJB1BStZ4UI99bPHwZ7SFRpPumfmtmeTRCn+lgYspFX2xpFUbANI=
+	t=1710810850; cv=none; b=kn5v9AOEmydQKlROR0lC1T9J0jAhziOtR5VhkY28cr7XWT8jdhtb5D1MYvFV7ahXJvn1QDFbYG+SasUXeJaXJ7SMB3XSdzEcMEp7ogWN00f4xkDDHmiKnBhdYXBuh5+0hCczosCM2hu+EcgtWvKa78TvSzU9xCY2pOkGNPGr9n4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710804612; c=relaxed/simple;
-	bh=AMYGSce8qrAtr4jy9sIVSISx/4x7n8AvCtVGoBjLw8M=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=WpBrV3OmtEX2aT8ZzkYd/6ocghGl3sHTM2q4iQ3di2xMCkXTqJd3sjHNIN34j+y7SwxjZdlYGOAJFpjJoSqXwtJ378TWNH7diO0gW6eSFKI+CfE16gUKGRpbQJW03PJoOcUI/cDiaOjY+9cA6+5wBBJtbnPy9LEMggM8L/pPK6E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=s4pqleSn; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1710810850; c=relaxed/simple;
+	bh=aKNtM1auXFf5e2SfSjWXHtQS/lxJHV0FCYpjLFlyrP4=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=EPBfsjvkgmUAs+FS5Z0tMu/X50A0QGazLafYhoTcjUXuQ9pU1Lgpet6mFyyOUwXGdcvT/VyU2xfp5UOgJuuct5zpqrOVJir/9211OJXzYBgxdxR3wQLPbUvtQAJzTrfc2zm42KHkNecVyl86FKipAl4VYmy+w/EZQXo0rLQAye8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PQbogAaZ; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="s4pqleSn"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 83799C433F1;
-	Mon, 18 Mar 2024 23:30:11 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1710804612;
-	bh=AMYGSce8qrAtr4jy9sIVSISx/4x7n8AvCtVGoBjLw8M=;
-	h=From:To:Cc:Subject:Date:From;
-	b=s4pqleSnNw3hNjm7HQj/5cdUO9dk//gV5IBQ72rAx19/x6Z0BSgCaFacLgGuD6fdb
-	 3uHsiFkkPsmHrf2vpKw7B4GDhqJmwZK84pNTeEFRArvEtWf2i3Whd/bNxV3GWDdslb
-	 N1c1Wg5hQDW+Y07GAKFX+CWIS3kTfdgcATHuSSycryYfLWQ40euW3rm2aBlWh77QZ2
-	 OWpXZy4tguvo/2Qlp/awoicmxdvzKCRK/27H7+V6DMLGor/zUC/85r2CwMQ9cbtfYe
-	 yADJw8jM9zZOWe1g8QsF6AIXoftGE1vy8nOksy+V2yYS5TJzWDuDj1lctDRGaCLP6Q
-	 AVh1Kwx/wIIkw==
-From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org,
-	mpatocka@redhat.com
-Cc: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	dm-devel@lists.linux.dev
-Subject: Patch "dm-verity, dm-crypt: align "struct bvec_iter" correctly" has been added to the 4.19-stable tree
-Date: Mon, 18 Mar 2024 19:30:09 -0400
-Message-ID: <20240318233010.2282632-1-sashal@kernel.org>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PQbogAaZ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1710810848;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=1+ki3M8LXsD9YdHWeoMgF7qk7wGMX3DA1a/BYmADzKU=;
+	b=PQbogAaZplPVhxIueRj+u5C5/iVhrhsfEFT7BIJj6MVENwYu0ni35aMYPAhOlkQ1q97Atw
+	Eng0aD8O1bRs9NnVzalmInbz3U5pSu0TFDv26YqXelponCm91xQ+r1Z+s5g94tj5DEr/Qc
+	NHsosIDBugruf92mf0KVTWslQVnu12k=
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-323-2ianEMyhMxeGiN6-QM9oTQ-1; Mon, 18 Mar 2024 21:14:06 -0400
+X-MC-Unique: 2ianEMyhMxeGiN6-QM9oTQ-1
+Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-789ea18d175so383618985a.3
+        for <dm-devel@lists.linux.dev>; Mon, 18 Mar 2024 18:14:06 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1710810846; x=1711415646;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=1+ki3M8LXsD9YdHWeoMgF7qk7wGMX3DA1a/BYmADzKU=;
+        b=uV0cBn9SeXaau0NweL9QBfE8gfhEiizZZV12Jn+hHl1OK4NvYCD56ZrvX5C7qFCUpm
+         5syZ12SDvXnjJ2IIXdTHIKL+bsyU3MaJUsm9rjveeS1GW82mFe11KkdOoja4tbZd8Dsx
+         nSoTUznCtv7guYu3FbXMJMOtDlkISrSI83vcov6SHOpSDETLsTjSQyw67bsY0pIfopMX
+         03wKIa6zUixlyOzUnd58BXgm70JG98sgwwCPhD1+x6WQkfOXvJofnHvpK0sH8t151jn7
+         p0hEGdxAOWaRW6Unu67nzLm8KaWkWU2kjTH3PwvpSocKDyMrsyN+o1d56soZmP2Tel99
+         fHMg==
+X-Gm-Message-State: AOJu0YyO8CQiGwGh0FFkjt8tyfMvzGEeuWq50gbv5eACpDCUlWNoJ94Q
+	ythTE7vChRy1L2H9pyBBmQ3Do1tlw4jjtkO7L1qpzOZkt0bR41klqD0gCxhGTkyvdQPXySrNfH2
+	eQIC0E1kbnT7Wktv8gQ4F6AwudHBEEHGPopAxhtmbKs1ilEuEglK5fF86
+X-Received: by 2002:a37:c40b:0:b0:788:7404:ae2d with SMTP id d11-20020a37c40b000000b007887404ae2dmr14022883qki.25.1710810846168;
+        Mon, 18 Mar 2024 18:14:06 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFWmXddF0iwYjeP4bycVdQMfzAK4D9WL3tJ0LdZ64qcKqDIxZFiH5WyRSavWENWDuEFzVytrw==
+X-Received: by 2002:a37:c40b:0:b0:788:7404:ae2d with SMTP id d11-20020a37c40b000000b007887404ae2dmr14022873qki.25.1710810845902;
+        Mon, 18 Mar 2024 18:14:05 -0700 (PDT)
+Received: from [192.168.1.163] ([70.22.187.239])
+        by smtp.gmail.com with ESMTPSA id d14-20020a05620a204e00b00789e70d135dsm3468404qka.127.2024.03.18.18.14.05
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 18 Mar 2024 18:14:05 -0700 (PDT)
+Message-ID: <a8be4040-280f-4698-0cfe-d84c0c8bdf34@redhat.com>
+Date: Mon, 18 Mar 2024 21:14:04 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.12.0
+Subject: Re: [PATCH v4 02/39] dm vdo: add the MurmurHash3 fast hashing
+ algorithm
+To: Guenter Roeck <linux@roeck-us.net>, Kenneth Raeburn <raeburn@redhat.com>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org
+References: <20231026214136.1067410-1-msakai@redhat.com>
+ <20231026214136.1067410-3-msakai@redhat.com>
+ <ea57f231-f78e-4a55-bf85-c5d50e17237e@roeck-us.net>
+ <CAK1Ur38jAmWo35HTNrDDAaN5Awiie9wRiPDMVrNUg6+ZM8mJ7A@mail.gmail.com>
+ <28a88525-6b06-4215-9e78-2b3d8c0d8657@roeck-us.net>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <28a88525-6b06-4215-9e78-2b3d8c0d8657@roeck-us.net>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-This is a note to let you know that I've just added the patch titled
-
-    dm-verity, dm-crypt: align "struct bvec_iter" correctly
-
-to the 4.19-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
-
-The filename of the patch is:
-     dm-verity-dm-crypt-align-struct-bvec_iter-correctly.patch
-and it can be found in the queue-4.19 subdirectory.
-
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
 
 
+On 3/18/24 16:54, Guenter Roeck wrote:
+> On 3/18/24 13:37, Kenneth Raeburn wrote:
+>> (resend because of accidental HTML lossage)
+>>
+>> On Thu, Mar 14, 2024 at 7:38 PM Guenter Roeck <linux@roeck-us.net> wrote:
+>>> On sparc64, with gcc 11.4, the above code results in:
+>>>
+>>> ERROR: modpost: "__bswapdi2" [drivers/md/dm-vdo/dm-vdo.ko] undefined!
+>>>
+>>> Guenter
+>>
+>> Thanks for catching that. I don't think our team has any sparc
+>> machines readily available for testing.
+>> This is an artifact of our having imported user-mode code to use in
+>> the kernel. We should probably be using le64_to_cpup and friends, as
+>> we do elsewhere, so it doesn't try to pull in libgcc support routines.
+>>
+> 
+> I am kind of getting wary about reporting such issues. Should I drop
+> building dm-vdo images for sparc ? Would it be possible to add
+> "depends on BROKEN if SPARC" configuration option to indicate that
+> the code isn't expected to be buildable on sparc, much less work ?
 
-commit c048b053cf419f832c332a213fe4c3438cf2f192
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Tue Feb 20 19:11:51 2024 +0100
+First off, sorry for the slow response. I was away for the last couple 
+of days.
 
-    dm-verity, dm-crypt: align "struct bvec_iter" correctly
-    
-    [ Upstream commit 787f1b2800464aa277236a66eb3c279535edd460 ]
-    
-    "struct bvec_iter" is defined with the __packed attribute, so it is
-    aligned on a single byte. On X86 (and on other architectures that support
-    unaligned addresses in hardware), "struct bvec_iter" is accessed using the
-    8-byte and 4-byte memory instructions, however these instructions are less
-    efficient if they operate on unaligned addresses.
-    
-    (on RISC machines that don't have unaligned access in hardware, GCC
-    generates byte-by-byte accesses that are very inefficient - see [1])
-    
-    This commit reorders the entries in "struct dm_verity_io" and "struct
-    convert_context", so that "struct bvec_iter" is aligned on 8 bytes.
-    
-    [1] https://lore.kernel.org/all/ZcLuWUNRZadJr0tQ@fedora/T/
-    
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-    Signed-off-by: Sasha Levin <sashal@kernel.org>
+I would encourage you to report issues when you find them. 
+Theoretically, VDO should work on sparc. However since we don't have 
+that architecture readily available to us, we won't know what to fix 
+unless it gets reported.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 569904f73994a..95ed46930a90e 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -46,11 +46,11 @@
- struct convert_context {
- 	struct completion restart;
- 	struct bio *bio_in;
--	struct bio *bio_out;
- 	struct bvec_iter iter_in;
-+	struct bio *bio_out;
- 	struct bvec_iter iter_out;
--	u64 cc_sector;
- 	atomic_t cc_pending;
-+	u64 cc_sector;
- 	union {
- 		struct skcipher_request *req;
- 		struct aead_request *req_aead;
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index 6e65ec0e627a6..04ef89e318564 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -72,11 +72,11 @@ struct dm_verity_io {
- 	/* original value of bio->bi_end_io */
- 	bio_end_io_t *orig_bi_end_io;
- 
-+	struct bvec_iter iter;
-+
- 	sector_t block;
- 	unsigned n_blocks;
- 
--	struct bvec_iter iter;
--
- 	struct work_struct work;
- 
- 	/*
+In this case, we really shouldn't be relying on these libgcc builtins 
+anyway. I hope to have a patch in a couple of days that you can try out. 
+If it turns out there are more extensive issues with VDO on sparc, I am 
+open to disabling the config, but I hope it won't come to that.
+
+Matt
+
