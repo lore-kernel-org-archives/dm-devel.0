@@ -1,64 +1,65 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3CD458465
-	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 01:14:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15CC165189
+	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 02:13:27 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710810850; cv=none; b=kn5v9AOEmydQKlROR0lC1T9J0jAhziOtR5VhkY28cr7XWT8jdhtb5D1MYvFV7ahXJvn1QDFbYG+SasUXeJaXJ7SMB3XSdzEcMEp7ogWN00f4xkDDHmiKnBhdYXBuh5+0hCczosCM2hu+EcgtWvKa78TvSzU9xCY2pOkGNPGr9n4=
+	t=1710814409; cv=none; b=u0vlmSZbR6ZT7bXoSkcwD+XVezEwBV5B7+Se8h4qn3NlORipoRw30Sftkkn5fyQWQpyRlMNmAA3QccbKJbo+TiyKYv72KdPM44eNtKnIvcSlTCS44PYSQyiZidTYBjcyMQeLI132nese78/kK2ZFphBeM4nQoEa0xEGTvKdJTkY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710810850; c=relaxed/simple;
-	bh=aKNtM1auXFf5e2SfSjWXHtQS/lxJHV0FCYpjLFlyrP4=;
+	s=arc-20240116; t=1710814409; c=relaxed/simple;
+	bh=HgXqsL6bokae77+3qonV1fTiuEm5+WKxKPmzpTF7UQc=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=EPBfsjvkgmUAs+FS5Z0tMu/X50A0QGazLafYhoTcjUXuQ9pU1Lgpet6mFyyOUwXGdcvT/VyU2xfp5UOgJuuct5zpqrOVJir/9211OJXzYBgxdxR3wQLPbUvtQAJzTrfc2zm42KHkNecVyl86FKipAl4VYmy+w/EZQXo0rLQAye8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PQbogAaZ; arc=none smtp.client-ip=170.10.129.124
+	 In-Reply-To:Content-Type; b=ItUqK2YI+EgmUObI6QFEMjz4EO1YCHxPsgtCYV04o5OFuP2qgj/RNIzgqvYNLNOXSO/dYLXWhilZXxPYcllW+SYUm9hQUXRqHstNLtl1jWPteLbG8VtG3pVDwinmpyQB9nuKihrGakQHLXFCsDIxAbE2ZaivxVOBC/AgyO13JjY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=d0znwoNY; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PQbogAaZ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="d0znwoNY"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1710810848;
+	s=mimecast20190719; t=1710814407;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=1+ki3M8LXsD9YdHWeoMgF7qk7wGMX3DA1a/BYmADzKU=;
-	b=PQbogAaZplPVhxIueRj+u5C5/iVhrhsfEFT7BIJj6MVENwYu0ni35aMYPAhOlkQ1q97Atw
-	Eng0aD8O1bRs9NnVzalmInbz3U5pSu0TFDv26YqXelponCm91xQ+r1Z+s5g94tj5DEr/Qc
-	NHsosIDBugruf92mf0KVTWslQVnu12k=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=PR2W7QxFvFoQlpFb6TU+oTBxoI64ohRIcsZtQ1vS4u0=;
+	b=d0znwoNYm/b2rBiqdcno8dZ14o2QowKFNZxed18yWclwxumqZ5LhYm4RcYDaiwa175Vxik
+	hgkU/2vpfdqLRWHLuCwIPS1j26Ki4ffJp2osVUOPKeJLAwUBHk2cXttQr23O3eGeVvfeJ6
+	N/cyyIgy4o374cg4OFInI78h+FR7it0=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-323-2ianEMyhMxeGiN6-QM9oTQ-1; Mon, 18 Mar 2024 21:14:06 -0400
-X-MC-Unique: 2ianEMyhMxeGiN6-QM9oTQ-1
-Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-789ea18d175so383618985a.3
-        for <dm-devel@lists.linux.dev>; Mon, 18 Mar 2024 18:14:06 -0700 (PDT)
+ us-mta-313-HWsSdyoNPv-otsoCgw8kpA-1; Mon, 18 Mar 2024 22:13:25 -0400
+X-MC-Unique: HWsSdyoNPv-otsoCgw8kpA-1
+Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-78a09c0a053so108232485a.2
+        for <dm-devel@lists.linux.dev>; Mon, 18 Mar 2024 19:13:25 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710810846; x=1711415646;
+        d=1e100.net; s=20230601; t=1710814405; x=1711419205;
         h=content-transfer-encoding:in-reply-to:from:references:cc:to
          :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=1+ki3M8LXsD9YdHWeoMgF7qk7wGMX3DA1a/BYmADzKU=;
-        b=uV0cBn9SeXaau0NweL9QBfE8gfhEiizZZV12Jn+hHl1OK4NvYCD56ZrvX5C7qFCUpm
-         5syZ12SDvXnjJ2IIXdTHIKL+bsyU3MaJUsm9rjveeS1GW82mFe11KkdOoja4tbZd8Dsx
-         nSoTUznCtv7guYu3FbXMJMOtDlkISrSI83vcov6SHOpSDETLsTjSQyw67bsY0pIfopMX
-         03wKIa6zUixlyOzUnd58BXgm70JG98sgwwCPhD1+x6WQkfOXvJofnHvpK0sH8t151jn7
-         p0hEGdxAOWaRW6Unu67nzLm8KaWkWU2kjTH3PwvpSocKDyMrsyN+o1d56soZmP2Tel99
-         fHMg==
-X-Gm-Message-State: AOJu0YyO8CQiGwGh0FFkjt8tyfMvzGEeuWq50gbv5eACpDCUlWNoJ94Q
-	ythTE7vChRy1L2H9pyBBmQ3Do1tlw4jjtkO7L1qpzOZkt0bR41klqD0gCxhGTkyvdQPXySrNfH2
-	eQIC0E1kbnT7Wktv8gQ4F6AwudHBEEHGPopAxhtmbKs1ilEuEglK5fF86
-X-Received: by 2002:a37:c40b:0:b0:788:7404:ae2d with SMTP id d11-20020a37c40b000000b007887404ae2dmr14022883qki.25.1710810846168;
-        Mon, 18 Mar 2024 18:14:06 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFWmXddF0iwYjeP4bycVdQMfzAK4D9WL3tJ0LdZ64qcKqDIxZFiH5WyRSavWENWDuEFzVytrw==
-X-Received: by 2002:a37:c40b:0:b0:788:7404:ae2d with SMTP id d11-20020a37c40b000000b007887404ae2dmr14022873qki.25.1710810845902;
-        Mon, 18 Mar 2024 18:14:05 -0700 (PDT)
+        bh=PR2W7QxFvFoQlpFb6TU+oTBxoI64ohRIcsZtQ1vS4u0=;
+        b=HmPn6LrnU7cMUs3VC3CTUlRUaVwTAC4yGVR8HQCOZDW4MBoeVEHvL5SieZfHRtExsI
+         U8VdTPMy9laiBbM6uPOFUo8bgnUv4xgjmDN1FZ5vBKCJgYKbeyjxdCP5kUmWh6HXlt6e
+         7L8K2X2hPSEc/ZsE3YT8+8xP+MbGB04vEtL5TYZi8zF2/hZETaelbS1HUr7JJAVrqG3Y
+         CbELlgX21bj/DZ1D3UOwcsuOzmMxdJ2Q7aSJStLHE+NhmXlQRUuXKdUkpYpuHxwwMSeo
+         pucbeBN+ZTrbpTMkLfDkK7fOsOZ3Bv1br134kc7oqVpDvjJnvWm9zzZK80BQ5zC/1aK3
+         jkMQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVmyN2pfETDp1sphTFlIveGGDCg4robfxqfo0VDb7tS1qAnIQJeq9Qr8NQ4L+d9rbi5n1OFVappsvB7bEyQl5uUFLMnO0yKpxY=
+X-Gm-Message-State: AOJu0YyEd+TXyOCqJgkPU2yjRFyvEPGQaleuv+oLzxAvtgXSE7nVqW35
+	GBRAbKUZgl7rCFxD29mZVma+HsugwlySDNddflwh4pCH3PN9eF+a5AC/KTutvP5W1cbu+gpvu0v
+	tZnri489MYKf79rEQs9UVUzTSvoJv431okaLGDXCC8JpQB+FA18/5Bhtp
+X-Received: by 2002:a05:620a:ec1:b0:788:2b1c:1e57 with SMTP id x1-20020a05620a0ec100b007882b1c1e57mr14376435qkm.55.1710814405022;
+        Mon, 18 Mar 2024 19:13:25 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IH6IVS25Egeb7ZU7Mkj2+mrhK7KiNxctSo4ouA/lQ06ajNkcRwpZqlTTzOThSCjm79dmZhgIw==
+X-Received: by 2002:a05:620a:ec1:b0:788:2b1c:1e57 with SMTP id x1-20020a05620a0ec100b007882b1c1e57mr14376420qkm.55.1710814404762;
+        Mon, 18 Mar 2024 19:13:24 -0700 (PDT)
 Received: from [192.168.1.163] ([70.22.187.239])
-        by smtp.gmail.com with ESMTPSA id d14-20020a05620a204e00b00789e70d135dsm3468404qka.127.2024.03.18.18.14.05
+        by smtp.gmail.com with ESMTPSA id 20-20020a05620a04d400b007885e3275e9sm5007287qks.132.2024.03.18.19.13.23
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 18 Mar 2024 18:14:05 -0700 (PDT)
-Message-ID: <a8be4040-280f-4698-0cfe-d84c0c8bdf34@redhat.com>
-Date: Mon, 18 Mar 2024 21:14:04 -0400
+        Mon, 18 Mar 2024 19:13:24 -0700 (PDT)
+Message-ID: <0665f6a6-39d9-e730-9403-0348c181dd55@redhat.com>
+Date: Mon, 18 Mar 2024 22:13:23 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -67,17 +68,20 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
  Thunderbird/102.12.0
-Subject: Re: [PATCH v4 02/39] dm vdo: add the MurmurHash3 fast hashing
- algorithm
-To: Guenter Roeck <linux@roeck-us.net>, Kenneth Raeburn <raeburn@redhat.com>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org
-References: <20231026214136.1067410-1-msakai@redhat.com>
- <20231026214136.1067410-3-msakai@redhat.com>
- <ea57f231-f78e-4a55-bf85-c5d50e17237e@roeck-us.net>
- <CAK1Ur38jAmWo35HTNrDDAaN5Awiie9wRiPDMVrNUg6+ZM8mJ7A@mail.gmail.com>
- <28a88525-6b06-4215-9e78-2b3d8c0d8657@roeck-us.net>
+Subject: Re: [RFC v4 linux-next 00/19] fs & block: remove bdev->bd_inode
+To: Yu Kuai <yukuai1@huaweicloud.com>, Christian Brauner <brauner@kernel.org>
+Cc: jack@suse.cz, hch@lst.de, axboe@kernel.dk, linux-fsdevel@vger.kernel.org,
+ linux-block@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>, dm-devel@lists.linux.dev
+References: <20240222124555.2049140-1-yukuai1@huaweicloud.com>
+ <1324ffb5-28b6-34fb-014e-3f57df714095@huawei.com>
+ <20240315-assoziieren-hacken-b43f24f78970@brauner>
+ <ac0eb132-c604-9761-bce5-69158e73f256@huaweicloud.com>
+ <20240318-mythisch-pittoresk-1c57af743061@brauner>
+ <c9bfba49-9611-c965-713c-1ef0b1e305ce@huaweicloud.com>
+ <dd4e443a-696d-b02f-44ff-4649b585ef17@huaweicloud.com>
 From: Matthew Sakai <msakai@redhat.com>
-In-Reply-To: <28a88525-6b06-4215-9e78-2b3d8c0d8657@roeck-us.net>
+In-Reply-To: <dd4e443a-696d-b02f-44ff-4649b585ef17@huaweicloud.com>
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
@@ -85,42 +89,48 @@ Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
 
-
-On 3/18/24 16:54, Guenter Roeck wrote:
-> On 3/18/24 13:37, Kenneth Raeburn wrote:
->> (resend because of accidental HTML lossage)
->>
->> On Thu, Mar 14, 2024 at 7:38 PM Guenter Roeck <linux@roeck-us.net> wrote:
->>> On sparc64, with gcc 11.4, the above code results in:
->>>
->>> ERROR: modpost: "__bswapdi2" [drivers/md/dm-vdo/dm-vdo.ko] undefined!
->>>
->>> Guenter
->>
->> Thanks for catching that. I don't think our team has any sparc
->> machines readily available for testing.
->> This is an artifact of our having imported user-mode code to use in
->> the kernel. We should probably be using le64_to_cpup and friends, as
->> we do elsewhere, so it doesn't try to pull in libgcc support routines.
->>
+On 3/18/24 21:43, Yu Kuai wrote:
+> Hi,
 > 
-> I am kind of getting wary about reporting such issues. Should I drop
-> building dm-vdo images for sparc ? Would it be possible to add
-> "depends on BROKEN if SPARC" configuration option to indicate that
-> the code isn't expected to be buildable on sparc, much less work ?
+> 在 2024/03/19 9:18, Yu Kuai 写道:
+>> Hi,
+>>
+>> 在 2024/03/18 17:39, Christian Brauner 写道:
+>>> On Sat, Mar 16, 2024 at 10:49:33AM +0800, Yu Kuai wrote:
+>>>> Hi, Christian
+>>>>
+>>>> 在 2024/03/15 21:54, Christian Brauner 写道:
+>>>>> On Fri, Mar 15, 2024 at 08:08:49PM +0800, Yu Kuai wrote:
+>>>>>> Hi, Christian
+>>>>>> Hi, Christoph
+>>>>>> Hi, Jan
+>>>>>>
+>>>>>> Perhaps now is a good time to send a formal version of this set.
+>>>>>> However, I'm not sure yet what branch should I rebase and send 
+>>>>>> this set.
+>>>>>> Should I send to the vfs tree?
+>>>>>
+>>>>> Nearly all of it is in fs/ so I'd say yes.
+>>>>> .
+>>>>
+>>>> I see that you just create a new branch vfs.fixes, perhaps can I rebase
+>>>> this set against this branch?
+>>>
+>>> Please base it on vfs.super. I'll rebase it to v6.9-rc1 on Sunday.
+>>
+>> Okay, I just see that vfs.super doesn't contain commit
+>> 1cdeac6da33f("btrfs: pass btrfs_device to btrfs_scratch_superblocks()"),
+>> and you might need to fix the conflict at some point.
+> 
+> And there is another problem, dm-vdo doesn't exist in vfs.super yet. Do
+> you still want me to rebase here?
+> 
 
-First off, sorry for the slow response. I was away for the last couple 
-of days.
-
-I would encourage you to report issues when you find them. 
-Theoretically, VDO should work on sparc. However since we don't have 
-that architecture readily available to us, we won't know what to fix 
-unless it gets reported.
-
-In this case, we really shouldn't be relying on these libgcc builtins 
-anyway. I hope to have a patch in a couple of days that you can try out. 
-If it turns out there are more extensive issues with VDO on sparc, I am 
-open to disabling the config, but I hope it won't come to that.
+The dm-vdo changes don't appear to rely on earlier patches in the 
+series, so I think dm-vdo could incorporate the dm-vdo patch 
+independently from the rest of the series, if that would be helpful. (I 
+don't want to confuse things too much.) In that case it would go through 
+the dm tree with the rest of dm-vdo.
 
 Matt
 
