@@ -1,134 +1,107 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9EF1A64CEC
-	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 02:27:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 781263FBB9
+	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 13:04:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710815268; cv=none; b=M/9BHmhjr+CdMIOpk9hUsEQX0CutPf3ApgiWtOOAUEIJSRSHQjmKWm4GkXarP+cQPMDN7TyfAQQuRESar2dnlLVVuQ4yrBpCHGZ22gzNlbLCusWBdwxhDRnrZUlehlcTbj8mvFe+g7hAV99uIF+MtzN8vL5hfsGaHR47P4rULd8=
+	t=1710853473; cv=none; b=n8Y8uIt3Ltw3RwQqVBYME2qQyr6yQci7y7RQBU5+VGHG3/U6Ekvk0ow+NrInzcXKnufLPa267XgjqNTP2pUavLuPS5J+bTS7MYmrdo2a7aM/f+pr2T8Pe1qpieeyT/gfWIhq6IGSbjR/uboC64XEDRP3nsOV7DNfcUMNl3+cGdQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710815268; c=relaxed/simple;
-	bh=KlK6RRY+rznZ+X+XX2ZR9KnlLvHxiYkumw+UmKTdxzM=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=i2Obn7Ah07erqBOeRGJjEkY/bePCuBHYJrGJJy9AAtZ3T6x7rml1SdQcG4wSMqKmTWrzTaZZZQ6Nd7x1tGLV70sr4TnQx7uuWcfUyBG7Y4Ts0wTo0M2k/u7fThDwxHINjgKHWGJA9PcF+ygBla70oIbMDeaOr6os3sC8afTw3CQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4TzFxN2dXLz4f3kFc
-	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 10:27:36 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 4EADE1A0844
-	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 10:27:42 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgAX6REc+PhlGo6SHQ--.49153S3;
-	Tue, 19 Mar 2024 10:27:42 +0800 (CST)
-Subject: Re: [RFC v4 linux-next 00/19] fs & block: remove bdev->bd_inode
-To: Matthew Sakai <msakai@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>,
- Christian Brauner <brauner@kernel.org>
-Cc: jack@suse.cz, hch@lst.de, axboe@kernel.dk, linux-fsdevel@vger.kernel.org,
- linux-block@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- dm-devel@lists.linux.dev, "yukuai (C)" <yukuai3@huawei.com>
-References: <20240222124555.2049140-1-yukuai1@huaweicloud.com>
- <1324ffb5-28b6-34fb-014e-3f57df714095@huawei.com>
- <20240315-assoziieren-hacken-b43f24f78970@brauner>
- <ac0eb132-c604-9761-bce5-69158e73f256@huaweicloud.com>
- <20240318-mythisch-pittoresk-1c57af743061@brauner>
- <c9bfba49-9611-c965-713c-1ef0b1e305ce@huaweicloud.com>
- <dd4e443a-696d-b02f-44ff-4649b585ef17@huaweicloud.com>
- <0665f6a6-39d9-e730-9403-0348c181dd55@redhat.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <7210daac-4c0b-ce98-fe61-1c5e7c33b289@huaweicloud.com>
-Date: Tue, 19 Mar 2024 10:27:40 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1710853473; c=relaxed/simple;
+	bh=t8/WbBOO17RV9PAifBmlRewT+u9NooCdKtAXog8FkVM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=jq7ym2zhMS3slVMEAM3RXFpixHhtRfj5/nvCzRulTH6NcFOOsqM1fZv0JLGhSFj7GcgH1yQIXaH46flOJSdH3sc2r2BNOFEv6aZf1T3yrYX+5FAoXxliYdfPf10CXDIx1b8UHbX9FHwYxKnGqfeDDTM5vaRTyFUY97W9gS82dyY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=a1QEPwOJ; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="a1QEPwOJ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1710853469;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=vGqQmj8V+iFqzes2z51VbLZdMwFXCUEPashuoA/Telo=;
+	b=a1QEPwOJIqunsxWmSe0ZSLzujB0bllM7RDajWi3IlcWf66QjfJiuZFRCeKpttdlF8EffqO
+	FqLI7s0lLo9e85TuQ7m7zFcAy6c7qabwQ6bFg2yr5d1Bx9kHTZpwccuygvI/kNYFbAsozt
+	4dMmyFvjLQxgHy2SSrWuDS15t+tn2lc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-355-P3QGoAUdN3yQfaM9_NMj6g-1; Tue, 19 Mar 2024 09:04:26 -0400
+X-MC-Unique: P3QGoAUdN3yQfaM9_NMj6g-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 99C4F8007A6;
+	Tue, 19 Mar 2024 13:04:25 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.95])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A32F910E47;
+	Tue, 19 Mar 2024 13:04:20 +0000 (UTC)
+Date: Tue, 19 Mar 2024 21:04:12 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Mike Snitzer <snitzer@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Alasdair G Kergon <agk@redhat.com>, dm-devel@lists.linux.dev,
+	Martin Wilck <mwilck@suse.com>, Hannes Reinecke <hare@suse.de>,
+	Vasilis Liaskovitis <vliaskovitis@suse.com>, ming.lei@redhat.com
+Subject: Re: [RFC Patch] dm: make sure to wait for all dispatched requests in
+ __dm_suspend()
+Message-ID: <ZfmNTK9uODx9YrLL@fedora>
+References: <20240315231035.26046-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <0665f6a6-39d9-e730-9403-0348c181dd55@redhat.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgAX6REc+PhlGo6SHQ--.49153S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxJryUZryfur4xuF43uFW3KFg_yoW8Aw18p3
-	4qyFsxKr4Dtr1DA34Syw18Xw1Fyw45Xr1rXw15Xr12vryktry3tr4xKrn0kryDXrsrZr17
-	uF48t3yfXas5ZrDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9214x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
-	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
-	67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
-	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWr
-	Zr1UMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYx
-	BIdaVFxhVjvjDU0xZFpf9x0JUdHUDUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+In-Reply-To: <20240315231035.26046-1-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Hi,
+Hello Martin,
 
-在 2024/03/19 10:13, Matthew Sakai 写道:
+On Sat, Mar 16, 2024 at 12:10:35AM +0100, Martin Wilck wrote:
+> In a recent kernel dump analysis, we found that the kernel crashed because
+> dm_rq_target_io tio->ti was pointing to invalid memory in dm_end_request(),
+> in a situation where multipathd was doing map reloads because of a storage
+> failover. The map of the respective mapped_device had been replaced by a
+> different struct dm_table.
 > 
-> On 3/18/24 21:43, Yu Kuai wrote:
->> Hi,
->>
->> 在 2024/03/19 9:18, Yu Kuai 写道:
->>> Hi,
->>>
->>> 在 2024/03/18 17:39, Christian Brauner 写道:
->>>> On Sat, Mar 16, 2024 at 10:49:33AM +0800, Yu Kuai wrote:
->>>>> Hi, Christian
->>>>>
->>>>> 在 2024/03/15 21:54, Christian Brauner 写道:
->>>>>> On Fri, Mar 15, 2024 at 08:08:49PM +0800, Yu Kuai wrote:
->>>>>>> Hi, Christian
->>>>>>> Hi, Christoph
->>>>>>> Hi, Jan
->>>>>>>
->>>>>>> Perhaps now is a good time to send a formal version of this set.
->>>>>>> However, I'm not sure yet what branch should I rebase and send 
->>>>>>> this set.
->>>>>>> Should I send to the vfs tree?
->>>>>>
->>>>>> Nearly all of it is in fs/ so I'd say yes.
->>>>>> .
->>>>>
->>>>> I see that you just create a new branch vfs.fixes, perhaps can I 
->>>>> rebase
->>>>> this set against this branch?
->>>>
->>>> Please base it on vfs.super. I'll rebase it to v6.9-rc1 on Sunday.
->>>
->>> Okay, I just see that vfs.super doesn't contain commit
->>> 1cdeac6da33f("btrfs: pass btrfs_device to btrfs_scratch_superblocks()"),
->>> and you might need to fix the conflict at some point.
->>
->> And there is another problem, dm-vdo doesn't exist in vfs.super yet. Do
->> you still want me to rebase here?
->>
+> We obverved this with a 5.3.18 distro kernel, but the code in question
+> hasn't change much since then. Basically, we were only missing
+> b4459b11e840 ("dm rq: don't queue request to blk-mq during DM suspend"),
+> which doesn't guarantee that the race I'm thinking of (see below) can't
+> happen.
 > 
-> The dm-vdo changes don't appear to rely on earlier patches in the 
-> series, so I think dm-vdo could incorporate the dm-vdo patch 
-> independently from the rest of the series, if that would be helpful. (I 
-> don't want to confuse things too much.) In that case it would go through 
-> the dm tree with the rest of dm-vdo.
+> When a map is resumed after a table reload, the live table is swapped, and
+> the tio->ti member of any live request becomes stale.  __dm_resume() avoids
+> this by quiescing the queue and calling dm_wait_for_completion(), which
+> waits until blk_mq_queue_inflight() doesn't report any in-flight requests.
+> 
+> However, blk_mq_queue_inflight() counts only "started" requests. So, if a
+> request is dispatched before the queue was quiesced, but
+> dm_wait_for_completion() doesn't observe MQ_RQ_IN_FLIGHT for this request
+> because of memory ordering effects, __dm_suspend() may finish successfully,
 
-We want to remove the 'bd_inode' field in this set. And if we want to go
-through dm tree for dm-vdo changes, we must keep the field for now.
+Can you explain a bit about the exact memory order which causes MQ_RQ_IN_FLIGHT
+not observed?
 
-I don't have preference, Christian will make the decision. 😉
+blk-mq quiesce includes synchronize_rcu() which drains all in-flight
+dispatch, so after blk_mq_quiesce_queue() returns,
+if blk_mq_queue_inflight() returns 0, it does mean there isn't any
+active inflight requests.
+
+If there is bug in this pattern, I guess more drivers may have such
+'risk'.
+
+BTW, what is the underlying disks in your dm-mpath setting?
 
 Thanks,
-Kuai
-
-> 
-> Matt
-> 
-> .
-> 
+Ming
 
