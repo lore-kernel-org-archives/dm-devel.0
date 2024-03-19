@@ -1,67 +1,67 @@
-Received: from mail-il1-f174.google.com (mail-il1-f174.google.com [209.85.166.174])
+Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B2393D0D2
-	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 19:55:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB3A33C092
+	for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 19:55:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710878123; cv=none; b=LCTjs4NljrbRzz/Md7kvw66tKU5v1Y1KUV4bXgTueN0GxtzleqlIjfw/NFwJDeolmzJYA7HuK5LXAayGnyQ/+VCvmk6mv05p+hrdC3OLH86fnH0eAgTVIRInvdubaWxY5fHha42iZ4wLdwsAPplrV0AToF3PQsHE/cXl4EUt9QM=
+	t=1710878143; cv=none; b=kfMQWzjDp+Vkz8li+GqRceFytXfqQRJkvB5UB0j9ie0mC7P6c/HOT5awpzTIwJ/53PJQmu67SxXxa4x9uvPBnKlFXnBUCNYqKZqN111lB7vUY1+jkWTux5od9LCFsUJ0YMT0izQDsYID5nhzShYMulefZEP+tQTVJIv7hoTg8SM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710878123; c=relaxed/simple;
-	bh=tq/1pPtVk4bFy1TUWWqhNCcGUABz2Wn0gW+04VmLGUk=;
+	s=arc-20240116; t=1710878143; c=relaxed/simple;
+	bh=DkGbf8h4XzzoSDefJIAK6ZrPjFFLGxuGgr6Oo7HhzqA=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=YZJuMMcY8gfT541iCOav4rjGHLIR36V26J8pezTCFhU85GBYxVUphgkw7LmCo62Pmd65ZZi0IL6LDiDon8+setvLpoMWPPcXjM+OmfnbqUCHqH5hvH1lI48gAbhulaWVSf/VDAavtxNS6ATFxmwSytCvss5yoRGCCdFSyb6aVVw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=kSw5RgEA; arc=none smtp.client-ip=209.85.166.174
+	 To:Cc:Content-Type; b=sFn0MFB+du1uUfmkUk9nMosRYR9ZseJSb12+FKXHfp56jObpF/PYY0wXU1zs5e6dXD+nzG22+lsCH7R3yqHc/SNk4YQG2Mvqfe/+7Rv5jKaba3cSbazdZeDzCnFOXjIrziwKmFTBR/m2lVz7+93gSjJIYXM9S1sZli23q8HHH/g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=NaacJnfH; arc=none smtp.client-ip=209.85.214.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="kSw5RgEA"
-Received: by mail-il1-f174.google.com with SMTP id e9e14a558f8ab-366a04fb186so34015ab.0
-        for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 12:55:22 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="NaacJnfH"
+Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-1e058b9e479so24845ad.0
+        for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 12:55:41 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1710878121; x=1711482921; darn=lists.linux.dev;
+        d=google.com; s=20230601; t=1710878141; x=1711482941; darn=lists.linux.dev;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=xgLh9fxNWA3PLxV487Uv3NZnNjKvvWhoCvzQBg8zyQQ=;
-        b=kSw5RgEAaYlJB2UwrYwu8iIDwWncPTZ7o8pdT84JlFZgg9pilkIPiJdGFxGXi0FCNu
-         V9X/k5otY0gocc46nNIy5htcuPYe2tZWEzU2ymHJVpjp9g6ydv8dZUVWgLDHHgkBvPg7
-         c7IMAvZdnVL1aXdQg/S6WTs3mdGTPWVAKU13XEIFZ/ymvIvPQBmz4Uv94JdBv/btZeU1
-         bPw+CPt9Q7hqnNaKEcdJooodrytrzDK6Gvl9oKLJPsaUxFIaT0NflABQ4bTbMA7+iIuJ
-         Ndd/Y5sT818YX0b/Wi1b6gBqowEQXssZidyg+mirHM0URnK3qExu4u42OQJXmSKj6+2b
-         Qf7A==
+        bh=q9w8PbtBRrbzy6fT9pf26bGDWwtthxushM9+09GU4ck=;
+        b=NaacJnfHK7z8CCVa0Mn8FNLtxK7gdc9IZjUlvslxRPaNCliCixiJlXf/IyvGEzNeGm
+         FRn1+tQeNAJ5oUfdTf4Sa3W8TbrS6N2vUGi18KJvlKDCublf9XxMOVt+9g/pO9mW2+0h
+         a/uxnTg/zI0H/r2q+wjTEbSBx54jzmNaVctt/rhP1vbCHyAcxLnBFGUc0emTeLpPvKCC
+         DDkh1GYj0ruzPHtN0ivpT83Ltqi8Y3kCjsO+Wnx0WXeEleoz44UENsIHrEy+vI93Zgcd
+         jIcXI4KvwAb1WBQMTd2Trk8bHOZCDvQBl0kLyc1ZMY+QX/pd6lQsCLQ/KbAf4awkMEuz
+         D4bA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710878121; x=1711482921;
+        d=1e100.net; s=20230601; t=1710878141; x=1711482941;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=xgLh9fxNWA3PLxV487Uv3NZnNjKvvWhoCvzQBg8zyQQ=;
-        b=bEnca5+Zdayqsx08nEUGewwicZi/gCBi5+d/64EaxSlFH1qm/c7NmweBws05dYZm0/
-         TauaJdtjGKRD4NiSCmqW5b2pLmiSlOKOntIGH/ofzZQBubUKoaL6uNzn7jIG6olrRWSy
-         TpALUgpMjju9BZnLmAIZuLQ6P3Oz1VGMmG8PjRtPx0SJ1BRs73QhQxmE4JjUK4BLHjM+
-         ec/CX63IUvKLS4fQM8wW7I4BGLHavYDWN1jXUO+mvu49JsejJ11fwksDVaD85JQ8VuZE
-         ZPzHmcpqzaoSzHgBQ53NMudDll6xZJhGBf7MpRNDF23a2CVzywcjHhMbzDmLDW4UL0Cz
-         Mv5Q==
-X-Forwarded-Encrypted: i=1; AJvYcCUPTmUPXhoF2ytR1U1xhgbmiA6YriVdZwrWGxzpSyodGPatl9lV8H8ZFvDJCvnRVMDmmZ/RXF6aAwC3lEY6VuYWRt7H8aX/qY4=
-X-Gm-Message-State: AOJu0Ywp63e2ARtBU07dEub/ogw02FLu763aIaIhDcIJa3pq3GrbfNAm
-	XgGs7ERqM87yjkrc6/0aLafHVWDZy5zqzUSvOkV9wBc37BB/fSmcqjlsbcznfVdX0Ruwrn6TE38
-	sjyAhAsgBTM2vIjdLxUaqRLS02s7bXORZaFMK
-X-Google-Smtp-Source: AGHT+IERlmpYbi7scXHRweGWqKFANu4nCnjg91c1eLgZPt1tpqmLTiArMaKYHHFVGIrDmnNDhYnBI2oLyIaUqaSz3v8=
-X-Received: by 2002:a05:6e02:1aa7:b0:365:a6a3:9c82 with SMTP id
- l7-20020a056e021aa700b00365a6a39c82mr63098ilv.26.1710878121279; Tue, 19 Mar
- 2024 12:55:21 -0700 (PDT)
+        bh=q9w8PbtBRrbzy6fT9pf26bGDWwtthxushM9+09GU4ck=;
+        b=b4NeNoiirvEqHUdZT4a3h9I0kScHjdTjhGFIAwNeRJuP3JcEQZlV9yAOTUXf1IiZIj
+         yxmQQ4Vib1ZGQw4+yHICtqDFU6mGWfKUOR0j1pf+sgg9QViybSRg471GIuDt3TKSmz3W
+         F9YWolIV9zWfhBtYgwaZ07dzyUeNXeg8MzGh8sQojl2kZ4LOU+sD3KGXWpQEgzDIfPZE
+         5j/Mag8TpLUiaQHuBtYj22HRRgUZY5hUT78KUjrp2hBdHzNpRZMI1ZdTTX4sgVAYp4iv
+         8jcj4ccrgnUNO4+nDv73331MHaTBghFAS2feRKcRtE5ZI2jQlJjhvVz8v9VZ5CYFsMap
+         AGxg==
+X-Forwarded-Encrypted: i=1; AJvYcCVyPR/9bj8qUIA7j4/eTVW02knUpok762aeChGhLW0Vr36Vhq6HCskzbXAn8XOB6UlYQUY/3jApoTkpJSeo9wxA5XI7S9/3MgE=
+X-Gm-Message-State: AOJu0YxYJgSZ5Xnh4E0IY8FRtBLQU3ERCIxBF6cHBdXvQEJ837q3IEWV
+	huqN6KR4nDguuORrVXtTA9XeM2d0haeaxnw8DtMv1VzjMWOU4c7nveMs32SuzUzbqwwh31MKLya
+	vJlnrMkWggK6bOJeQXI+IDPc9ucNjDPGKZ577
+X-Google-Smtp-Source: AGHT+IEGUy1g0mPuJa2436aZVsiZ+B76HSfqTt+3t0AHeyPnbMCc8H9EBOuwBFiT8UXAddUXwVGhHA/iEbGm+uJBvGU=
+X-Received: by 2002:a17:902:db01:b0:1dd:9e68:d2f3 with SMTP id
+ m1-20020a170902db0100b001dd9e68d2f3mr66983plx.10.1710878140831; Tue, 19 Mar
+ 2024 12:55:40 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240319180005.246930-1-visitorckw@gmail.com> <20240319180005.246930-7-visitorckw@gmail.com>
-In-Reply-To: <20240319180005.246930-7-visitorckw@gmail.com>
+References: <20240319180005.246930-1-visitorckw@gmail.com> <20240319180005.246930-8-visitorckw@gmail.com>
+In-Reply-To: <20240319180005.246930-8-visitorckw@gmail.com>
 From: Ian Rogers <irogers@google.com>
-Date: Tue, 19 Mar 2024 12:55:10 -0700
-Message-ID: <CAP-5=fURxwVSddrNRhRwT4rWsRhq+BLkAzqi7ooZ6JQbPsOP8A@mail.gmail.com>
-Subject: Re: [PATCH 06/13] lib min_heap: Add min_heap_peek()
+Date: Tue, 19 Mar 2024 12:55:29 -0700
+Message-ID: <CAP-5=fVhEg25ntnWaEHzTKa7E+Y6aYQ+9NUXiftSpaQ29avcZA@mail.gmail.com>
+Subject: Re: [PATCH 07/13] lib min_heap: Add min_heap_full()
 To: Kuan-Wei Chiu <visitorckw@gmail.com>
 Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com, 
 	peterz@infradead.org, mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, 
@@ -76,8 +76,8 @@ Content-Transfer-Encoding: quoted-printable
 On Tue, Mar 19, 2024 at 11:00=E2=80=AFAM Kuan-Wei Chiu <visitorckw@gmail.co=
 m> wrote:
 >
-> Add min_heap_peek() function to retrieve a pointer to the smallest
-> element. The pointer is cast to the appropriate type of heap elements.
+> Add min_heap_full() which returns a boolean value indicating whether
+> the heap has reached its maximum capacity.
 >
 > Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 
@@ -93,23 +93,22 @@ Ian
 >  1 file changed, 10 insertions(+)
 >
 > diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
-> index ed462f194b88..7c1fd1ddc71a 100644
+> index 7c1fd1ddc71a..b1d874f4d536 100644
 > --- a/include/linux/min_heap.h
 > +++ b/include/linux/min_heap.h
-> @@ -56,6 +56,16 @@ void __min_heap_init(struct __min_heap *heap, void *da=
-ta, int size)
->  #define min_heap_init(_heap, _data, _size)     \
->         __min_heap_init(&(_heap)->heap, _data, _size)
+> @@ -66,6 +66,16 @@ void *__min_heap_peek(struct __min_heap *heap)
+>  #define min_heap_peek(_heap)   \
+>         (__minheap_cast(_heap) __min_heap_peek(&(_heap)->heap))
 >
-> +/* Get the minimum element from the heap. */
+> +/* Check if the heap is full. */
 > +static __always_inline
-> +void *__min_heap_peek(struct __min_heap *heap)
+> +bool __min_heap_full(struct __min_heap *heap)
 > +{
-> +       return heap->nr ? heap->data : NULL;
+> +       return heap->nr =3D=3D heap->size;
 > +}
 > +
-> +#define min_heap_peek(_heap)   \
-> +       (__minheap_cast(_heap) __min_heap_peek(&(_heap)->heap))
+> +#define min_heap_full(_heap)   \
+> +       __min_heap_full(&(_heap)->heap)
 > +
 >  /* Sift the element at pos down the heap. */
 >  static __always_inline
