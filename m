@@ -1,361 +1,88 @@
-Received: from mail-yb1-f174.google.com (mail-yb1-f174.google.com [209.85.219.174])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 474846A34C
-	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 17:23:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0AEFF628
+	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 17:43:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710955411; cv=none; b=gaSE0xD1B17JKQWX6NQ4N1W6JgfMBy9VK+QC8T9CO9E/M59Km7/7kNJ8f1HHlJL0ZyKskT+Tl2NP843aDPgAZ7TI25kzyjJ4aNaFX5hamgEdd/xfqlDbW71fYhUKSv+p8dNqnOuIBKVrK5W8cdfXTPQCWtzY66Una/1NqhpbMx8=
+	t=1710956604; cv=none; b=uNpvdggZ75vY8LRNq4w6+gI/BBmHpKpTLdVcOtjA1WrESWbpv/GB5/tOYe0433CUwkS/6pK3iHRnTxEozSq90J0VEJwn4uxh2iYNd1aZTnJxgpu1lb8PuNMLL+CrVtGJjBW37FzdoCsHbRy5RsdkZountG3VfjHkr2+sM8d/yqY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710955411; c=relaxed/simple;
-	bh=OktSo1wzw1/Tkeb7gXpxEk9VZSpYD0XVPWVaHlIfXLc=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=UVojFxu9an455w7rxSwtCRAkdZjEqGBJbHWJg3K64lp2pB4s8eQwv42dCoYF0S1PKZ54oT8lPNpdLsVhy8lA5VEVNZiidLdCXCk86aBUbjw7FjzN4B4cJnXU1wYko2j9p5aVdhO8teg18g22vD1dfpt8noz1Fylw3YHXNEUrdCs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=LozIBiWU; arc=none smtp.client-ip=209.85.219.174
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
+	s=arc-20240116; t=1710956604; c=relaxed/simple;
+	bh=BtZOlmwYZwDsfSWoUZWTWgIFPlEQWU4eKSrg6AQqtZg=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=fd8bHD92E2ixtnXCS+xIh0g4P1O0zVKCAQAbmZ+F1F691cXQMBkFVVqh6B7d6WNNDi13XS3EhaAKsNSA1zBErYN8wCK3NRlMV6PPgtAugsb6Nsuvri+RiG8l002rQ9JUY1bwzsdL7jVYm2hdt5PLLgLXU6YK/S09aDWkyXv0qCo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=h9giK6HB; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="LozIBiWU"
-Received: by mail-yb1-f174.google.com with SMTP id 3f1490d57ef6-dd02fb9a31cso6070703276.3
-        for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 10:23:29 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1710955408; x=1711560208; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=zL+b5IqSmT+yiak0XO4i+W4JtR/sEZzsL6gRjLnV0bw=;
-        b=LozIBiWUditKKYgjr8VP4YnJLrSZTU18hvIgpfQjicZcji3S6ZsaV09NzJ8/p4gh/V
-         E1kDWLS5J/Qf7aR6TDEsFBxZmtEuDuG/8QIaNyM49rF2tokQrV1SW1HWXJz8w28KrzQ7
-         eHjFVoYOlBBfwD0Oy/7S7gXVnstpffmzHDcVx8C8XpxzAWs2belHkT5R/iaCSvORxkS5
-         xyX68XfA883S/Z/cbP26ksuQShfkSDw2+OCzW0GDz4ZAZ5v4bTcDZZP7exX+Gdh8QShi
-         7qA1VZDQd6ppXv5+rpgwnwdUoaDXJaBxKbe6pDDrWhmpHuacdgd72hcJTQdeBJJS7K44
-         cisg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710955408; x=1711560208;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=zL+b5IqSmT+yiak0XO4i+W4JtR/sEZzsL6gRjLnV0bw=;
-        b=rsTWPcJgpsLNMh6EG+dJHhthCNaalOKgfPB5jSwXQk5Jnp6/Qabf/1MkJcVYJ1Dbkx
-         7He2cE96opv4IfKqkkWkqmBVe3g1dxNvdbuhD8CxQQ0UfuaxIr528WtYwU6Bra99RfB8
-         XWUuY4cLEh/vwDMOyaW7ZbXA7rvuOU5tFynLU7KdqrlaQ+2Yvjlz5q6y25y6g4xjpvGw
-         sZAcX/u5nLts67sXl2LhsUgRw6ifxOWue8zcciGUg2u1axLROfLW/WpGDAymNRMSBzYN
-         wUSNMjmuSof7oKv2JLBhlTy4zT6J1DxbWIl0Ems6/fkP6iwZe/turKpNDP0ko/3g9Esj
-         zfUQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVVJgkv2RrP8y7f2SAlXESp7kIYkT5WziFuvMygeJsHwQRMQL82nc/DWnYl+cyzdBHIZ/1jtrbeL/QCtGmWjuEjfmFOx2TMubA=
-X-Gm-Message-State: AOJu0YzcVT2TihKiyJc/F8ozGxDfmUYghCdc+zIJucVHUv/4ZwuK+F8U
-	M4heiDWSWZa/Kko9p+aFkZddeTDY5pzqQi0E66GxQoo5ZSG1JSOTEyxUpLzdwW5Ta1pcHeZFkyt
-	c750y6Ei1oB58CQwR2EKsJruXBup7seA94oQI
-X-Google-Smtp-Source: AGHT+IGisQjCjQt12sXnN9Jt9UbAiCVuocXkhWkDVU4b8Sz//Q1jqxXIMt0rNAmfp/Y8hIDNuFGtuTe2UbVFtwFiUv0=
-X-Received: by 2002:a25:6fc5:0:b0:dd1:2f58:292b with SMTP id
- k188-20020a256fc5000000b00dd12f58292bmr13153934ybc.9.1710955408153; Wed, 20
- Mar 2024 10:23:28 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="h9giK6HB"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1710956602;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=Y9xaiWTH03zLNxV2Kaw2TaGNs2+Tbk/Z8Ra1mEQR4oE=;
+	b=h9giK6HBoJRLFU7ka1MTkbTE+p0RuctqXOXgIMJQyoGZ/Deyy1U+1A+S0WncgKsvAKw0/7
+	GreBjU85KPdccfsFpnT1RosmK+7gRCbXU50WT88OSWQ8w4J84eMg0wbGFgjHZv1qNoe3JA
+	0p5cfWwtddQ5WzaoMd75l50X2lPcI4k=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-557-k2Fr9_sxPVOo8GAfHhjzgg-1; Wed,
+ 20 Mar 2024 13:43:12 -0400
+X-MC-Unique: k2Fr9_sxPVOo8GAfHhjzgg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ADEBC3802151
+	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 17:43:11 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A842A2166AE5;
+	Wed, 20 Mar 2024 17:43:11 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 90F9C30BFECA; Wed, 20 Mar 2024 17:43:11 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 8D44E3FB4A;
+	Wed, 20 Mar 2024 18:43:11 +0100 (CET)
+Date: Wed, 20 Mar 2024 18:43:11 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>
+cc: Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
+Subject: [PATCH] dm snapshot: add cond_resched to dm_exception_table_exit
+Message-ID: <fab7e-7fb7-4d28-ac54-2141bbc6bfde@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <1710560151-28904-15-git-send-email-wufan@linux.microsoft.com>
- <657b73a0cf531fd4291a0f780d2fcf78@paul-moore.com> <ZfpHxkmRy0oqxZVF@redhat.com>
-In-Reply-To: <ZfpHxkmRy0oqxZVF@redhat.com>
-From: Paul Moore <paul@paul-moore.com>
-Date: Wed, 20 Mar 2024 13:23:17 -0400
-Message-ID: <CAHC9VhTkpSa665tesTEs8gBjaD3ahUMATGMXuGy+-unt7WL-UQ@mail.gmail.com>
-Subject: Re: [PATCH RFC v15 14/21] dm verity: consume root hash digest and
- signature data via LSM hook
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, 
-	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
-	axboe@kernel.dk, agk@redhat.com, eparis@redhat.com, linux-doc@vger.kernel.org, 
-	linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, 
-	fsverity@lists.linux.dev, linux-block@vger.kernel.org, 
-	dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	Deven Bowers <deven.desai@linux.microsoft.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On Tue, Mar 19, 2024 at 10:19=E2=80=AFPM Mike Snitzer <snitzer@kernel.org> =
-wrote:
-> On Tue, Mar 19 2024 at  7:00P -0400,
-> Paul Moore <paul@paul-moore.com> wrote:
-> > On Mar 15, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
-> > >
-> > > dm-verity provides a strong guarantee of a block device's integrity. =
-As
-> > > a generic way to check the integrity of a block device, it provides
-> > > those integrity guarantees to its higher layers, including the filesy=
-stem
-> > > level.
-> > >
-> > > An LSM that control access to a resource on the system based on the
-> > > available integrity claims can use this transitive property of
-> > > dm-verity, by querying the underlying block_device of a particular
-> > > file.
-> > >
-> > > The digest and signature information need to be stored in the block
-> > > device to fulfill the next requirement of authorization via LSM polic=
-y.
-> > > This will enable the LSM to perform revocation of devices that are st=
-ill
-> > > mounted, prohibiting execution of files that are no longer authorized
-> > > by the LSM in question.
-> > >
-> > > This patch adds two security hook calls in dm-verity to save the
-> > > dm-verity roothash and the roothash signature to the block device's
-> > > LSM blobs. The hook calls are depended on CONFIG_IPE_PROP_DM_VERITY,
-> > > which will be introduced in the next commit.
-> > >
-> > > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> > > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-> > > ---
-> > > v2:
-> > >   + No Changes
-> > >
-> > > v3:
-> > >   + No changes
-> > >
-> > > v4:
-> > >   + No changes
-> > >
-> > > v5:
-> > >   + No changes
-> > >
-> > > v6:
-> > >   + Fix an improper cleanup that can result in
-> > >     a leak
-> > >
-> > > v7:
-> > >   + Squash patch 08/12, 10/12 to [11/16]
-> > >   + Use part0 for block_device, to retrieve the block_device, when
-> > >     calling security_bdev_setsecurity
-> > >
-> > > v8:
-> > >   + Undo squash of 08/12, 10/12 - separating drivers/md/ from
-> > >     security/ & block/
-> > >   + Use common-audit function for dmverity_signature.
-> > >   + Change implementation for storing the dm-verity digest to use the
-> > >     newly introduced dm_verity_digest structure introduced in patch
-> > >     14/20.
-> > >   + Create new structure, dm_verity_digest, containing digest algorit=
-hm,
-> > >     size, and digest itself to pass to the LSM layer. V7 was missing =
-the
-> > >     algorithm.
-> > >   + Create an associated public header containing this new structure =
-and
-> > >     the key values for the LSM hook, specific to dm-verity.
-> > >   + Additional information added to commit, discussing the layering o=
-f
-> > >     the changes and how the information passed will be used.
-> > >
-> > > v9:
-> > >   + No changes
-> > >
-> > > v10:
-> > >   + No changes
-> > >
-> > > v11:
-> > >   + Add an optional field to save signature
-> > >   + Move the security hook call to the new finalize hook
-> > >
-> > > v12:
-> > >   + No changes
-> > >
-> > > v13:
-> > >   + No changes
-> > >
-> > > v14:
-> > >   + Correct code format
-> > >   + Remove unnecessary header and switch to dm_disk()
-> > >
-> > > v15:
-> > >   + Refactor security_bdev_setsecurity() to security_bdev_setintegrit=
-y()
-> > >   + Remove unnecessary headers
-> > > ---
-> > >  drivers/md/dm-verity-target.c | 73 +++++++++++++++++++++++++++++++++=
-++
-> > >  drivers/md/dm-verity.h        |  6 +++
-> > >  include/linux/dm-verity.h     | 12 ++++++
-> > >  include/linux/security.h      |  2 +
-> > >  4 files changed, 93 insertions(+)
-> > >  create mode 100644 include/linux/dm-verity.h
-> > >
-> > > diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-tar=
-get.c
-> > > index bb5da66da4c1..e94cc6a755d5 100644
-> > > --- a/drivers/md/dm-verity-target.c
-> > > +++ b/drivers/md/dm-verity-target.c
-> > > @@ -22,6 +22,8 @@
-> > >  #include <linux/scatterlist.h>
-> > >  #include <linux/string.h>
-> > >  #include <linux/jump_label.h>
-> > > +#include <linux/security.h>
-> > > +#include <linux/dm-verity.h>
-> > >
-> > >  #define DM_MSG_PREFIX                      "verity"
-> > >
-> > > @@ -1017,6 +1019,38 @@ static void verity_io_hints(struct dm_target *=
-ti, struct queue_limits *limits)
-> > >     blk_limits_io_min(limits, limits->logical_block_size);
-> > >  }
-> > >
-> > > +#ifdef CONFIG_IPE_PROP_DM_VERITY
-> > > +
-> > > +static int verity_init_sig(struct dm_verity *v, const void *sig,
-> > > +                      size_t sig_size)
-> > > +{
-> > > +   v->sig_size =3D sig_size;
-> > > +   v->root_digest_sig =3D kmalloc(v->sig_size, GFP_KERNEL);
-> > > +   if (!v->root_digest)
-> > > +           return -ENOMEM;
-> >
-> > Either you meant to copy @sig into @v->root_digest_sig and forgot to
-> > add the code for that, or we don't need to include @sig as a parameter
-> > to this function.  I'm guessing it is the former as it wouldn't make
-> > sense to even have dm_verity::root_digest_sig if we weren't stashing
-> > it here.
-> >
-> > I'd also suggest looking at kmemdup() instead of a kmalloc()/memcpy()
-> > combo.
-> >
-> > > +   return 0;
-> > > +}
-> > > +
-> > > +static void verity_free_sig(struct dm_verity *v)
-> > > +{
-> > > +   kfree(v->root_digest_sig);
-> > > +}
-> > > +#else
-> > > +
-> > > +static inline int verity_init_sig(struct dm_verity *v, const void *s=
-ig,
-> > > +                             size_t sig_size)
-> > > +{
-> > > +   return 0;
-> > > +}
-> > > +
-> > > +static inline void verity_free_sig(struct dm_verity *v)
-> > > +{
-> > > +}
-> > > +
-> > > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
-> >
-> > It's been a while since I looked at this patch in the patchset, so
-> > maybe I'm missing something, but in general we don't want CONFIG_XXX
-> > checks in the kernel, outside of security/, that are specific to a
-> > particular LSM (what happens when multiple LSMs need this?).  Please
-> > use CONFIG_SECURITY instead.
-> >
-> > >  static void verity_dtr(struct dm_target *ti)
-> > >  {
-> > >     struct dm_verity *v =3D ti->private;
-> > > @@ -1035,6 +1069,7 @@ static void verity_dtr(struct dm_target *ti)
-> > >     kfree(v->salt);
-> > >     kfree(v->root_digest);
-> > >     kfree(v->zero_digest);
-> > > +   verity_free_sig(v);
-> > >
-> > >     if (v->tfm)
-> > >             crypto_free_ahash(v->tfm);
-> > > @@ -1434,6 +1469,13 @@ static int verity_ctr(struct dm_target *ti, un=
-signed int argc, char **argv)
-> > >             ti->error =3D "Root hash verification failed";
-> > >             goto bad;
-> > >     }
-> > > +
-> > > +   r =3D verity_init_sig(v, verify_args.sig, verify_args.sig_size);
-> > > +   if (r < 0) {
-> > > +           ti->error =3D "Cannot allocate root digest signature";
-> > > +           goto bad;
-> > > +   }
-> > > +
-> > >     v->hash_per_block_bits =3D
-> > >             __fls((1 << v->hash_dev_block_bits) / v->digest_size);
-> > >
-> > > @@ -1584,6 +1626,34 @@ int dm_verity_get_root_digest(struct dm_target=
- *ti, u8 **root_digest, unsigned i
-> > >     return 0;
-> > >  }
-> > >
-> > > +#ifdef CONFIG_IPE_PROP_DM_VERITY
-> > > +
-> > > +static int verity_finalize(struct dm_target *ti)
-> > > +{
-> > > +   struct block_device *bdev;
-> > > +   struct dm_verity_digest root_digest;
-> > > +   struct dm_verity *v;
-> > > +   int r;
-> > > +
-> > > +   v =3D ti->private;
-> > > +   bdev =3D dm_disk(dm_table_get_md(ti->table))->part0;
-> > > +   root_digest.digest =3D v->root_digest;
-> > > +   root_digest.digest_len =3D v->digest_size;
-> > > +   root_digest.alg =3D v->alg_name;
-> > > +
-> > > +   r =3D security_bdev_setintegrity(bdev, LSM_INTGR_DMV_ROOTHASH, &r=
-oot_digest,
-> > > +                                  sizeof(root_digest));
-> > > +   if (r)
-> > > +           return r;
-> > > +
-> > > +   return security_bdev_setintegrity(bdev,
-> > > +                                     LSM_INTGR_DMV_SIG,
-> > > +                                     v->root_digest_sig,
-> > > +                                     v->sig_size);
-> >
-> > What happens if the second call fails, should we clear the
-> > LSM_INTGR_DMV_ROOTHASH state in the LSM?
-> >
-> > > +}
-> > > +
-> > > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
-> >
-> > See my comments about CONFIG_SECURITY above.  In fact, I would suggest
-> > moving this up into that part of the file so you only need one #ifdef
-> > block relating to CONFIG_SECURITY.
-> >
-> > I would also recommend making a dummy function so we can get rid of
-> > the conditional compilation in @verity_target below.  For example:
-> >
-> >   #ifdef CONFIG_SECURITY
-> >   static int verity_finalize(struct dm_target *ti)
-> >   {
-> >     /* real implementation */
-> >   }
-> >   #else
-> >   static int verity_finalize(struct dm_target *ti)
-> >   {
-> >     return 0;
-> >   }
-> >   #endif /* CONFIG_SECURITY */
-> >
-> > >  static struct target_type verity_target =3D {
-> > >     .name           =3D "verity",
-> > >     .features       =3D DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
-> > > @@ -1596,6 +1666,9 @@ static struct target_type verity_target =3D {
-> > >     .prepare_ioctl  =3D verity_prepare_ioctl,
-> > >     .iterate_devices =3D verity_iterate_devices,
-> > >     .io_hints       =3D verity_io_hints,
-> > > +#ifdef CONFIG_IPE_PROP_DM_VERITY
-> > > +   .finalize       =3D verity_finalize,
-> > > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
-> > >  };
-> > >  module_dm(verity);
-> >
-> > If you create a dummy verity_finalize() function like above you can
-> > get rid of the #ifdef checks.
->
-> Think it is better to leave it as-is, to avoid calling the .finalize
-> hook if it isn't actually needed.
+There was reported lockup when we exit a snapshot with many exceptions.
+Fix this by adding "cond_resched" to the loop that frees the exceptions.
 
-Fair enough, my personal preference is to minimize Kconfig conditional
-code flow changes such as this, but I understand your point of view
-and device-mapper is your code after all.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
-I believe the other issues still need to be addressed, but other than
-that are you generally okay with the new "finalize" hook approach?
+---
+ drivers/md/dm-snap.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
---=20
-paul-moore.com
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c	2024-03-06 17:54:03.000000000 +0100
++++ linux-2.6/drivers/md/dm-snap.c	2024-03-20 18:38:20.000000000 +0100
+@@ -684,8 +684,10 @@ static void dm_exception_table_exit(stru
+ 	for (i = 0; i < size; i++) {
+ 		slot = et->table + i;
+ 
+-		hlist_bl_for_each_entry_safe(ex, pos, n, slot, hash_list)
++		hlist_bl_for_each_entry_safe(ex, pos, n, slot, hash_list) {
+ 			kmem_cache_free(mem, ex);
++			cond_resched();
++		}
+ 	}
+ 
+ 	kvfree(et->table);
+
