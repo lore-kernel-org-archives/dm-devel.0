@@ -1,326 +1,485 @@
-Received: from mail-qv1-f43.google.com (mail-qv1-f43.google.com [209.85.219.43])
+Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com [209.85.210.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 18F5379D0
-	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 02:19:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AAC4E125C4
+	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 02:49:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710901196; cv=none; b=Zmt54DxgwE2c8YbsFyI95w3NaTJl0FkhgZmaJFEuRRqxNdC9QWOxecGhD4gUngu3wG93wNO+vHng/nlDVmejV602TvulM1zPuqb2NpywO9dal1yxx2XwaaB2+DX8MwxmFrId4qM7VwKiu/PzDQtCX/bWMmCQm1GASMnlti2AFYg=
+	t=1710902982; cv=none; b=uuZ4WXndKVLpkZG1Of1mSgH0bRN4PuEJZssDxt9FAGv40tqqHJMxXvX6X/jDQ+zqB85Nj4rEhj0dI187X1nAjAM55Mat4t8XigdQZrfgi9pFJVmJK60MpV8TNlWeptqKlqxq93n9KRtKreiPHa0pTR85GR1CYhFHnO8BBpqqXQA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710901196; c=relaxed/simple;
-	bh=vRXg445GfbKWTYTB9fRQrXl8N4c1mUKMW6+I4dnRlZ0=;
+	s=arc-20240116; t=1710902982; c=relaxed/simple;
+	bh=I38XBXif3WDOPZGd4HX+W842KBGrtupkmvRocUe3FL4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=iVZq0XkOCmsUiVPyZvjzbEcsreMCPjmFbcFdtdVdatbOtDfKUJIrhrDCF0Z29TJF9WAbQ34YuzGf9ZqVxV14vzt3ASjrLKfhD+/w0t4mGQ6aR5EFpfPQ5lz0Idh6jq5CZyE2VmmW9yzhf4F6Edx5BDjOfmRHJPUNAuwLiPetTto=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.219.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qv1-f43.google.com with SMTP id 6a1803df08f44-690fed6816fso41339386d6.1
-        for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 19:19:52 -0700 (PDT)
+	 Content-Type:Content-Disposition:In-Reply-To; b=M398rSCg88QlW6I7sqpWcMDo5EZELyUpjn7X/ShAiSN6Jv7J88Fgio/LFigdKoKFb1sh6UpbrsXJnCnwodIKeN0KDRmeiPh9FblX1F5FkHgqXIUIYYLFtIvnCJyoRuCqKR3Si/6i/ceqx4gBq/zco/LasHQT5V0fgUYYkrCHd8o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gXly3FGs; arc=none smtp.client-ip=209.85.210.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gXly3FGs"
+Received: by mail-pf1-f176.google.com with SMTP id d2e1a72fcca58-6e6c18e9635so1602270b3a.1
+        for <dm-devel@lists.linux.dev>; Tue, 19 Mar 2024 19:49:40 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1710902980; x=1711507780; darn=lists.linux.dev;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=rK5f5lnEOGDA0dNCZVHYPRsxftlJcrb8cEbJ45ahcLU=;
+        b=gXly3FGsCTcYa+vAZuUimF6SIyFwlvdIw/Urq4YaEndU6xau4NgVrHkzYTlhgD6S9d
+         CHdca7TvulnCH2nJWRCqf/Mh1m7dterlOnPY6g6uVMMFm+MIEtB5tYhHZ8wfDkTkrRgv
+         WAcxpxesc1Twiyowgy5B8sJAeqXcLbKSFLbP1pB+Hb86zylgFcrBY1vc5U1fluJMdTrr
+         od41OoG6Ygr0NKSkCiB9XEAmdczLltswWgfdlJeQhfbAxsp+Z/rs/Mo4oTeDivBEKHc4
+         U+ngXUalmISuEfqwLA6WgJEe/Tb9LrmEhnuRhkc1ziNhnYQnlCcgsbKVFpfubCusEVtb
+         MIPQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710901192; x=1711505992;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=rslxMkN67eukyzDXMF/hyjaCbVs6Hgx0cps6F0DAzFE=;
-        b=Clqj1k1/FP7hS92jEWiv2x5AKDLtlhmwKVIXKzkHn+aCmspfnKkWzzyS+4tmKhNRIx
-         Jv2bB13zDB8q/kqwlb8Ap2S8+zF9IAqqpAlToEnLHHvavEwyLpxiEkCoHI23t3ewt/ZO
-         v6rms70Fegya+3/YvllhS6prbbJduR33zWGLcQV+4dy0D9NE2yP9nG65C6dqV56qCWFO
-         Ar4xostVLk45VBn9jjjBy6sfXnPMd/zKWyLvnO31PbOoENw5TXxtowOa9AHqJafkoAZ3
-         gBqIJbgFI0MLBjVSgpmmJ/Ie32r/LoM6U0YqV6Zs9806w1FFPbsEPBowQ67a+PerlEYv
-         SuKg==
-X-Forwarded-Encrypted: i=1; AJvYcCUowrfQZdRh9mhgSWoK1jvUf9qkKHIv+cNYN0UjPhHqdb/4g0r1p21ksAMv23GRv1N6vwmKdNyeiGHkdxUxoV+jfdMQ6ytNBTU=
-X-Gm-Message-State: AOJu0YxO1TSp0tuHcR+6f0GOFOUagL35Y/cjx8puNN+JDlfU+W/GBBgn
-	YS5LXBo+lQmCFnCbzsS812tYt92KYuG3Wm00GEtL0jDc2j0uuXGf6AyvivnYrg==
-X-Google-Smtp-Source: AGHT+IEA05HVYDsDIWdpmMWvM7gMWpxctsG28SD6IkpudKMk6z95MxKszxrHOnWKeLM0IzEx/noQVA==
-X-Received: by 2002:a0c:f5d4:0:b0:690:ba28:828a with SMTP id q20-20020a0cf5d4000000b00690ba28828amr17770049qvm.56.1710901192042;
-        Tue, 19 Mar 2024 19:19:52 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id gm9-20020a056214268900b00691865eae7bsm5194446qvb.4.2024.03.19.19.19.51
+        d=1e100.net; s=20230601; t=1710902980; x=1711507780;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=rK5f5lnEOGDA0dNCZVHYPRsxftlJcrb8cEbJ45ahcLU=;
+        b=MvbMTlnDI5eyGaCVXhiuwnN2RouYWCs3b+VJH8ckD91GN18RgWyCBTXfveaBd4rFZz
+         sC05nh2AE7WFoH76SwQio59xi9WhyH40pD3OCjCV4v1ceyNiuVJPF8f095cqKLZd5Yxm
+         H6M6POuSMhR1S8glAR/RHeU10c6SXH7r4aG4WYjtCqmwgT2qbW0jDhMkUjpXUmS9Orb0
+         r5zl6AKTugX5OlaNt+gHsBMfIhSkkAvabMqW3qOFydkjDbCuR92XcAzbhzToNwlR8OVR
+         poDyCLAn6kBPYXSHORcBT9F1nFLuxP4rMXzOMJvwZzuWBLw1d9WHzPBazLHfw2mskJRA
+         nb+g==
+X-Forwarded-Encrypted: i=1; AJvYcCWHAeM+tXR5SsvEZpopuRFgWluIa1XqZS8j9yY8rEfxlKYwQvnpug2cB3+3Odnnj+PYrIPdDydYPWuR5Ur/QkOXBaRr3euQkXY=
+X-Gm-Message-State: AOJu0YwSLQIR+9BNyPjdIW+cBxBoxzi41Xuwba9hmtQWo3Yj5+1ALif9
+	TRGwm36Kyb1wBa7WamJbB5t2QqTI8HfT1m1A6lgHnv2+Nm7n9Epf
+X-Google-Smtp-Source: AGHT+IEEmmwgIgoQbNlzSIaaKFkhbsGbkd5CbtIJYv4wDGSywn8Gpt53Dr6SbO0nA5u2nSCtpNhJ+A==
+X-Received: by 2002:a17:902:e80c:b0:1dd:b883:3398 with SMTP id u12-20020a170902e80c00b001ddb8833398mr462837plg.4.1710902979704;
+        Tue, 19 Mar 2024 19:49:39 -0700 (PDT)
+Received: from visitorckw-System-Product-Name ([140.113.216.168])
+        by smtp.gmail.com with ESMTPSA id a6-20020a170902ecc600b001dffe8a22aesm7599871plh.262.2024.03.19.19.49.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Mar 2024 19:19:51 -0700 (PDT)
-Date: Tue, 19 Mar 2024 22:19:50 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Paul Moore <paul@paul-moore.com>
-Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
-	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu,
-	ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
-	eparis@redhat.com, linux-doc@vger.kernel.org,
-	linux-integrity@vger.kernel.org,
-	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	audit@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [PATCH RFC v15 14/21] dm verity: consume root hash digest and
- signature data via LSM hook
-Message-ID: <ZfpHxkmRy0oqxZVF@redhat.com>
-References: <1710560151-28904-15-git-send-email-wufan@linux.microsoft.com>
- <657b73a0cf531fd4291a0f780d2fcf78@paul-moore.com>
+        Tue, 19 Mar 2024 19:49:39 -0700 (PDT)
+Date: Wed, 20 Mar 2024 10:49:34 +0800
+From: Kuan-Wei Chiu <visitorckw@gmail.com>
+To: Ian Rogers <irogers@google.com>
+Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com,
+	peterz@infradead.org, mingo@redhat.com, acme@kernel.org,
+	namhyung@kernel.org, akpm@linux-foundation.org, bfoster@redhat.com,
+	mark.rutland@arm.com, alexander.shishkin@linux.intel.com,
+	jolsa@kernel.org, adrian.hunter@intel.com, jserv@ccns.ncku.edu.tw,
+	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 08/13] lib min_heap: Add args for min_heap_callbacks
+Message-ID: <ZfpOvsD++wbwCTWO@visitorckw-System-Product-Name>
+References: <20240319180005.246930-1-visitorckw@gmail.com>
+ <20240319180005.246930-9-visitorckw@gmail.com>
+ <CAP-5=fUk12o7u-+0u0KeUbdRDYiGzeZU0vgOrTc_3BHEntjn_Q@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <657b73a0cf531fd4291a0f780d2fcf78@paul-moore.com>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CAP-5=fUk12o7u-+0u0KeUbdRDYiGzeZU0vgOrTc_3BHEntjn_Q@mail.gmail.com>
 
-On Tue, Mar 19 2024 at  7:00P -0400,
-Paul Moore <paul@paul-moore.com> wrote:
+On Tue, Mar 19, 2024 at 01:05:18PM -0700, Ian Rogers wrote:
+> On Tue, Mar 19, 2024 at 11:00 AM Kuan-Wei Chiu <visitorckw@gmail.com> wrote:
+> >
+> > Add a third parameter 'args' for the 'less' and 'swp' functions in the
+> > 'struct min_heap_callbacks'. This additional parameter allows these
+> > comparison and swap functions to handle extra arguments when necessary.
+> >
+> > Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
+> 
+> I've no objection to this but I don't see it used in your changes -
+> that may be my fault :-). Perhaps hold off or add a test with args
+> being non-null?
+>
 
-> On Mar 15, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
-> > 
-> > dm-verity provides a strong guarantee of a block device's integrity. As
-> > a generic way to check the integrity of a block device, it provides
-> > those integrity guarantees to its higher layers, including the filesystem
-> > level.
-> > 
-> > An LSM that control access to a resource on the system based on the
-> > available integrity claims can use this transitive property of
-> > dm-verity, by querying the underlying block_device of a particular
-> > file.
-> > 
-> > The digest and signature information need to be stored in the block
-> > device to fulfill the next requirement of authorization via LSM policy.
-> > This will enable the LSM to perform revocation of devices that are still
-> > mounted, prohibiting execution of files that are no longer authorized
-> > by the LSM in question.
-> > 
-> > This patch adds two security hook calls in dm-verity to save the
-> > dm-verity roothash and the roothash signature to the block device's
-> > LSM blobs. The hook calls are depended on CONFIG_IPE_PROP_DM_VERITY,
-> > which will be introduced in the next commit.
-> > 
-> > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+The parameter will be required in the patches for bcache and bcachefs.
+One is for bucket_min_cmp() and bucket_max_cmp() in
+drivers/md/bcache/alloc.c, and the other is for ec_stripes_heap_swap()
+in fs/bcachefs/ec.c.
+
+Do you have any more specific suggestions for adding non-null
+test cases? I'm unsure about what would be a reasonable way to include
+non-null test items in testing.
+> 
 > > ---
-> > v2:
-> >   + No Changes
-> > 
-> > v3:
-> >   + No changes
-> > 
-> > v4:
-> >   + No changes
-> > 
-> > v5:
-> >   + No changes
-> > 
-> > v6:
-> >   + Fix an improper cleanup that can result in
-> >     a leak
-> > 
-> > v7:
-> >   + Squash patch 08/12, 10/12 to [11/16]
-> >   + Use part0 for block_device, to retrieve the block_device, when
-> >     calling security_bdev_setsecurity
-> > 
-> > v8:
-> >   + Undo squash of 08/12, 10/12 - separating drivers/md/ from
-> >     security/ & block/
-> >   + Use common-audit function for dmverity_signature.
-> >   + Change implementation for storing the dm-verity digest to use the
-> >     newly introduced dm_verity_digest structure introduced in patch
-> >     14/20.
-> >   + Create new structure, dm_verity_digest, containing digest algorithm,
-> >     size, and digest itself to pass to the LSM layer. V7 was missing the
-> >     algorithm.
-> >   + Create an associated public header containing this new structure and
-> >     the key values for the LSM hook, specific to dm-verity.
-> >   + Additional information added to commit, discussing the layering of
-> >     the changes and how the information passed will be used.
-> > 
-> > v9:
-> >   + No changes
-> > 
-> > v10:
-> >   + No changes
-> > 
-> > v11:
-> >   + Add an optional field to save signature
-> >   + Move the security hook call to the new finalize hook
-> > 
-> > v12:
-> >   + No changes
-> > 
-> > v13:
-> >   + No changes
-> > 
-> > v14:
-> >   + Correct code format
-> >   + Remove unnecessary header and switch to dm_disk()
-> > 
-> > v15:
-> >   + Refactor security_bdev_setsecurity() to security_bdev_setintegrity()
-> >   + Remove unnecessary headers
-> > ---
-> >  drivers/md/dm-verity-target.c | 73 +++++++++++++++++++++++++++++++++++
-> >  drivers/md/dm-verity.h        |  6 +++
-> >  include/linux/dm-verity.h     | 12 ++++++
-> >  include/linux/security.h      |  2 +
-> >  4 files changed, 93 insertions(+)
-> >  create mode 100644 include/linux/dm-verity.h
-> > 
-> > diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> > index bb5da66da4c1..e94cc6a755d5 100644
-> > --- a/drivers/md/dm-verity-target.c
-> > +++ b/drivers/md/dm-verity-target.c
-> > @@ -22,6 +22,8 @@
-> >  #include <linux/scatterlist.h>
-> >  #include <linux/string.h>
-> >  #include <linux/jump_label.h>
-> > +#include <linux/security.h>
-> > +#include <linux/dm-verity.h>
-> >  
-> >  #define DM_MSG_PREFIX			"verity"
-> >  
-> > @@ -1017,6 +1019,38 @@ static void verity_io_hints(struct dm_target *ti, struct queue_limits *limits)
-> >  	blk_limits_io_min(limits, limits->logical_block_size);
-> >  }
-> >  
-> > +#ifdef CONFIG_IPE_PROP_DM_VERITY
-> > +
-> > +static int verity_init_sig(struct dm_verity *v, const void *sig,
-> > +			   size_t sig_size)
-> > +{
-> > +	v->sig_size = sig_size;
-> > +	v->root_digest_sig = kmalloc(v->sig_size, GFP_KERNEL);
-> > +	if (!v->root_digest)
-> > +		return -ENOMEM;
-> 
-> Either you meant to copy @sig into @v->root_digest_sig and forgot to
-> add the code for that, or we don't need to include @sig as a parameter
-> to this function.  I'm guessing it is the former as it wouldn't make
-> sense to even have dm_verity::root_digest_sig if we weren't stashing
-> it here.
-> 
-> I'd also suggest looking at kmemdup() instead of a kmalloc()/memcpy()
-> combo.
-> 
-> > +	return 0;
-> > +}
-> > +
-> > +static void verity_free_sig(struct dm_verity *v)
-> > +{
-> > +	kfree(v->root_digest_sig);
-> > +}
-> > +#else
-> > +
-> > +static inline int verity_init_sig(struct dm_verity *v, const void *sig,
-> > +				  size_t sig_size)
-> > +{
-> > +	return 0;
-> > +}
-> > +
-> > +static inline void verity_free_sig(struct dm_verity *v)
-> > +{
-> > +}
-> > +
-> > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
-> 
-> It's been a while since I looked at this patch in the patchset, so
-> maybe I'm missing something, but in general we don't want CONFIG_XXX
-> checks in the kernel, outside of security/, that are specific to a
-> particular LSM (what happens when multiple LSMs need this?).  Please
-> use CONFIG_SECURITY instead.
-> 
-> >  static void verity_dtr(struct dm_target *ti)
+> >  drivers/md/dm-vdo/repair.c     | 10 +++----
+> >  drivers/md/dm-vdo/slab-depot.c |  8 +++---
+> >  include/linux/min_heap.h       | 51 +++++++++++++++++-----------------
+> >  kernel/events/core.c           | 10 +++----
+> >  lib/test_min_heap.c            | 26 ++++++++---------
+> >  5 files changed, 53 insertions(+), 52 deletions(-)
+> >
+> > diff --git a/drivers/md/dm-vdo/repair.c b/drivers/md/dm-vdo/repair.c
+> > index 7663fa2098f4..528fa100b410 100644
+> > --- a/drivers/md/dm-vdo/repair.c
+> > +++ b/drivers/md/dm-vdo/repair.c
+> > @@ -137,7 +137,7 @@ struct repair_completion {
+> >   * to sort by slot while still ensuring we replay all entries with the same slot in the exact order
+> >   * as they appeared in the journal.
+> >   */
+> > -static bool mapping_is_less_than(const void *item1, const void *item2)
+> > +static bool mapping_is_less_than(const void *item1, const void *item2, void *args)
 > >  {
-> >  	struct dm_verity *v = ti->private;
-> > @@ -1035,6 +1069,7 @@ static void verity_dtr(struct dm_target *ti)
-> >  	kfree(v->salt);
-> >  	kfree(v->root_digest);
-> >  	kfree(v->zero_digest);
-> > +	verity_free_sig(v);
-> >  
-> >  	if (v->tfm)
-> >  		crypto_free_ahash(v->tfm);
-> > @@ -1434,6 +1469,13 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-> >  		ti->error = "Root hash verification failed";
-> >  		goto bad;
-> >  	}
-> > +
-> > +	r = verity_init_sig(v, verify_args.sig, verify_args.sig_size);
-> > +	if (r < 0) {
-> > +		ti->error = "Cannot allocate root digest signature";
-> > +		goto bad;
-> > +	}
-> > +
-> >  	v->hash_per_block_bits =
-> >  		__fls((1 << v->hash_dev_block_bits) / v->digest_size);
-> >  
-> > @@ -1584,6 +1626,34 @@ int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest, unsigned i
-> >  	return 0;
+> >         const struct numbered_block_mapping *mapping1 =
+> >                 (const struct numbered_block_mapping *) item1;
+> > @@ -156,7 +156,7 @@ static bool mapping_is_less_than(const void *item1, const void *item2)
+> >         return 0;
 > >  }
-> >  
-> > +#ifdef CONFIG_IPE_PROP_DM_VERITY
-> > +
-> > +static int verity_finalize(struct dm_target *ti)
-> > +{
-> > +	struct block_device *bdev;
-> > +	struct dm_verity_digest root_digest;
-> > +	struct dm_verity *v;
-> > +	int r;
-> > +
-> > +	v = ti->private;
-> > +	bdev = dm_disk(dm_table_get_md(ti->table))->part0;
-> > +	root_digest.digest = v->root_digest;
-> > +	root_digest.digest_len = v->digest_size;
-> > +	root_digest.alg = v->alg_name;
-> > +
-> > +	r = security_bdev_setintegrity(bdev, LSM_INTGR_DMV_ROOTHASH, &root_digest,
-> > +				       sizeof(root_digest));
-> > +	if (r)
-> > +		return r;
-> > +
-> > +	return security_bdev_setintegrity(bdev,
-> > +					  LSM_INTGR_DMV_SIG,
-> > +					  v->root_digest_sig,
-> > +					  v->sig_size);
-> 
-> What happens if the second call fails, should we clear the
-> LSM_INTGR_DMV_ROOTHASH state in the LSM?
-> 
-> > +}
-> > +
-> > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
-> 
-> See my comments about CONFIG_SECURITY above.  In fact, I would suggest
-> moving this up into that part of the file so you only need one #ifdef
-> block relating to CONFIG_SECURITY.
-> 
-> I would also recommend making a dummy function so we can get rid of
-> the conditional compilation in @verity_target below.  For example:
-> 
->   #ifdef CONFIG_SECURITY
->   static int verity_finalize(struct dm_target *ti)
->   {
->     /* real implementation */
->   }
->   #else
->   static int verity_finalize(struct dm_target *ti)
->   {
->     return 0;
->   }
->   #endif /* CONFIG_SECURITY */
-> 
-> >  static struct target_type verity_target = {
-> >  	.name		= "verity",
-> >  	.features	= DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
-> > @@ -1596,6 +1666,9 @@ static struct target_type verity_target = {
-> >  	.prepare_ioctl	= verity_prepare_ioctl,
-> >  	.iterate_devices = verity_iterate_devices,
-> >  	.io_hints	= verity_io_hints,
-> > +#ifdef CONFIG_IPE_PROP_DM_VERITY
-> > +	.finalize	= verity_finalize,
-> > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
+> >
+> > -static void swap_mappings(void *item1, void *item2)
+> > +static void swap_mappings(void *item1, void *item2, void *args)
+> >  {
+> >         struct numbered_block_mapping *mapping1 = item1;
+> >         struct numbered_block_mapping *mapping2 = item2;
+> > @@ -182,8 +182,8 @@ static struct numbered_block_mapping *sort_next_heap_element(struct repair_compl
+> >          * restore the heap invariant, and return a pointer to the popped element.
+> >          */
+> >         last = &repair->entries[--heap->heap.nr];
+> > -       swap_mappings(heap->heap.data, last);
+> > -       min_heapify(heap, 0, &repair_min_heap);
+> > +       swap_mappings(heap->heap.data, last, NULL);
+> > +       min_heapify(heap, 0, &repair_min_heap, NULL);
+> >         return last;
+> >  }
+> >
+> > @@ -1121,7 +1121,7 @@ static void recover_block_map(struct vdo_completion *completion)
+> >         repair->replay_heap.heap.data = repair->entries;
+> >         repair->replay_heap.heap.nr = repair->block_map_entry_count;
+> >         repair->replay_heap.heap.size = repair->block_map_entry_count;
+> > -       min_heapify_all(&repair->replay_heap, &repair_min_heap);
+> > +       min_heapify_all(&repair->replay_heap, &repair_min_heap, NULL);
+> >
+> >         vdo_log_info("Replaying %zu recovery entries into block map",
+> >                      repair->block_map_entry_count);
+> > diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
+> > index 3309480170c3..b8c41d7ccde0 100644
+> > --- a/drivers/md/dm-vdo/slab-depot.c
+> > +++ b/drivers/md/dm-vdo/slab-depot.c
+> > @@ -3288,7 +3288,7 @@ int vdo_release_block_reference(struct block_allocator *allocator,
+> >   * Thus, the ordering is reversed from the usual sense since min_heap returns smaller elements
+> >   * before larger ones.
+> >   */
+> > -static bool slab_status_is_less_than(const void *item1, const void *item2)
+> > +static bool slab_status_is_less_than(const void *item1, const void *item2, void *args)
+> >  {
+> >         const struct slab_status *info1 = item1;
+> >         const struct slab_status *info2 = item2;
+> > @@ -3300,7 +3300,7 @@ static bool slab_status_is_less_than(const void *item1, const void *item2)
+> >         return info1->slab_number < info2->slab_number;
+> >  }
+> >
+> > -static void swap_slab_statuses(void *item1, void *item2)
+> > +static void swap_slab_statuses(void *item1, void *item2, void *args)
+> >  {
+> >         struct slab_status *info1 = item1;
+> >         struct slab_status *info2 = item2;
+> > @@ -3523,7 +3523,7 @@ static int __must_check vdo_prepare_slabs_for_allocation(struct block_allocator
+> >         heap.heap.data = slab_statuses;
+> >         heap.heap.nr = allocator->slab_count;
+> >         heap.heap.size = allocator->slab_count;
+> > -       min_heapify_all(&heap, &slab_status_min_heap);
+> > +       min_heapify_all(&heap, &slab_status_min_heap, NULL);
+> >
+> >         while (heap.heap.nr > 0) {
+> >                 bool high_priority;
+> > @@ -3531,7 +3531,7 @@ static int __must_check vdo_prepare_slabs_for_allocation(struct block_allocator
+> >                 struct slab_journal *journal;
+> >
+> >                 current_slab_status = slab_statuses[0];
+> > -               min_heap_pop(&heap, &slab_status_min_heap);
+> > +               min_heap_pop(&heap, &slab_status_min_heap, NULL);
+> >                 slab = depot->slabs[current_slab_status.slab_number];
+> >
+> >                 if ((depot->load_type == VDO_SLAB_DEPOT_REBUILD_LOAD) ||
+> > diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
+> > index b1d874f4d536..97d8ba5c32e6 100644
+> > --- a/include/linux/min_heap.h
+> > +++ b/include/linux/min_heap.h
+> > @@ -40,8 +40,8 @@ struct _name {                                \
+> >   * @swp: Swap elements function.
+> >   */
+> >  struct min_heap_callbacks {
+> > -       bool (*less)(const void *lhs, const void *rhs);
+> > -       void (*swp)(void *lhs, void *rhs);
+> > +       bool (*less)(const void *lhs, const void *rhs, void *args);
+> > +       void (*swp)(void *lhs, void *rhs, void *args);
 > >  };
-> >  module_dm(verity);
-> 
-> If you create a dummy verity_finalize() function like above you can
-> get rid of the #ifdef checks.
-
-Think it is better to leave it as-is, to avoid calling the .finalize
-hook if it isn't actually needed.
-
-Mike
+> >
+> >  /* Initialize a min-heap. */
+> > @@ -79,7 +79,7 @@ bool __min_heap_full(struct __min_heap *heap)
+> >  /* Sift the element at pos down the heap. */
+> >  static __always_inline
+> >  void __min_heapify(struct __min_heap *heap, int pos, size_t elem_size,
+> > -               const struct min_heap_callbacks *func)
+> > +               const struct min_heap_callbacks *func, void *args)
+> >  {
+> >         void *left, *right;
+> >         void *data = heap->data;
+> > @@ -92,7 +92,7 @@ void __min_heapify(struct __min_heap *heap, int pos, size_t elem_size,
+> >                         break;
+> >                 left = data + (i * 2 + 1) * elem_size;
+> >                 right = data + (i * 2 + 2) * elem_size;
+> > -               i = func->less(left, right) ? i * 2 + 1 : i * 2 + 2;
+> > +               i = func->less(left, right, args) ? i * 2 + 1 : i * 2 + 2;
+> >         }
+> >
+> >         /* Special case for the last leaf with no sibling. */
+> > @@ -100,38 +100,38 @@ void __min_heapify(struct __min_heap *heap, int pos, size_t elem_size,
+> >                 i = i * 2 + 1;
+> >
+> >         /* Backtrack to the correct location. */
+> > -       while (i != pos && func->less(root, data + i * elem_size))
+> > +       while (i != pos && func->less(root, data + i * elem_size, args))
+> >                 i = (i - 1) / 2;
+> >
+> >         /* Shift the element into its correct place. */
+> >         j = i;
+> >         while (i != pos) {
+> >                 i = (i - 1) / 2;
+> > -               func->swp(data + i * elem_size, data + j * elem_size);
+> > +               func->swp(data + i * elem_size, data + j * elem_size, args);
+> >         }
+> >  }
+> >
+> > -#define min_heapify(_heap, _pos, _func)        \
+> > -       __min_heapify(&(_heap)->heap, _pos, __minheap_obj_size(_heap), _func)
+> > +#define min_heapify(_heap, _pos, _func, _args) \
+> > +       __min_heapify(&(_heap)->heap, _pos, __minheap_obj_size(_heap), _func, _args)
+> >
+> >  /* Floyd's approach to heapification that is O(nr). */
+> >  static __always_inline
+> >  void __min_heapify_all(struct __min_heap *heap, size_t elem_size,
+> > -               const struct min_heap_callbacks *func)
+> > +               const struct min_heap_callbacks *func, void *args)
+> >  {
+> >         int i;
+> >
+> >         for (i = heap->nr / 2 - 1; i >= 0; i--)
+> > -               __min_heapify(heap, i, elem_size, func);
+> > +               __min_heapify(heap, i, elem_size, func, args);
+> >  }
+> >
+> > -#define min_heapify_all(_heap, _func)  \
+> > -       __min_heapify_all(&(_heap)->heap, __minheap_obj_size(_heap), _func)
+> > +#define min_heapify_all(_heap, _func, _args)   \
+> > +       __min_heapify_all(&(_heap)->heap, __minheap_obj_size(_heap), _func, _args)
+> >
+> >  /* Remove minimum element from the heap, O(log2(nr)). */
+> >  static __always_inline
+> >  void __min_heap_pop(struct __min_heap *heap, size_t elem_size,
+> > -               const struct min_heap_callbacks *func)
+> > +               const struct min_heap_callbacks *func, void *args)
+> >  {
+> >         void *data = heap->data;
+> >
+> > @@ -141,11 +141,11 @@ void __min_heap_pop(struct __min_heap *heap, size_t elem_size,
+> >         /* Place last element at the root (position 0) and then sift down. */
+> >         heap->nr--;
+> >         memcpy(data, data + (heap->nr * elem_size), elem_size);
+> > -       __min_heapify(heap, 0, elem_size, func);
+> > +       __min_heapify(heap, 0, elem_size, func, args);
+> >  }
+> >
+> > -#define min_heap_pop(_heap, _func)     \
+> > -       __min_heap_pop(&(_heap)->heap, __minheap_obj_size(_heap), _func)
+> > +#define min_heap_pop(_heap, _func, _args)      \
+> > +       __min_heap_pop(&(_heap)->heap, __minheap_obj_size(_heap), _func, _args)
+> >
+> >  /*
+> >   * Remove the minimum element and then push the given element. The
+> > @@ -155,19 +155,20 @@ void __min_heap_pop(struct __min_heap *heap, size_t elem_size,
+> >  static __always_inline
+> >  void __min_heap_pop_push(struct __min_heap *heap,
+> >                 const void *element, size_t elem_size,
+> > -               const struct min_heap_callbacks *func)
+> > +               const struct min_heap_callbacks *func,
+> > +               void *args)
+> >  {
+> >         memcpy(heap->data, element, elem_size);
+> > -       __min_heapify(heap, 0, elem_size, func);
+> > +       __min_heapify(heap, 0, elem_size, func, args);
+> >  }
+> >
+> > -#define min_heap_pop_push(_heap, _element, _func)      \
+> > -       __min_heap_pop_push(&(_heap)->heap, _element, __minheap_obj_size(_heap), _func)
+> > +#define min_heap_pop_push(_heap, _element, _func, _args)       \
+> > +       __min_heap_pop_push(&(_heap)->heap, _element, __minheap_obj_size(_heap), _func, _args)
+> >
+> >  /* Push an element on to the heap, O(log2(nr)). */
+> >  static __always_inline
+> >  void __min_heap_push(struct __min_heap *heap, const void *element, size_t elem_size,
+> > -               const struct min_heap_callbacks *func)
+> > +               const struct min_heap_callbacks *func, void *args)
+> >  {
+> >         void *data = heap->data;
+> >         void *child, *parent;
+> > @@ -185,13 +186,13 @@ void __min_heap_push(struct __min_heap *heap, const void *element, size_t elem_s
+> >         for (; pos > 0; pos = (pos - 1) / 2) {
+> >                 child = data + (pos * elem_size);
+> >                 parent = data + ((pos - 1) / 2) * elem_size;
+> > -               if (func->less(parent, child))
+> > +               if (func->less(parent, child, args))
+> >                         break;
+> > -               func->swp(parent, child);
+> > +               func->swp(parent, child, args);
+> >         }
+> >  }
+> >
+> > -#define min_heap_push(_heap, _element, _func)  \
+> > -       __min_heap_push(&(_heap)->heap, _element, __minheap_obj_size(_heap), _func)
+> > +#define min_heap_push(_heap, _element, _func, _args)   \
+> > +       __min_heap_push(&(_heap)->heap, _element, __minheap_obj_size(_heap), _func, _args)
+> >
+> >  #endif /* _LINUX_MIN_HEAP_H */
+> > diff --git a/kernel/events/core.c b/kernel/events/core.c
+> > index 065dfaa8b009..f2a9044058ee 100644
+> > --- a/kernel/events/core.c
+> > +++ b/kernel/events/core.c
+> > @@ -3683,7 +3683,7 @@ void __perf_event_task_sched_out(struct task_struct *task,
+> >         perf_cgroup_switch(next);
+> >  }
+> >
+> > -static bool perf_less_group_idx(const void *l, const void *r)
+> > +static bool perf_less_group_idx(const void *l, const void *r, void *args)
+> >  {
+> >         const struct perf_event *le = *(const struct perf_event **)l;
+> >         const struct perf_event *re = *(const struct perf_event **)r;
+> > @@ -3691,7 +3691,7 @@ static bool perf_less_group_idx(const void *l, const void *r)
+> >         return le->group_index < re->group_index;
+> >  }
+> >
+> > -static void swap_ptr(void *l, void *r)
+> > +static void swap_ptr(void *l, void *r, void *args)
+> >  {
+> >         void **lp = l, **rp = r;
+> >
+> > @@ -3779,7 +3779,7 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
+> >                 perf_assert_pmu_disabled((*evt)->pmu_ctx->pmu);
+> >         }
+> >
+> > -       min_heapify_all(&event_heap, &perf_min_heap);
+> > +       min_heapify_all(&event_heap, &perf_min_heap, NULL);
+> >
+> >         while (event_heap.heap.nr) {
+> >                 ret = func(*evt, data);
+> > @@ -3788,9 +3788,9 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
+> >
+> >                 *evt = perf_event_groups_next(*evt, pmu);
+> >                 if (*evt)
+> > -                       min_heapify(&event_heap, 0, &perf_min_heap);
+> > +                       min_heapify(&event_heap, 0, &perf_min_heap, NULL);
+> >                 else
+> > -                       min_heap_pop(&event_heap, &perf_min_heap);
+> > +                       min_heap_pop(&event_heap, &perf_min_heap, NULL);
+> >         }
+> >
+> >         return 0;
+> > diff --git a/lib/test_min_heap.c b/lib/test_min_heap.c
+> > index af2e446034d8..b8859d17a19c 100644
+> > --- a/lib/test_min_heap.c
+> > +++ b/lib/test_min_heap.c
+> > @@ -13,17 +13,17 @@
+> >
+> >  MIN_HEAP(int, min_heap_test);
+> >
+> > -static __init bool less_than(const void *lhs, const void *rhs)
+> > +static __init bool less_than(const void *lhs, const void *rhs, void *args)
+> >  {
+> >         return *(int *)lhs < *(int *)rhs;
+> >  }
+> >
+> > -static __init bool greater_than(const void *lhs, const void *rhs)
+> > +static __init bool greater_than(const void *lhs, const void *rhs, void *args)
+> >  {
+> >         return *(int *)lhs > *(int *)rhs;
+> >  }
+> >
+> > -static __init void swap_ints(void *lhs, void *rhs)
+> > +static __init void swap_ints(void *lhs, void *rhs, void *argsss)
+> >  {
+> >         int temp = *(int *)lhs;
+> >
+> > @@ -40,7 +40,7 @@ static __init int pop_verify_heap(bool min_heap,
+> >         int last;
+> >
+> >         last = values[0];
+> > -       min_heap_pop(heap, funcs);
+> > +       min_heap_pop(heap, funcs, NULL);
+> >         while (heap->heap.nr > 0) {
+> >                 if (min_heap) {
+> >                         if (last > values[0]) {
+> > @@ -56,7 +56,7 @@ static __init int pop_verify_heap(bool min_heap,
+> >                         }
+> >                 }
+> >                 last = values[0];
+> > -               min_heap_pop(heap, funcs);
+> > +               min_heap_pop(heap, funcs, NULL);
+> >         }
+> >         return err;
+> >  }
+> > @@ -77,7 +77,7 @@ static __init int test_heapify_all(bool min_heap)
+> >         int i, err;
+> >
+> >         /* Test with known set of values. */
+> > -       min_heapify_all(&heap, &funcs);
+> > +       min_heapify_all(&heap, &funcs, NULL);
+> >         err = pop_verify_heap(min_heap, &heap, &funcs);
+> >
+> >
+> > @@ -86,7 +86,7 @@ static __init int test_heapify_all(bool min_heap)
+> >         for (i = 0; i < heap.heap.nr; i++)
+> >                 values[i] = get_random_u32();
+> >
+> > -       min_heapify_all(&heap, &funcs);
+> > +       min_heapify_all(&heap, &funcs, NULL);
+> >         err += pop_verify_heap(min_heap, &heap, &funcs);
+> >
+> >         return err;
+> > @@ -110,14 +110,14 @@ static __init int test_heap_push(bool min_heap)
+> >
+> >         /* Test with known set of values copied from data. */
+> >         for (i = 0; i < ARRAY_SIZE(data); i++)
+> > -               min_heap_push(&heap, &data[i], &funcs);
+> > +               min_heap_push(&heap, &data[i], &funcs, NULL);
+> >
+> >         err = pop_verify_heap(min_heap, &heap, &funcs);
+> >
+> >         /* Test with randomly generated values. */
+> >         while (heap.heap.nr < heap.heap.size) {
+> >                 temp = get_random_u32();
+> > -               min_heap_push(&heap, &temp, &funcs);
+> > +               min_heap_push(&heap, &temp, &funcs, NULL);
+> >         }
+> >         err += pop_verify_heap(min_heap, &heap, &funcs);
+> >
+> > @@ -143,22 +143,22 @@ static __init int test_heap_pop_push(bool min_heap)
+> >         /* Fill values with data to pop and replace. */
+> >         temp = min_heap ? 0x80000000 : 0x7FFFFFFF;
+> >         for (i = 0; i < ARRAY_SIZE(data); i++)
+> > -               min_heap_push(&heap, &temp, &funcs);
+> > +               min_heap_push(&heap, &temp, &funcs, NULL);
+> >
+> >         /* Test with known set of values copied from data. */
+> >         for (i = 0; i < ARRAY_SIZE(data); i++)
+> > -               min_heap_pop_push(&heap, &data[i], &funcs);
+> > +               min_heap_pop_push(&heap, &data[i], &funcs, NULL);
+> >
+> >         err = pop_verify_heap(min_heap, &heap, &funcs);
+> >
+> >         heap.heap.nr = 0;
+> >         for (i = 0; i < ARRAY_SIZE(data); i++)
+> > -               min_heap_push(&heap, &temp, &funcs);
+> > +               min_heap_push(&heap, &temp, &funcs, NULL);
+> >
+> >         /* Test with randomly generated values. */
+> >         for (i = 0; i < ARRAY_SIZE(data); i++) {
+> >                 temp = get_random_u32();
+> > -               min_heap_pop_push(&heap, &temp, &funcs);
+> > +               min_heap_pop_push(&heap, &temp, &funcs, NULL);
+> >         }
+> >         err += pop_verify_heap(min_heap, &heap, &funcs);
+> >
+> > --
+> > 2.34.1
+> >
