@@ -1,647 +1,361 @@
-Received: from mail-pl1-f181.google.com (mail-pl1-f181.google.com [209.85.214.181])
+Received: from mail-yb1-f174.google.com (mail-yb1-f174.google.com [209.85.219.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8AD546A327
-	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 17:21:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 474846A34C
+	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 17:23:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710955264; cv=none; b=PvZFstVi8bwEfNzBrXNzxZESvBf7bx58iKbLp0Ub1m5dFY35lIlWo6xWqei6AZ78eYkVrCvwJwEu9BjBTCQZ3bGby27QJsFouXw9yayWc2ldPg0HZ+uFa63vVAM7Z36jCqCQqZU7Jm73PebFAKXSOTPfQSmLqYrj/Xadgh7YIHA=
+	t=1710955411; cv=none; b=gaSE0xD1B17JKQWX6NQ4N1W6JgfMBy9VK+QC8T9CO9E/M59Km7/7kNJ8f1HHlJL0ZyKskT+Tl2NP843aDPgAZ7TI25kzyjJ4aNaFX5hamgEdd/xfqlDbW71fYhUKSv+p8dNqnOuIBKVrK5W8cdfXTPQCWtzY66Una/1NqhpbMx8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710955264; c=relaxed/simple;
-	bh=+SX43BWO6u+p5f4Vx1LbMGUeQVHcvfL4yh3HKoiXaOI=;
+	s=arc-20240116; t=1710955411; c=relaxed/simple;
+	bh=OktSo1wzw1/Tkeb7gXpxEk9VZSpYD0XVPWVaHlIfXLc=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=kZWnBTzaCitaUk/EUjDy7txzHrUu7YgZ6XhJAUt2+sJLvrowzqNbRtqQrocqAiVO53BTQHG06DwLoGYw2OV8yug4pI/z+YrjJlW+yMz8/EYw/72S9nAi3l4q7dGaaqUoshObXUDYqPQy83aiPbpwPHcv1p/VxMMA2ffDH0J8ahM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=qpXggdj3; arc=none smtp.client-ip=209.85.214.181
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	 To:Cc:Content-Type; b=UVojFxu9an455w7rxSwtCRAkdZjEqGBJbHWJg3K64lp2pB4s8eQwv42dCoYF0S1PKZ54oT8lPNpdLsVhy8lA5VEVNZiidLdCXCk86aBUbjw7FjzN4B4cJnXU1wYko2j9p5aVdhO8teg18g22vD1dfpt8noz1Fylw3YHXNEUrdCs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=LozIBiWU; arc=none smtp.client-ip=209.85.219.174
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="qpXggdj3"
-Received: by mail-pl1-f181.google.com with SMTP id d9443c01a7336-1e062f3a47bso6735ad.1
-        for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 10:21:02 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="LozIBiWU"
+Received: by mail-yb1-f174.google.com with SMTP id 3f1490d57ef6-dd02fb9a31cso6070703276.3
+        for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 10:23:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1710955262; x=1711560062; darn=lists.linux.dev;
+        d=paul-moore.com; s=google; t=1710955408; x=1711560208; darn=lists.linux.dev;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=b8zFRjf4Lu5KxIDhdOc4C9O3ujBbtuLkYfCxydXmaL0=;
-        b=qpXggdj3PN/NPgA5I8iVvjyagGU1bM0z69SJu5J1/FpALw5ZW8+U0D7KefXDnneh0t
-         jiVeviwts0WNS93F2+Uk41uKgJqrjwyCo6UDaUEm8bm9s2fVuIsurCJ7TA2zHofWy6f7
-         cbzr6WmzPF57KR2NfdzIeXYknYjcaefMFSqWT9anDapxH7FyZC/CdslCbophf/5Vg56J
-         uEg/kWhFIZQNh2GrEc4j0JzJfYaFP+le0rbMsuql4RxVqFv3l2CW775Adq9qAIQCt2e+
-         0jY42k37i1XYaUFzPMW41Jhj2kMH9TH6NprCRzsylf8NFw3RQK7NpyRUdDMum8pQ/I2V
-         j0Qw==
+        bh=zL+b5IqSmT+yiak0XO4i+W4JtR/sEZzsL6gRjLnV0bw=;
+        b=LozIBiWUditKKYgjr8VP4YnJLrSZTU18hvIgpfQjicZcji3S6ZsaV09NzJ8/p4gh/V
+         E1kDWLS5J/Qf7aR6TDEsFBxZmtEuDuG/8QIaNyM49rF2tokQrV1SW1HWXJz8w28KrzQ7
+         eHjFVoYOlBBfwD0Oy/7S7gXVnstpffmzHDcVx8C8XpxzAWs2belHkT5R/iaCSvORxkS5
+         xyX68XfA883S/Z/cbP26ksuQShfkSDw2+OCzW0GDz4ZAZ5v4bTcDZZP7exX+Gdh8QShi
+         7qA1VZDQd6ppXv5+rpgwnwdUoaDXJaBxKbe6pDDrWhmpHuacdgd72hcJTQdeBJJS7K44
+         cisg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710955262; x=1711560062;
+        d=1e100.net; s=20230601; t=1710955408; x=1711560208;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=b8zFRjf4Lu5KxIDhdOc4C9O3ujBbtuLkYfCxydXmaL0=;
-        b=p7AWXHdxiHYwMA2mcK6xYsDSUvaPVXOpw/ZucZFM4h5wP12+qP/tWtlk2Uy8TwE8TB
-         XicHjcA8WUDCzoXswefo0527SJuB1WWSLW67h2flq2ynlkspMK73jaS9TFrY9j+YQpJL
-         2qNJ5vhe5lDQMtQ0FBD2g8dIqDnmHQsxavCNmwkLedQIEIS5UAsYA21ElaOBbVUYNYR8
-         x6HrryA2A6tL5Gz5wzlXuDwMM0YWvOQtMqVvXNKcLOFaOowBvxXc1csT2o4W/gldsk4A
-         Sj0CDUmA5deaHEXpFSqj7KDyV6SP2bgjtvHLGANL4UpjTIVjQ2M53fddZcsiOwiphoqj
-         qQlw==
-X-Forwarded-Encrypted: i=1; AJvYcCUWgyr8w0km4iNbltdSfkc6BPrn6ORYn36SLzTwS+cA+jDl9WaPOC5EHNOIXURtJUipyZ45y3W/wXXfYx1pgiocjugw8vyZmAE=
-X-Gm-Message-State: AOJu0Yz6pPYjpvxk9iQi7nXrLfRYc3tRyxGTxagqkBfjBtcJNHF6MF+0
-	3XuyXtKtUuC4EG0ozvIIoLEuCIjSXvqXcc9iDLEHyur8Xk1rgFiPoD+Ah1UpT3ngbOMYaQxMzHG
-	pDWb9v7/S1kflTil+sr3Y1KuY7jfO11xg+8Jc
-X-Google-Smtp-Source: AGHT+IGxkRxK8RgP4Er4icB5kbdhxDCHvobQMPJ+91a7OPiuAM4D/WWiMYrc0KMnivFPSdshJz+8NuvedPr8WreDM68=
-X-Received: by 2002:a17:902:ea11:b0:1de:ed50:41f8 with SMTP id
- s17-20020a170902ea1100b001deed5041f8mr306592plg.22.1710955261406; Wed, 20 Mar
- 2024 10:21:01 -0700 (PDT)
+        bh=zL+b5IqSmT+yiak0XO4i+W4JtR/sEZzsL6gRjLnV0bw=;
+        b=rsTWPcJgpsLNMh6EG+dJHhthCNaalOKgfPB5jSwXQk5Jnp6/Qabf/1MkJcVYJ1Dbkx
+         7He2cE96opv4IfKqkkWkqmBVe3g1dxNvdbuhD8CxQQ0UfuaxIr528WtYwU6Bra99RfB8
+         XWUuY4cLEh/vwDMOyaW7ZbXA7rvuOU5tFynLU7KdqrlaQ+2Yvjlz5q6y25y6g4xjpvGw
+         sZAcX/u5nLts67sXl2LhsUgRw6ifxOWue8zcciGUg2u1axLROfLW/WpGDAymNRMSBzYN
+         wUSNMjmuSof7oKv2JLBhlTy4zT6J1DxbWIl0Ems6/fkP6iwZe/turKpNDP0ko/3g9Esj
+         zfUQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVVJgkv2RrP8y7f2SAlXESp7kIYkT5WziFuvMygeJsHwQRMQL82nc/DWnYl+cyzdBHIZ/1jtrbeL/QCtGmWjuEjfmFOx2TMubA=
+X-Gm-Message-State: AOJu0YzcVT2TihKiyJc/F8ozGxDfmUYghCdc+zIJucVHUv/4ZwuK+F8U
+	M4heiDWSWZa/Kko9p+aFkZddeTDY5pzqQi0E66GxQoo5ZSG1JSOTEyxUpLzdwW5Ta1pcHeZFkyt
+	c750y6Ei1oB58CQwR2EKsJruXBup7seA94oQI
+X-Google-Smtp-Source: AGHT+IGisQjCjQt12sXnN9Jt9UbAiCVuocXkhWkDVU4b8Sz//Q1jqxXIMt0rNAmfp/Y8hIDNuFGtuTe2UbVFtwFiUv0=
+X-Received: by 2002:a25:6fc5:0:b0:dd1:2f58:292b with SMTP id
+ k188-20020a256fc5000000b00dd12f58292bmr13153934ybc.9.1710955408153; Wed, 20
+ Mar 2024 10:23:28 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240320145417.336208-1-visitorckw@gmail.com> <20240320145417.336208-16-visitorckw@gmail.com>
-In-Reply-To: <20240320145417.336208-16-visitorckw@gmail.com>
-From: Ian Rogers <irogers@google.com>
-Date: Wed, 20 Mar 2024 10:20:50 -0700
-Message-ID: <CAP-5=fVfrhvMdU+6RkK6FYuNa-FtSe8LvkvTRnCXHtCe42NjQw@mail.gmail.com>
-Subject: Re: [PATCH v2 15/15] bcachefs: Remove heap-related macros and switch
- to generic min_heap
-To: Kuan-Wei Chiu <visitorckw@gmail.com>
-Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com, 
-	peterz@infradead.org, mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, 
-	akpm@linux-foundation.org, bfoster@redhat.com, mark.rutland@arm.com, 
-	alexander.shishkin@linux.intel.com, jolsa@kernel.org, adrian.hunter@intel.com, 
-	jserv@ccns.ncku.edu.tw, dm-devel@lists.linux.dev, 
-	linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org
+References: <1710560151-28904-15-git-send-email-wufan@linux.microsoft.com>
+ <657b73a0cf531fd4291a0f780d2fcf78@paul-moore.com> <ZfpHxkmRy0oqxZVF@redhat.com>
+In-Reply-To: <ZfpHxkmRy0oqxZVF@redhat.com>
+From: Paul Moore <paul@paul-moore.com>
+Date: Wed, 20 Mar 2024 13:23:17 -0400
+Message-ID: <CAHC9VhTkpSa665tesTEs8gBjaD3ahUMATGMXuGy+-unt7WL-UQ@mail.gmail.com>
+Subject: Re: [PATCH RFC v15 14/21] dm verity: consume root hash digest and
+ signature data via LSM hook
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, 
+	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
+	axboe@kernel.dk, agk@redhat.com, eparis@redhat.com, linux-doc@vger.kernel.org, 
+	linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, 
+	fsverity@lists.linux.dev, linux-block@vger.kernel.org, 
+	dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	Deven Bowers <deven.desai@linux.microsoft.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Mar 20, 2024 at 7:55=E2=80=AFAM Kuan-Wei Chiu <visitorckw@gmail.com=
-> wrote:
+On Tue, Mar 19, 2024 at 10:19=E2=80=AFPM Mike Snitzer <snitzer@kernel.org> =
+wrote:
+> On Tue, Mar 19 2024 at  7:00P -0400,
+> Paul Moore <paul@paul-moore.com> wrote:
+> > On Mar 15, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
+> > >
+> > > dm-verity provides a strong guarantee of a block device's integrity. =
+As
+> > > a generic way to check the integrity of a block device, it provides
+> > > those integrity guarantees to its higher layers, including the filesy=
+stem
+> > > level.
+> > >
+> > > An LSM that control access to a resource on the system based on the
+> > > available integrity claims can use this transitive property of
+> > > dm-verity, by querying the underlying block_device of a particular
+> > > file.
+> > >
+> > > The digest and signature information need to be stored in the block
+> > > device to fulfill the next requirement of authorization via LSM polic=
+y.
+> > > This will enable the LSM to perform revocation of devices that are st=
+ill
+> > > mounted, prohibiting execution of files that are no longer authorized
+> > > by the LSM in question.
+> > >
+> > > This patch adds two security hook calls in dm-verity to save the
+> > > dm-verity roothash and the roothash signature to the block device's
+> > > LSM blobs. The hook calls are depended on CONFIG_IPE_PROP_DM_VERITY,
+> > > which will be introduced in the next commit.
+> > >
+> > > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+> > > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> > > ---
+> > > v2:
+> > >   + No Changes
+> > >
+> > > v3:
+> > >   + No changes
+> > >
+> > > v4:
+> > >   + No changes
+> > >
+> > > v5:
+> > >   + No changes
+> > >
+> > > v6:
+> > >   + Fix an improper cleanup that can result in
+> > >     a leak
+> > >
+> > > v7:
+> > >   + Squash patch 08/12, 10/12 to [11/16]
+> > >   + Use part0 for block_device, to retrieve the block_device, when
+> > >     calling security_bdev_setsecurity
+> > >
+> > > v8:
+> > >   + Undo squash of 08/12, 10/12 - separating drivers/md/ from
+> > >     security/ & block/
+> > >   + Use common-audit function for dmverity_signature.
+> > >   + Change implementation for storing the dm-verity digest to use the
+> > >     newly introduced dm_verity_digest structure introduced in patch
+> > >     14/20.
+> > >   + Create new structure, dm_verity_digest, containing digest algorit=
+hm,
+> > >     size, and digest itself to pass to the LSM layer. V7 was missing =
+the
+> > >     algorithm.
+> > >   + Create an associated public header containing this new structure =
+and
+> > >     the key values for the LSM hook, specific to dm-verity.
+> > >   + Additional information added to commit, discussing the layering o=
+f
+> > >     the changes and how the information passed will be used.
+> > >
+> > > v9:
+> > >   + No changes
+> > >
+> > > v10:
+> > >   + No changes
+> > >
+> > > v11:
+> > >   + Add an optional field to save signature
+> > >   + Move the security hook call to the new finalize hook
+> > >
+> > > v12:
+> > >   + No changes
+> > >
+> > > v13:
+> > >   + No changes
+> > >
+> > > v14:
+> > >   + Correct code format
+> > >   + Remove unnecessary header and switch to dm_disk()
+> > >
+> > > v15:
+> > >   + Refactor security_bdev_setsecurity() to security_bdev_setintegrit=
+y()
+> > >   + Remove unnecessary headers
+> > > ---
+> > >  drivers/md/dm-verity-target.c | 73 +++++++++++++++++++++++++++++++++=
+++
+> > >  drivers/md/dm-verity.h        |  6 +++
+> > >  include/linux/dm-verity.h     | 12 ++++++
+> > >  include/linux/security.h      |  2 +
+> > >  4 files changed, 93 insertions(+)
+> > >  create mode 100644 include/linux/dm-verity.h
+> > >
+> > > diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-tar=
+get.c
+> > > index bb5da66da4c1..e94cc6a755d5 100644
+> > > --- a/drivers/md/dm-verity-target.c
+> > > +++ b/drivers/md/dm-verity-target.c
+> > > @@ -22,6 +22,8 @@
+> > >  #include <linux/scatterlist.h>
+> > >  #include <linux/string.h>
+> > >  #include <linux/jump_label.h>
+> > > +#include <linux/security.h>
+> > > +#include <linux/dm-verity.h>
+> > >
+> > >  #define DM_MSG_PREFIX                      "verity"
+> > >
+> > > @@ -1017,6 +1019,38 @@ static void verity_io_hints(struct dm_target *=
+ti, struct queue_limits *limits)
+> > >     blk_limits_io_min(limits, limits->logical_block_size);
+> > >  }
+> > >
+> > > +#ifdef CONFIG_IPE_PROP_DM_VERITY
+> > > +
+> > > +static int verity_init_sig(struct dm_verity *v, const void *sig,
+> > > +                      size_t sig_size)
+> > > +{
+> > > +   v->sig_size =3D sig_size;
+> > > +   v->root_digest_sig =3D kmalloc(v->sig_size, GFP_KERNEL);
+> > > +   if (!v->root_digest)
+> > > +           return -ENOMEM;
+> >
+> > Either you meant to copy @sig into @v->root_digest_sig and forgot to
+> > add the code for that, or we don't need to include @sig as a parameter
+> > to this function.  I'm guessing it is the former as it wouldn't make
+> > sense to even have dm_verity::root_digest_sig if we weren't stashing
+> > it here.
+> >
+> > I'd also suggest looking at kmemdup() instead of a kmalloc()/memcpy()
+> > combo.
+> >
+> > > +   return 0;
+> > > +}
+> > > +
+> > > +static void verity_free_sig(struct dm_verity *v)
+> > > +{
+> > > +   kfree(v->root_digest_sig);
+> > > +}
+> > > +#else
+> > > +
+> > > +static inline int verity_init_sig(struct dm_verity *v, const void *s=
+ig,
+> > > +                             size_t sig_size)
+> > > +{
+> > > +   return 0;
+> > > +}
+> > > +
+> > > +static inline void verity_free_sig(struct dm_verity *v)
+> > > +{
+> > > +}
+> > > +
+> > > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
+> >
+> > It's been a while since I looked at this patch in the patchset, so
+> > maybe I'm missing something, but in general we don't want CONFIG_XXX
+> > checks in the kernel, outside of security/, that are specific to a
+> > particular LSM (what happens when multiple LSMs need this?).  Please
+> > use CONFIG_SECURITY instead.
+> >
+> > >  static void verity_dtr(struct dm_target *ti)
+> > >  {
+> > >     struct dm_verity *v =3D ti->private;
+> > > @@ -1035,6 +1069,7 @@ static void verity_dtr(struct dm_target *ti)
+> > >     kfree(v->salt);
+> > >     kfree(v->root_digest);
+> > >     kfree(v->zero_digest);
+> > > +   verity_free_sig(v);
+> > >
+> > >     if (v->tfm)
+> > >             crypto_free_ahash(v->tfm);
+> > > @@ -1434,6 +1469,13 @@ static int verity_ctr(struct dm_target *ti, un=
+signed int argc, char **argv)
+> > >             ti->error =3D "Root hash verification failed";
+> > >             goto bad;
+> > >     }
+> > > +
+> > > +   r =3D verity_init_sig(v, verify_args.sig, verify_args.sig_size);
+> > > +   if (r < 0) {
+> > > +           ti->error =3D "Cannot allocate root digest signature";
+> > > +           goto bad;
+> > > +   }
+> > > +
+> > >     v->hash_per_block_bits =3D
+> > >             __fls((1 << v->hash_dev_block_bits) / v->digest_size);
+> > >
+> > > @@ -1584,6 +1626,34 @@ int dm_verity_get_root_digest(struct dm_target=
+ *ti, u8 **root_digest, unsigned i
+> > >     return 0;
+> > >  }
+> > >
+> > > +#ifdef CONFIG_IPE_PROP_DM_VERITY
+> > > +
+> > > +static int verity_finalize(struct dm_target *ti)
+> > > +{
+> > > +   struct block_device *bdev;
+> > > +   struct dm_verity_digest root_digest;
+> > > +   struct dm_verity *v;
+> > > +   int r;
+> > > +
+> > > +   v =3D ti->private;
+> > > +   bdev =3D dm_disk(dm_table_get_md(ti->table))->part0;
+> > > +   root_digest.digest =3D v->root_digest;
+> > > +   root_digest.digest_len =3D v->digest_size;
+> > > +   root_digest.alg =3D v->alg_name;
+> > > +
+> > > +   r =3D security_bdev_setintegrity(bdev, LSM_INTGR_DMV_ROOTHASH, &r=
+oot_digest,
+> > > +                                  sizeof(root_digest));
+> > > +   if (r)
+> > > +           return r;
+> > > +
+> > > +   return security_bdev_setintegrity(bdev,
+> > > +                                     LSM_INTGR_DMV_SIG,
+> > > +                                     v->root_digest_sig,
+> > > +                                     v->sig_size);
+> >
+> > What happens if the second call fails, should we clear the
+> > LSM_INTGR_DMV_ROOTHASH state in the LSM?
+> >
+> > > +}
+> > > +
+> > > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
+> >
+> > See my comments about CONFIG_SECURITY above.  In fact, I would suggest
+> > moving this up into that part of the file so you only need one #ifdef
+> > block relating to CONFIG_SECURITY.
+> >
+> > I would also recommend making a dummy function so we can get rid of
+> > the conditional compilation in @verity_target below.  For example:
+> >
+> >   #ifdef CONFIG_SECURITY
+> >   static int verity_finalize(struct dm_target *ti)
+> >   {
+> >     /* real implementation */
+> >   }
+> >   #else
+> >   static int verity_finalize(struct dm_target *ti)
+> >   {
+> >     return 0;
+> >   }
+> >   #endif /* CONFIG_SECURITY */
+> >
+> > >  static struct target_type verity_target =3D {
+> > >     .name           =3D "verity",
+> > >     .features       =3D DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
+> > > @@ -1596,6 +1666,9 @@ static struct target_type verity_target =3D {
+> > >     .prepare_ioctl  =3D verity_prepare_ioctl,
+> > >     .iterate_devices =3D verity_iterate_devices,
+> > >     .io_hints       =3D verity_io_hints,
+> > > +#ifdef CONFIG_IPE_PROP_DM_VERITY
+> > > +   .finalize       =3D verity_finalize,
+> > > +#endif /* CONFIG_IPE_PROP_DM_VERITY */
+> > >  };
+> > >  module_dm(verity);
+> >
+> > If you create a dummy verity_finalize() function like above you can
+> > get rid of the #ifdef checks.
 >
-> Drop the heap-related macros from bcachefs and replacing them with the
-> generic min_heap implementation from include/linux. By doing so, code
-> readability is improved by using functions instead of macros. Moreover,
-> the min_heap implementation in include/linux adopts a bottom-up
-> variation compared to the textbook version currently used in bcachefs.
-> This bottom-up variation allows for approximately 50% reduction in the
-> number of comparison operations during heap siftdown, without changing
-> the number of swaps, thus making it more efficient.
->
-> Link: https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvs=
-dp4mqqg@nrlek5vmisbu
-> Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
+> Think it is better to leave it as-is, to avoid calling the .finalize
+> hook if it isn't actually needed.
 
-Reviewed-by: Ian Rogers <irogers@google.com>
+Fair enough, my personal preference is to minimize Kconfig conditional
+code flow changes such as this, but I understand your point of view
+and device-mapper is your code after all.
 
-Thanks,
-Ian
+I believe the other issues still need to be addressed, but other than
+that are you generally okay with the new "finalize" hook approach?
 
-> ---
-> Changes in v2:
-> - Add attribute __always_unused to the compare and swap functions that
->   do not use the args parameter.
-> - Rename min_heapify() to min_heap_sift_down().
-> - Refine the commit message.
->
->  fs/bcachefs/clock.c       |  53 +++++++++++-----
->  fs/bcachefs/clock_types.h |   2 +-
->  fs/bcachefs/ec.c          | 100 +++++++++++++++++++-----------
->  fs/bcachefs/ec_types.h    |   2 +-
->  fs/bcachefs/util.h        | 127 +++-----------------------------------
->  5 files changed, 110 insertions(+), 174 deletions(-)
->
-> diff --git a/fs/bcachefs/clock.c b/fs/bcachefs/clock.c
-> index 363644451106..e898f4693bd0 100644
-> --- a/fs/bcachefs/clock.c
-> +++ b/fs/bcachefs/clock.c
-> @@ -6,16 +6,29 @@
->  #include <linux/kthread.h>
->  #include <linux/preempt.h>
->
-> -static inline long io_timer_cmp(io_timer_heap *h,
-> -                               struct io_timer *l,
-> -                               struct io_timer *r)
-> +static inline bool io_timer_cmp(const void *l, const void *r, void __alw=
-ays_unused *args)
->  {
-> -       return l->expire - r->expire;
-> +       struct io_timer *_l =3D (struct io_timer *)l;
-> +       struct io_timer *_r =3D (struct io_timer *)r;
-> +
-> +       return _l->expire >=3D _r->expire;
-> +}
-> +
-> +static inline void io_timer_swp(void *l, void *r, void __always_unused *=
-args)
-> +{
-> +       struct io_timer *_l =3D (struct io_timer *)l;
-> +       struct io_timer *_r =3D (struct io_timer *)r;
-> +
-> +       swap(*_l, *_r);
->  }
->
->  void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
->  {
->         size_t i;
-> +       const struct min_heap_callbacks callbacks =3D {
-> +               .less =3D io_timer_cmp,
-> +               .swp =3D io_timer_swp,
-> +       };
->
->         spin_lock(&clock->timer_lock);
->
-> @@ -26,11 +39,11 @@ void bch2_io_timer_add(struct io_clock *clock, struct=
- io_timer *timer)
->                 return;
->         }
->
-> -       for (i =3D 0; i < clock->timers.used; i++)
-> -               if (clock->timers.data[i] =3D=3D timer)
-> +       for (i =3D 0; i < clock->timers.heap.nr; i++)
-> +               if (min_heap_peek(&clock->timers)[i] =3D=3D timer)
->                         goto out;
->
-> -       BUG_ON(!heap_add(&clock->timers, timer, io_timer_cmp, NULL));
-> +       BUG_ON(!min_heap_push(&clock->timers, &timer, &callbacks, NULL));
->  out:
->         spin_unlock(&clock->timer_lock);
->  }
-> @@ -38,12 +51,16 @@ void bch2_io_timer_add(struct io_clock *clock, struct=
- io_timer *timer)
->  void bch2_io_timer_del(struct io_clock *clock, struct io_timer *timer)
->  {
->         size_t i;
-> +       const struct min_heap_callbacks callbacks =3D {
-> +               .less =3D io_timer_cmp,
-> +               .swp =3D io_timer_swp,
-> +       };
->
->         spin_lock(&clock->timer_lock);
->
-> -       for (i =3D 0; i < clock->timers.used; i++)
-> -               if (clock->timers.data[i] =3D=3D timer) {
-> -                       heap_del(&clock->timers, i, io_timer_cmp, NULL);
-> +       for (i =3D 0; i < clock->timers.heap.nr; i++)
-> +               if (min_heap_peek(&clock->timers)[i] =3D=3D timer) {
-> +                       min_heap_pop(&clock->timers, &callbacks, NULL);
->                         break;
->                 }
->
-> @@ -131,12 +148,16 @@ static struct io_timer *get_expired_timer(struct io=
-_clock *clock,
->                                           unsigned long now)
->  {
->         struct io_timer *ret =3D NULL;
-> +       const struct min_heap_callbacks callbacks =3D {
-> +               .less =3D io_timer_cmp,
-> +               .swp =3D io_timer_swp,
-> +       };
->
->         spin_lock(&clock->timer_lock);
->
-> -       if (clock->timers.used &&
-> -           time_after_eq(now, clock->timers.data[0]->expire))
-> -               heap_pop(&clock->timers, ret, io_timer_cmp, NULL);
-> +       if (clock->timers.heap.nr &&
-> +           time_after_eq(now, min_heap_peek(&clock->timers)[0]->expire))
-> +               min_heap_pop(&clock->timers, &callbacks, NULL);
->
->         spin_unlock(&clock->timer_lock);
->
-> @@ -161,10 +182,10 @@ void bch2_io_timers_to_text(struct printbuf *out, s=
-truct io_clock *clock)
->         spin_lock(&clock->timer_lock);
->         now =3D atomic64_read(&clock->now);
->
-> -       for (i =3D 0; i < clock->timers.used; i++)
-> +       for (i =3D 0; i < clock->timers.heap.nr; i++)
->                 prt_printf(out, "%ps:\t%li\n",
-> -                      clock->timers.data[i]->fn,
-> -                      clock->timers.data[i]->expire - now);
-> +                      min_heap_peek(&clock->timers)[i]->fn,
-> +                      min_heap_peek(&clock->timers)[i]->expire - now);
->         spin_unlock(&clock->timer_lock);
->         --out->atomic;
->  }
-> diff --git a/fs/bcachefs/clock_types.h b/fs/bcachefs/clock_types.h
-> index 5fae0012d808..b02b24b9d74f 100644
-> --- a/fs/bcachefs/clock_types.h
-> +++ b/fs/bcachefs/clock_types.h
-> @@ -23,7 +23,7 @@ struct io_timer {
->  /* Amount to buffer up on a percpu counter */
->  #define IO_CLOCK_PCPU_SECTORS  128
->
-> -typedef HEAP(struct io_timer *)        io_timer_heap;
-> +typedef MIN_HEAP(struct io_timer *, io_timer_heap) io_timer_heap;
->
->  struct io_clock {
->         atomic64_t              now;
-> diff --git a/fs/bcachefs/ec.c b/fs/bcachefs/ec.c
-> index 082075244e16..68c5e9e928a7 100644
-> --- a/fs/bcachefs/ec.c
-> +++ b/fs/bcachefs/ec.c
-> @@ -860,14 +860,15 @@ static int __ec_stripe_mem_alloc(struct bch_fs *c, =
-size_t idx, gfp_t gfp)
->  {
->         ec_stripes_heap n, *h =3D &c->ec_stripes_heap;
->
-> -       if (idx >=3D h->size) {
-> +       if (idx >=3D h->heap.size) {
->                 if (!init_heap(&n, max(1024UL, roundup_pow_of_two(idx + 1=
-)), gfp))
->                         return -BCH_ERR_ENOMEM_ec_stripe_mem_alloc;
->
->                 mutex_lock(&c->ec_stripes_heap_lock);
-> -               if (n.size > h->size) {
-> -                       memcpy(n.data, h->data, h->used * sizeof(h->data[=
-0]));
-> -                       n.used =3D h->used;
-> +               if (n.heap.size > h->heap.size) {
-> +                       memcpy(min_heap_peek(&n), min_heap_peek(h),
-> +                               h->heap.nr * sizeof(*min_heap_peek(h)));
-> +                       n.heap.nr =3D h->heap.nr;
->                         swap(*h, n);
->                 }
->                 mutex_unlock(&c->ec_stripes_heap_lock);
-> @@ -958,20 +959,21 @@ static u64 stripe_idx_to_delete(struct bch_fs *c)
->
->         lockdep_assert_held(&c->ec_stripes_heap_lock);
->
-> -       if (h->used &&
-> -           h->data[0].blocks_nonempty =3D=3D 0 &&
-> -           !bch2_stripe_is_open(c, h->data[0].idx))
-> -               return h->data[0].idx;
-> +       if (h->heap.nr &&
-> +           min_heap_peek(h)->blocks_nonempty =3D=3D 0 &&
-> +           !bch2_stripe_is_open(c, min_heap_peek(h)->idx))
-> +               return min_heap_peek(h)->idx;
->
->         return 0;
->  }
->
-> -static inline int ec_stripes_heap_cmp(ec_stripes_heap *h,
-> -                                     struct ec_stripe_heap_entry l,
-> -                                     struct ec_stripe_heap_entry r)
-> +static inline bool ec_stripes_heap_cmp(const void *l, const void *r, voi=
-d __always_unused *args)
->  {
-> -       return ((l.blocks_nonempty > r.blocks_nonempty) -
-> -               (l.blocks_nonempty < r.blocks_nonempty));
-> +       struct ec_stripe_heap_entry *_l =3D (struct ec_stripe_heap_entry =
-*)l;
-> +       struct ec_stripe_heap_entry *_r =3D (struct ec_stripe_heap_entry =
-*)r;
-> +
-> +       return ((_l->blocks_nonempty > _r->blocks_nonempty) >=3D
-> +               (_l->blocks_nonempty < _r->blocks_nonempty));
->  }
->
->  static inline void ec_stripes_heap_set_backpointer(ec_stripes_heap *h,
-> @@ -979,7 +981,21 @@ static inline void ec_stripes_heap_set_backpointer(e=
-c_stripes_heap *h,
->  {
->         struct bch_fs *c =3D container_of(h, struct bch_fs, ec_stripes_he=
-ap);
->
-> -       genradix_ptr(&c->stripes, h->data[i].idx)->heap_idx =3D i;
-> +       genradix_ptr(&c->stripes, min_heap_peek(h)[i].idx)->heap_idx =3D =
-i;
-> +}
-> +
-> +static inline void ec_stripes_heap_swap(void *l, void *r, void *h)
-> +{
-> +       struct ec_stripe_heap_entry *_l =3D (struct ec_stripe_heap_entry =
-*)l;
-> +       struct ec_stripe_heap_entry *_r =3D (struct ec_stripe_heap_entry =
-*)r;
-> +       ec_stripes_heap *_h =3D (ec_stripes_heap *)h;
-> +       size_t i =3D _l - min_heap_peek(_h);
-> +       size_t j =3D _r - min_heap_peek(_h);
-> +
-> +       ec_stripes_heap_set_backpointer(_h, i);
-> +       ec_stripes_heap_set_backpointer(_h, j);
-> +
-> +       swap(*_l, *_r);
->  }
->
->  static void heap_verify_backpointer(struct bch_fs *c, size_t idx)
-> @@ -987,34 +1003,43 @@ static void heap_verify_backpointer(struct bch_fs =
-*c, size_t idx)
->         ec_stripes_heap *h =3D &c->ec_stripes_heap;
->         struct stripe *m =3D genradix_ptr(&c->stripes, idx);
->
-> -       BUG_ON(m->heap_idx >=3D h->used);
-> -       BUG_ON(h->data[m->heap_idx].idx !=3D idx);
-> +       BUG_ON(m->heap_idx >=3D h->heap.nr);
-> +       BUG_ON(min_heap_peek(h)[m->heap_idx].idx !=3D idx);
->  }
->
->  void bch2_stripes_heap_del(struct bch_fs *c,
->                            struct stripe *m, size_t idx)
->  {
-> +       const struct min_heap_callbacks callbacks =3D {
-> +               .less =3D ec_stripes_heap_cmp,
-> +               .swp =3D ec_stripes_heap_swap,
-> +       };
-> +
->         mutex_lock(&c->ec_stripes_heap_lock);
->         heap_verify_backpointer(c, idx);
->
-> -       heap_del(&c->ec_stripes_heap, m->heap_idx,
-> -                ec_stripes_heap_cmp,
-> -                ec_stripes_heap_set_backpointer);
-> +       min_heap_del(&c->ec_stripes_heap, m->heap_idx, &callbacks, &c->ec=
-_stripes_heap);
->         mutex_unlock(&c->ec_stripes_heap_lock);
->  }
->
->  void bch2_stripes_heap_insert(struct bch_fs *c,
->                               struct stripe *m, size_t idx)
->  {
-> +       const struct min_heap_callbacks callbacks =3D {
-> +               .less =3D ec_stripes_heap_cmp,
-> +               .swp =3D ec_stripes_heap_swap,
-> +       };
-> +
->         mutex_lock(&c->ec_stripes_heap_lock);
-> -       BUG_ON(heap_full(&c->ec_stripes_heap));
-> +       BUG_ON(min_heap_full(&c->ec_stripes_heap));
->
-> -       heap_add(&c->ec_stripes_heap, ((struct ec_stripe_heap_entry) {
-> +       genradix_ptr(&c->stripes, idx)->heap_idx =3D c->ec_stripes_heap.h=
-eap.nr;
-> +       min_heap_push(&c->ec_stripes_heap, &((struct ec_stripe_heap_entry=
-) {
->                         .idx =3D idx,
->                         .blocks_nonempty =3D m->blocks_nonempty,
->                 }),
-> -                ec_stripes_heap_cmp,
-> -                ec_stripes_heap_set_backpointer);
-> +                &callbacks,
-> +                &c->ec_stripes_heap);
->
->         heap_verify_backpointer(c, idx);
->         mutex_unlock(&c->ec_stripes_heap_lock);
-> @@ -1026,17 +1051,20 @@ void bch2_stripes_heap_update(struct bch_fs *c,
->         ec_stripes_heap *h =3D &c->ec_stripes_heap;
->         bool do_deletes;
->         size_t i;
-> +       const struct min_heap_callbacks callbacks =3D {
-> +               .less =3D ec_stripes_heap_cmp,
-> +               .swp =3D ec_stripes_heap_swap,
-> +       };
->
->         mutex_lock(&c->ec_stripes_heap_lock);
->         heap_verify_backpointer(c, idx);
->
-> -       h->data[m->heap_idx].blocks_nonempty =3D m->blocks_nonempty;
-> +       min_heap_peek(h)[m->heap_idx].blocks_nonempty =3D m->blocks_nonem=
-pty;
->
->         i =3D m->heap_idx;
-> -       heap_sift_up(h,   i, ec_stripes_heap_cmp,
-> -                    ec_stripes_heap_set_backpointer);
-> -       heap_sift_down(h, i, ec_stripes_heap_cmp,
-> -                      ec_stripes_heap_set_backpointer);
-> +
-> +       min_heap_sift_up(h,     i, &callbacks, &c->ec_stripes_heap);
-> +       min_heap_sift_down(h, i, &callbacks, &c->ec_stripes_heap);
->
->         heap_verify_backpointer(c, idx);
->
-> @@ -1828,12 +1856,12 @@ static s64 get_existing_stripe(struct bch_fs *c,
->                 return -1;
->
->         mutex_lock(&c->ec_stripes_heap_lock);
-> -       for (heap_idx =3D 0; heap_idx < h->used; heap_idx++) {
-> +       for (heap_idx =3D 0; heap_idx < h->heap.nr; heap_idx++) {
->                 /* No blocks worth reusing, stripe will just be deleted: =
-*/
-> -               if (!h->data[heap_idx].blocks_nonempty)
-> +               if (!min_heap_peek(h)[heap_idx].blocks_nonempty)
->                         continue;
->
-> -               stripe_idx =3D h->data[heap_idx].idx;
-> +               stripe_idx =3D min_heap_peek(h)[heap_idx].idx;
->
->                 m =3D genradix_ptr(&c->stripes, stripe_idx);
->
-> @@ -2159,14 +2187,14 @@ void bch2_stripes_heap_to_text(struct printbuf *o=
-ut, struct bch_fs *c)
->         size_t i;
->
->         mutex_lock(&c->ec_stripes_heap_lock);
-> -       for (i =3D 0; i < min_t(size_t, h->used, 50); i++) {
-> -               m =3D genradix_ptr(&c->stripes, h->data[i].idx);
-> +       for (i =3D 0; i < min_t(size_t, h->heap.nr, 50); i++) {
-> +               m =3D genradix_ptr(&c->stripes, min_heap_peek(h)[i].idx);
->
-> -               prt_printf(out, "%zu %u/%u+%u", h->data[i].idx,
-> -                      h->data[i].blocks_nonempty,
-> +               prt_printf(out, "%zu %u/%u+%u", min_heap_peek(h)[i].idx,
-> +                      min_heap_peek(h)[i].blocks_nonempty,
->                        m->nr_blocks - m->nr_redundant,
->                        m->nr_redundant);
-> -               if (bch2_stripe_is_open(c, h->data[i].idx))
-> +               if (bch2_stripe_is_open(c, min_heap_peek(h)[i].idx))
->                         prt_str(out, " open");
->                 prt_newline(out);
->         }
-> diff --git a/fs/bcachefs/ec_types.h b/fs/bcachefs/ec_types.h
-> index 976426da3a12..2ed67431a81c 100644
-> --- a/fs/bcachefs/ec_types.h
-> +++ b/fs/bcachefs/ec_types.h
-> @@ -36,6 +36,6 @@ struct ec_stripe_heap_entry {
->         unsigned                blocks_nonempty;
->  };
->
-> -typedef HEAP(struct ec_stripe_heap_entry) ec_stripes_heap;
-> +typedef MIN_HEAP(struct ec_stripe_heap_entry, ec_stripes_heap) ec_stripe=
-s_heap;
->
->  #endif /* _BCACHEFS_EC_TYPES_H */
-> diff --git a/fs/bcachefs/util.h b/fs/bcachefs/util.h
-> index 175aee3074c7..e0c86ad04bf3 100644
-> --- a/fs/bcachefs/util.h
-> +++ b/fs/bcachefs/util.h
-> @@ -8,6 +8,7 @@
->  #include <linux/errno.h>
->  #include <linux/freezer.h>
->  #include <linux/kernel.h>
-> +#include <linux/min_heap.h>
->  #include <linux/sched/clock.h>
->  #include <linux/llist.h>
->  #include <linux/log2.h>
-> @@ -54,134 +55,20 @@ static inline size_t buf_pages(void *p, size_t len)
->                             PAGE_SIZE);
->  }
->
-> -#define HEAP(type)                                                     \
-> -struct {                                                               \
-> -       size_t size, used;                                              \
-> -       type *data;                                                     \
-> -}
-> -
-> -#define DECLARE_HEAP(type, name) HEAP(type) name
-> -
->  #define init_heap(heap, _size, gfp)                                    \
->  ({                                                                     \
-> -       (heap)->used =3D 0;                                              =
- \
-> -       (heap)->size =3D (_size);                                        =
- \
-> -       (heap)->data =3D kvmalloc((heap)->size * sizeof((heap)->data[0]),=
-\
-> -                                (gfp));                                \
-> -})
-> -
-> -#define free_heap(heap)                                                 =
-       \
-> -do {                                                                   \
-> -       kvfree((heap)->data);                                           \
-> -       (heap)->data =3D NULL;                                           =
- \
-> -} while (0)
-> -
-> -#define heap_set_backpointer(h, i, _fn)                                 =
-       \
-> -do {                                                                   \
-> -       void (*fn)(typeof(h), size_t) =3D _fn;                           =
- \
-> -       if (fn)                                                         \
-> -               fn(h, i);                                               \
-> -} while (0)
-> -
-> -#define heap_swap(h, i, j, set_backpointer)                            \
-> -do {                                                                   \
-> -       swap((h)->data[i], (h)->data[j]);                               \
-> -       heap_set_backpointer(h, i, set_backpointer);                    \
-> -       heap_set_backpointer(h, j, set_backpointer);                    \
-> -} while (0)
-> -
-> -#define heap_peek(h)                                                   \
-> -({                                                                     \
-> -       EBUG_ON(!(h)->used);                                            \
-> -       (h)->data[0];                                                   \
-> -})
-> -
-> -#define heap_full(h)   ((h)->used =3D=3D (h)->size)
-> -
-> -#define heap_sift_down(h, i, cmp, set_backpointer)                     \
-> -do {                                                                   \
-> -       size_t _c, _j =3D i;                                             =
- \
-> -                                                                       \
-> -       for (; _j * 2 + 1 < (h)->used; _j =3D _c) {                      =
- \
-> -               _c =3D _j * 2 + 1;                                       =
- \
-> -               if (_c + 1 < (h)->used &&                               \
-> -                   cmp(h, (h)->data[_c], (h)->data[_c + 1]) >=3D 0)     =
- \
-> -                       _c++;                                           \
-> -                                                                       \
-> -               if (cmp(h, (h)->data[_c], (h)->data[_j]) >=3D 0)         =
- \
-> -                       break;                                          \
-> -               heap_swap(h, _c, _j, set_backpointer);                  \
-> -       }                                                               \
-> -} while (0)
-> -
-> -#define heap_sift_up(h, i, cmp, set_backpointer)                       \
-> -do {                                                                   \
-> -       while (i) {                                                     \
-> -               size_t p =3D (i - 1) / 2;                                =
- \
-> -               if (cmp(h, (h)->data[i], (h)->data[p]) >=3D 0)           =
- \
-> -                       break;                                          \
-> -               heap_swap(h, i, p, set_backpointer);                    \
-> -               i =3D p;                                                 =
- \
-> -       }                                                               \
-> -} while (0)
-> -
-> -#define __heap_add(h, d, cmp, set_backpointer)                         \
-> -({                                                                     \
-> -       size_t _i =3D (h)->used++;                                       =
- \
-> -       (h)->data[_i] =3D d;                                             =
- \
-> -       heap_set_backpointer(h, _i, set_backpointer);                   \
-> -                                                                       \
-> -       heap_sift_up(h, _i, cmp, set_backpointer);                      \
-> -       _i;                                                             \
-> -})
-> -
-> -#define heap_add(h, d, cmp, set_backpointer)                           \
-> -({                                                                     \
-> -       bool _r =3D !heap_full(h);                                       =
- \
-> -       if (_r)                                                         \
-> -               __heap_add(h, d, cmp, set_backpointer);                 \
-> -       _r;                                                             \
-> +       void *data =3D kvmalloc(_size * sizeof(*min_heap_peek(heap)), (gf=
-p));\
-> +       min_heap_init(heap, data, _size);                               \
-> +       min_heap_peek(heap);                                            \
->  })
->
-> -#define heap_add_or_replace(h, new, cmp, set_backpointer)              \
-> -do {                                                                   \
-> -       if (!heap_add(h, new, cmp, set_backpointer) &&                  \
-> -           cmp(h, new, heap_peek(h)) >=3D 0) {                          =
- \
-> -               (h)->data[0] =3D new;                                    =
- \
-> -               heap_set_backpointer(h, 0, set_backpointer);            \
-> -               heap_sift_down(h, 0, cmp, set_backpointer);             \
-> -       }                                                               \
-> -} while (0)
->
-> -#define heap_del(h, i, cmp, set_backpointer)                           \
-> +#define free_heap(_heap)                                                =
-       \
->  do {                                                                   \
-> -       size_t _i =3D (i);                                               =
- \
-> -                                                                       \
-> -       BUG_ON(_i >=3D (h)->used);                                       =
- \
-> -       (h)->used--;                                                    \
-> -       if ((_i) < (h)->used) {                                         \
-> -               heap_swap(h, _i, (h)->used, set_backpointer);           \
-> -               heap_sift_up(h, _i, cmp, set_backpointer);              \
-> -               heap_sift_down(h, _i, cmp, set_backpointer);            \
-> -       }                                                               \
-> +       kvfree((_heap)->heap.data);                                      =
-       \
-> +       (_heap)->heap.data =3D NULL;                                     =
-         \
->  } while (0)
->
-> -#define heap_pop(h, d, cmp, set_backpointer)                           \
-> -({                                                                     \
-> -       bool _r =3D (h)->used;                                           =
- \
-> -       if (_r) {                                                       \
-> -               (d) =3D (h)->data[0];                                    =
- \
-> -               heap_del(h, 0, cmp, set_backpointer);                   \
-> -       }                                                               \
-> -       _r;                                                             \
-> -})
-> -
-> -#define heap_resort(heap, cmp, set_backpointer)                         =
-       \
-> -do {                                                                   \
-> -       ssize_t _i;                                                     \
-> -       for (_i =3D (ssize_t) (heap)->used / 2 -  1; _i >=3D 0; --_i)    =
-   \
-> -               heap_sift_down(heap, _i, cmp, set_backpointer);         \
-> -} while (0)
->
->  #define ANYSINT_MAX(t)                                                 \
->         ((((t) 1 << (sizeof(t) * 8 - 2)) - (t) 1) * (t) 2 + (t) 1)
-> --
-> 2.34.1
->
+--=20
+paul-moore.com
