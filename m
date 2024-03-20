@@ -1,160 +1,162 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com [209.85.214.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5D5DD3BB36
-	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 09:51:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE5933D54C
+	for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 14:54:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710928319; cv=none; b=LZYpmmxmVBQin56H89bwHqnZ5gio1R4OdJz1VxKeH3R/5P+2yfO8VAyV6K50IBPwQBRamODyu2x+vLjNMeIl0tyzmVs10RgaZaOiTpwW0h8Fy1TK8BOPS19LKdsoxLKluANsPdQhxiKEylyJVH19IW7Q8dfm6c3pqpn9u1td7r4=
+	t=1710946467; cv=none; b=Ht/uhHpAMXME6wH6caQghhee0aWWNolPiuGRTyu1WhA7cmAsMbWoxnE396AIK3Avs6oe/YehWhbfL1uM0ddoTiRs1M30q3PWQHagCvIfobHetBi8r/uCex4iHfI3KeFdumAE6NZH4jzAe3GgMDICUavd+OWIjo1V4pLliyo60Xk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710928319; c=relaxed/simple;
-	bh=khddTk1YhRIFkU86dLWlqf76guJ+nh5GA3BWU+z3io8=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=BahzMo6RLzjovOlWBLDZabxa57gcHeRRinwew7/ix1tjekYut/kDkk6jgCfU+h5sa0T4e4fc9mzVqEwzmovmUGlXSjE2tSCJsHpDkxFPm9pELW0K7/i4EDikjSKlLu+NLOZpNQINxZnUG18em3fpr4mQwUOZbfezB0p2KypgaOQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=O8HXguMS; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=O8HXguMS; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1710946467; c=relaxed/simple;
+	bh=IYecSohcwpGyIXoXSq7rCQyR8nAeqM8KbTlKn0CKjQQ=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=jHurPcCeQd9zX2giXx1xOKfgb3dOqk3NdQPnL+Ye76UKJnsbzqJsHvoG+pDl1X5N7SyNKJnwC5XPfHAEVzHVqdcd4AJ1sOS6ez+ZbF7vUQwdQJn73HDXgVS+RbwcH8RzcgrlgZRUw+3o2f1gOOarc9gwRVEDl9LUODTC/xcBTDY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FuXGG+uO; arc=none smtp.client-ip=209.85.214.174
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="O8HXguMS";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="O8HXguMS"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 881EE22305;
-	Wed, 20 Mar 2024 09:51:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1710928315; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=khddTk1YhRIFkU86dLWlqf76guJ+nh5GA3BWU+z3io8=;
-	b=O8HXguMSRsN88QC3G+dAt84geEMHBuTR6VRlNyVz1yMCQe/U0ZDOUD46T+pKJLVZp8jpE5
-	W4OykFS9OcwblIAGrSIe2qfRLC3Fw6S2kcqFfggvhzDtScyp4sOOSKAkThcwqhVUetIC8U
-	QfvmjVHwpOYmLmyc6o1tiss8Jg6O4co=
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1710928315; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=khddTk1YhRIFkU86dLWlqf76guJ+nh5GA3BWU+z3io8=;
-	b=O8HXguMSRsN88QC3G+dAt84geEMHBuTR6VRlNyVz1yMCQe/U0ZDOUD46T+pKJLVZp8jpE5
-	W4OykFS9OcwblIAGrSIe2qfRLC3Fw6S2kcqFfggvhzDtScyp4sOOSKAkThcwqhVUetIC8U
-	QfvmjVHwpOYmLmyc6o1tiss8Jg6O4co=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 3FCD8136D6;
-	Wed, 20 Mar 2024 09:51:55 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([10.150.64.162])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id o5zIDbux+mVtXQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 20 Mar 2024 09:51:55 +0000
-Message-ID: <9c19b0e67ffc172121590a4b71a0ce5e9367b8a9.camel@suse.com>
-Subject: Re: [RFC Patch] dm: make sure to wait for all dispatched requests
- in __dm_suspend()
-From: Martin Wilck <mwilck@suse.com>
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka
- <mpatocka@redhat.com>,  Alasdair G Kergon <agk@redhat.com>,
- dm-devel@lists.linux.dev, Hannes Reinecke <hare@suse.de>,  Vasilis
- Liaskovitis <vliaskovitis@suse.com>
-Date: Wed, 20 Mar 2024 10:51:50 +0100
-In-Reply-To: <ZfpSFA9NlLKZyBDg@fedora>
-References: <20240315231035.26046-1-mwilck@suse.com>
-	 <ZfmNTK9uODx9YrLL@fedora>
-	 <821487f4494d34dd1c9686f23306b20f60bacd8a.camel@suse.com>
-	 <ZfpSFA9NlLKZyBDg@fedora>
-Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
- keydata=mQINBF3mxsYBEACmOnQxWBCxCkTb3D4N8VAT8yNtIBZrmvomY7RLddBIT1yh2X7roOoJQ5KlmyjMmzrPr111poqmw8v4dUqc1SVqQoKHXv97BzlVIEKC5G2W29gse0oXhx3dhie0Z6ytkHVOY29VLsLhVXEz+p5xL71KYgIy3lmM/NaWvoqwwaXiv1TmLG96Uoitvj1vdXqqTv/R6/MBye+xQUacXpM8FA5k7OpmzCFjl4NVtGmo0VhIfXM/ldmyEJpg8a5LrZ4t5Qi32BWQjUHGmS8OXjUJ/n0QxLkymbcbY1KepP9UnLGPT+TmKJm1QlMDj69+WPKgMsif3iz4hZPoQ0Knp11ThYzBh7+AiRxE9FG2hTtZeKimkpjR12bytF4Y0aIM/HeLMHRvwykJuh5JxT9A68xF7hmqQZ7rsx/GoRBOA792kFgr5KdCZ1YoeVUkrohT1nfh/Y/Xfeq4E69mktE0R0Yxg/4CSiB7sLSzry8dyqk2sbGs+W/Ol7D7VOG45aZ5iTB08R2ji2xKArcH+Dmy48nwqIvdrppZG2tZEe+wtGPTzahE4OJdpZ3vS4ujdChynS47DVWa5JtBxfqopr0rPGoCyxmyvzJzHAUjlp7iSXpDZqfdu7F4HAC13mS41IVk/yHTXE28AKrZ4O+efZ6qgw5zJV9lAbWM7JjfdrTd+ofOc+GurQARAQABtCRNYXJ0aW4gV2lsY2sgPG1hcnRpbi53aWxja0BzdXNlLmNvbT6JAlEEEwEIADsCGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQR1Dq1LLt6xpUXU9fRnxYbmhVaXVAUCXebHhgIZAQAKCRBnxYbmhVaXVJ6+EACa5mbuH1dy2bKldy+bybUe4jFpJxflAPSrdpIlwkIfD/SgQRWUUm+BLLJMGJFSKiVC6oAHH6/mo3gdWAqBJ0LAOQDDR2BW31ERYqQQ7m01INQIvMlg+PXQ8HbWd
-	CNF1SOgjxiIs04DlB+u+DD5pgPtxKFN/jaJSx9oZ+GZpSd+eJeull3a+U/1+QpYmLbH34bxYZ16+cXfarkH3QQC65DH/iIZwcpxp+v/zrQVXnsZ81XmmbLD1vMkFCIU0ircIcaJoqloNJOA46P4mj9ETwC5OiSTs7vlyHP4Ni/86kmjmr41d/baY1cAXpAbtOGYd5K72B6qSP5EJI+Ci6rSbWInQaYzKuAOrDDyhW7ODd+hOtBcmUIH5GpKvzRjdfxEP/zlyecBszxycz7lOYNx86QWsyyRWITKzHzhdqKVZ9kvjVozTtcpb1RSqsj43qqMEQjcp1uXhbmwVmbzsWaPqmCx4xsIQoXfIzzffvw+nOiPLkxzGczprwNJasDUM1hcyEPv+5VzZpE4YjlDw/mtTayehb2EGzt2RfZIuPCBr88KlWUh2+nu9RfBJNdJ2vZ13Aun8NbqPKR2vfsE+BUJY14Ak9ZIzcyruHBHQ78dxD0J+HSC1bm9e4UOnW0PBbZwuPTRwyO3aXoExPabGgig6gcY34bsXvW9SDwOu+pzXMnVvbQeTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+iQJOBBMBCAA4FiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAl3mxz0CGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQZ8WG5oVWl1TdsA/6A0DZmGwreygUic5csLSLUm2ahdat3rRKfQVdlOdl0aWa/vS90PqpuDNGzXVzS/s4YXRjWesnYEdwQGSc4PnBYCitLKUwenII39RCyZLU3J95luWG2eOagFaerK+HvuNEH6RpYkqPpaDEwpblfi30xNNYLIR4HK0GTYwhbmBTrYgaKATNiplU08ZUvC23s00t2i7SBGmOue/0dIPMhO3EDYPP0RaDnKvHAOAywkI1J9Ey0xEslG9AFylOihcdaq9/7MlMWU8oNHK7EVE5OOZ2NiJv1sWSgM
-	6dvGdfgLeNmsiyHGDtfXYFw32e59ShkxUDc/uLLseISAftDYdPzKXxdkxRfjLkLk24HMP+uEauH0ytdC7P4NJmDHKlKH9da7lA1x94XEsn+ZMiqFvXh4ce2SgqnH7FjctNPamek+3tJIBBoFkMeABDeXnMlmLtTU21qC6lEXMLAmcyIR+eBdivTZyhf7NOE100JQYGdYTKUDITUSXdJ33cgwll4a2kUZK1nA7DGNwDYOoWF4i1cZKRBfMaD/1Pm/Los9ga/B+kfI+fQTam+gdD/crwpsr5wiXcGgggR+FwBsux3/hcoXVbBhCQKeoEE/4ajmAxsNWGZgMvRv6JLJNZ/rBfges5LjvHJY9tOcjlniJAArIfR/LrRRrQhf1zHH/fpql7lIPvBM20HU1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuZGU+iQJOBBMBCAA4FiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAl3mx2UCGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQZ8WG5oVWl1QWFBAAipbqrpAO+TYm8U8Nz0GpM/Q+nOya2JS2eF8UbkpZcmhC9pObpLd4PsEl6QbmDvbiVhurv5Cp7TVPhl1ap5ir7TFHvErzs4Rxwohof4MSY5SRSbYAaz4e6bMw7GGIOQhtKOXi+zzSqLrCIdTKxfNy3MYZ+Z4xBCGyE2bNExjxpDBjYrjm6ehfo8+TVabBRX+2sJsLugZszQF0tnV4Y8oAA2iePTiwSe9hz45OKEhDyNpfJ1Kg2hUropKEOS7Q+jP6Bw8M3RomQnk37GnU0Wi8wSNiyWYRhossI72Se/w1uRsQuVCT0qSsa9raLekya2rf0bPFmCBPRUP+KUrBq5yY0c6BdY45incUqhLlQo06lf38e6+CyouN0HpQ62CxQQTMxM87FRTg6uRUitWtnDLoVY/d9wgzvxBJHW4hIKuv5JNeh7PyFO7vB55DekaoRLKU3MC
-	FWjq3LA0t2FLEVXdF/NcVw1Qn6kIIfbgPYVdBMO1b3ciu+NY6ba8lzqiIIH+Js/+JnAwzLQNLp360Kza7/P7bgd0NxBCbLziay7MVZawRQhCUkUWcqeonGBuSyf0wO3sFlRZm+pv1sg6I6DZCrykSFyABkH7joZg5nUuNuT3/E2Jw9gBqll6OrsgTDzWzofTASYtQIRjqLypeqiz4ADmHy9tyEt1SxVd2C4o1Jma5AY0EXebHmQEMAKL9PxzQOcH6cq2l5LhRjzvJAHwIfYTLIjtwdvuqW/AXsUKDEXVW3CNl+yavgFz0H4MrqASTisqDMIpxEZUfeZWeO8TlfPwiIyPTdXqLVxXmaPKCpT1iUZZ9QdYUvFMIxy2OOsL3wfZD7DEkj6SsA1EpSDP7wsTKcekFnqh7geur11WATHIf3Csotyp3xVqSF656KMnYq6FY1fp6xSUz2EUy2FX+VhF7FdvgxKtXEmtydiBT5RuieWhgH93oPJCTNOMAdk6MYILSXKzJriWmMvqq6Yu6m409mHpQaBBjkZEoFyjPfGGhNwc/TAplxc3tzQnlAZReCJK/0DqhgnIXbbelCM5VwzT/0w42QNi1VlDSoh0vKftWAyz8Udr1jsU5k7u6J/4Dfnugb6yzSQa4wroHx4xw59sc+OrCvH8qtfnheuWBqe6JXvzlDp+LrUsc6OqhpNWg3X2RqLXNrhEcBZPkBAdcq4YrJ66DzcKSv9sM0lvFutMe7x7FKdvPKg8RnwARAQABiQPyBBgBCAAmAhsCFiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAmVqM08FCQlknzYBwAkQZ8WG5oVWl1TA9CAEGQEIAB0WIQT9/H021zOM2230IgahTsY9IAD82wUCXebHmQAKCRChTsY9IAD822P8DACHuDtarUdaBW8D/iFW26D5Ki421H/ZXN7IU0nsJgHomsIRYUxSFDFlxvLIW3HhBFZqo/M2BA1/nVg6CZey
-	arO95omGf1RKu3BaGgFOQDc9NIfZ1YW4fyLu6hKgE9GFxtkFe2jPoNSNPiBhX3xpqL+69g9QcASbDAxdK76nIkbVHGXJB7NCjNo4CuDDRaiv6PDRa4GyKxdLv4FiXmX/9SfzhGgWJFUxnRwcDmNBX1CPZo2augYDFFinkz596/VecQZztgitg6sI578U7XvTZ3ZxgeOr6rfg6iDuOQUXoObfkFPFxLDxH6zRLsJn+EsTnRZN/xXFWI5XwXUlrSeXowulKKjlVzmoDU84TYr1HmbS7vDDUfr8oO3xN4/QtSxUoEnMQ1nbjFciUiXIQuZNWlngmDhooPN0hIvmr0nbgCK/W2j7CNjFk8i/htPTfn+zNr4mcikegWpCX4jNnYwPB9oiZHVmXLKFpvTx6uYXYg4zSAQH6s/OB7VwxlfJyUfxGtObABAAgPQtBfzEner4+5Eb+SXMRJMT87OK122T8Y3ExZHgrR8PtbbJ0BOUiuM3pnwzWKZ05CzRVovUy1DnWu3iAYzsrmbOBPOaFnPw9yOocROM2wOtEc/Kd2dLCbITs42AgmWR10hXDr2y6Wu9Alx31vBygW/6KlOSiDQUHVAReCgW+TsHRTCM1hORWBiNCaYNV8n0+teIg6RtceeZrYCGW13Kr7o3aNspp/SCDalLyUI+47oDfuC2rOr5/uDMkWFAtFTugkKp+bGQ+unVlmclOdg9/bWG/G2xBaTKKyc3JtmOx3Bs82huwXA0TZfoXVxpJ1DRIE0OzuyB2ImMn4NnuN5qC0Rn46hypVl/1OQUp76rLv6hnyF4vyi/LYAwkuIYAO3tZzGIFoYnP90nYJmCAAy2xK/NPRi8gzTPmuk8cVM0N4QzOGIzp6XjuXDwNI+9P9DLBf1BjIfX6SZ3nmDsuR3JR0gLQVmjOZTOQQcQWaYsH09jeG3+gSIhWR0n8EyMRUoOvRHnh/KIzAJ/faa6djYeH5pH+TOX33CdPpxs09C6r1gy1j2Mo
-	4XxSRm0tfhIjx96U9yDQZo/QuWcQ3CLfxKQXVUXa3IACmeUtBlOYpsJ7uLL/Dj12vrpMbpnpbh8yV4GUE0r/N0fwvPB8Q83uDJpGnfCnB+mhTLWdb4S83LJ3ai5AY0EXebH5QEMAL8O8qQiFEWZoIEKxXMOrqnnR1sv+pIiH1+31s+LxhR1rw0JKyYFnJE+0yqoQJCi7HjG2xKDBglhlGfWw4uAPB6ZrIbHcRqhiUHmTYWvwANhiTC3Ibp68YNGGiB1W4YQaiBN3Bbcx4Gqo6UVIUS8H6i5anA7zLYdnTteY1UCXm8qc3rWbUaEZIZkcNpM3gyGw8XJFCWoY4yifL8Rzwm+Gi+mn8xmkoRHoYxlKtJDwtodNsJOCWLEY+I8BMrKmZyteiquO7eQSup0ONgJTyTU0HAsoCws/imjK5RZoCKXUNMJr8KOSjG1fTGBZd3/KwFFRNqJOMtx3KAxRu5WjQaArGrjIIjT/F/lG6nyRZ1T7z/JaWehRcA1jnWG4SnQzo/qzldUEUnLjIrrIbM31UUNDXCMCg03OgNwOc9O2SYbosMWo9ek4iry7rr3WsDdi4oTz/O+q4hzb7Gd7oX/bCGNIbLgIyce6cjPqD/Jjg879j4SRcUau2XjdziCGfKFJRCTTwARAQABiQI8BBgBCAAmAhsMFiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAmVqM6YFCQlkn0EACgkQZ8WG5oVWl1RYvw/8DLgZNm7liHJQT4FkpHy4O4tOykCKiavMjgiRfwSL7VheeEIv0KkEs91cNaBSGMXvXyph7wPq3xnvVEqao1+QJcW+pKnfozovROpRz3QQpg53/xAJx/sv7fJPgrEI5p4GMTvPneBwYZ6K4DKesBHdoHg/Gaf4VKMirYSSwIufZWvlK0jdQXzHuT6VfqLZw11Io/uIjCI9Gg0MmlWzj9REpc/DtTB2Uu9UDzOGBj57bIrqIeitzKsM+eGW4OZDvTn3EV
-	UrXkquWuE8OTnH/f43LHBxykkccw/Knin5ay1DXDX3e3u5XpIEq49fumfKNWN2RlZor54hm0JXBZJTwZu7/XmVRwMKP0vPmUGvaat/bImu9Nvsb23UB5YQx/VZMmJGT+EUIaR2zDM14M9xLz9/KmUlyNna5G4K3OV5r0d3CNOCmzhoOyDW3Yz4DHGTRmxgE7FnRAsF5eLVkMBmyjJTPI0qGBe/3MLvT0BC82vh6waR3nI17ubCvuKkoxvkwaEICBDlvUVrN7S9KAPu2HceQzGB8Y9a8DgAmfaKI6EqnxfBwUys4gpPyKBYLUj2Sw9aQW4tB7SgBRDOR1pufi7UT4EEIC+aUwq2KzK73t3QtrftxS2ccW5ffkqnlcbUnFIXHTIJziBaOGy3ed/RZXg/BnjZ9ygNfbw7wmXf/hGNpxa5AY0EXebICwEMAOtx5vY5VtPL2VucF0ypZqqUnfVevJ12hhsjkbJ5KPc07SilwKmZsfujC0Fh68zKTEMup2b4O3kQHV/w7l+flH878NlWA/TdE/iSQXnrM3iCve1J0dKWGKSPvuqtt2/h3xOPLIZQPdw+2otNFyxvuHGQq75Dfiu/e5kNi3hprdXuOgqCcmkXrXTIm83cBr7CvsWE1yxXuelC0UV2m1O7P+9wJkZ3/mdrXp6KYj4OknBAT/fRoBKscW9xbOXnY3I6DnUK4z6y+rL8l+vdrpfYtprF79086YL0wGOWlCJCf2WoVo5zmb9nCSG0rU9tWJR9qTJ4ctIoZXzSeK1r4f6XiJnnBHFWe4lsl02TuF3VP3WCBnplxeb6ULnL+NHk9YzpOtz03W+P7OE5pvg3GR+IO5qHTlsIO4t4mXQ3qP+adjQYWwyLP3fvqrbpMroa62gjTfCH4jPUxMmxmuW++cmemmm/S5q5qixp6oayN6C8YYzEB2lKZGZfX8QpgVLFZyMyfwARAQABiQI8BBgBCAAmAhsgFiEEdQ6tSy7esaVF1PX0Z8W
-	G5oVWl1QFAmVqM6YFCQlknxsACgkQZ8WG5oVWl1RU/hAAh2OuXXLnPAp9rVDrsv3PNe2aXAC5VeaE9Yfyj49eAFzTE36KKMLd/5S/iIwiag43EYOF549pH2sO5KmOK/5JT+6Q1Zx7gWrf6nL5F8i4GWHle4QUeFJQG7w2CTP0Qiu0CQT0emcI1tBFLWNOTZx0W4/Qs7CGNvsDPmoRC8dCKe7t8P1vh6nrLCDILE8ft04AMEXZsHvFJCrXTNuaqBAm3hTSVetMowiZlJmDXtPwfFFXjaa1wXrOsDmzF/Oa0ZWx9FiHN6OTixuTIgMKzRsj8WOBmoCgNAPoTEZScZdYDIFd71LTtlVNIb1MjR66zyUmNmVlaZuPrtRS2JeF3B3gFi/Y4YfsvOG6lb9kEsoY54hDzdzQgeMBjxAy0GVt4mh6cSY4a5CmQtdKpGoipcXVlKgIUQAxR5Jz2ngCoOwHB3JPSM3cK8NoYfatymn9383IF5xeNJj8v85jeSxw1UYkvk0PBKvSFlKsECR5hzvBAMeCM+sQnhkmlAUJqh31XwhpE5zw+Eb4EI9Wq35CHOTYnB56ywLIExZ9/xHd0IJLdhL/YeKgXyGSwjkTqM47GpCPMBLCW5sesyIFWRHtzGYA9mWoMxS7YbOMxdirVr35gY9W/CCpNzZyg/2+f/P+wGleKx4K0vIuvdQGBr2PFHUKkEVAT1dNpBhOr+VdRoEEoSg=
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
-User-Agent: Evolution 3.50.3 
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FuXGG+uO"
+Received: by mail-pl1-f174.google.com with SMTP id d9443c01a7336-1dee6672526so6078185ad.1
+        for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 07:54:25 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1710946465; x=1711551265; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=H9pPYTnULGauSrpbFS5pR787jIzr/dKzPEq/yKn+20k=;
+        b=FuXGG+uO1aEDt6VrYwtNuuJPwZj+qOfvfXLbvPByhI4JovX//C0KedLkCgoRuxfoMU
+         EwrzVJenUB1LZOo8W8aWO8KkIz26/A8i8RxmNKbs0LxvnzwXrI01of9aJqyRbBhNempC
+         quyuJFehrXhjvGMTQLwYbXWkjBU7wH1MkrYDM6gbvDvzWytXF2W46QjT/sGYRz5wWE4G
+         koEqoGGlEr6E1wBWBtQk//HwpcHNFsPSyWAsxlwQv4g7hILsLL2UW9hzEGkTEtSsKLMY
+         egiLy40JR64KhBBTrDG2/4JcNgw5aNQPwKWbSPBDngV/ee65Oa0Nryf23cUASxh3uTyo
+         tUaw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1710946465; x=1711551265;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=H9pPYTnULGauSrpbFS5pR787jIzr/dKzPEq/yKn+20k=;
+        b=sN6YcTidUWleQDijOF8ZWFk2mnIwtN+J6xLGu2jjiXeT+t+Gv2/OlF8O43u9o4rvKe
+         H/q1wAAERuPH3EQcIcqWsKtxoVaDU4TUat1C4vQqmOZpz6uUgGpur913A8e6qjhgICMU
+         lZ/p7QC01FmQXLtmwz31ARPwFPZ67y5cQmoK1y7l4NK48pmWpSTrlf/m/bd0J8wCeQL9
+         IYDRQndovb3L1lTbSqQsRJjIqEwS6v/7UHbh/KnNHcPQK5KXwkETR8rfv3sON5+FsbZg
+         AfonH59NILuJznf4ZbHJQPf3YKz6kE8ZUF+ZpQ3EFRerezV0k4Yz/nTG8sDOMd5Ic83j
+         JjnQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVfArcERR+HQOEHbVW2MdNIrJJTxriYXbxHjk7jDGvbsurcvXuzH8mwEi8o31VvbRQQdawGnnmnA+AeSMLWoDw8BaGAqjO7gTs=
+X-Gm-Message-State: AOJu0YxT5Y3aEHBBPg3mM7vAEzdN4OSEAeMhab/Lp9NhHBgMHIsZplIM
+	lj7GS2XGNE1Mpo81JEAOhgbPTF53zWvoqiAezSgoYyADWiD3mYv5
+X-Google-Smtp-Source: AGHT+IEKS3qkVwmOq9hl/R6NzZ7V12FfqonEGI+lod4HJvjLgBZVIKQsxp+rc4s699c4UI2aCaWBjg==
+X-Received: by 2002:a17:903:24f:b0:1dd:7d66:bfc0 with SMTP id j15-20020a170903024f00b001dd7d66bfc0mr19432256plh.4.1710946465092;
+        Wed, 20 Mar 2024 07:54:25 -0700 (PDT)
+Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
+        by smtp.gmail.com with ESMTPSA id la11-20020a170902fa0b00b001dc30f13e6asm13719989plb.137.2024.03.20.07.54.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 20 Mar 2024 07:54:24 -0700 (PDT)
+From: Kuan-Wei Chiu <visitorckw@gmail.com>
+To: colyli@suse.de,
+	kent.overstreet@linux.dev,
+	msakai@redhat.com,
+	peterz@infradead.org,
+	mingo@redhat.com,
+	acme@kernel.org,
+	namhyung@kernel.org,
+	akpm@linux-foundation.org
+Cc: bfoster@redhat.com,
+	mark.rutland@arm.com,
+	alexander.shishkin@linux.intel.com,
+	jolsa@kernel.org,
+	irogers@google.com,
+	adrian.hunter@intel.com,
+	jserv@ccns.ncku.edu.tw,
+	dm-devel@lists.linux.dev,
+	linux-bcache@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-bcachefs@vger.kernel.org,
+	linux-perf-users@vger.kernel.org,
+	Kuan-Wei Chiu <visitorckw@gmail.com>
+Subject: [PATCH v2 00/15] treewide: Refactor heap related implementation
+Date: Wed, 20 Mar 2024 22:54:02 +0800
+Message-Id: <20240320145417.336208-1-visitorckw@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Authentication-Results: smtp-out1.suse.de;
-	none
-X-Spam-Level: 
-X-Spam-Score: -1.40
-X-Spamd-Result: default: False [-1.40 / 50.00];
-	 ARC_NA(0.00)[];
-	 RCVD_VIA_SMTP_AUTH(0.00)[];
-	 BAYES_HAM(-0.20)[71.13%];
-	 FROM_HAS_DN(0.00)[];
-	 TO_DN_SOME(0.00)[];
-	 TO_MATCH_ENVRCPT_ALL(0.00)[];
-	 NEURAL_HAM_LONG(-1.00)[-1.000];
-	 MIME_GOOD(-0.10)[text/plain];
-	 RCVD_COUNT_THREE(0.00)[3];
-	 DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	 NEURAL_HAM_SHORT(-0.20)[-1.000];
-	 MIME_BASE64_TEXT(0.10)[];
-	 RCPT_COUNT_SEVEN(0.00)[7];
-	 FUZZY_BLOCKED(0.00)[rspamd.com];
-	 FROM_EQ_ENVFROM(0.00)[];
-	 MIME_TRACE(0.00)[0:+];
-	 RCVD_TLS_ALL(0.00)[];
-	 MID_RHS_MATCH_FROM(0.00)[]
-X-Spam-Flag: NO
+Content-Transfer-Encoding: 8bit
 
-T24gV2VkLCAyMDI0LTAzLTIwIGF0IDExOjAzICswODAwLCBNaW5nIExlaSB3cm90ZToKPiBPbiBU
-dWUsIE1hciAxOSwgMjAyNCBhdCAwNDo0MToyNlBNICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6
-Cj4gPiAKPiA+IFdoYXQgd2Uga25vdyBmb3Igc3VyZSBpcyB0aGF0IHRoZXJlIHdhcyBhIGJhZCBk
-bV90YXJnZXQgcmVmZXJlbmNlCj4gPiBpbgo+ID4gKHN0cnVjdCBkbV9ycV90YXJnZXRfaW8gKnRp
-byktPnRpOgo+ID4gCj4gPiBjcmFzaD4gc3RydWN0IC14IGRtX3JxX3RhcmdldF9pbyBjMDAwMDAy
-NDVjYTkwMTI4Cj4gPiBzdHJ1Y3QgZG1fcnFfdGFyZ2V0X2lvIHsKPiA+IMKgIG1kID0gMHhjMDAw
-MDAzMWM2NmE0MDAwLAo+ID4gwqAgdGkgPSAweGMwMDgwMDAwMDIwZDAwODAgPGZzY2FjaGVfb2Jq
-ZWN0X2xpc3RfbG9jays2NjU2MzI+LAo+ID4gCj4gPiBjcmFzaD4gc3RydWN0IC14IGRtX3Rhcmdl
-dMKgIDB4YzAwODAwMDAwMjBkMDA4MAo+ID4gc3RydWN0IGRtX3RhcmdldCBzdHJ1Y3Q6IGludmFs
-aWQga2VybmVsIHZpcnR1YWwgYWRkcmVzczoKPiA+IGMwMDgwMDAwMDIwZDAwODDCoCB0eXBlOiAi
-Z2RiX3JlYWRtZW1fY2FsbGJhY2siCj4gPiAKPiA+IFRoZSBxdWVzdGlvbiBpcyBob3cgdGhpcyBj
-b3VsZCBoYXZlIGNvbWUgdG8gcGFzcy4gSXQgY2FuIG9ubHkKPiA+IGhhcHBlbgo+ID4gaWYgdGlv
-LT50aSBoYWQgYmVlbiBzZXQgYmVmb3JlIHRoZSBtYXAgd2FzIHJlbG9hZGVkLsKgCj4gPiBNeSB0
-aGVvcnkgaXMgdGhhdCB0aGUgSU8gaGFkIGJlZW4gZGlzcGF0Y2hlZCBiZWZvcmUgdGhlIHF1ZXVl
-IGhhZAo+ID4gYmVlbgo+ID4gcXVpZXNjZWQsIGxpa2UgdGhpczoKPiA+IAo+ID4gVGFzayBBwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoCBUYXNrIEIKPiA+IChkaXNwYXRjaGluZyBJTynCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoCAoZXhlY3V0aW5nIGEgRE1fU1VTUEVORAo+ID4gaW9jdGwgdG8K
-PiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgcmVzdW1lIGFmdGVyIERNX1RBQkxFX0xPQUQpCj4gPiDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgIGRvX3Jlc3VtZSgpCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oCBkbV9zdXNwZW5kKCkKPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBfX2RtX3N1c3Bl
-bmQoKQo+ID4gZG1fbXFfcXVldWVfcnEoKcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoCAKPiA+IMKgwqAgc3RydWN0IGRtX3RhcmdldCAqdGkgPcKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAKPiA+IMKgwqDCoMKgwqDCoCBtZC0+aW1tdXRhYmxlX3Rh
-cmdldDvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIAo+ID4gwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgIGRtX3N0b3BfcXVldWUoKQo+ID4gwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgCj4gPiBibGtfbXFfcXVpZXNjZV9xdWV1ZSgpCj4gPiDC
-oMKgwqDCoMKgwqAgLyogCj4gPiDCoMKgwqDCoMKgwqDCoCAqIEF0IHRoaXMgcG9pbnQsIHRoZSBx
-dWV1ZSBpcyBxdWllc2NlZCwgYnV0IHRhc2sgQQo+ID4gwqDCoMKgwqDCoMKgwqAgKiBoYXMgYWxy
-ZWFkeWVudGVyZWQgZG1fbXFfcXVldWVfcnEoKQo+ID4gwqDCoMKgwqDCoMKgwqAgKi8KPiAKPiBU
-aGF0IHNob3VsZG4ndCBoYXBwZW4sIGJsa19tcV9xdWllc2NlX3F1ZXVlKCkgZHJhaW5zIGFsbCBw
-ZW5kaW5nCj4gZG1fbXFfcXVldWVfcnEoKSBhbmQgcHJldmVudHMgbmV3IGRtX21xX3F1ZXVlX3Jx
-KCkgZnJvbSBiZWluZwo+IGNhbGxlZC4KClRoYW5rcyBmb3IgcG9pbnRpbmcgdGhpcyBvdXQuIEkn
-ZCBiZWVuIG1pc3NpbmcgdGhlIGZhY3QgdGhhdCB0aGUKc3luY2hyb25pemF0aW9uIGlzIGFjaGll
-dmVkIGJ5IHRoZSByY3VfcmVhZF9sb2NrKCkgaW4KX19ibGtfbXFfcnVuX2Rpc3BhdGNoX29wcygp
-LCB3aGljaCBndWFyZHMgaW52b2NhdGlvbnMgb2YgdGhlCnJlcXVlc3QgZGlzcGF0Y2hpbmcgY29k
-ZSBhZ2FpbnN0IHRoZSBzeW5jaHJvbml6ZV9yY3UoKSBpbgpibGtfbXFfd2FpdF9xdWllc2NlX2Rv
-bmUoKS4gSW4gb3VyIG9sZCBrZXJuZWwgaXQgd2FzIHN0aWxsIGluCmhjdHhfbG9jaygpLCBidXQg
-d2l0aCB0aGUgc2FtZSBlZmZlY3QuCgpUaGlzIG1lYW5zIHRoYXQgZG9uJ3Qgc2VlIGFueSBtb3Jl
-IGhvdyBvdXIgZG1fdGFyZ2V0IHJlZmVyZW5jZSBjb3VsZCAKaGF2ZSBwb2ludGVkIHRvIGZyZWVk
-IG1lbW9yeS4gRm9yIG5vdywgd2UnbGwgZm9sbG93IE1pa2UncyBhZHZpY2UuCgpUaGFua3MgYSBs
-b3QsCk1hcnRpbgoKCgo=
+This patch series focuses on several adjustments related to heap
+implementation. Firstly, a type-safe interface has been added to the
+min_heap, along with the introduction of several new functions to
+enhance its functionality. Additionally, the heap implementation for
+bcache and bcachefs has been replaced with the generic min_heap
+implementation from include/linux. Furthermore, several typos have been
+corrected.
+
+Previous discussion with Kent Overstreet:
+https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvsdp4mqqg@nrlek5vmisbu
+
+Regards,
+Kuan-Wei
+
+---
+
+You can preview this patch series on the 'refactor-heap-v2' branch of
+the repository at the following link:
+
+https://github.com/visitorckw/linux.git
+
+Changes in v2:
+- Add attribute __always_unused to the compare and swap functions
+  that do not use the args parameter.
+- Rename min_heapify() to min_heap_sift_down().
+- Update lib/test_min_heap.c to use min_heap_init().
+- Refine the commit message for bcache and bcachefs.
+- Adjust the order of patches in the patch series.
+
+Link to v1: https://lkml.kernel.org/20240319180005.246930-1-visitorckw@gmail.com
+
+Kuan-Wei Chiu (15):
+  perf/core: Fix several typos
+  bcache: Fix typo
+  bcachefs: Fix typo
+  lib min_heap: Add type safe interface
+  lib min_heap: Add min_heap_init()
+  lib min_heap: Add min_heap_peek()
+  lib min_heap: Add min_heap_full()
+  lib min_heap: Add min_heap_del()
+  lib min_heap: Add min_heap_sift_up()
+  lib min_heap: Add args for min_heap_callbacks
+  lib min_heap: Update min_heap_push() and min_heap_pop() to return bool
+    values
+  lib min_heap: Rename min_heapify() to min_heap_sift_down()
+  lib/test_min_heap: Use min_heap_init() for initializing
+  bcache: Remove heap-related macros and switch to generic min_heap
+  bcachefs: Remove heap-related macros and switch to generic min_heap
+
+ drivers/md/bcache/alloc.c      |  66 ++++++++----
+ drivers/md/bcache/bcache.h     |   2 +-
+ drivers/md/bcache/bset.c       |  73 ++++++++-----
+ drivers/md/bcache/bset.h       |  38 ++++---
+ drivers/md/bcache/btree.c      |  27 ++++-
+ drivers/md/bcache/extents.c    |  44 ++++----
+ drivers/md/bcache/movinggc.c   |  40 ++++++--
+ drivers/md/bcache/super.c      |  16 +++
+ drivers/md/bcache/sysfs.c      |   3 +
+ drivers/md/bcache/util.c       |   2 +-
+ drivers/md/bcache/util.h       |  81 +--------------
+ drivers/md/dm-vdo/repair.c     |  29 +++---
+ drivers/md/dm-vdo/slab-depot.c |  22 ++--
+ fs/bcachefs/clock.c            |  53 +++++++---
+ fs/bcachefs/clock_types.h      |   2 +-
+ fs/bcachefs/ec.c               | 100 +++++++++++-------
+ fs/bcachefs/ec_types.h         |   2 +-
+ fs/bcachefs/util.c             |   2 +-
+ fs/bcachefs/util.h             | 127 ++---------------------
+ include/linux/min_heap.h       | 180 ++++++++++++++++++++++++++-------
+ kernel/events/core.c           |  53 +++++-----
+ lib/test_min_heap.c            |  70 ++++++-------
+ 22 files changed, 562 insertions(+), 470 deletions(-)
+
+-- 
+2.34.1
 
