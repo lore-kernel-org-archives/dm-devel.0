@@ -1,46 +1,45 @@
-Received: from out-186.mta1.migadu.com (out-186.mta1.migadu.com [95.215.58.186])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B296D135A65
-	for <dm-devel@lists.linux.dev>; Thu, 21 Mar 2024 21:22:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.186
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C3CD132489;
+	Thu, 21 Mar 2024 22:07:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711056143; cv=none; b=Sfu6QRZLe7xJ3KHyxvfQaOsMLez8D26tCNg1XXaAy+WMe7pBoeUEZMmfvSXoE1Dq2HE+vLA7p5tLCzh/KkQGnolIwso912maDlGtYHjCCrDDGItgYY81A1GMn1wnmvGwoIdR4QDeQCHOQx5NaIYH7M99yIDcZWvpNO1OABfAz5M=
+	t=1711058861; cv=none; b=Pj+N9c+tLb4R0O8o3qTvdvSo71ADLNZZV72+4dyFR+0R4ONGpeC6ZHlPRdlL+TuH37NirqbYRl8nHxZVxiKrUzINenR6GXAqj6CoynJ1cRvxRshWhk+pUE5n/qPh6ImFkxrmywYz2oqqcYdwaqyMPnHrAW4C+oo3774Cu4dcvhM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711056143; c=relaxed/simple;
-	bh=Anq4NcuB/lwgoTXLF75lThmEeR+MuCgA6bicmSCWtE4=;
+	s=arc-20240116; t=1711058861; c=relaxed/simple;
+	bh=0/PyoRJiNG0lXwOlRCqHjKpbFIs9KJZ1c7t/9Ifk3oo=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=atOXxiBVElGY0R+/CFOLB/QoX+F5204Q0moOQdDPsmVzIMYaTsa9J5NHYI57q6rZHYQsJBd4WSgMpB+mb5uEYINQSOIR9sXauIsTzouK2DLQ6JoPGCOflT+xSbQk7+0JZxSr6RT7IA2icopDJ0NiSgZmsTCefVP6Ojn3n76CxwM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=KXyqdB/5; arc=none smtp.client-ip=95.215.58.186
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	 Content-Type:Content-Disposition:In-Reply-To; b=A9RP+XdsoqFpa3tI6pZm1PFTrgOIele/+x/aHVZn3iAt99xr9WnAfqBvdWumA2m1bA+4i/rqvzEjEDQKtLSb4GNdVC7ZeAyMcqIVLRDvWPvQR9lN8qoOVGC7ueevMsxlbPuOByQ0ZQWjYfd433lnPKa/t5qSvT0C4EivkmNvLWo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=aKETLpDt; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="KXyqdB/5"
-Date: Thu, 21 Mar 2024 17:22:14 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1711056139;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=S05qIGXtD9xW8hBhYLVEJF2bePesL9LF4WflE+oBdCA=;
-	b=KXyqdB/5x6fm8sKDy7Wx6c1+9/aaeEK0c6jkGhTWGiLB9kU+pA76QZmr1Kf9DTr66Dc60G
-	fB2C5gKBmUG3J3KTzZLaNkFSoCZTsVYWkK9kLZLejwfJhbprlY/Qz7wCVcISG86ycSSRRM
-	37QJ0vm12wWgJX97hIfyhbDmoQVqYJg=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Kuan-Wei Chiu <visitorckw@gmail.com>
-Cc: colyli@suse.de, msakai@redhat.com, peterz@infradead.org, 
-	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, akpm@linux-foundation.org, 
-	bfoster@redhat.com, mark.rutland@arm.com, alexander.shishkin@linux.intel.com, 
-	jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
-	jserv@ccns.ncku.edu.tw, dm-devel@lists.linux.dev, linux-bcache@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org
-Subject: Re: [PATCH v2 04/15] lib min_heap: Add type safe interface
-Message-ID: <mi3uq4gqvseubfiylslxfrnwupfzopz753md5f53v6brlgiamv@l5bxmctqnz6g>
-References: <20240320145417.336208-1-visitorckw@gmail.com>
- <20240320145417.336208-5-visitorckw@gmail.com>
- <iz6wl3twuc72txd4ifxy73bbbfijo3ecy7izw3drsmcb2payeu@b2dusfoqobgu>
- <Zfwgu8+IeH/YqWYR@visitorckw-System-Product-Name>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="aKETLpDt"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=JWESeA7aSgA5nIcGmeWSayQGds3VE09pp/wUgycxUB4=; b=aKETLpDtKENs6Pf6A1oh9vqtkq
+	tSyH3y1uw9wbWQDUme0NosZemlLivkoR/yvwGBoLNFKNBL2QwSYDIwFRC70NMBABmofHa2b8+aGRm
+	xLbnoY+mC6CtM187R1YCGDDk+aOP2mHReohrhovd6dWCipfBM2618ooYC143xg+QuKK6iCLs0Wo+4
+	C6SN4IQ1OOuC5ppw1v4n9tXlBTROEu1izrQBKWU4Zn51LXhY0o2yIBohCYDVWQ8W9F6AS68ybwADJ
+	8WUssF626ulv/qLK7qVO8PR41XnsCZr6JQSFZH8t9qqkrVbIj++FprTmaCmqaGlSPIUtLCEEN0qSU
+	d4Qf2N8A==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rnQZW-00000004q8R-1RHS;
+	Thu, 21 Mar 2024 22:07:38 +0000
+Date: Thu, 21 Mar 2024 15:07:38 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>, Ming Lei <ming.lei@redhat.com>,
+	Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: Re: block: fail unaligned bio from submit_bio_noacct()
+Message-ID: <ZfyvqmslFn19vgdG@infradead.org>
+References: <20240321131634.1009972-1-ming.lei@redhat.com>
+ <ZfxVqkniO-6jFFH5@redhat.com>
+ <ea8a13c-ee40-47f9-a7be-17b84bd1f686@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -49,29 +48,18 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <Zfwgu8+IeH/YqWYR@visitorckw-System-Product-Name>
-X-Migadu-Flow: FLOW_OUT
+In-Reply-To: <ea8a13c-ee40-47f9-a7be-17b84bd1f686@redhat.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Thu, Mar 21, 2024 at 07:57:47PM +0800, Kuan-Wei Chiu wrote:
-> On Wed, Mar 20, 2024 at 04:56:57PM -0400, Kent Overstreet wrote:
-> > On Wed, Mar 20, 2024 at 10:54:06PM +0800, Kuan-Wei Chiu wrote:
-> > > Introduce a type-safe interface for min_heap by adding small macro
-> > > wrappers around functions and using a 0-size array to store type
-> > > information. This enables the use of __minheap_cast and
-> > > __minheap_obj_size macros for type casting and obtaining element size.
-> > > The implementation draws inspiration from generic-radix-tree.h,
-> > > eliminating the need to pass element size in min_heap_callbacks.
-> > 
-> > let's avoid the heap->heap.nr - darray (fs/bcachefs/darray.h) has a
-> > trick for that. All heaps have the same memory layout, so we can just
-> > cast to a void pointer heap to get something the C code can use.
-> >
-> If I understand correctly, you're suggesting adding APIs similar to
-> darray_top(), darray_first(), and darray_last() within min_heap and
-> having them return a pointer. However, some users are using heap.nr in
-> conditional statements instead of utilizing heap.nr for memory
-> operations, so returning pointers may not be as convenient. What about
-> adding get and set functions for nr instead?
+On Thu, Mar 21, 2024 at 06:01:41PM +0100, Mikulas Patocka wrote:
+> But then, the system would crash with the config option being 'n' and 
+> return an error with the config option being 'y' - which would be 
+> unfortunate.
+> 
+> We could remove the check from the drivers and add it to the generic I/O 
+> path - this wouldn't add extra overhead.
 
-No, I mean not having separate inner and outer types. Want me to sketch
-something out?
+Agreed.  This is a pretty cheap check, and I'd rather have it all the
+time instead of being duplicated in various drivers, just like we do
+a lot of other sanity checking in submit_bio.
+
