@@ -1,102 +1,114 @@
-Received: from mail-oo1-f53.google.com (mail-oo1-f53.google.com [209.85.161.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.8])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B314C381AA
-	for <dm-devel@lists.linux.dev>; Thu, 21 Mar 2024 07:13:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB78C53E12
+	for <dm-devel@lists.linux.dev>; Thu, 21 Mar 2024 09:17:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.8
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711005220; cv=none; b=uZVUC1QHqH+KkbUJdoBHH8gqAHJhATe0cOVnJZvWPXSVb0046ZnIyYGD2o3aLKJYM/4zQBpvTD/KJ+hQMXPBuMW+1ll9lYDeJscipnJYI3vhEqUerpOs+ie5IkvTYHf3yV5OUQAsawMJp8KPjn/pT6hafiR/DNWWTB6uOcJu3Y8=
+	t=1711012637; cv=none; b=ZjI0QIP6Ja+QRiW8h3pT0NKolZumL5cVg/ZA55qo9IyLASJ1VcjT0zVrvTVko0x654RuUc7ZuhvGNITGzhv9OUwD3R1+Di7DdP+S2Wu0UqLSfZeReyTqH/D6nil7p+R5+TB8BNRxOKyDMSO+FsRIYSmT21EEZVEvI4XHYFEpS/w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711005220; c=relaxed/simple;
-	bh=44fOfPf5fU3d/qtrVfcQjK72mdFuP0xwwcj4hJus11M=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=M+E1IBbEs1OCNKTENDYk6OZUrNspi0kso6Hdr+myakSEWFnTj5AIiKJXLjZKl4O/lSFhw+qKR2skvAFOEkmZG9gPDHL7XefR+kta+OxO3aqosVwrvLFnfA/k8tV+3D1KorvmclzfAP3mkMjMaDbWDh5yz8ViGieWL85jaLVMrOQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ahQQS5xx; arc=none smtp.client-ip=209.85.161.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1711012637; c=relaxed/simple;
+	bh=A2dUqi23mhrFRKH247nVj2PIyrePzIhEEJwoCB2FG6Q=;
+	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:Content-Type; b=smblH+1R8UeZk7Z8hAXqv+B6hUyxIx5DT3zUS+M1GDRCEQLqbOWFvIEdIKGMKqq4G+4q/GByQ8alzVa1FTe8Zy8UzhY1Q7z/j46MFhl0pQY0MHns6XX6oecrpo8IV4tegmBzXEUcI9UHc6oXog94nWU7G4wCBvDUeZW/oqERKBA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=hxvCRGYn; arc=none smtp.client-ip=192.198.163.8
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ahQQS5xx"
-Received: by mail-oo1-f53.google.com with SMTP id 006d021491bc7-5a47680a806so189119eaf.0
-        for <dm-devel@lists.linux.dev>; Thu, 21 Mar 2024 00:13:38 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1711005217; x=1711610017; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=cdehVXsBNnGNu7JIAl0Q10r3P3hbg+hd7rOHH7Isw/s=;
-        b=ahQQS5xx9Q9/WqQVvwQnafcwW0gY0B/goLFQ0V5jBtInf4RAi1XIlmPUiRWbPEAVo4
-         sXqd8cdbpHs9bs+DVP+fmpTteYNUJnnNOxkM9XV0O6qcCXirZNFNpB1pKj5ZnhhlUj3i
-         yJmGMcB7gHbjWmTSdPYMyGhQMyVBUN/p809yxNdGfiEzthZ6wNj/YwBEDtRnv/e/mrJ2
-         T0qOXyY2PN6DFCTwVR9zac/4mNR+aKwQMR//7SY8zBPMuKytr2MIYo2gSocNSst//hiM
-         ytm67pN7ersEmYDR9o/lXICV753R9T0H/moLRTnFuGunsFElAfo9GHc7+uAvAd0D/Zy9
-         gqdA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711005217; x=1711610017;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=cdehVXsBNnGNu7JIAl0Q10r3P3hbg+hd7rOHH7Isw/s=;
-        b=mMlwcynBEHc8OR+ciQW5+Rv/W9cdbyj1n8M5cmmQVTqOH/idpxXI+T1LMMRJZL4IuC
-         BQpOjIC4JC4V6km/Sq92p/FEwvxApkBsbp95ohWaqB7oF2cIQfCpTa3KqJjXixm9Bvpy
-         FaDwOpOLmzkVMADVAoevbtTn9U7w4gZyqzClqz3rFI5Zy4R+OW0oHBphvLzTO4tCoaBm
-         93hrtbEUoX03VdzKk8l8iVm35UDISN/HVNeFpL5QiqLj6btYc6eE/x5BS+01E3TDqEWw
-         L4i3+V0xJq8t6hpZjtp2F/U82kDi9/o35WuFkX8NIkKdIxbZpMUWs9qrUcxTfyY0YT5C
-         S2eg==
-X-Forwarded-Encrypted: i=1; AJvYcCX9/dfkZxvIOGE5aPrxQMNrmjOuI7MhVei62jjK24n6xPA0nT4m7HrMhcaj1dvlrBVEeswfeu/N7HGhB86bQ2K6PT0RzKZMk94=
-X-Gm-Message-State: AOJu0YyVQmwotEXqoTKPM6DozK/byygB9NkzZ2PGiK6VvZRbTBias+wl
-	DTQdW1IOP2A0X313QSzwoVmIqwKisjtjV/cQskqaUq53Ap+Eyzjv9wyJnMNl1Bs=
-X-Google-Smtp-Source: AGHT+IFyBPQ76yKJTbUwHPEhA91L3Dj58RUYtEkSZ5tRp1ui+ThKUlnlraJbQqHDTO2KCUJcjGoqYQ==
-X-Received: by 2002:a05:6a21:a59c:b0:1a3:6f13:b136 with SMTP id gd28-20020a056a21a59c00b001a36f13b136mr8311254pzc.6.1711004907652;
-        Thu, 21 Mar 2024 00:08:27 -0700 (PDT)
-Received: from visitorckw-System-Product-Name ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id y10-20020a17090322ca00b001e04cfa5e8csm4711690plg.99.2024.03.21.00.08.24
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 21 Mar 2024 00:08:27 -0700 (PDT)
-Date: Thu, 21 Mar 2024 15:08:22 +0800
-From: Kuan-Wei Chiu <visitorckw@gmail.com>
-To: Kent Overstreet <kent.overstreet@linux.dev>
-Cc: colyli@suse.de, msakai@redhat.com, peterz@infradead.org,
-	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org,
-	akpm@linux-foundation.org, bfoster@redhat.com, mark.rutland@arm.com,
-	alexander.shishkin@linux.intel.com, jolsa@kernel.org,
-	irogers@google.com, adrian.hunter@intel.com, jserv@ccns.ncku.edu.tw,
-	dm-devel@lists.linux.dev, linux-bcache@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-bcachefs@vger.kernel.org,
-	linux-perf-users@vger.kernel.org
-Subject: Re: [PATCH v2 00/15] treewide: Refactor heap related implementation
-Message-ID: <Zfvc5iqc+BN6v2Oj@visitorckw-System-Product-Name>
-References: <20240320145417.336208-1-visitorckw@gmail.com>
- <ofjgwiygmyl4fmstibtrckzdoibsmxqypjg2aohwpsg57urqhw@5bikquw6kwew>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="hxvCRGYn"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1711012636; x=1742548636;
+  h=message-id:date:mime-version:from:subject:to:cc:
+   content-transfer-encoding;
+  bh=A2dUqi23mhrFRKH247nVj2PIyrePzIhEEJwoCB2FG6Q=;
+  b=hxvCRGYn8X7Cjr/JUfdW6A2g5L55AIUA3zcQ3eAOMdK/tofZXIaCtSFY
+   GmNYD9zZtGueLbcHH+YthBFP2EKM7fOejxIm2Q+Q879i+7JW2eS+0RfBg
+   xkK+RXgWJiTHVLex5RoXmzaAoQZZFKGWPuRMxkZNA7LfH8tqBYX2KbEbH
+   71pYQ3YzIZUfOZU0ubzXDxJ9tfF3RPMeI7anOb3PRbKMoIQNBUUbtvl2o
+   o6kAMOcEd5hKwygWGE0ngxlXFCYpTKHM5os8wKhiTWzWrwOfZyR34OoXZ
+   8PYuvtDU/JJzBaKorst6ABJzPBPVZ3iZTqPJ0osoGEhCc/Z2JeTuRrUPV
+   g==;
+X-IronPort-AV: E=McAfee;i="6600,9927,11019"; a="23484682"
+X-IronPort-AV: E=Sophos;i="6.07,142,1708416000"; 
+   d="scan'208";a="23484682"
+Received: from fmviesa004.fm.intel.com ([10.60.135.144])
+  by fmvoesa102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 Mar 2024 02:17:15 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.07,142,1708416000"; 
+   d="scan'208";a="19083261"
+Received: from mkusiak-mobl1.ger.corp.intel.com (HELO [10.246.34.229]) ([10.246.34.229])
+  by fmviesa004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 Mar 2024 02:17:14 -0700
+Message-ID: <35e0eae0-7fb0-4029-8445-997e22c21482@linux.intel.com>
+Date: Thu, 21 Mar 2024 10:17:12 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ofjgwiygmyl4fmstibtrckzdoibsmxqypjg2aohwpsg57urqhw@5bikquw6kwew>
+User-Agent: Mozilla Thunderbird
+Content-Language: pl, en-US
+From: Mateusz Kusiak <mateusz.kusiak@linux.intel.com>
+Subject: regression: mdadm detects dm-device as partition
+To: DM-devel-linux <dm-devel@lists.linux.dev>
+Cc: linux-raid@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 20, 2024 at 03:57:59PM -0400, Kent Overstreet wrote:
-> On Wed, Mar 20, 2024 at 10:54:02PM +0800, Kuan-Wei Chiu wrote:
-> > This patch series focuses on several adjustments related to heap
-> > implementation. Firstly, a type-safe interface has been added to the
-> > min_heap, along with the introduction of several new functions to
-> > enhance its functionality. Additionally, the heap implementation for
-> > bcache and bcachefs has been replaced with the generic min_heap
-> > implementation from include/linux. Furthermore, several typos have been
-> > corrected.
-> 
-> looks like something's busted:
-> 
-> https://evilpiepirate.org/~testdashboard/ci?branch=refactor-heap
+Hello,
+We discovered an issue when trying to create imsm container with mdadm on dm-device.
 
-Oh...That's horrible.
-I apologize for the error in the patch I sent.
+The scenario is as follows:
 
-As I am relatively new to bcache and bcachefs, I would like to ask if
-you have any suggestions on how I can conduct comprehensive testing
-locally, similar to the CI process you use. This way, I can ensure that
-patches are thoroughly tested before next submission.
+1. Create dm device
+# echo -e '0 195312 linear /dev/nvme2n1 0' | dmsetup create nvme2n1DM
 
-Regards,
-Kuan-Wei
+2. Create IMSM container.
+# dmdev=$(readlink -f /dev/mapper/nvme2n1DM)
+# export IMSM_DEVNAME_AS_SERIAL=1 IMSM_NO_PLATFORM=1; mdadm --create /dev/md/container 
+--metadata=imsm --raid-disks=1 $dmdev --force
+
+Result:
+
+Error message is displayed
+# mdadm: imsm: /dev/dm-0 is a partition, cannot be used in IMSM
+
+Mdadm's function for checking "if partition" looks like so.
+
+int test_partition(int fd)
+{
+     /* Check if fd is a whole-disk or a partition.
+      * BLKPG will return EINVAL on a partition, and BLKPG_DEL_PARTITION
+      * will return ENXIO on an invalid partition number.
+      */
+     struct blkpg_ioctl_arg a;
+     struct blkpg_partition p;
+     a.op = BLKPG_DEL_PARTITION;
+     a.data = (void*)&p;
+     a.datalen = sizeof(p);
+     a.flags = 0;
+     memset(a.data, 0, a.datalen);
+     p.pno = 1<<30;
+     if (ioctl(fd, BLKPG, &a) == 0)
+         /* Very unlikely, but not a partition */
+         return 0;
+     if (errno == ENXIO || errno == ENOTTY)
+         /* not a partition */
+         return 0;
+
+     return 1;
+}
+
+I plugged in with debugger and established that when ioctl is run on dm-device errno is EINVAL, as 
+if it was a partition.
+
+The issue is reproducible only with newer kernels which leads me te believe there is a regression in 
+device mapper. This code has been working stable for last 10+ years, which is another reason. I 
+tested this on RHEL 8.9 with inbox 5.14 kernel and 6.5.7-1 I happen to have installed. The issue 
+reproduced only on 6.5.7-1 kernel. I also observed same regression on stock Ubuntu 24.04 with inbox 
+6.6.0 kernel.
+
+Can you please point me to when it was introduced and are there any plans for fixing it?
+
+Thanks,
+Mateusz
