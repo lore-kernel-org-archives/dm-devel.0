@@ -1,64 +1,38 @@
-Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com [209.85.210.169])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48C0217F7
-	for <dm-devel@lists.linux.dev>; Thu, 21 Mar 2024 02:41:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10987F4FA
+	for <dm-devel@lists.linux.dev>; Thu, 21 Mar 2024 03:52:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1710988876; cv=none; b=Hcvru/lZhcezKqPlRqSgiwhmRvSf5sel8wDuocBtbm2c4Vp9+wMjzG6xYNeRIzmym4GJsYqBdJhoJ2jbHUeuKm0L+Fwwt1MrMmymLvatAAZrD78vaDL+fdmLlqSaJ+4FAjdk1au67SUxQ7ymZ3GcdspmWKb5eSqTP7xM1ZyqQRE=
+	t=1710993126; cv=none; b=m2YxGRoI7hQGTyESVMqtUBP5cZwM7Rn3lFAH/nHlwvOQG91PkdST23IGGIi0ki/abPM0DIqCi8Zdexi98z0/wrCzld8/kd/TYu0dsANukdlWFr8BLCBRE831mj71MQJAvhnB1BuhTOYTPnzwl0LqwD8aCBU9N3I2rthClDS8dGA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1710988876; c=relaxed/simple;
-	bh=48raKXF2/dxohRpGhJPb6ohvogqVUVsODvFjK9PsDZQ=;
+	s=arc-20240116; t=1710993126; c=relaxed/simple;
+	bh=C4m7BhlDCtvaFNAZij87qDNkiehqb3Q36aL3wTgibxc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=sZ+ANwZBltCn2zOq4cSIIbRTFRc0Xa8RbRAroboI8i0kUC3spfJlMyYcCfqa0GQMbjMc7Dec8rkNN/ImeDMNHQqFzVzRLQ+dpublWGB0ldmWHYiurdkEhMqMUEffsfTK7tQ3s3Z3hgDtRfqg3Z08waaL4A/exKdaj/X6c0ya7vI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=roeck-us.net; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=R+yruWUJ; arc=none smtp.client-ip=209.85.210.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=roeck-us.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=Jzv60BmQ/wCXXc3eMg4gcELozm4HyZf2yX5kC1Rw791FUclmS0qCLRKiPHRg93kq+meubeOEhJgXVj6q+/FU87p8FWz3UPx32E2lip0iXFPxkViyLMqlWkkThNJr1oFYsd761AOXuqyPXfBTfch4hOrLwJ2FisD0K8xjV5JlP0M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=X9oNc3Fq; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="R+yruWUJ"
-Received: by mail-pf1-f169.google.com with SMTP id d2e1a72fcca58-6e73e8bdea2so491474b3a.0
-        for <dm-devel@lists.linux.dev>; Wed, 20 Mar 2024 19:41:15 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1710988874; x=1711593674; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=oC50l27jOECYM15O9eydIrzegzfUqf9NwMLtBgxKr8c=;
-        b=R+yruWUJLOgsny9y6yO6Rv3DxkJzSKu7BdqJ39Y6NqXjz/2tn5wL6MjLp5pR2dDeOr
-         X9/BgaziCCZnoVzRJXghoU7XNOcpNEn9WARA3gGaIMPNdeyid2sFFUX7Z1M00pEPNaAl
-         TM0IoLLgiltizKFElR/zy+eoMHMgkbWWcyDA8qsxyli4Ubi5uE2lfQPIwa7jy+O7ZVOA
-         vTr7EG0FkdLdPmzoNf7SEEfv7Fi3lfNCIg7/Njv46pXjbXk9z4SfnQbvdvEFVSZdLOxa
-         ryRZ8JDW//ox2EhFdqhpJjTPEABZ7V60JedsbvNyZdZYFDIXD2QskbrqA3fSQfavUXEk
-         TTKA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1710988874; x=1711593674;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=oC50l27jOECYM15O9eydIrzegzfUqf9NwMLtBgxKr8c=;
-        b=GkJT80+k/xlOHLcdShI0FSCdxrP5YuNusU/ctZV49wq0nvptmxXMpgbP8zg/8TXlHK
-         64ozz4S8yIaIZwHXLH7OZJJk+rl5mIqKhEjIrFx2fVjj+Gqybkw7xFwR8WfON9uTb+sc
-         1Ke+gRvW44poAe6J6/2WZyKpbGwirWASZ4N1uadN44BhDIIg6naisZs3XraTpPayRtwY
-         9Gbnq/xD781b2hzIY1lmJiSkYoPg9/DThO9GD9oJy3Zyil62tquYcNWS3S63EcA7rdzS
-         cVxlf50PV3rcjxTVYdNUdHTLKWF1CGokQ2V7UiuiYq/ZV2O+3vAoL/UF9ln61aw2I/vi
-         tp6Q==
-X-Gm-Message-State: AOJu0YyMQtE9vO6y6TLmeBlnOLlZVdV2liQFENcwJfZHXDLQGJtVKNGj
-	c1UamYurKCM6M23t/jezk23qp88VM8rwbw8CokL+MeW92cBzEr0K
-X-Google-Smtp-Source: AGHT+IG3zYL4p822in0uZcrtSSRhEnn3bZVlVmtmYmq8uos5bhZnQwunEtdTbqVC8cBMviSfbc6cJQ==
-X-Received: by 2002:a05:6a00:2395:b0:6e7:1833:883b with SMTP id f21-20020a056a00239500b006e71833883bmr4729815pfc.26.1710988874509;
-        Wed, 20 Mar 2024 19:41:14 -0700 (PDT)
-Received: from server.roeck-us.net ([2600:1700:e321:62f0:329c:23ff:fee3:9d7c])
-        by smtp.gmail.com with ESMTPSA id fa31-20020a056a002d1f00b006e6c856c0f3sm12363668pfb.188.2024.03.20.19.41.13
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 20 Mar 2024 19:41:13 -0700 (PDT)
-Sender: Guenter Roeck <groeck7@gmail.com>
-Date: Wed, 20 Mar 2024 19:41:12 -0700
-From: Guenter Roeck <linux@roeck-us.net>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="X9oNc3Fq"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8B1D0C433C7;
+	Thu, 21 Mar 2024 03:52:05 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1710993125;
+	bh=C4m7BhlDCtvaFNAZij87qDNkiehqb3Q36aL3wTgibxc=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=X9oNc3Fqw8FnKa4ZDUKAkGEn/ZadyHM6JmwyC33BA96NNpYvczxbQUFidL9NpD3IZ
+	 wiiT4x+wXflj83cecR2ztf9S4uSwXpEtWMj/4tTUVflrg+9FjRFwW28aPVlyc6THiC
+	 HK3lav6r1GYr2WpD3tkFOdsqxHUd4r0pdCjwZ55SSJpF8S4eHs3fBvzf04H1URWs9E
+	 hnQFDBw34Wzd4pLR1EDyRq8QoVSNzf65aucO+gL48qe3CUCYd2NepZ+PMAuag5y/Mm
+	 SQm0DV2Xquq6lUQdyMx1iHdWEBQ+MPn4lZzb5dtWovUnPeC8kJTEoaOFJQCq6uLltF
+	 ai/slFNjxuA8A==
+Date: Wed, 20 Mar 2024 20:52:03 -0700
+From: Eric Biggers <ebiggers@kernel.org>
 To: Matthew Sakai <msakai@redhat.com>
 Cc: dm-devel@lists.linux.dev, Ken Raeburn <raeburn@redhat.com>
 Subject: Re: [PATCH] dm vdo: use kernel byteswapping routines instead of GCC
  ones
-Message-ID: <7e210190-915c-4bba-985e-483e8f340384@roeck-us.net>
+Message-ID: <20240321035203.GA2387@sol.localdomain>
 References: <fe10f7bf2332c868deb88bb59967fa1880b1b34f.1710970229.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -71,33 +45,6 @@ Content-Disposition: inline
 In-Reply-To: <fe10f7bf2332c868deb88bb59967fa1880b1b34f.1710970229.git.msakai@redhat.com>
 
 On Wed, Mar 20, 2024 at 05:44:05PM -0400, Matthew Sakai wrote:
-> From: Ken Raeburn <raeburn@redhat.com>
-> 
-> Reported-by: Guenter Roeck <linux@roeck-us.net>
-> Signed-off-by: Ken Raeburn <raeburn@redhat.com>
-> Signed-off-by: Matthew Sakai <msakai@redhat.com>
-
-Tested-by: Guenter Roeck <linux@roeck-us.net>
-
-> ---
->  drivers/md/dm-vdo/murmurhash3.c | 18 ++++--------------
->  1 file changed, 4 insertions(+), 14 deletions(-)
-> 
-> diff --git a/drivers/md/dm-vdo/murmurhash3.c b/drivers/md/dm-vdo/murmurhash3.c
-> index 00c9b9c05001..124026cb676a 100644
-> --- a/drivers/md/dm-vdo/murmurhash3.c
-> +++ b/drivers/md/dm-vdo/murmurhash3.c
-> @@ -8,6 +8,8 @@
->  
->  #include "murmurhash3.h"
->  
-> +#include <asm/byteorder.h>
-> +
->  static inline u64 rotl64(u64 x, s8 r)
->  {
->  	return (x << r) | (x >> (64 - r));
-> @@ -16,24 +18,12 @@ static inline u64 rotl64(u64 x, s8 r)
->  #define ROTL64(x, y) rotl64(x, y)
 >  static __always_inline u64 getblock64(const u64 *p, int i)
 >  {
 > -#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -121,8 +68,8 @@ Tested-by: Guenter Roeck <linux@roeck-us.net>
 > -#endif
 > +	p[i] = cpu_to_le64(value);
 >  }
->  
->  /* Finalization mix - force all bits of a hash block to avalanche */
-> -- 
-> 2.42.0
-> 
+
+This is very broken.  What you're actually looking for is get_unaligned_le64()
+and put_unaligned_le64().  And they should be folded directly into the caller.
+
+- Eric
