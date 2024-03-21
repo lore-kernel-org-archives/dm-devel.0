@@ -1,121 +1,77 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from out-186.mta1.migadu.com (out-186.mta1.migadu.com [95.215.58.186])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C3FD79E0;
-	Thu, 21 Mar 2024 17:25:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B296D135A65
+	for <dm-devel@lists.linux.dev>; Thu, 21 Mar 2024 21:22:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.186
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711041927; cv=none; b=MDqT6UoiLqk/wN1WQ1KdpMdhqihyZOGCtNURRbC83n2Q3vmmL6QofefPZPh+UFGJ2E+WeZmF/031n0ALV9+x7uLZSvQrxzkw7GcTlXSNGbN0XNCaOw8RBERjEbWcJ/Oa01qlvBdKpU+947CK04FYlvaS4f62VO/amVhSjM2hp4A=
+	t=1711056143; cv=none; b=Sfu6QRZLe7xJ3KHyxvfQaOsMLez8D26tCNg1XXaAy+WMe7pBoeUEZMmfvSXoE1Dq2HE+vLA7p5tLCzh/KkQGnolIwso912maDlGtYHjCCrDDGItgYY81A1GMn1wnmvGwoIdR4QDeQCHOQx5NaIYH7M99yIDcZWvpNO1OABfAz5M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711041927; c=relaxed/simple;
-	bh=iNXaAGwm6iS6DNKISF6dlrJY5wNVKnpnm8REwy4rDho=;
-	h=Mime-Version:Content-Type:Date:Message-Id:To:Cc:Subject:From:
-	 References:In-Reply-To; b=ZlrxG4ckuZ8goLtQ3Em9Yp1/x2MZLfQKcZBNJJRM1Mb3vNory2jOJCXysSu0vJiZhxeJA0sblwHWyEal53rf1STgifO0GY5glb7rHOIhY0wEzcByhjLfmSBat936BVoHSNLC+bg6+vk5KVlv6Cm5OI7VSc+5oY2gGUDKiB9Amaw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=uQevDAax; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711056143; c=relaxed/simple;
+	bh=Anq4NcuB/lwgoTXLF75lThmEeR+MuCgA6bicmSCWtE4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=atOXxiBVElGY0R+/CFOLB/QoX+F5204Q0moOQdDPsmVzIMYaTsa9J5NHYI57q6rZHYQsJBd4WSgMpB+mb5uEYINQSOIR9sXauIsTzouK2DLQ6JoPGCOflT+xSbQk7+0JZxSr6RT7IA2icopDJ0NiSgZmsTCefVP6Ojn3n76CxwM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=KXyqdB/5; arc=none smtp.client-ip=95.215.58.186
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="uQevDAax"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 073E2C433C7;
-	Thu, 21 Mar 2024 17:25:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711041927;
-	bh=iNXaAGwm6iS6DNKISF6dlrJY5wNVKnpnm8REwy4rDho=;
-	h=Date:To:Cc:Subject:From:References:In-Reply-To:From;
-	b=uQevDAaxSvs1weuPxAVtTq79oE8xNAAlm00KgUZtg+SF0ZCpdazoYqldu4ms40wTI
-	 KdBcq8uWAD47/rKzsT59SMSEtZvXIWGj+5CJdnbpCRBT7JEP/03D/qAdLGr6V1WR1O
-	 tKmQl20Xe9j84FJNztEGGULdS8/DLACS1ZZirVT9+YuBlMkeNH6yshOtZFYcoGOQ7c
-	 I87pEcsouNJ2soJeKDqyYmUarFAbdb9NjQvdlnXKq82l4NPh+I1KSlj5wGFMn4Ze0w
-	 1SfpgXrWpNJ2W3SvSXv2vZ0wLvpr77vGmkJjpJhw4mdXecJniydVNE2PwYSrO+l75f
-	 cX/eY3iu0uHhg==
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="KXyqdB/5"
+Date: Thu, 21 Mar 2024 17:22:14 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1711056139;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=S05qIGXtD9xW8hBhYLVEJF2bePesL9LF4WflE+oBdCA=;
+	b=KXyqdB/5x6fm8sKDy7Wx6c1+9/aaeEK0c6jkGhTWGiLB9kU+pA76QZmr1Kf9DTr66Dc60G
+	fB2C5gKBmUG3J3KTzZLaNkFSoCZTsVYWkK9kLZLejwfJhbprlY/Qz7wCVcISG86ycSSRRM
+	37QJ0vm12wWgJX97hIfyhbDmoQVqYJg=
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Kent Overstreet <kent.overstreet@linux.dev>
+To: Kuan-Wei Chiu <visitorckw@gmail.com>
+Cc: colyli@suse.de, msakai@redhat.com, peterz@infradead.org, 
+	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, akpm@linux-foundation.org, 
+	bfoster@redhat.com, mark.rutland@arm.com, alexander.shishkin@linux.intel.com, 
+	jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
+	jserv@ccns.ncku.edu.tw, dm-devel@lists.linux.dev, linux-bcache@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org
+Subject: Re: [PATCH v2 04/15] lib min_heap: Add type safe interface
+Message-ID: <mi3uq4gqvseubfiylslxfrnwupfzopz753md5f53v6brlgiamv@l5bxmctqnz6g>
+References: <20240320145417.336208-1-visitorckw@gmail.com>
+ <20240320145417.336208-5-visitorckw@gmail.com>
+ <iz6wl3twuc72txd4ifxy73bbbfijo3ecy7izw3drsmcb2payeu@b2dusfoqobgu>
+ <Zfwgu8+IeH/YqWYR@visitorckw-System-Product-Name>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset=UTF-8
-Date: Thu, 21 Mar 2024 19:25:21 +0200
-Message-Id: <CZZLQN9CUN2E.5PNZ0C2JHP42@kernel.org>
-To: "Fan Wu" <wufan@linux.microsoft.com>, "Paul Moore"
- <paul@paul-moore.com>, <corbet@lwn.net>, <zohar@linux.ibm.com>,
- <jmorris@namei.org>, <serge@hallyn.com>, <tytso@mit.edu>,
- <ebiggers@kernel.org>, <axboe@kernel.dk>, <agk@redhat.com>,
- <snitzer@kernel.org>, <eparis@redhat.com>
-Cc: <linux-doc@vger.kernel.org>, <linux-integrity@vger.kernel.org>,
- <linux-security-module@vger.kernel.org>, <fsverity@lists.linux.dev>,
- <linux-block@vger.kernel.org>, <dm-devel@lists.linux.dev>,
- <audit@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH RFC v15 12/21] security: add
- security_bdev_setintegrity() hook
-From: "Jarkko Sakkinen" <jarkko@kernel.org>
-X-Mailer: aerc 0.17.0
-References: <1710560151-28904-13-git-send-email-wufan@linux.microsoft.com>
- <f5cf9d285bd5f09bbc3f79b0800d37fc@paul-moore.com>
- <CZYFP5S04YTK.23AJMKWQWVCR8@kernel.org>
- <CZYFR8LEEQB1.8C0J9KCTF8CB@kernel.org>
- <a69805c7-7b8a-44ee-9b32-f9314b5a9763@linux.microsoft.com>
-In-Reply-To: <a69805c7-7b8a-44ee-9b32-f9314b5a9763@linux.microsoft.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <Zfwgu8+IeH/YqWYR@visitorckw-System-Product-Name>
+X-Migadu-Flow: FLOW_OUT
 
-On Wed Mar 20, 2024 at 10:31 PM EET, Fan Wu wrote:
->
->
-> On 3/20/2024 1:31 AM, Jarkko Sakkinen wrote:
-> > On Wed Mar 20, 2024 at 10:28 AM EET, Jarkko Sakkinen wrote:
-> >> On Wed Mar 20, 2024 at 1:00 AM EET, Paul Moore wrote:
-> >>> On Mar 15, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
-> >>>>
-> >>>> This patch introduces a new hook to save block device's integrity
-> >>>> data. For example, for dm-verity, LSMs can use this hook to save
-> >>>> the roothash signature of a dm-verity into the security blob,
-> >>>> and LSMs can make access decisions based on the data inside
-> >>>> the signature, like the signer certificate.
-> >>>>
-> >>>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-> >>>>
-> >>>> --
-> >>>> v1-v14:
-> >>>>    + Not present
-> >>>>
-> >>>> v15:
-> >>>>    + Introduced
-> >>>>
-> >>>> ---
-> >>>>   include/linux/lsm_hook_defs.h |  2 ++
-> >>>>   include/linux/security.h      | 14 ++++++++++++++
-> >>>>   security/security.c           | 28 ++++++++++++++++++++++++++++
-> >>>>   3 files changed, 44 insertions(+)
-> >>>
-> >>> I'm not sure why you made this a separate patch, help?  If there is
-> >>> no significant reason why this is separate, please squash it together
-> >>> with patch 11/21.
-> >>
-> >> Off-topic: it is weird to have *RFC* patch set at v15.
-> >>
-> >> RFC by de-facto is something that can be safely ignored if you don't
-> >> have bandwidth. 15 versions of anything that can be safely ignored
-> >> is by definition spamming :-) I mean just conceptually.
-> >>
-> >> So does the RFC still hold or what the heck is going on with this one?
-> >>
-> >> Haven't followed for some time now...
-> >=20
-> > I mean if this RFC trend continues I'll just put auto-filter for this
-> > thread to put straight to the bin.  There's enough non-RFC patch sets
-> > to review.
-> >=20
-> > BR, Jarkko
->
-> Sorry about the confusion with the RFC tag =E2=80=93 I wasn't fully aware=
- of its=20
-> conventional meaning and how it's perceived in terms of importance and=20
-> urgency. Point taken, and I'll make sure to remove the RFC tag for=20
-> future submissions. Definitely not my intention to clog up the workflow=
-=20
-> or seem like I'm spamming.
+On Thu, Mar 21, 2024 at 07:57:47PM +0800, Kuan-Wei Chiu wrote:
+> On Wed, Mar 20, 2024 at 04:56:57PM -0400, Kent Overstreet wrote:
+> > On Wed, Mar 20, 2024 at 10:54:06PM +0800, Kuan-Wei Chiu wrote:
+> > > Introduce a type-safe interface for min_heap by adding small macro
+> > > wrappers around functions and using a 0-size array to store type
+> > > information. This enables the use of __minheap_cast and
+> > > __minheap_obj_size macros for type casting and obtaining element size.
+> > > The implementation draws inspiration from generic-radix-tree.h,
+> > > eliminating the need to pass element size in min_heap_callbacks.
+> > 
+> > let's avoid the heap->heap.nr - darray (fs/bcachefs/darray.h) has a
+> > trick for that. All heaps have the same memory layout, so we can just
+> > cast to a void pointer heap to get something the C code can use.
+> >
+> If I understand correctly, you're suggesting adding APIs similar to
+> darray_top(), darray_first(), and darray_last() within min_heap and
+> having them return a pointer. However, some users are using heap.nr in
+> conditional statements instead of utilizing heap.nr for memory
+> operations, so returning pointers may not be as convenient. What about
+> adding get and set functions for nr instead?
 
-OK cool! Just wanted to point this out also because it already looks
-good enough not to be considered as RFC in my eyes :-) If you keep RFC
-it is by definition "look into if you have the bandwidth but please
-do not take this to mainline". No means to nitpick here...
-
-BR, Jarkko
+No, I mean not having separate inner and outer types. Want me to sketch
+something out?
