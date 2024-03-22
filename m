@@ -1,116 +1,103 @@
-Received: from out-188.mta1.migadu.com (out-188.mta1.migadu.com [95.215.58.188])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2955A65BB4
-	for <dm-devel@lists.linux.dev>; Fri, 22 Mar 2024 18:23:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.188
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF7E165BDA;
+	Fri, 22 Mar 2024 18:26:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711131814; cv=none; b=Ti1Wo30/pvhFozcELi5/01H2GU2XAhUubjPizFvPc1h9sGZV47wumeSHRWzvmGq0H8V5ilgHyopvCNde3nZonk8VuSPlZi+K42kXgbzt4Z4bY4PgTb4Ok7iX7ZJAJ7+eous/mxj7npJ3BenqIfFefOx3e1qJv/j3X5h42KK/dUg=
+	t=1711131967; cv=none; b=NXvvCVGjI35Xb7VrrVHN729O/In5+JU64VVPmWsDuRyeBpJ3fSoIW1M52nHXt4Ii7fwBEV+IXef9Lg42hq8bGeUXMu/9whzGHTshMcz5xfBQEp6+liHzqZfGKj2DHVHCsUoyIR8+xklq04uFYfEfZRr6xk0D8bUTR8yYUMbR3/g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711131814; c=relaxed/simple;
-	bh=40VVfM6/809+pYJgj2wzfEjVNEU0Bg0sahyBYokr3rE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=GkcaZAXHJywHx8R+FZlYT4ll0xK2G4QThGoxPhgDHKQhrQUrTdPC8Fzbr/qPg0CcAkVKVSWQJvMjT8Krtb6skBz6vczgkDxbm3iXkrCDikdwSPUeklsoESvAw0Vw3yYF/MfS7J5fgik0Mcwu8ZO7QpqO7QAGDUIpQGNPYMlpbtk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=rn45MCTu; arc=none smtp.client-ip=95.215.58.188
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1711131967; c=relaxed/simple;
+	bh=+anMoiYaSWRSv2L+o96ueu/YmLOGdDH9Ds3kNchZWSg=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=sZVrOqlBYG0ZxNe+1dZ8SWXIwNtDbp4f1ujP+HoZiJPQ21SVyEFYsyEgPCgCKq8y7t14QmPhbeeoH+m/O+IRKgD+bo9RBQ0eN5VV8YVPwHPbXTygZ0eIcDtx97pu3mLP1EDYmdonCyMAKtairsXWnUAUZkAwTlfyPG3WROZTl00=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=cZk2IqaW; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="rn45MCTu"
-Date: Fri, 22 Mar 2024 14:23:26 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1711131811;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=HGAD06oDDixz/25yvLztOQXn8pWPlf8SP7amw2+5Ywg=;
-	b=rn45MCTud1uEVpZzz9hgmmrzdwnqyZPa0nupO4gg+Qbf2//Ozo+YE4rOBPIR+OrlOyb4J9
-	KKQxqH4RWXeS5pOhyk+/FblibwpYDe/DPpMOxRIax59Wu2wtT2bu7C9YHjW2fWxCE7M2wA
-	x/Wd5P9nsmTnXr8zB9yZHQDt+9+I0A8=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Kuan-Wei Chiu <visitorckw@gmail.com>
-Cc: colyli@suse.de, msakai@redhat.com, peterz@infradead.org, 
-	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, akpm@linux-foundation.org, 
-	bfoster@redhat.com, mark.rutland@arm.com, alexander.shishkin@linux.intel.com, 
-	jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
-	jserv@ccns.ncku.edu.tw, dm-devel@lists.linux.dev, linux-bcache@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org
-Subject: Re: [PATCH v2 04/15] lib min_heap: Add type safe interface
-Message-ID: <gx3skkrp6pfp7ch3dmludzmqrsyncsptzhlvuwqt2abdhcli5m@xsny7x4nkxv3>
-References: <20240320145417.336208-1-visitorckw@gmail.com>
- <20240320145417.336208-5-visitorckw@gmail.com>
- <iz6wl3twuc72txd4ifxy73bbbfijo3ecy7izw3drsmcb2payeu@b2dusfoqobgu>
- <Zfwgu8+IeH/YqWYR@visitorckw-System-Product-Name>
- <mi3uq4gqvseubfiylslxfrnwupfzopz753md5f53v6brlgiamv@l5bxmctqnz6g>
- <Zf25pSI4p0d5pFXX@visitorckw-System-Product-Name>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="cZk2IqaW"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D3741C433F1;
+	Fri, 22 Mar 2024 18:26:06 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1711131967;
+	bh=+anMoiYaSWRSv2L+o96ueu/YmLOGdDH9Ds3kNchZWSg=;
+	h=From:To:Cc:Subject:Date:From;
+	b=cZk2IqaWJwyunfLkdw1jE/qKPKxp8ONDz+0COoRhavbnCSdZ20tFcmDbd5+S41e1j
+	 ZYaucD8QD5EQiI7PyRRJpINisWimUzartXg8tqmRKqhTMzfnaOYVIlBI//wSK+ylnI
+	 bX8LMnvekqZJG4WgArbCSc0DqpbjIhvWmivBzj8sLuBrSci+SiuivrfTI3y5wsdXc/
+	 ghnFQTS6A28KTXg7D9sdew7i2SY4TdZ3S6kxPYIbWFjMS59StiYa9OglwdozyhqGxh
+	 7nT9NjHFI2MpWLsGemuQAZMhXvd5gGUtqY1iwGumzXUSJjhVsOlpGuS9yg95xzM+Ky
+	 hxW1mOyUGogag==
+From: Sasha Levin <sashal@kernel.org>
+To: stable-commits@vger.kernel.org,
+	ming.lei@redhat.com
+Cc: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev
+Subject: Patch "dm raid: fix false positive for requeue needed during reshape" has been added to the 6.7-stable tree
+Date: Fri, 22 Mar 2024 13:34:47 -0400
+Message-ID: <20240322173447.77867-1-sashal@kernel.org>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <Zf25pSI4p0d5pFXX@visitorckw-System-Product-Name>
-X-Migadu-Flow: FLOW_OUT
+X-Patchwork-Hint: ignore
+X-stable: review
+Content-Transfer-Encoding: 8bit
 
-On Sat, Mar 23, 2024 at 01:02:29AM +0800, Kuan-Wei Chiu wrote:
-> On Thu, Mar 21, 2024 at 05:22:14PM -0400, Kent Overstreet wrote:
-> > On Thu, Mar 21, 2024 at 07:57:47PM +0800, Kuan-Wei Chiu wrote:
-> > > On Wed, Mar 20, 2024 at 04:56:57PM -0400, Kent Overstreet wrote:
-> > > > On Wed, Mar 20, 2024 at 10:54:06PM +0800, Kuan-Wei Chiu wrote:
-> > > > > Introduce a type-safe interface for min_heap by adding small macro
-> > > > > wrappers around functions and using a 0-size array to store type
-> > > > > information. This enables the use of __minheap_cast and
-> > > > > __minheap_obj_size macros for type casting and obtaining element size.
-> > > > > The implementation draws inspiration from generic-radix-tree.h,
-> > > > > eliminating the need to pass element size in min_heap_callbacks.
-> > > > 
-> > > > let's avoid the heap->heap.nr - darray (fs/bcachefs/darray.h) has a
-> > > > trick for that. All heaps have the same memory layout, so we can just
-> > > > cast to a void pointer heap to get something the C code can use.
-> > > >
-> > > If I understand correctly, you're suggesting adding APIs similar to
-> > > darray_top(), darray_first(), and darray_last() within min_heap and
-> > > having them return a pointer. However, some users are using heap.nr in
-> > > conditional statements instead of utilizing heap.nr for memory
-> > > operations, so returning pointers may not be as convenient. What about
-> > > adding get and set functions for nr instead?
-> > 
-> > No, I mean not having separate inner and outer types. Want me to sketch
-> > something out?
-> 
-> Based on your suggestion, I've come up with the following code snippet:
-> 
-> #define MIN_HEAP_PREALLOCATED(_type, _name, _nr) \
-> struct _name {  \
->     int nr; \
->     int size;   \
->     _type *data;    \
->     _type preallocated[_nr];    \
-> };
-> 
-> #define MIN_HEAP(_type, _name) MIN_HEAP_PREALLOCATED(_type, _name, 0)
-> 
-> typdef MIN_HEAP(char, _) min_heap_char;
-> 
-> static __always_inline
-> void min_heap_init(min_heap_char *heap, void *data, int size)
-> {
-> 	heap->nr = 0;
-> 	heap->size = size;
->     heap->data = size <= ARRAY_SIZE(heap->preallocated) ? heap->preallocated : data;
-> }
-> 
-> But I'm not sure how to implement other inline functions like
-> min_heap_push or min_heap_pop if I do that, unless they are rewritten
-> using macros. Also, I'm not sure how to make the less and swp functions
-> in the min_heap_callbacks not use void * type parameters. Or perhaps I
-> misunderstood your meaning again. If you could sketch out your idea or
-> have a better approach, it would be a great help to me. Any guidance
-> would be greatly appreciated.
+This is a note to let you know that I've just added the patch titled
 
-No, you're on the right track. To call C functions on different types of
-heaps you have to cast them all to a common type, say HEAP(char), also
-pass the element size as a paremeter (which you had to do previously
-anyways).
+    dm raid: fix false positive for requeue needed during reshape
+
+to the 6.7-stable tree which can be found at:
+    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+
+The filename of the patch is:
+     dm-raid-fix-false-positive-for-requeue-needed-during.patch
+and it can be found in the queue-6.7 subdirectory.
+
+If you, or anyone else, feels it should not be added to the stable tree,
+please let <stable@vger.kernel.org> know about it.
+
+
+
+commit 23e25e3ffcdd59a5a002589ecbab43183c26a954
+Author: Ming Lei <ming.lei@redhat.com>
+Date:   Mon Mar 11 13:42:55 2024 -0400
+
+    dm raid: fix false positive for requeue needed during reshape
+    
+    [ Upstream commit b25b8f4b8ecef0f48c05f0c3572daeabefe16526 ]
+    
+    An empty flush doesn't have a payload, so it should never be looked at
+    when considering to possibly requeue a bio for the case when a reshape
+    is in progress.
+    
+    Fixes: 9dbd1aa3a81c ("dm raid: add reshaping support to the target")
+    Reported-by: Patrick Plenefisch <simonpatp@gmail.com>
+    Signed-off-by: Ming Lei <ming.lei@redhat.com>
+    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+    Signed-off-by: Sasha Levin <sashal@kernel.org>
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index eb009d6bb03a1..13eb47b997f94 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3329,14 +3329,14 @@ static int raid_map(struct dm_target *ti, struct bio *bio)
+ 	struct mddev *mddev = &rs->md;
+ 
+ 	/*
+-	 * If we're reshaping to add disk(s)), ti->len and
++	 * If we're reshaping to add disk(s), ti->len and
+ 	 * mddev->array_sectors will differ during the process
+ 	 * (ti->len > mddev->array_sectors), so we have to requeue
+ 	 * bios with addresses > mddev->array_sectors here or
+ 	 * there will occur accesses past EOD of the component
+ 	 * data images thus erroring the raid set.
+ 	 */
+-	if (unlikely(bio_end_sector(bio) > mddev->array_sectors))
++	if (unlikely(bio_has_data(bio) && bio_end_sector(bio) > mddev->array_sectors))
+ 		return DM_MAPIO_REQUEUE;
+ 
+ 	md_handle_request(mddev, bio);
