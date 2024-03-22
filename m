@@ -1,65 +1,145 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C3CD132489;
-	Thu, 21 Mar 2024 22:07:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A6DC10E3
+	for <dm-devel@lists.linux.dev>; Fri, 22 Mar 2024 01:41:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711058861; cv=none; b=Pj+N9c+tLb4R0O8o3qTvdvSo71ADLNZZV72+4dyFR+0R4ONGpeC6ZHlPRdlL+TuH37NirqbYRl8nHxZVxiKrUzINenR6GXAqj6CoynJ1cRvxRshWhk+pUE5n/qPh6ImFkxrmywYz2oqqcYdwaqyMPnHrAW4C+oo3774Cu4dcvhM=
+	t=1711071710; cv=none; b=WVeNXUSrZOKGzxdo9hGG/jDWYTmyyJIbtFhhrBEiEE1goVIGWtL5Ux5yNMUnLK/aYbqVe75HXxUPC63LwdgjKpxtn9lse6X5noSjXNns8QRic9tJ7ZDHWKZevH+p1XO60E19fnh1kg0P0FNeIBBqtiAPYw94wIxRAaSV9dUhkhg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711058861; c=relaxed/simple;
-	bh=0/PyoRJiNG0lXwOlRCqHjKpbFIs9KJZ1c7t/9Ifk3oo=;
+	s=arc-20240116; t=1711071710; c=relaxed/simple;
+	bh=Ft5u502/izjnsAwNWPy20E/m8yanrU19N5qyzi5Z+0s=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=A9RP+XdsoqFpa3tI6pZm1PFTrgOIele/+x/aHVZn3iAt99xr9WnAfqBvdWumA2m1bA+4i/rqvzEjEDQKtLSb4GNdVC7ZeAyMcqIVLRDvWPvQR9lN8qoOVGC7ueevMsxlbPuOByQ0ZQWjYfd433lnPKa/t5qSvT0C4EivkmNvLWo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=aKETLpDt; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	 In-Reply-To:Content-Type:Content-Disposition; b=tnpJXWhuSahBRbdMk6r3YIzSA8bhE1AY6K5FuV0k1LYPh1hfap517iqKihiUHTuNkO6F1uiXAkEmkHjaY6DiPI3NX3RRCORdILerXwK1x259fmCg6BK9TWHpk8PAXwEwi4/qofp3V6d/+/bfoJpicz6vsFzYFQ6boeHGNcH+8O8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YF+q1hYk; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="aKETLpDt"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=JWESeA7aSgA5nIcGmeWSayQGds3VE09pp/wUgycxUB4=; b=aKETLpDtKENs6Pf6A1oh9vqtkq
-	tSyH3y1uw9wbWQDUme0NosZemlLivkoR/yvwGBoLNFKNBL2QwSYDIwFRC70NMBABmofHa2b8+aGRm
-	xLbnoY+mC6CtM187R1YCGDDk+aOP2mHReohrhovd6dWCipfBM2618ooYC143xg+QuKK6iCLs0Wo+4
-	C6SN4IQ1OOuC5ppw1v4n9tXlBTROEu1izrQBKWU4Zn51LXhY0o2yIBohCYDVWQ8W9F6AS68ybwADJ
-	8WUssF626ulv/qLK7qVO8PR41XnsCZr6JQSFZH8t9qqkrVbIj++FprTmaCmqaGlSPIUtLCEEN0qSU
-	d4Qf2N8A==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rnQZW-00000004q8R-1RHS;
-	Thu, 21 Mar 2024 22:07:38 +0000
-Date: Thu, 21 Mar 2024 15:07:38 -0700
-From: Christoph Hellwig <hch@infradead.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YF+q1hYk"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1711071707;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=R/meFkut62NYS10fTsS9z+PwawATcl6x28OcJlWH9ok=;
+	b=YF+q1hYkiAnq2iKtm9UmgRLQ/ylueEgG7NYQZ8VSZX9s/TcrN/+y9q2lkvSwxdCt3SVU8Z
+	WdtmA+BJqjwFcK1TaxqWkkl40HD5MpYuCOanmYSgzhb24FYDYOOmBNRI1aRkggZuRHpPKo
+	UWhbC767oNfJXbyYI4fZvwAVTQNJ1AY=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-649-zMAtkVeRNA61afGY8oRb-Q-1; Thu,
+ 21 Mar 2024 21:41:45 -0400
+X-MC-Unique: zMAtkVeRNA61afGY8oRb-Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D3C253C025D2
+	for <dm-devel@lists.linux.dev>; Fri, 22 Mar 2024 01:41:44 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.75])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EC0102166B33;
+	Fri, 22 Mar 2024 01:41:40 +0000 (UTC)
+Date: Fri, 22 Mar 2024 09:41:32 +0800
+From: Ming Lei <ming.lei@redhat.com>
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>, Ming Lei <ming.lei@redhat.com>,
-	Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev
-Subject: Re: block: fail unaligned bio from submit_bio_noacct()
-Message-ID: <ZfyvqmslFn19vgdG@infradead.org>
-References: <20240321131634.1009972-1-ming.lei@redhat.com>
- <ZfxVqkniO-6jFFH5@redhat.com>
- <ea8a13c-ee40-47f9-a7be-17b84bd1f686@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev,
+	ming.lei@redhat.com
+Subject: Re: [PATCH] dm-integrity: align the outgoing bio in integrity_recheck
+Message-ID: <ZfzhzMgdJJaOZwGA@fedora>
+References: <580e4e3-b6b3-e291-282e-b57be178cec1@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <580e4e3-b6b3-e291-282e-b57be178cec1@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ea8a13c-ee40-47f9-a7be-17b84bd1f686@redhat.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Thu, Mar 21, 2024 at 06:01:41PM +0100, Mikulas Patocka wrote:
-> But then, the system would crash with the config option being 'n' and 
-> return an error with the config option being 'y' - which would be 
-> unfortunate.
+On Thu, Mar 21, 2024 at 05:48:45PM +0100, Mikulas Patocka wrote:
+> It may be possible to set up dm-integrity with smaller sector size than
+> the logical sector size of the underlying device. In this situation,
+> dm-integrity guarantees that the outgoing bios have the same alignment as
+> incoming bios (so, if you create a filesystem with 4k block size,
+> dm-integrity would send 4k-aligned bios to the underlying device).
 > 
-> We could remove the check from the drivers and add it to the generic I/O 
-> path - this wouldn't add extra overhead.
+> This guarantee was broken when integrity_recheck was implemented.
+> integrity_recheck sends bio that is aligned to ic->sectors_per_block. So
+> if we set up integrity with 512-byte sector size on a device with logical
+> block size 4k, we would be sending unaligned bio. This triggered a bug in
+> one of our internal tests.
+> 
+> This commit fixes it - it determines what's the actual alignment of the
+> incoming bio and then makes sure that the outgoing bio in
+> integrity_recheck has the same alignment.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: c88f5e553fe3 ("dm-integrity: recheck the integrity tag after a failure")
+> Cc: stable@vger.kernel.org
+> 
+> ---
+>  drivers/md/dm-integrity.c |   12 ++++++++++--
+>  1 file changed, 10 insertions(+), 2 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm-integrity.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-integrity.c	2024-03-21 14:25:45.000000000 +0100
+> +++ linux-2.6/drivers/md/dm-integrity.c	2024-03-21 17:47:39.000000000 +0100
+> @@ -1699,7 +1699,6 @@ static noinline void integrity_recheck(s
+>  	struct bio_vec bv;
+>  	sector_t sector, logical_sector, area, offset;
+>  	struct page *page;
+> -	void *buffer;
+>  
+>  	get_area_and_offset(ic, dio->range.logical_sector, &area, &offset);
+>  	dio->metadata_block = get_metadata_sector_and_offset(ic, area, offset,
+> @@ -1708,13 +1707,14 @@ static noinline void integrity_recheck(s
+>  	logical_sector = dio->range.logical_sector;
+>  
+>  	page = mempool_alloc(&ic->recheck_pool, GFP_NOIO);
+> -	buffer = page_to_virt(page);
+>  
+>  	__bio_for_each_segment(bv, bio, iter, dio->bio_details.bi_iter) {
+>  		unsigned pos = 0;
+>  
+>  		do {
+> +			sector_t alignment;
+>  			char *mem;
+> +			char *buffer = page_to_virt(page);
+>  			int r;
+>  			struct dm_io_request io_req;
+>  			struct dm_io_region io_loc;
+> @@ -1727,6 +1727,14 @@ static noinline void integrity_recheck(s
+>  			io_loc.sector = sector;
+>  			io_loc.count = ic->sectors_per_block;
+>  
+> +			/* Align the bio to logical block size */
+> +			alignment = dio->range.logical_sector | bio_sectors(bio) | (PAGE_SIZE >> SECTOR_SHIFT);
+> +			alignment &= -alignment;
 
-Agreed.  This is a pretty cheap check, and I'd rather have it all the
-time instead of being duplicated in various drivers, just like we do
-a lot of other sanity checking in submit_bio.
+The above is less readable, :-(
+
+> +			io_loc.sector = round_down(io_loc.sector, alignment);
+> +			io_loc.count += sector - io_loc.sector;
+> +			buffer += (sector - io_loc.sector) << SECTOR_SHIFT;
+> +			io_loc.count = round_up(io_loc.count, alignment);
+
+I feel the above code isn't very reliable, what we need actually is to
+make sure that io's sector & size is aligned with dm's
+bdev_logical_block_size(bdev).
+
+Yeah, so far the max logical block size is 4k, but it may be increased
+in future and you can see the recent lsfmm proposal, so can we force it to be
+aligned with bdev_logical_block_size(bdev) here?
+
+Also can the above change work efficiently in case of 64K PAGE_SIZE?
+
+
+Thanks,
+Ming
 
