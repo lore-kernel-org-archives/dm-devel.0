@@ -1,179 +1,116 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from out-188.mta1.migadu.com (out-188.mta1.migadu.com [95.215.58.188])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8DC2F6089A;
-	Fri, 22 Mar 2024 18:01:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2955A65BB4
+	for <dm-devel@lists.linux.dev>; Fri, 22 Mar 2024 18:23:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.188
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711130468; cv=none; b=bTYTJKS8ypRXIdyFBSnrvM2NaH7oEzWZTdzmV1dl3yrVzqmOklQ+i06vvoAl8ScGEh/koXnRIUrdylPRv39z8xo9iQyjOT5MA+lQ7LMYmwjWS5E4k0ZAyGcCbZwWGSogIGLsnk9PE2HzJeuJT+e7ZeeB/wanYgGNHOxis+BViBU=
+	t=1711131814; cv=none; b=Ti1Wo30/pvhFozcELi5/01H2GU2XAhUubjPizFvPc1h9sGZV47wumeSHRWzvmGq0H8V5ilgHyopvCNde3nZonk8VuSPlZi+K42kXgbzt4Z4bY4PgTb4Ok7iX7ZJAJ7+eous/mxj7npJ3BenqIfFefOx3e1qJv/j3X5h42KK/dUg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711130468; c=relaxed/simple;
-	bh=HWfMZo4TCMWBnqWtQf/6F84hk1fxtPSpoq8Qi8Vhpw4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=MFuz8xUN5fZFyesb3VJPHqpIKKF1xosUxXQnlofkwbK7p9rjExFetyNJTsJTAumcLu+VRpQOz2o+H0CgLkLu0gPKL5qxwcDv4aCKMVilFnkASgatLGHtiN+THLi4ioe3lRRc5/CKSGkpTTQ1XFJpS/AAPOT3t1mkqLfa+5YJqC4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=RyNULrr2; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711131814; c=relaxed/simple;
+	bh=40VVfM6/809+pYJgj2wzfEjVNEU0Bg0sahyBYokr3rE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=GkcaZAXHJywHx8R+FZlYT4ll0xK2G4QThGoxPhgDHKQhrQUrTdPC8Fzbr/qPg0CcAkVKVSWQJvMjT8Krtb6skBz6vczgkDxbm3iXkrCDikdwSPUeklsoESvAw0Vw3yYF/MfS7J5fgik0Mcwu8ZO7QpqO7QAGDUIpQGNPYMlpbtk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=rn45MCTu; arc=none smtp.client-ip=95.215.58.188
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="RyNULrr2"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C71BFC433C7;
-	Fri, 22 Mar 2024 18:01:07 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711130468;
-	bh=HWfMZo4TCMWBnqWtQf/6F84hk1fxtPSpoq8Qi8Vhpw4=;
-	h=From:To:Cc:Subject:Date:From;
-	b=RyNULrr20vNCmdrzVYTOquT96GOc6Eg9XfPdQ83RY04f65XP8gQtgp0GAYePyF4Tc
-	 VHI7rrqa3A6naQ3TU/X9ZS0pHDpoczy93bjJIvi+6j+ULuAf0gR1PYtOugXomTLXNh
-	 j2XfKvQa8Ofiqn/X7KG7GXET9OWEF7n2f2cd8lx/6tURaLqIkIHwf+qyeL/r82S6af
-	 TMSwxTAPeBSXZkiVOVMUg+nQ9yONkgi7dj/3vcxzPgOGfBTea4sI8yHDPSm648iX/u
-	 eWcEhzRF5L0k7YJGkjJT/WSCiMJ2Fs2M9JJMxBtCoQPXSwqHhQyAiBgKkqE+G0Ib6y
-	 bSDc+fnok87Ug==
-From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org,
-	mpatocka@redhat.com
-Cc: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	dm-devel@lists.linux.dev
-Subject: Patch "dm: call the resume method on internal suspend" has been added to the 6.8-stable tree
-Date: Fri, 22 Mar 2024 13:09:48 -0400
-Message-ID: <20240322170948.52186-1-sashal@kernel.org>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="rn45MCTu"
+Date: Fri, 22 Mar 2024 14:23:26 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1711131811;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=HGAD06oDDixz/25yvLztOQXn8pWPlf8SP7amw2+5Ywg=;
+	b=rn45MCTud1uEVpZzz9hgmmrzdwnqyZPa0nupO4gg+Qbf2//Ozo+YE4rOBPIR+OrlOyb4J9
+	KKQxqH4RWXeS5pOhyk+/FblibwpYDe/DPpMOxRIax59Wu2wtT2bu7C9YHjW2fWxCE7M2wA
+	x/Wd5P9nsmTnXr8zB9yZHQDt+9+I0A8=
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Kent Overstreet <kent.overstreet@linux.dev>
+To: Kuan-Wei Chiu <visitorckw@gmail.com>
+Cc: colyli@suse.de, msakai@redhat.com, peterz@infradead.org, 
+	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, akpm@linux-foundation.org, 
+	bfoster@redhat.com, mark.rutland@arm.com, alexander.shishkin@linux.intel.com, 
+	jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
+	jserv@ccns.ncku.edu.tw, dm-devel@lists.linux.dev, linux-bcache@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org
+Subject: Re: [PATCH v2 04/15] lib min_heap: Add type safe interface
+Message-ID: <gx3skkrp6pfp7ch3dmludzmqrsyncsptzhlvuwqt2abdhcli5m@xsny7x4nkxv3>
+References: <20240320145417.336208-1-visitorckw@gmail.com>
+ <20240320145417.336208-5-visitorckw@gmail.com>
+ <iz6wl3twuc72txd4ifxy73bbbfijo3ecy7izw3drsmcb2payeu@b2dusfoqobgu>
+ <Zfwgu8+IeH/YqWYR@visitorckw-System-Product-Name>
+ <mi3uq4gqvseubfiylslxfrnwupfzopz753md5f53v6brlgiamv@l5bxmctqnz6g>
+ <Zf25pSI4p0d5pFXX@visitorckw-System-Product-Name>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <Zf25pSI4p0d5pFXX@visitorckw-System-Product-Name>
+X-Migadu-Flow: FLOW_OUT
 
-This is a note to let you know that I've just added the patch titled
+On Sat, Mar 23, 2024 at 01:02:29AM +0800, Kuan-Wei Chiu wrote:
+> On Thu, Mar 21, 2024 at 05:22:14PM -0400, Kent Overstreet wrote:
+> > On Thu, Mar 21, 2024 at 07:57:47PM +0800, Kuan-Wei Chiu wrote:
+> > > On Wed, Mar 20, 2024 at 04:56:57PM -0400, Kent Overstreet wrote:
+> > > > On Wed, Mar 20, 2024 at 10:54:06PM +0800, Kuan-Wei Chiu wrote:
+> > > > > Introduce a type-safe interface for min_heap by adding small macro
+> > > > > wrappers around functions and using a 0-size array to store type
+> > > > > information. This enables the use of __minheap_cast and
+> > > > > __minheap_obj_size macros for type casting and obtaining element size.
+> > > > > The implementation draws inspiration from generic-radix-tree.h,
+> > > > > eliminating the need to pass element size in min_heap_callbacks.
+> > > > 
+> > > > let's avoid the heap->heap.nr - darray (fs/bcachefs/darray.h) has a
+> > > > trick for that. All heaps have the same memory layout, so we can just
+> > > > cast to a void pointer heap to get something the C code can use.
+> > > >
+> > > If I understand correctly, you're suggesting adding APIs similar to
+> > > darray_top(), darray_first(), and darray_last() within min_heap and
+> > > having them return a pointer. However, some users are using heap.nr in
+> > > conditional statements instead of utilizing heap.nr for memory
+> > > operations, so returning pointers may not be as convenient. What about
+> > > adding get and set functions for nr instead?
+> > 
+> > No, I mean not having separate inner and outer types. Want me to sketch
+> > something out?
+> 
+> Based on your suggestion, I've come up with the following code snippet:
+> 
+> #define MIN_HEAP_PREALLOCATED(_type, _name, _nr) \
+> struct _name {  \
+>     int nr; \
+>     int size;   \
+>     _type *data;    \
+>     _type preallocated[_nr];    \
+> };
+> 
+> #define MIN_HEAP(_type, _name) MIN_HEAP_PREALLOCATED(_type, _name, 0)
+> 
+> typdef MIN_HEAP(char, _) min_heap_char;
+> 
+> static __always_inline
+> void min_heap_init(min_heap_char *heap, void *data, int size)
+> {
+> 	heap->nr = 0;
+> 	heap->size = size;
+>     heap->data = size <= ARRAY_SIZE(heap->preallocated) ? heap->preallocated : data;
+> }
+> 
+> But I'm not sure how to implement other inline functions like
+> min_heap_push or min_heap_pop if I do that, unless they are rewritten
+> using macros. Also, I'm not sure how to make the less and swp functions
+> in the min_heap_callbacks not use void * type parameters. Or perhaps I
+> misunderstood your meaning again. If you could sketch out your idea or
+> have a better approach, it would be a great help to me. Any guidance
+> would be greatly appreciated.
 
-    dm: call the resume method on internal suspend
-
-to the 6.8-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
-
-The filename of the patch is:
-     dm-call-the-resume-method-on-internal-suspend.patch
-and it can be found in the queue-6.8 subdirectory.
-
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
-
-
-
-commit 2842d62307162235aeee176d3d467869a331c3ba
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Mon Mar 11 15:06:39 2024 +0100
-
-    dm: call the resume method on internal suspend
-    
-    [ Upstream commit 65e8fbde64520001abf1c8d0e573561b4746ef38 ]
-    
-    There is this reported crash when experimenting with the lvm2 testsuite.
-    The list corruption is caused by the fact that the postsuspend and resume
-    methods were not paired correctly; there were two consecutive calls to the
-    origin_postsuspend function. The second call attempts to remove the
-    "hash_list" entry from a list, while it was already removed by the first
-    call.
-    
-    Fix __dm_internal_resume so that it calls the preresume and resume
-    methods of the table's targets.
-    
-    If a preresume method of some target fails, we are in a tricky situation.
-    We can't return an error because dm_internal_resume isn't supposed to
-    return errors. We can't return success, because then the "resume" and
-    "postsuspend" methods would not be paired correctly. So, we set the
-    DMF_SUSPENDED flag and we fake normal suspend - it may confuse userspace
-    tools, but it won't cause a kernel crash.
-    
-    ------------[ cut here ]------------
-    kernel BUG at lib/list_debug.c:56!
-    invalid opcode: 0000 [#1] PREEMPT SMP
-    CPU: 1 PID: 8343 Comm: dmsetup Not tainted 6.8.0-rc6 #4
-    Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.14.0-2 04/01/2014
-    RIP: 0010:__list_del_entry_valid_or_report+0x77/0xc0
-    <snip>
-    RSP: 0018:ffff8881b831bcc0 EFLAGS: 00010282
-    RAX: 000000000000004e RBX: ffff888143b6eb80 RCX: 0000000000000000
-    RDX: 0000000000000001 RSI: ffffffff819053d0 RDI: 00000000ffffffff
-    RBP: ffff8881b83a3400 R08: 00000000fffeffff R09: 0000000000000058
-    R10: 0000000000000000 R11: ffffffff81a24080 R12: 0000000000000001
-    R13: ffff88814538e000 R14: ffff888143bc6dc0 R15: ffffffffa02e4bb0
-    FS:  00000000f7c0f780(0000) GS:ffff8893f0a40000(0000) knlGS:0000000000000000
-    CS:  0010 DS: 002b ES: 002b CR0: 0000000080050033
-    CR2: 0000000057fb5000 CR3: 0000000143474000 CR4: 00000000000006b0
-    Call Trace:
-     <TASK>
-     ? die+0x2d/0x80
-     ? do_trap+0xeb/0xf0
-     ? __list_del_entry_valid_or_report+0x77/0xc0
-     ? do_error_trap+0x60/0x80
-     ? __list_del_entry_valid_or_report+0x77/0xc0
-     ? exc_invalid_op+0x49/0x60
-     ? __list_del_entry_valid_or_report+0x77/0xc0
-     ? asm_exc_invalid_op+0x16/0x20
-     ? table_deps+0x1b0/0x1b0 [dm_mod]
-     ? __list_del_entry_valid_or_report+0x77/0xc0
-     origin_postsuspend+0x1a/0x50 [dm_snapshot]
-     dm_table_postsuspend_targets+0x34/0x50 [dm_mod]
-     dm_suspend+0xd8/0xf0 [dm_mod]
-     dev_suspend+0x1f2/0x2f0 [dm_mod]
-     ? table_deps+0x1b0/0x1b0 [dm_mod]
-     ctl_ioctl+0x300/0x5f0 [dm_mod]
-     dm_compat_ctl_ioctl+0x7/0x10 [dm_mod]
-     __x64_compat_sys_ioctl+0x104/0x170
-     do_syscall_64+0x184/0x1b0
-     entry_SYSCALL_64_after_hwframe+0x46/0x4e
-    RIP: 0033:0xf7e6aead
-    <snip>
-    ---[ end trace 0000000000000000 ]---
-    
-    Fixes: ffcc39364160 ("dm: enhance internal suspend and resume interface")
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-    Signed-off-by: Sasha Levin <sashal@kernel.org>
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8dcabf84d866e..0dc3650c7f4ca 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2945,6 +2945,9 @@ static void __dm_internal_suspend(struct mapped_device *md, unsigned int suspend
- 
- static void __dm_internal_resume(struct mapped_device *md)
- {
-+	int r;
-+	struct dm_table *map;
-+
- 	BUG_ON(!md->internal_suspend_count);
- 
- 	if (--md->internal_suspend_count)
-@@ -2953,12 +2956,23 @@ static void __dm_internal_resume(struct mapped_device *md)
- 	if (dm_suspended_md(md))
- 		goto done; /* resume from nested suspend */
- 
--	/*
--	 * NOTE: existing callers don't need to call dm_table_resume_targets
--	 * (which may fail -- so best to avoid it for now by passing NULL map)
--	 */
--	(void) __dm_resume(md, NULL);
--
-+	map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
-+	r = __dm_resume(md, map);
-+	if (r) {
-+		/*
-+		 * If a preresume method of some target failed, we are in a
-+		 * tricky situation. We can't return an error to the caller. We
-+		 * can't fake success because then the "resume" and
-+		 * "postsuspend" methods would not be paired correctly, and it
-+		 * would break various targets, for example it would cause list
-+		 * corruption in the "origin" target.
-+		 *
-+		 * So, we fake normal suspend here, to make sure that the
-+		 * "resume" and "postsuspend" methods will be paired correctly.
-+		 */
-+		DMERR("Preresume method failed: %d", r);
-+		set_bit(DMF_SUSPENDED, &md->flags);
-+	}
- done:
- 	clear_bit(DMF_SUSPENDED_INTERNALLY, &md->flags);
- 	smp_mb__after_atomic();
+No, you're on the right track. To call C functions on different types of
+heaps you have to cast them all to a common type, say HEAP(char), also
+pass the element size as a paremeter (which you had to do previously
+anyways).
