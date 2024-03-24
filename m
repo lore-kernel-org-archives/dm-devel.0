@@ -1,135 +1,98 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com [209.85.208.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A91892F58;
-	Sun, 24 Mar 2024 18:27:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AD62D53F
+	for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 21:13:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711304830; cv=none; b=FFT0RzvVu3RuDc1uB8dKa6BNiPlD9Ba5dDw3lgUUkU0qz1EGqxjgNaAp8PCdM2XcvrCfEvO7/0Mmz4aUquAsOD0UsxDhn4GfNfiPE8w/g/3XbwxJASpSY8LmnemMkboQX/PZEIDULruuznOUvxuf3BfFNM5Xigr9LpUJnk8lEp8=
+	t=1711314798; cv=none; b=icMvMMFCA5RtPZsDtqUnhIVEt7veUFHuxo13lLCbBiTWH9nJN/FW4p83qXt9cGu0ySn59ycVJM3nl3k1oi9ZuCeTbDAb6/lNgacRydjdSkoJdi+g7XBzxOqYTrcpFiEMUBW8D3euhQSL5YF7LfYsqUSgpm7Pyf+2OzCnF/SfnbM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711304830; c=relaxed/simple;
-	bh=6VfBeiCJKnqeVcZHF2n+DxGhxDCY3+oRkv3RkGZB/Ys=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=up75tbzQMfDpZOmUaG2FtMu0pygSDZk82HfFqbUxZZzseoIbT5qrHMRaybm/vyEynfVQhTT8668kXkIhS25qWfNpwBE8LnlatGAxsRZ2OsOmPnn9FQAqWtuHgr0tPDF0JsaTWkGchQMt2aLSGQ+tD8DTWlmX/xPv1Pz7/jbxbMw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=e8DNqbSu; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711314798; c=relaxed/simple;
+	bh=Jpp/nNaaXF8Uyw6qKtyfAJ1djeBx8XF3SemDFGydHgY=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=YtNmhR5JqahT9VEWfHUf39PE/qIJZiiYG+HnSLAgix+U2VZxwZkvOTkWohpbPb3poaA7fLUQ3WCyQQuvhJIOq9vblJbkc3nQauGhFZvdYIbZUmqFob3+H0teRrAHXL4+gmMEejUUrdv2hZYWnneKpLigz3xk+ummxP0NKTLmPHk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=AwXpQKiY; arc=none smtp.client-ip=209.85.208.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="e8DNqbSu"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E59D3C433F1;
-	Sun, 24 Mar 2024 18:27:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711304830;
-	bh=6VfBeiCJKnqeVcZHF2n+DxGhxDCY3+oRkv3RkGZB/Ys=;
-	h=From:To:Cc:Subject:Date:From;
-	b=e8DNqbSukwDg7NmeAzOh/8U04Vh+h6kU+YOmXMaH1FT6ZdTyk74q3tzVmzJRPTll1
-	 t+rGjYnnys+VroGqDggRFTAXMcoB/sXxyekfyFetC1JXWOE37srbkzfVFmqqdKcIgY
-	 CSAL0ueHGMwEas32vUrKt6+pMshXm4hStBUAdpwWfAHzkcsD44teiKdi+tKrX/7Eu8
-	 O59JNeU+DSLCvtrObOPBFoXfBLkaZ83z62ezaeCSLbKxuLqSwqtatD6gc1gO47t0iW
-	 MAZyhK8DyxTg7twHpTk0rWhv1fkYe8OEB0RuSjXl0tawfHnMqlM/utiOV3PfSVL55v
-	 b5QFGhw9nsfBA==
-From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org,
-	mpatocka@redhat.com
-Cc: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	dm-devel@lists.linux.dev
-Subject: Patch "dm-integrity: align the outgoing bio in integrity_recheck" has been added to the 6.1-stable tree
-Date: Sun, 24 Mar 2024 14:27:08 -0400
-Message-ID: <20240324182709.650293-1-sashal@kernel.org>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="AwXpQKiY"
+Received: by mail-ed1-f53.google.com with SMTP id 4fb4d7f45d1cf-56890b533aaso4400622a12.3
+        for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 14:13:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1711314794; x=1711919594; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=b4cHYx5sSThIpoJ/WEBPm1QAvFKmx8KK6A25MgnZTKE=;
+        b=AwXpQKiYkr5Pa7tcoTJsaAuynRw5coKrwcgzlE4EDcjhdAN1NxXjpIMtutd8Faf2cr
+         vKl5WcJUN0BysRiYSzK5nCwucf33Wkt3Vn8LoTuU2zKoYNFvC+Uz++fDpUXQiJPZRo/J
+         fRMatmAAocAjfV5sWBKUaLcwidJVHfzectzJGp/a/wHQjCrlO70CurCWjJy0MtIkWq2u
+         QwZNt56dBHxzEYd5RUfZlePtm5bOHQpoxBqKC4B6EXKkZq5e1gIYfoAvBL/dlkyeRgt0
+         FBJlXvvTvoBa5dvXmmAh4VOHY0zL9utXonI658ikuNdyur4lWg+H/jiozfy+okB4ziOR
+         dr8w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1711314794; x=1711919594;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=b4cHYx5sSThIpoJ/WEBPm1QAvFKmx8KK6A25MgnZTKE=;
+        b=sOsk1Zp1jjf6isW5B1KS668IH7rkvReDzqCFSznOZLmkKkDZk7TJmZmBe1gP2IhO2G
+         GVs1UPn+a96gVBERn/H+DQ5l7qa5ButqwvFl77ewRKjNQ9KqagwiQVxkIIaCqjlHwsbM
+         BmXdFiLX7IGfyAQjOvWb1et52ceH/4uGl3MwqtFN6cYL9xYPAIBbIgqc23s+g276Cn2a
+         BiagrqB1BHOtAOOgspCO+kTlx6hfKs9zX/CC0x3w9QT4mG9kogLWqhfYQqxTBD+SC91Z
+         U0Ypy7l2aEuGNfH/wEZXmzSyjECZoxmlgOOudj63HRjeYbW8/w6CfjqJy4SDmvmyo9wU
+         7PNQ==
+X-Gm-Message-State: AOJu0YwCWvI89Fg+TFT4ec6Awur+vDLT56haEhQ46iTQfblXbYtYqC6t
+	z8v6UceUmpoazxuambmi0pZM/qYuHToIOLGyolnuSWseyrXSUJo9vrHgF9QUvMI=
+X-Google-Smtp-Source: AGHT+IGLdJOSX/A6hVE6LkgMHLEDYydOP4IZWGfN0XnShkHzFyDkqocX1F9Gr7juNZKBumKH4QXYDw==
+X-Received: by 2002:a50:9ecc:0:b0:566:ab45:e6c5 with SMTP id a70-20020a509ecc000000b00566ab45e6c5mr3600643edf.28.1711314794431;
+        Sun, 24 Mar 2024 14:13:14 -0700 (PDT)
+Received: from localhost (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
+        by smtp.gmail.com with UTF8SMTPSA id b23-20020a056402139700b0056c0d96e099sm462192edv.89.2024.03.24.14.13.14
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sun, 24 Mar 2024 14:13:14 -0700 (PDT)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Peter Rajnoha <prajnoha@redhat.com>,
+	Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 00/11] multipath udev rules changes for dm rules V3
+Date: Sun, 24 Mar 2024 22:12:50 +0100
+Message-ID: <20240324211301.7200-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.43.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
 Content-Transfer-Encoding: 8bit
 
-This is a note to let you know that I've just added the patch titled
+This patch set adapts the multipath rules to the pending changes
+for device mapper rules that update DM_UDEV_RULES_VSN to 3, and
+applies some additional clean-ups to the rules files.
 
-    dm-integrity: align the outgoing bio in integrity_recheck
+Comments welcome.
 
-to the 6.1-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+Martin Wilck (11):
+  11-dm-mpath.rules: don't set MPATH_DEVICE_READY=0 for suspended
+    devices
+  11-dm-mpath.rules: don't import DM_NOSCAN from udev db
+  11-dm-mpath.rules: don't import ID_FS_VERSION from udev db
+  11-dm-mpath.rules: adapt MPATH_DEVICE_READY=0 logic to 10-dm.rules
+    update
+  11-dm-mpath.rules: adapt coldplug event handling ro 10-dm.rules update
+  11-dm-mpath.rules: don't import properties with new 13-dm-disk.rules
+  11-dm-mpath.rules: replace DM_SUSPENDED by .DM_SUSPENDED
+  11-dm-mpath.rules: replace DM_NOSCAN by .DM_NOSCAN
+  11-dm-mpath.rules: simplify PATH_FAILED case
+  11-dm-mpath.rules: make label names more intuitive
+  kpartx.rules: ignore DM_SUSPENDED
 
-The filename of the patch is:
-     dm-integrity-align-the-outgoing-bio-in-integrity_rec.patch
-and it can be found in the queue-6.1 subdirectory.
+ kpartx/kpartx.rules            |  2 +-
+ multipath/11-dm-mpath.rules.in | 84 ++++++++++++++++++++--------------
+ 2 files changed, 50 insertions(+), 36 deletions(-)
 
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
+-- 
+2.43.2
 
-
-
-commit cbee6076b3123d67dd0c7184553892d298a6c5da
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Thu Mar 21 17:48:45 2024 +0100
-
-    dm-integrity: align the outgoing bio in integrity_recheck
-    
-    [ Upstream commit b4d78cfeb30476239cf08f4f40afc095c173d6e3 ]
-    
-    It is possible to set up dm-integrity with smaller sector size than
-    the logical sector size of the underlying device. In this situation,
-    dm-integrity guarantees that the outgoing bios have the same alignment as
-    incoming bios (so, if you create a filesystem with 4k block size,
-    dm-integrity would send 4k-aligned bios to the underlying device).
-    
-    This guarantee was broken when integrity_recheck was implemented.
-    integrity_recheck sends bio that is aligned to ic->sectors_per_block. So
-    if we set up integrity with 512-byte sector size on a device with logical
-    block size 4k, we would be sending unaligned bio. This triggered a bug in
-    one of our internal tests.
-    
-    This commit fixes it by determining the actual alignment of the
-    incoming bio and then makes sure that the outgoing bio in
-    integrity_recheck has the same alignment.
-    
-    Fixes: c88f5e553fe3 ("dm-integrity: recheck the integrity tag after a failure")
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-    Signed-off-by: Sasha Levin <sashal@kernel.org>
-
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index aff818eb31fbb..9c9e2b50c63c3 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -1709,7 +1709,6 @@ static noinline void integrity_recheck(struct dm_integrity_io *dio, char *checks
- 	struct bio_vec bv;
- 	sector_t sector, logical_sector, area, offset;
- 	struct page *page;
--	void *buffer;
- 
- 	get_area_and_offset(ic, dio->range.logical_sector, &area, &offset);
- 	dio->metadata_block = get_metadata_sector_and_offset(ic, area, offset,
-@@ -1718,13 +1717,14 @@ static noinline void integrity_recheck(struct dm_integrity_io *dio, char *checks
- 	logical_sector = dio->range.logical_sector;
- 
- 	page = mempool_alloc(&ic->recheck_pool, GFP_NOIO);
--	buffer = page_to_virt(page);
- 
- 	__bio_for_each_segment(bv, bio, iter, dio->bio_details.bi_iter) {
- 		unsigned pos = 0;
- 
- 		do {
-+			sector_t alignment;
- 			char *mem;
-+			char *buffer = page_to_virt(page);
- 			int r;
- 			struct dm_io_request io_req;
- 			struct dm_io_region io_loc;
-@@ -1737,6 +1737,14 @@ static noinline void integrity_recheck(struct dm_integrity_io *dio, char *checks
- 			io_loc.sector = sector;
- 			io_loc.count = ic->sectors_per_block;
- 
-+			/* Align the bio to logical block size */
-+			alignment = dio->range.logical_sector | bio_sectors(bio) | (PAGE_SIZE >> SECTOR_SHIFT);
-+			alignment &= -alignment;
-+			io_loc.sector = round_down(io_loc.sector, alignment);
-+			io_loc.count += sector - io_loc.sector;
-+			buffer += (sector - io_loc.sector) << SECTOR_SHIFT;
-+			io_loc.count = round_up(io_loc.count, alignment);
-+
- 			r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
- 			if (unlikely(r)) {
- 				dio->bi_status = errno_to_blk_status(r);
