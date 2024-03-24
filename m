@@ -1,54 +1,56 @@
-Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com [209.85.208.53])
+Received: from mail-ej1-f46.google.com (mail-ej1-f46.google.com [209.85.218.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AD62D53F
-	for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 21:13:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09CFADDD2
+	for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 21:13:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711314798; cv=none; b=icMvMMFCA5RtPZsDtqUnhIVEt7veUFHuxo13lLCbBiTWH9nJN/FW4p83qXt9cGu0ySn59ycVJM3nl3k1oi9ZuCeTbDAb6/lNgacRydjdSkoJdi+g7XBzxOqYTrcpFiEMUBW8D3euhQSL5YF7LfYsqUSgpm7Pyf+2OzCnF/SfnbM=
+	t=1711314799; cv=none; b=EK4Qg9uDzt3VTI9huCBj3sPmOV05UvLEvaQrGehVt+vbU/P6xv2ePb/cIBN+Sp2jo4YcbYNYsl3rgaY3GUeiCcGEjgsFZtpf/Cs7C/3uioEtYtKI7gcVvJAwfnRXLyC4S2y/816vUxVMfUWh2OE34d2rG6qrW0yiNZhXMoSPJBk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711314798; c=relaxed/simple;
-	bh=Jpp/nNaaXF8Uyw6qKtyfAJ1djeBx8XF3SemDFGydHgY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=YtNmhR5JqahT9VEWfHUf39PE/qIJZiiYG+HnSLAgix+U2VZxwZkvOTkWohpbPb3poaA7fLUQ3WCyQQuvhJIOq9vblJbkc3nQauGhFZvdYIbZUmqFob3+H0teRrAHXL4+gmMEejUUrdv2hZYWnneKpLigz3xk+ummxP0NKTLmPHk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=AwXpQKiY; arc=none smtp.client-ip=209.85.208.53
+	s=arc-20240116; t=1711314799; c=relaxed/simple;
+	bh=GbInGcbEl2WjTsUuVYG3EHtADZEbN/x8V5FqMuayWuE=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=Te4pdWiOAQ9FXAOcaahIUKrDDK48q0tSbJQsQLh7s7ur4x0C+tZXe1RlzzcziFh6mcClm/hSLbBpM7CLwbjtKdSNdBzjlne3b3LO7jFhpIX9pVcFuMr5jEUkISWKBaWWuZMMY/kbUougJZw7jkgpaTLypfi8ys2BAgf6VBMDpC0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Sode4bMB; arc=none smtp.client-ip=209.85.218.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="AwXpQKiY"
-Received: by mail-ed1-f53.google.com with SMTP id 4fb4d7f45d1cf-56890b533aaso4400622a12.3
-        for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 14:13:15 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Sode4bMB"
+Received: by mail-ej1-f46.google.com with SMTP id a640c23a62f3a-a466e53f8c0so494313266b.1
+        for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 14:13:16 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1711314794; x=1711919594; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=b4cHYx5sSThIpoJ/WEBPm1QAvFKmx8KK6A25MgnZTKE=;
-        b=AwXpQKiYkr5Pa7tcoTJsaAuynRw5coKrwcgzlE4EDcjhdAN1NxXjpIMtutd8Faf2cr
-         vKl5WcJUN0BysRiYSzK5nCwucf33Wkt3Vn8LoTuU2zKoYNFvC+Uz++fDpUXQiJPZRo/J
-         fRMatmAAocAjfV5sWBKUaLcwidJVHfzectzJGp/a/wHQjCrlO70CurCWjJy0MtIkWq2u
-         QwZNt56dBHxzEYd5RUfZlePtm5bOHQpoxBqKC4B6EXKkZq5e1gIYfoAvBL/dlkyeRgt0
-         FBJlXvvTvoBa5dvXmmAh4VOHY0zL9utXonI658ikuNdyur4lWg+H/jiozfy+okB4ziOR
-         dr8w==
+        d=suse.com; s=google; t=1711314795; x=1711919595; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=SHqtB0Vhn3BLyWIFx5N2vw0XbOoC7SH5MZHYPTPYdDM=;
+        b=Sode4bMBsexDeGFrsm0EmZYbz21HfmsY2B8aUGDEK5xjpcC4CVcFPqbrFy7af0yYZg
+         oiRCsM747eZ6tMMvqtnAnaksIbACGsb1gWghNodtToe1XMHoBQexQzMojQ0y4gVVLxi8
+         rjxA/jzkztK1h4VcapQRewbTnggDzkaeaneIp+aF0KsoawM29V4vZQx+P0uOEOk92Zqq
+         3lvSn12rCdFASoc96qECLc0Jldv+561XnBISk15o4tfU23ypAm1R7Q43JwE49KNY8dW9
+         KJHVXvK8wj/KyEcNp+pg7ZCHEtHgzxBMWir8sdfymB5fNUJWVAV0wX5fjWdVwU/8Ykvf
+         Tnrw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711314794; x=1711919594;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=b4cHYx5sSThIpoJ/WEBPm1QAvFKmx8KK6A25MgnZTKE=;
-        b=sOsk1Zp1jjf6isW5B1KS668IH7rkvReDzqCFSznOZLmkKkDZk7TJmZmBe1gP2IhO2G
-         GVs1UPn+a96gVBERn/H+DQ5l7qa5ButqwvFl77ewRKjNQ9KqagwiQVxkIIaCqjlHwsbM
-         BmXdFiLX7IGfyAQjOvWb1et52ceH/4uGl3MwqtFN6cYL9xYPAIBbIgqc23s+g276Cn2a
-         BiagrqB1BHOtAOOgspCO+kTlx6hfKs9zX/CC0x3w9QT4mG9kogLWqhfYQqxTBD+SC91Z
-         U0Ypy7l2aEuGNfH/wEZXmzSyjECZoxmlgOOudj63HRjeYbW8/w6CfjqJy4SDmvmyo9wU
-         7PNQ==
-X-Gm-Message-State: AOJu0YwCWvI89Fg+TFT4ec6Awur+vDLT56haEhQ46iTQfblXbYtYqC6t
-	z8v6UceUmpoazxuambmi0pZM/qYuHToIOLGyolnuSWseyrXSUJo9vrHgF9QUvMI=
-X-Google-Smtp-Source: AGHT+IGLdJOSX/A6hVE6LkgMHLEDYydOP4IZWGfN0XnShkHzFyDkqocX1F9Gr7juNZKBumKH4QXYDw==
-X-Received: by 2002:a50:9ecc:0:b0:566:ab45:e6c5 with SMTP id a70-20020a509ecc000000b00566ab45e6c5mr3600643edf.28.1711314794431;
-        Sun, 24 Mar 2024 14:13:14 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1711314795; x=1711919595;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=SHqtB0Vhn3BLyWIFx5N2vw0XbOoC7SH5MZHYPTPYdDM=;
+        b=rtajRq9tHcYxE0St+GhSMtTVdeC9GKDkl9osYTe6ufFpB2Z6Wz1LUaM+lgIbJy7H1O
+         K626KFAekB1oGrdWQNwM5+myc+4db0L4QUpce5a9NqDn7V4KPZ56N4II5fjnoSXyP0ke
+         MDgWhM6czt3t0RqD9ZuHXKb+3ApFXOPIEfysRQMCNFUuAAkcHwlUHzGMAkT3FprTspAO
+         H2Wovqqd2duLMixUKIdJvdfh9JUxYBXB+NMOQWKxwJjHVIcTnlXGfDETC0dvkp9XwZKj
+         5XV04xKhEsjPX/S3odbwQs/eqfJ/YKcHUgL3IYUlwCgBGmk7VzdtnUyayrMIkwEcjx/4
+         4mdA==
+X-Gm-Message-State: AOJu0Yx//DrRWGET7394+sfTdgD9YVdYVvMkkutom5erXbR6SvZ/Qs97
+	OqCIVzQeFAfbJBoNUVyTdSVviLWRp7eBO+U7Bey+IOTwH1+z2oZKOrKPJ7p2rEg=
+X-Google-Smtp-Source: AGHT+IG78x7Q8Q7OhlbLhUJc5lQz8PVssW7MOU1JTYMEMKBdIVuvyFXsGG24rydWD/XaXiFl3+fWOg==
+X-Received: by 2002:a17:907:970f:b0:a47:4293:947f with SMTP id jg15-20020a170907970f00b00a474293947fmr3996613ejc.8.1711314795245;
+        Sun, 24 Mar 2024 14:13:15 -0700 (PDT)
 Received: from localhost (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
-        by smtp.gmail.com with UTF8SMTPSA id b23-20020a056402139700b0056c0d96e099sm462192edv.89.2024.03.24.14.13.14
+        by smtp.gmail.com with UTF8SMTPSA id j24-20020a17090643d800b00a4672fb2a03sm2360935ejn.10.2024.03.24.14.13.14
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 24 Mar 2024 14:13:14 -0700 (PDT)
+        Sun, 24 Mar 2024 14:13:15 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -56,10 +58,12 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 Cc: dm-devel@lists.linux.dev,
 	Peter Rajnoha <prajnoha@redhat.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 00/11] multipath udev rules changes for dm rules V3
-Date: Sun, 24 Mar 2024 22:12:50 +0100
-Message-ID: <20240324211301.7200-1-mwilck@suse.com>
+Subject: [PATCH 01/11] 11-dm-mpath.rules: don't set MPATH_DEVICE_READY=0 for suspended devices
+Date: Sun, 24 Mar 2024 22:12:51 +0100
+Message-ID: <20240324211301.7200-2-mwilck@suse.com>
 X-Mailer: git-send-email 2.43.2
+In-Reply-To: <20240324211301.7200-1-mwilck@suse.com>
+References: <20240324211301.7200-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -68,31 +72,30 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This patch set adapts the multipath rules to the pending changes
-for device mapper rules that update DM_UDEV_RULES_VSN to 3, and
-applies some additional clean-ups to the rules files.
+MPATH_DEVICE_READY is an internal property, not to be consumed by
+later rules. It means that there are no usable paths. Being suspended
+is a different, independent property of a map.
 
-Comments welcome.
+Don't set MPATH_DEVICE_READY=0 for suspended devices.
 
-Martin Wilck (11):
-  11-dm-mpath.rules: don't set MPATH_DEVICE_READY=0 for suspended
-    devices
-  11-dm-mpath.rules: don't import DM_NOSCAN from udev db
-  11-dm-mpath.rules: don't import ID_FS_VERSION from udev db
-  11-dm-mpath.rules: adapt MPATH_DEVICE_READY=0 logic to 10-dm.rules
-    update
-  11-dm-mpath.rules: adapt coldplug event handling ro 10-dm.rules update
-  11-dm-mpath.rules: don't import properties with new 13-dm-disk.rules
-  11-dm-mpath.rules: replace DM_SUSPENDED by .DM_SUSPENDED
-  11-dm-mpath.rules: replace DM_NOSCAN by .DM_NOSCAN
-  11-dm-mpath.rules: simplify PATH_FAILED case
-  11-dm-mpath.rules: make label names more intuitive
-  kpartx.rules: ignore DM_SUSPENDED
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipath/11-dm-mpath.rules.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
- kpartx/kpartx.rules            |  2 +-
- multipath/11-dm-mpath.rules.in | 84 ++++++++++++++++++++--------------
- 2 files changed, 50 insertions(+), 36 deletions(-)
-
+diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
+index d9585ab..3f23108 100644
+--- a/multipath/11-dm-mpath.rules.in
++++ b/multipath/11-dm-mpath.rules.in
+@@ -100,7 +100,7 @@ ENV{MPATH_DEVICE_READY}=="0", \
+ # we have to postpone the activation until the next event.
+ ENV{MPATH_DEVICE_READY}=="0", GOTO="dont_activate"
+ ENV{.MPATH_DEVICE_READY_OLD}!="0", GOTO="dont_activate"
+-ENV{DM_SUSPENDED}=="1", ENV{MPATH_DEVICE_READY}="0", GOTO="dont_activate"
++ENV{DM_SUSPENDED}=="1", GOTO="dont_activate"
+ 
+ ENV{DM_ACTIVATION}="1", ENV{MPATH_UNCHANGED}="0"
+ LABEL="dont_activate"
 -- 
 2.43.2
 
