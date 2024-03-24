@@ -1,39 +1,40 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4701225A6;
-	Sun, 24 Mar 2024 18:19:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C98E25543;
+	Sun, 24 Mar 2024 18:20:41 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711304378; cv=none; b=qVOgvdpmg7d05ChHF4s1ZeviUzE7YrfqvNB4qaTIvtt8YpcIo/zMBPUr9/pTsSxQuXRREtpTuIu63QJtjtIhuJyB3w07kpCNaimEoLDULM4ABhW+hjx3GxtOSEikHsqmCmMjnxnH6AO2sCxZRzmthNpjtV/FmQh16tcWGh7utCE=
+	t=1711304442; cv=none; b=bjpRBX8Y2F6+Zg8KjTKMyG8Sc0oHYfZ5v7qobiPpRZO4yzgnQpL8d0fr2RJQGNexrHmStujRnXLigWm+ZGpgPjZAoNSA2gDROLuRSBtATng7dcFGNBHx6LVJ9OVHUOTkbbcMTddLIe6BY1ve+sUGMgGyoyzlBymtpux+oHg/Ycs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711304378; c=relaxed/simple;
-	bh=BhNL/Evr3WyN9wkTHYuELdqnzMJFpMrJEIlG5ceO/Jk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Wq2kK3Rz7bDe6PKJZ28xBFA7sSGQcZJnkQwOwDZzytzugO0RUf5jqUHNI0WXcAxlgkTBwgQPdR/O93c8jgSoUkbGwZ8HLrikNCgag/+cK7gNnUFk72+sOEX4ObXWMr74sodbBcP89KtzXInS/zxy1/UTxPQ5fcsfP7sxNKuN2jE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DL1nylpu; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711304442; c=relaxed/simple;
+	bh=fbiUk9xgb3Ac4RVIp/55qCLbdGpMu5BTS4XmfOpm4pc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=rwPTkwDRTlyYKHYJUauFmHxwH3VNBSQIDRSyCzy3Qbf5HfKBX5J+uRZmp2rGOR+oVtPRiwV/k6CQrXfCvNb0z5Ct+OHEL9MKzGodg9PLgixQQkNY0Bk8V6uq2kRYt1+XSSCgXy+uTRpTPhwSHWewS5p4t23aBOezcPwqAo8kZiQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MJmWxZEZ; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DL1nylpu"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 154F7C433C7;
-	Sun, 24 Mar 2024 18:19:37 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MJmWxZEZ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1F80DC433F1;
+	Sun, 24 Mar 2024 18:20:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711304378;
-	bh=BhNL/Evr3WyN9wkTHYuELdqnzMJFpMrJEIlG5ceO/Jk=;
+	s=k20201202; t=1711304441;
+	bh=fbiUk9xgb3Ac4RVIp/55qCLbdGpMu5BTS4XmfOpm4pc=;
 	h=From:To:Cc:Subject:Date:From;
-	b=DL1nylpuCgfakAHYfK37ZpgS5YygUkP+8vnwJFaF1n0gdHGinUz+tMxfOpIs1Govh
-	 4n+YLL2gNWdyvkDHYMFZC/0DT0ZwFhl1OxVy+ZLsdroY/EQKt1Q26q6mpNn1lefsab
-	 qbXMV5x1T9kKmNNPK614xRBe/s6P52kvFAEsiUyenpLwgkcdopcryMi/Dz0R/Xuwkw
-	 7g8/r5yANTsBTtpt410afrukVHxXWI0wQUfItC07+87+btGyUdLCMGSVjxJnU0Ra2C
-	 tPGdOh+8V6kAfUIuJblHOXhY3xFPIVSWyYb882EOIbi3dON7N+6jdeojCfJDd2Ngzj
-	 uCrfZ56Xj6gkA==
+	b=MJmWxZEZYfLJTlMQGg3YRGuAsSuCgcnoAE0/o/kZxb/RkD7d53V6Gv+VuPOD/t5LH
+	 vZAlnRK0WFuEr9ov8Eqsyd1ZJihjnFhwb5cYr/q5cVEiy4+mf0I3ETMG+vA1/Zz9EY
+	 wQA2ol37d8NnIsnRgYmTN6fdO5fna9zTubO6XPVJ7b74qPsoUQm1hmJtmdyIf4cK8C
+	 paW7HJ80Vsgh/HSL9n3lCLmpthnmaigGu0zl+4awSSFOHy/0CiTOHItzFy3Y5xdvMR
+	 46q3bDwNzOUhnALXPqPpqOkLLfXZKhv69GLNuXEWZ6EFtuME1CfkaUpONKDqWQMIEH
+	 +66tFuzpSUAmQ==
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
-	mpatocka@redhat.com
+	hongyu.jin@unisoc.com
 Cc: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
 	dm-devel@lists.linux.dev
-Subject: Patch "dm-integrity: fix a memory leak when rechecking the data" has been added to the 6.7-stable tree
-Date: Sun, 24 Mar 2024 14:19:37 -0400
-Message-ID: <20240324181937.642861-1-sashal@kernel.org>
+Subject: Patch "dm io: Support IO priority" has been added to the 6.7-stable tree
+Date: Sun, 24 Mar 2024 14:20:39 -0400
+Message-ID: <20240324182040.643850-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -47,13 +48,13 @@ Content-Transfer-Encoding: 8bit
 
 This is a note to let you know that I've just added the patch titled
 
-    dm-integrity: fix a memory leak when rechecking the data
+    dm io: Support IO priority
 
 to the 6.7-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
-     dm-integrity-fix-a-memory-leak-when-rechecking-the-d.patch
+     dm-io-support-io-priority.patch
 and it can be found in the queue-6.7 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
@@ -61,43 +62,373 @@ please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 22554ed2b958dd9fec6ba88da1a3f976d03373cf
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Mon Mar 18 18:35:06 2024 +0100
+commit a1fa63eef9da3f5a5e4ee3d8b8000e0641492784
+Author: Hongyu Jin <hongyu.jin@unisoc.com>
+Date:   Wed Jan 24 13:35:53 2024 +0800
 
-    dm-integrity: fix a memory leak when rechecking the data
+    dm io: Support IO priority
     
-    [ Upstream commit 55e565c42dce81a4e49c13262d5bc4eb4c2e588a ]
+    [ Upstream commit 6e5f0f6383b4896c7e9b943d84b136149d0f45e9 ]
     
-    Memory for the "checksums" pointer will leak if the data is rechecked
-    after checksum failure (because the associated kfree won't happen due
-    to 'goto skip_io').
+    Some IO will dispatch from kworker with different io_context settings
+    than the submitting task, we may need to specify a priority to avoid
+    losing priority.
     
-    Fix this by freeing the checksums memory before recheck, and just use
-    the "checksum_onstack" memory for storing checksum during recheck.
+    Add IO priority parameter to dm_io() and update all callers.
     
-    Fixes: c88f5e553fe3 ("dm-integrity: recheck the integrity tag after a failure")
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+    Co-developed-by: Yibin Ding <yibin.ding@unisoc.com>
+    Signed-off-by: Yibin Ding <yibin.ding@unisoc.com>
+    Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
+    Reviewed-by: Eric Biggers <ebiggers@google.com>
+    Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
     Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+    Stable-dep-of: b4d78cfeb304 ("dm-integrity: align the outgoing bio in integrity_recheck")
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index f03d7dba270c5..4f2808ef387f6 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -1315,7 +1315,7 @@ static void use_dmio(struct dm_buffer *b, enum req_op op, sector_t sector,
+ 		io_req.mem.ptr.vma = (char *)b->data + offset;
+ 	}
+ 
+-	r = dm_io(&io_req, 1, &region, NULL);
++	r = dm_io(&io_req, 1, &region, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		b->end_io(b, errno_to_blk_status(r));
+ }
+@@ -2167,7 +2167,7 @@ int dm_bufio_issue_flush(struct dm_bufio_client *c)
+ 	if (WARN_ON_ONCE(dm_bufio_in_request()))
+ 		return -EINVAL;
+ 
+-	return dm_io(&io_req, 1, &io_reg, NULL);
++	return dm_io(&io_req, 1, &io_reg, NULL, IOPRIO_DEFAULT);
+ }
+ EXPORT_SYMBOL_GPL(dm_bufio_issue_flush);
+ 
+@@ -2191,7 +2191,7 @@ int dm_bufio_issue_discard(struct dm_bufio_client *c, sector_t block, sector_t c
+ 	if (WARN_ON_ONCE(dm_bufio_in_request()))
+ 		return -EINVAL; /* discards are optional */
+ 
+-	return dm_io(&io_req, 1, &io_reg, NULL);
++	return dm_io(&io_req, 1, &io_reg, NULL, IOPRIO_DEFAULT);
+ }
+ EXPORT_SYMBOL_GPL(dm_bufio_issue_discard);
+ 
 diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index e8e8fc33d3440..cc834c8423bcf 100644
+index cc834c8423bcf..ec8df735077fe 100644
 --- a/drivers/md/dm-integrity.c
 +++ b/drivers/md/dm-integrity.c
-@@ -1848,12 +1848,12 @@ static void integrity_metadata(struct work_struct *w)
- 			r = dm_integrity_rw_tag(ic, checksums, &dio->metadata_block, &dio->metadata_offset,
- 						checksums_ptr - checksums, dio->op == REQ_OP_READ ? TAG_CMP : TAG_WRITE);
- 			if (unlikely(r)) {
-+				if (likely(checksums != checksums_onstack))
-+					kfree(checksums);
- 				if (r > 0) {
--					integrity_recheck(dio, checksums);
-+					integrity_recheck(dio, checksums_onstack);
- 					goto skip_io;
- 				}
--				if (likely(checksums != checksums_onstack))
--					kfree(checksums);
- 				goto error;
- 			}
+@@ -555,7 +555,7 @@ static int sync_rw_sb(struct dm_integrity_c *ic, blk_opf_t opf)
+ 		}
+ 	}
  
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		return r;
+ 
+@@ -1073,7 +1073,7 @@ static void rw_journal_sectors(struct dm_integrity_c *ic, blk_opf_t opf,
+ 	io_loc.sector = ic->start + SB_SECTORS + sector;
+ 	io_loc.count = n_sectors;
+ 
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r)) {
+ 		dm_integrity_io_error(ic, (opf & REQ_OP_MASK) == REQ_OP_READ ?
+ 				      "reading journal" : "writing journal", r);
+@@ -1190,7 +1190,7 @@ static void copy_from_journal(struct dm_integrity_c *ic, unsigned int section, u
+ 	io_loc.sector = target;
+ 	io_loc.count = n_sectors;
+ 
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r)) {
+ 		WARN_ONCE(1, "asynchronous dm_io failed: %d", r);
+ 		fn(-1UL, data);
+@@ -1519,7 +1519,7 @@ static void dm_integrity_flush_buffers(struct dm_integrity_c *ic, bool flush_dat
+ 		fr.io_reg.count = 0,
+ 		fr.ic = ic;
+ 		init_completion(&fr.comp);
+-		r = dm_io(&fr.io_req, 1, &fr.io_reg, NULL);
++		r = dm_io(&fr.io_req, 1, &fr.io_reg, NULL, IOPRIO_DEFAULT);
+ 		BUG_ON(r);
+ 	}
+ 
+@@ -1727,7 +1727,7 @@ static noinline void integrity_recheck(struct dm_integrity_io *dio, char *checks
+ 			io_loc.sector = sector;
+ 			io_loc.count = ic->sectors_per_block;
+ 
+-			r = dm_io(&io_req, 1, &io_loc, NULL);
++			r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 			if (unlikely(r)) {
+ 				dio->bi_status = errno_to_blk_status(r);
+ 				goto free_ret;
+@@ -2806,7 +2806,7 @@ static void integrity_recalc(struct work_struct *w)
+ 	io_loc.sector = get_data_sector(ic, area, offset);
+ 	io_loc.count = n_sectors;
+ 
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r)) {
+ 		dm_integrity_io_error(ic, "reading data", r);
+ 		goto err;
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index f053ce2458147..7409490259d1d 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -305,7 +305,7 @@ static void km_dp_init(struct dpages *dp, void *data)
+  */
+ static void do_region(const blk_opf_t opf, unsigned int region,
+ 		      struct dm_io_region *where, struct dpages *dp,
+-		      struct io *io)
++		      struct io *io, unsigned short ioprio)
+ {
+ 	struct bio *bio;
+ 	struct page *page;
+@@ -354,6 +354,7 @@ static void do_region(const blk_opf_t opf, unsigned int region,
+ 				       &io->client->bios);
+ 		bio->bi_iter.bi_sector = where->sector + (where->count - remaining);
+ 		bio->bi_end_io = endio;
++		bio->bi_ioprio = ioprio;
+ 		store_io_and_region_in_bio(bio, io, region);
+ 
+ 		if (op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES) {
+@@ -383,7 +384,7 @@ static void do_region(const blk_opf_t opf, unsigned int region,
+ 
+ static void dispatch_io(blk_opf_t opf, unsigned int num_regions,
+ 			struct dm_io_region *where, struct dpages *dp,
+-			struct io *io, int sync)
++			struct io *io, int sync, unsigned short ioprio)
+ {
+ 	int i;
+ 	struct dpages old_pages = *dp;
+@@ -400,7 +401,7 @@ static void dispatch_io(blk_opf_t opf, unsigned int num_regions,
+ 	for (i = 0; i < num_regions; i++) {
+ 		*dp = old_pages;
+ 		if (where[i].count || (opf & REQ_PREFLUSH))
+-			do_region(opf, i, where + i, dp, io);
++			do_region(opf, i, where + i, dp, io, ioprio);
+ 	}
+ 
+ 	/*
+@@ -425,7 +426,7 @@ static void sync_io_complete(unsigned long error, void *context)
+ 
+ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 		   struct dm_io_region *where, blk_opf_t opf, struct dpages *dp,
+-		   unsigned long *error_bits)
++		   unsigned long *error_bits, unsigned short ioprio)
+ {
+ 	struct io *io;
+ 	struct sync_io sio;
+@@ -447,7 +448,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
+-	dispatch_io(opf, num_regions, where, dp, io, 1);
++	dispatch_io(opf, num_regions, where, dp, io, 1, ioprio);
+ 
+ 	wait_for_completion_io(&sio.wait);
+ 
+@@ -459,7 +460,8 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
+ 
+ static int async_io(struct dm_io_client *client, unsigned int num_regions,
+ 		    struct dm_io_region *where, blk_opf_t opf,
+-		    struct dpages *dp, io_notify_fn fn, void *context)
++		    struct dpages *dp, io_notify_fn fn, void *context,
++		    unsigned short ioprio)
+ {
+ 	struct io *io;
+ 
+@@ -479,7 +481,7 @@ static int async_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+ 
+-	dispatch_io(opf, num_regions, where, dp, io, 0);
++	dispatch_io(opf, num_regions, where, dp, io, 0, ioprio);
+ 	return 0;
+ }
+ 
+@@ -521,7 +523,8 @@ static int dp_init(struct dm_io_request *io_req, struct dpages *dp,
+ }
+ 
+ int dm_io(struct dm_io_request *io_req, unsigned int num_regions,
+-	  struct dm_io_region *where, unsigned long *sync_error_bits)
++	  struct dm_io_region *where, unsigned long *sync_error_bits,
++	  unsigned short ioprio)
+ {
+ 	int r;
+ 	struct dpages dp;
+@@ -532,11 +535,11 @@ int dm_io(struct dm_io_request *io_req, unsigned int num_regions,
+ 
+ 	if (!io_req->notify.fn)
+ 		return sync_io(io_req->client, num_regions, where,
+-			       io_req->bi_opf, &dp, sync_error_bits);
++			       io_req->bi_opf, &dp, sync_error_bits, ioprio);
+ 
+ 	return async_io(io_req->client, num_regions, where,
+ 			io_req->bi_opf, &dp, io_req->notify.fn,
+-			io_req->notify.context);
++			io_req->notify.context, ioprio);
+ }
+ EXPORT_SYMBOL(dm_io);
+ 
+diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
+index d01807c50f20b..79c65c9ad5fa8 100644
+--- a/drivers/md/dm-kcopyd.c
++++ b/drivers/md/dm-kcopyd.c
+@@ -578,9 +578,9 @@ static int run_io_job(struct kcopyd_job *job)
+ 	io_job_start(job->kc->throttle);
+ 
+ 	if (job->op == REQ_OP_READ)
+-		r = dm_io(&io_req, 1, &job->source, NULL);
++		r = dm_io(&io_req, 1, &job->source, NULL, IOPRIO_DEFAULT);
+ 	else
+-		r = dm_io(&io_req, job->num_dests, job->dests, NULL);
++		r = dm_io(&io_req, job->num_dests, job->dests, NULL, IOPRIO_DEFAULT);
+ 
+ 	return r;
+ }
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index f9f84236dfcd7..f7f9c2100937b 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -300,7 +300,7 @@ static int rw_header(struct log_c *lc, enum req_op op)
+ {
+ 	lc->io_req.bi_opf = op;
+ 
+-	return dm_io(&lc->io_req, 1, &lc->header_location, NULL);
++	return dm_io(&lc->io_req, 1, &lc->header_location, NULL, IOPRIO_DEFAULT);
+ }
+ 
+ static int flush_header(struct log_c *lc)
+@@ -313,7 +313,7 @@ static int flush_header(struct log_c *lc)
+ 
+ 	lc->io_req.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
+ 
+-	return dm_io(&lc->io_req, 1, &null_location, NULL);
++	return dm_io(&lc->io_req, 1, &null_location, NULL, IOPRIO_DEFAULT);
+ }
+ 
+ static int read_header(struct log_c *log)
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index ddcb2bc4a6179..9511dae5b556a 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -278,7 +278,7 @@ static int mirror_flush(struct dm_target *ti)
+ 	}
+ 
+ 	error_bits = -1;
+-	dm_io(&io_req, ms->nr_mirrors, io, &error_bits);
++	dm_io(&io_req, ms->nr_mirrors, io, &error_bits, IOPRIO_DEFAULT);
+ 	if (unlikely(error_bits != 0)) {
+ 		for (i = 0; i < ms->nr_mirrors; i++)
+ 			if (test_bit(i, &error_bits))
+@@ -554,7 +554,7 @@ static void read_async_bio(struct mirror *m, struct bio *bio)
+ 
+ 	map_region(&io, m, bio);
+ 	bio_set_m(bio, m);
+-	BUG_ON(dm_io(&io_req, 1, &io, NULL));
++	BUG_ON(dm_io(&io_req, 1, &io, NULL, IOPRIO_DEFAULT));
+ }
+ 
+ static inline int region_in_sync(struct mirror_set *ms, region_t region,
+@@ -681,7 +681,7 @@ static void do_write(struct mirror_set *ms, struct bio *bio)
+ 	 */
+ 	bio_set_m(bio, get_default_mirror(ms));
+ 
+-	BUG_ON(dm_io(&io_req, ms->nr_mirrors, io, NULL));
++	BUG_ON(dm_io(&io_req, ms->nr_mirrors, io, NULL, IOPRIO_DEFAULT));
+ }
+ 
+ static void do_writes(struct mirror_set *ms, struct bio_list *writes)
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index 15649921f2a9b..568d10842b1f4 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -223,7 +223,7 @@ static void do_metadata(struct work_struct *work)
+ {
+ 	struct mdata_req *req = container_of(work, struct mdata_req, work);
+ 
+-	req->result = dm_io(req->io_req, 1, req->where, NULL);
++	req->result = dm_io(req->io_req, 1, req->where, NULL, IOPRIO_DEFAULT);
+ }
+ 
+ /*
+@@ -247,7 +247,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, blk_opf_t opf,
+ 	struct mdata_req req;
+ 
+ 	if (!metadata)
+-		return dm_io(&io_req, 1, &where, NULL);
++		return dm_io(&io_req, 1, &where, NULL, IOPRIO_DEFAULT);
+ 
+ 	req.where = &where;
+ 	req.io_req = &io_req;
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 7b620b187da90..49e4a35d70196 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -511,7 +511,7 @@ static noinline int verity_recheck(struct dm_verity *v, struct dm_verity_io *io,
+ 	io_loc.bdev = v->data_dev->bdev;
+ 	io_loc.sector = cur_block << (v->data_dev_block_bits - SECTOR_SHIFT);
+ 	io_loc.count = 1 << (v->data_dev_block_bits - SECTOR_SHIFT);
+-	r = dm_io(&io_req, 1, &io_loc, NULL);
++	r = dm_io(&io_req, 1, &io_loc, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		goto free_ret;
+ 
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 074cb785eafc1..6a4279bfb1e77 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -531,7 +531,7 @@ static void ssd_commit_flushed(struct dm_writecache *wc, bool wait_for_ios)
+ 		req.notify.context = &endio;
+ 
+ 		/* writing via async dm-io (implied by notify.fn above) won't return an error */
+-		(void) dm_io(&req, 1, &region, NULL);
++		(void) dm_io(&req, 1, &region, NULL, IOPRIO_DEFAULT);
+ 		i = j;
+ 	}
+ 
+@@ -568,7 +568,7 @@ static void ssd_commit_superblock(struct dm_writecache *wc)
+ 	req.notify.fn = NULL;
+ 	req.notify.context = NULL;
+ 
+-	r = dm_io(&req, 1, &region, NULL);
++	r = dm_io(&req, 1, &region, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		writecache_error(wc, r, "error writing superblock");
+ }
+@@ -596,7 +596,7 @@ static void writecache_disk_flush(struct dm_writecache *wc, struct dm_dev *dev)
+ 	req.client = wc->dm_io;
+ 	req.notify.fn = NULL;
+ 
+-	r = dm_io(&req, 1, &region, NULL);
++	r = dm_io(&req, 1, &region, NULL, IOPRIO_DEFAULT);
+ 	if (unlikely(r))
+ 		writecache_error(wc, r, "error flushing metadata: %d", r);
+ }
+@@ -990,7 +990,7 @@ static int writecache_read_metadata(struct dm_writecache *wc, sector_t n_sectors
+ 	req.client = wc->dm_io;
+ 	req.notify.fn = NULL;
+ 
+-	return dm_io(&req, 1, &region, NULL);
++	return dm_io(&req, 1, &region, NULL, IOPRIO_DEFAULT);
+ }
+ 
+ static void writecache_resume(struct dm_target *ti)
+diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
+index 7595142f3fc57..7b2968612b7e6 100644
+--- a/include/linux/dm-io.h
++++ b/include/linux/dm-io.h
+@@ -80,7 +80,8 @@ void dm_io_client_destroy(struct dm_io_client *client);
+  * error occurred doing io to the corresponding region.
+  */
+ int dm_io(struct dm_io_request *io_req, unsigned int num_regions,
+-	  struct dm_io_region *region, unsigned int long *sync_error_bits);
++	  struct dm_io_region *region, unsigned int long *sync_error_bits,
++	  unsigned short ioprio);
+ 
+ #endif	/* __KERNEL__ */
+ #endif	/* _LINUX_DM_IO_H */
