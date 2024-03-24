@@ -1,55 +1,54 @@
-Received: from mail-ed1-f47.google.com (mail-ed1-f47.google.com [209.85.208.47])
+Received: from mail-lf1-f52.google.com (mail-lf1-f52.google.com [209.85.167.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D699519474
-	for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 21:13:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D98CD1C68C
+	for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 21:13:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711314801; cv=none; b=m+03AembZ2T8wKd2+8rlNSX4kmxfBtcPAYyCi6DZCZ2PRI/IdwsMFrvVkkTCoxAClQ8NCydmCpvxPhsa6h/E5h874Utbn2HNHV5SQNYpQ6ZqxBmDg3rRDPS/R3vRUCmeUImG1cZ6yK0STov8ICx5xIJX+2fzrrzbjxomLZtuqDw=
+	t=1711314802; cv=none; b=NeygExw2jw9Os+3Zbc4il2MdgJehm2kjvmchNOH5/cCXHkLSGyEHmV/erv0phsKLQxJDNIxjU4BwbFN9Vwvo6rh8OzS+s6oqgjTwGvcAJKzO1oTJOKjZnxJ2FvFZECvuW1JU3ICKSiyjQmz33c5Yh1D1BSwAAChpZluJ/1ubaRQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711314801; c=relaxed/simple;
-	bh=oIeg36BZGyWFQlb4uvr9FT8zh3xv7QCBjhCha5tE3X0=;
+	s=arc-20240116; t=1711314802; c=relaxed/simple;
+	bh=aQDtUsqSZDks++4+4aVm/1r5e9E2S1/AkkV1vciiQ9Q=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=W9U4ALndAAPkKBG9fI3iCqsK8HSPn3e/oA851Efrjya2pEl5z/KDVOZyH/6AqtVU5Yfa103N0Bsxc7IMVY2SYJ1/o/rFi3h9GRKasaMrQ9us2ivi/J0MDpKckHvVgbCgAPjYFuTJtOIVe0vr9Q7ps5dE6CrogQvos05mjo70MUI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=FL28Jt7o; arc=none smtp.client-ip=209.85.208.47
+	 MIME-Version; b=NbhH7dp02ezl7oGVpf6BaTGNaEiO+m+HmSCJJFltZNlQKNNpiZrkicloZTp4fmjT62ov4N8u9rLY3SzPH2Fsukwd1MLvx+XNsFjEcGw9w/yZcQ4jULDVfekbrylX7DTP6rIpIx5trx+jI08QYmt2MH+0dzS0oF8scvr+In8yEdg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=c2w3R+Wg; arc=none smtp.client-ip=209.85.167.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="FL28Jt7o"
-Received: by mail-ed1-f47.google.com with SMTP id 4fb4d7f45d1cf-56bc5a3aeb9so4831525a12.3
-        for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 14:13:18 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="c2w3R+Wg"
+Received: by mail-lf1-f52.google.com with SMTP id 2adb3069b0e04-513cf9bacf1so5099046e87.0
+        for <dm-devel@lists.linux.dev>; Sun, 24 Mar 2024 14:13:19 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1711314797; x=1711919597; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1711314798; x=1711919598; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=I+roRKIT+rmyk5lYzFroLZzmLMHajsWjyNJ3YXFmuPY=;
-        b=FL28Jt7olY9HuGl8vIlUsKqXgs0oB5fS8LvxksDXc4v0boEaC5gHDf3AK8sfxWSAni
-         XC4FWvXC8v4VgTxgVGku+WlObwyc6EPfHJN4zoRXmaB1GIWIDB0B/0wm8vUFkbxPrzKr
-         pChXxqArqGPM6kev7omB22KqT3Z6F2z6WcS3QlDfxos4XImGXfE4LXZZ3H5pdXPaN9Jq
-         MldRNK37Gt+xP0X6BySR7lH89hCqAjRjsWnKeA1Jzuxe2zS8I+qHC40avzDwACV4YG05
-         qRJvj4fWztUGz3h9ds8WZQ97TYykv2XneKR8JEi5FpmEO55BoOhwzdLj8Pp+lLbjzEkS
-         izZA==
+        bh=GnLimJrGXje3zkfwDU/rSbqICbGjFslBIN92J2rU9dY=;
+        b=c2w3R+WgPSJdCkATfGE4Pk75KjHlLZHzMgP0PhdXepQzfwcay/XpDo/eXwhN4GI68y
+         nIiCUfawmPPMavgBszuotowchBQ3h3bRdsFhY0hNDKBrbkN/uDspg4CGENKlKlH9WAUb
+         PSBb0xyZlizEUDnmvhuK1Es14UbVh0vjSDE8h+gO6UyHBYM1ZsFCSlIFImB+1eqmS4Iu
+         eVQCv3fjOBforP/dVCph6KFO8ObanAZT6vqI70H3FbYbUNLWKzO5tWPtZgD+70LOaiaf
+         3T7HWaIjf8ye4jAO38EvoebO5Qt/3mSTaRfK8TEriWc/ugePjrHr7xExwQqsxoqnyht/
+         OwkQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711314797; x=1711919597;
+        d=1e100.net; s=20230601; t=1711314798; x=1711919598;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=I+roRKIT+rmyk5lYzFroLZzmLMHajsWjyNJ3YXFmuPY=;
-        b=X0D1h8Vala0zOicIk/QRPQdSsQgBtHfKtNZnpTnYVD10Xigdk0UNIK03uR7LKuquOl
-         rBJRf1uhqjBw8709KwS5Pxbynn/piDiTEI9w1cWwJzIHYV7kzi2ST3Up/xDYvF8SJB7h
-         dnSJdcmuWFbY/uFXI4o6RGgvZFislBF70L/bcHgjugMQaEv4jihSUtTV7EsZMAEcutdd
-         1JBsQ8z6hvhN+8rBkNkQ5N6/p1X1Of8V3qA89qenVTXrPKP70XxcusiW9OTkrUf+WqLs
-         9Ot5Xepfui4c5duTRcs6WM9ju28BNQe7mJs+tfmVg7xanFAN+/MWhXgJXHmU1sKrHXUm
-         Xs9Q==
-X-Gm-Message-State: AOJu0YyShhpfXSSVBXxGzFr4fKrIY2jZmKV5wVPksi5qQ/Y3DJcqP/I6
-	XMsYIvOAlQjegHPPdFHk2Fw4EHdUzIZgbeyeaGo6uIQR91azIJsTzEYrHOwqwgQpsob/ixxsZa3
-	z
-X-Google-Smtp-Source: AGHT+IHvRIzIceDg6SlJxFtTEWe9L+76MySyFc7Gj9KPZE0yMLRv5QjVczZnbJRAeGjuuOlBmPXX2A==
-X-Received: by 2002:a50:cc97:0:b0:566:2f24:b063 with SMTP id q23-20020a50cc97000000b005662f24b063mr3877208edi.23.1711314797268;
-        Sun, 24 Mar 2024 14:13:17 -0700 (PDT)
+        bh=GnLimJrGXje3zkfwDU/rSbqICbGjFslBIN92J2rU9dY=;
+        b=ofhRNweEY91I/t/BQPsB1ZcljBwjzTBkyI84++UTP7W35yA0NyfBAx100G1PqeopKA
+         qFh6Zh+M+0XpZiYQBY2PDT6hLys+XPaLSGq5pv7fV3qk9MiPk1hMpGyuSUMYuOYhpLLp
+         j6Oto4igvZuoL/fi1ASmgSP7SDDjpfSwRiaCcgxh77SqAHq7jhpuRx1svAEcw6XntncP
+         MVKDFG7Iunb9ARE16OnosYgWqgFZ1dzPgAGjm49rHKlDt95RUGwi7i4eAVLhjet2m3vD
+         xL8ia9hMvz5dlYgYPOew/5YPsOFYeCQjEETPZyG1m0IIBcWm2WNablEOIGd1sZcRrt2h
+         YvWQ==
+X-Gm-Message-State: AOJu0YyOt/aI13HzzKcBUsiA76rUS+UnNMMg7QENw1ti0DETH7x8xygc
+	xz7V8HBVqlS8yNEupN7bBsxZSMyRp7su/F9TQ7x2PmJP7Jr+OmS0U+hK3Wfgf5E=
+X-Google-Smtp-Source: AGHT+IFoGSVASpmtB7DbT1HPO165KnGiWlRkfgW6/4pq0KGwRgNJY2oSY/cSkohgTPOtHSoM1XrVTg==
+X-Received: by 2002:a19:5f5a:0:b0:513:af26:8cd0 with SMTP id a26-20020a195f5a000000b00513af268cd0mr3152972lfj.68.1711314798129;
+        Sun, 24 Mar 2024 14:13:18 -0700 (PDT)
 Received: from localhost (dslb-002-202-118-224.002.202.pools.vodafone-ip.de. [2.202.118.224])
-        by smtp.gmail.com with UTF8SMTPSA id h10-20020a0564020e0a00b00568b6f73491sm2266550edh.14.2024.03.24.14.13.16
+        by smtp.gmail.com with UTF8SMTPSA id pv18-20020a170907209200b00a46cf83216csm2309925ejb.120.2024.03.24.14.13.17
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
         Sun, 24 Mar 2024 14:13:17 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
@@ -59,9 +58,9 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 Cc: dm-devel@lists.linux.dev,
 	Peter Rajnoha <prajnoha@redhat.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 03/11] 11-dm-mpath.rules: don't import ID_FS_VERSION from udev db
-Date: Sun, 24 Mar 2024 22:12:53 +0100
-Message-ID: <20240324211301.7200-4-mwilck@suse.com>
+Subject: [PATCH 04/11] 11-dm-mpath.rules: adapt MPATH_DEVICE_READY=0 logic to 10-dm.rules update
+Date: Sun, 24 Mar 2024 22:12:54 +0100
+Message-ID: <20240324211301.7200-5-mwilck@suse.com>
 X-Mailer: git-send-email 2.43.2
 In-Reply-To: <20240324211301.7200-1-mwilck@suse.com>
 References: <20240324211301.7200-1-mwilck@suse.com>
@@ -73,26 +72,54 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Use the same set of properties to import as 13-dm-disk.rules.
-ID_FS_VERSION isn't used in any udev rule I am aware of.
+With the late patches for 10-dm.rules, DM_UDEV_DISABLE_OTHER_RULES_FLAG isn't
+restored from the udev database any more, so we don't need to restore
+the flag to its original state before it is saved to the db.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/11-dm-mpath.rules.in | 1 -
- 1 file changed, 1 deletion(-)
+ multipath/11-dm-mpath.rules.in | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
 
 diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
-index 11b5adf..5259b86 100644
+index 5259b86..997e3e7 100644
 --- a/multipath/11-dm-mpath.rules.in
 +++ b/multipath/11-dm-mpath.rules.in
-@@ -124,7 +124,6 @@ IMPORT{db}="ID_FS_TYPE"
- IMPORT{db}="ID_FS_USAGE"
- IMPORT{db}="ID_FS_UUID_ENC"
- IMPORT{db}="ID_FS_LABEL_ENC"
--IMPORT{db}="ID_FS_VERSION"
- IMPORT{db}="ID_PART_ENTRY_NAME"
- IMPORT{db}="ID_PART_ENTRY_UUID"
- IMPORT{db}="ID_PART_ENTRY_SCHEME"
+@@ -84,23 +84,25 @@ ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", \
+ 
+ LABEL="force_activation"
+ 
++ENV{MPATH_DEVICE_READY}!="0", GOTO="mpath_is_ready"
+ # Do not initiate scanning if no path is available,
+ # otherwise there would be a hang or IO error on access.
+ # We'd like to avoid this, especially within udev processing.
+-ENV{MPATH_DEVICE_READY}=="0", ENV{DM_NOSCAN}="1"
+-
+-# Skip all foreign rules if no path is available.
++# This is communicated to later rules in DM_NOSCAN.
++# Likewise, skip all foreign rules if no path is available.
+ # Use DM_UDEV_DISABLE_OTHER_RULES_FLAG to communicate this
+-# to upper layers. The original value will be restored in a late
+-# udev rule.
+-ENV{MPATH_DEVICE_READY}=="0", \
+-	ENV{.MPATH_SAVE_DISABLE_OTHER_RULES_FLAG}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}", \
+-	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
++# to upper layers. With dm rules < v3, save the original value here;
++# it will be restored in a late udev rule.
++ENV{DM_UDEV_RULES_VSN}!="3",
++	ENV{.MPATH_SAVE_DISABLE_OTHER_RULES_FLAG}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}"
++ENV{DM_NOSCAN}="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
++GOTO="dont_activate"
++
++LABEL="mpath_is_ready"
+ 
+ # If the device comes back online, set DM_ACTIVATION so that
+ # upper layers do a rescan. If the device is currently suspended,
+ # we have to postpone the activation until the next event.
+-ENV{MPATH_DEVICE_READY}=="0", GOTO="dont_activate"
+ ENV{.MPATH_DEVICE_READY_OLD}!="0", GOTO="dont_activate"
+ ENV{DM_SUSPENDED}=="1", GOTO="dont_activate"
+ 
 -- 
 2.43.2
 
