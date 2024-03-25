@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B7B91C322F;
-	Mon, 25 Mar 2024 04:45:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92B5F1C2300;
+	Mon, 25 Mar 2024 04:45:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711341911; cv=none; b=lSfzB5edrA5D+YqToXM0dvQUGPayA9MoojXiXF9/LxIZl1vCY9ebCwLk5kU5w3ASsuBhOHwI0K4gmhFHPgbaoLB8JwwWEujjhaFifkOeZK9ms72CXJZOi5MMoIbDC6lZb7o/heSV2uELPWiLPoyl6m414b/F6ZHPr4764SIRXTY=
+	t=1711341922; cv=none; b=BvqwXwdZluIC9JsIZxcVOpqW4XGPxj3hVRM7FUbj1CjQaZSY+wlv3iJQUUBo9UtNVuPgA/LXNVUmrZZNGfLHP9Og1SvrN0UikycatieP0+e713ixcG2ihLQZ+w0b+iI1aOCnYGiSLng1jvbsxlhDKlZmpdc3Ql/Cndooc79mp14=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711341911; c=relaxed/simple;
-	bh=0ES/j5YKwo9VcxpvKOHpEYwHplTfg2Fp17R4OcX8qXg=;
+	s=arc-20240116; t=1711341922; c=relaxed/simple;
+	bh=gBmitwwDdaCtwvKF7yQy7ef9z+2p59IZpTA4bl0m6m8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=QYcnl3pDklNY1i9bboo7a0jJ7qEi02s5jxRXY0g8flflPqatakWh5ut5y2jFzRpClZ2cwqobqG9fdjbviHHUXBwnTNrTzDyXLB+uGyeGBz4tGTEyLHw8LgQm3KWiXgRtlE0B39CJfLdzOUIDGNPzaX3CpPuLZ1By1YLPgUvLsWA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=bRu5D+KP; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=JZPXKM8RfKeFZpJfR0xtKt5dLjuWgDl7vyahR7dhr3QJqjfaOP0S5ko4KMWJ25kUk8l6smUKwZKNBvw8wgB0sXXkMJlRY/sAfoG6B3VKmYVoNoDIsM1WV8psJTEq0IE9gavdRad6j3Po3cAZ1Rt9fkCNuQ0JXjf2SuRHNFs0VDg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=vAj3iUjw; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="bRu5D+KP"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 42F66C43394;
-	Mon, 25 Mar 2024 04:45:09 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="vAj3iUjw"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 236C8C43390;
+	Mon, 25 Mar 2024 04:45:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711341911;
-	bh=0ES/j5YKwo9VcxpvKOHpEYwHplTfg2Fp17R4OcX8qXg=;
+	s=k20201202; t=1711341921;
+	bh=gBmitwwDdaCtwvKF7yQy7ef9z+2p59IZpTA4bl0m6m8=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=bRu5D+KPzy47FQqK0I4t5DPsaxmQJjqUXp8LwzFuOcrY57K8kR03zFuHiDXZ7rO9H
-	 E7Tt9Zp99Fr7vOX3jfpsmuTRH/QGybDBvDdbiCgm+YpTpqtsOtfZWWJWuPWwsMMmHY
-	 DSVN42qJECOkZmXdDpfL734fRjohF3juxm1MzEZgQOi4G88lTz7SS6ksjK31VD+K1f
-	 Fjv9NBmXvw8PonZJAe/U1es7Ak+MmrjMDGkMU2DPbTgMQSPYiq9XcMPJ1P2O3Qk+hg
-	 ACKpxIiuM9elMHihcOgnjwi4WO4XuDx8wP5BwgKi42UwGAUv6U3dmoRyHaEOxa55hI
-	 Uh3T2PtYDgZmw==
+	b=vAj3iUjwg8Hhsh5XNQBCSRo+XbxWlGb+YVLqhDwZsTncqzyFPnK+QiM72AjUaIFlA
+	 k5Kql+CUo/QDQbfD4F01AefAkob8P1phGsfgpFLqnw3rsvsUS36g9nKb/6SGiGrshS
+	 Xcf9MGHZlfuWejxqcJAD+Ur54T1/YPAQuL/P05npiARd/dn/9ujYvnXEoDxX+lowAm
+	 yfkOUAobPOSKRd/xl6sTC+f54pxBjgrQcGso6J/sKWYH6/noptOCA8K9SJ4NlEQOfy
+	 XFfrE/NAFk3iN2J5y8G5q724k8Rq/zYTSQvAJU2x4zvcu7/fExwXsSoznRJiQ2KUqa
+	 glB1Z+QTHUBfQ==
 From: Damien Le Moal <dlemoal@kernel.org>
 To: linux-block@vger.kernel.org,
 	Jens Axboe <axboe@kernel.dk>,
@@ -34,9 +34,9 @@ To: linux-block@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	Mike Snitzer <snitzer@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v2 08/28] block: Use a mempool to allocate zone write plugs
-Date: Mon, 25 Mar 2024 13:44:32 +0900
-Message-ID: <20240325044452.3125418-9-dlemoal@kernel.org>
+Subject: [PATCH v2 13/28] dm: Use the block layer zone append emulation
+Date: Mon, 25 Mar 2024 13:44:37 +0900
+Message-ID: <20240325044452.3125418-14-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240325044452.3125418-1-dlemoal@kernel.org>
 References: <20240325044452.3125418-1-dlemoal@kernel.org>
@@ -48,259 +48,747 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Allocating zone write plugs using a struct kmem_cache does not guarantee
-that enough write plugs can be allocated to simultaneously write up to
-the maximum number of active zones of a zoned block device.
+For targets requiring zone append operation emulation with regular
+writes (e.g. dm-crypt), we can use the block layer emulation provided by
+zone write plugging. Remove DM implemented zone append emulation and
+enable the block layer one.
 
-Avoid any issue with memory allocation by using a mempool with a size
-equal to the disk maximum number of open zones or maximum number of
-active zones, whichever is larger. For zoned devices that do not have
-open or active zone limits, the default 128 is used as the mempool size.
-If a change to the zone limits is detected, the mempool is resized in
-blk_revalidate_disk_zones().
+This is done by setting the max_zone_append_sectors limit of the
+mapped device queue to 0 for mapped devices that have a target table
+that cannot support native zone append operations (e.g. dm-crypt).
+Such mapped devices are flagged with the DMF_EMULATE_ZONE_APPEND flag.
+dm_split_and_process_bio() is modified to execute
+blk_zone_write_plug_bio() for such device to let the block layer
+transform zone append operations into regular writes.  This is done
+after ensuring that the submitted BIO is split if it straddles zone
+boundaries. Both changes are implemented unsing the inline helpers
+dm_zone_write_plug_bio() and dm_zone_bio_needs_split() respectively.
+
+dm_revalidate_zones() is also modified to use the block layer provided
+function blk_revalidate_disk_zones() so that all zone resources needed
+for zone append emulation are initialized by the block layer without DM
+core needing to do anything. Since the device table is not yet live when
+dm_revalidate_zones() is executed, enabling the use of
+blk_revalidate_disk_zones() requires adding a pointer to the device
+table in struct mapped_device. This avoids errors in
+dm_blk_report_zones() trying to get the table with dm_get_live_table().
+The mapped device table pointer is set to the table passed as argument
+to dm_revalidate_zones() before calling blk_revalidate_disk_zones() and
+reset to NULL after this function returns to restore the live table
+handling for user call of report zones.
+
+All the code related to zone append emulation is removed from
+dm-zone.c. This leads to simplifications of the functions __map_bio()
+and dm_zone_endio(). This later function now only needs to deal with
+completions of real zone append operations for targets that support it.
 
 Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+Reviewed-by: Mike Snitzer <snitzer@kernel.org>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- block/blk-zoned.c      | 62 ++++++++++++++++++++++++++++++------------
- include/linux/blkdev.h |  3 ++
- 2 files changed, 47 insertions(+), 18 deletions(-)
+ drivers/md/dm-core.h |   2 +-
+ drivers/md/dm-zone.c | 476 ++++---------------------------------------
+ drivers/md/dm.c      |  75 ++++---
+ drivers/md/dm.h      |   4 +-
+ 4 files changed, 97 insertions(+), 460 deletions(-)
 
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 39e66d64ea55..4e93293b1233 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -568,13 +568,14 @@ static struct blk_zone_wplug *disk_get_zone_wplug(struct gendisk *disk,
- 	return zwplug;
+diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+index e6757a30dcca..08700bfc3e23 100644
+--- a/drivers/md/dm-core.h
++++ b/drivers/md/dm-core.h
+@@ -140,7 +140,7 @@ struct mapped_device {
+ 
+ #ifdef CONFIG_BLK_DEV_ZONED
+ 	unsigned int nr_zones;
+-	unsigned int *zwp_offset;
++	void *zone_revalidate_map;
+ #endif
+ 
+ #ifdef CONFIG_IMA
+diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
+index eb9832b22b14..174fda0a301c 100644
+--- a/drivers/md/dm-zone.c
++++ b/drivers/md/dm-zone.c
+@@ -60,16 +60,23 @@ int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
+ 	struct dm_table *map;
+ 	int srcu_idx, ret;
+ 
+-	if (dm_suspended_md(md))
+-		return -EAGAIN;
++	if (!md->zone_revalidate_map) {
++		/* Regular user context */
++		if (dm_suspended_md(md))
++			return -EAGAIN;
+ 
+-	map = dm_get_live_table(md, &srcu_idx);
+-	if (!map)
+-		return -EIO;
++		map = dm_get_live_table(md, &srcu_idx);
++		if (!map)
++			return -EIO;
++	} else {
++		/* Zone revalidation during __bind() */
++		map = md->zone_revalidate_map;
++	}
+ 
+ 	ret = dm_blk_do_report_zones(md, map, sector, nr_zones, cb, data);
+ 
+-	dm_put_live_table(md, srcu_idx);
++	if (!md->zone_revalidate_map)
++		dm_put_live_table(md, srcu_idx);
+ 
+ 	return ret;
+ }
+@@ -138,85 +145,6 @@ bool dm_is_zone_write(struct mapped_device *md, struct bio *bio)
+ 	}
  }
  
--static inline void disk_put_zone_wplug(struct blk_zone_wplug *zwplug)
-+static inline void disk_put_zone_wplug(struct gendisk *disk,
-+				       struct blk_zone_wplug *zwplug)
+-void dm_cleanup_zoned_dev(struct mapped_device *md)
+-{
+-	if (md->disk) {
+-		bitmap_free(md->disk->conv_zones_bitmap);
+-		md->disk->conv_zones_bitmap = NULL;
+-		bitmap_free(md->disk->seq_zones_wlock);
+-		md->disk->seq_zones_wlock = NULL;
+-	}
+-
+-	kvfree(md->zwp_offset);
+-	md->zwp_offset = NULL;
+-	md->nr_zones = 0;
+-}
+-
+-static unsigned int dm_get_zone_wp_offset(struct blk_zone *zone)
+-{
+-	switch (zone->cond) {
+-	case BLK_ZONE_COND_IMP_OPEN:
+-	case BLK_ZONE_COND_EXP_OPEN:
+-	case BLK_ZONE_COND_CLOSED:
+-		return zone->wp - zone->start;
+-	case BLK_ZONE_COND_FULL:
+-		return zone->len;
+-	case BLK_ZONE_COND_EMPTY:
+-	case BLK_ZONE_COND_NOT_WP:
+-	case BLK_ZONE_COND_OFFLINE:
+-	case BLK_ZONE_COND_READONLY:
+-	default:
+-		/*
+-		 * Conventional, offline and read-only zones do not have a valid
+-		 * write pointer. Use 0 as for an empty zone.
+-		 */
+-		return 0;
+-	}
+-}
+-
+-static int dm_zone_revalidate_cb(struct blk_zone *zone, unsigned int idx,
+-				 void *data)
+-{
+-	struct mapped_device *md = data;
+-	struct gendisk *disk = md->disk;
+-
+-	switch (zone->type) {
+-	case BLK_ZONE_TYPE_CONVENTIONAL:
+-		if (!disk->conv_zones_bitmap) {
+-			disk->conv_zones_bitmap = bitmap_zalloc(disk->nr_zones,
+-								GFP_NOIO);
+-			if (!disk->conv_zones_bitmap)
+-				return -ENOMEM;
+-		}
+-		set_bit(idx, disk->conv_zones_bitmap);
+-		break;
+-	case BLK_ZONE_TYPE_SEQWRITE_REQ:
+-	case BLK_ZONE_TYPE_SEQWRITE_PREF:
+-		if (!disk->seq_zones_wlock) {
+-			disk->seq_zones_wlock = bitmap_zalloc(disk->nr_zones,
+-							      GFP_NOIO);
+-			if (!disk->seq_zones_wlock)
+-				return -ENOMEM;
+-		}
+-		if (!md->zwp_offset) {
+-			md->zwp_offset =
+-				kvcalloc(disk->nr_zones, sizeof(unsigned int),
+-					 GFP_KERNEL);
+-			if (!md->zwp_offset)
+-				return -ENOMEM;
+-		}
+-		md->zwp_offset[idx] = dm_get_zone_wp_offset(zone);
+-
+-		break;
+-	default:
+-		DMERR("Invalid zone type 0x%x at sectors %llu",
+-		      (int)zone->type, zone->start);
+-		return -ENODEV;
+-	}
+-
+-	return 0;
+-}
+-
+ /*
+  * Revalidate the zones of a mapped device to initialize resource necessary
+  * for zone append emulation. Note that we cannot simply use the block layer
+@@ -226,41 +154,32 @@ static int dm_zone_revalidate_cb(struct blk_zone *zone, unsigned int idx,
+ static int dm_revalidate_zones(struct mapped_device *md, struct dm_table *t)
  {
- 	if (atomic_dec_and_test(&zwplug->ref)) {
- 		WARN_ON_ONCE(!bio_list_empty(&zwplug->bio_list));
- 		WARN_ON_ONCE(!list_empty(&zwplug->err));
+ 	struct gendisk *disk = md->disk;
+-	unsigned int noio_flag;
+ 	int ret;
  
--		kmem_cache_free(blk_zone_wplugs_cachep, zwplug);
-+		mempool_free(zwplug, disk->zone_wplugs_pool);
- 	}
- }
- 
-@@ -599,14 +600,14 @@ static struct blk_zone_wplug *disk_get_zone_wplug_locked(struct gendisk *disk,
- 		spin_lock_irqsave(&zwplug->lock, *flags);
- 		if (zwplug->flags & BLK_ZONE_WPLUG_FREEING) {
- 			spin_unlock_irqrestore(&zwplug->lock, *flags);
--			disk_put_zone_wplug(zwplug);
-+			disk_put_zone_wplug(disk, zwplug);
- 			goto again;
- 		}
- 		return zwplug;
- 	}
- 
- 	/* Allocate and insert a new zone write plug. */
--	zwplug = kmem_cache_alloc(blk_zone_wplugs_cachep, gfp_mask);
-+	zwplug = mempool_alloc(disk->zone_wplugs_pool, gfp_mask);
- 	if (!zwplug)
- 		return NULL;
- 
-@@ -629,7 +630,7 @@ static struct blk_zone_wplug *disk_get_zone_wplug_locked(struct gendisk *disk,
- 	 */
- 	if (!disk_insert_zone_wplug(disk, zwplug)) {
- 		spin_unlock_irqrestore(&zwplug->lock, *flags);
--		kmem_cache_free(blk_zone_wplugs_cachep, zwplug);
-+		mempool_free(zwplug, disk->zone_wplugs_pool);
- 		goto again;
- 	}
- 
-@@ -659,13 +660,14 @@ static inline void blk_zone_wplug_bio_io_error(struct bio *bio)
- 	blk_queue_exit(q);
- }
- 
--static void disk_zone_wplug_abort(struct blk_zone_wplug *zwplug)
-+static void disk_zone_wplug_abort(struct gendisk *disk,
-+				  struct blk_zone_wplug *zwplug)
- {
- 	struct bio *bio;
- 
- 	while ((bio = bio_list_pop(&zwplug->bio_list))) {
- 		blk_zone_wplug_bio_io_error(bio);
--		disk_put_zone_wplug(zwplug);
-+		disk_put_zone_wplug(disk, zwplug);
- 	}
- }
- 
-@@ -681,7 +683,7 @@ static void disk_zone_wplug_abort_unaligned(struct gendisk *disk,
- 		if (wp_offset >= zone_capacity ||
- 		     bio_offset_from_zone_start(bio) != wp_offset) {
- 			blk_zone_wplug_bio_io_error(bio);
--			disk_put_zone_wplug(zwplug);
-+			disk_put_zone_wplug(disk, zwplug);
- 			continue;
- 		}
- 
-@@ -718,7 +720,7 @@ static void disk_zone_wplug_set_wp_offset(struct gendisk *disk,
- 
- 	/* Update the zone write pointer and abort all plugged BIOs. */
- 	zwplug->wp_offset = wp_offset;
--	disk_zone_wplug_abort(zwplug);
-+	disk_zone_wplug_abort(disk, zwplug);
+-	/*
+-	 * Check if something changed. If yes, cleanup the current resources
+-	 * and reallocate everything.
+-	 */
++	/* Revalidate ionly if something changed. */
+ 	if (!disk->nr_zones || disk->nr_zones != md->nr_zones)
+-		dm_cleanup_zoned_dev(md);
++		md->nr_zones = 0;
++
+ 	if (md->nr_zones)
+ 		return 0;
  
  	/*
- 	 * Updating the write pointer offset puts back the zone
-@@ -765,7 +767,7 @@ static bool blk_zone_wplug_handle_reset_or_finish(struct bio *bio,
- 	zwplug = disk_get_zone_wplug(disk, bio->bi_iter.bi_sector);
- 	if (zwplug) {
- 		disk_zone_wplug_set_wp_offset(disk, zwplug, wp_offset);
--		disk_put_zone_wplug(zwplug);
-+		disk_put_zone_wplug(disk, zwplug);
+-	 * Scan all zones to initialize everything. Ensure that all vmalloc
+-	 * operations in this context are done as if GFP_NOIO was specified.
++	 * Our table is not live yet. So the call to dm_get_live_table()
++	 * in dm_blk_report_zones() will fail. So set a temporary pointer to
++	 * our table for dm_blk_report_zones() to use directly.
+ 	 */
+-	noio_flag = memalloc_noio_save();
+-	ret = dm_blk_do_report_zones(md, t, 0, disk->nr_zones,
+-				     dm_zone_revalidate_cb, md);
+-	memalloc_noio_restore(noio_flag);
+-	if (ret < 0)
+-		goto err;
+-	if (ret != disk->nr_zones) {
+-		ret = -EIO;
+-		goto err;
++	md->zone_revalidate_map = t;
++	ret = blk_revalidate_disk_zones(disk, NULL);
++	md->zone_revalidate_map = NULL;
++
++	if (ret) {
++		DMERR("Revalidate zones failed %d", ret);
++		return ret;
  	}
  
- 	return false;
-@@ -787,7 +789,7 @@ static bool blk_zone_wplug_handle_reset_all(struct bio *bio)
- 		zwplug = disk_get_zone_wplug(disk, sector);
- 		if (zwplug) {
- 			disk_zone_wplug_set_wp_offset(disk, zwplug, 0);
--			disk_put_zone_wplug(zwplug);
-+			disk_put_zone_wplug(disk, zwplug);
- 		}
- 	}
+ 	md->nr_zones = disk->nr_zones;
  
-@@ -1158,7 +1160,7 @@ void blk_zone_write_plug_bio_endio(struct bio *bio)
- 	if (bio->bi_bdev->bd_has_submit_bio)
- 		disk_zone_wplug_unplug_bio(disk, zwplug);
- 
--	disk_put_zone_wplug(zwplug);
-+	disk_put_zone_wplug(disk, zwplug);
+ 	return 0;
+-
+-err:
+-	DMERR("Revalidate zones failed %d", ret);
+-	dm_cleanup_zoned_dev(md);
+-	return ret;
  }
  
- void blk_zone_write_plug_complete_request(struct request *req)
-@@ -1171,7 +1173,7 @@ void blk_zone_write_plug_complete_request(struct request *req)
+ static int device_not_zone_append_capable(struct dm_target *ti,
+@@ -291,292 +210,27 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
+ 	struct mapped_device *md = t->md;
  
- 	disk_zone_wplug_unplug_bio(disk, zwplug);
+ 	/*
+-	 * For a zoned target, the number of zones should be updated for the
+-	 * correct value to be exposed in sysfs queue/nr_zones.
++	 * Check if zone append is natively supported, and if not, set the
++	 * mapped device queue as needing zone append emulation.
+ 	 */
+ 	WARN_ON_ONCE(queue_is_mq(q));
+-	md->disk->nr_zones = bdev_nr_zones(md->disk->part0);
+-
+-	/* Check if zone append is natively supported */
+ 	if (dm_table_supports_zone_append(t)) {
+ 		clear_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
+-		dm_cleanup_zoned_dev(md);
+-		return 0;
++	} else {
++		set_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
++		blk_queue_max_zone_append_sectors(q, 0);
+ 	}
  
--	disk_put_zone_wplug(zwplug);
-+	disk_put_zone_wplug(disk, zwplug);
+-	/*
+-	 * Mark the mapped device as needing zone append emulation and
+-	 * initialize the emulation resources once the capacity is set.
+-	 */
+-	set_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
+ 	if (!get_capacity(md->disk))
+ 		return 0;
+ 
+-	return dm_revalidate_zones(md, t);
+-}
+-
+-static int dm_update_zone_wp_offset_cb(struct blk_zone *zone, unsigned int idx,
+-				       void *data)
+-{
+-	unsigned int *wp_offset = data;
+-
+-	*wp_offset = dm_get_zone_wp_offset(zone);
+-
+-	return 0;
+-}
+-
+-static int dm_update_zone_wp_offset(struct mapped_device *md, unsigned int zno,
+-				    unsigned int *wp_ofst)
+-{
+-	sector_t sector = zno * bdev_zone_sectors(md->disk->part0);
+-	unsigned int noio_flag;
+-	struct dm_table *t;
+-	int srcu_idx, ret;
+-
+-	t = dm_get_live_table(md, &srcu_idx);
+-	if (!t)
+-		return -EIO;
+-
+-	/*
+-	 * Ensure that all memory allocations in this context are done as if
+-	 * GFP_NOIO was specified.
+-	 */
+-	noio_flag = memalloc_noio_save();
+-	ret = dm_blk_do_report_zones(md, t, sector, 1,
+-				     dm_update_zone_wp_offset_cb, wp_ofst);
+-	memalloc_noio_restore(noio_flag);
+-
+-	dm_put_live_table(md, srcu_idx);
+-
+-	if (ret != 1)
+-		return -EIO;
+-
+-	return 0;
+-}
+-
+-struct orig_bio_details {
+-	enum req_op op;
+-	unsigned int nr_sectors;
+-};
+-
+-/*
+- * First phase of BIO mapping for targets with zone append emulation:
+- * check all BIO that change a zone writer pointer and change zone
+- * append operations into regular write operations.
+- */
+-static bool dm_zone_map_bio_begin(struct mapped_device *md,
+-				  unsigned int zno, struct bio *clone)
+-{
+-	sector_t zsectors = bdev_zone_sectors(md->disk->part0);
+-	unsigned int zwp_offset = READ_ONCE(md->zwp_offset[zno]);
+-
+-	/*
+-	 * If the target zone is in an error state, recover by inspecting the
+-	 * zone to get its current write pointer position. Note that since the
+-	 * target zone is already locked, a BIO issuing context should never
+-	 * see the zone write in the DM_ZONE_UPDATING_WP_OFST state.
+-	 */
+-	if (zwp_offset == DM_ZONE_INVALID_WP_OFST) {
+-		if (dm_update_zone_wp_offset(md, zno, &zwp_offset))
+-			return false;
+-		WRITE_ONCE(md->zwp_offset[zno], zwp_offset);
+-	}
+-
+-	switch (bio_op(clone)) {
+-	case REQ_OP_ZONE_RESET:
+-	case REQ_OP_ZONE_FINISH:
+-		return true;
+-	case REQ_OP_WRITE_ZEROES:
+-	case REQ_OP_WRITE:
+-		/* Writes must be aligned to the zone write pointer */
+-		if ((clone->bi_iter.bi_sector & (zsectors - 1)) != zwp_offset)
+-			return false;
+-		break;
+-	case REQ_OP_ZONE_APPEND:
+-		/*
+-		 * Change zone append operations into a non-mergeable regular
+-		 * writes directed at the current write pointer position of the
+-		 * target zone.
+-		 */
+-		clone->bi_opf = REQ_OP_WRITE | REQ_NOMERGE |
+-			(clone->bi_opf & (~REQ_OP_MASK));
+-		clone->bi_iter.bi_sector += zwp_offset;
+-		break;
+-	default:
+-		DMWARN_LIMIT("Invalid BIO operation");
+-		return false;
+-	}
+-
+-	/* Cannot write to a full zone */
+-	if (zwp_offset >= zsectors)
+-		return false;
+-
+-	return true;
+-}
+-
+-/*
+- * Second phase of BIO mapping for targets with zone append emulation:
+- * update the zone write pointer offset array to account for the additional
+- * data written to a zone. Note that at this point, the remapped clone BIO
+- * may already have completed, so we do not touch it.
+- */
+-static blk_status_t dm_zone_map_bio_end(struct mapped_device *md, unsigned int zno,
+-					struct orig_bio_details *orig_bio_details,
+-					unsigned int nr_sectors)
+-{
+-	unsigned int zwp_offset = READ_ONCE(md->zwp_offset[zno]);
+-
+-	/* The clone BIO may already have been completed and failed */
+-	if (zwp_offset == DM_ZONE_INVALID_WP_OFST)
+-		return BLK_STS_IOERR;
+-
+-	/* Update the zone wp offset */
+-	switch (orig_bio_details->op) {
+-	case REQ_OP_ZONE_RESET:
+-		WRITE_ONCE(md->zwp_offset[zno], 0);
+-		return BLK_STS_OK;
+-	case REQ_OP_ZONE_FINISH:
+-		WRITE_ONCE(md->zwp_offset[zno],
+-			   bdev_zone_sectors(md->disk->part0));
+-		return BLK_STS_OK;
+-	case REQ_OP_WRITE_ZEROES:
+-	case REQ_OP_WRITE:
+-		WRITE_ONCE(md->zwp_offset[zno], zwp_offset + nr_sectors);
+-		return BLK_STS_OK;
+-	case REQ_OP_ZONE_APPEND:
+-		/*
+-		 * Check that the target did not truncate the write operation
+-		 * emulating a zone append.
+-		 */
+-		if (nr_sectors != orig_bio_details->nr_sectors) {
+-			DMWARN_LIMIT("Truncated write for zone append");
+-			return BLK_STS_IOERR;
+-		}
+-		WRITE_ONCE(md->zwp_offset[zno], zwp_offset + nr_sectors);
+-		return BLK_STS_OK;
+-	default:
+-		DMWARN_LIMIT("Invalid BIO operation");
+-		return BLK_STS_IOERR;
++	if (!md->disk->nr_zones) {
++		DMINFO("%s using %s zone append",
++		       md->disk->disk_name,
++		       queue_emulates_zone_append(q) ? "emulated" : "native");
+ 	}
+-}
+-
+-static inline void dm_zone_lock(struct gendisk *disk, unsigned int zno,
+-				struct bio *clone)
+-{
+-	if (WARN_ON_ONCE(bio_flagged(clone, BIO_ZONE_WRITE_LOCKED)))
+-		return;
+-
+-	wait_on_bit_lock_io(disk->seq_zones_wlock, zno, TASK_UNINTERRUPTIBLE);
+-	bio_set_flag(clone, BIO_ZONE_WRITE_LOCKED);
+-}
+-
+-static inline void dm_zone_unlock(struct gendisk *disk, unsigned int zno,
+-				  struct bio *clone)
+-{
+-	if (!bio_flagged(clone, BIO_ZONE_WRITE_LOCKED))
+-		return;
+-
+-	WARN_ON_ONCE(!test_bit(zno, disk->seq_zones_wlock));
+-	clear_bit_unlock(zno, disk->seq_zones_wlock);
+-	smp_mb__after_atomic();
+-	wake_up_bit(disk->seq_zones_wlock, zno);
+-
+-	bio_clear_flag(clone, BIO_ZONE_WRITE_LOCKED);
+-}
+ 
+-static bool dm_need_zone_wp_tracking(struct bio *bio)
+-{
+-	/*
+-	 * Special processing is not needed for operations that do not need the
+-	 * zone write lock, that is, all operations that target conventional
+-	 * zones and all operations that do not modify directly a sequential
+-	 * zone write pointer.
+-	 */
+-	if (op_is_flush(bio->bi_opf) && !bio_sectors(bio))
+-		return false;
+-	switch (bio_op(bio)) {
+-	case REQ_OP_WRITE_ZEROES:
+-	case REQ_OP_WRITE:
+-	case REQ_OP_ZONE_RESET:
+-	case REQ_OP_ZONE_FINISH:
+-	case REQ_OP_ZONE_APPEND:
+-		return bio_zone_is_seq(bio);
+-	default:
+-		return false;
+-	}
+-}
+-
+-/*
+- * Special IO mapping for targets needing zone append emulation.
+- */
+-int dm_zone_map_bio(struct dm_target_io *tio)
+-{
+-	struct dm_io *io = tio->io;
+-	struct dm_target *ti = tio->ti;
+-	struct mapped_device *md = io->md;
+-	struct bio *clone = &tio->clone;
+-	struct orig_bio_details orig_bio_details;
+-	unsigned int zno;
+-	blk_status_t sts;
+-	int r;
+-
+-	/*
+-	 * IOs that do not change a zone write pointer do not need
+-	 * any additional special processing.
+-	 */
+-	if (!dm_need_zone_wp_tracking(clone))
+-		return ti->type->map(ti, clone);
+-
+-	/* Lock the target zone */
+-	zno = bio_zone_no(clone);
+-	dm_zone_lock(md->disk, zno, clone);
+-
+-	orig_bio_details.nr_sectors = bio_sectors(clone);
+-	orig_bio_details.op = bio_op(clone);
+-
+-	/*
+-	 * Check that the bio and the target zone write pointer offset are
+-	 * both valid, and if the bio is a zone append, remap it to a write.
+-	 */
+-	if (!dm_zone_map_bio_begin(md, zno, clone)) {
+-		dm_zone_unlock(md->disk, zno, clone);
+-		return DM_MAPIO_KILL;
+-	}
+-
+-	/* Let the target do its work */
+-	r = ti->type->map(ti, clone);
+-	switch (r) {
+-	case DM_MAPIO_SUBMITTED:
+-		/*
+-		 * The target submitted the clone BIO. The target zone will
+-		 * be unlocked on completion of the clone.
+-		 */
+-		sts = dm_zone_map_bio_end(md, zno, &orig_bio_details,
+-					  *tio->len_ptr);
+-		break;
+-	case DM_MAPIO_REMAPPED:
+-		/*
+-		 * The target only remapped the clone BIO. In case of error,
+-		 * unlock the target zone here as the clone will not be
+-		 * submitted.
+-		 */
+-		sts = dm_zone_map_bio_end(md, zno, &orig_bio_details,
+-					  *tio->len_ptr);
+-		if (sts != BLK_STS_OK)
+-			dm_zone_unlock(md->disk, zno, clone);
+-		break;
+-	case DM_MAPIO_REQUEUE:
+-	case DM_MAPIO_KILL:
+-	default:
+-		dm_zone_unlock(md->disk, zno, clone);
+-		sts = BLK_STS_IOERR;
+-		break;
+-	}
+-
+-	if (sts != BLK_STS_OK)
+-		return DM_MAPIO_KILL;
+-
+-	return r;
++	return dm_revalidate_zones(md, t);
  }
  
- static void blk_zone_wplug_bio_work(struct work_struct *work)
-@@ -1284,7 +1286,7 @@ static void disk_zone_wplug_handle_error(struct gendisk *disk,
- 		 * plugged BIOs as otherwise we could endup waiting forever on
- 		 * plugged BIOs to complete if there is a queue freeze on-going.
- 		 */
--		disk_zone_wplug_abort(zwplug);
-+		disk_zone_wplug_abort(disk, zwplug);
- 		goto unplug;
+ /*
+@@ -587,61 +241,17 @@ void dm_zone_endio(struct dm_io *io, struct bio *clone)
+ 	struct mapped_device *md = io->md;
+ 	struct gendisk *disk = md->disk;
+ 	struct bio *orig_bio = io->orig_bio;
+-	unsigned int zwp_offset;
+-	unsigned int zno;
+ 
+ 	/*
+-	 * For targets that do not emulate zone append, we only need to
+-	 * handle native zone-append bios.
++	 * Get the offset within the zone of the written sector
++	 * and add that to the original bio sector position.
+ 	 */
+-	if (!dm_emulate_zone_append(md)) {
+-		/*
+-		 * Get the offset within the zone of the written sector
+-		 * and add that to the original bio sector position.
+-		 */
+-		if (clone->bi_status == BLK_STS_OK &&
+-		    bio_op(clone) == REQ_OP_ZONE_APPEND) {
+-			sector_t mask =
+-				(sector_t)bdev_zone_sectors(disk->part0) - 1;
+-
+-			orig_bio->bi_iter.bi_sector +=
+-				clone->bi_iter.bi_sector & mask;
+-		}
+-
+-		return;
+-	}
++	if (clone->bi_status == BLK_STS_OK &&
++	    bio_op(clone) == REQ_OP_ZONE_APPEND) {
++		sector_t mask = bdev_zone_sectors(disk->part0) - 1;
+ 
+-	/*
+-	 * For targets that do emulate zone append, if the clone BIO does not
+-	 * own the target zone write lock, we have nothing to do.
+-	 */
+-	if (!bio_flagged(clone, BIO_ZONE_WRITE_LOCKED))
+-		return;
+-
+-	zno = bio_zone_no(orig_bio);
+-
+-	if (clone->bi_status != BLK_STS_OK) {
+-		/*
+-		 * BIOs that modify a zone write pointer may leave the zone
+-		 * in an unknown state in case of failure (e.g. the write
+-		 * pointer was only partially advanced). In this case, set
+-		 * the target zone write pointer as invalid unless it is
+-		 * already being updated.
+-		 */
+-		WRITE_ONCE(md->zwp_offset[zno], DM_ZONE_INVALID_WP_OFST);
+-	} else if (bio_op(orig_bio) == REQ_OP_ZONE_APPEND) {
+-		/*
+-		 * Get the written sector for zone append operation that were
+-		 * emulated using regular write operations.
+-		 */
+-		zwp_offset = READ_ONCE(md->zwp_offset[zno]);
+-		if (WARN_ON_ONCE(zwp_offset < bio_sectors(orig_bio)))
+-			WRITE_ONCE(md->zwp_offset[zno],
+-				   DM_ZONE_INVALID_WP_OFST);
+-		else
+-			orig_bio->bi_iter.bi_sector +=
+-				zwp_offset - bio_sectors(orig_bio);
++		orig_bio->bi_iter.bi_sector += clone->bi_iter.bi_sector & mask;
  	}
  
-@@ -1325,7 +1327,7 @@ static void disk_zone_wplugs_work(struct work_struct *work)
- 		spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
- 
- 		disk_zone_wplug_handle_error(disk, zwplug);
--		disk_put_zone_wplug(zwplug);
-+		disk_put_zone_wplug(disk, zwplug);
- 
- 		spin_lock_irqsave(&disk->zone_wplugs_lock, flags);
- 	}
-@@ -1353,7 +1355,7 @@ static void disk_free_zone_wplugs(struct gendisk *disk)
- 					     struct blk_zone_wplug, node);
- 			blk_get_zone_wplug(zwplug);
- 			disk_remove_zone_wplug(disk, zwplug);
--			disk_put_zone_wplug(zwplug);
-+			disk_put_zone_wplug(disk, zwplug);
- 		}
- 	}
+-	dm_zone_unlock(disk, zno, clone);
++	return;
  }
-@@ -1369,7 +1371,7 @@ void disk_init_zone_resources(struct gendisk *disk)
-  * For the size of a disk zone write plug hash table, use the disk maximum
-  * open zones and maximum active zones limits, but do not exceed 4KB (512 hlist
-  * head entries), that is, 9 bits. For a disk that has no limits, default to
-- * 128 zones to hash.
-+ * 128 zones for the mempool size and the hash size.
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 56aa2a8b9d71..6d842d6709b6 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1422,25 +1422,12 @@ static void __map_bio(struct bio *clone)
+ 		down(&md->swap_bios_semaphore);
+ 	}
+ 
+-	if (static_branch_unlikely(&zoned_enabled)) {
+-		/*
+-		 * Check if the IO needs a special mapping due to zone append
+-		 * emulation on zoned target. In this case, dm_zone_map_bio()
+-		 * calls the target map operation.
+-		 */
+-		if (unlikely(dm_emulate_zone_append(md)))
+-			r = dm_zone_map_bio(tio);
+-		else
+-			goto do_map;
+-	} else {
+-do_map:
+-		if (likely(ti->type->map == linear_map))
+-			r = linear_map(ti, clone);
+-		else if (ti->type->map == stripe_map)
+-			r = stripe_map(ti, clone);
+-		else
+-			r = ti->type->map(ti, clone);
+-	}
++	if (likely(ti->type->map == linear_map))
++		r = linear_map(ti, clone);
++	else if (ti->type->map == stripe_map)
++		r = stripe_map(ti, clone);
++	else
++		r = ti->type->map(ti, clone);
+ 
+ 	switch (r) {
+ 	case DM_MAPIO_SUBMITTED:
+@@ -1768,6 +1755,35 @@ static void init_clone_info(struct clone_info *ci, struct dm_io *io,
+ 		ci->sector_count = 0;
+ }
+ 
++#ifdef CONFIG_BLK_DEV_ZONED
++static inline bool dm_zone_bio_needs_split(struct mapped_device *md,
++					   struct bio *bio)
++{
++	/*
++	 * For mapped device that need zone append emulation, we must
++	 * split any large BIO that straddle zone boundaries.
++	 */
++	return dm_emulate_zone_append(md) && bio_straddle_zones(bio) &&
++		!bio_flagged(bio, BIO_ZONE_WRITE_PLUGGING);
++}
++static inline bool dm_zone_write_plug_bio(struct mapped_device *md,
++					  struct bio *bio)
++{
++	return dm_emulate_zone_append(md) && blk_zone_write_plug_bio(bio, 0);
++}
++#else
++static inline bool dm_zone_bio_needs_split(struct mapped_device *md,
++					   struct bio *bio)
++{
++	return false;
++}
++static inline bool dm_zone_write_plug_bio(struct mapped_device *md,
++					  struct bio *bio)
++{
++	return false;
++}
++#endif
++
+ /*
+  * Entry point to split a bio into clones and submit them to the targets.
   */
- #define BLK_ZONE_MAX_WPLUG_HASH_BITS		9
- #define BLK_ZONE_DEFAULT_WPLUG_HASH_SIZE	128
-@@ -1391,6 +1393,17 @@ static int disk_alloc_zone_resources(struct gendisk *disk,
- 	for (i = 0; i < disk_zone_wplugs_hash_size(disk); i++)
- 		INIT_HLIST_HEAD(&disk->zone_wplugs_hash[i]);
+@@ -1777,19 +1793,33 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 	struct clone_info ci;
+ 	struct dm_io *io;
+ 	blk_status_t error = BLK_STS_OK;
+-	bool is_abnormal;
++	bool is_abnormal, need_split;
  
-+	disk->zone_wplugs_pool =
-+		mempool_create_slab_pool(hash_size, blk_zone_wplugs_cachep);
-+	if (!disk->zone_wplugs_pool) {
-+		kfree(disk->zone_wplugs_hash);
-+		disk->zone_wplugs_hash = NULL;
-+		disk->zone_wplugs_hash_bits = 0;
-+		return -ENOMEM;
-+	}
+-	is_abnormal = is_abnormal_io(bio);
+-	if (unlikely(is_abnormal)) {
++	need_split = is_abnormal = is_abnormal_io(bio);
++	if (static_branch_unlikely(&zoned_enabled))
++		need_split = is_abnormal || dm_zone_bio_needs_split(md, bio);
 +
-+	disk->zone_wplugs_pool_size = hash_size;
-+
- 	return 0;
- }
++	if (unlikely(need_split)) {
+ 		/*
+ 		 * Use bio_split_to_limits() for abnormal IO (e.g. discard, etc)
+ 		 * otherwise associated queue_limits won't be imposed.
++		 * Also split the BIO for mapped devices needing zone append
++		 * emulation to ensure that the BIO does not cross zone
++		 * boundaries.
+ 		 */
+ 		bio = bio_split_to_limits(bio);
+ 		if (!bio)
+ 			return;
+ 	}
  
-@@ -1404,6 +1417,10 @@ void disk_free_zone_resources(struct gendisk *disk)
- 	disk->zone_wplugs_hash = NULL;
- 	disk->zone_wplugs_hash_bits = 0;
- 
-+	mempool_destroy(disk->zone_wplugs_pool);
-+	disk->zone_wplugs_pool = NULL;
-+	disk->zone_wplugs_pool_size = 0;
++	/*
++	 * Use the block layer zone write plugging for mapped devices that
++	 * need zone append emulation (e.g. dm-crypt).
++	 */
++	if (static_branch_unlikely(&zoned_enabled) &&
++	    dm_zone_write_plug_bio(md, bio))
++		return;
 +
- 	kfree(disk->conv_zones_bitmap);
- 	disk->conv_zones_bitmap = NULL;
- 	kfree(disk->seq_zones_wlock);
-@@ -1418,6 +1435,7 @@ static int disk_revalidate_zone_resources(struct gendisk *disk,
+ 	/* Only support nowait for normal IO */
+ 	if (unlikely(bio->bi_opf & REQ_NOWAIT) && !is_abnormal) {
+ 		io = alloc_io(md, bio, GFP_NOWAIT);
+@@ -2010,7 +2040,6 @@ static void cleanup_mapped_device(struct mapped_device *md)
+ 		md->dax_dev = NULL;
+ 	}
+ 
+-	dm_cleanup_zoned_dev(md);
+ 	if (md->disk) {
+ 		spin_lock(&_minor_lock);
+ 		md->disk->private_data = NULL;
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 7f1acbf6bd9e..6e951cd42074 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -104,14 +104,12 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
+ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q);
+ void dm_zone_endio(struct dm_io *io, struct bio *clone);
+ #ifdef CONFIG_BLK_DEV_ZONED
+-void dm_cleanup_zoned_dev(struct mapped_device *md);
+ int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
+ 			unsigned int nr_zones, report_zones_cb cb, void *data);
+ bool dm_is_zone_write(struct mapped_device *md, struct bio *bio);
+ int dm_zone_map_bio(struct dm_target_io *io);
+ #else
+-static inline void dm_cleanup_zoned_dev(struct mapped_device *md) {}
+-#define dm_blk_report_zones	NULL
++#define dm_blk_report_zones    NULL
+ static inline bool dm_is_zone_write(struct mapped_device *md, struct bio *bio)
  {
- 	struct queue_limits *lim = &disk->queue->limits;
- 	unsigned int hash_size;
-+	int ret;
- 
- 	hash_size = max(lim->max_open_zones, lim->max_active_zones);
- 	if (!hash_size)
-@@ -1427,6 +1445,14 @@ static int disk_revalidate_zone_resources(struct gendisk *disk,
- 	if (!disk->zone_wplugs_hash)
- 		return disk_alloc_zone_resources(disk, hash_size);
- 
-+	/* Resize the memory pool if needed. */
-+	if (disk->zone_wplugs_pool_size != hash_size) {
-+		ret = mempool_resize(disk->zone_wplugs_pool, hash_size);
-+		if (ret)
-+			return ret;
-+		disk->zone_wplugs_pool_size = hash_size;
-+	}
-+
- 	return 0;
- }
- 
-@@ -1526,7 +1552,7 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
- 			if (!zwplug)
- 				return -ENOMEM;
- 			spin_unlock_irqrestore(&zwplug->lock, flags);
--			disk_put_zone_wplug(zwplug);
-+			disk_put_zone_wplug(disk, zwplug);
- 		}
- 
- 		break;
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index e9b670be338b..68c60039a7ea 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -25,6 +25,7 @@
- #include <linux/uuid.h>
- #include <linux/xarray.h>
- #include <linux/file.h>
-+#include <linux/mempool.h>
- 
- struct module;
- struct request_queue;
-@@ -194,6 +195,8 @@ struct gendisk {
- 	unsigned int		zone_capacity;
- 	unsigned long		*conv_zones_bitmap;
- 	unsigned long		*seq_zones_wlock;
-+	unsigned int		zone_wplugs_pool_size;
-+	mempool_t		*zone_wplugs_pool;
- 	unsigned int            zone_wplugs_hash_bits;
- 	spinlock_t              zone_wplugs_lock;
- 	struct hlist_head       *zone_wplugs_hash;
+ 	return false;
 -- 
 2.44.0
 
