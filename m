@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 085DB1C322D;
-	Mon, 25 Mar 2024 04:45:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B7B91C322F;
+	Mon, 25 Mar 2024 04:45:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711341916; cv=none; b=nhfRx7kH5z8QWAAZKA4/2Rbmh/NWkk1/o8oe4Ni8yhuA1EdwmK/ldzrdkYX0Dp6a6vIlmLz3d+xWFz8gavDqopRsDgsNa5iXh48qP8IViVD/EgNRsLb9Uw7cWlEQu30MoJ8jAdToKVlDflgRVSCIkLoxnwVg2T/B0E5bCSP8IIg=
+	t=1711341911; cv=none; b=lSfzB5edrA5D+YqToXM0dvQUGPayA9MoojXiXF9/LxIZl1vCY9ebCwLk5kU5w3ASsuBhOHwI0K4gmhFHPgbaoLB8JwwWEujjhaFifkOeZK9ms72CXJZOi5MMoIbDC6lZb7o/heSV2uELPWiLPoyl6m414b/F6ZHPr4764SIRXTY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711341916; c=relaxed/simple;
-	bh=LIdQq+Zpk4R/zJzqbg4N/OAThIu3sAW/GQHQEGs4ejY=;
+	s=arc-20240116; t=1711341911; c=relaxed/simple;
+	bh=0ES/j5YKwo9VcxpvKOHpEYwHplTfg2Fp17R4OcX8qXg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=sHKAdYZT2D4K16ushVGqzqqTo7PuO8k2Fy3ONvkb/LoEHhCuTJM3Q+x+n0RNPOA01HUuyJWL348i9XlAvYhoQEw/yGNGxSC1SnxJzKEwshgW94UmaaDFG7zTaw9/FpWIgZ76/zmWVkSEqiZxnrRBk+IGEdwW5CEDnAdGdgvh7yU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=usyDGePG; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=QYcnl3pDklNY1i9bboo7a0jJ7qEi02s5jxRXY0g8flflPqatakWh5ut5y2jFzRpClZ2cwqobqG9fdjbviHHUXBwnTNrTzDyXLB+uGyeGBz4tGTEyLHw8LgQm3KWiXgRtlE0B39CJfLdzOUIDGNPzaX3CpPuLZ1By1YLPgUvLsWA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=bRu5D+KP; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="usyDGePG"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 147CFC43390;
-	Mon, 25 Mar 2024 04:45:13 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="bRu5D+KP"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 42F66C43394;
+	Mon, 25 Mar 2024 04:45:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711341915;
-	bh=LIdQq+Zpk4R/zJzqbg4N/OAThIu3sAW/GQHQEGs4ejY=;
+	s=k20201202; t=1711341911;
+	bh=0ES/j5YKwo9VcxpvKOHpEYwHplTfg2Fp17R4OcX8qXg=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=usyDGePGcbgZCM8ZDEKtcXiN6NkRet0PlPD7/ATSUt8iLgbGiH05g6q6oyhcX17Xn
-	 xx7Ujm4ojS5pZUM/1/K4KIxgw7ybvSGEJxJ6O25kaoWNSWXegvk37FIejTPfK4oMGn
-	 6wLcVXIzGGeW/UIbzgoj4/VYeUvzZOP29gToOtAeOV86of9zF0qWnVK7WHiGylTCal
-	 8DoQD4UuafgGBebqy8PGDBa2yWAgprXqN3u5oHaJ6KVGtFL+TMr7PaLbN0CpTtBLVA
-	 X2cwsJPfWbqaBuE3BXLT3/5dJWdavF6CsJKvWBWKPufYupjjpgPl5Gu9BI03OugCD3
-	 4Hoj8WcEhe6DQ==
+	b=bRu5D+KPzy47FQqK0I4t5DPsaxmQJjqUXp8LwzFuOcrY57K8kR03zFuHiDXZ7rO9H
+	 E7Tt9Zp99Fr7vOX3jfpsmuTRH/QGybDBvDdbiCgm+YpTpqtsOtfZWWJWuPWwsMMmHY
+	 DSVN42qJECOkZmXdDpfL734fRjohF3juxm1MzEZgQOi4G88lTz7SS6ksjK31VD+K1f
+	 Fjv9NBmXvw8PonZJAe/U1es7Ak+MmrjMDGkMU2DPbTgMQSPYiq9XcMPJ1P2O3Qk+hg
+	 ACKpxIiuM9elMHihcOgnjwi4WO4XuDx8wP5BwgKi42UwGAUv6U3dmoRyHaEOxa55hI
+	 Uh3T2PtYDgZmw==
 From: Damien Le Moal <dlemoal@kernel.org>
 To: linux-block@vger.kernel.org,
 	Jens Axboe <axboe@kernel.dk>,
@@ -34,9 +34,9 @@ To: linux-block@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	Mike Snitzer <snitzer@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v2 10/28] block: Allow zero value of max_zone_append_sectors queue limit
-Date: Mon, 25 Mar 2024 13:44:34 +0900
-Message-ID: <20240325044452.3125418-11-dlemoal@kernel.org>
+Subject: [PATCH v2 08/28] block: Use a mempool to allocate zone write plugs
+Date: Mon, 25 Mar 2024 13:44:32 +0900
+Message-ID: <20240325044452.3125418-9-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240325044452.3125418-1-dlemoal@kernel.org>
 References: <20240325044452.3125418-1-dlemoal@kernel.org>
@@ -48,185 +48,259 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-In preparation for adding a generic zone append emulation using zone
-write plugging, allow device drivers supporting zoned block device to
-set a the max_zone_append_sectors queue limit of a device to 0 to
-indicate the lack of native support for zone append operations and that
-the block layer should emulate these operations using regular write
-operations.
+Allocating zone write plugs using a struct kmem_cache does not guarantee
+that enough write plugs can be allocated to simultaneously write up to
+the maximum number of active zones of a zoned block device.
 
-blk_queue_max_zone_append_sectors() is modified to allow passing 0 as
-the max_zone_append_sectors argument. The function
-queue_max_zone_append_sectors() is also modified to ensure that the
-minimum of the max_hw_sectors and chunk_sectors limit is used whenever
-the max_zone_append_sectors limit is 0. This minimum is consistent with
-the value set for the max_zone_append_sectors limit by the function
-blk_validate_zoned_limits() when limits for a queue are validated.
-
-The helper functions queue_emulates_zone_append() and
-bdev_emulates_zone_append() are added to test if a queue (or block
-device) emulates zone append operations.
-
-In order for blk_revalidate_disk_zones() to accept zoned block devices
-relying on zone append emulation, the direct check to the
-max_zone_append_sectors queue limit of the disk is replaced by a check
-using the value returned by queue_max_zone_append_sectors(). Similarly,
-queue_zone_append_max_show() is modified to use the same accessor so
-that the sysfs attribute advertizes the non-zero limit that will be
-used, regardless if it is for native or emulated commands.
-
-For stacking drivers, a top device should not need to care if the
-underlying devices have native or emulated zone append operations.
-blk_stack_limits() is thus modified to set the top device
-max_zone_append_sectors limit using the new accessor
-queue_limits_max_zone_append_sectors(). queue_max_zone_append_sectors()
-is modified to use this function as well. Stacking drivers that require
-zone append emulation, e.g. dm-crypt, can still request this feature by
-calling blk_queue_max_zone_append_sectors() with a 0 limit.
+Avoid any issue with memory allocation by using a mempool with a size
+equal to the disk maximum number of open zones or maximum number of
+active zones, whichever is larger. For zoned devices that do not have
+open or active zone limits, the default 128 is used as the mempool size.
+If a change to the zone limits is detected, the mempool is resized in
+blk_revalidate_disk_zones().
 
 Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- block/blk-core.c       |  2 +-
- block/blk-settings.c   | 30 +++++++++++++++++++-----------
- block/blk-sysfs.c      |  2 +-
- block/blk-zoned.c      |  2 +-
- include/linux/blkdev.h | 23 ++++++++++++++++++++---
- 5 files changed, 42 insertions(+), 17 deletions(-)
+ block/blk-zoned.c      | 62 ++++++++++++++++++++++++++++++------------
+ include/linux/blkdev.h |  3 ++
+ 2 files changed, 47 insertions(+), 18 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index b6bc1978207d..c6d41e1c7a0a 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -602,7 +602,7 @@ static inline blk_status_t blk_check_zone_append(struct request_queue *q,
- 		return BLK_STS_IOERR;
- 
- 	/* Make sure the BIO is small enough and will not get split */
--	if (nr_sectors > q->limits.max_zone_append_sectors)
-+	if (nr_sectors > queue_max_zone_append_sectors(q))
- 		return BLK_STS_IOERR;
- 
- 	bio->bi_opf |= REQ_NOMERGE;
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index 3c7d8d638ab5..82c61d2e4bb8 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -413,24 +413,32 @@ EXPORT_SYMBOL(blk_queue_max_write_zeroes_sectors);
-  * blk_queue_max_zone_append_sectors - set max sectors for a single zone append
-  * @q:  the request queue for the device
-  * @max_zone_append_sectors: maximum number of sectors to write per command
-+ *
-+ * Sets the maximum number of sectors allowed for zone append commands. If
-+ * Specifying 0 for @max_zone_append_sectors indicates that the queue does
-+ * not natively support zone append operations and that the block layer must
-+ * emulate these operations using regular writes.
-  **/
- void blk_queue_max_zone_append_sectors(struct request_queue *q,
- 		unsigned int max_zone_append_sectors)
- {
--	unsigned int max_sectors;
-+	unsigned int max_sectors = 0;
- 
- 	if (WARN_ON(!blk_queue_is_zoned(q)))
- 		return;
- 
--	max_sectors = min(q->limits.max_hw_sectors, max_zone_append_sectors);
--	max_sectors = min(q->limits.chunk_sectors, max_sectors);
-+	if (max_zone_append_sectors) {
-+		max_sectors = min(q->limits.max_hw_sectors,
-+				  max_zone_append_sectors);
-+		max_sectors = min(q->limits.chunk_sectors, max_sectors);
- 
--	/*
--	 * Signal eventual driver bugs resulting in the max_zone_append sectors limit
--	 * being 0 due to a 0 argument, the chunk_sectors limit (zone size) not set,
--	 * or the max_hw_sectors limit not set.
--	 */
--	WARN_ON(!max_sectors);
-+		/*
-+		 * Signal eventual driver bugs resulting in the max_zone_append
-+		 * sectors limit being 0 due to the chunk_sectors limit (zone
-+		 * size) not set or the max_hw_sectors limit not set.
-+		 */
-+		WARN_ON_ONCE(!max_sectors);
-+	}
- 
- 	q->limits.max_zone_append_sectors = max_sectors;
- }
-@@ -757,8 +765,8 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 	t->max_dev_sectors = min_not_zero(t->max_dev_sectors, b->max_dev_sectors);
- 	t->max_write_zeroes_sectors = min(t->max_write_zeroes_sectors,
- 					b->max_write_zeroes_sectors);
--	t->max_zone_append_sectors = min(t->max_zone_append_sectors,
--					b->max_zone_append_sectors);
-+	t->max_zone_append_sectors = min(queue_limits_max_zone_append_sectors(t),
-+					 queue_limits_max_zone_append_sectors(b));
- 	t->bounce = max(t->bounce, b->bounce);
- 
- 	t->seg_boundary_mask = min_not_zero(t->seg_boundary_mask,
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index 8c8f69d8ba48..e3ed5a921aff 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -224,7 +224,7 @@ static ssize_t queue_zone_write_granularity_show(struct request_queue *q,
- 
- static ssize_t queue_zone_append_max_show(struct request_queue *q, char *page)
- {
--	unsigned long long max_sectors = q->limits.max_zone_append_sectors;
-+	unsigned long long max_sectors = queue_max_zone_append_sectors(q);
- 
- 	return sprintf(page, "%llu\n", max_sectors << SECTOR_SHIFT);
- }
 diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 33dea8ca9a6f..27ea88e976c2 100644
+index 39e66d64ea55..4e93293b1233 100644
 --- a/block/blk-zoned.c
 +++ b/block/blk-zoned.c
-@@ -1629,7 +1629,7 @@ int blk_revalidate_disk_zones(struct gendisk *disk,
- 		return -ENODEV;
+@@ -568,13 +568,14 @@ static struct blk_zone_wplug *disk_get_zone_wplug(struct gendisk *disk,
+ 	return zwplug;
+ }
+ 
+-static inline void disk_put_zone_wplug(struct blk_zone_wplug *zwplug)
++static inline void disk_put_zone_wplug(struct gendisk *disk,
++				       struct blk_zone_wplug *zwplug)
+ {
+ 	if (atomic_dec_and_test(&zwplug->ref)) {
+ 		WARN_ON_ONCE(!bio_list_empty(&zwplug->bio_list));
+ 		WARN_ON_ONCE(!list_empty(&zwplug->err));
+ 
+-		kmem_cache_free(blk_zone_wplugs_cachep, zwplug);
++		mempool_free(zwplug, disk->zone_wplugs_pool);
+ 	}
+ }
+ 
+@@ -599,14 +600,14 @@ static struct blk_zone_wplug *disk_get_zone_wplug_locked(struct gendisk *disk,
+ 		spin_lock_irqsave(&zwplug->lock, *flags);
+ 		if (zwplug->flags & BLK_ZONE_WPLUG_FREEING) {
+ 			spin_unlock_irqrestore(&zwplug->lock, *flags);
+-			disk_put_zone_wplug(zwplug);
++			disk_put_zone_wplug(disk, zwplug);
+ 			goto again;
+ 		}
+ 		return zwplug;
  	}
  
--	if (!q->limits.max_zone_append_sectors) {
-+	if (!queue_max_zone_append_sectors(q)) {
- 		pr_warn("%s: Invalid 0 maximum zone append limit\n",
- 			disk->disk_name);
- 		return -ENODEV;
+ 	/* Allocate and insert a new zone write plug. */
+-	zwplug = kmem_cache_alloc(blk_zone_wplugs_cachep, gfp_mask);
++	zwplug = mempool_alloc(disk->zone_wplugs_pool, gfp_mask);
+ 	if (!zwplug)
+ 		return NULL;
+ 
+@@ -629,7 +630,7 @@ static struct blk_zone_wplug *disk_get_zone_wplug_locked(struct gendisk *disk,
+ 	 */
+ 	if (!disk_insert_zone_wplug(disk, zwplug)) {
+ 		spin_unlock_irqrestore(&zwplug->lock, *flags);
+-		kmem_cache_free(blk_zone_wplugs_cachep, zwplug);
++		mempool_free(zwplug, disk->zone_wplugs_pool);
+ 		goto again;
+ 	}
+ 
+@@ -659,13 +660,14 @@ static inline void blk_zone_wplug_bio_io_error(struct bio *bio)
+ 	blk_queue_exit(q);
+ }
+ 
+-static void disk_zone_wplug_abort(struct blk_zone_wplug *zwplug)
++static void disk_zone_wplug_abort(struct gendisk *disk,
++				  struct blk_zone_wplug *zwplug)
+ {
+ 	struct bio *bio;
+ 
+ 	while ((bio = bio_list_pop(&zwplug->bio_list))) {
+ 		blk_zone_wplug_bio_io_error(bio);
+-		disk_put_zone_wplug(zwplug);
++		disk_put_zone_wplug(disk, zwplug);
+ 	}
+ }
+ 
+@@ -681,7 +683,7 @@ static void disk_zone_wplug_abort_unaligned(struct gendisk *disk,
+ 		if (wp_offset >= zone_capacity ||
+ 		     bio_offset_from_zone_start(bio) != wp_offset) {
+ 			blk_zone_wplug_bio_io_error(bio);
+-			disk_put_zone_wplug(zwplug);
++			disk_put_zone_wplug(disk, zwplug);
+ 			continue;
+ 		}
+ 
+@@ -718,7 +720,7 @@ static void disk_zone_wplug_set_wp_offset(struct gendisk *disk,
+ 
+ 	/* Update the zone write pointer and abort all plugged BIOs. */
+ 	zwplug->wp_offset = wp_offset;
+-	disk_zone_wplug_abort(zwplug);
++	disk_zone_wplug_abort(disk, zwplug);
+ 
+ 	/*
+ 	 * Updating the write pointer offset puts back the zone
+@@ -765,7 +767,7 @@ static bool blk_zone_wplug_handle_reset_or_finish(struct bio *bio,
+ 	zwplug = disk_get_zone_wplug(disk, bio->bi_iter.bi_sector);
+ 	if (zwplug) {
+ 		disk_zone_wplug_set_wp_offset(disk, zwplug, wp_offset);
+-		disk_put_zone_wplug(zwplug);
++		disk_put_zone_wplug(disk, zwplug);
+ 	}
+ 
+ 	return false;
+@@ -787,7 +789,7 @@ static bool blk_zone_wplug_handle_reset_all(struct bio *bio)
+ 		zwplug = disk_get_zone_wplug(disk, sector);
+ 		if (zwplug) {
+ 			disk_zone_wplug_set_wp_offset(disk, zwplug, 0);
+-			disk_put_zone_wplug(zwplug);
++			disk_put_zone_wplug(disk, zwplug);
+ 		}
+ 	}
+ 
+@@ -1158,7 +1160,7 @@ void blk_zone_write_plug_bio_endio(struct bio *bio)
+ 	if (bio->bi_bdev->bd_has_submit_bio)
+ 		disk_zone_wplug_unplug_bio(disk, zwplug);
+ 
+-	disk_put_zone_wplug(zwplug);
++	disk_put_zone_wplug(disk, zwplug);
+ }
+ 
+ void blk_zone_write_plug_complete_request(struct request *req)
+@@ -1171,7 +1173,7 @@ void blk_zone_write_plug_complete_request(struct request *req)
+ 
+ 	disk_zone_wplug_unplug_bio(disk, zwplug);
+ 
+-	disk_put_zone_wplug(zwplug);
++	disk_put_zone_wplug(disk, zwplug);
+ }
+ 
+ static void blk_zone_wplug_bio_work(struct work_struct *work)
+@@ -1284,7 +1286,7 @@ static void disk_zone_wplug_handle_error(struct gendisk *disk,
+ 		 * plugged BIOs as otherwise we could endup waiting forever on
+ 		 * plugged BIOs to complete if there is a queue freeze on-going.
+ 		 */
+-		disk_zone_wplug_abort(zwplug);
++		disk_zone_wplug_abort(disk, zwplug);
+ 		goto unplug;
+ 	}
+ 
+@@ -1325,7 +1327,7 @@ static void disk_zone_wplugs_work(struct work_struct *work)
+ 		spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
+ 
+ 		disk_zone_wplug_handle_error(disk, zwplug);
+-		disk_put_zone_wplug(zwplug);
++		disk_put_zone_wplug(disk, zwplug);
+ 
+ 		spin_lock_irqsave(&disk->zone_wplugs_lock, flags);
+ 	}
+@@ -1353,7 +1355,7 @@ static void disk_free_zone_wplugs(struct gendisk *disk)
+ 					     struct blk_zone_wplug, node);
+ 			blk_get_zone_wplug(zwplug);
+ 			disk_remove_zone_wplug(disk, zwplug);
+-			disk_put_zone_wplug(zwplug);
++			disk_put_zone_wplug(disk, zwplug);
+ 		}
+ 	}
+ }
+@@ -1369,7 +1371,7 @@ void disk_init_zone_resources(struct gendisk *disk)
+  * For the size of a disk zone write plug hash table, use the disk maximum
+  * open zones and maximum active zones limits, but do not exceed 4KB (512 hlist
+  * head entries), that is, 9 bits. For a disk that has no limits, default to
+- * 128 zones to hash.
++ * 128 zones for the mempool size and the hash size.
+  */
+ #define BLK_ZONE_MAX_WPLUG_HASH_BITS		9
+ #define BLK_ZONE_DEFAULT_WPLUG_HASH_SIZE	128
+@@ -1391,6 +1393,17 @@ static int disk_alloc_zone_resources(struct gendisk *disk,
+ 	for (i = 0; i < disk_zone_wplugs_hash_size(disk); i++)
+ 		INIT_HLIST_HEAD(&disk->zone_wplugs_hash[i]);
+ 
++	disk->zone_wplugs_pool =
++		mempool_create_slab_pool(hash_size, blk_zone_wplugs_cachep);
++	if (!disk->zone_wplugs_pool) {
++		kfree(disk->zone_wplugs_hash);
++		disk->zone_wplugs_hash = NULL;
++		disk->zone_wplugs_hash_bits = 0;
++		return -ENOMEM;
++	}
++
++	disk->zone_wplugs_pool_size = hash_size;
++
+ 	return 0;
+ }
+ 
+@@ -1404,6 +1417,10 @@ void disk_free_zone_resources(struct gendisk *disk)
+ 	disk->zone_wplugs_hash = NULL;
+ 	disk->zone_wplugs_hash_bits = 0;
+ 
++	mempool_destroy(disk->zone_wplugs_pool);
++	disk->zone_wplugs_pool = NULL;
++	disk->zone_wplugs_pool_size = 0;
++
+ 	kfree(disk->conv_zones_bitmap);
+ 	disk->conv_zones_bitmap = NULL;
+ 	kfree(disk->seq_zones_wlock);
+@@ -1418,6 +1435,7 @@ static int disk_revalidate_zone_resources(struct gendisk *disk,
+ {
+ 	struct queue_limits *lim = &disk->queue->limits;
+ 	unsigned int hash_size;
++	int ret;
+ 
+ 	hash_size = max(lim->max_open_zones, lim->max_active_zones);
+ 	if (!hash_size)
+@@ -1427,6 +1445,14 @@ static int disk_revalidate_zone_resources(struct gendisk *disk,
+ 	if (!disk->zone_wplugs_hash)
+ 		return disk_alloc_zone_resources(disk, hash_size);
+ 
++	/* Resize the memory pool if needed. */
++	if (disk->zone_wplugs_pool_size != hash_size) {
++		ret = mempool_resize(disk->zone_wplugs_pool, hash_size);
++		if (ret)
++			return ret;
++		disk->zone_wplugs_pool_size = hash_size;
++	}
++
+ 	return 0;
+ }
+ 
+@@ -1526,7 +1552,7 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
+ 			if (!zwplug)
+ 				return -ENOMEM;
+ 			spin_unlock_irqrestore(&zwplug->lock, flags);
+-			disk_put_zone_wplug(zwplug);
++			disk_put_zone_wplug(disk, zwplug);
+ 		}
+ 
+ 		break;
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 8eb99cab7221..916334f173a2 100644
+index e9b670be338b..68c60039a7ea 100644
 --- a/include/linux/blkdev.h
 +++ b/include/linux/blkdev.h
-@@ -1177,12 +1177,29 @@ static inline unsigned int queue_max_segment_size(const struct request_queue *q)
- 	return q->limits.max_segment_size;
- }
+@@ -25,6 +25,7 @@
+ #include <linux/uuid.h>
+ #include <linux/xarray.h>
+ #include <linux/file.h>
++#include <linux/mempool.h>
  
--static inline unsigned int queue_max_zone_append_sectors(const struct request_queue *q)
-+static inline unsigned int queue_limits_max_zone_append_sectors(struct queue_limits *l)
- {
-+	unsigned int max_sectors = min(l->chunk_sectors, l->max_hw_sectors);
- 
--	const struct queue_limits *l = &q->limits;
-+	return min_not_zero(l->max_zone_append_sectors, max_sectors);
-+}
-+
-+static inline unsigned int queue_max_zone_append_sectors(struct request_queue *q)
-+{
-+	if (!blk_queue_is_zoned(q))
-+		return 0;
- 
--	return min(l->max_zone_append_sectors, l->max_sectors);
-+	return queue_limits_max_zone_append_sectors(&q->limits);
-+}
-+
-+static inline bool queue_emulates_zone_append(struct request_queue *q)
-+{
-+	return blk_queue_is_zoned(q) && !q->limits.max_zone_append_sectors;
-+}
-+
-+static inline bool bdev_emulates_zone_append(struct block_device *bdev)
-+{
-+	return queue_emulates_zone_append(bdev_get_queue(bdev));
- }
- 
- static inline unsigned int
+ struct module;
+ struct request_queue;
+@@ -194,6 +195,8 @@ struct gendisk {
+ 	unsigned int		zone_capacity;
+ 	unsigned long		*conv_zones_bitmap;
+ 	unsigned long		*seq_zones_wlock;
++	unsigned int		zone_wplugs_pool_size;
++	mempool_t		*zone_wplugs_pool;
+ 	unsigned int            zone_wplugs_hash_bits;
+ 	spinlock_t              zone_wplugs_lock;
+ 	struct hlist_head       *zone_wplugs_hash;
 -- 
 2.44.0
 
