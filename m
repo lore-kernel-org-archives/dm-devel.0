@@ -1,45 +1,33 @@
-Received: from mail-pl1-f177.google.com (mail-pl1-f177.google.com [209.85.214.177])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A740276408
-	for <dm-devel@lists.linux.dev>; Mon, 25 Mar 2024 22:29:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4CE570CB3;
+	Mon, 25 Mar 2024 23:17:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711405775; cv=none; b=bGS0lnS4VbgaC7qDpaj5S0ExTqVFjcktILYGICHgPNjBqWgZwBKantL/ylywhLtjWyj/YdPTuRX9c505+M99m7lkn5D66+kYizE7jEG8biBzEd0vUeYC/LJy7sIXM7z+uV3WfI+zShKBxk+NSpqbs9rJW4Y5MXSv8A6u2HBZlQk=
+	t=1711408662; cv=none; b=GHJNRmguN4aoR9hY29duYF+OmweoGd8DneCtmKyerLSOplaU3KKqTSP7+WRs/Mu5Il6IKbo09oMM6yIbSjk+pDOEQRjsTqvf8XjGQdaEXLa4g61wkKofv8sadeA5rnjkS7oyTQOKhGI3FtBq7fXouhPoEP24qLvcFWbTBZvOEIM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711405775; c=relaxed/simple;
-	bh=1Ay2rHYFemB44J5xEVkTil+N75NLcE4PSSkIx8V5G5I=;
+	s=arc-20240116; t=1711408662; c=relaxed/simple;
+	bh=eX+nnrw2vRDpB8LH/AreoGfYWoaX1acBcF7HGBiBLoo=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=leqYD654lpiaKugDGH0EBLt55r+lRIkTy0I/5a9mg9/yyPFOFKiFDpaEfmwkzQXWz+YF4Ou0jNm9bbbl+FKhDIbWuZZhmcVRH74UyGf29bfMxdtJooHDc1rX2ZGSfCZPoq8wlwYS+Ls/W80AfBaA4CE5fSLXQo6CdTMd2dJvGk0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.214.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-pl1-f177.google.com with SMTP id d9443c01a7336-1def142ae7bso42924765ad.3
-        for <dm-devel@lists.linux.dev>; Mon, 25 Mar 2024 15:29:33 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711405773; x=1712010573;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=1Ay2rHYFemB44J5xEVkTil+N75NLcE4PSSkIx8V5G5I=;
-        b=HXgTqSQYo+WrXAnG+kzXvbEeM+utqKsGCZQ2dej+wupIw7YpX0FfKcd4CPIVFf2xxv
-         vwItx7Q77/7JW4SKCvi9NveabTki332pCPP21wfVaGmYOw4dcOGixfNele1UwNtXr0/H
-         DCgvoRHbSq2CLQ28T5BeGnyHX4bsZr4HzErKXm6Pp3FLC55XS+644231VWIUzVgo2CeJ
-         +t7XUrKcmya5q9flKBHLPjVKHYOC1yqkZ33ZcEU7VdY4V2i7xr8F1xknBFSysv3c5zZ5
-         7VkyjgJ+/soKaMiUDG68VpYL+WgdOFSpLT/rhurArHAJ8LL+gYqpwgvhfHI1sF6OWltF
-         3hzQ==
-X-Forwarded-Encrypted: i=1; AJvYcCU8DxBwdUjuV5+/ehFyDyCIBzOp42B9kWfcxnKXkp9ZjPhUFhZDvNiLhhI5we7FzUiORReqCT4IeDHdm9pXShmt/hqkdT01/Gc=
-X-Gm-Message-State: AOJu0Yz2OJAZra8Nl1etnGrHPtjuuC8B6isG6XiCeUci6Fb5Hue/KN5S
-	+2cg0mnJ4TfYGjVz1muiFs9wQXHhfJ+1fW7VRWSsz7SgQKirlxwa
-X-Google-Smtp-Source: AGHT+IFk182OYI6LXsNe0+MNjqoaDZsE8bBJFlK6xMQloJ2JRx+dYFgULmW3i9PiYaDZOKxsC0Ecmw==
-X-Received: by 2002:a17:902:e752:b0:1e0:b5d4:9f60 with SMTP id p18-20020a170902e75200b001e0b5d49f60mr5829559plf.28.1711405772921;
-        Mon, 25 Mar 2024 15:29:32 -0700 (PDT)
-Received: from ?IPV6:2620:0:1000:8411:262:e41e:a4dd:81c6? ([2620:0:1000:8411:262:e41e:a4dd:81c6])
-        by smtp.gmail.com with ESMTPSA id p1-20020a1709027ec100b001e0d6cd042bsm936742plb.303.2024.03.25.15.29.31
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 25 Mar 2024 15:29:32 -0700 (PDT)
-Message-ID: <efd36ac0-daa7-437a-be55-a3379632739c@acm.org>
-Date: Mon, 25 Mar 2024 15:29:30 -0700
+	 In-Reply-To:Content-Type; b=n71lk9tXLx/Hvc8OAb/cuYNwyy4d74g53gJIyVg6zu2SN3UxFHHOZz35qKRPq5Tv0XEO8w4pBxvCAtjxf8XK3JRq3Gtk+/Y55MY+RyvxgcND/f/UULDCuwUDyayr3yQ9wZRYA7rA0tEUkMUVZ+rrWk3nOT2TmDmEg3WvwRuj/8g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jsDfCifQ; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jsDfCifQ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 022EEC433F1;
+	Mon, 25 Mar 2024 23:17:40 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1711408662;
+	bh=eX+nnrw2vRDpB8LH/AreoGfYWoaX1acBcF7HGBiBLoo=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=jsDfCifQLAIk9JJuzE4as6hgMMbGilVN04XANFdzSirIw+L3eUQi37r63UrKYiL3D
+	 TWR6cwOOnRFjMX1FZsfySJM2U75ggJ+TV4aXRS/Spl3FoFy/BxffxYb0xeS4IT5mGR
+	 XkECos6AlT4V8BSYikVSrz29nUeGwSymR+QM1H9OUxWA9A9IHmKVpVNr+8/M6NeJY8
+	 KjsFY6/MNopqVGuRkz1w7rwZ1tIoWR3U9sOzKQhfKOnYJqRpYmVy7fDYhJWlDVAD+H
+	 fzfee8JC7GeYSYPAUdOFpOPAyIMJPseP/9Q3cmdH6WE/r7NV2pEaGuJSHmC1Jl8ErJ
+	 IdX0m9VxKB53w==
+Message-ID: <3412b80a-a5a0-489c-96b9-d9b2652540e4@kernel.org>
+Date: Tue, 26 Mar 2024 08:17:39 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -47,24 +35,91 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 27/28] block: Do not force select mq-deadline with
- CONFIG_BLK_DEV_ZONED
+Subject: Re: [PATCH v2 25/28] block: Move zone related debugfs attribute to
+ blk-zoned.c
 Content-Language: en-US
-To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+To: Bart Van Assche <bvanassche@acm.org>, linux-block@vger.kernel.org,
  Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
  "Martin K . Petersen" <martin.petersen@oracle.com>,
  dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>
 References: <20240325044452.3125418-1-dlemoal@kernel.org>
- <20240325044452.3125418-28-dlemoal@kernel.org>
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20240325044452.3125418-28-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+ <20240325044452.3125418-26-dlemoal@kernel.org>
+ <ddc7708f-fcfa-45da-af01-601ea7ca8897@acm.org>
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <ddc7708f-fcfa-45da-af01-601ea7ca8897@acm.org>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
-On 3/24/24 21:44, Damien Le Moal wrote:
-> Now that zone block device write ordering control does not depend
-> anymore on mq-deadline and zone write locking, there is no need to force
-> select the mq-deadline scheduler when CONFIG_BLK_DEV_ZONED is enabled.
+On 3/26/24 07:20, Bart Van Assche wrote:
+> On 3/24/24 21:44, Damien Le Moal wrote:
+>> diff --git a/block/blk-mq-debugfs.h b/block/blk-mq-debugfs.h
+>> index 9c7d4b6117d4..3ebe2c29b624 100644
+>> --- a/block/blk-mq-debugfs.h
+>> +++ b/block/blk-mq-debugfs.h
+>> @@ -83,7 +83,7 @@ static inline void blk_mq_debugfs_unregister_rqos(struct rq_qos *rqos)
+>>   }
+>>   #endif
+>>   
+>> -#ifdef CONFIG_BLK_DEBUG_FS_ZONED
+>> +#if defined(CONFIG_BLK_DEV_ZONED) && defined(CONFIG_BLK_DEBUG_FS)
+>>   int queue_zone_wlock_show(void *data, struct seq_file *m);
+>>   #else
+>>   static inline int queue_zone_wlock_show(void *data, struct seq_file *m)
+>> diff --git a/block/blk-zoned.c b/block/blk-zoned.c
+>> index 03222314d649..62160a8675f4 100644
+>> --- a/block/blk-zoned.c
+>> +++ b/block/blk-zoned.c
+>> @@ -22,6 +22,7 @@
+>>   
+>>   #include "blk.h"
+>>   #include "blk-mq-sched.h"
+>> +#include "blk-mq-debugfs.h"
+>>   
+>>   #define ZONE_COND_NAME(name) [BLK_ZONE_COND_##name] = #name
+>>   static const char *const zone_cond_name[] = {
+>> @@ -1745,3 +1746,22 @@ void blk_zone_dev_init(void)
+>>   {
+>>   	blk_zone_wplugs_cachep = KMEM_CACHE(blk_zone_wplug, SLAB_PANIC);
+>>   }
+>> +
+>> +#ifdef CONFIG_BLK_DEBUG_FS
+>> +
+>> +int queue_zone_wlock_show(void *data, struct seq_file *m)
+>> +{
+>> +	struct request_queue *q = data;
+>> +	unsigned int i;
+>> +
+>> +	if (!q->disk->seq_zones_wlock)
+>> +		return 0;
+>> +
+>> +	for (i = 0; i < q->disk->nr_zones; i++)
+>> +		if (test_bit(i, q->disk->seq_zones_wlock))
+>> +			seq_printf(m, "%u\n", i);
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +#endif
+> 
+> This patch increases the number of #ifdefs in block layer .c files so
+> I'm not sure that this patch can be considered an improvement.
 
-Reviewed-by: Bart Van Assche <bvanassche@acm.org>
+Not following... This removes CONFIG_BLK_DEBUG_FS_ZONED and only add this single
+ifdef here in blk-zoned.c instead of testing the removed config in
+blk-mq-debugfs.h. Same count and one less config. Sure, there is one ifdef in c
+code added. But I *really* prefer that instead of having zone related code all
+over the place guarded with #if defined(CONFIG_BLK_DEV_ZONED).
+
+So unless Jens is against this change, I am keeping it.
+
+> 
+> Thanks,
+> 
+> Bart.
+
+-- 
+Damien Le Moal
+Western Digital Research
+
