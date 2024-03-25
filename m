@@ -1,48 +1,45 @@
-Received: from 009.lax.mailroute.net (009.lax.mailroute.net [199.89.1.12])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com [209.85.214.180])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0189E5C61A
-	for <dm-devel@lists.linux.dev>; Mon, 25 Mar 2024 21:53:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.12
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C94473167
+	for <dm-devel@lists.linux.dev>; Mon, 25 Mar 2024 22:13:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711403613; cv=none; b=UMbIBfS/g9XXIh33DqvNgjZvXGMF5cHqhTyf0yBs06ICF+4iPIlwTCKP7rKhTHwQfBigrhMPcy+SXVfaWpqV9BVmNZklQFB2yujJ5sH80vtj8HZQuwK+27sF37QiT1pTg+RV1PB46swrhlmAMcRUVTqCIF3yK+5/nWXxmjlIKKg=
+	t=1711404811; cv=none; b=NxGNo7K3HXRymOVg+hi5XQM8weeYpTiDtAjPTgJMflC0NSYYqV32c7YbRzpODrFJyHSw7dbJK3ll7+aUhdjraIXn3DoBS7PNqke9sVS/cdCeE2/qFr4hN/mELnO5rvHZ695h8ZgKu4My2E3qdP9OPTopT0S2OxC55OMRhjM+YQo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711403613; c=relaxed/simple;
-	bh=Ie3epx9FMfV5IO1IjZ1R8esxCVWPB+w55HlChItVMGY=;
+	s=arc-20240116; t=1711404811; c=relaxed/simple;
+	bh=hN55zRuf1wTWfhOuZ1Hsv78yTqllTTJ254BBca/qaQk=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=SXgeQMGo7Ff6WfVQsprAomq3zko4PuWMAbAQV7oUakPpaOdsxiIcFhZrh2uEH+WN/xd5Nv947LRACzsOCDR2wh+Xav7s3GJn/B7T8503YZOJnG3XUKk3JDpvIdZmdk9Ci27Zhwfbu/Xl66CuWl3dk3OPMxF9I7kyPWG9Zb+E6OQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=c+Hk+wn+; arc=none smtp.client-ip=199.89.1.12
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="c+Hk+wn+"
-Received: from localhost (localhost [127.0.0.1])
-	by 009.lax.mailroute.net (Postfix) with ESMTP id 4V3RWv3p6WzlgVnW;
-	Mon, 25 Mar 2024 21:53:31 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:references:content-language:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1711403609; x=1713995610; bh=yKqm8lQwdry1AL1X2ZSwasu3
-	7lQXGhDAX3yUxjjOOoI=; b=c+Hk+wn+zH2O80vc5PcbJTHAz1sV0uyi/bKYyUZn
-	Rh0TFqmH/ZVDW232Ggv/2SevRuMH7M8U7Wfpn2aOFuKazcFE+C8bMa98mwO2kxfQ
-	L8iFENzkmDPewmbnn1tnfsINbXPB6+HURp+vBnkHmLuOzGWh28BfAhUVnPcpQWr6
-	UmDsBz/yqTNyNe/VzG/uuESYcvqvdPFfutAEF5yUgUmCMhnw6guxTktamnIICYXU
-	qZ+4oV0uo6aGD//FoqQjgc7xu6i8qFya4SFHJJVbphLE4Qd7tD1pnLkWqx2aJHMF
-	si1kNGhcro9hpHtLF1i5l8QUgBncFNjF5CNejvivOFu69Q==
-X-Virus-Scanned: by MailRoute
-Received: from 009.lax.mailroute.net ([127.0.0.1])
- by localhost (009.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id PIeOHKoYi9Ov; Mon, 25 Mar 2024 21:53:29 +0000 (UTC)
-Received: from [100.96.154.173] (unknown [104.132.1.77])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 009.lax.mailroute.net (Postfix) with ESMTPSA id 4V3RWn3hBMzlgVnN;
-	Mon, 25 Mar 2024 21:53:25 +0000 (UTC)
-Message-ID: <641c122c-1dfa-4590-b908-68706721a2ef@acm.org>
-Date: Mon, 25 Mar 2024 14:53:24 -0700
+	 In-Reply-To:Content-Type; b=cG9XUdwnJupOtS/dlKlg+jwgrSekMBFcvavfscmNtDIkxN1+TPUf7/9zaNHsNzp721m2lMH1AekgtgTA7GjxqP30HbCHz0UA83dZaqsfHKmfqjm2RjP5wQ1b0+gmvqp9XFGyoHZh3cryyVmYaVsGQ1AOcGAY3hGtC7dR00fsbNo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.214.180
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-pl1-f180.google.com with SMTP id d9443c01a7336-1e0000cdf99so37974615ad.0
+        for <dm-devel@lists.linux.dev>; Mon, 25 Mar 2024 15:13:30 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1711404809; x=1712009609;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=zuN0euwq54EZtcjYVhfgSHBS8X1ggoE7zpwJRA9IdAU=;
+        b=KF11ZmZXGbbzGycXWBm8H+Setzm7esgwO5S48GlD8pvKR0Yb8+i7PW5JgPHjzQsKq1
+         DSyOBHX/MRMpKd4rlpD1qsZtx25uEjurgCarKpgzVVBfRa4XhJBDEni65xH7ZlZtYyp4
+         Sa8sHEqTo1MIY7DQrmKqnGrYWh4rF7LrM/G6423bplkhHX5ccVg+C8pLFsLvtumdcFb8
+         Gbsy1i1xnvPcY+LH3JMFCxwADlDAO+dxrtkkUxNwcJDEXMtARdv4rglkt21UkBKJM8Fy
+         /yoeseZrsQLF9M3nsmlybEO3dx4KEBKtRWpAcMlyrM1jK9DTCcgvoIhc0Xh+UBFb8/wP
+         BcFA==
+X-Forwarded-Encrypted: i=1; AJvYcCWYzx7n9UIg7pkO5kBtFQy6DwSXdzb2e8KqWs9jkz3TlArzuUR2pITsaTO7sprWA0+7qyqqFy1+2H3N++jC9R94SQFuJXA5AMs=
+X-Gm-Message-State: AOJu0YzWR4floHuPSV5U9X+NcOWndKWZZONj5PCnsgEzXwb7HVc6VQJE
+	eIGciHY4kf8fpvW6U8/zVSdyUPvEYO9IcT3yfPsWSZgMLCOsqcvf
+X-Google-Smtp-Source: AGHT+IH7D3A3vhycoJD9zsFoky6aAGhFXt3gON+zXNbmmnkac3mGgGxBCi5GcVNm1aUF9F0QqwqVXQ==
+X-Received: by 2002:a17:902:c3cd:b0:1df:f624:a542 with SMTP id j13-20020a170902c3cd00b001dff624a542mr8579974plj.16.1711404809365;
+        Mon, 25 Mar 2024 15:13:29 -0700 (PDT)
+Received: from ?IPV6:2620:0:1000:8411:262:e41e:a4dd:81c6? ([2620:0:1000:8411:262:e41e:a4dd:81c6])
+        by smtp.gmail.com with ESMTPSA id s23-20020a170902a51700b001e0310bb84fsm5229183plq.289.2024.03.25.15.13.28
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 25 Mar 2024 15:13:28 -0700 (PDT)
+Message-ID: <df2e08d0-102e-4754-ad91-e50fa643d744@acm.org>
+Date: Mon, 25 Mar 2024 15:13:27 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -50,8 +47,8 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 06/28] block: Remember zone capacity when revalidating
- zones
+Subject: Re: [PATCH v2 22/28] block: mq-deadline: Remove support for zone
+ write locking
 Content-Language: en-US
 To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
  Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
@@ -59,28 +56,21 @@ To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
  dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>
 References: <20240325044452.3125418-1-dlemoal@kernel.org>
- <20240325044452.3125418-7-dlemoal@kernel.org>
+ <20240325044452.3125418-23-dlemoal@kernel.org>
 From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20240325044452.3125418-7-dlemoal@kernel.org>
+In-Reply-To: <20240325044452.3125418-23-dlemoal@kernel.org>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
 On 3/24/24 21:44, Damien Le Moal wrote:
-> +		/*
-> +		 * Remember the capacity of the first sequential zone and check
-> +		 * if it is constant for all zones.
-> +		 */
-> +		if (!args->zone_capacity)
-> +			args->zone_capacity = zone->capacity;
-> +		if (zone->capacity != args->zone_capacity) {
-> +			pr_warn("%s: Invalid variable zone capacity\n",
-> +				disk->disk_name);
-> +			return -ENODEV;
-> +		}
+> With the block layer generic plugging of write operations for zoned
+> block devices, mq-deadline, or any other scheduler, can only ever
+> see at most one write operation per zone at any time. There is thus no
+> sequentiality requirements for these writes and thus no need to tightly
+> control the dispatching of write requests using zone write locking.
+> 
+> Remove all the code that implement this control in the mq-deadline
+> scheduler and remove advertizing support for the
+> ELEVATOR_F_ZBD_SEQ_WRITE elevator feature.
 
-The above code won't refuse devices for which the first few zones have 
-capacity zero. Shouldn't these be rejected?
-
-Thanks,
-
-Bart.
+Reviewed-by: Bart Van Assche <bvanassche@acm.org>
