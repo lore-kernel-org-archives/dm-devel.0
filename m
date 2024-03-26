@@ -1,32 +1,32 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2ABA012AAD7
-	for <dm-devel@lists.linux.dev>; Tue, 26 Mar 2024 06:05:12 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 087C654BFF
+	for <dm-devel@lists.linux.dev>; Tue, 26 Mar 2024 06:37:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711433114; cv=none; b=BwqgtF2foFH3khSUSzgWBP7bSQUxFkWXkm3iL5hEGY2HLq7yRDCFd3SJQDoRvgSFlQTRn+pLhNQPngQhFPuxoncQTXntY2F4SCToG1mw5JCFNOnSoMylCvt7MHqge8vlvoFGHVoZbtYar/1CfX9Xbw7iQAHF2MVQ4Qvh0/cVUVo=
+	t=1711435031; cv=none; b=H8nxL0IxD7q4qaxywD8ryqD//a8xyW9VIuM+OHUzKemRTo73sWSd3JhKK+5v38FsQIavDPNY+Wk4csY1vC2kaVUE6zV+LTX6El01ErXYO+2v5KeZcvMFcBlDAAcLl5LiRZLPnQZtJGbG/t39n4iHhPWi1Alp1/bZisLEOurOZQ0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711433114; c=relaxed/simple;
-	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=;
+	s=arc-20240116; t=1711435031; c=relaxed/simple;
+	bh=3JP1CqEqApwltEmbjWTFsr0gBD3EFkWz9YuXIANfkSk=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=sV5ezH3VNueJwIN+LjW/PKvaVMtTXoq0lb4InBUO94KdpG1nAT7gq+iosMFDtzOvPKmyOmmkJwUQ5vlMHU2flFvuBYR89EgIPIz/2iHdyxkwd4t/Sle6ktJ5y8rEWw1giaBpyA5Cys5kWjKRMF7YxU8LSnrYQxZi61D55Gd2z14=
+	 Content-Type:Content-Disposition:In-Reply-To; b=n7M5CJRH+1bs/7o1MFVtv0/DoXGr8WcPw9pq0FZ6xPLlMye1SsI14an9WcjOT9B4j3tYYQRDiIc+iT+eeF4iJCbP/o4HFBVkGhUaedqeaPbUVP8t2yO32g3OgqYiI+1Gk+6liX3XYp7GOiVBmWH+gmOM4q42jc7wjyH7jxc1y50=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id F08E268D3F; Tue, 26 Mar 2024 07:05:09 +0100 (CET)
-Date: Tue, 26 Mar 2024 07:05:09 +0100
+	id 1F35868D37; Tue, 26 Mar 2024 07:37:05 +0100 (CET)
+Date: Tue, 26 Mar 2024 07:37:05 +0100
 From: Christoph Hellwig <hch@lst.de>
 To: Damien Le Moal <dlemoal@kernel.org>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
-	linux-scsi@vger.kernel.org,
+Cc: Bart Van Assche <bvanassche@acm.org>, linux-block@vger.kernel.org,
+	Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
 	"Martin K . Petersen" <martin.petersen@oracle.com>,
 	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
 	Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v2 01/28] block: Restore sector of flush requests
-Message-ID: <20240326060509.GB7108@lst.de>
-References: <20240325044452.3125418-1-dlemoal@kernel.org> <20240325044452.3125418-2-dlemoal@kernel.org>
+Subject: Re: [PATCH v2 03/28] block: Introduce blk_zone_update_request_bio()
+Message-ID: <20240326063705.GA7696@lst.de>
+References: <20240325044452.3125418-1-dlemoal@kernel.org> <20240325044452.3125418-4-dlemoal@kernel.org> <20a3af4a-3075-4abc-8378-d55ea84a5893@acm.org> <0d3d0d81-66e0-4c7c-82dd-024972946666@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,9 +35,16 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240325044452.3125418-2-dlemoal@kernel.org>
+In-Reply-To: <0d3d0d81-66e0-4c7c-82dd-024972946666@kernel.org>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-Looks good:
+On Tue, Mar 26, 2024 at 08:23:19AM +0900, Damien Le Moal wrote:
+> REQ_OP_ZONE_APPEND + RQF_FLUSH_SEQ is not something supported, and this patch
+> series is not changing that. The reason is that the flush machinery is not
+> zone-append aware and will break if such request is issued for a device that
+> does not support fua. We probably should check for this, but that is not
+> something for this series to do and should be a separate fix.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Btw, I don't think we're even catching this right now.  Would be great
+to have a submission path check for it.
+
