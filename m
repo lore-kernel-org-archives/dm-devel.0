@@ -1,110 +1,81 @@
-Received: from mail-pf1-f179.google.com (mail-pf1-f179.google.com [209.85.210.179])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 446121C6BB
-	for <dm-devel@lists.linux.dev>; Tue, 26 Mar 2024 17:23:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 579B74CE09;
+	Tue, 26 Mar 2024 18:08:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711473832; cv=none; b=LnKsrwhaCS5ujCiw+dTdqWNoOQwBtgWFyfiGTDKFN9ZJnNkdd1tR4E/4jb26tDxrK5ObylIPJikR73vEjq4G9HLOF+VMZfv3triJaN2I2TfoklOg3FuzaY/0MlELUO9nocoXNAjeLpAttD+tKsmGhBs5GOG4zXhB/Z9myel9ZK0=
+	t=1711476499; cv=none; b=Yw5CW4IzYMfaTwAksXavqg/PgqjzbVn3zpP0pivl7BIpjuMGgDipRyS1CkQOTYNOH8xSQ2e8dgmwSS7Fa7DQrzPvp+09JU7B7JqwxiGKhL86hGRZDhi5CD5tuOttsxprdcEqxsPozFFS2wskHlo/W1qI7I5habSzPq0id10cyQ4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711473832; c=relaxed/simple;
-	bh=y+Jn18BZvFtNR884rHy0vrdkGll6bE/d3iE32Yv6pyM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=m7/xXIU9qUAr8XOg/5nLgR0eFkoDkrRttszwzRhpZl8FtTGOQZa/4g+QqA4jQ/xHfxnfdanpf5gAbJxdEQQgpqCk3PZcxo9cvj7hZyNTCtjJS0wNN2NSFC/Zs+IS0JpCErMI+WzXUzVXGDr0+0VADqKZP7Pv1FbDqjaeUq+91c0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.210.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-pf1-f179.google.com with SMTP id d2e1a72fcca58-6e8f51d0bf0so4630397b3a.3
-        for <dm-devel@lists.linux.dev>; Tue, 26 Mar 2024 10:23:51 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711473830; x=1712078630;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=CbK5+D93ipMvgDtby/SY/DONORImvPAeAXEdkHS1+b8=;
-        b=YLv6WBUaHWkBNX4JN0xE2z1NxpRTXmUCheg4gLfCP3C15HDnwr7Grxi1bMr7y0NXrH
-         84M+eGp8rSpPcmxeEDRX60YFe7vk14kNLw1kwjhE1B/eaFF7HNf94eN837qFJnkFaf1X
-         CtvTiKuUobcR0t+x9NbthhGRdJ0a/wNn8uC8zxvITtVC1KztU+kzVbBy/FZChtKsX4Wp
-         AypXUcExgaFxfrQwMNJ60I5fC3r/5j+jXoGDL1tfmd12GtBzTbMxLKU9TqpZ80ZhZqHD
-         TSUZMtnQIUXpNWtPG8Vy8dM/3ygHe6XOIb2HQkCWKARamq/DiFPY26Zpi+rlrh2d9xuI
-         47/A==
-X-Forwarded-Encrypted: i=1; AJvYcCWYgqzc6kUBA8q9//8k2N2MgWojDkcc/r3o+rMbe12hRB68EgAAvdJA0ALZltwDdJBnYWkf/xCGw+gIgjCct2bKLSJQDCYUraw=
-X-Gm-Message-State: AOJu0YxpJ+YQdaxIlPAWu8jG2jcbT8j8c8ibtb11R2tVMeXN7OBCGkAb
-	V4I04pob5YesktJY8xuc7qXcBOnEcndsHvMqkoE343E0Eyb/toOq
-X-Google-Smtp-Source: AGHT+IF1a1+CI+nTKVQ/ChEFscp+C7hhSiLHGv8wry4HV4h8dI0yWHSfHNCPewRPVIDM7JHJjuoSRA==
-X-Received: by 2002:a05:6a00:2d15:b0:6e7:30b0:9cc7 with SMTP id fa21-20020a056a002d1500b006e730b09cc7mr3703390pfb.15.1711473830487;
-        Tue, 26 Mar 2024 10:23:50 -0700 (PDT)
-Received: from ?IPV6:2620:0:1000:8411:262:e41e:a4dd:81c6? ([2620:0:1000:8411:262:e41e:a4dd:81c6])
-        by smtp.gmail.com with ESMTPSA id x21-20020a056a00271500b006e7309d9831sm3908204pfv.39.2024.03.26.10.23.49
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 26 Mar 2024 10:23:49 -0700 (PDT)
-Message-ID: <c50dc0a4-190a-4780-91b7-ceedfb1aa926@acm.org>
-Date: Tue, 26 Mar 2024 10:23:48 -0700
+	s=arc-20240116; t=1711476499; c=relaxed/simple;
+	bh=Khhh1ZLvxT6fxllkqRRqmsp4cXTsqy6SAp6jE45FhEU=;
+	h=Date:To:From:Subject:Message-Id; b=hl1AOaB253mirXEN71xCwc7ofxY8rjP1DnfGEL/W10bt1oWg/endeVRiVITHP6616kDiSnPXFx6Up/N2C1E7IFzLkuxMqf60MmWnVzWyfmLfRO+v8zmhswUSciGZDbpNrt4qP2GKbqfaan6XIUjxvoTlPg4YyIp5QCL1/miEpVE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=XNHsk4Qf; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="XNHsk4Qf"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 29F5FC433C7;
+	Tue, 26 Mar 2024 18:08:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
+	s=korg; t=1711476499;
+	bh=Khhh1ZLvxT6fxllkqRRqmsp4cXTsqy6SAp6jE45FhEU=;
+	h=Date:To:From:Subject:From;
+	b=XNHsk4QfOqckhK4aZX2uj6guDaS7s4ptdPICu0kHJeUCEihRboL1FGke1UZ6CsWxL
+	 zUTVFhXH5+bWyC5Z//0PZnCuJILd4fKkHI4gZe702lFQ0UfnWoIu6ZpbuKtKj+mcT3
+	 XvIkyT3OyEvVlKsYz+IyZRJNl+Qf893FxNBdshBY=
+Date: Tue, 26 Mar 2024 11:08:18 -0700
+To: mm-commits@vger.kernel.org,msakai@redhat.com,jserv@ccns.ncku.edu.tw,dm-devel@lists.linux.dev,visitorckw@gmail.com,akpm@linux-foundation.org
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: [merged mm-hotfixes-stable] maintainers-remove-incorrect-m-tag-for-dm-devel-listslinuxdev.patch removed from -mm tree
+Message-Id: <20240326180819.29F5FC433C7@smtp.kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 07/28] block: Introduce zone write plugging
-Content-Language: en-US
-To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
- Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-References: <20240325044452.3125418-1-dlemoal@kernel.org>
- <20240325044452.3125418-8-dlemoal@kernel.org>
- <f3b298bb-b68a-4375-a3b4-fc91229740c1@acm.org>
- <839ebf2a-4dc6-433b-bc47-fd7915ed0ecf@kernel.org>
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <839ebf2a-4dc6-433b-bc47-fd7915ed0ecf@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
 
-On 3/25/24 20:12, Damien Le Moal wrote:
-> On 3/26/24 06:53, Bart Van Assche wrote:
->> On 3/24/24 21:44, Damien Le Moal wrote:
->>> -void disk_free_zone_bitmaps(struct gendisk *disk)
->>> +static bool disk_insert_zone_wplug(struct gendisk *disk,
->>> +				   struct blk_zone_wplug *zwplug)
->>> +{
->>> +	struct blk_zone_wplug *zwplg;
->>> +	unsigned long flags;
->>> +	unsigned int idx =
->>> +		hash_32(zwplug->zone_no, disk->zone_wplugs_hash_bits);
->>> +
->>> +	/*
->>> +	 * Add the new zone write plug to the hash table, but carefully as we
->>> +	 * are racing with other submission context, so we may already have a
->>> +	 * zone write plug for the same zone.
->>> +	 */
->>> +	spin_lock_irqsave(&disk->zone_wplugs_lock, flags);
->>> +	hlist_for_each_entry_rcu(zwplg, &disk->zone_wplugs_hash[idx], node) {
->>> +		if (zwplg->zone_no == zwplug->zone_no) {
->>> +			spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
->>> +			return false;
->>> +		}
->>> +	}
->>> +	hlist_add_head_rcu(&zwplug->node, &disk->zone_wplugs_hash[idx]);
->>> +	spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
->>> +
->>> +	return true;
->>> +}
->>
->> Since this function inserts an element into disk->zone_wplugs_hash[],
->> can it happen that another thread removes that element from the hash
->> list before this function returns?
-> 
-> No, that cannot happen. Both insertion and deletion of plugs in the hash table
-> are serialized with disk->zone_wplugs_lock. See disk_remove_zone_wplug().
 
-I think that documenting locking assumptions with lockdep_assert_held()
-would make this patch easier to review.
+The quilt patch titled
+     Subject: MAINTAINERS: remove incorrect M: tag for dm-devel@lists.linux.dev
+has been removed from the -mm tree.  Its filename was
+     maintainers-remove-incorrect-m-tag-for-dm-devel-listslinuxdev.patch
 
-Thanks,
+This patch was dropped because it was merged into the mm-hotfixes-stable branch
+of git://git.kernel.org/pub/scm/linux/kernel/git/akpm/mm
 
-Bart.
+------------------------------------------------------
+From: Kuan-Wei Chiu <visitorckw@gmail.com>
+Subject: MAINTAINERS: remove incorrect M: tag for dm-devel@lists.linux.dev
+Date: Wed, 20 Mar 2024 02:18:42 +0800
+
+The dm-devel@lists.linux.dev mailing list should only be listed under the
+L: (List) tag in the MAINTAINERS file.  However, it was incorrectly listed
+under both L: and M: (Maintainers) tags, which is not accurate.  Remove
+the M: tag for dm-devel@lists.linux.dev in the MAINTAINERS file to reflect
+the correct categorization.
+
+Link: https://lkml.kernel.org/r/20240319181842.249547-1-visitorckw@gmail.com
+Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
+Cc: Ching-Chun (Jim) Huang <jserv@ccns.ncku.edu.tw>
+Cc: Matthew Sakai <msakai@redhat.com>
+Cc: Michael Sclafani <dm-devel@lists.linux.dev>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+ MAINTAINERS |    1 -
+ 1 file changed, 1 deletion(-)
+
+--- a/MAINTAINERS~maintainers-remove-incorrect-m-tag-for-dm-devel-listslinuxdev
++++ a/MAINTAINERS
+@@ -6173,7 +6173,6 @@ F:	include/uapi/linux/dm-*.h
+ 
+ DEVICE-MAPPER VDO TARGET
+ M:	Matthew Sakai <msakai@redhat.com>
+-M:	dm-devel@lists.linux.dev
+ L:	dm-devel@lists.linux.dev
+ S:	Maintained
+ F:	Documentation/admin-guide/device-mapper/vdo*.rst
+_
+
+Patches currently in -mm which might be from visitorckw@gmail.com are
 
 
