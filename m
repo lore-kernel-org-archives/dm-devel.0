@@ -1,39 +1,40 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CBDAD5F869;
-	Wed, 27 Mar 2024 11:28:43 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAC7B8173D;
+	Wed, 27 Mar 2024 11:33:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711538923; cv=none; b=T6bqmtTV6VJmbrL0jRaPSnR91Wg6qrvWKMLAqp66L6vVQNuUr6QHYmIJNwTssElUcExV8gol9kwqxmcgn7d2Ur6Z/3ZFCI3N4FkiVW/tQE005uYgewD9ZfPRe/Biges/3ZO0QXCAvPX+OLW9r7N/fFoVUlBEHx6UI/I+cJgLo0Q=
+	t=1711539185; cv=none; b=oUjUqFxo6dT8nh1LO2f5ZajDdmn0n81cO3jk684ghwBkdZE5yJ7dFFPtzJQJIZzR+LamgijURq/zPAGwBL5MhD5R8st3EpSLNY69Argf9DTS3p0XhAuEY/ibUy7P7uBKG+v01AU7+z1rqHCSGoVMywDc9XdXgGBnwEQrOQbxsFY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711538923; c=relaxed/simple;
-	bh=oK2WNGk3bL7/M5b66hzamH9aEeU3/7BOwNC5Zg8F9Is=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=E8V0Ldh95hbVQXdTcgLWCNo+NGnxDIGcYYx43XerzSvQYPoXvGtb8Fr+uemr8Bh2iFvVCa1plP9WYAdI1ERLNe8R6YJDfP/Uwt+c8JYWmrF01tXZcKbDtOqDE/oekGjxutJ+m9Az9rXtJljNXfPyjjvy4wIrPrWZcZ8aCsJxhY8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=l3dlSiPB; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711539185; c=relaxed/simple;
+	bh=j6GokdrcgqfuCqZBjXSjmikK6huQq8OjWKBwSY64S5Q=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=fVtHbFAq8okRjW663XZp/G2XNOWYlXyFI8DJSMY0EpDXNy6KMnWf60ddPKcJLwBYWPS92FGCT3jjVWkrZia6+N6jWZl5J1YqbSXVIgf9tvo/LA7NUKSNeX5goz5EsnKiBCkb5kvR6WNci7J9LI5oLjJ7q3Hz1qvmrUb/KZXDQaY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hlXEv9Wl; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="l3dlSiPB"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 181DAC433F1;
-	Wed, 27 Mar 2024 11:28:43 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hlXEv9Wl"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C9C00C433F1;
+	Wed, 27 Mar 2024 11:33:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711538923;
-	bh=oK2WNGk3bL7/M5b66hzamH9aEeU3/7BOwNC5Zg8F9Is=;
+	s=k20201202; t=1711539184;
+	bh=j6GokdrcgqfuCqZBjXSjmikK6huQq8OjWKBwSY64S5Q=;
 	h=From:To:Cc:Subject:Date:Reply-To:From;
-	b=l3dlSiPBGTgrJ91rQF0FhhJfjE2XjBVFC3uBt4foKs1Syowgxa1ocDOzwj6IUyIw8
-	 hLduWY1GkOiJA14lX/kNspRjgjTJwi1icaQ+Y5cdFmq1vXhEgvP11EhgPrluj3q4Fc
-	 79quKLxoxXnPTGVXuze4MKeE8ifr9x/6L7Y9j0/n8BO/QVJ50bCytQ9Tz73L+C7P84
-	 V+SQnLSopdnPeo7Ne6JbyUWInZDEM2IGrJUpRgJUJ9HEu5Vv/GvcB8EnPjN+oAOlBp
-	 K3Pg+woDy38iDf0gLMiQFvBnCxoz9seJZF5zTxqmSCVBF4vsqT5DLX1nn4An9Aqbsa
-	 inviKrKpy53nQ==
+	b=hlXEv9Wl7IKV38UI3QnJmy2dIZM+Sa8Z0IHhPxjPi1liReB4XGAONuLM2MSl6emY+
+	 FGi/5HIFotXrXqQLnaN/Qn8xoVd4PGDuQFMD7go5iW1hASd4J6OeHJBxGluvBL+Krr
+	 jcS+J+wsnTHFU5FMOXTs/MMf4mlY1cWcQSHrj6553wBtsjZeTgwAaLIGs58VHkclfT
+	 wmf9KUtuOfisCM7Qbpbq9/M3r+Ni5AJ6nz+vTJrnY5A3dKHggcdcrisJpP+bHP8xDJ
+	 tnn5X/nQggRyH7wvdd4H05wXuTfFMAbMHwAXGUpjgaRDwy2UZ4yB9RpZflDtuTIS3G
+	 SDbzF0QmVGCRg==
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
-	mpatocka@redhat.com
+	yukuai3@huawei.com
 Cc: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
 	dm-devel@lists.linux.dev
-Subject: Patch "dm snapshot: fix lockup in dm_exception_table_exit" has been added to the 6.7-stable tree
-Date: Wed, 27 Mar 2024 07:28:42 -0400
-Message-ID: <20240327112842.2790561-1-sashal@kernel.org>
+Subject: Patch "dm-raid: fix lockdep waring in "pers->hot_add_disk"" has been added to the 6.6-stable tree
+Date: Wed, 27 Mar 2024 07:33:02 -0400
+Message-ID: <20240327113302.2796955-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -48,50 +49,59 @@ Content-Transfer-Encoding: 8bit
 
 This is a note to let you know that I've just added the patch titled
 
-    dm snapshot: fix lockup in dm_exception_table_exit
+    dm-raid: fix lockdep waring in "pers->hot_add_disk"
 
-to the 6.7-stable tree which can be found at:
+to the 6.6-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
-     dm-snapshot-fix-lockup-in-dm_exception_table_exit.patch
-and it can be found in the queue-6.7 subdirectory.
+     dm-raid-fix-lockdep-waring-in-pers-hot_add_disk.patch
+and it can be found in the queue-6.6 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 4efed027117efdd074872bef8ccf1c42786b2582
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Wed Mar 20 18:43:11 2024 +0100
+commit 03b6302b16568735c98c5658aefb1f39d76f4d79
+Author: Yu Kuai <yukuai3@huawei.com>
+Date:   Tue Mar 5 15:23:06 2024 +0800
 
-    dm snapshot: fix lockup in dm_exception_table_exit
+    dm-raid: fix lockdep waring in "pers->hot_add_disk"
     
-    [ Upstream commit 6e7132ed3c07bd8a6ce3db4bb307ef2852b322dc ]
+    [ Upstream commit 95009ae904b1e9dca8db6f649f2d7c18a6e42c75 ]
     
-    There was reported lockup when we exit a snapshot with many exceptions.
-    Fix this by adding "cond_resched" to the loop that frees the exceptions.
+    The lockdep assert is added by commit a448af25becf ("md/raid10: remove
+    rcu protection to access rdev from conf") in print_conf(). And I didn't
+    notice that dm-raid is calling "pers->hot_add_disk" without holding
+    'reconfig_mutex'.
     
-    Reported-by: John Pittman <jpittman@redhat.com>
-    Cc: stable@vger.kernel.org
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+    "pers->hot_add_disk" read and write many fields that is protected by
+    'reconfig_mutex', and raid_resume() already grab the lock in other
+    contex. Hence fix this problem by protecting "pers->host_add_disk"
+    with the lock.
+    
+    Fixes: 9092c02d9435 ("DM RAID: Add ability to restore transiently failed devices on resume")
+    Fixes: a448af25becf ("md/raid10: remove rcu protection to access rdev from conf")
+    Cc: stable@vger.kernel.org # v6.7+
+    Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+    Signed-off-by: Xiao Ni <xni@redhat.com>
+    Acked-by: Mike Snitzer <snitzer@kernel.org>
+    Signed-off-by: Song Liu <song@kernel.org>
+    Link: https://lore.kernel.org/r/20240305072306.2562024-10-yukuai1@huaweicloud.com
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index bf7a574499a34..0ace06d1bee38 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -684,8 +684,10 @@ static void dm_exception_table_exit(struct dm_exception_table *et,
- 	for (i = 0; i < size; i++) {
- 		slot = et->table + i;
- 
--		hlist_bl_for_each_entry_safe(ex, pos, n, slot, hash_list)
-+		hlist_bl_for_each_entry_safe(ex, pos, n, slot, hash_list) {
- 			kmem_cache_free(mem, ex);
-+			cond_resched();
-+		}
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 3d8ee9eb59ea6..385e24f55ec00 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -4042,7 +4042,9 @@ static void raid_resume(struct dm_target *ti)
+ 		 * Take this opportunity to check whether any failed
+ 		 * devices are reachable again.
+ 		 */
++		mddev_lock_nointr(mddev);
+ 		attempt_restore_of_faulty_devices(rs);
++		mddev_unlock(mddev);
  	}
  
- 	kvfree(et->table);
+ 	if (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
