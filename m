@@ -1,43 +1,40 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 638221B48A3;
-	Wed, 27 Mar 2024 12:28:03 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FFED1B6FB6;
+	Wed, 27 Mar 2024 12:28:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711542483; cv=none; b=GZjh9aig+LcsWQ/PIG5S856Nq3Q6siV07d/GDnr5zeHXlvgaQy1xMae7e5FEVjaKk7rjLl0eqnd7j8H0fLXai9g+B4hCNXncA25XQaeDc1gOwg5mryn50lsBOu57h8sN5dtAhXO4cgHNvHan+j5Z0tHeWzOMLQx1IuJQjIghlv4=
+	t=1711542509; cv=none; b=eZxkG0yPvBR/F3fq8127EW8/1ihRsGHzz6cE433XciytRiX2ds52Ot9OkdoOI5wCpW4sysAz6g5fQzAG6u192bPUUNOVERLlOyk7A5CmUsN5eOIABWMgpqRsfkGfoZBKUgCjjXZNLRph5nQZon4lJA0O6uY6fZyvlKeZYBO8CW0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711542483; c=relaxed/simple;
-	bh=tAuTV6LSJ2JopxHyNQ68pJxS6L8HMX+vlbwqZUqaZzc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=VUGWZnsZiH7PW0YWj2SmrlLJxjDursR3oE6nfkSz+WqbmR+TDel7smDxA0XEsxuY31/N8lAXBkALXIt37e3EgjqUASG7WLlcWzGJj6yLdsA663akTdelC1IBmni9ygDIc2g0Mk6S/lwfcZlSUUt9i7eSojj0+KAoygPr7Dbkem8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=liz27+3F; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711542509; c=relaxed/simple;
+	bh=qILXJDfEFX4ZvfUyQtQSZ91X4eaPsw7idazy43hhUPg=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Asy7YTvOlpp5895dvIYzMEgITh9MKnF1OzV8tKHga+EZhkkDtn34cPn0eYIGbY2CYalK82kNcjSh0z74B5mWmrZxWtUTsuxfuDfIZvFfGRqBDo8ETBFgqhwSz9AWU8qQ5gRz/YLuF7KSwtR0hXqxA7B9nQObOxOZQSlx59F8QvY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=lNiZ24oC; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="liz27+3F"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2F796C43394;
-	Wed, 27 Mar 2024 12:28:02 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="lNiZ24oC"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A2E61C433C7;
+	Wed, 27 Mar 2024 12:28:28 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711542483;
-	bh=tAuTV6LSJ2JopxHyNQ68pJxS6L8HMX+vlbwqZUqaZzc=;
+	s=k20201202; t=1711542509;
+	bh=qILXJDfEFX4ZvfUyQtQSZ91X4eaPsw7idazy43hhUPg=;
 	h=From:To:Cc:Subject:Date:From;
-	b=liz27+3FvLoPKxF/C5Qan6ViCjj1kTJdkQ/lSglO3ibXKfESY4RBD3JDFPfJdOLWj
-	 bl/zEFDlbZQ9ivWMqbkrka0e7GFekfJDBD4mfZhiLRPJ4023GpC8kPux6vNyvOEcFP
-	 LG2VrIjvmH5QYQjxd9+T3feA15PPv0WPKaO4lzOD1Yo5uRC5B4OkaFIUZ+L+IlELmS
-	 ZlV90LXvnReq/g+AeNNt6Lu7Izn+ZXY76ZziUlQgejnh/CdpynIgCLGdF0o5IncLec
-	 zdGZg6cq4fZI+qkDzK5NxpSBQ6ZMDZlXOLNe5PYpKcAfBX8B2BY4e4cSut2XZ5/Yhl
-	 5VTb3JNLMJb6A==
+	b=lNiZ24oCexiEmuZ7PM4dYQS+I56/lo+Uw07F2cmNzaukPJG2NbpgPjMH1HRYDpZHU
+	 kDe+YUFoQMQTXCSqx0qzBmfWUYFbtMz7ZFod0noZ/KBHHuXr5nDNibZAFJjzSrjg15
+	 K+sKnpQUAKml6ww21l0YLG8GDjAhyka0m060OnLbC2mkUTmWED6Hmgr0ZtIWwyUw6V
+	 XcAdMLTOy6tas0dVCb8CsPHKeVwuJRChZxM/CEntlvyKAAM/+dCQzPHQH0F3QAENcp
+	 v4Jfa1yesBGVVwXaDRmv4HSfO7SszkNlw43ULMgPHbdemQ1xBgEuTUzXmqSBKqed+C
+	 f7Yyl6TjP0Cjg==
 From: Sasha Levin <sashal@kernel.org>
 To: stable@vger.kernel.org,
-	yukuai3@huawei.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-	Xiao Ni <xni@redhat.com>,
+	mpatocka@redhat.com
+Cc: John Pittman <jpittman@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
-	Song Liu <song@kernel.org>,
 	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	linux-raid@vger.kernel.org
-Subject: FAILED: Patch "dm-raid: really frozen sync_thread during suspend" failed to apply to 4.19-stable tree
-Date: Wed, 27 Mar 2024 08:28:00 -0400
-Message-ID: <20240327122801.2842406-1-sashal@kernel.org>
+	linux-kernel@vger.kernel.org
+Subject: FAILED: Patch "dm snapshot: fix lockup in dm_exception_table_exit" failed to apply to 4.19-stable tree
+Date: Wed, 27 Mar 2024 08:28:27 -0400
+Message-ID: <20240327122827.2842757-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -59,145 +56,38 @@ Sasha
 
 ------------------ original commit in Linus's tree ------------------
 
-From 16c4770c75b1223998adbeb7286f9a15c65fba73 Mon Sep 17 00:00:00 2001
-From: Yu Kuai <yukuai3@huawei.com>
-Date: Tue, 5 Mar 2024 15:23:02 +0800
-Subject: [PATCH] dm-raid: really frozen sync_thread during suspend
+From 6e7132ed3c07bd8a6ce3db4bb307ef2852b322dc Mon Sep 17 00:00:00 2001
+From: Mikulas Patocka <mpatocka@redhat.com>
+Date: Wed, 20 Mar 2024 18:43:11 +0100
+Subject: [PATCH] dm snapshot: fix lockup in dm_exception_table_exit
 
-1) commit f52f5c71f3d4 ("md: fix stopping sync thread") remove
-   MD_RECOVERY_FROZEN from __md_stop_writes() and doesn't realize that
-   dm-raid relies on __md_stop_writes() to frozen sync_thread
-   indirectly. Fix this problem by adding MD_RECOVERY_FROZEN in
-   md_stop_writes(), and since stop_sync_thread() is only used for
-   dm-raid in this case, also move stop_sync_thread() to
-   md_stop_writes().
-2) The flag MD_RECOVERY_FROZEN doesn't mean that sync thread is frozen,
-   it only prevent new sync_thread to start, and it can't stop the
-   running sync thread; In order to frozen sync_thread, after seting the
-   flag, stop_sync_thread() should be used.
-3) The flag MD_RECOVERY_FROZEN doesn't mean that writes are stopped, use
-   it as condition for md_stop_writes() in raid_postsuspend() doesn't
-   look correct. Consider that reentrant stop_sync_thread() do nothing,
-   always call md_stop_writes() in raid_postsuspend().
-4) raid_message can set/clear the flag MD_RECOVERY_FROZEN at anytime,
-   and if MD_RECOVERY_FROZEN is cleared while the array is suspended,
-   new sync_thread can start unexpected. Fix this by disallow
-   raid_message() to change sync_thread status during suspend.
+There was reported lockup when we exit a snapshot with many exceptions.
+Fix this by adding "cond_resched" to the loop that frees the exceptions.
 
-Note that after commit f52f5c71f3d4 ("md: fix stopping sync thread"), the
-test shell/lvconvert-raid-reshape.sh start to hang in stop_sync_thread(),
-and with previous fixes, the test won't hang there anymore, however, the
-test will still fail and complain that ext4 is corrupted. And with this
-patch, the test won't hang due to stop_sync_thread() or fail due to ext4
-is corrupted anymore. However, there is still a deadlock related to
-dm-raid456 that will be fixed in following patches.
-
-Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-Closes: https://lore.kernel.org/all/e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com/
-Fixes: 1af2048a3e87 ("dm raid: fix deadlock caused by premature md_stop_writes()")
-Fixes: 9dbd1aa3a81c ("dm raid: add reshaping support to the target")
-Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
-Cc: stable@vger.kernel.org # v6.7+
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-Signed-off-by: Xiao Ni <xni@redhat.com>
-Acked-by: Mike Snitzer <snitzer@kernel.org>
-Signed-off-by: Song Liu <song@kernel.org>
-Link: https://lore.kernel.org/r/20240305072306.2562024-6-yukuai1@huaweicloud.com
+Reported-by: John Pittman <jpittman@redhat.com>
+Cc: stable@vger.kernel.org
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-raid.c | 25 +++++++++++++++----------
- drivers/md/md.c      |  3 ++-
- 2 files changed, 17 insertions(+), 11 deletions(-)
+ drivers/md/dm-snap.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index eb009d6bb03a1..e2d7a73c0f874 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3240,11 +3240,12 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	rs->md.ro = 1;
- 	rs->md.in_sync = 1;
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index bf7a574499a34..0ace06d1bee38 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -684,8 +684,10 @@ static void dm_exception_table_exit(struct dm_exception_table *et,
+ 	for (i = 0; i < size; i++) {
+ 		slot = et->table + i;
  
--	/* Keep array frozen until resume. */
--	set_bit(MD_RECOVERY_FROZEN, &rs->md.recovery);
--
- 	/* Has to be held on running the array */
- 	mddev_suspend_and_lock_nointr(&rs->md);
-+
-+	/* Keep array frozen until resume. */
-+	md_frozen_sync_thread(&rs->md);
-+
- 	r = md_run(&rs->md);
- 	rs->md.in_sync = 0; /* Assume already marked dirty */
- 	if (r) {
-@@ -3722,6 +3723,9 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
- 	if (!mddev->pers || !mddev->pers->sync_request)
- 		return -EINVAL;
- 
-+	if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
-+		return -EBUSY;
-+
- 	if (!strcasecmp(argv[0], "frozen"))
- 		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- 	else
-@@ -3796,10 +3800,11 @@ static void raid_postsuspend(struct dm_target *ti)
- 	struct raid_set *rs = ti->private;
- 
- 	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
--		/* Writes have to be stopped before suspending to avoid deadlocks. */
--		if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
--			md_stop_writes(&rs->md);
--
-+		/*
-+		 * sync_thread must be stopped during suspend, and writes have
-+		 * to be stopped before suspending to avoid deadlocks.
-+		 */
-+		md_stop_writes(&rs->md);
- 		mddev_suspend(&rs->md, false);
- 	}
- }
-@@ -4012,8 +4017,6 @@ static int raid_preresume(struct dm_target *ti)
+-		hlist_bl_for_each_entry_safe(ex, pos, n, slot, hash_list)
++		hlist_bl_for_each_entry_safe(ex, pos, n, slot, hash_list) {
+ 			kmem_cache_free(mem, ex);
++			cond_resched();
++		}
  	}
  
- 	/* Check for any resize/reshape on @rs and adjust/initiate */
--	/* Be prepared for mddev_resume() in raid_resume() */
--	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- 	if (mddev->recovery_cp && mddev->recovery_cp < MaxSector) {
- 		set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
- 		mddev->resync_min = mddev->recovery_cp;
-@@ -4055,10 +4058,12 @@ static void raid_resume(struct dm_target *ti)
- 		if (mddev->delta_disks < 0)
- 			rs_set_capacity(rs);
- 
-+		WARN_ON_ONCE(!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery));
-+		WARN_ON_ONCE(test_bit(MD_RECOVERY_RUNNING, &mddev->recovery));
- 		mddev_lock_nointr(mddev);
--		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- 		mddev->ro = 0;
- 		mddev->in_sync = 0;
-+		md_unfrozen_sync_thread(mddev);
- 		mddev_unlock_and_resume(mddev);
- 	}
- }
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 55ecc05c17c65..167db77442392 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -6364,7 +6364,6 @@ static void md_clean(struct mddev *mddev)
- 
- static void __md_stop_writes(struct mddev *mddev)
- {
--	stop_sync_thread(mddev, true, false);
- 	del_timer_sync(&mddev->safemode_timer);
- 
- 	if (mddev->pers && mddev->pers->quiesce) {
-@@ -6389,6 +6388,8 @@ static void __md_stop_writes(struct mddev *mddev)
- void md_stop_writes(struct mddev *mddev)
- {
- 	mddev_lock_nointr(mddev);
-+	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	stop_sync_thread(mddev, true, false);
- 	__md_stop_writes(mddev);
- 	mddev_unlock(mddev);
- }
+ 	kvfree(et->table);
 -- 
 2.43.0
 
