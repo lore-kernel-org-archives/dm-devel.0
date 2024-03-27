@@ -1,40 +1,41 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2188524C7;
-	Wed, 27 Mar 2024 11:13:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6502364A7;
+	Wed, 27 Mar 2024 11:13:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711538020; cv=none; b=PLry+r0kCTA/fTKpOu6g/q5Ux8f85XPHwPZ9XCL4a8i8f7iGyYNZVeeCyTmDEe7teoYxTDAc4SyXE2dhEALzfwVsqQsVurHOXeaUQ6/yOfVUWNpmah0frJ3bs0BnrgLvf050L/uO15eSjqXUngAfdi+lAtiHxbkUTIfc63s4K5w=
+	t=1711538022; cv=none; b=oY79CnZE9o1xFQIL5kNs+hFBySUHKnxVim+wRzUCozaG4ntq2KG44Mpveb/lD5jvg3bhYvL+Zrnscez+kfBQyvkNC7vlz5vOndqJojIIv8ssGuYiBcagnnh0hnBlmddRsvEFVk4VR7/UJ5tmp0kUh98KcaW2jdCrLUXU24nUXP8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711538020; c=relaxed/simple;
-	bh=NAV/Mm3SSNTSRIUvKDoPhc2Qiw1YIcWSh40tWFVNNOc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=OgncZULTXkwoVE5m6ZqsJ7UTy3D8sMhBS1W3h9pAHhxWhudqhKJBEM01mgw09Y/eBVLXTDwknbeNW6g65eYR6GVFmC8rx9bybnuSrmm7tBlguLppYHdA71m9bMfm9HO2UmtDTw5OdCvutDEtBVbiVGbvqtX6Q+eNempOl12jxCs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=E10DaCuO; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711538022; c=relaxed/simple;
+	bh=AZjuLdLG2dc67tRxkoMOc5gymyc+8UJCejLiBWrJ8mU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=gkean9bNKg76597dOH70ByZS5uescDAzxZwkX8wDd431YWihHeyLKLuBmMfr2JZ/WrSAL5pXd20W2IEDztbJibJM92DOGCaVCpBrJNbb7D6k9abh71qbyj5IPvySk7nnzHrYvhNC+6Q2bI5zfV7bOWgM2eMG0R09OJjSgO0/VSw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=dJugftEe; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="E10DaCuO"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 29AC5C433C7;
-	Wed, 27 Mar 2024 11:13:39 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="dJugftEe"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B880AC433C7;
+	Wed, 27 Mar 2024 11:13:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711538019;
-	bh=NAV/Mm3SSNTSRIUvKDoPhc2Qiw1YIcWSh40tWFVNNOc=;
+	s=k20201202; t=1711538022;
+	bh=AZjuLdLG2dc67tRxkoMOc5gymyc+8UJCejLiBWrJ8mU=;
 	h=From:To:Cc:Subject:Date:Reply-To:From;
-	b=E10DaCuOjMw7lTpKUD4tVU7p4qQVsbKrMafRBisBmphH1dHPWoVJ/aisytIbiuo8P
-	 4SWS2fBM+ZXO3G52GHoZ32UVdXQFjgXosageB5A8pM252zGzJoay+Nkv9BkQjLECKA
-	 WCIuwMqaPc60thOiycRqIrEPorBw6oahMgrSfrT3rSGRFQXXSo1WWp/kK2X2kDZwCu
-	 blFQ1q0zN72pglhbjeOPwpCTl9IVcHg5fPC8VNWnrvetYaK1Q90WuzbPseu/+r/pja
-	 bawM4jeDFjpxg3Y37G1bZYa4bcb6J/gn7rT9vSToBvYgmz96Jq+EZIRkPlh+nXXW1K
-	 32CNvOYYlc7Fw==
+	b=dJugftEe+Ctkcu/RVVxiwQwpi5k7c3jaffy8SKpu6pocgZDj1h7++vWK19sb/nmP2
+	 cne6n1xR4tc0G384X1IoGlNIY35jClcGa/5ytEaPsN9CqYCPNl6MsZInR5dCjltpsZ
+	 cwfIZkzxEJw9OvHiBFYhzAVvLg5/kcMqpMXmFk3PrfsbhLBYU0CqeKwdp/lM8seNgF
+	 a2n0BsqRc5d8ghwuWbHqGq9wSRaljtnD55k/Hxi+QheYlKEFYdqwaocUGbLU/JDfxg
+	 2B4xYVWiBcn/CiJRjjCMZ4VOS5w5cETIKwC9rNm1VRJXykf1k3w+lHP14TLwoQPtG1
+	 Ob5AMIGHw3s+g==
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
 	yukuai3@huawei.com
 Cc: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel@lists.linux.dev
-Subject: Patch "md/dm-raid: don't call md_reap_sync_thread() directly" has been added to the 6.8-stable tree
-Date: Wed, 27 Mar 2024 07:13:38 -0400
-Message-ID: <20240327111338.2748152-1-sashal@kernel.org>
+	dm-devel@lists.linux.dev,
+	Song Liu <song@kernel.org>
+Subject: Patch "dm-raid: add a new helper prepare_suspend() in md_personality" has been added to the 6.8-stable tree
+Date: Wed, 27 Mar 2024 07:13:40 -0400
+Message-ID: <20240327111340.2748313-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -49,13 +50,13 @@ Content-Transfer-Encoding: 8bit
 
 This is a note to let you know that I've just added the patch titled
 
-    md/dm-raid: don't call md_reap_sync_thread() directly
+    dm-raid: add a new helper prepare_suspend() in md_personality
 
 to the 6.8-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
-     md-dm-raid-don-t-call-md_reap_sync_thread-directly.patch
+     dm-raid-add-a-new-helper-prepare_suspend-in-md_perso.patch
 and it can be found in the queue-6.8 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
@@ -63,79 +64,70 @@ please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 4e170adc23af59a34179948460104741321218ec
+commit ad4e5d3982daa4fb951bf98380959c3f978d69f8
 Author: Yu Kuai <yukuai3@huawei.com>
-Date:   Tue Mar 5 15:23:03 2024 +0800
+Date:   Tue Mar 5 15:23:04 2024 +0800
 
-    md/dm-raid: don't call md_reap_sync_thread() directly
+    dm-raid: add a new helper prepare_suspend() in md_personality
     
-    [ Upstream commit cd32b27a66db8776d8b8e82ec7d7dde97a8693b0 ]
+    [ Upstream commit 5625ff8b72b0e5c13b0fc1fc1f198155af45f729 ]
     
-    Currently md_reap_sync_thread() is called from raid_message() directly
-    without holding 'reconfig_mutex', this is definitely unsafe because
-    md_reap_sync_thread() can change many fields that is protected by
-    'reconfig_mutex'.
+    There are no functional changes for now, prepare to fix a deadlock for
+    dm-raid456.
     
-    However, hold 'reconfig_mutex' here is still problematic because this
-    will cause deadlock, for example, commit 130443d60b1b ("md: refactor
-    idle/frozen_sync_thread() to fix deadlock").
-    
-    Fix this problem by using stop_sync_thread() to unregister sync_thread,
-    like md/raid did.
-    
-    Fixes: be83651f0050 ("DM RAID: Add message/status support for changing sync action")
     Cc: stable@vger.kernel.org # v6.7+
     Signed-off-by: Yu Kuai <yukuai3@huawei.com>
     Signed-off-by: Xiao Ni <xni@redhat.com>
     Acked-by: Mike Snitzer <snitzer@kernel.org>
     Signed-off-by: Song Liu <song@kernel.org>
-    Link: https://lore.kernel.org/r/20240305072306.2562024-7-yukuai1@huaweicloud.com
+    Link: https://lore.kernel.org/r/20240305072306.2562024-8-yukuai1@huaweicloud.com
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index fff9336fee767..8d38cdb221453 100644
+index 8d38cdb221453..b8f5304ca00d1 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -3719,6 +3719,7 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
+@@ -3803,6 +3803,23 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 	blk_limits_io_opt(limits, chunk_size_bytes * mddev_data_stripes(rs));
+ }
+ 
++static void raid_presuspend(struct dm_target *ti)
++{
++	struct raid_set *rs = ti->private;
++	struct mddev *mddev = &rs->md;
++
++	if (!reshape_interrupted(mddev))
++		return;
++
++	/*
++	 * For raid456, if reshape is interrupted, IO across reshape position
++	 * will never make progress, while caller will wait for IO to be done.
++	 * Inform raid456 to handle those IO to prevent deadlock.
++	 */
++	if (mddev->pers && mddev->pers->prepare_suspend)
++		mddev->pers->prepare_suspend(mddev);
++}
++
+ static void raid_postsuspend(struct dm_target *ti)
  {
  	struct raid_set *rs = ti->private;
- 	struct mddev *mddev = &rs->md;
-+	int ret = 0;
- 
- 	if (!mddev->pers || !mddev->pers->sync_request)
- 		return -EINVAL;
-@@ -3726,17 +3727,24 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
- 	if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
- 		return -EBUSY;
- 
--	if (!strcasecmp(argv[0], "frozen"))
--		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
--	else
--		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	if (!strcasecmp(argv[0], "frozen")) {
-+		ret = mddev_lock(mddev);
-+		if (ret)
-+			return ret;
- 
--	if (!strcasecmp(argv[0], "idle") || !strcasecmp(argv[0], "frozen")) {
--		if (mddev->sync_thread) {
--			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
--			md_reap_sync_thread(mddev);
--		}
--	} else if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
-+		md_frozen_sync_thread(mddev);
-+		mddev_unlock(mddev);
-+	} else if (!strcasecmp(argv[0], "idle")) {
-+		ret = mddev_lock(mddev);
-+		if (ret)
-+			return ret;
-+
-+		md_idle_sync_thread(mddev);
-+		mddev_unlock(mddev);
-+	}
-+
-+	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-+	if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
- 		return -EBUSY;
- 	else if (!strcasecmp(argv[0], "resync"))
- 		; /* MD_RECOVERY_NEEDED set below */
+@@ -4087,6 +4104,7 @@ static struct target_type raid_target = {
+ 	.message = raid_message,
+ 	.iterate_devices = raid_iterate_devices,
+ 	.io_hints = raid_io_hints,
++	.presuspend = raid_presuspend,
+ 	.postsuspend = raid_postsuspend,
+ 	.preresume = raid_preresume,
+ 	.resume = raid_resume,
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index ea0fd76c17e75..24261f9b676d5 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -649,6 +649,7 @@ struct md_personality
+ 	int (*start_reshape) (struct mddev *mddev);
+ 	void (*finish_reshape) (struct mddev *mddev);
+ 	void (*update_reshape_pos) (struct mddev *mddev);
++	void (*prepare_suspend) (struct mddev *mddev);
+ 	/* quiesce suspends or resumes internal processing.
+ 	 * 1 - stop new actions and wait for action io to complete
+ 	 * 0 - return to normal behaviour
