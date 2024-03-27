@@ -1,164 +1,205 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF1272C1A5
-	for <dm-devel@lists.linux.dev>; Wed, 27 Mar 2024 07:33:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8026155C11;
+	Wed, 27 Mar 2024 11:13:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711524828; cv=none; b=CX8fjDuTALci0pZsxUkUEnf9iX9CHWy1EBDnL5uaCP7nxL8J/Hqae3cWWYRjDfTfIpoKmwHSDKTIescoCQzZ6BdwnQDDx4/4lzTzDIGE1rmv743vb5VOffBGye6Xn2QPNviiw2tWizh0NjbACH/MWzzNb8vVomii8VeiU0dPfK4=
+	t=1711538017; cv=none; b=Irx4ZGR0Tsi9IACgcZqahEmC+Ub6uBW4hcZkXBTBAfa+x82e7nIHRLByPNzW0uKJTw4zCTBvxTOp4NhwTQgLiFuBXqKQEhnj2ONOjTqoeqSypOFptXYZmKFjMoZpnnFQ+lRMAF1+/8PXVr+d3KzLo1Nc/8pMBLjYXa2a0vBZAZc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711524828; c=relaxed/simple;
-	bh=uWZhZCTjCdv9BRCYQRPuFbmFx5dG84ZkNjHyRZXSqbk=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=a5g3Cu7jk+IhJ+NZjG2YXGYauJ+5pwwAGUJ6W3ZOH/1N9Fk5e5/eekFwUyuN26Prl7SQmKpvMwRi5o6GUeXdk+sXMMfpCTo7MyxGmJBXi2P/YyOrjkWipvF7JFgDgSuLXyxUx8c+9P+lq8vApeOjxJIImvqBp0xdFCS6yAgUgsc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=DTn3SWS3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=tR5/67VI; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=DTn3SWS3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=tR5/67VI; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	s=arc-20240116; t=1711538017; c=relaxed/simple;
+	bh=l17hfzADW0KHaUngsoe65mnZXv/ky/gtWKzap1MimT4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=h26uMwTB0i6uSmFT+5RqDPrJPcBwXvfxfDIwpD+/byq99I+vFGV1i0lhcqUwjcUa2dhLVaXSPLdtSRT7hu7ODfqNQpnNT6rN6DygU1Am3KIEcQes7/RG0awcE8mSlBPck1o/ZSVrgRxH50QowROCteeefymY1kENIHKjyMznOCo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=QTxpVrlC; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="DTn3SWS3";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="tR5/67VI";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="DTn3SWS3";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="tR5/67VI"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id CAEA85F9F6;
-	Wed, 27 Mar 2024 07:33:35 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1711524815; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=N1yBeqz2rtXiSTTozIUNCVIH2ZVOt0/ZQZ9ypm9J+oA=;
-	b=DTn3SWS3OI5Q20Nrvj/SaLZK3MC5cRstxSgF6SdQvgLgSoMMDUdQp9RV1z7Kb2jCUd7mmB
-	1qk/842uWhf8Do+VZqK7su/nJXZReaR6M8L9Hbrr2YK+9cxFUB799NvpioGyksgVCxHi5a
-	CPTGWtzs+hJurTPn9lKie//NlMYk3fY=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1711524815;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=N1yBeqz2rtXiSTTozIUNCVIH2ZVOt0/ZQZ9ypm9J+oA=;
-	b=tR5/67VIXalsCiY1I+Om4aexP/A9Wzh6Y9CTQM6PSBTGKVn+IfDjtBDLsJbNmEwiddJNFc
-	EE+u7iDKwW3g8dCA==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1711524815; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=N1yBeqz2rtXiSTTozIUNCVIH2ZVOt0/ZQZ9ypm9J+oA=;
-	b=DTn3SWS3OI5Q20Nrvj/SaLZK3MC5cRstxSgF6SdQvgLgSoMMDUdQp9RV1z7Kb2jCUd7mmB
-	1qk/842uWhf8Do+VZqK7su/nJXZReaR6M8L9Hbrr2YK+9cxFUB799NvpioGyksgVCxHi5a
-	CPTGWtzs+hJurTPn9lKie//NlMYk3fY=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1711524815;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=N1yBeqz2rtXiSTTozIUNCVIH2ZVOt0/ZQZ9ypm9J+oA=;
-	b=tR5/67VIXalsCiY1I+Om4aexP/A9Wzh6Y9CTQM6PSBTGKVn+IfDjtBDLsJbNmEwiddJNFc
-	EE+u7iDKwW3g8dCA==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id E8C341369F;
-	Wed, 27 Mar 2024 07:33:34 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([10.150.64.162])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id CGHyNc7LA2ZKewAAD6G6ig
-	(envelope-from <hare@suse.de>); Wed, 27 Mar 2024 07:33:34 +0000
-Message-ID: <e10d2389-dd24-4768-95ed-290d773365f7@suse.de>
-Date: Wed, 27 Mar 2024 08:33:33 +0100
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="QTxpVrlC"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 92FFFC43390;
+	Wed, 27 Mar 2024 11:13:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1711538017;
+	bh=l17hfzADW0KHaUngsoe65mnZXv/ky/gtWKzap1MimT4=;
+	h=From:To:Cc:Subject:Date:Reply-To:From;
+	b=QTxpVrlCfq1vv603T/MYZ6wIVIdmH1yr/IxtASIzPUrmlxJBoEN3Wc4UJtb8JbPbv
+	 BQB2AFywKKZrV/E551f/pJuxJAnt7dy4QHlT1LFrZ00o8FndnAOeCMwBVeB5xgaAjZ
+	 ugsuQLajSon1PgBfR8iSq3u9uZBBaMVeO3PoJL+k4MDxKNGD62TgFaiJdF1fGMqrQe
+	 Qhpq/qGOFEcz5yrOjLsvUcs8bgE+XARWgu3tSBA/GvI3slgT2KJun5XDtPz9UeowP7
+	 PYRCZomzjKqnYQ7YfHW93kCJrEGS0XpjVdUNlP8+dB/OYONvr3H/Tj/p0JLmHV6CEa
+	 tfPHAILT13dGg==
+From: Sasha Levin <sashal@kernel.org>
+To: stable-commits@vger.kernel.org,
+	yukuai3@huawei.com
+Cc: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev,
+	Song Liu <song@kernel.org>
+Subject: Patch "dm-raid: really frozen sync_thread during suspend" has been added to the 6.8-stable tree
+Date: Wed, 27 Mar 2024 07:13:35 -0400
+Message-ID: <20240327111335.2748008-1-sashal@kernel.org>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 27/28] block: Do not force select mq-deadline with
- CONFIG_BLK_DEV_ZONED
-Content-Language: en-US
-To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
- Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-References: <20240325044452.3125418-1-dlemoal@kernel.org>
- <20240325044452.3125418-28-dlemoal@kernel.org>
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <20240325044452.3125418-28-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+X-Patchwork-Hint: ignore
+X-stable: review
+Reply-To: stable@vger.kernel.org
 Content-Transfer-Encoding: 8bit
-X-Spam-Score: -2.58
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spam-Flag: NO
-X-Spamd-Result: default: False [-2.58 / 50.00];
-	 ARC_NA(0.00)[];
-	 RCVD_VIA_SMTP_AUTH(0.00)[];
-	 R_DKIM_ALLOW(-0.20)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	 XM_UA_NO_VERSION(0.01)[];
-	 FROM_HAS_DN(0.00)[];
-	 TO_DN_SOME(0.00)[];
-	 TO_MATCH_ENVRCPT_ALL(0.00)[];
-	 BAYES_HAM(-0.08)[63.11%];
-	 MIME_GOOD(-0.10)[text/plain];
-	 NEURAL_HAM_LONG(-1.00)[-1.000];
-	 DWL_DNSWL_LOW(-1.00)[suse.de:dkim];
-	 RCVD_COUNT_THREE(0.00)[3];
-	 DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	 DKIM_TRACE(0.00)[suse.de:+];
-	 MX_GOOD(-0.01)[];
-	 RCPT_COUNT_SEVEN(0.00)[8];
-	 DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:dkim,suse.de:email];
-	 FUZZY_BLOCKED(0.00)[rspamd.com];
-	 FROM_EQ_ENVFROM(0.00)[];
-	 MIME_TRACE(0.00)[0:+];
-	 NEURAL_HAM_SHORT(-0.20)[-1.000];
-	 RCVD_TLS_ALL(0.00)[];
-	 MID_RHS_MATCH_FROM(0.00)[];
-	 RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from]
-X-Spam-Level: 
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.de header.s=susede2_rsa header.b=DTn3SWS3;
-	dkim=pass header.d=suse.de header.s=susede2_ed25519 header.b="tR5/67VI"
-X-Rspamd-Queue-Id: CAEA85F9F6
 
-On 3/25/24 05:44, Damien Le Moal wrote:
-> Now that zone block device write ordering control does not depend
-> anymore on mq-deadline and zone write locking, there is no need to force
-> select the mq-deadline scheduler when CONFIG_BLK_DEV_ZONED is enabled.
-> 
-> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-> ---
->   block/Kconfig | 1 -
->   1 file changed, 1 deletion(-)
-> 
-> diff --git a/block/Kconfig b/block/Kconfig
-> index 9f647149fbee..d47398ae9824 100644
-> --- a/block/Kconfig
-> +++ b/block/Kconfig
-> @@ -100,7 +100,6 @@ config BLK_DEV_WRITE_MOUNTED
->   
->   config BLK_DEV_ZONED
->   	bool "Zoned block device support"
-> -	select MQ_IOSCHED_DEADLINE
->   	help
->   	Block layer zoned block device support. This option enables
->   	support for ZAC/ZBC/ZNS host-managed and host-aware zoned block
+This is a note to let you know that I've just added the patch titled
 
-Reviewed-by: Hannes Reinecke <hare@suse.de>
+    dm-raid: really frozen sync_thread during suspend
 
-Cheers,
+to the 6.8-stable tree which can be found at:
+    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+The filename of the patch is:
+     dm-raid-really-frozen-sync_thread-during-suspend.patch
+and it can be found in the queue-6.8 subdirectory.
 
+If you, or anyone else, feels it should not be added to the stable tree,
+please let <stable@vger.kernel.org> know about it.
+
+
+
+commit fecac3d81622211812aeed9b97483293a4dbbb43
+Author: Yu Kuai <yukuai3@huawei.com>
+Date:   Tue Mar 5 15:23:02 2024 +0800
+
+    dm-raid: really frozen sync_thread during suspend
+    
+    [ Upstream commit 16c4770c75b1223998adbeb7286f9a15c65fba73 ]
+    
+    1) commit f52f5c71f3d4 ("md: fix stopping sync thread") remove
+       MD_RECOVERY_FROZEN from __md_stop_writes() and doesn't realize that
+       dm-raid relies on __md_stop_writes() to frozen sync_thread
+       indirectly. Fix this problem by adding MD_RECOVERY_FROZEN in
+       md_stop_writes(), and since stop_sync_thread() is only used for
+       dm-raid in this case, also move stop_sync_thread() to
+       md_stop_writes().
+    2) The flag MD_RECOVERY_FROZEN doesn't mean that sync thread is frozen,
+       it only prevent new sync_thread to start, and it can't stop the
+       running sync thread; In order to frozen sync_thread, after seting the
+       flag, stop_sync_thread() should be used.
+    3) The flag MD_RECOVERY_FROZEN doesn't mean that writes are stopped, use
+       it as condition for md_stop_writes() in raid_postsuspend() doesn't
+       look correct. Consider that reentrant stop_sync_thread() do nothing,
+       always call md_stop_writes() in raid_postsuspend().
+    4) raid_message can set/clear the flag MD_RECOVERY_FROZEN at anytime,
+       and if MD_RECOVERY_FROZEN is cleared while the array is suspended,
+       new sync_thread can start unexpected. Fix this by disallow
+       raid_message() to change sync_thread status during suspend.
+    
+    Note that after commit f52f5c71f3d4 ("md: fix stopping sync thread"), the
+    test shell/lvconvert-raid-reshape.sh start to hang in stop_sync_thread(),
+    and with previous fixes, the test won't hang there anymore, however, the
+    test will still fail and complain that ext4 is corrupted. And with this
+    patch, the test won't hang due to stop_sync_thread() or fail due to ext4
+    is corrupted anymore. However, there is still a deadlock related to
+    dm-raid456 that will be fixed in following patches.
+    
+    Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+    Closes: https://lore.kernel.org/all/e5e8afe2-e9a8-49a2-5ab0-958d4065c55e@redhat.com/
+    Fixes: 1af2048a3e87 ("dm raid: fix deadlock caused by premature md_stop_writes()")
+    Fixes: 9dbd1aa3a81c ("dm raid: add reshaping support to the target")
+    Fixes: f52f5c71f3d4 ("md: fix stopping sync thread")
+    Cc: stable@vger.kernel.org # v6.7+
+    Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+    Signed-off-by: Xiao Ni <xni@redhat.com>
+    Acked-by: Mike Snitzer <snitzer@kernel.org>
+    Signed-off-by: Song Liu <song@kernel.org>
+    Link: https://lore.kernel.org/r/20240305072306.2562024-6-yukuai1@huaweicloud.com
+    Signed-off-by: Sasha Levin <sashal@kernel.org>
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 13eb47b997f94..fff9336fee767 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3240,11 +3240,12 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	rs->md.ro = 1;
+ 	rs->md.in_sync = 1;
+ 
+-	/* Keep array frozen until resume. */
+-	set_bit(MD_RECOVERY_FROZEN, &rs->md.recovery);
+-
+ 	/* Has to be held on running the array */
+ 	mddev_suspend_and_lock_nointr(&rs->md);
++
++	/* Keep array frozen until resume. */
++	md_frozen_sync_thread(&rs->md);
++
+ 	r = md_run(&rs->md);
+ 	rs->md.in_sync = 0; /* Assume already marked dirty */
+ 	if (r) {
+@@ -3722,6 +3723,9 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 	if (!mddev->pers || !mddev->pers->sync_request)
+ 		return -EINVAL;
+ 
++	if (test_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
++		return -EBUSY;
++
+ 	if (!strcasecmp(argv[0], "frozen"))
+ 		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+ 	else
+@@ -3796,10 +3800,11 @@ static void raid_postsuspend(struct dm_target *ti)
+ 	struct raid_set *rs = ti->private;
+ 
+ 	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
+-		/* Writes have to be stopped before suspending to avoid deadlocks. */
+-		if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
+-			md_stop_writes(&rs->md);
+-
++		/*
++		 * sync_thread must be stopped during suspend, and writes have
++		 * to be stopped before suspending to avoid deadlocks.
++		 */
++		md_stop_writes(&rs->md);
+ 		mddev_suspend(&rs->md, false);
+ 	}
+ }
+@@ -4012,8 +4017,6 @@ static int raid_preresume(struct dm_target *ti)
+ 	}
+ 
+ 	/* Check for any resize/reshape on @rs and adjust/initiate */
+-	/* Be prepared for mddev_resume() in raid_resume() */
+-	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+ 	if (mddev->recovery_cp && mddev->recovery_cp < MaxSector) {
+ 		set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
+ 		mddev->resync_min = mddev->recovery_cp;
+@@ -4055,10 +4058,12 @@ static void raid_resume(struct dm_target *ti)
+ 		if (mddev->delta_disks < 0)
+ 			rs_set_capacity(rs);
+ 
++		WARN_ON_ONCE(!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery));
++		WARN_ON_ONCE(test_bit(MD_RECOVERY_RUNNING, &mddev->recovery));
+ 		mddev_lock_nointr(mddev);
+-		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+ 		mddev->ro = 0;
+ 		mddev->in_sync = 0;
++		md_unfrozen_sync_thread(mddev);
+ 		mddev_unlock_and_resume(mddev);
+ 	}
+ }
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 245ef8af8640a..ea68a6f8103bb 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -6344,7 +6344,6 @@ static void md_clean(struct mddev *mddev)
+ 
+ static void __md_stop_writes(struct mddev *mddev)
+ {
+-	stop_sync_thread(mddev, true, false);
+ 	del_timer_sync(&mddev->safemode_timer);
+ 
+ 	if (mddev->pers && mddev->pers->quiesce) {
+@@ -6369,6 +6368,8 @@ static void __md_stop_writes(struct mddev *mddev)
+ void md_stop_writes(struct mddev *mddev)
+ {
+ 	mddev_lock_nointr(mddev);
++	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++	stop_sync_thread(mddev, true, false);
+ 	__md_stop_writes(mddev);
+ 	mddev_unlock(mddev);
+ }
