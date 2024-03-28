@@ -1,90 +1,119 @@
-Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B7F312DDAC
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 22:29:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A26413AD3F
+	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 22:30:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711664959; cv=none; b=Jp4QosUBulxH8rjXbAbJL84aEhZD742tl6+BVcCs8MpaUkzrvz3OfoxjtHmEuQl/dsQw3hpGgxYRclncrRnwtZXdJaqeZxp+TtyzQrQvjrytca5wZoxc2faKtbMiZwoPqH5fJYPKozsvGN3IXbypVyEPETovttZL1/iJgDEl2J0=
+	t=1711665012; cv=none; b=R2jljb0zombsNv7ByQ8TJGitDIE6R1qViv+i5XK36Tzi0mEFZZfRh4tJeiWoyRhZl8HGLmOyI4ulQWtOaefsD2ZqVvGIh/PVQMtDLmh2l6sIbpTli1rEMwA/ZS7Kb8Fsvax/ABffFAUp54x6iOuqG0pCHSVt6iDf1PFbllFt8yA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711664959; c=relaxed/simple;
-	bh=H4QQZfrZU0MxBXl2n+UXU1HklTcyk+tNDJ5dZZ+aR5o=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=GRD1iXgNMimogWSu4imJB8a1pANTfoczkKTAw/tCMFWnB1H3mSdek6N+f9p4sbiMprL6vQ0ugGiwwSRGtih50YsiOoHQBeqjyefVXY2i7DCF3GmKtuMIe8Ut5dv6KfsD2FYDwLmYBq/1t9mxKBmnxXm4W9VvuvjHSNIejAJz21c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=WGRjrY8M; arc=none smtp.client-ip=199.89.1.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1711665012; c=relaxed/simple;
+	bh=jNMwMosRuw1ECtOuwXay6HxPvPPRqcMN2lZS7RX/vm8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=bXXCo80pYxX4U1DjgVHlFe2u+bNStJ8VBIa+ZZ6jSz7aA1xlAnQa4O+UCuLsGqm2m0AwpCvSQ2MrKjeoz/VdZjg3adKmd9Qr9pGnLmgenf9Cy02F7+WcLPj9ke4CAHBwgNs6hoHIub3zNqmpT7E9l8BENrilYRA5KUpbTLXjBf8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cHuAJAYV; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="WGRjrY8M"
-Received: from localhost (localhost [127.0.0.1])
-	by 008.lax.mailroute.net (Postfix) with ESMTP id 4V5J9n5gCFz6Cnk8t;
-	Thu, 28 Mar 2024 22:29:17 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1711664954; x=1714256955; bh=IVxtrsQyU59W5Vggd5LI5HVP
-	rndB9GeCBj+KxNWWa4c=; b=WGRjrY8Mbq21ADwKQKBYOrZXqMNykXjiqMsEqSvk
-	ynupNMIjngpQPs4evEW+Rpz3ctV1rFfX+1jtgCu9VOYd4CNoDHRDKelaYDXdgCX5
-	5stoUEXe2mg9EY2PN4lB5EA+WcKCPM74Q4fqCMAw5yemE0ZTs6LumG5lrYsB+QWe
-	tPLkTEvlEuXI/J5WIyT5cPAlrry5gcU8lpQx/65gqjmDS6/ahBvGcmks6ydEaQtf
-	2bZHYtZXIezOuQj/KILkUWHqlpdQDhLDOy+c91yTLEOnkyocvWgRuDrBnPBItrsj
-	YmkH0xsbf33dTvoGc5c08l2tfxOY1r7sRzLxYutGwjb0Lg==
-X-Virus-Scanned: by MailRoute
-Received: from 008.lax.mailroute.net ([127.0.0.1])
- by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id H57sQG6YDuzT; Thu, 28 Mar 2024 22:29:14 +0000 (UTC)
-Received: from [192.168.3.219] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cHuAJAYV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1711665009;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=RLjxk2wc4jymH4AwmcERFao5SrhB3AXX6RO0DVW/6VI=;
+	b=cHuAJAYVeHqItfsJtfxrSNVw2t3zgkwMRu6cgL6EX2rFwnuDxibGKMuXmdWy0z4R8O4wmH
+	cseWXV2z3RPiBQ3DBabZOa364LpNbsouDDaZ85IeAJaDB9nNdaDDAoaVqqqA9AC3Ps+Bto
+	DWfbw3jAnhpGVozw3VCBuaWf+Qa46Cg=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-488-0VoqLDZMPAWlOIYT-scMbA-1; Thu, 28 Mar 2024 18:30:05 -0400
+X-MC-Unique: 0VoqLDZMPAWlOIYT-scMbA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4V5J9j06CYz6Cnk8m;
-	Thu, 28 Mar 2024 22:29:12 +0000 (UTC)
-Message-ID: <5f98992d-e94a-4558-84bf-2602a13b6f74@acm.org>
-Date: Thu, 28 Mar 2024 15:29:12 -0700
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7B5A7101CC6B;
+	Thu, 28 Mar 2024 22:30:05 +0000 (UTC)
+Received: from redhat.com (unknown [10.2.16.33])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D71B9200AFFC;
+	Thu, 28 Mar 2024 22:30:03 +0000 (UTC)
+Date: Thu, 28 Mar 2024 17:29:57 -0500
+From: Eric Blake <eblake@redhat.com>
+To: Stefan Hajnoczi <stefanha@redhat.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
+	David Teigland <teigland@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>, 
+	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
+Subject: Re: [RFC 0/9] block: add llseek(SEEK_HOLE/SEEK_DATA) support
+Message-ID: <tlgssdlmk4hgbtjo76qre5o72m3k5co5kewxah7iwsgm2nzv55@oyog6vhhxwnc>
+References: <20240328203910.2370087-1-stefanha@redhat.com>
+ <e2lcp3n5gpf7zmlpyn4nj7wsr36sffn23z5bmzlsghu6oapi5u@sdkcbpimi5is>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 09/30] block: Pre-allocate zone write plugs
-To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
- Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
- linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>
-References: <20240328004409.594888-1-dlemoal@kernel.org>
- <20240328004409.594888-10-dlemoal@kernel.org>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20240328004409.594888-10-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <e2lcp3n5gpf7zmlpyn4nj7wsr36sffn23z5bmzlsghu6oapi5u@sdkcbpimi5is>
+User-Agent: NeoMutt/20240201
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-On 3/27/24 5:43 PM, Damien Le Moal wrote:
-> Allocating zone write plugs using kmalloc() does not guarantee that
-> enough write plugs can be allocated to simultaneously write up to
-> the maximum number of active zones or maximum number of open zones of
-> a zoned block device.
+Replying to myself,
+
+On Thu, Mar 28, 2024 at 05:17:18PM -0500, Eric Blake wrote:
+> On Thu, Mar 28, 2024 at 04:39:01PM -0400, Stefan Hajnoczi wrote:
+> > cp(1) and backup tools use llseek(SEEK_HOLE/SEEK_DATA) to skip holes in files.
 > 
-> Avoid any issue with memory allocation by pre-allocating zone write
-> plugs up to the disk maximum number of open zones or maximum number of
-> active zones, whichever is larger. For zoned devices that do not have
-> open or active zone limits, the default 128 is used as the number of
-> write plugs to pre-allocate.
+> > 
+> > In the block device world there are similar concepts to holes:
+> > - SCSI has Logical Block Provisioning where the "mapped" state would be
+> >   considered data and other states would be considered holes.
 > 
-> Pre-allocated zone write plugs are managed using a free list. If a
-> change to the device zone limits is detected, the disk free list is
-> grown if needed when blk_revalidate_disk_zones() is executed.
+> BIG caveat here: the SCSI spec does not necessarily guarantee that
+> unmapped regions read as all zeroes; compare the difference between
+> FALLOC_FL_ZERO_RANGE and FALLOC_FL_PUNCH_HOLE.  While lseek(SEEK_HOLE)
+> on a regular file guarantees that future read() in that hole will see
+> NUL bytes, I'm not sure whether we want to make that guarantee for
+> block devices.  This may be yet another case where we might want to
+> add new SEEK_* constants to the *seek() family of functions that lets
+> the caller indicate whether they want offsets that are guaranteed to
+> read as zero, vs. merely offsets that are not allocated but may or may
+> not read as zero.  Skipping unallocated portions, even when you don't
+> know if the contents reliably read as zero, is still a useful goal in
+> some userspace programs.
+> 
+> > - NBD has NBD_CMD_BLOCK_STATUS for querying whether blocks are present.
 
-Is there a way to retry bio submission if allocating a zone write plug
-fails? Would that make it possible to drop this patch?
+The upstream NBD spec[1] took the time to represent two bits of
+information per extent, _because_ of the knowledge that not all SCSI
+devices with TRIM support actually guarantee a read of zeroes after
+trimming.  That is, NBD chose to convey both:
 
-Thanks,
+NBD_STATE_HOLE: 1<<0 if region is unallocated, 0 if region has not been trimmed
+NBD_STATE_ZERO: 1<<1 if region reads as zeroes, 0 if region contents might be nonzero
 
-Bart.
+it is always safe to describe an extent as value 0 (both bits clear),
+whether or not lseek(SEEK_DATA) returns the same offset; meanwhile,
+traditional lseek(SEEK_HOLE) on filesystems generally translates to a
+status of 3 (both bits set), but as it is (sometimes) possible to
+determine that allocated data still reads as zero, or that unallocated
+data may not necessarily read as zero, it is also possible to
+implement NBD servers that don't report both bits in parallel.
+
+If we are going to enhance llseek(2) to expose more information about
+underlying block devices, possibly by adding more SEEK_ constants for
+use in the entire family of *seek() API, it may be worth thinking
+about whether it is worth userspace being able to query this
+additional distinction between unallocated vs reads-as-zero.
+
+[1] https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md#baseallocation-metadata-context
+
+-- 
+Eric Blake, Principal Software Engineer
+Red Hat, Inc.
+Virtualization:  qemu.org | libguestfs.org
 
