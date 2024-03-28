@@ -1,98 +1,148 @@
-Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7147B12FF95
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 23:05:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2059140875
+	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 23:10:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711667127; cv=none; b=lBJ8FumgQ5AV3XOgkWQSvUvfyjdLbdhXZE8NYXijCP3+0pQ4qeZKDiro0AgnCDT8XpE8iMHywtl+n3bDN5dsKcnVlphMCxJAR6lgM+XJVU1OrdQnmwwB8U0Jwm/LFmhgpK5yWWwIl/m5P7erMKxSUPvxXA0PhwFkSeBd2LyD9ho=
+	t=1711667405; cv=none; b=cfWQRPHyOkEFvdbi3Lry8iTOJm7TrtWer4iFk35TISHeygtpOEpLjc1nL71GaTUvrVQJ3MLyRvFORci+0vCGN+YH6FrFdjZVyWRIDT1NhiOzLZabJO8dcitSN3oNcRo2zyi5GWfxEYZpRBw5fLam+h0zmlmWWCGwBCATJbppC90=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711667127; c=relaxed/simple;
-	bh=RR1NsxYBYOM1Y/zktRAsa3HBsBJLbkk3BP9brZN7qiU=;
-	h=From:To:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=OnWz9vFWQnTSVRP5KvE73VMWQ9XeJeE8c/fWosrJw8aqyCeTNCOT2F6FXtqt/b6ny2kIS1Gh3XUoTvx7zOIxzW7yySgB7N/CgGFRjgss8mVED9Hxvuc7cRFBj4uYIzlPs0YVXFsfsR/KWA5CSYlqlmObTrqv2swPhYhaKZlJCPw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=QPneIhE+; arc=none smtp.client-ip=209.85.214.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1711667405; c=relaxed/simple;
+	bh=kvmTcmHWQT5BDi0XbGATB1yNB1cSxJT9/zwntUh/tFU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=S0GLlXJmA38gwHCwq7V4eJB/kcjR/4zuAwu+yAfo3r2Ao3Q/xnaJ7NMCftMRUN0idmmeVsYRa/wCFmBqPuSDxh17O/UMnNtC74KyaUtPEwXhyw1fk7jHtzmDTxmw2QXCQOH98XT+PHqGiQO4/Y7ULLgii1CBoLPa8GWzRJf1HGA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=f7cftWJS; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="QPneIhE+"
-Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-1dd3c6c8dbbso2197965ad.1
-        for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 16:05:26 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1711667126; x=1712271926; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:to:from:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=jH6cSamYqu9y6NrHpddafX7jLWVjJSO+MIjSmesZ7SQ=;
-        b=QPneIhE+wrWKWRa1Lwzk1MdYdBbBA+6G8h5r9b0bk5wxRn9jotDIPyAOZ1NOMtW/Vf
-         gMaCUmpj3ku0VhFsp3Lagmh50l72c8MZf131vNU9VSNoSTa3/sk+nftUEDLHo3OGKfjT
-         92TnKdsdllXQBSAJNzNDvf7XVrnTNbKHdW5hbWP/cXX3DZO8W5DBqFqF4JUfsQ2DVf8B
-         WS0rQLUoXfUjDXwtZ5mrlYvv2qNLy2VgtCxiQiUy7DvNw2lccGuDpbRi0QF9oGX9Vp8J
-         EDdCBlJ3lEMjTT3Un9rFTjgH9ZepaSANXJWF642bdy31LzpJs/Sd0+dXHplI6zOgrUmm
-         ss+A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711667126; x=1712271926;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=jH6cSamYqu9y6NrHpddafX7jLWVjJSO+MIjSmesZ7SQ=;
-        b=koVsf3UuHRAhRn+0k5kqwpR3+LRAzMliRVlWoRQ2Y18mgp5BhfuVMxvOyEnLoLvadO
-         NaNIK6R/exmH1C0+xbu8MvJEnW3NQjrqHx3jz2pRM5kqvyuIURz/07LErV9QZgikzHuS
-         uf64OKBxGJcIWEho6fiw1mVOZB7/izpYZvDpRT1vgxVpTD1momGKNLq+wwBoNhSB04Li
-         +6NgIKAXPten7vzsA+fRLN5rnoFTCZ7AinK49DPaxvp9lVCK6T+IsBDNlpfzyt7nyjij
-         6EdfapgYGOVeYwH2Jdc78TldRLcCB5c5906tP5KLGSjTDFHgCyiO16BeGbl0DM98WzV3
-         a4HA==
-X-Forwarded-Encrypted: i=1; AJvYcCUigHFoFqn3iu+DDcGJQ98LrLnkj2AnsjRXd9nWvgE3kjZeH+wSzUwfKtYPetS597nWzz7JfoRpHKJx6XAYlQ0FSmRLqEaJ72I=
-X-Gm-Message-State: AOJu0Yz5v0pBXAKFPSevD/h1OpvyPHbz/RyJRg6uA+RLg6efIImS2VhZ
-	+T+RdalzGrTHYeaEpSLKHKMcQ89eAnlfnBJDIbQ7Ld3WMHpcqZbEj1UeBHXVzb8=
-X-Google-Smtp-Source: AGHT+IFz2PM05uHbkjHCxEwx7ITQmcuHmP+Q9onJ6IDFb8FdZ5M8mwUFVEVXNdLv1bOXS14zB6XpZg==
-X-Received: by 2002:a17:90a:77cb:b0:29c:7487:43b8 with SMTP id e11-20020a17090a77cb00b0029c748743b8mr839839pjs.1.1711667125810;
-        Thu, 28 Mar 2024 16:05:25 -0700 (PDT)
-Received: from [127.0.0.1] ([50.234.116.5])
-        by smtp.gmail.com with ESMTPSA id cx18-20020a17090afd9200b0029d7e7b7b41sm4013902pjb.33.2024.03.28.16.05.24
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 28 Mar 2024 16:05:24 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, 
- "Martin K . Petersen" <martin.petersen@oracle.com>, 
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>, 
- linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>, 
- Christoph Hellwig <hch@lst.de>, Damien Le Moal <dlemoal@kernel.org>
-In-Reply-To: <20240328004409.594888-1-dlemoal@kernel.org>
-References: <20240328004409.594888-1-dlemoal@kernel.org>
-Subject: Re: (subset) [PATCH v3 00/30] Zone write plugging
-Message-Id: <171166712406.796545.15002324421306835511.b4-ty@kernel.dk>
-Date: Thu, 28 Mar 2024 17:05:24 -0600
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="f7cftWJS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1711667403;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=rndfg4XfB22ONXO19F0as1oglujXnoi27yaTdnHvC0g=;
+	b=f7cftWJSSszvmGhjQjY18gWLiIUJMSEff/0rwjPU5VsAU8dmc7LLNhA5jkSqBUuvBR0/xu
+	p1CkfaBNU2NQ188K2DBXU9vKQLcYoaqOKeyrisA7T45Tpdb4ux6vgzbWVarYlZZ5SbBBKc
+	DhO8iEISo7HmrC7XygM4ojblcwI4kac=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-110-aWGgeugXPACFN4sPZ5mRhA-1; Thu,
+ 28 Mar 2024 19:09:59 -0400
+X-MC-Unique: aWGgeugXPACFN4sPZ5mRhA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36AB71C05AB5;
+	Thu, 28 Mar 2024 23:09:59 +0000 (UTC)
+Received: from localhost (unknown [10.39.194.117])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7785B2166B31;
+	Thu, 28 Mar 2024 23:09:58 +0000 (UTC)
+Date: Thu, 28 Mar 2024 19:09:52 -0400
+From: Stefan Hajnoczi <stefanha@redhat.com>
+To: Eric Blake <eblake@redhat.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+	David Teigland <teigland@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
+Subject: Re: [RFC 0/9] block: add llseek(SEEK_HOLE/SEEK_DATA) support
+Message-ID: <20240328230952.GB2373362@fedora>
+References: <20240328203910.2370087-1-stefanha@redhat.com>
+ <e2lcp3n5gpf7zmlpyn4nj7wsr36sffn23z5bmzlsghu6oapi5u@sdkcbpimi5is>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.12.5-dev-2aabd
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="L5fVNxigY5xSFlqK"
+Content-Disposition: inline
+In-Reply-To: <e2lcp3n5gpf7zmlpyn4nj7wsr36sffn23z5bmzlsghu6oapi5u@sdkcbpimi5is>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
 
 
-On Thu, 28 Mar 2024 09:43:39 +0900, Damien Le Moal wrote:
-> The patch series introduces zone write plugging (ZWP) as the new
-> mechanism to control the ordering of writes to zoned block devices.
-> ZWP replaces zone write locking (ZWL) which is implemented only by
-> mq-deadline today. ZWP also allows emulating zone append operations
-> using regular writes for zoned devices that do not natively support this
-> operation (e.g. SMR HDDs). This patch series removes the scsi disk
-> driver and device mapper zone append emulation to use ZWP emulation.
-> 
-> [...]
+--L5fVNxigY5xSFlqK
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Applied, thanks!
+On Thu, Mar 28, 2024 at 05:16:54PM -0500, Eric Blake wrote:
+> On Thu, Mar 28, 2024 at 04:39:01PM -0400, Stefan Hajnoczi wrote:
+> > This can speed up the process by reducing the amount of data read and it
+> > preserves sparseness when writing to the output file.
+> >=20
+> > This patch series is an initial attempt at implementing
+> > llseek(SEEK_HOLE/SEEK_DATA) for block devices. I'm looking for feedback=
+ on this
+> > approach and suggestions for resolving the open issues.
+>=20
+> One of your open issues was whether adjusting the offset of the block
+> device itself should also adjust the file offset of the underlying
+> file (at least in the case of loopback and dm-linear).  What would the
 
-[01/30] block: Do not force full zone append completion in req_bio_endio()
-        commit: 55251fbdf0146c252ceff146a1bb145546f3e034
+Only the loop block driver has this issue. The dm-linear driver uses
+blkdev_seek_hole_data(), which does not update the file offset because
+it operates on a struct block_device instead of a struct file.
 
-Best regards,
--- 
-Jens Axboe
+>=20
+> >=20
+> > In the block device world there are similar concepts to holes:
+> > - SCSI has Logical Block Provisioning where the "mapped" state would be
+> >   considered data and other states would be considered holes.
+>=20
+> BIG caveat here: the SCSI spec does not necessarily guarantee that
+> unmapped regions read as all zeroes; compare the difference between
+> FALLOC_FL_ZERO_RANGE and FALLOC_FL_PUNCH_HOLE.  While lseek(SEEK_HOLE)
+> on a regular file guarantees that future read() in that hole will see
+> NUL bytes, I'm not sure whether we want to make that guarantee for
+> block devices.  This may be yet another case where we might want to
+> add new SEEK_* constants to the *seek() family of functions that lets
+> the caller indicate whether they want offsets that are guaranteed to
+> read as zero, vs. merely offsets that are not allocated but may or may
+> not read as zero.  Skipping unallocated portions, even when you don't
+> know if the contents reliably read as zero, is still a useful goal in
+> some userspace programs.
 
+SCSI initiators can check the Logical Block Provisioning Read Zeroes
+(LBPRZ) field to determine whether or not zeroes are guaranteed. The sd
+driver would only rely on the device when LPBRZ indicates that zeroes
+will be read. Otherwise the driver would report that the device is
+filled with data.
 
+>=20
+> > - NBD has NBD_CMD_BLOCK_STATUS for querying whether blocks are present.
+>=20
+> However, utilizing it in nbd.ko would require teaching the kernel to
+> handle structured or extended headers (right now, that is an extension
+> only supported in user-space implementations of the NBD protocol).  I
+> can see why you did not tackle that in this RFC series, even though
+> you mention it in the cover letter.
+
+Yes, I'm mostly interested in dm-thin. The loop block driver and
+dm-linear are useful for testing so I modified them. I didn't try SCSI
+or NBD.
+
+Thanks,
+Stefan
+
+--L5fVNxigY5xSFlqK
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmYF+MAACgkQnKSrs4Gr
+c8igigf/UDJaxtkdbmVL4Uer+bQYsOyVoZO0KIJ2d4vKGyQMZyoLt/teOilDZbji
+TnmcqrRqRbpIIiaIajLleTUUEwFArHq0LcENf5ONMKhShi1xVvX9OG2/v7iWlmzg
+RHI9mPKgu2S3/C3Vb5wPTjxAQjqGKzudy8JoiZ60dTYbUVoAlgkSp5wf3EPeVURm
+h63dZy2Gy4jgHWrnpYwcjXEa5T4i1xhTDwXfR7QFCtlOFYqpyfqrZBqj8CY+LNQ0
+8nSabkb+YiU+mOWXSr6qWr7BlPqn92bGazdSQRCEHsMKpxwUT8k5xz+zILF/KnrC
+f9wF1Fgl6oASE8MLEk9uAw3kzRYaOA==
+=PLlk
+-----END PGP SIGNATURE-----
+
+--L5fVNxigY5xSFlqK--
 
