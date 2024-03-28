@@ -1,178 +1,404 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60967139CF0
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 20:41:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7CFB146BF;
+	Thu, 28 Mar 2024 20:45:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711658463; cv=none; b=TPqUHsvIJNRe8WEbQqKs0UWcdVPvjJ2seKEavDZVdCDJv3BSaAA+43j7UBpZq7NmlAnNKApj9jK3MxD0nsv/ZIv+u9199Inqk/rsQXAaA29oVU04BopmID+hyEbVpjmiyI7BFRGExc9wAy8Wccqbx0vGxuIXRp9sc7rTwk89B0E=
+	t=1711658735; cv=none; b=Awkjx5yzGY2Iewnz0yWwCncS4bIri7+MTaKhc+WILVHi3k7aZpPQ0XBDxhspNhvt+R/XoBd8cA73mdRNQQ8RIRahAlfoIPtPz6srPemOsBPHqdoBlPf+2DHfmVxM/nLeatE32twOO2+f/6chAblGG+F43XyRr+suyH8gp38TEV0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711658463; c=relaxed/simple;
-	bh=4LVr4XIyTxfxImYgjXFnrBvXpjmjemBkyYv51+FUVj0=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=SpoCfE+ONP9OvrICD/CZVKiGjIRexTX0++lig7xWNxGlv/kXTAYNF7KocdQo3+Uc3EgyCTP672m0+Y+bI2XdpXvbNBquNd2lsPiEK8LzSprQfDaEAmpn91NBW2uad0dNhl+PRh7viu54fKAtHUBYK+fNZnZXaYhwXHVkV6/OME8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WkeU1nLy; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1711658735; c=relaxed/simple;
+	bh=gz6qAnr95/mpG/Wqs8dMJHu4Z2DPzgH2FdBsH4EodMo=;
+	h=Mime-Version:Content-Type:Date:Message-Id:Cc:Subject:From:To:
+	 References:In-Reply-To; b=OLSow+fYt1Tn4c3axBAznL1TWrnYRuRo/gnYHQNvOlMb/+G1jeX4pnEOpAIBMFihmhn1WjLw5sbaqXB0XU15y+uqCmUR3vkDQLwXmtW5HFZJ0SVwY1AhX6WD9N1BO5sdwHR7ZxpF/RLj4tVUeuGRnbU93YBCT9HC1XtR59+GdvM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=KY1gzXDJ; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WkeU1nLy"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1711658460;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=y4QwQ4LobXpOZeMcmZtW4ftxyW2t074qf+BN+wufuQA=;
-	b=WkeU1nLyZwpjusMGdTH8N7QNbPk1F7C7Q9lF2HmqjBKle6zFMIuGpfG/1ps70H/eFr6uOz
-	cjOCQLV3z2z+OSYacIsIfXRSwCuldg0QareOS8jaQK5kl8xWBobFEfqJ/aDV8tID7+K8eo
-	Jq/nMox66h5/LImMEl9UyXMlSyTdKe8=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-631-FGHnscCFOt2rRDtvRy7V4Q-1; Thu, 28 Mar 2024 16:40:56 -0400
-X-MC-Unique: FGHnscCFOt2rRDtvRy7V4Q-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4C74A8007A7;
-	Thu, 28 Mar 2024 20:40:56 +0000 (UTC)
-Received: from localhost (unknown [10.39.194.117])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B0F5B3C54;
-	Thu, 28 Mar 2024 20:40:54 +0000 (UTC)
-From: Stefan Hajnoczi <stefanha@redhat.com>
-To: linux-block@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org,
-	eblake@redhat.com,
-	Alasdair Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel@lists.linux.dev,
-	David Teigland <teigland@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Jens Axboe <axboe@kernel.dk>,
-	Christoph Hellwig <hch@lst.de>,
-	Joe Thornber <ejt@redhat.com>,
-	Stefan Hajnoczi <stefanha@redhat.com>
-Subject: [RFC 9/9] selftests: block_seek_hole: add dm-thin test
-Date: Thu, 28 Mar 2024 16:39:10 -0400
-Message-ID: <20240328203910.2370087-10-stefanha@redhat.com>
-In-Reply-To: <20240328203910.2370087-1-stefanha@redhat.com>
-References: <20240328203910.2370087-1-stefanha@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="KY1gzXDJ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DB2B7C433F1;
+	Thu, 28 Mar 2024 20:45:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1711658735;
+	bh=gz6qAnr95/mpG/Wqs8dMJHu4Z2DPzgH2FdBsH4EodMo=;
+	h=Date:Cc:Subject:From:To:References:In-Reply-To:From;
+	b=KY1gzXDJJuyAE02bHXeN5LGzBm2HiYvLiYjeZtRbajfASuGamuG6nuF1eCmG5OsuE
+	 pZLq+q5pdA8KSTQCSqViqjk4B7a9xTvtRtb5drLViSF9/aXRE3EiyqUm5Xw10Llx3o
+	 6YPjqABnYQeZLKBohjHSvemMCUzTW4cX2iDOPLB7guLR6eDaOaxi1/fh1UW2Ol8hu3
+	 5GvqDiQtXRtiEZRQPYXCzADTzD+A14jR70dfFiXCtfkqXfa1sT6ne+5w4d8M1gkstt
+	 oKgBEqoQHGJy1DKI9SvZtdNFKHqamBmcweouFMPIFx6Mw2Rpxr5xXnNXSzK+OxUUf1
+	 rRhsEogt6l+Sw==
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+Mime-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Date: Thu, 28 Mar 2024 22:45:28 +0200
+Message-Id: <D05ODONHFJ9O.3VG0HLFPA1OB0@kernel.org>
+Cc: <linux-doc@vger.kernel.org>, <linux-integrity@vger.kernel.org>,
+ <linux-security-module@vger.kernel.org>, <fsverity@lists.linux.dev>,
+ <linux-block@vger.kernel.org>, <dm-devel@lists.linux.dev>,
+ <audit@vger.kernel.org>, <linux-kernel@vger.kernel.org>, "Deven Bowers"
+ <deven.desai@linux.microsoft.com>
+Subject: Re: [PATCH v16 01/20] security: add ipe lsm
+From: "Jarkko Sakkinen" <jarkko@kernel.org>
+To: "Fan Wu" <wufan@linux.microsoft.com>, <corbet@lwn.net>,
+ <zohar@linux.ibm.com>, <jmorris@namei.org>, <serge@hallyn.com>,
+ <tytso@mit.edu>, <ebiggers@kernel.org>, <axboe@kernel.dk>,
+ <agk@redhat.com>, <snitzer@kernel.org>, <eparis@redhat.com>,
+ <paul@paul-moore.com>
+X-Mailer: aerc 0.17.0
+References: <1711657047-10526-1-git-send-email-wufan@linux.microsoft.com>
+ <1711657047-10526-2-git-send-email-wufan@linux.microsoft.com>
+In-Reply-To: <1711657047-10526-2-git-send-email-wufan@linux.microsoft.com>
 
-Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
----
- .../selftests/block_seek_hole/Makefile        |  2 +-
- .../selftests/block_seek_hole/dm_thin.sh      | 80 +++++++++++++++++++
- 2 files changed, 81 insertions(+), 1 deletion(-)
- create mode 100755 tools/testing/selftests/block_seek_hole/dm_thin.sh
+On Thu Mar 28, 2024 at 10:17 PM EET, Fan Wu wrote:
+> From: Deven Bowers <deven.desai@linux.microsoft.com>
+>
+> Integrity Policy Enforcement (IPE) is an LSM that provides an
+> complimentary approach to Mandatory Access Control than existing LSMs
+> today.
+>
+> Existing LSMs have centered around the concept of access to a resource
+> should be controlled by the current user's credentials. IPE's approach,
+> is that access to a resource should be controlled by the system's trust
+> of a current resource.
+>
+> The basis of this approach is defining a global policy to specify which
+> resource can be trusted.
+>
+> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> ---
+> v2:
+>   + Split evaluation loop, access control hooks,
+>     and evaluation loop from policy parser and userspace
+>     interface to pass mailing list character limit
+>
+> v3:
+>   + Move ipe_load_properties to patch 04.
+>   + Remove useless 0-initializations
+>   + Prefix extern variables with ipe_
+>   + Remove kernel module parameters, as these are
+>     exposed through sysctls.
+>   + Add more prose to the IPE base config option
+>     help text.
+>   + Use GFP_KERNEL for audit_log_start.
+>   + Remove unnecessary caching system.
+>   + Remove comments from headers
+>   + Use rcu_access_pointer for rcu-pointer null check
+>   + Remove usage of reqprot; use prot only.
+>   + Move policy load and activation audit event to 03/12
+>
+> v4:
+>   + Remove sysctls in favor of securityfs nodes
+>   + Re-add kernel module parameters, as these are now
+>     exposed through securityfs.
+>   + Refactor property audit loop to a separate function.
+>
+> v5:
+>   + fix minor grammatical errors
+>   + do not group rule by curly-brace in audit record,
+>     reconstruct the exact rule.
+>
+> v6:
+>   + No changes
+>
+> v7:
+>   + Further split lsm creation into a separate commit from the
+>     evaluation loop and audit system, for easier review.
+>
+>   + Introduce the concept of an ipe_context, a scoped way to
+>     introduce execution policies, used initially for allowing for
+>     kunit tests in isolation.
+>
+> v8:
+>   + Follow lsmname_hook_name convention for lsm hooks.
+>   + Move LSM blob accessors to ipe.c and mark LSM blobs as static.
+>
+> v9:
+>   + Remove ipe_context for simplification
+>
+> v10:
+>   + Add github url
+>
+> v11:
+>   + Correct github url
+>   + Move ipe before bpf
+>
+> v12:
+>   + Switch to use lsm_id instead of string for lsm name
+>
+> v13:
+>   + No changes
+>
+> v14:
+>   + No changes
+>
+> v15:
+>   + Add missing code in tools/testing/selftests/lsm/lsm_list_modules_test=
+.c
+>
+> v16:
+>   + No changes
+> ---
+>  MAINTAINERS                                   |  7 ++++
+>  include/uapi/linux/lsm.h                      |  1 +
+>  security/Kconfig                              | 11 ++---
+>  security/Makefile                             |  1 +
+>  security/ipe/Kconfig                          | 17 ++++++++
+>  security/ipe/Makefile                         |  9 ++++
+>  security/ipe/ipe.c                            | 41 +++++++++++++++++++
+>  security/ipe/ipe.h                            | 16 ++++++++
+>  security/security.c                           |  3 +-
+>  .../selftests/lsm/lsm_list_modules_test.c     |  3 ++
+>  10 files changed, 103 insertions(+), 6 deletions(-)
+>  create mode 100644 security/ipe/Kconfig
+>  create mode 100644 security/ipe/Makefile
+>  create mode 100644 security/ipe/ipe.c
+>  create mode 100644 security/ipe/ipe.h
+>
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index 079a86e680bc..16e29f2361c9 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -10744,6 +10744,13 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel=
+/git/zohar/linux-integrity.git
+>  F:	security/integrity/
+>  F:	security/integrity/ima/
+> =20
+> +INTEGRITY POLICY ENFORCEMENT (IPE)
+> +M:	Fan Wu <wufan@linux.microsoft.com>
+> +L:	linux-security-module@vger.kernel.org
+> +S:	Supported
+> +T:	git https://github.com/microsoft/ipe.git
+> +F:	security/ipe/
+> +
+>  INTEL 810/815 FRAMEBUFFER DRIVER
+>  M:	Antonino Daplas <adaplas@gmail.com>
+>  L:	linux-fbdev@vger.kernel.org
 
-diff --git a/tools/testing/selftests/block_seek_hole/Makefile b/tools/testing/selftests/block_seek_hole/Makefile
-index 1bd9e748b2acc..3b4ee1b1fb6e7 100644
---- a/tools/testing/selftests/block_seek_hole/Makefile
-+++ b/tools/testing/selftests/block_seek_hole/Makefile
-@@ -3,7 +3,7 @@ PY3 = $(shell which python3 2>/dev/null)
- 
- ifneq ($(PY3),)
- 
--TEST_PROGS := test.py dm_zero.sh
-+TEST_PROGS := test.py dm_zero.sh dm_thin.sh
- 
- include ../lib.mk
- 
-diff --git a/tools/testing/selftests/block_seek_hole/dm_thin.sh b/tools/testing/selftests/block_seek_hole/dm_thin.sh
-new file mode 100755
-index 0000000000000..a379b7c875f28
---- /dev/null
-+++ b/tools/testing/selftests/block_seek_hole/dm_thin.sh
-@@ -0,0 +1,80 @@
-+#!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0-only
-+#
-+# dm_thin.sh
-+#
-+# Test that dm-thin supports SEEK_HOLE/SEEK_DATA.
-+
-+set -e
-+
-+# check <actual> <expected>
-+# Check that the actual output matches the expected output.
-+check() {
-+	if [ "$1" != "$2" ]; then
-+		echo 'FAIL expected:'
-+		echo "$2"
-+		echo 'Does not match device output:'
-+		echo "$1"
-+		exit 1
-+	fi
-+}
-+
-+cleanup() {
-+	if [ -n "$thin_name" ]; then
-+		dmsetup remove $thin_name
-+	fi
-+	if [ -n "$pool_name" ]; then
-+		dmsetup remove $pool_name
-+	fi
-+	if [ -n "$metadata_path" ]; then
-+		losetup --detach "$metadata_path"
-+	fi
-+	if [ -n "$data_path" ]; then
-+		losetup --detach "$data_path"
-+	fi
-+	rm -f pool-metadata pool-data
-+}
-+trap cleanup EXIT
-+
-+rm -f pool-metadata pool-data
-+truncate -s 256M pool-metadata
-+truncate -s 1G pool-data
-+
-+size_sectors=$((1024 * 1024 * 1024 / 512)) # 1 GB
-+metadata_path=$(losetup --show --find pool-metadata)
-+data_path=$(losetup --show --find pool-data)
-+pool_name=pool-$$
-+thin_name=thin-$$
-+
-+dmsetup create $pool_name \
-+	--table "0 $size_sectors thin-pool $metadata_path $data_path 128 $size_sectors"
-+dmsetup message /dev/mapper/$pool_name 0 'create_thin 0'
-+dmsetup create $thin_name --table "0 $size_sectors thin /dev/mapper/$pool_name 0"
-+
-+# Verify that the device is empty
-+check "$(./map_holes.py /dev/mapper/$thin_name)" 'TYPE START END SIZE
-+HOLE 0 1073741824 1073741824'
-+
-+# Write 4k at offset 128M but dm-thin will actually map an entire 64k block
-+dd if=/dev/urandom of=/dev/mapper/$thin_name bs=4k count=1 seek=32768 status=none
-+check "$(./map_holes.py /dev/mapper/$thin_name)" 'TYPE START END SIZE
-+HOLE 0 134217728 134217728
-+DATA 134217728 134283264 65536
-+HOLE 134283264 1073741824 939458560'
-+
-+# Write at the beginning of the device
-+dd if=/dev/urandom of=/dev/mapper/$thin_name bs=4k count=1 status=none
-+check "$(./map_holes.py /dev/mapper/$thin_name)" 'TYPE START END SIZE
-+DATA 0 65536 65536
-+HOLE 65536 134217728 134152192
-+DATA 134217728 134283264 65536
-+HOLE 134283264 1073741824 939458560'
-+
-+# Write at the end of the device
-+dd if=/dev/urandom of=/dev/mapper/$thin_name bs=4k count=1 seek=262143 status=none
-+check "$(./map_holes.py /dev/mapper/$thin_name)" 'TYPE START END SIZE
-+DATA 0 65536 65536
-+HOLE 65536 134217728 134152192
-+DATA 134217728 134283264 65536
-+HOLE 134283264 1073676288 939393024
-+DATA 1073676288 1073741824 65536'
--- 
-2.44.0
+MAINTAINER updates should be split into separate commits, preferably to
+the tail of the series because it is stamp for the full feature not a
+subportion of it.
 
+> diff --git a/include/uapi/linux/lsm.h b/include/uapi/linux/lsm.h
+> index 33d8c9f4aa6b..938593dfd5da 100644
+> --- a/include/uapi/linux/lsm.h
+> +++ b/include/uapi/linux/lsm.h
+> @@ -64,6 +64,7 @@ struct lsm_ctx {
+>  #define LSM_ID_LANDLOCK		110
+>  #define LSM_ID_IMA		111
+>  #define LSM_ID_EVM		112
+> +#define LSM_ID_IPE		113
+> =20
+>  /*
+>   * LSM_ATTR_XXX definitions identify different LSM attributes
+> diff --git a/security/Kconfig b/security/Kconfig
+> index 412e76f1575d..9fb8f9b14972 100644
+> --- a/security/Kconfig
+> +++ b/security/Kconfig
+> @@ -192,6 +192,7 @@ source "security/yama/Kconfig"
+>  source "security/safesetid/Kconfig"
+>  source "security/lockdown/Kconfig"
+>  source "security/landlock/Kconfig"
+> +source "security/ipe/Kconfig"
+> =20
+>  source "security/integrity/Kconfig"
+> =20
+> @@ -231,11 +232,11 @@ endchoice
+> =20
+>  config LSM
+>  	string "Ordered list of enabled LSMs"
+> -	default "landlock,lockdown,yama,loadpin,safesetid,smack,selinux,tomoyo,=
+apparmor,bpf" if DEFAULT_SECURITY_SMACK
+> -	default "landlock,lockdown,yama,loadpin,safesetid,apparmor,selinux,smac=
+k,tomoyo,bpf" if DEFAULT_SECURITY_APPARMOR
+> -	default "landlock,lockdown,yama,loadpin,safesetid,tomoyo,bpf" if DEFAUL=
+T_SECURITY_TOMOYO
+> -	default "landlock,lockdown,yama,loadpin,safesetid,bpf" if DEFAULT_SECUR=
+ITY_DAC
+> -	default "landlock,lockdown,yama,loadpin,safesetid,selinux,smack,tomoyo,=
+apparmor,bpf"
+> +	default "landlock,lockdown,yama,loadpin,safesetid,smack,selinux,tomoyo,=
+apparmor,ipe,bpf" if DEFAULT_SECURITY_SMACK
+> +	default "landlock,lockdown,yama,loadpin,safesetid,apparmor,selinux,smac=
+k,tomoyo,ipe,bpf" if DEFAULT_SECURITY_APPARMOR
+> +	default "landlock,lockdown,yama,loadpin,safesetid,tomoyo,ipe,bpf" if DE=
+FAULT_SECURITY_TOMOYO
+> +	default "landlock,lockdown,yama,loadpin,safesetid,ipe,bpf" if DEFAULT_S=
+ECURITY_DAC
+> +	default "landlock,lockdown,yama,loadpin,safesetid,selinux,smack,tomoyo,=
+apparmor,ipe,bpf"
+>  	help
+>  	  A comma-separated list of LSMs, in initialization order.
+>  	  Any LSMs left off this list, except for those with order
+> diff --git a/security/Makefile b/security/Makefile
+> index 59f238490665..cc0982214b84 100644
+> --- a/security/Makefile
+> +++ b/security/Makefile
+> @@ -25,6 +25,7 @@ obj-$(CONFIG_SECURITY_LOCKDOWN_LSM)	+=3D lockdown/
+>  obj-$(CONFIG_CGROUPS)			+=3D device_cgroup.o
+>  obj-$(CONFIG_BPF_LSM)			+=3D bpf/
+>  obj-$(CONFIG_SECURITY_LANDLOCK)		+=3D landlock/
+> +obj-$(CONFIG_SECURITY_IPE)		+=3D ipe/
+> =20
+>  # Object integrity file lists
+>  obj-$(CONFIG_INTEGRITY)			+=3D integrity/
+> diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+> new file mode 100644
+> index 000000000000..e4875fb04883
+> --- /dev/null
+> +++ b/security/ipe/Kconfig
+> @@ -0,0 +1,17 @@
+> +# SPDX-License-Identifier: GPL-2.0-only
+> +#
+> +# Integrity Policy Enforcement (IPE) configuration
+> +#
+> +
+> +menuconfig SECURITY_IPE
+> +	bool "Integrity Policy Enforcement (IPE)"
+> +	depends on SECURITY && SECURITYFS
+> +	select PKCS7_MESSAGE_PARSER
+> +	select SYSTEM_DATA_VERIFICATION
+> +	help
+> +	  This option enables the Integrity Policy Enforcement LSM
+> +	  allowing users to define a policy to enforce a trust-based access
+> +	  control. A key feature of IPE is a customizable policy to allow
+> +	  admins to reconfigure trust requirements on the fly.
+> +
+> +	  If unsure, answer N.
+> diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+> new file mode 100644
+> index 000000000000..f7a80d0f18f8
+> --- /dev/null
+> +++ b/security/ipe/Makefile
+> @@ -0,0 +1,9 @@
+> +# SPDX-License-Identifier: GPL-2.0
+> +#
+> +# Copyright (C) Microsoft Corporation. All rights reserved.
+> +#
+> +# Makefile for building the IPE module as part of the kernel tree.
+> +#
+> +
+> +obj-$(CONFIG_SECURITY_IPE) +=3D \
+> +	ipe.o \
+> diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+> new file mode 100644
+> index 000000000000..b013aed15e73
+> --- /dev/null
+> +++ b/security/ipe/ipe.c
+> @@ -0,0 +1,41 @@
+> +// SPDX-License-Identifier: GPL-2.0
+> +/*
+> + * Copyright (C) Microsoft Corporation. All rights reserved.
+> + */
+> +#include <uapi/linux/lsm.h>
+> +
+
+Not sure if this new line adds any clarity but you can keep it if you
+want I neither mind that much.
+
+> +#include "ipe.h"
+> +
+> +static struct lsm_blob_sizes ipe_blobs __ro_after_init =3D {
+> +};
+> +
+> +static const struct lsm_id ipe_lsmid =3D {
+> +	.name =3D "ipe",
+> +	.id =3D LSM_ID_IPE,
+> +};
+> +
+> +static struct security_hook_list ipe_hooks[] __ro_after_init =3D {
+> +};
+> +
+> +/**
+> + * ipe_init - Entry point of IPE.
+> + *
+> + * This is called at LSM init, which happens occurs early during kernel
+> + * start up. During this phase, IPE registers its hooks and loads the
+> + * builtin boot policy.
+> + * Return:
+> + * * 0		- OK
+> + * * -ENOMEM	- Out of memory
+
+Just a suggestion:
+
+* 0:		OK
+* -ENOMEM:	Out of memory (OOM)
+
+Rationale being more readable (less convoluted).
+
+And also sort of symmetrical how parameters are formatted in kdoc.
+
+> + */
+> +static int __init ipe_init(void)
+> +{
+> +	security_add_hooks(ipe_hooks, ARRAY_SIZE(ipe_hooks), &ipe_lsmid);
+> +
+> +	return 0;
+> +}
+> +
+> +DEFINE_LSM(ipe) =3D {
+> +	.name =3D "ipe",
+> +	.init =3D ipe_init,
+> +	.blobs =3D &ipe_blobs,
+> +};
+> diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
+> new file mode 100644
+> index 000000000000..a1c68d0fc2e0
+> --- /dev/null
+> +++ b/security/ipe/ipe.h
+> @@ -0,0 +1,16 @@
+> +/* SPDX-License-Identifier: GPL-2.0 */
+> +/*
+> + * Copyright (C) Microsoft Corporation. All rights reserved.
+> + */
+> +
+> +#ifndef _IPE_H
+> +#define _IPE_H
+> +
+> +#ifdef pr_fmt
+> +#undef pr_fmt
+> +#endif
+> +#define pr_fmt(fmt) "IPE: " fmt
+
+s/IPE/ipe/
+
+
+> +
+> +#include <linux/lsm_hooks.h>
+> +
+> +#endif /* _IPE_H */
+> diff --git a/security/security.c b/security/security.c
+> index 7e118858b545..287bfac6b471 100644
+> --- a/security/security.c
+> +++ b/security/security.c
+> @@ -51,7 +51,8 @@
+>  	(IS_ENABLED(CONFIG_BPF_LSM) ? 1 : 0) + \
+>  	(IS_ENABLED(CONFIG_SECURITY_LANDLOCK) ? 1 : 0) + \
+>  	(IS_ENABLED(CONFIG_IMA) ? 1 : 0) + \
+> -	(IS_ENABLED(CONFIG_EVM) ? 1 : 0))
+> +	(IS_ENABLED(CONFIG_EVM) ? 1 : 0) + \
+> +	(IS_ENABLED(CONFIG_SECURITY_IPE) ? 1 : 0))
+> =20
+>  /*
+>   * These are descriptions of the reasons that can be passed to the
+> diff --git a/tools/testing/selftests/lsm/lsm_list_modules_test.c b/tools/=
+testing/selftests/lsm/lsm_list_modules_test.c
+> index 06d24d4679a6..1cc8a977c711 100644
+> --- a/tools/testing/selftests/lsm/lsm_list_modules_test.c
+> +++ b/tools/testing/selftests/lsm/lsm_list_modules_test.c
+> @@ -128,6 +128,9 @@ TEST(correct_lsm_list_modules)
+>  		case LSM_ID_EVM:
+>  			name =3D "evm";
+>  			break;
+> +		case LSM_ID_IPE:
+> +			name =3D "ipe";
+> +			break;
+>  		default:
+>  			name =3D "INVALID";
+>  			break;
+
+BR, Jarkko
