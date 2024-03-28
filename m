@@ -1,86 +1,224 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C87E13B795;
-	Thu, 28 Mar 2024 22:11:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68B0C13AD3F
+	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 22:17:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711663875; cv=none; b=gYDnPeRwWDAiw010+aaNRme+hUw9d48G4cccWYVNA0UN2lk8KNw/J606svMds958LXcCelqUTE0TID9y/T53FrllDTumrisQFY2YjRFl1iNUNK7nkdtDTFGxzHjNe6Vqdwbgj+q9kUQNyouB+1wUYuyvBXLZzuJFU3m+B+u4pQU=
+	t=1711664246; cv=none; b=FU0NpNsnkBfwZh64m8gpRtYEeQ9e0yp5GKDPoWzpdqWrQVixMteuTRjARmpgXnJdi/TE335nipbKmkEMLxIOz/dx6SZ2xW4xcPsdJs+Snx4Df7MW1hWuaBMn4zuRjg+deN1Dqb1TJ+vkeCviPcHkZV+7nsUtJEjLtyGuCz7ikIQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711663875; c=relaxed/simple;
-	bh=JVuXWZU7ypGWL4ciDE6dFgx2siJQMrXVakqC0WXbnd0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=WjeDCmuy1zQEgYuBc0cmLt/E+KI2gpzycBQwmosnnTAi1GhqDTKRxyMBaBVgIdj5LgyPaMP4UK4C2itEHA0ipl6v8GxdaIBpg23DCtvsyP8WeEGWkGgoV7m+6ziOAZVXgdApHJGz+vp7swO6jKbWcA/5IzPtklv4RE9Ral8R39o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=NbJm49eL; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	s=arc-20240116; t=1711664246; c=relaxed/simple;
+	bh=VXnhaaKU33+tHF5mbKEdgreqcKhfv4lLGZol/7nwD0U=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=oDoMgFxPahX3GOX4Ihupf3mjxs6bkkCaC3WpGoW6nPQu6jlFjLRhVqnYr9l9cqftf5ahZxwzWDJzKpdRBviQLXxmzHg12QLl2J4jjvGXrj0dsbpsFMqdCv0HQlrR//jmrFBp+JZ7wLTuQlsfi2GGyOLX4R0KVbU8diMi91ZxxKw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EbBY/xh8; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="NbJm49eL"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-	Content-Type:In-Reply-To:From:References:Cc:To:Subject:MIME-Version:Date:
-	Message-ID:Sender:Reply-To:Content-ID:Content-Description;
-	bh=HnoWopqeEhgUSDrAxtnUhuDZR8QdjUiaKbpLIYgV22M=; b=NbJm49eLsaBJIDmaaGUPIwTP6s
-	RdCdHdp9gJrWgLOyWIaGiU2iEa3h0mDLeFNu8MpWBCcjIt+F1mBI8g082Y+IpFySLM/hEsNJi6SK1
-	JBk39TG18J9OCNVQporM5qOQ71kG0TDUjkZcnc4dAvsUfuM70hJvQAllMyhnggYK0MKVKGnTD8s/J
-	pwz0gob9RjN5DyrV1KCIE79TcNpQT0Fn18OWvlWWNJjye4FkmJFqE0E/qDklUsVta8jWE3bO374Mz
-	wFZ7SPWQCxzZ1K0xUYogPf2vhybumDglajK78Iq4x/BmSLLRdWq0eNniSqEvN8UThtFfomA7d21P3
-	PMZSsxhQ==;
-Received: from [50.53.2.121] (helo=[192.168.254.15])
-	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rpxxf-0000000Fs9X-3pVK;
-	Thu, 28 Mar 2024 22:11:04 +0000
-Message-ID: <cde3dc6e-ca77-445e-a4b7-fc21a934999a@infradead.org>
-Date: Thu, 28 Mar 2024 15:11:03 -0700
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EbBY/xh8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1711664242;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=rNZU2QXk2ogZj79fBqMGTUF0KyS+J6WMZo1HESMP3P4=;
+	b=EbBY/xh8m1HZtxpZu/J8wRJT71FPX2Ky5JsPdjYZrE3qqkoj5ZxaQEYLKmcbBev4whLdT9
+	DF71uT9kgUOMIj+79355G5xs2Y25PXs1dGkDz+fEyzU8xtbTH3hxBH1RCynM2/8kY2KsiN
+	YVMge0HX/ctffCFOb1ZbYZLMoffyVP4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-649-IpWhAem8PQu9RuynnIXXjQ-1; Thu, 28 Mar 2024 18:17:19 -0400
+X-MC-Unique: IpWhAem8PQu9RuynnIXXjQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD8F8101A523;
+	Thu, 28 Mar 2024 22:17:18 +0000 (UTC)
+Received: from redhat.com (unknown [10.2.16.33])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 20EC43C54;
+	Thu, 28 Mar 2024 22:17:16 +0000 (UTC)
+Date: Thu, 28 Mar 2024 17:16:54 -0500
+From: Eric Blake <eblake@redhat.com>
+To: Stefan Hajnoczi <stefanha@redhat.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
+	David Teigland <teigland@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>, 
+	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
+Subject: Re: [RFC 0/9] block: add llseek(SEEK_HOLE/SEEK_DATA) support
+Message-ID: <e2lcp3n5gpf7zmlpyn4nj7wsr36sffn23z5bmzlsghu6oapi5u@sdkcbpimi5is>
+References: <20240328203910.2370087-1-stefanha@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v16 01/20] security: add ipe lsm
-Content-Language: en-US
-To: Jarkko Sakkinen <jarkko@kernel.org>, Fan Wu <wufan@linux.microsoft.com>,
- corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
- tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
- snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
- linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
- linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
- audit@vger.kernel.org, linux-kernel@vger.kernel.org,
- Deven Bowers <deven.desai@linux.microsoft.com>
-References: <1711657047-10526-1-git-send-email-wufan@linux.microsoft.com>
- <1711657047-10526-2-git-send-email-wufan@linux.microsoft.com>
- <D05ODONHFJ9O.3VG0HLFPA1OB0@kernel.org>
-From: Randy Dunlap <rdunlap@infradead.org>
-In-Reply-To: <D05ODONHFJ9O.3VG0HLFPA1OB0@kernel.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240328203910.2370087-1-stefanha@redhat.com>
+User-Agent: NeoMutt/20240201
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 
+On Thu, Mar 28, 2024 at 04:39:01PM -0400, Stefan Hajnoczi wrote:
+> cp(1) and backup tools use llseek(SEEK_HOLE/SEEK_DATA) to skip holes in files.
 
+As a minor point of clarity (perhaps as much for my own records for
+documenting research I've done over the years, and not necessarily
+something you need to change in the commit message):
 
-On 3/28/24 13:45, Jarkko Sakkinen wrote:
->> +/**
->> + * ipe_init - Entry point of IPE.
->> + *
->> + * This is called at LSM init, which happens occurs early during kernel
->> + * start up. During this phase, IPE registers its hooks and loads the
->> + * builtin boot policy.
->> + * Return:
->> + * * 0		- OK
->> + * * -ENOMEM	- Out of memory
-> Just a suggestion:
+Userspace apps generally use lseek(2) from glibc or similar (perhaps
+via its alias lseek64(), depending on whether userspace is using large
+file offsets), rather than directly calling the _llseek() syscall.
+But it all boils down to the same notion of seeking information about
+various special offsets.
+
+Also, in past history, coreutils cp(1) and dd(1) did experiment with
+using FS_IOC_FIEMAP ioctls when SEEK_HOLE was not available, but it
+proved to cause more problems than it solved, so that is not currently
+in favor.  Yes, we could teach more and more block devices to expose
+specific ioctls for querying sparseness boundaries, and then teach
+userspace apps a list of ioctls to try; but as cp(1) already learned,
+having one common interface is much easier than an ever-growing ioctl
+ladder to be copied across every client that would benefit from
+knowing where the unallocated portions are.
+
+> This can speed up the process by reducing the amount of data read and it
+> preserves sparseness when writing to the output file.
 > 
-> * 0:		OK
-> * -ENOMEM:	Out of memory (OOM)
-> 
-> Rationale being more readable (less convoluted).
-> 
-> And also sort of symmetrical how parameters are formatted in kdoc.
+> This patch series is an initial attempt at implementing
+> llseek(SEEK_HOLE/SEEK_DATA) for block devices. I'm looking for feedback on this
+> approach and suggestions for resolving the open issues.
 
-It needs the " * *" to make a formatted list in the generated output.
-Otherwise the use of '- or ':' as a separator doesn't matter AFAIK.
+One of your open issues was whether adjusting the offset of the block
+device itself should also adjust the file offset of the underlying
+file (at least in the case of loopback and dm-linear).  What would the
+community think of adding two additional constants to the entire
+family of *seek() functions, that have the effect of returning the
+same offset as their SEEK_HOLE/SEEK_DATA counterparts but without
+moving the file offset?
+
+Explaining the idea by example, although I'm not stuck on these names:
+suppose you have an fd visiting a file description of 2MiB in size,
+with the first 1MiB being a hole and the second being data.
+
+#define MiB (1024*1024)
+lseek64(fd, MiB, SEEK_SET); // returns MiB, file offset changed to MiB
+lseek64(fd, 0, SEEK_HOLE); // returns 0, file offset changed to 0
+lseek64(fd, 0, SEEK_DATA); // returns MiB, file offset changed to MiB
+lseek64(fd, 0, SEEK_PEEK_HOLE); // returns 0, but file offset left at MiB
+lseek64(fd, 0, SEEK_SET); // returns 0, file offset changed to MiB
+lseek64(fd, 0, SEEK_PEEK_DATA); // returns MiB, but file offset left at MiB
+
+With semantics like that, it might be easier to implement just
+SEEK_PEEK* in devices (don't worry about changing offsets, just about
+reporting where the requested offset is), and then have a common layer
+do the translation from llseek(...,offs,SEEK_HOLE) into a 2-step
+llseek(...,llseek(...,offs,SEEK_PEEK_HOLE),SEEK_SET) if that makes life
+easier under the hood.
+
+> 
+> In the block device world there are similar concepts to holes:
+> - SCSI has Logical Block Provisioning where the "mapped" state would be
+>   considered data and other states would be considered holes.
+
+BIG caveat here: the SCSI spec does not necessarily guarantee that
+unmapped regions read as all zeroes; compare the difference between
+FALLOC_FL_ZERO_RANGE and FALLOC_FL_PUNCH_HOLE.  While lseek(SEEK_HOLE)
+on a regular file guarantees that future read() in that hole will see
+NUL bytes, I'm not sure whether we want to make that guarantee for
+block devices.  This may be yet another case where we might want to
+add new SEEK_* constants to the *seek() family of functions that lets
+the caller indicate whether they want offsets that are guaranteed to
+read as zero, vs. merely offsets that are not allocated but may or may
+not read as zero.  Skipping unallocated portions, even when you don't
+know if the contents reliably read as zero, is still a useful goal in
+some userspace programs.
+
+> - NBD has NBD_CMD_BLOCK_STATUS for querying whether blocks are present.
+
+However, utilizing it in nbd.ko would require teaching the kernel to
+handle structured or extended headers (right now, that is an extension
+only supported in user-space implementations of the NBD protocol).  I
+can see why you did not tackle that in this RFC series, even though
+you mention it in the cover letter.
+
+> - Linux loop block devices and dm-linear targets can pass through queries to
+>   the backing file.
+> - dm-thin targets can query metadata to find holes.
+> - ...and you may be able to think of more examples.
+> 
+> Therefore it is possible to offer this functionality in block drivers.
+> 
+> In my use case a QEMU process in userspace copies the contents of a dm-thin
+> target. QEMU already uses SEEK_HOLE but that doesn't work on dm-thin targets
+> without this patch series.
+> 
+> Others have also wished for block device support for SEEK_HOLE. Here is an open
+> issue from the BorgBackup project:
+> https://github.com/borgbackup/borg/issues/5609
+> 
+> With these patches userspace can identify holes in loop, dm-linear, and dm-thin
+> devices. This is done by adding a seek_hole_data() callback to struct
+> block_device_operations. When the callback is NULL the entire device is
+> considered data. Device-mapper is extended along the same lines so that targets
+> can provide seek_hole_data() callbacks.
+> 
+> I'm unfamiliar with much of this code and have probably missed locking
+> requirements. Since llseek() executes synchronously like ioctl() and is not an
+> asynchronous I/O request it's possible that my changes to the loop block driver
+> and dm-thin are broken (e.g. what if the loop device fd is changed during
+> llseek()?).
+> 
+> To run the tests:
+> 
+>   # make TARGETS=block_seek_hole -C tools/testing/selftests run_tests
+> 
+> The code is also available here:
+> https://gitlab.com/stefanha/linux/-/tree/block-seek-hole
+> 
+> Please take a look and let me know your thoughts. Thanks!
+> 
+> Stefan Hajnoczi (9):
+>   block: add llseek(SEEK_HOLE/SEEK_DATA) support
+>   loop: add llseek(SEEK_HOLE/SEEK_DATA) support
+>   selftests: block_seek_hole: add loop block driver tests
+>   dm: add llseek(SEEK_HOLE/SEEK_DATA) support
+>   selftests: block_seek_hole: add dm-zero test
+>   dm-linear: add llseek(SEEK_HOLE/SEEK_DATA) support
+>   selftests: block_seek_hole: add dm-linear test
+>   dm thin: add llseek(SEEK_HOLE/SEEK_DATA) support
+>   selftests: block_seek_hole: add dm-thin test
+> 
+>  tools/testing/selftests/Makefile              |   1 +
+>  .../selftests/block_seek_hole/Makefile        |  17 +++
+>  include/linux/blkdev.h                        |   7 ++
+>  include/linux/device-mapper.h                 |   5 +
+>  block/fops.c                                  |  43 ++++++-
+>  drivers/block/loop.c                          |  36 +++++-
+>  drivers/md/dm-linear.c                        |  25 ++++
+>  drivers/md/dm-thin.c                          |  77 ++++++++++++
+>  drivers/md/dm.c                               |  68 ++++++++++
+>  .../testing/selftests/block_seek_hole/config  |   3 +
+>  .../selftests/block_seek_hole/dm_thin.sh      |  80 ++++++++++++
+>  .../selftests/block_seek_hole/dm_zero.sh      |  31 +++++
+>  .../selftests/block_seek_hole/map_holes.py    |  37 ++++++
+>  .../testing/selftests/block_seek_hole/test.py | 117 ++++++++++++++++++
+>  14 files changed, 540 insertions(+), 7 deletions(-)
+>  create mode 100644 tools/testing/selftests/block_seek_hole/Makefile
+>  create mode 100644 tools/testing/selftests/block_seek_hole/config
+>  create mode 100755 tools/testing/selftests/block_seek_hole/dm_thin.sh
+>  create mode 100755 tools/testing/selftests/block_seek_hole/dm_zero.sh
+>  create mode 100755 tools/testing/selftests/block_seek_hole/map_holes.py
+>  create mode 100755 tools/testing/selftests/block_seek_hole/test.py
+> 
+> -- 
+> 2.44.0
+> 
 
 -- 
-#Randy
+Eric Blake, Principal Software Engineer
+Red Hat, Inc.
+Virtualization:  qemu.org | libguestfs.org
+
