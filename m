@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD8F913B7A2
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 20:40:17 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B6A313A258
+	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 20:40:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711658419; cv=none; b=lz8UUcFSucDZv3y5oPIzzGgtQwT4WiED+YA8IgXGNsdYWdPm3mkHiWI8ZlZx62U3F6CqMCu3Lteb4fN/p9Cl8PQ8bZkP+9IPNGHWVnMOrG8IAxWgqyeOYEjnvYkh+aZ0ZRiI6mauuuVGVi53+8o8kHNca6CwjRI33dHc3Lm4dJY=
+	t=1711658426; cv=none; b=PMtpX7JeZZWcPcKCqRXRb7qPqrt3XArnv6ZtlJN+7bkvvYcNpXvNwSnojo0eA+Cr0Z9euSwY0UYLdewWD1/sRJ+aSJ8eT7AhymFZzNmAc14qrkxYVKkCWv2Z4guwl2mCyxfdV11q7oQARa/AkP5hjFKHYvJ6kWKOq5X9kbyw7Rw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711658419; c=relaxed/simple;
-	bh=FlivA4yfGfFdJLo5ECHK0IC8x6gx23qUTsMI8w0FX6A=;
+	s=arc-20240116; t=1711658426; c=relaxed/simple;
+	bh=9Z6YD6FPCzBTKeIPm1fHe9GnkbXDhxoo7eDcvyUvuCs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=tmzaikw5IjsmheWCTdZcVeBeAfQmhjRUv0nL+cFcBf/Y7CaZxWXAxDUrwb8RqkCbvAmZT5/gQZ9ktFxgLVk82qnvXe2gPIDYh6ptyjuWag5IHBdYJ+fgi5ObJ4eGIUpaIsY/XRGA4msY6edJ2cL+amY6K7pfrLreWh0c1B8l+8c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FELyqegE; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version; b=JwwcVYaNileKZAEXDK09ujiq3h4sF9MbeFPG3CALqqdYVfw7HLINB+mSLZyzK3yZNu3M2hRfS7UxxVSYqY/9pAIRP5BTgc+LFu5++FwgjkB4oeF3MY8Xndx8eQt9d0MX3ZOTZ3DtO3BAyNiDUnHpjtzSNJfqDKw4awEtPcFlIfU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Y9YL/Hgj; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FELyqegE"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Y9YL/Hgj"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1711658416;
+	s=mimecast20190719; t=1711658424;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=pLyw7KMUSkZphXtYRA9aQyoROjVXRJ0JkZ6RNSfd43U=;
-	b=FELyqegEbVpa0uH5JmewyaPisuuqMOt2GyVSisJB1iEJKre8dCXWLzZBuSJIb+Ti5iZI5a
-	y5WF54hmtVttuLtxAuX3Y4ij4GA87b1mjNr/16NQ+0aHiylB8ztOwMXpV6ydqJ4m1Pb/8j
-	HxA+HFGrc9WbDDUVqPOFWZ38IL5BSjU=
+	bh=NXXER/zigpP/1IR48CBo1zF8A1UxNQTU4ClNAQkl164=;
+	b=Y9YL/HgjjPxfYCZDl767fff+NePAiuupg5PsmF7Ynm8ttbtCXYySJ4Z005lxl7O6AL8iqR
+	n4B+Hd+hDFuS+tckyouIuNXd1Wes+Ayz1UqIrh2Kc7K7OLjjUMqt2CusYxW0qXyeRgqlux
+	4dOcioqxI6qTGV4uvXdYdkWsb9w/T0Y=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-327-01rxHV2tPM2OivYrAooexw-1; Thu, 28 Mar 2024 16:40:13 -0400
-X-MC-Unique: 01rxHV2tPM2OivYrAooexw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-595-5C6a797YMhSPfEhO_58Kmg-1; Thu, 28 Mar 2024 16:40:20 -0400
+X-MC-Unique: 5C6a797YMhSPfEhO_58Kmg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EB8B788905A;
-	Thu, 28 Mar 2024 20:40:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 50E4888905E;
+	Thu, 28 Mar 2024 20:40:20 +0000 (UTC)
 Received: from localhost (unknown [10.39.194.117])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C87C7492BC8;
-	Thu, 28 Mar 2024 20:40:11 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 474F3C1576F;
+	Thu, 28 Mar 2024 20:40:18 +0000 (UTC)
 From: Stefan Hajnoczi <stefanha@redhat.com>
 To: linux-block@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org,
@@ -53,9 +53,9 @@ Cc: linux-kernel@vger.kernel.org,
 	Christoph Hellwig <hch@lst.de>,
 	Joe Thornber <ejt@redhat.com>,
 	Stefan Hajnoczi <stefanha@redhat.com>
-Subject: [RFC 5/9] selftests: block_seek_hole: add dm-zero test
-Date: Thu, 28 Mar 2024 16:39:06 -0400
-Message-ID: <20240328203910.2370087-6-stefanha@redhat.com>
+Subject: [RFC 6/9] dm-linear: add llseek(SEEK_HOLE/SEEK_DATA) support
+Date: Thu, 28 Mar 2024 16:39:07 -0400
+Message-ID: <20240328203910.2370087-7-stefanha@redhat.com>
 In-Reply-To: <20240328203910.2370087-1-stefanha@redhat.com>
 References: <20240328203910.2370087-1-stefanha@redhat.com>
 Precedence: bulk
@@ -65,74 +65,56 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
 
 Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
 ---
- .../selftests/block_seek_hole/Makefile        |  2 +-
- .../testing/selftests/block_seek_hole/config  |  2 ++
- .../selftests/block_seek_hole/dm_zero.sh      | 31 +++++++++++++++++++
- 3 files changed, 34 insertions(+), 1 deletion(-)
- create mode 100755 tools/testing/selftests/block_seek_hole/dm_zero.sh
+ drivers/md/dm-linear.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
-diff --git a/tools/testing/selftests/block_seek_hole/Makefile b/tools/testing/selftests/block_seek_hole/Makefile
-index 3f4bbd52db29f..1bd9e748b2acc 100644
---- a/tools/testing/selftests/block_seek_hole/Makefile
-+++ b/tools/testing/selftests/block_seek_hole/Makefile
-@@ -3,7 +3,7 @@ PY3 = $(shell which python3 2>/dev/null)
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 2d3e186ca87e3..9b6cdfa4f951d 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -147,6 +147,30 @@ static int linear_report_zones(struct dm_target *ti,
+ #define linear_report_zones NULL
+ #endif
  
- ifneq ($(PY3),)
- 
--TEST_PROGS := test.py
-+TEST_PROGS := test.py dm_zero.sh
- 
- include ../lib.mk
- 
-diff --git a/tools/testing/selftests/block_seek_hole/config b/tools/testing/selftests/block_seek_hole/config
-index 72437e0c0fc1c..bfd59f1d98769 100644
---- a/tools/testing/selftests/block_seek_hole/config
-+++ b/tools/testing/selftests/block_seek_hole/config
-@@ -1 +1,3 @@
- CONFIG_BLK_DEV_LOOP=m
-+CONFIG_BLK_DEV_DM=m
-+CONFIG_DM_ZERO=m
-diff --git a/tools/testing/selftests/block_seek_hole/dm_zero.sh b/tools/testing/selftests/block_seek_hole/dm_zero.sh
-new file mode 100755
-index 0000000000000..20836a566fcc8
---- /dev/null
-+++ b/tools/testing/selftests/block_seek_hole/dm_zero.sh
-@@ -0,0 +1,31 @@
-+#!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0-only
-+#
-+# dm_zero.sh
-+#
-+# Test that dm-zero reports data because it does not have a custom
-+# SEEK_HOLE/SEEK_DATA implementation.
++static loff_t linear_seek_hole_data(struct dm_target *ti, loff_t offset,
++		int whence)
++{
++	struct linear_c *lc = ti->private;
++	loff_t ti_begin = ti->begin << SECTOR_SHIFT;
++	loff_t ti_len = ti->len << SECTOR_SHIFT;
++	loff_t bdev_start = lc->start << SECTOR_SHIFT;
++	loff_t bdev_offset;
 +
-+set -e
++	/* TODO underflow/overflow? */
++	bdev_offset = offset - ti_begin + bdev_start;
 +
-+dev_name=test-$$
-+size=$((1024 * 1024 * 1024 / 512)) # 1 GB
++	bdev_offset = blkdev_seek_hole_data(lc->dev->bdev, bdev_offset,
++					    whence);
++	if (bdev_offset < 0)
++		return bdev_offset;
 +
-+cleanup() {
-+	dmsetup remove $dev_name
++	offset = bdev_offset - bdev_start;
++	if (offset >= ti_len)
++		return whence == SEEK_DATA ? -ENXIO : ti_begin + ti_len;
++
++	return offset + ti_begin;
 +}
-+trap cleanup EXIT
 +
-+dmsetup create $dev_name --table "0 $size zero"
-+
-+output=$(./map_holes.py /dev/mapper/$dev_name)
-+expected='TYPE START END SIZE
-+DATA 0 1073741824 1073741824'
-+
-+if [ "$output" != "$expected" ]; then
-+	echo 'FAIL expected:'
-+	echo "$expected"
-+	echo 'Does not match device output:'
-+	echo "$output"
-+	exit 1
-+fi
+ static int linear_iterate_devices(struct dm_target *ti,
+ 				  iterate_devices_callout_fn fn, void *data)
+ {
+@@ -212,6 +236,7 @@ static struct target_type linear_target = {
+ 	.direct_access = linear_dax_direct_access,
+ 	.dax_zero_page_range = linear_dax_zero_page_range,
+ 	.dax_recovery_write = linear_dax_recovery_write,
++	.seek_hole_data = linear_seek_hole_data,
+ };
+ 
+ int __init dm_linear_init(void)
 -- 
 2.44.0
 
