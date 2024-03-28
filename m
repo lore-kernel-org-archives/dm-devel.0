@@ -1,93 +1,131 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79FF113F452
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 22:19:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DE17813A240
+	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 22:20:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711664382; cv=none; b=oOiiqFRK0pFcSKk94a6nhWK6OVYY4p/X2W5iWRMF9hlodkdKeYaZn1OkJzWoGJpLduulo/cwMRNljEJ2UUou6VO+fnoE36a1ENKFk/81E507NrriBl3Uqhq3FDEkDL2/ZLDZe7BY0+Zy4UZf83CEjUaX1P5mzCJqMpaxRtKQAqI=
+	t=1711664423; cv=none; b=U/M2byzAvWvFWJsaaBMG/yMSgMBgZOKXUq5b81Ma45NeNhlqOV01RzaYLhcbfYT4qdNhFNxH2WYoAaa/9u077VFxIx0HYcAzKwBpAJDJQxO8I6FZLc9bMo0VpwOfEmi//C6kQs+rlNiHoj5ghYX1SUfv/CFMtLkr2VvPhKWO9UU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711664382; c=relaxed/simple;
-	bh=KNmyW5fEKd4KjDtcb2BedrvwQ/K9KSHvnnjPqGPoltY=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=WeXK9BXtqZ9v0tbIPEhFemCOMdG5EWVM1YZa3ryD9DA8pdRA6QgT7q3h0A7l2S2Zro8bRDLMw6FjiVJGLgQwy4mJ34u6dDyHjlBdhgdEMWKQfKa+BI96r7yTPj3NGx7Tv3PIJNGNB1LBIUjDjaxZ7KpAcGADRbDP8AdUnJl5laE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=dFTVrvir; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1711664423; c=relaxed/simple;
+	bh=52Dhf6z/72rCN3hRJbd5HD2QYzajoOPuuQICDXLGhso=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=LkhB2vka5qfmDA0+p6on97IPgYikcMfs28X5Mu5zLwXflGcAzhTgBB6R6kpuFNeXjecf/PQz1VI807XPbtictAhU+Qfg5K1vXfmJkeBsvEErqImntmux1aoSev6uCeLBs5OmcKG8fE02o8VJ2kdI9/gj3BlSSh5yMRwdYIA49kE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=l0Iqx4ws; arc=none smtp.client-ip=199.89.1.11
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dFTVrvir"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1711664379;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=c0gVdAJady0w2m/mZdiSsjO56B184pXm5Ghe4hgiYIs=;
-	b=dFTVrvirYFiNE8JqumieBzStPi1rP9FTfllic1xPEYO6UwxpmlLumr2YRDQJpjRDazdcxe
-	9TuyqLhuGd/RVAfXohH0XJhauo5xnPyYLkw4LBNQt05deRTENjtMYZ9TvjzmF/QuJ5morl
-	0kjAkWVL+TKE0LeDeqq3quXwBQxTwMU=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-552-Is6uAylFP6CykLsXkY2xAA-1; Thu,
- 28 Mar 2024 18:19:34 -0400
-X-MC-Unique: Is6uAylFP6CykLsXkY2xAA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="l0Iqx4ws"
+Received: from localhost (localhost [127.0.0.1])
+	by 008.lax.mailroute.net (Postfix) with ESMTP id 4V5HzT2dwDz6Cnk8t;
+	Thu, 28 Mar 2024 22:20:21 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1711664416; x=1714256417; bh=biHmi33YIfGx176ee0cuOTX9
+	tPVA38ASjA6C7DNKzzc=; b=l0Iqx4wsPxCNSTyduWDzbW4fjR19IlBtTP6gJH+r
+	NIi8nOXwGV8tke4FTPjMLey7r+Q32Zc6nfhvuWpoPtixNItr66IGljL81VPrJnvb
+	BH3lxrfxtsBnrOAXmYMTu9xzrU1/nBFZ7tNViHStqGZK4O90LjjSF4JRQVXfC0ek
+	kbE/93ok6J+OlHcpH+S8/lVZXK9wyCGyXJGKU7kYbrxPA/jg7Knc5ML5YDAfA0Fx
+	F0/cY6XuUSp6BxBqeVKlbObYI30Cu8+FQ03qNPya68XPCPwTnvQ4nCWagerl0+B5
+	I+f9A7RHRpWJ1fS9WOGizbzr/hmAPPVgUS/sRVBbQ0sVkQ==
+X-Virus-Scanned: by MailRoute
+Received: from 008.lax.mailroute.net ([127.0.0.1])
+ by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id l62VJEqGq-6D; Thu, 28 Mar 2024 22:20:16 +0000 (UTC)
+Received: from [192.168.3.219] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 14395380213D;
-	Thu, 28 Mar 2024 22:19:34 +0000 (UTC)
-Received: from redhat.com (unknown [10.2.16.33])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 65AEC1C06690;
-	Thu, 28 Mar 2024 22:19:31 +0000 (UTC)
-Date: Thu, 28 Mar 2024 17:19:26 -0500
-From: Eric Blake <eblake@redhat.com>
-To: Stefan Hajnoczi <stefanha@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
-	David Teigland <teigland@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>, 
-	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
-Subject: Re: [RFC 5/9] selftests: block_seek_hole: add dm-zero test
-Message-ID: <sr42hsk5rqu5siso6xwjlu5akfegl6glco3ug6pleawszgtfcb@h5pca4b3yqot>
-References: <20240328203910.2370087-1-stefanha@redhat.com>
- <20240328203910.2370087-6-stefanha@redhat.com>
+	(Authenticated sender: bvanassche@acm.org)
+	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4V5HzM1Blqz6Cnk8m;
+	Thu, 28 Mar 2024 22:20:14 +0000 (UTC)
+Message-ID: <688607d9-6dfe-4c37-81e8-4fea91ec8da8@acm.org>
+Date: Thu, 28 Mar 2024 15:20:14 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240328203910.2370087-6-stefanha@redhat.com>
-User-Agent: NeoMutt/20240201
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3 08/30] block: Introduce zone write plugging
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
+ linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>
+References: <20240328004409.594888-1-dlemoal@kernel.org>
+ <20240328004409.594888-9-dlemoal@kernel.org>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20240328004409.594888-9-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Thu, Mar 28, 2024 at 04:39:06PM -0400, Stefan Hajnoczi wrote:
-> Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
-> ---
->  .../selftests/block_seek_hole/Makefile        |  2 +-
->  .../testing/selftests/block_seek_hole/config  |  2 ++
->  .../selftests/block_seek_hole/dm_zero.sh      | 31 +++++++++++++++++++
->  3 files changed, 34 insertions(+), 1 deletion(-)
->  create mode 100755 tools/testing/selftests/block_seek_hole/dm_zero.sh
-> 
+On 3/27/24 5:43 PM, Damien Le Moal wrote:
+> +	/*
+> +	 * Initialize the zoen write plug with an extra reference so that
+> +	 * it is not freed when the zone write plug becomes idle without
+> +	 * the zone being full.
+> +	 */
 
-> +++ b/tools/testing/selftests/block_seek_hole/dm_zero.sh
-> @@ -0,0 +1,31 @@
-> +#!/bin/sh
-> +# SPDX-License-Identifier: GPL-2.0-only
-> +#
-> +# dm_zero.sh
-> +#
-> +# Test that dm-zero reports data because it does not have a custom
-> +# SEEK_HOLE/SEEK_DATA implementation.
+zoen -> zone
 
-Why not?  Wouldn't it make more sense to have dm-zero report the
-entire device as a hole (that is, an in-range SEEK_HOLE always returns
-the same offset, while an in-range SEEK_DATA returns the device size)?
+> +static void disk_zone_wplugs_work(struct work_struct *work)
+> +{
+> +	struct gendisk *disk =
+> +		container_of(work, struct gendisk, zone_wplugs_work);
+> +	struct blk_zone_wplug *zwplug;
+> +	unsigned long flags;
+> +
+> +	spin_lock_irqsave(&disk->zone_wplugs_lock, flags);
+> +
+> +	while (!list_empty(&disk->zone_wplugs_err_list)) {
+> +		zwplug = list_first_entry(&disk->zone_wplugs_err_list,
+> +					  struct blk_zone_wplug, link);
+> +		list_del_init(&zwplug->link);
+> +		blk_get_zone_wplug(zwplug);
+> +		spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
+> +
+> +		disk_zone_wplug_handle_error(disk, zwplug);
+> +		disk_put_zone_wplug(zwplug);
+> +
+> +		spin_lock_irqsave(&disk->zone_wplugs_lock, flags);
+> +	}
+> +
+> +	spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
+> +}
 
--- 
-Eric Blake, Principal Software Engineer
-Red Hat, Inc.
-Virtualization:  qemu.org | libguestfs.org
+What is the maximum number of iterations the above while loop can 
+perform? I'm wondering whether a cond_resched() call should be added.
 
+> +
+> +	/* Wait for the zone write plugs to be RCU-freed. */
+> +	rcu_barrier();
+> +}
+
+It is not clear to me why the above rcu_barrier() call is necessary? I'm
+not aware of any other kernel code where kfree_rcu() is followed by an
+rcu_barrier() call.
+
+> +static int disk_alloc_zone_resources(struct gendisk *disk,
+> +				     unsigned int max_nr_zwplugs)
+> +{
+> +	unsigned int i;
+> +
+> +	disk->zone_wplugs_hash_bits =
+> +		min(ilog2(max_nr_zwplugs) + 1, BLK_ZONE_MAX_WPLUG_HASH_BITS);
+
+If max_nr_zwplugs is a power of two, the above formula will result in a
+hash table with a size that is twice the size of max_nr_zwplugs.
+Shouldn't ilog2(max_nr_zwplugs) + 1 be changed into
+ilog2(roundup_pow_of_two(max_nr_zwplugs))?
+
+Otherwise this patch looks fine to me.
+
+Thanks,
+
+Bart.
