@@ -1,87 +1,122 @@
-Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f43.google.com (mail-ed1-f43.google.com [209.85.208.43])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5852B36AF5
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 21:38:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B5D913A266
+	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 21:58:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711661893; cv=none; b=ZGrvL65mH989FYhufw0hLCv1iyAVal8gqQqOWhQnrPywvNEyetcUuOWTI+L5N2Y/BtwHv41qcOtBFdPirOqVpUo2dYGI13jfUMZIi+INEzlFCdYq00EZsbDQdDZVIPaa/M7/6H+eSsa8zWNGhiVw04xr21uOrw+5j5Fv2LtxVa4=
+	t=1711663104; cv=none; b=bWw38ImI1d1Mfvf+5tXQlMW75vEDIDcXNryMGegb/4BD13lpUwkoRi2izO816gUfeNv4Lq4Uw8YvHgOrasM+YtlM7UjGCAP23JmYPmzg1cp1cbhhMZY9AejQ3ODdWNPxF7CtDu+Oh95/cKOYrRidrvCozvObbTPz2yvez33x/Lk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711661893; c=relaxed/simple;
-	bh=jQx77FV08xvh7ws9/FrSTIde127vGI6Xw/+HIcCmXFc=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=EgKWVxCnTaZbyLlmtlRotWmP3s8wAm5YB7c2U516GApGUzTTiSaN/Mkb3isrk4u+9V+eG7HsZsiJlofSGM/JNw2b071+1r99PL0g1wRPIBTCTK9H2eA2rF/npXeetCGEoNE9PBOPsSvR+/RIk/G0kA2ro5T2I4kF9Psci79SWog=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=qT4k6f3J; arc=none smtp.client-ip=199.89.1.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1711663104; c=relaxed/simple;
+	bh=EVOmIevOY7yIjg6tCh+xVx1hJEYZK8SikqOcoPFgsDo=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=tY4SOtyBFIiT7iZxf4ky2tIlJuDFin00JkTimxQyvAH8vMogYkb9VDJzB96B2bZlyqpMN30e4cq6kvyLNOH5kiI9QGe0qnpi/Gb5AXaSH3M87zGL9rtz4fZuNVyYyvKs4OXN/mgFkzA6nyIiJmwxQRwFvNcEqYlJeQuu8FCL75I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=XxEKbh+c; arc=none smtp.client-ip=209.85.208.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="qT4k6f3J"
-Received: from localhost (localhost [127.0.0.1])
-	by 008.lax.mailroute.net (Postfix) with ESMTP id 4V5H2q5dwJz6Cnk8t;
-	Thu, 28 Mar 2024 21:38:11 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1711661888; x=1714253889; bh=66AKkG3PE4cQTzggRWxgRNhO
-	M7zTlOgr921WiYgCRQ4=; b=qT4k6f3JyJQBxUXRjsL8Om0gTzhKGsfTk957Swks
-	qpxzTuUT94giBQhW8CqaEn0Vjbz1Y3cpmdRVqDzAWyi9IMZ/uY2MkZ0Fb3HC+WPr
-	inVs0AGA65ZoFlINUUv+oJBh7IAAjoOMIPIjlv4OykZeK6Uk3XdxMahObbP2RGVz
-	GW7NxcgQ/tbYFFoPhxUrXQ8+Y76khG0lVS8Qh4dlksmOKwL5L3nDqGzX6D01JjY2
-	cSknGsp2sbwYlu1ynId+ndtgKYfqpTtsUvGwKo1sEg+Q+HV7tfnwLH+2RJ+6qN+e
-	OiZVsud85jc7WJqDeMZmw3H0JBbRJ1O2DuDgdLxIXEwTJg==
-X-Virus-Scanned: by MailRoute
-Received: from 008.lax.mailroute.net ([127.0.0.1])
- by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id t-6wXCmN5Kaw; Thu, 28 Mar 2024 21:38:08 +0000 (UTC)
-Received: from [192.168.3.219] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4V5H2k69fwz6Cnk8m;
-	Thu, 28 Mar 2024 21:38:06 +0000 (UTC)
-Message-ID: <38575b90-7cd1-48f9-8c86-a77ef372900d@acm.org>
-Date: Thu, 28 Mar 2024 14:38:06 -0700
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="XxEKbh+c"
+Received: by mail-ed1-f43.google.com with SMTP id 4fb4d7f45d1cf-56c4ca65dc6so1797390a12.1
+        for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 14:58:22 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1711663101; x=1712267901; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=BxsKZxZUzuDOnaAX/evvGdiqGyKkkrreXD8So3xuleM=;
+        b=XxEKbh+cXawiyANgc9VlUT9+qy/oocydkhUGdGnReAHyn6xvx8y/acHCDliZU6oY6m
+         K/aIYM8fQdHPEUQIEUzp5PHfnfEZ67vaSVUYXxx5z7E+1I0Y6xQntquv/K97pFToIGOF
+         wFPFkjGsJ/THw5WX5LSxJvlnzHvT+0P2bkAmh5jH49ArDDNUGTBYk7Vfzp3+yTUTfl5i
+         ARry/fuYk6LzXhXgepKKKsXvzaVq22JsBaug2bgKbDoiayNp1g8nAe9X0yVx7hW+9mHH
+         nLAjIqMwZs0avVGNaIw3O8RMtYR/u893wMG1Pb5N1yp3KzX2fLhZjCToqQKqvwTablfn
+         dDog==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1711663101; x=1712267901;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=BxsKZxZUzuDOnaAX/evvGdiqGyKkkrreXD8So3xuleM=;
+        b=rByM79r5KKJRT87errivu0/H/yTzPNj1Txg7APesrPa3Mo02MF5sJf9rTYjN8fB/Ae
+         Y9GA/e5Cf21tax6+ddnXaELDW3NFqCh1WfhsImC5Gurp09hkQZ6djQ2QnVRS2z8YOdsQ
+         7TvnupOk/t3/C15Oleb+Q7F9xo7iYcUrGrTXmMZG+VN717nXIkPd/swaY4r7mM4V5BNJ
+         eol1/jCcSmzEWTuB9cnjUBwDUorfKTBQ+d5eQPW1LkAEbDdW4/e8QGnnX/Z0bMgcbF5E
+         /FtwZiNmBwqI6TTPiVy/ayCstdZn/YlZ17oaV1lye8bCSW5XqVCRw/jgzeGXanwg2B5V
+         dHUQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUULVDrGHx2LkBy5j6LPuITiFiW9+UzMT8RPOaRIyrjFMM1KPYXEPzOG5+mOlDMLG8r1UOIN6CugcDymOT9TiZh35ac7kWem60=
+X-Gm-Message-State: AOJu0YwWh2z2QkuY/lML5O4fk9PoFoHL0kBG/6YNZTXA87yd8QiwcB0r
+	3Wxho5uEIWjb04ssiek3j4f+ce4CXltMF06LGLcxPVMhxpIE96NV4zW3hNXeTZgZb51i/2/l7ug
+	RsEwttwq07VNRwf2N5ejb7qlw66GdG6yLF4lE
+X-Google-Smtp-Source: AGHT+IE0y1seF6MQXvRRM3kwa+kdGhzZ45RQ2GHfTY+7iJdVAkXbLfTYxpaWZJXiKbseniIrUcFPm/SQhMOY2Slfwn4=
+X-Received: by 2002:a05:6402:51c9:b0:568:32f7:6c53 with SMTP id
+ r9-20020a05640251c900b0056832f76c53mr421604edd.3.1711663100915; Thu, 28 Mar
+ 2024 14:58:20 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 07/30] block: Remember zone capacity when revalidating
- zones
-To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
- Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
- linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>
-References: <20240328004409.594888-1-dlemoal@kernel.org>
- <20240328004409.594888-8-dlemoal@kernel.org>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20240328004409.594888-8-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+References: <20240328143051.1069575-1-arnd@kernel.org> <20240328143051.1069575-2-arnd@kernel.org>
+In-Reply-To: <20240328143051.1069575-2-arnd@kernel.org>
+From: Justin Stitt <justinstitt@google.com>
+Date: Thu, 28 Mar 2024 14:58:08 -0700
+Message-ID: <CAFhGd8ortE-ahJD+BDss7qbW-=Hn2_L_r2OZfa0V87mG2KV3+g@mail.gmail.com>
+Subject: Re: [PATCH 1/9] dm integrity: fix out-of-range warning
+To: Arnd Bergmann <arnd@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
+	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
+	Nathan Chancellor <nathan@kernel.org>, Arnd Bergmann <arnd@arndb.de>, 
+	Nick Desaulniers <ndesaulniers@google.com>, Bill Wendling <morbo@google.com>, 
+	Eric Biggers <ebiggers@google.com>, llvm@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On 3/27/24 5:43 PM, Damien Le Moal wrote:
-> +		/*
-> +		 * Remember the capacity of the first sequential zone and check
-> +		 * if it is constant for all zones.
-> +		 */
-> +		if (!args->zone_capacity)
-> +			args->zone_capacity = zone->capacity;
-> +		if (zone->capacity != args->zone_capacity) {
-> +			pr_warn("%s: Invalid variable zone capacity\n",
-> +				disk->disk_name);
-> +			return -ENODEV;
-> +		}
+On Thu, Mar 28, 2024 at 7:31=E2=80=AFAM Arnd Bergmann <arnd@kernel.org> wro=
+te:
+>
+> From: Arnd Bergmann <arnd@arndb.de>
+>
+> Depending on the value of CONFIG_HZ, clang compares about a pointless
+> comparison:
+>
+> drivers/md/dm-integrity.c:4085:12: error: result of comparison of constan=
+t 42949672950 with expression of type 'unsigned int' is always false [-Werr=
+or,-Wtautological-constant-out-of-range-compare]
+>                         if (val >=3D (uint64_t)UINT_MAX * 1000 / HZ) {
+>
+> As the check remains useful for other configurations, shut up the
+> warning by adding a second type cast to uint64_t.
 
-SMR disks may have a smaller last zone. Does the above code handle such
-SMR disks correctly?
+Yeah, nice.
 
-Thanks,
+>
+> Fixes: 468dfca38b1a ("dm integrity: add a bitmap mode")
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+Reviewed-by: Justin Stitt <justinstitt@google.com>
 
-Bart.
+> ---
+>  drivers/md/dm-integrity.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> index 37b9f8f1ae1a..7f3dc8ee6ab8 100644
+> --- a/drivers/md/dm-integrity.c
+> +++ b/drivers/md/dm-integrity.c
+> @@ -4221,7 +4221,7 @@ static int dm_integrity_ctr(struct dm_target *ti, u=
+nsigned int argc, char **argv
+>                 } else if (sscanf(opt_string, "sectors_per_bit:%llu%c", &=
+llval, &dummy) =3D=3D 1) {
+>                         log2_sectors_per_bitmap_bit =3D !llval ? 0 : __il=
+og2_u64(llval);
+>                 } else if (sscanf(opt_string, "bitmap_flush_interval:%u%c=
+", &val, &dummy) =3D=3D 1) {
+> -                       if (val >=3D (uint64_t)UINT_MAX * 1000 / HZ) {
+> +                       if ((uint64_t)val >=3D (uint64_t)UINT_MAX * 1000 =
+/ HZ) {
+>                                 r =3D -EINVAL;
+>                                 ti->error =3D "Invalid bitmap_flush_inter=
+val argument";
+>                                 goto bad;
+> --
+> 2.39.2
+>
