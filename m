@@ -1,163 +1,157 @@
-Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D96E465BAD
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 12:21:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=68.232.143.124
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711628474; cv=fail; b=Y9SxKzgM24kwpMBFf2X0D/FovMMOrykRtgAZAR26YTk86lKYxaccmxydwfYog/d30xy2ExucPx7LGJ71HWb5ccOlhC/nGzaFzC1y9ecvlKXqVimKoCDfn1aD1Lay3D0wYqxLH5sZw78vPYHW1w15msIGVpK6iUpDCtRk6JMa6W4=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711628474; c=relaxed/simple;
-	bh=joufdrNO2/FLdgGzlnaieoHfZ28FYCwNXGhrZ08f24E=;
-	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
-	 Content-Type:MIME-Version; b=e/LbTWCzpugUSi+7nkGdTcIXTPBDlrG+OTryW5eKYkb9kcvLSK8+Ke2F4D6nhmVvSG0xLLbBE14Rzc0M7zqk+IYGyqehV+coRRA95vr0gM2ycVAS6FjuhqijcFP3rS8Oxxsvp9adSPxH4UFKyC/gl8emsW7WeSW+mQjGr1zvWAE=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com; spf=pass smtp.mailfrom=wdc.com; dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b=cZmC3IVO; dkim=pass (1024-bit key) header.d=sharedspace.onmicrosoft.com header.i=@sharedspace.onmicrosoft.com header.b=t/XFWuMg; arc=fail smtp.client-ip=68.232.143.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wdc.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10F081879;
+	Thu, 28 Mar 2024 14:31:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1711636265; cv=none; b=TsaSuZaa+mOPb4gMTrYw6L6GZvvkXyWSJl1F6oLiN/d9cyei/sqjeLivDoKuLEArbftgkr8kn/4RC8rMN9pSq8Gslumnb5ALq7gqV9IAkh6ac+f9ubVSGA5egeD7c36qrt3LE6ob/nVFyIDbCG9PrsXhJb8Ue7u7TlApyLr1VNI=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1711636265; c=relaxed/simple;
+	bh=zN2hzijZlAwA7dSIUuqXqTXuAGGw3rihlUXROhzown4=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=XSfHzXv59ixjGGMOCuKiEcRfQH5Wz0iPodm6syal3cKs1ibOcBB8VQ6aE2+tAAVPsfPQQBTyRyb/qoda2KTCVttB0xw3cB816Y4UGNxWeP4Km2wwe+2WJvcSsEZOcPsQad/YfFPQWfacVFhDbYmSmLNrUyj97Cy6uzU917PbO2M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eWM+Qp30; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="cZmC3IVO";
-	dkim=pass (1024-bit key) header.d=sharedspace.onmicrosoft.com header.i=@sharedspace.onmicrosoft.com header.b="t/XFWuMg"
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
-  d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1711628471; x=1743164471;
-  h=from:to:cc:subject:date:message-id:references:
-   in-reply-to:content-id:content-transfer-encoding:
-   mime-version;
-  bh=joufdrNO2/FLdgGzlnaieoHfZ28FYCwNXGhrZ08f24E=;
-  b=cZmC3IVOh7W3tXXLW7A/6NYJXTAxaBHrDkjAUa3aFs2V0MfrW9GyXGNB
-   GMxShPsRxuwFkd/JCJK2cLohBb584Bjy4WaKqGjYDeYS+AfEsUmSHd8ku
-   ypm+xckoj1hL6v2GO8su+B8zvWq5w6o97zmuPIoIlrIUGBvFX167jiI2e
-   TB9tFXPECArciNfuNP4VN1TTc8FDSq0u15jfsGQ2T+1yIGx/KI+vXadcG
-   y68MR9v5UecLHNCNcSYBEFfqnVEpCJKqDAV2byp+WMc6XqRTFU8lCzfKz
-   lFq5h+eXVwfYceqo8puwQUTl/7qPocK7Ehilq3BO6X+wyfELLMZd4I6/E
-   A==;
-X-CSE-ConnectionGUID: ebIO6gpCQraLvEkas3Q0kg==
-X-CSE-MsgGUID: Yu0sxhy9Qnu7/gTAbyEy6A==
-X-IronPort-AV: E=Sophos;i="6.07,161,1708358400"; 
-   d="scan'208";a="12690026"
-Received: from mail-co1nam11lp2169.outbound.protection.outlook.com (HELO NAM11-CO1-obe.outbound.protection.outlook.com) ([104.47.56.169])
-  by ob1.hgst.iphmx.com with ESMTP; 28 Mar 2024 20:21:08 +0800
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=G4P5lNv6HWn+UiEeVpAw0L5X9lv2Tq+JYC5yQzLN5RPDiSo6QJ/NojT7+D86ZWuz9AOwJgDVpguKAF+zDAPJgQITr75aKUEKxv0JrJjMYSVROCkoGPD3ZBtixDbdTth6w9tsPBXPILeRExwaZRXP5dIJ+ZOGOWH3nwNNJ61Uuv5ClxuaF3U6P7LNUAauL4HBO2YQywUN/ZA+0Gi115PYtc1QywchomP8qoOyT9WhIT2/UqZRF3nfYmODYJWxco6Mhp7uLt1p2OaWrFcZ5rc80yixiV/uRoOFHzuJ6jC9lyBfofqg5sHij+L/TLiUcul1yDyK0oJ9qud6UjIrHwKqaw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=joufdrNO2/FLdgGzlnaieoHfZ28FYCwNXGhrZ08f24E=;
- b=Imh5IIeb8Iu+QjSlKe4L2PkJQRcJp5lZUSGijM4bg/93ebyHh7F0JmxjACl1oybgLL/Oi0LIzkmYObp0gTATnglXt/7Ve5ADZv8vwd6Q82Z4xT7ejnlPeKkUVy3G2/ukxMjJSODQPS5t/eAHyyEQCcxXf1UrXCYwKQttiQ0L+TL0CTVIR8Nz0kNGmmXByqMR9k9d4VLVbgAk4CVkJvpD3/AKSVaftz1GRYnnhV9woKLlcyYctUvS6BnDPJ8gTD/+7BEDWr2e40v740Ygs/+MMFcUNUHjO1dpvTXgi2J7Ci9Iwx3FcVqa1VWlqaBP+MNvx5gp1EMYY6gsd5C0zXjNJg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=wdc.com; dmarc=pass action=none header.from=wdc.com; dkim=pass
- header.d=wdc.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=sharedspace.onmicrosoft.com; s=selector2-sharedspace-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=joufdrNO2/FLdgGzlnaieoHfZ28FYCwNXGhrZ08f24E=;
- b=t/XFWuMgN0QsyVyW/WjU1Ka9r9CQ95gUfywNKmv7TSWrrIFvp/KvH2iFeGtpL0oAX5wGpmaXul5KI3YNJFMgvL7e8w6zohbZZnvqXndt3LCr5KOmQb6gdiISL6Lwwqcjfw4E01D1Ue1MDQbSsQ47OBwQKUONB6OR5GuwYS/yiwI=
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com (2603:10b6:510:12::17)
- by MN2PR04MB6813.namprd04.prod.outlook.com (2603:10b6:208:19f::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7409.33; Thu, 28 Mar
- 2024 12:21:07 +0000
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com
- ([fe80::a814:67f1:24ab:508e]) by PH0PR04MB7416.namprd04.prod.outlook.com
- ([fe80::a814:67f1:24ab:508e%7]) with mapi id 15.20.7409.031; Thu, 28 Mar 2024
- 12:21:07 +0000
-From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-CC: Tejun Heo <tj@kernel.org>, Josef Bacik <josef@toxicpanda.com>, Mike
- Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Matthew
- Sakai <msakai@redhat.com>, Chris Mason <clm@fb.com>, David Sterba
-	<dsterba@suse.com>, "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
-	"cgroups@vger.kernel.org" <cgroups@vger.kernel.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
-Subject: Re: add a bio_list_merge_init helper
-Thread-Topic: add a bio_list_merge_init helper
-Thread-Index: AQHagOvSjpDiA5VFG0SahBsX4A1BvLFNEvgA
-Date: Thu, 28 Mar 2024 12:21:07 +0000
-Message-ID: <5ed8e2ad-1ed5-4988-a625-b0a67f800d9f@wdc.com>
-References: <20240328084147.2954434-1-hch@lst.de>
-In-Reply-To: <20240328084147.2954434-1-hch@lst.de>
-Accept-Language: en-GB, en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-user-agent: Mozilla Thunderbird
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=wdc.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: PH0PR04MB7416:EE_|MN2PR04MB6813:EE_
-x-ms-office365-filtering-correlation-id: f5dc80f4-75c1-4867-f76f-08dc4f218b65
-wdcipoutbound: EOP-TRUE
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info:
- NdvP8M1WqvHzwhOjjNbTIC6aVK45u/VurONf0sFLx/rinxwY92RHbBEhfJPmHVq/t9vGjJTOQSgPxfKi+QpVTNoMU3kwCJ5eKFm92htU3BS6R+kyOpTQOodIOxQZG+Vh8j2pPV8nB2l0agEKazY8syh4OVGjOdK/kabqHOrbmXLEgHhW4UnEJOf4RY+QGf11+vIxz+/7/v6iO2dD4vLb4TsWzlS3X+8ya0CViQV6Aen6GapZPA34qZ3SdYqusC8uBMellLJjeji2GlWFBjOJ5zWcytJ0nnwYCDQi1laC34T9ReePhr4MN5N17xOBLUhROdAs1N/6sZKKCGYTdbAFaic4KGmRDVHWFNIwqz5m2cZG+RJBTasuxGOmPQbHqTx4ltjQsC/FaOO2VjTMF9Zbj8TfWyaOGA3UwfG77iYmpRC/auoRjsjpeLtYpOXO2Sp3T3h7JT3OWYWcnSd18YD+rCoGHpTa92zMEi/IS+Uv+KGK8jBzdrVXRlF6B+CUmJyP4bl5rfGdb5MIvpsB8fzeNBHDpCoTbFc2ri16jYpIXihLGcfI+jDb+Asfdket2n7Iu+NQgvB9eD0Ej63LigKvjmAjBt91mJqaTKGy/1PI+bSMoHyJAEUyE9LV7+dLbQCF979oYT8GbZ+6G8SmLf0IPKa1qnX40ExCFUgQO+pxfdKdutYrl7KV4h3DhIJ03G8U+kX4RlhSYkl8piJTe6anfTMDiyNOgUxudV0izZsOoSQ=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PH0PR04MB7416.namprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376005)(7416005)(1800799015)(366007)(38070700009);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?utf-8?B?bHlzSGVjZEhwcGxnaVlJbDlLck9vLzFTZXlzcXhjV1pVV0lyT1lVZTVVdXFV?=
- =?utf-8?B?MXV6SGU2NUtWT0Ewd1pqTy83ZnlwU29qSEc2MGZrNDZVamc0eGM3Q3EwajFp?=
- =?utf-8?B?YzhpNUlkdS93UUhDVk4vY1lsaS9KUm5lWHV4Tk9FWjBDdWdGOHd1bXI3cmxK?=
- =?utf-8?B?VGVHQW1zMFprNit5c3YxWXZnVHZzU3drQm5icm14YnNQWFBsY2Jvd2lITU40?=
- =?utf-8?B?T3BKSFpnWmNWL3VNU3ZRU0U2ZGszRWkxQTFiekk2dHNNbFZBRTlGMVNPZmdO?=
- =?utf-8?B?ZmJyZ3NoWmMzTzEySGdqOEF3WTJhV2E3V2daWTRFaUY2dGRhcXA5bE96N21R?=
- =?utf-8?B?RFE1RWZvMXBHeSt3bFhzcE5GK1hyTERRTmZxRWFjQWJtQTBzVXdSOFlXVFRZ?=
- =?utf-8?B?TlJRdStxZ3ZqdHJhN0d4MGlYSmh2U29pUHZpQUZSRDgrZTZGSG1DR2g2ZnR4?=
- =?utf-8?B?a1FGQW9MQWxocjl3YVA3TEtiOHR3bEVFVXZxQWdqS09VK1dOOUovdzQxc1c5?=
- =?utf-8?B?cVJoakR5V25lTHJpZ0o4bjJZM1hvQ2pwZURFejlFR00yOWNGRnB5aTR0cFVO?=
- =?utf-8?B?em12N1RUOGNVYkJwWVRVRk1ja2plQ1ZkS2E1NmFXYlU3TkVOR2VxemVGY2dX?=
- =?utf-8?B?Y1JlWmFEc21FdCtzMEQ1SDFuLzZuaFBFM1d6ZVVJVmxmSldjWDQ5RGZDMnV4?=
- =?utf-8?B?Nld2VEduWk01ODk1L3pROFhsQXZyZW1JempmL2VHMG1JeGNtMkM2K0tCM0R3?=
- =?utf-8?B?bjNTMkQvei9BYVZkNUJxWHVMMDFNVmU3ZEo2NThEWE9udTRNZEx6UHIzUHFr?=
- =?utf-8?B?bHl6QXRiZlhYNkNOSWZXS3U4WjBjVmVtYm50ZElYcEZZdXZLM1RLaWdmUG5F?=
- =?utf-8?B?azNtZWFIMTFjMksxVFRIYVhjU25Fd3dOamt4dkNRWWdTblMzaVpVdWlSMHhM?=
- =?utf-8?B?Q3o4c0dhT01leWVIUDN6ZGh4eTFja3RDS0NLcEh3bTUvdmNJeEkxQ0ZNdjJ5?=
- =?utf-8?B?NUZXSlRSWEZQdzl1YS95cGI5NHFsNnYvaXlnNmJlakw4UFdxbGNQNjFXSHhp?=
- =?utf-8?B?UGF6NUJzWEZUZ0JnNVJ5YnJxU1hrQzgvUGYxUk94VERRbTlhaXVMVjl2a1ZG?=
- =?utf-8?B?dS9kay82bDkrdEl0NlNlTVJRM1UyLytMam5vMUFaMkRicnhvckhOcHlOdHdB?=
- =?utf-8?B?QldLcEhqN2tzeDVCMTdvWFpzeFBYWXNPZ05VcnFJa0VMd1l6TTQ3Q3JZN3FV?=
- =?utf-8?B?OW1Zb2NOcHplM1hFZmNOUzZ4WjdnT0Z6cHpvRmpOc2FEWHlLV2l5RkF4MGhM?=
- =?utf-8?B?cUh4ZWx4RTRaM1BwcTFmdG9CSjNFakZTSENMMWlkQkRFb0RwT2hidmROZ2NE?=
- =?utf-8?B?aW9jRjRuVURmejNqYnZkWGd0dEp3Wlk1RlJqaHBUYkNMa1dEVkVEVitpekI3?=
- =?utf-8?B?Tm5WSE1sUjh5RndYV3dYS0gzRjBWcy9aTGFVYzFDa241K2pnNmtWcWxjWVln?=
- =?utf-8?B?QmNpYkYxcjV2QVZ2QTVjalVrNEZNeDBlT0RZVDREWFF4Q3VOMHJCR05Oemg2?=
- =?utf-8?B?aHlWSDBHSEpIQmdvV0dkMjJwTHdScGtjdGxNYW9WY29tV0dPdVJrWnllZEg0?=
- =?utf-8?B?Q3ZmUzBXN1dUOHhHL2NxdDVUSHA5Z0Voekw3ci8rc3pWRFFNVUdkbUk2MzN4?=
- =?utf-8?B?OTcrNnpnaXFMcTdhKzQ3bVVDZ0JibzhlWkR6YndBOFRkSUlEN3IrQkdLOFBh?=
- =?utf-8?B?d2dGUlZwNDJySUJzRGVIa2N4Rk9lNDlFWmpYUHJCNEFFazJ2Y2x6WUx3dmFs?=
- =?utf-8?B?amdpLzFGS21Ob3RlbDgyU0plMFAzU2FvUUZxcWZLdFpoU1VoUmxKNzd1cUhG?=
- =?utf-8?B?ZHRpK0NSV0phcWI4S2lpVTdrMDFGc1dlQVptY2kraDFyT2wyTFh3M3lFY09G?=
- =?utf-8?B?Nk5DaU1pZmxVdEVsc3NsSFY4TzNsb1psTktMT2x6d0pIV3NyRFo4WkRBbjV2?=
- =?utf-8?B?K1U0ZitVMUdDWXFLWUNLNUh4dTRlMGRoQ0p3Y01hcFE5SllISy9iNGgyUjdO?=
- =?utf-8?B?MjFDd0w1bTJRMFFFZDk2d1JWSnROd0s5WXFuK1J1TjJyc2dqMForZlJ4NVR3?=
- =?utf-8?B?bjlQRXBKeFRXT29BNmYwOEM1ekRRYW9YN0wvMC96dHVhcmdNUDJjd05NUk5D?=
- =?utf-8?B?Q21UWUQ3NjUvNHdyMElMYzRBcVFqSXErMkQ3OGtzcmJjcmVyQ0RRZUtNTlpV?=
- =?utf-8?B?KzNMNmNCeE53UUlLa25ncWJaR3BBPT0=?=
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <A3D8253A0299694D9E976A6F298ADB5D@namprd04.prod.outlook.com>
-Content-Transfer-Encoding: base64
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eWM+Qp30"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D7141C433C7;
+	Thu, 28 Mar 2024 14:30:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1711636264;
+	bh=zN2hzijZlAwA7dSIUuqXqTXuAGGw3rihlUXROhzown4=;
+	h=From:To:Cc:Subject:Date:From;
+	b=eWM+Qp30VXj9Cmh0LnGCxoeRKFCdiRG/+7cYiw3/d1A2+4+cFEwZTeR0JCmdB7dCq
+	 BJ9rIQbF9IBEI+soObC424HP7laoiCA3/oi1O9qP9rBITnPfxuSYeV5KRvg9hYcRab
+	 e/dCX3l7xvE+Crt9nLuvyn+RK8JuQn+i+0gl/X6RqKrS31M7lA4cVVAcZLH+2tD70I
+	 3HfxG2oBSEgx+79CZh8PlNRuEJmIOG2T+nm5DpqItFA2gaY6b7ltr3jg7UjRUmiCnX
+	 fBIiKt6tGKRHDPmTgbO18UpcTP5WlsP5+HLng5MSKm27q042WFMvRohaMfXHDUBt2+
+	 CV0uOkwqjgK7A==
+From: Arnd Bergmann <arnd@kernel.org>
+To: linux-kernel@vger.kernel.org
+Cc: Arnd Bergmann <arnd@arndb.de>,
+	Ilya Dryomov <idryomov@gmail.com>,
+	Dongsheng Yang <dongsheng.yang@easystack.cn>,
+	Jens Axboe <axboe@kernel.dk>,
+	Jason Gunthorpe <jgg@ziepe.ca>,
+	Leon Romanovsky <leon@kernel.org>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev,
+	Saeed Mahameed <saeedm@nvidia.com>,
+	"David S. Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Xiubo Li <xiubli@redhat.com>,
+	Jeff Layton <jlayton@kernel.org>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	Dmitry Vyukov <dvyukov@google.com>,
+	Andrey Konovalov <andreyknvl@gmail.com>,
+	David Ahern <dsahern@kernel.org>,
+	Masahiro Yamada <masahiroy@kernel.org>,
+	Nathan Chancellor <nathan@kernel.org>,
+	Nicolas Schier <nicolas@fjasle.eu>,
+	Nick Desaulniers <ndesaulniers@google.com>,
+	Bill Wendling <morbo@google.com>,
+	Justin Stitt <justinstitt@google.com>,
+	Kees Cook <keescook@chromium.org>,
+	"Gustavo A. R. Silva" <gustavoars@kernel.org>,
+	Tariq Toukan <tariqt@nvidia.com>,
+	ceph-devel@vger.kernel.org,
+	linux-block@vger.kernel.org,
+	linux-rdma@vger.kernel.org,
+	netdev@vger.kernel.org,
+	linux-nilfs@vger.kernel.org,
+	kasan-dev@googlegroups.com,
+	linux-kbuild@vger.kernel.org,
+	llvm@lists.linux.dev
+Subject: [PATCH 0/9] address remaining -Wtautological-constant-out-of-range-compare
+Date: Thu, 28 Mar 2024 15:30:38 +0100
+Message-Id: <20240328143051.1069575-1-arnd@kernel.org>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	Onco7K0wNNwjeQOdA7eKrKIQiwnVpckn6tDbXsAWBgUjmaqsOz8dTk+1hJ6hDr0jMsD9u5P2QDXpjc2NKMVFUd8pC+trMldPbTvP0rdXud3z3GzjIpRAMCff+khvn1jwXjM3mWllnHFgAHGWFe+WHCM888OiovWQC9PDiI4BCT+sE36K47biYbxv/DNAIy1w/WyOaIa+FWqnwhB7xJ2GQZkL4Fu6p0CsvEjMdo46V8cBdQ6J68qsC9TWIZz1ENIfjevfF+JFje6MY5Zi8bg9exyZritd98xjOYuzngnDcUrg2sjbG1I13Zmsh7/xpkkhjJMkDfs/DqKOSJ7fIgzKXONJlUWgWHzOk9gyho5/f1r8iAOQ670EY6GPLZbBqn77RjN5K74/eKubDQnkQcjLrco8JhLKPFZu0ZtdNemQy/8gBRNMcZuTZZv+7ov4wvYSccBI2kgvXRmJJU0zDi+UmZKN/g0TxwhGPdhQ0r+oOc17/N7dzvpOMVJhmirQktos3P22G5Q+uV207fv9X39moZUga++t2t+dMf4wcnUbJNZlGerjOtvrvWUChKbUTr7nCNwY64khiSJafmO8120l7aJyo5Bb5SdN9AUhRC1asvF8liPTOl9thVqIxEGhl1Dn
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: PH0PR04MB7416.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f5dc80f4-75c1-4867-f76f-08dc4f218b65
-X-MS-Exchange-CrossTenant-originalarrivaltime: 28 Mar 2024 12:21:07.0623
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: zw5TTTTPguKN6+Cu9uY4GS0thtrh0a3CRcnEgNerjiEH9/DVJxcBaP8+jQoQRFujF+1Nm0A1GlqfLKb83AtnLh1Jqwbu1tAbF5K34AaV7Zw=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR04MB6813
+Content-Transfer-Encoding: 8bit
 
-TG9va3MgZ29vZCwNClJldmlld2VkLWJ5OiBKb2hhbm5lcyBUaHVtc2hpcm4gPGpvaGFubmVzLnRo
-dW1zaGlybkB3ZGMuY29tPg0K
+From: Arnd Bergmann <arnd@arndb.de>
+
+The warning option was introduced a few years ago but left disabled
+by default. All of the actual bugs that this has found have been
+fixed in the meantime, and this series should address the remaining
+false-positives, as tested on arm/arm64/x86 randconfigs as well as
+allmodconfig builds for all architectures supported by clang.
+
+Please apply the patches individually to subsystem maintainer trees.
+
+      Arnd
+
+Arnd Bergmann (9):
+  dm integrity: fix out-of-range warning
+  libceph: avoid clang out-of-range warning
+  rbd: avoid out-of-range warning
+  kcov: avoid clang out-of-range warning
+  ipv4: tcp_output: avoid warning about NET_ADD_STATS
+  nilfs2: fix out-of-range warning
+  infiniband: uverbs: avoid out-of-range warnings
+  mlx5: stop warning for 64KB pages
+  kbuild: enable tautological-constant-out-of-range-compare
+
+ drivers/block/rbd.c                                    | 2 +-
+ drivers/infiniband/core/uverbs_ioctl.c                 | 4 ++--
+ drivers/md/dm-integrity.c                              | 2 +-
+ drivers/net/ethernet/mellanox/mlx5/core/en/xsk/setup.c | 6 ++++--
+ fs/ceph/snap.c                                         | 2 +-
+ fs/nilfs2/ioctl.c                                      | 2 +-
+ kernel/kcov.c                                          | 3 ++-
+ net/ceph/osdmap.c                                      | 4 ++--
+ net/ipv4/tcp_output.c                                  | 2 +-
+ scripts/Makefile.extrawarn                             | 1 -
+ 10 files changed, 15 insertions(+), 13 deletions(-)
+
+-- 
+2.39.2
+
+Cc: Ilya Dryomov <idryomov@gmail.com>
+Cc: Dongsheng Yang <dongsheng.yang@easystack.cn>
+Cc: Jens Axboe <axboe@kernel.dk>
+Cc: Jason Gunthorpe <jgg@ziepe.ca>
+Cc: Leon Romanovsky <leon@kernel.org>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev
+Cc: Saeed Mahameed <saeedm@nvidia.com>
+Cc: "David S. Miller" <davem@davemloft.net>
+Cc: Eric Dumazet <edumazet@google.com>
+Cc: Jakub Kicinski <kuba@kernel.org>
+Cc: Paolo Abeni <pabeni@redhat.com>
+Cc: Xiubo Li <xiubli@redhat.com>
+Cc: Jeff Layton <jlayton@kernel.org>
+Cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: Dmitry Vyukov <dvyukov@google.com>
+Cc: Andrey Konovalov <andreyknvl@gmail.com>
+Cc: David Ahern <dsahern@kernel.org>
+Cc: Masahiro Yamada <masahiroy@kernel.org>
+Cc: Nathan Chancellor <nathan@kernel.org>
+Cc: Nicolas Schier <nicolas@fjasle.eu>
+Cc: Nick Desaulniers <ndesaulniers@google.com>
+Cc: Bill Wendling <morbo@google.com>
+Cc: Justin Stitt <justinstitt@google.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: "Gustavo A. R. Silva" <gustavoars@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Tariq Toukan <tariqt@nvidia.com>
+Cc: ceph-devel@vger.kernel.org
+Cc: linux-block@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-rdma@vger.kernel.org
+Cc: netdev@vger.kernel.org
+Cc: linux-nilfs@vger.kernel.org
+Cc: kasan-dev@googlegroups.com
+Cc: linux-kbuild@vger.kernel.org
+Cc: llvm@lists.linux.dev
+
