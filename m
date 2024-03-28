@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id B3BED13A40D;
-	Thu, 28 Mar 2024 20:17:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 6324213A268;
+	Thu, 28 Mar 2024 20:17:33 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711657056; cv=none; b=Xy+bNsMGntn10WF2LWcw0pf2z/I4CaPY4N93V0P4Hy1Jm3N257aqSPs/gJ/b/9CYvPeRjppLeh18gPPHtluF1cXsAqSjyvPhpwgLVCJ7uPksvDJGOli3GQh+4hoSNfOuxXY21b0BMdnt4tICVdZMxmHanoW/jsUDen0IzzkBv84=
+	t=1711657057; cv=none; b=HCyqT5DFolKgszgjraMQggcQW31mjcewCdgEPsYtZghNEhnLKv3MnGXGuBmqBQw3xHZsTIMP3Xx0SwLyvWxto6tPIN1GcgoyknZOFjhJ8UcoshX5D5wLxOAHkh4kCwVQXmBb8B1+CSPEQE1iFvQju60drmvzTVllbyzuiox8gdA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711657056; c=relaxed/simple;
-	bh=MoYJ6E1Wd7WrNrkXn+HMX4JdzG8UGPizAvZg5owtETY=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=oQqtZa1pZqq3ZDGBLqr2bQ6DjZT8OJg3WVUqsKTAW3ZT3exCAtxRiQ4hSXiygTZfBkbJbI6GMp15r29PsalAjX3Aw/n26w2Fsq/9DhFQXeGkQCD6IKBskev11St4ehOrCyOhQyD4LW9oRnEQbXOnpWCewB2Kjw7grJkAALwtjoA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=qVKrTMZ9; arc=none smtp.client-ip=13.77.154.182
+	s=arc-20240116; t=1711657057; c=relaxed/simple;
+	bh=8Wkj6APgowOM1wCYwpFj64MBNrIKEgRwdw3icE38+Y8=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=qgSqAkJK7A+uVoB0Aj2Qh00W46RXX7hGpR5zFepf51tYX3wEzoijYpmZzEBY3Z/jiuiOGAg+5rxZ4vp1v6auf7bz9FzuL0OnS23nq8CIXnOAvuk/toCFPnW6JocGtNVg4ShsfTxw9CZgZ1jhqBez+e681rWR18cANNuthElfedk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=X4/19zvb; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="qVKrTMZ9"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="X4/19zvb"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id 1566020E6F46; Thu, 28 Mar 2024 13:17:28 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 1566020E6F46
+	id 44D5A20E6F61; Thu, 28 Mar 2024 13:17:28 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 44D5A20E6F61
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
 	s=default; t=1711657049;
-	bh=JmW+w3GjpzAQDp0EZ3A4BHnSHNwVjunuggdvHyK868o=;
+	bh=dUH87E40NrkSioYizP3cef7n/LxfQy39zSmAnjbWbeg=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=qVKrTMZ9TwG+6hdejGvm6Tcm39m3XWSL9ghV4cveHwqdp9kH7mPvb/Ff3HDlVWWzc
-	 C21tEfNK7UNZhrZakKuF8bzXQKyYikONrBp1s2ziThRRnt7C/RNxJPIqC9LShWnt7s
-	 3T+VK/ICyR/cWIKAyOEzXaw2ObREvhIx/ccovLF8=
+	b=X4/19zvbS1QHZiOwRguyh0mnDOMxnwtxqh+K8spjotNxTe81quYgpaSIVb7qlu1/g
+	 IofoxD7cKR91OhnX4Ur5zK6QVJjJX55hofb+X4TmTJHPhmoZg6W3m0WTAgFE1HsT8m
+	 alQDzQkeFoPcwuRTwFEwWyUjqjKS1RlG2pds7adc=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -44,9 +44,9 @@ Cc: linux-doc@vger.kernel.org,
 	audit@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	Fan Wu <wufan@linux.microsoft.com>
-Subject: [PATCH v16 12/20] dm: add finalize hook to target_type
-Date: Thu, 28 Mar 2024 13:17:19 -0700
-Message-Id: <1711657047-10526-13-git-send-email-wufan@linux.microsoft.com>
+Subject: [PATCH v16 15/20] security: add security_inode_setintegrity() hook
+Date: Thu, 28 Mar 2024 13:17:22 -0700
+Message-Id: <1711657047-10526-16-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1711657047-10526-1-git-send-email-wufan@linux.microsoft.com>
 References: <1711657047-10526-1-git-send-email-wufan@linux.microsoft.com>
@@ -56,92 +56,101 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
-This patch adds a target finalize hook.
-
-The hook is triggered just before activating an inactive table of a
-mapped device. If it returns an error the __bind get cancelled.
-
-The dm-verity target will use this hook to attach the dm-verity's
-roothash metadata to the block_device struct of the mapped device.
+This patch introduces a new hook to save inode's integrity
+data. For example, for fsverity enabled files, LSMs can use this hook to
+save the verified fsverity builtin signature into the inode's security
+blob, and LSMs can make access decisions based on the data inside
+the signature, like the signer certificate.
 
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
----
-v1-v10:
+--
+v1-v14:
   + Not present
 
-v11:
+v15:
   + Introduced
 
-v12:
-  + No changes
-
-v13:
-  + No changes
-
-v14:
-  + Add documentation
-
-v15:
-  + No changes
-
 v16:
-  + No changes
+  + Switch to call_int_hook()
 ---
- drivers/md/dm.c               | 12 ++++++++++++
- include/linux/device-mapper.h |  9 +++++++++
- 2 files changed, 21 insertions(+)
+ include/linux/lsm_hook_defs.h |  2 ++
+ include/linux/security.h      | 10 ++++++++++
+ security/security.c           | 20 ++++++++++++++++++++
+ 3 files changed, 32 insertions(+)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 56aa2a8b9d71..16d3fd644176 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2270,6 +2270,18 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
- 		goto out;
- 	}
+diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
+index b391a7f13053..6f746dfdb28b 100644
+--- a/include/linux/lsm_hook_defs.h
++++ b/include/linux/lsm_hook_defs.h
+@@ -177,6 +177,8 @@ LSM_HOOK(int, 0, inode_listsecurity, struct inode *inode, char *buffer,
+ LSM_HOOK(void, LSM_RET_VOID, inode_getsecid, struct inode *inode, u32 *secid)
+ LSM_HOOK(int, 0, inode_copy_up, struct dentry *src, struct cred **new)
+ LSM_HOOK(int, -EOPNOTSUPP, inode_copy_up_xattr, const char *name)
++LSM_HOOK(int, 0, inode_setintegrity, struct inode *inode,
++	 enum lsm_integrity_type type, const void *value, size_t size)
+ LSM_HOOK(int, 0, kernfs_init_security, struct kernfs_node *kn_dir,
+ 	 struct kernfs_node *kn)
+ LSM_HOOK(int, 0, file_permission, struct file *file, int mask)
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 26b422059f54..22612058b903 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -404,6 +404,9 @@ int security_inode_listsecurity(struct inode *inode, char *buffer, size_t buffer
+ void security_inode_getsecid(struct inode *inode, u32 *secid);
+ int security_inode_copy_up(struct dentry *src, struct cred **new);
+ int security_inode_copy_up_xattr(const char *name);
++int security_inode_setintegrity(struct inode *inode,
++				enum lsm_integrity_type type, const void *value,
++				size_t size);
+ int security_kernfs_init_security(struct kernfs_node *kn_dir,
+ 				  struct kernfs_node *kn);
+ int security_file_permission(struct file *file, int mask);
+@@ -1020,6 +1023,13 @@ static inline int security_inode_copy_up(struct dentry *src, struct cred **new)
+ 	return 0;
+ }
  
-+	for (unsigned int i = 0; i < t->num_targets; i++) {
-+		struct dm_target *ti = dm_table_get_target(t, i);
++static inline int security_inode_setintegrity(struct inode *inode,
++					      enum lsm_integrity_type, type,
++					      const void *value, size_t size)
++{
++	return 0;
++}
 +
-+		if (ti->type->finalize) {
-+			ret = ti->type->finalize(ti);
-+			if (ret) {
-+				old_map = ERR_PTR(ret);
-+				goto out;
-+			}
-+		}
-+	}
-+
- 	old_map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
- 	rcu_assign_pointer(md->map, (void *)t);
- 	md->immutable_target_type = dm_table_get_immutable_target_type(t);
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 82b2195efaca..ad368904b1d5 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -160,6 +160,14 @@ typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
-  */
- typedef size_t (*dm_dax_recovery_write_fn)(struct dm_target *ti, pgoff_t pgoff,
- 		void *addr, size_t bytes, struct iov_iter *i);
-+/*
-+ * This hook allows DM targets in an inactive table to complete their setup
-+ * before the table is made active.
-+ * Returns:
-+ *  < 0 : error
-+ *  = 0 : success
+ static inline int security_kernfs_init_security(struct kernfs_node *kn_dir,
+ 						struct kernfs_node *kn)
+ {
+diff --git a/security/security.c b/security/security.c
+index 8f462d82bd8b..629f31710975 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -2681,6 +2681,26 @@ int security_inode_copy_up_xattr(const char *name)
+ }
+ EXPORT_SYMBOL(security_inode_copy_up_xattr);
+ 
++/**
++ * security_inode_setintegrity() - Set the inode's integrity data
++ * @inode: inode
++ * @type: type of integrity, e.g. hash digest, signature, etc
++ * @value: the integrity value
++ * @size: size of the integrity value
++ *
++ * Register a verified integrity measurement of a inode with LSMs.
++ * LSMs should free the previously saved data if @value is NULL.
++ *
++ * Return: Returns 0 on success, negative values on failure.
 + */
-+typedef int (*dm_finalize_fn) (struct dm_target *target);
- 
- void dm_error(const char *message);
- 
-@@ -210,6 +218,7 @@ struct target_type {
- 	dm_dax_direct_access_fn direct_access;
- 	dm_dax_zero_page_range_fn dax_zero_page_range;
- 	dm_dax_recovery_write_fn dax_recovery_write;
-+	dm_finalize_fn finalize;
- 
- 	/* For internal device-mapper use. */
- 	struct list_head list;
++int security_inode_setintegrity(struct inode *inode,
++				enum lsm_integrity_type type, const void *value,
++				size_t size)
++{
++	return call_int_hook(inode_setintegrity, inode, type, value, size);
++}
++EXPORT_SYMBOL(security_inode_setintegrity);
++
+ /**
+  * security_kernfs_init_security() - Init LSM context for a kernfs node
+  * @kn_dir: parent kernfs node
 -- 
 2.44.0
 
