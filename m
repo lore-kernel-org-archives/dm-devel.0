@@ -1,122 +1,86 @@
-Received: from mail-ed1-f43.google.com (mail-ed1-f43.google.com [209.85.208.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B5D913A266
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 21:58:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C87E13B795;
+	Thu, 28 Mar 2024 22:11:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711663104; cv=none; b=bWw38ImI1d1Mfvf+5tXQlMW75vEDIDcXNryMGegb/4BD13lpUwkoRi2izO816gUfeNv4Lq4Uw8YvHgOrasM+YtlM7UjGCAP23JmYPmzg1cp1cbhhMZY9AejQ3ODdWNPxF7CtDu+Oh95/cKOYrRidrvCozvObbTPz2yvez33x/Lk=
+	t=1711663875; cv=none; b=gYDnPeRwWDAiw010+aaNRme+hUw9d48G4cccWYVNA0UN2lk8KNw/J606svMds958LXcCelqUTE0TID9y/T53FrllDTumrisQFY2YjRFl1iNUNK7nkdtDTFGxzHjNe6Vqdwbgj+q9kUQNyouB+1wUYuyvBXLZzuJFU3m+B+u4pQU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711663104; c=relaxed/simple;
-	bh=EVOmIevOY7yIjg6tCh+xVx1hJEYZK8SikqOcoPFgsDo=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=tY4SOtyBFIiT7iZxf4ky2tIlJuDFin00JkTimxQyvAH8vMogYkb9VDJzB96B2bZlyqpMN30e4cq6kvyLNOH5kiI9QGe0qnpi/Gb5AXaSH3M87zGL9rtz4fZuNVyYyvKs4OXN/mgFkzA6nyIiJmwxQRwFvNcEqYlJeQuu8FCL75I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=XxEKbh+c; arc=none smtp.client-ip=209.85.208.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	s=arc-20240116; t=1711663875; c=relaxed/simple;
+	bh=JVuXWZU7ypGWL4ciDE6dFgx2siJQMrXVakqC0WXbnd0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=WjeDCmuy1zQEgYuBc0cmLt/E+KI2gpzycBQwmosnnTAi1GhqDTKRxyMBaBVgIdj5LgyPaMP4UK4C2itEHA0ipl6v8GxdaIBpg23DCtvsyP8WeEGWkGgoV7m+6ziOAZVXgdApHJGz+vp7swO6jKbWcA/5IzPtklv4RE9Ral8R39o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=NbJm49eL; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="XxEKbh+c"
-Received: by mail-ed1-f43.google.com with SMTP id 4fb4d7f45d1cf-56c4ca65dc6so1797390a12.1
-        for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 14:58:22 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1711663101; x=1712267901; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=BxsKZxZUzuDOnaAX/evvGdiqGyKkkrreXD8So3xuleM=;
-        b=XxEKbh+cXawiyANgc9VlUT9+qy/oocydkhUGdGnReAHyn6xvx8y/acHCDliZU6oY6m
-         K/aIYM8fQdHPEUQIEUzp5PHfnfEZ67vaSVUYXxx5z7E+1I0Y6xQntquv/K97pFToIGOF
-         wFPFkjGsJ/THw5WX5LSxJvlnzHvT+0P2bkAmh5jH49ArDDNUGTBYk7Vfzp3+yTUTfl5i
-         ARry/fuYk6LzXhXgepKKKsXvzaVq22JsBaug2bgKbDoiayNp1g8nAe9X0yVx7hW+9mHH
-         nLAjIqMwZs0avVGNaIw3O8RMtYR/u893wMG1Pb5N1yp3KzX2fLhZjCToqQKqvwTablfn
-         dDog==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711663101; x=1712267901;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=BxsKZxZUzuDOnaAX/evvGdiqGyKkkrreXD8So3xuleM=;
-        b=rByM79r5KKJRT87errivu0/H/yTzPNj1Txg7APesrPa3Mo02MF5sJf9rTYjN8fB/Ae
-         Y9GA/e5Cf21tax6+ddnXaELDW3NFqCh1WfhsImC5Gurp09hkQZ6djQ2QnVRS2z8YOdsQ
-         7TvnupOk/t3/C15Oleb+Q7F9xo7iYcUrGrTXmMZG+VN717nXIkPd/swaY4r7mM4V5BNJ
-         eol1/jCcSmzEWTuB9cnjUBwDUorfKTBQ+d5eQPW1LkAEbDdW4/e8QGnnX/Z0bMgcbF5E
-         /FtwZiNmBwqI6TTPiVy/ayCstdZn/YlZ17oaV1lye8bCSW5XqVCRw/jgzeGXanwg2B5V
-         dHUQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUULVDrGHx2LkBy5j6LPuITiFiW9+UzMT8RPOaRIyrjFMM1KPYXEPzOG5+mOlDMLG8r1UOIN6CugcDymOT9TiZh35ac7kWem60=
-X-Gm-Message-State: AOJu0YwWh2z2QkuY/lML5O4fk9PoFoHL0kBG/6YNZTXA87yd8QiwcB0r
-	3Wxho5uEIWjb04ssiek3j4f+ce4CXltMF06LGLcxPVMhxpIE96NV4zW3hNXeTZgZb51i/2/l7ug
-	RsEwttwq07VNRwf2N5ejb7qlw66GdG6yLF4lE
-X-Google-Smtp-Source: AGHT+IE0y1seF6MQXvRRM3kwa+kdGhzZ45RQ2GHfTY+7iJdVAkXbLfTYxpaWZJXiKbseniIrUcFPm/SQhMOY2Slfwn4=
-X-Received: by 2002:a05:6402:51c9:b0:568:32f7:6c53 with SMTP id
- r9-20020a05640251c900b0056832f76c53mr421604edd.3.1711663100915; Thu, 28 Mar
- 2024 14:58:20 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="NbJm49eL"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	Content-Type:In-Reply-To:From:References:Cc:To:Subject:MIME-Version:Date:
+	Message-ID:Sender:Reply-To:Content-ID:Content-Description;
+	bh=HnoWopqeEhgUSDrAxtnUhuDZR8QdjUiaKbpLIYgV22M=; b=NbJm49eLsaBJIDmaaGUPIwTP6s
+	RdCdHdp9gJrWgLOyWIaGiU2iEa3h0mDLeFNu8MpWBCcjIt+F1mBI8g082Y+IpFySLM/hEsNJi6SK1
+	JBk39TG18J9OCNVQporM5qOQ71kG0TDUjkZcnc4dAvsUfuM70hJvQAllMyhnggYK0MKVKGnTD8s/J
+	pwz0gob9RjN5DyrV1KCIE79TcNpQT0Fn18OWvlWWNJjye4FkmJFqE0E/qDklUsVta8jWE3bO374Mz
+	wFZ7SPWQCxzZ1K0xUYogPf2vhybumDglajK78Iq4x/BmSLLRdWq0eNniSqEvN8UThtFfomA7d21P3
+	PMZSsxhQ==;
+Received: from [50.53.2.121] (helo=[192.168.254.15])
+	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1rpxxf-0000000Fs9X-3pVK;
+	Thu, 28 Mar 2024 22:11:04 +0000
+Message-ID: <cde3dc6e-ca77-445e-a4b7-fc21a934999a@infradead.org>
+Date: Thu, 28 Mar 2024 15:11:03 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240328143051.1069575-1-arnd@kernel.org> <20240328143051.1069575-2-arnd@kernel.org>
-In-Reply-To: <20240328143051.1069575-2-arnd@kernel.org>
-From: Justin Stitt <justinstitt@google.com>
-Date: Thu, 28 Mar 2024 14:58:08 -0700
-Message-ID: <CAFhGd8ortE-ahJD+BDss7qbW-=Hn2_L_r2OZfa0V87mG2KV3+g@mail.gmail.com>
-Subject: Re: [PATCH 1/9] dm integrity: fix out-of-range warning
-To: Arnd Bergmann <arnd@kernel.org>
-Cc: linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
-	Nathan Chancellor <nathan@kernel.org>, Arnd Bergmann <arnd@arndb.de>, 
-	Nick Desaulniers <ndesaulniers@google.com>, Bill Wendling <morbo@google.com>, 
-	Eric Biggers <ebiggers@google.com>, llvm@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v16 01/20] security: add ipe lsm
+Content-Language: en-US
+To: Jarkko Sakkinen <jarkko@kernel.org>, Fan Wu <wufan@linux.microsoft.com>,
+ corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
+ tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
+ snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
+Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
+ linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+ audit@vger.kernel.org, linux-kernel@vger.kernel.org,
+ Deven Bowers <deven.desai@linux.microsoft.com>
+References: <1711657047-10526-1-git-send-email-wufan@linux.microsoft.com>
+ <1711657047-10526-2-git-send-email-wufan@linux.microsoft.com>
+ <D05ODONHFJ9O.3VG0HLFPA1OB0@kernel.org>
+From: Randy Dunlap <rdunlap@infradead.org>
+In-Reply-To: <D05ODONHFJ9O.3VG0HLFPA1OB0@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Thu, Mar 28, 2024 at 7:31=E2=80=AFAM Arnd Bergmann <arnd@kernel.org> wro=
-te:
->
-> From: Arnd Bergmann <arnd@arndb.de>
->
-> Depending on the value of CONFIG_HZ, clang compares about a pointless
-> comparison:
->
-> drivers/md/dm-integrity.c:4085:12: error: result of comparison of constan=
-t 42949672950 with expression of type 'unsigned int' is always false [-Werr=
-or,-Wtautological-constant-out-of-range-compare]
->                         if (val >=3D (uint64_t)UINT_MAX * 1000 / HZ) {
->
-> As the check remains useful for other configurations, shut up the
-> warning by adding a second type cast to uint64_t.
 
-Yeah, nice.
 
->
-> Fixes: 468dfca38b1a ("dm integrity: add a bitmap mode")
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-Reviewed-by: Justin Stitt <justinstitt@google.com>
+On 3/28/24 13:45, Jarkko Sakkinen wrote:
+>> +/**
+>> + * ipe_init - Entry point of IPE.
+>> + *
+>> + * This is called at LSM init, which happens occurs early during kernel
+>> + * start up. During this phase, IPE registers its hooks and loads the
+>> + * builtin boot policy.
+>> + * Return:
+>> + * * 0		- OK
+>> + * * -ENOMEM	- Out of memory
+> Just a suggestion:
+> 
+> * 0:		OK
+> * -ENOMEM:	Out of memory (OOM)
+> 
+> Rationale being more readable (less convoluted).
+> 
+> And also sort of symmetrical how parameters are formatted in kdoc.
 
-> ---
->  drivers/md/dm-integrity.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index 37b9f8f1ae1a..7f3dc8ee6ab8 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -4221,7 +4221,7 @@ static int dm_integrity_ctr(struct dm_target *ti, u=
-nsigned int argc, char **argv
->                 } else if (sscanf(opt_string, "sectors_per_bit:%llu%c", &=
-llval, &dummy) =3D=3D 1) {
->                         log2_sectors_per_bitmap_bit =3D !llval ? 0 : __il=
-og2_u64(llval);
->                 } else if (sscanf(opt_string, "bitmap_flush_interval:%u%c=
-", &val, &dummy) =3D=3D 1) {
-> -                       if (val >=3D (uint64_t)UINT_MAX * 1000 / HZ) {
-> +                       if ((uint64_t)val >=3D (uint64_t)UINT_MAX * 1000 =
-/ HZ) {
->                                 r =3D -EINVAL;
->                                 ti->error =3D "Invalid bitmap_flush_inter=
-val argument";
->                                 goto bad;
-> --
-> 2.39.2
->
+It needs the " * *" to make a formatted list in the generated output.
+Otherwise the use of '- or ':' as a separator doesn't matter AFAIK.
+
+-- 
+#Randy
