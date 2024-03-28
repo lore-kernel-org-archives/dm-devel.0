@@ -1,109 +1,111 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5553D1CF9A
-	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 18:36:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5124D5FBA7
+	for <dm-devel@lists.linux.dev>; Thu, 28 Mar 2024 19:23:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711650993; cv=none; b=qSpJcsAmPkqL9o1o8DACPrDwsMUEzkS3hEYZQSEHEazW6UqC24lmJtooiMHTVwsUv+V07xGlQ5Fu4fOB6GG9EH5NkHGYQZlDPNWnVXhWoz1+oqAUpyCvpp5O82aRJu1P2CgTN06mTALYhiceHr67mM2wlqdtZbIzDCW16UkPc+4=
+	t=1711653815; cv=none; b=nJOr4ES71BMUAv8ejXqqqclVbaxjkSFVdyCaW1S5BpNN3j7Wduw05KyxJKHZeIwe4aVYmqfsL6XWXYj2AYucQmEFiS8ovHw6Sxvls5yjlNqi2FNbG6fHDHBN5kJL/8SwcERoTp9/umLs3Me+wXN7QA/Qns5Xe9u8ljTvzkHy9Wg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711650993; c=relaxed/simple;
-	bh=Sp5jvlLKNP32D8rGHjbzJDshNB/ON9laKdFiq1xs/3c=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=l9foRORe65RP8aWh9JiL9Gbjj0CmU4qgaohxO+HO1lroRDlquTrYl2h6NQnWILMsoD1ZNmqJn9TsimwuQUrYSSX8bjepgAgdmh1eThQRlZB0MkkMawSvj8epGurjYf9u3R4hVxrka2sPAEGdnuDjq6EBVkAUsQSkK3zF7LE4JtM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fbPiNO1B; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1711653815; c=relaxed/simple;
+	bh=wA/3ZMzsqhnPRDvcXtmhlRKA0r/1h+Jjze3JHfLTZzI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=DpJ/B3L4x5UOcYPZsSL1g2wOgCWpbs5RJHmGk2jx5X/1tQzfJ70xa9EfWZvPsWhP8WuREfob5VhvaDw15BNnz2G+9q3LTDjHDgH4n+td8j1kRCQnvRAA21AuNaE/UdNsq6dmwj/Dnr4lcT6k2xGnbC/Sygz8/+PNAm55yCXLzlg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=Cngsym2B; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=TSDDrWfH; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fbPiNO1B"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1711650991;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=JEF8L6USQ1hLDps3RdI620BNw20PF30fu98tAKwws1U=;
-	b=fbPiNO1BLr9EvT8ceIZBweITN8d2/aGUr6DXLzsTlIOmbHpa82ZVGnokRt+THtPS2IM2/p
-	5EMtpRynw2y05bcJk2bTp6+H5zZ+jtEB2wWftheNkp3RIKeT4z+AW4OgPP1+udZJL+P7Qm
-	vW3TsDAZOhNdO1zIGRfATQPCk+XtDwQ=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-197-02DqlTmTObS6YAizG9d5GQ-1; Thu, 28 Mar 2024 14:36:29 -0400
-X-MC-Unique: 02DqlTmTObS6YAizG9d5GQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="Cngsym2B";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="TSDDrWfH"
+Received: from imap2.dmz-prg2.suse.org (imap2.dmz-prg2.suse.org [10.150.64.98])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0899785A58C;
-	Thu, 28 Mar 2024 18:36:29 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id ED25C1121312;
-	Thu, 28 Mar 2024 18:36:28 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id D729B30BFEC2; Thu, 28 Mar 2024 18:36:28 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id D355E3FB53;
-	Thu, 28 Mar 2024 19:36:28 +0100 (CET)
-Date: Thu, 28 Mar 2024 19:36:28 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Arnd Bergmann <arnd@kernel.org>
-cc: linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, 
-    Nathan Chancellor <nathan@kernel.org>, Arnd Bergmann <arnd@arndb.de>, 
-    Nick Desaulniers <ndesaulniers@google.com>, 
-    Bill Wendling <morbo@google.com>, Justin Stitt <justinstitt@google.com>, 
-    Eric Biggers <ebiggers@google.com>, llvm@lists.linux.dev
-Subject: Re: [PATCH 1/9] dm integrity: fix out-of-range warning
-In-Reply-To: <20240328143051.1069575-2-arnd@kernel.org>
-Message-ID: <3573cc6-9a74-4eab-92aa-e66afe18cbf@redhat.com>
-References: <20240328143051.1069575-1-arnd@kernel.org> <20240328143051.1069575-2-arnd@kernel.org>
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 688DA34336;
+	Thu, 28 Mar 2024 19:23:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1711653811;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Ji3/UHuciPHNkExk7xa/gFONeP3sfxTR6+pZplh8sHw=;
+	b=Cngsym2Bx1bWQZwsIC0zsKw0NzvpGxOk3akKbL4obhj7d1jb/iUdwFZLt1Qmv0adOFlG7s
+	6RgLs7a8JOJDYVl2MEONXeeOkycod4dhhy5ZTk5vGNPi4W+RQIR/VSHMzxPThbcfRd+OMa
+	lF7uFr5exuV7EWHqlpBjgURJ17wMPoE=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1711653811;
+	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
+	 cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Ji3/UHuciPHNkExk7xa/gFONeP3sfxTR6+pZplh8sHw=;
+	b=TSDDrWfHiZ0MN2QLCLn9mZDB70GugkpLsGz/KGcuI46XhybN7OsWUj4DInvPdyCE0bbMvA
+	L5XYOUgivHqdy/Ag==
+Authentication-Results: smtp-out1.suse.de;
+	none
+Received: from imap2.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap2.dmz-prg2.suse.org (Postfix) with ESMTPS id 4B8AD13A94;
+	Thu, 28 Mar 2024 19:23:31 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap2.dmz-prg2.suse.org with ESMTPSA
+	id QUpLErPDBWYPLwAAn2gu4w
+	(envelope-from <dsterba@suse.cz>); Thu, 28 Mar 2024 19:23:31 +0000
+Date: Thu, 28 Mar 2024 20:16:12 +0100
+From: David Sterba <dsterba@suse.cz>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>,
+	Josef Bacik <josef@toxicpanda.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Matthew Sakai <msakai@redhat.com>, Chris Mason <clm@fb.com>,
+	David Sterba <dsterba@suse.com>, dm-devel@lists.linux.dev,
+	cgroups@vger.kernel.org, linux-block@vger.kernel.org,
+	linux-btrfs@vger.kernel.org
+Subject: Re: [PATCH 4/4] btrfs use bio_list_merge_init
+Message-ID: <20240328191612.GZ14596@suse.cz>
+Reply-To: dsterba@suse.cz
+References: <20240328084147.2954434-1-hch@lst.de>
+ <20240328084147.2954434-5-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240328084147.2954434-5-hch@lst.de>
+User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
+X-Spamd-Result: default: False [-0.05 / 50.00];
+	HAS_REPLYTO(0.30)[dsterba@suse.cz];
+	NEURAL_HAM_SHORT(-0.20)[-0.999];
+	MIME_GOOD(-0.10)[text/plain];
+	BAYES_HAM(-0.05)[59.90%];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	ARC_NA(0.00)[];
+	RCPT_COUNT_TWELVE(0.00)[13];
+	MIME_TRACE(0.00)[0:+];
+	TO_DN_SOME(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	REPLYTO_ADDR_EQ_FROM(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.cz:replyto,suse.com:email]
+X-Spam-Score: -0.05
+X-Spam-Level: 
+X-Spam-Flag: NO
 
-
-
-On Thu, 28 Mar 2024, Arnd Bergmann wrote:
-
-> From: Arnd Bergmann <arnd@arndb.de>
+On Thu, Mar 28, 2024 at 09:41:47AM +0100, Christoph Hellwig wrote:
+> Use bio_list_merge_init instead of open coding bio_list_merge and
+> bio_list_init.
 > 
-> Depending on the value of CONFIG_HZ, clang compares about a pointless
-> comparison:
-> 
-> drivers/md/dm-integrity.c:4085:12: error: result of comparison of constant 42949672950 with expression of type 'unsigned int' is always false [-Werror,-Wtautological-constant-out-of-range-compare]
->                         if (val >= (uint64_t)UINT_MAX * 1000 / HZ) {
-> 
-> As the check remains useful for other configurations, shut up the
-> warning by adding a second type cast to uint64_t.
-> 
-> Fixes: 468dfca38b1a ("dm integrity: add a bitmap mode")
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
-
-> ---
->  drivers/md/dm-integrity.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index 37b9f8f1ae1a..7f3dc8ee6ab8 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -4221,7 +4221,7 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
->  		} else if (sscanf(opt_string, "sectors_per_bit:%llu%c", &llval, &dummy) == 1) {
->  			log2_sectors_per_bitmap_bit = !llval ? 0 : __ilog2_u64(llval);
->  		} else if (sscanf(opt_string, "bitmap_flush_interval:%u%c", &val, &dummy) == 1) {
-> -			if (val >= (uint64_t)UINT_MAX * 1000 / HZ) {
-> +			if ((uint64_t)val >= (uint64_t)UINT_MAX * 1000 / HZ) {
->  				r = -EINVAL;
->  				ti->error = "Invalid bitmap_flush_interval argument";
->  				goto bad;
-> -- 
-> 2.39.2
-> 
-
+Acked-by: David Sterba <dsterba@suse.com>
