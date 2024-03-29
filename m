@@ -1,93 +1,77 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from 009.lax.mailroute.net (009.lax.mailroute.net [199.89.1.12])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1920A131E59;
-	Fri, 29 Mar 2024 20:00:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0DFD73B7A0
+	for <dm-devel@lists.linux.dev>; Fri, 29 Mar 2024 20:37:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711742437; cv=none; b=U+/SbMjZXFFV5DmCRmBAAN7gMYg3DReVOIIFVGEM1/cPwThxnzy9A03wNDMZOl2vR/DoXWfFAdUBgB23VhlT62a39SDnxtql4Y26Z8m+28xFqzSUgkFDLruM3/R0yMGgzHhPoE2hvwd96fiOjGyCXt+1v9kNkndBXOn8oEd2nZ4=
+	t=1711744656; cv=none; b=nK54uWWaTwslp6Ds7GcehG0se7ikNvSAZhnRyokWxaB188a9uGG7HIpSBcS0CbZ6DobMadSOH4aVf7xAi5V8c2NoMg541def13+mO5qlPMe96B5xZqW+Hzvelcw7qpqCVlV2g9sKuYsO6ya7fMFNCOJUEVgtKkPL3u/7HLtO5mM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711742437; c=relaxed/simple;
-	bh=O10HO98LXxHRjwwegetD1LC2QarBz8wOkuidkGTxkic=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=PnBmFAmNiNutZAk0OAiRfOfj4Z2HD6NoW97nrh2+lO5n6JMkXzTn3Ihn7SnnGPbDb9SMGZsG4adEqxuLnV30VfuxMDc4fgkYIMiyQCOsPWJT8o7iIwlxXVMZY4IqORrEwr2MotYud95+XXa7IkqNz6Nheiojtzqm8ru8lXqtTjg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ibdChtO/; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711744656; c=relaxed/simple;
+	bh=d+rhaQeE4XFKYd1O2K6qSIHBuk+O1S/KN9jXVfQHUGg=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=Pcq1tyBC5rrqoQT6bZzaeozIEBq6qjOX7Q2xWNBrasnky+ddkaV/YZWN7Ec1lfbkgoNwoymR8ZpWeH5xnKE/70wMiGklFHZYkIHPTJ8r9svvcIQHB991WbvS8IR9hwXgETaxiMS1mu0POE3rP6dOkCXoDi/yHdpAnnn3GKFCrJM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=t1T2dU2k; arc=none smtp.client-ip=199.89.1.12
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ibdChtO/"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 88958C43399;
-	Fri, 29 Mar 2024 20:00:36 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711742436;
-	bh=O10HO98LXxHRjwwegetD1LC2QarBz8wOkuidkGTxkic=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=ibdChtO/bXootBctSxklNeA7bYCBts1UgwUFhft4x2sjMGXGiyQ6xGf96V2e0eOA1
-	 ODq9Ia/6579epCaP4lnUDfDLkut5fsOWeaFbJF7me6TstZSBLf3BMrkYDf55Adi731
-	 zHrMkkINKMdPiMUb6gLSoTWBG++DiMupsV5KEmKMPytdOQEZ4kBSph0dMZLkdeLFkK
-	 EbluA1me7aURKnJpRkImBfuddbCDZ41vUC7YUj2cCjTbvsHIIgprJTvRvr6boPp1Ff
-	 UJoxCMbUZIsBcLic6mF8suqylfUb00h7TTGot8oyp8sxfTR9PMGMw0bRiDFpkQ8O6Y
-	 waG7vYyhosOoA==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 7B142D84BAF;
-	Fri, 29 Mar 2024 20:00:36 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="t1T2dU2k"
+Received: from localhost (localhost [127.0.0.1])
+	by 009.lax.mailroute.net (Postfix) with ESMTP id 4V5sfQ2q2QzlgTGW;
+	Fri, 29 Mar 2024 20:37:34 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1711744652; x=1714336653; bh=XSrD+I5G2xuzgmbmL6BGldgz
+	7UUYDzW35s5Oy1nLOsA=; b=t1T2dU2kxtPDSFUPNGYTj84cTtPhV0DWFlt1Mtxm
+	Jx3jCEkbtfF4Ucz5B5JnjlryerMfCc7ssv3OEO4FW/27/3qfQ55BgRHdSuOuy6Os
+	XD8OlwbGGq38ct7uZTxzqkU8Uaob+dTE0UWvER4+fQ74f9AVGfvKwTkcisqcx8U5
+	Orvu/Z+CTzWAat21niWb/As7XQ32cJU7JrZUsS0UwV31RMy0M0ZSfhG6hXErQCc+
+	Rha3dZneWI1iEVZooeYJM2fa2Rvz600jablTSckxoDnFQYRRdFru9FAtz4WT8U9I
+	bOkaCvU++OzNDIlUm2WcLztVOJFsIttpGhfIBirxTOO7AA==
+X-Virus-Scanned: by MailRoute
+Received: from 009.lax.mailroute.net ([127.0.0.1])
+ by localhost (009.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id gY31OGqN4otv; Fri, 29 Mar 2024 20:37:32 +0000 (UTC)
+Received: from [192.168.3.219] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: bvanassche@acm.org)
+	by 009.lax.mailroute.net (Postfix) with ESMTPSA id 4V5sfK5ctlzlgTHp;
+	Fri, 29 Mar 2024 20:37:29 +0000 (UTC)
+Message-ID: <8f8bf2dd-5a73-4952-ad76-dc0c79c65237@acm.org>
+Date: Fri, 29 Mar 2024 13:37:27 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH 0/9] address remaining
- -Wtautological-constant-out-of-range-compare
-From: patchwork-bot+netdevbpf@kernel.org
-Message-Id: 
- <171174243650.4906.1760676317968487901.git-patchwork-notify@kernel.org>
-Date: Fri, 29 Mar 2024 20:00:36 +0000
-References: <20240328143051.1069575-1-arnd@kernel.org>
-In-Reply-To: <20240328143051.1069575-1-arnd@kernel.org>
-To: Arnd Bergmann <arnd@kernel.org>
-Cc: linux-kernel@vger.kernel.org, arnd@arndb.de, idryomov@gmail.com,
- dongsheng.yang@easystack.cn, axboe@kernel.dk, jgg@ziepe.ca, leon@kernel.org,
- agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
- dm-devel@lists.linux.dev, saeedm@nvidia.com, davem@davemloft.net,
- edumazet@google.com, kuba@kernel.org, pabeni@redhat.com, xiubli@redhat.com,
- jlayton@kernel.org, konishi.ryusuke@gmail.com, dvyukov@google.com,
- andreyknvl@gmail.com, dsahern@kernel.org, masahiroy@kernel.org,
- nathan@kernel.org, nicolas@fjasle.eu, ndesaulniers@google.com,
- morbo@google.com, justinstitt@google.com, keescook@chromium.org,
- gustavoars@kernel.org, tariqt@nvidia.com, ceph-devel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-rdma@vger.kernel.org,
- netdev@vger.kernel.org, linux-nilfs@vger.kernel.org,
- kasan-dev@googlegroups.com, linux-kbuild@vger.kernel.org,
- llvm@lists.linux.dev
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3 10/30] block: Fake max open zones limit when there is
+ no limit
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
+ linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>
+References: <20240328004409.594888-1-dlemoal@kernel.org>
+ <20240328004409.594888-11-dlemoal@kernel.org>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20240328004409.594888-11-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hello:
+On 3/27/24 5:43 PM, Damien Le Moal wrote:
+> +	 * zone write plugsso that the user is aware of the potential
+                       ^^^^^^^
 
-This series was applied to netdev/net-next.git (main)
-by Jakub Kicinski <kuba@kernel.org>:
+A space is missing.
 
-On Thu, 28 Mar 2024 15:30:38 +0100 you wrote:
-> From: Arnd Bergmann <arnd@arndb.de>
-> 
-> The warning option was introduced a few years ago but left disabled
-> by default. All of the actual bugs that this has found have been
-> fixed in the meantime, and this series should address the remaining
-> false-positives, as tested on arm/arm64/x86 randconfigs as well as
-> allmodconfig builds for all architectures supported by clang.
-> 
-> [...]
+Thanks,
 
-Here is the summary with links:
-  - [2/9] libceph: avoid clang out-of-range warning
-    (no matching commit)
-  - [5/9] ipv4: tcp_output: avoid warning about NET_ADD_STATS
-    (no matching commit)
-  - [8/9] mlx5: stop warning for 64KB pages
-    https://git.kernel.org/netdev/net-next/c/a5535e533694
-
-You are awesome, thank you!
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
-
+Bart.
