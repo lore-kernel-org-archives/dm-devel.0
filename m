@@ -1,76 +1,63 @@
-Received: from 009.lax.mailroute.net (009.lax.mailroute.net [199.89.1.12])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 445471DA5E
-	for <dm-devel@lists.linux.dev>; Fri, 29 Mar 2024 19:00:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.12
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E356E13A89E;
+	Fri, 29 Mar 2024 19:27:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711738822; cv=none; b=Ztv1BkWZHTpGxXLUL4eBAdUCVHqdggZ85AFkmB8EdeCHJz1v4imhorr8rvefsmQvSbNE9+nr3mSQ+deXFRkPkUYGgV2dm+/afSaRB1qpMHM/DE3F8QD35M8ojcz0cz9P2PX2F4BvIHjeF7I7G4vC9SzZ7b8REdqJonCNGXdQiQs=
+	t=1711740451; cv=none; b=hJ1dJTLHRCGTrP65E0OYNZorHOj7bZSoSbeIFWc0kxSOhE5Z4gdc+vj8hmFfqNz75GBRsacPyWgbVSObYs0UYAkNZ8HQPn8ZA6FHTt1ZBw/7hoTyD+3w4EH4Xtmvp0XbI/WUlalb6udcF9pbLlkDPbS1FmO8vqYsr3N5338areE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711738822; c=relaxed/simple;
-	bh=g7Av2jin4sX0Cfb78/pBPBNfyidDPOykp9LCP0eWApg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=CjWRY3sq0Irg9VXb+8iFk6xqQtXc9QuYR1bu0GoDG0fk4u3LlFIPeyXq7NtDC3aLGCpW7kcLNHERuNEBMHJqbWezfJBDtx3Ob59RdXQeEuYPq5ZdSYXpAeL3BLkBVdP5pliasupKwIAEZWFter5wujYDxzgjteCFlxZ/QJyaq3g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=399cq4Xg; arc=none smtp.client-ip=199.89.1.12
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1711740451; c=relaxed/simple;
+	bh=zQx6slfbQwkr5CxuDiu9WPG+iL7RXOVvhowcv+VoKpc=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=AW+MS9JqKexlsX8nvWV0/g4ltHPsnl8ORjQ147BLvRIZ+RPz3mq6XwUok66o7QajLZKffPQCY0q3hn82lRq1RnHCP5D3DrlLMrK+nmk4A1nF4ZDv1OjN6IO20AUt6vsoxj9xq1jnSzwG5iFu+FOaKOmwwbEAyUXURDLSi9lT+Ew=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DX+MlK3g; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="399cq4Xg"
-Received: from localhost (localhost [127.0.0.1])
-	by 009.lax.mailroute.net (Postfix) with ESMTP id 4V5qVD51PVzlgTGW;
-	Fri, 29 Mar 2024 19:00:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1711738818; x=1714330819; bh=g7Av2jin4sX0Cfb78/pBPBNf
-	yidDPOykp9LCP0eWApg=; b=399cq4XgVFCAZleHjaMjkk4Dxz80eXehdQuOh3Il
-	N/xxtb52kFk+EnmbeXSc55NK98tQrHiBX5qGwHPsGM7Wyfh+dJGkxU/kHwtgkqSu
-	Jcp7xrkbNiHI/P+bEJxyL2BzvdY3t55N25/V2sOb/kHtsmF9t5FMmyJ6GpoCGQYl
-	Bdr6EVgtt0lVBy7GowlZy+Sa0Sp8+6AdaYLngZNCbLh5tguBeX8M35tGr6pjgU4K
-	ijBqqQekpzB1E1aYObWhiCfFMPzXmkUCGwfIootc1ALsLE3jf6m/Me+1TcA6QuWQ
-	dRJ2z3PZdx9Asl0tjJROWVx0p2xYfseLBSlHN5NFx33drQ==
-X-Virus-Scanned: by MailRoute
-Received: from 009.lax.mailroute.net ([127.0.0.1])
- by localhost (009.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id PaHJm4o6KFQU; Fri, 29 Mar 2024 19:00:18 +0000 (UTC)
-Received: from [192.168.3.219] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 009.lax.mailroute.net (Postfix) with ESMTPSA id 4V5qV76jybzlgTHp;
-	Fri, 29 Mar 2024 19:00:15 +0000 (UTC)
-Message-ID: <17a9b0ce-1423-408a-8c70-767218572d64@acm.org>
-Date: Fri, 29 Mar 2024 12:00:13 -0700
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DX+MlK3g"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id C24D0C433F1;
+	Fri, 29 Mar 2024 19:27:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1711740450;
+	bh=zQx6slfbQwkr5CxuDiu9WPG+iL7RXOVvhowcv+VoKpc=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=DX+MlK3gA5Sh5nKxM0bF97DFO9+mNrdgtyQvJeDvRm0tHPtV2LOflMyPUOxqUoBfa
+	 8nhUOJO2jdvPT0YBiwmazYZRemwc4D1oedy+WpiBmbRXL+VzHGNKFrhkIMAUagfbaj
+	 lMXiYhQ67ZmRjs1buVF5JYVjpNtXrxQ1b7aASjsk1InPhWT4/vLU7Uq7n+xPQ18vts
+	 MRaw/c8hnRcBrStFXwx6PZAM+lQqJL1a0X/cjgXXGTHjAMHu8NgbnicnSwRV361P9F
+	 OuP0m0TCZpIT3qlGhvN35KMJGL42CZo5JN8ai8N0moEi77vStUtBkfYTdqiMbyN4i8
+	 ZEA5Zd8F3R6Dg==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id BAC8ED2D0EB;
+	Fri, 29 Mar 2024 19:27:30 +0000 (UTC)
+Subject: Re: [git pull] device mapper fixes for 6.9-rc2
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <ZgbOJlMv2nYOEbWe@redhat.com>
+References: <ZgbOJlMv2nYOEbWe@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <ZgbOJlMv2nYOEbWe@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.9/dm-fixes-2
+X-PR-Tracked-Commit-Id: 8e91c2342351e0f5ef6c0a704384a7f6fc70c3b2
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 3508f318a1dbbc6a19cc873bb312c7d221550ba0
+Message-Id: <171174045076.16736.10562119489660838087.pr-tracker-bot@kernel.org>
+Date: Fri, 29 Mar 2024 19:27:30 +0000
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@lists.linux.dev, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Kuan-Wei Chiu <visitorckw@gmail.com>, Ken Raeburn <raeburn@redhat.com>, Arnd Bergmann <arnd@arndb.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 26/30] block: Move zone related debugfs attribute to
- blk-zoned.c
-To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
- Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
- linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>
-References: <20240328004409.594888-1-dlemoal@kernel.org>
- <20240328004409.594888-27-dlemoal@kernel.org>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20240328004409.594888-27-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
 
-On 3/27/24 5:44 PM, Damien Le Moal wrote:
-> block/blk-mq-debugfs-zone.c contains a single debugfs attribute
-> function. Defining this outside of block/blk-zoned.c does not really
-> help in any way, so move this zone related debugfs attribute to
-> block/blk-zoned.c and delete block/blk-mq-debugfs-zone.c.
+The pull request you sent on Fri, 29 Mar 2024 10:20:22 -0400:
 
-Reviewed-by: Bart Van Assche <bvanassche@acm.org>
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.9/dm-fixes-2
 
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/3508f318a1dbbc6a19cc873bb312c7d221550ba0
+
+Thank you!
+
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
