@@ -1,185 +1,73 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f45.google.com (mail-ot1-f45.google.com [209.85.210.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2FD9D18622
-	for <dm-devel@lists.linux.dev>; Fri, 29 Mar 2024 12:54:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9242146A7C
+	for <dm-devel@lists.linux.dev>; Fri, 29 Mar 2024 14:01:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711716874; cv=none; b=i/WrIaX/AkS24uZMVTm0/ETDr9EBmeHNtwCGbFIfELBMmrwysCiKSQ6y/RDFryMqkV63n5jOwxC2djfHw19/yXM6UIdJifdQAabqMkt5FTN68CKK++ptuUaX7XL9/Sh2INXruKL8EG1sohGvZaUptokhPF3P5kuRcpy/Fv7bKPs=
+	t=1711720895; cv=none; b=m+qGTsi37N/U9QfOUiuQR1Ecy123pL+dWOa996ZGONKcsQbHnw2pyOAyed5T98wZgoarXNqzMKEO5XxSKK5wBHGUApf6lnRHQKYgTl7DkeIM46DT86tiZ9EaZgmMP0MiIuXVZci2vk14A8LWwQuJvBhEkzIDht0gEsq4O6Y87/U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711716874; c=relaxed/simple;
-	bh=q4ISZa1bjkpgcxTzPsAa/bfGXgqOjWEakuRnIBOiMzs=;
+	s=arc-20240116; t=1711720895; c=relaxed/simple;
+	bh=i74F7NjaxnuQxdDtY85xiWNbuiNsx+NkmIsGdmHdShQ=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=c+Y28N+YpjldZI8irinzKuc1YFvJxTkdiGvd5sCOZ2ygnoUtdO8zwUQ4nbejd/+bQpUR0Ed76hnhKOHeR67IGwPIXlYspJF+rAnPDclaAH0e71PtomTa+FaeSvsvUhd6PYp+PaAnatPokUIP6sJNtPvD+3jG8y9N6flcDYqnoII=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Dn0Ullc4; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=L9ehwUISKz4g6WTo3dMP5as/IcvqRzzKCMpR8sa/lkLV1x0wKXAKjDy6mGVyQGZs8fej4oJ0ofIqjf4vbuJdcBl6RjYAadksKYmIyoy3YeV5IrFR0R3/1pCPuprA+6sZUcd5gjImZINwl/4kgKAj1B63BvFVuHZPM14s77gS8QU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.210.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Dn0Ullc4"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1711716871;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=WXr5ge2Ro0Gfnb1mE6GR/iBdI4y0shJZvyEqCg4t9i8=;
-	b=Dn0Ullc44nn32CQ7KKRProWX/w2RDRZ6xC3RuCG49Kjozq8Za2K4yvFVyzDm5dLCwfF8Rd
-	RJ5kIPEUDuHkiwX4l6fE2YUYKLT5UXSXj1vQxokEP8+/75kKfGeZuJuCYssB673B9Z4q5s
-	3fEb1oU5qnUTPn+KCaXcUVkh1DBseKw=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-620-cGgNYPFEM-ml5sNMqfrsYw-1; Fri, 29 Mar 2024 08:54:28 -0400
-X-MC-Unique: cGgNYPFEM-ml5sNMqfrsYw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C11C0800267;
-	Fri, 29 Mar 2024 12:54:27 +0000 (UTC)
-Received: from localhost (unknown [10.39.192.163])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0F72F40C6CB1;
-	Fri, 29 Mar 2024 12:54:26 +0000 (UTC)
-Date: Fri, 29 Mar 2024 08:54:05 -0400
-From: Stefan Hajnoczi <stefanha@redhat.com>
-To: Eric Blake <eblake@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-	David Teigland <teigland@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
-Subject: Re: [RFC 2/9] loop: add llseek(SEEK_HOLE/SEEK_DATA) support
-Message-ID: <20240329125405.GA2382288@fedora>
-References: <20240328203910.2370087-1-stefanha@redhat.com>
- <20240328203910.2370087-3-stefanha@redhat.com>
- <wvdjesmnq6xrkanncathyciocbtxa6m3fefvx3za3ikxfs7uqx@wo22n4cvndr3>
+Received: by mail-ot1-f45.google.com with SMTP id 46e09a7af769-6e695470280so1036849a34.3
+        for <dm-devel@lists.linux.dev>; Fri, 29 Mar 2024 07:01:33 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1711720893; x=1712325693;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=lohjzyD8g/hGhEYvGq+VpCtpRHCNchr+EEmW0UGYQa4=;
+        b=VMvNZxaqe5U6XbJoKLQjo78rSMaWj+kkxeJk5shtx08YNfvkoEXX7Y8w4IxtO7D8Ij
+         TM+/0juXnmgI9y7bsxar3j/ofa7ap32ha+DCRBmPl18u0/JL+CCYA3B5uPJ5ZTAwOgrY
+         E0rU7a6L2emykmz/cZdURENU276uvbd2grAojjfwdqD+KSfULxOMnIiaGG4XRB4l42kK
+         5QqpowJj79k0cBzVmle8fbKmMmVgjBWWIFUWhVsKcglAnzgM8sDzeEBuOhLc1Ost4Ivz
+         h2KRogarOao3wAAKbYMK4z17lMl5mE1U1A35mpcUQeRaXxT3HQUwMRbHxvqWiF8qiVjX
+         OApg==
+X-Forwarded-Encrypted: i=1; AJvYcCUcYPKYyb/LeHygm9zIo8ySM4F0jaOcPYPC8ZFFN9a+BHvbOfVUwQoQLMBOnG+di+EQpBExCnRASLRC9n43ZcUGlWs8D2Yoz0s=
+X-Gm-Message-State: AOJu0Yw/bgXQCY5lGSrZD+m/0AaK/a5QJVuLNahTfDUoj5JgAqymrZhv
+	UMD6jYj/PEk+QcIkLxIeCIUpIDBQrxhf6Q4W1np2c5Tq8JcGE0A/rwtU61U1kg==
+X-Google-Smtp-Source: AGHT+IFsGhp10NMaL9dWqt1JzkamUY3E/XLNndhoccAqNlbVHfXe9eIcnVwx/GPeWcdOmWfGWY+mtQ==
+X-Received: by 2002:a05:6830:1da:b0:6e5:1aca:aa26 with SMTP id r26-20020a05683001da00b006e51acaaa26mr2165579ota.7.1711720892924;
+        Fri, 29 Mar 2024 07:01:32 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id nf5-20020a0562143b8500b0069044802760sm1663149qvb.120.2024.03.29.07.01.32
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 29 Mar 2024 07:01:32 -0700 (PDT)
+Date: Fri, 29 Mar 2024 10:01:31 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>,
+	Josef Bacik <josef@toxicpanda.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Matthew Sakai <msakai@redhat.com>, Chris Mason <clm@fb.com>,
+	David Sterba <dsterba@suse.com>, dm-devel@lists.linux.dev,
+	cgroups@vger.kernel.org, linux-block@vger.kernel.org,
+	linux-btrfs@vger.kernel.org
+Subject: Re: [PATCH 3/4] dm: use bio_list_merge_init
+Message-ID: <ZgbJu0Dx8uku5cTP@redhat.com>
+References: <20240328084147.2954434-1-hch@lst.de>
+ <20240328084147.2954434-4-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="O0O0CfUZc75I8i/Q"
-Content-Disposition: inline
-In-Reply-To: <wvdjesmnq6xrkanncathyciocbtxa6m3fefvx3za3ikxfs7uqx@wo22n4cvndr3>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
-
-
---O0O0CfUZc75I8i/Q
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20240328084147.2954434-4-hch@lst.de>
 
-On Thu, Mar 28, 2024 at 07:00:26PM -0500, Eric Blake wrote:
-> On Thu, Mar 28, 2024 at 04:39:03PM -0400, Stefan Hajnoczi wrote:
-> > Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
-> > ---
-> > Open issues:
-> > - The file offset is updated on both the blkdev file and the backing
-> >   file. Is there a way to avoid updating the backing file offset so the
-> >   file opened by userspace is not affected?
-> > - Should this run in the worker or use the cgroups?
-> > ---
-> >  drivers/block/loop.c | 36 ++++++++++++++++++++++++++++++------
-> >  1 file changed, 30 insertions(+), 6 deletions(-)
-> >=20
-> > diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-> > index 28a95fd366fea..6a89375de82e8 100644
-> > --- a/drivers/block/loop.c
-> > +++ b/drivers/block/loop.c
-> > @@ -750,6 +750,29 @@ static void loop_sysfs_exit(struct loop_device *lo)
-> >  				   &loop_attribute_group);
-> >  }
-> > =20
-> > +static loff_t lo_seek_hole_data(struct block_device *bdev, loff_t offs=
-et,
-> > +		int whence)
-> > +{
-> > +	/* TODO need to activate cgroups or use worker? */
-> > +	/* TODO locking? */
-> > +	struct loop_device *lo =3D bdev->bd_disk->private_data;
-> > +	struct file *file =3D lo->lo_backing_file;
-> > +
-> > +	if (lo->lo_offset > 0)
-> > +		offset +=3D lo->lo_offset; /* TODO underflow/overflow? */
-> > +
-> > +	/* TODO backing file offset is modified! */
-> > +	offset =3D vfs_llseek(file, offset, whence);
->=20
-> Not only did you modify the underlying offset...
->=20
-> > +	if (offset < 0)
-> > +		return offset;
-> > +
-> > +	if (lo->lo_offset > 0)
-> > +		offset -=3D lo->lo_offset; /* TODO underflow/overflow? */
-> > +	if (lo->lo_sizelimit > 0 && offset > lo->lo_sizelimit)
-> > +		offset =3D lo->lo_sizelimit;
->=20
-> ...but if this code kicks in, you have clamped the return result to
-> EOF of the loop device while leaving the underlying offset beyond the
-> limit, which may mess up assumptions of other code expecting the loop
-> to always have an in-bounds offset for the underlying file (offhand, I
-> don't know if there is any such code; but since loop_ctl_fops.llseek =3D
-> noop_lseek, there may be code relying on an even-tighter restriction
-> that the offset of the underlying file never changes, not even within
-> bounds).
+On Thu, Mar 28 2024 at  4:41P -0400,
+Christoph Hellwig <hch@lst.de> wrote:
 
-I don't think anything relies on the file offset. Requests coming from
-the block device contain their own offset (which may have been based on
-the block device file's offset, but not the backing file's offset).
+> Use bio_list_merge_init instead of open coding bio_list_merge and
+> bio_list_init.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-> Furthermore, this is inconsistent with all other seek-beyond-end code
-> that fails with -ENXIO instead of returning size.
-
-You're right, in the SEEK_DATA case the return value should be -ENXIO.
-The SEEK_HOLE case is correct with lo_sizelimit. There is also an
-off-by-one error in the comparison.
-
-It should be:
-
-  if (lo->lo_sizelimit > 0 && offset >=3D lo->lo_sizelimit) {
-  	if (whence =3D=3D SEEK_DATA)
-  		offset =3D -ENXIO;
-  	else
-  		offset =3D lo->lo_sizelimit;
-  }
-
-> But for an RFC, the idea of being able to seek to HOLEs in a loop
-> device is awesome!
->=20
-> > @@ -2140,7 +2164,7 @@ static int loop_control_remove(int idx)
-> >  		pr_warn_once("deleting an unspecified loop device is not supported.\=
-n");
-> >  		return -EINVAL;
-> >  	}
-> > -	=09
-> > +
-> >  	/* Hide this loop device for serialization. */
-> >  	ret =3D mutex_lock_killable(&loop_ctl_mutex);
-> >  	if (ret)
->=20
-> Unrelated whitespace change?
-
-Yes, I'll drop it.
-
-Stefan
-
---O0O0CfUZc75I8i/Q
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmYGue0ACgkQnKSrs4Gr
-c8jpDggAtKqqz4GIKlteqyYksQXgYleVmkngDOnQAQp9bkmubJmmml9ZX6CMhB7X
-HnmKX80aoDVIcy5KTFh1bcRLGJgzidr5vjuO3UT5MP3P+fEMiZzp2EfBRGqUsnY9
-Sooj/8pCs7vLKcfXxKLRH15ME4+1tj1LhG8LVZRhKLYtuHXPE9MP3N4x4lwPOWy5
-vypvEnduzoCor/mPGM7OUMroQd7BZtuZteACWSoI77koQ3pB/296Z5WJv3+Sg/SJ
-jdJX963d2ylggR3CMeetgftzGfpP5Cb/ev26LwbTpAyLe3Uv2hBobhQaB2pKZ9ry
-17rpr2bJwObaeAqsXmVDPAlUOqAHTg==
-=iCZg
------END PGP SIGNATURE-----
-
---O0O0CfUZc75I8i/Q--
-
+Reviewed-by: Mike Snitzer <snitzer@kernel.org>
