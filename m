@@ -1,107 +1,91 @@
-Received: from mail-ot1-f44.google.com (mail-ot1-f44.google.com [209.85.210.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from 009.lax.mailroute.net (009.lax.mailroute.net [199.89.1.12])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DCC808565D
-	for <dm-devel@lists.linux.dev>; Fri, 29 Mar 2024 14:20:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC35C8565D
+	for <dm-devel@lists.linux.dev>; Fri, 29 Mar 2024 18:21:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711722026; cv=none; b=cIZfhXiCZXdbs6VHgQ6sB86dvkBhNTQeeRhi7p1BNV8zOgYE7NzJgrijts4u1Ae1sQ2pElO7GgqO7z3FKMofmbpkplEnEf8KANyTvoET2gFdjr4WqdfBX7BrekRuSy52GSnCD7nFXh6dpCbMHjZ5wz1e0GnKnGu+10NDEteOccE=
+	t=1711736475; cv=none; b=m2aQfWdtG90Ma3Osc8OMWe85mh+Zo8cTXejZVRery3N3XbQnUUlkr/ZDXsJlIlf56m6K1Ltk5oyRFHruHyM7UDLd8OofFMF1nRznPtqG/Ws5Zs38hwRtDgTU6jjInPE1vQCOcEJ6cc2CCiE61qGioMMQrC7z1OYmFAQLv15hTCg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711722026; c=relaxed/simple;
-	bh=wIqcItp3TZSxSQIu3lQo1+x7c8g8/iqdkFQJw8MxJec=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=jrPSiUR1bc8XOYLn5wzCSJDUKZtkSuBksTgIYZ0gWwXdRT/hnD0/GN4uDdF68/F4kiLzOiLiQ3fMWm2Sh8jeyWOITweDkfIrLghC4hJEAZhrSQauZRcu+FYSYLyPJ1jKPv3qhfPV4E1hIWhvIrn0VcjbUwJR6baaGuaw0E7UwYE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.210.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-ot1-f44.google.com with SMTP id 46e09a7af769-6e6e3eadec8so987613a34.0
-        for <dm-devel@lists.linux.dev>; Fri, 29 Mar 2024 07:20:24 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1711722024; x=1712326824;
-        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=n5Pe0hzSzMNAPl2hWGBkg9DigkDiMKnl2M8tW4nsDWg=;
-        b=hYMDtQGI4AeB/n/nQVbfwpoLZS1mdqqxq+c8p7bh9eRrmkcdrAasUUMlrPkcyZ703u
-         jpz4iux1F/72XzEQ/0hzpU/qe89o1qees6flFX2++ZlOeCgkOEIFglgRRVfuWAkqOyX8
-         nGoK369/qKy2KZNafbrqAnae1Q9lvBl4vQkRTQyoHOag/tapQecXEmhQGQ8HgyexlgoA
-         RNIyYcvdf4sf3Tt1+QY6wUnEMopxAt12uNsKPnL/UPZWPByYMJg4J+PrylnXcWf/JpD7
-         zF3o0cVF7orXQwjtiI0h9bc38Z6xB7R172oVqfVJAb6qOJwrHe7lQSqztIDit9WuA6wb
-         LF1w==
-X-Gm-Message-State: AOJu0YxDwxArfMXHes2Xj9EIvT7sxN5KuWfwGlG2r1OlzoxY7WBf3I/Z
-	6HOstenZifJdz+JvTH2tdeV7iOwRVr4oZnbY70QbWA7PLhDBBgjvz2yCZ/Re4Q==
-X-Google-Smtp-Source: AGHT+IFMBJLXrQwid/701zOEqkvHUyFciXE9pt18JMhClmz7yIxaE4V07KuzPmFb/Ujq0k9kxhmuoQ==
-X-Received: by 2002:a05:6808:1509:b0:3c3:d03c:a612 with SMTP id u9-20020a056808150900b003c3d03ca612mr2790182oiw.1.1711722024107;
-        Fri, 29 Mar 2024 07:20:24 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id 6-20020ad45ba6000000b0069694dab3f8sm1686878qvq.39.2024.03.29.07.20.23
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 29 Mar 2024 07:20:23 -0700 (PDT)
-Date: Fri, 29 Mar 2024 10:20:22 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	Alasdair G Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Kuan-Wei Chiu <visitorckw@gmail.com>,
-	Ken Raeburn <raeburn@redhat.com>, Arnd Bergmann <arnd@arndb.de>
-Subject: [git pull] device mapper fixes for 6.9-rc2
-Message-ID: <ZgbOJlMv2nYOEbWe@redhat.com>
+	s=arc-20240116; t=1711736475; c=relaxed/simple;
+	bh=RG69lixKT8XbHVx5HThaYvbNC0wFCvDkG/GNVyevG1U=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=O/34wJbYDrLXfw3zYzCOAyuwxEuE+/FYLkJvz6a6tre/AGJA13yUMIP28Bm0+yF5XUGMShFfFYLzavYvrxvXcuAl3y0hvr+K6fvXiFlNK+W7DM8y6wtZKrbjuLS1G5e1Cm5wAvEXbISsp6h+Ihi7dg31gEo5suGt8EK54mahp38=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=4P5rAMbb; arc=none smtp.client-ip=199.89.1.12
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="4P5rAMbb"
+Received: from localhost (localhost [127.0.0.1])
+	by 009.lax.mailroute.net (Postfix) with ESMTP id 4V5pcz3t92zlgTGW;
+	Fri, 29 Mar 2024 18:21:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1711736464; x=1714328465; bh=oWd4mKvBTfHIVdJ4XtrugL3T
+	fCRZQd98PpL66KZWPK0=; b=4P5rAMbbzABVDZwOK+CHiFKZhkTEmN/S0+pJT6Ol
+	GtbQhk5zaXO0QOt+nUoepPnvpBK0GVK8XuBUcMKlTHwL+wsKsfNgBCKuWJirpxNo
+	TPQ8DfnCfBJCgePs+2Ft8yWtPWc8pSv0VdTt9PPCK0xzUAPXiYwOmblN9AONmiA5
+	iIdvFh52Q2QozPqSVGJRv4hP8YoWn9xkwEJ1yT31mHyKCSpMj1WXixfm0dz7CI3K
+	92vCDLxlH465cgNF6Nu/5EyXQoGiPq7C35T/Qfe2bCiGmZVVOM9tqoz2/+n5712u
+	+GOsye2JpFffvjG+x6fUfkBqqTUUiT7m1660D2m2f2i6ww==
+X-Virus-Scanned: by MailRoute
+Received: from 009.lax.mailroute.net ([127.0.0.1])
+ by localhost (009.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id SOWuDXWEU5aM; Fri, 29 Mar 2024 18:21:04 +0000 (UTC)
+Received: from [192.168.3.219] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: bvanassche@acm.org)
+	by 009.lax.mailroute.net (Postfix) with ESMTPSA id 4V5pcs5YCJzlgTHp;
+	Fri, 29 Mar 2024 18:21:01 +0000 (UTC)
+Message-ID: <e36aac15-1090-4e3c-a402-cff56b4d1961@acm.org>
+Date: Fri, 29 Mar 2024 11:20:59 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3 08/30] block: Introduce zone write plugging
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
+ linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>
+References: <20240328004409.594888-1-dlemoal@kernel.org>
+ <20240328004409.594888-9-dlemoal@kernel.org>
+ <688607d9-6dfe-4c37-81e8-4fea91ec8da8@acm.org>
+ <caf50c25-8f3d-4eb1-85bc-cc3499d5b107@kernel.org>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <caf50c25-8f3d-4eb1-85bc-cc3499d5b107@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hi Linus,
+On 3/28/24 3:38 PM, Damien Le Moal wrote:
+> On 3/29/24 07:20, Bart Van Assche wrote:
+>>> +	/* Wait for the zone write plugs to be RCU-freed. */
+>>> +	rcu_barrier();
+>>> +}
+>>
+>> It is not clear to me why the above rcu_barrier() call is necessary? I'm
+>> not aware of any other kernel code where kfree_rcu() is followed by an
+>> rcu_barrier() call.
+> 
+> Right after that, the mempool (in v4, free list here) is destroyed. So the
+> rcu_barrier() is needed to ensure that the grace period is past and that all
+> plugs are back in the pool/freelist. Without this, I saw problems/crashes when
+> removing devices.
 
-The following changes since commit 4cece764965020c22cff7665b18a012006359095:
+This patch would be easier to read if the rcu_barrier() call would be
+moved out of disk_free_zone_wplugs() and into its caller.
 
-  Linux 6.9-rc1 (2024-03-24 14:10:05 -0700)
+Thanks,
 
-are available in the Git repository at:
+Bart.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.9/dm-fixes-2
-
-for you to fetch changes up to 8e91c2342351e0f5ef6c0a704384a7f6fc70c3b2:
-
-  dm integrity: fix out-of-range warning (2024-03-29 09:48:07 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- Fix MAINTAINERS to not include M: dm-devel for DM entries.
-
-- Fix DM vdo's murmurhash to use proper byteswapping methods.
-
-- Fix DM integrity clang warning about comparison out-of-range.
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmYGzUoACgkQxSPxCi2d
-A1roewf/V6P7fvYKJlAFQ3nhpOy09KSY8G1UofjrfTmqVG329jAzOWoEq5umivPY
-TLWJ0kJ1Wst0+U61u+lho0RnYd3ZHQU3pMrl5Lq9B5yCeZcZIPYxhEBhBsRJtSV7
-m04aaF8Lox5ofhPfNwrhUmJyTa7ZKtkz2MCk4TaT3qNkamzE0ToYjJduERzA1FU7
-x8fEg/D8CrPVn5tbTf6G2u3T2iMJXu1mzR3bj3C8CEGN4QPtRc9c54s2FL4o0mOS
-c/i7VDSSDk/NujY65vY2u0P3hNZKEUcv00M7LezYA6hwhZdINTS4K4oOtPaZUYaN
-FsjMHiyE5echCCv6FvE+ztFGo4H30w==
-=U7Wa
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Arnd Bergmann (1):
-      dm integrity: fix out-of-range warning
-
-Ken Raeburn (1):
-      dm vdo murmurhash3: use kernel byteswapping routines instead of GCC ones
-
-Kuan-Wei Chiu (1):
-      MAINTAINERS: Remove incorrect M: tag for dm-devel@lists.linux.dev
-
- MAINTAINERS                     |  2 --
- drivers/md/dm-integrity.c       |  2 +-
- drivers/md/dm-vdo/murmurhash3.c | 33 ++++++++-------------------------
- 3 files changed, 9 insertions(+), 28 deletions(-)
