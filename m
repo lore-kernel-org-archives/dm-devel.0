@@ -1,82 +1,86 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C443610FF;
-	Sat, 30 Mar 2024 00:33:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEFAFBE6F;
+	Sat, 30 Mar 2024 11:11:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711758808; cv=none; b=GCVVSmti0c4dvGnAesdH+dAdiMm6io7nsSMAkSrgVNbw/nYKTybvN4LhibqkbH8LMkDSih4q6BMQUGpWU0eM7i8Ihud3znnZjxGixkNK+aZ2yWvnBucBrtnLwIeTuMkHzrQ+Mp3GpNPZw/ngz9t6P2yPQqZTHtDXx7a9QUwYxPs=
+	t=1711797093; cv=none; b=pthwGYGVfkKbo79i4r3JfW+J203srEv4BC6L5S4Y3mQ2kd4OYvYtMhaXKPexDmEipY4fIfYU55BS7w/rlrTa8AXWce6NKmQAAkphwv4b4rVqkxv4z+JT6XEZCcVsYS165T4HoL+pSJi6F4ST+gFyWuUe+LrpxL0GWxBdDFIT6Y8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711758808; c=relaxed/simple;
-	bh=csJGkazmVozzT5A8motwawZT4X6xZdC0OteDaVk0kTk=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=sOeCsoUFjwzx+VImt0yzADEjuPnNxEKI4cy8BfvFQO6r8vmSzWkLFIxJfyydvosTD2YTgghwSG2DNzRvPc7qebpSjC5zU9unB+Ef24/0AdeqoiGlWV4+TCErlAGGkWP3KyeXZSCwWXkBMb1ixsB5B6bLdmxxOEX4dNoa1N6YiGI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=foDMAoyL; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1711797093; c=relaxed/simple;
+	bh=iXcSCv1Lm8qoVXmrgVuG9IH8TGJqsJHpTZ9ruAqsmUI=;
+	h=Mime-Version:Content-Type:Date:Message-Id:To:Cc:Subject:From:
+	 References:In-Reply-To; b=mneaipFTH8fgHzlTlxHH/boSUgl+zn6i8Dxa5S9wy4cnacpxWYlhZtnVRyobCCFaf/cfp5ja1XzOyMV8XkkFMoV32ZN3x2I54TuTLApffum0FFRV2gHAzm1BmMOpE0b8qYT9y67Y6aNVhYD85N9qu/MsSl+QyonWMhUngoyfY8A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=qVyEp2OC; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="foDMAoyL"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 98800C433C7;
-	Sat, 30 Mar 2024 00:33:26 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="qVyEp2OC"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 061ADC433C7;
+	Sat, 30 Mar 2024 11:11:26 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1711758808;
-	bh=csJGkazmVozzT5A8motwawZT4X6xZdC0OteDaVk0kTk=;
-	h=Date:Subject:To:References:From:In-Reply-To:From;
-	b=foDMAoyLdSsfL8d5rqY2PUtDxwp1rhpbwNQafskaT6bWWR+5xdxZ/JDASoQ8rBkPG
-	 OqaKf3SMuEAddayru0agzGW6QurWphr/P68Kc7z7Bnk3/Z54pLmpLed9uQPGn+WnTz
-	 euObADHgwau0WzgBhIxDBT49N8TJDQ5i0m6moMlcHheXiro5JxEB4NX3UZ4sKx9SpP
-	 PkYKFH0jiyiXwi3ngZ2fsDIp/97dqcdAvN8QcGyXxT7ZYvz5CKiratCpWY8Ur+Fkpc
-	 5yxDde9SD92clcTvIH+mFVqNPbofnEJxPLzfbEvUaCq6vfTOOSgwSMZ1ocCnKLSSYi
-	 bN9Xdq+Ybgakw==
-Message-ID: <f661db89-8008-4c56-a50d-44ad95d706ef@kernel.org>
-Date: Sat, 30 Mar 2024 09:33:24 +0900
+	s=k20201202; t=1711797091;
+	bh=iXcSCv1Lm8qoVXmrgVuG9IH8TGJqsJHpTZ9ruAqsmUI=;
+	h=Date:To:Cc:Subject:From:References:In-Reply-To:From;
+	b=qVyEp2OCL7jBvHHpwLy5SoX/uOuYnC1rcPn+CPe8wTYEuho90fPuIdCDew6wweXpi
+	 vr2rRp7C/tCMbPkVmBjvy0d2xn6W7Vkq71NAS+exqVOYf9jSy5wwSyB4rBFcof/1Vr
+	 dtKAFPNiSks+nyA/O9D41wwFoloIqWTxq9TGLOkhwBWa57+P6iPY2DxcR6RL1oMeml
+	 U5/g9Yh/kIQo8XvnWmdPc6JRYsVI0rbuX/07su2hZhO9zv1dd7X5ExFmEn+nYdFvuJ
+	 jd8KJFKJkfmbb65/UaOIex+Hn/flU5IlCzJjpbswd6ds72r9f3uIOp8vV91t+ASrBX
+	 Z0Fp2O26xlMEQ==
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 18/30] null_blk: Introduce zone_append_max_sectors
- attribute
-To: Bart Van Assche <bvanassche@acm.org>, linux-block@vger.kernel.org,
- Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
- linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>
-References: <20240328004409.594888-1-dlemoal@kernel.org>
- <20240328004409.594888-19-dlemoal@kernel.org>
- <20897217-2eae-44f8-9873-43d8898ecf43@acm.org>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <20897217-2eae-44f8-9873-43d8898ecf43@acm.org>
+Mime-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Date: Sat, 30 Mar 2024 13:11:25 +0200
+Message-Id: <D071F8P9F4W2.OJB84BIYSIR6@kernel.org>
+To: "Randy Dunlap" <rdunlap@infradead.org>, "Fan Wu"
+ <wufan@linux.microsoft.com>, <corbet@lwn.net>, <zohar@linux.ibm.com>,
+ <jmorris@namei.org>, <serge@hallyn.com>, <tytso@mit.edu>,
+ <ebiggers@kernel.org>, <axboe@kernel.dk>, <agk@redhat.com>,
+ <snitzer@kernel.org>, <eparis@redhat.com>, <paul@paul-moore.com>
+Cc: <linux-doc@vger.kernel.org>, <linux-integrity@vger.kernel.org>,
+ <linux-security-module@vger.kernel.org>, <fsverity@lists.linux.dev>,
+ <linux-block@vger.kernel.org>, <dm-devel@lists.linux.dev>,
+ <audit@vger.kernel.org>, <linux-kernel@vger.kernel.org>, "Deven Bowers"
+ <deven.desai@linux.microsoft.com>
+Subject: Re: [PATCH v16 01/20] security: add ipe lsm
+From: "Jarkko Sakkinen" <jarkko@kernel.org>
+X-Mailer: aerc 0.17.0
+References: <1711657047-10526-1-git-send-email-wufan@linux.microsoft.com>
+ <1711657047-10526-2-git-send-email-wufan@linux.microsoft.com>
+ <D05ODONHFJ9O.3VG0HLFPA1OB0@kernel.org>
+ <cde3dc6e-ca77-445e-a4b7-fc21a934999a@infradead.org>
+In-Reply-To: <cde3dc6e-ca77-445e-a4b7-fc21a934999a@infradead.org>
 
-On 3/30/24 06:35, Bart Van Assche wrote:
-> On 3/27/24 5:43 PM, Damien Le Moal wrote:
->> @@ -1953,7 +1961,7 @@ static int null_add_dev(struct nullb_device *dev)
->>   
->>   	rv = add_disk(nullb->disk);
->>   	if (rv)
->> -		goto out_ida_free;
->> +		goto out_cleanup_zone;
->>   
-> 
-> The above change is unrelated to the introduction of
-> zone_append_max_sectors and hence should not be in this patch.
+On Fri Mar 29, 2024 at 12:11 AM EET, Randy Dunlap wrote:
+>
+>
+> On 3/28/24 13:45, Jarkko Sakkinen wrote:
+> >> +/**
+> >> + * ipe_init - Entry point of IPE.
+> >> + *
+> >> + * This is called at LSM init, which happens occurs early during kern=
+el
+> >> + * start up. During this phase, IPE registers its hooks and loads the
+> >> + * builtin boot policy.
+> >> + * Return:
+> >> + * * 0		- OK
+> >> + * * -ENOMEM	- Out of memory
+> > Just a suggestion:
+> >=20
+> > * 0:		OK
+> > * -ENOMEM:	Out of memory (OOM)
+> >=20
+> > Rationale being more readable (less convoluted).
+> >=20
+> > And also sort of symmetrical how parameters are formatted in kdoc.
+>
+> It needs the " * *" to make a formatted list in the generated output.
+> Otherwise the use of '- or ':' as a separator doesn't matter AFAIK.
 
-Good catch. That is a bug of this patch. I removed this change as it is incorrect.
+Thanks for the remark! Yeah I don't mind the two stars.
 
-> Additionally, the order of cleanup actions in the error path seems
-> wrong to me. null_init_zoned_dev() is called before blk_mq_alloc_disk().
-> Hence, the put_disk() call in the error path should occur before the
-> null_free_zoned_dev() call.
-
-That is separate from this patch (and the series). But I will send a fix patch
-for that.
-
--- 
-Damien Le Moal
-Western Digital Research
-
+BR, Jarkko
