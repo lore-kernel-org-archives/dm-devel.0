@@ -1,119 +1,100 @@
-Received: from mail-qt1-f174.google.com (mail-qt1-f174.google.com [209.85.160.174])
+Received: from mail-oi1-f177.google.com (mail-oi1-f177.google.com [209.85.167.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D066FDF5C
-	for <dm-devel@lists.linux.dev>; Tue,  2 Apr 2024 01:26:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E19A25575
+	for <dm-devel@lists.linux.dev>; Tue,  2 Apr 2024 06:42:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712021210; cv=none; b=co0OLfM8lvOAuOIh3QhhPIY7/OY89IGU4ZjyhB4Rc9SjwBCLLBNdFxfiAkJ4SY2YLNNO9v/WiBO7Th4t3N4aV8Z63lQ7MKAAVgGB4fecrfKcK+x6XhBWZEYXx8iXXZeiII6eKPjD12+cY1nyikiUE2wV6Yulcj5aFxb4JqRn0yE=
+	t=1712040137; cv=none; b=Q7V/KywTIt21FA5DbfrBIuy2qASZueQDRlPlwRgiE5IFF/QNrf5Ja2wHx/Alz0wErBMeKAbEGAWZRHrQqV5pHjUPFtMQB4k8qn8ZRLerOgvD0tQQZUR1yxqCjO3zsD/QLm7weLgH7WUSaca4HY2gLczuWoS1Bviyyjwe2qdwpzA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712021210; c=relaxed/simple;
-	bh=WqrYHc1OrW927dxpv9fTrIBfKRqR2NBvDdcY6XIS0bs=;
-	h=Date:Message-ID:MIME-Version:Content-Type:Content-Disposition:
-	 From:To:Cc:Subject:References:In-Reply-To; b=eIAeD+mGQ4Zwpowl1CTZKQc8QeD+3VeJfYrs4wp35txchmVhQQ/mck7iknw4AH+X6i8EOLmoK/6yINGQPWZ5LwsClhPrfzCtZtr6tJGTA3ghQSeGzZ+YAim4NU/eFRgCzdDsdfakqg+hNdGzeXAPfYhw3GLivUfChyUNfSrfbZA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=VvaKM7gc; arc=none smtp.client-ip=209.85.160.174
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
+	s=arc-20240116; t=1712040137; c=relaxed/simple;
+	bh=JjAntBOnD5xFGFnRblpAkq+2VumhA3Hem++jWk6Y4W8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:Cc:
+	 In-Reply-To:Content-Type; b=OjQ43iDkNikw2IBWiEq3gOmz0quouZs9NzHMpUDxKVN1YykU5KMSdfEEhFpEDXEKl+jyeLAuywHi9QT/u6YtuxDlsG8/v8kQgE+Hbs4ZSA3jsB8SchYmbivqJp7bRWghJP12Iz+ON8KR2wn4WaybBDDz8L1Zw/iR8ZShT6FtcPY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=m9QjIg34; arc=none smtp.client-ip=209.85.167.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="VvaKM7gc"
-Received: by mail-qt1-f174.google.com with SMTP id d75a77b69052e-432ff72d745so6170751cf.1
-        for <dm-devel@lists.linux.dev>; Mon, 01 Apr 2024 18:26:47 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="m9QjIg34"
+Received: by mail-oi1-f177.google.com with SMTP id 5614622812f47-3c3d2d0e86dso2278834b6e.2
+        for <dm-devel@lists.linux.dev>; Mon, 01 Apr 2024 23:42:16 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1712021206; x=1712626006; darn=lists.linux.dev;
-        h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
-         :content-disposition:mime-version:message-id:date:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=hRws9YXLN8yb7zuQUc8CIutzWgp4avkTPI09HZCU6cI=;
-        b=VvaKM7gcqspPdQXMO/J5ODc9xyXMqyPJxaP1Ti+98WlFC1y0BNjPInnMLY61h9zAB4
-         fh67mgnfhqit8fuBN1HrY8bzpoUHeJfAKvhxU5wCeopQ4Q6RnlszKh0lmbFmlUtxCvXj
-         TYkrJ94sBgHnwD4bXyzg1clIVyJ9S9T2tv91lPshVI1EsqNsYnbl4ffkCevunFSTZpDZ
-         QUPPtGW496glzstqi++rNuBaT10r0o1Kk7p0LU8G+5/Qdw5iRehWCYeHV1akImx4Onau
-         3ZdQJBZWPge4uDiRpGethWo6jcTR3YBPsgyIKNm/Efb0/b/m4LLfKtx6obh1pYGxYQwP
-         Jrag==
+        d=gmail.com; s=20230601; t=1712040135; x=1712644935; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:cc:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=uU48DJgFaHLx1/2t1/ZicKir2GW9GbUz5ocKNaf/XsY=;
+        b=m9QjIg34XjekOUtPLgRREPbggB+bkEk4Gdx8Wx0ln5TDQ4SNhfNh6LpPXeJT6VLBwt
+         NP14zYDXWuQ6yiVzFFvPf9hmYi3scmm8XGxVulE8XGeq17GsrCxTUonBU0JDP2t6MQrl
+         n12QNshi8/O/NqXN/B7NntM49vIHeS+sEdW9ujLlTjnfeMmL9qf4b2RrKMMdKWUzKO6U
+         DwxYoBXxLULJk6D3RcpG4ES91WQKdNkItd1wLXfIpZ/Dj1dNLIIDMB1FlLO86OBr3/oI
+         FAUaPB5x75tJat3ymH/zReQ97KxGX+RLcg81YYE3DReSvyg9gnf2xKi44tFDM/fu94Ey
+         FQYg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712021206; x=1712626006;
-        h=in-reply-to:references:subject:cc:to:from:content-transfer-encoding
-         :content-disposition:mime-version:message-id:date:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=hRws9YXLN8yb7zuQUc8CIutzWgp4avkTPI09HZCU6cI=;
-        b=P/AUmYtURXAeS4qPYCMW/bgN17kbJJD7IaMZNWlockFl7Hf10+07g3CS2k1K0KfN9c
-         +OlkV6eehoeuAvWd+FPQt6AT8Pp4AG46b5SnQtKf9tyMkozf3s4iU56TYIcZg+d1tm6o
-         e79WJce5lq8Hg+aR1XneWPvY9o5OI1gT6YD/ALJuIDmMyOZMGssZ/bKpCQJ3bb8pdm2k
-         ZyC6jcDwtGERb6NPYdqLhE3RH3VfWaZ45wkOBeKQF/CMHSip6YS/cVR5yqgsrjjs87ee
-         3i9PP/tn2RI6b2BhwVNPxe8SE+hi/sWsth9F61UadXItjwmdBjM+or12I6dgW5I/+ikB
-         WMqw==
-X-Forwarded-Encrypted: i=1; AJvYcCXyxOPkJHepq2amdflROWHWyjjVe22ERI873IBTC3rqKzS3rE0gCMCho/X3kZbJW+Qg5GkRp3WvQw6kLJN2AwksvYT3HqI4Uw0=
-X-Gm-Message-State: AOJu0Yzf+npu1f07EjNP+Y/TeRcPy2Crcz6Ojr9hmVbmsSSWaFNT2YB8
-	XRfYfvKTEKqYgNt0dWmEV4qGmcHcch78AyjSaqZf/XMTCfyyoKt74ibNa9TR1w==
-X-Google-Smtp-Source: AGHT+IFZ7SasfMMYh5vB3j/xGXqf/TCs4Bcif8z6dD6zV7+EZAG39P9HJEPaE4K4Urz2UW0TPzSDug==
-X-Received: by 2002:a05:622a:4b11:b0:432:de8a:3a8 with SMTP id et17-20020a05622a4b1100b00432de8a03a8mr9661426qtb.18.1712021206548;
-        Mon, 01 Apr 2024 18:26:46 -0700 (PDT)
-Received: from localhost ([70.22.175.108])
-        by smtp.gmail.com with ESMTPSA id fw4-20020a05622a4a8400b00432bcd630c8sm4405470qtb.93.2024.04.01.18.26.46
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 01 Apr 2024 18:26:46 -0700 (PDT)
-Date: Mon, 01 Apr 2024 21:26:45 -0400
-Message-ID: <7bc35832c837a23773424bdc2255808b@paul-moore.com>
+        d=1e100.net; s=20230601; t=1712040135; x=1712644935;
+        h=content-transfer-encoding:in-reply-to:cc:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=uU48DJgFaHLx1/2t1/ZicKir2GW9GbUz5ocKNaf/XsY=;
+        b=ONGYb0G2rYcMiNvQo/1kogPD682G84Yak2UdNhfrnoqjy4COKMEzhJpEaDb3QPH/lm
+         r5RDyrrcRDj1vLQHTzLRtjDrK3nER7cNUXh9VxpahjmXmvnBfhwFvoxAblOxPFddEa0M
+         F1qtK6oDzX3u9NbEvWDy1dcZtVcuPvGs58a9yhRBDi4opsuJUWsL0eGCzeZJghLO5iLW
+         pId2XeAv7i0K0djNvvK0VFkV3jKkKgwAw25bkwsFgLnRD1gsOXGgxnSQEHziTkRPDtwc
+         g2KISVD1qs413peCf5YaI6C7bArpQni9+uwRph6vxK12uBWISUtJksgdsdwQXGqsTFk4
+         nIog==
+X-Forwarded-Encrypted: i=1; AJvYcCXoQZqGuYjAR5IomTc4ABmiUBJUnLVRIECUSvUlnIe5/8VHZUwzQWuS2vfMLpgY0WBK7/qo+IoMT6Xn+8f6AC34I1n8gOunk+Y=
+X-Gm-Message-State: AOJu0YxSA0WvxzF1p48JZX5+a0K5mrlMi8D4tq6sMqbPpaUnAZaijshz
+	F8cneXWSPgB5yDTE+st0rDg2FfgSJ04LELr2VhZdMGeGqRrRffI9
+X-Google-Smtp-Source: AGHT+IFJBRPUzzyLOZ+Iz+JssAjGs8OrSAfHCaYLwSwDXfN3nVO69I7ZzxGjs/eatznGecPM52vC8Q==
+X-Received: by 2002:a05:6808:19a1:b0:3c3:e621:4bd2 with SMTP id bj33-20020a05680819a100b003c3e6214bd2mr14487788oib.8.1712040135376;
+        Mon, 01 Apr 2024 23:42:15 -0700 (PDT)
+Received: from ?IPV6:2600:8802:3800:75a0:2378:fa3f:c6b3:24d1? ([2600:8802:3800:75a0:2378:fa3f:c6b3:24d1])
+        by smtp.gmail.com with ESMTPSA id z9-20020a63e549000000b005cd8044c6fesm8907652pgj.23.2024.04.01.23.42.14
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 01 Apr 2024 23:42:14 -0700 (PDT)
+Message-ID: <f502ece5-4120-40dd-999f-2904ca5d0b38@gmail.com>
+Date: Mon, 1 Apr 2024 23:42:13 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0 
-Content-Type: text/plain; charset=utf-8 
-Content-Disposition: inline 
-Content-Transfer-Encoding: 8bit
-From: Paul Moore <paul@paul-moore.com>
-To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>
-Subject: Re: [PATCH v16 15/20] security: add security_inode_setintegrity() hook
-References: <1711657047-10526-16-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1711657047-10526-16-git-send-email-wufan@linux.microsoft.com>
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3 19/30] null_blk: Introduce fua attribute
+To: Damien Le Moal <dlemoal@kernel.org>
+References: <20240328004409.594888-1-dlemoal@kernel.org>
+ <20240328004409.594888-20-dlemoal@kernel.org>
+Content-Language: en-US
+From: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+ linux-scsi@vger.kernel.org, "Martin K . Petersen"
+ <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
+ Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org,
+ Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20240328004409.594888-20-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Mar 28, 2024 Fan Wu <wufan@linux.microsoft.com> wrote:
+On 3/27/24 17:43, Damien Le Moal wrote:
+> Add the fua configfs attribute and module parameter to allow
+> configuring if the device supports FUA or not. Using this attribute
+> has an effect on the null_blk device only if memory backing is enabled
+> together with a write cache (cache_size option).
 > 
-> This patch introduces a new hook to save inode's integrity
-> data. For example, for fsverity enabled files, LSMs can use this hook to
-> save the verified fsverity builtin signature into the inode's security
-> blob, and LSMs can make access decisions based on the data inside
-> the signature, like the signer certificate.
+> This new attribute allows configuring a null_blk device with a write
+> cache but without FUA support. This is convenient to test the block
+> layer flush machinery.
 > 
-> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-> 
-> --
-> v1-v14:
->   + Not present
-> 
-> v15:
->   + Introduced
-> 
-> v16:
->   + Switch to call_int_hook()
-> 
-> ---
->  include/linux/lsm_hook_defs.h |  2 ++
->  include/linux/security.h      | 10 ++++++++++
->  security/security.c           | 20 ++++++++++++++++++++
->  3 files changed, 32 insertions(+)
-> 
-> diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-> index b391a7f13053..6f746dfdb28b 100644
-> --- a/include/linux/lsm_hook_defs.h
-> +++ b/include/linux/lsm_hook_defs.h
-> @@ -1020,6 +1023,13 @@ static inline int security_inode_copy_up(struct dentry *src, struct cred **new)
->  	return 0;
->  }
->  
-> +static inline int security_inode_setintegrity(struct inode *inode,
-> +					      enum lsm_integrity_type, type,
+> Signed-off-by: Damien Le Moal<dlemoal@kernel.org>
+> Reviewed-by: Hannes Reinecke<hare@suse.de>
 
-Another bonus comma ...
 
-> +					      const void *value, size_t size)
-> +{
-> +	return 0;
-> +}
-> +
+Looks good.
 
---
-paul-moore.com
+Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
+
+-ck
+
+
+
