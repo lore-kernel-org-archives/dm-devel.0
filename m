@@ -1,199 +1,110 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78AB67A151;
-	Tue,  2 Apr 2024 12:39:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 049E67F7D3
+	for <dm-devel@lists.linux.dev>; Tue,  2 Apr 2024 13:04:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712061589; cv=none; b=lAfLz8puLFwpVS3NwZXh9e6gcWDNx6mPPdQ737yoLli2sLYXzfN0csCwo7m18FIOEdNOawHrIaEHE6vKxeLgWthrp7JKkHkjhFHPtlVMN8sOH0CqkGFhYnrZ+55oNq0ntiWcSlW909SnQ8YaYmhmTMt80VR/PD6oixfYXATU5DM=
+	t=1712063100; cv=none; b=TdMCG8XCwCaQ+ck7DDFuNexNjYHWM8H9VpFEfmUJkAFpwAH/TC53leHfMwlyd9B5o8T4icGu4M81nHv2QBRi8Whd3XxOyQUXsu1450tqlLHgSQWHai7KNWsv3Oj5Le8LPxIKWHK1Uka+oRn6tCUwv7Qn4PvwzXE5dg/2f0Jm8vs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712061589; c=relaxed/simple;
-	bh=I/kfomac+HfU+6TqAibNGPZkKFgGudZZ6kHMd4uDmxg=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Bg9B1V5P2RUlDozLXkb/ARB2vYddcI30uXmTvAOHp0sIjtIdY3pbryFVLl8slYd6W8XfU1ansjLcAunYTYbALBWkkRFtQ4Okc0Bl+B1VRATIRqpcj7aC2V22NzhimvQ87vD3zyhWWcXi1A10diyboG0i2frf2IhKx3sm056ocD0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fxPJmJPR; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1712063100; c=relaxed/simple;
+	bh=7ah2VuBYWEmWHWPyFP68b6yoTO91npOyV7LilgwLJqw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=KJPfVtU1/v2jpstk5NtLg6qgaoOlw6APlgNV9a4LeUsLwMGMwfZ1PiTa5zA31NfM9Xc67QFlPBLu5m/+Nq015YKimVXb4Ywq5YXufGNdC2qNrKW+ibg+10zvUf0VWRZ56dhRaNjPiFtB0ywaP1BBnrm0p+kaIE7tBG/VNS75ASQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ky4McLlu; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fxPJmJPR"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 44874C43394;
-	Tue,  2 Apr 2024 12:39:48 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1712061589;
-	bh=I/kfomac+HfU+6TqAibNGPZkKFgGudZZ6kHMd4uDmxg=;
-	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=fxPJmJPRiMFDx+utnhtGpuLsQNe7ccZebfJyPhrXidah2dgDegKho5mkNm5kiae49
-	 FJ12+DN6Dlaq6PSrktL1pJBaKXdcVp4UC601DhPIX1UweTRbJ2jSm7XkUH/cE20GzB
-	 qMOPKhgXF08LQx1geWdVI9dyHvqjUj4AdeQQdCIJjNyatZkouY/awruaBPDqLPpCkR
-	 yNBwKwHIIguTub+HJKgpAYDujGzSdsRt5sZzCGPNHHnz/Tg7t1Rbet10/qqqGXvkgI
-	 vIRIEIFI/rT89kYybyvGfduFTzWvDf8U5EOc5AV1PSFvT/nG8J2/a/5Ar8PcBu+qHF
-	 +NmR8fvMf+GDw==
-From: Damien Le Moal <dlemoal@kernel.org>
-To: linux-block@vger.kernel.org,
-	Jens Axboe <axboe@kernel.dk>,
-	linux-scsi@vger.kernel.org,
-	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@redhat.com>,
-	linux-nvme@lists.infradead.org,
-	Keith Busch <kbusch@kernel.org>,
-	Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v4 28/28] block: Do not special-case plugging of zone write operations
-Date: Tue,  2 Apr 2024 21:39:07 +0900
-Message-ID: <20240402123907.512027-29-dlemoal@kernel.org>
-X-Mailer: git-send-email 2.44.0
-In-Reply-To: <20240402123907.512027-1-dlemoal@kernel.org>
-References: <20240402123907.512027-1-dlemoal@kernel.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ky4McLlu"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1712063098;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=OvSWXFalEF6OU22DUvBZWFYn2B7uDOAlKG6m5QBQYIk=;
+	b=Ky4McLlu1CegBZcflHdn/wM175LEb4xmNP12ttahkdri3+Ep8PRHIcv7+9XTuSVKA2nqXY
+	vHXRbp7sXpEovWexCYadq9cmdg/wOjVyqNZzHiJBkPvOlKlM3Si/yvaSqXpvM6mrWGUE1P
+	39qRGIgHvxuUE1EiuDK9Sc/ts/AY/HE=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-682-NI3dA4XqNgaoiilj5Na5TA-1; Tue, 02 Apr 2024 09:04:54 -0400
+X-MC-Unique: NI3dA4XqNgaoiilj5Na5TA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 141C3101A520;
+	Tue,  2 Apr 2024 13:04:54 +0000 (UTC)
+Received: from localhost (unknown [10.39.193.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2134E492BCD;
+	Tue,  2 Apr 2024 13:04:52 +0000 (UTC)
+Date: Tue, 2 Apr 2024 09:04:46 -0400
+From: Stefan Hajnoczi <stefanha@redhat.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	eblake@redhat.com, Alasdair Kergon <agk@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+	David Teigland <teigland@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+	Joe Thornber <ejt@redhat.com>
+Subject: Re: [RFC 0/9] block: add llseek(SEEK_HOLE/SEEK_DATA) support
+Message-ID: <20240402130446.GA2496428@fedora>
+References: <20240328203910.2370087-1-stefanha@redhat.com>
+ <20240402122617.GA30720@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="RDsvgnmIpxDRfcPA"
+Content-Disposition: inline
+In-Reply-To: <20240402122617.GA30720@lst.de>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 
-With the block layer zone write plugging being automatically done for
-any write operation to a zone of a zoned block device, a regular request
-plugging handled through current->plug can only ever see at most a
-single write request per zone. In such case, any potential reordering
-of the plugged requests will be harmless. We can thus remove the special
-casing for write operations to zones and have these requests plugged as
-well. This allows removing the function blk_mq_plug and instead directly
-using current->plug where needed.
 
-Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Bart Van Assche <bvanassche@acm.org>
----
- block/blk-core.c       |  6 ------
- block/blk-merge.c      |  3 +--
- block/blk-mq.c         |  7 +------
- block/blk-mq.h         | 31 -------------------------------
- include/linux/blkdev.h | 12 ------------
- 5 files changed, 2 insertions(+), 57 deletions(-)
+--RDsvgnmIpxDRfcPA
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index e1a5344c2257..47400a4fe851 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -907,12 +907,6 @@ int bio_poll(struct bio *bio, struct io_comp_batch *iob, unsigned int flags)
- 	    !test_bit(QUEUE_FLAG_POLL, &q->queue_flags))
- 		return 0;
- 
--	/*
--	 * As the requests that require a zone lock are not plugged in the
--	 * first place, directly accessing the plug instead of using
--	 * blk_mq_plug() should not have any consequences during flushing for
--	 * zoned devices.
--	 */
- 	blk_flush_plug(current->plug, false);
- 
- 	/*
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index 7a9f8187ea62..3228868283a4 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -1112,10 +1112,9 @@ static enum bio_merge_status blk_attempt_bio_merge(struct request_queue *q,
- bool blk_attempt_plug_merge(struct request_queue *q, struct bio *bio,
- 		unsigned int nr_segs)
- {
--	struct blk_plug *plug;
-+	struct blk_plug *plug = current->plug;
- 	struct request *rq;
- 
--	plug = blk_mq_plug(bio);
- 	if (!plug || rq_list_empty(plug->mq_list))
- 		return false;
- 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 66dc289f5bee..9eda4d8413f4 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -1333,11 +1333,6 @@ void blk_execute_rq_nowait(struct request *rq, bool at_head)
- 
- 	blk_account_io_start(rq);
- 
--	/*
--	 * As plugging can be enabled for passthrough requests on a zoned
--	 * device, directly accessing the plug instead of using blk_mq_plug()
--	 * should not have any consequences.
--	 */
- 	if (current->plug && !at_head) {
- 		blk_add_rq_to_plug(current->plug, rq);
- 		return;
-@@ -2935,7 +2930,7 @@ static void blk_mq_use_cached_rq(struct request *rq, struct blk_plug *plug,
- void blk_mq_submit_bio(struct bio *bio)
- {
- 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
--	struct blk_plug *plug = blk_mq_plug(bio);
-+	struct blk_plug *plug = current->plug;
- 	const int is_sync = op_is_sync(bio->bi_opf);
- 	struct blk_mq_hw_ctx *hctx;
- 	unsigned int nr_segs = 1;
-diff --git a/block/blk-mq.h b/block/blk-mq.h
-index f75a9ecfebde..260beea8e332 100644
---- a/block/blk-mq.h
-+++ b/block/blk-mq.h
-@@ -365,37 +365,6 @@ static inline void blk_mq_clear_mq_map(struct blk_mq_queue_map *qmap)
- 		qmap->mq_map[cpu] = 0;
- }
- 
--/*
-- * blk_mq_plug() - Get caller context plug
-- * @bio : the bio being submitted by the caller context
-- *
-- * Plugging, by design, may delay the insertion of BIOs into the elevator in
-- * order to increase BIO merging opportunities. This however can cause BIO
-- * insertion order to change from the order in which submit_bio() is being
-- * executed in the case of multiple contexts concurrently issuing BIOs to a
-- * device, even if these context are synchronized to tightly control BIO issuing
-- * order. While this is not a problem with regular block devices, this ordering
-- * change can cause write BIO failures with zoned block devices as these
-- * require sequential write patterns to zones. Prevent this from happening by
-- * ignoring the plug state of a BIO issuing context if it is for a zoned block
-- * device and the BIO to plug is a write operation.
-- *
-- * Return current->plug if the bio can be plugged and NULL otherwise
-- */
--static inline struct blk_plug *blk_mq_plug( struct bio *bio)
--{
--	/* Zoned block device write operation case: do not plug the BIO */
--	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
--	    bdev_op_is_zoned_write(bio->bi_bdev, bio_op(bio)))
--		return NULL;
--
--	/*
--	 * For regular block devices or read operations, use the context plug
--	 * which may be NULL if blk_start_plug() was not executed.
--	 */
--	return current->plug;
--}
--
- /* Free all requests on the list */
- static inline void blk_mq_free_requests(struct list_head *list)
- {
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index faacc9853e0b..79ed07bd652a 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1301,18 +1301,6 @@ static inline unsigned int bdev_zone_no(struct block_device *bdev, sector_t sec)
- 	return disk_zone_no(bdev->bd_disk, sec);
- }
- 
--/* Whether write serialization is required for @op on zoned devices. */
--static inline bool op_needs_zoned_write_locking(enum req_op op)
--{
--	return op == REQ_OP_WRITE || op == REQ_OP_WRITE_ZEROES;
--}
--
--static inline bool bdev_op_is_zoned_write(struct block_device *bdev,
--					  enum req_op op)
--{
--	return bdev_is_zoned(bdev) && op_needs_zoned_write_locking(op);
--}
--
- static inline sector_t bdev_zone_sectors(struct block_device *bdev)
- {
- 	struct request_queue *q = bdev_get_queue(bdev);
--- 
-2.44.0
+On Tue, Apr 02, 2024 at 02:26:17PM +0200, Christoph Hellwig wrote:
+> On Thu, Mar 28, 2024 at 04:39:01PM -0400, Stefan Hajnoczi wrote:
+> > In the block device world there are similar concepts to holes:
+> > - SCSI has Logical Block Provisioning where the "mapped" state would be
+> >   considered data and other states would be considered holes.
+>=20
+> But for SCSI (and ATA and NVMe) unmapped/delallocated/etc blocks do
+> not have to return zeroes.  They could also return some other
+> initialization pattern pattern.  So they are (unfortunately) not a 1:1
+> mapping to holes in sparse files.
+
+Hi Christoph,
+There is a 1:1 mapping when when the Logical Block Provisioning Read
+Zeroes (LBPRZ) field is set to xx1b in the Logical Block Provisioning
+VPD page.
+
+Otherwise SEEK_HOLE/SEEK_DATA has to treat the device as filled with
+data because it doesn't know where the holes are.
+
+Stefan
+
+--RDsvgnmIpxDRfcPA
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmYMAm4ACgkQnKSrs4Gr
+c8hVxQf6Ai3HCf81vk9Zfg0wnaREk8TJeBtQghYd36C8nr5bX1BpwXAQog0wnYbZ
+VK0zB5aL/xDtzp+Vs69+Dn7ouGRxk48H5h1Xk8o9UD2XWSoS4f+bb7b5nSKeF45y
+gQd/tdgI+ch4AqbpByYz6Cgc3ZqJ03Tcm+zm9Vj4xUiXw1Hhj1V/09vVzif9X5tw
+3/80Yd4JLU1W/7cznhTTAIrpz8L+NAclZkQFVtfbvV0aXQfAXGvV8Kl82ddmKBmL
++ovnir/EbVpxUcg4veYJCme1B8D6ALU4znM2krhnz6g5jBynLN+av88weJErNfox
+34X6JufpJpSZUzfyTIA6PB7z5eS3Lg==
+=cwzD
+-----END PGP SIGNATURE-----
+
+--RDsvgnmIpxDRfcPA--
 
