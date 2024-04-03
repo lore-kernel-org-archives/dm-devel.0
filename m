@@ -1,256 +1,170 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4BB341514D5
-	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 17:58:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A226E1552FC
+	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 19:28:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712167131; cv=none; b=Dti756PTV200SbIeVmvBV4tLegnQl/rMFS86bSxFV13V4xV0SQa4S//87FRHZZ82kcy9n9hKImiN7aMWJ2PDRhNuClnyriOm4vxCtZLTlSZS1/bnWqmLnM6gIuOc9DvpQXRnv77gCKUXIOVef07DXfUYPVNQOgual4vr4Ii4/eo=
+	t=1712172502; cv=none; b=K5Skff/s3XRVzOa5C4kF10unfSvxpYhntfAzGRt+LA/dWaDA0w9PR+yA/Yc5tSP/0CPHFhvXG25bja9d4RHUYLUkE1Cn3PRN7xmJ70K9eNkkuORSJ5ouT+ZVaMEvMt9KJ0B4n9cQ6gVnYyud4Emox7BjnSyVQ5b8SuxntQuKCD0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712167131; c=relaxed/simple;
-	bh=rVUr+9Z6zFvc1AIV7RSHph6ecLl/6yxn7os2D1j1n1w=;
+	s=arc-20240116; t=1712172502; c=relaxed/simple;
+	bh=OwALeF5nmzCNK8ItJ0qnf5QvnZqP/OUnt88OHcvEQWM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=oqb1CypkknGBWyUpS21kB7rI/HnxG0Xt2cbnS1GJiTH1VyAIsWRpymLx3A8lOLzLhgITG40PK4CfcQ9OEcbUE9aiNnboWpO2NOjYKxm/3kcHozi40obNrPXvivl0g9qLN7iJAGZYblQvATgSqzkCj86858hUJXR5CDBRL4G4XkY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ByNMInwR; arc=none smtp.client-ip=170.10.129.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=ZgsWk0VyuEvQBTJeL2eY9BeLIDk1qDKYqB3BWLAD1e2yTMLoIs66h+HlN+282Csy21X/WQj+oFFC0CPCqypwLrVmX1a/Zch10VyG1np6Xlnkhh/5i7oWxplKqP5L9zbU5agEN8UJi+1dLRrNoVUdFs1F1iGqvZGy/yaY48q3tRc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IwNC1RDw; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ByNMInwR"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IwNC1RDw"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712167128;
+	s=mimecast20190719; t=1712172499;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=EoWWC9fUfdXuL312/PrgDfdNTqMt9C2B7PqNvW2X5jk=;
-	b=ByNMInwRWc7xtTYsFpnUZIAdFlbx2NuLGbVg2hCUf8NYbHYJVJ1rMfOhhiE5bSckxWE+Va
-	hLYd6/ao6NdoFrDYGrZL/EIfTBVeY6CRoVu3n1P4xmGzgPIkYVgxSnkG5sIuzi6FX1dUZ3
-	UEU7Wq7sFa0prBGLDDIU2UQB2/mA0lQ=
+	bh=l8IjLsOFjETxQxIF6yNyiEpLyzn4wdWa1ib2f+sE/pY=;
+	b=IwNC1RDwZvqU9xnCUfJlWQ4Y2y5276XZFmJbbNluvLh6a+RM2W+Rt0gG6QsgEiAreRfXCa
+	OdnLmBok74dLGky6EsLepEZKUlmbdFjHDSbdgdmHs67ZGKt8cI5wr5gyXjfqOdpjczCj9Y
+	H9Ch4/QMEnkYLgI3vFibn5sqsAZvYvw=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-253-3meuzdLsN1u0ha3OmoqVeg-1; Wed,
- 03 Apr 2024 13:58:45 -0400
-X-MC-Unique: 3meuzdLsN1u0ha3OmoqVeg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-247-Ng9pcfDpMWumDdRch7iYhg-1; Wed,
+ 03 Apr 2024 15:28:16 -0400
+X-MC-Unique: Ng9pcfDpMWumDdRch7iYhg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 27F9529AA2CD;
-	Wed,  3 Apr 2024 17:58:45 +0000 (UTC)
-Received: from localhost (unknown [10.39.192.28])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3DC6EC01600;
-	Wed,  3 Apr 2024 17:58:44 +0000 (UTC)
-Date: Wed, 3 Apr 2024 13:58:38 -0400
-From: Stefan Hajnoczi <stefanha@redhat.com>
-To: Eric Blake <eblake@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-	David Teigland <teigland@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E7D413800086;
+	Wed,  3 Apr 2024 19:28:15 +0000 (UTC)
+Received: from redhat.com (unknown [10.2.16.181])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3BDC22024517;
+	Wed,  3 Apr 2024 19:28:13 +0000 (UTC)
+Date: Wed, 3 Apr 2024 14:28:07 -0500
+From: Eric Blake <eblake@redhat.com>
+To: Stefan Hajnoczi <stefanha@redhat.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
+	David Teigland <teigland@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>, 
 	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
 Subject: Re: [RFC 4/9] dm: add llseek(SEEK_HOLE/SEEK_DATA) support
-Message-ID: <20240403175838.GB2534900@fedora>
+Message-ID: <usjvvltfh6lk4ummqh3qyvd4gp3vzbmclvbcp2zqjhdwrswv7f@mmjwmfoyavxg>
 References: <20240328203910.2370087-1-stefanha@redhat.com>
  <20240328203910.2370087-5-stefanha@redhat.com>
  <6awt5gq36kzwhuobabtye5vhnexc6cufuamy4frymehuv57ky5@esel3f5naqyu>
  <20240403141147.GD2524049@fedora>
  <mi3yp4kel6junjk2corv4hi56s56pmwilnm2bb4gg2tbbvyq2n@zmzaqpdq2rlq>
+ <20240403175838.GB2534900@fedora>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="N31yZm+DVUhVXgFt"
-Content-Disposition: inline
-In-Reply-To: <mi3yp4kel6junjk2corv4hi56s56pmwilnm2bb4gg2tbbvyq2n@zmzaqpdq2rlq>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
-
-
---N31yZm+DVUhVXgFt
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20240403175838.GB2534900@fedora>
+User-Agent: NeoMutt/20240201
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-On Wed, Apr 03, 2024 at 12:02:19PM -0500, Eric Blake wrote:
-> On Wed, Apr 03, 2024 at 10:11:47AM -0400, Stefan Hajnoczi wrote:
-> ...
-> > > > +static loff_t dm_blk_do_seek_hole_data(struct dm_table *table, lof=
-f_t offset,
-> > > > +		int whence)
-> > > > +{
-> > > > +	struct dm_target *ti;
-> > > > +	loff_t end;
-> > > > +
-> > > > +	/* Loop when the end of a target is reached */
-> > > > +	do {
-> > > > +		ti =3D dm_table_find_target(table, offset >> SECTOR_SHIFT);
-> > > > +		if (!ti)
-> > > > +			return whence =3D=3D SEEK_DATA ? -ENXIO : offset;
-> > >=20
-> > > ...but this blindly returns offset for SEEK_HOLE, even when offset is
-> > > beyond the end of the dm.  I think you want 'return -ENXIO;'
-> > > unconditionally here.
-> >=20
-> > If the initial offset is beyond the end of the table, then SEEK_HOLE
-> > should return -ENXIO. I agree that the code doesn't handle this case.
-> >=20
-> > However, returning offset here is correct when there is data at the end
-> > with SEEK_HOLE.
-> >=20
-> > I'll update the code to address the out-of-bounds offset case, perhaps
-> > by checking the initial offset before entering the loop.
->=20
-> You are correct that if we are on the second loop iteration of
-> SEEK_HOLE (because the first iteration saw all data), then we have
-> found the offset of the start of a hole and should return that offset,
-> not -ENXIO.  This may be a case where we just have to be careful on
-> whether the initial pass might have any corner cases different from
-> later times through the loop, and that we end the loop with correct
-> results for both SEEK_HOLE and SEEK_DATA.
->=20
-> >=20
-> > >=20
-> > > > +
-> > > > +		end =3D (ti->begin + ti->len) << SECTOR_SHIFT;
-> > > > +
-> > > > +		if (ti->type->seek_hole_data)
-> > > > +			offset =3D ti->type->seek_hole_data(ti, offset, whence);
-> > >=20
-> > > Are we guaranteed that ti->type->seek_hole_data will not return a
-> > > value exceeding end?  Or can dm be used to truncate the view of an
-> > > underlying device, and the underlying seek_hold_data can now return an
-> > > answer beyond where dm_table_find_target should look for the next part
-> > > of the dm's view?
-> >=20
-> > ti->type->seek_hole_data() must not return a value larger than
-> > (ti->begin + ti->len) << SECTOR_SHIFT.
->=20
-> Worth adding as documentation then.
->=20
-> >=20
-> > >=20
-> > > In which case, should the blkdev_seek_hole_data callback be passed a
-> > > max size parameter everywhere, similar to how fixed_size_llseek does
-> > > things?
-> > >=20
-> > > > +		else
-> > > > +			offset =3D dm_blk_seek_hole_data_default(offset, whence, end);
-> > > > +
-> > > > +		if (whence =3D=3D SEEK_DATA && offset =3D=3D -ENXIO)
-> > > > +			offset =3D end;
-> > >=20
-> > > You have a bug here.  If I have a dm contructed of two underlying tar=
-gets:
-> > >=20
-> > > |A  |B  |
-> > >=20
-> > > and A is all data, then whence =3D=3D SEEK_HOLE will have offset =3D =
--ENXIO
-> > > at this point, and you fail to check whether B is also data.  That is,
-> > > you have silently treated the rest of the block device as data, which
-> > > is semantically not wrong (as that is always a safe fallback), but not
-> > > optimal.
-> > >=20
-> > > I think the correct logic is s/whence =3D=3D SEEK_DATA &&//.
-> >=20
-> > No, with whence =3D=3D SEEK_HOLE and an initial offset in A, the new of=
-fset
-> > will be (A->begin + A->end) << SECTOR_SHIFT. The loop will iterate and
-> > continue seeking into B.
-> >=20
-> > The if statement you commented on ensures that we also continue looping
-> > with whence =3D=3D SEEK_DATA, because that would otherwise prematurely =
-end
-> > with the new offset =3D -ENXIO.
-> >=20
-> > >=20
-> > > > +	} while (offset =3D=3D end);
-> > >=20
-> > > I'm trying to make sure that we can never return the equivalent of
-> > > lseek(dm, 0, SEEK_END).  If you make my above suggested changes, we
-> > > will iterate through the do loop once more at EOF, and
-> > > dm_table_find_target() will then fail to match at which point we do
-> > > get the desired -ENXIO for both SEEK_HOLE and SEEK_DATA.
-> >=20
-> > Wait, lseek() is supposed to return the equivalent of lseek(dm, 0,
-> > SEEK_END) when whence =3D=3D SEEK_HOLE and there is data at the end.
->=20
-> It was confusing enough for me to write my initial review, I apologize
-> if I'm making it harder for you.
+On Wed, Apr 03, 2024 at 01:58:38PM -0400, Stefan Hajnoczi wrote:
+> > Yes, we want to ensure that:
+> > 
+> > off1 = lseek(fd, -1, SEEK_END);
+> > off2 = off1 + 1; // == lseek(fd, 0, SEEK_END)
+> > 
+> > if off1 belongs to a data extent:
+> >   - lseek(fd, off1, SEEK_DATA) == off1
+> >   - lseek(fd, off1, SEEK_HOLE) == off2
+> >   - lseek(fd, off2, SEEK_DATA) == -ENXIO
+> >   - lseek(fd, off2, SEEK_HOLE) == -ENXIO
+> 
+> Agreed.
+> 
+> > if off1 belongs to a hole:
+> >   - lseek(fd, off1, SEEK_DATA) == -ENXIO
+> >   - lseek(fd, off1, SEEK_HOLE) == off1
+> >   - lseek(fd, off2, SEEK_DATA) == -ENXIO
+> >   - lseek(fd, off2, SEEK_HOLE) == -ENXIO
+> 
+> Agreed.
+> 
+...
+> > 
+> > That is, we can never pass in off2 (beyond the bounds of the table),
+> > and when passing in off1, I think this interface may be easier to work
+> > with in the intermediate layers, even though it differs from the
+> > lseek() interface above.  For off1 in data:
+> >   - dm_blk_do_seek_hole_data(dm, off1, SEEK_DATA) == off1
+> >   - dm_blk_do_seek_hole_data(dm, off1, SEEK_HOLE) == off2
+> > and for a hole:
+> >   - dm_blk_do_seek_hole_data(dm, off1, SEEK_DATA) == off2
+> >   - dm_blk_do_seek_hole_data(dm, off1, SEEK_HOLE) == off1
+>
 
-No worries, if my code is hard to understand I can learn from your
-feedback.
+In the caller, we already need to know both off1 and off2 (that is,
+the offset we are asking about, AND the offset at which the underlying
+component ends its map at, since that is where we are then in charge
+of whether to concatenate that with the next component or give the
+overall result).
 
-> Yes, we want to ensure that:
->=20
-> off1 =3D lseek(fd, -1, SEEK_END);
-> off2 =3D off1 + 1; // =3D=3D lseek(fd, 0, SEEK_END)
->=20
-> if off1 belongs to a data extent:
->   - lseek(fd, off1, SEEK_DATA) =3D=3D off1
->   - lseek(fd, off1, SEEK_HOLE) =3D=3D off2
->   - lseek(fd, off2, SEEK_DATA) =3D=3D -ENXIO
->   - lseek(fd, off2, SEEK_HOLE) =3D=3D -ENXIO
+If we already guarantee that we never call into a lower layer with
+off2 (because it was beyond bounds), then the only difference between
+the two semantics is whether SEEK_DATA in a final hole returns -ENXIO
+or off2; and it looks like we can do a conversion from either style
+into the other.
 
-Agreed.
+So designing the caller logic, it looks like I would want:
 
-> if off1 belongs to a hole:
->   - lseek(fd, off1, SEEK_DATA) =3D=3D -ENXIO
->   - lseek(fd, off1, SEEK_HOLE) =3D=3D off1
->   - lseek(fd, off2, SEEK_DATA) =3D=3D -ENXIO
->   - lseek(fd, off2, SEEK_HOLE) =3D=3D -ENXIO
+if off1 >= EOF return -ENXIO (out of bounds)
 
-Agreed.
+while off1 < EOF:
 
->=20
-> Anything in my wall of text from the earlier message inconsistent with
-> this table can be ignored; but at the same time, I was not able to
-> quickly convince myself that your code properly had those properties,
-> even after writing up the table.
->=20
-> Reiterating what I said elsewhere, it may be smarter to document that
-> for callbacks, it is wiser to require intermediate behavior that the
-> input value 'offset' is always between the half-open range
-> [ti->begin<<SECTOR_SHIFT, (ti->begin+ti->len)<<SECTOR_SHIFT), and on
-> success, the output must be in the fully-closed range [offset,
-> (ti->begin+ti->len)<<SECTOR_SHIFT], errors like -EIO are permitted but
-> -ENXIO should not be returned; and let the caller worry about
-> synthesizing -ENXIO from that (since the caller knows whether or not
-> there is a successor ti where adjacency concerns come into play).
->=20
-> That is, we can never pass in off2 (beyond the bounds of the table),
-> and when passing in off1, I think this interface may be easier to work
-> with in the intermediate layers, even though it differs from the
-> lseek() interface above.  For off1 in data:
->   - dm_blk_do_seek_hole_data(dm, off1, SEEK_DATA) =3D=3D off1
->   - dm_blk_do_seek_hole_data(dm, off1, SEEK_HOLE) =3D=3D off2
-> and for a hole:
->   - dm_blk_do_seek_hole_data(dm, off1, SEEK_DATA) =3D=3D off2
->   - dm_blk_do_seek_hole_data(dm, off1, SEEK_HOLE) =3D=3D off1
+  determine off2 of current lower region
+  at this point, we are guaranteed off1 < off2
+  we also know that off2 < EOF unless we are on last lower region
+  call result=lower_layer(off1, SEEK_X)
+  it is a bug if result is non-negative but < off1, or if result > off2
 
-I'll take a look again starting from block/fops.c, through dm.c, and
-into dm-linear.c to see how to make things clearest. Although I would
-like to have the same semantics for every seek function, maybe in the
-end your suggestion will make the code clearer. Let's see.
+  if result == off1, return result (we are already in the right HOLE
+  or DATA)
 
-Stefan
+  if result > off1 and < off2, return result (we had to advance to get
+  to the right region, but the right region was within the lower
+  layer, and we don't need to inspect further layers)
 
---N31yZm+DVUhVXgFt
-Content-Type: application/pgp-signature; name="signature.asc"
+  Note - the above two paragraphs can be collapsed into one: if result
+  < off2, return result (the current subregion gave us an adequate
+  answer)
 
------BEGIN PGP SIGNATURE-----
+  if result == off2, continue to the next region with off1=result (in
+  first semantics, this is only possible for SEEK_HOLE for a lower
+  region ending in data; in the second semantics, it is possible for
+  either SEEK_HOLE or SEEK_DATA for a lower region ending in the type
+  opposite of the request)
 
-iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmYNmM4ACgkQnKSrs4Gr
-c8iAvgf/VrPqldLYrcFp72kYDOeOuDaMtnQx8rd3kAITiBtLHObhWuXOUCa4tb6i
-npUgJhyNkUTfzPjkrbvEVjiGsRcVHTPCCAo1OiGU/na+hb2XpU8vAWi7kaoUWco/
-K2nyJWOH8WLKSnF7/BysPZDlPa9q2mOsdFIndzIHuNwAQfqTdxvM0Qw6S8TnGmsO
-5GAyjMkBQsxssBhymMz9/5HBUdGY1g5mGOJY3d0KB4QZZ3OpnvxcHLynq3RSl+wZ
-2dRwccLASS6HiwCeUnWWpFqpe0/EZKkVeGiIlb2iCWK5VMM2eETRXGj/JXYECZfw
-+JBARUyqNE2uYBGSpws1RS8qdssnMQ==
-=f+tw
------END PGP SIGNATURE-----
+  if result == -ENXIO, continue to the next region by using off1=off2
+  (only possible in the first semantics for SEEK_DATA on a lower
+  region ending in a hole)
 
---N31yZm+DVUhVXgFt--
+  any other result is necessarily a negative errno like -EIO; return it
+
+if the loop completes without an early return, we are out of lower
+regions, and we should be left with off1 == EOF.  Because we advanced,
+we know now to:
+return whence == SEEK_HOLE ? off1 : -ENXIO
+
+> I'll take a look again starting from block/fops.c, through dm.c, and
+> into dm-linear.c to see how to make things clearest. Although I would
+> like to have the same semantics for every seek function, maybe in the
+> end your suggestion will make the code clearer. Let's see.
+
+Keeping lseek semantics may require a couple more lines of code
+duplicated at each layer, but less maintainer headaches in the long
+run of converting between slightly different semantics depending on
+which layer you are at.
+
+-- 
+Eric Blake, Principal Software Engineer
+Red Hat, Inc.
+Virtualization:  qemu.org | libguestfs.org
 
