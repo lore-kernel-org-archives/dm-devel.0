@@ -1,96 +1,144 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10621645;
-	Wed,  3 Apr 2024 05:10:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FCF233F9
+	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 06:41:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712121034; cv=none; b=bUhjD2qiR7A0/SHq8RqHayu9F5rIFF4n1T0rVvbyp8jnCeplTPTUy8E0WJb7FM1GmcAZZh3qrTvwTE/WvEqQIodzrYbuqGxizFGcoT01H9UgqTIxSjdSzIfzfoZwdWRSGBm+s1hmIW6qH5WvTi3yRX47FtcVVZrBplAcFKimQxw=
+	t=1712126511; cv=none; b=VfTDfROjvbpYSvcjzR0Qe0rSAVG/sra1WWejrRYWl0eGVfaFes4cknq/rK6wKdZa7AFGU72UlHJTS114FWWnZhvl5FB0FsEljfHLucmCqqm7tljG/UCrpe9/1rtccpeXLxlH7AOYfLkiPT49UtAvY4KxdXsGcWuuzwcOk8E+NvM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712121034; c=relaxed/simple;
-	bh=nfMida/fwtgf6d9g/VzEFa7bAK2MwKc03M85xVMKpXk=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=pKymvtannxk9XJlgHLrOs8gdl87w/uFZUq2gsOAj5uujrkzrZYRF4W8VcOq2CBRL91HsfimzSDze5dLWxfsRlHGBVXZ5Qh9w7FldsO++ceKorPH1Onj4CNmfdok9CR53g7UznoIOVOP0ld2E1atQsnB1KeD6T/1X6jOOOB6LuGc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=soGyJg5H; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1712126511; c=relaxed/simple;
+	bh=E9Ecl6XQRBm/yMMBLrmo4Gtab8qfD2drajpLDGTn/qw=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=OBtIsVbpLFaxko6NMwBLiBROrciHay0ChvQpwGxZD6teXQ6kYG7qUN2XrzG0tH3CWvP4ZBLLCohlasY7Hao9IW2j1HkL4uFJHVwX7ES/2JqroSrlET7LCaUnohzZSCI2cONNdAaq+E50mYxkSePPXxTZCxlO1RdhUSW6oXZyft4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=abrfw6Bg; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=2c0sKg+S; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="soGyJg5H"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id EAB17C433C7;
-	Wed,  3 Apr 2024 05:10:32 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1712121033;
-	bh=nfMida/fwtgf6d9g/VzEFa7bAK2MwKc03M85xVMKpXk=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=soGyJg5HUoztDgHwRzno02g7VWNaNwjWE8EJzeGEFWvEqlVnOv95t66xg0dFWdDsm
-	 XAyyRG+qzesHn2tUz00OrC8EBuSOOGB8YyksVmIn7+nywRPuIf+tkY3I0hVwccgAxB
-	 LV88ts4IKuLJSsyu0WKfjKSGMvjPvCMN492RMBmIu4Q/8cJmNTiJJGiIVXkenEVkZ+
-	 sCeBB21FhOWGjrmkCpF9fIG1wagU4e6GcznzodJOxTWZGajmhmZALzUfbeaXMCoGRK
-	 gmK4lsXCF7oQ3Jggov2yJLLgeFfSirdE24WLJvYSx2shbC8HMygRJyjY0PKghRN881
-	 OMWLkAXEj4jUA==
-Date: Tue, 2 Apr 2024 22:10:31 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: Fan Wu <wufan@linux.microsoft.com>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org,
-	serge@hallyn.com, tytso@mit.edu, axboe@kernel.dk, agk@redhat.com,
-	snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com,
-	linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
-	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	audit@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [PATCH v16 17/20] ipe: enable support for fs-verity as a trust
- provider
-Message-ID: <20240403051031.GK2576@sol.localdomain>
-References: <1711657047-10526-1-git-send-email-wufan@linux.microsoft.com>
- <1711657047-10526-18-git-send-email-wufan@linux.microsoft.com>
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="abrfw6Bg";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="2c0sKg+S"
+Received: from imap2.dmz-prg2.suse.org (imap2.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:98])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 18E4B5C8E2;
+	Wed,  3 Apr 2024 06:41:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1712126508; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=++gI3BgNddEsJjDazUZFQ5dNULCqFbKr3X7lMwf1zaU=;
+	b=abrfw6BgsiZS0ga4vzE0rHZt5HLtv6VSaVEXArK7UJwJsBJleuBnAFJU4uNbJuOlWAEm9/
+	5h7QXFUEJpvHBhH0w1dTRHHXESMEh3GAOHLe1uCQ6ZqLBfm29Xt0sOqRebXt8+9QK8ZRx+
+	GvulbFynxhG38t+Th5aQe4Qrpw2EWgY=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1712126508;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=++gI3BgNddEsJjDazUZFQ5dNULCqFbKr3X7lMwf1zaU=;
+	b=2c0sKg+Srs9LbwVsDTiIm7jRYG4JaKgrR0ueLfW3sWRnUFnDnGaSHqYJpjZsPI5g7zVcqq
+	fMuGeSYv5q9sU3BA==
+Authentication-Results: smtp-out2.suse.de;
+	dkim=none
+Received: from imap2.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap2.dmz-prg2.suse.org (Postfix) with ESMTPS id 6985A13357;
+	Wed,  3 Apr 2024 06:41:46 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap2.dmz-prg2.suse.org with ESMTPSA
+	id 9ufkFSr6DGb8CAAAn2gu4w
+	(envelope-from <hare@suse.de>); Wed, 03 Apr 2024 06:41:46 +0000
+Message-ID: <174cb0ad-7a03-4148-a9c8-23d25b890fd1@suse.de>
+Date: Wed, 3 Apr 2024 08:41:45 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1711657047-10526-18-git-send-email-wufan@linux.microsoft.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v4 11/28] block: Allow BIO-based drivers to use
+ blk_revalidate_disk_zones()
+Content-Language: en-US
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
+ linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>
+References: <20240402123907.512027-1-dlemoal@kernel.org>
+ <20240402123907.512027-12-dlemoal@kernel.org>
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20240402123907.512027-12-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Spam-Score: -1.13
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-1.13 / 50.00];
+	 ARC_NA(0.00)[];
+	 RCVD_VIA_SMTP_AUTH(0.00)[];
+	 XM_UA_NO_VERSION(0.01)[];
+	 FROM_HAS_DN(0.00)[];
+	 TO_DN_SOME(0.00)[];
+	 TO_MATCH_ENVRCPT_ALL(0.00)[];
+	 RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	 MIME_GOOD(-0.10)[text/plain];
+	 SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:98:from];
+	 NEURAL_HAM_LONG(-0.03)[-0.028];
+	 BAYES_HAM(-3.00)[100.00%];
+	 RCVD_COUNT_THREE(0.00)[3];
+	 DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	 MX_GOOD(-0.01)[];
+	 NEURAL_HAM_SHORT(-0.20)[-1.000];
+	 RCPT_COUNT_SEVEN(0.00)[10];
+	 DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:email];
+	 FUZZY_BLOCKED(0.00)[rspamd.com];
+	 FROM_EQ_ENVFROM(0.00)[];
+	 R_DKIM_NA(2.20)[];
+	 MIME_TRACE(0.00)[0:+];
+	 RCVD_TLS_ALL(0.00)[];
+	 MID_RHS_MATCH_FROM(0.00)[];
+	 RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:98:from]
+X-Spam-Level: 
+X-Rspamd-Queue-Id: 18E4B5C8E2
 
-On Thu, Mar 28, 2024 at 01:17:24PM -0700, Fan Wu wrote:
-> Enable IPE policy authors to indicate trust for a singular fsverity
-> file, identified by the digest information, through "fsverity_digest"
-> and all files using fsverity's builtin signatures via
-> "fsverity_signature".
+On 4/2/24 14:38, Damien Le Moal wrote:
+> In preparation for allowing BIO based device drivers to use zone write
+> plugging and its zone append emulation, allow these drivers to call
+> blk_revalidate_disk_zones() so that all zone resources necessary to zone
+> write plugging can be initialized.
+> 
+> To do so, remove the check in blk_revalidate_disk_zones() restricting
+> the use of this function to mq request-based drivers to allow also
+> BIO-based drivers to use it. This is safe to do as long as the
+> BIO-based block device queue is already setup and usable, as it should,
+> and can be safely frozen.
+> 
+> The helper function disk_need_zone_resources() is added to control the
+> allocation and initialization of the zone write plug hash table and
+> of the conventional zone bitmap only for mq devices and for BIO-based
+> devices that require zone append emulation.
+> 
+> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> ---
+>   block/blk-zoned.c | 30 ++++++++++++++++++++++++------
+>   1 file changed, 24 insertions(+), 6 deletions(-)
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
-Again, I'm pretty sure you actually care about all files with *valid* builtin
-signatures, not simply all files with builtin signatures...
+Cheers,
 
-> +/**
-> + * ipe_inode_setintegrity - save integrity data from a inode to IPE's LSM blob.
-> + * @inode: The inode to source the security blob from.
-> + * @type: Supplies the integrity type.
-> + * @value: The value to be stored.
-> + * @size: The size of @value.
-> + *
-> + * Saves fsverity signature into inode security blob
-> + *
-> + * Return:
-> + * * 0	- OK
-> + * * !0	- Error
-> + */
-> +int ipe_inode_setintegrity(struct inode *inode, enum lsm_integrity_type type,
-> +			   const void *value, size_t size)
-> +{
-> +	struct ipe_inode *inode_sec = ipe_inode(inode);
-> +
-> +	if (type == LSM_INT_FSVERITY_BUILTINSIG) {
-> +		inode_sec->fs_verity_signed = size > 0 && value;
-> +		return 0;
-> +	}
-> +
-> +	return 0;
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
 
-This is the actual code, and it's *still* documented incorrectly.  No, it
-doesn't "Save fsverity signature into inode security blob".  All it actually
-does is save a flag saying that there was a valid signature.
-
-The flag also should be called something like fsverity_sig_valid, indicating
-that there is a builtin signature *and* it's valid.
-
-- Eric
