@@ -1,132 +1,212 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 658E2149E1B
-	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 15:28:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0CF5E152197
+	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 17:02:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712158132; cv=none; b=AxHqBP4/3ReFif1BheN6rR/P9LsROuv46ON1wB5Bp6g6e1FZOw67A8C0ehdY35JOXkVQBylb7Dsmiv+vnHH25EDcdDxzx1CDZSqr3Tm6p+GAGzPXaRM8/8cJW8t7AdD2VhnedeekaAx0M4Fv9H71jocPtJq36QCSY0ftbcO4Uuc=
+	t=1712163754; cv=none; b=Yq6m5Z11BQ9OmILEPoGjyhts8eoElD0Hy/8W6+LIb9lcdtCwjWqh/WgcCdQg/nN/BRLDYs2cuUjSWc9JSSlcU8VqvlZ8j0kQRjYU2TeaALlkAiZ//3ZLNN505IZcTraOCB/P06dlRngvBqEV4C/lgjhCvcUHe71V5mGFV20qLEA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712158132; c=relaxed/simple;
-	bh=+wDb5B+7ke71UecZ+HQk698SPbOzgUPyXQIqNsr4/lQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=Dg56OTA6ciS4X8BW3xisXGKnpFGn11XPIOzUShIIdn3E1vx/H6MuBLcQJ6Lf/B/jMA2kHHga777qYUp03BBHIvTprIz27YWT4jP8CXNlRd0MMKXAO4Tl0IhXHSlu8w207N95bIUqciNrF7SLFl+OHlQhXyNJx7jheyOQnWweVL4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=KSwSzPW3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=qIshLm3r; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	s=arc-20240116; t=1712163754; c=relaxed/simple;
+	bh=Ka2XBtHojXmQUntIvVIeiS+w7Alxi2joEQy4FL+ruYo=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=XBvGFNGYtW8vgON5opjBZbD965Glt8bm0DGphWYl1KOXiNtio6ZRQpeTnW4FhKq4BJ5spigUYp1tXCTW7I1fuqe3OjMJG3Agr8zcefdtY7j7Du8lD6dqvVHjmDLMS6qAqmhFZs7Kz3Gm0Yd9BIHm4s0M/1E3hnWRM1BVCIbE66U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FDjf9hK6; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="KSwSzPW3";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="qIshLm3r"
-Received: from imap2.dmz-prg2.suse.org (imap2.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:98])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id DD0093720F;
-	Wed,  3 Apr 2024 15:28:48 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1712158128; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FDjf9hK6"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1712163752;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=9ieV4gtk+MMlsEV2jR3L9psPPjm2FxdbRvV0d7MlGps=;
-	b=KSwSzPW3rJUs63Zbnl/oCRvbpFCbpZPCjIdo2ciz6TKd15J+kMCM0gZ1wzXGJgI1Ze046P
-	YHX8bCvKKFjOkTvi8xlM0C2KH0wE7QAbDCaElg26gz5QDk7wrqXRdvr6c9ioWpgydUKrFF
-	NpEBVurxPTiQ2cFVnYLSUeS2RVltCF0=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1712158128;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9ieV4gtk+MMlsEV2jR3L9psPPjm2FxdbRvV0d7MlGps=;
-	b=qIshLm3rDBn7S4NwB4UQ2sZJzspXmUG0tCXH6TBF6CGcXdTsE2wOQ9iQjfrSIxzRt3fCE0
-	nUKd/L+ZhNNJNrDQ==
-Authentication-Results: smtp-out1.suse.de;
-	dkim=none
-Received: from imap2.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=PvD24Gz3vP6mwRZR6roKTP8B0DvgtjySY7yBjOsMWK0=;
+	b=FDjf9hK6idBS8hUkFivVix3BvvME8qb+VEpOHZ0V2mDQIcOP6dhcwkly+9bDqUHdZJNSaH
+	ec+hQY3DF+0obYH2OPFZ9mUg6mjoKGS2IgkgzjlZrz0O5Mrw4nf1tQiqioR54PS/Agl1LV
+	oPj955SBh6oKjlXUMtSfQ+j2vw5P22Y=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-185-NA0bh8ygOJGTWGJDE_96tA-1; Wed, 03 Apr 2024 13:02:28 -0400
+X-MC-Unique: NA0bh8ygOJGTWGJDE_96tA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap2.dmz-prg2.suse.org (Postfix) with ESMTPS id E40A11331E;
-	Wed,  3 Apr 2024 15:28:47 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap2.dmz-prg2.suse.org with ESMTPSA
-	id +KDeMq91DWaMdAAAn2gu4w
-	(envelope-from <hare@suse.de>); Wed, 03 Apr 2024 15:28:47 +0000
-Message-ID: <0e93e91e-e8f8-44ed-bb46-48cc8d7bbd1f@suse.de>
-Date: Wed, 3 Apr 2024 17:28:47 +0200
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 048F4101A56D;
+	Wed,  3 Apr 2024 17:02:28 +0000 (UTC)
+Received: from redhat.com (unknown [10.2.16.181])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 42AA9C15778;
+	Wed,  3 Apr 2024 17:02:24 +0000 (UTC)
+Date: Wed, 3 Apr 2024 12:02:19 -0500
+From: Eric Blake <eblake@redhat.com>
+To: Stefan Hajnoczi <stefanha@redhat.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
+	David Teigland <teigland@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>, 
+	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
+Subject: Re: [RFC 4/9] dm: add llseek(SEEK_HOLE/SEEK_DATA) support
+Message-ID: <mi3yp4kel6junjk2corv4hi56s56pmwilnm2bb4gg2tbbvyq2n@zmzaqpdq2rlq>
+References: <20240328203910.2370087-1-stefanha@redhat.com>
+ <20240328203910.2370087-5-stefanha@redhat.com>
+ <6awt5gq36kzwhuobabtye5vhnexc6cufuamy4frymehuv57ky5@esel3f5naqyu>
+ <20240403141147.GD2524049@fedora>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v5 08/28] block: Fake max open zones limit when there is
- no limit
-Content-Language: en-US
-To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
- Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
- linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>
-References: <20240403084247.856481-1-dlemoal@kernel.org>
- <20240403084247.856481-9-dlemoal@kernel.org>
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <20240403084247.856481-9-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Rspamd-Queue-Id: DD0093720F
-X-Spamd-Result: default: False [-3.29 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_SHORT(-0.19)[-0.965];
-	MIME_GOOD(-0.10)[text/plain];
-	XM_UA_NO_VERSION(0.01)[];
-	MX_GOOD(-0.01)[];
-	RCPT_COUNT_SEVEN(0.00)[10];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	ARC_NA(0.00)[];
-	R_DKIM_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:98:from,2a07:de40:b281:106:10:150:64:167:received];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:email,imap2.dmz-prg2.suse.org:rdns,imap2.dmz-prg2.suse.org:helo]
-X-Rspamd-Action: no action
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Spam-Score: -3.29
-X-Spam-Level: 
-X-Spam-Flag: NO
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240403141147.GD2524049@fedora>
+User-Agent: NeoMutt/20240201
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
 
-On 4/3/24 10:42, Damien Le Moal wrote:
-> For a zoned block device that has no limit on the number of open zones
-> and no limit on the number of active zones, the zone write plug mempool
-> is created with a size of 128 zone write plugs. For such case, set the
-> device max_open_zones queue limit to this value to indicate to the user
-> the potential performance penalty that may happen when writing
-> simultaneously to more zones than the mempool size.
+On Wed, Apr 03, 2024 at 10:11:47AM -0400, Stefan Hajnoczi wrote:
+...
+> > > +static loff_t dm_blk_do_seek_hole_data(struct dm_table *table, loff_t offset,
+> > > +		int whence)
+> > > +{
+> > > +	struct dm_target *ti;
+> > > +	loff_t end;
+> > > +
+> > > +	/* Loop when the end of a target is reached */
+> > > +	do {
+> > > +		ti = dm_table_find_target(table, offset >> SECTOR_SHIFT);
+> > > +		if (!ti)
+> > > +			return whence == SEEK_DATA ? -ENXIO : offset;
+> > 
+> > ...but this blindly returns offset for SEEK_HOLE, even when offset is
+> > beyond the end of the dm.  I think you want 'return -ENXIO;'
+> > unconditionally here.
 > 
-> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-> ---
->   block/blk-zoned.c | 41 +++++++++++++++++++++++++++++++++++------
->   1 file changed, 35 insertions(+), 6 deletions(-)
+> If the initial offset is beyond the end of the table, then SEEK_HOLE
+> should return -ENXIO. I agree that the code doesn't handle this case.
 > 
-Reviewed-by: Hannes Reinecke <hare@suse.de>
+> However, returning offset here is correct when there is data at the end
+> with SEEK_HOLE.
+> 
+> I'll update the code to address the out-of-bounds offset case, perhaps
+> by checking the initial offset before entering the loop.
 
-Cheers,
+You are correct that if we are on the second loop iteration of
+SEEK_HOLE (because the first iteration saw all data), then we have
+found the offset of the start of a hole and should return that offset,
+not -ENXIO.  This may be a case where we just have to be careful on
+whether the initial pass might have any corner cases different from
+later times through the loop, and that we end the loop with correct
+results for both SEEK_HOLE and SEEK_DATA.
 
-Hannes
+> 
+> > 
+> > > +
+> > > +		end = (ti->begin + ti->len) << SECTOR_SHIFT;
+> > > +
+> > > +		if (ti->type->seek_hole_data)
+> > > +			offset = ti->type->seek_hole_data(ti, offset, whence);
+> > 
+> > Are we guaranteed that ti->type->seek_hole_data will not return a
+> > value exceeding end?  Or can dm be used to truncate the view of an
+> > underlying device, and the underlying seek_hold_data can now return an
+> > answer beyond where dm_table_find_target should look for the next part
+> > of the dm's view?
+> 
+> ti->type->seek_hole_data() must not return a value larger than
+> (ti->begin + ti->len) << SECTOR_SHIFT.
+
+Worth adding as documentation then.
+
+> 
+> > 
+> > In which case, should the blkdev_seek_hole_data callback be passed a
+> > max size parameter everywhere, similar to how fixed_size_llseek does
+> > things?
+> > 
+> > > +		else
+> > > +			offset = dm_blk_seek_hole_data_default(offset, whence, end);
+> > > +
+> > > +		if (whence == SEEK_DATA && offset == -ENXIO)
+> > > +			offset = end;
+> > 
+> > You have a bug here.  If I have a dm contructed of two underlying targets:
+> > 
+> > |A  |B  |
+> > 
+> > and A is all data, then whence == SEEK_HOLE will have offset = -ENXIO
+> > at this point, and you fail to check whether B is also data.  That is,
+> > you have silently treated the rest of the block device as data, which
+> > is semantically not wrong (as that is always a safe fallback), but not
+> > optimal.
+> > 
+> > I think the correct logic is s/whence == SEEK_DATA &&//.
+> 
+> No, with whence == SEEK_HOLE and an initial offset in A, the new offset
+> will be (A->begin + A->end) << SECTOR_SHIFT. The loop will iterate and
+> continue seeking into B.
+> 
+> The if statement you commented on ensures that we also continue looping
+> with whence == SEEK_DATA, because that would otherwise prematurely end
+> with the new offset = -ENXIO.
+> 
+> > 
+> > > +	} while (offset == end);
+> > 
+> > I'm trying to make sure that we can never return the equivalent of
+> > lseek(dm, 0, SEEK_END).  If you make my above suggested changes, we
+> > will iterate through the do loop once more at EOF, and
+> > dm_table_find_target() will then fail to match at which point we do
+> > get the desired -ENXIO for both SEEK_HOLE and SEEK_DATA.
+> 
+> Wait, lseek() is supposed to return the equivalent of lseek(dm, 0,
+> SEEK_END) when whence == SEEK_HOLE and there is data at the end.
+
+It was confusing enough for me to write my initial review, I apologize
+if I'm making it harder for you.  Yes, we want to ensure that:
+
+off1 = lseek(fd, -1, SEEK_END);
+off2 = off1 + 1; // == lseek(fd, 0, SEEK_END)
+
+if off1 belongs to a data extent:
+  - lseek(fd, off1, SEEK_DATA) == off1
+  - lseek(fd, off1, SEEK_HOLE) == off2
+  - lseek(fd, off2, SEEK_DATA) == -ENXIO
+  - lseek(fd, off2, SEEK_HOLE) == -ENXIO
+
+if off1 belongs to a hole:
+  - lseek(fd, off1, SEEK_DATA) == -ENXIO
+  - lseek(fd, off1, SEEK_HOLE) == off1
+  - lseek(fd, off2, SEEK_DATA) == -ENXIO
+  - lseek(fd, off2, SEEK_HOLE) == -ENXIO
+
+Anything in my wall of text from the earlier message inconsistent with
+this table can be ignored; but at the same time, I was not able to
+quickly convince myself that your code properly had those properties,
+even after writing up the table.
+
+Reiterating what I said elsewhere, it may be smarter to document that
+for callbacks, it is wiser to require intermediate behavior that the
+input value 'offset' is always between the half-open range
+[ti->begin<<SECTOR_SHIFT, (ti->begin+ti->len)<<SECTOR_SHIFT), and on
+success, the output must be in the fully-closed range [offset,
+(ti->begin+ti->len)<<SECTOR_SHIFT], errors like -EIO are permitted but
+-ENXIO should not be returned; and let the caller worry about
+synthesizing -ENXIO from that (since the caller knows whether or not
+there is a successor ti where adjacency concerns come into play).
+
+That is, we can never pass in off2 (beyond the bounds of the table),
+and when passing in off1, I think this interface may be easier to work
+with in the intermediate layers, even though it differs from the
+lseek() interface above.  For off1 in data:
+  - dm_blk_do_seek_hole_data(dm, off1, SEEK_DATA) == off1
+  - dm_blk_do_seek_hole_data(dm, off1, SEEK_HOLE) == off2
+and for a hole:
+  - dm_blk_do_seek_hole_data(dm, off1, SEEK_DATA) == off2
+  - dm_blk_do_seek_hole_data(dm, off1, SEEK_HOLE) == off1
+
 -- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+Eric Blake, Principal Software Engineer
+Red Hat, Inc.
+Virtualization:  qemu.org | libguestfs.org
 
