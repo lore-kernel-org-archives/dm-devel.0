@@ -1,213 +1,272 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48E6F14A0B4
-	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 15:04:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9AD4614A4E4
+	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 15:28:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712156655; cv=none; b=Se8dNdFBvnS85FjSg7lcU31wiGl+NqqG7+lWjPob/hPKkCvxcbukmRH6nnkfzxKb9W6pg0rgq/g9+8GyYpPOdFGs21DcSuICZlTN8ToDt/wN8F6n+2lJNm56eiRrND9jXI5DyPT19Tl+MODdLIWeLOTgYGmv5OcCqA2vWH3e5u8=
+	t=1712158093; cv=none; b=UUyhwYVYPVWhHp39/1uuMJyroMc/dsmGVjNP4oqtoShYXDX7OX9birv3tPApGkTIbt1+rJVUvhxuL79E6QhSjp19n44vDxvztS+mg8J2VYg9Gsf+ElmYXJ3aLHvGQ4Hj4MbLuq1lOD76iDLaPzyNxSWC3GRus1JdJUU2m1/dqT4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712156655; c=relaxed/simple;
-	bh=k8uce1rf56gQTid1JBeAXtJeS2WnwUoqGN9N80BabCI=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JpZh3eHaLCDB9cH9mwsIcESGKyy17xTu6DnTNVSU0zuU17km6ITmIrIfb3yVnVvgWE9djqdiTzpPiAR3AE6Xpfntmsawc7kRVSfkyWrEpmIqSqyKxKFdGsWYirgHIEqXtA0/1HlgQI/WarqKMJAwd/QcgtRnheUQOI3oA4cJai0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Y2/jELtl; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1712158093; c=relaxed/simple;
+	bh=cATIjMK3aumD/SpEKnqqVEZrsX5ySTg0KoSuAKsm2Zs=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=TKFj7ahlm6HGBIfdNoTvwE84DvvtbVyO7ICUHjqJh/frfUkP6/glsMHmiL8FBfL13u/ZNaEc9NSM6IE63TaWq6QZRZKDd2lo41cuWkEnyBWrWzZIHgVXpZKWJjxdVvdeUrTQ5DzNBiaPUQg6ivCeOeyyteaJOgouRO1Dn06pRi0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=QW07L4L2; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=PsClbm1g; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Y2/jELtl"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712156653;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=t/jx0gVWX+z6DL+RdUWe4Xtrtk69fV0JhZ/qa15t2TM=;
-	b=Y2/jELtl5cParLi1fncpSSrUUwlrKNa0U29lsMnNgnGaBsn9JdKUKvVXudmEKqS7conA45
-	wzntW4r1sPXi1VVPc3KfPOhRVLqa1dsIlaAm5fSUt/vYaJObXSJ3QHSBCjo8I43ovlgIy6
-	yVREjRN7nZNq8WNrqOcBQ7wzeN0j7fw=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-368-2cBnbDAkODaeNogeLgoMow-1; Wed,
- 03 Apr 2024 11:04:09 -0400
-X-MC-Unique: 2cBnbDAkODaeNogeLgoMow-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="QW07L4L2";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="PsClbm1g"
+Received: from imap2.dmz-prg2.suse.org (imap2.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:98])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A4273816B4D;
-	Wed,  3 Apr 2024 15:04:08 +0000 (UTC)
-Received: from localhost (unknown [10.39.194.118])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CA7E64073484;
-	Wed,  3 Apr 2024 15:04:07 +0000 (UTC)
-Date: Wed, 3 Apr 2024 11:03:46 -0400
-From: Stefan Hajnoczi <stefanha@redhat.com>
-To: Eric Blake <eblake@redhat.com>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-	David Teigland <teigland@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
-Subject: Re: [RFC 8/9] dm thin: add llseek(SEEK_HOLE/SEEK_DATA) support
-Message-ID: <20240403150346.GH2524049@fedora>
-References: <20240328203910.2370087-1-stefanha@redhat.com>
- <20240328203910.2370087-9-stefanha@redhat.com>
- <c4pit5qf3sgiynx3jcnngdj7d3m62c5fdsgmla7twxynh6wfai@7jvhgxya4xo6>
+	by smtp-out1.suse.de (Postfix) with ESMTPS id CA5323720E;
+	Wed,  3 Apr 2024 15:28:08 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1712158088; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=0irQ8tS4A/FZFoI6eW6Nr7AOJ80BlvhlW3CE1jxJ+pQ=;
+	b=QW07L4L2J+XUJvwomyATIPF48zQMieOFlTOFemqn26gZpRb3AhamG1NjrliPAvWRfipNpK
+	IJfJr055H+lLqwAk/cwS9SJkE2vyYFUlqBcgE/9QbuzT7g+HKciTFunWw7qr8nvXJ8BTRf
+	QCOOH5OYHkEEP7H9YJlMyulhPVcbF4Y=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1712158088;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=0irQ8tS4A/FZFoI6eW6Nr7AOJ80BlvhlW3CE1jxJ+pQ=;
+	b=PsClbm1grC4Xdca5ju5oNq0Y7NeyhUVhDz41AgYGVdYV23XFQ7F80qYrJY0SNAG5dGkUXK
+	l9rQCXyGP9CjqFBg==
+Authentication-Results: smtp-out1.suse.de;
+	dkim=none
+Received: from imap2.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap2.dmz-prg2.suse.org (Postfix) with ESMTPS id 582CF13357;
+	Wed,  3 Apr 2024 15:28:08 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap2.dmz-prg2.suse.org with ESMTPSA
+	id fMdgEoh1DWaMdAAAn2gu4w
+	(envelope-from <hare@suse.de>); Wed, 03 Apr 2024 15:28:08 +0000
+Message-ID: <5c89baf3-68f1-4e91-8fa9-efa183297ca8@suse.de>
+Date: Wed, 3 Apr 2024 17:28:06 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="RRfDDrHk+pzHnTwS"
-Content-Disposition: inline
-In-Reply-To: <c4pit5qf3sgiynx3jcnngdj7d3m62c5fdsgmla7twxynh6wfai@7jvhgxya4xo6>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v5 07/28] block: Introduce zone write plugging
+Content-Language: en-US
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
+ linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>
+References: <20240403084247.856481-1-dlemoal@kernel.org>
+ <20240403084247.856481-8-dlemoal@kernel.org>
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20240403084247.856481-8-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Rspamd-Queue-Id: CA5323720E
+X-Spamd-Result: default: False [-3.29 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_SHORT(-0.19)[-0.970];
+	MIME_GOOD(-0.10)[text/plain];
+	XM_UA_NO_VERSION(0.01)[];
+	MX_GOOD(-0.01)[];
+	RCPT_COUNT_SEVEN(0.00)[10];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	R_DKIM_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:98:from,2a07:de40:b281:106:10:150:64:167:received];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:email,imap2.dmz-prg2.suse.org:rdns,imap2.dmz-prg2.suse.org:helo]
+X-Rspamd-Action: no action
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Spam-Score: -3.29
+X-Spam-Level: 
+X-Spam-Flag: NO
 
+On 4/3/24 10:42, Damien Le Moal wrote:
+> Zone write plugging implements a per-zone "plug" for write operations
+> to control the submission and execution order of write operations to
+> sequential write required zones of a zoned block device. Per-zone
+> plugging guarantees that at any time there is at most only one write
+> request per zone being executed. This mechanism is intended to replace
+> zone write locking which implements a similar per-zone write throttling
+> at the scheduler level, but is implemented only by mq-deadline.
+> 
+> Unlike zone write locking which operates on requests, zone write
+> plugging operates on BIOs. A zone write plug is simply a BIO list that
+> is atomically manipulated using a spinlock and a kblockd submission
+> work. A write BIO to a zone is "plugged" to delay its execution if a
+> write BIO for the same zone was already issued, that is, if a write
+> request for the same zone is being executed. The next plugged BIO is
+> unplugged and issued once the write request completes.
+> 
+> This mechanism allows to:
+>   - Untangle zone write ordering from block IO schedulers. This allows
+>     removing the restriction on using mq-deadline for writing to zoned
+>     block devices. Any block IO scheduler, including "none" can be used.
+>   - Zone write plugging operates on BIOs instead of requests. Plugged
+>     BIOs waiting for execution thus do not hold scheduling tags and thus
+>     are not preventing other BIOs from executing (reads or writes to
+>     other zones). Depending on the workload, this can significantly
+>     improve the device use (higher queue depth operation) and
+>     performance.
+>   - Both blk-mq (request based) zoned devices and BIO-based zoned devices
+>     (e.g.  device mapper) can use zone write plugging. It is mandatory
+>     for the former but optional for the latter. BIO-based drivers can
+>     use zone write plugging to implement write ordering guarantees, or
+>     the drivers can implement their own if needed.
+>   - The code is less invasive in the block layer and is mostly limited to
+>     blk-zoned.c with some small changes in blk-mq.c, blk-merge.c and
+>     bio.c.
+> 
+> Zone write plugging is implemented using struct blk_zone_wplug. This
+> structure includes a spinlock, a BIO list and a work structure to
+> handle the submission of plugged BIOs. Zone write plugs structures are
+> managed using a per-disk hash table.
+> 
+> Plugging of zone write BIOs is done using the function
+> blk_zone_write_plug_bio() which returns false if a BIO execution does
+> not need to be delayed and true otherwise. This function is called
+> from blk_mq_submit_bio() after a BIO is split to avoid large BIOs
+> spanning multiple zones which would cause mishandling of zone write
+> plugs. This ichange enables by default zone write plugging for any mq
+> request-based block device. BIO-based device drivers can also use zone
+> write plugging by expliclty calling blk_zone_write_plug_bio() in their
+> ->submit_bio method. For such devices, the driver must ensure that a
+> BIO passed to blk_zone_write_plug_bio() is already split and not
+> straddling zone boundaries.
+> 
+> Only write and write zeroes BIOs are plugged. Zone write plugging does
+> not introduce any significant overhead for other operations. A BIO that
+> is being handled through zone write plugging is flagged using the new
+> BIO flag BIO_ZONE_WRITE_PLUGGING. A request handling a BIO flagged with
+> this new flag is flagged with the new RQF_ZONE_WRITE_PLUGGING flag.
+> The completion of BIOs and requests flagged trigger respectively calls
+> to the functions blk_zone_write_bio_endio() and
+> blk_zone_write_complete_request(). The latter function is used to
+> trigger submission of the next plugged BIO using the zone plug work.
+> blk_zone_write_bio_endio() does the same for BIO-based devices.
+> This ensures that at any time, at most one request (blk-mq devices) or
+> one BIO (BIO-based devices) is being executed for any zone. The
+> handling of zone write plugs using a per-zone plug spinlock maximizes
+> parallelism and device usage by allowing multiple zones to be writen
+> simultaneously without lock contention.
+> 
+> Zone write plugging ignores flush BIOs without data. Hovever, any flush
+> BIO that has data is always plugged so that the write part of the flush
+> sequence is serialized with other regular writes.
+> 
+> Given that any BIO handled through zone write plugging will be the only
+> BIO in flight for the target zone when it is executed, the unplugging
+> and submission of a BIO will have no chance of successfully merging with
+> plugged requests or requests in the scheduler. To overcome this
+> potential performance degradation, blk_mq_submit_bio() calls the
+> function blk_zone_write_plug_attempt_merge() to try to merge other
+> plugged BIOs with the one just unplugged and submitted. Successful
+> merging is signaled using blk_zone_write_plug_bio_merged(), called from
+> bio_attempt_back_merge(). Furthermore, to avoid recalculating the number
+> of segments of plugged BIOs to attempt merging, the number of segments
+> of a plugged BIO is saved using the new struct bio field
+> __bi_nr_segments. To avoid growing the size of struct bio, this field is
+> added as a union with the bio_cookie field. This is safe to do as
+> polling is always disabled for plugged BIOs.
+> 
+> When BIOs are plugged in a zone write plug, the device request queue
+> usage counter is always incremented. This reference is kept and reused
+> for blk-mq devices when the plugged BIO is unplugged and submitted
+> again using submit_bio_noacct_nocheck(). For this case, the unplugged
+> BIO is already flagged with BIO_ZONE_WRITE_PLUGGING and
+> blk_mq_submit_bio() proceeds directly to allocating a new request for
+> the BIO, re-using the usage reference count taken when the BIO was
+> plugged. This extra reference count is dropped in
+> blk_zone_write_plug_attempt_merge() for any plugged BIO that is
+> successfully merged. Given that BIO-based devices will not take this
+> path, the extra reference is dropped after a plugged BIO is unplugged
+> and submitted.
+> 
+> Zone write plugs are dynamically allocated and managed using a hash
+> table (an array of struct hlist_head) with RCU protection.
+> A zone write plug is allocated when a write BIO is received for the
+> zone and not freed until the zone is fully written, reset or finished.
+> To detect when a zone write plug can be freed, the write state of each
+> zone is tracked using a write pointer offset which corresponds to the
+> offset of a zone write pointer relative to the zone start. Write
+> operations always increment this write pointer offset. Zone reset
+> operations set it to 0 and zone finish operations set it to the zone
+> size.
+> 
+> If a write error happens, the wp_offset value of a zone write plug may
+> become incorrect and out of sync with the device managed write pointer.
+> This is handled using the zone write plug flag BLK_ZONE_WPLUG_ERROR.
+> The function blk_zone_wplug_handle_error() is called from the new disk
+> zone write plug work when this flag is set. This function executes a
+> report zone to update the zone write pointer offset to the current
+> value as indicated by the device. The disk zone write plug work is
+> scheduled whenever a BIO flagged with BIO_ZONE_WRITE_PLUGGING completes
+> with an error or when bio_zone_wplug_prepare_bio() detects an unaligned
+> write. Once scheduled, the disk zone write plugs work keeps running
+> until all zone errors are handled.
+> 
+> To match the new data structures used for zoned disks, the function
+> disk_free_zone_bitmaps() is renamed to the more generic
+> disk_free_zone_resources(). The function disk_init_zone_resources() is
+> also introduced to initialize zone write plugs resources when a gendisk
+> is allocated.
+> 
+> In order to guarantee that the user can simultaneously write up to a
+> number of zones equal to a device max active zone limit or max open zone
+> limit, zone write plugs are allocated using a mempool sized to the
+> maximum of these 2 device limits. For a device that does not have
+> active and open zone limits, 128 is used as the default mempool size.
+> 
+> If a change to the device active and open zone limits is detected, the
+> disk mempool is resized when blk_revalidate_disk_zones() is executed.
+> 
+> This commit contains contributions from Christoph Hellwig <hch@lst.de>.
+> 
+> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+> ---
+>   block/bio.c               |    6 +
+>   block/blk-merge.c         |   11 +
+>   block/blk-mq.c            |   32 +-
+>   block/blk-zoned.c         | 1090 ++++++++++++++++++++++++++++++++++++-
+>   block/blk.h               |   47 +-
+>   block/genhd.c             |    3 +-
+>   include/linux/blk-mq.h    |    2 +
+>   include/linux/blk_types.h |    8 +-
+>   include/linux/blkdev.h    |   12 +
+>   9 files changed, 1200 insertions(+), 11 deletions(-)
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
---RRfDDrHk+pzHnTwS
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Cheers,
 
-On Thu, Mar 28, 2024 at 08:31:21PM -0500, Eric Blake wrote:
-> On Thu, Mar 28, 2024 at 04:39:09PM -0400, Stefan Hajnoczi wrote:
-> > Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
-> > ---
-> > Open issues:
-> > - Locking?
-> > - thin_seek_hole_data() does not run as a bio or request. This patch
-> >   assumes dm_thin_find_mapped_range() synchronously performs I/O if
-> >   metadata needs to be loaded from disk. Is that a valid assumption?
-> > ---
-> >  drivers/md/dm-thin.c | 77 ++++++++++++++++++++++++++++++++++++++++++++
-> >  1 file changed, 77 insertions(+)
-> >=20
-> > diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> > index 4793ad2aa1f7e..3c5dc4f0fe8a3 100644
-> > --- a/drivers/md/dm-thin.c
-> > +++ b/drivers/md/dm-thin.c
-> > @@ -4501,6 +4501,82 @@ static void thin_io_hints(struct dm_target *ti, =
-struct queue_limits *limits)
-> >  	}
-> >  }
-> > =20
-> > +static dm_block_t loff_to_block(struct pool *pool, loff_t offset)
-> > +{
-> > +	sector_t offset_sectors =3D offset >> SECTOR_SHIFT;
-> > +	dm_block_t ret;
-> > +
-> > +	if (block_size_is_power_of_two(pool))
-> > +		ret =3D offset_sectors >> pool->sectors_per_block_shift;
-> > +	else {
-> > +		ret =3D offset_sectors;
-> > +		(void) sector_div(ret, pool->sectors_per_block);
-> > +	}
-> > +
-> > +	return ret;
-> > +}
-> > +
-> > +static loff_t block_to_loff(struct pool *pool, dm_block_t block)
-> > +{
-> > +	return block_to_sectors(pool, block) << SECTOR_SHIFT;
-> > +}
-> > +
-> > +static loff_t thin_seek_hole_data(struct dm_target *ti, loff_t offset,
-> > +		int whence)
-> > +{
-> > +	struct thin_c *tc =3D ti->private;
-> > +	struct dm_thin_device *td =3D tc->td;
-> > +	struct pool *pool =3D tc->pool;
-> > +	dm_block_t begin;
-> > +	dm_block_t end;
-> > +	dm_block_t mapped_begin;
-> > +	dm_block_t mapped_end;
-> > +	dm_block_t pool_begin;
-> > +	bool maybe_shared;
-> > +	int ret;
-> > +
-> > +	/* TODO locking? */
-> > +
-> > +	if (block_size_is_power_of_two(pool))
-> > +		end =3D ti->len >> pool->sectors_per_block_shift;
-> > +	else {
-> > +		end =3D ti->len;
-> > +		(void) sector_div(end, pool->sectors_per_block);
-> > +	}
-> > +
-> > +	offset -=3D ti->begin << SECTOR_SHIFT;
-> > +
-> > +	while (true) {
-> > +		begin =3D loff_to_block(pool, offset);
-> > +		ret =3D dm_thin_find_mapped_range(td, begin, end,
-> > +						&mapped_begin, &mapped_end,
-> > +						&pool_begin, &maybe_shared);
-> > +		if (ret =3D=3D -ENODATA) {
-> > +			if (whence =3D=3D SEEK_DATA)
-> > +				return -ENXIO;
-> > +			break;
-> > +		} else if (ret < 0) {
-> > +			/* TODO handle EWOULDBLOCK? */
-> > +			return -ENXIO;
->=20
-> This should probably be -EIO, not -ENXIO.
-
-Yes. XFS also returns -EIO, so I guess it's okay to do so.
-
-I still need to get to the bottom of whether calling
-dm_thin_find_mapped_range() is sane here and what to do when/if it
-returns EWOULDBLOCK.
-
-> > +		}
-> > +
-> > +		/* SEEK_DATA finishes here... */
-> > +		if (whence =3D=3D SEEK_DATA) {
-> > +			if (mapped_begin !=3D begin)
-> > +				offset =3D block_to_loff(pool, mapped_begin);
-> > +			break;
-> > +		}
-> > +
-> > +		/* ...while SEEK_HOLE may need to look further */
-> > +		if (mapped_begin !=3D begin)
-> > +			break; /* offset is in a hole */
-> > +
-> > +		offset =3D block_to_loff(pool, mapped_end);
-> > +	}
-> > +
-> > +	return offset + (ti->begin << SECTOR_SHIFT);
->=20
-> It's hard to follow, but I'm fairly certain that if whence =3D=3D
-> SEEK_HOLE, you end up returning ti->begin + ti->len instead of -ENXIO
-> if the range from begin to end is fully mapped; which is inconsistent
-> with the semantics you have in 4/9 (although in 6/9 I argue that
-> having all of the dm callbacks return ti->begin + ti->len instead of
-> -ENXIO might make logic easier for iterating through consecutive ti,
-> and then convert to -ENXIO only in the caller).
-
-Returning (ti->begin + ti->len) << SECTOR_SHIFT for SEEK_HOLE when there
-is data at the end of the target is intentional. This matches the
-semantics of lseek().
-
-I agree there is adjustment necessary in dm.c, but I want to seek the
-semantics of all lseek() functions identical to avoid confusion.
-
-Stefan
-
---RRfDDrHk+pzHnTwS
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmYNb9IACgkQnKSrs4Gr
-c8iUVwf/Zpv3IsSznycexR7MwM8g1Pl1+FVxzDf79d7uGFplkj6L9AEhUrePfHRh
-cGxgeFgNqzKAAfDc6rWkEoGxm8Jq5J/OwaTQnMfS5qhmCSekIanhihEtmh2o+3vQ
-5ugyOOADTaWx4AvxKNrfr+16kosIWS8NOHreUzqvYxEsqJ8H07PwZBDNUslQociS
-BtFimE8NmN40GYgH9KetDIyfzxwDE87WPWD61iQBKtsjpHaHcFcI1wsu+jqItN3i
-u7kLKlLBFyLGnuQjuCCYsOQR629RC1ZE4z2j2IEzJEOeQvnAD2YfGjBk7fdt1mXw
-bk76t2gtHwIgCVbdS5wnu6Bt+Wl6Ow==
-=zZmQ
------END PGP SIGNATURE-----
-
---RRfDDrHk+pzHnTwS--
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
 
