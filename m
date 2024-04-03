@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2E30149DE1
-	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 14:23:34 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48E6F14A0B4
+	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 15:04:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712154216; cv=none; b=VbAYApdprXmc68vpeN2w534MTutWmjEiuo999oMyYi5PWgEvfLGyHOIc27ImpKmrja6xvgPaZc1Tabh3yovSe//f1YrTnbOiTKQylm0aaZ/DFJyQy4+hHHXzB6dkkGNWgaKasbA/UVm0wOKpNXmnBU5m3mViTLwneY3x5mtgE70=
+	t=1712156655; cv=none; b=Se8dNdFBvnS85FjSg7lcU31wiGl+NqqG7+lWjPob/hPKkCvxcbukmRH6nnkfzxKb9W6pg0rgq/g9+8GyYpPOdFGs21DcSuICZlTN8ToDt/wN8F6n+2lJNm56eiRrND9jXI5DyPT19Tl+MODdLIWeLOTgYGmv5OcCqA2vWH3e5u8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712154216; c=relaxed/simple;
-	bh=MJsYbHNQg0lSwmPG/X2o3oLlRyBN/Ty3EYj1mD55ruA=;
+	s=arc-20240116; t=1712156655; c=relaxed/simple;
+	bh=k8uce1rf56gQTid1JBeAXtJeS2WnwUoqGN9N80BabCI=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=DLhj9WeUdYPqguErmhH/MliPc7wOVbYRMCP5qmUh4MEWqSU//g3+3y1bnLaaw3Ia9EKoEihHbCBmmN2BeCfbNsNMB+qUoxRYG6EXM1Po3Yo7GtY+1//2g22ygz7ki12M7A53Ap7/27whr9ozBBRWc0UxCB246hekNdbX8Wv0VJU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iqIvpgT1; arc=none smtp.client-ip=170.10.133.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=JpZh3eHaLCDB9cH9mwsIcESGKyy17xTu6DnTNVSU0zuU17km6ITmIrIfb3yVnVvgWE9djqdiTzpPiAR3AE6Xpfntmsawc7kRVSfkyWrEpmIqSqyKxKFdGsWYirgHIEqXtA0/1HlgQI/WarqKMJAwd/QcgtRnheUQOI3oA4cJai0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Y2/jELtl; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iqIvpgT1"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Y2/jELtl"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712154213;
+	s=mimecast20190719; t=1712156653;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=+gSUDQRMNdN4LCSZGFVEafCl8Q9JC4BYcnfOXZQvm7Y=;
-	b=iqIvpgT1KnWTJWBD5IMgA7YO3KnQWIFl7DVOLA47px9I6ICzcrml+ph/3f7wRQvBBYlbOk
-	I6NSDb4jpdSaOdY9AOqmerpPk5zwKOKJdelWF85fXLJnvI2B5u8sngBVse5m82XdZO9RGQ
-	7XJQlBsE6BqkxK5yfUVLQ+A9K3vAWek=
+	bh=t/jx0gVWX+z6DL+RdUWe4Xtrtk69fV0JhZ/qa15t2TM=;
+	b=Y2/jELtl5cParLi1fncpSSrUUwlrKNa0U29lsMnNgnGaBsn9JdKUKvVXudmEKqS7conA45
+	wzntW4r1sPXi1VVPc3KfPOhRVLqa1dsIlaAm5fSUt/vYaJObXSJ3QHSBCjo8I43ovlgIy6
+	yVREjRN7nZNq8WNrqOcBQ7wzeN0j7fw=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-466-d96tnrTYOqmWlR_Cdp8zTA-1; Wed,
- 03 Apr 2024 10:23:30 -0400
-X-MC-Unique: d96tnrTYOqmWlR_Cdp8zTA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-368-2cBnbDAkODaeNogeLgoMow-1; Wed,
+ 03 Apr 2024 11:04:09 -0400
+X-MC-Unique: 2cBnbDAkODaeNogeLgoMow-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BFABD1C0AF54;
-	Wed,  3 Apr 2024 14:23:29 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A4273816B4D;
+	Wed,  3 Apr 2024 15:04:08 +0000 (UTC)
 Received: from localhost (unknown [10.39.194.118])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0D1822166B32;
-	Wed,  3 Apr 2024 14:23:28 +0000 (UTC)
-Date: Wed, 3 Apr 2024 10:23:23 -0400
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CA7E64073484;
+	Wed,  3 Apr 2024 15:04:07 +0000 (UTC)
+Date: Wed, 3 Apr 2024 11:03:46 -0400
 From: Stefan Hajnoczi <stefanha@redhat.com>
 To: Eric Blake <eblake@redhat.com>
 Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
@@ -48,11 +48,11 @@ Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
 	David Teigland <teigland@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>, Jens Axboe <axboe@kernel.dk>,
 	Christoph Hellwig <hch@lst.de>, Joe Thornber <ejt@redhat.com>
-Subject: Re: [RFC 7/9] selftests: block_seek_hole: add dm-linear test
-Message-ID: <20240403142323.GG2524049@fedora>
+Subject: Re: [RFC 8/9] dm thin: add llseek(SEEK_HOLE/SEEK_DATA) support
+Message-ID: <20240403150346.GH2524049@fedora>
 References: <20240328203910.2370087-1-stefanha@redhat.com>
- <20240328203910.2370087-8-stefanha@redhat.com>
- <tb76h2qr2aoj6gi5q2ps4dszgvb723vsevm3637kuimxhnhhup@ezvqkck4qgt3>
+ <20240328203910.2370087-9-stefanha@redhat.com>
+ <c4pit5qf3sgiynx3jcnngdj7d3m62c5fdsgmla7twxynh6wfai@7jvhgxya4xo6>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -60,73 +60,154 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="UFe5qkLdFPYhOF/f"
+	protocol="application/pgp-signature"; boundary="RRfDDrHk+pzHnTwS"
 Content-Disposition: inline
-In-Reply-To: <tb76h2qr2aoj6gi5q2ps4dszgvb723vsevm3637kuimxhnhhup@ezvqkck4qgt3>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+In-Reply-To: <c4pit5qf3sgiynx3jcnngdj7d3m62c5fdsgmla7twxynh6wfai@7jvhgxya4xo6>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
 
---UFe5qkLdFPYhOF/f
+--RRfDDrHk+pzHnTwS
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Mar 28, 2024 at 07:59:14PM -0500, Eric Blake wrote:
-> On Thu, Mar 28, 2024 at 04:39:08PM -0400, Stefan Hajnoczi wrote:
-> > The dm-linear linear target passes through SEEK_HOLE/SEEK_DATA. Extend
-> > the test case to check that the same holes/data are reported as for the
-> > underlying file.
-> >=20
+On Thu, Mar 28, 2024 at 08:31:21PM -0500, Eric Blake wrote:
+> On Thu, Mar 28, 2024 at 04:39:09PM -0400, Stefan Hajnoczi wrote:
 > > Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
 > > ---
-> >  tools/testing/selftests/block_seek_hole/test.py | 16 +++++++++++++++-
-> >  1 file changed, 15 insertions(+), 1 deletion(-)
+> > Open issues:
+> > - Locking?
+> > - thin_seek_hole_data() does not run as a bio or request. This patch
+> >   assumes dm_thin_find_mapped_range() synchronously performs I/O if
+> >   metadata needs to be loaded from disk. Is that a valid assumption?
+> > ---
+> >  drivers/md/dm-thin.c | 77 ++++++++++++++++++++++++++++++++++++++++++++
+> >  1 file changed, 77 insertions(+)
 > >=20
-> > diff --git a/tools/testing/selftests/block_seek_hole/test.py b/tools/te=
-sting/selftests/block_seek_hole/test.py
-> > index 4f7c2d01ab3d3..6360b72aee338 100755
-> > --- a/tools/testing/selftests/block_seek_hole/test.py
-> > +++ b/tools/testing/selftests/block_seek_hole/test.py
-> > @@ -45,6 +45,20 @@ def loop_device(file_path):
-> >      finally:
-> >          run(['losetup', '-d', loop_path])
+> > diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> > index 4793ad2aa1f7e..3c5dc4f0fe8a3 100644
+> > --- a/drivers/md/dm-thin.c
+> > +++ b/drivers/md/dm-thin.c
+> > @@ -4501,6 +4501,82 @@ static void thin_io_hints(struct dm_target *ti, =
+struct queue_limits *limits)
+> >  	}
+> >  }
 > > =20
-> > +@contextmanager
-> > +def dm_linear(file_path):
-> > +    file_size =3D os.path.getsize(file_path)
+> > +static dm_block_t loff_to_block(struct pool *pool, loff_t offset)
+> > +{
+> > +	sector_t offset_sectors =3D offset >> SECTOR_SHIFT;
+> > +	dm_block_t ret;
 > > +
-> > +    with loop_device(file_path) as loop_path:
-> > +        dm_name =3D f'test-{os.getpid()}'
-> > +        run(['dmsetup', 'create', dm_name, '--table',
-> > +             f'0 {file_size // 512} linear {loop_path} 0'])
+> > +	if (block_size_is_power_of_two(pool))
+> > +		ret =3D offset_sectors >> pool->sectors_per_block_shift;
+> > +	else {
+> > +		ret =3D offset_sectors;
+> > +		(void) sector_div(ret, pool->sectors_per_block);
+> > +	}
+> > +
+> > +	return ret;
+> > +}
+> > +
+> > +static loff_t block_to_loff(struct pool *pool, dm_block_t block)
+> > +{
+> > +	return block_to_sectors(pool, block) << SECTOR_SHIFT;
+> > +}
+> > +
+> > +static loff_t thin_seek_hole_data(struct dm_target *ti, loff_t offset,
+> > +		int whence)
+> > +{
+> > +	struct thin_c *tc =3D ti->private;
+> > +	struct dm_thin_device *td =3D tc->td;
+> > +	struct pool *pool =3D tc->pool;
+> > +	dm_block_t begin;
+> > +	dm_block_t end;
+> > +	dm_block_t mapped_begin;
+> > +	dm_block_t mapped_end;
+> > +	dm_block_t pool_begin;
+> > +	bool maybe_shared;
+> > +	int ret;
+> > +
+> > +	/* TODO locking? */
+> > +
+> > +	if (block_size_is_power_of_two(pool))
+> > +		end =3D ti->len >> pool->sectors_per_block_shift;
+> > +	else {
+> > +		end =3D ti->len;
+> > +		(void) sector_div(end, pool->sectors_per_block);
+> > +	}
+> > +
+> > +	offset -=3D ti->begin << SECTOR_SHIFT;
+> > +
+> > +	while (true) {
+> > +		begin =3D loff_to_block(pool, offset);
+> > +		ret =3D dm_thin_find_mapped_range(td, begin, end,
+> > +						&mapped_begin, &mapped_end,
+> > +						&pool_begin, &maybe_shared);
+> > +		if (ret =3D=3D -ENODATA) {
+> > +			if (whence =3D=3D SEEK_DATA)
+> > +				return -ENXIO;
+> > +			break;
+> > +		} else if (ret < 0) {
+> > +			/* TODO handle EWOULDBLOCK? */
+> > +			return -ENXIO;
 >=20
-> Would it be worth tryiing to create the dm with two copies of
-> loop_path concatenated one after the other?  You'd have to do more
-> work on expected output (coalescing adjacent data or holes between the
-> tail of the first copy and the head of the second), but without that
-> in place, I worry that you are missing logic bugs for when there is
-> more than one table in the overall dm (as evidenced by my review in
-> 4/9).
+> This should probably be -EIO, not -ENXIO.
 
-Yes, I agree that more tests are needed to cover transitions between
-adjacent targets.
+Yes. XFS also returns -EIO, so I guess it's okay to do so.
+
+I still need to get to the bottom of whether calling
+dm_thin_find_mapped_range() is sane here and what to do when/if it
+returns EWOULDBLOCK.
+
+> > +		}
+> > +
+> > +		/* SEEK_DATA finishes here... */
+> > +		if (whence =3D=3D SEEK_DATA) {
+> > +			if (mapped_begin !=3D begin)
+> > +				offset =3D block_to_loff(pool, mapped_begin);
+> > +			break;
+> > +		}
+> > +
+> > +		/* ...while SEEK_HOLE may need to look further */
+> > +		if (mapped_begin !=3D begin)
+> > +			break; /* offset is in a hole */
+> > +
+> > +		offset =3D block_to_loff(pool, mapped_end);
+> > +	}
+> > +
+> > +	return offset + (ti->begin << SECTOR_SHIFT);
+>=20
+> It's hard to follow, but I'm fairly certain that if whence =3D=3D
+> SEEK_HOLE, you end up returning ti->begin + ti->len instead of -ENXIO
+> if the range from begin to end is fully mapped; which is inconsistent
+> with the semantics you have in 4/9 (although in 6/9 I argue that
+> having all of the dm callbacks return ti->begin + ti->len instead of
+> -ENXIO might make logic easier for iterating through consecutive ti,
+> and then convert to -ENXIO only in the caller).
+
+Returning (ti->begin + ti->len) << SECTOR_SHIFT for SEEK_HOLE when there
+is data at the end of the target is intentional. This matches the
+semantics of lseek().
+
+I agree there is adjustment necessary in dm.c, but I want to seek the
+semantics of all lseek() functions identical to avoid confusion.
 
 Stefan
 
---UFe5qkLdFPYhOF/f
+--RRfDDrHk+pzHnTwS
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmYNZlsACgkQnKSrs4Gr
-c8irpggAgEsdY3HQUxjbzRdNS2viwwbbMIvyPfW7lJqspI9OLhurqOITHHLhaF0Q
-EpWb8UJotzcmaqLesjFzwrXMJecUfbhF0ON7A4NbgNd9LhxG6eF1C3VmSUR9kgZI
-PKU5+t6H1N5jvKWBngnoTcL/dtJk3o9qbN759KpAMMQ5djRmZU3y52BOD0ciW4v4
-6jAcBP4tHfJU4wde2cEP3N9f9ZY1fa1DstlvA2PaFYIbeIMGF4q8z9O2wcoTLAdT
-fX/r52mR+XnpvzVLUU9bLX3EUDLkkVykPBtI4NHeqN/xNwpu5tS0pc5P+cOc6hdn
-68VRDKu2SVH/Sa0jUZ6I7xLwFZ+YhQ==
-=CUG2
+iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmYNb9IACgkQnKSrs4Gr
+c8iUVwf/Zpv3IsSznycexR7MwM8g1Pl1+FVxzDf79d7uGFplkj6L9AEhUrePfHRh
+cGxgeFgNqzKAAfDc6rWkEoGxm8Jq5J/OwaTQnMfS5qhmCSekIanhihEtmh2o+3vQ
+5ugyOOADTaWx4AvxKNrfr+16kosIWS8NOHreUzqvYxEsqJ8H07PwZBDNUslQociS
+BtFimE8NmN40GYgH9KetDIyfzxwDE87WPWD61iQBKtsjpHaHcFcI1wsu+jqItN3i
+u7kLKlLBFyLGnuQjuCCYsOQR629RC1ZE4z2j2IEzJEOeQvnAD2YfGjBk7fdt1mXw
+bk76t2gtHwIgCVbdS5wnu6Bt+Wl6Ow==
+=zZmQ
 -----END PGP SIGNATURE-----
 
---UFe5qkLdFPYhOF/f--
+--RRfDDrHk+pzHnTwS--
 
