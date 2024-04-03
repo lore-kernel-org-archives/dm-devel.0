@@ -1,33 +1,59 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pg1-f173.google.com (mail-pg1-f173.google.com [209.85.215.173])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9852210A0D;
-	Wed,  3 Apr 2024 01:02:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 603363FE37
+	for <dm-devel@lists.linux.dev>; Wed,  3 Apr 2024 03:56:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712106155; cv=none; b=vBZQAeH8ow2zT3Hpak9WzYcCHpKlX4v/VbvvPIIcIEiT8QlLAVQtmIpUkt+D7MOk7smVc2su3VjD0ZNPPQHWESo1GmL22QyxRi3nL9LHj2dGPQgfpUgS0aSWu2NhVdaeVoZCUIh6Tya6woUPQgea057eujqaZ5v+8sp4DAvQKhA=
+	t=1712116603; cv=none; b=tg9ncUjSiV/UrMA0xAZs1HB6jqPexxPE264P1IE42M9wAZk+IJlcLA3kL/lfFSzXH+66ILR4LrsXUdzIxm3MtidQaWST9fWWqmJXf119fcxjYnzJJWqY27niFRibFIYG5DqGK+cstB9N7QTsojqLPH6aVSkAne5CWqJ9bMa3/+8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712106155; c=relaxed/simple;
-	bh=kzgwLdsL4OudUwPrRRSPRtFvw3mEHVc9aO/Nux6tJOs=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=R6Zxpq97ErgTiP+Klh2RxD+iXIOYrnl5iGnafno5fv2DX2bWq2cpvES44yKq8HqpwslAdFV3pWX1FbsG6Yghe2FuCm9rFOnrnqg+aIUjuGdSrTimmmv2WlW4taNVB3KEzouBdoviBHzuASoR9Di1T+xVEMFo0B5SPl9qThGRmPY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=j/WsTKmG; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1712116603; c=relaxed/simple;
+	bh=YYCPVBA3375GF5Ph5qAHEvIAw0hfx7yA1qo6ZRkPtrM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:Cc:
+	 In-Reply-To:Content-Type; b=gWbmP6rzSpIsqKS+4xsUjB/18zi75zSlbiJHfLzfyk8uYMPjpmXokycYCjpNQ24Zb6RqEfQUma7Sr33tM8K13JEtfaQ4muS9jjRS30Up5JL+GhPipOntmLZJw71zekXH1/B5+ak8jrFnnbo2CM5vN1YQQ4Z+zZkMIPZvaqXRhdo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Cu418TOl; arc=none smtp.client-ip=209.85.215.173
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="j/WsTKmG"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A71CEC433C7;
-	Wed,  3 Apr 2024 01:02:33 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1712106155;
-	bh=kzgwLdsL4OudUwPrRRSPRtFvw3mEHVc9aO/Nux6tJOs=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=j/WsTKmGI70YaCEBXfrg3yAAQyr/QbNeES4W3bPqzfs9wnji+dRQOlTQD4J9k7sRY
-	 nwlo+vB34Za3Oo5kUbWjbf8xQGMBV8PlGB+2HQLqLQnuJlnWFjJH7UVFJRigzc+9BS
-	 zFtRiDHycscQNh6GCixrP5TOx/ezsYoLPxoYdi4MYfXf5OikeDpWNr2AO2WJzLMQak
-	 LXAC3824kBL9t6F/UcWVng3ePi1HK6RrbKEmVN8OpB3VbcxLjME1FPMtZnf4mOvjD4
-	 c9huh4rdbqqgwyl4EUlZDwfQfuZfEMpe6txECbCWhxO2/mQqqMHouksQ3V9qQetZYe
-	 rgBlfwhN8sO2A==
-Message-ID: <084cc8bd-bbc7-491f-b196-51ccd3d97620@kernel.org>
-Date: Wed, 3 Apr 2024 10:02:32 +0900
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Cu418TOl"
+Received: by mail-pg1-f173.google.com with SMTP id 41be03b00d2f7-5cedfc32250so3726924a12.0
+        for <dm-devel@lists.linux.dev>; Tue, 02 Apr 2024 20:56:42 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1712116601; x=1712721401; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:cc:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=fugzhJcIxXGAO0ssTnR0bYZbKaxEwSQa+2J5+v83xpo=;
+        b=Cu418TOlFbVfDDu2btrEnB0eCnRtbU8kbSNvsgRfd/ZL6NRtPiXhssvWAKq4RWfVjH
+         A55vqhdQvl6J4gciNJ88W5E8DCPua8YiHG85BlWOe8OI+/15cVmIT4y41SvqLR8lA2qR
+         bOjt2KndDNcdp9pvN/UdGxf5w7FEFZ8XNjkGwt3r1EkkpKsYS2tayd24aaZZSIyz4jqZ
+         6jI5KEuHnAfCO52EAkPLtXbSQhBQogY01eeUkZ/H/NMaX2rjUwxQ9VZYWQRuJufxy74s
+         /ybA8FqkasEAJU3UF7p9w+jTcXs+drJ44s0xGVO1Os/7ieOwoJorWt4c9xuJ2tmYl/HF
+         OKbQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1712116601; x=1712721401;
+        h=content-transfer-encoding:in-reply-to:cc:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=fugzhJcIxXGAO0ssTnR0bYZbKaxEwSQa+2J5+v83xpo=;
+        b=sIxGXSzpo4Zy/OBAvF9tXAbpKb88l/n86TXepb5BeUHzrgiTHZmKHwToKw3pMEwY3A
+         cLzl4ZkE+oOasxktt47TULGuKKwtNKuX18Cbqb0rr5F3xV404log6B3Od0Fm1KfUpRni
+         wKBsfZPyzEfxygqhgJU1NcfJCK3RbLHQDnAdrS5pPHg/ChuXvc8ib20h3PTR3iGAL+1v
+         VeYpW7kuARssgDEmMiD/BkKia7wJksm7czlEacWupR4PEiNYd1tMRGw3MERmrzPKYFf5
+         rmD5TiAdu0jySzfHWsluyM4fj9FbgP2QyOTNRrWsuufYevovVex7M5cWg7YGamMTn6Ul
+         VCsQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXzTyI3bWUZkOCs/vj9aB5dcJUDHyLgMvrPkmrKtVm55B2JggKsS/OxeMrznaRVzS0ZyuAOcc83UwM2znhxrceesGByNkkOrxM=
+X-Gm-Message-State: AOJu0YyTR4rDhlxBKdU2CdWnR8MEETiu2QiQbcYk9iasnApfVC21drrr
+	6aM6lV/FRYlhw5kLGvhjK0tCDlWfK0oePlBupxP7e/pd7ht6RcTy
+X-Google-Smtp-Source: AGHT+IHfoJxdwg1KatKMqIm6Uh/xcA1bx9qJJajW01kM2Vir6+vvULrmKk55dbcD4GRCoM8/BWI30w==
+X-Received: by 2002:a05:6a21:6d8e:b0:1a5:6c73:74b9 with SMTP id wl14-20020a056a216d8e00b001a56c7374b9mr14589743pzb.48.1712116601569;
+        Tue, 02 Apr 2024 20:56:41 -0700 (PDT)
+Received: from ?IPV6:2600:8802:3800:75a0:159f:e332:af97:bfba? ([2600:8802:3800:75a0:159f:e332:af97:bfba])
+        by smtp.gmail.com with ESMTPSA id i13-20020a17090adc0d00b002a29160df67sm531650pjv.27.2024.04.02.20.56.40
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 02 Apr 2024 20:56:41 -0700 (PDT)
+Message-ID: <7a3be43c-39d9-472a-9593-89a1c4e03004@gmail.com>
+Date: Tue, 2 Apr 2024 20:56:40 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,87 +61,41 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 07/28] block: Introduce zone write plugging
-To: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>
-Cc: linux-block@vger.kernel.org, linux-scsi@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
- linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>
+Subject: Re: [PATCH v4 17/28] null_blk: Introduce fua attribute
+To: Damien Le Moal <dlemoal@kernel.org>
 References: <20240402123907.512027-1-dlemoal@kernel.org>
- <20240402123907.512027-8-dlemoal@kernel.org> <20240402161213.GB3527@lst.de>
- <e923b1cf-9683-4029-8a39-c66aa8fb2647@kernel.org>
- <a68d7e70-d82f-4a09-8b9c-db5e902a3663@kernel.dk>
+ <20240402123907.512027-18-dlemoal@kernel.org>
 Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <a68d7e70-d82f-4a09-8b9c-db5e902a3663@kernel.dk>
-Content-Type: text/plain; charset=UTF-8
+From: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+ linux-scsi@vger.kernel.org, "Martin K . Petersen"
+ <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
+ Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org,
+ Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20240402123907.512027-18-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 4/3/24 10:01, Jens Axboe wrote:
-> On 4/2/24 5:38 PM, Damien Le Moal wrote:
->> On 4/3/24 01:12, Christoph Hellwig wrote:
->>>> +static inline struct blk_zone_wplug *
->>>> +disk_lookup_zone_wplug(struct gendisk *disk, sector_t sector)
->>>> +{
->>>> +	unsigned int zno = disk_zone_no(disk, sector);
->>>> +	unsigned int idx = hash_32(zno, disk->zone_wplugs_hash_bits);
->>>> +	struct blk_zone_wplug *zwplug;
->>>> +
->>>> +	rcu_read_lock();
->>>> +	hlist_for_each_entry_rcu(zwplug, &disk->zone_wplugs_hash[idx], node) {
->>>> +		if (zwplug->zone_no == zno)
->>>> +			goto unlock;
->>>> +	}
->>>> +	zwplug = NULL;
->>>> +
->>>> +unlock:
->>>> +	rcu_read_unlock();
->>>> +	return zwplug;
->>>> +}
->>>
->>> Did we lose an atomic_inc_unless_zero here?  This now just does a lookup
->>> under RCU, but nothing to prevent the zwplug from beeing freed?
->>
->> Nope. When disk_lookup_zone_wplug() is called directly, it is always
->> for handling requests/bios which are holding a reference on the plug
->> and because there are requests/BIOs in-flight, the plug is marked as
->> busy (BLK_ZONE_WPLUG_PLUGGED or BLK_ZONE_WPLUG_ERROR are set). In such
->> state, the plug is always hashed given that
->> disk_should_remove_zone_wplug() retturns false for busy plugs. So
->> there is no reference increase here. The atomic_inc_not_zero() is in
->> disk_get_zone_wplug() which calls disk_lookup_zone_wplug() +
->> atomic_inc_not_zero() within an rcu_read_lock()/rcu_read_unlock()
->> section.
-> 
-> But doing a lookup under rcu, dropping it, and then returning the unit
-> without an increment is just a horrible pattern. Regardless of whether
-> it's safe or not. And as most callers do the atomic_inc anyway, some of
-> then outside rcu lock, this looks horrible buggy.
-> 
-> Please just unify it all and have it follow the idiomatic rcu lookup
-> pattern, which is:
-> 
-> rcu_read_lock();
-> item = lookup();
-> if (atomic_inc_not_zero(item->ref)) {
-> 	rcu_read_unlock();
-> 	return item;
-> }
-> 
-> rcu_read_unlock();
-> return NULL;
-> 
-> as that is well understood, and your code most certainly does not look
-> safe nor sane in that regard.
-> 
-> And probably kill that atomic_inc() helper you have as well while at it.
+Damien,
 
-OK.
+On 4/2/24 05:38, Damien Le Moal wrote:
+>   
+> +static bool g_fua = true;
+> +module_param_named(fua, g_fua, bool, S_IRUGO);
+> +MODULE_PARM_DESC(zoned, "Enable/disable FUA support when cache_size is used. Default: true");
+> +
 
-> 
+checkpatch is generating warning on this patch, please check :-
 
--- 
-Damien Le Moal
-Western Digital Research
+WARNING: Symbolic permissions 'S_IRUGO' are not preferred. Consider 
+using octal permissions '0444'.
+#31: FILE: drivers/block/null_blk/main.c:229:
++module_param_named(fua, g_fua, bool, S_IRUGO);
+
+Also, I noticed that for zone_append_max_sectors attribute patch
+you are using 0444 but for fua you are using S_IRUGO, any specific
+reason ?
+
+-ck
+
 
