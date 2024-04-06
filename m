@@ -1,57 +1,57 @@
-Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com [209.85.216.47])
+Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com [209.85.214.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0EC1F3FBAB
-	for <dm-devel@lists.linux.dev>; Sat,  6 Apr 2024 16:48:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4DDB84438A
+	for <dm-devel@lists.linux.dev>; Sat,  6 Apr 2024 16:48:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712422086; cv=none; b=RDIH1vYLbPuwsUSxK6LKY4dCzjGfHUQO5I+diJtHDhdpPiAYCR/S9HiGnqMi4cgmswNxzzVc40EzAHSMVZtoBoSwyFOru67sQOYCfaPq0cNKdN+3Ok0oxvCcHUrTK7jBLnNU4lMPdWIDlQh0b6M72FqnifVHpIoHiTIOrDtA3G8=
+	t=1712422088; cv=none; b=fNjMFoaPS2reU3PBUxMnRsaVHo8u06YV2hm3VzoDxF59IGBaWdrXNuV8lfoYUJW/xhQiDunWF4LH7JtiSNshMOmijDBN9ihp/UAp+pwiekA0Q/iLjnS2eC0xkJnusUB7ucAeVGLe7jF7kiAOuXecN3L/6CAcpPp5t9qCEZ/Raik=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712422086; c=relaxed/simple;
-	bh=Kmi/WfJXrF9DmnDIPKVOruewhD/0hLZT0Rq7qSw+uTg=;
+	s=arc-20240116; t=1712422088; c=relaxed/simple;
+	bh=41wIMMrsMcV2JAh2IuFxgje7q/XR6YKUnX/6Mr8hZpU=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=d2BbVx3DRyZ1v7C1CKiVLC2Y/aL0GkIEz9IBMTf+EtuX2QLD2htmWYfzWuIZx0w4etvfru2tlGEozAqGfBJrr0VVjz+7xQQhAWQphiDaT1eyutYhRQPD6/g/6hmNCVS7UDeT9k8qX072UIXvG4P+q1A96UPYbCK2pTcVQtb+Srg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=W5qkrwnP; arc=none smtp.client-ip=209.85.216.47
+	 MIME-Version; b=QKOoKPi+rW3Z/hlS8hT3n36zFxFZ+KPzguowzsnOsIO8L8jVXRW9OqvxfROWhE24742Nx5GUzIB+3nl0nX0pqegoYEJ9XL3Liy4SoMTo47lITreNkMtNApx1Tu1PDbyexxb+6tsMyYIx4+JMqntxSct/30YBzBVScA/ToaxTTvM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GpXB6S+J; arc=none smtp.client-ip=209.85.214.176
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="W5qkrwnP"
-Received: by mail-pj1-f47.google.com with SMTP id 98e67ed59e1d1-2a49986efc0so371083a91.0
-        for <dm-devel@lists.linux.dev>; Sat, 06 Apr 2024 09:48:02 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GpXB6S+J"
+Received: by mail-pl1-f176.google.com with SMTP id d9443c01a7336-1e2ae3a3f66so5426905ad.0
+        for <dm-devel@lists.linux.dev>; Sat, 06 Apr 2024 09:48:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712422082; x=1713026882; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1712422087; x=1713026887; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=dK09sdVm3FDc6WKxOeZ2eJalXfjQmceUyaajZx+IgEI=;
-        b=W5qkrwnPqoEN/6cOE8A5VceUmdYO/8M8d5m82yq+i8lOWfanvcPNvJ8M1TYFyG6KQS
-         SgMIozIWZISmehRooEfGztvI5qPtsR5rL6aqDdY+d70GkK1eZsvVoKGJTv6LntyEMHfF
-         OTCKm9cilD+hflOGc/NPM3mkoJ5nFLxjFNMtCnCRl1spg7ehekR3rfXSl3KPzKEBVcq9
-         kJUxEHmFNkHi2gxBwDjblY0t6cldGdCMJe1ac1CcQ36aa2E3yqW+FuIolc4tOS6NIoz0
-         Cv2SdJ1bO9LIhhSMtrfvOoCT2sD7ykgnI2ZJnwKTLnuusiCeNctyHK5J/JGQZcdZGrQ1
-         c+3A==
+        bh=mUGTczp2Kn8XprLlzlIe26wHtjou4WYa/rxGIi1PK80=;
+        b=GpXB6S+J6Bw9NKm/xzwVEsqOIoy3D8lJbpIr8t6Ia1C9AXSAEXcDcO+BLjHhorXv7l
+         Sx7E93FZy1U8u8aKBmwzQSGI5y4p2rmpebDhVCfXS3WJe++sDtY324f7hG8nZHzetfyd
+         /2zun96kR3Dib7biJNS/PQkfT8A8OWx7eZSKq8/THvrNyxji6nMgwvV2X6LQtZ1ECOFE
+         BHJZNgceVzoYGoNa0/qvaBSY1maZkoJGO15rBbrTDltzmWbWxKrmgQ7+T1fyXO36heSd
+         nT0NIuIE/tvfLZUinlFNxqqX2HxlPDir57K3T+JWio2hxz6OOHOFmryd8G7d8ozraJAv
+         hIxA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712422082; x=1713026882;
+        d=1e100.net; s=20230601; t=1712422087; x=1713026887;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=dK09sdVm3FDc6WKxOeZ2eJalXfjQmceUyaajZx+IgEI=;
-        b=Vy8ZqogWm/6X+lrqlgEDllvGqLOR5qNxGTVnA9xJFIbmt2iEZyBGtUDJoeSyW+75lx
-         O9TriafNUea4Q9hX1LI+K3Hbm9uXVOfx29N0jfM0oDJ8FxufS51uHHiC/FUX6QCxOoPo
-         dX9TJL74NchBfCD0P68+z/UInFoB4fCeLSO0MMgf/u1KJx2hFSEKsBDCHJx3lDdVCrBM
-         DubXrumXIUsXqcb7w67GW6vcHFgG4nKg45eBmeKYKbydRhghTXhhayt8kktLdihkievy
-         80EdMCE+AKlMbTPtdwPcCD8r4r56rYQkcknWeX7kEHOuJA/zxXEbvDr+JU7cMCkbRdjy
-         68fg==
-X-Forwarded-Encrypted: i=1; AJvYcCUNjtSc//YAbeypGgkln2Kx2Rs0Fnubyacz5BUHJ6hji+nsOe1byvZeSPK7pee8e2w+5bEdZx9b/6jB/ltb2JMyfcDqwLVfXfY=
-X-Gm-Message-State: AOJu0Yz5rPOQrntlD4JjhITDTH2JQn6yKspfqJAakwd3h4vp9cfo7Hvr
-	wQXfaceki9ScBaE18yIcjEgToJz6WUen95hJSqQcD0sUNLLRnhFv
-X-Google-Smtp-Source: AGHT+IF6bSM9TvaOHZ1SxE6Lem5Gy66Hig9ApmIiEpbRWhnjYwG5p8fVQ2KN7omN/hwecz/4GFfmWA==
-X-Received: by 2002:a17:902:e5c1:b0:1e0:c91b:b950 with SMTP id u1-20020a170902e5c100b001e0c91bb950mr5606192plf.5.1712422082051;
-        Sat, 06 Apr 2024 09:48:02 -0700 (PDT)
+        bh=mUGTczp2Kn8XprLlzlIe26wHtjou4WYa/rxGIi1PK80=;
+        b=ItQc3FuBuGuExzRmLmpolKYF3lFHZ1vgFgA6PUAQggamLJ9mD8p8yjTIyarShVNO9y
+         ooawjTWSdy/GXTvdjoX3+kgXJAp2rbRUzKNRLFOajFTZfO/JnJqx9IS5RDp3h75cQKGS
+         /0KjrHjRTt45hJLo5hcAErlc7fG1Ef0N39OPwReayanjptoWxYwg54bGBFGyNNKcsMEV
+         Nu3BWeFcoDKUgd6L5UkcEdyRUUrXF01XJ76JP2uH3JlvQNNcg+k7aORxfafP8uxu9QFT
+         X0vDgd0Bw4o752Xx2hIiwDFK+N8H1Ei95GrkDuOuLEp+rJRPfloFEkae+treMPDhtdJx
+         JuZw==
+X-Forwarded-Encrypted: i=1; AJvYcCUBWDZejNQ6mPdpqSZdFIq9aw2x/pzjS0nK6ekT7DRl/V9r/O2PAI0gi0DN7XyQ6s2m1m5RzF1uvSTO6u/AwLqRVPRwvH/9nRk=
+X-Gm-Message-State: AOJu0YxTEEfwdlVASeWwS8Scr8EkOshkN5z7ksBVGasXm8t5OPIWIQG9
+	ZMWDu5BAMFPrSpgfnVfGxXW7wG3ikpxYUjKLlX2g2GRKtutVRzoi
+X-Google-Smtp-Source: AGHT+IEfdT0u+GNUvqc2IQqievgBGrYbYzE6csgkYg+ooNoxAHp4tOGUzoKNnscpqMdglSVxGHUWwA==
+X-Received: by 2002:a17:902:ea01:b0:1e2:c1ce:5b9d with SMTP id s1-20020a170902ea0100b001e2c1ce5b9dmr5303688plg.2.1712422086668;
+        Sat, 06 Apr 2024 09:48:06 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id q14-20020a170902a3ce00b001e2b8c91f04sm3665068plb.22.2024.04.06.09.47.58
+        by smtp.gmail.com with ESMTPSA id q14-20020a170902a3ce00b001e2b8c91f04sm3665068plb.22.2024.04.06.09.48.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 06 Apr 2024 09:48:01 -0700 (PDT)
+        Sat, 06 Apr 2024 09:48:06 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -74,9 +74,9 @@ Cc: bfoster@redhat.com,
 	linux-bcachefs@vger.kernel.org,
 	linux-perf-users@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v3 04/17] lib min_heap: Add type safe interface
-Date: Sun,  7 Apr 2024 00:47:14 +0800
-Message-Id: <20240406164727.577914-5-visitorckw@gmail.com>
+Subject: [PATCH v3 05/17] lib min_heap: Add min_heap_init()
+Date: Sun,  7 Apr 2024 00:47:15 +0800
+Message-Id: <20240406164727.577914-6-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240406164727.577914-1-visitorckw@gmail.com>
 References: <20240406164727.577914-1-visitorckw@gmail.com>
@@ -88,436 +88,44 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Implement a type-safe interface for min_heap using strong type
-pointers instead of void * in the data field. This change includes
-adding small macro wrappers around functions, enabling the use of
-__minheap_cast and __minheap_obj_size macros for type casting and
-obtaining element size. This implementation removes the necessity of
-passing element size in min_heap_callbacks. Additionally, introduce the
-MIN_HEAP_PREALLOCATED macro for preallocating some elements.
+Add min_heap_init() for initializing heap with data, nr, and size.
 
-Link: https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvsdp4mqqg@nrlek5vmisbu
 Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 Reviewed-by: Ian Rogers <irogers@google.com>
 ---
 Changes in v3:
-- Avoid heap->heap.nr to eliminate the nested types.
-- Add MIN_HEAP_PREALLOCATED macro for preallocating some elements.
+- If the 'data' parameter is NULL, we now make the data pointer in the
+  heap point to the preallocated.
 
- drivers/md/dm-vdo/repair.c     | 15 +++----
- drivers/md/dm-vdo/slab-depot.c | 11 ++---
- include/linux/min_heap.h       | 79 ++++++++++++++++++++++------------
- kernel/events/core.c           | 23 +++++-----
- lib/test_min_heap.c            | 37 ++++++++--------
- 5 files changed, 90 insertions(+), 75 deletions(-)
+ include/linux/min_heap.h | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-diff --git a/drivers/md/dm-vdo/repair.c b/drivers/md/dm-vdo/repair.c
-index defc9359f10e..1916dc284365 100644
---- a/drivers/md/dm-vdo/repair.c
-+++ b/drivers/md/dm-vdo/repair.c
-@@ -51,6 +51,8 @@ struct recovery_point {
- 	bool increment_applied;
- };
- 
-+MIN_HEAP(struct numbered_block_mapping, replay_heap);
-+
- struct repair_completion {
- 	/* The completion header */
- 	struct vdo_completion completion;
-@@ -97,7 +99,7 @@ struct repair_completion {
- 	 * order, then original journal order. This permits efficient iteration over the journal
- 	 * entries in order.
- 	 */
--	struct min_heap replay_heap;
-+	struct replay_heap replay_heap;
- 	/* Fields tracking progress through the journal entries. */
- 	struct numbered_block_mapping *current_entry;
- 	struct numbered_block_mapping *current_unfetched_entry;
-@@ -163,14 +165,13 @@ static void swap_mappings(void *item1, void *item2)
- }
- 
- static const struct min_heap_callbacks repair_min_heap = {
--	.elem_size = sizeof(struct numbered_block_mapping),
- 	.less = mapping_is_less_than,
- 	.swp = swap_mappings,
- };
- 
- static struct numbered_block_mapping *sort_next_heap_element(struct repair_completion *repair)
- {
--	struct min_heap *heap = &repair->replay_heap;
-+	struct replay_heap *heap = &repair->replay_heap;
- 	struct numbered_block_mapping *last;
- 
- 	if (heap->nr == 0)
-@@ -1117,11 +1118,9 @@ static void recover_block_map(struct vdo_completion *completion)
- 	 * Organize the journal entries into a binary heap so we can iterate over them in sorted
- 	 * order incrementally, avoiding an expensive sort call.
- 	 */
--	repair->replay_heap = (struct min_heap) {
--		.data = repair->entries,
--		.nr = repair->block_map_entry_count,
--		.size = repair->block_map_entry_count,
--	};
-+	repair->replay_heap.data = repair->entries;
-+	repair->replay_heap.nr = repair->block_map_entry_count;
-+	repair->replay_heap.size = repair->block_map_entry_count;
- 	min_heapify_all(&repair->replay_heap, &repair_min_heap);
- 
- 	vdo_log_info("Replaying %zu recovery entries into block map",
-diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
-index 46e4721e5b4f..fb38e3b8befc 100644
---- a/drivers/md/dm-vdo/slab-depot.c
-+++ b/drivers/md/dm-vdo/slab-depot.c
-@@ -3309,7 +3309,6 @@ static void swap_slab_statuses(void *item1, void *item2)
- }
- 
- static const struct min_heap_callbacks slab_status_min_heap = {
--	.elem_size = sizeof(struct slab_status),
- 	.less = slab_status_is_less_than,
- 	.swp = swap_slab_statuses,
- };
-@@ -3509,7 +3508,7 @@ static int get_slab_statuses(struct block_allocator *allocator,
- static int __must_check vdo_prepare_slabs_for_allocation(struct block_allocator *allocator)
- {
- 	struct slab_status current_slab_status;
--	struct min_heap heap;
-+	MIN_HEAP(struct slab_status, heap) heap;
- 	int result;
- 	struct slab_status *slab_statuses;
- 	struct slab_depot *depot = allocator->depot;
-@@ -3521,11 +3520,9 @@ static int __must_check vdo_prepare_slabs_for_allocation(struct block_allocator
- 		return result;
- 
- 	/* Sort the slabs by cleanliness, then by emptiness hint. */
--	heap = (struct min_heap) {
--		.data = slab_statuses,
--		.nr = allocator->slab_count,
--		.size = allocator->slab_count,
--	};
-+	heap.data = slab_statuses;
-+	heap.nr = allocator->slab_count;
-+	heap.size = allocator->slab_count;
- 	min_heapify_all(&heap, &slab_status_min_heap);
- 
- 	while (heap.nr > 0) {
 diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
-index d52daf45861b..87737cadb9a5 100644
+index 87737cadb9a5..f6b07fb8b2d3 100644
 --- a/include/linux/min_heap.h
 +++ b/include/linux/min_heap.h
-@@ -7,45 +7,53 @@
- #include <linux/types.h>
- 
- /**
-- * struct min_heap - Data structure to hold a min-heap.
-- * @data: Start of array holding the heap elements.
-+ * Data structure to hold a min-heap.
-  * @nr: Number of elements currently in the heap.
-  * @size: Maximum number of elements that can be held in current storage.
-+ * @data: Pointer to the start of array holding the heap elements.
-+ * @preallocated: Start of the static preallocated array holding the heap elements.
-  */
--struct min_heap {
--	void *data;
--	int nr;
--	int size;
--};
-+#define MIN_HEAP_PREALLOCATED(_type, _name, _nr)	\
-+struct _name {	\
-+	int nr;	\
-+	int size;	\
-+	_type *data;	\
-+	_type preallocated[_nr];	\
-+}
-+
-+#define MIN_HEAP(_type, _name) MIN_HEAP_PREALLOCATED(_type, _name, 0)
-+
-+typedef MIN_HEAP(char, min_heap_char) min_heap_char;
-+
-+#define __minheap_cast(_heap)		(typeof((_heap)->data[0]) *)
-+#define __minheap_obj_size(_heap)	sizeof((_heap)->data[0])
- 
- /**
-  * struct min_heap_callbacks - Data/functions to customise the min_heap.
-- * @elem_size: The nr of each element in bytes.
-  * @less: Partial order function for this heap.
-  * @swp: Swap elements function.
-  */
- struct min_heap_callbacks {
--	int elem_size;
- 	bool (*less)(const void *lhs, const void *rhs);
+@@ -38,6 +38,21 @@ struct min_heap_callbacks {
  	void (*swp)(void *lhs, void *rhs);
  };
  
++/* Initialize a min-heap. */
++static __always_inline
++void __min_heap_init(min_heap_char *heap, void *data, int size)
++{
++	heap->nr = 0;
++	heap->size = size;
++	if (data)
++		heap->data = data;
++	else
++		heap->data = heap->preallocated;
++}
++
++#define min_heap_init(_heap, _data, _size)	\
++	__min_heap_init((min_heap_char *)_heap, _data, _size)
++
  /* Sift the element at pos down the heap. */
  static __always_inline
--void min_heapify(struct min_heap *heap, int pos,
-+void __min_heapify(min_heap_char *heap, int pos, size_t elem_size,
- 		const struct min_heap_callbacks *func)
- {
- 	void *left, *right;
- 	void *data = heap->data;
--	void *root = data + pos * func->elem_size;
-+	void *root = data + pos * elem_size;
- 	int i = pos, j;
- 
- 	/* Find the sift-down path all the way to the leaves. */
- 	for (;;) {
- 		if (i * 2 + 2 >= heap->nr)
- 			break;
--		left = data + (i * 2 + 1) * func->elem_size;
--		right = data + (i * 2 + 2) * func->elem_size;
-+		left = data + (i * 2 + 1) * elem_size;
-+		right = data + (i * 2 + 2) * elem_size;
- 		i = func->less(left, right) ? i * 2 + 1 : i * 2 + 2;
- 	}
- 
-@@ -54,31 +62,37 @@ void min_heapify(struct min_heap *heap, int pos,
- 		i = i * 2 + 1;
- 
- 	/* Backtrack to the correct location. */
--	while (i != pos && func->less(root, data + i * func->elem_size))
-+	while (i != pos && func->less(root, data + i * elem_size))
- 		i = (i - 1) / 2;
- 
- 	/* Shift the element into its correct place. */
- 	j = i;
- 	while (i != pos) {
- 		i = (i - 1) / 2;
--		func->swp(data + i * func->elem_size, data + j * func->elem_size);
-+		func->swp(data + i * elem_size, data + j * elem_size);
- 	}
- }
- 
-+#define min_heapify(_heap, _pos, _func)	\
-+	__min_heapify((min_heap_char *)_heap, _pos, __minheap_obj_size(_heap), _func)
-+
- /* Floyd's approach to heapification that is O(nr). */
- static __always_inline
--void min_heapify_all(struct min_heap *heap,
-+void __min_heapify_all(min_heap_char *heap, size_t elem_size,
- 		const struct min_heap_callbacks *func)
- {
- 	int i;
- 
- 	for (i = heap->nr / 2 - 1; i >= 0; i--)
--		min_heapify(heap, i, func);
-+		__min_heapify(heap, i, elem_size, func);
- }
- 
-+#define min_heapify_all(_heap, _func)	\
-+	__min_heapify_all((min_heap_char *)_heap, __minheap_obj_size(_heap), _func)
-+
- /* Remove minimum element from the heap, O(log2(nr)). */
- static __always_inline
--void min_heap_pop(struct min_heap *heap,
-+void __min_heap_pop(min_heap_char *heap, size_t elem_size,
- 		const struct min_heap_callbacks *func)
- {
- 	void *data = heap->data;
-@@ -88,27 +102,33 @@ void min_heap_pop(struct min_heap *heap,
- 
- 	/* Place last element at the root (position 0) and then sift down. */
- 	heap->nr--;
--	memcpy(data, data + (heap->nr * func->elem_size), func->elem_size);
--	min_heapify(heap, 0, func);
-+	memcpy(data, data + (heap->nr * elem_size), elem_size);
-+	__min_heapify(heap, 0, elem_size, func);
- }
- 
-+#define min_heap_pop(_heap, _func)	\
-+	__min_heap_pop((min_heap_char *)_heap, __minheap_obj_size(_heap), _func)
-+
- /*
-  * Remove the minimum element and then push the given element. The
-  * implementation performs 1 sift (O(log2(nr))) and is therefore more
-  * efficient than a pop followed by a push that does 2.
-  */
- static __always_inline
--void min_heap_pop_push(struct min_heap *heap,
--		const void *element,
-+void __min_heap_pop_push(min_heap_char *heap,
-+		const void *element, size_t elem_size,
- 		const struct min_heap_callbacks *func)
- {
--	memcpy(heap->data, element, func->elem_size);
--	min_heapify(heap, 0, func);
-+	memcpy(heap->data, element, elem_size);
-+	__min_heapify(heap, 0, elem_size, func);
- }
- 
-+#define min_heap_pop_push(_heap, _element, _func)	\
-+	__min_heap_pop_push((min_heap_char *)_heap, _element, __minheap_obj_size(_heap), _func)
-+
- /* Push an element on to the heap, O(log2(nr)). */
- static __always_inline
--void min_heap_push(struct min_heap *heap, const void *element,
-+void __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
- 		const struct min_heap_callbacks *func)
- {
- 	void *data = heap->data;
-@@ -120,17 +140,20 @@ void min_heap_push(struct min_heap *heap, const void *element,
- 
- 	/* Place at the end of data. */
- 	pos = heap->nr;
--	memcpy(data + (pos * func->elem_size), element, func->elem_size);
-+	memcpy(data + (pos * elem_size), element, elem_size);
- 	heap->nr++;
- 
- 	/* Sift child at pos up. */
- 	for (; pos > 0; pos = (pos - 1) / 2) {
--		child = data + (pos * func->elem_size);
--		parent = data + ((pos - 1) / 2) * func->elem_size;
-+		child = data + (pos * elem_size);
-+		parent = data + ((pos - 1) / 2) * elem_size;
- 		if (func->less(parent, child))
- 			break;
- 		func->swp(parent, child);
- 	}
- }
- 
-+#define min_heap_push(_heap, _element, _func)	\
-+	__min_heap_push((min_heap_char *)_heap, _element, __minheap_obj_size(_heap), _func)
-+
- #endif /* _LINUX_MIN_HEAP_H */
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 10ac2db83f14..4b6a50b0fef0 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -3698,13 +3698,14 @@ static void swap_ptr(void *l, void *r)
- 	swap(*lp, *rp);
- }
- 
-+MIN_HEAP(struct perf_event *, perf_event_min_heap);
-+
- static const struct min_heap_callbacks perf_min_heap = {
--	.elem_size = sizeof(struct perf_event *),
- 	.less = perf_less_group_idx,
- 	.swp = swap_ptr,
- };
- 
--static void __heap_add(struct min_heap *heap, struct perf_event *event)
-+static void __heap_add(struct perf_event_min_heap *heap, struct perf_event *event)
- {
- 	struct perf_event **itrs = heap->data;
- 
-@@ -3738,7 +3739,7 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
- 	struct perf_cpu_context *cpuctx = NULL;
- 	/* Space for per CPU and/or any CPU event iterators. */
- 	struct perf_event *itrs[2];
--	struct min_heap event_heap;
-+	struct perf_event_min_heap event_heap;
- 	struct perf_event **evt;
- 	int ret;
- 
-@@ -3747,11 +3748,9 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
- 
- 	if (!ctx->task) {
- 		cpuctx = this_cpu_ptr(&perf_cpu_context);
--		event_heap = (struct min_heap){
--			.data = cpuctx->heap,
--			.nr = 0,
--			.size = cpuctx->heap_size,
--		};
-+		event_heap.data = cpuctx->heap;
-+		event_heap.nr = 0;
-+		event_heap.size = cpuctx->heap_size;
- 
- 		lockdep_assert_held(&cpuctx->ctx.lock);
- 
-@@ -3760,11 +3759,9 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
- 			css = &cpuctx->cgrp->css;
- #endif
- 	} else {
--		event_heap = (struct min_heap){
--			.data = itrs,
--			.nr = 0,
--			.size = ARRAY_SIZE(itrs),
--		};
-+		event_heap.data = itrs;
-+		event_heap.nr = 0;
-+		event_heap.size = ARRAY_SIZE(itrs);
- 		/* Events not within a CPU context may be on any CPU. */
- 		__heap_add(&event_heap, perf_event_groups_first(groups, -1, pmu, NULL));
- 	}
-diff --git a/lib/test_min_heap.c b/lib/test_min_heap.c
-index 7b01b4387cfb..9e7642c3ef9e 100644
---- a/lib/test_min_heap.c
-+++ b/lib/test_min_heap.c
-@@ -11,6 +11,8 @@
- #include <linux/printk.h>
- #include <linux/random.h>
- 
-+MIN_HEAP(int, min_heap_test);
-+
- static __init bool less_than(const void *lhs, const void *rhs)
- {
- 	return *(int *)lhs < *(int *)rhs;
-@@ -30,7 +32,7 @@ static __init void swap_ints(void *lhs, void *rhs)
- }
- 
- static __init int pop_verify_heap(bool min_heap,
--				struct min_heap *heap,
-+				struct min_heap_test *heap,
- 				const struct min_heap_callbacks *funcs)
- {
- 	int *values = heap->data;
-@@ -63,13 +65,12 @@ static __init int test_heapify_all(bool min_heap)
- {
- 	int values[] = { 3, 1, 2, 4, 0x8000000, 0x7FFFFFF, 0,
- 			 -3, -1, -2, -4, 0x8000000, 0x7FFFFFF };
--	struct min_heap heap = {
--		.data = values,
--		.nr = ARRAY_SIZE(values),
--		.size =  ARRAY_SIZE(values),
--	};
-+	struct min_heap_test heap;
-+
-+	heap.data = values;
-+	heap.nr = ARRAY_SIZE(values);
-+	heap.size =  ARRAY_SIZE(values);
- 	struct min_heap_callbacks funcs = {
--		.elem_size = sizeof(int),
- 		.less = min_heap ? less_than : greater_than,
- 		.swp = swap_ints,
- 	};
-@@ -96,13 +97,12 @@ static __init int test_heap_push(bool min_heap)
- 	const int data[] = { 3, 1, 2, 4, 0x80000000, 0x7FFFFFFF, 0,
- 			     -3, -1, -2, -4, 0x80000000, 0x7FFFFFFF };
- 	int values[ARRAY_SIZE(data)];
--	struct min_heap heap = {
--		.data = values,
--		.nr = 0,
--		.size =  ARRAY_SIZE(values),
--	};
-+	struct min_heap_test heap;
-+
-+	heap.data = values;
-+	heap.nr = 0;
-+	heap.size =  ARRAY_SIZE(values);
- 	struct min_heap_callbacks funcs = {
--		.elem_size = sizeof(int),
- 		.less = min_heap ? less_than : greater_than,
- 		.swp = swap_ints,
- 	};
-@@ -129,13 +129,12 @@ static __init int test_heap_pop_push(bool min_heap)
- 	const int data[] = { 3, 1, 2, 4, 0x80000000, 0x7FFFFFFF, 0,
- 			     -3, -1, -2, -4, 0x80000000, 0x7FFFFFFF };
- 	int values[ARRAY_SIZE(data)];
--	struct min_heap heap = {
--		.data = values,
--		.nr = 0,
--		.size =  ARRAY_SIZE(values),
--	};
-+	struct min_heap_test heap;
-+
-+	heap.data = values;
-+	heap.nr = 0;
-+	heap.size =  ARRAY_SIZE(values);
- 	struct min_heap_callbacks funcs = {
--		.elem_size = sizeof(int),
- 		.less = min_heap ? less_than : greater_than,
- 		.swp = swap_ints,
- 	};
+ void __min_heapify(min_heap_char *heap, int pos, size_t elem_size,
 -- 
 2.34.1
 
