@@ -1,118 +1,132 @@
-Received: from mail-qk1-f176.google.com (mail-qk1-f176.google.com [209.85.222.176])
+Received: from mail-pl1-f177.google.com (mail-pl1-f177.google.com [209.85.214.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D85C28485
-	for <dm-devel@lists.linux.dev>; Sun,  7 Apr 2024 14:57:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B6763D0BD
+	for <dm-devel@lists.linux.dev>; Sun,  7 Apr 2024 19:10:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712501828; cv=none; b=gvR+ntOv2bJCAVrzV7j8g6JhkdGizaKiX6YFWwltM2Ox/SKu5XNfaYbIh79dyIkIBc0jMw3Nlr2lFNu1kMmrZ+39BvLHPRWqd4e3PISth0cr7of8pAhEv3dW1JeL0PKNNGzIWcd//axvmGdStiU5n5m6ZmSZCY8tm+V9bIB+IxU=
+	t=1712517055; cv=none; b=gvctPMgRUda202ovFdc2SWqC2YBEZBLAZG2wVt2gGwPy8FlJgrhnGoJv/aAWFNZktNAn5v7rVctjamg0O4QBW4kIjOfqI21MD5sXXJfPVh9Gl5bhlH/aUXPdkRxleDidx/4jnf0ebP5LY+XHWadyi7iXs1MTc7yxtJIp1JrT4dQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712501828; c=relaxed/simple;
-	bh=e4fwXOUyYq6mV6uhvLjPhbnGjuszMvN9URKWpUlfXvY=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=SeqSHCc6TBvK3TaMyfW/AWVZ4vX+9r7FsEu3r9aRKbzM+pg6zilxpHkPyr7ZvlloejVpNFZk5IZ2u8p0/Wu13eB5R1csMES0aWY3S50SAXXPbOFiEbodc1a79XU0VPyM/ryEsMpKsw75oLEOjGsPF69r/q2OAHcxBJZpj88ofQ4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.176
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qk1-f176.google.com with SMTP id af79cd13be357-78d54a3e462so97949085a.0
-        for <dm-devel@lists.linux.dev>; Sun, 07 Apr 2024 07:57:05 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712501825; x=1713106625;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+	s=arc-20240116; t=1712517055; c=relaxed/simple;
+	bh=70HHBEd6cxrXlLkgbwjfvu3LYrWt/mT4YkQDDZ2MPi0=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=HKO+uU1sg1ZjopsIBD7QWydAENv2Zvhwf33210yTAZiwv2pac52A3u6zongRSlLr+fnFhbzQ3XF/1+IK/oupqNZ1eVDGFVFnxLWniSN23yfB6M/+bB+AWQYG5QbQf4J7vrIj0Bus83u1f1XF0KIEXzKkImYO6Osz5IaeZWhKeuc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=zvGQVwf0; arc=none smtp.client-ip=209.85.214.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="zvGQVwf0"
+Received: by mail-pl1-f177.google.com with SMTP id d9443c01a7336-1e062f3a47bso123665ad.1
+        for <dm-devel@lists.linux.dev>; Sun, 07 Apr 2024 12:10:54 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1712517053; x=1713121853; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=f9UKQt8oRXG6Dh8pSrRfOqttC99MPstJOYP5P6LSjTI=;
-        b=vnDyCR/X8IXidDfQojDuYg0SNSaWep1TLpQA2wom3GxmkBGshOowd5Lgcc2Q41EL/5
-         SRo2ZtPqEl3VqEVvsRY5HipETIQ5L/Bv/PpEy3o5MqDfdUl+vCksS1MCf3H00FCFznLY
-         Q55CO586gPk7vJWzQ6zfz6m4fiy1QH0vPFHz6bXn+F1zgEXn3EL27n8DIKpjeOvsZBrx
-         M8dvnC6NdRID/5WR9yutZnhxEfAzeWKUwd/eQXdm84ffs/vJQuxhnybsHKbKSnEsEN9n
-         dMLLLlwROhczfPxg4MuslxxxqxI2vm4Q4KMnJUOVu27rcAnqFRKXgllWfTNSRH993pS0
-         wc+g==
-X-Forwarded-Encrypted: i=1; AJvYcCWsa9iOObi6ewcGuAegq6RhJ4RjDdJmRRX/iywK6yCN4dbMFfhNJ9/5ZBKxjOtLTYSMnUP5zRQmjl/fhqjJCOhAmR7/mvnwqlI=
-X-Gm-Message-State: AOJu0YwRrZe/ofn/b08qCSHi5pLjYxCopmXU3C3PcY19p44ZrOYcm1g4
-	wR18HH3aWsPsry5NxeYvc7wZpWcYDajRqWVElySk0IS5r8RSi/sZjUliWgeLfQ==
-X-Google-Smtp-Source: AGHT+IFOCt5ITUSZM9yD/CST7Tn+uc5Nrf1bq7XmB0Gqa35jK1G/uyfDDNQaypFMkPS1UTQNfQ/K9w==
-X-Received: by 2002:ae9:e412:0:b0:78a:22bd:d980 with SMTP id q18-20020ae9e412000000b0078a22bdd980mr7153654qkc.64.1712501824869;
-        Sun, 07 Apr 2024 07:57:04 -0700 (PDT)
-Received: from localhost ([64.44.118.111])
-        by smtp.gmail.com with ESMTPSA id bq12-20020a05620a468c00b0078d64195031sm328312qkb.31.2024.04.07.07.57.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 07 Apr 2024 07:57:04 -0700 (PDT)
-Date: Sun, 7 Apr 2024 10:57:02 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	janpieter.sollie@edpnet.be, Christoph Hellwig <hch@lst.de>,
-	dm-devel@lists.linux.dev, Song Liu <song@kernel.org>,
-	linux-raid@vger.kernel.org
-Subject: Re: block: allow device to have both virt_boundary_mask and max
- segment size
-Message-ID: <ZhK0PvAtXfIfHG4t@redhat.com>
-References: <20240407131931.4055231-1-ming.lei@redhat.com>
+        bh=x6EUWLXyMd/QrPrA543Vnpb+tkAZZfWHn9rSEQeDI00=;
+        b=zvGQVwf0Ass97WIAdrajkQe3r2s/lEs3qEuctBsfaER5eWiVH5LZlFQyGKwKovCVOT
+         /aouBGvdGgdqxd7ritq9eefF4mFK72gX0IbeqrPLPO+Nc+6KOre6WfyncaU83LKVz49H
+         DmtDLl03X67nQ8y5DjqvQg0CpqT4LiLfyA4EYQhO822NJHrYvLiLED3wiP7EHCsljhbM
+         N+3jIzELD3Y2F3dJCv2KCl4W7X9lJyTO2WaQy9VnEW0YNgXUC4NyJXmpxYy1AkpN5KDf
+         925JzPsDsQNG6ywYrNKPh9cfHRndqbyIqM4lBdam6vQ1ms4fROujg7OW0Ihu0eJVdjsk
+         roXg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1712517053; x=1713121853;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=x6EUWLXyMd/QrPrA543Vnpb+tkAZZfWHn9rSEQeDI00=;
+        b=UoQneQFuk/hq0ceM1cSMOGIq74jbzlMePkWHodJA0mS1J1b3hNz/brJdWy9XGejc1Q
+         IM0n6G9ZdI3R4ESlrSlV7nx5H4zewTVOYcvqyRxGIScdhevdSzPqKrX6cq6nS1Yx2cS5
+         5MbZqV5vZJU4S8IBvDshiaY2Fe9h/+sxr4TbwsMBUYlLKM9tMiJux8/mLp2h7v/YgZpI
+         l1Wxf3OACKxK2EhTr579J+UR0KEPLkrswBgIubO5vhKdeWEHgLUZCXQ4lkBDmITYIgnw
+         g9nptLVw3eV946il0/mluSacUCJqru5SsHioCljbQgauPt1z1qR+sFIrnbA6u+hUmyhp
+         k4aw==
+X-Forwarded-Encrypted: i=1; AJvYcCVojijlr3xoM1Rg9lMjyOQg2V2TIAPeiiHswE7zyluV6gs8yyqQnHn2W5dBFouAeZ69Lh04jM61URZG8DmU1J9ZyARY9sLB3kY=
+X-Gm-Message-State: AOJu0YyL63AxzqtH1RZZKDOmqVk0aM6J1Tpj7mH8Hfgd9peXVafFqCiA
+	ciU/tKNfO29txv3pHWsS084eTC55YMRFn7L3PIdhAKZ6fS4c3yC8eHjgP2UXYo9V5+AfEmOPMBZ
+	A1NP5g5tcg6V6RWvX58Aulj+oq1ZG0FEBue6O
+X-Google-Smtp-Source: AGHT+IF3K6r9xbBJkilZy6HGKb6dlLXRf6FqatUAZbCIWOQ+wDqVm5LXVF61yEKWVnLToUGV3EtmibzNbcvolpkp1/g=
+X-Received: by 2002:a17:903:32c9:b0:1e3:c1a9:ed7e with SMTP id
+ i9-20020a17090332c900b001e3c1a9ed7emr176673plr.25.1712517053266; Sun, 07 Apr
+ 2024 12:10:53 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240407131931.4055231-1-ming.lei@redhat.com>
+References: <20240406164727.577914-1-visitorckw@gmail.com> <20240406164727.577914-10-visitorckw@gmail.com>
+In-Reply-To: <20240406164727.577914-10-visitorckw@gmail.com>
+From: Ian Rogers <irogers@google.com>
+Date: Sun, 7 Apr 2024 12:10:42 -0700
+Message-ID: <CAP-5=fWb3eNe3mufRJjPAc=jcHFiHYpPqLuK2H8YiijHu0rLZw@mail.gmail.com>
+Subject: Re: [PATCH v3 09/17] lib min_heap: Add min_heap_sift_up()
+To: Kuan-Wei Chiu <visitorckw@gmail.com>
+Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com, 
+	peterz@infradead.org, mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, 
+	akpm@linux-foundation.org, bfoster@redhat.com, mark.rutland@arm.com, 
+	alexander.shishkin@linux.intel.com, jolsa@kernel.org, adrian.hunter@intel.com, 
+	jserv@ccns.ncku.edu.tw, linux-bcache@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+	linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Sun, Apr 07 2024 at  9:19P -0400,
-Ming Lei <ming.lei@redhat.com> wrote:
+On Sat, Apr 6, 2024 at 9:48=E2=80=AFAM Kuan-Wei Chiu <visitorckw@gmail.com>=
+ wrote:
+>
+> Add min_heap_sift_up() to sift up the element at index 'idx' in the
+> heap.
+>
+> Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 
-> When one stacking device is over one device with virt_boundary_mask and
-> another one with max segment size, the stacking device have both limits
-> set. This way is allowed before d690cb8ae14b ("block: add an API to
-> atomically update queue limits").
-> 
-> Relax the limit so that we won't break such kind of stacking setting.
-> 
-> Closes: https://bugzilla.kernel.org/show_bug.cgi?id=218687
-> Reported-by: janpieter.sollie@edpnet.be
-> Fixes: d690cb8ae14b ("block: add an API to atomically update queue limits")
-> Link: https://lore.kernel.org/linux-block/ZfGl8HzUpiOxCLm3@fedora/
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Mike Snitzer <snitzer@kernel.org>
-> Cc: dm-devel@lists.linux.dev
-> Cc: Song Liu <song@kernel.org>
-> Cc: linux-raid@vger.kernel.org
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+Reviewed-by: Ian Rogers <irogers@google.com>
+
+Thanks,
+Ian
+
 > ---
->  block/blk-settings.c | 16 ++++++----------
->  1 file changed, 6 insertions(+), 10 deletions(-)
-> 
-> diff --git a/block/blk-settings.c b/block/blk-settings.c
-> index cdbaef159c4b..d2731843f2fc 100644
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> @@ -182,17 +182,13 @@ static int blk_validate_limits(struct queue_limits *lim)
->  		return -EINVAL;
->  
->  	/*
-> -	 * Devices that require a virtual boundary do not support scatter/gather
-> -	 * I/O natively, but instead require a descriptor list entry for each
-> -	 * page (which might not be identical to the Linux PAGE_SIZE).  Because
-> -	 * of that they are not limited by our notion of "segment size".
-> +	 * Stacking device may have both virtual boundary and max segment
-> +	 * size limit, so allow this setting now, and long-term the two
-> +	 * might need to move out of stacking limits since we have immutable
-> +	 * bvec and lower layer bio splitting is supposed to handle the two
-> +	 * correctly.
->  	 */
-> -	if (lim->virt_boundary_mask) {
-> -		if (WARN_ON_ONCE(lim->max_segment_size &&
-> -				 lim->max_segment_size != UINT_MAX))
-> -			return -EINVAL;
-> -		lim->max_segment_size = UINT_MAX;
-> -	} else {
-> +	if (!lim->virt_boundary_mask) {
->  		/*
->  		 * The maximum segment size has an odd historic 64k default that
->  		 * drivers probably should override.  Just like the I/O size we
-> -- 
-> 2.41.0
-> 
-
-Reviewed-by: Mike Snitzer <snitzer@kernel.org>
+>  include/linux/min_heap.h | 20 ++++++++++++++++++++
+>  1 file changed, 20 insertions(+)
+>
+> diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
+> index 9391f7cc9da9..201f59cb3558 100644
+> --- a/include/linux/min_heap.h
+> +++ b/include/linux/min_heap.h
+> @@ -111,6 +111,26 @@ void __min_heapify(min_heap_char *heap, int pos, siz=
+e_t elem_size,
+>  #define min_heapify(_heap, _pos, _func, _args) \
+>         __min_heapify((min_heap_char *)_heap, _pos, __minheap_obj_size(_h=
+eap), _func, _args)
+>
+> +/* Sift up ith element from the heap, O(log2(nr)). */
+> +static __always_inline
+> +void __min_heap_sift_up(min_heap_char *heap, size_t elem_size, size_t id=
+x,
+> +               const struct min_heap_callbacks *func, void *args)
+> +{
+> +       void *data =3D heap->data;
+> +       size_t parent;
+> +
+> +       while (idx) {
+> +               parent =3D (idx - 1) / 2;
+> +               if (func->less(data + parent * elem_size, data + idx * el=
+em_size, args))
+> +                       break;
+> +               func->swp(data + parent * elem_size, data + idx * elem_si=
+ze, args);
+> +               idx =3D parent;
+> +       }
+> +}
+> +
+> +#define min_heap_sift_up(_heap, _idx, _func, _args)    \
+> +       __min_heap_sift_up((min_heap_char *)_heap, __minheap_obj_size(_he=
+ap), _idx, _func, _args)
+> +
+>  /* Floyd's approach to heapification that is O(nr). */
+>  static __always_inline
+>  void __min_heapify_all(min_heap_char *heap, size_t elem_size,
+> --
+> 2.34.1
+>
