@@ -1,91 +1,114 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C23CD3FB92;
-	Sat,  6 Apr 2024 17:31:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1D15E3A1B5
+	for <dm-devel@lists.linux.dev>; Sun,  7 Apr 2024 13:20:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712424713; cv=none; b=eF/vfA6X2cyrb6V+Mt/tkYGhFRh5G8jRHz+S/JuA+8V+3wpkpwxooSTvAEWSWo4lHkSZS4s9JMbb9/QVyAIKaw97moA81BR1eugHEDb7YQvKcVIY2iIZ1pa/O45CfO7i+ptVDrm30Mf8WZpa+eU6/NO3bmy/PLdHHHf0N9Yzl0s=
+	t=1712496026; cv=none; b=TAv4YRJDRmwK2r9LJ1aAIUsZqnZxCh0+AS18c7pyADhUXwKoK09SRbAElAGqgsZc8wMPrg8qOlOydtfdS90I/F6NDJoxoYa9KO4HElAv6t13g8XPJ1wcZb5MkCJzXJsY+Z4LDIWrNu9oqsTvCzwtnfKaoMIo0QlWNmqe6c1Vv1Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712424713; c=relaxed/simple;
-	bh=vZ8hOquufdNKiyCJecLeixIcMnrnV1AW3oXr5DxC8CU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=d51g6F4sOrv5Kgfob578ZH1Jj1RGnG+rVyhKcTohxsK/f2fm85Mkl6Tm8Ct9I1jnsoSXIi5mbg6upmor98tSFhGlWd12LL8HqSywvsnQvGFIXxvocUw/2DtvVTti1AygXivx/+r1l9uiGaa4ohmemkxo4CoGnWRBOFFup5OApYw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=qVCVk5mo; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	s=arc-20240116; t=1712496026; c=relaxed/simple;
+	bh=gAcqnn8q6dh2LPD9m+lIEzWsxpYhy/78/JsRLW2fyJ8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=pGtyXS+WPiuYZZf4fsa2iHBRObCQloJH1klOix4QyapfyZmXWB0DCSo2RGzMVoNy/cwlFNj9Nw+ls52agp3JPqlfuKiJGOGolPuvr4oxBuq+LYZ8wwebqqpfBixKdW30gXmQsylHF/0vwWNw8NtblMUURGLYrXCer4nQyOkOAx0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UgfmaObf; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="qVCVk5mo"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-	Content-Type:In-Reply-To:From:References:Cc:To:Subject:MIME-Version:Date:
-	Message-ID:Sender:Reply-To:Content-ID:Content-Description;
-	bh=5v76W08TT679PKia3IEz1oLMJe/sls4wnfr6gKUBWtQ=; b=qVCVk5moDyycimdiGI9lb20ivU
-	+bUKgCMQn2i7dGau9Yj4YI18gbUtwisM3meIjdLI3kVbGwa8PKbwhJ7JZz2dk0908QC+eRTAkr6D+
-	RkuKXz2HX+CYJn+t7/mhcyQyCWNvn2+nU+qw7ipMn3shNoyk6lnkrz8d2o6NsivsWkyqF1G/7OELq
-	JST25fzpSg9ygATfKklKt+N6DgP6GeQyxZIYMAjh1vWJ1cl0M/jq9dqG435fF+ioFCA0LddV6A8Ud
-	/cCP6CLuGq8ooK/o37+2HBimh+Xh/k/it3HgKFuBy8nleqRoKynnS63U4ltWtPsdSMlJqFfOGSAkq
-	cW9He2Bg==;
-Received: from [50.53.2.121] (helo=[192.168.254.15])
-	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rt9tE-0000000Ajxe-1mzp;
-	Sat, 06 Apr 2024 17:31:40 +0000
-Message-ID: <bce1e749-1317-446b-a07a-6381ceb599e8@infradead.org>
-Date: Sat, 6 Apr 2024 10:31:39 -0700
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UgfmaObf"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1712496024;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=KUBepHOmYlRsdpOU9NeSucoinqPuYLesTRviUQJH+40=;
+	b=UgfmaObfi8BmMUlXS2NhOQ8QfH7j1oljq1d2v+XecA0USpOMiaZKFlAlUpgtzlYBmOZ4zd
+	+Y+tgS3r7yDuaBflKl+H8CwoPlEy8VizdyD3cIyi+zB2D1qlTjLs5UDTWFgj1vUiWoOsKz
+	E++XXjAZP4fZLVa/V7AAMuIstRZFygI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-609-5RjkPi5TOsaXlYwBl-sOHQ-1; Sun, 07 Apr 2024 09:20:21 -0400
+X-MC-Unique: 5RjkPi5TOsaXlYwBl-sOHQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C0843927A63;
+	Sun,  7 Apr 2024 13:20:20 +0000 (UTC)
+Received: from localhost (unknown [10.72.116.148])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8B82D489;
+	Sun,  7 Apr 2024 13:20:19 +0000 (UTC)
+From: Ming Lei <ming.lei@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org
+Cc: Ming Lei <ming.lei@redhat.com>,
+	janpieter.sollie@edpnet.be,
+	Christoph Hellwig <hch@lst.de>,
+	Mike Snitzer <snitzer@kernel.org>,
+	dm-devel@lists.linux.dev,
+	Song Liu <song@kernel.org>,
+	linux-raid@vger.kernel.org
+Subject: [PATCH] block: allow device to have both virt_boundary_mask and max segment size
+Date: Sun,  7 Apr 2024 21:19:31 +0800
+Message-ID: <20240407131931.4055231-1-ming.lei@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 03/17] bcachefs: Fix typo
-To: Kuan-Wei Chiu <visitorckw@gmail.com>, colyli@suse.de,
- kent.overstreet@linux.dev, msakai@redhat.com, peterz@infradead.org,
- mingo@redhat.com, acme@kernel.org, namhyung@kernel.org,
- akpm@linux-foundation.org
-Cc: bfoster@redhat.com, mark.rutland@arm.com,
- alexander.shishkin@linux.intel.com, jolsa@kernel.org, irogers@google.com,
- adrian.hunter@intel.com, jserv@ccns.ncku.edu.tw,
- linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-bcachefs@vger.kernel.org,
- linux-perf-users@vger.kernel.org
-References: <20240406164727.577914-1-visitorckw@gmail.com>
- <20240406164727.577914-4-visitorckw@gmail.com>
-Content-Language: en-US
-From: Randy Dunlap <rdunlap@infradead.org>
-In-Reply-To: <20240406164727.577914-4-visitorckw@gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 
+When one stacking device is over one device with virt_boundary_mask and
+another one with max segment size, the stacking device have both limits
+set. This way is allowed before d690cb8ae14b ("block: add an API to
+atomically update queue limits").
 
+Relax the limit so that we won't break such kind of stacking setting.
 
-On 4/6/24 9:47 AM, Kuan-Wei Chiu wrote:
-> Replace 'utiility' with 'utility'.
-> 
-> Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
-> Reviewed-by: Ian Rogers <irogers@google.com>
+Closes: https://bugzilla.kernel.org/show_bug.cgi?id=218687
+Reported-by: janpieter.sollie@edpnet.be
+Fixes: d690cb8ae14b ("block: add an API to atomically update queue limits")
+Link: https://lore.kernel.org/linux-block/ZfGl8HzUpiOxCLm3@fedora/
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@lists.linux.dev
+Cc: Song Liu <song@kernel.org>
+Cc: linux-raid@vger.kernel.org
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ block/blk-settings.c | 16 ++++++----------
+ 1 file changed, 6 insertions(+), 10 deletions(-)
 
-Reviewed-by: Randy Dunlap <rdunlap@infradead.org>
-
-Thanks.
-
-> ---
->  fs/bcachefs/util.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/fs/bcachefs/util.c b/fs/bcachefs/util.c
-> index 92c6ad75e702..05ac1b3b0604 100644
-> --- a/fs/bcachefs/util.c
-> +++ b/fs/bcachefs/util.c
-> @@ -1,6 +1,6 @@
->  // SPDX-License-Identifier: GPL-2.0
->  /*
-> - * random utiility code, for bcache but in theory not specific to bcache
-> + * random utility code, for bcache but in theory not specific to bcache
->   *
->   * Copyright 2010, 2011 Kent Overstreet <kent.overstreet@gmail.com>
->   * Copyright 2012 Google, Inc.
-
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index cdbaef159c4b..d2731843f2fc 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -182,17 +182,13 @@ static int blk_validate_limits(struct queue_limits *lim)
+ 		return -EINVAL;
+ 
+ 	/*
+-	 * Devices that require a virtual boundary do not support scatter/gather
+-	 * I/O natively, but instead require a descriptor list entry for each
+-	 * page (which might not be identical to the Linux PAGE_SIZE).  Because
+-	 * of that they are not limited by our notion of "segment size".
++	 * Stacking device may have both virtual boundary and max segment
++	 * size limit, so allow this setting now, and long-term the two
++	 * might need to move out of stacking limits since we have immutable
++	 * bvec and lower layer bio splitting is supposed to handle the two
++	 * correctly.
+ 	 */
+-	if (lim->virt_boundary_mask) {
+-		if (WARN_ON_ONCE(lim->max_segment_size &&
+-				 lim->max_segment_size != UINT_MAX))
+-			return -EINVAL;
+-		lim->max_segment_size = UINT_MAX;
+-	} else {
++	if (!lim->virt_boundary_mask) {
+ 		/*
+ 		 * The maximum segment size has an odd historic 64k default that
+ 		 * drivers probably should override.  Just like the I/O size we
 -- 
-#Randy
+2.41.0
+
