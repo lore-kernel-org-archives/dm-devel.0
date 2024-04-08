@@ -1,97 +1,81 @@
-Received: from mail-io1-f53.google.com (mail-io1-f53.google.com [209.85.166.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 244A140877
-	for <dm-devel@lists.linux.dev>; Sun,  7 Apr 2024 21:50:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2DD905228;
+	Mon,  8 Apr 2024 01:26:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712526658; cv=none; b=G5O4K9RCFnv/A4L9bQt6Y4VoAjny+P/8iHyHh5CeEjcIdNkYt9IdltHrEpVTX6ktKOb9Sy7kIVn7QCB8HOvVa5XF4uI8rDLp0j8nNA51UclzDM0zb+KCcD7B0Cgpi/LJZTIT1fEQQHtgyn7UA9vTeXSDJLE/vzyuz800KB5mY40=
+	t=1712539572; cv=none; b=bXMnyj6wdtylO5es5zwV6HewX1BkO6UCwaI7fD/MwFeVDLTYP5pwn3b0jMuHqmKtXDdu2mgEp4HxRiDi1MuHx8SCtUUtBKEm6iNlXjQXYN3QMcWDfQLdfIJFweOC7MIlmijwLhKofqb1ORdRJtnhN6wa5GU5RzXDInFdU5TfmGM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712526658; c=relaxed/simple;
-	bh=q9bB34yrTrN7+26ZiIknUHb6xnKLyvfXa80njLwq+dY=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=UC/6KUOZzepK1RpDILAeF4oZcQDojvaGeNrIiiE6WL/EXM5k+/7sGiKxxAQzn0/R6WEgl3x4QBoa78VqFdqI/jU/Q/bUcUo12tVHwuS82NBBhGUVyP/+RNW+BSaeLsp6Eaxb2ovWktxTJVGtXiqjBEUp+lU9syKarwFS8ixW1C8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=XY9DsBd4; arc=none smtp.client-ip=209.85.166.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1712539572; c=relaxed/simple;
+	bh=+UQXNtn1Uy7xaukPw1RWns7kxpirCo4Jp35Je0Y1ODU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=AcaihnLkCruAm+3FohUJbp+cM8kpoAn4/iZqCO9lhgQOkoZLexh/lSmnNrAT3A31pkSx79bHg4TlNEJdUB2mEEd6UQJhhJOHUBG1jajAHttMmI1wd8XVlPIVh8bwQ5qppjsqTRVJFud/kl0/pEikU4w+12ZfjdaJ/Uere5TSRJQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Dn5qm8kW; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="XY9DsBd4"
-Received: by mail-io1-f53.google.com with SMTP id ca18e2360f4ac-7c86e6f649aso37023439f.0
-        for <dm-devel@lists.linux.dev>; Sun, 07 Apr 2024 14:50:56 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1712526656; x=1713131456; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=IFhGDEXqIbtR+UAjGGiVYjOWq205kUX/iLnpNybBY6E=;
-        b=XY9DsBd4YrPNHBJHZqQ0OdhsQl9z042x+4mOGnlEL4maPghCsJTO7iaIxModDK9EKo
-         itz6ePXD4MjMfPsPo6cqj0s/Fdj9PNmceSEQusPuf2n5fM/txuOBrIG6hsRc1UCeTCmf
-         FltMoOKiykpZ0C8F1CR2MIeDFioH59MkL2z7oSi7mzIGhhaaUjGxMZsh5qU7jfD/k+Pf
-         dDBYAAWmu/tgfYPVH6ePkeRLbQ0wltdD1iSvWV9S4/23WFr8fqaMOjM2H8dk8iTc6Fi5
-         ys9J0nGuV9WhYXOpmvA2HXYz4EvIgoTIKWyuHmVl4t8ZS/vmLY3gm/eeLFlcdYuKlh1r
-         ng2Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712526656; x=1713131456;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=IFhGDEXqIbtR+UAjGGiVYjOWq205kUX/iLnpNybBY6E=;
-        b=gemxK1OSinAgKs7tdBq4DowDjMrV66sKmN49a8jD3Zjht1jr2dsY9jwarB9HBJ19Ke
-         RYx7desEdf3XSBmMJrG2vxUBbUjbaOFxB/WkmEBa2JDERf7Xg9H1WU95T+V7leo9hVnf
-         0oq3Vb0SApSLvV+OmallkzNZzn94IfG7BWH0LLu6w+Fyd4nvjUVhv4Hs/IlXxXDcKaCM
-         2ALpNh3xH4d4YisZnJUY+MN4G+TgT1EThKnFsz2AOwIayfAW/Fcg1UXR073KpiXZVlQn
-         aDfyuuGSy86FPxXJUiOiqLlDXreDnIGWh963nZuDzPGoVFsXQD4GUfkSlEsSs9HCN920
-         t11g==
-X-Forwarded-Encrypted: i=1; AJvYcCWGz4GZOc5LmtgFxqqw7ByHFQtgRxWO2h4IheJOkv07dUP0Q0ajM4rDKiFbVCqglDoH99kf/PsiflcvEUKxdc0v/d1U4+8Zkjo=
-X-Gm-Message-State: AOJu0YzHsqHj1+/le3IoPNuxx29tS0Vt0t0y7iaxpn/hee1seXYQfC9c
-	C+691yGgVBCReqwaIADN28DIySkGCYP1OnizOzIFRpWWwgMdQ418IKPhdFT/3N0=
-X-Google-Smtp-Source: AGHT+IGeQLkiyNOEpEcA0eZIatdoZcDvnlZBaLWFYUJxiaD4EhRF1lLJaYaGiFa9TdaHA1ylA8nh+g==
-X-Received: by 2002:a05:6602:1644:b0:7d5:cc9e:9d96 with SMTP id y4-20020a056602164400b007d5cc9e9d96mr4771043iow.1.1712526656251;
-        Sun, 07 Apr 2024 14:50:56 -0700 (PDT)
-Received: from [127.0.0.1] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id o8-20020a05660213c800b007d5d40a4910sm993714iov.5.2024.04.07.14.50.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 07 Apr 2024 14:50:55 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: linux-block@vger.kernel.org, Ming Lei <ming.lei@redhat.com>
-Cc: janpieter.sollie@edpnet.be, Christoph Hellwig <hch@lst.de>, 
- Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, 
- Song Liu <song@kernel.org>, linux-raid@vger.kernel.org
-In-Reply-To: <20240407131931.4055231-1-ming.lei@redhat.com>
-References: <20240407131931.4055231-1-ming.lei@redhat.com>
-Subject: Re: [PATCH] block: allow device to have both virt_boundary_mask
- and max segment size
-Message-Id: <171252665540.2536278.16554247338004438050.b4-ty@kernel.dk>
-Date: Sun, 07 Apr 2024 15:50:55 -0600
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Dn5qm8kW"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 326A9C433C7;
+	Mon,  8 Apr 2024 01:26:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1712539571;
+	bh=+UQXNtn1Uy7xaukPw1RWns7kxpirCo4Jp35Je0Y1ODU=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=Dn5qm8kWLR9O4+p065nJcW0gqIUM2WETkhmlR6RkFFI1xAJkjzP9f/XpTgyeityUt
+	 B+EnDeNGzLRbp4JuEfmYaG6ngRXx+raxAMp1hX/TzeLWJl4NJZ4BroeZ81oLkgJPj0
+	 vbRrUJ2ShzKqlU/RBXr7W1JQUj3mAw/Hrd8ekOb9jZAVouzNyGOx/BAccqOd8neBAc
+	 Fx0LjWPA1U1p2bp2M8jvfoBDxNJ0TKNBI1xBmVPi4oBaPUcqnIrJVBYrf84pNz1sG1
+	 m+e+fYp89HYiyEzV6Inyp8kz6Xv359sHhcyIwhSRTR2szx9jNMNfcnzlFs/FeJMAeZ
+	 00G0LnUFBjQzA==
+Message-ID: <51f5c3eb-df8b-4e9a-97e3-7f100d98fd1d@kernel.org>
+Date: Mon, 8 Apr 2024 10:26:08 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v6 12/28] dm: Use the block layer zone append emulation
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+ linux-scsi@vger.kernel.org, "Martin K . Petersen"
+ <martin.petersen@oracle.com>, dm-devel@lists.linux.dev,
+ linux-nvme@lists.infradead.org, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>
+References: <20240405044207.1123462-1-dlemoal@kernel.org>
+ <20240405044207.1123462-13-dlemoal@kernel.org> <ZhAc5JL9KwoDdiOO@redhat.com>
+Content-Language: en-US
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <ZhAc5JL9KwoDdiOO@redhat.com>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.12.5-dev-2aabd
 
-
-On Sun, 07 Apr 2024 21:19:31 +0800, Ming Lei wrote:
-> When one stacking device is over one device with virt_boundary_mask and
-> another one with max segment size, the stacking device have both limits
-> set. This way is allowed before d690cb8ae14b ("block: add an API to
-> atomically update queue limits").
+On 4/6/24 00:46, Mike Snitzer wrote:
+>> diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
+>> index eb9832b22b14..174fda0a301c 100644
+>> --- a/drivers/md/dm-zone.c
+>> +++ b/drivers/md/dm-zone.c
+>> @@ -226,41 +154,32 @@ static int dm_zone_revalidate_cb(struct blk_zone *zone, unsigned int idx,
+>>  static int dm_revalidate_zones(struct mapped_device *md, struct dm_table *t)
+>>  {
+>>  	struct gendisk *disk = md->disk;
+>> -	unsigned int noio_flag;
+>>  	int ret;
+>>  
+>> -	/*
+>> -	 * Check if something changed. If yes, cleanup the current resources
+>> -	 * and reallocate everything.
+>> -	 */
+>> +	/* Revalidate ionly if something changed. */
 > 
-> Relax the limit so that we won't break such kind of stacking setting.
-> 
-> [...]
+> Just noticed this ionly typo ^ Please fix.
 
-Applied, thanks!
+Good catch. Thanks. Fixed it. Also fixed a tab that became spaces in the
+declaration of dm_blk_report_zones() in drivers/md/dm.h.
 
-[1/1] block: allow device to have both virt_boundary_mask and max segment size
-      commit: b561ea56a26415bf44ce8ca6a8e625c7c390f1ea
 
-Best regards,
 -- 
-Jens Axboe
-
-
+Damien Le Moal
+Western Digital Research
 
