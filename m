@@ -1,129 +1,201 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00769144D1A
-	for <dm-devel@lists.linux.dev>; Mon,  8 Apr 2024 18:47:44 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 737571E489
+	for <dm-devel@lists.linux.dev>; Mon,  8 Apr 2024 19:37:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712602066; cv=none; b=OIOdNXzt2Xa2AKzuilnxX7pilfXwKtqOC8DXFihfL8jJv7OKnIsNlxkDg79TlsQ2hgPU2CMY7QLivFqg55U/ZFCQJkbeH+vZZ8JhTsbXxx0wJVYTZyAXss8YBuGcTmkZEtCsaU2GFLwEZS0B/emLc9sPQrZ0Pm+6oehpixLDXb0=
+	t=1712605023; cv=none; b=M6feN3BRMkWNVMRlXhq3RtJUuBnpJrAEHqSiQOSV+eB0P0ve9DKEj3w/lD2lBk+AoFRaXPu9hzEfomztCTegWqmVaZgFie03Ue6QstesZBaJeN9b64O4JvoxuedTrFPy84b6crxqdescoHgDvp4C4Cm5CYoBzK9BYt4+4YnNN+A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712602066; c=relaxed/simple;
-	bh=chIpzK/fwziwQn4KN9ta6zKXEbW9e7PLUPIaxbqejXU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=rrARyQHDgvoLPTYboXTVS/nHas1tbCM12cGZJ7DXyrOcyhK1maoBU1/8+dxSpZv3K6ha3Ft1KaG2nJRYHFxsszLG/CE1wL9k6p0wlHsDgeDjT7yLmEAM2C+tQ0etceCMZd307p06F62UFupt/81w2NxlZI7c3EnRdjT8ptj8t20=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JIPJLv1j; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1712605023; c=relaxed/simple;
+	bh=B2qB36/uQsKHAg9ciu9fxPNT/FufU4K+2ca6UsyUBGg=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=Ih+UQb4vA8wySNFkqgstffl++NcqpTxxIACN+YxLvLa6+ms0u8mHEWgLFfiIOqqRVe/iLHK7twYRx92WWrwXHbLRSObZBU5W3M3cx+G4tMhC4J6wNUWzqJKGF5xQU+a5b0Ggw5B+TzcQwIc+YQC+Ao3Ef7iltlCzVB7T7O/oa70=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eje/C9mS; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JIPJLv1j"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eje/C9mS"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712602063;
+	s=mimecast20190719; t=1712605020;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=K4rKv2QnbiGjMtmT3sXuNcelARnes1e2/sagWXz52zw=;
-	b=JIPJLv1jp+5Zj1h4t05Jc9RWayGwLGSJAxX9HSFCTk3o452Da7oPNIc+k9D/IcDNyyw6sl
-	pHtJVQnPMzssmQoiQrIK2Mr4Qjl1vI/76xZP7+5cRCM69jAZ+ivPGfHSZWSEn3+bl6IPLY
-	EyhMqDjPv/rsF4K9uLTrKJ+e5hybVkM=
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=9CyQJzLRnEB2mn7LtsfHdXBVGu/u4weOGAsjV1w2j4U=;
+	b=eje/C9mS90mtw9daDULV9Wk+3gr/p41h/H8qpulm2VG35N4QzBz1x19N0MbqmQowj0TBxl
+	bsTo0tjOKicjMnBOtwTMz894KyJy98+U47JH38xXt5UhlEXWCnsSXsfp+XNnQr41SqWnxy
+	XHJputu8aNOIRZ+cTpcVF/H9VqWiWlY=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-39-atGGHafcNFCxNVmITTjvnA-1; Mon, 08 Apr 2024 14:47:39 -0400
-X-MC-Unique: atGGHafcNFCxNVmITTjvnA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-639-fdKi9Qg4N0WTG98zoI3P9Q-1; Mon, 08 Apr 2024 15:36:57 -0400
+X-MC-Unique: fdKi9Qg4N0WTG98zoI3P9Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EECE38007AD;
-	Mon,  8 Apr 2024 18:47:38 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E65DA47E;
-	Mon,  8 Apr 2024 18:47:38 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 438Ilc9j1818695
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 8 Apr 2024 14:47:38 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 438Ilc5M1818694;
-	Mon, 8 Apr 2024 14:47:38 -0400
-Date: Mon, 8 Apr 2024 14:47:38 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev, Peter Rajnoha <prajnoha@redhat.com>,
-        Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 08/11] 11-dm-mpath.rules: replace DM_NOSCAN by
- .DM_NOSCAN
-Message-ID: <ZhQ7yrm3jfG4v4zc@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <20240404173814.3143-1-mwilck@suse.com>
- <20240404173814.3143-9-mwilck@suse.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AFCD180171B;
+	Mon,  8 Apr 2024 19:36:56 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A736200B09C;
+	Mon,  8 Apr 2024 19:36:56 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 731A130BE3C1; Mon,  8 Apr 2024 19:36:56 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 6DA883FD64;
+	Mon,  8 Apr 2024 21:36:56 +0200 (CEST)
+Date: Mon, 8 Apr 2024 21:36:56 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>
+cc: dm-devel@lists.linux.dev, Milan Broz <gmazyland@gmail.com>, 
+    yangerkun@huawei.com, Bart Van Assche <bvanassche@acm.org>, 
+    "Alasdair G. Kergon" <agk@redhat.com>, 
+    Laurence Oberman <loberman@redhat.com>
+Subject: [PATCH resend] dm-crypt: add the "high_priority" flag
+Message-ID: <f53ff8a9-da8e-da35-cdf8-3bd260d9af33@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240404173814.3143-9-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
 
-On Thu, Apr 04, 2024 at 07:38:11PM +0200, Martin Wilck wrote:
-> We don't need to restore DM_NOSCAN from the db anymore, so we can rename
-> it to .DM_NOSCAN, making it a temporary property.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipath/11-dm-mpath.rules.in | 9 ++++++---
->  1 file changed, 6 insertions(+), 3 deletions(-)
-> 
-> diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
-> index efc6416..ec55435 100644
-> --- a/multipath/11-dm-mpath.rules.in
-> +++ b/multipath/11-dm-mpath.rules.in
-> @@ -96,14 +96,14 @@ ENV{MPATH_DEVICE_READY}!="0", GOTO="mpath_is_ready"
->  # Do not initiate scanning if no path is available,
->  # otherwise there would be a hang or IO error on access.
->  # We'd like to avoid this, especially within udev processing.
-> -# This is communicated to later rules in DM_NOSCAN.
-> +# This is communicated to later rules in .DM_NOSCAN.
->  # Likewise, skip all foreign rules if no path is available.
->  # Use DM_UDEV_DISABLE_OTHER_RULES_FLAG to communicate this
->  # to upper layers. With dm rules < v3, save the original value here;
->  # it will be restored in a late udev rule.
->  ENV{DM_UDEV_RULES_VSN}=="1|2", \
->  	ENV{.MPATH_SAVE_DISABLE_OTHER_RULES_FLAG}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}"
-> -ENV{DM_NOSCAN}="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
-> +ENV{.DM_NOSCAN}="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
->  GOTO="dont_activate"
->  
->  LABEL="mpath_is_ready"
-> @@ -134,7 +134,7 @@ ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!="1", GOTO="import_end"
->  ENV{DM_UDEV_RULES_VSN}!="1|2", GOTO="import_end"
->  
->  # Don't import the properties from db if we will run blkid later.
-> -ENV{DM_NOSCAN}!="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}!="1", GOTO="import_end"
-> +ENV{.DM_NOSCAN}!="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}!="1", GOTO="import_end"
->  
->  IMPORT{db}="ID_FS_TYPE"
->  IMPORT{db}="ID_FS_USAGE"
-> @@ -150,6 +150,9 @@ LABEL="import_end"
->  # Reset previous DM_COLDPLUG_SUSPENDED if activation happens now
->  ENV{.DM_SUSPENDED}!="1", ENV{DM_ACTIVATION}=="1", ENV{DM_COLDPLUG_SUSPENDED}=""
->  
-> +# device-mapper rules v2 compatibility for 13-dm-disk.rules
-> +ENV{DM_UDEV_RULES_VSN}!="3", ENV{DM_NOSCAN}="$env{.DM_NOSCAN}"
-> +
+It was reported that dm-crypt performs badly when the system is loaded[1]. 
+So I'm adding an option "high_priority" that sets the workqueues and the 
+write_thread to nice level -20. This used to be default in the past, but 
+it caused audio skipping, so it had to be reverted - see the commit 
+f612b2132db529feac4f965f28a1b9258ea7c22b. This commit makes it optional, 
+so that normal users won't be harmed by it.
 
-You missed a DM_UDEV_RULES_VSN change here.
+[1] https://listman.redhat.com/archives/dm-devel/2023-February/053410.html
 
--Ben
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
->  # Multipath maps should take precedence over their members.
->  ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
->  
-> -- 
-> 2.44.0
+---
+ Documentation/admin-guide/device-mapper/dm-crypt.rst |    5 +++
+ drivers/md/dm-crypt.c                                |   28 +++++++++++++------
+ 2 files changed, 25 insertions(+), 8 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-crypt.c	2024-04-08 19:54:41.000000000 +0200
++++ linux-2.6/drivers/md/dm-crypt.c	2024-04-08 19:54:58.000000000 +0200
+@@ -137,9 +137,9 @@ struct iv_elephant_private {
+  * and encrypts / decrypts at the same time.
+  */
+ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
+-	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD,
+-	     DM_CRYPT_NO_READ_WORKQUEUE, DM_CRYPT_NO_WRITE_WORKQUEUE,
+-	     DM_CRYPT_WRITE_INLINE };
++	     DM_CRYPT_SAME_CPU, DM_CRYPT_HIGH_PRIORITY,
++	     DM_CRYPT_NO_OFFLOAD, DM_CRYPT_NO_READ_WORKQUEUE,
++	     DM_CRYPT_NO_WRITE_WORKQUEUE, DM_CRYPT_WRITE_INLINE };
+ 
+ enum cipher_flags {
+ 	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cipher */
+@@ -3134,7 +3134,7 @@ static int crypt_ctr_optional(struct dm_
+ 	struct crypt_config *cc = ti->private;
+ 	struct dm_arg_set as;
+ 	static const struct dm_arg _args[] = {
+-		{0, 8, "Invalid number of feature args"},
++		{0, 9, "Invalid number of feature args"},
+ 	};
+ 	unsigned int opt_params, val;
+ 	const char *opt_string, *sval;
+@@ -3161,6 +3161,8 @@ static int crypt_ctr_optional(struct dm_
+ 
+ 		else if (!strcasecmp(opt_string, "same_cpu_crypt"))
+ 			set_bit(DM_CRYPT_SAME_CPU, &cc->flags);
++		else if (!strcasecmp(opt_string, "high_priority"))
++			set_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags);
+ 
+ 		else if (!strcasecmp(opt_string, "submit_from_crypt_cpus"))
+ 			set_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
+@@ -3399,18 +3401,22 @@ static int crypt_ctr(struct dm_target *t
+ 	}
+ 
+ 	ret = -ENOMEM;
+-	cc->io_queue = alloc_workqueue("kcryptd_io/%s", WQ_MEM_RECLAIM, 1, devname);
++	cc->io_queue = alloc_workqueue("kcryptd_io/%s", WQ_MEM_RECLAIM |
++				       test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags) * WQ_HIGHPRI,
++				       1, devname);
+ 	if (!cc->io_queue) {
+ 		ti->error = "Couldn't create kcryptd io queue";
+ 		goto bad;
+ 	}
+ 
+ 	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+-		cc->crypt_queue = alloc_workqueue("kcryptd/%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
++		cc->crypt_queue = alloc_workqueue("kcryptd/%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM |
++						  test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags) * WQ_HIGHPRI,
+ 						  1, devname);
+ 	else
+ 		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
+-						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND,
++						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND |
++						  test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags) * WQ_HIGHPRI,
+ 						  num_online_cpus(), devname);
+ 	if (!cc->crypt_queue) {
+ 		ti->error = "Couldn't create kcryptd queue";
+@@ -3427,6 +3433,8 @@ static int crypt_ctr(struct dm_target *t
+ 		ti->error = "Couldn't spawn write thread";
+ 		goto bad;
+ 	}
++	if (test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags))
++		set_user_nice(cc->write_thread, MIN_NICE);
+ 
+ 	ti->num_flush_bios = 1;
+ 	ti->limit_swap_bios = true;
+@@ -3547,6 +3555,7 @@ static void crypt_status(struct dm_targe
+ 
+ 		num_feature_args += !!ti->num_discard_bios;
+ 		num_feature_args += test_bit(DM_CRYPT_SAME_CPU, &cc->flags);
++		num_feature_args += test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags);
+ 		num_feature_args += test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
+ 		num_feature_args += test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags);
+ 		num_feature_args += test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags);
+@@ -3560,6 +3569,8 @@ static void crypt_status(struct dm_targe
+ 				DMEMIT(" allow_discards");
+ 			if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+ 				DMEMIT(" same_cpu_crypt");
++			if (test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags))
++				DMEMIT(" high_priority");
+ 			if (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags))
+ 				DMEMIT(" submit_from_crypt_cpus");
+ 			if (test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags))
+@@ -3579,6 +3590,7 @@ static void crypt_status(struct dm_targe
+ 		DMEMIT_TARGET_NAME_VERSION(ti->type);
+ 		DMEMIT(",allow_discards=%c", ti->num_discard_bios ? 'y' : 'n');
+ 		DMEMIT(",same_cpu_crypt=%c", test_bit(DM_CRYPT_SAME_CPU, &cc->flags) ? 'y' : 'n');
++		DMEMIT(",high_priority=%c", test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags) ? 'y' : 'n');
+ 		DMEMIT(",submit_from_crypt_cpus=%c", test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags) ?
+ 		       'y' : 'n');
+ 		DMEMIT(",no_read_workqueue=%c", test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags) ?
+@@ -3706,7 +3718,7 @@ static void crypt_io_hints(struct dm_tar
+ 
+ static struct target_type crypt_target = {
+ 	.name   = "crypt",
+-	.version = {1, 25, 0},
++	.version = {1, 26, 0},
+ 	.module = THIS_MODULE,
+ 	.ctr    = crypt_ctr,
+ 	.dtr    = crypt_dtr,
+Index: linux-2.6/Documentation/admin-guide/device-mapper/dm-crypt.rst
+===================================================================
+--- linux-2.6.orig/Documentation/admin-guide/device-mapper/dm-crypt.rst	2024-04-08 19:54:41.000000000 +0200
++++ linux-2.6/Documentation/admin-guide/device-mapper/dm-crypt.rst	2024-04-08 19:54:41.000000000 +0200
+@@ -113,6 +113,11 @@ same_cpu_crypt
+     The default is to use an unbound workqueue so that encryption work
+     is automatically balanced between available CPUs.
+ 
++high_priority
++    Set dm-crypt workqueues and the writer thread to high priority. This
++    improves throughput and latency of dm-crypt while degrading general
++    responsiveness of the system.
++
+ submit_from_crypt_cpus
+     Disable offloading writes to a separate thread after encryption.
+     There are some situations where offloading write bios from the
 
