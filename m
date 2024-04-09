@@ -1,101 +1,103 @@
-Received: from mail-lf1-f47.google.com (mail-lf1-f47.google.com [209.85.167.47])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E81A1381C8
-	for <dm-devel@lists.linux.dev>; Tue,  9 Apr 2024 14:39:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A32C137937
+	for <dm-devel@lists.linux.dev>; Tue,  9 Apr 2024 15:57:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712673543; cv=none; b=dGd0ISLLnCv9D5bf5LGkXPyrhVgP8Vy7FlzEScsST8vbpKQVrrkqDW5cCj2qfxYC+OPokhPWEM0K5w3oDDjwkGVjP4nYSXsDhaPZ7YMo+QbuuOYQDdQG1J99TmIr4s41Vk+kFQ5ZoZk1sKVkLuoqZFXe9xzeGO0zm9o5QRoTvds=
+	t=1712678243; cv=none; b=k1L1BUas6qTQCr/Kgw51aF+lPFaokaeKoeLKeoStLdMRYrMRC3GrPSPwJ0z71HvrOouThoBgTX7LXUOGOShNUckCY84wPfuz5Sf7UOzBBr/bA9nXpEz4HPv7BMRzWuFEYLCjl0YDM6GunftulLhF7CGd/7FTuh0sZtPioaPQEs4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712673543; c=relaxed/simple;
-	bh=GmfUDxVPuiwIkTUsd+ogO5/l7IrAr/+E8tvLrf91a6s=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=qXgnkL5VyZ8WaoyHwDgWmPo8d1g8hsAKDhYku1CXQek2mhJG1AK3AQDVgeaV8mAikFZimmIJgkJaDEx+Ulhf6vC89qU+s8v8bRy6qQANFyA9mflJodqfACjLWwHaRgX+Hb4KUq+jCglkG6dgO5sQyc73oyX+W67b0jwWaLVF1nw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=hAbX1GXy; arc=none smtp.client-ip=209.85.167.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1712678243; c=relaxed/simple;
+	bh=F7wmDJo1CTgLlcMGnB22FbyVjlRMIAGgTDI9EoDph5Y=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=iBBysiQ4WIpA/7PDUjokDRCQFvRbjEf/g9POTzHEgqDe47S192lpptfi75U9Li7KZ1R+l3T3TZJCaNzkbd5bgO/c+9BuqDNkwUEnk0/OU4XcyaZ8AfHJaeuFqZTxjtR7HySLGh21L4tz2l2wbrs2gyRirLrs42Cr0mwQc+9QDDM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=OgNnjI5U; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="hAbX1GXy"
-Received: by mail-lf1-f47.google.com with SMTP id 2adb3069b0e04-516d6c1e238so4525596e87.2
-        for <dm-devel@lists.linux.dev>; Tue, 09 Apr 2024 07:39:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1712673539; x=1713278339; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=GmfUDxVPuiwIkTUsd+ogO5/l7IrAr/+E8tvLrf91a6s=;
-        b=hAbX1GXyu6GtbvvTYNB6VilYzkCcZ7BI50Y67cAWOF6695PTlZkc5GFJHTWTsWSGd3
-         P7RyXG6O1agbNi+eM7D99LEjrH5e4lxu+RELx2DQctb66j25cpgOON8ClrgRBCl6N0cR
-         C4uPR7pV7Of6czsiyt1fsS8opRFjA2djvBXkk2NKF2gC+tAbP5JJf85+cjFzTLAMQOKu
-         /ZTgIK071Tt1OwftobTuWUrgIKqo8d+5ZC/wV5wbyukzvwk4QRIh1+1BA6pt0aEhz22A
-         Kn6orlzMkK+M+tkpBXy6hJBmxB/s4aQjgkRQKtO7ISgd6z4a4fKPkPAozP/Pbt75VQLj
-         0Kog==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712673539; x=1713278339;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=GmfUDxVPuiwIkTUsd+ogO5/l7IrAr/+E8tvLrf91a6s=;
-        b=sb/EmPaIQjFHZymMWlKtnX9Yq44m+IMoPT6k7BkfLhiOxvJXVXucvBivyerFWiOuU9
-         0HJ5KCHZ6kB/9Qv+toxwzRzNACj23AOEx4uXJJcc+S7MijK9ucRvsjGZy5vh0OJ/H4al
-         2kTTrWCSPxg319poqEVvXHXi3evklDRgwIl2jnQVIl2R+pmjGwt4a1AVecJxEixW1C16
-         kSfwwRhy315SObP7tdNL7EiOjIuJTco9554OnNdcqpwoNRBU+TKEgtRX9wyOYPgjTVtS
-         vkqr0K69csKxxIIhBqkeAmC5zbFukMX+pC2orkpS9ziidAomj5t/lB9CvhCAmq/FsaKx
-         FJGw==
-X-Gm-Message-State: AOJu0YyyO6AlBvnF2cUgy75i4dCTo1xQyhWTuMbz8QqVG3ztVHgu8JmQ
-	QxNYQO0sWsCaAHE2cmbP0wA3j9HVa8ewh0KL5BR+ydflnVBgwAgUsgSUtX581xJDHCCNdkVPlej
-	t
-X-Google-Smtp-Source: AGHT+IHGzOAPowNEzetjXeKP3Wf4qertSGU0NfYLU3cv+WaSAxYKWgkDkcv/BtK3L1FKqYt1s8D3CQ==
-X-Received: by 2002:ac2:4286:0:b0:515:d036:f5c6 with SMTP id m6-20020ac24286000000b00515d036f5c6mr7525308lfh.52.1712673538903;
-        Tue, 09 Apr 2024 07:38:58 -0700 (PDT)
-Received: from apollon.wilcks.net (dslb-090-186-231-154.090.186.pools.vodafone-ip.de. [90.186.231.154])
-        by smtp.gmail.com with ESMTPSA id i33-20020a0564020f2100b0056e6e9a367fsm1113255eda.19.2024.04.09.07.38.58
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 09 Apr 2024 07:38:58 -0700 (PDT)
-Message-ID: <f6654d3ac12ff4621942e409340b29bb23d959b3.camel@suse.com>
-Subject: Re: [PATCH] multipathd: make multipathd set priority to
- RLIMIT_RTPRIO
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Tue, 09 Apr 2024 16:38:57 +0200
-In-Reply-To: <20240329182813.1455019-1-bmarzins@redhat.com>
-References: <20240329182813.1455019-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.0 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OgNnjI5U"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1712678241;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=WzbRqHGt5XInRshA+Pv85lImG4dL2VBw+03B1sBGY9w=;
+	b=OgNnjI5Uc2HMk5A9WOVqLGTMgJoSBP+UCEcRfKQuw7kR3uQ7+goTDSpa/tUKIHFnNYCBZV
+	iqlU84SbRxWe8Yi5ddvQPa1Bh0/FySy3wP8AZtVMw88/RyWzbbXWaF5y3kQO7NfzJbI5kF
+	eNaqDPxuPA1it7qDnkYe8jKx34K0Lwo=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-679-30-BI5_mNe6hz72sLGltcw-1; Tue,
+ 09 Apr 2024 11:57:19 -0400
+X-MC-Unique: 30-BI5_mNe6hz72sLGltcw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 88FBA29AA392;
+	Tue,  9 Apr 2024 15:57:18 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.148])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3DDA347B;
+	Tue,  9 Apr 2024 15:57:13 +0000 (UTC)
+Date: Tue, 9 Apr 2024 23:56:50 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	janpieter.sollie@edpnet.be, Mike Snitzer <snitzer@kernel.org>,
+	dm-devel@lists.linux.dev, Song Liu <song@kernel.org>,
+	linux-raid@vger.kernel.org
+Subject: Re: [PATCH] block: allow device to have both virt_boundary_mask and
+ max segment size
+Message-ID: <ZhVlQqtHU+8oP6rD@fedora>
+References: <20240407131931.4055231-1-ming.lei@redhat.com>
+ <20240408055542.GA15653@lst.de>
+ <ZhOekuZdwlwNSiZV@fedora>
+ <20240408084739.GA26968@lst.de>
+ <ZhO9UrfK4EulTkLo@fedora>
+ <20240409135758.GA20668@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240409135758.GA20668@lst.de>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 
-On Fri, 2024-03-29 at 14:28 -0400, Benjamin Marzinski wrote:
-> With this change, if the SCHED_RT_PRIO compiler flag is not set,
-> multipathd will call getrlimit(RLIMIT_RTPRIO, ...) and look at the
-> hard
-> limit. It it's 0, multipath will do nothing. Otherwise it will change
-> its scheduling policy to SCHED_RR and its priority to the hard limit.
->=20
-> This allows users to change the priority of that multipathd runs with
-> by
-> adding
->=20
-> LimitRTPRIO=3D<prio>
->=20
-> to the [Service] section of the multipathd.service unit file. Setting
-> LimitRTPRIO=3D0 will make multipathd run as a normal process, while
-> setting LimitRTPRIO=3Dinfinity will make it use the maximum SCHED_RR
-> prio,
-> which is 99.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Tue, Apr 09, 2024 at 03:57:58PM +0200, Christoph Hellwig wrote:
+> On Mon, Apr 08, 2024 at 05:48:02PM +0800, Ming Lei wrote:
+> > The limit is from commit 09324d32d2a0 ("block: force an unlimited segment
+> > size on queues with a virt boundary") which claims to fix f6970f83ef79
+> > ("block: don't check if adjacent bvecs in one bio can be mergeable").
+> > 
+> > However commit f6970f83ef79 only covers merge code which isn't used by
+> > bio driver at all, so not sure pre-6.9-rc is broken for stacking driver.
+> 
+> We can stack rq drivers as well.
+> 
+> > Also commit 09324d32d2a0 mentioned that it did not cause problem,
+> > actually 64K default segment size limits always exists even though the
+> > device doesn't provide one, so looks there isn't report as 'real bugs',
+> > or maybe I miss something?
+> 
+> The problem is when the segment size does not align to the boundary
+> mask as you'll now start feeding malformed segments/entris to the
+> device.
 
-This looks good to me, but do we really need both the RLIMIT_RTPRIO and
-the SCHED_RT_PRIO mechanism?
+In case of single bio, this bio will be split with max segment size
+if segment size doesn't align with virt boundary, so the resulted bio
+is still valid because virt-boundary allows the last bvec to be
+unaligned. 
 
-Thanks,
-Martin
+In case of bio merge, bio_will_gap() is always called to make sure
+there isn't gap between the two bios wrt. virt boundary.
+
+Can you explain a bit how one malformed bio is made?
+
+
+
+Thanks, 
+Ming
 
