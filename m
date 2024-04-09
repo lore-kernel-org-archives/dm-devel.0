@@ -1,59 +1,117 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC7BC12F374
-	for <dm-devel@lists.linux.dev>; Tue,  9 Apr 2024 13:58:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 71D2B12F5A4
+	for <dm-devel@lists.linux.dev>; Tue,  9 Apr 2024 14:09:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712671090; cv=none; b=luN6otkmGvRnUbo1HG5KEnZkO7HTVB9b3HmGXQtBvvagkMVMow6A0DJiz1YgPhrwME3qUgrWe5vUrx4MlV5Vkj9dfUGfRzZoftz2RYFEOE3UbwL7MSvSmGCbhQocUPTbih3YA3eCAJTx9OGM29gO1vwCjlvXkFdSjq+SbCKIkAE=
+	t=1712671743; cv=none; b=qUw+qCTt5O0o90FbpHBqr8SVH6OkAcplf7R53TX/EgeGh23hqamO6z+M/b0Yo3ISvsg9srpVHbo03jrmUa07Jb/iPc8w863BgbzCzta8VymJlBhCLxT59+X3c8gOM0VJUDmw167qOdQW33vmCNgKfHc98HKMx0/A+IQ4jbHUyEc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712671090; c=relaxed/simple;
-	bh=aup9EyGiaZCY4USFtmk2XO8IJxXlwPpNJ7u1cRpu9U4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=asNv3XXIQuAzhLBMfLuKvEYyCGL7BFKm1mun1x217JYGkq8409XuHsvxwxIHOYNWxRFt9R1AoQSUX1R8CkRbhohSjj3a3ezCR3m268H+yR6V3dUoIqMDB63bX8myorrgdup29TnIe8MFXyQE6LzrSmqq5O91+n0nQmWyHVsbqhE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id B03C068B05; Tue,  9 Apr 2024 15:57:58 +0200 (CEST)
-Date: Tue, 9 Apr 2024 15:57:58 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
-	linux-block@vger.kernel.org, janpieter.sollie@edpnet.be,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	Song Liu <song@kernel.org>, linux-raid@vger.kernel.org
-Subject: Re: [PATCH] block: allow device to have both virt_boundary_mask
- and max segment size
-Message-ID: <20240409135758.GA20668@lst.de>
-References: <20240407131931.4055231-1-ming.lei@redhat.com> <20240408055542.GA15653@lst.de> <ZhOekuZdwlwNSiZV@fedora> <20240408084739.GA26968@lst.de> <ZhO9UrfK4EulTkLo@fedora>
+	s=arc-20240116; t=1712671743; c=relaxed/simple;
+	bh=ZyyZuaXiLhkdNUtizJgtkYZbeWilkJYooPnZeM4zSMc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=fKUk6UzDQ8VeTLNSOOXIFdB8Xt6ezkFryOzUsUoD+E/wq7J6i8xwVyUacS1Mie1zVaiqDS4eaWmj8vkmH1Ru7S2o72n+o0dst4FOJNx2iFGZ4xv42xT5gyj7lPkwDI+wGb5gpzXrAE5PEm+YuwFgDUy7YseJNEvLQ80W0pUazt4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=NgfEiKhS; arc=none smtp.client-ip=209.85.208.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="NgfEiKhS"
+Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-56e6e08d328so1412915a12.2
+        for <dm-devel@lists.linux.dev>; Tue, 09 Apr 2024 07:09:01 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1712671740; x=1713276540; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=5l0qTRTy2Nr2uEL2QPbEkwEA9HuItxmsyYtsz6T3c/M=;
+        b=NgfEiKhSnwhZXbbg1mtbAWs+xsbT1IpxrnlRYcfXSE2P//zjA+AebQriED6roCzlDw
+         0OxXdwC3ET6hszQq2O5kIZb23RZ+RIDrrg+kvPXKG9eEhm4a5LysKZPt0ebxxOS+9E1B
+         vyv/63+x/gO2Ve7ILomBtLVKTK1ypPWIVCuxD+DP6oFA6hTBlB1GKpu51N6TRovalmAc
+         qTzWoc/LJY6lTm5prsZ+mBnLD5clG5flP49WtrizzA+JwgKqAMadvfWI9V8aCPqKtUJa
+         edwIuGm1zTwG8CQjf6NQ/zahXFBVLOwsSJfbKrHFjz3nAqz+aCPCsT+nagtmHn7n9Yaf
+         fCow==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1712671740; x=1713276540;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=5l0qTRTy2Nr2uEL2QPbEkwEA9HuItxmsyYtsz6T3c/M=;
+        b=qIFGg+z2ktEM9s7ooR0XO6puG2rvF0bKX+IhBWIaejGigJpH2qjd0j4KqHMSWkj/fN
+         eb+hR6tUE25x8iXCCgp73TpaIuh3J3iTRz7vlFArugCt4UJL/8btPWe9WjzdANcDQWv5
+         go4x7SCWLFP4NUtlFUc5rc7EDgjg1lG33RaFJ+Tv6TgGpyPoo66eV2d8Kvra8aA6o5qJ
+         E0HNZoAzbcXPEmgp0lA1Ik5OfQHK6YJMZRvKgoCpLmtoLDmTdYeQpQ0E5e1ptwp49Btr
+         nd4IC3UuFCt5uWMOfTHIQggoC8QfTIkB3Sige/JrSqrnBw/avfNoELFCQ0j4SmQ277tK
+         4r6g==
+X-Gm-Message-State: AOJu0YwUrmjSa1pW6/6AkBCC7zyNsAZUCEwvYqdEW7q5CRz/P7agCblc
+	PuDT//7Smjdn+BFyYbhadRu+qvmDjANI2n42UN8FpWCL0oioj4O4/m7XWTyF+X0=
+X-Google-Smtp-Source: AGHT+IG+FxGPD8Xbzc7I2lKgMzV8hulM1SIkdorBz6W8CjrvvDvziH7Z2xGIGuY5TUscULXnzOzsYQ==
+X-Received: by 2002:a17:906:f582:b0:a51:dd18:bd20 with SMTP id cm2-20020a170906f58200b00a51dd18bd20mr3837435ejd.14.1712671739695;
+        Tue, 09 Apr 2024 07:08:59 -0700 (PDT)
+Received: from localhost (dslb-090-186-231-154.090.186.pools.vodafone-ip.de. [90.186.231.154])
+        by smtp.gmail.com with UTF8SMTPSA id i19-20020a170906699300b00a4576dd5a8csm5663689ejr.201.2024.04.09.07.08.59
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 09 Apr 2024 07:08:59 -0700 (PDT)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Peter Rajnoha <prajnoha@redhat.com>,
+	Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v3 00/12] multipath udev rules changes for dm rules V3
+Date: Tue,  9 Apr 2024 16:08:12 +0200
+Message-ID: <20240409140813.26774-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.44.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ZhO9UrfK4EulTkLo@fedora>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Transfer-Encoding: 8bit
 
-On Mon, Apr 08, 2024 at 05:48:02PM +0800, Ming Lei wrote:
-> The limit is from commit 09324d32d2a0 ("block: force an unlimited segment
-> size on queues with a virt boundary") which claims to fix f6970f83ef79
-> ("block: don't check if adjacent bvecs in one bio can be mergeable").
-> 
-> However commit f6970f83ef79 only covers merge code which isn't used by
-> bio driver at all, so not sure pre-6.9-rc is broken for stacking driver.
+This patch set adapts the multipath rules to the pending changes
+for device mapper rules that update DM_UDEV_RULES_VSN to 3, and
+applies some additional clean-ups to the rules files.
 
-We can stack rq drivers as well.
+Changes v2 -> v3:
+* 08/11 replaced another UDEV_RULES_VSN test (Benjamin Marzinski)
 
-> Also commit 09324d32d2a0 mentioned that it did not cause problem,
-> actually 64K default segment size limits always exists even though the
-> device doesn't provide one, so looks there isn't report as 'real bugs',
-> or maybe I miss something?
+(not resending the patches that have already been acked by Ben).
 
-The problem is when the segment size does not align to the boundary
-mask as you'll now start feeding malformed segments/entris to the
-device.
+Changes v1 -> v2:
+
+All changes suggested by Benjamin Marzinski except the last one.
+
+* multiple patches: check DM_UDEV_RULES_VSN agains "1|2" rather than "3".
+* 01/11: this patch was wrong as discussed, dropped code changes and
+  added some comments instead, lest I make the same mistake again.
+* 02/11: fix label name in comment to match an existing label
+* 04/11: added missing "\" at end of line
+
+Comments welcome.
+
+Martin Wilck (12):
+  11-dm-mpath.rules: explain logic for device becoming ready while
+    suspended
+  11-dm-mpath.rules: don't import DM_NOSCAN from udev db
+  11-dm-mpath.rules: don't import ID_FS_VERSION from udev db
+  11-dm-mpath.rules: adapt MPATH_DEVICE_READY=0 logic to 10-dm.rules
+    update
+  11-dm-mpath.rules: adapt coldplug event handling ro 10-dm.rules update
+  11-dm-mpath.rules: don't import properties with new 13-dm-disk.rules
+  11-dm-mpath.rules: replace DM_SUSPENDED by .DM_SUSPENDED
+  11-dm-mpath.rules: replace DM_NOSCAN by .DM_NOSCAN
+  11-dm-mpath.rules: simplify PATH_FAILED case
+  11-dm-mpath.rules: make label names more intuitive
+  kpartx.rules: ignore DM_SUSPENDED
+  multipath-tools tests: fix CI failures on arm/v7 with glibc 2.37
+
+ kpartx/kpartx.rules            |  2 +-
+ multipath/11-dm-mpath.rules.in | 86 ++++++++++++++++++++--------------
+ tests/directio.c               | 22 ++++-----
+ tests/vpd.c                    | 35 +++++++-------
+ tests/wrap64.h                 | 23 ++++++++-
+ 5 files changed, 103 insertions(+), 65 deletions(-)
+
+-- 
+2.44.0
 
