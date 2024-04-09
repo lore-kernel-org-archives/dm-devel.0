@@ -1,171 +1,70 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.schwermer.no (mail.schwermer.no [49.12.228.226])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37D2F7E101
-	for <dm-devel@lists.linux.dev>; Tue,  9 Apr 2024 08:17:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 54BF212E1DD
+	for <dm-devel@lists.linux.dev>; Tue,  9 Apr 2024 11:33:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.228.226
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712650664; cv=none; b=jatRflh7+897iGnr4b/mbHXpoDG0/HpLo9Bk+XPFdUIjGbkbGwLvH8IR49nDdzgrwxkfUnCocOPV3k3cQA+C4PMJLUA8+Q7Xxv5rVTYbKv0Rgrfzv4t3qoKF025O9OZVbo1/DyX6DbrfGQ8H60Xwr5jOWUnj4PqEoEj8933JljI=
+	t=1712662399; cv=none; b=IMoBBpVlmkguOkrcJpRW+mNa4hD3c/mgRJ+mdkWnwa4JX19FYMbRltouTAhc0xpZ+q8/ZvX1Qn5zgM+R8LRP7UsNNsA6ZJGgEvNF64sE79C0m2rFwcPdEHsDIfU3om4m28eoo1HBrbETDGuNovACP4S93gLG5DkcsHFZhk+lZyA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712650664; c=relaxed/simple;
-	bh=AiFhZZUZqB6jjCLTAQDauhVTYjRmfj10W8hqnvzki7E=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=cdCssfdIhcbW9tmf8AtBeaULtlVfiqwYHKeiZL13hljOgm8NC3JGA+uFhStMsedmw0E2+C+pZE2CfG0jtcYyFEW+VwQTchQSB5jJlNyuNE9Yr0Sa1j7jBJxp+c54A96xc3US3U8xYdepTVAZ2MkhZDEsvlo2wrAE6b8IU9MdGaA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=bCFKi5E3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=1grhO2tR; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=bCFKi5E3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=1grhO2tR; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	s=arc-20240116; t=1712662399; c=relaxed/simple;
+	bh=dFweYkfqsY6Sr2WpR72t4e7CT/ReIKiIXHH6/2i4DQg=;
+	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:Content-Type; b=jEQ6/nCW+OGO+pbh1BMIlSTZ9d33PvbfQUCDmYLI6GJ4epUmW0O0NFM0cbR+KZQ4XktKW2DTExTrLiNcv39X+yHthC/HQxHVgpcaRkQWVWf2J9JdNjIet2OJfIc4dHqTYZ7Baq4YX0J0A/7tLTUO0M8TchWsPyOz9UaW+IHkzsQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=schwermer.no; spf=pass smtp.mailfrom=schwermer.no; dkim=pass (2048-bit key) header.d=schwermer.no header.i=@schwermer.no header.b=+GTlNrtB; arc=none smtp.client-ip=49.12.228.226
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=schwermer.no
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=schwermer.no
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="bCFKi5E3";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="1grhO2tR";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="bCFKi5E3";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="1grhO2tR"
-Received: from imap2.dmz-prg2.suse.org (imap2.dmz-prg2.suse.org [10.150.64.98])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 63E692089D;
-	Tue,  9 Apr 2024 08:17:41 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1712650661; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AiFhZZUZqB6jjCLTAQDauhVTYjRmfj10W8hqnvzki7E=;
-	b=bCFKi5E3op8vqPkRE5Sbt976rEx7PoAKBquyYapJgpO6sHmPOMPbigIrteb2mHDVxdnsBr
-	wuhHZebZF4o7lZLq3nC7dYUJ5Z8v/HOEuH+gxLV9HM7QikbQtV9eiTvkbsy5gDQitRlBuE
-	NNKJQomcOvD5NHxwcCnL6I3Fa0Ep3h0=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1712650661;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AiFhZZUZqB6jjCLTAQDauhVTYjRmfj10W8hqnvzki7E=;
-	b=1grhO2tRTMiz95IcoHP+oe+0Ibc+xLaBLrj2dYVbPsag9vxLnppOfoEEzTfy02DmkekeIB
-	0r5f6bsqUpvWv1Bg==
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1712650661; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AiFhZZUZqB6jjCLTAQDauhVTYjRmfj10W8hqnvzki7E=;
-	b=bCFKi5E3op8vqPkRE5Sbt976rEx7PoAKBquyYapJgpO6sHmPOMPbigIrteb2mHDVxdnsBr
-	wuhHZebZF4o7lZLq3nC7dYUJ5Z8v/HOEuH+gxLV9HM7QikbQtV9eiTvkbsy5gDQitRlBuE
-	NNKJQomcOvD5NHxwcCnL6I3Fa0Ep3h0=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1712650661;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AiFhZZUZqB6jjCLTAQDauhVTYjRmfj10W8hqnvzki7E=;
-	b=1grhO2tRTMiz95IcoHP+oe+0Ibc+xLaBLrj2dYVbPsag9vxLnppOfoEEzTfy02DmkekeIB
-	0r5f6bsqUpvWv1Bg==
-Received: from imap2.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap2.dmz-prg2.suse.org (Postfix) with ESMTPS id C638713253;
-	Tue,  9 Apr 2024 08:17:32 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([10.150.64.162])
-	by imap2.dmz-prg2.suse.org with ESMTPSA
-	id yQHPF5z5FGaONgAAn2gu4w
-	(envelope-from <colyli@suse.de>); Tue, 09 Apr 2024 08:17:32 +0000
-Content-Type: text/plain;
-	charset=utf-8
+	dkim=pass (2048-bit key) header.d=schwermer.no header.i=@schwermer.no header.b="+GTlNrtB"
+X-Virus-Scanned: Yes
+Message-ID: <b5c5cd56-b9dd-4368-a8e1-b9e0a07b79b4@schwermer.no>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=schwermer.no; s=mail;
+	t=1712662394; bh=dFweYkfqsY6Sr2WpR72t4e7CT/ReIKiIXHH6/2i4DQg=;
+	h=From:Subject:To:Cc;
+	b=+GTlNrtBXFRwsezL5xIZ5gaB8p9mr10u7lhSqXTTWtleDCw11zSe90N4kr0ExlXGa
+	 tf1ZJx/AgaRAY4JTJp0zc3HB9SWLWGTcVkhu5lsBaG/RpKqF911RQCmHhhWr1scZ9d
+	 m78W+wZxd1gSpojD111j79m5LI5gCmLKsRxom7X4H0fQrsb/H+Ocm480H/NfyozKcm
+	 JEpjx32jiQUD5Tm3iqVLtAhnrc2s0ewSpw6p0oPsKW/sXKeVpib8bEh1hKzVribyq1
+	 /Zd74eGJ0dDEz49thAeXsp9bPHWMK4wGg00MBHj+YSLBpT1us7KmNQ4WSWg6amzw0/
+	 VvrulnNTKO8Vw==
+Date: Tue, 9 Apr 2024 13:33:13 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3774.500.171.1.1\))
-Subject: Re: [PATCH v3 00/17] treewide: Refactor heap related implementation
-From: Coly Li <colyli@suse.de>
-In-Reply-To: <i2qewo34mvw7bizhefwz5s3fc4nlc4zk7eijglkieuci5iradm@zgcks3u5omhw>
-Date: Tue, 9 Apr 2024 16:17:14 +0800
-Cc: Kuan-Wei Chiu <visitorckw@gmail.com>,
- msakai@redhat.com,
- peterz@infradead.org,
- mingo@redhat.com,
- acme@kernel.org,
- namhyung@kernel.org,
- akpm@linux-foundation.org,
- bfoster@redhat.com,
- mark.rutland@arm.com,
- alexander.shishkin@linux.intel.com,
- jolsa@kernel.org,
- irogers@google.com,
- adrian.hunter@intel.com,
- jserv@ccns.ncku.edu.tw,
- Bcache Linux <linux-bcache@vger.kernel.org>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- Linux bcachefs <linux-bcachefs@vger.kernel.org>,
- linux-perf-users@vger.kernel.org
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <8D0FD5AF-2AD9-4A91-831D-C79A798BED11@suse.de>
-References: <20240406164727.577914-1-visitorckw@gmail.com>
- <i2qewo34mvw7bizhefwz5s3fc4nlc4zk7eijglkieuci5iradm@zgcks3u5omhw>
-To: Kent Overstreet <kent.overstreet@linux.dev>
-X-Mailer: Apple Mail (2.3774.500.171.1.1)
-X-Spam-Flag: NO
-X-Spam-Score: -1.58
-X-Spam-Level: 
-X-Spamd-Result: default: False [-1.58 / 50.00];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	BAYES_HAM(-0.78)[84.53%];
-	MV_CASE(0.50)[];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_TLS_ALL(0.00)[];
-	ARC_NA(0.00)[];
-	RCPT_COUNT_TWELVE(0.00)[20];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FROM_HAS_DN(0.00)[];
-	FREEMAIL_CC(0.00)[gmail.com,redhat.com,infradead.org,kernel.org,linux-foundation.org,arm.com,linux.intel.com,google.com,intel.com,ccns.ncku.edu.tw,vger.kernel.org,lists.linux.dev];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap2.dmz-prg2.suse.org:helo,imap2.dmz-prg2.suse.org:rdns]
+MIME-Version: 1.0
+Content-Language: en-US
+From: Sven <dm-devel@schwermer.no>
+Subject: dm-init/dm-verity: Data device lookup failed
+To: dm-devel@lists.linux.dev
+Cc: Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
+Hi,
 
+I'm using dm-init to set up a dm-verity rootfs, i.e. my kernel command 
+line includes:
 
-> 2024=E5=B9=B44=E6=9C=889=E6=97=A5 11:40=EF=BC=8CKent Overstreet =
-<kent.overstreet@linux.dev> =E5=86=99=E9=81=93=EF=BC=9A
->=20
-> On Sun, Apr 07, 2024 at 12:47:10AM +0800, Kuan-Wei Chiu wrote:
->> This patch series focuses on several adjustments related to heap
->> implementation. Firstly, a type-safe interface has been added to the
->> min_heap, along with the introduction of several new functions to
->> enhance its functionality. Additionally, the heap implementation for
->> bcache and bcachefs has been replaced with the generic min_heap
->> implementation from include/linux. Furthermore, several typos have =
-been
->> corrected.
->>=20
->> Previous discussion with Kent Overstreet:
->> =
-https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvsdp4mqqg=
-@nrlek5vmisbu
->>=20
->> Regards,
->> Kuan-Wei
->=20
-> pointing test automation at it now:
-> https://evilpiepirate.org/~testdashboard/ci?branch=3Drefactor-heap-v3
->=20
-> Coli, could I get some acks from you?
+root=/dev/dm-0
+dm-mod.waitfor=/dev/mmcblk0p3
+dm-mod.create="rootfs,,0,ro,0 614400 verity 1 /dev/mmcblk0p3 
+/dev/mmcblk0p3 1024 4096 307200 76801 sha256 HASH HASH"
 
-Yes, the code tested and Acked-by sent.
+Occasionally, my device refuses to boot with the following errors:
 
-Thanks.
+device-mapper: table: 254:0: verity: Data device lookup failed (-ENXIO)
+device-mapper: ioctl: error adding target to table
 
-Coly Li=
+There appears to be a race condition somewhere. This problem started to 
+appear when updating from kernel version 5.15.148 to 6.6.22. Looking at 
+the changes between the versions, this patch seems relevant: 
+https://lore.kernel.org/all/20230531125535.676098-19-hch@lst.de/
+
+It appears that early_lookup_bdev in dm_init_init would succeed even if 
+the partition block device is not there yet but the parent block device 
+is. Could that explain why the subsequent device lookup for the 
+partition fails?
+
+Best regards,
+Sven
