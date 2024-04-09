@@ -1,111 +1,59 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D8E6130A6C
-	for <dm-devel@lists.linux.dev>; Tue,  9 Apr 2024 13:55:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC7BC12F374
+	for <dm-devel@lists.linux.dev>; Tue,  9 Apr 2024 13:58:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712670960; cv=none; b=uDNOzV5H405ATP6I2hvnisTnLvzeFd0T6g3TQCYvbH7hNtPjFVmCcT6UGUeopzOB1LAjSpszt8sujqpEL7iMLsULsC1qtE7X4eXd0NofsKL+evRS7NlRRU1LyF9KJmu74EZ/pDk6s1Q5iLrRMJGqhm4oSfFiqlLODZKOZHfQS3k=
+	t=1712671090; cv=none; b=luN6otkmGvRnUbo1HG5KEnZkO7HTVB9b3HmGXQtBvvagkMVMow6A0DJiz1YgPhrwME3qUgrWe5vUrx4MlV5Vkj9dfUGfRzZoftz2RYFEOE3UbwL7MSvSmGCbhQocUPTbih3YA3eCAJTx9OGM29gO1vwCjlvXkFdSjq+SbCKIkAE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712670960; c=relaxed/simple;
-	bh=TP1P+YsLOsTgZobQ/Sxw1VMQvOrMEzWShDz8R/u32y4=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=kq8XSzpZZFkzVinKZuymFBDTgeZoRG9w/B9LntIL/ngY3+pm/uKLj3e4E/WVZ5BNp+8OXz03tdnotanylM9TzOeHeMDPXjaqtx9jTEns/ZJSM9mjhYigMTHlpeNPL47Zm7fV3k0wNdsUe5+WcofrUHoFVo9OSsgWiy/D37nvhL8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Fo7WvWnD; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Fo7WvWnD; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Fo7WvWnD";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Fo7WvWnD"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id D430E33A12;
-	Tue,  9 Apr 2024 13:55:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1712670956; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TP1P+YsLOsTgZobQ/Sxw1VMQvOrMEzWShDz8R/u32y4=;
-	b=Fo7WvWnDhd1d6GeSVcOXQPVKRgGhWpAWzy4dP6fhKsKXqTb0rD8/DVIsYf5v8E9WhRkdwq
-	xpgrzwvm5E5Gr9INPRCT7rsWHO0JEqF5yNfu3J2k45CerJTTkbs9a4UrfCZ7e3NljUalLO
-	3CeskMRotXGQFtfhzh8gMSyYQOVuzzM=
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1712670956; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TP1P+YsLOsTgZobQ/Sxw1VMQvOrMEzWShDz8R/u32y4=;
-	b=Fo7WvWnDhd1d6GeSVcOXQPVKRgGhWpAWzy4dP6fhKsKXqTb0rD8/DVIsYf5v8E9WhRkdwq
-	xpgrzwvm5E5Gr9INPRCT7rsWHO0JEqF5yNfu3J2k45CerJTTkbs9a4UrfCZ7e3NljUalLO
-	3CeskMRotXGQFtfhzh8gMSyYQOVuzzM=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id A677E136D9;
-	Tue,  9 Apr 2024 13:55:56 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([10.150.64.162])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id Li78JuxIFWb0JQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 09 Apr 2024 13:55:56 +0000
-Message-ID: <3235505f5f6f5e744cfa2ad4c19c64bacc3731b5.camel@suse.com>
-Subject: Re: [PATCH v2 08/11] 11-dm-mpath.rules: replace DM_NOSCAN by
- .DM_NOSCAN
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
-	dm-devel@lists.linux.dev, Peter Rajnoha <prajnoha@redhat.com>
-Date: Tue, 09 Apr 2024 15:55:56 +0200
-In-Reply-To: <ZhQ7yrm3jfG4v4zc@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <20240404173814.3143-1-mwilck@suse.com>
-	 <20240404173814.3143-9-mwilck@suse.com>
-	 <ZhQ7yrm3jfG4v4zc@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.0 
+	s=arc-20240116; t=1712671090; c=relaxed/simple;
+	bh=aup9EyGiaZCY4USFtmk2XO8IJxXlwPpNJ7u1cRpu9U4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=asNv3XXIQuAzhLBMfLuKvEYyCGL7BFKm1mun1x217JYGkq8409XuHsvxwxIHOYNWxRFt9R1AoQSUX1R8CkRbhohSjj3a3ezCR3m268H+yR6V3dUoIqMDB63bX8myorrgdup29TnIe8MFXyQE6LzrSmqq5O91+n0nQmWyHVsbqhE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id B03C068B05; Tue,  9 Apr 2024 15:57:58 +0200 (CEST)
+Date: Tue, 9 Apr 2024 15:57:58 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org, janpieter.sollie@edpnet.be,
+	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
+	Song Liu <song@kernel.org>, linux-raid@vger.kernel.org
+Subject: Re: [PATCH] block: allow device to have both virt_boundary_mask
+ and max segment size
+Message-ID: <20240409135758.GA20668@lst.de>
+References: <20240407131931.4055231-1-ming.lei@redhat.com> <20240408055542.GA15653@lst.de> <ZhOekuZdwlwNSiZV@fedora> <20240408084739.GA26968@lst.de> <ZhO9UrfK4EulTkLo@fedora>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Level: 
-X-Spamd-Result: default: False [-2.58 / 50.00];
-	BAYES_HAM(-1.28)[89.87%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
-X-Spam-Score: -2.58
-X-Spam-Flag: NO
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ZhO9UrfK4EulTkLo@fedora>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Mon, 2024-04-08 at 14:47 -0400, Benjamin Marzinski wrote:
-> > =C2=A0
-> > +# device-mapper rules v2 compatibility for 13-dm-disk.rules
-> > +ENV{DM_UDEV_RULES_VSN}!=3D"3", ENV{DM_NOSCAN}=3D"$env{.DM_NOSCAN}"
-> > +
->=20
-> You missed a DM_UDEV_RULES_VSN change here.
+On Mon, Apr 08, 2024 at 05:48:02PM +0800, Ming Lei wrote:
+> The limit is from commit 09324d32d2a0 ("block: force an unlimited segment
+> size on queues with a virt boundary") which claims to fix f6970f83ef79
+> ("block: don't check if adjacent bvecs in one bio can be mergeable").
+> 
+> However commit f6970f83ef79 only covers merge code which isn't used by
+> bio driver at all, so not sure pre-6.9-rc is broken for stacking driver.
 
-Thanks!
+We can stack rq drivers as well.
 
-Martin
+> Also commit 09324d32d2a0 mentioned that it did not cause problem,
+> actually 64K default segment size limits always exists even though the
+> device doesn't provide one, so looks there isn't report as 'real bugs',
+> or maybe I miss something?
+
+The problem is when the segment size does not align to the boundary
+mask as you'll now start feeding malformed segments/entris to the
+device.
 
