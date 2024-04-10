@@ -1,177 +1,487 @@
-Received: from mail-qv1-f49.google.com (mail-qv1-f49.google.com [209.85.219.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8013312EBCF
-	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 16:03:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6678F17F38F
+	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 17:26:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712764984; cv=none; b=gxU0lEneh1/PcnGau2EqA5frj3tc9IjBQh7340axIxqoOCamtQGw2DRWbGUpKcMavKLD8SjPm1OYpMMJARxyWq6rZTmv5T3H2AbHFpd0Lx8BL/Ax0zx5vIIe3uE7cnBV19O1u+XrvYBblCFsi8SevU+ePSmATeypRJuBpSqvx54=
+	t=1712770014; cv=none; b=qc/LjXpZ05DYDIpydeDSrBc6gtbmWU79maNBlvQaAEuJdwLS8F25BU5ujMdlNLVdl1p7ccq6jm00rjST3os6I3+QlNi/GBaBZOFvyIRCiwiB918JuvoVVd6iFjVOwGUjHpkIeiUkpXzhO+tG8C94JDY7QV5D1x+c7pg4zbILSZs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712764984; c=relaxed/simple;
-	bh=IVFSM0BCrE6A1xc/CVbkYEQb9Y79P40NL3fUgUD7vSU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=mul3iWPczYiY3PmbseC0hJkeTm4RHMS5JKmRO9n2/y5rzUj8RSuFTbNUtQ6lvwh+eB/KGWUa1wgdIwvXLS/x+dmX979el5MMkb1esmMCNixJ/NFsXZ4fd8Wwf2zF5eQKomMBCQRt91nrUeqref8+8Q+ZC3NYkZCTgxw5VJzlgps=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.219.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	s=arc-20240116; t=1712770014; c=relaxed/simple;
+	bh=8a3DBXg7hhfdUQ3RyfxlUX1F2I1ZewtL5n+AJ7i1NO0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=gNxN7kNQVvaI4t9mtwCy0xPtgOnGWsw+aHLrdfruZCt5/y2VzKt9Y78dMTBsb1ajw37wKHi9GEDBFeF433GqrUOw5GucW0gQouL79YUVDsLWmZcH+SFXCiDSLYcy+1ixLttlUYT3slKbP/ExTyoxGZN9QfMlBWWmVJVA/HGWFas=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PcPH038s; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qv1-f49.google.com with SMTP id 6a1803df08f44-69b265a1ae7so14084826d6.0
-        for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 09:03:02 -0700 (PDT)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PcPH038s"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1712770011;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=SvrK1xeD8grMUj7IGa5lN1CzcJxYgQcYtrUkQ3eifvk=;
+	b=PcPH038s9vB+L+RZK38A8YoN0FTD8v0m4HST+0Qv0/loFge9c4WfVgB2OAXDszmWuROcu+
+	rbUZ8SzVjZQP3eJLL6S7Gj8tyVI5CzGt/VmbX8+F5ahhFbRjmWzaj0aRRez9Koyd85k+ko
+	kYkNcTKnWJshvItzezmyVIrG6jvJWeo=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-619-l3eikD0IP_iPhB0tgE1UpA-1; Wed, 10 Apr 2024 13:26:50 -0400
+X-MC-Unique: l3eikD0IP_iPhB0tgE1UpA-1
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-6993bd297ebso74508596d6.2
+        for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 10:26:49 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712764981; x=1713369781;
-        h=in-reply-to:content-transfer-encoding:content-disposition
-         :mime-version:references:message-id:subject:cc:to:from:date
+        d=1e100.net; s=20230601; t=1712770009; x=1713374809;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=18asjn701EnXrAEa1lUJTVnwwXNqBx4Xp3ynvhhCH1I=;
-        b=h6ZdccIiVDZWCkbpb1Ox2c10R6YWxeKGR13VmvVzOSIUpJQfv0f3aqwbOanqD/edOD
-         hRhDbtpAAc1xEDZpMM5DfXsuHPOfii/Jfab893gaHh85uf7ePyj00IvoCEOtuTNrtItN
-         VB0fcvNQbI9/dMNRe/CGB0AZK3mzQ35nRdgpIWwXyaKeefMK5fjR7E5bNG5CB3gY5AgQ
-         NMlU06WwiVSQY84FDuJ6famZ3WYMFZL8CvPVyahDhrOka4HrWuvNP+77XaHTmjJXuLiy
-         x//p1O4vuzCKiflu+ccebHycgPsf0KnLCkCNNKWFxxhpHiCZuP6JCBW/sHtCfppsuqXg
-         j32w==
-X-Forwarded-Encrypted: i=1; AJvYcCX+NPBE800dE3zAzayTR1FFOsDYDgTFQHeNZEt9BH9k8zyFkBVlI2hASQMHcKVKVcpP+4lvknNUy2DGzXbb9sC2ioZT1jXyEdU=
-X-Gm-Message-State: AOJu0YyW21SmX71pyE4Mt8/7UUfWsdlZ/DVp1Iqy04v3RVkUCQxtL9d3
-	LPiID8guYMQitG9pHdzzUWmC5S6upBGKDDUAFw5Le8Hyko5anSZ8BuefUBnQKw==
-X-Google-Smtp-Source: AGHT+IF8DD3k/ay27V0TzqAnwQU2YrT2+ssEUXP45hpptOlU0L0qggnwSGMqk5i2u9rLAEYt7M81tw==
-X-Received: by 2002:a0c:fac3:0:b0:69b:4608:72a4 with SMTP id p3-20020a0cfac3000000b0069b460872a4mr74678qvo.25.1712764981034;
-        Wed, 10 Apr 2024 09:03:01 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id mx18-20020a0562142e1200b0069b3f41d402sm578169qvb.21.2024.04.10.09.03.00
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 10 Apr 2024 09:03:00 -0700 (PDT)
-Date: Wed, 10 Apr 2024 12:02:59 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: yangerkun <yangerkun@huaweicloud.com>
-Cc: mpatocka@redhat.com, agk@redhat.com, tj@kernel.org,
-	dm-devel@lists.linux.dev, yangerkun@huawei.com, yukuai3@huawei.com,
-	Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH v3] dm-crypt: reexport sysfs of kcryptd workqueue
-Message-ID: <Zha4M0ru46QrKYgq@redhat.com>
-References: <20230711061129.2706759-1-yangerkun@huaweicloud.com>
- <45a09f8d-d167-c78c-7ac8-3ed27db18653@huaweicloud.com>
- <Zhaxz1ZkGzbfW0RQ@redhat.com>
+        bh=SvrK1xeD8grMUj7IGa5lN1CzcJxYgQcYtrUkQ3eifvk=;
+        b=hA2bgQa4ihbIe99ewk1giaP94VgutOKdf0be+7LC6suRV1mLivVCmSJCZihbWg24M4
+         97RO2HIAfVmxiUjrM5dATq8nxX6LMZqlNC5vm7ZzHBFZV+afolbAmrhUz6H+CVS+c4Z7
+         2DdZ8u3cAeV2zkPLfDhdH9gJIO/wHWIS0ZzPv7oPcO8EzQEl5kka4FU+ciyC6Kin4Xbw
+         coYOWVYaF7sEF0ejL2W3o23CO4nWc7wbkqDhk+M1g4lIn6U1vlYChlLdFTrpb0mcedRp
+         +gzwTLhVDcEng414YoQmN9LwCGM7d0lRruTk7Ch3cHMRcdHomHntrO5wNSfaFGwMkR5B
+         zL+w==
+X-Forwarded-Encrypted: i=1; AJvYcCV+B9BS9gS9aFJOhRG6Z6eafqB1oQ5ncKYphIGSjVxxQIfbHOux9U6QWlgQN/mFNyZ2V2YSt+WFOd6HCS65YXg/QFey+IQqvUk=
+X-Gm-Message-State: AOJu0Yxov36LF8TrGKCD2w66Ma4m6IrHwbIenSrs6jOBnrMUhjJUtZiG
+	iE+Ks5XvtB7OmywiKFm9W+gdWOl0eqHXuZYWafUfH2w61ds05HHVbEjcru1NgPOLSd0ddxownzL
+	16GF1EhlrZg5Svvh0INsBfmo6cvp1Ij5m3/7v7t00c8c5TZwwuDZrP5n2
+X-Received: by 2002:a05:6214:d6a:b0:69b:243a:46c with SMTP id 10-20020a0562140d6a00b0069b243a046cmr3689299qvs.34.1712770009392;
+        Wed, 10 Apr 2024 10:26:49 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IENlG1Ttc7CoucrebyF8rwj5w6PnqB4FtRGniqXuoTW722Dlp/ItwidpVu+OB/JrzsrPrI9qw==
+X-Received: by 2002:a05:6214:d6a:b0:69b:243a:46c with SMTP id 10-20020a0562140d6a00b0069b243a046cmr3689277qvs.34.1712770008984;
+        Wed, 10 Apr 2024 10:26:48 -0700 (PDT)
+Received: from [192.168.1.165] ([70.22.187.239])
+        by smtp.gmail.com with ESMTPSA id l9-20020a0cc209000000b0069941839737sm5035258qvh.3.2024.04.10.10.26.47
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 10 Apr 2024 10:26:48 -0700 (PDT)
+Message-ID: <a8493592-2a9b-ac14-f914-c747aa4455f3@redhat.com>
+Date: Wed, 10 Apr 2024 13:26:47 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <Zhaxz1ZkGzbfW0RQ@redhat.com>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.12.0
+Subject: Re: [PATCH vfs.all 19/26] dm-vdo: convert to use bdev_file
+To: Yu Kuai <yukuai1@huaweicloud.com>, jack@suse.cz, hch@lst.de,
+ brauner@kernel.org, viro@zeniv.linux.org.uk, axboe@kernel.dk
+Cc: linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org,
+ yi.zhang@huawei.com, yangerkun@huawei.com, yukuai3@huawei.com,
+ dm-devel@lists.linux.dev
+References: <20240406090930.2252838-1-yukuai1@huaweicloud.com>
+ <20240406090930.2252838-20-yukuai1@huaweicloud.com>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20240406090930.2252838-20-yukuai1@huaweicloud.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-[resend after rebase and fixing dm-devel mailing list address]
++dm-devel
 
-On Wed, Apr 10 2024 at 11:35P -0400,
-Mike Snitzer <snitzer@kernel.org> wrote:
+On 4/6/24 05:09, Yu Kuai wrote:
+> From: Yu Kuai <yukuai3@huawei.com>
+> 
+> Now that dm upper layer already statsh the file of opened device in
 
-> On Sat, Mar 30 2024 at  4:05P -0400,
-> yangerkun <yangerkun@huaweicloud.com> wrote:
+                                  ^ stashes
+
+> 'dm_dev->bdev_file', it's ok to get inode from the file.
+> There are no functional changes, prepare to remove 'bd_inode' from
+> block_device.
 > 
-> > Hi,
-> > 
-> > Ping for this patch!
-> > 
-> > 在 2023/7/11 14:11, yangerkun 写道:
-> > > From: yangerkun <yangerkun@huawei.com>
-> > > 
-> > > Once there is a heavy IO load, so many encrypt/decrypt work will occupy
-> > > all of the cpu, which may lead the poor performance for other service.
-> > > So the idea like 'a2b8b2d97567 ("dm crypt: export sysfs of kcryptd
-> > > workqueue")' said seems necessary. We can export "kcryptd" workqueue
-> > > sysfs, the entry like cpumask/max_active and so on can help us to limit
-> > > the usage for encrypt/decrypt work.
-> > > 
-> > > However, that commit does not consider the reload table will call .ctr
-> > > before .dtr, so the reload for dm-crypt will fail since the same sysfs
-> > > problem, and then we revert that commit('48b0777cd93d ("Revert "dm
-> > > crypt: export sysfs of kcryptd workqueue"")').
-> > > 
-> > > Actually, what we should do is give a unique name once we try reload
-> > > table, we can use ida to fix the problem.
-> > > 
-> > > Signed-off-by: yangerkun <yangerkun@huawei.com>
-> > > ---
-> > >   drivers/md/dm-crypt.c | 28 +++++++++++++++++++++++-----
-> > >   1 file changed, 23 insertions(+), 5 deletions(-)
-> > > 
-> > > v1->v2:
-> > > rewrite the commit msg
-> > > 
-> > > v2->v3:
-> > > no logical change, just rebase to latest linux kernel
-> > > 
-> > > diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> > > index 1dc6227d353e..f4678eb71322 100644
-> > > --- a/drivers/md/dm-crypt.c
-> > > +++ b/drivers/md/dm-crypt.c
-> > > @@ -47,6 +47,8 @@
-> > >   #define DM_MSG_PREFIX "crypt"
-> > > +static DEFINE_IDA(crypt_queue_ida);
-> > > +
-> > >   /*
-> > >    * context holding the current state of a multi-part conversion
-> > >    */
-> > > @@ -182,6 +184,7 @@ struct crypt_config {
-> > >   		struct crypto_aead **tfms_aead;
-> > >   	} cipher_tfm;
-> > >   	unsigned int tfms_count;
-> > > +	int crypt_queue_id;
-> > >   	unsigned long cipher_flags;
-> > >   	/*
-> > > @@ -2735,6 +2738,9 @@ static void crypt_dtr(struct dm_target *ti)
-> > >   	if (cc->crypt_queue)
-> > >   		destroy_workqueue(cc->crypt_queue);
-> > > +	if (cc->crypt_queue_id)
-> > > +		ida_free(&crypt_queue_ida, cc->crypt_queue_id);
-> > > +
-> > >   	crypt_free_tfms(cc);
-> > >   	bioset_exit(&cc->bs);
-> > > @@ -3371,12 +3377,24 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-> > >   	}
-> > >   	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
-> > > -		cc->crypt_queue = alloc_workqueue("kcryptd/%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
-> > > +		cc->crypt_queue = alloc_workqueue("kcryptd-%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
-> > >   						  1, devname);
-> > > -	else
-> > > -		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
-> > > -						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND,
-> > > -						  num_online_cpus(), devname);
-> > > +	else {
-> > > +		int id = ida_alloc_min(&crypt_queue_ida, 1, GFP_KERNEL);
-> > > +
-> > > +		if (id < 0) {
-> > > +			ti->error = "Couldn't get kcryptd queue id";
-> > > +			ret = id;
-> > > +			goto bad;
-> > > +		}
-> > > +
-> > > +		cc->crypt_queue_id = id;
-> > > +		cc->crypt_queue = alloc_workqueue("kcryptd-%s-%d",
-> > > +						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM |
-> > > +						  WQ_UNBOUND | WQ_SYSFS,
-> > > +						  num_online_cpus(), devname, id);
-> > > +	}
-> > > +
-> > >   	if (!cc->crypt_queue) {
-> > >   		ti->error = "Couldn't create kcryptd queue";
-> > >   		goto bad;
-> > 
+> Suggested-by: Jan Kara <jack@suse.cz>
+> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+> ---
+>   drivers/md/dm-vdo/dedupe.c                |  7 ++++---
+>   drivers/md/dm-vdo/dm-vdo-target.c         |  9 +++++++--
+>   drivers/md/dm-vdo/indexer/config.c        |  2 +-
+>   drivers/md/dm-vdo/indexer/config.h        |  4 ++--
+>   drivers/md/dm-vdo/indexer/index-layout.c  |  6 +++---
+>   drivers/md/dm-vdo/indexer/index-layout.h  |  2 +-
+>   drivers/md/dm-vdo/indexer/index-session.c | 18 ++++++++++--------
+>   drivers/md/dm-vdo/indexer/index.c         |  4 ++--
+>   drivers/md/dm-vdo/indexer/index.h         |  2 +-
+>   drivers/md/dm-vdo/indexer/indexer.h       |  6 +++---
+>   drivers/md/dm-vdo/indexer/io-factory.c    | 17 +++++++++--------
+>   drivers/md/dm-vdo/indexer/io-factory.h    |  4 ++--
+>   drivers/md/dm-vdo/indexer/volume.c        |  4 ++--
+>   drivers/md/dm-vdo/indexer/volume.h        |  2 +-
+>   drivers/md/dm-vdo/vdo.c                   |  2 +-
+>   15 files changed, 49 insertions(+), 40 deletions(-)
 > 
-> I'm OK with adding WQ_SYSFS to export workqueue info.  dm-crypt's
-> performance is very tighly coupled with its use of workqueues.  So
-> allowing more visibility into workqueues makes sense.
-> 
-> That said, I'm not loving that the sysfs entry will have a dynamic
-> name (made possible with ida) -- but I can live with it.
-> 
-> However, I do think it is useful to always use WQ_SYSFS (even if
-> DM_CRYPT_SAME_CPU, and also for the IO wq).
-> 
-> So I've made the use of ida common to all dm-crypt wq. I was able to
-> do this more cleanly by rebasing ontop of dm-6.10 (which now includes
-> recent dm-crypt patch to allow WQ_HIGHPRI to be configured), see:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.10&id=6bd1e0b331ddd7bb4d6b2abc8472a36602180aa5
-> 
-> Thanks,
-> Mike
+> diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
+> index 117266e1b3ae..0e311989247e 100644
+> --- a/drivers/md/dm-vdo/dedupe.c
+> +++ b/drivers/md/dm-vdo/dedupe.c
+> @@ -2191,7 +2191,7 @@ static int initialize_index(struct vdo *vdo, struct hash_zones *zones)
+>   	uds_offset = ((vdo_get_index_region_start(geometry) -
+>   		       geometry.bio_offset) * VDO_BLOCK_SIZE);
+>   	zones->parameters = (struct uds_parameters) {
+> -		.bdev = vdo->device_config->owned_device->bdev,
+> +		.bdev_file = vdo->device_config->owned_device->bdev_file,
+>   		.offset = uds_offset,
+>   		.size = (vdo_get_index_region_size(geometry) * VDO_BLOCK_SIZE),
+>   		.memory_size = geometry.index_config.mem,
+> @@ -2582,8 +2582,9 @@ static void resume_index(void *context, struct vdo_completion *parent)
+>   	struct device_config *config = parent->vdo->device_config;
+>   	int result;
+>   
+> -	zones->parameters.bdev = config->owned_device->bdev;
+> -	result = uds_resume_index_session(zones->index_session, zones->parameters.bdev);
+> +	zones->parameters.bdev_file = config->owned_device->bdev_file;
+> +	result = uds_resume_index_session(zones->index_session,
+> +					  zones->parameters.bdev_file);
+>   	if (result != UDS_SUCCESS)
+>   		vdo_log_error_strerror(result, "Error resuming dedupe index");
+>   
+> diff --git a/drivers/md/dm-vdo/dm-vdo-target.c b/drivers/md/dm-vdo/dm-vdo-target.c
+> index 5a4b0a927f56..79e861c2887c 100644
+> --- a/drivers/md/dm-vdo/dm-vdo-target.c
+> +++ b/drivers/md/dm-vdo/dm-vdo-target.c
+> @@ -696,6 +696,11 @@ static void handle_parse_error(struct device_config *config, char **error_ptr,
+>   	*error_ptr = error_str;
+>   }
+>   
+> +static loff_t vdo_get_device_size(const struct device_config *config)
+> +{
+> +	return i_size_read(file_inode(config->owned_device->bdev_file));
+> +}
+> +
+>   /**
+>    * parse_device_config() - Convert the dmsetup table into a struct device_config.
+>    * @argc: The number of table values.
+> @@ -878,7 +883,7 @@ static int parse_device_config(int argc, char **argv, struct dm_target *ti,
+>   	}
+>   
+>   	if (config->version == 0) {
+> -		u64 device_size = i_size_read(config->owned_device->bdev->bd_inode);
+> +		u64 device_size = vdo_get_device_size(config);
+>   
+>   		config->physical_blocks = device_size / VDO_BLOCK_SIZE;
+>   	}
+> @@ -1011,7 +1016,7 @@ static void vdo_status(struct dm_target *ti, status_type_t status_type,
+>   
+>   static block_count_t __must_check get_underlying_device_block_count(const struct vdo *vdo)
+>   {
+> -	return i_size_read(vdo_get_backing_device(vdo)->bd_inode) / VDO_BLOCK_SIZE;
+> +	return vdo_get_device_size(vdo->device_config) / VDO_BLOCK_SIZE;
+>   }
+>   
+>   static int __must_check process_vdo_message_locked(struct vdo *vdo, unsigned int argc,
+> diff --git a/drivers/md/dm-vdo/indexer/config.c b/drivers/md/dm-vdo/indexer/config.c
+> index 5532371b952f..dcf0742a6145 100644
+> --- a/drivers/md/dm-vdo/indexer/config.c
+> +++ b/drivers/md/dm-vdo/indexer/config.c
+> @@ -344,7 +344,7 @@ int uds_make_configuration(const struct uds_parameters *params,
+>   	config->volume_index_mean_delta = DEFAULT_VOLUME_INDEX_MEAN_DELTA;
+>   	config->sparse_sample_rate = (params->sparse ? DEFAULT_SPARSE_SAMPLE_RATE : 0);
+>   	config->nonce = params->nonce;
+> -	config->bdev = params->bdev;
+> +	config->bdev_file = params->bdev_file;
+>   	config->offset = params->offset;
+>   	config->size = params->size;
+>   
+> diff --git a/drivers/md/dm-vdo/indexer/config.h b/drivers/md/dm-vdo/indexer/config.h
+> index 08507dc2f7a1..8ba0cf72dec9 100644
+> --- a/drivers/md/dm-vdo/indexer/config.h
+> +++ b/drivers/md/dm-vdo/indexer/config.h
+> @@ -25,8 +25,8 @@ enum {
+>   
+>   /* A set of configuration parameters for the indexer. */
+>   struct uds_configuration {
+> -	/* Storage device for the index */
+> -	struct block_device *bdev;
+> +	/* File of opened storage device for the index */
+> +	struct file *bdev_file;
+>   
+>   	/* The maximum allowable size of the index */
+>   	size_t size;
+> diff --git a/drivers/md/dm-vdo/indexer/index-layout.c b/drivers/md/dm-vdo/indexer/index-layout.c
+> index 627adc24af3b..32eee76bc246 100644
+> --- a/drivers/md/dm-vdo/indexer/index-layout.c
+> +++ b/drivers/md/dm-vdo/indexer/index-layout.c
+> @@ -1668,7 +1668,7 @@ static int create_layout_factory(struct index_layout *layout,
+>   	size_t writable_size;
+>   	struct io_factory *factory = NULL;
+>   
+> -	result = uds_make_io_factory(config->bdev, &factory);
+> +	result = uds_make_io_factory(config->bdev_file, &factory);
+>   	if (result != UDS_SUCCESS)
+>   		return result;
+>   
+> @@ -1741,9 +1741,9 @@ void uds_free_index_layout(struct index_layout *layout)
+>   }
+>   
+>   int uds_replace_index_layout_storage(struct index_layout *layout,
+> -				     struct block_device *bdev)
+> +				     struct file *bdev_file)
+>   {
+> -	return uds_replace_storage(layout->factory, bdev);
+> +	return uds_replace_storage(layout->factory, bdev_file);
+>   }
+>   
+>   /* Obtain a dm_bufio_client for the volume region. */
+> diff --git a/drivers/md/dm-vdo/indexer/index-layout.h b/drivers/md/dm-vdo/indexer/index-layout.h
+> index e9ac6f4302d6..28f9be577631 100644
+> --- a/drivers/md/dm-vdo/indexer/index-layout.h
+> +++ b/drivers/md/dm-vdo/indexer/index-layout.h
+> @@ -24,7 +24,7 @@ int __must_check uds_make_index_layout(struct uds_configuration *config, bool ne
+>   void uds_free_index_layout(struct index_layout *layout);
+>   
+>   int __must_check uds_replace_index_layout_storage(struct index_layout *layout,
+> -						  struct block_device *bdev);
+> +						  struct file *bdev_file);
+>   
+>   int __must_check uds_load_index_state(struct index_layout *layout,
+>   				      struct uds_index *index);
+> diff --git a/drivers/md/dm-vdo/indexer/index-session.c b/drivers/md/dm-vdo/indexer/index-session.c
+> index aee0914d604a..914abf5e006b 100644
+> --- a/drivers/md/dm-vdo/indexer/index-session.c
+> +++ b/drivers/md/dm-vdo/indexer/index-session.c
+> @@ -335,7 +335,7 @@ int uds_open_index(enum uds_open_index_type open_type,
+>   		vdo_log_error("missing required parameters");
+>   		return -EINVAL;
+>   	}
+> -	if (parameters->bdev == NULL) {
+> +	if (parameters->bdev_file == NULL) {
+>   		vdo_log_error("missing required block device");
+>   		return -EINVAL;
+>   	}
+> @@ -349,7 +349,7 @@ int uds_open_index(enum uds_open_index_type open_type,
+>   		return uds_status_to_errno(result);
+>   
+>   	session->parameters = *parameters;
+> -	format_dev_t(name, parameters->bdev->bd_dev);
+> +	format_dev_t(name, file_bdev(parameters->bdev_file)->bd_dev);
+>   	vdo_log_info("%s: %s", get_open_type_string(open_type), name);
+>   
+>   	result = initialize_index_session(session, open_type);
+> @@ -460,15 +460,16 @@ int uds_suspend_index_session(struct uds_index_session *session, bool save)
+>   	return uds_status_to_errno(result);
+>   }
+>   
+> -static int replace_device(struct uds_index_session *session, struct block_device *bdev)
+> +static int replace_device(struct uds_index_session *session,
+> +			  struct file *bdev_file)
+>   {
+>   	int result;
+>   
+> -	result = uds_replace_index_storage(session->index, bdev);
+> +	result = uds_replace_index_storage(session->index, bdev_file);
+>   	if (result != UDS_SUCCESS)
+>   		return result;
+>   
+> -	session->parameters.bdev = bdev;
+> +	session->parameters.bdev_file = bdev_file;
+>   	return UDS_SUCCESS;
+>   }
+>   
+> @@ -477,7 +478,7 @@ static int replace_device(struct uds_index_session *session, struct block_device
+>    * device differs from the current backing store, the index will start using the new backing store.
+>    */
+>   int uds_resume_index_session(struct uds_index_session *session,
+> -			     struct block_device *bdev)
+> +			     struct file *bdev_file)
+>   {
+>   	int result = UDS_SUCCESS;
+>   	bool no_work = false;
+> @@ -502,8 +503,9 @@ int uds_resume_index_session(struct uds_index_session *session,
+>   	if (no_work)
+>   		return result;
+>   
+> -	if ((session->index != NULL) && (bdev != session->parameters.bdev)) {
+> -		result = replace_device(session, bdev);
+> +	if (session->index != NULL &&
+> +	    bdev_file != session->parameters.bdev_file) {
+> +		result = replace_device(session, bdev_file);
+>   		if (result != UDS_SUCCESS) {
+>   			mutex_lock(&session->request_mutex);
+>   			session->state &= ~IS_FLAG_WAITING;
+> diff --git a/drivers/md/dm-vdo/indexer/index.c b/drivers/md/dm-vdo/indexer/index.c
+> index 1ba767144426..48b16275a067 100644
+> --- a/drivers/md/dm-vdo/indexer/index.c
+> +++ b/drivers/md/dm-vdo/indexer/index.c
+> @@ -1336,9 +1336,9 @@ int uds_save_index(struct uds_index *index)
+>   	return result;
+>   }
+>   
+> -int uds_replace_index_storage(struct uds_index *index, struct block_device *bdev)
+> +int uds_replace_index_storage(struct uds_index *index, struct file *bdev_file)
+>   {
+> -	return uds_replace_volume_storage(index->volume, index->layout, bdev);
+> +	return uds_replace_volume_storage(index->volume, index->layout, bdev_file);
+>   }
+>   
+>   /* Accessing statistics should be safe from any thread. */
+> diff --git a/drivers/md/dm-vdo/indexer/index.h b/drivers/md/dm-vdo/indexer/index.h
+> index edabb239548e..6e2e203f43f7 100644
+> --- a/drivers/md/dm-vdo/indexer/index.h
+> +++ b/drivers/md/dm-vdo/indexer/index.h
+> @@ -72,7 +72,7 @@ int __must_check uds_save_index(struct uds_index *index);
+>   void uds_free_index(struct uds_index *index);
+>   
+>   int __must_check uds_replace_index_storage(struct uds_index *index,
+> -					   struct block_device *bdev);
+> +					   struct file *bdev_file);
+>   
+>   void uds_get_index_stats(struct uds_index *index, struct uds_index_stats *counters);
+>   
+> diff --git a/drivers/md/dm-vdo/indexer/indexer.h b/drivers/md/dm-vdo/indexer/indexer.h
+> index 3744aaf625b0..246ff2810e01 100644
+> --- a/drivers/md/dm-vdo/indexer/indexer.h
+> +++ b/drivers/md/dm-vdo/indexer/indexer.h
+> @@ -128,8 +128,8 @@ struct uds_volume_record {
+>   };
+>   
+>   struct uds_parameters {
+> -	/* The block_device used for storage */
+> -	struct block_device *bdev;
+> +	/* The bdev_file used for storage */
+> +	struct file *bdev_file;
+>   	/* The maximum allowable size of the index on storage */
+>   	size_t size;
+>   	/* The offset where the index should start */
+> @@ -314,7 +314,7 @@ int __must_check uds_suspend_index_session(struct uds_index_session *session, bo
+>    * start using the new backing store instead.
+>    */
+>   int __must_check uds_resume_index_session(struct uds_index_session *session,
+> -					  struct block_device *bdev);
+> +					  struct file *bdev_file);
+>   
+>   /* Wait until all outstanding index operations are complete. */
+>   int __must_check uds_flush_index_session(struct uds_index_session *session);
+> diff --git a/drivers/md/dm-vdo/indexer/io-factory.c b/drivers/md/dm-vdo/indexer/io-factory.c
+> index 515765d35794..f4dedb7b7f40 100644
+> --- a/drivers/md/dm-vdo/indexer/io-factory.c
+> +++ b/drivers/md/dm-vdo/indexer/io-factory.c
+> @@ -22,7 +22,7 @@
+>    * make helper structures that can be used to access sections of the index.
+>    */
+>   struct io_factory {
+> -	struct block_device *bdev;
+> +	struct file *bdev_file;
+>   	atomic_t ref_count;
+>   };
+>   
+> @@ -59,7 +59,7 @@ static void uds_get_io_factory(struct io_factory *factory)
+>   	atomic_inc(&factory->ref_count);
+>   }
+>   
+> -int uds_make_io_factory(struct block_device *bdev, struct io_factory **factory_ptr)
+> +int uds_make_io_factory(struct file *bdev_file, struct io_factory **factory_ptr)
+>   {
+>   	int result;
+>   	struct io_factory *factory;
+> @@ -68,16 +68,16 @@ int uds_make_io_factory(struct block_device *bdev, struct io_factory **factory_p
+>   	if (result != VDO_SUCCESS)
+>   		return result;
+>   
+> -	factory->bdev = bdev;
+> +	factory->bdev_file = bdev_file;
+>   	atomic_set_release(&factory->ref_count, 1);
+>   
+>   	*factory_ptr = factory;
+>   	return UDS_SUCCESS;
+>   }
+>   
+> -int uds_replace_storage(struct io_factory *factory, struct block_device *bdev)
+> +int uds_replace_storage(struct io_factory *factory, struct file *bdev_file)
+>   {
+> -	factory->bdev = bdev;
+> +	factory->bdev_file = bdev_file;
+>   	return UDS_SUCCESS;
+>   }
+>   
+> @@ -90,7 +90,7 @@ void uds_put_io_factory(struct io_factory *factory)
+>   
+>   size_t uds_get_writable_size(struct io_factory *factory)
+>   {
+> -	return i_size_read(factory->bdev->bd_inode);
+> +	return i_size_read(file_inode(factory->bdev_file));
+>   }
+>   
+>   /* Create a struct dm_bufio_client for an index region starting at offset. */
+> @@ -99,8 +99,9 @@ int uds_make_bufio(struct io_factory *factory, off_t block_offset, size_t block_
+>   {
+>   	struct dm_bufio_client *client;
+>   
+> -	client = dm_bufio_client_create(factory->bdev, block_size, reserved_buffers, 0,
+> -					NULL, NULL, 0);
+> +	client = dm_bufio_client_create(file_bdev(factory->bdev_file),
+> +					block_size, reserved_buffers,
+> +					0, NULL, NULL, 0);
+>   	if (IS_ERR(client))
+>   		return -PTR_ERR(client);
+>   
+> diff --git a/drivers/md/dm-vdo/indexer/io-factory.h b/drivers/md/dm-vdo/indexer/io-factory.h
+> index 7fb5a0616a79..a3ca84d62f2d 100644
+> --- a/drivers/md/dm-vdo/indexer/io-factory.h
+> +++ b/drivers/md/dm-vdo/indexer/io-factory.h
+> @@ -24,11 +24,11 @@ enum {
+>   	SECTORS_PER_BLOCK = UDS_BLOCK_SIZE >> SECTOR_SHIFT,
+>   };
+>   
+> -int __must_check uds_make_io_factory(struct block_device *bdev,
+> +int __must_check uds_make_io_factory(struct file *bdev_file,
+>   				     struct io_factory **factory_ptr);
+>   
+>   int __must_check uds_replace_storage(struct io_factory *factory,
+> -				     struct block_device *bdev);
+> +				     struct file *bdev_file);
+>   
+>   void uds_put_io_factory(struct io_factory *factory);
+>   
+> diff --git a/drivers/md/dm-vdo/indexer/volume.c b/drivers/md/dm-vdo/indexer/volume.c
+> index 655453bb276b..edbe46252657 100644
+> --- a/drivers/md/dm-vdo/indexer/volume.c
+> +++ b/drivers/md/dm-vdo/indexer/volume.c
+> @@ -1465,12 +1465,12 @@ int uds_find_volume_chapter_boundaries(struct volume *volume, u64 *lowest_vcn,
+>   
+>   int __must_check uds_replace_volume_storage(struct volume *volume,
+>   					    struct index_layout *layout,
+> -					    struct block_device *bdev)
+> +					    struct file *bdev_file)
+>   {
+>   	int result;
+>   	u32 i;
+>   
+> -	result = uds_replace_index_layout_storage(layout, bdev);
+> +	result = uds_replace_index_layout_storage(layout, bdev_file);
+>   	if (result != UDS_SUCCESS)
+>   		return result;
+>   
+> diff --git a/drivers/md/dm-vdo/indexer/volume.h b/drivers/md/dm-vdo/indexer/volume.h
+> index 8679a5e55347..1dc3561b8b43 100644
+> --- a/drivers/md/dm-vdo/indexer/volume.h
+> +++ b/drivers/md/dm-vdo/indexer/volume.h
+> @@ -130,7 +130,7 @@ void uds_free_volume(struct volume *volume);
+>   
+>   int __must_check uds_replace_volume_storage(struct volume *volume,
+>   					    struct index_layout *layout,
+> -					    struct block_device *bdev);
+> +					    struct file *bdev_file);
+>   
+>   int __must_check uds_find_volume_chapter_boundaries(struct volume *volume,
+>   						    u64 *lowest_vcn, u64 *highest_vcn,
+> diff --git a/drivers/md/dm-vdo/vdo.c b/drivers/md/dm-vdo/vdo.c
+> index fff847767755..eca9f8b51535 100644
+> --- a/drivers/md/dm-vdo/vdo.c
+> +++ b/drivers/md/dm-vdo/vdo.c
+> @@ -809,7 +809,7 @@ void vdo_load_super_block(struct vdo *vdo, struct vdo_completion *parent)
+>    */
+>   struct block_device *vdo_get_backing_device(const struct vdo *vdo)
+>   {
+> -	return vdo->device_config->owned_device->bdev;
+> +	return file_bdev(vdo->device_config->owned_device->bdev_file);
+>   }
+>   
+>   /**
+
