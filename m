@@ -1,114 +1,160 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com [209.85.222.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB9B2158D70
-	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 14:30:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F9D416DEC0
+	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 15:33:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712759457; cv=none; b=SZ7js+njjcdGT8zSI0e44b1IskulEcLbwwTv68K7sHRX5KiEulN0d0p/rzwGwd4CBMonAfl7/athimDv511BOR3jXZZSkYdH6unBn0BOiOZJ4BfqWoOfUf/ZzxmM3V4eoCd1ycyd/OYM4G4y3KkPs/Cjgyxewqaf+kfZrFE+KEE=
+	t=1712763215; cv=none; b=qIu+cFooYSuvIDt2SUr8Ngf5lvQB2xJqyeuBy2pIMvfINfxmJheQisJMq0FW1zHZNbeM2MBrFkAWAvbyOzxuajy7pQ8B8pMyKobvxg7g2R5PYq8qa5VwOAZw7Ffz/Xwi5dDUuWQQute2qWSXTgxO4ssVQCyKyuAUYQkJEGtNlss=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712759457; c=relaxed/simple;
-	bh=HoRdY4U8jiSiFT10MVv1jVL2TKyfMXDDxqVTAPQiyKQ=;
+	s=arc-20240116; t=1712763215; c=relaxed/simple;
+	bh=CJjivhgSNW12vuz1FW4XwUCLmaHE+k6cRCIhcVoI+CM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=ibcog1INMIe3t5fTFscMGwXcbpfMZy0wIuoyCnKks9XuVnRPPMWFODJKPpONPi1oxVkrkcjbrHzKOexHHL+cQdbZ3ASQ8Qsj74l2xnvaIIk9sd6Bi7GJt5BfjArYjYoIenO8FVVQ3E43n4xO9EBBPu4fV77SnT29uawaH4pl9Sg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UUw0XAXh; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=lspfen7mm6j4GIDRnq7QOQx5UGYFVDBYkyC90MZ5qJiSuqtZO4LfkSNuskSwOUaA/pGtNcZgx9Q/M0wJGnIghEY7vDKbliYx4MIu8A3Z6IMmnxG+HjZ/YEOub7KeCaG4i9H9/3Oq3z7GwFCWkOojxiO6lvDeGgEobu05LW0nPpA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.222.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UUw0XAXh"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712759454;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=txCV/NBDhufTCOlI9CyswAWIzx3N5wImKYpzFmcHHgo=;
-	b=UUw0XAXhV2dd+mSR2srmrNpEj/FdQjELsgTTqSX3E0W257FeqBI+/MbqbL+2NE0+wRIMF7
-	SS0e5w0wJTUXMrBbPG4tkgjhpG6XrUa9p4AdKgo83KFHhxnQ30JODWHy9w8IHp8LQIca4L
-	k4N24QZ6dPpvaPy2c3eCnMg7CqxLQ8g=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-595-Xl82o29HMaa11X0XIXEhpQ-1; Wed, 10 Apr 2024 10:30:50 -0400
-X-MC-Unique: Xl82o29HMaa11X0XIXEhpQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C0963830E76;
-	Wed, 10 Apr 2024 14:30:49 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A6BCD40C5FD;
-	Wed, 10 Apr 2024 14:30:49 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 43AEUn9u1845341
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 10 Apr 2024 10:30:49 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 43AEUmle1845340;
-	Wed, 10 Apr 2024 10:30:48 -0400
-Date: Wed, 10 Apr 2024 10:30:48 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        device-mapper development <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH v2] multipathd: make multipathd set priority to
- RLIMIT_RTPRIO
-Message-ID: <ZhaimLF4MYCPH7NF@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
-References: <20240409225612.1837905-1-bmarzins@redhat.com>
- <19375aff6ea5ad4dfc4cfc64ec7efbf2f8a4c8d5.camel@suse.com>
+Received: by mail-qk1-f171.google.com with SMTP id af79cd13be357-78a2a97c296so396994185a.2
+        for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 08:33:33 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1712763213; x=1713368013;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=BBcTgV/x7+DUqETyOP/TINXC8TYCNHdQ6atrZMG2KUw=;
+        b=MT3BQ49zcUBflO0ju8QH8ilm/jasV3dPLHDSMXEQHFIUnUS16UIv8w4NF2ONerV0i9
+         BM0cbdMWH/6BGeuNVES436WkYolpPVE990w6TcpLHiTGISOy1A0whooblhP5WNLeqk0M
+         CpLAiKCO1A596J5X0Q/jRjoTbioydbmbL4wpCPvBOb1dtutJ4bO6jprscU6p1KWjOf3t
+         Hg5TcNCXqP1oUavOLl5lNtKEZpwQbJiXNGoz6xmelKx8cHHO+SLPkZCMIUem0JHoZQAT
+         N7oKvcnyFnrQlAzGgmCcxJcOksMNptsRCtdOPlN/ncMON9lDc9dctIvvSGrsPUCO2SeW
+         LTBg==
+X-Forwarded-Encrypted: i=1; AJvYcCUkSmmYWd/8rDB6UOaYEjJpT6naTT1+yHWXdij97tqPmx8M+LhVNh7mgGIgrR+Km0GzMBLHZ8FzUfa/ApmzXEmHpWJn+5z322g=
+X-Gm-Message-State: AOJu0YyPLANqII6nXmUHghSUNTJOMOGygsbbHCAw67FEcwdrN6drQ3ZL
+	/lj3VhY3jS2Pw1pl4pUNnn5SCGkTUMGBpwEoQIUEP719v7mgEdg2/HCkka/3fg==
+X-Google-Smtp-Source: AGHT+IF40H+zfzvTCc8lOAb6ssYNizrJGhjkKPfwcSdhI4uPd7CUvflJjzizYUYVVVZjpSz9oQ4/Ww==
+X-Received: by 2002:a05:6214:18d3:b0:69b:3a49:106f with SMTP id cy19-20020a05621418d300b0069b3a49106fmr1813853qvb.15.1712763212909;
+        Wed, 10 Apr 2024 08:33:32 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id qf12-20020a0562144b8c00b0069b412e3716sm436565qvb.80.2024.04.10.08.33.32
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 10 Apr 2024 08:33:32 -0700 (PDT)
+Date: Wed, 10 Apr 2024 11:33:31 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+	yangerkun@huawei.com, Bart Van Assche <bvanassche@acm.org>,
+	"Alasdair G. Kergon" <agk@redhat.com>,
+	Laurence Oberman <loberman@redhat.com>
+Subject: Re: [PATCH resend] dm-crypt: add the "high_priority" flag
+Message-ID: <ZhaxSyT3qq6i9Wg_@redhat.com>
+References: <f53ff8a9-da8e-da35-cdf8-3bd260d9af33@redhat.com>
+ <970419e5-9f14-4b73-97a8-ceea45da240c@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <19375aff6ea5ad4dfc4cfc64ec7efbf2f8a4c8d5.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <970419e5-9f14-4b73-97a8-ceea45da240c@gmail.com>
 
-On Wed, Apr 10, 2024 at 10:37:38AM +0200, Martin Wilck wrote:
-> On Tue, 2024-04-09 at 18:56 -0400, Benjamin Marzinski wrote:
-> > With this change, if the SCHED_RT_PRIO compiler flag has been
-> > removed.
-> > Instead multipathd will call getrlimit(RLIMIT_RTPRIO, ...) and look
-> > at
-> > the hard limit. It it's 0, multipath will do nothing. Otherwise it
-> > will
-> > change its scheduling policy to SCHED_RR and its priority to the hard
-> > limit.
-> > 
-> > This allows users to change the priority of that multipathd runs with
-> > by
-> > adding
-> > 
-> > LimitRTPRIO=<prio>
-> > 
-> > to the [Service] section of the multipathd.service unit file. Setting
-> > LimitRTPRIO=0 will make multipathd run as a normal process, while
-> > setting LimitRTPRIO=infinity will make it use the maximum SCHED_RR
-> > prio,
-> > which is 99.
-> > 
-> > To keep the existing behavior, multipathd.service now sets
-> > LimitRTPRIO=infinity
-> > 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> Reviewed-by: Martin Wilck <mwilck@suse.com>
-> 
-> I will wait a while for feedback on 
-> https://github.com/opensvc/multipath-tools/issues/82
-> before pushing it to the queue branch.
-> 
-> When it's pushed, I'll squash it with 1c4301a ("multipathd: make
-> multipathd scheduling configurable"), if you don't mind.
+Hey Milan,
 
-That's fine.
+Hope things are good for you!
 
+On Tue, Apr 09 2024 at  9:04P -0400,
+Milan Broz <gmazyland@gmail.com> wrote:
+
+> On 4/8/24 9:36 PM, Mikulas Patocka wrote:
+> > It was reported that dm-crypt performs badly when the system is loaded[1].
+> > So I'm adding an option "high_priority" that sets the workqueues and the
+> > write_thread to nice level -20. This used to be default in the past, but
+> > it caused audio skipping, so it had to be reverted - see the commit
+> > f612b2132db529feac4f965f28a1b9258ea7c22b. This commit makes it optional,
+> > so that normal users won't be harmed by it.
+> > 
+> > [1] https://listman.redhat.com/archives/dm-devel/2023-February/053410.html
 > 
-> Thanks,
-> Martin
+> It is pity that we need an optional flag here leaving decision to the user
+> (I would prefer a magic workqueue setting that will self-tune automagically.)
+> 
+> I guess people will set it and forgot about it (until some problem reappears)
+> - as we can store persistent performance flags for LUKS2, so this one will
+> be a new option there.
+> 
+> ...
+> 
+> > @@ -3399,18 +3401,22 @@ static int crypt_ctr(struct dm_target *t
+> >   	}
+> >   	ret = -ENOMEM;
+> > -	cc->io_queue = alloc_workqueue("kcryptd_io/%s", WQ_MEM_RECLAIM, 1, devname);
+> > +	cc->io_queue = alloc_workqueue("kcryptd_io/%s", WQ_MEM_RECLAIM |
+> > +				       test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags) * WQ_HIGHPRI,
+> > +				       1, devname);
+> 
+> Just one nitpicking though:
+> 
+>    test_bit(...) ? WQ_HIGHPRI : 0
+> 
+> looks more clear/readable to me (but I guess test_bit should always return 0/1 only).
 
+I agree, but I actually cleaned stuff up in further with the following
+incremental patch:
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index fad4b920008f..eabc576d8d28 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -3234,6 +3234,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	const char *devname = dm_table_device_name(ti->table);
+ 	int key_size;
+ 	unsigned int align_mask;
++	unsigned int common_wq_flags;
+ 	unsigned long long tmpll;
+ 	int ret;
+ 	size_t iv_size_padding, additional_req_size;
+@@ -3401,23 +3402,25 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 
+ 	ret = -ENOMEM;
+-	cc->io_queue = alloc_workqueue("kcryptd_io/%s", WQ_MEM_RECLAIM |
+-				       test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags) * WQ_HIGHPRI,
+-				       1, devname);
++	common_wq_flags = WQ_MEM_RECLAIM;
++	if (test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags))
++		common_wq_flags |= WQ_HIGHPRI;
++
++	cc->io_queue = alloc_workqueue("kcryptd_io/%s", common_wq_flags, 1, devname);
+ 	if (!cc->io_queue) {
+ 		ti->error = "Couldn't create kcryptd io queue";
+ 		goto bad;
+ 	}
+ 
+-	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+-		cc->crypt_queue = alloc_workqueue("kcryptd/%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM |
+-						  test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags) * WQ_HIGHPRI,
++	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags)) {
++		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
++						  common_wq_flags | WQ_CPU_INTENSIVE,
+ 						  1, devname);
+-	else
++	} else {
+ 		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
+-						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND |
+-						  test_bit(DM_CRYPT_HIGH_PRIORITY, &cc->flags) * WQ_HIGHPRI,
++						  common_wq_flags | WQ_CPU_INTENSIVE | WQ_UNBOUND,
+ 						  num_online_cpus(), devname);
++	}
+ 	if (!cc->crypt_queue) {
+ 		ti->error = "Couldn't create kcryptd queue";
+ 		goto bad;
+
+The end result is here (also revised commit header):
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.10&id=fdca2c9cb999e781fbb3171541c709bf0e43fbda
+
+Doing it this way made sense given the following commit I staged (to
+reintroduce the use of WQ_SYSFS, will send mail on that next).
+
+Thanks,
+Mike
