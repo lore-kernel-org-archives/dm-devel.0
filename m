@@ -1,111 +1,114 @@
-Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91CAF154BEE
-	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 08:45:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=68.232.143.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB9B2158D70
+	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 14:30:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712738736; cv=none; b=Xe3Xj7bIOwTyCZDKhHJCwNJgsSJqxWSOwaDrDq988+48Fd+BLztIq27LV4k9bfHkU72gt3ydmaCEmU1WrWXfyqN5HsUUDHaBCOXBvWUOL1DV2lN1eU4fbnkPub8lJIb7uK6bFdUhkXM0d38fXUtgaXXgAmQIbkPzmO4c7P6Hceo=
+	t=1712759457; cv=none; b=SZ7js+njjcdGT8zSI0e44b1IskulEcLbwwTv68K7sHRX5KiEulN0d0p/rzwGwd4CBMonAfl7/athimDv511BOR3jXZZSkYdH6unBn0BOiOZJ4BfqWoOfUf/ZzxmM3V4eoCd1ycyd/OYM4G4y3KkPs/Cjgyxewqaf+kfZrFE+KEE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712738736; c=relaxed/simple;
-	bh=CA1KcUVOd7+E0bkWzdnxOXoScLlHn0pNOjqV9e0jzAk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=UkXJUbJJjLZ4+yKBGPBpgBcauQyksNPfWFZKUGxpwzMn2/mIv9Hbnot06S0M0y3DUoEbjLuyrxB27vmcZfihfjIpeqqtraEFjV56jQuVR2SErg1CcbFuyQx8ShUQWDAVBcuixXoI51LfhxW3dHKviU2j/ack7u1mTmZbKyGYntQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com; spf=pass smtp.mailfrom=wdc.com; dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b=RDOvCN+M; arc=none smtp.client-ip=68.232.143.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wdc.com
+	s=arc-20240116; t=1712759457; c=relaxed/simple;
+	bh=HoRdY4U8jiSiFT10MVv1jVL2TKyfMXDDxqVTAPQiyKQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=ibcog1INMIe3t5fTFscMGwXcbpfMZy0wIuoyCnKks9XuVnRPPMWFODJKPpONPi1oxVkrkcjbrHzKOexHHL+cQdbZ3ASQ8Qsj74l2xnvaIIk9sd6Bi7GJt5BfjArYjYoIenO8FVVQ3E43n4xO9EBBPu4fV77SnT29uawaH4pl9Sg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UUw0XAXh; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="RDOvCN+M"
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
-  d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1712738734; x=1744274734;
-  h=from:to:cc:subject:date:message-id:mime-version:
-   content-transfer-encoding;
-  bh=CA1KcUVOd7+E0bkWzdnxOXoScLlHn0pNOjqV9e0jzAk=;
-  b=RDOvCN+M/u1mrgFSrrb826Fc3H0/JNFPMyN3n2PZyL92ITQKWaFoOYZn
-   DhzjPKFs88AEHYxuziQvqAcFbfFe3C8SSn7LFcZuy3pEExdsct+UxRVBz
-   xqtfMfDyLJYp3/cwkl1sV3L/VHfs2/MgiDLoEzSftbXDXAYN4QGoV+3Ok
-   Dm0noFh8wiXat3FYlNhgpTAUdoFs53VbQ4jbcE8rWURqvh9vP9ZRKzYYK
-   7xQJ8mwKTuCYsAT7MSeFrmGQYPnjdx2V4fWBsSaDTvPFGscz6QtPgIDWk
-   kwJgaXOqNnWSqPCt6tkG2/T9NGIWkdXOipZtZH6IHVX5P1Gp3am39dJD5
-   Q==;
-X-CSE-ConnectionGUID: guvlYc1tQr6+g9eC+TNUFw==
-X-CSE-MsgGUID: LLd2+MpQTUOPJembfWtVpg==
-X-IronPort-AV: E=Sophos;i="6.07,190,1708358400"; 
-   d="scan'208";a="13666451"
-Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com) ([199.255.45.14])
-  by ob1.hgst.iphmx.com with ESMTP; 10 Apr 2024 16:45:33 +0800
-IronPort-SDR: x7q49Ls9PifGCcBXrCszJNnRP27cmi0NNRHET6w6quC0arX6MpWdOXIpxrSnzLj93E4jtQ8qSh
- tg1G6nVh3B0w==
-Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
-  by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256; 10 Apr 2024 00:54:00 -0700
-IronPort-SDR: dXAtZt1tTHpLK32MA1SZNfZUBT6RaabCDn3Ri44d0fYqCu+vANYMk+Xg7LAbMjEoE2qy3GZl0z
- fgzYU0mW+3gQ==
-WDCIronportException: Internal
-Received: from unknown (HELO shindev.ssa.fujisawa.hgst.com) ([10.149.66.30])
-  by uls-op-cesaip02.wdc.com with ESMTP; 10 Apr 2024 01:45:32 -0700
-From: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-To: dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@kernel.org>
-Cc: Tejun Heo <tj@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-Subject: [PATCH] dm zoned: Drop the WQ_UNBOUND flag for the chunk workqueue
-Date: Wed, 10 Apr 2024 17:45:31 +0900
-Message-ID: <20240410084531.2134621-1-shinichiro.kawasaki@wdc.com>
-X-Mailer: git-send-email 2.44.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UUw0XAXh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1712759454;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=txCV/NBDhufTCOlI9CyswAWIzx3N5wImKYpzFmcHHgo=;
+	b=UUw0XAXhV2dd+mSR2srmrNpEj/FdQjELsgTTqSX3E0W257FeqBI+/MbqbL+2NE0+wRIMF7
+	SS0e5w0wJTUXMrBbPG4tkgjhpG6XrUa9p4AdKgo83KFHhxnQ30JODWHy9w8IHp8LQIca4L
+	k4N24QZ6dPpvaPy2c3eCnMg7CqxLQ8g=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-595-Xl82o29HMaa11X0XIXEhpQ-1; Wed, 10 Apr 2024 10:30:50 -0400
+X-MC-Unique: Xl82o29HMaa11X0XIXEhpQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C0963830E76;
+	Wed, 10 Apr 2024 14:30:49 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A6BCD40C5FD;
+	Wed, 10 Apr 2024 14:30:49 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 43AEUn9u1845341
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 10 Apr 2024 10:30:49 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 43AEUmle1845340;
+	Wed, 10 Apr 2024 10:30:48 -0400
+Date: Wed, 10 Apr 2024 10:30:48 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH v2] multipathd: make multipathd set priority to
+ RLIMIT_RTPRIO
+Message-ID: <ZhaimLF4MYCPH7NF@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+References: <20240409225612.1837905-1-bmarzins@redhat.com>
+ <19375aff6ea5ad4dfc4cfc64ec7efbf2f8a4c8d5.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <19375aff6ea5ad4dfc4cfc64ec7efbf2f8a4c8d5.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Commit 5797b1c18919 ("workqueue: Implement system-wide nr_active
-enforcement for unbound workqueues") modified the maximum number of
-active works that an unbound workqueue can handle to at most
-WQ_DFL_MIN_ACTIVE (8 by default). This commit thus limits the number of
-active dm-zoned chunk works that execute concurrently on a single NUMA
-node machine. This reduction results in garbage collection performance
-degradation which manifests itself with longer unmount time with the xfs
-file system on dm-zoned devices.
+On Wed, Apr 10, 2024 at 10:37:38AM +0200, Martin Wilck wrote:
+> On Tue, 2024-04-09 at 18:56 -0400, Benjamin Marzinski wrote:
+> > With this change, if the SCHED_RT_PRIO compiler flag has been
+> > removed.
+> > Instead multipathd will call getrlimit(RLIMIT_RTPRIO, ...) and look
+> > at
+> > the hard limit. It it's 0, multipath will do nothing. Otherwise it
+> > will
+> > change its scheduling policy to SCHED_RR and its priority to the hard
+> > limit.
+> > 
+> > This allows users to change the priority of that multipathd runs with
+> > by
+> > adding
+> > 
+> > LimitRTPRIO=<prio>
+> > 
+> > to the [Service] section of the multipathd.service unit file. Setting
+> > LimitRTPRIO=0 will make multipathd run as a normal process, while
+> > setting LimitRTPRIO=infinity will make it use the maximum SCHED_RR
+> > prio,
+> > which is 99.
+> > 
+> > To keep the existing behavior, multipathd.service now sets
+> > LimitRTPRIO=infinity
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> 
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
+> 
+> I will wait a while for feedback on 
+> https://github.com/opensvc/multipath-tools/issues/82
+> before pushing it to the queue branch.
+> 
+> When it's pushed, I'll squash it with 1c4301a ("multipathd: make
+> multipathd scheduling configurable"), if you don't mind.
 
-To restore unmount duration with dm-zoned devices, drop the WQ_UNBOUND
-flag for the chunk workqueue, thus allowing more than WQ_DFL_MIN_ACTIVE
-chunk works. Though this change bounds all chunk works to the same CPU,
-it provides more parallelism and improved performance. The table below
-shows the average xfs unmount time of 10 times measurements, using a
-single NUMA node machine with 32 CPUs. The xfs volume was prepared on
-dm-zoned devices on top of an SMR HDD with 26GB dm-linear clip, then
-filled with data files before executing unmount.
+That's fine.
 
- Kernel              | Unmount time
----------------------+--------------
- v6.8                |   29m  3s
- v6.9-rc2            |   34m 17s
- v6.9-rc2 + this fix |   27m 12s
-
-Suggested-by: Damien Le Moal <dlemoal@kernel.org>
-Fixes: 5797b1c18919 ("workqueue: Implement system-wide nr_active enforcement for unbound workqueues")
-Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
----
- drivers/md/dm-zoned-target.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 621794a9edd6..3d6383c7b9b2 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -900,8 +900,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	/* Chunk BIO work */
- 	mutex_init(&dmz->chunk_lock);
- 	INIT_RADIX_TREE(&dmz->chunk_rxtree, GFP_NOIO);
--	dmz->chunk_wq = alloc_workqueue("dmz_cwq_%s",
--					WQ_MEM_RECLAIM | WQ_UNBOUND, 0,
-+	dmz->chunk_wq = alloc_workqueue("dmz_cwq_%s", WQ_MEM_RECLAIM, 0,
- 					dmz_metadata_label(dmz->metadata));
- 	if (!dmz->chunk_wq) {
- 		ti->error = "Create chunk workqueue failed";
--- 
-2.44.0
+> 
+> Thanks,
+> Martin
 
