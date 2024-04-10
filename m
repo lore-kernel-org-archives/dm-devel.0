@@ -1,115 +1,146 @@
-Received: from mail-pl1-f181.google.com (mail-pl1-f181.google.com [209.85.214.181])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 038FF17BB17
-	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 17:51:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E09D1802D1
+	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 18:59:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712771488; cv=none; b=eZmSaTagSDfsg0BgdyyoxmYOK4L5ySFDQ9osbvh6LBVrGIkbCt8mayCljIoYjq1K6VnIysxHx9eS3Gyj3jkA2kSaAcKpoiVkNOvfB5KPJr6irjFad5uTfdWTN6hT+Y5KeEc+eW5XkFyA83Hn9rlpGrMAvzQy6c2JGVW5616tbCU=
+	t=1712775549; cv=none; b=av4Qp4wf+EzOR5JmrzYPEwtwdiqWsJqw9bIEKy1MCbpE2VFK84HAZ/4x8CtoQ1gxP78rzC9wxEJSaR+4gzU/0/DvWEiIJUZ77QSubdGyknqZOq9nGPf/UKW5QemhoJaDOH/rPeUpUxExPVHXCO41JucRmSckZqm4Gx7uDzrJ+Hc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712771488; c=relaxed/simple;
-	bh=D5g9dKCapGU/uTqenguqmTBnD3q1hWyUfcaskRjyhIk=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=R22lu72G9E33MiL2PXW+jc+77tOBP6gYV+EjuuQ+2EaLg/aT7a5MUoacdQiV6n2qgW5mspeoz7jxPdxPM/vtkYLgwLwijXwQFhfizmpljdzs5lTHbp6988hGvL/84KY4MOF6pM1aBYUCD3HR85yicKg4d9i5QqboAFKXiDn2xuw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bt6LteYv; arc=none smtp.client-ip=209.85.214.181
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1712775549; c=relaxed/simple;
+	bh=HcTvQPAA9NUPS2igJbqEH//WEl4aZTKvJGY0XkzAfiI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=ZyOqnMtRK3P3yOA0PG1WvRwzb5F0aXhT+ozaDtymZGr/05ltVHHuCVkYiSawWu6zBe1P6zEU5MUkzcgrJRqt1Q568NmgjtmvXGV8csWvyUSnT6OHwVt3I2V81b71+T/LVS6zLIZw8gqLQJxN2YEjONhrs1ugjCG4Wo/ybBYX+Zk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BCnb2Uh6; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bt6LteYv"
-Received: by mail-pl1-f181.google.com with SMTP id d9443c01a7336-1e3c3aa8938so34881335ad.1
-        for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 10:51:25 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1712771485; x=1713376285; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=QClVgWhE5RKcdKOXPBTCS58BRjJBS/jAPujqo6I4aBQ=;
-        b=bt6LteYvElkiIaC8yIxPPd5+Xh3jodDZA3DpiHWfFtR/xtiNfgonwmKhBoPXjA+tEK
-         DrDO99ha3mqpdnQVRXbfKPiHyDUhBzHq9/Kahy6n2grRiGK5+rxlYTqCHd8Cab3KQ2zb
-         XavZIqcMvJrUGanIT3VHM8D0V1AbhARFHUlR2ZC8AzRnuzHsQ5HGgof+tGTwNaFo3cyj
-         eWIL6JwUy5yXOvouLYk1n28SuA3GEJFsCNymZWaPF8Hdvo5eNpXfrD0n61QLuE74P9oS
-         8KjonDn18AYokbBF8Vzhn15XnRA06fCV6WV/zV56GuFSdihIKWtjhJL4uY87jkMAYVoV
-         bDbQ==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BCnb2Uh6"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1712775547;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=XxpkuxUnIrOWR5YmuW0AIjNYXGEKvHqlxiu3ZzXtRNg=;
+	b=BCnb2Uh6fMCJOejfHM8WLfYlscTvZuKzJiWVobfJv7cJVzxOuU9xRroooT0BKAQMEIlFXY
+	172KNU43Q6Ivr8DsnqSE7PPIvXn5G2idDfYIEHs6GVPNU733P6NEN9kked83FvjDp/8xg+
+	uv6pWy+/B+dPlDsOj5U0TlE8jlHKJu8=
+Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
+ [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-400-aetmdrmwP5qwcXTE89KtwA-1; Wed, 10 Apr 2024 14:59:05 -0400
+X-MC-Unique: aetmdrmwP5qwcXTE89KtwA-1
+Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-69b1effbc16so32654506d6.0
+        for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 11:59:05 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712771485; x=1713376285;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=QClVgWhE5RKcdKOXPBTCS58BRjJBS/jAPujqo6I4aBQ=;
-        b=jemA8xKmUnw+L2upaJAZRFv0L/3Z0P2KJ2uVGJ2koDx5m3FQ5bnmE08Td8fEHDDRiB
-         GAIc9Z3sYtKkP5LriTMRwEBDL01crSTC46IO3FkJpfQZizUJGAYdG2EUj8cHNQIQgJkW
-         Ibia1TXvTgGwo1TuD+zzGIZxkfelD3zc6JVCk+w+YwnJCKGW3Ybfqrg61T6nkHc8lL+V
-         vQH/D9IjcHQB0Nsebwc4LAPnAEQMFdqieAEEfeXz8zAbtxUROny29ep6Zs0zmDPsTuCn
-         gOKL8BvMZE9hs98H7xHTfHf7mF5QSK7/zQmolhEcoOv5ONCj8VwAUvx8/cgtsUI2daBj
-         OOMA==
-X-Gm-Message-State: AOJu0YzHl/VaBJtj10NdJJps4MnGqL1Uxe2g0DLQZ+GGcTkpieADAXiG
-	+Yys8IF0YF2imBLtKB0X0I85oeMimLvTiyNM2d5kTj8L+hTrCB3QpcZw0+c9
-X-Google-Smtp-Source: AGHT+IG00gdxJU998Et66RF7sgFk5Qgh12osD+0dHHqugbavk5R0MqCR+QGSgYMG+S5ZIS5FQ0jEUQ==
-X-Received: by 2002:a17:902:f14b:b0:1e2:6d57:c1bb with SMTP id d11-20020a170902f14b00b001e26d57c1bbmr2675685plb.21.1712771485118;
-        Wed, 10 Apr 2024 10:51:25 -0700 (PDT)
-Received: from localhost ([2620:10d:c090:400::5:a5f4])
-        by smtp.gmail.com with ESMTPSA id l8-20020a170903244800b001e530aab374sm240436pls.194.2024.04.10.10.51.24
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 10 Apr 2024 10:51:24 -0700 (PDT)
-Sender: Tejun Heo <htejun@gmail.com>
-Date: Wed, 10 Apr 2024 07:51:23 -1000
-From: Tejun Heo <tj@kernel.org>
-To: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>
-Subject: Re: [PATCH] dm zoned: Drop the WQ_UNBOUND flag for the chunk
- workqueue
-Message-ID: <ZhbRm2i3OeBVwE44@slm.duckdns.org>
-References: <20240410084531.2134621-1-shinichiro.kawasaki@wdc.com>
+        d=1e100.net; s=20230601; t=1712775545; x=1713380345;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=XxpkuxUnIrOWR5YmuW0AIjNYXGEKvHqlxiu3ZzXtRNg=;
+        b=pMFSHG17ZCYPWc+JVBOVmtiaSTApVoxk5nEMac8wckVW6AYUtSBiS8osS1lvRbiKzc
+         vxWG1SZC7mHMkWYk7sqzatJ0Hrfi6n812K9eeU7TToxEb+W/gamg4MUdn+vUpiNJMOvA
+         2jCsXMp4qtMArQxtCm2IDRenwjuSTlpLJxinR63dAN6QqaPmwBUY5gsUR065AH//mKW5
+         quA9sQOpRXfqniwqduBAOryngJ9snFUqMXm+xpY4CLSQzHZHi+GYj6O1PbEjwt/Sv2+o
+         W0Lbwbdet/seGLinU7Ri05oW7J0+1TPZPzjDsVFP8flNigvskdWm2OkqlPurl4/xnqNv
+         hGEA==
+X-Forwarded-Encrypted: i=1; AJvYcCWFxoe6QkjtwpNQ+oQjAuConfEPyyb6n0yGqi5HWwl3+Q4LMjs38QNmJYm/9+zU/mnYRhpwqIuU5pPWlKrYf7+pm+XfHM4b8Jo=
+X-Gm-Message-State: AOJu0YzZhEs0fyeYlRrMMyh6HuYVmKy6CndAFH4bebf5oQXfRDBbSKn/
+	vLQ3pRk8flbrWr7ZnONJTTwzIhFMwCNrR5ldw5ik9hPjG6oBF9yOOOTWY4Kno3GRmIYsaPUPZt7
+	87dtDC6HhcSH7Cwt2ryT5wh0oD+JqUxfrJTuIJn+3ua/OPirM6rCQFyp9
+X-Received: by 2002:a05:6214:4111:b0:69b:1efb:9d42 with SMTP id kc17-20020a056214411100b0069b1efb9d42mr3445946qvb.6.1712775545306;
+        Wed, 10 Apr 2024 11:59:05 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IH1rZzHlFdlKErUaVzaIIBoz+uophffHDufiBosrVM2ScG6c79A0tsfU5q3lB5GUj4EtqyQxA==
+X-Received: by 2002:a05:6214:4111:b0:69b:1efb:9d42 with SMTP id kc17-20020a056214411100b0069b1efb9d42mr3445922qvb.6.1712775544953;
+        Wed, 10 Apr 2024 11:59:04 -0700 (PDT)
+Received: from [192.168.1.165] ([70.22.187.239])
+        by smtp.gmail.com with ESMTPSA id p20-20020a05621415d400b00698d06df322sm5418657qvz.122.2024.04.10.11.59.04
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 10 Apr 2024 11:59:04 -0700 (PDT)
+Message-ID: <1e344d3b-1e30-6638-83c3-f743546374ec@redhat.com>
+Date: Wed, 10 Apr 2024 14:59:03 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240410084531.2134621-1-shinichiro.kawasaki@wdc.com>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.12.0
+Subject: Re: [PATCH vfs.all 19/26] dm-vdo: convert to use bdev_file
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Yu Kuai <yukuai1@huaweicloud.com>, jack@suse.cz, hch@lst.de,
+ brauner@kernel.org, axboe@kernel.dk, linux-fsdevel@vger.kernel.org,
+ linux-block@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
+ yukuai3@huawei.com, dm-devel@lists.linux.dev
+References: <20240406090930.2252838-1-yukuai1@huaweicloud.com>
+ <20240406090930.2252838-20-yukuai1@huaweicloud.com>
+ <a8493592-2a9b-ac14-f914-c747aa4455f3@redhat.com>
+ <20240410174022.GF2118490@ZenIV>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20240410174022.GF2118490@ZenIV>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hello,
 
-On Wed, Apr 10, 2024 at 05:45:31PM +0900, Shin'ichiro Kawasaki wrote:
-> Commit 5797b1c18919 ("workqueue: Implement system-wide nr_active
-> enforcement for unbound workqueues") modified the maximum number of
-> active works that an unbound workqueue can handle to at most
-> WQ_DFL_MIN_ACTIVE (8 by default). This commit thus limits the number of
 
-This shouldn't be the case. The default max_active remains the same at 256.
-MIN_ACTIVE is used only to guarantee minimum forward progress guarantee when
-@max_active too low in multi NUMA setups. It's unexpected that the commit
-caused significant behavior difference on a single NUMA machines. The limits
-and enforcement for single NUMA machien shouldn't have changed.
-
-> active dm-zoned chunk works that execute concurrently on a single NUMA
-> node machine. This reduction results in garbage collection performance
-> degradation which manifests itself with longer unmount time with the xfs
-> file system on dm-zoned devices.
+On 4/10/24 13:40, Al Viro wrote:
+> On Wed, Apr 10, 2024 at 01:26:47PM -0400, Matthew Sakai wrote:
 > 
-> To restore unmount duration with dm-zoned devices, drop the WQ_UNBOUND
-> flag for the chunk workqueue, thus allowing more than WQ_DFL_MIN_ACTIVE
-> chunk works. Though this change bounds all chunk works to the same CPU,
-> it provides more parallelism and improved performance. The table below
-> shows the average xfs unmount time of 10 times measurements, using a
-> single NUMA node machine with 32 CPUs. The xfs volume was prepared on
-> dm-zoned devices on top of an SMR HDD with 26GB dm-linear clip, then
-> filled with data files before executing unmount.
+>>> 'dm_dev->bdev_file', it's ok to get inode from the file.
 > 
->  Kernel              | Unmount time
-> ---------------------+--------------
->  v6.8                |   29m  3s
->  v6.9-rc2            |   34m 17s
->  v6.9-rc2 + this fix |   27m 12s
+> It can be done much easier, though -
+> 
+> [PATCH] dm-vdo: use bdev_nr_bytes(bdev) instead of i_size_read(bdev->bd_inode)
+> 
+> going to be faster, actually - shift is cheaper than dereference...
 
-Can you please run `drgn tools/workqueue/wq_monitor.py 'dmz_cwq.*'` while
-testing? It should show how many work items are in flight and how much CPU
-time the workqueues are consuming.
+This does look simpler. And doing this means there's no reason to switch 
+dm-vdo from using struct block_device * to using struct file *, so the 
+rest of the original patch is unnecessary.
 
-Thanks.
+Reviewed-by: Matthew Sakai <msakai@redhat.com>
 
--- 
-tejun
+> Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+> ---
+> diff --git a/drivers/md/dm-vdo/dm-vdo-target.c b/drivers/md/dm-vdo/dm-vdo-target.c
+> index 5a4b0a927f56..b423bec6458b 100644
+> --- a/drivers/md/dm-vdo/dm-vdo-target.c
+> +++ b/drivers/md/dm-vdo/dm-vdo-target.c
+> @@ -878,7 +878,7 @@ static int parse_device_config(int argc, char **argv, struct dm_target *ti,
+>   	}
+>   
+>   	if (config->version == 0) {
+> -		u64 device_size = i_size_read(config->owned_device->bdev->bd_inode);
+> +		u64 device_size = bdev_nr_bytes(config->owned_device->bdev);
+>   
+>   		config->physical_blocks = device_size / VDO_BLOCK_SIZE;
+>   	}
+> @@ -1011,7 +1011,7 @@ static void vdo_status(struct dm_target *ti, status_type_t status_type,
+>   
+>   static block_count_t __must_check get_underlying_device_block_count(const struct vdo *vdo)
+>   {
+> -	return i_size_read(vdo_get_backing_device(vdo)->bd_inode) / VDO_BLOCK_SIZE;
+> +	return bdev_nr_bytes(vdo_get_backing_device(vdo)) / VDO_BLOCK_SIZE;
+>   }
+>   
+>   static int __must_check process_vdo_message_locked(struct vdo *vdo, unsigned int argc,
+> diff --git a/drivers/md/dm-vdo/indexer/io-factory.c b/drivers/md/dm-vdo/indexer/io-factory.c
+> index 515765d35794..1bee9d63dc0a 100644
+> --- a/drivers/md/dm-vdo/indexer/io-factory.c
+> +++ b/drivers/md/dm-vdo/indexer/io-factory.c
+> @@ -90,7 +90,7 @@ void uds_put_io_factory(struct io_factory *factory)
+>   
+>   size_t uds_get_writable_size(struct io_factory *factory)
+>   {
+> -	return i_size_read(factory->bdev->bd_inode);
+> +	return bdev_nr_bytes(factory->bdev);
+>   }
+>   
+>   /* Create a struct dm_bufio_client for an index region starting at offset. */
+> 
+
