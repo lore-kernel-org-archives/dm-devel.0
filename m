@@ -1,66 +1,91 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from szxga01-in.huawei.com (szxga01-in.huawei.com [45.249.212.187])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 194B91474C9;
-	Thu, 11 Apr 2024 11:12:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E385514C5B0
+	for <dm-devel@lists.linux.dev>; Thu, 11 Apr 2024 12:17:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.187
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712833978; cv=none; b=D3xMFYYLEaGgbaIWuPfPVweITJ2h8grP997KI903tyN94pjMFTj/LbEMocoRstdOYdwcvI10EQ/75X20fhXIT94cocAo9biHDECoP2chzaEr1c29KxkZcJTrh9By/5MJ5sOjtPV/0330FJROssdLRBjjMvoPhP4pemC/igdgVMM=
+	t=1712837882; cv=none; b=Z7rvrSddNqnqGZW1l0j/gL7ceEryockon/QhjLQb5v0wAHxf5epUeGk+dsbtdJlODajgmtGgF8Ij98niEBfPbuM5wv4LImETjzSelhYYezf23PQN8BAaXIAs5DuVtpqbTBYBNPeD0PV/eCjIOW51/NuUdYtJPo/uEt9Hr3X+2Xk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712833978; c=relaxed/simple;
-	bh=bbEKjy+eSYUjL9yRB7zTbDHe8ycq4RK3pkzGPtkRb0U=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=MhJJ4h16vPEHrZCUU50mo8eSECVtFoDswJP44jm1wOdiJoAd9yKC4EIsc5hNzw9dZwge+MvVf6qeyVJ5d0I+5vlKQrjjMF5uAbfyapLN29wY5D4XM43OO99OoU+8Nq8jGji0TMLZBhkN5nnd29xjLqLMAozv9gt3TMC38gWZ2YI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hKOO/H+r; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hKOO/H+r"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C8EF4C43399;
-	Thu, 11 Apr 2024 11:12:53 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1712833977;
-	bh=bbEKjy+eSYUjL9yRB7zTbDHe8ycq4RK3pkzGPtkRb0U=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=hKOO/H+rXXxAnPdoIb9WMdIQOAqjOfwzm0oBY0anLEYIa2l46BFS5STObdd2UPOcM
-	 WU9fptb5n9M1AslEXQLcGFtNu680YB6/xkCjrYZXp/AlnfCObZTVi+rSF/VXGv2FBm
-	 l45buWGmeRbVZ3yoLrQz03ojHlAng+bTC8nWkv9P5PaeK3IhCUj7HXwDhw+kKn609y
-	 ZNl6HnUfPnvtt+caFcBuUEqzgxXyF07kox0gfNZooFQOP2+ByeBWmRodvRMhBvoePX
-	 Mhz4oS9F1ZuD/0yTJm1Iy4w6ukGX3OkheQ5tvm+OM9g1WTOru4XS8SzXKSDtYzNYzm
-	 F91z1+/RsMicg==
-Date: Thu, 11 Apr 2024 13:12:50 +0200
-From: Christian Brauner <brauner@kernel.org>
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Matthew Sakai <msakai@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>, 
-	jack@suse.cz, hch@lst.de, axboe@kernel.dk, linux-fsdevel@vger.kernel.org, 
-	linux-block@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com, yukuai3@huawei.com, 
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH vfs.all 19/26] dm-vdo: convert to use bdev_file
-Message-ID: <20240411-abwinken-gesehen-a8f038f147aa@brauner>
-References: <20240406090930.2252838-1-yukuai1@huaweicloud.com>
- <20240406090930.2252838-20-yukuai1@huaweicloud.com>
- <a8493592-2a9b-ac14-f914-c747aa4455f3@redhat.com>
- <20240410174022.GF2118490@ZenIV>
+	s=arc-20240116; t=1712837882; c=relaxed/simple;
+	bh=cy6vEhb31ERfN0BuM1JGJrIcuc7i0gndmm34/Zjc+/s=;
+	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
+	 In-Reply-To:Content-Type; b=pTK8r3c8ZIiouUIL8//H2s7g1jqNqFZrKpGZ9xAOF//e05neTsfCoCdqArLJf6psYHy91rrbDVaRM1zZGEvYZGyhaMWOcEI9s52sp4XyVMR3q0JT2hdsJyrMGnBvxVfRkASlaLFzg1n22lOsd3ljh4YLc3cCNkbEQjKA03LOxj8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.187
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
+Received: from mail.maildlp.com (unknown [172.19.163.174])
+	by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4VFdtk2QZPztSG4;
+	Thu, 11 Apr 2024 20:15:10 +0800 (CST)
+Received: from dggpemd100001.china.huawei.com (unknown [7.185.36.94])
+	by mail.maildlp.com (Postfix) with ESMTPS id 2B30D140E9F;
+	Thu, 11 Apr 2024 20:17:55 +0800 (CST)
+Received: from [10.174.179.155] (10.174.179.155) by
+ dggpemd100001.china.huawei.com (7.185.36.94) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1258.28; Thu, 11 Apr 2024 20:17:54 +0800
+Message-ID: <1f9f1ea8-0a94-4d4c-cae3-983f307e6840@huawei.com>
+Date: Thu, 11 Apr 2024 20:17:53 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20240410174022.GF2118490@ZenIV>
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101
+ Thunderbird/104.0
+Subject: Re: [PATCH 6.6] Revert "dm-crypt, dm-verity: disable tasklets"
+To: Greg KH <gregkh@linuxfoundation.org>
+CC: <stable@vger.kernel.org>, <mpatocka@redhat.com>,
+	<torvalds@linux-foundation.org>, <tglx@linutronix.de>,
+	<linux-kernel@vger.kernel.org>, <dm-devel@lists.linux.dev>,
+	<msnitzer@redhat.com>, <ignat@cloudflare.com>, <damien.lemoal@wdc.com>,
+	<bob.liu@oracle.com>, <houtao1@huawei.com>, <nhuck@google.com>,
+	<peterz@infradead.org>, <mingo@elte.hu>, <yukuai3@huawei.com>,
+	<yangerkun@huawei.com>, <yi.zhang@huawei.com>, <lilingfeng@huaweicloud.com>
+References: <20240411091539.361470-1-lilingfeng3@huawei.com>
+ <2024041103-reputable-bobsled-585f@gregkh>
+From: Li Lingfeng <lilingfeng3@huawei.com>
+In-Reply-To: <2024041103-reputable-bobsled-585f@gregkh>
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 8bit
+X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
+ dggpemd100001.china.huawei.com (7.185.36.94)
 
-On Wed, Apr 10, 2024 at 06:40:22PM +0100, Al Viro wrote:
-> On Wed, Apr 10, 2024 at 01:26:47PM -0400, Matthew Sakai wrote:
-> 
-> > > 'dm_dev->bdev_file', it's ok to get inode from the file.
-> 
-> It can be done much easier, though -
-> 
-> [PATCH] dm-vdo: use bdev_nr_bytes(bdev) instead of i_size_read(bdev->bd_inode)
-> 
-> going to be faster, actually - shift is cheaper than dereference...
-> 
-> Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
-> ---
+There is no need to revert it in Linus's tree since the expanded 
+workqueue can work like tasklet.
+https://lore.kernel.org/lkml/20240130091300.2968534-1-tj@kernel.org/
 
-I've used that patch instead of the original one.
+I'm not sure if the problem described in [1] could be triggered by a 
+scenario I haven't considered. So I only send the revert patch to 6.6 
+mainly for comments.
+Of course, I think the other branches need it too.
+
+Thanks
+
+在 2024/4/11 17:52, Greg KH 写道:
+> On Thu, Apr 11, 2024 at 05:15:39PM +0800, Li Lingfeng wrote:
+>> This reverts commit 5735a2671ffb70ea29ca83969fe01316ee2ed6fc which is
+>> commit 0a9bab391e336489169b95cb0d4553d921302189 upstream.
+>>
+>> Tasklet is thought to cause memory corruption [1], so it was disabled in
+>> dm-crypt and dm-verity. However, memory corruption may not happen since
+>> cc->io_queue is created without WQ_UNBOUND [2].
+>> Revert commit 5735a2671ffb ("dm-crypt, dm-verity: disable tasklets") to
+>> bring tasklet back.
+>>
+>> [1] https://lore.kernel.org/all/d390d7ee-f142-44d3-822a-87949e14608b@suse.de/T/
+>> [2] https://lore.kernel.org/all/4d331659-badd-749d-fba1-271543631a8a@huawei.com/
+>>
+>> Signed-off-by: Li Lingfeng <lilingfeng3@huawei.com>
+>> ---
+>>   drivers/md/dm-crypt.c         | 38 +++++++++++++++++++++++++++++++++--
+>>   drivers/md/dm-verity-target.c | 26 ++++++++++++++++++++++--
+>>   drivers/md/dm-verity.h        |  1 +
+>>   3 files changed, 61 insertions(+), 4 deletions(-)
+> What is the commit id of this in Linus's tree?  And why only 6.6.y?
+>
+> thanks,
+>
+> greg k-h
+>
