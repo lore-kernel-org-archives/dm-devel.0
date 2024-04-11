@@ -1,146 +1,187 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E09D1802D1
-	for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 18:59:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 087A46217D
+	for <dm-devel@lists.linux.dev>; Thu, 11 Apr 2024 02:18:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712775549; cv=none; b=av4Qp4wf+EzOR5JmrzYPEwtwdiqWsJqw9bIEKy1MCbpE2VFK84HAZ/4x8CtoQ1gxP78rzC9wxEJSaR+4gzU/0/DvWEiIJUZ77QSubdGyknqZOq9nGPf/UKW5QemhoJaDOH/rPeUpUxExPVHXCO41JucRmSckZqm4Gx7uDzrJ+Hc=
+	t=1712801893; cv=none; b=i9/oQgDt/Zi1Ihva+rn/j0Ju9kxFmutBsm3vhlMJN5NXfaGGdjQQfEJyI5+M8hwHoHrEWx2+rRvcrbRo1CvViyFRy6jxQsVv1DXSxPPKJTKFWsd1NRktxnSFok9xT31vyXyseWiKrfym1aEYZtfXCsbN4cyO88Pjd29CF/rN/Q0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712775549; c=relaxed/simple;
-	bh=HcTvQPAA9NUPS2igJbqEH//WEl4aZTKvJGY0XkzAfiI=;
+	s=arc-20240116; t=1712801893; c=relaxed/simple;
+	bh=n4oWJOJwpnZcX+1yGeKqJ/YTnoROf+ymwqyy+sCtko8=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=ZyOqnMtRK3P3yOA0PG1WvRwzb5F0aXhT+ozaDtymZGr/05ltVHHuCVkYiSawWu6zBe1P6zEU5MUkzcgrJRqt1Q568NmgjtmvXGV8csWvyUSnT6OHwVt3I2V81b71+T/LVS6zLIZw8gqLQJxN2YEjONhrs1ugjCG4Wo/ybBYX+Zk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BCnb2Uh6; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BCnb2Uh6"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1712775547;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=XxpkuxUnIrOWR5YmuW0AIjNYXGEKvHqlxiu3ZzXtRNg=;
-	b=BCnb2Uh6fMCJOejfHM8WLfYlscTvZuKzJiWVobfJv7cJVzxOuU9xRroooT0BKAQMEIlFXY
-	172KNU43Q6Ivr8DsnqSE7PPIvXn5G2idDfYIEHs6GVPNU733P6NEN9kked83FvjDp/8xg+
-	uv6pWy+/B+dPlDsOj5U0TlE8jlHKJu8=
-Received: from mail-qv1-f72.google.com (mail-qv1-f72.google.com
- [209.85.219.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-400-aetmdrmwP5qwcXTE89KtwA-1; Wed, 10 Apr 2024 14:59:05 -0400
-X-MC-Unique: aetmdrmwP5qwcXTE89KtwA-1
-Received: by mail-qv1-f72.google.com with SMTP id 6a1803df08f44-69b1effbc16so32654506d6.0
-        for <dm-devel@lists.linux.dev>; Wed, 10 Apr 2024 11:59:05 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712775545; x=1713380345;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=XxpkuxUnIrOWR5YmuW0AIjNYXGEKvHqlxiu3ZzXtRNg=;
-        b=pMFSHG17ZCYPWc+JVBOVmtiaSTApVoxk5nEMac8wckVW6AYUtSBiS8osS1lvRbiKzc
-         vxWG1SZC7mHMkWYk7sqzatJ0Hrfi6n812K9eeU7TToxEb+W/gamg4MUdn+vUpiNJMOvA
-         2jCsXMp4qtMArQxtCm2IDRenwjuSTlpLJxinR63dAN6QqaPmwBUY5gsUR065AH//mKW5
-         quA9sQOpRXfqniwqduBAOryngJ9snFUqMXm+xpY4CLSQzHZHi+GYj6O1PbEjwt/Sv2+o
-         W0Lbwbdet/seGLinU7Ri05oW7J0+1TPZPzjDsVFP8flNigvskdWm2OkqlPurl4/xnqNv
-         hGEA==
-X-Forwarded-Encrypted: i=1; AJvYcCWFxoe6QkjtwpNQ+oQjAuConfEPyyb6n0yGqi5HWwl3+Q4LMjs38QNmJYm/9+zU/mnYRhpwqIuU5pPWlKrYf7+pm+XfHM4b8Jo=
-X-Gm-Message-State: AOJu0YzZhEs0fyeYlRrMMyh6HuYVmKy6CndAFH4bebf5oQXfRDBbSKn/
-	vLQ3pRk8flbrWr7ZnONJTTwzIhFMwCNrR5ldw5ik9hPjG6oBF9yOOOTWY4Kno3GRmIYsaPUPZt7
-	87dtDC6HhcSH7Cwt2ryT5wh0oD+JqUxfrJTuIJn+3ua/OPirM6rCQFyp9
-X-Received: by 2002:a05:6214:4111:b0:69b:1efb:9d42 with SMTP id kc17-20020a056214411100b0069b1efb9d42mr3445946qvb.6.1712775545306;
-        Wed, 10 Apr 2024 11:59:05 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IH1rZzHlFdlKErUaVzaIIBoz+uophffHDufiBosrVM2ScG6c79A0tsfU5q3lB5GUj4EtqyQxA==
-X-Received: by 2002:a05:6214:4111:b0:69b:1efb:9d42 with SMTP id kc17-20020a056214411100b0069b1efb9d42mr3445922qvb.6.1712775544953;
-        Wed, 10 Apr 2024 11:59:04 -0700 (PDT)
-Received: from [192.168.1.165] ([70.22.187.239])
-        by smtp.gmail.com with ESMTPSA id p20-20020a05621415d400b00698d06df322sm5418657qvz.122.2024.04.10.11.59.04
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 10 Apr 2024 11:59:04 -0700 (PDT)
-Message-ID: <1e344d3b-1e30-6638-83c3-f743546374ec@redhat.com>
-Date: Wed, 10 Apr 2024 14:59:03 -0400
+	 In-Reply-To:Content-Type; b=iEEBVuDgu+QYn5JMtb6joej4ERYujTSPuuH2oi8Weyb+WJdVbrOa+h1DQa1NQFrRDDYt7DdpEbxZ0YzNHuDRxFeYnY5KCs4YgouKRC33WiezfG3yi3Ol8u6dL1V5Dco/dj6EGzcmJe8mkcQl4mI9a0hIpYzt7Z+Z9rEz1pNaeU0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4VFNdX5Mtgz4f3m79
+	for <dm-devel@lists.linux.dev>; Thu, 11 Apr 2024 10:17:52 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 6A1F51A0179
+	for <dm-devel@lists.linux.dev>; Thu, 11 Apr 2024 10:18:01 +0800 (CST)
+Received: from [10.174.177.210] (unknown [10.174.177.210])
+	by APP1 (Coremail) with SMTP id cCh0CgAn9g5WSBdmZmOoJg--.5436S3;
+	Thu, 11 Apr 2024 10:18:00 +0800 (CST)
+Message-ID: <cfd693de-449e-a505-39e5-0a7931c3a5b2@huaweicloud.com>
+Date: Thu, 11 Apr 2024 10:17:58 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.12.0
-Subject: Re: [PATCH vfs.all 19/26] dm-vdo: convert to use bdev_file
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Yu Kuai <yukuai1@huaweicloud.com>, jack@suse.cz, hch@lst.de,
- brauner@kernel.org, axboe@kernel.dk, linux-fsdevel@vger.kernel.org,
- linux-block@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- yukuai3@huawei.com, dm-devel@lists.linux.dev
-References: <20240406090930.2252838-1-yukuai1@huaweicloud.com>
- <20240406090930.2252838-20-yukuai1@huaweicloud.com>
- <a8493592-2a9b-ac14-f914-c747aa4455f3@redhat.com>
- <20240410174022.GF2118490@ZenIV>
-From: Matthew Sakai <msakai@redhat.com>
-In-Reply-To: <20240410174022.GF2118490@ZenIV>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
+ Thunderbird/102.5.1
+Subject: Re: [PATCH v3] dm-crypt: reexport sysfs of kcryptd workqueue
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: mpatocka@redhat.com, agk@redhat.com, tj@kernel.org,
+ dm-devel@lists.linux.dev, yangerkun@huawei.com, yukuai3@huawei.com,
+ Milan Broz <gmazyland@gmail.com>
+References: <20230711061129.2706759-1-yangerkun@huaweicloud.com>
+ <45a09f8d-d167-c78c-7ac8-3ed27db18653@huaweicloud.com>
+ <Zhaxz1ZkGzbfW0RQ@redhat.com> <Zha4M0ru46QrKYgq@redhat.com>
+From: yangerkun <yangerkun@huaweicloud.com>
+In-Reply-To: <Zha4M0ru46QrKYgq@redhat.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgAn9g5WSBdmZmOoJg--.5436S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxAFWrXF4UAFyDGryrtFyrJFb_yoWrZFWrpF
+	W5JF4akw48Jr47KwnIqw1kJF9xtryrGr9xZr4xJ347Cwn09F93XF17Ar45urWkAFn5Ga1U
+	ZF4DJa9I9F9Yy3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUyEb4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JMxk0xIA0c2IEe2xFo4CEbIxvr21l42xK82IYc2Ij
+	64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x
+	8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43MIIYrxkI7VAKI48JMIIF0xvE
+	2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42
+	xK8VAvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIE
+	c7CjxVAFwI0_Jr0_GrUvcSsGvfC2KfnxnUUI43ZEXa7IU1zuWJUUUUU==
+X-CM-SenderInfo: 51dqwvhunx0q5kxd4v5lfo033gof0z/
 
 
 
-On 4/10/24 13:40, Al Viro wrote:
-> On Wed, Apr 10, 2024 at 01:26:47PM -0400, Matthew Sakai wrote:
+在 2024/4/11 0:02, Mike Snitzer 写道:
+> [resend after rebase and fixing dm-devel mailing list address]
 > 
->>> 'dm_dev->bdev_file', it's ok to get inode from the file.
+> On Wed, Apr 10 2024 at 11:35P -0400,
+> Mike Snitzer <snitzer@kernel.org> wrote:
 > 
-> It can be done much easier, though -
-> 
-> [PATCH] dm-vdo: use bdev_nr_bytes(bdev) instead of i_size_read(bdev->bd_inode)
-> 
-> going to be faster, actually - shift is cheaper than dereference...
+>> On Sat, Mar 30 2024 at  4:05P -0400,
+>> yangerkun <yangerkun@huaweicloud.com> wrote:
+>>
+>>> Hi,
+>>>
+>>> Ping for this patch!
+>>>
+>>> 在 2023/7/11 14:11, yangerkun 写道:
+>>>> From: yangerkun <yangerkun@huawei.com>
+>>>>
+>>>> Once there is a heavy IO load, so many encrypt/decrypt work will occupy
+>>>> all of the cpu, which may lead the poor performance for other service.
+>>>> So the idea like 'a2b8b2d97567 ("dm crypt: export sysfs of kcryptd
+>>>> workqueue")' said seems necessary. We can export "kcryptd" workqueue
+>>>> sysfs, the entry like cpumask/max_active and so on can help us to limit
+>>>> the usage for encrypt/decrypt work.
+>>>>
+>>>> However, that commit does not consider the reload table will call .ctr
+>>>> before .dtr, so the reload for dm-crypt will fail since the same sysfs
+>>>> problem, and then we revert that commit('48b0777cd93d ("Revert "dm
+>>>> crypt: export sysfs of kcryptd workqueue"")').
+>>>>
+>>>> Actually, what we should do is give a unique name once we try reload
+>>>> table, we can use ida to fix the problem.
+>>>>
+>>>> Signed-off-by: yangerkun <yangerkun@huawei.com>
+>>>> ---
+>>>>    drivers/md/dm-crypt.c | 28 +++++++++++++++++++++++-----
+>>>>    1 file changed, 23 insertions(+), 5 deletions(-)
+>>>>
+>>>> v1->v2:
+>>>> rewrite the commit msg
+>>>>
+>>>> v2->v3:
+>>>> no logical change, just rebase to latest linux kernel
+>>>>
+>>>> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+>>>> index 1dc6227d353e..f4678eb71322 100644
+>>>> --- a/drivers/md/dm-crypt.c
+>>>> +++ b/drivers/md/dm-crypt.c
+>>>> @@ -47,6 +47,8 @@
+>>>>    #define DM_MSG_PREFIX "crypt"
+>>>> +static DEFINE_IDA(crypt_queue_ida);
+>>>> +
+>>>>    /*
+>>>>     * context holding the current state of a multi-part conversion
+>>>>     */
+>>>> @@ -182,6 +184,7 @@ struct crypt_config {
+>>>>    		struct crypto_aead **tfms_aead;
+>>>>    	} cipher_tfm;
+>>>>    	unsigned int tfms_count;
+>>>> +	int crypt_queue_id;
+>>>>    	unsigned long cipher_flags;
+>>>>    	/*
+>>>> @@ -2735,6 +2738,9 @@ static void crypt_dtr(struct dm_target *ti)
+>>>>    	if (cc->crypt_queue)
+>>>>    		destroy_workqueue(cc->crypt_queue);
+>>>> +	if (cc->crypt_queue_id)
+>>>> +		ida_free(&crypt_queue_ida, cc->crypt_queue_id);
+>>>> +
+>>>>    	crypt_free_tfms(cc);
+>>>>    	bioset_exit(&cc->bs);
+>>>> @@ -3371,12 +3377,24 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>>>>    	}
+>>>>    	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+>>>> -		cc->crypt_queue = alloc_workqueue("kcryptd/%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
+>>>> +		cc->crypt_queue = alloc_workqueue("kcryptd-%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
+>>>>    						  1, devname);
+>>>> -	else
+>>>> -		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
+>>>> -						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND,
+>>>> -						  num_online_cpus(), devname);
+>>>> +	else {
+>>>> +		int id = ida_alloc_min(&crypt_queue_ida, 1, GFP_KERNEL);
+>>>> +
+>>>> +		if (id < 0) {
+>>>> +			ti->error = "Couldn't get kcryptd queue id";
+>>>> +			ret = id;
+>>>> +			goto bad;
+>>>> +		}
+>>>> +
+>>>> +		cc->crypt_queue_id = id;
+>>>> +		cc->crypt_queue = alloc_workqueue("kcryptd-%s-%d",
+>>>> +						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM |
+>>>> +						  WQ_UNBOUND | WQ_SYSFS,
+>>>> +						  num_online_cpus(), devname, id);
+>>>> +	}
+>>>> +
+>>>>    	if (!cc->crypt_queue) {
+>>>>    		ti->error = "Couldn't create kcryptd queue";
+>>>>    		goto bad;
+>>>
+>>
+>> I'm OK with adding WQ_SYSFS to export workqueue info.  dm-crypt's
+>> performance is very tighly coupled with its use of workqueues.  So
+>> allowing more visibility into workqueues makes sense.
+>>
+>> That said, I'm not loving that the sysfs entry will have a dynamic
+>> name (made possible with ida) -- but I can live with it.
+>>
+>> However, I do think it is useful to always use WQ_SYSFS (even if
+>> DM_CRYPT_SAME_CPU, and also for the IO wq).
+>>
+>> So I've made the use of ida common to all dm-crypt wq. I was able to
+>> do this more cleanly by rebasing ontop of dm-6.10 (which now includes
+>> recent dm-crypt patch to allow WQ_HIGHPRI to be configured), see:
+>> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.10&id=6bd1e0b331ddd7bb4d6b2abc8472a36602180aa5
+>>
+>> Thanks,
+>> Mike
 
-This does look simpler. And doing this means there's no reason to switch 
-dm-vdo from using struct block_device * to using struct file *, so the 
-rest of the original patch is unnecessary.
 
-Reviewed-by: Matthew Sakai <msakai@redhat.com>
-
-> Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
-> ---
-> diff --git a/drivers/md/dm-vdo/dm-vdo-target.c b/drivers/md/dm-vdo/dm-vdo-target.c
-> index 5a4b0a927f56..b423bec6458b 100644
-> --- a/drivers/md/dm-vdo/dm-vdo-target.c
-> +++ b/drivers/md/dm-vdo/dm-vdo-target.c
-> @@ -878,7 +878,7 @@ static int parse_device_config(int argc, char **argv, struct dm_target *ti,
->   	}
->   
->   	if (config->version == 0) {
-> -		u64 device_size = i_size_read(config->owned_device->bdev->bd_inode);
-> +		u64 device_size = bdev_nr_bytes(config->owned_device->bdev);
->   
->   		config->physical_blocks = device_size / VDO_BLOCK_SIZE;
->   	}
-> @@ -1011,7 +1011,7 @@ static void vdo_status(struct dm_target *ti, status_type_t status_type,
->   
->   static block_count_t __must_check get_underlying_device_block_count(const struct vdo *vdo)
->   {
-> -	return i_size_read(vdo_get_backing_device(vdo)->bd_inode) / VDO_BLOCK_SIZE;
-> +	return bdev_nr_bytes(vdo_get_backing_device(vdo)) / VDO_BLOCK_SIZE;
->   }
->   
->   static int __must_check process_vdo_message_locked(struct vdo *vdo, unsigned int argc,
-> diff --git a/drivers/md/dm-vdo/indexer/io-factory.c b/drivers/md/dm-vdo/indexer/io-factory.c
-> index 515765d35794..1bee9d63dc0a 100644
-> --- a/drivers/md/dm-vdo/indexer/io-factory.c
-> +++ b/drivers/md/dm-vdo/indexer/io-factory.c
-> @@ -90,7 +90,7 @@ void uds_put_io_factory(struct io_factory *factory)
->   
->   size_t uds_get_writable_size(struct io_factory *factory)
->   {
-> -	return i_size_read(factory->bdev->bd_inode);
-> +	return bdev_nr_bytes(factory->bdev);
->   }
->   
->   /* Create a struct dm_bufio_client for an index region starting at offset. */
-> 
+This version looks good to me. Thanks a lot!
 
