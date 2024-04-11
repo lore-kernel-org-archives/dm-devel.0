@@ -1,74 +1,66 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E6AC13DDDD;
-	Thu, 11 Apr 2024 09:52:45 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 194B91474C9;
+	Thu, 11 Apr 2024 11:12:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712829165; cv=none; b=rUQ0kqJaYkH5vJqHreVw6ty4PXGnlXCnuCYo9mbbusSOUb0b+4RK11pImmHEVr8f1Xj/luA49fUzXoEWlPE1AJeZ7oRdUSwePwVswWZx7+Prow0YEHAfOnwIQnEuePywByjS1+JNpKncEMKmOVx2X3CyWz1jyxbgYIbm12TVzX8=
+	t=1712833978; cv=none; b=D3xMFYYLEaGgbaIWuPfPVweITJ2h8grP997KI903tyN94pjMFTj/LbEMocoRstdOYdwcvI10EQ/75X20fhXIT94cocAo9biHDECoP2chzaEr1c29KxkZcJTrh9By/5MJ5sOjtPV/0330FJROssdLRBjjMvoPhP4pemC/igdgVMM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712829165; c=relaxed/simple;
-	bh=6LPoBgM4dGej3G/EWTMFuCJO16wnG8LmgDKZpio/Qhc=;
+	s=arc-20240116; t=1712833978; c=relaxed/simple;
+	bh=bbEKjy+eSYUjL9yRB7zTbDHe8ycq4RK3pkzGPtkRb0U=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ncPUzk4TXiNpglkYSWaCHgXND1hw5rBUwCk84fncucsXsEOw+eaTkmOrukXb/VOpCwrBJ2BJvJe3OHcpP8gB/dIYuX9WFVPXXQnR626ZJsGrS0iJPGTKPPWG+K8/pbAcRgu3nWmylP4YMtnjDpqa49EDNi9LfOtVmxDRk0QeJ/Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=E15cJJmQ; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=MhJJ4h16vPEHrZCUU50mo8eSECVtFoDswJP44jm1wOdiJoAd9yKC4EIsc5hNzw9dZwge+MvVf6qeyVJ5d0I+5vlKQrjjMF5uAbfyapLN29wY5D4XM43OO99OoU+8Nq8jGji0TMLZBhkN5nnd29xjLqLMAozv9gt3TMC38gWZ2YI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hKOO/H+r; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="E15cJJmQ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9730FC433C7;
-	Thu, 11 Apr 2024 09:52:44 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-	s=korg; t=1712829165;
-	bh=6LPoBgM4dGej3G/EWTMFuCJO16wnG8LmgDKZpio/Qhc=;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hKOO/H+r"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C8EF4C43399;
+	Thu, 11 Apr 2024 11:12:53 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1712833977;
+	bh=bbEKjy+eSYUjL9yRB7zTbDHe8ycq4RK3pkzGPtkRb0U=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=E15cJJmQXcTEWhPntWZaEqhzjfV6BmzTLhrLy5VszuykEJiRpYvX63Gw8sx+KCiFF
-	 0dcPdr8um1FyZ4lFMRUsmBHeDQG2mH1RtxIYU0Ubg1uoKbQ3qeLYS5KfqxwvWBC8d7
-	 9CfWanz66AH9E38nL2POUCwZEQ8YVmKKqb+HIqmM=
-Date: Thu, 11 Apr 2024 11:52:42 +0200
-From: Greg KH <gregkh@linuxfoundation.org>
-To: Li Lingfeng <lilingfeng3@huawei.com>
-Cc: stable@vger.kernel.org, mpatocka@redhat.com,
-	torvalds@linux-foundation.org, tglx@linutronix.de,
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
-	msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com,
-	bob.liu@oracle.com, houtao1@huawei.com, nhuck@google.com,
-	peterz@infradead.org, mingo@elte.hu, yukuai3@huawei.com,
-	yangerkun@huawei.com, yi.zhang@huawei.com,
-	lilingfeng@huaweicloud.com
-Subject: Re: [PATCH 6.6] Revert "dm-crypt, dm-verity: disable tasklets"
-Message-ID: <2024041103-reputable-bobsled-585f@gregkh>
-References: <20240411091539.361470-1-lilingfeng3@huawei.com>
+	b=hKOO/H+rXXxAnPdoIb9WMdIQOAqjOfwzm0oBY0anLEYIa2l46BFS5STObdd2UPOcM
+	 WU9fptb5n9M1AslEXQLcGFtNu680YB6/xkCjrYZXp/AlnfCObZTVi+rSF/VXGv2FBm
+	 l45buWGmeRbVZ3yoLrQz03ojHlAng+bTC8nWkv9P5PaeK3IhCUj7HXwDhw+kKn609y
+	 ZNl6HnUfPnvtt+caFcBuUEqzgxXyF07kox0gfNZooFQOP2+ByeBWmRodvRMhBvoePX
+	 Mhz4oS9F1ZuD/0yTJm1Iy4w6ukGX3OkheQ5tvm+OM9g1WTOru4XS8SzXKSDtYzNYzm
+	 F91z1+/RsMicg==
+Date: Thu, 11 Apr 2024 13:12:50 +0200
+From: Christian Brauner <brauner@kernel.org>
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Matthew Sakai <msakai@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>, 
+	jack@suse.cz, hch@lst.de, axboe@kernel.dk, linux-fsdevel@vger.kernel.org, 
+	linux-block@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com, yukuai3@huawei.com, 
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH vfs.all 19/26] dm-vdo: convert to use bdev_file
+Message-ID: <20240411-abwinken-gesehen-a8f038f147aa@brauner>
+References: <20240406090930.2252838-1-yukuai1@huaweicloud.com>
+ <20240406090930.2252838-20-yukuai1@huaweicloud.com>
+ <a8493592-2a9b-ac14-f914-c747aa4455f3@redhat.com>
+ <20240410174022.GF2118490@ZenIV>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20240411091539.361470-1-lilingfeng3@huawei.com>
+In-Reply-To: <20240410174022.GF2118490@ZenIV>
 
-On Thu, Apr 11, 2024 at 05:15:39PM +0800, Li Lingfeng wrote:
-> This reverts commit 5735a2671ffb70ea29ca83969fe01316ee2ed6fc which is
-> commit 0a9bab391e336489169b95cb0d4553d921302189 upstream.
+On Wed, Apr 10, 2024 at 06:40:22PM +0100, Al Viro wrote:
+> On Wed, Apr 10, 2024 at 01:26:47PM -0400, Matthew Sakai wrote:
 > 
-> Tasklet is thought to cause memory corruption [1], so it was disabled in
-> dm-crypt and dm-verity. However, memory corruption may not happen since
-> cc->io_queue is created without WQ_UNBOUND [2].
-> Revert commit 5735a2671ffb ("dm-crypt, dm-verity: disable tasklets") to
-> bring tasklet back.
+> > > 'dm_dev->bdev_file', it's ok to get inode from the file.
 > 
-> [1] https://lore.kernel.org/all/d390d7ee-f142-44d3-822a-87949e14608b@suse.de/T/
-> [2] https://lore.kernel.org/all/4d331659-badd-749d-fba1-271543631a8a@huawei.com/
+> It can be done much easier, though -
 > 
-> Signed-off-by: Li Lingfeng <lilingfeng3@huawei.com>
+> [PATCH] dm-vdo: use bdev_nr_bytes(bdev) instead of i_size_read(bdev->bd_inode)
+> 
+> going to be faster, actually - shift is cheaper than dereference...
+> 
+> Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
 > ---
->  drivers/md/dm-crypt.c         | 38 +++++++++++++++++++++++++++++++++--
->  drivers/md/dm-verity-target.c | 26 ++++++++++++++++++++++--
->  drivers/md/dm-verity.h        |  1 +
->  3 files changed, 61 insertions(+), 4 deletions(-)
 
-What is the commit id of this in Linus's tree?  And why only 6.6.y?
-
-thanks,
-
-greg k-h
+I've used that patch instead of the original one.
