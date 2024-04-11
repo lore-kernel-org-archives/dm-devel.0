@@ -1,91 +1,253 @@
-Received: from szxga01-in.huawei.com (szxga01-in.huawei.com [45.249.212.187])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E385514C5B0
-	for <dm-devel@lists.linux.dev>; Thu, 11 Apr 2024 12:17:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.187
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FE233F8E2
+	for <dm-devel@lists.linux.dev>; Thu, 11 Apr 2024 12:37:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712837882; cv=none; b=Z7rvrSddNqnqGZW1l0j/gL7ceEryockon/QhjLQb5v0wAHxf5epUeGk+dsbtdJlODajgmtGgF8Ij98niEBfPbuM5wv4LImETjzSelhYYezf23PQN8BAaXIAs5DuVtpqbTBYBNPeD0PV/eCjIOW51/NuUdYtJPo/uEt9Hr3X+2Xk=
+	t=1712839079; cv=none; b=flN8t75FSqSW3/rCwoQzoBWfzHrS+5RaV+JqtRslzhgRxf/+7Asgy4L/UhWyz6mFjE2iqkMJhiuQfNth0i/8qwLoZhz8FDrPrkBbudYq4UICHqwbndYBkN7miSVoFNKrtfGZZAlmsdsF90Ce3Lv+vX0zgMpkqTSfT7V9wJPIiZs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712837882; c=relaxed/simple;
-	bh=cy6vEhb31ERfN0BuM1JGJrIcuc7i0gndmm34/Zjc+/s=;
-	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
-	 In-Reply-To:Content-Type; b=pTK8r3c8ZIiouUIL8//H2s7g1jqNqFZrKpGZ9xAOF//e05neTsfCoCdqArLJf6psYHy91rrbDVaRM1zZGEvYZGyhaMWOcEI9s52sp4XyVMR3q0JT2hdsJyrMGnBvxVfRkASlaLFzg1n22lOsd3ljh4YLc3cCNkbEQjKA03LOxj8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.187
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
-Received: from mail.maildlp.com (unknown [172.19.163.174])
-	by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4VFdtk2QZPztSG4;
-	Thu, 11 Apr 2024 20:15:10 +0800 (CST)
-Received: from dggpemd100001.china.huawei.com (unknown [7.185.36.94])
-	by mail.maildlp.com (Postfix) with ESMTPS id 2B30D140E9F;
-	Thu, 11 Apr 2024 20:17:55 +0800 (CST)
-Received: from [10.174.179.155] (10.174.179.155) by
- dggpemd100001.china.huawei.com (7.185.36.94) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1258.28; Thu, 11 Apr 2024 20:17:54 +0800
-Message-ID: <1f9f1ea8-0a94-4d4c-cae3-983f307e6840@huawei.com>
-Date: Thu, 11 Apr 2024 20:17:53 +0800
+	s=arc-20240116; t=1712839079; c=relaxed/simple;
+	bh=CIVy0SsUlg0fUMKX1CWqt9cbJE+qBzIZsfDGQR1WG34=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=kkGSE1u7aymrkvkdNIQFuQZTiTCA3ojeKj9XFspFXosqwPgHglobEwR15kzgs2NWSeztUB8XFjrxVFW6MTVE9zXb2a/P+vsHXrUZTykH1AYH777CzRylthegXUGwM+CXefivcz8Tu60Q0Ez0nPo1dNvLJej8iqNG5zxe5nRSEhc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=OjCf/axC; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OjCf/axC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1712839076;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=jJHSGS6DZn5w0lI3N34lZqsw+keKCQ5HV+u+tB7G5X4=;
+	b=OjCf/axCQOZvHXQ4s5HsGUvQcNow6CR8MN4yFHnZVL23ClKNzrUM5x2k6NKif4jSOY0wQq
+	/I+Y0jVDfRp+ub/mIP1kpoRpkf737EiDsi1M+Te/h0fl51EPJ1oDgyW+OdxNb9D8PRZg7/
+	QObiEIUnX+wUifPmr4q3OWzd5RB2FKY=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-130-s809NAxbMm-yId62tKkBHQ-1; Thu, 11 Apr 2024 08:37:50 -0400
+X-MC-Unique: s809NAxbMm-yId62tKkBHQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 510BD802A6F;
+	Thu, 11 Apr 2024 12:37:49 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 57E7F2026962;
+	Thu, 11 Apr 2024 12:37:48 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 3CD3F30BFEC2; Thu, 11 Apr 2024 12:37:48 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 37CE43FD73;
+	Thu, 11 Apr 2024 14:37:48 +0200 (CEST)
+Date: Thu, 11 Apr 2024 14:37:48 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Li Lingfeng <lilingfeng3@huawei.com>
+cc: stable@vger.kernel.org, gregkh@linuxfoundation.org, 
+    torvalds@linux-foundation.org, tglx@linutronix.de, 
+    linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+    msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com, 
+    bob.liu@oracle.com, houtao1@huawei.com, nhuck@google.com, 
+    peterz@infradead.org, mingo@elte.hu, yukuai3@huawei.com, 
+    yangerkun@huawei.com, yi.zhang@huawei.com, lilingfeng@huaweicloud.com
+Subject: Re: [PATCH 6.6] Revert "dm-crypt, dm-verity: disable tasklets"
+In-Reply-To: <20240411091539.361470-1-lilingfeng3@huawei.com>
+Message-ID: <7c17f31a-2cc3-1597-e2b5-832355de7647@redhat.com>
+References: <20240411091539.361470-1-lilingfeng3@huawei.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101
- Thunderbird/104.0
-Subject: Re: [PATCH 6.6] Revert "dm-crypt, dm-verity: disable tasklets"
-To: Greg KH <gregkh@linuxfoundation.org>
-CC: <stable@vger.kernel.org>, <mpatocka@redhat.com>,
-	<torvalds@linux-foundation.org>, <tglx@linutronix.de>,
-	<linux-kernel@vger.kernel.org>, <dm-devel@lists.linux.dev>,
-	<msnitzer@redhat.com>, <ignat@cloudflare.com>, <damien.lemoal@wdc.com>,
-	<bob.liu@oracle.com>, <houtao1@huawei.com>, <nhuck@google.com>,
-	<peterz@infradead.org>, <mingo@elte.hu>, <yukuai3@huawei.com>,
-	<yangerkun@huawei.com>, <yi.zhang@huawei.com>, <lilingfeng@huaweicloud.com>
-References: <20240411091539.361470-1-lilingfeng3@huawei.com>
- <2024041103-reputable-bobsled-585f@gregkh>
-From: Li Lingfeng <lilingfeng3@huawei.com>
-In-Reply-To: <2024041103-reputable-bobsled-585f@gregkh>
-Content-Type: text/plain; charset="UTF-8"; format=flowed
-Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
- dggpemd100001.china.huawei.com (7.185.36.94)
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-There is no need to revert it in Linus's tree since the expanded 
-workqueue can work like tasklet.
-https://lore.kernel.org/lkml/20240130091300.2968534-1-tj@kernel.org/
+Hi
 
-I'm not sure if the problem described in [1] could be triggered by a 
-scenario I haven't considered. So I only send the revert patch to 6.6 
-mainly for comments.
-Of course, I think the other branches need it too.
+I NACK this.
 
-Thanks
 
-在 2024/4/11 17:52, Greg KH 写道:
-> On Thu, Apr 11, 2024 at 05:15:39PM +0800, Li Lingfeng wrote:
->> This reverts commit 5735a2671ffb70ea29ca83969fe01316ee2ed6fc which is
->> commit 0a9bab391e336489169b95cb0d4553d921302189 upstream.
->>
->> Tasklet is thought to cause memory corruption [1], so it was disabled in
->> dm-crypt and dm-verity. However, memory corruption may not happen since
->> cc->io_queue is created without WQ_UNBOUND [2].
->> Revert commit 5735a2671ffb ("dm-crypt, dm-verity: disable tasklets") to
->> bring tasklet back.
->>
->> [1] https://lore.kernel.org/all/d390d7ee-f142-44d3-822a-87949e14608b@suse.de/T/
->> [2] https://lore.kernel.org/all/4d331659-badd-749d-fba1-271543631a8a@huawei.com/
->>
->> Signed-off-by: Li Lingfeng <lilingfeng3@huawei.com>
->> ---
->>   drivers/md/dm-crypt.c         | 38 +++++++++++++++++++++++++++++++++--
->>   drivers/md/dm-verity-target.c | 26 ++++++++++++++++++++++--
->>   drivers/md/dm-verity.h        |  1 +
->>   3 files changed, 61 insertions(+), 4 deletions(-)
-> What is the commit id of this in Linus's tree?  And why only 6.6.y?
->
-> thanks,
->
-> greg k-h
->
+On Thu, 11 Apr 2024, Li Lingfeng wrote:
+
+> This reverts commit 5735a2671ffb70ea29ca83969fe01316ee2ed6fc which is
+> commit 0a9bab391e336489169b95cb0d4553d921302189 upstream.
+> 
+> Tasklet is thought to cause memory corruption [1], so it was disabled in
+> dm-crypt and dm-verity. However, memory corruption may not happen since
+> cc->io_queue is created without WQ_UNBOUND [2].
+> Revert commit 5735a2671ffb ("dm-crypt, dm-verity: disable tasklets") to
+> bring tasklet back.
+> 
+> [1] https://lore.kernel.org/all/d390d7ee-f142-44d3-822a-87949e14608b@suse.de/T/
+> [2] https://lore.kernel.org/all/4d331659-badd-749d-fba1-271543631a8a@huawei.com/
+
+Regarding [2] - if you add mdelay, you can make the race condition less 
+reproducible, but it is not a proper fix and the race condition stays 
+there unfixed.
+
+Workqueues and ksoftirqd may be scheduled arbitrarily, there is no 
+guarantee that they will be executed in a particular order, even if they 
+are executed on the same CPU.
+
+Mikulas
+
+> Signed-off-by: Li Lingfeng <lilingfeng3@huawei.com>
+> ---
+>  drivers/md/dm-crypt.c         | 38 +++++++++++++++++++++++++++++++++--
+>  drivers/md/dm-verity-target.c | 26 ++++++++++++++++++++++--
+>  drivers/md/dm-verity.h        |  1 +
+>  3 files changed, 61 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index aa6bb5b4704b..a60d91d02e28 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -75,8 +75,10 @@ struct dm_crypt_io {
+>  	struct bio *base_bio;
+>  	u8 *integrity_metadata;
+>  	bool integrity_metadata_from_pool:1;
+> +	bool in_tasklet:1;
+>  
+>  	struct work_struct work;
+> +	struct tasklet_struct tasklet;
+>  
+>  	struct convert_context ctx;
+>  
+> @@ -1775,6 +1777,7 @@ static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
+>  	io->ctx.r.req = NULL;
+>  	io->integrity_metadata = NULL;
+>  	io->integrity_metadata_from_pool = false;
+> +	io->in_tasklet = false;
+>  	atomic_set(&io->io_pending, 0);
+>  }
+>  
+> @@ -1785,6 +1788,13 @@ static void crypt_inc_pending(struct dm_crypt_io *io)
+>  
+>  static void kcryptd_queue_read(struct dm_crypt_io *io);
+>  
+> +static void kcryptd_io_bio_endio(struct work_struct *work)
+> +{
+> +	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
+> +
+> +	bio_endio(io->base_bio);
+> +}
+> +
+>  /*
+>   * One of the bios was finished. Check for completion of
+>   * the whole request and correctly clean up the buffer.
+> @@ -1817,6 +1827,20 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+>  
+>  	base_bio->bi_status = error;
+>  
+> +	/*
+> +	 * If we are running this function from our tasklet,
+> +	 * we can't call bio_endio() here, because it will call
+> +	 * clone_endio() from dm.c, which in turn will
+> +	 * free the current struct dm_crypt_io structure with
+> +	 * our tasklet. In this case we need to delay bio_endio()
+> +	 * execution to after the tasklet is done and dequeued.
+> +	 */
+> +	if (io->in_tasklet) {
+> +		INIT_WORK(&io->work, kcryptd_io_bio_endio);
+> +		queue_work(cc->io_queue, &io->work);
+> +		return;
+> +	}
+> +
+>  	bio_endio(base_bio);
+>  }
+>  
+> @@ -2291,6 +2315,11 @@ static void kcryptd_crypt(struct work_struct *work)
+>  		kcryptd_crypt_write_convert(io);
+>  }
+>  
+> +static void kcryptd_crypt_tasklet(unsigned long work)
+> +{
+> +	kcryptd_crypt((struct work_struct *)work);
+> +}
+> +
+>  static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+>  {
+>  	struct crypt_config *cc = io->cc;
+> @@ -2302,10 +2331,15 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+>  		 * irqs_disabled(): the kernel may run some IO completion from the idle thread, but
+>  		 * it is being executed with irqs disabled.
+>  		 */
+> -		if (!(in_hardirq() || irqs_disabled())) {
+> -			kcryptd_crypt(&io->work);
+> +		if (in_hardirq() || irqs_disabled()) {
+> +			io->in_tasklet = true;
+> +			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
+> +			tasklet_schedule(&io->tasklet);
+>  			return;
+>  		}
+> +
+> +		kcryptd_crypt(&io->work);
+> +		return;
+>  	}
+>  
+>  	INIT_WORK(&io->work, kcryptd_crypt);
+> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> index 49e4a35d7019..0bb126eadc0d 100644
+> --- a/drivers/md/dm-verity-target.c
+> +++ b/drivers/md/dm-verity-target.c
+> @@ -701,6 +701,23 @@ static void verity_work(struct work_struct *w)
+>  	verity_finish_io(io, errno_to_blk_status(verity_verify_io(io)));
+>  }
+>  
+> +static void verity_tasklet(unsigned long data)
+> +{
+> +	struct dm_verity_io *io = (struct dm_verity_io *)data;
+> +	int err;
+> +
+> +	io->in_tasklet = true;
+> +	err = verity_verify_io(io);
+> +	if (err == -EAGAIN || err == -ENOMEM) {
+> +		/* fallback to retrying with work-queue */
+> +		INIT_WORK(&io->work, verity_work);
+> +		queue_work(io->v->verify_wq, &io->work);
+> +		return;
+> +	}
+> +
+> +	verity_finish_io(io, errno_to_blk_status(err));
+> +}
+> +
+>  static void verity_end_io(struct bio *bio)
+>  {
+>  	struct dm_verity_io *io = bio->bi_private;
+> @@ -713,8 +730,13 @@ static void verity_end_io(struct bio *bio)
+>  		return;
+>  	}
+>  
+> -	INIT_WORK(&io->work, verity_work);
+> -	queue_work(io->v->verify_wq, &io->work);
+> +	if (static_branch_unlikely(&use_tasklet_enabled) && io->v->use_tasklet) {
+> +		tasklet_init(&io->tasklet, verity_tasklet, (unsigned long)io);
+> +		tasklet_schedule(&io->tasklet);
+> +	} else {
+> +		INIT_WORK(&io->work, verity_work);
+> +		queue_work(io->v->verify_wq, &io->work);
+> +	}
+>  }
+>  
+>  /*
+> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
+> index db93a91169d5..7e495cc375b0 100644
+> --- a/drivers/md/dm-verity.h
+> +++ b/drivers/md/dm-verity.h
+> @@ -87,6 +87,7 @@ struct dm_verity_io {
+>  	bool in_tasklet;
+>  
+>  	struct work_struct work;
+> +	struct tasklet_struct tasklet;
+>  
+>  	char *recheck_buffer;
+>  
+> -- 
+> 2.31.1
+> 
+
