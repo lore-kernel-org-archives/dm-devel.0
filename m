@@ -1,275 +1,194 @@
-Received: from szxga02-in.huawei.com (szxga02-in.huawei.com [45.249.212.188])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD674E560
-	for <dm-devel@lists.linux.dev>; Fri, 12 Apr 2024 02:06:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.188
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B369383A5
+	for <dm-devel@lists.linux.dev>; Fri, 12 Apr 2024 06:06:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712887587; cv=none; b=Ps3G/JXBlMkAvh7vbeJDI5ccdmOPvJn1rWU2I2UKGaYBq0NVIrCy6bwL6AY8udK9N3Sse17bRFZJznJFCRV8UKTc0NZe9zPufv8xKD9JL7I0xBHn0H9G9AL0M9xSO9sjofFrWJAsbMZB4BfyFMSma/JFyV6hpXzrVoX7hX0veks=
+	t=1712901976; cv=none; b=dzGdkyPVyyDxdCedCMhUCE9VmGNYqAXjhBcUvM37pcXXQOgCaLk8z7EVAf9DWsab9cAs+rgSYUIudyiGsQpMqrQWJ+9yJRC4KplLnh714TYZWvPdIHmwXfC2gwXeYbjUaoxeRlQ3a06RhMCIRUzqz1lLVAmzMdtr1uppXnoH1GU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712887587; c=relaxed/simple;
-	bh=iPUJalo/V5yuwIqG56h/GIP8PXBjUtO8NPe4sOfCQKc=;
-	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
-	 In-Reply-To:Content-Type; b=oFnb7abloKKO2QvbZm1IRSjFQpeeTNb3y8JZOvsSUgYK5QuC7Yk4eSMk73xGMX3sVgXTr5xS/atbTz+UQXbcSIri0N28394KN4lL3GEV2d2nyqPaDb6JcRLkYYrOY/oMCTVs3KyFn93CeG1jDOQsNYd0iOML/w0ggkwAYAEIZlo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.188
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
-Received: from mail.maildlp.com (unknown [172.19.163.252])
-	by szxga02-in.huawei.com (SkyGuard) with ESMTP id 4VG0JX1S25zYdKk;
-	Fri, 12 Apr 2024 10:05:16 +0800 (CST)
-Received: from dggpemd100001.china.huawei.com (unknown [7.185.36.94])
-	by mail.maildlp.com (Postfix) with ESMTPS id 1536018007F;
-	Fri, 12 Apr 2024 10:06:15 +0800 (CST)
-Received: from [10.174.179.155] (10.174.179.155) by
- dggpemd100001.china.huawei.com (7.185.36.94) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1258.28; Fri, 12 Apr 2024 10:06:14 +0800
-Message-ID: <4e5e4634-a2d0-ce35-3884-829d385c0879@huawei.com>
-Date: Fri, 12 Apr 2024 10:06:14 +0800
+	s=arc-20240116; t=1712901976; c=relaxed/simple;
+	bh=G3pr5LPUGO9t79qiAnaITY/2vre975QTtoMPgOs5E8w=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=X1W0wzdlJIoaDC9oWrp+FEwJs+R5eCS3C6b2Rf2nf3hHELBEZY7yNllLBItoQ8q9l5fYwnptfeuGRE7B2d+ZKxA504WEO3EO0cFmaRhToiwaR5s2ZXqgMqmK9J2Bu80WZ63XceugpQpad7lANjYIpkD8HYw20z7zEzG9ZQvHIvo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=U5iplOW/; arc=none smtp.client-ip=209.85.221.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="U5iplOW/"
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-34388753650so207851f8f.3
+        for <dm-devel@lists.linux.dev>; Thu, 11 Apr 2024 23:06:13 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1712901972; x=1713506772; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=J8GNh5ybVxw/DykKt798BH/xXgYhGYVh2tS08spZGHU=;
+        b=U5iplOW/km2Rbe8qYO9hJJcqn9sIumskxYD5xLlQgNxHQu3xGP86FtHcZOfAn9BYie
+         lmAksAkgQ5E53GHCUk2mk575P2tNtRw9mRqUU99dSUP+VSJiWjFUPoI5PPZLtqNEXf0M
+         cFahKYjMylg4OrMJ5kFvUXcyOrSkXnNjI9wL2h2GWEAN5Kl5KB43oOnuPm8aXg2dZLyd
+         gcWbpGgLtgs0uwLvFPPD7QRU7m5qWWYGq9YMHIZdDWzgcS9PIHtYu2zskdZb33H9vlqp
+         Eb9jaSX+81PjKq2ZbVv0GBxM8X5mA1fLa2p9HClrbnNsKWCKzG0D7KigoPf8TIquZO0V
+         xk3A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1712901972; x=1713506772;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=J8GNh5ybVxw/DykKt798BH/xXgYhGYVh2tS08spZGHU=;
+        b=OqRF6rs2PRNRpSSeK/FAx/u9/OjzO0YZdZeyC7rmC2XII3wPiEqqzFRR0ZJ+KCHBLH
+         WMXSB25gE7j5/6yBHd+C/tuJauMz3YDZ5LKrpefKDASPNcw4EzNbYbDw1fSyyukeZOU0
+         izb8b/gvZGZlSXxjGgvxuzQAczauiDejQ8qUCR231jEGL7o/ZtunCjE7b20G+XHQQ2uk
+         OrL/QCxLXN3RX5s9f0SBw2TlZHbu7poqloiTBGgMM7Tr3dh2TlYThUc52qU+Auaaaa2t
+         GZPkrpzzV1rCcPuRQD9gtBHUrKquf4HK8mMAjshsTJI+L4aaQNdNd2ewPi+HLJbzd1lE
+         k7Gw==
+X-Forwarded-Encrypted: i=1; AJvYcCUR+/wigdNu4+oSNwclSBBxGadnNK1dIg867i+q7litQgeMKcjt7ZcS+WyCUFbX+IUcIxgd5g5fB7CTAj0LE8zaZoA12ceuMcs=
+X-Gm-Message-State: AOJu0Yw8ixMbbv8p3Xxbue0l1jJkeEE5EfDAoiySQOmMYucXAwtlt+P5
+	5BWdzDTjDMqW5ArxrwCE7IGiCwySc6Ei2M5mN0j14XyF2cC0bO9YsQH+/lp5gPg=
+X-Google-Smtp-Source: AGHT+IFnNlkWGsmUoyZkKCFgPN6JKLMh7QMphM5zZgNw275CWWB0100Gnn9/GELhw1Ev0sYZPPEN3Q==
+X-Received: by 2002:a5d:4248:0:b0:343:742c:6a57 with SMTP id s8-20020a5d4248000000b00343742c6a57mr1023846wrr.35.1712901972410;
+        Thu, 11 Apr 2024 23:06:12 -0700 (PDT)
+Received: from ?IPV6:2001:a61:2b3c:8a01:4b64:83a6:b824:8156? ([2001:a61:2b3c:8a01:4b64:83a6:b824:8156])
+        by smtp.gmail.com with ESMTPSA id l26-20020adfa39a000000b00343e825d679sm3439474wrb.87.2024.04.11.23.06.11
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 11 Apr 2024 23:06:12 -0700 (PDT)
+Message-ID: <13eefee4-02ab-4cdf-b317-6a8585b4afdf@suse.com>
+Date: Fri, 12 Apr 2024 08:06:11 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101
- Thunderbird/104.0
-Subject: Re: [PATCH 6.6] Revert "dm-crypt, dm-verity: disable tasklets"
-To: Mikulas Patocka <mpatocka@redhat.com>
-CC: <stable@vger.kernel.org>, <gregkh@linuxfoundation.org>,
-	<torvalds@linux-foundation.org>, <tglx@linutronix.de>,
-	<linux-kernel@vger.kernel.org>, <dm-devel@lists.linux.dev>,
-	<msnitzer@redhat.com>, <ignat@cloudflare.com>, <damien.lemoal@wdc.com>,
-	<houtao1@huawei.com>, <nhuck@google.com>, <peterz@infradead.org>,
-	<yukuai3@huawei.com>, <yangerkun@huawei.com>, <yi.zhang@huawei.com>,
-	<lilingfeng@huaweicloud.com>
-References: <20240411091539.361470-1-lilingfeng3@huawei.com>
- <7c17f31a-2cc3-1597-e2b5-832355de7647@redhat.com>
-From: Li Lingfeng <lilingfeng3@huawei.com>
-In-Reply-To: <7c17f31a-2cc3-1597-e2b5-832355de7647@redhat.com>
-Content-Type: text/plain; charset="UTF-8"; format=flowed
+User-Agent: Mozilla Thunderbird
+Subject: Re: Problem with [PATCH] libmultipath: fix max_sectors_kb on adding
+ path
+To: Martin Wilck <mwilck@suse.com>, "bmarzins@redhat.com"
+ <bmarzins@redhat.com>, Etienne Aujames <eaujames@ddn.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ nilesh.javali@marvell.com, DM-DEVEL ML <dm-devel@lists.linux.dev>
+References: <ac898b4b79947c22d510bb365e9b507faac1f016.camel@ddn.com>
+ <9bb4ca089c3d2dd5b331df88f3f89953916b0b17.camel@suse.com>
+ <7742003e19b5a49398067dc0c59dfa8ddeffc3d7.camel@suse.com>
+Content-Language: en-US
+From: Hannes Reinecke <hare@suse.com>
+In-Reply-To: <7742003e19b5a49398067dc0c59dfa8ddeffc3d7.camel@suse.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: dggems703-chm.china.huawei.com (10.3.19.180) To
- dggpemd100001.china.huawei.com (7.185.36.94)
 
-Hi
-
-I'm having difficulty understanding "Workqueues and ksoftirqd may be 
-scheduled arbitrarily".
-This is my understanding:
-kcryptd_queue_crypt
-  tasklet_schedule
-   __tasklet_schedule
-    __tasklet_schedule_common
-     raise_softirq_irqoff
-      wakeup_softirqd
-       wake_up_process // ksoftirqd
-
-run_ksoftirqd
-  __do_softirq
-   softirq_handle_begin
-    __local_bh_disable_ip // Turn off preemption
-<---------- [1] ---------->
-   tasklet_action // h->action
-    tasklet_action_common
-     tasklet_trylock
-      kcryptd_crypt_tasklet // t->func(t->data)
-      ...
-       queue_work(cc->io_queue, &io->work)
-<---------- [2] ---------->
-     tasklet_unlock
-
-// workqueue process
-kcryptd_io_bio_endio
-  ...
-  // free tasklet_struct
-
-Since preemption has been turned off at [1], I'm confused about how the 
-CPU can be scheduled out to do work first at [2].
-Would you mind explaining it to me?
-
-Thanks
-
-在 2024/4/11 20:37, Mikulas Patocka 写道:
-> Hi
->
-> I NACK this.
->
->
-> On Thu, 11 Apr 2024, Li Lingfeng wrote:
->
->> This reverts commit 5735a2671ffb70ea29ca83969fe01316ee2ed6fc which is
->> commit 0a9bab391e336489169b95cb0d4553d921302189 upstream.
+On 4/11/24 19:41, Martin Wilck wrote:
+> Hello Ben, hello Etienne,
+> 
+> On Wed, 2023-08-23 at 21:51 +0200, Martin Wilck wrote:
+>> On Wed, 2023-08-23 at 16:24 +0000, Etienne Aujames wrote:
+>>> From: Etienne AUJAMES <eaujames@ddn.com>
+>>>
+>>> A user can change the value of max_sectors_kb on the multipath
+>>> device
+>>> and its path devices.
+>>> So when a path is deleted and then re-added, its value will not be
+>>> the
+>>> same as the multipath device. In that case the IOs could be mis-
+>>> sized.
+>>>
+>>> On reload, this patch re-apply max_sectors_kb value of the
+>>> multipath
+>>> device on its path devices.
+>>>
+>>> Signed-off-by: Etienne AUJAMES <eaujames@ddn.com>
 >>
->> Tasklet is thought to cause memory corruption [1], so it was disabled in
->> dm-crypt and dm-verity. However, memory corruption may not happen since
->> cc->io_queue is created without WQ_UNBOUND [2].
->> Revert commit 5735a2671ffb ("dm-crypt, dm-verity: disable tasklets") to
->> bring tasklet back.
->>
->> [1] https://lore.kernel.org/all/d390d7ee-f142-44d3-822a-87949e14608b@suse.de/T/
->> [2] https://lore.kernel.org/all/4d331659-badd-749d-fba1-271543631a8a@huawei.com/
-> Regarding [2] - if you add mdelay, you can make the race condition less
-> reproducible, but it is not a proper fix and the race condition stays
-> there unfixed.
->
-> Workqueues and ksoftirqd may be scheduled arbitrarily, there is no
-> guarantee that they will be executed in a particular order, even if they
-> are executed on the same CPU.
->
-> Mikulas
->
->> Signed-off-by: Li Lingfeng <lilingfeng3@huawei.com>
->> ---
->>   drivers/md/dm-crypt.c         | 38 +++++++++++++++++++++++++++++++++--
->>   drivers/md/dm-verity-target.c | 26 ++++++++++++++++++++++--
->>   drivers/md/dm-verity.h        |  1 +
->>   3 files changed, 61 insertions(+), 4 deletions(-)
->>
->> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
->> index aa6bb5b4704b..a60d91d02e28 100644
->> --- a/drivers/md/dm-crypt.c
->> +++ b/drivers/md/dm-crypt.c
->> @@ -75,8 +75,10 @@ struct dm_crypt_io {
->>   	struct bio *base_bio;
->>   	u8 *integrity_metadata;
->>   	bool integrity_metadata_from_pool:1;
->> +	bool in_tasklet:1;
->>   
->>   	struct work_struct work;
->> +	struct tasklet_struct tasklet;
->>   
->>   	struct convert_context ctx;
->>   
->> @@ -1775,6 +1777,7 @@ static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
->>   	io->ctx.r.req = NULL;
->>   	io->integrity_metadata = NULL;
->>   	io->integrity_metadata_from_pool = false;
->> +	io->in_tasklet = false;
->>   	atomic_set(&io->io_pending, 0);
->>   }
->>   
->> @@ -1785,6 +1788,13 @@ static void crypt_inc_pending(struct dm_crypt_io *io)
->>   
->>   static void kcryptd_queue_read(struct dm_crypt_io *io);
->>   
->> +static void kcryptd_io_bio_endio(struct work_struct *work)
->> +{
->> +	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
->> +
->> +	bio_endio(io->base_bio);
->> +}
->> +
->>   /*
->>    * One of the bios was finished. Check for completion of
->>    * the whole request and correctly clean up the buffer.
->> @@ -1817,6 +1827,20 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
->>   
->>   	base_bio->bi_status = error;
->>   
->> +	/*
->> +	 * If we are running this function from our tasklet,
->> +	 * we can't call bio_endio() here, because it will call
->> +	 * clone_endio() from dm.c, which in turn will
->> +	 * free the current struct dm_crypt_io structure with
->> +	 * our tasklet. In this case we need to delay bio_endio()
->> +	 * execution to after the tasklet is done and dequeued.
->> +	 */
->> +	if (io->in_tasklet) {
->> +		INIT_WORK(&io->work, kcryptd_io_bio_endio);
->> +		queue_work(cc->io_queue, &io->work);
->> +		return;
->> +	}
->> +
->>   	bio_endio(base_bio);
->>   }
->>   
->> @@ -2291,6 +2315,11 @@ static void kcryptd_crypt(struct work_struct *work)
->>   		kcryptd_crypt_write_convert(io);
->>   }
->>   
->> +static void kcryptd_crypt_tasklet(unsigned long work)
->> +{
->> +	kcryptd_crypt((struct work_struct *)work);
->> +}
->> +
->>   static void kcryptd_queue_crypt(struct dm_crypt_io *io)
->>   {
->>   	struct crypt_config *cc = io->cc;
->> @@ -2302,10 +2331,15 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
->>   		 * irqs_disabled(): the kernel may run some IO completion from the idle thread, but
->>   		 * it is being executed with irqs disabled.
->>   		 */
->> -		if (!(in_hardirq() || irqs_disabled())) {
->> -			kcryptd_crypt(&io->work);
->> +		if (in_hardirq() || irqs_disabled()) {
->> +			io->in_tasklet = true;
->> +			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
->> +			tasklet_schedule(&io->tasklet);
->>   			return;
->>   		}
->> +
->> +		kcryptd_crypt(&io->work);
->> +		return;
->>   	}
->>   
->>   	INIT_WORK(&io->work, kcryptd_crypt);
->> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
->> index 49e4a35d7019..0bb126eadc0d 100644
->> --- a/drivers/md/dm-verity-target.c
->> +++ b/drivers/md/dm-verity-target.c
->> @@ -701,6 +701,23 @@ static void verity_work(struct work_struct *w)
->>   	verity_finish_io(io, errno_to_blk_status(verity_verify_io(io)));
->>   }
->>   
->> +static void verity_tasklet(unsigned long data)
->> +{
->> +	struct dm_verity_io *io = (struct dm_verity_io *)data;
->> +	int err;
->> +
->> +	io->in_tasklet = true;
->> +	err = verity_verify_io(io);
->> +	if (err == -EAGAIN || err == -ENOMEM) {
->> +		/* fallback to retrying with work-queue */
->> +		INIT_WORK(&io->work, verity_work);
->> +		queue_work(io->v->verify_wq, &io->work);
->> +		return;
->> +	}
->> +
->> +	verity_finish_io(io, errno_to_blk_status(err));
->> +}
->> +
->>   static void verity_end_io(struct bio *bio)
->>   {
->>   	struct dm_verity_io *io = bio->bi_private;
->> @@ -713,8 +730,13 @@ static void verity_end_io(struct bio *bio)
->>   		return;
->>   	}
->>   
->> -	INIT_WORK(&io->work, verity_work);
->> -	queue_work(io->v->verify_wq, &io->work);
->> +	if (static_branch_unlikely(&use_tasklet_enabled) && io->v->use_tasklet) {
->> +		tasklet_init(&io->tasklet, verity_tasklet, (unsigned long)io);
->> +		tasklet_schedule(&io->tasklet);
->> +	} else {
->> +		INIT_WORK(&io->work, verity_work);
->> +		queue_work(io->v->verify_wq, &io->work);
->> +	}
->>   }
->>   
->>   /*
->> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
->> index db93a91169d5..7e495cc375b0 100644
->> --- a/drivers/md/dm-verity.h
->> +++ b/drivers/md/dm-verity.h
->> @@ -87,6 +87,7 @@ struct dm_verity_io {
->>   	bool in_tasklet;
->>   
->>   	struct work_struct work;
->> +	struct tasklet_struct tasklet;
->>   
->>   	char *recheck_buffer;
->>   
->> -- 
->> 2.31.1
->>
+>> Looks good to me.
+>> Reviewed-by: Martin Wilck <mwilck@suse.com>
+> 
+> We've seen issues in our beta-testing with this patch.
+> 
+> Consider a device with an odd max_sectors number (in 512 byte blocks).
+> If you look through the kernel sources, you'll see that there are quite
+> a few devices with odd max_sectors defaults. In our testing, we used
+> bnx2i (max_sectors = 127).
+> 
+> When a multipath map is set up, the kernel will call
+> blk_stack_limits(), making sure that the map has a max_sectors value
+> that doesn't exceed the max of all path devices.
+> The map will have max_sectors = 127 in the bnx2i case.
+> 
+> When a device is added, multipathd will read max_sectors_kb from sysfs,
+> and obtain (127 >> 1) == 63. It will then write this value to the path
+> devices, causing the kernel-internal max_sectors value to be set to
+> (63 << 1) = 126. But the map's max_sectors is still 127. The path
+> devices have now a lower limit than the map. This leads to errors like
+> this:
+> 
+> [  254.652934][  T820] blk_insert_cloned_request: over max size limit. (127 > 126)
+> 
+> If the map was reloaded after that, the kernel would fix this
+> discrepancy autmatically through the blk_stack_limits() algorithm. But
+> as long as this doesn't happen, the blk_insert_cloned_request() error
+> will repeat and possibly cause the system to hang, and even if a reload
+> happens, if the map is currently active, there will be a race window
+> during which IO may fail.
+> 
+> I'm working on a fix for this. My first idea was just to revert
+> Etienne's patch bbb77f3 ("libmultipath: fix max_sectors_kb on adding
+> path"). The code that exhibits the above issue is actually from 8fd4868
+> ("libmultipath: don't set max_sectors_kb on reloads").
+> 
+> My thoughts so far:
+> 
+> 1) We must strictly avoid max_sectors(path) < max_sectors(map).
+> 2) max_sectors(path) > max_sectors(map) doesn't hurt.
+> 3) We currently have no way to tell if the kernel value for max_sectors
+> of a path device is even or odd.
+> 4) As soon as we or someone else writes anything to max_sectors_kb, the
+> kernel internal value will be even. This applies to both path and map
+> devices.
+> 5) The max_sectors value of a map device will be equal to the lowest
+> max_sectors of all path devices after each reload.
+> 6) Therefore, if max_sectors_kb is set in multipath.conf and we have
+> set it at least once in a reload, we're on the safe side wrt the
+> scenario above. This is why we see no issue with 8fd4868
+> ("libmultipath: don't set max_sectors_kb on reloads"), even though that
+> commit introduced the code that rounds the max_sectors value down.
+> 7) Arguably, the kernel should be patched to provide the raw
+> max_sectors value to user space, but that will take time.
+> 8) If users change max_sectors_kb, either for path devices or for map
+> devices or other stacked devices, after the mapping has been set up,
+> they are asking for trouble. We can't avoid errors resulting from such
+> user actions, and I believe it's futile to try. This is not a
+> multipath-specific problem, it applies to any stacked block device.
+> 
+> AFAIU, bbb77f3 ("libmultipath: fix max_sectors_kb on adding path") just
+> "fixes" a scenario where a user had manipulated max_sectors_kb, which
+> is a situation we can't correctly deal with anyway (see (8)). So
+> perhaps just reverting bbb77f3 is enough.
+> 
+> OTOH, 8fd4868 is somewhat inconsistent. If it's correct to set
+> max_sectors_kb when path devices are added to make the value consistent
+> with the map, it should also be correct if max_sectors_kb was not
+> configured. This is what bbb77f3 tried to fix.
+> 
+> In light of (2) above, I think we shouldn't change a path devices'
+> max_sectors_kb unless it's smaller than the value of the map.
+> If we do it this way, the scenario above couldn't occur.
+> 
+We have gone into great pains in the kernel to ensure the queue limits
+are sane, and updated correctly. Even for stacking devices.
+I sinserely doubt we need this patch from multipath anymore.
+Having to adjust max_sectors_kb really should be reserved for
+corner-cases where the user has a dodgy hardware which doesn't
+report correct limits.
+But even that should rather be handled by blacklisting.
+Can't we just set max_sectors_kb to readonly in the kernel and
+be done with it?
+
+BTW: Brilliant analysis!
+
+Cheers,
+
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.com                               +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+
