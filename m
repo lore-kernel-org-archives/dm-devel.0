@@ -1,139 +1,127 @@
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.schwermer.no (mail.schwermer.no [49.12.228.226])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1498E51C49
-	for <dm-devel@lists.linux.dev>; Fri, 12 Apr 2024 08:25:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E2573286AC
+	for <dm-devel@lists.linux.dev>; Fri, 12 Apr 2024 09:13:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.228.226
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712910358; cv=none; b=u7Iab4nzgab6Z/xmfWsVrWd8ujYDVVXK5kH9YKKcRcW/GWySI6IRhViT9B8KGYYUyeG87USJAyDy/sIUkutNf5q/enGzxN+OCkgfCANsKWrA2U/Wb+1WYQOAgcEOU0UFb61jTOio2C2t9QRfthYBxobABlGM4UKWwoKRQ4ES2+E=
+	t=1712913221; cv=none; b=lffDHhhp34zwoiWTDS1cxauVO5Yr5EAP6pE2nawdMADjcbD+A3a1OwgxzH0VT+B290F2GlsnAxmwE1qfDoqGWiCLxSD89xODcUH3mzEia/hPxJLAVyN6UA5pLi8v633VD0nXoWHKM20ADfaZ9FthIrBTV4qQutSWo04SQM3jVGI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1712910358; c=relaxed/simple;
-	bh=ys1xNDospWYY8+6SUaFa3qTSrrE35CxPgWj8sVX5GIM=;
+	s=arc-20240116; t=1712913221; c=relaxed/simple;
+	bh=uySwppyPv+454vocW4sVxWntAp5CvM0RjGduy5Dcj2Y=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=lv+a5P24DMTzl8xa8AKYEMm3BDp//7ZsqsrLOKsfW8EHSurHsXJ1fxePzczhFyLqW8vkByRsaYOcYukdnk3HaiBXAiWoEkMEj3eXYbNZiS3IfXmHBSUSEAcMJzVUdB/J2s0Opa8lrk9XtX/jC64Rm9BD9Xl2Pegz5fOCSX249UI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=NCrJ/0fs; arc=none smtp.client-ip=209.85.128.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	 In-Reply-To:Content-Type; b=sqlGucw/YDl7NuKs8KU6Vh9ecqgiBWzB0hs1seg/JN52aHa4XktnSySNNLBINLenI54sPdZ8AXWQa2XksMDryPr9gcC7PZ+CXg7jKy+X3jI1ZodJ02mfC+MbOBXtq0v3m9oP5o+6sUGSRu2vTgeWBT5nzEo+uQMX9orXStOvpnI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=schwermer.no; spf=pass smtp.mailfrom=schwermer.no; dkim=pass (2048-bit key) header.d=schwermer.no header.i=@schwermer.no header.b=706kQmkM; arc=none smtp.client-ip=49.12.228.226
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=schwermer.no
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=schwermer.no
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="NCrJ/0fs"
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-417db45fe01so4779775e9.1
-        for <dm-devel@lists.linux.dev>; Fri, 12 Apr 2024 01:25:54 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1712910353; x=1713515153; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=M9yzipjLT7g5zEHzAitKNE/GT2SRvni1/pt8SW9fAd8=;
-        b=NCrJ/0fsL5RPhFmRBvgr9NtFle3sbyD0iomrFYAlOxsegWnKANQSb1V610w1Ebscwn
-         AjfgpT+B/QieKq0XFvD/ynTeOhyBfM7aEcdSraORltcb1bJQ9SIhtH7HC2N7i2i/mE3V
-         EaREm6Hbi+IY6K33/LEZoAYF+sttRYjRE564KZcHY6vpipP9LMoRMK+s4n6NPBBc9wFX
-         Oq/Z+Z7sYQP1STADfeb9q3EnZpFrjI89fNOGCeCrv1myUSj4HzJE6v6gfj1FrgsMEPw/
-         cIrJfbnManoQpxeyQC+UQSo5pp67XOwPRSyxucMBk2vuOk5OYxTD54odjgORNJmS4hZg
-         KVmA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1712910353; x=1713515153;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=M9yzipjLT7g5zEHzAitKNE/GT2SRvni1/pt8SW9fAd8=;
-        b=JnfqaZDTtzN1fyPw3Ks9oLeaN1QY8xzHRoJdhqKDavsBqY6c509mufHaNWa6FSdYNK
-         dKOK6ImtVr/ECRXSsyEJtqmhFiI7jxDlSuYgKORfNAmkkrjJXpzmZU49aTZkOS631ngz
-         fqzGmYfMea1REgiRGpfDYde+fuxx4fnlvdg+2hLnAjIwvNzklCahh9Vtm82nNnhbNjMd
-         llGBLJzceUgd6OhyOyw92KvXQPmveigDmtb56J22t8u+90q77J1G1qNpTq3ObRONfySJ
-         jSSGqmyPBtPvmWFGS3DeLTonkd9sO9UzXNk9cIUx1/3Y1wVSlY9iotfCHy5UvXj7O2Nu
-         tSVg==
-X-Forwarded-Encrypted: i=1; AJvYcCXCP/qAT8P1cPz+YZioyMDT5LIj6vP+gGB+UjP0DdAk6kfEOweQe6inDTe2H7rJXi72YLdHUNVnMNTD1IqigwsqZyE69wpMLWI=
-X-Gm-Message-State: AOJu0Yy0jL8NJBvGcfwMcopOCOi2u2BMdygYABuxKLMnoVQhkobA10WL
-	21RLAHQnQbEl2T9BTBypgcsBmUFHb8soek9gxMGGlA3gMAxHtZT/rWOjEHGQIOc=
-X-Google-Smtp-Source: AGHT+IFidzyrxnaVclec55unHbwLcFkJwp2VF+9QhvSAM30jXnLwiNjcMXKD1Rd93WhlZd9dkDuJoQ==
-X-Received: by 2002:a05:600c:4e06:b0:416:667d:4691 with SMTP id b6-20020a05600c4e0600b00416667d4691mr1428440wmq.25.1712910353426;
-        Fri, 12 Apr 2024 01:25:53 -0700 (PDT)
-Received: from ?IPV6:2a07:de40:a101:3:ce70:3e6f:3b9c:9125? (megane.afterburst.com. [2a01:4a0:11::2])
-        by smtp.gmail.com with ESMTPSA id a8-20020a05600c348800b00417bc4820acsm5005704wmq.0.2024.04.12.01.25.52
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 12 Apr 2024 01:25:53 -0700 (PDT)
-Message-ID: <30522782-cafa-4901-9635-bb14bd4d810f@suse.com>
-Date: Fri, 12 Apr 2024 10:25:52 +0200
+	dkim=pass (2048-bit key) header.d=schwermer.no header.i=@schwermer.no header.b="706kQmkM"
+X-Virus-Scanned: Yes
+Message-ID: <ba299ab0-9b70-469f-8c1b-bf88465df63f@schwermer.no>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=schwermer.no; s=mail;
+	t=1712913208; bh=uySwppyPv+454vocW4sVxWntAp5CvM0RjGduy5Dcj2Y=;
+	h=Subject:To:Cc:References:From:In-Reply-To;
+	b=706kQmkMIC4G5uJnVbUnWSqzEl0vqVu4nFcK1xFto9jsxy5xdB2pq81OvCu0x1OND
+	 WIQF1Hb5MOTHCv0fN524oNBktHVztwLKUkNV4ZCQWIhUprAbE3KoxJJO7EG3IMvSb6
+	 gYSd1QpoeqKMKebxs6Q5giyPhF1k/g2YVzc3OUcmEBGaxu8FODXicPipxkYguY/CiY
+	 AEmhBKD+JaZW+oNGC4d91wVteZZHlFXTwFUhglk3ToWihxSaU7P8VmkKhmrjkq5mFz
+	 KIBbK6ua6hWr9CLq6KEr1FgcxcRMh5Kxzh7qyghkeOeocLhK8Whvfn6iaaBam61xjT
+	 kB09TlDOjJshQ==
+Date: Fri, 12 Apr 2024 11:13:27 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Problem with [PATCH] libmultipath: fix max_sectors_kb on adding
- path
-To: Martin Wilck <mwilck@suse.com>, "bmarzins@redhat.com"
- <bmarzins@redhat.com>, Etienne Aujames <eaujames@ddn.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
- nilesh.javali@marvell.com, DM-DEVEL ML <dm-devel@lists.linux.dev>
-References: <ac898b4b79947c22d510bb365e9b507faac1f016.camel@ddn.com>
- <9bb4ca089c3d2dd5b331df88f3f89953916b0b17.camel@suse.com>
- <7742003e19b5a49398067dc0c59dfa8ddeffc3d7.camel@suse.com>
- <13eefee4-02ab-4cdf-b317-6a8585b4afdf@suse.com>
- <20c44a0ebb3aef1c6924aa7ab6006785330bb744.camel@suse.com>
+Subject: Re: dm-init/dm-verity: Data device lookup failed
+To: Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@lists.linux.dev
+References: <b5c5cd56-b9dd-4368-a8e1-b9e0a07b79b4@schwermer.no>
+ <20240409142323.GA22617@lst.de>
 Content-Language: en-US
-From: Hannes Reinecke <hare@suse.com>
-In-Reply-To: <20c44a0ebb3aef1c6924aa7ab6006785330bb744.camel@suse.com>
+From: Sven <dm-devel@schwermer.no>
+In-Reply-To: <20240409142323.GA22617@lst.de>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 4/12/24 09:21, Martin Wilck wrote:
-> On Fri, 2024-04-12 at 08:06 +0200, Hannes Reinecke wrote:
->>>
->> We have gone into great pains in the kernel to ensure the queue
->> limits
->> are sane, and updated correctly. Even for stacking devices.
-> 
-> This is true, but only for the creation of stacked devices (table
-> activation, as far as device mapper is concerned). Admins are free to
-> change max_sectors_kb any time; there's no propagation of changed
-> settings along the device stack, and no sanity checking in the kernel
-> prevents them from setting values that will cause I/O errors.
-> 
->> I sinserely doubt we need this patch from multipath anymore.
->> Having to adjust max_sectors_kb really should be reserved for
->> corner-cases where the user has a dodgy hardware which doesn't
->> report correct limits.
-> 
-> Right. We've seen a couple of cases where decreasing max_sectors_kb
-> from the default value was the only remedy for weird I/O failures. This
-> happened with remote storage reporting wrong limits, misbehaving
-> elements in the fabric, and even with virtualized IO stacks.
-> 
->> But even that should rather be handled by blacklisting.
->> Can't we just set max_sectors_kb to readonly in the kernel and
->> be done with it?
-> 
-> Personally, I think this goes a bit too far. I believe the kernel
-> should disallow changing (more specifically, decreasing) the
-> max_sectors_kb sysfs attribute for block devices that are either in use
-> (bd_openers > 0) or held by other block devices (bd_holder != NULL).
-> That would eliminate a large portion of bad cases, AFAICS. Admins could
-> still increase max_sectors_kb at the top of the device stack, but that
-> would arguably count as shooting oneself into the foot.
-> 
-> Errors in valid configurations are possible, even without changing
-> max_sectors_kb in sysfs. Consider a multipath map consisting of devices
-> with different max_sectors (for example mixed iSCSI/tcp and
-> iSCSI/bnx2i). If only the paths with large max_sectors are initially
-> detected, and others are added later, the map's max_sectors will be
-> decreased while in use, and the change will not be propagated to
-> stacked block layers above multipath: bummer. The only way to avoid
-> this in general is implementing limit propagation. I assume that the
-> implementation of block limit propagation in the kernel would be a
-> major effort with lots of possible race conditions. It's far easier to
-> have admins simply impose max_sectors_kb on multipath maps in corner
-> case scenarios like this.
-> 
-Indeed; changing the max_sectors_kb while the queue is live should
-be preceeded with a quiesce, to ensure that we're not changing request
-limits in flight.
+Hi again,
 
-And disabling setting of max_sectors_kb for stacked devices is a good
-idea, too.
+I have found out some more about this issue:
 
-Cheers,
+When dm-init succeeds in finding /dev/mmcblk0p3, it actually only finds 
+/dev/mmcblk0 and NOT the partition block device (see behavior in 
+devt_from_devname).
 
-Hannes
+Subsequently, when dm-verity looks up the data device (/dev/mmcblk0p3) 
+via dm_get_device, the following call stack is executed:
 
+dm_get_device
+  dm_get_table_device
+   open_table_device
+    blkdev_get_by_dev
+     blkdev_get_no_open
+
+blkdev_get_no_open actually returns -ENXIO because the partition device 
+is not available yet. That error then propagates back.
+
+A naive fix that works for me follows:
+
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index 2a71bcdba92d1..1e0867e5e9d95 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -294,10 +294,14 @@ static int __init dm_init_init(void)
+  	for (i = 0; i < ARRAY_SIZE(waitfor); i++) {
+  		if (waitfor[i]) {
+  			dev_t dev;
++			struct block_device *bdev;
+
+  			DMINFO("waiting for device %s ...", waitfor[i]);
+  			while (early_lookup_bdev(waitfor[i], &dev))
+  				fsleep(5000);
++			while (!(bdev = blkdev_get_no_open(dev)))
++				fsleep(5000);
++			blkdev_put_no_open(bdev);
+  		}
+  	}
+
+This is probably not ideal but I lack knowledge in the dm world to come 
+up with a better fix. Suggestions welcome.
+
+Best regards,
+Sven
+
+On 4/9/24 4:23 PM, Christoph Hellwig wrote:
+> On Tue, Apr 09, 2024 at 01:33:13PM +0200, Sven wrote:
+>> Hi,
+>>
+>> I'm using dm-init to set up a dm-verity rootfs, i.e. my kernel command line
+>> includes:
+>>
+>> root=/dev/dm-0
+>> dm-mod.waitfor=/dev/mmcblk0p3
+>> dm-mod.create="rootfs,,0,ro,0 614400 verity 1 /dev/mmcblk0p3 /dev/mmcblk0p3
+>> 1024 4096 307200 76801 sha256 HASH HASH"
+>>
+>> Occasionally, my device refuses to boot with the following errors:
+>>
+>> device-mapper: table: 254:0: verity: Data device lookup failed (-ENXIO)
+>> device-mapper: ioctl: error adding target to table
+>>
+>> There appears to be a race condition somewhere. This problem started to
+>> appear when updating from kernel version 5.15.148 to 6.6.22. Looking at the
+>> changes between the versions, this patch seems relevant:
+>> https://lore.kernel.org/all/20230531125535.676098-19-hch@lst.de/
+>>
+>> It appears that early_lookup_bdev in dm_init_init would succeed even if the
+>> partition block device is not there yet but the parent block device is.
+>> Could that explain why the subsequent device lookup for the partition
+>> fails?
+> 
+> -ENXIO isn't really an error that should come from the early block
+> device lookup.  On the other hand mmc_blk_open can return -ENXIO
+> and block device open return values end up here.  Can you throw
+> a printk or trace probe of your choice into mmc_blk_open to see if
+> that's the culprit?
+> 
