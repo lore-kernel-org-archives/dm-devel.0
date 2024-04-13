@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 59EA418E20;
-	Sat, 13 Apr 2024 00:56:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 412A11BDCD;
+	Sat, 13 Apr 2024 00:56:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1712969773; cv=none; b=BMgJtNXY129L+WxjfI3cXT/b79DZwmpb1cdbWPnwMb4RHe8qefJ9QdxNCxkAGLO7Hsp6xsKOna34laUEk97qIyDEXFNbe2qxNSUdNmdofsj1Myi40bOo84+kHKtSWp27k11M1j5To6NG6qniVoj4KTQRsHP58I5XmBHRf7L6oh4=
+	t=1712969773; cv=none; b=X/lL2hNCF73jVlvHfHKeTm1khh8lFOk30KIcrd3Oz0VN6zmPrMlFJYEsoTLPCVyQAS2nTAyhUiBYmgKcpaAKX2hSt4bAFCVB9ld684F3XwRC+DOi786OPjmy6cUO7sFYfGHiyIxvCgG6SuePtSXLLjLpgU4CrHGmQugq/haKXrg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1712969773; c=relaxed/simple;
-	bh=cqg4zI114ULLGY12Y1REFW1EBl88e+WSkAYDQuvQW9k=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=qwHPlWAE7mgi3mom3oZM+RI2cRgJK3PPB9rddeFNHawCICMfBSANYjRN62MIQbBBzlr1SFfPHZsKflnI6Po2/fLJk6QafOwe8ZZ7EY4MIzjcb1mQStAw3C+CI2jRpwIyr+4Zzdk+TsxGPZ5oZvYO9coOP3y+dioolJLHfl1MIIU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=botUGULx; arc=none smtp.client-ip=13.77.154.182
+	bh=QMznBQE7oyJQFYjL09OHjij3GoXneRiLsv5SZfImH7s=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=fSK1GKwiL3WzrcpnUKWczTQxz6+d4+AyxrrNMJlaWNNbhASoTw7mqoTdmAquEZrGvC8N2huL3Qpi1vETGVC5WIKB2dCj59UVESFK8NXMLRr2TpXkR/EhTuyZqa07YSZ9gMVW7jbsXkselTJlpyGJE4tSJ9pgy+p4QWb9Eq9rZ7U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=Tcz746cu; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="botUGULx"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="Tcz746cu"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id 118B120F3CE8; Fri, 12 Apr 2024 17:56:05 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 118B120F3CE8
+	id 6659F20FC5F2; Fri, 12 Apr 2024 17:56:05 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 6659F20FC5F2
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
 	s=default; t=1712969766;
-	bh=qgzvNluGT9ErOs84m/NcPTB0/hL9GdWaYuhJXNLZjGQ=;
+	bh=i0QxcQperO3WcXX66bzTWacqGnj904SxCZMw/Ni9WmA=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=botUGULxRYTBBmss87tG/Ar7jisX+G25X+phGjgRv7pzM+cdUdVoBQwepQ/GB7/9K
-	 hH/c+dVM7Au3dCzs2g2fsJW2hMUUkJ2OYNKb3fh3be3G7KB8+D3/iueKHBLgtMnmFY
-	 RebZnjX2KfGttJ8PJhvSsMBrYohQC7gAQ4BUF7pU=
+	b=Tcz746cucHaVy4tXYOFhvxaB+w6ibuaspBuQMrxShyIQLClp7a7BwJSULCuGA4RUj
+	 B/ZlcdMgknZDh6wkVxqmdKInMRNlDmv8RJnMSQKF7UjdOGP13F030e0xdcYDtaD7Jw
+	 FDs3pAAWyU4vs4SqUf04HhaGiIewr6EYQQ/VaXW4=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -43,11 +43,11 @@ Cc: linux-doc@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	audit@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
-	Deven Bowers <deven.desai@linux.microsoft.com>,
-	Fan Wu <wufan@linux.microsoft.com>
-Subject: [PATCH v17 10/21] ipe: add permissive toggle
-Date: Fri, 12 Apr 2024 17:55:53 -0700
-Message-Id: <1712969764-31039-11-git-send-email-wufan@linux.microsoft.com>
+	Fan Wu <wufan@linux.microsoft.com>,
+	Deven Bowers <deven.desai@linux.microsoft.com>
+Subject: [PATCH v17 16/21] fsverity: expose verified fsverity built-in signatures to LSMs
+Date: Fri, 12 Apr 2024 17:55:59 -0700
+Message-Id: <1712969764-31039-17-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1712969764-31039-1-git-send-email-wufan@linux.microsoft.com>
 References: <1712969764-31039-1-git-send-email-wufan@linux.microsoft.com>
@@ -57,332 +57,245 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
-From: Deven Bowers <deven.desai@linux.microsoft.com>
+This patch enhances fsverity's capabilities to support both integrity and
+authenticity protection by introducing the consumption of built-in
+signatures through a new LSM hook. This functionality allows LSMs,
+e.g. IPE, to enforce policies based on the authenticity and integrity of
+files, specifically focusing on built-in fsverity signatures. It enables
+a policy enforcement layer within LSMs for fsverity, offering granular
+control over the usage of authenticity claims. For instance, a policy
+could be established to permit the execution of all files with verified
+built-in fsverity signatures while restricting kernel module loading
+from specified fsverity files via fsverity digets.
 
-IPE, like SELinux, supports a permissive mode. This mode allows policy
-authors to test and evaluate IPE policy without it effecting their
-programs. When the mode is changed, a 1404 AUDIT_MAC_STATUS
-be reported.
+The introduction of a security_inode_setintegrity() hook call within
+fsverity's workflow ensures that the verified built-in signature of a file
+is exposed to LSMs, This enables LSMs to recognize and label fsverity files
+that contain a verified built-in fsverity signature. This hook is invoked
+subsequent to the fsverity_verify_signature() process, guaranteeing the
+signature's verification against fsverity's keyring. This mechanism is
+crucial for maintaining system security, as it operates in kernel space,
+effectively thwarting attempts by malicious binaries to bypass user space
+stack interactions.
 
-This patch adds the following audit records:
-
-    audit: MAC_STATUS enforcing=0 old_enforcing=1 auid=4294967295
-      ses=4294967295 enabled=1 old-enabled=1 lsm=ipe res=1
-    audit: MAC_STATUS enforcing=1 old_enforcing=0 auid=4294967295
-      ses=4294967295 enabled=1 old-enabled=1 lsm=ipe res=1
-
-The audit record only emit when the value from the user input is
-different from the current enforce value.
+The second to last commit in this patch set will add a link to the IPE
+documentation in fsverity.rst.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
 ---
-v2:
-  + Split evaluation loop, access control hooks,
-    and evaluation loop from policy parser and userspace
-    interface to pass mailing list character limit
-
-v3:
-  + Move ipe_load_properties to patch 04.
-  + Remove useless 0-initializations
-  + Prefix extern variables with ipe_
-  + Remove kernel module parameters, as these are
-    exposed through sysctls.
-  + Add more prose to the IPE base config option
-    help text.
-  + Use GFP_KERNEL for audit_log_start.
-  + Remove unnecessary caching system.
-  + Remove comments from headers
-  + Use rcu_access_pointer for rcu-pointer null check
-  + Remove usage of reqprot; use prot only.
-  + Move policy load and activation audit event to 03/12
-
-v4:
-  + Remove sysctls in favor of securityfs nodes
-  + Re-add kernel module parameters, as these are now
-    exposed through securityfs.
-  + Refactor property audit loop to a separate function.
-
-v5:
-  + fix minor grammatical errors
-  + do not group rule by curly-brace in audit record,
-    reconstruct the exact rule.
-
-v6:
-  + No changes
+v1-v6:
+  + Not present
 
 v7:
-  + Further split lsm creation into a separate commit from the
-    evaluation loop and audit system, for easier review.
-  + Propagating changes to support the new ipe_context structure in the
-    evaluation loop.
-  + Split out permissive functionality into a separate patch for easier
-    review.
-  + Remove permissive switch compile-time configuration option - this
-    is trivial to add later.
+  Introduced
 
 v8:
-  + Remove "IPE" prefix from permissive audit record
-  + align fields to the linux-audit field dictionary. This causes the
-    following fields to change:
-      enforce -> permissive
-
-  + Remove duplicated information correlated with syscall record, that
-    will always be present in the audit event.
-  + Change audit types:
-    + AUDIT_TRUST_STATUS -> AUDIT_MAC_STATUS
-      + There is no significant difference in meaning between
-        these types.
+  + Split fs/verity/ changes and security/ changes into separate patches
+  + Change signature of fsverity_create_info to accept non-const inode
+  + Change signature of fsverity_verify_signature to accept non-const inode
+  + Don't cast-away const from inode.
+  + Digest functionality dropped in favor of:
+    ("fs-verity: define a function to return the integrity protected
+      file digest")
+  + Reworded commit description and title to match changes.
+  + Fix a bug wherein no LSM implements the particular fsverity @name
+    (or LSM is disabled), and returns -EOPNOTSUPP, causing errors.
 
 v9:
-  + Clean up ipe_context related code
+  + No changes
 
 v10:
-  + Change audit format to comform with the existing format selinux is
-    using
-  + Remove the audit record emission during init to align with selinux,
-    which does not perform this action.
+  + Rename the signature blob key
+  + Cleanup redundant code
+  + Make the hook call depends on CONFIG_FS_VERITY_BUILTIN_SIGNATURES
 
 v11:
-  + Remove redundant code
+  + No changes
 
 v12:
-  + Remove redundant code
+  + Add constification to the hook call
 
 v13:
-  + Remove audit format macro
+  + No changes
 
 v14:
-  + No changes
+  + Add doc/comment to built-in signature verification
 
 v15:
-  + No changes
+  + Add more docs related to IPE
+  + Switch the hook call to security_inode_setintegrity()
 
 v16:
-  + No changes
+  + Explicitly mention "fsverity builtin signatures" in the commit
+    message
+  + Amend documentation in fsverity.rst
+  + Fix format issue
+  + Change enum name
 
 v17:
-  + Fix code and documentation style issues
+  + Fix various documentation issues
+  + Use new enum name LSM_INT_FSVERITY_BUILTINSIG_VALID
 ---
- security/ipe/audit.c | 27 ++++++++++++++++--
- security/ipe/audit.h |  1 +
- security/ipe/eval.c  | 11 ++++++--
- security/ipe/eval.h  |  1 +
- security/ipe/fs.c    | 66 ++++++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 102 insertions(+), 4 deletions(-)
+ Documentation/filesystems/fsverity.rst | 23 +++++++++++++++++++++--
+ fs/verity/fsverity_private.h           |  2 +-
+ fs/verity/open.c                       | 24 +++++++++++++++++++++++-
+ fs/verity/signature.c                  |  6 +++++-
+ include/linux/security.h               |  1 +
+ 5 files changed, 51 insertions(+), 5 deletions(-)
 
-diff --git a/security/ipe/audit.c b/security/ipe/audit.c
-index 6a3f24665655..a416291ba477 100644
---- a/security/ipe/audit.c
-+++ b/security/ipe/audit.c
-@@ -93,8 +93,8 @@ void ipe_audit_match(const struct ipe_eval_ctx *const ctx,
- 	if (!ab)
- 		return;
+diff --git a/Documentation/filesystems/fsverity.rst b/Documentation/filesystems/fsverity.rst
+index 13e4b18e5dbb..362b7a5dc300 100644
+--- a/Documentation/filesystems/fsverity.rst
++++ b/Documentation/filesystems/fsverity.rst
+@@ -86,6 +86,14 @@ authenticating fs-verity file hashes include:
+   signature in their "security.ima" extended attribute, as controlled
+   by the IMA policy.  For more information, see the IMA documentation.
  
--	audit_log_format(ab, "ipe_op=%s ipe_hook=%s pid=%d comm=",
--			 op, audit_hook_names[ctx->hook],
-+	audit_log_format(ab, "ipe_op=%s ipe_hook=%s enforcing=%d pid=%d comm=",
-+			 op, audit_hook_names[ctx->hook], READ_ONCE(enforce),
- 			 task_tgid_nr(current));
- 	audit_log_untrustedstring(ab, get_task_comm(comm, current));
- 
-@@ -212,3 +212,26 @@ void ipe_audit_policy_load(const struct ipe_policy *const p)
- 
- 	audit_log_end(ab);
- }
++- Integrity Policy Enforcement (IPE).  IPE supports enforcing access
++  control decisions based on immutable security properties of files,
++  including those protected by fs-verity's built-in signatures.
++  "IPE policy" specifically allows for the authorization of fs-verity
++  files using properties ``fsverity_digest`` for identifying
++  files by their verity digest, and ``fsverity_signature`` to authorize
++  files with a verified fs-verity's built-in signature.
 +
-+/**
-+ * ipe_audit_enforce() - Audit a change in IPE's enforcement state.
-+ * @new_enforce: The new value enforce to be set.
-+ * @old_enforce: The old value currently in enforce.
-+ */
-+void ipe_audit_enforce(bool new_enforce, bool old_enforce)
-+{
-+	struct audit_buffer *ab;
+ - Trusted userspace code in combination with `Built-in signature
+   verification`_.  This approach should be used only with great care.
+ 
+@@ -457,7 +465,11 @@ Enabling this option adds the following:
+    On success, the ioctl persists the signature alongside the Merkle
+    tree.  Then, any time the file is opened, the kernel verifies the
+    file's actual digest against this signature, using the certificates
+-   in the ".fs-verity" keyring.
++   in the ".fs-verity" keyring. This verification happens as long as the
++   file's signature exists, regardless of the state of the sysctl variable
++   "fs.verity.require_signatures" described in the next item. The IPE LSM
++   relies on this behavior to recognize and label fsverity files
++   that contain a verified built-in fsverity signature.
+ 
+ 3. A new sysctl "fs.verity.require_signatures" is made available.
+    When set to 1, the kernel requires that all verity files have a
+@@ -481,7 +493,7 @@ be carefully considered before using them:
+ 
+ - Builtin signature verification does *not* make the kernel enforce
+   that any files actually have fs-verity enabled.  Thus, it is not a
+-  complete authentication policy.  Currently, if it is used, the only
++  complete authentication policy.  Currently, if it is used, one
+   way to complete the authentication policy is for trusted userspace
+   code to explicitly check whether files have fs-verity enabled with a
+   signature before they are accessed.  (With
+@@ -490,6 +502,13 @@ be carefully considered before using them:
+   could just store the signature alongside the file and verify it
+   itself using a cryptographic library, instead of using this feature.
+ 
++- Another approach is to utilize fs-verity builtin signature
++  verification in conjunction with the IPE LSM, which supports defining
++  a kernel-enforced, system-wide authentication policy that allows only
++  files with a verified fs-verity builtin signature to perform certain
++  operations, such as execution. Note that IPE doesn't require
++  fs.verity.require_signatures=1.
 +
-+	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_MAC_STATUS);
-+	if (!ab)
-+		return;
-+
-+	audit_log(audit_context(), GFP_KERNEL, AUDIT_MAC_STATUS,
-+		  "enforcing=%d old_enforcing=%d auid=%u ses=%u"
-+		  " enabled=1 old-enabled=1 lsm=ipe res=1",
-+		  new_enforce, old_enforce,
-+		  from_kuid(&init_user_ns, audit_get_loginuid(current)),
-+		  audit_get_sessionid(current));
-+
-+	audit_log_end(ab);
-+}
-diff --git a/security/ipe/audit.h b/security/ipe/audit.h
-index 3ba8b8a91541..ed2620846a79 100644
---- a/security/ipe/audit.h
-+++ b/security/ipe/audit.h
-@@ -14,5 +14,6 @@ void ipe_audit_match(const struct ipe_eval_ctx *const ctx,
- void ipe_audit_policy_load(const struct ipe_policy *const p);
- void ipe_audit_policy_activation(const struct ipe_policy *const op,
- 				 const struct ipe_policy *const np);
-+void ipe_audit_enforce(bool new_enforce, bool old_enforce);
+ - A file's builtin signature can only be set at the same time that
+   fs-verity is being enabled on the file.  Changing or deleting the
+   builtin signature later requires re-creating the file.
+diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
+index b3506f56e180..a0e786c611c9 100644
+--- a/fs/verity/fsverity_private.h
++++ b/fs/verity/fsverity_private.h
+@@ -117,7 +117,7 @@ int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
+ 				     unsigned int log_blocksize,
+ 				     const u8 *salt, size_t salt_size);
  
- #endif /* _IPE_AUDIT_H */
-diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-index 18fd5d8fa03e..dd9064974be6 100644
---- a/security/ipe/eval.c
-+++ b/security/ipe/eval.c
-@@ -18,6 +18,7 @@
+-struct fsverity_info *fsverity_create_info(const struct inode *inode,
++struct fsverity_info *fsverity_create_info(struct inode *inode,
+ 					   struct fsverity_descriptor *desc);
  
- struct ipe_policy __rcu *ipe_active_policy;
- bool success_audit;
-+bool enforce = true;
+ void fsverity_set_info(struct inode *inode, struct fsverity_info *vi);
+diff --git a/fs/verity/open.c b/fs/verity/open.c
+index fdeb95eca3af..e04fffa6b274 100644
+--- a/fs/verity/open.c
++++ b/fs/verity/open.c
+@@ -8,6 +8,7 @@
+ #include "fsverity_private.h"
  
- #define FILE_SUPERBLOCK(f) ((f)->f_path.mnt->mnt_sb)
+ #include <linux/mm.h>
++#include <linux/security.h>
+ #include <linux/slab.h>
  
-@@ -108,6 +109,7 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
- 	enum ipe_action_type action;
- 	enum ipe_match match_type;
- 	bool match = false;
-+	int rc = 0;
- 
- 	rcu_read_lock();
- 
-@@ -160,9 +162,12 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
- 	ipe_audit_match(ctx, match_type, action, rule);
- 
- 	if (action == IPE_ACTION_DENY)
--		return -EACCES;
-+		rc = -EACCES;
- 
--	return 0;
-+	if (!READ_ONCE(enforce))
-+		rc = 0;
-+
-+	return rc;
+ static struct kmem_cache *fsverity_info_cachep;
+@@ -172,12 +173,29 @@ static int compute_file_digest(const struct fsverity_hash_alg *hash_alg,
+ 	return err;
  }
  
- /* Set the right module name */
-@@ -173,3 +178,5 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
- 
- module_param(success_audit, bool, 0400);
- MODULE_PARM_DESC(success_audit, "Start IPE with success auditing enabled");
-+module_param(enforce, bool, 0400);
-+MODULE_PARM_DESC(enforce, "Start IPE in enforce or permissive mode");
-diff --git a/security/ipe/eval.h b/security/ipe/eval.h
-index 42b74a7a7c2b..80b74f55fa69 100644
---- a/security/ipe/eval.h
-+++ b/security/ipe/eval.h
-@@ -16,6 +16,7 @@
- 
- extern struct ipe_policy __rcu *ipe_active_policy;
- extern bool success_audit;
-+extern bool enforce;
- 
- struct ipe_superblock {
- 	bool initramfs;
-diff --git a/security/ipe/fs.c b/security/ipe/fs.c
-index 9e410982b759..b52fb6023904 100644
---- a/security/ipe/fs.c
-+++ b/security/ipe/fs.c
-@@ -16,6 +16,7 @@ static struct dentry *np __ro_after_init;
- static struct dentry *root __ro_after_init;
- struct dentry *policy_root __ro_after_init;
- static struct dentry *audit_node __ro_after_init;
-+static struct dentry *enforce_node __ro_after_init;
- 
- /**
-  * setaudit() - Write handler for the securityfs node, "ipe/success_audit"
-@@ -65,6 +66,58 @@ static ssize_t getaudit(struct file *f, char __user *data,
- 	return simple_read_from_buffer(data, len, offset, result, 1);
- }
- 
-+/**
-+ * setenforce() - Write handler for the securityfs node, "ipe/enforce"
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-EPERM			- Insufficient permission
-+ */
-+static ssize_t setenforce(struct file *f, const char __user *data,
-+			  size_t len, loff_t *offset)
++#ifdef CONFIG_FS_VERITY_BUILTIN_SIGNATURES
++static int fsverity_inode_setintegrity(struct inode *inode,
++				       const struct fsverity_descriptor *desc)
 +{
-+	int rc = 0;
-+	bool new_value, old_value;
-+
-+	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
-+		return -EPERM;
-+
-+	old_value = READ_ONCE(enforce);
-+	rc = kstrtobool_from_user(data, len, &new_value);
-+	if (rc)
-+		return rc;
-+
-+	if (new_value != old_value) {
-+		ipe_audit_enforce(new_value, old_value);
-+		WRITE_ONCE(enforce, new_value);
-+	}
-+
-+	return len;
++	return security_inode_setintegrity(inode,
++					   LSM_INT_FSVERITY_BUILTINSIG_VALID,
++					   desc->signature,
++					   le32_to_cpu(desc->sig_size));
 +}
-+
-+/**
-+ * getenforce() - Read handler for the securityfs node, "ipe/enforce"
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the read syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * Return: Length of buffer written
-+ */
-+static ssize_t getenforce(struct file *f, char __user *data,
-+			  size_t len, loff_t *offset)
++#else
++static inline int fsverity_inode_setintegrity(struct inode *inode,
++					      const struct fsverity_descriptor *desc)
 +{
-+	const char *result;
-+
-+	result = ((READ_ONCE(enforce)) ? "1" : "0");
-+
-+	return simple_read_from_buffer(data, len, offset, result, 1);
++	return 0;
 +}
++#endif /* CONFIG_FS_VERITY_BUILTIN_SIGNATURES */
 +
- /**
-  * new_policy() - Write handler for the securityfs node, "ipe/new_policy".
-  * @f: Supplies a file structure representing the securityfs node.
-@@ -123,6 +176,11 @@ static const struct file_operations audit_fops = {
- 	.read = getaudit,
- };
- 
-+static const struct file_operations enforce_fops = {
-+	.write = setenforce,
-+	.read = getenforce,
-+};
-+
- /**
-  * ipe_init_securityfs() - Initialize IPE's securityfs tree at fsinit.
-  *
-@@ -149,6 +207,13 @@ static int __init ipe_init_securityfs(void)
- 		goto err;
+ /*
+  * Create a new fsverity_info from the given fsverity_descriptor (with optional
+  * appended builtin signature), and check the signature if present.  The
+  * fsverity_descriptor must have already undergone basic validation.
+  */
+-struct fsverity_info *fsverity_create_info(const struct inode *inode,
++struct fsverity_info *fsverity_create_info(struct inode *inode,
+ 					   struct fsverity_descriptor *desc)
+ {
+ 	struct fsverity_info *vi;
+@@ -241,6 +259,10 @@ struct fsverity_info *fsverity_create_info(const struct inode *inode,
+ 		}
  	}
  
-+	enforce_node = securityfs_create_file("enforce", 0600, root, NULL,
-+					      &enforce_fops);
-+	if (IS_ERR(enforce_node)) {
-+		rc = PTR_ERR(enforce_node);
-+		goto err;
-+	}
++	err = fsverity_inode_setintegrity(inode, desc);
++	if (err)
++		goto fail;
 +
- 	policy_root = securityfs_create_dir("policies", root);
- 	if (IS_ERR(policy_root)) {
- 		rc = PTR_ERR(policy_root);
-@@ -165,6 +230,7 @@ static int __init ipe_init_securityfs(void)
- err:
- 	securityfs_remove(np);
- 	securityfs_remove(policy_root);
-+	securityfs_remove(enforce_node);
- 	securityfs_remove(audit_node);
- 	securityfs_remove(root);
- 	return rc;
+ 	return vi;
+ 
+ fail:
+diff --git a/fs/verity/signature.c b/fs/verity/signature.c
+index 90c07573dd77..fd60e9704e78 100644
+--- a/fs/verity/signature.c
++++ b/fs/verity/signature.c
+@@ -41,7 +41,11 @@ static struct key *fsverity_keyring;
+  * @sig_size: size of signature in bytes, or 0 if no signature
+  *
+  * If the file includes a signature of its fs-verity file digest, verify it
+- * against the certificates in the fs-verity keyring.
++ * against the certificates in the fs-verity keyring. Note that signatures
++ * are verified regardless of the state of the 'fsverity_require_signatures'
++ * variable and the LSM subsystem relies on this behavior to help enforce
++ * file integrity policies. Please discuss changes with the LSM list
++ * (thank you!).
+  *
+  * Return: 0 on success (signature valid or not required); -errno on failure
+  */
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 703762b0c4ad..2d6752333d6f 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -86,6 +86,7 @@ enum lsm_event {
+ enum lsm_integrity_type {
+ 	LSM_INT_DMVERITY_SIG_VALID,
+ 	LSM_INT_DMVERITY_ROOTHASH,
++	LSM_INT_FSVERITY_BUILTINSIG_VALID,
+ };
+ 
+ /*
 -- 
 2.44.0
 
