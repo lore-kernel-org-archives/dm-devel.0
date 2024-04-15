@@ -1,138 +1,111 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0CE471B50
-	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 19:56:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A32371B50
+	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 20:26:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713211000; cv=none; b=h+2pH0iZJj7cfxOw2ZtfA8OgfMU6cLWXoT7xSEsHGNpKf7CQ4TKmcpA52yOkX4UIvfItwoEU7Jf6Z4SJ9IT2GVOXs1L8yRC8mcZSQzvoWTvW7Klo3CnnYKqsT/xQmBAHYjuvbGZwkpbnzcojrNGUfWLdIN/6DVibgaFDgB0l2sk=
+	t=1713212805; cv=none; b=qGBqheHiELUXJ5n1avAu6aYX7ZknvqUudhQOxIW6ngTNzvBbP2YqWOqz+ZOlNxBdUWUtxpx4thEf7xCEEdfHe5MuIh6lVdRi+A6M4XQyCsw4pkTitd2OsPL2reb/INtOimypYag7vWzKtDgawST7EkkdEwYS0WKV6xKHXXNM9rA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713211000; c=relaxed/simple;
-	bh=dC4s91t5qBKCHyNN5rKv1IPrdoB6zaDEwfafoSCR91k=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=e6EHqaZL6NOPO6u3PE+v09QM5z4l9703BerJUIPZ5GVtkqtlDabXKSvbKs03jr+kGptkfH7QBcuXXj6kZJvjBkgPiGdiB9VmzVnYDn8/lUFAjqzvb9ClBGO8jM4JXhSfL6w8/6GlZxj6yLEV6STYGNqBHxF5whg7qLiIPOrHpf4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=aJuWdSE9; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1713212805; c=relaxed/simple;
+	bh=qPJVOjEezsFM2XL6tDYb2RhtONVF0U9eARItJ2ARwKs=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=d7VT9sWr2PviSFYp1+w7APshqDtH4J07G7uyPstkVY9jQbYpn2ibZkGrD1o0M/xtwr148/Ocb9lst7mSwx/uNPDlgh9mZKSmxErA36WxWy7IMeKEaAW1lW91at4NbxpsQEpWLWd5VVqL0vfWFJNrr89qbD69PeO6XezfrGrIN5w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=W4YyCPon; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aJuWdSE9"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="W4YyCPon"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713210997;
+	s=mimecast20190719; t=1713212803;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=bG35vuPs2gV03R4SJtXJmpy8yBrYHYtZhZ+cuQSMSRM=;
-	b=aJuWdSE9aFGy20ITAUtWEzgy2VTWO1DfO9WLeEv2wY/JkefOJq25myEAsIJhng4G0Eqrv4
-	uxJlTS8lb2oFGUJFVESkqaerB7mkMRIsShpA0Z7X90jNnyx/kyyqbEGJFXdp0ThIn670/F
-	E9cY4Fwg93S3J7d61APGEu+g2SzYKtU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-341-j4tBiozYMmCGmqNKkxZLYA-1; Mon, 15 Apr 2024 15:56:34 -0400
-X-MC-Unique: j4tBiozYMmCGmqNKkxZLYA-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	bh=fNlpfyfj8U1n0/Sd2C3M6qnEzCqQjaHBE1WQAjdXoeY=;
+	b=W4YyCPon3CJbrpOIkKlbX9srniSPFJqCaY4rL721yJH0oDBjM/PLtKmx5xuVON8RYvIDuj
+	6LF/L5DZ3KhJN7BolrdKWSReo1nAa/s4lcC2YfHZjlFk7A+VZXYdUY3Pis/oWBhbOQ+LB2
+	xRHr2f8vZwn13qXnwjfVp3yolo9/6Vw=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-524-_DXJlfKKOX2yxJUySwpq7Q-1; Mon,
+ 15 Apr 2024 16:26:39 -0400
+X-MC-Unique: _DXJlfKKOX2yxJUySwpq7Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2BCF6104D509;
-	Mon, 15 Apr 2024 19:56:34 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DC159492BD4;
-	Mon, 15 Apr 2024 19:56:33 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id C53D230BFED5; Mon, 15 Apr 2024 19:56:33 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id C08373FB54;
-	Mon, 15 Apr 2024 21:56:33 +0200 (CEST)
-Date: Mon, 15 Apr 2024 21:56:33 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Bart Van Assche <bvanassche@acm.org>
-cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev, 
-    Eric Biggers <ebiggers@kernel.org>, Jaegeuk Kim <jaegeuk@kernel.org>, 
-    Daniel Lee <chullee@google.com>, stable@vger.kernel.org
-Subject: Re: [PATCH] dm: Change the default value of rq_affinity from 0 into
- 1
-In-Reply-To: <20240415194921.6404-1-bvanassche@acm.org>
-Message-ID: <20cf8b38-6c5b-9a10-6a7b-5d587a19eed@redhat.com>
-References: <20240415194921.6404-1-bvanassche@acm.org>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 690253819C5F;
+	Mon, 15 Apr 2024 20:26:39 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4F0F02166B31;
+	Mon, 15 Apr 2024 20:26:39 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 43FKQcPc1904562
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 15 Apr 2024 16:26:39 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 43FKQc4c1904561;
+	Mon, 15 Apr 2024 16:26:38 -0400
+Date: Mon, 15 Apr 2024 16:26:38 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH] multipathd: Set CPUWeight to 1000
+Message-ID: <Zh2NfqoNHCWg6-Tw@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+References: <20240415180646.1903335-1-bmarzins@redhat.com>
+ <7959de14debd4e414e40de89a6267f587de14bb9.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+In-Reply-To: <7959de14debd4e414e40de89a6267f587de14bb9.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-
-
-On Mon, 15 Apr 2024, Bart Van Assche wrote:
-
-> The following behavior is inconsistent:
-> * For request-based dm queues the default value of rq_affinity is 1.
-> * For bio-based dm queues the default value of rq_affinity is 0.
+On Mon, Apr 15, 2024 at 08:18:08PM +0200, Martin Wilck wrote:
+> On Mon, 2024-04-15 at 14:06 -0400, Benjamin Marzinski wrote:
+> > If multipathd doesn't become a real time process, it was scheduled as
+> > a
+> > normal process, without any priority increase. Bump up the CPUWeight
+> > so
+> > that even as a normal process, it will still run with increased
+> > priority.
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  multipathd/multipathd.service.in | 1 +
+> >  1 file changed, 1 insertion(+)
 > 
-> The default value for request-based dm queues is 1 because of the following
-> code in blk_mq_init_allocated_queue():
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
 > 
->     q->queue_flags |= QUEUE_FLAG_MQ_DEFAULT;
-> 
-> >From <linux/blkdev.h>:
-> 
->     #define QUEUE_FLAG_MQ_DEFAULT ((1UL << QUEUE_FLAG_IO_STAT) |	\
-> 				   (1UL << QUEUE_FLAG_SAME_COMP) |	\
-> 				   (1UL << QUEUE_FLAG_NOWAIT))
-> 
-> The default value of rq_affinity for bio-based dm queues is 0 because the
-> dm alloc_dev() function does not set any of the QUEUE_FLAG_SAME_* flags. I
-> think the different default values are the result of an oversight when
-> blk-mq support was added in the device mapper code. Hence this patch that
-> changes the default value of rq_affinity from 0 to 1 for bio-based dm
-> queues.
-> 
-> This patch reduces the boot time from 12.23 to 12.20 seconds on my test
+> But let's also decrease the default value for LimitRTPRIO.
 
-Are you sure that this is not jitter?
+Sure.
 
-I am wondering how should QUEUE_FLAG_SAME_COMP work for bio-based
-devices.
-
-I grepped the kernel for QUEUE_FLAG_SAME_COMP and it is tested in 
-block/blk-mq.c in blk_mq_complete_need_ipi (this code path is taken only 
-for request-based devices) and in block/blk-sysfs.c in 
-queue_rq_affinity_show (this just displays the value in sysfs). There are 
-no other places where QUEUE_FLAG_SAME_COMP is tested, so I don't see what 
-effect is it supposed to have.
-
-Mikulas
-
-
-> setup, a Pixel 2023 development board. The storage controller on that test
-> setup supports a single completion interrupt and hence benefits from
-> redirecting I/O completions to a CPU core that is closer to the submitter.
 > 
-> Cc: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: Eric Biggers <ebiggers@kernel.org>
-> Cc: Jaegeuk Kim <jaegeuk@kernel.org>
-> Cc: Daniel Lee <chullee@google.com>
-> Cc: stable@vger.kernel.org
-> Fixes: bfebd1cdb497 ("dm: add full blk-mq support to request-based DM")
-> Signed-off-by: Bart Van Assche <bvanassche@acm.org>
-> ---
->  drivers/md/dm.c | 1 +
->  1 file changed, 1 insertion(+)
+> Martin
 > 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 56aa2a8b9d71..9af216c11cf7 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -2106,6 +2106,7 @@ static struct mapped_device *alloc_dev(int minor)
->  	if (IS_ERR(md->disk))
->  		goto bad;
->  	md->queue = md->disk->queue;
-> +	blk_queue_flag_set(QUEUE_FLAG_SAME_COMP, md->queue);
->  
->  	init_waitqueue_head(&md->wait);
->  	INIT_WORK(&md->work, dm_wq_work);
 > 
+> > 
+> > diff --git a/multipathd/multipathd.service.in
+> > b/multipathd/multipathd.service.in
+> > index 18bb367e..1b3fccd2 100644
+> > --- a/multipathd/multipathd.service.in
+> > +++ b/multipathd/multipathd.service.in
+> > @@ -20,6 +20,7 @@ ExecStart=/sbin/multipathd -d -s
+> >  ExecReload=/sbin/multipathd reconfigure
+> >  TasksMax=infinity
+> >  LimitRTPRIO=infinity
+> > +CPUWeight=1000
+> >  
+> >  [Install]
+> >  WantedBy=sysinit.target
 
