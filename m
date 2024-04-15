@@ -1,53 +1,88 @@
-Received: from mail-qv1-f54.google.com (mail-qv1-f54.google.com [209.85.219.54])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C2A57F7EA
-	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 15:53:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4514C8002A
+	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 16:22:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713196424; cv=none; b=gmeDdBROzJ+O2RIYFmhEQIclEMSc5Ck/vcBbLHQxrTQUYyDSXemyHdOPvuVC4bVuVO7zKJgxKma/hY5OkSyPXfZVJJOGgXI2w4LC9ZwIIjBHtxajobXkXHP/mEYuKRSxTVDzNPqKEWf5+3Bd3GyoSalQWsF0pZqVYvfMKcpKLHE=
+	t=1713198140; cv=none; b=A77taEXyWVuAqlogCHdLVsA1NmpBr25itDULW0MwwXsm/Y/YrBSR04G087aOivtKpVwNGo7eE0adRTIj2/dizeQJVhgkJWXmL2dbwo3Tibwl/tTLfHkos4TX0460Jjb2jddiVQOViwa6cy+TZfur2Dj9Oni5l7dLPU/fDk2svGc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713196424; c=relaxed/simple;
-	bh=YiQjWJpzdavvT8xdQ9oAiiYmz0r9Ih+L53BAr+/F5Bk=;
+	s=arc-20240116; t=1713198140; c=relaxed/simple;
+	bh=4D7YDo8WyLmas+2iL6PKKZth++C7DB2cOeWPTEnBO8o=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=MRueHLAt+QE9K666jSADfyQ4YRB3CXmwSOf9fg73rZ3RX6/8Yova62PLUfVak/w0vo0wo+GYmsv8tPP4gBFp3+HClyI/Mh+Xn6e5bNtRhtWeqgiiHoFB3c7R1htfwObGmNl7y892yfDlokPeAQhH0iIWVmHNxS1448v6VSZCgqQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.219.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Received: by mail-qv1-f54.google.com with SMTP id 6a1803df08f44-69b50b8239fso29448866d6.0
-        for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 08:53:42 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713196421; x=1713801221;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=pZq59D7CN8IyAio+UrGCoszHZ95ZUk1m4Cy8JPSP7JY=;
-        b=aMk2zK+jNCQNPEkwKe+gJJIzILmwBefEdCEduwYKJUeQeV92rHTDp4BPZE1nx0oN+h
-         38F5kislGTx5Nxqi2gDDKkizP0Ss2//V37TuXrPXh+UzqzkMHekbfPLXaFCt7V6QX9aM
-         CvBdygg8y4451z7ju5KU1EeOvMTQm6DDuwe52RMAqnn7nrcP3EDt4We23nUL4hTGf5zC
-         Uj+x7wB87U+0/tKWDDZI84lJHjXPrHi5iall9johJ7g+CpRE4SCde2SHmdLN7RnQJoZo
-         yM23vfAMGDxY+eveSIxF2G0IaYMeJ7JEX++1qxLHtSxk4TAIukJcHzA6N6vogjHIBEOH
-         CVig==
-X-Forwarded-Encrypted: i=1; AJvYcCW0sSQbW/F3Vxc/qBQ7sUpU0nufTAFq6xWniGewQAeFzWRfLJLJsiYdQ9Yyg0y+pSO2XLltPWG13Y/AnqmDGf6uSKhFR7USd8A=
-X-Gm-Message-State: AOJu0YwfchDvu1zAFiQKYvV3mH2Yyr36kFS5rD5BFpaPXuM1lTw4NDDF
-	LhJOJ3u4RfEcnYfMgM648vKHMeIfI27fJoK/q+1V0mikTIU1YFbWqLqr9LZj2A==
-X-Google-Smtp-Source: AGHT+IG47NcQiFkABQEss43aPCNBl6bAMBkER4pxXkwkNBWvGUcY2M2YjQz7yfo8xKZy4ihq6yrasw==
-X-Received: by 2002:a05:6214:2b49:b0:696:4086:5e1 with SMTP id jy9-20020a0562142b4900b00696408605e1mr151924qvb.2.1713196421499;
-        Mon, 15 Apr 2024 08:53:41 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id kr5-20020a0562142b8500b0069b7929cdfcsm1794585qvb.111.2024.04.15.08.53.40
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 15 Apr 2024 08:53:41 -0700 (PDT)
-Date: Mon, 15 Apr 2024 11:53:40 -0400
-From: Mike Snitzer <snitzer@kernel.org>
+	 Content-Type:Content-Disposition:In-Reply-To; b=d/Wq7MnS9r7zFYlAAZNeePqTh4xBdtxGPClG/wHR6K49c99rTCEDaGic2YEk/PXZIKA3DE2X0AoLahDcQSR0Lb7GVna8xxdjEzwPjDXb8cMvaVX9ih7BzzpTw0bZYj6C9iqwggWPS8LGsg4CoK7Mj12yxOjt4E/kDpldpYD2Q0k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=Y6OsQ5WJ; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=1ZEE3JAn; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=cMYxHnXv; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=Zkm/33Kc; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="Y6OsQ5WJ";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="1ZEE3JAn";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="cMYxHnXv";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="Zkm/33Kc"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 4625D5D203;
+	Mon, 15 Apr 2024 16:22:15 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1713198136; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/vSFrElYhgRSxGTyq+kKn6PgXtDmzDwIL8wSe3ioMwc=;
+	b=Y6OsQ5WJbv6aFy82vuJvCMuOTxmiiv5gatgGv+Kf1kiGlrFwsKx2gqCAp03Kl+eKPd8BQZ
+	fMHytzp9eSBIPSbM53ZDloxN05uLcaQxdcsuzwv62lqxGLy4xNsdQLSep73+yfoXG8I5af
+	gBiqkM9eJQE4073veaQ+exPnRUGMPSU=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1713198136;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/vSFrElYhgRSxGTyq+kKn6PgXtDmzDwIL8wSe3ioMwc=;
+	b=1ZEE3JAnqpMeoktivS9Babk+35pFmM/7874hVi1oHWKGaHFUewffrqiUwxkRnuJHHb4NvG
+	mAO+zlkD68Uve/CQ==
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.cz header.s=susede2_rsa header.b=cMYxHnXv;
+	dkim=pass header.d=suse.cz header.s=susede2_ed25519 header.b="Zkm/33Kc"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1713198135; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/vSFrElYhgRSxGTyq+kKn6PgXtDmzDwIL8wSe3ioMwc=;
+	b=cMYxHnXv9AqOloP1WsxLgQjXRywuHpytX9GUKA2Z8IzNAKjPWUsMdsas3doaeZf5tgoT1O
+	4ijaJRCqX/LdSVZBDP6oEI0r4Q2N/BUys+xNS/svTOQ12E4EgUXJmY4BYjFaZTyxrxNVxR
+	4uTNq1NhdYCNWvy+N2xruiGCmSRkSTo=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1713198135;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/vSFrElYhgRSxGTyq+kKn6PgXtDmzDwIL8wSe3ioMwc=;
+	b=Zkm/33KcWUHUv2Et6sZG9T7SdR93mDi0SpKtS34tXHTrL5k2wz2ZBhTJrvC31pIveLeCyM
+	qrBClf89SSqzZLBw==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 32F941386E;
+	Mon, 15 Apr 2024 16:22:15 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id +kRsDDdUHWbGTgAAD6G6ig
+	(envelope-from <jack@suse.cz>); Mon, 15 Apr 2024 16:22:15 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id C955BA0817; Mon, 15 Apr 2024 18:22:10 +0200 (CEST)
+Date: Mon, 15 Apr 2024 18:22:10 +0200
+From: Jan Kara <jack@suse.cz>
 To: Ming Lei <ming.lei@redhat.com>
 Cc: Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
 	Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
 	"Darrick J. Wong" <djwong@kernel.org>,
 	linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>
+	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
+	Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH v2 04/34] md: port block device access to file
-Message-ID: <Zh1NhM1ow11I03hX@redhat.com>
+Message-ID: <20240415162210.zyoolbj27usnhk56@quack3>
 References: <20240123-vfs-bdev-file-v2-0-adbd023e19cc@kernel.org>
  <20240123-vfs-bdev-file-v2-4-adbd023e19cc@kernel.org>
  <Zhzyu6pQYkSNgvuh@fedora>
@@ -64,8 +99,41 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 In-Reply-To: <Zh1Dtvs8nst9P4J2@fedora>
+X-Spam-Flag: NO
+X-Spam-Score: -4.01
+X-Rspamd-Action: no action
+X-Rspamd-Queue-Id: 4625D5D203
+X-Spam-Level: 
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Spamd-Result: default: False [-4.01 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	R_DKIM_ALLOW(-0.20)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	ARC_NA(0.00)[];
+	TO_DN_SOME(0.00)[];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	RCVD_COUNT_THREE(0.00)[3];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
+	FROM_HAS_DN(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	RCPT_COUNT_SEVEN(0.00)[11];
+	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	FROM_EQ_ENVFROM(0.00)[];
+	RCVD_TLS_LAST(0.00)[];
+	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	MISSING_XM_UA(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	DKIM_TRACE(0.00)[suse.cz:+];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email]
 
-On Mon, Apr 15, 2024 at 11:11:50PM +0800, Ming Lei wrote:
+On Mon 15-04-24 23:11:50, Ming Lei wrote:
 > On Mon, Apr 15, 2024 at 04:53:42PM +0200, Christian Brauner wrote:
 > > On Mon, Apr 15, 2024 at 10:35:53PM +0800, Ming Lei wrote:
 > > > On Mon, Apr 15, 2024 at 02:35:17PM +0200, Christian Brauner wrote:
@@ -124,24 +192,74 @@ On Mon, Apr 15, 2024 at 11:11:50PM +0800, Ming Lei wrote:
 > At least the current dm implementation relies on this way sort of, and
 > it could be addressed by forcing to mark DMF_DEFERRED_REMOVE in
 > remove_all().
-
-You floated that earlier in this thread, etc: no, that would change
-the interface.  DMF_DEFERRED_REMOVE gives people options to allow for
-async device closes, etc.  But I don't want to impose it as some faux
-equivalent to the sync model remove_all has always provided.
-
-And what about simple 'dmsetup remove'? remove_all just loops doing
-remove... so isn't 'dmsetup remove' also being forced to be async as
-of commit a28d893eb3270 ("md: port block device access to file")?
-
-dm.c:dm_put_device -> dm_put_table_device -> close_table_device
-
+> 
 > > that case use __fput_sync() instead of fput() which ensures that this
 > > file is closed synchronously.
 > 
 > I tried __fput_sync(), but the following panic is caused:
+> 
+> [  113.486522] ------------[ cut here ]------------
+> [  113.486524] kernel BUG at fs/file_table.c:453!
+> [  113.486531] invalid opcode: 0000 [#1] PREEMPT SMP NOPTI
+> [  113.488878] CPU: 6 PID: 1919 Comm: dmsetup Kdump: loaded Not tainted 5.14.0+ #23
 
-Ok, so more work needed.  But we need to preserve the existing sync
-interface for DM device removal.
+Wait, how come this is 5.14 kernel? Apparently you're crashing on:
 
-Mike
+BUG_ON(!(task->flags & PF_KTHREAD));
+
+but that is not present in current upstream (BUG_ON was removed in 6.6-rc1
+by commit 021a160abf62c).
+
+								Honza
+
+> [  113.490114] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-1.fc37 04/01/2014
+> [  113.491661] RIP: 0010:__fput_sync+0x25/0x30
+> [  113.492562] Code: 90 90 90 90 90 0f 1f 44 00 00 f0 48 ff 4f 38 75 14 65 48 8b 04 25 40 25 03 00 f6 40 36 20 74 0a e9 20 fd ff ff c3 cc cc cc cc <0f0
+> [  113.493926] RSP: 0018:ffffb76581003c20 EFLAGS: 00010246
+> [  113.494220] RAX: ffff92eca6ef8000 RBX: ffff92ed176c3c18 RCX: 000000008080007c
+> [  113.494632] RDX: 0000000000000000 RSI: 0000000000000001 RDI: ffff92ec844cac00
+> [  113.495033] RBP: ffff92ed176c3c00 R08: 0000000000000001 R09: 0000000000000000
+> [  113.495378] R10: ffffb76581003b00 R11: ffffb76581003b68 R12: ffff92ec8fccec20
+> [  113.495723] R13: ffff92ec8431b400 R14: ffff92ec8431b508 R15: ffff92ec8fccec00
+> [  113.496108] FS:  00007f5be5638840(0000) GS:ffff92f0ebb80000(0000) knlGS:0000000000000000
+> [  113.496581] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> [  113.496907] CR2: 00007f5be54694b0 CR3: 0000000108e54003 CR4: 0000000000770ef0
+> [  113.497308] PKRU: 55555554
+> [  113.497469] Call Trace:
+> [  113.497613]  <TASK>
+> [  113.497741]  ? show_trace_log_lvl+0x1c4/0x2df
+> [  113.497997]  ? show_trace_log_lvl+0x1c4/0x2df
+> [  113.498251]  ? dm_put_table_device+0x64/0xd0 [dm_mod]
+> [  113.498553]  ? __die_body.cold+0x8/0xd
+> [  113.498768]  ? die+0x2b/0x50
+> [  113.498937]  ? do_trap+0xce/0x120
+> [  113.499129]  ? __fput_sync+0x25/0x30
+> [  113.499337]  ? do_error_trap+0x65/0x80
+> [  113.499577]  ? __fput_sync+0x25/0x30
+> [  113.499787]  ? exc_invalid_op+0x4e/0x70
+> [  113.500011]  ? __fput_sync+0x25/0x30
+> [  113.500239]  ? asm_exc_invalid_op+0x16/0x20
+> [  113.500842]  ? __fput_sync+0x25/0x30
+> [  113.501387]  dm_put_table_device+0x64/0xd0 [dm_mod]
+> [  113.502047]  dm_put_device+0x80/0x110 [dm_mod]
+> [  113.502650]  stripe_dtr+0x2f/0x50 [dm_mod]
+> [  113.503218]  dm_table_destroy+0x59/0x120 [dm_mod]
+> [  113.503842]  __dm_destroy+0x114/0x1e0 [dm_mod]
+> [  113.504402]  dm_hash_remove_all+0x63/0x160 [dm_mod]
+> [  113.505028]  remove_all+0x1e/0x30 [dm_mod]
+> [  113.505602]  ctl_ioctl+0x19f/0x290 [dm_mod]
+> [  113.506146]  dm_ctl_ioctl+0xa/0x20 [dm_mod]
+> [  113.506717]  __x64_sys_ioctl+0x87/0xc0
+> [  113.507230]  do_syscall_64+0x5c/0xf0
+> [  113.507755]  ? exc_page_fault+0x62/0x150
+> [  113.508309]  entry_SYSCALL_64_after_hwframe+0x6e/0x76
+> [  113.508945] RIP: 0033:0x7f5be543ec6b
+> 
+> 
+> 
+> Thanks. 
+> Ming
+> 
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
