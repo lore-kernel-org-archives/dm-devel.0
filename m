@@ -1,73 +1,135 @@
-Received: from mail.schwermer.no (mail.schwermer.no [49.12.228.226])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f177.google.com (mail-qk1-f177.google.com [209.85.222.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B014127E14
-	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 13:02:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.228.226
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 922EE71B3A
+	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 13:56:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713186157; cv=none; b=agx5t7YmCa/jpXn8apySDzGrb4SjnqiQHV7igrTobDAJtJgDzhTh17CZJLFchQK9jYdjoCRAChtjhHoI1N9QGoZsaYHdIgy6i/do69xgNhpqQ40Y77jbwkuOadQlejh2aopCHVOXdyLkhMBmJ66Bf0c10lB5gOGKCWhP08h21MY=
+	t=1713189393; cv=none; b=XQTTFQZPHQrDxR/lWsIM7nfKAOqYlKzxrCzIQHVONem/+C+FhGhEm717VNJ43DHyJndBHBCrXG9/4bPD79Mm1536TNz6/Q5vyiToOWBO+72r+DiIna739l3Yy1Ab/NNRhyRRL5Fiw7oZsnEQhlHs4VVXj2Kf207/15ZCxr6NpPc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713186157; c=relaxed/simple;
-	bh=RoxAGvomIR/7mfhwQ5ZKYXw87HUfhCwHYzumIR7qulk=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:Cc:
-	 In-Reply-To:Content-Type; b=Xh2kPNJSA9/amjaxBE9zUFGPXbPK7hfo3/csLnGWGQ90ml4MmUe7RZcORF1O2dE2Wt6VXqGWdqs5QEg/7E2hf8k4JvE0cA7H1weZ63m0zVgO5X9rrkX7GgP+bMO/llNJ4sdpDrnd/O5fHLj4jed8ScUlR+T2SZdPmoZCcRTppds=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=schwermer.no; spf=pass smtp.mailfrom=schwermer.no; dkim=pass (2048-bit key) header.d=schwermer.no header.i=@schwermer.no header.b=3kUPeqTi; arc=none smtp.client-ip=49.12.228.226
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=schwermer.no
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=schwermer.no
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=schwermer.no header.i=@schwermer.no header.b="3kUPeqTi"
-X-Virus-Scanned: Yes
-Message-ID: <847a0907-b174-4ba2-90b0-3be96db2e2da@schwermer.no>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=schwermer.no; s=mail;
-	t=1713186146; bh=RoxAGvomIR/7mfhwQ5ZKYXw87HUfhCwHYzumIR7qulk=;
-	h=Subject:To:References:From:Cc:In-Reply-To;
-	b=3kUPeqTi344zi63tFhgM2MKbmRdOmvWAnjTyZn9FpYuJNIBm0Alw7VgyN/Ji/mSUR
-	 iA1ITCntEpNTXRi7Ds+4USPqp7dL9WHKgj0bEASrKOWcuaHRTclqmLbkmxtix+Vl2B
-	 XT52J6/Ca8cDX7t44gcEgMBqPG0EB8aUpnxoakAzz/GiI1udY8AA16gDOCuW0ftjBZ
-	 0+J9UXPIsXReisRCv6Swb9h5pQEEWNHdV3JvwIWUF363KFvqB+Fh2fGQpKQFqkBLeD
-	 +8O3g2rANWX3E+SBnpz2Gu5wXaHEwk5/3bzyHeQHjaTecGsVGtkEHosTaFiXxzh4xu
-	 zp3uchDppn+zQ==
-Date: Mon, 15 Apr 2024 15:02:25 +0200
+	s=arc-20240116; t=1713189393; c=relaxed/simple;
+	bh=+VVV7sQD/TURqBaQ3o4+GnmR1SYFSqIiY2IQytgOeyg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=uZRWc4x4pLgCY5UCb+igQnmGzOsFvRmQ+tfU45WvOqflv54fRpoHyEPA4RwN90/yE9C39n1mT9Z1JvdP/x3KwgsheaLMVVLpU5/dk7ymqdkMb/AjYGElPsP7DMSugZs3Cg2cBSmjQLH+GlIXzgan1lxVObGFo35BIk5n+k9exHc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.222.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
+Received: by mail-qk1-f177.google.com with SMTP id af79cd13be357-78d677dca70so245502885a.0
+        for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 06:56:31 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713189390; x=1713794190;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=A8W/huyXe05bmHkZ7p3zhmV/PsnRvwctPQtMd0KsVdw=;
+        b=oPSSglJrHp8FQveqsEexpU+fakNGM55hMRR+cuiyrsSANZx1t17xxpir62pwrHcL5g
+         MSIVBquY0KCyrb1sgUmoM+VnhLw1Z0tkaQ96tGlrAqZzGFYNUHle1YsuVfesHDG2LpsU
+         MXuacaVEAQLWKfZcx1NzlSmIEQzr53u3diwbumNlnG/p66mHm4ax4mEf4pzGCT3zH9nw
+         isLCLpxczD+7zsfy+TtJscNj+Mga4iVOQAyW7ygmS6h8r1NhjDqLgzE3MHom9NIRVWXi
+         w+gBckcl0NFEg/7N8k6NQCGsnKMJCLC6qswTJRPthU7giGcCUnD4I+u7V2xu9Za60l+i
+         qzMw==
+X-Forwarded-Encrypted: i=1; AJvYcCXjv3j4wyh2CXV2c3bOKGcgRFdOvvKsU3V3SJ+FbXg98HTguliR5OVN2g18w0PW5CcNLHd8/71WLDNL3CpTw3lMEOiP5l0MWE4=
+X-Gm-Message-State: AOJu0Yyg6tAbTdJ5uvTvVpSucY14g/OPf1Qa5JJllLMA/A8FkWCUihsg
+	nZ98Ew2n1C2AgywmZmC1kaUp9g4XaDDsD8XFLzGTURgtaoed3VzuDqH2qt2I7jE=
+X-Google-Smtp-Source: AGHT+IGyhwxIGf0/tZcTU4Qo6zY7NFezwol5Iq8ThT/YVXI3g8yDqaQ6a06haDbA8lDnpkm4O991xA==
+X-Received: by 2002:ae9:f718:0:b0:78d:5f83:4f77 with SMTP id s24-20020ae9f718000000b0078d5f834f77mr10863669qkg.37.1713189390431;
+        Mon, 15 Apr 2024 06:56:30 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id x10-20020ae9e90a000000b0078d6d22a0c3sm6383346qkf.90.2024.04.15.06.56.29
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 15 Apr 2024 06:56:29 -0700 (PDT)
+Date: Mon, 15 Apr 2024 09:56:28 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Christian Brauner <brauner@kernel.org>
+Cc: Ming Lei <ming.lei@redhat.com>, Jan Kara <jack@suse.cz>,
+	Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
+	"Darrick J. Wong" <djwong@kernel.org>,
+	linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH v2 04/34] md: port block device access to file
+Message-ID: <Zh0yDCvqO8rXcXpz@redhat.com>
+References: <20240123-vfs-bdev-file-v2-0-adbd023e19cc@kernel.org>
+ <20240123-vfs-bdev-file-v2-4-adbd023e19cc@kernel.org>
+ <Zhzyu6pQYkSNgvuh@fedora>
+ <20240415-haufen-demolieren-8c6da8159586@brauner>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: dm-init/dm-verity: Data device lookup failed
-To: Christoph Hellwig <hch@lst.de>
-References: <b5c5cd56-b9dd-4368-a8e1-b9e0a07b79b4@schwermer.no>
- <20240409142323.GA22617@lst.de>
- <ba299ab0-9b70-469f-8c1b-bf88465df63f@schwermer.no>
- <20240415073829.GA32688@lst.de>
-Content-Language: en-US
-From: Sven <dm-devel@schwermer.no>
-Cc: dm-devel@lists.linux.dev
-In-Reply-To: <20240415073829.GA32688@lst.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240415-haufen-demolieren-8c6da8159586@brauner>
 
-> Yea, the early lookup behavior is weird.  But it also dates back
-> a long time, so I'm not sure this changed, except for maybe timings?
+On Mon, Apr 15 2024 at  8:35P -0400,
+Christian Brauner <brauner@kernel.org> wrote:
 
-This might just be a timing change. I don't know. As mentioned in the 
-initial email, this change looks relevant: 
-https://lore.kernel.org/all/20230531125535.676098-19-hch@lst.de/
+> On Mon, Apr 15, 2024 at 05:26:19PM +0800, Ming Lei wrote:
+> > Hello,
+> > 
+> > On Tue, Jan 23, 2024 at 02:26:21PM +0100, Christian Brauner wrote:
+> > > Signed-off-by: Christian Brauner <brauner@kernel.org>
+> > > ---
+> > >  drivers/md/dm.c               | 23 +++++++++++++----------
+> > >  drivers/md/md.c               | 12 ++++++------
+> > >  drivers/md/md.h               |  2 +-
+> > >  include/linux/device-mapper.h |  2 +-
+> > >  4 files changed, 21 insertions(+), 18 deletions(-)
+> > > 
+> > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > > index 8dcabf84d866..87de5b5682ad 100644
+> > > --- a/drivers/md/dm.c
+> > > +++ b/drivers/md/dm.c
+> > 
+> > ...
+> > 
+> > > @@ -775,7 +778,7 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
+> > >  {
+> > >  	if (md->disk->slave_dir)
+> > >  		bd_unlink_disk_holder(td->dm_dev.bdev, md->disk);
+> > > -	bdev_release(td->dm_dev.bdev_handle);
+> > > +	fput(td->dm_dev.bdev_file);
+> > 
+> > The above change caused regression on 'dmsetup remove_all'.
+> > 
+> > blkdev_release() is delayed because of fput(), so dm_lock_for_deletion
+> > returns -EBUSY, then this dm disk is skipped in remove_all().
+> > 
+> > Force to mark DMF_DEFERRED_REMOVE might solve it, but need our device
+> > mapper guys to check if it is safe.
+> > 
+> > Or other better solution?
+> 
+> Yeah, I think there is. You can just switch all fput() instances in
+> device mapper to bdev_fput() which is mainline now. This will yield the
+> device and make it able to be reclaimed. Should be as simple as the
+> patch below. Could you test this and send a patch based on this (I'm on
+> a prolonged vacation so I don't have time right now.):
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 56aa2a8b9d71..0f681a1e70af 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -765,7 +765,7 @@ static struct table_device *open_table_device(struct mapped_device *md,
+>         return td;
+> 
+>  out_blkdev_put:
+> -       fput(bdev_file);
+> +       bdev_fput(bdev_file);
+>  out_free_td:
+>         kfree(td);
+>         return ERR_PTR(r);
+> @@ -778,7 +778,7 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
+>  {
+>         if (md->disk->slave_dir)
+>                 bd_unlink_disk_holder(td->dm_dev.bdev, md->disk);
+> -       fput(td->dm_dev.bdev_file);
+> +       bdev_fput(td->dm_dev.bdev_file);
+>         put_dax(td->dm_dev.dax_dev);
+>         list_del(&td->list);
+>         kfree(td);
+> 
+> 
 
-> If you go down the device open route it should us the kernel open
-> routins and not just the not open ones.
-
-OK. Would you mind elaborating why?
-
-> That being said the right
-> fix is to not use this code at all, which was only shoe horned together
-> and doesn't have a chance to work solidly and just wait for the
-> device in userspace because we do have reliably udev events there.
-
-I cannot wait for user space because my root device is dm-verity-backed 
-which is why I am using dm-init in the first place. And I am not using 
-an initramfs. Isn't the point of dm-init to be able to use e.g. 
-dm-verity for the root device or did I misunderstand the docs?
-
-Thanks,
-Sven
+Thanks. I'll work with Ming and others to take care of it. Have a great vacation!
