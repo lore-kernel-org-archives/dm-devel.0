@@ -1,28 +1,56 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E57432C182
-	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 07:38:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD1D33E49E
+	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 09:26:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713166721; cv=none; b=i9rtzHGufsJNc9RDDLRJjNtuEqoGfa/GUByeGIsmglbvyrE5JuzhPI0kDLuLGCjwSrzmTx+qeCG+HNCGpATtWwndmYz3UCaETN8nTkNRakNFncAdeFeNkd94V4WVynOdqhwKluyP4hPUaxjecUqgNLAm/miETyc6TbabOKTyiuU=
+	t=1713173215; cv=none; b=SMahta1unlGQzS+xNzU9mFW0vF9BgLK8DE8YFTfq4PCGfiai6b4Mu0G6iHcCEfHXsUoafx/XhqHhzNlJv3ij9tA/TvhqsnPFR+H9/p2yctmJeGawdTvstsuTYVkh4A7lmlB39nVFg013RxA0RotC32LfpJN6k/wf2IkmPG37bc8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713166721; c=relaxed/simple;
-	bh=YOydG6Yb0QjCjsj1xoSvTvJbFQsNturwBvcQUZrbQbU=;
+	s=arc-20240116; t=1713173215; c=relaxed/simple;
+	bh=sA5fgX9HWhMU42nF38m0dAA/l+qdQMZG3Q8ualuuI4g=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=AN/+tW+QlVnBsGEwSCo7HMDp6CN8lVOCxDQA6lHA+G0yBabxmGYp8exj7bVObI55H+CrDDfqp/JrOHbsdv6Kt+6eflQMrdZQ9wnvGtfy/C/nhXRj291gmbq3gyu+EHcr0F1fNOe9yA9f0PBblAGNgg3braF6qxagOYj8AR/G5J8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 8CC0C68BEB; Mon, 15 Apr 2024 09:38:29 +0200 (CEST)
-Date: Mon, 15 Apr 2024 09:38:29 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Sven <dm-devel@schwermer.no>
-Cc: Christoph Hellwig <hch@lst.de>, dm-devel@lists.linux.dev
-Subject: Re: dm-init/dm-verity: Data device lookup failed
-Message-ID: <20240415073829.GA32688@lst.de>
-References: <b5c5cd56-b9dd-4368-a8e1-b9e0a07b79b4@schwermer.no> <20240409142323.GA22617@lst.de> <ba299ab0-9b70-469f-8c1b-bf88465df63f@schwermer.no>
+	 Content-Type:Content-Disposition:In-Reply-To; b=TAGKtKrEn5T6tfWJLP9OqEU9M+Tbqt3Tj0pbrFhO1JoTZxVPv2ECytfDsmsrJahYhWgm3oJPzu4QxrHXLN2FKG+GmTen9IK0cL6a76kcksd6+kd5MB9GAjaPWkPcxsBrTg16WLkDv1hTLSnEg8zcpPHngUBQPJK/3/nrYKQaXFo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QApRJ6+L; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QApRJ6+L"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1713173212;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=JKW7sMkNKvCDKzXl0a+7+sB/76+8oNdGXWP00zBOyoM=;
+	b=QApRJ6+LL8rskW2BAZztk5rAqyzq/mNCxusbUzC36w5Ek3exb30N4L9JCsqS9D3OAZDwS/
+	5yQNg3jo33GwyjAoWo+c1sF7mG47hkEbC53g0FphgHp0QD3owzrQNGkp3DOy8/mANB5n0u
+	iUx+xOcspg4/uLapjfGI6JpXsvcqMug=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-208-b4_-Er1KM7i5HB7d0PL9cw-1; Mon, 15 Apr 2024 05:26:49 -0400
+X-MC-Unique: b4_-Er1KM7i5HB7d0PL9cw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D9C35830E77;
+	Mon, 15 Apr 2024 09:26:48 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.13])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 774E92BA;
+	Mon, 15 Apr 2024 09:26:43 +0000 (UTC)
+Date: Mon, 15 Apr 2024 17:26:19 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Christian Brauner <brauner@kernel.org>
+Cc: Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@lst.de>,
+	Jens Axboe <axboe@kernel.dk>, "Darrick J. Wong" <djwong@kernel.org>,
+	linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org,
+	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH v2 04/34] md: port block device access to file
+Message-ID: <Zhzyu6pQYkSNgvuh@fedora>
+References: <20240123-vfs-bdev-file-v2-0-adbd023e19cc@kernel.org>
+ <20240123-vfs-bdev-file-v2-4-adbd023e19cc@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -31,38 +59,44 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ba299ab0-9b70-469f-8c1b-bf88465df63f@schwermer.no>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <20240123-vfs-bdev-file-v2-4-adbd023e19cc@kernel.org>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 
-On Fri, Apr 12, 2024 at 11:13:27AM +0200, Sven wrote:
-> Hi again,
->
-> I have found out some more about this issue:
->
-> When dm-init succeeds in finding /dev/mmcblk0p3, it actually only finds 
-> /dev/mmcblk0 and NOT the partition block device (see behavior in 
-> devt_from_devname).
->
-> Subsequently, when dm-verity looks up the data device (/dev/mmcblk0p3) via 
-> dm_get_device, the following call stack is executed:
->
-> dm_get_device
->  dm_get_table_device
->   open_table_device
->    blkdev_get_by_dev
->     blkdev_get_no_open
->
-> blkdev_get_no_open actually returns -ENXIO because the partition device is 
-> not available yet. That error then propagates back.
->
-> A naive fix that works for me follows:
+Hello,
 
-Yea, the early lookup behavior is weird.  But it also dates back
-a long time, so I'm not sure this changed, except for maybe timings?
+On Tue, Jan 23, 2024 at 02:26:21PM +0100, Christian Brauner wrote:
+> Signed-off-by: Christian Brauner <brauner@kernel.org>
+> ---
+>  drivers/md/dm.c               | 23 +++++++++++++----------
+>  drivers/md/md.c               | 12 ++++++------
+>  drivers/md/md.h               |  2 +-
+>  include/linux/device-mapper.h |  2 +-
+>  4 files changed, 21 insertions(+), 18 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 8dcabf84d866..87de5b5682ad 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
 
-If you go down the device open route it should us the kernel open
-routins and not just the not open ones.  That being said the right
-fix is to not use this code at all, which was only shoe horned together
-and doesn't have a chance to work solidly and just wait for the
-device in userspace because we do have reliably udev events there.
+...
+
+> @@ -775,7 +778,7 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
+>  {
+>  	if (md->disk->slave_dir)
+>  		bd_unlink_disk_holder(td->dm_dev.bdev, md->disk);
+> -	bdev_release(td->dm_dev.bdev_handle);
+> +	fput(td->dm_dev.bdev_file);
+
+The above change caused regression on 'dmsetup remove_all'.
+
+blkdev_release() is delayed because of fput(), so dm_lock_for_deletion
+returns -EBUSY, then this dm disk is skipped in remove_all().
+
+Force to mark DMF_DEFERRED_REMOVE might solve it, but need our device
+mapper guys to check if it is safe.
+
+Or other better solution?
+
+thanks,
+Ming
 
