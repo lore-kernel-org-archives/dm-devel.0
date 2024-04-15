@@ -1,75 +1,129 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B50B2119;
-	Mon, 15 Apr 2024 14:56:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3DC578C84
+	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 15:05:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713192990; cv=none; b=K1zQpoiLPCUAOMJoVOEfCJgiheQxGJhnnTPgERA0FlFmGhiiWYkBtXQbyfbrTVByf6bYfO5RPSDetHF2lRtHLxQSCx7THsClecTOKonjls1ytl/Tz4u0svNXJ9VkroPPJjYuqExiTDeOpcVbzgudCBRyzsie0TYxqKct9smYi2U=
+	t=1713193502; cv=none; b=CmZZvuxqAW5OUV8jTIOQpDNzEEnIh2Xowa8CDqEtoIeu5CjgZ4HYR+bOaHqOv/1DU7ITQay7nvN/NoDxt/cYLxwcIJLfiMxb8YEx30FRqIoP8SnPMwaNoS1wB39+0yECJnXeHgsSvTu5z6i5SRRY3u6F++Q3u0LYGObFEZR+h9U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713192990; c=relaxed/simple;
-	bh=/mvT0EDWyKl1LlJVsDqLsYJZ3bKhS9o6DCyFrjILGz8=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=c+/bD4rjy0/gOOgGqkFGIwIMAD2Eymhf+YorS2kdHcQHJ5SXmwY9us/82UWP3mtVt5p9EX/SkB6Gw0P0o2JbHAxiDQ2LzbZ8VLI7khY/95Ld7ZFwdhKGfdb03QXw37V+7Q0xEiZEaMWWESpCR19iDXG238bdUhNsu2l1Pk4vLYU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=PEgd9GAE; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	s=arc-20240116; t=1713193502; c=relaxed/simple;
+	bh=d5cmappnFJ0/wDvwY88Um505JFlXsV8IcwfFnmq2FlY=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=VKPWLGkAljpc8BfbtmpftcEYke70APEDA0pzRXu1a9gPIVwcDI+bMlHAwFFR4IHlle1Wp33+O33gcZWHXNIn0NYrED4XmAP1PUzJyfIXsBNkXseqD0+ijVTI7a/3TIFEEOkyCjxaUjDLaeW2lZBOEjSXqQeVSRdNhAEKV4gxbMM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FgPaRP8U; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="PEgd9GAE"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-	Content-Type:In-Reply-To:From:References:Cc:To:Subject:MIME-Version:Date:
-	Message-ID:Sender:Reply-To:Content-ID:Content-Description;
-	bh=rSYz6ltDs8l3GpHsJ/BNWBnXGvHDJcVElTYrkRgq2hM=; b=PEgd9GAEOSK8jC+Q0K+Ai2oK2K
-	ExbXvP+V+x9B7nHBgxud3TaOYOIy9C8rQk3bulN65+YLSbnA/IzFGchEKzw8a0ruwr2eRMzuIsKw6
-	2nBUzrYjQsk2tPaPavs8/sCArkepf5xZW9R0U8EYT4SoL1PqT27hmYa2ZhgwamTYMANJTBN3AGF/8
-	PWjYVfJ3h3sjLfCw2UMqynzWUsHi0p1hxHnxIrA5vfJILn/QKfFic8c2Wsr038SOe55C08W/st6lB
-	QGQp/r/E0diq89k0udzMPfodXjo/kZ/Vkbmntrz8wFf3mV22PiW4DuMLztUyomxJaYvzv1rb9KBuM
-	UbjQzQeQ==;
-Received: from [50.53.2.121] (helo=[192.168.254.15])
-	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rwNkq-00000008mEB-0FKk;
-	Mon, 15 Apr 2024 14:56:20 +0000
-Message-ID: <a2266217-c3ad-4bb2-8188-498a2c8ae36c@infradead.org>
-Date: Mon, 15 Apr 2024 07:56:16 -0700
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FgPaRP8U"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1713193499;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=z8xnurLSraf68tR7a2NWQu+yYrcYokZdoz7hggE/R38=;
+	b=FgPaRP8UaeRc/+XP/CJCtnsQ09umNak/5Tk7oEN/gNIsw3qqarz1VLct1nozbGi1eQrLWW
+	35+zI6HSqs8k7F8MXNZ8ZY8TB/8O7axYraxKZCbgAtkg/VtCD7MFNiVHcOyuRBkWdnio1V
+	LhLvwzr5OGKrt7RJj+d97iRniLf1cVw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-316-cJDC2KeyNx6oY9pwZQnFzA-1; Mon, 15 Apr 2024 11:04:54 -0400
+X-MC-Unique: cJDC2KeyNx6oY9pwZQnFzA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7F96188ACA5;
+	Mon, 15 Apr 2024 15:04:53 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 11FD340C6DAE;
+	Mon, 15 Apr 2024 15:04:53 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id E9A8C30C72AD; Mon, 15 Apr 2024 15:04:52 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id E51CE3FD7A;
+	Mon, 15 Apr 2024 17:04:52 +0200 (CEST)
+Date: Mon, 15 Apr 2024 17:04:52 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Li Lingfeng <lilingfeng3@huawei.com>
+cc: stable@vger.kernel.org, gregkh@linuxfoundation.org, 
+    torvalds@linux-foundation.org, tglx@linutronix.de, 
+    linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+    msnitzer@redhat.com, ignat@cloudflare.com, damien.lemoal@wdc.com, 
+    houtao1@huawei.com, nhuck@google.com, peterz@infradead.org, 
+    yukuai3@huawei.com, yangerkun@huawei.com, yi.zhang@huawei.com, 
+    lilingfeng@huaweicloud.com
+Subject: Re: [PATCH 6.6] Revert "dm-crypt, dm-verity: disable tasklets"
+In-Reply-To: <4e5e4634-a2d0-ce35-3884-829d385c0879@huawei.com>
+Message-ID: <3bc637b9-f7b4-aef6-74a8-5066d0d646f3@redhat.com>
+References: <20240411091539.361470-1-lilingfeng3@huawei.com> <7c17f31a-2cc3-1597-e2b5-832355de7647@redhat.com> <4e5e4634-a2d0-ce35-3884-829d385c0879@huawei.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v17 20/21] Documentation: add ipe documentation
-To: Bagas Sanjaya <bagasdotme@gmail.com>, Fan Wu <wufan@linux.microsoft.com>,
- corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
- tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
- snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
- linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
- linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
- audit@vger.kernel.org, linux-kernel@vger.kernel.org,
- Deven Bowers <deven.desai@linux.microsoft.com>
-References: <1712969764-31039-1-git-send-email-wufan@linux.microsoft.com>
- <1712969764-31039-21-git-send-email-wufan@linux.microsoft.com>
- <Zh0Zh3-xraVl85Lm@archie.me>
-Content-Language: en-US
-From: Randy Dunlap <rdunlap@infradead.org>
-In-Reply-To: <Zh0Zh3-xraVl85Lm@archie.me>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; BOUNDARY="185210117-1508192850-1713191327=:1973731"
+Content-ID: <57482597-77c8-9c50-5cee-a88780511284@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--185210117-1508192850-1713191327=:1973731
+Content-Type: text/plain; CHARSET=ISO-8859-15
+Content-Transfer-Encoding: 8BIT
+Content-ID: <d4f484f-7d14-ecbc-5c9f-5e4cc90bd23@redhat.com>
 
 
-On 4/15/24 5:11 AM, Bagas Sanjaya wrote:
-> The doc LGTM, thanks!
+
+On Fri, 12 Apr 2024, Li Lingfeng wrote:
+
+> Hi
 > 
-> Reviewed-by: Bagas Sanjaya <bagasdotme@gmail.com>
+> I'm having difficulty understanding "Workqueues and ksoftirqd may be scheduled
+> arbitrarily".
+> This is my understanding:
+> kcryptd_queue_crypt
+>  tasklet_schedule
+>   __tasklet_schedule
+>    __tasklet_schedule_common
+>     raise_softirq_irqoff
+>      wakeup_softirqd
+>       wake_up_process // ksoftirqd
+> 
+> run_ksoftirqd
+>  __do_softirq
+>   softirq_handle_begin
+>    __local_bh_disable_ip // Turn off preemption
+> <---------- [1] ---------->
+>   tasklet_action // h->action
+>    tasklet_action_common
+>     tasklet_trylock
+>      kcryptd_crypt_tasklet // t->func(t->data)
+>      ...
+>       queue_work(cc->io_queue, &io->work)
+> <---------- [2] ---------->
+>     tasklet_unlock
+> 
+> // workqueue process
+> kcryptd_io_bio_endio
+>  ...
+>  // free tasklet_struct
+> 
+> Since preemption has been turned off at [1], I'm confused about how the CPU
+> can be scheduled out to do work first at [2].
+> Would you mind explaining it to me?
+> 
+> Thanks
 
-Hi,
-Please see netiquette, section "Trim replies".
-Thanks.
+Yes, you are right that scheduling is disabled when ksoftirqd processes a 
+softirq task.
 
+But the upstream kernel switched to bh workqueues anyway, so there is no 
+need to submit a different solution to the stable kernels.
 
--- 
-#Randy
-https://people.kernel.org/tglx/notes-about-netiquette
-https://subspace.kernel.org/etiquette.html
+Mikulas
+--185210117-1508192850-1713191327=:1973731--
+
