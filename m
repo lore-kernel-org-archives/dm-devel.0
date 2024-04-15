@@ -1,144 +1,91 @@
-Received: from mail-pf1-f170.google.com (mail-pf1-f170.google.com [209.85.210.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A04D82C63
-	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 17:35:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA694824B7
+	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 18:06:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713202539; cv=none; b=N4PAjDnSI5jB1hiGdZyQWb6Is14vMhoVgNxlfqm6Yhd9pcnp0cvgW032wNRQO79jhDVAhqYkxVIb95W/8X+mgyRwVduAE92zsLhzTo+PjQvZ6IoiIzN0vBlKgxCzFLn6QDGQ7tIWmYiSH5U36QVicegwCWiwcU9B7Aa9D9tR0Q4=
+	t=1713204414; cv=none; b=mLGa5cUx8wQPHUUMV3l9r7rqn+hk3fpWVQigmcH+XVa8Y4GrFYdJLfXUDt+0aSTFsWBipitfmbcAJYdiKZicXF34CHRA+7Fx7McRHZnNmk5zXr2X8LalZrG8Ad0GnT032RLJl6h5kFfbEWfkGp43s+qQaWk6nj7D9uq77xxyUL4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713202539; c=relaxed/simple;
-	bh=+mDx52s9ABbP+qylPDjlEdQbUbUBCGmkdgYzyLRZEsw=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=fqeNeb/Z19YIaPnZaa6lP5S/kM9ifYZxEJ6rAH7AL7A+V4BaleeEjAEFZKzfdTiO+0i3I74mmMQ+4GunAPFDYIaxEGo3kAqm0S1bT0bM3l2Wz9DL7Pv1nFOwvAt4iYkoDOZdKwPOpmo69ZnGw9d5nQIvhDPqe9rUoNGDUFs/MeE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LIbK6YYY; arc=none smtp.client-ip=209.85.210.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1713204414; c=relaxed/simple;
+	bh=DcuCBCqijCxSReWU5dnyKbJkKxWCPvR7qe92JHAJNnA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=cOxNj0Ya+P4Au2oi7+G7w6QEPMNCBlZt9u+BmM1BeQ6NOTCFIrfRM0VLini/32+SXhbVt+lM/9frgBCvzVC1Aoa7sSuLasYd6i02xBnB0p6Zdd65tUBKAId0h2iAXFZpg5LnGYagwjxFGAmr7FFvFdzoeCvXMuaMuLpVEFibdpY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FHd26AOK; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LIbK6YYY"
-Received: by mail-pf1-f170.google.com with SMTP id d2e1a72fcca58-6ee0d5044e6so503692b3a.0
-        for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 10:35:37 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713202537; x=1713807337; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=yND2zUfUi+v4q+Fs4T63lVmVArBJWibOzfGLa99Xn9w=;
-        b=LIbK6YYY5bpp1do90/NO7lUYHQoJA9mLFQ9L6C6Cnah9cWEXIFUpGkQOKC9F1ksrvP
-         yzveEpEsRY5TjceQPUw+B9F+hlhzpy8svRqRzNiuTiL0uY7CjPVmDqymTiS46t9aoraN
-         qRbaY9zkEmCSTqEi+X5FTeNmiWucl4v58kf4TJuxrBsuq77yDEfxPk8CjhadNdQxuSch
-         FeP9+41JWSrxHRF2GSdahGQkgQ8AtslGh5/lS7zxFGGaFEPITQHPsvfHy/9ro6yxKdNU
-         UKI9/pLWjYG7221YFPWKx7Ihozqt4OKkaa3tGsKuIawGm/w/i/CBkQjpgB+xQ3HRIewy
-         TMXw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713202537; x=1713807337;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=yND2zUfUi+v4q+Fs4T63lVmVArBJWibOzfGLa99Xn9w=;
-        b=R55ykfZzx3yBQu7nsZ2VjvyzWVpZk8FAdLglxG6i0OzPlXs5zh1C6GXUYC6HhoSWm7
-         ZI9eim8VXYgLhEyN2Uc+pqAP3tUpC9tfpb3cvUcx4dXrHSrdmu/fbuieCNXqWonVPptO
-         /P1zkFoWbvvqwct+vFXFQbG2tKsXYtKbtoto6GJtO/JyGrEGvXA0FQxv5QhfXGrZqOzI
-         RbnisKjgX0CIo0DT+fd45uOd2UuyCuKuCHLnnTDFVAdM9Zp5LjTKg4F0IbHM83CRE7/y
-         96jtGh89E4eW9IQaeKPnl5x2ZoJd8d3fhl4GFAjF0772iI310RF6ovUG3wFhPLv42gJN
-         15WA==
-X-Forwarded-Encrypted: i=1; AJvYcCWXLE9ASSQCkE56N3Mf3X/bS6inc91FfuhCmPTd5h86XcbzG5lcvL2mzZhzVbVPfsnkEw1UPzpSdC4Uyh3Doxv70bF49ECqYMo=
-X-Gm-Message-State: AOJu0YzR+Evp0MjiwX+/ckGl6EedStCxP8/qevhMp4M9oxwjTuew96JH
-	3nH/wR2GPhJtoBtbyYtRlBHBN0ZkKqXteLji7YHrUFjK1U4GKIGB
-X-Google-Smtp-Source: AGHT+IG6NKLoYgtNA0zwWTzkP8WTGQd4qLXhWBTEEVWaqnnI2QLPzr1rMVeOMKwzxaqVx/1yQ3sSow==
-X-Received: by 2002:a05:6a20:2590:b0:1a9:a31a:1b69 with SMTP id k16-20020a056a20259000b001a9a31a1b69mr13640576pzd.6.1713202537217;
-        Mon, 15 Apr 2024 10:35:37 -0700 (PDT)
-Received: from visitorckw-System-Product-Name ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id t6-20020a056a00138600b006ecef9e9615sm7456833pfg.200.2024.04.15.10.35.33
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 15 Apr 2024 10:35:36 -0700 (PDT)
-Date: Tue, 16 Apr 2024 01:35:31 +0800
-From: Kuan-Wei Chiu <visitorckw@gmail.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com,
-	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org,
-	akpm@linux-foundation.org, bfoster@redhat.com, mark.rutland@arm.com,
-	alexander.shishkin@linux.intel.com, jolsa@kernel.org,
-	irogers@google.com, adrian.hunter@intel.com, jserv@ccns.ncku.edu.tw,
-	linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-bcachefs@vger.kernel.org,
-	linux-perf-users@vger.kernel.org
-Subject: Re: [PATCH v3 04/17] lib min_heap: Add type safe interface
-Message-ID: <Zh1lY8EFyE943+89@visitorckw-System-Product-Name>
-References: <20240406164727.577914-1-visitorckw@gmail.com>
- <20240406164727.577914-5-visitorckw@gmail.com>
- <20240412073017.GE30852@noisy.programming.kicks-ass.net>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FHd26AOK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1713204411;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=gzhU6TWnVcNjb2SZZ0gVtXU7eCTYjuZSXwdeI7qaIE0=;
+	b=FHd26AOKH3S0gTK+GJcbXIK3y6UCisKDRxPBSxzf76iR8ZK6YqdNPEyA7OglkEX9I4g8Lf
+	ilhNeKkOqPPCRRNfrTpFycgjCVUxSx3t6ISeX6tiyXUcewm7AX5Gsj7oDkvfi4eoWU4PO9
+	4FAcQTktg4eslZ9g3JxGgpl6/ZnCeVc=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-641-caNqETi0Mgux6kmwi9Ud1A-1; Mon,
+ 15 Apr 2024 14:06:47 -0400
+X-MC-Unique: caNqETi0Mgux6kmwi9Ud1A-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E18529AA3BD;
+	Mon, 15 Apr 2024 18:06:47 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 146E71C060A6;
+	Mon, 15 Apr 2024 18:06:46 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 43FI6kcx1903344
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 15 Apr 2024 14:06:46 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 43FI6k0P1903343;
+	Mon, 15 Apr 2024 14:06:46 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH] multipathd: Set CPUWeight to 1000
+Date: Mon, 15 Apr 2024 14:06:46 -0400
+Message-ID: <20240415180646.1903335-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240412073017.GE30852@noisy.programming.kicks-ass.net>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-On Fri, Apr 12, 2024 at 09:30:17AM +0200, Peter Zijlstra wrote:
-> On Sun, Apr 07, 2024 at 12:47:14AM +0800, Kuan-Wei Chiu wrote:
-> 
-> > -struct min_heap {
-> > -	void *data;
-> > -	int nr;
-> > -	int size;
-> > -};
-> > +#define MIN_HEAP_PREALLOCATED(_type, _name, _nr)	\
-> > +struct _name {	\
-> > +	int nr;	\
-> > +	int size;	\
-> > +	_type *data;	\
-> > +	_type preallocated[_nr];	\
-> > +}
-> 
-> 
-> > @@ -3738,7 +3739,7 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
-> >  	struct perf_cpu_context *cpuctx = NULL;
-> >  	/* Space for per CPU and/or any CPU event iterators. */
-> >  	struct perf_event *itrs[2];
-> > -	struct min_heap event_heap;
-> > +	struct perf_event_min_heap event_heap;
-> >  	struct perf_event **evt;
-> >  	int ret;
-> >  
-> > @@ -3747,11 +3748,9 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
-> >  
-> >  	if (!ctx->task) {
-> >  		cpuctx = this_cpu_ptr(&perf_cpu_context);
-> > -		event_heap = (struct min_heap){
-> > -			.data = cpuctx->heap,
-> > -			.nr = 0,
-> > -			.size = cpuctx->heap_size,
-> > -		};
-> > +		event_heap.data = cpuctx->heap;
-> > +		event_heap.nr = 0;
-> > +		event_heap.size = cpuctx->heap_size;
-> >  
-> >  		lockdep_assert_held(&cpuctx->ctx.lock);
-> >  
-> > @@ -3760,11 +3759,9 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
-> >  			css = &cpuctx->cgrp->css;
-> >  #endif
-> >  	} else {
-> > -		event_heap = (struct min_heap){
-> > -			.data = itrs,
-> > -			.nr = 0,
-> > -			.size = ARRAY_SIZE(itrs),
-> > -		};
-> > +		event_heap.data = itrs;
-> > +		event_heap.nr = 0;
-> > +		event_heap.size = ARRAY_SIZE(itrs);
-> >  		/* Events not within a CPU context may be on any CPU. */
-> >  		__heap_add(&event_heap, perf_event_groups_first(groups, -1, pmu, NULL));
-> >  	}
-> 
-> Not too happy about these. If you ever add more fields they will go
-> uninitialized. Why not keep the existing form and fix the struct name?
+If multipathd doesn't become a real time process, it was scheduled as a
+normal process, without any priority increase. Bump up the CPUWeight so
+that even as a normal process, it will still run with increased
+priority.
 
-Sorry for the late reply. I'm traveling.
-I'll change that back in v4.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/multipathd.service.in | 1 +
+ 1 file changed, 1 insertion(+)
 
-Regards,
-Kuan-Wei
+diff --git a/multipathd/multipathd.service.in b/multipathd/multipathd.service.in
+index 18bb367e..1b3fccd2 100644
+--- a/multipathd/multipathd.service.in
++++ b/multipathd/multipathd.service.in
+@@ -20,6 +20,7 @@ ExecStart=/sbin/multipathd -d -s
+ ExecReload=/sbin/multipathd reconfigure
+ TasksMax=infinity
+ LimitRTPRIO=infinity
++CPUWeight=1000
+ 
+ [Install]
+ WantedBy=sysinit.target
+-- 
+2.43.0
+
