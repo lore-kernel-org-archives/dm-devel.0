@@ -1,104 +1,113 @@
-Received: from 009.lax.mailroute.net (009.lax.mailroute.net [199.89.1.12])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C104A154452
-	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 20:55:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.12
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED7BE1E89A;
+	Mon, 15 Apr 2024 21:38:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713214506; cv=none; b=A3MmQU2N8n0UXQLKqfVymvgSXOY4LQu47eUUNw25dM4lJbA39+jZobOe6UFw0/lskS9mCgkoOTg91kQ6YgC2AOVaHNUeJ/DaZBTAoVsN/Jx5bxx3pCqGE0Udgi/mbQmV+vt3HU54sjWb2sgkXFof6iEav428hsgofoj8FNR53M8=
+	t=1713217129; cv=none; b=qhm83+h0NcBQIREmpvE40AikVJoIxKrmi1K+dXU4NEdA6To0z1GQvxFxrY0j57I9gT1ovNfLYStKlfiYrr/CR2Yep2otxJKwrL34q13QMCsCMvOwJluS4BVTktCVA+XjWUmjrZ40pN/qxLbmhfRiIO0nsPHmVvDANsBx5L7tCQY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713214506; c=relaxed/simple;
-	bh=1kLbnkLpwA47PammM8c6gpt8Z5qGwHI0vHaz7g/GBT0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=MCMF7/wY+7AYtNtIT9B7QWS9saUhrI6NSBrx9SQuIJiryGxkZcb+8WzCAbtkQhjfPe4dSZmDaQZSJPnN6LIg5rEFBxCP8r+M2f6RwpTKO1iOBu45LxaV1EKZyDIb+oT0mves2CT1c3BC/l8l3RBgOqbm/Xaio1c31C5USw9viio=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=XShDe4rq; arc=none smtp.client-ip=199.89.1.12
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1713217129; c=relaxed/simple;
+	bh=LdgSzKnyi2LWa7e/BgfjAMFoEXu5VqKaRa128bZAOp8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=AL3UW5K4YxNtNkRr4Fpu1PXYn9rA0hL93Bsh4mruQhPtVBa1mBEJ1myQEEhmPwKO04cigYwtfwSW5tujLz+V0VFz5S5ySK/bnXAH64vRBiVsWLUFsAKg7PdWYjdhfEdcVdQ9b3z2GGjQhDTzCfio8DH68uTcl3naoCcSzpVkKS0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=EYIF4/rv; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="XShDe4rq"
-Received: from localhost (localhost [127.0.0.1])
-	by 009.lax.mailroute.net (Postfix) with ESMTP id 4VJKDm1H3lzlgTHp;
-	Mon, 15 Apr 2024 20:55:04 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1713214501; x=1715806502; bh=5o4zcRpA0zVDnfcPBNEvgwNg
-	jNvZG1IbSS+iXwxvD58=; b=XShDe4rqHGZp1Dafps5mfGA7uz09NPnnhzEVdP/E
-	Jsk/tZ8RX6qQ1XU/Zs3fPJ4CaxTSX2MTL7rNWxz1o5K8NTgFx6CJOxV74yHe04tN
-	4dFwKTpIcTtqNEENwpu2DL8DdmRqUMYluJpKXvGEuxyHdt77XQLd3KXFetcB5NO0
-	4g63O7g43Stk4jsZBGPGEu7yW4F78eNzwI4IyK8wYM/l+yeKNEYJ3I9Pmp4emH51
-	BAAXU/qkdTSdwUGEKv0cOfSLSQx/4jgXoOihBDMccTnNNcBuMdk8bVDQzWScj6Rd
-	EQg79fTq6/fWwI2ZPNU9KiejXkz/jSWRq9Ie0JkAlbdOPA==
-X-Virus-Scanned: by MailRoute
-Received: from 009.lax.mailroute.net ([127.0.0.1])
- by localhost (009.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id IyVkd_lmTHvf; Mon, 15 Apr 2024 20:55:01 +0000 (UTC)
-Received: from [100.96.154.26] (unknown [104.132.0.90])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 009.lax.mailroute.net (Postfix) with ESMTPSA id 4VJKDh1kypzlgTsK;
-	Mon, 15 Apr 2024 20:54:59 +0000 (UTC)
-Message-ID: <c107bba4-03a1-4121-af9e-7c93f40c24a0@acm.org>
-Date: Mon, 15 Apr 2024 13:54:58 -0700
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="EYIF4/rv"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 44054C113CC;
+	Mon, 15 Apr 2024 21:38:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1713217128;
+	bh=LdgSzKnyi2LWa7e/BgfjAMFoEXu5VqKaRa128bZAOp8=;
+	h=From:To:Cc:Subject:Date:From;
+	b=EYIF4/rvgnLfiMR2HZGkvI551MKvMeaAR/vQxBnQ5XW3GsGPKwIn3OsHIbDBZWPc2
+	 cb1hR4kA8L1bkTeoI+UTGiD2P2yzHigmynE+mzEAoIwWaVeE0Y44Ke/A3xpGC/fHyz
+	 UfW5riqyKkwdCNsth7fWbWJx1UCFVa0MLS5YCInSFtBg7BqQpeI7SOxkUnlSGi/UOj
+	 Km8ka2Hu1+am5WCkwOPXmV069RNxnCtewxPkbBNpFqn3S4b//3GAxJJIfht6Infaef
+	 k/F5TcY1KCjH8QjO2ZUmYKOnI5yO6tGT1Sev2Orm4QEGXvJc1ME4s0Emiz7Q8U8VoU
+	 tGfUAVPd+NBIQ==
+From: Eric Biggers <ebiggers@kernel.org>
+To: linux-crypto@vger.kernel.org,
+	fsverity@lists.linux.dev,
+	dm-devel@lists.linux.dev
+Cc: x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: [RFC PATCH 0/8] Optimize dm-verity and fsverity using multibuffer hashing
+Date: Mon, 15 Apr 2024 14:37:11 -0700
+Message-ID: <20240415213719.120673-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.44.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] dm: Change the default value of rq_affinity from 0 into 1
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev,
- Eric Biggers <ebiggers@kernel.org>, Jaegeuk Kim <jaegeuk@kernel.org>,
- Daniel Lee <chullee@google.com>, stable@vger.kernel.org
-References: <20240415194921.6404-1-bvanassche@acm.org>
- <20cf8b38-6c5b-9a10-6a7b-5d587a19eed@redhat.com>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20cf8b38-6c5b-9a10-6a7b-5d587a19eed@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 4/15/24 12:56, Mikulas Patocka wrote:
-> I am wondering how should QUEUE_FLAG_SAME_COMP work for bio-based
-> devices.
-> 
-> I grepped the kernel for QUEUE_FLAG_SAME_COMP and it is tested in
-> block/blk-mq.c in blk_mq_complete_need_ipi (this code path is taken only
-> for request-based devices) and in block/blk-sysfs.c in
-> queue_rq_affinity_show (this just displays the value in sysfs). There are
-> no other places where QUEUE_FLAG_SAME_COMP is tested, so I don't see what
-> effect is it supposed to have.
+On many modern CPUs, it is possible to compute the SHA-256 hash of two
+equal-length messages in about the same time as a single message, if all
+the instructions are interleaved.  This is because each SHA-256 (and
+also most other cryptographic hash functions) is inherently serialized
+and therefore can't always take advantage of the CPU's full throughput.
 
-I think the answer depends on whether or not the underlying device
-defines the .submit_bio() callback. From block/blk-core.c:
+An earlier attempt to support multibuffer hashing in Linux was based
+around the ahash API.  That approach had some major issues.  This
+patchset instead takes a much simpler approach of just adding a
+synchronous API for hashing two equal-length messages.
 
-static void __submit_bio(struct bio *bio)
-{
-	if (unlikely(!blk_crypto_bio_prep(&bio)))
-		return;
+This works well for dm-verity and fsverity, which use Merkle trees and
+therefore hash large numbers of equal-length messages.
 
-	if (!bio->bi_bdev->bd_has_submit_bio) {
-		blk_mq_submit_bio(bio);
-	} else if (likely(bio_queue_enter(bio) == 0)) {
-		struct gendisk *disk = bio->bi_bdev->bd_disk;
+This patchset is organized as follows:
 
-		disk->fops->submit_bio(bio);
-		blk_queue_exit(disk->queue);
-	}
-}
+- Patch 1-3 add crypto_shash_finup2x() and tests for it.
+- Patch 4-5 implement finup2x on x86_64 and arm64.
+- Patch 6-8 update fsverity and dm-verity to use crypto_shash_finup2x()
+  to hash pairs of data blocks when possible.  Note: the patch
+  "dm-verity: hash blocks with shash import+finup when possible" is
+  revived from its original submission
+  (https://lore.kernel.org/dm-devel/20231030023351.6041-1-ebiggers@kernel.org/)
+  because this new work provides a new motivation for it.
 
-In other words, if the .submit_bio() callback is defined, that function
-is called. If it is not defined, blk_mq_submit_bio() converts the bio
-into a request. QUEUE_FLAG_SAME_COMP affects the request completion
-path. On my test setup there are multiple dm instances defined on top of
-SCSI devices. The SCSI core does not implement the .submit_bio()
-callback.
+On CPUs that support multiple concurrent SHA-256's (all arm64 CPUs I
+tested, and AMD Zen CPUs), raw SHA-256 hashing throughput increases by
+82-98%, and the throughput of cold-cache reads from dm-verity and
+fsverity increases by very roughly 35%.
 
-Thanks,
+This is marked as RFC for now, as I'm soliciting feedback on the overall
+concept, and some parts may need a bit more work.  The dm-verity and
+fsverity patches are a bit large and I may try to split those up.
 
-Bart.
+Eric Biggers (8):
+  crypto: shash - add support for finup2x
+  crypto: testmgr - generate power-of-2 lengths more often
+  crypto: testmgr - add tests for finup2x
+  crypto: x86/sha256-ni - add support for finup2x
+  crypto: arm64/sha256-ce - add support for finup2x
+  fsverity: improve performance by using multibuffer hashing
+  dm-verity: hash blocks with shash import+finup when possible
+  dm-verity: improve performance by using multibuffer hashing
+
+ arch/arm64/crypto/sha2-ce-core.S    | 261 ++++++++++++-
+ arch/arm64/crypto/sha2-ce-glue.c    |  40 ++
+ arch/x86/crypto/sha256_ni_asm.S     | 352 +++++++++++++++++
+ arch/x86/crypto/sha256_ssse3_glue.c |  40 ++
+ crypto/testmgr.c                    |  59 ++-
+ drivers/md/dm-verity-fec.c          |  31 +-
+ drivers/md/dm-verity-fec.h          |   7 +-
+ drivers/md/dm-verity-target.c       | 560 ++++++++++++++++++++--------
+ drivers/md/dm-verity.h              |  43 +--
+ fs/verity/fsverity_private.h        |   5 +
+ fs/verity/hash_algs.c               |  31 +-
+ fs/verity/open.c                    |   6 +
+ fs/verity/verify.c                  | 177 +++++++--
+ include/crypto/hash.h               |  34 ++
+ 14 files changed, 1403 insertions(+), 243 deletions(-)
+
+
+base-commit: 0bbac3facb5d6cc0171c45c9873a2dc96bea9680
+-- 
+2.44.0
+
