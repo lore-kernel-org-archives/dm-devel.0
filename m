@@ -1,237 +1,120 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30F0271B51
-	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 14:23:46 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE743745C9
+	for <dm-devel@lists.linux.dev>; Mon, 15 Apr 2024 14:36:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713191028; cv=none; b=IBLWUKZmByNqcFDJXKcw5MtRbgcGRzPmcS+5fFjC+IbRtGZDcKyX1Jr8M2gJzRQFZsjxcX3RMfA1BMmiG/Po+0ANS/x1Jti7QyzXdd8/3grYqMREe30mGTo34esqF+Znftri6iUAK4mhsfzQ80mfz3B0Mb8sBKY2fD72Ub76sio=
+	t=1713191774; cv=none; b=NSQZizovDRthsRLcvZuQjA5INDNYvpCFXEnqMsd8uwwPiQYJmnWzoe8uNTxNZv7BhQR58c2Ij/bhXSIoAD1FFnPYfKrGsTxoiL7qAUaNLmVR7tePAC8Pu9ilqL+0kYhnkkEQ3q/Gikkh39kYYLr3LbnlQ2tRXE6eK37Wi5kt990=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713191028; c=relaxed/simple;
-	bh=Q8ddaSdhE7/gVUfNMEZD9uSx9PcB4chFOWCEf3Bq4C8=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=BItRjUQomKTQdPyYwfPbPXRgrRC3L+MS3f4AJN2/tVYGd/N3e8d86rA/lyjmqVKFxO3Z51AKHpDsWCJruygCWj5FeESqgp4fdQNhq4FCOtbPX6Jpr0qJBTAU2GXvredv52oQlFhvzSn+vVhlM2qskQHKc80W4tZhomJ7ISR7tU0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KfNbJt4z; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1713191774; c=relaxed/simple;
+	bh=YMv48aXULq+P+Zfe6u92CCqGqs7nverst/BByaD+MJg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=LRnlmYC5K8EIQ46lVfKCOmuBlpaG42r0NHW8mTG9y7RlXoQNRF9MUqtUHV74jDXnu1xoQ6a8aV1crrhbL1oJzTM4k7gnoTHtu9eXiO8OWBW0nwRZYRmyXLjCfcz0zkDARHcrtv7qc9KRu5SzQSevM9XEeSgM1RG+bAkDXs5GZ/k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=POd4K1ar; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KfNbJt4z"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="POd4K1ar"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713191026;
+	s=mimecast20190719; t=1713191772;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=BjQwLM20+Quhk8bhbDosqopdWxghCUTo7JDca8bI0C4=;
-	b=KfNbJt4zuJJCX4/fCKqNOGBF+L6H9PkZFf57vLpN7KfJ1qhQ8jKTUyvVkKNVczsGwcCaZE
-	cwPD8ZWbuWTOQPYtyAspJNyQ0+YYAADHXiDKVEa6ZFB8/KgQpV8Qw0EIslhOiYo/RSWCMP
-	9JDRH74anmDCp/bG84inSDvCt0DOLnQ=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-691-DWZab5HoMiyzvYfIUuJC1A-1; Mon, 15 Apr 2024 10:23:44 -0400
-X-MC-Unique: DWZab5HoMiyzvYfIUuJC1A-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+	bh=2Fpco6JyEqxSHVCGXvAnj47X9HVqOOy7QTJFx9DYGrE=;
+	b=POd4K1arC7muTlR++ioDO3Ir6qG0aidfwXe+6WH0NGgdFpOZogqrV4obLSTDb8K3N8AcZM
+	H9TqPU6e75Jmb3tnNMe/Vqz4VBtTb1eqqzgx65Wq/OF27+HHOS8+grSJjNmEZnDUb3KfTS
+	LTDMVl2vqIvOqKQM6NvzMGdqebjrA98=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-659-O5C2w4qgPzGIwjnOkYKvtQ-1; Mon,
+ 15 Apr 2024 10:36:07 -0400
+X-MC-Unique: O5C2w4qgPzGIwjnOkYKvtQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B13A68059E0;
-	Mon, 15 Apr 2024 14:23:43 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AAB2F2166B32;
-	Mon, 15 Apr 2024 14:23:43 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 90FD930C72AD; Mon, 15 Apr 2024 14:23:43 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 8D8DD3FD7A;
-	Mon, 15 Apr 2024 16:23:43 +0200 (CEST)
-Date: Mon, 15 Apr 2024 16:23:43 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Damien Le Moal <dlemoal@kernel.org>
-cc: Mike Snitzer <msnitzer@redhat.com>, Guangwu Zhang <guazhang@redhat.com>, 
-    dm-devel@lists.linux.dev
-Subject: [PATCH v2] dm-io: don't warn if flush takes too long time
-In-Reply-To: <715f0135-2a64-4c95-9e8f-b20e1dd3b02d@kernel.org>
-Message-ID: <21b8a171-ea95-9eef-8c68-8cee98c7367@redhat.com>
-References: <c183dd5c-da91-c71-dccc-c923977bc77@redhat.com> <715f0135-2a64-4c95-9e8f-b20e1dd3b02d@kernel.org>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B3F4A380350C;
+	Mon, 15 Apr 2024 14:36:06 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.13])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5FC5F51EF;
+	Mon, 15 Apr 2024 14:36:01 +0000 (UTC)
+Date: Mon, 15 Apr 2024 22:35:53 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Christian Brauner <brauner@kernel.org>
+Cc: Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@lst.de>,
+	Jens Axboe <axboe@kernel.dk>, "Darrick J. Wong" <djwong@kernel.org>,
+	linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org,
+	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH v2 04/34] md: port block device access to file
+Message-ID: <Zh07Sc3lYStOWK8J@fedora>
+References: <20240123-vfs-bdev-file-v2-0-adbd023e19cc@kernel.org>
+ <20240123-vfs-bdev-file-v2-4-adbd023e19cc@kernel.org>
+ <Zhzyu6pQYkSNgvuh@fedora>
+ <20240415-haufen-demolieren-8c6da8159586@brauner>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240415-haufen-demolieren-8c6da8159586@brauner>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-> > @@ -119,4 +120,16 @@ extern void complete(struct completion *
-> >  extern void complete_on_current_cpu(struct completion *x);
-> >  extern void complete_all(struct completion *);
-> >  
-> > +static inline void blk_wait_io(struct completion *done)
+On Mon, Apr 15, 2024 at 02:35:17PM +0200, Christian Brauner wrote:
+> On Mon, Apr 15, 2024 at 05:26:19PM +0800, Ming Lei wrote:
+> > Hello,
+> > 
+> > On Tue, Jan 23, 2024 at 02:26:21PM +0100, Christian Brauner wrote:
+> > > Signed-off-by: Christian Brauner <brauner@kernel.org>
+> > > ---
+> > >  drivers/md/dm.c               | 23 +++++++++++++----------
+> > >  drivers/md/md.c               | 12 ++++++------
+> > >  drivers/md/md.h               |  2 +-
+> > >  include/linux/device-mapper.h |  2 +-
+> > >  4 files changed, 21 insertions(+), 18 deletions(-)
+> > > 
+> > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > > index 8dcabf84d866..87de5b5682ad 100644
+> > > --- a/drivers/md/dm.c
+> > > +++ b/drivers/md/dm.c
+> > 
+> > ...
+> > 
+> > > @@ -775,7 +778,7 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
+> > >  {
+> > >  	if (md->disk->slave_dir)
+> > >  		bd_unlink_disk_holder(td->dm_dev.bdev, md->disk);
+> > > -	bdev_release(td->dm_dev.bdev_handle);
+> > > +	fput(td->dm_dev.bdev_file);
+> > 
+> > The above change caused regression on 'dmsetup remove_all'.
+> > 
+> > blkdev_release() is delayed because of fput(), so dm_lock_for_deletion
+> > returns -EBUSY, then this dm disk is skipped in remove_all().
+> > 
+> > Force to mark DMF_DEFERRED_REMOVE might solve it, but need our device
+> > mapper guys to check if it is safe.
+> > 
+> > Or other better solution?
 > 
-> Since you move this function outside of the block layer, the "blk_" prefix seems
-> out of place. What about renaming this to something like
-> "wait_for_completion_blk_io()", or to make it clear that it is not the same as
-> wait_for_completion_io(), may be "wait_for_completion_long_io()" ?
+> Yeah, I think there is. You can just switch all fput() instances in
+> device mapper to bdev_fput() which is mainline now. This will yield the
+> device and make it able to be reclaimed. Should be as simple as the
+> patch below. Could you test this and send a patch based on this (I'm on
+> a prolonged vacation so I don't have time right now.):
 
-Yes. Here I'm sending a second patch that renames this function to 
-wait_for_completion_long_io.
+Unfortunately it doesn't work.
 
-Mikulas
+Here the problem is that blkdev_release() is delayed, which changes
+'dmsetup remove_all' behavior, and causes that some of dm disks aren't
+removed.
 
+Please see dm_lock_for_deletion() and dm_blk_open()/dm_blk_close().
 
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-There was reported hang warning when using dm-integrity on the top of loop
-device on XFS on a rotational disk. The warning was triggered because
-flush on the loop device was too slow.
-
-There's no easy way to reduce the latency, so I made a patch that shuts
-the warning up.
-
-There's already a function blk_wait_io that avoids the hung task warning.
-This commit moves this function from block/blk.h to
-include/linux/completion.h, renames it to wait_for_completion_long_io
-(because it is not dependent on the block layer at all) and uses it in
-dm-io instead of wait_for_completion_io.
-
-[ 1352.586981] INFO: task kworker/1:2:14820 blocked for more than 120 seconds.
-[ 1352.593951] Not tainted 4.18.0-552.el8_10.x86_64 #1
-[ 1352.599358] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-[ 1352.607202] Call Trace:
-[ 1352.609670] __schedule+0x2d1/0x870
-[ 1352.613173] ? update_load_avg+0x7e/0x710
-[ 1352.617193] ? update_load_avg+0x7e/0x710
-[ 1352.621214] schedule+0x55/0xf0
-[ 1352.624371] schedule_timeout+0x281/0x320
-[ 1352.628393] ? __schedule+0x2d9/0x870
-[ 1352.632065] io_schedule_timeout+0x19/0x40
-[ 1352.636176] wait_for_completion_io+0x96/0x100
-[ 1352.640639] sync_io+0xcc/0x120 [dm_mod]
-[ 1352.644592] dm_io+0x209/0x230 [dm_mod]
-[ 1352.648436] ? bit_wait_timeout+0xa0/0xa0
-[ 1352.652461] ? vm_next_page+0x20/0x20 [dm_mod]
-[ 1352.656924] ? km_get_page+0x60/0x60 [dm_mod]
-[ 1352.661298] dm_bufio_issue_flush+0xa0/0xd0 [dm_bufio]
-[ 1352.666448] dm_bufio_write_dirty_buffers+0x1a0/0x1e0 [dm_bufio]
-[ 1352.672462] dm_integrity_flush_buffers+0x32/0x140 [dm_integrity]
-[ 1352.678567] ? lock_timer_base+0x67/0x90
-[ 1352.682505] ? __timer_delete.part.36+0x5c/0x90
-[ 1352.687050] integrity_commit+0x31a/0x330 [dm_integrity]
-[ 1352.692368] ? __switch_to+0x10c/0x430
-[ 1352.696131] process_one_work+0x1d3/0x390
-[ 1352.700152] ? process_one_work+0x390/0x390
-[ 1352.704348] worker_thread+0x30/0x390
-[ 1352.708019] ? process_one_work+0x390/0x390
-[ 1352.712214] kthread+0x134/0x150
-[ 1352.715459] ? set_kthread_struct+0x50/0x50
-[ 1352.719659] ret_from_fork+0x1f/0x40 
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- block/bio.c                |    2 +-
- block/blk-mq.c             |    2 +-
- block/blk.h                |   12 ------------
- drivers/md/dm-io.c         |    2 +-
- include/linux/completion.h |   17 +++++++++++++++++
- 5 files changed, 20 insertions(+), 15 deletions(-)
-
-Index: linux-2.6/block/blk.h
-===================================================================
---- linux-2.6.orig/block/blk.h	2024-04-15 15:54:22.000000000 +0200
-+++ linux-2.6/block/blk.h	2024-04-15 15:54:21.000000000 +0200
-@@ -72,18 +72,6 @@ static inline int bio_queue_enter(struct
- 	return __bio_queue_enter(q, bio);
- }
- 
--static inline void blk_wait_io(struct completion *done)
--{
--	/* Prevent hang_check timer from firing at us during very long I/O */
--	unsigned long timeout = sysctl_hung_task_timeout_secs * HZ / 2;
--
--	if (timeout)
--		while (!wait_for_completion_io_timeout(done, timeout))
--			;
--	else
--		wait_for_completion_io(done);
--}
--
- #define BIO_INLINE_VECS 4
- struct bio_vec *bvec_alloc(mempool_t *pool, unsigned short *nr_vecs,
- 		gfp_t gfp_mask);
-Index: linux-2.6/drivers/md/dm-io.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-io.c	2024-04-15 15:54:22.000000000 +0200
-+++ linux-2.6/drivers/md/dm-io.c	2024-04-15 15:54:21.000000000 +0200
-@@ -450,7 +450,7 @@ static int sync_io(struct dm_io_client *
- 
- 	dispatch_io(opf, num_regions, where, dp, io, 1, ioprio);
- 
--	wait_for_completion_io(&sio.wait);
-+	wait_for_completion_long_io(&sio.wait);
- 
- 	if (error_bits)
- 		*error_bits = sio.error_bits;
-Index: linux-2.6/include/linux/completion.h
-===================================================================
---- linux-2.6.orig/include/linux/completion.h	2024-04-15 15:54:22.000000000 +0200
-+++ linux-2.6/include/linux/completion.h	2024-04-15 15:57:14.000000000 +0200
-@@ -10,6 +10,7 @@
-  */
- 
- #include <linux/swait.h>
-+#include <linux/sched/sysctl.h>
- 
- /*
-  * struct completion - structure used to maintain state for a "completion"
-@@ -119,4 +120,20 @@ extern void complete(struct completion *
- extern void complete_on_current_cpu(struct completion *x);
- extern void complete_all(struct completion *);
- 
-+/**
-+ * wait_for_completion_long_io - this is like wait_for_completion_io,
-+ * but it doesn't warn if the wait takes too long.
-+ */
-+static inline void wait_for_completion_long_io(struct completion *done)
-+{
-+	/* Prevent hang_check timer from firing at us during very long I/O */
-+	unsigned long timeout = sysctl_hung_task_timeout_secs * HZ / 2;
-+
-+	if (timeout)
-+		while (!wait_for_completion_io_timeout(done, timeout))
-+			;
-+	else
-+		wait_for_completion_io(done);
-+}
-+
- #endif
-Index: linux-2.6/block/bio.c
-===================================================================
---- linux-2.6.orig/block/bio.c	2024-03-30 20:07:03.000000000 +0100
-+++ linux-2.6/block/bio.c	2024-04-15 15:55:13.000000000 +0200
-@@ -1378,7 +1378,7 @@ int submit_bio_wait(struct bio *bio)
- 	bio->bi_end_io = submit_bio_wait_endio;
- 	bio->bi_opf |= REQ_SYNC;
- 	submit_bio(bio);
--	blk_wait_io(&done);
-+	wait_for_completion_long_io(&done);
- 
- 	return blk_status_to_errno(bio->bi_status);
- }
-Index: linux-2.6/block/blk-mq.c
-===================================================================
---- linux-2.6.orig/block/blk-mq.c	2024-03-30 20:07:03.000000000 +0100
-+++ linux-2.6/block/blk-mq.c	2024-04-15 15:55:05.000000000 +0200
-@@ -1407,7 +1407,7 @@ blk_status_t blk_execute_rq(struct reque
- 	if (blk_rq_is_poll(rq))
- 		blk_rq_poll_completion(rq, &wait.done);
- 	else
--		blk_wait_io(&wait.done);
-+		wait_for_completion_long_io(&wait.done);
- 
- 	return wait.ret;
- }
+Thanks,
+Ming
 
