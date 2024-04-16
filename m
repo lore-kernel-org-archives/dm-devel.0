@@ -1,104 +1,112 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9845F1849
-	for <dm-devel@lists.linux.dev>; Tue, 16 Apr 2024 00:57:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 51B7A83A1D
+	for <dm-devel@lists.linux.dev>; Tue, 16 Apr 2024 09:59:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713229028; cv=none; b=bvZoBkw1fH+sjaP1WeapfvRG9JqbfIHmUg6TjIKm666L+mYecZ1S0JVlE6NrRFk80OCUuVGbUjXRPOt1TKFN5ZK5kyfrSSohsC6GrmWzrJjdi4VId2hgjIGrOoi7PAx8+WvYfL35V58SdpbJ2HEHNOd++mNAscVG6xAfITRirws=
+	t=1713261588; cv=none; b=DvbosYfVmy+lcorNEV4juOsXdc1mutbEaTESskQIA2k9nX+lqgh/Ju9L3MwjQUzO6SwHgqRNREopW87P1l44GS/4kUQ64eufdqfNymOaJDoen7asIsoDkj2wc9sxfWtaqGeC/YP2ok5ffp4XyLSEuwechNvuMVG/TcKiO2ZuxgQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713229028; c=relaxed/simple;
-	bh=h78k/cMnV9WcZ+oIMMDsbGhDWujQU5+K66BUAeJcoKk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=WPvIJDekkHedkrHNOePeJA/8ogFKblH+XkOXzK/Vv9fUlLWtI5/v5GXISHUmXu/4GDnRIWRjIbFXxJpJ89f+KXnms3dGGCkkczIifP/sbV0/rEpmphtjBHaYnvOHvYK2CUNRRmj8WPcUVWckne2fqOxf3i8ZYIsPCTXJE49NdxI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QUL/+Gnk; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1713261588; c=relaxed/simple;
+	bh=Vo72edf2kOrLeVo0aO4zZ26/z3TZ29awbJMpR10wTxw=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=AeZXfCXAT17R3wYQ6+CWTUxARgFHyHaTY7ude8MjhgYRWnDKdF6naUxNVdIY6gECUZgnQpP2Ceg6NGyVW4OlB8CQIEQcPwQA9oX8hDrOXPXxshwePs7ETMw1QJMhdsiUcBIaxPWSwtSibwCHbwszl/gjWmN5wp0mrz/65LTl27Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=YmbkYsb+; arc=none smtp.client-ip=209.85.167.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QUL/+Gnk"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713229025;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=rtfsBGt9nxVZSTBD+9lVdGFyEJvY5tLix3749+nDieY=;
-	b=QUL/+GnkROAskq8mDmp4GnG07sG90fowKyiAMSmWEGpGXRku5ZpikVSpN29Hts34fil1mW
-	gEbfNfP6jeMfK+PPrZbRwhim+ajIuciAIYc/VGHyAUSHh829Ad8jwJBZCbAELLZ/oJ5fxC
-	Dh7hIzRcqptyRNojly3CPvrXf0R3XiA=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-509-eKWK1bd5MYWmJoObAClQxA-1; Mon,
- 15 Apr 2024 20:57:02 -0400
-X-MC-Unique: eKWK1bd5MYWmJoObAClQxA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 898941C3F0EE;
-	Tue, 16 Apr 2024 00:57:01 +0000 (UTC)
-Received: from localhost (unknown [10.72.116.28])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8E3BA2166B31;
-	Tue, 16 Apr 2024 00:57:00 +0000 (UTC)
-From: Ming Lei <ming.lei@redhat.com>
-To: Mike Snitzer <snitzer@redhat.com>,
-	dm-devel@lists.linux.dev
-Cc: linux-block@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org,
-	Ming Lei <ming.lei@redhat.com>,
-	Zhong Changhui <czhong@redhat.com>,
-	Christian Brauner <brauner@kernel.org>,
-	Jan Kara <jack@suse.cz>
-Subject: [PATCH] dm: core: put device mapper block device synchronously
-Date: Tue, 16 Apr 2024 08:56:33 +0800
-Message-ID: <20240416005633.877153-1-ming.lei@redhat.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="YmbkYsb+"
+Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-518a3e0d2ecso4873065e87.3
+        for <dm-devel@lists.linux.dev>; Tue, 16 Apr 2024 02:59:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1713261584; x=1713866384; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=Vo72edf2kOrLeVo0aO4zZ26/z3TZ29awbJMpR10wTxw=;
+        b=YmbkYsb+0GHlFBUpsaQwuOJqYL/T+wnKhoFjX248fdtdGKa+y/9nJU9a+1j1eJ24tp
+         r88AXRx+R2aQWnZmrT/6y0bao84apdSlozkGGPtFASySbLv+emA63fN99koV5z9oPlq4
+         DPEODwZb/GeKcqD1zlO4RBA5H6M+WrmfxgfQHrbSV9zAzJ4kdc7UI5PcrW5nPfmJfejM
+         wVKPfAOwPARaOLSbnhlySaFs/u+cU/Cpa2vBsUrQVGLlQkS52lVhvNvV5x/2xeJ06PDI
+         1l17miLz4iW0aiGfTwBghclQNzVRfoEZjwLEIvyQpJSZ0CRH3c8/eOAwmfYMUfUStJgc
+         PmDw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713261584; x=1713866384;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=Vo72edf2kOrLeVo0aO4zZ26/z3TZ29awbJMpR10wTxw=;
+        b=umb10k32q9pv7/ICNML81SjJRQ6y0euT8ajbkw/BQcSweiVx6tA/LGVRGuwHiVYxcw
+         3Hhc5vhSB7qJAk9Z6U2lB+FvitpbHRZW2TXbqp4zSYDc+pWCStksQ+9xG0+fce7L5fOO
+         SRsBQ3Nttskdr1PHwwR2aBVfIFSEwtwqPjTovcqzeKLgUJLGZmNQOGSfwNwoTZRVopd1
+         x+ydBYL+mAyp9/1Y97sBzLhvzGfNRRFEr2/nF7JC48l9cJISn/gaXct8RMfuA/pZAPj9
+         Ci00sjwMkOv3DTa5BiAePx4uHeU+1t8A3ZRm8clUUe91VNsqVn2ggHa+bUh2d5YB+AD5
+         lLpw==
+X-Gm-Message-State: AOJu0YyVv8q8IU1ey3GFiMchsLp5NV/L3kS/5nyFeSPy1pT+uLOPbI5/
+	rivYab6LRXwuFczBzWWbBt4fZY4yBy7kZO+Honlmvii9ftq4Fe3bW+LA+i1Pi+c=
+X-Google-Smtp-Source: AGHT+IF9cGRfrMe0liArJVNzsTmedlj7RORLa//9EJdFRkWtRyIgOYiutMyDt4BYN+xN9SGD6CN3Bw==
+X-Received: by 2002:a05:6512:2303:b0:519:166a:d217 with SMTP id o3-20020a056512230300b00519166ad217mr2081489lfu.32.1713261584351;
+        Tue, 16 Apr 2024 02:59:44 -0700 (PDT)
+Received: from apollon.fritz.box (dslb-090-186-231-154.090.186.pools.vodafone-ip.de. [90.186.231.154])
+        by smtp.gmail.com with ESMTPSA id m19-20020a17090679d300b00a4e03c28fd5sm6651466ejo.43.2024.04.16.02.59.43
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 16 Apr 2024 02:59:44 -0700 (PDT)
+Message-ID: <79596769d7ebe048cbfe95020f5c492a12bb1673.camel@suse.com>
+Subject: Re: [PATCH v2] multipathd: Set CPUWeight to 1000 and LimitRTPRIO to
+ 10
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Tue, 16 Apr 2024 11:59:43 +0200
+In-Reply-To: <20240415234306.1984762-1-bmarzins@redhat.com>
+References: <20240415234306.1984762-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.0 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
 
-'dmsetup remove_all' actually depends on sync bdev release since
-dm_lock_for_deletion() may return -EBUSY if the open count is > 0, and the
-open count is dropped in dm_blk_close().
+On Mon, 2024-04-15 at 19:43 -0400, Benjamin Marzinski wrote:
+> If multipathd doesn't become a real time process, it was scheduled as
+> a
+> normal process, without any priority increase. Bump up the CPUWeight
+> so
+> that even as a normal process, it will still run with increased
+> priority.
+>=20
+> If multipathd did become a real time process, it set itself to the
+> highest priority, which is excessive. A priority of 10 is plenty.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-So if dm_blk_close() is delayed because of fput(), this device mapper
-device is skipped in remove_all, and cause regression.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-Fix the issue by using __fput_sync().
-
-Reported-by: Zhong Changhui <czhong@redhat.com>
-Fixes: a28d893eb327 ("md: port block device access to file")
-Suggested-by: Christian Brauner <brauner@kernel.org>
-Cc: Jan Kara <jack@suse.cz>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- drivers/md/dm.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 56aa2a8b9d71..93f3d28b0f03 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -765,7 +765,7 @@ static struct table_device *open_table_device(struct mapped_device *md,
- 	return td;
- 
- out_blkdev_put:
--	fput(bdev_file);
-+	__fput_sync(bdev_file);
- out_free_td:
- 	kfree(td);
- 	return ERR_PTR(r);
-@@ -778,7 +778,7 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
- {
- 	if (md->disk->slave_dir)
- 		bd_unlink_disk_holder(td->dm_dev.bdev, md->disk);
--	fput(td->dm_dev.bdev_file);
-+	__fput_sync(td->dm_dev.bdev_file);
- 	put_dax(td->dm_dev.dax_dev);
- 	list_del(&td->list);
- 	kfree(td);
--- 
-2.44.0
+> ---
+>=20
+> Notes:
+> =C2=A0=C2=A0=C2=A0 v2: Lowered LimitRTPRIO as suggested by Martin Wilck.
+>=20
+> =C2=A0multipathd/multipathd.service.in | 3 ++-
+> =C2=A01 file changed, 2 insertions(+), 1 deletion(-)
+>=20
+> diff --git a/multipathd/multipathd.service.in
+> b/multipathd/multipathd.service.in
+> index 18bb367e..a63ddd9a 100644
+> --- a/multipathd/multipathd.service.in
+> +++ b/multipathd/multipathd.service.in
+> @@ -19,7 +19,8 @@ NotifyAccess=3Dmain
+> =C2=A0ExecStart=3D/sbin/multipathd -d -s
+> =C2=A0ExecReload=3D/sbin/multipathd reconfigure
+> =C2=A0TasksMax=3Dinfinity
+> -LimitRTPRIO=3Dinfinity
+> +LimitRTPRIO=3D10
+> +CPUWeight=3D1000
+> =C2=A0
+> =C2=A0[Install]
+> =C2=A0WantedBy=3Dsysinit.target
 
