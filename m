@@ -1,85 +1,107 @@
-Received: from desiato.infradead.org (desiato.infradead.org [90.155.92.199])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8FD81487DF;
-	Wed, 17 Apr 2024 17:55:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.92.199
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60B4B172BCB
+	for <dm-devel@lists.linux.dev>; Wed, 17 Apr 2024 18:00:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713376545; cv=none; b=jd2JyAEP1zKf8RDZ9wMDnTto7yxCkNFKlq7loP0QcTGoiBmA9ncjFzz6HhKChx0nOyro2jczY2M/CcD2MdLb8EzOINhY2+bNTgTsdmP8tBP5afPvY2TH3Th+BPplVuKXkxZvkFqGrOvAMRmRUYAnn62YjCWgpepQP9SuS9oyqP0=
+	t=1713376828; cv=none; b=Qu1nMKgwtx0IAFVVC8swzd25mZEqnYQksQ53BnDfsN4VrBR2on45rO/zcIkvyHsx/P56uMk6TBQY3MXVZsmX6W0SU43adatjJohUyBM8qncTReWmNky5vtV3dcVLUPqNilwrA06mlNlX5Sj3UqN02aoKy+MyevacBoHqlZVmBM0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713376545; c=relaxed/simple;
-	bh=iM1cRx/dRlcToMFYIxS0SCJWI9W90EJVDhqZRt7Jh1k=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Net0NebJYH0uhtpMnygkaHiObP4/G143n1bwbuvwowgZgmpNcgwGxOgcb+qrL4onKshgh+J18zcnFubEXQAIdkiZN/PKruxLMjoh8FbIVcq6XhM3vPAudIyyhKhUFZLtzQklF8HRyvPoGufBnE6Rj760UlwwDQvIyhaRh1Yt5Cg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=R7DYTJNd; arc=none smtp.client-ip=90.155.92.199
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	s=arc-20240116; t=1713376828; c=relaxed/simple;
+	bh=Dq26QfCgnNaI2tOpF1lMZEHiWUNQ/2Uht7UQhqKYR3g=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=TdXa4zSNx5PS2Z/HBOdwzBqxmM5BFENN22csXFhjOhDkk06TZAVr2xwtN3k4A94RMX9ZuCFD1cF4/EVi2IZ40uuOBPJIeYlwfnH84HKtlHyOxZAibej+3OYdrvVSvqMTab61X/f+tGEvGLDq/60Kc6xGa0NskAVAAyW1ewODnGc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=g9K/RXMI; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="R7DYTJNd"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=InWcaRy3h3nbfDQgATItK7nUOOUbF1ycPOVv55Cp7bw=; b=R7DYTJNd8n8/ayp8J3r+y+0izk
-	BnBCLmMrEZ8RPWxyf2cv3HpzKGFEBSyu4aIfr4pF9eTeVeO0Oj40XEWmyaXpA0uGTvaf5Fy11+Gjl
-	Hh5+GHXybPSmn1VuiPOa8w5SQEc872Q7YkEShx2CdOa4D71qe5WE6qhinyf3OnyIHfhNJMvelo6gs
-	BIsGCR7u0X64TVweOu0Pr5T6HWYp1SwdYZ4v+B0vsfwJ8k+sRMOxitce4vuq+ncmkcuBG4iNenbEV
-	/5FPlAnOTqxZSxfw9CEkTfVBWbkCNgH55nzZOjFNPsPzhBr5/WnkZMQlH2N3r14Qd4Q/wWl3fdFCw
-	RYv4roNA==;
-Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-	by desiato.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1rx9VT-0000000Bd3H-1UcW;
-	Wed, 17 Apr 2024 17:55:39 +0000
-Received: by noisy.programming.kicks-ass.net (Postfix, from userid 1000)
-	id 079023002E1; Wed, 17 Apr 2024 19:55:39 +0200 (CEST)
-Date: Wed, 17 Apr 2024 19:55:38 +0200
-From: Peter Zijlstra <peterz@infradead.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>,
-	Damien Le Moal <dlemoal@kernel.org>, Ingo Molnar <mingo@redhat.com>,
-	Will Deacon <will@kernel.org>, Waiman Long <longman@redhat.com>,
-	Guangwu Zhang <guazhang@redhat.com>, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="g9K/RXMI"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1713376826;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=4CqEU9pkrruCGPgaK3aKCqLwJU0gMOcZXnjX2G2B4QE=;
+	b=g9K/RXMI5gRd3LQx1R01T1v5WCWW2lcDf1Oi2go9gCCdNi6ZLPkf9xHCDSZ9MRpoznbe9D
+	I0vjBk0AyDKQytyo5JRhpfU1CPvTMsglRkYbyeDOE1sdOhihfV1fXlLXoB5ZeYEizFSgdi
+	EeTAPYiP+EUFjmqLq177vEGY8tQqNOk=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-79-RXnpd9TUMWycQMsvV3WMKA-1; Wed, 17 Apr 2024 14:00:23 -0400
+X-MC-Unique: RXnpd9TUMWycQMsvV3WMKA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9583618A8260;
+	Wed, 17 Apr 2024 18:00:22 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5522D4011FF7;
+	Wed, 17 Apr 2024 18:00:22 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 392F330C2BF7; Wed, 17 Apr 2024 18:00:22 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 3583C3FA97;
+	Wed, 17 Apr 2024 20:00:22 +0200 (CEST)
+Date: Wed, 17 Apr 2024 20:00:22 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
+cc: Mike Snitzer <msnitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, 
+    Damien Le Moal <dlemoal@kernel.org>, Ingo Molnar <mingo@redhat.com>, 
+    Will Deacon <will@kernel.org>, Waiman Long <longman@redhat.com>, 
+    Guangwu Zhang <guazhang@redhat.com>, dm-devel@lists.linux.dev, 
+    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 Subject: Re: [PATCH 1/2] completion: move blk_wait_io to
  kernel/sched/completion.c
-Message-ID: <20240417175538.GP40213@noisy.programming.kicks-ass.net>
-References: <31b118f3-bc8d-b18b-c4b9-e57d74a73f@redhat.com>
+In-Reply-To: <20240417175538.GP40213@noisy.programming.kicks-ass.net>
+Message-ID: <546473fd-ca4b-3c64-349d-cc739088b748@redhat.com>
+References: <31b118f3-bc8d-b18b-c4b9-e57d74a73f@redhat.com> <20240417175538.GP40213@noisy.programming.kicks-ass.net>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <31b118f3-bc8d-b18b-c4b9-e57d74a73f@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-On Wed, Apr 17, 2024 at 07:49:17PM +0200, Mikulas Patocka wrote:
-> Index: linux-2.6/kernel/sched/completion.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/sched/completion.c	2024-04-17 19:41:14.000000000 +0200
-> +++ linux-2.6/kernel/sched/completion.c	2024-04-17 19:41:14.000000000 +0200
-> @@ -290,6 +290,26 @@ wait_for_completion_killable_timeout(str
->  EXPORT_SYMBOL(wait_for_completion_killable_timeout);
->  
->  /**
-> + * wait_for_completion_long_io - waits for completion of a task
-> + * @x:  holds the state of this particular completion
-> + *
-> + * This is like wait_for_completion_io, but it doesn't warn if the wait takes
-> + * too long.
-> + */
-> +void wait_for_completion_long_io(struct completion *x)
-> +{
-> +	/* Prevent hang_check timer from firing at us during very long I/O */
-> +	unsigned long timeout = sysctl_hung_task_timeout_secs * HZ / 2;
-> +
-> +	if (timeout)
-> +		while (!wait_for_completion_io_timeout(x, timeout))
-> +			;
-> +	else
-> +		wait_for_completion_io(x);
-> +}
-> +EXPORT_SYMBOL(wait_for_completion_long_io);
 
-Urgh, why is it a sane thing to circumvent the hang check timer? 
+
+On Wed, 17 Apr 2024, Peter Zijlstra wrote:
+
+> On Wed, Apr 17, 2024 at 07:49:17PM +0200, Mikulas Patocka wrote:
+> > Index: linux-2.6/kernel/sched/completion.c
+> > ===================================================================
+> > --- linux-2.6.orig/kernel/sched/completion.c	2024-04-17 19:41:14.000000000 +0200
+> > +++ linux-2.6/kernel/sched/completion.c	2024-04-17 19:41:14.000000000 +0200
+> > @@ -290,6 +290,26 @@ wait_for_completion_killable_timeout(str
+> >  EXPORT_SYMBOL(wait_for_completion_killable_timeout);
+> >  
+> >  /**
+> > + * wait_for_completion_long_io - waits for completion of a task
+> > + * @x:  holds the state of this particular completion
+> > + *
+> > + * This is like wait_for_completion_io, but it doesn't warn if the wait takes
+> > + * too long.
+> > + */
+> > +void wait_for_completion_long_io(struct completion *x)
+> > +{
+> > +	/* Prevent hang_check timer from firing at us during very long I/O */
+> > +	unsigned long timeout = sysctl_hung_task_timeout_secs * HZ / 2;
+> > +
+> > +	if (timeout)
+> > +		while (!wait_for_completion_io_timeout(x, timeout))
+> > +			;
+> > +	else
+> > +		wait_for_completion_io(x);
+> > +}
+> > +EXPORT_SYMBOL(wait_for_completion_long_io);
+> 
+> Urgh, why is it a sane thing to circumvent the hang check timer? 
+
+The block layer already does it - the bios can have arbitrary size, so 
+waiting for them takes arbitrary time.
+
+Mikulas
+
