@@ -1,124 +1,96 @@
-Received: from mail-pg1-f171.google.com (mail-pg1-f171.google.com [209.85.215.171])
+Received: from mail-io1-f49.google.com (mail-io1-f49.google.com [209.85.166.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C23A213A3E8;
-	Wed, 17 Apr 2024 10:05:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 797BF128811
+	for <dm-devel@lists.linux.dev>; Wed, 17 Apr 2024 14:20:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713348343; cv=none; b=NF++83WGlMLokKiwiFzUD53ebluXwlT7EG+/O7G7ortpbnLTsh5XK1+oEVfgAP+KUSZfJ9K7EIcwb8VS2LzodnID/YabqhZfKVCrLofo5hr3ecViNjUX0zi51I0v6A+urOJCDCF+dn4vNrkEyMovKqKlyP38+Cq/29UQR7iDR5M=
+	t=1713363614; cv=none; b=txk4Q1bPqDOlRNW+Fhai9+AWFdMdCtBPuGOeV2ECIXlJ1xk7xi76Ye3iqBnGtBEbMFz2KX4tAbz2CFoxiU2s2/NeZPNLZriTmLS8fe5TPbVE1Nf4hpDm9VOBJWtMAY2Tt6j4Fq17wL/TCQxHpavejZznOKoOmf/Hze5Nq9BcvdI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713348343; c=relaxed/simple;
-	bh=1gRmg87JIr+AbQO3Esc+cHkCY63QUm02iWl6ErooOoI=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=XU3td6G7fWbXnPQf48Ggof1Fp54+Dk+nhoogxH6usw13701HNr/jHnf9sOMZrfh+KiA4uo90vw+/VdnlrIbEZ6BSJTcmCHdEnuQP0DKeFAl3p/IW7l3FNJ281xkDVEIEXR36ehI9JGEKd8eUI/QYlIomd8EaJ1L5qic6YYBdyTc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=E7N/1X16; arc=none smtp.client-ip=209.85.215.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1713363614; c=relaxed/simple;
+	bh=qV+sZe9J6QOdFH+HyvdCk29XqhUU/5ZAe3YBep7WUpg=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=YWV2fYxNilnSyH/yNxDMBIMAwZZB6Ot2LAw9S/Lo6AhxEE3N79a3RLiwOczDOD0pSSc0yo9YN2T0IJdQ9leXmnjxPHDl7ABOXsknPcWybOESqYPKaDIScdFn/FfLjWQo4xwnboo/O7ihLCfNy3qEDyxa5AAoVe7ZuXOOLIaZ3YQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=RL0t9Qts; arc=none smtp.client-ip=209.85.166.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="E7N/1X16"
-Received: by mail-pg1-f171.google.com with SMTP id 41be03b00d2f7-5d8b887bb0cso4045938a12.2;
-        Wed, 17 Apr 2024 03:05:40 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="RL0t9Qts"
+Received: by mail-io1-f49.google.com with SMTP id ca18e2360f4ac-7d6b362115eso80479639f.0
+        for <dm-devel@lists.linux.dev>; Wed, 17 Apr 2024 07:20:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713348340; x=1713953140; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=1gRmg87JIr+AbQO3Esc+cHkCY63QUm02iWl6ErooOoI=;
-        b=E7N/1X16YKChCa7WH9BNN4xCDPxkjcZecadqnavxB8oDRzUN1b/UV32QQ6dCdOy5UL
-         UT0C71rVadhQQQBNpwq5j8HEaXe3GTwkrHy1TDqvVP2tIRn32clrUhwZzZASlG92dhmO
-         M5r4vnXltLTfNZPiSIRElAcGZRmMilE8URxo0jG/iahlQqMUKsdlbPPzt8+aceYBmPp0
-         pImNeF4USvuSUulc+nK7nj2dTBBotybvOX1fIzOJamDmoEiB18H1Z3dfmc5Dk47W2cEL
-         6gFKPv5e67rj3HRmoR5FlByamiLHwt+pmk9TCCFxt4H8NWzdJc3OVQNlHEVqSmIy8Io9
-         Lq+Q==
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1713363611; x=1713968411; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=HmJ5eZJGxB1Hun1ep3UDJQ3ZjsSAsChxE6ejtia75oo=;
+        b=RL0t9QtsbmPDVv4/u9f2WJiBJ/In5nAErN3PUdd4SFIfCwMcVYEsnFrkszpcDoOsPD
+         60K++/pD+gMZ5QPaBdWEqEuAZqDAvSOzOKEZDHkapZA4itUo0aKCeK0BtNd4e6AL9osh
+         iYrz36d8lfgfjoa5QCGgGUXOxXb4EkYwwYG0z/GyfItaC00fcI/gW3FFh/tV8qOz3inN
+         sjAQoYLPqNL44u3kgPzJ3D2XwupZj/NxxvyytUuNCwEK36YOvxOwO+D8AFtYwJMePbnk
+         MEzEFWIt9ognluJhDaxQzt5NfpiiYBj15Gh8vpe0fd11QbAoVMAvm/bd01oakv1riQrb
+         PDtw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713348340; x=1713953140;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=1gRmg87JIr+AbQO3Esc+cHkCY63QUm02iWl6ErooOoI=;
-        b=RB2MGdUwOtdYMMaMA25IgESDfBtSAahCf/qxLuVVJKOI0BZ6rXhktQFV2r/IzpMtaD
-         Ooa8au8xFRa0pkgHGvEB/CxL1iXujrS2+mElqZyXwMyXsVsGMpoGTGrg+wLtASYpjN4n
-         SjyxRvEi9Q3kXzae5lNXE86QWI2nEsOckHRMzaQm74Yh5EqldhaMjfl3+eiY6JsTL7IL
-         EOCrssJO+JFBCGlt9nMIHFB23Oj7MZpDg91Z0kl+f/jmx9K5+p57kXnvkg+bL07mlySD
-         m37zXCmIcfsAny/vcCANGETAmgdF31i9uZe7e+Z1Ye+dZsxicBFUz5xREw3lv1AeXuib
-         BLHA==
-X-Forwarded-Encrypted: i=1; AJvYcCWaF5CPOBYQGKoEiEajy6pXtaNmNRoVGC3S8kqldm1yqysQI4iP4pWqSsvwtlNLpeEV/I/ZBVhVDZr0ZwS74FxOF9xAwMpvKaRJCYogf+eV2TClqY8HPjYIae2kAqdX9hWkmQ==
-X-Gm-Message-State: AOJu0YwzwFuYTYDyJWgl+FIYMjMObzNobgBRq7e2wJU3ref+19/M8MfT
-	4LCIgGFfSybBDW4ia79glHWefJ/pXhi/6UCmhvDPL11prNui60uU
-X-Google-Smtp-Source: AGHT+IHoSQwgWNaYYN9PHfJ92Leu3dCSJnPJtoI+4IJ8iitgaNIncK7hpg/lzzZCpwVd83QGt3/Z2Q==
-X-Received: by 2002:a17:90a:108:b0:2aa:7057:437b with SMTP id b8-20020a17090a010800b002aa7057437bmr6040509pjb.16.1713348339921;
-        Wed, 17 Apr 2024 03:05:39 -0700 (PDT)
-Received: from archie.me ([103.124.138.155])
-        by smtp.gmail.com with ESMTPSA id t12-20020a17090a5d8c00b002a474e2d7d8sm1019325pji.15.2024.04.17.03.05.38
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 17 Apr 2024 03:05:38 -0700 (PDT)
-Received: by archie.me (Postfix, from userid 1000)
-	id 1682E18462BA0; Wed, 17 Apr 2024 17:05:35 +0700 (WIB)
-Date: Wed, 17 Apr 2024 17:05:35 +0700
-From: Bagas Sanjaya <bagasdotme@gmail.com>
-To: Randy Dunlap <rdunlap@infradead.org>,
-	Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net,
-	zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
-	tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
-	snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Cc: linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
-	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	audit@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [PATCH v17 20/21] Documentation: add ipe documentation
-Message-ID: <Zh-e7945DM6f2u9T@archie.me>
-References: <1712969764-31039-1-git-send-email-wufan@linux.microsoft.com>
- <1712969764-31039-21-git-send-email-wufan@linux.microsoft.com>
- <Zh0Zh3-xraVl85Lm@archie.me>
- <a2266217-c3ad-4bb2-8188-498a2c8ae36c@infradead.org>
+        d=1e100.net; s=20230601; t=1713363611; x=1713968411;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=HmJ5eZJGxB1Hun1ep3UDJQ3ZjsSAsChxE6ejtia75oo=;
+        b=b6MUOaHUilGD5qqGT2QoDWJVp70VsTT79i4SrCeemf4sH/rBGn6PvKP7uhT9Mi+GYA
+         UauJHBIGNfadVS9UroiKAf+o/HUZ7G3oqKtENiWsDFa+zckLWpl7DjLEk3dkixpgqIvC
+         CYLmEtM+6Dr8GebrykyFgFq9Q53y6JnCgF4XGjCo1Q1oAys4TAimle7zgeGmOeHrtNP4
+         zGPLI/ffj2oznFMMtmTgyS48ddOTanHYNBhf94YXXPj3j8YqVw4XkRxE/wlQBiRsMhvn
+         bCRFZklyQcwYsvpUxqPLtAi4BuMpX/jDXzhhAMOkvnNc2wXTic0zCUGaKO2OJ0Idf9on
+         pkfg==
+X-Forwarded-Encrypted: i=1; AJvYcCXG443JpS+a4mKlzTv2HlRYoQrzu/4TSAAXmkK4pCD3p1xDuHTycIiqIQU4SrFuKaPtdWvOBO1p8kpTcllsv13YD7h3Ya8Togo=
+X-Gm-Message-State: AOJu0YyBUiqRuDu4AP9TBCUwAXnOMllqaBltJAnhAMF3HOFgu+gQVR3f
+	gCCI0L6UzNVv+fJnOxgLF8NAidaFRkwWXAL3yUP45rMcrAOHIupl1PYynN0I4G4=
+X-Google-Smtp-Source: AGHT+IHtsCXR9G3n7aDlaLxkxPqb+SGPG4DBga0J3T70QmsEh45We5icSAo7F0CzW0bUzldcD1V8pw==
+X-Received: by 2002:a5e:8d03:0:b0:7d9:4bfe:5ed1 with SMTP id m3-20020a5e8d03000000b007d94bfe5ed1mr10824580ioj.2.1713363611590;
+        Wed, 17 Apr 2024 07:20:11 -0700 (PDT)
+Received: from [192.168.1.116] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id dv2-20020a056638608200b00482f1e0662asm3245449jab.9.2024.04.17.07.20.10
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 17 Apr 2024 07:20:11 -0700 (PDT)
+Message-ID: <e86c972f-4acc-4b89-9872-b5f92606cfd9@kernel.dk>
+Date: Wed, 17 Apr 2024 08:20:10 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="0nWDRmFxn5oWDUvp"
-Content-Disposition: inline
-In-Reply-To: <a2266217-c3ad-4bb2-8188-498a2c8ae36c@infradead.org>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3] dm-io: don't warn if flush takes too long time
+Content-Language: en-US
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer
+ <msnitzer@redhat.com>, Damien Le Moal <dlemoal@kernel.org>
+Cc: Guangwu Zhang <guazhang@redhat.com>, dm-devel@lists.linux.dev,
+ linux-block@vger.kernel.org
+References: <754d1973-31cb-d3ca-1f6f-2d35b96364db@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <754d1973-31cb-d3ca-1f6f-2d35b96364db@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
+On 4/17/24 3:05 AM, Mikulas Patocka wrote:
+> There was reported hang warning when using dm-integrity on the top of loop
+> device on XFS on a rotational disk. The warning was triggered because
+> flush on the loop device was too slow.
+> 
+> There's no easy way to reduce the latency, so I made a patch that shuts
+> the warning up.
+> 
+> There's already a function blk_wait_io that avoids the hung task warning.
+> This commit moves this function from block/blk.h to
+> include/linux/completion.h, renames it to wait_for_completion_long_io
+> (because it is not dependent on the block layer at all) and uses it in
+> dm-io instead of wait_for_completion_io.
 
---0nWDRmFxn5oWDUvp
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Change looks fine to me, but while at it, let's just move it into
+blk-core.c and make it public, no need for this function to be a static
+inline.
 
-On Mon, Apr 15, 2024 at 07:56:16AM -0700, Randy Dunlap wrote:
->=20
-> On 4/15/24 5:11 AM, Bagas Sanjaya wrote:
-> > The doc LGTM, thanks!
-> >=20
-> > Reviewed-by: Bagas Sanjaya <bagasdotme@gmail.com>
->=20
-> Hi,
-> Please see netiquette, section "Trim replies".
-> Thanks.
->=20
->=20
-> --=20
-> #Randy
-> https://people.kernel.org/tglx/notes-about-netiquette
-> https://subspace.kernel.org/etiquette.html
+-- 
+Jens Axboe
 
-Thanks for the tip!
-
---=20
-An old man doll... just what I always wanted! - Clara
-
---0nWDRmFxn5oWDUvp
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYKAB0WIQSSYQ6Cy7oyFNCHrUH2uYlJVVFOowUCZh+e6wAKCRD2uYlJVVFO
-o4TXAPwN11FytsnDX/+gFpUvWYFc3CxPaaA7sJCuHF5qVYQtGAEA6GP0hs+AljG4
-tOsfo209C7he+IJJJUnxDpScnZoh/wc=
-=jvcJ
------END PGP SIGNATURE-----
-
---0nWDRmFxn5oWDUvp--
