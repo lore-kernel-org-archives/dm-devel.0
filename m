@@ -1,304 +1,211 @@
-Received: from APC01-TYZ-obe.outbound.protection.outlook.com (mail-tyzapc01on2087.outbound.protection.outlook.com [40.107.117.87])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC79D7D06E
-	for <dm-devel@lists.linux.dev>; Wed, 17 Apr 2024 08:04:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.117.87
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713341072; cv=fail; b=PXNagm0cZdjk+6pfOMYxShMJ+lPEVWTMoJAm2uFuWlFY+YRDKWsXjo2WcGrWXxDiz5ifa02Le2ycV0u7XjxnS7cohm+7+mdhXJwohKGULhKowJmBbpH04qcc6/NVladL02JvPjEDd5xj989MIgPuhigwchakDWfFBKVlk4eW9kY=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713341072; c=relaxed/simple;
-	bh=zkcRz3wVXbRLdWQlSuOoZqiweRUrhOHHPcIDkju2Lms=;
-	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=BdTNxm763EC5R3zCQtx7Sk9peJum05V1wYgS9AqhEqo17AVVBaoZ6bEIMXeGDyr/0Z5/2G092p6Lfq+hRqqtoG0zlRGnDU1fwo0VxPHS3w1fyAIEjUWwGio3jsecIMgK4UpGoE6j4OCEkZFO3c02Y22oQp2o8IrRtIwhreIXoOQ=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=df2uXNFT; arc=fail smtp.client-ip=40.107.117.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7AB2129A7F
+	for <dm-devel@lists.linux.dev>; Wed, 17 Apr 2024 09:05:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1713344737; cv=none; b=ZO/4qNWapGudYyMnat8xKkBsf7YEuEkwdvbuH/3DhtcCcJJDX1IWRHU9skkzlHKNUC3XX3VPFVm2N1Oav9F6bMgWWPOWX8JN9QvJW/9Zr35ry/pjDYOjYdbwiJU4DDF2/ZBlisKvEN4pTSE6zCNFzRGZNuSVvjAg0jeNXj/BbZA=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1713344737; c=relaxed/simple;
+	bh=dzLuLNR+JHkFKMGMqRUn0tXcCa7nTBGisy6FkCnmdfM=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=gOc1y8FIv5hYvHQvhHlaGavR/1dMMQs6wJDIXjcMhEwUix/lkJJfgGqjg7o3y/kvt5dv4dZgjEB5M0cHZz7a6R3yNIlYZLXJpgTBrziMmx6k5sizRS7RtvBDzje2QPTSZ4L+akfjTMsJchNWfRIBF/XiiaCZtu4p+5l/lklIqUE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hDdczSok; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="df2uXNFT"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=G0n88Efxz1jqyTwUH/pCsX6PKA7dpiWZy/BGRlKCEYJmmhQeer3O8lsBM1Xn+TOA30cztgzWX3RhCWxlewS2B+YT5CQcFF8Qcuy4nHFLxd+Ib56KS2x896aRyiIJJtFgkmloMQcMii+Q2xv0VrpHtdDj0/jONz5L2dGuQtdlYt5qfLtWiKSXMaImDNdylV6S8dzewKDoVE3LTmJawTa8aCPUOHshjQ50ro9QT7OQrAAyOWzk3UGWVdPSrdAaDNiErBIlu64sQUP8mCbpXohr3vTBb+eR57mK+NXl3sOE4vb2qpyVGHAjOsaUcUbxma8IG1vuImCxORywr1kx7TOaNQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=msSiQsbO5mdiWzvTW2gO1Ngk7B+FDQNoL7e2nHr3x8w=;
- b=FqpNWpD/62Ib6vLbxIx5sHZrr9CcBqfDgfQb4vNeFDBNPI5Xz/cs3kgDKEuREdJqmH1B0JIeOR7blSpV4IsEIjyS/ExjwRIBCODmPnIt0sFf93UU4RGyZ/Z78yMK8sV7ujm/ybwf8WXe8OJmHFovId3V/Bwm/vOwhDl1bAlGVsBFbnPaELjWQQUHs3jyOuZgsR2ar7O1/QCe5HAA7yZrysAbe54HfFHwGe1tjRFkE0H8Nf8gE/HR/vtP4gEBZGkMIx1SnfyJS5wZ1GEzDUhZgBpCxzyzH5QJzlRMs7eSeEavuJGTtKHGWoJej/wGkU79t27EYO0E56yYI8wYT3ZbBA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
- dkim=pass header.d=vivo.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=msSiQsbO5mdiWzvTW2gO1Ngk7B+FDQNoL7e2nHr3x8w=;
- b=df2uXNFTfq6UgUwfF7w8QaygFcxzoVncU7YdRPVo2QK2yRx/uBqU6JKPlUjXb5zrwtFoL6kcLibtYNvJpaEHOXdsS7+F5fg59aFoFDLA5tcKAAAM9q93JzL7NSu1g0QXOg/8dIaPVCtabh4vRaHNpSzoBhzmZZnfQ0SpgvsHxBdbQP4LXc/tkETdZQ5mA988AR7a8GZCwIx9ZhyAFdygv1/8D5UypZLhLHNOi4/HikD82hhcck9i8zzn6Igy8hcgnN0e6kaCdHcl5hcYei15o80CnktqLX0QWvxXDbr4WKoaYraYjx2jw6vAAc0vxIVs70YY2kmISZ/MX4ITjE922Q==
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=vivo.com;
-Received: from TYSPR06MB6411.apcprd06.prod.outlook.com (2603:1096:400:42a::11)
- by OSQPR06MB7181.apcprd06.prod.outlook.com (2603:1096:604:291::7) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7409.55; Wed, 17 Apr
- 2024 08:04:21 +0000
-Received: from TYSPR06MB6411.apcprd06.prod.outlook.com
- ([fe80::af33:ff9c:cf31:45e9]) by TYSPR06MB6411.apcprd06.prod.outlook.com
- ([fe80::af33:ff9c:cf31:45e9%3]) with mapi id 15.20.7452.049; Wed, 17 Apr 2024
- 08:04:20 +0000
-From: Yang Yang <yang.yang@vivo.com>
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel@lists.linux.dev
-Cc: Yang Yang <yang.yang@vivo.com>
-Subject: [PATCH] dm: Avoid sending redundant empty flush bios to the same block device
-Date: Wed, 17 Apr 2024 16:03:31 +0800
-Message-Id: <20240417080332.9288-1-yang.yang@vivo.com>
-X-Mailer: git-send-email 2.34.1
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: TY2PR06CA0004.apcprd06.prod.outlook.com
- (2603:1096:404:42::16) To TYSPR06MB6411.apcprd06.prod.outlook.com
- (2603:1096:400:42a::11)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hDdczSok"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1713344735;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=FgizP1W9wYXJTXddAvpCsKugaMlz1Qb6hK6QhZ7rS64=;
+	b=hDdczSokBrhJCtYcIXUi9lR5YR7GoPbYr0+cxzrAsKK3bJ34NvSyiLTdJ2G/Lz8V/Yz0Es
+	XzQRdbvT/X52rnMPoO6FAyRLcF+UGw5YT44WLGV2+JU6qsmCaPiublSIWG1jjU6OOHbMBe
+	H0lRWeZ8YuhH7DlK17Me32UXuyDXA1Q=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-605-P-AHZvDuO-eELP6h9QJRxQ-1; Wed,
+ 17 Apr 2024 05:05:31 -0400
+X-MC-Unique: P-AHZvDuO-eELP6h9QJRxQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7044628EC11A;
+	Wed, 17 Apr 2024 09:05:31 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 248A3490DD;
+	Wed, 17 Apr 2024 09:05:31 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id ECC8330C2BF7; Wed, 17 Apr 2024 09:05:30 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id E80903FD7A;
+	Wed, 17 Apr 2024 11:05:30 +0200 (CEST)
+Date: Wed, 17 Apr 2024 11:05:30 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>, Damien Le Moal <dlemoal@kernel.org>
+cc: Guangwu Zhang <guazhang@redhat.com>, dm-devel@lists.linux.dev, 
+    Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org
+Subject: [PATCH v3] dm-io: don't warn if flush takes too long time
+Message-ID: <754d1973-31cb-d3ca-1f6f-2d35b96364db@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: TYSPR06MB6411:EE_|OSQPR06MB7181:EE_
-X-MS-Office365-Filtering-Correlation-Id: a8ce3f85-79cd-4d62-ea6a-08dc5eb4fcab
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info:
-	KNPq9WVY6qLaiQX0mSIRUKhBqFVnJ7czpBYrhiVaFlGuK+FfjCs92dWLirsJb8wPjmkl2tYi/i5X1GktPjrLFOY3wHcUs2u5thcwL27yXkLgE+ofiUMWJGNvVVuldHIaE36z3FEq2o/0LuLjCiy9s5jx2PGuKdq9kCMXhwaGszqCUjcRXqVOBph31dxG1QrS9CNiZhy1tuECK6l1c++IbbBRtlfmX+aoJphxMLpcjXkbQYU9VAWufp0XnIOHd3fyAjutrmJv7K2qRQhJbMRa5B/4l9r3GQyJGczEuxbWw9PrtOdTZZmXWqqdPBbjMKJffOeC1t9zqMQKct+fJo/N7tjwovNCwCFCaqsQDunp/vYRwT3SH+HcQ+E6NVm3wOG5E7rmnTnH8zDARArOmKot9TWBiRt3NfhAquMG69P5cxIFkXmfcT1KILtwAhxyJQPI0gwnuNAMLF97yFWAykrWAsRYvl+ng7HNG/ADZKIb1LazbTiW/faoRQXx0teKtRZrjUVO0b5oIcISpDFB/jOFD+S2CzBuT7jgph/edtRCTB2MUuPmYfbI6F/NNFCt9ubB58SVPiT/Jd2aplO0qj/9fLm4oO/CDMjHD+dVksGcU4eDZS0ItURtH/SYmYlG0UGYMgYtbY89hkyzN2J8Qqksj0+z22UX+vP/m4BtgCIYVnlHu/We3IyEteEnHwQUv6ZFdS/3ER/jzI62/69IhydZ1Q==
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:TYSPR06MB6411.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(366007)(376005)(52116005)(1800799015)(38350700005);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?kPZ0v4lg+JtVUMSoOkJAE4sJOF/jzFTEQaRlz6/Yav4wwiYtHre9YsrMdQEe?=
- =?us-ascii?Q?tluDTZDqUynW6pxK3iI1uHD9lkZFk3V5E9MBw0+Y9T3YdGJZ4SEBMnrdc7sI?=
- =?us-ascii?Q?EDgDgcgKAyhs1mlVnpNcECymQ2zQNcMjQT/phtN7lvYjr5uY4P7B9+aNGkzK?=
- =?us-ascii?Q?9ZDcTEqzTXH2oXsC6qa6B6ZcnFgccS7LPVsBEjYq2XBXx+M3tGbJQUsPLWs9?=
- =?us-ascii?Q?3V1SK3SfT04yZKWTfC28T1CHXofIbkeR1lZUAd4aQsW1cdfhnWIEyYklaZYG?=
- =?us-ascii?Q?GhPyx2Nbf1VLtd0WWeL5WPb1+vxdLGnZwicrqrhEHmF60Fuq3Fc0Kjgoq+PJ?=
- =?us-ascii?Q?mH4STky//ANok/KetrG9in+F1iRBCwNwbAreibATJCaJtRGCewSINe6Mexuj?=
- =?us-ascii?Q?edQV/GbLk9ipfjg9cpnJ4tROewiqYSBUNhwDl6ZpDuyGM+H1nbnG1pckue39?=
- =?us-ascii?Q?Qv6t1yc1SkiSEZpCL9cKBscmX2KmFbZA6XR7wh3jUizdIGlPldRmIZSGdLI/?=
- =?us-ascii?Q?20FbZ9BbI1zyhidU5WpI5NpgPZmfySAcwvs59VmSX4MhxEXod9xErPG8xw/i?=
- =?us-ascii?Q?TQ65kUEqyj2kLkJjmVgAD6QRgFlONBo+MRp1BKFQZHNvZlV9BLjoDJNaxWJw?=
- =?us-ascii?Q?XoEMjWSmTMw49IZ/bJUeQU3W6y9mBCPt14XnucGB9/Fm5bIi9ma4xWkGF56d?=
- =?us-ascii?Q?xCkTIk2o2pAyRSrdOO2E6p6YDC/fE7aYiNcp0zzUZswA66MySS9thlVHhw/Z?=
- =?us-ascii?Q?LEE+ApGTYk4LK1BDBjhUB9y4WyrzKuf9Cag4ig29HrwE6w9llzJdGj/RK/NH?=
- =?us-ascii?Q?tzlc2+qpee2VvIDbgcwmkKjcLGJNpVvIxi1Sk8NDPBkNQ08eJrJTRWdtPXwu?=
- =?us-ascii?Q?nH1VYr7FxEC20JHJHXYHQE8eUut+DoAIprLLF9FEOvVva804klPViYLpd47Q?=
- =?us-ascii?Q?7WgX1jVVw8d1mr0XpaMQoReUx/C4CrUL4egCTXS0Qu3tFSo0TdrbDUtf7oR4?=
- =?us-ascii?Q?0wekGkZlJCWHRQecfeWuqaQoKtpFOrieNrfNFKzkdrq8KEg4FbXJudoIrlEe?=
- =?us-ascii?Q?UX+G0Mp4jScJUdEW2i3j83EQWPbQrmtnhSdNAmIulJgsCUanosG7Qe/NUIFR?=
- =?us-ascii?Q?9VYBanFayvqu1mLf0BLG53qROMYRyg9Ei1mwURve6BV1GMDSynRowBO/b58q?=
- =?us-ascii?Q?vfyuQ0KWoSDOwSyNBFZK5hd7nGQsdmZbOAUtd+nwN/TSVHIftfcLbx0+Ji/y?=
- =?us-ascii?Q?QPvCry15usCRbWGFlY27YpqLkJCBMUjI3PUFlXEWIzPe4bjNfVpiik2FC2sC?=
- =?us-ascii?Q?06NLRxKVJzAzqhoVDmgPiLzGPhVLPmaBfTPxr0ifwk2CPOutj59bnN8AL0zV?=
- =?us-ascii?Q?bCw1oWiDHW9pvceBpsTHzYTCgdGONtpgQdz187W/OtxmQU3pNGXeqPTMqxSh?=
- =?us-ascii?Q?in3vexa+pXhTynk9LtbOevNApfL459HPmH9WuhDEs2xm04DR/nFjhjP4P6tQ?=
- =?us-ascii?Q?4RXSYaj6zXrCB6XjclI34AZ+62G8bkUKL0I0qweAqmigP9Ak+r7UNNsG8ZzY?=
- =?us-ascii?Q?XwafuQKoK4WZ3yyD5QT8luGCpo7I1mQ8SZi6ZVS5?=
-X-OriginatorOrg: vivo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: a8ce3f85-79cd-4d62-ea6a-08dc5eb4fcab
-X-MS-Exchange-CrossTenant-AuthSource: TYSPR06MB6411.apcprd06.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Apr 2024 08:04:20.7553
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: VXfIbANN/Ug2ZqEdygvytMQEV73k8fP9GMfv/ER2XrfXdaIhNvXmaIp684qNRrHCxF0VWbg1+clHdbg5rq9KgA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: OSQPR06MB7181
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 
-__send_empty_flush() sends empty flush bios to every target in the
-dm_table. However, if the num_targets exceeds the number of block
-devices in the dm_table's device list, it could lead to multiple
-invocations of __send_duplicate_bios() for the same block device.
-Typically, a single thread sending numerous empty flush bios to one
-block device is redundant, as these bios are likely to be merged by the
-flush state machine. In scenarios where num_targets significantly
-outweighs the number of block devices, such behavior may result in a
-noteworthy decrease in performance.
+There was reported hang warning when using dm-integrity on the top of loop
+device on XFS on a rotational disk. The warning was triggered because
+flush on the loop device was too slow.
 
-This issue can be reproduced using this command line:
-  for i in {0..1023}; do
-    echo $((8000*$i)) 8000 linear /dev/sda2 $((16384*$i))
-  done | dmsetup create example
+There's no easy way to reduce the latency, so I made a patch that shuts
+the warning up.
 
-With this fix, a random write with fsync workload executed with the
-following fio command:
+There's already a function blk_wait_io that avoids the hung task warning.
+This commit moves this function from block/blk.h to
+include/linux/completion.h, renames it to wait_for_completion_long_io
+(because it is not dependent on the block layer at all) and uses it in
+dm-io instead of wait_for_completion_io.
 
-  fio --group_reporting --name=benchmark --filename=/dev/mapper/example \
-      --ioengine=sync --invalidate=1 --numjobs=16 --rw=randwrite \
-      --blocksize=4k --size=2G --time_based --runtime=30 --fdatasync=1
+[ 1352.586981] INFO: task kworker/1:2:14820 blocked for more than 120 seconds.
+[ 1352.593951] Not tainted 4.18.0-552.el8_10.x86_64 #1
+[ 1352.599358] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+[ 1352.607202] Call Trace:
+[ 1352.609670] __schedule+0x2d1/0x870
+[ 1352.613173] ? update_load_avg+0x7e/0x710
+[ 1352.617193] ? update_load_avg+0x7e/0x710
+[ 1352.621214] schedule+0x55/0xf0
+[ 1352.624371] schedule_timeout+0x281/0x320
+[ 1352.628393] ? __schedule+0x2d9/0x870
+[ 1352.632065] io_schedule_timeout+0x19/0x40
+[ 1352.636176] wait_for_completion_io+0x96/0x100
+[ 1352.640639] sync_io+0xcc/0x120 [dm_mod]
+[ 1352.644592] dm_io+0x209/0x230 [dm_mod]
+[ 1352.648436] ? bit_wait_timeout+0xa0/0xa0
+[ 1352.652461] ? vm_next_page+0x20/0x20 [dm_mod]
+[ 1352.656924] ? km_get_page+0x60/0x60 [dm_mod]
+[ 1352.661298] dm_bufio_issue_flush+0xa0/0xd0 [dm_bufio]
+[ 1352.666448] dm_bufio_write_dirty_buffers+0x1a0/0x1e0 [dm_bufio]
+[ 1352.672462] dm_integrity_flush_buffers+0x32/0x140 [dm_integrity]
+[ 1352.678567] ? lock_timer_base+0x67/0x90
+[ 1352.682505] ? __timer_delete.part.36+0x5c/0x90
+[ 1352.687050] integrity_commit+0x31a/0x330 [dm_integrity]
+[ 1352.692368] ? __switch_to+0x10c/0x430
+[ 1352.696131] process_one_work+0x1d3/0x390
+[ 1352.700152] ? process_one_work+0x390/0x390
+[ 1352.704348] worker_thread+0x30/0x390
+[ 1352.708019] ? process_one_work+0x390/0x390
+[ 1352.712214] kthread+0x134/0x150
+[ 1352.715459] ? set_kthread_struct+0x50/0x50
+[ 1352.719659] ret_from_fork+0x1f/0x40 
 
-results in an increase from 857 KB/s to 30.8 MB/s of the write
-throughput (3580% increase).
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Signed-off-by: Yang Yang <yang.yang@vivo.com>
 ---
- drivers/md/dm-core.h          |  1 +
- drivers/md/dm-table.c         |  7 ++++
- drivers/md/dm.c               | 60 +++++++++++++++++++++++++++++++++++
- include/linux/device-mapper.h |  6 ++++
- 4 files changed, 74 insertions(+)
+ block/bio.c                |    2 +-
+ block/blk-mq.c             |    2 +-
+ block/blk.h                |   12 ------------
+ drivers/md/dm-io.c         |    2 +-
+ include/linux/completion.h |   17 +++++++++++++++++
+ 5 files changed, 20 insertions(+), 15 deletions(-)
 
-diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index e6757a30dcca..7e3f2168289f 100644
---- a/drivers/md/dm-core.h
-+++ b/drivers/md/dm-core.h
-@@ -217,6 +217,7 @@ struct dm_table {
- 	/* a list of devices used by this table */
- 	struct list_head devices;
- 	struct rw_semaphore devices_lock;
-+	unsigned short num_devices;
- 
- 	/* events get handed up using this callback */
- 	void (*event_fn)(void *data);
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 41f1d731ae5a..ddc60e498afb 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -2133,6 +2133,8 @@ void dm_table_postsuspend_targets(struct dm_table *t)
- 
- int dm_table_resume_targets(struct dm_table *t)
- {
-+	struct list_head *devices = dm_table_get_devices(t);
-+	struct dm_dev_internal *dd;
- 	unsigned int i;
- 	int r = 0;
- 
-@@ -2159,6 +2161,11 @@ int dm_table_resume_targets(struct dm_table *t)
- 			ti->type->resume(ti);
- 	}
- 
-+	t->num_devices = 0;
-+
-+	list_for_each_entry(dd, devices, list)
-+		dd->dm_dev->index = ++(t->num_devices);
-+
- 	return 0;
+Index: linux-2.6/block/blk.h
+===================================================================
+--- linux-2.6.orig/block/blk.h	2024-04-15 15:54:22.000000000 +0200
++++ linux-2.6/block/blk.h	2024-04-15 15:54:21.000000000 +0200
+@@ -72,18 +72,6 @@ static inline int bio_queue_enter(struct
+ 	return __bio_queue_enter(q, bio);
  }
  
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 56aa2a8b9d71..e46bafa13601 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -48,6 +48,8 @@
+-static inline void blk_wait_io(struct completion *done)
+-{
+-	/* Prevent hang_check timer from firing at us during very long I/O */
+-	unsigned long timeout = sysctl_hung_task_timeout_secs * HZ / 2;
+-
+-	if (timeout)
+-		while (!wait_for_completion_io_timeout(done, timeout))
+-			;
+-	else
+-		wait_for_completion_io(done);
+-}
+-
+ #define BIO_INLINE_VECS 4
+ struct bio_vec *bvec_alloc(mempool_t *pool, unsigned short *nr_vecs,
+ 		gfp_t gfp_mask);
+Index: linux-2.6/drivers/md/dm-io.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-io.c	2024-04-15 15:54:22.000000000 +0200
++++ linux-2.6/drivers/md/dm-io.c	2024-04-15 15:54:21.000000000 +0200
+@@ -450,7 +450,7 @@ static int sync_io(struct dm_io_client *
+ 
+ 	dispatch_io(opf, num_regions, where, dp, io, 1, ioprio);
+ 
+-	wait_for_completion_io(&sio.wait);
++	wait_for_completion_long_io(&sio.wait);
+ 
+ 	if (error_bits)
+ 		*error_bits = sio.error_bits;
+Index: linux-2.6/include/linux/completion.h
+===================================================================
+--- linux-2.6.orig/include/linux/completion.h	2024-04-15 15:54:22.000000000 +0200
++++ linux-2.6/include/linux/completion.h	2024-04-15 15:57:14.000000000 +0200
+@@ -10,6 +10,7 @@
   */
- #define REQ_DM_POLL_LIST	REQ_DRV
  
-+#define DM_MAX_TABLE_DEVICES	1024
-+
- static const char *_name = DM_NAME;
- 
- static unsigned int major;
-@@ -1543,10 +1545,39 @@ static unsigned int __send_duplicate_bios(struct clone_info *ci, struct dm_targe
- 	return ret;
- }
- 
-+static inline bool has_redundant_flush(struct dm_table *t,
-+		unsigned long **bitmap)
-+{
-+	/* Add a limit here to prevent excessive memory usage for bitmaps */
-+	if (t->num_devices >= DM_MAX_TABLE_DEVICES)
-+		return false;
-+
-+	if (t->num_devices < t->num_targets) {
-+		/* dm_dev's index starts from 1, so need plus 1 here */
-+		*bitmap = bitmap_zalloc(min(t->num_devices + 1, DM_MAX_TABLE_DEVICES),
-+						GFP_KERNEL);
-+		if (*bitmap)
-+			return true;
-+	}
-+
-+	return false;
-+}
-+
-+static int dm_get_dev_index(struct dm_target *ti, struct dm_dev *dev,
-+				     sector_t start, sector_t len, void *data)
-+{
-+	unsigned short *index = data;
-+	*index = dev->index;
-+	return 0;
-+}
-+
- static void __send_empty_flush(struct clone_info *ci)
- {
- 	struct dm_table *t = ci->map;
- 	struct bio flush_bio;
-+	unsigned long *handled_map;
-+	unsigned int nr_handled = 0;
-+	bool check = has_redundant_flush(t, &handled_map);
- 
- 	/*
- 	 * Use an on-stack bio for this, it's safe since we don't
-@@ -1562,17 +1593,46 @@ static void __send_empty_flush(struct clone_info *ci)
- 
- 	for (unsigned int i = 0; i < t->num_targets; i++) {
- 		unsigned int bios;
-+		unsigned short index = 0;
- 		struct dm_target *ti = dm_table_get_target(t, i);
- 
- 		if (unlikely(ti->num_flush_bios == 0))
- 			continue;
- 
-+		/*
-+		 * If the num_targets is greater than the number of block devices
-+		 * in the dm_table's devices list, __send_empty_flush() might
-+		 * invoke __send_duplicate_bios() multiple times for the same
-+		 * block device. This could lead to a substantial decrease in
-+		 * performance when num_targets significantly exceeds the number
-+		 * of block devices.
-+		 * Ensure that __send_duplicate_bios() is only called once for
-+		 * each block device.
-+		 */
-+		if (check) {
-+			if (nr_handled == t->num_devices)
-+				break;
-+
-+			if (ti->type->iterate_devices)
-+				ti->type->iterate_devices(ti, dm_get_dev_index, &index);
-+
-+			if (index > 0) {
-+				if (__test_and_set_bit(index, handled_map))
-+					continue;
-+				else
-+					nr_handled++;
-+			}
-+		}
-+
- 		atomic_add(ti->num_flush_bios, &ci->io->io_count);
- 		bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
- 					     NULL, GFP_NOWAIT);
- 		atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
- 	}
- 
-+	if (check)
-+		bitmap_free(handled_map);
-+
- 	/*
- 	 * alloc_io() takes one extra reference for submission, so the
- 	 * reference won't reach 0 without the following subtraction
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 82b2195efaca..4a54b4f0a609 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -169,6 +169,12 @@ struct dm_dev {
- 	struct dax_device *dax_dev;
- 	blk_mode_t mode;
- 	char name[16];
-+
-+	/*
-+	 * sequential number for each dm_dev in dm_table's devices list,
-+	 * start from 1
-+	 */
-+	unsigned short index;
- };
+ #include <linux/swait.h>
++#include <linux/sched/sysctl.h>
  
  /*
--- 
-2.34.1
+  * struct completion - structure used to maintain state for a "completion"
+@@ -119,4 +120,20 @@ extern void complete(struct completion *
+ extern void complete_on_current_cpu(struct completion *x);
+ extern void complete_all(struct completion *);
+ 
++/**
++ * wait_for_completion_long_io - this is like wait_for_completion_io,
++ * but it doesn't warn if the wait takes too long.
++ */
++static inline void wait_for_completion_long_io(struct completion *done)
++{
++	/* Prevent hang_check timer from firing at us during very long I/O */
++	unsigned long timeout = sysctl_hung_task_timeout_secs * HZ / 2;
++
++	if (timeout)
++		while (!wait_for_completion_io_timeout(done, timeout))
++			;
++	else
++		wait_for_completion_io(done);
++}
++
+ #endif
+Index: linux-2.6/block/bio.c
+===================================================================
+--- linux-2.6.orig/block/bio.c	2024-03-30 20:07:03.000000000 +0100
++++ linux-2.6/block/bio.c	2024-04-15 15:55:13.000000000 +0200
+@@ -1378,7 +1378,7 @@ int submit_bio_wait(struct bio *bio)
+ 	bio->bi_end_io = submit_bio_wait_endio;
+ 	bio->bi_opf |= REQ_SYNC;
+ 	submit_bio(bio);
+-	blk_wait_io(&done);
++	wait_for_completion_long_io(&done);
+ 
+ 	return blk_status_to_errno(bio->bi_status);
+ }
+Index: linux-2.6/block/blk-mq.c
+===================================================================
+--- linux-2.6.orig/block/blk-mq.c	2024-03-30 20:07:03.000000000 +0100
++++ linux-2.6/block/blk-mq.c	2024-04-15 15:55:05.000000000 +0200
+@@ -1407,7 +1407,7 @@ blk_status_t blk_execute_rq(struct reque
+ 	if (blk_rq_is_poll(rq))
+ 		blk_rq_poll_completion(rq, &wait.done);
+ 	else
+-		blk_wait_io(&wait.done);
++		wait_for_completion_long_io(&wait.done);
+ 
+ 	return wait.ret;
+ }
 
