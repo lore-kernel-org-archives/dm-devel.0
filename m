@@ -1,107 +1,138 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com [209.85.208.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60B4B172BCB
-	for <dm-devel@lists.linux.dev>; Wed, 17 Apr 2024 18:00:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8679211CA0
+	for <dm-devel@lists.linux.dev>; Wed, 17 Apr 2024 18:46:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713376828; cv=none; b=Qu1nMKgwtx0IAFVVC8swzd25mZEqnYQksQ53BnDfsN4VrBR2on45rO/zcIkvyHsx/P56uMk6TBQY3MXVZsmX6W0SU43adatjJohUyBM8qncTReWmNky5vtV3dcVLUPqNilwrA06mlNlX5Sj3UqN02aoKy+MyevacBoHqlZVmBM0=
+	t=1713379618; cv=none; b=upO1h+Ehd1hJDg8V3rkwLoRyECJvY5SoaHFgjaIapjnM+RDko+WWQhX8N2vin7zTVTCa8yhAjywNOUDMxH+iLIbOCespYTbBbp2PzPONpBQZUI6jmlVPP5ZKGdFLOoX87TfKV1dlaL9UZnZ4MzOc5jBH+M6Y8QAUtxVMFgYw1vA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713376828; c=relaxed/simple;
-	bh=Dq26QfCgnNaI2tOpF1lMZEHiWUNQ/2Uht7UQhqKYR3g=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=TdXa4zSNx5PS2Z/HBOdwzBqxmM5BFENN22csXFhjOhDkk06TZAVr2xwtN3k4A94RMX9ZuCFD1cF4/EVi2IZ40uuOBPJIeYlwfnH84HKtlHyOxZAibej+3OYdrvVSvqMTab61X/f+tGEvGLDq/60Kc6xGa0NskAVAAyW1ewODnGc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=g9K/RXMI; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1713379618; c=relaxed/simple;
+	bh=1uGxy8X4638nStif0WEt4ugGL+ryA2406c7/XLywv2M=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Wfiy9ySs6wxjkUDfTUV0JIDmq1IaFOf5LE3gfBJnNOEUYA3/HS6fIXo0Q3FpkAFcuCsHBeIThXEQ19eQ0umHlY/FeYptqtyoOipu31SHXKeSmpPUSFtfzzsPSUwukm1aI2AKqnNn7X5ZulEJMMATPTtFjJ675Eq7wJ3LE59S/v0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=RF7eQ+/X; arc=none smtp.client-ip=209.85.208.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="g9K/RXMI"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713376826;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=4CqEU9pkrruCGPgaK3aKCqLwJU0gMOcZXnjX2G2B4QE=;
-	b=g9K/RXMI5gRd3LQx1R01T1v5WCWW2lcDf1Oi2go9gCCdNi6ZLPkf9xHCDSZ9MRpoznbe9D
-	I0vjBk0AyDKQytyo5JRhpfU1CPvTMsglRkYbyeDOE1sdOhihfV1fXlLXoB5ZeYEizFSgdi
-	EeTAPYiP+EUFjmqLq177vEGY8tQqNOk=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-79-RXnpd9TUMWycQMsvV3WMKA-1; Wed, 17 Apr 2024 14:00:23 -0400
-X-MC-Unique: RXnpd9TUMWycQMsvV3WMKA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9583618A8260;
-	Wed, 17 Apr 2024 18:00:22 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5522D4011FF7;
-	Wed, 17 Apr 2024 18:00:22 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 392F330C2BF7; Wed, 17 Apr 2024 18:00:22 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 3583C3FA97;
-	Wed, 17 Apr 2024 20:00:22 +0200 (CEST)
-Date: Wed, 17 Apr 2024 20:00:22 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
-cc: Mike Snitzer <msnitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, 
-    Damien Le Moal <dlemoal@kernel.org>, Ingo Molnar <mingo@redhat.com>, 
-    Will Deacon <will@kernel.org>, Waiman Long <longman@redhat.com>, 
-    Guangwu Zhang <guazhang@redhat.com>, dm-devel@lists.linux.dev, 
-    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 1/2] completion: move blk_wait_io to
- kernel/sched/completion.c
-In-Reply-To: <20240417175538.GP40213@noisy.programming.kicks-ass.net>
-Message-ID: <546473fd-ca4b-3c64-349d-cc739088b748@redhat.com>
-References: <31b118f3-bc8d-b18b-c4b9-e57d74a73f@redhat.com> <20240417175538.GP40213@noisy.programming.kicks-ass.net>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="RF7eQ+/X"
+Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-56e477db7fbso15354a12.3
+        for <dm-devel@lists.linux.dev>; Wed, 17 Apr 2024 11:46:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1713379614; x=1713984414; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=yWGcPJ10j7EA019asAidHtlcht7Nu3R4xGB+Ok0Rcho=;
+        b=RF7eQ+/XJXM99pJ5TjB6A+ywLkpfjpZPc/b0F8BvYvt2hryUYEScTRnGCplvT1wvMK
+         U3vohw6iNJKrqBveLK9z4tfz42rFPLLDhMZDFATSZkQA/8esZg618Epp7glbja4P3Wqz
+         xgz859sgLAlLLTKPCsDkOys76wjozP9OyV1l3Q7nAylG26dZrpdVPj8vxZYNGU4okMMZ
+         ljdFBbUmgZVezPQnwIDjZOTMtHAWrQJz3RdNKfQnLXTa3kdAGo011IBoWeirXK3Wk8fk
+         O4tslkub3LlDsAS+EYdom/3htOksy0tra6nAkUq48Sbaxo3ihFdahbos7Qr7wSFe9imy
+         vQGQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713379614; x=1713984414;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=yWGcPJ10j7EA019asAidHtlcht7Nu3R4xGB+Ok0Rcho=;
+        b=ph7YlhQRmu91Usqsxp+EVMQrxmq8bq1wPRHKuLqnwapvaHtYnmggIqCbBHagbdgpMX
+         ZvkjQDJ1p9yipxcnN1gKzyzOXzuuzTYtOalHJ4tmd5L5C/zZazibfrCrfsQ5A6o5vrhS
+         1JHNHNOD7vAAg3WEJgrQXrvR4hq0UlYM6yp3uwF9cZGWRdbsD3/Q/754xU4YH7/eE7my
+         GDCaPM3mz+NT6QM6myd2U9PCNjqpNcpkNqOVkfbiDqyyMluBytwSikMMy27pTf5IHYkH
+         HvdkeUSrovM0hUSswI1/ERljuYFmxQn0/blTJaQXoYF/b19R4HudnVDBPyaYkruFsZG/
+         ySqQ==
+X-Gm-Message-State: AOJu0YyNZz8aG95uzOfpgd6jIi49AhjzmJgJje6i55b9tKgL6GdqlUVf
+	CROIlFd/AmTW7wItwEMScBBgP+vt9MNj2cT8omHftZ1zxvx2vExF/jRF8CtIz6c=
+X-Google-Smtp-Source: AGHT+IFr8uvu50etY7CMzMsOMNgJiwqQNGQ/NjtYcfjlr+8EvyVrW6AynJUZnUOI92escZYhpMOBuA==
+X-Received: by 2002:a50:cdd8:0:b0:56e:2332:c282 with SMTP id h24-20020a50cdd8000000b0056e2332c282mr298591edj.14.1713379613760;
+        Wed, 17 Apr 2024 11:46:53 -0700 (PDT)
+Received: from localhost (dslb-090-186-231-154.090.186.pools.vodafone-ip.de. [90.186.231.154])
+        by smtp.gmail.com with UTF8SMTPSA id es20-20020a056402381400b0056fe4dff5e3sm7495864edb.60.2024.04.17.11.46.53
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 17 Apr 2024 11:46:53 -0700 (PDT)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Etienne AUJAMES <eaujames@ddn.com>
+Subject: [PATCH 0/8] multipath-tools: max_sectors_kb rework
+Date: Wed, 17 Apr 2024 20:46:36 +0200
+Message-ID: <20240417184644.6193-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.44.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+Content-Transfer-Encoding: 8bit
 
+This patch series addresses the issue described in [1].
 
+Changing max_sectors_kb on a live multipath map is dangerous. In particular,
+no path device may have a lower value than the map at any time, unless the
+device is suspended and all I/O has been flushed. It is also dangerous to
+read a max_sectors_kb value from sysfs and write it back, because this may
+actually cause the max_sectors value in the kernel (which is in 512 byte block
+units, not in kiB) to be rounded down to the next even number.
 
-On Wed, 17 Apr 2024, Peter Zijlstra wrote:
+This patch set avoids both these problematic techniques. max_sectors_kb is
+only changed for maps that have the respective configuration parameter set,
+and only during map creation or during path addition. In the latter case,
+the limit is set on the new path before actually adding it to the map, thus
+avoiding a change on a live path. While it is generally recommended to set
+max_sectors_kb once and for all before creating a map, the latter technique
+can be used to change the value on a live map, by removing and re-adding
+a path device.
 
-> On Wed, Apr 17, 2024 at 07:49:17PM +0200, Mikulas Patocka wrote:
-> > Index: linux-2.6/kernel/sched/completion.c
-> > ===================================================================
-> > --- linux-2.6.orig/kernel/sched/completion.c	2024-04-17 19:41:14.000000000 +0200
-> > +++ linux-2.6/kernel/sched/completion.c	2024-04-17 19:41:14.000000000 +0200
-> > @@ -290,6 +290,26 @@ wait_for_completion_killable_timeout(str
-> >  EXPORT_SYMBOL(wait_for_completion_killable_timeout);
-> >  
-> >  /**
-> > + * wait_for_completion_long_io - waits for completion of a task
-> > + * @x:  holds the state of this particular completion
-> > + *
-> > + * This is like wait_for_completion_io, but it doesn't warn if the wait takes
-> > + * too long.
-> > + */
-> > +void wait_for_completion_long_io(struct completion *x)
-> > +{
-> > +	/* Prevent hang_check timer from firing at us during very long I/O */
-> > +	unsigned long timeout = sysctl_hung_task_timeout_secs * HZ / 2;
-> > +
-> > +	if (timeout)
-> > +		while (!wait_for_completion_io_timeout(x, timeout))
-> > +			;
-> > +	else
-> > +		wait_for_completion_io(x);
-> > +}
-> > +EXPORT_SYMBOL(wait_for_completion_long_io);
-> 
-> Urgh, why is it a sane thing to circumvent the hang check timer? 
+A side effect of this patch set is that not necessarily all path devices of
+a map that has max_sectors_kb set will have this limit configured. In
+particular, if max_sectors_kb is enforced by adding a path device, only the
+added path and the map itself will have the new max_sectors_kb value, because
+multipathd will not attempt to change the value of the other paths, which
+can therefore be higher than the configured limit. This is not a problem.
+Errors arise only if the limit of the map device is higher than that of
+any path device.
 
-The block layer already does it - the bios can have arbitrary size, so 
-waiting for them takes arbitrary time.
+This patch set does not attempt to address issues between a multipath device
+and block layers stacked on to of it (e.g. LVM or MD raid), as discussed in
+the commit message of 8fd4868 ("libmultipath: don't set max_sectors_kb on
+reloads"). I think, and my experiments have confirmed it, that for bio-based
+stacked devices on top of multipath, max_sectors_kb is not a problem. bios
+with a large amount of I/O are split in the kernel to fit into the lower-level
+device's limits. Only request-based dm aka multipath is susceptible to errors
+caused by max_sectors_kb mismatch. If I am overlooking something here, please
+provide an example to prove me wrong.
 
-Mikulas
+https://lore.kernel.org/dm-devel/7742003e19b5a49398067dc0c59dfa8ddeffc3d7.camel@suse.com/
+
+Martin Wilck (8):
+  multipath-tools: add TGTDIR option
+  libmultipath: move get_udev_for_mpp to sysfs.c
+  libmultipath: add mp_find_path_by_devt()
+  Revert "libmultipath: fix max_sectors_kb on adding path"
+  libmultipath: Only set max_sectors_kb on map creation
+  libmultipath: set max_sectors_kb in adopt_paths()
+  libmultipath: add wildcard %k for printing max_sectors_kb
+  multipath.conf(5): update documentation for max_sectors_kb
+
+ .github/actions/spelling/expect.txt |  2 +
+ Makefile.inc                        |  8 ++--
+ README.md                           | 33 +++++++++++++++
+ libmultipath/configure.c            | 63 +++--------------------------
+ libmultipath/print.c                | 38 +++++++++++++++++
+ libmultipath/structs.c              | 19 +++++++++
+ libmultipath/structs.h              |  3 ++
+ libmultipath/structs_vec.c          | 62 +++++++++++++++++++++++++---
+ libmultipath/structs_vec.h          |  6 ++-
+ libmultipath/sysfs.c                | 19 +++++++++
+ libmultipath/sysfs.h                |  4 ++
+ multipath/multipath.conf.5.in       | 33 +++++++++++++--
+ multipathd/main.c                   |  6 +--
+ tests/Makefile                      |  2 +-
+ tests/test-lib.c                    |  9 ++++-
+ 15 files changed, 229 insertions(+), 78 deletions(-)
+
+-- 
+2.44.0
 
