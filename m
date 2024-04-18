@@ -1,107 +1,77 @@
-Received: from mail-pg1-f176.google.com (mail-pg1-f176.google.com [209.85.215.176])
+Received: from mail-ot1-f52.google.com (mail-ot1-f52.google.com [209.85.210.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 765B2165FDF
-	for <dm-devel@lists.linux.dev>; Thu, 18 Apr 2024 15:09:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E941F4D9E8
+	for <dm-devel@lists.linux.dev>; Thu, 18 Apr 2024 16:15:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713452952; cv=none; b=h3uNeWAzUt0qccCf2TRrskTHebkakBQO2qOzw9KSXEzLMxrPDwT4r+fcQWzt0PM3uJ5/C7Y5SUW4EABjPE5vk4XmURpJ0Yim0AASo39s/tXxqLRzhPyjzQeEF4knEiGQdVZ9cT1c5NJe/pbhermtMJDg4W/owbwepSOtncdFByY=
+	t=1713456915; cv=none; b=GNZOYGAi3YdxKf61H4m6TWfxQxWl9FBlcm9sab5ezQ5TqsfXcYmpDyM16YM6xVcSGg6BUYiGRcWLbz26qzOqpSw2pnjtnlKFYpQI/TNUhvGg8BuMUO7tGAyrhsmqBJh48gmjfY+Q0GiPdUpB2iBhwjO2FKHjMHWvaHezeMyZi6M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713452952; c=relaxed/simple;
-	bh=k+6r0GGg1vUggBFS1HFE+EGyXIm1V66bbTL8/78gpIg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=tWO2oHltiCCvYjADwAT8PqunQeYV1/NOE+buCWiPELR/ImPXRryICqLb5hNkY3JE4eF8dN5z/nZJwP7IlcqtR5O7e1GEYPnYwlml490LD4bXxJ3k/20tRJgd7nBEr2xkWfYDWbhzS/dbFJW6uhoqg0FvekccWeQVKc22a+js2TQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=H4UnNQ8v; arc=none smtp.client-ip=209.85.215.176
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1713456915; c=relaxed/simple;
+	bh=q/oyaADR6y1Yq6DCRTNBX42MV7N6DcDfF1sT7CgSabA=;
+	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=IZpwlnde677RszBLC1ouq+K/Ubp7uFvRS02o8uthtKiA0s62Qm6PUzTj3kmBdkl/3gByHsw9AqKxFtms3fP33v0lwMHKsZ9Mhu+obuZCLE/rtfRkELrR1fm/9/BnnraKPImjEwnMSxxz9Y7BVbUtxHZRNkXKzIfCPbZ1fNeNLFQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=c1EWAvzB; arc=none smtp.client-ip=209.85.210.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="H4UnNQ8v"
-Received: by mail-pg1-f176.google.com with SMTP id 41be03b00d2f7-5f0a485dab9so59157a12.1
-        for <dm-devel@lists.linux.dev>; Thu, 18 Apr 2024 08:09:10 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="c1EWAvzB"
+Received: by mail-ot1-f52.google.com with SMTP id 46e09a7af769-6eb7ef71c03so581194a34.0
+        for <dm-devel@lists.linux.dev>; Thu, 18 Apr 2024 09:15:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1713452950; x=1714057750; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=p9O3FV94jh7vQc95L9k9nvefdNDVfaT9ibGX8CYdkE0=;
-        b=H4UnNQ8vpHrb00hFek7iHtPW/6x++jIEgfQPAcBd4cEYgUN30QgX6P2hfxuL/tAej9
-         2CvQD86Mj4WUgxHacuStrpSCvvVfT6SxQ3w1g+5EeU9FCUWPhWNTGWv9pF+ous6TFydE
-         Xq0Zhvxv9jVLwQAxtXqioF3nppPzZNzaBmriOxQB7f62PYmhlgEj+LkpdM5UAWd+dWwp
-         4fbEOfCHQIMcA/6th2vicrCuB24SMn/cIg5sZsDpHUCYxvCwmeVx0K/Z9xwt0n0Tz+Li
-         nW7gFz2N5Q/zaMbe9KJVss1xrMYnz1ZnCSE891DySPws5bHk5E4vxh0gaQquHvHZp7vO
-         NkLg==
+        d=gmail.com; s=20230601; t=1713456912; x=1714061712; darn=lists.linux.dev;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=VAWJsbeIDSPygX7YaLR6isLPd2p07JOTl8DsjelWL0A=;
+        b=c1EWAvzBLbAx3y239camEJYnyeqnD3gETyXCXzeN67qNc/Fem2dVq7oTG3+86ffK7w
+         lA10ooX9531ZBMuVqPfRedRkqHRUiHIpdFdcLScEwZrJjxmypLYRLULoTOS/NaPAKxsz
+         EBkmS11yPSae33V3G8dSbHJ5FJjDBDeg70hY7GaEzUk80Npnf2qvmBcPGNicjX2hITCz
+         KpLbhqB+jETLvoWKVmuHxRyd3J8SN4eEO+rLjlfOYfDKxIzia8RcSOgcpl/D6GWP3pzN
+         6yqHdUr1bWAsPkCJAi/vP7Z1raNUdDCnmWFdu0H8rdmQleakJGG0+cvfMCK80km8TLzH
+         7QrQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713452950; x=1714057750;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=p9O3FV94jh7vQc95L9k9nvefdNDVfaT9ibGX8CYdkE0=;
-        b=NfTjbkxOWFZadJ7RiAW7hlFLet0t4ZJOKHO2PXghkurCfbN9BkI20nYYFXXaWWQ5aO
-         HrDQF/ZsShKwFWwUr8OF1RL1Z4+upOCON/B4svzeT4zRE130h5lyvq4c0y/MidUoleT0
-         Z/50p43mjnsm6vgC2EJq3Y5JKLM6lfknNvmoQifx8qIOULTEHEwmA2jqZvxSolEgbO7t
-         61xDVb6DHxackO0PwPhvpLJMaYAEdHqBDQzSzfDVy6kaGWtK+JUji7yVbvo2H446DHqk
-         ei3jVBC2aVWvJ4/qERRX2MGlEVt7yuFBgdXh2BDTgzvvUTKnTBaJNLFMg5zMwasqK9Na
-         Locg==
-X-Forwarded-Encrypted: i=1; AJvYcCUktY0pBJLZisgBxZ+6qNiulAOsFGY1PTg3AHGqc0coxj27daan0Agb30WG1pId7nl6V8MdCJ6lGK8MxeCcfoUb7dqR5F3JgTo=
-X-Gm-Message-State: AOJu0YzXjYeDJbMj5kCqKVClufDG2PBZgcfF4Q1tmaRQOJqkfglNLFT5
-	bPzERP1nVyCjC13vP/h0KnfnD9o3aKacNmDouf3PgAudCNtJvwDC3BE15K6eEiA=
-X-Google-Smtp-Source: AGHT+IEpDI3SLb6DK8eESf91mbfRxTkqd15fvUPDNtPee/hawli5VCPVwcKmvtkaX2PmBdDDW5btOg==
-X-Received: by 2002:a17:90a:7e0e:b0:2a3:be48:23f3 with SMTP id i14-20020a17090a7e0e00b002a3be4823f3mr2885933pjl.4.1713452949760;
-        Thu, 18 Apr 2024 08:09:09 -0700 (PDT)
-Received: from [192.168.1.150] ([198.8.77.194])
-        by smtp.gmail.com with ESMTPSA id s22-20020a17090aa11600b002ab664e5e17sm1547775pjp.1.2024.04.18.08.09.08
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 18 Apr 2024 08:09:09 -0700 (PDT)
-Message-ID: <362c3c63-6fd9-401c-9281-e2e0c7efc14a@kernel.dk>
-Date: Thu, 18 Apr 2024 09:09:07 -0600
+        d=1e100.net; s=20230601; t=1713456912; x=1714061712;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=VAWJsbeIDSPygX7YaLR6isLPd2p07JOTl8DsjelWL0A=;
+        b=GnRCR4PsEl9QKVyWaoRe4752u++wztNQkQVZn46ppdPaE4paMHGXhNVOcrVKBNhXIQ
+         rMu1CFPFXY+yN+SPOD0o9fic+HL9wYhKu1uwuDRL74eyXV8TlRR88UQipje19fbO/V6p
+         EZPDfYjBg0mApr7CtRDhinU37PLvCJ3joRaa4j3RLkzbkNsecVO79IViNoAamDZn03jE
+         X3P9c1ZY5Z5t/9KYtVdJHLQZrBmyNUI8wEUUc3AAa3yUvKlhQuVBcBC3m5kfYGmShuFy
+         CfZXPQMuE8IXIub7jc8D06hD86O0bC0cMVcbqlyNEA3BvyxGV/vwFZe9EHhn7rpUnL1h
+         izwg==
+X-Gm-Message-State: AOJu0Yxg/AMovIyJcYonV46WQ4ToJmeGwcUNunud3epqwpt8OpH4U0fu
+	lwkpBKonBTkpYtXx2VjOUN+bQphI5oYmT/UgK3IheR0f0mS87qVF2iJ7Gcof4/tZXKlKECzpJ+s
+	HyB3c4unQW6Rg0Mvb2U0EGrgc5H9zyp3P
+X-Google-Smtp-Source: AGHT+IG9WoTS6CA6T+P4LiuddqiFyJz0c0N9Gx5lD4u5hg/Ucy1y20EiZHQHrEnpCML7PkJHTGCD5Nho5c5mAzYpSwY=
+X-Received: by 2002:a05:6870:ac0c:b0:238:ffae:b5fd with SMTP id
+ kw12-20020a056870ac0c00b00238ffaeb5fdmr2521205oab.54.1713456912677; Thu, 18
+ Apr 2024 09:15:12 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/2] completion: move blk_wait_io to
- kernel/sched/completion.c
-Content-Language: en-US
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
- Peter Zijlstra <peterz@infradead.org>, Mike Snitzer <msnitzer@redhat.com>,
- Damien Le Moal <dlemoal@kernel.org>, Ingo Molnar <mingo@redhat.com>,
- Will Deacon <will@kernel.org>, Waiman Long <longman@redhat.com>,
- Guangwu Zhang <guazhang@redhat.com>, dm-devel@lists.linux.dev,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-References: <31b118f3-bc8d-b18b-c4b9-e57d74a73f@redhat.com>
- <20240417175538.GP40213@noisy.programming.kicks-ass.net>
- <546473fd-ca4b-3c64-349d-cc739088b748@redhat.com>
- <ZiCoIHFLAzCva2lU@infradead.org>
- <5f3d434b-e05c-445f-bee5-2bb1f11a5946@kernel.dk>
- <ZiEyLvL6Pq_RB-Eh@infradead.org>
-From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <ZiEyLvL6Pq_RB-Eh@infradead.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+From: dE <de.techno@gmail.com>
+Date: Thu, 18 Apr 2024 21:45:01 +0530
+Message-ID: <CADofXPAz2v0teH91QtAzNQ5jfp8bU1+8hwoZUs-0h+G7KLdZkw@mail.gmail.com>
+Subject: Decrypting only uses 2 threads.
+To: dm-devel@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
 
-On 4/18/24 8:46 AM, Christoph Hellwig wrote:
-> On Thu, Apr 18, 2024 at 08:30:14AM -0600, Jens Axboe wrote:
->> It certainly is a hack/work-around, but unless there are a lot more that
->> should be using something like this, I don't think adding extra core
->> complexity in terms of a special task state (or per-task flag, at least
->> that would be easier) is really warranted.
-> 
-> Basically any kernel thread doing on-demand work has the same problem.
-> It just has an easier workaround hack, as the kernel threads can simply
-> claim to do an interruptible sleep to not trigger the softlockup
-> warnings.
+Hi.
+    I'm trying to encrypt some block devices and trying to use a
+cipher and mode which is multithreaded. I'm trying out
+aes-ctr-essiv:sha256 to test multithreading, but have also tried
+aes-xts-essiv:sha256 with the same result.
 
-A kernel thread can just use TASK_INTERRUPTIBLE, as it doesn't take
-signals anyway. But yeah, I guess you could view that as a work-around
-as well.
+The encryption is definitely multithread (massively), but while
+reading from the encrypted block device, I see that only 2 threads are
+being used. As a result when the CPU is throttled (deliberately), I
+see a drop in throughput while increased CPU utilization only in 2
+cores.
+The following commands were used to setup the encryption --
 
-Outside of that, mostly only a block problem, where our sleep is always
-uninterruptible. Unless there are similar hacks elsewhere in the kernel
-that I'm not aware of?
+cryptsetup -y -d - -c aes-ctr-essiv:sha256 --key-size 256 create disk1 /dev/sda
 
--- 
-Jens Axboe
-
+Is there anything I can do to increase concurrency while decrypting?
