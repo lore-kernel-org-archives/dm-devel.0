@@ -1,90 +1,109 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from fout2-smtp.messagingengine.com (fout2-smtp.messagingengine.com [103.168.172.145])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17828130AC4
-	for <dm-devel@lists.linux.dev>; Fri, 19 Apr 2024 18:04:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A32997494
+	for <dm-devel@lists.linux.dev>; Fri, 19 Apr 2024 18:48:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.168.172.145
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713549874; cv=none; b=XgPWBbdl2tD1sgpuhM3LYCwEKyf5uM+dvbokfDZDnYLUKv0Mwka+MDNP3cnK4gZEQj4wISze0mGrpEObs4fz0HaeA5Mjf7cj9hK5v3p9Zxq1YaFAySYtQogGIFBpVCsGXS8qMw5OpugaFubdOs+st1Ruc0+80EWwvtqvt4agfpY=
+	t=1713552485; cv=none; b=hcCGz8tmNhCiBGm603lkQFZzKfhOK3STt/9TPAJ88pS1+rl4p+qiJ1g4zx07he06wdq3Y3p6E6/IgEPRu0Aa2qYhL6ygjMa729RCXbWOqwkIc6AV62V5snNtOcCWchlRgdyqzbvHouuDr4G72iaFRM4QrHQUJufRJck4pFGitPU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713549874; c=relaxed/simple;
-	bh=nq4wyBQrDr8crTxxWe8pKniZDlTVIGpGa3EkcYKFUo8=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=f3Bc+ov3JbldvAZc2uiVV8rlcvYgIlTqmHMOJutUMRu9jyMIuDpEWXs6Jcq3LzfrxbYUeiecCIpSLdYYXhEtKv5phodmW9gRflsyRK/v/Gb8o4T3q0j53hFPWZf32d91pYETruvmIzrdcvivsWFCp+O4cQ9OHksluOK+J5kjZRQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UfeORXWv; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1713552485; c=relaxed/simple;
+	bh=Xa6c56KK90Oa97wuQjMQPqqfqI66mgHxnchxnRxiSiM=;
+	h=MIME-Version:Message-Id:In-Reply-To:References:Date:From:To:Cc:
+	 Subject:Content-Type; b=TuXOwDmgnPRtDYGQiW76NEqFfsNCspKc3zAeD8nul13NzAlfTdzCxPdaJFdIgIOUjg0RFubk8TMeEHZH04tz9cygoqqM+J31cYRL313nnaeoZtTuWiX6CZYohtaxqdcHdC0T8J4+83Y56oRdOeRANYzWYgvcp8HXsnabvsHTvtQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=owlfolio.org; spf=pass smtp.mailfrom=owlfolio.org; dkim=pass (2048-bit key) header.d=owlfolio.org header.i=@owlfolio.org header.b=QK1KdtD+; dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b=KWcf4Y5l; arc=none smtp.client-ip=103.168.172.145
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=owlfolio.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=owlfolio.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UfeORXWv"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713549869;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=o5DiIAaypFQCUiSRGZEBukKmwVEfN80CNyFVQ1IBze8=;
-	b=UfeORXWvD4HE7d0kseiwkqSisC999zFhl2VGXRg1NxxoI9AIQUwScMsRw7dnavhpKircXK
-	dWTer53T9llGjS9FWIB8E9Z7C2R81qSrhuyedg3dq5rnLvhALeEY5/1SD7yTR6JDaEVclG
-	CKjBiWm0IQQGpLZM5VxQkE7h0qZkPCc=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-301-ueozs9dlNKOFAXYlvJG9tA-1; Fri,
- 19 Apr 2024 14:04:24 -0400
-X-MC-Unique: ueozs9dlNKOFAXYlvJG9tA-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29D5B3C3D0DD;
-	Fri, 19 Apr 2024 18:04:24 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 23CDC40219F;
-	Fri, 19 Apr 2024 18:04:24 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 0B37B30C2BF6; Fri, 19 Apr 2024 18:04:24 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 0783E3FB54;
-	Fri, 19 Apr 2024 20:04:24 +0200 (CEST)
-Date: Fri, 19 Apr 2024 20:04:23 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: "H.J. Lu" <hjl.tools@gmail.com>
-cc: libc-alpha@sourceware.org, Zdenek Kabelac <zkabelac@redhat.com>, 
-    Ondrej Kozina <okozina@redhat.com>, Milan Broz <gmazyland@gmail.com>, 
-    dm-devel@lists.linux.dev
-Subject: Re: memcpy is leaking secret data through ZMM vector registers
-In-Reply-To: <CAMe9rOpz5Uft3MKXneYd3VqW1CaSXFF_GLBqKEZFiZsidKA43A@mail.gmail.com>
-Message-ID: <e35dccca-a1e7-93c4-f797-b89246877370@redhat.com>
-References: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com> <CAMe9rOoErR0xLqf4wLzk13XwTQY9-+cRAxDWKW9HU+rB0GApzQ@mail.gmail.com> <a995c5bd-8f80-2118-4d4-86e5e062a77@redhat.com> <CAMe9rOpz5Uft3MKXneYd3VqW1CaSXFF_GLBqKEZFiZsidKA43A@mail.gmail.com>
+	dkim=pass (2048-bit key) header.d=owlfolio.org header.i=@owlfolio.org header.b="QK1KdtD+";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="KWcf4Y5l"
+Received: from compute5.internal (compute5.nyi.internal [10.202.2.45])
+	by mailfout.nyi.internal (Postfix) with ESMTP id 9C9691380254;
+	Fri, 19 Apr 2024 14:48:01 -0400 (EDT)
+Received: from imap45 ([10.202.2.95])
+  by compute5.internal (MEProxy); Fri, 19 Apr 2024 14:48:01 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=owlfolio.org; h=
+	cc:cc:content-type:content-type:date:date:from:from:in-reply-to
+	:in-reply-to:message-id:mime-version:references:reply-to:subject
+	:subject:to:to; s=fm2; t=1713552481; x=1713638881; bh=SUfhRo47ZC
+	EfcPXp8xCNzrsSROlKQBKSEI8r8PaE3g8=; b=QK1KdtD+Iko1q7KSFvg+6E1ufn
+	UHIMpuSbjEZctidVVuzdPyI0bI8PxwmOsMqSkKrEGL/DQMRRBhfiP6wYQZo5iF/H
+	WTwB5XVve306buZe07bdf8AaaQ9V72smz5HSqQ07I8YzOlI7I5fGylgU7Ecrp3zH
+	QRXDyoDK5vnShwKWJb6U/ardsvPXrM6e0wgbzLFa5TVivwLPXc6QVk1wd0cGmkXs
+	Vct+lYyxEqdKsLe3VBovjSih9qeeDOwfbZKwH8G5CJlND89XYCrw/Mcsc7VKtVfQ
+	PRCyi7BRIEaoMraOFhXiDnOaI+efYNG8TX/cutNVZ8D5BtKDSIBZQTy3mE3A==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+	messagingengine.com; h=cc:cc:content-type:content-type:date:date
+	:feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
+	:message-id:mime-version:references:reply-to:subject:subject:to
+	:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=
+	fm3; t=1713552481; x=1713638881; bh=SUfhRo47ZCEfcPXp8xCNzrsSROlK
+	QBKSEI8r8PaE3g8=; b=KWcf4Y5lAz+R/Ve4rTp9LSz1Hu1EJ8y7nLFBfZRKORK+
+	Y74KYVtbmchcjyVxeCDx/dSoOEExxKQJAVcvRvaiakdDSMsClsjXY6g8t1DlTVVK
+	x51F06uZSh8djC/eni9BQa/9nkhkVpZumxG6kKi3iNkvCQ46MH/nKqP/iK1TsteS
+	0S880DGq+Hh3448JJUMDNze+/d82aygG2VDJIKbyxg1YuFAuTLZm2OtkBSr15YTZ
+	VoN8AMVvotPROLxBV1BX3eGvvmB+i0wU4EE6wXdXzv5+8VtI81TvZ7S2/PH7pC89
+	smcvkQdvpWCFGvV3r/1xDB1hHEZLksr8XzsUFWzcIQ==
+X-ME-Sender: <xms:YbwiZj9fCR5TADeofZjh-UsTw2ybfaAr8eWhJjrWsM1YDKq7sLBugA>
+    <xme:YbwiZvtDmu37RuK1OXltDBTkL-J3yKaqwgKZqqFJyDO1F6G4qPkrtOo9SEItASM7q
+    D-TSGF1OeD5PaEtAGU>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvledrudekvddgudefvdcutefuodetggdotefrod
+    ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
+    necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
+    enucfjughrpefofgggkfgjfhffhffvvefutgesthdtredtreertdenucfhrhhomhepfdgk
+    rggtkhcuhggvihhnsggvrhhgfdcuoeiirggtkhesohiflhhfohhlihhordhorhhgqeenuc
+    ggtffrrghtthgvrhhnpefhleefheduhfelgeehgeejveehueeihedvgfeuueetteelieei
+    teehfefhleduieenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepmhgrihhlfh
+    hrohhmpeiirggtkhesohiflhhfohhlihhordhorhhg
+X-ME-Proxy: <xmx:YbwiZhDMhhARvF9v7UWW7himkvBSuBgpiP89on9cgj3l9_-FQGOjJg>
+    <xmx:YbwiZveuXmhpL7Z9GKH2jjTlzR3X2oUHpmOveWpe4ojqiOZrf3ibMg>
+    <xmx:YbwiZoMtejvDBaFqRx1LVSAqbh_z1MLWTdUwUUyhDcOPs5CFV-nlrw>
+    <xmx:YbwiZhmvkycelV01TCtTS8TPgRXu4cnvowcr2BBPAhTMuHc6O223Jw>
+    <xmx:YbwiZvfC2GibuYXu0uuMua3VNnPyQE-DL_uVqqo9gCXuJ0HQaNLM6Ouf>
+Feedback-ID: i876146a2:Fastmail
+Received: by mailuser.nyi.internal (Postfix, from userid 501)
+	id 3A025272007D; Fri, 19 Apr 2024 14:48:01 -0400 (EDT)
+X-Mailer: MessagingEngine.com Webmail Interface
+User-Agent: Cyrus-JMAP/3.11.0-alpha0-379-gabd37849b7-fm-20240408.001-gabd37849
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Message-Id: <d387436c-8c35-4f51-bf49-dc02d829c73a@app.fastmail.com>
+In-Reply-To: <9cefd07d-2940-4865-bd77-3dd0899a539f@cs.ucla.edu>
+References: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
+ <CAMe9rOoErR0xLqf4wLzk13XwTQY9-+cRAxDWKW9HU+rB0GApzQ@mail.gmail.com>
+ <a995c5bd-8f80-2118-4d4-86e5e062a77@redhat.com>
+ <CAMe9rOpz5Uft3MKXneYd3VqW1CaSXFF_GLBqKEZFiZsidKA43A@mail.gmail.com>
+ <e35dccca-a1e7-93c4-f797-b89246877370@redhat.com>
+ <9cefd07d-2940-4865-bd77-3dd0899a539f@cs.ucla.edu>
+Date: Fri, 19 Apr 2024 14:47:40 -0400
+From: "Zack Weinberg" <zack@owlfolio.org>
+To: "Paul Eggert" <eggert@cs.ucla.edu>,
+ "Mikulas Patocka" <mpatocka@redhat.com>, "H . J . Lu" <hjl.tools@gmail.com>
+Cc: "GNU libc development" <libc-alpha@sourceware.org>,
+ "Zdenek Kabelac" <zkabelac@redhat.com>, "Ondrej Kozina" <okozina@redhat.com>,
+ "Milan Broz" <gmazyland@gmail.com>, dm-devel@lists.linux.dev
+Subject: Re: memcpy is leaking secret data through ZMM vector registers
+Content-Type: text/plain
 
+On Fri, Apr 19, 2024, at 2:45 PM, Paul Eggert wrote:
+> On 4/19/24 11:04, Mikulas Patocka wrote:
+>> There's already "explicit_bzero", so maybe we could add
+>> "explicit_memcpy"
+>
+> Where would this stop? Wouldn't we also need explicit_memcmp, 
+> explicit_memmove, explicit_mempcpy, etc.? Pretty much any function that 
+> looks at memory could have the problem. Even C source code that doesn't 
+> invoke any C library function could have the problem.
 
+As I recall, one of the arguments for _not_ adding explicit_bzero to glibc
+was that we couldn't guarantee copies of the secret data wouldn't hang
+around in registers.
 
-On Fri, 19 Apr 2024, H.J. Lu wrote:
+Is a hypothetical function __attribute__((clear_call_clobbered_regs_on_exit))
+what we need here instead, maybe?
 
-> You should write your own memory copy function and compile it with
-> -fzero-call-used-regs if possible.
-> 
-> -- 
-> H.J.
-
-This would work - but I looked at OpenSSL and it seems to suffer from the 
-same problem as libdevmapper.
-
-OpenSSL uses plain memcpy, it overwrites memory before freeing it, but it 
-doesn't overwrite the YMM and ZMM registers.
-
-So, it seems like overkill to add a special memcpy implementation to every 
-library that manipulates sensitive data. It may be better to have some 
-general solution. There's already "explicit_bzero", so maybe we could add 
-"explicit_memcpy" or "secure_memcpy"?
-
-Mikulas
-
+zw
