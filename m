@@ -1,100 +1,122 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yb1-f181.google.com (mail-yb1-f181.google.com [209.85.219.181])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 75AB112D1E8
-	for <dm-devel@lists.linux.dev>; Fri, 19 Apr 2024 14:07:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2475B128387
+	for <dm-devel@lists.linux.dev>; Fri, 19 Apr 2024 14:19:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713535678; cv=none; b=CEqyJb+1Rn11YT89pmnxh539S7QX00WU2yrg9TpvdvHDd8CyoPIymrYFBO2MWk0JOYaBBJhBg69VNta4D0DJghNdvGYOhmqFsliDsrMdIreA6RkvTig7wsCWXvVN7d2EYJh/F+fYCC/u914u1f5viy+D7oi4210r4yww+5rQbiQ=
+	t=1713536387; cv=none; b=N6i4FQ40FO7Otyd6+qW0WARfDzOGbM9VMUhYZLwFHBX7/P9z5ubEbwx8qdghjh3brbt9KX8WjvfDsRDT4L5Mc8xsRd4iLEIRWIxXwxR3lV/icSl6KWAAqZ7Mo+nOqo4RvYqzPi1/V1nQOgbcAAkWEqeR5L1S9fZ0XjgO87Vgj84=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713535678; c=relaxed/simple;
-	bh=U9PXcFOeIqESWu0c2SlNx+UthdhaxoOWvNpzfTWJxZE=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=VFRULdmIjFLhHtcesQKsEhZQytp1vMfp4aaElaaXM+BqhyxBy/TWDLj21oPSiE5hvV7Y9fUjPTsJEz9KWpKnNnfg58Z3LLf3kLUwUkNpVVcNCJwPhMIW5riiBgoML373uUpgd4aNHuxIhIYCAM8HQxT/6V882rLaUXjcNzczg+Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XCXSbUc9; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1713536387; c=relaxed/simple;
+	bh=pb519J5zNRflhlPLtsK62v30aMto9JJb+pAQHjSfZp8=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=hR07JQDctyYFrk9iQlT1+QmBqqDFuXeCM0LGDKqdshiL7OBQk6HMuF5EUqArrqX7Q82+iJxen75umcCQjvO6HvgysDJYrJoKLs6pi9wk6yhS/Bjue9/4d5yZ9YKiZBaItuLHO0AMaCc76d43zzcwMuchwU8sKhqqdaNUcFa6iX8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bSAIHMGN; arc=none smtp.client-ip=209.85.219.181
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XCXSbUc9"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713535675;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=f53NOzMnZUQO60mZYyg1uEXJF+Smc4vYyV2JpxF7nSA=;
-	b=XCXSbUc9NSylyicXobS0bCn49fGsdOG/B+cuG6vWj4zBeVBNNb3GJP+WwDct6tTbKs+P8A
-	7hPaq+HnxdE6IXHWfouKHgqSD6/43YWc7eMjYLB9moKa0L2lZBj1wTIWKPT3A8MuFO/oTQ
-	FeefxbfqbuDyYHNg1CBB41do+j+XMUc=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-56-5zfKPNC7P3CMSYdD_QX0nQ-1; Fri,
- 19 Apr 2024 10:07:51 -0400
-X-MC-Unique: 5zfKPNC7P3CMSYdD_QX0nQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8BC2B29AA38F;
-	Fri, 19 Apr 2024 14:07:50 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 858BB49102;
-	Fri, 19 Apr 2024 14:07:50 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 6F31930C2BF6; Fri, 19 Apr 2024 14:07:50 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 6AA053FB54;
-	Fri, 19 Apr 2024 16:07:50 +0200 (CEST)
-Date: Fri, 19 Apr 2024 16:07:50 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: libc-alpha@sourceware.org
-cc: Zdenek Kabelac <zkabelac@redhat.com>, Ondrej Kozina <okozina@redhat.com>, 
-    Milan Broz <gmazyland@gmail.com>, dm-devel@lists.linux.dev
-Subject: memcpy is leaking secret data through ZMM vector registers
-Message-ID: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bSAIHMGN"
+Received: by mail-yb1-f181.google.com with SMTP id 3f1490d57ef6-dc742543119so2268613276.0
+        for <dm-devel@lists.linux.dev>; Fri, 19 Apr 2024 07:19:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1713536385; x=1714141185; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=pb519J5zNRflhlPLtsK62v30aMto9JJb+pAQHjSfZp8=;
+        b=bSAIHMGNYWLTOHkJBYqOGK664YzmkIzwHNkgurpK6tJjvmAcI1bCUBfOBVeMFZLSBP
+         4FnYlAHeNj2BkTkICHw2tUn91MGjij4VPQCDhGoM2bC7a8oUI4ZWquFZlMwn/3pNAE18
+         2tmTw7Y08u+LYhKSxL8jZBvgFgJTqLE+qwG3JYr1X7c0FvswtkSVcYiVJ1dzp9o/1JW5
+         71iGNkYBt+wYCD2XuOi9fRb4392uKN8Ke1Y6F+thLHcAI1+Tm+dQ33evH/mYb83/w+92
+         2eN7OQ6QgpjuR7CYUx6RE+bKqFvsbqZJS/M4ELai2ttIU9d77B7W2Px4+XR1leMBBEpJ
+         5EBw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713536385; x=1714141185;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=pb519J5zNRflhlPLtsK62v30aMto9JJb+pAQHjSfZp8=;
+        b=xGfN4tNauV34H+l4NdEoEU+diFQozuR6cJemEWC6ykZM/ioV8/qy5gr3aT46tzR0pG
+         hdh5tJRQgesX9RZ3Kn+jcamrwBuym72qrp3XgWjP9X7ceKfvygepo1v79jkuzb22ToHp
+         fQhcy6D3Mtd4m0rcn98gp50Ty+7vJ4GiFefJVRzk1E5xB+FACmcdfV28XQx5WSwwHyzX
+         gudRoF3KuskxgiiM5y/UO+d4Dfh5EQwFOki4b1v4bWYASSigC7xOWjWCDDDV5pB6hOZV
+         ywfR63ppnH5W/54mj9w1JXy2R3L1y6hOlh8wpTx8nzztLEzP8hqqL5dRbrKkStsDKGJR
+         Z1EQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVcIZsAN5OGbLr+aRSjTuhmFSvqb2Pk+ELU+jXe77btTAiTYnhMb71P6Nq8qMTuxUcYlSRWHn4X6IZjjJrYUIF/5x4PzzBupOY=
+X-Gm-Message-State: AOJu0Yw5DzqxanHoEMZgPt8i8Hv/8QNijGIswCDTdvSoLZbm3ibgRD0X
+	NYQWHTfuAqRmWXEbB0zBeUIXA5fdhXD2RNeTypxLLBaHFgzO5uKmtX9PfXS9vJXsK8kLZnCCIxi
+	Tk8SulJPRvSBWkR6FPwU8n7Eclcw615f9
+X-Google-Smtp-Source: AGHT+IHxNcp1hjaHfZAjTo3wVnuZTJ23MYZ8SX7UGJyDyngoklUX8aM+BRPXFrZGvWF4JA9Y13opxEVLN7Sn8k8KkAA=
+X-Received: by 2002:a05:6902:e09:b0:dcc:9aed:6282 with SMTP id
+ df9-20020a0569020e0900b00dcc9aed6282mr2144990ybb.65.1713536385165; Fri, 19
+ Apr 2024 07:19:45 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+References: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
+In-Reply-To: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Fri, 19 Apr 2024 07:19:09 -0700
+Message-ID: <CAMe9rOoErR0xLqf4wLzk13XwTQY9-+cRAxDWKW9HU+rB0GApzQ@mail.gmail.com>
+Subject: Re: memcpy is leaking secret data through ZMM vector registers
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: libc-alpha@sourceware.org, Zdenek Kabelac <zkabelac@redhat.com>, 
+	Ondrej Kozina <okozina@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi
+On Fri, Apr 19, 2024 at 7:08=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
+>
+> Hi
+>
+> As a part of LVM2, we are developing the libdevmapper library. The librar=
+y
+> may be used to load cryptographic keys to the kernel, so it avoids leakin=
+g
+> the data to kernel memory and to the swap partition.
+>
+> After the use of cryptographic data, the libdevmapper library clears them
+> with memset and frees them afterwards. It executes __asm__ volatile("" ::=
+:
+> "memory") to thwart some compiler optimization regarding writing to
+> to-be-freed memory.
+>
+> We have a test "dmsecuretest.sh" that loads cryptographic keys into the
+> kernel, dumps a core, the core file is analyzed and if it contains the
+> key, the test fails.
+>
+> This test fails on AMD Zen 4 - the reason for the failure is that the
+> "memcpy" function uses ZMM registers for data copying. When memcpy exits,
+> the encryption key is present in the ZMM registers and the key remains
+> there even after both source and destination buffers of memcpy were
+> cleared.
+>
+> When we perform dynamic symbol lookup, the ZMM registers are spilled on
+> the stack and they remain there forever - this is the reason why the core
+> file contains the encryption key and the test fails.
+>
+> I'd like to ask what to do with it? We could use LD_BIND_NOW=3D1 (or
+> -Wl,-z,now) - it mostly works, but not entirely - the key may still be
+> present on the stack even if we use LD_BIND_NOW=3D1.
 
-As a part of LVM2, we are developing the libdevmapper library. The library 
-may be used to load cryptographic keys to the kernel, so it avoids leaking 
-the data to kernel memory and to the swap partition.
+Since vector registers are saved on stack only during symbol lookup,
+shouldn't disabling lazy binding solve this issue?
 
-After the use of cryptographic data, the libdevmapper library clears them 
-with memset and frees them afterwards. It executes __asm__ volatile("" ::: 
-"memory") to thwart some compiler optimization regarding writing to 
-to-be-freed memory.
+> When I hack the file glibc/sysdeps/x86_64/multiarch/ifunc-memmove.h so
+> that it always selects the ERMS variant of memcpy, the problem goes away.
+>
+> Could it be possible to add some switch to glibc, that could be turned on
+> by security-sensitive programs and that would prevent glibc from using th=
+e
+> vector registers? Or, do you suggest another solution?
+>
+> Mikulas
+>
 
-We have a test "dmsecuretest.sh" that loads cryptographic keys into the 
-kernel, dumps a core, the core file is analyzed and if it contains the 
-key, the test fails.
 
-This test fails on AMD Zen 4 - the reason for the failure is that the 
-"memcpy" function uses ZMM registers for data copying. When memcpy exits, 
-the encryption key is present in the ZMM registers and the key remains 
-there even after both source and destination buffers of memcpy were 
-cleared.
-
-When we perform dynamic symbol lookup, the ZMM registers are spilled on 
-the stack and they remain there forever - this is the reason why the core 
-file contains the encryption key and the test fails.
-
-I'd like to ask what to do with it? We could use LD_BIND_NOW=1 (or 
--Wl,-z,now) - it mostly works, but not entirely - the key may still be 
-present on the stack even if we use LD_BIND_NOW=1.
-
-When I hack the file glibc/sysdeps/x86_64/multiarch/ifunc-memmove.h so 
-that it always selects the ERMS variant of memcpy, the problem goes away.
-
-Could it be possible to add some switch to glibc, that could be turned on 
-by security-sensitive programs and that would prevent glibc from using the 
-vector registers? Or, do you suggest another solution?
-
-Mikulas
-
+--=20
+H.J.
