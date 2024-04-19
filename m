@@ -1,104 +1,86 @@
-Received: from mail-yw1-f177.google.com (mail-yw1-f177.google.com [209.85.128.177])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A139B12E1D2
-	for <dm-devel@lists.linux.dev>; Fri, 19 Apr 2024 14:37:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 393103A8CE;
+	Fri, 19 Apr 2024 16:30:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713537478; cv=none; b=QyPK7Gw//RUDO3LMILZJhurfetuUnSAGZOcrgyuQtR7BytWeu4FnfsckHqeUj0mp/lMXxGWpiY0iSZRI1XTQR693iIQg3xMQtwRpdiqLqhbxljMUroTGBeTwXFEcY+XePgONRghkqpvwhNZ2Bi7TFQXYPypkRuj3cu8pzyZPU3Y=
+	t=1713544210; cv=none; b=CfieoxcXl6xdCAXDvzlqPT85eln4C0U1kBlkixAkioncschKpsh5he0bGWCCY4VmL1e9kXs/mvK+3m1WrOsG+nRw1hpmCSxE6pVG1OtNlilj/j106DkRGibob/au8qZmcl5Y3rw5ICJknWzX8ywx8ojkAMffkrhZ62OVtQYTY80=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713537478; c=relaxed/simple;
-	bh=B2KjOBeJYiu/sPhhhgIm5hStOwT0PTL8XKgyZ0RgG7g=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=Aswr/onK4X4nkjXA1Zu2RPLR1BI06XyUwlwAAdHx+mhFkcdkBlcTzETQRVRr1IeyMinCrnMjpZqPQpFfz8GlCo5aQ11ClXf+8MGjWUkK0yQMmGQnmlqOS4W2cG5G0FNKeLAdm7eYNbT9WN3qEQ3tmpNL3ktqPdJoxislWQJxdiA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KPIiLyxr; arc=none smtp.client-ip=209.85.128.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1713544210; c=relaxed/simple;
+	bh=v5MMF4sIsyKZ3N8RRXo2tf2gqlanICtP5fvLTXeqLFg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Q2yxpKQwTHPmgF9PYeE+IU1LseQsZIlJ0EAVhC5EsDAi3XG2vdPf7uJkvaRKj4t1puKEGDchJ6b5gmdyZ7AG4KOOgjeM+5sYzH1SsOBGf/qHiZbnmKtJV7GfYsGZcOmbPz1FQx+UMvRxDlor69Y4BztkPfqgIA7vccTLdwUex0o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=B+i8an4+; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KPIiLyxr"
-Received: by mail-yw1-f177.google.com with SMTP id 00721157ae682-617e42a3f94so23392687b3.2
-        for <dm-devel@lists.linux.dev>; Fri, 19 Apr 2024 07:37:56 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713537475; x=1714142275; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=B2KjOBeJYiu/sPhhhgIm5hStOwT0PTL8XKgyZ0RgG7g=;
-        b=KPIiLyxrc0hrN6wUTECE/5+oQcq8yIoB7xTfz16IxqYhGLis4qa5YDJex0XoTZjalO
-         VghlxKXn2O6tBGZ/YMGSLmgQaDUaMzv+h+OSP/bEbneucoD4H94t7NJEwlakq+P61TeG
-         WWD6cME0XKm63KPXxz3GkPGQGxlOZocAMRF5ZFdQrPGlFgDXSqjH3WDl0O4WWjkVcM2r
-         VnD/bsSDeEqGo8ZhaiieE48ZrBrYp1Q+smmyMIESC+2ZFA8AEoCBaOBWq0XX6sSPIvHz
-         3fivTlw9vZrc3IeJDcKgANF79dryWsuHwy1wEFjXX6yze/jUPjzhSCnZ2wHU8XVb37/y
-         5e/w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713537475; x=1714142275;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=B2KjOBeJYiu/sPhhhgIm5hStOwT0PTL8XKgyZ0RgG7g=;
-        b=K6rW4csj9JPvv5pcNTGDBuS/BmLVjdEvft7mentcEK4yIAl39F6f+fpJZOm7hKOHUX
-         nZceThaTzsoa923lqQ7ydhUPNU+Zh7SieRWZi6/G6HCeMzDsozBMCFJcB41rmYHcKXPT
-         ePNonQWFITP2EFkMYDH/qhAgs54h2Z9Bj4lZTYpFBzC2haZgPlS6ma9vbOzNO4aL07qw
-         G3dPVnyTZCb+uOMA9lfFL9mN3S/wFqeOlK1erzdZlEMdFoMZpB7jp2gKgZQO57oQ99OP
-         3MyICPTQZG2kGREZ4yVgN0VfFolysQ2eib4w4LmO6OTf7F1Hy7AUajfxdBMCTYi135x7
-         eEBg==
-X-Forwarded-Encrypted: i=1; AJvYcCXqZ2cdzBispmsZZg9TJU05smjW1oL52QlB2S9qMRL0JnEuJZWg6A3JVHYLK+OClZXsPngcBddAJvvPP0BRnpgGcgFb7y64hlA=
-X-Gm-Message-State: AOJu0YyO5zOuChznzuO1xsIvOYapF/zzS0lI524YD+IJbgz4gn1idO0I
-	qj4X2//h2roymGukV43YeVFTogjj0Z6ZygRAS3C4BOxHfM72i27Vu9YWsHD46ylkZ9HVTFJUBh3
-	V09SKf4vlqE7zDWUPeKB54xVRJBI=
-X-Google-Smtp-Source: AGHT+IG90oqcl+NoAjtlw2Fh2VnLC10TlQeri3zVc1I+pOEhLIngrArDURNQyxAQFLQdx36XZMSVuw8iPTnG11JSDAM=
-X-Received: by 2002:a25:6943:0:b0:dcc:383b:e48d with SMTP id
- e64-20020a256943000000b00dcc383be48dmr2105108ybc.26.1713537475582; Fri, 19
- Apr 2024 07:37:55 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="B+i8an4+"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6E3DCC072AA;
+	Fri, 19 Apr 2024 16:30:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1713544209;
+	bh=v5MMF4sIsyKZ3N8RRXo2tf2gqlanICtP5fvLTXeqLFg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=B+i8an4+RHBaHIfqfGD8ealLtIAsz6St26O1nZM3C8ms4MqGT5QMufqZdXCVNumX9
+	 TjJBPmZH2LgZU+ZDfkzMqqHNQ35hh/tfesz8qOSRVuMSPxG/TkHCwIbxJCHASIAvfe
+	 GqNpT8lFABWEIYat9LLuNF5jzLh5qtX+Rqs/zzLR4uBY/wBn0eO64l66wPcjknD5Tv
+	 fEOv96Uhh3vwI934AiyI1H2I2Rz3pMcSOrv3AQwH7O/f+x6rFSWEVJYXzs1BbfCm3T
+	 QB5Scu0tT2RCexliBsMnvcpxpyGI3IgYT64jZJkHwGdFIrg8sesOHDfy22tRYBwRsy
+	 EZnodEk1p9FlA==
+Date: Fri, 19 Apr 2024 09:30:07 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
+	dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org, ardb@kernel.org,
+	samitolvanen@google.com, bvanassche@acm.org
+Subject: Re: [RFC PATCH 1/8] crypto: shash - add support for finup2x
+Message-ID: <20240419163007.GA1131@sol.localdomain>
+References: <20240415213719.120673-2-ebiggers@kernel.org>
+ <ZiJI1RhdHUsCDELY@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
- <CAMe9rOoErR0xLqf4wLzk13XwTQY9-+cRAxDWKW9HU+rB0GApzQ@mail.gmail.com> <a995c5bd-8f80-2118-4d4-86e5e062a77@redhat.com>
-In-Reply-To: <a995c5bd-8f80-2118-4d4-86e5e062a77@redhat.com>
-From: "H.J. Lu" <hjl.tools@gmail.com>
-Date: Fri, 19 Apr 2024 07:37:19 -0700
-Message-ID: <CAMe9rOpz5Uft3MKXneYd3VqW1CaSXFF_GLBqKEZFiZsidKA43A@mail.gmail.com>
-Subject: Re: memcpy is leaking secret data through ZMM vector registers
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: libc-alpha@sourceware.org, Zdenek Kabelac <zkabelac@redhat.com>, 
-	Ondrej Kozina <okozina@redhat.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ZiJI1RhdHUsCDELY@gondor.apana.org.au>
 
-On Fri, Apr 19, 2024 at 7:24=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
-m> wrote:
->
->
->
-> On Fri, 19 Apr 2024, H.J. Lu wrote:
->
-> > On Fri, Apr 19, 2024 at 7:08=E2=80=AFAM Mikulas Patocka <mpatocka@redha=
-t.com> wrote:
-> > >
-> > > I'd like to ask what to do with it? We could use LD_BIND_NOW=3D1 (or
-> > > -Wl,-z,now) - it mostly works, but not entirely - the key may still b=
-e
-> > > present on the stack even if we use LD_BIND_NOW=3D1.
+On Fri, Apr 19, 2024 at 06:35:01PM +0800, Herbert Xu wrote:
+> Eric Biggers <ebiggers@kernel.org> wrote:
 > >
-> > Since vector registers are saved on stack only during symbol lookup,
-> > shouldn't disabling lazy binding solve this issue?
->
-> It should, but it doesn't fix this problem entirely.
->
-> If I set "GLIBC_TUNABLES=3Dglibc.cpu.hwcaps=3D-AVX512F,-AVX2" "LD_BIND_NO=
-W=3D1",
-> I still get a failure (I don't get the failure if I don't set
-> GLIBC_TUNABLES and set only LD_BIND_NOW).
->
-> So, even if we use plain SSE, the data somehow end up on the stack.
->
+> > The new API is part of the "shash" algorithm type, as it does not make
+> > sense in "ahash".  It does a "finup" operation rather than a "digest"
+> > operation in order to support the salt that is used by dm-verity and
+> > fs-verity.  There is no fallback implementation that does two regular
+> > finups if the underlying algorithm doesn't support finup2x, since users
+> > probably will want to avoid the overhead of queueing up multiple hashes
+> > when multibuffer hashing won't actually be used anyway.
+> 
+> For your intended users, will the SIMD fallback ever be invoked?
+> 
 
-You should write your own memory copy function and compile it with
--fzero-call-used-regs if possible.
+If you mean the fallback to scalar instructions when !crypto_simd_usable(), by
+default dm-verity and fs-verity do all hashing in process context, in which case
+the scalar fallback will never be used.  dm-verity does support the
+'try_verify_in_tasklet' option which makes hashing sometimes happen in softirq
+context, and x86 Linux has an edge case where if a softirq comes in while the
+kernel is in the middle of using SIMD instructions, SIMD instructions can't be
+used during that softirq.  So in theory the !crypto_simd_usable() case could be
+reached then.  Either way, I have the fallback implemented in the x86 and arm64
+SHA-256 glue code for consistency with the rest of the crypto_shash API anyway.
 
---=20
-H.J.
+If you mean falling back to two crypto_shash_finup() when the algorithm doesn't
+support crypto_shash_finup2x(), my patches to dm-verity and fs-verity do that.
+Modern x86_64 and arm64 systems will use crypto_shash_finup2x(), but dm-verity
+and fs-verity need to work on all architectures and on older CPUs too.  The
+alternative would be to put the fallback to two crypto_shash_finup() directly in
+crypto_shash_finup2x() and have the users call crypto_shash_finup2x()
+unconditionally (similar to how crypto_shash_digest() can be called even if the
+underlying shash_alg doesn't implement ->digest()).  That would make for
+slightly simpler code, though it feels a bit awkward to queue up multiple blocks
+for multibuffer hashing when multibuffer hashing won't actually be used.  Let me
+know if you have a preference about this.
+
+- Eric
