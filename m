@@ -1,109 +1,75 @@
-Received: from smtp.gentoo.org (woodpecker.gentoo.org [140.211.166.183])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91B731843
-	for <dm-devel@lists.linux.dev>; Sun, 21 Apr 2024 01:20:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=140.211.166.183
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 873604AEC1
+	for <dm-devel@lists.linux.dev>; Mon, 22 Apr 2024 07:28:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713662433; cv=none; b=ftmotisVjMj9kJdVYx9jXfPhjApw+QV3Nf8hJXR+BbAdTVKv1yd3tVl+crXcpVlINQJQdG4/LhydBgiZCcgAhLbA/KoTY2yZUfG25cOQthoub++Cl/0FKlkRpBHKOHYEO6ikBVhfhnla8UoT5OaPW1aiZjlhvwcQvbzjU7ZFWQc=
+	t=1713770934; cv=none; b=W0/e7l2A6V0sGnw1AR0lzENw3M4xCDJDJUBBvCA+7ty2YVYfzvwHVVfuhsn1YXHBuVVLvUfWf9+BMNTKP+Vz0hSznkrlMDwO0dIGugo526BGK/KKaTC37WmiMC9+eHGou7biB2q8FiV7Rn34kwqio3iLfEl9xiJ004C3/57FmrY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713662433; c=relaxed/simple;
-	bh=umUN52MAHLhx2zWn+c/A/RFRkUo9ct1QnOMPoMHdu4I=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=g0fMj3XFK2Vkzsh04zWvk1qMsJoT4cYyghh+Gk33a2PEQvq4oZpvGpA0oOfV7s6WWZ34MuTohSxZ0GGUz3aBUq8/JU390jtyWJaXHFVAySnOhT6Z8mqnFTQPm9w0vTrnpdREpohhMI4pa1B7UaGgfwAyzq6kJudEcTuoyUpyk/Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gentoo.org; spf=pass smtp.mailfrom=gentoo.org; arc=none smtp.client-ip=140.211.166.183
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gentoo.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gentoo.org
-From: "Andreas K. Huettel" <dilfridge@gentoo.org>
-To: libc-alpha@sourceware.org
-Cc: Zdenek Kabelac <zkabelac@redhat.com>, Ondrej Kozina <okozina@redhat.com>,
- Milan Broz <gmazyland@gmail.com>, dm-devel@lists.linux.dev,
- Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: memcpy is leaking secret data through ZMM vector registers
-Date: Sun, 21 Apr 2024 12:20:20 +1100
-Message-ID: <4900476.GXAFRqVoOG@noumea>
-Organization: Gentoo Linux
-In-Reply-To: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
-References: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
+	s=arc-20240116; t=1713770934; c=relaxed/simple;
+	bh=nFmgUjFS52Lo52E77EaZj7u7FZAMqovH66Dw2lTny3c=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Ye0+WJ+AlXTLdy5wHjz2vcYiefGFSATR2ElNk+p2epdBtRNLOcRECu9/gVh7aQc1SkakpvhT+k3bvL1uTodOb74MLc2F0Vt9p35WXN1iVEKAbcWZRcwDgE11FOixoonCDx0sKYU0pHv47uB8a5FHQ2Yv8+GLYSsmzt4Nh5OHoI8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 74A3468C4E; Mon, 22 Apr 2024 09:28:47 +0200 (CEST)
+Date: Mon, 22 Apr 2024 09:28:47 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christoph Hellwig <hch@lst.de>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Hannes Reinecke <hare@kernel.org>,
+	Mike Snitzer <snitzer@kernel.org>, Hannes Reinecke <hare@suse.de>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	James Bottomley <james.bottomley@hansenpartnership.com>,
+	linux-scsi@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: Re: [PATCH] scsi_lib: Align max_sectors to kb
+Message-ID: <20240422072847.GA4605@lst.de>
+References: <20240418070015.27781-1-hare@kernel.org> <20240418070304.GA26607@lst.de> <5707dfc3-f8e2-4050-9bba-029facc32ca9@suse.de> <20240418145129.GA32025@lst.de> <410750a52af76fdc3bcf6265c9036037cb8141da.camel@suse.com> <20240419062035.GA12480@lst.de> <be267b46dd6bea6d82334d9d591c9a5054ff3b17.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; boundary="nextPart1899325.tdWV9SEqCh";
- micalg="pgp-sha256"; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <be267b46dd6bea6d82334d9d591c9a5054ff3b17.camel@suse.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
---nextPart1899325.tdWV9SEqCh
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset="iso-8859-1"; protected-headers="v1"
-From: "Andreas K. Huettel" <dilfridge@gentoo.org>
-To: libc-alpha@sourceware.org
-Date: Sun, 21 Apr 2024 12:20:20 +1100
-Message-ID: <4900476.GXAFRqVoOG@noumea>
-Organization: Gentoo Linux
-In-Reply-To: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
-References: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
-MIME-Version: 1.0
+On Fri, Apr 19, 2024 at 10:27:53AM +0200, Martin Wilck wrote:
+> Well, it's just a matter of setting "queue_mode" in the multipath
+> configuration.
 
-> We have a test "dmsecuretest.sh" that loads cryptographic keys into the=20
-> kernel, dumps a core, the core file is analyzed and if it contains the=20
-> key, the test fails.
->=20
-> This test fails on AMD Zen 4 - the reason for the failure is that the=20
-> "memcpy" function uses ZMM registers for data copying. When memcpy exits,=
-=20
-> the encryption key is present in the ZMM registers and the key remains=20
-> there even after both source and destination buffers of memcpy were=20
-> cleared.
->=20
-> When we perform dynamic symbol lookup, the ZMM registers are spilled on=20
-> the stack and they remain there forever - this is the reason why the core=
-=20
-> file contains the encryption key and the test fails.
+Yes, and no.  We'd probably at very last want a blk_plug callback to
+allow making decisions for entire large I/Os instead of on a per-bio
+basis.
 
-So let me ask a few obvious questions, as someone with not (yet) deep
-insights into the problem.
+> Mike has pointed out in 76e33fe4e2c4 that many of the original reasons
+> for introducing request-based dm-multipath have been obsoleted by
+> faster hardware and improvements in the generic block layer. 
 
-* Shouldn't this be treated as a security issue?
+Yes.
 
-* Are the expectations on where the (key) data may end up defined=20
-  somewhere?
+> I am open for discussion on this subject, but with my distribution 
+> maintainer hat on, I don't expect the default being changed for end
+> customers soon. Actually, with NVMe rising, I wonder if a major
+> technology switch for dm-multipath (which is effectively SCSI multipath
+> these days) makes sense at this point in time.
 
-* If yes, which component behaves faulty?
+Well, it'll take ages until anything upstream gets into the enterprise
+distros, which array users tend to use anyway.  But I'd really love
+to get the ball rolling upstream rather sooner than later even if there
+is no need for immediate action.  The reason is that request based
+dm multipath causes a lot of special casing in the block core and
+dm, and that has become a significant maintenance burden.
 
-* If no, who needs to be involved in making the specs?
-
-
-=2D-=20
-Andreas K. H=FCttel
-dilfridge@gentoo.org
-Gentoo Linux developer=20
-(council, comrel, toolchain, base-system, perl, libreoffice)
-https://wiki.gentoo.org/wiki/User:Dilfridge
---nextPart1899325.tdWV9SEqCh
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part.
-Content-Transfer-Encoding: 7Bit
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEE/Rnm0xsZLuTcY+rT3CsWIV7VQSoFAmYkadQACgkQ3CsWIV7V
-QSopUBAAgUklOXkgwbUZbNn1PqxeWR3xT9iLTPim3cHscv40WYW7Z9rEYsWmv3UL
-AOqdAChBOWfqFYe2J6mNJDsC78iWGndvITBrssfAJ/5cUsGjaAz1mdgY5t1RZcye
-5Q1wt/58N7vLl0Bnf0JA1ZhXJYKTq+8WaeyZdGk5Vwu8erm9lLw0AKGo9lHpBQ21
-XTSDa3Nj93f0X/2Mo8MSgfY8QDIoQsZsCIV9+gBmqgIU0le4xNmJHmwEWAxrufjY
-tNPhwMYXY/oRNaIkCcJGb80YSR6IFUXq0uPfoCSDyw1urU2Y0JP+bhqNNbBPFWC1
-xIH4TtANHsXZiW6mDQlpF1AFX1XhInCkW/+iOUUq4nIsVRB0gLM7cK/Z832cpNvS
-iddYB5j3bsgOA8IGmp/7iwcO1Sxv8X8CnMfCHepMiM3RWytzj1r7lJk9OJoY1v6d
-wJJibcWwOy0Gv0f6HRnGnHQOMnMkgmyAWLtLgOPMvfm/QP0ZXeKac/xsMoxZoo1T
-Bc1nHq+HGFYR0nA8zPD1EkWqnLV1RqLVUo0jl8Cj+onLkKY/AjQNzQ87lb68aMfR
-QzMxh+b50xJoItcfiiu//DbXSXLksoiW73GMlVYo4VWBlu/79kcCXduejYAF89Ko
-lyJLDpua9iyhI+WrKzf2fPPRKyEnaWzzSP5PL3QaAwCNjX1V2Fo=
-=0XOU
------END PGP SIGNATURE-----
-
---nextPart1899325.tdWV9SEqCh--
-
-
-
+So if you have a chance to test the current bio based path, or help
+with testing a plug callback (I can try to write a patch for that,
+but I don't really have a good test setup) we can start to see where
+we are in practice in terms of still needing the request based stacking,
+and if there is a feasible path to move away from it.
