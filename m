@@ -1,280 +1,326 @@
-Received: from EUR05-VI1-obe.outbound.protection.outlook.com (mail-vi1eur05on2048.outbound.protection.outlook.com [40.107.21.48])
+Received: from APC01-PSA-obe.outbound.protection.outlook.com (mail-psaapc01on2088.outbound.protection.outlook.com [40.107.255.88])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EEB765644F
-	for <dm-devel@lists.linux.dev>; Mon, 22 Apr 2024 09:33:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.21.48
-ARC-Seal:i=3; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713778440; cv=fail; b=nJ5XGcxICMuGLwssTqKKHm/cJfETezqeih8tGkm/hzLJbLTZZ2qcwRYGbOvGmoadXJ0Nmg6ltm202vLryAUY788B2ojdVBj22N2z5APY/8ikoXCLO+FLUdZcAAT3qivAIV4GgYUiF9QTIIWMft0fOigX/6ZAVhsT9VHy+tWInjM=
-ARC-Message-Signature:i=3; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713778440; c=relaxed/simple;
-	bh=vs1OQrL/hOrOL909MZpH1Bmng6128yOKcnHMaqqYWsg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:Content-Type:
-	 Content-Disposition:In-Reply-To:MIME-Version; b=dAGnONg/oZHHw9Lyp/Dp6zaow7SjaJd5foe2/c6JCRqqg+exI7qA0sQt3nOmRalUBnuqjkixtSjafqBYrCJ+IztV8Ou+CTI0x91iR+Nbz0soQRlcZNmiEwH5CBEgf/Lrk6lIh7Ft7b3CEs7Wnjd4nVr+SvbqaJSCTbtz0LFLVa4=
-ARC-Authentication-Results:i=3; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; dkim=pass (1024-bit key) header.d=armh.onmicrosoft.com header.i=@armh.onmicrosoft.com header.b=8a7/cHdn; dkim=pass (1024-bit key) header.d=armh.onmicrosoft.com header.i=@armh.onmicrosoft.com header.b=8a7/cHdn; arc=fail smtp.client-ip=40.107.21.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C7F9A13C3CA
+	for <dm-devel@lists.linux.dev>; Mon, 22 Apr 2024 10:06:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.255.88
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1713780386; cv=fail; b=sK1nTTfwx0oTJZPLyxhFTVpL6EU+6CTe5C6YmMCkCSvn6acdLWGA85dqnELgoVcc0XsFezmBd49KIHJKBwCcx2oye/fwDMHt6KvhEuG+EzV/he2TKaqciAItpA9zc8nnFXWFE4Xi1OSAAotfspnncYXCwed0BtI1q6JBWJNSack=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1713780386; c=relaxed/simple;
+	bh=zh8sgmiVYwsPHPzQ5BzKy0mT2GO6/gUNpR7OrkEKXmc=;
+	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=gMhkKo7bJb34fGqUN8Zf8IIi9hK7XrNOZTfJ/SrAe3aVtc4p26BvFnq4Vlo5PpGG6QlZDzfNAYptHmW2BZ3AvrUhxf+JEQwjjK2lyeqozQp3GHYEONtSYuEGoYfRbDfAeOSplQUsldaIZ9SG3W2UXzmcVADoPRY9U7JHaKoHRA8=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=f6cJkofO; arc=fail smtp.client-ip=40.107.255.88
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=armh.onmicrosoft.com header.i=@armh.onmicrosoft.com header.b="8a7/cHdn";
-	dkim=pass (1024-bit key) header.d=armh.onmicrosoft.com header.i=@armh.onmicrosoft.com header.b="8a7/cHdn"
-ARC-Seal: i=2; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=pass;
- b=AJMXxocpSn6x1866Aqv3ZxED+lOry61lx+1+682XO/CI4/W5eb50iZLkSjSN0x6LvBosGbh0nWXHzaD34I4AEo9eGZ24eakO/3dazin37xpDd+1mNxTipjKweIbVlUGU6RIGJ/cdc3wJyDwy/Ly4wBqOv3RsFuz8hGzjBXOs2PhipJTe2V25T88zggUDn4zgQIK9fiIjUaX0kqsUUR1Z72ZvYRMdbRGM/83PwybxO1je8pa7mSn9MXQIYT+E0tXbem3yMqHoOMr9ZMun/KmwATsX6xHiDgKkhqCv05H5794mYpaE1RPKcNEHZ+faBLatvvVV0dwFdL6a6BxmnLiywg==
-ARC-Message-Signature: i=2; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=etE7acvZx6HYqe2Jq30jD7X3z6QlcL2aoalD7eHzZOY=;
- b=KKJAHzel84k4U5eOiF0a4Opw8KJhSXrG0IcEebYEIR8mcBib1dOoIqE4Lct/lrw3Lo3WfBwsCenZq60H8mo6w4eT7jFu+q8Wu5l2IVvvmTh5znk0mwkm50mWhmROn5FchePKDPOteA3m/Q+IFEJjEVxbZkrIO5SyIkZ4fG42JJEltqb4wgZFZLk4GJvHokOqyZpvGS868Fq/xaysM4REh52k0H6Io6sS0S4xYwotZCa4dWrt4XoHtfqgsGOYXnH8gEQBFeZLbiCwZAnIGN/4GvufgaqSsznOSjH8wjfz2a9G3kTphtcYkghuWYVY63fovsQUpXDe2DrNi8gTcAI5AA==
-ARC-Authentication-Results: i=2; mx.microsoft.com 1; spf=pass (sender ip is
- 63.35.35.123) smtp.rcpttodomain=lists.linux.dev smtp.mailfrom=arm.com;
- dmarc=pass (p=none sp=none pct=100) action=none header.from=arm.com;
- dkim=pass (signature was verified) header.d=armh.onmicrosoft.com; arc=pass (0
- oda=1 ltdi=1 spf=[1,1,smtp.mailfrom=arm.com] dkim=[1,1,header.d=arm.com]
- dmarc=[1,1,header.from=arm.com])
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=armh.onmicrosoft.com;
- s=selector2-armh-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=etE7acvZx6HYqe2Jq30jD7X3z6QlcL2aoalD7eHzZOY=;
- b=8a7/cHdngYvjJHbQtAWETopNtPrYFF1Os+VrAS7h6jjirKj9wN4zgyv67/wqunJ5w/gzghtd7cy5Lj5qLqwkFTe4UwbdnapfYD/kRpKdVOa4HyhHsIRmz63BH13B7skpggzCWDOPHw0RMMM/fMI7Rmaph6mSj94UojYGwu7kHfM=
-Received: from AS8P251CA0003.EURP251.PROD.OUTLOOK.COM (2603:10a6:20b:2f2::23)
- by AS8PR08MB6728.eurprd08.prod.outlook.com (2603:10a6:20b:396::19) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7472.44; Mon, 22 Apr
- 2024 09:33:54 +0000
-Received: from AMS0EPF000001A6.eurprd05.prod.outlook.com
- (2603:10a6:20b:2f2:cafe::1d) by AS8P251CA0003.outlook.office365.com
- (2603:10a6:20b:2f2::23) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7495.33 via Frontend
- Transport; Mon, 22 Apr 2024 09:33:54 +0000
-X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 63.35.35.123)
- smtp.mailfrom=arm.com; dkim=pass (signature was verified)
- header.d=armh.onmicrosoft.com;dmarc=pass action=none header.from=arm.com;
-Received-SPF: Pass (protection.outlook.com: domain of arm.com designates
- 63.35.35.123 as permitted sender) receiver=protection.outlook.com;
- client-ip=63.35.35.123; helo=64aa7808-outbound-1.mta.getcheckrecipient.com;
- pr=C
-Received: from 64aa7808-outbound-1.mta.getcheckrecipient.com (63.35.35.123) by
- AMS0EPF000001A6.mail.protection.outlook.com (10.167.16.233) with Microsoft
- SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.20.7519.19
- via Frontend Transport; Mon, 22 Apr 2024 09:33:54 +0000
-Received: ("Tessian outbound 88c46f8f09a7:v313"); Mon, 22 Apr 2024 09:33:54 +0000
-X-CheckRecipientChecked: true
-X-CR-MTA-CID: 4a30949d174ad816
-X-CR-MTA-TID: 64aa7808
-Received: from fb65f69311db.1
-	by 64aa7808-outbound-1.mta.getcheckrecipient.com id 5408B32E-F173-4017-9A6C-3D907CE3F879.1;
-	Mon, 22 Apr 2024 09:33:47 +0000
-Received: from EUR05-AM6-obe.outbound.protection.outlook.com
-    by 64aa7808-outbound-1.mta.getcheckrecipient.com with ESMTPS id fb65f69311db.1
-    (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384);
-    Mon, 22 Apr 2024 09:33:47 +0000
+	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="f6cJkofO"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=KLllv7BCaB1DfMm6p5Qlplgq5DFHJvxobvzOmUmypUk7gMQhpyf6T8x9lmKcix7brpGJ21krkE+qzu1FtCflvxs+W7in94Q7xz7NUyTyOZthSFlBamry/hkZbiCexWHkgHotWxgQ59IoWz/KRHG/dZu0HYzSdDpQLN7DCZdbqAufFeGzywe4pwtFd+KYmp7CkkWW8M8iAElXD8s61l+8SOgkIIIGR79Pj/ySvH3LcRX+vVcCdFftX93TGw+cJ7hsDrniT3tRbLBe1aeT3tf0rS9ZQ8yGEtEHe/tmQ1NhiChFzYS7Yv5Yfskaa3vBJM2+SBdHgCaMB8Zp/4XTIWhpOQ==
+ b=RjaQyNAMu7YoIl0iM4/mXCfpz/3HIJOfBdyueqXH1qmBFgnywoQvIffxjqlWYrJJ3UjuFbm/u7ZAXtgeiLh5pcAkQzpDyu5LoG87lfNfJzJwLJNQ3wf/zvjHOxXgNKy+e3AiQlN5TserxDoELrDA0lbkKnRQBkBC6ESPJv4pjmJKtmzUEwZflNKGl9NF//HZ6Gz5FgpMUvdM6ba1xYqU7U/fTy7hUWEQrnjkWwgVJA1DFakh4lLcA3TEd/gfOb/9ox2VhWO7AFPn1dy9ib6fwBFQUhs2CqfiaEvZjm3/F6R/1K+T5jUX71NDSUdOJ+Y+rMnozbY65BXsn+AeP5n5yw==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector9901;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=etE7acvZx6HYqe2Jq30jD7X3z6QlcL2aoalD7eHzZOY=;
- b=ob89I+0IOgza/CzMZo9Eit+5fPLBjofQ0onecaRgE6y1LdMOBDu7sDuWqwvd8KytDonfDFh0Rp9UOe8lM/vAwiC2hNi3CSfk+6lHXfh0JeRm/C4u38PqWR/Yle4gJo0j9p12/qWbr8+6hJ59GJceps/8PHKdl4vKhrQnDsWrG1NGAzF8cYU7nVIJOwuwfeobnzpKLGBYXxzRhoLkxRYrdwe6H5D2Uqoz5pyUw8Vmj9iSO7DlvqZJdDcc4vNDd+IQ0Hkh1FBtnuu0wX+Hu2yZVmBBkTqQgR7gnbu4dD6JFv/lfGY6Y8UQeic/t1oUf1f15uZi6CwRARV1flGsppyT0A==
+ bh=ihY3yBrqrqDnBnJCg28J+tIaZKQhbxqHnzslFW/KQOI=;
+ b=mt4J+FklPgf3LqewaOD8BqktbwMPsR2N4P47mm7q3Od3au5QZkpw2/u5fGSX9pIYL8htypMHkp5ZGYrf8uviX5xWTOo1YDrZjWSytkGBZP9202D66a9qlvCr54x25DBwSc+DNjGkcsRS3e0JJ95nY+UBpYqCfFhqKnfJNQcc0sT/JKbi+2DWDBIJ6eo0gEan+NyXfxPWUu0cfgulZlkpLIm4fZv4spHNoVuqV0z1nWxMaoAq0lTobKeDdZAL1OXD3xaIZEHWvoAbH1ndRN9o5CuJcaCRSP3+Af+EJ9D7poFs+JTT9JNlyw0VmQdzPe3MkxgGxueAGre5jb8kF1qEsw==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=arm.com; dmarc=pass action=none header.from=arm.com; dkim=pass
- header.d=arm.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=armh.onmicrosoft.com;
- s=selector2-armh-onmicrosoft-com;
+ smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
+ dkim=pass header.d=vivo.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=etE7acvZx6HYqe2Jq30jD7X3z6QlcL2aoalD7eHzZOY=;
- b=8a7/cHdngYvjJHbQtAWETopNtPrYFF1Os+VrAS7h6jjirKj9wN4zgyv67/wqunJ5w/gzghtd7cy5Lj5qLqwkFTe4UwbdnapfYD/kRpKdVOa4HyhHsIRmz63BH13B7skpggzCWDOPHw0RMMM/fMI7Rmaph6mSj94UojYGwu7kHfM=
-Authentication-Results-Original: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=arm.com;
-Received: from DB9PR08MB7179.eurprd08.prod.outlook.com (2603:10a6:10:2cc::19)
- by DB3PR08MB10335.eurprd08.prod.outlook.com (2603:10a6:10:435::13) with
+ bh=ihY3yBrqrqDnBnJCg28J+tIaZKQhbxqHnzslFW/KQOI=;
+ b=f6cJkofOzw5dMaqV81XHmuaefyxrcvJM37LMUB7HK1mFwaD+GoMpFGZErWhrSubJPUn7CrzPXLqlWKZy77dkuPX5vqs6m7I7RSBa++DubS/fCc3FYVVtkuR0R8zGF16X705+ONAZjEOqRJh3mJpB6cZl5fTYsVfT8UU7LcjtVC2pMsFxOCFmOPKUAgJ1sH+kUsmwDfqoDPXVk2MThZqyalhTFm+dMy43aKNfz+xR/HC4eqa36SfILz0HNCm46U81nVbDwmAd+pCWYVZLHmVv6wlv16BcB7VHM5ha0Wtr/D+0ptpHDrzqkcoTqmTSFofHHpuLT5oA4gxqgsj1G60tBg==
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=vivo.com;
+Received: from TYSPR06MB6411.apcprd06.prod.outlook.com (2603:1096:400:42a::11)
+ by SI2PR06MB5116.apcprd06.prod.outlook.com (2603:1096:4:1ab::8) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7472.44; Mon, 22 Apr
- 2024 09:33:43 +0000
-Received: from DB9PR08MB7179.eurprd08.prod.outlook.com
- ([fe80::8c23:46ef:c2c9:ea91]) by DB9PR08MB7179.eurprd08.prod.outlook.com
- ([fe80::8c23:46ef:c2c9:ea91%4]) with mapi id 15.20.7472.044; Mon, 22 Apr 2024
- 09:33:43 +0000
-Date: Mon, 22 Apr 2024 10:33:30 +0100
-From: Szabolcs Nagy <szabolcs.nagy@arm.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, libc-alpha@sourceware.org
-Cc: Zdenek Kabelac <zkabelac@redhat.com>,
-	Ondrej Kozina <okozina@redhat.com>,
-	Milan Broz <gmazyland@gmail.com>, dm-devel@lists.linux.dev
-Subject: Re: memcpy is leaking secret data through ZMM vector registers
-Message-ID: <ZiYu6laGnTGbkRCS@arm.com>
-References: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <a139443-d6de-7be1-c59b-c099b0b32884@redhat.com>
-X-ClientProxiedBy: LO4P123CA0163.GBRP123.PROD.OUTLOOK.COM
- (2603:10a6:600:18a::6) To DB9PR08MB7179.eurprd08.prod.outlook.com
- (2603:10a6:10:2cc::19)
+ 2024 10:06:19 +0000
+Received: from TYSPR06MB6411.apcprd06.prod.outlook.com
+ ([fe80::af33:ff9c:cf31:45e9]) by TYSPR06MB6411.apcprd06.prod.outlook.com
+ ([fe80::af33:ff9c:cf31:45e9%3]) with mapi id 15.20.7472.044; Mon, 22 Apr 2024
+ 10:06:19 +0000
+From: Yang Yang <yang.yang@vivo.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Cc: Yang Yang <yang.yang@vivo.com>
+Subject: [RFC PATCH] dm: Avoid sending redundant empty flush bios to the same block device
+Date: Mon, 22 Apr 2024 18:05:40 +0800
+Message-Id: <20240422100540.2213-1-yang.yang@vivo.com>
+X-Mailer: git-send-email 2.34.1
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: SI2PR01CA0046.apcprd01.prod.exchangelabs.com
+ (2603:1096:4:193::18) To TYSPR06MB6411.apcprd06.prod.outlook.com
+ (2603:1096:400:42a::11)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-TrafficTypeDiagnostic:
-	DB9PR08MB7179:EE_|DB3PR08MB10335:EE_|AMS0EPF000001A6:EE_|AS8PR08MB6728:EE_
-X-MS-Office365-Filtering-Correlation-Id: 4e69e9ec-21b3-4fc9-6208-08dc62af53cc
-x-checkrecipientrouted: true
-NoDisclaimer: true
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: TYSPR06MB6411:EE_|SI2PR06MB5116:EE_
+X-MS-Office365-Filtering-Correlation-Id: ad5b6b13-9915-4321-e6aa-08dc62b3daf1
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam-Untrusted: BCL:0;
-X-Microsoft-Antispam-Message-Info-Original:
- =?utf-8?B?Q1J1R2pac2FmU3h5L1I3SWR0a0s3TC9Ma09xSmpYNXA2cENmdlhNVEhCOTdv?=
- =?utf-8?B?L0JhcWlyNkJ1TUpCc1B0STFyOGlJQkRocEprdlEvMkhOcHpyeGZYSld5ZFBN?=
- =?utf-8?B?NkdrMWVCTFVSY1JSYWRTN2J6VFJNYndicEphUHpPSVJyZkxTWmJCN2xBS0Z4?=
- =?utf-8?B?SkZVRnNWU2w5bW5uVHUxY3ZDekJlWXdvWDViSm04NklEWkZJQWJsK1RpQ1JW?=
- =?utf-8?B?VXU1dWpFelZWcXg2dW4zemdrQ3pjcDViOXhUUU9tVkdhaTZIeWJSQjRsTWFy?=
- =?utf-8?B?Nko4bG1rRm1Vd2NoNXExZzVXUnI2elFOK1d3eXpEOUFVTGxXeFJhUHFuY2Ur?=
- =?utf-8?B?emVtZXVId3lSVmFvTFNrSkVzcUdCNEJKeUJZUnN0K3NqSVlUM0o5SklrS2Vt?=
- =?utf-8?B?Q0RGaFIwSUJCNnY5QncwMElIY3kwbmxQZTBxbWVXZ3hBOUhEd0JlOHRFUzY4?=
- =?utf-8?B?aTdieUNYbWhxa01qaWlRRFJwak93QVc2VTRvc2dyU1VYb09JRzZvMGVHN0dm?=
- =?utf-8?B?enAxU0V5SUpGMWF3VjVBQ1FMOGJRZ2ZWdndJdTk1SDdYQnJoK2MyLzA4V2F0?=
- =?utf-8?B?c3BiMWwrTmQrSnNZTjdrdFdKRW93YzNTYW5VTXVGWi8wU3lmUStucnJKYTdu?=
- =?utf-8?B?WE9lSWtOQlZxN0lTZXdRdjBFT0xNS3hmVENzRXNtL2VDRUNnL1QwTGhKOHh6?=
- =?utf-8?B?b1d2RmhNQU1FVGdqQTZSSHVZTmdmRW0yNXV1bU1MT00ydGE2bXhZQWRVTXlC?=
- =?utf-8?B?eXBjaHBKOG9yRjNwUjlCOWkzYWJrbW94SlJ4MldIbkYyZGlDTUJBQUNvd2dW?=
- =?utf-8?B?R3YwNEJFRzZIVEtmRGF3Vkx2RjBuOExQVWtkMGJyWFhPd2ducXNRWlIycDFk?=
- =?utf-8?B?cG92SVdmMFlYR2FJdjE4Q3Yrd1VLd0RoQTFZS1ZRZGp1My9CUm1IV3ZJVk5T?=
- =?utf-8?B?QWR0VkhQdXpQRG9McFptdGNIY0JQZUdFZFR0YXhnaFZEeVZvZlVPc1dkQXVn?=
- =?utf-8?B?WDA2SFlpbTVSRzlqOEd5UWtYazdtcWEyMmg4aFFlU2VRVXFBRUQ3dUJwL2pV?=
- =?utf-8?B?aHR4RjRBOVFXMVgxRkcxdVBGdy9LbkJrSTdNNVhNaUFUK091aGpxTWhnT2E0?=
- =?utf-8?B?a09RamFDaEs1aHJZMmd1L1hSVW0yQWVTWmdLNlBtSmdHUE01bkh0Um85eFNh?=
- =?utf-8?B?SlROYXkzLzUvSkRkUnhyeXFDYlJNR2x2WGZxZExrT295NGhIZlRTN1RvaWhl?=
- =?utf-8?B?aWNTa3FXMEFudUI2RHZuV2FWTTFNdHQ0RUZ5MmQvTmg0M0wxcHBxVGU4Vnoy?=
- =?utf-8?B?RmQ5aStkSTR5bXVZU2xkb0IwVWVJWjhHaGM4U2VvNTY0THNMUXd1b3ZMWDFV?=
- =?utf-8?B?a2FiYlA4SEN1dWNYWHpsNU1JbklVWitaTGFmeEFOOUp3Z2p0MXNaUkthOVE5?=
- =?utf-8?B?dW5sVGJHUS9uUmJIM2FzOW16SDRldngxRlhING1ienVlSXphVzdIOGhTWXRv?=
- =?utf-8?B?NHlFc1JXS1BjWWNHS0Eya2tpWXhsYkZldkVHUTJ2NDR2SXZUYjBFRDBhNGRK?=
- =?utf-8?B?VGVJMnBHdVZrTHVGQklZaTFDY2R5K3BnWnJ5MDZqUElaMC8zWFMxSk4rWXdB?=
- =?utf-8?B?YWNoSHJPaTZqUFdTSU9ZckxvQUl1NGxkS1o1bCtzOUVMUmZKK2FrcXNZaEZh?=
- =?utf-8?B?cjlmTDh2WnoxZHdBSVlmcUhTWTNHRmFTS09GWGErQTZZTGJHY1JYaERnPT0=?=
-X-Forefront-Antispam-Report-Untrusted:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DB9PR08MB7179.eurprd08.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(1800799015)(376005)(366007);DIR:OUT;SFP:1101;
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB3PR08MB10335
-Original-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=arm.com;
-X-EOPAttributedMessage: 0
-X-MS-Exchange-Transport-CrossTenantHeadersStripped:
- AMS0EPF000001A6.eurprd05.prod.outlook.com
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id-Prvs:
-	a751d886-943f-4d4f-13fb-08dc62af4d49
 X-Microsoft-Antispam: BCL:0;
 X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?MlNOMGZyV2JKK25Mc0x5NWpVbEpIVjlrc20vRDNTSHdKTUZoTDN5cEJIcWFW?=
- =?utf-8?B?dVgwMk91WGNwb3RvZXFDeXZUZFQvbVpTMlJWaTJnOGJscUJ4RStoKytta2Np?=
- =?utf-8?B?T1hSVVRLN1RZam05NDMrQUlKR00zZVc3a1FFRitFYjZ0K0V5UG43S2dwMDBi?=
- =?utf-8?B?MVZxSzdPZjZrNDlaMGkvZ3ArRmYzOHFCVlI4YTlDelVXSXRNVkdFek1KMG9u?=
- =?utf-8?B?THJma3ZQWElsR1Bhbko3TndMbHQ5ZlNQRGVMd0U1V3JtSkRoa1NGR3B0YXJ6?=
- =?utf-8?B?MHNNN25XUkNVUVhjSCs0YmxYTWlTeXdSeEY1WmZKZkFTbFZsQTVNTUlTSUhM?=
- =?utf-8?B?RGFodG5PbUh6RDVrSEtpNHY1MS9rNmFnNFJsbEk2WWtHS0JYSkNQVzgvNFNi?=
- =?utf-8?B?RFBLT09RMy9FVVJ2d1J1dE1IMHZnYTNsWnJ0c3BWbUtkdzZqWHhRWXRDd2R2?=
- =?utf-8?B?blFsUWVndlhFV1hYZ1lpN1lpLzBFY2pVdlZmME5TM0lQbEFzMjFlcFgzbk0x?=
- =?utf-8?B?S1FMV05YcUl2QUFjcExveFp5UTRGUDRvdThJMDI5dFhiZW9xWnk3eVVqWnhX?=
- =?utf-8?B?ZFdrQm10WGpCdGMwSmo2Vk9zMzVhZ1VwdXhibGhVNk5GYjd6M29EaEt6bFJJ?=
- =?utf-8?B?NXZPRk5uT2pJREdTbXJic0JQczVaejArb1l5ZnVDMmdGakVTMDlkMUZaVytj?=
- =?utf-8?B?SGVGWjRSY3FxWngwTE9oU1VPSUxraTdydlFOTWhSWnhxNGdEOFdQZjhnbENz?=
- =?utf-8?B?ekdncVV5L1pISUR6eXZBQXRNQWJlbGdGcEN4c2ZjZnFqbk50eWZyVzlXK2Rs?=
- =?utf-8?B?eDU3bVRIT2pZbHZBR2pEaHVueFZPR0J1Vis0aHpJanVzSmRYWk1rcjBmUVRB?=
- =?utf-8?B?VnAzYTdDYWtkdStFTlNIZUhYcFRuTm11SzNVeDY4Tk1xTzVpSElNSHR0TndZ?=
- =?utf-8?B?YXZ5UjZGNThmeVRVQmdGSzVCaEZOcWl1NmlOaTVOWTVmcTcrblBJV3VPTk5I?=
- =?utf-8?B?dEFCK2FWbE9RM3g4SGtpZGdpcDNHT1ptOVdQUk5uTEFXaitFMmpsemFjU3hR?=
- =?utf-8?B?ZEJidWR3U1FlQmNDU29YT29zNWI1NXhQcDZTd0p1eE1Bd1FPVHdzc2tCWWM4?=
- =?utf-8?B?MUdpSHVLZkl3Z01uQ1BGSkJMRWRwQzBXOTNMYjdxZ3lab0Q5M3JwV2VPeWpw?=
- =?utf-8?B?ejVmeEcydGw5RGZzVUNEZmI0UjRQMlIzOXkzYUVQRk5rbEhSMmpQK1FRV3BK?=
- =?utf-8?B?VkRYbEJjZXRjNG1OQWJwK2QwRW9MN2FReVRlcHNuSURTQms2M2F4RTZNU25o?=
- =?utf-8?B?VFpza2h6cGpXWTBOdXcxcjJCd05sSzhQc1pqbHB2alUyell6TWpIaU1MQzJE?=
- =?utf-8?B?MVZFbWx5TUE5bjdWNnAxeFA0UDUvSXhqeVNaRURjMU56VGtMV1UyMWowNU9p?=
- =?utf-8?B?NWIxeEF3anhMODdHazdNdlVJZFNNOFd6WFZna29qazJzNFlubW53cGVJeVJk?=
- =?utf-8?B?ZG55YXU1eG9vNy94c0hBcWloNUVObGEyQXZxanVJR0VtdXdOS0tTREFHSWdP?=
- =?utf-8?B?SnlYWWFHSTBSbW1rYlR5eVBsK1ZpTHFoTG9kZit6UnowdGZyMUF1K2IxQUlX?=
- =?utf-8?B?bTliMnRyWmszUCtxYXFMQkdlTU5TOEhZdVQ0am1NZy9GVGgzNGpLZ3IxOS9h?=
- =?utf-8?B?VmdQaFBSSDJIdXZsOU0wY3NtSE4xZTRESklXbDdEY3A4RTlzR1F4QlZhUVhx?=
- =?utf-8?B?NE5oN0h2VWFvWWNxdmNYczNFL200TU1wUWp5c2l4NFpiTGZscnJFVXJ5WGF3?=
- =?utf-8?B?d2xSZWRCdUxHUDVGdmcwbkxseEFyNkQrSHJuRG1IT0VNS3JyWXJ0VkUwUE1E?=
- =?utf-8?Q?LcwPI39kO8Df/?=
+	=?us-ascii?Q?v9OpQw4Nu1jjrsAa7K+EB1CLU5519GwlsyXEfSJpdJy3BQ0FWgCe4NImXwgZ?=
+ =?us-ascii?Q?R0wRTQkU7cY0pGVnsc3SzpidNJZz/SAJWKSy75w1FL/O5lEZyGB+6DPQHHZ/?=
+ =?us-ascii?Q?0+R8Y9+Av6rugebokzNR2xGLtbv8L+Gga2RZ8MuRMnUwloUXMhj53lFzFlrG?=
+ =?us-ascii?Q?f1Ql3ltLp4gl+dda1timFABmBGUzoMhR83Cfg1zM56Z0JF7U/AJxSUhHn5iN?=
+ =?us-ascii?Q?FibgjoXJpGi53E2am/E+rYCzqq80/VeF11PgyWhCGAQrT4QftGzWK+XK/V8s?=
+ =?us-ascii?Q?RSp22vCgeVzQjnqpSBc27l870c8Paw9HPj6TJiPCF1DHkLnKj3V3DVBmNyKa?=
+ =?us-ascii?Q?Y65QHntJ8kSLmZ90sg/P9ExeUWSpmI6pCKjet+H/ny/hxi8CBq9bptzuruhu?=
+ =?us-ascii?Q?JdYloi7zc31gCOW6z3EigeVBpa+OYri3thaXA+SEitHOGudf14+VLdI6BQ9e?=
+ =?us-ascii?Q?040/2oW0IJDiZUXyWYxm/yijugzf7ZqCOpZDBmiSpboaWL7dw/lzVoKZsTHI?=
+ =?us-ascii?Q?8n6dmkL9RW4M8t5T+25VURS/rVkSa8wQasN1ncDWk6zdOkH/TcsodNMfJJSM?=
+ =?us-ascii?Q?FKXEdxexmX88ksJva+qoTOLIfGiegyy8pACmSAGCT9zceOjJ/Et4S/Fz1GN7?=
+ =?us-ascii?Q?iognsE9bGKzF4Z3jwik/nGf/vJTQgFynn4R9l19E2LLk6Qy+mqRurfHl/oII?=
+ =?us-ascii?Q?EEittmmL2Q/vbQ+sH+Y7nf4P9AWtC6qK4ej0qenfT0s8tPRoIVYPtWDqOfV0?=
+ =?us-ascii?Q?JEv7Her2KZhgJx40PCM8AsFq7tAX0pThlHhKCjMLJIFdm0fxYiaM0059Tw33?=
+ =?us-ascii?Q?WFN9E2A6jSaOaYDotk6p2fqCjznyL7tcA9N4icmj61htU4XLmcPI3Sd6iZFE?=
+ =?us-ascii?Q?uJC9L+v2hnJGx2gIWSy9sI5cQQF7XfnvE4iQkJdIndSRPXjCtR2DIFtu7ziK?=
+ =?us-ascii?Q?OdBizwv3UMYl4+wm1+Tw3o/m2zeWGa+oCJuMuMfdEdKjgL87lx3MzrJo4JJ4?=
+ =?us-ascii?Q?tj7hMU3r1XY1e0fNabZ02yxFIel4O5YCCSRocdorxgDFMxP8+bL8vX8XIuoo?=
+ =?us-ascii?Q?3j57zX3vp4rAshIi/0eMhlTdnrwtcuQb6lMk7C9m+o4FBJgljtYxjgwZthVg?=
+ =?us-ascii?Q?z+sFa4m88x7ro9dvIdVsjbwqdJ7lDC3ZVe6iyqxadBjeTypEn8R5vYwn5qM2?=
+ =?us-ascii?Q?a0E1IrCQ8LHnHywGPJR8ayJOVLMAnEJxifgWPYsCSMZBHeLevAbjvvFlrpJT?=
+ =?us-ascii?Q?FALRRwjYjSmlXbkAa/YeSUXXtvN0qMyFyuq47ZXQ8ATzpEm1UcFqgZBDcT+Y?=
+ =?us-ascii?Q?RfgV9jjVOz5osEXTV2Xl4CEVlmJERVwPOYRUQ3CQbxgZ3g=3D=3D?=
 X-Forefront-Antispam-Report:
-	CIP:63.35.35.123;CTRY:IE;LANG:en;SCL:1;SRV:;IPV:CAL;SFV:NSPM;H:64aa7808-outbound-1.mta.getcheckrecipient.com;PTR:ec2-63-35-35-123.eu-west-1.compute.amazonaws.com;CAT:NONE;SFS:(13230031)(36860700004)(1800799015)(82310400014)(376005);DIR:OUT;SFP:1101;
-X-OriginatorOrg: arm.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 22 Apr 2024 09:33:54.3845
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:TYSPR06MB6411.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376005)(52116005)(1800799015)(366007)(38350700005);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?jtCXRhi1svph1waMulrcjRAdVoqDiyFA27Gqmgi4DStVDRt9Olw3VPqrtDnl?=
+ =?us-ascii?Q?fAfqsohPEDENlFF2WZj201lkK0vhlbGiWtUi/2feHYabDa700L2FfeuZLR7W?=
+ =?us-ascii?Q?+Fl/i51MNss2tEQhRYZYtFgfa5hJeDvUIPt85UQ8zHSUQpf6vz3Xr9K9AfzF?=
+ =?us-ascii?Q?dOk3lsXptlrGZ/5a6DFnpxxQSUjJDgYAzgfQW7BN7qwxUTyNm7tsprSQ5Zng?=
+ =?us-ascii?Q?gkC682PzTKgb3BhwbReEvylBoeu0qCcSjgmJ1G8OABI6XJ+JfymHOqF0SJlb?=
+ =?us-ascii?Q?1FlfnhsgT28OOxzpS2ibjUOUcsDXZY7orXeckyHuBNZ2OTlfBY/1RIae4yYt?=
+ =?us-ascii?Q?bpFx6L8ghLo4EK4mFFJN5IDSlMJx0kpS/etgvoLRr8SPUgTvVg96rM28L9eY?=
+ =?us-ascii?Q?j8mAgzPJhnD2A9kw9PTet8ds3tqurcFZ6l2WjeJEu+x9wxMfI60uCfW46g5D?=
+ =?us-ascii?Q?IA3HEl7t3CXuHiSWxZM7tOkRkvgYc6auaqXyuWaPycYtQg4i2MCpVVriTQfa?=
+ =?us-ascii?Q?xeMf33TbbmJKgGvJfodD+Ju0T9xvz9KbLUR+URuXKORVpz8jGthZtjW4mvLj?=
+ =?us-ascii?Q?zn5pUN9D1FbzoonuNYoIDNs8D27fUkos6M905xlmgU92ptkDccECLszP8w8P?=
+ =?us-ascii?Q?py3QDk37XAWRsM/crdiiwjusGhMUuu+tGb9RE1B8LhRkvzRwzCWwHAzalsl8?=
+ =?us-ascii?Q?TgB3j7HREZwRCTaa4u4qCMGGM2y4jMq70e5Bmu+MjudSltp6hRUsXSweSMsT?=
+ =?us-ascii?Q?DNuJRjLL7KqCAypiM41sYVw4NKJvRGUYWvvPVZHX1mKbKtYCniYlu3TaYDko?=
+ =?us-ascii?Q?jO6XMyMEv46Ex6ZmM2xL0pnsKdhQeL9lX16REUY6osXfd7GeAlxliZuq29Gy?=
+ =?us-ascii?Q?QTPnOVUxz2aqdQgyRGKACYQS4DF0Rzdt6HwBb+SS7/aSj5M6tr/HukXHF1e3?=
+ =?us-ascii?Q?C38YcnsvcW0Xe7BKOHdsPB1XR3PV6NSAoqAyzvS7gxGrpO4kMStBKdDsW1Cs?=
+ =?us-ascii?Q?7Hy9M24U63hNCRUFcEgfazUXdeCdy9HiaTlsi3I3J8wcGMwNF15Eu9bFURKy?=
+ =?us-ascii?Q?k7djhUDWbMTW4e/r20EunILrYrV4Z4M9uJp1vOdK2QsCOqZdSbsD7rPJQTt5?=
+ =?us-ascii?Q?Z7h4D4x7njDrEDBIgV3U567OeK0GL0JAX/1nM4unWBzhu5V4ocLNjr06GYgJ?=
+ =?us-ascii?Q?Y7e3b2pG05xPyntClgGcThCGHy/cVr/+zKhRjtwk2dqN+fdWye8kXEt8PqvS?=
+ =?us-ascii?Q?RMvtWNjP3dA6hOUk+G/aCxGQwlz7/7i2L1Q8ljQXaU4+rfSAQU/zd2VJXHDe?=
+ =?us-ascii?Q?bvg9mqsDp5eBgsvlle1XRL/eR5t9PZLbWdtYBGmQe6NN6NgGvGDmrBhJ6Nk3?=
+ =?us-ascii?Q?vJB9+XWwOiosGFiOxShQy/2kwNZhqdzB4fgftdetI2WNyadBZJoeggosXKiY?=
+ =?us-ascii?Q?qV5AT+Mj4QonQDoyRZiliUuzW7kdQ0w1fPjURbm22qY6Kbb9BzQo7RA0e0UY?=
+ =?us-ascii?Q?ePdzq2LAFr9UJS7LY7tfFSKxKvCmPFJUOV1ajl+xNpEOW8LS1u+XGLZNZ851?=
+ =?us-ascii?Q?kxTXIw1Tn8WyHYfTXwItt8OvOCB4I98LgfWy3oxJ?=
+X-OriginatorOrg: vivo.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: ad5b6b13-9915-4321-e6aa-08dc62b3daf1
+X-MS-Exchange-CrossTenant-AuthSource: TYSPR06MB6411.apcprd06.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 22 Apr 2024 10:06:19.3425
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: 4e69e9ec-21b3-4fc9-6208-08dc62af53cc
-X-MS-Exchange-CrossTenant-Id: f34e5979-57d9-4aaa-ad4d-b122a662184d
-X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=f34e5979-57d9-4aaa-ad4d-b122a662184d;Ip=[63.35.35.123];Helo=[64aa7808-outbound-1.mta.getcheckrecipient.com]
-X-MS-Exchange-CrossTenant-AuthSource:
-	AMS0EPF000001A6.eurprd05.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Anonymous
-X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS8PR08MB6728
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: J4rCr9U+c9Y65GdfysmbIH5kEyp39oHTW+s1GG8ocWxAvLUTtf8FfrpUsJVoLUL7yp/2883GHZ6K1vIe40bmBg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SI2PR06MB5116
 
-The 04/19/2024 16:07, Mikulas Patocka wrote:
-> Hi
-> 
-> As a part of LVM2, we are developing the libdevmapper library. The library 
-> may be used to load cryptographic keys to the kernel, so it avoids leaking 
-> the data to kernel memory and to the swap partition.
-> 
-> After the use of cryptographic data, the libdevmapper library clears them 
-> with memset and frees them afterwards. It executes __asm__ volatile("" ::: 
-> "memory") to thwart some compiler optimization regarding writing to 
-> to-be-freed memory.
+__send_empty_flush() sends empty flush bios to every target in the
+dm_table. However, if the num_targets exceeds the number of block
+devices in the dm_table's device list, it could lead to multiple
+invocations of __send_duplicate_bios() for the same block device.
+Typically, a single thread sending numerous empty flush bios to one
+block device is redundant, as these bios are likely to be merged by the
+flush state machine. In scenarios where num_targets significantly
+outweighs the number of block devices, such behavior may result in a
+noteworthy decrease in performance.
 
-instead of
+This issue can be reproduced using this command line:
+  for i in {0..1023}; do
+    echo $((8000*$i)) 8000 linear /dev/sda2 $((16384*$i))
+  done | dmsetup create example
 
- crypto_foo(key);
- dont_optimize_me_memset(key, 0, sizeof key);
+With this fix, a random write with fsync workload executed with the
+following fio command:
 
-can you do
+  fio --group_reporting --name=benchmark --filename=/dev/mapper/example \
+      --ioengine=sync --invalidate=1 --numjobs=16 --rw=randwrite \
+      --blocksize=4k --size=2G --time_based --runtime=30 --fdatasync=1
 
- crypto_foo(key);
- memcpy(key, dummykey, sizeof key);
- crypto_foo(key);
- memcpy(key, dummykey, sizeof key);
+results in an increase from 857 KB/s to 30.8 MB/s of the write
+throughput (3580% increase).
 
-if there is no sensitive data based conditional in
-the code (which there should not be in crypto logic
-nor in memcpy) the exact same registers and
-instructions should be exercised twice. i.e. you
-clobber all state in a portable way, no arch
-specific magic hack is needed nor new compiler flag.
+Signed-off-by: Yang Yang <yang.yang@vivo.com>
+---
+ drivers/md/dm-core.h          |  1 +
+ drivers/md/dm-table.c         |  7 +++++
+ drivers/md/dm.c               | 59 +++++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h |  6 ++++
+ 4 files changed, 73 insertions(+)
 
-technically this can still leak information in all
-sorts of ways (c is a high level language, internally
-the implementation can do whatever with the secrets),
-but this is pretty much how far you can go within c
-(pretending otherwise with random weird compiler or
-libc extensions is a mistake imho).
+diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+index e6757a30dcca..7e3f2168289f 100644
+--- a/drivers/md/dm-core.h
++++ b/drivers/md/dm-core.h
+@@ -217,6 +217,7 @@ struct dm_table {
+ 	/* a list of devices used by this table */
+ 	struct list_head devices;
+ 	struct rw_semaphore devices_lock;
++	unsigned short num_devices;
+ 
+ 	/* events get handed up using this callback */
+ 	void (*event_fn)(void *data);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 41f1d731ae5a..ddc60e498afb 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -2133,6 +2133,8 @@ void dm_table_postsuspend_targets(struct dm_table *t)
+ 
+ int dm_table_resume_targets(struct dm_table *t)
+ {
++	struct list_head *devices = dm_table_get_devices(t);
++	struct dm_dev_internal *dd;
+ 	unsigned int i;
+ 	int r = 0;
+ 
+@@ -2159,6 +2161,11 @@ int dm_table_resume_targets(struct dm_table *t)
+ 			ti->type->resume(ti);
+ 	}
+ 
++	t->num_devices = 0;
++
++	list_for_each_entry(dd, devices, list)
++		dd->dm_dev->index = ++(t->num_devices);
++
+ 	return 0;
+ }
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 56aa2a8b9d71..7297235291f6 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -48,6 +48,8 @@
+  */
+ #define REQ_DM_POLL_LIST	REQ_DRV
+ 
++#define DM_MAX_TABLE_DEVICES	1024
++
+ static const char *_name = DM_NAME;
+ 
+ static unsigned int major;
+@@ -1543,10 +1545,38 @@ static unsigned int __send_duplicate_bios(struct clone_info *ci, struct dm_targe
+ 	return ret;
+ }
+ 
++static inline bool has_redundant_flush(struct dm_table *t,
++		unsigned long **bitmap)
++{
++	if (t->num_devices < t->num_targets) {
++		/* Add a limit here to prevent excessive memory usage for bitmaps */
++		if (t->num_devices >= DM_MAX_TABLE_DEVICES)
++			return false;
++
++		/* dm_dev's index starts from 1, so need plus 1 here */
++		*bitmap = bitmap_zalloc(t->num_devices + 1, GFP_KERNEL);
++		if (*bitmap)
++			return true;
++	}
++
++	return false;
++}
++
++static int dm_get_dev_index(struct dm_target *ti, struct dm_dev *dev,
++				     sector_t start, sector_t len, void *data)
++{
++	unsigned short *index = data;
++	*index = dev->index;
++	return 0;
++}
++
+ static void __send_empty_flush(struct clone_info *ci)
+ {
+ 	struct dm_table *t = ci->map;
+ 	struct bio flush_bio;
++	unsigned long *handled_map;
++	unsigned int nr_handled = 0;
++	bool check = has_redundant_flush(t, &handled_map);
+ 
+ 	/*
+ 	 * Use an on-stack bio for this, it's safe since we don't
+@@ -1562,17 +1592,46 @@ static void __send_empty_flush(struct clone_info *ci)
+ 
+ 	for (unsigned int i = 0; i < t->num_targets; i++) {
+ 		unsigned int bios;
++		unsigned short index = 0;
+ 		struct dm_target *ti = dm_table_get_target(t, i);
+ 
+ 		if (unlikely(ti->num_flush_bios == 0))
+ 			continue;
+ 
++		/*
++		 * If the num_targets is greater than the number of block devices
++		 * in the dm_table's devices list, __send_empty_flush() might
++		 * invoke __send_duplicate_bios() multiple times for the same
++		 * block device. This could lead to a substantial decrease in
++		 * performance when num_targets significantly exceeds the number
++		 * of block devices.
++		 * Ensure that __send_duplicate_bios() is only called once for
++		 * each block device.
++		 */
++		if (check) {
++			if (nr_handled == t->num_devices)
++				break;
++
++			if (ti->type->iterate_devices)
++				ti->type->iterate_devices(ti, dm_get_dev_index, &index);
++
++			if (index > 0) {
++				if (__test_and_set_bit(index, handled_map))
++					continue;
++				else
++					nr_handled++;
++			}
++		}
++
+ 		atomic_add(ti->num_flush_bios, &ci->io->io_count);
+ 		bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
+ 					     NULL, GFP_NOWAIT);
+ 		atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
+ 	}
+ 
++	if (check)
++		bitmap_free(handled_map);
++
+ 	/*
+ 	 * alloc_io() takes one extra reference for submission, so the
+ 	 * reference won't reach 0 without the following subtraction
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 82b2195efaca..4a54b4f0a609 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -169,6 +169,12 @@ struct dm_dev {
+ 	struct dax_device *dax_dev;
+ 	blk_mode_t mode;
+ 	char name[16];
++
++	/*
++	 * sequential number for each dm_dev in dm_table's devices list,
++	 * start from 1
++	 */
++	unsigned short index;
+ };
+ 
+ /*
+-- 
+2.34.1
 
-
-> 
-> We have a test "dmsecuretest.sh" that loads cryptographic keys into the 
-> kernel, dumps a core, the core file is analyzed and if it contains the 
-> key, the test fails.
-> 
-> This test fails on AMD Zen 4 - the reason for the failure is that the 
-> "memcpy" function uses ZMM registers for data copying. When memcpy exits, 
-> the encryption key is present in the ZMM registers and the key remains 
-> there even after both source and destination buffers of memcpy were 
-> cleared.
-> 
-> When we perform dynamic symbol lookup, the ZMM registers are spilled on 
-> the stack and they remain there forever - this is the reason why the core 
-> file contains the encryption key and the test fails.
-> 
-> I'd like to ask what to do with it? We could use LD_BIND_NOW=1 (or 
-> -Wl,-z,now) - it mostly works, but not entirely - the key may still be 
-> present on the stack even if we use LD_BIND_NOW=1.
-> 
-> When I hack the file glibc/sysdeps/x86_64/multiarch/ifunc-memmove.h so 
-> that it always selects the ERMS variant of memcpy, the problem goes away.
-> 
-> Could it be possible to add some switch to glibc, that could be turned on 
-> by security-sensitive programs and that would prevent glibc from using the 
-> vector registers? Or, do you suggest another solution?
-> 
-> Mikulas
-> 
