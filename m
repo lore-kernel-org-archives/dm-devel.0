@@ -1,129 +1,116 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f170.google.com (mail-pl1-f170.google.com [209.85.214.170])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C56848662E
-	for <dm-devel@lists.linux.dev>; Tue, 23 Apr 2024 12:36:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC569160
+	for <dm-devel@lists.linux.dev>; Tue, 23 Apr 2024 16:31:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713875815; cv=none; b=IsKxQo3VmAHsXpdRmOieg6NPTHLkUYc/6fGev1ZR/KShgHyTDY6hlNVBwL82DpQmxBPYSUPYn/7Ur3RJPhdOtxTjrvvO+TSp7QPGbgvDULVuZwa+4CcmiqIbVVX330ejstydcMugyBSCtGkqzNDZKpY/+OGYyrjs3PUh32GXdCM=
+	t=1713889868; cv=none; b=HWJ2O6o1D5zxvh9Bhqg64Xl0zefBgfv4GwYmBWnOr8xwUlcuOVQLLtGg+AsaYxnsbGPCrMKUC4QcfPqyLUownoiyokT43PTnMWvi5SSKX/Ei/SSxGoYaAuHvgpaWVq5MabZvl7k/chr0cvBcePIrmNNqNslsGx5pYqfbF+dN7gw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713875815; c=relaxed/simple;
-	bh=VvAME1LWxRbvx9VDh/G7d7/s1knb+JtsY3BVP7m4ZaU=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=rUr5HbTEvnCTKTgdEY7oMS2q00MLAgW8yv7DjZdCxpH0zKFA7hLK89SDE3tKW/DBwVY6vCRiSRUy64jUdvPAugaMwCygsD0TunsEWEj4Zop8U3XTFVWHi1pPJoXn9dXcnhPHjTR84EUNUU/EJgg49hPa4OH866RYLHly1CPhE3g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=btFvEEBs; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1713889868; c=relaxed/simple;
+	bh=U2MZdd+9Rt41ocZdukFU7nbZdZgpQqPlgXUazYqpbCc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=e+qUIUoTOjjtRZNV3q/RPjHNao6OFCoyoLPLJ+f4xSBwWWl+kQIzvIXbguzThLdCnjSdgvrwMZw0aecvKW3w55wEPGbtjDJ6W/Aj6wEVA5RXgHFUFu6V2NLr1UehXyN6JLvwKaiQw1n4k/CxkMKxnn4+k4UsvxkO1WuuzcbuhjU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FLwl+/69; arc=none smtp.client-ip=209.85.214.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="btFvEEBs"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1713875811;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=m5hTS5Su8xeK74rUb4KJF+eI0XGddiqGV3X2wh7pCMQ=;
-	b=btFvEEBsMZF9gn+777W27D97HcdU2HX5rxfLE8u/+JYO0pUUyRviLW13IHczFFAEBm0LUv
-	VQwCqufljgVhTCA6XhwiA8onddwn88mh/XscbAps1on4JWllTgmWU+YksyPK/fJFNZeVXe
-	3IvubmmPvpqbMdKWHTLrAWpontSi4bA=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-75-Xj5FVClHMBeSnhEOFqUCew-1; Tue, 23 Apr 2024 08:36:47 -0400
-X-MC-Unique: Xj5FVClHMBeSnhEOFqUCew-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8096981F317;
-	Tue, 23 Apr 2024 12:36:46 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D93FC0E7C2;
-	Tue, 23 Apr 2024 12:36:45 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 883ED30BE3F7; Tue, 23 Apr 2024 12:36:45 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 841A83FA97;
-	Tue, 23 Apr 2024 14:36:45 +0200 (CEST)
-Date: Tue, 23 Apr 2024 14:36:45 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
-cc: Christoph Hellwig <hch@infradead.org>, Mike Snitzer <msnitzer@redhat.com>, 
-    Jens Axboe <axboe@kernel.dk>, Damien Le Moal <dlemoal@kernel.org>, 
-    Ingo Molnar <mingo@redhat.com>, Will Deacon <will@kernel.org>, 
-    Waiman Long <longman@redhat.com>, Guangwu Zhang <guazhang@redhat.com>, 
-    dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
-    linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 1/2] completion: move blk_wait_io to
- kernel/sched/completion.c
-In-Reply-To: <20240422105956.GN30852@noisy.programming.kicks-ass.net>
-Message-ID: <8ab5c16e-154-c66-d167-5ce9eb6ea331@redhat.com>
-References: <31b118f3-bc8d-b18b-c4b9-e57d74a73f@redhat.com> <20240417175538.GP40213@noisy.programming.kicks-ass.net> <546473fd-ca4b-3c64-349d-cc739088b748@redhat.com> <ZiCoIHFLAzCva2lU@infradead.org> <20240422105956.GN30852@noisy.programming.kicks-ass.net>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FLwl+/69"
+Received: by mail-pl1-f170.google.com with SMTP id d9443c01a7336-1e65b29f703so45113895ad.3
+        for <dm-devel@lists.linux.dev>; Tue, 23 Apr 2024 09:31:06 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1713889866; x=1714494666; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=HQdb+gb13aDffmyrVa1/DUF2z7QqWEjY6z0UkrAzU+c=;
+        b=FLwl+/69wkNCnF1tMqD8kjLbf3R7A7aC/+AH9LeTNaUK5iqVHBMXmeWQ7+67++HKhQ
+         6nNuSSz1BAs/I8k7rQ1ZqAvDBaHT7D+psWP59TOsvOgxR8TI7BtRRVP5gOe9/O0lhxgR
+         eWmOlPBwPQFALWKL5brj6OH75RK2TXj/sDG5gKZJVG1rk0h9zSgJSvCpwz2/gyyhcNor
+         o8Ewmd64lxtT5FTsRnMJTFn2zAAZ/B+uaanalFMRJz4uLcB0e7ZuVu+yUhwzbtDoEJJA
+         aGDR6xwsfprqZGTYDKfzZcgEC1b0+NkxmhHLsW4K+RR/vfT6x47+CgjrcGlEA5OiTosc
+         3NJA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1713889866; x=1714494666;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=HQdb+gb13aDffmyrVa1/DUF2z7QqWEjY6z0UkrAzU+c=;
+        b=gZNzl83kQZVvD1EstjyHZ1wKDhHDBFSs4dtc9o8VmUcvb0/jkQrQKPsfmyEhHLqoq8
+         EzyPne583/mPJqgHPUjJsKHYlW70j+SSfQkwTr6wqRorIh4zCBJC7g+m7HinIndoxxAh
+         eDbbWIPnAwUaaQe11aATCl66xf2It1grXKO7kZnsnIcQdQvh/CbGNMwaj00fJIASvXjm
+         F9f2g52VDJQ+fcwKCAE9eggSLdNKu0c5mqHzLOtAqx7wlFiCzf4Oz0lkn+1TdF6cLVGu
+         uv6v3e/SZWDMxzmSNDn7ySudVHaEYeOtzhdkmaiMHOu7ylv7cggsVUvRQez6EqxGG5TL
+         a4cg==
+X-Gm-Message-State: AOJu0YxHj5SRQYRj30/1JfX9Xr8lIQlSy/eAM7+jmHFeK6UT6K8dhua6
+	gbUELFayX/uWCqnBnaq/YsCMyEMCAGaXTKWl1CwgSbGl7E0+FxgZ
+X-Google-Smtp-Source: AGHT+IGgOXBttlBybis4Yl+YOI8+hy+YskrDi9fkSbcz7YstfmX6fkhOeiTTaMhxOl1xhdTeg7l/CQ==
+X-Received: by 2002:a17:902:da8f:b0:1e4:70d0:9333 with SMTP id j15-20020a170902da8f00b001e470d09333mr15717151plx.9.1713889866012;
+        Tue, 23 Apr 2024 09:31:06 -0700 (PDT)
+Received: from localhost ([2620:10d:c090:400::5:6f51])
+        by smtp.gmail.com with ESMTPSA id e14-20020a17090301ce00b001e3f148ffd3sm10178482plh.201.2024.04.23.09.31.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 23 Apr 2024 09:31:05 -0700 (PDT)
+Sender: Tejun Heo <htejun@gmail.com>
+Date: Tue, 23 Apr 2024 06:31:04 -1000
+From: Tejun Heo <tj@kernel.org>
+To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Cc: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Damien Le Moal <dlemoal@kernel.org>
+Subject: Re: [PATCH] dm zoned: Drop the WQ_UNBOUND flag for the chunk
+ workqueue
+Message-ID: <ZifiSILH9MlSDjxw@slm.duckdns.org>
+References: <20240410084531.2134621-1-shinichiro.kawasaki@wdc.com>
+ <ZhbRm2i3OeBVwE44@slm.duckdns.org>
+ <kmi647h6yrkpc2d5zfbxzvv6yi37yh3aonbbjkohvbf44s7s3n@frptyb2kp5vl>
+ <ZhlugLZbFk8xUbJ8@slm.duckdns.org>
+ <nl3ys53xadoca2qht2r5ikjh2vrxyrlwvs7n5nbitzxuxx4maa@daejezc4mr6z>
+ <ZicERHDW2w02sJQA@slm.duckdns.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ZicERHDW2w02sJQA@slm.duckdns.org>
 
-
-
-On Mon, 22 Apr 2024, Peter Zijlstra wrote:
-
-> On Wed, Apr 17, 2024 at 09:57:04PM -0700, Christoph Hellwig wrote:
-> > On Wed, Apr 17, 2024 at 08:00:22PM +0200, Mikulas Patocka wrote:
-> > > > > +EXPORT_SYMBOL(wait_for_completion_long_io);
-> > > > 
-> > > > Urgh, why is it a sane thing to circumvent the hang check timer? 
-> > > 
-> > > The block layer already does it - the bios can have arbitrary size, so 
-> > > waiting for them takes arbitrary time.
-> > 
-> > And as mentioned the last few times around, I think we want a task
-> > state to say that task can sleep long or even forever and not propagate
-> > this hack even further.
+On Mon, Apr 22, 2024 at 02:43:48PM -1000, Tejun Heo wrote:
+> workqueue: The default node_nr_active should have its max set to max_active
 > 
-> A bit like TASK_NOLOAD (which is used to make TASK_IDLE work), but
-> different I suppose.
+> The default nna (node_nr_active) is used when the pool isn't tied to a
+> specific NUMA node. This can happen in the following cases:
 > 
-> TASK_NOHUNG would be trivial to add ofc. But is it worth it?
+>  1. On NUMA, if per-node pwq init failure and the fallback pwq is used.
+>  2. On NUMA, if a pool is configured to span multiple nodes.
+>  3. On single node setups.
 > 
-> Anyway, as per the other email, anything like this needs to come with a
-> big fat warning. You get to keep the pieces etc..
-
-This seems better than the blk_wait_io hack.
-
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
-
-> ---
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 3c2abbc587b4..83b25327c233 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -112,7 +112,8 @@ struct user_event_mm;
->  #define TASK_FREEZABLE			0x00002000
->  #define __TASK_FREEZABLE_UNSAFE	       (0x00004000 * IS_ENABLED(CONFIG_LOCKDEP))
->  #define TASK_FROZEN			0x00008000
-> -#define TASK_STATE_MAX			0x00010000
-> +#define TASK_NOHUNG			0x00010000
-> +#define TASK_STATE_MAX			0x00020000
->  
->  #define TASK_ANY			(TASK_STATE_MAX-1)
->  
-> diff --git a/kernel/hung_task.c b/kernel/hung_task.c
-> index b2fc2727d654..126fac835e5e 100644
-> --- a/kernel/hung_task.c
-> +++ b/kernel/hung_task.c
-> @@ -210,7 +210,8 @@ static void check_hung_uninterruptible_tasks(unsigned long timeout)
->  		state = READ_ONCE(t->__state);
->  		if ((state & TASK_UNINTERRUPTIBLE) &&
->  		    !(state & TASK_WAKEKILL) &&
-> -		    !(state & TASK_NOLOAD))
-> +		    !(state & TASK_NOLOAD) &&
-> +		    !(state & TASK_NOHUNG))
->  			check_hung_task(t, timeout);
->  	}
->   unlock:
+> 5797b1c18919 ("workqueue: Implement system-wide nr_active enforcement for
+> unbound workqueues") set the default nna->max to min_active because only #1
+> was being considered. For #2 and #3, using min_active means that the max
+> concurrency in normal operation is pushed down to min_active which is
+> currently 8, which can obviously lead to performance issues.
 > 
+> #1 is very unlikely to happen to begin with and even when it does which
+> exact value nna->max is set to doesn't really matter. #2 can only happen if
+> the workqueue is intentionally configured to ignore NUMA boundaries and
+> there's no good way to distribute max_active in this case. #3 is the default
+> behavior on single node machines.
+> 
+> Let's set it the default nna->max to max_active. This fixes the artificially
+> lowered concurrency problem on single node machines and shouldn't hurt
+> anything for other cases.
+> 
+> Signed-off-by: Tejun Heo <tj@kernel.org>
+> Reported-by: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+> Fixes: 5797b1c18919 ("workqueue: Implement system-wide nr_active enforcement for unbound workqueues")
+> Link: http://lkml.kernel.org/r/20240410082822.2131994-1-shinichiro.kawasaki@wdc.com
 
+Apply to wq/for-6.9-fixes.
+
+Thanks.
+
+-- 
+tejun
