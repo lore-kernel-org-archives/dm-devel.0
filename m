@@ -1,71 +1,56 @@
-Received: from mail-pf1-f182.google.com (mail-pf1-f182.google.com [209.85.210.182])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF59117543
-	for <dm-devel@lists.linux.dev>; Tue, 23 Apr 2024 00:43:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 275D247772
+	for <dm-devel@lists.linux.dev>; Tue, 23 Apr 2024 07:32:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713833032; cv=none; b=hHXRv/B+8JI6rCX/4vbjqcANclBBS5v2tPSJSIw39qvj1riJ7+0YRHsqPZO2UGVcAeimfIqdC3oYXA3dOsZDeXyYLWHX9zIK2mVV0MCaH700+TeKfulqUHrMSj7/SncfQcd1bU2zecULoGs0F8wmoqdycpcsfg3y7Gj3b6Ofcvw=
+	t=1713857545; cv=none; b=AAxcKvqLvvjWkgs3H0aux7VD8noaiIfo71+DZroeiF0DCwclao2sDOxKcQDfwd7dtOyVTgr0pQNrIbQck5EsImZAJLveeOegocYwirGo+jkC52IwbtFfsAQEvJR/COH7lItJDFDvdc0FEafUSAkLcu2HIWtmyHaoNeOyLx/eu7A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713833032; c=relaxed/simple;
-	bh=zm0PVmrnyBvzggy6+uE5c+CD6f3INNYYmKCWNhOou+k=;
+	s=arc-20240116; t=1713857545; c=relaxed/simple;
+	bh=fCtgTqqPIGgKR7CtOKrHPlxAEAm3QiX1Kyq3VvKxjHQ=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=kxIDF2A35OTmvx1EHBHwXXknM8B2Hi6+pTCyo/r97wmFlShd468X4uRcQyuyxVD4oHBqbTTwhqh+lmAh+DZgNsZqcn3oISk28MMKGT6phoFxzOpFIfhgnde3FQHpg3aQ4nLHjvr+z+PB4DIxz23bi7lE+JbvWoWF4G/eudpNUBY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LpRUoYEy; arc=none smtp.client-ip=209.85.210.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=a0qoWuTIFYfSLtGYie5V4Ff21FiLVwbPuQOl0ZmBkDefWJ8rm0z6HIigErsGn2yjI/RBtiWA9ySuxGx7E5Gf5lmg6Fv3vxAB6OXYPT/uUNt3A+YaJUr1oT8e8hYWXHT/jeiqVBWOJv9+P7God2u0d/ipCC3u1yjn9sFVZDHNE7Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Gz9zbe0X; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LpRUoYEy"
-Received: by mail-pf1-f182.google.com with SMTP id d2e1a72fcca58-6ed20fb620fso4225817b3a.2
-        for <dm-devel@lists.linux.dev>; Mon, 22 Apr 2024 17:43:50 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713833030; x=1714437830; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=kgy2pSKaWKZr77kQ+lvnqcQfCnes1rWUXdspB7oF+GM=;
-        b=LpRUoYEyANtQpXv91H0fnDi1TahFBihBhg8TwRTSMLBeUn4jzbOluGSmoYSy/TLkjn
-         4b3NsuljVHBOl5c1N3Ld/0LoV1AWeydUujIakMI46Dt7Vx3OykqSp9uuvhYS+I6dXxgP
-         hma9Ubog8ymg/Sk98DIsxfjpeG+zvfzCNDl+PXxN9a4oVaspvM9cwkGSP6SYK3ZgyRGg
-         QZCV3UA9SmPZOk1jAbp4K35cIxMJDatSlo5nSlhiariRCGjBXB3r3f/1a3N7ChsO2Irn
-         kIMunCZ5zoY1RVPl319fRI9Ymq5Yt7c85VH6D5KqpIrOdlwbyTW2r5V7bxWMoFsHJ9hZ
-         UXiA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713833030; x=1714437830;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=kgy2pSKaWKZr77kQ+lvnqcQfCnes1rWUXdspB7oF+GM=;
-        b=h/Zseo5H2K7DJAH0mmHmZ/MvkJoFWc+ng0V5pqFKbCATk/XrtPaR1nZ0yEn4ud8Jd0
-         YnKxub2u4Bmn0Ca9urWrc6ixjnxHoflSLe02klx2fLi7MuOQCRqtok9D/XT4boNEeWyH
-         ZQjxNH/zeeOEol719RIr4gdha+kT2Yxkd8b6ZR7wd2zdgDIvgPO5c6Ezd9/zAiYDoZO1
-         KLbzYYq9gHGZMwM2Sm0BL3H3q9iWKRyfm+epIdKsg9ylqmjIs66POd8aUm2FieBVigtq
-         L1MszoOCjU9Djo+F2wtEtf+shxmldmulFtfasEZllobTQV1WPefEgjb19E0t9lDjtjhE
-         ni1g==
-X-Gm-Message-State: AOJu0Yy7akvg49gxdPjCyY+3zj04DSiUPLacGrpUe5nqOKX0eTUH4Njx
-	MnRMKQ3+dEa+iDImv9NOCDFtYeictnme451edYKO912gnjgltO2w/pEZH7XI
-X-Google-Smtp-Source: AGHT+IHMi7y8L/f0l8G37UFbkQ+s0MyDBEcxoUtMVEXSmbUE+wpJkZC00cKjttWeLuTthaABOtsuQg==
-X-Received: by 2002:a05:6a21:8803:b0:1ad:746:b15a with SMTP id ta3-20020a056a21880300b001ad0746b15amr6719056pzc.47.1713833030033;
-        Mon, 22 Apr 2024 17:43:50 -0700 (PDT)
-Received: from localhost ([2620:10d:c090:400::5:6f51])
-        by smtp.gmail.com with ESMTPSA id u7-20020a17090341c700b001dcfaf4db22sm8753676ple.2.2024.04.22.17.43.49
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 22 Apr 2024 17:43:49 -0700 (PDT)
-Sender: Tejun Heo <htejun@gmail.com>
-Date: Mon, 22 Apr 2024 14:43:48 -1000
-From: Tejun Heo <tj@kernel.org>
-To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-Cc: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>
-Subject: Re: [PATCH] dm zoned: Drop the WQ_UNBOUND flag for the chunk
- workqueue
-Message-ID: <ZicERHDW2w02sJQA@slm.duckdns.org>
-References: <20240410084531.2134621-1-shinichiro.kawasaki@wdc.com>
- <ZhbRm2i3OeBVwE44@slm.duckdns.org>
- <kmi647h6yrkpc2d5zfbxzvv6yi37yh3aonbbjkohvbf44s7s3n@frptyb2kp5vl>
- <ZhlugLZbFk8xUbJ8@slm.duckdns.org>
- <nl3ys53xadoca2qht2r5ikjh2vrxyrlwvs7n5nbitzxuxx4maa@daejezc4mr6z>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Gz9zbe0X"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1713857543;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+l4LrlxVKztyl389Cf9Ye2PtVJ+Dx3CAmwyRxf4t95E=;
+	b=Gz9zbe0XybnbkAocZOPwvwIIMZZR/7lGfh3Ilpf+TwnK5kYabIS44Kjn53h7xRu1SsdvWL
+	+JoXhEG08TGMRxy1QIt/fg4q/BEpsdW4IZVHZ9Iep2xIho/HRtM8rgHgLbyC/IKRnhM65l
+	bbwM82oHQEL8UnMMSJ9aw9vLWjCPY/4=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-57-XPyiARAZPVCA_2h0Qmy82g-1; Tue,
+ 23 Apr 2024 03:32:20 -0400
+X-MC-Unique: XPyiARAZPVCA_2h0Qmy82g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 58B5E1C05122;
+	Tue, 23 Apr 2024 07:32:20 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.86])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3AB0320128F3;
+	Tue, 23 Apr 2024 07:32:15 +0000 (UTC)
+Date: Tue, 23 Apr 2024 15:32:12 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: hch@lst.de, axboe@kernel.dk, dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org, mpatocka@redhat.com,
+	Brandon Smith <freedom@reardencode.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH for-6.10 1/2] dm-crypt: stop constraining
+ max_segment_size to PAGE_SIZE
+Message-ID: <Zidj46jf/9USES3L@fedora>
+References: <ZfDeMn6V8WzRUws3@infradead.org>
+ <20240411201529.44846-2-snitzer@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -74,59 +59,36 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <nl3ys53xadoca2qht2r5ikjh2vrxyrlwvs7n5nbitzxuxx4maa@daejezc4mr6z>
+In-Reply-To: <20240411201529.44846-2-snitzer@kernel.org>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-Hello,
+On Thu, Apr 11, 2024 at 04:15:28PM -0400, Mike Snitzer wrote:
+> This change effectively reverts commit 586b286b110e ("dm crypt:
+> constrain crypt device's max_segment_size to PAGE_SIZE") and relies on
+> block core's late bio-splitting to ensure that dm-crypt's encryption
+> bios are split accordingly if they exceed the underlying device's
+> limits (e.g. max_segment_size).
+> 
+> Commit 586b286b110e was applied as a 4.3 fix for the benefit of
+> stable@ kernels 4.0+ just after block core's late bio-splitting was
+> introduced in 4.3 with commit 54efd50bfd873 ("block: make
+> generic_make_request handle arbitrarily sized bios"). Given block
+> core's late bio-splitting it is past time that dm-crypt make use of
+> it.
+> 
+> Also, given the recent need to revert meaningful progress that was
+> attempted during the 6.9 merge window (see commit bff4b74625fe Revert
+> "dm: use queue_limits_set") this change allows DM core to safely make
+> use of queue_limits_set() without risk of breaking dm-crypt on NVMe.
+> Though it should be noted this commit isn't a prereq for reinstating
+> DM core's use of queue_limits_set() because blk_validate_limits() was
+> made less strict with commit b561ea56a264 ("block: allow device to
+> have both virt_boundary_mask and max segment size").
+> 
+> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 
-Sorry about the delay. I was wondering what happened to this thread earlier
-in the morning and realized that I missed your reply. Thanks for the dump
-and instruction. I was only testing on NUMA setups and made a silly mistake.
-Can you please try the following patch?
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
 
------- 8< ------
-workqueue: The default node_nr_active should have its max set to max_active
+Thanks,
+Ming
 
-The default nna (node_nr_active) is used when the pool isn't tied to a
-specific NUMA node. This can happen in the following cases:
-
- 1. On NUMA, if per-node pwq init failure and the fallback pwq is used.
- 2. On NUMA, if a pool is configured to span multiple nodes.
- 3. On single node setups.
-
-5797b1c18919 ("workqueue: Implement system-wide nr_active enforcement for
-unbound workqueues") set the default nna->max to min_active because only #1
-was being considered. For #2 and #3, using min_active means that the max
-concurrency in normal operation is pushed down to min_active which is
-currently 8, which can obviously lead to performance issues.
-
-#1 is very unlikely to happen to begin with and even when it does which
-exact value nna->max is set to doesn't really matter. #2 can only happen if
-the workqueue is intentionally configured to ignore NUMA boundaries and
-there's no good way to distribute max_active in this case. #3 is the default
-behavior on single node machines.
-
-Let's set it the default nna->max to max_active. This fixes the artificially
-lowered concurrency problem on single node machines and shouldn't hurt
-anything for other cases.
-
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Reported-by: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-Fixes: 5797b1c18919 ("workqueue: Implement system-wide nr_active enforcement for unbound workqueues")
-Link: http://lkml.kernel.org/r/20240410082822.2131994-1-shinichiro.kawasaki@wdc.com
----
- kernel/workqueue.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 0066c8f6c154..f94ae51c6f2b 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1606,7 +1606,7 @@ static void wq_update_node_max_active(struct workqueue_struct *wq, int off_cpu)
- 			      min_active, max_active);
- 	}
- 
--	wq_node_nr_active(wq, NUMA_NO_NODE)->max = min_active;
-+	wq_node_nr_active(wq, NUMA_NO_NODE)->max = max_active;
- }
- 
- /**
