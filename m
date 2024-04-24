@@ -1,124 +1,169 @@
-Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com [209.85.214.169])
+Received: from albert.telenet-ops.be (albert.telenet-ops.be [195.130.137.90])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86E20947E
-	for <dm-devel@lists.linux.dev>; Wed, 24 Apr 2024 03:35:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B92F915921D
+	for <dm-devel@lists.linux.dev>; Wed, 24 Apr 2024 10:26:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.130.137.90
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713929759; cv=none; b=WMwS2WyxwqeS8LjHeLRLp0HqjzCjgh0V0tZbDLgn3T43UXeGkJl0N88UQhfDL+IoNN7l+1RiCQQdC5YmnQ6uPoZSYn756PmypwR4ROnA1nxQmY28lvLH8e4Co27ly87FS49PFWXBR+POyOXkay52De+WWTbF3hpMmolLqyf0Poc=
+	t=1713954399; cv=none; b=BCs5YZQEBWumbfREw21omcZJ6cop+H2rVHEgJYMJkgJFdsz9ejqWHpszyCT6dYJ7JgBqkaNNCykMQ4O53ZHbVZSiVpMEKSsHHJscG/W2sYgSugKTmP4yztRqVKWUsvNf4rfIxrf/wbmmY+/DGf+ToQ7EOi34PpfMUy3OoV/YS7Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713929759; c=relaxed/simple;
-	bh=JwK/dbIxaWptB2RhQ9uRvZfMOjQTtoDNhMRznP/UqKw=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=s0S+5yPbmEvWKxvZQ5CADO6RI3oRw7xzsYmu3h5agFQrzX50xmaPmPswlu5m56NVi8eHsgNeIuSss7m1xJI46vonNoTAW437/rbpfdzg8EKQ1ZAGHCuVfkigZJY3AXUa18e7oh6XFFYE9c0CG36x2uetWOINK9VHoJscTuuWtUU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jof1areH; arc=none smtp.client-ip=209.85.214.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jof1areH"
-Received: by mail-pl1-f169.google.com with SMTP id d9443c01a7336-1e2c725e234so3936715ad.1
-        for <dm-devel@lists.linux.dev>; Tue, 23 Apr 2024 20:35:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1713929758; x=1714534558; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=iovjPUoBjii91EbA5LBmNWR1OvCfHoM4dBJsUW8BYkE=;
-        b=jof1areHEKq/LpDzxOfUCH1+6WA2UvEJy2ZAhTl/KmYcKePUP3AFVK2rJtGHTWEfC4
-         y1878J5eZMfAPa/EHrz6X4480FzcqcijexvDOpyLWKlgk8gRduFdOKF7bbsCQ85EaPoX
-         cdcdcSFUkMr8Ga5yfwsJYPVvivgu/kPSedSeVr9HESwhJlP3FGbCdSoSDWnvIo5y6Rlx
-         P6QeON/OWDLyWqFnFZ1/2e5nrnzbPOn5sw3aViOVW8z8Xgr6nZeYRz99gSPiRJEoaFT2
-         Ao0hfONgRiTEqDWeYoNMCiy0FVSlaVMjvfiU5SlDte2Be/LhJMYo64OK3B2eS2OzxS9C
-         6Dcg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1713929758; x=1714534558;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=iovjPUoBjii91EbA5LBmNWR1OvCfHoM4dBJsUW8BYkE=;
-        b=Jgpnwbw0mgqMBa7QjrRw7/1ftQOyfTDjshPoYyLsq7K8q1fc49xHC3B8TctGANlKE/
-         DawLcjYE/CmortazUmgxct4JiHiWNlCVDuTUeHGTm9zLGPwDjxJlN9RzuWron7U/cmZk
-         CycZZ6eBLQz+jFSq/6yoE3eopblXVf/NKLVENZwvqWqLwy4AikyVfc9H3xp40SPcpaUF
-         LqzzbWgbUK7YWct9Bg697rGQLz0pWoKD2QjWuQxFhh2wvXteqLu+dfnVKitEThNv1uxo
-         LC5/DDSVbcLK6QXn8PiGfdI5bQ20q0U+nMyeEwRBAfca8oFBR7KTKAQlDpof4dVxfbIb
-         kdIw==
-X-Gm-Message-State: AOJu0YzZp3SIy6+lKHO7lfysC/NPnDIJGhLYbisMJ4HGvGHc7Vgnc1jT
-	3bgs+FR4k9E3hilhYKNx/nw1yBxqGRq0kEN3k+6JPxchEQMlftXU
-X-Google-Smtp-Source: AGHT+IF8ME0QkL0Rg/LVV5viucXaiTQ4qryWF+rDCSDYnUB2QGOXTckp6Ek8w+lonE0vtJ9ksSi9zQ==
-X-Received: by 2002:a17:902:f682:b0:1e0:bc64:a37a with SMTP id l2-20020a170902f68200b001e0bc64a37amr6167288plg.8.1713929757605;
-        Tue, 23 Apr 2024 20:35:57 -0700 (PDT)
-Received: from localhost (dhcp-141-239-159-203.hawaiiantel.net. [141.239.159.203])
-        by smtp.gmail.com with ESMTPSA id n6-20020a170903110600b001e668c1060bsm10781772plh.122.2024.04.23.20.35.56
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 23 Apr 2024 20:35:57 -0700 (PDT)
-Sender: Tejun Heo <htejun@gmail.com>
-Date: Tue, 23 Apr 2024 17:35:56 -1000
-From: Tejun Heo <tj@kernel.org>
-To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-Cc: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>
-Subject: Re: [PATCH] dm zoned: Drop the WQ_UNBOUND flag for the chunk
- workqueue
-Message-ID: <Zih-HANo8RV6L-4Y@slm.duckdns.org>
-References: <20240410084531.2134621-1-shinichiro.kawasaki@wdc.com>
- <ZhbRm2i3OeBVwE44@slm.duckdns.org>
- <kmi647h6yrkpc2d5zfbxzvv6yi37yh3aonbbjkohvbf44s7s3n@frptyb2kp5vl>
- <ZhlugLZbFk8xUbJ8@slm.duckdns.org>
- <nl3ys53xadoca2qht2r5ikjh2vrxyrlwvs7n5nbitzxuxx4maa@daejezc4mr6z>
- <ZicERHDW2w02sJQA@slm.duckdns.org>
- <ZifiSILH9MlSDjxw@slm.duckdns.org>
- <isfz6pnm2l6aizihmdrksktlcpkkbnkmxgc55ar4akkrmggecc@lxu4tko3ht5k>
+	s=arc-20240116; t=1713954399; c=relaxed/simple;
+	bh=dG+revxQzK/A7VOH2CsUT2VQD1d/Iq8wWNut+VMBstc=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=MmVeak8saIKaWODbHQtqNESTcOG/tVvFBmkRKUI+kltQrsrCltMkkcA5J6AXUp4///yExrRJ9r11CePDBS6hLPLZ81NSsmBjHxr8RMAVkU581PlfHl5tdIIcvW+OD9rtjy8J3Z89a5R+isBvrrZHVyHasYNpiD7rpJR16aJvUUI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=none smtp.mailfrom=linux-m68k.org; arc=none smtp.client-ip=195.130.137.90
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux-m68k.org
+Received: from ramsan.of.borg ([IPv6:2a02:1810:ac12:ed80:76d0:2bff:fec8:549])
+	by albert.telenet-ops.be with bizsmtp
+	id EyST2C0070SSLxL06ySTPi; Wed, 24 Apr 2024 12:26:28 +0200
+Received: from geert (helo=localhost)
+	by ramsan.of.borg with local-esmtp (Exim 4.95)
+	(envelope-from <geert@linux-m68k.org>)
+	id 1rzZpa-0066TE-WE;
+	Wed, 24 Apr 2024 12:26:27 +0200
+Date: Wed, 24 Apr 2024 12:26:26 +0200 (CEST)
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+To: Ming Lei <ming.lei@redhat.com>
+cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, 
+    janpieter.sollie@edpnet.be, Christoph Hellwig <hch@lst.de>, 
+    Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, 
+    Song Liu <song@kernel.org>, linux-raid@vger.kernel.org, 
+    linux-renesas-soc@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] block: allow device to have both virt_boundary_mask and
+ max segment size
+In-Reply-To: <20240407131931.4055231-1-ming.lei@redhat.com>
+Message-ID: <7e38b67c-9372-a42d-41eb-abdce33d3372@linux-m68k.org>
+References: <20240407131931.4055231-1-ming.lei@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <isfz6pnm2l6aizihmdrksktlcpkkbnkmxgc55ar4akkrmggecc@lxu4tko3ht5k>
+Content-Type: text/plain; charset=US-ASCII; format=flowed
 
-Hello,
+ 	Hi Ming,
 
-On Wed, Apr 24, 2024 at 12:36:45AM +0000, Shinichiro Kawasaki wrote:
-> Hello Tejun, thanks for the fix. I confirmed that the number of in-flight works
-> become larger than 8 during the unmount operation.
-> 
->                             total  infl  CPUtime CPUitsv CMW/RPR  mayday rescued
-> dmz_cwq_dmz_dml_072           613    33      4.6       -       0       0       0
-> 
->                             total  infl  CPUtime CPUitsv CMW/RPR  mayday rescued
-> dmz_cwq_dmz_dml_072           617    33      4.7       -       0       0       0
-> 
->                             total  infl  CPUtime CPUitsv CMW/RPR  mayday rescued
-> dmz_cwq_dmz_dml_072           619    33      4.8       -       0       0       0
-> 
-> 
-> Also I measured xfs unmount time of 10 times. Its avarage is as follows.
-> 
->  Kernel               | Unmount time
-> ----------------------+--------------
->  v6.8                 |   29m  3s
->  v6.9-rc2             |   34m 17s
->  v6.9-rc2 + Tejun fix |   30m 55s
-> 
-> We can see that the fix reduced the unmount time, which is great! Still there is
-> a gap from v6.8 kernel. I think this gap can be a left work, and hope the fix
-> patch to be upstreamed.
+On Sun, 7 Apr 2024, Ming Lei wrote:
+> When one stacking device is over one device with virt_boundary_mask and
+> another one with max segment size, the stacking device have both limits
+> set. This way is allowed before d690cb8ae14b ("block: add an API to
+> atomically update queue limits").
+>
+> Relax the limit so that we won't break such kind of stacking setting.
+>
+> Closes: https://bugzilla.kernel.org/show_bug.cgi?id=218687
+> Reported-by: janpieter.sollie@edpnet.be
+> Fixes: d690cb8ae14b ("block: add an API to atomically update queue limits")
+> Link: https://lore.kernel.org/linux-block/ZfGl8HzUpiOxCLm3@fedora/
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Mike Snitzer <snitzer@kernel.org>
+> Cc: dm-devel@lists.linux.dev
+> Cc: Song Liu <song@kernel.org>
+> Cc: linux-raid@vger.kernel.org
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
 
-So, v6.8 was buggy in that it allowed a lot higher concurrency than
-requested. If higher concurrency is desirable, you can just set @max_active
-to a higher number. Currently, the absolute maximum is 512 (WQ_MAX_ACTIVE)
-but that number was picked arbitrarily probably more than a decade ago, so
-if you find higher concurrency useful, we can definitely push up that
-number.
+Thanks for your patch, which is now commit b561ea56a26415bf ("block:
+allow device to have both virt_boundary_mask and max segment size") in
+v6.9-rc4.
 
-> BTW, the URL of the Link tag is not working. Instead, I suggest this:
-> 
->   https://lore.kernel.org/dm-devel/20240410084531.2134621-1-shinichiro.kawasaki@wdc.com/
+With CONFIG_DMA_API_DEBUG_SG=y and IOMMU support enabled, this causes a
+warning on R-Car Gen3/Gen4 platforms:
 
-Ah, updated. Thanks.
+     DMA-API: renesas_sdhi_internal_dmac ee160000.mmc: mapping sg segment longer than device claims to support [len=86016] [max=65536]
+     WARNING: CPU: 1 PID: 281 at kernel/dma/debug.c:1178 debug_dma_map_sg+0x2ac/0x330
+     Modules linked in:
+     CPU: 1 PID: 281 Comm: systemd-udevd Tainted: G        W          6.9.0-rc2-ebisu-00012-gb561ea56a264 #596
+     Hardware name: Renesas Ebisu board based on r8a77990 (DT)
+     pstate: 60400005 (nZCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+     pc : debug_dma_map_sg+0x2ac/0x330
+     lr : debug_dma_map_sg+0x2ac/0x330
+     sp : ffffffc083643470
+     x29: ffffffc083643470 x28: 0000000000000080 x27: 0000000000010000
+     x26: 0000000000000000 x25: 0000000000000001 x24: ffffffc0810afc30
+     x23: ffffffffffffffff x22: ffffffc080c8366f x21: ffffff8008849f80
+     x20: ffffff800cd24000 x19: ffffff80099a2810 x18: 0000000000000000
+     x17: ffffff800801a000 x16: ffffffc080453f00 x15: ffffffc0836430f0
+     x14: ffffffc08099fb50 x13: 0000000000000007 x12: 0000000000000000
+     x11: 0000000000000202 x10: ffffffc0810d99d0 x9 : ffffffc081189bb0
+     x8 : ffffffc083643178 x7 : ffffffc083643180 x6 : 00000000ffffdfff
+     x5 : 0000000000000000 x4 : 0000000000000000 x3 : 0000000000000000
+     x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffffff800ebad280
+     Call trace:
+      debug_dma_map_sg+0x2ac/0x330
+      __dma_map_sg_attrs+0xcc/0xd0
+      dma_map_sg_attrs+0xc/0x1c
+      renesas_sdhi_internal_dmac_map+0x64/0x94
+      renesas_sdhi_internal_dmac_pre_req+0x20/0x2c
+      mmc_blk_mq_issue_rq+0x62c/0x6c8
+      mmc_mq_queue_rq+0x194/0x218
+      blk_mq_dispatch_rq_list+0x36c/0x4d4
+      __blk_mq_sched_dispatch_requests+0x344/0x4e0
+      blk_mq_sched_dispatch_requests+0x28/0x5c
+      blk_mq_run_hw_queue+0x1a4/0x218
+      blk_mq_flush_plug_list+0x2fc/0x4a0
+      __blk_flush_plug+0x70/0x134
+      blk_finish_plug+0x24/0x34
+      read_pages+0x60/0x158
+      page_cache_ra_unbounded+0x98/0x184
+      do_page_cache_ra+0x44/0x50
+      force_page_cache_ra+0x98/0x9c
+      page_cache_sync_ra+0x30/0x54
+      filemap_get_pages+0xfc/0x4f8
+      filemap_read+0xe8/0x2b8
+      blkdev_read_iter+0x12c/0x144
+      vfs_read+0x104/0x150
+      ksys_read+0x6c/0xd4
+      __arm64_sys_read+0x14/0x1c
+      invoke_syscall+0x70/0xf4
+      el0_svc_common.constprop.0+0xb0/0xcc
+      do_el0_svc+0x1c/0x24
+      el0_svc+0x34/0x8c
+      el0t_64_sync_handler+0x88/0x124
+      el0t_64_sync+0x150/0x154
+     irq event stamp: 0
+     hardirqs last  enabled at (0): [<0000000000000000>] 0x0
+     hardirqs last disabled at (0): [<ffffffc08007efa4>] copy_process+0x6ac/0x18d4
+     softirqs last  enabled at (0): [<ffffffc08007efa4>] copy_process+0x6ac/0x18d4
+     softirqs last disabled at (0): [<0000000000000000>] 0x0
 
--- 
-tejun
+Reverting this commit, or disabling IOMMU support fixes the issue.
+
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -182,17 +182,13 @@ static int blk_validate_limits(struct queue_limits *lim)
+> 		return -EINVAL;
+>
+> 	/*
+> -	 * Devices that require a virtual boundary do not support scatter/gather
+> -	 * I/O natively, but instead require a descriptor list entry for each
+> -	 * page (which might not be identical to the Linux PAGE_SIZE).  Because
+> -	 * of that they are not limited by our notion of "segment size".
+> +	 * Stacking device may have both virtual boundary and max segment
+> +	 * size limit, so allow this setting now, and long-term the two
+> +	 * might need to move out of stacking limits since we have immutable
+> +	 * bvec and lower layer bio splitting is supposed to handle the two
+> +	 * correctly.
+> 	 */
+> -	if (lim->virt_boundary_mask) {
+> -		if (WARN_ON_ONCE(lim->max_segment_size &&
+> -				 lim->max_segment_size != UINT_MAX))
+> -			return -EINVAL;
+> -		lim->max_segment_size = UINT_MAX;
+> -	} else {
+> +	if (!lim->virt_boundary_mask) {
+> 		/*
+> 		 * The maximum segment size has an odd historic 64k default that
+> 		 * drivers probably should override.  Just like the I/O size we
+
+Gr{oetje,eeting}s,
+
+ 						Geert
+
+--
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+ 							    -- Linus Torvalds
