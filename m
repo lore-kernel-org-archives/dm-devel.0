@@ -1,57 +1,57 @@
-Received: from mail-pj1-f52.google.com (mail-pj1-f52.google.com [209.85.216.52])
+Received: from mail-pl1-f175.google.com (mail-pl1-f175.google.com [209.85.214.175])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA7EA14A4F7
-	for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 14:18:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8EF5E14C5B5
+	for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 14:18:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714054726; cv=none; b=Bmxamc4gQ6Py6a3Dwnu/MfPbXs4shaGnHx4JCiEr4IQTZ/5gVI87kFiKV0D58cJHdWgqGwH99uRPHIdkWrKiYTPjYDB7AqnYMXGbeoa7nbFaEY24w+0Uh2RK8GZzcNS4ebbJnfAzoAuXwmKIbm+1cUiGVp2AszMlXkpx0q93opM=
+	t=1714054730; cv=none; b=Z4EvcJ4rCZFr+pLzAti3J4pKnOoeN4mznBnCzCK9Wa76Ka8ApWylA41fpS4i7wkEqrvdRIsAXi91Lb1DC9lNDj+lozi0gzwwoJjQG81oy67kvOWGJr6s4dosI+D+D4AgxKgxRDVgKbywtFR7yqFE3fq4VdqXUPe88xIKOlFyCE4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714054726; c=relaxed/simple;
-	bh=UN1Xetleeq5Nz5tLKfuxk8/opVO9kM/FjVJ/CVGswXI=;
+	s=arc-20240116; t=1714054730; c=relaxed/simple;
+	bh=F4H9nDZNXyr/ZsFI+cCJhr3OYw8PynR+1AAuPVXPV9M=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=uDQrt2KTB0+QVLbTdS3q+9yKSbLjv+kx7k0LuSz6elOysfevEkcJuKnUseUEL9gcB4WAJuiH7PTCFptYu3AePcAIDhsMPi70Cu10EjMzmyp7k2zHztW5qn16gRhpb2wi8++4IAKcIHWGmY/Cf/M+qDCT7bZnLIfPzvIBR9SNl0Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FLK3yO/8; arc=none smtp.client-ip=209.85.216.52
+	 MIME-Version; b=VD9xaV7edg3lpA0j/teanCs0ie8I/2N+j5MEwzc3TBsrzDNHXhxv6qpJl6N0z+XpvkaLLLxk/0US0eF2T4efWvDZPTdFJYnJyUX7TTQui1OTmzTrUtx9Ug439RF1Zpb5Ovhjfyr0jt2USq9g4h8RH7yuhyivbVYPgaqJi3hBmSI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DXPW32Vs; arc=none smtp.client-ip=209.85.214.175
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FLK3yO/8"
-Received: by mail-pj1-f52.google.com with SMTP id 98e67ed59e1d1-2ab936993abso275260a91.3
-        for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 07:18:44 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DXPW32Vs"
+Received: by mail-pl1-f175.google.com with SMTP id d9443c01a7336-1e825c65c9bso116005ad.2
+        for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 07:18:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714054724; x=1714659524; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1714054729; x=1714659529; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=/7grr21+dk77QDv4Gfk7ePfGBs40BXM1/CLzaulLK98=;
-        b=FLK3yO/8l5TEZCcJCOmMohCK8Hq5nBPNVy2spSe8jUlpxPh5xSGk1CI0W3RHlr2Sf4
-         gyHQ2KLdxAw4O92XDQzfxtYeIo+RUoIs1nwXRJ25+1AlhYJxdeObR4k+XDDQ+AbzMYyE
-         qzWXkZ8FoEVaw7SffVO1kpoegNmRGJee9quRjcvgZuniVdJIDpBpQmjyq5JsrCslVUHM
-         pvrCVpq/W7UebgZ1VQCARPEw0KW20oSxHZQ5kRpPiohzcQNYF3fvWhBxXAXWQzppyXR0
-         rRGYVy652SujxCwtjisEqvahKZWLEUqlTBVvYeZqArOmWh0vHKLs1g92xKNr1H2k/das
-         o/qg==
+        bh=6mL/EL0d7nL6m0RFDxHa1SNm7xjXj5OmWxYW9IhbyI0=;
+        b=DXPW32VsyRxz2CaKW8dRjQfE9cQ7J2pddkv5lwhb4bGAxYdeUSvOKHcz88JT1cA3QO
+         MMfuB6fx2BSxJdZnJ74gTcXz6tzx6jOOfEwF1Zw6AttvQNEDxaAzsYz2Nq0bTnRM+51f
+         7HuS33Br3iqvjF0QSHlKOEY4RY42TK8Xtup9iHh9jzJ/MnLiLe2PLtq/P0bK+DejmiDo
+         9hTTTFK3u4gV+INVSOE/FWAetVeSlx25YRqE5ILBbVeBi8Gbq7WRCrJ4+RAOdqaYjaVW
+         ehzNiryjpWyzfuilSKe6+Z4Onv9f5nFJEe/N0A+Wuj4KuQ374XhvlQsEK7KJUm7VNaCT
+         fb8w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714054724; x=1714659524;
+        d=1e100.net; s=20230601; t=1714054729; x=1714659529;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=/7grr21+dk77QDv4Gfk7ePfGBs40BXM1/CLzaulLK98=;
-        b=eAA6no64o5wbcTW3lIsCP0MK30ctfETk2ubcasbCGD0amioIqN6iM1Y+J2+2pu6Oxq
-         dyD7rNMef3IJpNIUwYzv0gh0muIRrwf3IXk9tmu8ziKIg4pY6vOxYdO1vhy1Isl1LE6M
-         bMwFjlobJQXr4/+CTqqr7XGI1NWkE7VDjgQqXcQ1QHi3B6nfKYlDDLjKNd/BQBAbcaNO
-         V4IFs+OlDEPzHjiNWs3HfiFbgn2hcFsc/i9k5FRZXO/bVQ4Z+VNfZiLjx7p8Rk4ee6WV
-         vDwdY8xVTIushTAhKz4uBvaMmam41IBJWaWqeoCCIuNebxQzlTKQCDlEixBBw5lqsWNt
-         dzRQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXD1s2QYn42PzkYoCGPBmfKMx+vDunCsvZF8CrnT78co44/Naxw01W5nctU7F5FL7+sXo4LBe65Us5JBh3YjDFwIHl9Q6CKSmk=
-X-Gm-Message-State: AOJu0YwzfCl+QFHk1Wf4UdWg8feIhXP3Gkau5kLIzQjqJke3JIxvRHoH
-	tO9sDL4UDxBNyZ0mDGJRU0PbNuCw64cO//cXJ8CspSVigAqHPwde
-X-Google-Smtp-Source: AGHT+IEQD11OltUE11ifdg6XbUXWB+Wv3EwPvaLgQGSfd4UJ7AD3kkEQJxgz0+FjABEIMkzUpKhT0w==
-X-Received: by 2002:aa7:8d15:0:b0:6ec:f5d2:f641 with SMTP id j21-20020aa78d15000000b006ecf5d2f641mr6842102pfe.1.1714054724050;
-        Thu, 25 Apr 2024 07:18:44 -0700 (PDT)
+        bh=6mL/EL0d7nL6m0RFDxHa1SNm7xjXj5OmWxYW9IhbyI0=;
+        b=P1fDQgQ8YmD8TFLTbLDUJ3OW3DjZQq5S0fNteMGViKgSSZ5vTXAonW6Psnny9sg6ak
+         YwTRIYPGSd1DlF5btFJBNqaaueipeRb8bPIN8cMVMnKbmjIKISC79F9AH+FnNUZNcUp5
+         m1HxatHEGdssyYVzxCx6mwozKbpdqKTI2zBHUSqL1uDobGFksfyWN5PRtMPcKmB2SwFQ
+         bayXS4sx1UYu8hepnEuGrc7WzZ1CiThNC6wNKhf1zwoSA+rqKC4XdhjH4JM6Slc1ejxT
+         Ws2+OxS/MvBrwWNKDQPzfcbjE6FdKSgzLhx4GyTfOyHdQO1HlZGcwlHHelMz1cRucKEC
+         L32w==
+X-Forwarded-Encrypted: i=1; AJvYcCUm6pcicNky4Kd/YjWe+6sldhI6JCfoGgf1rJMN72F20XiDK0fk+7E9Rkcdo+w8AxzlEX/5EqZ3GDhLpfpYTMCel5lQiPsyFHo=
+X-Gm-Message-State: AOJu0YxRN4uir++I1hh7DoX1kaabqhr9NFDky8p7K4ZgP48/Yu9VUEpt
+	wHjXxis74x2b7R4i93hYZCtZHe0aIWoCn9ad9bN2rFZNLdQQKw9v
+X-Google-Smtp-Source: AGHT+IFAco8SS+QgCQv0p+fueHlybivSKvhE5qQYuUi+dWforsZMvlEpw0tqxGG/Sh3EeDZa7lb0cg==
+X-Received: by 2002:a05:6a00:8985:b0:6ec:f406:ab17 with SMTP id hx5-20020a056a00898500b006ecf406ab17mr6515587pfb.0.1714054728656;
+        Thu, 25 Apr 2024 07:18:48 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id go20-20020a056a003b1400b006e6233563cesm13162397pfb.218.2024.04.25.07.18.40
+        by smtp.gmail.com with ESMTPSA id go20-20020a056a003b1400b006e6233563cesm13162397pfb.218.2024.04.25.07.18.44
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 25 Apr 2024 07:18:43 -0700 (PDT)
+        Thu, 25 Apr 2024 07:18:48 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -75,9 +75,9 @@ Cc: bfoster@redhat.com,
 	linux-perf-users@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>,
 	Randy Dunlap <rdunlap@infradead.org>
-Subject: [PATCH v4 02/16] bcache: Fix typo
-Date: Thu, 25 Apr 2024 22:18:12 +0800
-Message-Id: <20240425141826.840077-3-visitorckw@gmail.com>
+Subject: [PATCH v4 03/16] bcachefs: Fix typo
+Date: Thu, 25 Apr 2024 22:18:13 +0800
+Message-Id: <20240425141826.840077-4-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240425141826.840077-1-visitorckw@gmail.com>
 References: <20240425141826.840077-1-visitorckw@gmail.com>
@@ -95,13 +95,13 @@ Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 Reviewed-by: Ian Rogers <irogers@google.com>
 Reviewed-by: Randy Dunlap <rdunlap@infradead.org>
 ---
- drivers/md/bcache/util.c | 2 +-
+ fs/bcachefs/util.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/bcache/util.c b/drivers/md/bcache/util.c
-index ae380bc3992e..410d8cb49e50 100644
---- a/drivers/md/bcache/util.c
-+++ b/drivers/md/bcache/util.c
+diff --git a/fs/bcachefs/util.c b/fs/bcachefs/util.c
+index 92c6ad75e702..05ac1b3b0604 100644
+--- a/fs/bcachefs/util.c
++++ b/fs/bcachefs/util.c
 @@ -1,6 +1,6 @@
  // SPDX-License-Identifier: GPL-2.0
  /*
