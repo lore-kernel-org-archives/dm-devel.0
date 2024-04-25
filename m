@@ -1,547 +1,364 @@
-Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
+Received: from mail-wr1-f48.google.com (mail-wr1-f48.google.com [209.85.221.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E458D155341
-	for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 14:19:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E619C14A4C3
+	for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 16:56:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714054791; cv=none; b=USbpzLj+nblTqNiTXhY3fb/nAdCkCkiJq5nd3WamTtiSlU9Ja4QCZhFaurPDnA1SaUsgqvzRXO1Sc3lYV6mJ8As1oMizC/kvnkILToa4axXP3PIinOpmLQexBiPLAz+Z8aNWn0QPsha9fk/0JtYDLCrynYz7+phyKiskyFfXCc4=
+	t=1714064213; cv=none; b=qVW+6GFyQB67ela9zMC8+v/36pCHxFQ5dPN+TnwGEYxQTbG7AzbPLHW9SAmKJpFQclZowUqJKONEdXzhEBJWvq/2TpXXJ2bn8SLQ0B+OrTRMVexLfNZ6pBM0EevRLozhZLAEGEGPKyaQDZw+j2OTLAJqvE7VO61XtuUJrBZbdY4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714054791; c=relaxed/simple;
-	bh=zdDqeX1+1QEGuoTmK2ZnrwD+LKYtS8f4ZXb8ed+Eme8=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=OWtK3gRmab4s7Ffoltf05fQOsXaLOHZ9wf5AfD77nzma1XUVcK0GDNjklkmdr9Va6SZMeB6qM4d5szeNN7vGUndWXgASAyCK/WRCTBIfR626pckDeh1v8pNCc72/lVhSe6K+mT6tvtejs61jJbNKIsNNtBrWlUTSxDFWAb43lH4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TbDyIJiL; arc=none smtp.client-ip=209.85.214.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1714064213; c=relaxed/simple;
+	bh=4R9h5a9mxU4dTWzPVWFPBkYGl0cd0XhKvpYNpp8A+Uk=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=qlYI3pm4bxsxBeJll4MBxSVfVp7b63NwY9/JPX6SF2iPWr+vtr+TT4KcHZbIgPw0lXmN2rce+/ut7Ch18noNsr3VltO0ukeIfmihX1z9lfCpgOa51123yE9adWxTdsjLK2mS+dPyZPU+WFoBg6qafORO+gn0Qtbbm0LjaiC8sck=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Xfy/bhEA; arc=none smtp.client-ip=209.85.221.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TbDyIJiL"
-Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-1e85055aebfso518365ad.3
-        for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 07:19:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Xfy/bhEA"
+Received: by mail-wr1-f48.google.com with SMTP id ffacd0b85a97d-34665dd7744so826191f8f.1
+        for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 09:56:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714054789; x=1714659589; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=J6NqyQrctkzCfziO6/T6yC8PVEhcoyrj5OJlrdP0FjI=;
-        b=TbDyIJiL1E6gv7XBeUwW5PbbomBf/kH5QausSvQXC1HegWwcamLCS2ZSgdtwBbS6ct
-         jjNK7LFcL2B0lT4lx7o+VifBnC3yFTGbAsIotwtMM7nvhTL8pa2cXtz5epheDgXH7u1Q
-         SynOvyJpaFdAEBGHOJUoIMn0fY9jc3mCswofZ7njQKn7Oubox06T5DB4HdiOCwMvn0f7
-         v8mETe9qoMDmU6MJUz8YXOmsoCwaC2uXSwDDp8hwZHDUSH4wE47BbLLdFptUHVchQvAN
-         1xjI8qh6ROa/TzCf+iFtNYuaKovoAprjWCsxr2gOTMNLFAU03L5J3dYAV17e24bWZ334
-         1cgw==
+        d=suse.com; s=google; t=1714064209; x=1714669009; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=gNM4lOtBt4ttf7jpVsltM4M9Y8RRkR3MK8V1RAhVGXs=;
+        b=Xfy/bhEAnXg6wfEbNnp3gvNBUjGcxf1/NBg/G2o6uzP9KhGVD/2EYT2RBdKPN0eP1S
+         O9VQiLQWkdn5Z1M7sXbm1lwk0szBVy21tBdMinBKm9N3dkqgcMY0f0CUz8uyaz7XKlJZ
+         420TzQNMUMnTY6qKNXMUNJfwsFzxa6uNYPPvs9zvI/NHwJ06KZnT13P9XmSBBDijypg7
+         nKyXTuq8mi3jG9CyKlEN8QBgsftgiu+bfaZMC+q+n+LPtrzcv0ehnwSDJ9ndHoz2F6dZ
+         wkBEnUkIjtUPEwS2wzz6uKthO+bLoGJ18a3niMBhbr3JjRUWpXdySEMmrXXKFywb6vkp
+         5erw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714054789; x=1714659589;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=J6NqyQrctkzCfziO6/T6yC8PVEhcoyrj5OJlrdP0FjI=;
-        b=tewFjblDBLNFxRZ68a9RbV8zovbXNwCV09SIHvkBTRbADsBm0WTpdkoEn5ORgJUKLa
-         hfIadlOs5rhmgD5g4iMvDCb3sysGJVF3MpO9d55kw30EUKYwX4mxPTkyeYz1efBoSoGF
-         qYXTrRwxFb8zOzi6br8Uh2CLyVPj00qh7tSoTs5Iv1Ktcu0fd03A6FDc2RFZsFDFU8h0
-         Yv3BbtLAoaYz46KJFbqlnLWtQP87ZqZWdAZVHSUxrb/lnghJHWorTY/ANCyRz3ilXzz4
-         QGncl+G++IwVM27LGWOc6drw+7MHbMARIvsXXzn+qJ8+uZe1UDhgDJQv+BAm+2f/GF5/
-         Ouiw==
-X-Forwarded-Encrypted: i=1; AJvYcCW9A94s8zS2bAYb/abm5Gl59wPMDOirb/3B5oVGSMVrj0A07PYrHTCqkoKakIVZIzYV5CT+R3fFYp9k4ukV+yMjx5MlBSXVYLs=
-X-Gm-Message-State: AOJu0Yye54pDYMRigzp7KLOjwokEq7SZidhavTCe2CTYqxB+y8z4INKC
-	Cxf2vw6wrLpLb5lMLdSnJfg3N2puxzjBiXT17uY+6wMTz1GvA4p0
-X-Google-Smtp-Source: AGHT+IGR7S4gQOtrTx60AMKLS4Us1wyxOR35cVJGcCQLsECmLozBJyTOCovG6de7BwCtzwBjCkWqtA==
-X-Received: by 2002:a05:6a20:68a8:b0:1ad:df1:c05d with SMTP id n40-20020a056a2068a800b001ad0df1c05dmr5208221pzj.3.1714054789305;
-        Thu, 25 Apr 2024 07:19:49 -0700 (PDT)
-Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id go20-20020a056a003b1400b006e6233563cesm13162397pfb.218.2024.04.25.07.19.45
+        d=1e100.net; s=20230601; t=1714064209; x=1714669009;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=gNM4lOtBt4ttf7jpVsltM4M9Y8RRkR3MK8V1RAhVGXs=;
+        b=WrkNu3AOZ9XuXwa3oEWLcKEwWPBqdQN6OGRYNflEqf1Fm1L5TEILpd/gexr+X25Az+
+         1SjNy89/fjc/y3YZ94azvWJ+H13cs9D6sv7z9Uvtuoxe7ubKfPF0SZ0NWFFXtlcF7EWh
+         xLvN5l2dULBEuGdqrfucWbRGyXOc90Tt+r/GgGj1R0zEn2Z0RrHIRBcWDsNXcb9CYtGO
+         X/fNJKKq2oDUhXORuPisR1LPlywl8Jl2oY/8POAZMmHE4MR5LgtyojCt5bF7g1SciGyv
+         0ph1aVyDaEWViaWCcwoqdUqttiUDbWLrsKPaECoWR8hfA98rnr8RGIoA7MJWBGAcR2yG
+         k2NQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWM282KYY89iO4AWjVKFb5RONvscYyECYm8YIm3y6t7K+CcY7wKFXRywvpaNc7McRiWZba27foJSX1BjHA2GwyTxfpS2Z0gbhU=
+X-Gm-Message-State: AOJu0YxkBGH66+B1/VgmWVxntbZ7iswdSg+8BnLGTc0z4Izv15aXFDS2
+	S8Sc5VcwLCzbA9/Bo5P+LjxVMdeMOyZYiiiNR6KEDEjonrmZedV9xzpvQxzq+y29q4ma58K1iiN
+	f
+X-Google-Smtp-Source: AGHT+IEiTW/N7xTG1OBvRQ5pnC8wRoNlmacMaB4Ru1ofTLSk3Z71WKjWOFfqA/j8cvRppdYM1Qsu/A==
+X-Received: by 2002:a5d:4e86:0:b0:341:e4f4:4399 with SMTP id e6-20020a5d4e86000000b00341e4f44399mr56593wru.68.1714064209142;
+        Thu, 25 Apr 2024 09:56:49 -0700 (PDT)
+Received: from apollon.wilcks.net (dslb-090-186-231-154.090.186.pools.vodafone-ip.de. [90.186.231.154])
+        by smtp.gmail.com with ESMTPSA id l10-20020a5d410a000000b00343d1d09550sm20344369wrp.60.2024.04.25.09.56.48
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 25 Apr 2024 07:19:48 -0700 (PDT)
-From: Kuan-Wei Chiu <visitorckw@gmail.com>
-To: colyli@suse.de,
-	kent.overstreet@linux.dev,
-	msakai@redhat.com,
-	peterz@infradead.org,
-	mingo@redhat.com,
-	acme@kernel.org,
-	namhyung@kernel.org,
-	akpm@linux-foundation.org
-Cc: bfoster@redhat.com,
-	mark.rutland@arm.com,
-	alexander.shishkin@linux.intel.com,
-	jolsa@kernel.org,
-	irogers@google.com,
-	adrian.hunter@intel.com,
-	jserv@ccns.ncku.edu.tw,
-	linux-bcache@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	linux-bcachefs@vger.kernel.org,
-	linux-perf-users@vger.kernel.org,
-	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v4 16/16] bcachefs: Remove heap-related macros and switch to generic min_heap
-Date: Thu, 25 Apr 2024 22:18:26 +0800
-Message-Id: <20240425141826.840077-17-visitorckw@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20240425141826.840077-1-visitorckw@gmail.com>
-References: <20240425141826.840077-1-visitorckw@gmail.com>
+        Thu, 25 Apr 2024 09:56:48 -0700 (PDT)
+Message-ID: <b555131290e6923f54a3494413aa3ee3eefb9813.camel@suse.com>
+Subject: Re: [PATCH 2/3] libmultipath: change flush_on_last_del to fix a
+ multipathd hang
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
+ development <dm-devel@lists.linux.dev>
+Date: Thu, 25 Apr 2024 18:56:47 +0200
+In-Reply-To: <ZilunDUSAH8jnBNT@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+References: <20240423222536.2096486-1-bmarzins@redhat.com>
+	 <20240423222536.2096486-3-bmarzins@redhat.com>
+	 <439b76a2cdc7d044d2588315663bcca3a21063e2.camel@suse.com>
+	 <ZilunDUSAH8jnBNT@bmarzins-01.fast.eng.rdu2.dc.redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.0 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-Drop the heap-related macros from bcachefs and replacing them with the
-generic min_heap implementation from include/linux. By doing so, code
-readability is improved by using functions instead of macros. Moreover,
-the min_heap implementation in include/linux adopts a bottom-up
-variation compared to the textbook version currently used in bcachefs.
-This bottom-up variation allows for approximately 50% reduction in the
-number of comparison operations during heap siftdown, without changing
-the number of swaps, thus making it more efficient.
+On Wed, 2024-04-24 at 16:42 -0400, Benjamin Marzinski wrote:
+> On Wed, Apr 24, 2024 at 06:34:35PM +0200, Martin Wilck wrote:
+> > On Tue, 2024-04-23 at 18:25 -0400, Benjamin Marzinski wrote:
+> >=20
+> > >=20
+> > > I chose "unused" as the default because this should generally
+> > > only
+> > > cause
+> > > multipathd to work differently from the users perspective when
+> > > nothing
+> > > has the multipath device open but it is queueing and there is
+> > > outstanding IO. Without this change, it would have hung instead
+> > > of
+> > > failing the outstanding IO. However, I do understand that an
+> > > argument
+> > > could be made that "never" makes more sense as default, even
+> > > though
+> > > it
+> > > will cause multipathd to skip autoremoves in cases where it
+> > > wouldn't
+> > > before.
+> >=20
+> > How important is the autoremove feature, actually? I have do
+> > confess I
+> > don't like it too much, anyway.
+> >=20
+> > I'd actually vote to set the default to "never", even if that means
+> > a
+> > change in the default behavior, unless someone convinces me that
+> > autoremoving unused maps with no paths is actually the right thing
+> > to
+> > do.
+>=20
+> If we changed the default behavior, we'd find out how much users rely
+> on
+> it. My guess is "more than they should".=C2=A0 Ideally, users would shut
+> down
+> their multipath device before removing their underlying path devices.
+> In practice, I bet that a significant number do not.=C2=A0
 
-Link: https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvsdp4mqqg@nrlek5vmisbu
-Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
-Reviewed-by: Ian Rogers <irogers@google.com>
----
-Changes in v4:
-- Fix an error in ec_stripes_heap_swap() where
-  ec_stripes_heap_set_backpointer() should be called after swapping.
+I'm not sure if we should continue encouraging this sort of lazy
+practice. Actually, it doesn't matter that much if the multipath device
+persists. If there's anything of value, like a file system, database
+storage, or whatever, in the stack on top, the user would be well-
+advised to close/umount it before deleting the path devices. If she
+does, also destructing the multipath device would be minor step. If she
+doesn't, the fact that the multipath device persists would be a lesser
+concern.
 
- fs/bcachefs/clock.c       |  43 ++++++++++----
- fs/bcachefs/clock_types.h |   2 +-
- fs/bcachefs/ec.c          |  76 ++++++++++++++++--------
- fs/bcachefs/ec_types.h    |   2 +-
- fs/bcachefs/util.h        | 118 +-------------------------------------
- 5 files changed, 87 insertions(+), 154 deletions(-)
+But of course you're right, we don't know what our users actually do in
+this respect.
 
-diff --git a/fs/bcachefs/clock.c b/fs/bcachefs/clock.c
-index 363644451106..3ec64fe6a064 100644
---- a/fs/bcachefs/clock.c
-+++ b/fs/bcachefs/clock.c
-@@ -6,16 +6,29 @@
- #include <linux/kthread.h>
- #include <linux/preempt.h>
- 
--static inline long io_timer_cmp(io_timer_heap *h,
--				struct io_timer *l,
--				struct io_timer *r)
-+static inline bool io_timer_cmp(const void *l, const void *r, void __always_unused *args)
- {
--	return l->expire - r->expire;
-+	struct io_timer **_l = (struct io_timer **)l;
-+	struct io_timer **_r = (struct io_timer **)r;
-+
-+	return (*_l)->expire < (*_r)->expire;
-+}
-+
-+static inline void io_timer_swp(void *l, void *r, void __always_unused *args)
-+{
-+	struct io_timer **_l = (struct io_timer **)l;
-+	struct io_timer **_r = (struct io_timer **)r;
-+
-+	swap(*_l, *_r);
- }
- 
- void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
- {
- 	size_t i;
-+	const struct min_heap_callbacks callbacks = {
-+		.less = io_timer_cmp,
-+		.swp = io_timer_swp,
-+	};
- 
- 	spin_lock(&clock->timer_lock);
- 
-@@ -26,11 +39,11 @@ void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
- 		return;
- 	}
- 
--	for (i = 0; i < clock->timers.used; i++)
-+	for (i = 0; i < clock->timers.nr; i++)
- 		if (clock->timers.data[i] == timer)
- 			goto out;
- 
--	BUG_ON(!heap_add(&clock->timers, timer, io_timer_cmp, NULL));
-+	BUG_ON(!min_heap_push(&clock->timers, &timer, &callbacks, NULL));
- out:
- 	spin_unlock(&clock->timer_lock);
- }
-@@ -38,12 +51,16 @@ void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
- void bch2_io_timer_del(struct io_clock *clock, struct io_timer *timer)
- {
- 	size_t i;
-+	const struct min_heap_callbacks callbacks = {
-+		.less = io_timer_cmp,
-+		.swp = io_timer_swp,
-+	};
- 
- 	spin_lock(&clock->timer_lock);
- 
--	for (i = 0; i < clock->timers.used; i++)
-+	for (i = 0; i < clock->timers.nr; i++)
- 		if (clock->timers.data[i] == timer) {
--			heap_del(&clock->timers, i, io_timer_cmp, NULL);
-+			min_heap_del(&clock->timers, i, &callbacks, NULL);
- 			break;
- 		}
- 
-@@ -131,12 +148,16 @@ static struct io_timer *get_expired_timer(struct io_clock *clock,
- 					  unsigned long now)
- {
- 	struct io_timer *ret = NULL;
-+	const struct min_heap_callbacks callbacks = {
-+		.less = io_timer_cmp,
-+		.swp = io_timer_swp,
-+	};
- 
- 	spin_lock(&clock->timer_lock);
- 
--	if (clock->timers.used &&
-+	if (clock->timers.nr &&
- 	    time_after_eq(now, clock->timers.data[0]->expire))
--		heap_pop(&clock->timers, ret, io_timer_cmp, NULL);
-+		min_heap_pop(&clock->timers, &callbacks, NULL);
- 
- 	spin_unlock(&clock->timer_lock);
- 
-@@ -161,7 +182,7 @@ void bch2_io_timers_to_text(struct printbuf *out, struct io_clock *clock)
- 	spin_lock(&clock->timer_lock);
- 	now = atomic64_read(&clock->now);
- 
--	for (i = 0; i < clock->timers.used; i++)
-+	for (i = 0; i < clock->timers.nr; i++)
- 		prt_printf(out, "%ps:\t%li\n",
- 		       clock->timers.data[i]->fn,
- 		       clock->timers.data[i]->expire - now);
-diff --git a/fs/bcachefs/clock_types.h b/fs/bcachefs/clock_types.h
-index 5fae0012d808..59716e148645 100644
---- a/fs/bcachefs/clock_types.h
-+++ b/fs/bcachefs/clock_types.h
-@@ -23,7 +23,7 @@ struct io_timer {
- /* Amount to buffer up on a percpu counter */
- #define IO_CLOCK_PCPU_SECTORS	128
- 
--typedef HEAP(struct io_timer *)	io_timer_heap;
-+typedef MIN_HEAP(struct io_timer *, io_timer_heap)	io_timer_heap;
- 
- struct io_clock {
- 	atomic64_t		now;
-diff --git a/fs/bcachefs/ec.c b/fs/bcachefs/ec.c
-index 556a217108d3..0831e745dd12 100644
---- a/fs/bcachefs/ec.c
-+++ b/fs/bcachefs/ec.c
-@@ -868,8 +868,8 @@ static int __ec_stripe_mem_alloc(struct bch_fs *c, size_t idx, gfp_t gfp)
- 
- 		mutex_lock(&c->ec_stripes_heap_lock);
- 		if (n.size > h->size) {
--			memcpy(n.data, h->data, h->used * sizeof(h->data[0]));
--			n.used = h->used;
-+			memcpy(n.data, h->data, h->nr * sizeof(h->data[0]));
-+			n.nr = h->nr;
- 			swap(*h, n);
- 		}
- 		mutex_unlock(&c->ec_stripes_heap_lock);
-@@ -960,7 +960,7 @@ static u64 stripe_idx_to_delete(struct bch_fs *c)
- 
- 	lockdep_assert_held(&c->ec_stripes_heap_lock);
- 
--	if (h->used &&
-+	if (h->nr &&
- 	    h->data[0].blocks_nonempty == 0 &&
- 	    !bch2_stripe_is_open(c, h->data[0].idx))
- 		return h->data[0].idx;
-@@ -968,14 +968,6 @@ static u64 stripe_idx_to_delete(struct bch_fs *c)
- 	return 0;
- }
- 
--static inline int ec_stripes_heap_cmp(ec_stripes_heap *h,
--				      struct ec_stripe_heap_entry l,
--				      struct ec_stripe_heap_entry r)
--{
--	return ((l.blocks_nonempty > r.blocks_nonempty) -
--		(l.blocks_nonempty < r.blocks_nonempty));
--}
--
- static inline void ec_stripes_heap_set_backpointer(ec_stripes_heap *h,
- 						   size_t i)
- {
-@@ -984,39 +976,71 @@ static inline void ec_stripes_heap_set_backpointer(ec_stripes_heap *h,
- 	genradix_ptr(&c->stripes, h->data[i].idx)->heap_idx = i;
- }
- 
-+static inline bool ec_stripes_heap_cmp(const void *l, const void *r, void __always_unused *args)
-+{
-+	struct ec_stripe_heap_entry *_l = (struct ec_stripe_heap_entry *)l;
-+	struct ec_stripe_heap_entry *_r = (struct ec_stripe_heap_entry *)r;
-+
-+	return ((_l->blocks_nonempty > _r->blocks_nonempty) <
-+		(_l->blocks_nonempty < _r->blocks_nonempty));
-+}
-+
-+static inline void ec_stripes_heap_swap(void *l, void *r, void *h)
-+{
-+	struct ec_stripe_heap_entry *_l = (struct ec_stripe_heap_entry *)l;
-+	struct ec_stripe_heap_entry *_r = (struct ec_stripe_heap_entry *)r;
-+	ec_stripes_heap *_h = (ec_stripes_heap *)h;
-+	size_t i = _l - _h->data;
-+	size_t j = _r - _h->data;
-+
-+	swap(*_l, *_r);
-+
-+	ec_stripes_heap_set_backpointer(_h, i);
-+	ec_stripes_heap_set_backpointer(_h, j);
-+}
-+
- static void heap_verify_backpointer(struct bch_fs *c, size_t idx)
- {
- 	ec_stripes_heap *h = &c->ec_stripes_heap;
- 	struct stripe *m = genradix_ptr(&c->stripes, idx);
- 
--	BUG_ON(m->heap_idx >= h->used);
-+	BUG_ON(m->heap_idx >= h->nr);
- 	BUG_ON(h->data[m->heap_idx].idx != idx);
- }
- 
- void bch2_stripes_heap_del(struct bch_fs *c,
- 			   struct stripe *m, size_t idx)
- {
-+	const struct min_heap_callbacks callbacks = {
-+		.less = ec_stripes_heap_cmp,
-+		.swp = ec_stripes_heap_swap,
-+	};
-+
- 	mutex_lock(&c->ec_stripes_heap_lock);
- 	heap_verify_backpointer(c, idx);
- 
--	heap_del(&c->ec_stripes_heap, m->heap_idx,
--		 ec_stripes_heap_cmp,
--		 ec_stripes_heap_set_backpointer);
-+	min_heap_del(&c->ec_stripes_heap, m->heap_idx, &callbacks, &c->ec_stripes_heap);
- 	mutex_unlock(&c->ec_stripes_heap_lock);
- }
- 
- void bch2_stripes_heap_insert(struct bch_fs *c,
- 			      struct stripe *m, size_t idx)
- {
-+	const struct min_heap_callbacks callbacks = {
-+		.less = ec_stripes_heap_cmp,
-+		.swp = ec_stripes_heap_swap,
-+	};
-+
- 	mutex_lock(&c->ec_stripes_heap_lock);
--	BUG_ON(heap_full(&c->ec_stripes_heap));
-+	BUG_ON(min_heap_full(&c->ec_stripes_heap));
- 
--	heap_add(&c->ec_stripes_heap, ((struct ec_stripe_heap_entry) {
-+	genradix_ptr(&c->stripes, idx)->heap_idx = c->ec_stripes_heap.nr;
-+	min_heap_push(&c->ec_stripes_heap, &((struct ec_stripe_heap_entry) {
- 			.idx = idx,
- 			.blocks_nonempty = m->blocks_nonempty,
- 		}),
--		 ec_stripes_heap_cmp,
--		 ec_stripes_heap_set_backpointer);
-+		&callbacks,
-+		&c->ec_stripes_heap);
- 
- 	heap_verify_backpointer(c, idx);
- 	mutex_unlock(&c->ec_stripes_heap_lock);
-@@ -1025,6 +1049,10 @@ void bch2_stripes_heap_insert(struct bch_fs *c,
- void bch2_stripes_heap_update(struct bch_fs *c,
- 			      struct stripe *m, size_t idx)
- {
-+	const struct min_heap_callbacks callbacks = {
-+		.less = ec_stripes_heap_cmp,
-+		.swp = ec_stripes_heap_swap,
-+	};
- 	ec_stripes_heap *h = &c->ec_stripes_heap;
- 	bool do_deletes;
- 	size_t i;
-@@ -1035,10 +1063,8 @@ void bch2_stripes_heap_update(struct bch_fs *c,
- 	h->data[m->heap_idx].blocks_nonempty = m->blocks_nonempty;
- 
- 	i = m->heap_idx;
--	heap_sift_up(h,	  i, ec_stripes_heap_cmp,
--		     ec_stripes_heap_set_backpointer);
--	heap_sift_down(h, i, ec_stripes_heap_cmp,
--		       ec_stripes_heap_set_backpointer);
-+	min_heap_sift_up(h,	i, &callbacks, &c->ec_stripes_heap);
-+	min_heap_sift_down(h, i, &callbacks, &c->ec_stripes_heap);
- 
- 	heap_verify_backpointer(c, idx);
- 
-@@ -1830,7 +1856,7 @@ static s64 get_existing_stripe(struct bch_fs *c,
- 		return -1;
- 
- 	mutex_lock(&c->ec_stripes_heap_lock);
--	for (heap_idx = 0; heap_idx < h->used; heap_idx++) {
-+	for (heap_idx = 0; heap_idx < h->nr; heap_idx++) {
- 		/* No blocks worth reusing, stripe will just be deleted: */
- 		if (!h->data[heap_idx].blocks_nonempty)
- 			continue;
-@@ -2161,7 +2187,7 @@ void bch2_stripes_heap_to_text(struct printbuf *out, struct bch_fs *c)
- 	size_t i;
- 
- 	mutex_lock(&c->ec_stripes_heap_lock);
--	for (i = 0; i < min_t(size_t, h->used, 50); i++) {
-+	for (i = 0; i < min_t(size_t, h->nr, 50); i++) {
- 		m = genradix_ptr(&c->stripes, h->data[i].idx);
- 
- 		prt_printf(out, "%zu %u/%u+%u", h->data[i].idx,
-diff --git a/fs/bcachefs/ec_types.h b/fs/bcachefs/ec_types.h
-index 976426da3a12..2ed67431a81c 100644
---- a/fs/bcachefs/ec_types.h
-+++ b/fs/bcachefs/ec_types.h
-@@ -36,6 +36,6 @@ struct ec_stripe_heap_entry {
- 	unsigned		blocks_nonempty;
- };
- 
--typedef HEAP(struct ec_stripe_heap_entry) ec_stripes_heap;
-+typedef MIN_HEAP(struct ec_stripe_heap_entry, ec_stripes_heap) ec_stripes_heap;
- 
- #endif /* _BCACHEFS_EC_TYPES_H */
-diff --git a/fs/bcachefs/util.h b/fs/bcachefs/util.h
-index 5cf885b09986..d5a1f1e29013 100644
---- a/fs/bcachefs/util.h
-+++ b/fs/bcachefs/util.h
-@@ -8,6 +8,7 @@
- #include <linux/errno.h>
- #include <linux/freezer.h>
- #include <linux/kernel.h>
-+#include <linux/min_heap.h>
- #include <linux/sched/clock.h>
- #include <linux/llist.h>
- #include <linux/log2.h>
-@@ -54,17 +55,9 @@ static inline size_t buf_pages(void *p, size_t len)
- 			    PAGE_SIZE);
- }
- 
--#define HEAP(type)							\
--struct {								\
--	size_t size, used;						\
--	type *data;							\
--}
--
--#define DECLARE_HEAP(type, name) HEAP(type) name
--
- #define init_heap(heap, _size, gfp)					\
- ({									\
--	(heap)->used = 0;						\
-+	(heap)->nr = 0;						\
- 	(heap)->size = (_size);						\
- 	(heap)->data = kvmalloc((heap)->size * sizeof((heap)->data[0]),\
- 				 (gfp));				\
-@@ -76,113 +69,6 @@ do {									\
- 	(heap)->data = NULL;						\
- } while (0)
- 
--#define heap_set_backpointer(h, i, _fn)					\
--do {									\
--	void (*fn)(typeof(h), size_t) = _fn;				\
--	if (fn)								\
--		fn(h, i);						\
--} while (0)
--
--#define heap_swap(h, i, j, set_backpointer)				\
--do {									\
--	swap((h)->data[i], (h)->data[j]);				\
--	heap_set_backpointer(h, i, set_backpointer);			\
--	heap_set_backpointer(h, j, set_backpointer);			\
--} while (0)
--
--#define heap_peek(h)							\
--({									\
--	EBUG_ON(!(h)->used);						\
--	(h)->data[0];							\
--})
--
--#define heap_full(h)	((h)->used == (h)->size)
--
--#define heap_sift_down(h, i, cmp, set_backpointer)			\
--do {									\
--	size_t _c, _j = i;						\
--									\
--	for (; _j * 2 + 1 < (h)->used; _j = _c) {			\
--		_c = _j * 2 + 1;					\
--		if (_c + 1 < (h)->used &&				\
--		    cmp(h, (h)->data[_c], (h)->data[_c + 1]) >= 0)	\
--			_c++;						\
--									\
--		if (cmp(h, (h)->data[_c], (h)->data[_j]) >= 0)		\
--			break;						\
--		heap_swap(h, _c, _j, set_backpointer);			\
--	}								\
--} while (0)
--
--#define heap_sift_up(h, i, cmp, set_backpointer)			\
--do {									\
--	while (i) {							\
--		size_t p = (i - 1) / 2;					\
--		if (cmp(h, (h)->data[i], (h)->data[p]) >= 0)		\
--			break;						\
--		heap_swap(h, i, p, set_backpointer);			\
--		i = p;							\
--	}								\
--} while (0)
--
--#define __heap_add(h, d, cmp, set_backpointer)				\
--({									\
--	size_t _i = (h)->used++;					\
--	(h)->data[_i] = d;						\
--	heap_set_backpointer(h, _i, set_backpointer);			\
--									\
--	heap_sift_up(h, _i, cmp, set_backpointer);			\
--	_i;								\
--})
--
--#define heap_add(h, d, cmp, set_backpointer)				\
--({									\
--	bool _r = !heap_full(h);					\
--	if (_r)								\
--		__heap_add(h, d, cmp, set_backpointer);			\
--	_r;								\
--})
--
--#define heap_add_or_replace(h, new, cmp, set_backpointer)		\
--do {									\
--	if (!heap_add(h, new, cmp, set_backpointer) &&			\
--	    cmp(h, new, heap_peek(h)) >= 0) {				\
--		(h)->data[0] = new;					\
--		heap_set_backpointer(h, 0, set_backpointer);		\
--		heap_sift_down(h, 0, cmp, set_backpointer);		\
--	}								\
--} while (0)
--
--#define heap_del(h, i, cmp, set_backpointer)				\
--do {									\
--	size_t _i = (i);						\
--									\
--	BUG_ON(_i >= (h)->used);					\
--	(h)->used--;							\
--	if ((_i) < (h)->used) {						\
--		heap_swap(h, _i, (h)->used, set_backpointer);		\
--		heap_sift_up(h, _i, cmp, set_backpointer);		\
--		heap_sift_down(h, _i, cmp, set_backpointer);		\
--	}								\
--} while (0)
--
--#define heap_pop(h, d, cmp, set_backpointer)				\
--({									\
--	bool _r = (h)->used;						\
--	if (_r) {							\
--		(d) = (h)->data[0];					\
--		heap_del(h, 0, cmp, set_backpointer);			\
--	}								\
--	_r;								\
--})
--
--#define heap_resort(heap, cmp, set_backpointer)				\
--do {									\
--	ssize_t _i;							\
--	for (_i = (ssize_t) (heap)->used / 2 -  1; _i >= 0; --_i)	\
--		heap_sift_down(heap, _i, cmp, set_backpointer);		\
--} while (0)
--
- #define ANYSINT_MAX(t)							\
- 	((((t) 1 << (sizeof(t) * 8 - 2)) - (t) 1) * (t) 2 + (t) 1)
- 
--- 
-2.34.1
+> Since deleting path
+> devices isn't a common thing, and we can argue that we are just
+> enforcing good behavior, it's probably o.k. to change it, but I'm
+> pretty
+> sure some users would complain or file bugs. Off the top of my head,
+> one
+> thing that could potentially go wrong (although I hope this isn't
+> likely
+> in the real world) is:
+>=20
+> 1. User removes the LUNs under an unused multipath device. The
+> =C2=A0=C2=A0 multipath device isn't removed
+> 2. User creates new LUNs with a different size. The array gives these
+> =C2=A0=C2=A0 new LUNs the same WWID as the old ones (I don't know how oft=
+en
+> this
+> =C2=A0=C2=A0 happens. I hope rarely, if at all)
+> 3. Multipathd tries to add these new LUNs to the existing multipath
+> =C2=A0=C2=A0 device and fails because the size doesn't match.
+
+My first thought here was: we could avoid this scenario by overriding
+the mp's size with the path's size if the existing map had no devices.
+But if there was actually pending, queued I/O on the device, we might
+corrupt the new device as soon as it's added. That wouldn't be a good
+idea.
+
+But then, the situation at hand would be rather obvious, the customer
+would need to remove the existing, empty map before creating the new
+one. If this fails because the map is either in use, has outstanding
+I/O, or both, it seems reasonable that the user would need to inspect
+the situation and fix it manually. I don't think this can be automated
+on our side.
+
+> Also, our current dev_loss_tmo resetting seems pretty racy. It's set
+> to
+> exactly the same length of time as the we should retry for. If
+> multipathd is slow in its retries, paths can get deleted while we are
+> still queueing, making it more likely that you would have pathless
+> multipath devices hanging around. In theory, we could add another
+> check
+> to see if a device has no paths and isn't in use when we disable
+> queueing, but I don't see a reason why we should expand autoremoving,
+> and we can easily pad the dev_loss_tmo value to reduce the race.
+
+Good point.
+
+>=20
+> > >=20
+> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > > ---
+> > > =C2=A0libmultipath/defaults.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=
+=C2=A0 2 +-
+> > > =C2=A0libmultipath/dict.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 | 72
+> > > +++++++++++++++++++++++++++++++--
+> > > --
+> > > =C2=A0libmultipath/dict.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 |=C2=A0 1 +
+> > > =C2=A0libmultipath/hwtable.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 |=C2=A0 6 +--
+> > > =C2=A0libmultipath/propsel.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 |=C2=A0 4 +-
+> > > =C2=A0libmultipath/structs.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 |=C2=A0 7 ++--
+> > > =C2=A0multipath/multipath.conf.5.in | 20 +++++++---
+> > > =C2=A0multipathd/main.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 42 +++++++++++++++++---
+> > > =C2=A08 files changed, 127 insertions(+), 27 deletions(-)
+> > >=20
+> > > diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+> > > index 64b633f2..ed08c251 100644
+> >=20
+
+[...]
+
+> > How much sense do these hwtable entries make? In view of your
+> > commit
+> > description, this seems to be a dangerous device default. It has
+> > the
+> > surprising side effect that users who don't want flush_on_last_del
+> > will
+> > need to set in either in the overrides section or in a dedicated
+> > device
+> > section for the device at hand. This can be changed in a separate
+> > patch
+> > of course.
+>=20
+> I remember NetApp having strong feelings about their configs. They
+> are
+> the only user of the devices section user_friendly_names option. IIRC
+> the only reason this option exists in the devices section is because
+> they pushed for it.
+>=20
+> But the way they have things set up, I don't see it as dangerous.
+> They
+> set dev_loss_tmo to "infinity" so their path devices should never
+> disappear, unless someone chooses to remove them. They also set
+> no_path_retry to "queue", since they don't want IO to ever fail on
+> their
+> devices unless someone manually disables queueing.
+
+Yeah, I see it in 8e22682 ("multipath: Some device configuration
+changes for NetApp LUNs", 12y ago.
+I agree that in combination with "no_path_retry queue" and
+"dev_loss_tmo infinity", this setting makes sense, or is at least not
+harmful. Still, we could ask NetApp for their motivation.
+
+
+>  It's odd, but nobody
+> has ever complained that the builtin config for NetApp devices
+> doesn't
+> work like the other builtin configs, so it's just remained that way.
+> Again, it seems like it's more trouble than it's worth to change it
+> now.
+>=20
+> On the other hand, the Infinidat config already sets no_path_retry to
+> "fail", so there's not much point in also setting flush_on_last_del
+> to
+> "always".
+
+I'd say it's dangerous, especially as they don't set dev_loss_tmo.
+
+[...]
+=C2=A0
+> > > +
+> > > +	/* It's not safe to do a non-deferred remove of a map
+> > > that
+> > > has
+> > > +	 * "queue_if_no_path" set, since there could be
+> > > outstanding
+> > > IO which
+> > > +	 * will cause multipathd to hang while attempting the
+> > > remove
+> > > */
+> > > +	if (mpp->flush_on_last_del =3D=3D FLUSH_NEVER &&
+> > > +	=C2=A0=C2=A0=C2=A0 !do_deferred(deferred_remove) && is_queueing) {
+> > > +		condlog(2, "%s: map is queueing, can't remove",
+> > > mpp-
+> > > > alias);
+> > > +		return false;
+> > > +	}
+> >=20
+> > Just a thought: Why don't we just pretend that deferred_remove is
+> > on if
+> > flush_on_last_del is set to "never"? Wouldn't that avoid our
+> > issues?
+> > In the same context, why haven't we made deferred_remove the
+> > default
+> > yet?
+>=20
+> I'm not sure we want to change the default multipath behavior without
+> a
+> good reason.=C2=A0 Users don't expect that removing a multipath device ca=
+n
+> succeed, but the device will still be there.
+
+Right. We *could* distinguish auto-removal and manual removal and fall
+back to deferred remove only in the auto-removal case. But I guess that
+over-complicates matters.
+
+Btw, I realize that in devmapper.h we pass 0 for the deferred parameter
+of _dm_flush_map, while we should rather pass DEFERRED_REMOVE_OFF. It
+has no actual consequences, but maybe you want to fix it while you're
+working on this?
+
+#define dm_flush_map(mapname) _dm_flush_map(mapname, 1, 0, 0, 0)
+#define dm_flush_map_nosync(mapname) _dm_flush_map(mapname, 0, 0, 0, 0)
+#define dm_suspend_and_flush_map(mapname, retries) \
+	_dm_flush_map(mapname, 1, 0, 1, retries)
+
+
+> Worse, I just tested and found out that my test will still hang
+> multipathd with my new code if you have deferred_remove turned on.=C2=A0
+> This
+> is because there is no opener of the kpartx device, so device-mapper
+> tries to immediately remove it. Apparently, it's also not safe to
+> trigger a deferred remove without disabling queueing.
+>=20
+
+Ugh. I guess you'll fix this in a v2, right?
+
+
+> > > +	if (mpp->flush_on_last_del =3D=3D FLUSH_UNUSED &&
+> > > +	=C2=A0=C2=A0=C2=A0 !do_deferred(deferred_remove) &&
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 (=
+in_use =3D partmap_in_use(mpp->alias, NULL)) &&
+> > > is_queueing) {
+> > > +		condlog(2, "%s: map in use and queueing, can't
+> > > remove",
+> > > +			mpp->alias);
+> > > +		return false;
+> > > +	}
+> >=20
+> > Same reasoning as above, why not just defer?
+> >=20
+> > > =C2=A0	/*
+> > > -	 * flush_map will fail if the device is open
+> > > +	 * This will flush FLUSH_NEVER devices and FLUSH_UNUSED
+> > > devices
+> > > +	 * that are in use, but only if this is not a deferred
+> > > remove, and
+> >=20
+> > "that are not in use" ?
+>=20
+> This *will* disable queue_if_no_path on in-use devices. But like I
+> said,
+> only if, according to mulitpathd, the device is already set to
+> queue_if_no_path.=C2=A0 This is just to make sure the mpp->features isn't
+> out
+> of date, since getting this wrong and hanging multipathd is a bad
+> thing.
+
+I understand that you're calling dm_queue_if_no_path(mpp, 0) to be on
+the safe side. That makes sense. But the comment is confusing. AFAICS,
+you're doing this regardless of the value of is_queueing. Only the log
+priority of is_queueing depends on is_queueing.
+
+This logic is complicated (with 24 possible combinations of
+flush_on_last_del, deferred, is_queueing, and in_use). It took me a
+while to figure out, but meanwhile I think you got it right, just the
+comment keeps confusing me.
+
+> Alternatively, I could call update_multipath_table() to make sure
+> mpp->features is up to date. This way does less work, and if
+> multipathd
+> thinks that the device shouldn't be queueing, then it really
+> shouldn't
+> be queueing.
+
+I didn't mean to say that you should do this.
+
+Regards,
+Martin
 
