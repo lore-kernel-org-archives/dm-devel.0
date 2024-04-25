@@ -1,204 +1,159 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 97221153809;
-	Thu, 25 Apr 2024 20:23:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from out-184.mta0.migadu.com (out-184.mta0.migadu.com [91.218.175.184])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4D1D15382C
+	for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 20:55:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.184
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714076641; cv=none; b=pqDImpkrU10LEOOWQvYk9uo6AeVgU/uWSy9GXqZ/NTGQ8HVHGLTTudczVzXlFoEG+iQ+d0CJ7vdwh2C0pld4Oq/G9mse8vgskJrXZicMXaUGeGOp7UZ+qjOt1D/aDEKsm00umoyif/CdYA+CL8a99quBf2HchDVdW94dRreI+7Y=
+	t=1714078504; cv=none; b=OQOSqOvSWehJHvj531s5W6mfuZErt7NgD0OqwJQEHYRC3xLr1fkwpFWsWXKX1co1KsovezxVGl/yjuv73U6z+8bnH51MOyxZdqYHAGggsDsyN3/g3GKhZhfVaAkldgfshHHCrEN2PVAhMLNEf+UNBf92efFKet7V+32ckd7sL7o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714076641; c=relaxed/simple;
-	bh=08WPogXj9ccCunrIcH7Gsf5VsfCJT+2vSloyAfgVOpo=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=E6vxXiPbziu6LLIrSQOLXQjR7psCrTHUwvCdyOA4VPVg4m6W2ukEofQhfb4Z+abiBZErrbWpJ8E6dmpRkk3h6nLGQMgDMg4DxRWNCjF41lDOxKG0Gm/v1t/bL2KD9F/SnnVo6regPER9wdfvcI29bQB88MTy4x/SoyETGgcDcGM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=QzRFHDNM; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
+	s=arc-20240116; t=1714078504; c=relaxed/simple;
+	bh=daE5p8VJ4kRVjpcfiiAOvzh3uP/gYYfQQN1gJ/B+N7Q=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=tdYl13UvZ4nhD2z3M5mXk+0/S2ypOT6HCAydSpnUNLfIUT8dHUZwbCGqDC+HTNppwHG6WRp5BWyujVEzP7uapvFLQsVExb4jRBwLKIzdiIC6KTbnSuskh/jx2W5PREp0dKk3U0/QajwoS+axf0wygg0uZn4A1m1IqwRzBd/skXQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=JUBElSyG; arc=none smtp.client-ip=91.218.175.184
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="QzRFHDNM"
-Received: from [10.137.106.151] (unknown [167.220.2.23])
-	by linux.microsoft.com (Postfix) with ESMTPSA id E234E20FD4CE;
-	Thu, 25 Apr 2024 13:23:57 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com E234E20FD4CE
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1714076638;
-	bh=Ut792Bm4cIOYNOqotGiFt26HJ/65wP94SVse6cZs0cU=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=QzRFHDNMdopqkGKA5TUBtW0Vrr3/py/nBJLRMF/wnzbWNulqxJ+g+rYqSg6zSRn4u
-	 yqOzz8YbPOQKDxvZ8OnHbTca+U6PA2Jycw+u/5fF4Z6Qg6OF0aUBky68HRJfknZSPc
-	 F2+OF3hzpfon+VEwQmF4/xiOd8H7SpBuHHnSPphQ=
-Message-ID: <6cf278b3-32f2-4665-be8d-ea6605f4318b@linux.microsoft.com>
-Date: Thu, 25 Apr 2024 13:23:57 -0700
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="JUBElSyG"
+Date: Thu, 25 Apr 2024 16:54:54 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1714078499;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=fpcflvpS+Hn8wp3+pLJqk2pjx5fffShKDTtoZG3LoBU=;
+	b=JUBElSyG9xfRtJvIpXv6ronc83/E25ujffQIfGDyvIt1CXLlpFQAv2/G6yFAcHoI1rJwHL
+	yiO2HywL3hj+tjNSd+ql5HHs36k0UqVFfhBI3n9GUJGK0PjTXNsyW/dYtwe42g5B6AUFoa
+	A2b9FN6WrYeHgQZ5iS2H1SFMK63ASZY=
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Kent Overstreet <kent.overstreet@linux.dev>
+To: Stephen Rothwell <sfr@canb.auug.org.au>
+Cc: colyli@suse.de, msakai@redhat.com, peterz@infradead.org, 
+	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, akpm@linux-foundation.org, 
+	bfoster@redhat.com, mark.rutland@arm.com, alexander.shishkin@linux.intel.com, 
+	jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
+	jserv@ccns.ncku.edu.tw, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	dm-devel@lists.linux.dev, linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org, 
+	Kuan-Wei Chiu <visitorckw@gmail.com>
+Subject: Re: [PATCH v4 00/16] treewide: Refactor heap related implementation
+Message-ID: <txga7kntgxylhmxqkzs3rdgmnjai2ftlstdezltkapdctn3ju6@ndyytejfyoc2>
+References: <20240425141826.840077-1-visitorckw@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v17 13/21] dm verity: consume root hash digest and expose
- signature data via LSM hook
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
- tytso@mit.edu, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org,
- eparis@redhat.com, paul@paul-moore.com, linux-doc@vger.kernel.org,
- linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org,
- fsverity@lists.linux.dev, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, audit@vger.kernel.org,
- linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>
-References: <1712969764-31039-1-git-send-email-wufan@linux.microsoft.com>
- <1712969764-31039-14-git-send-email-wufan@linux.microsoft.com>
- <20240425035647.GC1401@sol.localdomain>
-Content-Language: en-CA
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <20240425035647.GC1401@sol.localdomain>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240425141826.840077-1-visitorckw@gmail.com>
+X-Migadu-Flow: FLOW_OUT
 
+Hey Stephen, I think this is ready for -next.
 
+https://github.com/visitorckw/linux.git refactor-heap-v4
 
-On 4/24/2024 8:56 PM, Eric Biggers wrote:
-> On Fri, Apr 12, 2024 at 05:55:56PM -0700, Fan Wu wrote:
->> dm verity: consume root hash digest and expose signature data via LSM hook
-> 
-> As in the fsverity patch, nothing is being "consumed" here.  This patch adds a
-> supplier, not a consumer.  I think you mean something like: expose root digest
-> and signature to LSMs.
-> 
-Thanks for the suggestion.
+Kuan, please add my acked-by to the bcachefs patch as well.
 
->> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
->> index bb5da66da4c1..fbb83c6fd99c 100644
->> --- a/drivers/md/dm-verity-target.c
->> +++ b/drivers/md/dm-verity-target.c
->> @@ -22,6 +22,8 @@
->>   #include <linux/scatterlist.h>
->>   #include <linux/string.h>
->>   #include <linux/jump_label.h>
->> +#include <linux/security.h>
->> +#include <linux/dm-verity.h>
->>   
->>   #define DM_MSG_PREFIX			"verity"
->>   
->> @@ -1017,6 +1019,38 @@ static void verity_io_hints(struct dm_target *ti, struct queue_limits *limits)
->>   	blk_limits_io_min(limits, limits->logical_block_size);
->>   }
->>   
->> +#ifdef CONFIG_SECURITY
->> +
->> +static int verity_init_sig(struct dm_verity *v, const void *sig,
->> +			   size_t sig_size)
->> +{
->> +	v->sig_size = sig_size;
->> +	v->root_digest_sig = kmemdup(sig, v->sig_size, GFP_KERNEL);
->> +	if (!v->root_digest)
->> +		return -ENOMEM;
-> 
-> root_digest_sig, not root_digest
-> 
-Thanks for pointing out!
+Cheers,
+Kent
 
->> +#ifdef CONFIG_SECURITY
->> +
->> +static int verity_finalize(struct dm_target *ti)
->> +{
->> +	struct block_device *bdev;
->> +	struct dm_verity_digest root_digest;
->> +	struct dm_verity *v;
->> +	int r;
->> +
->> +	v = ti->private;
->> +	bdev = dm_disk(dm_table_get_md(ti->table))->part0;
->> +	root_digest.digest = v->root_digest;
->> +	root_digest.digest_len = v->digest_size;
->> +	root_digest.alg = v->alg_name;
->> +
->> +	r = security_bdev_setintegrity(bdev, LSM_INT_DMVERITY_ROOTHASH, &root_digest,
->> +				       sizeof(root_digest));
->> +	if (r)
->> +		return r;
->> +
->> +	r = security_bdev_setintegrity(bdev,
->> +				       LSM_INT_DMVERITY_SIG_VALID,
->> +				       v->root_digest_sig,
->> +				       v->sig_size);
+On Thu, Apr 25, 2024 at 10:18:10PM +0800, Kuan-Wei Chiu wrote:
+> This patch series focuses on several adjustments related to heap
+> implementation. Firstly, a type-safe interface has been added to the
+> min_heap, along with the introduction of several new functions to
+> enhance its functionality. Additionally, the heap implementation for
+> bcache and bcachefs has been replaced with the generic min_heap
+> implementation from include/linux. Furthermore, several typos have been
+> corrected.
 > 
-> The signature is only checked if CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG=y, whereas
-> this code is built whenever CONFIG_SECURITY=y.
+> Previous discussion with Kent Overstreet:
+> https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvsdp4mqqg@nrlek5vmisbu
 > 
-> So this seems like the same issue that has turned up elsewhere in the IPE
-> patchset, where IPE is (apparently) happy with any signature, even one that
-> hasn't been checked...
+> Regards,
+> Kuan-Wei
 > 
-
-Yes I do agree the second hook call should better depend on 
-CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG=y.
-
-However, the current implementation does not happy with any signature.
-
-In case of CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG=y, any signature 
-provided to dm-verity will be checked against the configured keyring, 
-the hook call won't be reached if the check failed. In case of no 
-signature is provided and !DM_VERITY_IS_SIG_FORCE_ENABLED(), the hook 
-will be called with signature value NULL.
-
-In case of CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG=n, signature won't be 
-accepted by dm-verity. In addition, the whole support of dm-verity will 
-be disabled for IPE because CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG=n.
-
->> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
->> index 20b1bcf03474..89e862f0cdf6 100644
->> --- a/drivers/md/dm-verity.h
->> +++ b/drivers/md/dm-verity.h
->> @@ -43,6 +43,9 @@ struct dm_verity {
->>   	u8 *root_digest;	/* digest of the root block */
->>   	u8 *salt;		/* salt: its size is salt_size */
->>   	u8 *zero_digest;	/* digest for a zero block */
->> +#ifdef CONFIG_SECURITY
->> +	u8 *root_digest_sig;	/* digest signature of the root block */
->> +#endif /* CONFIG_SECURITY */
+> ---
 > 
-> No, it's not a signature of the root block, at least not directly.  It's a
-> signature of the root digest (the digest of the root block).
+> You can preview this patch series on the 'refactor-heap-v4' branch of
+> the repository at the following link:
 > 
->> diff --git a/include/linux/dm-verity.h b/include/linux/dm-verity.h
->> new file mode 100644
->> index 000000000000..a799a8043d85
->> --- /dev/null
->> +++ b/include/linux/dm-verity.h
->> @@ -0,0 +1,12 @@
->> +/* SPDX-License-Identifier: GPL-2.0 */
->> +
->> +#ifndef _LINUX_DM_VERITY_H
->> +#define _LINUX_DM_VERITY_H
->> +
->> +struct dm_verity_digest {
->> +	const char *alg;
->> +	const u8 *digest;
->> +	size_t digest_len;
->> +};
->> +
->> +#endif /* _LINUX_DM_VERITY_H */
->> diff --git a/include/linux/security.h b/include/linux/security.h
->> index ac0985641611..9e46b13a356c 100644
->> --- a/include/linux/security.h
->> +++ b/include/linux/security.h
->> @@ -84,7 +84,8 @@ enum lsm_event {
->>   };
->>   
->>   enum lsm_integrity_type {
->> -	__LSM_INT_MAX
->> +	LSM_INT_DMVERITY_SIG_VALID,
->> +	LSM_INT_DMVERITY_ROOTHASH,
->>   };
+> https://github.com/visitorckw/linux.git
 > 
-> Shouldn't struct dm_verity_digest be defined next to LSM_INT_DMVERITY_ROOTHASH?
-> It's the struct that's associated with it.
+> Changes in v4:
+> - Change struct initializations to use designated initializers.
+> - Replace memcpy() with func->swp() in heap_del() due to issues with
+>   set_backpointer in bcachefs when setting idx.
+> - Fix an error in ec_stripes_heap_swap() where
+>   ec_stripes_heap_set_backpointer() should be called after swapping.
 > 
-> It seems weird to create a brand new header <linux/dm-verity.h> that just
-> contains this one LSM related definition, when there's already a header for the
-> LSM definitions that even includes the related value LSM_INT_DMVERITY_ROOTHASH.
+> Changes in v3:
+> - Avoid heap->heap.nr to eliminate the nested types.
+> - Add MIN_HEAP_PREALLOCATED macro for preallocating some elements.
+> - Use min_heap_sift_up() in min_heap_push().
+> - Fix a bug in heap_del() where we should copy the last element to
+>   'data + idx * element_size' instead of 'data'.
+> - Add testcases for heap_del().
+> - Fix bugs in bcache/bcachefs patches where the parameter types in
+>   some compare functions should have been 'type **', but were
+>   mistakenly written as 'type *'.
 > 
-> - Eric
-
-Yes they can just be in the same header. Thanks for the suggestion.
-
--Fan
+> Changes in v2:
+> - Add attribute __always_unused to the compare and swap functions
+>   that do not use the args parameter.
+> - Rename min_heapify() to min_heap_sift_down().
+> - Update lib/test_min_heap.c to use min_heap_init().
+> - Refine the commit message for bcache and bcachefs.
+> - Adjust the order of patches in the patch series.
+> 
+> Link to v3: https://lore.kernel.org/20240406164727.577914-1-visitorckw@gmail.com
+> Link to v2: https://lore.kernel.org/20240320145417.336208-1-visitorckw@gmail.com
+> Link to v1: https://lkml.kernel.org/20240319180005.246930-1-visitorckw@gmail.com
+> 
+> Kuan-Wei Chiu (16):
+>   perf/core: Fix several typos
+>   bcache: Fix typo
+>   bcachefs: Fix typo
+>   lib min_heap: Add type safe interface
+>   lib min_heap: Add min_heap_init()
+>   lib min_heap: Add min_heap_peek()
+>   lib min_heap: Add min_heap_full()
+>   lib min_heap: Add args for min_heap_callbacks
+>   lib min_heap: Add min_heap_sift_up()
+>   lib min_heap: Add min_heap_del()
+>   lib min_heap: Update min_heap_push() and min_heap_pop() to return bool
+>     values
+>   lib min_heap: Rename min_heapify() to min_heap_sift_down()
+>   lib min_heap: Update min_heap_push() to use min_heap_sift_up()
+>   lib/test_min_heap: Add test for heap_del()
+>   bcache: Remove heap-related macros and switch to generic min_heap
+>   bcachefs: Remove heap-related macros and switch to generic min_heap
+> 
+>  drivers/md/bcache/alloc.c      |  64 ++++++++---
+>  drivers/md/bcache/bcache.h     |   2 +-
+>  drivers/md/bcache/bset.c       |  84 ++++++++++-----
+>  drivers/md/bcache/bset.h       |  14 +--
+>  drivers/md/bcache/btree.c      |  17 ++-
+>  drivers/md/bcache/extents.c    |  53 ++++++----
+>  drivers/md/bcache/movinggc.c   |  41 +++++--
+>  drivers/md/bcache/sysfs.c      |   2 +
+>  drivers/md/bcache/util.c       |   2 +-
+>  drivers/md/bcache/util.h       |  67 +-----------
+>  drivers/md/bcache/writeback.c  |   3 +
+>  drivers/md/dm-vdo/repair.c     |  19 ++--
+>  drivers/md/dm-vdo/slab-depot.c |  14 +--
+>  fs/bcachefs/clock.c            |  43 ++++++--
+>  fs/bcachefs/clock_types.h      |   2 +-
+>  fs/bcachefs/ec.c               |  76 ++++++++-----
+>  fs/bcachefs/ec_types.h         |   2 +-
+>  fs/bcachefs/util.c             |   2 +-
+>  fs/bcachefs/util.h             | 118 +--------------------
+>  include/linux/min_heap.h       | 188 +++++++++++++++++++++++++--------
+>  kernel/events/core.c           |  29 ++---
+>  lib/test_min_heap.c            |  75 +++++++++----
+>  22 files changed, 522 insertions(+), 395 deletions(-)
+> 
+> -- 
+> 2.34.1
+> 
