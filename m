@@ -1,159 +1,115 @@
-Received: from out-184.mta0.migadu.com (out-184.mta0.migadu.com [91.218.175.184])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4D1D15382C
-	for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 20:55:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.184
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DCB9A153BF9
+	for <dm-devel@lists.linux.dev>; Thu, 25 Apr 2024 23:35:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714078504; cv=none; b=OQOSqOvSWehJHvj531s5W6mfuZErt7NgD0OqwJQEHYRC3xLr1fkwpFWsWXKX1co1KsovezxVGl/yjuv73U6z+8bnH51MOyxZdqYHAGggsDsyN3/g3GKhZhfVaAkldgfshHHCrEN2PVAhMLNEf+UNBf92efFKet7V+32ckd7sL7o=
+	t=1714088122; cv=none; b=OFU9eKHq7p0jUROZsgwjSJeDZRpieAo1/Kladi8eGq2CDjb+cReWG+MnXWeUjdVPcQlPw9cRAwF9T3+vHFa1rrxUrIYLr0D/gphWiQoHTHUsBYCFCUtqfFA28YA20wg7ol9aKy3GSCN1VhdImZq1shbiHyZUujrQkDxQPz/T768=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714078504; c=relaxed/simple;
-	bh=daE5p8VJ4kRVjpcfiiAOvzh3uP/gYYfQQN1gJ/B+N7Q=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=tdYl13UvZ4nhD2z3M5mXk+0/S2ypOT6HCAydSpnUNLfIUT8dHUZwbCGqDC+HTNppwHG6WRp5BWyujVEzP7uapvFLQsVExb4jRBwLKIzdiIC6KTbnSuskh/jx2W5PREp0dKk3U0/QajwoS+axf0wygg0uZn4A1m1IqwRzBd/skXQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=JUBElSyG; arc=none smtp.client-ip=91.218.175.184
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1714088122; c=relaxed/simple;
+	bh=xroxsJxKBKScy7iZ6nzyfvvU14Dw2tn6gBPg2EWDQj8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=WlbFWWXgdZlOxu+qvQGulnXiWUalDPKi82NCTOdBgH42t/R1V5+zzoosmVJWzDkp1vJ5PPKUyv2MCSEsOnPTGi9KMqciikKxl7v4Tn053p3npJP4JwrMeouejadB/wWCU1SY3KbcIlPeZI95o1l5mbglsZ7HT6+j/4af1JxaHM0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=h+8j7rm0; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="JUBElSyG"
-Date: Thu, 25 Apr 2024 16:54:54 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1714078499;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="h+8j7rm0"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1714088119;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=fpcflvpS+Hn8wp3+pLJqk2pjx5fffShKDTtoZG3LoBU=;
-	b=JUBElSyG9xfRtJvIpXv6ronc83/E25ujffQIfGDyvIt1CXLlpFQAv2/G6yFAcHoI1rJwHL
-	yiO2HywL3hj+tjNSd+ql5HHs36k0UqVFfhBI3n9GUJGK0PjTXNsyW/dYtwe42g5B6AUFoa
-	A2b9FN6WrYeHgQZ5iS2H1SFMK63ASZY=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Stephen Rothwell <sfr@canb.auug.org.au>
-Cc: colyli@suse.de, msakai@redhat.com, peterz@infradead.org, 
-	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, akpm@linux-foundation.org, 
-	bfoster@redhat.com, mark.rutland@arm.com, alexander.shishkin@linux.intel.com, 
-	jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
-	jserv@ccns.ncku.edu.tw, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	dm-devel@lists.linux.dev, linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org, 
-	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: Re: [PATCH v4 00/16] treewide: Refactor heap related implementation
-Message-ID: <txga7kntgxylhmxqkzs3rdgmnjai2ftlstdezltkapdctn3ju6@ndyytejfyoc2>
-References: <20240425141826.840077-1-visitorckw@gmail.com>
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=+DHM6gviwKZsuWRsO8AFXs6rBXCvz/eFHF96i8sv67g=;
+	b=h+8j7rm0j7PPsX1DX+kCEgGeY9BIqK5mPhsfGzHICDUOZIMCIdeVUkJvgwvvpNj3+GyhoS
+	w9epv/vQEGk8XA5RVgzCAMnwupjELiyzhUxoOUYqGkMgwqKldLWr+aso7FYEPIwksj8GjD
+	ERC6qRwvb+Fx1rXVflTmwuQTI58iS68=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-447-jVXF8F7FPxi0JsBj8o3N7Q-1; Thu, 25 Apr 2024 19:35:18 -0400
+X-MC-Unique: jVXF8F7FPxi0JsBj8o3N7Q-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 06D4B8001B2;
+	Thu, 25 Apr 2024 23:35:18 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EDAFC730B;
+	Thu, 25 Apr 2024 23:35:17 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 43PNZHUX2125156
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 25 Apr 2024 19:35:17 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 43PNZH3l2125155;
+	Thu, 25 Apr 2024 19:35:17 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v2 0/5] multipath: fix hang in flush_map_nopaths
+Date: Thu, 25 Apr 2024 19:35:12 -0400
+Message-ID: <20240425233517.2125142-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240425141826.840077-1-visitorckw@gmail.com>
-X-Migadu-Flow: FLOW_OUT
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Hey Stephen, I think this is ready for -next.
+Commit 9bd3482e ("multipathd: make flush_map() delete maps like the
+multipath command") fixed a multipathd hang when trying to remove a
+multipath device with only kpartx devices opening it but with
+outstanding IO. However that commit didn't deal with autoremoving the
+multipath device when the last path is deleted. It's possible for the
+same hang to occur during an autoremove. Since this remove is not
+initiated by the user, multipathd shouldn't just automatically disable
+queueing. On the other hand, multipathd hanging is a big problem, since
+that stops all of its work on all multipath devices. This patchset
+handles the issue by changing the options for flush_on_last_del to give
+the users more choice in how to deal with this situation. But none of
+the options will allow multipath to flush a device while it is queueing,
+which is the action that can cause it to hang.
 
-https://github.com/visitorckw/linux.git refactor-heap-v4
+Differences from v1 (from conversations with Martin Wilck):
+0001: Since flush_map_nopaths() will no longer need to know what the
+      deferred_remove setting is, only exported partmap_in_use.
+0002: Fixed up the commit message. Removed all of the code treating
+      deferred removes as special in flush_map_nopaths(), and made
+      sure flush_map_nopaths() skipped the autoremove if disabling
+      queueing failed.
+Original 0003: Dropped. flush_map_nopaths() no longer needs to care
+      about the deferred_remove value, so dm_flush_map_nopaths() does.
+0003-0005: New commits based on suggestions from Martin
 
-Kuan, please add my acked-by to the bcachefs patch as well.
+Benjamin Marzinski (5):
+  libmultipath: export partmap_in_use
+  libmultipath: change flush_on_last_del to fix a multipathd hang
+  libmultipath: remove redundant config option from InfiniBox config
+  libmultipath: pad dev_loss_tmo to avoid race with no_path_retry
+  libmultipath: fix deferred_remove function arguments
 
-Cheers,
-Kent
+ libmultipath/defaults.h           |  2 +-
+ libmultipath/devmapper.c          | 21 +++++----
+ libmultipath/devmapper.h          |  1 +
+ libmultipath/dict.c               | 72 +++++++++++++++++++++++++++----
+ libmultipath/dict.h               |  1 +
+ libmultipath/discovery.c          |  5 +++
+ libmultipath/hwtable.c            |  5 +--
+ libmultipath/libmultipath.version |  3 +-
+ libmultipath/propsel.c            |  4 +-
+ libmultipath/structs.h            |  7 +--
+ multipath/multipath.conf.5.in     | 20 ++++++---
+ multipathd/main.c                 | 39 +++++++++++++----
+ 12 files changed, 139 insertions(+), 41 deletions(-)
 
-On Thu, Apr 25, 2024 at 10:18:10PM +0800, Kuan-Wei Chiu wrote:
-> This patch series focuses on several adjustments related to heap
-> implementation. Firstly, a type-safe interface has been added to the
-> min_heap, along with the introduction of several new functions to
-> enhance its functionality. Additionally, the heap implementation for
-> bcache and bcachefs has been replaced with the generic min_heap
-> implementation from include/linux. Furthermore, several typos have been
-> corrected.
-> 
-> Previous discussion with Kent Overstreet:
-> https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvsdp4mqqg@nrlek5vmisbu
-> 
-> Regards,
-> Kuan-Wei
-> 
-> ---
-> 
-> You can preview this patch series on the 'refactor-heap-v4' branch of
-> the repository at the following link:
-> 
-> https://github.com/visitorckw/linux.git
-> 
-> Changes in v4:
-> - Change struct initializations to use designated initializers.
-> - Replace memcpy() with func->swp() in heap_del() due to issues with
->   set_backpointer in bcachefs when setting idx.
-> - Fix an error in ec_stripes_heap_swap() where
->   ec_stripes_heap_set_backpointer() should be called after swapping.
-> 
-> Changes in v3:
-> - Avoid heap->heap.nr to eliminate the nested types.
-> - Add MIN_HEAP_PREALLOCATED macro for preallocating some elements.
-> - Use min_heap_sift_up() in min_heap_push().
-> - Fix a bug in heap_del() where we should copy the last element to
->   'data + idx * element_size' instead of 'data'.
-> - Add testcases for heap_del().
-> - Fix bugs in bcache/bcachefs patches where the parameter types in
->   some compare functions should have been 'type **', but were
->   mistakenly written as 'type *'.
-> 
-> Changes in v2:
-> - Add attribute __always_unused to the compare and swap functions
->   that do not use the args parameter.
-> - Rename min_heapify() to min_heap_sift_down().
-> - Update lib/test_min_heap.c to use min_heap_init().
-> - Refine the commit message for bcache and bcachefs.
-> - Adjust the order of patches in the patch series.
-> 
-> Link to v3: https://lore.kernel.org/20240406164727.577914-1-visitorckw@gmail.com
-> Link to v2: https://lore.kernel.org/20240320145417.336208-1-visitorckw@gmail.com
-> Link to v1: https://lkml.kernel.org/20240319180005.246930-1-visitorckw@gmail.com
-> 
-> Kuan-Wei Chiu (16):
->   perf/core: Fix several typos
->   bcache: Fix typo
->   bcachefs: Fix typo
->   lib min_heap: Add type safe interface
->   lib min_heap: Add min_heap_init()
->   lib min_heap: Add min_heap_peek()
->   lib min_heap: Add min_heap_full()
->   lib min_heap: Add args for min_heap_callbacks
->   lib min_heap: Add min_heap_sift_up()
->   lib min_heap: Add min_heap_del()
->   lib min_heap: Update min_heap_push() and min_heap_pop() to return bool
->     values
->   lib min_heap: Rename min_heapify() to min_heap_sift_down()
->   lib min_heap: Update min_heap_push() to use min_heap_sift_up()
->   lib/test_min_heap: Add test for heap_del()
->   bcache: Remove heap-related macros and switch to generic min_heap
->   bcachefs: Remove heap-related macros and switch to generic min_heap
-> 
->  drivers/md/bcache/alloc.c      |  64 ++++++++---
->  drivers/md/bcache/bcache.h     |   2 +-
->  drivers/md/bcache/bset.c       |  84 ++++++++++-----
->  drivers/md/bcache/bset.h       |  14 +--
->  drivers/md/bcache/btree.c      |  17 ++-
->  drivers/md/bcache/extents.c    |  53 ++++++----
->  drivers/md/bcache/movinggc.c   |  41 +++++--
->  drivers/md/bcache/sysfs.c      |   2 +
->  drivers/md/bcache/util.c       |   2 +-
->  drivers/md/bcache/util.h       |  67 +-----------
->  drivers/md/bcache/writeback.c  |   3 +
->  drivers/md/dm-vdo/repair.c     |  19 ++--
->  drivers/md/dm-vdo/slab-depot.c |  14 +--
->  fs/bcachefs/clock.c            |  43 ++++++--
->  fs/bcachefs/clock_types.h      |   2 +-
->  fs/bcachefs/ec.c               |  76 ++++++++-----
->  fs/bcachefs/ec_types.h         |   2 +-
->  fs/bcachefs/util.c             |   2 +-
->  fs/bcachefs/util.h             | 118 +--------------------
->  include/linux/min_heap.h       | 188 +++++++++++++++++++++++++--------
->  kernel/events/core.c           |  29 ++---
->  lib/test_min_heap.c            |  75 +++++++++----
->  22 files changed, 522 insertions(+), 395 deletions(-)
-> 
-> -- 
-> 2.34.1
-> 
+-- 
+2.43.0
+
