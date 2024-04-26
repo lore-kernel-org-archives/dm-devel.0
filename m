@@ -1,35 +1,51 @@
-Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com [209.85.219.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A642813CAB7;
-	Fri, 26 Apr 2024 08:56:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D466C15666A
+	for <dm-devel@lists.linux.dev>; Fri, 26 Apr 2024 16:29:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714121810; cv=none; b=GYgUFcOO2MrE+UryoDzAu17RjIe1Zm9gFCogZaM3nNNcA0EviZWsiJ5oARFQXSQrALB89whvjVZ7mkssDTwAuJvo1fLVUqH8b4d1PclT7sDsIo448bCVoh3qIgdyQMUtPP05sYNMbSObXv14gEIasGdxmCwk8ZyYfGN+fg+1lQs=
+	t=1714148971; cv=none; b=jJdnGE3XrWwOCBWmJ42+JvlHoEGY6MoQrgv/MXTofaqLMZfwMJ07be5/f1w6PAl2YJCkuJZaTEyzH0/WypkARdTUH+OlTPDKwcngnWT5MTljOMK0rMwifp5HCoMxO6e1kevULjxcYAi3UUrWEXWN81NOBDaAERClsicPGvzXWS4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714121810; c=relaxed/simple;
-	bh=B5McHmG2hxWqiezo9OOvdzUTt0Xn8lTGfuOoc5RjqBQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=kWzONAuXC+eioWD27atAQ5VADhEVPevvDskEVaFecaql1YfoQyn2Dal8YoFMsMtKmbIRLs7fdhbEMVIBhXZ1stLnhuUzh2BzfrZRfSXQ3bTy7ROD48Vr+MazQDPpSnDY7mYd2Qk0pjs5FFCRizCeNDF9idxBXMro0sHvbpI6aIc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; arc=none smtp.client-ip=144.6.53.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.94.2 #2 (Debian))
-	id 1s0HNg-006dVw-Ea; Fri, 26 Apr 2024 16:56:33 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Fri, 26 Apr 2024 16:56:50 +0800
-Date: Fri, 26 Apr 2024 16:56:50 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
-	dm-devel@lists.linux.dev, x86@kernel.org,
-	linux-arm-kernel@lists.infradead.org, ardb@kernel.org,
-	samitolvanen@google.com, bvanassche@acm.org
-Subject: Re: [RFC PATCH 1/8] crypto: shash - add support for finup2x
-Message-ID: <ZitsUtjm7/tuWwqM@gondor.apana.org.au>
-References: <20240415213719.120673-2-ebiggers@kernel.org>
- <ZiJI1RhdHUsCDELY@gondor.apana.org.au>
- <20240419163007.GA1131@sol.localdomain>
+	s=arc-20240116; t=1714148971; c=relaxed/simple;
+	bh=Xzf0YrsQaq3PqDI6eFn5IeYiSpav42bGXqVpMPnHWsQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=EdjSWTLbeust8UtNiF4R8UqALZqkKKWA6yKfoo/kgcMp/mXdyME0pCF7XXVURJj+tkUCjj4fPuvHeyeu7iAzla3DgiABL2Gs+X99ZWRhmejS8br0ZoLBAqzpbcIXo5h5cWPa5g6Szo5+LDZOJwzCbMBcZNCgb3tsDl+nfpC2L9g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.219.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Received: by mail-qv1-f44.google.com with SMTP id 6a1803df08f44-69b6d36b71cso15661906d6.3
+        for <dm-devel@lists.linux.dev>; Fri, 26 Apr 2024 09:29:28 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714148968; x=1714753768;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=sExa2HFzs6PwslTUWtqkQ8fa6GIAXsJ9dTc0im2HLsk=;
+        b=FgLlkAM3To4adoVeDxgNkH33C3Pt7hCFNdOfQkgCqpeUhNoFSugyxPTGF45vH0gwbH
+         iRuw0hYVvd3se+oZyjl/vFrHLdKXV03St9KO72yNMWY1mPrORrO7H9da8JH0SsLN3jGh
+         BHRWuhpH5NZtnqVPGFYpLtevyPaw7RXfe9xjnMNOPFuDJQ4cPAVnBzaR8zaseKtV3cd8
+         movH/9CzFIyrRQv3aVJUPvP92K7n9zdig5mSR6B/uAeCFIkIUsK/Kjt+AG5al0oR8kj2
+         o8M0E9Be7k3DeFAtsXIHsU7N+uqmTfNcXJR4+MPutQVAdm2lbQl5/StqudinNEzvWMpB
+         /29w==
+X-Gm-Message-State: AOJu0YxORg70nNYkUwn/It77+ARWTlkRXfTSj2ifJ1+W1XVUadk2cV3m
+	Je9CijtHJBhekrXpP0PfhwJUu3sdctnaSKyjf6h/I03iIzJFM6OWNIDSBWAvCg==
+X-Google-Smtp-Source: AGHT+IFaxf6nB/nrsjiYwz4onRFf5tdc34X1Sp55cv/17zHOi1fY4ofmA0rk2+2+YwLoaEXEpMEQQQ==
+X-Received: by 2002:a0c:fa81:0:b0:6a0:a92f:956 with SMTP id o1-20020a0cfa81000000b006a0a92f0956mr3093619qvn.56.1714148967818;
+        Fri, 26 Apr 2024 09:29:27 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id d17-20020a0cf0d1000000b006a04769b5a7sm7975359qvl.110.2024.04.26.09.29.27
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 26 Apr 2024 09:29:27 -0700 (PDT)
+Date: Fri, 26 Apr 2024 12:29:26 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	Alasdair G Kergon <agk@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Matthew Sakai <msakai@redhat.com>, Ming Lei <ming.lei@redhat.com>
+Subject: [git pull] device mapper fixes for v6.9-rc6
+Message-ID: <ZivWZtBH77F9v1f7@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -38,39 +54,51 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240419163007.GA1131@sol.localdomain>
 
-On Fri, Apr 19, 2024 at 09:30:07AM -0700, Eric Biggers wrote:
->
-> If you mean the fallback to scalar instructions when !crypto_simd_usable(), by
-> default dm-verity and fs-verity do all hashing in process context, in which case
-> the scalar fallback will never be used.  dm-verity does support the
-> 'try_verify_in_tasklet' option which makes hashing sometimes happen in softirq
-> context, and x86 Linux has an edge case where if a softirq comes in while the
-> kernel is in the middle of using SIMD instructions, SIMD instructions can't be
-> used during that softirq.  So in theory the !crypto_simd_usable() case could be
-> reached then.  Either way, I have the fallback implemented in the x86 and arm64
-> SHA-256 glue code for consistency with the rest of the crypto_shash API anyway.
+Hi Linus,
 
-OK that's good to hear.  So if they enable try_verify_in_tasklet
-then they will only have themselves to blame :)
+The following changes since commit 39cd87c4eb2b893354f3b850f916353f2658ae6f:
 
-> If you mean falling back to two crypto_shash_finup() when the algorithm doesn't
-> support crypto_shash_finup2x(), my patches to dm-verity and fs-verity do that.
-> Modern x86_64 and arm64 systems will use crypto_shash_finup2x(), but dm-verity
-> and fs-verity need to work on all architectures and on older CPUs too.  The
-> alternative would be to put the fallback to two crypto_shash_finup() directly in
-> crypto_shash_finup2x() and have the users call crypto_shash_finup2x()
-> unconditionally (similar to how crypto_shash_digest() can be called even if the
-> underlying shash_alg doesn't implement ->digest()).  That would make for
-> slightly simpler code, though it feels a bit awkward to queue up multiple blocks
-> for multibuffer hashing when multibuffer hashing won't actually be used.  Let me
-> know if you have a preference about this.
+  Linux 6.9-rc2 (2024-03-31 14:32:39 -0700)
 
-No I don't think it's necessary for the time being.
+are available in the Git repository at:
 
-Thanks,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.9/dm-fixes-3
+
+for you to fetch changes up to 48ef0ba12e6b77a1ce5d09c580c38855b090ae7c:
+
+  dm: restore synchronous close of device mapper block device (2024-04-16 11:32:07 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Fix 6.9 regression so that DM device removal is performed
+  synchronously by default. Asynchronous removal has always been
+  possible but it isn't the default. It is important that synchronous
+  removal be preserved, otherwise it is an interface change that
+  breaks lvm2.
+
+- Remove errant semicolon in drivers/md/dm-vdo/murmurhash3.c
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmYr08wACgkQxSPxCi2d
+A1qSXAgAsmfo5nV8/tNsrG3aBYN/rbGyEQaKl+m3eGK3T874WyrbW/On5qfGzEO1
+09O5jNEMhkEHBQq6tKu/Gp87xLVJroIOMLTYpmCg6nnlwVIifFy1uuaBFA1xgM9U
+xf7myg6fRj66Yjwv0y1WmTaQTX30s9alJ7f/PZQT1MJFhGIuHPIns3bsyZ43RcOl
+pNkS9jjdHkDpXK/cWseb9mz6TAISa8Fn2NYkDPvq6r/J/aIxhRiHlhlzFuQnnfkH
+Rg5GVg2R/yCZiGQpuA6IqfEX6eqc4HlZa5Ty2zj9BjUhmj+YbuLEKj+uMEB6wMPd
+uK7uWfkxZYvsBAdaFfSpU8XyTumaAA==
+=zK77
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Matthew Sakai (1):
+      dm vdo murmurhash: remove unneeded semicolon
+
+Ming Lei (1):
+      dm: restore synchronous close of device mapper block device
+
+ drivers/md/dm-vdo/murmurhash3.c |  2 +-
+ drivers/md/dm.c                 | 10 ++++++++--
+ 2 files changed, 9 insertions(+), 3 deletions(-)
