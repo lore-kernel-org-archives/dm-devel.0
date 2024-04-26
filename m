@@ -1,68 +1,113 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f46.google.com (mail-lf1-f46.google.com [209.85.167.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 025D875810;
-	Fri, 26 Apr 2024 06:06:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7483013B298
+	for <dm-devel@lists.linux.dev>; Fri, 26 Apr 2024 07:21:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714111614; cv=none; b=ZP4lZU3b1v7iu4BDB+f8u7Q0TEcYhJcC2tUOrM4izCNMe9bGnZHz+bKSHAZ8X+08b2WlRAhTwWo8SCcfZtlePUt/3pDdiZgn5Yugx8AI+W6FV/DvZoH0O6bMEZ1DbmUiYFTAkit53AvYhY5MDzMcHJWSkSBoqlUd4940/91Yadk=
+	t=1714116108; cv=none; b=QBme/U1CEqiyzA61BXifbLQB27X8ddlKFoaOv8UoBpmgOQfmV4nc3A7t/INgXFC9muYwdmYfMR+2dG06b0pqA82I2RtlrbmiM3laySV0fhDKehskSqd4jX3G7QSNSq3eT6B1CYOWG1AnjYG6TSOVJD+87wux3FhcIB3l90obLKo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714111614; c=relaxed/simple;
-	bh=ScRbr+wIDvRcJVfn/2jmiWQIpjY96kUJbIjeVXhPEgA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=OOx1YGNITM0XU50XGj0nZ5kUK/uUzzVH/KaAzOrVxObbACcn7VqSA5hYiFssy109/2oU5HMUOVSUk1nBTuc6PenNmRsPPYmCVfg+PyYwG1QjDL1Mg9Mm8a76WNHd+WodEOObRWt73A6GBsMB6y9l+jilc8AvMaIAN/Z5rEVZ6PQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=HezeXzpK; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1714116108; c=relaxed/simple;
+	bh=ORi4L4bgAwO18CzIXnxnG8o1DUKEBmtAwP6XEZokH3o=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=YXiP6xCjuTYMV/3M7s1nLVy65ZjTd8gm8uvsowCzDBro+6IrF77BAp5xVbIm/h/Dz9oZGNgZuc0i92oPIGaeyjav9pwWDlh2TA6JNITjXqTsFRnuiBTUn+goFt17qT0XXabc+hS/6rJ/900ihW0x599KVq+OOIbETWe2/6z6Ukk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linbit.com; spf=pass smtp.mailfrom=linbit.com; dkim=pass (2048-bit key) header.d=linbit-com.20230601.gappssmtp.com header.i=@linbit-com.20230601.gappssmtp.com header.b=Y/AzE+fb; arc=none smtp.client-ip=209.85.167.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linbit.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linbit.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="HezeXzpK"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=cYGc8bgkg5Zpu6slyAM2fZResCr4NoxWh4jC4YTe6Z4=; b=HezeXzpKy+c+nbPtjU9hQ2YON4
-	7NqeGctB0kFJARxdzicRJ9qkqb/LJJPufqo8C9651LqrjVmsH4lClJBWw0/kA46d4v0COqrFTKCZI
-	vfY3Li1ZWeapTu9wB2XZrlPdoQP94e41omYnxHovxmUvi/J+VElrUEGoz9eS4yvIAocfBXQpZWEae
-	oiGOk6bnS6HU1TGP8+ETw7PK1NHE/+5CdO+cbl60JQbcAptfHk+JrXI2uLAQiOqT7tCcM7zKm932S
-	Xbfr0cs334iPsHIUI5lMzyCxUKBtu7IVWV7WgfqlBSwp8c3v9p06+CXnUTQ6G6on2AxvAcGxNfcO1
-	hq6KoMFQ==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1s0EjP-0000000BEyH-28j0;
-	Fri, 26 Apr 2024 06:06:47 +0000
-Date: Thu, 25 Apr 2024 23:06:47 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Christoph Hellwig <hch@infradead.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Mike Snitzer <msnitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>,
-	Damien Le Moal <dlemoal@kernel.org>, Ingo Molnar <mingo@redhat.com>,
-	Will Deacon <will@kernel.org>, Waiman Long <longman@redhat.com>,
-	Guangwu Zhang <guazhang@redhat.com>, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 1/2] completion: move blk_wait_io to
- kernel/sched/completion.c
-Message-ID: <ZitEd_CzSgqy2Kd0@infradead.org>
-References: <31b118f3-bc8d-b18b-c4b9-e57d74a73f@redhat.com>
- <20240417175538.GP40213@noisy.programming.kicks-ass.net>
- <546473fd-ca4b-3c64-349d-cc739088b748@redhat.com>
- <ZiCoIHFLAzCva2lU@infradead.org>
- <20240422105956.GN30852@noisy.programming.kicks-ass.net>
+	dkim=pass (2048-bit key) header.d=linbit-com.20230601.gappssmtp.com header.i=@linbit-com.20230601.gappssmtp.com header.b="Y/AzE+fb"
+Received: by mail-lf1-f46.google.com with SMTP id 2adb3069b0e04-51b2f105829so2378710e87.3
+        for <dm-devel@lists.linux.dev>; Fri, 26 Apr 2024 00:21:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linbit-com.20230601.gappssmtp.com; s=20230601; t=1714116104; x=1714720904; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=QRexq8HwdmSga2MQO7hRjA+guFSY+ssnXLOdMDXpGw4=;
+        b=Y/AzE+fb9WhTQ4KqdTLEALa/9h2TdP16EnaQdSTPFvf7Nk6xEClT6FfxLzfguxIAY6
+         HqmYDFf9+QK6ATLPUZMa+ZTPPywRW0bhjArQfr4PBDKZlfv7uCFlVF6O6Qp58Qc5HHzT
+         8wa9rCrKhTHDSZ8rbdscyMPi/kI+CbjtZMpNxtsJ/BZno9PJGDa9L93W8MilMpDnl9NS
+         eBM4WlEIp9SGC8pXIjXVoEhjeZ2759uvZ1NI6B6F1p8398uoNMN5OrTdnq12eAsxGypu
+         DahJTxQf2SQ8zKDc8XcuOTZC6cSDJUP2v7Ho8K5/Gxaks+QQ7arXwpdox1rNLE06ABv7
+         Le1A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714116104; x=1714720904;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=QRexq8HwdmSga2MQO7hRjA+guFSY+ssnXLOdMDXpGw4=;
+        b=kWQYe4Kyjw/ExFnN0ab7iZ8WrqeUh005cqzk5n+NNAY5Apqfj8hScNc/6GwlULtWT/
+         YNnwCJnQ8q/7aY82SBzMIa+wH6vn0uhJedy2IarsbaDCWrB6ZcB7HZuterIk1PrJ1w9h
+         /0P9egSau7cIZ32cax/8KN+PTtO51ES9Gy1mZi/D+oJtTHolW7SpbmSzrVQfwUFg2Hnh
+         kq7l6T6A32/DkybulI4ZIkHaxdhNScZ8PmB7Ynehxq8czgloiuFrMP5sANPHTfWrBxzW
+         xiU2HnCmXzXgyH2En2CB8S1GcmsO/lyYhvkMjIoyfRMN0RPQ/WuTbFJXOn11VixcHLjq
+         z9TA==
+X-Forwarded-Encrypted: i=1; AJvYcCW3ylitBLhm6938eDMJ+VSVYJ69rdc33zRV7GWxE9h8cU1JwU0lR9/ufsYyXyoaqID1CBoRTolnJTT57hqYCl1h5fOfmFUfuik=
+X-Gm-Message-State: AOJu0YwOIEt7WAd++kQai1qxlHgly8XPl9jkuZL0AeHheFN9bML1es2S
+	sSnTnEn4I2kqizK9eegAS+5pyf0OoX5MBCHrqX29Z4HYY+n8NFUMczoKh5tIhDI=
+X-Google-Smtp-Source: AGHT+IETFye/yi8SOFdPp4/fiVRdWzDTud16xMH9ZicXVvyZQ8AbxWWDDqeJO4sWy2gykGvetekfAw==
+X-Received: by 2002:a19:750c:0:b0:519:611f:df49 with SMTP id y12-20020a19750c000000b00519611fdf49mr1521001lfe.69.1714116104393;
+        Fri, 26 Apr 2024 00:21:44 -0700 (PDT)
+Received: from jrc-a.. (213-47-229-24.cable.dynamic.surfer.at. [213.47.229.24])
+        by smtp.gmail.com with ESMTPSA id o12-20020aa7dd4c000000b005704419f56csm9723818edw.86.2024.04.26.00.21.43
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 26 Apr 2024 00:21:44 -0700 (PDT)
+From: Joel Colledge <joel.colledge@linbit.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Christian Loehle <christian.loehle@arm.com>,
+	dm-devel@lists.linux.dev
+Subject: [PATCH 0/1] dm-delay: fix hung task issue
+Date: Fri, 26 Apr 2024 09:21:34 +0200
+Message-Id: <20240426072135.291206-1-joel.colledge@linbit.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240422105956.GN30852@noisy.programming.kicks-ass.net>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+Content-Transfer-Encoding: 8bit
 
-On Mon, Apr 22, 2024 at 12:59:56PM +0200, Peter Zijlstra wrote:
-> A bit like TASK_NOLOAD (which is used to make TASK_IDLE work), but
-> different I suppose.
-> 
-> TASK_NOHUNG would be trivial to add ofc. But is it worth it?
+Hi,
 
-Yes.  And it would allow us to kill the horrible existing block hack.
+The tests for DRBD encountered an issue with dm-delay when testing with
+a 6.8 series kernel. Specifically on Ubuntu 24.04 "Noble". Here is a
+minimal reproducer:
+
+virter vm run --name dm-delay-test --id 10 --wait-ssh ubuntu-noble
+virter vm ssh dm-delay-test
+# truncate -s 100M /file
+# loop_dev=$(losetup -f --show /file)
+# echo "0 $(blockdev --getsz $loop_dev) delay $loop_dev 0 0" | dmsetup create delay-volume
+
+After a few minutes, the following is printed to the kernel log:
+
+[  246.919123] INFO: task dm-delay-flush-:1256 blocked for more than 122 seconds.
+[  246.922543]       Not tainted 6.8.0-31-generic #31-Ubuntu
+[  246.923753] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+[  246.924932] task:dm-delay-flush- state:D stack:0     pid:1256  tgid:1256  ppid:2      flags:0x00004000
+[  246.924940] Call Trace:
+[  246.924950]  <TASK>
+[  246.924980]  __schedule+0x27c/0x6b0
+[  246.925002]  ? __pfx_flush_worker_fn+0x10/0x10 [dm_delay]
+[  246.925011]  schedule+0x33/0x110
+[  246.925016]  schedule_preempt_disabled+0x15/0x30
+[  246.925035]  kthread+0xb1/0x120
+...
+
+This bug appears to have been introduced in Linux v6.7.
+
+The following patch fixes the issue.
+
+Best regards,
+Joel
+
+Joel Colledge (1):
+  dm-delay: fix hung task introduced by kthread mode
+
+ drivers/md/dm-delay.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+-- 
+2.34.1
 
