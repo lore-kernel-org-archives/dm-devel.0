@@ -1,63 +1,146 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5298617FF;
-	Fri, 26 Apr 2024 18:30:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B136C1448EE
+	for <dm-devel@lists.linux.dev>; Sat, 27 Apr 2024 23:45:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714156258; cv=none; b=YBYl8YGykBNSbiCIpCj8W5D+3lASTqtMEophYUxCw1tVTctTRsHM+R2MWL3Ifkm3be6rYfed2GfXmen9+BmmS9zWeK1EHVjULlS6mXpKQc/FqHQLAs55DYpNoh/zCNbCkpx7Y2I0yEvPbnb2P8iFPsmbokgyG7uKB5C+o02oSho=
+	t=1714261550; cv=none; b=n9Qq0TjbCKMiUyYTrZe/NNR16HrObJ9IkSRiEirkdAqLj7vf2HRqdX8tACwRfqUGuxLw79vUD1TKMkbTgUUZX7zs9TCGYn4af34tgqO0V0ex34/e+BpNMvg3BBDD9NjInnB22gL/5qxH6j3+ZGz2HP7cg9qC1tC1NEvoKHV3mew=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714156258; c=relaxed/simple;
-	bh=hlZHhXDbfrtY8Hl9c3SinyUT3TjpxduHmRO+a9sgFyA=;
-	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=iHO6B+Alk7E50eqp22oYjV84O+gmZt7wQD0uItfVvb4499O1KxJ2LpUwz1r881JxORgjKLEoV6fR/PQBT7jcSllFRP7e96KvDIcGz7kQq9cT/ihbqiJdXbJlYtA3s1THmZefyxwQPQLJptVAPDHxULkl1CVYp7vxeMZGN9ZI56k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VDmT4G6/; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1714261550; c=relaxed/simple;
+	bh=i9dOj/WIZ1G32fy3lhxdnjC0IqpXh/6iBmJJCGuek/Y=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=METbc/cElE4sGZ16CvsjBdqUxZTtdXCfmgIx4Yw8Z7U+SEJRukHCIt5rYeWkGoGMF7SV8H39TOc+G68AnZiRVasmyKLnhxtfjCoXzTd0iGa7sJOo05Nd9mN0hBxTT1vXz79Tuju7d72fqfDSXIeyoeFgHTGUHB9tz/n7+eFGJOM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aYPp4jg2; arc=none smtp.client-ip=209.85.128.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VDmT4G6/"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id CD21FC113CD;
-	Fri, 26 Apr 2024 18:30:57 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714156257;
-	bh=hlZHhXDbfrtY8Hl9c3SinyUT3TjpxduHmRO+a9sgFyA=;
-	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
-	b=VDmT4G6/g7S0mKFzwkMTvTv+08XQ4ROhb63ynK2Kw8PC4pI7WZOFrTEXXBqAcVXDR
-	 zwcxk+q9uRGQj7ArAu7vATKlzLinLbl5jY+ZGKB1OAVc6ucqTd10VkyP3602S/zEh8
-	 uEAab0j5Fsc3SvRHUjWBjD+mk1ismaSGHbbLXL8PLefzN4UplDhimXjvpXViHlIGQS
-	 VxasEsgBtIbC/RIIjkZadQDqU9RYQpOUxlq8oIBxZu+UDSdLmG6DSviZi+P2U8cDF/
-	 kzks3cXuaqmZb3d6e0FynoOYY0S5kNcqBG5d/7p3xKlvnnPO2ccosG69YekT+Rzu8K
-	 y2gLiGvj/z5Og==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id B9351DF3C9B;
-	Fri, 26 Apr 2024 18:30:57 +0000 (UTC)
-Subject: Re: [git pull] device mapper fixes for v6.9-rc6
-From: pr-tracker-bot@kernel.org
-In-Reply-To: <ZivWZtBH77F9v1f7@redhat.com>
-References: <ZivWZtBH77F9v1f7@redhat.com>
-X-PR-Tracked-List-Id: <linux-block.vger.kernel.org>
-X-PR-Tracked-Message-Id: <ZivWZtBH77F9v1f7@redhat.com>
-X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.9/dm-fixes-3
-X-PR-Tracked-Commit-Id: 48ef0ba12e6b77a1ce5d09c580c38855b090ae7c
-X-PR-Merge-Tree: torvalds/linux.git
-X-PR-Merge-Refname: refs/heads/master
-X-PR-Merge-Commit-Id: 08f0677dfc1a0e4648eca650be5b32f1a40e93ad
-Message-Id: <171415625774.22135.12583743369111950372.pr-tracker-bot@kernel.org>
-Date: Fri, 26 Apr 2024 18:30:57 +0000
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@lists.linux.dev, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Matthew Sakai <msakai@redhat.com>, Ming Lei <ming.lei@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aYPp4jg2"
+Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-41bca450fa3so7594605e9.2
+        for <dm-devel@lists.linux.dev>; Sat, 27 Apr 2024 16:45:48 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1714261547; x=1714866347; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=zN3v3/5XekK8gpaUkD8G/dLVvPy/2igCGoA+7OSgoaM=;
+        b=aYPp4jg2PdSB2MAz9f3HItzPkgSgqvEV04URWl5bdI6K2aNwo38HrwDOYGElS/0i6e
+         sDSe543qsutgniIUQsaevgNqBJ2KNpei8LQJ4b0rlebCEdbo+Y1q2JdZQA3qXNTstb+s
+         GymIQoRuSypVz092463HyezLZGNRXmn7Ufd6GoXAJnJOUQQmKmvZSGawX3bAVlQHkJUh
+         s7LrrdqUIUOCN5TNMsZe0zD9NLwVBwp9ySNA+GkanyqIRB7bF68oIHbc6JJEyvDQwyy4
+         Fmbx87sqgY3uFIfD0txIOWKE8il04Yw0NZvMqGISqRehQJ8sRbfY4lakDE00wO0V5yHD
+         ckKA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714261547; x=1714866347;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=zN3v3/5XekK8gpaUkD8G/dLVvPy/2igCGoA+7OSgoaM=;
+        b=vVgRmw25n/rbxr8YA8T01FTg9DUMdqmoXEXUVLN9sWP87JWCfhMIppel/3AdjEtOdK
+         ze984EWgNm/7DyJYADNowgOGZHxXMKkltcJRkGuvMU59+UTy0PL33P5gsWVuzOuA5UJ9
+         fKJ9SGNXvPJZvaos1LAO7vBUJ1ri1E/hjDxq2Chx7+VD2+ll1+nexmxQ73yzTywiFeeJ
+         YTOc7Q4pgwJOZeHqEfj+tstEE5CrmCsL1ZxNecHrzM/NHM4P3EZAhD2cICpAoqh1L4u7
+         /dzj4TLimNO2nM2C1smwA0eyFw2zDKNz/a80/BQ4cShUz1aZgL9kDW4unYaRt3t1QJzj
+         ORKQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXwfyI1o600n71XebDWCsZMuW1PENmuJRBlEdwkwWAVyLOmwHymIHPyt0Y0hTcJPPi1Z9ivJONfppskfMXiqiu0yjP89NQcEUU=
+X-Gm-Message-State: AOJu0YxS2Nx1BdjvwlB5NI9BZMTzS0eUh+dr43Xsm/bW89DhhjscgRkb
+	7X2UQN1q1UOasdJS20oYyXf+G/H28apHArAR33zLqdutGMjQKaka3BUaL8g=
+X-Google-Smtp-Source: AGHT+IEE8b7PxJE++n7LgRd4Al2IO3+sLz/JgwgzLmu9Oh1dL0IkakYIzZgmU0b4J7+AdI+0HLRKGg==
+X-Received: by 2002:a05:600c:4448:b0:418:ee30:3f92 with SMTP id v8-20020a05600c444800b00418ee303f92mr5168169wmn.25.1714261546842;
+        Sat, 27 Apr 2024 16:45:46 -0700 (PDT)
+Received: from localhost (11.red-81-44-148.dynamicip.rima-tde.net. [81.44.148.11])
+        by smtp.gmail.com with ESMTPSA id bg5-20020a05600c3c8500b00419f419236fsm27599104wmb.41.2024.04.27.16.45.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 27 Apr 2024 16:45:46 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: [PATCH 2/3] multipath-tools: unify text in multipath.conf.5
+Date: Sun, 28 Apr 2024 01:45:36 +0200
+Message-ID: <20240427234538.8025-3-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.44.0
+In-Reply-To: <20240427234538.8025-1-xose.vazquez@gmail.com>
+References: <20240427234538.8025-1-xose.vazquez@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
-The pull request you sent on Fri, 26 Apr 2024 12:29:26 -0400:
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ multipath/multipath.conf.5.in | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.9/dm-fixes-3
-
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/08f0677dfc1a0e4648eca650be5b32f1a40e93ad
-
-Thank you!
-
+diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
+index b29a75fe..c1a19ebb 100644
+--- a/multipath/multipath.conf.5.in
++++ b/multipath/multipath.conf.5.in
+@@ -187,7 +187,7 @@ The default is: \fBno\fR
+ .
+ .TP
+ .B multipath_dir
+-(Deprecated) This option is not supported anymore, and the value is ignored.
++(Deprecated) This option is not supported anymore, and will be ignored.
+ .
+ .
+ .TP
+@@ -277,7 +277,7 @@ The default is: \fBno\fR
+ .
+ .TP
+ .B pg_timeout
+-(Deprecated) This option is not supported anymore, and the value is ignored.
++(Deprecated) This option is not supported anymore, and will be ignored.
+ .
+ .
+ .TP
+@@ -322,7 +322,7 @@ The default is: \fBID_WWN\fR, for NVMe devices
+ .
+ .TP
+ .B getuid_callout
+-(Deprecated) This option is not supported anymore, and the value is ignored.
++(Deprecated) This option is not supported anymore, and will be ignored.
+ .
+ .
+ .TP
+@@ -995,7 +995,7 @@ The default is: \fB<unset>\fR
+ .
+ .TP
+ .B config_dir
+-(Deprecated) This option is not supported anymore, and the value is ignored.
++(Deprecated) This option is not supported anymore, and will be ignored.
+ .RS
+ .TP
+ The compiled-in value is: \fB@CONFIGDIR@\fR
+@@ -1295,7 +1295,7 @@ The default is: \fBno\fR
+ .
+ .TP
+ .B disable_changed_wwids
+-(Deprecated) This option is not supported anymore, and the value is ignored.
++(Deprecated) This option is not supported anymore, and will be ignored.
+ .RE
+ .
+ .
+@@ -1340,7 +1340,7 @@ value in \fI@CONFIGFILE@\fR, run \fBmultipathd reconfigure\fR, and use
+ \fBmultipathd del path <path>\fR and \fBmultipathd add path <path>\fR to
+ delete and re-add the same path device.
+ .LP
+-The default is: \fBundefined\fR.
++The default is: \fB<undefined>\fR
+ .RE
+ .
+ .
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/prtracker.html
+2.44.0
+
