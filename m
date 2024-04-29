@@ -1,162 +1,138 @@
-Received: from APC01-TYZ-obe.outbound.protection.outlook.com (mail-tyzapc01on2047.outbound.protection.outlook.com [40.107.117.47])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F1854748E
-	for <dm-devel@lists.linux.dev>; Mon, 29 Apr 2024 02:50:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.117.47
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714359046; cv=fail; b=LYqtsIO10qHAFamE9KKfTZX5TFZtC4JN2sq0LusV9KOwdZrKPrsFNa6sBlJF+Mc/l1phHz01EDx+XuMq7/HBkiPeUuCICHEJXpwvOFKH1o1TuZX15K5UMIRtpEAPoEYHy+TtBPMzctC1j7C879jsgJjzsmdsSgHjhfdPBtvhxBk=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714359046; c=relaxed/simple;
-	bh=wH0bRDwDJ6coVL4nvn2Q59MVkHR4ET4RW5IO2ztL1H4=;
-	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=Xad1uTfWTh1t6UyZXIWB0tIVDl4W3nK578ysDZRaHxRxf81C1zmznJtMrm1wMJwm20n0Yv6Iw1o7RUpH7rlQjqbfRWmjtMttV8G7CdrSVkT83AfHH+l08xglVIMbyoL5HYb25tE8QbXMnHWbcEYkNbrxK4H2gIhsKdKEBlXXUbM=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=B/gGH/Jl; arc=fail smtp.client-ip=40.107.117.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 38C56DDB1
+	for <dm-devel@lists.linux.dev>; Mon, 29 Apr 2024 05:50:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.54
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1714369805; cv=none; b=GkLQeILtulXzMN2nbuPbCaw6B3QSH84ATwp6A+iUALVErkY9X0ALVjT40+MJy1i3h+CA723mVxWrFHFWYjaGmmeV7ap97CsG9tJB4H2LoBLzgrSIrN/rrODhm8Nj7p9y7buZY8yUPuDgj+sWp4+LQGtqYFjdsI4RDRxNA3sUsNk=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1714369805; c=relaxed/simple;
+	bh=IZ0pCnE6LGKSv1BY8600SAA+8YX35szUvdWSAvdru5o=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=P+4Ydcu42k3Oh/+Y7eNXx3vljY3vvjRproATZJN6hF5vjE+SNISvoFqrZ4Q3D2c2YSyBZjpk1Z6thv20xSyKjx0vdRb99mL25wILxl3yZiiu7OCOOXrsyBS6pewCP+ihESc4Zatpy9VKlWAkIJX2dhpuu7JF7Cw95w2nQ4MU4r4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=S6knsJOv; arc=none smtp.client-ip=209.85.218.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="B/gGH/Jl"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=QMvEPhYOW9YNSIbI86h70AGDznHGC7o4FUxiB83ybxVEyXr+Ll8nA1qf7IxnOpWAd/L4cvizpgaF+WvBrhB68lwfgSyv3JK6BwJtxO912uxmCQ6hLz7aZZuVbf0zMWnRov/ATePa9qzpG1I2nzDCjMl5b7Q7uVfYyLOHDYPq2U/DWO3KhpLKBit8VlnVa9fsoiIrf6CY8H1xaVBmv6qo8TrFVde0RtIzHbHS/4y940Laksi12bJ2JuCWHBWBzWpLBExNkTVTWAepsBLTV5ZJIizu7bnNn/VhTlCRT47C8R0Eq4tbGvDYcL6QfJM//Ya8Y0dDcZR9w4ySMhj1BSIP9w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=bMU87YWCmjz83FtStBkdo/ngsypV4KRejSdcm0EbsFM=;
- b=VEi1YfaZI06l+QwbEXnAJksvicInlO7vTA4pJwApzhUd7ylu7YI3moOrYulVL5rz0bM1tbH3EiZ7gnDmyeAsNJBScRRzvjV3UlBD8cWgzYDjJkNoftjvIDz3ldD3yV+vCcA7WHvwDFZFoh1NqRoxIv566GVa1/tIo3Cr0Je179DjeNHo9qp3tuII9SYEvHWdLYQwghvgdstbElCEn3Fz18o0VCIDy4KIqhgosD2LT+TNoM8Vr8MaQzYM2VGV+i/ALuVp34FAMmxuSHVfwOoGkTK615MLTXunTpS2Q91lJh8ut6NUouEuaK8EdLkO+uUQjfpAi6x+EVuBcstPgpa/yA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
- dkim=pass header.d=vivo.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=bMU87YWCmjz83FtStBkdo/ngsypV4KRejSdcm0EbsFM=;
- b=B/gGH/JlMQ2z4cjj+XQ7dinAHj02lNvOLh0mMwVmGpGWoXOti4fgDGp72XQl6YezYkOK0UzlN4719lPva6x3eewNyD5jLOnztCfCBLQzdYaRWOkK1pHZ7fFtHEvfTqyWA+0e8MLc9FebnTRRg17t09UVPLdd3X1wefHYDd4kNoWOni6EBvS3N2SxnO8sNHFxRgHT+OcKd3L4u+XslHVY/+f/byLFIX/1UFM1hL4dHjmbf0CtvjMst5QXcG0tHFB6gpqasAFw3sxBiuiqYSI65ksDGDVHlF6znRGKoQcjW6bBaQ0Woy8rZZ6s/NkFO9w9x9tLd+gYJFp//fQK3yIbvg==
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=vivo.com;
-Received: from SEZPR06MB5576.apcprd06.prod.outlook.com (2603:1096:101:c9::14)
- by JH0PR06MB6850.apcprd06.prod.outlook.com (2603:1096:990:4d::13) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7519.34; Mon, 29 Apr
- 2024 02:50:40 +0000
-Received: from SEZPR06MB5576.apcprd06.prod.outlook.com
- ([fe80::5c0a:2748:6a72:99b6]) by SEZPR06MB5576.apcprd06.prod.outlook.com
- ([fe80::5c0a:2748:6a72:99b6%6]) with mapi id 15.20.7519.031; Mon, 29 Apr 2024
- 02:50:40 +0000
-From: Liao Yuanhong <liaoyuanhong@vivo.com>
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: dm-devel@lists.linux.dev,
-	bo.wu@vivo.com,
-	Liao Yuanhong <liaoyuanhong@vivo.com>
-Subject: [PATCH] dm-table:remove the restriction on zone sector being align to pow2
-Date: Mon, 29 Apr 2024 10:50:29 +0800
-Message-Id: <20240429025029.1620-1-liaoyuanhong@vivo.com>
-X-Mailer: git-send-email 2.25.1
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: SI1PR02CA0038.apcprd02.prod.outlook.com
- (2603:1096:4:1f6::15) To SEZPR06MB5576.apcprd06.prod.outlook.com
- (2603:1096:101:c9::14)
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="S6knsJOv"
+Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-a58f1f36427so138865266b.3
+        for <dm-devel@lists.linux.dev>; Sun, 28 Apr 2024 22:50:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1714369801; x=1714974601; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=fBC8NsME8FDQrSM2a9ldWs4Dp8svNoY8pDm9JIJNDxs=;
+        b=S6knsJOv8vgLJKBD7yNyvXHLGKlGr53kLHXEyurmtYg6YV2LKbGeGOCCp53YnMQwit
+         tuDYeXvrZNFALsbixxT6ncFDSVT6o6Cc2AE5/FZzzHweMh91dZ3OR+eIkXbFXXHNaSI5
+         j8mecpJfGl/o4UAsXpEWeYjkjaGoO3tL1kNnbQXJZXUdHVMFSFjV3GIz1yS6qKjwK54j
+         ounAiUutkiboBqq0ucwA2L3fZE9VkCNURXjOhb1YyF9f1mq0y/WmXwrGjU/nNAL8gG18
+         ngYeBIyxnS4hvp1YrXZ3odFlvt9qB7jIp266wkcWtGo+wi1u8mVWjuEWRZ82ZlpyYXGD
+         QUsg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714369801; x=1714974601;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=fBC8NsME8FDQrSM2a9ldWs4Dp8svNoY8pDm9JIJNDxs=;
+        b=GuuR9QHS/EJc2FYk4lup2aLpBXQlNPob3iAHtMPEg7x4JkOJqSFdxX9FOIPg70/68Q
+         avD7ml9tISuejh9tIENf71JFxhjSukeTzCWxPGctD8ZsoqrYPBt540rrzTcFC2AuhxVR
+         vgY4nmmLhOnrjbEjFZta17FnkMIpX7FkpGF8YzmkNPoQK9vUWH3jJ7kvqBiDl4GA0u2B
+         GLZr8anYxsUMDoCS7K461D8fFtcB8FujkvyoYWO0nkaNI5Mp2m8kO+MOIpNW1hfBpory
+         PS5uZI497Sj0wauZpuGe5i3IUbDsw82Fo7cu2rNuIC00WUFIPDwCkOGakUHxcoqgKsd5
+         9vLw==
+X-Gm-Message-State: AOJu0YxoLGwu0Il/NeAncrkvcE/Gzz/7huCcYC6aKLCWUgzHzZvIub8n
+	xFZpuUzOLMgyySzTppHTu1dgZWirbsVkEtP58ve7luZGAEBlvM8Tpjfguc5VS4A=
+X-Google-Smtp-Source: AGHT+IHz+gH2i2CuUvU4/lWr2eFTF6pfN39+7821KdJqT1JXS0SoRmi+x1kCqWIvwpXfweuET6tjKA==
+X-Received: by 2002:a17:907:1b27:b0:a55:b592:7e0a with SMTP id mp39-20020a1709071b2700b00a55b5927e0amr7295555ejc.48.1714369801217;
+        Sun, 28 Apr 2024 22:50:01 -0700 (PDT)
+Received: from localhost ([102.222.70.76])
+        by smtp.gmail.com with ESMTPSA id z13-20020a17090655cd00b00a4739efd7cesm13602468ejp.60.2024.04.28.22.49.59
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 28 Apr 2024 22:50:00 -0700 (PDT)
+Date: Mon, 29 Apr 2024 08:49:55 +0300
+From: Dan Carpenter <dan.carpenter@linaro.org>
+To: Kees Cook <keescook@chromium.org>
+Cc: dm-devel@lists.linux.dev, linux-hardening@vger.kernel.org
+Subject: Re: [bug report] dm ioctl: harden copy_params()'s copy_from_user()
+ from malicious users
+Message-ID: <5cde5d51-a8f2-4c30-a016-1fd8e34212e0@moroto.mountain>
+References: <f84a96d7-2df4-4f79-8c27-83a1d9574412@moroto.mountain>
+ <202404280901.96E2E1AD9@keescook>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SEZPR06MB5576:EE_|JH0PR06MB6850:EE_
-X-MS-Office365-Filtering-Correlation-Id: be801e0f-c893-4421-997d-08dc67f727a8
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230031|376005|52116005|1800799015|366007|38350700005;
-X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?Qz02I3K1m4ZpqLw77T0OmR6AApJdSqEh3R+A3RydAuifwe2wDT1H3nrZo6WO?=
- =?us-ascii?Q?4b8tkbjNKFkye5OH7jJuhlILAqmTYLdBZsCovni4t38Nes4ghWNL17I6jOPp?=
- =?us-ascii?Q?n44LMCd/9ECPWT+iO9hRfMFL+MoKMg1xQAdSYqc8D2gnnzoqWHOf5LAs6BRN?=
- =?us-ascii?Q?/T612SFWlyaN1r/B9kIruQIBeJwlWXamu/uILwLE1XSvsgXwTt1HelW0V5Cm?=
- =?us-ascii?Q?Iq59+gWWQ5ernpk7k1OjgtZykJeTs9P4FSCgVI8s+BfTaOWO2AVcgT8sTjI4?=
- =?us-ascii?Q?JevdvdE9BOS89GTaxQNRBAZJqemTl7iSX1uoqaPg3yREKIv6Vvz6P9Da9utk?=
- =?us-ascii?Q?KaNJ0I1/FQeGf6QG/eR+fBaqGUtbdFWlz8p8P4JuCD8fCvJ6oGjUucgQFndT?=
- =?us-ascii?Q?O9kyhtlRG94CFKU68uvp0A/DG3OBkM3vU/SHD0iapih1+rC6qYfuTi9cW8bf?=
- =?us-ascii?Q?APnVcnrmqXZi5VKDaz6+TkT87L6lp+BENqZsDWKtPPUlUwL/gdhGX+B5tmXn?=
- =?us-ascii?Q?8EUnNRzSBoKtKAcPsOgE+TEbFGXxM5JV8moychPO/I8bG8e7Fo/Si/pD8kt0?=
- =?us-ascii?Q?Xx+q62cKlI58N0A/WY6/BFtyCNwom4umYfUoYwrTp3UT997aDjIIjD6+SMs3?=
- =?us-ascii?Q?NYzGkP8m+g4PM0W0KRk6XkbakNLOLkC4XBlGOw8HSSVO3P6wiTxistqUf2YQ?=
- =?us-ascii?Q?Mf+6/SW2UeD+arpGpQT7M9Hv4n+ybM9RhY2OQSmP3KDqPUCLWCglmrqwqwKf?=
- =?us-ascii?Q?PEXQHTFyAfMqZ6vybwSiQr1ma5Fc0NA/mOA/27oSaPrd+yT1G1EpGTBndv0/?=
- =?us-ascii?Q?cJhv/Z+hZU/HuUh1tGHXpCYFax2D+KEk66U34VZ4uXqyWh6prCKzzZRjgyWI?=
- =?us-ascii?Q?rBULvF7BQkq9EGuiHWog3XUBcM49ZZYKge2XaaB4YfkHPF93hHUp7ge0QvWn?=
- =?us-ascii?Q?AdGySS9jW1JXFGzvL3wpXCx8T9y1MsFGEG5EZy9HnaQNyUBQuiCiPQmU6r9S?=
- =?us-ascii?Q?7g72CSkm5FfSr8Fv6Aov3zzhjil2B/3vh/EOkqcblemkz0BnVCbWhQwJxB3u?=
- =?us-ascii?Q?Ta8fi9fHv/sk25TqfeqetVlVddI7Ab0DcDtT3VTgkZn49ByrYQR8HiAdIHQj?=
- =?us-ascii?Q?bn3lLa/bTKVLgBshQ/FXJtvWoCgX6Q7K9IS+b5sL4eztGQZWBLC6IP0Larsa?=
- =?us-ascii?Q?6T7z5FH0w9TNNHmj7x8+i+KDHB3ggzu+5CiTErowd1j4xVdBtVDvoCOS8vo4?=
- =?us-ascii?Q?Ew0ssoi5/8ScKjCljBXIht5nqE8yBWmSplwzxHC8XDOnZfHDBaOXOM/UejOZ?=
- =?us-ascii?Q?cRkMwKVwbrB6TgvfHNt2hFWVqmWVe8Xh8L5adEdIktTIvQ=3D=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SEZPR06MB5576.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376005)(52116005)(1800799015)(366007)(38350700005);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?DB/vinVZxUHbLmwpNjtxV4V95sdY1K/fENN6O/YeIMpuG8WGw7IDkbG+bJJu?=
- =?us-ascii?Q?K1sc754hjX+YIeLHmv5oA/fgsZYv+kIpW2F2j6uJqhlWYubC4mHvPLJR4NB/?=
- =?us-ascii?Q?ZIHfUYroHjwHlv5HqypTnNyGyhhblvd2uHTu3OmlQjZe2tpp9soOQn5hrMLh?=
- =?us-ascii?Q?NE3esPfQVJfaZwH1AYOmdR98RZjpa+Zf0t9fOd8I7e6oQDxzozbQ2JoWQPiM?=
- =?us-ascii?Q?fDXPPFkki+FXwJAch0VY3kM9pnde6iDudvoPtF1Eej7a8MdIzOYzrCYXNABI?=
- =?us-ascii?Q?A7FJBuQCQ0IKUYkkxtNjVv5y/S11ripm7jeNv9isUv4JYQttcZT6bblPpR7r?=
- =?us-ascii?Q?g+oNJL9afAgsVyYh48NR4HgHQGcFN6xsv0OMXPQbHhdzSbm1rAjqDpN3n/id?=
- =?us-ascii?Q?IEZGXCD5dpINqoc4M25tlla6jXIlp8UGlZDNzyVvZsyIKZS33pS/ipkNkzIH?=
- =?us-ascii?Q?ULphgQZ1Ajs6D1rBmEhH4JAjbb4A7udM79/FLdSB8zmnIdiZZsVXwEYEwJcx?=
- =?us-ascii?Q?JDH1MzqXahW5ab+0AjTtqpjsNKzdzqeAHHJNjSyml1WyHfWhBuc6RsUqaKk7?=
- =?us-ascii?Q?5zpFWVTOURjDni/Qf7pUJYjRmQ3tfBsmqTGNsNd7O06IxStF1SyAPMD+3+rw?=
- =?us-ascii?Q?aJyyH44Bs2ms28vMgvv2lPxLAtCVouqeis9hbzvFWr1szbe7T9ACOiJOJFZq?=
- =?us-ascii?Q?qnIVTqmOK1NP7WLxR86t6YYAC1Y5arZgA/GKgiV5ep23hM4DqVEbxi4shTvK?=
- =?us-ascii?Q?o6QcVhzoNQ4edP2NmvhOFElaeFe/R750rORaVXdPzCYuglRmLhNCg/j+iwQm?=
- =?us-ascii?Q?ob29dG8xAJlpATEFO/KKbL82r39/UDznx4DnbNBrQ7+8MxBdOrlc5BagD93A?=
- =?us-ascii?Q?0c1lfdAFcXjWshW41KhRmDBziPkADgKrO3j+RlNhx0ICalN2ea4swIkmUhlp?=
- =?us-ascii?Q?yaI+G9qX9FJa4die7Vv2gdv+uPcxdoKxnrTSF1AjX0bjsWHP0HdhtcFwNLxh?=
- =?us-ascii?Q?U20wyLo8fNP3nEn57pih402n8M1WlDInFacdpGp+QqwG+sMBXO7dTWcDYRlF?=
- =?us-ascii?Q?wF7CRdNu5sTcLAb0WUy9iBNd15IbsMPZoWIpJZD+moIRdkikW/k+4jPfadTW?=
- =?us-ascii?Q?CD0Qc37msyjyRPCPcROj03NGzbHepkSKhWwO6pi08NYcElC2Yvt0PbTFsQhJ?=
- =?us-ascii?Q?OzbyoF+IEYJ7lh+dd/5sCxtuDG1DWXbS6n/VGR0tkBAO5r7HS2ClHp/DI3cY?=
- =?us-ascii?Q?KzOfWMFsGDuxhT8PWs3wkzlHLqcSmxbfA2ksvswzxfdg5Z7QkH3z+q9wP6i/?=
- =?us-ascii?Q?PTZkyK8YGCwq2eOCck2tPruGAclyJTEBcXqG6La2lsRTNy5zvm0YXMKcscPG?=
- =?us-ascii?Q?I4CP/xb93YEP5o8Ud/7R9qvvJ/08EuxFJWiuSelopxQ9GQfJpHX/yQZO2eoz?=
- =?us-ascii?Q?nKtSjkC3p4JdpBhlHNsjaCOzUk7+XzPYs4R8WFlArrf5dGWEMcSJ5yMdOQnC?=
- =?us-ascii?Q?GPPBmFZmR/9cVIvqiNppaZiShiXcxgNkSDgIvt5bcBHM4GKunmFD6MA1fdrB?=
- =?us-ascii?Q?tiNA+eQ45jKy5hoCTo4DI3Um3V0oeJzh5xTduoHC?=
-X-OriginatorOrg: vivo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: be801e0f-c893-4421-997d-08dc67f727a8
-X-MS-Exchange-CrossTenant-AuthSource: SEZPR06MB5576.apcprd06.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 29 Apr 2024 02:50:40.1692
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: H/oaWa/hHU0bSq5+XWwdvOl7D642Q1c6BH3rRxyeEhtjayySrAqSmTm6tcliCiAMWhe/QATdbHV3lCSves8BWA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: JH0PR06MB6850
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <202404280901.96E2E1AD9@keescook>
 
-For zoned-UFS, sector size may not aligned to pow2, so we need to remove 
-the pow2 limitation.
+On Sun, Apr 28, 2024 at 09:20:35AM -0700, Kees Cook wrote:
+> On Sun, Apr 28, 2024 at 04:12:07PM +0300, Dan Carpenter wrote:
+> > Hi DM Maintainers and kernel hardenning people,
+> 
+> Hello! :)
+> 
+> > drivers/md/dm-ioctl.c
+> >     1931 static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kernel,
+> >     1932                        int ioctl_flags, struct dm_ioctl **param, int *param_flags)
+> >     1933 {
+> >     1934         struct dm_ioctl *dmi;
+> >     1935         int secure_data;
+> >     1936         const size_t minimum_data_size = offsetof(struct dm_ioctl, data);
+> >     1937 
+> >     1938         /* check_version() already copied version from userspace, avoid TOCTOU */
+> >     1939         if (copy_from_user((char *)param_kernel + sizeof(param_kernel->version),
+> >     1940                            (char __user *)user + sizeof(param_kernel->version),
+> >     1941                            minimum_data_size - sizeof(param_kernel->version)))
+> >     1942                 return -EFAULT;
+> >     1943 
+> >     1944         if (unlikely(param_kernel->data_size < minimum_data_size) ||
+> >     1945             unlikely(param_kernel->data_size > DM_MAX_TARGETS * DM_MAX_TARGET_PARAMS)) {
+> > 
+> > So what's happening here is that struct dm_ioctl->data[] is declared as
+> > a 7 byte array, but it's actually a variable size array which could be
+> > more or less than 7 bytes.
+> 
+> Repeating from include/uapi/linux/dm-ioctl.h:
+> 
+> struct dm_ioctl {
+> ...
+>         __u32 data_size;        /* total size of data passed in
+>                                  * including this struct */
+> 
+>         __u32 data_start;       /* offset to start of data
+>                                  * relative to start of this struct */
+> ...
+>         char data[7];           /* padding or data */
+> };
+> 
 
-Signed-off-by: Liao Yuanhong <liaoyuanhong@vivo.com>
----
- drivers/md/dm-table.c | 4 ----
- 1 file changed, 4 deletions(-)
+Ugh...  Those comments are out of date.
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 41f1d731ae5a..823f2f6a2d53 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1663,10 +1663,6 @@ static int validate_hardware_zoned(struct dm_table *t, bool zoned,
- 		return -EINVAL;
- 	}
- 
--	/* Check zone size validity and compatibility */
--	if (!zone_sectors || !is_power_of_2(zone_sectors))
--		return -EINVAL;
--
- 	if (dm_table_any_dev_attr(t, device_not_matches_zone_sectors, &zone_sectors)) {
- 		DMERR("%s: zone sectors is not consistent across all zoned devices",
- 		      dm_device_name(t->md));
--- 
-2.25.1
+What happened was that back in the day we added padding to make the
+struct the same size on both 32 bit and 64 bit so that we could do
+pointer math like "param + 1" and it would work on both arches.
+But they couldn't call it "padding" because there was already a struct
+member with that name so it was called "data".
+
+And then people started using it for data and made it a variable length
+array.  When it's a variable length array obviously "param + 1" is not
+going to work.  So the original purpose of the padding is now gone.
+
+So now to calculate the real, allocated size of the struct we take
+the sizeof() of the struct, subtract 7, and add the number of bytes in
+->data[].  #LOL
+
+
+> The Subject in the email is "bug report", though. Is there something
+> here that is breaking?
+> 
+
+I was going to send an automated email but then I changed it.
+
+regards,
+dan carpenter
 
