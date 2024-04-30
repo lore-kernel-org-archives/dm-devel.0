@@ -1,56 +1,99 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f42.google.com (mail-lf1-f42.google.com [209.85.167.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6AE98770F2;
-	Tue, 30 Apr 2024 15:39:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F30B171E67
+	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 16:12:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714491574; cv=none; b=uHKcxCoi8T1oJ003c8tWR89DaJxQpyBSTGZXOEbNG1C/LcYBi/D4JFXgEHeOBxB8Ajp6vkWr1xNFqPks62h6QRlW2AhfRcoVt3wo4skz9mVjSMxHjM9xWRgzsXqaSmh3PlN6WMSORc8bW9pydsjEgURaWcrvdtZ0jXFBs2f1w3Q=
+	t=1714493572; cv=none; b=eXUVLNclR686q87UeGhA7k6RMuHpLHciL+7LEnIyxDin4Yd2YE9Bb5ZQ0ZV4BHTyCFSsJxDjADwVLskDpxEPUkS+WcKGi40AO8yvWysE6G0qj4Ub1OrpWeIT68wFiRf7G0hVIZpYXDzt7xb7F381wS8wH0KOohkZ7gmmTvJdYDM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714491574; c=relaxed/simple;
-	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=i16q1btuZ+fGii1Zn1h4Hv2bBtLtk5xDZQIQ7lI6X7PtL4+6u0wPo42zMpBz9EJnYSXMoPe30VEded6QyNfHHECzPHg8Us3BAGc+eAoX4MeHh0vxCwmBGcWqDk4yY7O8knLhH3OLBzlrODS90OdoNREJDeo7rk66Jy+YHRmnzOs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=HO7ChlXT; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1714493572; c=relaxed/simple;
+	bh=BoGZkMO6fkNInTqbk+uc/HetlMwIedWQg89taSWr3fQ=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=rf4YPLZy7zFLKFhvD6jfHcYqIJhDJsyBy41i9xlxV1KRJpPL/WDMFc2CRHktz3rHkv1KBFr6MuwRGLMnBvpg0n+uvBJwJBrwLClmztHopS0MvsLnRACtw4040wrY8/8NZPS5vxgtL+kk7DWOvFQrprNBa0PxNhhgr1wQX5caaTM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linbit.com; spf=pass smtp.mailfrom=linbit.com; dkim=pass (2048-bit key) header.d=linbit-com.20230601.gappssmtp.com header.i=@linbit-com.20230601.gappssmtp.com header.b=TfUej9Ka; arc=none smtp.client-ip=209.85.167.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linbit.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linbit.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="HO7ChlXT"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=HO7ChlXTCLedVUpDtcLze9Kupg
-	8VOrV0A9wY2Z+aUMmgVukT9u4CGF+FKaI1OUK/40C8leUl+lrYt+brT9eTQcIWZ8i25MPzFqYHdHq
-	uKs0Tw4AI/nxUQDwhXIr0NmLN8a0TyFXFuMFBzfDWLSBIxlECqkvIUtJhBWBrmP8xl0YXyYwtRGVb
-	lxJh6I9Ilpdsqn9pSwKOnCZC/tjYG5z15P52Q1/3KetkWT1y+8TF/YsfSzno3nGj1I5SKP6tjaHSR
-	hBr327ErPemcJpSW+7/FYNqG4vM3qmZrIHwGpwGMgAS+f1kvHG+YFGTmjgnBS4a3QeifLBg9o5tSB
-	3W+OpOSQ==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1s1pZs-0000000755I-3Xd0;
-	Tue, 30 Apr 2024 15:39:32 +0000
-Date: Tue, 30 Apr 2024 08:39:32 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
-	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 11/13] block: Improve zone write request completion
- handling
-Message-ID: <ZjEQtGbeCMGawk8y@infradead.org>
-References: <20240430125131.668482-1-dlemoal@kernel.org>
- <20240430125131.668482-12-dlemoal@kernel.org>
+	dkim=pass (2048-bit key) header.d=linbit-com.20230601.gappssmtp.com header.i=@linbit-com.20230601.gappssmtp.com header.b="TfUej9Ka"
+Received: by mail-lf1-f42.google.com with SMTP id 2adb3069b0e04-51d62b0ecb7so4896096e87.3
+        for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 09:12:50 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linbit-com.20230601.gappssmtp.com; s=20230601; t=1714493568; x=1715098368; darn=lists.linux.dev;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=BoGZkMO6fkNInTqbk+uc/HetlMwIedWQg89taSWr3fQ=;
+        b=TfUej9KaGlU58Wqb9MuEYfva2Kygn5bFF8ZCEli1ZI9ZUSrF4j/4exz+fLtE1HkWPm
+         ZdDEfhxNprvfTfeCRYwH2afro10VfOqpIKe7K3cgRDotqfz2nAZw8Lm5i+JYUhrGxZ8j
+         YSfBCE22uhP/vCmLJHpkZOUH1qsMa1Gm3wrtwI4Tv/TDCEasjZk+Jl+5uiCCYOn/+8NN
+         ngslPdelNZpu+pgJgV1ArhqpjNEqXpQPfuuU8iDv5tzqKjl7zEZN+TpUDFSUApVz9f1I
+         P9FDRnGL+NaXEcwTObiKDdh3c8n/Lmk9CTOAlXH9sVFJPSLjJ4DQbFc/2q5vGgGUKFIf
+         7n+w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714493568; x=1715098368;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=BoGZkMO6fkNInTqbk+uc/HetlMwIedWQg89taSWr3fQ=;
+        b=sBDwPh5iTYxQF6Hp/EkFG9lYNvz+w47VuX5c61PZM/M3VPo0h/Cf/mM8vae0hc0bt0
+         X4botlY9zXqpjF46ULlTD5pFfLXJ+Re40Y0Hp6oJ11i9iyrm/dlGjVUHwFbYxL4jsSk7
+         DdVzOjNZEpP9oeQoql6ipm5cilSOsX/G5c47zbnkNOxoASZOfjEMBgvcUeAL83La7H0E
+         LNB8Mqj+vQJkcctZGmsl0v+jCN8QTZL2IRFmYXpi79E+nbKHeZxDfpkrjUj9PKiRcsDW
+         fhkAKCYxKBitkFcpSWDnjfA6kHGlGS+FcE9X8UotEFgaQljjYo43+mYEJGhNKGmHVtPz
+         qB/Q==
+X-Forwarded-Encrypted: i=1; AJvYcCXhc7CZcPoXAFHd84QJUr8HsEkLmAlHMwuTgmeit7CV4upQmBXNEep7AmZfemLb3H6w0TfEEiQ1uKTeGZJNicMyr3uYBjyiFhM=
+X-Gm-Message-State: AOJu0Yw8ycLQ+hC6TiiNsCpeBq8bALdGsmg5r3RtEeTqXTM6fKdYBNOD
+	fKxgNNb8DyqBUN8J02FANHD4gyg7EIyTiiw+Rilq8OheVJLVstJkaF7tqJyv2m9QI/wyezD3UV6
+	h2L/fWdtSPOdXgUbM4QLDvh0hwQAgoMvqKQut7g==
+X-Google-Smtp-Source: AGHT+IGiw736SWHN5lPtqiIAKDxxRH4iuI88nVBI0BdBh3W3mvh2Yz7DXlY1t0BvpVo0g6DcryRYHBZE/xkK65u9MNQ=
+X-Received: by 2002:a05:6512:2033:b0:51d:9e17:29f0 with SMTP id
+ s19-20020a056512203300b0051d9e1729f0mr5377196lfs.24.1714493568350; Tue, 30
+ Apr 2024 09:12:48 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240430125131.668482-12-dlemoal@kernel.org>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+References: <20240426072135.291206-1-joel.colledge@linbit.com>
+ <20240426072135.291206-2-joel.colledge@linbit.com> <71a31fdb-fad6-4ce9-bda0-2f86633d23a3@arm.com>
+ <CAGNP_+Uocb_8YtY9P3EuMQ8sQwWaQtqEMszqbGZrVyrKw-udRg@mail.gmail.com> <bc673c7e-f705-46ce-a3c0-0d34f612fe30@arm.com>
+In-Reply-To: <bc673c7e-f705-46ce-a3c0-0d34f612fe30@arm.com>
+From: Joel Colledge <joel.colledge@linbit.com>
+Date: Tue, 30 Apr 2024 18:12:37 +0200
+Message-ID: <CAGNP_+WStY+C9=eT=gzC-dYhMtPTj4kzKDSuYiVHi0w41Qa_8w@mail.gmail.com>
+Subject: Re: [PATCH 1/1] dm-delay: fix hung task introduced by kthread mode
+To: Christian Loehle <christian.loehle@arm.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
+	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
 
-Looks good:
+On Tue, 30 Apr 2024 at 17:27, Christian Loehle <christian.loehle@arm.com> wrote:
+> On 30/04/2024 15:44, Joel Colledge wrote:
+> > On Tue, 30 Apr 2024 at 16:28, Christian Loehle <christian.loehle@arm.com> wrote:
+> >> Is this an issue for delay > 0 too somehow?
+> >
+> > I believe it is. If there is simply no IO to the delay device, then
+> > nothing will wake the new thread and the same issue will occur.
+>
+> Yes, but might be better to just set_current_state(TASK_INTERRUPTIBLE);
+> instead of the wakeup.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+I'm afraid I don't follow what you mean.
+set_current_state(TASK_INTERRUPTIBLE) would need to be called from the
+worker, but the worker isn't running yet, so it can't do that.
 
+When preparing this patch, I checked how common kthread_create()
+followed by wake_up_process() is. It is fairly common according to
+this very approximate metric:
+$ grep -r -I -A10 kthread_create | grep -c wake_up_process
+49
+
+I just looked through those matches in more detail and noticed that
+there is a kthread_run() macro which does exactly what we need. I will
+change my suggestion to use that instead.
+
+I will wait for more comments before sending a new version of the patch.
+
+Best regards,
+Joel
