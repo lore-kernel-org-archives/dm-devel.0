@@ -1,109 +1,78 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A55B172786;
-	Tue, 30 Apr 2024 12:51:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id E169117B4E6
+	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 14:28:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714481508; cv=none; b=l4kfPZiLjcj5vNJ4Oz2QqDOlMQGEnsDPY93N2oNdjLONoxp2KuDGc0EdostDA/08U1kH4dlj5BU1kagfOU3EfaNRWRQVc+a9UnzPctj2bknbTWaFTDK/23cNMvR62/QGi7tgr15FTv8Wjki1WOwCpqnIgHRv1Bykar7PjOlX3o0=
+	t=1714487310; cv=none; b=s+sg71CEGdJdjpCB+eqRX2FwEkyzP+/98HNKbvvjtAAManKf27UcrUGIe4EYOJLkl2o8AWkupVM4aLfMfa3FqkqPOzR4VkDA+i7p3ex19iMQ5V9/iAmhabL+8BFpglZyn+rsbiqkjpeE6QiBiH/urIoMqHGoLOic2tkGJgRgS+Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714481508; c=relaxed/simple;
-	bh=MRdsW+P27msNbM9tQINbf8dXSKB5x61YZFCUVVelG0s=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Cu2WIk0d64GBkeeieeNMv4r6SPkS3/Hs0J99XoNI66Ohbzx8zRmNW4klHiGXYxPh9OKEK/ijbKqZwzwZQ2pTmcWJkD/YJZGSN+h+x90yZJSqlibaIOoHTcoVNoQZWG6Hd+URuWN17uaqkaPQYMnlUTv9sZRawcne151yvHC1iKU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=c+c0XlHH; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="c+c0XlHH"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 913D6C4AF1A;
-	Tue, 30 Apr 2024 12:51:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714481508;
-	bh=MRdsW+P27msNbM9tQINbf8dXSKB5x61YZFCUVVelG0s=;
-	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=c+c0XlHHCFAY3y7MdcnsytME+c7zoExZBJc36mzxXfobcxFBvf3bbsp+10sISLbyN
-	 wUtOm31n+fUVNN0iyxixEbahBWhqOKIRICR0lfE6HR1/TMD/wyQh8qiSMxLMi8YBy9
-	 J8QMdhff6QwkFgrVD8YYVOJIxCnXLVS8teSZ3BPcfNPQozHJ5CmRm+SNBqAhEBWzg8
-	 ItNCD6Gv3Uj5umlql5BtQwx80Y5mniiZtWnEqaVQD3wRZ2YJ7FlrWzqwsQAtNKIW6P
-	 US7ckcadrwnHVVO7VqxgqXV5i7dqPs8nNn+C0xKLTVUzaMaCwAWJlXKvrmpoHvQ2OJ
-	 ww+UuDTqvD5SQ==
-From: Damien Le Moal <dlemoal@kernel.org>
-To: linux-block@vger.kernel.org,
-	Jens Axboe <axboe@kernel.dk>,
-	dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 13/13] block: Simplify zone write plug BIO abort
-Date: Tue, 30 Apr 2024 21:51:31 +0900
-Message-ID: <20240430125131.668482-14-dlemoal@kernel.org>
-X-Mailer: git-send-email 2.44.0
-In-Reply-To: <20240430125131.668482-1-dlemoal@kernel.org>
-References: <20240430125131.668482-1-dlemoal@kernel.org>
+	s=arc-20240116; t=1714487310; c=relaxed/simple;
+	bh=SygWmh4EZ/7zQA+H95ZTjYhUpXgz3ERjUz5ElgN46EM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Qfs32uQLVmqUsLUpz+nw0FXuUM8KCtg9kOJ3mie4JSqw7Js+1foN6uSJv5KqjF9sgDHIUPwDDMvWDBxUbI1x+W6PbZBJBDv5oEV39oFvKps1rcDi8U/zygwXr62mBZq1lYAJo//MozqaOi+tVvfL+luzn8L9cC/KwGFBLVTLV40=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; arc=none smtp.client-ip=217.140.110.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id A22562F4;
+	Tue, 30 Apr 2024 07:28:53 -0700 (PDT)
+Received: from [10.1.35.31] (e133047.arm.com [10.1.35.31])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 3AA4A3F793;
+	Tue, 30 Apr 2024 07:28:26 -0700 (PDT)
+Message-ID: <71a31fdb-fad6-4ce9-bda0-2f86633d23a3@arm.com>
+Date: Tue, 30 Apr 2024 15:28:24 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/1] dm-delay: fix hung task introduced by kthread mode
+To: Joel Colledge <joel.colledge@linbit.com>,
+ Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@lists.linux.dev
+References: <20240426072135.291206-1-joel.colledge@linbit.com>
+ <20240426072135.291206-2-joel.colledge@linbit.com>
+Content-Language: en-US
+From: Christian Loehle <christian.loehle@arm.com>
+In-Reply-To: <20240426072135.291206-2-joel.colledge@linbit.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-When BIOs plugged in a zone write plug are aborted,
-blk_zone_wplug_bio_io_error() clears the BIO BIO_ZONE_WRITE_PLUGGING
-flag so that bio_io_error(bio) does not end up calling
-blk_zone_write_plug_bio_endio() and we thus need to manually drop the
-reference on the zone write plug held by the aborted BIO.
+On 26/04/2024 08:21, Joel Colledge wrote:
+> If the worker thread is not woken due to a bio, then it is not woken at
+> all. This causes the hung task check to trigger. For instance, when a
+> delay of 0 is configured, delay_bio() returns without waking the worker,
+> so this situation occurs.
+> 
+> Prevent the hung task check from triggering by waking up the newly
+> minted worker in delay_ctr().
+> 
+> Fixes: 70bbeb29fab0 ("dm delay: for short delays, use kthread instead of timers and wq")
+> Signed-off-by: Joel Colledge <joel.colledge@linbit.com>
+> ---
+>  drivers/md/dm-delay.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+> index 5eabdb06c649..003512bb5fea 100644
+> --- a/drivers/md/dm-delay.c
+> +++ b/drivers/md/dm-delay.c
+> @@ -274,6 +274,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  			dc->worker = NULL;
+>  			goto bad;
+>  		}
+> +		wake_up_process(dc->worker);
+>  	} else {
+>  		timer_setup(&dc->delay_timer, handle_delayed_timer, 0);
+>  		INIT_WORK(&dc->flush_expired_bios, flush_expired_bios);
 
-Move the call to disk_put_zone_wplug() that is alwasy following the call
-to blk_zone_wplug_bio_io_error() inside that function to simplify the
-code.
+Is this an issue for delay > 0 too somehow?
+Indeed if we don't have a delay the process will never be woken up,
+but in that case, why create the worker in the first place?
 
-Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
----
- block/blk-zoned.c | 15 +++++++--------
- 1 file changed, 7 insertions(+), 8 deletions(-)
+You're missing lkml as recipient btw.
 
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index c819e3cc7a20..ed180fdf66f4 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -616,12 +616,14 @@ static struct blk_zone_wplug *disk_get_and_lock_zone_wplug(struct gendisk *disk,
- 	return zwplug;
- }
- 
--static inline void blk_zone_wplug_bio_io_error(struct bio *bio)
-+static inline void blk_zone_wplug_bio_io_error(struct blk_zone_wplug *zwplug,
-+					       struct bio *bio)
- {
--	struct request_queue *q = bio->bi_bdev->bd_disk->queue;
-+	struct request_queue *q = zwplug->disk->queue;
- 
- 	bio_clear_flag(bio, BIO_ZONE_WRITE_PLUGGING);
- 	bio_io_error(bio);
-+	disk_put_zone_wplug(zwplug);
- 	blk_queue_exit(q);
- }
- 
-@@ -632,10 +634,8 @@ static void disk_zone_wplug_abort(struct blk_zone_wplug *zwplug)
- {
- 	struct bio *bio;
- 
--	while ((bio = bio_list_pop(&zwplug->bio_list))) {
--		blk_zone_wplug_bio_io_error(bio);
--		disk_put_zone_wplug(zwplug);
--	}
-+	while ((bio = bio_list_pop(&zwplug->bio_list)))
-+		blk_zone_wplug_bio_io_error(zwplug, bio);
- }
- 
- /*
-@@ -655,8 +655,7 @@ static void disk_zone_wplug_abort_unaligned(struct gendisk *disk,
- 		if (wp_offset >= zone_capacity ||
- 		    (bio_op(bio) != REQ_OP_ZONE_APPEND &&
- 		     bio_offset_from_zone_start(bio) != wp_offset)) {
--			blk_zone_wplug_bio_io_error(bio);
--			disk_put_zone_wplug(zwplug);
-+			blk_zone_wplug_bio_io_error(zwplug, bio);
- 			continue;
- 		}
- 
--- 
-2.44.0
-
+Kind Regards,
+Christian
