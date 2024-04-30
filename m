@@ -1,98 +1,92 @@
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
+Received: from mail-io1-f47.google.com (mail-io1-f47.google.com [209.85.166.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4DE22175560
-	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 17:54:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 93C38184136
+	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 19:04:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714499694; cv=none; b=Y694g3eEzaf88Oq2Tc7Cc2gtrrv7ncWZgmfQUI6EjiGg8uR3LsabZheqzka7pLDtP7vzEXuA/lkhEY7D2mapTy7M8F8sSuWAMnWbymjrPaSQq7Jn5+XRFJOz2OBb2F3XXUy35f6l5gvFQ9NuOFcfyy/floich/aj+fGNme/5eno=
+	t=1714503897; cv=none; b=uDFvI0Sbb8p4cWjnB5IB0JCiy7pree7gFWP/h+O6kttLv+WJte8juX4llZUfL7lKxP6LC3X8MRxArig270fA3C4HfTowqcJe/QYbSgjN+tjBLjKiuO2MPSMLeczmxOIuLmeisS3lhyzEBgPFEzJ3U5OTB05SaqJGbkzfHI89JOg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714499694; c=relaxed/simple;
-	bh=JajfIpDaI/yq4q9+JKZr88WyiW/MMlFj62bmsJ8WTtY=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=ZjLXDJ7kgEjgaug04D50ui/n6ea3lBviBiNKfj0lLnA/9StwBhpwg9I43UMvE60DQbHXIqgFb8/AUlsB0T5XFDltRB3J1NqkRbsPC61v9dkjv2Hc3lrMYxj+4KxIjlMmsbtBbYgt1uVoko9R97uqJFpdb0poAEzP0QqwNQtKv7E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kC4ZOQev; arc=none smtp.client-ip=209.85.218.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1714503897; c=relaxed/simple;
+	bh=PUmwHRkZpZ8husnv2UW+PtgNM5uFoU+77Xz3woX3+jM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Q4aKXiweCVmcBmPhIINim5LoglMF2vnX8txAtJV+TcNiPoyQYg+/eJzgAKb6dgYZ/EtTFlRhg3zZMIZnnaRA8WoUITUztt/LSQvHTFFkzTdtBWQEgXIDx4YgrQc94NxL8hqsvnaA2Fr7c2RmQxN/rjt1hEeWiJ8r0ZQoVk+Bx9E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=19+jpnWX; arc=none smtp.client-ip=209.85.166.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kC4ZOQev"
-Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-a58e787130fso14003566b.0
-        for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 10:54:52 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="19+jpnWX"
+Received: by mail-io1-f47.google.com with SMTP id ca18e2360f4ac-7d9c78d1087so37688839f.2
+        for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 12:04:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714499691; x=1715104491; darn=lists.linux.dev;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=+cIvZk7m5hBvp56eIwGJOqKD7C6vbAOb/Qn31AA0GVM=;
-        b=kC4ZOQevfUTtmueLWKN9W/uoSJzLtDvhlKGv0Xd8pxfTlSrnxDOyxVNnSKNISxVtei
-         ex3FZVT3+lyo6YfTzg2PLgdCGq38CM+8RRMn3SPaaKlgXpE01IluiNkywgMULTlWBdod
-         YRNfIbi1i57kOfAT7ZZipiL/+DMmzeeaAmZ7FptWOe/Mx0r5nB9/v6v288IRxVpdKm34
-         I5nqaAFdYwCZAJTeHgp298r+5Fta6jPDyhdCdQljzqIidEA/YwmoI5hB4hSeODhwNNBf
-         VrJ/QUzZ7v0JpJPOBHDhrIXfIfY5DfrJITsaPG63nfO8oysgAVzsBuV9+9noSU9Pxoye
-         h5pw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714499691; x=1715104491;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1714503894; x=1715108694; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=+cIvZk7m5hBvp56eIwGJOqKD7C6vbAOb/Qn31AA0GVM=;
-        b=G023yKYWnss0nVTofEjS2WNjzN+mExHZ+cCO+fWWoxU6qJBZaL8ffjw4UW0Sp7z3xk
-         K7C+OO2L8/xgKmijHCktEL5JKKuuVe/6tskqkLqg0DkruWn+okpgeaTYhqqfQFY52bOD
-         LG+FZhAlZwEPw60ip+Ch+w+LlB11YAlPA2l4hKB+qjYNQsJyOLMN28/DRh/wWqR0xIoH
-         MwMEFpqmiLjr5uDQtmEALHP4aiIXR6Xyx9D21OdfLvDShnA9UCHbdsDATUlVrQhHb9iM
-         stl8CylqfE7dJR1OPd6YXV2XjS/mSoJ9e7gEHMUq4ttHvCm5GOZ+lg2/n6V9lE6rEbmh
-         umDg==
-X-Gm-Message-State: AOJu0YwfojhFKJbw4sq+XKbLfURoztgIpdtPQaceDZAdkVzvTVVjlahq
-	xoz6bwiu/cASerr6v5aIu+t8rlvu88lonu6iD3aZxhsi2R1lANC0r5+uYr+PMptVy3Nu8R1iZop
-	SZrXFIq5+wympof5Ipdr1hflvJxlsOuWi
-X-Google-Smtp-Source: AGHT+IEUVYhsoJDKegG1hBmdWUEyqOAfGkoV8feiTC5nx4mdcNpa+LlilCJM3DnTRfFfmcGB4QmLDHL1WYhU7PdSb70=
-X-Received: by 2002:a17:906:6c99:b0:a55:adf5:e698 with SMTP id
- s25-20020a1709066c9900b00a55adf5e698mr3320442ejr.28.1714499691347; Tue, 30
- Apr 2024 10:54:51 -0700 (PDT)
+        bh=8YdF3doTeWlJMwEbx+LBvN0OsrsY2e10ycxw5Z87MJI=;
+        b=19+jpnWXzrDWx25UDXriuluLgMwlYATokFUYIFJ98dWhHx7Hjq7Ew3TotcaP6gKgl3
+         Tat1gFdXzEA2c36B0TMP8+l6PaPtr7FOUHIHXSUxRE82yGW3XIcNBd43qHze7JyJ+s+m
+         VjHEjbkpspF+EBOy+8jju3GGBDTh/H168BeNJh4IOVrWSfQ3EmHIRG4CVAQjUq2BdJaE
+         oref2GkOrcLCMGRok6z0UHVdvb+8NfmpDzdmRyl+NsXbIYmiePLLY7Mb6Q+HzTgoRFbD
+         zSAijtsqR750YvGaUXCYnODSout2zZjtXbZI6YSZEamSIACQJscH7tiXeKziRxe9yko0
+         wLNg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714503894; x=1715108694;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=8YdF3doTeWlJMwEbx+LBvN0OsrsY2e10ycxw5Z87MJI=;
+        b=adck6yTHaSGfCGYIarB/oOczumQpFGfWuSZErrg2XroQcMGIp/u2n4KyGgtHGSV0th
+         972DtsycsU5mmrbnouLIYaq/ej3YJOOTqFnkgaLe5Fz6mTGp/6MYGcLofiLvn/Awk2Os
+         O6O68D8v+nHWZ5I44eMlxLfi0Br5G5Zfb8gHglBOOmG2uzBRQo4SRKBqCniyxeexgFC+
+         UlPlCAkDmpZDmtYt0Fxty6rcjqz6hLIHfRP2Re+a8z/YpAaszUp3mp5Vkl05Fctv+M6r
+         dgmq2obDltdVs1qcYj5VdixcQhTHitKvl3rLn9dXNmGsAer7YNPz0aoLWhj8ZaMxpioZ
+         F9hw==
+X-Forwarded-Encrypted: i=1; AJvYcCVuO7ZYW1bCTH6nb9bYIkR+VYrTbIlx9r5eOwaNep4xaeLsf/o3rxB9bDW+hbANtRQCTo7rcwsvpEGZ6ZmjH4NavJ4AYFS/t24=
+X-Gm-Message-State: AOJu0YzajWHnWx6UnmTPCeSdIHyaQLLzNXZ7XdJ/A5BW8rZpfx6xjExu
+	K1qx4iPQR0JNPLna+5W4hdwJkGQGG8u5YqQ3lx3yl2rEgAqszVDG/fKjzpU3A9g=
+X-Google-Smtp-Source: AGHT+IFVgLw+AgihydySRNu2M5TSCR05W5WyJs9fmLGdJVjuB078XWLK7FYrKmSFDiHD1ZNqTIIUkQ==
+X-Received: by 2002:a05:6602:2bd6:b0:7de:e495:42bf with SMTP id s22-20020a0566022bd600b007dee49542bfmr779930iov.1.1714503894503;
+        Tue, 30 Apr 2024 12:04:54 -0700 (PDT)
+Received: from [192.168.1.116] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id g3-20020a05660226c300b007deaecfe190sm2315494ioo.7.2024.04.30.12.04.52
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 30 Apr 2024 12:04:52 -0700 (PDT)
+Message-ID: <4c54e3c8-83ed-46dd-b437-2f01ab1cb866@kernel.dk>
+Date: Tue, 30 Apr 2024 13:04:51 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-From: Michael DiDomenico <mdidomenico4@gmail.com>
-Date: Tue, 30 Apr 2024 13:54:39 -0400
-Message-ID: <CABOsP2PL9AM5phv4ZhucGmpk6V1x+DozXLaPTBVaWqMdy-KdPA@mail.gmail.com>
-Subject: delete on snapshot does not free space
-To: dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 02/13] block: Exclude conventional zones when faking max
+ open limit
+To: Christoph Hellwig <hch@infradead.org>, Damien Le Moal <dlemoal@kernel.org>
+Cc: linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+ Mike Snitzer <snitzer@redhat.com>
+References: <20240430125131.668482-1-dlemoal@kernel.org>
+ <20240430125131.668482-3-dlemoal@kernel.org> <ZjENF8spyEWrGwws@infradead.org>
+Content-Language: en-US
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <ZjENF8spyEWrGwws@infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-this is probably expected behavior, but i'd like to confirm as i'm not
-a device-mapper expert
+On 4/30/24 9:24 AM, Christoph Hellwig wrote:
+> On Tue, Apr 30, 2024 at 09:51:20PM +0900, Damien Le Moal wrote:
+>> +	/* Resize the zone write plug memory pool if needed. */
+>> +	if (disk->zone_wplugs_pool->min_nr != pool_size)
+>> +		mempool_resize(disk->zone_wplugs_pool, pool_size);
+> 
+> No need for the if here, mempool_resize is a no-op if called for
+> the current value.
 
-we're using COW snapshots overtop of a readonly block device.  this
-seems to be working fine, however, when a person deletes files the
-blocks are not freed.  case in point a RO block device with a COW
-filled up to 100% as shown in df.  when i deleted some files to free
-space the usage never decreased
+Still cheaper than the function call though, so I think that's
+the right way to do it.
 
-to create the mount we do
+-- 
+Jens Axboe
 
-echo "0 <realsize> linear /dev/loop1 0" | dmsetup create roimage-base-real
-echo "0 <cowsize> linear /dev/loop2 0" | dmsetup create roimage-snap-cow
-echo "0 <realsize> snapshot-origin /dev/mapper/roimage-base-real" |
-dmsetup create roimage-base
-echo "0 <realsize> snapshot /dev/mapper/roimage-base-real
-/dev/mapper/roimage-snap-cow n 1" | dmsetup create roimage-cow
 
-mount /dev/mapper/roimage-cow /roimagemntpnt
-
-this is working as the origin device is Read-Only, but we can change files.
-
-so two questions come up
-
-1 when we delete files, how do we reclaim the space
-2 should/can we roll the snapshots to reclaim space?
-- if i wanted to create a new snapshot and discard the existing one,
-do i basically just to the fourth step again to a different device?  i
-haven't found a "clear" how-to on this.  most people just stop after
-the fourth line and then tear it all down
-
-ideally what i'm looking to do is create a filesystem where the base
-is read-only, but we can make changes.  i'm okay with all those
-changes getting lost after a reboot/unmount/etc.  the issue right now
-is when df shows 100% usage it seems the only recourse is reboot(aka
-clear it all out) and restart.  i'm hoping there's something more
-graceful
