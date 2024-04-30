@@ -1,33 +1,33 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 877F486126;
-	Tue, 30 Apr 2024 23:06:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 358DD1C0DF2;
+	Tue, 30 Apr 2024 23:54:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714518395; cv=none; b=EUTbVHDGgfEEHh5hkFx2ChEg7r+MYPI8LD37GIYkXBlV42gb+CNJiWjDHI0VVE2ymiGiBhnvH6et/cvdyFEnDIlMKTSfiUz1/BRr4p/EARkzk5l7McJlEtfD8cPlzSGSDCBKEXhTvBN0TfW0pPkA1IM6QE/2s6IQnTXOk+FyKQA=
+	t=1714521253; cv=none; b=IQGYJtFOQ075m4TJfsQLO86+MzXkhiMVJLEfwjMKZEwY29ccGiZ+/aF9UfsWFK91PApP3a5jFTt5272WMmQWIubmI+YWs34j39obyInMi9WEcNsiO8Jt+tVEdTcVcCcXKMlo9F36Nhbxy6pzVcQvh6NJof+POM6s2UQa9Y7EaYc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714518395; c=relaxed/simple;
-	bh=S4ut/7XvqIQzLveGvtOkrN+JLgOAoBPjlRdfqvMcnkI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=B18ic1vuYpgU3FNl/lm++m8p/nY5lWKE59Ox4OoEB59FaeVDWHP81HJgYRnvAQYHu87VSY5Kjxh0lfXRK1djFZ5AazOwBO/ZYJs3cfxJguxRury3jyDPEwBHcMF1hxhJVVyYC2w7bpWm489P2ybmVX2GA9gsFmTtuGki58z+v4g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ojjtfMpZ; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1714521253; c=relaxed/simple;
+	bh=16TKyee9xwfwynR6ebfGiZnEQ4JTQhjjnPkcYzMGjIY=;
+	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
+	 In-Reply-To:Content-Type; b=l8KBRhi+BSr1wgFOLf+fz7AL5zpxo1PzxMUu1UgMVrlrkt8tDK8boV4XNeP4Fe7ByOvoe565Lhp2Q1AtPUa0sByPo1vunznI/CWvgMpABU6tBVGg3+0IcQJLe5YvbgzsAYIzcjWTWGL5vtvclUA0HoSEZdlNj1BF75iKtepf3sU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=J4L3vpKz; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ojjtfMpZ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 38BACC2BBFC;
-	Tue, 30 Apr 2024 23:06:34 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="J4L3vpKz"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CF98CC2BBFC;
+	Tue, 30 Apr 2024 23:54:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714518395;
-	bh=S4ut/7XvqIQzLveGvtOkrN+JLgOAoBPjlRdfqvMcnkI=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=ojjtfMpZi3pMVpux+CtFjdcS9e/g/fCjkpOzb45Avs/JvinZJyhmL5V2L/SmTKk3/
-	 +/+oFNofpiFQwHq7MI4cztdJUDbFTZGdljupEHK2uoyCWzx06w9kvJetquVT6WZR4T
-	 BiSnHuif8kcWarsp2byvo3Y0ixFpE5NG1aPOQah+Jm24H3X2bQtvEhXTmntseaYJeD
-	 90fY8uidMF0Fcpnx8Fwyko4jhsEh7G2u+KBZJPgd3PX//s+x0D+uhJkXCRlCDiETLD
-	 HkPRhYpkoalSaeQrsa7CnfKnracBLgEoJrrMGwmhwOOCE1X+3+YtNoaBNLnxJF9cs1
-	 a9zIsfHpzi6eg==
-Message-ID: <6c974d9e-4bf4-4ddf-a593-a108c8a759f5@kernel.org>
-Date: Wed, 1 May 2024 08:06:33 +0900
+	s=k20201202; t=1714521252;
+	bh=16TKyee9xwfwynR6ebfGiZnEQ4JTQhjjnPkcYzMGjIY=;
+	h=Date:Subject:From:To:Cc:References:In-Reply-To:From;
+	b=J4L3vpKzfDbnGvjyGwPx4o+3jpRelBE4WA5BjBj5RfOY04334GZmTlkfmymRgkNPl
+	 tp+UzmVW/E0crMGmNpnVEVxKPvqX3YpC0s3+32S5xuq+SxYlEtEmdBUeGRbdqEreJI
+	 sfbfGu5lqx6yi7r+oPskU1cKxWU4uEbemRnkMlMC9sxIq5t0uirnWF0VMiwxxR5G6S
+	 +qwGmlhR1ZgAgd6uPDzyy2POo31rIpOS5jmPNrB3gqD1iXzJ9Gpm/O5NX+mlRTnZUD
+	 btfRS1ObNSITYVpl6Jk2Up8moLtK9UwLRQkfZoISB1AiQ8bTOYgU/Es+gDVaW5HDCk
+	 C/WI6e/hIBjJg==
+Message-ID: <a15959d6-fbf1-4819-9fcc-45b48975da48@kernel.org>
+Date: Wed, 1 May 2024 08:54:10 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,49 +35,35 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 07/13] block: Do not remove zone write plugs still in use
+Subject: Re: [PATCH 03/13] block: Fix zone write plug initialization from
+ blk_revalidate_zone_cb()
+From: Damien Le Moal <dlemoal@kernel.org>
 To: Christoph Hellwig <hch@infradead.org>
 Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
  dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
 References: <20240430125131.668482-1-dlemoal@kernel.org>
- <20240430125131.668482-8-dlemoal@kernel.org> <ZjEPdVYmPYt2ilAu@infradead.org>
+ <20240430125131.668482-4-dlemoal@kernel.org> <ZjENmQ6d0tayg_YR@infradead.org>
+ <c3df1441-94a1-4b7b-b9ed-733d1a1a0639@kernel.org>
 Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
 Organization: Western Digital Research
-In-Reply-To: <ZjEPdVYmPYt2ilAu@infradead.org>
+In-Reply-To: <c3df1441-94a1-4b7b-b9ed-733d1a1a0639@kernel.org>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
-On 5/1/24 00:34, Christoph Hellwig wrote:
->> Fix this by modifying disk_should_remove_zone_wplug() to check that the
->> reference count to a zone write plug is not larger than 2, that is, that
->> the only references left on the zone are the caller held reference
->> (blk_zone_write_plug_complete_request()) and the initial extra reference
->> for the zone write plug taken when it was initialized (and that is
->> dropped when the zone write plug is removed from the hash table).
+On 5/1/24 07:50, Damien Le Moal wrote:
+> On 5/1/24 00:26, Christoph Hellwig wrote:
+>> Looks good:
+>>
+>> Reviewed-by: Christoph Hellwig <hch@lst.de>
+>>
+>> Although I suspect that at some point blk_revalidate_zone_cb should
+>> grow separate helpers for the conventional and sequential required cases
+>> as the amount of code in that switch statement is getting a bit out of
+>> bounds..
 > 
-> How is this atomic_read() based check not racy?
+> Yep, will clean that up later (next cycle).
 
-Because of how references work:
-1) A valid and unused zone write plug has a ref count of 1
-2) A function using a write plug always has a reference on it, so if the plug is
-valid and unused, the ref count is always 2
-3) Any plugged BIO and in-flight BIOs and requests hold a reference on the plug.
-So if the plug is used for BIOs, the reference count is always at least 2, and
-when a function is using the plug the refcount is always at least 3
-
-Based on this, all callers of disk_should_remove_zone_wplug() will always see a
-refcount of 2 if the plug is unused, or more than 2 if the plug is being used to
-handle BIOs. Most of the time, checking for the BUSY (PLUGGED) flag catches the
-later case. But as explained in the commit message, chained BIOs due to splits
-can lead to bio_endio() execution order to change and to calls to
-blk_zone_write_plug_bio_endio() to be done after
-blk_zone_write_plug_finish_request() calls disk_zone_wplug_unplug_bio().
-Checking that the plug refcount is not more than 2 tells us reliably that BIOs
-are still holding references on the plug and that the plug should not be removed
-until all BIOs completions are handled.
-
-Does this answer your question ?
+I did it now. It is a nice cleanup. I added a patch to the series for that.
 
 -- 
 Damien Le Moal
