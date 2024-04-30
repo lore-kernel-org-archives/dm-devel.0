@@ -1,44 +1,44 @@
 Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4A60770F0;
-	Tue, 30 Apr 2024 15:24:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 209B5143752;
+	Tue, 30 Apr 2024 15:26:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714490650; cv=none; b=svrKTyndEjoxupiHPLVRUbjbI5I0G/7Dj2iuGyC1gU6R7aEUlPQAEKMxW7wtt353oiD1exjDZMJhmlKHBFhLymfnvHRNvp5ERT1brmQZXKECq6RIpcYSP3lIk36Z0xSKQwsq0drsZTrzN3UFwxPRDysLxjrnK2Zcf90L3/k1T98=
+	t=1714490779; cv=none; b=HNupQ3lwZmmKXWaYJiTNFds0hJT3JYC3euKiliRs9Yb54zsbBafL1+4e9txUkyOCIkNNv3dod6l3VvyoSmnSJS0rTEVmGle97fsui/CTvs0WjwYJNtIsu2OrWlc6n0AKjebydN5q8SV3KgR3/xmW5XT1x8FvmxVzGLZBnjyGqWU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714490650; c=relaxed/simple;
-	bh=uIlTWDEVP6/9STi4JRdV7hwIzRQX2pkyMuGrwfl2Y20=;
+	s=arc-20240116; t=1714490779; c=relaxed/simple;
+	bh=Kdkj1F/H5Nmqw6pFz6r75/IMXjIFnqcTnvbpEC7kWlU=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=QjAV+mRoyl9I8D8UWYEROHyk2KhhYJw/MEVZlmcn4637CH2nTKzpsa1/Wx5Ca9sozty6UpU1d+FaIjPDyFDR3+0Eyh5Y9jvRN/IRpD+K72afbYRZ8B3/Mtx1NufUmTI2RdZcFSxpotIOFm0Wbys9du6tApzL9k9tNWpFsJkDoUo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Goa3K8rm; arc=none smtp.client-ip=198.137.202.133
+	 Content-Type:Content-Disposition:In-Reply-To; b=LtNhMTHlt7Xfai0LuH4VKehzxsnOqtJPTvjRPAbbp6N6mjFFoR2DFIJlr2qQ+EUe8S/V2DTzrdo2kRiKT3p1h0BUyAdZ7jdNu80xme1EOrSmE0EnqBWX+lJJNGvzw6y886GDG1dAGlPjFZdRy5WPLi/lFW5+FPfhoSug0ePzlzs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=xYHfRdF4; arc=none smtp.client-ip=198.137.202.133
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Goa3K8rm"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="xYHfRdF4"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
 	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
 	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=7to6bsX34EJDGZQBW8ziRCIFjV3P/zRrci5apjZz7Ic=; b=Goa3K8rmCwqklydVl/Nggu5fJD
-	JvoYNNkQNgSdSqkqXhUnnpOT4J2bcvG2/wyWTqql51Lx7aS4MxjN7QHS5g/03pntI8xoHOTNmZdSN
-	wwf9xsDkf/MhDEiOVrcPnzwgmf8/p5x7Sc+am2hCh7dDFYGLmAWSd1c6naXVe9FztVOIE4VLGTDOv
-	cDk7tZhQr2oF5fKQpRagzOW5DX/6VRT53/ckZqnCa03vBBp0QjouD6C2kGBfmSKgxbpGreIXIqjOX
-	DYFYI2x2jUp1/N9x/9CaCCrDfDFM24JYaF5EjrQLOR96rhH6CzN0JHR+CJo6nQU5DxtxHr1TbgY6f
-	SHXq0WfQ==;
+	bh=Kdkj1F/H5Nmqw6pFz6r75/IMXjIFnqcTnvbpEC7kWlU=; b=xYHfRdF4yEePhlIvVCLJHZfVaj
+	WAhfN/bcTNGJabXqjn3nt6iAeZ+LCdd09DvBB9+4NaBC82eYmfkQHy69U8KJUeh2raUhq4trnisxA
+	+Xxx8ir6pQXPpJD0pUJ3wZctChkAj/hXYeqha/8//o959bAfvY6tpzY4HkuLZB+xkDbDnOwl7gRnW
+	/rh4r7tRcdVbxo3rt2LS5FIF94G89N+PnJQYojZZ7vLAKhqQMUeUKxJ2oHwumK0bIiDjyPxIRynzV
+	xKigj1BxSqxfQZaFzMqW9hgvu6IC4ULajIY4i8huucmxlT+Y61rBLb3cpudaZ2bQXOqCoTtF5HfR5
+	o5+8tQgw==;
 Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1s1pKx-000000071d8-2tIE;
-	Tue, 30 Apr 2024 15:24:07 +0000
-Date: Tue, 30 Apr 2024 08:24:07 -0700
+	id 1s1pN3-0000000720r-342x;
+	Tue, 30 Apr 2024 15:26:17 +0000
+Date: Tue, 30 Apr 2024 08:26:17 -0700
 From: Christoph Hellwig <hch@infradead.org>
 To: Damien Le Moal <dlemoal@kernel.org>
 Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
 	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 02/13] block: Exclude conventional zones when faking max
- open limit
-Message-ID: <ZjENF8spyEWrGwws@infradead.org>
+Subject: Re: [PATCH 03/13] block: Fix zone write plug initialization from
+ blk_revalidate_zone_cb()
+Message-ID: <ZjENmQ6d0tayg_YR@infradead.org>
 References: <20240430125131.668482-1-dlemoal@kernel.org>
- <20240430125131.668482-3-dlemoal@kernel.org>
+ <20240430125131.668482-4-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -47,17 +47,15 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240430125131.668482-3-dlemoal@kernel.org>
+In-Reply-To: <20240430125131.668482-4-dlemoal@kernel.org>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Tue, Apr 30, 2024 at 09:51:20PM +0900, Damien Le Moal wrote:
-> +	/* Resize the zone write plug memory pool if needed. */
-> +	if (disk->zone_wplugs_pool->min_nr != pool_size)
-> +		mempool_resize(disk->zone_wplugs_pool, pool_size);
-
-No need for the if here, mempool_resize is a no-op if called for
-the current value.
-
-Otherwise looks good:
+Looks good:
 
 Reviewed-by: Christoph Hellwig <hch@lst.de>
+
+Although I suspect that at some point blk_revalidate_zone_cb should
+grow separate helpers for the conventional and sequential required cases
+as the amount of code in that switch statement is getting a bit out of
+bounds..
+
