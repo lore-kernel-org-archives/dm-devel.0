@@ -1,75 +1,71 @@
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 533287711D
-	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 15:27:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72FC514374D;
+	Tue, 30 Apr 2024 15:28:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714490833; cv=none; b=SR1MY/dPcOn/Fr4letiFYHXkZtVtgJBGmZst0IZpnreoMPEvIiz00rQz2fihVtrPopHyIheNEtaNvUqQ2jgYXV1PDqwcRm4YJIYdQa6MPB3tYSI44KrVhafrKWZ41NUgthypnj7gmoPIz8fDDA/cdrgMs73uNqUivJNBqB8NgUU=
+	t=1714490940; cv=none; b=STwXjWGOXI4TJvuefxu6qQp20qH7Tr3cyttzr2/B6YzfYPXGu3z0HrWS7E0uUxDkTSmcS7rHWIt3mwKvkXMYsozXCnU+t8//6Yce5g0HlyhF/SvnhE42roDYcuOy48kG6Ww9LN72WNY51IB9Yh7W46tPoagn1x736n0TEZdNf/4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714490833; c=relaxed/simple;
-	bh=oSf2x27jJ1M2be9JySgfZ4rR1elPXE8NE7XAtU6bOEI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=P8H+majnCSYb6PZlsvaaaL8JLUXK1wC/2QLpENWcLNPZ0qkT7noasEtSMHizk+YIrEyhDiAIgLh/gfkjtSTz2Gz+S7msJOjAb6Cg9wW078QY/qv5RXWFqBk24GFz10gCv70E4tDJfjxRaCAXFRnIeu7ExUw4AMQitcoBszXgbXM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; arc=none smtp.client-ip=217.140.110.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 358202F4;
-	Tue, 30 Apr 2024 08:27:37 -0700 (PDT)
-Received: from [10.1.35.31] (e133047.arm.com [10.1.35.31])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 8AE883F793;
-	Tue, 30 Apr 2024 08:27:09 -0700 (PDT)
-Message-ID: <bc673c7e-f705-46ce-a3c0-0d34f612fe30@arm.com>
-Date: Tue, 30 Apr 2024 16:26:53 +0100
+	s=arc-20240116; t=1714490940; c=relaxed/simple;
+	bh=4wzhusDu2kottjdqxweKQCW8XSUzIVDg6+bz+ZC4EFc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=nXkg1QMmUfgDacWXrwpxIW/oHqTqBtZ6qCUDv0n1+gAIS6hM/2BxX1XwPdgmOOxmm7R8n7/7UxbKLHK6XAvm+HzpumHGCWLsRKXdvu1fRZEB+inxn3B3KujKODexHncYRkg1Gn/Erd1KWdTaWCEpC+0UcW2qLFtbxPigEAWXyuA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=qdxvIFt2; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="qdxvIFt2"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=anq8xj4KEPmVHzsx/ChTyefgFVUaW5U9Pqm8x8DaWIA=; b=qdxvIFt21NoPYGOE99HCCpoYAq
+	AX2A05PeK23yPJ6W/+Vg3hm8H1iHlYvcF0KCHbhsLVoliM8ue23S82s0bJ1GgKqZI1uvvoSPm6nub
+	WbAbleRLz9C9NXYuU/7rm/B6JJN87mFoIYtKf8Rr09iEjo/efVkMY39XlOwCMIuAP/BxzsjsmQZxB
+	BGEGgjCxvhrXN8YIg09u2HqTayYwbGZWX6bil6phhAlCQ0NzH9pvA16H60/YA7hQrXeus3LgUq/Rx
+	Ew0xF671IXsSR6ZieH928oQAEszqpSNXEXkh0Wf6dPWME/FQJIIOsWUqC7sp3jChcjPRqU6ZPLOeU
+	FYM/4SDA==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1s1pPf-000000072ic-06wM;
+	Tue, 30 Apr 2024 15:28:59 +0000
+Date: Tue, 30 Apr 2024 08:28:58 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 04/13] block: Fix reference counting for zone write plugs
+ in error state
+Message-ID: <ZjEOOmfY0e4Eve_9@infradead.org>
+References: <20240430125131.668482-1-dlemoal@kernel.org>
+ <20240430125131.668482-5-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/1] dm-delay: fix hung task introduced by kthread mode
-To: Joel Colledge <joel.colledge@linbit.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
-References: <20240426072135.291206-1-joel.colledge@linbit.com>
- <20240426072135.291206-2-joel.colledge@linbit.com>
- <71a31fdb-fad6-4ce9-bda0-2f86633d23a3@arm.com>
- <CAGNP_+Uocb_8YtY9P3EuMQ8sQwWaQtqEMszqbGZrVyrKw-udRg@mail.gmail.com>
-Content-Language: en-US
-From: Christian Loehle <christian.loehle@arm.com>
-In-Reply-To: <CAGNP_+Uocb_8YtY9P3EuMQ8sQwWaQtqEMszqbGZrVyrKw-udRg@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240430125131.668482-5-dlemoal@kernel.org>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On 30/04/2024 15:44, Joel Colledge wrote:
-> On Tue, 30 Apr 2024 at 16:28, Christian Loehle <christian.loehle@arm.com> wrote:
->> Is this an issue for delay > 0 too somehow?
-> 
-> I believe it is. If there is simply no IO to the delay device, then
-> nothing will wake the new thread and the same issue will occur.
+>  
+> +static inline void disk_zone_wplug_set_error(struct gendisk *disk,
+> +					     struct blk_zone_wplug *zwplug)
+> +{
+> +	if (!(zwplug->flags & BLK_ZONE_WPLUG_ERROR)) {
 
-Yes, but might be better to just set_current_state(TASK_INTERRUPTIBLE);
-instead of the wakeup.
+Can you just do an early return if the flag is not set instead of
+all the extra indentation?
 
-> 
-> I haven't yet reproduced this case, because the system I am testing on
-> submits reads on any new block device and I don't know offhand how to
-> disable them. I think the reads are from scans for multipathd,
-> bcachefs or similar.
-> 
->> Indeed if we don't have a delay the process will never be woken up,
->> but in that case, why create the worker in the first place?
-> 
-> I agree. If this were only an issue with delay == 0, it would make
-> more sense not to create the worker at all.
-> 
-> As mentioned above, I believe the issue can occur with delay > 0. So
-> not creating the worker in the delay == 0 case is an additional
-> optimization and out of the scope of this change.
+> +static inline void disk_zone_wplug_clear_error(struct gendisk *disk,
+> +					       struct blk_zone_wplug *zwplug)
+> +{
+> +	if (zwplug->flags & BLK_ZONE_WPLUG_ERROR) {
 
-Ah right because of the delay_is_fast() definition that is slightly more
-work.
+Same here.
 
-Regards,
-Christian.
+Otherwise looks good:
 
+Reviewed-by: Christoph Hellwig <hch@lst.de>
