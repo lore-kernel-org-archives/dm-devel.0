@@ -1,87 +1,67 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8702D1FB4
-	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 22:35:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0697EFBFD;
+	Tue, 30 Apr 2024 22:50:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714516558; cv=none; b=AZOg2JiNa9ClB5GbMjQXo3iptsto7MlZ/8e7saTFyEPJRWj333tk4g5+lLFhtT3gdUgOPTL0D1h1hZBPQCMNAUZ95f1NVWyA5ML/76tss/8rCUIDgvfWzriWBJdoNX6bdhdgDZUCUX6NqupUCraXqdqjXaBEMhq6fNhgWV82kPw=
+	t=1714517409; cv=none; b=UTABCsKT6IQDBHvcTPKYhELEYMA6kb56pne4UFp8gudSoGZCX1B6TVM/fs8JGsQa1C3kThBdTclNK3YxoN/8eljPLyssFLdJ867hShIx+L/3MKP5QahJKzIGw8jlyusADhVIgcJ1eR2G73KkY/NJwGeBTT5QFbYFJXiOLhKRjrc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714516558; c=relaxed/simple;
-	bh=y0aBHo99+nQo6uI6GjP6caA9eEMAKHmQHNrozchkme0=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=c36bvfgbIeBSf8tsDAxqkEJzcFPVjR2MiGvSTRymPOE0nR7eUIWCuU/4L71AOz4iEcsFHddDSMl42Q2Gb94HkB61LEIBjPWbcfRQbJBKxBYvRzVPDXwoDinQz2mNF1s/ihXu0qaoFc3SDPHJZfSZkHf1Fib87qdp1Auc35pjl7k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=G22f+uId; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1714517409; c=relaxed/simple;
+	bh=+0PCWyqq/oVXCE2rQysVcS78moJ/4NoK0UKhpjSntNE=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Mhx+Fv1leND0oZ1FzjP2gvfazOdvJMKArrC5iexWenxTkSgHUBGtUK+Gmaik+QglsfPrd4hLf5ZjMVToB6VnLUhnBgE94CpCSwK6VV0DONR8D0QGWvAW0SghxCJMFc0kzGvJZII0jYOIkrWhjJ8E/nZHVQ+WZ34vNaA3HfpqS4Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GQEHG/1s; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="G22f+uId"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1714516555;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=uQjgSpiKr36z/UJnNLHs2EcJ1dKnMR6JIrp3bMkPKwA=;
-	b=G22f+uIdbKwNtKuNsvPm5TBiBEiisLy6cp0cxcvVon8DcPxzBrYzlj/MAQvC1E33kzKYX5
-	kYQGr7XlHVpj5FVt57FQcVUF2SWLqbkdc5uzTtAoGXcbNnbwkZAbb2fyamIwmamzPns2pW
-	qJmI2VmAugvjHmOtSH05drNiAY1ooFI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-377-t82Vft6DMnygsaDfCSoOsQ-1; Tue, 30 Apr 2024 18:35:47 -0400
-X-MC-Unique: t82Vft6DMnygsaDfCSoOsQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6C99E100ADE4;
-	Tue, 30 Apr 2024 22:35:46 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3953140C140B;
-	Tue, 30 Apr 2024 22:35:46 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 43UMZjQf2342612
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 30 Apr 2024 18:35:46 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 43UMZiRb2342611;
-	Tue, 30 Apr 2024 18:35:44 -0400
-Date: Tue, 30 Apr 2024 18:35:44 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Liao Yuanhong <liaoyuanhong@vivo.com>
-Cc: bo.wu@vivo.com, dm-devel@lists.linux.dev, snitzer@kernel.org,
-        Pankaj Raghav <p.raghav@samsung.com>, damien.lemoal@opensource.wdc.com,
-        Bart Van Assche <bvanassche@acm.org>, Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH] dm-table:remove the restriction on zone sector being
- align to pow2
-Message-ID: <ZjFyQH7gr6-_9yIL@redhat.com>
-References: <Zi_sSyu7CWdFS_v7@redhat.com>
- <20240430033207.875-1-liaoyuanhong@vivo.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GQEHG/1s"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A1109C2BBFC;
+	Tue, 30 Apr 2024 22:50:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1714517408;
+	bh=+0PCWyqq/oVXCE2rQysVcS78moJ/4NoK0UKhpjSntNE=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=GQEHG/1sLAhUPRQZmDT3neMF6+qk5aDV7hhjR1BVbZHh7WylgcDhLtmo6CmehMc73
+	 S1satcH4jmqHqP0FcNPkBNhO1BKGd5Ok551I4FTeU0aE9ON1+ihWpttaIChlp5ILMv
+	 cmD5Sv2CjDZ7csQw/AI2HbnUVQXOBLM5ipadTNlaIgYD8P5bGGjsb2Kk5pw1GQtddw
+	 /13ucgIH8AFwGUzbdlFPgYqL/PUqWy5LZjWbaAVcN06aQtqIkNmZDwEfiHLnRtRJrw
+	 o+ESdXxsftgBpYDHjUmgpmFo2+MY22XXNY9OUSO94nNstVpW4B//iujUDdnxDNEBOG
+	 SSm2QBE9iN1Ng==
+Message-ID: <c3df1441-94a1-4b7b-b9ed-733d1a1a0639@kernel.org>
+Date: Wed, 1 May 2024 07:50:05 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240430033207.875-1-liaoyuanhong@vivo.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 03/13] block: Fix zone write plug initialization from
+ blk_revalidate_zone_cb()
+To: Christoph Hellwig <hch@infradead.org>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
+References: <20240430125131.668482-1-dlemoal@kernel.org>
+ <20240430125131.668482-4-dlemoal@kernel.org> <ZjENmQ6d0tayg_YR@infradead.org>
+From: Damien Le Moal <dlemoal@kernel.org>
+Content-Language: en-US
+Organization: Western Digital Research
+In-Reply-To: <ZjENmQ6d0tayg_YR@infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Tue, Apr 30, 2024 at 11:32:07AM +0800, Liao Yuanhong wrote:
-> Currently, the zone size of the ZoneUFS provided by Hynix is not aligned
-> to pow2. After testing on the mobile platform with this fix, we found 
-> that basic functionality can be executed. May we merge this patch first?
+On 5/1/24 00:26, Christoph Hellwig wrote:
+> Looks good:
+> 
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> 
+> Although I suspect that at some point blk_revalidate_zone_cb should
+> grow separate helpers for the conventional and sequential required cases
+> as the amount of code in that switch statement is getting a bit out of
+> bounds..
 
-The issue is that device-mapper makes assumptions in multiple places
-that zones are power of 2 sized. Simply removing this check will allow
-users to create broken device-mapper devices on top of non-power-of-2
-devices.
+Yep, will clean that up later (next cycle).
 
-A better solution would be to see if Pankaj Raghav's non-power-of-2 zone
-size patchset can be revisited.
-
--Ben 
+-- 
+Damien Le Moal
+Western Digital Research
 
