@@ -1,39 +1,39 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 777C1171096;
-	Tue, 30 Apr 2024 12:51:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 547E5171E40;
+	Tue, 30 Apr 2024 12:51:39 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714481498; cv=none; b=bSwjigDKomAGodhsEFneHZkxka3raYeiY2a/54BGxEC9qknv3VVReC/g4SA32wLSzCdj6lPwVlQHiIDp6MQMQwHFFxKoBGAGbRMhbaiJgKBJLcGp6mIV4S73mGlIUnCpdxgtaYAfGxz3Knh+6Nd2MUpI3YSPQpSat8hpRazz6MI=
+	t=1714481499; cv=none; b=F+/jXV8SdCxTpYeaslWiGS1+Btfa7fw9QAYTS4DlsTTsCgy1nFc1uVwCEpeLAKlTrNKuJFymE70QdsO2kgVGRaEDQKPp2nZBz+zVkeBzTI2Rts9yvCz3vhYMFHBlrAhli+htyR/NW3EamCv7J7hhOdZjLgkBrnFkoSmFqGeKuT0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714481498; c=relaxed/simple;
-	bh=cYF0XCVNaKjlif5lITJ69C3QuZHOBKVEAIwcOsZ0T2c=;
+	s=arc-20240116; t=1714481499; c=relaxed/simple;
+	bh=Lcxo+nJbtOj+dBCmtGlyawY7aPkYfCV2KhusyQ8HWSA=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=DZrUjlCH6QDzsB6OIdVXFjQjvpCMnISsGIlPp+0FXdKTjBrTx4e/4HTN+dUqYPmnLRSsLwrEomRX7Y16ZSRRHfInYDE9mSuIOwxFUs8o1ATk1dupSH3Jmx9bTiue1x1xwLg5zdcRW8UMHb1TWXkzvnI/VqvOeU3dXZjxG3uWpqU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=iK8rjibE; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=PmcDslyhvnwiPX+EAmEnjMUwUButUSRKou1VPb22fyMW3pu6kjraNd3bxRPh3tzuhOS93x/pIokLUgqWvwUqEXlApkpQ2h5mAuXHZxo2/A6wMEWITg/F2XjZzuJZqgIrnP7BYJhPF3kKjZmUjDw+d6p3HBFHeufqMGcAGtwSdSk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=tMDxgtF6; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="iK8rjibE"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4F44BC2BBFC;
-	Tue, 30 Apr 2024 12:51:37 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="tMDxgtF6"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7350BC4AF1A;
+	Tue, 30 Apr 2024 12:51:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714481498;
-	bh=cYF0XCVNaKjlif5lITJ69C3QuZHOBKVEAIwcOsZ0T2c=;
+	s=k20201202; t=1714481499;
+	bh=Lcxo+nJbtOj+dBCmtGlyawY7aPkYfCV2KhusyQ8HWSA=;
 	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=iK8rjibEgR+MpHYsDzLnIPZAbGundvGWASxah1oyyy22S9lQ2uK2zBk1AoeG9NnIr
-	 K1AIwpoJOlV+33Mx5D/mANSbwWAEwk2BHbnp6AHaDsI6dmo4WWKqFoWNKtFXI6sd24
-	 TvjUT4AwXKOhK0pBm39/fGYTLz8Lp9orSNVm52Z4c51VMUy4IFKGKuGjSjU7sBicdd
-	 Xu5g17D4wUcICV3whFqOiQfa7BZVs1GtONKy1wE5hB5lCuTBZZCfhNP6xLp4VKsgHr
-	 p/Hq/x71AguKRaQJixFrG/DPSNRiCEepQHjt9nWPG0i1SpWBBBYZKf7utc2fYnnjcP
-	 e0Yw44MNz5k6A==
+	b=tMDxgtF6V0cjqUvLRt4LpFVQ6nyk8THAKQm65pr7qEJyQO0kPIRcS6137aIYnEvwY
+	 YLW5kWFzqMloSNSj5rYKjtl9dg4r7nKJCWJO07g5OduWjPpAgJFLcNRje9g4LQEBZB
+	 YWvekfTFshder6QIWclK0CnddZT9qfRkE/sGBG3gaej7IDbaAbNEItQgF4I0fcUAei
+	 DquoEjEYCk7ZOOM37AyhmiF0aUmYdt0mx5jUiPDDzgnJztdJedcCu4rgRgXdeYZ+ZG
+	 1w9rMS3IfeSEjgiHVo8qsEBXghyU3gvLBCJOTBxJMM9IlAZG6iiA/1PifPa4h5VEvM
+	 DJlpKlAI6W6UA==
 From: Damien Le Moal <dlemoal@kernel.org>
 To: linux-block@vger.kernel.org,
 	Jens Axboe <axboe@kernel.dk>,
 	dm-devel@lists.linux.dev,
 	Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 04/13] block: Fix reference counting for zone write plugs in error state
-Date: Tue, 30 Apr 2024 21:51:22 +0900
-Message-ID: <20240430125131.668482-5-dlemoal@kernel.org>
+Subject: [PATCH 05/13] block: Hold a reference on zone write plugs to schedule submission
+Date: Tue, 30 Apr 2024 21:51:23 +0900
+Message-ID: <20240430125131.668482-6-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240430125131.668482-1-dlemoal@kernel.org>
 References: <20240430125131.668482-1-dlemoal@kernel.org>
@@ -45,133 +45,94 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-When zone is reset or finished, disk_zone_wplug_set_wp_offset() is
-called to update the zone write plug write pointer offset and to clear
-the zone error state (BLK_ZONE_WPLUG_ERROR flag) if it is set.
-However, this processing is missing dropping the reference to the zone
-write plug that was taken in disk_zone_wplug_set_error() when the error
-flag was first set. Furthermore, the error state handling must release
-the zone write plug lock to first execute a report zones command. When
-the report zone races with a reset or finish operation that clears the
-error, we can end up decrementing the zone write plug reference count
-twice: once in disk_zone_wplug_set_wp_offset() for the reset/finish
-operation and one more time in disk_zone_wplugs_work() once
-disk_zone_wplug_handle_error() completes.
-
-Fix this by introducing disk_zone_wplug_clear_error() as the symmetric
-function of disk_zone_wplug_set_error(). disk_zone_wplug_clear_error()
-decrements the zone write plug reference count obtained in
-disk_zone_wplug_set_error() only if the error handling has not started
-yet, that is, only if disk_zone_wplugs_work() has not yet taken the zone
-write plug off the error list. This ensure that either
-disk_zone_wplug_clear_error() or disk_zone_wplugs_work() drop the zone
-write plug reference count.
+Since a zone write plug BIO work is a field of struct blk_zone_wplug, we
+must ensure that a zone write plug is never freed when its BIO
+submission work is queued or running. Do this by holding a reference on
+the zone write plug when the submission work is scheduled for execution
+with queue_work() and releasing the reference at the end of the
+execution of the work function blk_zone_wplug_bio_work().
+The helper function disk_zone_wplug_schedule_bio_work() is introduced to
+get a reference on a zone write plug and queue its work. This helper is
+used in disk_zone_wplug_unplug_bio() and disk_zone_wplug_handle_error().
 
 Fixes: dd291d77cc90 ("block: Introduce zone write plugging")
 Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
 ---
- block/blk-zoned.c | 74 ++++++++++++++++++++++++++++++-----------------
- 1 file changed, 48 insertions(+), 26 deletions(-)
+ block/blk-zoned.c | 26 +++++++++++++++++++++-----
+ 1 file changed, 21 insertions(+), 5 deletions(-)
 
 diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index e92ae0729cf8..9bded29592e0 100644
+index 9bded29592e0..03555ea64774 100644
 --- a/block/blk-zoned.c
 +++ b/block/blk-zoned.c
-@@ -658,6 +658,53 @@ static void disk_zone_wplug_abort_unaligned(struct gendisk *disk,
- 	bio_list_merge(&zwplug->bio_list, &bl);
+@@ -1131,6 +1131,19 @@ bool blk_zone_plug_bio(struct bio *bio, unsigned int nr_segs)
  }
+ EXPORT_SYMBOL_GPL(blk_zone_plug_bio);
  
-+static inline void disk_zone_wplug_set_error(struct gendisk *disk,
-+					     struct blk_zone_wplug *zwplug)
++static void disk_zone_wplug_schedule_bio_work(struct gendisk *disk,
++					      struct blk_zone_wplug *zwplug)
 +{
-+	if (!(zwplug->flags & BLK_ZONE_WPLUG_ERROR)) {
-+		unsigned long flags;
-+
-+		/*
-+		 * At this point, we already have a reference on the zone write
-+		 * plug. However, since we are going to add the plug to the disk
-+		 * zone write plugs work list, increase its reference count.
-+		 * This reference will be dropped in disk_zone_wplugs_work()
-+		 * once the error state is handled, or
-+		 * in disk_zone_wplug_clear_error() if the zone is reset or
-+		 * finished.
-+		 */
-+		zwplug->flags |= BLK_ZONE_WPLUG_ERROR;
-+		atomic_inc(&zwplug->ref);
-+
-+		spin_lock_irqsave(&disk->zone_wplugs_lock, flags);
-+		list_add_tail(&zwplug->link, &disk->zone_wplugs_err_list);
-+		spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
-+	}
++	/*
++	 * Take a reference on the zone write plug and schedule the submission
++	 * of the next plugged BIO. blk_zone_wplug_bio_work() will release the
++	 * reference we take here.
++	 */
++	WARN_ON_ONCE(!(zwplug->flags & BLK_ZONE_WPLUG_PLUGGED));
++	atomic_inc(&zwplug->ref);
++	queue_work(disk->zone_wplugs_wq, &zwplug->bio_work);
 +}
 +
-+static inline void disk_zone_wplug_clear_error(struct gendisk *disk,
-+					       struct blk_zone_wplug *zwplug)
-+{
-+	if (zwplug->flags & BLK_ZONE_WPLUG_ERROR) {
-+		unsigned long flags;
-+
-+		/*
-+		 * We are racing with the error handling work which drops
-+		 * the reference on the zone write plug after handling the error
-+		 * state. So remove the plug from the error list and drop its
-+		 * reference count only if the error handling has not yet
-+		 * started, that is, if the zone write plug is still listed.
-+		 */
-+		spin_lock_irqsave(&disk->zone_wplugs_lock, flags);
-+		if (!list_empty(&zwplug->link)) {
-+			list_del_init(&zwplug->link);
-+			zwplug->flags &= ~BLK_ZONE_WPLUG_ERROR;
-+			disk_put_zone_wplug(zwplug);
-+		}
-+		spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
-+	}
-+}
-+
- /*
-  * Set a zone write plug write pointer offset to either 0 (zone reset case)
-  * or to the zone size (zone finish case). This aborts all plugged BIOs, which
-@@ -691,12 +738,7 @@ static void disk_zone_wplug_set_wp_offset(struct gendisk *disk,
- 	 * in a good state. So clear the error flag and decrement the
- 	 * error count if we were in error state.
- 	 */
--	if (zwplug->flags & BLK_ZONE_WPLUG_ERROR) {
--		zwplug->flags &= ~BLK_ZONE_WPLUG_ERROR;
--		spin_lock(&disk->zone_wplugs_lock);
--		list_del_init(&zwplug->link);
--		spin_unlock(&disk->zone_wplugs_lock);
--	}
-+	disk_zone_wplug_clear_error(disk, zwplug);
+ static void disk_zone_wplug_unplug_bio(struct gendisk *disk,
+ 				       struct blk_zone_wplug *zwplug)
+ {
+@@ -1150,8 +1163,8 @@ static void disk_zone_wplug_unplug_bio(struct gendisk *disk,
  
- 	/*
- 	 * The zone write plug now has no BIO plugged: remove it from the
-@@ -885,26 +927,6 @@ void blk_zone_write_plug_attempt_merge(struct request *req)
+ 	/* Schedule submission of the next plugged BIO if we have one. */
+ 	if (!bio_list_empty(&zwplug->bio_list)) {
++		disk_zone_wplug_schedule_bio_work(disk, zwplug);
+ 		spin_unlock_irqrestore(&zwplug->lock, flags);
+-		queue_work(disk->zone_wplugs_wq, &zwplug->bio_work);
+ 		return;
+ 	}
+ 
+@@ -1251,14 +1264,14 @@ static void blk_zone_wplug_bio_work(struct work_struct *work)
+ 	if (!bio) {
+ 		zwplug->flags &= ~BLK_ZONE_WPLUG_PLUGGED;
+ 		spin_unlock_irqrestore(&zwplug->lock, flags);
+-		return;
++		goto put_zwplug;
+ 	}
+ 
+ 	if (!blk_zone_wplug_prepare_bio(zwplug, bio)) {
+ 		/* Error recovery will decide what to do with the BIO. */
+ 		bio_list_add_head(&zwplug->bio_list, bio);
+ 		spin_unlock_irqrestore(&zwplug->lock, flags);
+-		return;
++		goto put_zwplug;
+ 	}
+ 
  	spin_unlock_irqrestore(&zwplug->lock, flags);
+@@ -1274,6 +1287,10 @@ static void blk_zone_wplug_bio_work(struct work_struct *work)
+ 	 */
+ 	if (bdev->bd_has_submit_bio)
+ 		blk_queue_exit(bdev->bd_disk->queue);
++
++put_zwplug:
++	/* Drop the reference we took in disk_zone_wplug_schedule_bio_work(). */
++	disk_put_zone_wplug(zwplug);
  }
  
--static inline void disk_zone_wplug_set_error(struct gendisk *disk,
--					     struct blk_zone_wplug *zwplug)
--{
--	if (!(zwplug->flags & BLK_ZONE_WPLUG_ERROR)) {
--		unsigned long flags;
--
--		/*
--		 * Increase the plug reference count. The reference will be
--		 * dropped in disk_zone_wplugs_work() once the error state
--		 * is handled.
--		 */
--		zwplug->flags |= BLK_ZONE_WPLUG_ERROR;
--		atomic_inc(&zwplug->ref);
--
--		spin_lock_irqsave(&disk->zone_wplugs_lock, flags);
--		list_add_tail(&zwplug->link, &disk->zone_wplugs_err_list);
--		spin_unlock_irqrestore(&disk->zone_wplugs_lock, flags);
--	}
--}
--
- /*
-  * Check and prepare a BIO for submission by incrementing the write pointer
-  * offset of its zone write plug and changing zone append operations into
+ static unsigned int blk_zone_wp_offset(struct blk_zone *zone)
+@@ -1353,8 +1370,7 @@ static void disk_zone_wplug_handle_error(struct gendisk *disk,
+ 
+ 	/* Restart BIO submission if we still have any BIO left. */
+ 	if (!bio_list_empty(&zwplug->bio_list)) {
+-		WARN_ON_ONCE(!(zwplug->flags & BLK_ZONE_WPLUG_PLUGGED));
+-		queue_work(disk->zone_wplugs_wq, &zwplug->bio_work);
++		disk_zone_wplug_schedule_bio_work(disk, zwplug);
+ 		goto unlock;
+ 	}
+ 
 -- 
 2.44.0
 
