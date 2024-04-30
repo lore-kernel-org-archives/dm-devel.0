@@ -1,59 +1,75 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8D92140E26;
-	Tue, 30 Apr 2024 15:26:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 533287711D
+	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 15:27:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714490812; cv=none; b=CkuhygAlFbQpxQ85SIoPtysJRQuxFJFTD2/GH/0rdCFyc8jNrW2r6pX/ZdIwYZBJLU901LZRHUAc9adsvxP+s72H8zuVNlfM9lawpzqPsXZ8uoPnzlewiV2NxoScQnX6Y9bvIWHwzNSlMfrPBApIdMqW86xubQXfxGct1hamxOQ=
+	t=1714490833; cv=none; b=SR1MY/dPcOn/Fr4letiFYHXkZtVtgJBGmZst0IZpnreoMPEvIiz00rQz2fihVtrPopHyIheNEtaNvUqQ2jgYXV1PDqwcRm4YJIYdQa6MPB3tYSI44KrVhafrKWZ41NUgthypnj7gmoPIz8fDDA/cdrgMs73uNqUivJNBqB8NgUU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714490812; c=relaxed/simple;
-	bh=Mp8nmJM4fj7MmA9rfrpsrKJsaO0r6WI3GJI7zSlTwNs=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=tRw0JvSQEn/7RKR4Xqz3ZfHQ7LIoLKo/JnTm/B4n8puC8VmqGFVBXkG67Flno9JDevAvjVC1ZqqrKFeslpAw+BSHSHprX28fdw+wMphFl+mRwwyNLaj8bsb8cK8rf67xatLiC9NxxWdj14mz3Hq8Hi0aQqT/SJ8PZqOBViv1WaY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=rwEfwRRS; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="rwEfwRRS"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=Mp8nmJM4fj7MmA9rfrpsrKJsaO0r6WI3GJI7zSlTwNs=; b=rwEfwRRS+sYepWMT2jHg6IoU8e
-	sKszCg1l7Yq6Ymq8V7XhMDCBJnOzEpQHzZnm/pqZwjj6hsYcOVkQ7ANHxK0PpwozC2hZU04NYYMZG
-	JJq2klIlHH6vZWMEe9Zbpkyov3hgmfxRgA1e7EtuM9iiAMhyHbP6iw37gO8/T/N1DNKHPMgS7SWUy
-	a1NJYnHfekA3oru+Vc9kPUKuRrCTLjiP8GnPPszM2wWTKwJs1edo4w4qlGeW/Y71dHEIKGxzJdDmh
-	T49nm0EZZqnauJggorFUAAZVCB9OBXVoVbRCNlmQH/KGLseLt3fmPuJTU5GoJA3oUwjkLqneJ9fvJ
-	c5iOntvA==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1s1pNa-0000000728Z-1bzb;
-	Tue, 30 Apr 2024 15:26:50 +0000
-Date: Tue, 30 Apr 2024 08:26:50 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
-	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 08/13] block: Fix flush request sector restore
-Message-ID: <ZjENujO2R5TGb_sh@infradead.org>
-References: <20240430125131.668482-1-dlemoal@kernel.org>
- <20240430125131.668482-9-dlemoal@kernel.org>
+	s=arc-20240116; t=1714490833; c=relaxed/simple;
+	bh=oSf2x27jJ1M2be9JySgfZ4rR1elPXE8NE7XAtU6bOEI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=P8H+majnCSYb6PZlsvaaaL8JLUXK1wC/2QLpENWcLNPZ0qkT7noasEtSMHizk+YIrEyhDiAIgLh/gfkjtSTz2Gz+S7msJOjAb6Cg9wW078QY/qv5RXWFqBk24GFz10gCv70E4tDJfjxRaCAXFRnIeu7ExUw4AMQitcoBszXgbXM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; arc=none smtp.client-ip=217.140.110.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 358202F4;
+	Tue, 30 Apr 2024 08:27:37 -0700 (PDT)
+Received: from [10.1.35.31] (e133047.arm.com [10.1.35.31])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 8AE883F793;
+	Tue, 30 Apr 2024 08:27:09 -0700 (PDT)
+Message-ID: <bc673c7e-f705-46ce-a3c0-0d34f612fe30@arm.com>
+Date: Tue, 30 Apr 2024 16:26:53 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240430125131.668482-9-dlemoal@kernel.org>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/1] dm-delay: fix hung task introduced by kthread mode
+To: Joel Colledge <joel.colledge@linbit.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
+References: <20240426072135.291206-1-joel.colledge@linbit.com>
+ <20240426072135.291206-2-joel.colledge@linbit.com>
+ <71a31fdb-fad6-4ce9-bda0-2f86633d23a3@arm.com>
+ <CAGNP_+Uocb_8YtY9P3EuMQ8sQwWaQtqEMszqbGZrVyrKw-udRg@mail.gmail.com>
+Content-Language: en-US
+From: Christian Loehle <christian.loehle@arm.com>
+In-Reply-To: <CAGNP_+Uocb_8YtY9P3EuMQ8sQwWaQtqEMszqbGZrVyrKw-udRg@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Tue, Apr 30, 2024 at 09:51:26PM +0900, Damien Le Moal wrote:
-> Make sure that a request bio is not NULL before trying to restore the
-> request start sector.
+On 30/04/2024 15:44, Joel Colledge wrote:
+> On Tue, 30 Apr 2024 at 16:28, Christian Loehle <christian.loehle@arm.com> wrote:
+>> Is this an issue for delay > 0 too somehow?
+> 
+> I believe it is. If there is simply no IO to the delay device, then
+> nothing will wake the new thread and the same issue will occur.
 
-Looks good:
+Yes, but might be better to just set_current_state(TASK_INTERRUPTIBLE);
+instead of the wakeup.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+> 
+> I haven't yet reproduced this case, because the system I am testing on
+> submits reads on any new block device and I don't know offhand how to
+> disable them. I think the reads are from scans for multipathd,
+> bcachefs or similar.
+> 
+>> Indeed if we don't have a delay the process will never be woken up,
+>> but in that case, why create the worker in the first place?
+> 
+> I agree. If this were only an issue with delay == 0, it would make
+> more sense not to create the worker at all.
+> 
+> As mentioned above, I believe the issue can occur with delay > 0. So
+> not creating the worker in the delay == 0 case is an additional
+> optimization and out of the scope of this change.
+
+Ah right because of the delay_is_fast() definition that is slightly more
+work.
+
+Regards,
+Christian.
 
