@@ -1,113 +1,145 @@
-Received: from mail-ej1-f49.google.com (mail-ej1-f49.google.com [209.85.218.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ECC15129E72
-	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 20:35:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7C2C1A38F7
+	for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 21:29:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714509354; cv=none; b=s/vrdvxCOrwZWeqhsNhJYJiI5v1CyKgDDV/XyBTENfDzXsUXgB42m5D236vkxRo6zYfoql2nKEf1FZz1C5l5nFmAPJvOVFHp4UTFSHKNG54Ug/9GUrnR3mgxitX6fWifBF7GVNfF36IGhdoDUrOZeFWsjqANTCSZyHtJbDz7QnE=
+	t=1714512565; cv=none; b=F5v1cLN1s4Yi1qVBhIxDw7M+ZHwit4uT1ducHI50yyFFyKSawCbUlMoXAnEgEecjnuK9nrCUuzGGvAfd965Pj5+/ZjLuTn7xTkEA0tPxADGivZCceFVxq44VJhZz+fAa87Ka8yNVeOmCadapMjchb+nF8N7RzAiDZ7YofFRco+A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714509354; c=relaxed/simple;
-	bh=wUd0nXj1UufpWGT1dh+HRftQhqcNf/fPfNSAQ8y6JPY=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=FtCc6ckfk5veiBrBfbL3WEyVaEMWKyCM8qGqqx9GzJUT1ym02PxdyTA0pwU1LTYGgp0XLPxW5pjWvvvw6mxzFyUbmAxipP5E7PLcb6OeBJOOLhLIQdoWnFfc/NK7zMHkZ6A7xxywhamGOfTceB4AufoLbEdGRcwBLILKxaH40Vk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GtydE7Xs; arc=none smtp.client-ip=209.85.218.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1714512565; c=relaxed/simple;
+	bh=ByBNS9qAJFRUNYu11k1iOZc+OIoFSFNQ24H6C6TSBmQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=HGLR3Ree9lc7anZs0ES3RXgqqJWvlmLHAzPlVVlCoJQBLo9s/B1WBLJEie2GUzx7QyY4yrQVY2K6NiLjB9dBYfuCliqa8UzN1mPKWaGWPKEeBwaxY4YKgWqWJg/4WW1aPU1bccCOMHtAsMsn4O2cdxD6pqPI6eJX3dfrjCpNKtI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ACy04qoK; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GtydE7Xs"
-Received: by mail-ej1-f49.google.com with SMTP id a640c23a62f3a-a4702457ccbso816666066b.3
-        for <dm-devel@lists.linux.dev>; Tue, 30 Apr 2024 13:35:52 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1714509351; x=1715114151; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=WuDn4uv6WwhlrUUmB1oaXSAR8ExM+MVqlmrw3Ho5zog=;
-        b=GtydE7XsqBeTc+s1kjZaK1tHCrr8Q17wRiHFTuSH1tkFh+9JgByrVyVH7Fv6uB2n1g
-         tNoxWuMo1QlTZMicIoJLBCh5SFnka6aPNKS2kA5pZj1+f/gID/c60TRADCSro2PWbVNP
-         pMXipgeZCVE3xM1AMjSFTLWzBm8ZTSkS3jkoP5eJUvb+IwqeyjMDMcfn/OoFX8pxKMjD
-         X9ocUpRBjVGUDbrXvIgdG9A2Wg+tPPm3LnQSQyMRyFGVT4sPH5tbV//V1AK2wils2E/z
-         tMeafN5kjE52U/+IqIRBOWr97yknuPU5HDLnoL1B6UesVUQ0wo6COFc+wf1vrNSRwOBV
-         xNrg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714509351; x=1715114151;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=WuDn4uv6WwhlrUUmB1oaXSAR8ExM+MVqlmrw3Ho5zog=;
-        b=wxT3a+2lhEVuhI8s+DKPc2eGtNorIOc1rP/w9X3/MhZKuwnqCrcJzfTRZhBiJGz2vq
-         oqZJij6ayxQBgjQnxkiyRVixAr3kuUy86EY18JyEfmLtRq2a703+QV+JL22GqMKq4Evc
-         XnbtVRMkqdCf4ByZ6CRCInWuf6ht+RRnlwvpOE1ggOTofwxLfIVmChjRI2ObYumbWPTX
-         AsBAZ7GKEJ/T5q/NCiF7jP7kEK4zxgKsp3tRvH+AR8wcCegcGz5aCqv9A/z+cQzsqqAT
-         UT5OkqZwq6I5GbQFK/5zTtAJURUScPU+6QJbqHihNT97iCJlEwpLFspEe5T+oJ7/0wFo
-         /BoA==
-X-Forwarded-Encrypted: i=1; AJvYcCXTcisxEg//IcMBMBvRVjgwMQ7HFqkRXj7d3yDThg5LQLsux7B07qhAM1mrKY07E12lxl3ssmzcHEti+hl5QXoQrQ4YJYdD8fo=
-X-Gm-Message-State: AOJu0YzSMFEwAtNX/QJR9iXsq9IdhaD+AOsWIpNeglEFq8ET+MdidQuO
-	VjKhr0nY07J0Gls+NO1DPAVxcyoaPjnZv/laz7h5HalR6cXi/rA8
-X-Google-Smtp-Source: AGHT+IF9K1bayEHnFgpxwrh3tLdIe8IN6ceac03jzsvVF0RusdhOcPuoFBEV9dVLyTidivose7fBQg==
-X-Received: by 2002:a17:906:2615:b0:a55:67ae:bbe3 with SMTP id h21-20020a170906261500b00a5567aebbe3mr503989ejc.44.1714509350838;
-        Tue, 30 Apr 2024 13:35:50 -0700 (PDT)
-Received: from ?IPV6:2a03:a900:1000:7e9:403e:7c8b:351b:f333? ([2a03:a900:1000:7e9:403e:7c8b:351b:f333])
-        by smtp.gmail.com with ESMTPSA id cd9-20020a170906b34900b00a5264576138sm15521308ejb.35.2024.04.30.13.35.50
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 30 Apr 2024 13:35:50 -0700 (PDT)
-Message-ID: <bda0198d-22dd-43fb-bf81-68fb101e596c@gmail.com>
-Date: Tue, 30 Apr 2024 22:35:49 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ACy04qoK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1714512562;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Lgs+FLTpSNDQMCNUb/rF1UEoL8ReR6K21LcUeuYXkkc=;
+	b=ACy04qoK+YU2hURa1VtvaFr1iG1a1hda4EoBPXsbB3xhMs7m/xnfeCG6jtVNeD5PBNjmu5
+	E3Z/0AT1CqZnRI0D4bxcus2kKngRgzZRoi5KkXIxxRISeVMZZ3WND/Oeva6fwtQ8wy9B9Z
+	6ntUVkOKtAf2zWfIGF/Kk6f7UbjC/PA=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-648-MJElOt-QOiiLv1RSPCqTFQ-1; Tue,
+ 30 Apr 2024 17:29:20 -0400
+X-MC-Unique: MJElOt-QOiiLv1RSPCqTFQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BBBC01C0C647;
+	Tue, 30 Apr 2024 21:29:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A233F51BF;
+	Tue, 30 Apr 2024 21:29:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 43ULTJ3j2341302
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 30 Apr 2024 17:29:19 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 43ULTJj32341301;
+	Tue, 30 Apr 2024 17:29:19 -0400
+Date: Tue, 30 Apr 2024 17:29:19 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH v2 2/5] libmultipath: change flush_on_last_del to fix a
+ multipathd hang
+Message-ID: <ZjFir8_To8UGoYVK@redhat.com>
+References: <20240425233517.2125142-1-bmarzins@redhat.com>
+ <20240425233517.2125142-3-bmarzins@redhat.com>
+ <5a5aa59a1b60ee0e91abeec292ef3d591d55a7e7.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: delete on snapshot does not free space
-To: Michael DiDomenico <mdidomenico4@gmail.com>, dm-devel@lists.linux.dev
-References: <CABOsP2PL9AM5phv4ZhucGmpk6V1x+DozXLaPTBVaWqMdy-KdPA@mail.gmail.com>
-Content-Language: en-US, cs
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-In-Reply-To: <CABOsP2PL9AM5phv4ZhucGmpk6V1x+DozXLaPTBVaWqMdy-KdPA@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+In-Reply-To: <5a5aa59a1b60ee0e91abeec292ef3d591d55a7e7.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-Dne 30. 04. 24 v 19:54 Michael DiDomenico napsal(a):
-> this is probably expected behavior, but i'd like to confirm as i'm not
-> a device-mapper expert
+On Tue, Apr 30, 2024 at 07:06:24PM +0200, Martin Wilck wrote:
+> On Thu, 2024-04-25 at 19:35 -0400, Benjamin Marzinski wrote:
+> > 
+> > 1. create a multipath device with a kpartx partition on top of it and
+> > no_path_retry set to either "queue" or something long enough to run
+> > all
+> > the commands in the reproducer before it disables queueing.
+> > 2. disable all the paths to the device with something like:
+> >  # echo offline > /sys/block/<path_dev>/device/state
+> > 3. Write directly to the multipath device with something like:
+> >  # dd if=/dev/zero of=/dev/mapper/<mpath_dev> bs=4K count=1
+> > 4. delete all the paths to the device with something like:
+> >  # echo 1 > /sys/block/<path_dev>/device/delete
 > 
-> we're using COW snapshots overtop of a readonly block device.  this
-> seems to be working fine, however, when a person deletes files the
-> blocks are not freed.  case in point a RO block device with a COW
-> filled up to 100% as shown in df.  when i deleted some files to free
-> space the usage never decreased
+> I've tried to reproduce the issue with these commands. Test system was
+> using a LIO iSCSI target with 2 paths. I created a  test script
+> (attached) to try the offline / IO / delete procedure repeatedly.
+> I haven't been able to make multipathd hang even once.
 > 
-> to create the mount we do
+> I also played around with dd options. If I use oflag=sync or
+> oflag=direct, the dd command itself hangs.
 > 
-> echo "0 <realsize> linear /dev/loop1 0" | dmsetup create roimage-base-real
-> echo "0 <cowsize> linear /dev/loop2 0" | dmsetup create roimage-snap-cow
-> echo "0 <realsize> snapshot-origin /dev/mapper/roimage-base-real" |
-> dmsetup create roimage-base
-> echo "0 <realsize> snapshot /dev/mapper/roimage-base-real
-> /dev/mapper/roimage-snap-cow n 1" | dmsetup create roimage-cow
+> Did I set up anything wrongly, or does the behavior perhaps depend on
+> the kernel, or something else perhaps? Mine was a 6.4 kernel. This is
+> not to say there's something wrong with your patch, but I'd like to
+> understand the error situation better, as it doesn't seem to be
+> trigger-able on my test system.
 > 
-> mount /dev/mapper/roimage-cow /roimagemntpnt
+> multipath.conf:
 > 
-> this is working as the origin device is Read-Only, but we can change files.
-> 
-> so two questions come up
-> 
-> 1 when we delete files, how do we reclaim the space
-> 2 should/can we roll the snapshots to reclaim space?
+> defaults {
+> 	verbosity 3
+> 	flush_on_last_del yes
 
-Please consider using  thin-pools - this should be giving you the features you 
-are likely looking for.
+If you set flush_on_last_del to "yes", then you won't be able to hit
+this, because you will never be queueing when multipathd tries to
+autoremove the device. The goal of my patch was to make sure multipathd
+never hung on an autoremove, regardless of the no_path_retry setting and
+the flush_on_last_del setting.
 
-Note - you can use thin-pool to  hold only snapshots  and use your read-only 
-volume as the external origin for thin volume.
+With "always", the device will always have queueing disabled, so the
+device can be safely removed.
 
-Regards
+With "unused", if the device is unused, queuing is disabled. Otherwise,
+multipathd will skip the autoremove if the device is queueing.
 
-Zdenek
+With "never", multipathd will skip the autoremove if the device is
+queueing.
 
+Your script looks fine, but with a system set up to hit it, the bug
+should occur every time.
 
+-Ben
+
+> }
+> 
+> blacklist {
+> 	wwid QEMU
+> }
+> 
+> overrides {
+> 	no_path_retry queue
+> }
+> 
+> Regards,
+> Martin
+> 
+> 
+> 
 
 
