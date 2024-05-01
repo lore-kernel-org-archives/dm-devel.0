@@ -1,39 +1,39 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3C8633F9;
-	Wed,  1 May 2024 00:09:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F014546BA;
+	Wed,  1 May 2024 00:09:40 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714522180; cv=none; b=X/xiFv3lQh+ShCliQvd822FKVfGnfNCzeyVSth6Csvd8HTTr5YAT23ZUG4yohXLg3rqquLI0KAgSNMJt7H8knAt3mEumByKwUWoluvPQxCx/rCtbBiNGUt5ybfZPf6GlcUDnxXk7x1M+57s+ZV4+PbJ0YYNaZLP33M0tnC7eB2s=
+	t=1714522181; cv=none; b=dvODVkD5U9ADGNrsAVXUiKSXbSAbjyJ8472NE28Q2a+BFb+8txnlH8CDzTqonSj/OpE9AQ6QpITzcKnz3S/TPQRTp+StpmhlNUnDH+1Jqc56p20q4mqYBCbeDcqiOnybTyba1irnaopy+4qxVaeX8O1H9stqR9JyGdKo1XGPkZ4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714522180; c=relaxed/simple;
-	bh=fFeesJRkVknw7/RMtxm8FMNxBrpXsSCO1ccVPKN7cd0=;
+	s=arc-20240116; t=1714522181; c=relaxed/simple;
+	bh=hKhf3tu/OWCDWFwaZGcp2SnI5XVx3uBpkPAcElWwqTg=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=cDZZ7MuRMEpJ54NFSwXCauXU3Tk/MkP/q7Gj5UZm3IOtjphalAKnw5re2s3PpLk2yMyhrmrNpCoAhY8K3gL1VGdTAvR905w6buv2f//DxYaSTHr8D6R0K9m2Pmd5vY9IN8ZJznL43B05bwLjJNzwBUSnZUU9W8tm51SXobIsu74=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=M9Jy2BKS; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=KbL+DPE1Rf0e4NmxsJtWY48+l2xhSw53XYR/Mg0NT2SiLrphfQHIw8HIkbFI3a2F3wl4P7xHAHpV5kmgm3RRdEKNG5p/uq1nOm+lDLqXWKNiUMlGQUf7lXnyG0e6Zlq5yPjmciFv5Z/WkbJGGYQgLWwkJLTS7Fcr2XvlqgJFwjk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ZE+GuJTo; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="M9Jy2BKS"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id ACFDFC2BBFC;
-	Wed,  1 May 2024 00:09:38 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ZE+GuJTo"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C1EB0C4AF1C;
+	Wed,  1 May 2024 00:09:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714522179;
-	bh=fFeesJRkVknw7/RMtxm8FMNxBrpXsSCO1ccVPKN7cd0=;
+	s=k20201202; t=1714522180;
+	bh=hKhf3tu/OWCDWFwaZGcp2SnI5XVx3uBpkPAcElWwqTg=;
 	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=M9Jy2BKS1ydoEQYDyTT4+GfMFXaHLAzAZ5n/t1FOQFFoZ79xi03fg2bKXh2Au9/b7
-	 r/s6H0kTWFkXB/CjHAWLODWpEZLIq8RORbKAGEjnHlrSEgKnxMHvBHEfZYNRuL/vq6
-	 srX59bZwXe9H7rpx4zy3vel1BzcutPYXASrvL3TiErJYhjEexyDSAT4BueN+YqdCiY
-	 Aifvryy99rWYyYiN7M06IRDjP/HM23yRDGOtj0qiUEiNLgIvbPJZFlA4mZeOgZodq+
-	 HSTOrLXuYZGwHx1xWw3QW7AHjh5VWITeHOwae7c+WMHraEx/p2rSec7ar8jD8o9rPE
-	 yT1PosPvkYPQA==
+	b=ZE+GuJToJwF5V2wonCwgYj7EbitfKeizcG14BYyTTM9Vnf5uYcWVcNAxaMJSQM9Ep
+	 ts3ubtpXsnJqyrM/pltEnB/4Kn9ABqXS6iOeqd/qx2WbnJ2BzRbV5JLpBuWlPtV6ZV
+	 yApFzTPZ5/U4weQRlGkERvOQhe4jc6aGcuzJ2dP5Ju7Mha5mehtObVPnI0knwLJDGW
+	 eQkJsbort48rjbJulLRQFAfVXMB83glwSPj/3FbZeP86sBh3GoUZUHOkAQBM+xssFz
+	 7Ib7dGERDMP4GxgImbhmhAhWqyF75cs3QqP4ZLfc9SyhQheMfj7MDlAIgdVIOYkIol
+	 a+2LIv39xhD2w==
 From: Damien Le Moal <dlemoal@kernel.org>
 To: linux-block@vger.kernel.org,
 	Jens Axboe <axboe@kernel.dk>,
 	dm-devel@lists.linux.dev,
 	Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 02/14] block: Exclude conventional zones when faking max open limit
-Date: Wed,  1 May 2024 09:09:23 +0900
-Message-ID: <20240501000935.100534-3-dlemoal@kernel.org>
+Subject: [PATCH v2 03/14] block: Fix zone write plug initialization from blk_revalidate_zone_cb()
+Date: Wed,  1 May 2024 09:09:24 +0900
+Message-ID: <20240501000935.100534-4-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.44.0
 In-Reply-To: <20240501000935.100534-1-dlemoal@kernel.org>
 References: <20240501000935.100534-1-dlemoal@kernel.org>
@@ -45,104 +45,45 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-For a device that has no limits for the maximum number of open and
-active zones, we default to using the number of zones, limited to
-BLK_ZONE_WPLUG_DEFAULT_POOL_SIZE (128), for the maximum number of open
-zones indicated to the user. However, for a device that has conventional
-zones and less zones than BLK_ZONE_WPLUG_DEFAULT_POOL_SIZE, we should
-not account conventional zones and set the limit to the number of
-sequential write required zones. Furthermore, for cases where the limit
-is equal to the number of sequential write required zones, we can
-advertize a limit of 0 to indicate "no limits".
+When revalidating the zones of a zoned block device,
+blk_revalidate_zone_cb() must allocate a zone write plug for any
+sequential write required zone that is not empty nor full. However, the
+current code tests the latter case by comparing the zone write pointer
+offset to the zone size instead of the zone capacity. Furthermore,
+disk_get_and_lock_zone_wplug() is called with a sector argument equal to
+the zone start instead of the current zone write pointer position.
+This commit fixes both issues by calling disk_get_and_lock_zone_wplug()
+for a zone that is not empty and with a write pointer offset lower than
+the zone capacity and use the zone capacity sector as the sector
+argument for disk_get_and_lock_zone_wplug().
 
-Fix this by moving the zone write plug mempool resizing from
-disk_revalidate_zone_resources() to disk_update_zone_resources() where
-we can safely compute the number of conventional zones and update the
-limits.
-
-Fixes: 843283e96e5a ("block: Fake max open zones limit when there is no limit")
-Reported-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Fixes: dd291d77cc90 ("block: Introduce zone write plugging")
 Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
 Reviewed-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 ---
- block/blk-zoned.c | 42 +++++++++++++++++++++++++++++++-----------
- 1 file changed, 31 insertions(+), 11 deletions(-)
+ block/blk-zoned.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index bad68277c0b2..6cf3e319513c 100644
+index 6cf3e319513c..e92ae0729cf8 100644
 --- a/block/blk-zoned.c
 +++ b/block/blk-zoned.c
-@@ -1513,10 +1513,6 @@ static int disk_revalidate_zone_resources(struct gendisk *disk,
- 	if (!disk->zone_wplugs_hash)
- 		return disk_alloc_zone_resources(disk, pool_size);
- 
--	/* Resize the zone write plug memory pool if needed. */
--	if (disk->zone_wplugs_pool->min_nr != pool_size)
--		return mempool_resize(disk->zone_wplugs_pool, pool_size);
--
- 	return 0;
- }
- 
-@@ -1536,27 +1532,51 @@ static int disk_update_zone_resources(struct gendisk *disk,
- 				      struct blk_revalidate_zone_args *args)
- {
- 	struct request_queue *q = disk->queue;
-+	unsigned int nr_seq_zones, nr_conv_zones = 0;
-+	unsigned int pool_size;
- 	struct queue_limits lim;
- 
- 	disk->nr_zones = args->nr_zones;
- 	disk->zone_capacity = args->zone_capacity;
- 	swap(disk->conv_zones_bitmap, args->conv_zones_bitmap);
-+	if (disk->conv_zones_bitmap)
-+		nr_conv_zones = bitmap_weight(disk->conv_zones_bitmap,
-+					      disk->nr_zones);
-+	if (nr_conv_zones >= disk->nr_zones) {
-+		pr_warn("%s: Invalid number of conventional zones %u / %u\n",
-+			disk->disk_name, nr_conv_zones, disk->nr_zones);
-+		return -ENODEV;
-+	}
-+
-+	if (!disk->zone_wplugs_pool)
-+		return 0;
- 
- 	/*
--	 * If the device has no limit on the maximum number of open and active
-+	 * If the device has no limits on the maximum number of open and active
- 	 * zones, set its max open zone limit to the mempool size to indicate
- 	 * to the user that there is a potential performance impact due to
- 	 * dynamic zone write plug allocation when simultaneously writing to
- 	 * more zones than the size of the mempool.
- 	 */
--	if (disk->zone_wplugs_pool) {
--		lim = queue_limits_start_update(q);
--		if (!lim.max_open_zones && !lim.max_active_zones)
--			lim.max_open_zones = disk->zone_wplugs_pool->min_nr;
--		return queue_limits_commit_update(q, &lim);
-+	lim = queue_limits_start_update(q);
-+
-+	nr_seq_zones = disk->nr_zones - nr_conv_zones;
-+	pool_size = max(lim.max_open_zones, lim.max_active_zones);
-+	if (!pool_size)
-+		pool_size = min(BLK_ZONE_WPLUG_DEFAULT_POOL_SIZE, nr_seq_zones);
-+
-+	/* Resize the zone write plug memory pool if needed. */
-+	if (disk->zone_wplugs_pool->min_nr != pool_size)
-+		mempool_resize(disk->zone_wplugs_pool, pool_size);
-+
-+	if (!lim.max_open_zones && !lim.max_active_zones) {
-+		if (pool_size < nr_seq_zones)
-+			lim.max_open_zones = pool_size;
-+		else
-+			lim.max_open_zones = 0;
- 	}
- 
--	return 0;
-+	return queue_limits_commit_update(q, &lim);
- }
- 
- /*
+@@ -1666,10 +1666,11 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
+ 		 * empty nor full. So make sure we have a zone write plug for
+ 		 * such zone if the device has a zone write plug hash table.
+ 		 */
++		if (!disk->zone_wplugs_hash)
++			break;
+ 		wp_offset = blk_zone_wp_offset(zone);
+-		if (disk->zone_wplugs_hash &&
+-		    wp_offset && wp_offset < zone_sectors) {
+-			zwplug = disk_get_and_lock_zone_wplug(disk, zone->start,
++		if (wp_offset && wp_offset < zone->capacity) {
++			zwplug = disk_get_and_lock_zone_wplug(disk, zone->wp,
+ 							      GFP_NOIO, &flags);
+ 			if (!zwplug)
+ 				return -ENOMEM;
 -- 
 2.44.0
 
