@@ -1,55 +1,79 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 32B634E1DA;
-	Wed,  1 May 2024 07:49:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id A05D4EED6
+	for <dm-devel@lists.linux.dev>; Wed,  1 May 2024 08:26:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714549745; cv=none; b=ivy36JgA+5Jc3uCr95/XDrHleop3fFcTGFmsbsUCNNFdP6JOV39u8dHQHtbmpNo7mVvmKv3D3AwwOSisKac7ATb0Lel/eV1E19p1FgRN7+1JkQReOc9YCX0i3lBjYv2JmR9Oc0G0RfiwyqY6Oh2MSudJsDpoJ9uLrDqRIHPWVs8=
+	t=1714551995; cv=none; b=O1vWXBORmPYq0PTxwBdyuUl5aIG2HO0z/bKlrPJPJePvVpHnehs2A7A6OtOxq3bLUlk03HorjSQ6lcrsUov1cSmWa7z6Qx5vZVLdX1SbCtX3ZM8yRYfnrYLz2yYMuRIGBqha1AXQ6JGkXIuQHtJMh1EBujlNAZJaNqbPtRFd1sg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714549745; c=relaxed/simple;
-	bh=DwSe5eM3AmiI1Dq5Giy6q3PME3FwE6PW0h9hKY5PAhs=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=IToZ8C0QBkxrl6UDZE3w2DlIDje7HhkWDg2Yf+EiYV0Tfi86dLwdlcHtcEDDSI0uTUJ+pqiSR3NYANs6xAV0getpggh9eGqPCHpR7bqscOnQdDigWhi4RRCHyBdwtovKLP+o+TUThLwUffERZhO3dKPxFgcPaX1NRZX4Fb3HxS4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=aGLb9YVA; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="aGLb9YVA"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=ZFU1Vghd+kcJ76QbCL6rW7E5UpbqtoJIArKrgFkDS/c=; b=aGLb9YVALaKk4ghf6N5nkJXhFq
-	XDUaCaDPVfFA3Llca/vm4NTYuYl4I+DryiE/YXY21rvdxWlaPTWAejKGzp+FONuZaeRCjL803/ZIb
-	3bnMHY5aaD2z5PnWO89qz0ZiaY1uykYs5hSCUWnPKkbJk9/CcopcGWRy8bJCTBm/Pd0F6teltd9Vn
-	dL3y4fktUByvhAoiKeEix9z1W2dy8ANZCagaMOy5XzqPoGVtYlT9KwBiCaYT4FeATnl+YQkBktf+T
-	wvDO2B595m5Y631kBzhuWhMXgQKiqbgjHCXUN1OM2TeTtG1M+mK3d6fcLJLsZeeOH2VqfoxNKiyTF
-	VZrCl6Ow==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1s24i7-00000008mql-2JB9;
-	Wed, 01 May 2024 07:49:03 +0000
-Date: Wed, 1 May 2024 00:49:03 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>,
-	Mike Snitzer <snitzer@kernel.org>, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org
-Subject: Re: [PATCH] block: change rq_integrity_vec to respect the iterator
-Message-ID: <ZjHz705yGUZhIaLv@infradead.org>
-References: <19d1b52a-f43e-5b41-ff1d-5257c7b3492@redhat.com>
+	s=arc-20240116; t=1714551995; c=relaxed/simple;
+	bh=jIxrOQTm41IHyfaxpihklaSd3JU75WV7W+FWaXoka6k=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=ITfm2ACmi+XyUFRRiUfITCKAx6CIiMGlSp+AKeiZGDijrumBGhBBW105jlXayVYnJmABE7Mj+LfsfhfcVN2KLSRc5EMv30bPbkmOkuEVqqICz6z0xHTSfqVNQmd/XWPnhRoM7d/vL9lNLsjr597ELxjAqdd3Wzp1P8qqGau2kmc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; arc=none smtp.client-ip=217.140.110.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 23457DA7;
+	Wed,  1 May 2024 01:27:00 -0700 (PDT)
+Received: from [10.1.34.50] (unknown [10.1.34.50])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 4A4333F793;
+	Wed,  1 May 2024 01:26:33 -0700 (PDT)
+Message-ID: <d18e4aef-893b-4940-bc00-352036c34504@arm.com>
+Date: Wed, 1 May 2024 09:26:31 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <19d1b52a-f43e-5b41-ff1d-5257c7b3492@redhat.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/1] dm-delay: fix hung task introduced by kthread mode
+To: Joel Colledge <joel.colledge@linbit.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
+References: <20240426072135.291206-1-joel.colledge@linbit.com>
+ <20240426072135.291206-2-joel.colledge@linbit.com>
+ <71a31fdb-fad6-4ce9-bda0-2f86633d23a3@arm.com>
+ <CAGNP_+Uocb_8YtY9P3EuMQ8sQwWaQtqEMszqbGZrVyrKw-udRg@mail.gmail.com>
+ <bc673c7e-f705-46ce-a3c0-0d34f612fe30@arm.com>
+ <CAGNP_+WStY+C9=eT=gzC-dYhMtPTj4kzKDSuYiVHi0w41Qa_8w@mail.gmail.com>
+Content-Language: en-US
+From: Christian Loehle <christian.loehle@arm.com>
+In-Reply-To: <CAGNP_+WStY+C9=eT=gzC-dYhMtPTj4kzKDSuYiVHi0w41Qa_8w@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Please work with Anuj and Kanchan on a single coherent set of patches
-to make integrity splitting work properly.  It would probably also
-help if you posted your code using this somewhere.
+On 30/04/2024 17:12, Joel Colledge wrote:
+> On Tue, 30 Apr 2024 at 17:27, Christian Loehle <christian.loehle@arm.com> wrote:
+>> On 30/04/2024 15:44, Joel Colledge wrote:
+>>> On Tue, 30 Apr 2024 at 16:28, Christian Loehle <christian.loehle@arm.com> wrote:
+>>>> Is this an issue for delay > 0 too somehow?
+>>>
+>>> I believe it is. If there is simply no IO to the delay device, then
+>>> nothing will wake the new thread and the same issue will occur.
+>>
+>> Yes, but might be better to just set_current_state(TASK_INTERRUPTIBLE);
+>> instead of the wakeup.
+> 
+> I'm afraid I don't follow what you mean.
+> set_current_state(TASK_INTERRUPTIBLE) would need to be called from the
+> worker, but the worker isn't running yet, so it can't do that.
+
+Sorry about that, wasn't thinking :/
+
+> 
+> When preparing this patch, I checked how common kthread_create()
+> followed by wake_up_process() is. It is fairly common according to
+> this very approximate metric:
+> $ grep -r -I -A10 kthread_create | grep -c wake_up_process
+> 49
+> 
+> I just looked through those matches in more detail and noticed that
+> there is a kthread_run() macro which does exactly what we need. I will
+> change my suggestion to use that instead.
+> 
+> I will wait for more comments before sending a new version of the patch.
+> 
+> Best regards,
+> Joel
 
