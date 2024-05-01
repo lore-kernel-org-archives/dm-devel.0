@@ -1,226 +1,121 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-io1-f47.google.com (mail-io1-f47.google.com [209.85.166.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB43C48CE0;
-	Wed,  1 May 2024 11:09:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1DE2E12E1E0
+	for <dm-devel@lists.linux.dev>; Wed,  1 May 2024 14:09:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714561765; cv=none; b=eOCGIzn5+1+U0vnD1ldkNWBGhoM1WIoDZS92j5ZqNrWHnrksmRGqvYe9HSUztUgwMgZHGFlATQz3dojfYzuq7ueEBdqtqfjETuIt+ntyNfi0tUfBjq1SU66+kebFE2lCcm1KWWMBBaVVlGcfqcI+OS2966LCIcrEfpwCoKRS188=
+	t=1714572544; cv=none; b=nYDJVnFz8/PQ+7h/mtww7xiXrOU3WP0xkoYsK+Zo37oUELLi5UGWcUe4EGOjzxSVOPMi7pPoQJ+RvzbvdMPRB8gWDG2J6gQtv8oLf8PUHb/bbw5OFy+ou8uHC5dmopubB5gWRycz5QCl5lzYvumBBW9QatX3vQn6grm3yMuUwPU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714561765; c=relaxed/simple;
-	bh=MSRDFEdBwPqkuZNym8HCtTIVxfyLWOeBU4cc8kv4sNY=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=jKv3oLb+iD7U1MgfW3i6tpB2XPTQkqq7mOpIiDIFa3s3srqm4nAF9Xgjtywrt0ScY71pmrtbuwgF4QutyMFgJRggNihQrbwS3wKiTgPq9faZx2+3x0kRKYIZqGq3TSj3GmUKgS2kyvb3TTpkXpfhtgpA2JVaRIsnuqYT1Y/h8/g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=lRV8cXcg; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1714572544; c=relaxed/simple;
+	bh=zfim7CcucR0BdncVSCbvZAeOm8GEIeOfwzAR5umcIkc=;
+	h=From:To:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type; b=M/nVgm6J9q4kgeQBCu3Z7cGIkMo2JtQzJB8TANiDNh9VFtECJVWYCPQDAkuVkwMLxjcU6Lxema417CVdkGj5vVVeFubE0bwm3vmEN/ukgKo+zrN7ak3ZD7a/1KbJJimg0k7Pv5EbcEqQN9kNS5w64gBDT+446gx13v8Pvg4E1i0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=XaGhYXgw; arc=none smtp.client-ip=209.85.166.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="lRV8cXcg"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B94F1C4AF1C;
-	Wed,  1 May 2024 11:09:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1714561765;
-	bh=MSRDFEdBwPqkuZNym8HCtTIVxfyLWOeBU4cc8kv4sNY=;
-	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=lRV8cXcgGuBS9hVahaGt9hDh76jPCtM6eE7oBF4J36fXObNyDgRAg2Pocd/VMoVhj
-	 LEqqo6f/yLONgm/Xh+NxHRjQdfOIIF6bNGRDLlmWoSVy/1L5LkKOBC3LLaLpoe0BFh
-	 UG3CWivqE8bt9uNvIPOBTETygXrFbRbT3/dpG9igPbHO/p7TM2uT5XvgZU4p6dhMyg
-	 xIYCBmT/dSd0jHnRHXDzH1Fzj8TDJiMXOHIatGoNmpmQc+RpN5IBb/jb8+1e9q3P4m
-	 sD+wzfB0WYwDk1Ao+mu3yGlXrNTsHidWqdmvGIzi5S3O72oHTCIX5m7Z0oLizDhzTL
-	 L7Fp1t4FxJCHg==
-From: Damien Le Moal <dlemoal@kernel.org>
-To: linux-block@vger.kernel.org,
-	Jens Axboe <axboe@kernel.dk>,
-	dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 14/14] block: Cleanup blk_revalidate_zone_cb()
-Date: Wed,  1 May 2024 20:09:07 +0900
-Message-ID: <20240501110907.96950-15-dlemoal@kernel.org>
-X-Mailer: git-send-email 2.44.0
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="XaGhYXgw"
+Received: by mail-io1-f47.google.com with SMTP id ca18e2360f4ac-7d9ef422859so52143439f.0
+        for <dm-devel@lists.linux.dev>; Wed, 01 May 2024 07:09:01 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1714572541; x=1715177341; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:to:from:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=fs2eFC9t4Ym2eJACriIJKBgSiMCMgOPbsLq77wPhjyU=;
+        b=XaGhYXgwzqHpFKY55C7kFDrQl4azkZYTHbolRWNVBxoMYtWZ5wNN6lABG6Zr2i7bCa
+         MT9WXwTb4Hv1A2W+BDSczGbhdrOqa2GoJe8Fg8wF2j5SVpb2soHXlUB2pRphWrEwvApv
+         rDedY2pc6RkgrHQL6CU1sW9WtLgwojbC+DHAK01SVMRWNXkihqFFDlrZDmMDt18QHI5W
+         gezgvXrILh8fcQdRlKmxxQtG0MAAqvEUnxsAnbZu57UqlWLDgMp0lMFDNHXkiEnnviAq
+         Vg+lUOf1iD9sb0sxCmOikp/ADa2JRhKlI32tteezJeEDJ//2Llh3gngNlc/Tx2DzcA3O
+         9rDA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1714572541; x=1715177341;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=fs2eFC9t4Ym2eJACriIJKBgSiMCMgOPbsLq77wPhjyU=;
+        b=fMZl10CjjzBZr/acYVDfgALkRLpq+Ew9OA/NCHNqzFSfxM7/5EF4SuE+2pdLmC9UDw
+         KZpu5uWt5M+Te836oAApt6tJwpSU22RUvaks6Ezz3+0lecsasPp/DubQxhOlJbuyBa2a
+         IFRBV0qfTevdYbni1JUhXgdE76GG1xY4GFbS2i5yNtXk99lMCoVG7LmYpq068O4lW+Ka
+         MEYXAJ7ngaWstNoAWfegEnPt5clpRUgjcPVo8xxgRfY7KcxSo8MCAtuNFPdvBojw3kdc
+         r0doET3PeIz2Lp/3uDwYkBgOR4gCBEAV6SDvP9rfYiAFcnCG83s9MwrB8zeovrvDoYaQ
+         EdhA==
+X-Forwarded-Encrypted: i=1; AJvYcCXzK4DZt/rGo/4C+qG7+lal/RlcD6cL064rKdOvz/u5orC1eg+3PnbqoSI9BA0MJtTG06DYxRsJ+w5MArrqAgKr5oHuvnpaSO0=
+X-Gm-Message-State: AOJu0YzYtNnJltst5vXAZ3Kuehpv1KhyZeT/xkCAZdT/DEuyWKx4joJ+
+	w/qRcQYPz5A15kGyO0/JSYM3MDj6yjnNwDuPj5vqIpjonN3U0prK4xzrK4A3gSW60VuktWZrKKj
+	A
+X-Google-Smtp-Source: AGHT+IElsxpRhoKMKje29Pm9oGG2g8KnqwtVCGQmpoAL/6gtj2Nhu59IqcMPZOXKkC2+KcYGUCAizQ==
+X-Received: by 2002:a6b:3113:0:b0:7dd:88df:b673 with SMTP id j19-20020a6b3113000000b007dd88dfb673mr3481150ioa.0.1714572540629;
+        Wed, 01 May 2024 07:09:00 -0700 (PDT)
+Received: from [127.0.0.1] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id m12-20020a056638260c00b004881ff30b22sm260901jat.9.2024.05.01.07.08.59
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 01 May 2024 07:08:59 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
+ Mike Snitzer <snitzer@redhat.com>, Damien Le Moal <dlemoal@kernel.org>
 In-Reply-To: <20240501110907.96950-1-dlemoal@kernel.org>
 References: <20240501110907.96950-1-dlemoal@kernel.org>
+Subject: Re: [PATCH v3 00/14] Zone write plugging fixes and cleanup
+Message-Id: <171457253943.85560.5028649665581943834.b4-ty@kernel.dk>
+Date: Wed, 01 May 2024 08:08:59 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.12.5-dev-2aabd
 
-Define the code for checking conventional and sequential write required
-zones suing the functions blk_revalidate_conv_zone() and
-blk_revalidate_seq_zone() respectively. This simplifies the zone type
-switch-case in blk_revalidate_zone_cb().
 
-No functional changes.
+On Wed, 01 May 2024 20:08:53 +0900, Damien Le Moal wrote:
+> Jens, Mike,
+> 
+> With more testing of zone write plugging on more device setups,
+> including weird/test setups (with scsi debug and null_blk), several
+> issues were identified. This patch series addresses them and cleanup the
+> code a little to try to make it more obvious.
+> 
+> [...]
 
-Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
----
- block/blk-zoned.c | 129 +++++++++++++++++++++++++++-------------------
- 1 file changed, 77 insertions(+), 52 deletions(-)
+Applied, thanks!
 
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 15e4e14e16f7..48e5e3bbb89c 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -1656,6 +1656,74 @@ static int disk_update_zone_resources(struct gendisk *disk,
- 	return queue_limits_commit_update(q, &lim);
- }
- 
-+static int blk_revalidate_conv_zone(struct blk_zone *zone, unsigned int idx,
-+				    struct blk_revalidate_zone_args *args)
-+{
-+	struct gendisk *disk = args->disk;
-+	struct request_queue *q = disk->queue;
-+
-+	if (zone->capacity != zone->len) {
-+		pr_warn("%s: Invalid conventional zone capacity\n",
-+			disk->disk_name);
-+		return -ENODEV;
-+	}
-+
-+	if (!disk_need_zone_resources(disk))
-+		return 0;
-+
-+	if (!args->conv_zones_bitmap) {
-+		args->conv_zones_bitmap =
-+			blk_alloc_zone_bitmap(q->node, args->nr_zones);
-+		if (!args->conv_zones_bitmap)
-+			return -ENOMEM;
-+	}
-+
-+	set_bit(idx, args->conv_zones_bitmap);
-+
-+	return 0;
-+}
-+
-+static int blk_revalidate_seq_zone(struct blk_zone *zone, unsigned int idx,
-+				   struct blk_revalidate_zone_args *args)
-+{
-+	struct gendisk *disk = args->disk;
-+	struct blk_zone_wplug *zwplug;
-+	unsigned int wp_offset;
-+	unsigned long flags;
-+
-+	/*
-+	 * Remember the capacity of the first sequential zone and check
-+	 * if it is constant for all zones.
-+	 */
-+	if (!args->zone_capacity)
-+		args->zone_capacity = zone->capacity;
-+	if (zone->capacity != args->zone_capacity) {
-+		pr_warn("%s: Invalid variable zone capacity\n",
-+			disk->disk_name);
-+		return -ENODEV;
-+	}
-+
-+	/*
-+	 * We need to track the write pointer of all zones that are not
-+	 * empty nor full. So make sure we have a zone write plug for
-+	 * such zone if the device has a zone write plug hash table.
-+	 */
-+	if (!disk->zone_wplugs_hash)
-+		return 0;
-+
-+	wp_offset = blk_zone_wp_offset(zone);
-+	if (!wp_offset || wp_offset >= zone->capacity)
-+		return 0;
-+
-+	zwplug = disk_get_and_lock_zone_wplug(disk, zone->wp, GFP_NOIO, &flags);
-+	if (!zwplug)
-+		return -ENOMEM;
-+	spin_unlock_irqrestore(&zwplug->lock, flags);
-+	disk_put_zone_wplug(zwplug);
-+
-+	return 0;
-+}
-+
- /*
-  * Helper function to check the validity of zones of a zoned block device.
-  */
-@@ -1664,12 +1732,9 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
- {
- 	struct blk_revalidate_zone_args *args = data;
- 	struct gendisk *disk = args->disk;
--	struct request_queue *q = disk->queue;
- 	sector_t capacity = get_capacity(disk);
--	sector_t zone_sectors = q->limits.chunk_sectors;
--	struct blk_zone_wplug *zwplug;
--	unsigned long flags;
--	unsigned int wp_offset;
-+	sector_t zone_sectors = disk->queue->limits.chunk_sectors;
-+	int ret;
- 
- 	/* Check for bad zones and holes in the zone report */
- 	if (zone->start != args->sector) {
-@@ -1709,62 +1774,22 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
- 	/* Check zone type */
- 	switch (zone->type) {
- 	case BLK_ZONE_TYPE_CONVENTIONAL:
--		if (zone->capacity != zone->len) {
--			pr_warn("%s: Invalid conventional zone capacity\n",
--				disk->disk_name);
--			return -ENODEV;
--		}
--
--		if (!disk_need_zone_resources(disk))
--			break;
--		if (!args->conv_zones_bitmap) {
--			args->conv_zones_bitmap =
--				blk_alloc_zone_bitmap(q->node, args->nr_zones);
--			if (!args->conv_zones_bitmap)
--				return -ENOMEM;
--		}
--		set_bit(idx, args->conv_zones_bitmap);
-+		ret = blk_revalidate_conv_zone(zone, idx, args);
- 		break;
- 	case BLK_ZONE_TYPE_SEQWRITE_REQ:
--		/*
--		 * Remember the capacity of the first sequential zone and check
--		 * if it is constant for all zones.
--		 */
--		if (!args->zone_capacity)
--			args->zone_capacity = zone->capacity;
--		if (zone->capacity != args->zone_capacity) {
--			pr_warn("%s: Invalid variable zone capacity\n",
--				disk->disk_name);
--			return -ENODEV;
--		}
--
--		/*
--		 * We need to track the write pointer of all zones that are not
--		 * empty nor full. So make sure we have a zone write plug for
--		 * such zone if the device has a zone write plug hash table.
--		 */
--		if (!disk->zone_wplugs_hash)
--			break;
--		wp_offset = blk_zone_wp_offset(zone);
--		if (wp_offset && wp_offset < zone->capacity) {
--			zwplug = disk_get_and_lock_zone_wplug(disk, zone->wp,
--							      GFP_NOIO, &flags);
--			if (!zwplug)
--				return -ENOMEM;
--			spin_unlock_irqrestore(&zwplug->lock, flags);
--			disk_put_zone_wplug(zwplug);
--		}
--
-+		ret = blk_revalidate_seq_zone(zone, idx, args);
- 		break;
- 	case BLK_ZONE_TYPE_SEQWRITE_PREF:
- 	default:
- 		pr_warn("%s: Invalid zone type 0x%x at sectors %llu\n",
- 			disk->disk_name, (int)zone->type, zone->start);
--		return -ENODEV;
-+		ret = -ENODEV;
- 	}
- 
--	args->sector += zone->len;
--	return 0;
-+	if (!ret)
-+		args->sector += zone->len;
-+
-+	return ret;
- }
- 
- /**
+[01/14] dm: Check that a zoned table leads to a valid mapped device
+        commit: 44cccb3027d4719c9229203233250d73d3192bf9
+[02/14] block: Exclude conventional zones when faking max open limit
+        commit: 6b7593b5fb9eb73be92f78a1abfa502f05ff5e15
+[03/14] block: Fix zone write plug initialization from blk_revalidate_zone_cb()
+        commit: 74b7ae5f48e6f9518a32f50926619eba54be44de
+[04/14] block: Fix reference counting for zone write plugs in error state
+        commit: 19aad274c22b96fc4c0113d87cc8a083c87c467e
+[05/14] block: Hold a reference on zone write plugs to schedule submission
+        commit: 9e78c38ab30b14c1d6a07c61d57ac5e2f12fa568
+[06/14] block: Unhash a zone write plug only if needed
+        commit: 79ae35a4233df5909f8bea0b64eadbebde870de2
+[07/14] block: Do not remove zone write plugs still in use
+        commit: 7b295187287e0006dd1b0b95f995f00878e436c5
+[08/14] block: Fix flush request sector restore
+        commit: af147b740f111730c2e387ee6c0ac3ada7d51117
+[09/14] block: Fix handling of non-empty flush write requests to zones
+        commit: 096bc7ea335bc5dfbaed1d005ff27f008ec9d710
+[10/14] block: Improve blk_zone_write_plug_bio_merged()
+        commit: c4c3ffdab2e26780f6f7c9959a473b2c652f4d13
+[11/14] block: Improve zone write request completion handling
+        commit: 347bde9da10f410b8134a82d6096105cad44e1c1
+[12/14] block: Simplify blk_zone_write_plug_bio_endio()
+        commit: b5a64ec2ea2be2a7f7eb73c243c2381e9fc1c71b
+[13/14] block: Simplify zone write plug BIO abort
+        commit: c9c8aea03c4ac2ea902bc7dd5ba14f5d78af8ece
+[14/14] block: Cleanup blk_revalidate_zone_cb()
+        commit: d7580149efc5c86c4e72f9263b97c062616a84dd
+
+Best regards,
 -- 
-2.44.0
+Jens Axboe
+
+
 
