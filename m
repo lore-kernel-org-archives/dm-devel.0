@@ -1,102 +1,150 @@
-Received: from mail-ej1-f51.google.com (mail-ej1-f51.google.com [209.85.218.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 213F539AF9
-	for <dm-devel@lists.linux.dev>; Thu,  2 May 2024 15:52:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8A9C15359A
+	for <dm-devel@lists.linux.dev>; Thu,  2 May 2024 16:05:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714665150; cv=none; b=qjUBGBEfjSU1nAJZqLc50/3UbRrmTDGJ/5/J4tZ+t8SZTyolCfCKtKbX1UhFM8uVJ6UTkpD5SCtrcyK2VLySfXgVSJlXcCHeztK08FbNBNzNUL+d/wkB94WEusTZpiEIMEXL4BamfOD/AzcwHPbLMaoYdEgXmPxhLfH4znaiRTA=
+	t=1714665941; cv=none; b=u7zPa+ae91uvkawwlXMmBmjlRD56aA+AlGtlYG43kg/YkbfOTmp6owU/0MyvBQlCn58W08Hl/OhMeBSAV54o3C+L5vIY4dkAI/Xq6GeUpzR5no6pt28ylA7OcVlcVKuy8b7HTTdPUPSlQoFDrhQAyhbLmT8VRhhmB1wh7qPGZxM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714665150; c=relaxed/simple;
-	bh=fW2t4cgBZA+e4gidFOrwLlB0VRfqQTwzVDc7LT4/3K0=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=uIhag3mbhOo+cr8lE4EaWg12SfIMv4tUNr3GrlpLzurWgGutPbYc5cBHSYBaXIunc908rXmHMeCLxXq3sILrd9HGnjhJ43sxm+ymRcnneCqu5qiF/wpOrBGWsKMcvPlW7cPjBippv23KzoBJl4uyXOIHW0UvCYrZZ529TXLVcFw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=A+9QvCQ0; arc=none smtp.client-ip=209.85.218.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1714665941; c=relaxed/simple;
+	bh=beAgqHKPPhNzJtncMNV1sedFva1so2V1I19I9GtrBXM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=XoxwBYuzSkZhZb3mlDrIz1hdIXvfW+mvoIYyS6owsJ3a6kQk6RH87FCx9VmOgWtk1/tLqutKZYlsBSUwnE/eGBCuz/3mew2RS/80wv1r4LEnraElNvReExjazAf83fKq+WOQfxv/GqKEudMngn0NMRc+srw92YSct3ZP9wANF7k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=OjCoZMIY; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="A+9QvCQ0"
-Received: by mail-ej1-f51.google.com with SMTP id a640c23a62f3a-a55911bff66so1038568366b.0
-        for <dm-devel@lists.linux.dev>; Thu, 02 May 2024 08:52:27 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1714665146; x=1715269946; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=fW2t4cgBZA+e4gidFOrwLlB0VRfqQTwzVDc7LT4/3K0=;
-        b=A+9QvCQ0eqeKzy12W8LamUt9FwRUQ+klaPEMLSXooO/z0NgNd0RbdRWFEtBsU6unz1
-         HmmUq25ArQJmSsAChdvWofGGvAik5sC//tw6Gm4meRwZzt0bxLsxkaKTZYKxe1Y/ZCby
-         JeYdqgZqq95CRfPcIF4GNrXRDALNxBGjNVycJfiMWmZ0cYK8+pDQJUk0DSw0ugUlnZHT
-         t1an3U6duBE+ww/Z+Lsz036zY7N6AoDDUrJ5ksF5B9OPZy4yfXxn9XAr0lOVtxnqanUu
-         cSqAb5A5D5SOikNpMiOFg41PktL4n5s9q8fFgqFRrjuaQ2JrWtIIqO0Ictm36VHAAuV8
-         z9Eg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714665146; x=1715269946;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=fW2t4cgBZA+e4gidFOrwLlB0VRfqQTwzVDc7LT4/3K0=;
-        b=vinWxX/J+TOZq6pj3Kjk1gRYeoNLJNdpasAUo079fwhtPHPPbWIFnDWo3a/PbovNXs
-         e17fvbwHRuNcp7+744xWScAvQ3sWRXNe+6w19oCoj2/l2oyjD0zn4J9rkBT6G14DeNr+
-         covUlfCcewUmRO41DUDDlVfkz0/pro79EVheVD6f2kaH9IfpyhwqKLpt90njuHyBzRgY
-         NujsW/1Qwc4Q7HPP/oO8LxKWdJgA7rfbNSs1Kij2DqESMPo3iFvtRJKrcGsJo3kg9R7a
-         kEZexsh+mmAiAf8GwdGxCMCRKkMoBZKmArhEZIoqflU4UcAxxBcaeSYwIJ9Ztg9rM5fF
-         rWeQ==
-X-Gm-Message-State: AOJu0YwBy/hc2E6hntJiXz9waifCHCSJmcwEAMt7HwRGQaG99wF4aqwC
-	ZIiCwd3CO1Hj0FR1dbKXd/KgS+6pTPzoThPl8dlN7F9hq9cnlADrgHLqEHWEmXo=
-X-Google-Smtp-Source: AGHT+IE7iJmtlUETxL38lL3cn6c2CoX7ykjiAct5m4Olvu+R61wNKV9nXUcxhO/D6GrULpgb6cRNtg==
-X-Received: by 2002:a17:906:1694:b0:a55:8f2a:950d with SMTP id s20-20020a170906169400b00a558f2a950dmr3939198ejd.16.1714665146533;
-        Thu, 02 May 2024 08:52:26 -0700 (PDT)
-Received: from ?IPv6:2003:de:373e:dc00:b298:a6be:282c:8242? (p200300de373edc00b298a6be282c8242.dip0.t-ipconnect.de. [2003:de:373e:dc00:b298:a6be:282c:8242])
-        by smtp.gmail.com with ESMTPSA id p25-20020a1709061b5900b00a54c12de34dsm685158ejg.188.2024.05.02.08.52.25
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 02 May 2024 08:52:26 -0700 (PDT)
-Message-ID: <bebad0cd71b1d979e9db514a2172d1e4a22eb969.camel@suse.com>
-Subject: Re: [PATCH v2 5/5] libmultipath: fix deferred_remove function
- arguments
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Thu, 02 May 2024 17:52:25 +0200
-In-Reply-To: <20240425233517.2125142-6-bmarzins@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OjCoZMIY"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1714665938;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=mU/iH1py0v4N3yGMO+1OF4lR42hossy+3/W76HfRurk=;
+	b=OjCoZMIY/YDvfWJQMgrTOTizSoAVlC3kSHkYEYh+M0ehY+KuUS6U0UzWCDpuv4mNNYE3XE
+	y7KpEjoM/HpduN8ft9ydDkgbhJuPU6jh5CrPk+aJXf5R7NTgkmXzLVye/FET4gOiedeod7
+	Nmpl12EPQDscubX3wJMgBkoGTjiQme0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-385-PXVeqoVAN16MbaIJdAkl2w-1; Thu, 02 May 2024 12:05:37 -0400
+X-MC-Unique: PXVeqoVAN16MbaIJdAkl2w-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C2C45803505;
+	Thu,  2 May 2024 16:05:36 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A837A40B497A;
+	Thu,  2 May 2024 16:05:36 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1) with ESMTPS id 442G5a8U2403110
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 2 May 2024 12:05:36 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.1/8.17.1/Submit) id 442G5a5O2403109;
+	Thu, 2 May 2024 12:05:36 -0400
+Date: Thu, 2 May 2024 12:05:36 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH v2 4/5] libmultipath: pad dev_loss_tmo to avoid race with
+ no_path_retry
+Message-ID: <ZjO50C2hB8MilnHV@redhat.com>
 References: <20240425233517.2125142-1-bmarzins@redhat.com>
-	 <20240425233517.2125142-6-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.0 
+ <20240425233517.2125142-5-bmarzins@redhat.com>
+ <9ee49b7c07938b38e39161a5a9143a472b01bff6.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <9ee49b7c07938b38e39161a5a9143a472b01bff6.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Thu, 2024-04-25 at 19:35 -0400, Benjamin Marzinski wrote:
-> Aside from one version of dm_flush_map_nopaths(), all the callers of
-> _dm_flush_map() and dm_simplecmd() set deferred_remove to 0. But
-> these
-> functions, as well as some helper functions they called, all treated
-> the
-> deferred_remove argument as an enum deferred_remove_states, and
-> called
-> do_deferred() to see if the remove should be deferred. To simplify
-> the
-> code, make these functions treat deferred_remove as a boolean value
-> signifying whether a remove is deferred, and make
-> dm_flush_map_nopaths()
-> do the work of checking if the remove should be deferred.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Thu, May 02, 2024 at 05:14:56PM +0200, Martin Wilck wrote:
+> On Thu, 2024-04-25 at 19:35 -0400, Benjamin Marzinski wrote:
+> > Currently multipath makes sure that dev_loss_tmo is at least as long
+> > as
+> > the configured no path queueing time. The goal is to make sure that
+> > path
+> > devices aren't removed while the multipath device is still queueing
+> > in
+> > hopes that they will become usable again.
+> > 
+> > This is racy. Multipathd may take longer to check the paths than
+> > configured. If strict_timing isn't set, it will definitely take
+> > longer.
+> > To account for this, pad the minimum dev_loss_tmo value by five
+> > seconds
+> > (one default checker interval) plus one second per minute of no path
+> > queueing time.
+> 
+> What's the rationale for the "one second per minute" part?
+> It feels kind of arbitrary to me, and I don't find it obvious that we
+> need larger padding for larger timeouts.
 
-While correct in general, this patch doesn't make me quite happy yet.
-The argument type of _dm_flush_map() and elsewhere should at least be
-changed to "bool" to express the semantics more clearly.
+The way the checker works, without strict_timing, we do all the checking
+work, and then we wait for a second. Obviously, the checking work takes
+time, so every nominal one second checker loop will in reality take
+longer than a second. The larger you have configured (no_path_retry *
+checkint), the further away the actual time when we disable queueing
+will be from (no_path_retry * checkint) seconds.
 
-But I have something more intrusive in mind. I'll post a patch on top
-of your series.
+With strict_timing on, things work better. As long as the checking work
+doesn't take more than a second, you will stay fairly close to one
+second per loop, but even still, it can be longer. nanosleep() will
+sleep till at least the time specified. If multipathd is not running as
+a realtime process, it will usually sleep for longer.
 
-Thus:
+Also, if the checker work takes longer than a second, then strict_timing
+will make sure that the loop takes (close to) exactly 2 (or whatever the
+next number is) seconds. However, retry_count_tick() still only ticks
+down by 1 for each loop. This means that the real time before queueing
+is disabled can diverge from (no_path_retry * checkint). And again, the
+longer you've configured it to wait, the more it diverges.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+I thought about passing ticks to retry_count_tick(), so that it would
+correctly deal with these multi-tick loops, but this can cause it to
+diverge from the actual number of retries attempted, in a way that would
+mean we disable queueing before the desired number of retries have
+occurred, which is a bigger problem, IMHO.  No matter how long the
+checker work takes, you will only ever do one path check per loop. In
+the worse case, say that the checker work (or anything else in
+multipathd) gets stuck for a couple of minutes. You would only do one
+path check, but hundreds of ticks would be passed to the
+retry_count_tick(), meaning that you could disable queueing after only
+one retry. Now you could limit the number of ticks you passed to
+retry_count_tick(), but even still, if the a path was 1 tick away from
+being checked, and the checker work took 3 seconds, you would still pass
+3 ticks to retry_count_tick(), which would cause it to start to diverge
+from the actual time it takes for the path to do the configured amount
+of retries.
+
+We could improve retry_count_tick(), so that it actually tracks the
+number of retries you did, but that still leaves the problems when
+either strict_timing isn't on or multipathd isn't a realtime process.
+It seemed easier to just say, the longer you have configured multipathd
+to wait to disable queueing, the more the time when it actually disables
+queueing can diverge from the configured time.
+
+The number I picked for the rate of divergence is just a guest, and if
+you don't like it, I'm fine with removing it. After all, the whole point
+of this patchset is to make sure that the worst thing that can happen if
+paths disappear while we are still queueing is that a multipath device
+isn't autoremoved.
+
+-Ben
+
+> 
+> Regards
+> Martin
 
