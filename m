@@ -1,105 +1,82 @@
-Received: from mail-ej1-f42.google.com (mail-ej1-f42.google.com [209.85.218.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A175D763E4
-	for <dm-devel@lists.linux.dev>; Mon,  6 May 2024 07:26:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD74115B99C
+	for <dm-devel@lists.linux.dev>; Mon,  6 May 2024 21:11:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1714980374; cv=none; b=bKKLp36E6vac2Xt7SEOcVpMwqAwhBDRn3kGHCIRe+K7HuZczvo6K2Rz/UKHzLNp+XhTSNVcNs0K7/xdzW2uXSQUQ7A+bXdQSTIhgMpRZ2frWK3RbMKF1BFPAcZeE+k3/wWUpmxFDSpfs1mmSSlXXIlNCJ40bn0ThZ1IlcBAi08k=
+	t=1715029867; cv=none; b=Yaewq4awBmREV94h2V3aI1AzDUjV/LIx7Z0iHkbyNGiqLcE8Saj/GJ4R8kMFylDh6Z9Rg0XBWsZRHSDAfgRuZZ4pZ52DzvlzEaBjulBr8TIEBY715F24q2jxSi9fo40zqZ7tJp7Ka483+FtVV0vv6w8PDuIvwuvCKsgjSfrMdOs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1714980374; c=relaxed/simple;
-	bh=AllLnRUfY8oVArg/OQXVQOXZddAbll/rOsq1CE5JEdc=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=FLaAbUBjmep9vts9puQMOycjE29kdsambUq3hd7UxzQZ3buiR7+bLQ0/b6mOUpvj9ILO4M6B12cSlD+cLAS1piIu20MFavifKSaT7WimQCl48m6gQVPUZzVrwQJX3Gdm3MG4FZcTiS1QGhHX2r35063PMZotPuRtxBATMt3X2mE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linbit.com; spf=pass smtp.mailfrom=linbit.com; dkim=pass (2048-bit key) header.d=linbit-com.20230601.gappssmtp.com header.i=@linbit-com.20230601.gappssmtp.com header.b=xIuLsQPm; arc=none smtp.client-ip=209.85.218.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linbit.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linbit.com
+	s=arc-20240116; t=1715029867; c=relaxed/simple;
+	bh=WGO5QO3dRKlfICitdweFGYAhS6YfziQiBFs8T7YQuUk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=E9EdE2tTcT8Cp6hQOQLIDXfozYxQFjcg8Vxwhh2wmHffdF+qONEhMblPYWA8aC6AsIzkWkQW+tSeoG/Meu+fYuSGlocxwUelwBeQvaSLj5J60AD6C418+OFB9zQluVN/AgLTK5g4dht/weD3MY9Ps84l2W88+4hp3qCawINpAAg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=E814cy9a; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linbit-com.20230601.gappssmtp.com header.i=@linbit-com.20230601.gappssmtp.com header.b="xIuLsQPm"
-Received: by mail-ej1-f42.google.com with SMTP id a640c23a62f3a-a59a0e4b773so344914266b.2
-        for <dm-devel@lists.linux.dev>; Mon, 06 May 2024 00:26:10 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linbit-com.20230601.gappssmtp.com; s=20230601; t=1714980369; x=1715585169; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=9rIFkbCWlbzUtN5PpRfhtP4G9tKmdZ6WmQepTdXTBAk=;
-        b=xIuLsQPmCAKp4nx23KKtrR8lE5/4ib02pJGOgIvXkW8G88W5u0NRAQEJ1tOKW6Uk7l
-         6kW055lYZph1l11CX2eicvbLsReQZYTxuPy3mE1f5t5VzdeU1tP0lbJpljdJPG5ZHQ1J
-         cU2iMdSfnIxtTv38Ru5iZN6jgm81DtbIrASMSXOirpHoArFt60+WG8uzP+7UCLtOfE/z
-         pP1XA8fbaM8EIoYYN0wL3OcSegnOM64gtRqSxKuqIBAIom+K0qREIYp1SUB0Q3/xuNXR
-         yP6lMD/ZvTyQuGG2vv80nb4/APi3PUDNYAskpflgP9Kx3iB1O4B3O/N18kJROuoXzzXh
-         EeNA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1714980369; x=1715585169;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=9rIFkbCWlbzUtN5PpRfhtP4G9tKmdZ6WmQepTdXTBAk=;
-        b=aN+NZeHm4VfdOjLGeQGduzdK6WvVbU9qecVTbEznaj99QOCRgpb85LjDmbogB68ZTa
-         P6XmHzbWDXg8e5X/c0VHm8pBj7b8JUsfbZInXO+tm8/kY/2SJmuQK4PfCDNZSXgqGe/2
-         9MrDUgLV5PuITjv+F+OGjV+ddQcn49wM6JgOuxYGcxJoyeBXHiLSX/F1+FoK/EkCQ0TR
-         MfMYIk3LgxW47acwq8BInLLAy9hZ9Geq+4UGvQYfvNLug+qbPigaC7YtM9xLfTMrnkGB
-         ySL+389T8ufIr10UzFGTiVlrZWQisp5/aDLxuHHc8TRM/jS/zpC5+QV8OARxqZCAdswF
-         NwJQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVorxTUwqhQZ8tDWnSzAqOJKCtGE8ysxN+Iky/0Qi/dnRY9ROXki8UKKu6Qmxegw6Kd2cB/NtWvyAM8Lc5WymO+hqpCudPfjPs=
-X-Gm-Message-State: AOJu0YzoLQt8j4BmRPa0IwBx3iuavFsz5rknryvm2RcZE3pVmya3JBPV
-	EfghwIaGBXvAW/8W++6b+ZRitawyt0pMziZytai/AJR3DfoGZSaoRfLiWI9dvNbMSwyuID1ergt
-	7
-X-Google-Smtp-Source: AGHT+IHSvKPsrFKqw6KfE2f2jYNvVCpSGhY+PowBEX5x/SvfY5hyvV+g/7mmozBB6bOQ6w0e/lHa8w==
-X-Received: by 2002:a17:907:3f1d:b0:a59:c9ce:3390 with SMTP id hq29-20020a1709073f1d00b00a59c9ce3390mr2161679ejc.30.1714980369175;
-        Mon, 06 May 2024 00:26:09 -0700 (PDT)
-Received: from jrc-a.. (213-47-229-24.cable.dynamic.surfer.at. [213.47.229.24])
-        by smtp.gmail.com with ESMTPSA id oy17-20020a170907105100b00a599a5dec53sm3552611ejb.125.2024.05.06.00.26.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 06 May 2024 00:26:08 -0700 (PDT)
-From: Joel Colledge <joel.colledge@linbit.com>
-To: Christian Loehle <christian.loehle@arm.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH v2 1/1] dm-delay: fix hung task introduced by kthread mode
-Date: Mon,  6 May 2024 09:25:23 +0200
-Message-Id: <20240506072523.399767-2-joel.colledge@linbit.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20240506072523.399767-1-joel.colledge@linbit.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="E814cy9a"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1715029864;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=vpuM7DdZ1dIVsrgmEZWd5kU26lRSp4glNuqdk/kl22U=;
+	b=E814cy9aGK3kEq9qTRmlzte2bu1fa6/iQcUy4FAoCd3cHfa2GP7NPfOMqI3sUDCGF18zjz
+	ejZqgGPnmZhbhpYD4WilgxkzKhBU1658DnL/9VFZ0N7AgoUGFVpOlo2ojpIy2qC5saH4Po
+	rjwe+17QHzH3iMy6s0xsiaUy+n7iByY=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-613-RUNP_kfqNUyH-DGcUyNMHw-1; Mon,
+ 06 May 2024 17:11:00 -0400
+X-MC-Unique: RUNP_kfqNUyH-DGcUyNMHw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C66A71C05153;
+	Mon,  6 May 2024 21:10:59 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AEF3CC13FA3;
+	Mon,  6 May 2024 21:10:59 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 446LAxvH004709
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 6 May 2024 17:10:59 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 446LAxVh004708;
+	Mon, 6 May 2024 17:10:59 -0400
+Date: Mon, 6 May 2024 17:10:59 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Joel Colledge <joel.colledge@linbit.com>
+Cc: Christian Loehle <christian.loehle@arm.com>, dm-devel@lists.linux.dev,
+        linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v2 1/1] dm-delay: fix hung task introduced by kthread mode
+Message-ID: <ZjlHY02it0wBL0TB@redhat.com>
 References: <20240506072523.399767-1-joel.colledge@linbit.com>
+ <20240506072523.399767-2-joel.colledge@linbit.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240506072523.399767-2-joel.colledge@linbit.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
 
-If the worker thread is not woken due to a bio, then it is not woken at
-all. This causes the hung task check to trigger. This occurs, for
-instance, when no bios are submitted. Also when a delay of 0 is
-configured, delay_bio() returns without waking the worker.
+On Mon, May 06, 2024 at 09:25:23AM +0200, Joel Colledge wrote:
+> If the worker thread is not woken due to a bio, then it is not woken at
+> all. This causes the hung task check to trigger. This occurs, for
+> instance, when no bios are submitted. Also when a delay of 0 is
+> configured, delay_bio() returns without waking the worker.
+> 
+> Prevent the hung task check from triggering by creating the thread with
+> kthread_run() instead of using kthread_create() directly.
+> 
+> Fixes: 70bbeb29fab0 ("dm delay: for short delays, use kthread instead of timers and wq")
+> Signed-off-by: Joel Colledge <joel.colledge@linbit.com>
 
-Prevent the hung task check from triggering by creating the thread with
-kthread_run() instead of using kthread_create() directly.
-
-Fixes: 70bbeb29fab0 ("dm delay: for short delays, use kthread instead of timers and wq")
-Signed-off-by: Joel Colledge <joel.colledge@linbit.com>
----
- drivers/md/dm-delay.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-index 5eabdb06c649..eac166405b6b 100644
---- a/drivers/md/dm-delay.c
-+++ b/drivers/md/dm-delay.c
-@@ -267,8 +267,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		 * In case of small requested delays, use kthread instead of
- 		 * timers and workqueue to achieve better latency.
- 		 */
--		dc->worker = kthread_create(&flush_worker_fn, dc,
--					    "dm-delay-flush-worker");
-+		dc->worker = kthread_run(&flush_worker_fn, dc, "dm-delay-flush-worker");
- 		if (IS_ERR(dc->worker)) {
- 			ret = PTR_ERR(dc->worker);
- 			dc->worker = NULL;
--- 
-2.34.1
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
