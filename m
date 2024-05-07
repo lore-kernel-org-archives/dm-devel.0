@@ -1,137 +1,81 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 94B43391;
-	Tue,  7 May 2024 00:33:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 25C2053E16
+	for <dm-devel@lists.linux.dev>; Tue,  7 May 2024 21:16:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715041991; cv=none; b=Ivk9kmZ2IhAwsIbLZFAlZbmjS+p2wKhBUfGUR20E/ySA4zCYfp9udaK/qHQLXitipQax3EU0niKN3R/J27g2inRKFHId3Yk/fotNfFw8DIF0eHdWCO399iSk3wKbnC2UFUSuW77lT1dPBbL0D7rYwzF9UABGG/vGcjDcASKVKfs=
+	t=1715116590; cv=none; b=RNpyEtkvs0R0AZwz4dHeOW6D5tJD1rwUybFJj3KygLlQG4t44lpGWdQlR4RoIQ0qaGO+3Ulx6JEFxzIGGHYXCOyPPWu6DR6/CyuQaoFLgbOGtRdfdEISYAVUn+E4H2c5O1hGv9NPRS7hnoclB74EOh4oyYawNvb+ZYOjdUB7U5Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715041991; c=relaxed/simple;
-	bh=kyXSE/1/9DSfrUdCoQ7zo6XwGE50mgMUeEBfoEZHCKY=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=B0I5kXtYwpk7iEFsSeeJFXu8fZ0RL5VSnFQivSlMg4YrbBjGaer3w/rFcpsXRbUuuPHD0lybimwEDWH3xw/B8dEqR/7w8WPa1T/U+59jDs/4EBywrUtzCUE13aCC93ZQ3tog+ztUmZhuyClSsN4rgrT7PVoT1T31gE6NgLDloxY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=JKxBgi7y; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1715116590; c=relaxed/simple;
+	bh=Q1vGruqUKrNM46alBEBrrB7+4TNSfAh4HfgKgzfD448=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=jmFi59YVNPTdWqxifyiIAg+gVL/5tKuMrCGHKBS9ncTgbxBou9rMjtwh7fHjTBEs+HHAdlyrAZF1fqprstfhPyoBLDc8Thdsn23tm3ZU0QYn8gL8tvk3JoZVZysUFivYlI/vxz10JgpzU+Ga5u229jpnc09SXUIky8T5/bcJ7eI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IdN0HguJ; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="JKxBgi7y"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id DBDB6C116B1;
-	Tue,  7 May 2024 00:33:10 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1715041991;
-	bh=kyXSE/1/9DSfrUdCoQ7zo6XwGE50mgMUeEBfoEZHCKY=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=JKxBgi7ytUA2NJCFUerOeOfKkDAyWyRFNk4I0SuhU3gQ5tOju1583qJTWUaRL2qvB
-	 Xa0/mVe0eokC/FmGq3hRRvfxkW8DuGHZYGEHkjF3YT08o9efzUMmF+COBfZIgv3xX/
-	 qJFslQ3BtP9kaC5iloOhLFHCPIdWOy51cTxW4gJzi1aspYcJZ3EeWX4j+TVmyD0OyV
-	 liBS5wB1co+hziXnGra4OIfgaGb5iJZL6iKjO626BvJQSMVDXtbbl5yvH3TCkYD0Tu
-	 c9kCgV3VsLlRma7LZsJl2JiC4CnU6NF1IdxOky/RVBY3RuN2FgAYUJi9NAwXYHjfMN
-	 j+vFJlckdZ7WA==
-Date: Mon, 6 May 2024 17:33:09 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
-	dm-devel@lists.linux.dev, x86@kernel.org,
-	linux-arm-kernel@lists.infradead.org, ardb@kernel.org,
-	samitolvanen@google.com, bvanassche@acm.org
-Subject: Re: [PATCH v2 1/8] crypto: shash - add support for finup2x
-Message-ID: <20240507003309.GA192875@sol.localdomain>
-References: <20240422203544.195390-2-ebiggers@kernel.org>
- <ZjS5-Im1wWGawfUy@gondor.apana.org.au>
- <20240503152810.GA1132@sol.localdomain>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IdN0HguJ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1715116588;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Cv2VuPrihKdd/sTtrx06MuGPRuxXldtdGlYk7ty0KZA=;
+	b=IdN0HguJtA51es1m8uBQA5tk+Qy8divr4Skbj0qDQMY48ZcHJUZye5ArMpg9vQD+CRejtW
+	S93R67M8yr9YcBoYB67NsLmU/M9K2EHvpkFBzaqJm/OFZCQahzVfIHp8I+gATGf4XzdQ/z
+	lE9wM5TwnlKU3AaPmxnTebIFNvfnm6Y=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-133-KPOYcDTROTmBC7sibPCUGg-1; Tue, 07 May 2024 17:16:26 -0400
+X-MC-Unique: KPOYcDTROTmBC7sibPCUGg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 871F880021D;
+	Tue,  7 May 2024 21:16:26 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 434FF4750A0;
+	Tue,  7 May 2024 21:16:26 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 447LGQci026718
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 7 May 2024 17:16:26 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 447LGQ7S026717;
+	Tue, 7 May 2024 17:16:26 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+        Heinz Mauelshagen <mauelshagen@redhat.com>
+Cc: dm-devel@lists.linux.dev
+Subject: [PATCH 0/3] dm-delay synchronization cleanup
+Date: Tue,  7 May 2024 17:16:22 -0400
+Message-ID: <20240507211626.26706-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240503152810.GA1132@sol.localdomain>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-On Fri, May 03, 2024 at 08:28:10AM -0700, Eric Biggers wrote:
-> On Fri, May 03, 2024 at 06:18:32PM +0800, Herbert Xu wrote:
-> > Eric Biggers <ebiggers@kernel.org> wrote:
-> > >
-> > > For now the API only supports 2-way interleaving, as the usefulness and
-> > > practicality seems to drop off dramatically after 2.  The arm64 CPUs I
-> > > tested don't support more than 2 concurrent SHA-256 hashes.  On x86_64,
-> > > AMD's Zen 4 can do 4 concurrent SHA-256 hashes (at least based on a
-> > > microbenchmark of the sha256rnds2 instruction), and it's been reported
-> > > that the highest SHA-256 throughput on Intel processors comes from using
-> > > AVX512 to compute 16 hashes in parallel.  However, higher interleaving
-> > > factors would involve tradeoffs such as no longer being able to cache
-> > > the round constants in registers, further increasing the code size (both
-> > > source and binary), further increasing the amount of state that users
-> > > need to keep track of, and causing there to be more "leftover" hashes.
-> > 
-> > I think the lack of extensibility is the biggest problem with this
-> > API.  Now I confess I too have used the magic number 2 in the
-> > lskcipher patch-set, but there I think at least it was more
-> > justifiable based on the set of algorithms we currently support.
-> > 
-> > Here I think the evidence for limiting this to 2 is weak.  And the
-> > amount of work to extend this beyond 2 would mean ripping this API
-> > out again.
-> > 
-> > So let's get this right from the start.  Rather than shoehorning
-> > this into shash, how about we add this to ahash instead where an
-> > async return is a natural part of the API?
-> > 
-> > In fact, if we do it there we don't need to make any major changes
-> > to the API.  You could simply add an optional flag that to the
-> > request flags to indicate that more requests will be forthcoming
-> > immediately.
-> > 
-> > The algorithm could then either delay the current request if it
-> > is supported, or process it immediately as is the case now.
-> > 
-> 
-> The kernel already had ahash-based multibuffer hashing years ago.  It failed
-> spectacularly, as it was extremely complex, buggy, slow, and potentially
-> insecure as it mixed requests from different contexts.  Sure, it could have been
-> improved slightly by adding flush support, but most issues would have remained.
-> 
-> Synchronous hashing really is the right model here.  One of the main performance
-> issues we are having with dm-verity and fs-verity is the scheduling hops
-> associated with the workqueues on which the dm-verity and fs-verity work runs.
-> If there was another scheduling hop from the worker task to another task to do
-> the actual hashing, that would be even worse and would defeat the point of doing
-> multibuffer hashing.  And with the ahash based API this would be difficult to
-> avoid, as when an individual request gets submitted and put on a queue somewhere
-> it would lose the information about the original submitter, so when it finally
-> gets hashed it might be by another task (which the original task would then have
-> to wait for).  I guess the submitter could provide some sort of tag that makes
-> the request be put on a dedicated queue that would eventually get processed only
-> by the same task (which might also be needed for security reasons anyway, due to
-> all the CPU side channels), but that would add lots of complexity to add tag
-> support to the API and support an arbitrary number of queues.
-> 
-> And then there's the issue of request lengths.  With one at a time submission
-> via 'ahash_request', each request would have its own length.  Having to support
-> multibuffer hashing of different length requests would add a massive amount of
-> complexity and edge cases that are difficult to get correct, as was shown by the
-> old ahash based code.  This suggests that either the API needs to enforce that
-> all the lengths are the same, or it needs to provide a clean API (my patch)
-> where the caller just provides a single length that applies to all messages.
-> 
-> So the synchronous API really seems like the right approach, whereas shoehorning
-> it into the asynchronous hash API would result in something much more complex
-> and not actually useful for the intended use cases.
-> 
-> If you're concerned about the hardcoding to 2x specifically, how about the
-> following API instead:
-> 
->     int crypto_shash_finup_mb(struct shash_desc *desc,
->                               const u8 *datas[], unsigned int len,
->                               u8 *outs[], int num_msgs)
-> 
-> This would allow extension to higher interleaving factors.
-> 
-> I do suspect that anything higher than 2x isn't going to be very practical for
-> in-kernel use cases, where code size, latency, and per-request memory usage tend
-> to be very important.  Regardless, this would make the API able to support
-> higher interleaving factors.
+This patchset fixes a possible crash in delay_dtr() caused by the
+delay_timer queueing work on a destroyed workqueue. It also cuts down
+on the amount of locking and waiting the dm-delay does.
 
-I've sent out a new version that makes the change to crypto_shash_finup_mb().
+Benjamin Marzinski (3):
+  dm-delay: fix workqueue delay_timer race
+  dm-delay: change locking to avoid contention
+  dm-delay: remove timer_lock
 
-- Eric
+ drivers/md/dm-delay.c | 52 +++++++++++++++++++++++--------------------
+ 1 file changed, 28 insertions(+), 24 deletions(-)
+
+-- 
+2.45.0
+
