@@ -1,85 +1,107 @@
-Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com [209.85.219.47])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29D9314B95C
-	for <dm-devel@lists.linux.dev>; Thu,  9 May 2024 14:24:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 605AC383BD
+	for <dm-devel@lists.linux.dev>; Thu,  9 May 2024 16:07:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715264696; cv=none; b=ZPv5zFdYlsBszFTNh/wW9Y1wtQmPOl3zHwMuag5PZT0KYdwQgcYMdpaHQBZzq4V8Hvzq+gZtI7ZAK3Cka4wENqcac/HRUC4vbsvBNfgVLevJb9EIbZNa2t3lOMXi9m5sDNyrCLbB4Kd5zQLbR0lBc27HTN6FoA9mPX2Qrw+1XzQ=
+	t=1715270854; cv=none; b=njfVpApY6nuLaBJZa0SeA64rjMLe3/MIOjleNi+BrGol6Z7ezsqOWa8JVZQFc86l6LFcAW7WK1ePHf58DpSqlCmPpdlTGLdxmApZIs2QJ6qVBybQ+qBJLKNClz95+9KqTz9iAi/wQ98nV0TGEFrrjo5hzBxfN256aBWTFCsUgZ4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715264696; c=relaxed/simple;
-	bh=Fh6Gp8KCO5posqyeaV7qi4GXAWQ5LfRgpWLUsR1gkxU=;
+	s=arc-20240116; t=1715270854; c=relaxed/simple;
+	bh=FgIbhRy7HSrWRViKpPVE8AV0cZ4sC3zgxZcgjDUi/vA=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=eToB+sRg2go+mzD6UqAKb7YYYsjYDZKx7Dh2s4v9p8PZ8UtUIBGnTDawEDN5GDBKCtH1ojMVemk5pEEA4LkpJlyoZz7uJWUCpp9+Ob4GIEZFX8HkvBlnrQPGuxfH38Zpy7x8+iArZ2dF6y/n/euGPqV/e1nLZ9U87JkO362h65E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.219.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
-Received: by mail-qv1-f47.google.com with SMTP id 6a1803df08f44-69b7d2de292so4309486d6.2
-        for <dm-devel@lists.linux.dev>; Thu, 09 May 2024 07:24:54 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715264694; x=1715869494;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=OYoYKkdbfRSKqt/bnbJ4410nX8EskydVEumvwaRPd1c=;
-        b=GnbvgrRV2leIJLGqgpbuMEnNL2M3XHHnOg0H/cXEYr87DisqaID/VFjpgQsHm0Yj4N
-         Uh1DMupnZeu51vGLIpDj0nEIDWQNjb6XqR16l6CGHWz8StGFFc4/ZYkWCwSYlZTC3ZNF
-         qmrczdxHLHm4vKhpYvuZaP+WxoWKMeuJSUN4VUx3MmUPfYIVnf7iFX6ujsC1/FRQI1jx
-         rbOM1gQ3mYVxLUMb1e6kA1PxG+eJPM+HGyX8NCNYPhP8rP4zviYFwOKZNV6m7+7uQpLg
-         D53fXDqKxwxQb382wvlGXL88c9LHWWl5BkaE1+T3j4D708VAGc92TRmJs1VUOU2JjzkV
-         T1dQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWzSqr4l5+tZI25DGg7zp9Yy+sYmrwHmy6Ru3UyFa37Pqb+i20KpInCFQzWNe1vnP7Tw2D1EVMdjfpFRTAY8VCsY87BJxP5j30=
-X-Gm-Message-State: AOJu0YxF5VBo5kb+WQl5b/BxxRgAnF06QZ4nDIYfyXX40EF7K58I0pPl
-	qfj5pODiaRu+HSBWnsQdAcjTXob/UIZgjnls40a7Utap5vT4b7LY6uH+11gxpt0=
-X-Google-Smtp-Source: AGHT+IFWAlECgA5m9go9TiTlAjrA5s3PgnnUjbQHGKH4r8Y2O5p2sRo5EcePeMKkDU9SUvpkrI0XPA==
-X-Received: by 2002:a05:6214:c47:b0:6a0:d312:2c75 with SMTP id 6a1803df08f44-6a15157df9amr51985726d6.64.1715264694122;
-        Thu, 09 May 2024 07:24:54 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6a1624fb686sm5341936d6.124.2024.05.09.07.24.53
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 09 May 2024 07:24:53 -0700 (PDT)
-Date: Thu, 9 May 2024 10:24:52 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Benjamin Marzinski <bmarzins@redhat.com>
+	 In-Reply-To:Content-Type:Content-Disposition; b=LFnEujw0HcMP/hVd2crjxILzKKaNzS0j4wq/R/JCnGBJWRMrKgOJsSFd2SK1g4bq3PDGb574cH63WFOMOUODdfWoaPSZ30aB4YY401MbppvvQQVALtmrHVwXdBpvo17masrRbvdptmn1c91d0hPVfhsuDPhbwclGlTbusxWZRd8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=OxLQv6QN; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OxLQv6QN"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1715270851;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=skcFIg+gE2cq8ItC18iUQ3bcCNr+kvWpwg62m7/g4e8=;
+	b=OxLQv6QNc/RgH9mr1tGjYa9HXCGOWuLGnGtIFNl0MKEBhGb/79Svral5CBZzSfVlCmcChB
+	Jl3tqKIzTCvaoxY6tYwH0sshGCiYBH16SLOJcr7rT2lHl5tKKL+8JnxtIwSNK3UqtQ+q34
+	wh+15uhZi6ifiQ2hYdAn1xRvtEHMuHQ=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-154-3KXZ1f9aMyqmq66XheBQXw-1; Thu, 09 May 2024 12:07:27 -0400
+X-MC-Unique: 3KXZ1f9aMyqmq66XheBQXw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7CD5780027F;
+	Thu,  9 May 2024 16:07:27 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3283243511F;
+	Thu,  9 May 2024 16:07:27 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 449G7Re8048645
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 9 May 2024 12:07:27 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 449G7QMf048644;
+	Thu, 9 May 2024 12:07:26 -0400
+Date: Thu, 9 May 2024 12:07:26 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
 Cc: Mikulas Patocka <mpatocka@redhat.com>,
-	Heinz Mauelshagen <mauelshagen@redhat.com>,
-	dm-devel@lists.linux.dev, Joel Colledge <joel.colledge@linbit.com>
+        Heinz Mauelshagen <mauelshagen@redhat.com>, dm-devel@lists.linux.dev,
+        Joel Colledge <joel.colledge@linbit.com>
 Subject: Re: [PATCH 0/3] dm-delay synchronization cleanup
-Message-ID: <ZjzctGe27JkXsANR@redhat.com>
+Message-ID: <Zjz0vkYQSMPxHFqz@redhat.com>
 References: <20240507211626.26706-1-bmarzins@redhat.com>
+ <ZjzctGe27JkXsANR@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <ZjzctGe27JkXsANR@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240507211626.26706-1-bmarzins@redhat.com>
 
-On Tue, May 07, 2024 at 05:16:22PM -0400, Benjamin Marzinski wrote:
-> This patchset fixes a possible crash in delay_dtr() caused by the
-> delay_timer queueing work on a destroyed workqueue. It also cuts down
-> on the amount of locking and waiting the dm-delay does.
+On Thu, May 09, 2024 at 10:24:52AM -0400, Mike Snitzer wrote:
+> On Tue, May 07, 2024 at 05:16:22PM -0400, Benjamin Marzinski wrote:
+> > This patchset fixes a possible crash in delay_dtr() caused by the
+> > delay_timer queueing work on a destroyed workqueue. It also cuts down
+> > on the amount of locking and waiting the dm-delay does.
+> > 
+> > Benjamin Marzinski (3):
+> >   dm-delay: fix workqueue delay_timer race
+> >   dm-delay: change locking to avoid contention
+> >   dm-delay: remove timer_lock
+> > 
+> >  drivers/md/dm-delay.c | 52 +++++++++++++++++++++++--------------------
+> >  1 file changed, 28 insertions(+), 24 deletions(-)
+> > 
+> > -- 
+> > 2.45.0
+> > 
+> > 
 > 
-> Benjamin Marzinski (3):
->   dm-delay: fix workqueue delay_timer race
->   dm-delay: change locking to avoid contention
->   dm-delay: remove timer_lock
+> Hey Ben,
 > 
->  drivers/md/dm-delay.c | 52 +++++++++++++++++++++++--------------------
->  1 file changed, 28 insertions(+), 24 deletions(-)
-> 
-> -- 
-> 2.45.0
-> 
-> 
+> I just staged 5 dm-delay patches in dm-6.10. 1 from Joel and 4 from
+> you.  Please confirm this is what you expected and looks good:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-6.10
 
-Hey Ben,
+Well, I was half expecting to be told that it's kinda pointless to
+optimize a target whoses purpose is to slow things down, but yeah, this
+matches my dev branch.
 
-I just staged 5 dm-delay patches in dm-6.10. 1 from Joel and 4 from
-you.  Please confirm this is what you expected and looks good:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-6.10
+Thanks.
+-Ben
 
-Thanks,
-Mike
+> 
+> Thanks,
+> Mike
+
