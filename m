@@ -1,202 +1,295 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f182.google.com (mail-qk1-f182.google.com [209.85.222.182])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12CB513C919
-	for <dm-devel@lists.linux.dev>; Thu,  9 May 2024 01:29:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BF7812F378
+	for <dm-devel@lists.linux.dev>; Thu,  9 May 2024 14:20:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715218153; cv=none; b=alJgyrJwG5fDUXbyflq2oif9JSEcibqP/2dvnTZouuUzonpgcSeczCj8o3GRXWRgTsbgRIJKx81PsZaNiQSs058X1eQc8evhBin0NKE2JZ/30SbDzY0rWPSzHKObRef5xicbnxg1qr0kZ0UtF9vSGwgDO0URi7+IZszJheY91BI=
+	t=1715264447; cv=none; b=YjzQpcA3XVbySZCEfFir5goDTYpC5SuJERaJ8mKkIVjdsUrh2dCIKedhu15kpCYYkbmyp4Z5aB27wlp0pjdKmFaLRsJQ+djc6RcClupURBxtSnpLza2jXuw7KvDhEPfZayRtv/b0xJcI5ZuZuDtMHVxE87oPXjg/q8bRzbEAxe4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715218153; c=relaxed/simple;
-	bh=bAXNs+MafqLh6UEtkbloHDsJqX7fuUMCLpWoqj7mDZw=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=QbmbbSFYRsdak3wRnSepBWWqbOTiU8cnaqPuisC3vpopql72IPfJMIAAqZpFHjTeNEunAzzip6X1LAJPvvcbzk50V2OWzZ/CLtHjBsDqqzn17RVVk8rzc9Eu2wyJjFrP75hWoFPO7HnO6atam1/25nG/3UaEVViMovqtzw7Ksd4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4VZZDC6CR5z4f3jJL
-	for <dm-devel@lists.linux.dev>; Thu,  9 May 2024 09:28:59 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 3470F1A016E
-	for <dm-devel@lists.linux.dev>; Thu,  9 May 2024 09:29:08 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP1 (Coremail) with SMTP id cCh0CgDHlxDeJjxm5MuXMA--.59814S13;
-	Thu, 09 May 2024 09:29:08 +0800 (CST)
-From: Yu Kuai <yukuai1@huaweicloud.com>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	song@kernel.org,
-	xni@redhat.com
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	linux-raid@vger.kernel.org,
-	yukuai3@huawei.com,
-	yukuai1@huaweicloud.com,
-	yi.zhang@huawei.com,
-	yangerkun@huawei.com
-Subject: [PATCH md-6.10 9/9] md: pass in max_sectors for pers->sync_request()
-Date: Thu,  9 May 2024 09:19:00 +0800
-Message-Id: <20240509011900.2694291-10-yukuai1@huaweicloud.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
-References: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
+	s=arc-20240116; t=1715264447; c=relaxed/simple;
+	bh=eWWDGvbsDVngZYCUCH9ox5lJo7YaapwVrqzwIb2h2I8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Vh2D8rmPmDkIMrtijGQSHMitU3qkMXGpowwKcpUNlBAtzCZUhGVG85+cUuuTZR5BGjMWFu/ISQNeqQNK/sqc2se2aqmJTtSV1xPAzd9pW8aN07TjT07pF2Xd+MOKuwBJBX4TCM+gsB6vsqkiZiEk0rNurJ/WxbtNkatqJbSVRSM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.222.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
+Received: by mail-qk1-f182.google.com with SMTP id af79cd13be357-792bd1f5b28so69120185a.2
+        for <dm-devel@lists.linux.dev>; Thu, 09 May 2024 07:20:45 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1715264444; x=1715869244;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=LI8zKzgShybSKm84oEfOTFsWuCr52KPccSGiUqMIups=;
+        b=mBuvIK3YV6/Z5JJQUPtZthRp52Ts9QoXvR8Ot5QuYBtMZzMHtu36W4cR09BeS/2Sjq
+         cBno2Aa+nfAgUcDwuL4bRr3lgctS1qarWW16M2zieJdw1ONsOR88gNjBD5O75lJUzk1M
+         64J6ECE/h1Ihb7E2rM9jim4V2UdOpInG5GoC/JoQhLZt16dmLFWTkSrIKl4dsw+tnIhL
+         Uw5xs0iX6eYiD44x+w1xEcXtkHnBDFm16SnJMnx3YumCNWx11RgzRKX1OvK7QX834aXs
+         O2c/5md847QwVOUo8yL4y+6N8MSJnBSQIX2Nfs4aNbYFs7B6zTFSKHWYBHJNq8R6rSHY
+         3KMA==
+X-Forwarded-Encrypted: i=1; AJvYcCVpeA5BBHP9KYouVk8dXEbqp5MGsB+yvO2lwCdIJgtHgPvLOvBlGprfBbjOn9BhhcRhLCV4IzjjcF7gmsZuCPOxrTCV2aTDErk=
+X-Gm-Message-State: AOJu0YyQW6mCGszhgwTbK4+zApoWPZbg/CUgXOprXEFaOPFOhNhW7Dbp
+	3ehB5ch1Ukywmp+2M2WhVZkqlinclGO4WF17DiuZM/ySQjpiAa9tD54ZPmY2nJk=
+X-Google-Smtp-Source: AGHT+IGEqgEoqCipeNchj0vk0VdEV8PUYIZbfhchERXbpltagFOdZQ7FxUe/n0jpmEpUCwvUPuHnvg==
+X-Received: by 2002:a05:6214:268a:b0:6a0:a55b:9539 with SMTP id 6a1803df08f44-6a1514e4e6bmr65394296d6.60.1715264444246;
+        Thu, 09 May 2024 07:20:44 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6a15f1d8368sm7320406d6.109.2024.05.09.07.20.43
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 09 May 2024 07:20:43 -0700 (PDT)
+Date: Thu, 9 May 2024 10:20:42 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Yang Yang <yang.yang@vivo.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: Re: [RFC PATCH] dm: Avoid sending redundant empty flush bios to the
+ same block device
+Message-ID: <ZjzbuuGKqEJxScRY@redhat.com>
+References: <20240422100540.2213-1-yang.yang@vivo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgDHlxDeJjxm5MuXMA--.59814S13
-X-Coremail-Antispam: 1UD129KBjvJXoWxXr4fJF1kGrW3XrWDZrW5KFg_yoWrKF4kpa
-	18tFy3ZrW7XrW5Jwn8AryDua4Fva4ftrWjkryfu3s3WFn3Kr9rAF1rXayUXFyDWa4rJr4Y
-	qw1Utr45u3Z2grJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUPI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
-	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
-	z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
-	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
-	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
-	IYx2IY67AKxVWUGVWUXwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
-	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
-	kIc2xKxwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E
-	14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_Jw0_GFylIx
-	kGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVW8JVW5JwCI42IY6xIIjxv20xvEc7CjxVAF
-	wI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Gr
-	0_Cr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUA
-	rcfUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240422100540.2213-1-yang.yang@vivo.com>
 
-From: Yu Kuai <yukuai3@huawei.com>
+On Mon, Apr 22, 2024 at 06:05:40PM +0800, Yang Yang wrote:
+> __send_empty_flush() sends empty flush bios to every target in the
+> dm_table. However, if the num_targets exceeds the number of block
+> devices in the dm_table's device list, it could lead to multiple
+> invocations of __send_duplicate_bios() for the same block device.
+> Typically, a single thread sending numerous empty flush bios to one
+> block device is redundant, as these bios are likely to be merged by the
+> flush state machine. In scenarios where num_targets significantly
+> outweighs the number of block devices, such behavior may result in a
+> noteworthy decrease in performance.
+> 
+> This issue can be reproduced using this command line:
+>   for i in {0..1023}; do
+>     echo $((8000*$i)) 8000 linear /dev/sda2 $((16384*$i))
+>   done | dmsetup create example
 
-For different sync_action, sync_thread will use different max_sectors,
-see details in md_sync_max_sectors(), currently both md_do_sync() and
-pers->sync_request() in eatch iteration have to get the same
-max_sectors. Hence pass in max_sectors for pers->sync_request() to
-prevent redundant code.
+Only _one_ dm_dev will be created for this example: /dev/sda2
+So your bitmap is looking at a single bit.
 
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
----
- drivers/md/md.c     | 5 +++--
- drivers/md/md.h     | 3 ++-
- drivers/md/raid1.c  | 5 ++---
- drivers/md/raid10.c | 8 ++------
- drivers/md/raid5.c  | 3 +--
- 5 files changed, 10 insertions(+), 14 deletions(-)
+> With this fix, a random write with fsync workload executed with the
+> following fio command:
+> 
+>   fio --group_reporting --name=benchmark --filename=/dev/mapper/example \
+>       --ioengine=sync --invalidate=1 --numjobs=16 --rw=randwrite \
+>       --blocksize=4k --size=2G --time_based --runtime=30 --fdatasync=1
+> 
+> results in an increase from 857 KB/s to 30.8 MB/s of the write
+> throughput (3580% increase).
+> 
+> Signed-off-by: Yang Yang <yang.yang@vivo.com>
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 42db128b82d9..95b0f9642137 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -9200,7 +9200,8 @@ void md_do_sync(struct md_thread *thread)
- 		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
- 			break;
- 
--		sectors = mddev->pers->sync_request(mddev, j, &skipped);
-+		sectors = mddev->pers->sync_request(mddev, j, max_sectors,
-+						    &skipped);
- 		if (sectors == 0) {
- 			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
- 			break;
-@@ -9290,7 +9291,7 @@ void md_do_sync(struct md_thread *thread)
- 		mddev->curr_resync_completed = mddev->curr_resync;
- 		sysfs_notify_dirent_safe(mddev->sysfs_completed);
- 	}
--	mddev->pers->sync_request(mddev, max_sectors, &skipped);
-+	mddev->pers->sync_request(mddev, max_sectors, max_sectors, &skipped);
- 
- 	if (!test_bit(MD_RECOVERY_CHECK, &mddev->recovery) &&
- 	    mddev->curr_resync > MD_RESYNC_ACTIVE) {
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 883b147a2c52..d03e11fff79a 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -731,7 +731,8 @@ struct md_personality
- 	int (*hot_add_disk) (struct mddev *mddev, struct md_rdev *rdev);
- 	int (*hot_remove_disk) (struct mddev *mddev, struct md_rdev *rdev);
- 	int (*spare_active) (struct mddev *mddev);
--	sector_t (*sync_request)(struct mddev *mddev, sector_t sector_nr, int *skipped);
-+	sector_t (*sync_request)(struct mddev *mddev, sector_t sector_nr,
-+				 sector_t max_sector, int *skipped);
- 	int (*resize) (struct mddev *mddev, sector_t sectors);
- 	sector_t (*size) (struct mddev *mddev, sector_t sectors, int raid_disks);
- 	int (*check_reshape) (struct mddev *mddev);
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index be8ac24f50b6..1f6dffada912 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -2757,12 +2757,12 @@ static struct r1bio *raid1_alloc_init_r1buf(struct r1conf *conf)
-  */
- 
- static sector_t raid1_sync_request(struct mddev *mddev, sector_t sector_nr,
--				   int *skipped)
-+				   sector_t max_sector, int *skipped)
- {
- 	struct r1conf *conf = mddev->private;
- 	struct r1bio *r1_bio;
- 	struct bio *bio;
--	sector_t max_sector, nr_sectors;
-+	sector_t nr_sectors;
- 	int disk = -1;
- 	int i;
- 	int wonly = -1;
-@@ -2778,7 +2778,6 @@ static sector_t raid1_sync_request(struct mddev *mddev, sector_t sector_nr,
- 		if (init_resync(conf))
- 			return 0;
- 
--	max_sector = mddev->dev_sectors;
- 	if (sector_nr >= max_sector) {
- 		/* If we aborted, we need to abort the
- 		 * sync on the 'current' bitmap chunk (there will
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index a4556d2e46bf..af54ac30a667 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -3140,12 +3140,12 @@ static void raid10_set_cluster_sync_high(struct r10conf *conf)
-  */
- 
- static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
--			     int *skipped)
-+				    sector_t max_sector, int *skipped)
- {
- 	struct r10conf *conf = mddev->private;
- 	struct r10bio *r10_bio;
- 	struct bio *biolist = NULL, *bio;
--	sector_t max_sector, nr_sectors;
-+	sector_t nr_sectors;
- 	int i;
- 	int max_sync;
- 	sector_t sync_blocks;
-@@ -3175,10 +3175,6 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
- 			return 0;
- 
-  skipped:
--	max_sector = mddev->dev_sectors;
--	if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery) ||
--	    test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery))
--		max_sector = mddev->resync_max_sectors;
- 	if (sector_nr >= max_sector) {
- 		conf->cluster_sync_low = 0;
- 		conf->cluster_sync_high = 0;
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 2bd1ce9b3922..69a083ca41a3 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -6458,11 +6458,10 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
- }
- 
- static inline sector_t raid5_sync_request(struct mddev *mddev, sector_t sector_nr,
--					  int *skipped)
-+					  sector_t max_sector, int *skipped)
- {
- 	struct r5conf *conf = mddev->private;
- 	struct stripe_head *sh;
--	sector_t max_sector = mddev->dev_sectors;
- 	sector_t sync_blocks;
- 	int still_degraded = 0;
- 	int i;
--- 
-2.39.2
+I'm including my original fine-grained review comments inlined below
+BUT, having wasted time reviewing this patch I'm left with the
+conclusions:
 
+1) this patch has serious issues.
+2) it fixes an issue with a toy 'example' but ignores that not all
+   targets are linear, each disparate target could have their own
+   reason(s) for actually _needing_ the redundant flushes.
+
+I'm inclined to never take this type of change.
+
+> ---
+>  drivers/md/dm-core.h          |  1 +
+>  drivers/md/dm-table.c         |  7 +++++
+>  drivers/md/dm.c               | 59 +++++++++++++++++++++++++++++++++++
+>  include/linux/device-mapper.h |  6 ++++
+>  4 files changed, 73 insertions(+)
+> 
+> diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+> index e6757a30dcca..7e3f2168289f 100644
+> --- a/drivers/md/dm-core.h
+> +++ b/drivers/md/dm-core.h
+> @@ -217,6 +217,7 @@ struct dm_table {
+>  	/* a list of devices used by this table */
+>  	struct list_head devices;
+>  	struct rw_semaphore devices_lock;
+> +	unsigned short num_devices;
+>  
+>  	/* events get handed up using this callback */
+>  	void (*event_fn)(void *data);
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 41f1d731ae5a..ddc60e498afb 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -2133,6 +2133,8 @@ void dm_table_postsuspend_targets(struct dm_table *t)
+>  
+>  int dm_table_resume_targets(struct dm_table *t)
+>  {
+> +	struct list_head *devices = dm_table_get_devices(t);
+> +	struct dm_dev_internal *dd;
+>  	unsigned int i;
+>  	int r = 0;
+>  
+> @@ -2159,6 +2161,11 @@ int dm_table_resume_targets(struct dm_table *t)
+>  			ti->type->resume(ti);
+>  	}
+>  
+> +	t->num_devices = 0;
+> +
+> +	list_for_each_entry(dd, devices, list)
+> +		dd->dm_dev->index = ++(t->num_devices);
+> +
+>  	return 0;
+>  }
+>  
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 56aa2a8b9d71..7297235291f6 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -48,6 +48,8 @@
+>   */
+>  #define REQ_DM_POLL_LIST	REQ_DRV
+>  
+> +#define DM_MAX_TABLE_DEVICES	1024
+> +
+
+This name is too general. This limit isn't imposed for anything other
+than bounding the size of the bitmap used to avoid redundant flushes.
+
+So maybe rename to: DM_MAX_REDUNDANT_FLUSH_BITMAP_DEVICES
+
+>  static const char *_name = DM_NAME;
+>  
+>  static unsigned int major;
+> @@ -1543,10 +1545,38 @@ static unsigned int __send_duplicate_bios(struct clone_info *ci, struct dm_targe
+>  	return ret;
+>  }
+>  
+> +static inline bool has_redundant_flush(struct dm_table *t,
+> +		unsigned long **bitmap)
+> +{
+> +	if (t->num_devices < t->num_targets) {
+> +		/* Add a limit here to prevent excessive memory usage for bitmaps */
+> +		if (t->num_devices >= DM_MAX_TABLE_DEVICES)
+> +			return false;
+
+OK, in practice I'm not aware of tables that require such an excessive
+amount of devices.
+
+> +		/* dm_dev's index starts from 1, so need plus 1 here */
+> +		*bitmap = bitmap_zalloc(t->num_devices + 1, GFP_KERNEL);
+> +		if (*bitmap)
+> +			return true;
+> +	}
+
+This method is being used in the IO path, so you cannot use
+GFP_KERNEL.  Please switch to GFP_NOIO.
+
+> +
+> +	return false;
+> +}
+> +
+> +static int dm_get_dev_index(struct dm_target *ti, struct dm_dev *dev,
+> +				     sector_t start, sector_t len, void *data)
+> +{
+> +	unsigned short *index = data;
+> +	*index = dev->index;
+> +	return 0;
+> +}
+> +
+>  static void __send_empty_flush(struct clone_info *ci)
+>  {
+>  	struct dm_table *t = ci->map;
+>  	struct bio flush_bio;
+> +	unsigned long *handled_map;
+
+Please rename, e.g.: handled_devices_bitmap
+
+> +	unsigned int nr_handled = 0;
+> +	bool check = has_redundant_flush(t, &handled_map);
+>  
+>  	/*
+>  	 * Use an on-stack bio for this, it's safe since we don't
+> @@ -1562,17 +1592,46 @@ static void __send_empty_flush(struct clone_info *ci)
+>  
+>  	for (unsigned int i = 0; i < t->num_targets; i++) {
+>  		unsigned int bios;
+> +		unsigned short index = 0;
+>  		struct dm_target *ti = dm_table_get_target(t, i);
+>  
+>  		if (unlikely(ti->num_flush_bios == 0))
+>  			continue;
+>  
+> +		/*
+> +		 * If the num_targets is greater than the number of block devices
+> +		 * in the dm_table's devices list, __send_empty_flush() might
+> +		 * invoke __send_duplicate_bios() multiple times for the same
+> +		 * block device. This could lead to a substantial decrease in
+> +		 * performance when num_targets significantly exceeds the number
+> +		 * of block devices.
+> +		 * Ensure that __send_duplicate_bios() is only called once for
+> +		 * each block device.
+> +		 */
+> +		if (check) {
+> +			if (nr_handled == t->num_devices)
+> +				break;
+> +
+> +			if (ti->type->iterate_devices)
+> +				ti->type->iterate_devices(ti, dm_get_dev_index, &index);
+
+You're looping through all data devices in a target, so you're only
+getting the last device in the target's index.  That seems very
+broken.
+
+But each target in your test 'example' device (mentioned in the patch
+header) only has a single device so you wouldn't have noticed this.
+
+> +
+> +			if (index > 0) {
+> +				if (__test_and_set_bit(index, handled_map))
+> +					continue;
+> +				else
+> +					nr_handled++;
+
+Think you really mean to set bits in the bitmap within the
+iterate_devices callout.  So it should be renamed accordingly.
+
+Why not count the first time a device is handled in nr_handled?
+Also, it strikes me as strange that you're break'ing out this loop
+early based on nr_handled... not seeing the point (and also it seems
+broken, because it implies you aren't issuing flushes to targets at
+the end).
+
+> +			}
+> +		}
+> +
+>  		atomic_add(ti->num_flush_bios, &ci->io->io_count);
+>  		bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
+>  					     NULL, GFP_NOWAIT);
+>  		atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
+>  	}
+>  
+> +	if (check)
+> +		bitmap_free(handled_map);
+> +
+>  	/*
+>  	 * alloc_io() takes one extra reference for submission, so the
+>  	 * reference won't reach 0 without the following subtraction
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index 82b2195efaca..4a54b4f0a609 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -169,6 +169,12 @@ struct dm_dev {
+>  	struct dax_device *dax_dev;
+>  	blk_mode_t mode;
+>  	char name[16];
+> +
+> +	/*
+> +	 * sequential number for each dm_dev in dm_table's devices list,
+> +	 * start from 1
+> +	 */
+> +	unsigned short index;
+
+Please update this comment to indicate that index=0 is (ab)used as a
+flag in __send_empty_flush().
