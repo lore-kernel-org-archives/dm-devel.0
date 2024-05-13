@@ -1,170 +1,95 @@
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.9])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F206F568A
-	for <dm-devel@lists.linux.dev>; Mon, 13 May 2024 15:12:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.9
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5528220332
+	for <dm-devel@lists.linux.dev>; Mon, 13 May 2024 17:36:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715613163; cv=none; b=exgqOIB05V6KQXLUdmlC4AnYkLuVdSIrpZT4V1UgtCHV0oMam4eEfYAvkmX2joqTgnyNDcErkBvKFGbMO6jSMFv3rAn82/cJ+NxwmyII4hkMTzneDODRIBnPuutm3e7oc3Io3UnOKWdpV8ltkJzqEE3hgWRkHv0i3RO8x2xJbLk=
+	t=1715621811; cv=none; b=UxD+zfSJTF2XUR/GYhmE/zGcoDQ/6pr78Bs1LbnH0VnWK1HtJvUEqy4zgpf96ejR1TsW4+Irmk9ELz6V6ZgvLGMI5b4tpqv0EqcLZQt66TfGV06nlhE87RfajZb6vAHhEv+CntnX5d1+z/ccnpq75yoN0+jtfLkVhyTg1ci69CU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715613163; c=relaxed/simple;
-	bh=ynJ/pnM/GjNYy4Nt18Bb/K8F/EBJcsXYbqIjDqKLeAg=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=mu8vEisnPvLMkwlsjszm5mYHfilOjA6ThccTn+EZfM/fy7+Bma5k2Rm8GX8Dllmyw4IYp0B2WHpf4sVCsAy1KkgRygeSugGFLwyD/jKPbvaoSCDgvvo0WFP8eMNBk2kz1SSVCvRweAXa6k3uO2I3sUMWiK1RDiH+reeP+ZREcfQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=J2pS4zid; arc=none smtp.client-ip=192.198.163.9
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
+	s=arc-20240116; t=1715621811; c=relaxed/simple;
+	bh=E4L5D1BVhPwuBIRLImdWaJV3HE2Gbu8ZCARspKVW+/8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=at4Yl4lx+EPBwaGlYaseLIe2NoSeAgTkaR08oPsfps8G5nf3SwElFiDAaSsKPR6n0Zbyu+FO/q+dxVZ4kB/ld6Dv0GIeGQVcUj5rZNd4mtnvqSK7m0ky25CH4JKWXU/i+Ax/wVKkvHQLvrx54TZZtuh9ekGFz5UnVREQ+e1hgGs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Wsyoy/Jt; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="J2pS4zid"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1715613162; x=1747149162;
-  h=date:from:to:cc:subject:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=ynJ/pnM/GjNYy4Nt18Bb/K8F/EBJcsXYbqIjDqKLeAg=;
-  b=J2pS4zidI5zQVXAFaPYOXxZDYZiukr5B0diA0sqwevC+G9IELlWICz6l
-   Dk9pDXCOTXCVSpDO3hohfpE1ggvFluZ5vY5Gwzs8KdQSt7D/5tFRhQf7P
-   PkJVuqGLgyq8Rtybnyqrz2Qn9xy80Ne0KkUOZYBlmzvLoi1JRQx8Xh5pb
-   wnWFM902J1NR+0BRGOaVHWyilXTw9dsx1M/ZSXkyqyv1QlmYYLKsqNJgQ
-   JITs1q54TE9j+859qs81Cf8bRADwcfhlVJ+6oV65hQ1RNGTu5tZYSjnco
-   okWBxfGeN06pL8+wSsOLKMoCilE3EuuuZD/6c607/U3mZzHAljlB196au
-   Q==;
-X-CSE-ConnectionGUID: ve3ft7r6RHi2EC0lSPRwzg==
-X-CSE-MsgGUID: 0mjqHxgRTGqIFBmmNT2lLg==
-X-IronPort-AV: E=McAfee;i="6600,9927,11072"; a="22223145"
-X-IronPort-AV: E=Sophos;i="6.08,158,1712646000"; 
-   d="scan'208";a="22223145"
-Received: from orviesa003.jf.intel.com ([10.64.159.143])
-  by fmvoesa103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 May 2024 08:12:41 -0700
-X-CSE-ConnectionGUID: MNpgC/KdRVSO9VpxZreujg==
-X-CSE-MsgGUID: lumNu1SMR0KQDOuZ2ColuA==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.08,158,1712646000"; 
-   d="scan'208";a="35056573"
-Received: from mtkaczyk-mobl.ger.corp.intel.com (HELO localhost) ([10.245.98.108])
-  by ORVIESA003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 13 May 2024 08:12:38 -0700
-Date: Mon, 13 May 2024 17:12:33 +0200
-From: Mariusz Tkaczyk <mariusz.tkaczyk@linux.intel.com>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
- song@kernel.org, xni@redhat.com, dm-devel@lists.linux.dev,
- linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
- yukuai3@huawei.com, yi.zhang@huawei.com, yangerkun@huawei.com
-Subject: Re: [PATCH md-6.10 1/9] md: rearrange recovery_flage
-Message-ID: <20240513170958.00002282@linux.intel.com>
-In-Reply-To: <20240509011900.2694291-2-yukuai1@huaweicloud.com>
-References: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
- <20240509011900.2694291-2-yukuai1@huaweicloud.com>
-X-Mailer: Claws Mail 4.1.0 (GTK 3.24.33; x86_64-w64-mingw32)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Wsyoy/Jt"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1715621809;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=4Nbkxf4VYyosS70Ln4GyrLcnmUbGdmO1b19FKW80WTI=;
+	b=Wsyoy/JtRFs8RlaeSJZdzdyvy7ExOAMwqR+hdksNzl7hbemS0cOXyUnE5OqB1fqSn/aYjH
+	BCDyznpzMhzKXh56p4VG098NijYradmR2r7R41lSQeQk8fulf+laR2wDtd5XB0Q2vbiIWA
+	zlibkSmOUbzy7X1eXRvipdaabQDdRJM=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-257-i87istTzNOe0up6RLqE06g-1; Mon,
+ 13 May 2024 13:36:47 -0400
+X-MC-Unique: i87istTzNOe0up6RLqE06g-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 503E81C0514C;
+	Mon, 13 May 2024 17:36:47 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 40E69561A;
+	Mon, 13 May 2024 17:36:47 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44DHakXe094440
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 13 May 2024 13:36:47 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44DHakDI094439;
+	Mon, 13 May 2024 13:36:46 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>,
+        Nitin Yewale <nyewale@redhat.com>
+Subject: [PATCH 0/7] multipath-tools man pages: add missing information
+Date: Mon, 13 May 2024 13:36:39 -0400
+Message-ID: <20240513173646.94424-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-On Thu,  9 May 2024 09:18:52 +0800
-Yu Kuai <yukuai1@huaweicloud.com> wrote:
+This patchset is inspired by:
+https://lore.kernel.org/dm-devel/1673555329-9850-1-git-send-email-bmarzins@redhat.com/
 
-There is typo in subject.
+It removes the useless pathgroup wildcards section from the "show
+wildcards" output and adds wildcards descriptions to the multipathd.8
+man page, along with some issing multipathd commands.  In the process of
+doing this, I noticed some instances where either the man page or
+multipathd wasn't giving the correct information, and fixed those up.
 
-> From: Yu Kuai <yukuai3@huawei.com>
-> 
-> Currently there are lots of flags and the names are confusing, since
-> there are two main types of flags, sync thread runnng status and sync
-> thread action, rearrange and update comment to improve code readability,
-> there are no functional changes.
-> 
-> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-> ---
->  drivers/md/md.h | 52 ++++++++++++++++++++++++++++++++++++-------------
->  1 file changed, 38 insertions(+), 14 deletions(-)
-> 
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index 029dd0491a36..2a1cb7b889e5 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -551,22 +551,46 @@ struct mddev {
->  };
->  
->  enum recovery_flags {
-> +	/* flags for sync thread running status */
-> +
-> +	/*
-> +	 * set when one of sync action is set and new sync thread need to be
-> +	 * registered, or just add/remove spares from conf.
-> +	 */
-> +	MD_RECOVERY_NEEDED,
-> +	/* sync thread is running, or about to be started */
-> +	MD_RECOVERY_RUNNING,
-> +	/* sync thread needs to be aborted for some reason */
-> +	MD_RECOVERY_INTR,
-> +	/* sync thread is done and is waiting to be unregistered */
-> +	MD_RECOVERY_DONE,
-> +	/* running sync thread must abort immediately, and not restart */
-> +	MD_RECOVERY_FROZEN,
-> +	/* waiting for pers->start() to finish */
-> +	MD_RECOVERY_WAIT,
-> +	/* interrupted because io-error */
-> +	MD_RECOVERY_ERROR,
-> +
-> +	/* flags determines sync action */
-> +
-> +	/* if just this flag is set, action is resync. */
-> +	MD_RECOVERY_SYNC,
-> +	/*
-> +	 * paired with MD_RECOVERY_SYNC, if MD_RECOVERY_CHECK is not set,
-> +	 * action is repair, means user requested resync.
-> +	 */
-> +	MD_RECOVERY_REQUESTED,
->  	/*
-> -	 * If neither SYNC or RESHAPE are set, then it is a recovery.
-> +	 * paired with MD_RECOVERY_SYNC and MD_RECOVERY_REQUESTED, action is
-> +	 * check.
->  	 */
-> -	MD_RECOVERY_RUNNING,	/* a thread is running, or about to be
-> started */
-> -	MD_RECOVERY_SYNC,	/* actually doing a resync, not a recovery
-> */
-> -	MD_RECOVERY_RECOVER,	/* doing recovery, or need to try it. */
-> -	MD_RECOVERY_INTR,	/* resync needs to be aborted for some
-> reason */
-> -	MD_RECOVERY_DONE,	/* thread is done and is waiting to be
-> reaped */
-> -	MD_RECOVERY_NEEDED,	/* we might need to start a
-> resync/recover */
-> -	MD_RECOVERY_REQUESTED,	/* user-space has requested a sync
-> (used with SYNC) */
-> -	MD_RECOVERY_CHECK,	/* user-space request for check-only, no
-> repair */
-> -	MD_RECOVERY_RESHAPE,	/* A reshape is happening */
-> -	MD_RECOVERY_FROZEN,	/* User request to abort, and not
-> restart, any action */
-> -	MD_RECOVERY_ERROR,	/* sync-action interrupted because
-> io-error */
-> -	MD_RECOVERY_WAIT,	/* waiting for pers->start() to finish */
-> -	MD_RESYNCING_REMOTE,	/* remote node is running resync thread
-> */
-> +	MD_RECOVERY_CHECK,
-> +	/* recovery, or need to try it */
-> +	MD_RECOVERY_RECOVER,
-> +	/* reshape */
-> +	MD_RECOVERY_RESHAPE,
-> +	/* remote node is running resync thread */
-> +	MD_RESYNCING_REMOTE,
->  };
->  
->  enum md_ro_state {
+Benjamin Marzinski (6):
+  multipath-tools man pages: don't assume multipath.socket is enabled
+  libmultipath: print all values in snprint_failback
+  multipathd: Stop double counting map failures for no_path_retry > 0
+  multipath-tools man pages: add missing multipathd commands
+  libmultipath: change the vend/prod/rev printing
+  multipath-tools man pages: Add format wildcard descriptions
 
-I don't know if it is better readable but I know that Kernel coding style comes
-with different approach. I used it for enum mddev_flags in md.h please take a
-look.
+Nitin Yewale (1):
+  libmultipath: remove pathgroup wildcard options
 
-Also, I get used to comment above, not below enum values but I don't have strong
-justification here.
+ libmultipath/print.c       |  22 ++--
+ libmultipath/structs_vec.c |   5 +-
+ multipathd/multipathd.8.in | 260 +++++++++++++++++++++++++++++++++++--
+ 3 files changed, 263 insertions(+), 24 deletions(-)
 
-Thanks,
-Mariusz
+-- 
+2.45.0
 
