@@ -1,269 +1,205 @@
-Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+Received: from APC01-PSA-obe.outbound.protection.outlook.com (mail-psaapc01on2086.outbound.protection.outlook.com [40.107.255.86])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAD75225D0
-	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 08:52:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715676764; cv=none; b=Dt2lRwsYROtBhK46d2Vh8t8L+0bUkwHfqAM4AsOpc7uWGIxXZcDEgv+hoxQf37hWFaj0JDCFCK8fXkrzyPO+S+vytTFJ/KMwT1N795ODYxqPfHZ0zYI7xDAVXmGeVs2hs1xuN4rNr4cktegMm2IwLyEgbfILXED8FF2Arojjw08=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715676764; c=relaxed/simple;
-	bh=VnwPN1HC0Qg3a/FfvSmXTWKLTyLbOBEkoZkWOJT5MY8=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=ErJ+lM0qcdHU1iE1I7cgjzqXUmr6WZlSKDQGBLQSakAKK+QVfoCGvqONIM549mkMiPpoHOY8edNIqaWfN/ixQTlB16N9AK0i6PZ/oajk54Tj0PyqmTt9tM/wYRAoDRqz8evXaTwRfO3r3Iuwb3+isr80wT7ivR28KhCd18rCEuk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4VdqqZ661Wz4f3lW3
-	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 16:52:26 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id F39121A0851
-	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 16:52:36 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP1 (Coremail) with SMTP id cCh0CgBnOBFTJkNmDmeDMg--.26345S3;
-	Tue, 14 May 2024 16:52:36 +0800 (CST)
-Subject: Re: [PATCH md-6.10 3/9] md: add new helpers for sync_action
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org,
- dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
- <20240509011900.2694291-4-yukuai1@huaweicloud.com>
- <CALTww2-RPH_eYBumjxhHLkj7J2tfHskTYNif93Hwn5ksCN0+kA@mail.gmail.com>
- <06211ae2-9b5f-10c7-7953-9d79d2eacc67@huaweicloud.com>
- <CALTww28LM_b6SMC-vLY3y7R3ZD9z80H+2vZCXMzmAwnoEH-eMA@mail.gmail.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <2d457d0f-8bb5-39cb-0b8a-0bfdde1f560f@huaweicloud.com>
-Date: Tue, 14 May 2024 16:52:34 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C066FFC1F
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 09:05:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.255.86
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1715677549; cv=fail; b=O4UwmH324RlPS9LfJo1c0XNRvqtqwhVvcDeaw9kHf2TB9V8OcN+rvEWhkU/8DdR4IQuYDmYqXcx9+U9O/IQ/MSYxVC/zYZdKZI5EAvNGyf8KHqgq3GI+Y/MFz/kYfcRvrqt4uSt95G3zDEJ1sf7YAlv1bP6nA8SmUm5lP0Nr+7o=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1715677549; c=relaxed/simple;
+	bh=liVHYinpXH3a2/7J6fbY7ikGg3OeqjmcxDvXrthCT+A=;
+	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=BEn4kUaf/JAjKh+g9UB+9EwBJD0Sjvc0ful6wUCYzAJNCJZkaZJDe02NNg8/4mE1m4bYqPl4a7t2PjEDzzLdISd+Eu2xmVFQbQy+Q0sV7Oxn8bpN/pu97+tvXrv1dRmTUamT+E3xP31gjofdufMTdXkpXHRDWi11OaxUaXDW6jU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=nTEl3qxi; arc=fail smtp.client-ip=40.107.255.86
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="nTEl3qxi"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=IGKsAX1hVQGxC/g2srUzUVvkSvKuZu8UepW1Sfk/8sJD2uw21I4fBhCN8i3zg5LTqL/BXvAHrDZzAT18U0MKrEBeBoi3vJUP7h2h8xgJuwfLCKbUiYgV/FGkLkJM6o+BlJgvv4vgL/lq1NUynITw60LASkNwnMltKtj5xIVsep8Y2wwXlKXA8XBH7lMb01aYs505lsbNWbAgyj3jE6uuCYa6Vt3o4H3XoJQVlCkQPUowC50IFE+kAcRxr8KqW7gE/S8pV0LnEZTJhaiB1LzL/wRkhdABD3Bjkl731uPvEY7ClCCRhMf7Mn2Z4uFvzRM7VzAo4vDKgGiNt8ATDUR6vA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=BaE3wqdZHaqdvXtGnMdNijadmmg118QT7oTKiNY6NRM=;
+ b=V30nQO7eoPzoBdOTQxdpkUE8RpjrJ58cyN4PcQlomRuNRn/0mCopcmWXwHQTuquiEDuggZDD6hbupjsh1MN/mIeDrnu54JAlsTeESYdTwiendzrG7a1ReoILaMmR1G9MZfhWQjBDH1m1h18T29t7RCEM9LKudZD0QQkP1oM13AY9LnjR/FYJ/dFa1PieopI0TLyXskgKF4XMF/tUSxtJVfnISENP5jOIEsPsiIZ2EHK1PJknwZM49rhJFullsmFxSPuI4zzccswlPbgqGMu6YQvIfPRuFmx5MZvhasQt+B0edkNhj79GTgJmHsY50PO3RKxfZxeFOU0x3oWLwbZmnQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
+ dkim=pass header.d=vivo.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=BaE3wqdZHaqdvXtGnMdNijadmmg118QT7oTKiNY6NRM=;
+ b=nTEl3qxi6EmIOddEsMhb5cPmeOYHhmVXCdHCLf02zgT+dH16+JFZtV4DzKafdNjItVpD37SlyP7JbP015utXEbbndsBNhBRKGZ+Osk+vu8spvqsBVp9Z/sefSsPY70y5msZqivobz7FXgpIFlN33cUQxGScTg2/HM/MR3IO+wt0yzVOycM8Ea0BbPLCkk7P1CBfIS9oLa+CxftUeqain/n+ZxJxTYxjTGvTVkVQW/Tp0zkhu6AFAyFv9Jj01JlEDAYygw8wob6U0+k5kVHvEKLdSL6A9hSkJpi6y1qYn1mY4wLatM0Bzm5+FGRoYEh5nRBbSS/b2nuTp5ha4KvFYDQ==
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=vivo.com;
+Received: from SEYPR06MB6398.apcprd06.prod.outlook.com (2603:1096:101:145::9)
+ by PUZPR06MB6102.apcprd06.prod.outlook.com (2603:1096:301:112::5) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7544.55; Tue, 14 May
+ 2024 09:05:44 +0000
+Received: from SEYPR06MB6398.apcprd06.prod.outlook.com
+ ([fe80::9784:d8bc:5eb5:b60e]) by SEYPR06MB6398.apcprd06.prod.outlook.com
+ ([fe80::9784:d8bc:5eb5:b60e%6]) with mapi id 15.20.7544.052; Tue, 14 May 2024
+ 09:05:44 +0000
+From: Yang Yang <yang.yang@vivo.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Cc: Yang Yang <yang.yang@vivo.com>
+Subject: [PATCH 0/5] dm: empty flush optimization
+Date: Tue, 14 May 2024 17:04:39 +0800
+Message-Id: <20240514090445.2847-1-yang.yang@vivo.com>
+X-Mailer: git-send-email 2.34.1
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: SI1PR02CA0046.apcprd02.prod.outlook.com
+ (2603:1096:4:1f5::14) To SEYPR06MB6398.apcprd06.prod.outlook.com
+ (2603:1096:101:145::9)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CALTww28LM_b6SMC-vLY3y7R3ZD9z80H+2vZCXMzmAwnoEH-eMA@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:cCh0CgBnOBFTJkNmDmeDMg--.26345S3
-X-Coremail-Antispam: 1UD129KBjvJXoW3Xw4fuw4kCrWUGFW3KF17ZFb_yoW7Kw47pF
-	W0yFn8Zr4UXry7Jr12q3WDta9ayr1IqryUXry3Ga48J3ZxKFn3G3WUJF17Cryvyr15uryj
-	vrWDGFW3uF4YyrJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
-	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
-	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
-	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
-	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
-	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
-	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
-	17CEb7AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
-	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
-	3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
-	nIWIevJa73UjIFyTuYvjfUoOJ5UUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SEYPR06MB6398:EE_|PUZPR06MB6102:EE_
+X-MS-Office365-Filtering-Correlation-Id: d1326706-5b1b-4440-71fb-08dc73f50973
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230031|376005|52116005|1800799015|366007|38350700005;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?3c+LMXYh1G00/9coL4yrniZB4lbR6kKQEw+/W38bim2QTWxB6cJIUvSoZApR?=
+ =?us-ascii?Q?1udTg6dof5Rv67B0UG9W43Mb7uzC53S4pXZ/KLFQ8JjbV1gfFUY+Vsu6un5y?=
+ =?us-ascii?Q?lJvwOyGtye4Y5DYkmj76woDKNJxrJHRmVetmZGyIOT0OKv6LlNvdRFsNq5Ab?=
+ =?us-ascii?Q?5OkLlgjPoHGYJIvRoi2BuF9tgfYzySn+2lKGdAMMFF3E/FIf67ltlEjpURQ/?=
+ =?us-ascii?Q?grIerMdXGUCK1qbs+CCZNwBGtcNXsGYZ0dE1p3/2WRAWg9Qhmsi3p632LvIU?=
+ =?us-ascii?Q?/1zvx8WuC0KzobZHEYM880clTx3Iy1WSgmod7kV/zPjOcKp1xbtsBH4A3zet?=
+ =?us-ascii?Q?9Pdatf4p7aJyW1ll+Ot/u4EcquxpWli5WKNDW84V45PbIrxpepunOA9VOGs5?=
+ =?us-ascii?Q?WNF01gu2gdx00LUhs6GK066jGQ1XaHa4o2eYV1R5DGfo2g++n2z5p4vsLn0I?=
+ =?us-ascii?Q?bKtUyqvVHi13hedzfxuVXWkss2zuxpp4lt7Lnwu0+OD/Z+zHdSfhz9dhwb+8?=
+ =?us-ascii?Q?7b1mveT9ZWPm5Gdi90A5Q15Hp5bFuF9AFCZYwGX7SwiiGVEDJKcQIENRfwJa?=
+ =?us-ascii?Q?bBCznsQQ5upasmRJyKtfgbDE4XQJoYKhF9cOf6S/ExNNvJ5k9wUEihsJG4h7?=
+ =?us-ascii?Q?XcDL+rrxfqGXsFZaVrwLW/mKSnYn+YrxUas8kK9UCgDB7p5q63chAXGel020?=
+ =?us-ascii?Q?fjM1t9wSo6MVrAhB+xE+Bie2tBPqLcw0ElTmbyIPY1DHXjozOr66QSx+ag4Y?=
+ =?us-ascii?Q?8d7titwM4glBo6kyvxEPaxDTqGp0F+3+wP1AuA3JnAGnX8mw0zDBAomhIBjw?=
+ =?us-ascii?Q?A8kIM6TRZ972IO8uPVhEo/BqCYWoISFCEm5qJ2aom+BQai2WJvUz7wjtHbPw?=
+ =?us-ascii?Q?Vl7T4zEKT4T6ZmM2TuzaIMNz2DCMoYj1IbIdS5XDFabwy63n1aYBykabY70r?=
+ =?us-ascii?Q?6poqyHoEBW4Yho1JIj/oIW3Xjc5On9kKrhik1zq/48zw/2pU9yoV+l14MuiI?=
+ =?us-ascii?Q?ww3LR060Xu3HnaMezro5RIJJPj2YFC3Bn4WXQUZ9uAx6m6icVPuSuEZQpxAz?=
+ =?us-ascii?Q?o3Vp4i56OgGajVtTCu67/DM1c5ieOPFnwh43uAMdcSq/fao6x1MKuJY67w42?=
+ =?us-ascii?Q?AnuhhODmT4OkSg4plguhRcsn94x+L9RmDPzGn0pChD9plgUZGT20U1aGxAAb?=
+ =?us-ascii?Q?Gil+r9lzXqr7hIVwKdYytvA3k6aL6E1asE4uIDf05Ib/Qrkc/4GFfOrI5dwY?=
+ =?us-ascii?Q?XZKu40qD3Y7BROC6OOKJfUPWyziC/gHFTB+HDzQHXsKq3jXGFsfSf4oIAAV5?=
+ =?us-ascii?Q?NDgXn9FQmQvXRu/0IESHWPn+5SkgUqrKmLDXU/mE48Xqcw=3D=3D?=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SEYPR06MB6398.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376005)(52116005)(1800799015)(366007)(38350700005);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?CwmoEReDlZaCydgVHFHAvVlpTKRd/5SUzqVZOKiGLKljZDPvKXvxXQLAk+Xu?=
+ =?us-ascii?Q?Grpq1CdBh+mSQEa9b026CWBq7uExw21SmpRrbB1YU+esQnN7y7ZO13te5V7y?=
+ =?us-ascii?Q?K//2/9THdcinqcZu8RCNEts+YGHBzKU34KiMNhYFUr0dhDg+2WDfjHv1VeE2?=
+ =?us-ascii?Q?b3rLEn+gmb14pX5ZrLTgA6eJ2706PbahKGV9kPx6D1rhXm/t+rbX14t8mCew?=
+ =?us-ascii?Q?d5sPAwc+Y4/FSqG5Qnd5dvZY37WJ//+E0WBnsxi9eZqZxVHbTBfBm0uTcbfm?=
+ =?us-ascii?Q?TobU/uMz7OhJ/i/yX/kuRvFWXcS+SY0kx5oYkn6XFcSWksdvpFTpAEN70EGn?=
+ =?us-ascii?Q?3bGlakA94O7t7NM/Ym16lZkm0imy2cQuJvbfNfCNZeNElBxq+9s8H6UPClkT?=
+ =?us-ascii?Q?4ZON6Fhoj9YvvPuHl2FTyqcmMJA07oLK+1K+uChk6N7anjSZNxV2Hlr5TRnJ?=
+ =?us-ascii?Q?HPY3Lic5DbvVkqgC84XK9BM4gVubmVrBGWZ5s3NbXhEnd10Xo/gUR/DDNuIn?=
+ =?us-ascii?Q?MJPKyE7JR3MVfaerwOZ1Sf1LZiyoghGONcoLNOrDLvZY6uXrqXny7KxtjwH7?=
+ =?us-ascii?Q?vNxYzJ+J35UJtd4Rjl+mzmFrV9UE8JJI0j4QWV9j3kGfYdecd3o5Oa1UVnEU?=
+ =?us-ascii?Q?fT4AVNluDP7sbeI/r7uGkSqotdXCw3KJZuIO1J5SC2qTBNPC7QOF/YyQsAhI?=
+ =?us-ascii?Q?HYWmhykI7AQuHYM24kphkHVpzwUaf8uG1Mc3Ig6hEBTzpOABCAR0af7GqVfb?=
+ =?us-ascii?Q?nmK2quK0Rckfj4y4qGpTopq1FaHm5ylv1CjtHKbOXiYWi5M7ozzR7jxXPSjN?=
+ =?us-ascii?Q?P+KW5oHnmzhFbseBn2RxvgQRpRC5QRRnTsHjxqSu//gENT7wpuk6JcPsAU7Q?=
+ =?us-ascii?Q?GLW+D7GBz9Y54D2vB+0d9GajiQhahOflgIv1PGny6MNcux7i8Qut8rgKMaQc?=
+ =?us-ascii?Q?l8PjDwwIJ1ex/PGetatOqV2l+Z/5OtWO4XSRC64ox6U/aUpZIJI5tTxdX1o+?=
+ =?us-ascii?Q?j9jV/gbbPxKZ+Tpj8hxvq1BvSgsPBfuqP/mWPNr1UhZZE3P9ZadyNhBJ6qFd?=
+ =?us-ascii?Q?fpnMmlqgfcNuYj2tztGNelZzh1zCLQbrjEnDZiXCmZNjfoDi81Hzu6+VFsOo?=
+ =?us-ascii?Q?QqJCBz1MfIXUoyLdep+WmAcYER2qe4jBfpMXRHw0w4pFtAGkA/S7H1Vy94x0?=
+ =?us-ascii?Q?tQH1abyhVFzB1yH8QyntdgdW+0X78GA5FiVtkIanUOquMaBjNM5etikMPZ5m?=
+ =?us-ascii?Q?mNGz4hE4cQLH1c+uuJCh3boqBZym5gmJeLAllD1jiACNyFn0CTZMru9i4Q/f?=
+ =?us-ascii?Q?l8A/cgdbrcUHlxfVTKHrfE0LwE1CmxsUB0aaU5LcxsuPopkC/nBdVV6sIjWe?=
+ =?us-ascii?Q?4AfxW0AmowEJQixNMOV+53rqX1/6xUW++6utZgkDHm6PfLGM+jUWbPFshaQp?=
+ =?us-ascii?Q?1fabfx7+X5VFCer5PGuDXLKbWHd1HQrGMNZHOe39uqJ23IUBHM2pFZgFjImo?=
+ =?us-ascii?Q?hkSPGYWmcf+V1pJoTLrnzStVgyv5viJSacAtlLmOdS+C3DsfJCI4rwCbfL30?=
+ =?us-ascii?Q?o029Vjg2hYfL7VFUIC82ssZ7YlcX4SfgXCjzK28b?=
+X-OriginatorOrg: vivo.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: d1326706-5b1b-4440-71fb-08dc73f50973
+X-MS-Exchange-CrossTenant-AuthSource: SEYPR06MB6398.apcprd06.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 14 May 2024 09:05:44.4552
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: E2NdhLQMuV9wt4G0+UcdqnWvGwCPEs3XRk3u1H/GtjSdF5ZkIjW9ISvK49JNXoXJP5F//UtDi+0oVFnoceHTuQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: PUZPR06MB6102
 
+__send_empty_flush() sends empty flush bios to every target in the
+dm_table. However, if the num_targets exceeds the number of block
+devices in the dm_table's device list, it could lead to multiple
+invocations of __send_duplicate_bios() for the same block device.
+Typically, a single thread sending numerous empty flush bios to one
+block device is redundant, as these bios are likely to be merged by the
+flush state machine. In scenarios where num_targets significantly
+outweighs the number of block devices, such behavior may result in a
+noteworthy decrease in performance.
 
+This is a real-world scenario that we have encountered:
+1) Call fallocate(file_fd, 0, 0, SZ_8G)
+2) Call ioctl(file_fd, FS_IOC_FIEMAP, fiemap). In situations of severe
+file system fragmentation, fiemap->fm_mapped_extents may exceed 1000.
+3) Create a dm-linear device based on fiemap->fm_extents
+4) Create a snapshot-cow device based on the dm-linear device 
 
-在 2024/05/14 16:40, Xiao Ni 写道:
-> On Tue, May 14, 2024 at 3:39 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>
->> Hi,
->>
->> 在 2024/05/14 14:52, Xiao Ni 写道:
->>> On Mon, May 13, 2024 at 5:31 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>>>
->>>> From: Yu Kuai <yukuai3@huawei.com>
->>>>
->>>> The new helpers will get current sync_action of the array, will be used
->>>> in later patches to make code cleaner.
->>>>
->>>> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
->>>> ---
->>>>    drivers/md/md.c | 64 +++++++++++++++++++++++++++++++++++++++++++++++++
->>>>    drivers/md/md.h |  3 +++
->>>>    2 files changed, 67 insertions(+)
->>>>
->>>> diff --git a/drivers/md/md.c b/drivers/md/md.c
->>>> index 00bbafcd27bb..48ec35342d1b 100644
->>>> --- a/drivers/md/md.c
->>>> +++ b/drivers/md/md.c
->>>> @@ -69,6 +69,16 @@
->>>>    #include "md-bitmap.h"
->>>>    #include "md-cluster.h"
->>>>
->>>> +static char *action_name[NR_SYNC_ACTIONS] = {
->>>> +       [ACTION_RESYNC]         = "resync",
->>>> +       [ACTION_RECOVER]        = "recover",
->>>> +       [ACTION_CHECK]          = "check",
->>>> +       [ACTION_REPAIR]         = "repair",
->>>> +       [ACTION_RESHAPE]        = "reshape",
->>>> +       [ACTION_FROZEN]         = "frozen",
->>>> +       [ACTION_IDLE]           = "idle",
->>>> +};
->>>> +
->>>>    /* pers_list is a list of registered personalities protected by pers_lock. */
->>>>    static LIST_HEAD(pers_list);
->>>>    static DEFINE_SPINLOCK(pers_lock);
->>>> @@ -4867,6 +4877,60 @@ metadata_store(struct mddev *mddev, const char *buf, size_t len)
->>>>    static struct md_sysfs_entry md_metadata =
->>>>    __ATTR_PREALLOC(metadata_version, S_IRUGO|S_IWUSR, metadata_show, metadata_store);
->>>>
->>>> +enum sync_action md_sync_action(struct mddev *mddev)
->>>> +{
->>>> +       unsigned long recovery = mddev->recovery;
->>>> +
->>>> +       /*
->>>> +        * frozen has the highest priority, means running sync_thread will be
->>>> +        * stopped immediately, and no new sync_thread can start.
->>>> +        */
->>>> +       if (test_bit(MD_RECOVERY_FROZEN, &recovery))
->>>> +               return ACTION_FROZEN;
->>>> +
->>>> +       /*
->>>> +        * idle means no sync_thread is running, and no new sync_thread is
->>>> +        * requested.
->>>> +        */
->>>> +       if (!test_bit(MD_RECOVERY_RUNNING, &recovery) &&
->>>> +           (!md_is_rdwr(mddev) || !test_bit(MD_RECOVERY_NEEDED, &recovery)))
->>>> +               return ACTION_IDLE;
->>>
->>> Hi Kuai
->>>
->>> Can I think the above judgement cover these two situations:
->>> 1. The array is readonly / readauto and it doesn't have
->>> MD_RECOVERY_RUNNING. Now maybe it has MD_RECOVERY_NEEDED, it means one
->>> array may want to do some sync action, but the array state is not
->>> readwrite and it can't start.
->>> 2. The array doesn't have MD_RECOVERY_RUNNING and MD_RECOVERY_NEEDED
->>>
->>>> +
->>>> +       if (test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
->>>> +           mddev->reshape_position != MaxSector)
->>>> +               return ACTION_RESHAPE;
->>>> +
->>>> +       if (test_bit(MD_RECOVERY_RECOVER, &recovery))
->>>> +               return ACTION_RECOVER;
->>>> +
->>>> +       if (test_bit(MD_RECOVERY_SYNC, &recovery)) {
->>>> +               if (test_bit(MD_RECOVERY_CHECK, &recovery))
->>>> +                       return ACTION_CHECK;
->>>> +               if (test_bit(MD_RECOVERY_REQUESTED, &recovery))
->>>> +                       return ACTION_REPAIR;
->>>> +               return ACTION_RESYNC;
->>>> +       }
->>>> +
->>>> +       return ACTION_IDLE;
->>>
->>> Does it need this? I guess it's the reason in case there are other
->>> situations, right?
->>
->> Yes, we need this, because they are many places to set
->> MD_RECOVERY_NEEDED, while there are no sync action actually, this case
->> is 'idle'.
-> 
-> To be frank, the logic in action_show is easier to understand than the
-> logic above. I have taken more than half an hour to think if the logic
-> here is right or not. In action_show, it only needs to think when it's
-> not idle and it's easy.
-> 
-> Now this patch logic needs to think in the opposite direction: when
-> it's idle. And it returns ACTION_IDLE at two places which means it
-> still needs to think about when it has sync action. So it's better to
-> keep the original logic in action_show now. It's just my 2 cents
-> point.
+Perf diff of fio test:
+  fio --group_reporting --name=benchmark --filename=/dev/mapper/example \
+      --ioengine=sync --invalidate=1 --numjobs=16 --rw=randwrite \
+      --blocksize=4k --size=2G --time_based --runtime=30 --fdatasync=1
 
-Hi,
+Scenario one:
+  for i in {0..1023}; do
+    echo $((8000*$i)) 8000 linear /dev/sda2 $((16384*$i))
+  done | sudo dmsetup create example
 
-but the logical is exactlly the same as action_show(), and there are
-no functional changes. I just remove the local variable and return
-early, because I think code is cleaner this way...
+  Before: bw=857KiB/
+  After:  bw=30.8MiB/s    +3580%
 
-action_show:
+Scenario two:
+  for i in {0..1023}; do
+    if [[ $i -gt 511 ]]; then
+      echo $((8000*$i)) 8000 linear /dev/nvme0n1p6 $((16384*$i))
+    else
+      echo $((8000*$i)) 8000 linear /dev/sda2 $((16384*$i))
+    fi
+  done | sudo dmsetup create example
 
-char *type = "idle"
+  Before: bw=1470KiB/
+  After:  bw=33.9MiB/s    +2261%
 
-if (test_bit() || xxx) {
+Any comments are welcome!
 
-  if (xxx)
-   type ="reshape"
-  else if(xxx)
-   type ="resync/check/repair"
-  else if(xxx)
-   type = "recover"
-  else if (xxx)
-   type = "reshape"
-  -> else is idle
-}
--> else is idle
+V2:
+-- Split into smaller pieces that are easier to review
+-- Add flush_pass_around, suggested by Mikulas Patocka
+-- Handling different target types separately
 
-The above two place are corresponding to the new code to return
-ACTION_IDLE.
+Yang Yang (5):
+  dm: introduce flush_pass_around flag
+  dm: add __send_empty_flush_bios() helper
+  dm: support retrieving struct dm_target from struct dm_dev
+  dm: Avoid sending redundant empty flush bios to the same block device
+  dm linear: enable flush optimization function
 
-Thanks,
-Kuai
+ drivers/md/dm-core.h          |  3 +++
+ drivers/md/dm-ioctl.c         |  4 ++++
+ drivers/md/dm-linear.c        |  1 +
+ drivers/md/dm-table.c         | 39 +++++++++++++++++++++++++++++++++++
+ drivers/md/dm.c               | 37 +++++++++++++++++++++++++--------
+ include/linux/device-mapper.h |  8 +++++++
+ 6 files changed, 83 insertions(+), 9 deletions(-)
 
-> 
-> Best Regards
-> Xiao
-> 
->>
->> Thanks,
->> Kuai
->>
->>>
->>> Regards
->>> Xiao
->>>
->>>> +}
->>>> +
->>>> +enum sync_action md_sync_action_by_name(char *page)
->>>> +{
->>>> +       enum sync_action action;
->>>> +
->>>> +       for (action = 0; action < NR_SYNC_ACTIONS; ++action) {
->>>> +               if (cmd_match(page, action_name[action]))
->>>> +                       return action;
->>>> +       }
->>>> +
->>>> +       return NR_SYNC_ACTIONS;
->>>> +}
->>>> +
->>>> +char *md_sync_action_name(enum sync_action action)
->>>> +{
->>>> +       return action_name[action];
->>>> +}
->>>> +
->>>>    static ssize_t
->>>>    action_show(struct mddev *mddev, char *page)
->>>>    {
->>>> diff --git a/drivers/md/md.h b/drivers/md/md.h
->>>> index 2edad966f90a..72ca7a796df5 100644
->>>> --- a/drivers/md/md.h
->>>> +++ b/drivers/md/md.h
->>>> @@ -864,6 +864,9 @@ extern void md_unregister_thread(struct mddev *mddev, struct md_thread __rcu **t
->>>>    extern void md_wakeup_thread(struct md_thread __rcu *thread);
->>>>    extern void md_check_recovery(struct mddev *mddev);
->>>>    extern void md_reap_sync_thread(struct mddev *mddev);
->>>> +extern enum sync_action md_sync_action(struct mddev *mddev);
->>>> +extern enum sync_action md_sync_action_by_name(char *page);
->>>> +extern char *md_sync_action_name(enum sync_action action);
->>>>    extern bool md_write_start(struct mddev *mddev, struct bio *bi);
->>>>    extern void md_write_inc(struct mddev *mddev, struct bio *bi);
->>>>    extern void md_write_end(struct mddev *mddev);
->>>> --
->>>> 2.39.2
->>>>
->>>
->>> .
->>>
->>
->>
-> 
-> .
-> 
+-- 
+2.34.1
 
