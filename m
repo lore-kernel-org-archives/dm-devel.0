@@ -1,545 +1,269 @@
-Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com [209.85.216.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 140B8381D4
-	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 08:48:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAD75225D0
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 08:52:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715676535; cv=none; b=HEv/6DAyomlecF7V74aibDsKS0OTp5QnDCQswYt69rY8kKzGtgnyqd94mN61gvTH0TLHCLFdPZ5BbFZ0OdBhbbT6Wf5dLVwNGCrjAslbmQfhtyCSuSi1qkGGm3ASMIKyvfm4k1Xmz03iQU0VMGBIYoPsW+0U0JKhq/PcQHv4jhk=
+	t=1715676764; cv=none; b=Dt2lRwsYROtBhK46d2Vh8t8L+0bUkwHfqAM4AsOpc7uWGIxXZcDEgv+hoxQf37hWFaj0JDCFCK8fXkrzyPO+S+vytTFJ/KMwT1N795ODYxqPfHZ0zYI7xDAVXmGeVs2hs1xuN4rNr4cktegMm2IwLyEgbfILXED8FF2Arojjw08=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715676535; c=relaxed/simple;
-	bh=CYJPttL+JF8N5/NTkoHY1q+LgvV7Sz6Pl1uxkoyDlPQ=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=Vj89wJkf9XhmcRIHBzXG0xm9F4wun10SVwajEQyPaoetLrRKIM7mQEEjk8bR8tn8TnagUTVGqCyKXxkXF29JReQ9q9c75Xrasu8LRRXcIespA8tt5B/BwWTONnnaNObb8rZ5tcbHR8TTsLt9MDoFs5MGJjYrGLIJjPbQQDF4g0s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ajR48I7Q; arc=none smtp.client-ip=209.85.216.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ajR48I7Q"
-Received: by mail-pj1-f51.google.com with SMTP id 98e67ed59e1d1-2b33953a163so1333070a91.2
-        for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 01:48:52 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1715676532; x=1716281332; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=YsW/NrQIz4qgIL+42NXiwZPni65tkbkU75mwRevJWaw=;
-        b=ajR48I7QS9So35cIF7336s29HC/f+xi+gzFKVcqj0tsKx+dkJa5wW4P1gND5D4E4N0
-         2M7mtJawTaSlslQfAXKq5x9//vGEqrQddjJq6BU0MSy915NF/XNhXHZRoZK4BKFH6TQH
-         zAtnvEboAJ1FJTgT5mvmcOHoyOMnpTPFWze2/848YuMioI9gcSYhFspiXjkyKTmfVsCP
-         czow0vaWpoMasPBYJ/xAGKETEpAPvclSE0rskBb3nwAEjGH1fYwvxg1Ty8mboRjFlLN+
-         kscnSCA+lh6dfYmkZ+XzpWw+YB105oVNp8Nr9GFfhJRalVK+b0+b+PVWXGoH2ihtdeT8
-         YImA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715676532; x=1716281332;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=YsW/NrQIz4qgIL+42NXiwZPni65tkbkU75mwRevJWaw=;
-        b=OrCdj/3S5ZOvCq2XDR501eXLgLxoxR/rTGdwZ8vR3NOc6LmcstiUnYNw7Zjfht+4+W
-         AjGj52gg2dIUFWCAe2o6YDcTR6jcaul28UNNRniUFeQ2ROiucczIpdvCIiNYWJ4wUgoi
-         cp2SplBzuaWkfDCzxDZPK8ES/rLxhLxfYhfZqR+mfZuSke1904LtqrrjiS13NRERToux
-         cwtInZAI6a1mYFg0SXSHBd4032wJzaB0s5TSF6XlO/jZdDIKP1eAeeMtIsEAotqSqmbs
-         l2gzzrsCuEJKnTzgJmWuWTOQ+VtVcIr5oxiOI+zP5+vRctyyM3Pphez52EQ7d2CXwtn8
-         auWQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUtbByHKeziyYl9ch+xn3kILW9DFK2CFmRKMaHB65g+zBcZO/Km1RFZMe8KEWWhh1SycevIoXsMbYIDG12hDMZWibkoM4HK5vw=
-X-Gm-Message-State: AOJu0YwjX3br5ubwEdLit1e13xt0TM4e4NXIE8d3hCCDyp5THfGUPx43
-	zpEQwd3fTG94H7HshqqI3nlvE8WuLG5i9rzHduqMMmhZWQkOsj1r
-X-Google-Smtp-Source: AGHT+IEZJBE4DY5W8seUtK7dDgv4H+R9ogDWxkvK6WzOdLPljg9hUEy4MyjVirQowRDmzupDGecTdQ==
-X-Received: by 2002:a05:6a21:329d:b0:1af:a5e8:d184 with SMTP id adf61e73a8af0-1afde224bd1mr14426210637.5.1715676532311;
-        Tue, 14 May 2024 01:48:52 -0700 (PDT)
-Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2b6711660fdsm9195597a91.16.2024.05.14.01.48.48
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 May 2024 01:48:51 -0700 (PDT)
-From: Kuan-Wei Chiu <visitorckw@gmail.com>
-To: colyli@suse.de,
-	kent.overstreet@linux.dev,
-	msakai@redhat.com,
-	peterz@infradead.org,
-	mingo@redhat.com,
-	acme@kernel.org,
-	namhyung@kernel.org,
-	akpm@linux-foundation.org
-Cc: bfoster@redhat.com,
-	mark.rutland@arm.com,
-	alexander.shishkin@linux.intel.com,
-	jolsa@kernel.org,
-	irogers@google.com,
-	adrian.hunter@intel.com,
-	bagasdotme@gmail.com,
-	jserv@ccns.ncku.edu.tw,
-	linux-bcache@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	linux-bcachefs@vger.kernel.org,
-	linux-perf-users@vger.kernel.org,
-	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [RESEND PATCH v5 16/16] bcachefs: Remove heap-related macros and switch to generic min_heap
-Date: Tue, 14 May 2024 16:47:24 +0800
-Message-Id: <20240514084724.557100-17-visitorckw@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20240514084724.557100-1-visitorckw@gmail.com>
-References: <20240514084724.557100-1-visitorckw@gmail.com>
+	s=arc-20240116; t=1715676764; c=relaxed/simple;
+	bh=VnwPN1HC0Qg3a/FfvSmXTWKLTyLbOBEkoZkWOJT5MY8=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=ErJ+lM0qcdHU1iE1I7cgjzqXUmr6WZlSKDQGBLQSakAKK+QVfoCGvqONIM549mkMiPpoHOY8edNIqaWfN/ixQTlB16N9AK0i6PZ/oajk54Tj0PyqmTt9tM/wYRAoDRqz8evXaTwRfO3r3Iuwb3+isr80wT7ivR28KhCd18rCEuk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4VdqqZ661Wz4f3lW3
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 16:52:26 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id F39121A0851
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 16:52:36 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgBnOBFTJkNmDmeDMg--.26345S3;
+	Tue, 14 May 2024 16:52:36 +0800 (CST)
+Subject: Re: [PATCH md-6.10 3/9] md: add new helpers for sync_action
+To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org,
+ dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
+ <20240509011900.2694291-4-yukuai1@huaweicloud.com>
+ <CALTww2-RPH_eYBumjxhHLkj7J2tfHskTYNif93Hwn5ksCN0+kA@mail.gmail.com>
+ <06211ae2-9b5f-10c7-7953-9d79d2eacc67@huaweicloud.com>
+ <CALTww28LM_b6SMC-vLY3y7R3ZD9z80H+2vZCXMzmAwnoEH-eMA@mail.gmail.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <2d457d0f-8bb5-39cb-0b8a-0bfdde1f560f@huaweicloud.com>
+Date: Tue, 14 May 2024 16:52:34 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <CALTww28LM_b6SMC-vLY3y7R3ZD9z80H+2vZCXMzmAwnoEH-eMA@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgBnOBFTJkNmDmeDMg--.26345S3
+X-Coremail-Antispam: 1UD129KBjvJXoW3Xw4fuw4kCrWUGFW3KF17ZFb_yoW7Kw47pF
+	W0yFn8Zr4UXry7Jr12q3WDta9ayr1IqryUXry3Ga48J3ZxKFn3G3WUJF17Cryvyr15uryj
+	vrWDGFW3uF4YyrJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
+	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4
+	AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE
+	17CEb7AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMI
+	IF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq
+	3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
+	nIWIevJa73UjIFyTuYvjfUoOJ5UUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Drop the heap-related macros from bcachefs and replacing them with the
-generic min_heap implementation from include/linux. By doing so, code
-readability is improved by using functions instead of macros. Moreover,
-the min_heap implementation in include/linux adopts a bottom-up
-variation compared to the textbook version currently used in bcachefs.
-This bottom-up variation allows for approximately 50% reduction in the
-number of comparison operations during heap siftdown, without changing
-the number of swaps, thus making it more efficient.
 
-Link: https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvsdp4mqqg@nrlek5vmisbu
-Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
-Reviewed-by: Ian Rogers <irogers@google.com>
-Acked-by: Kent Overstreet <kent.overstreet@linux.dev>
----
- fs/bcachefs/clock.c       |  43 ++++++++++----
- fs/bcachefs/clock_types.h |   2 +-
- fs/bcachefs/ec.c          |  76 ++++++++++++++++--------
- fs/bcachefs/ec_types.h    |   2 +-
- fs/bcachefs/util.h        | 118 +-------------------------------------
- 5 files changed, 87 insertions(+), 154 deletions(-)
 
-diff --git a/fs/bcachefs/clock.c b/fs/bcachefs/clock.c
-index 363644451106..3ec64fe6a064 100644
---- a/fs/bcachefs/clock.c
-+++ b/fs/bcachefs/clock.c
-@@ -6,16 +6,29 @@
- #include <linux/kthread.h>
- #include <linux/preempt.h>
- 
--static inline long io_timer_cmp(io_timer_heap *h,
--				struct io_timer *l,
--				struct io_timer *r)
-+static inline bool io_timer_cmp(const void *l, const void *r, void __always_unused *args)
- {
--	return l->expire - r->expire;
-+	struct io_timer **_l = (struct io_timer **)l;
-+	struct io_timer **_r = (struct io_timer **)r;
-+
-+	return (*_l)->expire < (*_r)->expire;
-+}
-+
-+static inline void io_timer_swp(void *l, void *r, void __always_unused *args)
-+{
-+	struct io_timer **_l = (struct io_timer **)l;
-+	struct io_timer **_r = (struct io_timer **)r;
-+
-+	swap(*_l, *_r);
- }
- 
- void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
- {
- 	size_t i;
-+	const struct min_heap_callbacks callbacks = {
-+		.less = io_timer_cmp,
-+		.swp = io_timer_swp,
-+	};
- 
- 	spin_lock(&clock->timer_lock);
- 
-@@ -26,11 +39,11 @@ void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
- 		return;
- 	}
- 
--	for (i = 0; i < clock->timers.used; i++)
-+	for (i = 0; i < clock->timers.nr; i++)
- 		if (clock->timers.data[i] == timer)
- 			goto out;
- 
--	BUG_ON(!heap_add(&clock->timers, timer, io_timer_cmp, NULL));
-+	BUG_ON(!min_heap_push(&clock->timers, &timer, &callbacks, NULL));
- out:
- 	spin_unlock(&clock->timer_lock);
- }
-@@ -38,12 +51,16 @@ void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
- void bch2_io_timer_del(struct io_clock *clock, struct io_timer *timer)
- {
- 	size_t i;
-+	const struct min_heap_callbacks callbacks = {
-+		.less = io_timer_cmp,
-+		.swp = io_timer_swp,
-+	};
- 
- 	spin_lock(&clock->timer_lock);
- 
--	for (i = 0; i < clock->timers.used; i++)
-+	for (i = 0; i < clock->timers.nr; i++)
- 		if (clock->timers.data[i] == timer) {
--			heap_del(&clock->timers, i, io_timer_cmp, NULL);
-+			min_heap_del(&clock->timers, i, &callbacks, NULL);
- 			break;
- 		}
- 
-@@ -131,12 +148,16 @@ static struct io_timer *get_expired_timer(struct io_clock *clock,
- 					  unsigned long now)
- {
- 	struct io_timer *ret = NULL;
-+	const struct min_heap_callbacks callbacks = {
-+		.less = io_timer_cmp,
-+		.swp = io_timer_swp,
-+	};
- 
- 	spin_lock(&clock->timer_lock);
- 
--	if (clock->timers.used &&
-+	if (clock->timers.nr &&
- 	    time_after_eq(now, clock->timers.data[0]->expire))
--		heap_pop(&clock->timers, ret, io_timer_cmp, NULL);
-+		min_heap_pop(&clock->timers, &callbacks, NULL);
- 
- 	spin_unlock(&clock->timer_lock);
- 
-@@ -161,7 +182,7 @@ void bch2_io_timers_to_text(struct printbuf *out, struct io_clock *clock)
- 	spin_lock(&clock->timer_lock);
- 	now = atomic64_read(&clock->now);
- 
--	for (i = 0; i < clock->timers.used; i++)
-+	for (i = 0; i < clock->timers.nr; i++)
- 		prt_printf(out, "%ps:\t%li\n",
- 		       clock->timers.data[i]->fn,
- 		       clock->timers.data[i]->expire - now);
-diff --git a/fs/bcachefs/clock_types.h b/fs/bcachefs/clock_types.h
-index 5fae0012d808..59716e148645 100644
---- a/fs/bcachefs/clock_types.h
-+++ b/fs/bcachefs/clock_types.h
-@@ -23,7 +23,7 @@ struct io_timer {
- /* Amount to buffer up on a percpu counter */
- #define IO_CLOCK_PCPU_SECTORS	128
- 
--typedef HEAP(struct io_timer *)	io_timer_heap;
-+typedef MIN_HEAP(struct io_timer *, io_timer_heap)	io_timer_heap;
- 
- struct io_clock {
- 	atomic64_t		now;
-diff --git a/fs/bcachefs/ec.c b/fs/bcachefs/ec.c
-index 082075244e16..ade65173898a 100644
---- a/fs/bcachefs/ec.c
-+++ b/fs/bcachefs/ec.c
-@@ -866,8 +866,8 @@ static int __ec_stripe_mem_alloc(struct bch_fs *c, size_t idx, gfp_t gfp)
- 
- 		mutex_lock(&c->ec_stripes_heap_lock);
- 		if (n.size > h->size) {
--			memcpy(n.data, h->data, h->used * sizeof(h->data[0]));
--			n.used = h->used;
-+			memcpy(n.data, h->data, h->nr * sizeof(h->data[0]));
-+			n.nr = h->nr;
- 			swap(*h, n);
- 		}
- 		mutex_unlock(&c->ec_stripes_heap_lock);
-@@ -958,7 +958,7 @@ static u64 stripe_idx_to_delete(struct bch_fs *c)
- 
- 	lockdep_assert_held(&c->ec_stripes_heap_lock);
- 
--	if (h->used &&
-+	if (h->nr &&
- 	    h->data[0].blocks_nonempty == 0 &&
- 	    !bch2_stripe_is_open(c, h->data[0].idx))
- 		return h->data[0].idx;
-@@ -966,14 +966,6 @@ static u64 stripe_idx_to_delete(struct bch_fs *c)
- 	return 0;
- }
- 
--static inline int ec_stripes_heap_cmp(ec_stripes_heap *h,
--				      struct ec_stripe_heap_entry l,
--				      struct ec_stripe_heap_entry r)
--{
--	return ((l.blocks_nonempty > r.blocks_nonempty) -
--		(l.blocks_nonempty < r.blocks_nonempty));
--}
--
- static inline void ec_stripes_heap_set_backpointer(ec_stripes_heap *h,
- 						   size_t i)
- {
-@@ -982,39 +974,71 @@ static inline void ec_stripes_heap_set_backpointer(ec_stripes_heap *h,
- 	genradix_ptr(&c->stripes, h->data[i].idx)->heap_idx = i;
- }
- 
-+static inline bool ec_stripes_heap_cmp(const void *l, const void *r, void __always_unused *args)
-+{
-+	struct ec_stripe_heap_entry *_l = (struct ec_stripe_heap_entry *)l;
-+	struct ec_stripe_heap_entry *_r = (struct ec_stripe_heap_entry *)r;
-+
-+	return ((_l->blocks_nonempty > _r->blocks_nonempty) <
-+		(_l->blocks_nonempty < _r->blocks_nonempty));
-+}
-+
-+static inline void ec_stripes_heap_swap(void *l, void *r, void *h)
-+{
-+	struct ec_stripe_heap_entry *_l = (struct ec_stripe_heap_entry *)l;
-+	struct ec_stripe_heap_entry *_r = (struct ec_stripe_heap_entry *)r;
-+	ec_stripes_heap *_h = (ec_stripes_heap *)h;
-+	size_t i = _l - _h->data;
-+	size_t j = _r - _h->data;
-+
-+	swap(*_l, *_r);
-+
-+	ec_stripes_heap_set_backpointer(_h, i);
-+	ec_stripes_heap_set_backpointer(_h, j);
-+}
-+
- static void heap_verify_backpointer(struct bch_fs *c, size_t idx)
- {
- 	ec_stripes_heap *h = &c->ec_stripes_heap;
- 	struct stripe *m = genradix_ptr(&c->stripes, idx);
- 
--	BUG_ON(m->heap_idx >= h->used);
-+	BUG_ON(m->heap_idx >= h->nr);
- 	BUG_ON(h->data[m->heap_idx].idx != idx);
- }
- 
- void bch2_stripes_heap_del(struct bch_fs *c,
- 			   struct stripe *m, size_t idx)
- {
-+	const struct min_heap_callbacks callbacks = {
-+		.less = ec_stripes_heap_cmp,
-+		.swp = ec_stripes_heap_swap,
-+	};
-+
- 	mutex_lock(&c->ec_stripes_heap_lock);
- 	heap_verify_backpointer(c, idx);
- 
--	heap_del(&c->ec_stripes_heap, m->heap_idx,
--		 ec_stripes_heap_cmp,
--		 ec_stripes_heap_set_backpointer);
-+	min_heap_del(&c->ec_stripes_heap, m->heap_idx, &callbacks, &c->ec_stripes_heap);
- 	mutex_unlock(&c->ec_stripes_heap_lock);
- }
- 
- void bch2_stripes_heap_insert(struct bch_fs *c,
- 			      struct stripe *m, size_t idx)
- {
-+	const struct min_heap_callbacks callbacks = {
-+		.less = ec_stripes_heap_cmp,
-+		.swp = ec_stripes_heap_swap,
-+	};
-+
- 	mutex_lock(&c->ec_stripes_heap_lock);
--	BUG_ON(heap_full(&c->ec_stripes_heap));
-+	BUG_ON(min_heap_full(&c->ec_stripes_heap));
- 
--	heap_add(&c->ec_stripes_heap, ((struct ec_stripe_heap_entry) {
-+	genradix_ptr(&c->stripes, idx)->heap_idx = c->ec_stripes_heap.nr;
-+	min_heap_push(&c->ec_stripes_heap, &((struct ec_stripe_heap_entry) {
- 			.idx = idx,
- 			.blocks_nonempty = m->blocks_nonempty,
- 		}),
--		 ec_stripes_heap_cmp,
--		 ec_stripes_heap_set_backpointer);
-+		&callbacks,
-+		&c->ec_stripes_heap);
- 
- 	heap_verify_backpointer(c, idx);
- 	mutex_unlock(&c->ec_stripes_heap_lock);
-@@ -1023,6 +1047,10 @@ void bch2_stripes_heap_insert(struct bch_fs *c,
- void bch2_stripes_heap_update(struct bch_fs *c,
- 			      struct stripe *m, size_t idx)
- {
-+	const struct min_heap_callbacks callbacks = {
-+		.less = ec_stripes_heap_cmp,
-+		.swp = ec_stripes_heap_swap,
-+	};
- 	ec_stripes_heap *h = &c->ec_stripes_heap;
- 	bool do_deletes;
- 	size_t i;
-@@ -1033,10 +1061,8 @@ void bch2_stripes_heap_update(struct bch_fs *c,
- 	h->data[m->heap_idx].blocks_nonempty = m->blocks_nonempty;
- 
- 	i = m->heap_idx;
--	heap_sift_up(h,	  i, ec_stripes_heap_cmp,
--		     ec_stripes_heap_set_backpointer);
--	heap_sift_down(h, i, ec_stripes_heap_cmp,
--		       ec_stripes_heap_set_backpointer);
-+	min_heap_sift_up(h,	i, &callbacks, &c->ec_stripes_heap);
-+	min_heap_sift_down(h, i, &callbacks, &c->ec_stripes_heap);
- 
- 	heap_verify_backpointer(c, idx);
- 
-@@ -1828,7 +1854,7 @@ static s64 get_existing_stripe(struct bch_fs *c,
- 		return -1;
- 
- 	mutex_lock(&c->ec_stripes_heap_lock);
--	for (heap_idx = 0; heap_idx < h->used; heap_idx++) {
-+	for (heap_idx = 0; heap_idx < h->nr; heap_idx++) {
- 		/* No blocks worth reusing, stripe will just be deleted: */
- 		if (!h->data[heap_idx].blocks_nonempty)
- 			continue;
-@@ -2159,7 +2185,7 @@ void bch2_stripes_heap_to_text(struct printbuf *out, struct bch_fs *c)
- 	size_t i;
- 
- 	mutex_lock(&c->ec_stripes_heap_lock);
--	for (i = 0; i < min_t(size_t, h->used, 50); i++) {
-+	for (i = 0; i < min_t(size_t, h->nr, 50); i++) {
- 		m = genradix_ptr(&c->stripes, h->data[i].idx);
- 
- 		prt_printf(out, "%zu %u/%u+%u", h->data[i].idx,
-diff --git a/fs/bcachefs/ec_types.h b/fs/bcachefs/ec_types.h
-index 976426da3a12..2ed67431a81c 100644
---- a/fs/bcachefs/ec_types.h
-+++ b/fs/bcachefs/ec_types.h
-@@ -36,6 +36,6 @@ struct ec_stripe_heap_entry {
- 	unsigned		blocks_nonempty;
- };
- 
--typedef HEAP(struct ec_stripe_heap_entry) ec_stripes_heap;
-+typedef MIN_HEAP(struct ec_stripe_heap_entry, ec_stripes_heap) ec_stripes_heap;
- 
- #endif /* _BCACHEFS_EC_TYPES_H */
-diff --git a/fs/bcachefs/util.h b/fs/bcachefs/util.h
-index 5cf885b09986..d5a1f1e29013 100644
---- a/fs/bcachefs/util.h
-+++ b/fs/bcachefs/util.h
-@@ -8,6 +8,7 @@
- #include <linux/errno.h>
- #include <linux/freezer.h>
- #include <linux/kernel.h>
-+#include <linux/min_heap.h>
- #include <linux/sched/clock.h>
- #include <linux/llist.h>
- #include <linux/log2.h>
-@@ -54,17 +55,9 @@ static inline size_t buf_pages(void *p, size_t len)
- 			    PAGE_SIZE);
- }
- 
--#define HEAP(type)							\
--struct {								\
--	size_t size, used;						\
--	type *data;							\
--}
--
--#define DECLARE_HEAP(type, name) HEAP(type) name
--
- #define init_heap(heap, _size, gfp)					\
- ({									\
--	(heap)->used = 0;						\
-+	(heap)->nr = 0;						\
- 	(heap)->size = (_size);						\
- 	(heap)->data = kvmalloc((heap)->size * sizeof((heap)->data[0]),\
- 				 (gfp));				\
-@@ -76,113 +69,6 @@ do {									\
- 	(heap)->data = NULL;						\
- } while (0)
- 
--#define heap_set_backpointer(h, i, _fn)					\
--do {									\
--	void (*fn)(typeof(h), size_t) = _fn;				\
--	if (fn)								\
--		fn(h, i);						\
--} while (0)
--
--#define heap_swap(h, i, j, set_backpointer)				\
--do {									\
--	swap((h)->data[i], (h)->data[j]);				\
--	heap_set_backpointer(h, i, set_backpointer);			\
--	heap_set_backpointer(h, j, set_backpointer);			\
--} while (0)
--
--#define heap_peek(h)							\
--({									\
--	EBUG_ON(!(h)->used);						\
--	(h)->data[0];							\
--})
--
--#define heap_full(h)	((h)->used == (h)->size)
--
--#define heap_sift_down(h, i, cmp, set_backpointer)			\
--do {									\
--	size_t _c, _j = i;						\
--									\
--	for (; _j * 2 + 1 < (h)->used; _j = _c) {			\
--		_c = _j * 2 + 1;					\
--		if (_c + 1 < (h)->used &&				\
--		    cmp(h, (h)->data[_c], (h)->data[_c + 1]) >= 0)	\
--			_c++;						\
--									\
--		if (cmp(h, (h)->data[_c], (h)->data[_j]) >= 0)		\
--			break;						\
--		heap_swap(h, _c, _j, set_backpointer);			\
--	}								\
--} while (0)
--
--#define heap_sift_up(h, i, cmp, set_backpointer)			\
--do {									\
--	while (i) {							\
--		size_t p = (i - 1) / 2;					\
--		if (cmp(h, (h)->data[i], (h)->data[p]) >= 0)		\
--			break;						\
--		heap_swap(h, i, p, set_backpointer);			\
--		i = p;							\
--	}								\
--} while (0)
--
--#define __heap_add(h, d, cmp, set_backpointer)				\
--({									\
--	size_t _i = (h)->used++;					\
--	(h)->data[_i] = d;						\
--	heap_set_backpointer(h, _i, set_backpointer);			\
--									\
--	heap_sift_up(h, _i, cmp, set_backpointer);			\
--	_i;								\
--})
--
--#define heap_add(h, d, cmp, set_backpointer)				\
--({									\
--	bool _r = !heap_full(h);					\
--	if (_r)								\
--		__heap_add(h, d, cmp, set_backpointer);			\
--	_r;								\
--})
--
--#define heap_add_or_replace(h, new, cmp, set_backpointer)		\
--do {									\
--	if (!heap_add(h, new, cmp, set_backpointer) &&			\
--	    cmp(h, new, heap_peek(h)) >= 0) {				\
--		(h)->data[0] = new;					\
--		heap_set_backpointer(h, 0, set_backpointer);		\
--		heap_sift_down(h, 0, cmp, set_backpointer);		\
--	}								\
--} while (0)
--
--#define heap_del(h, i, cmp, set_backpointer)				\
--do {									\
--	size_t _i = (i);						\
--									\
--	BUG_ON(_i >= (h)->used);					\
--	(h)->used--;							\
--	if ((_i) < (h)->used) {						\
--		heap_swap(h, _i, (h)->used, set_backpointer);		\
--		heap_sift_up(h, _i, cmp, set_backpointer);		\
--		heap_sift_down(h, _i, cmp, set_backpointer);		\
--	}								\
--} while (0)
--
--#define heap_pop(h, d, cmp, set_backpointer)				\
--({									\
--	bool _r = (h)->used;						\
--	if (_r) {							\
--		(d) = (h)->data[0];					\
--		heap_del(h, 0, cmp, set_backpointer);			\
--	}								\
--	_r;								\
--})
--
--#define heap_resort(heap, cmp, set_backpointer)				\
--do {									\
--	ssize_t _i;							\
--	for (_i = (ssize_t) (heap)->used / 2 -  1; _i >= 0; --_i)	\
--		heap_sift_down(heap, _i, cmp, set_backpointer);		\
--} while (0)
--
- #define ANYSINT_MAX(t)							\
- 	((((t) 1 << (sizeof(t) * 8 - 2)) - (t) 1) * (t) 2 + (t) 1)
- 
--- 
-2.34.1
+在 2024/05/14 16:40, Xiao Ni 写道:
+> On Tue, May 14, 2024 at 3:39 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>
+>> Hi,
+>>
+>> 在 2024/05/14 14:52, Xiao Ni 写道:
+>>> On Mon, May 13, 2024 at 5:31 PM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>>>
+>>>> From: Yu Kuai <yukuai3@huawei.com>
+>>>>
+>>>> The new helpers will get current sync_action of the array, will be used
+>>>> in later patches to make code cleaner.
+>>>>
+>>>> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+>>>> ---
+>>>>    drivers/md/md.c | 64 +++++++++++++++++++++++++++++++++++++++++++++++++
+>>>>    drivers/md/md.h |  3 +++
+>>>>    2 files changed, 67 insertions(+)
+>>>>
+>>>> diff --git a/drivers/md/md.c b/drivers/md/md.c
+>>>> index 00bbafcd27bb..48ec35342d1b 100644
+>>>> --- a/drivers/md/md.c
+>>>> +++ b/drivers/md/md.c
+>>>> @@ -69,6 +69,16 @@
+>>>>    #include "md-bitmap.h"
+>>>>    #include "md-cluster.h"
+>>>>
+>>>> +static char *action_name[NR_SYNC_ACTIONS] = {
+>>>> +       [ACTION_RESYNC]         = "resync",
+>>>> +       [ACTION_RECOVER]        = "recover",
+>>>> +       [ACTION_CHECK]          = "check",
+>>>> +       [ACTION_REPAIR]         = "repair",
+>>>> +       [ACTION_RESHAPE]        = "reshape",
+>>>> +       [ACTION_FROZEN]         = "frozen",
+>>>> +       [ACTION_IDLE]           = "idle",
+>>>> +};
+>>>> +
+>>>>    /* pers_list is a list of registered personalities protected by pers_lock. */
+>>>>    static LIST_HEAD(pers_list);
+>>>>    static DEFINE_SPINLOCK(pers_lock);
+>>>> @@ -4867,6 +4877,60 @@ metadata_store(struct mddev *mddev, const char *buf, size_t len)
+>>>>    static struct md_sysfs_entry md_metadata =
+>>>>    __ATTR_PREALLOC(metadata_version, S_IRUGO|S_IWUSR, metadata_show, metadata_store);
+>>>>
+>>>> +enum sync_action md_sync_action(struct mddev *mddev)
+>>>> +{
+>>>> +       unsigned long recovery = mddev->recovery;
+>>>> +
+>>>> +       /*
+>>>> +        * frozen has the highest priority, means running sync_thread will be
+>>>> +        * stopped immediately, and no new sync_thread can start.
+>>>> +        */
+>>>> +       if (test_bit(MD_RECOVERY_FROZEN, &recovery))
+>>>> +               return ACTION_FROZEN;
+>>>> +
+>>>> +       /*
+>>>> +        * idle means no sync_thread is running, and no new sync_thread is
+>>>> +        * requested.
+>>>> +        */
+>>>> +       if (!test_bit(MD_RECOVERY_RUNNING, &recovery) &&
+>>>> +           (!md_is_rdwr(mddev) || !test_bit(MD_RECOVERY_NEEDED, &recovery)))
+>>>> +               return ACTION_IDLE;
+>>>
+>>> Hi Kuai
+>>>
+>>> Can I think the above judgement cover these two situations:
+>>> 1. The array is readonly / readauto and it doesn't have
+>>> MD_RECOVERY_RUNNING. Now maybe it has MD_RECOVERY_NEEDED, it means one
+>>> array may want to do some sync action, but the array state is not
+>>> readwrite and it can't start.
+>>> 2. The array doesn't have MD_RECOVERY_RUNNING and MD_RECOVERY_NEEDED
+>>>
+>>>> +
+>>>> +       if (test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
+>>>> +           mddev->reshape_position != MaxSector)
+>>>> +               return ACTION_RESHAPE;
+>>>> +
+>>>> +       if (test_bit(MD_RECOVERY_RECOVER, &recovery))
+>>>> +               return ACTION_RECOVER;
+>>>> +
+>>>> +       if (test_bit(MD_RECOVERY_SYNC, &recovery)) {
+>>>> +               if (test_bit(MD_RECOVERY_CHECK, &recovery))
+>>>> +                       return ACTION_CHECK;
+>>>> +               if (test_bit(MD_RECOVERY_REQUESTED, &recovery))
+>>>> +                       return ACTION_REPAIR;
+>>>> +               return ACTION_RESYNC;
+>>>> +       }
+>>>> +
+>>>> +       return ACTION_IDLE;
+>>>
+>>> Does it need this? I guess it's the reason in case there are other
+>>> situations, right?
+>>
+>> Yes, we need this, because they are many places to set
+>> MD_RECOVERY_NEEDED, while there are no sync action actually, this case
+>> is 'idle'.
+> 
+> To be frank, the logic in action_show is easier to understand than the
+> logic above. I have taken more than half an hour to think if the logic
+> here is right or not. In action_show, it only needs to think when it's
+> not idle and it's easy.
+> 
+> Now this patch logic needs to think in the opposite direction: when
+> it's idle. And it returns ACTION_IDLE at two places which means it
+> still needs to think about when it has sync action. So it's better to
+> keep the original logic in action_show now. It's just my 2 cents
+> point.
+
+Hi,
+
+but the logical is exactlly the same as action_show(), and there are
+no functional changes. I just remove the local variable and return
+early, because I think code is cleaner this way...
+
+action_show:
+
+char *type = "idle"
+
+if (test_bit() || xxx) {
+
+  if (xxx)
+   type ="reshape"
+  else if(xxx)
+   type ="resync/check/repair"
+  else if(xxx)
+   type = "recover"
+  else if (xxx)
+   type = "reshape"
+  -> else is idle
+}
+-> else is idle
+
+The above two place are corresponding to the new code to return
+ACTION_IDLE.
+
+Thanks,
+Kuai
+
+> 
+> Best Regards
+> Xiao
+> 
+>>
+>> Thanks,
+>> Kuai
+>>
+>>>
+>>> Regards
+>>> Xiao
+>>>
+>>>> +}
+>>>> +
+>>>> +enum sync_action md_sync_action_by_name(char *page)
+>>>> +{
+>>>> +       enum sync_action action;
+>>>> +
+>>>> +       for (action = 0; action < NR_SYNC_ACTIONS; ++action) {
+>>>> +               if (cmd_match(page, action_name[action]))
+>>>> +                       return action;
+>>>> +       }
+>>>> +
+>>>> +       return NR_SYNC_ACTIONS;
+>>>> +}
+>>>> +
+>>>> +char *md_sync_action_name(enum sync_action action)
+>>>> +{
+>>>> +       return action_name[action];
+>>>> +}
+>>>> +
+>>>>    static ssize_t
+>>>>    action_show(struct mddev *mddev, char *page)
+>>>>    {
+>>>> diff --git a/drivers/md/md.h b/drivers/md/md.h
+>>>> index 2edad966f90a..72ca7a796df5 100644
+>>>> --- a/drivers/md/md.h
+>>>> +++ b/drivers/md/md.h
+>>>> @@ -864,6 +864,9 @@ extern void md_unregister_thread(struct mddev *mddev, struct md_thread __rcu **t
+>>>>    extern void md_wakeup_thread(struct md_thread __rcu *thread);
+>>>>    extern void md_check_recovery(struct mddev *mddev);
+>>>>    extern void md_reap_sync_thread(struct mddev *mddev);
+>>>> +extern enum sync_action md_sync_action(struct mddev *mddev);
+>>>> +extern enum sync_action md_sync_action_by_name(char *page);
+>>>> +extern char *md_sync_action_name(enum sync_action action);
+>>>>    extern bool md_write_start(struct mddev *mddev, struct bio *bi);
+>>>>    extern void md_write_inc(struct mddev *mddev, struct bio *bi);
+>>>>    extern void md_write_end(struct mddev *mddev);
+>>>> --
+>>>> 2.39.2
+>>>>
+>>>
+>>> .
+>>>
+>>
+>>
+> 
+> .
+> 
 
