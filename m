@@ -1,57 +1,57 @@
-Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com [209.85.216.43])
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com [209.85.216.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3E96C22F00
-	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 08:47:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 616F320319
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 08:47:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715676459; cv=none; b=oXcfp911DM1ZnYZOe0N9QzF//0ZPw0u1OD7k5BHnxAnUNIm1Ac9RLGNHJWI64zHeron/D+XfBq9+ybrKPtjM3HLfvlD9sz14yEVekyQvq/wFCEaDiWwPZhh+F0Rxg1bYFZTlninr4LVXeY9BZxtitng7jiD+s6/KIbQFDttGUQM=
+	t=1715676464; cv=none; b=sQOQo1v35baGMgcr2P4g3Z7PLjlHbm64bYN/htwoAzfj390Icnf/7I6/neFRfPEGdubNEfVZVvmuOI/HjDJQWZUsQLPosZUiA0wwT7XIs1OydOoLgYujYxeUcwOvCDAqw1hCwxufdbQnWLCR6mO6gsh98Vov/BvbyaahlDSzT1M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715676459; c=relaxed/simple;
-	bh=5eMBfUoMBCijCucBrYyXb5iM12NH5j3cQUyWi3Km8qU=;
+	s=arc-20240116; t=1715676464; c=relaxed/simple;
+	bh=UN1Xetleeq5Nz5tLKfuxk8/opVO9kM/FjVJ/CVGswXI=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=Go86sZIXdOtxjYvZcwsLpgcaqyFo9kmD1CghQnh4OEja1MNHd4oPlRtE7FOz4qbjNKfJ5CyrT70A9Oc4MJWXS/PNL9ltOeNVEFqDKGHtdjRiH97+e7kIbvMKKi2sVreIgJQaPy0bZHyprKOgffRuVdO+xAx8X5DfwV5hRePGd/0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cDbIH+B2; arc=none smtp.client-ip=209.85.216.43
+	 MIME-Version; b=AHd2AMCFrfBKI/kEqT4oOpW2XWhTotj7yaAVt7Ni0UwjCahSSEGMuf5Z68ywwBpqAMUOGcVUky8YJso+59Q+lU02lQjNWOTTUQyYyZKhG4R6FsqLuquy6XLblZ7JrrCm+XILgVWxYn95BHz5aXlAn0Eyp+tjex1KKBp96erRY30=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jXiEJlGf; arc=none smtp.client-ip=209.85.216.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cDbIH+B2"
-Received: by mail-pj1-f43.google.com with SMTP id 98e67ed59e1d1-2b4b30702a5so1342585a91.1
-        for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 01:47:38 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jXiEJlGf"
+Received: by mail-pj1-f41.google.com with SMTP id 98e67ed59e1d1-2b345894600so1226939a91.2
+        for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 01:47:43 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1715676457; x=1716281257; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1715676463; x=1716281263; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=VJIN0mq5LX930XVge9ngeqBSR6yoC+cL9OxlPKOkaa8=;
-        b=cDbIH+B2LNuTDYuhakji/53JhTDm+1zUoWldpiEcE7tpUm4a8SWCqGZEoYo0E6rbiH
-         m6J0smMlf3+VF317LVWbkNtfacTG1zcF0czeWSP0XSEWF0sS54x94sQWVqyZJMzEU1bv
-         BwHkxQ1sEgBKnHuMlWWXLVJI8kFsk2hM/1j7r6y6PDzx0fxc3GtihkedfdYhNqpWbx/9
-         1rSA1zWXG7tCwHQcPPPv+bRBi/43AYIK3ybHQcD8WsRsDPxGEJRNhvau0R9kFVPzoDYR
-         xxZF1ohuQTg9lWF6VmtagI1X3fDLI1xFgCIwMydV7ZSEwLEZ4q2yIPnGAM/JI3wf5REl
-         v5sA==
+        bh=/7grr21+dk77QDv4Gfk7ePfGBs40BXM1/CLzaulLK98=;
+        b=jXiEJlGfOkZj9QxuPedOUXVK9olFC3D6NUwlEKwuohv0H7os+5fyfBiSSMKqpaLv4L
+         mo2JpUF6/mEBIOlz9GEbSPkkm2EJDLpWnnXBBdPaPB1v9zl8hg0esymUsjnbUQRnLhri
+         rkyRyU0tX2fdj7RhB0DF6nheSPljKg5IX/+gzlCdiKf95xVb0rFZM8fiIcRjbIOp3Ww4
+         Uif1bMBLXkUDjbxOe3IpjuUgViQ5XxdU7EGCusdgaJWxguwrd/PZqOhk885D+F/j5yl3
+         NPhKTzzQ3AJzvKiIAXiHJHcDXnWoyBsPphqWw5/yAY9Sju1em/yRK6HUcNNo6Ji3Q/t7
+         kB6g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715676458; x=1716281258;
+        d=1e100.net; s=20230601; t=1715676463; x=1716281263;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=VJIN0mq5LX930XVge9ngeqBSR6yoC+cL9OxlPKOkaa8=;
-        b=V5FfjcK4nEE/RId+ruIQJalOpZKvAojCzghqIKlUpz/pgVlkBKKIh4yWHxamDfEmrg
-         2ZmqJd2Q66Era4/s+G31DB5fZrgOshgfZ8zdtQh8DF0TJ5A2532u31WqfMFipSoR1nqn
-         t1OfMj4Lk/SU8ZYOmqLOBxz06dxepvqG6PcXZ7GO5OWdBV7by3RlVsrnA1NE+6TcJwUS
-         LYECGV2QCtjIRMYbG+eAvS6u4FP8xDaalZMuYbtyBzOXinOUK9FdPK/dNmO35ZSGQi7r
-         cnAbrlutogqUtJxgLmorW/MPAJhDEzOSGGGi4SEvnVtYED5U19AswMNLH13vrAIeanQr
-         s0GA==
-X-Forwarded-Encrypted: i=1; AJvYcCVaf+7ltLXSPU1NMWfY96YtZ2ICI9N1Jq6Iq5xIoIfHTnsDQqQvxr/VlYeSq7H2StnYs5JpQZ15VANF6xz9xJVG47Yfm6zGOcQ=
-X-Gm-Message-State: AOJu0YyxSQqEMkkeHat8pvHWYJOor8SIeQBTizT5HGOjecRNtH52Lf4F
-	XkFyj789IS8pJeirnzUJD3DytkJz7AkhzmMYjlwUh/8Otfb6dZ9kFPXrBQ==
-X-Google-Smtp-Source: AGHT+IG03sin8CsXv9ZoBGudgY6bQBtBEMYZDMlC5AFiVRjrzKUMTKrBFfGO2gSMQoV+wDsSjXqlxQ==
-X-Received: by 2002:a05:6a20:3d81:b0:1af:93cc:860a with SMTP id adf61e73a8af0-1afde24da77mr15883169637.6.1715676457543;
-        Tue, 14 May 2024 01:47:37 -0700 (PDT)
+        bh=/7grr21+dk77QDv4Gfk7ePfGBs40BXM1/CLzaulLK98=;
+        b=cufIBfwf+fz0UI5QO1xQRkxnZJLbU17WQDL+X6aHyaRsY3AyIMyK9FpmgWdKNWv1Ui
+         XXuH0OU8A6BeXHH60FHzOzmxujnueTyoFEmYXycBGDQ8WPSjYwobZGE7bnEk4SmsJ/RS
+         EVSvAzUm258swMS7G+ZE7DuSb1a/vgCnnfoIFBFvFrS6O74WaycXyncSXTLtBzM1uQj4
+         v2xx2HvELVuGPNEImZ1vEfk3OSX06fzpT66nLOjiBQZ6uI0QCI291U9NZhm8g2k7zynZ
+         +U7u3Kr/1H47ONllSKY442uvQH92H5hfV1NDQvnEdVNi7E+6K3Nh4JVPcbhp7dkfr61k
+         VaoQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVGCasL0HH8+NaidsUVlHxxb38V7mtRYLZhKlnPN1vm8IXw5bBEMecprlkZi8v2tuQmFdXUUIPMaSHwmZrx+eT+jysWVDuVfzw=
+X-Gm-Message-State: AOJu0Yxd/eIPMCQzeYcfGQAzR+seniAED55wI+cKoWr7W/rMEqSQPn//
+	f+G/+V4MJaaDn20+egJZarxsKLkvbQB1Gku9ycI8o4Nr6aSxuM7Ayo595g==
+X-Google-Smtp-Source: AGHT+IEMUmx+37VSqc6GRGyY4pOmP+xoAi9mzpeZ5gYRml7jxeXeFDC0FyBMpm/Kb0QmMkl9TuNysw==
+X-Received: by 2002:a17:90a:3d83:b0:2b6:5b13:b3b0 with SMTP id 98e67ed59e1d1-2b6cd30d2c3mr11588329a91.4.1715676462694;
+        Tue, 14 May 2024 01:47:42 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2b6711660fdsm9195597a91.16.2024.05.14.01.47.33
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2b6711660fdsm9195597a91.16.2024.05.14.01.47.38
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 May 2024 01:47:36 -0700 (PDT)
+        Tue, 14 May 2024 01:47:42 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -76,9 +76,9 @@ Cc: bfoster@redhat.com,
 	linux-perf-users@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>,
 	Randy Dunlap <rdunlap@infradead.org>
-Subject: [RESEND PATCH v5 01/16] perf/core: Fix several typos
-Date: Tue, 14 May 2024 16:47:09 +0800
-Message-Id: <20240514084724.557100-2-visitorckw@gmail.com>
+Subject: [RESEND PATCH v5 02/16] bcache: Fix typo
+Date: Tue, 14 May 2024 16:47:10 +0800
+Message-Id: <20240514084724.557100-3-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240514084724.557100-1-visitorckw@gmail.com>
 References: <20240514084724.557100-1-visitorckw@gmail.com>
@@ -90,53 +90,27 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Replace 'artifically' with 'artificially'.
-Replace 'irrespecive' with 'irrespective'.
-Replace 'futher' with 'further'.
-Replace 'sufficent' with 'sufficient'.
+Replace 'utiility' with 'utility'.
 
 Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 Reviewed-by: Ian Rogers <irogers@google.com>
 Reviewed-by: Randy Dunlap <rdunlap@infradead.org>
 ---
- kernel/events/core.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/md/bcache/util.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 724e6d7e128f..10ac2db83f14 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -534,7 +534,7 @@ void perf_sample_event_took(u64 sample_len_ns)
- 	__this_cpu_write(running_sample_length, running_len);
- 
- 	/*
--	 * Note: this will be biased artifically low until we have
-+	 * Note: this will be biased artificially low until we have
- 	 * seen NR_ACCUMULATED_SAMPLES. Doing it this way keeps us
- 	 * from having to maintain a count.
- 	 */
-@@ -596,10 +596,10 @@ static inline u64 perf_event_clock(struct perf_event *event)
+diff --git a/drivers/md/bcache/util.c b/drivers/md/bcache/util.c
+index ae380bc3992e..410d8cb49e50 100644
+--- a/drivers/md/bcache/util.c
++++ b/drivers/md/bcache/util.c
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0
+ /*
+- * random utiility code, for bcache but in theory not specific to bcache
++ * random utility code, for bcache but in theory not specific to bcache
   *
-  * Event groups make things a little more complicated, but not terribly so. The
-  * rules for a group are that if the group leader is OFF the entire group is
-- * OFF, irrespecive of what the group member states are. This results in
-+ * OFF, irrespective of what the group member states are. This results in
-  * __perf_effective_state().
-  *
-- * A futher ramification is that when a group leader flips between OFF and
-+ * A further ramification is that when a group leader flips between OFF and
-  * !OFF, we need to update all group member times.
-  *
-  *
-@@ -891,7 +891,7 @@ static int perf_cgroup_ensure_storage(struct perf_event *event,
- 	int cpu, heap_size, ret = 0;
- 
- 	/*
--	 * Allow storage to have sufficent space for an iterator for each
-+	 * Allow storage to have sufficient space for an iterator for each
- 	 * possibly nested cgroup plus an iterator for events with no cgroup.
- 	 */
- 	for (heap_size = 1; css; css = css->parent)
+  * Copyright 2010, 2011 Kent Overstreet <kent.overstreet@gmail.com>
+  * Copyright 2012 Google, Inc.
 -- 
 2.34.1
 
