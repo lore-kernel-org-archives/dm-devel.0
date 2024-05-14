@@ -1,218 +1,248 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC361AD31
-	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 06:57:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 689381EB2B
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 07:39:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715669843; cv=none; b=cbRZVM2zN+Rq3pSt+mWmfZk+ehmjnv8UsgHwjGgRz9lSV7D4rJkxxT5WHnuxgMH4lduIhrbkuhfh4y35RtdoANJumCAnpfcjD/inVNh4CXz6BdJJUgpuJw3mBxVa6tVgth8yG/UYWrXF6gzIf8zP8Y44Kz6fWzEXCFL0Lcod0mg=
+	t=1715672366; cv=none; b=RRq0injYJlRlRt+USABvrYuaPw48ZeYuAzS68hpisnPiaXSrzyx5X063sAG8+otiGUtCKlde+IYgPOu1YZZA5tvf/ud3J6/LrDQLyVUlvJ0s01Szm2UBfK9pLW5OjpbXEeSicW5iJ+576rKxfyLGq/KbMM9MPuNMdF3KuirYk90=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715669843; c=relaxed/simple;
-	bh=6aIPSi+GUkocJtWzCmsTX5dWm52pyDTisNVEAYOpQmc=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=QuO5QVYi20jBQ9GQTQYE7F5J/k3heExIMPWfQQWCCdPj1F/we4t5nO1dJYXWt8jpkD/mpHI21LuW0hScJeRv0v2GPlbRzzD7usyt2x7Qduf3puPOZ5p+SkVkC5umPMtiJFGhhDK3EX+SR6auTc4vHFwabsxaDSssmcjc7tGi38g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=aLWAwZFg; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1715672366; c=relaxed/simple;
+	bh=/zbNmJnrBYof+TFZ1f9IC1pLr1xpwQrseSt/5531pW8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=TDsJJEYMN0TnaC9jcgVrRGrvfPGVjF/uXAzZp4c5wfyLjVuDh9oxho63A0rONkrFlanmOyCOTIvm8IMH8tM88PiKdBoXYFq8hlit43SzCeLaV3+UJiErYgcN55jDl8BI/9vgLp9JSyA8sAPD7xmnf+5XiU/xl3HvVHc5BpM7CaU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KNTti/Rb; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aLWAwZFg"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KNTti/Rb"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1715669839;
+	s=mimecast20190719; t=1715672363;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=tt9yK6I/O8EYanlAPHDgSca+ykSFbvnV0w6tvpdiWNs=;
-	b=aLWAwZFgCipLW3NAVlwOecJdWoTFR055JKQ6URJCRmbdGR5NJZol2I7Lek0iN1zQTfT+vI
-	y3l5Ojhky/5Re1zBDsNtuRz0cP8/sDX0NeufSeKZWUl/gEZi5Fh6s+pECrFng9yP8/YqTj
-	iiKasC2mfmcROAjZq+P5Qymel9o13NQ=
-Received: from mail-pg1-f197.google.com (mail-pg1-f197.google.com
- [209.85.215.197]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=rCyrSqY6tNdEEVYrLErxV8jAv56KZFmfGB/kOU6LsTE=;
+	b=KNTti/RbHiwVQFV8vZGfnfraGgk1MJRYKgUiUVqgBw7IYU8OS9R4oD0XJpFEDv/5pSGO5+
+	bLTY055x6tNgHdAOWqAYk1KDc6I0me3irrPqDtAQ6XIzWm7eFFuzLaHnMDyrcr3M67e/C7
+	rsLwGWkFlyL6RBnArm+49A82H5fp6GE=
+Received: from mail-pg1-f198.google.com (mail-pg1-f198.google.com
+ [209.85.215.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-549-CEyFucjTNkmzwO3ncc754A-1; Tue, 14 May 2024 02:52:18 -0400
-X-MC-Unique: CEyFucjTNkmzwO3ncc754A-1
-Received: by mail-pg1-f197.google.com with SMTP id 41be03b00d2f7-61a9f6c869dso4477844a12.3
-        for <dm-devel@lists.linux.dev>; Mon, 13 May 2024 23:52:17 -0700 (PDT)
+ us-mta-80-aFFh9axqP9evKjC_viTaEA-1; Tue, 14 May 2024 03:28:03 -0400
+X-MC-Unique: aFFh9axqP9evKjC_viTaEA-1
+Received: by mail-pg1-f198.google.com with SMTP id 41be03b00d2f7-5cdfd47de98so5343340a12.1
+        for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 00:28:02 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715669537; x=1716274337;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=tt9yK6I/O8EYanlAPHDgSca+ykSFbvnV0w6tvpdiWNs=;
-        b=EASStIAS54md4xX/82WenZzCCZEtuQoSw5LiBDZG9/U+ZQ6cOu+Icib1yFeIvow5Hr
-         DRNMUMHsMtmZREhocCooDRtkQTlyS3ruHLKVah/bdHa3dOp80aTWG0GLmXh5TZq0qbfR
-         lrTn9q8P/jXb4A4+W03XQjzJ4Q4yArz5WIyw91AVBknduxh17MgDbBqxD2AisP5m8HZ6
-         Ystp3ZI6VWfmAC8uxkupIBJb/4QI6prmwgTMGw4ZSOOUNZHkUnCjWZ1xCQAkiSSYw9E1
-         tY/USR04S11ZRvq3FK40n79JPH3sLbSp9L8d7PNLt/b9/fKIEPh2QYuDRUX8kc3k3Q2z
-         5zvQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXsOI+DFVZZ9NzTMCe1xCGq/YK3OPZutWTalTays1dEKK1ac909U80kGxGezQqEF2stMaYF0NyG7DXQCjWpo31pAfvgC3hSmts=
-X-Gm-Message-State: AOJu0YxM+k5v1I2oocGpj34fN6Tm1T0ROumpPTsOmpx96+n/DWtgaSrz
-	1PaKHch1/xDGTZ+LPq6MZghKTbkNqKtDlaFOcbup+MsZxCwlsWTeWhNA5/Ij5lrz7gUTWMDpg67
-	/SP0Ywo8l9FXva96IMeYqju8XfW0gtsMIOgiUQlu2BgLUZ4QgavmEAhc2fHnjULEICKJay08nj+
-	ScWID2MxPZW5/EUew2H0hapqTThXp17yQ=
-X-Received: by 2002:a05:6a20:2d2a:b0:1af:f5d3:b919 with SMTP id adf61e73a8af0-1aff5d3ba1emr5310268637.4.1715669536962;
-        Mon, 13 May 2024 23:52:16 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IH03hiv7dUouGI6qNIM6FbukFBpKI4K+JPWCWHUdhQQ/ueIAvM2k6M9rZP5Vm/SRlGw8FRyKAXO5ebt9NZab3c=
-X-Received: by 2002:a05:6a20:2d2a:b0:1af:f5d3:b919 with SMTP id
- adf61e73a8af0-1aff5d3ba1emr5310243637.4.1715669536555; Mon, 13 May 2024
- 23:52:16 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1715671682; x=1716276482;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to:subject
+         :user-agent:mime-version:date:message-id:x-gm-message-state:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=rCyrSqY6tNdEEVYrLErxV8jAv56KZFmfGB/kOU6LsTE=;
+        b=nrTQYfmuaLcdIV1TQyEUt6drGSOv9K9ORstpxdGzY+XmuZK0k7kGToiObas7zWkhtF
+         xDmKfLIU1Vrwq6UcsBrM+u24WQkuvspwajRGpH64VCWPE8uwj5UVyNsoDuB94qTids1M
+         HieUYJjwYL2Kvc681swo+WeDbqbFQhUGF6vhi9J++/0maFHYrTRCa5ss2QBxuu7V9loT
+         HXaV+8SipIO9c2dL6BhVMfPNJZyYFQGlAKZBgBytHSnAytwogYqk9ouOC4WP9bFtXjH3
+         ndBBfjidsLfsosI2r9MzcavVXFv0YEeilpv6dp/W8BZwlhYwgAR2CTXPnurNvcD3UtJ2
+         P09w==
+X-Gm-Message-State: AOJu0YyCJcNOHERYcmTyNuDtOUCGolQ+AoKjsHQFwz5kstM9Ka04tfNe
+	Y27opMXLwwEcyulO8anJ2dy5y7w/eyZhxYKz5DNPvCegLuRPPR2XwLduzIY1OwyJ/Ilsh/mOcws
+	asB7KsPfN0Tc/p4Uom5rDim1TSb9I4ytH0PmX/65sgkGWnJCG7819vaV7
+X-Received: by 2002:a05:6a21:6802:b0:1af:9321:8ac3 with SMTP id adf61e73a8af0-1afde10debemr11738097637.36.1715671681839;
+        Tue, 14 May 2024 00:28:01 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHra1DAm/uRiLAzU5PNgm685JCcjDtOry36q06hMMN8aWCTMkQTvupLI92LgQ6KHGdt3jGnDw==
+X-Received: by 2002:a05:6a21:6802:b0:1af:9321:8ac3 with SMTP id adf61e73a8af0-1afde10debemr11738075637.36.1715671681472;
+        Tue, 14 May 2024 00:28:01 -0700 (PDT)
+Received: from [10.72.120.5] ([43.228.180.230])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2b62863cd9dsm10903410a91.12.2024.05.14.00.27.57
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 14 May 2024 00:28:01 -0700 (PDT)
+Message-ID: <5a1ff1a3-3197-40b4-8b9c-f2ec567ff24e@redhat.com>
+Date: Tue, 14 May 2024 15:27:56 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240509011900.2694291-1-yukuai1@huaweicloud.com> <20240509011900.2694291-4-yukuai1@huaweicloud.com>
-In-Reply-To: <20240509011900.2694291-4-yukuai1@huaweicloud.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH md-6.10 8/9] md: factor out helpers for different
+ sync_action in md_do_sync()
+To: Yu Kuai <yukuai1@huaweicloud.com>, agk@redhat.com, snitzer@kernel.org,
+ mpatocka@redhat.com, song@kernel.org
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yukuai3@huawei.com, yi.zhang@huawei.com,
+ yangerkun@huawei.com
+References: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
+ <20240509011900.2694291-9-yukuai1@huaweicloud.com>
 From: Xiao Ni <xni@redhat.com>
-Date: Tue, 14 May 2024 14:52:05 +0800
-Message-ID: <CALTww2-RPH_eYBumjxhHLkj7J2tfHskTYNif93Hwn5ksCN0+kA@mail.gmail.com>
-Subject: Re: [PATCH md-6.10 3/9] md: add new helpers for sync_action
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org, 
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-raid@vger.kernel.org, yukuai3@huawei.com, yi.zhang@huawei.com, 
-	yangerkun@huawei.com
+In-Reply-To: <20240509011900.2694291-9-yukuai1@huaweicloud.com>
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On Mon, May 13, 2024 at 5:31=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com> w=
-rote:
->
+
+在 2024/5/9 上午9:18, Yu Kuai 写道:
 > From: Yu Kuai <yukuai3@huawei.com>
 >
-> The new helpers will get current sync_action of the array, will be used
-> in later patches to make code cleaner.
->
-> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-> ---
->  drivers/md/md.c | 64 +++++++++++++++++++++++++++++++++++++++++++++++++
->  drivers/md/md.h |  3 +++
->  2 files changed, 67 insertions(+)
->
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 00bbafcd27bb..48ec35342d1b 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -69,6 +69,16 @@
->  #include "md-bitmap.h"
->  #include "md-cluster.h"
->
-> +static char *action_name[NR_SYNC_ACTIONS] =3D {
-> +       [ACTION_RESYNC]         =3D "resync",
-> +       [ACTION_RECOVER]        =3D "recover",
-> +       [ACTION_CHECK]          =3D "check",
-> +       [ACTION_REPAIR]         =3D "repair",
-> +       [ACTION_RESHAPE]        =3D "reshape",
-> +       [ACTION_FROZEN]         =3D "frozen",
-> +       [ACTION_IDLE]           =3D "idle",
-> +};
-> +
->  /* pers_list is a list of registered personalities protected by pers_loc=
-k. */
->  static LIST_HEAD(pers_list);
->  static DEFINE_SPINLOCK(pers_lock);
-> @@ -4867,6 +4877,60 @@ metadata_store(struct mddev *mddev, const char *bu=
-f, size_t len)
->  static struct md_sysfs_entry md_metadata =3D
->  __ATTR_PREALLOC(metadata_version, S_IRUGO|S_IWUSR, metadata_show, metada=
-ta_store);
->
-> +enum sync_action md_sync_action(struct mddev *mddev)
-> +{
-> +       unsigned long recovery =3D mddev->recovery;
-> +
-> +       /*
-> +        * frozen has the highest priority, means running sync_thread wil=
-l be
-> +        * stopped immediately, and no new sync_thread can start.
-> +        */
-> +       if (test_bit(MD_RECOVERY_FROZEN, &recovery))
-> +               return ACTION_FROZEN;
-> +
-> +       /*
-> +        * idle means no sync_thread is running, and no new sync_thread i=
-s
-> +        * requested.
-> +        */
-> +       if (!test_bit(MD_RECOVERY_RUNNING, &recovery) &&
-> +           (!md_is_rdwr(mddev) || !test_bit(MD_RECOVERY_NEEDED, &recover=
-y)))
-> +               return ACTION_IDLE;
+> Make code cleaner by replace if else if with switch, and it's more
+> obvious now what is doning for each sync_action. There are no
 
 Hi Kuai
 
-Can I think the above judgement cover these two situations:
-1. The array is readonly / readauto and it doesn't have
-MD_RECOVERY_RUNNING. Now maybe it has MD_RECOVERY_NEEDED, it means one
-array may want to do some sync action, but the array state is not
-readwrite and it can't start.
-2. The array doesn't have MD_RECOVERY_RUNNING and MD_RECOVERY_NEEDED
-
-> +
-> +       if (test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
-> +           mddev->reshape_position !=3D MaxSector)
-> +               return ACTION_RESHAPE;
-> +
-> +       if (test_bit(MD_RECOVERY_RECOVER, &recovery))
-> +               return ACTION_RECOVER;
-> +
-> +       if (test_bit(MD_RECOVERY_SYNC, &recovery)) {
-> +               if (test_bit(MD_RECOVERY_CHECK, &recovery))
-> +                       return ACTION_CHECK;
-> +               if (test_bit(MD_RECOVERY_REQUESTED, &recovery))
-> +                       return ACTION_REPAIR;
-> +               return ACTION_RESYNC;
-> +       }
-> +
-> +       return ACTION_IDLE;
-
-Does it need this? I guess it's the reason in case there are other
-situations, right?
+type error s/doning/doing/g
 
 Regards
+
 Xiao
 
-> +}
-> +
-> +enum sync_action md_sync_action_by_name(char *page)
-> +{
-> +       enum sync_action action;
-> +
-> +       for (action =3D 0; action < NR_SYNC_ACTIONS; ++action) {
-> +               if (cmd_match(page, action_name[action]))
-> +                       return action;
-> +       }
-> +
-> +       return NR_SYNC_ACTIONS;
-> +}
-> +
-> +char *md_sync_action_name(enum sync_action action)
-> +{
-> +       return action_name[action];
-> +}
-> +
->  static ssize_t
->  action_show(struct mddev *mddev, char *page)
->  {
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index 2edad966f90a..72ca7a796df5 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -864,6 +864,9 @@ extern void md_unregister_thread(struct mddev *mddev,=
- struct md_thread __rcu **t
->  extern void md_wakeup_thread(struct md_thread __rcu *thread);
->  extern void md_check_recovery(struct mddev *mddev);
->  extern void md_reap_sync_thread(struct mddev *mddev);
-> +extern enum sync_action md_sync_action(struct mddev *mddev);
-> +extern enum sync_action md_sync_action_by_name(char *page);
-> +extern char *md_sync_action_name(enum sync_action action);
->  extern bool md_write_start(struct mddev *mddev, struct bio *bi);
->  extern void md_write_inc(struct mddev *mddev, struct bio *bi);
->  extern void md_write_end(struct mddev *mddev);
-> --
-> 2.39.2
+> functional changes.
 >
+> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+> ---
+>   drivers/md/md.c | 123 ++++++++++++++++++++++++++++--------------------
+>   1 file changed, 73 insertions(+), 50 deletions(-)
+>
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 2fc81175b46b..42db128b82d9 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -8928,6 +8928,77 @@ void md_allow_write(struct mddev *mddev)
+>   }
+>   EXPORT_SYMBOL_GPL(md_allow_write);
+>   
+> +static sector_t md_sync_max_sectors(struct mddev *mddev,
+> +				    enum sync_action action)
+> +{
+> +	switch (action) {
+> +	case ACTION_RESYNC:
+> +	case ACTION_CHECK:
+> +	case ACTION_REPAIR:
+> +		atomic64_set(&mddev->resync_mismatches, 0);
+> +		fallthrough;
+> +	case ACTION_RESHAPE:
+> +		return mddev->resync_max_sectors;
+> +	case ACTION_RECOVER:
+> +		return mddev->dev_sectors;
+> +	default:
+> +		return 0;
+> +	}
+> +}
+> +
+> +static sector_t md_sync_position(struct mddev *mddev, enum sync_action action)
+> +{
+> +	sector_t start = 0;
+> +	struct md_rdev *rdev;
+> +
+> +	switch (action) {
+> +	case ACTION_CHECK:
+> +	case ACTION_REPAIR:
+> +		return mddev->resync_min;
+> +	case ACTION_RESYNC:
+> +		if (!mddev->bitmap)
+> +			return mddev->recovery_cp;
+> +		return 0;
+> +	case ACTION_RESHAPE:
+> +		/*
+> +		 * If the original node aborts reshaping then we continue the
+> +		 * reshaping, so set again to avoid restart reshape from the
+> +		 * first beginning
+> +		 */
+> +		if (mddev_is_clustered(mddev) &&
+> +		    mddev->reshape_position != MaxSector)
+> +			return mddev->reshape_position;
+> +		return 0;
+> +	case ACTION_RECOVER:
+> +		start = MaxSector;
+> +		rcu_read_lock();
+> +		rdev_for_each_rcu(rdev, mddev)
+> +			if (rdev->raid_disk >= 0 &&
+> +			    !test_bit(Journal, &rdev->flags) &&
+> +			    !test_bit(Faulty, &rdev->flags) &&
+> +			    !test_bit(In_sync, &rdev->flags) &&
+> +			    rdev->recovery_offset < start)
+> +				start = rdev->recovery_offset;
+> +		rcu_read_unlock();
+> +
+> +		/* If there is a bitmap, we need to make sure all
+> +		 * writes that started before we added a spare
+> +		 * complete before we start doing a recovery.
+> +		 * Otherwise the write might complete and (via
+> +		 * bitmap_endwrite) set a bit in the bitmap after the
+> +		 * recovery has checked that bit and skipped that
+> +		 * region.
+> +		 */
+> +		if (mddev->bitmap) {
+> +			mddev->pers->quiesce(mddev, 1);
+> +			mddev->pers->quiesce(mddev, 0);
+> +		}
+> +		return start;
+> +	default:
+> +		return MaxSector;
+> +	}
+> +}
+> +
+>   #define SYNC_MARKS	10
+>   #define	SYNC_MARK_STEP	(3*HZ)
+>   #define UPDATE_FREQUENCY (5*60*HZ)
+> @@ -9046,56 +9117,8 @@ void md_do_sync(struct md_thread *thread)
+>   		spin_unlock(&all_mddevs_lock);
+>   	} while (mddev->curr_resync < MD_RESYNC_DELAYED);
+>   
+> -	j = 0;
+> -	if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery)) {
+> -		/* resync follows the size requested by the personality,
+> -		 * which defaults to physical size, but can be virtual size
+> -		 */
+> -		max_sectors = mddev->resync_max_sectors;
+> -		atomic64_set(&mddev->resync_mismatches, 0);
+> -		/* we don't use the checkpoint if there's a bitmap */
+> -		if (test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery))
+> -			j = mddev->resync_min;
+> -		else if (!mddev->bitmap)
+> -			j = mddev->recovery_cp;
+> -
+> -	} else if (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery)) {
+> -		max_sectors = mddev->resync_max_sectors;
+> -		/*
+> -		 * If the original node aborts reshaping then we continue the
+> -		 * reshaping, so set j again to avoid restart reshape from the
+> -		 * first beginning
+> -		 */
+> -		if (mddev_is_clustered(mddev) &&
+> -		    mddev->reshape_position != MaxSector)
+> -			j = mddev->reshape_position;
+> -	} else {
+> -		/* recovery follows the physical size of devices */
+> -		max_sectors = mddev->dev_sectors;
+> -		j = MaxSector;
+> -		rcu_read_lock();
+> -		rdev_for_each_rcu(rdev, mddev)
+> -			if (rdev->raid_disk >= 0 &&
+> -			    !test_bit(Journal, &rdev->flags) &&
+> -			    !test_bit(Faulty, &rdev->flags) &&
+> -			    !test_bit(In_sync, &rdev->flags) &&
+> -			    rdev->recovery_offset < j)
+> -				j = rdev->recovery_offset;
+> -		rcu_read_unlock();
+> -
+> -		/* If there is a bitmap, we need to make sure all
+> -		 * writes that started before we added a spare
+> -		 * complete before we start doing a recovery.
+> -		 * Otherwise the write might complete and (via
+> -		 * bitmap_endwrite) set a bit in the bitmap after the
+> -		 * recovery has checked that bit and skipped that
+> -		 * region.
+> -		 */
+> -		if (mddev->bitmap) {
+> -			mddev->pers->quiesce(mddev, 1);
+> -			mddev->pers->quiesce(mddev, 0);
+> -		}
+> -	}
+> +	max_sectors = md_sync_max_sectors(mddev, action);
+> +	j = md_sync_position(mddev, action);
+>   
+>   	pr_info("md: %s of RAID array %s\n", desc, mdname(mddev));
+>   	pr_debug("md: minimum _guaranteed_  speed: %d KB/sec/disk.\n", speed_min(mddev));
 
