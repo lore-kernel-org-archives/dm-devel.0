@@ -1,341 +1,194 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout12.his.huawei.com (unknown [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D412741C69
-	for <dm-devel@lists.linux.dev>; Mon, 13 May 2024 19:14:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DBF7517F7
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 01:36:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715627643; cv=none; b=JBeBTzZfs7FlOleAkft4g1VBMMkqBoJFa4trSUqHlLaHcSAG+m+HAH9dRP02GncuUxi1a0nIyPSmHf6fbXimfmFcsFCWv/oY6PkZQIEQ+UClJDFFQa5eTeivmaW48mWZ2GL/aCRCuNGtA6RBmIlnqM5zyA++rUv7ysTMmWf9CTw=
+	t=1715650571; cv=none; b=S+3/HV97txEZBtk94e/Lx+bSqApty46Y5D5CZlnotzR1HEU4t9mZ+/wdSlT58PSzSunYagXoaby+VAfV7p4dzGd3pipwJgFY/v6Gem42UAkiuAwByiz1a051fOQudomZLh1/VmD3Oevso+kJn6uHtp25q2Dpw1+11AZwd2Fjl5w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715627643; c=relaxed/simple;
-	bh=J8uHjjAiHf2v7kkLFF3v0eG+HLiB5rZ+l5q8xgUXxI0=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=O6lncKhYIix/1ZprA5hYfq65su7tQcL86eqhp7D2YW9NGoz+QahV0Os5+MEoizzg1vz8etZ5SxIHfWq2B9nEJjMCZx3HsVVEkQ6XT5SivnGC2SHVN4bUomi/OUewGndyTMR+49QKRv2mFF67ZKYjMrwPfSMKvt9K0083nPOVLwk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NCb/xbPx; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NCb/xbPx"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1715627640;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Ulk0A5cR5wltU2X6ZvqKuKUvVxnP7aS9atl7TIBPUxg=;
-	b=NCb/xbPx4HkBhM0JLN6vcd/wETK3zJz0eZh+ReIabXrH1XyskfVx+h9CEnJ2oNPaziHpEs
-	lWe/Iy3oxXHZz6PWuCh+4GeLHO9lwkTxoyAUeE1nDdghjbgMJkvu4xwOm0GDM44ySnTMmb
-	lJR1MSR7GFhPDsyfh+RaJmQgYbP4Zn8=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-680-HtSmvD6DNyuST6acjxQWZQ-1; Mon,
- 13 May 2024 15:11:08 -0400
-X-MC-Unique: HtSmvD6DNyuST6acjxQWZQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 02F1229AB403;
-	Mon, 13 May 2024 19:11:08 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EC83B3C27;
-	Mon, 13 May 2024 19:11:07 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44DJB7DS095617
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 13 May 2024 15:11:07 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44DJB73C095616;
-	Mon, 13 May 2024 15:11:07 -0400
-Date: Mon, 13 May 2024 15:11:07 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>,
-        Nitin Yewale <nyewale@redhat.com>
-Subject: Re: [PATCH 7/7] multipath-tools man pages: Add format wildcard
- descriptions
-Message-ID: <ZkJlywJBcXQku0a8@redhat.com>
-References: <20240513173646.94424-1-bmarzins@redhat.com>
- <20240513173646.94424-8-bmarzins@redhat.com>
+	s=arc-20240116; t=1715650571; c=relaxed/simple;
+	bh=Upsul9NcofEKR67TbzR1JI6SV64CmPDbuIlZIz0tIg8=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=U5fGhR6cZToQxIcP5ouNjz7U+nqG+dZiQjU9p8HoOjDU6cKumhd+ZUjmjUbz9xQzAFo27M8XJrlZZdm5orkHKBaQ8knDPmZrvXtfN0aRUibiWH8Cidw4Tzesqe4i21Gfsut7ys5JEupodnJ9lD1k3flrVfXcAxhPTIDjyhjwAOU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Vdf7w109hz4f3jJ2
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 09:35:56 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id B54E81A017F
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 09:36:04 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgBnOBECwEJm7mVnMg--.15054S3;
+	Tue, 14 May 2024 09:36:04 +0800 (CST)
+Subject: Re: [PATCH md-6.10 1/9] md: rearrange recovery_flage
+To: Mariusz Tkaczyk <mariusz.tkaczyk@linux.intel.com>,
+ Yu Kuai <yukuai1@huaweicloud.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org,
+ xni@redhat.com, dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
+ <20240509011900.2694291-2-yukuai1@huaweicloud.com>
+ <20240513170958.00002282@linux.intel.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <46448c77-894a-1ddc-30b3-42ca00b6ecd4@huaweicloud.com>
+Date: Tue, 14 May 2024 09:36:02 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240513173646.94424-8-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+In-Reply-To: <20240513170958.00002282@linux.intel.com>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgBnOBECwEJm7mVnMg--.15054S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxAFykGrWxAr1xJF4DtFykuFg_yoWrXry5pF
+	W0kFn5Zr4UZr12yry7ta4rX39Y934FvFy5ArW3WF98JasYk3Zayr18J3WUWFZ7t3sxt3W7
+	XF45JF13uFs0y3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
+	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
+	67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
+	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E
+	3s1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcS
+	sGvfC2KfnxnUUI43ZEXa7VUbXdbUUUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Mon, May 13, 2024 at 01:36:46PM -0400, Benjamin Marzinski wrote:
-> Suggested-by: Nitin Yewale <nyewale@redhat.com>
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Hi,
 
-Oops. I forgot to update the man page date. Martin, either I can send a
-new patch or you can feel free to update the date when you apply this
-one, whichever you'd prefer.
-
--Ben
-
-
-> ---
->  multipathd/multipathd.8.in | 211 ++++++++++++++++++++++++++++++++++++-
->  1 file changed, 207 insertions(+), 4 deletions(-)
+ÔÚ 2024/05/13 23:12, Mariusz Tkaczyk Ð´µÀ:
+> On Thu,  9 May 2024 09:18:52 +0800
+> Yu Kuai <yukuai1@huaweicloud.com> wrote:
 > 
-> diff --git a/multipathd/multipathd.8.in b/multipathd/multipathd.8.in
-> index 32976052..ff150f3d 100644
-> --- a/multipathd/multipathd.8.in
-> +++ b/multipathd/multipathd.8.in
-> @@ -117,7 +117,7 @@ Show the paths that multipathd is monitoring, and their state.
->  .B list|show paths [raw] format $format
->  Show the paths that multipathd is monitoring, using a format string with path
->  format wildcards. Adding \fIraw\fR will remove the headers and alignment
-> -padding from the ouput.
-> +padding from the output. See "Path format wildcards" below.
->  .
->  .TP
->  .B list|show path $path
-> @@ -131,7 +131,8 @@ Show the multipath devices that the multipathd is monitoring.
->  .B list|show maps|multipaths [raw] format $format
->  Show the status of all multipath devices that the multipathd is monitoring,
->  using a format string with multipath format wildcards. Adding \fIraw\fR will
-> -remove the headers and alignment padding from the output.
-> +remove the headers and alignment padding from the output. See "Multipath
-> +format wildcards" below.
->  .
->  .TP
->  .B list|show maps|multipaths status
-> @@ -162,7 +163,7 @@ Show topology of a single multipath device specified by $map, for example
->  .B list|show map|multipath $map [raw] format $format.
->  Show the status of multipath device $map, using a format string with multipath
->  format wildcards. Adding \fIraw\fR will remove the headers and alignment
-> -padding from the output.
-> +padding from the output. See "Multipath format wildcards" below.
->  .
->  .TP
->  .B list|show map|multipath $map json
-> @@ -170,7 +171,8 @@ Show information about multipath device $map in JSON format.
->  .
->  .TP
->  .B list|show wildcards
-> -Show the format wildcards used in interactive commands taking $format.
-> +Show the format wildcards used in interactive commands taking $format. See
-> +"Format Wildcards" below.
->  .
->  .TP
->  .B list|show config
-> @@ -367,6 +369,207 @@ Stop multipathd.
->  .
->  .
->  .\" ----------------------------------------------------------------------------
-> +.SH "Format Wildcards"
-> +.\" ----------------------------------------------------------------------------
-> +.
-> +Multipathd commands that take a $format option require a format string. This
-> +string controls how a device is printed and should include format wildcards.
-> +When the devices are printed, these wildcards will be replaced by the
-> +appropriate device information. The following wildcards are supported.
-> +.TP
-> +.B Multipath format wildcards
-> +.RS
-> +.TP 12
-> +.B %n
-> +The device name.
-> +.TP
-> +.B %w
-> +The device WWID (uuid).
-> +.TP
-> +.B %d
-> +The device sysfs name (dm-<minor_nr>).
-> +.TP
-> +.B %F
-> +The device \fBfailback\fR setting. For deferred failbacks, it will either
-> +print the configured time if a deferred failback is not in progress, or
-> +it will show the current progress of a deferred failback.
-> +.TP
-> +.B %Q
-> +The device \fBno_path_retry\fR setting. If no_path_retry is set to a
-> +number of retires, it will either print the configured number of checker
-> +retries if the device is not in recovery mode, the number of seconds until
-> +queueing is disabled if the device is queueing in recovery mode, or \fIoff\fR
-> +if the device has disabled queueing.
-> +.TP
-> +.B %N
-> +The number of active paths for the device.
-> +.TP
-> +.B %r
-> +The device write-protect setting, either \fIro\fR or \fIrw\fR.
-> +.TP
-> +.B %t
-> +The device-mapper state of the device, either \fIsuspend\fR or \fIactive\fR.
-> +.TP
-> +.B %S
-> +The device size.
-> +.TP
-> +.B %f
-> +The device table features string.
-> +.TP
-> +.B %x
-> +The number of times the device has entered a state where it will fail IO.
-> +This is an alias for the \fB%4\fR wildcard.
-> +This value can be reset with the '\fIreset map $map stats\fR' command.
-> +.TP
-> +.B %h
-> +The device table hardware handler string.
-> +.TP
-> +.B %A
-> +The last action multipathd took on the device. This wildcard is for debugging
-> +use, as understanding its meaning requires looking at the code.
-> +.TP
-> +.B %0
-> +The number of times a path in the device has failed.
-> +This value can be reset with the '\fIreset map $map stats\fR' command.
-> +.TP
-> +.B %1
-> +The number of times multipathd has initiated a pathgroup switch for the device.
-> +This value can be reset with the '\fIreset map $map stats\fR' command.
-> +.TP
-> +.B %2
-> +The number of times multipathd has loaded a new table for the device.
-> +This value can be reset with the '\fIreset map $map stats\fR' command.
-> +.TP
-> +.B %3
-> +The approximate number of seconds that multipathd has spent queueing with
-> +no usable paths. This value can be reset with the '\fIreset map $map stats\fR'
-> +command.
-> +.TP
-> +.B %4
-> +The number of times the device has entered a state where it will fail IO.
-> +This is an alias for the \fB%x\fR wildcard.
-> +This value can be reset with the '\fIreset map $map stats\fR' command.
-> +.TP
-> +.B %s
-> +The vendor/product string for the device.
-> +.TP
-> +.B %v
-> +The array vendor string for the device.
-> +.TP
-> +.B %p
-> +The array product string for the device.
-> +.TP
-> +.B %e
-> +The array firmware revision string for the device.
-> +.TP
-> +.B %G
-> +The foreign library used for the device, or \fB--\fR for native device-mapper
-> +multipath devices.
-> +.TP
-> +.B %g
-> +Data from vendor specific vpd pages for the device, if any.
-> +.TP
-> +.B %k
-> +The actual max_sectors_kb setting for the device (which may be different from
-> +the configured one).
-> +.RE
-> +.
-> +.
-> +.TP
-> +.B Path format wildcards
-> +.RS
-> +.TP 12
-> +.B %w
-> +The device WWID (uuid).
-> +.TP
-> +.B %i
-> +The device Host:Channel:Id:Lun
-> +.TP
-> +.B %d
-> +The device sysfs name.
-> +.TP
-> +.B %D
-> +The device major:minor
-> +.TP
-> +.B %t
-> +The device-mapper state of the device, either \fIactive\fR or \fIfailed\fR.
-> +.TP
-> +.B %o
-> +Whether the device is \fIoffline\fR or \fIrunning\fR.
-> +.TP
-> +.B %T
-> +The multipathd path checker state of the device.
-> +.TP
-> +.B %s
-> +The vendor/product/revision string for the device.
-> +.TP
-> +.B %c
-> +The device's path checker name.
-> +.TP
-> +.B %C
-> +The progress towards the next path checker run on the device.
-> +.TP
-> +.B %p
-> +The device priority.
-> +.TP
-> +.B %S
-> +The device size.
-> +.TP
-> +.B %z
-> +The device serial number.
-> +.TP
-> +.B %M
-> +The device marginal state, either \fImarginal\fR or \fInormal\fR.
-> +.TP
-> +.B %m
-> +The multipath device that this device is a path of.
-> +.TP
-> +.B %N
-> +The host World Wide Node Name (WWNN) of the device.
-> +.TP
-> +.B %n
-> +The target World Wide Node Name (WWNN) of the device.
-> +.TP
-> +.B %R
-> +The host World Wide Port Name (WWPN) of the device.
-> +.TP
-> +.B %r
-> +The target World Wide Port Name (WWPN) of the device.
-> +.TP
-> +.B %a
-> +The host adapter name for the device (only SCSI devices).
-> +.TP
-> +.B %G
-> +The foreign library used for the device, or \fB--\fR for paths of native
-> +device-mapper multipath devices.
-> +.TP
-> +.B %g
-> +Data from vendor specific vpd pages for the device, if any.
-> +.TP
-> +.B %0
-> +The number of times this device has failed.
-> +.TP
-> +.B %P
-> +The device protocol. This output can be used for \fIprotocol\fR blacklist
-> +entries.
-> +.TP
-> +.B %I
-> +The device initialization state. Devices that have been fully initialized
-> +are shown as \fIok\fR.
-> +.TP
-> +.B %L
-> +The device SCSI LUN ID in hexadecimal format
-> +.TP
-> +.B %A
-> +The ALUA Target Port Group ID for the device, if applicable.
-> +.TP
-> +.B %k
-> +The actual max_sectors_kb setting for the device (which may be different than
-> +the configured one).
-> +.RE
-> +.
-> +.
-> +.\" ----------------------------------------------------------------------------
->  .SH "SYSTEMD INTEGRATION"
->  .\" ----------------------------------------------------------------------------
->  .
-> -- 
-> 2.45.0
+> There is typo in subject.
+
+Yes, :)
+> 
+>> From: Yu Kuai <yukuai3@huawei.com>
+>>
+>> Currently there are lots of flags and the names are confusing, since
+>> there are two main types of flags, sync thread runnng status and sync
+>> thread action, rearrange and update comment to improve code readability,
+>> there are no functional changes.
+>>
+>> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+>> ---
+>>   drivers/md/md.h | 52 ++++++++++++++++++++++++++++++++++++-------------
+>>   1 file changed, 38 insertions(+), 14 deletions(-)
+>>
+>> diff --git a/drivers/md/md.h b/drivers/md/md.h
+>> index 029dd0491a36..2a1cb7b889e5 100644
+>> --- a/drivers/md/md.h
+>> +++ b/drivers/md/md.h
+>> @@ -551,22 +551,46 @@ struct mddev {
+>>   };
+>>   
+>>   enum recovery_flags {
+>> +	/* flags for sync thread running status */
+>> +
+>> +	/*
+>> +	 * set when one of sync action is set and new sync thread need to be
+>> +	 * registered, or just add/remove spares from conf.
+>> +	 */
+>> +	MD_RECOVERY_NEEDED,
+>> +	/* sync thread is running, or about to be started */
+>> +	MD_RECOVERY_RUNNING,
+>> +	/* sync thread needs to be aborted for some reason */
+>> +	MD_RECOVERY_INTR,
+>> +	/* sync thread is done and is waiting to be unregistered */
+>> +	MD_RECOVERY_DONE,
+>> +	/* running sync thread must abort immediately, and not restart */
+>> +	MD_RECOVERY_FROZEN,
+>> +	/* waiting for pers->start() to finish */
+>> +	MD_RECOVERY_WAIT,
+>> +	/* interrupted because io-error */
+>> +	MD_RECOVERY_ERROR,
+>> +
+>> +	/* flags determines sync action */
+>> +
+>> +	/* if just this flag is set, action is resync. */
+>> +	MD_RECOVERY_SYNC,
+>> +	/*
+>> +	 * paired with MD_RECOVERY_SYNC, if MD_RECOVERY_CHECK is not set,
+>> +	 * action is repair, means user requested resync.
+>> +	 */
+>> +	MD_RECOVERY_REQUESTED,
+>>   	/*
+>> -	 * If neither SYNC or RESHAPE are set, then it is a recovery.
+>> +	 * paired with MD_RECOVERY_SYNC and MD_RECOVERY_REQUESTED, action is
+>> +	 * check.
+>>   	 */
+>> -	MD_RECOVERY_RUNNING,	/* a thread is running, or about to be
+>> started */
+>> -	MD_RECOVERY_SYNC,	/* actually doing a resync, not a recovery
+>> */
+>> -	MD_RECOVERY_RECOVER,	/* doing recovery, or need to try it. */
+>> -	MD_RECOVERY_INTR,	/* resync needs to be aborted for some
+>> reason */
+>> -	MD_RECOVERY_DONE,	/* thread is done and is waiting to be
+>> reaped */
+>> -	MD_RECOVERY_NEEDED,	/* we might need to start a
+>> resync/recover */
+>> -	MD_RECOVERY_REQUESTED,	/* user-space has requested a sync
+>> (used with SYNC) */
+>> -	MD_RECOVERY_CHECK,	/* user-space request for check-only, no
+>> repair */
+>> -	MD_RECOVERY_RESHAPE,	/* A reshape is happening */
+>> -	MD_RECOVERY_FROZEN,	/* User request to abort, and not
+>> restart, any action */
+>> -	MD_RECOVERY_ERROR,	/* sync-action interrupted because
+>> io-error */
+>> -	MD_RECOVERY_WAIT,	/* waiting for pers->start() to finish */
+>> -	MD_RESYNCING_REMOTE,	/* remote node is running resync thread
+>> */
+>> +	MD_RECOVERY_CHECK,
+>> +	/* recovery, or need to try it */
+>> +	MD_RECOVERY_RECOVER,
+>> +	/* reshape */
+>> +	MD_RECOVERY_RESHAPE,
+>> +	/* remote node is running resync thread */
+>> +	MD_RESYNCING_REMOTE,
+>>   };
+>>   
+>>   enum md_ro_state {
+> 
+> I don't know if it is better readable but I know that Kernel coding style comes
+> with different approach. I used it for enum mddev_flags in md.h please take a
+> look.
+
+1) There are two kinds of flags here, for sync thread running status and
+for sync action, I think it's better to distinguish them.
+2) The names are confusing, for sync thread status I prefer
+SYNC_THREAD_xxx and for sync action I prefer SYNC_ACTION_xxx, I plan to
+remove the flags to sync action and replace them with enum type in patch
+2.
+
+> 
+> Also, I get used to comment above, not below enum values but I don't have strong
+> justification here.
+
+I do comment above here.
+
+Thanks,
+Kuai
+
+> 
+> Thanks,
+> Mariusz
+> 
+> 
+> .
 > 
 
