@@ -1,250 +1,218 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A0F26386
-	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 06:45:34 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC361AD31
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 06:57:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715669136; cv=none; b=kNxaT/eHfuaY0QG6DAsVQz1fEsZzJeuzHQkI2tSP2+bDsqlvQpVXkSCOiOzq8Adz/PRCqvF/ecduTYHlhHHIngIat7Fo6kaTcgNz1b+vzQj9kATTa2gQFXDxWatpZlkKYv/gBGcYMotXK0yNm6geuJbk5Ga1R4CmN9VsyU+4dsY=
+	t=1715669843; cv=none; b=cbRZVM2zN+Rq3pSt+mWmfZk+ehmjnv8UsgHwjGgRz9lSV7D4rJkxxT5WHnuxgMH4lduIhrbkuhfh4y35RtdoANJumCAnpfcjD/inVNh4CXz6BdJJUgpuJw3mBxVa6tVgth8yG/UYWrXF6gzIf8zP8Y44Kz6fWzEXCFL0Lcod0mg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715669136; c=relaxed/simple;
-	bh=LWQ6jexXuSZi5ZpaP1mUHm4kpvFrGFOwvM8Vegc8zdA=;
+	s=arc-20240116; t=1715669843; c=relaxed/simple;
+	bh=6aIPSi+GUkocJtWzCmsTX5dWm52pyDTisNVEAYOpQmc=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=pKa7BXWiMM2QiNBgpBnLF/VQiSRM5F7Prtmngt/p8IniRx8UG8cuoZZpVEqFU6NLAh4J9VE3uuftWBeM2/p1NiEqJ+Oj6WyG7nZ+oeKLaxCc/NhWA1+ZuKKwSyq7uJLe/oSFy3AEJ99x4Nn0oUulc5gUa8oo2URdy+T+v5Sv+v0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IJ4bZ8A9; arc=none smtp.client-ip=170.10.129.124
+	 To:Cc:Content-Type; b=QuO5QVYi20jBQ9GQTQYE7F5J/k3heExIMPWfQQWCCdPj1F/we4t5nO1dJYXWt8jpkD/mpHI21LuW0hScJeRv0v2GPlbRzzD7usyt2x7Qduf3puPOZ5p+SkVkC5umPMtiJFGhhDK3EX+SR6auTc4vHFwabsxaDSssmcjc7tGi38g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=aLWAwZFg; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IJ4bZ8A9"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aLWAwZFg"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1715669133;
+	s=mimecast20190719; t=1715669839;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Y4hSY1d8jq6XzfstUOW1N/hjQcvfLd42t04S3x4l0Nw=;
-	b=IJ4bZ8A9KHBAaXmFpixEG93WKsLpIjUnG0IEIWZjrQBmasRWlhmAfpOPzUKs+GDMJ6VMri
-	d85AIC3pLMaV56dOq6VOMv4HajimSygdqBFQpCagr7fNO62XEmG37EwKQtbk3p9SziRA3T
-	+1wmwDFEelYiNcbKnNq5j2wF+tTjYVM=
-Received: from mail-pg1-f199.google.com (mail-pg1-f199.google.com
- [209.85.215.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=tt9yK6I/O8EYanlAPHDgSca+ykSFbvnV0w6tvpdiWNs=;
+	b=aLWAwZFgCipLW3NAVlwOecJdWoTFR055JKQ6URJCRmbdGR5NJZol2I7Lek0iN1zQTfT+vI
+	y3l5Ojhky/5Re1zBDsNtuRz0cP8/sDX0NeufSeKZWUl/gEZi5Fh6s+pECrFng9yP8/YqTj
+	iiKasC2mfmcROAjZq+P5Qymel9o13NQ=
+Received: from mail-pg1-f197.google.com (mail-pg1-f197.google.com
+ [209.85.215.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-451-8kOOm4gLPTK2EZEQN0qNtA-1; Tue, 14 May 2024 02:39:28 -0400
-X-MC-Unique: 8kOOm4gLPTK2EZEQN0qNtA-1
-Received: by mail-pg1-f199.google.com with SMTP id 41be03b00d2f7-5c6245bc7caso4224995a12.3
-        for <dm-devel@lists.linux.dev>; Mon, 13 May 2024 23:39:28 -0700 (PDT)
+ us-mta-549-CEyFucjTNkmzwO3ncc754A-1; Tue, 14 May 2024 02:52:18 -0400
+X-MC-Unique: CEyFucjTNkmzwO3ncc754A-1
+Received: by mail-pg1-f197.google.com with SMTP id 41be03b00d2f7-61a9f6c869dso4477844a12.3
+        for <dm-devel@lists.linux.dev>; Mon, 13 May 2024 23:52:17 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715668767; x=1716273567;
+        d=1e100.net; s=20230601; t=1715669537; x=1716274337;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=Y4hSY1d8jq6XzfstUOW1N/hjQcvfLd42t04S3x4l0Nw=;
-        b=FRYiBYWCLjAZrApTgMUWCOOL/Cc0waYGgwNmYQQ6ZyvXA2wVvMLBielshUK6/9AODN
-         MVDJZVaODn9es/euR3wW0UgIAeGutAyD+lHoHxd3PX4imANZ4DKdrZpqfgWeYUd5VTAo
-         oNxEDyYS/GVuf+oyONbzF2vljSnjXG50jd3RNXhMZ2cMhlPHEs0DaTo9G6yuPR/O392P
-         w1s8gyBX/34w8/LMtxRXjkTN7Ne5zASNJMBZBnfLWiNgN26XiCMeaHDplKMEVgdihuLQ
-         m6TMoX/HLET71yLWZ8aWFSA6uPZA9UB/f7vKwO9XrSOJaOiXQ2lo74N0Psip59oRQ+Pd
-         wYPw==
-X-Forwarded-Encrypted: i=1; AJvYcCUHqQDqCq+R46eX/j6F73Mb6eqW6fdD7mvONjWge0P6CLXdNsBBOC46J8y3Ma+1xwtlGswTusUBdYQd4ksUuwXdC/L3VjGqAFg=
-X-Gm-Message-State: AOJu0YwdmtaX0j6TJ4J9GyLPbDNDIEz4rzuZWlpX2up0t2545WLX3uJu
-	Ad1PMcuHAU+se79tsQ4gC4L+p7+V0DMRmLNaEz0ErBnTBsZi8UFKRupXVp24PblFQQNwrCmfLRJ
-	CgtjrRw9hMCXhs1ZMvtaqKm21L3dPd8MPVgF4tJuh6lxsTpTiLef3f6AE+LN8Bhv9mgr6x3MexB
-	7UY24K3VdQu47I4deKWCzQFvAi47u44/U=
-X-Received: by 2002:a05:6a20:96cd:b0:1af:dae8:5eaf with SMTP id adf61e73a8af0-1afde1c5d90mr10068826637.56.1715668767292;
-        Mon, 13 May 2024 23:39:27 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IHwOuzczaLAqIDR6EoehK9X+UPcltl2JP7zchAX15z0LD6Fbfw4vUmDQODVydh83/kwC9nwsiF6RLX00/wiP5g=
-X-Received: by 2002:a05:6a20:96cd:b0:1af:dae8:5eaf with SMTP id
- adf61e73a8af0-1afde1c5d90mr10068813637.56.1715668766937; Mon, 13 May 2024
- 23:39:26 -0700 (PDT)
+        bh=tt9yK6I/O8EYanlAPHDgSca+ykSFbvnV0w6tvpdiWNs=;
+        b=EASStIAS54md4xX/82WenZzCCZEtuQoSw5LiBDZG9/U+ZQ6cOu+Icib1yFeIvow5Hr
+         DRNMUMHsMtmZREhocCooDRtkQTlyS3ruHLKVah/bdHa3dOp80aTWG0GLmXh5TZq0qbfR
+         lrTn9q8P/jXb4A4+W03XQjzJ4Q4yArz5WIyw91AVBknduxh17MgDbBqxD2AisP5m8HZ6
+         Ystp3ZI6VWfmAC8uxkupIBJb/4QI6prmwgTMGw4ZSOOUNZHkUnCjWZ1xCQAkiSSYw9E1
+         tY/USR04S11ZRvq3FK40n79JPH3sLbSp9L8d7PNLt/b9/fKIEPh2QYuDRUX8kc3k3Q2z
+         5zvQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXsOI+DFVZZ9NzTMCe1xCGq/YK3OPZutWTalTays1dEKK1ac909U80kGxGezQqEF2stMaYF0NyG7DXQCjWpo31pAfvgC3hSmts=
+X-Gm-Message-State: AOJu0YxM+k5v1I2oocGpj34fN6Tm1T0ROumpPTsOmpx96+n/DWtgaSrz
+	1PaKHch1/xDGTZ+LPq6MZghKTbkNqKtDlaFOcbup+MsZxCwlsWTeWhNA5/Ij5lrz7gUTWMDpg67
+	/SP0Ywo8l9FXva96IMeYqju8XfW0gtsMIOgiUQlu2BgLUZ4QgavmEAhc2fHnjULEICKJay08nj+
+	ScWID2MxPZW5/EUew2H0hapqTThXp17yQ=
+X-Received: by 2002:a05:6a20:2d2a:b0:1af:f5d3:b919 with SMTP id adf61e73a8af0-1aff5d3ba1emr5310268637.4.1715669536962;
+        Mon, 13 May 2024 23:52:16 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IH03hiv7dUouGI6qNIM6FbukFBpKI4K+JPWCWHUdhQQ/ueIAvM2k6M9rZP5Vm/SRlGw8FRyKAXO5ebt9NZab3c=
+X-Received: by 2002:a05:6a20:2d2a:b0:1af:f5d3:b919 with SMTP id
+ adf61e73a8af0-1aff5d3ba1emr5310243637.4.1715669536555; Mon, 13 May 2024
+ 23:52:16 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
- <20240509011900.2694291-2-yukuai1@huaweicloud.com> <CALTww2_2UG49wxNZv1Ay7u9X-2SoV31ca-=2K8uWHH9nRT2Apw@mail.gmail.com>
- <e71bec08-036b-9dc1-ca12-a187b2aff528@huaweicloud.com>
-In-Reply-To: <e71bec08-036b-9dc1-ca12-a187b2aff528@huaweicloud.com>
+References: <20240509011900.2694291-1-yukuai1@huaweicloud.com> <20240509011900.2694291-4-yukuai1@huaweicloud.com>
+In-Reply-To: <20240509011900.2694291-4-yukuai1@huaweicloud.com>
 From: Xiao Ni <xni@redhat.com>
-Date: Tue, 14 May 2024 14:39:15 +0800
-Message-ID: <CALTww2-z_YXTfgxxuTH1Qb_dp46sORiG=iD4S=Lh7_RZYqd8yA@mail.gmail.com>
-Subject: Re: [PATCH md-6.10 1/9] md: rearrange recovery_flage
+Date: Tue, 14 May 2024 14:52:05 +0800
+Message-ID: <CALTww2-RPH_eYBumjxhHLkj7J2tfHskTYNif93Hwn5ksCN0+kA@mail.gmail.com>
+Subject: Re: [PATCH md-6.10 3/9] md: add new helpers for sync_action
 To: Yu Kuai <yukuai1@huaweicloud.com>
 Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org, 
 	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com, 
-	"yukuai (C)" <yukuai3@huawei.com>
+	linux-raid@vger.kernel.org, yukuai3@huawei.com, yi.zhang@huawei.com, 
+	yangerkun@huawei.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, May 14, 2024 at 2:16=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com> w=
+On Mon, May 13, 2024 at 5:31=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com> w=
 rote:
 >
-> Hi,
+> From: Yu Kuai <yukuai3@huawei.com>
 >
-> =E5=9C=A8 2024/05/14 13:51, Xiao Ni =E5=86=99=E9=81=93:
-> > On Mon, May 13, 2024 at 9:57=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.co=
-m> wrote:
-> >>
-> >> From: Yu Kuai <yukuai3@huawei.com>
-> >>
-> >> Currently there are lots of flags and the names are confusing, since
-> >> there are two main types of flags, sync thread runnng status and sync
-> >> thread action, rearrange and update comment to improve code readabilit=
-y,
-> >> there are no functional changes.
-> >>
-> >> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-> >> ---
-> >>   drivers/md/md.h | 52 ++++++++++++++++++++++++++++++++++++-----------=
---
-> >>   1 file changed, 38 insertions(+), 14 deletions(-)
-> >>
-> >> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> >> index 029dd0491a36..2a1cb7b889e5 100644
-> >> --- a/drivers/md/md.h
-> >> +++ b/drivers/md/md.h
-> >> @@ -551,22 +551,46 @@ struct mddev {
-> >>   };
-> >>
-> >>   enum recovery_flags {
-> >> +       /* flags for sync thread running status */
-> >> +
-> >> +       /*
-> >> +        * set when one of sync action is set and new sync thread need=
- to be
-> >> +        * registered, or just add/remove spares from conf.
-> >> +        */
-> >> +       MD_RECOVERY_NEEDED,
-> >> +       /* sync thread is running, or about to be started */
-> >> +       MD_RECOVERY_RUNNING,
-> >> +       /* sync thread needs to be aborted for some reason */
-> >> +       MD_RECOVERY_INTR,
-> >> +       /* sync thread is done and is waiting to be unregistered */
-> >> +       MD_RECOVERY_DONE,
-> >> +       /* running sync thread must abort immediately, and not restart=
- */
-> >> +       MD_RECOVERY_FROZEN,
-> >> +       /* waiting for pers->start() to finish */
-> >> +       MD_RECOVERY_WAIT,
-> >> +       /* interrupted because io-error */
-> >> +       MD_RECOVERY_ERROR,
-> >> +
-> >> +       /* flags determines sync action */
-> >> +
-> >> +       /* if just this flag is set, action is resync. */
-> >> +       MD_RECOVERY_SYNC,
-> >> +       /*
-> >> +        * paired with MD_RECOVERY_SYNC, if MD_RECOVERY_CHECK is not s=
-et,
-> >> +        * action is repair, means user requested resync.
-> >> +        */
-> >> +       MD_RECOVERY_REQUESTED,
-> >>          /*
-> >> -        * If neither SYNC or RESHAPE are set, then it is a recovery.
-> >> +        * paired with MD_RECOVERY_SYNC and MD_RECOVERY_REQUESTED, act=
-ion is
-> >> +        * check.
-> >
-> > Hi Kuai
-> >
-> > I did a test as follows:
-> >
-> > echo check > /sys/block/md0/md/sync_action
-> > I added some logs in md_do_sync to check these bits. It only prints
-> > MD_RECOVERY_SYNC and MD_RECOVERY_CHECK without MD_RECOVERY_SYNC. So
-> > the comment is not right?
+> The new helpers will get current sync_action of the array, will be used
+> in later patches to make code cleaner.
 >
-> There is a typo, I'm not sure what you mean yet. Can you show how you
-> add your logs? I think comment is right.
-
-Sorry. I added logs in the wrong places. You're right. Data check has
-the three bits. So, the comments are right.
-
-
+> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+> ---
+>  drivers/md/md.c | 64 +++++++++++++++++++++++++++++++++++++++++++++++++
+>  drivers/md/md.h |  3 +++
+>  2 files changed, 67 insertions(+)
 >
->  From action_store:
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 00bbafcd27bb..48ec35342d1b 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -69,6 +69,16 @@
+>  #include "md-bitmap.h"
+>  #include "md-cluster.h"
 >
->                  if (cmd_match(page, "check"))
->                          set_bit(MD_RECOVERY_CHECK, &mddev->recovery);
->                  else if (!cmd_match(page, "repair"))
->                          return -EINVAL;
->                  clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
->                  set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
->                  set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
+> +static char *action_name[NR_SYNC_ACTIONS] =3D {
+> +       [ACTION_RESYNC]         =3D "resync",
+> +       [ACTION_RECOVER]        =3D "recover",
+> +       [ACTION_CHECK]          =3D "check",
+> +       [ACTION_REPAIR]         =3D "repair",
+> +       [ACTION_RESHAPE]        =3D "reshape",
+> +       [ACTION_FROZEN]         =3D "frozen",
+> +       [ACTION_IDLE]           =3D "idle",
+> +};
+> +
+>  /* pers_list is a list of registered personalities protected by pers_loc=
+k. */
+>  static LIST_HEAD(pers_list);
+>  static DEFINE_SPINLOCK(pers_lock);
+> @@ -4867,6 +4877,60 @@ metadata_store(struct mddev *mddev, const char *bu=
+f, size_t len)
+>  static struct md_sysfs_entry md_metadata =3D
+>  __ATTR_PREALLOC(metadata_version, S_IRUGO|S_IWUSR, metadata_show, metada=
+ta_store);
+>
+> +enum sync_action md_sync_action(struct mddev *mddev)
+> +{
+> +       unsigned long recovery =3D mddev->recovery;
+> +
+> +       /*
+> +        * frozen has the highest priority, means running sync_thread wil=
+l be
+> +        * stopped immediately, and no new sync_thread can start.
+> +        */
+> +       if (test_bit(MD_RECOVERY_FROZEN, &recovery))
+> +               return ACTION_FROZEN;
+> +
+> +       /*
+> +        * idle means no sync_thread is running, and no new sync_thread i=
+s
+> +        * requested.
+> +        */
+> +       if (!test_bit(MD_RECOVERY_RUNNING, &recovery) &&
+> +           (!md_is_rdwr(mddev) || !test_bit(MD_RECOVERY_NEEDED, &recover=
+y)))
+> +               return ACTION_IDLE;
 
-Yes.
+Hi Kuai
 
-Best Regards
+Can I think the above judgement cover these two situations:
+1. The array is readonly / readauto and it doesn't have
+MD_RECOVERY_RUNNING. Now maybe it has MD_RECOVERY_NEEDED, it means one
+array may want to do some sync action, but the array state is not
+readwrite and it can't start.
+2. The array doesn't have MD_RECOVERY_RUNNING and MD_RECOVERY_NEEDED
+
+> +
+> +       if (test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
+> +           mddev->reshape_position !=3D MaxSector)
+> +               return ACTION_RESHAPE;
+> +
+> +       if (test_bit(MD_RECOVERY_RECOVER, &recovery))
+> +               return ACTION_RECOVER;
+> +
+> +       if (test_bit(MD_RECOVERY_SYNC, &recovery)) {
+> +               if (test_bit(MD_RECOVERY_CHECK, &recovery))
+> +                       return ACTION_CHECK;
+> +               if (test_bit(MD_RECOVERY_REQUESTED, &recovery))
+> +                       return ACTION_REPAIR;
+> +               return ACTION_RESYNC;
+> +       }
+> +
+> +       return ACTION_IDLE;
+
+Does it need this? I guess it's the reason in case there are other
+situations, right?
+
+Regards
 Xiao
 
->
->  From md_do_sync:
->
->          if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery)) {
->                  if (test_bit(MD_RECOVERY_CHECK, &mddev->recovery)) {
->                          desc =3D "data-check";
->                          action =3D "check";
->                  } else if (test_bit(MD_RECOVERY_REQUESTED,
-> &mddev->recovery)) {
->                          desc =3D "requested-resync";
->                          action =3D "repair";
->                  } else
->                          desc =3D "resync";
->
-> Thanks,
-> Kuai
->
-> >
-> > Best Regards
-> > Xiao
-> >
-> >>           */
-> >> -       MD_RECOVERY_RUNNING,    /* a thread is running, or about to be=
- started */
-> >> -       MD_RECOVERY_SYNC,       /* actually doing a resync, not a reco=
-very */
-> >> -       MD_RECOVERY_RECOVER,    /* doing recovery, or need to try it. =
-*/
-> >> -       MD_RECOVERY_INTR,       /* resync needs to be aborted for some=
- reason */
-> >> -       MD_RECOVERY_DONE,       /* thread is done and is waiting to be=
- reaped */
-> >> -       MD_RECOVERY_NEEDED,     /* we might need to start a resync/rec=
-over */
-> >> -       MD_RECOVERY_REQUESTED,  /* user-space has requested a sync (us=
-ed with SYNC) */
-> >> -       MD_RECOVERY_CHECK,      /* user-space request for check-only, =
-no repair */
-> >> -       MD_RECOVERY_RESHAPE,    /* A reshape is happening */
-> >> -       MD_RECOVERY_FROZEN,     /* User request to abort, and not rest=
-art, any action */
-> >> -       MD_RECOVERY_ERROR,      /* sync-action interrupted because io-=
-error */
-> >> -       MD_RECOVERY_WAIT,       /* waiting for pers->start() to finish=
- */
-> >> -       MD_RESYNCING_REMOTE,    /* remote node is running resync threa=
-d */
-> >> +       MD_RECOVERY_CHECK,
-> >> +       /* recovery, or need to try it */
-> >> +       MD_RECOVERY_RECOVER,
-> >> +       /* reshape */
-> >> +       MD_RECOVERY_RESHAPE,
-> >> +       /* remote node is running resync thread */
-> >> +       MD_RESYNCING_REMOTE,
-> >>   };
-> >>
-> >>   enum md_ro_state {
-> >> --
-> >> 2.39.2
-> >>
-> >
-> >
-> > .
-> >
->
+> +}
+> +
+> +enum sync_action md_sync_action_by_name(char *page)
+> +{
+> +       enum sync_action action;
+> +
+> +       for (action =3D 0; action < NR_SYNC_ACTIONS; ++action) {
+> +               if (cmd_match(page, action_name[action]))
+> +                       return action;
+> +       }
+> +
+> +       return NR_SYNC_ACTIONS;
+> +}
+> +
+> +char *md_sync_action_name(enum sync_action action)
+> +{
+> +       return action_name[action];
+> +}
+> +
+>  static ssize_t
+>  action_show(struct mddev *mddev, char *page)
+>  {
+> diff --git a/drivers/md/md.h b/drivers/md/md.h
+> index 2edad966f90a..72ca7a796df5 100644
+> --- a/drivers/md/md.h
+> +++ b/drivers/md/md.h
+> @@ -864,6 +864,9 @@ extern void md_unregister_thread(struct mddev *mddev,=
+ struct md_thread __rcu **t
+>  extern void md_wakeup_thread(struct md_thread __rcu *thread);
+>  extern void md_check_recovery(struct mddev *mddev);
+>  extern void md_reap_sync_thread(struct mddev *mddev);
+> +extern enum sync_action md_sync_action(struct mddev *mddev);
+> +extern enum sync_action md_sync_action_by_name(char *page);
+> +extern char *md_sync_action_name(enum sync_action action);
+>  extern bool md_write_start(struct mddev *mddev, struct bio *bi);
+>  extern void md_write_inc(struct mddev *mddev, struct bio *bi);
+>  extern void md_write_end(struct mddev *mddev);
+> --
+> 2.39.2
 >
 
