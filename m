@@ -1,133 +1,109 @@
-Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com [209.85.210.173])
+Received: from mail-yb1-f172.google.com (mail-yb1-f172.google.com [209.85.219.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C8E31448F2
-	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 16:08:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA317181320
+	for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 19:50:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715702903; cv=none; b=VMRbXC4ESHaZKQkiLegx/6fXJINVkeycbjtrCal1wwZe9RlpNNIK3FfQ5uGWfU4+ioBI2iR4tBGqZlWoFC+TFX6JBOMnk9ze5HeP1ApE8R5E7QdEXVKRvxiwwKqU2rxeKQJkxd8LKkGnR91+XFsyx6dieSDRqWiuHT8HIfQ+diE=
+	t=1715716224; cv=none; b=GnG9w79BcKfn24+XxvOIektDwSyM6MBFQGBg3BnuBqceO0TV6Xw/Bj/K0yNrG58m5acsterRrncg2Cz45oSotIZMFeI4zMl/Pqxt8bVouOXualxxmB/w2vjj45dkpNKOyEIemiOVXCCIgJ2Cc94FbNM5+r9NYHcqxFrCx96Ua5k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715702903; c=relaxed/simple;
-	bh=TALiqw+2bRnrQzNIioqE2dReB/lq0tUTzpan2VON0GE=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=scMPtRt207QpAu9g4LI/XEfZSt+/Ji4IDO4Bqkwr2Wn1gQTnYLlRrrw22u8E59wdZVx5mAJtLHQ2kqBCcJxLDRK5rvyhaJfaBCq6gyrJnCODu5Ju0UnP3E+Xl99tWdRuaFk7QbQFE8qLpUps/EXvYN1Knyi/8A6EyPooL/uPbm8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.210.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
-Received: by mail-pf1-f173.google.com with SMTP id d2e1a72fcca58-6f489e64eb3so4111484b3a.1
-        for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 09:08:21 -0700 (PDT)
+	s=arc-20240116; t=1715716224; c=relaxed/simple;
+	bh=xCGobSiEZZKVIGvtlb17VkXzrJav2cpynpYO5pxHsTg=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=Fs2czrxxGI0radmSkmESPLj67Hh75ERXhVQ7k38fb0cFG6SsiNcVM3ELCOmz2LrB1H+K2FjysqXKQdDwrNpvlOBKF3PBSi7aR5DfjRB1jNcHpW+7elPckJPQAqfilsHlzIlpdXe7RKzh+bOgHk3eAAxICVu1dETHb+DAQQd8V1o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=ONEvMiMR; arc=none smtp.client-ip=209.85.219.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="ONEvMiMR"
+Received: by mail-yb1-f172.google.com with SMTP id 3f1490d57ef6-de60a51fe21so5994397276.0
+        for <dm-devel@lists.linux.dev>; Tue, 14 May 2024 12:50:21 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=paul-moore.com; s=google; t=1715716221; x=1716321021; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=lkp4I1/EP34xCsXz894jXcfOHu9Xc+3+8P13l0GVrxE=;
+        b=ONEvMiMRLOgJNvyZuEidebbOwrHllocwsrUEhY9VnB0dJaGe5uCmOund/ra+kSdwKb
+         LeFJjtUe4ozMuEquPZojx8X3EDSDhd4VsOIsvA0f8ll6PPlhb9dJn+ZNYs23wQ5qCfxn
+         S2z9ra5xAJWfA7zZTIbjRi3X/frwc1E4vN/qhECbug6Mmg9+97YxnKx+jk65XvMVT5i/
+         LmH+ZdloLR/fLxTadne/fwjOqvmCgioAErwm9FXK5J28yeG8Tov2b8SAAMK9BhbADJYX
+         AfOyyXwoTm6Utc7XQ89ImwWkT2i/54RGz1eXNxgB2dV7hBnxR2R6np/QiiXjFoRYf6Jw
+         +vuQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715702900; x=1716307700;
-        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=YNP5n42nn9nZu6GVCQLpvtO7ZgtE6a5A4oDtv9l67/E=;
-        b=YBnzfhPAuaOhMSWB4/2t+gkTfgoSEY6JSgeFCtS30VAUvXVHporBb1+UTqj3QnQsL6
-         THvKr7lw6oeOuVnJawT3QqQtdRFyEuhoIKUe1tMJwkZZv8oKPHeAdTdAuu8Aua82yr+0
-         ilsGr3YqwKUOiI0y4RLW2M29CiX4b2q8i4y0aqgOdTo3P9HVdTYW758MPTZzV+k1Kz0J
-         SlBDnVHzonpx8E+7iv2+uQGMetKIvozRDx/RYvSMbULQMsAvkwwt/gaW0uzu9gTCaPcY
-         WG8N2SoL9+MobJV7WIf/woFFVfiMpLzwNIiMErZ3p6ysZJq1l8qThX8KPcK4+MIqHeb0
-         yJ+g==
-X-Gm-Message-State: AOJu0Yy+r8/Vkxt647sXq71hrmMLmo4QS42L/UdM1mQGIRti+0dOqsiC
-	rZspzxKD8/mJ7w5HIlqjfi4T/IgUKuqoRQrqEL3p/3Lfw6knE/v+PG+VjFmsIR8=
-X-Google-Smtp-Source: AGHT+IGISwphAxSeBGW6eIoRZvoxDajLXY5C9QYe2vWn2FJFRUScFThli9hJhEif/xY0XERfyE3W1w==
-X-Received: by 2002:a05:6a20:d70b:b0:1af:d9a3:f38d with SMTP id adf61e73a8af0-1afde202083mr12223986637.62.1715702900535;
-        Tue, 14 May 2024 09:08:20 -0700 (PDT)
-Received: from localhost ([50.204.89.20])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-6340a449e0esm9649907a12.13.2024.05.14.09.08.19
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 May 2024 09:08:19 -0700 (PDT)
-Date: Tue, 14 May 2024 12:08:19 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	Alasdair G Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christoph Hellwig <hch@lst.de>,
-	Joel Colledge <joel.colledge@linbit.com>,
-	yangerkun <yangerkun@huawei.com>
-Subject: [git pull] device mapper changes for 6.10
-Message-ID: <ZkOMczEgGuPBOCrr@redhat.com>
+        d=1e100.net; s=20230601; t=1715716221; x=1716321021;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=lkp4I1/EP34xCsXz894jXcfOHu9Xc+3+8P13l0GVrxE=;
+        b=vIHZEw7t8F6qjZZdsg4kBqPQ7hL+5gg25FlOXObw63BZK0KYy5GLpb0nFjeZ9tZxo5
+         pY3JsjEeksToCoc9qylPfkH3dZS54SDwri2/KLEqvsDJegUCEIiMzy2U02K/JerB6QWh
+         /QfwBOCfpGmLXKYLSsvMHJicBhTJCIkMQStAbgrYLJg0iFn19P0MwpQt48oJg4CU/Ynt
+         l+AsprFhrEXYiTgEulj4P0Ncp4CveHQgSkqvnB/2PP7NKpEdRAStqKRJrsjcn8SaSSAb
+         s9soSOeoLlpKu/9f8nmHmCBc7xzRM/YL3cqqzM0gHOyLnn+adJwhgFOaup34uz13JNsX
+         ZVrg==
+X-Forwarded-Encrypted: i=1; AJvYcCU7SsRe4zQ5dYylYUJNGyhxK4+FQeGkz+qvSzVXIlTl4w76WnP2mrcfcoA/28GYCgwSuESiWQItTxPv2blDnvF11whb2B4Louc=
+X-Gm-Message-State: AOJu0YxGZ1xs0U39ZALBrk3t4mXCYZI7BRj5Fve9d0k79EoVK7eF5oS1
+	xN2w3okr9kxpa5nqjtjAKd4Pu0VB020/pnuGYtyh2UjF4qPAjiJqM6t7r3XOMhUCB8zsXKzPCHP
+	LARtVIXDBxBh8tQask3R4qNC/dcyhIp2ljGTF
+X-Google-Smtp-Source: AGHT+IFWIy5UA2F/+z955H9aT1kkILcAstR0rQ1Z6k7ELYYSk3poMncJ+M812qPYw6M0u0TMB7AFkJo/BviRvM2KHkE=
+X-Received: by 2002:a05:6902:218f:b0:dee:8da8:aeb7 with SMTP id
+ 3f1490d57ef6-dee8da8b092mr8719461276.25.1715716220678; Tue, 14 May 2024
+ 12:50:20 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+References: <1714775551-22384-1-git-send-email-wufan@linux.microsoft.com>
+ <1714775551-22384-21-git-send-email-wufan@linux.microsoft.com>
+ <ZjXsBjAFs-qp9xY4@archie.me> <ab7054cd-affd-47c3-bd98-2cf47d6a6376@linux.microsoft.com>
+In-Reply-To: <ab7054cd-affd-47c3-bd98-2cf47d6a6376@linux.microsoft.com>
+From: Paul Moore <paul@paul-moore.com>
+Date: Tue, 14 May 2024 15:50:09 -0400
+Message-ID: <CAHC9VhQewDL4cWXSiAgzvrHa8N5rd6TbhSCM3jRp29=Kmr3m-Q@mail.gmail.com>
+Subject: Re: [PATCH v18 20/21] Documentation: add ipe documentation
+To: Fan Wu <wufan@linux.microsoft.com>
+Cc: Bagas Sanjaya <bagasdotme@gmail.com>, corbet@lwn.net, zohar@linux.ibm.com, 
+	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
+	axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com, 
+	linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
+	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi Linus,
+On Sat, May 4, 2024 at 4:13=E2=80=AFPM Fan Wu <wufan@linux.microsoft.com> w=
+rote:
+> On 5/4/2024 1:04 AM, Bagas Sanjaya wrote:
+> > On Fri, May 03, 2024 at 03:32:30PM -0700, Fan Wu wrote:
+> >> +IPE does not mitigate threats arising from malicious but authorized
+> >> +developers (with access to a signing certificate), or compromised
+> >> +developer tools used by them (i.e. return-oriented programming attack=
+s).
+> >> +Additionally, IPE draws hard security boundary between userspace and
+> >> +kernelspace. As a result, IPE does not provide any protections agains=
+t a
+> >> +kernel level exploit, and a kernel-level exploit can disable or tampe=
+r
+> >> +with IPE's protections.
+> >
+> > So how to mitigate kernel-level exploits then?
+>
+> One possible way is to use hypervisor to protect the kernel integrity.
+> https://github.com/heki-linux is one project on this direction. Perhaps
+> I should also add this link to the doc.
 
-The following changes since commit 48ef0ba12e6b77a1ce5d09c580c38855b090ae7c:
+I wouldn't spend a lot of time on kernel exploits in the IPE
+documentation as it is out of scope for IPE.  In face, I would say
+just that in the last sentence in the paragraph above:
 
-  dm: restore synchronous close of device mapper block device (2024-04-16 11:32:07 -0400)
+"As a result, kernel-level exploits are considered outside the scope
+of IPE and mitigation is left to other mechanisms."
 
-are available in the Git repository at:
+(or something similar)
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.10/dm-changes
-
-for you to fetch changes up to 8b21ac87d550acc4f6207764fed0cf6f0e3966cd:
-
-  dm-delay: remove timer_lock (2024-05-09 09:10:58 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- Add a dm-crypt optional "high_priority" flag that enables the crypt
-  workqueues to use WQ_HIGHPRI.
-
-- Export dm-crypt workqueues via sysfs (by enabling WQ_SYSFS) to allow
-  for improved visibility and controls over IO and crypt workqueues.
-
-- Fix dm-crypt to no longer constrain max_segment_size to PAGE_SIZE.
-  This limit isn't needed given that the block core provides late bio
-  splitting if bio exceeds underlying limits (e.g. max_segment_size).
-
-- Fix dm-crypt crypt_queue's use of WQ_UNBOUND to not use
-  WQ_CPU_INTENSIVE because it is meaningless with WQ_UNBOUND.
-
-- Fix various issues with dm-delay target (ranging from a resource
-  teardown fix, a fix for hung task when using kthread mode, and other
-  improvements that followed from code inspection).
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmZDiggACgkQxSPxCi2d
-A1oQrwf7BUHy7ehwCjRrVlFTteIlx0ULTpPxictakN/S+xZfcZUcbE20OjNVzdk9
-m5dx4Gn557rlMkiC4NDlHazVEVM5BbTpih27rvUgvX2nchUUdfHIT1OvU0isT4Yi
-h9g/o7i9DnBPjvyNjpXjP9YE7Xg8u2X9mxpv8DyU5M+QpFuofwzsfkCP7g14B0g2
-btGxT3AZ5Bo8A/csKeSqHq13Nbq/dcAZZ3IvjIg1xSXjm6CoQ04rfO0TN6SKfsFJ
-GXteBS2JT1MMcXf3oKweAeQduTE+psVFea7gt/8haKFldnV+DpPNg1gU/7rza5Os
-eL1+L1iPY5fuEJIkaqPjBVRGkxQqHg==
-=+OhH
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Benjamin Marzinski (4):
-      dm-delay: fix workqueue delay_timer race
-      dm-delay: fix max_delay calculations
-      dm-delay: change locking to avoid contention
-      dm-delay: remove timer_lock
-
-Christoph Hellwig (1):
-      dm: use queue_limits_set
-
-Joel Colledge (1):
-      dm-delay: fix hung task introduced by kthread mode
-
-Mike Snitzer (2):
-      dm-crypt: stop constraining max_segment_size to PAGE_SIZE
-      dm-crypt: don't set WQ_CPU_INTENSIVE for WQ_UNBOUND crypt_queue
-
-Mikulas Patocka (1):
-      dm-crypt: add the optional "high_priority" flag
-
-yangerkun (1):
-      dm-crypt: export sysfs of all workqueues
-
- .../admin-guide/device-mapper/dm-crypt.rst         |  5 ++
- drivers/md/dm-crypt.c                              | 73 +++++++++++++++-------
- drivers/md/dm-delay.c                              | 60 +++++++++---------
- drivers/md/dm-table.c                              | 27 ++++----
- 4 files changed, 97 insertions(+), 68 deletions(-)
+--=20
+paul-moore.com
