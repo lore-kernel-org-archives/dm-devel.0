@@ -1,256 +1,196 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FCDB8595B
-	for <dm-devel@lists.linux.dev>; Wed, 15 May 2024 13:30:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6DB815622E
+	for <dm-devel@lists.linux.dev>; Wed, 15 May 2024 15:42:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715779824; cv=none; b=HK6fpHJNAOqpoyL4hjfH16u9YhXN/EWV09XQzRXKmlLUQE8qX10jYzdapAjMMjfIDMTO3IBwL2eL23UbmqqzmVW00d3Ob3sf9ldPqwA2BEkWaezcQUBpQk+/NKDSht3YdiSafN2BuBcuX/k1UxFw8BHf2Y1RUGjLB7ePFg8sqTA=
+	t=1715787742; cv=none; b=GBz4APSB3yCu0+waPhC4LRESnlfo5L9dsY6Fr50CrDwyAiQn3LLSY2Ky8LsIkNe3pIy3cAZaYPn/GgHg6vAaqiRzigQN6nGKzlw21AVTFjrdKpSY9YhPsQK2hAC8I6uLP5MW+SDeE1U4vyVZDI2vWX0pt+u7hfFbL1ob7JTDg+I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715779824; c=relaxed/simple;
-	bh=pIeiSZrd4rgBZC4gL7z+H5NdoWWSEVH80JIRINfngNg=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=s8ajt+kCkK+tR4ro4TpC87odKpmfm9XO17OBaWRrcOUbJf7tV7H4gydgz9eKtZwULVYf9DJKsk/ato/mgfqNhfXay13pveb6fwwBLCWcTUOeLlmid3TrGA8SJoDtQr9w/R94qyWRxvD/3rWa9CIDg2/zwBVemOPLYSVzWlOpT/c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iUMDKPdc; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1715787742; c=relaxed/simple;
+	bh=/deTcq+w80Cb17xbYuE3uBl4Y02GhqRR0ENPYtWyjOI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=o8DAa7Kabu/nBi7JDGIKzme+MgRk8G1T8RHZsIKcdkQOhesnMcRaTkxPvpTI+Bc7RH9Or/NFvfx85jykOC3qdHAPtb9NgkNF4Efln/ApO1G1J4cYs0jvcQ2j3kcbZElYN4c1xxEQj09MmEkdsgZgMRfHZh2NiIJe2w5bxQdrTuE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Xb/K55H5; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iUMDKPdc"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Xb/K55H5"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1715779821;
+	s=mimecast20190719; t=1715787739;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=9EXSHk5bMjjCfNj1XQxUp8jPiBPqNxQX5WYV1QsG8g8=;
-	b=iUMDKPdctZ3Q8+bPiWYStifNBLnyCJcgvxc1anoXgPqhBN2HwUnKujBi6FeHpCvm6/Ukm0
-	S6J6FpBTYley7Ob4AysSk860RuZP9pwHa1IxX/4CaqEQQYslDK97ny1OwsCgTFPeM5nG/Z
-	D2pV/di/JmzplGca4TLH8Y91/b/1/Do=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-663-TVbppDLyMD-k2oXIqPpyTg-1; Wed,
- 15 May 2024 09:30:12 -0400
-X-MC-Unique: TVbppDLyMD-k2oXIqPpyTg-1
+	bh=KDC9yVDJQXh1VBgH8zcKx1ck2Zow97M73RPc1/GvQ4U=;
+	b=Xb/K55H5YbFoZeRsEmKkBaCbGPS/PZ3ppUs/tFxoLPXe83w3whd5/SIMI+QQuQxo2kpN0Q
+	KDsiA27I+ydT1ugLDHum4K8grRtxbPAYcQFbgmy7qEw/w8w06mCBk+eJ3shHVZYBJUFTdD
+	c3eMV15BvHtTWGvjD0tyqWx49XLwkgo=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-524-ewEautHJMya3PrE8ptHmoQ-1; Wed, 15 May 2024 11:42:05 -0400
+X-MC-Unique: ewEautHJMya3PrE8ptHmoQ-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D9F2E1C53C69;
-	Wed, 15 May 2024 13:30:11 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D311A51BF;
-	Wed, 15 May 2024 13:30:11 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id C2AD330C7280; Wed, 15 May 2024 13:30:11 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id C1C7E3FB52;
-	Wed, 15 May 2024 15:30:11 +0200 (CEST)
-Date: Wed, 15 May 2024 15:30:11 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>, 
-    Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, 
-    Mike Snitzer <snitzer@kernel.org>, Milan Broz <gmazyland@gmail.com>
-cc: linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
-    linux-nvme@lists.infradead.org
-Subject: [RFC PATCH 2/2] dm-crypt: support per-sector NVMe metadata
-In-Reply-To: <f85e3824-5545-f541-c96d-4352585288a@redhat.com>
-Message-ID: <703ffbcf-2fa8-56aa-2219-10254af26ba5@redhat.com>
-References: <f85e3824-5545-f541-c96d-4352585288a@redhat.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7218E80118E;
+	Wed, 15 May 2024 15:42:04 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6641028E2;
+	Wed, 15 May 2024 15:42:04 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44FFg4f3119750
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 15 May 2024 11:42:04 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44FFg4q7119749;
+	Wed, 15 May 2024 11:42:04 -0400
+Date: Wed, 15 May 2024 11:42:04 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Yang Yang <yang.yang@vivo.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+        Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+        linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 3/5] dm: support retrieving struct dm_target from struct
+ dm_dev
+Message-ID: <ZkTXzG1yrPmW64Z6@redhat.com>
+References: <20240514090445.2847-1-yang.yang@vivo.com>
+ <20240514090445.2847-4-yang.yang@vivo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240514090445.2847-4-yang.yang@vivo.com>
 X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-Support per-sector NVMe metadata in dm-crypt.
+On Tue, May 14, 2024 at 05:04:42PM +0800, Yang Yang wrote:
+> Add a list to the struct dm_dev structure to store the associated
+> targets, while also allowing differentiation between different target
+> types.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+I still think this is more complex than it needs to be. If devices that
+support flush_pass_around can guarantee that:
 
----
- drivers/md/dm-crypt.c |   53 ++++++++++++++++++++++++++++----------------------
- 1 file changed, 30 insertions(+), 23 deletions(-)
+1. They will send a flush bio to all of their table devices
+2. They are fine with another target sending the flush bio to their
+   table devices
 
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c
-+++ linux-2.6/drivers/md/dm-crypt.c
-@@ -211,7 +211,8 @@ struct crypt_config {
- 
- 	unsigned int integrity_tag_size;
- 	unsigned int integrity_iv_size;
--	unsigned int on_disk_tag_size;
-+	unsigned int used_tag_size;
-+	unsigned int tuple_size;
- 
- 	/*
- 	 * pool for per bio private data, crypto requests,
-@@ -1148,14 +1149,14 @@ static int dm_crypt_integrity_io_alloc(s
- 	unsigned int tag_len;
- 	int ret;
- 
--	if (!bio_sectors(bio) || !io->cc->on_disk_tag_size)
-+	if (!bio_sectors(bio) || !io->cc->tuple_size)
- 		return 0;
- 
- 	bip = bio_integrity_alloc(bio, GFP_NOIO, 1);
- 	if (IS_ERR(bip))
- 		return PTR_ERR(bip);
- 
--	tag_len = io->cc->on_disk_tag_size * (bio_sectors(bio) >> io->cc->sector_shift);
-+	tag_len = io->cc->tuple_size * (bio_sectors(bio) >> io->cc->sector_shift);
- 
- 	bip->bip_iter.bi_sector = io->cc->start + io->sector;
- 
-@@ -1173,24 +1174,30 @@ static int crypt_integrity_ctr(struct cr
- 	struct blk_integrity *bi = blk_get_integrity(cc->dev->bdev->bd_disk);
- 	struct mapped_device *md = dm_table_get_md(ti->table);
- 
-+	if (!bi) {
-+		ti->error = "No integrity profile.";
-+		return -EINVAL;
-+	}
-+
- 	/* From now we require underlying device with our integrity profile */
--	if (!bi || strcasecmp(bi->profile->name, "DM-DIF-EXT-TAG")) {
-+	if (strcasecmp(bi->profile->name, "DM-DIF-EXT-TAG") &&
-+	    strcasecmp(bi->profile->name, "nop")) {
- 		ti->error = "Integrity profile not supported.";
- 		return -EINVAL;
- 	}
- 
--	if (bi->tag_size != cc->on_disk_tag_size ||
--	    bi->tuple_size != cc->on_disk_tag_size) {
-+	if (bi->tuple_size < cc->used_tag_size) {
- 		ti->error = "Integrity profile tag size mismatch.";
- 		return -EINVAL;
- 	}
-+	cc->tuple_size = bi->tuple_size;
- 	if (1 << bi->interval_exp != cc->sector_size) {
- 		ti->error = "Integrity profile sector size mismatch.";
- 		return -EINVAL;
- 	}
- 
- 	if (crypt_integrity_aead(cc)) {
--		cc->integrity_tag_size = cc->on_disk_tag_size - cc->integrity_iv_size;
-+		cc->integrity_tag_size = cc->used_tag_size - cc->integrity_iv_size;
- 		DMDEBUG("%s: Integrity AEAD, tag size %u, IV size %u.", dm_device_name(md),
- 		       cc->integrity_tag_size, cc->integrity_iv_size);
- 
-@@ -1202,7 +1209,7 @@ static int crypt_integrity_ctr(struct cr
- 		DMDEBUG("%s: Additional per-sector space %u bytes for IV.", dm_device_name(md),
- 		       cc->integrity_iv_size);
- 
--	if ((cc->integrity_tag_size + cc->integrity_iv_size) != bi->tag_size) {
-+	if ((cc->integrity_tag_size + cc->integrity_iv_size) > cc->tuple_size) {
- 		ti->error = "Not enough space for integrity tag in the profile.";
- 		return -EINVAL;
- 	}
-@@ -1281,7 +1288,7 @@ static void *tag_from_dmreq(struct crypt
- 	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
- 
- 	return &io->integrity_metadata[*org_tag_of_dmreq(cc, dmreq) *
--		cc->on_disk_tag_size];
-+		cc->tuple_size];
- }
- 
- static void *iv_tag_from_dmreq(struct crypt_config *cc,
-@@ -1362,9 +1369,9 @@ static int crypt_convert_block_aead(stru
- 		aead_request_set_crypt(req, dmreq->sg_in, dmreq->sg_out,
- 				       cc->sector_size, iv);
- 		r = crypto_aead_encrypt(req);
--		if (cc->integrity_tag_size + cc->integrity_iv_size != cc->on_disk_tag_size)
-+		if (cc->integrity_tag_size + cc->integrity_iv_size != cc->tuple_size)
- 			memset(tag + cc->integrity_tag_size + cc->integrity_iv_size, 0,
--			       cc->on_disk_tag_size - (cc->integrity_tag_size + cc->integrity_iv_size));
-+			       cc->tuple_size - (cc->integrity_tag_size + cc->integrity_iv_size));
- 	} else {
- 		aead_request_set_crypt(req, dmreq->sg_in, dmreq->sg_out,
- 				       cc->sector_size + cc->integrity_tag_size, iv);
-@@ -1794,7 +1801,7 @@ static void crypt_dec_pending(struct dm_
- 		return;
- 
- 	if (likely(!io->ctx.aead_recheck) && unlikely(io->ctx.aead_failed) &&
--	    cc->on_disk_tag_size && bio_data_dir(base_bio) == READ) {
-+	    cc->used_tag_size && bio_data_dir(base_bio) == READ) {
- 		io->ctx.aead_recheck = true;
- 		io->ctx.aead_failed = false;
- 		io->error = 0;
-@@ -3173,7 +3180,7 @@ static int crypt_ctr_optional(struct dm_
- 				ti->error = "Invalid integrity arguments";
- 				return -EINVAL;
- 			}
--			cc->on_disk_tag_size = val;
-+			cc->used_tag_size = val;
- 			sval = strchr(opt_string + strlen("integrity:"), ':') + 1;
- 			if (!strcasecmp(sval, "aead")) {
- 				set_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags);
-@@ -3384,12 +3391,12 @@ static int crypt_ctr(struct dm_target *t
- 		if (ret)
- 			goto bad;
- 
--		cc->tag_pool_max_sectors = POOL_ENTRY_SIZE / cc->on_disk_tag_size;
-+		cc->tag_pool_max_sectors = POOL_ENTRY_SIZE / cc->tuple_size;
- 		if (!cc->tag_pool_max_sectors)
- 			cc->tag_pool_max_sectors = 1;
- 
- 		ret = mempool_init_kmalloc_pool(&cc->tag_pool, MIN_IOS,
--			cc->tag_pool_max_sectors * cc->on_disk_tag_size);
-+			cc->tag_pool_max_sectors * cc->tuple_size);
- 		if (ret) {
- 			ti->error = "Cannot allocate integrity tags mempool";
- 			goto bad;
-@@ -3464,7 +3471,7 @@ static int crypt_map(struct dm_target *t
- 	 * Check if bio is too large, split as needed.
- 	 */
- 	if (unlikely(bio->bi_iter.bi_size > (BIO_MAX_VECS << PAGE_SHIFT)) &&
--	    (bio_data_dir(bio) == WRITE || cc->on_disk_tag_size))
-+	    (bio_data_dir(bio) == WRITE || cc->used_tag_size))
- 		dm_accept_partial_bio(bio, ((BIO_MAX_VECS << PAGE_SHIFT) >> SECTOR_SHIFT));
- 
- 	/*
-@@ -3480,8 +3487,8 @@ static int crypt_map(struct dm_target *t
- 	io = dm_per_bio_data(bio, cc->per_bio_data_size);
- 	crypt_io_init(io, cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector));
- 
--	if (cc->on_disk_tag_size) {
--		unsigned int tag_len = cc->on_disk_tag_size * (bio_sectors(bio) >> cc->sector_shift);
-+	if (cc->tuple_size) {
-+		unsigned int tag_len = cc->tuple_size * (bio_sectors(bio) >> cc->sector_shift);
- 
- 		if (unlikely(tag_len > KMALLOC_MAX_SIZE))
- 			io->integrity_metadata = NULL;
-@@ -3552,7 +3559,7 @@ static void crypt_status(struct dm_targe
- 		num_feature_args += test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags);
- 		num_feature_args += cc->sector_size != (1 << SECTOR_SHIFT);
- 		num_feature_args += test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);
--		if (cc->on_disk_tag_size)
-+		if (cc->used_tag_size)
- 			num_feature_args++;
- 		if (num_feature_args) {
- 			DMEMIT(" %d", num_feature_args);
-@@ -3566,8 +3573,8 @@ static void crypt_status(struct dm_targe
- 				DMEMIT(" no_read_workqueue");
- 			if (test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))
- 				DMEMIT(" no_write_workqueue");
--			if (cc->on_disk_tag_size)
--				DMEMIT(" integrity:%u:%s", cc->on_disk_tag_size, cc->cipher_auth);
-+			if (cc->used_tag_size)
-+				DMEMIT(" integrity:%u:%s", cc->used_tag_size, cc->cipher_auth);
- 			if (cc->sector_size != (1 << SECTOR_SHIFT))
- 				DMEMIT(" sector_size:%d", cc->sector_size);
- 			if (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
-@@ -3588,9 +3595,9 @@ static void crypt_status(struct dm_targe
- 		DMEMIT(",iv_large_sectors=%c", test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags) ?
- 		       'y' : 'n');
- 
--		if (cc->on_disk_tag_size)
-+		if (cc->used_tag_size)
- 			DMEMIT(",integrity_tag_size=%u,cipher_auth=%s",
--			       cc->on_disk_tag_size, cc->cipher_auth);
-+			       cc->used_tag_size, cc->cipher_auth);
- 		if (cc->sector_size != (1 << SECTOR_SHIFT))
- 			DMEMIT(",sector_size=%d", cc->sector_size);
- 		if (cc->cipher_string)
+Then I don't see why we need the table devices to keep track of all the
+different target types that are using them. Am I missing something here?
+
+If we don't need to worry about sending a flush bio to a target of each
+type that is using a table device, then all we need to do is call
+__send_empty_flush_bios() for enough targets to cover all the table
+devices. This seems a lot easier to track. We just need another flag in
+dm_target, something like sends_pass_around_flush.
+
+When a target calls dm_get_device(), if it adds a new table device to
+t->devices, then it's the first target in this table to use that device.
+If flush_pass_around is set for this target, then it also sets
+sends_pass_around_flush. In __send_empty_flush() if the table has
+flush_pass_around set, when you iterate through the devices, you only
+call __send_empty_flush_bios() for the ones with sends_pass_around_flush
+set.
+
+Or am I overlooking something?
+
+-Ben
+
+> 
+> Signed-off-by: Yang Yang <yang.yang@vivo.com>
+> ---
+>  drivers/md/dm-table.c         | 36 +++++++++++++++++++++++++++++++++++
+>  include/linux/device-mapper.h |  3 +++
+>  2 files changed, 39 insertions(+)
+> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index bd68af10afed..f6554590b7af 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -741,6 +741,8 @@ int dm_table_add_target(struct dm_table *t, const char *type,
+>  	if (ti->flush_pass_around == 0)
+>  		t->flush_pass_around = 0;
+>  
+> +	INIT_LIST_HEAD(&ti->list);
+> +
+>  	return 0;
+>  
+>   bad:
+> @@ -2134,6 +2136,25 @@ void dm_table_postsuspend_targets(struct dm_table *t)
+>  	suspend_targets(t, POSTSUSPEND);
+>  }
+>  
+> +static int dm_link_dev_to_target(struct dm_target *ti, struct dm_dev *dev,
+> +		sector_t start, sector_t len, void *data)
+> +{
+> +	struct list_head *targets = &dev->targets;
+> +	struct dm_target *pti;
+> +
+> +	if (!list_empty(targets)) {
+> +		list_for_each_entry(pti, targets, list) {
+> +			if (pti->type == ti->type)
+> +				return 0;
+> +		}
+> +	}
+> +
+> +	if (list_empty(&ti->list))
+> +		list_add_tail(&ti->list, targets);
+> +
+> +	return 0;
+> +}
+> +
+>  int dm_table_resume_targets(struct dm_table *t)
+>  {
+>  	unsigned int i;
+> @@ -2162,6 +2183,21 @@ int dm_table_resume_targets(struct dm_table *t)
+>  			ti->type->resume(ti);
+>  	}
+>  
+> +	if (t->flush_pass_around) {
+> +		struct list_head *devices = &t->devices;
+> +		struct dm_dev_internal *dd;
+> +
+> +		list_for_each_entry(dd, devices, list)
+> +			INIT_LIST_HEAD(&dd->dm_dev->targets);
+> +
+> +		for (i = 0; i < t->num_targets; i++) {
+> +			struct dm_target *ti = dm_table_get_target(t, i);
+> +
+> +			if (ti->type->iterate_devices)
+> +				ti->type->iterate_devices(ti, dm_link_dev_to_target, NULL);
+> +		}
+> +	}
+> +
+>  	return 0;
+>  }
+>  
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index 0893ff8c01b6..19e03f9b2589 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -169,6 +169,7 @@ struct dm_dev {
+>  	struct dax_device *dax_dev;
+>  	blk_mode_t mode;
+>  	char name[16];
+> +	struct list_head targets;
+>  };
+>  
+>  /*
+> @@ -298,6 +299,8 @@ struct dm_target {
+>  	struct dm_table *table;
+>  	struct target_type *type;
+>  
+> +	struct list_head list;
+> +
+>  	/* target limits */
+>  	sector_t begin;
+>  	sector_t len;
+> -- 
+> 2.34.1
+> 
 
