@@ -1,81 +1,88 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0BA4B433BC
-	for <dm-devel@lists.linux.dev>; Wed, 15 May 2024 18:15:26 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5648C157A67
+	for <dm-devel@lists.linux.dev>; Wed, 15 May 2024 18:48:36 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715796928; cv=none; b=lSmfU1Eho/5i+luThPuB+maHOUosCcuHtAt3FAIBHQuurRi966u81alE9Fs53MbyKMFZ7d8ist0UxQV07JgZ8OCwuoYYZz7jCqNJDbqhoF4AWdzP7Gwj5sSRzAC4Fm3WiDihiJ3i4ZqQqkpE5WUvbesBknEObOkIRs/j99MKzD4=
+	t=1715798918; cv=none; b=fpw+AXJOyo5+TMUu8sjPJKi0D32EK5B5UOVeDo5v8C28HKIC8nYrJd0DM5j80R+A27c9AoPoUxjoJcuy/d1Nu4MHHW+cZIxnlFlnoGlATr8YAT6Xo8zbHjgfj4tRqk2wcMReHO65wu+OPRibs0LWxqyVuf+9Vg3BztUHWbv4Xvk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715796928; c=relaxed/simple;
-	bh=SU/RDVkpPTpp5QYAfDm+EZqMp5LVlExxE1dd6L0JSXQ=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=dWVqEaOddFA2nZ/clu5r4wNSYyz1QR0Kv3HHKxISqh0EWd884TceUMA4ZyketpFIav1/MgjRPrgOZ6TKXgtDSP1XJI6nb4hWqWyIRnJfrUOr2pie/VCquHFdPPGeb1fcNC2ZSa7j16C1qffGxM9mWtfNOECCvtm0yI9rWiLtMuY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=evcK+GS5; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1715798918; c=relaxed/simple;
+	bh=1AYh4AZgud8pZ5jkp3Qn10r7XNQRpR+F9hEdfptzNH8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Z7Nvah1QXxWvRLveqKU6sfVH4LV46pYpBUmZRmrNJuHjeuNvdmBgglMBO/17GHaW0jZ7Ok6Pub/ddVZA98t+19qUagrY9BuZQ27kGSS5zEiwMGJ4Z2PGrcqxdUbkZ6dkwAkEfLYGynZBs0/uY+5kYt+kq2l3m5qeIxoGpqDeEvE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ss7IIDyf; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="evcK+GS5"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ss7IIDyf"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1715796925;
+	s=mimecast20190719; t=1715798916;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=8nFn5bvdBW4AsQ5YTuGNNNTcA1XQHPb7RVCvLk4JYTU=;
-	b=evcK+GS5s8AXoRh0pR+Q/wqo7+s7RNXA7c+VrxBUJKGPWyezI09GK20YeS9jDDD7No96To
-	yM/Jr6RPuoVDZK6bdao0Qh0MFkiLsw0PvNfsFsICgUHbhmYKBOKjIYFq3KjRHPhx4PaWQV
-	4fUND9fRh6gf4Rwyq6p6/eIQYor2cqY=
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Xd+R8/9IDMX4r9RGDIR4YxH4ubN2ckUYViNmkbcyxK0=;
+	b=Ss7IIDyfLrZgGAzyBhQv1zDgzVaZ272OShbVCUdozJ8CvqspCt2iARxLT3xOpaYfTXaHjg
+	XEwpW2kW/OAZ7Ra91MBGqOJsMc7YUUoxuKRPNHVi6GXYvAUFAHAiRwbu28OrYsesiGapvL
+	PlS8HOtVwX8srnQvIZ5aCNXvx6dmO/A=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-195-p4OHpuzlMOqdDeW0eSOvXQ-1; Wed,
- 15 May 2024 14:15:21 -0400
-X-MC-Unique: p4OHpuzlMOqdDeW0eSOvXQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-637-UE48TvaAMwu3Ly2rP-IX5g-1; Wed,
+ 15 May 2024 14:48:34 -0400
+X-MC-Unique: UE48TvaAMwu3Ly2rP-IX5g-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 31A111C031AC;
-	Wed, 15 May 2024 18:15:21 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E484D2024511;
-	Wed, 15 May 2024 18:15:20 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id CD28830C1C33; Wed, 15 May 2024 18:15:20 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id C906D3FB4F;
-	Wed, 15 May 2024 20:15:20 +0200 (CEST)
-Date: Wed, 15 May 2024 20:15:20 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Mike Snitzer <snitzer@kernel.org>, Ming Lei <ming.lei@redhat.com>
-cc: dm-devel@lists.linux.dev
-Subject: Useless test in alloc_multiple_bios
-Message-ID: <ec2ba8a0-5a8-6dd0-eb56-33c8e7a389ea@redhat.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1A0743C00096;
+	Wed, 15 May 2024 18:48:34 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 08A5840105B;
+	Wed, 15 May 2024 18:48:32 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44FImWIB121958
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 15 May 2024 14:48:32 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44FImWan121957;
+	Wed, 15 May 2024 14:48:32 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm: remove unneeded kvfree from alloc_targets
+Date: Wed, 15 May 2024 14:48:32 -0400
+Message-ID: <20240515184832.121949-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Hi
+alloc_targets() is always called with a newly initialized table where
+t->highs == NULL.
 
-I found this piece of code in alloc_multiple_bios:
-int try = (gfp_flag & GFP_NOWAIT) ? 0 : 1;
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ drivers/md/dm-table.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-The problem is that GFP_NOWAIT includes __GFP_KSWAPD_RECLAIM and GFP_IO 
-also includes __GFP_KSWAPD_RECLAIM - so the test always returns true and 
-we always start with try = 0. This code was introduced by the commit 
-4a2fe2960891f1ccd7805d0973284fd44c2f12b4.
-
-I am inclined to remove this logic at all and always start with try = 0; 
-- trying to allocate bios first with GFP_NOWAIT makes no harm (and it 
-improves performance because we don't need to grab the lock) and if the 
-allocation fails, it is retried with GFP_NOIO.
-
-I'd like to ask - if you think that this piece of code has some purpose, 
-please describe the purpose.
-
-Mikulas
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 88114719fe18..d124e37dfb00 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -117,7 +117,6 @@ static int alloc_targets(struct dm_table *t, unsigned int num)
+ 	n_targets = (struct dm_target *) (n_highs + num);
+ 
+ 	memset(n_highs, -1, sizeof(*n_highs) * num);
+-	kvfree(t->highs);
+ 
+ 	t->num_allocated = num;
+ 	t->highs = n_highs;
+-- 
+2.45.0
 
