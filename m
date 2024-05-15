@@ -1,164 +1,88 @@
-Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com [209.85.216.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 634DB57C8A
-	for <dm-devel@lists.linux.dev>; Wed, 15 May 2024 09:26:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8EF4B3B79F
+	for <dm-devel@lists.linux.dev>; Wed, 15 May 2024 13:27:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715765163; cv=none; b=AG44tz/79l6kXDqSgMVSN3mM3nZ7eNtF1vLq3zKw+pDcO0N4RtEOhbGMVY1RUemg+dGdgJzZlgCWU4idIDuaTa/U3tadG4JEiggEit8utcLw4eVDVUju5qxA4XzEYLunQm4pvZhjo557fWU784xJ2oQd4KbZWyCAubJ458Z3OMw=
+	t=1715779655; cv=none; b=QAkMFt4ANatCpoLDvrQr+GKO2RKQFwNZLtUjiOM21u0wkyIPVicqgGCiylNN0vfRsQJaC0+Y6mjdd0MJx8V+GVSPl0R4V9oFBg8ejQUloiPlWFNZffsL6V8EOauY2kfdUnbUAE8fU0n9ySH+AfzntTmsZq3MIW96K/Ywy2bX2Bw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715765163; c=relaxed/simple;
-	bh=U537H0j/9PlQaC0LiL9fsVT4K5alZFkllM7ciYu/MeQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=pBG5Bn8VAfvDPq84J97RhkhBQE/qtOylnTQ0gRHvSKgER3yNEv4nnxZEvwq9t3i+A1ZEJVL/4Hu7yGYJpj88mx7Ey75tDtNTvClizWcnHoeMwJM20kZanPzUP51UUjKrA8qvuyi5rHQKRurc8l5VlKWCLPBEYcdxIMnUMuwNot0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TrDk+Bgc; arc=none smtp.client-ip=209.85.216.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1715779655; c=relaxed/simple;
+	bh=7NN+p0VArzGwk72h7bf9onqlo8hFDngBzL8RjKLPj/s=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=SsMkZ2wDOEPWvkUDtwjOR6jOa0S2++8Ejv/8Lq3C2MekZwle1WeZ8QKrybGOU67HsSIODlJ4Uo8DFGH+wGsmi9hfyfUzPurarxqxW0QJHp9wT17VK7/ZYPkrR53NhGrPk9KoxQ/sa99CglphRzRprbyb9TRpL3jowoORDVOpYcA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=dAh1msAz; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TrDk+Bgc"
-Received: by mail-pj1-f51.google.com with SMTP id 98e67ed59e1d1-2b6215bcd03so1472963a91.1
-        for <dm-devel@lists.linux.dev>; Wed, 15 May 2024 02:26:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1715765160; x=1716369960; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=OPKfNooZp8Km8QQjbs+4OOukYiKVYt2UrV4I2QW6i4c=;
-        b=TrDk+Bgc1bK7UJw9WozdpREfkQPlBLJ1q4IO3DAEBaIwBGIjAI+s6YeX7O5zRfq5QH
-         +IpwmmdESBHVeiHRo+kHRpRKCnIOMKIoG3xsdZKyzzmMPTfiOI6/+w1erHw00QqtFArB
-         nKPxJrnazoqJEvTEFJzr0Y5htLJkGjq9N14ukka9JKOC4gknyHsY5crHU0Fr/sqYq9bm
-         GbP0LehCIn4Z1yYHMCngWSvM6E1wZaFPXuNzmaMwZbpLDtzBSxPppAfAmKoSavlu0jWU
-         u3tEtvOqyf/ylF/b2fr8hun+lv68CzaNql2EykyA38IetsJvjviDe4aI7AteA2XFvFwQ
-         VIzQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1715765160; x=1716369960;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=OPKfNooZp8Km8QQjbs+4OOukYiKVYt2UrV4I2QW6i4c=;
-        b=VFLANzz4VkmJm0nVZxMzFpvb4CO44fKxf5q/odlJAaOV52wwVQKfvrnAe88SQkalLv
-         B6GKe1pjc04dq0bVzbPSEPlab/XSkUYRkndp/dTlUD8gbvYIuGbPrGOwa/by8OIxAM0u
-         Ony75bTk9s4HNosaShJp7qBv7OnEIHnE39F0p0bAY1avxltgdBY/0JEXDjwNv/LNoyDF
-         tIHAUmi84EyzxgCZ6KJLxGPFcivKsLocKxF1tJSbFlqpcNSBrUmDzy39/ZpKjJnhWgUA
-         gTW8w12shMAMLxRAYAcvzZeyu7tqPQ7D+nbV7JTPyrhmk3GAqIHrvrywFT9FQXjhsFo2
-         NZeg==
-X-Forwarded-Encrypted: i=1; AJvYcCU72r0BBaWhiH2f3BkqvRnkIv3mqLfgsxsceKX2b4t1eSmuCfKtsl+YQK5/fEvz9XoeXx3I5khuP0ccXB1yTtO+L6fLHbhPPds=
-X-Gm-Message-State: AOJu0YzoUCf2tfqN664GrQvUcdRZ4GQX7BfrzH9WmJl/zW0uWYbsrliw
-	0gdmTid6iryFueMQsLdHZ9XJyrLREbJqbX5kKX4QMDRynq0lBcKd
-X-Google-Smtp-Source: AGHT+IF2x8/iHfJaxUooX4X3TGoGoXPwzr8yltF5Wclj64bedUjHLoWk82Et3XcILWR8yWtSNWfX5A==
-X-Received: by 2002:a17:902:cec6:b0:1eb:ac3c:e39f with SMTP id d9443c01a7336-1ef441b5da6mr178395365ad.6.1715765159464;
-        Wed, 15 May 2024 02:25:59 -0700 (PDT)
-Received: from visitorckw-System-Product-Name ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1ef0b9d16dasm113812805ad.15.2024.05.15.02.25.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 15 May 2024 02:25:58 -0700 (PDT)
-Date: Wed, 15 May 2024 17:25:54 +0800
-From: Kuan-Wei Chiu <visitorckw@gmail.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com,
-	mingo@redhat.com, acme@kernel.org, namhyung@kernel.org,
-	akpm@linux-foundation.org, bfoster@redhat.com, mark.rutland@arm.com,
-	alexander.shishkin@linux.intel.com, jolsa@kernel.org,
-	irogers@google.com, adrian.hunter@intel.com, bagasdotme@gmail.com,
-	jserv@ccns.ncku.edu.tw, linux-bcache@vger.kernel.org,
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org
-Subject: Re: [RESEND PATCH v5 11/16] lib min_heap: Update min_heap_push() and
- min_heap_pop() to return bool values
-Message-ID: <ZkR/ovACvPFqvFCv@visitorckw-System-Product-Name>
-References: <20240514084724.557100-1-visitorckw@gmail.com>
- <20240514084724.557100-12-visitorckw@gmail.com>
- <20240515083755.GB40213@noisy.programming.kicks-ass.net>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dAh1msAz"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1715779651;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=g5fc8mcPKMWKuhRC4H98ePL+lLJSZdpFd80L6MUtTVs=;
+	b=dAh1msAzZyYshcHUIC674A+nkrHcpX6lkfq7LmPAScyY3nhkCeLD5JIGS2P75tpo/2Ko5R
+	9O+4KKlj4/UhgsxQ3lQZmWPzjXO7N9+6aQYv4J+5RNS4fghjdB3/chY/v3JNPsOnrN88JB
+	m+lCzxPvrlLOWlUwXAME/lTpZBSk8Lc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-91-_pFjeoFPPYGUAvQmLQ8GsQ-1; Wed, 15 May 2024 09:27:27 -0400
+X-MC-Unique: _pFjeoFPPYGUAvQmLQ8GsQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36A918058C8;
+	Wed, 15 May 2024 13:27:27 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E8D281C008BB;
+	Wed, 15 May 2024 13:27:26 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id D068D30C7280; Wed, 15 May 2024 13:27:26 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id CECAF3FB52;
+	Wed, 15 May 2024 15:27:26 +0200 (CEST)
+Date: Wed, 15 May 2024 15:27:26 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>, 
+    Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, 
+    Mike Snitzer <snitzer@kernel.org>, Milan Broz <gmazyland@gmail.com>
+cc: linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
+    linux-nvme@lists.infradead.org
+Subject: [RFC PATCH 0/2] dm-crypt support for per-sector NVMe metadata
+Message-ID: <f85e3824-5545-f541-c96d-4352585288a@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240515083755.GB40213@noisy.programming.kicks-ass.net>
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
 
-On Wed, May 15, 2024 at 10:37:55AM +0200, Peter Zijlstra wrote:
-> On Tue, May 14, 2024 at 04:47:19PM +0800, Kuan-Wei Chiu wrote:
-> > Modify the min_heap_push() and min_heap_pop() to return a boolean
-> > value. They now return false when the operation fails and true when it
-> > succeeds.
-> 
-> But why ?!
+Hi
 
-When handling failures of push/pop operations, although we could
-achieve the same effect by checking whether the heap is empty/full
-before push/pop, we have already performed such checks within the
-push/pop operations. Therefore, I believe directly using the result
-of the check as the return value will make the code written by the user
-more concise. This return value is used in subsequent patches for
-replacing the heap macro in bcache and bcachefs to determine if an
-error has occurred. The original heap macros in bcache and bcachefs
-also do the same thing.
+Some NVMe devices may be formatted with extra 64 bytes of metadata per 
+sector.
 
-Regards,
-Kuan-Wei
-> 
-> > Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
-> > Reviewed-by: Ian Rogers <irogers@google.com>
-> > ---
-> >  include/linux/min_heap.h | 12 ++++++++----
-> >  1 file changed, 8 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
-> > index c94f9d303205..2d080f85ad0d 100644
-> > --- a/include/linux/min_heap.h
-> > +++ b/include/linux/min_heap.h
-> > @@ -147,18 +147,20 @@ void __min_heapify_all(min_heap_char *heap, size_t elem_size,
-> >  
-> >  /* Remove minimum element from the heap, O(log2(nr)). */
-> >  static __always_inline
-> > -void __min_heap_pop(min_heap_char *heap, size_t elem_size,
-> > +bool __min_heap_pop(min_heap_char *heap, size_t elem_size,
-> >  		const struct min_heap_callbacks *func, void *args)
-> >  {
-> >  	void *data = heap->data;
-> >  
-> >  	if (WARN_ONCE(heap->nr <= 0, "Popping an empty heap"))
-> > -		return;
-> > +		return false;
-> >  
-> >  	/* Place last element at the root (position 0) and then sift down. */
-> >  	heap->nr--;
-> >  	memcpy(data, data + (heap->nr * elem_size), elem_size);
-> >  	__min_heapify(heap, 0, elem_size, func, args);
-> > +
-> > +	return true;
-> >  }
-> >  
-> >  #define min_heap_pop(_heap, _func, _args)	\
-> > @@ -184,7 +186,7 @@ void __min_heap_pop_push(min_heap_char *heap,
-> >  
-> >  /* Push an element on to the heap, O(log2(nr)). */
-> >  static __always_inline
-> > -void __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
-> > +bool __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
-> >  		const struct min_heap_callbacks *func, void *args)
-> >  {
-> >  	void *data = heap->data;
-> > @@ -192,7 +194,7 @@ void __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
-> >  	int pos;
-> >  
-> >  	if (WARN_ONCE(heap->nr >= heap->size, "Pushing on a full heap"))
-> > -		return;
-> > +		return false;
-> >  
-> >  	/* Place at the end of data. */
-> >  	pos = heap->nr;
-> > @@ -207,6 +209,8 @@ void __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
-> >  			break;
-> >  		func->swp(parent, child, args);
-> >  	}
-> > +
-> > +	return true;
-> >  }
-> >  
-> >  #define min_heap_push(_heap, _element, _func, _args)	\
-> > -- 
-> > 2.34.1
-> > 
+Here I'm submitting for review dm-crypt patches that make it possible to 
+use per-sector metadata for authenticated encryption. With these patches, 
+dm-crypt can run directly on the top of a NVMe device, without using 
+dm-integrity. These patches increase write throughput twice, because there 
+is no write to the dm-integrity journal.
+
+An example how to use it (so far, there is no support in the userspace 
+cryptsetup tool):
+
+# nvme format /dev/nvme1 -n 1 -lbaf=4
+# dmsetup create cr --table '0 1048576 crypt 
+capi:authenc(hmac(sha256),cbc(aes))-essiv:sha256 
+01b11af6b55f76424fd53fb66667c301466b2eeaf0f39fd36d26e7fc4f52ade2de4228e996f5ae2fe817ce178e77079d28e4baaebffbcd3e16ae4f36ef217298 
+0 /dev/nvme1n1 0 2 integrity:32:aead sector_size:4096'
+
+Please review it - I'd like to know whether detecting the presence of 
+per-sector metadata in crypt_integrity_ctr is correct whether it should be 
+done differently.
+
+Mikulas
+
