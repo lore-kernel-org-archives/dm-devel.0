@@ -1,117 +1,173 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FD4579CC
-	for <dm-devel@lists.linux.dev>; Fri, 17 May 2024 14:33:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 81ABA13F015;
+	Fri, 17 May 2024 19:13:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715956398; cv=none; b=Y/UeVJv/KpJyha1uX5Efd66HxpEkmBFjdyvHJBYxrtqNrQbNvSvZzPEcKmE+5LJqMBIf5D2hnxCEvDM79zvTfx5NqcR/NPGmZFSJKkZfZbrhh1a3L0GCy6B9Z03VyUxef3yoIkJUA0BIposViMe+rvGzM66t3uBAVDfOAQBZxPc=
+	t=1715973215; cv=none; b=UaxBx6SYVThYnl36M51ZTnba7Hl5xUkx7nR8/rmrdvuzptcucvv600yHW1ZlayO8BbDNGaZEjipdqAWZ75M8KuxQxik45YR/yHTZc4CKT5uPgClOnVilb1zaHV0vo1TZ7q/RvzI9fpKaDb/nzZGAr8Ct5Fg/Vggus2BGCi92Qm4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715956398; c=relaxed/simple;
-	bh=V93XLAiIxz56pOFhKRk2dq+FLKZDcnpird74nR4nZdo=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=X86qLtXnMoTrAzPRTrK+XWG7IXYRqSvTp+yKu2cSf+17XqmGMpbQ8B0yjyoWp+vRG8FBJieV4gtbaMVz6qrhUxK7Sy6nXlVfvC+gQ13GYzY4OePcEB/mkHgPQlD4rqYrmBMzBsNbkIHtLCUYWnEu9ui6dKU7hoZLzFakFkcll5M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cD8G3wAe; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1715973215; c=relaxed/simple;
+	bh=cl5z+RypzfaYXGWf+rnBBjI5OlA1WYqdwNwX6Edu4uM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=VaoX/Mkf+ITTV+m5NFhu/VCAWAXdfdtjcPbqpMmf8PREM6nTIrDuqQAspB8ryI0jg8u0Dl8QenC5S24Mer3RtHgMF/nDVYJBe9/6HPVAbdMmDqoFw8ekXtsknzW32V3LkUCMOq9j238Pe3+OYJ1sUon+bIQixbRBc58KS0q6coA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=fpp/vl3D; arc=none smtp.client-ip=13.77.154.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cD8G3wAe"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1715956395;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=qXRpht3Oiyb6WnCO2PLJaNfFB/1BTZbbiqXWPvuMhk8=;
-	b=cD8G3wAebGGzPBWtO5rICY44gfV0adUu5DRHtyDNTtJvTq43WQSrITfsLyxnmFqKh0ZOaC
-	1L/Burqp2JZm37H9gmjotP2j9fZrngVbULEWJxk1JiUmfYj6Io3/eNjxvbgt4JdyOaZnCC
-	I3AImNZ8MhXq3VmeyHfd1yMP68kovb0=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-7-f_iC8IrFOze2TXNajTJl6Q-1; Fri,
- 17 May 2024 10:33:11 -0400
-X-MC-Unique: f_iC8IrFOze2TXNajTJl6Q-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 004D23802130;
-	Fri, 17 May 2024 14:33:11 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E9F5F2026D68;
-	Fri, 17 May 2024 14:33:10 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44HEXAqY146578
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 17 May 2024 10:33:10 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44HEXA7Y146577;
-	Fri, 17 May 2024 10:33:10 -0400
-Date: Fri, 17 May 2024 10:33:10 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: YangYang <yang.yang@vivo.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-        linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 3/5] dm: support retrieving struct dm_target from struct
- dm_dev
-Message-ID: <Zkdqpl5SN3RV0smg@redhat.com>
-References: <20240514090445.2847-1-yang.yang@vivo.com>
- <20240514090445.2847-4-yang.yang@vivo.com>
- <ZkTXzG1yrPmW64Z6@redhat.com>
- <80ddcd90-2e1c-4fbf-a45a-b1b5ff4d60fb@vivo.com>
- <ZkYmZaGWPtGIwedG@redhat.com>
- <8f49b95e-88df-48b8-9311-8a15414d8107@vivo.com>
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="fpp/vl3D"
+Received: from [10.137.106.151] (unknown [167.220.2.23])
+	by linux.microsoft.com (Postfix) with ESMTPSA id 6FAD220B915A;
+	Fri, 17 May 2024 12:13:27 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 6FAD220B915A
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
+	s=default; t=1715973207;
+	bh=2p1wopyKvglG1K22JP2DhRwV85SJbq4dKxtjT1xHvtY=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=fpp/vl3DKUdjSDRpvAjyDgeuyiVrUyujnX4va9QRUjeu+quEuTpy1VLMWrbI1o4O2
+	 7tFT61OD7MvfnS0fygEkUh5vIkJKB8wvWKhgP7fqsqhi6YbLFLZ5KpReHrkz8TRyK5
+	 gfobGVgWsvo7PzhwRCDJDIgnL1vDR71OaQIF5phw=
+Message-ID: <234910c1-40c3-4489-94ab-6e9a5f00d93e@linux.microsoft.com>
+Date: Fri, 17 May 2024 12:13:26 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <8f49b95e-88df-48b8-9311-8a15414d8107@vivo.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v18 12/21] dm: add finalize hook to target_type
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
+ tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
+ snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com,
+ linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
+ linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+ audit@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <1714775551-22384-1-git-send-email-wufan@linux.microsoft.com>
+ <1714775551-22384-13-git-send-email-wufan@linux.microsoft.com>
+ <aa767961-5e3-2ceb-1a1e-ff66a8eed649@redhat.com>
+ <212b02a8-f5f0-4433-a726-1639dda61790@linux.microsoft.com>
+ <bc9aa053-20a6-eaa-cbe4-344f340242b@redhat.com>
+Content-Language: en-CA
+From: Fan Wu <wufan@linux.microsoft.com>
+In-Reply-To: <bc9aa053-20a6-eaa-cbe4-344f340242b@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Fri, May 17, 2024 at 03:48:49PM +0800, YangYang wrote:
-> On 2024/5/16 23:29, Benjamin Marzinski wrote:
-> > On Thu, May 16, 2024 at 09:55:53AM +0800, YangYang wrote:
-> > > On 2024/5/15 23:42, Benjamin Marzinski wrote:
-> > > > On Tue, May 14, 2024 at 05:04:42PM +0800, Yang Yang wrote:
 
-> > > 
-> > > If I understand correctly, you are suggesting to iterate through all the
-> > > targets, handling those with sends_pass_around_flush set, and skipping
-> > > those where sends_pass_around_flush is not set. I believe this approach
-> > > may result in some CPU wastage.
-> > > 
-> > >    for i in {0..1023}; do
-> > >      echo $((8000*$i)) 8000 linear /dev/sda2 $((16384*$i))
-> > >    done | sudo dmsetup create example
-> > > 
-> > > In this specific scenario, a single iteration of the loop is all that
-> > > is needed.
-> > 
-> > It's just one iteration of the loop either way. You either loop through
-> > the targets or the devices.  It's true that if you have lots of targets
-> > all mapped to the same device, you would waste time looping through all
-> > the targets instead of looping through the devices.  But if you only had
-> > one striped target mapped to lots of devices, you would waste time
-> > looping through all of the devices instead of looping through the
-> > targets.
+
+On 5/9/2024 10:07 AM, Mikulas Patocka wrote:
 > 
-> Yes, I get your point. This patchset may make things even worse for
-> the striped target.
-> I am just curious, in what scenario is the "dm-strip" target mapped to
-> a large number of underlying devices from the same block device.
 > 
+> On Wed, 8 May 2024, Fan Wu wrote:
+> 
+>>
+>>
+>> On 5/8/2024 10:17 AM, Mikulas Patocka wrote:
+>>>
+>>>
+>>> On Fri, 3 May 2024, Fan Wu wrote:
+>>>
+>>>> This patch adds a target finalize hook.
+>>>>
+>>>> The hook is triggered just before activating an inactive table of a
+>>>> mapped device. If it returns an error the __bind get cancelled.
+>>>>
+>>>> The dm-verity target will use this hook to attach the dm-verity's
+>>>> roothash metadata to the block_device struct of the mapped device.
+>>>>
+>>>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+>>>
+>>> Hi
+>>>
+>>> Why not use the preresume callback?
+>>>
+>>> Is there some reason why do we need a new callback instead of using the
+>>> existing one?
+>>>
+>>> Mikulas
+>> Thanks for the suggestion.
+>>
+>> Mike suggested the new finalize() callback. I think the reason for not using
+>> the preresume() callback is that there are multiple points that can fail
+>> before activating an inactive table of a mapped device which can potentially
+>> lead to inconsistent state.
+>>
+>> In our specific case, we are trying to associate dm-verity's roothash metadata
+>> with the block_device struct of the mapped device inside the callback.
+>>
+>> If we use the preresume() callback for the work and an error occurs between
+>> the callback and the table activation, this leave the block_device struct in
+>> an inconsistent state.
+> 
+> The preresume callback is the final GO/NO-GO decision point. If all the
+> targets return zero in their preresume callback, then there's no turning
+> back and the table will be activated.
+> 
+>> This is because now the block device contains the roothash metadata of it's
+>> inactive table due to the preresume() callback, but the activation failed so
+>> the mapped device is still using the old table.
+>>
+>> The new finalize() callback guarantees that the callback happens just before
+>> the table activation, thus avoiding the inconsistency.
+> 
+> In your patch, it doesn't guarantee that.
+> 
+> do_resume calls dm_swap_table, dm_swap_table calls __bind, __bind calls
+> ti->type->finalize. Then we go back to do_resume and call dm_resume which
+> calls __dm_resume which calls dm_table_resume_targets which calls the
+> preresume callback on all the targets. If some of them fails, it returns a
+> failure (despite the fact that ti->type->finalize succeeded), if all of
+> them succeed, it calls the resume callback on all of them.
+> 
+> So, it seems that the preresume callback provides the guarantee that you
+> looking for.
+> 
+>> -Fan
+> 
+> Mikulas
 
-I don't think anyone in the real world does create dm-stripe devices with a
-huge number of stripe table devices. My point was that it didn't seem
-obvious me that looping through the targets was a significant problem
-compared to looping through the devices.
+Thanks for the info. I have tested and verified that the preresume() 
+hook can also work for our case.
 
-At any rate, Mikulas's patch already does this optimally, even for
-targets like dm-stripe, so it doesn't really matter now.
+ From the source code 
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-ioctl.c#n1149, 
+the whole resume process appears to be:
 
--Ben
+1. Check if there is a new map for the device. If so, attempt to 
+activate the new map using dm_swap_table() (where the finalize() 
+callback occurs).
 
+2. Check if the device is suspended. If so, use dm_resume() (where the 
+preresume() callback occurs) to resume the device.
+
+3. If a new map is activated, use dm_table_destroy() to destroy the old map.
+
+For our case:
+
+- Using the finalize() callback, the metadata of the dm-verity target 
+inside the table is attached to the mapped device every time a new table 
+is activated.
+- Using the preresume() callback, the same metadata is attached every 
+time the device resumes from suspension.
+
+If I understand the code correctly, resuming from suspension is a 
+necessary step for loading a new mapping table. Thus, the preresume() 
+callback covers all conditions where the finalize() callback would be 
+triggered. However, the preresume() callback can also be triggered when 
+the device resumes from suspension without loading a new table, in which 
+case there is no new metadata in the table to attach to the mapped device.
+
+In the scenario where the finalize() callback succeeds but the 
+preresume() callback fails, it seems the device will remain in a 
+suspended state, the newly activated table will be kept, and the old 
+table will be destroyed, so it seems there is no inconsistency using 
+finalize() even preresume() potentially fails.
+
+I believe both the finalize() callback proposed by Mike and the 
+preresume() callback suggested by Mikulas can work for our case. I am 
+fine with either approach, but I would like to know which one is 
+preferred by the maintainers and would appreciate an ACK for the chosen 
+approach.
+
+-Fan
