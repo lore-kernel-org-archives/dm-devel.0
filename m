@@ -1,144 +1,117 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A6B1524AF
-	for <dm-devel@lists.linux.dev>; Fri, 17 May 2024 12:53:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FD4579CC
+	for <dm-devel@lists.linux.dev>; Fri, 17 May 2024 14:33:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715950427; cv=none; b=Z+NcOKvjLxLfP33sVDMY/VCG0VKYQsrj9oF5zg89RjXQDVfuZWYIc8rXNy2t2c9PgclTdsYnUrHt8woEVZb8IQ3N12OnTnxf0NpY2l7x6W/mK53MvxlqSnnGs3JkFZIsQedQhT//4AM6+ET1mp/2P+Csz35hGdSmeY3N7EeCYwo=
+	t=1715956398; cv=none; b=Y/UeVJv/KpJyha1uX5Efd66HxpEkmBFjdyvHJBYxrtqNrQbNvSvZzPEcKmE+5LJqMBIf5D2hnxCEvDM79zvTfx5NqcR/NPGmZFSJKkZfZbrhh1a3L0GCy6B9Z03VyUxef3yoIkJUA0BIposViMe+rvGzM66t3uBAVDfOAQBZxPc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715950427; c=relaxed/simple;
-	bh=++ylF5mAuYf7NXGIAbjfEBud2voVVTi+RbFkmWWZK2U=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=OKA4zdfWgj3okwrvrPHHD01Uw3FK1dfIrp9eis6n6LLZhu69OilHpF2rwUZLZ0DN13YDTeLC6sF7kivSROSqPjpyjO0TeO9w6hbY+nWG2PW+cLM29Ub2UDtVehTP1uQI+eEkTlRGGH2LDCxEkZ65A5hGccuRZleVG3vXSZv0nPU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=PDEs01bV; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=zSStPvfd; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=PDEs01bV; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=zSStPvfd; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	s=arc-20240116; t=1715956398; c=relaxed/simple;
+	bh=V93XLAiIxz56pOFhKRk2dq+FLKZDcnpird74nR4nZdo=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=X86qLtXnMoTrAzPRTrK+XWG7IXYRqSvTp+yKu2cSf+17XqmGMpbQ8B0yjyoWp+vRG8FBJieV4gtbaMVz6qrhUxK7Sy6nXlVfvC+gQ13GYzY4OePcEB/mkHgPQlD4rqYrmBMzBsNbkIHtLCUYWnEu9ui6dKU7hoZLzFakFkcll5M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cD8G3wAe; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="PDEs01bV";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="zSStPvfd";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="PDEs01bV";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="zSStPvfd"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cD8G3wAe"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1715956395;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=qXRpht3Oiyb6WnCO2PLJaNfFB/1BTZbbiqXWPvuMhk8=;
+	b=cD8G3wAebGGzPBWtO5rICY44gfV0adUu5DRHtyDNTtJvTq43WQSrITfsLyxnmFqKh0ZOaC
+	1L/Burqp2JZm37H9gmjotP2j9fZrngVbULEWJxk1JiUmfYj6Io3/eNjxvbgt4JdyOaZnCC
+	I3AImNZ8MhXq3VmeyHfd1yMP68kovb0=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-7-f_iC8IrFOze2TXNajTJl6Q-1; Fri,
+ 17 May 2024 10:33:11 -0400
+X-MC-Unique: f_iC8IrFOze2TXNajTJl6Q-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 651945D397;
-	Fri, 17 May 2024 12:53:43 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1715950423; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=weqWsq0ZT1VZ7wYdqnmf3ZTv0gkAQuPpWEsY9C8w7R4=;
-	b=PDEs01bVI+rxrfTsLgT52HHuTKuja2Ei6yQGR8jTwuVqhKz9816UD4gcICeMJdgfTDPUjH
-	1/2/CpxAonaWNnVxq5LYVI6/Jjl+i5hPBm6txAHY4blAgbRjKP9qXED2hkVOk1SzSSFNTe
-	D32eMgGxIV7aGzRa9bMPyFjplfGNFDY=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1715950423;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=weqWsq0ZT1VZ7wYdqnmf3ZTv0gkAQuPpWEsY9C8w7R4=;
-	b=zSStPvfdaAd/XlIAVDBkq6r7fvYtCRerFp/ovJ4uV6AHhL5xhTfuXjMH/pCx/ZmEoM6QZr
-	eINHvPaxY+9gNWAQ==
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1715950423; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=weqWsq0ZT1VZ7wYdqnmf3ZTv0gkAQuPpWEsY9C8w7R4=;
-	b=PDEs01bVI+rxrfTsLgT52HHuTKuja2Ei6yQGR8jTwuVqhKz9816UD4gcICeMJdgfTDPUjH
-	1/2/CpxAonaWNnVxq5LYVI6/Jjl+i5hPBm6txAHY4blAgbRjKP9qXED2hkVOk1SzSSFNTe
-	D32eMgGxIV7aGzRa9bMPyFjplfGNFDY=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1715950423;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=weqWsq0ZT1VZ7wYdqnmf3ZTv0gkAQuPpWEsY9C8w7R4=;
-	b=zSStPvfdaAd/XlIAVDBkq6r7fvYtCRerFp/ovJ4uV6AHhL5xhTfuXjMH/pCx/ZmEoM6QZr
-	eINHvPaxY+9gNWAQ==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 3EF5F13991;
-	Fri, 17 May 2024 12:53:43 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id wJtyDVdTR2Z/EgAAD6G6ig
-	(envelope-from <hare@suse.de>); Fri, 17 May 2024 12:53:43 +0000
-Message-ID: <a3d8bab5-9293-4765-b202-d2bbecaa1f63@suse.de>
-Date: Fri, 17 May 2024 14:53:42 +0200
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 004D23802130;
+	Fri, 17 May 2024 14:33:11 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E9F5F2026D68;
+	Fri, 17 May 2024 14:33:10 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44HEXAqY146578
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 17 May 2024 10:33:10 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44HEXA7Y146577;
+	Fri, 17 May 2024 10:33:10 -0400
+Date: Fri, 17 May 2024 10:33:10 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: YangYang <yang.yang@vivo.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+        Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+        linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 3/5] dm: support retrieving struct dm_target from struct
+ dm_dev
+Message-ID: <Zkdqpl5SN3RV0smg@redhat.com>
+References: <20240514090445.2847-1-yang.yang@vivo.com>
+ <20240514090445.2847-4-yang.yang@vivo.com>
+ <ZkTXzG1yrPmW64Z6@redhat.com>
+ <80ddcd90-2e1c-4fbf-a45a-b1b5ff4d60fb@vivo.com>
+ <ZkYmZaGWPtGIwedG@redhat.com>
+ <8f49b95e-88df-48b8-9311-8a15414d8107@vivo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Kernel namespaces for device mapper targets and block devices?
-Content-Language: en-US
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>, dm-devel@lists.linux.dev
-Cc: linux-block@vger.kernel.org
-References: <61c1fff7-b5ff-dfdd-62c1-506e055ae5e@ewheeler.net>
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <61c1fff7-b5ff-dfdd-62c1-506e055ae5e@ewheeler.net>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Spam-Flag: NO
-X-Spam-Score: -3.29
-X-Spam-Level: 
-X-Spamd-Result: default: False [-3.29 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	SUBJECT_ENDS_QUESTION(1.00)[];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	XM_UA_NO_VERSION(0.01)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[3];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.de:email]
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <8f49b95e-88df-48b8-9311-8a15414d8107@vivo.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-On 5/17/24 02:18, Eric Wheeler wrote:
-> Hello everyone,
-> 
-> Is there any work being done on namespaces for device-mapper targets, or
-> for the block layer in general?
-> 
-> For example, namespaces could make `dmsetup table` or `losetup -a` see
-> only devices mapped in that name space. I found this article from to 2013,
-> but it is quite old:
-> 	https://lwn.net/Articles/564854/
-> 
-> If you know any more recent work on the topic that I would be interested.
-> Thank you for help!
-> 
-It is on my to-do list.
-We sure should work on that one.
+On Fri, May 17, 2024 at 03:48:49PM +0800, YangYang wrote:
+> On 2024/5/16 23:29, Benjamin Marzinski wrote:
+> > On Thu, May 16, 2024 at 09:55:53AM +0800, YangYang wrote:
+> > > On 2024/5/15 23:42, Benjamin Marzinski wrote:
+> > > > On Tue, May 14, 2024 at 05:04:42PM +0800, Yang Yang wrote:
 
-Cheers,
+> > > 
+> > > If I understand correctly, you are suggesting to iterate through all the
+> > > targets, handling those with sends_pass_around_flush set, and skipping
+> > > those where sends_pass_around_flush is not set. I believe this approach
+> > > may result in some CPU wastage.
+> > > 
+> > >    for i in {0..1023}; do
+> > >      echo $((8000*$i)) 8000 linear /dev/sda2 $((16384*$i))
+> > >    done | sudo dmsetup create example
+> > > 
+> > > In this specific scenario, a single iteration of the loop is all that
+> > > is needed.
+> > 
+> > It's just one iteration of the loop either way. You either loop through
+> > the targets or the devices.  It's true that if you have lots of targets
+> > all mapped to the same device, you would waste time looping through all
+> > the targets instead of looping through the devices.  But if you only had
+> > one striped target mapped to lots of devices, you would waste time
+> > looping through all of the devices instead of looping through the
+> > targets.
+> 
+> Yes, I get your point. This patchset may make things even worse for
+> the striped target.
+> I am just curious, in what scenario is the "dm-strip" target mapped to
+> a large number of underlying devices from the same block device.
+> 
 
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+I don't think anyone in the real world does create dm-stripe devices with a
+huge number of stripe table devices. My point was that it didn't seem
+obvious me that looping through the targets was a significant problem
+compared to looping through the devices.
+
+At any rate, Mikulas's patch already does this optimally, even for
+targets like dm-stripe, so it doesn't really matter now.
+
+-Ben
 
