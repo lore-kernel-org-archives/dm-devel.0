@@ -1,65 +1,65 @@
-Received: from APC01-PSA-obe.outbound.protection.outlook.com (mail-psaapc01on2048.outbound.protection.outlook.com [40.107.255.48])
+Received: from APC01-PSA-obe.outbound.protection.outlook.com (mail-psaapc01on2056.outbound.protection.outlook.com [40.107.255.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9875A179A8
-	for <dm-devel@lists.linux.dev>; Fri, 17 May 2024 07:48:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.255.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8137E10A23
+	for <dm-devel@lists.linux.dev>; Fri, 17 May 2024 08:56:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.255.56
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1715932140; cv=fail; b=J/F98UwJlGYOqH8Xab0jsbG+ygZgsPaLh4y428eWQiWOj/l4TmrmjmKAzqIuMFOw2RRAb8Danz0FkUPTULvNYaWUxgG1Z4CTuBW2bRfvs2FzYf6plqITmnsgX63ER1m//e9HHx2Nq3B1rosZRcZWIPSZMCz4gAMUYyWeDQOlbIk=
+	t=1715936164; cv=fail; b=cYDy2djBjeV71NPsq7EdrvRk7rAV+18tMM4iGAOLIB7dcOp8lHiKhwoktrsWTl+UkLHqEv8EU6wP/wTb0yMzUW2Th77RmMQUUdCkOhwCgsX9r6toREygL7J5aAaDqINUXjIKkPsiDAoaKpAyj2DPFx+j3VzHheAmgmzUsUP78N0=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1715932140; c=relaxed/simple;
-	bh=bwLYGk7p5mxL4A02drJvPEyR367cKRry0+OzF2r7Kpo=;
+	s=arc-20240116; t=1715936164; c=relaxed/simple;
+	bh=ZSmsmExMIV3BPtG8+G1d6pRZ/b2ouH0rKVPpia2B6o0=;
 	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=A3ib79KzxmDH158mxEZDAtlc1hIi9okT1gHKOObbd7JZt4AeD/EyUn+MTgCFe3NoJL1hDgWeZuU2DKzsZimat2hSyPZMa2+3HXJYxRbCdt8C2ktLYKUBMJNBpRYLwLhofO9OFwWUmC9RKvBVtLx0I5ciauW1IPK27nEK9KFOY8o=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=DlqZ7Mhd; arc=fail smtp.client-ip=40.107.255.48
+	 Content-Type:MIME-Version; b=BxRmT86j5UzYDEWTi1ObPxKP8Y340Arb68d6mbt6yr7KqgcKrPvn7kxjs3hngnpXtf1nsGA1TxTNzvYgLsLwQPJBzCBAodWNtfSSFaYJM3xOlF3/1jR7FmvBGFDcdTosyCxnSTsZoamyOSO7Nm0eeF9+o7ACCuwS/aBvOQAuego=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=T/K3cUJN; arc=fail smtp.client-ip=40.107.255.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="DlqZ7Mhd"
+	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="T/K3cUJN"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=DFLc/5KoeuFxluZMoSveAjOEq5tqGCjNc8p/s+UazBLTG4t5mu2HUuoiYfxhPScuHkU1hZMSzzH+nLKajHkMJWOvrmvGO97p03SCFXRsgEhHNaN4FxVP10GgV5vA2JqyTz0S7gHN63ExNrjcrKD6tqKhPJE5qigh6Ao97I84tUnx90NqMFlLMTI6bYFF2G7cDa+jyYrgpeZ9DXsOs7Y2iDMppVr7OQG/q2afJQCSE+sypp5la5IQDpFrQSVCAYsAioMqrf+RAyPqvDIkdXQX8cmBgCRRiyeaL/8vAGE4/SaV84uuNG8aGnK3BQeYJjo4IZQhThKizZ+rTb+5vLVzpA==
+ b=h3O6b3DJOnV6lqCJePybZm8jhsYNRUZNGiibP6deNDhF1vIfupP4H6JAbTf91BboNT5c7ifdBoS+KlxbiB27uRehubIf3ppg0RXudSvRl/G694lIaI8GiZpS2DqDpUYSRdyKiIeXUuMPg93jxnFGoDs1i5fpUCjPAU45pv+TcWBP4cjK4IP5H3knt4vee/ggDGMcC7yHsYI2UBxqQUBr0MPjikQ8RicsK4ZRdWSYebV6KQEL1vN/ODO0F2Afiw/Ge26RFXs2dGGp2ky+VLqRPGWYll0+0hLcO6boKhv8d+IGBg8WXszAQOTDu0S7pa0ecygkoDYwcrkzplvfHWXbSQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector9901;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=6WHPDxfQC8Cz0SKLPSS1k0tQuqB2OfZM9qyLrgjZk8k=;
- b=U8OLdQr9ekogJKEDPspT+P4l4TUqsPkr6H0bWv3JsdTVZ7wLN060vPlJi+sldXenJYtYrMIdHSNiBF0uJsKzDRJSsz4MQEMsJop2yvVbjvaXuU3aHQJYvzoJ8WfCJcRGvef3Vcto1U9v+jq4ZXLWOHCfB0sVZoXJgFPB3X2eJE1xmJS36yzxcRgAJPI0E2V68hFGzNWFIcUHUy/gmrhUHgnpMb7ytVwAqApndiO/yVXNed8ke/3cvcg0mc4a7YqNBnrOGMlXZsbHCGsCpLxlInxu6qBCcXzh7lHiipzbX6t1wNY/NDgpDplNOeZwEBPxBvjRMtwdQ7ZQnX086M9YPQ==
+ bh=tEgLbXj89fXnxcQ5F4AHW/ghe8p3w/edsB60JjpnhZ0=;
+ b=h5wYb7oesP2pnZe6LSS0Y02a4yHTN/fhp78MUFzYvGHacFMywwrvssakB8rh8X4gvvhezgV981VCodsTbF7eqTs0qruIXnB814ixjcPgCJ7r15NxwUZgLQ1SHumhXsfzqGkXsdkoaNtEp1LQxViL1kPuv44SgqZgJE64bu38DjmxTPfCr3k8HFYXSfgeTkwybRHgc2RD1RHRbdfIlY3uVkG5OZ+ltI3msyhcF/+Lw5yUDHex3B3xN4tbmb3ruz03SFtL/UDnKrvsVEfNbzSv3+lLIADUizAlFhF2MWKEgQBFPcA14FX1527dZVkN6ZgMSds4ASz66kXC1KlnYj6bGg==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
  dkim=pass header.d=vivo.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=6WHPDxfQC8Cz0SKLPSS1k0tQuqB2OfZM9qyLrgjZk8k=;
- b=DlqZ7MhdggRhbV8gAoDT8w4CxixCTzJmDnVXoT0XS/KqLV6GGlCtyk+/4kV0rIjubl2GQLjmS+vKHzTSMzmY/claBbMRzhOixQwKvCejejnN/6sdCiJT0VJKzEqDZXvCHzy6b/uU0Di4gMYvtuckv7xEGYdP8++1FJdkQBEGDcquSWNNC+29KZPot/wo1I2IyQhfnS3fX+6Urd50MUkFXH/9NAIK0HTEbK6GeqAKW7Z1KUFuG0teVt2ZUx2z7b2Q4zJ5JdK38JpQz31g4Fg+UQWwlf9AgDbDvnMIfRMUpI5gsiFrwx3qi0k7L9wt6tyGkE9vT/M1bdEW+nKG/t0usg==
+ bh=tEgLbXj89fXnxcQ5F4AHW/ghe8p3w/edsB60JjpnhZ0=;
+ b=T/K3cUJNAnhpbNj9pZFBzjqIUiGm1hYYlTfqHpZcdbaQQiXXQPF8RG18X8VL22cPCSI/tg7w5Xb02M1HOlFX5uUMiX1jWQu33P5Ibp3aPxIrqfeYHJaf8IyvU8LEW/Nz8Ay4ziqwUagr9XS3Ut6AjIfa7PYMD7LsRZIIBrJh2oOxYPSVwT69xz+uLSUPnHReRUA3vQ6sYxPkOUFAclAC78cXo+7a3Og7b3c2Z3V1gZg83LANMOcfN9Ln61gU4TiSnbteeng4VA06s15mlJEk+Bi/4RH1QeQ9lF/YOh4i5OpGoHJj6z9liT3TVEka5AyIJkPpAEP79o/01CXayy8H8g==
 Authentication-Results: dkim=none (message not signed)
  header.d=none;dmarc=none action=none header.from=vivo.com;
 Received: from TYSPR06MB6411.apcprd06.prod.outlook.com (2603:1096:400:42a::11)
- by SEYPR06MB5669.apcprd06.prod.outlook.com (2603:1096:101:bf::14) with
+ by TYZPR06MB7141.apcprd06.prod.outlook.com (2603:1096:405:b7::7) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7587.28; Fri, 17 May
- 2024 07:48:53 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7544.55; Fri, 17 May
+ 2024 08:55:58 +0000
 Received: from TYSPR06MB6411.apcprd06.prod.outlook.com
  ([fe80::8e76:5af3:e027:ccee]) by TYSPR06MB6411.apcprd06.prod.outlook.com
  ([fe80::8e76:5af3:e027:ccee%3]) with mapi id 15.20.7587.028; Fri, 17 May 2024
- 07:48:53 +0000
-Message-ID: <8f49b95e-88df-48b8-9311-8a15414d8107@vivo.com>
-Date: Fri, 17 May 2024 15:48:49 +0800
+ 08:55:58 +0000
+Message-ID: <753c5305-6104-44e1-b402-a5ed6ea03d82@vivo.com>
+Date: Fri, 17 May 2024 16:55:55 +0800
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 3/5] dm: support retrieving struct dm_target from struct
- dm_dev
+Subject: Re: [PATCH] dm: optimize flushes
 Content-Language: en-US
-To: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
- linux-kernel@vger.kernel.org
+ dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
 References: <20240514090445.2847-1-yang.yang@vivo.com>
  <20240514090445.2847-4-yang.yang@vivo.com> <ZkTXzG1yrPmW64Z6@redhat.com>
- <80ddcd90-2e1c-4fbf-a45a-b1b5ff4d60fb@vivo.com> <ZkYmZaGWPtGIwedG@redhat.com>
+ <60bd4b9-8edd-7e22-ce8b-e5d0e43da195@redhat.com>
+ <90f4beb-2e15-3f9-4bc2-0d13872e8ea@redhat.com>
 From: YangYang <yang.yang@vivo.com>
-In-Reply-To: <ZkYmZaGWPtGIwedG@redhat.com>
+In-Reply-To: <90f4beb-2e15-3f9-4bc2-0d13872e8ea@redhat.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: TYCP286CA0023.JPNP286.PROD.OUTLOOK.COM
- (2603:1096:400:263::10) To TYSPR06MB6411.apcprd06.prod.outlook.com
+X-ClientProxiedBy: TYCP286CA0321.JPNP286.PROD.OUTLOOK.COM
+ (2603:1096:400:3b7::14) To TYSPR06MB6411.apcprd06.prod.outlook.com
  (2603:1096:400:42a::11)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -68,271 +68,277 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: TYSPR06MB6411:EE_|SEYPR06MB5669:EE_
-X-MS-Office365-Filtering-Correlation-Id: b13edea2-8710-4910-bdb3-08dc7645cc7a
+X-MS-TrafficTypeDiagnostic: TYSPR06MB6411:EE_|TYZPR06MB7141:EE_
+X-MS-Office365-Filtering-Correlation-Id: 5c7a6461-7f70-43f0-5d67-08dc764f2b74
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230031|376005|366007|1800799015;
+X-Microsoft-Antispam: BCL:0;ARA:13230031|376005|1800799015|366007;
 X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?U3dnODdjRGo4Z3VsbW9mcWMvTjdMSEg1ZHlRalEyd3pEaTl3UktYR3pDMVEx?=
- =?utf-8?B?ZzRJbm5DSkVsN2FDME8rQWYvdXYzbnl0aDdJWFhacWNNK2xUdThwUTdaWmNE?=
- =?utf-8?B?R1VJWlBseVY5TWFibUdBVkdrbHZGZGNybDRFOW5yZVN6M0pjQlFEWFNZc0k4?=
- =?utf-8?B?SURMN21SdmlJenRsNE5CcGJMKzN1QnFFbGMxZjR0OVZzUkhva0NFMldpUGJT?=
- =?utf-8?B?Z0tlRmRneXo3RFoxbWEzZi9rWnZPMDU2UmZTandWQ01Jd1Z0NENLaEU0dUdx?=
- =?utf-8?B?YVBrUFViZXJ0RlJEQlBkc2V4STYxMHM3cEZUZUxNVTlBZmY2MXdUUGNtbnRV?=
- =?utf-8?B?cU90OGs5Qk9SVCtyZ3F5TVVMdldwcjV6alV5T1FWSFh5NFl6Z0pkUnhHQmNh?=
- =?utf-8?B?WGdVNXkwVWV0RWZkbUJDdXpyTmFOSitLb216SlcyQUFnU05xdzEzTTNHdEh2?=
- =?utf-8?B?M0lqZkFnYythWStTZWpteUcvbDljNkQ3YTlhOWRpcVRrVWlhTFcvZldPTXJX?=
- =?utf-8?B?Tkt3U2RVK1M3NkErSEoyR0RSbnFLYmd4NXN6bE5wVE9XRVBRUCtoVUUxZk5G?=
- =?utf-8?B?dzVBZXA2TWJrb1hVS3djV1JiSjBuRXk0NDh2VEtzWGJIRHd2MnJyQ0I4L3FS?=
- =?utf-8?B?dFg0aGRud0IzL0ZpZWZydW1DSU9OSFpZMUJtNWtLVndBd1JVT2E4MUdQaTVZ?=
- =?utf-8?B?azI3SHN1ZDVqNnRYdEFYaXNmMXFFa0RkUjZRc1hJZ0xiQkErb3RPQjR2elho?=
- =?utf-8?B?TnY5MzFFOTFzTUN0MjV2anR1Uk1maFRJWVliYVI1RHR1Sy9BVFNUVDdidGNt?=
- =?utf-8?B?UEkzUmY1RHRzbnAzem93dWpFaVgwNHdGVVFMNXFBVkJEbGRjR2hmUmd1elVu?=
- =?utf-8?B?Yi8rU1piY3VDZWRkMlRsWnBsRlhYNGh5TjdDTkhLRUhORmlmTzRaZkxXZENC?=
- =?utf-8?B?NGsyTTdJeUFZbkV4UlJxaFgrYm9EOHlkYVZvdm93VWYzeWF4NCtuRHh0dUNE?=
- =?utf-8?B?MWN6Y0I2YlNQTUNJY1BiNFpWL3Y1YjJiME1xS0FCbzd6ZDVWYjBMUGFaT0Ja?=
- =?utf-8?B?TkdRaXlucVkyMWpsa0ZNcnJZc2NxSVpvRFBIZ3lCL3RhZEQwQTJvYVAxNUlX?=
- =?utf-8?B?MUNKMkQyQ04zZW9rc3htUS8xZ1RralRoMjg1MXNUblNJUzExUDVkR1hLTXlZ?=
- =?utf-8?B?QlJUS21GQmE5Qkx5ZnFEVGdMU1lnNUpvWkFJeDd1Nms2a0g3OVlRZ2lNNHRW?=
- =?utf-8?B?bHcraHh3ZUN2V0xEYkFxYTNpUjE0RUFjQ0R4QmFTUWhDdktwTDlTZVY3NEt4?=
- =?utf-8?B?Y01FL211VWZEMzJJT2FoSmdOYkhFelQxdk9YS1JmYjMyZ2lKa3NPRGFJYWl1?=
- =?utf-8?B?ZDNod2dpV2pUL3Z0bTgwRjF6ZjJQQ3k0d1F2ZThZK01SWkVwb08xb0N6OUJE?=
- =?utf-8?B?ekpKdWt3KzlXa3R4WGh2RTFncndIUHBQN2UzN01uMllCRTJPVDkya1lVVFFu?=
- =?utf-8?B?VFR3dmg2QTJ6T2ZLSnV6NUo2VkpvSm12UGJySFEwVnhoU0VMZDJya1NNRkhI?=
- =?utf-8?B?dU1kU3hHR0xxYkwwaHBLNjA2RlVXSGFZY0tPUkFaOHQ3V3V5QVZUdkpFRWwz?=
- =?utf-8?B?YTE1VDl1bXpPVkk2dS80K2pkWkErK2E0UzhnWGFYQ0pGWE51Z01nVHUyZlJF?=
- =?utf-8?B?OXdnK2hRbGZzdnhCeDhEOCtxTmpRVFRKV3lBaFBpN09ZejZYcjFWQVJRPT0=?=
+	=?utf-8?B?MXh2OW5GWXFKRnFTWjJ3eVYvV2d5US8vUEZCSkxMSmd1UWc4dkV5akxWNHJT?=
+ =?utf-8?B?b3dTNGloSUdTakJBQTR0NEs1eWljMVFuS3p2cHdLUXpjb1JUWkRUMCtvcUwr?=
+ =?utf-8?B?TXFzUUhjY1VlYzVQYm5yTFlTT1BxeUc4cHlGTjNUNGJKT1NwQWQ0SVlqVS9q?=
+ =?utf-8?B?TVM5dGhGeHJYaW53ZlRJSlFJVk10MUFPQzNOZXNVaXl5VTFUL1l3YW5mUmRB?=
+ =?utf-8?B?L3N0UG1sT29nQitxTEx1YWpCbVZHOEs3YVI5VzVwQ0pVZnc0OGVTdjU1ckc1?=
+ =?utf-8?B?ZW5vazNyZkhnenlVRGNrZjhsYkR1QTF1VlpDaG9GRUdaL1hmSjRtSmk3N1V3?=
+ =?utf-8?B?ZHBvQ0hVOTZhVE1qYmxiSGN2Y2pkQ2VzUUdobWxQTFBxUHdib21SVktXeUQr?=
+ =?utf-8?B?Kzg1ZGxlZFpHUCtqNnhVYlZYdzBFV2NETlExc1UwRUdIYUk0TUxNTXBXODVU?=
+ =?utf-8?B?cDdMVngrWWtRWkxGNDkyM0Rzbmd2dGlzRXNUV1M2cTdvMUlGU3BTZFBCZ21O?=
+ =?utf-8?B?U21SUmRjTnd1dHhCM2dmK2trajllRFN5bDdkM3JBOW1XeERPWkphTndBSjE5?=
+ =?utf-8?B?TURPWHdEQUMzQjNyeERoRXVYdTlSdjdWZmlYcElnb0kvRm5XdEZycjU5dlFX?=
+ =?utf-8?B?TEhFMzRoUER1WGZZSi81SHp1dVdRUnZxMDdwZ21tb0NDVE5WWlNwY1NvdElV?=
+ =?utf-8?B?RVFaQitucUxUTk5Sd3VocHBtNGwyN1VJOWk4MTFaRXlJTEpVSDdrR3N5Rk5B?=
+ =?utf-8?B?K2g4ZVpDSEdKVUJva3NjTXR6VzNKVFpIeFhseG9LckdPcWpJdXZpQ3ZRL29Q?=
+ =?utf-8?B?OGt5N3pnSDhuRUdWUHRhSzYrT2NIYmF6Q0xPMDQwc3UxaDN4azVqQ2lXZUI4?=
+ =?utf-8?B?b25oSyswTTNIRmRSY0dBU1h5MnhJUWhndmZqVnNsWG9STUhLYW9UaTlLTWRG?=
+ =?utf-8?B?aGpFSWhKa3NpeDZ5ZlZiaUo1K3RteUVWS25RNmxtR2pjRmFvZFFQLzJEcW1r?=
+ =?utf-8?B?Z2E2Wnpzc0RhZmNwWmR1ejVxRDRmeEhrWEFnbThXWUgzSXN0bWY4VmJsUFBW?=
+ =?utf-8?B?WXIzTkZzcUY3djNkVm91ODJuc1pNWE95RUIzWHVvL2ZlbTV6bUxqeHo0MEpN?=
+ =?utf-8?B?QjNyc0t1Q1NjNWE0M3YzaVpVL0R0dGdLc0pvNFloT3pqamt2MUFHOEFjUW80?=
+ =?utf-8?B?Z1EvNW5mb0JHSkFDVzFMeGoxM2t6Z01YRkVzZTBPWm12VVlFMzVJZHhsaFRT?=
+ =?utf-8?B?bVRPOWJyWVBnd0dwdkZUTkZNU29KWWhhejVDYkMwR1hWRmpRQUxMbXRsYzZq?=
+ =?utf-8?B?UXFKVUQ4M3hQMklVZTNFTEd4OHRVUklDK1V4VGR4Vlk2SjBsWDZXajlVSE91?=
+ =?utf-8?B?eXlYOFZsMGZMYms5K016OFlaR1VSTVlGT2hQQ29ZL3B6VWdaSmFqQnB0d1pr?=
+ =?utf-8?B?K2VqMFZMaEFQRGdMblRtWVM5QUgxMlBNNzkrT2xyS1ZxbzhGNTRnR1EvOWVL?=
+ =?utf-8?B?aWJHcm5nKzdZaENkQmFwWFNMMjE5YjZBMFJHOU44TGE4aFk3ZXdwM3JRR0cv?=
+ =?utf-8?B?TExPSHNJTlQzYUVvOGRuTXo3ZXNBK2pDTlpodHBiWUxYb0ZyZHJwNXBVVWtL?=
+ =?utf-8?Q?dI+30atXYt4BfDoaS1wGSikcAhMqP2FPC8URK+sSLvpk=3D?=
 X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:TYSPR06MB6411.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376005)(366007)(1800799015);DIR:OUT;SFP:1101;
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:TYSPR06MB6411.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376005)(1800799015)(366007);DIR:OUT;SFP:1101;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?YWVUNEg4SEV2a0s2WmFYSjRwZlhEaCtZczRDOTdjNGVjYllNSFVPOUxMMmdH?=
- =?utf-8?B?RDNCZ1c5bmhMb01lMzFIeVk5ckwxVlhSS2c4cG52QzJHNk5HUmMxY3p2M3Ji?=
- =?utf-8?B?ZW9wTE9oZmNpaCtZdzgzRG53OU9WeDdKVEF2U1prb3phais5cHFzWnliUFA4?=
- =?utf-8?B?c1RDejY2VDVCeDlFcFNaSWYvcGFqQzJad2xVdmpabXBZbkZ0MWpnVWp5RjFj?=
- =?utf-8?B?S1NWT0FJTW45UHRCemZ6dnZRZm9OYUlTTzl0V0JGVkRWNjBNa2hWU3pxMGxO?=
- =?utf-8?B?RnNRb1hHalZXSmVXVWJqRUZSMkhFOGJxdmFLR2IyRHlwcjYwcWJBdjU5QlVJ?=
- =?utf-8?B?Tjlwd3JwdTVCRXBoTjJrRStRbEVRSjkybU4rY1dVOGY1MkJGNmFtOXVGL3ZC?=
- =?utf-8?B?V2taRzZnUWlKd3gvcVRlUHJFdzc5d3Y0Umh3b2JBTjcyQmI5MTVHZm10emE1?=
- =?utf-8?B?MWFJUUxpM3NFdmkvUTU0aUpTdGpGUUhMaXlaUWxTc2lBNGZiaTZDeG5Va3NQ?=
- =?utf-8?B?cjFNWUUwSlRsS1BsQU93Nkljayt2OUVkUE9neWIvME5uRVJaUlhncXdRUU9G?=
- =?utf-8?B?Zit1UDl0Sk9yQ1A2L0VIVXlYTStVTXV2eXluK3hwK2N4ZGw5NjRQK2pwR1BW?=
- =?utf-8?B?bW1VWC93ZXZJY1ZvT3Nqb1FhZUZkcWczV2lKZ1FRYUs4QTBQWlBrdnlGbHdq?=
- =?utf-8?B?RWhKRTR2U002R295UDh3NGo0VkNaRFJHVlNnR3kvSTRuVzhqaEMwSk40WnFR?=
- =?utf-8?B?cGVTK1ZzaG1VYjRtSk10NWVlR2ovbDBjMEJlSmsvVkxGVEx4V3NVbldiM3lG?=
- =?utf-8?B?R00wN1NsWFN4NzBMdi9MYjRBK3Z1eEt1OGdHYzBRWktIL3ltcTNIRTl6aExF?=
- =?utf-8?B?cXdlbWxjQURNTUFYdWVDLzg2TDFUSUFyTzZZdHNHQndsRFRPWkU2bHJ6VExQ?=
- =?utf-8?B?WkNIUG1yU3FtbFhNdnM3SFlqYWxHc2NkT2FkS1d3OVdCN0FBUk5HWmpPVVh3?=
- =?utf-8?B?Um95T28yK04wV0JlSzNiRk5wSXRIb0FmS1RTako0Y2pmaGd1U2V2NFZpWmMx?=
- =?utf-8?B?ZGhLd0RwVFdBVElMNlVkTm44REx4N0xKWDREMkZCR3ZDUnhzdlFZS3dacUZR?=
- =?utf-8?B?THUyc0s4cmNQUERzdlY0eEl1djd0UXpPZjFyNFVTdUFLNzFwN21ISjBRck9S?=
- =?utf-8?B?MDd2UmFqZUdlak03L1hKMmcxZDErczJ0cTN6eWorKzBGVmhjZ1czUEU5S3Jz?=
- =?utf-8?B?RzErYzRxdThOR0JIN0RWaTJRTzB3Z1FHZWFCMU5FQXprS1lyaUloQXJRRWhU?=
- =?utf-8?B?MlVMNGY1c2hXSWRCN0haQ3dHQTI2UnpQd085dG91VWhjU0VtYVlTUDFlZ3JO?=
- =?utf-8?B?VmUzU3ZqZGpkVU04dHp0cllMYnBNRktxYVQyNTc0QnFsUWdXdjQwNU9iZ2gx?=
- =?utf-8?B?ZVNNbDZ2RUtvREdEdjF4Q2krZTZZcmhvdHJGK255LzMxaEtXcklyb3lYczNq?=
- =?utf-8?B?RURyaHJXYk9DQkt4RFhzeEhPeFdmMzgxbWQyekRJUjduSjJKUWxxdHAxVHdt?=
- =?utf-8?B?bnhESUd1ODJtZUk0cGVMZUFXWmJtdjIrcmwycGxaamRPdFJYN3hZb0tVay9o?=
- =?utf-8?B?VmRUOG9XU3BkMTFkblZLOFQrTVQwYW5ST3F5RDM3ZkdrTVh4cEN2ZlF5SENp?=
- =?utf-8?B?OWozeWNiL3RTRFNkbFF4bVNRU2FqZjRtSTNMUlhwajA5Qjhjc1dBU3FtNk14?=
- =?utf-8?B?SjY5RUNFWVZBMnJTYkJoWFJ6amI0NGpNenVOaVREOU5kbmVBLy81dUVsVGNL?=
- =?utf-8?B?MjRRNWtXOVF1YjR6bjQ0eFBMQm84cXZtV3E1SDNRR0pFQUR2eHhRbGt5NnUx?=
- =?utf-8?B?dUVwcUE0VnNqNHRxcVlydmU5Y2VzZW5wOHRJeDNVc3cyQ2NvVm1RTFVnYjdm?=
- =?utf-8?B?aVdLUFptQWJBcW9PeUdwVG9XY3FENFFxZlNVaTZyTkVlQWZGTlFaZ25xc2wv?=
- =?utf-8?B?V0Q3Y2YxNTRMMFdzVUxmN2pvYWRCMjNIcG1nQXAybWx6cDlkSnE3Zm1qYzlx?=
- =?utf-8?B?dHB2ekxGdGU4MFJDZE5MS2VEcE5CNHJCTHZaWnFpeEZIRkRqV2F4M0lsd2tE?=
- =?utf-8?Q?0Y0s8OMVYMnP8+UPQW4A+y8bY?=
+	=?utf-8?B?QlphMFdTcnVwc3V5ejZnMXJMYzVIaTF2VnBtbGtnQm9IUXE0TG93c0NXTTVK?=
+ =?utf-8?B?aHVtbEx3enNoaWhVbWoxRHJHRkR0VEhiZTNJNXlWM0E0bFpGaGJUeU4vYjFO?=
+ =?utf-8?B?VHNFL3duUUNXQlNOUUQyT21Ra200TjVQZVhDaUV4dTBXZnlJeVRhblgwV0tY?=
+ =?utf-8?B?bnB6eUNRTEh1NXdPQlkvc0NTVzBMbmNVcm0rUUdMaXZpTkozRkxwMFUwU0lq?=
+ =?utf-8?B?WHgzMUVZS1VUd01HZTF0c0JhRW85SHcwWGZZY1JqMHNLcEhSbWprNUZTSWgv?=
+ =?utf-8?B?NkFQdUFlMWVpY3FtRHpVenN1NDhCZ2RMcjN0a3lTamlsd01RUHFXbWZHY0xo?=
+ =?utf-8?B?Q0c0WktrcTlxdkRmckgxWm9WNW1wZkxVcEVhU1hHOUdROC9sa2d6bmhVTVRX?=
+ =?utf-8?B?UjQ4Zy82TVg4dll6cEJuUGMwUkJiR1NyWDE1Ym4yZGxDUjlFTy9VVTNiREE4?=
+ =?utf-8?B?enF0T29GZmUzc2x6RGVRMlpTWW96czlHODZDMU15SHRSVlVjbjlSOTNrQmVm?=
+ =?utf-8?B?M0pHRzZRdUVtRTVGZm52dUY5eFRqNmV5RXFpZkhnaTBMNXlCemlvWk52WkRG?=
+ =?utf-8?B?azFZUFprdXMrdDhBc3JKcTFabk1GL1daVmdzV1M4SVZlaVZxWGNlamZGMmh0?=
+ =?utf-8?B?RktXbldKWGdJQndKVDE1VWdITlhqWlQ4Sm5iQ2F4VWhCUnFGeGRsVnlOSWUv?=
+ =?utf-8?B?ZDlLaFdubEFxc1RmR3J1dWEzSVAyRUdJaFJEOURTa2F6cGlMQlRhTHo5SStP?=
+ =?utf-8?B?VExxaDF3M3hjZXY4Uk5VeDgrNSs1eldBbk5BT0krQmNTR3NDMXF6dWlRckRh?=
+ =?utf-8?B?a0Rxb2dZNTcvbEdONVRDU3I4NjZTNHRkVlYzRmROaUFXQk1FVHZ2K3FTVzJY?=
+ =?utf-8?B?QkVNZlJTd3J2OXRZRnhvOHhhTEZSZmhFMlNGdktCallqcTJJeXpnblJzL1U5?=
+ =?utf-8?B?UnRQemprcjg5RXkxVExXUE1DdTZ4RHZNVVd5eWdSWEpTZkw2NWxPa1ZwdFA0?=
+ =?utf-8?B?bW5VWGZ5Y0lIWkVDdVJYVy9DMDlmZFBYekJCb2RkWnppZ3JQazljU25mR2JF?=
+ =?utf-8?B?UWszY21xMGVCemk2UExoT2w5bnhOR1E5ZGxJSEQ2b0g4cUV5QVVZL1hBN1A5?=
+ =?utf-8?B?VGtxdFRQdGZyY0pWMmVoYy96RUFieVNpUk1RUVErR0ZVNGNFYVVVeVE5MDNx?=
+ =?utf-8?B?RmpSZGZZalR1UFVNYndmQjZJWHpDam1HS1Z3Y1g2UFdQSi9waDRUZVNVYjk2?=
+ =?utf-8?B?anNWdjBYVHFhS0JrNXlrVEV1SlFXeGVMVGppa0ZqNzRiRU44U3NQVWl0TUdh?=
+ =?utf-8?B?T1dJZHJsWUhjSmpRa0RNVXlOQ1pYMUwxQXhjdEFXNC9NbFZKRXl4Z2w2NWFJ?=
+ =?utf-8?B?R2VkUFVXNTVlWExYaGN0YzlHcEF1SnFCTy9NTWVaOE1SMVZpM05sbTYrNjlV?=
+ =?utf-8?B?djJ2c0FHQU1oekRsME9jR2FEUlgxUnVrL3FadlNoVkVIWCtWaVExSERWcmli?=
+ =?utf-8?B?aVl2T3dmVHpsdTg0Q0FuUkZoSGR4UDUzL2QySExlMVY2SnJKZlp3c2NFNXI3?=
+ =?utf-8?B?T2RURkwwSFRDcmRuNlN1dE83dEsrcmFGU280dUF2K3NGb1hUamRnK2E2TS9R?=
+ =?utf-8?B?TlVDTUxCK2EyOG9SYnFYblJ6Zm5BN3JKQUtOQ0U4VUpPbGNGNlFZQjRMb0FS?=
+ =?utf-8?B?L09zc0t2V2xicmFlc0Z0WW83UitrKzBYVmtNaGMvN2FtdWF4S1hNOGcxVHJ4?=
+ =?utf-8?B?VTRkaEJhSXZ0d0plZVAwMFFlZmd6ZDF5LzU3NklIS0ZqTWVTZzlWRm8vc1ph?=
+ =?utf-8?B?cTg5MEtmcExzUEhNSndlWS9ZSlBxMXRSQzBZSTJWQng3MEo1VnZpZm1OZmcr?=
+ =?utf-8?B?YzQ2Wkg5UlAzQlI0Y3ZuTnN4Q01KRW12R3pSUnd0bU9aQmdSTCtRZGdwbU96?=
+ =?utf-8?B?b3pRdzNPUXVMQlNwV2IwOHhIdkJqbGIrQWlybm15azM3djNYUk0yZFVZaXlV?=
+ =?utf-8?B?NDJZNDRkMzVyS3FUeC8wTTF2OEtjbFB6RFFtWWhpSkhsMzBZTDdrVjBVckVQ?=
+ =?utf-8?B?ZEdTQnp6L1htSVhYc2lteDcwaXIyU3Q4eFVZWjBIU0k3QkdrSSt2K3c1L3Jp?=
+ =?utf-8?Q?3ROrn3gMYJC7hcLdDwy3YQiMZ?=
 X-OriginatorOrg: vivo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b13edea2-8710-4910-bdb3-08dc7645cc7a
+X-MS-Exchange-CrossTenant-Network-Message-Id: 5c7a6461-7f70-43f0-5d67-08dc764f2b74
 X-MS-Exchange-CrossTenant-AuthSource: TYSPR06MB6411.apcprd06.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 May 2024 07:48:53.6075
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 May 2024 08:55:58.4104
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: KAYXvvAD4gNncV3SzY23ijtceVMqO18VV3GeLhGAoBjXlW+8jHRRksRz8gkqQY/pJT0jeiiv1ny/hrteuLBJZg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SEYPR06MB5669
+X-MS-Exchange-CrossTenant-UserPrincipalName: wQUSZJE/dKnwL+8BJToJsIsZumIIKBCdBArt8x5TMiNVUrwlqDczpNrOHG/pFuRdi0wR+GGKRAs7g0JiGYtsgA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYZPR06MB7141
 
-On 2024/5/16 23:29, Benjamin Marzinski wrote:
-> On Thu, May 16, 2024 at 09:55:53AM +0800, YangYang wrote:
->> On 2024/5/15 23:42, Benjamin Marzinski wrote:
->>> On Tue, May 14, 2024 at 05:04:42PM +0800, Yang Yang wrote:
->>>> Add a list to the struct dm_dev structure to store the associated
->>>> targets, while also allowing differentiation between different target
->>>> types.
->>>
->>> I still think this is more complex than it needs to be. If devices that
->>> support flush_pass_around can guarantee that:
->>>
->>> 1. They will send a flush bio to all of their table devices
->>> 2. They are fine with another target sending the flush bio to their
->>>      table devices
->>>
->>> Then I don't see why we need the table devices to keep track of all the
->>> different target types that are using them. Am I missing something here?
->>
->> I attempted to enhance this solution to support additional target types,
->> such as those with num_flush_bios greater than 1.
+On 2024/5/17 4:49, Mikulas Patocka wrote:
+> Device mapper sends flush bios to all the targets and the targets send it
+> to the underlying device. That may be inefficient, for example if a table
+> contains 10 linear targets pointing to the same physical device, then
+> device mapper would send 10 flush bios to that device - despite the fact
+> that only one bio would be sufficient.
 > 
-> I'm still missing why sending a flush to each target type is necessary
-> to handle num_flush_bios > 1. As long as the targets meet the
-> requirements I listed before, AFAICS it should still work with only one
-> of the targets mapped to each device.
+> This commit optimizes the flush behavior. It introduces a per-target
+> variable flush_pass_around - it is set when the target supports flush
+> optimization - currently, the dm-linear and dm-stripe targets support it.
+> When all the targets in a table have flush_pass_around, flush_pass_around
+> on the table is set. __send_empty_flush tests if the table has
+> flush_pass_around - and if it has, no flush bios are sent to the targets
+> and the list dm_table->devices is iterated and the flush bios are sent to
+> each member of the list.
 > 
-> Say the table devices are sda, sdb, sdc, and sdd.  If you have 4 linear
-> targets, each mapped to a different table device, and one stripe target
-> mapped to all of them.  It doesn't really matter if you don't call
-> __send_empty_flush_bios() for the stripe target, does it? all if its
-> stripe devs will still get flushes. Similarly, it's fine if one of the
-> linear targets doesn't get called (in fact it's fine if all the linear
-> targets don't get called, since the stripe target will send flushes to
-> all the devices). If there were only 3 linear targets, then the stripe
-> target would get linked to a table device, so it would get a flush sent
-> to it. Can you explain a situation where you need the to send a flush to
-> multiple targets per table device for this to work, if you assume the 2
-> guarantees I mentioned above (the target sends flushes to all their
-> devices, and they don't do something special so they need to be the one
-> to send the flushes).
-
-Yes, if the targets meet the requirements you listed previously, there
-is no need to send a flush to each target type.
-I think I may be overthinking this. I tried to handle some targets with
-num_flush_bios > 1 that don't meet the requirements.
-
->>
->>> If we don't need to worry about sending a flush bio to a target of each
->>> type that is using a table device, then all we need to do is call
->>> __send_empty_flush_bios() for enough targets to cover all the table
->>> devices. This seems a lot easier to track. We just need another flag in
->>> dm_target, something like sends_pass_around_flush.
->>>
->>> When a target calls dm_get_device(), if it adds a new table device to
->>> t->devices, then it's the first target in this table to use that device.
->>> If flush_pass_around is set for this target, then it also sets
->>> sends_pass_around_flush. In __send_empty_flush() if the table has
->>> flush_pass_around set, when you iterate through the devices, you only
->>> call __send_empty_flush_bios() for the ones with sends_pass_around_flush
->>> set.
->>>
->>> Or am I overlooking something?
->>
->> If I understand correctly, you are suggesting to iterate through all the
->> targets, handling those with sends_pass_around_flush set, and skipping
->> those where sends_pass_around_flush is not set. I believe this approach
->> may result in some CPU wastage.
->>
->>    for i in {0..1023}; do
->>      echo $((8000*$i)) 8000 linear /dev/sda2 $((16384*$i))
->>    done | sudo dmsetup create example
->>
->> In this specific scenario, a single iteration of the loop is all that
->> is needed.
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Reported-by: Yang Yang <yang.yang@vivo.com>
 > 
-> It's just one iteration of the loop either way. You either loop through
-> the targets or the devices.  It's true that if you have lots of targets
-> all mapped to the same device, you would waste time looping through all
-> the targets instead of looping through the devices.  But if you only had
-> one striped target mapped to lots of devices, you would waste time
-> looping through all of the devices instead of looping through the
-> targets.
-
-Yes, I get your point. This patchset may make things even worse for
-the striped target.
-I am just curious, in what scenario is the "dm-strip" target mapped to
-a large number of underlying devices from the same block device.
-
-> -Ben
+> ---
+>   drivers/md/dm-core.h          |    4 ++-
+>   drivers/md/dm-linear.c        |    1
+>   drivers/md/dm-stripe.c        |    1
+>   drivers/md/dm-table.c         |    4 +++
+>   drivers/md/dm.c               |   47 +++++++++++++++++++++++++++++-------------
+>   include/linux/device-mapper.h |    5 ++++
+>   6 files changed, 47 insertions(+), 15 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm-core.h
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-core.h	2024-05-15 16:56:49.000000000 +0200
+> +++ linux-2.6/drivers/md/dm-core.h	2024-05-15 16:56:49.000000000 +0200
+> @@ -206,7 +206,9 @@ struct dm_table {
 >   
->>>
->>> -Ben
->>>
->>>>
->>>> Signed-off-by: Yang Yang <yang.yang@vivo.com>
->>>> ---
->>>>    drivers/md/dm-table.c         | 36 +++++++++++++++++++++++++++++++++++
->>>>    include/linux/device-mapper.h |  3 +++
->>>>    2 files changed, 39 insertions(+)
->>>>
->>>> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
->>>> index bd68af10afed..f6554590b7af 100644
->>>> --- a/drivers/md/dm-table.c
->>>> +++ b/drivers/md/dm-table.c
->>>> @@ -741,6 +741,8 @@ int dm_table_add_target(struct dm_table *t, const char *type,
->>>>    	if (ti->flush_pass_around == 0)
->>>>    		t->flush_pass_around = 0;
->>>> +	INIT_LIST_HEAD(&ti->list);
->>>> +
->>>>    	return 0;
->>>>     bad:
->>>> @@ -2134,6 +2136,25 @@ void dm_table_postsuspend_targets(struct dm_table *t)
->>>>    	suspend_targets(t, POSTSUSPEND);
->>>>    }
->>>> +static int dm_link_dev_to_target(struct dm_target *ti, struct dm_dev *dev,
->>>> +		sector_t start, sector_t len, void *data)
->>>> +{
->>>> +	struct list_head *targets = &dev->targets;
->>>> +	struct dm_target *pti;
->>>> +
->>>> +	if (!list_empty(targets)) {
->>>> +		list_for_each_entry(pti, targets, list) {
->>>> +			if (pti->type == ti->type)
->>>> +				return 0;
->>>> +		}
->>>> +	}
->>>> +
->>>> +	if (list_empty(&ti->list))
->>>> +		list_add_tail(&ti->list, targets);
->>>> +
->>>> +	return 0;
->>>> +}
->>>> +
->>>>    int dm_table_resume_targets(struct dm_table *t)
->>>>    {
->>>>    	unsigned int i;
->>>> @@ -2162,6 +2183,21 @@ int dm_table_resume_targets(struct dm_table *t)
->>>>    			ti->type->resume(ti);
->>>>    	}
->>>> +	if (t->flush_pass_around) {
->>>> +		struct list_head *devices = &t->devices;
->>>> +		struct dm_dev_internal *dd;
->>>> +
->>>> +		list_for_each_entry(dd, devices, list)
->>>> +			INIT_LIST_HEAD(&dd->dm_dev->targets);
->>>> +
->>>> +		for (i = 0; i < t->num_targets; i++) {
->>>> +			struct dm_target *ti = dm_table_get_target(t, i);
->>>> +
->>>> +			if (ti->type->iterate_devices)
->>>> +				ti->type->iterate_devices(ti, dm_link_dev_to_target, NULL);
->>>> +		}
->>>> +	}
->>>> +
->>>>    	return 0;
->>>>    }
->>>> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
->>>> index 0893ff8c01b6..19e03f9b2589 100644
->>>> --- a/include/linux/device-mapper.h
->>>> +++ b/include/linux/device-mapper.h
->>>> @@ -169,6 +169,7 @@ struct dm_dev {
->>>>    	struct dax_device *dax_dev;
->>>>    	blk_mode_t mode;
->>>>    	char name[16];
->>>> +	struct list_head targets;
->>>>    };
->>>>    /*
->>>> @@ -298,6 +299,8 @@ struct dm_target {
->>>>    	struct dm_table *table;
->>>>    	struct target_type *type;
->>>> +	struct list_head list;
->>>> +
->>>>    	/* target limits */
->>>>    	sector_t begin;
->>>>    	sector_t len;
->>>> -- 
->>>> 2.34.1
->>>>
->>>
+>   	bool integrity_supported:1;
+>   	bool singleton:1;
+> -	unsigned integrity_added:1;
+> +	bool integrity_added:1;
+> +	/* set if all the targets in the table have "flush_pass_around" set */
+> +	bool flush_pass_around:1;
+>   
+>   	/*
+>   	 * Indicates the rw permissions for the new logical device.  This
+> Index: linux-2.6/drivers/md/dm-linear.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-linear.c	2024-05-15 16:56:49.000000000 +0200
+> +++ linux-2.6/drivers/md/dm-linear.c	2024-05-15 16:56:49.000000000 +0200
+> @@ -62,6 +62,7 @@ static int linear_ctr(struct dm_target *
+>   	ti->num_discard_bios = 1;
+>   	ti->num_secure_erase_bios = 1;
+>   	ti->num_write_zeroes_bios = 1;
+> +	ti->flush_pass_around = true;
+>   	ti->private = lc;
+>   	return 0;
+>   
+> Index: linux-2.6/drivers/md/dm-stripe.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-stripe.c	2024-05-15 16:56:49.000000000 +0200
+> +++ linux-2.6/drivers/md/dm-stripe.c	2024-05-15 16:56:49.000000000 +0200
+> @@ -157,6 +157,7 @@ static int stripe_ctr(struct dm_target *
+>   	ti->num_discard_bios = stripes;
+>   	ti->num_secure_erase_bios = stripes;
+>   	ti->num_write_zeroes_bios = stripes;
+> +	ti->flush_pass_around = true;
+>   
+>   	sc->chunk_size = chunk_size;
+>   	if (chunk_size & (chunk_size - 1))
+> Index: linux-2.6/drivers/md/dm-table.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-table.c	2024-05-15 16:56:49.000000000 +0200
+> +++ linux-2.6/drivers/md/dm-table.c	2024-05-15 16:56:49.000000000 +0200
+> @@ -160,6 +160,7 @@ int dm_table_create(struct dm_table **re
+>   	t->type = DM_TYPE_NONE;
+>   	t->mode = mode;
+>   	t->md = md;
+> +	t->flush_pass_around = 1;
+>   	*result = t;
+>   	return 0;
+>   }
+> @@ -738,6 +739,9 @@ int dm_table_add_target(struct dm_table
+>   	if (ti->limit_swap_bios && !static_key_enabled(&swap_bios_enabled.key))
+>   		static_branch_enable(&swap_bios_enabled);
+>   
+> +	if (!ti->flush_pass_around)
+> +		t->flush_pass_around = false;
+> +
+>   	return 0;
+>   
+>    bad:
+> Index: linux-2.6/include/linux/device-mapper.h
+> ===================================================================
+> --- linux-2.6.orig/include/linux/device-mapper.h	2024-05-15 16:56:49.000000000 +0200
+> +++ linux-2.6/include/linux/device-mapper.h	2024-05-15 16:56:49.000000000 +0200
+> @@ -397,6 +397,11 @@ struct dm_target {
+>   	 * bio_set_dev(). NOTE: ideally a target should _not_ need this.
+>   	 */
+>   	bool needs_bio_set_dev:1;
+> +
+> +	/*
+> +	 * Set if the target supports flush optimization
+> +	 */
+> +	bool flush_pass_around:1;
+>   };
+>   
+>   void *dm_per_bio_data(struct bio *bio, size_t data_size);
+> Index: linux-2.6/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm.c	2024-05-15 16:56:49.000000000 +0200
+> +++ linux-2.6/drivers/md/dm.c	2024-05-16 20:06:32.000000000 +0200
+> @@ -645,7 +645,7 @@ static struct bio *alloc_tio(struct clon
+>   
+>   	/* Set default bdev, but target must bio_set_dev() before issuing IO */
+>   	clone->bi_bdev = md->disk->part0;
+> -	if (unlikely(ti->needs_bio_set_dev))
+> +	if (likely(ti != NULL) && unlikely(ti->needs_bio_set_dev))
+>   		bio_set_dev(clone, md->disk->part0);
+>   
+>   	if (len) {
+> @@ -1107,7 +1107,7 @@ static void clone_endio(struct bio *bio)
+>   	blk_status_t error = bio->bi_status;
+>   	struct dm_target_io *tio = clone_to_tio(bio);
+>   	struct dm_target *ti = tio->ti;
+> -	dm_endio_fn endio = ti->type->end_io;
+> +	dm_endio_fn endio = likely(ti != NULL) ? ti->type->end_io : NULL;
+>   	struct dm_io *io = tio->io;
+>   	struct mapped_device *md = io->md;
+>   
+> @@ -1154,7 +1154,7 @@ static void clone_endio(struct bio *bio)
+>   	}
+>   
+>   	if (static_branch_unlikely(&swap_bios_enabled) &&
+> -	    unlikely(swap_bios_limit(ti, bio)))
+> +	    likely(ti != NULL) && unlikely(swap_bios_limit(ti, bio)))
+>   		up(&md->swap_bios_semaphore);
+>   
+>   	free_tio(bio);
+> @@ -1566,17 +1566,36 @@ static void __send_empty_flush(struct cl
+>   	ci->sector_count = 0;
+>   	ci->io->tio.clone.bi_iter.bi_size = 0;
+>   
+> -	for (unsigned int i = 0; i < t->num_targets; i++) {
+> -		unsigned int bios;
+> -		struct dm_target *ti = dm_table_get_target(t, i);
+> -
+> -		if (unlikely(ti->num_flush_bios == 0))
+> -			continue;
+> -
+> -		atomic_add(ti->num_flush_bios, &ci->io->io_count);
+> -		bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
+> -					     NULL, GFP_NOWAIT);
+> -		atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
+> +	if (!t->flush_pass_around) {
+> +		for (unsigned int i = 0; i < t->num_targets; i++) {
+> +			unsigned int bios;
+> +			struct dm_target *ti = dm_table_get_target(t, i);
+> +
+> +			if (unlikely(ti->num_flush_bios == 0))
+> +				continue;
+> +
+> +			atomic_add(ti->num_flush_bios, &ci->io->io_count);
+> +			bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
+> +						     NULL, GFP_NOWAIT);
+> +			atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
+> +		}
+> +	} else {
+> +		/*
+> +		 * Note that there's no need to grab t->devices_lock here
+> +		 * because the targets that support flush pass-around don't
+> +		 * modify the list of devices.
+> +		 */
+> +		struct list_head *devices = dm_table_get_devices(t);
+> +		unsigned int len = 0;
+> +		struct dm_dev_internal *dd;
+> +		list_for_each_entry(dd, devices, list) {
+> +			struct bio *clone;
+> +			clone = alloc_tio(ci, NULL, 0, &len, GFP_NOIO);
+> +			atomic_add(1, &ci->io->io_count);
+> +			bio_set_dev(clone, dd->dm_dev->bdev);
+> +			clone->bi_end_io = clone_endio;
+> +			dm_submit_bio_remap(clone, NULL);
+> +		}
+>   	}
+>   
+>   	/*
 > 
+
+Thanks, I tested this patch, and it fixed the issue for me!
 
