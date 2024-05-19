@@ -1,162 +1,88 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out-185.mta1.migadu.com (out-185.mta1.migadu.com [95.215.58.185])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72CC918638
-	for <dm-devel@lists.linux.dev>; Sun, 19 May 2024 11:14:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99D7818042
+	for <dm-devel@lists.linux.dev>; Sun, 19 May 2024 23:03:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.185
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716117267; cv=none; b=BLaTeZ2laB73teiALIpIr91WissxKsZGw4r6fnZ2J/fFnEXcxBsIrPOk/RRJVxqWUjKCBA1VFCT1LX/C9lffzjPweVREyAVMLW+IA5Z+aCpRQ+PcdCHCgJechhLvUDqnAJ8xigKtByV+wB00uycuPFTFY6os04F9xRImGPYKDa0=
+	t=1716159809; cv=none; b=TQbwMeW6ovhnfdgMnvTIib+0fTlN7ZbaazHpPsWvWvJJbHogxNIfMQFHmn9r/IWw+4C8WO13iJn0o1yiuEKmlcV6coxHlSqTqBcUGZD54+DdM1nx+CNQCtxtP5FaBjrYM1XWSWyCzI6kDmWL7gEn6RiLL4A9sjuCCGkoL6TMqk4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716117267; c=relaxed/simple;
-	bh=gWkQQv+PTBdUyXOqpGIopnE494UiTwBS+G6jGgeNoVY=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Q/wzhylbp11UNIjh1UEYnWPeTMX1hAqYpMQNlUUtJioySwDMcPxVtcbwgUz9UjG08PVkvsPa+gv0S2opXYL8q5L567+BRQH0tl+dBdz/+9TR8/al15bIVMA48tSgG9UnTDyAHaCFmR/PDGqpshxgSC59/PnDBNyYTHkkt/0JYFo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=v41wEHJ8; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=KIQMpv0w; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=v41wEHJ8; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=KIQMpv0w; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	s=arc-20240116; t=1716159809; c=relaxed/simple;
+	bh=f+dqr7wX6Dzc+IEUgIjY13qVsDw6pGhMt1gywjtRTo8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=VnL3l4myk6vUIc3TNAxznvz75Eon3LC10Q79HRtul2cKNSvfXIHVMPypXQRsPP6NBymHyPb8AoAqH/BWORpS1psHf3ChfHoWf3DkfpTK9WGb+wCZXWT2ndgQBEvl3gjw8hx+f8aoLUD5ylx1a4TYKEaIZLP2T6iAxiecbflvE3w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=f4IWLZse; arc=none smtp.client-ip=95.215.58.185
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="v41wEHJ8";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="KIQMpv0w";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="v41wEHJ8";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="KIQMpv0w"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 7DF0B22CEE;
-	Sun, 19 May 2024 11:14:17 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1716117257; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="f4IWLZse"
+X-Envelope-To: peterz@infradead.org
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1716159805;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=5Gm1u9Koqw89TuDsJwaurwObpqruOPHXXAgXl4nC0l8=;
-	b=v41wEHJ8b0nE+Jj/7xLKl2ugLcOLq0aTdOsVfZnQNAeqH1AzHncvJbe8fmXUMDBtv4KoNF
-	t9SUg/9PjUo0nNb04ABtHlW4++PlHdHnaTNBEV5PHtVcD6CoR5MimUgWR+lvlgtJu0uijY
-	dVuJQNaMSzIVpWvyIeU3nrAFAOQGzA0=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1716117257;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=5Gm1u9Koqw89TuDsJwaurwObpqruOPHXXAgXl4nC0l8=;
-	b=KIQMpv0wZuBIre6t2H15nu/5N4f2csg+JZ74jTN77YaRluVWbDTJYEjYGErB9TkMXZ0UIe
-	SOWI1x+q84CxezAg==
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1716117257; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=5Gm1u9Koqw89TuDsJwaurwObpqruOPHXXAgXl4nC0l8=;
-	b=v41wEHJ8b0nE+Jj/7xLKl2ugLcOLq0aTdOsVfZnQNAeqH1AzHncvJbe8fmXUMDBtv4KoNF
-	t9SUg/9PjUo0nNb04ABtHlW4++PlHdHnaTNBEV5PHtVcD6CoR5MimUgWR+lvlgtJu0uijY
-	dVuJQNaMSzIVpWvyIeU3nrAFAOQGzA0=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1716117257;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=5Gm1u9Koqw89TuDsJwaurwObpqruOPHXXAgXl4nC0l8=;
-	b=KIQMpv0wZuBIre6t2H15nu/5N4f2csg+JZ74jTN77YaRluVWbDTJYEjYGErB9TkMXZ0UIe
-	SOWI1x+q84CxezAg==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 4E5D6134C3;
-	Sun, 19 May 2024 11:14:17 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id 51l0EAnfSWYUBwAAD6G6ig
-	(envelope-from <hare@suse.de>); Sun, 19 May 2024 11:14:17 +0000
-Message-ID: <5fc134e0-6f9b-4f87-8dea-ba929bf1e91d@suse.de>
-Date: Sun, 19 May 2024 13:14:15 +0200
+	bh=+V0S8PCd3+C0VSIsGmhpI47bpGeTogzeC9Uf4DblCds=;
+	b=f4IWLZseKij1P3S6iUqOHooBGx4YmH63N1gk6Db5y9+fNEwSYsB5ZWryj6CL/6Zp1k7KMO
+	SXRrBiH2liO9rphAmazVFlmynGsMBvRp3AVIXqEOFxiO7bO6bM+N2G1qZd/b7Pq4BT2oX9
+	y4a7bSknDHt6o0pyTN4E3oVxsZEC5y0=
+X-Envelope-To: visitorckw@gmail.com
+X-Envelope-To: colyli@suse.de
+X-Envelope-To: msakai@redhat.com
+X-Envelope-To: mingo@redhat.com
+X-Envelope-To: acme@kernel.org
+X-Envelope-To: namhyung@kernel.org
+X-Envelope-To: akpm@linux-foundation.org
+X-Envelope-To: bfoster@redhat.com
+X-Envelope-To: mark.rutland@arm.com
+X-Envelope-To: alexander.shishkin@linux.intel.com
+X-Envelope-To: jolsa@kernel.org
+X-Envelope-To: irogers@google.com
+X-Envelope-To: adrian.hunter@intel.com
+X-Envelope-To: bagasdotme@gmail.com
+X-Envelope-To: jserv@ccns.ncku.edu.tw
+X-Envelope-To: linux-bcache@vger.kernel.org
+X-Envelope-To: linux-kernel@vger.kernel.org
+X-Envelope-To: dm-devel@lists.linux.dev
+X-Envelope-To: linux-bcachefs@vger.kernel.org
+X-Envelope-To: linux-perf-users@vger.kernel.org
+Date: Sun, 19 May 2024 19:03:20 -0400
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Kent Overstreet <kent.overstreet@linux.dev>
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Kuan-Wei Chiu <visitorckw@gmail.com>, colyli@suse.de, 
+	msakai@redhat.com, mingo@redhat.com, acme@kernel.org, namhyung@kernel.org, 
+	akpm@linux-foundation.org, bfoster@redhat.com, mark.rutland@arm.com, 
+	alexander.shishkin@linux.intel.com, jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
+	bagasdotme@gmail.com, jserv@ccns.ncku.edu.tw, linux-bcache@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, linux-bcachefs@vger.kernel.org, 
+	linux-perf-users@vger.kernel.org
+Subject: Re: [RESEND PATCH v5 11/16] lib min_heap: Update min_heap_push() and
+ min_heap_pop() to return bool values
+Message-ID: <tnsqm2iw2qmyll6hmgfadh6bgorpsqjjgefibg2vagopyqurjt@vrix7erg2jp7>
+References: <20240514084724.557100-1-visitorckw@gmail.com>
+ <20240514084724.557100-12-visitorckw@gmail.com>
+ <20240515083755.GB40213@noisy.programming.kicks-ass.net>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Kernel namespaces for device mapper targets and block devices?
-Content-Language: en-US
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org
-References: <61c1fff7-b5ff-dfdd-62c1-506e055ae5e@ewheeler.net>
- <a3d8bab5-9293-4765-b202-d2bbecaa1f63@suse.de>
- <f55c2eb7-eb6d-3f95-b2c8-a28e9447e570@ewheeler.net>
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <f55c2eb7-eb6d-3f95-b2c8-a28e9447e570@ewheeler.net>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Spam-Flag: NO
-X-Spam-Score: -3.29
-X-Spam-Level: 
-X-Spamd-Result: default: False [-3.29 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	SUBJECT_ENDS_QUESTION(1.00)[];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	XM_UA_NO_VERSION(0.01)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	ARC_NA(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	TO_DN_SOME(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	RCPT_COUNT_THREE(0.00)[3];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	RCVD_COUNT_TWO(0.00)[2];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:email]
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240515083755.GB40213@noisy.programming.kicks-ass.net>
+X-Migadu-Flow: FLOW_OUT
 
-On 5/18/24 00:04, Eric Wheeler wrote:
-> On Fri, 17 May 2024, Hannes Reinecke wrote:
+On Wed, May 15, 2024 at 10:37:55AM +0200, Peter Zijlstra wrote:
+> On Tue, May 14, 2024 at 04:47:19PM +0800, Kuan-Wei Chiu wrote:
+> > Modify the min_heap_push() and min_heap_pop() to return a boolean
+> > value. They now return false when the operation fails and true when it
+> > succeeds.
 > 
->> On 5/17/24 02:18, Eric Wheeler wrote:
->>> Hello everyone,
->>>
->>> Is there any work being done on namespaces for device-mapper targets, or
->>> for the block layer in general?
->>>
->>> For example, namespaces could make `dmsetup table` or `losetup -a` see
->>> only devices mapped in that name space. I found this article from to 2013,
->>> but it is quite old:
->>>   https://lwn.net/Articles/564854/
->>>
->>> If you know any more recent work on the topic that I would be interested.
->>> Thank you for help!
->>>
->> It is on my to-do list.
->> We sure should work on that one.
-> 
-> How you envision hooking namespaces into the block layer?
-> 
-Overall idea is to inherit devices from the original namespace.
-- upon creation the new namespace inherits all devices from the
-   original ns.
-- new devices show up only in the current namespace and all
-   namespaces derived from it.
-- Namespace teardown should remove all devices created
-   within this namespace.
+> But why ?!
 
-I did a patchset once, based upon suggestion from Christian Brauner.
-Let me dig it up.
+like Kuan said, it makes for cleaner code.
 
-Cheers,
-
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
-
+It's also what the bcache/bcachefs heap (and fifo) implementations do,
+which we're consolidating.
