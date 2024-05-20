@@ -1,135 +1,145 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oo1-f44.google.com (mail-oo1-f44.google.com [209.85.161.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DC1F136986
-	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 15:58:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A82F61E878
+	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 17:17:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716220723; cv=none; b=pLyce0kF3lakdpOIvZjQMq83h9rMSsXEGudOcKovX9CTqkxyZDdvBWBdQy2Vu2nt/JbG2YoIhgrq5+3O9a+5ypkUjNxue8xr01ZygmuCEJgEdu0FVF6+afZxJczf8Jfd4D6Ze5xnQq3vTmT/FeH4wNqGhs64eCDLkhfag9V6YO0=
+	t=1716225471; cv=none; b=P41IU8qmEo2eO+tR7CNlwTGLTpZLgVvVowQBDrANzBZKmJGfCibVnTmRwI6Kyd1pjEytm/NptYOM6lvUBJcrUrxGWj4QBcYIgaZpPywPpHTxg6EDlbVyJSF57yK/+0cnoaYFSMRHLQNo4kIVm+YpW+IRbZiimir8sJf7V/wCX50=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716220723; c=relaxed/simple;
-	bh=t3mfBSzF4gIvBSfX7jkRegAysI84IrZ1lqd3Qtea+DM=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version; b=Zbif8u5/YupIihIYXVP1d2x9kMH4ZZ69BoZAAyhCCum4NUPacacs2DCtzdyS3WpOyYEmlpZUxQ9qrOV0/+KbWvXnG6jpMw8YWGwo/KOkV3h8B+u9DJXQBDjBBOxI3nuMVuZhh3s1JkNxfGezUBGLIzdLCACe3ORR/ThHtiOrjxU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=dXN0YZCC; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dXN0YZCC"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716220720;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=kSK2a4NXM+01L73sT13tW+y4QN80BSHVPrc8TenqHmM=;
-	b=dXN0YZCCh1Yo7Cef9BMkd1kFOqTc2o6glS31HwQn1n+xzsItVMWTy/sxlnvBnQCoKAQ07C
-	L0BoqVWFePpqGzz/VP+i3m0/P2S/WuId/uF2uGFyWY8c+Xmvlf4g80pdo4Bs/PAK/89inw
-	F9GoLlJgcpV7N70IKRYmThQESSLj4Po=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-639-eaFpYAHbN-C-r68a1wfmlQ-1; Mon, 20 May 2024 11:58:38 -0400
-X-MC-Unique: eaFpYAHbN-C-r68a1wfmlQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3BC7A81101E;
-	Mon, 20 May 2024 15:58:38 +0000 (UTC)
-Received: from bgurney-thinkpadp1gen5.remote.csb (unknown [10.22.9.110])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0E867491032;
-	Mon, 20 May 2024 15:58:37 +0000 (UTC)
-From: Bryan Gurney <bgurney@redhat.com>
-To: shinichiro.kawasaki@wdc.com,
-	linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	snitzer@kernel.org,
-	bgurney@redhat.com
-Subject: [PATCH] tests/dm: add dm-dust general functionality test
-Date: Mon, 20 May 2024 11:58:26 -0400
-Message-ID: <20240520155826.23446-1-bgurney@redhat.com>
+	s=arc-20240116; t=1716225471; c=relaxed/simple;
+	bh=8Ey01W3TWy3+gnWNHRxVsreKBzXGp/Fzi06llfcCTYA=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=jimGcoMNqKf8EFKr/2ik17VMfsRWB+my85s/aAGwcnN0+iKUKWma7kzy5tqXiw/yTH8oBRjSwT9nW/CZu40ZxVR2RheJ2MWLV9VzXe/ems/yQAnIIWMNLt4EY3sZgFD6bdqUt2MwbsecxvMGcQo3ZJe+fXu6OphTugDm4eAVrjk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.161.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
+Received: by mail-oo1-f44.google.com with SMTP id 006d021491bc7-5b296194ac1so2646115eaf.2
+        for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 10:17:49 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716225469; x=1716830269;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=b9qfg2yY+aMu5/VkyPP4w1KWCmXu9VzHzd1XZC4MYQM=;
+        b=wxZFYthTJdEWBqcwrxWbZ7VyerkM2Ki6VnEratSNEREIy2y1uopPNY4d3LYJe1FJyT
+         hTOBSfBW2OESvwyWyQpYrZM5lfoP8kuBWbqbB3qLC7Leuto/pI9zEPV/sxCdKZl65NUG
+         He0cgLoepF5BF6Fcyeh7URM7CaUW1ZQ7KHUNZPRwiFn2a0JmyxNEw1DPLM+yEwjfAYjp
+         JjGnTLU4TKCDdVJ+nbN3n4piQORNDwtd3NfOQ9jlezBON7mrbESnNYistugoi3NkAbPN
+         48Y4zwczNiw9PGUtr1s0VIhp2HXXRU9sw/QqXteZad4/KSH3xTpeRFeUa19QL9pZTVcs
+         j4SA==
+X-Forwarded-Encrypted: i=1; AJvYcCU9T6/ytD7DI8NJQMq6EUmTIThVWhN//t1OOhDJ1zAOw38eTQa8k11EpFO1t/wj2elZvHCc0147Bx5I7HF++X8xgfaak4YkmyQ=
+X-Gm-Message-State: AOJu0YxGs+gpaZYkfDlvmqPhZBVmIT9odizKsI8ANHFMd7UIhaSJ5lRV
+	kJ2W29cBRESiydNSNtquubhqXc/ea0n20NGjtAM3YS1yF+Njb56Vr9sP6Mzcv/8=
+X-Google-Smtp-Source: AGHT+IGOQ4OQGxkNfsshJaLNjEfIH76m2IGPnMddp7gaSVxhNmrS/aA7yI7pZ70kNwz5B3/MuQaylg==
+X-Received: by 2002:a05:6359:5a8c:b0:192:4bf2:a397 with SMTP id e5c5f4694b2df-193bb64d50cmr2918493755d.17.1716225468732;
+        Mon, 20 May 2024 10:17:48 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-43e0bf64844sm121731321cf.62.2024.05.20.10.17.47
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 20 May 2024 10:17:48 -0700 (PDT)
+Date: Mon, 20 May 2024 13:17:46 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Theodore Ts'o <tytso@mit.edu>, dm-devel@lists.linux.dev,
+	fstests@vger.kernel.org, linux-ext4@vger.kernel.org,
+	regressions@lists.linux.dev, linux-block@vger.kernel.org
+Subject: Re: dm: use queue_limits_set
+Message-ID: <ZkuFuqo3dNw8bOA2@kernel.org>
+References: <20240518022646.GA450709@mit.edu>
+ <ZkmIpCRaZE0237OH@kernel.org>
+ <ZkmRKPfPeX3c138f@kernel.org>
+ <20240520150653.GA32461@lst.de>
+ <ZktuojMrQWH9MQJO@kernel.org>
+ <20240520154425.GB1104@lst.de>
+ <ZktyTYKySaauFcQT@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ZktyTYKySaauFcQT@kernel.org>
 
-Add a general functionality test for the dm-dust device-mapper test
-target.  Test the addition of bad blocks, and the clearing of bad
-blocks after a write is performed to the test device.
+[replying for completeness to explain what I think is happening for
+the issue Ted reported]
 
-Signed-off-by: Bryan Gurney <bgurney@redhat.com>
----
- tests/dm/002     | 40 ++++++++++++++++++++++++++++++++++++++++
- tests/dm/002.out | 10 ++++++++++
- 2 files changed, 50 insertions(+)
- create mode 100755 tests/dm/002
- create mode 100644 tests/dm/002.out
+On Mon, May 20, 2024 at 11:54:53AM -0400, Mike Snitzer wrote:
+> On Mon, May 20, 2024 at 05:44:25PM +0200, Christoph Hellwig wrote:
+> > On Mon, May 20, 2024 at 11:39:14AM -0400, Mike Snitzer wrote:
+> > > That's fair.  My criticism was more about having to fix up DM targets
+> > > to cope with the new normal of max_discard_sectors being set as a
+> > > function of max_hw_discard_sectors and max_user_discard_sectors.
+> > > 
+> > > With stacked devices in particular it is _very_ hard for the user to
+> > > know their exerting control over a max discard limit is correct.
+> > 
+> > The user forcing a limit is always very sketchy, which is why I'm
+> > not a fan of it.
+> > 
+> > > Yeah, but my concern is that if a user sets a value that is too low
+> > > it'll break targets like DM thinp (which Ted reported).  So forcibly
+> > > setting both to indirectly set the required max_discard_sectors seems
+> > > necessary.
 
-diff --git a/tests/dm/002 b/tests/dm/002
-new file mode 100755
-index 0000000..6635c43
---- /dev/null
-+++ b/tests/dm/002
-@@ -0,0 +1,40 @@
-+#!/bin/bash
-+# SPDX-License-Identifier: GPL-3.0+
-+# Copyright (C) 2024 Red Hat, Inc.
-+#
-+
-+. tests/dm/rc
-+
-+DESCRIPTION="dm-dust general functionality test"
-+QUICK=1
-+
-+requires() {
-+        _have_driver dm_dust
-+}
-+
-+
-+test_device() {
-+	echo "Running ${TEST_NAME}"
-+
-+	TEST_DEV_SZ=$(blockdev --getsz "$TEST_DEV")
-+	dmsetup create dust1 --table "0 $TEST_DEV_SZ dust $TEST_DEV 0 512"
-+	dmsetup message dust1 0 addbadblock 60
-+	dmsetup message dust1 0 addbadblock 67
-+	dmsetup message dust1 0 addbadblock 72
-+	dmsetup message dust1 0 countbadblocks
-+	dmsetup message dust1 0 listbadblocks
-+	dmsetup message dust1 0 clearbadblocks
-+	dmsetup message dust1 0 countbadblocks
-+	dmsetup message dust1 0 addbadblock 60
-+	dmsetup message dust1 0 addbadblock 67
-+	dmsetup message dust1 0 addbadblock 72
-+	dmsetup message dust1 0 countbadblocks
-+	dmsetup message dust1 0 enable
-+	dd if=/dev/zero of=/dev/mapper/dust1 bs=512 count=128 oflag=direct >/dev/null 2>&1 || return $?
-+	sync
-+	dmsetup message dust1 0 countbadblocks
-+	sync
-+	dmsetup remove dust1
-+
-+	echo "Test complete"
-+}
-diff --git a/tests/dm/002.out b/tests/dm/002.out
-new file mode 100644
-index 0000000..f348fe4
---- /dev/null
-+++ b/tests/dm/002.out
-@@ -0,0 +1,10 @@
-+Running dm/002
-+countbadblocks: 3 badblock(s) found
-+60
-+67
-+72
-+dust_clear_badblocks: badblocks cleared
-+countbadblocks: 0 badblock(s) found
-+countbadblocks: 3 badblock(s) found
-+countbadblocks: 0 badblock(s) found
-+Test complete
--- 
-2.45.0
+Could also be that a user sets the max discard too large (e.g. larger
+than thinp's BIO_PRISON_MAX_RANGE).
 
+> > Dm-think requiring a minimum discard size is a rather odd requirement.
+> > Is this just a debug asswert, or is there a real technical reason
+> > for it?  If so we can introduce a now to force a minimum size or
+> > disable user setting the value entirely. 
+> 
+> thinp's discard implementation is constrained by the dm-bio-prison's
+> constraints.  One of the requirements of dm-bio-prison is that a
+> discard not exceed BIO_PRISON_MAX_RANGE.
+> 
+> My previous reply is a reasonible way to ensure best effort to respect
+> a users request but that takes into account the driver provided
+> discard_granularity.  It'll force suboptimal (too small) discards be
+> issued but at least they'll cover a full thinp block.
+
+Given below, this isn't at the heart of the issue Ted reported.  So
+the change to ensure max_discard_sectors is a factor of
+discard_granularity, while worthwhile, isn't critical to fixing the
+reported issue.
+
+> > > diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> > > index 4793ad2aa1f7..c196f39579af 100644
+> > > --- a/drivers/md/dm-thin.c
+> > > +++ b/drivers/md/dm-thin.c
+> > > @@ -4497,7 +4499,8 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
+> > >  
+> > >  	if (pool->pf.discard_enabled) {
+> > >  		limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
+> > > -		limits->max_discard_sectors = pool->sectors_per_block * BIO_PRISON_MAX_RANGE;
+> > > +		limits->max_hw_discard_sectors = limits->max_user_discard_sectors =
+> > > +			pool->sectors_per_block * BIO_PRISON_MAX_RANGE;
+> > >  	}
+> > 
+> > Drivers really have no business setting max_user_discard_sector,
+> > the whole point of the field is to separate device/driver capabilities
+> > from user policy.  So if dm-think really has no way of handling
+> > smaller discards, we need to ensure they can't be set.
+> 
+> It can handle smaller so long as they respect discard_granularity.
+> 
+> > I'm also kinda curious what actually sets a user limit in Ted's case
+> > as that feels weird.
+> 
+> I agree, not sure... maybe the fstests is using the knob?
+
+Doubt there was anything in fstests setting max discard user limit
+(max_user_discard_sectors) in Ted's case. blk_set_stacking_limits()
+sets max_user_discard_sectors to UINT_MAX, so given the use of
+min(lim->max_hw_discard_sectors, lim->max_user_discard_sectors) I
+suspect blk_stack_limits() stacks up max_discard_sectors to match the
+underlying storage's max_hw_discard_sectors.
+
+And max_hw_discard_sectors exceeds BIO_PRISON_MAX_RANGE, resulting in
+dm_cell_key_has_valid_range() triggering on:
+WARN_ON_ONCE(key->block_end - key->block_begin > BIO_PRISON_MAX_RANGE)
+
+Mike
