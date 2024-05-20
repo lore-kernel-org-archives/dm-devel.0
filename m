@@ -1,93 +1,145 @@
-Received: from mail-qt1-f182.google.com (mail-qt1-f182.google.com [209.85.160.182])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 71F003A29A
-	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 22:03:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 841AA374D9
+	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 22:42:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716242596; cv=none; b=aThfGU0izx9FOq7IbDOs+jUWawpSE4wXhHSLW2A1u/tnUnyrgfBS+3yO7hhEVbojp9kilpuumOdSPbArflwLsfXYIINsj5wOfFWF1RlS1xWJVdk7b1L8odHMvq1AqCGOCUNfxkksYY+X/WTZmheJwZ8Qbj471uWyhkkoO0fNjhs=
+	t=1716244964; cv=none; b=AwNRRJiYJSOPxMNrBZ7K30vZ1wNQ6sCDlb64/OZJdqGJJmUZrRQ90Wr21dl/3ou1hc+mw6WXPp879AaMBTYNIUYEHmgc7mScO85tpjzvPLBLlQtQQ7/3n/0aQ2k3bBVVORb6zAZb7BdfYQh4143csjMIHOMZ2I9vgXDeB03huxA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716242596; c=relaxed/simple;
-	bh=UVljutfoWopCdRjUsE3nyQBe0vyYLt1LjMCS4mpMGr4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JQEnIzXfdlTCq72h+UgjmVPn5L8rGn4d692q8Uwiz+DrLZPMrXK1DhfSxlaC2rtf1rwTmqyNekWlTyUNSjf02at5YuETW5Iw/phQsBBKCNnIts7qq1e9zY56+3OeE1A196mt5m5ihdT6/fWRLL5B3l24B7HSNO/0PoaRbRy4SAs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.160.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
-Received: by mail-qt1-f182.google.com with SMTP id d75a77b69052e-43df23e034cso29149591cf.0
-        for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 15:03:15 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716242594; x=1716847394;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=FuxhBJ4qisQVuZrq+vvIeMKpTLFAeiOz1b8+2ahYk6E=;
-        b=DLBOtuygwAA98TNQ0BL0jdkJjCdYNsc+oO9qvfYoMUdNwBywfMUA+F1JJ+1QWFrNFE
-         BMIKL4fdAgS7UebjI1wE0bbPX+BNT3JEjM0apRUUlCleAY6HjzFwh0HO9rkSKdIKyBZf
-         O3l3K7KPi/I8a+qZu3PrXQYVuQ1x+URIkPKjAhNdj0HYi+ig32rOLdTsg/VRzsbltLRU
-         mDjsUJ99whpzH+mo0BlpE9r6C6rG0KTKs1aNUjBxPL5FroQj8DiT2DHTyS5QmTqH4bMP
-         eR/3QRycFfDkuuql8OM6tpji2EiZkqBmoO0kXOU/8Y9W6B4Nxq4Ids677HtArVdZJw2m
-         Ch8w==
-X-Gm-Message-State: AOJu0YzJhPBntQpYKH3ifJYYgNyILMdA5ujScndYpo9UVCZyTYDbW45K
-	RNzKYH5X+KV+QgiY6Zr59MMLVCXNfIJvWqq+TYOLntIhxhO2kmdlvVq7Ny0Gxfw=
-X-Google-Smtp-Source: AGHT+IHkgbqiVU0lW4qUTrQXwo9y7zvN2ZZUxBT9G8J+CnypXz8b/pWVZjl3dkIURNrt2XouM39MlQ==
-X-Received: by 2002:a05:622a:60f:b0:43a:357c:322a with SMTP id d75a77b69052e-43f7a303ce0mr149884241cf.34.1716242594272;
-        Mon, 20 May 2024 15:03:14 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-43f7a8dae94sm37851681cf.33.2024.05.20.15.03.13
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 20 May 2024 15:03:13 -0700 (PDT)
-Date: Mon, 20 May 2024 18:03:11 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>
-Cc: dm-devel@lists.linux.dev, fstests@vger.kernel.org,
-	linux-ext4@vger.kernel.org, regressions@lists.linux.dev,
-	linux-block@vger.kernel.org
-Subject: Re: dm: use queue_limits_set
-Message-ID: <ZkvIn73jAqz94LjI@kernel.org>
-References: <20240518022646.GA450709@mit.edu>
- <ZkmIpCRaZE0237OH@kernel.org>
- <ZkmRKPfPeX3c138f@kernel.org>
- <20240520150653.GA32461@lst.de>
- <ZktuojMrQWH9MQJO@kernel.org>
- <20240520154425.GB1104@lst.de>
- <ZktyTYKySaauFcQT@kernel.org>
- <ZkuFuqo3dNw8bOA2@kernel.org>
- <20240520201237.GA6235@lst.de>
+	s=arc-20240116; t=1716244964; c=relaxed/simple;
+	bh=heA4s3lERjam+6Larr6TOOfCA1T/Ts00JtBoUfmIlMU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=BD9z1lvKqCeRq51J73VT6URfgH34TEeM0tSQYeLTf/h+zpW/aQWs7+tKpBIOk3t/r45lP56J0p/txQUpFt8pEergwNknmntFppz2cBObXwe0L9AfmEap4hGolSa9g7soDbVe/s8Y3SbQ+kU7Do4p58IOq2JGLhx3bsZ8/WlpGAE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=l3/NWJ5L; arc=none smtp.client-ip=199.89.1.11
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="l3/NWJ5L"
+Received: from localhost (localhost [127.0.0.1])
+	by 008.lax.mailroute.net (Postfix) with ESMTP id 4Vjsyn5ZRFz6Cnk8t;
+	Mon, 20 May 2024 22:42:41 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1716244947; x=1718836948; bh=0pJSnqKU4Io+VCN5eICuTeI+
+	NiAtDO/zLNkz8Pxl2Wg=; b=l3/NWJ5LX8oUM5iUAXCMbAS/xJWypIHnCgFgjhg1
+	1JT2cmlLGjH004Vw3IsbcB4Y6PoVXdT0cD9f4/g86ByrfSidSdCrQmnUfaUBtXh3
+	R6FHhxz0mpFhcitcDGM7hsnV1cwQ3lCKq/xl5pxLcD7R5oV31Us6Ayj6zjDEoYVG
+	GGY9NGYDWBFiKg8LLeEFkmX6tvDt0v6Qc6lEwoHx6Y05yPekdF2Per+daViCzgkV
+	9VqunyYQrIJTYqTK5U1KKS8iy48HUStLR5TKFKvZM3LTxfSEK5S8DBZ+4sGVTnaw
+	yeBtaCtoHBqzWeXaMfiQuvd+SAksf8Q+r5AmXseC1nGVRA==
+X-Virus-Scanned: by MailRoute
+Received: from 008.lax.mailroute.net ([127.0.0.1])
+ by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id RDRQgEpz2QIf; Mon, 20 May 2024 22:42:27 +0000 (UTC)
+Received: from [100.96.154.26] (unknown [104.132.0.90])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: bvanassche@acm.org)
+	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4VjsyP5zMJz6Cnk8s;
+	Mon, 20 May 2024 22:42:21 +0000 (UTC)
+Message-ID: <d47b55ac-b986-4bb0-84f4-e193479444e3@acm.org>
+Date: Mon, 20 May 2024 15:42:17 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240520201237.GA6235@lst.de>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v20 01/12] block: Introduce queue limits and sysfs for
+ copy-offload support
+To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
+ Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
+ Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>
+Cc: martin.petersen@oracle.com, david@fromorbit.com, hare@suse.de,
+ damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com, joshi.k@samsung.com,
+ nitheshshetty@gmail.com, gost.dev@samsung.com, linux-block@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+ linux-fsdevel@vger.kernel.org
+References: <20240520102033.9361-1-nj.shetty@samsung.com>
+ <CGME20240520102830epcas5p27274901f3d0c2738c515709890b1dec4@epcas5p2.samsung.com>
+ <20240520102033.9361-2-nj.shetty@samsung.com>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20240520102033.9361-2-nj.shetty@samsung.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Mon, May 20, 2024 at 10:12:37PM +0200, Christoph Hellwig wrote:
-> On Mon, May 20, 2024 at 01:17:46PM -0400, Mike Snitzer wrote:
-> > Doubt there was anything in fstests setting max discard user limit
-> > (max_user_discard_sectors) in Ted's case. blk_set_stacking_limits()
-> > sets max_user_discard_sectors to UINT_MAX, so given the use of
-> > min(lim->max_hw_discard_sectors, lim->max_user_discard_sectors) I
-> > suspect blk_stack_limits() stacks up max_discard_sectors to match the
-> > underlying storage's max_hw_discard_sectors.
-> > 
-> > And max_hw_discard_sectors exceeds BIO_PRISON_MAX_RANGE, resulting in
-> > dm_cell_key_has_valid_range() triggering on:
-> > WARN_ON_ONCE(key->block_end - key->block_begin > BIO_PRISON_MAX_RANGE)
-> 
-> Oh, that makes more sense.
-> 
-> I think you just want to set the max_hw_discard_sectors limit before
-> stacking in the lower device limits so that they can only lower it.
-> 
-> (and in the long run we should just stop stacking the limits except
-> for request based dm which really needs it)
+On 5/20/24 03:20, Nitesh Shetty wrote:
+> +static ssize_t queue_copy_max_show(struct request_queue *q, char *page)
+> +{
+> +	return sprintf(page, "%llu\n", (unsigned long long)
+> +		       q->limits.max_copy_sectors << SECTOR_SHIFT);
+> +}
+> +
+> +static ssize_t queue_copy_max_store(struct request_queue *q, const char *page,
+> +				    size_t count)
+> +{
+> +	unsigned long max_copy_bytes;
+> +	struct queue_limits lim;
+> +	ssize_t ret;
+> +	int err;
+> +
+> +	ret = queue_var_store(&max_copy_bytes, page, count);
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	if (max_copy_bytes & (queue_logical_block_size(q) - 1))
+> +		return -EINVAL;
 
-This is what I staged, I cannot send a patch out right now.. 
+Wouldn't it be more user-friendly if this check would be left out? Does any code
+depend on max_copy_bytes being a multiple of the logical block size?
 
-Ted if you need the patch in email (rather than from linux-dm.git) I
-can send it later tonight.  Please see:
+> +	blk_mq_freeze_queue(q);
+> +	lim = queue_limits_start_update(q);
+> +	lim.max_user_copy_sectors = max_copy_bytes >> SECTOR_SHIFT;
+> +	err = queue_limits_commit_update(q, &lim);
+> +	blk_mq_unfreeze_queue(q);
+> +
+> +	if (err)
+> +		return err;
+> +	return count;
+> +}
 
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.10&id=825d8bbd2f32cb229c3b6653bd454832c3c20acb
+queue_copy_max_show() shows max_copy_sectors while queue_copy_max_store()
+modifies max_user_copy_sectors. Is that perhaps a bug?
+
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index aefdda9f4ec7..109d9f905c3c 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -309,6 +309,10 @@ struct queue_limits {
+>   	unsigned int		discard_alignment;
+>   	unsigned int		zone_write_granularity;
+>   
+> +	unsigned int		max_copy_hw_sectors;
+> +	unsigned int		max_copy_sectors;
+> +	unsigned int		max_user_copy_sectors;
+
+Two new limits are documented in Documentation/ABI/stable/sysfs-block while three
+new parameters are added in struct queue_limits. Why three new limits instead of
+two? Please add a comment above the new parameters that explains the role of the
+new parameters.
+
+> +/* maximum copy offload length, this is set to 128MB based on current testing */
+> +#define BLK_COPY_MAX_BYTES		(1 << 27)
+
+"current testing" sounds vague. Why is this limit required? Why to cap what the
+driver reports instead of using the value reported by the driver without modifying it?
+
+Additionally, since this constant is only used in source code that occurs in the
+block/ directory, please move the definition of this constant into a source or header
+file in the block/ directory.
+
+Thanks,
+
+Bart.
