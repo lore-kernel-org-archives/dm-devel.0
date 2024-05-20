@@ -1,81 +1,82 @@
-Received: from 009.lax.mailroute.net (009.lax.mailroute.net [199.89.1.12])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50992139D13
-	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 23:27:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.12
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F94D3611A
+	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 23:38:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716247665; cv=none; b=BSNX6wgThGjXEXUS4t6BOB2Vg6+aemg+cu+C8ZLI70RyMvo7yfaSo9DKCkvS8j6cD+21QJKuHejyMaD6Upn+Tp8Rd+p860yVhjtrv5JpLA6pA40qHdR4sfVva0PqKekwsCLcQ2JUEAn2bctefeT5U2N7FM3iBl87kb4GHkvxYk0=
+	t=1716248291; cv=none; b=gzyjFmeZw1cdRce6eCNsDxu7XXCQ+gcQhTaiTB7IcN83jznFIB3P0/LrmfMOjrxyMzKUDsydNMoxsC2cxyKIDqeTxbq3BJQfjIhD32sTJPECzWt/7RrKvkZqzwcAZW6i+esfPEA+jBHf+42MNHTVq/XblWXF47xWWClMj5+dmJ8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716247665; c=relaxed/simple;
-	bh=Nzt9qDt5h+70hQ0fqdsDup9j6gDQZjBLsr7H3jI9z+E=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=ZNrD2Lz1FXwIp8cmORyinPYWEzPNCta80MvEISchJsxKZaVf4sA2hkFSCdE4X7zvKzG0ctlFViiTmMTyQNtuK2lEbEVg4ZD5PkYkxz1YV5gr1aaCj7qMjwoCFMbdyfkHcsAGO6aAw760GpGYjDftJ2XGhrzvM2Rh6zg86pvl//M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=C/YA9Sy0; arc=none smtp.client-ip=199.89.1.12
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1716248291; c=relaxed/simple;
+	bh=4bt++waHQ2R9Zb+35vuWAqwJuOZtjry6e4NbK1b92Kc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=SVbRR/iO3NiqSMnJoMUZQx62zitDgsJpeFXDuyz1WQPa2jg1tuyCgC3mdACRACQw37hhCO+oZV58/xc5YLbyC10dq9KmxIs3o6S9SyN+0wtycv8Mw0Qo6VUgFSmvrA/btQ3j4gWSWGdb1dClBoFeKZFPbqhX1n33WnYLGcG6xfQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=U4pV8Hiy; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="C/YA9Sy0"
-Received: from localhost (localhost [127.0.0.1])
-	by 009.lax.mailroute.net (Postfix) with ESMTP id 4Vjtyl5Q4VzlgT1M;
-	Mon, 20 May 2024 23:27:43 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1716247657; x=1718839658; bh=Nzt9qDt5h+70hQ0fqdsDup9j
-	6gDQZjBLsr7H3jI9z+E=; b=C/YA9Sy07IEM+qqgYqVbUuTT2eae7FaZjY67RglY
-	xs8JIZ5fIEJmIi/4yguN7lWemkIY0lF1uW4HaGT1T7awti5GTnTBmHKQ04JxrUUa
-	LSDC3OeoJbL4RngdRtaktFL03Ec7biVRlKEwJ2GVnG9wWiYUekcgidKdm8eayTXE
-	glYavP90/fn4z+2DgVWcbXE9mLkd5i6gxajbPM/JL0vPaqHYUmeFuEWk2YtQcdn7
-	oR8/laYOwODyy/CdsxFI5H8VGrTkV1ppmN28+l4eH5dYRW+sAmPhzOgwoDOKEyq/
-	IlC4XiLikdRNeujS2eAqTmGSSddZuhR3GALg8lwyKmz5eg==
-X-Virus-Scanned: by MailRoute
-Received: from 009.lax.mailroute.net ([127.0.0.1])
- by localhost (009.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id ozaYIhn_TTJn; Mon, 20 May 2024 23:27:37 +0000 (UTC)
-Received: from [100.96.154.26] (unknown [104.132.0.90])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="U4pV8Hiy"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716248287;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=fauhI+WTcIHybbUJ8pD1S39Ntn+ZMExqf1NyHL9VO5E=;
+	b=U4pV8HiyCYhb4EZojd4hqH2dWsR4ciTfzqLr6u4CXZ7IbAvDHMbceRmadR+fS7BQ3ByIG8
+	4OTi6UWQcUrSmHzQEMM2Fg8d62HBaR5B8+qfAt6YwNHKcSDkrxwEafd/LMtQd3R5afOMJr
+	V73b0JB1ZBlUjXJBqLVQQQoi/IUMRDA=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-659-XkeEGymNNfO4XtB35qu82g-1; Mon, 20 May 2024 19:38:04 -0400
+X-MC-Unique: XkeEGymNNfO4XtB35qu82g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 009.lax.mailroute.net (Postfix) with ESMTPSA id 4VjtyW3wcTzlgT1K;
-	Mon, 20 May 2024 23:27:31 +0000 (UTC)
-Message-ID: <de16a905-3cc1-46e3-b9b4-494ad73cac07@acm.org>
-Date: Mon, 20 May 2024 16:27:29 -0700
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13436185A780;
+	Mon, 20 May 2024 23:38:04 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 07E252026D6E;
+	Mon, 20 May 2024 23:38:03 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44KNc3Z5190804
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 20 May 2024 19:38:03 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44KNc3Hl190803;
+	Mon, 20 May 2024 19:38:03 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH 0/2] multipathd: accept more multipath device names
+Date: Mon, 20 May 2024 19:38:01 -0400
+Message-ID: <20240520233803.190793-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v20 11/12] null: Enable trace capability for null block
-To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
- Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
- Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>
-Cc: martin.petersen@oracle.com, david@fromorbit.com, hare@suse.de,
- damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com, joshi.k@samsung.com,
- nitheshshetty@gmail.com, gost.dev@samsung.com, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
- linux-fsdevel@vger.kernel.org
-References: <20240520102033.9361-1-nj.shetty@samsung.com>
- <CGME20240520103027epcas5p4789defe8ab3bff23bd2abcf019689fa2@epcas5p4.samsung.com>
- <20240520102033.9361-12-nj.shetty@samsung.com>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20240520102033.9361-12-nj.shetty@samsung.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-On 5/20/24 03:20, Nitesh Shetty wrote:
-> This is a prep patch to enable copy trace capability.
-> At present only zoned null_block is using trace, so we decoupled trace
-> and zoned dependency to make it usable in null_blk driver also.
+The multipathd commands with a $map argument will only accept
+dm-<number> and aliases for $map. Make them accept WWIDs as well. Also,
+change find_mp_by_str() to not skip devices with aliases of the form
+dm-<something_that_starts_with_a_number>, which are horrible names, but
+still valid.
 
-Reviewed-by: Bart Van Assche <bvanassche@acm.org>
+Benjamin Marzinski (2):
+  libmultipath: accept poorly chosen aliases in find_mp_by_str
+  libmultipath: accept wwids in find_mp_by_str
+
+ libmultipath/structs.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+-- 
+2.45.0
+
