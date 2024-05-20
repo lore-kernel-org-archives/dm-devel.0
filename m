@@ -1,139 +1,208 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-108-mta72.mxroute.com (mail-108-mta72.mxroute.com [136.175.108.72])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF42B6BB5B
-	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 12:31:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A923D5674E
+	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 12:38:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=136.175.108.72
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716208283; cv=none; b=R9kH8BD7Cf8IDwGzPdPKIYASUGOjkrAj5HMYpwDqcbM4Akw+DO3Bi+OsISyvo0dzzW2RQViJa317ClG/SoTRFKOzpdsmM+GOShNGe2znI1Mv/ktLvjT3o/7H4eWY1lef+0MCRNPDeUBmWaycwEyArBJ+FLebM3o/hwv2e1AhWf4=
+	t=1716208711; cv=none; b=oGeafpTYfS9XyG7jYCYFcosyFDt3kWC1lLdZ4cQm/IJ5K/ZtGRjPh2IephWw7gCQCNCRlmuCGPfTp2jtHdWxnZaQ692QlcOIrObBtf9+nd7Uj1HEE8GzSo/KznWFk67pynrIYbx50XQHO6fg48Mo3V6mLGDxAvTgidpMVlyraBY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716208283; c=relaxed/simple;
-	bh=ce6oru7LPD9lbhzZfnzBKS2IPT8JY+sTsV2gMVxtYCk=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=qvAEtwqUeTkIS4Dxm2SfiX4gbYLkSP1QKXuQ+JBQi8R3HzQarfCeapXNKIA/BFdZ6nNt3HB+y0FV+F3TluNHc0nkJct82Ct8tvYVPXP7aabttsy/205MAy6VvngvFCp0bhIfWFpR5TQeVM7eUqIQdHqIzv8XKwXOlDNR+lxA9hQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cqj9iVHo; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1716208711; c=relaxed/simple;
+	bh=vSwLw09oJeePOsbI1H72eswYjkpje5c2G4YPiZSuBj8=;
+	h=References:From:To:Cc:Subject:Date:In-reply-to:Message-ID:
+	 MIME-Version:Content-Type; b=KM371ucuvheBBUX9Eh+cUuZFAg9fVMs5OLeSHOFz2uxC7VdNNhQah072gNtT/0gbiyl+3naFM6S4sqNuiz70xn3JJXGznkskqM6BIT5lDMflkqKW8KNCiz9qWEb5D7sPoiRgVfTYI/n+agaI8xx3nBoLfEGUfEy+7Dlv2VB2HCU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=damenly.org; spf=pass smtp.mailfrom=damenly.org; dkim=pass (2048-bit key) header.d=damenly.org header.i=@damenly.org header.b=p8/2w1aH; arc=none smtp.client-ip=136.175.108.72
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=damenly.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=damenly.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cqj9iVHo"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716208280;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9xxq06coPp2aoGXiJwR3/gZ9zYxOiYsiplvRA2+0uqY=;
-	b=cqj9iVHox7j02T+38EXF57Fhn6VN5blMnonAy3YwGNVYzSeN1vMWTQ0bogAeBXVxUqvdE0
-	Jga4M7iWwuqT1ke2plhnkCvywQds7+fdxxsQrF1WFXEJsQUww1CJhSKR3mChNh2/+tdepu
-	p6+JTkXuT+tq6WTRXO1/25c4VWtJXpQ=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-604-6Z3kB0usO7OYs13PWUSzNQ-1; Mon,
- 20 May 2024 08:31:18 -0400
-X-MC-Unique: 6Z3kB0usO7OYs13PWUSzNQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 848A73C0C2C4;
-	Mon, 20 May 2024 12:31:17 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1BA0B40C6EB7;
-	Mon, 20 May 2024 12:31:17 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id E330530C1C33; Mon, 20 May 2024 12:31:16 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id E05EF3FB52;
-	Mon, 20 May 2024 14:31:16 +0200 (CEST)
-Date: Mon, 20 May 2024 14:31:16 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Fan Wu <wufan@linux.microsoft.com>
-cc: Mike Snitzer <snitzer@kernel.org>, corbet@lwn.net, zohar@linux.ibm.com, 
-    jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
-    axboe@kernel.dk, agk@redhat.com, eparis@redhat.com, paul@paul-moore.com, 
-    linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
-    linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
-    linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
-    audit@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v18 12/21] dm: add finalize hook to target_type
-In-Reply-To: <234910c1-40c3-4489-94ab-6e9a5f00d93e@linux.microsoft.com>
-Message-ID: <889a7880-8336-a44a-bea4-a4c81c5e5cce@redhat.com>
-References: <1714775551-22384-1-git-send-email-wufan@linux.microsoft.com> <1714775551-22384-13-git-send-email-wufan@linux.microsoft.com> <aa767961-5e3-2ceb-1a1e-ff66a8eed649@redhat.com> <212b02a8-f5f0-4433-a726-1639dda61790@linux.microsoft.com>
- <bc9aa053-20a6-eaa-cbe4-344f340242b@redhat.com> <234910c1-40c3-4489-94ab-6e9a5f00d93e@linux.microsoft.com>
+	dkim=pass (2048-bit key) header.d=damenly.org header.i=@damenly.org header.b="p8/2w1aH"
+Received: from filter006.mxroute.com ([136.175.111.3] filter006.mxroute.com)
+ (Authenticated sender: mN4UYu2MZsgR)
+ by mail-108-mta72.mxroute.com (ZoneMTA) with ESMTPSA id 18f95fdf437000efce.007
+ for <dm-devel@lists.linux.dev>
+ (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
+ Mon, 20 May 2024 12:33:19 +0000
+X-Zone-Loop: 4a95cb1f53249a2062f34de335230cf23c8d9830849e
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=damenly.org
+	; s=x; h=Content-Type:MIME-Version:Message-ID:In-reply-to:Date:Subject:Cc:To:
+	From:References:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+	List-Post:List-Owner:List-Archive;
+	bh=JvDGKlHjtsOoT4fZ/bziidnM87mi6Drl2/H5bm2mPzM=; b=p8/2w1aHCYzDslMAYy93dwz2e6
+	vhlqrwcwxLncKvNFqMHO0DIGCj2FoFfGaMEWE3b4t4Q7nj8MoPpAQR5gJXqIDGKW9SgWSpzUqqXyM
+	aBGjVIdRkgPlHDCBUHijbXEBNemJq3Hw58aNQXcWDFuPZNojxf8yp0LLbmmIXuN1hcsgijmdaKcWx
+	F3KBhhecUmCJibFnY0v0od58b9FdLWxV4MgPJef9Wqle9eiru+7jGkKzhZs1xJBktjiAvjtVGex0q
+	Pib9myuR3eQ2cJd0dw43Rs6XrmL+M08qbepXVG0o286MdarM1LjoI+mFj0BON5kJLQKHjqmocyMth
+	ZH0CT2jw==;
+References: <20240509011900.2694291-1-yukuai1@huaweicloud.com>
+ <20240509011900.2694291-4-yukuai1@huaweicloud.com>
+User-agent: mu4e 1.7.5; emacs 28.2
+From: Su Yue <l@damenly.org>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+ song@kernel.org, xni@redhat.com, dm-devel@lists.linux.dev,
+ linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+ yukuai3@huawei.com, yi.zhang@huawei.com, yangerkun@huawei.com
+Subject: Re: [PATCH md-6.10 3/9] md: add new helpers for sync_action
+Date: Mon, 20 May 2024 19:51:25 +0800
+In-reply-to: <20240509011900.2694291-4-yukuai1@huaweicloud.com>
+Message-ID: <v838ekaa.fsf@damenly.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+Content-Type: text/plain; format=flowed
+X-Authenticated-Id: l@damenly.org
 
 
+On Thu 09 May 2024 at 09:18, Yu Kuai <yukuai1@huaweicloud.com> 
+wrote:
 
-On Fri, 17 May 2024, Fan Wu wrote:
+> From: Yu Kuai <yukuai3@huawei.com>
+>
+> The new helpers will get current sync_action of the array, will 
+> be used
+> in later patches to make code cleaner.
+>
+> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+> ---
+>  drivers/md/md.c | 64 
+>  +++++++++++++++++++++++++++++++++++++++++++++++++
+>  drivers/md/md.h |  3 +++
+>  2 files changed, 67 insertions(+)
+>
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 00bbafcd27bb..48ec35342d1b 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -69,6 +69,16 @@
+>  #include "md-bitmap.h"
+>  #include "md-cluster.h"
+>
+> +static char *action_name[NR_SYNC_ACTIONS] = {
+>
 
-> > So, it seems that the preresume callback provides the guarantee that you
-> > looking for.
-> > 
-> >> -Fan
-> > 
-> > Mikulas
-> 
-> Thanks for the info. I have tested and verified that the preresume() hook can
-> also work for our case.
-> 
-> From the source code
-> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-ioctl.c#n1149,
-> the whole resume process appears to be:
-> 
-> 1. Check if there is a new map for the device. If so, attempt to activate the
-> new map using dm_swap_table() (where the finalize() callback occurs).
-> 
-> 2. Check if the device is suspended. If so, use dm_resume() (where the
-> preresume() callback occurs) to resume the device.
-> 
-> 3. If a new map is activated, use dm_table_destroy() to destroy the old map.
-> 
-> For our case:
-> 
-> - Using the finalize() callback, the metadata of the dm-verity target inside
-> the table is attached to the mapped device every time a new table is
-> activated.
-> - Using the preresume() callback, the same metadata is attached every time the
-> device resumes from suspension.
-> 
-> If I understand the code correctly, resuming from suspension is a necessary
-> step for loading a new mapping table. Thus, the preresume() callback covers
-> all conditions where the finalize() callback would be triggered.
+Th array will not be modified, so:
 
-Yes.
+static const char * const action_names[NR_SYNC_ACTIONS]
 
-> However, the preresume() callback can also be triggered when the device 
-> resumes from suspension without loading a new table, in which case there 
-> is no new metadata in the table to attach to the mapped device.
+> +	[ACTION_RESYNC]		= "resync",
+> +	[ACTION_RECOVER]	= "recover",
+> +	[ACTION_CHECK]		= "check",
+> +	[ACTION_REPAIR]		= "repair",
+> +	[ACTION_RESHAPE]	= "reshape",
+> +	[ACTION_FROZEN]		= "frozen",
+> +	[ACTION_IDLE]		= "idle",
+> +};
+> +
+>  /* pers_list is a list of registered personalities protected by 
+>  pers_lock. */
+>  static LIST_HEAD(pers_list);
+>  static DEFINE_SPINLOCK(pers_lock);
+> @@ -4867,6 +4877,60 @@ metadata_store(struct mddev *mddev, const 
+> char *buf, size_t len)
+>  static struct md_sysfs_entry md_metadata =
+>  __ATTR_PREALLOC(metadata_version, S_IRUGO|S_IWUSR, 
+>  metadata_show, metadata_store);
+>
+> +enum sync_action md_sync_action(struct mddev *mddev)
+> +{
+> +	unsigned long recovery = mddev->recovery;
+> +
+> +	/*
+> +	 * frozen has the highest priority, means running sync_thread 
+> will be
+> +	 * stopped immediately, and no new sync_thread can start.
+> +	 */
+> +	if (test_bit(MD_RECOVERY_FROZEN, &recovery))
+> +		return ACTION_FROZEN;
+> +
+> +	/*
+> +	 * idle means no sync_thread is running, and no new 
+> sync_thread is
+> +	 * requested.
+> +	 */
+> +	if (!test_bit(MD_RECOVERY_RUNNING, &recovery) &&
+> +	    (!md_is_rdwr(mddev) || !test_bit(MD_RECOVERY_NEEDED, 
+> &recovery)))
+> +		return ACTION_IDLE;
+My brain was lost sometimes looking into nested conditions of md 
+code...
+I agree with Xiao Ni's suggestion that more comments about the 
+array
+state should be added.
 
-Yes.
+> +	if (test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
+> +	    mddev->reshape_position != MaxSector)
+> +		return ACTION_RESHAPE;
+> +
+> +	if (test_bit(MD_RECOVERY_RECOVER, &recovery))
+> +		return ACTION_RECOVER;
+> +
+>
+In action_show, MD_RECOVERY_SYNC is tested first then 
+MD_RECOVERY_RECOVER.
+After looking through the logic of MD_RECOVERY_RECOVER 
+clear/set_bit, the
+change is fine to me. However, better to follow old pattern unless 
+there
+have resons.
 
-> In the scenario where the finalize() callback succeeds but the preresume()
-> callback fails, it seems the device will remain in a suspended state, the
-> newly activated table will be kept, and the old table will be destroyed, so it
-> seems there is no inconsistency using finalize() even preresume() potentially
-> fails.
 
-What does your security module do when the verification of the dm-verity 
-hash fails? Does it halt the whole system? Does it destroy just the 
-failing dm device? Or does it attempt to recover somehow from this 
-situation?
+> +	if (test_bit(MD_RECOVERY_SYNC, &recovery)) {
+> +		if (test_bit(MD_RECOVERY_CHECK, &recovery))
+> +			return ACTION_CHECK;
+> +		if (test_bit(MD_RECOVERY_REQUESTED, &recovery))
+> +			return ACTION_REPAIR;
+> +		return ACTION_RESYNC;
+> +	}
+> +
+> +	return ACTION_IDLE;
+> +}
+> +
+> +enum sync_action md_sync_action_by_name(char *page)
+> +{
+> +	enum sync_action action;
+> +
+> +	for (action = 0; action < NR_SYNC_ACTIONS; ++action) {
+> +		if (cmd_match(page, action_name[action]))
+> +			return action;
+> +	}
+> +
+> +	return NR_SYNC_ACTIONS;
+> +}
+> +
+> +char *md_sync_action_name(enum sync_action action)
+>
 
-> I believe both the finalize() callback proposed by Mike and the preresume()
-> callback suggested by Mikulas can work for our case. I am fine with either
-> approach, but I would like to know which one is preferred by the maintainers
-> and would appreciate an ACK for the chosen approach.
-> 
-> -Fan
+And 'const char *'
 
-I would prefer preresume - we shouldn't add new callbacks unless it's 
-necessary.
+--
+Su
 
-Mikulas
-
+> +{
+> +	return action_name[action];
+> +}
+> +
+>  static ssize_t
+>  action_show(struct mddev *mddev, char *page)
+>  {
+> diff --git a/drivers/md/md.h b/drivers/md/md.h
+> index 2edad966f90a..72ca7a796df5 100644
+> --- a/drivers/md/md.h
+> +++ b/drivers/md/md.h
+> @@ -864,6 +864,9 @@ extern void md_unregister_thread(struct 
+> mddev *mddev, struct md_thread __rcu **t
+>  extern void md_wakeup_thread(struct md_thread __rcu *thread);
+>  extern void md_check_recovery(struct mddev *mddev);
+>  extern void md_reap_sync_thread(struct mddev *mddev);
+> +extern enum sync_action md_sync_action(struct mddev *mddev);
+> +extern enum sync_action md_sync_action_by_name(char *page);
+> +extern char *md_sync_action_name(enum sync_action action);
+>  extern bool md_write_start(struct mddev *mddev, struct bio 
+>  *bi);
+>  extern void md_write_inc(struct mddev *mddev, struct bio *bi);
+>  extern void md_write_end(struct mddev *mddev);
