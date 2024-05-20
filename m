@@ -1,61 +1,61 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3B6E53373
-	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 10:39:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E717C502A0
+	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 10:48:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716201556; cv=none; b=OXzIFulTEwcMs/XgKrGLaO1oj0b4kFlwrGoaxWXP43BPtmGdOa+L+gPo0CNmpwaBi9zPGg0J76phDXw/w/8INDQuA7Y4xXCuYgV/7KIHIBAH49yAmAinQtkuWwdQICYebnLBHsIXm0B+w/Pk5GaFhJm+epKjwFawflNQIPMwq5Y=
+	t=1716202090; cv=none; b=mOhCBvfKMFMc2WBezgGN91TrTnaaJ1Tdhizj6hYVnhGxgkIKJ1nk2uAiwotk3jc/7aO/fkSNRBoG7CuUOrG8CFgQeev9uF68/9V/vW9JX9KmO/yBQCIjpVKIBcZpg9Mt2hVckurD/KDp2RXI+ohvKQstbisoS/uyyQZiJq9AEN0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716201556; c=relaxed/simple;
-	bh=HFgWWZL2wifN2cwpEjonm57Q/k5K+tvVYKfhgGUwrSc=;
+	s=arc-20240116; t=1716202090; c=relaxed/simple;
+	bh=xmWY4f02X7qlcH4yGMxFNj65fKAvO9snaQuM4/zb9oM=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=nkXyhqjZYnNkp64gMP3Q7pGn6xQbbpX6z30DYVFLSWG7U/XUvCxcISyTWaS46TkXpRFdRdmhch5nxHRyhfo9CvnOTnncSEdGhULujQzdQyqAIyLNWdfIrunLXJ5cEQNes9oQVgVRc2N5ioE0gxSPB5bzx9pQnzGx4Muc0BtOC2w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=d2AKLo86; arc=none smtp.client-ip=170.10.133.124
+	 To:Cc:Content-Type; b=YaZ9qi2RmHUQzGKkRdC+6xZjZJKeesUjc71b8XvOnnd51nlWnrcAvXOXLDbp7QqqZNJt/MklCUSWMKnAGMbEAGWXoeqk9FwICKh6SGv+qXg2Nu1YLNiIFYn7jBXF7awEs/NnZskyL7cr7p7KfFmEW0s2fSY2eZW7sFhNztroa9g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TQ9ICwIy; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="d2AKLo86"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TQ9ICwIy"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716201554;
+	s=mimecast20190719; t=1716202086;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=RlAqBOlKtvveeTtrv4Z304b9Esia2ku08LBiVu9x3+g=;
-	b=d2AKLo86VvPj6L2bsyiFlJEQj+qw09+hWPGy3JYgLO4HT2sb2oIDzMyNlL3pXxc1I6n1HM
-	mJgyWjYHSIthlIMZBQ4RZ+dIZ8eS56r5+spvlf4hAVYvvo13wiIcR10aD/ZbiajMeXWRMI
-	Ck0o4jBSIirzlXIvJZmN+/J3ZFC0CM4=
-Received: from mail-pl1-f197.google.com (mail-pl1-f197.google.com
- [209.85.214.197]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=NNz3U5QZm8AZDLJeucZLL1YyhyAVTs0xS8svaas4LQI=;
+	b=TQ9ICwIyYkhhzB5yJBlNl+nabh9kw0VSEu+R+lQeliV9AaSVHJrnys65uKnJSLddZycJB6
+	+WqD3gyWycy90GQcS1rwieTZRxIAPTPsFfLk2CkvYGYr4kNeuSIxRvoNsF4T7qiK3Ha2y0
+	xieeq8ZlmfOAGcmzc9xvCIrETLjVl+E=
+Received: from mail-pj1-f69.google.com (mail-pj1-f69.google.com
+ [209.85.216.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-442-GKUhI66wPYe8_iQPgH7UWg-1; Mon, 20 May 2024 06:39:12 -0400
-X-MC-Unique: GKUhI66wPYe8_iQPgH7UWg-1
-Received: by mail-pl1-f197.google.com with SMTP id d9443c01a7336-1eea09ec7ecso116011605ad.2
-        for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 03:39:12 -0700 (PDT)
+ us-mta-671-9KyuPNXlOzGlGeN9mtUNCg-1; Mon, 20 May 2024 06:48:05 -0400
+X-MC-Unique: 9KyuPNXlOzGlGeN9mtUNCg-1
+Received: by mail-pj1-f69.google.com with SMTP id 98e67ed59e1d1-2b8700329e6so8377904a91.1
+        for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 03:48:05 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716201551; x=1716806351;
+        d=1e100.net; s=20230601; t=1716202084; x=1716806884;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=RlAqBOlKtvveeTtrv4Z304b9Esia2ku08LBiVu9x3+g=;
-        b=KcXyjp4Qr6JCsl34QQLHwAkfK4t5+GvhrScmwZHgkaIgCIUA1gJnOyzYEa+r186mMu
-         XGSGfqEmK17XkqWatqP4k9g9+1PupD/nr6nr3Ajk7kYs7yIOlGh5noHdsWKPGmUgoeai
-         iKzbnHfaaeO8QxkJIwYDPm2gUnWlwmXYATMwExJ84Ua7Rxfx+I8fOPvzcT1QBmAnC2A/
-         Jl0tzJHEBOMEgcQlocWqcoAyaYFEsUhggnhQyMraIvXR/82fybbTxu4YGr7P5N+7Dluc
-         oPF7VYdCj5JKlJ6zoLzbJjxxY40Wffy9HvgAxmTzIBjC3JHyE2MGryB00KhaM84l7JKm
-         UoZA==
-X-Forwarded-Encrypted: i=1; AJvYcCXYPm42UlIjnC5XJajB7Umt2Uheh/FhGTpzYGtBKs7QSmOh2P/ySLNRV+cMsrayFcaTNiDpmPKJgCGP3YL4ZfNoI5CIvmDI6qM=
-X-Gm-Message-State: AOJu0Yz0bm1mj+ve4T6fiRUP2CjDcdUzcOSypFOdV2EAchik00oER4GW
-	2umSwwWi19alM38Bu4IzrbTodIfTYnA9xUBnxScxhxU+krudNwmolVfkdoS7SGOG5365YbnBojz
-	qsAaG4pb3xlpzHg7sgOmK/BI4FuvF/YLonKV0xhKyqJO/fcTN3WXMJOqS3v0lXkTH6WJeGov/kM
-	n1b2Cjs4J/l/71gZ0HW+K+cQUNFTR1S7I=
-X-Received: by 2002:a05:6a20:dc95:b0:1aa:6613:2387 with SMTP id adf61e73a8af0-1afde1b01femr25864178637.47.1716201551308;
-        Mon, 20 May 2024 03:39:11 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IGweEbarBn6gVZIYtzMprWTNE7rrULCXr2Qkpb5hkVGaFeKkeBNZgclYJeiXDISg78hKS6RDFcIMHNXzq2EwxY=
-X-Received: by 2002:a05:6a20:dc95:b0:1aa:6613:2387 with SMTP id
- adf61e73a8af0-1afde1b01femr25864167637.47.1716201550946; Mon, 20 May 2024
- 03:39:10 -0700 (PDT)
+        bh=NNz3U5QZm8AZDLJeucZLL1YyhyAVTs0xS8svaas4LQI=;
+        b=tVtb3hl0w1gp5XM2cFuw/XBgT6AcApzelFnRJEnKbJh1h3PgabeRNy9CPN3KoBDJD3
+         kw7dBhRJ2QGny1hwqT3PwJIdn6yjGbvEGWgdXMgBiO98J29Cl+3c8MgGUu+ue9ispPec
+         yLIKDdSaKbLG0QJ8WLst61cHsOaKiiWyPprVyTAsZiKskTD9uqOddizx8Yxf/moi6Z5o
+         DpC1OF8X/BhJaDa05eLnXAB5X1OLtHSx33AMmTssOzLYidY4HaXggaF6gQeUFtGD+JUx
+         1BsR7otOAZ2if4okRSHUsk4jCODmLR8CEPPm1y4zcL7/wu1a0oa6UhBz5FkzDCBE97zE
+         UK7Q==
+X-Forwarded-Encrypted: i=1; AJvYcCWypedBYauBU4hOR2IbsU0Z9OnT6tLQvGLVGu2ZLTW2chW2NCDTkk7rKfVoQcibLM5JD0uq7NMbNuXqoGMp8b0L93NP5VYsGho=
+X-Gm-Message-State: AOJu0YydcKbsyVMB1s92bxS07F5Tb37o7gs7CYdKMAruHaRuM79CVhmh
+	1FNRP5tVo9pv8A/3AiaIalrcljzX+xQ4fCvd0Wr1U5C+QC/kRz4lhlueHUIJxAX07ixc9WKUr20
+	PtMcY+z5fplMmAddDYat/NLAaqxtoaBfLFwnd6yZQBoNIILW23momIC+MHh1aI0uBPq2aJbzFEx
+	NL2maFSZyULM7of0bQ8z8/A1KQMse/O9EzscbbQuZCW2XZDpg=
+X-Received: by 2002:a17:90a:b785:b0:29d:dd93:5865 with SMTP id 98e67ed59e1d1-2b6ccef64bdmr23756815a91.46.1716202084376;
+        Mon, 20 May 2024 03:48:04 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHyQGJnqu6O926v2TqMkiej0ZHycTo1wX8iox6govhRW4orIuHx7fPcI35fo68r09zetjgxB17k9Nl2jO9geDA=
+X-Received: by 2002:a17:90a:b785:b0:29d:dd93:5865 with SMTP id
+ 98e67ed59e1d1-2b6ccef64bdmr23756795a91.46.1716202083833; Mon, 20 May 2024
+ 03:48:03 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -66,11 +66,12 @@ References: <CAGVVp+Xsmzy2G9YuEatfMT6qv1M--YdOCQ0g7z7OVmcTbBxQAg@mail.gmail.com>
  <ZkXsOKV5d4T0Hyqu@fedora> <9b340157-dc0c-6e6a-3d92-f2c65b515461@huaweicloud.com>
  <CAGVVp+XtThX7=bZm441VxyVd-wv_ycdqMU=19a2pa4wUkbkJ3g@mail.gmail.com>
  <1b35a177-670a-4d2f-0b68-6eda769af37d@huaweicloud.com> <CAGVVp+WQVeV0PE12RvpojFTRB4rHXh6Lk01vLmdStw1W9zUACg@mail.gmail.com>
- <CAGVVp+WGyPS5nOQYhWtgJyQnXwUb-+Hui14pXqxd+-ZUjWpTrA@mail.gmail.com> <f1c98dd1-a62c-6857-3773-e05b80e6a763@huaweicloud.com>
-In-Reply-To: <f1c98dd1-a62c-6857-3773-e05b80e6a763@huaweicloud.com>
+ <CAGVVp+WGyPS5nOQYhWtgJyQnXwUb-+Hui14pXqxd+-ZUjWpTrA@mail.gmail.com>
+ <f1c98dd1-a62c-6857-3773-e05b80e6a763@huaweicloud.com> <ca29a4b1-4b4a-3b1c-4981-6e05e0bb24be@huaweicloud.com>
+In-Reply-To: <ca29a4b1-4b4a-3b1c-4981-6e05e0bb24be@huaweicloud.com>
 From: Changhui Zhong <czhong@redhat.com>
-Date: Mon, 20 May 2024 18:38:59 +0800
-Message-ID: <CAGVVp+UdBekv2udwxtXBrtn0CMTrBa94oE4taUfynWncYF5ETQ@mail.gmail.com>
+Date: Mon, 20 May 2024 18:47:52 +0800
+Message-ID: <CAGVVp+W=MKwytCH+skL=hUsxHzz21O8qv_eeXfwKQEnLiuf3VA@mail.gmail.com>
 Subject: Re: [bug report] INFO: task mdX_resync:42168 blocked for more than
  122 seconds
 To: Yu Kuai <yukuai1@huaweicloud.com>
@@ -83,87 +84,166 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, May 20, 2024 at 10:55=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> =
-wrote:
+On Mon, May 20, 2024 at 3:27=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com> w=
+rote:
 >
-> Hi, Changhui
+> Hi,
 >
-> =E5=9C=A8 2024/05/20 8:39, Changhui Zhong =E5=86=99=E9=81=93:
-> > [czhong@vm linux-block]$ git bisect bad
-> > 060406c61c7cb4bbd82a02d179decca9c9bb3443 is the first bad commit
-> > commit 060406c61c7cb4bbd82a02d179decca9c9bb3443
-> > Author: Yu Kuai<yukuai3@huawei.com>
-> > Date:   Thu May 9 20:38:25 2024 +0800
+> =E5=9C=A8 2024/05/20 10:55, Yu Kuai =E5=86=99=E9=81=93:
+> > Hi, Changhui
 > >
-> >      block: add plug while submitting IO
+> > =E5=9C=A8 2024/05/20 8:39, Changhui Zhong =E5=86=99=E9=81=93:
+> >> [czhong@vm linux-block]$ git bisect bad
+> >> 060406c61c7cb4bbd82a02d179decca9c9bb3443 is the first bad commit
+> >> commit 060406c61c7cb4bbd82a02d179decca9c9bb3443
+> >> Author: Yu Kuai<yukuai3@huawei.com>
+> >> Date:   Thu May 9 20:38:25 2024 +0800
+> >>
+> >>      block: add plug while submitting IO
+> >>
+> >>      So that if caller didn't use plug, for example,
+> >> __blkdev_direct_IO_simple()
+> >>      and __blkdev_direct_IO_async(), block layer can still benefit
+> >> from caching
+> >>      nsec time in the plug.
+> >>
+> >>      Signed-off-by: Yu Kuai<yukuai3@huawei.com>
+> >>
+> >> Link:https://lore.kernel.org/r/20240509123825.3225207-1-yukuai1@huawei=
+cloud.com
+> >>
+> >>      Signed-off-by: Jens Axboe<axboe@kernel.dk>
+> >>
+> >>   block/blk-core.c | 6 ++++++
+> >>   1 file changed, 6 insertions(+)
 > >
-> >      So that if caller didn't use plug, for example, __blkdev_direct_IO=
-_simple()
-> >      and __blkdev_direct_IO_async(), block layer can still benefit from=
- caching
-> >      nsec time in the plug.
+> > Thanks for the test!
 > >
-> >      Signed-off-by: Yu Kuai<yukuai3@huawei.com>
-> >      Link:https://lore.kernel.org/r/20240509123825.3225207-1-yukuai1@hu=
-aweicloud.com
-> >      Signed-off-by: Jens Axboe<axboe@kernel.dk>
+> > I was surprised to see this blamed commit, and after taking a look at
+> > raid1 barrier code, I found that there are some known problems, fixed i=
+n
+> > raid10, while raid1 still unfixed. So I wonder this patch maybe just
+> > making the exist problem easier to reporduce.
 > >
-> >   block/blk-core.c | 6 ++++++
-> >   1 file changed, 6 insertions(+)
+> > I'll start cooking patches to sync raid10 fixes to raid1, meanwhile,
+> > can you change your script to test raid10 as well, if raid10 is fine,
+> > I'll give you these patches later to test raid1.
 >
-> Thanks for the test!
+> Hi,
 >
-> I was surprised to see this blamed commit, and after taking a look at
-> raid1 barrier code, I found that there are some known problems, fixed in
-> raid10, while raid1 still unfixed. So I wonder this patch maybe just
-> making the exist problem easier to reporduce.
+> Sorry to ask, but since I can't reporduce the problem, and based on
+> code reiview, there are multiple potential problems, can you also
+> reporduce the problem with following debug patch(just add some debug
+> info, no functional changes). So that I can make sure of details of
+> the problem.
 >
-> I'll start cooking patches to sync raid10 fixes to raid1, meanwhile,
-> can you change your script to test raid10 as well, if raid10 is fine,
-> I'll give you these patches later to test raid1.
+
+Hi=EF=BC=8CKuai
+
+yeah=EF=BC=8C I can test your patch=EF=BC=8C
+but I hit a problem when applying the patch, please help check it, and
+I will test it again after you fix it.
+
+```
+patching file drivers/md/raid1.c
+patch: **** malformed patch at line 42: idx, nr, RESYNC_DEPTH);
+```
+
+Thanks,
+Changhui
+
+> diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+> index 113135e7b5f2..b35b847a9e8b 100644
+> --- a/drivers/md/raid1.c
+> +++ b/drivers/md/raid1.c
+> @@ -936,6 +936,45 @@ static void flush_pending_writes(struct r1conf *conf=
+)
+>                  spin_unlock_irq(&conf->device_lock);
+>   }
+>
+> +static bool waiting_barrier(struct r1conf *conf, int idx)
+> +{
+> +       int nr =3D atomic_read(&conf->nr_waiting[idx]);
+> +
+> +       if (nr) {
+> +               printk("%s: idx %d nr_waiting %d\n", __func__, idx, nr);
+> +               return true;
+> +       }
+> +
+> +       return false;
+> +}
+> +
+> +static bool waiting_pending(struct r1conf *conf, int idx)
+> +{
+> +       int nr;
+> +
+> +       if (test_bit(MD_RECOVERY_INTR, &conf->mddev->recovery))
+> +               return false;
+> +
+> +       if (conf->array_frozen) {
+> +               printk("%s: array is frozen\n", __func__);
+> +               return true;
+> +       }
+> +
+> +       nr =3D atomic_read(&conf->nr_pending[idx]);
+> +       if (nr) {
+> +               printk("%s: idx %d nr_pending %d\n", __func__, idx, nr);
+> +               return true;
+> +       }
+> +
+> +       nr =3D atomic_read(&conf->barrier[idx]);
+> +       if (nr >=3D RESYNC_DEPTH) {
+> +               printk("%s: idx %d barrier %d exceeds %d\n", __func__,
+> idx, nr, RESYNC_DEPTH);
+> +               return true;
+> +       }
+> +
+> +       return false;
+> +}
+> +
+>   /* Barriers....
+>    * Sometimes we need to suspend IO while we do something else,
+>    * either some resync/recovery, or reconfigure the array.
+> @@ -967,8 +1006,7 @@ static int raise_barrier(struct r1conf *conf,
+> sector_t sector_nr)
+>          spin_lock_irq(&conf->resync_lock);
+>
+>          /* Wait until no block IO is waiting */
+> -       wait_event_lock_irq(conf->wait_barrier,
+> -                           !atomic_read(&conf->nr_waiting[idx]),
+> +       wait_event_lock_irq(conf->wait_barrier, !waiting_barrier(conf, id=
+x),
+>                              conf->resync_lock);
+>
+>          /* block any new IO from starting */
+> @@ -990,11 +1028,7 @@ static int raise_barrier(struct r1conf *conf,
+> sector_t sector_nr)
+>           * C: while conf->barrier[idx] >=3D RESYNC_DEPTH, meaning reache=
+s
+>           *    max resync count which allowed on current I/O barrier buck=
+et.
+>           */
+> -       wait_event_lock_irq(conf->wait_barrier,
+> -                           (!conf->array_frozen &&
+> -                            !atomic_read(&conf->nr_pending[idx]) &&
+> -                            atomic_read(&conf->barrier[idx]) <
+> RESYNC_DEPTH) ||
+> -                               test_bit(MD_RECOVERY_INTR,
+> &conf->mddev->recovery),
+> +       wait_event_lock_irq(conf->wait_barrier, !waiting_pending(conf, id=
+x),
+>                              conf->resync_lock);
+>
+>          if (test_bit(MD_RECOVERY_INTR, &conf->mddev->recovery)) {
 >
 > Thanks,
 > Kuai
 >
-
-Hi=EF=BC=8C Kuai
-
-I tested raid10 and trigger this issue too=EF=BC=8C
-
-[  332.435340] Create raid10
-[  332.573160] device-mapper: raid: Superblocks created for new raid set
-[  332.595273] md/raid10:mdX: not clean -- starting background reconstructi=
-on
-[  332.595277] md/raid10:mdX: active with 4 out of 4 devices
-[  332.597017] mdX: bitmap file is out of date, doing full recovery
-[  332.603712] md: resync of RAID array mdX
-[  492.173892] INFO: task mdX_resync:3092 blocked for more than 122 seconds=
-.
-[  492.180694]       Not tainted 6.9.0+ #1
-[  492.184536] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  492.192365] task:mdX_resync      state:D stack:0     pid:3092
-tgid:3092  ppid:2      flags:0x00004000
-[  492.192368] Call Trace:
-[  492.192370]  <TASK>
-[  492.192371]  __schedule+0x222/0x670
-[  492.192377]  schedule+0x2c/0xb0
-[  492.192381]  raise_barrier+0xc3/0x190 [raid10]
-[  492.192387]  ? __pfx_autoremove_wake_function+0x10/0x10
-[  492.192392]  raid10_sync_request+0x2c3/0x1ae0 [raid10]
-[  492.192397]  ? __schedule+0x22a/0x670
-[  492.192398]  ? prepare_to_wait_event+0x5f/0x190
-[  492.192401]  md_do_sync+0x660/0x1040
-[  492.192405]  ? __pfx_autoremove_wake_function+0x10/0x10
-[  492.192408]  md_thread+0xad/0x160
-[  492.192410]  ? __pfx_md_thread+0x10/0x10
-[  492.192411]  kthread+0xdc/0x110
-[  492.192414]  ? __pfx_kthread+0x10/0x10
-[  492.192416]  ret_from_fork+0x2d/0x50
-[  492.192420]  ? __pfx_kthread+0x10/0x10
-[  492.192421]  ret_from_fork_asm+0x1a/0x30
-[  492.192424]  </TASK>
-
-Thanks=EF=BC=8C
-Changhui
+> >
+> > Thanks,
+> > Kuai
+> >
+> > .
+> >
+>
 
