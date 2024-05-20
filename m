@@ -1,104 +1,168 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from 009.lax.mailroute.net (009.lax.mailroute.net [199.89.1.12])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CDD7D3B182
-	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 23:38:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4287236AFE
+	for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 23:43:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716248292; cv=none; b=Q39pzmLdjseuAfad4hMoNy5xsx425zjc79gmGdQloDsXQL5Krx7GUNaeewA29+2qJpmVnLmiY7msN18ay6YMg/J+PTD5hA1JZAWqTz3+uOgIk0bz2HH3EmVO+zBfZIrOfILMz/ll3U+UwB757S6SPnGVVMF0iUZvuuo2wwzJKyw=
+	t=1716248595; cv=none; b=VKQLpVSV9gSnNfW+aAQb2XgmtkafvY+mr+BEPTbQxg46Y0MI4y2qewJxJdoQjEIAS7dcQEHscjLHEtw2XieJSP1/q8q9luA8w5s5+z5ogT+jMiQMEww1gKFreOox6VW+J0uB2Pc5+cnpvlJPZeBZcj4Iu6xMH/qaL6zK7xPTqzk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716248292; c=relaxed/simple;
-	bh=8egc7NBR+EVa5WZBkDegdMlAKAf0rzg4g7nRGJ40C8o=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=sO0PelXZF5dBzh9GTmM72xF3PeqReeUWaDSxMs3j5egABM24KNMTAMC8J1+oyEtxo/r8FtdABZ0snxCNOjSZX2B8n9C0jgZFAvK8MT8NuW1WFrEXc7c7rp6NhpQsLiJrYzgV3gsnLCBJ5Dr6WcDDYEBbPTHQIYE9bSf052v6X+U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ylsd406b; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1716248595; c=relaxed/simple;
+	bh=XI0ilmooLeYwpmsoKJHHHdPY4156763P5d8LFnYqgoo=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=YV/NB7vKtQD28boJSeSxTupHMFg3v4Gd+o4tt7yCSmZGawTGg28MQZfvUGHLsjBSJFT5DrqjwpYPP6qrZnF5P589pdbljl0NcuSTt62MlqzjXa/7BL5NbiXsQeorPOCYAPEBb+Bsf+8IZUKozNv5oAhET6rhkE/M98yYmxlFgG0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=kCzSBQht; arc=none smtp.client-ip=199.89.1.12
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ylsd406b"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716248288;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=jWRfhUNrR598ea8j25mkx6lMulu3kGYzn9guK8hxDqw=;
-	b=Ylsd406bnrGOdnAW/XB2pbAqbp8MLtfhW2FvMWpJZWM4adA1YlsqM0rotaO+CyPt2KHE6o
-	OosN5u6v/94ytANctBZrZu1pXj3TlQm1rfjwtfKPwz7G0qPVZMCrr0DCtl5tQKaIhUBb5G
-	tR54mLQW2COhnQUIXGPRV/czhfBzFZY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-210-xKoaoryINVSH4ONy7C4YIg-1; Mon, 20 May 2024 19:38:04 -0400
-X-MC-Unique: xKoaoryINVSH4ONy7C4YIg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="kCzSBQht"
+Received: from localhost (localhost [127.0.0.1])
+	by 009.lax.mailroute.net (Postfix) with ESMTP id 4VjvJd4CZRzlgT1M;
+	Mon, 20 May 2024 23:43:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1716248582; x=1718840583; bh=OyFlC0B3t3C3QPALfJEi8R8r
+	d3f1cHbIyvzodAAs6QI=; b=kCzSBQhtvR/gwexX/OBMgW8+9uPM2XLI1Io3VPXA
+	ExEWQOuBhyfGPlN9tKDNhM1K5E9x0eL/9Ri9AdYtHgjzysrJytIcu7gSGlYMqkC1
+	Ca0Br0owVaLiVVu/FpxEEeojwBG57vo0FCdc3OsdSmOf3dbvEfYzJI+8HE3qe1mY
+	vWMZfvF/OU5X5BG4RLWTW0ODrCRsLtIGJvzZdTxgA+cC1AMYouzEw6foDJqXDpTK
+	uX+zra2D0UtQsL7OjinTTCVPnMzbGsRgtbIkhkpB3RbRPFifE6E+Yyl7LBzNEdmL
+	zV5OOA6ldYfH80zPuAQxjF6hg/HtlnLKdM/Dhm7yFWNcsw==
+X-Virus-Scanned: by MailRoute
+Received: from 009.lax.mailroute.net ([127.0.0.1])
+ by localhost (009.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id EgVMztfS5ec5; Mon, 20 May 2024 23:43:02 +0000 (UTC)
+Received: from [100.96.154.26] (unknown [104.132.0.90])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 22EF9800169;
-	Mon, 20 May 2024 23:38:04 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1CBF51C09484;
-	Mon, 20 May 2024 23:38:04 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44KNc3Hl190808
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 20 May 2024 19:38:03 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44KNc3Rt190807;
-	Mon, 20 May 2024 19:38:03 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 1/2] libmultipath: accept poorly chosen aliases in find_mp_by_str
-Date: Mon, 20 May 2024 19:38:02 -0400
-Message-ID: <20240520233803.190793-2-bmarzins@redhat.com>
-In-Reply-To: <20240520233803.190793-1-bmarzins@redhat.com>
-References: <20240520233803.190793-1-bmarzins@redhat.com>
+	(Authenticated sender: bvanassche@acm.org)
+	by 009.lax.mailroute.net (Postfix) with ESMTPSA id 4VjvJH2Hf4zlgT1K;
+	Mon, 20 May 2024 23:42:54 +0000 (UTC)
+Message-ID: <2433bc0d-3867-475d-b472-0f6725f9a296@acm.org>
+Date: Mon, 20 May 2024 16:42:52 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v20 12/12] null_blk: add support for copy offload
+To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
+ Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
+ Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>
+Cc: martin.petersen@oracle.com, david@fromorbit.com, hare@suse.de,
+ damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com, joshi.k@samsung.com,
+ nitheshshetty@gmail.com, gost.dev@samsung.com,
+ Vincent Fu <vincent.fu@samsung.com>, linux-block@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+ linux-fsdevel@vger.kernel.org
+References: <20240520102033.9361-1-nj.shetty@samsung.com>
+ <CGME20240520103039epcas5p4373f7234162a32222ac225b976ae30ce@epcas5p4.samsung.com>
+ <20240520102033.9361-13-nj.shetty@samsung.com>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20240520102033.9361-13-nj.shetty@samsung.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-A multipath device alias of dm-1 is valid, albeit a really bad idea.
-Make sure that find_mp_by_str() is only checking for multipath devices
-by minor number for strings that really are of the form dm-<number>, and
-if the minor-number check fails, check if the string is an alias, just
-to be safe.
+On 5/20/24 03:20, Nitesh Shetty wrote:
+> +	if (blk_rq_nr_phys_segments(req) != BLK_COPY_MAX_SEGMENTS)
+> +		return status;
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/structs.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+Why is this check necessary?
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index e248fb51..d89f2187 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -480,11 +480,12 @@ struct multipath *
- find_mp_by_str (const struct _vector *mpvec, const char * str)
- {
- 	int minor;
--	struct multipath *mpp;
-+	char dummy;
-+	struct multipath *mpp = NULL;
- 
--	if (sscanf(str, "dm-%d", &minor) == 1)
-+	if (sscanf(str, "dm-%d%c", &minor, &dummy) == 1)
- 		mpp = find_mp_by_minor(mpvec, minor);
--	else
-+	if (!mpp)
- 		mpp = find_mp_by_alias(mpvec, str);
- 
- 	if (!mpp)
--- 
-2.45.0
+> +	/*
+> +	 * First bio contains information about destination and last bio
+> +	 * contains information about source.
+> +	 */
 
+Please check this at runtime (WARN_ON_ONCE()?).
+
+> +	__rq_for_each_bio(bio, req) {
+> +		if (seg == blk_rq_nr_phys_segments(req)) {
+> +			sector_in = bio->bi_iter.bi_sector;
+> +			if (rem != bio->bi_iter.bi_size)
+> +				return status;
+> +		} else {
+> +			sector_out = bio->bi_iter.bi_sector;
+> +			rem = bio->bi_iter.bi_size;
+> +		}
+> +		seg++;
+> +	}
+
+_rq_for_each_bio() iterates over the bios in a request. Does a copy
+offload request always have two bios - one copy destination bio and
+one copy source bio? If so, is 'seg' a bio counter? Why is that bio
+counter compared with the number of physical segments in the request?
+
+> +	trace_nullb_copy_op(req, sector_out << SECTOR_SHIFT,
+> +			    sector_in << SECTOR_SHIFT, rem);
+> +
+> +	spin_lock_irq(&nullb->lock);
+> +	while (rem > 0) {
+> +		chunk = min_t(size_t, nullb->dev->blocksize, rem);
+> +		offset_in = (sector_in & SECTOR_MASK) << SECTOR_SHIFT;
+> +		offset_out = (sector_out & SECTOR_MASK) << SECTOR_SHIFT;
+> +
+> +		if (null_cache_active(nullb) && !is_fua)
+> +			null_make_cache_space(nullb, PAGE_SIZE);
+> +
+> +		t_page_in = null_lookup_page(nullb, sector_in, false,
+> +					     !null_cache_active(nullb));
+> +		if (!t_page_in)
+> +			goto err;
+> +		t_page_out = null_insert_page(nullb, sector_out,
+> +					      !null_cache_active(nullb) ||
+> +					      is_fua);
+> +		if (!t_page_out)
+> +			goto err;
+> +
+> +		in = kmap_local_page(t_page_in->page);
+> +		out = kmap_local_page(t_page_out->page);
+> +
+> +		memcpy(out + offset_out, in + offset_in, chunk);
+> +		kunmap_local(out);
+> +		kunmap_local(in);
+> +		__set_bit(sector_out & SECTOR_MASK, t_page_out->bitmap);
+> +
+> +		if (is_fua)
+> +			null_free_sector(nullb, sector_out, true);
+> +
+> +		rem -= chunk;
+> +		sector_in += chunk >> SECTOR_SHIFT;
+> +		sector_out += chunk >> SECTOR_SHIFT;
+> +	}
+> +
+> +	status = 0;
+> +err:
+> +	spin_unlock_irq(&nullb->lock);
+
+In the worst case, how long does this loop disable interrupts?
+
+> +TRACE_EVENT(nullb_copy_op,
+> +		TP_PROTO(struct request *req,
+> +			 sector_t dst, sector_t src, size_t len),
+> +		TP_ARGS(req, dst, src, len),
+> +		TP_STRUCT__entry(
+> +				 __array(char, disk, DISK_NAME_LEN)
+> +				 __field(enum req_op, op)
+> +				 __field(sector_t, dst)
+> +				 __field(sector_t, src)
+> +				 __field(size_t, len)
+> +		),
+
+Isn't __string() preferred over __array() since the former occupies less space
+in the trace buffer?
+
+Thanks,
+
+Bart.
