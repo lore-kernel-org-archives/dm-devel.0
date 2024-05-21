@@ -1,154 +1,116 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 90CBD2AE6C;
-	Tue, 21 May 2024 21:42:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 937445674A
+	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 23:19:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=173.205.220.69
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716327770; cv=none; b=lAQiKsbORL3csm6lFm/DdOyP+KIONYpWHFrMEethpVR3BDZpH6YJmu1CCUU8LviCs9eK6JfVUZRNhQBU59u6mQV31/vmq8Z3oNlMd38/35IVGT/+X/TA1HJ4DhKYoA1++Zp5U9QaMFKs3m79kzf4aT5VtWC5eDOOjG3O9qgYVRs=
+	t=1716333573; cv=none; b=ri3X6YMvlkSpIHDbvuxK9+OeXF3TrWKzvgKs/xTN+Zn5boyToNTNg1MtOKa2PVthcMd+weyCowlcA5nGGSSHVGeb7hB8UBgV9zjEvYaWje2+u3OTQ1s/pPTfMQOcPjgxHKx4b+8NJBmPm1qrMCw0OzWfhOKawgv7bDl93mxPmOs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716327770; c=relaxed/simple;
-	bh=u9OHQk1eGnLPF7q8QnB3x/3atmb+9wZIs5n85uU/v2c=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=d9MM7xsvtqLN903geLKBlL7Ptr5pjIxAR5nNs5wW/QUUAvSHPVLvnMnuIRHV3h4HBOW+cC61ySxfdAHqjSxyfLVdoxR42EHHl8yeQ+JENPKLntuokb/MJKgLGpsIaiLIvg3go5yapjMUkft6Z5IslzH9vmhVAio//1r5b4UsaQY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=pobkyxdG; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="pobkyxdG"
-Received: from [10.137.106.151] (unknown [167.220.2.23])
-	by linux.microsoft.com (Postfix) with ESMTPSA id CCF0E2067900;
-	Tue, 21 May 2024 14:42:47 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com CCF0E2067900
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1716327768;
-	bh=BUSVrQbwhWTK6SmDrPgyWJrCD0hgOdRhFqYqUq240sk=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=pobkyxdGe7YVFwF3dkaJkJgWbG+KavLPiuQF6SQQN1zBASMoAM9wcAdd5EmYZaB/L
-	 61ecccz7Ow8aijjoRWVO+F98iR9BjxIC5czqVksM0Y0rMb0ZRRAKkfCOJ6tvNTRUK0
-	 vikUnzUoW2A/1EOMAGY+LrNlY0+QdhS1KLRy/ENA=
-Message-ID: <3bd4d9a8-58ce-4cb2-a91e-c0d33174d951@linux.microsoft.com>
-Date: Tue, 21 May 2024 14:42:47 -0700
+	s=arc-20240116; t=1716333573; c=relaxed/simple;
+	bh=uok8ci7oRP3MNHrXIWln3P2ERxY4MQe+7vIO5pahGEs=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=e7balHv8WU4gWLaboxPDlnyAaxZscbaMtwZ7oQI4om4zp1xx8IQNvCgHiUIVVASr5H9b23ghk7FltldSr5FTkX2uWNd7g66VZUbdTarsa4lVbC2tv4bYNb5Jw53GaLDvuLtYSy1IcyaDak/cE0ZIlaI4cbDACqDwzxVH8p7Qdyg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net; spf=none smtp.mailfrom=lists.ewheeler.net; arc=none smtp.client-ip=173.205.220.69
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=lists.ewheeler.net
+Received: from localhost (localhost [127.0.0.1])
+	by mx.ewheeler.net (Postfix) with ESMTP id 7750485;
+	Tue, 21 May 2024 16:19:26 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at ewheeler.net
+Received: from mx.ewheeler.net ([127.0.0.1])
+	by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id TDTdmSp48eMn; Tue, 21 May 2024 16:19:22 -0700 (PDT)
+Received: from localhost (localhost [127.0.0.1])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx.ewheeler.net (Postfix) with ESMTPSA id 1862440;
+	Tue, 21 May 2024 16:19:22 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net 1862440
+Date: Tue, 21 May 2024 16:19:22 -0700 (PDT)
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+To: Hannes Reinecke <hare@suse.de>
+cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org
+Subject: Re: Kernel namespaces for device mapper targets and block devices?
+In-Reply-To: <5fc134e0-6f9b-4f87-8dea-ba929bf1e91d@suse.de>
+Message-ID: <10a92e14-70f5-e3c8-dd75-532c35d51d13@ewheeler.net>
+References: <61c1fff7-b5ff-dfdd-62c1-506e055ae5e@ewheeler.net> <a3d8bab5-9293-4765-b202-d2bbecaa1f63@suse.de> <f55c2eb7-eb6d-3f95-b2c8-a28e9447e570@ewheeler.net> <5fc134e0-6f9b-4f87-8dea-ba929bf1e91d@suse.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v18 12/21] dm: add finalize hook to target_type
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>, corbet@lwn.net, zohar@linux.ibm.com,
- jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
- axboe@kernel.dk, agk@redhat.com, eparis@redhat.com, paul@paul-moore.com,
- linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
- linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
- linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
- audit@vger.kernel.org, linux-kernel@vger.kernel.org
-References: <1714775551-22384-1-git-send-email-wufan@linux.microsoft.com>
- <1714775551-22384-13-git-send-email-wufan@linux.microsoft.com>
- <aa767961-5e3-2ceb-1a1e-ff66a8eed649@redhat.com>
- <212b02a8-f5f0-4433-a726-1639dda61790@linux.microsoft.com>
- <bc9aa053-20a6-eaa-cbe4-344f340242b@redhat.com>
- <234910c1-40c3-4489-94ab-6e9a5f00d93e@linux.microsoft.com>
- <889a7880-8336-a44a-bea4-a4c81c5e5cce@redhat.com>
-Content-Language: en-CA
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <889a7880-8336-a44a-bea4-a4c81c5e5cce@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="8323328-1834047648-1716333562=:9489"
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--8323328-1834047648-1716333562=:9489
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+On Sun, 19 May 2024, Hannes Reinecke wrote:
+> On 5/18/24 00:04, Eric Wheeler wrote:
+> > On Fri, 17 May 2024, Hannes Reinecke wrote:
+> > 
+> >> On 5/17/24 02:18, Eric Wheeler wrote:
+> >>> Hello everyone,
+> >>>
+> >>> Is there any work being done on namespaces for device-mapper targets, or
+> >>> for the block layer in general?
+> >>>
+> >>> For example, namespaces could make `dmsetup table` or `losetup -a` see
+> >>> only devices mapped in that name space. I found this article from to 2013,
+> >>> but it is quite old:
+> >>>   https://lwn.net/Articles/564854/
+> >>>
+> >>> If you know any more recent work on the topic that I would be interested.
+> >>> Thank you for help!
+> >>>
+> >> It is on my to-do list.
+> >> We sure should work on that one.
+> > 
+> > How you envision hooking namespaces into the block layer?
+> > 
+> Overall idea is to inherit devices from the original namespace.
+> - upon creation the new namespace inherits all devices from the
+>   original ns.
+
+For namespace initialization, is there way to start with an empty 
+namespace (no inherit), and only add devices the namespace that you would 
+like to provide to the container? For example, you might want to provide a 
+logical volume to the container and then let the container users do with 
+they want in terms of creating new devices from that namespace-assigned 
+"root level" device.
+
+Somehow it needs to be safe in terms of the container users changing the 
+device mapper table spec of a "root level" device using `dmsetup reload 
+--table`.
+
+
+--
+Eric Wheeler
 
 
 
-On 5/20/2024 5:31 AM, Mikulas Patocka wrote:
+> - new devices show up only in the current namespace and all
+>   namespaces derived from it.
+> - Namespace teardown should remove all devices created
+>   within this namespace.
+> 
+> I did a patchset once, based upon suggestion from Christian Brauner.
+> Let me dig it up.
+> 
+> Cheers,
+> 
+> Hannes
+> -- 
+> Dr. Hannes Reinecke                  Kernel Storage Architect
+> hare@suse.de                                +49 911 74053 688
+> SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+> HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
 > 
 > 
-> On Fri, 17 May 2024, Fan Wu wrote:
 > 
->>> So, it seems that the preresume callback provides the guarantee that you
->>> looking for.
->>>
->>>> -Fan
->>>
->>> Mikulas
->>
->> Thanks for the info. I have tested and verified that the preresume() hook can
->> also work for our case.
->>
->>  From the source code
->> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-ioctl.c#n1149,
->> the whole resume process appears to be:
->>
->> 1. Check if there is a new map for the device. If so, attempt to activate the
->> new map using dm_swap_table() (where the finalize() callback occurs).
->>
->> 2. Check if the device is suspended. If so, use dm_resume() (where the
->> preresume() callback occurs) to resume the device.
->>
->> 3. If a new map is activated, use dm_table_destroy() to destroy the old map.
->>
->> For our case:
->>
->> - Using the finalize() callback, the metadata of the dm-verity target inside
->> the table is attached to the mapped device every time a new table is
->> activated.
->> - Using the preresume() callback, the same metadata is attached every time the
->> device resumes from suspension.
->>
->> If I understand the code correctly, resuming from suspension is a necessary
->> step for loading a new mapping table. Thus, the preresume() callback covers
->> all conditions where the finalize() callback would be triggered.
-> 
-> Yes.
-> 
->> However, the preresume() callback can also be triggered when the device
->> resumes from suspension without loading a new table, in which case there
->> is no new metadata in the table to attach to the mapped device.
-> 
-> Yes.
-> 
->> In the scenario where the finalize() callback succeeds but the preresume()
->> callback fails, it seems the device will remain in a suspended state, the
->> newly activated table will be kept, and the old table will be destroyed, so it
->> seems there is no inconsistency using finalize() even preresume() potentially
->> fails.
-> 
-> What does your security module do when the verification of the dm-verity
-> hash fails? Does it halt the whole system? Does it destroy just the
-> failing dm device? Or does it attempt to recover somehow from this
-> situation?
->
-
-I'm not sure which hash verification is being referred to here, but it 
-could be either root hash signature verification or block-level hash 
-verification. Our security module does not intervene in these processes, 
-so the behavior remains as dm-verity currently handles it.
-
-Within the device mapper, our security module uses the device mapper 
-callback to duplicate the root hash of a dm-verity target and record the 
-signature verification state of the dm-verity target, then attach this 
-information to the security field of the block_device structure. This 
-process can only fail if the system is out of memory.
-
-With the root hash and signature verification state attached to the 
-security field of the block device, the security system can access this 
-important metadata to enforce policies. For example, these policies can 
-include only allowing files from a dm-verity volume specified by its 
-root hash to execute or only allowing files from a verified signed 
-dm-verity volume to execute.
-
->> I believe both the finalize() callback proposed by Mike and the preresume()
->> callback suggested by Mikulas can work for our case. I am fine with either
->> approach, but I would like to know which one is preferred by the maintainers
->> and would appreciate an ACK for the chosen approach.
->>
->> -Fan
-> 
-> I would prefer preresume - we shouldn't add new callbacks unless it's
-> necessary.
-> 
-> Mikulas
->
-
-Thanks for the confirmation. I will switch to use prereume and I will 
-send a new version later this week.
-
--Fan
+--8323328-1834047648-1716333562=:9489--
