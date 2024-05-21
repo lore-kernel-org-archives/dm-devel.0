@@ -1,282 +1,257 @@
-Received: from mail-oi1-f181.google.com (mail-oi1-f181.google.com [209.85.167.181])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (unknown [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0A21128FC
-	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 00:45:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 61583634
+	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 01:08:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716252333; cv=none; b=Z/wz6vf+6xuNVMWVUlDT6/KwckTvwB97CUM0rTavDJYpC0p4PKoUBmfcwpB45ZWI0SsfXo2p5OcNdifiPbngl7S1mtoi3XSEcdmhru5OEmovgPhAtFf0ZI42Stc+O0MStHnAHLa6u04v/tdWeP1oaoPPFp5P3UOqI40MytWxqbQ=
+	t=1716253742; cv=none; b=OsNFhjBF5xj5mJe4unjL7XmqvcuWBNk+40pUU8v1fSPoQOvzo8t439wgtRP/8ueXEgSPtqiflcNXwNWS70TNaY7EE5HIISnO53lTbm0loNYHmXlRzIqSfkmhAEcq97ArES6bRjC2sJJzsiLH9kKEDOcMNBaKRI97HclBZxhkdBQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716252333; c=relaxed/simple;
-	bh=M3IGua52fbiYvVXmDO9/O5jfEFfSwxKvM3kbq6LZ/ME=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=cjpdFr1LI6YhouswxTHZAPKGtkQTnGq1mV+0eH361U5hX6f9rmDmIv75RNdSU81tSJa1cCFj0/Hh5/300xHTLkk+ech70GQJKDKqHplkjYmauDCwltzn5oNipmoTVCeE1hYSxfgUThUCqQ8akWpQ3pycZQx2O6U0POz+zd+qJhk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.167.181
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
-Received: by mail-oi1-f181.google.com with SMTP id 5614622812f47-3c9c67c059bso1521472b6e.3
-        for <dm-devel@lists.linux.dev>; Mon, 20 May 2024 17:45:30 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716252330; x=1716857130;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=WAQ7EZw2gT8mUoiA62o4QOdC/XHNNwGQwfkkzt04Rds=;
-        b=uqO5DfW2/xklpLcN/8LbhAPArZUmoIXeZHACRqLj0gcau0203fazxZz/L6dUyCI51p
-         58QehOSUZJ9Bsy0mEtfdP6nwOYBkpv6VZee2quWUpB5ojVfLiD3KB5Vt7DNheqivccsL
-         KQe1p/k6zC2qID+aY0aLmFCR7M+nlh0MD/49EHZOerEU0t+Yy7++o5fTtZdfuj4ZPluH
-         lSxZPgbITpMETCj5tbicYG6f9ndlmdE0LOizuGAmAD9FRswcz6PSiUyFTVw/zcndL8b4
-         zMaDaOe+ldgwk4TnKpsPnjnIBRdZGsCa9chp4Ozh2zseDh9L4k+2K/qR3WecVmRzZa3k
-         f/gw==
-X-Gm-Message-State: AOJu0Yz6Q1bvIfe/tpeAvQW7p69dg0sXZCFlzs1nfxQZZoViRB+mhHLj
-	rrqOAPsagqL13mv6/caDwgel6MyPQnmFMz4B25RhZ+TEjbc8CJHUuEuGRQLAwc0=
-X-Google-Smtp-Source: AGHT+IGMn6xjydCtb38kyKvLjZDgFdGue2uUOR537cPk5ZgFt4ChObkqOmoaYUFS+4P+IGBFARHGTQ==
-X-Received: by 2002:a05:6808:18a8:b0:3c9:c3ad:53b9 with SMTP id 5614622812f47-3c9c3ad58ddmr21150431b6e.26.1716252330121;
-        Mon, 20 May 2024 17:45:30 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-792bf2757b5sm1237989085a.17.2024.05.20.17.45.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 20 May 2024 17:45:29 -0700 (PDT)
-Date: Mon, 20 May 2024 20:45:28 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>
-Cc: dm-devel@lists.linux.dev, fstests@vger.kernel.org,
-	linux-ext4@vger.kernel.org, regressions@lists.linux.dev,
-	linux-block@vger.kernel.org
-Subject: Re: dm: use queue_limits_set
-Message-ID: <ZkvuqNXaNOMe6Gfj@kernel.org>
-References: <20240518022646.GA450709@mit.edu>
- <ZkmIpCRaZE0237OH@kernel.org>
- <ZkmRKPfPeX3c138f@kernel.org>
- <20240520150653.GA32461@lst.de>
- <ZktuojMrQWH9MQJO@kernel.org>
- <20240520154425.GB1104@lst.de>
- <ZktyTYKySaauFcQT@kernel.org>
- <ZkuFuqo3dNw8bOA2@kernel.org>
- <20240520201237.GA6235@lst.de>
- <ZkvIn73jAqz94LjI@kernel.org>
+	s=arc-20240116; t=1716253742; c=relaxed/simple;
+	bh=0VRRaR/3O3wMWddepqm1xcimmL+4ZkayhmSYYjCRsQA=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=rT+qU/yCxDM0w+iwHX+Rdqp/FPXvAk6zND0uYEFEBV4749Q2BIpp5keaWJIahzU0DX9eTjjGN+TzOHGAkLkuOsyIGjOzPgaeHGwO7UoZlCg2ccJ/QUpNGFbhWbR4ojxj9hpX4G6H/CsDL+ovM7plxxLLtIVO6f2gSnfNUP9mie8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4VjxCP5gsxz4f3jMM
+	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 09:08:49 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id 87E961A083D
+	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 09:08:55 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgBHGBEj9EtmPbjwNA--.15691S3;
+	Tue, 21 May 2024 09:08:53 +0800 (CST)
+Subject: Re: [bug report] INFO: task mdX_resync:42168 blocked for more than
+ 122 seconds
+To: Changhui Zhong <czhong@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: Ming Lei <ming.lei@redhat.com>,
+ Linux Block Devices <linux-block@vger.kernel.org>, dm-devel@lists.linux.dev,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Song Liu <song@kernel.org>, linux-raid@vger.kernel.org,
+ Xiao Ni <xni@redhat.com>, "yukuai (C)" <yukuai3@huawei.com>,
+ "yangerkun@huawei.com" <yangerkun@huawei.com>
+References: <CAGVVp+Xsmzy2G9YuEatfMT6qv1M--YdOCQ0g7z7OVmcTbBxQAg@mail.gmail.com>
+ <ZkXsOKV5d4T0Hyqu@fedora>
+ <9b340157-dc0c-6e6a-3d92-f2c65b515461@huaweicloud.com>
+ <CAGVVp+XtThX7=bZm441VxyVd-wv_ycdqMU=19a2pa4wUkbkJ3g@mail.gmail.com>
+ <1b35a177-670a-4d2f-0b68-6eda769af37d@huaweicloud.com>
+ <CAGVVp+WQVeV0PE12RvpojFTRB4rHXh6Lk01vLmdStw1W9zUACg@mail.gmail.com>
+ <CAGVVp+WGyPS5nOQYhWtgJyQnXwUb-+Hui14pXqxd+-ZUjWpTrA@mail.gmail.com>
+ <f1c98dd1-a62c-6857-3773-e05b80e6a763@huaweicloud.com>
+ <CAGVVp+UdBekv2udwxtXBrtn0CMTrBa94oE4taUfynWncYF5ETQ@mail.gmail.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <0aef762b-ecc5-7dde-7020-08d1b85ed057@huaweicloud.com>
+Date: Tue, 21 May 2024 09:08:51 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ZkvIn73jAqz94LjI@kernel.org>
+In-Reply-To: <CAGVVp+UdBekv2udwxtXBrtn0CMTrBa94oE4taUfynWncYF5ETQ@mail.gmail.com>
+Content-Type: multipart/mixed;
+ boundary="------------55A80B6ABFD688306F29E1A2"
+X-CM-TRANSID:cCh0CgBHGBEj9EtmPbjwNA--.15691S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxJF43ArWDAr13KF1xJF18Krg_yoW5tr4xpa
+	4Iva1akr48Zr109an2k3W2gFy0qa95Xr17t3yxGw1fJw12kF9xXayDJa1jgFnrur929w45
+	Wa4UX343AF1FyFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUm014x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wASzI0EjI02j7AqF2xKxwAqx4xG64xvF2IE
+	w4CE5I8CrVC2j2WlYx0E2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMc
+	vjeVCFs4IE7xkEbVWUJVW8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1l
+	FcxC0VAYjxAxZF0Ex2IqxwACI402YVCY1x02628vn2kIc2xKxwCYjI0SjxkI62AI1cAE67
+	vIY487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAF
+	wI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUtVW8ZwCIc4
+	0Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AK
+	xVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq3wCI42IY6I8E87Iv67AKxVWUJV
+	W8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJwCE64xvF2IEb7IF0Fy7YxBIdaVFxhVj
+	vjDU0xZFpf9x0JUQTmhUUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Mon, May 20, 2024 at 06:03:11PM -0400, Mike Snitzer wrote:
-> On Mon, May 20, 2024 at 10:12:37PM +0200, Christoph Hellwig wrote:
-> > On Mon, May 20, 2024 at 01:17:46PM -0400, Mike Snitzer wrote:
-> > > Doubt there was anything in fstests setting max discard user limit
-> > > (max_user_discard_sectors) in Ted's case. blk_set_stacking_limits()
-> > > sets max_user_discard_sectors to UINT_MAX, so given the use of
-> > > min(lim->max_hw_discard_sectors, lim->max_user_discard_sectors) I
-> > > suspect blk_stack_limits() stacks up max_discard_sectors to match the
-> > > underlying storage's max_hw_discard_sectors.
-> > > 
-> > > And max_hw_discard_sectors exceeds BIO_PRISON_MAX_RANGE, resulting in
-> > > dm_cell_key_has_valid_range() triggering on:
-> > > WARN_ON_ONCE(key->block_end - key->block_begin > BIO_PRISON_MAX_RANGE)
-> > 
-> > Oh, that makes more sense.
-> > 
-> > I think you just want to set the max_hw_discard_sectors limit before
-> > stacking in the lower device limits so that they can only lower it.
-> > 
-> > (and in the long run we should just stop stacking the limits except
-> > for request based dm which really needs it)
+This is a multi-part message in MIME format.
+--------------55A80B6ABFD688306F29E1A2
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+
+Hi,
+
+在 2024/05/20 18:38, Changhui Zhong 写道:
+> On Mon, May 20, 2024 at 10:55 AM Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>
+>> Hi, Changhui
+>>
+>> 在 2024/05/20 8:39, Changhui Zhong 写道:
+>>> [czhong@vm linux-block]$ git bisect bad
+>>> 060406c61c7cb4bbd82a02d179decca9c9bb3443 is the first bad commit
+>>> commit 060406c61c7cb4bbd82a02d179decca9c9bb3443
+>>> Author: Yu Kuai<yukuai3@huawei.com>
+>>> Date:   Thu May 9 20:38:25 2024 +0800
+>>>
+>>>       block: add plug while submitting IO
+>>>
+>>>       So that if caller didn't use plug, for example, __blkdev_direct_IO_simple()
+>>>       and __blkdev_direct_IO_async(), block layer can still benefit from caching
+>>>       nsec time in the plug.
+>>>
+>>>       Signed-off-by: Yu Kuai<yukuai3@huawei.com>
+>>>       Link:https://lore.kernel.org/r/20240509123825.3225207-1-yukuai1@huaweicloud.com
+>>>       Signed-off-by: Jens Axboe<axboe@kernel.dk>
+>>>
+>>>    block/blk-core.c | 6 ++++++
+>>>    1 file changed, 6 insertions(+)
+>>
+>> Thanks for the test!
+>>
+>> I was surprised to see this blamed commit, and after taking a look at
+>> raid1 barrier code, I found that there are some known problems, fixed in
+>> raid10, while raid1 still unfixed. So I wonder this patch maybe just
+>> making the exist problem easier to reporduce.
+>>
+>> I'll start cooking patches to sync raid10 fixes to raid1, meanwhile,
+>> can you change your script to test raid10 as well, if raid10 is fine,
+>> I'll give you these patches later to test raid1.
+>>
+>> Thanks,
+>> Kuai
+>>
 > 
-> This is what I staged, I cannot send a patch out right now.. 
+> Hi， Kuai
 > 
-> Ted if you need the patch in email (rather than from linux-dm.git) I
-> can send it later tonight.  Please see:
+> I tested raid10 and trigger this issue too，
+
+Thanks for the test! Since raid10 has the same problem as well, then the
+problem seems to be more common in raid. And related code to raid10 is
+more simpler, attached is a patch to add debuginfo to raid10.
+
+BTW, Xiao can reporduce the problem as well, and will lend a hand as
+well.
+
+Thanks,
+Kuai
 > 
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.10&id=825d8bbd2f32cb229c3b6653bd454832c3c20acb
+> [  332.435340] Create raid10
+> [  332.573160] device-mapper: raid: Superblocks created for new raid set
+> [  332.595273] md/raid10:mdX: not clean -- starting background reconstruction
+> [  332.595277] md/raid10:mdX: active with 4 out of 4 devices
+> [  332.597017] mdX: bitmap file is out of date, doing full recovery
+> [  332.603712] md: resync of RAID array mdX
+> [  492.173892] INFO: task mdX_resync:3092 blocked for more than 122 seconds.
+> [  492.180694]       Not tainted 6.9.0+ #1
+> [  492.184536] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+> disables this message.
+> [  492.192365] task:mdX_resync      state:D stack:0     pid:3092
+> tgid:3092  ppid:2      flags:0x00004000
+> [  492.192368] Call Trace:
+> [  492.192370]  <TASK>
+> [  492.192371]  __schedule+0x222/0x670
+> [  492.192377]  schedule+0x2c/0xb0
+> [  492.192381]  raise_barrier+0xc3/0x190 [raid10]
+> [  492.192387]  ? __pfx_autoremove_wake_function+0x10/0x10
+> [  492.192392]  raid10_sync_request+0x2c3/0x1ae0 [raid10]
+> [  492.192397]  ? __schedule+0x22a/0x670
+> [  492.192398]  ? prepare_to_wait_event+0x5f/0x190
+> [  492.192401]  md_do_sync+0x660/0x1040
+> [  492.192405]  ? __pfx_autoremove_wake_function+0x10/0x10
+> [  492.192408]  md_thread+0xad/0x160
+> [  492.192410]  ? __pfx_md_thread+0x10/0x10
+> [  492.192411]  kthread+0xdc/0x110
+> [  492.192414]  ? __pfx_kthread+0x10/0x10
+> [  492.192416]  ret_from_fork+0x2d/0x50
+> [  492.192420]  ? __pfx_kthread+0x10/0x10
+> [  492.192421]  ret_from_fork_asm+0x1a/0x30
+> [  492.192424]  </TASK>
+> 
+> Thanks，
+> Changhui
+> 
+> 
+> .
+> 
 
-From: Mike Snitzer <snitzer@kernel.org>
-Date: Mon, 20 May 2024 13:34:06 -0400
-Subject: [PATCH] dm: always manage discard support in terms of max_hw_discard_sectors
+--------------55A80B6ABFD688306F29E1A2
+Content-Type: text/plain; charset=UTF-8;
+ name="0001-raid10-debuginfo.patch"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-raid10-debuginfo.patch"
 
-Commit 4f563a64732d ("block: add a max_user_discard_sectors queue
-limit") changed block core to set max_discard_sectors to:
- min(lim->max_hw_discard_sectors, lim->max_user_discard_sectors)
-
-Since commit 1c0e720228ad ("dm: use queue_limits_set") it was reported
-dm-thinp was failing in a few fstests (generic/347 and generic/405)
-with the first WARN_ON_ONCE in dm_cell_key_has_valid_range() being
-reported, e.g.:
-WARNING: CPU: 1 PID: 30 at drivers/md/dm-bio-prison-v1.c:128 dm_cell_key_has_valid_range+0x3d/0x50
-
-blk_set_stacking_limits() sets max_user_discard_sectors to UINT_MAX,
-so given how block core now sets max_discard_sectors (detailed above)
-it follows that blk_stack_limits() stacks up the underlying device's
-max_hw_discard_sectors and max_discard_sectors is set to match it. If
-max_hw_discard_sectors exceeds dm's BIO_PRISON_MAX_RANGE, then
-dm_cell_key_has_valid_range() will trigger the warning with:
-WARN_ON_ONCE(key->block_end - key->block_begin > BIO_PRISON_MAX_RANGE)
-
-Aside from this warning, the discard will fail.  Fix this and other DM
-issues by governing discard support in terms of max_hw_discard_sectors
-instead of max_discard_sectors.
-
-Reported-by: Theodore Ts'o <tytso@mit.edu>
-Fixes: 1c0e720228ad ("dm: use queue_limits_set")
-Signed-off-by: Mike Snitzer <snitzer@kernel.org>
----
- drivers/md/dm-cache-target.c | 5 ++---
- drivers/md/dm-clone-target.c | 4 ++--
- drivers/md/dm-log-writes.c   | 2 +-
- drivers/md/dm-snap.c         | 2 +-
- drivers/md/dm-target.c       | 1 -
- drivers/md/dm-thin.c         | 4 ++--
- drivers/md/dm-zero.c         | 1 -
- drivers/md/dm-zoned-target.c | 1 -
- drivers/md/dm.c              | 2 +-
- 9 files changed, 9 insertions(+), 13 deletions(-)
-
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 911f73f7ebba..1f0bc1173230 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -3394,8 +3394,8 @@ static void set_discard_limits(struct cache *cache, struct queue_limits *limits)
- 
- 	if (!cache->features.discard_passdown) {
- 		/* No passdown is done so setting own virtual limits */
--		limits->max_discard_sectors = min_t(sector_t, cache->discard_block_size * 1024,
--						    cache->origin_sectors);
-+		limits->max_hw_discard_sectors = min_t(sector_t, cache->discard_block_size * 1024,
-+						       cache->origin_sectors);
- 		limits->discard_granularity = cache->discard_block_size << SECTOR_SHIFT;
- 		return;
- 	}
-@@ -3404,7 +3404,6 @@ static void set_discard_limits(struct cache *cache, struct queue_limits *limits)
- 	 * cache_iterate_devices() is stacking both origin and fast device limits
- 	 * but discards aren't passed to fast device, so inherit origin's limits.
- 	 */
--	limits->max_discard_sectors = origin_limits->max_discard_sectors;
- 	limits->max_hw_discard_sectors = origin_limits->max_hw_discard_sectors;
- 	limits->discard_granularity = origin_limits->discard_granularity;
- 	limits->discard_alignment = origin_limits->discard_alignment;
-diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
-index 94b2fc33f64b..2332d9798141 100644
---- a/drivers/md/dm-clone-target.c
-+++ b/drivers/md/dm-clone-target.c
-@@ -2050,7 +2050,8 @@ static void set_discard_limits(struct clone *clone, struct queue_limits *limits)
- 	if (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags)) {
- 		/* No passdown is done so we set our own virtual limits */
- 		limits->discard_granularity = clone->region_size << SECTOR_SHIFT;
--		limits->max_discard_sectors = round_down(UINT_MAX >> SECTOR_SHIFT, clone->region_size);
-+		limits->max_hw_discard_sectors = round_down(UINT_MAX >> SECTOR_SHIFT,
-+							    clone->region_size);
- 		return;
- 	}
- 
-@@ -2059,7 +2060,6 @@ static void set_discard_limits(struct clone *clone, struct queue_limits *limits)
- 	 * device limits but discards aren't passed to the source device, so
- 	 * inherit destination's limits.
- 	 */
--	limits->max_discard_sectors = dest_limits->max_discard_sectors;
- 	limits->max_hw_discard_sectors = dest_limits->max_hw_discard_sectors;
- 	limits->discard_granularity = dest_limits->discard_granularity;
- 	limits->discard_alignment = dest_limits->discard_alignment;
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index f17a6cf2284e..8d7df8303d0a 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -871,7 +871,7 @@ static void log_writes_io_hints(struct dm_target *ti, struct queue_limits *limit
- 	if (!bdev_max_discard_sectors(lc->dev->bdev)) {
- 		lc->device_supports_discard = false;
- 		limits->discard_granularity = lc->sectorsize;
--		limits->max_discard_sectors = (UINT_MAX >> SECTOR_SHIFT);
-+		limits->max_hw_discard_sectors = (UINT_MAX >> SECTOR_SHIFT);
- 	}
- 	limits->logical_block_size = bdev_logical_block_size(lc->dev->bdev);
- 	limits->physical_block_size = bdev_physical_block_size(lc->dev->bdev);
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 0ace06d1bee3..f40c18da4000 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -2410,7 +2410,7 @@ static void snapshot_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 
- 		/* All discards are split on chunk_size boundary */
- 		limits->discard_granularity = snap->store->chunk_size;
--		limits->max_discard_sectors = snap->store->chunk_size;
-+		limits->max_hw_discard_sectors = snap->store->chunk_size;
- 
- 		up_read(&_origins_lock);
- 	}
-diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-index 0c4efb0bef8a..652627aea11b 100644
---- a/drivers/md/dm-target.c
-+++ b/drivers/md/dm-target.c
-@@ -249,7 +249,6 @@ static int io_err_iterate_devices(struct dm_target *ti,
- 
- static void io_err_io_hints(struct dm_target *ti, struct queue_limits *limits)
- {
--	limits->max_discard_sectors = UINT_MAX;
- 	limits->max_hw_discard_sectors = UINT_MAX;
- 	limits->discard_granularity = 512;
- }
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 4793ad2aa1f7..e0528a4f809c 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -4100,7 +4100,7 @@ static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	if (pt->adjusted_pf.discard_enabled) {
- 		disable_discard_passdown_if_not_supported(pt);
- 		if (!pt->adjusted_pf.discard_passdown)
--			limits->max_discard_sectors = 0;
-+			limits->max_hw_discard_sectors = 0;
- 		/*
- 		 * The pool uses the same discard limits as the underlying data
- 		 * device.  DM core has already set this up.
-@@ -4497,7 +4497,7 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 
- 	if (pool->pf.discard_enabled) {
- 		limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
--		limits->max_discard_sectors = pool->sectors_per_block * BIO_PRISON_MAX_RANGE;
-+		limits->max_hw_discard_sectors = pool->sectors_per_block * BIO_PRISON_MAX_RANGE;
- 	}
- }
- 
-diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
-index 3b13e6eb1aa4..9a0bb623e823 100644
---- a/drivers/md/dm-zero.c
-+++ b/drivers/md/dm-zero.c
-@@ -61,7 +61,6 @@ static int zero_map(struct dm_target *ti, struct bio *bio)
- 
- static void zero_io_hints(struct dm_target *ti, struct queue_limits *limits)
- {
--	limits->max_discard_sectors = UINT_MAX;
- 	limits->max_hw_discard_sectors = UINT_MAX;
- 	limits->discard_granularity = 512;
- }
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 621794a9edd6..12236e6f46f3 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -1001,7 +1001,6 @@ static void dmz_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 
- 	limits->discard_alignment = 0;
- 	limits->discard_granularity = DMZ_BLOCK_SIZE;
--	limits->max_discard_sectors = chunk_sectors;
- 	limits->max_hw_discard_sectors = chunk_sectors;
- 	limits->max_write_zeroes_sectors = chunk_sectors;
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 7d0746b37c8e..3adfc6b83c01 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1086,7 +1086,7 @@ void disable_discard(struct mapped_device *md)
- 	struct queue_limits *limits = dm_get_queue_limits(md);
- 
- 	/* device doesn't really support DISCARD, disable it */
--	limits->max_discard_sectors = 0;
-+	limits->max_hw_discard_sectors = 0;
- }
- 
- void disable_write_zeroes(struct mapped_device *md)
--- 
-2.44.0
+RnJvbSBkNDQzYTViYzQzZWNkNDEzODZlOGU5MTAzY2Q1ZTE2OTE0YTFhMmMzIE1vbiBTZXAg
+MTcgMDA6MDA6MDAgMjAwMQpGcm9tOiBZdSBLdWFpIDx5dWt1YWkzQGh1YXdlaS5jb20+CkRh
+dGU6IE1vbiwgMjAgTWF5IDIwMjQgMTk6NDM6MjkgKzA4MDAKU3ViamVjdDogW1BBVENIXSB0
+bXAKClNpZ25lZC1vZmYtYnk6IFl1IEt1YWkgPHl1a3VhaTNAaHVhd2VpLmNvbT4KLS0tCiBk
+cml2ZXJzL21kL3JhaWQxMC5jIHwgNDkgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKy0tLS0tCiAxIGZpbGUgY2hhbmdlZCwgNDQgaW5zZXJ0aW9ucygrKSwgNSBk
+ZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL3JhaWQxMC5jIGIvZHJpdmVy
+cy9tZC9yYWlkMTAuYwppbmRleCBhNDU1NmQyZTQ2YmYuLmJjMDVkNGZmNTE4NSAxMDA2NDQK
+LS0tIGEvZHJpdmVycy9tZC9yYWlkMTAuYworKysgYi9kcml2ZXJzL21kL3JhaWQxMC5jCkBA
+IC0zMzEsNiArMzMxLDcgQEAgc3RhdGljIHZvaWQgcmFpZF9lbmRfYmlvX2lvKHN0cnVjdCBy
+MTBiaW8gKnIxMF9iaW8pCiAJICovCiAJYWxsb3dfYmFycmllcihjb25mKTsKIAorCXByaW50
+aygiJXM6IHIxMF9iaW8gJXB4IGRvbmVcbiIsIF9fZnVuY19fLCByMTBfYmlvKTsKIAlmcmVl
+X3IxMGJpbyhyMTBfYmlvKTsKIH0KIApAQCAtODk5LDYgKzkwMCwzNCBAQCBzdGF0aWMgdm9p
+ZCBmbHVzaF9wZW5kaW5nX3dyaXRlcyhzdHJ1Y3QgcjEwY29uZiAqY29uZikKIAkJc3Bpbl91
+bmxvY2tfaXJxKCZjb25mLT5kZXZpY2VfbG9jayk7CiB9CiAKK3N0YXRpYyBib29sIGJhcnJp
+ZXJfd2FpdGluZyhzdHJ1Y3QgcjEwY29uZiAqY29uZikKK3sKKwlpZiAoY29uZi0+bnJfd2Fp
+dGluZykgeworCQlwcmludGsoIiVzOiBucl93YWl0aW5nICVkXG4iLCBfX2Z1bmNfXywgY29u
+Zi0+bnJfd2FpdGluZyk7CisJCXJldHVybiBmYWxzZTsKKwl9CisKKwlyZXR1cm4gdHJ1ZTsK
+K30KKworc3RhdGljIGJvb2wgdHJ5X3JhaXNlX2JhcnJpZXIoc3RydWN0IHIxMGNvbmYgKmNv
+bmYpCit7CisJaW50IG5yOworCisJaWYgKGNvbmYtPmJhcnJpZXIgPj0gUkVTWU5DX0RFUFRI
+KSB7CisJCXByaW50a19yYXRlbGltaXRlZCgiJXM6IHJlc3luYyBkZXB0aCBleGNlZWQgbGlt
+aXRcbiIsIF9fZnVuY19fKTsKKwkJcmV0dXJuIGZhbHNlOworCX0KKworCW5yID0gYXRvbWlj
+X3JlYWQoJmNvbmYtPm5yX3BlbmRpbmcpOworCWlmIChucikgeworCQlwcmludGsoIiVzOiBu
+cl9wZW5kaW5nICVkXG4iLCBfX2Z1bmNfXywgbnIpOworCQlyZXR1cm4gZmFsc2U7CisJfQor
+CisJcmV0dXJuIHRydWU7Cit9CisKIC8qIEJhcnJpZXJzLi4uLgogICogU29tZXRpbWVzIHdl
+IG5lZWQgdG8gc3VzcGVuZCBJTyB3aGlsZSB3ZSBkbyBzb21ldGhpbmcgZWxzZSwKICAqIGVp
+dGhlciBzb21lIHJlc3luYy9yZWNvdmVyeSwgb3IgcmVjb25maWd1cmUgdGhlIGFycmF5LgpA
+QCAtOTI5LDE0ICs5NTgsMTMgQEAgc3RhdGljIHZvaWQgcmFpc2VfYmFycmllcihzdHJ1Y3Qg
+cjEwY29uZiAqY29uZiwgaW50IGZvcmNlKQogCQlmb3JjZSA9IGZhbHNlOwogCiAJLyogV2Fp
+dCB1bnRpbCBubyBibG9jayBJTyBpcyB3YWl0aW5nICh1bmxlc3MgJ2ZvcmNlJykgKi8KLQl3
+YWl0X2V2ZW50X2JhcnJpZXIoY29uZiwgZm9yY2UgfHwgIWNvbmYtPm5yX3dhaXRpbmcpOwor
+CXdhaXRfZXZlbnRfYmFycmllcihjb25mLCBmb3JjZSB8fCBiYXJyaWVyX3dhaXRpbmcoY29u
+ZikpOwogCiAJLyogYmxvY2sgYW55IG5ldyBJTyBmcm9tIHN0YXJ0aW5nICovCiAJV1JJVEVf
+T05DRShjb25mLT5iYXJyaWVyLCBjb25mLT5iYXJyaWVyICsgMSk7CiAKIAkvKiBOb3cgd2Fp
+dCBmb3IgYWxsIHBlbmRpbmcgSU8gdG8gY29tcGxldGUgKi8KLQl3YWl0X2V2ZW50X2JhcnJp
+ZXIoY29uZiwgIWF0b21pY19yZWFkKCZjb25mLT5ucl9wZW5kaW5nKSAmJgotCQkJCSBjb25m
+LT5iYXJyaWVyIDwgUkVTWU5DX0RFUFRIKTsKKwl3YWl0X2V2ZW50X2JhcnJpZXIoY29uZiwg
+dHJ5X3JhaXNlX2JhcnJpZXIoY29uZikpOwogCiAJd3JpdGVfc2VxdW5sb2NrX2lycSgmY29u
+Zi0+cmVzeW5jX2xvY2spOwogfQpAQCAtMTAwNiw4ICsxMDM0LDEwIEBAIHN0YXRpYyBib29s
+IHdhaXRfYmFycmllcihzdHJ1Y3QgcjEwY29uZiAqY29uZiwgYm9vbCBub3dhaXQpCiB7CiAJ
+Ym9vbCByZXQgPSB0cnVlOwogCi0JaWYgKHdhaXRfYmFycmllcl9ub2xvY2soY29uZikpCisJ
+aWYgKHdhaXRfYmFycmllcl9ub2xvY2soY29uZikpIHsKKwkJcHJpbnRrKCIlczogbnJfcGVu
+ZGluZzogJWRcbiIsIF9fZnVuY19fLCBhdG9taWNfcmVhZCgmY29uZi0+bnJfcGVuZGluZykp
+OwogCQlyZXR1cm4gdHJ1ZTsKKwl9CiAKIAl3cml0ZV9zZXFsb2NrX2lycSgmY29uZi0+cmVz
+eW5jX2xvY2spOwogCWlmIChjb25mLT5iYXJyaWVyKSB7CkBAIC0xMDI0LDkgKzEwNTQsMTIg
+QEAgc3RhdGljIGJvb2wgd2FpdF9iYXJyaWVyKHN0cnVjdCByMTBjb25mICpjb25mLCBib29s
+IG5vd2FpdCkKIAkJCXdha2VfdXAoJmNvbmYtPndhaXRfYmFycmllcik7CiAJfQogCS8qIE9u
+bHkgaW5jcmVtZW50IG5yX3BlbmRpbmcgd2hlbiB3ZSB3YWl0ICovCi0JaWYgKHJldCkKKwlp
+ZiAocmV0KSB7CiAJCWF0b21pY19pbmMoJmNvbmYtPm5yX3BlbmRpbmcpOworCQlwcmludGso
+IiVzOiBucl9wZW5kaW5nOiAlZFxuIiwgX19mdW5jX18sIGF0b21pY19yZWFkKCZjb25mLT5u
+cl9wZW5kaW5nKSk7CisJfQogCXdyaXRlX3NlcXVubG9ja19pcnEoJmNvbmYtPnJlc3luY19s
+b2NrKTsKKwogCXJldHVybiByZXQ7CiB9CiAKQEAgLTEwMzUsNiArMTA2OCw4IEBAIHN0YXRp
+YyB2b2lkIGFsbG93X2JhcnJpZXIoc3RydWN0IHIxMGNvbmYgKmNvbmYpCiAJaWYgKChhdG9t
+aWNfZGVjX2FuZF90ZXN0KCZjb25mLT5ucl9wZW5kaW5nKSkgfHwKIAkJCShjb25mLT5hcnJh
+eV9mcmVlemVfcGVuZGluZykpCiAJCXdha2VfdXBfYmFycmllcihjb25mKTsKKworCXByaW50
+aygiJXM6IG5yX3BlbmRpbmc6ICVkXG4iLCBfX2Z1bmNfXywgYXRvbWljX3JlYWQoJmNvbmYt
+Pm5yX3BlbmRpbmcpKTsKIH0KIAogc3RhdGljIHZvaWQgZnJlZXplX2FycmF5KHN0cnVjdCBy
+MTBjb25mICpjb25mLCBpbnQgZXh0cmEpCkBAIC0xMTg3LDYgKzEyMjIsOCBAQCBzdGF0aWMg
+dm9pZCByYWlkMTBfcmVhZF9yZXF1ZXN0KHN0cnVjdCBtZGRldiAqbWRkZXYsIHN0cnVjdCBi
+aW8gKmJpbywKIAogCWlmICghcmVndWxhcl9yZXF1ZXN0X3dhaXQobWRkZXYsIGNvbmYsIGJp
+bywgcjEwX2Jpby0+c2VjdG9ycykpCiAJCXJldHVybjsKKworCXByaW50aygiJXM6IHIxMF9i
+aW8gJXB4IHN0YXJ0XG4iLCBfX2Z1bmNfXywgcjEwX2Jpbyk7CiAJcmRldiA9IHJlYWRfYmFs
+YW5jZShjb25mLCByMTBfYmlvLCAmbWF4X3NlY3RvcnMpOwogCWlmICghcmRldikgewogCQlp
+ZiAoZXJyX3JkZXYpIHsKQEAgLTEzNzQsNiArMTQxMSw4IEBAIHN0YXRpYyB2b2lkIHJhaWQx
+MF93cml0ZV9yZXF1ZXN0KHN0cnVjdCBtZGRldiAqbWRkZXYsIHN0cnVjdCBiaW8gKmJpbywK
+IAlzZWN0b3JzID0gcjEwX2Jpby0+c2VjdG9yczsKIAlpZiAoIXJlZ3VsYXJfcmVxdWVzdF93
+YWl0KG1kZGV2LCBjb25mLCBiaW8sIHNlY3RvcnMpKQogCQlyZXR1cm47CisKKwlwcmludGso
+IiVzOiByMTBfYmlvICVweCBzdGFydFxuIiwgX19mdW5jX18sIHIxMF9iaW8pOwogCWlmICh0
+ZXN0X2JpdChNRF9SRUNPVkVSWV9SRVNIQVBFLCAmbWRkZXYtPnJlY292ZXJ5KSAmJgogCSAg
+ICAobWRkZXYtPnJlc2hhcGVfYmFja3dhcmRzCiAJICAgICA/IChiaW8tPmJpX2l0ZXIuYmlf
+c2VjdG9yIDwgY29uZi0+cmVzaGFwZV9zYWZlICYmCi0tIAoyLjM5LjIKCg==
+--------------55A80B6ABFD688306F29E1A2--
 
