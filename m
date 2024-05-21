@@ -1,433 +1,1117 @@
-Received: from mailout1.samsung.com (mailout1.samsung.com [203.254.224.24])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6AB7457C83
-	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 11:06:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.24
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6EBBA6CDCC
+	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 11:40:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716289569; cv=none; b=JgCjntijLyIVG2R1dWnByxm4BtEbKWeC/l1VaBGIv5krWKVUoKfYteedaJqdR4gQP7l2pYfx0DR758uMX8uKQPrwClAjRjwtoR1NAZG7kZrxDVHcw20q4s5JHpbiex5w13KcQoCzzfb6tzuiGgNfDjDnisP1Rps4kRTsA8oCml4=
+	t=1716291605; cv=none; b=Z7IbC1jxvEx21Pqd3XjvccIcRaB3DcIT+7OHc1KSTs0m4sD+80fwU5vzbXaOnEWa8k5QZcP7tf42A6LCyIGtZUEnzkIBZniYK9NKPnOYS9it+/Fm4IvXWH4polSMEzQ1blBdFP4cjpxvLBc9ehkc+IJ+87wZmdiTAtLMU7kG6vg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716289569; c=relaxed/simple;
-	bh=o44WQQLOr+jbcEqW8C4R1uKdiNVbrDAo5or5/+ckeJ8=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:In-Reply-To:
-	 Content-Type:References; b=NsMuI66hd8/Z7C+/VeFPw0DcKayOOTXKVVWUR1eCLtDjoNrzUUf45uSTK8vWQz2RjxFUwEg25GMfabqnu684X8IZoQbnLes6LWGBSlIYsaBUoT55fai9Y6v2/SNHhwZtLQqKYJhKxbCkB87jtwgpOJTmlLk9TUIWV+R9D+qzjRk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=CMA/kfaQ; arc=none smtp.client-ip=203.254.224.24
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
+	s=arc-20240116; t=1716291605; c=relaxed/simple;
+	bh=hIgWMVVMu4ktdcwvAZyrie6YAtl1U5c0Z1XIxoJhGco=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=VbTDZtrGLONyZk7clLseOGC7M92uDpr2fBwuK/ObHW3EGVr+/+obIeaD78Ffk5AyDhouoyzVcrWgSpbJEeY5L8tQvfC4uqaF5GdHQ0tauHNDf6oRJQqfAZ53LEjBEM0U7IXWdCIWB15WWpwvknGLMlIEUiiHEhD0X6TV5p1AYYo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JZ00AGc8; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="CMA/kfaQ"
-Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
-	by mailout1.samsung.com (KnoxPortal) with ESMTP id 20240521110602epoutp0179f1da4b846ba7dc44c8d82514d51972~RfEOjjar_1275912759epoutp01W
-	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 11:06:02 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.samsung.com 20240521110602epoutp0179f1da4b846ba7dc44c8d82514d51972~RfEOjjar_1275912759epoutp01W
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1716289562;
-	bh=wSEDsytbD7se0+xPMl8QsO9Y8bzwKozeONYaDOcAYkA=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=CMA/kfaQLO/cGNfcSMxSgn+l9rWn96F4MoWi4Kq1rTJwFLtryFBH6rHFzNFw0SbCx
-	 uSH77edALETARzm9DSoiiNt8iGNVmHjQUoHmOs9YYKb2t9Bp49Ev+qtWGDcxpo6xDH
-	 Ppa1ZrnEQULDfe9x8L4DyxFrcTtDR7eJDO2ZfXj4=
-Received: from epsnrtp2.localdomain (unknown [182.195.42.163]) by
-	epcas5p1.samsung.com (KnoxPortal) with ESMTP id
-	20240521110602epcas5p1a38d5dca6dd409e90b38345b9894409f~RfEN9tTPy0892108921epcas5p1C;
-	Tue, 21 May 2024 11:06:02 +0000 (GMT)
-Received: from epsmges5p2new.samsung.com (unknown [182.195.38.174]) by
-	epsnrtp2.localdomain (Postfix) with ESMTP id 4VkBSS3vmJz4x9Px; Tue, 21 May
-	2024 11:06:00 +0000 (GMT)
-Received: from epcas5p4.samsung.com ( [182.195.41.42]) by
-	epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	09.F5.09688.8108C466; Tue, 21 May 2024 20:06:00 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
-	epcas5p1.samsung.com (KnoxPortal) with ESMTPA id
-	20240521105753epcas5p18f2c0624aeed49d549cc041a79de0ca3~Re9GlZHVd0195801958epcas5p1r;
-	Tue, 21 May 2024 10:57:53 +0000 (GMT)
-Received: from epsmgmcp1.samsung.com (unknown [182.195.42.82]) by
-	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20240521105753epsmtrp203ee2b39fa95d524d64b55226de24106~Re9GiyYM91824018240epsmtrp2K;
-	Tue, 21 May 2024 10:57:53 +0000 (GMT)
-X-AuditID: b6c32a4a-837fa700000025d8-af-664c8018f4a0
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
-	epsmgmcp1.samsung.com (Symantec Messaging Gateway) with SMTP id
-	DA.1C.19234.13E7C466; Tue, 21 May 2024 19:57:53 +0900 (KST)
-Received: from green245 (unknown [107.99.41.245]) by epsmtip1.samsung.com
-	(KnoxPortal) with ESMTPA id
-	20240521105749epsmtip1e6401767b96e4918e0ae9e0e52120cd2~Re9CmycwF2242022420epsmtip1l;
-	Tue, 21 May 2024 10:57:48 +0000 (GMT)
-Date: Tue, 21 May 2024 16:20:50 +0530
-From: Nitesh Shetty <nj.shetty@samsung.com>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
-	Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
-	<mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, Christoph Hellwig
-	<hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni
-	<kch@nvidia.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian
-	Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
-	martin.petersen@oracle.com, bvanassche@acm.org, david@fromorbit.com,
-	hare@suse.de, damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com,
-	joshi.k@samsung.com, nitheshshetty@gmail.com, gost.dev@samsung.com,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-doc@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
-Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
- and request layer.
-Message-ID: <20240521105050.r7webdbevi2ywsni@green245>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JZ00AGc8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716291601;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=HV87Q0WS1wh+2XVeiD7+8DBuPPINZHb+zErYv6uFbYQ=;
+	b=JZ00AGc87TVjq3euBhqn9ZfkDEc3866YMfe4ivw7AMxOU7+ThCEpfoqnE3+kji4F4noggw
+	Wz2ahLqRTqHL9CRvbLSpPNuCBPPv6MuciiQSptec7F2P95tVPpK8Tg2lDjyxwN3ss+8/q3
+	L/KyfYDguwHoiGKyIs96aajNQg/61HU=
+Received: from mail-pj1-f70.google.com (mail-pj1-f70.google.com
+ [209.85.216.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-649-9RZZ8vnHOamyEhVuokr16g-1; Tue, 21 May 2024 07:39:58 -0400
+X-MC-Unique: 9RZZ8vnHOamyEhVuokr16g-1
+Received: by mail-pj1-f70.google.com with SMTP id 98e67ed59e1d1-2b432dfdcf6so11168044a91.3
+        for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 04:39:58 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716291597; x=1716896397;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=HV87Q0WS1wh+2XVeiD7+8DBuPPINZHb+zErYv6uFbYQ=;
+        b=qbkz6EfPyajqiQ+OY7UVwLIBRTdRCclvb583LnOVN+MFAuLB0SW1RutUkXmQeTSg1e
+         Vl77jRO2ZeE+Va34R9Zb8f2jEWEz1n3grFHndl+z3ZY0ZTQ8NdtSIHY9C6Ag2gaC5QBa
+         sZIPWM79bhFqCAcPOpJ/WE7qDxldbwBbRv5uds6B8y4LMhmsplgl2YtdLJvNPV5xPSRb
+         z4a0qVZGSDVksXaW28kwoGbsyOb4JPHkMd/LfYmiYiSCxIUNtHEAhYYlcz22gUQQUytS
+         3wqDLHH9Ui4lVg02vRYnQ46mfj/k85A/+8ClF9IQg0or34okOkZImRmXTCrogFbTmNc3
+         hX+w==
+X-Forwarded-Encrypted: i=1; AJvYcCWSUU/IqMzUyPTwPB17PwizWGxwRUVa9SofhVOTy9wTFw1VF6Qp8Caj/wzhRAvDqRtxs3jtcwrUe5CiikIjkS2X63wXnLtOim8=
+X-Gm-Message-State: AOJu0YwkBhj1MnN5YG1cOesvfSOzPsFLYDHCooXFcvfVTDaU23iaEAaX
+	Y6PKLz0SsfExl+pwTet3A2RMPTSLRgM3NNP0j/TWWDQlBh5CmNP4adSVb3IP/Sr6TImoXsOgiHT
+	UM//fRP52/7JURA687P+1y5SX2tLB9AGuAw17DHbc8EZFILYyCO/U4+TrWtRupNRxBSZaEraj48
+	e699Ft+0Ii8uh4eYkIy/3jNQyWJczU34Y=
+X-Received: by 2002:a17:90a:8d10:b0:2ba:705:52db with SMTP id 98e67ed59e1d1-2ba0705535fmr15036144a91.38.1716291597344;
+        Tue, 21 May 2024 04:39:57 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHjWlmWlwNEBezfCjv6JkuMU5tRIBL0riNuuVw1rJ3rVVE24HkxWufcpXCmNtu114S9NcN6gQQ+n5PwCRdRHHo=
+X-Received: by 2002:a17:90a:8d10:b0:2ba:705:52db with SMTP id
+ 98e67ed59e1d1-2ba0705535fmr15036116a91.38.1716291596664; Tue, 21 May 2024
+ 04:39:56 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <8f60ed88-1978-4d7c-9149-aee672aa1b09@kernel.org>
-User-Agent: NeoMutt/20171215
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xTdxTH97v39lJIMFdA9xPYIDWGV4CCUH+oPIZEL+ACCxE3nIOGXigC
-	bdfCFJNtIEMUw1sUykPGmMyC1kG38RQCKFCpbGIRcCAsZVnkLTpinDDKVeN/n9/3nO85Oefk
-	x8UtmkysuQmSFEYuESbxSDPi1x4nZ1eYfjiOv1pmg9TaOzg6U/AKR/UT+SSa7XkK0KWlFzgy
-	dGUD9FI3hCPNnUmApjr9UXVNJYHGulow1F5ThKFr9bcxVH45E0O31+dJVNQ9AtCMXomhjnEX
-	9P3ZWgK1dwwQaLi1gkRXrs6YoLq+NQwVntNjqNmQAdCN2UUC9Y/boKFXfZwAW3r4QSitrYF0
-	i3LChB6a/Jmgh3WpdKPqPEk31X5L/9NUBui2sXSS/iGvmEPnZi6QdEvWYw69PDNO0Iu39CSd
-	p1EBerC61yTcMipxv5gRihi5PSOJlYoSJPG+vNCI6APR3gK+h6uHD9rDs5cIkxlfXtDhcNeD
-	CUkbC+LZfyVMSt2QwoUKBc/db79cmprC2IulihRfHiMTJcm8ZG4KYbIiVRLvJmFS9nrw+Z7e
-	G4kxieLnl24C2UDEqUd5tVg6aD2QA0y5kPKCOt1lMgeYcS2oNgBfqIuBMWBBPQWw7tz2tzzU
-	YJsDuJuGklufsfktAC60dRPs428A9RMPOEYDQe2C9aWthNFAUi7w7jrXKFtRDrCkuB0Y83Hq
-	FxJWPcvfzLekYuC8tnCTzSkBXKooNWF5KxwoM2zWMaX84NI6bZS3Ubaw9MfnuLEOpCZN4Zph
-	CWenCYKqCT3BsiV80qcxYdkarix0kCyfhNcu/kSy5u8AVD5UAjbgD7O0+ZuFcEoMBw2a10U/
-	gCXaGxirb4G5Lw0Yq5vD5qo3vBM2qKtfN9gBR1YzSHZbNHzUYMcuaBnAqgu9oADYKd+ZTflO
-	O5b3wvNLZzjKDTtO2cC6NS6LTlDd6l4NOCqwg5EpkuMZhbfMU8KcfHvuWGlyI9j8Pc4hzWB6
-	asmtG2Bc0A0gF+dZmTdqguMszEXCtNOMXBotT01iFN3Ae+NWhbj1tljpxveTpER7ePnwvQQC
-	gZfPboEH733z2axKkQUVL0xhEhlGxsjf+DCuqXU6pu4NOHI1cL5QekymKTzxrPDLkT3iKwnR
-	kZzOzNmc0k+2wCN9BdPa0KD8mVMRo10BiiCVQ5pusvzj5UG++4nw6ONim3xT5Rw/K+2mY+7o
-	E+V/K9Ln5O7ZMsEhFPwwMfBeiJtOlte/1Q8nphci71tO/H5Q/9s+16+LCj6Srbi0PLbfWdFo
-	N7rYY8/hhP1haHQUhWbvc+m7wPEzC+x8b/tx/7CVew4O6XPuUaueVTyZz32rbMcosbLi828y
-	ul2Cne5q4o+qVZFzy+Zrp5vGPvxC/a+2a1wg1Sn7//y0ixtRPvTXlC62Kms8PsHN7mjYMX1W
-	5brvrvqCmLi16yEjQYaLEZrrZ3mEQiz0cMblCuH/8ReFMMYEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Sa0xTZxjHfc85nJ5WGw8FxkvrjFbUBCNC0umLNqgLJq9RicH4QWKUKgeK
-	UGxa2UREGQSEDpxCuFhFLpZiqQEFIlAuIsh9ShRxgahzWuIFseCEYEhhHMii3375P//Ll4ch
-	JROUlImKPcXpYlUxclpE3W2Xr9zof25vhF/VlAhV9XaSKPmSk0TWF3/QaLT9M0B5419JZG+9
-	ANDMw34S1Xa+BOjVve2ouLSQQkOtDQRqKs0mkMXaQaCr+SkE6pgbo1F22zOARgaNBGoe3oBK
-	0kwUamruodCA7RqNiswjAlTeNUugy+mDBKq3/wZQ5aiDQt3DMtTv7HLZsQIPPN2De0shbjC+
-	EOD+l3coPPAwDldXZNC4xnQev6u5AnDjUBKNb1zMccFZKZ9o3JD6twueGBmmsKNlkMYXaysA
-	/rP4gWC/W6hIGc7FRP3C6TYFhonUhXXdtHZm/+kP5kaQBNJ2GgDDQFYBc1sOGYCIkbB1AL4e
-	/CgwAOG87gXNzgfkIrtBy+zbBV3C2udN1h94pti10Fpgo/gemt0A++YYXnZn18PcnCbAd5Js
-	Iw1nvvYtZN3YMDjWe9mFZzG7GY5fKxAsDk8A+OXRPXLx4Ap7rtgpnsl50/Waf0h+gGRlsHyW
-	4VHIBsLxOcw7PNgVsKBskrwEXI3fhY3fhY3fwsWArAAenFavidQc1/r76lUafVxspO/xk5pq
-	sPAVPiH1wFzl9G0DBAPaAGRIubu4unZ3hEQcroo/w+lOHtXFxXD6NiBjKLmneE1MRriEjVSd
-	4qI5Tsvp/r8SjFCaRCR0BICyBIXSM8pxIuB5Wd1wNkEFrOrN3x7kBLdvKbLSpyKmy0PeL9+a
-	oAn9UXsoxe3fny/ER3+ZEo/lNlt3UUpvs0QY9KFCuqTFJsvJqv74WJ33pGjdK9NPLW+2hZTl
-	nUnHtq2/YntQ8d2JqKsOWeDZ4Ps3vaKNJanjfgdGuoLrhCWk3qf1eepBb0Visl+y0nLinfR8
-	pj66e9l9qx2q/4p3bouoZ90zPRsKM8KzH1nab41mujI3i8pXH85IS03M2xm2Pm3NMS+0pVMx
-	NfS61ARVd5Yulf6+r3CyoNIcPK3Ofey77Ii3UunobjY9IW6fsxhGFYbNQY7E0Moum6avRE7p
-	1Sp/H1KnV/0HFww+7oQDAAA=
-X-CMS-MailID: 20240521105753epcas5p18f2c0624aeed49d549cc041a79de0ca3
-X-Msg-Generator: CA
-Content-Type: multipart/mixed;
-	boundary="----0ARpVfROdpzmGW4Ln12FwIta42jNjH8le_L8dBWq-uMGoSqN=_1575d_"
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20240520102842epcas5p4949334c2587a15b8adab2c913daa622f
-References: <20240520102033.9361-1-nj.shetty@samsung.com>
-	<CGME20240520102842epcas5p4949334c2587a15b8adab2c913daa622f@epcas5p4.samsung.com>
-	<20240520102033.9361-3-nj.shetty@samsung.com>
-	<8f60ed88-1978-4d7c-9149-aee672aa1b09@kernel.org>
+References: <CAGVVp+Xsmzy2G9YuEatfMT6qv1M--YdOCQ0g7z7OVmcTbBxQAg@mail.gmail.com>
+ <ZkXsOKV5d4T0Hyqu@fedora> <9b340157-dc0c-6e6a-3d92-f2c65b515461@huaweicloud.com>
+ <CAGVVp+XtThX7=bZm441VxyVd-wv_ycdqMU=19a2pa4wUkbkJ3g@mail.gmail.com>
+ <1b35a177-670a-4d2f-0b68-6eda769af37d@huaweicloud.com> <CAGVVp+WQVeV0PE12RvpojFTRB4rHXh6Lk01vLmdStw1W9zUACg@mail.gmail.com>
+ <CAGVVp+WGyPS5nOQYhWtgJyQnXwUb-+Hui14pXqxd+-ZUjWpTrA@mail.gmail.com>
+ <f1c98dd1-a62c-6857-3773-e05b80e6a763@huaweicloud.com> <CAGVVp+UdBekv2udwxtXBrtn0CMTrBa94oE4taUfynWncYF5ETQ@mail.gmail.com>
+ <0aef762b-ecc5-7dde-7020-08d1b85ed057@huaweicloud.com> <CAGVVp+W-n8mqjjm+GRbO4fAGvqhAjHbCZJjSBysQJpAVzCUvDw@mail.gmail.com>
+ <0e6f15fc-5821-476d-e598-08154d13427c@huaweicloud.com>
+In-Reply-To: <0e6f15fc-5821-476d-e598-08154d13427c@huaweicloud.com>
+From: Changhui Zhong <czhong@redhat.com>
+Date: Tue, 21 May 2024 19:39:44 +0800
+Message-ID: <CAGVVp+UZ4stcktsHw0r8ks8LCfXvYJyT+zv93wEfGuuLswArnw@mail.gmail.com>
+Subject: Re: [bug report] INFO: task mdX_resync:42168 blocked for more than
+ 122 seconds
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: Ming Lei <ming.lei@redhat.com>, Linux Block Devices <linux-block@vger.kernel.org>, 
+	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>, 
+	Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>, linux-raid@vger.kernel.org, 
+	Xiao Ni <xni@redhat.com>, "yangerkun@huawei.com" <yangerkun@huawei.com>, "yukuai (C)" <yukuai3@huawei.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-------0ARpVfROdpzmGW4Ln12FwIta42jNjH8le_L8dBWq-uMGoSqN=_1575d_
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-Content-Disposition: inline
+On Tue, May 21, 2024 at 5:17=E2=80=AFPM Yu Kuai <yukuai1@huaweicloud.com> w=
+rote:
+>
+> Hi,
+>
+> =E5=9C=A8 2024/05/21 12:28, Changhui Zhong =E5=86=99=E9=81=93:
+> > On Tue, May 21, 2024 at 9:09=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.co=
+m> wrote:
+> >
+> >>
+> >> Thanks for the test! Since raid10 has the same problem as well, then t=
+he
+> >> problem seems to be more common in raid. And related code to raid10 is
+> >> more simpler, attached is a patch to add debuginfo to raid10.
+> >>
+> >> BTW, Xiao can reporduce the problem as well, and will lend a hand as
+> >> well.
+> >>
+> >> Thanks,
+> >> Kuai
+> >
+> >
+> > Hi, Yu Kuai and Xiao
+> >
+> > thanks for  efforts on this issue=EF=BC=8C
+> > after applying the debug patch, I got the following results, please che=
+ck it
+> >
+> > [  597.491083] Create raid10
+> > [  597.647987] device-mapper: raid: Superblocks created for new raid se=
+t
+> > [  597.680540] md/raid10:mdX: not clean -- starting background reconstr=
+uction
+> > [  597.680549] md/raid10:mdX: active with 4 out of 4 devices
+> > [  597.683779] mdX: bitmap file is out of date, doing full recovery
+> > [  597.692971] md: resync of RAID array mdX
+> > [  597.753583] try_raise_barrier: resync depth exceed limit
+> > [  597.759540] try_raise_barrier: resync depth exceed limit
+> > [  597.765504] try_raise_barrier: resync depth exceed limit
+> > [  597.771432] try_raise_barrier: resync depth exceed limit
+> > [  597.779400] barrier_waiting: nr_waiting 1
+> > [  597.783879] barrier_waiting: nr_waiting 1
+> > [  597.788356] barrier_waiting: nr_waiting 1
+> > [  597.792838] barrier_waiting: nr_waiting 1
+> > [  597.797327] barrier_waiting: nr_waiting 1
+> > [  597.801806] barrier_waiting: nr_waiting 1
+> > [  597.806288] barrier_waiting: nr_waiting 1
+> > [  597.810780] barrier_waiting: nr_waiting 1
+> > [  597.815252] barrier_waiting: nr_waiting 1
+> > [  597.819737] barrier_waiting: nr_waiting 1
+> > [  597.824232] barrier_waiting: nr_waiting 1
+> > [  597.828714] barrier_waiting: nr_waiting 1
+> > [  597.833196] barrier_waiting: nr_waiting 1
+> > [  597.837678] barrier_waiting: nr_waiting 1
+> > [  597.842160] barrier_waiting: nr_waiting 1
+> > [  597.846640] barrier_waiting: nr_waiting 1
+> > [  597.851128] barrier_waiting: nr_waiting 1
+> > [  597.855610] barrier_waiting: nr_waiting 1
+> > [  597.860094] barrier_waiting: nr_waiting 1
+> > [  597.864576] barrier_waiting: nr_waiting 1
+> > [  597.869060] barrier_waiting: nr_waiting 1
+> > [  597.873548] barrier_waiting: nr_waiting 1
+> > [  597.878032] barrier_waiting: nr_waiting 1
+> > [  597.882522] barrier_waiting: nr_waiting 1
+> > [  597.883457] barrier_waiting: nr_waiting 1
+> > [  597.891503] barrier_waiting: nr_waiting 1
+> > [  597.895987] barrier_waiting: nr_waiting 1
+> > [  597.900459] barrier_waiting: nr_waiting 1
+> > [  597.904940] barrier_waiting: nr_waiting 1
+> > [  597.909421] barrier_waiting: nr_waiting 1
+> > [  597.913900] barrier_waiting: nr_waiting 1
+> > [  597.918377] barrier_waiting: nr_waiting 1
+> > [  597.922857] barrier_waiting: nr_waiting 1
+> > [  597.927350] barrier_waiting: nr_waiting 1
+> > [  597.931841] barrier_waiting: nr_waiting 1
+> > [  597.936322] barrier_waiting: nr_waiting 1
+> > [  597.940805] barrier_waiting: nr_waiting 1
+> > [  597.945284] barrier_waiting: nr_waiting 1
+> > [  597.949766] barrier_waiting: nr_waiting 1
+> > [  597.954246] barrier_waiting: nr_waiting 1
+> > [  597.958726] barrier_waiting: nr_waiting 1
+> > [  597.963205] barrier_waiting: nr_waiting 1
+> > [  597.967683] barrier_waiting: nr_waiting 1
+> > [  597.972163] barrier_waiting: nr_waiting 1
+> > [  597.976641] barrier_waiting: nr_waiting 1
+> > [  597.981119] barrier_waiting: nr_waiting 1
+> > [  597.985601] barrier_waiting: nr_waiting 1
+> > [  597.990082] barrier_waiting: nr_waiting 1
+> > [  597.994562] barrier_waiting: nr_waiting 1
+> > [  597.999043] barrier_waiting: nr_waiting 1
+> > [  598.003522] barrier_waiting: nr_waiting 1
+> > [  598.008000] barrier_waiting: nr_waiting 1
+> > [  598.012485] barrier_waiting: nr_waiting 1
+> > [  598.016964] barrier_waiting: nr_waiting 1
+> > [  598.021451] barrier_waiting: nr_waiting 1
+> > [  598.025931] barrier_waiting: nr_waiting 1
+> > [  598.030409] barrier_waiting: nr_waiting 1
+> > [  598.034888] barrier_waiting: nr_waiting 1
+> > [  598.039368] barrier_waiting: nr_waiting 1
+> > [  598.043848] barrier_waiting: nr_waiting 1
+> > [  598.048325] barrier_waiting: nr_waiting 1
+> > [  598.052805] barrier_waiting: nr_waiting 1
+> > [  598.057283] barrier_waiting: nr_waiting 1
+> > [  598.061767] barrier_waiting: nr_waiting 1
+> > [  598.066246] barrier_waiting: nr_waiting 1
+> > [  598.070726] barrier_waiting: nr_waiting 1
+> > [  598.075206] barrier_waiting: nr_waiting 1
+> > [  598.079689] barrier_waiting: nr_waiting 1
+> > [  598.084170] barrier_waiting: nr_waiting 1
+> > [  598.088648] barrier_waiting: nr_waiting 1
+> > [  598.093130] barrier_waiting: nr_waiting 1
+> > [  598.097646] barrier_waiting: nr_waiting 1
+> > [  598.102126] barrier_waiting: nr_waiting 1
+> > [  598.106605] barrier_waiting: nr_waiting 1
+> > [  598.111085] barrier_waiting: nr_waiting 1
+> > [  598.115566] barrier_waiting: nr_waiting 1
+> > [  598.120043] barrier_waiting: nr_waiting 1
+> > [  598.124522] barrier_waiting: nr_waiting 1
+> > [  598.129001] barrier_waiting: nr_waiting 1
+> > [  598.133481] barrier_waiting: nr_waiting 1
+> > [  598.137958] barrier_waiting: nr_waiting 1
+> > [  598.142442] barrier_waiting: nr_waiting 1
+> > [  598.146921] barrier_waiting: nr_waiting 1
+> > [  598.151400] barrier_waiting: nr_waiting 1
+> > [  598.155878] barrier_waiting: nr_waiting 1
+> > [  598.160359] barrier_waiting: nr_waiting 1
+> > [  598.164838] barrier_waiting: nr_waiting 1
+> > [  598.169319] barrier_waiting: nr_waiting 1
+> > [  598.173803] barrier_waiting: nr_waiting 1
+> > [  598.178282] barrier_waiting: nr_waiting 1
+> > [  598.182762] barrier_waiting: nr_waiting 1
+> > [  598.187241] barrier_waiting: nr_waiting 1
+> > [  598.191722] barrier_waiting: nr_waiting 1
+> > [  598.196201] barrier_waiting: nr_waiting 1
+> > [  598.200678] barrier_waiting: nr_waiting 1
+> > [  598.205159] barrier_waiting: nr_waiting 1
+> > [  598.209640] barrier_waiting: nr_waiting 1
+> > [  598.214120] barrier_waiting: nr_waiting 1
+> > [  598.218599] barrier_waiting: nr_waiting 1
+> > [  598.223078] barrier_waiting: nr_waiting 1
+> > [  598.227557] barrier_waiting: nr_waiting 1
+> > [  598.232036] barrier_waiting: nr_waiting 1
+> > [  598.236519] barrier_waiting: nr_waiting 1
+> > [  598.240999] barrier_waiting: nr_waiting 1
+> > [  598.245478] barrier_waiting: nr_waiting 1
+> > [  598.249959] barrier_waiting: nr_waiting 1
+> > [  598.254439] barrier_waiting: nr_waiting 1
+> > [  598.258917] barrier_waiting: nr_waiting 1
+> > [  598.263397] barrier_waiting: nr_waiting 1
+> > [  598.267880] barrier_waiting: nr_waiting 1
+> > [  598.272362] barrier_waiting: nr_waiting 1
+> > [  598.276842] barrier_waiting: nr_waiting 1
+> > [  598.281322] barrier_waiting: nr_waiting 1
+> > [  598.285802] barrier_waiting: nr_waiting 1
+> > [  598.290281] barrier_waiting: nr_waiting 1
+> > [  598.294758] barrier_waiting: nr_waiting 1
+> > [  598.299256] barrier_waiting: nr_waiting 1
+> > [  598.303737] barrier_waiting: nr_waiting 1
+> > [  598.308219] barrier_waiting: nr_waiting 1
+> > [  598.312698] barrier_waiting: nr_waiting 1
+> > [  598.317176] barrier_waiting: nr_waiting 1
+> > [  598.321659] barrier_waiting: nr_waiting 1
+> > [  598.326138] barrier_waiting: nr_waiting 1
+> > [  598.330617] barrier_waiting: nr_waiting 1
+> > [  598.335100] barrier_waiting: nr_waiting 1
+> > [  598.339580] barrier_waiting: nr_waiting 1
+> > [  598.344057] barrier_waiting: nr_waiting 1
+> > [  598.348536] barrier_waiting: nr_waiting 1
+> > [  598.353016] barrier_waiting: nr_waiting 1
+> > [  598.357496] barrier_waiting: nr_waiting 1
+> > [  598.361973] barrier_waiting: nr_waiting 1
+> > [  598.366453] barrier_waiting: nr_waiting 1
+> > [  598.370932] barrier_waiting: nr_waiting 1
+> > [  598.375412] barrier_waiting: nr_waiting 1
+> > [  598.379890] barrier_waiting: nr_waiting 1
+> > [  598.384371] barrier_waiting: nr_waiting 1
+> > [  598.388856] barrier_waiting: nr_waiting 1
+> > [  598.393326] barrier_waiting: nr_waiting 1
+> > [  598.397805] barrier_waiting: nr_waiting 1
+> > [  598.402288] barrier_waiting: nr_waiting 1
+> > [  598.406772] barrier_waiting: nr_waiting 1
+> > [  598.411251] barrier_waiting: nr_waiting 1
+> > [  598.415729] barrier_waiting: nr_waiting 1
+> > [  598.420209] barrier_waiting: nr_waiting 1
+> > [  598.424686] barrier_waiting: nr_waiting 1
+> > [  598.429165] barrier_waiting: nr_waiting 1
+> > [  598.433644] barrier_waiting: nr_waiting 1
+> > [  598.438125] barrier_waiting: nr_waiting 1
+> > [  598.442604] barrier_waiting: nr_waiting 1
+> > [  598.447083] barrier_waiting: nr_waiting 1
+> > [  598.451571] barrier_waiting: nr_waiting 1
+> > [  598.456050] barrier_waiting: nr_waiting 1
+> > [  598.460531] barrier_waiting: nr_waiting 1
+> > [  598.465010] barrier_waiting: nr_waiting 1
+> > [  598.469498] barrier_waiting: nr_waiting 1
+> > [  598.473981] barrier_waiting: nr_waiting 1
+> > [  598.478460] barrier_waiting: nr_waiting 1
+> > [  598.482940] barrier_waiting: nr_waiting 1
+> > [  598.487421] barrier_waiting: nr_waiting 1
+> > [  598.491901] barrier_waiting: nr_waiting 1
+> > [  598.496382] barrier_waiting: nr_waiting 1
+> > [  598.500860] barrier_waiting: nr_waiting 1
+> > [  598.505338] barrier_waiting: nr_waiting 1
+> > [  598.509837] barrier_waiting: nr_waiting 1
+> > [  598.514317] barrier_waiting: nr_waiting 1
+> > [  598.518797] barrier_waiting: nr_waiting 1
+> > [  598.523276] barrier_waiting: nr_waiting 1
+> > [  598.527756] barrier_waiting: nr_waiting 1
+> > [  598.532241] barrier_waiting: nr_waiting 1
+> > [  598.536719] barrier_waiting: nr_waiting 1
+> > [  598.541199] barrier_waiting: nr_waiting 1
+> > [  598.545679] barrier_waiting: nr_waiting 1
+> > [  598.550159] barrier_waiting: nr_waiting 1
+> > [  598.554639] barrier_waiting: nr_waiting 1
+> > [  598.559118] barrier_waiting: nr_waiting 1
+> > [  598.563597] barrier_waiting: nr_waiting 1
+> > [  598.568077] barrier_waiting: nr_waiting 1
+> > [  598.572561] barrier_waiting: nr_waiting 1
+> > [  598.577038] barrier_waiting: nr_waiting 1
+> > [  598.581517] barrier_waiting: nr_waiting 1
+> > [  598.585995] barrier_waiting: nr_waiting 1
+> > [  598.590475] barrier_waiting: nr_waiting 1
+> > [  598.594953] barrier_waiting: nr_waiting 1
+> > [  598.599434] barrier_waiting: nr_waiting 1
+> > [  598.603913] barrier_waiting: nr_waiting 1
+> > [  598.608392] barrier_waiting: nr_waiting 1
+> > [  598.612871] barrier_waiting: nr_waiting 1
+> > [  598.617349] barrier_waiting: nr_waiting 1
+> > [  598.621828] barrier_waiting: nr_waiting 1
+> > [  598.626308] barrier_waiting: nr_waiting 1
+> > [  598.630787] barrier_waiting: nr_waiting 1
+> > [  598.635272] barrier_waiting: nr_waiting 1
+> > [  598.639753] barrier_waiting: nr_waiting 1
+> > [  598.644231] barrier_waiting: nr_waiting 1
+> > [  598.648712] barrier_waiting: nr_waiting 1
+> > [  598.653192] barrier_waiting: nr_waiting 1
+> > [  598.657671] barrier_waiting: nr_waiting 1
+> > [  598.662150] barrier_waiting: nr_waiting 1
+> > [  598.666630] barrier_waiting: nr_waiting 1
+> > [  598.671111] barrier_waiting: nr_waiting 1
+> > [  598.675589] barrier_waiting: nr_waiting 1
+> > [  598.680068] barrier_waiting: nr_waiting 1
+> > [  598.684547] barrier_waiting: nr_waiting 1
+> > [  598.689024] barrier_waiting: nr_waiting 1
+> > [  598.693501] barrier_waiting: nr_waiting 1
+> > [  598.697982] barrier_waiting: nr_waiting 1
+> > [  598.702462] barrier_waiting: nr_waiting 1
+> > [  598.706945] barrier_waiting: nr_waiting 1
+> > [  598.711425] barrier_waiting: nr_waiting 1
+> > [  598.715989] barrier_waiting: nr_waiting 1
+> > [  598.720523] barrier_waiting: nr_waiting 1
+> > [  598.725014] barrier_waiting: nr_waiting 1
+> > [  598.729500] barrier_waiting: nr_waiting 1
+> > [  598.733983] barrier_waiting: nr_waiting 1
+> > [  598.738465] barrier_waiting: nr_waiting 1
+> > [  598.742947] barrier_waiting: nr_waiting 1
+> > [  598.747426] barrier_waiting: nr_waiting 1
+> > [  598.751909] barrier_waiting: nr_waiting 1
+> > [  598.756390] barrier_waiting: nr_waiting 1
+> > [  598.760869] barrier_waiting: nr_waiting 1
+> > [  598.765360] barrier_waiting: nr_waiting 1
+> > [  598.769839] barrier_waiting: nr_waiting 1
+> > [  598.774318] barrier_waiting: nr_waiting 1
+> > [  598.778801] barrier_waiting: nr_waiting 1
+> > [  598.783280] barrier_waiting: nr_waiting 1
+> > [  598.787758] barrier_waiting: nr_waiting 1
+> > [  598.792242] barrier_waiting: nr_waiting 1
+> > [  598.796723] barrier_waiting: nr_waiting 1
+> > [  598.801200] barrier_waiting: nr_waiting 1
+> > [  598.805688] barrier_waiting: nr_waiting 1
+> > [  598.810166] barrier_waiting: nr_waiting 1
+> > [  598.814646] barrier_waiting: nr_waiting 1
+> > [  598.819126] barrier_waiting: nr_waiting 1
+> > [  598.823606] barrier_waiting: nr_waiting 1
+> > [  598.828086] barrier_waiting: nr_waiting 1
+> > [  598.832574] barrier_waiting: nr_waiting 1
+> > [  598.837052] barrier_waiting: nr_waiting 1
+> > [  598.841531] barrier_waiting: nr_waiting 1
+> > [  598.846012] barrier_waiting: nr_waiting 1
+> > [  598.850491] barrier_waiting: nr_waiting 1
+> > [  598.854969] barrier_waiting: nr_waiting 1
+> > [  598.859456] barrier_waiting: nr_waiting 1
+> > [  598.863934] barrier_waiting: nr_waiting 1
+> > [  598.868412] barrier_waiting: nr_waiting 1
+> > [  598.872895] barrier_waiting: nr_waiting 1
+> > [  598.877374] barrier_waiting: nr_waiting 1
+> > [  598.881853] barrier_waiting: nr_waiting 1
+> > [  598.886334] barrier_waiting: nr_waiting 1
+> > [  598.890813] barrier_waiting: nr_waiting 1
+> > [  598.895293] barrier_waiting: nr_waiting 1
+> > [  598.899774] barrier_waiting: nr_waiting 1
+> > [  598.904253] barrier_waiting: nr_waiting 1
+> > [  598.908735] barrier_waiting: nr_waiting 1
+> > [  598.913215] barrier_waiting: nr_waiting 1
+> > [  598.917694] barrier_waiting: nr_waiting 1
+> > [  598.922173] barrier_waiting: nr_waiting 1
+> > [  598.926663] barrier_waiting: nr_waiting 1
+> > [  598.931153] barrier_waiting: nr_waiting 1
+> > [  598.935638] barrier_waiting: nr_waiting 1
+> > [  598.940115] barrier_waiting: nr_waiting 1
+> > [  598.944599] barrier_waiting: nr_waiting 1
+> > [  598.949080] barrier_waiting: nr_waiting 1
+> > [  598.953561] barrier_waiting: nr_waiting 1
+> > [  598.958042] barrier_waiting: nr_waiting 1
+> > [  598.962523] barrier_waiting: nr_waiting 1
+> > [  598.967006] barrier_waiting: nr_waiting 1
+> > [  598.971486] barrier_waiting: nr_waiting 1
+> > [  598.975965] barrier_waiting: nr_waiting 1
+> > [  598.980446] barrier_waiting: nr_waiting 1
+> > [  598.984923] barrier_waiting: nr_waiting 1
+> > [  598.989408] barrier_waiting: nr_waiting 1
+> > [  598.993890] barrier_waiting: nr_waiting 1
+> > [  598.998367] barrier_waiting: nr_waiting 1
+> > [  599.002844] barrier_waiting: nr_waiting 1
+> > [  599.007328] barrier_waiting: nr_waiting 1
+> > [  599.011800] barrier_waiting: nr_waiting 1
+> > [  599.016278] barrier_waiting: nr_waiting 1
+> > [  599.020756] barrier_waiting: nr_waiting 1
+> > [  599.025241] barrier_waiting: nr_waiting 1
+> > [  599.029720] barrier_waiting: nr_waiting 1
+> > [  599.034199] barrier_waiting: nr_waiting 1
+> > [  599.038682] barrier_waiting: nr_waiting 1
+> > [  599.043161] barrier_waiting: nr_waiting 1
+> > [  599.047641] barrier_waiting: nr_waiting 1
+> > [  599.052120] barrier_waiting: nr_waiting 1
+> > [  599.056601] barrier_waiting: nr_waiting 1
+> > [  599.061082] barrier_waiting: nr_waiting 1
+> > [  599.065567] barrier_waiting: nr_waiting 1
+> > [  599.070045] barrier_waiting: nr_waiting 1
+> > [  599.074522] barrier_waiting: nr_waiting 1
+> > [  599.079006] barrier_waiting: nr_waiting 1
+> > [  599.083486] barrier_waiting: nr_waiting 1
+> > [  599.087968] barrier_waiting: nr_waiting 1
+> > [  599.092448] barrier_waiting: nr_waiting 1
+> > [  599.096929] barrier_waiting: nr_waiting 1
+> > [  599.101407] barrier_waiting: nr_waiting 1
+> > [  599.105886] barrier_waiting: nr_waiting 1
+> > [  599.110366] barrier_waiting: nr_waiting 1
+> > [  599.114850] barrier_waiting: nr_waiting 1
+> > [  599.119332] barrier_waiting: nr_waiting 1
+> > [  599.123809] barrier_waiting: nr_waiting 1
+> > [  599.128293] barrier_waiting: nr_waiting 1
+> > [  599.132765] barrier_waiting: nr_waiting 1
+> > [  599.137242] barrier_waiting: nr_waiting 1
+> > [  599.141723] barrier_waiting: nr_waiting 1
+> > [  599.146203] barrier_waiting: nr_waiting 1
+> > [  599.150682] barrier_waiting: nr_waiting 1
+> > [  599.155165] barrier_waiting: nr_waiting 1
+> > [  599.159644] barrier_waiting: nr_waiting 1
+> > [  599.164124] barrier_waiting: nr_waiting 1
+> > [  599.168603] barrier_waiting: nr_waiting 1
+> > [  599.173080] barrier_waiting: nr_waiting 1
+> > [  599.177564] barrier_waiting: nr_waiting 1
+> > [  599.182043] barrier_waiting: nr_waiting 1
+> > [  599.186525] barrier_waiting: nr_waiting 1
+> > [  599.191008] barrier_waiting: nr_waiting 1
+> > [  599.195488] barrier_waiting: nr_waiting 1
+> > [  599.199967] barrier_waiting: nr_waiting 1
+> > [  599.204448] barrier_waiting: nr_waiting 1
+> > [  599.208928] barrier_waiting: nr_waiting 1
+> > [  599.213408] barrier_waiting: nr_waiting 1
+> > [  599.217890] barrier_waiting: nr_waiting 1
+> > [  599.222370] barrier_waiting: nr_waiting 1
+> > [  599.226850] barrier_waiting: nr_waiting 1
+> > [  599.231329] barrier_waiting: nr_waiting 1
+> > [  599.235811] barrier_waiting: nr_waiting 1
+> > [  599.240289] barrier_waiting: nr_waiting 1
+> > [  599.244767] barrier_waiting: nr_waiting 1
+> > [  599.249247] barrier_waiting: nr_waiting 1
+> > [  599.253731] barrier_waiting: nr_waiting 1
+> > [  599.258212] barrier_waiting: nr_waiting 1
+> > [  599.262691] barrier_waiting: nr_waiting 1
+> > [  599.267170] barrier_waiting: nr_waiting 1
+> > [  599.271650] barrier_waiting: nr_waiting 1
+> > [  599.276128] barrier_waiting: nr_waiting 1
+> > [  599.280606] barrier_waiting: nr_waiting 1
+> > [  599.285084] barrier_waiting: nr_waiting 1
+> > [  599.289569] barrier_waiting: nr_waiting 1
+> > [  599.294040] barrier_waiting: nr_waiting 1
+> > [  599.298522] barrier_waiting: nr_waiting 1
+> > [  599.303006] barrier_waiting: nr_waiting 1
+> > [  599.307483] barrier_waiting: nr_waiting 1
+> > [  599.311961] barrier_waiting: nr_waiting 1
+> > [  599.316442] barrier_waiting: nr_waiting 1
+> > [  599.320923] barrier_waiting: nr_waiting 1
+> > [  599.325403] barrier_waiting: nr_waiting 1
+> > [  599.329884] barrier_waiting: nr_waiting 1
+> > [  599.334363] barrier_waiting: nr_waiting 1
+> > [  599.338842] barrier_waiting: nr_waiting 1
+> > [  599.343322] barrier_waiting: nr_waiting 1
+> > [  599.347801] barrier_waiting: nr_waiting 1
+> > [  599.352282] barrier_waiting: nr_waiting 1
+> > [  599.356762] barrier_waiting: nr_waiting 1
+> > [  599.361246] barrier_waiting: nr_waiting 1
+> > [  599.365727] barrier_waiting: nr_waiting 1
+> > [  599.370206] barrier_waiting: nr_waiting 1
+> > [  599.374685] barrier_waiting: nr_waiting 1
+> > [  599.379166] barrier_waiting: nr_waiting 1
+> > [  599.383647] barrier_waiting: nr_waiting 1
+> > [  599.388125] barrier_waiting: nr_waiting 1
+> > [  599.392605] barrier_waiting: nr_waiting 1
+> > [  599.397083] barrier_waiting: nr_waiting 1
+> > [  599.401562] barrier_waiting: nr_waiting 1
+> > [  599.406044] barrier_waiting: nr_waiting 1
+> > [  599.410525] barrier_waiting: nr_waiting 1
+> > [  599.415008] barrier_waiting: nr_waiting 1
+> > [  599.419486] barrier_waiting: nr_waiting 1
+> > [  599.423968] barrier_waiting: nr_waiting 1
+> > [  599.428446] barrier_waiting: nr_waiting 1
+> > [  599.432924] barrier_waiting: nr_waiting 1
+> > [  599.437409] barrier_waiting: nr_waiting 1
+> > [  599.441890] barrier_waiting: nr_waiting 1
+> > [  599.446373] barrier_waiting: nr_waiting 1
+> > [  599.450859] barrier_waiting: nr_waiting 1
+> > [  599.455337] barrier_waiting: nr_waiting 1
+> > [  599.459819] barrier_waiting: nr_waiting 1
+> > [  599.464306] barrier_waiting: nr_waiting 1
+> > [  599.468783] barrier_waiting: nr_waiting 1
+> > [  599.473262] barrier_waiting: nr_waiting 1
+> > [  599.477744] barrier_waiting: nr_waiting 1
+> > [  599.482224] barrier_waiting: nr_waiting 1
+> > [  599.486704] barrier_waiting: nr_waiting 1
+> > [  599.491190] barrier_waiting: nr_waiting 1
+> > [  599.495670] barrier_waiting: nr_waiting 1
+> > [  599.500150] barrier_waiting: nr_waiting 1
+> > [  599.504629] barrier_waiting: nr_waiting 1
+> > [  599.509106] barrier_waiting: nr_waiting 1
+> > [  599.513588] barrier_waiting: nr_waiting 1
+> > [  599.518072] barrier_waiting: nr_waiting 1
+> > [  599.522552] barrier_waiting: nr_waiting 1
+> > [  599.527030] barrier_waiting: nr_waiting 1
+> > [  599.531509] barrier_waiting: nr_waiting 1
+> > [  599.535988] barrier_waiting: nr_waiting 1
+> > [  599.540470] barrier_waiting: nr_waiting 1
+> > [  599.544955] barrier_waiting: nr_waiting 1
+> > [  599.549426] barrier_waiting: nr_waiting 1
+> > [  599.553904] barrier_waiting: nr_waiting 1
+> > [  599.558384] barrier_waiting: nr_waiting 1
+> > [  599.562863] barrier_waiting: nr_waiting 1
+> > [  599.567342] barrier_waiting: nr_waiting 1
+> > [  599.571820] barrier_waiting: nr_waiting 1
+> > [  599.576298] barrier_waiting: nr_waiting 1
+> > [  599.580779] barrier_waiting: nr_waiting 1
+> > [  599.585254] wait_barrier: nr_pending: 1
+> > [  599.589540] try_raise_barrier: nr_pending 1
+> > [  599.589547] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  599.594209] try_raise_barrier: nr_pending 1
+> > [  599.605582] try_raise_barrier: nr_pending 1
+> > [  599.605674] allow_barrier: nr_pending: 0
+> > [  599.610620] wait_barrier: nr_pending: 1
+> > [  599.614653] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  599.618935] try_raise_barrier: nr_pending 1
+> > [  599.618938] try_raise_barrier: nr_pending 1
+> > [  599.618965] raid10_read_request: r10_bio ff3b4134184a6100 start
+> > [  599.641092] try_raise_barrier: nr_pending 1
+> > [  599.641145] allow_barrier: nr_pending: 0
+> > [  599.646251] wait_barrier: nr_pending: 1
+> > [  599.650157] raid_end_bio_io: r10_bio ff3b4134184a6100 done
+> > [  599.654437] try_raise_barrier: nr_pending 1
+> > [  599.654446] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  599.654575] allow_barrier: nr_pending: 0
+> > [  599.654583] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  599.682715] wait_barrier: nr_pending: 1
+> > [  599.687000] try_raise_barrier: nr_pending 1
+> > [  599.687012] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  599.691672] try_raise_barrier: nr_pending 1
+> > [  599.703020] try_raise_barrier: nr_pending 1
+> > [  599.703069] allow_barrier: nr_pending: 0
+> > [  599.708037] wait_barrier: nr_pending: 1
+> > [  599.712092] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  599.716368] try_raise_barrier: nr_pending 1
+> > [  599.716372] try_raise_barrier: nr_pending 1
+> > [  599.716377] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  599.738510] try_raise_barrier: nr_pending 1
+> > [  599.738554] allow_barrier: nr_pending: 0
+> > [  599.743663] wait_barrier: nr_pending: 1
+> > [  599.747583] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  599.751853] try_raise_barrier: nr_pending 1
+> > [  599.751857] try_raise_barrier: nr_pending 1
+> > [  599.751864] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  599.773945] try_raise_barrier: nr_pending 1
+> > [  599.774058] allow_barrier: nr_pending: 0
+> > [  599.779116] wait_barrier: nr_pending: 1
+> > [  599.783020] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  599.787298] try_raise_barrier: nr_pending 1
+> > [  599.787307] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  599.787461] allow_barrier: nr_pending: 0
+> > [  599.787469] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  599.815585] wait_barrier: nr_pending: 1
+> > [  599.819872] try_raise_barrier: nr_pending 1
+> > [  599.819883] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  599.824546] try_raise_barrier: nr_pending 1
+> > [  599.835892] try_raise_barrier: nr_pending 1
+> > [  599.835904] allow_barrier: nr_pending: 0
+> > [  599.840922] wait_barrier: nr_pending: 1
+> > [  599.844957] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  599.849235] try_raise_barrier: nr_pending 1
+> > [  599.849239] try_raise_barrier: nr_pending 1
+> > [  599.849244] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  599.871381] try_raise_barrier: nr_pending 1
+> > [  599.871463] allow_barrier: nr_pending: 0
+> > [  599.876542] wait_barrier: nr_pending: 1
+> > [  599.880451] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  599.884730] try_raise_barrier: nr_pending 1
+> > [  599.884735] try_raise_barrier: nr_pending 1
+> > [  599.884740] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  599.884889] allow_barrier: nr_pending: 0
+> > [  599.884897] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  599.917789] wait_barrier: nr_pending: 1
+> > [  599.922088] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  599.922159] try_raise_barrier: nr_pending 1
+> > [  599.928829] allow_barrier: nr_pending: 0
+> > [  599.933736] wait_barrier: nr_pending: 1
+> > [  599.937771] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  599.942045] try_raise_barrier: nr_pending 1
+> > [  599.942049] try_raise_barrier: nr_pending 1
+> > [  599.942058] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  599.964202] try_raise_barrier: nr_pending 1
+> > [  599.964262] allow_barrier: nr_pending: 0
+> > [  599.969461] wait_barrier: nr_pending: 1
+> > [  599.973275] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  599.977553] try_raise_barrier: nr_pending 1
+> > [  599.977559] try_raise_barrier: nr_pending 1
+> > [  599.977562] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  599.977715] allow_barrier: nr_pending: 0
+> > [  599.977723] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.010600] wait_barrier: nr_pending: 1
+> > [  600.014887] try_raise_barrier: nr_pending 1
+> > [  600.014898] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  600.019559] try_raise_barrier: nr_pending 1
+> > [  600.030909] try_raise_barrier: nr_pending 1
+> > [  600.030917] allow_barrier: nr_pending: 0
+> > [  600.036049] wait_barrier: nr_pending: 1
+> > [  600.039974] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  600.044253] try_raise_barrier: nr_pending 1
+> > [  600.044257] try_raise_barrier: nr_pending 1
+> > [  600.044263] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  600.066363] try_raise_barrier: nr_pending 1
+> > [  600.066461] allow_barrier: nr_pending: 0
+> > [  600.071440] wait_barrier: nr_pending: 1
+> > [  600.075443] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  600.079722] try_raise_barrier: nr_pending 1
+> > [  600.079727] try_raise_barrier: nr_pending 1
+> > [  600.079731] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.079868] allow_barrier: nr_pending: 0
+> > [  600.079875] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.112682] wait_barrier: nr_pending: 1
+> > [  600.116967] try_raise_barrier: nr_pending 1
+> > [  600.116978] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.121640] try_raise_barrier: nr_pending 1
+> > [  600.132990] try_raise_barrier: nr_pending 1
+> > [  600.133057] allow_barrier: nr_pending: 0
+> > [  600.138070] wait_barrier: nr_pending: 1
+> > [  600.142062] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.146337] try_raise_barrier: nr_pending 1
+> > [  600.146342] try_raise_barrier: nr_pending 1
+> > [  600.146348] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  600.168487] try_raise_barrier: nr_pending 1
+> > [  600.168532] allow_barrier: nr_pending: 0
+> > [  600.173662] wait_barrier: nr_pending: 1
+> > [  600.177563] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  600.181840] try_raise_barrier: nr_pending 1
+> > [  600.181845] try_raise_barrier: nr_pending 1
+> > [  600.181849] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.181983] allow_barrier: nr_pending: 0
+> > [  600.181991] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.214790] wait_barrier: nr_pending: 1
+> > [  600.219075] try_raise_barrier: nr_pending 1
+> > [  600.219087] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  600.223748] try_raise_barrier: nr_pending 1
+> > [  600.235099] try_raise_barrier: nr_pending 1
+> > [  600.235150] allow_barrier: nr_pending: 0
+> > [  600.240130] wait_barrier: nr_pending: 1
+> > [  600.244170] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  600.248446] try_raise_barrier: nr_pending 1
+> > [  600.248450] try_raise_barrier: nr_pending 1
+> > [  600.248456] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  600.270600] try_raise_barrier: nr_pending 1
+> > [  600.270648] allow_barrier: nr_pending: 0
+> > [  600.275752] wait_barrier: nr_pending: 1
+> > [  600.279676] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  600.283952] try_raise_barrier: nr_pending 1
+> > [  600.283956] try_raise_barrier: nr_pending 1
+> > [  600.283961] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.284093] allow_barrier: nr_pending: 0
+> > [  600.284100] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.316975] wait_barrier: nr_pending: 1
+> > [  600.321262] try_raise_barrier: nr_pending 1
+> > [  600.321273] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.325936] try_raise_barrier: nr_pending 1
+> > [  600.337279] allow_barrier: nr_pending: 0
+> > [  600.337649] wait_barrier: nr_pending: 1
+> > [  600.341674] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.345947] try_raise_barrier: nr_pending 1
+> > [  600.345951] try_raise_barrier: nr_pending 1
+> > [  600.345958] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  600.368088] try_raise_barrier: nr_pending 1
+> > [  600.368129] allow_barrier: nr_pending: 0
+> > [  600.373070] wait_barrier: nr_pending: 1
+> > [  600.377153] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  600.381430] try_raise_barrier: nr_pending 1
+> > [  600.381434] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.381555] allow_barrier: nr_pending: 0
+> > [  600.381562] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.409730] wait_barrier: nr_pending: 1
+> > [  600.414012] try_raise_barrier: nr_pending 1
+> > [  600.414015] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  600.418685] try_raise_barrier: nr_pending 1
+> > [  600.430034] try_raise_barrier: nr_pending 1
+> > [  600.430085] allow_barrier: nr_pending: 0
+> > [  600.435126] wait_barrier: nr_pending: 1
+> > [  600.439107] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  600.443388] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  600.443462] try_raise_barrier: nr_pending 1
+> > [  600.443466] try_raise_barrier: nr_pending 1
+> > [  600.465548] try_raise_barrier: nr_pending 1
+> > [  600.465585] allow_barrier: nr_pending: 0
+> > [  600.470613] wait_barrier: nr_pending: 1
+> > [  600.474627] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  600.478903] try_raise_barrier: nr_pending 1
+> > [  600.478910] try_raise_barrier: nr_pending 1
+> > [  600.478912] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.479045] allow_barrier: nr_pending: 0
+> > [  600.479053] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.511838] wait_barrier: nr_pending: 1
+> > [  600.516124] try_raise_barrier: nr_pending 1
+> > [  600.516135] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.520797] try_raise_barrier: nr_pending 1
+> > [  600.532156] try_raise_barrier: nr_pending 1
+> > [  600.532225] allow_barrier: nr_pending: 0
+> > [  600.537288] wait_barrier: nr_pending: 1
+> > [  600.541229] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.545505] try_raise_barrier: nr_pending 1
+> > [  600.545509] try_raise_barrier: nr_pending 1
+> > [  600.545515] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  600.567662] try_raise_barrier: nr_pending 1
+> > [  600.567696] allow_barrier: nr_pending: 0
+> > [  600.572778] wait_barrier: nr_pending: 1
+> > [  600.576742] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  600.581017] try_raise_barrier: nr_pending 1
+> > [  600.581023] try_raise_barrier: nr_pending 1
+> > [  600.581028] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.581145] allow_barrier: nr_pending: 0
+> > [  600.581152] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.613893] wait_barrier: nr_pending: 1
+> > [  600.618178] try_raise_barrier: nr_pending 1
+> > [  600.618188] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  600.622851] try_raise_barrier: nr_pending 1
+> > [  600.634242] try_raise_barrier: nr_pending 1
+> > [  600.634317] allow_barrier: nr_pending: 0
+> > [  600.639159] wait_barrier: nr_pending: 1
+> > [  600.643299] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  600.647575] try_raise_barrier: nr_pending 1
+> > [  600.647579] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  600.647579] try_raise_barrier: nr_pending 1
+> > [  600.647633] allow_barrier: nr_pending: 0
+> > [  600.647637] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  600.680526] wait_barrier: nr_pending: 1
+> > [  600.684819] try_raise_barrier: nr_pending 1
+> > [  600.684841] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.689492] try_raise_barrier: nr_pending 1
+> > [  600.700853] try_raise_barrier: nr_pending 1
+> > [  600.700910] allow_barrier: nr_pending: 0
+> > [  600.706030] wait_barrier: nr_pending: 1
+> > [  600.709914] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.714193] try_raise_barrier: nr_pending 1
+> > [  600.714197] try_raise_barrier: nr_pending 1
+> > [  600.714205] raid10_read_request: r10_bio ff3b4134184a6100 start
+> > [  600.714376] allow_barrier: nr_pending: 0
+> > [  600.714383] raid_end_bio_io: r10_bio ff3b4134184a6100 done
+> > [  600.747144] wait_barrier: nr_pending: 1
+> > [  600.751430] try_raise_barrier: nr_pending 1
+> > [  600.751442] raid10_read_request: r10_bio ff3b4134184a6b00 start
+> > [  600.756102] try_raise_barrier: nr_pending 1
+> > [  600.767448] try_raise_barrier: nr_pending 1
+> > [  600.767537] allow_barrier: nr_pending: 0
+> > [  600.772502] wait_barrier: nr_pending: 1
+> > [  600.776516] raid_end_bio_io: r10_bio ff3b4134184a6b00 done
+> > [  600.780795] try_raise_barrier: nr_pending 1
+> > [  600.780799] try_raise_barrier: nr_pending 1
+> > [  600.780808] raid10_read_request: r10_bio ff3b4134184a7f00 start
+> > [  600.802876] try_raise_barrier: nr_pending 1
+> > [  600.803016] allow_barrier: nr_pending: 0
+> > [  600.808000] wait_barrier: nr_pending: 1
+> > [  600.811943] raid_end_bio_io: r10_bio ff3b4134184a7f00 done
+> > [  600.816225] try_raise_barrier: nr_pending 1
+> > [  600.816229] try_raise_barrier: nr_pending 1
+> > [  600.816245] raid10_read_request: r10_bio ff3b4134184a7400 start
+> > [  600.838385] try_raise_barrier: nr_pending 1
+> > [  600.838448] allow_barrier: nr_pending: 0
+> > [  600.843556] wait_barrier: nr_pending: 1
+> > [  600.847451] raid_end_bio_io: r10_bio ff3b4134184a7400 done
+> > [  600.851722] try_raise_barrier: nr_pending 1
+> > [  600.851726] try_raise_barrier: nr_pending 1
+> > [  600.851732] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.851897] allow_barrier: nr_pending: 0
+> > [  600.851904] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.884632] wait_barrier: nr_pending: 1
+> > [  600.888917] try_raise_barrier: nr_pending 1
+> > [  600.888929] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.893588] try_raise_barrier: nr_pending 1
+> > [  600.904881] try_raise_barrier: nr_pending 1
+> > [  600.905028] allow_barrier: nr_pending: 0
+> > [  600.909930] wait_barrier: nr_pending: 1
+> > [  600.913958] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  600.918233] try_raise_barrier: nr_pending 1
+> > [  600.918237] try_raise_barrier: nr_pending 1
+> > [  600.918245] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  600.940401] try_raise_barrier: nr_pending 1
+> > [  600.940502] allow_barrier: nr_pending: 0
+> > [  600.945589] wait_barrier: nr_pending: 1
+> > [  600.949477] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  600.953755] try_raise_barrier: nr_pending 1
+> > [  600.953760] try_raise_barrier: nr_pending 1
+> > [  600.953765] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  600.953893] allow_barrier: nr_pending: 0
+> > [  600.953901] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  600.986653] wait_barrier: nr_pending: 1
+> > [  600.990939] try_raise_barrier: nr_pending 1
+> > [  600.990949] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  600.995611] try_raise_barrier: nr_pending 1
+> > [  601.006963] try_raise_barrier: nr_pending 1
+> > [  601.007109] allow_barrier: nr_pending: 0
+> > [  601.011808] wait_barrier: nr_pending: 1
+> > [  601.016031] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  601.020309] try_raise_barrier: nr_pending 1
+> > [  601.020313] try_raise_barrier: nr_pending 1
+> > [  601.020319] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  601.042453] allow_barrier: nr_pending: 0
+> > [  601.042803] wait_barrier: nr_pending: 1
+> > [  601.046853] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  601.051120] try_raise_barrier: nr_pending 1
+> > [  601.051125] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  601.051126] try_raise_barrier: nr_pending 1
+> > [  601.051145] try_raise_barrier: nr_pending 1
+> > [  601.051415] allow_barrier: nr_pending: 0
+> > [  601.051422] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  601.088815] wait_barrier: nr_pending: 1
+> > [  601.093099] try_raise_barrier: nr_pending 1
+> > [  601.093111] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  601.097772] try_raise_barrier: nr_pending 1
+> > [  601.109103] try_raise_barrier: nr_pending 1
+> > [  601.109172] allow_barrier: nr_pending: 0
+> > [  601.114259] wait_barrier: nr_pending: 1
+> > [  601.118177] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  601.122446] try_raise_barrier: nr_pending 1
+> > [  601.122450] try_raise_barrier: nr_pending 1
+> > [  601.122459] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  601.144607] try_raise_barrier: nr_pending 1
+> > [  601.144650] allow_barrier: nr_pending: 0
+> > [  601.149688] wait_barrier: nr_pending: 1
+> > [  601.153683] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  601.157960] try_raise_barrier: nr_pending 1
+> > [  601.157964] try_raise_barrier: nr_pending 1
+> > [  601.157970] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  601.180129] try_raise_barrier: nr_pending 1
+> > [  601.180240] allow_barrier: nr_pending: 0
+> > [  601.185207] wait_barrier: nr_pending: 1
+> > [  601.189209] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  601.193485] try_raise_barrier: nr_pending 1
+> > [  601.193497] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  601.193706] allow_barrier: nr_pending: 0
+> > [  601.193714] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  601.221868] wait_barrier: nr_pending: 1
+> > [  601.226153] try_raise_barrier: nr_pending 1
+> > [  601.226164] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  601.230826] try_raise_barrier: nr_pending 1
+> > [  601.242175] try_raise_barrier: nr_pending 1
+> > [  601.242239] allow_barrier: nr_pending: 0
+> > [  601.247321] wait_barrier: nr_pending: 1
+> > [  601.251249] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  601.255526] try_raise_barrier: nr_pending 1
+> > [  601.255530] try_raise_barrier: nr_pending 1
+> > [  601.255536] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  601.277688] try_raise_barrier: nr_pending 1
+> > [  601.277818] allow_barrier: nr_pending: 0
+> > [  601.282730] wait_barrier: nr_pending: 1
+> > [  601.286761] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  601.291037] try_raise_barrier: nr_pending 1
+> > [  601.291043] try_raise_barrier: nr_pending 1
+> > [  601.291047] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  601.313190] try_raise_barrier: nr_pending 1
+> > [  601.313248] allow_barrier: nr_pending: 0
+> > [  601.318267] wait_barrier: nr_pending: 1
+> > [  601.322269] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  601.326544] try_raise_barrier: nr_pending 1
+> > [  601.326551] try_raise_barrier: nr_pending 1
+> > [  601.326556] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  601.326708] allow_barrier: nr_pending: 0
+> > [  601.326716] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  601.359595] wait_barrier: nr_pending: 1
+> > [  601.363882] try_raise_barrier: nr_pending 1
+> > [  601.363893] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  601.368556] try_raise_barrier: nr_pending 1
+> > [  601.379906] try_raise_barrier: nr_pending 1
+> > [  601.379973] allow_barrier: nr_pending: 0
+> > [  601.385040] wait_barrier: nr_pending: 1
+> > [  601.388979] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  601.393255] try_raise_barrier: nr_pending 1
+> > [  601.393260] try_raise_barrier: nr_pending 1
+> > [  601.393268] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  601.415361] try_raise_barrier: nr_pending 1
+> > [  601.415483] allow_barrier: nr_pending: 0
+> > [  601.420443] wait_barrier: nr_pending: 1
+> > [  601.424436] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  601.428713] try_raise_barrier: nr_pending 1
+> > [  601.428716] try_raise_barrier: nr_pending 1
+> > [  601.428723] raid10_read_request: r10_bio ff3b41340eb53600 start
+> > [  601.450871] try_raise_barrier: nr_pending 1
+> > [  601.450916] allow_barrier: nr_pending: 0
+> > [  601.455878] wait_barrier: nr_pending: 1
+> > [  601.459951] raid_end_bio_io: r10_bio ff3b41340eb53600 done
+> > [  601.464227] try_raise_barrier: nr_pending 1
+> > [  601.464231] raid10_read_request: r10_bio ff3b41340eb52d00 start
+> > [  601.481634] try_raise_barrier: nr_pending 1
+> > [  601.486439] allow_barrier: nr_pending: 0
+> > [  601.486947] wait_barrier: nr_pending: 1
+> > [  601.490841] raid_end_bio_io: r10_bio ff3b41340eb52d00 done
+> > [  601.495112] try_raise_barrier: nr_pending 1
+> > [  601.495116] try_raise_barrier: nr_pending 1
+> > [  601.495122] raid10_read_request: r10_bio ff3b41340eb53900 start
+> > [  601.517260] try_raise_barrier: nr_pending 1
+> > [  601.517346] allow_barrier: nr_pending: 0
+> > [  601.522456] wait_barrier: nr_pending: 1
+> > [  601.526326] raid_end_bio_io: r10_bio ff3b41340eb53900 done
+> > [  601.530603] try_raise_barrier: nr_pending 1
+> > [  601.530608] try_raise_barrier: nr_pending 1
+> > [  601.530612] raid10_write_request: r10_bio ff3b41340eb52d00 start
+> > [  601.552782] try_raise_barrier: nr_pending 1
+>
+> Thanks for the test!
+>
+> Now the problem is clear. r10_bio is generated and never complete, while
+> IO never issued to underlying loop device, and I can reporduce this
+> problem as well now.
+>
+> The blamed commit from git bisect is correct, and there are two
+> conditions for this problem:
+>
+> 1) plug is not used for caller;
+> 2) for raid1/raid10, bio plug is enabled;
+>
+> __submit_bio_noacct
+>   current->bio_list =3D ...;
+>   blk_start_plug
+>
+>    dm_submit_bio
+>     md_handle_request
+>      raid10_write_request
+>       -> generate new bio for underlying disks
+>       raid1_add_bio_to_plug -> bio added to plug
+>
+>   blk_finish_plug
+>    raid10_unplug
+>     raid1_submit_write
+>      submit_bio_noacct
+>       if (current->bio_list)
+>        -> bio_list is not empty
+>        bio_list_add(&current->bio_list[0], bio)
+>
+>   current->bio_list =3D NULL
+>   -> the bio is in bio_list, and it's dropped.
+>
+> Can you give the following patch a test? It should be a final test...
 
-On 20/05/24 05:00PM, Damien Le Moal wrote:
->On 2024/05/20 12:20, Nitesh Shetty wrote:
->> We add two new opcode REQ_OP_COPY_DST, REQ_OP_COPY_SRC.
->> Since copy is a composite operation involving src and dst sectors/lba,
->> each needs to be represented by a separate bio to make it compatible
->> with device mapper.
->
->Why ? The beginning of the sentence isn't justification enough for the two new
->operation codes ? The 2 sentences should be reversed for easier reading:
->justification first naturally leads to the reader understanding why the codes
->are needed.
->
->Also: s/opcode/operations
->
->
-Acked
+Hi=EF=BC=8CKuai
 
->> We expect caller to take a plug and send bio with destination information,
->> followed by bio with source information.
->
->expect ? Plugging is optional. Does copy offload require it ? Please clarify this.
->
-"caller" here refers to blkdev_copy_offload. The caller of blkdev_copy_offload
-does not need to take the plug. We should have made this clear.
-Sorry for the confusion, will update the description to reflect the same
-in next version.
+yeah, I would like to testing the fix patch=EF=BC=8Cbut I hit the patching
+issue with new patch=EF=BC=9A
+```
+patching file block/blk-core.c
+patch: **** malformed patch at line 6: blk_check_zone_append(struct
+request_queue *q,
+```
+I don=E2=80=99t know if it is caused by a format error.
+please add the patch as an attachment, just like the debuginfo patch
+you gave me this morning.
 
->> Once the dst bio arrives we form a request and wait for source
->
->arrives ? You mean "is submitted" ?
->
->s/and wait for/and wait for the
->
->> bio. Upon arrival of source bio we merge these two bio's and send
->
->s/arrival/submission ?
->
->s/of/of the
->s/bio's/BIOs
->s/and send/and send the
->s/down to/down to the
->
-acked for above.
-
->> corresponding request down to device driver.
->> Merging non copy offload bio is avoided by checking for copy specific
->> opcodes in merge function.
->
->Super unclear... What are you trying to say here ? That merging copy offload
->BIOs with other BIOs is not allowed ? That is already handled. Only BIOs &
->requests with the same operation can be merged. The code below also suggests
->that you allow merging copy offloads... So I really do not understand this.
->
-You are right, only BIOs & requests with same operation can be merged.
-We are not merging copy offloads. We are only merging src and dst BIO to
-form a copy offload request.
-We will remove this in next version.
-
->> diff --git a/block/blk-merge.c b/block/blk-merge.c
->> index 8534c35e0497..f8dc48a03379 100644
->> --- a/block/blk-merge.c
->> +++ b/block/blk-merge.c
->> @@ -154,6 +154,20 @@ static struct bio *bio_split_write_zeroes(struct bio *bio,
->>  	return bio_split(bio, lim->max_write_zeroes_sectors, GFP_NOIO, bs);
->>  }
->>
->> +static struct bio *bio_split_copy(struct bio *bio,
->> +				  const struct queue_limits *lim,
->> +				  unsigned int *nsegs)
->> +{
->> +	*nsegs = 1;
->> +	if (bio_sectors(bio) <= lim->max_copy_sectors)
->> +		return NULL;
->> +	/*
->> +	 * We don't support splitting for a copy bio. End it with EIO if
->> +	 * splitting is required and return an error pointer.
->> +	 */
->> +	return ERR_PTR(-EIO);
->> +}
->
->Hmm... Why not check that the copy request is small enough and will not be split
->when it is submitted ? Something like blk_check_zone_append() does with
->REQ_OP_ZONE_APPEND ? So adding a blk_check_copy_offload(). That would also
->include the limits check from the previous hunk.
-Yes, that could be one way. But we followed approach similar to discard.
-
->
->> +
->>  /*
->>   * Return the maximum number of sectors from the start of a bio that may be
->>   * submitted as a single request to a block device. If enough sectors remain,
->> @@ -362,6 +376,12 @@ struct bio *__bio_split_to_limits(struct bio *bio,
->>  	case REQ_OP_WRITE_ZEROES:
->>  		split = bio_split_write_zeroes(bio, lim, nr_segs, bs);
->>  		break;
->> +	case REQ_OP_COPY_SRC:
->> +	case REQ_OP_COPY_DST:
->> +		split = bio_split_copy(bio, lim, nr_segs);
->> +		if (IS_ERR(split))
->> +			return NULL;
->> +		break;
->
->See above.
->
->>  	default:
->>  		split = bio_split_rw(bio, lim, nr_segs, bs,
->>  				get_max_io_size(bio, lim) << SECTOR_SHIFT);
->> @@ -925,6 +945,9 @@ bool blk_rq_merge_ok(struct request *rq, struct bio *bio)
->>  	if (!rq_mergeable(rq) || !bio_mergeable(bio))
->>  		return false;
->>
->> +	if (blk_copy_offload_mergable(rq, bio))
->> +		return true;
->> +
->>  	if (req_op(rq) != bio_op(bio))
->>  		return false;
->>
->> @@ -958,6 +981,8 @@ enum elv_merge blk_try_merge(struct request *rq, struct bio *bio)
->>  {
->>  	if (blk_discard_mergable(rq))
->>  		return ELEVATOR_DISCARD_MERGE;
->> +	else if (blk_copy_offload_mergable(rq, bio))
->> +		return ELEVATOR_COPY_OFFLOAD_MERGE;
->>  	else if (blk_rq_pos(rq) + blk_rq_sectors(rq) == bio->bi_iter.bi_sector)
->>  		return ELEVATOR_BACK_MERGE;
->>  	else if (blk_rq_pos(rq) - bio_sectors(bio) == bio->bi_iter.bi_sector)
->> @@ -1065,6 +1090,20 @@ static enum bio_merge_status bio_attempt_discard_merge(struct request_queue *q,
->>  	return BIO_MERGE_FAILED;
->>  }
->>
->> +static enum bio_merge_status bio_attempt_copy_offload_merge(struct request *req,
->> +							    struct bio *bio)
->> +{
->> +	if (req->__data_len != bio->bi_iter.bi_size)
->> +		return BIO_MERGE_FAILED;
->> +
->> +	req->biotail->bi_next = bio;
->> +	req->biotail = bio;
->> +	req->nr_phys_segments++;
->> +	req->__data_len += bio->bi_iter.bi_size;
->
->Arg... You seem to be assuming that the source BIO always comes right after the
->destination request... What if copy offloads are being concurrently issued ?
->Shouldn't you check somehow that the pair is a match ? Or are you relying on the
->per-context plugging which prevents that from happening in the first place ? But
->that would assumes that you never ever sleep trying to allocate the source BIO
->after the destination BIO/request are prepared and plugged.
->
-Yes, we are rely on per-context plugging for copy to work.
-Incase for any reason we are not able to merge src and dst BIOs, and the
-request reaches driver layer with only one of the src or dst BIO,
-we fail this request in driver layer.
-This approach simplifies the overall copy plumbing.
-
->> +
->> +	return BIO_MERGE_OK;
->> +}
->> +
->>  static enum bio_merge_status blk_attempt_bio_merge(struct request_queue *q,
->>  						   struct request *rq,
->>  						   struct bio *bio,
->> @@ -1085,6 +1124,8 @@ static enum bio_merge_status blk_attempt_bio_merge(struct request_queue *q,
->>  		break;
->>  	case ELEVATOR_DISCARD_MERGE:
->>  		return bio_attempt_discard_merge(q, rq, bio);
->> +	case ELEVATOR_COPY_OFFLOAD_MERGE:
->> +		return bio_attempt_copy_offload_merge(rq, bio);
->>  	default:
->>  		return BIO_MERGE_NONE;
->>  	}
->> diff --git a/block/blk.h b/block/blk.h
->> index 189bc25beb50..6528a2779b84 100644
->> --- a/block/blk.h
->> +++ b/block/blk.h
->> @@ -174,6 +174,20 @@ static inline bool blk_discard_mergable(struct request *req)
->>  	return false;
->>  }
->>
->> +/*
->> + * Copy offload sends a pair of bio with REQ_OP_COPY_DST and REQ_OP_COPY_SRC
->> + * operation by taking a plug.
->> + * Initially DST bio is sent which forms a request and
->> + * waits for SRC bio to arrive. Once SRC bio arrives
->> + * we merge it and send request down to driver.
->> + */
->> +static inline bool blk_copy_offload_mergable(struct request *req,
->> +					     struct bio *bio)
->> +{
->> +	return (req_op(req) == REQ_OP_COPY_DST &&
->> +		bio_op(bio) == REQ_OP_COPY_SRC);
->> +}
->
->This function is really not needed at all (used in one place only).
->
-This is used at two places and we felt this provides better readability,
-similar to discard.
-
->> +
->>  static inline unsigned int blk_rq_get_max_segments(struct request *rq)
->>  {
->>  	if (req_op(rq) == REQ_OP_DISCARD)
->> @@ -323,6 +337,8 @@ static inline bool bio_may_exceed_limits(struct bio *bio,
->>  	case REQ_OP_DISCARD:
->>  	case REQ_OP_SECURE_ERASE:
->>  	case REQ_OP_WRITE_ZEROES:
->> +	case REQ_OP_COPY_SRC:
->> +	case REQ_OP_COPY_DST:
->>  		return true; /* non-trivial splitting decisions */
->
->See above. Limits should be checked on submission.
->
->>  	default:
->>  		break;
->> diff --git a/block/elevator.h b/block/elevator.h
->> index e9a050a96e53..c7a45c1f4156 100644
->> --- a/block/elevator.h
->> +++ b/block/elevator.h
->> @@ -18,6 +18,7 @@ enum elv_merge {
->>  	ELEVATOR_FRONT_MERGE	= 1,
->>  	ELEVATOR_BACK_MERGE	= 2,
->>  	ELEVATOR_DISCARD_MERGE	= 3,
->> +	ELEVATOR_COPY_OFFLOAD_MERGE	= 4,
->>  };
->>
->>  struct blk_mq_alloc_data;
->> diff --git a/include/linux/bio.h b/include/linux/bio.h
->> index d5379548d684..528ef22dd65b 100644
->> --- a/include/linux/bio.h
->> +++ b/include/linux/bio.h
->> @@ -53,11 +53,7 @@ static inline unsigned int bio_max_segs(unsigned int nr_segs)
->>   */
->>  static inline bool bio_has_data(struct bio *bio)
->>  {
->> -	if (bio &&
->> -	    bio->bi_iter.bi_size &&
->> -	    bio_op(bio) != REQ_OP_DISCARD &&
->> -	    bio_op(bio) != REQ_OP_SECURE_ERASE &&
->> -	    bio_op(bio) != REQ_OP_WRITE_ZEROES)
->> +	if (bio && (bio_op(bio) == REQ_OP_READ || bio_op(bio) == REQ_OP_WRITE))
->>  		return true;
->
->This change seems completely broken and out of place. This would cause a return
->of false for zone append operations.
->
-We changed this based on previous review comments[1].
-Idea is to replace this with a positive check.
-But we did miss adding ZONE_APPEND in this.
-We will add ZONE_APPEND check in next version.
-
-[1] https://lore.kernel.org/linux-block/20230720074256.GA5042@lst.de/
->>
->>  	return false;
->> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
->> index 781c4500491b..7f692bade271 100644
->> --- a/include/linux/blk_types.h
->> +++ b/include/linux/blk_types.h
->> @@ -342,6 +342,10 @@ enum req_op {
->>  	/* reset all the zone present on the device */
->>  	REQ_OP_ZONE_RESET_ALL	= (__force blk_opf_t)15,
->>
->> +	/* copy offload src and dst operation */
->
->s/src/source
->s/dst/destination
->s/operation/operations
->
-Acked
-
->> +	REQ_OP_COPY_SRC		= (__force blk_opf_t)18,
->> +	REQ_OP_COPY_DST		= (__force blk_opf_t)19,
->> +
->>  	/* Driver private requests */
->>  	REQ_OP_DRV_IN		= (__force blk_opf_t)34,
->>  	REQ_OP_DRV_OUT		= (__force blk_opf_t)35,
->> @@ -430,6 +434,12 @@ static inline bool op_is_write(blk_opf_t op)
->>  	return !!(op & (__force blk_opf_t)1);
->>  }
->>
->> +static inline bool op_is_copy(blk_opf_t op)
->> +{
->> +	return ((op & REQ_OP_MASK) == REQ_OP_COPY_SRC ||
->> +		(op & REQ_OP_MASK) == REQ_OP_COPY_DST);
->> +}
->
->May be use a switch here to avoid the double masking of op ?
->
-Acked
-
-Thank you,
-Nitesh Shetty
-
-------0ARpVfROdpzmGW4Ln12FwIta42jNjH8le_L8dBWq-uMGoSqN=_1575d_
-Content-Type: text/plain; charset="utf-8"
+Thanks=EF=BC=8C
+Changhui
 
 
-------0ARpVfROdpzmGW4Ln12FwIta42jNjH8le_L8dBWq-uMGoSqN=_1575d_--
+>
+> Thanks,
+> Kuai
+>
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index 01186333c88e..1e9208024e47 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -613,9 +613,13 @@ static inline blk_status_t
+> blk_check_zone_append(struct request_queue *q,
+>
+>   static void __submit_bio(struct bio *bio)
+>   {
+> +       struct blk_plug plug;
+> +
+>          if (unlikely(!blk_crypto_bio_prep(&bio)))
+>                  return;
+>
+> +       blk_start_plug(&plug);
+> +
+>          if (!bio->bi_bdev->bd_has_submit_bio) {
+>                  blk_mq_submit_bio(bio);
+>          } else if (likely(bio_queue_enter(bio) =3D=3D 0)) {
+> @@ -624,6 +628,8 @@ static void __submit_bio(struct bio *bio)
+>                  disk->fops->submit_bio(bio);
+>                  blk_queue_exit(disk->queue);
+>          }
+> +
+> +       blk_finish_plug(&plug);
+>   }
+>
+>   /*
+> @@ -648,13 +654,11 @@ static void __submit_bio(struct bio *bio)
+>   static void __submit_bio_noacct(struct bio *bio)
+>   {
+>          struct bio_list bio_list_on_stack[2];
+> -       struct blk_plug plug;
+>
+>          BUG_ON(bio->bi_next);
+>
+>          bio_list_init(&bio_list_on_stack[0]);
+>          current->bio_list =3D bio_list_on_stack;
+> -       blk_start_plug(&plug);
+>
+>          do {
+>                  struct request_queue *q =3D bdev_get_queue(bio->bi_bdev)=
+;
+> @@ -688,23 +692,19 @@ static void __submit_bio_noacct(struct bio *bio)
+>                  bio_list_merge(&bio_list_on_stack[0],
+> &bio_list_on_stack[1]);
+>          } while ((bio =3D bio_list_pop(&bio_list_on_stack[0])));
+>
+> -       blk_finish_plug(&plug);
+>          current->bio_list =3D NULL;
+>   }
+>
+>   static void __submit_bio_noacct_mq(struct bio *bio)
+>   {
+>          struct bio_list bio_list[2] =3D { };
+> -       struct blk_plug plug;
+>
+>          current->bio_list =3D bio_list;
+> -       blk_start_plug(&plug);
+>
+>          do {
+>                  __submit_bio(bio);
+>          } while ((bio =3D bio_list_pop(&bio_list[0])));
+>
+> -       blk_finish_plug(&plug);
+>          current->bio_list =3D NULL;
+>   }
+>
+> > [  737.970751] INFO: task mdX_resync:3115 blocked for more than 122 sec=
+onds.
+> > [  737.978361]       Not tainted 6.9.0+ #1
+> > [  737.982654] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+> > disables this message.
+> > [  737.991398] task:mdX_resync      state:D stack:0     pid:3115
+> > tgid:3115  ppid:2      flags:0x00004000
+> > [  737.991407] Call Trace:
+> > [  737.991410]  <TASK>
+> > [  737.991414]  __schedule+0x222/0x670
+> > [  737.991426]  schedule+0x2c/0xb0
+> > [  737.991434]  raise_barrier+0xca/0x1a0 [raid10]
+> > [  737.991450]  ? __pfx_autoremove_wake_function+0x10/0x10
+> > [  737.991459]  raid10_sync_request+0x2c3/0x19d0 [raid10]
+> > [  737.991472]  ? __switch_to_asm+0x39/0x70
+> > [  737.991478]  ? finish_task_switch.isra.0+0x8e/0x2a0
+> > [  737.991487]  ? __schedule+0x22a/0x670
+> > [  737.991491]  ? prepare_to_wait_event+0x5f/0x190
+> > [  737.991498]  md_do_sync+0x660/0x1040
+> > [  737.991508]  ? __pfx_autoremove_wake_function+0x10/0x10
+> > [  737.991517]  md_thread+0xad/0x160
+> > [  737.991521]  ? __pfx_md_thread+0x10/0x10
+> > [  737.991524]  kthread+0xdc/0x110
+> > [  737.991531]  ? __pfx_kthread+0x10/0x10
+> > [  737.991535]  ret_from_fork+0x2d/0x50
+> > [  737.991544]  ? __pfx_kthread+0x10/0x10
+> > [  737.991547]  ret_from_fork_asm+0x1a/0x30
+> > [  737.991553]  </TASK>
+> > [  860.850998] INFO: task mdX_resync:3115 blocked for more than 245 sec=
+onds.
+> > [  860.858606]       Not tainted 6.9.0+ #1
+> > [  860.862902] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
+> > disables this message.
+> > [  860.871649] task:mdX_resync      state:D stack:0     pid:3115
+> > tgid:3115  ppid:2      flags:0x00004000
+> > [  860.871658] Call Trace:
+> > [  860.871660]  <TASK>
+> > [  860.871664]  __schedule+0x222/0x670
+> > [  860.871674]  schedule+0x2c/0xb0
+> > [  860.871681]  raise_barrier+0xca/0x1a0 [raid10]
+> > [  860.871696]  ? __pfx_autoremove_wake_function+0x10/0x10
+> > [  860.871704]  raid10_sync_request+0x2c3/0x19d0 [raid10]
+> > [  860.871717]  ? __switch_to_asm+0x39/0x70
+> > [  860.871722]  ? finish_task_switch.isra.0+0x8e/0x2a0
+> > [  860.871729]  ? __schedule+0x22a/0x670
+> > [  860.871733]  ? prepare_to_wait_event+0x5f/0x190
+> > [  860.871740]  md_do_sync+0x660/0x1040
+> > [  860.871748]  ? __pfx_autoremove_wake_function+0x10/0x10
+> > [  860.871756]  md_thread+0xad/0x160
+> > [  860.871761]  ? __pfx_md_thread+0x10/0x10
+> > [  860.871765]  kthread+0xdc/0x110
+> > [  860.871770]  ? __pfx_kthread+0x10/0x10
+> > [  860.871774]  ret_from_fork+0x2d/0x50
+> > [  860.871781]  ? __pfx_kthread+0x10/0x10
+> > [  860.871785]  ret_from_fork_asm+0x1a/0x30
+> > [  860.871790]  </TASK>
+> >
+> > Thanks,
+> > Changhui
+> >
+> > .
+> >
+>
+
+
+--=20
+
+Changhui  Zhong
+
+Quality Engineer,Kernel QE
+
+Red Hat
+
+Red Hat Beijing - Raycom
+
