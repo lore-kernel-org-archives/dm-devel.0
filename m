@@ -1,181 +1,130 @@
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com [209.85.222.170])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D40D78C88
-	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 13:08:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.34
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5AE741442E3
+	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 15:29:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716296898; cv=none; b=fvwhgCaEWpmEo5kBVvr9MySg8Y+z+OXXIrX6f65Hj8inmqySyG+xZVhNtyJWfJXF4RBMV1fngOgio8y8N5zxsUxI5R5uN4lo9F3XX2hFQWi0EhOmTV5YOdbO42UVzmN/e7nQeexSusV4LOy7mKJWmmFXnjSQbk/5784E9wm2GVA=
+	t=1716305388; cv=none; b=mYYLvlFCkq0Z3r4vSEnpujvXif9dcWzcVRemBIidR+mjp2rB1Spj4D1n7qo/UqdcZVJQSN+mQjo/d5OrmgHCv+/iO8+dzCcp5IqsRtnv8Q/4r65tU3nzLReGIKSe6eIh6d4KlRdxBWPMKc+IRZK1Deor2wuG8vmHQ518ZPVVDAA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716296898; c=relaxed/simple;
-	bh=w4IzJBQom6e/eg+5ubWFpWqhEhfye03AL1iiFU9y0lM=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:In-Reply-To:
-	 Content-Type:References; b=fCDXVIlARkI97U7MTkHfONFBlv30AFDMcSPt+HX14KSi4OhScjkMkuiwstcFMARjnvSfqFk+DhUOCn0IxwRblU+ywXRmlpmtdcc/ORZyQdqU4BHGrQX5PpXrDZvGi4INcXTif4az5wv5AckPSb7yJVfLIfL0g1Z7ZNAMc+Ln6Hg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=doeRCQVb; arc=none smtp.client-ip=203.254.224.34
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="doeRCQVb"
-Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
-	by mailout4.samsung.com (KnoxPortal) with ESMTP id 20240521130813epoutp04a83fc16be7e56dfc3ea2d03b95bcd490~Rgu6GDlbN2499724997epoutp04V
-	for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 13:08:13 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com 20240521130813epoutp04a83fc16be7e56dfc3ea2d03b95bcd490~Rgu6GDlbN2499724997epoutp04V
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1716296894;
-	bh=CUX2VqrjfI/EEDqyZU4uVkkHPh5azdlSMuCxpIfmh70=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=doeRCQVbnOIa2lzDpkAPTeARfiVfov5TkfHQYT5U8PQlcv79cBywDooEV3FKi7dUr
-	 CKyrhdn7KnfZsgCKbGhDkxkMJaIy1ezXABEkOLqxIC/+HsnCCkY0CFK0fDmvzsFfC/
-	 cL1kkhZt5GrA5PQhw484fri4pwPCf03SGCHiBcgA=
-Received: from epsnrtp4.localdomain (unknown [182.195.42.165]) by
-	epcas5p4.samsung.com (KnoxPortal) with ESMTP id
-	20240521130813epcas5p4f33cd571cfdf2daa8ee1663f270202e2~Rgu5nUAr31546115461epcas5p4o;
-	Tue, 21 May 2024 13:08:13 +0000 (GMT)
-Received: from epsmges5p1new.samsung.com (unknown [182.195.38.178]) by
-	epsnrtp4.localdomain (Postfix) with ESMTP id 4VkF9R4XwQz4x9Pv; Tue, 21 May
-	2024 13:08:11 +0000 (GMT)
-Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
-	epsmges5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	94.0C.09666.BBC9C466; Tue, 21 May 2024 22:08:11 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
-	epcas5p4.samsung.com (KnoxPortal) with ESMTPA id
-	20240521113644epcas5p49bfa818b6040f17bad23f24e303ad269~RffB5Asan0500905009epcas5p4Q;
-	Tue, 21 May 2024 11:36:44 +0000 (GMT)
-Received: from epsmgms1p2new.samsung.com (unknown [182.195.42.42]) by
-	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20240521113644epsmtrp264154696bb143f8efc50b183487f8be0~RffB3y50X0882408824epsmtrp20;
-	Tue, 21 May 2024 11:36:44 +0000 (GMT)
-X-AuditID: b6c32a49-f53fa700000025c2-46-664c9cbb21d8
-Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
-	epsmgms1p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	66.AF.08390.C478C466; Tue, 21 May 2024 20:36:44 +0900 (KST)
-Received: from green245 (unknown [107.99.41.245]) by epsmtip2.samsung.com
-	(KnoxPortal) with ESMTPA id
-	20240521113640epsmtip2581da03f3a550f38dd151415706754e9~Rfe_OwQgG1086110861epsmtip2B;
-	Tue, 21 May 2024 11:36:40 +0000 (GMT)
-Date: Tue, 21 May 2024 16:59:42 +0530
-From: Nitesh Shetty <nj.shetty@samsung.com>
-To: Hannes Reinecke <hare@suse.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
-	Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
-	<mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, Christoph Hellwig
-	<hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni
-	<kch@nvidia.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian
-	Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
-	martin.petersen@oracle.com, bvanassche@acm.org, david@fromorbit.com,
-	damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com, joshi.k@samsung.com,
-	nitheshshetty@gmail.com, gost.dev@samsung.com, Vincent Fu
-	<vincent.fu@samsung.com>, linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-fsdevel@vger.kernel.org
-Subject: Re: [PATCH v20 04/12] block: add emulation for copy
-Message-ID: <20240521112942.f23aael3qehi4gww@green245>
+	s=arc-20240116; t=1716305388; c=relaxed/simple;
+	bh=UvH4ktnL1tc7jDTG/u5fqTldApC2eZfE4ZdoJUo2544=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=k5KU+pOu5PKejT6AnZ+szpbqhPHTONj/KW/mElbU6bUHBbP+d1hohq5XjmngUn1pI7GxIPVIPVP2/pdJ+b0w2zVaQbqyvE8GYmc8ymyDmL62t+G0BF2d9sX1t30oofcM9fw667+6sqnaJg3pJiLwDLqfhERFD0oHuFdDJIwwNDU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.222.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
+Received: by mail-qk1-f170.google.com with SMTP id af79cd13be357-79305314956so20975485a.3
+        for <dm-devel@lists.linux.dev>; Tue, 21 May 2024 08:29:46 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716305385; x=1716910185;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=3+XPV7zuv4ms1R7vIYpXPZzY3GXErYi4LFqsxLAG47I=;
+        b=TkX44yAOp3rx5oeI7Bib6SI4Jp3tjvbn8gG5orUKBSc59xd9eA9dFPXVo6A2xuUI1e
+         wtlNIEHDaOjop+kOuT1TjJONHWDn2tKecaNtrrhhdhPWXQDX6esNMAsIBzfjwtG0utJl
+         LdZ+qjaTH/Z9mBByfjMoPjuVWEMbNWhh7Pam9+m8HvZcOOlMaDI4cFoJ/ClBpbHYJsaD
+         NjS8KNYpVozORCKlccNbnt0GNrJtzvc4A7MjycCOY017U3MaI4qDei0f/tdst6SHfKwn
+         0LXMWWW6VUF/71td1vzHt43ltKG+zwwVgU0T3ryydb2neXUGAVCchPr1AS6F8Osjy8S6
+         lrAQ==
+X-Gm-Message-State: AOJu0YzKXHp1j3kSL3ga03dW25ZLUJi39+86hHSpoec62izERsksb7rU
+	UPsRKoLFsRdfC1NeDzLO+aXTGc+C6k+qQrGEFUCadv3x2uJQ0MKYoZXv3Rs1ScI=
+X-Google-Smtp-Source: AGHT+IF8uzIllLEK1FILZCyeg/sSMiPh8GED2VV5AYcL1qdc3iolbJlLULo4eghby1CQfxaYqUkGog==
+X-Received: by 2002:a05:620a:244a:b0:790:797d:2c4a with SMTP id af79cd13be357-792c75763e2mr3967911485a.14.1716305385299;
+        Tue, 21 May 2024 08:29:45 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-792bf2fc789sm1291554285a.93.2024.05.21.08.29.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 21 May 2024 08:29:44 -0700 (PDT)
+Date: Tue, 21 May 2024 11:29:43 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>
+Cc: dm-devel@lists.linux.dev, fstests@vger.kernel.org,
+	linux-ext4@vger.kernel.org, regressions@lists.linux.dev,
+	linux-block@vger.kernel.org
+Subject: Re: dm: use queue_limits_set
+Message-ID: <Zky951XVqcqI48P3@kernel.org>
+References: <ZkmIpCRaZE0237OH@kernel.org>
+ <ZkmRKPfPeX3c138f@kernel.org>
+ <20240520150653.GA32461@lst.de>
+ <ZktuojMrQWH9MQJO@kernel.org>
+ <20240520154425.GB1104@lst.de>
+ <ZktyTYKySaauFcQT@kernel.org>
+ <ZkuFuqo3dNw8bOA2@kernel.org>
+ <20240520201237.GA6235@lst.de>
+ <ZkvIn73jAqz94LjI@kernel.org>
+ <ZkvuqNXaNOMe6Gfj@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <cf6929e1-0dea-4216-bbc5-c00d963372f7@suse.de>
-User-Agent: NeoMutt/20171215
-X-Brightmail-Tracker: H4sIAAAAAAAAA01TezBcZxT33bvuLtOVazE+guimnUTEYxO2n9SjUya9Bo2ZzLQNTXWH6zHW
-	7nbXIzE19ah6ZKzH5mUjraiWoMQjSjyarghWlVRIV0oy8RhliEeSFrWptWTy3+/8vt/vnPOd
-	M4eFc5qZ1qwYUTwtFQmEXMKY0dzl4ODUVhIY6VqwZIvq1HdxlF6wiaPq8XwCzXetAHRxaQ1H
-	U7ezANoYGMRR090JgErLrjKQ5nYrhtrLijB0vbobQ1cuZWCo++UCgYpUowBNjygx1DHmiK59
-	U85A7R19DDR8q4RA3/04zUQVPVoMFWaPYKhlKg2g2vmnDNQ7thdNnssGaHCzx/A9G2r4fgCl
-	LoNUq3KcSQ1O1DOo4YEEqqEqh6Aay7+iZhuLAdWmSSWo7+UKQyovY5GgWjMfGVLL02MM6mnn
-	CEHJm6oA9VvpHWawWUisZzQtiKCl9rQoXBwRI4ry4gacDPMNc+e78px4Hugdrr1IEEd7cf0C
-	g52Oxwi3JsS1TxQIE7aoYIFMxnXx9pSKE+Jp+2ixLN6LS0sihBI3ibNMECdLEEU5i+j4YzxX
-	1yPuW8LPY6OfKRS4ZIU8s/ZMwUgFV0xygRELkm7wz5liIhcYszhkG4DrqfWYPlgB8OHQBtCp
-	OOQLAFtnXznU5y7uiDoAfNQ4sBPMAPjTrAbTqRjk2zC3P5uZC1gsgnSE/S9ZOtqc5MLlLBVT
-	p8fJ3wmoqWjarmBGekJtxZNtzCb5UK44z9RjU9hXPMXQ5TEi34XDqx/qaAvSBl7+4TmuywPJ
-	CSNYsdBJ6Lvzg/eqd7EZnOtpYuqxNVxd7Njhk+D185WE3vw1gMoHSqB/8IGZ6nxch3EyGs6u
-	lOJ63hZeUNdiet4E5m1MYXqeDVu+3cX7YU1d6U4BKzj6TxqhaxqSFCysCdUPaBHA2aJsZgHY
-	p3ztb8rXyunxMZizlG6o3LLj5F5YoWXpoQOsu+VSCgyrgBUtkcVF0TJ3CU9EJ71aeLg4rgFs
-	H9Ah/xYw/njJWQUwFlAByMK55uyGJv9IDjtCcDaZlorDpAlCWqYC7lu7KsStLcLFWxcoig/j
-	uXm4uvH5fDePo3we15I9n3k1gkNGCeLpWJqW0NJdH8Yysk7FYo7u37zz5OSnv9jUlsRqQrRx
-	gkitKvig7VJe/yXtvsS1DxbfsGIP7UkKlf83Y/AgJsgxXzqigZV2g6PPB1bvvdnnNff3xycs
-	T7mY/So+m2LCyfGWj5oW35BXlR/2+cLloLzd0umvwMqaM1KxhVGEMcuA/yWOi5M37dZH/MW8
-	zy505uKJ5ZM32el7hKcOzI5HfTLeHNrX2UPdNAsJTgujsxcyFadfaPqvLXdYdJ1Qd8OaoAPF
-	FaNqXpbv4Q1nk8eqI3O8P9LzMjhFgpSw6p/HeydTmEGJ7cLkaFdT7Ud19x8OuXfHWq//62Pg
-	m1Ps5w3fUklu9HofL7ftqw+wu/y++emBIi5DFi3gHcKlMsH/dMWR5MkEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrOIsWRmVeSWpSXmKPExsWy7bCSvK5Pu0+awYxf6hbrTx1jtmia8JfZ
-	YvXdfjaL14c/MVpM+/CT2eLJgXZGi99nzzNbbDl2j9FiwaK5LBY3D+xkstizaBKTxcrVR5ks
-	Zk9vZrI4+v8tm8WkQ9cYLZ5encVksfeWtsXCtiUsFnv2nmSxuLxrDpvF/GVP2S2WH//HZDGx
-	4yqTxY4njYwW616/Z7E4cUva4nF3B6PF+b/HWR1kPC5f8fY4tUjCY+esu+we5+9tZPG4fLbU
-	Y9OqTjaPzUvqPV5snsnosftmA5vH4r7JrB69ze/YPHa23mf1+Pj0FovH+31X2Tz6tqxi9Diz
-	4Ah7gHAUl01Kak5mWWqRvl0CV8aUxq/sBUv4Kg5tKG9gfM7dxcjJISFgInGqexpTFyMXh5DA
-	bkaJVVc/sEAkJCWW/T3CDGELS6z895wdougJo8T0V2vYQRIsAqoSXac7gGwODjYBbYnT/zlA
-	wiICShIf2w+B1TMLXGKTWL5wN9ggYQEbiX/LHzGC2LwCZhJ9k6dADX3HKNF8ZjsrREJQ4uTM
-	J2BXMAMVzdv8kBlkAbOAtMTyfxwgJqeAtcTlz34gFaICMhIzln5lnsAoOAtJ8ywkzbMQmhcw
-	Mq9ilEwtKM5Nzy02LDDKSy3XK07MLS7NS9dLzs/dxAhOG1paOxj3rPqgd4iRiYPxEKMEB7OS
-	CO+mLZ5pQrwpiZVVqUX58UWlOanFhxilOViUxHm/ve5NERJITyxJzU5NLUgtgskycXBKNTCV
-	+51k8X2sq169+fjktuiPcRIfOu96K9Qejnr0yG+ZI9/N1MgDEtcXXXApTZmxs+7TV36RzyGz
-	Q0L+BE+I/NIzaa6Au3GGSNTich6Lg1Pedl5dJTx9p8yLXD33niC5Dz+Tsy1DytvK9bpsdr/f
-	0KClNanQNMt6f47bn9kb9TyFJogU+M0q+DCl8cH5w20vWVMjUzTXr616qFPZ3+8YZF6p+NKW
-	v2HeZv5lxVOYGZSdfWsfB1Uanjy29ULul2fzIysFE0x4mNbN2lbTXfLBefHz2Yf1A4Qfzw7c
-	1bR8aVWJTVv20/Ul8mkLb8S9mPmHjXP6J042xrozYXv/X8zSjHtX4PxEdpml8lwt39+H05VY
-	ijMSDbWYi4oTAVGa+qWKAwAA
-X-CMS-MailID: 20240521113644epcas5p49bfa818b6040f17bad23f24e303ad269
-X-Msg-Generator: CA
-Content-Type: multipart/mixed;
-	boundary="----atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_159f3_"
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20240520102906epcas5p15b5a0b3c8edd0bf3073030a792a328bb
-References: <20240520102033.9361-1-nj.shetty@samsung.com>
-	<CGME20240520102906epcas5p15b5a0b3c8edd0bf3073030a792a328bb@epcas5p1.samsung.com>
-	<20240520102033.9361-5-nj.shetty@samsung.com>
-	<cf6929e1-0dea-4216-bbc5-c00d963372f7@suse.de>
-
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_159f3_
-Content-Type: text/plain; charset="utf-8"; format="flowed"
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <ZkvuqNXaNOMe6Gfj@kernel.org>
 
-On 21/05/24 09:06AM, Hannes Reinecke wrote:
->On 5/20/24 12:20, Nitesh Shetty wrote:
->>For the devices which does not support copy, copy emulation is added.
->>It is required for in-kernel users like fabrics, where file descriptor is
->>not available and hence they can't use copy_file_range.
->>Copy-emulation is implemented by reading from source into memory and
->>writing to the corresponding destination.
->>At present in kernel user of emulation is fabrics.
->>
->>Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
->>Signed-off-by: Vincent Fu <vincent.fu@samsung.com>
->>Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
->>---
->>  block/blk-lib.c        | 223 +++++++++++++++++++++++++++++++++++++++++
->>  include/linux/blkdev.h |   4 +
->>  2 files changed, 227 insertions(+)
->>
->Again, I'm not sure if we need this.
->After all, copy offload _is_optional, so we need to be prepared to 
->handle systems where it's not supported. In the end, the caller might
->decide to do something else entirely; having an in-kernel emulation 
->would defeat that.
->And with adding an emulation to nullblk we already have an emulation
->target to try if people will want to start experimenting.
->So I'd rather not have this but rather let the caller deal with the
->fact that copy offload is optional.
->
-Unlike previous iteration, blkdev_copy_offload doesn't fallback to emulation
-incase offload fails.
-This is one more option caller/user can leverage, if for some reason
-device copy offload is not supported/optimal.
-It is upto to the caller to decide, if it wants to use copy emulation.
-Moreover we found this is very useful for fabrics scenario, where this saves
-the network bandwidth, by sending offload over the network rather than
-read+write(when target doesn't support offload).
+On Mon, May 20, 2024 at 08:45:28PM -0400, Mike Snitzer wrote:
+> On Mon, May 20, 2024 at 06:03:11PM -0400, Mike Snitzer wrote:
+> > On Mon, May 20, 2024 at 10:12:37PM +0200, Christoph Hellwig wrote:
+> > > On Mon, May 20, 2024 at 01:17:46PM -0400, Mike Snitzer wrote:
+> > > > Doubt there was anything in fstests setting max discard user limit
+> > > > (max_user_discard_sectors) in Ted's case. blk_set_stacking_limits()
+> > > > sets max_user_discard_sectors to UINT_MAX, so given the use of
+> > > > min(lim->max_hw_discard_sectors, lim->max_user_discard_sectors) I
+> > > > suspect blk_stack_limits() stacks up max_discard_sectors to match the
+> > > > underlying storage's max_hw_discard_sectors.
+> > > > 
+> > > > And max_hw_discard_sectors exceeds BIO_PRISON_MAX_RANGE, resulting in
+> > > > dm_cell_key_has_valid_range() triggering on:
+> > > > WARN_ON_ONCE(key->block_end - key->block_begin > BIO_PRISON_MAX_RANGE)
+> > > 
+> > > Oh, that makes more sense.
+> > > 
+> > > I think you just want to set the max_hw_discard_sectors limit before
+> > > stacking in the lower device limits so that they can only lower it.
+> > > 
+> > > (and in the long run we should just stop stacking the limits except
+> > > for request based dm which really needs it)
+> > 
+> > This is what I staged, I cannot send a patch out right now.. 
+> > 
+> > Ted if you need the patch in email (rather than from linux-dm.git) I
+> > can send it later tonight.  Please see:
+> > 
+> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.10&id=825d8bbd2f32cb229c3b6653bd454832c3c20acb
+> 
+> From: Mike Snitzer <snitzer@kernel.org>
+> Date: Mon, 20 May 2024 13:34:06 -0400
+> Subject: [PATCH] dm: always manage discard support in terms of max_hw_discard_sectors
+> 
+> Commit 4f563a64732d ("block: add a max_user_discard_sectors queue
+> limit") changed block core to set max_discard_sectors to:
+>  min(lim->max_hw_discard_sectors, lim->max_user_discard_sectors)
+> 
+> Since commit 1c0e720228ad ("dm: use queue_limits_set") it was reported
+> dm-thinp was failing in a few fstests (generic/347 and generic/405)
+> with the first WARN_ON_ONCE in dm_cell_key_has_valid_range() being
+> reported, e.g.:
+> WARNING: CPU: 1 PID: 30 at drivers/md/dm-bio-prison-v1.c:128 dm_cell_key_has_valid_range+0x3d/0x50
+> 
+> blk_set_stacking_limits() sets max_user_discard_sectors to UINT_MAX,
+> so given how block core now sets max_discard_sectors (detailed above)
+> it follows that blk_stack_limits() stacks up the underlying device's
+> max_hw_discard_sectors and max_discard_sectors is set to match it. If
+> max_hw_discard_sectors exceeds dm's BIO_PRISON_MAX_RANGE, then
+> dm_cell_key_has_valid_range() will trigger the warning with:
+> WARN_ON_ONCE(key->block_end - key->block_begin > BIO_PRISON_MAX_RANGE)
+> 
+> Aside from this warning, the discard will fail.  Fix this and other DM
+> issues by governing discard support in terms of max_hw_discard_sectors
+> instead of max_discard_sectors.
+> 
+> Reported-by: Theodore Ts'o <tytso@mit.edu>
+> Fixes: 1c0e720228ad ("dm: use queue_limits_set")
+> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 
-Thank you
-Nitesh Shetty
-
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_159f3_
-Content-Type: text/plain; charset="utf-8"
-
-
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_159f3_--
+With this patch applied, I verified xfstests generic/347 and
+generic/405 no longer trigger the dm_cell_key_has_valid_range
+WARN_ON_ONCE.  I'm sending the fix to Linus now.
