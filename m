@@ -1,63 +1,154 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C3D2149C5D;
-	Tue, 21 May 2024 18:53:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 90CBD2AE6C;
+	Tue, 21 May 2024 21:42:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716317599; cv=none; b=mkXsN/G/s0NhPWt5tiGF7BIcxGSP4K7tNjlcrDsWhOjCATAABZxtrRmlknXOLOfm7MegNzkciU70ZwuR+NH1rb5xuWCrtNAzggp/zYAzlWk7ZVGB8PTKB4kov/fOMpr3FlcRdWHPKL3gTWioZygVzu2nHjZdSE4s6NEh0mtsfJ4=
+	t=1716327770; cv=none; b=lAQiKsbORL3csm6lFm/DdOyP+KIONYpWHFrMEethpVR3BDZpH6YJmu1CCUU8LviCs9eK6JfVUZRNhQBU59u6mQV31/vmq8Z3oNlMd38/35IVGT/+X/TA1HJ4DhKYoA1++Zp5U9QaMFKs3m79kzf4aT5VtWC5eDOOjG3O9qgYVRs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716317599; c=relaxed/simple;
-	bh=LjZeBsEO2K0zw2RCYDro1OcIDDZupMG8aj7htvluqHc=;
-	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=PFvnwfYcnWS0x/ayKna8ZEqvZepWDDdmQFEwnIjpWYpHchAXe7LFg/mlpuDJOegWZri99lhT185Hz96bV8TjIn92c6YhkwljfGAbQuXM31+qQv2h+1D+qw2pY2gxtoPhJGOXzZeiudMKmZJGfiWI+WmMcAt937tlNlvCz7Fe6Ow=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=a4aTbl2x; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1716327770; c=relaxed/simple;
+	bh=u9OHQk1eGnLPF7q8QnB3x/3atmb+9wZIs5n85uU/v2c=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=d9MM7xsvtqLN903geLKBlL7Ptr5pjIxAR5nNs5wW/QUUAvSHPVLvnMnuIRHV3h4HBOW+cC61ySxfdAHqjSxyfLVdoxR42EHHl8yeQ+JENPKLntuokb/MJKgLGpsIaiLIvg3go5yapjMUkft6Z5IslzH9vmhVAio//1r5b4UsaQY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=pobkyxdG; arc=none smtp.client-ip=13.77.154.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="a4aTbl2x"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 5B854C2BD11;
-	Tue, 21 May 2024 18:53:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1716317599;
-	bh=LjZeBsEO2K0zw2RCYDro1OcIDDZupMG8aj7htvluqHc=;
-	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
-	b=a4aTbl2xAzjcjYWacriWh9s+0lQ6vSgrTr+jii92wLcCsdfGbu/APPXHqvN15cIxR
-	 uAo+aYd4w39C+Sxqlh3w/arIaV/4oYTC6ff4KEd3moM3JDtbKKRlB8CgJJOSvqS1FD
-	 v4QsJWcmWTmMBYuehh6TIxKT8xXngs6rSq2sdn+up3vdy6p70xuDs2VbbVyh7KcjIf
-	 G+0CMYSiU0PDt9Hzj/hRo9Ie392rH/589uWnRiuVqEatbg69yFELX4MV9zvYHSi5ex
-	 Nd6sBHRtParM/mHVzOhbJb4FIy8fD3js6TWcRvi42FQ2uVZmS9LnGszKxR9A/QcUdt
-	 8Ryne9anbZPRQ==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 4A965C4936D;
-	Tue, 21 May 2024 18:53:19 +0000 (UTC)
-Subject: Re: [git pull] device mapper fixes for 6.10-rc1
-From: pr-tracker-bot@kernel.org
-In-Reply-To: <ZkzDAsx_7FvmFbSX@kernel.org>
-References: <ZkzDAsx_7FvmFbSX@kernel.org>
-X-PR-Tracked-List-Id: <linux-block.vger.kernel.org>
-X-PR-Tracked-Message-Id: <ZkzDAsx_7FvmFbSX@kernel.org>
-X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.10/dm-fixes
-X-PR-Tracked-Commit-Id: 825d8bbd2f32cb229c3b6653bd454832c3c20acb
-X-PR-Merge-Tree: torvalds/linux.git
-X-PR-Merge-Refname: refs/heads/master
-X-PR-Merge-Commit-Id: 856726396d6548ef21a9b02e5b685ec39e555248
-Message-Id: <171631759929.16717.11074821623831122508.pr-tracker-bot@kernel.org>
-Date: Tue, 21 May 2024 18:53:19 +0000
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@lists.linux.dev, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christoph Hellwig <hch@lst.de>, Theodore Ts'o <tytso@mit.edu>
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="pobkyxdG"
+Received: from [10.137.106.151] (unknown [167.220.2.23])
+	by linux.microsoft.com (Postfix) with ESMTPSA id CCF0E2067900;
+	Tue, 21 May 2024 14:42:47 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com CCF0E2067900
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
+	s=default; t=1716327768;
+	bh=BUSVrQbwhWTK6SmDrPgyWJrCD0hgOdRhFqYqUq240sk=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=pobkyxdGe7YVFwF3dkaJkJgWbG+KavLPiuQF6SQQN1zBASMoAM9wcAdd5EmYZaB/L
+	 61ecccz7Ow8aijjoRWVO+F98iR9BjxIC5czqVksM0Y0rMb0ZRRAKkfCOJ6tvNTRUK0
+	 vikUnzUoW2A/1EOMAGY+LrNlY0+QdhS1KLRy/ENA=
+Message-ID: <3bd4d9a8-58ce-4cb2-a91e-c0d33174d951@linux.microsoft.com>
+Date: Tue, 21 May 2024 14:42:47 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v18 12/21] dm: add finalize hook to target_type
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>, corbet@lwn.net, zohar@linux.ibm.com,
+ jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
+ axboe@kernel.dk, agk@redhat.com, eparis@redhat.com, paul@paul-moore.com,
+ linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
+ linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+ audit@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <1714775551-22384-1-git-send-email-wufan@linux.microsoft.com>
+ <1714775551-22384-13-git-send-email-wufan@linux.microsoft.com>
+ <aa767961-5e3-2ceb-1a1e-ff66a8eed649@redhat.com>
+ <212b02a8-f5f0-4433-a726-1639dda61790@linux.microsoft.com>
+ <bc9aa053-20a6-eaa-cbe4-344f340242b@redhat.com>
+ <234910c1-40c3-4489-94ab-6e9a5f00d93e@linux.microsoft.com>
+ <889a7880-8336-a44a-bea4-a4c81c5e5cce@redhat.com>
+Content-Language: en-CA
+From: Fan Wu <wufan@linux.microsoft.com>
+In-Reply-To: <889a7880-8336-a44a-bea4-a4c81c5e5cce@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-The pull request you sent on Tue, 21 May 2024 11:51:30 -0400:
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.10/dm-fixes
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/856726396d6548ef21a9b02e5b685ec39e555248
+On 5/20/2024 5:31 AM, Mikulas Patocka wrote:
+> 
+> 
+> On Fri, 17 May 2024, Fan Wu wrote:
+> 
+>>> So, it seems that the preresume callback provides the guarantee that you
+>>> looking for.
+>>>
+>>>> -Fan
+>>>
+>>> Mikulas
+>>
+>> Thanks for the info. I have tested and verified that the preresume() hook can
+>> also work for our case.
+>>
+>>  From the source code
+>> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-ioctl.c#n1149,
+>> the whole resume process appears to be:
+>>
+>> 1. Check if there is a new map for the device. If so, attempt to activate the
+>> new map using dm_swap_table() (where the finalize() callback occurs).
+>>
+>> 2. Check if the device is suspended. If so, use dm_resume() (where the
+>> preresume() callback occurs) to resume the device.
+>>
+>> 3. If a new map is activated, use dm_table_destroy() to destroy the old map.
+>>
+>> For our case:
+>>
+>> - Using the finalize() callback, the metadata of the dm-verity target inside
+>> the table is attached to the mapped device every time a new table is
+>> activated.
+>> - Using the preresume() callback, the same metadata is attached every time the
+>> device resumes from suspension.
+>>
+>> If I understand the code correctly, resuming from suspension is a necessary
+>> step for loading a new mapping table. Thus, the preresume() callback covers
+>> all conditions where the finalize() callback would be triggered.
+> 
+> Yes.
+> 
+>> However, the preresume() callback can also be triggered when the device
+>> resumes from suspension without loading a new table, in which case there
+>> is no new metadata in the table to attach to the mapped device.
+> 
+> Yes.
+> 
+>> In the scenario where the finalize() callback succeeds but the preresume()
+>> callback fails, it seems the device will remain in a suspended state, the
+>> newly activated table will be kept, and the old table will be destroyed, so it
+>> seems there is no inconsistency using finalize() even preresume() potentially
+>> fails.
+> 
+> What does your security module do when the verification of the dm-verity
+> hash fails? Does it halt the whole system? Does it destroy just the
+> failing dm device? Or does it attempt to recover somehow from this
+> situation?
+>
 
-Thank you!
+I'm not sure which hash verification is being referred to here, but it 
+could be either root hash signature verification or block-level hash 
+verification. Our security module does not intervene in these processes, 
+so the behavior remains as dm-verity currently handles it.
 
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/prtracker.html
+Within the device mapper, our security module uses the device mapper 
+callback to duplicate the root hash of a dm-verity target and record the 
+signature verification state of the dm-verity target, then attach this 
+information to the security field of the block_device structure. This 
+process can only fail if the system is out of memory.
+
+With the root hash and signature verification state attached to the 
+security field of the block device, the security system can access this 
+important metadata to enforce policies. For example, these policies can 
+include only allowing files from a dm-verity volume specified by its 
+root hash to execute or only allowing files from a verified signed 
+dm-verity volume to execute.
+
+>> I believe both the finalize() callback proposed by Mike and the preresume()
+>> callback suggested by Mikulas can work for our case. I am fine with either
+>> approach, but I would like to know which one is preferred by the maintainers
+>> and would appreciate an ACK for the chosen approach.
+>>
+>> -Fan
+> 
+> I would prefer preresume - we shouldn't add new callbacks unless it's
+> necessary.
+> 
+> Mikulas
+>
+
+Thanks for the confirmation. I will switch to use prereume and I will 
+send a new version later this week.
+
+-Fan
