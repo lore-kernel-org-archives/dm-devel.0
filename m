@@ -1,166 +1,254 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E78841A80
-	for <dm-devel@lists.linux.dev>; Wed, 22 May 2024 20:34:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C8E7182DB
+	for <dm-devel@lists.linux.dev>; Wed, 22 May 2024 21:05:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716410051; cv=none; b=D8NNTsJFBslqfaMIGUCy3D6LeE0s63ocsxmFvqVZ/Q7RRznm02mSjHAqMoZjRzJBjYLHZyCAoKVxAzKPbHKfn0tRPC8uL6V2+B4NHjcIGBaKMumdJR4a8ZDZYaOBQnAwygk39OvGatoQzUrk6JrbuMNWaKcE3QuWZk9rkYIPmxA=
+	t=1716411957; cv=none; b=MB0Ymae70u82y40HXlpteEVsQmt2eCBW3EUAybDgesQnvJB0eYCGutdj6jANel7Baq72E/oZl1ZZaHSAVlLP/Q1DcY/cHlr+jWFd2hUCNQxUDgGap59RhKOLuYf4pwf8EnmqHC6T/DZ6+D87mRpMuqo0eqdLH7b+etBP7jx2hBc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716410051; c=relaxed/simple;
-	bh=lw7qxI1EG5k1V/CgFWFkAlmixJPYuYeuePjzKcJEqN8=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=IKl29uDDfO2rRhp9EjCQkXT/ywB5hpe0IN2ZLzlGGteMZ0jOiZIvujloajwrxwnDi811YyVbldPioYv9nYlbMsW9V3g3Gh8ymaYnh8cz4a5d8cUQHEmLgx1FgZyyD9qoGjjeBPeHk+NsNm6rGrMa4rXsu0sI2eLHU4YmrGrtkaU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hlPx46SY; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1716411957; c=relaxed/simple;
+	bh=UuN+TNfyvWOM2QErKz9AgxlRgNIUw9Xz6smYUuJ2Xwg=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=VFVy6BOWzKdw/YUpGC+N8yRTJkaYFUN23HQMl1I/+JgVq7MX9mMM/1nWYqFBeK7szjtRiCW6WmnsspPqZC3pWbmkahVGlL+kbIH1cFEbs3VSeDrB5IM0RAiGcZ+Z25RWZl+piLfvETgHNwslW2I6t8d3p+HKwiZGKhKPgl1+6tE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FHgEbxuE; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hlPx46SY"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FHgEbxuE"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716410047;
+	s=mimecast20190719; t=1716411955;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=ge373HOlN0Aik/3EkLuJhurpwm+4P7IPirL4EqDjrfg=;
-	b=hlPx46SYqPJsZHogMxCQ8sQqxL+S7F0yVnkjqv8LHnDWWWA+eQIQTa8bhsY//QcwKlBfjx
-	Sd+WZoaqnMJIapCm2ZZ3VZquH8/gpv6/1rDPPZWtZxrEJ4bGOtn8PvFlMVWVsWvTK7PpBw
-	0acdrUCP3VsNZvZODz9932Rr5mdA9XY=
-Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com
- [209.85.128.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=fbWdfGX3ZmKUSYN5RjcaKLdCuKumShJmeeAR8Ld2BSY=;
+	b=FHgEbxuESY+Mz7vKFLbj6z+JdBdp7wNx+zIQMYf/MqtxTD1syPitfBGGPYZ6o/MkKnIgwb
+	TaxxQDDgYJoejT0YotngMZX/GwRIr1l8YEP9vf5CjkU8Z3yoqlPH480c0iw04MgniZfgLT
+	yQeYdNlT/OnnU7qFvO4+gPODKSiqjxU=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-609-bOBF-DJLMmujjL-k6x5hCg-1; Wed, 22 May 2024 16:34:06 -0400
-X-MC-Unique: bOBF-DJLMmujjL-k6x5hCg-1
-Received: by mail-yw1-f200.google.com with SMTP id 00721157ae682-627e6fe0303so21748397b3.2
-        for <dm-devel@lists.linux.dev>; Wed, 22 May 2024 13:34:06 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716410045; x=1717014845;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=ge373HOlN0Aik/3EkLuJhurpwm+4P7IPirL4EqDjrfg=;
-        b=ttbyCerLOiUARXF8cH3G0m1sEcc+0iupmQ+VcTpNSlO3YgjcahtgoVdeGBypR/XM7o
-         17gtHcksZMaQrVvUeq4E5V862y18yL+/bt0eDdt7pWo72Mi7TkqWuApVPmP/vxHQWeLd
-         qCGHgTZNkKE5vc978P1dGk4in4qWqJVi5yqwieRzI6+98N7EOk1FyI0fD1m5Okjrr1Ws
-         7w2diLfdO0NuA2yEdOvDAi2xW6uNsmlC79aC9fufT2yjomu93UNbzrL8aRRIpg54V+U4
-         s7Q/F9Y732LuepclRkOt6JO8afUmP7rVmwWiMRUd9LhXaOFdECUzl8RAQWgoz3ODJe3t
-         B2sA==
-X-Gm-Message-State: AOJu0YzMhg3gsKIL1dF+oz5vkLWABIQC3xLTPlcJbzOTiK4kX8vs2kdl
-	BBBhal1F8Q5XtJ882shOJnxY/ftQuu1dovoMqvgnoiHZDcUnV68EWvoemSNSEQuN7/QrjrGIM2S
-	8kvPwQCCdEDj0CjzbcvUQ0dBU2DaU6ukAtyj0JXNu/2xiu6S4wzrVtqlWeFgiBlHx2cNNGVNfor
-	EFPFTByCIsa3F1e01t2x+g2LQLg8OV8UM=
-X-Received: by 2002:a81:92d7:0:b0:618:8a27:6150 with SMTP id 00721157ae682-627e46df567mr31092217b3.24.1716410045490;
-        Wed, 22 May 2024 13:34:05 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEquxDTlRXGGA4s22WX4KXYImQfH+64pcqPMeHwlR2wNKwmu5VhT1cWrWZHjKw90Pdk3ZCZHnvRz+hJXHtXZdo=
-X-Received: by 2002:a81:92d7:0:b0:618:8a27:6150 with SMTP id
- 00721157ae682-627e46df567mr31092057b3.24.1716410045103; Wed, 22 May 2024
- 13:34:05 -0700 (PDT)
+ us-mta-132-42JCeEzPO8mAr3Hb6u2fxg-1; Wed, 22 May 2024 17:05:53 -0400
+X-MC-Unique: 42JCeEzPO8mAr3Hb6u2fxg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 281BE185A780;
+	Wed, 22 May 2024 21:05:53 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 18E46100046D;
+	Wed, 22 May 2024 21:05:53 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 0074B30C1C33; Wed, 22 May 2024 21:05:52 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id EFA3F3FB52;
+	Wed, 22 May 2024 23:05:52 +0200 (CEST)
+Date: Wed, 22 May 2024 23:05:52 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+cc: Benjamin Marzinski <bmarzins@redhat.com>, Yang Yang <yang.yang@vivo.com>, 
+    Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev, 
+    linux-kernel@vger.kernel.org
+Subject: Re: dm: optimize flushes
+In-Reply-To: <Zk4Y6DMgK71UuoKd@kernel.org>
+Message-ID: <9a0db0-4415-2013-6132-f1788b76a4ee@redhat.com>
+References: <20240514090445.2847-1-yang.yang@vivo.com> <20240514090445.2847-4-yang.yang@vivo.com> <ZkTXzG1yrPmW64Z6@redhat.com> <60bd4b9-8edd-7e22-ce8b-e5d0e43da195@redhat.com> <90f4beb-2e15-3f9-4bc2-0d13872e8ea@redhat.com> <Zk4Y6DMgK71UuoKd@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240522025117.75568-1-snitzer@kernel.org>
-In-Reply-To: <20240522025117.75568-1-snitzer@kernel.org>
-From: Ewan Milne <emilne@redhat.com>
-Date: Wed, 22 May 2024 16:33:53 -0400
-Message-ID: <CAGtn9rkcsmOiw0ZLA5DTYbybROMqp0rUTCbh9h0b1r29TB9oDw@mail.gmail.com>
-Subject: Re: [PATCH] dm: retain stacked max_sectors when setting queue_limits
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org, hch@lst.de, 
-	Marco Patalano <mpatalan@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
 
-On Tue, May 21, 2024 at 10:51=E2=80=AFPM Mike Snitzer <snitzer@kernel.org> =
-wrote:
->
-> Otherwise, blk_validate_limits() will throw-away the max_sectors that
-> was stacked from underlying device(s). In doing so it can set a
-> max_sectors limit that violates underlying device limits.
->
-> This caused dm-multipath IO failures like the following because the
-> underlying devices' max_sectors were stacked up to be 1024, yet
-> blk_validate_limits() defaulted max_sectors to BLK_DEF_MAX_SECTORS_CAP
-> (2560):
->
-> [ 1214.673233] blk_insert_cloned_request: over max size limit. (2048 > 10=
-24)
-> [ 1214.673267] device-mapper: multipath: 254:3: Failing path 8:32.
-> [ 1214.675196] blk_insert_cloned_request: over max size limit. (2048 > 10=
-24)
-> [ 1214.675224] device-mapper: multipath: 254:3: Failing path 8:16.
-> [ 1214.675309] blk_insert_cloned_request: over max size limit. (2048 > 10=
-24)
-> [ 1214.675338] device-mapper: multipath: 254:3: Failing path 8:48.
-> [ 1214.675413] blk_insert_cloned_request: over max size limit. (2048 > 10=
-24)
-> [ 1214.675441] device-mapper: multipath: 254:3: Failing path 8:64.
->
-> The initial bug report included:
->
-> [   13.822701] blk_insert_cloned_request: over max size limit. (248 > 128=
-)
-> [   13.829351] device-mapper: multipath: 253:3: Failing path 8:32.
-> [   13.835307] blk_insert_cloned_request: over max size limit. (248 > 128=
-)
-> [   13.841928] device-mapper: multipath: 253:3: Failing path 65:16.
-> [   13.844532] blk_insert_cloned_request: over max size limit. (248 > 128=
-)
-> [   13.854363] blk_insert_cloned_request: over max size limit. (248 > 128=
-)
-> [   13.854580] device-mapper: multipath: 253:4: Failing path 8:48.
-> [   13.861166] device-mapper: multipath: 253:3: Failing path 8:192.
->
-> Reported-by: Marco Patalano <mpatalan@redhat.com>
-> Reported-by: Ewan Milne <emilne@redhat.com>
-> Fixes: 1c0e720228ad ("dm: use queue_limits_set")
-> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-> ---
->  drivers/md/dm-table.c | 8 ++++++++
->  1 file changed, 8 insertions(+)
->
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 88114719fe18..6463b4afeaa4 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -1961,6 +1961,7 @@ int dm_table_set_restrictions(struct dm_table *t, s=
-truct request_queue *q,
->                               struct queue_limits *limits)
->  {
->         bool wc =3D false, fua =3D false;
-> +       unsigned int max_hw_sectors;
->         int r;
->
->         if (dm_table_supports_nowait(t))
-> @@ -1981,9 +1982,16 @@ int dm_table_set_restrictions(struct dm_table *t, =
-struct request_queue *q,
->         if (!dm_table_supports_secure_erase(t))
->                 limits->max_secure_erase_sectors =3D 0;
->
-> +       /* Don't allow queue_limits_set() to throw-away stacked max_secto=
-rs */
-> +       max_hw_sectors =3D limits->max_hw_sectors;
-> +       limits->max_hw_sectors =3D limits->max_sectors;
->         r =3D queue_limits_set(q, limits);
->         if (r)
->                 return r;
-> +       /* Restore stacked max_hw_sectors */
-> +       mutex_lock(&q->limits_lock);
-> +       limits->max_hw_sectors =3D max_hw_sectors;
-> +       mutex_unlock(&q->limits_lock);
->
->         if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) {
->                 wc =3D true;
-> --
-> 2.43.0
->
 
-This fixed the FC DM-MP failures, so:
 
-Tested-by: Marco Patalano <mpatalan@redhat.com>
-Revewied-by: Ewan D. Milne <emilne@redhat.com>
+On Wed, 22 May 2024, Mike Snitzer wrote:
+
+> On Thu, May 16, 2024 at 10:49:55PM +0200, Mikulas Patocka wrote:
+> > Device mapper sends flush bios to all the targets and the targets send it
+> > to the underlying device. That may be inefficient, for example if a table
+> > contains 10 linear targets pointing to the same physical device, then
+> > device mapper would send 10 flush bios to that device - despite the fact
+> > that only one bio would be sufficient.
+> > 
+> > This commit optimizes the flush behavior. It introduces a per-target
+> > variable flush_pass_around - it is set when the target supports flush
+> > optimization - currently, the dm-linear and dm-stripe targets support it.
+> > When all the targets in a table have flush_pass_around, flush_pass_around
+> > on the table is set. __send_empty_flush tests if the table has
+> > flush_pass_around - and if it has, no flush bios are sent to the targets
+> > and the list dm_table->devices is iterated and the flush bios are sent to
+> > each member of the list.
+> 
+> What does "pass around" mean?  Seems like an awkward name for this.
+> (Naming can be hard, I don't have better suggestions at the moment.)
+
+What about "flush_bypass" or "flush_bypasses_map"?
+
+> > Index: linux-2.6/drivers/md/dm-table.c
+> > ===================================================================
+> > --- linux-2.6.orig/drivers/md/dm-table.c	2024-05-15 16:56:49.000000000 +0200
+> > +++ linux-2.6/drivers/md/dm-table.c	2024-05-15 16:56:49.000000000 +0200
+> > @@ -160,6 +160,7 @@ int dm_table_create(struct dm_table **re
+> >  	t->type = DM_TYPE_NONE;
+> >  	t->mode = mode;
+> >  	t->md = md;
+> > +	t->flush_pass_around = 1;
+> >  	*result = t;
+> >  	return 0;
+> >  }
+> 
+> Should be: t->flush_pass_around = true;
+
+Yes.
+
+> > +
+> > +	/*
+> > +	 * Set if the target supports flush optimization
+> > +	 */
+> > +	bool flush_pass_around:1;
+> >  };
+> 
+> How does a developer _know_ if a target can set this flag?  Please
+> elaborate on the requirements in this code comment.
+
+What about:
+
+"The target supports flush optimization. When all the targets in the table 
+support flush optimization, flushes will not use the "map" method and they 
+will be sent directly to all the devices in the table. This optimization 
+reduces the number of flushes that are being sent if multiple targets use 
+the same underlying device."
+
+> >  
+> >  void *dm_per_bio_data(struct bio *bio, size_t data_size);
+> > Index: linux-2.6/drivers/md/dm.c
+> > ===================================================================
+> > --- linux-2.6.orig/drivers/md/dm.c	2024-05-15 16:56:49.000000000 +0200
+> > +++ linux-2.6/drivers/md/dm.c	2024-05-16 20:06:32.000000000 +0200
+> > @@ -645,7 +645,7 @@ static struct bio *alloc_tio(struct clon
+> >  
+> >  	/* Set default bdev, but target must bio_set_dev() before issuing IO */
+> >  	clone->bi_bdev = md->disk->part0;
+> > -	if (unlikely(ti->needs_bio_set_dev))
+> > +	if (likely(ti != NULL) && unlikely(ti->needs_bio_set_dev))
+> >  		bio_set_dev(clone, md->disk->part0);
+> >  
+> >  	if (len) {
+> > @@ -1107,7 +1107,7 @@ static void clone_endio(struct bio *bio)
+> >  	blk_status_t error = bio->bi_status;
+> >  	struct dm_target_io *tio = clone_to_tio(bio);
+> >  	struct dm_target *ti = tio->ti;
+> > -	dm_endio_fn endio = ti->type->end_io;
+> > +	dm_endio_fn endio = likely(ti != NULL) ? ti->type->end_io : NULL;
+> >  	struct dm_io *io = tio->io;
+> >  	struct mapped_device *md = io->md;
+> >  
+> > @@ -1154,7 +1154,7 @@ static void clone_endio(struct bio *bio)
+> >  	}
+> >  
+> >  	if (static_branch_unlikely(&swap_bios_enabled) &&
+> > -	    unlikely(swap_bios_limit(ti, bio)))
+> > +	    likely(ti != NULL) && unlikely(swap_bios_limit(ti, bio)))
+> >  		up(&md->swap_bios_semaphore);
+> >  
+> >  	free_tio(bio);
+> 
+> What is it about this commit that makes it important to verify ti
+> isn't NULL in the above 3 hunks?
+> 
+> Should these NULL checks be factored out as a separate fix?
+> 
+> Or can these hunks be dropped?
+
+They can't be dropped.
+
+When performing the flush bypass optimization, the dm core creates a 
+dm_target_io structure that isn't associated with any specific target. So, 
+the pointer "tio->ti" is NULL.
+
+I could set "tio->ti" to any target, but I think it's better to set it to 
+NULL, just to mark that there is no target association.
+
+> > @@ -1566,17 +1566,36 @@ static void __send_empty_flush(struct cl
+> >  	ci->sector_count = 0;
+> >  	ci->io->tio.clone.bi_iter.bi_size = 0;
+> >  
+> > -	for (unsigned int i = 0; i < t->num_targets; i++) {
+> > -		unsigned int bios;
+> > -		struct dm_target *ti = dm_table_get_target(t, i);
+> > -
+> > -		if (unlikely(ti->num_flush_bios == 0))
+> > -			continue;
+> > -
+> > -		atomic_add(ti->num_flush_bios, &ci->io->io_count);
+> > -		bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
+> > -					     NULL, GFP_NOWAIT);
+> > -		atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
+> > +	if (!t->flush_pass_around) {
+> > +		for (unsigned int i = 0; i < t->num_targets; i++) {
+> > +			unsigned int bios;
+> > +			struct dm_target *ti = dm_table_get_target(t, i);
+> > +
+> > +			if (unlikely(ti->num_flush_bios == 0))
+> > +				continue;
+> > +
+> > +			atomic_add(ti->num_flush_bios, &ci->io->io_count);
+> > +			bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
+> > +						     NULL, GFP_NOWAIT);
+> > +			atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
+> > +		}
+> > +	} else {
+> > +		/*
+> > +		 * Note that there's no need to grab t->devices_lock here
+> > +		 * because the targets that support flush pass-around don't
+> > +		 * modify the list of devices.
+> > +		 */
+> > +		struct list_head *devices = dm_table_get_devices(t);
+> > +		unsigned int len = 0;
+> > +		struct dm_dev_internal *dd;
+> > +		list_for_each_entry(dd, devices, list) {
+> > +			struct bio *clone;
+> > +			clone = alloc_tio(ci, NULL, 0, &len, GFP_NOIO);
+                                              ^^^^
+Here we set tio->ti to NULL.
+
+> > +			atomic_add(1, &ci->io->io_count);
+> > +			bio_set_dev(clone, dd->dm_dev->bdev);
+> > +			clone->bi_end_io = clone_endio;
+> > +			dm_submit_bio_remap(clone, NULL);
+> > +		}
+> >  	}
+> >  
+> >  	/*
+> > 
+> > 
+> 
+> Still missing what "pass-around" is meant to convey given that you
+> aren't passing around the same flush... you're cloning a new flush and
+> issuing one per device.  Probably worth explaining that's what you
+> mean by "flush_pass_around" (both in commit header and elaborate in
+> code)?
+
+I mean that flushes bypass the map method.
+
+> Also, you're issuing a flush to _all_ devices in a table. Not just
+> the data devices.  .iterate_devices returns only the data devices.
+> If/when there is a need to extend this feature to targets that have
+> metadata devices (e.g. dm-thin, cache, etc): would it make sense to
+> filter out non-data devices (by stepping through each target in the
+> table and using iterate_devices)?
+
+This optimization only makes sense if there are multiple targets in the 
+table. dm-thin, dm-cache, dm-raid is usually the only target in the table, 
+so the optimization doesn't make sense for them. Trying to support the 
+"flush bypass" optimization for them would bloat the code without reducing 
+the number of flush requests at all.
+
+> Mike
+
+Mikulas
 
