@@ -1,48 +1,50 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5D8DD17BD9
-	for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 16:53:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DAD113C467
+	for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 16:54:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716483227; cv=none; b=E7cxaBkOAXEXctvSxhFJ/JkaI6Mdk1czDnru+K9XAMOj6hOoxo9Og84KKJtVCeuFDxT90rgDmZRiVoMhSidTWi/JHupdUgYV39uJE087r63J0KV3b9xuvdIoc57frn87R++b193vbCajUi68HVOIZ3mSTKwULaQ1E17rW0ieQFM=
+	t=1716483297; cv=none; b=Vm7YmlT8hhW+nke1/gGJPEXlK+RtBURzDKWB35WQilLxkw/czvquL+UFnSaSKKeCQKJwu4J6dsMuKro1BmxtnvdHbi9nkoM3UsWRZN5E/LjmGddrOrL229mRfC/99TjJXXjq1QQhpgHyegz9cXGaWhjztpt4df11KyYUMTLDo7Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716483227; c=relaxed/simple;
-	bh=FXXc/WPUqVzWvmXyeKoySolFM1EnHkj9Q1p2+dRNWWE=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=QEZcBb8nsiQr/0Uj+qsii/Ekm+guyN4JgdSAhEEe2q/avVvC+YJd2lGuN2N67OYVeVolsOp2Iry8QfrHW9A7HzOgaVdAN341SEUnOjuEISQrRn3k7mEpgREoM9Bj38v3RPg7kB/Xv5YwS5AKRIHoalHH/cUYQ3Uox2h1jz/+03U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=GCs1T1Y+; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1716483297; c=relaxed/simple;
+	bh=FDPMweyJrIo2XlV7st38fC/4nJUh6W1fhDZKjl4Py5A=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=Ff/DH3jJAMaQLdOpZ+ks1JTpElYpbfeDk3L9BEtPDUmilG9Es04dCPHmcGaEbm1VfQ8AXpLDarkx2/S4s2VZ4PiVtCO6F9n3/J/AOn/SWAc2Xb9i9ywgIAXvFR5DHPSFPzzFf6fAJAEv5ii8mjqDWWvwzu52iZppwzXOn6J7B6M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=LkSNRkxo; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GCs1T1Y+"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LkSNRkxo"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716483225;
+	s=mimecast20190719; t=1716483295;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=D/p2RkQytKJi3MuPGrjVqdXhBuYp+ylwZe8ZbpZTahc=;
-	b=GCs1T1Y+je/R5EKuRTu9jvux/cM2MBBhh9eGMhGQ5pw5Q53Gq1yJe/uQ/jq1vhQfb73gPM
-	39+rYChj+HIhN6c5nB4WkuFrLrh0Hr60eEKj7GkKefDw+JbhP01+IxAKpq5d778OvjxulQ
-	ML59DOx0GJbDtZT273YxXSf47hEnjKI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-475-uz8F4asBM92bX_NY5AMwIA-1; Thu, 23 May 2024 12:53:38 -0400
-X-MC-Unique: uz8F4asBM92bX_NY5AMwIA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=iXaZo+W/cx1Ln+efj2mhYyn0/F4SZI+f7sm23Xt9OxU=;
+	b=LkSNRkxoJjZ1dNhIuevV53Lz5CQllb7adnryN7Gt69ZxOkxlaD4+vqRUYkvyo8w2uoAwhR
+	PYBv+rtNMRNn6OGO3Js2kKeQwcv5Fy7NuJmwmH5lXB4pl4eDv4rkwGFxvAS28ynlkkfpO6
+	q4MtkhCS75OPL/8kbG1YYoDjHEvHXWA=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-312-pqYiqwKrO9iKrWN0j5xqLw-1; Thu,
+ 23 May 2024 12:54:47 -0400
+X-MC-Unique: pqYiqwKrO9iKrWN0j5xqLw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 37C66101A52C;
-	Thu, 23 May 2024 16:53:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 53F1B1C0C641;
+	Thu, 23 May 2024 16:54:47 +0000 (UTC)
 Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2168C40C6EB7;
-	Thu, 23 May 2024 16:53:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4BC96200A35C;
+	Thu, 23 May 2024 16:54:47 +0000 (UTC)
 Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 0E31530C1C33; Thu, 23 May 2024 16:53:38 +0000 (UTC)
+	id 4305E30C1C33; Thu, 23 May 2024 16:54:47 +0000 (UTC)
 Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 0D4943FB52;
-	Thu, 23 May 2024 18:53:38 +0200 (CEST)
-Date: Thu, 23 May 2024 18:53:38 +0200 (CEST)
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 4238C3FB52;
+	Thu, 23 May 2024 18:54:47 +0200 (CEST)
+Date: Thu, 23 May 2024 18:54:47 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>, 
     Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, 
@@ -50,8 +52,11 @@ To: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>,
     Anuj gupta <anuj1072538@gmail.com>
 cc: linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
     linux-nvme@lists.infradead.org
-Subject: [PATCH 0/2 v3] dm-crypt support for per-sector NVMe metadata
-Message-ID: <a1d8771a-70ad-9eed-476c-af696d2f9ac2@redhat.com>
+Subject: [PATCH 1/2 v3] block: change rq_integrity_vec to respect the
+ iterator
+In-Reply-To: <a1d8771a-70ad-9eed-476c-af696d2f9ac2@redhat.com>
+Message-ID: <d27da881-e615-b081-d8db-17ac9b91d4be@redhat.com>
+References: <a1d8771a-70ad-9eed-476c-af696d2f9ac2@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -59,28 +64,86 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
 
-Hi
+If we allocate a bio that is larger than NVMe maximum request size, attach
+integrity metadata to it and send it to the NVMe subsystem, the integrity
+metadata will be corrupted.
 
-Here I'm resending the dm-crypt support for per-sector NVMe metadata. I 
-made some changes to the first patch as suggested by Jens Axboe.
+Splitting the bio works correctly. The function bio_split will clone the
+bio, trim the iterator of the first bio and advance the iterator of the
+second bio.
 
-The first patch fixes a bug when splitting a bio with attached metadata.
-The second patch enables dm-crypt to use NVMe metadata for authenticated 
-encryption. dm-crypt can run directly on NVMe without using dm-integrity.
+However, the function rq_integrity_vec has a bug - it returns the first
+vector of the bio's metadata and completely disregards the metadata
+iterator that was advanced when the bio was split. Thus, the second bio
+uses the same metadata as the first bio and this leads to metadata
+corruption.
 
-These patches increase write throughput twice, because there is no write 
-to the dm-integrity journal.
+This commit changes rq_integrity_vec, so that it calls mp_bvec_iter_bvec
+instead of returning the first vector. mp_bvec_iter_bvec reads the
+iterator and advances the vector by the iterator.
 
-An example how to use it (so far, there is no support in the userspace
-cryptsetup tool):
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-# nvme format /dev/nvme1 -n 1 -lbaf=4
-# dmsetup create cr --table '0 1048576 crypt
-capi:authenc(hmac(sha256),cbc(aes))-essiv:sha256
-01b11af6b55f76424fd53fb66667c301466b2eeaf0f39fd36d26e7fc4f52ade2de4228e996f5ae2fe817ce178e77079d28e4baaebffbcd3e16ae4f36ef217298
-0 /dev/nvme1n1 0 2 integrity:32:aead sector_size:4096'
+---
+ drivers/nvme/host/pci.c       |    6 +++---
+ include/linux/blk-integrity.h |   10 ++++++----
+ 2 files changed, 9 insertions(+), 7 deletions(-)
 
-Mikulas
+Index: linux-2.6/drivers/nvme/host/pci.c
+===================================================================
+--- linux-2.6.orig/drivers/nvme/host/pci.c
++++ linux-2.6/drivers/nvme/host/pci.c
+@@ -825,9 +825,9 @@ static blk_status_t nvme_map_metadata(st
+ 		struct nvme_command *cmnd)
+ {
+ 	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
++	struct bio_vec bv = rq_integrity_vec(req);
+ 
+-	iod->meta_dma = dma_map_bvec(dev->dev, rq_integrity_vec(req),
+-			rq_dma_dir(req), 0);
++	iod->meta_dma = dma_map_bvec(dev->dev, &bv, rq_dma_dir(req), 0);
+ 	if (dma_mapping_error(dev->dev, iod->meta_dma))
+ 		return BLK_STS_IOERR;
+ 	cmnd->rw.metadata = cpu_to_le64(iod->meta_dma);
+@@ -966,7 +966,7 @@ static __always_inline void nvme_pci_unm
+ 	        struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
+ 
+ 		dma_unmap_page(dev->dev, iod->meta_dma,
+-			       rq_integrity_vec(req)->bv_len, rq_dma_dir(req));
++			       rq_integrity_vec(req).bv_len, rq_dma_dir(req));
+ 	}
+ 
+ 	if (blk_rq_nr_phys_segments(req))
+Index: linux-2.6/include/linux/blk-integrity.h
+===================================================================
+--- linux-2.6.orig/include/linux/blk-integrity.h
++++ linux-2.6/include/linux/blk-integrity.h
+@@ -109,11 +109,12 @@ static inline bool blk_integrity_rq(stru
+  * Return the first bvec that contains integrity data.  Only drivers that are
+  * limited to a single integrity segment should use this helper.
+  */
+-static inline struct bio_vec *rq_integrity_vec(struct request *rq)
++static inline struct bio_vec rq_integrity_vec(struct request *rq)
+ {
+ 	if (WARN_ON_ONCE(queue_max_integrity_segments(rq->q) > 1))
+-		return NULL;
+-	return rq->bio->bi_integrity->bip_vec;
++		return (struct bio_vec){ };
++	return mp_bvec_iter_bvec(rq->bio->bi_integrity->bip_vec,
++				 rq->bio->bi_integrity->bip_iter);
+ }
+ #else /* CONFIG_BLK_DEV_INTEGRITY */
+ static inline int blk_rq_count_integrity_sg(struct request_queue *q,
+@@ -179,7 +180,8 @@ static inline int blk_integrity_rq(struc
+ 
+ static inline struct bio_vec *rq_integrity_vec(struct request *rq)
+ {
+-	return NULL;
++	/* the optimizer will remove all calls to this function */
++	return (struct bio_vec){ };
+ }
+ #endif /* CONFIG_BLK_DEV_INTEGRITY */
+ #endif /* _LINUX_BLK_INTEGRITY_H */
 
