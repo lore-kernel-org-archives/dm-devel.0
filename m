@@ -1,169 +1,141 @@
-Received: from mail-io1-f52.google.com (mail-io1-f52.google.com [209.85.166.52])
+Received: from mail-pl1-f177.google.com (mail-pl1-f177.google.com [209.85.214.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A9B67482
-	for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 15:33:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4742914287
+	for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 15:35:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716478432; cv=none; b=JfDtYEgC8B9NyXB+Ip0f6mvtZmNVTFmSBifc5uzrS7bamid5GiZnWLKvH6K0aRFBeORl4JpBDAYpZ5Ro6XrnBgO9HMtvCLg9IugKCl/Hgl5nEd7rjjV7W+9asZyKBu+X/o2Hz431iT3Sesr4MNAcC6zverRlTRlrItw+fVR1ntg=
+	t=1716478513; cv=none; b=lHi5CEhXM5VTvO3a78B42k6uIIkhxFuc/A0weO1Z7vwBRjgLLntj/sJsT+/9D3I4aUlbj53d2qL9sjUF7Ua1fI7Kb39YBu5NCg8YdWnXh6KgChvpbOCElBkL/Yug+UTE7ABFR1Kf23lts+N+RS7BcMm7lty6oRE7H6KNrQvr0pw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716478432; c=relaxed/simple;
-	bh=nYU1PIO2SFfLSTahfzTNWZje2OwhniNmOSD/p9qzWE4=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=fcsSgJaBM8mPuHW1Md8thsrKkcXhPul9D+3OpYL73P0TVPRUvYHRa8J8qRihaUvhqNqc+jCIPy5tO8mHOAKG2GE30Wz/0ibSOvy0CqUHguz7Bdn8bD1Oxv0om8Kmj4UyrYxal7cIVF/WjIhcH0zk1s6icjRZjxEIqcJisWUr7uk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=cXskMxML; arc=none smtp.client-ip=209.85.166.52
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1716478513; c=relaxed/simple;
+	bh=wdxKfjjLUk84a/tGuQYvrmqaFy9ZW/mj1pQCdE0YSj4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=powmlF1Cr2YOUUuYkVRU8bwB47FJTUgjrga8XaIfF7VvTdq+Gyzb+A0zcZNFvRapbqpeKek+IGuvtiuJuxOKJibxbf3q9s8+qSGqI5q4bl4x9/Xyerjgb7DATurRykgKfe3RO3MfZe7FsByW+n/iPlT1DKDm1o0uwACWw+zB4bg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eP3VRtXf; arc=none smtp.client-ip=209.85.214.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="cXskMxML"
-Received: by mail-io1-f52.google.com with SMTP id ca18e2360f4ac-7e1b88a886fso23346439f.0
-        for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 08:33:50 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eP3VRtXf"
+Received: by mail-pl1-f177.google.com with SMTP id d9443c01a7336-1f347e8f6acso658575ad.1
+        for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 08:35:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1716478430; x=1717083230; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=SvWyFJZNYQN+hDCxIRXzzdxVe6wwtRttv3fHKAE+JmM=;
-        b=cXskMxMLBX6AOsYvGNj6DolXDb2Fe8pACkH2i1detLIeBbqodLc2x0BxIgQ6RrmKzy
-         N75+PFA661N80n3yW5wdoBA5AVjxYa/k9g6clDb178c5HD7rlP40akBAmFI8XJfEAaxn
-         rV1kDBjjebMxhZtSq+3sv9xa77Y69fXA143jmo24iA5t7ClHmQBNR8NmkK98ndAHZfkh
-         EFTFzWPdcgs18S/yA1MxqoWDoAtUrZDtws0DGDa0BJw65hvfg0IkOjsTaHbrtWu9fUd4
-         jQ357+eaf+xvdXzZjIYz+sCC9HytdW30ILLJekYR/2Ketz9OzwXplAuEfhrvt8KDrm6Z
-         /igQ==
+        d=gmail.com; s=20230601; t=1716478511; x=1717083311; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=C2MfGbJLhBeGeMBRL5E+PaOkpQOo7Wuw1ls15958h4U=;
+        b=eP3VRtXfUIp07ray+EpVfMWV42l+cQiLXo89KRIEGOwzbA+HlNbu4B+mv0eUkKaq+M
+         erPxfnP03C2rvZW4LU35Vbokco7f/lAsbswsqrapezBGTYCYtysf05eVKpHVKCtOjWlm
+         iHsjVblSktA0w1hQmZCZ68lX0vClY0Sojn+ImPY9N0wulCWTCCm8isMGcC3TvF1YGtV1
+         G2qGtMDDvocw2zM71I05ecYyXsKLg/MdjE0xgCNixxjGZF8GKiruOZi5wlLemdyWtcQ2
+         190Cxlc4POdfyeApLj5PdwnbqLXXvezpa9SMnD2RWN8xqlj3NyzDnbjhzblWqw86fksc
+         E3rw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716478430; x=1717083230;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=SvWyFJZNYQN+hDCxIRXzzdxVe6wwtRttv3fHKAE+JmM=;
-        b=WG/8x7kk6Sa5fkwFCo3wkO7sW+Z0jOKO0jrJ73APavNq9Ieze8REBboP57x7mePneT
-         fM0pQ/1J5Sz8b6rPDNtkUwLrz31HV+iUXyTtai5q1lAsrzEv/YbHjppjAReuQvOO2O2b
-         FlUXmjK3ycmFBwgJS55/y+8oKqdnDHVPLfFNJbKeOfOd4FJVS6wTKvGl8Hh3ZBLlpGHy
-         lJyY7iLdZqQ7fe9V6U78DjR5WbQ8mgwVjiETt/Gfz9ETi0tISVBaaZ3zMHlNhqevssEa
-         Y7eMj6blOBKueJduHCIQbf6ZBlv1sVwzoOz1yZKzyjChbPHJIOFv9Io7GdGqHBLqXlNU
-         Fquw==
-X-Forwarded-Encrypted: i=1; AJvYcCXjYs4MWUhkmwbs1nWuqpss84bFLRRsJsA/17mMJDMuyYPN6UUgj5rXr48cOMnFyTVrPvWEtvCUU1MH38ucI3rZIs9CpkDRvIQ=
-X-Gm-Message-State: AOJu0Yw90TTc5kxrxEb8oiEKReSTntwiYSOIkgDopYMC2SZJKhVEcmFt
-	9mU7vD23auhwOrGG6qbPKw6fXIHItq1YjEtkqpisyfW1PGZGq+eDTBN8DGC8uFw=
-X-Google-Smtp-Source: AGHT+IF5NcgPaSwej7+H6rkVJpCG1LN6K+ptgamP3mzzVLSM397L3FcGvlEY98JyQtKJbxKK2SxjEw==
-X-Received: by 2002:a5d:84ca:0:b0:7de:f48e:36c3 with SMTP id ca18e2360f4ac-7e360c17344mr550273439f.0.1716478428270;
-        Thu, 23 May 2024 08:33:48 -0700 (PDT)
-Received: from [192.168.1.116] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-489375c13f9sm7936231173.97.2024.05.23.08.33.47
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 23 May 2024 08:33:47 -0700 (PDT)
-Message-ID: <9ef7cff7-1ef5-4a3f-a2d5-5d7e28bb8a44@kernel.dk>
-Date: Thu, 23 May 2024 09:33:46 -0600
+        d=1e100.net; s=20230601; t=1716478511; x=1717083311;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=C2MfGbJLhBeGeMBRL5E+PaOkpQOo7Wuw1ls15958h4U=;
+        b=uEy1Avlf+dl8O6eAN+AZZuVIGfx5oVODJE+AEACqAYsxxTvZ/vvBXYSWKnxuEIgVzV
+         KWC9RdzRkDZHxg39thDbY1oDXtNmEGfa+L3F2rgGuW4I5ApMq5gxTiUnUWDj/GOEmOIg
+         BVuQCM7GC+HSd82iaLcD3uRiBkMyZDswY+U+h1ppkP6qzKVkhPL5bD25D2SWfrlzDFwM
+         RttOi9SvBe7En/kpE0Mx/7ltEOx3P8o3yJSv+nqxF6vd8rLT4ntmJVlsU9YcLLDn0YPh
+         ae4umBlfdod+xDyZyps7b1nBMTGAvU4KrPDgQbKlP9dcSaEAmDGL1xqoQ8W/azrOfetn
+         1L2A==
+X-Forwarded-Encrypted: i=1; AJvYcCVdhqE+6yAzF66dR47jrRu1dyv0CHJxBbBrTVUhWzwvbhGxOGmT/Ph7RwfduoTqdb5FiY7zSRKSf9Di74x3K3u7LeZaw9Ceb/w=
+X-Gm-Message-State: AOJu0Yzzcm6wx02HZiWGqBkC99wt2MiJn4xB9SUvE6WUVKOM6jbPrm0N
+	Cz9CPjptLhAIuSSQ75fn5Ugee3Sf/drlsXDljO+a1ueMyh99H8/1
+X-Google-Smtp-Source: AGHT+IHkI5Ag6ABIYhzsCAV6jWiQywV28rXKTT8C0iDOse037T9i6PohK5hkxxdwVCFRk3QopDFa2Q==
+X-Received: by 2002:a17:902:c94d:b0:1f3:453:2c82 with SMTP id d9443c01a7336-1f31ca5f2afmr56496085ad.4.1716478511499;
+        Thu, 23 May 2024 08:35:11 -0700 (PDT)
+Received: from visitorckw-System-Product-Name ([140.113.216.168])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1f3044a81c9sm69555845ad.43.2024.05.23.08.35.07
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 23 May 2024 08:35:10 -0700 (PDT)
+Date: Thu, 23 May 2024 23:35:05 +0800
+From: Kuan-Wei Chiu <visitorckw@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com,
+	peterz@infradead.org, mingo@redhat.com, acme@kernel.org,
+	namhyung@kernel.org, bfoster@redhat.com, mark.rutland@arm.com,
+	alexander.shishkin@linux.intel.com, jolsa@kernel.org,
+	irogers@google.com, adrian.hunter@intel.com, bagasdotme@gmail.com,
+	jserv@ccns.ncku.edu.tw, linux-bcache@vger.kernel.org,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org
+Subject: Re: [RESEND PATCH v5 04/16] lib min_heap: Add type safe interface
+Message-ID: <Zk9iKUhv7Oew6Lsh@visitorckw-System-Product-Name>
+References: <20240514084724.557100-1-visitorckw@gmail.com>
+ <20240514084724.557100-5-visitorckw@gmail.com>
+ <20240522161048.8d8bbc7b153b4ecd92c50666@linux-foundation.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2] block: change rq_integrity_vec to respect the iterator
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
- Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@kernel.org>,
- Milan Broz <gmazyland@gmail.com>, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org
-References: <f85e3824-5545-f541-c96d-4352585288a@redhat.com>
- <c366231-e146-5a2b-1d8a-5936fb2047ca@redhat.com>
- <8522af2f-fb97-4d0b-9e38-868c572da18a@kernel.dk>
- <7060a917-6537-4334-4961-601a182bca54@redhat.com>
- <b1ca89ae-1500-4c3c-bd8a-74e081aa8dd3@kernel.dk>
- <798720bc-bc69-1e1c-8436-474e8a9fb0e8@redhat.com>
-Content-Language: en-US
-From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <798720bc-bc69-1e1c-8436-474e8a9fb0e8@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240522161048.8d8bbc7b153b4ecd92c50666@linux-foundation.org>
 
-On 5/23/24 9:11 AM, Mikulas Patocka wrote:
->>> @@ -853,16 +855,20 @@ static blk_status_t nvme_prep_rq(struct
->>>  			goto out_free_cmd;
->>>  	}
->>>  
->>> +#ifdef CONFIG_BLK_DEV_INTEGRITY
->>>  	if (blk_integrity_rq(req)) {
->>>  		ret = nvme_map_metadata(dev, req, &iod->cmd);
->>>  		if (ret)
->>>  			goto out_unmap_data;
->>>  	}
->>> +#endif
->>
->> 	if (IS_ENABLED(CONFIG_BLK_DEV_INTEGRITY) && blk_integrity_rq(req)) {
->>
->> ?
+On Wed, May 22, 2024 at 04:10:48PM -0700, Andrew Morton wrote:
+> On Tue, 14 May 2024 16:47:12 +0800 Kuan-Wei Chiu <visitorckw@gmail.com> wrote:
 > 
-> That wouldn't work, because the calls to rq_integrity_vec need to be 
-> eliminated by the preprocessor.
+> > Implement a type-safe interface for min_heap using strong type
+> > pointers instead of void * in the data field. This change includes
+> > adding small macro wrappers around functions, enabling the use of
+> > __minheap_cast and __minheap_obj_size macros for type casting and
+> > obtaining element size. This implementation removes the necessity of
+> > passing element size in min_heap_callbacks. Additionally, introduce the
+> > MIN_HEAP_PREALLOCATED macro for preallocating some elements.
+> 
+> I guess it's a nice change, although it's unclear how valuable all this
+> is.  Being able to remove the local implementations in bcache and
+> bcachefs is good.
+> 
+> > --- a/drivers/md/dm-vdo/repair.c
+> > +++ b/drivers/md/dm-vdo/repair.c
+> > @@ -51,6 +51,8 @@ struct recovery_point {
+> >  	bool increment_applied;
+> >  };
+> >  
+> > +MIN_HEAP(struct numbered_block_mapping, replay_heap);
+> >
+> > ...
+> >
+> > -struct min_heap {
+> > -	void *data;
+> > -	int nr;
+> > -	int size;
+> > -};
+> > +#define MIN_HEAP_PREALLOCATED(_type, _name, _nr)	\
+> > +struct _name {	\
+> > +	int nr;	\
+> > +	int size;	\
+> > +	_type *data;	\
+> > +	_type preallocated[_nr];	\
+> > +}
+> 
+> I think that the MIN_HEAP() macro would be better named
+> DEFINE_MIN_HEAP().  There's a lot of precedent for this and it's
+> unclear whether "MIN_HEAP" actually implements storage.  I looked at
+> the repair.c addition and thought "hm, shouldn't that be static"!
+>
+I will update this in the next version.
 
-Why not just do this incremental? Cleans up the ifdef mess too, leaving
-only the one actually using rq_integrity_vec in place.
-
-diff --git a/drivers/nvme/host/pci.c b/drivers/nvme/host/pci.c
-index 5f857cbc95c8..bd56416a7fa8 100644
---- a/drivers/nvme/host/pci.c
-+++ b/drivers/nvme/host/pci.c
-@@ -821,10 +821,10 @@ static blk_status_t nvme_map_data(struct nvme_dev *dev, struct request *req,
- 	return ret;
- }
- 
--#ifdef CONFIG_BLK_DEV_INTEGRITY
- static blk_status_t nvme_map_metadata(struct nvme_dev *dev, struct request *req,
- 		struct nvme_command *cmnd)
- {
-+#ifdef CONFIG_BLK_DEV_INTEGRITY
- 	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
- 	struct bio_vec bv = rq_integrity_vec(req);
- 
-@@ -832,9 +832,9 @@ static blk_status_t nvme_map_metadata(struct nvme_dev *dev, struct request *req,
- 	if (dma_mapping_error(dev->dev, iod->meta_dma))
- 		return BLK_STS_IOERR;
- 	cmnd->rw.metadata = cpu_to_le64(iod->meta_dma);
-+#endif
- 	return BLK_STS_OK;
- }
--#endif
- 
- static blk_status_t nvme_prep_rq(struct nvme_dev *dev, struct request *req)
- {
-@@ -855,20 +855,16 @@ static blk_status_t nvme_prep_rq(struct nvme_dev *dev, struct request *req)
- 			goto out_free_cmd;
- 	}
- 
--#ifdef CONFIG_BLK_DEV_INTEGRITY
--	if (blk_integrity_rq(req)) {
-+	if (IS_ENABLED(CONFIG_BLK_DEV_INTEGRITY) && blk_integrity_rq(req)) {
- 		ret = nvme_map_metadata(dev, req, &iod->cmd);
- 		if (ret)
- 			goto out_unmap_data;
- 	}
--#endif
- 
- 	nvme_start_request(req);
- 	return BLK_STS_OK;
--#ifdef CONFIG_BLK_DEV_INTEGRITY
- out_unmap_data:
- 	nvme_unmap_data(dev, req);
--#endif
- out_free_cmd:
- 	nvme_cleanup_cmd(req);
- 	return ret;
-
-> Should I change rq_integrity_vec to this? Then, we could get rid of the 
-> ifdefs and let the optimizer remove all calls to rq_integrity_vec.
-> static inline struct bio_vec rq_integrity_vec(struct request *rq)
-> {
-> 	struct bio_vec bv = { };
-> 	return bv;
-> }
-
-Only if that eliminates runtime checking for !INTEGRITY, which I don't
-thin it will.
-
-
--- 
-Jens Axboe
+> >  /* Sift the element at pos down the heap. */
+> >  static __always_inline
+> > -void min_heapify(struct min_heap *heap, int pos,
+> > +void __min_heapify(min_heap_char *heap, int pos, size_t elem_size,
+> >  		const struct min_heap_callbacks *func)
+> >  {
+> 
+> It's a separate project, but min_heap.h has some crazily huge inlined
+> functions.  I expect we'd have a smaller and faster kernel if those
+> were moved into a new lib/min_heap.c.
+> 
+Moving these inline functions to lib/min_heap.c to reduce kernel size
+seems reasonable. However, I saw Ian mention that perf event's min_heap
+is used during context switches. Since I'm unsure about the performance
+impact of making these functions non-inline, I'd like to discuss this
+further before actually moving them to lib/min_heap.c.
 
