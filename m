@@ -1,67 +1,55 @@
-Received: from out-188.mta0.migadu.com (out-188.mta0.migadu.com [91.218.175.188])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 610148060B
-	for <dm-devel@lists.linux.dev>; Wed, 22 May 2024 23:33:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.188
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF9671860
+	for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 01:52:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716420793; cv=none; b=rXlR023eRLKYJ/PF5oOUDwc03eYkr+A5vHZ5Za1gzjabvpqJhDY9q/vruqSAmezLE6CQO4M2ec7a8LpXgXoOQyf18p3X9M8T3dOz/4XmJu9AOWFQG/Kmf/5WVe1+fTLoY1QRWbX9Csn1VZgDIeAXThwA9WsC0gHnQonai+dz6wk=
+	t=1716429175; cv=none; b=K7/tSosu2rB93eoYiJd60F3XymU4W62JGvRimGMkeSWoswFGnEzki0d+Rtapna9jg+uRiJfNphDYzvszRa1QjOe970tkbuZuK/2EdSzMBh7ZR4YJ6RUd90xofLpiwQ+5Ce5zYwdWveddjhF88SI47UVUaPOy44i8j2k+w6jMUwg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716420793; c=relaxed/simple;
-	bh=NT/ii8eaSJtuJOqeYSgC8cyd1idzt+7Q6oGZaAaQSDY=;
+	s=arc-20240116; t=1716429175; c=relaxed/simple;
+	bh=rw3mIi2XQ473pNjiTeN1/fD22GkNBUJYgoxFZjQskhY=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=EBWZa+7n3pfrHchZL5b7NsoMqKrgyVxiUsstktJTCBAzVQvKgTgPP4WOX+jzWYwpRX/vCAxkQr52F6+eNUoU6p8J1Tv+9ymxrpRggfx9zOce7Rz2Dm9oajW4BQmbDp7RF55mwx+1n3LQwMGlYFPQOugTpqE7eQQK10V/gZzf59k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=es04Benw; arc=none smtp.client-ip=91.218.175.188
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	 Content-Type:Content-Disposition:In-Reply-To; b=L+LLSCoEyaH+LxendGdkAz78GQZNOVG1UwojN5b7/H/5qj/lO3VK+aLPcgJpewBAYGJS/NuPOKSpouDaEf8rhGKsrolHCfwDDBi+LsvtUpG/mT5ylZCJi4+OTaWEZsVus7xC6F0tY5UVLk4lhZX3Dm6+VobxvTAhBG2aNjx15mg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DA3lCQIh; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="es04Benw"
-X-Envelope-To: akpm@linux-foundation.org
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1716420789;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DA3lCQIh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716429173;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=AJj3qTPEcDcXe8j2iV1Bt2UrJ9C9nF1bY3bOTkAluxo=;
-	b=es04BenwY5QAh2vvRy7s4tEAhNY1TxREQPsrLBcXkBFSKNVU2jDJtfmVY78FausPMpkaPB
-	pN+YJ3u9px+6D4u7+Q+dVDLDo3yWTv0zYwy63BLkkDmKWRxpU/g8oUx30vWdl9zz+FdU01
-	v/sBa0tnymS5K/Rv5z2nifbxXcfmqn8=
-X-Envelope-To: visitorckw@gmail.com
-X-Envelope-To: colyli@suse.de
-X-Envelope-To: msakai@redhat.com
-X-Envelope-To: peterz@infradead.org
-X-Envelope-To: mingo@redhat.com
-X-Envelope-To: acme@kernel.org
-X-Envelope-To: namhyung@kernel.org
-X-Envelope-To: bfoster@redhat.com
-X-Envelope-To: mark.rutland@arm.com
-X-Envelope-To: alexander.shishkin@linux.intel.com
-X-Envelope-To: jolsa@kernel.org
-X-Envelope-To: irogers@google.com
-X-Envelope-To: adrian.hunter@intel.com
-X-Envelope-To: bagasdotme@gmail.com
-X-Envelope-To: jserv@ccns.ncku.edu.tw
-X-Envelope-To: linux-bcache@vger.kernel.org
-X-Envelope-To: linux-kernel@vger.kernel.org
-X-Envelope-To: dm-devel@lists.linux.dev
-X-Envelope-To: linux-bcachefs@vger.kernel.org
-X-Envelope-To: linux-perf-users@vger.kernel.org
-Date: Wed, 22 May 2024 19:33:04 -0400
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Kuan-Wei Chiu <visitorckw@gmail.com>, colyli@suse.de, 
-	msakai@redhat.com, peterz@infradead.org, mingo@redhat.com, acme@kernel.org, 
-	namhyung@kernel.org, bfoster@redhat.com, mark.rutland@arm.com, 
-	alexander.shishkin@linux.intel.com, jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
-	bagasdotme@gmail.com, jserv@ccns.ncku.edu.tw, linux-bcache@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, linux-bcachefs@vger.kernel.org, 
-	linux-perf-users@vger.kernel.org
-Subject: Re: [RESEND PATCH v5 04/16] lib min_heap: Add type safe interface
-Message-ID: <gch7c2merdegxvqwpbb5ean7uj35tnh62fyviggjglftlfjs3i@jhbnllco5kau>
-References: <20240514084724.557100-1-visitorckw@gmail.com>
- <20240514084724.557100-5-visitorckw@gmail.com>
- <20240522161048.8d8bbc7b153b4ecd92c50666@linux-foundation.org>
+	bh=7XEolw1eTofFhzFRzXVEKYI8sDa8B5zCIV0/1n4eHcc=;
+	b=DA3lCQIhy8gGOuoZoN+HZadiDGTRWsK3Nh1tIwMIvccjeXBFp+RuLbfl7avyu17WsbL/6c
+	D7QgvLhfHkgHFGnAT7hBCXcmtRDwr3AFGMe0dOGFzYwmLY+I6dPuaNFYOZQLr2YbjTgiJW
+	Dvq+uI0NCSEXbg4gS9OFyrxzM1Mu+0I=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-221-3giBrACxNViHk6IrkuMBaA-1; Wed,
+ 22 May 2024 21:52:49 -0400
+X-MC-Unique: 3giBrACxNViHk6IrkuMBaA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DF3B13802265;
+	Thu, 23 May 2024 01:52:48 +0000 (UTC)
+Received: from fedora (unknown [10.72.116.54])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E98BE491034;
+	Thu, 23 May 2024 01:52:44 +0000 (UTC)
+Date: Thu, 23 May 2024 09:52:40 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org, Marco Patalano <mpatalan@redhat.com>,
+	Ewan Milne <emilne@redhat.com>, linux-raid@vger.kernel.org
+Subject: Re: dm: retain stacked max_sectors when setting queue_limits
+Message-ID: <Zk6haNVa5JXxlOf1@fedora>
+References: <20240522025117.75568-1-snitzer@kernel.org>
+ <20240522142458.GB7502@lst.de>
+ <Zk4h-6f2M0XmraJV@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -70,69 +58,28 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240522161048.8d8bbc7b153b4ecd92c50666@linux-foundation.org>
-X-Migadu-Flow: FLOW_OUT
+In-Reply-To: <Zk4h-6f2M0XmraJV@kernel.org>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 
-On Wed, May 22, 2024 at 04:10:48PM -0700, Andrew Morton wrote:
-> On Tue, 14 May 2024 16:47:12 +0800 Kuan-Wei Chiu <visitorckw@gmail.com> wrote:
+On Wed, May 22, 2024 at 12:48:59PM -0400, Mike Snitzer wrote:
+> On Wed, May 22, 2024 at 04:24:58PM +0200, Christoph Hellwig wrote:
+> > On Tue, May 21, 2024 at 10:51:17PM -0400, Mike Snitzer wrote:
+> > > Otherwise, blk_validate_limits() will throw-away the max_sectors that
+> > > was stacked from underlying device(s). In doing so it can set a
+> > > max_sectors limit that violates underlying device limits.
+> > 
+> > Hmm, yes it sort of is "throwing the limit away", but it really
+> > recalculates it from max_hw_sectors, max_dev_sectors and user_max_sectors.
 > 
-> > Implement a type-safe interface for min_heap using strong type
-> > pointers instead of void * in the data field. This change includes
-> > adding small macro wrappers around functions, enabling the use of
-> > __minheap_cast and __minheap_obj_size macros for type casting and
-> > obtaining element size. This implementation removes the necessity of
-> > passing element size in min_heap_callbacks. Additionally, introduce the
-> > MIN_HEAP_PREALLOCATED macro for preallocating some elements.
-> 
-> I guess it's a nice change, although it's unclear how valuable all this
-> is.  Being able to remove the local implementations in bcache and
-> bcachefs is good.
+> Yes, but it needs to do that recalculation at each level of a stacked
+> device.  And then we need to combine them via blk_stack_limits() -- as
+> is done with the various limits stacking loops in
+> drivers/md/dm-table.c:dm_calculate_queue_limits
 
-Yes, and now the standard kernel version is type safe. I suggested it to
-Kuan as a good starting project, I find (well picked) refactorings and
-cleanups are a great place for people to start.
+This way looks one stacking specific requirement, just wondering why not
+put the logic into blk_validate_limits() by passing 'stacking' parameter?
+Then raid can benefit from it oo.
 
-> 
-> > --- a/drivers/md/dm-vdo/repair.c
-> > +++ b/drivers/md/dm-vdo/repair.c
-> > @@ -51,6 +51,8 @@ struct recovery_point {
-> >  	bool increment_applied;
-> >  };
-> >  
-> > +MIN_HEAP(struct numbered_block_mapping, replay_heap);
-> >
-> > ...
-> >
-> > -struct min_heap {
-> > -	void *data;
-> > -	int nr;
-> > -	int size;
-> > -};
-> > +#define MIN_HEAP_PREALLOCATED(_type, _name, _nr)	\
-> > +struct _name {	\
-> > +	int nr;	\
-> > +	int size;	\
-> > +	_type *data;	\
-> > +	_type preallocated[_nr];	\
-> > +}
-> 
-> I think that the MIN_HEAP() macro would be better named
-> DEFINE_MIN_HEAP().  There's a lot of precedent for this and it's
-> unclear whether "MIN_HEAP" actually implements storage.  I looked at
-> the repair.c addition and thought "hm, shouldn't that be static"!
+thanks,
+Ming
 
-Agreed
-
-> >  /* Sift the element at pos down the heap. */
-> >  static __always_inline
-> > -void min_heapify(struct min_heap *heap, int pos,
-> > +void __min_heapify(min_heap_char *heap, int pos, size_t elem_size,
-> >  		const struct min_heap_callbacks *func)
-> >  {
-> 
-> It's a separate project, but min_heap.h has some crazily huge inlined
-> functions.  I expect we'd have a smaller and faster kernel if those
-> were moved into a new lib/min_heap.c.
-
-good thought - Kuan, want to do that too? Since we missed the merge
-window, may as well :)
