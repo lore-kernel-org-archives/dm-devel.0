@@ -1,130 +1,177 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F80F19B
-	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 01:34:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA29238F97
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 03:39:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.33
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716514487; cv=none; b=nXAQNdqni5QSMrC44qzwpAktdJaI2djunmf576d2BNtScvmufdcr8qFAo1BlTg9ICnAEMa3yKH1Ja9xxyiYR7xddYrgzIWVi1u/Z9/z1DK51p5bVoyh1SmJ7g4BIai8uBgmSl72WJc/UXv0snlk1SF5taa2nYoPIYydDdKV4c6s=
+	t=1716521943; cv=none; b=tOJ7BpqQzRXH0z5rVgwmSms3YnKec3+UBZAl8zSH8WYEKOhLdqQ69Q1ILrSGsp9Ha5RGbABTOdpOm33ZLQzpIFIGnDh+MhPXuVuFHiyYO1IBUxWm2gbJiOfIoTBekuKTaonG3j9QAsD3CUd96JyNw73UneTEed8MXj1BPXWddyI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716514487; c=relaxed/simple;
-	bh=6eqPKy9djQ44kxy9/4ekHNwI380SgUbokve8MKOW5nw=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=MXRxWAz9seR3K9hgYORo5TlvYARZX8gUMDRV2zd4/h+onzQvAc6V3JMEWi5zRuMcioMPB7NzPbnHRQYwEFpzNs0mNq4+hJQjE+L0LXz5ni26ezyrJKFMUKoKZPwPAJf4UzRMn5NtUtdZyrxy4QHONtvbPJLETtWDsiyj7tl01e4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZmVBaLNt; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1716521943; c=relaxed/simple;
+	bh=Rs8KfzPFWT1KO+9dMU8ukzxtSitXVwFhV5/HmJwGcis=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:In-Reply-To:
+	 Content-Type:References; b=hc+pvvZuAx8T+zTSWEFwXcRg58ZHJa7Rw2haSjv/G0aQAWOhNrmKZnkZdVvPW+/2SkCxtRwvFZKpplfq/2ouhqVOPgcPbBFl63dxfyLEvUBRGxSt0cracXLAP/MEMHoSP82srlf6lurMc/Xc5LipayHLC6rA8HWk5c0hX1CCx5Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=oO8pl/Rp; arc=none smtp.client-ip=203.254.224.33
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZmVBaLNt"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716514484;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=u7zyDSjhpyorp5nAJxno7CoO9uDDRfWCi8vAJwbr4pI=;
-	b=ZmVBaLNtugFwMpqoRDYPDBLUdUpZU30Cdy6U4iInlSoczqkQGr8ITKWSi/zTtHfwf1s5oI
-	kiTBMGFJ3zwTge3EwWuGolmigj3UoaMg/4ErEXy/qmeAVLsCv5DZGN+QT5ignVZIh1cb/+
-	XaMVPg7enYqWW3s881ni0lYzaqsYsRs=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-142-cpdfBXW7MLuFxc5cpj84mQ-1; Thu, 23 May 2024 21:34:43 -0400
-X-MC-Unique: cpdfBXW7MLuFxc5cpj84mQ-1
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-792ff5345c6so66213185a.1
-        for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 18:34:43 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716514482; x=1717119282;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=u7zyDSjhpyorp5nAJxno7CoO9uDDRfWCi8vAJwbr4pI=;
-        b=sbIAUkN1px9DJO1wFP8xSmHWqTEyz0T8ljzCJJKo82qki/sWNM+fBZON+8xhWlU9KX
-         Dn7LMMCXh+zpyr5LaBhkakrVBcNfZZmv73hZmWptm22uhgyOxwa2XzQb0YHTW0T3ueuU
-         RU4LDycVDJcbQ/jgNiiZp0WNxfLbCZBdYfYXKuhIv73GmQ01hfAMKaBvrAnG7Gc3jfgC
-         UY4N/Dnc85x+ViKc6aMb2n1cAIoRMsMMqvFZNNuo/1YoYVRJX2gsha5GbP//BIbQwqz9
-         ooMo9p4Jpi6Zhz0NZciVaXCzGQzlQCfKbiP3PEtGwPfRgT7hJ0qiqLYIjpkwtpfRZKAj
-         xFVw==
-X-Gm-Message-State: AOJu0YxNNmT6O1iFQduYwttnkbTujUtsqO4BMlZhB7+H4oUb+pwHs71K
-	IgRgq6Eq0ua6yBef080CCt2sy//D6k7LPeOg0R0Cog6OEyJyuZep2zYvtpKqB3WAo/bRHLN1kId
-	AwaZ+9AdoXJzaqOoAbyADGb4Q6IOxqLVuf/eJEZ2k+veQfeVrUG+YnOQw61Bqr4HuYJE=
-X-Received: by 2002:a05:6214:5c07:b0:6a0:8559:d137 with SMTP id 6a1803df08f44-6abcdaa8559mr9297916d6.61.1716514482632;
-        Thu, 23 May 2024 18:34:42 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFdkDT3EyxEf+gntyix61idG5hT7+VI8hQowuVB9g+Y0LHc/PAp4h7v2266c9W7+jo6cv+TeA==
-X-Received: by 2002:a05:6214:5c07:b0:6a0:8559:d137 with SMTP id 6a1803df08f44-6abcdaa8559mr9297736d6.61.1716514482293;
-        Thu, 23 May 2024 18:34:42 -0700 (PDT)
-Received: from [192.168.1.175] ([70.22.187.239])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6ac070dc638sm2357546d6.35.2024.05.23.18.34.41
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 23 May 2024 18:34:41 -0700 (PDT)
-Message-ID: <cc86b717-e060-2d73-88a6-1625285c47c5@redhat.com>
-Date: Thu, 23 May 2024 21:34:41 -0400
+	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="oO8pl/Rp"
+Received: from epcas5p3.samsung.com (unknown [182.195.41.41])
+	by mailout3.samsung.com (KnoxPortal) with ESMTP id 20240524033859epoutp033833d766d314514759f1b814513232d0~ST5wHr8MV3083230832epoutp037
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 03:38:59 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com 20240524033859epoutp033833d766d314514759f1b814513232d0~ST5wHr8MV3083230832epoutp037
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
+	s=mail20170921; t=1716521939;
+	bh=kEUNE5DDBugp0ptyOjlNvhJs+4yUfxAjHQz7sOYY5ZI=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+	b=oO8pl/RpKAB+7hnb8+/HuUwu4GfoNyg9mfIlRSee1S4yn6MftXaxZVI9095j+T5Z7
+	 QYkRsH0CwLC2tlealGyxh9oldqrKWLLlRR/kOzKUC2lMEYqkIaJT3LWUrLvUfQlh9r
+	 q5nzNSzwGv/rvY9089VVkDawhsd5EJ79MaECwTLQ=
+Received: from epsnrtp4.localdomain (unknown [182.195.42.165]) by
+	epcas5p3.samsung.com (KnoxPortal) with ESMTP id
+	20240524033859epcas5p3ab5fb4a491caf8ca91d3b7f32528fa36~ST5vooHaQ0531105311epcas5p3S;
+	Fri, 24 May 2024 03:38:59 +0000 (GMT)
+Received: from epsmgec5p1-new.samsung.com (unknown [182.195.38.183]) by
+	epsnrtp4.localdomain (Postfix) with ESMTP id 4VlrPF0SpVz4x9Pq; Fri, 24 May
+	2024 03:38:57 +0000 (GMT)
+Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
+	epsmgec5p1-new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	77.94.19431.0DB00566; Fri, 24 May 2024 12:38:56 +0900 (KST)
+Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
+	epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
+	20240523114201epcas5p35636ecdb5665cc3d792c120f43e67d96~SG2NGF_tW0305503055epcas5p30;
+	Thu, 23 May 2024 11:42:01 +0000 (GMT)
+Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
+	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
+	20240523114201epsmtrp18a825758bc171b7a412521bf53c949f7~SG2NE_PA90370403704epsmtrp1T;
+	Thu, 23 May 2024 11:42:01 +0000 (GMT)
+X-AuditID: b6c32a50-ccbff70000004be7-5d-66500bd0a7cf
+Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
+	epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	33.F1.08924.98B2F466; Thu, 23 May 2024 20:42:01 +0900 (KST)
+Received: from nj.shetty?samsung.com (unknown [107.99.41.245]) by
+	epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
+	20240523114157epsmtip2db1c50506ea74d1d9e6f9373973e76e2~SG2JoFU973178131781epsmtip2B;
+	Thu, 23 May 2024 11:41:57 +0000 (GMT)
+Date: Thu, 23 May 2024 11:34:54 +0000
+From: Nitesh Shetty <nj.shetty@samsung.com>
+To: Bart Van Assche <bvanassche@acm.org>
+Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
+	Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
+	<mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, Christoph Hellwig
+	<hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni
+	<kch@nvidia.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian
+	Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+	martin.petersen@oracle.com, david@fromorbit.com, hare@suse.de,
+	damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com, joshi.k@samsung.com,
+	nitheshshetty@gmail.com, gost.dev@samsung.com, linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+	linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
+ and request layer.
+Message-ID: <20240523113454.6mwg6xnrkscu6yps@nj.shetty@samsung.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.12.0
-Subject: Re: [PATCH] dm vdo: remove unused struct 'uds_attribute'
-To: "Dr. David Alan Gilbert" <linux@treblig.org>
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>
-References: <20240523210716.309324-1-linux@treblig.org>
- <5c063045-4bce-14e4-9930-77cc0ed2edad@redhat.com>
- <Zk_ozpHryOiMLx_Q@gallifrey>
-From: Matthew Sakai <msakai@redhat.com>
-In-Reply-To: <Zk_ozpHryOiMLx_Q@gallifrey>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+In-Reply-To: <97966085-d7a4-4238-a413-4cdac77af8bd@acm.org>
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xTVxzHd+69vRQEcwfqDrANVtzC23YUdkBwCyLezC3pZuYSCasNvUAD
+	tF1bpjPZeIkKCyAoFKqM93gKExCBAZIiVqqMbTyGKNoZWCaMhxAVwmsthcX/Pr/H95zfIz82
+	blth4cCWSFWMQiqK5ZBWREuPm6vXbzsEkdyiov2oQX8bR8kX1nBUO55FoumeBYDy5pdxNNF9
+	DqCV/gEcNd9+BFBxaSGB7ne3YaijNAdD1bW9GLqsTsFQ78YMiXK0IwBNDmsw1DnmgUrOlhOo
+	o7OPQIPtV0hU9NOkBarUrWMo+/wwhlonkgCqn54j0J0xRzSwpmN95EgPDh2h9aWQbtOMW9AD
+	j64R9GB/PN1Yk0bSTeUJ9D9NBYD+5X4iSZdlXmTRGSmzJN2W+phFP5scI+i5rmGSzmyuAfS9
+	4lsWArvjMYHRjEjMKJwZaYRMLJFGBXGOHBUeFPr6cXlePH/0AcdZKopjgjghnwi8QiWxxuFw
+	nL8RxcYbXQKRUsnZdyBQIYtXMc7RMqUqiMPIxbFyvtxbKYpTxkujvKWMKoDH5b7va0w8EROt
+	Tu6ykK/sPLVa8xgkgkbrdGDJhhQfXlPPYia2pToAnBv1SQdWRl4AMOP875jZeAGgdkZrsa2o
+	6snGzYFOAKsbG4HZWATQ8EM/mQ7YbIJ6Fy5XuZqQpDzg3Q22SbuLcoUvDJWEKR2nSkj4cHQJ
+	NwXsqBNwRp/NMrENdRCOdDZt8euwr2CCML1jSe2HZdXeJi2kfrWELUlXcXNBIbBvKGeL7eCU
+	rnmrUAf4NOvsFp+E1ZeqSLP4DICaPzXAHPgQpuqzNsU4FQ3VN/O3HnoL5urrMbN/J8xYmcDM
+	fhvY+uM2u8C6hmLSzPZw5GXSZu+QouGDOifzTGYBbFheABfA25pX+tG88p2ZA2DafDJLY5Tj
+	lCOsXGeb0Q02tO8rBqwa4MDIlXFRTISvnOclZU7+v+QIWVwj2LwXd0ErqP15zVsLMDbQAsjG
+	Obtswqo/jbS1EYu+Pc0oZEJFfCyj1AJf436ycYfdETLjwUlVQh7fn8v38/Pj+/v48Thv2Eyn
+	FoptqSiRiolhGDmj2NZhbEuHREz2fRDKbedH5gsKNAkp34lOCz/7ePCer1NFl6WLRjwa0bRj
+	MF+x5+q6k7D7HUOq5Oszt8J1oZkuVVdiDO56Z4MTdmjBsuHO5Sd3XS+Fo7a8orFOn4oWu4Ki
+	ynMX1Q8VebqARY77tPdyvpXulL5ZObNiO+5oWLoZyG05+vde3bpV2vVpz9U3j/H7+Sp1tt3M
+	X32LY7rVYN0xNydB+wPn1/zL53enpQ3vfc5Kee+Ll/btxGpOcLjcvr421POrtLV/b7g9nRrv
+	qCsNOxydI2nJ9Esecv9jqkQaLDy84S8J8XxSkm+dB6xuJITtIaybrHI9Pa4Tnzv2HniWuzT5
+	/MvC41ENsjIOoYwW8dxxhVL0H2e3GjK4BAAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA02SWUwTURSGc2em02kFHAHlQnFJY92IRQKYqyIQl2QSo7gkJi4JVjsgkVZs
+	pYhBpSqLFbFg3KoIgrIUNygqiwgCIqsEsC5EERSUCKWAxo20aG2Mvn0n3/+f83Io3PkD4UFF
+	yPezCrkkUkjyiXu1wpkLT3iFhC0qL+Sg2031ODqqteCo8M1pEg3WjgF0buQHjvqqkwAab23D
+	UUl9N0BZ2RkEelVdhqEH2ekYKih8jKFL549h6PGEiUTpNc8B6jfqMFTZ5YWuJl4j0IPKRgJ1
+	ll8mUWZuPxflPbFiKC3ZiKHSPjVAtwbNBGroEqA2yxNOsIDpfLaGacqGTJnuDZdp6y4imM7W
+	aKZYf4JkDNeOMAOGi4CpeBVPMjmpZzjMqWPDJFOW8JbDjPZ3EYz5oZFkUkv0gGnJquOud9nK
+	D5CykREqVuEduIO/e8CcQkTddDiQZjlPxgMrTwN4FKT9YH5tGq4BfMqZrgDw4btOzC7cYa6l
+	DrezCyywfuTaQ6MAZuYk/B4oiqBF8Ef+PBuStBdsnqBscVd6Hvzak0fY4jh9nYTtVeNcm3Ch
+	d0BTUxrHxo70Svi80sCx7xwGsOpjK2EXU2Djxb4/jNOL4RVDL247gNMCmGelbMijl8GcArEW
+	0Lr/Crr/Crp/hSyA64E7G6WUhcuUPlE+cjZGrJTIlNHycPGuvbJi8OcVFswvBff1I+IagFGg
+	BkAKF7o6bitYG+bsKJXEHmQVe0MV0ZGssgYIKELo5ug2cErqTIdL9rN7WDaKVfy1GMXziMdE
+	usmbzJ/N06wHeoMSUjwfreYHjQnmxqkPeXYH61SXQuLOjlqWjs8IMZY/UwXO8u3xvxL/s1L0
+	tLhEXWbJzwlZKOo++/JGwGL3oobcI++1a9GAdO6t9AumVDg81OipaR/+HpshS2px0/g2zY7e
+	5RehHfJ7EbpFl97b8dUhmO6Yrj/tyavQnPQKXGJQjVmSt08KytxZNxLzKUtlvrNH1OhW2kD5
+	D81ZJ94n6Q1OXNXitHlFs+Fo4UvlhtL13skz1C3H61MmFGpj82sn74qSqqldsaYhf2Oih5T4
+	/EW7MeDwi6TB7zuXhi3PiKuWR2TkZb53zd9w2XTX6Hsm8qrT9ZhvciQklLslPgtwhVLyCyPH
+	J1t5AwAA
+X-CMS-MailID: 20240523114201epcas5p35636ecdb5665cc3d792c120f43e67d96
+X-Msg-Generator: CA
+Content-Type: multipart/mixed;
+	boundary="----atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_20cab_"
+X-Sendblock-Type: REQ_APPROVE
+CMS-TYPE: 105P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20240520102842epcas5p4949334c2587a15b8adab2c913daa622f
+References: <20240520102033.9361-1-nj.shetty@samsung.com>
+	<CGME20240520102842epcas5p4949334c2587a15b8adab2c913daa622f@epcas5p4.samsung.com>
+	<20240520102033.9361-3-nj.shetty@samsung.com>
+	<97966085-d7a4-4238-a413-4cdac77af8bd@acm.org>
 
-On 5/23/24 21:09, Dr. David Alan Gilbert wrote:
-> * Matthew Sakai (msakai@redhat.com) wrote:
->> On 5/23/24 17:07, linux@treblig.org wrote:
->>> From: "Dr. David Alan Gilbert" <linux@treblig.org>
->>>
->>> 'uds_attribute' is unused since
->>> commit a9da0fb6d8c6 ("dm vdo: remove all sysfs interfaces").
->>>
->>> Remove it.
->>>
->>> Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
->>
->> Yes, this was clearly an oversight on our part. Feel free to add:
->> Reviewed-by: Matthew Sakai <msakai@redhat.com>
-> 
-> Thanks for the quick review.
-> Is this something you'll send a pull for, or do I need to
-> ask someone else to include it?
+------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_20cab_
+Content-Type: text/plain; charset="utf-8"; format="flowed"
+Content-Disposition: inline
 
-No need to do anything else, I think. Mike (or Mikulas), can you
-include this with the next set of device mapper patches?
+On 22/05/24 11:05AM, Bart Van Assche wrote:
+>On 5/20/24 03:20, Nitesh Shetty wrote:
+>>We add two new opcode REQ_OP_COPY_DST, REQ_OP_COPY_SRC.
+>>Since copy is a composite operation involving src and dst sectors/lba,
+>>each needs to be represented by a separate bio to make it compatible
+>>with device mapper.
+>>We expect caller to take a plug and send bio with destination information,
+>>followed by bio with source information.
+>>Once the dst bio arrives we form a request and wait for source
+>>bio. Upon arrival of source bio we merge these two bio's and send
+>>corresponding request down to device driver.
+>>Merging non copy offload bio is avoided by checking for copy specific
+>>opcodes in merge function.
+>
+>Plugs are per task. Can the following happen?
+We rely on per-context plugging to avoid this.
+>* Task A calls blk_start_plug()
+>* Task B calls blk_start_plug()
+>* Task A submits a REQ_OP_COPY_DST bio and a REQ_OP_COPY_SRC bio.
+Lets say this forms request A and stored in plug A
+>* Task B submits a REQ_OP_COPY_DST bio and a REQ_OP_COPY_SRC bio.
+Lets say this forms request B and stored in plug B
+>* Task A calls blk_finish_plug()
+>* Task B calls blk_finish_plug()
+>* The REQ_OP_COPY_DST bio from task A and the REQ_OP_COPY_SRC bio from
+>  task B are combined into a single request.
+Here task A picks plug A and hence request A
+>* The REQ_OP_COPY_DST bio from task B and the REQ_OP_COPY_SRC bio from
+>  task A are combined into a single request.
+same as above, request B
 
-> Dave
-> 
->>> ---
->>>    drivers/md/dm-vdo/dedupe.c | 5 -----
->>>    1 file changed, 5 deletions(-)
->>>
->>> diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
->>> index 117266e1b3ae..39ac68614419 100644
->>> --- a/drivers/md/dm-vdo/dedupe.c
->>> +++ b/drivers/md/dm-vdo/dedupe.c
->>> @@ -148,11 +148,6 @@
->>>    #include "vdo.h"
->>>    #include "wait-queue.h"
->>> -struct uds_attribute {
->>> -	struct attribute attr;
->>> -	const char *(*show_string)(struct hash_zones *hash_zones);
->>> -};
->>> -
->>>    #define DEDUPE_QUERY_TIMER_IDLE 0
->>>    #define DEDUPE_QUERY_TIMER_RUNNING 1
->>>    #define DEDUPE_QUERY_TIMER_FIRED 2
->>
->>
+So we expect this case not to happen.
 
+Thank you,
+Nitesh Shetty
+
+------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_20cab_
+Content-Type: text/plain; charset="utf-8"
+
+
+------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_20cab_--
