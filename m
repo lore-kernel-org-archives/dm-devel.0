@@ -1,40 +1,48 @@
-Received: from mout.web.de (mout.web.de [217.72.192.78])
+Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F37388528D;
-	Fri, 24 May 2024 13:48:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.72.192.78
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4132739FF4
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 13:49:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716558520; cv=none; b=fGZzUziAvKxRcJ1XSKNQhJENbIOKjwh5PG5FDiVGZrYvNSHdXgAEYic1YQDUfl48fGLsg97qe6OEavrEMSdEj7922h0X7vTtHMsN6F7dmN6eA5ECw3DsqUcewLLt25uMmftFoFxN48cRyyUCFaDPJJ41P4Pwiz1wJbizarv+dmk=
+	t=1716558589; cv=none; b=UNTt8b+xi0M4LBbYchVQ44Is2FhEW2kebhDmCnFYFLwDuYBkG9w06aRstho1q229sv53/ZxNLcO5Io/Zb6pfFBYhKsP4AMPlgqc3j2M/Jrybi/7XOCWDugH5vY4WYpRImeEmC03XjHBXIWl7ziprq5MgWuc+9ajlAPI/RuyRzIc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716558520; c=relaxed/simple;
-	bh=hueieaLczksDkmqINO5OE5EiLQWKb0+iM/e3znMSFJA=;
-	h=Message-ID:Date:MIME-Version:To:Cc:References:Subject:From:
-	 In-Reply-To:Content-Type; b=SXd5fSLsnForNFeKGmA9d2RAhQKZLS1A7tC2s8fol18m34dzI9g0hbhHpMfLO1rnfNOPhILwtpjjD1xapkzk+DbwzqHJb3ak57KB49kuyF00WRMe34xwI7nF+I1HQUSu8QTBHTJNt2dfLtmqoS4QKXE74lkqUHHJwsNhRTn2OTc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de; spf=pass smtp.mailfrom=web.de; dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b=GxaZM0ZS; arc=none smtp.client-ip=217.72.192.78
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=web.de
+	s=arc-20240116; t=1716558589; c=relaxed/simple;
+	bh=33WjeXVtBHAXy63Mf535PLvhmvIzrIQ3eRV0TsVNwu0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=d/X9HuXq/kw/Bltkr7tzz4+E+KFOe3jKAHG0r7gGd1Sy4E7YL0BvN1P+0q6TKYGmAonYmkX20sqFY2RaAHZrYsWw8JI5gTjuIa+SggvfCZRASPdiRdhjQS2wHS600krFu5jVzaeFEw5jpafQb5RxFd/PSJC8h5d1W4y4zzm4K1k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=udMQqJ4/; arc=none smtp.client-ip=199.89.1.11
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b="GxaZM0ZS"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=web.de;
-	s=s29768273; t=1716558506; x=1717163306; i=markus.elfring@web.de;
-	bh=TKpcU07BCg0puKeOnHmYb8r4j/62KyBnT3gPVl603HY=;
-	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:To:Cc:References:
-	 Subject:From:In-Reply-To:Content-Type:Content-Transfer-Encoding:
-	 cc:content-transfer-encoding:content-type:date:from:message-id:
-	 mime-version:reply-to:subject:to;
-	b=GxaZM0ZS8KUk0u8iDKn0jxjQCr6jUGjtxsD+g5VWAGPzgzgx5nuUMHwpdO3RQypt
-	 4I19S56RHUNnRpR4jS7kycWLzoHZrxTSipDL+zVPlM/2uZsFw+4GGe5nOP+ZqHsBK
-	 yKSiZwxXMkug8jAVV4cxgxz0HAimVO2OLbUdUXwl2QezSXzK8pZ6SXSs7ZghgXT/h
-	 nToxtfyG/0fho36ZgO6j8/bGkaE3NA3p6M2TgD9/+CdxJtu7hgFYIflgkiSLQ3bv7
-	 fDHZcoEcyF0RNB9nrlLkFps2FPId87VAA2J6Z1LzC9zTn/SfkuOjJ483Gjd31ky4k
-	 rRTNxBWG2SgEU1TwpA==
-X-UI-Sender-Class: 814a7b36-bfc1-4dae-8640-3722d8ec6cd6
-Received: from [192.168.178.21] ([94.31.83.95]) by smtp.web.de (mrweb105
- [213.165.67.124]) with ESMTPSA (Nemesis) id 1MuVGC-1sSa674Byk-015riH; Fri, 24
- May 2024 15:48:26 +0200
-Message-ID: <085b205a-8658-49ba-a8cb-8ffdba9d7a85@web.de>
-Date: Fri, 24 May 2024 15:48:25 +0200
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="udMQqJ4/"
+Received: from localhost (localhost [127.0.0.1])
+	by 008.lax.mailroute.net (Postfix) with ESMTP id 4Vm5y24RR3z6Cnk9B;
+	Fri, 24 May 2024 13:49:46 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1716558584; x=1719150585; bh=2dvz9sp9zWTB7DPElSQMRYR+
+	icXkhtOC/upc0cGQvlk=; b=udMQqJ4/MLmcfiopcGm4McjwZd/aAENQTTnTCIp1
+	/fKqKO0dKUlV2bgHrRN4XMUfwlF6C2xDea24BJSrCdeFQCDnm2tfIKS+l1RENXDA
+	ZR4/FcE/WmlnPPvCdMN1rP5+TRkUhQ1gUhpP8nXJiG7P6JBGsVCuMedIwXcTGbNG
+	3zV7pjGIYXRqPLX1jw9xqOA6+UNfaZ6I27rEm6IZs8Zs9qsEgCVQGuO9EkpD+7P+
+	c/9u/xTc8t5O02x8dhMCJ/UDgbAGMYKtY6Bh4RlJiNJnToZPuE29i8/dqDetgQ05
+	MdAmCu4ldXCRtVs5cvjBCNj0/CenlZ6DAogLf80hNoe7lA==
+X-Virus-Scanned: by MailRoute
+Received: from 008.lax.mailroute.net ([127.0.0.1])
+ by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id bjwhK9LPaoOC; Fri, 24 May 2024 13:49:44 +0000 (UTC)
+Received: from [192.168.50.14] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: bvanassche@acm.org)
+	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4Vm5xy4nHrz6Cnk98;
+	Fri, 24 May 2024 13:49:42 +0000 (UTC)
+Message-ID: <cbfd280d-188e-4dc9-82a0-4052e58a4bb2@acm.org>
+Date: Fri, 24 May 2024 06:49:40 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -42,59 +50,35 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-To: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>, abaci@linux.alibaba.com,
- dm-devel@lists.linux.dev, kernel-janitors@vger.kernel.org,
- Matthew Sakai <msakai@redhat.com>
-Cc: LKML <linux-kernel@vger.kernel.org>
-References: <20240524074109.13433-1-jiapeng.chong@linux.alibaba.com>
-Subject: Re: [PATCH] dm vdo indexer: Use swap() instead of open coding it
-Content-Language: en-GB
-From: Markus Elfring <Markus.Elfring@web.de>
-In-Reply-To: <20240524074109.13433-1-jiapeng.chong@linux.alibaba.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:CwR8mjLaFQnjS76aTyIm0LDeX7mE5+Y0DmhvsARq3yofsW07HBj
- XVetph+zxrR1kLjbVa7noUXMRHfLtJRwmog6Kk1KslKiqasrwtVgdbf5ldE1TJD7Ct5ETzK
- eeTWkQ4Qjw7UY/RwRqMy5oA4n6ciG0Oat3nOetnRJx2ZDIanzP/2f8xwwk3LHc7lDUhpcVx
- ZO6H+xEleGpoEf5lhVuXQ==
-X-Spam-Flag: NO
-UI-OutboundReport: notjunk:1;M01:P0:8nYy4xaiB90=;DW86oxmgOlM+5rGN6og4i9f/eqZ
- s29BRMsR8VHowjsb4NBGxcY2vj5do+GfcSahA4BQpSnWvuk6ObrX2kC+qqcc7D5Y0R+yxKuBW
- 5BnFZYrE8QO+8e9kyUXV/ng5Ku90FuO8gMVx/Bd9mIuKL/zN8gWjLpZI3Mkx7EMZFlC4cKpXL
- 3/1D3dcryc9hiXieTWaUdmT3W6gg6wOPoF+Fu34/Qg/aYxhII69fgFra1lsvJIH2jfL5a28D8
- Bwj8pyymS7u0R6j0ay2UGxBSq4Fxy3T8VAGqOKeu4U9IAHCPJAKic4D9FBj1cXE6Vd/04v3HO
- 4g1X77glYRtrxvR3iLti2+HdX9KSN7cYyA3lpjMWyBmIO8/LqLA3V41g9ZDU4wBwK4cJeXFcL
- xVi0fuKW2CsKX+6Lmkno9EcAVtEKSgaRhMHSgISBbdCRToyc5pWVsYzyue/8Fg6TiJHr3H47w
- o99b92X9NyArBUYGPez8go5+Ltw+oSmzkyAQpqnYj/Hv4JqtDgDg/iwX1FUP03yr9cOtlytxB
- aVkZFjxF+Zka0hty/jSMpXc102dxxvToqYw3sGoWTCFdFN/dkMcd7EE6laAkwp57QVktK4b8J
- DKUb7uSHyDTIyPRuOORntHPp3+D01T9cAlO9uAx1w5UJNCDnZlDumLLRPgl43U8vEe5wislEt
- jawv7Ob9bvlm9ivvooBOO2Jl6mmvBNhJn+4ZbiuHHh31axAJUAceU51r3PblbHZ3R7EmlbAJ1
- pflTe+x/G9BHaX9BZdRYl7MlqWl47DUXnOlkkBXVdEFby69FlGq7FByrVtE7ZOSj83LOi2C0F
- JdTpTuxf3Sg0DzB2mIUQuBs3dK4k5SAXE9NRisgW/jbxw=
+Subject: Re: [PATCH] block: check for max_hw_sectors underflow
+To: Hannes Reinecke <hare@kernel.org>, Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@kernel.org>,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev
+References: <20240524095719.105284-1-hare@kernel.org>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20240524095719.105284-1-hare@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-> Swap is a function interface that provides exchange function. To avoid
-> code duplication, we can use swap function.
+On 5/24/24 02:57, Hannes Reinecke wrote:
+> diff --git a/block/blk-settings.c b/block/blk-settings.c
+> index 524cf597b2e9..0cdca702e988 100644
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -133,6 +133,8 @@ static int blk_validate_limits(struct queue_limits *lim)
+>   		lim->max_hw_sectors = BLK_SAFE_MAX_SECTORS;
+>   	if (WARN_ON_ONCE(lim->max_hw_sectors < PAGE_SECTORS))
+>   		return -EINVAL;
+> +	if (WARN_ON_ONCE((lim->logical_block_size >> SECTOR_SHIFT) > lim->max_hw_sectors))
+> +		return -EINVAL;
+>   	lim->max_hw_sectors = round_down(lim->max_hw_sectors,
+>   			lim->logical_block_size >> SECTOR_SHIFT);
+>   
 
-Would a wording approach (like the following) be a bit nicer
-for the second sentence?
+Why is lim->max_hw_sectors checked before calling round_down() instead
+of checking that round_down() returns zero?
 
-   Use existing swap() function rather than duplicating its implementation=
-.
+Thanks,
 
-
-How do you think about to apply the summary phrase =E2=80=9CUse swap() in =
-swap_open_chapter()=E2=80=9D?
-
-
-> ./drivers/md/dm-vdo/indexer/index.c:207:43-44: WARNING opportunity for s=
-wap().
->
-> Reported-by: Abaci Robot <abaci@linux.alibaba.com>
-> Closes: https://bugzilla.openanolis.cn/show_bug.cgi?id=3D9173
-
-Would another indication be helpful for the involved analysis tool?
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/sc=
-ripts/coccinelle/misc/swap.cocci?h=3Dv6.9
-
-Regards,
-Markus
+Bart.
