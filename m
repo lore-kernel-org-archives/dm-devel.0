@@ -1,53 +1,53 @@
-Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com [209.85.160.177])
+Received: from mail-qt1-f176.google.com (mail-qt1-f176.google.com [209.85.160.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1CE1B12CDA8
-	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 15:08:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BA3F12CDB6
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 15:09:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716563283; cv=none; b=Ebgh4jXGYRX+gnA6o88ltKE1VGdtbylyAb1rUhM8cUL4d8ZeK+9W5HOr+ViL2XkxLMPUc1ZGqh9NQ7VmiaSTlDPxvj3rhsAleKl1r14C4dp0TuNMHXpntuqbi+BEcUh3s7vCZusas4ygMmUeOPS7QYdXJolcWUYB3c+5VwqnBpI=
+	t=1716563395; cv=none; b=AucZC4dNd//RpMPUez/DUlmU4jOcaOjfkV+l7t+3qgcHN76Ns7Gzl9FuT6FoO06z7qgBF7pwHOWD0+XBJiRuDvHAuqntxnFaFKBz36pJm3NCT2d+bcXEL/WGXAKg97HcWNAtTG13NiiYjQDFdJlLPos8ZyVcIPuPk3iep43Q9fU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716563283; c=relaxed/simple;
-	bh=awM9KS9Hf/cTVeJFtrPxpz6mdNN+XbqzYtxxMBFvNdU=;
+	s=arc-20240116; t=1716563395; c=relaxed/simple;
+	bh=zxVEMgI09UQfjFM1R4pyiHL6OkU1AyAqLPk40WkZOmo=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=txpm7MRTljgkMvSDoAEmXvTJT85R3hBU+kcYihMOKMAFlpPwchNmK27e1RDF0VERes4AxS6sY2AGK41jQkKdPyPkHU3vpCA8GUNDbJ8xsilsOnHLFJ47HtscE38pmndx+1xZjEoccFx8IgtH2QZQPbYkzR5I/J+LYXjCBGuytfE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.160.177
+	 Content-Type:Content-Disposition:In-Reply-To; b=lhpKX1auiHvRof8XS36WgzPV70Bku3IsHyMJyiS2mN7HvjXItjXLhecV8Ng1/Ej9QJkAUMaacFuqCXz2VdGh4S9pe2QxRmgNMM6DRlnOxTI4ViwIJFNTgkB6O+q3t8JedMImrzZumDkvbwcG7yuJCrZWe2N+NKV5FR2WgNQV+pA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org; spf=none smtp.mailfrom=snitzer.net; arc=none smtp.client-ip=209.85.160.176
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=snitzer.net
-Received: by mail-qt1-f177.google.com with SMTP id d75a77b69052e-43fb02d7eb5so4531691cf.0
-        for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 08:08:01 -0700 (PDT)
+Received: by mail-qt1-f176.google.com with SMTP id d75a77b69052e-43fb0f2daadso4520351cf.3
+        for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 08:09:54 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716563281; x=1717168081;
+        d=1e100.net; s=20230601; t=1716563393; x=1717168193;
         h=in-reply-to:content-disposition:mime-version:references:message-id
          :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=woYS6Es2+y4+PibBTK1NwSLpjN0wVXLdgLw932m/a6g=;
-        b=AqYisGwZaZnvfjhNm5ibTcKQdmQZ1knKqHQE2BPXJvrdqy6byp5ki95FFTlruEN44s
-         d+YKU65RHoGfSnzJDnK3gPdrgI9NkhyAx/8Ok6IGdj/vId165J5aq1DV3oaDp5tZEqGj
-         O20mlma8HKqw+d2/mOdzCnMdXBLEmPuIpJ1kjUx7lLETS4Lnral5r8Ts5Ayh9WLz924R
-         gvX+I0qpxuLvzC5NIfN64qVWxGyvttISKvCXKT5W/B38jfqED3nLcTiDi+VcO42tD7iv
-         UJo3u3dobGLc9iZ7TtPSanZqK74egUAjoFIKP0cVKW4d1+OjaYkf/vJS9o4ee/izALdV
-         p34A==
-X-Forwarded-Encrypted: i=1; AJvYcCUiZGtQ47Spv57BVpnCjK/2QyhnWkQJFqkO3S+VOJbykVmJkoqFigjfOHe+PeqHQ4wq0e3XFI90xtfZo+Uzc3ISntQ84PwFMVc=
-X-Gm-Message-State: AOJu0YzE5ABf/FeS9mYd/HnFhRGZ5E9w+DN7lZVE2dPOMiV7gPOPPUF2
-	7wrz9iGavEsp36F9XdGtXBj2XosHT+POj2RcKPDEFbKyb7OL2QIk0GTj5ruKGZI=
-X-Google-Smtp-Source: AGHT+IG1Iuvd4NC6UPMP7fN3razy69NpRrviBHID81LtFhzjsTGrwfa4UB1jK8cf0LUgilv/0FkOQw==
-X-Received: by 2002:a05:622a:450:b0:43b:a44:f83c with SMTP id d75a77b69052e-43fb0f0d702mr27402931cf.56.1716563280838;
-        Fri, 24 May 2024 08:08:00 -0700 (PDT)
+        bh=rdkc0qj1QfAURfQU2OpxmXvtxGpBJsgq5A22WLnsFyg=;
+        b=Ws3lofUebzGCGFCn0c5eOR6R+my2ieUO9u7RKNlIVQuiJduwDkA37UT4ZLW6EUFrRW
+         lhW7zrJgFh1p8LT7IXuAWROzHwWOH4/XStOsZt65hKlOUHYCL1vR6e2I9chF31Xr1Qdw
+         t0MtTuFt/elclSnH7KWLoEOvbqpOSfP2bPqCyF2jVAHNgIIoVFV2YiSLd/PBfx5/la4w
+         FCDzNQkQrj33ZTYkkaMkqYxUswB+2jAb+PjJ8EhBINDftT32CwW+9W86P3r0oTG2k87O
+         dgxLV7IBcDfYLDPGMvGvUmJXSUzi87EDkv6uNcHLoeJGtxWMpj1PnDZMtMQ/oS0Lyn4y
+         jpCw==
+X-Forwarded-Encrypted: i=1; AJvYcCU9VCPNEJADUpfo9xsJgqRPyBYrBV1wfRYQUNUBWRFrGB0ut/OYVGku9z1dOK52spngEtEZOJecSxGKUCXua8JXJF81DGGUnAQ=
+X-Gm-Message-State: AOJu0Yy4DaJt1nlb+VBIewPxztc4lXBI6S8A/w9FN3e15WNC1K6odsx1
+	cR6gJRqiXvWx4OAu5MFKEb23j64Zn4wHNpnxgb2cSrxX71jlpv3NLwFqe04i4ukYSs62ktx/DEX
+	39gkaug==
+X-Google-Smtp-Source: AGHT+IGLHO9oq7tqKD8/icYnVkNsh8ZMUBaSthC9tqQqno2sMecPNHiz/kQgN/zX6NReNQhJM0Umfw==
+X-Received: by 2002:ac8:7f91:0:b0:43a:b2a0:6e01 with SMTP id d75a77b69052e-43fb0de1a2amr29718201cf.21.1716563393278;
+        Fri, 24 May 2024 08:09:53 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-43fb17f40f2sm8534081cf.44.2024.05.24.08.08.00
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-43fb18c3f46sm8650681cf.85.2024.05.24.08.09.52
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 24 May 2024 08:08:00 -0700 (PDT)
-Date: Fri, 24 May 2024 11:07:59 -0400
+        Fri, 24 May 2024 08:09:52 -0700 (PDT)
+Date: Fri, 24 May 2024 11:09:51 -0400
 From: Mike Snitzer <snitzer@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
 Cc: Mikulas Patocka <mpatocka@redhat.com>,
 	Damien Le Moal <dlemoal@kernel.org>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH 1/3] dm: move setting zoned_enabled to
- dm_table_set_restrictions
-Message-ID: <ZlCtT0FadH4I8dFb@kernel.org>
+Subject: Re: [PATCH 2/3] dm: remove dm_check_zoned
+Message-ID: <ZlCtv8Z0_D2pLW80@kernel.org>
 References: <20240524142929.817565-1-hch@lst.de>
- <20240524142929.817565-2-hch@lst.de>
+ <20240524142929.817565-3-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -56,56 +56,12 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240524142929.817565-2-hch@lst.de>
+In-Reply-To: <20240524142929.817565-3-hch@lst.de>
 
-On Fri, May 24, 2024 at 04:29:09PM +0200, Christoph Hellwig wrote:
-> Keep it together with the rest of the zoned code.
+On Fri, May 24, 2024 at 04:29:10PM +0200, Christoph Hellwig wrote:
+> Fold it into the only caller in preparation to changes in the
+> queue limits setup.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/md/dm-table.c | 3 ---
->  drivers/md/dm-zone.c  | 8 +++++++-
->  2 files changed, 7 insertions(+), 4 deletions(-)
-> 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index cc66a27c363a65..e291b78b307b13 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -2040,9 +2040,6 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
->  		r = dm_set_zones_restrictions(t, q);
->  		if (r)
->  			return r;
-> -		if (blk_queue_is_zoned(q) &&
-> -		    !static_key_enabled(&zoned_enabled.key))
-> -			static_branch_enable(&zoned_enabled);
->  	}
->  
->  	dm_update_crypto_profile(q, t);
-> diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-> index 8e6bcb0d786a1a..eb1165324ab047 100644
-> --- a/drivers/md/dm-zone.c
-> +++ b/drivers/md/dm-zone.c
-> @@ -287,7 +287,13 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
->  		       queue_emulates_zone_append(q) ? "emulated" : "native");
->  	}
->  
-> -	return dm_revalidate_zones(md, t);
-> +	ret = dm_revalidate_zones(md, t);
-> +	if (ret < 0)
-> +		return 0;
 
-Not following why you're return 0 if r < 0.
-
-blk_revalidate_disk_zones() has quite a few negative checks that
-return regular error codes, so why drop those validation errors?
-
-> +
-> +	if (!static_key_enabled(&zoned_enabled.key))
-> +		static_branch_enable(&zoned_enabled);
-> +	return 0;
->  }
->  
->  /*
-> -- 
-> 2.43.0
-> 
+Reviewed-by: Mike Snitzer <snitzer@kernel.org>
