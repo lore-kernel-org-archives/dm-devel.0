@@ -1,236 +1,115 @@
-Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FB3676F17
-	for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 22:17:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=173.205.220.69
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7ED1563B8
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 00:58:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716502634; cv=none; b=pDhyBghmdnTtkKWDS22FauW9PSm39g4+RlOtUHJ8vA//DQdSIGJsWwEavWaekBIpQFx3nRnGbvs0tirwO8UA/0ErNqoA8+BbQMLra/bljxdFXQZMV7RrAf3U3KLCexoz81ZaCbNOX5Tu9abZV1Hu9fir0JLMnwVG3akD8YKsI38=
+	t=1716512282; cv=none; b=NXuJrb+ANcGKO5mtTn3u+YnKP9dEPApjWULHNkrBd3kVLWsMP7Hl9lIe4XBvuplR2gjLBUiZqCz1Mt7VNru2DcQwpl+wsJVUXXoM2cLHPoui04AUODzzAvUhc2x3xh59SN8F64GcFcFlD2AaKgeqqikNR6gP53s3dU3whvr1c94=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716502634; c=relaxed/simple;
-	bh=WKSeStaX/TFdgri9jtr2/9pLUQwqpsJ7Cj+v+tXlRwo=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Clam9vgUTNsKqQlLaoYwD9nALl1/kvSPqBw9ZdWiTTouAC7Jk01l85mavS7kxqFkhLihX3apR+jIUMaSCzNj/otrhaoFwBXF2KaHs3rPoFu3tE8bcPdi7wSwNEf3iSloddAsJ/y6KA86EvRAFd/LkygZNKucKRTSfcJphglTrug=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net; spf=none smtp.mailfrom=lists.ewheeler.net; arc=none smtp.client-ip=173.205.220.69
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=lists.ewheeler.net
-Received: from localhost (localhost [127.0.0.1])
-	by mx.ewheeler.net (Postfix) with ESMTP id 7E16481;
-	Thu, 23 May 2024 15:17:12 -0700 (PDT)
-X-Virus-Scanned: amavisd-new at ewheeler.net
-Received: from mx.ewheeler.net ([127.0.0.1])
-	by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
-	with LMTP id v-ScayE9AXXK; Thu, 23 May 2024 15:17:10 -0700 (PDT)
-Received: from localhost (localhost [127.0.0.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mx.ewheeler.net (Postfix) with ESMTPSA id AC0BE40;
-	Thu, 23 May 2024 15:17:10 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net AC0BE40
-Date: Thu, 23 May 2024 15:17:10 -0700 (PDT)
-From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-To: Mike Snitzer <snitzer@kernel.org>
-cc: Mikulas Patocka <mpatocka@redhat.com>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, Yang Yang <yang.yang@vivo.com>, 
-    Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org
-Subject: Re: dm: optimize flushes
-In-Reply-To: <Zk4Y6DMgK71UuoKd@kernel.org>
-Message-ID: <92786ecf-aa40-5e7-47c3-82614dffca78@ewheeler.net>
-References: <20240514090445.2847-1-yang.yang@vivo.com> <20240514090445.2847-4-yang.yang@vivo.com> <ZkTXzG1yrPmW64Z6@redhat.com> <60bd4b9-8edd-7e22-ce8b-e5d0e43da195@redhat.com> <90f4beb-2e15-3f9-4bc2-0d13872e8ea@redhat.com> <Zk4Y6DMgK71UuoKd@kernel.org>
+	s=arc-20240116; t=1716512282; c=relaxed/simple;
+	bh=B09WagMSQYqu2y6WcNLAL8j1PdOhiUvl64ijy52FX74=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=jZDeUIE3lwKXxe1qhcL9EKAoprcBaiGuL8ovYVqgF+rsbFXCHLjwEbo1PgHJmW4qs5PEEiiZ0GvLVDVOUK+Aqv8D4ukdl+JEl9j0L/WdiIqgqIhol+2z8QhUjL5035T/f7aKZcEIfW5lt53OFVtNrrktxDSsy6X12lhV2QsLsks=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JMTAfOCL; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JMTAfOCL"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716512279;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3nW6ItyXHWrOBbIXTrs/WnWz6xyA/F9n+0mCPhSlCMk=;
+	b=JMTAfOCLkbQR9AdCdAYUE8u5A2W0mjf5SWvAcmoPo1zNmWO1sJRe0NL3AcT4PzVtt9gfj8
+	HMvdoV5pVTMnTlPa05k6WmjY8xez5i58JU2YBHk9ojDngBBlKFaKLiFqCdjg+J7LhFDN5N
+	Qd5h+u2H+EfpfP1TAGolEvnOlkfTNnA=
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-220-CeUUOdB-M3KaESUlo2_GQg-1; Thu, 23 May 2024 20:57:55 -0400
+X-MC-Unique: CeUUOdB-M3KaESUlo2_GQg-1
+Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-6ab83a8eec0so6779856d6.0
+        for <dm-devel@lists.linux.dev>; Thu, 23 May 2024 17:57:55 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716512275; x=1717117075;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=3nW6ItyXHWrOBbIXTrs/WnWz6xyA/F9n+0mCPhSlCMk=;
+        b=tPnyTCxdVvxugZjfxpFO9sWch3oo1Ap/14hJ50Mb3fK6to9Qjm0JG1Iwwd94dXwZsl
+         N/wRbO0hPw+mMCchQJjVqeSDnqY2r/t4n1kKC460vqKWD71rR5aDG/PC5uNEYhs/7h0G
+         yhl4xofaG/k6awP5stnijPoHI2gAP7sXXNptAt01tE2NsCe6Rsj7h18OUTUrGE9+Z7j5
+         ydUGEMRc7ofo741NTez6tvx484y9e5DsQ7RNmLoLshSh/h4iz6rup8hXfxyiIngu6ykR
+         o2Ck52k5dOnYF6hitiGHn7N2o3ve0SyLsgkvJbHhUV9cUoNZbhvukPFoI7PdpDXAKgPm
+         F5xg==
+X-Gm-Message-State: AOJu0YzOJo6v0zNFxnMd8qXzHBp3sqHJl64mGR442s8bscILAmiqJ/HX
+	zgic37An8e2XwAu+PGW6rZlYbB6leSjU5QDdQcsd333bHr5zJwy4qQNsxXd62DAPnSMUDYvrCUi
+	8+CGnxE0sbf/N27aP9neOFXZc9sqYUWoq52YUqdT70razhoPsasTPaFcw
+X-Received: by 2002:a05:6214:5d11:b0:6ab:891c:54e9 with SMTP id 6a1803df08f44-6abcd0fadaamr6119326d6.35.1716512275099;
+        Thu, 23 May 2024 17:57:55 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHr9OA8GjcLWPDgYxGn3TRIwyBJob8LLed2gjUw9dHtXvVxRa+eApiMcnlNbmzT0L542FUa/A==
+X-Received: by 2002:a05:6214:5d11:b0:6ab:891c:54e9 with SMTP id 6a1803df08f44-6abcd0fadaamr6119246d6.35.1716512274609;
+        Thu, 23 May 2024 17:57:54 -0700 (PDT)
+Received: from [192.168.1.175] ([70.22.187.239])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6ac16308ecasm2009026d6.121.2024.05.23.17.57.54
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 23 May 2024 17:57:54 -0700 (PDT)
+Message-ID: <5c063045-4bce-14e4-9930-77cc0ed2edad@redhat.com>
+Date: Thu, 23 May 2024 20:57:53 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.12.0
+Subject: Re: [PATCH] dm vdo: remove unused struct 'uds_attribute'
+To: linux@treblig.org
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <20240523210716.309324-1-linux@treblig.org>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20240523210716.309324-1-linux@treblig.org>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Wed, 22 May 2024, Mike Snitzer wrote:
-> On Thu, May 16, 2024 at 10:49:55PM +0200, Mikulas Patocka wrote:
-> > Device mapper sends flush bios to all the targets and the targets send it
-> > to the underlying device. That may be inefficient, for example if a table
-> > contains 10 linear targets pointing to the same physical device, then
-> > device mapper would send 10 flush bios to that device - despite the fact
-> > that only one bio would be sufficient.
-> > 
-> > This commit optimizes the flush behavior. It introduces a per-target
-> > variable flush_pass_around - it is set when the target supports flush
-> > optimization - currently, the dm-linear and dm-stripe targets support it.
-> > When all the targets in a table have flush_pass_around, flush_pass_around
-> > on the table is set. __send_empty_flush tests if the table has
-> > flush_pass_around - and if it has, no flush bios are sent to the targets
-> > and the list dm_table->devices is iterated and the flush bios are sent to
-> > each member of the list.
+On 5/23/24 17:07, linux@treblig.org wrote:
+> From: "Dr. David Alan Gilbert" <linux@treblig.org>
 > 
-> What does "pass around" mean?  Seems like an awkward name for this.
-> (Naming can be hard, I don't have better suggestions at the moment.)
-
-just playing with naming ideas from other disciplines in case you likes 
-one of these concepts better than "pass around".  I'm not attached any of 
-these, this is just for making conversation so the flag can be easily 
-understood:
-
-	- flush_can_scatter (as in scatter/gather)
-	- flush_can_distribute
-	- flush_can_spread
-	- flush_deduplicate
-	
-...
-
-> > Index: linux-2.6/include/linux/device-mapper.h
-> > ===================================================================
-> > --- linux-2.6.orig/include/linux/device-mapper.h	2024-05-15 16:56:49.000000000 +0200
-> > +++ linux-2.6/include/linux/device-mapper.h	2024-05-15 16:56:49.000000000 +0200
-> > @@ -397,6 +397,11 @@ struct dm_target {
-> >  	 * bio_set_dev(). NOTE: ideally a target should _not_ need this.
-> >  	 */
-> >  	bool needs_bio_set_dev:1;
-> > +
-> > +	/*
-> > +	 * Set if the target supports flush optimization
-> > +	 */
-> > +	bool flush_pass_around:1;
-> >  };
+> 'uds_attribute' is unused since
+> commit a9da0fb6d8c6 ("dm vdo: remove all sysfs interfaces").
 > 
-> How does a developer _know_ if a target can set this flag?  Please
-> elaborate on the requirements in this code comment.
+> Remove it.
+> 
+> Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
 
-Relatedly,
+Yes, this was clearly an oversight on our part. Feel free to add:
+Reviewed-by: Matthew Sakai <msakai@redhat.com>
 
-To what extent can this be set automatically? For example, if you have a 
-bunch of non-DM (eg, SCSI) disks under a device mapper target, then it 
-seems reasonable that they would "support" this feature in the identity 
-sense: they can take flush and it will (should) not be spread to other 
-devices in the DM stack, so the device mapper targets being instantiated 
-in such a case would enable this flag.  Thus, a new target that only has 
-non-DM devices can (probably?) default enabled; maybe there are counter 
-examples here.
+> ---
+>   drivers/md/dm-vdo/dedupe.c | 5 -----
+>   1 file changed, 5 deletions(-)
+> 
+> diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
+> index 117266e1b3ae..39ac68614419 100644
+> --- a/drivers/md/dm-vdo/dedupe.c
+> +++ b/drivers/md/dm-vdo/dedupe.c
+> @@ -148,11 +148,6 @@
+>   #include "vdo.h"
+>   #include "wait-queue.h"
+>   
+> -struct uds_attribute {
+> -	struct attribute attr;
+> -	const char *(*show_string)(struct hash_zones *hash_zones);
+> -};
+> -
+>   #define DEDUPE_QUERY_TIMER_IDLE 0
+>   #define DEDUPE_QUERY_TIMER_RUNNING 1
+>   #define DEDUPE_QUERY_TIMER_FIRED 2
 
-Another consideration is for targets (eg, dm-thinpool) which have multiple 
-lower-level block devices on the same table definition line, often a data 
-and metadata volume. By contrast, linear tables may have multiple backing 
-devices in separate target table lines.  This may be further complicated 
-by the fact that a device mapper target can be composed of multiple 
-disparate targets as separate table lines, each of which may have a 
-different number of backing devices for their own definition.
-
-Perhaps your design already covers these edge cases, so I am only 
-mentioning this in case it may prompt ideas for other edge cases 
-to review.
-
-
---
-Eric Wheeler
-
-
-
-> 
-> >  
-> >  void *dm_per_bio_data(struct bio *bio, size_t data_size);
-> > Index: linux-2.6/drivers/md/dm.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm.c	2024-05-15 16:56:49.000000000 +0200
-> > +++ linux-2.6/drivers/md/dm.c	2024-05-16 20:06:32.000000000 +0200
-> > @@ -645,7 +645,7 @@ static struct bio *alloc_tio(struct clon
-> >  
-> >  	/* Set default bdev, but target must bio_set_dev() before issuing IO */
-> >  	clone->bi_bdev = md->disk->part0;
-> > -	if (unlikely(ti->needs_bio_set_dev))
-> > +	if (likely(ti != NULL) && unlikely(ti->needs_bio_set_dev))
-> >  		bio_set_dev(clone, md->disk->part0);
-> >  
-> >  	if (len) {
-> > @@ -1107,7 +1107,7 @@ static void clone_endio(struct bio *bio)
-> >  	blk_status_t error = bio->bi_status;
-> >  	struct dm_target_io *tio = clone_to_tio(bio);
-> >  	struct dm_target *ti = tio->ti;
-> > -	dm_endio_fn endio = ti->type->end_io;
-> > +	dm_endio_fn endio = likely(ti != NULL) ? ti->type->end_io : NULL;
-> >  	struct dm_io *io = tio->io;
-> >  	struct mapped_device *md = io->md;
-> >  
-> > @@ -1154,7 +1154,7 @@ static void clone_endio(struct bio *bio)
-> >  	}
-> >  
-> >  	if (static_branch_unlikely(&swap_bios_enabled) &&
-> > -	    unlikely(swap_bios_limit(ti, bio)))
-> > +	    likely(ti != NULL) && unlikely(swap_bios_limit(ti, bio)))
-> >  		up(&md->swap_bios_semaphore);
-> >  
-> >  	free_tio(bio);
-> 
-> What is it about this commit that makes it important to verify ti
-> isn't NULL in the above 3 hunks?
-> 
-> Should these NULL checks be factored out as a separate fix?
-> 
-> Or can these hunks be dropped?
-> 
-> > @@ -1566,17 +1566,36 @@ static void __send_empty_flush(struct cl
-> >  	ci->sector_count = 0;
-> >  	ci->io->tio.clone.bi_iter.bi_size = 0;
-> >  
-> > -	for (unsigned int i = 0; i < t->num_targets; i++) {
-> > -		unsigned int bios;
-> > -		struct dm_target *ti = dm_table_get_target(t, i);
-> > -
-> > -		if (unlikely(ti->num_flush_bios == 0))
-> > -			continue;
-> > -
-> > -		atomic_add(ti->num_flush_bios, &ci->io->io_count);
-> > -		bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
-> > -					     NULL, GFP_NOWAIT);
-> > -		atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
-> > +	if (!t->flush_pass_around) {
-> > +		for (unsigned int i = 0; i < t->num_targets; i++) {
-> > +			unsigned int bios;
-> > +			struct dm_target *ti = dm_table_get_target(t, i);
-> > +
-> > +			if (unlikely(ti->num_flush_bios == 0))
-> > +				continue;
-> > +
-> > +			atomic_add(ti->num_flush_bios, &ci->io->io_count);
-> > +			bios = __send_duplicate_bios(ci, ti, ti->num_flush_bios,
-> > +						     NULL, GFP_NOWAIT);
-> > +			atomic_sub(ti->num_flush_bios - bios, &ci->io->io_count);
-> > +		}
-> > +	} else {
-> > +		/*
-> > +		 * Note that there's no need to grab t->devices_lock here
-> > +		 * because the targets that support flush pass-around don't
-> > +		 * modify the list of devices.
-> > +		 */
-> > +		struct list_head *devices = dm_table_get_devices(t);
-> > +		unsigned int len = 0;
-> > +		struct dm_dev_internal *dd;
-> > +		list_for_each_entry(dd, devices, list) {
-> > +			struct bio *clone;
-> > +			clone = alloc_tio(ci, NULL, 0, &len, GFP_NOIO);
-> > +			atomic_add(1, &ci->io->io_count);
-> > +			bio_set_dev(clone, dd->dm_dev->bdev);
-> > +			clone->bi_end_io = clone_endio;
-> > +			dm_submit_bio_remap(clone, NULL);
-> > +		}
-> >  	}
-> >  
-> >  	/*
-> > 
-> > 
-> 
-> Still missing what "pass-around" is meant to convey given that you
-> aren't passing around the same flush... you're cloning a new flush and
-> issuing one per device.  Probably worth explaining that's what you
-> mean by "flush_pass_around" (both in commit header and elaborate in
-> code)?
-> 
-> Also, you're issuing a flush to _all_ devices in a table. Not just
-> the data devices.  .iterate_devices returns only the data devices.
-> If/when there is a need to extend this feature to targets that have
-> metadata devices (e.g. dm-thin, cache, etc): would it make sense to
-> filter out non-data devices (by stepping through each target in the
-> table and using iterate_devices)?
-> 
-> Mike
-> 
-> 
