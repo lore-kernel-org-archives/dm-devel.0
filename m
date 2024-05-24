@@ -1,49 +1,80 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from out30-130.freemail.mail.aliyun.com (out30-130.freemail.mail.aliyun.com [115.124.30.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CDFBA9475
-	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 07:40:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5D7641272D6
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 07:41:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=115.124.30.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716536408; cv=none; b=Dbu0GUzENzo+hZVJQF8GLg8JTL9Ye7GkJwRoJZ1ewFnSMLflvfaeSrzDWp4U/7KJ1+uDFHqUIE28RjnZ6SOYQTZu4iAz74cDGBOFgzQdOrQsVvEdsJpbrbMwpVJrtP8BibKFUNNdqaLbtTFeNaS3evGKuMiNgfGoAr1FawgL0C0=
+	t=1716536488; cv=none; b=HcKweM6fLLsIs8Z2iphgiMNpHnYrqrTCnyopRHqWY1Jg3hv8wEZD1e16Ux8lT336MN8zsPUCTTHmJlIumGSlgbl+K6kEgPTGecH7EO6C5jaSzFbsq/yZg2jaZI4Zx78EulbEkWjfUFyxEak7nFmNI+71jonExRfM5Ket/LMiQOM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716536408; c=relaxed/simple;
-	bh=d9uYQyhdcHAhJqhLyJS2puAOrgGCGS6DbNQ4um6HGjM=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=gA3JiP6Rcp6ZtNmRJYDfSalLjNKTNmTAasV8PO5UiQ+tHnyh0UZ7O8u4RI3we3K6gkzClRO6WvOMikSDs3TrSBrX+hNffJXp2mr28OZXhchwHiT2i5j701ob+Z+PSwY1ag9Ufpij41M4etLPaTYhTSlk+Dyl4LddLxv8J93eKwQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 2F58368B05; Fri, 24 May 2024 09:39:57 +0200 (CEST)
-Date: Fri, 24 May 2024 09:39:57 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Hannes Reinecke <hare@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>,
-	Mike Snitzer <snitzer@kernel.org>, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH] block: blk_set_stacking_limits() doesn't validate
-Message-ID: <20240524073957.GB16336@lst.de>
-References: <20240524062119.143788-1-hare@kernel.org>
+	s=arc-20240116; t=1716536488; c=relaxed/simple;
+	bh=ozll6qRziq35PAG1YBIEGMLw6nDofgS/piP4h49p9Ek=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=afW9k7atxfwWzFhummOVeVFU7aOo01VPbWIc6K0tlcXtY7V2v7Dg7s7FkKTnDhKHl8ww5vMv4d2s/V4qNvw1g1DqBaFHadM1+uE/NnH+nzk+QLff9WD+f9vnDJ6dU7hbaum4KD7L7A3pYRupkmXR+GA7wAT7kkzNpzgWmXlqVuo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com; spf=pass smtp.mailfrom=linux.alibaba.com; dkim=pass (1024-bit key) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.b=X8580v1W; arc=none smtp.client-ip=115.124.30.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.alibaba.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.b="X8580v1W"
+DKIM-Signature:v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=linux.alibaba.com; s=default;
+	t=1716536483; h=From:To:Subject:Date:Message-Id:MIME-Version;
+	bh=CVF9HV5OIB/RrlM1U638eXjEEYFYuWvTgJEt/6k4K4w=;
+	b=X8580v1Wc5hUPAc4GCoRaLTw+u5pbchD4BHymuyTLLHqZ2E+4TThj30DX7KRjXx0CzBquQM6GzcpcH7fJD2iglz4Fou0riRmMSu8FCTVDklZbEvAyejK/7sycilF/wlAwHDeDKigQwCJkm8qWDTZlM/LpnvIrINJ3lUhjaEQ7s0=
+X-Alimail-AntiSpam:AC=PASS;BC=-1|-1;BR=01201311R161e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=maildocker-contentspam033022160150;MF=jiapeng.chong@linux.alibaba.com;NM=1;PH=DS;RN=5;SR=0;TI=SMTPD_---0W761soU_1716536471;
+Received: from localhost(mailfrom:jiapeng.chong@linux.alibaba.com fp:SMTPD_---0W761soU_1716536471)
+          by smtp.aliyun-inc.com;
+          Fri, 24 May 2024 15:41:23 +0800
+From: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+To: msakai@redhat.com
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Jiapeng Chong <jiapeng.chong@linux.alibaba.com>,
+	Abaci Robot <abaci@linux.alibaba.com>
+Subject: [PATCH] dm vdo indexer: Use swap() instead of open coding it
+Date: Fri, 24 May 2024 15:41:09 +0800
+Message-Id: <20240524074109.13433-1-jiapeng.chong@linux.alibaba.com>
+X-Mailer: git-send-email 2.20.1.7.g153144c
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240524062119.143788-1-hare@kernel.org>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Transfer-Encoding: 8bit
 
-On Fri, May 24, 2024 at 08:21:19AM +0200, Hannes Reinecke wrote:
-> blk_validate_zoned_limits() checks whether any of the zoned limits
-> are set for non-zoned limits. As blk_set_stacking_limits() sets
-> max_zone_append_sectors() it'll fail to validate.
+Swap is a function interface that provides exchange function. To avoid
+code duplication, we can use swap function.
 
-Except that you now broke it for zone devices.  Normally if we are
-not building a stacked zoned device there should at least be one
-underlying device that has a zero max_zone_append_limit, thus lowering
-the stacked device limit to 0.  I guess you have a scenario where that
-is not the case, so please explain it so that we can fix it.
+./drivers/md/dm-vdo/indexer/index.c:207:43-44: WARNING opportunity for swap().
+
+Reported-by: Abaci Robot <abaci@linux.alibaba.com>
+Closes: https://bugzilla.openanolis.cn/show_bug.cgi?id=9173
+Signed-off-by: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+---
+ drivers/md/dm-vdo/indexer/index.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-vdo/indexer/index.c b/drivers/md/dm-vdo/indexer/index.c
+index 1ba767144426..df4934846244 100644
+--- a/drivers/md/dm-vdo/indexer/index.c
++++ b/drivers/md/dm-vdo/indexer/index.c
+@@ -197,15 +197,12 @@ static int finish_previous_chapter(struct uds_index *index, u64 current_chapter_
+ static int swap_open_chapter(struct index_zone *zone)
+ {
+ 	int result;
+-	struct open_chapter_zone *temporary_chapter;
+ 
+ 	result = finish_previous_chapter(zone->index, zone->newest_virtual_chapter);
+ 	if (result != UDS_SUCCESS)
+ 		return result;
+ 
+-	temporary_chapter = zone->open_chapter;
+-	zone->open_chapter = zone->writing_chapter;
+-	zone->writing_chapter = temporary_chapter;
++	swap(zone->open_chapter, zone->writing_chapter);
+ 	return UDS_SUCCESS;
+ }
+ 
+-- 
+2.20.1.7.g153144c
 
