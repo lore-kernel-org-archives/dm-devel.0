@@ -1,55 +1,57 @@
-Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com [209.85.216.54])
+Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com [209.85.216.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF3A412C495
-	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 15:30:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E63C412E1ED
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 15:30:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716564609; cv=none; b=BvY3AqS+5IiFzN1mpDiEs6W5iYA3DXVd6Qoo6yLkU+/1mhiyHuREqD+EeQVEc2Mewd4S3g+8SEaj3hiV/TafAxJzeHh3VAq+yL9h5fjwg7VvhUXzYB8AX3FjhxcHkjCJHot4y6ASvp45WqpRzHSmq9ruqP1E3rC5ZowU+3jwL7Q=
+	t=1716564614; cv=none; b=WVTuV7fyt61VS9PWAlIIzHbSmtkTO+o56UxaWyl5ODXO7jPF7eEAxi4CmFG1gonLRPHSx22Al4CrGFkvyy+6BD65H1OSvAuKmd0Ghv7uWtJvoDSpwThBNRygrLh5RZw0Ed3/Sofm3F1/Y5UDIIW+6ObwE8l30R7N5HX4I8vNEA4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716564609; c=relaxed/simple;
-	bh=1UgP6eazdUc8pLVw/Wqd33LMXd5ofZAnC5HL+Lqzbnw=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=DY6mFzUb+rZBl5+K8JVFqxTqGbTqQCxszwNoudm4xMR3+wyHz2fN1ecUiJJ8/ZIT2UkaaXYrodMgaLqsXlzaoHTwk3rhuOMkTRW46HLd9R4MuilZKb7UNWOOu5l7Ij+gJn1DpvtAsEvAhK2D3lnFmvIr7tqe7UgT8cicOvR8AP0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=J8shrP7s; arc=none smtp.client-ip=209.85.216.54
+	s=arc-20240116; t=1716564614; c=relaxed/simple;
+	bh=Vb+x/ZZbyvOZEx4tZHTKF+8NUAMDYHXMfePXFUeJ064=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=S98koyxykmvhEVH6vlnIO/2tHJuxLiQl24e8eZ6PBKCyA3VinjiU4yBD5rCCSs/yBsrRIEm+7tudRdFuDddBmPAbuh2eBq81mqANYrkgz6EZRzpCri1SonGE5XbRaFfDAHCkkhjpKWBqlkF3LvTri6J61mT46Y3DnQ9lFJbmu8I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=BaMaV8/u; arc=none smtp.client-ip=209.85.216.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="J8shrP7s"
-Received: by mail-pj1-f54.google.com with SMTP id 98e67ed59e1d1-2bf5bb3508fso182711a91.1
-        for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 08:30:07 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BaMaV8/u"
+Received: by mail-pj1-f51.google.com with SMTP id 98e67ed59e1d1-2bf5bb3508fso182729a91.1
+        for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 08:30:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716564607; x=1717169407; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=XSUhRbM/RHyP+JVF4HXLWv//N2kHCiRdWq6jevFx+Co=;
-        b=J8shrP7sqeH6l/rWWYDigYAorUu1Xo+w2X3Xhhi71xXK1PUbDEzFk0pUnAkapkyvg5
-         nnCDVsPlQ5qRN3GdGGnEOZVembpcbw5cFEExNQkJV+PhZV6i1uz9CmknacL5XZyTzMS1
-         CDb+5uzYhQtNibTqw/NrD6o4yfzQzCLA7cNlg6gwVafP5wFgRm0c6b4iZltqiQzaN2i1
-         CKz+e87OWPFDDIMmCJKkiXLFrdrLWfsE9v7oFewW40ESW5VgCfQtGo+K/vRaD9mHI1Gz
-         TdGzECVNw9UWNoYjD1N0AEoMIr9stwkEmzlNogzkEVU+DKkqojP+i5rLA8F1dEkQ/SXI
-         o6Og==
+        d=gmail.com; s=20230601; t=1716564612; x=1717169412; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=yA2giIirIzyk3qPOvNZ+vbWO0ihNMW8s6ZdoXXb+0f0=;
+        b=BaMaV8/ulBJc9yRW0OXMjcTl6BnV5/IQxgRJViq72b3VZPE0ZZwovBgR0PEO1/o9AE
+         nfGPtlhqMy2e26euQXqilcIEBPXAolIu/5TyLXofpHKHTrogFv+TseYldfwOkm2GHv0x
+         Q/2jAI/bcJDLA3+y+Vtq5I1Gjv+GCXzc4bZDV3lgxbbjZ4Kcfnii37QeeFh+nHBxn1N8
+         9YwjLhoUBzFXf0aiS2L+C/ic7/s03OMY/H/Hi3JqdBPEiSaQHOcXNStt52dVPhQhD164
+         sC2cQLVeT8y9AApwNX180VJ9iENwRFo1viB4HQdFialtJNbGU7afoPbT/XTaYxaDLg4o
+         y5Zg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716564607; x=1717169407;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=XSUhRbM/RHyP+JVF4HXLWv//N2kHCiRdWq6jevFx+Co=;
-        b=qUypl2lKcj3s7PC0S8YDTSzd5aNmp7r6//TD7HbLnVFiGLMkoEIniPPR6hz86H6g3M
-         MM4IX0U8xu1NaV0M2pJQPBwXiinZaIM8djxebk6KD7aIizGmmHh2rXz4m8e5bb29vB/J
-         RLcLgqlFmqecBGTRbz7dJdp3PDvHMveUdkB2/lITivYIWVwXUCENDfZd6F7Tnd/k3u5U
-         NaCXvl0ry6caeRWxIVEB631gymIXeWY08JkltnEe5Rdcw6mMovdUF8+4aromXUyus0pF
-         57eFvI/wyQyR1RN2eRoMnrc1a0pj5rYgHRlBnpfghw862Rz/nfLGVs28f4kgWPO7NCWQ
-         Apig==
-X-Forwarded-Encrypted: i=1; AJvYcCUx0vpctHE/G0cbewAgzopcLVY2ubZm2k8jxeM07oWI6kzuH8DxYR6FOSVolloVUjXVMcfzL1oOlNsdO9nfBcGVpXVOj4rRlDA=
-X-Gm-Message-State: AOJu0YyhHDKdNBdWk/JDEXZ0h+c2oWSaP9yTRtR1Mm683tE5CDPGE7e3
-	158ZmMKiyG1oyc+Sr44fNz+mUBL8mrhJ9vjOa1QTPF8hzMP+CA//
-X-Google-Smtp-Source: AGHT+IFY2ykJWU+aoDHZLEqKR0HSYpOf1JXuTKCB+Q07O2E7ikwkDfmbO8ZGWvz3URAGCeWk8pt3fg==
-X-Received: by 2002:a17:90a:f411:b0:2b5:1cdc:9ac8 with SMTP id 98e67ed59e1d1-2bf5f5186bcmr2532463a91.4.1716564606899;
-        Fri, 24 May 2024 08:30:06 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1716564612; x=1717169412;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=yA2giIirIzyk3qPOvNZ+vbWO0ihNMW8s6ZdoXXb+0f0=;
+        b=Zr16FjFJqEOClrf1jD1gcPDKudk7FnMZr8KTjmv4JUO7t/dmMW4JjiTooJaNI/owpE
+         KdmbKS9Y9Uzm/KhtUCQBrzo0azEUlLZqy/B84x0ZhCvmFKDkO0bHRiRKVPGM843GrzHr
+         Wimj2ubL/ie73ql0QmgEzoHmc0IAMyqg50h9X6guq7LOLN3vuVtz1Mg13yL9TkXxsqJg
+         /2pLIMp4Wui33uyXR+sdLlVwhushWD0K45YduPK1mPnxW4oV8Vc7mrjfrRGUeUx2m/O9
+         InsISEtL3eScqsIPBb93R3YvibdySSImpcB/ogACr8p9oyTvZFR8tYD2ZRCwfns37Xp5
+         bGHQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVsPNqqcFdpr98o2Y0zDQVGAA4E6P3F3IwD+qQRh//pIj0ny8OVGGGtOL+Il+z2l8Kl511j0zdQS3llZeEtKHqdIZExcsQS2D4=
+X-Gm-Message-State: AOJu0YwkKD+JGknvO1QAQarZCPI64RFczyau4GTVus2LXx8wFNM07fxm
+	i0CVKgv2weu+cuFkCZCDCqFvn23CJXtNd3jcVwqkqceWV8jvNpGm
+X-Google-Smtp-Source: AGHT+IGLArb7OqWEB6CrXg11EyYlnXTDni6xakbN7NY6EO02Mt7rz76EsWl65GGah93FseFaBLmQUg==
+X-Received: by 2002:a17:90a:df13:b0:2bd:7e73:6628 with SMTP id 98e67ed59e1d1-2bf5e0c1bc4mr2586413a91.0.1716564612133;
+        Fri, 24 May 2024 08:30:12 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2bf5f50d294sm1525556a91.20.2024.05.24.08.30.03
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2bf5f50d294sm1525556a91.20.2024.05.24.08.30.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 24 May 2024 08:30:06 -0700 (PDT)
+        Fri, 24 May 2024 08:30:11 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -72,11 +74,14 @@ Cc: bfoster@redhat.com,
 	dm-devel@lists.linux.dev,
 	linux-bcachefs@vger.kernel.org,
 	linux-perf-users@vger.kernel.org,
-	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v6 00/16] treewide: Refactor heap related implementation
-Date: Fri, 24 May 2024 23:29:42 +0800
-Message-Id: <20240524152958.919343-1-visitorckw@gmail.com>
+	Kuan-Wei Chiu <visitorckw@gmail.com>,
+	Randy Dunlap <rdunlap@infradead.org>
+Subject: [PATCH v6 01/16] perf/core: Fix several typos
+Date: Fri, 24 May 2024 23:29:43 +0800
+Message-Id: <20240524152958.919343-2-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20240524152958.919343-1-visitorckw@gmail.com>
+References: <20240524152958.919343-1-visitorckw@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -85,115 +90,53 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This patch series focuses on several adjustments related to heap
-implementation. Firstly, a type-safe interface has been added to the
-min_heap, along with the introduction of several new functions to
-enhance its functionality. Additionally, the heap implementation for
-bcache and bcachefs has been replaced with the generic min_heap
-implementation from include/linux. Furthermore, several typos have been
-corrected.
+Replace 'artifically' with 'artificially'.
+Replace 'irrespecive' with 'irrespective'.
+Replace 'futher' with 'further'.
+Replace 'sufficent' with 'sufficient'.
 
-Previous discussion with Kent Overstreet:
-https://lkml.kernel.org/ioyfizrzq7w7mjrqcadtzsfgpuntowtjdw5pgn4qhvsdp4mqqg@nrlek5vmisbu
-
-Regards,
-Kuan-Wei
-
+Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
+Reviewed-by: Ian Rogers <irogers@google.com>
+Reviewed-by: Randy Dunlap <rdunlap@infradead.org>
 ---
+ kernel/events/core.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-You can preview this patch series on the 'refactor-heap' branch of
-the repository at the following link:
-
-https://github.com/visitorckw/linux
-
-Changes in v6:
-- Rename the MIN_HEAP() macro to DEFINE_MIN_HEAP().
-
-Changes in RESEND v5:
-- Resend because the mail service failed to send out all patches.
-
-Changes in v5:
-- Rebase on the block tree to resolve the conflict in bcache.
-- Fix missing initialization for heap data pointer in bcache's
-  bch_btree_node_read_done().
-
-Changes in v4:
-- Change struct initializations to use designated initializers.
-- Replace memcpy() with func->swp() in heap_del() due to issues with
-  set_backpointer in bcachefs when setting idx.
-- Fix an error in ec_stripes_heap_swap() where
-  ec_stripes_heap_set_backpointer() should be called after swapping.
-
-Changes in v3:
-- Avoid heap->heap.nr to eliminate the nested types.
-- Add MIN_HEAP_PREALLOCATED macro for preallocating some elements.
-- Use min_heap_sift_up() in min_heap_push().
-- Fix a bug in heap_del() where we should copy the last element to
-  'data + idx * element_size' instead of 'data'.
-- Add testcases for heap_del().
-- Fix bugs in bcache/bcachefs patches where the parameter types in
-  some compare functions should have been 'type **', but were
-  mistakenly written as 'type *'.
-
-Changes in v2:
-- Add attribute __always_unused to the compare and swap functions
-  that do not use the args parameter.
-- Rename min_heapify() to min_heap_sift_down().
-- Update lib/test_min_heap.c to use min_heap_init().
-- Refine the commit message for bcache and bcachefs.
-- Adjust the order of patches in the patch series.
-
-Link to resend v5: https://lore.kernel.org/20240514084724.557100-1-visitorckw@gmail.com
-Link to v5: https://lore.kernel.org/20240514084209.556112-1-visitorckw@gmail.com
-Link to v4: https://lore.kernel.org/20240425141826.840077-1-visitorckw@gmail.com
-Link to v3: https://lore.kernel.org/20240406164727.577914-1-visitorckw@gmail.com
-Link to v2: https://lore.kernel.org/20240320145417.336208-1-visitorckw@gmail.com
-Link to v1: https://lkml.kernel.org/20240319180005.246930-1-visitorckw@gmail.com
-
-Kuan-Wei Chiu (16):
-  perf/core: Fix several typos
-  bcache: Fix typo
-  bcachefs: Fix typo
-  lib min_heap: Add type safe interface
-  lib min_heap: Add min_heap_init()
-  lib min_heap: Add min_heap_peek()
-  lib min_heap: Add min_heap_full()
-  lib min_heap: Add args for min_heap_callbacks
-  lib min_heap: Add min_heap_sift_up()
-  lib min_heap: Add min_heap_del()
-  lib min_heap: Update min_heap_push() and min_heap_pop() to return bool
-    values
-  lib min_heap: Rename min_heapify() to min_heap_sift_down()
-  lib min_heap: Update min_heap_push() to use min_heap_sift_up()
-  lib/test_min_heap: Add test for heap_del()
-  bcache: Remove heap-related macros and switch to generic min_heap
-  bcachefs: Remove heap-related macros and switch to generic min_heap
-
- drivers/md/bcache/alloc.c      |  64 ++++++++---
- drivers/md/bcache/bcache.h     |   2 +-
- drivers/md/bcache/bset.c       | 124 ++++++++++++++--------
- drivers/md/bcache/bset.h       |  40 +++----
- drivers/md/bcache/btree.c      |  69 +++++++-----
- drivers/md/bcache/extents.c    |  53 ++++++----
- drivers/md/bcache/movinggc.c   |  41 +++++--
- drivers/md/bcache/super.c      |   3 +-
- drivers/md/bcache/sysfs.c      |   4 +-
- drivers/md/bcache/util.c       |   2 +-
- drivers/md/bcache/util.h       |  67 +-----------
- drivers/md/bcache/writeback.c  |  13 ++-
- drivers/md/dm-vdo/repair.c     |  19 ++--
- drivers/md/dm-vdo/slab-depot.c |  14 +--
- fs/bcachefs/clock.c            |  43 ++++++--
- fs/bcachefs/clock_types.h      |   2 +-
- fs/bcachefs/ec.c               |  76 ++++++++-----
- fs/bcachefs/ec_types.h         |   2 +-
- fs/bcachefs/util.c             |   2 +-
- fs/bcachefs/util.h             | 118 +--------------------
- include/linux/min_heap.h       | 188 +++++++++++++++++++++++++--------
- kernel/events/core.c           |  29 ++---
- lib/test_min_heap.c            |  75 +++++++++----
- 23 files changed, 583 insertions(+), 467 deletions(-)
-
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index f0128c5ff278..5e4ad32aeb71 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -534,7 +534,7 @@ void perf_sample_event_took(u64 sample_len_ns)
+ 	__this_cpu_write(running_sample_length, running_len);
+ 
+ 	/*
+-	 * Note: this will be biased artifically low until we have
++	 * Note: this will be biased artificially low until we have
+ 	 * seen NR_ACCUMULATED_SAMPLES. Doing it this way keeps us
+ 	 * from having to maintain a count.
+ 	 */
+@@ -596,10 +596,10 @@ static inline u64 perf_event_clock(struct perf_event *event)
+  *
+  * Event groups make things a little more complicated, but not terribly so. The
+  * rules for a group are that if the group leader is OFF the entire group is
+- * OFF, irrespecive of what the group member states are. This results in
++ * OFF, irrespective of what the group member states are. This results in
+  * __perf_effective_state().
+  *
+- * A futher ramification is that when a group leader flips between OFF and
++ * A further ramification is that when a group leader flips between OFF and
+  * !OFF, we need to update all group member times.
+  *
+  *
+@@ -891,7 +891,7 @@ static int perf_cgroup_ensure_storage(struct perf_event *event,
+ 	int cpu, heap_size, ret = 0;
+ 
+ 	/*
+-	 * Allow storage to have sufficent space for an iterator for each
++	 * Allow storage to have sufficient space for an iterator for each
+ 	 * possibly nested cgroup plus an iterator for events with no cgroup.
+ 	 */
+ 	for (heap_size = 1; css; css = css->parent)
 -- 
 2.34.1
 
