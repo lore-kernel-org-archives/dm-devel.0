@@ -1,57 +1,57 @@
-Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com [209.85.216.48])
+Received: from mail-pj1-f50.google.com (mail-pj1-f50.google.com [209.85.216.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8097013048C
-	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 15:30:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8897512E1D0
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 15:30:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716564633; cv=none; b=qBKadgoo8TyYVIYwTQopsZva/6sjoY6c7pTuYKaNAOT+ZzJX+lCcfsl2lpRURgTSAOlL1fYBinNGRRAlFUTWD4idJ3q68y/8kXFQNjDHIqrRtmtz33SXhDwGnRVlWLMyb+PwxTcL6qGieCEBvBoMBmUK2Ks3JKp+RscdOk9JWyc=
+	t=1716564638; cv=none; b=aY9YVR9GftTjo3Ar0zVZBE6NYJrqTBG34d4KZkT35N+UBCmCkTkLmNKrVF2SqAYKcCphTPt3XCjXHLXt1G5TOUqRDj9wU2mtfg5xHWlzMO6sno+m5OgO3cmK9rohBCDQ5bzdxzGL3qWDRaRwhQhqnEJUPRt1tZ8u06Bw2bUQkJU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716564633; c=relaxed/simple;
-	bh=3Cv/NEYxtL7rses18dsQW99Ih1hbxSO8VST7jRlzjCU=;
+	s=arc-20240116; t=1716564638; c=relaxed/simple;
+	bh=CtmjnUhCovWSsS0eLtHZkP1gRg/+o2/rih6xjavgouM=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=GsGRT7I3UBf3+QUz0wWLItOwsqWsJ4bAib2Z8FoakGRFTzvM60qyJiKIidfvYOMd4pNV+GbdlwtV/oMGRSLSAoDZeIrSWG8JHjtZ5zSk61MmoDAtYIBgwtvSUPkEHJIYqK+3ZAS40ZvgsKRR1KYIKgaoDH7G8Ei4IOkZQJXBbZM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FuTuJO2D; arc=none smtp.client-ip=209.85.216.48
+	 MIME-Version; b=PqUd5ZYSCM7HX+FmvLkrtZxKM1Qu7d2Ih6ncvajH7lkjvEF+1gzVrAtVzviDpjTCaTZPLXxmu9+wKB1Id96BTL7ESiI9q/DkBQanVCoNnhY4RPl2vemtWxYpsz2iFo8qT22h9X7OS0fRHpCV+T7XhWsxTbWvQqtSg/AwGFvuAkw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jPWNVd7p; arc=none smtp.client-ip=209.85.216.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FuTuJO2D"
-Received: by mail-pj1-f48.google.com with SMTP id 98e67ed59e1d1-2bdf439c664so314755a91.3
-        for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 08:30:32 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jPWNVd7p"
+Received: by mail-pj1-f50.google.com with SMTP id 98e67ed59e1d1-2bf5baa5b76so103285a91.0
+        for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 08:30:37 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1716564632; x=1717169432; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1716564637; x=1717169437; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=T0fYqR9rcSvYbrkD+sBe/h5jrjzbrTBXD1r+tuRTAZk=;
-        b=FuTuJO2DB/zF301QpjfcAEhFydBM0MDlPK7ikszCM1J+0b/C16IDDw7NVraQirG/mL
-         OJo/quwoPbYq1NtHFfy0EOORgbL0EWFe8zRJgH9gMkLoSmqggd8ZKhpaWQJYPKwdHkme
-         ESvjb4GbR7Keyl4GVyAITJgFK1Dh0agLiu9/82DAHPpmvQZ++oLzPrtDnvRuvJVw4L+A
-         Ts+yxxQhjv6mvrHOdJGLoAKD0bPOllYwF05jToVVYJOy6faDrLZ70IRml8+iHSPCF4jF
-         jtvmHUBoFl9ypMKFCm1kUGErZVNs0TQqoiHNnFJlZckD03c5D6XG+sS+vZlPg6hw8mpW
-         vWrw==
+        bh=cYJrwbsUSMlgZtHUd20UudtqnzPzA+Nu3Je7Gypyz6k=;
+        b=jPWNVd7p/Pf6jqdXRhT+B5OuIbwVf6nhRLEgh1YF2jsnmVyj9QeZgIDpvmU3a0XQkU
+         AlYU95zKUw8iOOy7hWhiB1Agvc3TTjEGyXpBf2OX35kN7LPQzOk63+s/BG7+q6Hl+F5H
+         K2hJbL2+dP5k27IFYuTojGCbK7zaqoKIZHnbpNQwUsRRKr7G9aokZ8l8FNNjVvjZmjI9
+         ue75J1tjrRQpOhE8WaAfVi4SD6q+reZHzfugWqOjpJyajlNtwdvKc9nvEYYwu7R+zeF8
+         X5dpGxeLGNRjulOOGkoHYDGlm4dgwQ+zhdvUmBSuGw4RDBYC7IKeaWgMYa/49qQJVZqo
+         obJw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716564632; x=1717169432;
+        d=1e100.net; s=20230601; t=1716564637; x=1717169437;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=T0fYqR9rcSvYbrkD+sBe/h5jrjzbrTBXD1r+tuRTAZk=;
-        b=J4VqFs3dl2Y8FR9dlqDaD6ZKb8utbqtZQS1ZUc5OW4Fovr+UO/i5MYfEnVCPPgN3Uy
-         Kgrgks3VDGwD92N++Iky+wPFA0/MPqi9aLPB+VshGjuiXxXWCNUTtgsVFMNfyCw1/ENr
-         VsTpQVkOFsz04kbio0142TFIgL9l/uFKUdLb0FT3JkdZxl1NTm4fUIK4ZdOrg4rajMVD
-         wka4ZwH3tsqa6kbXt9Q9vr0mSRxgmz0HkPtNY6wIjqJDHM/6jsacc44cra1cR9bYukTZ
-         Z7olgLN0zGA6seKmSYtuR9YupPC2DJzs95u5OLI0tlUN1tRGoLS955GEsrv14PcU3avU
-         1dKA==
-X-Forwarded-Encrypted: i=1; AJvYcCWb+z1+v2fQoB0IvxgHNupS6u88Hewg43qEeE5Tl0g/ltX49YeWXK2iu6vbEq+oVjDFXgnszkTWkY9wF8VicXDc5t6O3qjvX3Y=
-X-Gm-Message-State: AOJu0Yzxo6VHLb7N+QcP8tc4NB5eLpEKZdxL1f0Z1hdoVJOfsSk3xhWh
-	FsNo3/fp3OuxOLbGhmEH/Tou8yMT1frRnjvU2YvYov24Ku6XlJTt
-X-Google-Smtp-Source: AGHT+IF8luE1cdHm1AfcM0WoDjZHudhzFqofZ1FcFKJ69yRGqwL7AZUhIIsbkDXV3LM7TdHAleFXCQ==
-X-Received: by 2002:a17:90b:230e:b0:2bd:76ee:48c2 with SMTP id 98e67ed59e1d1-2bf5e0a7a56mr2494152a91.0.1716564631729;
-        Fri, 24 May 2024 08:30:31 -0700 (PDT)
+        bh=cYJrwbsUSMlgZtHUd20UudtqnzPzA+Nu3Je7Gypyz6k=;
+        b=bNtsPWUYQa6KvVHua/kebObhg0GkzdqlpNL8fOMZXhJ8h9xWgjxhVbo4uumy14hRV9
+         nqXqwc3NkgHfIRfsxdWnzYVWO+DGLKB9K8KpxltqWeP/A8wGWcNe5cgsSDi+SlqSsv7k
+         D/HddCLAFVGPTx/80Xw4rzSkwpQVz/unbU2gLbizKvWyPUFrcU3f3WSzYDKra/hPerma
+         X/R+6kSVZ790vM0uOc5LswzAxi5eRtOPY7NC3dNKTIgFsr2ajz7DselrFRtHdlvFzLlg
+         qJ5gf4toaL5e72IdLiybG7Uln8IlvJg3FJl6QrqoWEmg9c5d5TSJpfr8siQQNJBW72u+
+         Rt1A==
+X-Forwarded-Encrypted: i=1; AJvYcCVNCm6/P1ZAv4kEDa86JaxRtHMpPfUpK6a9ztLpIc0VCq7sTtOVj/52ZA+RbYRw8FT36+SRIHlDmkENl5IWSvrhseJy7PKTfoI=
+X-Gm-Message-State: AOJu0YwH5RjbOWjajgBxU808WDKCUpzCVfW0EWA76Ms67IVwIeR/j8Fw
+	i+hqejDL8TqnZyOp8HnB837yfw+bwmbPy4ZZ/Tt8UYCRxj5sDB2W
+X-Google-Smtp-Source: AGHT+IHoYwOCUaxc1eEkPVdFwpRkMAzYQsOk0wv11TzpiDNFWzl8TbRA7I/ssjXw7Wzjhb+pC2mgVw==
+X-Received: by 2002:a17:90b:2286:b0:2bd:e806:49e4 with SMTP id 98e67ed59e1d1-2bf5f511c5amr2497068a91.4.1716564636772;
+        Fri, 24 May 2024 08:30:36 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2bf5f50d294sm1525556a91.20.2024.05.24.08.30.28
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2bf5f50d294sm1525556a91.20.2024.05.24.08.30.33
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 24 May 2024 08:30:31 -0700 (PDT)
+        Fri, 24 May 2024 08:30:36 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -75,9 +75,9 @@ Cc: bfoster@redhat.com,
 	linux-bcachefs@vger.kernel.org,
 	linux-perf-users@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v6 05/16] lib min_heap: Add min_heap_init()
-Date: Fri, 24 May 2024 23:29:47 +0800
-Message-Id: <20240524152958.919343-6-visitorckw@gmail.com>
+Subject: [PATCH v6 06/16] lib min_heap: Add min_heap_peek()
+Date: Fri, 24 May 2024 23:29:48 +0800
+Message-Id: <20240524152958.919343-7-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240524152958.919343-1-visitorckw@gmail.com>
 References: <20240524152958.919343-1-visitorckw@gmail.com>
@@ -89,36 +89,32 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add min_heap_init() for initializing heap with data, nr, and size.
+Add min_heap_peek() function to retrieve a pointer to the smallest
+element. The pointer is cast to the appropriate type of heap elements.
 
 Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 Reviewed-by: Ian Rogers <irogers@google.com>
 ---
- include/linux/min_heap.h | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ include/linux/min_heap.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
-index 92830f41642a..b384a4ea2afa 100644
+index b384a4ea2afa..d9c4ae7ad0cc 100644
 --- a/include/linux/min_heap.h
 +++ b/include/linux/min_heap.h
-@@ -38,6 +38,21 @@ struct min_heap_callbacks {
- 	void (*swp)(void *lhs, void *rhs);
- };
+@@ -53,6 +53,16 @@ void __min_heap_init(min_heap_char *heap, void *data, int size)
+ #define min_heap_init(_heap, _data, _size)	\
+ 	__min_heap_init((min_heap_char *)_heap, _data, _size)
  
-+/* Initialize a min-heap. */
++/* Get the minimum element from the heap. */
 +static __always_inline
-+void __min_heap_init(min_heap_char *heap, void *data, int size)
++void *__min_heap_peek(struct min_heap_char *heap)
 +{
-+	heap->nr = 0;
-+	heap->size = size;
-+	if (data)
-+		heap->data = data;
-+	else
-+		heap->data = heap->preallocated;
++	return heap->nr ? heap->data : NULL;
 +}
 +
-+#define min_heap_init(_heap, _data, _size)	\
-+	__min_heap_init((min_heap_char *)_heap, _data, _size)
++#define min_heap_peek(_heap)	\
++	(__minheap_cast(_heap) __min_heap_peek((min_heap_char *)_heap))
 +
  /* Sift the element at pos down the heap. */
  static __always_inline
