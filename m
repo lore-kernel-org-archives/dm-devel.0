@@ -1,112 +1,100 @@
-Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mout.web.de (mout.web.de [217.72.192.78])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 381D386AD6
-	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 13:43:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F37388528D;
+	Fri, 24 May 2024 13:48:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.72.192.78
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716558230; cv=none; b=G50t6oBmwPnS0FK3mhiIu0Kv7fUP1K4DzooRJqp+nM9/tLCSTTITn2SSxa54Bsna2dniD7dlPBAtvV+XtpmNphoB5v6S26mz/UlA9jBShjU4rIbf5+akjWMJiT/MwpFqTOE61t0WWUGeInT5ClEm5Czi+Esd+8YeagYoFYUCRMI=
+	t=1716558520; cv=none; b=fGZzUziAvKxRcJ1XSKNQhJENbIOKjwh5PG5FDiVGZrYvNSHdXgAEYic1YQDUfl48fGLsg97qe6OEavrEMSdEj7922h0X7vTtHMsN6F7dmN6eA5ECw3DsqUcewLLt25uMmftFoFxN48cRyyUCFaDPJJ41P4Pwiz1wJbizarv+dmk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716558230; c=relaxed/simple;
-	bh=KEpw+nUC0h6utBFxG4JKkTyNa4N0nSg4yK83l8a8038=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=aL96QXnvWAVrcyLIdsAb8TzKyGbDI6c0FmCV55UIj83FSOiel/pPh0T7aiE9PkESmvyDzlgi6tz14FajPBiiOvqs+DvIxaAGDY1361GqqQjRZFngrsOZIrDNvff5KP4dTxRMKk+frp2p90NS+psCwkcq7+7VJjAZSS8s+qpbEhA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=WCVZFrEq; arc=none smtp.client-ip=209.85.218.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1716558520; c=relaxed/simple;
+	bh=hueieaLczksDkmqINO5OE5EiLQWKb0+iM/e3znMSFJA=;
+	h=Message-ID:Date:MIME-Version:To:Cc:References:Subject:From:
+	 In-Reply-To:Content-Type; b=SXd5fSLsnForNFeKGmA9d2RAhQKZLS1A7tC2s8fol18m34dzI9g0hbhHpMfLO1rnfNOPhILwtpjjD1xapkzk+DbwzqHJb3ak57KB49kuyF00WRMe34xwI7nF+I1HQUSu8QTBHTJNt2dfLtmqoS4QKXE74lkqUHHJwsNhRTn2OTc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de; spf=pass smtp.mailfrom=web.de; dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b=GxaZM0ZS; arc=none smtp.client-ip=217.72.192.78
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=web.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="WCVZFrEq"
-Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-a59cc765c29so371256166b.3
-        for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 06:43:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1716558225; x=1717163025; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=16b/A2xRDYxumpG25A93qw+dE4Wyu7+C7Z97nAajQdE=;
-        b=WCVZFrEqOvfy3ekugaqQ/xjUUt7XzOSzvJSHPWpfd1BKS5TK3k+WjXSZ9/2vaGsnHa
-         je7R8rHkvd5Yspo+MnHvZxMB0x4s4FNaaP91ZcqRGZtmg7V9KX5DNEVRibB/LJHqwfuY
-         N+xX2ZjoEFTuGaoKE2hpB46T+8I00aGuD5A51+4s7wT4jqA7curu7IG7yN3+uFDrffZ7
-         uuYbpHb8nlWqvViTwHE4cvqZmdZ4JHqJkuFnOPUlvvTquL4qq+ckAusgsHGWXBPfTfrt
-         WavJCTtyLHxRU2Sy8v2xFmnxxFanqaZrEjxT5qFucFhQsSwt7NuPO0r0PiwhNjARo4rG
-         407A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1716558225; x=1717163025;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=16b/A2xRDYxumpG25A93qw+dE4Wyu7+C7Z97nAajQdE=;
-        b=u6jQv9xvUfMPgql1RHBGfZJ0QLOizoPFPQI0F2fdG65zkQKIU7w+mhyOhZIYIosDUO
-         n5JWJ6cQ1ZP6P9bj5Na8fQ82xL7m5v7DMFeUpkRCrUnpc9ccDObzWFl8HhY78dQLMv26
-         R4FlRc3BNH4fcf/eQcyIPY1OcHJ4lkfDUmE4M/f+lt7mm/sG8w2+6mhvrySuzVhUZtRk
-         M/SMz7HybFwwAidQVN8gIptI0h7TizbslRoh6nIgRfrLWrtmIdvmb4YL3OBkBZ/8lTPU
-         V0Lr089nBzYWrhGq3FqkH2uNM+vlZrbA3GZWssiq6g+Q6Xcq3/E6E4+97ZcJZGSuRs8m
-         ASXQ==
-X-Gm-Message-State: AOJu0YzNy5HCzK6Axk0CjFogF2cNN+STF801MflKnjxvS6098B+8oe0X
-	Fbu+P3A2Ulpid7Npn+z2h7o5epp/b51GgnDKlBCCrkBUvS8Sjj2g5YY9s8PoU5c=
-X-Google-Smtp-Source: AGHT+IGsYXBrFvJxJUofHkHTG9OxW74j1mGH/cgmus/ch03ziHXb9nXPDS7WCcXN4CXndqtBRGyFjg==
-X-Received: by 2002:a17:906:7f15:b0:a62:e9c:f621 with SMTP id a640c23a62f3a-a6265148c46mr165646766b.58.1716558225523;
-        Fri, 24 May 2024 06:43:45 -0700 (PDT)
-Received: from ?IPv6:2003:de:371a:a400:e6fd:936f:426b:4ff8? (p200300de371aa400e6fd936f426b4ff8.dip0.t-ipconnect.de. [2003:de:371a:a400:e6fd:936f:426b:4ff8])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a626c8170cbsm134449666b.20.2024.05.24.06.43.45
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 24 May 2024 06:43:45 -0700 (PDT)
-Message-ID: <5e534cd7c8034436819ef451e451fe00549d8a72.camel@suse.com>
-Subject: Re: [PATCH 3/7] libmultipath: print all values in snprint_failback
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>, Nitin Yewale
-	 <nyewale@redhat.com>
-Date: Fri, 24 May 2024 15:43:44 +0200
-In-Reply-To: <20240513173646.94424-4-bmarzins@redhat.com>
-References: <20240513173646.94424-1-bmarzins@redhat.com>
-	 <20240513173646.94424-4-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.1 
+	dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b="GxaZM0ZS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=web.de;
+	s=s29768273; t=1716558506; x=1717163306; i=markus.elfring@web.de;
+	bh=TKpcU07BCg0puKeOnHmYb8r4j/62KyBnT3gPVl603HY=;
+	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:To:Cc:References:
+	 Subject:From:In-Reply-To:Content-Type:Content-Transfer-Encoding:
+	 cc:content-transfer-encoding:content-type:date:from:message-id:
+	 mime-version:reply-to:subject:to;
+	b=GxaZM0ZS8KUk0u8iDKn0jxjQCr6jUGjtxsD+g5VWAGPzgzgx5nuUMHwpdO3RQypt
+	 4I19S56RHUNnRpR4jS7kycWLzoHZrxTSipDL+zVPlM/2uZsFw+4GGe5nOP+ZqHsBK
+	 yKSiZwxXMkug8jAVV4cxgxz0HAimVO2OLbUdUXwl2QezSXzK8pZ6SXSs7ZghgXT/h
+	 nToxtfyG/0fho36ZgO6j8/bGkaE3NA3p6M2TgD9/+CdxJtu7hgFYIflgkiSLQ3bv7
+	 fDHZcoEcyF0RNB9nrlLkFps2FPId87VAA2J6Z1LzC9zTn/SfkuOjJ483Gjd31ky4k
+	 rRTNxBWG2SgEU1TwpA==
+X-UI-Sender-Class: 814a7b36-bfc1-4dae-8640-3722d8ec6cd6
+Received: from [192.168.178.21] ([94.31.83.95]) by smtp.web.de (mrweb105
+ [213.165.67.124]) with ESMTPSA (Nemesis) id 1MuVGC-1sSa674Byk-015riH; Fri, 24
+ May 2024 15:48:26 +0200
+Message-ID: <085b205a-8658-49ba-a8cb-8ffdba9d7a85@web.de>
+Date: Fri, 24 May 2024 15:48:25 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+To: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>, abaci@linux.alibaba.com,
+ dm-devel@lists.linux.dev, kernel-janitors@vger.kernel.org,
+ Matthew Sakai <msakai@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>
+References: <20240524074109.13433-1-jiapeng.chong@linux.alibaba.com>
+Subject: Re: [PATCH] dm vdo indexer: Use swap() instead of open coding it
+Content-Language: en-GB
+From: Markus Elfring <Markus.Elfring@web.de>
+In-Reply-To: <20240524074109.13433-1-jiapeng.chong@linux.alibaba.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:CwR8mjLaFQnjS76aTyIm0LDeX7mE5+Y0DmhvsARq3yofsW07HBj
+ XVetph+zxrR1kLjbVa7noUXMRHfLtJRwmog6Kk1KslKiqasrwtVgdbf5ldE1TJD7Ct5ETzK
+ eeTWkQ4Qjw7UY/RwRqMy5oA4n6ciG0Oat3nOetnRJx2ZDIanzP/2f8xwwk3LHc7lDUhpcVx
+ ZO6H+xEleGpoEf5lhVuXQ==
+X-Spam-Flag: NO
+UI-OutboundReport: notjunk:1;M01:P0:8nYy4xaiB90=;DW86oxmgOlM+5rGN6og4i9f/eqZ
+ s29BRMsR8VHowjsb4NBGxcY2vj5do+GfcSahA4BQpSnWvuk6ObrX2kC+qqcc7D5Y0R+yxKuBW
+ 5BnFZYrE8QO+8e9kyUXV/ng5Ku90FuO8gMVx/Bd9mIuKL/zN8gWjLpZI3Mkx7EMZFlC4cKpXL
+ 3/1D3dcryc9hiXieTWaUdmT3W6gg6wOPoF+Fu34/Qg/aYxhII69fgFra1lsvJIH2jfL5a28D8
+ Bwj8pyymS7u0R6j0ay2UGxBSq4Fxy3T8VAGqOKeu4U9IAHCPJAKic4D9FBj1cXE6Vd/04v3HO
+ 4g1X77glYRtrxvR3iLti2+HdX9KSN7cYyA3lpjMWyBmIO8/LqLA3V41g9ZDU4wBwK4cJeXFcL
+ xVi0fuKW2CsKX+6Lmkno9EcAVtEKSgaRhMHSgISBbdCRToyc5pWVsYzyue/8Fg6TiJHr3H47w
+ o99b92X9NyArBUYGPez8go5+Ltw+oSmzkyAQpqnYj/Hv4JqtDgDg/iwX1FUP03yr9cOtlytxB
+ aVkZFjxF+Zka0hty/jSMpXc102dxxvToqYw3sGoWTCFdFN/dkMcd7EE6laAkwp57QVktK4b8J
+ DKUb7uSHyDTIyPRuOORntHPp3+D01T9cAlO9uAx1w5UJNCDnZlDumLLRPgl43U8vEe5wislEt
+ jawv7Ob9bvlm9ivvooBOO2Jl6mmvBNhJn+4ZbiuHHh31axAJUAceU51r3PblbHZ3R7EmlbAJ1
+ pflTe+x/G9BHaX9BZdRYl7MlqWl47DUXnOlkkBXVdEFby69FlGq7FByrVtE7ZOSj83LOi2C0F
+ JdTpTuxf3Sg0DzB2mIUQuBs3dK4k5SAXE9NRisgW/jbxw=
 
-On Mon, 2024-05-13 at 13:36 -0400, Benjamin Marzinski wrote:
-> Add the missing output for manual failback and print the defferral
-> time
-> for deferred failbacks, if one isn't currently in progress.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
-> =C2=A0libmultipath/print.c | 6 +++++-
-> =C2=A01 file changed, 5 insertions(+), 1 deletion(-)
->=20
-> diff --git a/libmultipath/print.c b/libmultipath/print.c
-> index 89813517..14e7e325 100644
-> --- a/libmultipath/print.c
-> +++ b/libmultipath/print.c
-> @@ -218,9 +218,13 @@ snprint_failback (struct strbuf *buff, const
-> struct multipath * mpp)
-> =C2=A0		return append_strbuf_str(buff, "immediate");
-> =C2=A0	if (mpp->pgfailback =3D=3D -FAILBACK_FOLLOWOVER)
-> =C2=A0		return append_strbuf_str(buff, "followover");
-> +	if (mpp->pgfailback =3D=3D -FAILBACK_MANUAL)
-> +		return append_strbuf_str(buff, "manual");
-> +	if (mpp->pgfailback =3D=3D FAILBACK_UNDEF)
-> +		return append_strbuf_str(buff, "undef");
-> =C2=A0
-> =C2=A0	if (!mpp->failback_tick)
-> -		return append_strbuf_str(buff, "-");
-> +		return print_strbuf(buff, "%i", mpp->pgfailback);
+> Swap is a function interface that provides exchange function. To avoid
+> code duplication, we can use swap function.
 
-Perhaps we should print something like "delayed:%i" here?
+Would a wording approach (like the following) be a bit nicer
+for the second sentence?
 
-Martin
+   Use existing swap() function rather than duplicating its implementation=
+.
 
 
+How do you think about to apply the summary phrase =E2=80=9CUse swap() in =
+swap_open_chapter()=E2=80=9D?
 
-> =C2=A0	else
-> =C2=A0		return snprint_progress(buff, mpp->failback_tick,
-> =C2=A0					mpp->pgfailback);
 
+> ./drivers/md/dm-vdo/indexer/index.c:207:43-44: WARNING opportunity for s=
+wap().
+>
+> Reported-by: Abaci Robot <abaci@linux.alibaba.com>
+> Closes: https://bugzilla.openanolis.cn/show_bug.cgi?id=3D9173
+
+Would another indication be helpful for the involved analysis tool?
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/sc=
+ripts/coccinelle/misc/swap.cocci?h=3Dv6.9
+
+Regards,
+Markus
