@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 3216884FD2;
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 322318529E;
 	Fri, 24 May 2024 20:46:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716583619; cv=none; b=pwJ4wPJnALHlp/pkK3rnGQDqyx5KQPxuXm5o/x42SuWxjp9IPyRazBHkEFU2cIBi9RdHsKW88fKtws/FQQ9pVQF+FOBfjEhNvjF8PVr13URpxRNlDjN3rsYzYIYYTZKsvzphy7rpNYTPEBZN3F+0CCZkaCxGfsSwGjl4qrv6gzE=
+	t=1716583619; cv=none; b=NPKxpqRdBIRlPL9ZyYORr6u5fcQUoX1/d/OTP1PseaAA9GkFHuqjvaSWT1oV/dgDz2APIAA62iTaXMGTt4yq2hxa3US47bfn/J+lcfbiHuhDtnJL66nVRmpgj84pen0uTdWRtTlnPltFBSDrS8+5e1un1wUsrEuvFmZ6QPRQxvA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1716583619; c=relaxed/simple;
-	bh=EgcBdXQYKO99R81PT33Yzlr8ivQRU/dY5VFKcWlnWRE=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=RE3FLM6/wXYvS+G3IQgu03hKQgSibc31gsKNYqWIzCqeILAtKiweEdS3GH6/gaM86GUa0iG33AKp8hD9sXQrRLjReVwP2uOJjPUKcE4aV5vAqMoiY4y0JuMHwW1Ezwyo3vIx7m/PsfbXrGr/Inbfi6JX1srdD44oEAJrkkY9B08=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=m7b/n3nA; arc=none smtp.client-ip=13.77.154.182
+	bh=BVsEPJTiqNrbPXHblGbQmiuAG1UUzZiW+pqfw66O8us=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=ubW8COglAWnCXUKGkdyXd5Zv4O8MOUpjlTp3ZguNGAly2UBHqipX3XtPRia0IsTq0ZQIOSdULqFgStXl8vAhEZYLs5dKLCtOz06uTskETZA1zXaazR3ChIxTTKH9U1/9nYwYr45Ay7+C4K6cSp3HudU/JNObTG9X8ojInipxTag=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=CDhcG1YM; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="m7b/n3nA"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="CDhcG1YM"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id 30C9420B915A; Fri, 24 May 2024 13:46:51 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 30C9420B915A
+	id 59E402067B4C; Fri, 24 May 2024 13:46:51 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 59E402067B4C
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
 	s=default; t=1716583611;
-	bh=zsqoD7jHsi4mUjNHWpvpMJPLjuQEiwL9C56Ve/mKXWI=;
+	bh=GJg1aZbXxI2LmbSqotik5lVX3oYTAZEWrk0MrVDp2cQ=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=m7b/n3nAdy2UgpWWsUh9pP/BEdTWGVV+hPi9dmDU8JAUTULHeoZSavudZ3ECZLFVX
-	 4q/Zlsm+NiyJVDFD5HfU5EMumel9ryhN3pdV1a5geFyOVUc9YZbc0rAbwKu9n2tUE2
-	 PgIjD24ypld+dVtqpwAsKZbhaL2s2PlcTKINMPug=
+	b=CDhcG1YMqCfZ0MjLY6TrSKH+8uDmN9LbKcii3OT0tOArBNo7NG9hVN7BFYxkesQ7Z
+	 oOimP+xAIOTraZ0ARC102NZ9612KAtUpGJdL+kGLI6LZU3gbNTJX4iETyDnFJNNZY+
+	 elBRnuglHuHKlGz6kNglzphHFLIcEhsoJRVNOQXk=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -46,9 +46,9 @@ Cc: linux-doc@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	Deven Bowers <deven.desai@linux.microsoft.com>,
 	Fan Wu <wufan@linux.microsoft.com>
-Subject: [PATCH v19 01/20] security: add ipe lsm
-Date: Fri, 24 May 2024 13:46:30 -0700
-Message-Id: <1716583609-21790-2-git-send-email-wufan@linux.microsoft.com>
+Subject: [PATCH v19 04/20] ipe: add LSM hooks on execution and kernel read
+Date: Fri, 24 May 2024 13:46:33 -0700
+Message-Id: <1716583609-21790-5-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1716583609-21790-1-git-send-email-wufan@linux.microsoft.com>
 References: <1716583609-21790-1-git-send-email-wufan@linux.microsoft.com>
@@ -60,20 +60,15 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-Integrity Policy Enforcement (IPE) is an LSM that provides an
-complimentary approach to Mandatory Access Control than existing LSMs
-today.
-
-Existing LSMs have centered around the concept of access to a resource
-should be controlled by the current user's credentials. IPE's approach,
-is that access to a resource should be controlled by the system's trust
-of a current resource.
-
-The basis of this approach is defining a global policy to specify which
-resource can be trusted.
+IPE's initial goal is to control both execution and the loading of
+kernel modules based on the system's definition of trust. It
+accomplishes this by plugging into the security hooks for
+bprm_check_security, file_mprotect, mmap_file, kernel_load_data,
+and kernel_read_data.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+
 ---
 v2:
   + Split evaluation loop, access control hooks,
@@ -110,29 +105,25 @@ v6:
   + No changes
 
 v7:
-  + Further split lsm creation into a separate commit from the
-    evaluation loop and audit system, for easier review.
-
-  + Introduce the concept of an ipe_context, a scoped way to
-    introduce execution policies, used initially for allowing for
-    kunit tests in isolation.
+  + Further split lsm creation, the audit system, the evaluation loop
+    and access control hooks into separate commits.
 
 v8:
-  + Follow lsmname_hook_name convention for lsm hooks.
-  + Move LSM blob accessors to ipe.c and mark LSM blobs as static.
+  + Rename hook functions to follow the lsmname_hook_name convention
+  + Remove ipe_hook enumeration, can be derived from correlation with
+    syscall audit record.
 
 v9:
-  + Remove ipe_context for simplification
+  + Minor changes for adapting to the new parser
 
 v10:
-  + Add github url
+  + Remove @reqprot part
 
 v11:
-  + Correct github url
-  + Move ipe before bpf
+  + Fix code style issues
 
 v12:
-  + Switch to use lsm_id instead of string for lsm name
+  + Correct WARN usages
 
 v13:
   + No changes
@@ -141,7 +132,7 @@ v14:
   + No changes
 
 v15:
-  + Add missing code in tools/testing/selftests/lsm/lsm_list_modules_test.c
+  + No changes
 
 v16:
   + No changes
@@ -156,210 +147,321 @@ v18:
 v19:
   + No changes
 ---
- include/uapi/linux/lsm.h                      |  1 +
- security/Kconfig                              | 11 ++---
- security/Makefile                             |  1 +
- security/ipe/Kconfig                          | 17 ++++++++
- security/ipe/Makefile                         |  9 ++++
- security/ipe/ipe.c                            | 42 +++++++++++++++++++
- security/ipe/ipe.h                            | 16 +++++++
- security/security.c                           |  3 +-
- .../selftests/lsm/lsm_list_modules_test.c     |  3 ++
- 9 files changed, 97 insertions(+), 6 deletions(-)
- create mode 100644 security/ipe/Kconfig
- create mode 100644 security/ipe/Makefile
- create mode 100644 security/ipe/ipe.c
- create mode 100644 security/ipe/ipe.h
+ security/ipe/Makefile |   1 +
+ security/ipe/eval.c   |  14 ++++
+ security/ipe/eval.h   |   5 ++
+ security/ipe/hooks.c  | 184 ++++++++++++++++++++++++++++++++++++++++++
+ security/ipe/hooks.h  |  25 ++++++
+ security/ipe/ipe.c    |   6 ++
+ 6 files changed, 235 insertions(+)
+ create mode 100644 security/ipe/hooks.c
+ create mode 100644 security/ipe/hooks.h
 
-diff --git a/include/uapi/linux/lsm.h b/include/uapi/linux/lsm.h
-index 33d8c9f4aa6b..938593dfd5da 100644
---- a/include/uapi/linux/lsm.h
-+++ b/include/uapi/linux/lsm.h
-@@ -64,6 +64,7 @@ struct lsm_ctx {
- #define LSM_ID_LANDLOCK		110
- #define LSM_ID_IMA		111
- #define LSM_ID_EVM		112
-+#define LSM_ID_IPE		113
- 
- /*
-  * LSM_ATTR_XXX definitions identify different LSM attributes
-diff --git a/security/Kconfig b/security/Kconfig
-index 412e76f1575d..9fb8f9b14972 100644
---- a/security/Kconfig
-+++ b/security/Kconfig
-@@ -192,6 +192,7 @@ source "security/yama/Kconfig"
- source "security/safesetid/Kconfig"
- source "security/lockdown/Kconfig"
- source "security/landlock/Kconfig"
-+source "security/ipe/Kconfig"
- 
- source "security/integrity/Kconfig"
- 
-@@ -231,11 +232,11 @@ endchoice
- 
- config LSM
- 	string "Ordered list of enabled LSMs"
--	default "landlock,lockdown,yama,loadpin,safesetid,smack,selinux,tomoyo,apparmor,bpf" if DEFAULT_SECURITY_SMACK
--	default "landlock,lockdown,yama,loadpin,safesetid,apparmor,selinux,smack,tomoyo,bpf" if DEFAULT_SECURITY_APPARMOR
--	default "landlock,lockdown,yama,loadpin,safesetid,tomoyo,bpf" if DEFAULT_SECURITY_TOMOYO
--	default "landlock,lockdown,yama,loadpin,safesetid,bpf" if DEFAULT_SECURITY_DAC
--	default "landlock,lockdown,yama,loadpin,safesetid,selinux,smack,tomoyo,apparmor,bpf"
-+	default "landlock,lockdown,yama,loadpin,safesetid,smack,selinux,tomoyo,apparmor,ipe,bpf" if DEFAULT_SECURITY_SMACK
-+	default "landlock,lockdown,yama,loadpin,safesetid,apparmor,selinux,smack,tomoyo,ipe,bpf" if DEFAULT_SECURITY_APPARMOR
-+	default "landlock,lockdown,yama,loadpin,safesetid,tomoyo,ipe,bpf" if DEFAULT_SECURITY_TOMOYO
-+	default "landlock,lockdown,yama,loadpin,safesetid,ipe,bpf" if DEFAULT_SECURITY_DAC
-+	default "landlock,lockdown,yama,loadpin,safesetid,selinux,smack,tomoyo,apparmor,ipe,bpf"
- 	help
- 	  A comma-separated list of LSMs, in initialization order.
- 	  Any LSMs left off this list, except for those with order
-diff --git a/security/Makefile b/security/Makefile
-index 59f238490665..cc0982214b84 100644
---- a/security/Makefile
-+++ b/security/Makefile
-@@ -25,6 +25,7 @@ obj-$(CONFIG_SECURITY_LOCKDOWN_LSM)	+= lockdown/
- obj-$(CONFIG_CGROUPS)			+= device_cgroup.o
- obj-$(CONFIG_BPF_LSM)			+= bpf/
- obj-$(CONFIG_SECURITY_LANDLOCK)		+= landlock/
-+obj-$(CONFIG_SECURITY_IPE)		+= ipe/
- 
- # Object integrity file lists
- obj-$(CONFIG_INTEGRITY)			+= integrity/
-diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
-new file mode 100644
-index 000000000000..e4875fb04883
---- /dev/null
-+++ b/security/ipe/Kconfig
-@@ -0,0 +1,17 @@
-+# SPDX-License-Identifier: GPL-2.0-only
-+#
-+# Integrity Policy Enforcement (IPE) configuration
-+#
-+
-+menuconfig SECURITY_IPE
-+	bool "Integrity Policy Enforcement (IPE)"
-+	depends on SECURITY && SECURITYFS
-+	select PKCS7_MESSAGE_PARSER
-+	select SYSTEM_DATA_VERIFICATION
-+	help
-+	  This option enables the Integrity Policy Enforcement LSM
-+	  allowing users to define a policy to enforce a trust-based access
-+	  control. A key feature of IPE is a customizable policy to allow
-+	  admins to reconfigure trust requirements on the fly.
-+
-+	  If unsure, answer N.
 diff --git a/security/ipe/Makefile b/security/ipe/Makefile
-new file mode 100644
-index 000000000000..5486398a69e9
---- /dev/null
+index 4cc17eb92060..e1c27e974c5c 100644
+--- a/security/ipe/Makefile
 +++ b/security/ipe/Makefile
-@@ -0,0 +1,9 @@
-+# SPDX-License-Identifier: GPL-2.0
-+#
-+# Copyright (C) 2020-2024 Microsoft Corporation. All rights reserved.
-+#
-+# Makefile for building the IPE module as part of the kernel tree.
-+#
+@@ -7,6 +7,7 @@
+ 
+ obj-$(CONFIG_SECURITY_IPE) += \
+ 	eval.o \
++	hooks.o \
+ 	ipe.o \
+ 	policy.o \
+ 	policy_parser.o \
+diff --git a/security/ipe/eval.c b/security/ipe/eval.c
+index 41331afdef7c..cc3b3f6583ad 100644
+--- a/security/ipe/eval.c
++++ b/security/ipe/eval.c
+@@ -16,6 +16,20 @@
+ 
+ struct ipe_policy __rcu *ipe_active_policy;
+ 
++/**
++ * ipe_build_eval_ctx() - Build an ipe evaluation context.
++ * @ctx: Supplies a pointer to the context to be populated.
++ * @file: Supplies a pointer to the file to associated with the evaluation.
++ * @op: Supplies the IPE policy operation associated with the evaluation.
++ */
++void ipe_build_eval_ctx(struct ipe_eval_ctx *ctx,
++			const struct file *file,
++			enum ipe_op_type op)
++{
++	ctx->file = file;
++	ctx->op = op;
++}
 +
-+obj-$(CONFIG_SECURITY_IPE) += \
-+	ipe.o \
-diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+ /**
+  * evaluate_property() - Analyze @ctx against a rule property.
+  * @ctx: Supplies a pointer to the context to be evaluated.
+diff --git a/security/ipe/eval.h b/security/ipe/eval.h
+index b137f2107852..00ed8ceca10e 100644
+--- a/security/ipe/eval.h
++++ b/security/ipe/eval.h
+@@ -11,6 +11,8 @@
+ 
+ #include "policy.h"
+ 
++#define IPE_EVAL_CTX_INIT ((struct ipe_eval_ctx){ 0 })
++
+ extern struct ipe_policy __rcu *ipe_active_policy;
+ 
+ struct ipe_eval_ctx {
+@@ -19,6 +21,9 @@ struct ipe_eval_ctx {
+ 	const struct file *file;
+ };
+ 
++void ipe_build_eval_ctx(struct ipe_eval_ctx *ctx,
++			const struct file *file,
++			enum ipe_op_type op);
+ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
+ 
+ #endif /* _IPE_EVAL_H */
+diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
 new file mode 100644
-index 000000000000..8d4ea372873e
+index 000000000000..f2aaa749dd7b
 --- /dev/null
-+++ b/security/ipe/ipe.c
-@@ -0,0 +1,42 @@
++++ b/security/ipe/hooks.c
+@@ -0,0 +1,184 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2020-2024 Microsoft Corporation. All rights reserved.
 + */
-+#include <uapi/linux/lsm.h>
++
++#include <linux/fs.h>
++#include <linux/types.h>
++#include <linux/binfmts.h>
++#include <linux/mman.h>
 +
 +#include "ipe.h"
-+
-+static struct lsm_blob_sizes ipe_blobs __ro_after_init = {
-+};
-+
-+static const struct lsm_id ipe_lsmid = {
-+	.name = "ipe",
-+	.id = LSM_ID_IPE,
-+};
-+
-+static struct security_hook_list ipe_hooks[] __ro_after_init = {
-+};
++#include "hooks.h"
++#include "eval.h"
 +
 +/**
-+ * ipe_init() - Entry point of IPE.
++ * ipe_bprm_check_security() - ipe security hook function for bprm check.
++ * @bprm: Supplies a pointer to a linux_binprm structure to source the file
++ *	  being evaluated.
 + *
-+ * This is called at LSM init, which happens occurs early during kernel
-+ * start up. During this phase, IPE registers its hooks and loads the
-+ * builtin boot policy.
++ * This LSM hook is called when a binary is loaded through the exec
++ * family of system calls.
 + *
 + * Return:
-+ * * %0		- OK
-+ * * %-ENOMEM	- Out of memory (OOM)
++ * * %0		- Success
++ * * %-EACCES	- Did not pass IPE policy
 + */
-+static int __init ipe_init(void)
++int ipe_bprm_check_security(struct linux_binprm *bprm)
 +{
-+	security_add_hooks(ipe_hooks, ARRAY_SIZE(ipe_hooks), &ipe_lsmid);
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++
++	ipe_build_eval_ctx(&ctx, bprm->file, IPE_OP_EXEC);
++	return ipe_evaluate_event(&ctx);
++}
++
++/**
++ * ipe_mmap_file() - ipe security hook function for mmap check.
++ * @f: File being mmap'd. Can be NULL in the case of anonymous memory.
++ * @reqprot: The requested protection on the mmap, passed from usermode.
++ * @prot: The effective protection on the mmap, resolved from reqprot and
++ *	  system configuration.
++ * @flags: Unused.
++ *
++ * This hook is called when a file is loaded through the mmap
++ * family of system calls.
++ *
++ * Return:
++ * * %0		- Success
++ * * %-EACCES	- Did not pass IPE policy
++ */
++int ipe_mmap_file(struct file *f, unsigned long reqprot __always_unused,
++		  unsigned long prot, unsigned long flags)
++{
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++
++	if (prot & PROT_EXEC) {
++		ipe_build_eval_ctx(&ctx, f, IPE_OP_EXEC);
++		return ipe_evaluate_event(&ctx);
++	}
 +
 +	return 0;
 +}
 +
-+DEFINE_LSM(ipe) = {
-+	.name = "ipe",
-+	.init = ipe_init,
-+	.blobs = &ipe_blobs,
-+};
-diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
++/**
++ * ipe_file_mprotect() - ipe security hook function for mprotect check.
++ * @vma: Existing virtual memory area created by mmap or similar.
++ * @reqprot: The requested protection on the mmap, passed from usermode.
++ * @prot: The effective protection on the mmap, resolved from reqprot and
++ *	  system configuration.
++ *
++ * This LSM hook is called when a mmap'd region of memory is changing
++ * its protections via mprotect.
++ *
++ * Return:
++ * * %0		- Success
++ * * %-EACCES	- Did not pass IPE policy
++ */
++int ipe_file_mprotect(struct vm_area_struct *vma,
++		      unsigned long reqprot __always_unused,
++		      unsigned long prot)
++{
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++
++	/* Already Executable */
++	if (vma->vm_flags & VM_EXEC)
++		return 0;
++
++	if (prot & PROT_EXEC) {
++		ipe_build_eval_ctx(&ctx, vma->vm_file, IPE_OP_EXEC);
++		return ipe_evaluate_event(&ctx);
++	}
++
++	return 0;
++}
++
++/**
++ * ipe_kernel_read_file() - ipe security hook function for kernel read.
++ * @file: Supplies a pointer to the file structure being read in from disk.
++ * @id: Supplies the enumeration identifying the purpose of the read.
++ * @contents: Unused.
++ *
++ * This LSM hook is called when a file is being read in from disk from
++ * the kernel.
++ *
++ * Return:
++ * * %0		- Success
++ * * %-EACCES	- Did not pass IPE policy
++ */
++int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
++			 bool contents)
++{
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++	enum ipe_op_type op;
++
++	switch (id) {
++	case READING_FIRMWARE:
++		op = IPE_OP_FIRMWARE;
++		break;
++	case READING_MODULE:
++		op = IPE_OP_KERNEL_MODULE;
++		break;
++	case READING_KEXEC_INITRAMFS:
++		op = IPE_OP_KEXEC_INITRAMFS;
++		break;
++	case READING_KEXEC_IMAGE:
++		op = IPE_OP_KEXEC_IMAGE;
++		break;
++	case READING_POLICY:
++		op = IPE_OP_POLICY;
++		break;
++	case READING_X509_CERTIFICATE:
++		op = IPE_OP_X509;
++		break;
++	default:
++		op = IPE_OP_INVALID;
++		WARN(1, "no rule setup for kernel_read_file enum %d", id);
++	}
++
++	ipe_build_eval_ctx(&ctx, file, op);
++	return ipe_evaluate_event(&ctx);
++}
++
++/**
++ * ipe_kernel_load_data() - ipe security hook function for kernel load data.
++ * @id: Supplies the enumeration identifying the purpose of the read.
++ * @contents: Unused.
++ *
++ * This LSM hook is called when a buffer is being read in from disk.
++ *
++ * Return:
++ * * %0		- Success
++ * * %-EACCES	- Did not pass IPE policy
++ */
++int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents)
++{
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++	enum ipe_op_type op;
++
++	switch (id) {
++	case LOADING_FIRMWARE:
++		op = IPE_OP_FIRMWARE;
++		break;
++	case LOADING_MODULE:
++		op = IPE_OP_KERNEL_MODULE;
++		break;
++	case LOADING_KEXEC_INITRAMFS:
++		op = IPE_OP_KEXEC_INITRAMFS;
++		break;
++	case LOADING_KEXEC_IMAGE:
++		op = IPE_OP_KEXEC_IMAGE;
++		break;
++	case LOADING_POLICY:
++		op = IPE_OP_POLICY;
++		break;
++	case LOADING_X509_CERTIFICATE:
++		op = IPE_OP_X509;
++		break;
++	default:
++		op = IPE_OP_INVALID;
++		WARN(1, "no rule setup for kernel_load_data enum %d", id);
++	}
++
++	ipe_build_eval_ctx(&ctx, NULL, op);
++	return ipe_evaluate_event(&ctx);
++}
+diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
 new file mode 100644
-index 000000000000..adc3c45e9f53
+index 000000000000..c22c3336d27c
 --- /dev/null
-+++ b/security/ipe/ipe.h
-@@ -0,0 +1,16 @@
++++ b/security/ipe/hooks.h
+@@ -0,0 +1,25 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * Copyright (C) 2020-2024 Microsoft Corporation. All rights reserved.
 + */
++#ifndef _IPE_HOOKS_H
++#define _IPE_HOOKS_H
 +
-+#ifndef _IPE_H
-+#define _IPE_H
++#include <linux/fs.h>
++#include <linux/binfmts.h>
++#include <linux/security.h>
 +
-+#ifdef pr_fmt
-+#undef pr_fmt
-+#endif
-+#define pr_fmt(fmt) "ipe: " fmt
++int ipe_bprm_check_security(struct linux_binprm *bprm);
 +
-+#include <linux/lsm_hooks.h>
++int ipe_mmap_file(struct file *f, unsigned long reqprot, unsigned long prot,
++		  unsigned long flags);
 +
-+#endif /* _IPE_H */
-diff --git a/security/security.c b/security/security.c
-index e5da848c50b9..2b7c18a1a2af 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -51,7 +51,8 @@
- 	(IS_ENABLED(CONFIG_BPF_LSM) ? 1 : 0) + \
- 	(IS_ENABLED(CONFIG_SECURITY_LANDLOCK) ? 1 : 0) + \
- 	(IS_ENABLED(CONFIG_IMA) ? 1 : 0) + \
--	(IS_ENABLED(CONFIG_EVM) ? 1 : 0))
-+	(IS_ENABLED(CONFIG_EVM) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_IPE) ? 1 : 0))
++int ipe_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
++		      unsigned long prot);
++
++int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
++			 bool contents);
++
++int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents);
++
++#endif /* _IPE_HOOKS_H */
+diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+index 8d4ea372873e..729334812636 100644
+--- a/security/ipe/ipe.c
++++ b/security/ipe/ipe.c
+@@ -5,6 +5,7 @@
+ #include <uapi/linux/lsm.h>
  
- /*
-  * These are descriptions of the reasons that can be passed to the
-diff --git a/tools/testing/selftests/lsm/lsm_list_modules_test.c b/tools/testing/selftests/lsm/lsm_list_modules_test.c
-index 06d24d4679a6..1cc8a977c711 100644
---- a/tools/testing/selftests/lsm/lsm_list_modules_test.c
-+++ b/tools/testing/selftests/lsm/lsm_list_modules_test.c
-@@ -128,6 +128,9 @@ TEST(correct_lsm_list_modules)
- 		case LSM_ID_EVM:
- 			name = "evm";
- 			break;
-+		case LSM_ID_IPE:
-+			name = "ipe";
-+			break;
- 		default:
- 			name = "INVALID";
- 			break;
+ #include "ipe.h"
++#include "hooks.h"
+ 
+ static struct lsm_blob_sizes ipe_blobs __ro_after_init = {
+ };
+@@ -15,6 +16,11 @@ static const struct lsm_id ipe_lsmid = {
+ };
+ 
+ static struct security_hook_list ipe_hooks[] __ro_after_init = {
++	LSM_HOOK_INIT(bprm_check_security, ipe_bprm_check_security),
++	LSM_HOOK_INIT(mmap_file, ipe_mmap_file),
++	LSM_HOOK_INIT(file_mprotect, ipe_file_mprotect),
++	LSM_HOOK_INIT(kernel_read_file, ipe_kernel_read_file),
++	LSM_HOOK_INIT(kernel_load_data, ipe_kernel_load_data),
+ };
+ 
+ /**
 -- 
 2.44.0
 
