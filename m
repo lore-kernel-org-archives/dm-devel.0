@@ -1,91 +1,93 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B53AADDC7;
-	Fri, 24 May 2024 10:46:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D62E0126F08
+	for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 13:22:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716547618; cv=none; b=hLacI7kPNDxPv9tzvMAnfoDOSAKSjRZ3EBtt1rVAFEn1Bm131KnMjPF285H/xKH+7ubRRHi1xc34SIB6r6cEzHDPN4DqQ2vst3JvdmGJ/ZeOP3QGMjZ3OgxfwxZVZoBJyxKcF9sUvY3Kb5CY1nJMu+74MpAcq7JCtWkK/0PLXp0=
+	t=1716556955; cv=none; b=XzBl3J3Tgp4pegvsOQCsCNqZ5XONgxzuj6QSWi9U+7sapcYj9CZxxjs1KXgjGeb1VQ5C2obBdz7PabPYkE7DtVoC599giH4K0wPWrbV9mIHyPiGAeAmDWbc+qAtQbh4byzQr+m52QXpk326p5tiht5GgE6OztBXQBEaLTeIQbeo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716547618; c=relaxed/simple;
-	bh=El40fFKvSQA62aQn3lWxFdNTsiyC/RjddEVEMtvh7I4=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=K3+TgbHZV38onEC9I3/dISHbQ2dTIhjv+LhpAiToJB8YMCY7pmRt9Vy4BQa8z89yl3tao8jaPaMePFjgjYJKEn+SGidNrOug9Y9/0JxAqdFcSYb9AXXscTjuXBmYp7VdYm/ZG2GeNho+6ltD8piDsGd0T3gC5Nfte6xrpGoLME0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VSRXLMq5; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1716556955; c=relaxed/simple;
+	bh=4TbyJt2HVLTMgTWkXjx9cwcgBvM7TtW2IYNWv81DpaU=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=nIO21jTP8bqHupoP1KuzzVR5zwlFsPof0jyRY9KCv9mCnDg9nq3+so0AOIs5yf1MB3mHFSSs0Ly/bqHUVqT+XOLgKOggy9Kv8vG7IbC1oHYTWRIgu7++oTQNyXemZwHxXZa++8jo/R8V+2QGHKEncZp7m+SK9GpUr9ptUqpGyBo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=YPdu9+x4; arc=none smtp.client-ip=209.85.218.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VSRXLMq5"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id CCE9AC3277B;
-	Fri, 24 May 2024 10:46:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1716547618;
-	bh=El40fFKvSQA62aQn3lWxFdNTsiyC/RjddEVEMtvh7I4=;
-	h=From:To:Cc:Subject:Date:From;
-	b=VSRXLMq5UsTTn2fa3tOgqf85AOP5Dy544dhMmEIKgfplepBVEoDmMlgLuqK6/TVAe
-	 aPB5b0Y+SooZsTYmyjSD32o/xvcgSziKC6aGpVah9WBpWtKr6UA8bsYY8G/6UI80hT
-	 WdLqks5tfx6CxkrsknrxXUatNyTNeB6wjOYm2ER34VGy9VX84jJ0Xg0tKC3ONOrAdk
-	 D/2MKBtlGRyj2Nfs92EDoGS+f5y/Bq9aKYcLSciCnLptEuHfuXzOBy+/Pyf9ZyU+H5
-	 Loyx3BgieOKf8oBouOUgsZAQHh2+UkM1d2it6lFwh9Q0Gr/lMABt73XpPdkh0NkBeH
-	 DQkhys9GbhKwg==
-From: Hannes Reinecke <hare@kernel.org>
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Christoph Hellwig <hch@lst.de>,
-	Mike Snitzer <snitzer@kernel.org>,
-	linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	Hannes Reinecke <hare@kernel.org>
-Subject: [PATCHv2] block: check for max_hw_sectors underflow
-Date: Fri, 24 May 2024 12:46:51 +0200
-Message-Id: <20240524104651.92506-1-hare@kernel.org>
-X-Mailer: git-send-email 2.35.3
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="YPdu9+x4"
+Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-a5a2d0d8644so1151327866b.1
+        for <dm-devel@lists.linux.dev>; Fri, 24 May 2024 06:22:32 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1716556951; x=1717161751; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=4TbyJt2HVLTMgTWkXjx9cwcgBvM7TtW2IYNWv81DpaU=;
+        b=YPdu9+x4GTNO/VEcfn3ehkeL5LCIwXBXhQi9idJFVdwrHSLLWxxRUCmaWviE1gyIqO
+         nlRyk+2JCD6dDYA84uMcrtGeqNqKfTlX+R1mbOOfSxI7n7VqC7L4Nx+fIBrHKxUPieUI
+         bTC3nKh/E9hXLwd8uW6tkbZecxeJFrA52J4vdUZWsyr0KCl1RIz/39Iq7SsThApS5iOa
+         4unERtMuXEovpBRIaDZD+y8rRunB42UxRLkwiyCczO2KpSlqEnlKymqn09TnGX60g8R7
+         pHzcEGsQsZzvMYo2w/a+MEdO0k8TyEVWY7hhf9szMXyBfSZqn3bqtyH1PW267pcTJZ3E
+         DUsQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716556951; x=1717161751;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=4TbyJt2HVLTMgTWkXjx9cwcgBvM7TtW2IYNWv81DpaU=;
+        b=I936fbFZrPqettS6LmyIjZGNguMI3O9ILz3tEzoUOg7EcXGryXFV8n6Bsvm6HhcAxw
+         +oVJpetLgPkk08pnKJ9lVN8N2xWj54fEUlFxIS4+HHcibkbdDnn4WgZ5T2oz77LAcgj5
+         85XIvsdra5ztXMXdkAboP7m59/BK8+C8QtW528U00Z/9LLf5OYV16vQ6lKqIW4AYPTBC
+         luDB+viligT7bZrWrEdkNGvZ6FJKwE5/8zpvpYKIP3NhYGPkHHkjCKyv3G/rhR42zu+N
+         4DRlC6LXLO55zwoQKI5h8DNHhOdxZWGZj3kSMhD4XPs9GuxlUwBRabJAGc1iQ7Gnpx1l
+         QgYw==
+X-Gm-Message-State: AOJu0YwkRRPcW8Rmn6AssYLKp5hTI09dX8mdzxfWwIHTTbYgkciOwRrr
+	nxh5NKvLPL5mNnaZ0ZXRiI6gsLK0CQ9Fwzv2BG4KkqMQWhWGbKJ0d63cOb5wbiUAaTWRtC0sxUw
+	t
+X-Google-Smtp-Source: AGHT+IH+cd7uYyVnrMvnvu1LH8dPJqXX0UDGQ7AjynAphL7HW06H3zEmR2DwO75at1+uTFziYB/S4w==
+X-Received: by 2002:a17:907:36ca:b0:a59:aa69:9791 with SMTP id a640c23a62f3a-a62642daa62mr205082866b.34.1716556951064;
+        Fri, 24 May 2024 06:22:31 -0700 (PDT)
+Received: from ?IPv6:2003:de:371a:a400:e6fd:936f:426b:4ff8? (p200300de371aa400e6fd936f426b4ff8.dip0.t-ipconnect.de. [2003:de:371a:a400:e6fd:936f:426b:4ff8])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a626c93a81dsm132116066b.87.2024.05.24.06.22.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 24 May 2024 06:22:30 -0700 (PDT)
+Message-ID: <40b3d21cb4fd39b02b66a709724d15507dc749b9.camel@suse.com>
+Subject: Re: [PATCH 0/2] multipathd: accept more multipath device names
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Fri, 24 May 2024 15:22:29 +0200
+In-Reply-To: <20240520233803.190793-1-bmarzins@redhat.com>
+References: <20240520233803.190793-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-The logical block size need to be smaller than the max_hw_sector
-setting, otherwise we can't even transfer a single LBA.
+On Mon, 2024-05-20 at 19:38 -0400, Benjamin Marzinski wrote:
+> The multipathd commands with a $map argument will only accept
+> dm-<number> and aliases for $map. Make them accept WWIDs as well.
+> Also,
+> change find_mp_by_str() to not skip devices with aliases of the form
+> dm-<something_that_starts_with_a_number>, which are horrible names,
+> but
+> still valid.
+>=20
+> Benjamin Marzinski (2):
+> =C2=A0 libmultipath: accept poorly chosen aliases in find_mp_by_str
+> =C2=A0 libmultipath: accept wwids in find_mp_by_str
+>=20
+> =C2=A0libmultipath/structs.c | 11 +++++++----
+> =C2=A01 file changed, 7 insertions(+), 4 deletions(-)
+>=20
 
-Signed-off-by: Hannes Reinecke <hare@kernel.org>
----
- block/blk-settings.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
-
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index d2731843f2fc..030afb597183 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -104,6 +104,7 @@ static int blk_validate_zoned_limits(struct queue_limits *lim)
- static int blk_validate_limits(struct queue_limits *lim)
- {
- 	unsigned int max_hw_sectors;
-+	unsigned int logical_block_sectors;
- 
- 	/*
- 	 * Unless otherwise specified, default to 512 byte logical blocks and a
-@@ -134,8 +135,11 @@ static int blk_validate_limits(struct queue_limits *lim)
- 		lim->max_hw_sectors = BLK_SAFE_MAX_SECTORS;
- 	if (WARN_ON_ONCE(lim->max_hw_sectors < PAGE_SECTORS))
- 		return -EINVAL;
-+	logical_block_sectors = lim->logical_block_size >> SECTOR_SHIFT;
-+	if (WARN_ON_ONCE(logical_block_sectors > lim->max_hw_sectors))
-+		return -EINVAL;
- 	lim->max_hw_sectors = round_down(lim->max_hw_sectors,
--			lim->logical_block_size >> SECTOR_SHIFT);
-+			logical_block_sectors);
- 
- 	/*
- 	 * The actual max_sectors value is a complex beast and also takes the
-@@ -153,7 +157,7 @@ static int blk_validate_limits(struct queue_limits *lim)
- 		lim->max_sectors = min(max_hw_sectors, BLK_DEF_MAX_SECTORS_CAP);
- 	}
- 	lim->max_sectors = round_down(lim->max_sectors,
--			lim->logical_block_size >> SECTOR_SHIFT);
-+			logical_block_sectors);
- 
- 	/*
- 	 * Random default for the maximum number of segments.  Driver should not
--- 
-2.35.3
+For the set:
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
