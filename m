@@ -1,155 +1,103 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f181.google.com (mail-pl1-f181.google.com [209.85.214.181])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDE4A38FA6;
-	Mon, 27 May 2024 12:36:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB53317E8E3
+	for <dm-devel@lists.linux.dev>; Mon, 27 May 2024 15:17:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716813410; cv=none; b=JXLIHTtHeVUZmhGkXwzeWlZ3Z4VV/jpkGZHWcaiJKVGy3hn3bRHyWX+RbtBDCtFXbYJJDd0ddcOYhc9yKJTeXgcdrP2U9vQh6fV1gkjwobeXySmtZLBL9hUJ/lcVFpy3eh7Qajp4pubnSIGQMIoF+evhPqfSh4RA++P6iLCL5iE=
+	t=1716823030; cv=none; b=NDPga+col34/saUkjszbJrTAfYuWCbw7Q3D49x6RzLPw1X2qAMDwL6jnjDoBVpdA8pCzQUJ6XJUtcB0rA/O5WPeo/29kU2Ezz4+2Ds+fz+6OOFy2N0rrEKPXCW7/bwnjriTsP1BHm7Xvgz5LA7AC53lGnMnXyyIzo8cdzMY+i0g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716813410; c=relaxed/simple;
-	bh=quJlpP2nltsTBTb2lwdypxbNRTK5QV/treQQeeWa0/8=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=kl5C2WR5nOrUGq1dmn+oI5H4KiR2frO4WdeElhenrtk9dugJx8rNrrZzdqVXC0GgVzyJjPEFLKGvrq6c95S0R3meOuos9pJZ7FZuIuG0NQEuzamg2LQbO84+UKrkT1tRZLEUK7+NkO79CoyB1S9SiVtdoe2yOf+kWtaUZVfwg08=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=NTesj0JI; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1716823030; c=relaxed/simple;
+	bh=5jiH4x1XWMSnP7qoMjrpmykCRTHBhIhKSZ3Gp9R829s=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type; b=I1oyCdUP7d9V88NtPoIr3Qf500/eA+pT9EI9Qi0ftcmWQkFdPXJMfZuqXY/fWaS6WXPz+iz91IkcEAFz0SHpStt5hmmD36pkgV4Z1lfcJoZK7TZEf1SZTDgp0/90O6ApFx/XjMxl4JgSFlkuj8s/JfPlo0eSgUhkNcwnYCWUHRU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=JvzSGuBW; arc=none smtp.client-ip=209.85.214.181
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="NTesj0JI"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-	MIME-Version:References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender
-	:Reply-To:Content-Type:Content-ID:Content-Description;
-	bh=Xw5VTmLtUcmmuhG0XHZfah6Xl9WiGswOVad2usHVz9A=; b=NTesj0JIa0b+4TQm8KNfHGfsYq
-	Ie3rT6B77Jo3Lmxw3DSlGooYjbhZzRrx56ZlzU9+Q5v29yKDvaXnK+oQ/4oqoG4O0qO0IUKvVv2lU
-	wAV17c0ASF1CzwijV7NKfkE0cxhXN6gLra+SiOPWDm9K8MH42kE39d5vdFNY3eewBcpCiwPoVlpNF
-	/aqVISA05GUe8hqLT//AAQ0qgom1xd5hIVD2yis9Hj2L3BDTrTVwIA8jcCk7ikBmKYCnqkV4n5+er
-	s/Hg7eOwZ56up6zNucQVFLGCfoVG9YQrvbySfCavZh89H/X/c15k3wRxBxnSvxUXHR0kIQiXN+TYo
-	aGkzA/Bw==;
-Received: from 2a02-8389-2341-5b80-3177-e4c1-2108-f294.cable.dynamic.v6.surfer.at ([2a02:8389:2341:5b80:3177:e4c1:2108:f294] helo=localhost)
-	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1sBZap-0000000Eu1o-3ZAC;
-	Mon, 27 May 2024 12:36:48 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Cc: Damien Le Moal <dlemoal@kernel.org>,
-	dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org,
-	Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Subject: [PATCH 3/3] dm: make dm_set_zones_restrictions work on the queue limits
-Date: Mon, 27 May 2024 14:36:20 +0200
-Message-ID: <20240527123634.1116952-4-hch@lst.de>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="JvzSGuBW"
+Received: by mail-pl1-f181.google.com with SMTP id d9443c01a7336-1f4948a6a8cso20785ad.1
+        for <dm-devel@lists.linux.dev>; Mon, 27 May 2024 08:17:08 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1716823028; x=1717427828; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=NmPSot7ggLnz+XQPHJ/svK2HUqmn9I3vNorDkw0wgw4=;
+        b=JvzSGuBWHkTpskV9Qh+n6e3y5AKAavJS4SvOuiWrEht8SqdoAViwrqDA/KRIjtfDXM
+         vHGsAx83m/x5CVjAhph5wgKrlrrN2+sbhGS0ycGj6aMtCAqJD9mIu39wbHxF2o7O92Fl
+         rHeAxe782IhX+bMQeCVoIZJqJ9D8gJrJiFEFdPWuIIVJE5OyM5+I3R7V9M7xjqk+A297
+         ZlatHSrAkPtI4di8knasnweA4prhIXxkByzRYjeKPUoKXO8tpkQ8kN3WaT3eBY+cGy7x
+         hKwyiwJSeJxHtw/RdjNm0TBr2pcpxsaW6x5GHXp7iAuB4NDjsCi72DOwR8QzzQ7PPkke
+         QpJA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716823028; x=1717427828;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=NmPSot7ggLnz+XQPHJ/svK2HUqmn9I3vNorDkw0wgw4=;
+        b=JNnTmEvauDb60ovWIaxZNEgVupKoUiYCNyerKkDHs26N/8whO5nFKqNhlZ2MuPdsRD
+         hRQ1acDQfrQHjyugd1e490Sgc6mkXkqVKS4jCOyShN88EY4pQvxPRnOvIQx06vNUCTKJ
+         Z2a4H/MPx8rQAyj1AR5fy37ZcX6x1h+z2Kml23oW7v1SeVxmUKRONOdFzHMkPZehTVBw
+         GwMU9s/v8KfHbAMCvVrREm7wJ8uh+/xUbDT/zRRutW2o7Ju+K3kbdPt3ZManzE3oivd5
+         ad0fkK0QRUEgyVx7Wn1euBl6C8J6RfVb58h7IuyQ6TY9QeRRFzMImqaNomOH4f60YBfz
+         WzwA==
+X-Forwarded-Encrypted: i=1; AJvYcCXvP+vOylPw9KC/yMwBEgJqnL3KV4KKBUnfmskCdt4x3nbNefG/gOovEfyuI/s19PRNMXUd6FZ+tXMEhzsQmdOwZv4EuvKrlwI=
+X-Gm-Message-State: AOJu0Yym51JeJyzEGwCVKSO1MGlqVDscDGslP6mfL1JE39URdkjtxRIa
+	BQeMSpd1kVweyQCgJhjEVh0kNkahpAh8y24wClpu52xcZtciRLCJqEqgk5edZlA=
+X-Google-Smtp-Source: AGHT+IHE849WWUx6bhlmTYdHVKsY/r/dVwclg2T4wtnnhKmGhqVNqk5z4HVEcOzw4kd0DhXQltjrtQ==
+X-Received: by 2002:a17:902:f686:b0:1f3:3d5a:e864 with SMTP id d9443c01a7336-1f4494f3db4mr114828955ad.3.1716823027556;
+        Mon, 27 May 2024 08:17:07 -0700 (PDT)
+Received: from [127.0.0.1] ([198.8.77.194])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1f44c9a4fadsm62169365ad.224.2024.05.27.08.17.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 27 May 2024 08:17:06 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, Christoph Hellwig <hch@lst.de>
+Cc: Damien Le Moal <dlemoal@kernel.org>, dm-devel@lists.linux.dev, 
+ linux-block@vger.kernel.org
 In-Reply-To: <20240527123634.1116952-1-hch@lst.de>
 References: <20240527123634.1116952-1-hch@lst.de>
+Subject: Re: convert newly added dm-zone code to the atomic queue commit
+ API v3
+Message-Id: <171682302619.252705.15503452020920646398.b4-ty@kernel.dk>
+Date: Mon, 27 May 2024 09:17:06 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.12.5-dev-2aabd
 
-Don't stuff the values directly into the queue without any
-synchronization, but instead delay applying the queue limits in
-the caller and let dm_set_zones_restrictions work on the limit
-structure.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
----
- drivers/md/dm-table.c | 12 ++++++------
- drivers/md/dm-zone.c  | 11 ++++++-----
- drivers/md/dm.h       |  3 ++-
- 3 files changed, 14 insertions(+), 12 deletions(-)
+On Mon, 27 May 2024 14:36:17 +0200, Christoph Hellwig wrote:
+> the new dm-zone code added by Damien in 6.10-rc directly modifies the
+> queue limits instead of using the commit-style API that dm has used
+> forever and that the block layer adopted now, and thus can only run
+> after all the other changes have been commited.  This is quite a land
+> mine and can be easily fixed.
+> 
+> Mike said he's fine with merging this through the block tree as the
+> dm-zone changes came in through that.
+> 
+> [...]
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e291b78b307b13..b2d5246cff2102 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1981,10 +1981,6 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	if (!dm_table_supports_secure_erase(t))
- 		limits->max_secure_erase_sectors = 0;
- 
--	r = queue_limits_set(q, limits);
--	if (r)
--		return r;
--
- 	if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) {
- 		wc = true;
- 		if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_FUA)))
-@@ -2036,12 +2032,16 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	 * For a zoned target, setup the zones related queue attributes
- 	 * and resources necessary for zone append emulation if necessary.
- 	 */
--	if (blk_queue_is_zoned(q)) {
--		r = dm_set_zones_restrictions(t, q);
-+	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) && limits->zoned) {
-+		r = dm_set_zones_restrictions(t, q, limits);
- 		if (r)
- 			return r;
- 	}
- 
-+	r = queue_limits_set(q, limits);
-+	if (r)
-+		return r;
-+
- 	dm_update_crypto_profile(q, t);
- 
- 	/*
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 0ee22494857d07..5d66d916730efa 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -220,7 +220,8 @@ static bool dm_table_supports_zone_append(struct dm_table *t)
- 	return true;
- }
- 
--int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
-+int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
-+		struct queue_limits *lim)
- {
- 	struct mapped_device *md = t->md;
- 	struct gendisk *disk = md->disk;
-@@ -236,7 +237,7 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
- 		clear_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
- 	} else {
- 		set_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
--		blk_queue_max_zone_append_sectors(q, 0);
-+		lim->max_zone_append_sectors = 0;
- 	}
- 
- 	if (!get_capacity(md->disk))
-@@ -260,9 +261,9 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
- 	 * a regular device.
- 	 */
- 	if (nr_conv_zones >= ret) {
--		disk->queue->limits.max_open_zones = 0;
--		disk->queue->limits.max_active_zones = 0;
--		disk->queue->limits.zoned = false;
-+		lim->max_open_zones = 0;
-+		lim->max_active_zones = 0;
-+		lim->zoned = false;
- 		clear_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
- 		disk->nr_zones = 0;
- 		return 0;
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index e0c57f19839b29..53ef8207fe2c15 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -101,7 +101,8 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
- /*
-  * Zoned targets related functions.
-  */
--int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q);
-+int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
-+		struct queue_limits *lim);
- void dm_zone_endio(struct dm_io *io, struct bio *clone);
- #ifdef CONFIG_BLK_DEV_ZONED
- int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
+Applied, thanks!
+
+[1/3] dm: move setting zoned_enabled to dm_table_set_restrictions
+      commit: d9780064b163b91c28e4d44ec3115599db65b7fa
+[2/3] dm: remove dm_check_zoned
+      commit: 5e7a4bbcc33d7df6bcc8565a8938c196285e5423
+[3/3] dm: make dm_set_zones_restrictions work on the queue limits
+      commit: c8c1f7012b807ca4da0136eacab96961b56f25d5
+
+Best regards,
 -- 
-2.43.0
+Jens Axboe
+
+
 
