@@ -1,45 +1,130 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 909C417E8F0
-	for <dm-devel@lists.linux.dev>; Tue, 28 May 2024 10:58:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B08B6154BF8
+	for <dm-devel@lists.linux.dev>; Tue, 28 May 2024 11:16:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716893923; cv=none; b=c+DW14pnbaEO2n+ivUv+QJ1qauh27IiTwyzjN2BVbIHFTpF3nSobbwJvUtaEUtZAkcvK8Z9wFI0V96itpPMLg7MoeJEbuVWMM4tFL+c/xbdKWL/rZw7cirfymWw+RJxFfSNeT4sKVR1UvFRGMFTXDyeZaaBEasoO2Q1e+01luCY=
+	t=1716894973; cv=none; b=kc9Uoskh50v4/0W9liqvnclQYZWG2OK0yvJcdNq30zIZE07r20gunvQ6/Qe74wPUMGXWZEsHJETxon+nasdtzz7rhgL3QvpXIgZ2pc7sdEXbHWbCDYplEEoFEpL65i/Hyd7rBZRpGWbpnai7OHe+NJDnx08jfHO2uZ0ASMmvavo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716893923; c=relaxed/simple;
-	bh=H4Hcx8CdYhMsJvPBck3oOGK6LE6xS2IFs6GTLz5AdJQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Bn3wMEx1wPnp5X/wPOmWOQ6ULhhu+vFk2gKjq9xbJqS5X5EAwl+f57vvDX90W9f/h0LwQy04aZQc6aK/Shpjhm+Ekp1UeDovxCV8akXEOwSanFD0/ocnIo6NV80wlwbBWAA6wl1inri5/Oi4qhvgXaMeMU9d9zlWB3reGSob5X8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 7ABD568AFE; Tue, 28 May 2024 12:58:37 +0200 (CEST)
-Date: Tue, 28 May 2024 12:58:37 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: John Garry <john.g.garry@oracle.com>
-Cc: Hannes Reinecke <hare@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-	Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@kernel.org>,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev
-Subject: Re: [PATCHv2] block: check for max_hw_sectors underflow
-Message-ID: <20240528105837.GA15290@lst.de>
-References: <20240524104651.92506-1-hare@kernel.org> <acf3e39c-36ae-4792-b870-26d392be5241@oracle.com>
+	s=arc-20240116; t=1716894973; c=relaxed/simple;
+	bh=dJzxH+C+YgA2K6Qr0KSXq7M+QtKSoJ8jXdM+a0oASB0=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=aWW7VGd7v597yTiyga/h9ZiPWtNtQfC5HPqh4LrvSDOJMMbeC3BaMrnhfFu1Tc/+EYajzkBl0OwTLhZXLAVfjl3HeqdmrVxa4EsVUSrlmztD78JmQF5ydPYsUWrOhBXP1YSzysW+gBHrl6UN5PkywQb6mqx3OR6pT6I1MBRKWh0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BEuzNZwR; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BEuzNZwR"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716894970;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=rYg0TTRzA8O3sBmCaNFcaodzlZZszlkh1V5SLXZSiEs=;
+	b=BEuzNZwRj18EBpGIHgBYA6+2HADA9lRZRh9JG+bDRegf8dmFiHAbAY9g7Of57tYclfBXoA
+	12ugeBvUwTyH0XjmDdlx1PTJWCciTkqc6bcYSjDcNc1qjOoNw50Wp+6lFpUSuxlArzkPbb
+	pC4LcIPXjGXOeybiHTFV/yPgS6HSH+8=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-487-iVtCDwhVNzKupBwSEjm7lg-1; Tue,
+ 28 May 2024 07:16:06 -0400
+X-MC-Unique: iVtCDwhVNzKupBwSEjm7lg-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 486FC1C05131;
+	Tue, 28 May 2024 11:16:06 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A8603400059;
+	Tue, 28 May 2024 11:16:05 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 9094030C1C33; Tue, 28 May 2024 11:16:05 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 8C6013C542;
+	Tue, 28 May 2024 13:16:05 +0200 (CEST)
+Date: Tue, 28 May 2024 13:16:05 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>, 
+    Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, 
+    Mike Snitzer <snitzer@kernel.org>, Milan Broz <gmazyland@gmail.com>, 
+    linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
+    linux-nvme@lists.infradead.org
+Subject: Re: [RFC PATCH 0/2] dm-crypt support for per-sector NVMe metadata
+In-Reply-To: <206cd9fc-7dd0-f633-f6a9-9a2bd348a48e@ewheeler.net>
+Message-ID: <971e4bbc-62b8-18bb-e847-1d2e58f2a07f@redhat.com>
+References: <f85e3824-5545-f541-c96d-4352585288a@redhat.com> <206cd9fc-7dd0-f633-f6a9-9a2bd348a48e@ewheeler.net>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <acf3e39c-36ae-4792-b870-26d392be5241@oracle.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 
-On Tue, May 28, 2024 at 11:54:42AM +0100, John Garry wrote:
-> I don't think that we ever check if lim->logical_block_size is a power-of-2 
-> - but that's a given, right?
 
-It has to be for the block stack to work.  That being said now that we
-do have a single good place for sanity checks it's probably worth to
-add this check explicitly.
+
+On Mon, 27 May 2024, Eric Wheeler wrote:
+
+> On Wed, 15 May 2024, Mikulas Patocka wrote:
+> > Hi
+> > 
+> > Some NVMe devices may be formatted with extra 64 bytes of metadata per 
+> > sector.
+> > 
+> > Here I'm submitting for review dm-crypt patches that make it possible to 
+> > use per-sector metadata for authenticated encryption. With these patches, 
+> > dm-crypt can run directly on the top of a NVMe device, without using 
+> > dm-integrity. These patches increase write throughput twice, because there 
+> > is no write to the dm-integrity journal.
+> > 
+> > An example how to use it (so far, there is no support in the userspace 
+> > cryptsetup tool):
+> > 
+> > # nvme format /dev/nvme1 -n 1 -lbaf=4
+> > # dmsetup create cr --table '0 1048576 crypt 
+> > capi:authenc(hmac(sha256),cbc(aes))-essiv:sha256 
+> > 01b11af6b55f76424fd53fb66667c301466b2eeaf0f39fd36d26e7fc4f52ade2de4228e996f5ae2fe817ce178e77079d28e4baaebffbcd3e16ae4f36ef217298 
+> > 0 /dev/nvme1n1 0 2 integrity:32:aead sector_size:4096'
+> 
+> Thats really an amazing feature, and I think your implementation is simple 
+> and elegant.  Somehow reminds me of 520/528-byte sectors that big 
+> commercial filers use, but in a way the Linux could use.
+> 
+> Questions:
+> 
+> - I see you are using 32-bytes of AEAD data (out of 64).  Is AEAD always 
+>   32-bytes, or can it vary by crypto mechanism?
+
+It varies. I.e. if you use hmac(sha512), full 64 bytes will be used.
+
+> - What drive are you using?
+
+Western Digital SN840
+
+WUS4BA119DSP3X3
+
+> I am curious what your `nvme id-ns` output 
+>   looks like. Do you have 64 in the `ms` value?
+> 
+>         # nvme id-ns /dev/nvme0n1 | grep lbaf
+>         nlbaf   : 0
+>         nulbaf  : 0
+>         lbaf  0 : ms:0   lbads:9  rp:0 (in use)
+>                      ^         ^512b
+
+Yes, I have this:
+lbaf  0 : ms:0   lbads:9  rp:0
+lbaf  1 : ms:8   lbads:9  rp:0
+lbaf  2 : ms:0   lbads:12 rp:0
+lbaf  3 : ms:8   lbads:12 rp:0
+lbaf  4 : ms:64  lbads:12 rp:0 (in use)
+
+Mikulas
+
+> --
+> Eric Wheeler
+
