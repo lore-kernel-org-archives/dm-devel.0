@@ -1,141 +1,123 @@
-Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA7421411D0
-	for <dm-devel@lists.linux.dev>; Tue, 28 May 2024 23:55:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=173.205.220.69
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5EC522324
+	for <dm-devel@lists.linux.dev>; Wed, 29 May 2024 02:00:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716940536; cv=none; b=E15bZkdiBXPDdCr09KjaGfALikH+bXT2QoBgm33QjgHPY1GVz/jRlyDOX5pVMjbeO1qw2En241zWy7o8Vet3V/62TzwmnTn7zNuBFKUOGqkxtxwKYzP4+MJ+LB33ym7uqUHu2WLfr5iwpVM56gwsyVeD6cZEVFiD27WMbpAiEPw=
+	t=1716948030; cv=none; b=TFSktPcZtGfvq9U+F4cTUpLhWab+XNX4zuP4zq9E9nYLCZOc6C8uLtDdcnMNugTqM0etYQqpQhtFDPu2Bi6NIXVeo6IaoCcl4nUq/IyGJlsIn5oEwMImgurFDgLMoCXm1hHeUu2OaAbIxReRqPOYlca+WRdjwgH29xwQ1PprUsM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716940536; c=relaxed/simple;
-	bh=jGmKAsNQSZ0hqCy19NxNHqZEfN/XQRZUWSbfUfZXAek=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=h4ENxB+Xwyi+Wm5Rw4V4aFo1+gUWZoorxXkMa3+Et0YCPr6awrLzYUYt5ahcnVqIfrXSHHiNvRDU6qG7UeKUzM50ieNzm0jnYMc7bD66bTggLalfOEMIgHmkpN5XhxXHcuXpTscc+g+z8/Omqks7crix/CQGl+HAblr2UOC8NA4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net; spf=none smtp.mailfrom=lists.ewheeler.net; arc=none smtp.client-ip=173.205.220.69
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lists.ewheeler.net
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=lists.ewheeler.net
-Received: from localhost (localhost [127.0.0.1])
-	by mx.ewheeler.net (Postfix) with ESMTP id 413A286;
-	Tue, 28 May 2024 16:55:28 -0700 (PDT)
-X-Virus-Scanned: amavisd-new at ewheeler.net
-Received: from mx.ewheeler.net ([127.0.0.1])
-	by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
-	with LMTP id eUt-uxGOa4ys; Tue, 28 May 2024 16:55:27 -0700 (PDT)
-Received: from localhost (localhost [127.0.0.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mx.ewheeler.net (Postfix) with ESMTPSA id 2984A48;
-	Tue, 28 May 2024 16:55:27 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net 2984A48
-Date: Tue, 28 May 2024 16:55:27 -0700 (PDT)
-From: Eric Wheeler <dm-devel@lists.ewheeler.net>
-To: Milan Broz <gmazyland@gmail.com>
-cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, 
-    Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>, 
-    Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@kernel.org>, 
-    linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
-    linux-nvme@lists.infradead.org
-Subject: Re: [RFC PATCH 0/2] dm-crypt support for per-sector NVMe metadata
-In-Reply-To: <f7c9e39f-b139-429b-a310-15f19dab05ec@gmail.com>
-Message-ID: <b8ba9b17-3fd-5c8c-4510-1eda64d6c5c@ewheeler.net>
-References: <f85e3824-5545-f541-c96d-4352585288a@redhat.com> <206cd9fc-7dd0-f633-f6a9-9a2bd348a48e@ewheeler.net> <f7c9e39f-b139-429b-a310-15f19dab05ec@gmail.com>
+	s=arc-20240116; t=1716948030; c=relaxed/simple;
+	bh=1q1tCShYiNmiz3QmxyaKlUD5m6tjnboeasn8VoDi/6k=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=MWC84Dc62vu2Ll2Sf3DDzjn2ItbiCNSAx2/uveMhugbXI0W6Sq3wOMAEM3oDVliX9OHMpnL9UMTQgWfzmlc+FbA72OufbjhufSLUJ4MCHc34US+HH2xAnSN2i42BoTNRrhAmLBzn+XGdsTj/KU/EBbrd2+GwXHilbw4RcRm/2ek=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=d0SjqMna; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="d0SjqMna"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716948026;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=7IJ2FBrWGqchGLvqswCTBuy+BPhnPSfu4z6uyGfELVY=;
+	b=d0SjqMna73qxI6W/wIEyy8VO6+248neSJHHGwWZwOb9Hp/tS+WROxQy92uYpORFTe5dPSR
+	FxAcWoZwPhu0VE2LAmO4uYEjqsFXaZMmigDRvF3F8b9yr8l+BnLQ2j9JikWiH5REPAXg5s
+	Hg9RGpnhE2g2HKcdLFVB1+fn2kpba5Q=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-323-w42JSqVWN5u_wn7YYXGf6Q-1; Tue, 28 May 2024 22:00:24 -0400
+X-MC-Unique: w42JSqVWN5u_wn7YYXGf6Q-1
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-6ad7b2f6933so14366186d6.0
+        for <dm-devel@lists.linux.dev>; Tue, 28 May 2024 19:00:24 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1716948024; x=1717552824;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=7IJ2FBrWGqchGLvqswCTBuy+BPhnPSfu4z6uyGfELVY=;
+        b=S71bv61G4kdviCrP6CGlTWtMpJgckrXlH2jsc79Knsqz6HZuFalpzX9yeAXaYDYuQB
+         iXh3jdaG9ibf1aPQRsAKm4BMAMwYWXmN314Ap1uus/Xsa/q49lHzQuWD06w27wLQLoaa
+         HXMeHuj0q1Ht1zQeP9dgLAo7wLoQdfCicFh2/o4fC1qfwO7PaPh2YpRiibOBp8k6I/1W
+         t/ONAQ6R5ungpjXxvNhl/WWesdoswWFDZVoUIfPn8oacJaH+LiNbSc8Efj95j2pRus2O
+         sfAIvPUin1AZSonOlF1V6GNLswjjQQpZ2HGHWYSYTrisLtSYXwkH0Jdw/dAKVPmumekO
+         Mbpg==
+X-Gm-Message-State: AOJu0Yy2nt8OaNpcy257v5v7mbYihdcYKb5pXp7fmYjnr1Y0Q/5C0dM8
+	Mf5YhZd2mP0i24XLKSu9KhUiELhzHB8d22PHaIwshZMR/eNSb53zIKF31u/i6AvAeUvWi7RLbaA
+	AG+P47BLw+IWi2aAG0matwOXo9xAgsjkucuTMaSLugMPqpZ6QHrXCoZ2lbzVpQxBe4Cg=
+X-Received: by 2002:a05:6214:5988:b0:6ab:1b6b:c8ba with SMTP id 6a1803df08f44-6abc7a9f3famr154298236d6.1.1716948024233;
+        Tue, 28 May 2024 19:00:24 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IHIqWMtUS4LMCQMI46PFt7oF6eIakE+BnJJ45NfXiWEsWFHSAaiN+W3QyLy0HZkGaVGZVH0tw==
+X-Received: by 2002:a05:6214:5988:b0:6ab:1b6b:c8ba with SMTP id 6a1803df08f44-6abc7a9f3famr154297036d6.1.1716948022387;
+        Tue, 28 May 2024 19:00:22 -0700 (PDT)
+Received: from [192.168.1.175] ([70.22.187.239])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6ac162ef448sm49771756d6.97.2024.05.28.19.00.21
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 28 May 2024 19:00:21 -0700 (PDT)
+Message-ID: <a1ceff08-164f-d0b4-36b6-41a7798b82be@redhat.com>
+Date: Tue, 28 May 2024 22:00:21 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.12.0
+Subject: Re: [PATCH] dm vdo indexer: Use swap() instead of open coding it
+To: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ Abaci Robot <abaci@linux.alibaba.com>, Mike Snitzer <snitzer@kernel.org>
+References: <20240524074109.13433-1-jiapeng.chong@linux.alibaba.com>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20240524074109.13433-1-jiapeng.chong@linux.alibaba.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Tue, 28 May 2024, Milan Broz wrote:
-> On 5/28/24 12:12 AM, Eric Wheeler wrote:
-> > On Wed, 15 May 2024, Mikulas Patocka wrote:
-> >> Hi
-> >>
-> >> Some NVMe devices may be formatted with extra 64 bytes of metadata per
-> >> sector.
-> >>
-> >> Here I'm submitting for review dm-crypt patches that make it possible to
-> >> use per-sector metadata for authenticated encryption. With these patches,
-> >> dm-crypt can run directly on the top of a NVMe device, without using
-> >> dm-integrity. These patches increase write throughput twice, because there
-> >> is no write to the dm-integrity journal.
-> >>
-> >> An example how to use it (so far, there is no support in the userspace
-> >> cryptsetup tool):
-> >>
-> >> # nvme format /dev/nvme1 -n 1 -lbaf=4
-> >> # dmsetup create cr --table '0 1048576 crypt
-> >> capi:authenc(hmac(sha256),cbc(aes))-essiv:sha256
-> >> 01b11af6b55f76424fd53fb66667c301466b2eeaf0f39fd36d26e7fc4f52ade2de4228e996f5ae2fe817ce178e77079d28e4baaebffbcd3e16ae4f36ef217298
-> >> 0 /dev/nvme1n1 0 2 integrity:32:aead sector_size:4096'
-> > 
-> > Thats really an amazing feature, and I think your implementation is simple
-> > and elegant.  Somehow reminds me of 520/528-byte sectors that big
-> > commercial filers use, but in a way the Linux could use.
-> > 
-> > Questions:
-> > 
-> > - I see you are using 32-bytes of AEAD data (out of 64).  Is AEAD always
-> >    32-bytes, or can it vary by crypto mechanism?
+On 5/24/24 03:41, Jiapeng Chong wrote:
+> Swap is a function interface that provides exchange function. To avoid
+> code duplication, we can use swap function.
 > 
-> Hi Eric,
+> ./drivers/md/dm-vdo/indexer/index.c:207:43-44: WARNING opportunity for swap().
 > 
-> I'll try to answer this question as this is where we headed with 
-> dm-integrity+dm-crypt since the beginning - replace it with HW and 
-> atomic sector+metadata handling once suitable HW becomes available.
-> 
-> Currently, dm-integrity allocates exact space for any AEAD you want to 
-> construct (cipher-xts/hctr2 + hmac) or for native AEAD (my favourite is 
-> AEGIS here).
+> Reported-by: Abaci Robot <abaci@linux.alibaba.com>
+> Closes: https://bugzilla.openanolis.cn/show_bug.cgi?id=9173
+> Signed-off-by: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
 
-Awesome.
- 
-> So it depends on configuration, the only difference to dm-integrity is 
-> that HW allocates fixed 64 bytes so that crypto can use up to this 
-> space, but it should be completely configurable in dm-crypt. IOW real 
-> used space can vary by crypto mechanism.
-> 
-> Definitely, it is now enough for real AEAD compared to legacy 512+8 DIF :)
->
-> Also, it opens a way to store something more (sector context) in metadata,
-> but that's an idea for the future (usable in fs encryption as well, I guess).
+Reviewed-by: Matthew Sakai <msakai@redhat.com>
 
-Good idea, you could modify the SCSI layer (similarly as for NVMe meta) so 
-that bio integrity payload data could be packed at the end of a sector for 
-drives that have DIF room. This would make it possible to use 520/528-byte 
-and 4160/4224-byte-sectored SAS drives in Linux, for the first time ever. 
+Mike, can you make sure this gets applied with the rest of the pending 
+dm patches?
 
-Newer SAS drives like the Xeos X22 with can support the following sector 
-sizes:
-	 512 +  0
-	 512 +  8
-	 512 + 16
-	4096 +  0
-	4096 + 64
-	4096 +128
+> ---
+>   drivers/md/dm-vdo/indexer/index.c | 5 +----
+>   1 file changed, 1 insertion(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm-vdo/indexer/index.c b/drivers/md/dm-vdo/indexer/index.c
+> index 1ba767144426..df4934846244 100644
+> --- a/drivers/md/dm-vdo/indexer/index.c
+> +++ b/drivers/md/dm-vdo/indexer/index.c
+> @@ -197,15 +197,12 @@ static int finish_previous_chapter(struct uds_index *index, u64 current_chapter_
+>   static int swap_open_chapter(struct index_zone *zone)
+>   {
+>   	int result;
+> -	struct open_chapter_zone *temporary_chapter;
+>   
+>   	result = finish_previous_chapter(zone->index, zone->newest_virtual_chapter);
+>   	if (result != UDS_SUCCESS)
+>   		return result;
+>   
+> -	temporary_chapter = zone->open_chapter;
+> -	zone->open_chapter = zone->writing_chapter;
+> -	zone->writing_chapter = temporary_chapter;
+> +	swap(zone->open_chapter, zone->writing_chapter);
+>   	return UDS_SUCCESS;
+>   }
+>   
 
-> > - What drive are you using? I am curious what your `nvme id-ns` output
-> >    looks like. Do you have 64 in the `ms` value?
-> > 
-> >          # nvme id-ns /dev/nvme0n1 | grep lbaf
-> >          nlbaf   : 0
-> >          nulbaf  : 0
-> >          lbaf  0 : ms:0   lbads:9  rp:0 (in use)
-> >                       ^         ^512b
-> 
-> This is the major issue still - I think there are only enterprisey NVMe drives
-> that can do this.
-
-For now that is fine, we only use enterprise drives anyway, and it will be 
-great to use the integrity that the drives support natively. Coupled with 
-MDRAID, this solves hidden bitrot quite nicely at that block layer ... and 
-it may trickle down into desktop drives eventually.
-
--Eric
-
-> 
-> Milan
-> 
-> 
-> 
