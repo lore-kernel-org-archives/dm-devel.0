@@ -1,95 +1,116 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 89832168C3D;
-	Wed, 29 May 2024 07:48:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B903C17BB15
+	for <dm-devel@lists.linux.dev>; Wed, 29 May 2024 15:03:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716968903; cv=none; b=AgKiAlLGKjjHD1FlVwQGkCvuGbonD+yPwxCi9NFyAz9XwfkBdl11WxpkXXwjvTOM3wyFD9PSIr65Ff6tsg+xpy5sZ1aQ71qYJxyZskij1Gb/Mw/GN+rg378CHhr0yWxyO/IrW880ruIZcoCzpqg4/aALnp97RK75o452yN+N/Wo=
+	t=1716994994; cv=none; b=PAhXXXPCMazOkHhcntREp0FxwDfIXpZhF8XUbwye7RnwB5gM75uobD4w72HpMLARiuySOmC//68U7fE9EpIFO1kPB5bL1zKbN+vA59sc6HMnVIzJuwNOwylm/u2RNxi+Db5mwKxCV9Us7Xpv22CaRKpqGQLjTHhg2XpVUccMKQY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716968903; c=relaxed/simple;
-	bh=S3iTcM1ZSPmjm7GZozDt8RGkp17GchQ3Ca1mGNH4Urc=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=GjRZQkdMKZgcQdVHlToFkLnSnnqrOn29v5LPQqdVK6arkKQQYQtKHCG1H/UhEqhAv99TtWd1y+0TWnbbBMFYvvYBRyVjWmswIUmKiX2WpmayH1fBLa6MgbJWMFCiZDH5IFpUpoDXvDjWNvxBXEdKIjWVzj9v9SPyQ4BwyeEmg2A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=dfbgA6jN; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1716994994; c=relaxed/simple;
+	bh=X6fZJ6pnk/p7KtSm6anIvMpsZaKFVB68x2Cmz+VXHA4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=jB41TfghCjBzRhwXuYwj8kSNYQ1M/2EiwhUUuQ9lp+dZ6HWImKmsaTedXs0WPFkwOb2DFbadd7jQe9s/R112VxnPuFXc6IpoP9JZqmeSoUxMHjYYKgIBq5jNI48UgiyS8v7CLmjvk4wQ6Df75yXQ0ts3vWh6LVPaKFQYkt6TpDo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=h2rprz2q; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="dfbgA6jN"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B05F7C2BD10;
-	Wed, 29 May 2024 07:48:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1716968903;
-	bh=S3iTcM1ZSPmjm7GZozDt8RGkp17GchQ3Ca1mGNH4Urc=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=dfbgA6jNdLtv905YzgHRwUpIcUYBb2/FqhbHwVVPi8jDYBzJegkHqnKtVllDgSZxJ
-	 hl119F1YITV2L0CzUXjFMz0P8CY1JoKC531SnvSR0HoJ9YdSPXasTOt6h/EqHBOz5D
-	 L6tidnnLJT9F5jmKbw3Jjz/je6ejB31Y6FneddoZhnRuBt9uZ2weZz0M8qraIlnOGu
-	 b564lvPJrYPe1xyTLSU6lOiEFiwyarsZVBy/9tTbFhKAXiUQ99rmKkFZCc0tkP24fr
-	 AM3HjKJP/ev9C0RkvyustpQi11rCci5L99jxRXkdkeoJFk08ttBvU+/Hb1H+2ytDwu
-	 nVyuobiiw1hmg==
-Message-ID: <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
-Date: Wed, 29 May 2024 16:48:18 +0900
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="h2rprz2q"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1716994991;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=DQfclFt4WlAa6q8XqrBw32cqACvBpvh7DmsSER7urF8=;
+	b=h2rprz2q+gLirHs6/Ialg7Wv/wRfeisEiHYEJI0iN5hKBBc+nNhOBxSuDADbwL/AwLU4Eo
+	8WkdWg5R3DF7hipkXKiNm2Hh9Lvfu9cOqQDWJHrOBSNoD2MGW7QQ2MIYPjdGPWdD5P60+9
+	NkPtpPHmV4U56kLnFDFl5DK+yEmjtvQ=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-331-H7bTiLh3P66VqfMDVSilqg-1; Wed,
+ 29 May 2024 11:03:10 -0400
+X-MC-Unique: H7bTiLh3P66VqfMDVSilqg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CE41529AA390;
+	Wed, 29 May 2024 15:03:09 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A4453200A6E7;
+	Wed, 29 May 2024 15:03:09 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44TF39jq359231
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 29 May 2024 11:03:09 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44TF39FL359230;
+	Wed, 29 May 2024 11:03:09 -0400
+Date: Wed, 29 May 2024 11:03:09 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>,
+        Nitin Yewale <nyewale@redhat.com>
+Subject: Re: [PATCH 3/7] libmultipath: print all values in snprint_failback
+Message-ID: <ZldDrafYc1riyz76@redhat.com>
+References: <20240513173646.94424-1-bmarzins@redhat.com>
+ <20240513173646.94424-4-bmarzins@redhat.com>
+ <5e534cd7c8034436819ef451e451fe00549d8a72.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
- and request layer.
-To: Nitesh Shetty <nj.shetty@samsung.com>,
- Bart Van Assche <bvanassche@acm.org>
-Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
- Chaitanya Kulkarni <kch@nvidia.com>, Alexander Viro
- <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>,
- Jan Kara <jack@suse.cz>, martin.petersen@oracle.com, david@fromorbit.com,
- hare@suse.de, damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com,
- joshi.k@samsung.com, nitheshshetty@gmail.com, gost.dev@samsung.com,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-doc@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
-References: <20240520102033.9361-1-nj.shetty@samsung.com>
- <CGME20240520102842epcas5p4949334c2587a15b8adab2c913daa622f@epcas5p4.samsung.com>
- <20240520102033.9361-3-nj.shetty@samsung.com>
- <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org>
- <20240529061736.rubnzwkkavgsgmie@nj.shetty@samsung.com>
-Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <20240529061736.rubnzwkkavgsgmie@nj.shetty@samsung.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+In-Reply-To: <5e534cd7c8034436819ef451e451fe00549d8a72.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On 5/29/24 15:17, Nitesh Shetty wrote:
-> On 24/05/24 01:33PM, Bart Van Assche wrote:
->> On 5/20/24 03:20, Nitesh Shetty wrote:
->>> We add two new opcode REQ_OP_COPY_DST, REQ_OP_COPY_SRC.
->>> Since copy is a composite operation involving src and dst sectors/lba,
->>> each needs to be represented by a separate bio to make it compatible
->>> with device mapper.
->>> We expect caller to take a plug and send bio with destination information,
->>> followed by bio with source information.
->>> Once the dst bio arrives we form a request and wait for source
->>> bio. Upon arrival of source bio we merge these two bio's and send
->>> corresponding request down to device driver.
->>> Merging non copy offload bio is avoided by checking for copy specific
->>> opcodes in merge function.
->>
->> In this patch I don't see any changes for blk_attempt_bio_merge(). Does
->> this mean that combining REQ_OP_COPY_DST and REQ_OP_COPY_SRC will never
->> happen if the QUEUE_FLAG_NOMERGES request queue flag has been set?
->>
-> Yes, in this case copy won't work, as both src and dst bio reach driver
-> as part of separate requests.
-> We will add this as part of documentation.
+On Fri, May 24, 2024 at 03:43:44PM +0200, Martin Wilck wrote:
+> On Mon, 2024-05-13 at 13:36 -0400, Benjamin Marzinski wrote:
+> > Add the missing output for manual failback and print the defferral
+> > time
+> > for deferred failbacks, if one isn't currently in progress.
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/print.c | 6 +++++-
+> >  1 file changed, 5 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/libmultipath/print.c b/libmultipath/print.c
+> > index 89813517..14e7e325 100644
+> > --- a/libmultipath/print.c
+> > +++ b/libmultipath/print.c
+> > @@ -218,9 +218,13 @@ snprint_failback (struct strbuf *buff, const
+> > struct multipath * mpp)
+> >  		return append_strbuf_str(buff, "immediate");
+> >  	if (mpp->pgfailback == -FAILBACK_FOLLOWOVER)
+> >  		return append_strbuf_str(buff, "followover");
+> > +	if (mpp->pgfailback == -FAILBACK_MANUAL)
+> > +		return append_strbuf_str(buff, "manual");
+> > +	if (mpp->pgfailback == FAILBACK_UNDEF)
+> > +		return append_strbuf_str(buff, "undef");
+> >  
+> >  	if (!mpp->failback_tick)
+> > -		return append_strbuf_str(buff, "-");
+> > +		return print_strbuf(buff, "%i", mpp->pgfailback);
+> 
+> Perhaps we should print something like "delayed:%i" here?
 
-So that means that 2 major SAS HBAs which set this flag (megaraid and mpt3sas)
-will not get support for copy offload ? Not ideal, by far.
+Sure.
 
--- 
-Damien Le Moal
-Western Digital Research
+> 
+> Martin
+> 
+> 
+> 
+> >  	else
+> >  		return snprint_progress(buff, mpp->failback_tick,
+> >  					mpp->pgfailback);
 
