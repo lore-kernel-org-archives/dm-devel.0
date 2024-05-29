@@ -1,468 +1,114 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB6927D3FB
-	for <dm-devel@lists.linux.dev>; Wed, 29 May 2024 15:15:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C9982169ADC
+	for <dm-devel@lists.linux.dev>; Wed, 29 May 2024 22:42:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716995730; cv=none; b=ZRqdB/eURxzXqzA3PRZ/CTfz/92sSwJFd8GYAZI0uVZujZm35dTa8SCbqDUT9vxAKD52fIokZP3RqdghyYUOXWAn1+xDAV/fhh6/XtNZn0P25ZVai7dV2ANoJNE7QgxDqXWPZPIaJgHzLl6i3gR1H9xSnPfokHzJNZMxQm/k87o=
+	t=1717022540; cv=none; b=WcHKCL8ZfcVTz0bYP969GrXuMpXGJ3eT39srrnhk7bRmsC/r447OF3Qh8GrlFLSQCy2686kPxi/sBBq/jd3NoMyHkXo6crq1TyBjHFfY2zKy5+SXPuLdBa8Gq6bCGP4c86QSGXX+3fyNYMOVihyrQq5Y5Gut9jsDnBVcVqFfFPo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1716995730; c=relaxed/simple;
-	bh=MAuOJLPKvmYak+TatpmrUXh22Kg3ycwAHQ+zt8WDJnU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=QaBUWzDLvjjB5cOjD7AF1rPHCTcfFTFjepCATpk9NNraFbtvsa/90BKijC00A/WV7mxXLbcqxkehnjzJoxdQu/nLi2itpcHYOmQe7+d36KDL0CcSW0/6qJyrfyoUUJfVZJqe6wfUW3kJ9+MYTwMI3FwOvZYAtn0cdPPzjEIVYjI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=D26oAoTe; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1717022540; c=relaxed/simple;
+	bh=OVpH2Iy+UNqNaSBm+18bef9LK4uwfGTVFbqySkhuG4U=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=AfVTBBlJvWsrRwNI7KsE7Kb0p8CiwIx49MogYA2aAj0fOPoaRZrBCu3pPW0L2+UhYleA70b7o33LgBxnyPjjvZQnXyQBhzRjyrYxFt6GZTeDe5eG8STEHrdCzJU33bKUwVSEYyLl45YDzYtJjwBLNzWAf7BMFzL+FaOk+PhGqT4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=PJ33HDfE; arc=none smtp.client-ip=199.89.1.11
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="D26oAoTe"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1716995727;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=3zc1weHQ56LqncLi4ZPfHyRRu6IREp1qvvfLDYICQTs=;
-	b=D26oAoTeEWgzMn53Lex1SZExAf7mAmGd+KBvUqNlrPGfzZWg5/08ktZUvDUM8RfwUzu890
-	oSoxiQSAnTxkqwvFl3RxDW30dZ5Aj8k6RaYpAHcgDP6/IFCf1gW0pQmZy3GZrA+X4bBYIi
-	yaEB2E5n0HhUJGez6E3ifNvaoLfAM9g=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-561-scuyrp6TPyWOtlSQ76fFaQ-1; Wed, 29 May 2024 11:15:24 -0400
-X-MC-Unique: scuyrp6TPyWOtlSQ76fFaQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="PJ33HDfE"
+Received: from localhost (localhost [127.0.0.1])
+	by 008.lax.mailroute.net (Postfix) with ESMTP id 4VqPXB0kc4z6Cnk97;
+	Wed, 29 May 2024 22:42:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1717022525; x=1719614526; bh=wmqAutlJJibPd6rU+UVnuwTK
+	NEx0bdku7UkT7t6UWI8=; b=PJ33HDfElBr6B2EjMPAfwGu7bE9RZoyBwrnjF5kb
+	ldVDQ25YGiOYb3pvO+o2X4KwZcFOl2ybOFgIkCOc0Ovy3mSs/Qkku5fBtZSpDMAH
+	mo9zWgWAO/CJ+wjKd7BKsK3R35ll6PbtNTvvc0E3qu33t6NW2oxmMmYoqJ0SyYV/
+	CkMts1Kxkn0f77eR5bgC4+EQtVRK5DWNELILtuJUAh/9D3uk14Q74GoSmyK2dSs8
+	ZCbwXv16vYl8xhRpUrE/FHWvAtX/lSM95PUP8DM2HTM46/7eMAE0O6yZP9PjEk+T
+	mNqQ5EKt9zBW3jpgOkylLeHIVqfmpQAEVzpoWX4wuRTsHg==
+X-Virus-Scanned: by MailRoute
+Received: from 008.lax.mailroute.net ([127.0.0.1])
+ by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id b0OFq5KM274R; Wed, 29 May 2024 22:42:05 +0000 (UTC)
+Received: from [192.168.3.219] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F343C8058D1;
-	Wed, 29 May 2024 15:15:23 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E6D5A2026D68;
-	Wed, 29 May 2024 15:15:23 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44TFFNGN359520
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 29 May 2024 11:15:23 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44TFFNrk359519;
-	Wed, 29 May 2024 11:15:23 -0400
-Date: Wed, 29 May 2024 11:15:23 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        device-mapper development <dm-devel@lists.linux.dev>,
-        Nitin Yewale <nyewale@redhat.com>
-Subject: Re: [PATCH 7/7] multipath-tools man pages: Add format wildcard
- descriptions
-Message-ID: <ZldGi_fezOSdBwdk@redhat.com>
-References: <20240513173646.94424-1-bmarzins@redhat.com>
- <20240513173646.94424-8-bmarzins@redhat.com>
- <06dd6590e3fa951137967111af67657fb753694c.camel@suse.com>
+	(Authenticated sender: bvanassche@acm.org)
+	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4VqPWk5M18z6Cnk94;
+	Wed, 29 May 2024 22:41:54 +0000 (UTC)
+Message-ID: <a866d5b5-5b01-44a2-9ccb-63bf30aa8a51@acm.org>
+Date: Wed, 29 May 2024 15:41:51 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <06dd6590e3fa951137967111af67657fb753694c.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
+ and request layer.
+To: Damien Le Moal <dlemoal@kernel.org>, Nitesh Shetty <nj.shetty@samsung.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
+ Chaitanya Kulkarni <kch@nvidia.com>, Alexander Viro
+ <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>,
+ Jan Kara <jack@suse.cz>, martin.petersen@oracle.com, david@fromorbit.com,
+ hare@suse.de, damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com,
+ joshi.k@samsung.com, nitheshshetty@gmail.com, gost.dev@samsung.com,
+ linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-doc@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
+References: <20240520102033.9361-1-nj.shetty@samsung.com>
+ <CGME20240520102842epcas5p4949334c2587a15b8adab2c913daa622f@epcas5p4.samsung.com>
+ <20240520102033.9361-3-nj.shetty@samsung.com>
+ <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org>
+ <20240529061736.rubnzwkkavgsgmie@nj.shetty@samsung.com>
+ <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Fri, May 24, 2024 at 04:27:12PM +0200, Martin Wilck wrote:
-> On Mon, 2024-05-13 at 13:36 -0400, Benjamin Marzinski wrote:
-> > Suggested-by: Nitin Yewale <nyewale@redhat.com>
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On 5/29/24 12:48 AM, Damien Le Moal wrote:
+> On 5/29/24 15:17, Nitesh Shetty wrote:
+>> On 24/05/24 01:33PM, Bart Van Assche wrote:
+>>> On 5/20/24 03:20, Nitesh Shetty wrote:
+>>>> We add two new opcode REQ_OP_COPY_DST, REQ_OP_COPY_SRC.
+>>>> Since copy is a composite operation involving src and dst sectors/lba,
+>>>> each needs to be represented by a separate bio to make it compatible
+>>>> with device mapper.
+>>>> We expect caller to take a plug and send bio with destination information,
+>>>> followed by bio with source information.
+>>>> Once the dst bio arrives we form a request and wait for source
+>>>> bio. Upon arrival of source bio we merge these two bio's and send
+>>>> corresponding request down to device driver.
+>>>> Merging non copy offload bio is avoided by checking for copy specific
+>>>> opcodes in merge function.
+>>>
+>>> In this patch I don't see any changes for blk_attempt_bio_merge(). Does
+>>> this mean that combining REQ_OP_COPY_DST and REQ_OP_COPY_SRC will never
+>>> happen if the QUEUE_FLAG_NOMERGES request queue flag has been set?
+>>>
+>> Yes, in this case copy won't work, as both src and dst bio reach driver
+>> as part of separate requests.
+>> We will add this as part of documentation.
 > 
-> Thanks. This is useful, but I have a few additional suggestions below.
+> So that means that 2 major SAS HBAs which set this flag (megaraid and mpt3sas)
+> will not get support for copy offload ? Not ideal, by far.
 
-They seem reasonable. I'll update this.
+QUEUE_FLAG_NOMERGES can also be set through sysfs (see also
+queue_nomerges_store()). This is one of the reasons why using the merge
+infrastructure for combining REQ_OP_COPY_DST and REQ_OP_COPY_SRC is
+unacceptable.
 
--Ben
+Thanks,
 
-> 
-> Martin
-> 
-> > ---
-> >  multipathd/multipathd.8.in | 211
-> > ++++++++++++++++++++++++++++++++++++-
-> >  1 file changed, 207 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/multipathd/multipathd.8.in b/multipathd/multipathd.8.in
-> > index 32976052..ff150f3d 100644
-> > --- a/multipathd/multipathd.8.in
-> > +++ b/multipathd/multipathd.8.in
-> > @@ -117,7 +117,7 @@ Show the paths that multipathd is monitoring, and
-> > their state.
-> >  .B list|show paths [raw] format $format
-> >  Show the paths that multipathd is monitoring, using a format string
-> > with path
-> >  format wildcards. Adding \fIraw\fR will remove the headers and
-> > alignment
-> > -padding from the ouput.
-> > +padding from the output. See "Path format wildcards" below.
-> >  .
-> >  .TP
-> >  .B list|show path $path
-> > @@ -131,7 +131,8 @@ Show the multipath devices that the multipathd is
-> > monitoring.
-> >  .B list|show maps|multipaths [raw] format $format
-> >  Show the status of all multipath devices that the multipathd is
-> > monitoring,
-> >  using a format string with multipath format wildcards. Adding
-> > \fIraw\fR will
-> > -remove the headers and alignment padding from the output.
-> > +remove the headers and alignment padding from the output. See
-> > "Multipath
-> > +format wildcards" below.
-> >  .
-> >  .TP
-> >  .B list|show maps|multipaths status
-> > @@ -162,7 +163,7 @@ Show topology of a single multipath device
-> > specified by $map, for example
-> >  .B list|show map|multipath $map [raw] format $format.
-> >  Show the status of multipath device $map, using a format string with
-> > multipath
-> >  format wildcards. Adding \fIraw\fR will remove the headers and
-> > alignment
-> > -padding from the output.
-> > +padding from the output. See "Multipath format wildcards" below.
-> >  .
-> >  .TP
-> >  .B list|show map|multipath $map json
-> > @@ -170,7 +171,8 @@ Show information about multipath device $map in
-> > JSON format.
-> >  .
-> >  .TP
-> >  .B list|show wildcards
-> > -Show the format wildcards used in interactive commands taking
-> > $format.
-> > +Show the format wildcards used in interactive commands taking
-> > $format. See
-> > +"Format Wildcards" below.
-> >  .
-> >  .TP
-> >  .B list|show config
-> > @@ -367,6 +369,207 @@ Stop multipathd.
-> >  .
-> >  .
-> >  .\" ----------------------------------------------------------------
-> > ------------
-> > +.SH "Format Wildcards"
-> > +.\" ----------------------------------------------------------------
-> > ------------
-> > +.
-> > +Multipathd commands that take a $format option require a format
-> > string. This
-> > +string controls how a device is printed and should include format
-> > wildcards.
-> > +When the devices are printed, these wildcards will be replaced by
-> > the
-> > +appropriate device information. The following wildcards are
-> > supported.
-> > +.TP
-> > +.B Multipath format wildcards
-> > +.RS
-> > +.TP 12
-> 
-> I can see that you're using the same ordering as in print.c. Perhaps we
-> should use alphabetical ordering in the man page? Or do you think it
-> makes more sense to group the wildcards semantically?
-> 
-> Alternatively, 
-> 
-> > +.B %n
-> > +The device name.
-> > +.TP
-> > +.B %w
-> > +The device WWID (uuid).
-> > +.TP
-> > +.B %d
-> > +The device sysfs name (dm-<minor_nr>).
-> > +.TP
-> > +.B %F
-> > +The device \fBfailback\fR setting. For deferred failbacks, it will
-> > either
-> > +print the configured time if a deferred failback is not in progress,
-> > or
-> > +it will show the current progress of a deferred failback.
-> 
-> If you agree to amend 3/7, please don't forget to change this, too.
-> 
-> > +.TP
-> > +.B %Q
-> > +The device \fBno_path_retry\fR setting. If no_path_retry is set to a
-> > +number of retires, it will either print the configured number of
-> 
->              ^ typo
-> 
-> > checker
-> > +retries if the device is not in recovery mode, the number of seconds
-> > until
-> > +queueing is disabled if the device is queueing in recovery mode, or
-> > \fIoff\fR
-> > +if the device has disabled queueing.
-> > +.TP
-> > +.B %N
-> > +The number of active paths for the device.
-> > +.TP
-> > +.B %r
-> > +The device write-protect setting, either \fIro\fR or \fIrw\fR.
-> > +.TP
-> > +.B %t
-> > +The device-mapper state of the device, either \fIsuspend\fR or
-> > \fIactive\fR.
-> 
-> "suspend" has been chosen to avoid  field overflow, but it sounds
-> weird.
-> 
-> \fIsuspend\fR if the device is suspended, and \fIactive\fR otherwise ?
-> 
-> > +.TP
-> > +.B %S
-> > +The device size.
-> 
-> Explain our "K", "M", "G", "T", "P" suffixes here?
-> 
-> > +.TP
-> > +.B %f
-> > +The device table features string.
-> 
-> Suggestion: 'The "features" string of the device-mapper table in the
-> kernel.'
-> 
-> > +.TP
-> > +.B %x
-> > +The number of times the device has entered a state where it will
-> > fail IO.
-> > +This is an alias for the \fB%4\fR wildcard.
-> > +This value can be reset with the '\fIreset map $map stats\fR'
-> > command.
-> > +.TP
-> > +.B %h
-> > +The device table hardware handler string.
-> > +.TP
-> > +.B %A
-> > +The last action multipathd took on the device. This wildcard is for
-> > debugging
-> > +use, as understanding its meaning requires looking at the code.
-> > +.TP
-> > +.B %0
-> > +The number of times a path in the device has failed.
-> > +This value can be reset with the '\fIreset map $map stats\fR'
-> > command.
-> > +.TP
-> > +.B %1
-> > +The number of times multipathd has initiated a pathgroup switch for
-> > the device.
-> > +This value can be reset with the '\fIreset map $map stats\fR'
-> > command.
-> > +.TP
-> > +.B %2
-> > +The number of times multipathd has loaded a new table for the
-> > device.
-> > +This value can be reset with the '\fIreset map $map stats\fR'
-> > command.
-> > +.TP
-> > +.B %3
-> > +The approximate number of seconds that multipathd has spent queueing
-> > with
-> > +no usable paths. This value can be reset with the '\fIreset map $map
-> > stats\fR'
-> > +command.
-> > +.TP
-> > +.B %4
-> > +The number of times the device has entered a state where it will
-> > fail IO.
-> > +This is an alias for the \fB%x\fR wildcard.
-> > +This value can be reset with the '\fIreset map $map stats\fR'
-> > command.
-> > +.TP
-> > +.B %s
-> > +The vendor/product string for the device.
-> > +.TP
-> > +.B %v
-> > +The array vendor string for the device.
-> > +.TP
-> > +.B %p
-> > +The array product string for the device.
-> > +.TP
-> > +.B %e
-> > +The array firmware revision string for the device.
-> > +.TP
-> > +.B %G
-> > +The foreign library used for the device, or \fB--\fR for native
-> > device-mapper
-> > +multipath devices.
-> 
-> Cross-ref to multipath.conf(5) here for an explanation of "foreign"?
-> 
-> > +.TP
-> > +.B %g
-> > +Data from vendor specific vpd pages for the device, if any.
-> 
-> "Currently multipathd supports VPD page 0xc0 für HPE 3PAR / Primera /
-> Alletra storage arrays."
-> 
-> > +.TP
-> > +.B %k
-> > +The actual max_sectors_kb setting for the device (which may be
-> > different from
-> > +the configured one).
-> > +.RE
-> > +.
-> > +.
-> > +.TP
-> > +.B Path format wildcards
-> > +.RS
-> > +.TP 12
-> > +.B %w
-> > +The device WWID (uuid).
-> > +.TP
-> > +.B %i
-> > +The device Host:Channel:Id:Lun
-> 
-> "for SCSI devices" (maybe explain what the data means for NVMe).
-> 
-> > +.TP
-> > +.B %d
-> > +The device sysfs name.
-> > +.TP
-> > +.B %D
-> > +The device major:minor
-> > +.TP
-> > +.B %t
-> > +The device-mapper state of the device, either \fIactive\fR or
-> > \fIfailed\fR.
-> > +.TP
-> > +.B %o
-> > +Whether the device is \fIoffline\fR or \fIrunning\fR.
-> 
-> 'This shows "offline" if the device's "state" attribute in sysfs
-> is "offline" (for SCSI) or "dead" (for NMVe). For all other sysfs
-> states, it shows "running".'
-> 
-> > +.TP
-> > +.B %T
-> > +The multipathd path checker state of the device.
-> 
-> Should we list or explain the different states here?
-> 
-> > +.TP
-> > +.B %s
-> > +The vendor/product/revision string for the device.
-> > +.TP
-> > +.B %c
-> > +The device's path checker name.
-> 
-> "The name of the device's path checking algorithm"?
-> 
-> > +.TP
-> > +.B %C
-> > +The progress towards the next path checker run on the device.
-> 
-> '... in seconds'
-> 
-> > +.TP
-> > +.B %p
-> > +The device priority.
-> 
-> > +.TP
-> > +.B %S
-> > +The device size.
-> 
-> Format? See above
-> 
-> > +.TP
-> > +.B %z
-> > +The device serial number.
-> > +.TP
-> > +.B %M
-> > +The device marginal state, either \fImarginal\fR or \fInormal\fR.
-> > +.TP
-> > +.B %m
-> > +The multipath device that this device is a path of.
-> > +.TP
-> > +.B %N
-> > +The host World Wide Node Name (WWNN) of the device.
-> 
-> ... if any
-> > +.TP
-> > +.B %n
-> > +The target World Wide Node Name (WWNN) of the device.
-> 
-> ... if any
-> 
-> > +.TP
-> > +.B %R
-> > +The host World Wide Port Name (WWPN) of the device.
-> 
-> ... if any
-> > +.TP
-> > +.B %r
-> > +The target World Wide Port Name (WWPN) of the device.
-> 
-> ... if any
-> 
-> > +.TP
-> > +.B %a
-> > +The host adapter name for the device (only SCSI devices).
-> > +.TP
-> > +.B %G
-> > +The foreign library used for the device, or \fB--\fR for paths of
-> > native
-> > +device-mapper multipath devices.
-> 
-> See above
-> 
-> > +.TP
-> > +.B %g
-> > +Data from vendor specific vpd pages for the device, if any.
-> 
-> See above
-> 
-> > +.TP
-> > +.B %0
-> > +The number of times this device has failed.
-> > +.TP
-> > +.B %P
-> > +The device protocol. This output can be used for \fIprotocol\fR
-> > blacklist
-> > +entries.
-> 
-> I wouldn't mention the blacklist here. Rather, add a cross-ref to
-> multipath.conf(5).
-> 
-> > +.TP
-> > +.B %I
-> > +The device initialization state. Devices that have been fully
-> > initialized
-> > +are shown as \fIok\fR.
-> > +.TP
-> > +.B %L
-> > +The device SCSI LUN ID in hexadecimal format
-> 
-> 'This is only meaningful for SCSI devices' ?
-> 
-> > +.TP
-> > +.B %A
-> > +The ALUA Target Port Group ID for the device, if applicable.
-> > +.TP
-> > +.B %k
-> > +The actual max_sectors_kb setting for the device (which may be
-> > different than
-> > +the configured one).
-> > +.RE
-> > +.
-> > +.
-> > +.\" ----------------------------------------------------------------
-> > ------------
-> >  .SH "SYSTEMD INTEGRATION"
-> >  .\" ----------------------------------------------------------------
-> > ------------
-> >  .
-
+Bart.
