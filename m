@@ -1,135 +1,93 @@
-Received: from mail-yw1-f172.google.com (mail-yw1-f172.google.com [209.85.128.172])
+Received: from mail-ot1-f47.google.com (mail-ot1-f47.google.com [209.85.210.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E536181D18
-	for <dm-devel@lists.linux.dev>; Thu, 30 May 2024 20:54:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 708A1208A5
+	for <dm-devel@lists.linux.dev>; Thu, 30 May 2024 21:03:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717102491; cv=none; b=iIY+aUy/llaVGRQvtXupy1++hnRq44Ff+nTEfXtVa00LEujacjA1nrUjXkwOV14fnlp3BKyPshENAsOKC6gV81F0XQLKcGGpug6M/dthtkQboqn8RHtMIn0lE/77iHRNgmcTYJCU6DQx4H31VBddyNr8W9j2GCCo3ugwb4c9I/U=
+	t=1717103009; cv=none; b=BtULze+QaZgrFogh4zxV908FHdy6B8nW2GBxgLwD3jaKb9vrLURbKPX4NAPiT76GzizceqQHBQXApMtYkCmrF5X0hPhPmjxGm1nZQMrk6441H1ZlnIQWCT7KCyQPrSmyMTSwB1Yw7zXxfVMw6R306CuuxMRCdhhnA03dkwgrFKM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717102491; c=relaxed/simple;
-	bh=eg+MIkwiEVxSkImTnP9/42HiBWABCU3sNxsgUn+kexk=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=enIgBjWpjFxjG2yi2ePDuDeCM1D+Tla5GnTHYHdWI7XqWpqcEumIDYp9v9VwBoutuZMgs+mm4+anQ4t3R1iunuX6ZzcQ1rgtzx96/UQEKxuxh1DhSqGenK5EDzaXfAB3VF8oJb27yQJWZDbYWxQ8mMnA9GPuH+8HJ7PZ3Yygr3k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=VGimXSFk; arc=none smtp.client-ip=209.85.128.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
+	s=arc-20240116; t=1717103009; c=relaxed/simple;
+	bh=z1QkV/oN4PrtxkXkowk2WXG5mwwAmpepcbaxRHSK50k=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=R3Oeu2KvuhrmjeMN0OPWOZyzAqchdrZ/N1YRDg8rEyROtPSeG+uL38ykR7XHLlDJog0DqjzIYd3ZNDAek2jWelCgfIl8dDukaJqZzAj9sMJLcBhCpJWOeE980P+m8Kz7Y1MHfpKzgu2GQgoBdTEi60Sio6cx8CHebA0VChyy/78=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=1xe+uWR6; arc=none smtp.client-ip=209.85.210.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="VGimXSFk"
-Received: by mail-yw1-f172.google.com with SMTP id 00721157ae682-62a2a6a5ccfso13724067b3.3
-        for <dm-devel@lists.linux.dev>; Thu, 30 May 2024 13:54:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="1xe+uWR6"
+Received: by mail-ot1-f47.google.com with SMTP id 46e09a7af769-6f907a8d289so19278a34.0
+        for <dm-devel@lists.linux.dev>; Thu, 30 May 2024 14:03:27 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1717102489; x=1717707289; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=IHhnEY8EBCWzfeI4r7ZxHSk1OcUfnIeP4X4PVOCwAbA=;
-        b=VGimXSFkxb0ePMP17qay2hdsuwrcXwK8gCOW0nwrR641QgeHooYRI3fVgYfEbmCJyv
-         ROwl0evuoqXCu8KTSCLnQ/T+KFVYBRrQ05ADDb4R+4cra8Hu7Qa4l8w24tirtjGfRmt+
-         dGU1ZmQSQSFR1Ln4d+Ela+MN6/rDohYVkp0VElV9XAMDwdrFRwkCnRliQYwuf/zxN2ow
-         74A3IuYD/MXsCEnsugXxDqHOX5RcjoVH200VQ06PNzyOtOElgszhvMfCgcQF0nEIJC91
-         ScAuxgNaEUIqyca5y8L0P5wwJ7XXtn7rXk4QQLGo1ezbbXWt2A0U580nrxJGKz4Bebr1
-         x4pA==
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1717103006; x=1717707806; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=8ADwps8sC0bvy2KrBBRv+blQLWKGCsgQXNcwl/1TWNo=;
+        b=1xe+uWR6g9kNN+v7hGiIHl0SAweWzKhgtToUfmsO3Mk3ytCioSSh3oZMLnIxOrstWF
+         C8PGM1D2GjKsQz8jzjWhbV3Iuo4gQe5Bzo9f9MbyAMo+s21v0vHTPbXSI4jGKJa8Cq9g
+         /ifCj3o8PXYy3Tahjs2JWHFOqW7ImqtjaJMLBJp5MjP+V8OlCIjVJkRhBUbAqk29VM59
+         UmuaQPy9sLdFNZH8yWCxUik6IHpC2MAZ58zKDVhuAG8V158jimvKAkAwfVF15K9VAO8H
+         mM/X+4ILwvn7gsXdUWMLFW5R0aToZ8h5I6U3RH23lKC14/sD+wvrOOe7z+3ZW5bMgK19
+         R9iQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717102489; x=1717707289;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=IHhnEY8EBCWzfeI4r7ZxHSk1OcUfnIeP4X4PVOCwAbA=;
-        b=fDf892O19+Oo/maD8cQe0VPwstgmJ/F00HJc/GNTEDtcBqA5frCjNrhVWmrX194vcv
-         gTCkzXz5co+C+jTpTwY78rY7sSFJwHuW7g2/gqu72xMu56DsfsQzuwdLQQfaYd6P+ebc
-         gUwdfhZEGjMDw0LMRzNNwhjbM7igxvNy6sYcl5KKF/Cj5KXnL9CzeKgwbMnGwF77wGrn
-         QyGW4VCGEHfxUiqn0tkEnx4eXUm43X99ewaVeCF8+YkcgYVCgUTB5W0xNSRJrQMk3T0M
-         vy/Af5NpZDvkY+GSI8UZaFF0Ct9hbB20E7r6LD6IPkaZZHcMx6v/VBlZ3k+So75O7E45
-         xBSA==
-X-Forwarded-Encrypted: i=1; AJvYcCWDdnmQD1lvjYQccXYZrh/qNiCqMFyATvd52f0eJbExlzUC00mypWDOESARvQKXP1R8JYmyKKNxE55peDehQEYIDMHq7UpxDiA=
-X-Gm-Message-State: AOJu0YxBdUksBkEdFgnhRBdKYASNNYnu/fYJhpi49v30oVg+AJe1eZnD
-	SBgCe39k4plDzPD6BMfK0ITyaFU4c04WpKsUv8CJ7vyN2uuN+mIDHh+kRHzpPr71KRsT6yamvZO
-	36C2+yyx6RpTGoIzw3ZpdhqXqznqrb06Jz0t/
-X-Google-Smtp-Source: AGHT+IFGAao34yd3dClXG2DXw+Iy5chVgrvzZN/oG9tpxQvuE1hMom7wnNuLEmL3KD2ppvrBp7AAzHWyXJlgtWi13+A=
-X-Received: by 2002:a0d:dc83:0:b0:61b:33fc:ad0e with SMTP id
- 00721157ae682-62c6bc3120bmr35459887b3.17.1717102489115; Thu, 30 May 2024
- 13:54:49 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1717103006; x=1717707806;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=8ADwps8sC0bvy2KrBBRv+blQLWKGCsgQXNcwl/1TWNo=;
+        b=uQGdvDbRlHTTdNWc51ccAVWpRbj8kRILt+QmMbCle/CczvZk5fDkyvUVEdk58R2KtQ
+         ziHOBOyQEeau+nTJRLIGm9t+lODyFu3A19gCqTn52RTWc2JLv++PH7r8RYcQDzL0pgRH
+         wl9/dschrlNAaqCoxhLNp9qavJpbfGqp/v141u6551tJMdZtyfl5gjRTezjnWyVArwTt
+         RCddqgZCkZcvI2fXQG/ejcOX7VAa14YUN2OkYz3OFwwiWofcRvpsb9SEyGXpDS28HOh4
+         31eFmWt72Suf/I0FZVT+08pUyRIHKA45p+LyDGn6P0cAECYyBNheK/yc4d4rt4n8UZeZ
+         r01A==
+X-Forwarded-Encrypted: i=1; AJvYcCVrK+M2mnISYWq91EiHHKGCxqIwsh8Cu8q4ps0lePWvaxcVjKWghxTvndEZ10hugydFdYf2iCu0b4j+6i+7NZ8z8VXmhmVrL4s=
+X-Gm-Message-State: AOJu0YwWocw63TParPxIPxOthHgd7HTmtxmjDbPk6sCjmjRXKuP2pkaI
+	vmeN18p+duWJyKogyXrbSGCp1ViYhBVSIU0Upc+ThvQp3MeTqOmqzdUQEEo/S50=
+X-Google-Smtp-Source: AGHT+IF59a24algYsdHIAtCu4zdmdj/N+NLGFiVkQN1zMHhH16wEcxkPdyBROz5FEWzkyW5od0gN8g==
+X-Received: by 2002:a05:6830:7203:b0:6f0:3cf3:fb35 with SMTP id 46e09a7af769-6f90aee6d10mr3391090a34.1.1717103006452;
+        Thu, 30 May 2024 14:03:26 -0700 (PDT)
+Received: from [192.168.1.116] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id 46e09a7af769-6f9105239d5sm100984a34.6.2024.05.30.14.03.25
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 30 May 2024 14:03:25 -0700 (PDT)
+Message-ID: <1599ad1c-4395-46eb-9b9b-7439850a8300@kernel.dk>
+Date: Thu, 30 May 2024 15:03:24 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <1716583609-21790-1-git-send-email-wufan@linux.microsoft.com>
- <1716583609-21790-16-git-send-email-wufan@linux.microsoft.com>
- <CAHC9VhRsnGjZATBj7-evK6Gdryr54raTTKMYO_vup8AGXLwjQg@mail.gmail.com> <20240530030605.GA29189@sol.localdomain>
-In-Reply-To: <20240530030605.GA29189@sol.localdomain>
-From: Paul Moore <paul@paul-moore.com>
-Date: Thu, 30 May 2024 16:54:37 -0400
-Message-ID: <CAHC9VhRySQ0c16UZz5xKT-y5Tn39wXxe4-f7LNjFY+ROGGxpaQ@mail.gmail.com>
-Subject: Re: [PATCH v19 15/20] fsverity: expose verified fsverity built-in
- signatures to LSMs
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, 
-	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, axboe@kernel.dk, 
-	agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, eparis@redhat.com, 
-	linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
-	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 0/4] Zone write plugging and DM zone fixes
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>
+References: <20240530054035.491497-1-dlemoal@kernel.org>
+Content-Language: en-US
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <20240530054035.491497-1-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Wed, May 29, 2024 at 11:06=E2=80=AFPM Eric Biggers <ebiggers@kernel.org>=
- wrote:
-> On Wed, May 29, 2024 at 09:46:57PM -0400, Paul Moore wrote:
-> > On Fri, May 24, 2024 at 4:46=E2=80=AFPM Fan Wu <wufan@linux.microsoft.c=
-om> wrote:
-> > >
-> > > This patch enhances fsverity's capabilities to support both integrity=
- and
-> > > authenticity protection by introducing the exposure of built-in
-> > > signatures through a new LSM hook. This functionality allows LSMs,
-> > > e.g. IPE, to enforce policies based on the authenticity and integrity=
- of
-> > > files, specifically focusing on built-in fsverity signatures. It enab=
-les
-> > > a policy enforcement layer within LSMs for fsverity, offering granula=
-r
-> > > control over the usage of authenticity claims. For instance, a policy
-> > > could be established to permit the execution of all files with verifi=
-ed
-> > > built-in fsverity signatures while restricting kernel module loading
-> > > from specified fsverity files via fsverity digests.
+On 5/29/24 11:40 PM, Damien Le Moal wrote:
+> The first patch of this series fixes null_blk to avoid weird zone
+> configurations, namely, a zoned device with a last smaller zone with a
+> zone capacity smaller than the zone size. Related to this, the next 2
+> patches fix the handling by zone write plugging of zoned devices with a
+> last smaller zone. That was completely botched in the initial series.
+> 
+> Finally, the last patch addresses a long standing issue with zoned
+> device-mapper devices: no zone resource limits (max open and max active
+> zones limits) are not exposed to the user. This patch fixes that,
+> allowing for the limits of the underlying target devices to be exposed
+> with a warning for setups that lead to unreliable limits.
 
-...
+Would be nice to get the dm part acked, but I guess I can queue up 1-3
+for now for 6.10?
 
-> > Eric, can you give this patch in particular a look to make sure you
-> > are okay with everything?  I believe Fan has addressed all of your
-> > previous comments and it would be nice to have your Ack/Review tag if
-> > you are okay with the current revision.
->
-> Sorry, I've just gotten a bit tired of finding so many basic issues in th=
-is
-> patchset even after years of revisions.
->
-> This patch in particular is finally looking better.  There are a couple i=
-ssues
-> that I still see.  (BTW, you're welcome to review it too to help find the=
-se
-> things, given that you seem to have an interest in getting this landed...=
-):
+-- 
+Jens Axboe
 
-I too have been reviewing this patchset across multiple years and have
-worked with Fan to fix locking issues, parsing issues, the initramfs
-approach, etc.  My interest in getting this landed is simply a
-combination of fulfilling my role as LSM maintainer as well as being
-Fan's coworker.  While I realize you don't work with Fan, you are
-listed as the fs-verity maintainer and as such I've been looking to
-you to help review and authorize the fs-verity related code.  If you
-are too busy, frustrated, or <fill in the blank> to continue reviewing
-this patchset it would be helpful if you could identify an authorized
-fs-verity reviewer.  I don't see any besides you and Ted listed in the
-MAINTAINERS file, but perhaps the fs-verity entry is dated.
-
-Regardless, I appreciate your time and feedback thus far and I'm sure
-Fan does as well.
-
---=20
-paul-moore.com
