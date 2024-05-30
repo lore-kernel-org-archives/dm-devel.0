@@ -1,78 +1,105 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C6EE171E65;
-	Thu, 30 May 2024 12:52:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5993442076
+	for <dm-devel@lists.linux.dev>; Thu, 30 May 2024 16:55:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717073527; cv=none; b=kpiRH7S/B7pJK+txGn4oZYrAF4JpvFGeDJFThyhovY2lmJ3/ek7131/OyoMEpf1WCrHg1ehI5AAH1C7wDgOgnoBbVVjc2nFHs3MIH+nirh6WH10vqc/RLyLZDK01tq+kxBe+sQe177/XF7xoQ41SACF+gPd2GB7DhYCBiDNWeEM=
+	t=1717088106; cv=none; b=ctjwMQjGebxA1v2pEEBfssjUMktlWRA5Pzd3GVf+Ew4uPP9YmSnCyssRDFNNNxcIAbWpShE2YJWhyU6cvqBXjB4P/H401H69mbM5CAxG3vwZ8LUQw1lO9k4148i8wWU1Kc/74brC7o1XJ+GZHglx5VoJHr8cREDekYpNmSdakNk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717073527; c=relaxed/simple;
-	bh=HEjrOJ4P9QQZ7244l3EwvA0UsW9jHOlEhmi7fJ1nWU4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=FtyUx+HsekViOjQLQxdmtidnEZ/XheC6qNpBjFohRmtfHZls49ebH0MGuyHFIVUPbFqpUtxF1OMksPUxIM7mxWj+7pmwN5lpNqVYF6A+RG057XZRDqriRHrE7yQ9HqR67HJpVIjgzMNivwJN7kVJvbgpVlZrmRqaZSnsG909RkE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=sbIizUUK; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1717088106; c=relaxed/simple;
+	bh=S71otdVZTwTFDASiQTEFNZ82UHvR+RJbLWXIGdd7JzA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=TRlHboBt5TUHO+1m2nA9Kezha2PDDmcNGpZjZF7oXRHqkzaWCY2eKgP5LeW7sQNThoBixEmHeeAoHNy0CLvtxx/61I/VhzOIyOk5WplI1L/2CjJGOMDl+xKtLRsFjRzm/Kl7i2TpPy4lUuPCd3RKi8CJ+0yfzesTVV8mNBCyp2w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ijWH+A0u; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="sbIizUUK"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 87F2AC3277B;
-	Thu, 30 May 2024 12:52:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717073527;
-	bh=HEjrOJ4P9QQZ7244l3EwvA0UsW9jHOlEhmi7fJ1nWU4=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=sbIizUUKS/d3WH2PHcdRhR7ea6UYz16f+Y3hXHkwM+yqc2gpkoGgGzLEmXnZgAKsP
-	 Xw1VRPAaSzeZSzQzbh5n5QtCk8F0vrhbgBNTbZ2Ep5RqtJHYpjrDDMe9JY7btPysGy
-	 KGrguoePmXN83jTO5QQ51j2ghIH1ypyrv4jnZfdofjudoe/62j/eHgLzWHeZTkyOrk
-	 esjQrLJwvSYEAoxdOlyBcM1u50w1SNdmfnKrWy9C3/vKRBrGMcDXhR36DcTaVa4/CA
-	 15DjdoSHY5pEHK5sx3QnJNHOoz1TCude4wFurDkxoz2G3BFcW0nNNFyg3ZPwLquoq5
-	 Jqyj8Qp1cleCg==
-Date: Thu, 30 May 2024 14:51:58 +0200
-From: Niklas Cassel <cassel@kernel.org>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 3/4] block: Fix zone write plugging handling of devices
- with a runt zone
-Message-ID: <Zlh2bj1uuDUZuFgH@ryzen.lan>
-References: <20240530054035.491497-1-dlemoal@kernel.org>
- <20240530054035.491497-4-dlemoal@kernel.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ijWH+A0u"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1717088104;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=JTm1XEuMmL1gG6NkNFSd3xF2QoRvy3PZKMrHrAB2OxE=;
+	b=ijWH+A0ua++8ZoTvtfX4cYI8n6TDt+kLeETmvkKRL+OS1TxqJCVx5P7yZ4zohr/IfjmHd8
+	As19BUAW640QYyWG/zPuYcbuDUn2vVNKz1bMkuxST4Dmg9cg0QZL4Tp3wR/eahZ27+5Uzt
+	Ulp4G3bfGNd2Fmu1z5IQ+MOkgm9Rvd0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-425-gqinex18PZSPx9pJy11WUw-1; Thu, 30 May 2024 12:55:02 -0400
+X-MC-Unique: gqinex18PZSPx9pJy11WUw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1C48F8008A4;
+	Thu, 30 May 2024 16:55:02 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 028F0C15BB1;
+	Thu, 30 May 2024 16:55:01 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 44UGt1hn397025
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 30 May 2024 12:55:01 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 44UGt03j397024;
+	Thu, 30 May 2024 12:55:00 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>,
+        Nitin Yewale <nyewale@redhat.com>
+Subject: [PATCH v2 0/7] multipath-tools man pages: add missing information
+Date: Thu, 30 May 2024 12:54:53 -0400
+Message-ID: <20240530165500.397009-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240530054035.491497-4-dlemoal@kernel.org>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-On Thu, May 30, 2024 at 02:40:34PM +0900, Damien Le Moal wrote:
-> A zoned device may have a last sequential write required zone that is
-> smaller than other zones. However, all tests to check if a zone write
-> plug write offset exceeds the zone capacity use the same capacity
-> value stored in the gendisk zone_capacity field. This is incorrect for a
-> zoned device with a last runt (smaller) zone.
-> 
-> Add the new field last_zone_capacity to struct gendisk to store the
-> capacity of the last zone of the device. blk_revalidate_seq_zone() and
-> blk_revalidate_conv_zone() are both modified to get this value when
-> disk_zone_is_last() returns true. Similarly to zone_capacity, the value
-> is first stored using the last_zone_capacity field of struct
-> blk_revalidate_zone_args. Once zone revalidation of all zones is done,
-> this is used to set the gendisk last_zone_capacity field.
-> 
-> The checks to determine if a zone is full or if a sector offset in a
-> zone exceeds the zone capacity in disk_should_remove_zone_wplug(),
-> disk_zone_wplug_abort_unaligned(), blk_zone_write_plug_init_request(),
-> and blk_zone_wplug_prepare_bio() are modified to use the new helper
-> functions disk_zone_is_full() and disk_zone_wplug_is_full().
-> disk_zone_is_full() uses the zone index to determine if the zone being
-> tested is the last one of the disk and uses the either the disk
-> zone_capacity or last_zone_capacity accordingly.
-> 
-> Fixes: dd291d77cc90 ("block: Introduce zone write plugging")
-> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-> ---
+This patchset is inspired by:
+https://lore.kernel.org/dm-devel/1673555329-9850-1-git-send-email-bmarzins@redhat.com/
 
-Reviewed-by: Niklas Cassel <cassel@kernel.org>
+It removes the useless pathgroup wildcards section from the "show
+wildcards" output and adds wildcards descriptions to the multipathd.8
+man page, along with some issing multipathd commands.  In the process of
+doing this, I noticed some instances where either the man page or
+multipathd wasn't giving the correct information, and fixed those up.
+
+Changes in V2 (based on comments by Martin Wilck):
+0003: change print format from "%i" to "deferred:%i"
+0007: Multiple man page changes. I left the order the same as shown in
+      "multipathd show wildcards", since it doesn't seem like an
+      alphabetic order makes more sense. Also, I'm not really sure what
+      to call the H and T members of the NVMe %i (H:C:I:L) output.
+      I ended up calling them Controller and Namspace Instance Numbers
+      based on their in-kernel variable names. But if there is a
+      better name, I'd happily use that.
+
+Benjamin Marzinski (6):
+  multipath-tools man pages: don't assume multipath.socket is enabled
+  libmultipath: print all values in snprint_failback
+  multipathd: Stop double counting map failures for no_path_retry > 0
+  multipath-tools man pages: add missing multipathd commands
+  libmultipath: change the vend/prod/rev printing
+  multipath-tools man pages: Add format wildcard descriptions
+
+Nitin Yewale (1):
+  libmultipath: remove pathgroup wildcard options
+
+ libmultipath/print.c       |  22 +--
+ libmultipath/structs_vec.c |   5 +-
+ multipathd/multipathd.8.in | 309 +++++++++++++++++++++++++++++++++++--
+ 3 files changed, 311 insertions(+), 25 deletions(-)
+
+-- 
+2.45.0
+
