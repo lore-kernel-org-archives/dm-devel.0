@@ -1,40 +1,40 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29CD3143881;
-	Thu, 30 May 2024 05:40:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26FD2143881;
+	Thu, 30 May 2024 05:40:41 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717047641; cv=none; b=jME1TmsHmu4VWNsQ9kcjWLmkHXUFd8j0xjG3hWtolc679P0ZiW8BJ3VYOr26L58S0xdNK5QJ/WqXxMAuar5W35+OjRGiiGBenvgm5BKNpGOPEissABhXeVtDQ68pLb1gNjTYNq+/J300uTzk775mMJKfH4B5qqD2LXArwGz6Pho=
+	t=1717047642; cv=none; b=O9adZjRG7e4R0UfsVXOoj4A2cBxhE1NlxIp34YyjGQZeizB8arOhhhmI3iZUgSGzoFRXgFgvCjfHAafRrVhUO8YXf9/J7dk0EqnwsIIjVWowzRvLSUc7fqE1Oyrp2ntqvCGuaxKE7yezn6cpM/fGLfXs6gc10XNPCyBRxqUkPyU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717047641; c=relaxed/simple;
-	bh=zq1flJzo4D0ydTL1aUlxX2XBynuRm4rgunyI1ebwP08=;
+	s=arc-20240116; t=1717047642; c=relaxed/simple;
+	bh=PdWwzmYj0FalkU2p3VQavwmK6ssWnPRHTkGVetRA6oE=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=pNa4UGzuRPqys4VPR1vxNiMrktVGiEVLhNOEu/MnmhZxwZ4q+Qdkm1W28/FGF6UClgmsc61CujCKsmrFyhfqt26ohq+pSUSHhEG4+AgTQ8IZZi6MTZWpSqn/Eu4cSUDlGzLQ5A5AhxoYT70gH+BS+SsIn2obtKmWU3xm7/bxiCk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=WLp1E3Eu; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=srWaTmvNRvM8nVZSEnYAGrQd4/TMh0ZzE6Sjc16EymPuXtOB/a6D5p9EQl/QgOdP8UFP9nCNU+u6Vl4tWWGJ7ccCdVbgfvet/oVMkEZAC4FCKD20FQhpf+oK85XBRSKE7ScDzrtAZJOvoi0zmb0sTyS0IzUJ5lcUb+WCPJy6L80=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MhiNy0fM; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="WLp1E3Eu"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E27B3C32782;
-	Thu, 30 May 2024 05:40:39 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MhiNy0fM"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0346FC3277B;
+	Thu, 30 May 2024 05:40:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717047640;
-	bh=zq1flJzo4D0ydTL1aUlxX2XBynuRm4rgunyI1ebwP08=;
+	s=k20201202; t=1717047641;
+	bh=PdWwzmYj0FalkU2p3VQavwmK6ssWnPRHTkGVetRA6oE=;
 	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=WLp1E3EuhJDAd7CakbVSPLFrQkRvLxHC+AELe/GqRIX4v0etrO3Hl+mSXrpjftjIc
-	 lHDr7fbkmB9nHc+jaHv7N0AdwjHBwBJ2UtNlyWq/+Gt+NT8FO13F2Fyf1jESZqAODq
-	 6Os1mIPolaUd72ojF65lAaPrqXq51s3shGqPDp/EZKGs9uND3FBj9F/9tNpSZoGc+c
-	 LxdjkaJOJoKOTq1etStk7IWwoLoKWfVqkFPPPlkzAAH43VjXzPQ7MO9tvKHpE0nUke
-	 XF/dwfqrXqkgWoqy2p4CfYku/nj4mtFyp3rqjkLBgj/uwqsomyf+ag51uT+n2uoZLE
-	 HHud5JYTVe1Zg==
+	b=MhiNy0fMo/5SPPz/ebLCpn6dDGVoN8dsvTtf3BUr7eUi/+Am36P3vpIr2gSwlJc5K
+	 yfS/koeL0iunR6q4v/8/YO0Fcbpa+oDrUqkqAAtliR7DPPubMhDnsIl15DBiDbESL/
+	 7k4egnDXPRnmqHr2F4jc8P7CpJ2L0itIInOsRY5+Gf+PMY+KNkqGwG6chXnPasyBd6
+	 bSkYfJ5TmyUgFotB5NAMcPh5Yx9bEWdagX0HF7YiT/PBTzx7R3HeLxoIKbF/hqdWJs
+	 jVv0zrEE1opN6tok3R02H3p2UQu1UBY1U/avMPihHZ9Mpruls3sE3eCvpDfW4ic0/d
+	 n2fMU7pMILkow==
 From: Damien Le Moal <dlemoal@kernel.org>
 To: Jens Axboe <axboe@kernel.dk>,
 	linux-block@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/4] null_blk: Do not allow runt zone with zone capacity smaller then zone size
-Date: Thu, 30 May 2024 14:40:32 +0900
-Message-ID: <20240530054035.491497-2-dlemoal@kernel.org>
+Subject: [PATCH 2/4] block: Fix validation of zoned device with a runt zone
+Date: Thu, 30 May 2024 14:40:33 +0900
+Message-ID: <20240530054035.491497-3-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.45.1
 In-Reply-To: <20240530054035.491497-1-dlemoal@kernel.org>
 References: <20240530054035.491497-1-dlemoal@kernel.org>
@@ -46,44 +46,84 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-A zoned device with a smaller last zone together with a zone capacity
-smaller than the zone size does make any sense as that does not
-correspond to any possible setup for a real device:
-1) For ZNS and zoned UFS devices, all zones are always the same size.
-2) For SMR HDDs, all zones always have the same capacity.
-In other words, if we have a smaller last runt zone, then this zone
-capacity should always be equal to the zone size.
+Commit ecfe43b11b02 ("block: Remember zone capacity when revalidating
+zones") introduced checks to ensure that the capacity of the zones of
+a zoned device is constant for all zones. However, this check ignores
+the possibility that a zoned device has a smaller last zone with a size
+not equal to the capacity of other zones. Such device correspond in
+practice to an SMR drive with a smaller last zone and all zones with a
+capacity equal to the zone size, leading to the last zone capacity being
+different than the capacity of other zones.
 
-Add a check in null_init_zoned_dev() to prevent a configuration to have
-both a smaller zone size and a zone capacity smaller than the zone size.
+Correctly handle such device by fixing the check for the constant zone
+capacity in blk_revalidate_seq_zone() using the new helper function
+disk_zone_is_last(). This helper function is also used in
+blk_revalidate_zone_cb() when checking the zone size.
 
+Fixes: ecfe43b11b02 ("block: Remember zone capacity when revalidating zones")
 Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
 ---
- drivers/block/null_blk/zoned.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ block/blk-zoned.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/block/null_blk/zoned.c b/drivers/block/null_blk/zoned.c
-index 79c8e5e99f7f..f118d304f310 100644
---- a/drivers/block/null_blk/zoned.c
-+++ b/drivers/block/null_blk/zoned.c
-@@ -74,6 +74,17 @@ int null_init_zoned_dev(struct nullb_device *dev,
- 		return -EINVAL;
+diff --git a/block/blk-zoned.c b/block/blk-zoned.c
+index 03aa4eead39e..402a50a1ac4d 100644
+--- a/block/blk-zoned.c
++++ b/block/blk-zoned.c
+@@ -450,6 +450,11 @@ static inline bool disk_zone_is_conv(struct gendisk *disk, sector_t sector)
+ 	return test_bit(disk_zone_no(disk, sector), disk->conv_zones_bitmap);
+ }
+ 
++static bool disk_zone_is_last(struct gendisk *disk, struct blk_zone *zone)
++{
++	return zone->start + zone->len >= get_capacity(disk);
++}
++
+ static bool disk_insert_zone_wplug(struct gendisk *disk,
+ 				   struct blk_zone_wplug *zwplug)
+ {
+@@ -1693,11 +1698,13 @@ static int blk_revalidate_seq_zone(struct blk_zone *zone, unsigned int idx,
+ 
+ 	/*
+ 	 * Remember the capacity of the first sequential zone and check
+-	 * if it is constant for all zones.
++	 * if it is constant for all zones, ignoring the last zone as it can be
++	 * smaller.
+ 	 */
+ 	if (!args->zone_capacity)
+ 		args->zone_capacity = zone->capacity;
+-	if (zone->capacity != args->zone_capacity) {
++	if (!disk_zone_is_last(disk, zone) &&
++	    zone->capacity != args->zone_capacity) {
+ 		pr_warn("%s: Invalid variable zone capacity\n",
+ 			disk->disk_name);
+ 		return -ENODEV;
+@@ -1732,7 +1739,6 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
+ {
+ 	struct blk_revalidate_zone_args *args = data;
+ 	struct gendisk *disk = args->disk;
+-	sector_t capacity = get_capacity(disk);
+ 	sector_t zone_sectors = disk->queue->limits.chunk_sectors;
+ 	int ret;
+ 
+@@ -1743,7 +1749,7 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
+ 		return -ENODEV;
  	}
  
-+	/*
-+	 * If a smaller zone capacity was requested, do not allow a smaller last
-+	 * zone at the same time as such zone configuration does not correspond
-+	 * to any real zoned device.
-+	 */
-+	if (dev->zone_capacity != dev->zone_size &&
-+	    dev->size & (dev->zone_size - 1)) {
-+		pr_err("A smaller last zone is not allowed with zone capacity smaller than zone size.\n");
-+		return -EINVAL;
-+	}
-+
- 	zone_capacity_sects = mb_to_sects(dev->zone_capacity);
- 	dev_capacity_sects = mb_to_sects(dev->size);
- 	dev->zone_size_sects = mb_to_sects(dev->zone_size);
+-	if (zone->start >= capacity || !zone->len) {
++	if (zone->start >= get_capacity(disk) || !zone->len) {
+ 		pr_warn("%s: Invalid zone start %llu, length %llu\n",
+ 			disk->disk_name, zone->start, zone->len);
+ 		return -ENODEV;
+@@ -1753,7 +1759,7 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
+ 	 * All zones must have the same size, with the exception on an eventual
+ 	 * smaller last zone.
+ 	 */
+-	if (zone->start + zone->len < capacity) {
++	if (!disk_zone_is_last(disk, zone)) {
+ 		if (zone->len != zone_sectors) {
+ 			pr_warn("%s: Invalid zoned device with non constant zone size\n",
+ 				disk->disk_name);
 -- 
 2.45.1
 
