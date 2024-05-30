@@ -1,105 +1,81 @@
-Received: from mail-ot1-f43.google.com (mail-ot1-f43.google.com [209.85.210.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D7DD64D8D1
-	for <dm-devel@lists.linux.dev>; Thu, 30 May 2024 21:04:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B8C261FC4;
+	Thu, 30 May 2024 23:58:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717103070; cv=none; b=WjdBQXLrqPaVxN+2h1h+Mtsi+frUjFhUxyenob0v+1N4g6X7p86DIeaDfUwLPWna7o3PbB9GLiZjxG4xA2Alh/LDOEcjB3qJ3RGhTdoQDYdIMCEA8RJQRSS2zef6KRGIC7LdyPq/Gd1crDMmIXfLxyIxs4Ykj0pVg3L4e8Uz/sI=
+	t=1717113500; cv=none; b=K7JBBR6EgUtqKk/fRAJA3s26p6AA5h3mkfA9XfsQCImg06Ut+0uYq2d+1zkUL7vT9dHOQ3PJKY6fOQqKOJ993Rcx4ZDS4aMe6UfJzcKzuatTSJrUYAiPb/b1AFZyzMtjx7MFvW/0JbcjmTa6hrTlFBEPn6brClXJlyOcMn84viw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717103070; c=relaxed/simple;
-	bh=zacMwD2B75k17xBwiTcDV8Fm746aX+06s3VllNJfDbA=;
-	h=From:To:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=Y/dYh4PphxtEzVthpg4FYHEn+DNO278dpzzgtRt8iyr03+QPFMaX4WISflLvVMIuiZaBl2ghLWOkHJ8Ef7jKS5mdog7H2NAGm8gUnnVvVvrpQChvYDRoJWKuON9tbZMdMEBt+ULdSm31bxWKQsPipuuxWAMDHO4tJpVVV3zkOso=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=PpO5wZuK; arc=none smtp.client-ip=209.85.210.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1717113500; c=relaxed/simple;
+	bh=rezVI8yhf8PY/WJB+M/RvsHarK624QE0EwmULuTx9qU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=WjKeR21cwx6nT0tUyOUi0BSSajSwTfef/yUW6fMsKpepbAZYD9x/Q/y3Puk/aaWao4Gp6UWTd1za52xk7W1EMbcdeEM2G9d8PkFBUkK+/VlkK9nDFUrlIPry7fkmWxh1uq8zvACZcD/VGkUVspD6VT7mOYvAIArQjUHF9MYyo3A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=B5f/1Ehv; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="PpO5wZuK"
-Received: by mail-ot1-f43.google.com with SMTP id 46e09a7af769-6f8d967078dso40444a34.0
-        for <dm-devel@lists.linux.dev>; Thu, 30 May 2024 14:04:28 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1717103067; x=1717707867; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:to:from:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=DmVsWK/E9tOB9NkFQ0ll8LZhGunDUEIrCnb9vISkFqs=;
-        b=PpO5wZuKqnMVe2N0KicBDxwVx9AfDCuAGm6SF5z88wKfhK2rVG9J37oAttrYIbGyph
-         wYZ5jjwVTUp81RrzxCsJhcKDCmn2fgsrs4M5siU4skCX6RH/EZu4ln8M0rrD+lmv9tYI
-         OubY31Yir/tcM7tAOpM7FEg1vZIjkKX8rJo2USSTuEJiAbIpEB6APpbWolVkJ4Rk2vdY
-         2WbiK9fKSScV1IrEXS4q9xWpVyK0f5/rHla8TdPNEmVsA+j/eiWALdE+4IAiz6ZTRgz8
-         iBwB1WGmCdcifs9IEBkliIBJ4CfdmbjAiE5LrDzAz8QX4V8hmMokYK33odxYLbXuvNO1
-         gKGA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717103067; x=1717707867;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=DmVsWK/E9tOB9NkFQ0ll8LZhGunDUEIrCnb9vISkFqs=;
-        b=vwFQJ+XbgrA2jCDfq/I0SoFW6Tvp4qpPPwbQaGnKojiyMTC9Yf+wMnBBhhs6o55BmW
-         M/Wm4wg0QLF2CUY70nQ54BNUtpDhuLV4dZtfbaSLxKxb6GfO7Zf/5rFK/0uSrxvP/Q7g
-         2i+Yq/B0mkapHIDr93zaemld3pPMOr1H3rXfrhxPSCwQIyoe5Diikb4p9l8TIAVuVnAO
-         uBmdjPQCes3Y2RPexbmapZ7rqpRPSZZpKpYV7CgcxWVe4wYwNRAlXv/tIrl3l0z4ZFu7
-         WZlcqXU1AGnE1LW81PkRfouG2Z8AraajIHVpovPDKRDlreUaNwTaCLkKgSSbcommgEde
-         TxbQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUIrVS5kwSoVVSZh8pCb3Lgd9U4CdPdeIa5XEC2cPaJcx6PM+riC/Dw+B1NT9bKFJXKa6I2ls+8eRYJuno0JZzHdF3TssO5FG4=
-X-Gm-Message-State: AOJu0Yy4dj6oHClXgJ31J9MzyV+i0tgiCEeWlYNFRD3qGES4+9w8TH6w
-	G9SQzkLvmTaKNaU5Dr1EOjGNFkH4I99kmbYrNvdLUlBaUdT9RajRk6o4yhP2by82iQCN9REuT5H
-	4
-X-Google-Smtp-Source: AGHT+IFU8TrnMQc7ItWkJnQGMjr97rywwV4nt/yGguhqbP6/Dfyv5QV7PXG46HjLsFxcH4q6LD600A==
-X-Received: by 2002:a05:6830:4597:b0:6f1:2171:4f9a with SMTP id 46e09a7af769-6f911d8fd89mr19716a34.0.1717103067428;
-        Thu, 30 May 2024 14:04:27 -0700 (PDT)
-Received: from [127.0.0.1] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id 46e09a7af769-6f910539e29sm100113a34.17.2024.05.30.14.04.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 30 May 2024 14:04:26 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
- Damien Le Moal <dlemoal@kernel.org>
-In-Reply-To: <20240530054035.491497-1-dlemoal@kernel.org>
-References: <20240530054035.491497-1-dlemoal@kernel.org>
-Subject: Re: (subset) [PATCH 0/4] Zone write plugging and DM zone fixes
-Message-Id: <171710306664.600767.9806925600309225248.b4-ty@kernel.dk>
-Date: Thu, 30 May 2024 15:04:26 -0600
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="B5f/1Ehv"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C1B50C2BBFC;
+	Thu, 30 May 2024 23:58:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1717113499;
+	bh=rezVI8yhf8PY/WJB+M/RvsHarK624QE0EwmULuTx9qU=;
+	h=Date:Subject:To:References:From:In-Reply-To:From;
+	b=B5f/1Ehvt1Wj3dnvQTJa0dqtv1pv5A8bsjR44mBVsOv9Ym/UnZsysbhVkzQM+r4wL
+	 nURyEMPgw1JEu4iOsd7fPK8yAlLHsnP8XzNR3XNz/s/mdcb+NaCDlK0yaNjn2gZbX0
+	 b+epsQ/poam5PyiRB8l6DeQJZjata82Jp0BVjblkWS8cZ4qma/UaqJijFy63z6dkYM
+	 laFbOcr/VhoiFRFq6kIh439WQSmv/QQgVXpTOeMLsKlD0osSfGSNYk97NNRhodl75h
+	 DJumcF8Q2b+sCyZ/oIv6+Uh8Ks9PjUR6SUM07BLULEWbj6RgtOpK/LXLpspKsJDXcK
+	 hx0wf1EuB4ydg==
+Message-ID: <99352774-5be7-4e13-93cd-6368ac7ddabd@kernel.org>
+Date: Fri, 31 May 2024 08:58:17 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 0/4] Zone write plugging and DM zone fixes
+To: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>
+References: <20240530054035.491497-1-dlemoal@kernel.org>
+ <1599ad1c-4395-46eb-9b9b-7439850a8300@kernel.dk>
+Content-Language: en-US
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <1599ad1c-4395-46eb-9b9b-7439850a8300@kernel.dk>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.12.5-dev-2aabd
 
-
-On Thu, 30 May 2024 14:40:31 +0900, Damien Le Moal wrote:
-> The first patch of this series fixes null_blk to avoid weird zone
-> configurations, namely, a zoned device with a last smaller zone with a
-> zone capacity smaller than the zone size. Related to this, the next 2
-> patches fix the handling by zone write plugging of zoned devices with a
-> last smaller zone. That was completely botched in the initial series.
+On 5/31/24 6:03 AM, Jens Axboe wrote:
+> On 5/29/24 11:40 PM, Damien Le Moal wrote:
+>> The first patch of this series fixes null_blk to avoid weird zone
+>> configurations, namely, a zoned device with a last smaller zone with a
+>> zone capacity smaller than the zone size. Related to this, the next 2
+>> patches fix the handling by zone write plugging of zoned devices with a
+>> last smaller zone. That was completely botched in the initial series.
+>>
+>> Finally, the last patch addresses a long standing issue with zoned
+>> device-mapper devices: no zone resource limits (max open and max active
+>> zones limits) are not exposed to the user. This patch fixes that,
+>> allowing for the limits of the underlying target devices to be exposed
+>> with a warning for setups that lead to unreliable limits.
 > 
-> Finally, the last patch addresses a long standing issue with zoned
-> device-mapper devices: no zone resource limits (max open and max active
-> zones limits) are not exposed to the user. This patch fixes that,
-> allowing for the limits of the underlying target devices to be exposed
-> with a warning for setups that lead to unreliable limits.
-> 
-> [...]
+> Would be nice to get the dm part acked, but I guess I can queue up 1-3
+> for now for 6.10?
 
-Applied, thanks!
+Yes please.
 
-[1/4] null_blk: Do not allow runt zone with zone capacity smaller then zone size
-      commit: b164316808ec5de391c3e7b0148ec937d32d280d
-[2/4] block: Fix validation of zoned device with a runt zone
-      commit: cd6399936869b4a042dd1270078cbf2bb871a407
-[3/4] block: Fix zone write plugging handling of devices with a runt zone
-      commit: 29459c3eaa5c6261fbe0dea7bdeb9b48d35d862a
+Mike, Mikulas,
 
-Best regards,
+Could you please review patch 4 ? It is a long standing issue with DM but now
+that zone write plugging fakes a smaller 128 max open zones limit for drives
+with no limits, zonefs gets confused and tests fail. So it would be great to
+get this patch in for 6.10 as a fix.
+Thanks !
+
 -- 
-Jens Axboe
-
-
+Damien Le Moal
+Western Digital Research
 
