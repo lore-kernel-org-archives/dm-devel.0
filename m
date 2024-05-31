@@ -1,112 +1,94 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8A44C8E9;
-	Fri, 31 May 2024 00:43:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F093A1C6A7;
+	Fri, 31 May 2024 04:50:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717116204; cv=none; b=XbnH2XFsGz3VYksgngGQwBo2TKEie3tMsNJbYPnwGkRZCVio8vjkXYsY2tTgrAtTxIzS6k1//oJD8SejceyNVle0oQj+7kqrVH09wy+4kNyNjtAq2Zl0x0IFGamK4vlCCSKzhy3NF1b7VIMfzavB7ZUm5EMsl76ssza7R3mqMxI=
+	t=1717131035; cv=none; b=MiiGyPEdzvsbFuLcKgrUT8O1pxhEUIyNiAeiIn06XAK8J/LhBLvH9Yw61rt4y/tmKxcom3v/NTogrSMU6QF42F0A5bDOdu06iz1o84sEo/mlRfQsS9Qvip/pHAEn0YKoSVaWmnzGHtvsbVqKf0Ibo3p/vnRPcvaHhSOmn6LCIpA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717116204; c=relaxed/simple;
-	bh=Si8XOeHALztLMCNRy0WVUR6eEdJsznZcIFbxAADO+ws=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=t6mFcna2KcbI4CdYz3HgExVYO6j+3xgXfT52pPWNViVMNYFZo2WXY+RuYoxenvFD9JLcaur1Gjar1JSgyNh8bRHuUftwbn3Y9YuBDIjqJlXQA1dtVHXIl6kBO7o8Gteq1WZCU5II6QFlumAV0NLnzx8+s7SWKA97H4gNAUckDcc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=aL+I4kcJ; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="aL+I4kcJ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D22D7C2BBFC;
-	Fri, 31 May 2024 00:43:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717116203;
-	bh=Si8XOeHALztLMCNRy0WVUR6eEdJsznZcIFbxAADO+ws=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=aL+I4kcJ/OXypWoEww0Gcs/K6q+ipdHIFStSTPXEusvtmwsVT6Y5Gx+hB/Z8NFvcg
-	 kk0aN5Ya2M3CtobxjGIO/J8URF8KA8GPPSqmdaRS/J0LLdEfPA0O12JA7q/hQ6fGfX
-	 SwfuTm0oJ+BUOIpXNNN9GK0rAuZVJsxMYF0i/EoIwfnBnWjEOag1O0HrcFn3kbyYtd
-	 t1OTPhgcjJPrqXeKo5kubhG5AO+qWl+nsDbFvnc17W78pikT8ci40gbrCQjnnwBQH1
-	 AzakKGpI2SiDbCV3seJHFg22s50U9W40RxniIrslsdhtv3JRiZLu3+h/ThTs7xM5SB
-	 Kvdqh9bknwLeQ==
-Date: Thu, 30 May 2024 17:43:21 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: Paul Moore <paul@paul-moore.com>
-Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
-	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, axboe@kernel.dk,
-	agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
-	eparis@redhat.com, linux-doc@vger.kernel.org,
-	linux-integrity@vger.kernel.org,
-	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	audit@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [PATCH v19 15/20] fsverity: expose verified fsverity built-in
- signatures to LSMs
-Message-ID: <20240531004321.GA1238@sol.localdomain>
-References: <1716583609-21790-1-git-send-email-wufan@linux.microsoft.com>
- <1716583609-21790-16-git-send-email-wufan@linux.microsoft.com>
- <CAHC9VhRsnGjZATBj7-evK6Gdryr54raTTKMYO_vup8AGXLwjQg@mail.gmail.com>
- <20240530030605.GA29189@sol.localdomain>
- <CAHC9VhRySQ0c16UZz5xKT-y5Tn39wXxe4-f7LNjFY+ROGGxpaQ@mail.gmail.com>
+	s=arc-20240116; t=1717131035; c=relaxed/simple;
+	bh=igaylIAIXNq3yDPXmBHyR1WE47ou5VpVBjrJAWMfgpA=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To; b=badcscIfq1UJjQXtcN7nG4mECbqtLXP01AXZYw8hyj1bC6jM2vEUBHt2tervnj5aVymHPVLa8v1AdYI2sdx34+aEcYCkr5UvAGybO9dJdOcMSuOQ9m6yLEm0drdmXNGj4xKwTO1OvzY/4aYLsgUP4wMMIZUb+V1CgPHC10mgWWQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; arc=none smtp.client-ip=144.6.53.87
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1sCuDa-0044PA-1x;
+	Fri, 31 May 2024 12:50:19 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Fri, 31 May 2024 12:50:20 +0800
+Date: Fri, 31 May 2024 12:50:20 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
+	dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org, ardb@kernel.org,
+	samitolvanen@google.com, bvanassche@acm.org
+Subject: Re: [PATCH v3 6/8] fsverity: improve performance by using
+ multibuffer hashing
+Message-ID: <ZllXDOJKW2pHWBTz@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAHC9VhRySQ0c16UZz5xKT-y5Tn39wXxe4-f7LNjFY+ROGGxpaQ@mail.gmail.com>
+In-Reply-To: <20240507002343.239552-7-ebiggers@kernel.org>
+X-Newsgroups: apana.lists.os.linux.cryptoapi
 
-On Thu, May 30, 2024 at 04:54:37PM -0400, Paul Moore wrote:
-> On Wed, May 29, 2024 at 11:06 PM Eric Biggers <ebiggers@kernel.org> wrote:
-> > On Wed, May 29, 2024 at 09:46:57PM -0400, Paul Moore wrote:
-> > > On Fri, May 24, 2024 at 4:46 PM Fan Wu <wufan@linux.microsoft.com> wrote:
-> > > >
-> > > > This patch enhances fsverity's capabilities to support both integrity and
-> > > > authenticity protection by introducing the exposure of built-in
-> > > > signatures through a new LSM hook. This functionality allows LSMs,
-> > > > e.g. IPE, to enforce policies based on the authenticity and integrity of
-> > > > files, specifically focusing on built-in fsverity signatures. It enables
-> > > > a policy enforcement layer within LSMs for fsverity, offering granular
-> > > > control over the usage of authenticity claims. For instance, a policy
-> > > > could be established to permit the execution of all files with verified
-> > > > built-in fsverity signatures while restricting kernel module loading
-> > > > from specified fsverity files via fsverity digests.
-> 
-> ...
-> 
-> > > Eric, can you give this patch in particular a look to make sure you
-> > > are okay with everything?  I believe Fan has addressed all of your
-> > > previous comments and it would be nice to have your Ack/Review tag if
-> > > you are okay with the current revision.
-> >
-> > Sorry, I've just gotten a bit tired of finding so many basic issues in this
-> > patchset even after years of revisions.
-> >
-> > This patch in particular is finally looking better.  There are a couple issues
-> > that I still see.  (BTW, you're welcome to review it too to help find these
-> > things, given that you seem to have an interest in getting this landed...):
-> 
-> I too have been reviewing this patchset across multiple years and have
-> worked with Fan to fix locking issues, parsing issues, the initramfs
-> approach, etc.  
+Eric Biggers <ebiggers@kernel.org> wrote:
+>
+> +               if (multibuffer) {
+> +                       if (ctx->pending_data) {
+> +                               /* Hash and verify two data blocks. */
+> +                               err = fsverity_hash_2_blocks(params,
+> +                                                            inode,
+> +                                                            ctx->pending_data,
+> +                                                            data,
+> +                                                            ctx->hash1,
+> +                                                            ctx->hash2);
+> +                               kunmap_local(data);
+> +                               kunmap_local(ctx->pending_data);
+> +                               ctx->pending_data = NULL;
+> +                               if (err != 0 ||
+> +                                   !verify_data_block(inode, vi, ctx->hash1,
+> +                                                      ctx->pending_pos,
+> +                                                      ctx->max_ra_pages) ||
+> +                                   !verify_data_block(inode, vi, ctx->hash2,
+> +                                                      pos, ctx->max_ra_pages))
+> +                                       return false;
+> +                       } else {
+> +                               /* Wait and see if there's another block. */
+> +                               ctx->pending_data = data;
+> +                               ctx->pending_pos = pos;
+> +                       }
+> +               } else {
+> +                       /* Hash and verify one data block. */
+> +                       err = fsverity_hash_block(params, inode, data,
+> +                                                 ctx->hash1);
+> +                       kunmap_local(data);
+> +                       if (err != 0 ||
+> +                           !verify_data_block(inode, vi, ctx->hash1,
+> +                                              pos, ctx->max_ra_pages))
+> +                               return false;
+> +               }
+> +               pos += block_size;
 
-Sure, but none of the patches actually have your Reviewed-by.
+I think this complexity is gross.  Look at how we did GSO in
+networking.  There should be a unified code-path for aggregated
+data and simple data, not an aggregated path versus a simple path.
 
-> My interest in getting this landed is simply a
-> combination of fulfilling my role as LSM maintainer as well as being
-> Fan's coworker.  While I realize you don't work with Fan, you are
-> listed as the fs-verity maintainer and as such I've been looking to
-> you to help review and authorize the fs-verity related code.  If you
-> are too busy, frustrated, or <fill in the blank> to continue reviewing
-> this patchset it would be helpful if you could identify an authorized
-> fs-verity reviewer.  I don't see any besides you and Ted listed in the
-> MAINTAINERS file, but perhaps the fs-verity entry is dated.
-> 
-> Regardless, I appreciate your time and feedback thus far and I'm sure
-> Fan does as well.
+I think ultimately it stems from the fact that this code went from
+ahash to shash.  What were the issues back then? If it's just vmalloc
+we should fix ahash to support that, rather than making users of the
+Crypto API go through contortions like this.
 
-Maintainers are expected to do reviews and acks, but not to the extent of
-extensive hand-holding of a half-baked submission.
-
-- Eric
+Cheers,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
