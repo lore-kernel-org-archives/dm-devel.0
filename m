@@ -1,26 +1,26 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5A502594
-	for <dm-devel@lists.linux.dev>; Sat,  1 Jun 2024 05:57:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 277BD2594
+	for <dm-devel@lists.linux.dev>; Sat,  1 Jun 2024 05:59:36 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717221460; cv=none; b=TIgQpRHNRFE0d6uA11ZcYxJlzoH7sXLKNX83rnJZNgJ/tm0E+BdjN4jTc6DyFlLWu0pBTGBWar2NbtaBdqV5nsaJyFjm3d4G2dHk9af4vOzV2/Ds4Q370nRfwvAmEnOhq6jNXS1Z9EBHyx8zD3+41x03UQVcUdei1Jwc0cy6Vio=
+	t=1717221577; cv=none; b=Z0cDVycsPf3gzYsbTWksr4NLqidC7yODm/clmqZyZ/M4H5zxxY2DM0fTaHAAu1pWqZ5ti3J833ojLJ8IYZcyvpPdgcupnbmLQCMvSg+81HjRYtYyrBcwpTW/tnFn5kd4UUA7AP6+GR2N2ffQHHKh5Y3CV1z4APdT1n6WhYcm1Uw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717221460; c=relaxed/simple;
-	bh=RtLg5SIXalA/xjJDVWd3IwNH9f+yh9qpLP07b0GBOJE=;
+	s=arc-20240116; t=1717221577; c=relaxed/simple;
+	bh=icMOdDMIgwIXGGzLIxIeSihpdWV/icJnEheY/OC4ask=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=czUIXoUV9MHLGDkeetlakuQEKfJ3fu9hDLbz/u34IBB9HQNNn3e8dGjYBWVeQtaulxOmDIpEA2fCvBX6SpdmMMh95+bMjUH7NeO2ZMzpbBxXqIBBpBTy7dhm8MLNjg5L1HWSzEfJfaEc1rBlOS7PzfQbnlVsHQCge5lEofZy6Lg=
+	 Content-Type:Content-Disposition:In-Reply-To; b=de0i6DCwPxc6nnoA03xNHvrmm+/FVMy4DB7lGkP3MKHuGrkzYvBmv0+PcCiN4l/0kbqayVVJuj/pb/ytmvoEO0PueAvicD9W05lkw5lefS/mAbcCs4JpVOuJ31wt7KBgbsl1n/BbsAFVGKKzBubOXL350HgVFg77US5xZyKOls4=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id B4E3468D17; Sat,  1 Jun 2024 07:57:35 +0200 (CEST)
-Date: Sat, 1 Jun 2024 07:57:35 +0200
+	id 06C1168D17; Sat,  1 Jun 2024 07:59:32 +0200 (CEST)
+Date: Sat, 1 Jun 2024 07:59:31 +0200
 From: Christoph Hellwig <hch@lst.de>
-To: Damien Le Moal <dlemoal@kernel.org>
+To: Bart Van Assche <bvanassche@acm.org>
 Cc: Nitesh Shetty <nj.shetty@samsung.com>,
-	Bart Van Assche <bvanassche@acm.org>, Jens Axboe <axboe@kernel.dk>,
+	Damien Le Moal <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
 	Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
@@ -37,8 +37,8 @@ Cc: Nitesh Shetty <nj.shetty@samsung.com>,
 	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
 Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
  and request layer.
-Message-ID: <20240601055735.GA5772@lst.de>
-References: <20240520102033.9361-1-nj.shetty@samsung.com> <CGME20240520102842epcas5p4949334c2587a15b8adab2c913daa622f@epcas5p4.samsung.com> <20240520102033.9361-3-nj.shetty@samsung.com> <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org> <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
+Message-ID: <20240601055931.GB5772@lst.de>
+References: <20240520102033.9361-1-nj.shetty@samsung.com> <CGME20240520102842epcas5p4949334c2587a15b8adab2c913daa622f@epcas5p4.samsung.com> <20240520102033.9361-3-nj.shetty@samsung.com> <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org> <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org> <a866d5b5-5b01-44a2-9ccb-63bf30aa8a51@acm.org> <665850bd.050a0220.a5e6b.5b72SMTPIN_ADDED_BROKEN@mx.google.com> <abe8c209-d452-4fb5-90eb-f77b5ec1a2dc@acm.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -47,21 +47,26 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
+In-Reply-To: <abe8c209-d452-4fb5-90eb-f77b5ec1a2dc@acm.org>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Wed, May 29, 2024 at 04:48:18PM +0900, Damien Le Moal wrote:
-> > Yes, in this case copy won't work, as both src and dst bio reach driver
-> > as part of separate requests.
-> > We will add this as part of documentation.
-> 
-> So that means that 2 major SAS HBAs which set this flag (megaraid and mpt3sas)
-> will not get support for copy offload ? Not ideal, by far.
+On Thu, May 30, 2024 at 10:11:15AM -0700, Bart Van Assche wrote:
+> This new approach has the following two disadvantages:
+> * Without plug, REQ_OP_COPY_SRC and REQ_OP_COPY_DST are not combined. These two
+>   operation types are the only operation types for which not using a plug causes
+>   an I/O failure.
 
-We really need to ignore the normerges flag for this.
-As should we for the precedence in the discard merging.
+So?  We can clearly document that and even fail submission with a helpful
+message trivially to enforce that.
 
-And the drivers need to stop setting this flag as they have no business
-to, but that's a separate discussion (and the flag can still be set
-manually).
+> * A loop is required to combine the REQ_OP_COPY_SRC and REQ_OP_COPY_DST operations.
 
+I don't see why that is a problem.  Especiallly once we allow multiple
+sources which is really useful for GC workloads we'll need to do that
+anyway.
+
+> Please switch to the approach Hannes suggested, namely bio chaining. Chaining
+> REQ_OP_COPY_SRC and REQ_OP_COPY_DST bios before these are submitted eliminates the
+> two disadvantages mentioned above.
+
+No.
