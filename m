@@ -1,113 +1,211 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 56634F9E9;
-	Mon,  3 Jun 2024 18:50:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FB3133F6
+	for <dm-devel@lists.linux.dev>; Tue,  4 Jun 2024 03:28:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717440604; cv=none; b=QGklGZvmlhMJ8FBjUhOXlvhhzHQCwxQoWkNYTQ57taqOkSE+N+ruA/u83Qa+8g0ydgIUPP2RLV5KWWV90CrFbFkHjPPUxMF1TkCvk8XJGB3XnypjlwRXOe+n0z0x7ckbNwPUI8eH5dQPGL+Zk4xhT1zHb/KZOFHMdhAX+3D7XDw=
+	t=1717471732; cv=none; b=No3PIUgtGIiiBrjwV4vZGClt4bWJzGTocuoQWQKxttz/t2qwguBefJVmTiUSBlOdTFUf4p7xdK+7jHQfBhoOTPgZiBBBlB+TCfHNkjQjn7RkDZCOAFIbB/avWyydA7+oKJwASFEBpTasHIYLEpn674IlaKBG26UIsyV2bX7imLU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717440604; c=relaxed/simple;
-	bh=tAoh6E2HyT2I7zRPieUiEXpLsGE3VAG7l4WoETX8/KA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=PcF/DwL1cu0WSPNNqhtcBvuomYIs5+vcJOK8eLAfHstBmeK3nye7MoNJMgfzjidVWBJUYFdIB3YKke5NE66C8YccO0VYML5nXXABbmfs5RR7i+T/1hx/LYbZLHQNGVVRZcwyqKzw+5epQ+VlBLCRQCas7LINxCWJNqcAQFWXbng=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GEf/jxEH; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1717471732; c=relaxed/simple;
+	bh=BmnSM780gtlucE+xybG8Q/hhbxyboU3CWExMeE8IYw8=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:In-Reply-To:
+	 Content-Type:References; b=W9eKYC/NeitCBj94zwlxMMZfxLTU79t9vmG5GXjesa0nJUH6x5cb8A4+1yAMsl2wEfnK6HEPcXCF+SS5THJtDoavGfNjtdWsNMgBYzg6k8wteiEgHnwnp6v939xVjqzTFjHp9QyZPfeDlGhA+VNm0ub4b4hNC0BsqyYekc3lHho=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=tNcvNOlR; arc=none smtp.client-ip=203.254.224.34
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GEf/jxEH"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id DF99DC2BD10;
-	Mon,  3 Jun 2024 18:50:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717440604;
-	bh=tAoh6E2HyT2I7zRPieUiEXpLsGE3VAG7l4WoETX8/KA=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=GEf/jxEHtJGXB7kScrOu7h0DjjNeWIg9lmhillOkUjsewEoDtkkXOBYTxIubLXC0D
-	 AF4raCk7yLDQsjaEiVt9L4jATQZdkgU4JttVpSxom5jc+RhW+ziwtinDv6R8RdlHfV
-	 2aq5gfLjxWyk1YHIbAwIGdaZo9nVrrLnghqYrrhZV1LMVmHyB1umUBQI+ZgnubF8Kd
-	 3KpP1RkPnIGdxnhu8CnsDUw7RZmxAFd6pHxvh6XERMEtX/eCfJDWXm7RlHjS4oYoai
-	 JflohoHAJ9g5V2MQ1cx1bAp9uDtUvT/iiJL/ne32mD6T06oKQfIC+1n85wD8kDzzHu
-	 1ndEUQNWLyvTA==
-Date: Mon, 3 Jun 2024 11:50:02 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
-	dm-devel@lists.linux.dev, x86@kernel.org,
-	linux-arm-kernel@lists.infradead.org, ardb@kernel.org,
-	samitolvanen@google.com, bvanassche@acm.org
-Subject: Re: [PATCH v3 6/8] fsverity: improve performance by using
- multibuffer hashing
-Message-ID: <20240603185002.GA35358@sol.localdomain>
-References: <20240507002343.239552-7-ebiggers@kernel.org>
- <ZllXDOJKW2pHWBTz@gondor.apana.org.au>
- <20240531061348.GG6505@sol.localdomain>
- <20240531065258.GH6505@sol.localdomain>
- <ZlmPGEt68OyAfuWo@gondor.apana.org.au>
- <20240531185126.GA1153@sol.localdomain>
+	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="tNcvNOlR"
+Received: from epcas5p3.samsung.com (unknown [182.195.41.41])
+	by mailout4.samsung.com (KnoxPortal) with ESMTP id 20240604032847epoutp04fde25762eb00bf1ba60609104fe0d477~Vr2_9PZA_1353113531epoutp04g
+	for <dm-devel@lists.linux.dev>; Tue,  4 Jun 2024 03:28:47 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com 20240604032847epoutp04fde25762eb00bf1ba60609104fe0d477~Vr2_9PZA_1353113531epoutp04g
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
+	s=mail20170921; t=1717471727;
+	bh=7VN6ZUoN/sVx9OFQYPCvCDso3Uou5inchmMvd4vuq5E=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+	b=tNcvNOlRXnI5bedxJ26y9w6TRzG50YcynA+2cGwniUTGpbgpPHphBAsVudbrcN6WS
+	 Fpv7ucxsfE765eTLhxyisAVREhNHMPqO/FB5cH81xO6io/wNvfYuyBtGTssgD1G/vj
+	 9fPq3lfnRj7akJXFtacojDMp/JpXoMaqAMTH/PV8=
+Received: from epsnrtp2.localdomain (unknown [182.195.42.163]) by
+	epcas5p1.samsung.com (KnoxPortal) with ESMTP id
+	20240604032846epcas5p1f1c03e377b238d49df5eb58251bf4543~Vr29wVx_50292302923epcas5p1T;
+	Tue,  4 Jun 2024 03:28:46 +0000 (GMT)
+Received: from epsmgec5p1new.samsung.com (unknown [182.195.38.177]) by
+	epsnrtp2.localdomain (Postfix) with ESMTP id 4VtbfN3yFfz4x9Pv; Tue,  4 Jun
+	2024 03:28:44 +0000 (GMT)
+Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
+	epsmgec5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	46.70.08853.CE98E566; Tue,  4 Jun 2024 12:28:44 +0900 (KST)
+Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
+	epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
+	20240603065101epcas5p2acde37ff1854ff6f455f51ec940caf65~Va_R6KOZ01423114231epcas5p2p;
+	Mon,  3 Jun 2024 06:51:01 +0000 (GMT)
+Received: from epsmgmc1p1new.samsung.com (unknown [182.195.42.40]) by
+	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
+	20240603065101epsmtrp18e7b805f6f3c250176196fb7d0105d49~Va_R3vysa1582915829epsmtrp1i;
+	Mon,  3 Jun 2024 06:51:01 +0000 (GMT)
+X-AuditID: b6c32a44-fc3fa70000002295-08-665e89ec9f67
+Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
+	epsmgmc1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	B8.4E.07412.5D76D566; Mon,  3 Jun 2024 15:51:01 +0900 (KST)
+Received: from nj.shetty?samsung.com (unknown [107.99.41.245]) by
+	epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
+	20240603065058epsmtip19af2886049d9888391a19a98b3e4be4f~Va_OP59sS2735927359epsmtip1k;
+	Mon,  3 Jun 2024 06:50:57 +0000 (GMT)
+Date: Mon, 3 Jun 2024 06:43:56 +0000
+From: Nitesh Shetty <nj.shetty@samsung.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
+	Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
+	<mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, Sagi Grimberg
+	<sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>, Alexander Viro
+	<viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara
+	<jack@suse.cz>, martin.petersen@oracle.com, bvanassche@acm.org,
+	david@fromorbit.com, hare@suse.de, damien.lemoal@opensource.wdc.com,
+	anuj20.g@samsung.com, joshi.k@samsung.com, nitheshshetty@gmail.com,
+	gost.dev@samsung.com, linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+	linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH v20 01/12] block: Introduce queue limits and sysfs for
+ copy-offload support
+Message-ID: <20240603064356.nujnjbtje3vjnti2@nj.shetty@samsung.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+In-Reply-To: <20240601055323.GB5613@lst.de>
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Te1BUVRzHO3fv3r1YS5eHcVgmh7nSFO9dWeDgiDVBdiebEXPGHHvACpdH
+	7Kt9aOAMgYiKBCvyilXj2RJgkkLyTmMFAsOdIEAQqCG2SCKIxqBBoIULjf99ft/ze//mkDxH
+	k0BEJih1rEYpk9PENvym2dPT94/M92PFE2MuqK63i4dOXVjhodpxA4FmzAsAFc7/y0NTt88C
+	tNxn4aGGrgmASsuv4GjkdjOG2sovYqi6thNDl4rSMdS5Nkugix1DAFkHjRhqH/VGZWcqcdTW
+	3oOjgZbLBCoxWQWoqnsVQ7nnBjHUNJUG0LWZORx9N+qGLCvd/FfcmIEf9zO95ZBpNo4LGMvE
+	dZwZ6NMzN2oyCaa+8mNmur4YMK0jqQRTkZPHZ7LT/ySY5oyf+Mxf1lGcmftmkGByGmoA833p
+	HUGE09HEPfGsLIbVuLPKaFVMgjIulN5/KDIsMjBILPGVhKBg2l0pU7ChdPibEb77EuS25dDu
+	x2VyvU2KkGm1tP/ePRqVXse6x6u0ulCaVcfI1VK1n1am0OqVcX5KVrdbIhbvCrQ5RiXGD+Xm
+	EOoml4+WUx+AVHDZ6TywIyElhYbGbOI82EY6Uq0Amq63YpyxYDNquvmc8Q+A5ol6sBUyXFDF
+	4x7aAVypz8U5428A+/v6BeteOOUBR0x9NiZJgvKGd9fIddmZoqH1Yd9GIh5VQMA1o9s6O1Ey
+	WDXSvqELqTA435DK59gB9hRP4etsZ0tjqf4NrNeClNkOdt0twdfzQyocDjTSXHNO8GF3g4Bj
+	EfzdcGaTT8Dq/C8ILvY0gMZh4+Y0L8OMXgOPaygeThuaN/XnYUHvNYzT7WH28hTG6ULY9NkW
+	74RX60oJjl3h0GLaJjPwktW8uccxANubR4gLYIfxiYGMT9TjeDfMnD/FN9rm4VFusGqV5NAT
+	1rX4lwJ+DXBl1VpFHBsdqJYo2RP/XzlapbgBNj6MV3gTuF+y6tcBMBJ0AEjyaGdhTso7sY7C
+	GFlSMqtRRWr0clbbAQJt98nlibZHq2w/TqmLlEhDxNKgoCBpSECQhHYRzmRciXGk4mQ6NpFl
+	1axmKw4j7USpmNbhhaIM/x37rMdGH096e/RGer8OF6ZKBhZe1VdbzvmW2S+99O4PC4uxB1qy
+	8O3DFSaHR1SQ988+gcVzTsSXT0fLVvL1hx8veS2W+3j0BVTy3eSubrOFSQejzaFRDj4ftpc3
+	HFz61kQeD//1tChX+uCWpL86eWz6yNfBj5JffHb4lmtN8lMnG1Wiyp7X8kZO7m1+65muubiZ
+	A8E6C23+tKzLPiSrRGLubCtO/4ScrZisXYHiqGBBRlpjvn/YB8OfKwwBR2OdQrRnj1Ue0jt/
+	9UvKnY6hhTcUeT5Fh7N2Ls1O7up2vPreTUHpkdnkzKSU+jihIF5xr+i+6G2DOOBhoTx/vPbe
+	czSujZdJvHgarew/c/aterkEAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Sa1BMYRzGveeczp5KzbGFN2vEYQyhbLm8bg3pwyG5fHC/rjptxm7lHJGI
+	Te4Ry5A2tdmy22VEl2mkwoRSrGUS2lJkl6ZGchmTtGGL4dtvnmd+z//Ln8LF74gR1LaInRwf
+	IVMwpBNRcpcZNaVevjFsaqraG12rrcLRwTM2HOW9Ok2ijrufAbrQ9R1HljtHAfphNOGouKoZ
+	oAxdGoEa7pRiqFx3FkM5efcxlJqcgKH7Pz+Q6Gzlc4Cs9RoMVZgnoctHsghUXlFDoLqbl0ik
+	1VtFyFDdhyH1sXoM3bDEA5Tf8ZFAD8wSZLJVO8yXsHXPgthaHWRLNa9ErKm5gGDrjNFsYe5x
+	ki3KOsC2FaUAtqxBRbKZSecc2FMJnSRberjFgf1kNRPsx1v1JJtUnAvYRxn3RMvd1jnNDeUU
+	23ZxvI//Fqfwruuv8ah295ib3V8IFWijTwBHCtLT4IvzBvwEcKLEdBmAVxKywUDhAfW2e/gA
+	u8GcvvciO4vpTwDGl0XbmaDHwQa98XdOUSQ9CT78Sdljd5qB1nZj/wxOp5DwkVZpZzdaBg0N
+	Ff25C70QdhWrHAbuNgNY01vypxgCa1IsxIA8A6YXvcHt+zgtgYa+/n3H36dMOe/BGUBr/jM0
+	/xmaf0YGwHOBBxclKOXKEGmUNILb7S3IlEJ0hNw7JFJZCPpfwWvCDdCs7fOuBBgFKgGkcMbd
+	JWn/+jCxS6hsTyzHR27moxWcUAkkFMEMd5FeTA0V03LZTm47x0Vx/N8WoxxHqLAnr0s8Dab8
+	HYOFdml25ju3mF3hwTHg3OygC641TSPfjI50DnRfuSy4VzK0HDsd19p5e6Rv+u1GV7WlZ30h
+	o57o17bEjxcWrs5sKpuXtT/3pbOGyWiM6clp8dN5JQtjtQFKcUpHYkCLdebe+Yf4VYpbBZvG
+	zYzfNyNZsXzNrMTW2N6tcdN1vk+bwiaO7VmRPV5fsEXDLYBV5rql7f6iOSHINoyIm+ATaYv1
+	T0+bM+Zq59vjlpA8n1W+rtb8tEBPc+rswK/axsXTHq+t/abu3mw+/FxuuxLsMciTmTylep+q
+	V7ge1prw42T2kw0feH2tsWqrYdHVtaODlN+htYlx7vYJiGMIIVwm9cJ5QfYLXINCcHkDAAA=
+X-CMS-MailID: 20240603065101epcas5p2acde37ff1854ff6f455f51ec940caf65
+X-Msg-Generator: CA
+Content-Type: multipart/mixed;
+	boundary="----Fualeei1.f5fhWGYL679EBd0hH5-OLgtfrOtH6wInDZGwDEe=_50408_"
+X-Sendblock-Type: REQ_APPROVE
+CMS-TYPE: 105P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20240520102830epcas5p27274901f3d0c2738c515709890b1dec4
+References: <20240520102033.9361-1-nj.shetty@samsung.com>
+	<CGME20240520102830epcas5p27274901f3d0c2738c515709890b1dec4@epcas5p2.samsung.com>
+	<20240520102033.9361-2-nj.shetty@samsung.com> <20240601055323.GB5613@lst.de>
+
+------Fualeei1.f5fhWGYL679EBd0hH5-OLgtfrOtH6wInDZGwDEe=_50408_
+Content-Type: text/plain; charset="utf-8"; format="flowed"
 Content-Disposition: inline
-In-Reply-To: <20240531185126.GA1153@sol.localdomain>
 
-On Fri, May 31, 2024 at 11:51:26AM -0700, Eric Biggers wrote:
-> On Fri, May 31, 2024 at 04:49:28PM +0800, Herbert Xu wrote:
-> > On Thu, May 30, 2024 at 11:52:58PM -0700, Eric Biggers wrote:
-> > >
-> > > Looking at it again a bit more closely, both fsverity and dm-verity have
-> > > per-block information that they need to keep track of in the queue in addition
-> > > to the data buffers and hashes: the block number, and in dm-verity's case also a
-> > > bvec_iter pointing to that block.
-> > 
-> > Again I'm not asking you to make this API asynchronous at all.
-> 
-> What exactly are you suggesting, then?  It seems that you want multibuffer
-> hashing to be supported by the existing ahash API.  However, that only works if
-> it's made asynchronous, given how the messages would have to be queued up on a
-> global queue.  That has a huge number of issues which I've already explained.
-> (And it was even tried before, and it failed.)
-> 
-> > I was just commenting on the added complexity in fsverify due to
-> > the use of the linear shash API instead of the page-based ahash API.
-> 
-> It's the other way around.  The shash version is much simpler.  Just look at the
-> diff of commit 8fcd94add6c5 that changed from ahash to shash:
-> 
->     4 files changed, 71 insertions(+), 200 deletions(-)
-> 
-> > This complexity was then compounded by the multi-buffer support.
-> 
-> fsverity and dm-verity will have to be updated to use multibuffer hashing
-> anyway, given that transparently supporting it in the existing API is not
-> viable.  If your concern is that in my current patchset fsverity and dm-verity
-> have separate code paths for multibuffer vs. single-buffer, as I mentioned I can
-> address that by restructuring them to operate on arrays (similar to what I
-> already did with the crypto API part).
-> 
-> > I think this would look a lot simpler if it moved back to ahash.
-> > 
-> > The original commit mentioned that ahash was bad for fsverify
-> > because of vmalloc.  But the only use of linear pointers in fsverify
-> > seems to be from kmalloc.  Where is the vmalloc coming from?
-> 
-> XFS is working on adding support for fsverity, and XFS was planning to provide
-> their Merkle tree blocks in vmalloced buffers.  Their plans have shifted several
-> times, and I think their latest plan no longer uses vmalloced buffers.  But in
-> any case it's still very convenient and much simpler to be able to just use
-> virtual addresses without having to worry about what type of memory it is.
-> 
+On 01/06/24 07:53AM, Christoph Hellwig wrote:
+>On Mon, May 20, 2024 at 03:50:14PM +0530, Nitesh Shetty wrote:
+>> Add device limits as sysfs entries,
+>> 	- copy_max_bytes (RW)
+>> 	- copy_max_hw_bytes (RO)
+>>
+>> Above limits help to split the copy payload in block layer.
+>> copy_max_bytes: maximum total length of copy in single payload.
+>> copy_max_hw_bytes: Reflects the device supported maximum limit.
+>
+>That's a bit of a weird way to phrase the commit log as the queue_limits
+>are the main thing (and there are three of them as required for the
+>scheme to work).  The sysfs attributes really are just an artifact.
+>
+Acked, we will update commit log.
 
-I've now unified the code paths for single-block and multi-block processing in
-fsverity and dm-verity, which I think addresses your remaining concern that's
-feasible to address.  Your feedback has been conflating different issues, and it
-only comes in once every few weeks, so it's a bit hard to follow.  But I think
-the remaining thing that you're asking for is to make the API to be part of
-"ahash" and use the existing async completion callback.  That's not actually
-feasible, for the reasons that I've explained in detail.  See in particular
-https://lore.kernel.org/linux-crypto/20240503152810.GA1132@sol.localdomain/.
+>> @@ -231,10 +237,11 @@ int blk_set_default_limits(struct queue_limits *lim)
+>>  {
+>>  	/*
+>>  	 * Most defaults are set by capping the bounds in blk_validate_limits,
+>> -	 * but max_user_discard_sectors is special and needs an explicit
+>> -	 * initialization to the max value here.
+>> +	 * but max_user_discard_sectors and max_user_copy_sectors are special
+>> +	 * and needs an explicit initialization to the max value here.
+>
+>s/needs/need/
+>
+Acked.
 
-Thanks,
+>> +/*
+>> + * blk_queue_max_copy_hw_sectors - set max sectors for a single copy payload
+>> + * @q:	the request queue for the device
+>> + * @max_copy_sectors: maximum number of sectors to copy
+>> + */
+>> +void blk_queue_max_copy_hw_sectors(struct request_queue *q,
+>> +				   unsigned int max_copy_sectors)
+>> +{
+>> +	struct queue_limits *lim = &q->limits;
+>> +
+>> +	if (max_copy_sectors > (BLK_COPY_MAX_BYTES >> SECTOR_SHIFT))
+>> +		max_copy_sectors = BLK_COPY_MAX_BYTES >> SECTOR_SHIFT;
+>> +
+>> +	lim->max_copy_hw_sectors = max_copy_sectors;
+>> +	lim->max_copy_sectors =
+>> +		min(max_copy_sectors, lim->max_user_copy_sectors);
+>> +}
+>> +EXPORT_SYMBOL_GPL(blk_queue_max_copy_hw_sectors);
+>
+>Please don't add new blk_queue_* helpers, everything should go through
+>the atomic queue limits API now.  Also capping the hardware limit
+>here looks odd.
+>
+This was a mistake, we are not using this function. We will remove this
+function in next version.
 
-- Eric
+>> +	if (max_copy_bytes & (queue_logical_block_size(q) - 1))
+>> +		return -EINVAL;
+>
+>This should probably go into blk_validate_limits and just round down.
+>
+Bart also pointed out similar thing. We do same check before issuing
+copy offload, so we will remove this check.
+
+>Also most block limits are in kb.  Not that I really know why we are
+>doing that, but is there a good reason to deviate from that scheme?
+>
+We followed discard as a reference, but we can move to kb, if that helps
+with overall readability.
+
+Thank you,
+Nitesh Shetty
+
+------Fualeei1.f5fhWGYL679EBd0hH5-OLgtfrOtH6wInDZGwDEe=_50408_
+Content-Type: text/plain; charset="utf-8"
+
+
+------Fualeei1.f5fhWGYL679EBd0hH5-OLgtfrOtH6wInDZGwDEe=_50408_--
