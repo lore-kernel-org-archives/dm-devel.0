@@ -1,59 +1,59 @@
-Received: from mailout1.samsung.com (mailout1.samsung.com [203.254.224.24])
+Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6428D19E
-	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 11:17:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.24
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C28E182887
+	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 11:17:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.25
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717413453; cv=none; b=cX3pq2kOc+vuTk6o/QgZMak+JeJ90LifE3Vj/DupZPxu24RC4qc9C3zgHeeWTKwWZNsMCto/8pJUPUBD0zHjt5Bxj42SY3nUq0ZBDrash+Xj8nBGXnKWLUY3JUtBwgvenqoTT/+b7UCDtFF8E2LhZWqqhW2MFX8UYC5KVzSHUxk=
+	t=1717413456; cv=none; b=KHkPL8mvBqSpKo/luspu0vwSkRlN99wu50ijq+QpXv+3laaxRZk3vG/n57suMOmWcL7a+ns/OcrEvOEotfYsdlZ1WZuOhjXHqQHBeFZUHLcqz3x1Wco6H1terOoM3UeVpijNgV243Ceh8PwDj02lSmDjWPVeF33cqaJt1K53G2w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717413453; c=relaxed/simple;
-	bh=X9ILtM/+5hKq9Dskgzk3jggSkTrWGbcydimSrAcZB/c=;
+	s=arc-20240116; t=1717413456; c=relaxed/simple;
+	bh=D3gB42XtxeSBE/jlJ1UPPvQmW6H1Vaq5vTF/0Hf4J0I=;
 	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:In-Reply-To:
-	 Content-Type:References; b=PJXOA6SWSamLJLZ0a+Io2J1EtCc/H7lS0Pkx62ocETvYvSA/V/wTk+pmujyYqCKgV05dRpN3G7Grclg9m1cefsQ6XgRDYfJxwgjxPaK9wdyt8A/pPINLuf19JGlqjjlOJLJOOM4n0MtrIBClt7d4h/UdGTA/1Z1kZMBUpOp5RE4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=fBCyfFmm; arc=none smtp.client-ip=203.254.224.24
+	 Content-Type:References; b=C3tCQvq+lhee7JDMQ2oOqwMtmM4CKAWTjKUVpbu7BXrWtyQkukCEtTjzKvhEBDewC0+sUTMw6xMxurkUUJiU2fFYqz/qaZO+lx2PSgLEV1gJ6BebFXF5OiEMYWLPPEv2ATnU9RpESGcegvlr5zSWmO86o+vXpXNFvWFPkCJy9Is=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=FOfTfbDi; arc=none smtp.client-ip=203.254.224.25
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="fBCyfFmm"
+	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="FOfTfbDi"
 Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
-	by mailout1.samsung.com (KnoxPortal) with ESMTP id 20240603111728epoutp01fa9e6657071e946816bb02979f997940~Vem6qPXWO3143731437epoutp014
-	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 11:17:28 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.samsung.com 20240603111728epoutp01fa9e6657071e946816bb02979f997940~Vem6qPXWO3143731437epoutp014
+	by mailout2.samsung.com (KnoxPortal) with ESMTP id 20240603111733epoutp022ba17ff39a4b9a416970f18c1072fc03~Vem_5uBVy2921929219epoutp02Y
+	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 11:17:33 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com 20240603111733epoutp022ba17ff39a4b9a416970f18c1072fc03~Vem_5uBVy2921929219epoutp02Y
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1717413448;
-	bh=NdbbPTU401HPnUoOaw/F+ZPaUI8FnwtrRdYBN1GmdNc=;
+	s=mail20170921; t=1717413453;
+	bh=D3gB42XtxeSBE/jlJ1UPPvQmW6H1Vaq5vTF/0Hf4J0I=;
 	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=fBCyfFmmOdsx9UkBEa9C/gMGpiNyDk4AnmSWtZbFfDv+7gBM+/il6hdrezNZoUm6u
-	 brNd0Yu+RFdFsvyiRq3EIXyNs2rR5HOPiAJA2VvMW5i5ShY8k0rytDknHtWX3ygeiW
-	 3INEWIAMTs1GV2KS6JZWO4Og6VhdoTW05ZmMqKO8=
+	b=FOfTfbDiGYY8dC+XkOh6fGvoSgYi+VKu3PQWMQ3I+dOlNKYBCeRGLbpjOtBQAZ0j1
+	 F6yeyzcPhDg2vZJa+7qvRzQXw3aDosUaUS+74DZkxsPSvBuRU6ilXXPcbQ7PF2Cr6+
+	 xMGYE71BQ1t9xzuUlXsLW5XXhxthiawahnvDJUcw=
 Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
-	epcas5p4.samsung.com (KnoxPortal) with ESMTP id
-	20240603111727epcas5p447c1effda385c696f1a1dab79263bc00~Vem6CshrS0313903139epcas5p4f;
-	Mon,  3 Jun 2024 11:17:27 +0000 (GMT)
-Received: from epsmges5p3new.samsung.com (unknown [182.195.38.182]) by
-	epsnrtp3.localdomain (Postfix) with ESMTP id 4VtB5f5Krnz4x9Pr; Mon,  3 Jun
-	2024 11:17:26 +0000 (GMT)
-Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
-	epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	F7.39.10035.646AD566; Mon,  3 Jun 2024 20:17:26 +0900 (KST)
+	epcas5p1.samsung.com (KnoxPortal) with ESMTP id
+	20240603111732epcas5p1ccf2e0f93b02b557dd78df93aa32c170~Vem_YDuab0938609386epcas5p1y;
+	Mon,  3 Jun 2024 11:17:32 +0000 (GMT)
+Received: from epsmges5p2new.samsung.com (unknown [182.195.38.174]) by
+	epsnrtp3.localdomain (Postfix) with ESMTP id 4VtB5k1BY1z4x9Q0; Mon,  3 Jun
+	2024 11:17:30 +0000 (GMT)
+Received: from epcas5p4.samsung.com ( [182.195.41.42]) by
+	epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	00.39.09989.946AD566; Mon,  3 Jun 2024 20:17:29 +0900 (KST)
 Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
-	epcas5p1.samsung.com (KnoxPortal) with ESMTPA id
-	20240603110051epcas5p1210a0ffdd361216c504cc342c8d4f247~VeYaUA-3V1603316033epcas5p10;
-	Mon,  3 Jun 2024 11:00:51 +0000 (GMT)
+	epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
+	20240603111120epcas5p32f11d320999cb72c11dd1a3eae7ddbb0~VehjYO1QI1720317203epcas5p36;
+	Mon,  3 Jun 2024 11:11:20 +0000 (GMT)
 Received: from epsmgmcp1.samsung.com (unknown [182.195.42.82]) by
 	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20240603110051epsmtrp274773a1330edafc070774ea66a2e82c2~VeYaSaTm90159301593epsmtrp2H;
-	Mon,  3 Jun 2024 11:00:51 +0000 (GMT)
-X-AuditID: b6c32a4b-b11fa70000002733-8b-665da646c938
+	20240603111119epsmtrp2f707e276d7ee7977b7bd999f469b7c14~VehjVlxGB0717207172epsmtrp2i;
+	Mon,  3 Jun 2024 11:11:19 +0000 (GMT)
+X-AuditID: b6c32a4a-e57f970000002705-d6-665da649f8aa
 Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
 	epsmgmcp1.samsung.com (Symantec Messaging Gateway) with SMTP id
-	2F.BD.18846.362AD566; Mon,  3 Jun 2024 20:00:51 +0900 (KST)
+	88.BE.18846.7D4AD566; Mon,  3 Jun 2024 20:11:19 +0900 (KST)
 Received: from nj.shetty?samsung.com (unknown [107.99.41.245]) by
 	epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
-	20240603110042epsmtip288f7ecce5d34cdfe18b68ceb823a3cdb~VeYRdfn010474404744epsmtip2K;
-	Mon,  3 Jun 2024 11:00:41 +0000 (GMT)
-Date: Mon, 3 Jun 2024 10:53:39 +0000
+	20240603111116epsmtip2cdcced5778a81386c3c2c6481e874bdf~Vehf6HtUx0894208942epsmtip2t;
+	Mon,  3 Jun 2024 11:11:16 +0000 (GMT)
+Date: Mon, 3 Jun 2024 11:04:15 +0000
 From: Nitesh Shetty <nj.shetty@samsung.com>
 To: Christoph Hellwig <hch@lst.de>
 Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
@@ -68,130 +68,88 @@ Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
 	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
 	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
 	linux-fsdevel@vger.kernel.org
-Subject: Re: [PATCH v20 00/12] Implement copy offload support
-Message-ID: <20240603105339.keuiudmeplxdmczj@nj.shetty@samsung.com>
+Subject: Re: [PATCH v20 11/12] null: Enable trace capability for null block
+Message-ID: <20240603110415.7furv27qlemddzee@nj.shetty@samsung.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240601054701.GA5613@lst.de>
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xTVxzHd+5tby9OSFeQHWAyUkkcEqBVigcGbAmM3Ag69jJOY6CDKyCl
-	bdoizi1bEXDQjbeFWYExROQlRGgWysMQHjJBRhwClilDUjYGE8pLtjBgLReN/31+33N+7/xI
-	nHed40wmSFW0QiqW8IldrJ+6Pd7yCqs6fUawsroPNfbfwdHFvA0c1T3OJdBc9xJAReZ/cWTq
-	/Aag9cEhHOnvTABUXlHKQsZOA4baKwowVFPXi6GrxWkY6t16SqCCrlGApkd0GOoY90Q/Xqpk
-	ofaOuyw03FpCoB+qpjnoRt8mhvIzRzDUYkoFqGFugYV+HndBQxt97HddqOEH4VR/BaQMuscc
-	amjiFosaHkymmmqzCKq58mtqpvkKoNqMaoK6llPIprLT5gnKkPE7m1qcHmdRC7dHCCpHXwuo
-	e+U9nEj7k4mB8bQ4lla40dIYWWyCNC6IH/5RVEiUyE8g9BL6o8N8N6k4iQ7ih0ZEeoUlSCzD
-	4budE0uSLVKkWKnk+wQHKmTJKtotXqZUBfFpeaxE7iv3VoqTlMnSOG8prQoQCgQHRZaP0Ynx
-	xrV6XK53PG9Qa3A1aOBpgA0Jub5wYWOcZWUetw3A4jpPDdhl4SUAq41m4oUx3ToGNIDc9vi+
-	3IXRDQBmG9IxxlgGcLJnHLeGYnHdYeb6M8zqQHA94cAWaZUduHw4PTsIrIxztQTc0rlY2Z4b
-	BB8Z0jlWtuWGQM3NX9gMvwbvXjFtV2djCbOVVcay5oLcbhtYrF7FmRZC4dMnjzgM28PZPv0O
-	O8Pl+Q6C4RRYc7maYJzTAdSN6QDz8A7M6M/FmYriYf53uWxG3wu1/Q0Yo9vB7HUTxui2sKXs
-	Oe+D9Y3lOwmc4Oha6g5T8B9DEYuZSj2A2sJMkAdcdS91pHspH8MBMMt80cKkhV3gjU2SQQ/Y
-	2OpTDti1wImWK5PiaKVIfkhKp7xYcowsqQls38uB8BYwNWn27gIYCboAJHG+g23OV6fO8Gxj
-	xZ9foBWyKEWyhFZ2AZFlQfm4854YmeXgpKoooa+/wNfPz8/X/5CfkP+67VxGaSyPGydW0Yk0
-	LacVz/0w0sZZjb0nQidHP/6vLUtysPJIxG52WrNaqx345Bbvr0vVwYE+JZKZ/pnmtxtOzM27
-	hx6btdfrucvHg7X3H+ZoTkx0NmUeKZy3Xzmv+yJHL8j+M6YwoyAsYtgMvDP17qbotr72cyub
-	xN6JJfKD0T+qJn1MxoCzu/Ubixd0ZYtRutknzbMxqa7Hist//XDt6LPj1Gqz/5RScjXvjW+F
-	sOhU18M3Py0tM3V3hxyVgmDDkpvA10MD3/dTO4X08FJXzKU1Zx1faT1sU8ZZfjCWYzfQc+3m
-	7czeXNeUtLXl03bZX/69qBjec490d7xfMph62Ri91eiwXxTx6vXfCj+bj7Hr3L/iTU7hcxl8
-	ljJeLDyAK5Ti/wH/DoZ6uAQAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Sa0hTYRjHe897dnY0xOOsfGtFsRJKa2ZEvZGZIOWhqwZBF8yGntRyKptK
-	N0ydWY4yXVG6zKaGppKR95W3vJXpWmaGqSnaVpYsL6BdbFpzRH378/yf3+/58tBQMEQuoUPD
-	ozhZuCRMRNmSFY2i5esCc/xPrC9+vQY/fNECcUKqGeKi99coPNI4AfDNsR8QG+ovATyt00Nc
-	1tIPsCbnDonf1WsJXJ2jInBBUTOBb99SELh51kRhVcNbgI1dagLX9Lji7KR7JK6uaSVx5+NM
-	Ct/NM/Jx/rMZAqdd7iJwlSEe4OKRURI/7xFivfkZz0vIdr7Zzb7IQaxW/Z7P6vsfkWynLpot
-	KUym2NJ7F9jh0gzAPnkXR7G5Kdd57FXFV4rVXhzgsePGHpIdre2i2JSyQsC2a5r4vo5HbD2C
-	uLDQGE7m5nncNiTtzSSM/Oh4+pUpHsaBn/ZKQNOI2YjSNUIlsKUFTCVAU0kaoAQ2f+aLUZ65
-	CVqzIyqY+cS3Lo0DlParl7IUJLMKXZ6eIiwiinFFbbO0ZbyAESHjF92cBzIZFGq/K7VkR2Yb
-	6tMm8i3ZjvFGygcveVZnMUATug7KWjig1gwDaYU3oazSQWjxQ0aI8mfm/DZ/Ts0mZ5GpgFH/
-	R6j/I9T/CA2AhWAhFymXBksDI93FcolUHh0eLA6MkJaAuTdwOVAF8h6axQ2AoEEDQDQULbBL
-	iT16QmAXJDlzlpNFBMiiwzh5AxDSpMjJbmVYcpCACZZEcac4LpKT/W0J2mZJHOEcXxck2Pnj
-	RsXgMpW9h+LLPi+uT/C5XjI0lPi0dsywM9VZNfw6pm7qW1tiwOihRZPrH+gdmkM2+/Wq0n+2
-	d7tFB4bejPWpluY2yUIcYMyq4fjpiOzTwerNHU3MYdGy3pbDWr/z4+f3KHwmfHJXCCeieN6v
-	GpeuXVq+McVTW1F00XQrf/7qWuPKgYCWc7vGElCsl7D8ujIrs1vX4X7QO1Fvr1gBObHO5Jm9
-	/9jyAH/z99X9hbvNb8XqHsP4d+xrSuoe0eaNeoSehO5tNbvcPsw7g2euODlzGemyrcIhp0d1
-	8ytbJ/f2VSTlZm7ZMLCDBE8y2xNcpxy2p7sUzLvf9WtQRMpDJO4uUCaX/AYjgqMpdQMAAA==
-X-CMS-MailID: 20240603110051epcas5p1210a0ffdd361216c504cc342c8d4f247
+In-Reply-To: <20240601062343.GA6347@lst.de>
+X-Brightmail-Tracker: H4sIAAAAAAAAA01Te1BUZRTvu3f37sUJWoGGDwgGr/YQBHcV1g9GihkcujycMMJGGVo3uLDI
+	srvtQlLTJE8NFQQTnF3cQlghQECFmOWVvJ8hKYFJgliAjKQQYA3xapddrP9+5/ed3zm/c858
+	JG5ZxLEjY6TxjEIqklDEFlZt205n14Di8Chehxmq6u3EUUr2Ko7KR88TaKZtHqC8uSUcTTSf
+	Bmi5fwBHNZ1jABUUaljofnMdhhoLL2CotLwDQ/mXUjHUsf6UQBdahwGaHFJjqGnEBV05pWWh
+	xqYeFhqsv0ygb4snOaikaw1DOV8NYUg3kQxQ5cwsC3WP2KOB1S62jz09+HMg3VsI6Tr1KIce
+	GLvBogf7E+ibZRkEXa09SU9XqwDdcD+JoIuyvmbTmanPCLou/SGb/nNyhEXP/jBE0Fk1ZYD+
+	saCdE2x1NHa/mBFFMgonRhohi4yRRntTgSFCX6GHgMd35XuifZSTVBTHeFMHgoJd/WIk+t1Q
+	Tp+KJAl6KlikVFK7396vkCXEM05imTLem2LkkRK5u9xNKYpTJkij3aRMvBefx9vjoU88Fivu
+	mbmHy3M5iXeSa4kkkEacAWYk5LrDP1RL+BmwhbTkNgCYN6IljME8gMXpU5wXQc/0dc6mZOUf
+	Hdv4UAdgZVEeZgwWAGxeXNvIYnF3wPzaq+AMIEmC6wL71kkDbc2l4OSTfmDAODeXgOtqe0OK
+	FTcQJo9JDLQ51xfOjnSyjHgr7FFNbGAzfZWW+XmWoRXktpnBXx8vAqOhA7D01lPMiK3gk64a
+	k1E7uPCsyTTnCVh68TvCKE4DUH1PbRK/A9N7z+MGEzhXDKdGTbQDzO2txIw+LWDm8oSpvjnU
+	fbOJt8NrVQWm+rZw+O9kE6bh0sRp04IeAngq7RGWDRzV/xtI/V879UYLL5gxl8I20vawZI00
+	wp2wqn53AWCXAVtGroyLZpQe8j1S5sSLG0fI4m6Cjd/iHKADj8bn3FoBRoJWAEmcsjbP+jIs
+	ytI8UvTZ54xCJlQkSBhlK/DQXycHt3s1Qqb/btJ4Id/dk+cuEAjcPfcK+JSN+Uy6JtKSGy2K
+	Z2IZRs4oNnUYaWaXhLGbrg/fCGrTvJ5Y5b2txrHdd3Hw6qGDDZMK2pWui3grNaarvp1/bMW/
+	4uyH89c0KfmltCOZZ1GeofOJbQzVBaVrfrdYPPLbm91FLrsE2vAZbLS+r+aN7O1UzvcrV+4E
+	5HL9D3OqfUMrioYdnY7Lbl+yOSo9udrNrnoJUz3vuzvE12Yme81MTYerz9mO25Vn7HgQ+stK
+	kO/LH4/VqxQL7hd/Gremjk99cPDBF86v1IZq3sN8PFuOxIaJdjmEvFsi3Hb2r7vv7/MPO1yB
+	CSWD0fJbDpf3ftLHG3OOss9Peh6qwh/bxHxUNhbi10JaLvMPZSvEGbNufoHK3rWtt+1roxKL
+	X/PXUiylWMR3xhVK0b+vszxutgQAAA==
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrEIsWRmVeSWpSXmKPExsWy7bCSvO71JbFpBrv+mFmsP3WM2aJpwl9m
+	i9V3+9ksXh/+xGgx7cNPZosnB9oZLX6fPc9sseXYPUaLBYvmsljcPLCTyWLPoklMFitXH2Wy
+	mD29mcni6P+3bBaTDl1jtHh6dRaTxd5b2hYL25awWOzZe5LF4vKuOWwW85c9ZbdYfvwfk8XE
+	jqtMFjueNDJarHv9nsXixC1pi/N/j7M6SHtcvuLtcWqRhMfOWXfZPc7f28jicflsqcemVZ1s
+	HpuX1Hu82DyT0WP3zQY2j8V9k1k9epvfsXnsbL3P6vHx6S0Wj/f7rrJ59G1ZxehxZsER9gDh
+	KC6blNSczLLUIn27BK6M+9N6mQuOs1TMmL2atYHxAnMXIyeHhICJxJ9fO1i7GLk4hAS2M0oc
+	e7OCESIhKbHs7xGoImGJlf+es0MUfWSUuP9yPytIgkVARWL2tqVADRwcbALaEqf/c4CERQSU
+	JJ6+Ogs2h1lgJpvEmfm5ICXCAt4SjfdyQMK8As4S728dY4EYeZ9RYuXRJ0wQCUGJkzOfsED0
+	mknM2/yQGaSXWUBaYvk/sPGcQJsOfvrEMoFRYBaSjllIOmYhdCxgZF7FKJpaUJybnptcYKhX
+	nJhbXJqXrpecn7uJEZwMtIJ2MC5b/1fvECMTB+MhRgkOZiUR3r666DQh3pTEyqrUovz4otKc
+	1OJDjNIcLErivMo5nSlCAumJJanZqakFqUUwWSYOTqkGpvKn7V03VGSzm1eIF8TuFskSZ09l
+	ENG5vNnEY1rcNNb48wf8XgUHJkV96pTYGCPtqVa3beqNs69+5Fls27cy16L4erf6iltN+5yN
+	kmPLhLcnBr74cCh3ZSibdyK72TSheXcW1P9YvrWwff1/2WzGG3xRypn3Tt5PEF/W413zbjPj
+	2d7oZ8lsk3rC/spJsiZbq0tYP7va1ett91F4/sfwXVdqmF7+VQhqWW7zfWaY5pPDTDVTZFiu
+	3TNacmxjyql503ceVMp4umP7rs3HH9sebLHrtxepXzXzwD7pA538inollu/3VV/fxfDg7jKW
+	3umf1f47flJkP937MS0oxnvR5sPx+k7n+c7Laeo2++SKKbEUZyQaajEXFScCAKh+bmp1AwAA
+X-CMS-MailID: 20240603111120epcas5p32f11d320999cb72c11dd1a3eae7ddbb0
 X-Msg-Generator: CA
 Content-Type: multipart/mixed;
-	boundary="----atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_520e5_"
+	boundary="----Fualeei1.f5fhWGYL679EBd0hH5-OLgtfrOtH6wInDZGwDEe=_5215e_"
 X-Sendblock-Type: REQ_APPROVE
 CMS-TYPE: 105P
 DLP-Filter: Pass
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20240520102747epcas5p33497a911ca70c991e5da8e22c5d1336b
-References: <CGME20240520102747epcas5p33497a911ca70c991e5da8e22c5d1336b@epcas5p3.samsung.com>
-	<20240520102033.9361-1-nj.shetty@samsung.com> <20240601054701.GA5613@lst.de>
+X-CMS-RootMailID: 20240520103027epcas5p4789defe8ab3bff23bd2abcf019689fa2
+References: <20240520102033.9361-1-nj.shetty@samsung.com>
+	<CGME20240520103027epcas5p4789defe8ab3bff23bd2abcf019689fa2@epcas5p4.samsung.com>
+	<20240520102033.9361-12-nj.shetty@samsung.com>
+	<20240601062343.GA6347@lst.de>
 
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_520e5_
+------Fualeei1.f5fhWGYL679EBd0hH5-OLgtfrOtH6wInDZGwDEe=_5215e_
 Content-Type: text/plain; charset="utf-8"; format="flowed"
 Content-Disposition: inline
 
-On 01/06/24 07:47AM, Christoph Hellwig wrote:
->On Mon, May 20, 2024 at 03:50:13PM +0530, Nitesh Shetty wrote:
->> So copy offload works only for request based storage drivers.
+On 01/06/24 08:23AM, Christoph Hellwig wrote:
+>On Mon, May 20, 2024 at 03:50:24PM +0530, Nitesh Shetty wrote:
+>> This is a prep patch to enable copy trace capability.
+>> At present only zoned null_block is using trace, so we decoupled trace
+>> and zoned dependency to make it usable in null_blk driver also.
 >
->I don't think that is actually true.  It just requires a fair amount of
->code in a bio based driver to match the bios up.
+>No need to mention the "prep patch", just state what you are doing.
+Acked.
+>Any this could just go out to Jens ASAP.
 >
->I'm missing any kind of information on what this patch set as-is
->actually helps with.  What operations are sped up, for what operations
->does it reduce resource usage?
->
-The major benefit of this copy-offload/emulation framework is
-observed in fabrics setup, for copy workloads across the network.
-The host will send offload command over the network and actual copy
-can be achieved using emulation on the target (hence patch 4).
-This results in higher performance and lower network consumption,
-as compared to read and write travelling across the network.
-With this design of copy-offload/emulation we are able to see the
-following improvements as compared to userspace read + write on a
-NVMeOF TCP setup:
-
-Setup1: Network Speed: 1000Mb/s
-	Host PC: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
-	Target PC: AMD Ryzen 9 5900X 12-Core Processor
-	block size 8k:
-	Improvement in IO BW from 106 MiB/s to 360 MiB/s
-	Network utilisation drops from  97% to 6%.
-	block-size 1M:
-	Improvement in IO BW from 104 MiB/s to 2677 MiB/s
-	Network utilisation drops from 92% to 0.66%.
-
-Setup2: Network Speed: 100Gb/s
-	Server: Intel(R) Xeon(R) Gold 6240 CPU @ 2.60GHz, 72 cores
-	(host and target have the same configuration)
-	block-size 8k:
-	17.5% improvement in IO BW (794 MiB/s to 933 MiB/s).
-	Network utilisation drops from  6.75% to 0.16%.
-
->Part of that might be that the included use case of offloading
->copy_file_range doesn't seem particularly useful - on any advance
->file system that would be done using reflinks anyway.
->
-Instead of coining a new user interface just for copy,
-we thought of using existing infra for plumbing.
-When this series gets merged, we can add io-uring interface.
-
->Have you considered hooking into dm-kcopyd which would be an
->instant win instead?  Or into garbage collection in zoned or other
->log structured file systems?  Those would probably really like
->multiple source bios, though.
->
-Our initial few version of the series had dm-kcopyd use case.
-We dropped it, to make overall series lightweight and make it
-easier to review and test.
-When the current series gets merged, we will start adding
-more in-kernel users in next phase.
+There is no user of trace apart from zoned and copy offload.
+Hence this would not make sense as separate patch.
 
 Thank you,
 Nitesh Shetty
 
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_520e5_
+------Fualeei1.f5fhWGYL679EBd0hH5-OLgtfrOtH6wInDZGwDEe=_5215e_
 Content-Type: text/plain; charset="utf-8"
 
 
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_520e5_--
+------Fualeei1.f5fhWGYL679EBd0hH5-OLgtfrOtH6wInDZGwDEe=_5215e_--
