@@ -1,131 +1,114 @@
-Received: from szxga08-in.huawei.com (szxga08-in.huawei.com [45.249.212.255])
+Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C790D12C7FD
-	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 13:00:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.255
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DDADA12E1F9
+	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 17:13:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717419661; cv=none; b=PKhPk2MjAvdVKBnvOt67k/35/vIcH7EKkjhUnQjw4XGGNv9afCsnBdvGNUqhlU/I2lHoNCSCIwmmt2Aaes+xhfO/XHFhSRSgktVliRS53dYxmSsjrYEFOmtgoeaymdDoxPjTQGtE1qet3MszNc5D54BV+FbeUmNLpUuIN44vhoo=
+	t=1717434796; cv=none; b=DlH7QsJoy3nVDPak4A3HUslpYgW1rdxmwtYs0aCTGK87s7jgHpTyU6PwQhSH0YkmuABFvZ7SVvMrrriubDKgaQ5c+eqRwd+NLe2ickfv/Cfx1aB1VkbFHjXKb0mxUV7hAVUGxwS2hC9/wKI0h5Ig5uXy8URA7U5PD5k1buw6OGg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717419661; c=relaxed/simple;
-	bh=DbKL2DpCNxLJE7j01bpvEj8WJhxVsUr+mlsQyFYMnDg=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=nv7jiOoHCopu76v+9bgF5eWK6LAkyXsEdOtRG78MHPCSkcm2nCYiJMXMJ1VgTa9f/1vSpU6RPjjkpYzmgI6qNhVuDsUuC4iLQw+cTJptOzyGspzX2x2tr6Fh/QRB7W+SiOqh8DM3HmZcDIN1CUmf2b0CwXRrslsf9Fsf6G6VX2g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.255
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
-Received: from mail.maildlp.com (unknown [172.19.88.105])
-	by szxga08-in.huawei.com (SkyGuard) with ESMTP id 4VtDJb5Yjwz1S98n;
-	Mon,  3 Jun 2024 20:57:03 +0800 (CST)
-Received: from kwepemm600009.china.huawei.com (unknown [7.193.23.164])
-	by mail.maildlp.com (Postfix) with ESMTPS id B8A9E140413;
-	Mon,  3 Jun 2024 21:00:42 +0800 (CST)
-Received: from huawei.com (10.175.104.67) by kwepemm600009.china.huawei.com
- (7.193.23.164) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.1.2507.39; Mon, 3 Jun
- 2024 20:58:20 +0800
-From: Yu Kuai <yukuai3@huawei.com>
-To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
-	<song@kernel.org>, <xni@redhat.com>, <mariusz.tkaczyk@linux.intel.com>,
-	<l@damenly.org>
-CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>,
-	<linux-raid@vger.kernel.org>, <yukuai3@huawei.com>,
-	<yukuai1@huaweicloud.com>, <yi.zhang@huawei.com>, <yangerkun@huawei.com>
-Subject: [PATCH 12/12] md/raid5: avoid BUG_ON() while continue reshape after reassembling
-Date: Mon, 3 Jun 2024 20:58:15 +0800
-Message-ID: <20240603125815.2199072-13-yukuai3@huawei.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20240603125815.2199072-1-yukuai3@huawei.com>
-References: <20240603125815.2199072-1-yukuai3@huawei.com>
+	s=arc-20240116; t=1717434796; c=relaxed/simple;
+	bh=JvLh7AbakjmzOrW6DkzL8QseI/8qErtZlt8Ymeg//Dc=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=W41Y8bD/slkxKTXPeuzkCyJ+VURMR8iNchWJ2/7U31UG5S3XnLtVFOHNIihQ9JoypeCnhvnP54UbU5i70f4QmavLG3Yf1uj/U4vztKGyrv9Rw2BLidZ9CJGj0+BF9eKVmwKJkkB09lkSA0AKGiwcWy8daWHUiubjxjF87rJa6lo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=gxqXSxhz; arc=none smtp.client-ip=199.89.1.11
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="gxqXSxhz"
+Received: from localhost (localhost [127.0.0.1])
+	by 008.lax.mailroute.net (Postfix) with ESMTP id 4VtL036QTzz6CmQtD;
+	Mon,  3 Jun 2024 17:13:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1717434776; x=1720026777; bh=v5lz8KDSVqQxkVH7H7CVN5A4
+	DbKQZhIXNO+ngY2Ze6U=; b=gxqXSxhzpblr5Pr//MwRCn6ubzSylXkeRojMTrLA
+	pI+/3nY5RsSrCKLBRXmo4tvyPlm1atdv/yQUc19ruOrub0WzBxgEngx+z8ZBK7CN
+	z2LWF2xwH0N+8gwAAOUr9vGGxQZfuktIQEH44zyFv0Ozg1U63A6m9MFYm5Z4Vtip
+	R43+TjNareecPim87+fX8wvQtiscHn21Ly4/6EE4o663Pks+2WwoQ5JQuy6T5FVy
+	bHwZP3+sDp8vygc53DhScfnLDQpTHf9mcLZr1Xktgz7bWMSyX+84Ct4IuOn7mWKz
+	7wTjIIowjeVZWKCf0y87eCG7hhXr2HLGMfxeXkwVhMK3OQ==
+X-Virus-Scanned: by MailRoute
+Received: from 008.lax.mailroute.net ([127.0.0.1])
+ by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id MlLOLRIWRk0a; Mon,  3 Jun 2024 17:12:56 +0000 (UTC)
+Received: from [192.168.50.14] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: bvanassche@acm.org)
+	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4VtKzl6rhRz6CmQwP;
+	Mon,  3 Jun 2024 17:12:51 +0000 (UTC)
+Message-ID: <d7ae00c8-c038-4bed-937e-222251bc627a@acm.org>
+Date: Mon, 3 Jun 2024 10:12:48 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
- kwepemm600009.china.huawei.com (7.193.23.164)
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
+ and request layer.
+To: Christoph Hellwig <hch@lst.de>
+Cc: Nitesh Shetty <nj.shetty@samsung.com>, Damien Le Moal
+ <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+ Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
+ Chaitanya Kulkarni <kch@nvidia.com>, Alexander Viro
+ <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>,
+ Jan Kara <jack@suse.cz>, martin.petersen@oracle.com, david@fromorbit.com,
+ hare@suse.de, damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com,
+ joshi.k@samsung.com, nitheshshetty@gmail.com, gost.dev@samsung.com,
+ linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-doc@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
+References: <20240520102033.9361-1-nj.shetty@samsung.com>
+ <CGME20240520102842epcas5p4949334c2587a15b8adab2c913daa622f@epcas5p4.samsung.com>
+ <20240520102033.9361-3-nj.shetty@samsung.com>
+ <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org>
+ <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
+ <a866d5b5-5b01-44a2-9ccb-63bf30aa8a51@acm.org>
+ <665850bd.050a0220.a5e6b.5b72SMTPIN_ADDED_BROKEN@mx.google.com>
+ <abe8c209-d452-4fb5-90eb-f77b5ec1a2dc@acm.org> <20240601055931.GB5772@lst.de>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20240601055931.GB5772@lst.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Currently, mdadm support --revert-reshape to abort the reshape while
-reassembling, as the test 07revert-grow. However, following BUG_ON()
-can be triggerred by the test:
+On 5/31/24 22:59, Christoph Hellwig wrote:
+> On Thu, May 30, 2024 at 10:11:15AM -0700, Bart Van Assche wrote:
+>> This new approach has the following two disadvantages:
+>> * Without plug, REQ_OP_COPY_SRC and REQ_OP_COPY_DST are not combined. These two
+>>    operation types are the only operation types for which not using a plug causes
+>>    an I/O failure.
+> 
+> So?  We can clearly document that and even fail submission with a helpful
+> message trivially to enforce that.
 
-kernel BUG at drivers/md/raid5.c:6278!
-invalid opcode: 0000 [#1] PREEMPT SMP PTI
-irq event stamp: 158985
-CPU: 6 PID: 891 Comm: md0_reshape Not tainted 6.9.0-03335-g7592a0b0049a #94
-RIP: 0010:reshape_request+0x3f1/0xe60
-Call Trace:
- <TASK>
- raid5_sync_request+0x43d/0x550
- md_do_sync+0xb7a/0x2110
- md_thread+0x294/0x2b0
- kthread+0x147/0x1c0
- ret_from_fork+0x59/0x70
- ret_from_fork_asm+0x1a/0x30
- </TASK>
+Consider the following use case:
+* Task A calls blk_start_plug()
+* Task B calls blk_start_plug()
+* Task A submits a REQ_OP_COPY_DST bio and a REQ_OP_COPY_SRC bio.
+* Task B submits a REQ_OP_COPY_DST bio and a REQ_OP_COPY_SRC bio.
+* The stacking driver to which all REQ_OP_COPY_* operations have been
+   submitted processes bios asynchronusly.
+* Task A calls blk_finish_plug()
+* Task B calls blk_finish_plug()
+* The REQ_OP_COPY_DST bio from task A and the REQ_OP_COPY_SRC bio from
+   task B are combined into a single request.
+* The REQ_OP_COPY_DST bio from task B and the REQ_OP_COPY_SRC bio from
+   task A are combined into a single request.
 
-Root cause is that --revert-reshape update the raid_disks from 5 to 4,
-while reshape position is still set, and after reassembling the array,
-reshape position will be read from super block, then during reshape the
-checking of 'writepos' that is caculated by old reshape position will
-fail.
+This results in silent and hard-to-debug data corruption. Do you agree
+that we should not restrict copy offloading to stacking drivers that
+process bios synchronously and also that this kind of data corruption
+should be prevented?
 
-Fix this panic the easy way first, by converting the BUG_ON() to
-WARN_ON(), and stop the reshape if checkings fail.
+Thanks,
 
-Noted that mdadm must fix --revert-shape as well, and probably md/raid
-should enhance metadata validation as well, however this means
-reassemble will fail and there must be user tools to fix the wrong
-metadata.
-
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
----
- drivers/md/raid5.c | 20 +++++++++++++-------
- 1 file changed, 13 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 69a083ca41a3..d4c30a94e4e4 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -6255,7 +6255,9 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
- 	safepos = conf->reshape_safe;
- 	sector_div(safepos, data_disks);
- 	if (mddev->reshape_backwards) {
--		BUG_ON(writepos < reshape_sectors);
-+		if (WARN_ON(writepos < reshape_sectors))
-+			return MaxSector;
-+
- 		writepos -= reshape_sectors;
- 		readpos += reshape_sectors;
- 		safepos += reshape_sectors;
-@@ -6273,14 +6275,18 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr, int *sk
- 	 * to set 'stripe_addr' which is where we will write to.
- 	 */
- 	if (mddev->reshape_backwards) {
--		BUG_ON(conf->reshape_progress == 0);
-+		if (WARN_ON(conf->reshape_progress == 0))
-+			return MaxSector;
-+
- 		stripe_addr = writepos;
--		BUG_ON((mddev->dev_sectors &
--			~((sector_t)reshape_sectors - 1))
--		       - reshape_sectors - stripe_addr
--		       != sector_nr);
-+		if (WARN_ON((mddev->dev_sectors &
-+		    ~((sector_t)reshape_sectors - 1)) -
-+		    reshape_sectors - stripe_addr != sector_nr))
-+			return MaxSector;
- 	} else {
--		BUG_ON(writepos != sector_nr + reshape_sectors);
-+		if (WARN_ON(writepos != sector_nr + reshape_sectors))
-+			return MaxSector;
-+
- 		stripe_addr = sector_nr;
- 	}
- 
--- 
-2.39.2
-
+Bart.
