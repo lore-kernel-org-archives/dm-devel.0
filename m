@@ -1,28 +1,29 @@
-Received: from szxga08-in.huawei.com (szxga08-in.huawei.com [45.249.212.255])
+Received: from szxga01-in.huawei.com (szxga01-in.huawei.com [45.249.212.187])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F7AD12C484
-	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 12:58:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.255
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C921B12C550
+	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 12:58:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.187
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717419493; cv=none; b=XyWy94pNzxa/tumz23tJpy1itdkZcBryTi8nIzn8d3E9s4QMG0acpreceJfUcuc1TPrCIZ7IFfcUJubAZl2x/tSOBhUmoYBSJ+3StFllMeSC+6DGlWX4PY7ZnbosxTTQtjvHlpCwiiiuVnRcEytUyK4IjyyHV6teQlKV4nBA1No=
+	t=1717419495; cv=none; b=he07o5OL3u6pTQ+8Tl1h5U3l2iNeFhcWKHWVQt9UP+lL1VtbM96m85HuIE9P9a0ZpztzAPC4+elTu1Zd0TDeNRuqoPywk76j5PIifKxR1FB+vRUwL9RclAPWpTSaZSAhXHoNunyh1kZtganF/BSLRc8NYdKVXE4brvpvJmYp8b8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717419493; c=relaxed/simple;
-	bh=OU4mVbRF8T7fGhSRohDJTOAtuVkdmbk3kcb/uJg5Lg0=;
-	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=jDa2VKU3lKRe8af7P66MxAiznGB0u35a1bNIZ8WzQM7+jivCSmjeylWrGB4hsn30p4QJbJBH3f4UyQYSXsnOTxWQHGBrxiYV614UEehH/j0XcOC88J6ds8oxLVccmc1Cp37dKlyV6V1Sy8wNzMkGDmukWA6JLPi34HCpn/KaODk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.255
+	s=arc-20240116; t=1717419495; c=relaxed/simple;
+	bh=gdmUcErX0vsOeRarPKhA1OeJyebQSfVxmZsfIBoqpRg=;
+	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=UawcPIwJbGPldj6vVCpk+JGxy5ftvHyF3XU4484h/i5gIGMARAURiiu9lT0FbqnH/qgUxY0tXxlQyT/TOlUReC6ohAV9oFH3eTbfjISTDXR4Q1BJqijW5MCGXYjMDk9auYuqY8bmc2IaGsgLoLrowSM2H2U0EDOttw6riFZUR6M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.187
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
-Received: from mail.maildlp.com (unknown [172.19.163.48])
-	by szxga08-in.huawei.com (SkyGuard) with ESMTP id 4VtDFN31XCz1S91T;
-	Mon,  3 Jun 2024 20:54:16 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.163.174])
+	by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4VtDFP1lqYzwRLd;
+	Mon,  3 Jun 2024 20:54:17 +0800 (CST)
 Received: from kwepemm600009.china.huawei.com (unknown [7.193.23.164])
-	by mail.maildlp.com (Postfix) with ESMTPS id 5D7D2180060;
-	Mon,  3 Jun 2024 20:58:10 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTPS id 5B033140417;
+	Mon,  3 Jun 2024 20:58:11 +0800 (CST)
 Received: from huawei.com (10.175.104.67) by kwepemm600009.china.huawei.com
  (7.193.23.164) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.1.2507.39; Mon, 3 Jun
- 2024 20:58:09 +0800
+ 2024 20:58:10 +0800
 From: Yu Kuai <yukuai3@huawei.com>
 To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
 	<song@kernel.org>, <xni@redhat.com>, <mariusz.tkaczyk@linux.intel.com>,
@@ -30,10 +31,12 @@ To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
 CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>,
 	<linux-raid@vger.kernel.org>, <yukuai3@huawei.com>,
 	<yukuai1@huaweicloud.com>, <yi.zhang@huawei.com>, <yangerkun@huawei.com>
-Subject: [PATCH 00/12] md: refacotor and some fixes related to sync_thread
-Date: Mon, 3 Jun 2024 20:58:03 +0800
-Message-ID: <20240603125815.2199072-1-yukuai3@huawei.com>
+Subject: [PATCH 01/12] md: rearrange recovery_flags
+Date: Mon, 3 Jun 2024 20:58:04 +0800
+Message-ID: <20240603125815.2199072-2-yukuai3@huawei.com>
 X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20240603125815.2199072-1-yukuai3@huawei.com>
+References: <20240603125815.2199072-1-yukuai3@huawei.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -45,33 +48,84 @@ Content-Type: text/plain
 X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
  kwepemm600009.china.huawei.com (7.193.23.164)
 
-Changes from RFC:
- - fix some typos;
- - add patch 7 to prevent some mdadm tests failure;
- - add patch 12 to fix BUG_ON() panic by mdadm test 07revert-grow;
+Currently there are lots of flags with the same confusing prefix
+"MD_REOCVERY_", and there are two main types of flags, sync thread runnng
+status, I prefer prefix "SYNC_THREAD_", and sync thread action, I perfer
+prefix "SYNC_ACTION_".
 
-Yu Kuai (12):
-  md: rearrange recovery_flags
-  md: add a new enum type sync_action
-  md: add new helpers for sync_action
-  md: factor out helper to start reshape from action_store()
-  md: replace sysfs api sync_action with new helpers
-  md: remove parameter check_seq for stop_sync_thread()
-  md: don't fail action_store() if sync_thread is not registered
-  md: use new helers in md_do_sync()
-  md: replace last_sync_action with new enum type
-  md: factor out helpers for different sync_action in md_do_sync()
-  md: pass in max_sectors for pers->sync_request()
-  md/raid5: avoid BUG_ON() while continue reshape after reassembling
+For now, rearrange and update comment to improve code readability,
+there are no functional changes.
 
- drivers/md/dm-raid.c |   2 +-
- drivers/md/md.c      | 437 ++++++++++++++++++++++++++-----------------
- drivers/md/md.h      | 124 +++++++++---
- drivers/md/raid1.c   |   5 +-
- drivers/md/raid10.c  |   8 +-
- drivers/md/raid5.c   |  23 ++-
- 6 files changed, 388 insertions(+), 211 deletions(-)
+Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+---
+ drivers/md/md.h | 52 ++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 38 insertions(+), 14 deletions(-)
 
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index ca085ecad504..170412a65b63 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -551,22 +551,46 @@ struct mddev {
+ };
+ 
+ enum recovery_flags {
++	/* flags for sync thread running status */
++
++	/*
++	 * set when one of sync action is set and new sync thread need to be
++	 * registered, or just add/remove spares from conf.
++	 */
++	MD_RECOVERY_NEEDED,
++	/* sync thread is running, or about to be started */
++	MD_RECOVERY_RUNNING,
++	/* sync thread needs to be aborted for some reason */
++	MD_RECOVERY_INTR,
++	/* sync thread is done and is waiting to be unregistered */
++	MD_RECOVERY_DONE,
++	/* running sync thread must abort immediately, and not restart */
++	MD_RECOVERY_FROZEN,
++	/* waiting for pers->start() to finish */
++	MD_RECOVERY_WAIT,
++	/* interrupted because io-error */
++	MD_RECOVERY_ERROR,
++
++	/* flags determines sync action */
++
++	/* if just this flag is set, action is resync. */
++	MD_RECOVERY_SYNC,
++	/*
++	 * paired with MD_RECOVERY_SYNC, if MD_RECOVERY_CHECK is not set,
++	 * action is repair, means user requested resync.
++	 */
++	MD_RECOVERY_REQUESTED,
+ 	/*
+-	 * If neither SYNC or RESHAPE are set, then it is a recovery.
++	 * paired with MD_RECOVERY_SYNC and MD_RECOVERY_REQUESTED, action is
++	 * check.
+ 	 */
+-	MD_RECOVERY_RUNNING,	/* a thread is running, or about to be started */
+-	MD_RECOVERY_SYNC,	/* actually doing a resync, not a recovery */
+-	MD_RECOVERY_RECOVER,	/* doing recovery, or need to try it. */
+-	MD_RECOVERY_INTR,	/* resync needs to be aborted for some reason */
+-	MD_RECOVERY_DONE,	/* thread is done and is waiting to be reaped */
+-	MD_RECOVERY_NEEDED,	/* we might need to start a resync/recover */
+-	MD_RECOVERY_REQUESTED,	/* user-space has requested a sync (used with SYNC) */
+-	MD_RECOVERY_CHECK,	/* user-space request for check-only, no repair */
+-	MD_RECOVERY_RESHAPE,	/* A reshape is happening */
+-	MD_RECOVERY_FROZEN,	/* User request to abort, and not restart, any action */
+-	MD_RECOVERY_ERROR,	/* sync-action interrupted because io-error */
+-	MD_RECOVERY_WAIT,	/* waiting for pers->start() to finish */
+-	MD_RESYNCING_REMOTE,	/* remote node is running resync thread */
++	MD_RECOVERY_CHECK,
++	/* recovery, or need to try it */
++	MD_RECOVERY_RECOVER,
++	/* reshape */
++	MD_RECOVERY_RESHAPE,
++	/* remote node is running resync thread */
++	MD_RESYNCING_REMOTE,
+ };
+ 
+ enum md_ro_state {
 -- 
 2.39.2
 
