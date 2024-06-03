@@ -1,29 +1,29 @@
-Received: from szxga08-in.huawei.com (szxga08-in.huawei.com [45.249.212.255])
+Received: from szxga02-in.huawei.com (szxga02-in.huawei.com [45.249.212.188])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 08AC312C484
-	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 12:58:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.255
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60F3812C550
+	for <dm-devel@lists.linux.dev>; Mon,  3 Jun 2024 12:58:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.188
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717419511; cv=none; b=JIhAGR6LLa6cPNgnzvbcq33UmrV9rHcYC2fEeWiyUbcOMBk5nc3SSxMWcKe6c1gVLVpNwP5r6OH9u0EjTeyvrvVRRzbMIE7BaipXqZg+cCuHWOFm6RLb5/PAtC0CaPfxq/EkaqBqEpVOKdiKYr+fO4R5adpgJ2RSaa08OwnFmU0=
+	t=1717419526; cv=none; b=r/hRzRWwhWJAkaSuO9iaiCUkmTkDO8vtGIFwPdTD6bqTO3deyKoHXewniD6Wv6xY//k/wG/wW9jSIAt4zLKgu/tNpL/OBsKmfNO5Ipof3c+IAMW380J8au+gqe6w7R/1wG/lhiFBTR+GFgPIwSuDnyNaSezbmzUe6nAR769/0DU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717419511; c=relaxed/simple;
-	bh=4FtcTTlzUqRsL2pap7+D6l9nOTLemGR0nLVEbnpHM8U=;
+	s=arc-20240116; t=1717419526; c=relaxed/simple;
+	bh=RYgIXlpfHFpa7fuAjbAWJANhvY0CxwerTgR7X6hLYaw=;
 	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=WjLXY1mt3qMN+HmcpWOjKrU+7UC6YTSgnOw/LC5LnHmgDP/PPOWa8r7O9f+UHe2/Dbg2pb+r6qLsZv6pBTUGYaYGIYHSWQyUFapZ4gKCdUEjimtN2/2PiS2b1BMOzfaBsmOV/av9DTz3HSIjdmqyEv3uicFHtinD1ACTmw5Lwe4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.255
+	 MIME-Version:Content-Type; b=PCMhzqrQstPKz84rAUYbnrTrxJdVjpB0CNGlKRV3AX/SACNI/yTfiuQT7psCJX8OpzPMwsNvxncZvSK2hFA8l7qg8F7zzmK+rIDxg5uUKdFGhw9LB0ZzTMK8zK7sKi2De5CMpSFHk97fGs0Q4nCelEgitn/qpi2GnNsvBYpiZ3k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.188
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Received: from mail.maildlp.com (unknown [172.19.88.105])
-	by szxga08-in.huawei.com (SkyGuard) with ESMTP id 4VtDFj2M7Qz1S98c;
-	Mon,  3 Jun 2024 20:54:33 +0800 (CST)
+	by szxga02-in.huawei.com (SkyGuard) with ESMTP id 4VtDFJ0BR1zmXZx;
+	Mon,  3 Jun 2024 20:54:12 +0800 (CST)
 Received: from kwepemm600009.china.huawei.com (unknown [7.193.23.164])
-	by mail.maildlp.com (Postfix) with ESMTPS id 4903E1403D2;
-	Mon,  3 Jun 2024 20:58:12 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTPS id 54347140123;
+	Mon,  3 Jun 2024 20:58:27 +0800 (CST)
 Received: from huawei.com (10.175.104.67) by kwepemm600009.china.huawei.com
  (7.193.23.164) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.1.2507.39; Mon, 3 Jun
- 2024 20:58:11 +0800
+ 2024 20:58:12 +0800
 From: Yu Kuai <yukuai3@huawei.com>
 To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
 	<song@kernel.org>, <xni@redhat.com>, <mariusz.tkaczyk@linux.intel.com>,
@@ -31,9 +31,9 @@ To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
 CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>,
 	<linux-raid@vger.kernel.org>, <yukuai3@huawei.com>,
 	<yukuai1@huaweicloud.com>, <yi.zhang@huawei.com>, <yangerkun@huawei.com>
-Subject: [PATCH 02/12] md: add a new enum type sync_action
-Date: Mon, 3 Jun 2024 20:58:05 +0800
-Message-ID: <20240603125815.2199072-3-yukuai3@huawei.com>
+Subject: [PATCH 03/12] md: add new helpers for sync_action
+Date: Mon, 3 Jun 2024 20:58:06 +0800
+Message-ID: <20240603125815.2199072-4-yukuai3@huawei.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20240603125815.2199072-1-yukuai3@huawei.com>
 References: <20240603125815.2199072-1-yukuai3@huawei.com>
@@ -48,90 +48,126 @@ Content-Type: text/plain
 X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
  kwepemm600009.china.huawei.com (7.193.23.164)
 
-In order to make code related to sync_thread cleaner in following
-patches, also add detail comment about each sync action. And also
-prepare to remove the related recovery_flags in the fulture.
+The new helpers will get current sync_action of the array, will be used
+in later patches to make code cleaner.
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md.h | 57 ++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 56 insertions(+), 1 deletion(-)
+ drivers/md/md.c | 79 +++++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/md.h |  3 ++
+ 2 files changed, 82 insertions(+)
 
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 170412a65b63..6b9d9246f260 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -34,6 +34,61 @@
-  */
- #define	MD_FAILFAST	(REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT)
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index aff9118ff697..e5487008f66e 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -69,6 +69,16 @@
+ #include "md-bitmap.h"
+ #include "md-cluster.h"
  
-+/* Status of sync thread. */
-+enum sync_action {
-+	/*
-+	 * Represent by MD_RECOVERY_SYNC, start when:
-+	 * 1) after assemble, sync data from first rdev to other copies, this
-+	 * must be done first before other sync actions and will only execute
-+	 * once;
-+	 * 2) resize the array(notice that this is not reshape), sync data for
-+	 * the new range;
-+	 */
-+	ACTION_RESYNC,
-+	/*
-+	 * Represent by MD_RECOVERY_RECOVER, start when:
-+	 * 1) for new replacement, sync data based on the replace rdev or
-+	 * available copies from other rdev;
-+	 * 2) for new member disk while the array is degraded, sync data from
-+	 * other rdev;
-+	 * 3) reassemble after power failure or re-add a hot removed rdev, sync
-+	 * data from first rdev to other copies based on bitmap;
-+	 */
-+	ACTION_RECOVER,
-+	/*
-+	 * Represent by MD_RECOVERY_SYNC | MD_RECOVERY_REQUESTED |
-+	 * MD_RECOVERY_CHECK, start when user echo "check" to sysfs api
-+	 * sync_action, used to check if data copies from differenct rdev are
-+	 * the same. The number of mismatch sectors will be exported to user
-+	 * by sysfs api mismatch_cnt;
-+	 */
-+	ACTION_CHECK,
-+	/*
-+	 * Represent by MD_RECOVERY_SYNC | MD_RECOVERY_REQUESTED, start when
-+	 * user echo "repair" to sysfs api sync_action, usually paired with
-+	 * ACTION_CHECK, used to force syncing data once user found that there
-+	 * are inconsistent data,
-+	 */
-+	ACTION_REPAIR,
-+	/*
-+	 * Represent by MD_RECOVERY_RESHAPE, start when new member disk is added
-+	 * to the conf, notice that this is different from spares or
-+	 * replacement;
-+	 */
-+	ACTION_RESHAPE,
-+	/*
-+	 * Represent by MD_RECOVERY_FROZEN, can be set by sysfs api sync_action
-+	 * or internal usage like setting the array read-only, will forbid above
-+	 * actions.
-+	 */
-+	ACTION_FROZEN,
-+	/*
-+	 * All above actions don't match.
-+	 */
-+	ACTION_IDLE,
-+	NR_SYNC_ACTIONS,
++static const char *action_name[NR_SYNC_ACTIONS] = {
++	[ACTION_RESYNC]		= "resync",
++	[ACTION_RECOVER]	= "recover",
++	[ACTION_CHECK]		= "check",
++	[ACTION_REPAIR]		= "repair",
++	[ACTION_RESHAPE]	= "reshape",
++	[ACTION_FROZEN]		= "frozen",
++	[ACTION_IDLE]		= "idle",
 +};
 +
- /*
-  * The struct embedded in rdev is used to serialize IO.
-  */
-@@ -571,7 +626,7 @@ enum recovery_flags {
- 	/* interrupted because io-error */
- 	MD_RECOVERY_ERROR,
+ /* pers_list is a list of registered personalities protected by pers_lock. */
+ static LIST_HEAD(pers_list);
+ static DEFINE_SPINLOCK(pers_lock);
+@@ -4867,6 +4877,75 @@ metadata_store(struct mddev *mddev, const char *buf, size_t len)
+ static struct md_sysfs_entry md_metadata =
+ __ATTR_PREALLOC(metadata_version, S_IRUGO|S_IWUSR, metadata_show, metadata_store);
  
--	/* flags determines sync action */
-+	/* flags determines sync action, see details in enum sync_action */
- 
- 	/* if just this flag is set, action is resync. */
- 	MD_RECOVERY_SYNC,
++enum sync_action md_sync_action(struct mddev *mddev)
++{
++	unsigned long recovery = mddev->recovery;
++
++	/*
++	 * frozen has the highest priority, means running sync_thread will be
++	 * stopped immediately, and no new sync_thread can start.
++	 */
++	if (test_bit(MD_RECOVERY_FROZEN, &recovery))
++		return ACTION_FROZEN;
++
++	/*
++	 * read-only array can't register sync_thread, and it can only
++	 * add/remove spares.
++	 */
++	if (!md_is_rdwr(mddev))
++		return ACTION_IDLE;
++
++	/*
++	 * idle means no sync_thread is running, and no new sync_thread is
++	 * requested.
++	 */
++	if (!test_bit(MD_RECOVERY_RUNNING, &recovery) &&
++	    !test_bit(MD_RECOVERY_NEEDED, &recovery))
++		return ACTION_IDLE;
++
++	if (test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
++	    mddev->reshape_position != MaxSector)
++		return ACTION_RESHAPE;
++
++	if (test_bit(MD_RECOVERY_RECOVER, &recovery))
++		return ACTION_RECOVER;
++
++	if (test_bit(MD_RECOVERY_SYNC, &recovery)) {
++		/*
++		 * MD_RECOVERY_CHECK must be paired with
++		 * MD_RECOVERY_REQUESTED.
++		 */
++		if (test_bit(MD_RECOVERY_CHECK, &recovery))
++			return ACTION_CHECK;
++		if (test_bit(MD_RECOVERY_REQUESTED, &recovery))
++			return ACTION_REPAIR;
++		return ACTION_RESYNC;
++	}
++
++	/*
++	 * MD_RECOVERY_NEEDED or MD_RECOVERY_RUNNING is set, however, no
++	 * sync_action is specified.
++	 */
++	return ACTION_IDLE;
++}
++
++enum sync_action md_sync_action_by_name(const char *page)
++{
++	enum sync_action action;
++
++	for (action = 0; action < NR_SYNC_ACTIONS; ++action) {
++		if (cmd_match(page, action_name[action]))
++			return action;
++	}
++
++	return NR_SYNC_ACTIONS;
++}
++
++const char *md_sync_action_name(enum sync_action action)
++{
++	return action_name[action];
++}
++
+ static ssize_t
+ action_show(struct mddev *mddev, char *page)
+ {
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 6b9d9246f260..018f3292a25c 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -864,6 +864,9 @@ extern void md_unregister_thread(struct mddev *mddev, struct md_thread __rcu **t
+ extern void md_wakeup_thread(struct md_thread __rcu *thread);
+ extern void md_check_recovery(struct mddev *mddev);
+ extern void md_reap_sync_thread(struct mddev *mddev);
++extern enum sync_action md_sync_action(struct mddev *mddev);
++extern enum sync_action md_sync_action_by_name(const char *page);
++extern const char *md_sync_action_name(enum sync_action action);
+ extern bool md_write_start(struct mddev *mddev, struct bio *bi);
+ extern void md_write_inc(struct mddev *mddev, struct bio *bi);
+ extern void md_write_end(struct mddev *mddev);
 -- 
 2.39.2
 
