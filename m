@@ -1,97 +1,134 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4680F1EB30;
-	Tue,  4 Jun 2024 07:39:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FAFADDB3;
+	Tue,  4 Jun 2024 09:37:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717486771; cv=none; b=FdzOn4M3TR9xulbXJGtnZrZPFYA+DHn6tVjGZvTKPouJLEDNWlGgfXyNJYITQUJA0K6VFiyDDVc8ZQK6plrPNWL7pvfLvg+xSqo2LfPF/hsMzsR+DwUPhkzmye8/nb7FnAJLmVwrYyDjlztILYUV35AsIANClfL8E7Ah3HSrS0s=
+	t=1717493866; cv=none; b=uejRoDzbmblkHhWLyEE3GozKqxCXdmu/W+Pb08ekgjCmjhyL0g5wKZrOu3656c6ZrG9gMUdZN77Z4pmhKcM7xW/x4AeMY8yzjc9Ix6mO4/Fr+KqezHVOjXArubFF7kTpV/qKALVvQ2BXrbNr1jlKMWkLoPtPxmz+eV9FkvauUAU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717486771; c=relaxed/simple;
-	bh=IwRk73FI7oCSvA9GoThk9eEnhOPDGRbbqcPOdPVc2Uw=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=qUzx9cG0SUqbRDiM/U2xVcpFMCV2roMQJ9RZOqPEBgz8PioWDzB+rSaoDmNpVStQ1YywYe+GAAGBiv0HSEN9Ok+VmmfAqFQi4lcpA4Pit7uMlqqjUcVFByDtc/GPYLT6e+hPzr51LNyZN+Us3yxgkCkz866GysabXcHyNirkuVI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GI261o57; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GI261o57"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 11995C32782;
-	Tue,  4 Jun 2024 07:39:26 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717486770;
-	bh=IwRk73FI7oCSvA9GoThk9eEnhOPDGRbbqcPOdPVc2Uw=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=GI261o576gg25/lggqNDA2SfXlSJn3QRY7AGVwcyAmBUOY2+2/Skb/bS1BUCh9qWl
-	 QKz3Jh5M82o5F/6PUgsBq0Gsh7DHrbgUxYPptG+VI9WDVVcsarzvpz92mvCFUSRn4w
-	 dsA3PAUnRTIlKggNkbrr+yewxURwwu2pgA4udfQ7PsravITSz0hF0RNkvPEsXjrDW0
-	 wgwdLoaBdgKRYI4xl7pgSc9vSh2CdAzwjhxH4xcArykbw0zJHnERyQlz+xAu/TMLtL
-	 Yd9pQ9MINSEdazBen1lLjskybIkbgnHTDxCdtLFQWOH/x3vJ71IiKQwnw36Gv4Ljfd
-	 jhhldACaNEbJQ==
-Message-ID: <5441b256-494a-4344-89fd-ee8c5a073f8b@kernel.org>
-Date: Tue, 4 Jun 2024 16:39:25 +0900
+	s=arc-20240116; t=1717493866; c=relaxed/simple;
+	bh=sb6H4cRJveYvYDAoRRNVgc3VL7ZzIFu0qHA0fsru1pU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=XK1OekWn/vlr7GYkwKH2lR4isNi/H7tLv9+BOaM5mTi2jNfmB485OptJDxusz8EUqRzHpYgPLSKfqnLnOWDC9vqrkjcvSiHU49d37BNt5kPU4Eq0cmSlVv+XEfSvVQrxYACZpbPLGsCWrw7mTw5fd2Ne1Vo9SvZwAlOcdx7lwis=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; arc=none smtp.client-ip=144.6.53.87
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1sEQbm-005SlT-0I;
+	Tue, 04 Jun 2024 17:37:35 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Tue, 04 Jun 2024 17:37:36 +0800
+Date: Tue, 4 Jun 2024 17:37:36 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
+	dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v4 6/8] fsverity: improve performance by using
+ multibuffer hashing
+Message-ID: <Zl7gYOMyscYDKZ8_@gondor.apana.org.au>
+References: <20240603183731.108986-1-ebiggers@kernel.org>
+ <20240603183731.108986-7-ebiggers@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v20 00/12] Implement copy offload support
-To: Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@lst.de>,
- Nitesh Shetty <nj.shetty@samsung.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>,
- Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
- martin.petersen@oracle.com, bvanassche@acm.org, david@fromorbit.com,
- damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com, joshi.k@samsung.com,
- nitheshshetty@gmail.com, gost.dev@samsung.com, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
- linux-fsdevel@vger.kernel.org
-References: <20240604043242.GC28886@lst.de>
- <393edf87-30c9-48b8-b703-4b8e514ac4d9@suse.de>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <393edf87-30c9-48b8-b703-4b8e514ac4d9@suse.de>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240603183731.108986-7-ebiggers@kernel.org>
 
-On 6/4/24 16:16, Hannes Reinecke wrote:
-> On 6/4/24 06:32, Christoph Hellwig wrote:
->> On Mon, Jun 03, 2024 at 10:53:39AM +0000, Nitesh Shetty wrote:
->>> The major benefit of this copy-offload/emulation framework is
->>> observed in fabrics setup, for copy workloads across the network.
->>> The host will send offload command over the network and actual copy
->>> can be achieved using emulation on the target (hence patch 4).
->>> This results in higher performance and lower network consumption,
->>> as compared to read and write travelling across the network.
->>> With this design of copy-offload/emulation we are able to see the
->>> following improvements as compared to userspace read + write on a
->>> NVMeOF TCP setup:
->>
->> What is the use case of this?   What workloads does raw copies a lot
->> of data inside a single block device?
->>
-> 
-> The canonical example would be VM provisioning from a master copy.
-> That's not within a single block device, mind; that's more for copying 
-> the contents of one device to another.
+On Mon, Jun 03, 2024 at 11:37:29AM -0700, Eric Biggers wrote:
+>
+> +	for (i = 0; i < ctx->num_pending; i++) {
+> +		data[i] = ctx->pending_blocks[i].data;
+> +		outs[i] = ctx->pending_blocks[i].hash;
+> +	}
+> +
+> +	desc->tfm = params->hash_alg->tfm;
+> +	if (params->hashstate)
+> +		err = crypto_shash_import(desc, params->hashstate);
+> +	else
+> +		err = crypto_shash_init(desc);
+> +	if (err) {
+> +		fsverity_err(inode, "Error %d importing hash state", err);
+> +		return false;
+> +	}
+> +	err = crypto_shash_finup_mb(desc, data, params->block_size, outs,
+> +				    ctx->num_pending);
+> +	if (err) {
+> +		fsverity_err(inode, "Error %d computing block hashes", err);
+> +		return false;
+> +	}
 
-Wouldn't such use case more likely to use file copy ?
-I have not heard a lot of cases where VM images occupy an entire block device,
-but I may be mistaken here...
+So with ahash operating in synchronous mode (callback == NULL), this
+would look like:
 
-> But I wasn't aware that this approach is limited to copying within a 
-> single block devices; that would be quite pointless indeed.
+	struct ahash_request *reqs[FS_VERITY_MAX_PENDING_DATA_BLOCKS];
 
-Not pointless for any FS doing CoW+Rebalancing of block groups (e.g. btrfs) and
-of course GC for FSes on zoned devices. But for this use case, an API allowing
-multiple sources and one destination would be better.
+	for (i = 0; i < ctx->num_pending; i++) {
+		reqs[i] = fsverity_alloc_hash_request();
+		if (!req) {
+			free all reqs;
+			return false;
+		}
 
+		if (params->hashstate)
+			err = crypto_ahash_import(&reqs[i], params->hashstate);
+		else
+			err = crypto_ahash_init(&reqs[i]);
+
+		if (err) {
+			fsverity_err(inode, "Error %d importing hash state", err);
+			free all reqs;
+			return false;
+		}
+	}
+
+	for (i = 0; i < ctx->num_pending; i++) {
+		unsigned more;
+
+		if (params->hashstate)
+			err = crypto_ahash_import(req, params->hashstate);
+		else
+			err = crypto_ahash_init(req);
+
+		if (err) {
+			fsverity_err(inode, "Error %d importing hash state", err);
+			free all requests;
+			return false;
+		}
+
+		more = 0;
+		if (i + 1 < ctx->num_pending)
+			more = CRYPTO_TFM_REQ_MORE;
+		ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP | more,
+					   NULL, NULL);
+		ahash_request_set_crypt(req, ctx->pending_blocks[i].sg,
+					ctx->pending_blocks[i].hash,
+					params->block_size);
+
+		err = crypto_ahash_finup(req);
+		if (err) {
+			fsverity_err(inode, "Error %d computing block hashes", err);
+			free all requests;
+			return false;
+		}
+	}
+
+You're hiding some of the complexity by not allocating memory
+explicitly for each hash state.  This might fit on the stack
+for two requests, but eventually you will have to allocate memory.
+
+With the ahash API, the allocation is explicit.
+
+Cheers,
 -- 
-Damien Le Moal
-Western Digital Research
-
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
