@@ -1,123 +1,134 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81898139D0A;
-	Wed,  5 Jun 2024 04:55:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CABEC61FE9;
+	Wed,  5 Jun 2024 06:30:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717563309; cv=none; b=cwPmcFqBmBf4MUB59hCxN0nOFH8LESgHPZIOLWXleajWHBKKpuesJVqTrxSrvavc3HuuYWDs7JbQHWhT7YRitqoZcSKZYBFeAzVgVLHzDxMmb0zPdk2dCXkdq9rw+9xKdTiTOPBSVyfv/Zt5INwo/Z3VlP1chhHkU4gyKREGYDc=
+	t=1717569046; cv=none; b=ROC4Q/6RscyEqbOH2hHI8Inzas6y+AIIa8MnMCs6R3EQwtSD1WeWEjIFjrWootA/dkELHHghgmR5MSGyVe5wF+SSbRG8irdrNnhQjevC6k/B+t23n43rNKqvZTl8C80UC8aA97pxlvs+8E9aXD6GIwPil5+mys/bTaFRtYGHbUk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717563309; c=relaxed/simple;
-	bh=bPxpSSVKfmFUoDuHuSRNB7QwXJdMRKEq4TJ8UU1ggYw=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=rPCadpu8NnPhVaoF88yY+qfhCKh07ZOD7UR2oVfzXc+5nPahXqDj/mWN2jte+GwMXn0J85MWc1v1coOxOmoXgplI/EEVr1OxvhhHG+8gg7cq7Xc5N6ic5YYI6ZSWaf65Z+B5Nq4fjl/nGfuegeqwQrIqHi11PS9KHm9ijpWd5kI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=qme6MEGW; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1717569046; c=relaxed/simple;
+	bh=qyAVkiwtWWdjBxmiE/fAs6E5PXT1YTmGgBCse0NKDA0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=u0T/6yw+0u32vgl4wBsBYQ7A0x4/A0GcPxnYl49lC6/TXyQnwi6d91uiTBJB4E3D7tTNvXkutt7je5yUlumJhKp11AYtNCkT4sdYrrE4gquZbDPr0cNt2WX+XVuRqk1rc+o977+o+yH5iRekLh/2o3NlPesoSW4mim30fpwGsyw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=oc+9qpf3; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="qme6MEGW"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2C2D0C32781;
-	Wed,  5 Jun 2024 04:55:08 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717563309;
-	bh=bPxpSSVKfmFUoDuHuSRNB7QwXJdMRKEq4TJ8UU1ggYw=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=qme6MEGW0ztIsLPWL3fAfJYIc1VztBEXRjhAYgFbEHQZhAACgXhbt0pin8jYhUF+n
-	 tmZfM1EHDQlcsizTzJzpCcEfQreu/LIpt8MwL/AZC4c/IpzgiJfztsuBiYYHD6k883
-	 7Zylh+upgtBQRN5sA51EYUsz/F+bHPmk9z28w4bI81wZJZcB016DXA2JZo8mkZRbTP
-	 idZIwsx22w58Yw2y3SkRMKqZRZzE/sPfzYQZnA/cdmKCWeCKF2oWKnMzRFFyx8GS0j
-	 gHJhNeHj9Sdotr/FVcoFS9HP4znZsde/lpsPBYKPkVLUb5RiaLZRs4mFC5ZZt4ONVk
-	 usezzDcWz3aYw==
-Message-ID: <83d7a9a9-c7a9-44bf-98cb-1c7be8e7fbe8@kernel.org>
-Date: Wed, 5 Jun 2024 13:55:07 +0900
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="oc+9qpf3"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:In-Reply-To:References;
+	bh=gaIx1WxRLwp7xMDbfUYp9Y8Ppe/7l8SW7mt5TiBUriI=; b=oc+9qpf3k+s4JvfTt1JTU81fRo
+	4PtUqPs3+ADC+zZHpsNI0gFNlpcT3d99PKR5wuhT+/8W516isssYtQ0UcJZQrlZEnxMSrOYAhxo7u
+	M1PgIpDm/49EJ+xtSPzJhliepwEblxWopoLIHSbO7Emp6z55cFKDvPBOd80TfoSD18VvW3YvryOId
+	bW5hAAmyWx5t+uciabUvCOpg7IQ1e3U5d7w2+9TgAL8uy2+Lg43TSpp5RnE5/+xWhVtouYsvWV7tq
+	ugKWiZxjuo3z+euO1ALzjymCx54ER2BNlbTcC1aWE0RBrY/9EvxkA6X0veDu/pGxf0RRQH7ekf2td
+	osDwJbnA==;
+Received: from 2a02-8389-2341-5b80-5bcb-678a-c0a8-08fe.cable.dynamic.v6.surfer.at ([2a02:8389:2341:5b80:5bcb:678a:c0a8:8fe] helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1sEkAM-00000004mUX-27zr;
+	Wed, 05 Jun 2024 06:30:34 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Song Liu <song@kernel.org>,
+	Yu Kuai <yukuai3@huawei.com>,
+	Dan Williams <dan.j.williams@intel.com>,
+	Vishal Verma <vishal.l.verma@intel.com>,
+	Dave Jiang <dave.jiang@intel.com>,
+	Ira Weiny <ira.weiny@intel.com>,
+	Keith Busch <kbusch@kernel.org>,
+	Sagi Grimberg <sagi@grimberg.me>,
+	Chaitanya Kulkarni <kch@nvidia.com>,
+	linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org,
+	nvdimm@lists.linux.dev,
+	linux-nvme@lists.infradead.org,
+	linux-scsi@vger.kernel.org
+Subject: move integrity settings to queue_limits
+Date: Wed,  5 Jun 2024 08:28:29 +0200
+Message-ID: <20240605063031.3286655-1-hch@lst.de>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 2/2] dm: Improve zone resource limits handling
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>
-References: <20240605022445.105747-1-dlemoal@kernel.org>
- <20240605022445.105747-3-dlemoal@kernel.org> <20240605042311.GB12183@lst.de>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <20240605042311.GB12183@lst.de>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On 6/5/24 13:23, Christoph Hellwig wrote:
-> On Wed, Jun 05, 2024 at 11:24:45AM +0900, Damien Le Moal wrote:
->> The generic stacking of limits implemented in the block layer cannot
->> correctly handle stacking of zone resource limits (max open zones and
->> max active zones)
-> 
-> ... for DM.  All other limits stacking ends up in a single top device.
+Hi Jens, hi Martin,
 
-I know. And I do not see your point here.
+this series converts the blk-integrity settings to sit in the queue
+limits and be updated through the atomic queue limits API.
 
-> 
->> +	/*
->> +	 * If the target does not map all sequential zones, the limits
->> +	 * will not be reliable.
->> +	 */
->> +	if (zc.target_nr_seq_zones < zc.total_nr_seq_zones)
->> +		zlim->reliable_limits = false;
->> +
->> +	/*
->> +	 * If the target maps less sequential zones than the limit values, then
->> +	 * we do not have limits for this target.
->> +	 */
->> +	max_active_zones = disk->queue->limits.max_active_zones;
->> +	if (max_active_zones >= zc.target_nr_seq_zones)
->> +		max_active_zones = 0;
->> +	zlim->max_active_zones =
->> +		min_not_zero(max_active_zones, zlim->max_active_zones);
->> +
->> +	max_open_zones = disk->queue->limits.max_open_zones;
->> +	if (max_open_zones >= zc.target_nr_seq_zones)
->> +		max_open_zones = 0;
->> +	zlim->max_open_zones =
->> +		min_not_zero(max_open_zones, zlim->max_open_zones);
-> 
-> Given that your previous patch already caps max_open/active_zones to the
-> number of sequential zones, duplicating this here should not be needed.
+I've mostly tested this with nvme, scsi is only covered by simple
+scsi_debug based tests.
 
-Indeed. Will remove this.
+For MD I found an pre-existing error handling bug when combining PI
+capable devices with not PI capable devices.  The fix was posted here
+(and is included in the git branch below):
 
-> 
->> +	/* We cannot have more open zones than active zones. */
->> +	zlim->max_open_zones =
->> +			min(zlim->max_open_zones, zlim->max_active_zones);
-> 
-> Same question about the capping as in patch 1, and same comment about
-> the duplication as above.
+   https://lore.kernel.org/linux-raid/20240604172607.3185916-1-hch@lst.de/
 
-Yes, we can remove this one too.
+For dm-integrity my testing showed that even the baseline fails to create
+the luks-based dm-crypto with dm-integrity backing for the authentication
+data.  As the failure is non-fatal I've not addressed it here.
 
-> 
->> +	if (zlim.max_open_zones >= zlim.mapped_nr_seq_zones)
->> +		lim->max_open_zones = 0;
->> +	else
->> +		lim->max_open_zones = zlim.max_open_zones;
->> +
->> +	if (zlim.max_active_zones >= zlim.mapped_nr_seq_zones)
->> +		lim->max_active_zones = 0;
->> +	else
->> +		lim->max_active_zones = zlim.max_active_zones;
-> 
-> And once more here.
+Note that the support for native metadata in dm-crypt by Mikulas will
+need a rebase on top of this, but as it already requires another
+block layer patch and the changes in this series will simplify it a bit
+I hope that is ok.
 
-Yep.
+The series is based on top of my previously sent "convert the SCSI ULDs
+to the atomic queue limits API v2" API.
 
-> 
-> 
+A git tree is available here:
 
--- 
-Damien Le Moal
-Western Digital Research
+   git://git.infradead.org/users/hch/block.git block-integrity-limits
 
+Gitweb:
+
+   http://git.infradead.org/?p=users/hch/block.git;a=shortlog;h=refs/heads/block-integrity-limits
+
+Diffstat:
+ Documentation/block/data-integrity.rst |   49 ------
+ block/Kconfig                          |    8 -
+ block/Makefile                         |    3 
+ block/bio-integrity.c                  |   36 ++---
+ block/blk-integrity.c                  |  232 +++++++++-----------------------
+ block/blk-mq.c                         |   13 -
+ block/blk-settings.c                   |  118 +++++++++++++++-
+ block/blk.h                            |    8 +
+ block/t10-pi.c                         |  236 ++++++++++-----------------------
+ drivers/md/dm-core.h                   |    1 
+ drivers/md/dm-crypt.c                  |    4 
+ drivers/md/dm-integrity.c              |   47 +-----
+ drivers/md/dm-table.c                  |  161 +++-------------------
+ drivers/md/md.c                        |   72 ++--------
+ drivers/md/md.h                        |    5 
+ drivers/md/raid0.c                     |    7 
+ drivers/md/raid1.c                     |   10 -
+ drivers/md/raid10.c                    |   10 -
+ drivers/md/raid5.c                     |    2 
+ drivers/nvdimm/btt.c                   |   13 -
+ drivers/nvme/host/Kconfig              |    1 
+ drivers/nvme/host/core.c               |   71 +++++----
+ drivers/nvme/host/multipath.c          |    3 
+ drivers/nvme/target/Kconfig            |    1 
+ drivers/nvme/target/io-cmd-bdev.c      |   16 +-
+ drivers/scsi/Kconfig                   |    1 
+ drivers/scsi/sd.c                      |   28 +--
+ drivers/scsi/sd.h                      |   12 -
+ drivers/scsi/sd_dif.c                  |   48 ++----
+ drivers/target/target_core_iblock.c    |   49 +++---
+ include/linux/bio.h                    |    7 
+ include/linux/blk-integrity.h          |   74 ++++------
+ include/linux/blkdev.h                 |   19 +-
+ include/linux/t10-pi.h                 |   20 --
+ 34 files changed, 524 insertions(+), 861 deletions(-)
