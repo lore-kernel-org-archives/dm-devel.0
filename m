@@ -1,183 +1,96 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC8A6175562
-	for <dm-devel@lists.linux.dev>; Wed,  5 Jun 2024 23:23:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 52C0D15FD0B;
+	Wed,  5 Jun 2024 23:52:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717629782; cv=none; b=OFjsLFB5x2T0G7lhOpnZAvyiDq2IvEh2RYeICoDALz0Facqsq9zP3aaDzRpThouFGe+3sVMo2E7a4/Ws/ryiSzmj9HhSuvtf7szgKYrWNObfzsqVy8vkpqqaqndVFqadQ64Fdz2o8n90ChfwFofCpc/urCT8A065KmRgfHgjYQo=
+	t=1717631555; cv=none; b=H+J5hngqxjL64xyLeJ+e6YiXNpsF0FxnCZxTgyyp6rLrzLwSzAUJnVJYBYT5cxv581SeUb89PgjbbFB77/rBvsTsXeZ7lhigOapImERaMcHX0KbCP5hLD9eogqbi7fLJb3vJMUAUuIGckdrWwT6GnsNtm1l1ryVYKfVI94/sT2Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717629782; c=relaxed/simple;
-	bh=aIiLz688TBy1j0iI27UEFPDEslJY71PnWegaEiOFDC4=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=TPADkRMp/5cx9beSHls71BboIB5CZGJS6Tm2GBM7/PbVGpozpaXMlHqriHdF2kfzmt7vaFt1hMPjZqQtyhttJnAU9L7i2HhfW4DO9INuHVgFa84oXarzpJTMVOfY7726DIeP8uPEYPQTOhZyLVKPw27Gv+4gmVdS+O2CfhucwTc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Mh0EaQZI; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1717631555; c=relaxed/simple;
+	bh=RViE+yDwPHMKwcj3LObh26OQLR9TJ/tVR/tAYs6LNzM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=idiD0TiyWdZj+nkB2UN5+O7f6ydEUGhWpCy4Cm+2VKf5yNGEjnEFtXHG7zXCofdN5ww68zvbhl8v4Sp5TI+EWitxiwMtd86mmFTDfDyF3fWaSJOhgE8W9WO++GWwujleegQQ2dLVe4mosTp4/AeThKtZ2Wuy4nJyYfnHWlxvb+k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=caWCVx4y; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Mh0EaQZI"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1717629779;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=SrFPtng+Uc7p8AeKTVTdTn+DHwPnoDlhSj/zte/zVMQ=;
-	b=Mh0EaQZIhxXWE/yjwQj2UT9AWwG5EZSoB3Mm7UXH6sPXth+9++1tDZOsMXtNNpRxvdrokT
-	amjtRT02mwmi+9ZMO0ypWDsMbzc0s2tR8SSrWGBgFKAgeq+MCUlu+ZFHxi3x2uktEE3ipe
-	wQgizYCtz3TKqgiaSgKsKNfKjx2dgVU=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-35-FwwUCivpNEKSIJmB03KGhw-1; Wed,
- 05 Jun 2024 19:22:56 -0400
-X-MC-Unique: FwwUCivpNEKSIJmB03KGhw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 190C31C0512A;
-	Wed,  5 Jun 2024 23:22:56 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1358BFF5A;
-	Wed,  5 Jun 2024 23:22:56 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 455NMtpL623334
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 5 Jun 2024 19:22:55 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 455NMt2L623333;
-	Wed, 5 Jun 2024 19:22:55 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 7/7] multipathd: make cli_add_map() handle adding maps by WWID correctly
-Date: Wed,  5 Jun 2024 19:22:54 -0400
-Message-ID: <20240605232254.623290-8-bmarzins@redhat.com>
-In-Reply-To: <20240605232254.623290-1-bmarzins@redhat.com>
-References: <20240605232254.623290-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="caWCVx4y"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D488AC2BD11;
+	Wed,  5 Jun 2024 23:52:33 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1717631554;
+	bh=RViE+yDwPHMKwcj3LObh26OQLR9TJ/tVR/tAYs6LNzM=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=caWCVx4yrrHdSuFT8937kBbWdyHz/zy+QZW5l7BYFHI8WKusyw6e+ph9wDBQvu+bL
+	 F8qqi1r8Md3hx2bBRvgb1D/9Ki1f7+kdoIqJGaCM0hNzQ61Jt/mmaWOAqyP8o573JV
+	 62zjayu5LsiMXMefs1eBiJY78EQPnbacQJ6+o2rsIDkigdFa+GkuyRT39YWKbXiUZv
+	 BS2SGWbpzd3gZPRpKrO2TJrHwirBDNoU4wZCblesz2OppveMd5skkV8i5X8duHt2hp
+	 UIquvzb9tTYLGclHhpRUl+FXF4KG2NjjJz1Igp9ENe9cVP0afRq7hVsz/nKyguYF+s
+	 tOI5tsP3QoOwg==
+Message-ID: <90629a40-e45f-490b-bef6-436839d91b92@kernel.org>
+Date: Thu, 6 Jun 2024 08:52:32 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v4 2/3] dm: Improve zone resource limits handling
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>, Christoph Hellwig <hch@lst.de>
+References: <20240605075144.153141-1-dlemoal@kernel.org>
+ <20240605075144.153141-3-dlemoal@kernel.org> <ZmDA5fmZMNGM1oFl@redhat.com>
+Content-Language: en-US
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <ZmDA5fmZMNGM1oFl@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-cli_add_map() runs filter_wwid() on the input param as if it were a
-WWID, but dm_get_major_minor() will never find the multipath device if
-the user actually passes in a WWID. To handle this case, call
-get_refwwid() early in the function, and use dm_map_present_by_uuid() to
-check if the map exists, and find its alias and minor number.
+On 6/6/24 4:47 AM, Benjamin Marzinski wrote:
+> On Wed, Jun 05, 2024 at 04:51:43PM +0900, Damien Le Moal wrote:
+>> +static int dm_device_count_zones(struct dm_dev *dev,
+>> +				 struct dm_device_zone_count *zc)
+>> +{
+>> +	int ret;
+>> +
+>> +	ret = blkdev_report_zones(dev->bdev, 0, UINT_MAX,
+>> +				  dm_device_count_zones_cb, zc);
+> 
+> Other than the nitpick that BLK_ALL_ZONES looks better than UINT_MAX
+> here, looks good.
 
-Also, the do/while loop is unnecessarily confusing and only avoids one
-repeated function call. Remove it to simplify the cli_add_map().
+Thanks, will make this change.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/libmultipath.version |  5 +++
- multipathd/cli_handlers.c         | 57 +++++++++++--------------------
- 2 files changed, 25 insertions(+), 37 deletions(-)
+However, I realized that we have another serious issue with this, so more
+changes are needed. The issue is that we have the call chain:
 
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 600de394..fa78bf93 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -241,3 +241,8 @@ global:
- local:
- 	*;
- };
-+
-+LIBMULTIPATH_25.1.0 {
-+global:
-+	dm_map_present_by_uuid;
-+} LIBMULTIPATH_25.0.0;
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 34e0147e..6016c51b 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -697,57 +697,40 @@ cli_add_map (void * v, struct strbuf *reply, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_MAP);
--	int major = -1, minor = -1;
- 	char dev_path[FILE_NAME_SIZE];
--	char *refwwid;
-+	char *refwwid __attribute__((cleanup(cleanup_charp))) = NULL;
- 	char *alias __attribute__((cleanup(cleanup_charp))) = NULL;
--	int rc, count = 0;
--	struct config *conf;
--	int invalid = 0;
-+	int rc, minor = -1;
- 
- 	param = convert_dev(param, 0);
- 	condlog(2, "%s: add map (operator)", param);
- 
--	conf = get_multipath_config();
--	pthread_cleanup_push(put_multipath_config, conf);
--	if (filter_wwid(conf->blist_wwid, conf->elist_wwid, param, NULL) > 0)
--		invalid = 1;
--	pthread_cleanup_pop(1);
--	if (invalid) {
-+	if (get_refwwid(CMD_NONE, param, DEV_DEVMAP, vecs->pathvec, &refwwid) ==
-+	    PATHINFO_SKIPPED) {
- 		append_strbuf_str(reply, "blacklisted\n");
- 		condlog(2, "%s: map blacklisted", param);
- 		return 1;
-+	} else if (!refwwid) {
-+		condlog(2, "%s: unknown map.", param);
-+		return -ENODEV;
- 	}
--	do {
--		if (dm_get_major_minor(param, &major, &minor) < 0)
--			condlog(count ? 2 : 3,
--				"%s: not a device mapper table", param);
--		else {
--			sprintf(dev_path, "dm-%d", minor);
--			alias = dm_mapname(major, minor);
-+	if (dm_map_present_by_uuid(refwwid, &alias, &minor) <= 0) {
-+		condlog(3, "%s: map not present. creating", param);
-+		if (coalesce_paths(vecs, NULL, refwwid, FORCE_RELOAD_NONE,
-+				   CMD_NONE) != CP_OK) {
-+			condlog(2, "%s: coalesce_paths failed", param);
-+			return 1;
- 		}
--		/*if there is no mapname found, we first create the device*/
--		if (!alias && !count) {
--			condlog(3, "%s: mapname not found for %d:%d",
--				param, major, minor);
--			get_refwwid(CMD_NONE, param, DEV_DEVMAP,
--				    vecs->pathvec, &refwwid);
--			if (refwwid) {
--				if (coalesce_paths(vecs, NULL, refwwid,
--						   FORCE_RELOAD_NONE, CMD_NONE)
--				    != CP_OK)
--					condlog(2, "%s: coalesce_paths failed",
--									param);
--				free(refwwid);
--			}
--		} /*we attempt to create device only once*/
--		count++;
--	} while (!alias && (count < 2));
--
-+		if (dm_map_present_by_uuid(refwwid, &alias, &minor) <= 0) {
-+			condlog(2, "%s: failed getting map", param);
-+			return 1;
-+		}
-+	}
- 	if (!alias) {
--		condlog(2, "%s: add map failed", param);
-+		condlog(2, "%s: failed getting alias", param);
- 		return 1;
- 	}
-+	sprintf(dev_path, "dm-%d", minor);
- 	rc = ev_add_map(dev_path, alias, vecs);
- 	return rc;
- }
+dm_table_set_restrictions(t, q, lim) -> dm_set_zones_restrictions(t, q, lim) ->
+dm_set_zone_resource_limits(md, t, lim) which  is fine as all these functions
+operate looking at the same limits. But then after calling
+dm_set_zone_resource_limits() which may modify the max open/max active limits,
+dm_set_zones_restrictions() calls dm_revalidate_zones(md, t), which then calls
+blk_revalidate_disk_zones(). This last function looks at the max open/max
+active limits of the disk queue limits to setup zone write plugging (if needed
+in the case of DM). But the disk queue limits are *different* from the lim
+pointer passed from dm_table_set_restrictions() as these have not been applied
+yet. So we have blk_revalidate_disk_zones() looking at the "old", not yet
+corrected zone resource limits.
+
+I have 22 different test cases for testing this and none of them can detect a
+problem with this. But it is still wrong and needs to be fixed.
+
+Christoph,
+
+Unless you have a better idea, I think we need to pass a queue_limits struct
+pointer to blk_revalidate_disk_zones() -> disk_update_zone_resources(). This
+pointer can be NULL, in which case disk_update_zone_resources() needs to do the
+limit start_update+commit. But if it is not NULL, then
+disk_update_zone_resources() must use the passed limits.
+
 -- 
-2.45.0
+Damien Le Moal
+Western Digital Research
 
