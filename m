@@ -1,43 +1,40 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9585119004E
-	for <dm-devel@lists.linux.dev>; Wed,  5 Jun 2024 08:20:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9FA7E18C324;
+	Wed,  5 Jun 2024 09:19:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717575634; cv=none; b=Nz9VELzYuWCKLmyA4xFKTHL6hSs4mlRkmTkxtzOi32WDtQmQZHzjQcW0C/xU9d0eXhW1ZsUxx/u5VS55HOBeD/Czmij+yW8zRWfxcCmPBaI9jObrJpubYht4MQA+PQIjUhA/zPF21/cy1yiF3NJBGVwaAImMc5R2JnlkoxALJwA=
+	t=1717579153; cv=none; b=lUltweXE428TKL2Z735a9rjaMLPjMFi/EHY9ZCNR1O3Qrh+Cbp4AUARfbLIgKn/ujT7FDKISAFtpJgKarnVpqR6G/Dlae7gwJwg8S+s6E/TPa3754flNI+8V3A5vnDTg3g8CEvzOwBUNfiKjpdUKWfZnnYfV+Gufx5Cusm+w2XU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717575634; c=relaxed/simple;
-	bh=196DRXrCJn+tQRx2ZKFZsFFDrXq1ezqD5rJSeNZaSDY=;
+	s=arc-20240116; t=1717579153; c=relaxed/simple;
+	bh=MrxZ/G9F0uWEM4pRHqrms1rajBedIxzdSelMDZ0BuZg=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=jevcoMm4XlXs/Ot3BF6SusTBtvp26VtbxqLghN9TQSyd8uHW2FFJeq6MrgFj8XY7aGn6g8HV6laS6yGMkTcLqu336H42fPkq64ZrcVPzOQvwX10yJ1z9TGEef/HzkaM7Kp/Ixy/duu10A2BP2DHCRBZOGapW7Dw+BgdGsUG/0go=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 3369B67373; Wed,  5 Jun 2024 10:20:29 +0200 (CEST)
-Date: Wed, 5 Jun 2024 10:20:28 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Christoph Hellwig <hch@lst.de>, Nitesh Shetty <nj.shetty@samsung.com>,
-	Damien Le Moal <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-	Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
-	Chaitanya Kulkarni <kch@nvidia.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
-	martin.petersen@oracle.com, david@fromorbit.com, hare@suse.de,
-	damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com,
-	joshi.k@samsung.com, nitheshshetty@gmail.com, gost.dev@samsung.com,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-doc@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
-Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
- and request layer.
-Message-ID: <20240605082028.GC18688@lst.de>
-References: <20240520102033.9361-3-nj.shetty@samsung.com> <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org> <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org> <a866d5b5-5b01-44a2-9ccb-63bf30aa8a51@acm.org> <665850bd.050a0220.a5e6b.5b72SMTPIN_ADDED_BROKEN@mx.google.com> <abe8c209-d452-4fb5-90eb-f77b5ec1a2dc@acm.org> <20240601055931.GB5772@lst.de> <d7ae00c8-c038-4bed-937e-222251bc627a@acm.org> <20240604044042.GA29094@lst.de> <4ffad358-a3e6-4a88-9a40-b7e5d05aa53c@acm.org>
+	 Content-Type:Content-Disposition:In-Reply-To; b=tXhI1c2YgeL50hvmeiBUCD6AqN1ZZHX/Nk+oTGrU/pdTugMJzLGEqxx+rDW/6+GCoMltfEy354iAe0HR6pbCTntRkgdadwtJurLSZoWxvu6VV67tY9dVL8vr5SAAfYRksJ5zuALjqb+kkf3FW9z0hYURbNgqlCN82B6ZtIeDOuE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; arc=none smtp.client-ip=144.6.53.87
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1sEmnK-005t8z-2C;
+	Wed, 05 Jun 2024 17:18:59 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Wed, 05 Jun 2024 17:19:01 +0800
+Date: Wed, 5 Jun 2024 17:19:01 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
+	dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v4 6/8] fsverity: improve performance by using
+ multibuffer hashing
+Message-ID: <ZmAthcxC8V3V3sm3@gondor.apana.org.au>
+References: <20240603183731.108986-1-ebiggers@kernel.org>
+ <20240603183731.108986-7-ebiggers@kernel.org>
+ <Zl7gYOMyscYDKZ8_@gondor.apana.org.au>
+ <20240604184220.GC1566@sol.localdomain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -46,28 +43,53 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <4ffad358-a3e6-4a88-9a40-b7e5d05aa53c@acm.org>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <20240604184220.GC1566@sol.localdomain>
 
-On Tue, Jun 04, 2024 at 04:44:34AM -0700, Bart Van Assche wrote:
-> On 6/3/24 21:40, Christoph Hellwig wrote:
->> There is no requirement to process them synchronously, there is just
->> a requirement to preserve the order.  Note that my suggestion a few
->> arounds ago also included a copy id to match them up.  If we don't
->> need that I'm happy to leave it away.  If need it it to make stacking
->> drivers' lifes easier that suggestion still stands.
+On Tue, Jun 04, 2024 at 11:42:20AM -0700, Eric Biggers wrote:
 >
-> Including an ID in REQ_OP_COPY_DST and REQ_OP_COPY_SRC operations sounds
-> much better to me than abusing the merge infrastructure for combining
-> these two operations into a single request. With the ID-based approach
-> stacking drivers are allowed to process copy bios asynchronously and it
-> is no longer necessary to activate merging for copy operations if
-> merging is disabled (QUEUE_FLAG_NOMERGES).
+> This doesn't make any sense, though.  First, the requests need to be enqueued
+> for the task, but crypto_ahash_finup() would only have the ability to enqueue it
+> in a queue associated with the tfm, which is shared by many tasks.  So it can't
 
-Again, we can decided on QUEUE_FLAG_NOMERGES per request type.  In fact
-I think we should not use it for discards as that just like copy
-is a very different kind of "merge".
+OK I screwed up that one.  But that's not hard to fix.  We could
+simply add request chaining:
 
-I'm in fact much more happy about avoiding the copy_id IFF we can.  It
-it a fair amout of extra overhead, so we should only add it if there
-is a real need for it
+	ahash_request_chain(req1, req2);
+	ahash_request_chain(req2, req3);
+	...
+	ahash_request_chain(reqn1, reqn);
+
+	err = crypto_ahash_finup(req1);
+
+> actually work unless the tfm maintained a separate queue for each task, which
+> would be really complex.  Second, it adds a memory allocation per block which is
+> very undesirable.  You claim that it's needed anyway, but actually it's not;
+> with my API there is only one initial hash state regardless of how high the
+> interleaving factor is.  In fact, if multiple initial states were allowed,
+
+Sure you don't need it for two interleaved requests.  But as you
+scale up to 16 and beyond, surely at some point you're going to
+want to move the hash states off the stack.
+
+> multibuffer hashing would become much more complex because the underlying
+> algorithm would need to validate that these different states are synced up.  My
+> proposal is much simpler and avoids all this unnecessary overhead.
+
+We could simply state that these chained requests must be on block
+boundaries, similar to how we handle block ciphers.  This is not a
+big deal.
+
+> Really the only reason to even consider ahash at all would be try to support
+> software hashing and off-CPU hardware accelerators using the "same" code.
+> However, your proposal would not achieve that either, as it would not use the
+> async callback.  Note, as far as I know no one actually cares about off-CPU
+> hardware accelerator support in fsverity anyway...
+
+The other thing is that verity doesn't benefit from shash at all.
+It appears to be doing kmap's on every single request.
+
+Cheers,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
