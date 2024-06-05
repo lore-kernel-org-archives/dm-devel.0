@@ -1,80 +1,71 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 05100801;
-	Tue,  4 Jun 2024 19:25:44 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DCE717C79;
+	Wed,  5 Jun 2024 02:24:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717529145; cv=none; b=rzv5ndgc1rJrH7mkY/+mnjk1X78FLFrBwbrKzEMjsukjMVEG5VtbFo6caKgqtf854HEDZZ8RGL18Cj+l/LEV/tHEtdHmDvvM2pHs2MxH+yJ8cJECHvB/XA7LrEmWp/C7UH3PuxkHY6JRLwpk/TtUZIW8SP0dukLpmWiPw6szO8g=
+	t=1717554288; cv=none; b=oHLdde1Uvqq1Nksy1oE0qiZbVmLrjXyYMtoq9XMjxwqJT3g0gbKkkYtMUcLVk1fnr2Sg6gvZC7mVgIK+b8kUb6Tg8kDO82NcMW8L27m4L2W48PfBfTtVi7BbsVntFwnjigGbvLX47GAgxB0mFwIatrhqTw2CJI/SFxO3eYdnSYo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717529145; c=relaxed/simple;
-	bh=CfdX3QgpBeGkiViJGYp7o44OH979z8N7+Zs7t2WW+f4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=dJaHosSxXLOImWLbK4Sc9T7+b5NBIWV3fRjqPNyCYxjbb3w48gLRHfUP3f41nX28c3swQmkwa+ee2Uuw5lZ4+JBBKg9Jr3Zv2JUsy5lkUhZmXQ9LGtJU1mqM5zP7WSEnRZtZ8QXzAbIbHAI4huMXVU1lgMcwtm1/AQdRjexx92w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=A4f+pTcO; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1717554288; c=relaxed/simple;
+	bh=QAr1sy3azoURsM3x9ZOBOj5e90yuFQes+5sd1vPDfhU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=tvcvUQyqMrsyWXLLJxO8Tag5dKy3W6//ntfinDD+zEBbPMvKzCtAY3KsuwY4A3oJ5PNLcu0x6g9aTyv6EDInvKs+NAAAHxzVn5sRYGcCUHhkv5bpfjGCs5+RQ38UIfBp9kuWWtKnZVZGFAcwy5UP8ql1+NBQzhdJCMebK7KiM4Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Ek0j5HrB; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="A4f+pTcO"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 36641C2BBFC;
-	Tue,  4 Jun 2024 19:25:44 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Ek0j5HrB"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 18150C2BBFC;
+	Wed,  5 Jun 2024 02:24:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717529144;
-	bh=CfdX3QgpBeGkiViJGYp7o44OH979z8N7+Zs7t2WW+f4=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=A4f+pTcO0TotuaZzcRhFq6IxIsRM4Qm8d2eF2w0RCHVEGfvBUyiY26sLeUEe2H+yZ
-	 gt+rOwUYrpWu7NmOPqtcgwQjhrRVFuM+pmeaMmkqPFln5SwJ5z/HtlucTFd/eiwTWk
-	 VPaDNYps3o6VgZXIrGE8d4/XgTxJnCm5q/AzQgP7D+LjJScqnfEdjk+cv2s+MNDLgk
-	 rA0n2GJkJeX6VJ9e1wBFVE5tF7LFKDdfyBMgYTZov8WakYIeJuoQ2h1fwXSPV0jlAC
-	 041k0uANAgAnRtlSfIENmxulVOMGM7ee+vei2prIem8AOmci/IVlsIqa+Bo2EKGS6M
-	 iVExfLAsdSi1Q==
-Date: Tue, 4 Jun 2024 12:25:42 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: Ard Biesheuvel <ardb@kernel.org>
-Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
-	dm-devel@lists.linux.dev, Herbert Xu <herbert@gondor.apana.org.au>,
-	x86@kernel.org, linux-arm-kernel@lists.infradead.org,
-	Sami Tolvanen <samitolvanen@google.com>,
-	Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH v4 1/8] crypto: shash - add support for finup_mb
-Message-ID: <20240604192542.GD1566@sol.localdomain>
-References: <20240603183731.108986-1-ebiggers@kernel.org>
- <20240603183731.108986-2-ebiggers@kernel.org>
- <CAMj1kXHVbVhydU60zzUc8a-jVkboRz1pz0TW7Sx_5N_AvdhZdA@mail.gmail.com>
+	s=k20201202; t=1717554288;
+	bh=QAr1sy3azoURsM3x9ZOBOj5e90yuFQes+5sd1vPDfhU=;
+	h=From:To:Cc:Subject:Date:From;
+	b=Ek0j5HrBJc9dHv5gpxhgP7Nlgp73WTA3azHQ4m7yjEBKrGh8/V6drRkiTQh73Zdbq
+	 cRDnUnyPFG9odAU8LAdS8Tr/XzayLM8UVNIo8dG4IH9Bs2VeZKUjdmSuatGboKxeeP
+	 fJL2OluTB5zBtcG8pWU/+6jeZyi7W9xfa8H+057m7bCh5sGBN4PzIOtMdN9Zh2cQVc
+	 YwRQUeTMd6sPcTqOZ+pdKPGnfSZB91yixj+op6i7QWaeOFKUqpBycQZNIUveQOjeq2
+	 yMGg/KqZyK2KXd52QZbVNlKmxKOVbOI8RYkRSCxsflP7yF94KnQHKerkPiZtgzk0k3
+	 M+0F4L5+7Wz/A==
+From: Damien Le Moal <dlemoal@kernel.org>
+To: Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v2 0/2] Fix DM zone resource limits stacking
+Date: Wed,  5 Jun 2024 11:24:43 +0900
+Message-ID: <20240605022445.105747-1-dlemoal@kernel.org>
+X-Mailer: git-send-email 2.45.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAMj1kXHVbVhydU60zzUc8a-jVkboRz1pz0TW7Sx_5N_AvdhZdA@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
 
-On Tue, Jun 04, 2024 at 08:55:48PM +0200, Ard Biesheuvel wrote:
-> >
-> > This patch takes a new approach of just adding an API
-> > crypto_shash_finup_mb() that synchronously computes the hash of multiple
-> > equal-length messages, starting from a common state that represents the
-> > (possibly empty) common prefix shared by the messages.
-> >
-> 
-> This is an independent optimization, right? This could be useful even
-> more sequential hashing, and is not a fundamental aspect of parallel
-> hashing?
+This is V2 of the patch 4/4 of the series "Zone write plugging and DM
+zone fixes". This patch fixes DM zone resource limits stacking (max open
+zones and max active zones limits). Patch 1 is new and is added to help
+catch problems and eventual regressions of the handling of these limits.
 
-If you're referring to the part about using a common starting state, that's not
-an independent optimization.  Only multibuffer hashing processes multiple
-messages in one call and therefore has an opportunity to share a starting
-shash_desc for finup.  This isn't just an optimization but it also makes the
-multibuffer hashing API and its implementation much simpler.
+Changes from v1:
+ - Added patch 1
+ - Modified patch 2 to not cap the limits for a target with the number
+   of sequential zones mapped but rather to use the device limits as is
+   when more zones than the limits are mapped and 0 otherwise (no
+   limits).
 
-With single-buffer there has to be one shash_desc per message as usual.
+Damien Le Moal (2):
+  block: Imporve checks on zone resource limits
+  dm: Improve zone resource limits handling
 
-If you're asking if crypto_shash_finup_mb() can be used even without multibuffer
-hashing support, the answer is yes.  This patchset makes crypto_shash_finup_mb()
-fall back to crypto_shash_finup() as needed, and this is used by fsverity and
-dm-verity to have one code path that uses crypto_shash_finup_mb() instead of
-separate code paths that use crypto_shash_finup_mb() and crypto_shash_finup().
-This just makes things a bit simpler and isn't an optimization; note that the
-fallback has to copy the shash_desc for each message beyond the first.
+ block/blk-settings.c |   4 +
+ block/blk-zoned.c    |   5 +
+ drivers/md/dm-zone.c | 220 +++++++++++++++++++++++++++++++++++--------
+ 3 files changed, 192 insertions(+), 37 deletions(-)
 
-- Eric
+-- 
+2.45.1
+
