@@ -1,76 +1,85 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A02513A400;
-	Wed,  5 Jun 2024 06:55:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F33218F2C1;
+	Wed,  5 Jun 2024 07:51:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717570511; cv=none; b=ZA2CpYDNiPa29xoDGEGIdAW9DFBYsUXjk9jDzpuPakDpV0On7+eGa+q/wBGW2JdGSkTWzL236Px2TjiE4FD3VRCHAa56GzujOfS+ptUNua3asrsHrt9Oj6NF3pAZm/BZHxlhL8hsaly/YQ7bo0+ZW0VrOVzQjQcixoXiduL56iM=
+	t=1717573908; cv=none; b=ZGbSQMQjwnD3D/k8KyXlaejTtwZte2Bmq6xl4XOXJoeCRmc9Gt8OXcbg0fO2wOAYjMRGH3GCGy0jYopL3EMYu1GVqIh7+WAEC4JkGXDhjAToi9bA12St0+nZbM8xWJuMGa8OmBsSzC+5CtejztYPFr1if+4+OtvDMCX+FtMkqz0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717570511; c=relaxed/simple;
-	bh=iXleuDabFNHa+VZiUPMAAZkflOGRUl09HmGi1BdroOs=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=vCO565R4BGvkrafKQWXbXcFN/GjBKSJXlwkS1Twf7PNK7RIUQVAyCM3uN4IVl2tK8o33Xy9hPPzGkRmL+UEezIrimuRxU1/uNWplCfOXgyZmw4UnFI85YfFSJKLYbEo5xgh4802cF8N0Z4a5RTQwCjJM8rcFvBS3f32bmBHFzEU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ZxOu5Bgz; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1717573908; c=relaxed/simple;
+	bh=jV6l/P6zCV6JbpSpn+l4qDidPcLYWrZhNbtmcZ6dNcI=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mutuaOLpDumEJxZ6NRpGtNd3E8d6uT9PCJ+sGCc21Rs1e1sDLYMAquXeOToGEP0XHk4wYF6S5oKAD1j3sqwaoDppdI06I+JXkuSNjwRopM3iQr0VKUnjSc0tc5HgNp6C2rkNMU3Trim23fGT97418xvxflx3kxZuf/mNpO6u3Fs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VmNAX0UP; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ZxOu5Bgz"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C122BC3277B;
-	Wed,  5 Jun 2024 06:55:08 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VmNAX0UP"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BDCEBC3277B;
+	Wed,  5 Jun 2024 07:51:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717570509;
-	bh=iXleuDabFNHa+VZiUPMAAZkflOGRUl09HmGi1BdroOs=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=ZxOu5Bgzf7qMtU0I1xl5k1x96E22vfZyr1IFukzAi19OQQu69kNv0axdT3Bq1Jwbt
-	 e2JZ3Pz3iLZ2xYfK8CHUNyEw9L3r9ZC929R7Tz7Oon0q3Bmtu2yfKlo+CYsBIlmBzz
-	 jkpv0pIVGtuxRZeBToYw6+EEx0Bm7U+LAqTWzmnTj8WU69qB4YkLks9FNVEW6sBE+B
-	 Bhx18HrvIm9JR1/rHwLYCEjZr2m+C7DZUAr8y/7rpKTHjhN26S/D0d7SKU/w1gn2aS
-	 oZNGP95RLcRInmbR29qmYofawGPE6XZu5JnBlg9s3aVDPAH5DKadnNpRZVaPIYZYES
-	 HuqYtmV2NE9tQ==
-Message-ID: <7a542065-e8b2-49fa-8d5d-fe37766ff1ed@kernel.org>
-Date: Wed, 5 Jun 2024 15:55:07 +0900
+	s=k20201202; t=1717573907;
+	bh=jV6l/P6zCV6JbpSpn+l4qDidPcLYWrZhNbtmcZ6dNcI=;
+	h=From:To:Cc:Subject:Date:From;
+	b=VmNAX0UPqQeBm2ifuTk9sUMICX2t1YIuRa3IG002Cyo0CgJ0ag7KfZLjA2hIXrnPn
+	 j4fXb5XEsM90FCFNebgtriOMkEqMCTEEe5b+rVBgR8Vf2i0u9Pb1qStAw7XuHSFrvz
+	 kfA4Cb2x08YfZrJeWeOtizkFhTs+iOzMXx3uv9TT+v/WNFEnqx4L3zbuYKtv1q8GMP
+	 A5WLw/M7kffOcyslxy+EnU2S3zHHRpLXHF0KY2WzJQ9eNRa4eZ6NosIbWbTJzgkrTw
+	 PrvszlFhvWB+3Zohgy3skucM6gan98OMg7i6WmtfB/BQqw6+9X+Vtf2ciqY38EDqGa
+	 BI2/vF6C5eB/A==
+From: Damien Le Moal <dlemoal@kernel.org>
+To: Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v4 0/3] Fix DM zone resource limits stacking
+Date: Wed,  5 Jun 2024 16:51:41 +0900
+Message-ID: <20240605075144.153141-1-dlemoal@kernel.org>
+X-Mailer: git-send-email 2.45.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 2/2] dm: Improve zone resource limits handling
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>
-References: <20240605063907.129120-1-dlemoal@kernel.org>
- <20240605063907.129120-3-dlemoal@kernel.org> <20240605064910.GB14642@lst.de>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <20240605064910.GB14642@lst.de>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 6/5/24 15:49, Christoph Hellwig wrote:
->> +	/*
->> +	 * If the limits are larger than the number of mapped sequential zones,
->> +	 * assume no limits. Note that blk_revalidate_disk_zones() also executes
->> +	 * this adjustment, but only for mapped devices that use zone write
->> +	 * plugging, that is, for mapped devices needing zone append emulation.
->> +	 * So for DM devices using native zone append of the target devices, we
->> +	 * need to adjust the zone resource limits here.
->> +	 */
->> +	if (lim->max_active_zones > zlim.mapped_nr_seq_zones)
->> +		lim->max_active_zones = 0;
->> +	if (lim->max_open_zones > zlim.mapped_nr_seq_zones)
->> +		lim->max_open_zones = 0;
-> 
-> Is there any good reason to not just do this unconditionally in common
-> code?
+This is the updated patch 4/4 of the series "Zone write plugging and DM
+zone fixes". This patch fixes DM zone resource limits stacking (max open
+zones and max active zones limits). Patch 1 is new and is added to help
+catch problems and eventual regressions of the handling of these limits.
 
-I can. I need to tweak the early return for the case where the DM device does
-not use zone write plugging. Let me do that.
+Changes from v3:
+ - Modify patch 1 to always check the zone resource limits values in
+   disk_update_zone_resources(), including for DM devices that do not
+   use zone write plugging. Simplify patch 2 accordingly by removing the
+   same check and adjustment of the zone resource limits.
+ - Added patch 3
+
+Changes from v2:
+ - Modify patch 1 to return an error for the case where the max open
+   zones limit is greater than the max active zones limit.
+ - Modify patch 2 to avoid duplicated actions on the limits and to
+   remove warnings for unusual zone limits.
+
+Changes from v1:
+ - Added patch 1
+ - Modified patch 2 to not cap the limits for a target with the number
+   of sequential zones mapped but rather to use the device limits as is
+   when more zones than the limits are mapped and 0 otherwise (no
+   limits).
+
+Damien Le Moal (3):
+  block: Improve checks on zone resource limits
+  dm: Improve zone resource limits handling
+  dm: Remove unused macro DM_ZONE_INVALID_WP_OFST
+
+ block/blk-settings.c |   8 ++
+ block/blk-zoned.c    |  20 ++++-
+ drivers/md/dm-zone.c | 206 +++++++++++++++++++++++++++++++++++--------
+ 3 files changed, 191 insertions(+), 43 deletions(-)
 
 -- 
-Damien Le Moal
-Western Digital Research
+2.45.1
 
