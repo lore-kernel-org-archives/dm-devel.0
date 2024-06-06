@@ -1,72 +1,86 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BEB2F3A8CB;
-	Thu,  6 Jun 2024 08:03:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2B4F13AA48;
+	Thu,  6 Jun 2024 08:08:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717661029; cv=none; b=cwT6e/VZu3rqmFHARRaHM/WwDU/aZqcguDAmkqkvTC1qPtoWRN4Spn0T/wwy+pdA07fGihLZBGPFrZ6e0fsIH+ZkOcdBm1Nfxe9z+0NAlUnXrY++8vXHRWiRFckYHB330OIAWzBjhv0kNbieuYredOve+RvDRzYEd+pUpV4Sblg=
+	t=1717661306; cv=none; b=Pwi2Dg8DVNvaG2o+vXcjVk308eSxFxMvr4ObBUBVK/bbHvurFuehoqMCoNGCus2KHBswYJFhXVDwfi0nADC6LTepZn1fL2WoaydD1+iolWLQqndWscAZ1TqnKkukQs3joRQ68Xht4tpglsAL0UkzaSGcvYMWQcXwR1WMP49fiUE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717661029; c=relaxed/simple;
-	bh=m1I+dMZoaqlsTr6YkfeLXRcvMDBoExpebbV8N25k8rs=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=XbueeDUQfiCxr4HqidfFh2ffGy0XIjtdxQ2E0kLohINN3MTbRjxOmgXAAj4jXcqB61ALgevHM5gX4RmouuNZjrdo5RuEmdfOg1I2KwoGIGUmF305kUn9qGv9xMp1/CXvyYYc9cqSDFVMu9yiJXmSmchVzwFRo8odVK3LOKHlhco=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DuBqEUnK; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DuBqEUnK"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 90317C32782;
-	Thu,  6 Jun 2024 08:03:48 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717661029;
-	bh=m1I+dMZoaqlsTr6YkfeLXRcvMDBoExpebbV8N25k8rs=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=DuBqEUnKGSnWxqvcED0LDOGPUcwpSKGhZ/xBiBLu9bnnaFuNkMsVfGcWZs4c3o30K
-	 NZYmC3zVZjKI0NeOeYvdWFCM5fHXHI56IvCxxRioWMref9QdHoi4boG0aqOmp5TwDn
-	 ys4Laz+A4+7jqnGOZKx/MbHhvGpUBXK8snnFJRHIv9pCk+ImfMwuFi0bn2Xj4lkQGo
-	 biX839piFZVlbuAUgH4uf/W+OY0qzw23hBVPTKWdYaUxvIU8Ir3lTd5XSby5t06zkL
-	 3xmkevYivp3EBGJBWbvWwFU1z2dqyiAqqq5DVb1ioSG1nxxnJESD/9tnn95fKvWaUW
-	 4dz0dh7L0EhmA==
-Message-ID: <4d110235-6bda-44be-beea-2b9242e7bdde@kernel.org>
-Date: Thu, 6 Jun 2024 17:03:47 +0900
+	s=arc-20240116; t=1717661306; c=relaxed/simple;
+	bh=6xuV2MJEvNFB5sqdVQt/0qFPZktWFm9ZqnfUlVgZgwU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=LtNomDFXSEhK6gSvV1PeEWW/S8mu8hF/XBbVJi777DGrAkYTtT6jKLQTF/sJkKqBOXioHsclkUFRGu8i9WvykxAWr8yMaKKY9pa6m45s8gbWHs4CAo6vlJYaP/53LCdI0tpvlK3XNpwXGjPyYhrE7ay9grGOaKerljo2TJmAZ/g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; arc=none smtp.client-ip=144.6.53.87
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1sF8AR-006J1u-0r;
+	Thu, 06 Jun 2024 16:08:16 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Thu, 06 Jun 2024 16:08:17 +0800
+Date: Thu, 6 Jun 2024 16:08:17 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Ard Biesheuvel <ardb@kernel.org>
+Cc: Eric Biggers <ebiggers@kernel.org>,
+	Steffen Klassert <steffen.klassert@secunet.com>,
+	netdev@vger.kernel.org, linux-crypto@vger.kernel.org,
+	fsverity@lists.linux.dev, dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Bart Van Assche <bvanassche@acm.org>,
+	Tim Chen <tim.c.chen@linux.intel.com>
+Subject: Re: [PATCH v4 6/8] fsverity: improve performance by using
+ multibuffer hashing
+Message-ID: <ZmFucW37DI6P6iYL@gondor.apana.org.au>
+References: <ZmAthcxC8V3V3sm3@gondor.apana.org.au>
+ <ZmAuTceqwZlRJqHx@gondor.apana.org.au>
+ <ZmAz8-glRX2wl13D@gondor.apana.org.au>
+ <20240605191410.GB1222@sol.localdomain>
+ <ZmEYJQFHQRFKC5JM@gondor.apana.org.au>
+ <20240606052801.GA324380@sol.localdomain>
+ <ZmFL-AXZ8lphOCUC@gondor.apana.org.au>
+ <CAMj1kXHLt6v03qkpKfwbN34oyeeCnJb=tpG4GvTn6E1cJQRTOw@mail.gmail.com>
+ <ZmFmiWZAposV5N1O@gondor.apana.org.au>
+ <CAMj1kXFt_E9ghN7GfpYHR4-yaLsz_J-D1Nc3XsVqUamZ6yXHGQ@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v5 3/4] dm: Improve zone resource limits handling
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>
-References: <20240606073721.88621-1-dlemoal@kernel.org>
- <20240606073721.88621-4-dlemoal@kernel.org> <20240606075813.GB14059@lst.de>
-Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <20240606075813.GB14059@lst.de>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAMj1kXFt_E9ghN7GfpYHR4-yaLsz_J-D1Nc3XsVqUamZ6yXHGQ@mail.gmail.com>
 
-On 6/6/24 4:58 PM, Christoph Hellwig wrote:
->> +static int dm_set_zone_resource_limits(struct mapped_device *md,
->> +				struct dm_table *t, struct queue_limits *lim)
-> 
-> Is there much of a point in splitting this out of
-> dm_set_zones_restrictions when almost nothing is left in
-> dm_set_zone_resource_limits after this changes?
+On Thu, Jun 06, 2024 at 09:55:56AM +0200, Ard Biesheuvel wrote:
+>
+> So again, how would that work for ahash falling back to shash. Are you
+> saying every existing shash implementation should be duplicated into
+> an ahash so that the multibuffer optimization can be added? shash is a
+> public interface so we cannot just remove the existing ones and we'll
+> end up carrying both forever.
 
-Indeed, we can merge the code and avoid the additional function.
-Will do that.
+It should do the same thing for ahash algorithms that do not support
+multiple requests.  IOW it should process the requests one by one.
 
-> 
-> Either way the logic looks good to me:
-> 
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> Sure, but the block I/O world is very different. Forcing it to use an
+> API modeled after how IPsec might use it seems, again, unreasonable.
 
+It's not different at all.  You can see that by the proliferation
+of kmap calls in fs/verity.  It's a fundamental issue.  You can't
+consistently get a large contiguous allocation beyond one page due
+to fragmentation.  So large data is always going to be scattered.
+
+BTW, I'm all for elminating the overhead when you already have a
+linear address for scattered memory, e.g., through vmalloc.  We
+should definitely improve our interface for ahash/skcipher/aead so
+that vmalloc addresses (as well as kmalloc virtual addresses by
+extension) are supported as first class citizens, and we don't turn
+them into SG lists unless it's necessary for DMA.
+
+Cheers,
 -- 
-Damien Le Moal
-Western Digital Research
-
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
