@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE13913C80F;
-	Thu,  6 Jun 2024 08:21:51 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 173E513C80B;
+	Thu,  6 Jun 2024 08:21:52 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717662111; cv=none; b=pFzK9FGxfg57VQI3zh5Hi3cah+qOkaLlyX0umAR12LptAMz8CtWI1duT7F2NZ79ck7GltS3zao2pLgb8mYia1UQVbCsHh4Y/SDjO3OpWGYvUWtbTn4xwLTT4sgDlodTTyergIx1dDKda2App6+Vhcj5E9lfhz/9baad4wQxzNzs=
+	t=1717662113; cv=none; b=t/q5aFGLrBL8Fe9eG+oX3tWJ8P9Pwr2XJxE3CPxijiJ0cSwTnrECicEMJ6T8tjdKSEUeboXVYjOsCF0C6lVoIfUSeLtpC3Xk6YK7GdtSyRJImyoNBmST2nW+MPdA49Y5rBG0pI/yx8iqZSMVCYyKu1DYabaWu+ZA0L1IxA3TfeM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717662111; c=relaxed/simple;
-	bh=UTS3ToDyEPmayEpKX3ALx48mU8ZpnPOhzlJJikS5kY0=;
+	s=arc-20240116; t=1717662113; c=relaxed/simple;
+	bh=t6h+XbjMuJYKVtj2lKCILPFJuGlLTr7sOcrpwcQ6Reo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=mNg+cr7BQuQixsepOhRxS/lD7n9JeTicYGUjz71Fs4PXXrggnJaWEeiQnvtKzpRxnPjeGkYHANb4JrX9XCW3QPFgNFbWhGByWDUbZfOx8y3vGBz1kqvwDUVVzMDBJpN6W8mLJEEdfSjBFFCLu6zRzuTb+MRRtsfnI2L0UZDsqq8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=i2Bdshm5; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=nRfPrMYNIy+6r17DR6FzQjnpkZJeohGMEXITIWlUJEbs2cDkXQxtO3DDJ0m6uUSvybr/mkSPkhiRFzZ7licpst9D1kWVyBxITYtEdwTCkgyzjYEkiwlbdUAKeXk9PqUdfZ5MmU0ST+G1odGOZZeWqGmDQ3EnHOU3h9OkhxO37oE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ubMXJ/12; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="i2Bdshm5"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 60F37C2BD10;
-	Thu,  6 Jun 2024 08:21:50 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ubMXJ/12"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 98B83C32782;
+	Thu,  6 Jun 2024 08:21:51 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717662111;
-	bh=UTS3ToDyEPmayEpKX3ALx48mU8ZpnPOhzlJJikS5kY0=;
+	s=k20201202; t=1717662112;
+	bh=t6h+XbjMuJYKVtj2lKCILPFJuGlLTr7sOcrpwcQ6Reo=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=i2Bdshm5wmWzPwTp6l2iG5CLHZV95kFgSHxznY42+NTGqdMzErqWdBbg5S+lcto6U
-	 6lopnzoaFGn+Muw9Sfy1484aME/14wdUulZQOQzBMeC1VEJS409WV7sQed1Scahy/U
-	 XtJqHFqpVXHN5XCIFwdZnnlhQJdid/Wnhtzrn38GmGRPteo3v20D8LVr3flyvmg4DH
-	 n7E+cEwMJClSMJ/QEfq2IRcDYA3MnW78/m4DOCO+Ac0vHS2EWA42ZZfSC/Ntnv5vc1
-	 QbGE6GSMs7K0XmjbXsJ4J3ihpv7iWuSOBfHuI0i47mPRSajuKYMAOrm89rKP7XUkne
-	 IZ3LK5WxtMScw==
+	b=ubMXJ/12hO6XkyVbzDW2Dyj6L1esBDUIDWeVFFYPZU+T9xbYmYlOIj++hFg+JgdkK
+	 46tvCOiuAFBWsWVbdMwrCNIyOPvKjB0YL2ufKMJ58fjoBN+QtbwWeZskXQmnsXgHHK
+	 4EfwRfv3ExoHqb41LnrgT1MTUzbl5O+WsvmApSnEA+ImmHhYfDeSDrlVVDCKnDfifp
+	 Mj6cV3B9doWJ5gvjt5cJMBsC+3sCN+Az3y7ePDVEumaCjNvlL59ugPL9+b9QuTslDS
+	 N1uCCMWura23tL+sGDDbpIDFpKmELS5ZHx+L62CjroyLznaEvL96MbCVIpaZRjDr+S
+	 rLzHWKHSk2UUA==
 From: Damien Le Moal <dlemoal@kernel.org>
 To: Jens Axboe <axboe@kernel.dk>,
 	linux-block@vger.kernel.org,
@@ -34,9 +34,9 @@ To: Jens Axboe <axboe@kernel.dk>,
 	Mikulas Patocka <mpatocka@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v6 1/4] block: Improve checks on zone resource limits
-Date: Thu,  6 Jun 2024 17:21:44 +0900
-Message-ID: <20240606082147.96422-2-dlemoal@kernel.org>
+Subject: [PATCH v6 2/4] dm: Call dm_revalidate_zones() after setting the queue limits
+Date: Thu,  6 Jun 2024 17:21:45 +0900
+Message-ID: <20240606082147.96422-3-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240606082147.96422-1-dlemoal@kernel.org>
 References: <20240606082147.96422-1-dlemoal@kernel.org>
@@ -48,102 +48,131 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Make sure that the zone resource limits of a zoned block device are
-correct by checking that:
-(a) If the device has a max active zones limit, make sure that the max
-    open zones limit is lower than the max active zones limit.
-(b) If the device has zone resource limits, check that the limits
-    values are lower than the number of sequential zones of the device.
-    If it is not, assume that the zoned device has no limits by setting
-    the limits to 0.
+dm_revalidate_zones() is called from dm_set_zone_restrictions() when the
+mapped device queue limits are not yet set. However,
+dm_revalidate_zones() calls blk_revalidate_disk_zones() and this
+function consults and modifies the mapped device queue limits. Thus,
+currently, blk_revalidate_disk_zones() operates on limits that are not
+yet initialized.
 
-For (a), a check is added to blk_validate_zoned_limits() and an error
-returned if the max open zones limit exceeds the value of the max active
-zone limit (if there is one).
+Fix this by moving the call to dm_revalidate_zones() out of
+dm_set_zone_restrictions() and into dm_table_set_restrictions() after
+executing queue_limits_set().
 
-For (b), given that we need the number of sequential zones of the zoned
-device, this check is added to disk_update_zone_resources(). This is
-safe to do as that function is executed with the disk queue frozen and
-the check executed after queue_limits_start_update() which takes the
-queue limits lock. Of note is that the early return in this function
-for zoned devices that do not use zone write plugging (e.g. DM devices
-using native zone append) is moved to after the new check and adjustment
-of the zone resource limits so that the check applies to any zoned
-device.
+To further cleanup dm_set_zones_restrictions(), the message about the
+type of zone append (native or emulated) is also moved inside
+dm_revalidate_zones().
 
+Fixes: 1c0e720228ad ("dm: use queue_limits_set")
 Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
 Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 ---
- block/blk-settings.c |  8 ++++++++
- block/blk-zoned.c    | 20 ++++++++++++++++----
- 2 files changed, 24 insertions(+), 4 deletions(-)
+ drivers/md/dm-table.c | 15 +++++++++++----
+ drivers/md/dm-zone.c  | 25 ++++++++++---------------
+ drivers/md/dm.h       |  1 +
+ 3 files changed, 22 insertions(+), 19 deletions(-)
 
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index effeb9a639bb..607f888fe93b 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -80,6 +80,14 @@ static int blk_validate_zoned_limits(struct queue_limits *lim)
- 	if (WARN_ON_ONCE(!IS_ENABLED(CONFIG_BLK_DEV_ZONED)))
- 		return -EINVAL;
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index b2d5246cff21..2fc847af254d 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -2028,10 +2028,7 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	    dm_table_any_dev_attr(t, device_is_not_random, NULL))
+ 		blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, q);
+ 
+-	/*
+-	 * For a zoned target, setup the zones related queue attributes
+-	 * and resources necessary for zone append emulation if necessary.
+-	 */
++	/* For a zoned table, setup the zone related queue attributes. */
+ 	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) && limits->zoned) {
+ 		r = dm_set_zones_restrictions(t, q, limits);
+ 		if (r)
+@@ -2042,6 +2039,16 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	if (r)
+ 		return r;
  
 +	/*
-+	 * Given that active zones include open zones, the maximum number of
-+	 * open zones cannot be larger than the maximum number of active zones.
++	 * Now that the limits are set, check the zones mapped by the table
++	 * and setup the resources for zone append emulation if necessary.
 +	 */
-+	if (lim->max_active_zones &&
-+	    lim->max_open_zones > lim->max_active_zones)
-+		return -EINVAL;
++	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) && limits->zoned) {
++		r = dm_revalidate_zones(t, q);
++		if (r)
++			return r;
++	}
 +
- 	if (lim->zone_write_granularity < lim->logical_block_size)
- 		lim->zone_write_granularity = lim->logical_block_size;
- 
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 52abebf56027..8f89705f5e1c 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -1647,8 +1647,22 @@ static int disk_update_zone_resources(struct gendisk *disk,
- 		return -ENODEV;
- 	}
- 
-+	lim = queue_limits_start_update(q);
-+
-+	/*
-+	 * Some devices can advertize zone resource limits that are larger than
-+	 * the number of sequential zones of the zoned block device, e.g. a
-+	 * small ZNS namespace. For such case, assume that the zoned device has
-+	 * no zone resource limits.
-+	 */
-+	nr_seq_zones = disk->nr_zones - nr_conv_zones;
-+	if (lim.max_open_zones >= nr_seq_zones)
-+		lim.max_open_zones = 0;
-+	if (lim.max_active_zones >= nr_seq_zones)
-+		lim.max_active_zones = 0;
-+
- 	if (!disk->zone_wplugs_pool)
--		return 0;
-+		goto commit;
+ 	dm_update_crypto_profile(q, t);
  
  	/*
- 	 * If the device has no limit on the maximum number of open and active
-@@ -1657,9 +1671,6 @@ static int disk_update_zone_resources(struct gendisk *disk,
- 	 * dynamic zone write plug allocation when simultaneously writing to
- 	 * more zones than the size of the mempool.
- 	 */
--	lim = queue_limits_start_update(q);
--
--	nr_seq_zones = disk->nr_zones - nr_conv_zones;
- 	pool_size = max(lim.max_open_zones, lim.max_active_zones);
- 	if (!pool_size)
- 		pool_size = min(BLK_ZONE_WPLUG_DEFAULT_POOL_SIZE, nr_seq_zones);
-@@ -1673,6 +1684,7 @@ static int disk_update_zone_resources(struct gendisk *disk,
- 			lim.max_open_zones = 0;
+diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
+index 5d66d916730e..75d0019a0649 100644
+--- a/drivers/md/dm-zone.c
++++ b/drivers/md/dm-zone.c
+@@ -166,14 +166,22 @@ static int dm_check_zoned_cb(struct blk_zone *zone, unsigned int idx,
+  * blk_revalidate_disk_zones() function here as the mapped device is suspended
+  * (this is called from __bind() context).
+  */
+-static int dm_revalidate_zones(struct mapped_device *md, struct dm_table *t)
++int dm_revalidate_zones(struct dm_table *t, struct request_queue *q)
+ {
++	struct mapped_device *md = t->md;
+ 	struct gendisk *disk = md->disk;
+ 	int ret;
+ 
++	if (!get_capacity(disk))
++		return 0;
++
+ 	/* Revalidate only if something changed. */
+-	if (!disk->nr_zones || disk->nr_zones != md->nr_zones)
++	if (!disk->nr_zones || disk->nr_zones != md->nr_zones) {
++		DMINFO("%s using %s zone append",
++		       disk->disk_name,
++		       queue_emulates_zone_append(q) ? "emulated" : "native");
+ 		md->nr_zones = 0;
++	}
+ 
+ 	if (md->nr_zones)
+ 		return 0;
+@@ -240,9 +248,6 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
+ 		lim->max_zone_append_sectors = 0;
  	}
  
-+commit:
- 	return queue_limits_commit_update(q, &lim);
- }
+-	if (!get_capacity(md->disk))
+-		return 0;
+-
+ 	/*
+ 	 * Count conventional zones to check that the mapped device will indeed 
+ 	 * have sequential write required zones.
+@@ -269,16 +274,6 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
+ 		return 0;
+ 	}
  
+-	if (!md->disk->nr_zones) {
+-		DMINFO("%s using %s zone append",
+-		       md->disk->disk_name,
+-		       queue_emulates_zone_append(q) ? "emulated" : "native");
+-	}
+-
+-	ret = dm_revalidate_zones(md, t);
+-	if (ret < 0)
+-		return ret;
+-
+ 	if (!static_key_enabled(&zoned_enabled.key))
+ 		static_branch_enable(&zoned_enabled);
+ 	return 0;
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 53ef8207fe2c..c984ecb64b1e 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -103,6 +103,7 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
+  */
+ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
+ 		struct queue_limits *lim);
++int dm_revalidate_zones(struct dm_table *t, struct request_queue *q);
+ void dm_zone_endio(struct dm_io *io, struct bio *clone);
+ #ifdef CONFIG_BLK_DEV_ZONED
+ int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
 -- 
 2.45.2
 
