@@ -1,86 +1,125 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7FD7413C3E7
-	for <dm-devel@lists.linux.dev>; Thu,  6 Jun 2024 07:54:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 730F61F5F5;
+	Thu,  6 Jun 2024 07:56:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717660477; cv=none; b=IXzyFQpbyvSAIXqrTBTtGRtYO9O9GKo/uRXIstV9js9g6PxuIkR9ib2x/Ong2/MniOAad+TnOpPYYu7UBhEBNBu1eEarHYMxpH1MCU9QQh7opsjK/NbeH2W8uNUFrGufNxpZZ4FY9aN8BY5X5sSPYXlBUIgzrJ9yipUhPJBDW5w=
+	t=1717660570; cv=none; b=oAOq7i6PwyE9u++EnNXcC6GpMIoCgSQs7lyaDdWiedgCFL68zu+fxMTHEHE/Z7hWue0cpKqvG9NobSk3OG3tnGEsG6T9f/osRznZz8h+PLqNJvNg13yDaYvAraNoaYufRNgJZDUzguKgzsBcpoMrGJd2s5bfzGuRE1F9LrwaXiE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717660477; c=relaxed/simple;
-	bh=Q6Ue1f3YLSKPkdpKyBXywb5N7htHk08/DkrtBJDJ4pc=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=G0R88y/hAzreVjgO62eVK8o7OvjJVzDkICrHSvMODyyu69ym1GxzxC7oTVS3u1Xs35qTPHoTbsrwNj2zsjPBYcT/gkUoh0vIW7Bz1utZgARuTrbdxSARm+EEuv1S8V4FeV3Fn81tj3uCBvTJu43bL17T0wRDykzNNA3ijuXYv1c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id CE42E68D07; Thu,  6 Jun 2024 09:54:25 +0200 (CEST)
-Date: Thu, 6 Jun 2024 09:54:25 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Christoph Hellwig <hch@lst.de>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v5 2/4] dm: Call dm_revalidate_zones() after setting
- the queue limits
-Message-ID: <20240606075425.GA14059@lst.de>
-References: <20240606073721.88621-1-dlemoal@kernel.org> <20240606073721.88621-3-dlemoal@kernel.org>
+	s=arc-20240116; t=1717660570; c=relaxed/simple;
+	bh=CVkaqZl8ch00DGfkNJRMLiOVSK869YuGUN3ADO9UFOg=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=BlIjUlpxuACyECcPTwVqNkhMe2oO6U/UxnTO415HqQt4nwE2GKpBnJdHG6JtMKSGo/ne07VwRFWRXgBRDUEQaZMxPZkFW2BLwTPacxF1sXOukg7KUIXYlQk0jw9LRIjHMqoSbaFm/1LgPOk5VkjX0JfWeWlDZQLxX2G0PhdRHbg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TP7ezMIE; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TP7ezMIE"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2D300C4AF13;
+	Thu,  6 Jun 2024 07:56:10 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1717660570;
+	bh=CVkaqZl8ch00DGfkNJRMLiOVSK869YuGUN3ADO9UFOg=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=TP7ezMIEYo5tH6cqv6jM3GitTGHJyiZW+uodFmffXAGjrXgvBIijEQQOOnYux6EkY
+	 liAthHQH2lBRbXNvJW0APd8rVZWoFl+7Ftk37MCuU2kNRDVaS24ZgbtIh1YTiDKASJ
+	 EYKTni5J9PAe2axBB2sJ/BmvQMZpFKdwVVPz6D4bp7Zi2JhECFhdK/0CdwT9/d3ywi
+	 oO28PJRDGZjGWDNGNvUVtSvZ50oOV3WGUsaPBKi9H8gyYxhYohF2L28/gtMRCe1mJk
+	 vE/0XrnPbKBdARta+46Ypxrp2c2xhNi9oR8YmxZYe0dIcyCS1z0j2ypJS+/FqIdgW8
+	 Epe9H/ygqg2Dw==
+Received: by mail-lj1-f173.google.com with SMTP id 38308e7fff4ca-2e78fe9fc2bso8994651fa.3;
+        Thu, 06 Jun 2024 00:56:10 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AJvYcCUdEmgwlO9hs5g0SOJ8+kpcZjm8M6F6R9OoY7VCjE6JJ6ewV1Gc40+MBm0MsoyEDH8z6Zigs5wfNKZoFDue8CfO/hpoLPUzajQuulcCON+nCkGCKLQAit12rvn277AwWnZBPQ==
+X-Gm-Message-State: AOJu0Yzmr+8bFJJTEIomi2mopEt5yZIyvFwhkv8QS6ENHT5TSWJEar8E
+	h1StzW8SoZmHrHydoanhKKiiC50Vcuou8LdwISV33ZUKtGejGOHzw8YhLpAr/IqR7aSmH4jjJi1
+	erldwcbEfY7soHYiBuhn81jiVouU=
+X-Google-Smtp-Source: AGHT+IFV+tAqQp09BODHzBNmtMi8MlvdHjCn2uBHKx0cTB133/EqPXtxB/XwMTtgflBRfXf6XRYzCruVskBjfCX1R8c=
+X-Received: by 2002:a2e:b704:0:b0:2ea:81cc:b146 with SMTP id
+ 38308e7fff4ca-2eac79dcb4bmr25794821fa.18.1717660568411; Thu, 06 Jun 2024
+ 00:56:08 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240606073721.88621-3-dlemoal@kernel.org>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+References: <Zl7gYOMyscYDKZ8_@gondor.apana.org.au> <20240604184220.GC1566@sol.localdomain>
+ <ZmAthcxC8V3V3sm3@gondor.apana.org.au> <ZmAuTceqwZlRJqHx@gondor.apana.org.au>
+ <ZmAz8-glRX2wl13D@gondor.apana.org.au> <20240605191410.GB1222@sol.localdomain>
+ <ZmEYJQFHQRFKC5JM@gondor.apana.org.au> <20240606052801.GA324380@sol.localdomain>
+ <ZmFL-AXZ8lphOCUC@gondor.apana.org.au> <CAMj1kXHLt6v03qkpKfwbN34oyeeCnJb=tpG4GvTn6E1cJQRTOw@mail.gmail.com>
+ <ZmFmiWZAposV5N1O@gondor.apana.org.au>
+In-Reply-To: <ZmFmiWZAposV5N1O@gondor.apana.org.au>
+From: Ard Biesheuvel <ardb@kernel.org>
+Date: Thu, 6 Jun 2024 09:55:56 +0200
+X-Gmail-Original-Message-ID: <CAMj1kXFt_E9ghN7GfpYHR4-yaLsz_J-D1Nc3XsVqUamZ6yXHGQ@mail.gmail.com>
+Message-ID: <CAMj1kXFt_E9ghN7GfpYHR4-yaLsz_J-D1Nc3XsVqUamZ6yXHGQ@mail.gmail.com>
+Subject: Re: [PATCH v4 6/8] fsverity: improve performance by using multibuffer hashing
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Eric Biggers <ebiggers@kernel.org>, Steffen Klassert <steffen.klassert@secunet.com>, 
+	netdev@vger.kernel.org, linux-crypto@vger.kernel.org, 
+	fsverity@lists.linux.dev, dm-devel@lists.linux.dev, x86@kernel.org, 
+	linux-arm-kernel@lists.infradead.org, Sami Tolvanen <samitolvanen@google.com>, 
+	Bart Van Assche <bvanassche@acm.org>, Tim Chen <tim.c.chen@linux.intel.com>
+Content-Type: text/plain; charset="UTF-8"
 
-On Thu, Jun 06, 2024 at 04:37:19PM +0900, Damien Le Moal wrote:
-> dm_revalidate_zones() is called from dm_set_zone_restrictions() when the
-> mapped device queue limits are not yet set. However,
-> dm_revalidate_zones() calls blk_revalidate_disk_zones() and this
-> function consults and modifies the mapped device queue limits. Thus,
-> currently, blk_revalidate_disk_zones() operates on limits that are not
-> yet initialized.
-> 
-> Fix this by moving the call to dm_revalidate_zones() out of
-> dm_set_zone_restrictions() and into dm_table_set_restrictions() after
-> executing queue_limits_set().
-> 
-> To further cleanup dm_set_zones_restrictions(), the message about the
-> type of zone append (native or emulated) is also moved inside
-> dm_revalidate_zones().
-> 
-> Fixes: 1c0e720228ad ("dm: use queue_limits_set")
-> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-> ---
->  drivers/md/dm-table.c | 15 +++++++++++----
->  drivers/md/dm-zone.c  | 25 ++++++++++---------------
->  drivers/md/dm.h       |  1 +
->  3 files changed, 22 insertions(+), 19 deletions(-)
-> 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index b2d5246cff21..f0c27d5a738b 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -2028,10 +2028,7 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
->  	    dm_table_any_dev_attr(t, device_is_not_random, NULL))
->  		blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, q);
->  
-> -	/*
-> -	 * For a zoned target, setup the zones related queue attributes
-> -	 * and resources necessary for zone append emulation if necessary.
-> -	 */
-> +	/* For a zoned table, setup the zones related queue attributes. */
+On Thu, 6 Jun 2024 at 09:34, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+>
+> On Thu, Jun 06, 2024 at 08:58:47AM +0200, Ard Biesheuvel wrote:
+> >
+> > IPSec users relying on software crypto and authenc() and caring about
+> > performance seems like a rather niche use case to me.
+>
+> It's no more niche than fs/verity and dm-integrity.
 
-s/zones/zone/ ?  Or is my grammar dector way off?
+fsverity is used by Android, which is the diametrical opposite of
+niche when it comes to Linux distros.
 
+> this could potentially be used for all algorithms.  Just the
+> reduction in the number of function calls may produce enough
+> of a benefit (this is something I observed when adding GSO,
+> even without any actual hardware offload, simply aggregating
+> packets into larger units produced a visible benefit).
+>
 
-Otherwise looks good:
+Sure. But my point is that anyone who cares enough about IPsec
+performance would have stopped using authenc(cbc(aes),hmac(sha2)) long
+ago and moved to GCM or even ChaChaPoly. This is not just a matter of
+efficiency in the implementation - using a general purpose hash
+function such as SHA-256 [twice] rather than GHASH or Poly1305 is just
+overkill.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+So complicating the performance optimization of something that runs on
+every (non-Apple) phone for the benefit of something that is rarely
+used in a context where the performance matters seems unreasonable to
+me.
 
+> > I'm struggling to follow this debate. Surely, if this functionality
+> > needs to live in ahash, the shash fallbacks need to implement this
+> > parallel scheme too, or ahash would end up just feeding the requests
+> > into shash sequentially, defeating the purpose. It is then up to the
+> > API client to choose between ahash or shash, just as it can today.
+>
+> I've never suggested it adding it to shash at all.  In fact
+> that's my primary problem with this interface.  I think it
+> should be ahash only.  Just like skcipher and aead.
+>
+
+So again, how would that work for ahash falling back to shash. Are you
+saying every existing shash implementation should be duplicated into
+an ahash so that the multibuffer optimization can be added? shash is a
+public interface so we cannot just remove the existing ones and we'll
+end up carrying both forever.
+
+> My reasoning is that this should cater mostly to bulk data, i.e.,
+> multiple pages (e.g., for IPsec we're talking about 64K chunks,
+> actually that (the 64K limit) is something that we should really
+> extend, it's not 2014 anymore).  These typically will be more
+> easily accessed as a number of distinct pages rather than as a
+> contiguous mapping.
+>
+
+Sure, but the block I/O world is very different. Forcing it to use an
+API modeled after how IPsec might use it seems, again, unreasonable.
+
+So these 64k chunks are made up of 1500 byte frames that can be hashed
+in parallel?
