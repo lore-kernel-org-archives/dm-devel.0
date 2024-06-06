@@ -1,208 +1,145 @@
-Received: from mailout1.samsung.com (mailout1.samsung.com [203.254.224.24])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-io1-f42.google.com (mail-io1-f42.google.com [209.85.166.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AABE91802AC
-	for <dm-devel@lists.linux.dev>; Thu,  6 Jun 2024 09:59:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.24
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5D40C13C67A
+	for <dm-devel@lists.linux.dev>; Thu,  6 Jun 2024 12:17:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717667973; cv=none; b=ggikjEo837Op5AQqefN3Khz9QYvRCyQpX3Tl5tPeoS60Q09xSbV/B7GtASr6rKz0tRUUeSvhhHU0W1FOGNxGW4eTUC6aEHTyaX0YCgmKwSvaWopRhZBP13IhiUviSroiL+CCpIwil6PeHCxC7Lf3XxRNnWQohNPpPO67EVSRZ2A=
+	t=1717676262; cv=none; b=CytXh09eJVkar3jdkd5dzDK0HOdNeRcriOKOTl6GvxtNiTr1BB7SCTXi0UGFMXG9rVNORaQOCXhaLm5GnphyWDzgxIuyLRUSX1fxA6eZ4XXi5HdsWIHEYFcnbfoCNterGQ28eMgsnC59EJJEvsENFQcGHnR3x1nzdeGxu4zifdU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717667973; c=relaxed/simple;
-	bh=+kWRtm46EHgrfEjT1jHXAvldmafiXTrXdwgo0depAw8=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:In-Reply-To:
-	 Content-Type:References; b=ui4B5rehfjSvQF0qtwmSn/NNLtVUv4PTE7SsVWjhri1NQIRaQ89QTQKY5ADG6hQ/1OiLClsgCsxS1FEft+8dK2bMpPJ/qcIi4aV4c1tdo4I6DNEU9s4cX6OhMY7seqV64/bYIISqJSBJCQ9Efj2Bd191al8mbLLWs8phjd2tNE4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=ZyAgvqyQ; arc=none smtp.client-ip=203.254.224.24
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
+	s=arc-20240116; t=1717676262; c=relaxed/simple;
+	bh=mfzNpWljTGWF5x0QoPC8XCUMC2PiQkHKzBSVEDCqb7w=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=f9ozwoRRjQzcZonGgXOViaANkTquhRIn/q/w1Q0nWkIqypei4Wt6fKyBVYSXMr/OtjmaF9jSOhqIMXtD5C1YMhnc+46g5SElsRmBAgAw8KKQ2bUfvAkeB52h3bPDAGrPY+JoK3QBCvgpp8HYw5bN8DaRQT/FE4YeD1HH7PmU4qU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j8cEoYh2; arc=none smtp.client-ip=209.85.166.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="ZyAgvqyQ"
-Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
-	by mailout1.samsung.com (KnoxPortal) with ESMTP id 20240606095929epoutp01cd95e4aeffc2643a02d79a045baf79d3~WYer_r0yt1884118841epoutp01Q
-	for <dm-devel@lists.linux.dev>; Thu,  6 Jun 2024 09:59:29 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.samsung.com 20240606095929epoutp01cd95e4aeffc2643a02d79a045baf79d3~WYer_r0yt1884118841epoutp01Q
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1717667969;
-	bh=X/08X1olkAIHOusibyucFDGsWQxmM65XPCWbJyAP97k=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=ZyAgvqyQx5UL/Lrxow6Z40Nz0W+5Pm6/8TljENaE5YWMuLIK1Ukl3ENvkJXNBjOK6
-	 3VTjQBSqJLFIoKlXRVJKNKWs4FTYe4m7yMLh6ZgcVv/9xlfPyPCu5lK47sSanfIUsr
-	 RfCjAtB5pmlNly3d6/hxP+eC0Nt8rfB2X5+UMvZg=
-Received: from epsnrtp2.localdomain (unknown [182.195.42.163]) by
-	epcas5p2.samsung.com (KnoxPortal) with ESMTP id
-	20240606095929epcas5p245fe6bdf77b2f0f33a3edf73692d5856~WYerhxehs1456214562epcas5p21;
-	Thu,  6 Jun 2024 09:59:29 +0000 (GMT)
-Received: from epsmgec5p1-new.samsung.com (unknown [182.195.38.174]) by
-	epsnrtp2.localdomain (Postfix) with ESMTP id 4Vw0DH2hHwz4x9Px; Thu,  6 Jun
-	2024 09:59:27 +0000 (GMT)
-Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
-	epsmgec5p1-new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	A2.3C.19174.F7881666; Thu,  6 Jun 2024 18:59:27 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
-	epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
-	20240606072827epcas5p285de8d4f3b0f6d3a87f8341414336b42~WWaz25d7o3006730067epcas5p2d;
-	Thu,  6 Jun 2024 07:28:27 +0000 (GMT)
-Received: from epsmgmc1p1new.samsung.com (unknown [182.195.42.40]) by
-	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20240606072827epsmtrp28b89143fbe61df61e97e0db30931c9e8~WWaz1zddk3242132421epsmtrp2a;
-	Thu,  6 Jun 2024 07:28:27 +0000 (GMT)
-X-AuditID: b6c32a50-157f7a8000004ae6-62-6661887f9388
-Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
-	epsmgmc1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	C9.FC.07412.B1561666; Thu,  6 Jun 2024 16:28:27 +0900 (KST)
-Received: from nj.shetty?samsung.com (unknown [107.99.41.245]) by
-	epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
-	20240606072823epsmtip2dad935b746ccadd32ea43752942abaab~WWawJjuEm2294122941epsmtip2Y;
-	Thu,  6 Jun 2024 07:28:23 +0000 (GMT)
-Date: Thu, 6 Jun 2024 12:58:35 +0530
-From: Nitesh Shetty <nj.shetty@samsung.com>
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Christoph Hellwig <hch@lst.de>, Damien Le Moal <dlemoal@kernel.org>,
-	Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
-	Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
-	<mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>, Sagi Grimberg
-	<sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>, Alexander Viro
-	<viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara
-	<jack@suse.cz>, martin.petersen@oracle.com, david@fromorbit.com,
-	hare@suse.de, damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com,
-	joshi.k@samsung.com, nitheshshetty@gmail.com, gost.dev@samsung.com,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-doc@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
-Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
- and request layer.
-Message-ID: <20240606072835.a7hnqm5mkzvgsojp@nj.shetty@samsung.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j8cEoYh2"
+Received: by mail-io1-f42.google.com with SMTP id ca18e2360f4ac-7ea7bcc72caso35981739f.0
+        for <dm-devel@lists.linux.dev>; Thu, 06 Jun 2024 05:17:41 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1717676260; x=1718281060; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=aWxxnlQwc9HtbCioAV6KSLO5jhCVBZVFta1hIKWFNQY=;
+        b=j8cEoYh2qH4uUXM/wrZTG3ARzeOWvpv5Y6Eh8KGArchJ7j2ErAYpxPS/zpiCBobOfe
+         A3UEzNtoL2Xv13zh11UfX/dpe+XQWJpMSR/IHZnd6wL6ny3PyiiLB8ibPPGnALWiLigs
+         yfzCxaBsDYTm7KCjsaN31eustZ9QEe0fOXk+FoBHInDKGB4hQ9p5nPaNQIneGHf64DOS
+         SEmSC8seuNdd3yH+66ON6ayLAGeExeStY0U+liyKR3gNTaLTlM8G9ZS1kLjj4k0vJD5o
+         5Ymi7ea21yzn3Eh/dzM5H6sZQgyQq9OC+QOU7naGMKNfF78LfX4BQ4uSpRn7NJk2EE4l
+         tkRw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1717676260; x=1718281060;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=aWxxnlQwc9HtbCioAV6KSLO5jhCVBZVFta1hIKWFNQY=;
+        b=RTO0oOmkUE+vgy1D7y+rz6xxmQqZOwT0JwOjMvyc7NPuAHrTBhNVJdBvMn/SzfIrDK
+         DuEgijwiV2xRu3Jiaa8sC5RvoTw8r+hOuUVPBCEDrnm8aEhGNqxWSZMuf9YqGdSl2TGJ
+         TvfNjSGxK/qDMH17C29zSyf7mZOQt0h+qaJQ7Coo06yzbKi1X1wD0g1tGlipotKX9VDe
+         plB4U8lynwyf8GJ6WBQVbb0J7vtBVtY0gJgiMqTX9W/vBgufFZCVEsFAxJQ3Ol8axgag
+         H1Z0VrBsvR3RGQWXFHB5IhNV+HD00OqF5D1SB/iQ+qr/tyjJIyWwHaTp+3pMg70k6Lji
+         v7AQ==
+X-Gm-Message-State: AOJu0YzzWBSigybWpJZTIWdX0LcqRMsHfKY2VhiiNAJyjwagQs6B0NFe
+	4Y+kxm97CfvegMkj2rkHUu8KmtSeEUMqrjqbJ9q+O3cfr+g1aK3c0EnY1k8rnCPGw41iW0QBv4W
+	NwoHqkmUgDQgwU7ejoxA6ni5a330=
+X-Google-Smtp-Source: AGHT+IFfgYHxk8XwWVrUEbkzOZ8PAr7c8Uc5oXZuiCK7AgJBzpXFvjaWOlGgGo0sxCJuBfmzVXJ+TVRAmVxzZ0U56AI=
+X-Received: by 2002:a5d:9a94:0:b0:7ea:f9e9:14ed with SMTP id
+ ca18e2360f4ac-7eb3cad3d41mr515910539f.19.1717676260361; Thu, 06 Jun 2024
+ 05:17:40 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <4ffad358-a3e6-4a88-9a40-b7e5d05aa53c@acm.org>
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xTZxjG951zetoSyo7A9APUscKygdw62/rhRIyiHnUzJGbZhltKVw4t
-	AdquFxTHwn1yGchlw1EUOyRyKYEJjIGCY6CAVccWoIsYCyawTQFh3ibrKAMKi//98j7Pm+f7
-	3jcvB3c1sT05cUodo1FKE/ikE9HW6+cXmJojjQ0pH+ahJnMfjjKKFnBkunuKRFO9jwAqm5vH
-	0UT3SYBstwZx1NpnBWj8x3BkrDpLoNvdHRjqrCrBUJ3pGoYqTmdi6NriDIlKeiwATY4YMNQ1
-	ugV9+0U1gTq7rhNo6NIZEp27MMlGNf12DBXnjGCofSIdoMapWQINjHqhwYV+1q6N9NDwIdpc
-	BekOw102PWi9SNBDt/R0c30uSbdUp9J/tpQD+vLtNJI+X1jKogsyH5J0R/YYi/5rcpSgZ6+M
-	kHRhaz2gbxqvsiPdouJ3KBhpDKPxZpQyVUycUh7GP3REskciEocIAgWhaBvfWylNZML4Ee9E
-	Bu6LS1gaEN87SZqgXypFSrVafvDOHRqVXsd4K1RaXRifUcckqIXqIK00UatXyoOUjG67ICTk
-	LdGSMTpe8aTIRKq/9Dg+cKeBSAP33PMAlwMpIczPyCbygBPHleoEsNGahS0LrtQjAEtmkhzC
-	MwAvdBURax01RSPAIXQB+MvT31fbHwP43Pore9lFUL7wfG8+mQc4HJLaAm8scpbL7tSb8Nl4
-	zYofp/pIWJ1VhC8LblQ0nDEXs5aZR+2BBWdqcQevg9fLJ1aSudTbcPFkJ9vxCgsX2upkDo6A
-	P/xswhzsBh/0t656POHjh12kg4/Buq9qyeVgSGUBaPjNABxCOMw2n1oJwykFbLUMrDZvgl+b
-	GzFH3QUW2CZWA3iwvXKNfWBDk3E1wANa/k5fZRr+O9DMckzlMgGtNhtWBDYbXviQ4YU8B2+H
-	uXMZLMPSwHDKC9bYOQ70g02Xgo2AVQ88GbU2Uc7IRGpBoJI59v+aZarEZrByNf6R7cD03UJQ
-	D8A4oAdADs535x3WSmJdeTHS5BOMRiXR6BMYbQ8QLW2oGPd8RaZaOjulTiIQhoYIxWKxMHSr
-	WMDfwJvKPhvjSsmlOiaeYdSMZq0P43A907DoWmuA+l6OuOAb/5SL4fv50x+ZDoJX28osXp++
-	FEU+sGtN3buD54z1zv6Efue2AIvQU+WzcXb6e5GGm60Yn5D46g8vJC/4RB3ENb5xf1QON93M
-	cJluOnDUY778n/WFJ+wfXnV3OWBzvsMqed4bgaUlFUpSaKtH+v5NybobgfSY9T2/gNLP98pf
-	rzmnqUjJP7JPJ1duDc2ZT/G4YiktbulIHuYmDSsTe40NyXszsbqyhdPzUevL7GW75zTeE7By
-	PlV4vyKg0Nn22sgHn8h2rVM+/ezJ+23xH6c62ac4iy+bQSw/F5fdF232dfvpXXfp8TfE7q7e
-	RxXpG7ww7lhzJ28mmE9oFVKBP67RSv8D5UMMgL4EAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA02SbUxTZxiGfc97enqoIzmU4l6EaDyZDmrsbLLha2SbupicBINTyBLFDc/k
-	UAkUSEvdJNlkoKI0sPIRLaUbHxKLVUQBDShUUpRK1ZAMYaEOpFrkS2A1zoxMyiyNkX93nuu+
-	nufPQ0PpC3I1nZaZI2gy+QyWkpA3utm1myIEPnWzsUuEm5w9EOcbFiC+NPwrhae7XwJ89u95
-	iD1dhQD/97AP4taeEYBHb3+Ja+p+I/FQVzuBO+rKCHzx0l0CV50rIPDdxRkKl9kHAR4bMBG4
-	07UR156qJ3FHZy+J+2+aKVx9YUyMLQ4fgUtPDxC4zfMLwFem50h8zxWB+xYcou2RXP+jOM5Z
-	h7h207CY6xu5RnL9D3Vcs/UMxbXUH+cmWioBd2soj+LOl5SLuOKCWYprP/lExHnHXCQ3Zxug
-	uJJWK+Ae1NwRfx16QBKbImSkHRU0n3xxSHJkwuASZdtW/Wh9biTyQKO0CATRiPkUWQwDoAhI
-	aClzC6DGWgcVAOHowsIdGMih6KJvXBwoeQEqbdMTfkAyH6Hz3fq3Ak1TzEZ0f5H2j2VMFHo9
-	aiH9fcg4KTRkNpF+EMocQjPOUpE/BzNfoWJzAwwsHYeoVf+KDIAQ1FvpWcqQiUG/t7ih/wBk
-	IpDFt3QgiNmGFgs7xAbAmJYZpmWG6b1RA6AVhAvZWrVKfViZrcwUflBoebVWl6lSHM5SN4Ol
-	h5BHtYGRap/CDgga2AGiISsLjtcmp0qDU/hjuYImK1mjyxC0dhBBk+yHwUpjVYqUUfE5Qrog
-	ZAuad5Sgg1bnEeZoeVLfQfOa10mPd9fu4QcTbeky25a2+akdPZ1bp4yRzeV7w1hen7sfZmzu
-	mGWFpsHkKce2GP2bj6uUCajCs5YdzUqSJwCQmkMbfGc863adiM0tPvqm4rPwyzNaw+RJvdnb
-	0Ijmeo8h+QsVW1Fc+NTt/vyVybslMqxopXVn51DV+PxIdPKpEPw00cL/k6D0psf3mk9Xh8Bv
-	bVv/ffC96PFfLnvKow3Pd4T9dFO0zq26bZ2t1zntsdUfRJUoLnfL9sU9a3kiv27P/c6RuvK+
-	fPrn+fWJDVfzj5esgAd1aeJE4qVsMmdS4qbUVNKfBScs3xjjW59dG6zIU/yRX7aJJbVHeKUc
-	arT8/7jiQ5l/AwAA
-X-CMS-MailID: 20240606072827epcas5p285de8d4f3b0f6d3a87f8341414336b42
-X-Msg-Generator: CA
-Content-Type: multipart/mixed;
-	boundary="----atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_61518_"
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20240606072827epcas5p285de8d4f3b0f6d3a87f8341414336b42
-References: <20240520102033.9361-3-nj.shetty@samsung.com>
-	<eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org>
-	<9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
-	<a866d5b5-5b01-44a2-9ccb-63bf30aa8a51@acm.org>
-	<665850bd.050a0220.a5e6b.5b72SMTPIN_ADDED_BROKEN@mx.google.com>
-	<abe8c209-d452-4fb5-90eb-f77b5ec1a2dc@acm.org>
-	<20240601055931.GB5772@lst.de>
-	<d7ae00c8-c038-4bed-937e-222251bc627a@acm.org>
-	<20240604044042.GA29094@lst.de>
-	<4ffad358-a3e6-4a88-9a40-b7e5d05aa53c@acm.org>
-	<CGME20240606072827epcas5p285de8d4f3b0f6d3a87f8341414336b42@epcas5p2.samsung.com>
+References: <1eb0ef1c-9703-43fd-9a51-bda24b9d2f1b@app.fastmail.com>
+In-Reply-To: <1eb0ef1c-9703-43fd-9a51-bda24b9d2f1b@app.fastmail.com>
+From: Roger Heflin <rogerheflin@gmail.com>
+Date: Thu, 6 Jun 2024 07:17:27 -0500
+Message-ID: <CAAMCDedh6j0jt8f1aWEpV_UX3-8FRNLBHEsOUcuvACSB-YDQ_g@mail.gmail.com>
+Subject: Re: Reproducible system lockup, extracting files into XFS on dm-raid5
+ on dm-integrity on HDD
+To: Zack Weinberg <zack@owlfolio.org>
+Cc: dm-devel@lists.linux.dev, linux-xfs@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_61518_
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-Content-Disposition: inline
+grep -E 'Dirty|Write' /proc/meminfo
 
-On 04/06/24 04:44AM, Bart Van Assche wrote:
->On 6/3/24 21:40, Christoph Hellwig wrote:
->>There is no requirement to process them synchronously, there is just
->>a requirement to preserve the order.  Note that my suggestion a few
->>arounds ago also included a copy id to match them up.  If we don't
->>need that I'm happy to leave it away.  If need it it to make stacking
->>drivers' lifes easier that suggestion still stands.
+The above are the amount of outstanding writes that need to be
+processed, I would expect it to be significant.
+sysctl -a 2>/dev/null | grep -iE 'dirty_ratio|dirty_bytes|dirty_background'
+vm.dirty_background_bytes =3D 3000000
+vm.dirty_background_ratio =3D 0
+vm.dirty_bytes =3D 5000000
+vm.dirty_ratio =3D 0
+
+Default you will be using ratio and ratio is a % of ram.
+dirty_(ratio|bytes) is the high water mark  (background is the low
+water mark) and the OS will stop writes when the high water mark is
+hit until you reach the low water mark.  With spinning disks and a tar
+file and the default setting that will be GB's of data requiring a
+significant number of seeks and the high water to lower water mark
+could be a really long time (many minutes or even hours if you have
+enough ram).
+
+In my experience about all these settings do is make it appear IO
+finished when it really did not (I believe the original intent of
+these changes may have been to improve benchmark results when the
+benchmark did not force sync).
+
+The downsides are that at any given time a much higher amount of
+IO/data could be in ram only and not on disk and if a crash
+(hardware/software/power) were to happen a lot of data could get lost.
+
+Because of that I set these values much lower (see above).  It appears
+that you need a write IO cache, but really it does not need to be
+huge.
+
+The settings above will stop writes when 5MB is hit and restart at 3MB
+(likely a pause of well under a second, rather than locking up the
+machine for a really long time).
+
+
+On Wed, Jun 5, 2024 at 1:41=E2=80=AFPM Zack Weinberg <zack@owlfolio.org> wr=
+ote:
 >
->Including an ID in REQ_OP_COPY_DST and REQ_OP_COPY_SRC operations sounds
->much better to me than abusing the merge infrastructure for combining
->these two operations into a single request. With the ID-based approach
->stacking drivers are allowed to process copy bios asynchronously and it
->is no longer necessary to activate merging for copy operations if
->merging is disabled (QUEUE_FLAG_NOMERGES).
+> I am experimenting with the use of dm-integrity underneath dm-raid,
+> to get around the problem where, if a RAID 1 or RAID 5 array is
+> inconsistent, you may not know which copy is the good one.  I have found
+> a reproducible hard lockup involving XFS, RAID 5 and dm-integrity.
 >
-Single request, with bio merging approach:
-The current approach is to send a single request to driver,
-which contains both destination and source information inside separate bios.
-Do you have any different approach in mind ?
-
-If we want to proceed with this single request based approach,
-we need to merge the destination request with source BIOs at some point.
-a. We chose to do it via plug approach.
-b. Alternative I see is scheduler merging, but here we need some way to
-hold the request which has destination info, until source bio is also
-submitted.
-c. Is there any other way, which I am missing here ?
-
-Limitation of current plug based approach:
-I missed the possibility of asynchronous submission by stacked device.
-Since we enabled only dm-linear, we had synchronous submission till now
-and our test cases worked fine.
-But in future if we start enabling dm targets with asynchronous submission,
-the current plug based approach won't work.
-The case where Bart mentioned possibility of 2 different tasks sending
-copy[1] and they are getting merged wrongly is valid in this case.
-There will be corruption, copy ID approach can solve this wrong merging.
-
-Copy ID based merging might preserve the order, but we still need the
-copy destination request to wait for copy source bio to merge.
-
-Copy ID approach:
-We see 3 possibilities here:
-1. No merging: If we include copy-id in src and dst bio, the bio's will get
-submitted separately and reach to the driver as separate requests.
-How do we plan to form a copy command in driver ?
-2. Merging BIOs:
-At some point we need to match the src bio with the dst bio and send this
-information together to the driver. The current implementation.
-This still does not solve the asynchronous submission problem, mentioned
-above.
-3. Chaining BIOs:
-This won't work with stacked devices as there will be cloning, and hence
-chain won't be maintained.
-
-[1] https://lore.kernel.org/all/d7ae00c8-c038-4bed-937e-222251bc627a@acm.org/
-
-Thank You,
-Nitesh Shetty
-
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_61518_
-Content-Type: text/plain; charset="utf-8"
-
-
-------atUsqPFm-1W_PDIhMRaVeMNpJ8wr1jcbO3GdUizRktR65zpR=_61518_--
+> My test array consists of three spinning HDDs (each 2 decimal
+> terabytes), each with dm-integrity laid directly onto the disk
+> (no partition table), using SHA-256 checksums.  On top of this is
+> an MD-RAID array (raid5), and on top of *that* is an ordinary XFS
+> filesystem.
+>
+> Extracting a large tar archive (970 G) into the filesystem causes a hard
+> lockup -- the entire system becomes unresponsive -- after some tens of
+> gigabytes have been extracted.  I have reproduced the lockup using
+> kernel versions 6.6.21 and 6.9.3.  No error messages make it to the
+> console, but with 6.9.3 I was able to extract almost all of a lockdep
+> report from pstore.  I don't fully understand lockdep reports, but it
+> *looks* like it might be a livelock rather than a deadlock, with all
+> available kworker threads so bogged down with dm-integrity chores that
+> an XFS log flush is blocked long enough to hit the hung task timeout.
+>
+> Attached are:
+>
+> - what I have of the lockdep report (kernel 6.9.3) (only a couple
+>   of lines at the very top are missing)
+> - kernel .config (6.9.3, lockdep enabled)
+> - dmesg up till userspace starts (6.6.21, lockdep not enabled)
+> - details of the test array configuration
+>
+> Please advise if there is any more information you need.  I am happy to
+> test patches.  I'm not subscribed to either dm-devel or linux-xfs.
+>
+> zw
+>
+> p.s. Incidentally, why doesn't the dm-integrity superblock record the
+> checksum algorithm in use?
