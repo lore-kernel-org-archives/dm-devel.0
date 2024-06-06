@@ -1,86 +1,99 @@
-Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2B4F13AA48;
-	Thu,  6 Jun 2024 08:08:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 840A813BC26;
+	Thu,  6 Jun 2024 08:21:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717661306; cv=none; b=Pwi2Dg8DVNvaG2o+vXcjVk308eSxFxMvr4ObBUBVK/bbHvurFuehoqMCoNGCus2KHBswYJFhXVDwfi0nADC6LTepZn1fL2WoaydD1+iolWLQqndWscAZ1TqnKkukQs3joRQ68Xht4tpglsAL0UkzaSGcvYMWQcXwR1WMP49fiUE=
+	t=1717662110; cv=none; b=RbPML/aa1SUcBQQs0mH30r9JJw27tte7Obhekgwihm1TXgwjZfeFfD/OKLiq88Gbb47qQCImyw1PpXQ8V4tfWWPNmiP2iKeWmlEjVZNmyvZgRL1Lb2NPAcgZHQW1SXYUZhkpkM+RR9ImUS/uL7HQ+idFOQnGYZ33TWvXlluTVpM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717661306; c=relaxed/simple;
-	bh=6xuV2MJEvNFB5sqdVQt/0qFPZktWFm9ZqnfUlVgZgwU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=LtNomDFXSEhK6gSvV1PeEWW/S8mu8hF/XBbVJi777DGrAkYTtT6jKLQTF/sJkKqBOXioHsclkUFRGu8i9WvykxAWr8yMaKKY9pa6m45s8gbWHs4CAo6vlJYaP/53LCdI0tpvlK3XNpwXGjPyYhrE7ay9grGOaKerljo2TJmAZ/g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; arc=none smtp.client-ip=144.6.53.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
-	id 1sF8AR-006J1u-0r;
-	Thu, 06 Jun 2024 16:08:16 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Thu, 06 Jun 2024 16:08:17 +0800
-Date: Thu, 6 Jun 2024 16:08:17 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Ard Biesheuvel <ardb@kernel.org>
-Cc: Eric Biggers <ebiggers@kernel.org>,
-	Steffen Klassert <steffen.klassert@secunet.com>,
-	netdev@vger.kernel.org, linux-crypto@vger.kernel.org,
-	fsverity@lists.linux.dev, dm-devel@lists.linux.dev, x86@kernel.org,
-	linux-arm-kernel@lists.infradead.org,
-	Sami Tolvanen <samitolvanen@google.com>,
-	Bart Van Assche <bvanassche@acm.org>,
-	Tim Chen <tim.c.chen@linux.intel.com>
-Subject: Re: [PATCH v4 6/8] fsverity: improve performance by using
- multibuffer hashing
-Message-ID: <ZmFucW37DI6P6iYL@gondor.apana.org.au>
-References: <ZmAthcxC8V3V3sm3@gondor.apana.org.au>
- <ZmAuTceqwZlRJqHx@gondor.apana.org.au>
- <ZmAz8-glRX2wl13D@gondor.apana.org.au>
- <20240605191410.GB1222@sol.localdomain>
- <ZmEYJQFHQRFKC5JM@gondor.apana.org.au>
- <20240606052801.GA324380@sol.localdomain>
- <ZmFL-AXZ8lphOCUC@gondor.apana.org.au>
- <CAMj1kXHLt6v03qkpKfwbN34oyeeCnJb=tpG4GvTn6E1cJQRTOw@mail.gmail.com>
- <ZmFmiWZAposV5N1O@gondor.apana.org.au>
- <CAMj1kXFt_E9ghN7GfpYHR4-yaLsz_J-D1Nc3XsVqUamZ6yXHGQ@mail.gmail.com>
+	s=arc-20240116; t=1717662110; c=relaxed/simple;
+	bh=0XEP+VNkR57GYxVykO6r4i9aFhLCEnvCD+59Fbxmcdc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=kyygpnzh2w81V9X8gQPoTqoF20v4ywsBG4VlGOwwNvGziXURKnWtreMVvtcRYULDj8FbFbgQme18tV2grVDzX53bZROk0bcsTxW8+8/vua0L8CxJWTHqxRD0qt6OrJw291tTwLRFXkQtW1bejbx+Z8z5SCYpcyLWeS2DWQnB4rA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=JXfrYSGE; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="JXfrYSGE"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1D9FCC32782;
+	Thu,  6 Jun 2024 08:21:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1717662110;
+	bh=0XEP+VNkR57GYxVykO6r4i9aFhLCEnvCD+59Fbxmcdc=;
+	h=From:To:Cc:Subject:Date:From;
+	b=JXfrYSGEbFAyNYM22DvOdCuetbG88BV0Ett+mu94BpHXufL8LYLr2iy5VCZJ+oDm0
+	 zwy5n/b5zhpNtwK88NF+Osk86O+KrEg0s8xXHCIxd3S+egO2uwtSYLp/qa0/7R5gPV
+	 CtHPbxCi7gGaPreTHCfT6x8FPpMB/Hm0T9Iaqf8cVmF8nhhLkmq9eOFXpgIU8tST8Z
+	 WZbFhstz9L5LUl51vz8mIcdHFi8zchcJ760k32yCc0Zwo2RDsA370WV8Rh9oTEgdPZ
+	 1Mz9tGOcI2j+NF3lWm6be4DV2LYlmxJlIub7DgKup4jYqgj+j/TtPO/hsfHzvABG/l
+	 qjRI9neK7mIww==
+From: Damien Le Moal <dlemoal@kernel.org>
+To: Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH v6 0/4] Fix DM zone resource limits stacking
+Date: Thu,  6 Jun 2024 17:21:43 +0900
+Message-ID: <20240606082147.96422-1-dlemoal@kernel.org>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CAMj1kXFt_E9ghN7GfpYHR4-yaLsz_J-D1Nc3XsVqUamZ6yXHGQ@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
 
-On Thu, Jun 06, 2024 at 09:55:56AM +0200, Ard Biesheuvel wrote:
->
-> So again, how would that work for ahash falling back to shash. Are you
-> saying every existing shash implementation should be duplicated into
-> an ahash so that the multibuffer optimization can be added? shash is a
-> public interface so we cannot just remove the existing ones and we'll
-> end up carrying both forever.
+This is the updated patch 4/4 of the series "Zone write plugging and DM
+zone fixes". This patch fixes DM zone resource limits stacking (max open
+zones and max active zones limits). Patch 1 is new and is added to help
+catch problems and eventual regressions of the handling of these limits.
 
-It should do the same thing for ahash algorithms that do not support
-multiple requests.  IOW it should process the requests one by one.
+Changes from v5:
+ - Corrected typo in comment in patch 2
+ - Simplyfied patch 3 by removing the function dm_set_zone_resources()
+   and integrating its code directly in dm_set_zone_restrictions().
+ - Added review tags
 
-> Sure, but the block I/O world is very different. Forcing it to use an
-> API modeled after how IPsec might use it seems, again, unreasonable.
+Changes from v4:
+ - Fixed a typo in a comment in patch 1
+ - Added patch 2 and changed patch 3 accordingly
+ - Added review tags
 
-It's not different at all.  You can see that by the proliferation
-of kmap calls in fs/verity.  It's a fundamental issue.  You can't
-consistently get a large contiguous allocation beyond one page due
-to fragmentation.  So large data is always going to be scattered.
+Changes from v3:
+ - Modify patch 1 to always check the zone resource limits values in
+   disk_update_zone_resources(), including for DM devices that do not
+   use zone write plugging. Simplify patch 2 accordingly by removing the
+   same check and adjustment of the zone resource limits.
+ - Added patch 3
 
-BTW, I'm all for elminating the overhead when you already have a
-linear address for scattered memory, e.g., through vmalloc.  We
-should definitely improve our interface for ahash/skcipher/aead so
-that vmalloc addresses (as well as kmalloc virtual addresses by
-extension) are supported as first class citizens, and we don't turn
-them into SG lists unless it's necessary for DMA.
+Changes from v2:
+ - Modify patch 1 to return an error for the case where the max open
+   zones limit is greater than the max active zones limit.
+ - Modify patch 2 to avoid duplicated actions on the limits and to
+   remove warnings for unusual zone limits.
 
-Cheers,
+Changes from v1:
+ - Added patch 1
+ - Modified patch 2 to not cap the limits for a target with the number
+   of sequential zones mapped but rather to use the device limits as is
+   when more zones than the limits are mapped and 0 otherwise (no
+   limits).
+
+Damien Le Moal (4):
+  block: Improve checks on zone resource limits
+  dm: Call dm_revalidate_zones() after setting the queue limits
+  dm: Improve zone resource limits handling
+  dm: Remove unused macro DM_ZONE_INVALID_WP_OFST
+
+ block/blk-settings.c  |   8 ++
+ block/blk-zoned.c     |  20 ++++-
+ drivers/md/dm-table.c |  15 +++-
+ drivers/md/dm-zone.c  | 200 ++++++++++++++++++++++++++++++++----------
+ drivers/md/dm.h       |   1 +
+ 5 files changed, 190 insertions(+), 54 deletions(-)
+
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.45.2
+
