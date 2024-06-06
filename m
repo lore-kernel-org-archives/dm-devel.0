@@ -1,170 +1,160 @@
-Received: from fhigh7-smtp.messagingengine.com (fhigh7-smtp.messagingengine.com [103.168.172.158])
+Received: from 008.lax.mailroute.net (008.lax.mailroute.net [199.89.1.11])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62D42197A97
-	for <dm-devel@lists.linux.dev>; Thu,  6 Jun 2024 15:49:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.168.172.158
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D01D81E87F
+	for <dm-devel@lists.linux.dev>; Thu,  6 Jun 2024 16:45:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.11
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717688961; cv=none; b=rW2iD6iKx+PO5OJdpU9u3LBuiV54REVqHCzr5MK8Ec8v3+PZqkguAvc9vKGdylKwOsil5XLO+WzwVosoQ7pSlwsZvLimL84jx3NCb0iTVr3wkLVztcqfR6cMBcUYNDyNPz6c1hK+hVKZwDdM4lSWbHqrR0Emsk48QD5wV/jLIF0=
+	t=1717692314; cv=none; b=nhFggh9R68xTWBB0RZc/vmImZj2WrW4u0F8s3UK965bHXl7nPMmS9GxZzcu6AOyGfdHG9my8pR6+o+SmgZv4HNCcRyPL2dur6/7I5c+1dXrmcW0DA6fgHFQwnW0170TjTPFfIMQBJaLR7rs+JKOHe387LDSrwNTxrlUHFfQiW70=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717688961; c=relaxed/simple;
-	bh=blkcAxawQfOp8FKVyPTNiq+apb9XVVeYgrFAqAfZm64=;
-	h=MIME-Version:Message-Id:In-Reply-To:References:Date:From:To:Cc:
-	 Subject:Content-Type; b=uDRUX5NbhdiRK8kl39irBQCOTiY3AlxEM0cCAZtaIQuhhAuwDXVonGMtAzvcBkeaftwi2SIH/os+d23ynrLqNTSKr/Cst+wgq+Tihb8/bFs/pWFHD1NvVcIEo2j94klrwjObQOh0oPuF5OXD+Vi0yMWhPhFmIRwuLiMHpbjlFuY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=owlfolio.org; spf=pass smtp.mailfrom=owlfolio.org; dkim=pass (2048-bit key) header.d=owlfolio.org header.i=@owlfolio.org header.b=Z9CDih0Y; dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b=FM81h4m7; arc=none smtp.client-ip=103.168.172.158
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=owlfolio.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=owlfolio.org
+	s=arc-20240116; t=1717692314; c=relaxed/simple;
+	bh=DVWoZ94Ms0F2PXMXl9M29RDWyH9n8ugMwEG4I+rMNwk=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=ddNdLqWTEqhulc7JylpDcS5yqA3XeOlPBpoQeCNcHpRUKZz9peOgruATBcqTKXhEoumnjgaPGfqdN1B1YmBJdf59FRsSIPAHtf3mlgO2EV2Z2LwxBqSHwnoX1+niSq09vXktk2BIPSQeLrDMy0YaJHvBZ/ka5KDvmSedD3awoD8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=4mA5ZvVo; arc=none smtp.client-ip=199.89.1.11
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=owlfolio.org header.i=@owlfolio.org header.b="Z9CDih0Y";
-	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="FM81h4m7"
-Received: from compute5.internal (compute5.nyi.internal [10.202.2.45])
-	by mailfhigh.nyi.internal (Postfix) with ESMTP id 7C5B4114019B;
-	Thu,  6 Jun 2024 11:49:18 -0400 (EDT)
-Received: from imap45 ([10.202.2.95])
-  by compute5.internal (MEProxy); Thu, 06 Jun 2024 11:49:18 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=owlfolio.org; h=
-	cc:cc:content-type:content-type:date:date:from:from:in-reply-to
-	:in-reply-to:message-id:mime-version:references:reply-to:subject
-	:subject:to:to; s=fm3; t=1717688958; x=1717775358; bh=P6h+Wqx4kO
-	VRvZctp/y5T21qHXIrOnGp3NuAMhwKmv8=; b=Z9CDih0Y0A+AigMRYwWk0430Uk
-	n3m3mKkAfqMqI5VzOGY5gSYqdYaCY6LhkQE+gaxgzJFaggcO08leaFS2fNTCdC7B
-	bqipGLik2F8WNY8/VuXsLIU0fim6GcQ2oNFkk/OjexNcpJu/dG91UzXrB5EWzn4D
-	1Ga7Fs3fTt6YBaagKMYNItPCCg+yaf4FCzqOb2VGGokpvNuNeUsgiRlwdUlU0P5L
-	8uQLoBprOn9sxk0Q7k5s0a3q2ksmMKJ0WPnGHDERQpk2T8xexd0rNniBKXWyIjDr
-	e/08fIuBTLN06kiN/9AuP5GkKoTVzRYVRHgr5mFfmNyqv3YKUxlZftxekR/g==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	messagingengine.com; h=cc:cc:content-type:content-type:date:date
-	:feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
-	:message-id:mime-version:references:reply-to:subject:subject:to
-	:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=
-	fm1; t=1717688958; x=1717775358; bh=P6h+Wqx4kOVRvZctp/y5T21qHXIr
-	OnGp3NuAMhwKmv8=; b=FM81h4m7RnSZ43G+0N3ed2llYQsZcL6V2/C/kOVBUjih
-	tJUmiq+wQu/HTi8z0gXiIja2R/rL8qLJLrooSFtIEq0pxqWbi0ViYnLWRPX1ocFs
-	sNs/OCVTx2KRUMudX13pS4SGzUl0i1lRcoo4JpUc1xJE3K/dUJ0+naq/HazPjrTH
-	LG2UlT87WBIYmlO5LzwWLNSv9MQEz8iC61mgHfOap9VEJ+bvs7RPlb0iadcHeffb
-	ywCVt6lzkVVOPtyqu+pCUQXFbZ56ryXWcz6052PygY20QaPMY5NXs4kSpMiApaJ3
-	JvA3RODAtRA5JfKlmCpHdSTKJYLD3qzKLxtqUVseEw==
-X-ME-Sender: <xms:ftphZuf9Uxmpu-6JGUH-5spvvECbFZO9OXBJ9F7EnRAOncWGK8B_Ug>
-    <xme:ftphZoPByukLO3evfPdOTL4qP13G6n2dexSRkZRfzlkpa9zR0PV0_7RruijnNshEk
-    PXfB1Vim_i8AZv8agE>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvledrvdelkedgleefucetufdoteggodetrfdotf
-    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
-    uceurghilhhouhhtmecufedttdenucenucfjughrpefofgggkfgjfhffhffvvefutgesth
-    dtredtreertdenucfhrhhomhepfdgkrggtkhcuhggvihhnsggvrhhgfdcuoeiirggtkhes
-    ohiflhhfohhlihhordhorhhgqeenucggtffrrghtthgvrhhnpefhleefheduhfelgeehge
-    ejveehueeihedvgfeuueetteelieeiteehfefhleduieenucevlhhushhtvghrufhiiigv
-    pedtnecurfgrrhgrmhepmhgrihhlfhhrohhmpeiirggtkhesohiflhhfohhlihhordhorh
-    hg
-X-ME-Proxy: <xmx:ftphZvhuVKvFJN01vtVrh0EDSFqiSSS3976V6sVgKOWQQJuTh9oOKA>
-    <xmx:ftphZr97KXB8yPEZsRkWivEfGcYsRWhk21YN7Wj7TvsTszWNVmGRYA>
-    <xmx:ftphZqsOL_m2Sos6ViN2VYtgmvJYiosOD3Z-8dFeHaHOiWmdHqkq4g>
-    <xmx:ftphZiF9wbBF0eY_HWl_aHGbsTl2Xq_KfNZFgps_pkKpWzxQzsgFoA>
-    <xmx:ftphZj4mr2mTBg0vIhg0KB4S-xJnxILKcliytkdzyUEb1sBFs-YReDpy>
-Feedback-ID: i876146a2:Fastmail
-Received: by mailuser.nyi.internal (Postfix, from userid 501)
-	id 0F653272007C; Thu,  6 Jun 2024 11:49:17 -0400 (EDT)
-X-Mailer: MessagingEngine.com Webmail Interface
-User-Agent: Cyrus-JMAP/3.11.0-alpha0-497-g97f96844c-fm-20240526.001-g97f96844
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="4mA5ZvVo"
+Received: from localhost (localhost [127.0.0.1])
+	by 008.lax.mailroute.net (Postfix) with ESMTP id 4Vw9DS0Qyfz6Cnk9Y;
+	Thu,  6 Jun 2024 16:45:12 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1717692294; x=1720284295; bh=DVWoZ94Ms0F2PXMXl9M29RDW
+	yH9n8ugMwEG4I+rMNwk=; b=4mA5ZvVohYkAsNlESeJ3jT48VdyeK8RVsj3ddKMP
+	SOZ3qL+U8x9NM1ZGSjH50C5K8oZL02MYFmrM4LLS7LcN6Tnu5zK6VqD49X8s+/Wl
+	Q2pqYqBgt3v5m6dNRXCT45LrvYm9WAfeX/gCjCm7WTRpeTMdmX5dtuAQmOOSWnbN
+	hg557ukShq3D5vTZUmN6TJw6dClp7RzjuendtlKDt7Nc9zcakDR8XvWcguj3R4PG
+	/Sit8qPBUqK5xyJbF0768vVr5bMJMJ09pr7q3k1PsWR5jsUvXJYgUG+4L0lkcnZJ
+	KJVBRTo/nHq8gBaiIFh6kHDmcLWyOmgEpPd01gxx+e/Khg==
+X-Virus-Scanned: by MailRoute
+Received: from 008.lax.mailroute.net ([127.0.0.1])
+ by localhost (008.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id riXgj8xOY7Yj; Thu,  6 Jun 2024 16:44:54 +0000 (UTC)
+Received: from [172.20.24.239] (unknown [204.98.150.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: bvanassche@acm.org)
+	by 008.lax.mailroute.net (Postfix) with ESMTPSA id 4Vw9D15Xxtz6Cnk9X;
+	Thu,  6 Jun 2024 16:44:49 +0000 (UTC)
+Message-ID: <d4946174-32e1-47f0-b448-38377dae0600@acm.org>
+Date: Thu, 6 Jun 2024 10:44:47 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Message-Id: <a9625e9f-e08c-4b2e-995d-693b2a992281@app.fastmail.com>
-In-Reply-To: <ZmDvT/oWgVBiCw9o@dread.disaster.area>
-References: <1eb0ef1c-9703-43fd-9a51-bda24b9d2f1b@app.fastmail.com>
- <ZmDvT/oWgVBiCw9o@dread.disaster.area>
-Date: Thu, 06 Jun 2024 11:48:57 -0400
-From: "Zack Weinberg" <zack@owlfolio.org>
-To: "Dave Chinner" <david@fromorbit.com>
-Cc: dm-devel@lists.linux.dev, linux-xfs@vger.kernel.org
-Subject: Re: Reproducible system lockup, extracting files into XFS on dm-raid5 on
- dm-integrity on HDD
-Content-Type: text/plain
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
+ and request layer.
+To: Nitesh Shetty <nj.shetty@samsung.com>
+Cc: Christoph Hellwig <hch@lst.de>, Damien Le Moal <dlemoal@kernel.org>,
+ Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>,
+ Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+ martin.petersen@oracle.com, david@fromorbit.com, hare@suse.de,
+ damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com, joshi.k@samsung.com,
+ nitheshshetty@gmail.com, gost.dev@samsung.com, linux-block@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+ linux-fsdevel@vger.kernel.org
+References: <20240520102033.9361-3-nj.shetty@samsung.com>
+ <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org>
+ <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
+ <a866d5b5-5b01-44a2-9ccb-63bf30aa8a51@acm.org>
+ <665850bd.050a0220.a5e6b.5b72SMTPIN_ADDED_BROKEN@mx.google.com>
+ <abe8c209-d452-4fb5-90eb-f77b5ec1a2dc@acm.org> <20240601055931.GB5772@lst.de>
+ <d7ae00c8-c038-4bed-937e-222251bc627a@acm.org>
+ <20240604044042.GA29094@lst.de>
+ <4ffad358-a3e6-4a88-9a40-b7e5d05aa53c@acm.org>
+ <CGME20240606072827epcas5p285de8d4f3b0f6d3a87f8341414336b42@epcas5p2.samsung.com>
+ <66618886.630a0220.4d4fc.1c9cSMTPIN_ADDED_BROKEN@mx.google.com>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <66618886.630a0220.4d4fc.1c9cSMTPIN_ADDED_BROKEN@mx.google.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-On Wed, Jun 5, 2024, at 7:05 PM, Dave Chinner wrote:
-> On Wed, Jun 05, 2024 at 02:40:45PM -0400, Zack Weinberg wrote:
->> I am experimenting with the use of dm-integrity underneath dm-raid,
->> to get around the problem where, if a RAID 1 or RAID 5 array is
->> inconsistent, you may not know which copy is the good one.  I have
->> found a reproducible hard lockup involving XFS, RAID 5 and dm-
->> integrity.
->
-> I don't think there's any lockup or kernel bug here - this just looks
-> to be a case of having a really, really slow storage setup and
-> everything waiting for a huge amount of IO to complete to make
-> forwards progress.
-...
-> Userspace stalls on on writes because there are too many dirty pages
-> in RAM. It throttles all incoming writes, waiting for background
-> writeback to clean dirty pages.  Data writeback requires block
-> allocation which requires metadata modification. Metadata modification
-> requires journal space reservations which block waiting for metadata
-> writeback IO to complete. There are hours of metadata writeback needed
-> to free journal space, so everything pauses waiting for metadata IO
-> completion.
+On 6/6/24 01:28, Nitesh Shetty wrote:
+> On 04/06/24 04:44AM, Bart Van Assche wrote:
+>> On 6/3/24 21:40, Christoph Hellwig wrote:
+>>> There is no requirement to process them synchronously, there is just
+>>> a requirement to preserve the order.=C2=A0 Note that my suggestion a =
+few
+>>> arounds ago also included a copy id to match them up.=C2=A0 If we don=
+'t
+>>> need that I'm happy to leave it away.=C2=A0 If need it it to make sta=
+cking
+>>> drivers' lifes easier that suggestion still stands.
+>>
+>> Including an ID in REQ_OP_COPY_DST and REQ_OP_COPY_SRC operations soun=
+ds
+>> much better to me than abusing the merge infrastructure for combining
+>> these two operations into a single request. With the ID-based approach
+>> stacking drivers are allowed to process copy bios asynchronously and i=
+t
+>> is no longer necessary to activate merging for copy operations if
+>> merging is disabled (QUEUE_FLAG_NOMERGES).
+>>
+> Single request, with bio merging approach:
+> The current approach is to send a single request to driver,
+> which contains both destination and source information inside separate =
+bios.
+> Do you have any different approach in mind ?
 
-This makes a lot of sense.
+No. I did not propose to change how copy offload requests are sent to blo=
+ck
+drivers (other than stacking drivers).
 
-> RAID 5 writes are slow with spinning disks. dm-integrity makes writes
-> even slower.  If you storage array can sustain more than 50 random 4kB
-> writes a second, I'd be very surprised. It's going to be -very slow-.
+> If we want to proceed with this single request based approach,
+> we need to merge the destination request with source BIOs at some point=
+.
+> a. We chose to do it via plug approach.
+> b. Alternative I see is scheduler merging, but here we need some way to
+> hold the request which has destination info, until source bio is also
+> submitted.
+> c. Is there any other way, which I am missing here ?
 
-I wiped the contents of the filesystem and ran bonnie++ on it in direct
-I/O mode with 4k block writes, skipping the one-character write and
-small file creation tests.  This is what I got:
+There are already exceptions in blk_mq_submit_bio() for zoned writes and =
+for
+flush bios. Another exception could be added for REQ_OP_COPY_* bios. I'm =
+not
+claiming that this is the best possible alternative. I'm only mentioning =
+this
+to show that there are alternatives.
 
-Version  2.00       ------Sequential Output------ --Sequential Input- --Random-
-                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
-Name:Size etc        /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
-64G:4k::65536                 15.8m  19 60.5m  26            218m  31 279.1  13
-Latency                         659ms     517ms             61146us    3052ms
+> Copy ID approach:
+> We see 3 possibilities here:
+> 1. No merging: If we include copy-id in src and dst bio, the bio's will=
+ get
+> submitted separately and reach to the driver as separate requests.
+> How do we plan to form a copy command in driver ?
+> 2. Merging BIOs:
+> At some point we need to match the src bio with the dst bio and send th=
+is
+> information together to the driver. The current implementation.
+> This still does not solve the asynchronous submission problem, mentione=
+d
+> above.
+> 3. Chaining BIOs:
+> This won't work with stacked devices as there will be cloning, and henc=
+e
+> chain won't be maintained.
 
-I think this is doing seek-and-read, not seek-and-write, but 300 random
-reads per second is still really damn slow compared to the sequential
-performance.  And it didn't lock up (with unchanged hung task timeout of
-two minutes) so that also tends to confirm your hypothesis -- direct I/O
-means no write backlog.
+I prefer option (2). Option (1) could result in a deadlock because the so=
+urce
+and destination bio both would have to be converted into a request before
+these are sent to a request-based driver.
 
-(Do you know of a good way to benchmark seek-and-write
-performance, ideally directly on a block device instead of having
-a filesystem present?)
+Thanks,
 
-I don't actually care how slow it is to write things to this array,
-because (if I can ever get it working) it's meant to be archival
-storage, written to only rarely.  But I do need to get this tarball
-unpacked, I'd prefer it if the runtime of 'tar' would correspond closely
-to the actual time required to get the data all the way to stable
-storage, and disabling the hung task timeout seems like a kludge.
+Bart.
 
-...
-> So a 1.6GB journal can buffer hundreds of thousands of dirty 4kb
-> metadata blocks with writeback pending. Once the journal is full,
-> however, the filesystem has to start writing them back to make space
-> in the journal for new incoming changes. At this point, the filesystem
-> with throttle incoming metadata modifications to the rate at which it
-> can remove dirty metadata from the journal. i.e. it will throttle
-> incoming modifications to the sustained random 4kB write rate of your
-> storage hardware.
->
-> With at least a quarter of a million random 4kB writes pending in the
-> journal when it starts throttling, I'd suggest that you're looking at
-> several hours of waiting just to flush the journal, let alone complete
-> the untar process which will be generating new metadata all the
-> time....
-
-This reminds me of the 'bufferbloat' phenomenon over in networking land.
-Would it help to reduce the size of the journal to something like 6MB,
-which (assuming 50 random writes per second) would take only 30s to
-flush?  Is a journal that small, for a filesystem this large, likely to
-cause other problems? Are there any other tuning knobs you can think of
-that might restrict the rate of incoming metadata modifications from
-'tar' to a sustainable level from the get-go, instead of barging ahead
-and then hitting a wall? I'm inclined to doubt that VM-level writeback
-controls (as suggested elsethread) will help much, since they would not
-change how much data can pile up in the filesystem's journal, but I
-could be wrong.
-
-Thanks for your help so far.
-zw
