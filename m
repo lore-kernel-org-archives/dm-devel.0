@@ -1,87 +1,51 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6890819D8A9;
-	Thu,  6 Jun 2024 02:12:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36FFC1D53C
+	for <dm-devel@lists.linux.dev>; Thu,  6 Jun 2024 04:40:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717639931; cv=none; b=Y7vqcML5pDhP8SS32VY3IUN+tinkHEMW+1v4A2cOWM5KiRIkSDiK5zMeg38SaHxU70g1g8YbzX0PPOi6uuBGmbShIYjnQYAci0wWrFZ+CKw/f4ncRPGaWByz2mOiBUvOpnHgd/m1zI9OnecMwnHzKXVzLIe15gAQjKh6Tzay25w=
+	t=1717648805; cv=none; b=Ze/aYNBrGEX2V5fLIPFWHrLDaijXetAxCMOBwFtbWJgYOt8Rrznh1s3guu1DR56mH0tgMcpcmVa/GW7oasonWyk1UKY1rSc9/sbe9Lm+W33JFXwKoIUWxd5/qZ3CkiTWSKMDNTHl6Y/yiowm78L/Qn7Q42/PrZHsEzwMeRcRN54=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717639931; c=relaxed/simple;
-	bh=Nu0ebJvDvi3CvrhFcCQzVxNxSxRPBKNE1k+wt8mz6f4=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=nt3viixrmwEaNthapUC0g530Tjzs4I6U4cLd/l02GeUVc+Ndi5E1cerV63KXLw1beGjZuPjWzxg0bMOTz2aquRWZxnaF1wvPjn0dI38cj+/2kYS3IAqmdjn8+YY42gWM7IAiR/NApJuqWzIUnFIk6xKcKtbJsad06dP282oStEA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MOb4W/oD; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MOb4W/oD"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D0B06C2BD11;
-	Thu,  6 Jun 2024 02:12:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1717639930;
-	bh=Nu0ebJvDvi3CvrhFcCQzVxNxSxRPBKNE1k+wt8mz6f4=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=MOb4W/oDkh5yR87MB1s+n6GFhcjBdb1UARwGHNUMIP7opQJzeqSGdf8rkZ9Tl7ssS
-	 qzzTkgd6Z0Zi/6/0wkCOoGSfggwme0J291lLhs96ydlPHA1LnSBKdSnDM9UYnVcaxF
-	 zHSgcSVAQOOg96XZ0oIrTrSS/8deAxh403weVzL2KBiS6P8HgTHTS2xWiNkXcz9LT/
-	 lJSZeBi/IRTSp/zdxhKb5HTR9PFnh9PzfxDgeV3wv3mDW33d6/dTGRtT/Nn7XmfyJX
-	 FpFGnGYjDA0xyfuQBh8KE/HsLGxvXoEJCC0/ChRaKnptgCnvmI4v+E0tV1R+hw3fwC
-	 cOcTdn8NzuumQ==
-Message-ID: <11c62aed-0048-4420-8edc-a38df761bef2@kernel.org>
-Date: Thu, 6 Jun 2024 11:12:08 +0900
+	s=arc-20240116; t=1717648805; c=relaxed/simple;
+	bh=s0+Rnw3BIOmtEHhpPlqWlyP+AUKh4K1YturoffD+jBI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=oSxxTFC7R3V9xl/2j3FmGv6XDoJvbEMCZ89j/Si0EZw1WKW8vB1jqVV4Il0nzjWH6pGf4Wt0hL+LN8zdR9OXXWo3Bt94J+jZ7DnGg2bnms24sofwq4an4M4z+E6nEzjYKRE1l0iwh3eOQMiT8yOZHCBKocvIq4+VdYh/nXdHNTQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 1C3E268CFE; Thu,  6 Jun 2024 06:39:59 +0200 (CEST)
+Date: Thu, 6 Jun 2024 06:39:58 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v4 2/3] dm: Improve zone resource limits handling
+Message-ID: <20240606043958.GA8331@lst.de>
+References: <20240605075144.153141-1-dlemoal@kernel.org> <20240605075144.153141-3-dlemoal@kernel.org> <ZmDA5fmZMNGM1oFl@redhat.com> <90629a40-e45f-490b-bef6-436839d91b92@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 1/3] block: Improve checks on zone resource limits
-To: Niklas Cassel <cassel@kernel.org>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, Christoph Hellwig <hch@lst.de>,
- Benjamin Marzinski <bmarzins@redhat.com>
-References: <20240605075144.153141-1-dlemoal@kernel.org>
- <20240605075144.153141-2-dlemoal@kernel.org> <ZmCfmlnoo7wjQLTg@ryzen.lan>
- <2e8b1334-61a1-4c1c-a4f7-9550e32e7be6@kernel.org>
- <ZmEPFn9tvZb95fgz@ryzen.lan>
-Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <ZmEPFn9tvZb95fgz@ryzen.lan>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <90629a40-e45f-490b-bef6-436839d91b92@kernel.org>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On 6/6/24 10:21 AM, Niklas Cassel wrote:
->> Right now, this all works the same way for DM and nvme zns, so I think this is
->> all good. If anything, we should probably add a warning in the nvme driver
->> about the potentially unreliable moz/moz limits if we see a ZNS device with
->> multiple zoned namespaces.
-> 
-> Well, it is only a problem for ZNS devices with NS management.
-> 
-> If there are two ZNS namespaces on the device, and the device does not
-> support NS management, the device vendor would have been seriously silly
-> to not allocate and set the limits in the I/O Command Set Specific Identify
-> Namespace Data Structure for the Zoned Namespace Command Set correctly.
-> 
-> But yes, this concern cannot be solved in disk_update_zone_resources(),
-> which operates on per gendisk (and there is one gendisk per namespace),
-> so not much this function can do. If we were to do something, it would
-> have to be done in the nvme driver.
-> 
-> 
-> Perhaps if the device is ZNS, and does support NS management, but does
-> not have the Zoned Namespace Resource Management supported bit is set,
-> divide the MAR/MOR values reported by each namespace by the number of
-> ZNS namespaces?
+On Thu, Jun 06, 2024 at 08:52:32AM +0900, Damien Le Moal wrote:
+> Unless you have a better idea, I think we need to pass a queue_limits struct
+> pointer to blk_revalidate_disk_zones() -> disk_update_zone_resources(). This
+> pointer can be NULL, in which case disk_update_zone_resources() needs to do the
+> limit start_update+commit. But if it is not NULL, then
+> disk_update_zone_resources() must use the passed limits.
 
-Maybe. But that would still not provide any guarantee: a buggy application not
-respecting the limits would be able to steal resources from the other namespace.
-
-In any case, I think this is a discussion to have on the nvme list.
-
--- 
-Damien Le Moal
-Western Digital Research
+I think the right thing is to simply move the call to dm_revalidate_zones
+out of dm_set_zones_restrictions and after the queue_limits_set call
+in dm_table_set_restrictions.
 
