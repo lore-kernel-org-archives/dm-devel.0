@@ -1,75 +1,88 @@
-Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com [209.85.160.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 05A62328A0;
-	Thu,  6 Jun 2024 05:02:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A50F138384;
+	Thu,  6 Jun 2024 05:28:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717650142; cv=none; b=cu6myjqAmmXHuziR/DmLdPflGPzncMId4vE5FJzcGhHCijlGABZeS6uhfbZWYedSUpJq822RyxmdlRxLzbBLusGnt/p1Y9k0+An80mIABSGSocq5xnlYBEI0MLQRV+c4qi0/Nzt8fCXkto1XVThDDbYIwPDfWwxIZ6ERbA0KkZc=
+	t=1717651683; cv=none; b=JzaGb47ExJsGRaEBU3cpERlp1EVzz6BTmxnPM8X9bObXS2Ao5BxwPOmIsQ4QYQDYX4klTy0zAP4bvmKNqFBPCo758aNsnNjlKY8hjrLZLFwhoBtB967Ud+73peOBcX3vOFNphmgcF9ztRsVJE6fQAl8815Iosw7FQ18zy9akb9s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717650142; c=relaxed/simple;
-	bh=MPy2dmqKlCsrw5okIZFwkiGzwVi0bWXg1j0NfWvMFRQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=D79jmlYNFawq0+3ovLJxQLdiB3iwaKoo+ldGmvX/sADaDN3+4v3OWMJuL3CUimwhvM+LQWSTvC+BJfjbLb6Wy7jAan6B1V5rb1k2gvO7vtVHzlto4r8KDdd9diQhccDCsRvTR6Z3Taw9IrGpF8rqErGli7ajImF7SPR3MasQhkk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lgncuOy7; arc=none smtp.client-ip=209.85.160.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1717651683; c=relaxed/simple;
+	bh=eENIBCPHkm00GMg6HuX97VGHvgr6QRp4HKMNEJaCIpM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Q49P5QrOYc+viGoEOB9iNEUw977JAznYnq1qK8MJtexrGbI4mBFsmP/wGFI5U/hxS2F79rOH2wqVjWWdBdtYmFfqeRw/Uc0LcvTAzVv9Ga73ab++eKvXJzuqdhFZ5zkb/oJfAMMgo9PkbMubXUrYP2uIMw3J+SUAzVUG7UPu0ow=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fHGaWook; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lgncuOy7"
-Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-2544465c9e2so182985fac.2;
-        Wed, 05 Jun 2024 22:02:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1717650140; x=1718254940; darn=lists.linux.dev;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=MPy2dmqKlCsrw5okIZFwkiGzwVi0bWXg1j0NfWvMFRQ=;
-        b=lgncuOy7KBOrB/GHRwOboxXk4HU0THwIzxTUwywBOjJ0zie70yczsVJnAPN5dTRLS3
-         B+aHj/3v82cBBmNNrECbv73mcbZ5RTJWvtFWiagkSN4TaE1ZvS/Fqbrd2p3IyK6EZyV+
-         yborEd9RJ6QhWYwUHKzCVDJ/Kb+mBuJ/w/VJgUhVKPcQUon8mgh9JZX7JeNJob6ak1iy
-         Gg3Y36/B2cZ2lpcFZWHeTjhlD+xpuH7lH/2ot20TkZlXibaNWSRnaO6ZycHSUwEteWR3
-         TpyOz6d6Q40V5cHigY7nPcGAJNC0svktQE9Xwiuz8IeJId717S3La8Jk2O8VuqzeRnqT
-         21Iw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717650140; x=1718254940;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=MPy2dmqKlCsrw5okIZFwkiGzwVi0bWXg1j0NfWvMFRQ=;
-        b=OxAVvmX6ozhwmREqQtBpgVQIrst9xOO7TAObcoSSCh0A1E91GKr6CwAnmV9paxd+ac
-         7ovK8mmbssloGeCW7aOF3OBUPGvUtrUVgfYKCoOTvUj5Xhzbwup92vgNrpojs0mNzrpD
-         HAwDEXrzVkmlKNqPOKgVRUCLEQtk59+5f5YOdpjPjLC2ltjuRQVortFzJsA2F7qozisL
-         7xLr2abz8MJ5J5aHq4Z+iMF51Kj6xhOqSv330UjRa5yZoDyC3LXXirDzBhmuMIxM+6/5
-         s4kZDb+/WFQjVuJKY/rLeHo6bOD15s8hDQ9bfbhoWIKIRQc7iy75UeRewIYPlBJDANGJ
-         Gtfw==
-X-Forwarded-Encrypted: i=1; AJvYcCWuPkdlUVDbYRUDry43kJBJDSnWpvoP0AKTSyWr87g+a8JwLSEFtsDbkFQJvTrXnQIUMdhnOBaQ1yXbWrFgDF4uhaMDtWyYI9hbUJSD0UPd0zc/Ybg56CiWx2MbDKY+qSs=
-X-Gm-Message-State: AOJu0YzW89W7OumgFeAc+PL6y585FzvNcoS1MU058griJMMj/ZcMeFHz
-	8cs4zmHd0rnnBf9vXrdy5IIoe7dKdzDEnSCR3S5Qv7gpIAZxxo8TFKnGeL7QwV4+cDnWhJ2WWut
-	HuWe8eb33BJ1mZNyBCJEHE5HiBY4=
-X-Google-Smtp-Source: AGHT+IHPqrwGLrOpiYOHRKHF6jjAJEe69uLlr8JRuR9rDqq7Rjpi5pT7mqAtKEV0L+JskZqRkbXl08yzChKNyWs0Mrk=
-X-Received: by 2002:a05:6871:79c:b0:250:6be5:1fc5 with SMTP id
- 586e51a60fabf-251228adf01mr5001314fac.38.1717650140012; Wed, 05 Jun 2024
- 22:02:20 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fHGaWook"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id AB61CC2BD10;
+	Thu,  6 Jun 2024 05:28:02 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1717651683;
+	bh=eENIBCPHkm00GMg6HuX97VGHvgr6QRp4HKMNEJaCIpM=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=fHGaWookzEB1nl4KqrzDbHt8insomG1TZAd8kABfrnhMBGYiN7+jvSri0J4T25XP0
+	 8QqHddMAum8flEVCEVuA89TnTUEzbbE0RlIjlx6M4F30epGEGHmJAJ280aqZz3OEaW
+	 MjC3rD673jDehWZFsZrfTHcFaekKQ4cZCrvmd2/sfeBQyCUoNeOlRaGcVubHslXfRI
+	 LbGwHJCfPx3Bot+WkIKeZ0PCl7wlzrVJiXmEUkNm8HoPHxgRy7IPipNgfFt6za4KJF
+	 FbKGJOsKRc4STSuUd9sRvQOuXjfVsQpqgGN8Pgm21pU7IKxYsDa64+YTRr6djm2xS1
+	 NVDODtslsuwYQ==
+Date: Wed, 5 Jun 2024 22:28:01 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Steffen Klassert <steffen.klassert@secunet.com>, netdev@vger.kernel.org,
+	linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
+	dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v4 6/8] fsverity: improve performance by using
+ multibuffer hashing
+Message-ID: <20240606052801.GA324380@sol.localdomain>
+References: <20240603183731.108986-1-ebiggers@kernel.org>
+ <20240603183731.108986-7-ebiggers@kernel.org>
+ <Zl7gYOMyscYDKZ8_@gondor.apana.org.au>
+ <20240604184220.GC1566@sol.localdomain>
+ <ZmAthcxC8V3V3sm3@gondor.apana.org.au>
+ <ZmAuTceqwZlRJqHx@gondor.apana.org.au>
+ <ZmAz8-glRX2wl13D@gondor.apana.org.au>
+ <20240605191410.GB1222@sol.localdomain>
+ <ZmEYJQFHQRFKC5JM@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240605063031.3286655-1-hch@lst.de> <20240605063031.3286655-4-hch@lst.de>
-In-Reply-To: <20240605063031.3286655-4-hch@lst.de>
-From: Kanchan Joshi <joshiiitr@gmail.com>
-Date: Thu, 6 Jun 2024 05:01:53 +0530
-Message-ID: <CA+1E3rKjG+kG1Z1N0c69Z_P5eNq9BzshKqdB5Ee0ySPzJGg-0g@mail.gmail.com>
-Subject: Re: [PATCH 03/12] block: remove the BIP_IP_CHECKSUM flag
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>, 
-	Yu Kuai <yukuai3@huawei.com>, Dan Williams <dan.j.williams@intel.com>, 
-	Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>, 
-	Ira Weiny <ira.weiny@intel.com>, Keith Busch <kbusch@kernel.org>, 
-	Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>, linux-block@vger.kernel.org, 
-	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, nvdimm@lists.linux.dev, 
-	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ZmEYJQFHQRFKC5JM@gondor.apana.org.au>
 
-Reviewed-by: Kanchan Joshi <joshi.k@samsung.com>
+On Thu, Jun 06, 2024 at 10:00:05AM +0800, Herbert Xu wrote:
+> On Wed, Jun 05, 2024 at 12:14:10PM -0700, Eric Biggers wrote:
+> > 
+> > This would at most apply to AH, not to ESP.  Is AH commonly used these days?
+> 
+> No AH is completely useless.  However, this applies perfectly to
+> ESP, in conjunction with authenc.  Obviously we would need to add
+> request linking to authenc (AEAD) as well so that it can pass it
+> along to sha.
+> 
+> BTW, does any of this interleaving apply to AES? If so we should
+> explore adding request linking to skcipher as well.
+> 
+
+With AES, interleaving would only help with non-parallelizable modes such as CBC
+encryption.  Anyone who cares about IPsec performance should of course be using
+AES-GCM, which is parallelizable.  Especially since my other patch
+https://lore.kernel.org/linux-crypto/20240602222221.176625-2-ebiggers@kernel.org/
+is making AES-GCM twice as fast...
+
+With hashing we unfortunately don't have the luxury of there being widely used
+and accepted parallelizable algorithms.  In particular, all the SHAs are
+serialized.  So that's why interleaving makes sense there.
+
+In any case, it seems that what you're asking for at this point is far beyond
+the scope of this patchset.
+
+- Eric
