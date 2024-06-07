@@ -1,117 +1,165 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B9FE14005
-	for <dm-devel@lists.linux.dev>; Fri,  7 Jun 2024 16:50:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D6BF51B974
+	for <dm-devel@lists.linux.dev>; Fri,  7 Jun 2024 18:31:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.33
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717779032; cv=none; b=qPssrOd2+PYSpjRD451iwuSoQl6alNtUafxjKGcWKrjuYg66OfbFGzwj7wJBi0rsUU0VI5Lks26plQEjlC7mzQNk/0YR1oyuwLry547wXIW64hTdqj6zOb4jLTtvWGR/nKNBWo/oP/HpDaw7B6jX0lMwaCXaO5RnKFZ7FNgXrDQ=
+	t=1717785121; cv=none; b=eikzD4lX2BR5xGCcUBQgbJPoB5LUwlvc++lYDiQ8kSfJBmCGJhY5bEjMa6fD0gYAM0+zRCij7u6CvOi4B4X/+eusWZMnW9Cgq3faUHzkyI1VumcTd6vcqFyFnIhcKPXw2lrw9BLKNhgt1r8OL2es2POL7FgzqR2SDFkJbyxrseY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717779032; c=relaxed/simple;
-	bh=ZRShh94EBIDncgMfKsMEaYZBkckkqMmO406vevpRS78=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=s1xcSNcPf2St10Bl3KzOSCuISbBgcdRGRUQe1n1nytzKuKp9o5xx4hwvzWGUikheeYuh8DSFOTs9ihdo0JVxhLYSq4GWXKDuZtFaxP3WJ01G+N8lsGtjEzvYxZzYg6D7CwdFPa2r5g/xFK9i6nViUZ9SWvSMjt7KhAIRlybHrbQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hVihkznZ; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1717785121; c=relaxed/simple;
+	bh=5VGyEcgYUZVsYd3JEKkHt82oXNDR1d8g9jbtXoEWEPo=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:From:In-Reply-To:
+	 Content-Type:References; b=WQF0lEj4czK73yWpJ8tIhhu32LZEe/yVh5BK9bjbU/ywZ5yUGGdpzEDvg0Tb2A84xj2IAIug9QGy45ORw0FBkNRbOEmjT2T4SPr7B9Zo7CqvMeHTorAel4QoWD2Uqt3L6uchHR8SgbOTmEma+Bt/xi8goYfxL7zkZ3zxNG1Qmsc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=MDHcgyKZ; arc=none smtp.client-ip=203.254.224.33
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hVihkznZ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1717779030;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=U7msnklgYBOIfbgcaCxKz002QCLA3EeUmLoFR0q1Nlk=;
-	b=hVihkznZpiPE2cpA+rvX46v7UkURea7Dro0o3ExffQactqHhXe0mBUddJeVBpvOKFusHM5
-	nQgMol6jmeuIZVv0UhFguJzft6AiH/0Cqztq7kigxGtA9uTnU6hxmba6soPOcPZ0mxmQW8
-	FwFXG0rJAMMbJWNYnZGKZJt8plr7X8s=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-352-mONfFz0OMcW4N61P6CokGA-1; Fri,
- 07 Jun 2024 12:50:26 -0400
-X-MC-Unique: mONfFz0OMcW4N61P6CokGA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 788FB3806708;
-	Fri,  7 Jun 2024 16:50:25 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 32EE43C23;
-	Fri,  7 Jun 2024 16:50:24 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 0C00330C1C2E; Fri,  7 Jun 2024 16:50:24 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 08B043D91D;
-	Fri,  7 Jun 2024 18:50:24 +0200 (CEST)
-Date: Fri, 7 Jun 2024 18:50:23 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Mike Snitzer <snitzer@kernel.org>
-cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, 
-    "Martin K. Petersen" <martin.petersen@oracle.com>, 
-    Song Liu <song@kernel.org>, Yu Kuai <yukuai3@huawei.com>, 
-    Dan Williams <dan.j.williams@intel.com>, 
-    Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>, 
-    Ira Weiny <ira.weiny@intel.com>, Keith Busch <kbusch@kernel.org>, 
-    Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>, 
-    linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
-    linux-raid@vger.kernel.org, nvdimm@lists.linux.dev, 
-    linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org
-Subject: Re: move integrity settings to queue_limits v2
-In-Reply-To: <ZmMqfj3T9Ft680j6@kernel.org>
-Message-ID: <d686fec1-c883-b02a-f755-b63d2661df6f@redhat.com>
-References: <20240607055912.3586772-1-hch@lst.de> <ZmMqfj3T9Ft680j6@kernel.org>
+	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="MDHcgyKZ"
+Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
+	by mailout3.samsung.com (KnoxPortal) with ESMTP id 20240607183150epoutp03e7f784bd138bfd708965d5e50608493a~WzHT3-ll92849128491epoutp03Q
+	for <dm-devel@lists.linux.dev>; Fri,  7 Jun 2024 18:31:50 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com 20240607183150epoutp03e7f784bd138bfd708965d5e50608493a~WzHT3-ll92849128491epoutp03Q
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
+	s=mail20170921; t=1717785110;
+	bh=Q7UteAPU1jA8crxsj3DgD2vFH2FK2jVTwOwPPdbKvCw=;
+	h=Date:Subject:To:Cc:From:In-Reply-To:References:From;
+	b=MDHcgyKZ4cKFzzHyh298rfvSpNjrWKLBoXmDd7oVFirJx/15iqgXXR1MuN3zDyIer
+	 PeVDKTUxA5ifTA/F3zWtN3LWJLmOh/33/YK3vn+j49LByq4TOwNYUoLcTOozi9bg0s
+	 Af3+ET9A2brasJoe59n4V4Jce443KSgfC59uOhDw=
+Received: from epsnrtp4.localdomain (unknown [182.195.42.165]) by
+	epcas5p4.samsung.com (KnoxPortal) with ESMTP id
+	20240607183149epcas5p4f4e675de6d486120a013e2f505a94038~WzHSqWxtY1183311833epcas5p4W;
+	Fri,  7 Jun 2024 18:31:49 +0000 (GMT)
+Received: from epsmgec5p1new.samsung.com (unknown [182.195.38.182]) by
+	epsnrtp4.localdomain (Postfix) with ESMTP id 4VwqXz4NVDz4x9Pq; Fri,  7 Jun
+	2024 18:31:47 +0000 (GMT)
+Received: from epcas5p1.samsung.com ( [182.195.41.39]) by
+	epsmgec5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	A0.D9.08853.31253666; Sat,  8 Jun 2024 03:31:47 +0900 (KST)
+Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
+	epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
+	20240607183146epcas5p2274f401a5fa7bcaeab89a814847ab2af~WzHQU3USS2960329603epcas5p2S;
+	Fri,  7 Jun 2024 18:31:46 +0000 (GMT)
+Received: from epsmgmcp1.samsung.com (unknown [182.195.42.82]) by
+	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
+	20240607183146epsmtrp22776e0f93ea286e1fcb0913b1f4efa82~WzHQT-STE2710127101epsmtrp2M;
+	Fri,  7 Jun 2024 18:31:46 +0000 (GMT)
+X-AuditID: b6c32a44-d67ff70000002295-fd-666352132248
+Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
+	epsmgmcp1.samsung.com (Symantec Messaging Gateway) with SMTP id
+	E9.CD.18846.21253666; Sat,  8 Jun 2024 03:31:46 +0900 (KST)
+Received: from [107.122.11.51] (unknown [107.122.11.51]) by
+	epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
+	20240607183144epsmtip1be7eb2e9bc00f4f582c6ec22f2566f94~WzHOFwhcD3142631426epsmtip1e;
+	Fri,  7 Jun 2024 18:31:44 +0000 (GMT)
+Message-ID: <8d26d133-6fac-531c-d300-5b99678f1cbd@samsung.com>
+Date: Sat, 8 Jun 2024 00:01:43 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0)
+	Gecko/20100101 Thunderbird/91.13.1
+Subject: Re: [PATCH 04/11] block: remove the blk_integrity_profile structure
+Content-Language: en-US
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, "Martin K.
+ Petersen" <martin.petersen@oracle.com>
+Cc: Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
+	<mpatocka@redhat.com>, Song Liu <song@kernel.org>, Yu Kuai
+	<yukuai3@huawei.com>, Keith Busch <kbusch@kernel.org>, Sagi Grimberg
+	<sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org, nvdimm@lists.linux.dev,
+	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org
+From: Kanchan Joshi <joshi.k@samsung.com>
+In-Reply-To: <20240607055912.3586772-5-hch@lst.de>
+Content-Transfer-Encoding: 7bit
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrPJsWRmVeSWpSXmKPExsWy7bCmuq5wUHKawZFeBYvVd/vZLBYsmsti
+	sXL1USaLSYeuMVo8vTqLyWLvLW2L+cueslu0z9/FaNF9fQebxfLj/5gsJnZcZbJY+eMPq8W6
+	1+9ZLE7ckrY4vvwvm8WchWwOAh7n721k8Wg58pbV4/LZUo9NqzrZPDYvqfd4sXkmo8fumw1s
+	Hr3N79g8Pj69xeLxft9VNo/Pm+QCuKOybTJSE1NSixRS85LzUzLz0m2VvIPjneNNzQwMdQ0t
+	LcyVFPISc1NtlVx8AnTdMnOAnlFSKEvMKQUKBSQWFyvp29kU5ZeWpCpk5BeX2CqlFqTkFJgU
+	6BUn5haX5qXr5aWWWBkaGBiZAhUmZGdMun2EpWAxd8XF76eYGhj7ObsYOTkkBEwktn07ztLF
+	yMUhJLCbUWL74dWsEM4nRonTq7tZ4JxVc9vZYFoafy5khEjsZJQ42XMEynnLKDH7zmUmkCpe
+	ATuJT58OsoPYLAIqEmfPvmaHiAtKnJz5hAXEFhVIlvjZdQBsqrCAj8T/5ltgcWYBcYlbT+aD
+	zRERKJX4veQpE8gCZoGFzBL9N6YAORwcbAKaEhcml4LUcAoYSUy/t44RoldeYvvbOcwQl37g
+	kFhw3xHCdpH4fHwVC4QtLPHq+BZ2CFtK4vO7vVCfJUtcmnmOCcIukXi85yCUbS/ReqqfGWQt
+	M9Da9bv0IVbxSfT+fgJ2jYQAr0RHmxBEtaLEvUlPWSFscYmHM5awQpR4SNz4kQgSFhJYyygx
+	rZ1pAqPCLKQwmYXk91lIfpmFsHcBI8sqRsnUguLc9NRk0wLDvNRyeHQn5+duYgSndC2XHYw3
+	5v/TO8TIxMF4iFGCg1lJhNevOD5NiDclsbIqtSg/vqg0J7X4EKMpMHImMkuJJucDs0peSbyh
+	iaWBiZmZmYmlsZmhkjjv69a5KUIC6YklqdmpqQWpRTB9TBycUg1MThMuKNnZX08RcGCIaHom
+	xlby4bLQa/XHH6ZUOug1m83LUL36RHiPxjONvLmnF6n0nOWSXLQ8Z2WvCXN0UNGkxL4LIt9m
+	bCnetClnpbPF9bMOS6bqz3pp9kfInHd28lebtEVvjeQuO31LN9j182PM88zK9KbIcha2r/tf
+	XKs+MKN5Rfqb94+4e7nMdvGaSJ2QNwiYfbpNO3nqKefTa84pf4mx13n39CFf3Z2b695bvDU6
+	ax+eXc96LOmFwb4ZWqG7jqTxr7eaIFdQeZqDU04qbaLa175a3s3SPX6TW5NK37IpMp6z4dmv
+	JPPu+xrhPV1BSboLf25+/WeGgLJk5tadW9sELU1VVql/2hizfO1aJZbijERDLeai4kQA5sVg
+	g3IEAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFtrFIsWRmVeSWpSXmKPExsWy7bCSnK5QUHKawaOH6har7/azWSxYNJfF
+	YuXqo0wWkw5dY7R4enUWk8XeW9oW85c9Zbdon7+L0aL7+g42i+XH/zFZTOy4ymSx8scfVot1
+	r9+zWJy4JW1xfPlfNos5C9kcBDzO39vI4tFy5C2rx+WzpR6bVnWyeWxeUu/xYvNMRo/dNxvY
+	PHqb37F5fHx6i8Xj/b6rbB6fN8kFcEdx2aSk5mSWpRbp2yVwZUy6fYSlYDF3xcXvp5gaGPs5
+	uxg5OSQETCQafy5k7GLk4hAS2M4osa75NwtEQlyi+doPdghbWGLlv+fsEEWvGSVW/dnIBJLg
+	FbCT+PTpIFgRi4CKxNmzr9kh4oISJ2c+ARskKpAs8fLPRLC4sICPxP/mW2BxZqAFt57MB5sj
+	IlAq0f9vBhPIAmaBhcwSi06/ZoPYtpZR4sDTtUAOBwebgKbEhcmlIA2cAkYS0++tY4QYZCbR
+	tbULypaX2P52DvMERqFZSO6YhWTfLCQts5C0LGBkWcUomlpQnJuem1xgqFecmFtcmpeul5yf
+	u4kRHL1aQTsYl63/q3eIkYmD8RCjBAezkgivX3F8mhBvSmJlVWpRfnxRaU5q8SFGaQ4WJXFe
+	5ZzOFCGB9MSS1OzU1ILUIpgsEwenVANTxdN/T21YDvzQ2nY+a+ma6/uK+X88UJbZx//7zO9n
+	/tN+p9zsuyDNE6Bne/5r2BapjJrcVaUMHRN9mUPWP15xu8chRyJX9/ytbS2P9LbtzAhRWhyb
+	f/e02qrpL1Yucb9XYCiw6djzSyu/fJxxedFjqQ8xL2ZquNd/dDxgyqV7XdfWJOSOv/Hdw5d/
+	KvsLfVorwPHZ7fUau+/t/ZnfLwr9qnp9+1LuMxbjq38mHHn1ReTA/sdrahLnrXi8Q8y4zG6D
+	zJuM1/2833ex8bz/Njd2qtbJLscbp+9FZDUUdJifFDH2t9Pf/cVnxsvYhoVn2FZ+eHz9dkGv
+	8tXn7ff4k942X/FIWHggrXgL78FtO298jhBQYinOSDTUYi4qTgQAwDSZfE0DAAA=
+X-CMS-MailID: 20240607183146epcas5p2274f401a5fa7bcaeab89a814847ab2af
+X-Msg-Generator: CA
+Content-Type: text/plain; charset="utf-8"
+CMS-TYPE: 105P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20240607060043epcas5p1a6d4d8c3536fe3b6e43ad34155803fc2
+References: <20240607055912.3586772-1-hch@lst.de>
+	<CGME20240607060043epcas5p1a6d4d8c3536fe3b6e43ad34155803fc2@epcas5p1.samsung.com>
+	<20240607055912.3586772-5-hch@lst.de>
 
+On 6/7/2024 11:28 AM, Christoph Hellwig wrote:
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -1177,7 +1177,7 @@ static int crypt_integrity_ctr(struct crypt_config *cc, struct dm_target *ti)
+>   	struct mapped_device *md = dm_table_get_md(ti->table);
+>   
+>   	/* We require an underlying device with non-PI metadata */
+> -	if (!bi || strcmp(bi->profile->name, "nop")) {
+> +	if (!bi || bi->csum_type != BLK_INTEGRITY_CSUM_NONE) {
+>   		ti->error = "Integrity profile not supported.";
+>   		return -EINVAL;
 
+I'd rename BLK_INTEGRITY_CSUM_NONE to BLK_INTEGRITY_CSUM_NOP. Overall.
 
-On Fri, 7 Jun 2024, Mike Snitzer wrote:
+Current choice is a bit confusing as it indicates that code is trying to 
+handle "none" case while it is actually trying to handle/support "nop" 
+profile.
 
-> On Fri, Jun 07, 2024 at 07:58:54AM +0200, Christoph Hellwig wrote:
-> > Hi Jens, hi Martin,
-> > 
-> > this series converts the blk-integrity settings to sit in the queue
-> > limits and be updated through the atomic queue limits API.
-> > 
-> > I've mostly tested this with nvme, scsi is only covered by simple
-> > scsi_debug based tests.
-> > 
-> > For MD I found an pre-existing error handling bug when combining PI
-> > capable devices with not PI capable devices.  The fix was posted here
-> > (and is included in the git branch below):
-> > 
-> >    https://lore.kernel.org/linux-raid/20240604172607.3185916-1-hch@lst.de/
-> > 
-> > For dm-integrity my testing showed that even the baseline fails to create
-> > the luks-based dm-crypto with dm-integrity backing for the authentication
-> > data.  As the failure is non-fatal I've not addressed it here.
-> 
-> Setup is complicated. Did you test in terms of cryptsetup's testsuite?
-> Or something else?
-> 
-> Would really like to see these changes verified to work, with no
-> cryptsetup regressions, before they go in.
->  
-> > Note that the support for native metadata in dm-crypt by Mikulas will
-> > need a rebase on top of this, but as it already requires another
-> > block layer patch and the changes in this series will simplify it a bit
-> > I hope that is ok.
-> 
-> Should be fine, Mikulas can you verify this series to pass
-> cryptsetup's testsuite before you rebase?
+With extended format off:
+# nvme format /dev/nvme0n1 -l 5 -m 0 -i 0 -f
+Success formatting namespace:1
+# cat /sys/block/nvme0n1/integrity/format
+nop
 
-Yes - it passes the cryptsetup testsuite.
+With extended format on:
+# nvme format /dev/nvme0n1 -l 5 -m 1 -i 0 -f
+Success formatting namespace:1
+# cat /sys/block/nvme0n1/integrity/format
+none
 
-Mikulas
+nop is the case when bi->tuple_size is perfectly valid (i.e. not zero), 
+and the code needs to have support for it.
+none is the case when bi->tuple_size is zero, and the code only needs to 
+ensure that it does nothing.
 
-> Thanks,
-> Mike
-> 
+That said, the change can be deferred to a future patch as well.
 
+So, looks good!
+
+Reviewed-by: Kanchan Joshi <joshi.k@samsung.com>
