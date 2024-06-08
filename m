@@ -1,62 +1,96 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C66E81FDA;
-	Sat,  8 Jun 2024 05:10:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 237688828;
+	Sat,  8 Jun 2024 20:49:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717823428; cv=none; b=A6nmFxIfmSn6BtBcObvUw74N1xZaPwMEQIetsSaf2m3V7vkhMjk43PSDFupM1koufj3JRzLPY22arFzAv6U9Jx82rg0zdP3CbQMDF4ToIQwhtc1DHKWm7XKV1dTpCIpQSzhZ8R1WpcDIlBBfV+7Q77yjCPDF8P8tWDmXKFdRWCk=
+	t=1717879764; cv=none; b=B4RlR4hOjzn/xSDZbbiR5s0bQEnaELoe6JDt/oPqNlfWetm1hvykfSU4ZHOqNO2/bgyZ7mPumfKjBRJggb8DcsqaBsLx+Cl9dd8Suq/qJ9mxyTjtiEp7LQWDOxyUOfaatwNJl2S/Ap1kTf80X6i9Px4XqDENib2FohbuweRPCjk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717823428; c=relaxed/simple;
-	bh=LcO1iRhj+p2foFEfQqNRcpOV9bbj+m8SiMAVM4hl/qQ=;
+	s=arc-20240116; t=1717879764; c=relaxed/simple;
+	bh=0kGZD8MX2St5muruzo0JFVrFwFHiT4IiWX1Ui3nLMYE=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=knLWKZzuZJ57DL12QzipkulzBmXYZX5FEP/SOGEgzmU8HqBa25Xp+TO2GKeowaL+ZTc2N1BxrpVP8Sot/sz+jkegtV6UzvysLUSDZLwpk8cI0RnRUmlmTdIPwVt2bYAHriiQau1xLWlRINywuvUtkCAojh1RTytybUPtpvb6dWc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 2F9AF68AFE; Sat,  8 Jun 2024 07:10:23 +0200 (CEST)
-Date: Sat, 8 Jun 2024 07:10:22 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>, Mikulas Patocka <mpatocka@redhat.com>,
-	Jens Axboe <axboe@kernel.dk>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	Song Liu <song@kernel.org>, Yu Kuai <yukuai3@huawei.com>,
-	Dan Williams <dan.j.williams@intel.com>,
-	Vishal Verma <vishal.l.verma@intel.com>,
-	Dave Jiang <dave.jiang@intel.com>, Ira Weiny <ira.weiny@intel.com>,
-	Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
-	Chaitanya Kulkarni <kch@nvidia.com>, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
-	nvdimm@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org
-Subject: Re: move integrity settings to queue_limits v2
-Message-ID: <20240608051022.GA23972@lst.de>
-References: <20240607055912.3586772-1-hch@lst.de> <ZmMqfj3T9Ft680j6@kernel.org>
+	 Content-Type:Content-Disposition:In-Reply-To; b=ZneBpr7Go75vU56cq2Arh+vr3Ei0yFlGlSVT85UM7B2fwU2XfP5Hpbxs06Kg63CJSeRB56iNHsk2UCxKvHHTwm1nVC8l03oyUnHYSpFbs1PlasTdT8HwtADh+qaml39KHTQ+x4qACLVTKx/cw2o+1Z1nLG+FpVzq23Mp9irWvUk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=bc/CoZuh; arc=none smtp.client-ip=46.235.229.95
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="bc/CoZuh"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
+	; s=bytemarkmx; h=Content-Type:MIME-Version:Message-ID:Subject:From:Date:From
+	:Subject; bh=rpf2zlxdcYZsCHLf8SwDT+0k74c3JFHCMQ1U6HltCD4=; b=bc/CoZuhS83TzMBI
+	htT2lW1SIAP2l7vgHlD71gTcPut2fREIOfKVEeHSG2koSrMu8NcGi9GvcuTa8GGhlDOPOsDk5/zBn
+	dAclCMdMbh1bXK4FPHwfK/djMNu+bh28T4qwZaqiuAs7xS6yUskcra6NYwuItYOKLXAjl5NriB6w0
+	Xf7R0/K1DQTZ4WaX6VAnZN9IDTXvahb5/1PYaPq+HmIYo+VYEQOUhaK0gcQFXzgK+8HmJqFo8X+Uf
+	VDzu09/ysFrVVIWLErSN7X539dsxgbaBh/QhfTFSHSHFQm3x9vND2jl33dCNPFI5mNjmTSXL+63N1
+	641HfbequAYgRe2ufw==;
+Received: from dg by mx.treblig.org with local (Exim 4.96)
+	(envelope-from <dg@treblig.org>)
+	id 1sG2zq-0059yc-2W;
+	Sat, 08 Jun 2024 20:49:06 +0000
+Date: Sat, 8 Jun 2024 20:49:06 +0000
+From: "Dr. David Alan Gilbert" <linux@treblig.org>
+To: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] dm cache metadata: remove unused struct 'thunk'
+Message-ID: <ZmTDwlUVu6HAyJ_X@gallifrey>
+References: <20240523210550.309116-1-linux@treblig.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
-In-Reply-To: <ZmMqfj3T9Ft680j6@kernel.org>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <20240523210550.309116-1-linux@treblig.org>
+X-Chocolate: 70 percent or better cocoa solids preferably
+X-Operating-System: Linux/6.1.0-21-amd64 (x86_64)
+X-Uptime: 20:47:45 up 31 days,  8:01,  1 user,  load average: 0.00, 0.00, 0.00
+User-Agent: Mutt/2.2.12 (2023-09-09)
 
-On Fri, Jun 07, 2024 at 11:42:54AM -0400, Mike Snitzer wrote:
-> > For dm-integrity my testing showed that even the baseline fails to create
-> > the luks-based dm-crypto with dm-integrity backing for the authentication
-> > data.  As the failure is non-fatal I've not addressed it here.
+* linux@treblig.org (linux@treblig.org) wrote:
+> From: "Dr. David Alan Gilbert" <linux@treblig.org>
 > 
-> Setup is complicated. Did you test in terms of cryptsetup's testsuite?
+> 'thunk' has been unused since
+> commit f177940a8091 ("dm cache metadata: switch to using the new
+> cursor api for loading metadata").
+> 
+> Remove it.
+> 
+> Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
 
-I didn't realize cryptsetup has yet another testsuite..
+Ping
 
-> Or something else?
-
-I just followed a random guid on the internet on how to set up the
-authenticated encryption, wrote a script to do it and used that for
-testing.
-
+> ---
+>  drivers/md/dm-cache-metadata.c | 9 ---------
+>  1 file changed, 9 deletions(-)
+> 
+> diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+> index 96751cd3d181..0ad9dc1824fa 100644
+> --- a/drivers/md/dm-cache-metadata.c
+> +++ b/drivers/md/dm-cache-metadata.c
+> @@ -1282,15 +1282,6 @@ int dm_cache_insert_mapping(struct dm_cache_metadata *cmd,
+>  	return r;
+>  }
+>  
+> -struct thunk {
+> -	load_mapping_fn fn;
+> -	void *context;
+> -
+> -	struct dm_cache_metadata *cmd;
+> -	bool respect_dirty_flags;
+> -	bool hints_valid;
+> -};
+> -
+>  static bool policy_unchanged(struct dm_cache_metadata *cmd,
+>  			     struct dm_cache_policy *policy)
+>  {
+> -- 
+> 2.45.1
+> 
+-- 
+ -----Open up your eyes, open up your mind, open up your code -------   
+/ Dr. David Alan Gilbert    |       Running GNU/Linux       | Happy  \ 
+\        dave @ treblig.org |                               | In Hex /
+ \ _________________________|_____ http://www.treblig.org   |_______/
