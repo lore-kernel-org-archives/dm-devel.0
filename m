@@ -1,96 +1,120 @@
-Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com [209.85.210.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 237688828;
-	Sat,  8 Jun 2024 20:49:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D814374F6
+	for <dm-devel@lists.linux.dev>; Sun,  9 Jun 2024 14:17:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717879764; cv=none; b=B4RlR4hOjzn/xSDZbbiR5s0bQEnaELoe6JDt/oPqNlfWetm1hvykfSU4ZHOqNO2/bgyZ7mPumfKjBRJggb8DcsqaBsLx+Cl9dd8Suq/qJ9mxyTjtiEp7LQWDOxyUOfaatwNJl2S/Ap1kTf80X6i9Px4XqDENib2FohbuweRPCjk=
+	t=1717942652; cv=none; b=ewI3dRr9k7kLKVt+FYNl2Xnl9oTbGpm1ibktD33LzsP6tsvygjNZP4Y12UaKoKedVpXYOCbZEAIan363fPIjLmMi0d4dzWMkO8fniML+dJGlXDuKpzCWTiLM+zwfjgGTty1hQwD9e2H9EQWlgo/QmWwp8hE+To//rHqQDWR0Fw0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717879764; c=relaxed/simple;
-	bh=0kGZD8MX2St5muruzo0JFVrFwFHiT4IiWX1Ui3nLMYE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ZneBpr7Go75vU56cq2Arh+vr3Ei0yFlGlSVT85UM7B2fwU2XfP5Hpbxs06Kg63CJSeRB56iNHsk2UCxKvHHTwm1nVC8l03oyUnHYSpFbs1PlasTdT8HwtADh+qaml39KHTQ+x4qACLVTKx/cw2o+1Z1nLG+FpVzq23Mp9irWvUk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=bc/CoZuh; arc=none smtp.client-ip=46.235.229.95
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
+	s=arc-20240116; t=1717942652; c=relaxed/simple;
+	bh=NJDToOELLavN79YkpNHBhxfCYr8Bzt9pRlexqHPJ7XY=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=brWBeePTPl7vTLOaTWdUT8ejJZNd8UdoPl8+HJ4EmL3VkDDJZdPdFpd/sZC8evDyOqZsFfrA9PqnttT3Zsmi23wHpv+oAswlMAi5fHnluC8hWRUVIfz64acUpgalc3wIsSPqUtvcuDl65EHazNUGHWBXUEjdI92QtjzLefIL0xA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gt2zY6pT; arc=none smtp.client-ip=209.85.210.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="bc/CoZuh"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
-	; s=bytemarkmx; h=Content-Type:MIME-Version:Message-ID:Subject:From:Date:From
-	:Subject; bh=rpf2zlxdcYZsCHLf8SwDT+0k74c3JFHCMQ1U6HltCD4=; b=bc/CoZuhS83TzMBI
-	htT2lW1SIAP2l7vgHlD71gTcPut2fREIOfKVEeHSG2koSrMu8NcGi9GvcuTa8GGhlDOPOsDk5/zBn
-	dAclCMdMbh1bXK4FPHwfK/djMNu+bh28T4qwZaqiuAs7xS6yUskcra6NYwuItYOKLXAjl5NriB6w0
-	Xf7R0/K1DQTZ4WaX6VAnZN9IDTXvahb5/1PYaPq+HmIYo+VYEQOUhaK0gcQFXzgK+8HmJqFo8X+Uf
-	VDzu09/ysFrVVIWLErSN7X539dsxgbaBh/QhfTFSHSHFQm3x9vND2jl33dCNPFI5mNjmTSXL+63N1
-	641HfbequAYgRe2ufw==;
-Received: from dg by mx.treblig.org with local (Exim 4.96)
-	(envelope-from <dg@treblig.org>)
-	id 1sG2zq-0059yc-2W;
-	Sat, 08 Jun 2024 20:49:06 +0000
-Date: Sat, 8 Jun 2024 20:49:06 +0000
-From: "Dr. David Alan Gilbert" <linux@treblig.org>
-To: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] dm cache metadata: remove unused struct 'thunk'
-Message-ID: <ZmTDwlUVu6HAyJ_X@gallifrey>
-References: <20240523210550.309116-1-linux@treblig.org>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gt2zY6pT"
+Received: by mail-pf1-f169.google.com with SMTP id d2e1a72fcca58-7042ee09f04so698878b3a.0
+        for <dm-devel@lists.linux.dev>; Sun, 09 Jun 2024 07:17:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1717942650; x=1718547450; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=TutpqlrSfL/EF9pT63bvOTQrpOoXNL5CWPlMZU8S7qU=;
+        b=gt2zY6pTtT3ItApQuQ4RufFitDQ2f3NONqpQmAvaB6Ars57C+3b6ZhnMIKX9xIdEmK
+         8C2SAMplvi52Wk+lOnznDfalNCZxAC4RrLVm2L7r8Hg9bYHt5hRxCZHNq4YKsidjuXC6
+         Q2J2hXGIM5tXvnSemBGP1czL8Hgvbl0+/0sRxV2jl8dGpQvPikalvAy/jZgjAp5q7Jio
+         jdXJshnHQkIWIt725ZNgrBJnTvCmRRcoZVy8zip4/kpwhJ4NdhK0abBfSo1yUJSSuevP
+         CxTOIihWmqvsNxodue2MU2kY/Mg3x+JWsVcD9p5EkrLlFmbv6DKja7UgnErLQiiDXVcF
+         DDtw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1717942650; x=1718547450;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=TutpqlrSfL/EF9pT63bvOTQrpOoXNL5CWPlMZU8S7qU=;
+        b=L62uBzAeWSZPlW3w6PBDsc+imkMHUb80NXMjcCA93eeBTFNmt1Veard3kvFHg5O5Jy
+         d9khy7iyzilmT75dvgGC17DQBI4lc2I3BjJr/tbD338zVm0PpQKYqHv9wWrye/pG44/m
+         aoSkv95Bn0LrW31Yx4Irc+Xnb9z/dfTBZpj3bJRc0I37OEKP9RvT6r8tN875h5iDMzc1
+         4xDuntcHaCX2MRSoTVNtAT//dp+cOtHzYViUyxJjpITsefiL4rE0vp5xMqQ65A5goiPb
+         ESQu2Q54DRUnSuLHdPBJ9903rfxQ0DHYRnqAqpk+OUGJpF1KoJ1kqqiYfp5phXbj+9U9
+         vIpw==
+X-Forwarded-Encrypted: i=1; AJvYcCVLYx/iSzLMBwI2fm+/RQ6qtLPE+81chjz8TLCtaGMKAXroCKlElhDPzShnRwRnAmO3afr45pqHrs4XrNRpv/BmV2V9PCFfkoc=
+X-Gm-Message-State: AOJu0YzzvG1q05LirxCHyS3+Qa1PC4WzJkSvrAPyB/TW35kl7kywP4gI
+	SSxsWxzuiugavrbBi4GPoG1nEJXIqWc55vqZOYqofkaYBdEBgdjdm21Zg7dn
+X-Google-Smtp-Source: AGHT+IFTYQkeJxZrMdLUEDOMYJfJADY46i3otPb5Xg6VepNEXgcNkbZzzwYqyTOBwy5rjnS0JFuV0Q==
+X-Received: by 2002:a05:6a20:7490:b0:1b5:97da:dfde with SMTP id adf61e73a8af0-1b597dae2ccmr3868311637.43.1717942649827;
+        Sun, 09 Jun 2024 07:17:29 -0700 (PDT)
+Received: from dev0.. ([49.43.162.161])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-7041ffa7cfasm2767555b3a.112.2024.06.09.07.17.26
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 09 Jun 2024 07:17:29 -0700 (PDT)
+From: Abhinav Jain <jain.abhinav177@gmail.com>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Cc: skhan@linuxfoundation.org,
+	javier.carrasco.cruz@gmail.com,
+	jain.abhinav177@gmail.com
+Subject: [PATCH] dm: Add support for escaped characters in str_field_delimit()
+Date: Sun,  9 Jun 2024 14:17:21 +0000
+Message-Id: <20240609141721.52344-1-jain.abhinav177@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-In-Reply-To: <20240523210550.309116-1-linux@treblig.org>
-X-Chocolate: 70 percent or better cocoa solids preferably
-X-Operating-System: Linux/6.1.0-21-amd64 (x86_64)
-X-Uptime: 20:47:45 up 31 days,  8:01,  1 user,  load average: 0.00, 0.00, 0.00
-User-Agent: Mutt/2.2.12 (2023-09-09)
+Content-Transfer-Encoding: 8bit
 
-* linux@treblig.org (linux@treblig.org) wrote:
-> From: "Dr. David Alan Gilbert" <linux@treblig.org>
-> 
-> 'thunk' has been unused since
-> commit f177940a8091 ("dm cache metadata: switch to using the new
-> cursor api for loading metadata").
-> 
-> Remove it.
-> 
-> Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
+Add a new variable for escaped characters.
 
-Ping
+If an escaped character (\) is found before the separator, and if the 
+separator is not found or if the escaped character is located before the
+separator, then move the separator ahead and continue searching for the
+next separator.
 
-> ---
->  drivers/md/dm-cache-metadata.c | 9 ---------
->  1 file changed, 9 deletions(-)
-> 
-> diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-> index 96751cd3d181..0ad9dc1824fa 100644
-> --- a/drivers/md/dm-cache-metadata.c
-> +++ b/drivers/md/dm-cache-metadata.c
-> @@ -1282,15 +1282,6 @@ int dm_cache_insert_mapping(struct dm_cache_metadata *cmd,
->  	return r;
->  }
->  
-> -struct thunk {
-> -	load_mapping_fn fn;
-> -	void *context;
-> -
-> -	struct dm_cache_metadata *cmd;
-> -	bool respect_dirty_flags;
-> -	bool hints_valid;
-> -};
-> -
->  static bool policy_unchanged(struct dm_cache_metadata *cmd,
->  			     struct dm_cache_policy *policy)
->  {
-> -- 
-> 2.45.1
-> 
+Return the pointer to remainder string after the delimiter. If the
+separator was found, return a pointer to the character immediately after
+the delimiter (s + 1). If the separator was not found, return NULL.
+
+Signed-off-by: Abhinav Jain <jain.abhinav177@gmail.com>
+---
+ drivers/md/dm-init.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index 2a71bcdba92d..bef6a582a4ae 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -87,11 +87,21 @@ static void __init dm_setup_cleanup(struct list_head *devices)
+  */
+ static char __init *str_field_delimit(char **str, char separator)
+ {
+-	char *s;
++	char *s, *escaped;
+ 
+-	/* TODO: add support for escaped characters */
+ 	*str = skip_spaces(*str);
+ 	s = strchr(*str, separator);
++
++	/* Check for escaped character */
++	escaped = strchr(*str, '\\');
++	if (escaped && (s == NULL || escaped < s)) {
++		/*
++		 * If escaped character comes before the separator, move
++		 * the separator ahead & continue searching for next one.
++		 */
++		s = strchr(escaped + 1, separator);
++	}
++
+ 	/* Delimit the field and remove trailing spaces */
+ 	if (s)
+ 		*s = '\0';
 -- 
- -----Open up your eyes, open up your mind, open up your code -------   
-/ Dr. David Alan Gilbert    |       Running GNU/Linux       | Happy  \ 
-\        dave @ treblig.org |                               | In Hex /
- \ _________________________|_____ http://www.treblig.org   |_______/
+2.34.1
+
