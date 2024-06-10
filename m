@@ -1,120 +1,87 @@
-Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com [209.85.210.169])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D814374F6
-	for <dm-devel@lists.linux.dev>; Sun,  9 Jun 2024 14:17:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 899F612E48;
+	Mon, 10 Jun 2024 06:59:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1717942652; cv=none; b=ewI3dRr9k7kLKVt+FYNl2Xnl9oTbGpm1ibktD33LzsP6tsvygjNZP4Y12UaKoKedVpXYOCbZEAIan363fPIjLmMi0d4dzWMkO8fniML+dJGlXDuKpzCWTiLM+zwfjgGTty1hQwD9e2H9EQWlgo/QmWwp8hE+To//rHqQDWR0Fw0=
+	t=1718002740; cv=none; b=e4kyUNj2MAQxfR4T1Ev4TB5Emyi78/+3xO3j5W7nxkZV3tcDOaCUmWvvmYZgSBZG9jIqFm4Fh9BWwWgKZRJoSp/1p4Xn+my0dkaFsCjcI9gbOZpHj9YEfyMhj0BrYrvp94i1rADq0ByW/DZYNhPOOT2vu8LDGeESjBDscWg3zlQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1717942652; c=relaxed/simple;
-	bh=NJDToOELLavN79YkpNHBhxfCYr8Bzt9pRlexqHPJ7XY=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=brWBeePTPl7vTLOaTWdUT8ejJZNd8UdoPl8+HJ4EmL3VkDDJZdPdFpd/sZC8evDyOqZsFfrA9PqnttT3Zsmi23wHpv+oAswlMAi5fHnluC8hWRUVIfz64acUpgalc3wIsSPqUtvcuDl65EHazNUGHWBXUEjdI92QtjzLefIL0xA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gt2zY6pT; arc=none smtp.client-ip=209.85.210.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1718002740; c=relaxed/simple;
+	bh=ivnGVeMbxFHaIZSxfMPDQu8PhpHK+D98ERkqQAbXv7I=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=PCn8eFvdZg/kdIM2It92I8HiNJlaVcwMM780STQEa6k058bKudZ7aaMw24zLPTdVJPKHZyStlbolRIS1xAD18dJbSHoc4T0Twl+YzlD3VcxKOQp1RyXGciA9tYJ0R1HVPdbJX+75xLgKHvdrqGZWHmgeDlFyYrsS8fLhQHjBaBE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=u4Zwp5WZ; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gt2zY6pT"
-Received: by mail-pf1-f169.google.com with SMTP id d2e1a72fcca58-7042ee09f04so698878b3a.0
-        for <dm-devel@lists.linux.dev>; Sun, 09 Jun 2024 07:17:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1717942650; x=1718547450; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=TutpqlrSfL/EF9pT63bvOTQrpOoXNL5CWPlMZU8S7qU=;
-        b=gt2zY6pTtT3ItApQuQ4RufFitDQ2f3NONqpQmAvaB6Ars57C+3b6ZhnMIKX9xIdEmK
-         8C2SAMplvi52Wk+lOnznDfalNCZxAC4RrLVm2L7r8Hg9bYHt5hRxCZHNq4YKsidjuXC6
-         Q2J2hXGIM5tXvnSemBGP1czL8Hgvbl0+/0sRxV2jl8dGpQvPikalvAy/jZgjAp5q7Jio
-         jdXJshnHQkIWIt725ZNgrBJnTvCmRRcoZVy8zip4/kpwhJ4NdhK0abBfSo1yUJSSuevP
-         CxTOIihWmqvsNxodue2MU2kY/Mg3x+JWsVcD9p5EkrLlFmbv6DKja7UgnErLQiiDXVcF
-         DDtw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1717942650; x=1718547450;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=TutpqlrSfL/EF9pT63bvOTQrpOoXNL5CWPlMZU8S7qU=;
-        b=L62uBzAeWSZPlW3w6PBDsc+imkMHUb80NXMjcCA93eeBTFNmt1Veard3kvFHg5O5Jy
-         d9khy7iyzilmT75dvgGC17DQBI4lc2I3BjJr/tbD338zVm0PpQKYqHv9wWrye/pG44/m
-         aoSkv95Bn0LrW31Yx4Irc+Xnb9z/dfTBZpj3bJRc0I37OEKP9RvT6r8tN875h5iDMzc1
-         4xDuntcHaCX2MRSoTVNtAT//dp+cOtHzYViUyxJjpITsefiL4rE0vp5xMqQ65A5goiPb
-         ESQu2Q54DRUnSuLHdPBJ9903rfxQ0DHYRnqAqpk+OUGJpF1KoJ1kqqiYfp5phXbj+9U9
-         vIpw==
-X-Forwarded-Encrypted: i=1; AJvYcCVLYx/iSzLMBwI2fm+/RQ6qtLPE+81chjz8TLCtaGMKAXroCKlElhDPzShnRwRnAmO3afr45pqHrs4XrNRpv/BmV2V9PCFfkoc=
-X-Gm-Message-State: AOJu0YzzvG1q05LirxCHyS3+Qa1PC4WzJkSvrAPyB/TW35kl7kywP4gI
-	SSxsWxzuiugavrbBi4GPoG1nEJXIqWc55vqZOYqofkaYBdEBgdjdm21Zg7dn
-X-Google-Smtp-Source: AGHT+IFTYQkeJxZrMdLUEDOMYJfJADY46i3otPb5Xg6VepNEXgcNkbZzzwYqyTOBwy5rjnS0JFuV0Q==
-X-Received: by 2002:a05:6a20:7490:b0:1b5:97da:dfde with SMTP id adf61e73a8af0-1b597dae2ccmr3868311637.43.1717942649827;
-        Sun, 09 Jun 2024 07:17:29 -0700 (PDT)
-Received: from dev0.. ([49.43.162.161])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-7041ffa7cfasm2767555b3a.112.2024.06.09.07.17.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 09 Jun 2024 07:17:29 -0700 (PDT)
-From: Abhinav Jain <jain.abhinav177@gmail.com>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Cc: skhan@linuxfoundation.org,
-	javier.carrasco.cruz@gmail.com,
-	jain.abhinav177@gmail.com
-Subject: [PATCH] dm: Add support for escaped characters in str_field_delimit()
-Date: Sun,  9 Jun 2024 14:17:21 +0000
-Message-Id: <20240609141721.52344-1-jain.abhinav177@gmail.com>
-X-Mailer: git-send-email 2.34.1
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="u4Zwp5WZ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7A23FC2BBFC;
+	Mon, 10 Jun 2024 06:58:58 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1718002740;
+	bh=ivnGVeMbxFHaIZSxfMPDQu8PhpHK+D98ERkqQAbXv7I=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=u4Zwp5WZfN3JbnULfaBvjFdQu8zg2HDbZjeqxqkZOfK4/gZdIMpaIPsO0+068sf0Y
+	 ridVelfr18qM27RfkZ/oisq0CJuuFtol6EIOGsUzjwsUWZOwe9858Hb/gFsJsLs4xx
+	 LhaEOZmerB/uuz4AUyngB3oHZABVC6A2B+Gs3cCkZp2OG1mfhM0zwLQpDRuUzUfN1Q
+	 3dQdW9fO+LnqtDcgQGLdnLxYzD+PeME/nuplqlf0KcGpI7dVz/oqWL3YFJjtrUoMF/
+	 VIVzK3AddXGO7oA7s16BBWSy/H39WGb9WAMGD9tA5qaGUgjhbXv7qpgSSZ1RCS/rjj
+	 MVBbLKKSHRZ6w==
+Date: Mon, 10 Jun 2024 08:58:55 +0200
+From: Niklas Cassel <cassel@kernel.org>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] block: Optimize disk zone resource cleanup
+Message-ID: <ZmakLyHAFQmiAgmx@ryzen.lan>
+References: <20240607002126.104227-1-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240607002126.104227-1-dlemoal@kernel.org>
 
-Add a new variable for escaped characters.
+On Fri, Jun 07, 2024 at 09:21:26AM +0900, Damien Le Moal wrote:
+> For zoned block devices using zone write plugging, an rcu_barrier() call
+> is needed in disk_free_zone_resources() to synchronize freeing of zone
+> write plugs and the destrution of the mempool used to allocate the
+> plugs. The barrier call does slow down a little teardown of zoned block
+> devices but should not affect teardown of regular block devices or zoned
+> block devices that do not use zone write plugging (e.g. zoned DM devices
+> that do not require zone append emulation).
+> 
+> Modify disk_free_zone_resources() to return early if we do not have a
+> mempool to start with, that is, if the device does not use zone write
+> plugging. This avoids the costly rcu_barrier() and speeds up disk
+> teardown.
+> 
+> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: dd291d77cc90 ("block: Introduce zone write plugging")
+> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+> ---
+>  block/blk-zoned.c | 3 +++
+>  1 file changed, 3 insertions(+)
+> 
+> diff --git a/block/blk-zoned.c b/block/blk-zoned.c
+> index 8f89705f5e1c..137842dbb59a 100644
+> --- a/block/blk-zoned.c
+> +++ b/block/blk-zoned.c
+> @@ -1552,6 +1552,9 @@ static void disk_destroy_zone_wplugs_hash_table(struct gendisk *disk)
+>  
+>  void disk_free_zone_resources(struct gendisk *disk)
+>  {
+> +	if (!disk->zone_wplugs_pool)
+> +		return;
+> +
+>  	cancel_work_sync(&disk->zone_wplugs_work);
+>  
+>  	if (disk->zone_wplugs_wq) {
+> -- 
+> 2.45.2
+> 
 
-If an escaped character (\) is found before the separator, and if the 
-separator is not found or if the escaped character is located before the
-separator, then move the separator ahead and continue searching for the
-next separator.
-
-Return the pointer to remainder string after the delimiter. If the
-separator was found, return a pointer to the character immediately after
-the delimiter (s + 1). If the separator was not found, return NULL.
-
-Signed-off-by: Abhinav Jain <jain.abhinav177@gmail.com>
----
- drivers/md/dm-init.c | 14 ++++++++++++--
- 1 file changed, 12 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
-index 2a71bcdba92d..bef6a582a4ae 100644
---- a/drivers/md/dm-init.c
-+++ b/drivers/md/dm-init.c
-@@ -87,11 +87,21 @@ static void __init dm_setup_cleanup(struct list_head *devices)
-  */
- static char __init *str_field_delimit(char **str, char separator)
- {
--	char *s;
-+	char *s, *escaped;
- 
--	/* TODO: add support for escaped characters */
- 	*str = skip_spaces(*str);
- 	s = strchr(*str, separator);
-+
-+	/* Check for escaped character */
-+	escaped = strchr(*str, '\\');
-+	if (escaped && (s == NULL || escaped < s)) {
-+		/*
-+		 * If escaped character comes before the separator, move
-+		 * the separator ahead & continue searching for next one.
-+		 */
-+		s = strchr(escaped + 1, separator);
-+	}
-+
- 	/* Delimit the field and remove trailing spaces */
- 	if (s)
- 		*s = '\0';
--- 
-2.34.1
-
+Reviewed-by: Niklas Cassel <cassel@kernel.org>
