@@ -1,104 +1,105 @@
-Received: from mail-oi1-f175.google.com (mail-oi1-f175.google.com [209.85.167.175])
+Received: from mail-yw1-f170.google.com (mail-yw1-f170.google.com [209.85.128.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 38A9543AA3
-	for <dm-devel@lists.linux.dev>; Tue, 11 Jun 2024 16:28:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D7B1358235
+	for <dm-devel@lists.linux.dev>; Tue, 11 Jun 2024 16:50:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718123294; cv=none; b=UvxmFQy1Tt6hH5HEZ4dVVAAZB46lufb4wftCaQhChgQstcvARi4BkaFw5LuPiQsZntsWM+wMfC3TXF2uS76992+3RVt1UmCWp9gIJpFiYqbTJDOhIZe1CkzZ2SvbXMcO6EGtQmycEMOXUUO58ctRTRl59hRR05663aWeoRAUa9c=
+	t=1718124660; cv=none; b=JI3KzvSZ1f7cW99dJcbig8Se4LSjcILWhHQ8D+89SzPoer5nr2dj7sVaVQ/UkR26efhI5CmHpwXhska7uel4wPUdBGfq/cpXk/4POw3VIMEN2kHqmYJ/fRQBknb5JsmIK64/ZE8T2gEbLhv1HhWuiIduIpXjgWsOMlQQ6gldvrw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718123294; c=relaxed/simple;
-	bh=N4evEqm5Lsj9muDRZ0FKGlEsgvOKjl0qugGTleH/ab8=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=bXYkniy54JewNoTMk8fZIJd5EKBV1NPWsWYWwecr6YqL8RupipFJlVzZGTOmP/z9d85Py0CXksYuwboZsPJILYQ+sLIXCkZLtpNvPt8e231if1jhwNKBq7ydl7a8LeGGPYD8nUFmWx81MgASAHgBC4RqioIXrRqXsGWo4+DQPqg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=qohxpE05; arc=none smtp.client-ip=209.85.167.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	s=arc-20240116; t=1718124660; c=relaxed/simple;
+	bh=2FT/emrK48iE3dx07WXN0ST/iq8T21acuyaCQMRLCLQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=N8Zv5CwySfiWAbVp1jyL56B2PcXchJyu0qW3eBDtz5BjpwBsFJMJFDt6OI1HU8+NpS2b59B/x2fXbpRw+B5PLP8RDflJp4qPgsIiZkqFxW8c+bSM8bpAFpD+nkzG7JX5EizLYyru1T1P4nqMoy0KnA/1E0dcuLh55dRG3jHyuBs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=toxicpanda.com; spf=none smtp.mailfrom=toxicpanda.com; dkim=pass (2048-bit key) header.d=toxicpanda-com.20230601.gappssmtp.com header.i=@toxicpanda-com.20230601.gappssmtp.com header.b=KBs+BqJk; arc=none smtp.client-ip=209.85.128.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=toxicpanda.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=toxicpanda.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="qohxpE05"
-Received: by mail-oi1-f175.google.com with SMTP id 5614622812f47-3d226c5a157so1671192b6e.2
-        for <dm-devel@lists.linux.dev>; Tue, 11 Jun 2024 09:28:13 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=toxicpanda-com.20230601.gappssmtp.com header.i=@toxicpanda-com.20230601.gappssmtp.com header.b="KBs+BqJk"
+Received: by mail-yw1-f170.google.com with SMTP id 00721157ae682-627f3265898so62729747b3.3
+        for <dm-devel@lists.linux.dev>; Tue, 11 Jun 2024 09:50:57 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1718123292; x=1718728092; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=BG7XPsDBrgukiLlYYahx3Tk9saQ0mEeAf77iSA+2xAk=;
-        b=qohxpE052TXJjsmcMVpwSmZ2pvvzd3GWiJQJWO9n95V/ccHoPIeNtP0b7j59sPbIb4
-         OyhOPq3MJRBzxiCvwI4HpWq4v8HQCEmgaCUFTJBR3wMh7R1uJ21tk1To+pFJEdKAPkrf
-         vA3sMzR5Iv+G99bwTJ8gA/LPIJRmVoG3iMw8acPY5HOGhnkajTXJVR05k0OHo8XNrqcI
-         m4AbTx9pNnMJDAsZqYBnHdZIefN1R8KDihp7xti0kd1E/p1MHIKCy8CDeGGbNg6Xa2Ok
-         mgt1FPUetHM8TqPCxFS9X3vumkHcnQdfMhuATcuay/Kh6ECsFPOBU8MuXCAfvFFW01/w
-         8f9w==
+        d=toxicpanda-com.20230601.gappssmtp.com; s=20230601; t=1718124657; x=1718729457; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=k7qH/Egkqtc5OmSCKcG8suDn1pwScsKWRQ+gioBgKgY=;
+        b=KBs+BqJkjpfdoeT0FekhAXu5BzSdxRNqGDBCsWKFZRxZaGdSS2YbH4tZcIqUvdN3Np
+         9LApHh0C0I4COWlx31NJirMC2hLNGWZBk7wmxB1/0Xu+w4ZsVIScakEt7WLCqfP33obC
+         /U9q8VK6REyY04tQtAOEFInoxP9CtgJn7ReFq+u+zVvecgYTioyj1eGn55w94WNWvxPr
+         Ngq5JrAJBWDjvauzuoulGdceUdQArZirMuv+upEE4yEj5YTuZf6CIAsp4jlfODzMjEjj
+         I37ugKxbK5mQ3WS3WksxcgYpRNp1gKTtRclJfuz3LySJy720bopx/3TAgMgo8Yduvggt
+         ojHQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718123292; x=1718728092;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=BG7XPsDBrgukiLlYYahx3Tk9saQ0mEeAf77iSA+2xAk=;
-        b=W4yD3wRqgnyZlRc23rLC68JgWMIgAnl1ko1zL44o0B9h5vy1/tdyM5atGEBKEBK4Mn
-         pmji2g0CCIgJ51TCzt/oAEXBavcGWVJqGbCKdIUKKml+mJ3cvPW0/D3fydeDe8iV9Tv7
-         JktsTJATQwOafO2jJl3jBtbUBPYYrsCCQZ4enFB6QFS1kc3XrKJ4Fcq+hxAWd2aH/1Pt
-         oIbWhtapufu7UaUjdDqrlfA2cJ9K2IMtJmcRcw4PcAp+jBAmaSuZu9T4hOj0F6UhB6iA
-         iym398Nc8UMjH+b3M7/+eOtqtHtINZU1UWKuiCFpLBx1dKRz41j2zVBM8xkHMDr0/0tL
-         4RWA==
-X-Forwarded-Encrypted: i=1; AJvYcCWTQitNgungNuu8GTmS0/IH2eD9OYqSsccQSeMXM36cwLOivcPyP5tOG9atI8ZYfXe5lb0sF9rRsl9IiqdGGZ+bVp6+9KROZtQ=
-X-Gm-Message-State: AOJu0YyljI9qdv0vq5OvTsWNpnGF68M8yUSuMq3KGWOz35tUqzIlqMWi
-	g2qOjjTcSY7k1XAukW40jA3jjZgL8FrVUYds5IdUxPZLJCRLSPVcI2N0SdXBvEVLIrZPRNccAAX
-	k1AWnKXrpp/svFFQTsXi4IpoerKpw29wJwsXf
-X-Google-Smtp-Source: AGHT+IGsoxkLL97yYbUdTS+m9HxBL/aA7VS6tK+dAweHiy1stwZYh0uBGwlgxKNC988k8KBFPrrE/j5bFzDX0CXaftQ=
-X-Received: by 2002:a05:6808:2183:b0:3d2:1f88:3e86 with SMTP id
- 5614622812f47-3d21f88455amr12786369b6e.37.1718123292024; Tue, 11 Jun 2024
- 09:28:12 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1718124657; x=1718729457;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=k7qH/Egkqtc5OmSCKcG8suDn1pwScsKWRQ+gioBgKgY=;
+        b=vINUrFXv0giVry1S32fN81hyHd+zrvmn2VFHVkWzwd17ydo98m6GW4AK2oaJv4r6Mn
+         ryq4nR1KJ7pHzqjH+bufZ+Mwwm32OD90pmAzGrPE33yLIA6LuAqo2hgPhw2gtDf97Fpr
+         NinV019IDGsJhgCoECESvaRttESyg7pDskcxFS8rIpBu77Air3AMfkVV/0Kz27pZ3jZG
+         3JjManJqPcIyhDd/R+JQvXQ/PGA+XZIS01e5ke36EC6pYlFlCGCuJFtr1wpujIWhjlUk
+         8Cfe9A2TaXlz3ONw+jDmca4vyc5eJFAxKH6+8l+OCgY9pA69IIQ4z2lkThgrZppoWKdo
+         vjVw==
+X-Forwarded-Encrypted: i=1; AJvYcCXoxhlEyTPXklI6iclOFUdFjQNo26S+WpRzSU8DrYglQsruZCgB6KgIfCs9VTzAlrsSFRY4slUzw2tGK4V18wc9Phm18ewEpk0=
+X-Gm-Message-State: AOJu0YwHK6KcaV0mJA64fNEak8U86rIEigLgwjzbBNlD7fjiqXXtdV7t
+	oGD/mk9vpJuHWOsbBGqT+5jJHCLnAIzaQUWWTgV0sEJ/8IpQsUx93BipUedMszo=
+X-Google-Smtp-Source: AGHT+IFLbNcRGoXteJvsvQz9ePKtTqtffGprFSIVvQoC+S7q0aJ0DFFhhqHjAFy+KyUVXYjD8ktBew==
+X-Received: by 2002:a0d:d851:0:b0:618:95a3:70b9 with SMTP id 00721157ae682-62cd565129cmr130634777b3.36.1718124656832;
+        Tue, 11 Jun 2024 09:50:56 -0700 (PDT)
+Received: from localhost (syn-076-182-020-124.res.spectrum.com. [76.182.20.124])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-62ccaef2825sm20935207b3.139.2024.06.11.09.50.56
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 11 Jun 2024 09:50:56 -0700 (PDT)
+Date: Tue, 11 Jun 2024 12:50:55 -0400
+From: Josef Bacik <josef@toxicpanda.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Geert Uytterhoeven <geert@linux-m68k.org>,
+	Richard Weinberger <richard@nod.at>,
+	Philipp Reisner <philipp.reisner@linbit.com>,
+	Lars Ellenberg <lars.ellenberg@linbit.com>,
+	Christoph =?iso-8859-1?Q?B=F6hmwalder?= <christoph.boehmwalder@linbit.com>,
+	Ming Lei <ming.lei@redhat.com>,
+	"Michael S. Tsirkin" <mst@redhat.com>,
+	Jason Wang <jasowang@redhat.com>,
+	Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
+	Yu Kuai <yukuai3@huawei.com>,
+	Vineeth Vijayan <vneethv@linux.ibm.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	linux-m68k@lists.linux-m68k.org, linux-um@lists.infradead.org,
+	drbd-dev@lists.linbit.com, nbd@other.debian.org,
+	linuxppc-dev@lists.ozlabs.org, ceph-devel@vger.kernel.org,
+	virtualization@lists.linux.dev, xen-devel@lists.xenproject.org,
+	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
+	linux-mtd@lists.infradead.org, nvdimm@lists.linux.dev,
+	linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org, linux-block@vger.kernel.org
+Subject: Re: [PATCH 09/26] nbd: move setting the cache control flags to
+ __nbd_set_size
+Message-ID: <20240611165055.GD247672@perftesting>
+References: <20240611051929.513387-1-hch@lst.de>
+ <20240611051929.513387-10-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240611034822.36603-1-ebiggers@kernel.org>
-In-Reply-To: <20240611034822.36603-1-ebiggers@kernel.org>
-From: Sami Tolvanen <samitolvanen@google.com>
-Date: Tue, 11 Jun 2024 09:27:32 -0700
-Message-ID: <CABCJKuf-yUQVh_gpO80qbifGyonQYDC-=QxL+PPwUzprXqQBUw@mail.gmail.com>
-Subject: Re: [PATCH v5 00/15] Optimize dm-verity and fsverity using
- multibuffer hashing
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev, 
-	dm-devel@lists.linux.dev, x86@kernel.org, 
-	linux-arm-kernel@lists.infradead.org, Ard Biesheuvel <ardb@kernel.org>, 
-	Bart Van Assche <bvanassche@acm.org>, Herbert Xu <herbert@gondor.apana.org.au>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240611051929.513387-10-hch@lst.de>
 
-Hi Eric,
+On Tue, Jun 11, 2024 at 07:19:09AM +0200, Christoph Hellwig wrote:
+> Move setting the cache control flags in nbd in preparation for moving
+> these flags into the queue_limits structure.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-On Mon, Jun 10, 2024 at 8:49=E2=80=AFPM Eric Biggers <ebiggers@kernel.org> =
-wrote:
->
-> On many modern CPUs, it is possible to compute the SHA-256 hash of two
-> equal-length messages in about the same time as a single message, if all
-> the instructions are interleaved.  This is because each SHA-256 (and
-> also most other cryptographic hash functions) is inherently serialized
-> and therefore can't always take advantage of the CPU's full throughput.
->
-> An earlier attempt to support multibuffer hashing in Linux was based
-> around the ahash API.  That approach had some major issues, as does the
-> alternative ahash-based approach proposed by Herbert (see my response at
-> https://lore.kernel.org/linux-crypto/20240610164258.GA3269@sol.localdomai=
-n/).
-> This patchset instead takes a much simpler approach of just adding a
-> synchronous API for hashing equal-length messages.
->
-> This works well for dm-verity and fsverity, which use Merkle trees and
-> therefore hash large numbers of equal-length messages.
+Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 
-Thank you for continuing to work on this! Improving dm-verity
-performance is a high priority for Android, and this patch series
-shows very promising results. FWIW, I would like to see this merged
-upstream, and any ahash improvements handled in follow-up patches. For
-the series:
+Thanks,
 
-Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
-
-Sami
+Josef
