@@ -1,83 +1,119 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 61EC62E417;
-	Tue, 11 Jun 2024 15:39:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C2F6376EC
+	for <dm-devel@lists.linux.dev>; Tue, 11 Jun 2024 15:43:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718120387; cv=none; b=AGywJKyrPATH0lMoBgm/eUqHmqPuS8bODpuoRayzS73LbM0E5u715lbETeAK5lJdkydMpb3K24Q8hfELJqknix6HNAtwltGEl4XKPnPPe+WbyCh+bAgtyR2US/prm4lQGJTpJ0bIjYLngRH4BM/5Qqe3AmMGZWb/AYTbn65GgHw=
+	t=1718120614; cv=none; b=XDfdKC5Nv43aJJ/p1cJdYXNvE3NIlOUYQJf4H0EsYJwWNRn3zNQAmD0VWzq0LJfMZU8T0Fi1g2EKBMih5Y4W3FXgt4Nu9+IaaY3LyqFO7WQ+V5MLdU/tTvv1cqfGim0sc4VLTeU2GwPTPME3NuNUULk9EsKpg5DwEezBgQhfqGo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718120387; c=relaxed/simple;
-	bh=l0Wz8/b/qUtp1MMRy0nBNac1T85JAy+dV2wUzOiVwmE=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ol2hWGK4QoDg3+Lbv6yS5BeuOdbNugmbLzadMld/6r6qIrJYCglueaBeMl5/GfiuaLcZdcHiONNDB+zXKOwmVxIi0B6RtOg4rcZ55UgSqw4UjPD07s8KFQergqQsbB7fto3pm8Iv7ScFgq2sjcu82yca5asf80RSjROV1VnniOg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=t2mckJAW; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1718120614; c=relaxed/simple;
+	bh=hxyesTbSn4JUu13b+/8fKE9DKC9Hdh6kphyvoTo4A04=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=gpisrdJdjTJE/liLBYAKATSpwsJwUffkc5j/pLpGaLqf6nrVte6JWJZWfSiPBOqNergMB9caS48xURaPT3bg0B9Mt3I8FnjV3BEszuwOeWsDYvQbHbwHKzwQQZysIMME9HG+Twglat1BDNjF5GGPzuZHOpEJGGKbM7/zgpxglCM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=g3ImpHwF; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="t2mckJAW"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 13EB9C4AF49;
-	Tue, 11 Jun 2024 15:39:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1718120387;
-	bh=l0Wz8/b/qUtp1MMRy0nBNac1T85JAy+dV2wUzOiVwmE=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=t2mckJAW+oe1EJP7zUAW4wC/6q5Fvol2jDGiPnlHM86g+Bmevz63HuvAGuvUgTNOO
-	 XJLwtZLybIuXwwigMd2WDyLECknlRHJi0YljL69h7tOV44WHr1GPA9bhQH1wZy8TDD
-	 0roD58YLFsI+LKpGXOMGd0aKG4JPNI+MIrPy8Mc/6gUUl/kmumW5IDyU3z7n3/aWtX
-	 sEGslOsiG4WRU9y2u3Etyk0VFygoHuE0uNO0qSERXsDgo4Hfhb7IY4lijRcjrL0jy2
-	 AlKAQkL18Mqq9zZlDuzvI0AhI3XS24DwRD7zi+YXNimLuhY0ip0QOPyp7VeYl/GanV
-	 Iv5nhcoON8zqw==
-Received: by mail-lj1-f173.google.com with SMTP id 38308e7fff4ca-2ebf5b259ffso6655351fa.1;
-        Tue, 11 Jun 2024 08:39:46 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AJvYcCUkWzADQkD2y7zznEbbKFBn8H8BoBX/yFDboQHn2utMdh3z1CVJlMfen6gphrwpsRKdQxGfbCoAau7TufyNG93qgQ4MtVDTThf2hMJ6AzEKalrogINOLz8P1fG9RZenH9APvg==
-X-Gm-Message-State: AOJu0YylA8MdrTIfQRXoj0kVp8KRvLQIRy3oj4cl8igAHncc88D07AVP
-	vmAeLa27q2gN9sOOkjwrbpC5dDB/zwdQF3uZQq6fu8/rpsq1hwJw93rV3m8M45k8M3c7oBYUj9/
-	vfh86w9fvmT5cIsUDtbk3zEs5yqg=
-X-Google-Smtp-Source: AGHT+IG7spKY3y+DQ9xLPb4U2LQpkYUyRr8Ss4KXbBwBVzSY5CCFccY0Sgw+PVAc0KrPpFXG2WAsUBCsAxkXHbZ4isI=
-X-Received: by 2002:a05:651c:a04:b0:2ea:abac:f97b with SMTP id
- 38308e7fff4ca-2ebf1039edbmr12147351fa.4.1718120385336; Tue, 11 Jun 2024
- 08:39:45 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="g3ImpHwF"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1718120612;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=m3mVOlE8X03VcFujwgTUstJqoq0FTNeRmucJ5uXzzb4=;
+	b=g3ImpHwFPd3zYDbSo6+DyCmL/sFBqBusrGTGQ+nUJ1Jc3pjC2QGt6IElAywhXBseiygDNC
+	z6Eh48Xu/zfSEPDq602vJsDch/Zk73o2E+gsTG0mWXmfLdGVuBh2n43fjFcUbiwN2993ci
+	LMQuTert1Fi/8EYVt+zdL5AN8obFP8c=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-541-M7gCHZsfNvaRoPk4wQQxjw-1; Tue,
+ 11 Jun 2024 11:43:27 -0400
+X-MC-Unique: M7gCHZsfNvaRoPk4wQQxjw-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8414F1956068;
+	Tue, 11 Jun 2024 15:43:15 +0000 (UTC)
+Received: from localhost (unknown [10.39.193.36])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id DD4331954AC1;
+	Tue, 11 Jun 2024 15:43:10 +0000 (UTC)
+Date: Tue, 11 Jun 2024 11:43:09 -0400
+From: Stefan Hajnoczi <stefanha@redhat.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Geert Uytterhoeven <geert@linux-m68k.org>,
+	Richard Weinberger <richard@nod.at>,
+	Philipp Reisner <philipp.reisner@linbit.com>,
+	Lars Ellenberg <lars.ellenberg@linbit.com>,
+	Christoph =?iso-8859-1?Q?B=F6hmwalder?= <christoph.boehmwalder@linbit.com>,
+	Josef Bacik <josef@toxicpanda.com>, Ming Lei <ming.lei@redhat.com>,
+	"Michael S. Tsirkin" <mst@redhat.com>,
+	Jason Wang <jasowang@redhat.com>,
+	Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
+	Yu Kuai <yukuai3@huawei.com>,
+	Vineeth Vijayan <vneethv@linux.ibm.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	linux-m68k@lists.linux-m68k.org, linux-um@lists.infradead.org,
+	drbd-dev@lists.linbit.com, nbd@other.debian.org,
+	linuxppc-dev@lists.ozlabs.org, ceph-devel@vger.kernel.org,
+	virtualization@lists.linux.dev, xen-devel@lists.xenproject.org,
+	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
+	linux-mtd@lists.infradead.org, nvdimm@lists.linux.dev,
+	linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org, linux-block@vger.kernel.org
+Subject: Re: [PATCH 08/26] virtio_blk: remove virtblk_update_cache_mode
+Message-ID: <20240611154309.GA371660@fedora.redhat.com>
+References: <20240611051929.513387-1-hch@lst.de>
+ <20240611051929.513387-9-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240611034822.36603-1-ebiggers@kernel.org>
-In-Reply-To: <20240611034822.36603-1-ebiggers@kernel.org>
-From: Ard Biesheuvel <ardb@kernel.org>
-Date: Tue, 11 Jun 2024 17:39:33 +0200
-X-Gmail-Original-Message-ID: <CAMj1kXEi1LGNu6xwxkAGg_b7DQh4092Y9vb4dobhkB5tbxjsQg@mail.gmail.com>
-Message-ID: <CAMj1kXEi1LGNu6xwxkAGg_b7DQh4092Y9vb4dobhkB5tbxjsQg@mail.gmail.com>
-Subject: Re: [PATCH v5 00/15] Optimize dm-verity and fsverity using
- multibuffer hashing
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev, 
-	dm-devel@lists.linux.dev, x86@kernel.org, 
-	linux-arm-kernel@lists.infradead.org, Sami Tolvanen <samitolvanen@google.com>, 
-	Bart Van Assche <bvanassche@acm.org>, Herbert Xu <herbert@gondor.apana.org.au>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="RRHJimCDVdpqhQ+7"
+Content-Disposition: inline
+In-Reply-To: <20240611051929.513387-9-hch@lst.de>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-On Tue, 11 Jun 2024 at 05:49, Eric Biggers <ebiggers@kernel.org> wrote:
->
-> On many modern CPUs, it is possible to compute the SHA-256 hash of two
-> equal-length messages in about the same time as a single message, if all
-> the instructions are interleaved.  This is because each SHA-256 (and
-> also most other cryptographic hash functions) is inherently serialized
-> and therefore can't always take advantage of the CPU's full throughput.
->
-> An earlier attempt to support multibuffer hashing in Linux was based
-> around the ahash API.  That approach had some major issues, as does the
-> alternative ahash-based approach proposed by Herbert (see my response at
-> https://lore.kernel.org/linux-crypto/20240610164258.GA3269@sol.localdomain/).
-> This patchset instead takes a much simpler approach of just adding a
-> synchronous API for hashing equal-length messages.
->
 
-I share Eric's skepticism that shoehorning this into ahash for
-theoretical reasons is going to lead anywhere. So I would strongly
-prefer this approach. We can always revisit this if/when this generic
-multibuffer ahash materializes.
+--RRHJimCDVdpqhQ+7
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-So for this series
+On Tue, Jun 11, 2024 at 07:19:08AM +0200, Christoph Hellwig wrote:
+> virtblk_update_cache_mode boils down to a single call to
+> blk_queue_write_cache.  Remove it in preparation for moving the cache
+> control flags into the queue_limits.
+>=20
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  drivers/block/virtio_blk.c | 13 +++----------
+>  1 file changed, 3 insertions(+), 10 deletions(-)
 
-Acked-by: Ard Biesheuvel <ardb@kernel.org>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+--RRHJimCDVdpqhQ+7
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmZocI0ACgkQnKSrs4Gr
+c8gYxQf+MiHN7lIto5cvBArHuLRaYXdHSqN8WkOxjyk6pKDVJN3zByol4IsQ1or0
+gi3U/1yXaU1lyM8v76HhRI789ZE9OXHiRD8iKWM54w0uldvJLPNzByqsrvapKvmR
+XjYyMxgp/uFJZ4qxg3nonI2Fa2FzSjqA/ct/sTYj8AbXOsOEK/bUZasvnrwUuIhP
+FwODujdCtfIpzMvn4c262LUiz3TOY+p3nH/CSKsYZwR5xiUbbZCf30PKrwN4RcmU
+ti4hIKoOJcLH5gjgeXpfx7jOM/6Qr7eQrEelsDnuMAKYXC9WMj48+O6Cf8mFja4M
+N1txQKX0NepjOjzDmydD5Dx/69S/sg==
+=ehtQ
+-----END PGP SIGNATURE-----
+
+--RRHJimCDVdpqhQ+7--
+
