@@ -1,92 +1,110 @@
-Received: from out203-205-221-173.mail.qq.com (out203-205-221-173.mail.qq.com [203.205.221.173])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B08313CAA7
-	for <dm-devel@lists.linux.dev>; Wed, 12 Jun 2024 06:19:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.205.221.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9998EB651
+	for <dm-devel@lists.linux.dev>; Wed, 12 Jun 2024 07:42:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718173165; cv=none; b=icERszymxkgSLjEuIdUPcCbiFeVsSqYZTc4Xw/k51WP50Bz0N7weKWLmUoDASrv+3yMHuIeCJPJwuV3mWRoDBQdSO3RGUf02wMvbDr3jepCG2uBnmba1KGHqSgZtf2iwJqBvnWq298f+pmhTBhrSI4mQdWsKNKBRiRiZiYEaRJA=
+	t=1718178176; cv=none; b=j9/xhMHP4fKnUzSSOy/34YrCctJaeiRhptGZolt1uiuM3n8f+R2BMA8i1xriDCUyVKqVkFGRYaQ1bUM8UbuS0HC1auI8YxwU8EG6WZfcYyKWIuFTgcCnTAxFu812CwTMlU4OiFyM4p4nriiZxWmEwrJ7w4i5ZlRGZuwBzVS1vC0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718173165; c=relaxed/simple;
-	bh=rLR89pcCDeXOZyXMA5OMIoyk9zZvS6jUegquyT9rYUU=;
-	h=Message-ID:From:To:Cc:Subject:Date:MIME-Version; b=FMIGaFk72xzLjbNvEIFTU5ywZtrAFmB8erNnZL83QiT3cduUekYFF2z5dVzUPGVBSLoaxttHYeRvXhwoj1u8vA0diD2SSs39w73/QI7a/TqTgQMSb7zhUPI/bHsSfCQ5KNPLuQ0CgOQi82WyhUkXwdXPFpaFwLJWux5LuBQR4Wc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=Gnuab4LJ; arc=none smtp.client-ip=203.205.221.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+	s=arc-20240116; t=1718178176; c=relaxed/simple;
+	bh=9VTzSOPH/Dwel5+Nnpo7rE2T0j5I9l0Fa/7+mL15OvY=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=SsgHb0TE7xFXslh/pCDoWJcflg3WnXA31IrLaH+reP/Vy93rsuGXsUN+USH9tLUapN6OTtixSxnbuvOZZYMPu76Y3R3CXUY+F3sQUd7lS0/vpl5tNLys5/RjzMwbZvC5WK04s4ShfsL8LRviJRHvaBWoFJ262UgSvY4Ceu/LRKM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Wyba1DhD; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Wyba1DhD; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="Gnuab4LJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
-	t=1718173148; bh=MDrbNW4fbT+LYEPotokNyHm+WAvMbodMYTf6IDC7q0I=;
-	h=From:To:Cc:Subject:Date;
-	b=Gnuab4LJvWV22khz4eMVxPGz1RQXGMQCdZG1o2I5X3WQIy2A1S3S4c1nOfiX9wn9i
-	 +hvM+LlR+POjE3mAOGBwSVmPtnHySHsYj9UxwRvarhNMYiQmGLGC1XHfV9lbNkKMM1
-	 sRpZwxaaU6VQo7ASw/jMJ1D9aaPTK/5BvQdNDWo8=
-Received: from localhost.localdomain ([123.150.8.42])
-	by newxmesmtplogicsvrsza10-0.qq.com (NewEsmtp) with SMTP
-	id 4C62643C; Wed, 12 Jun 2024 14:19:06 +0800
-X-QQ-mid: xmsmtpt1718173146t971n1mzo
-Message-ID: <tencent_28B810D5C1E1C6C30580729B90CA3CBFAF0A@qq.com>
-X-QQ-XMAILINFO: NhpLzBn2I3XwFzGOdN+p4J6dYi1G2ZouiDpC0MmckH8ML0XyYJiRg2MYhxBjcP
-	 VdA0i+iSdfVlCT5oUT2r05hFXh/ULpomyiKFqcrEcrKUwjwzwcG3k6w1Fxr1CX3AJ53+ttNMfhzc
-	 4ncM9lfcKCQNDZNXRbuqDrxNuUBH/JDiGu4L6z5lA8xT156067XschV2HIayMklRiNYUFU5rV02k
-	 TGgD5cMwXxpQmYFK9sdqkUN4cP9nKXgajPnuqZLB1GRGBDDl3Bnxj+07bmNjGPXx+x/1j4xmgcfs
-	 w1+dUIJCWgJq1AcdOsrdL6JjwvPjfh3AgT5qs/4Sn9pDvlXGaMCAQUh5cVecuKHuAy81VAX7RRGN
-	 Azw/LIoov9nnL2yOLjS5hEuc6z8PfsxQ8+aDjsFrs0kkZ56zmPC1DCYyfG2YFQJeK5M5Y/zaNSjC
-	 JKtL68YwRUK0cqCL/GFs6ruQ/GVzPXuH6DKXcrqLAazU/QZumNC3ZJcFAPVlP7XchIsqbfYgEghi
-	 lQKzlC+aoPcVYlX9EpPD9T5E9INNoHDcZivtynCj+Gn78QXgZffGbwNJo6fnBC6S0ODQCAB7Y03b
-	 FacR8nK5WRGx4BB/DfUC8rnOf+wOTSolfHEN+01AdY+b0os35g1wYaOydsqbbHcPYoJhn2sjU1YY
-	 UGTZZEDmlYcOVXgxOBZHSfZFFOtpj5uLSekhxIk8PNGCXUvD4779/Y1WagUbQsmenSuZlPqE7TdV
-	 3OmgeNOzncHDsCsF0nS3DA3Eot7iA/yi0W3t8PnkzqzewycH+8ooyYJ5HAUJFdxxypK2fjgKXLbF
-	 eYFRDvh6KOiFPKCMynlLCiynVx0rcMlGfV0qQNNoaz1a72e0QuuRD/tBoQ8mEFgoTSjPU3Nl/7pq
-	 IoXeoAz7595JWigL09wfkh3+Fru5xL1V2n/znmxLN1XhtLENO7SRp93RVziMXOrRVLadKX7Y5hCF
-	 gdoRY7wZ1Kg1/5co5lZ+pJLOz8F7nSM7zN739SfC6R6k9m8MuGNm7a1e0JfiiO
-X-QQ-XMRINFO: NI4Ajvh11aEj8Xl/2s1/T8w=
-From: 303146950@qq.com
-To: dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com,
-	mwilck@suse.com,
-	Kou Wenqi <kouwenqi@kylinos.cn>
-Subject: [PATCH] multipath.conf.5: fix the description of prio_args for path_latency prio
-Date: Wed, 12 Jun 2024 14:18:37 +0800
-X-OQ-MSGID: <20240612061837.68854-1-303146950@qq.com>
-X-Mailer: git-send-email 2.27.0
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Wyba1DhD";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Wyba1DhD"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 8851234079;
+	Wed, 12 Jun 2024 07:42:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1718178172; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9VTzSOPH/Dwel5+Nnpo7rE2T0j5I9l0Fa/7+mL15OvY=;
+	b=Wyba1DhDkoolns320eqc+q0jngnqxHATXyF4oztFkCYlvacTo4ZrVzVos9ciIR7gY4L3p1
+	zCPFyQPLggvLHOwYuqwe5u0jqgqlkgHY4HFnMSQTOJqg51U478ubnzuYbfo1HanaDpF1ts
+	CKbGh1dASXJlWzN/uQUOh9A2GO8ZLC8=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1718178172; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9VTzSOPH/Dwel5+Nnpo7rE2T0j5I9l0Fa/7+mL15OvY=;
+	b=Wyba1DhDkoolns320eqc+q0jngnqxHATXyF4oztFkCYlvacTo4ZrVzVos9ciIR7gY4L3p1
+	zCPFyQPLggvLHOwYuqwe5u0jqgqlkgHY4HFnMSQTOJqg51U478ubnzuYbfo1HanaDpF1ts
+	CKbGh1dASXJlWzN/uQUOh9A2GO8ZLC8=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 5C7E91372E;
+	Wed, 12 Jun 2024 07:42:52 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id prv0FHxRaWa/TgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 12 Jun 2024 07:42:52 +0000
+Message-ID: <fa3c9e3e8c32604b12f69aeac9bfd7f767407df3.camel@suse.com>
+Subject: Re: [PATCH] multipath.conf.5: fix the description of prio_args for
+ path_latency prio
+From: Martin Wilck <mwilck@suse.com>
+To: 303146950@qq.com, dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com, Kou Wenqi <kouwenqi@kylinos.cn>
+Date: Wed, 12 Jun 2024 09:42:51 +0200
+In-Reply-To: <tencent_28B810D5C1E1C6C30580729B90CA3CBFAF0A@qq.com>
+References: <tencent_28B810D5C1E1C6C30580729B90CA3CBFAF0A@qq.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Spam-Score: -4.08
+X-Spam-Level: 
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-4.08 / 50.00];
+	BAYES_HAM(-2.78)[99.03%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	FREEMAIL_TO(0.00)[qq.com,lists.linux.dev];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FREEMAIL_ENVRCPT(0.00)[qq.com];
+	RCPT_COUNT_THREE(0.00)[4];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,imap1.dmz-prg2.suse.org:helo]
 
-From: Kou Wenqi <kouwenqi@kylinos.cn>
+On Wed, 2024-06-12 at 14:18 +0800, 303146950@qq.com wrote:
+> From: Kou Wenqi <kouwenqi@kylinos.cn>
+>=20
+> This aligns the description of prio_args for path_latency prio and
+> the actual code.
+>=20
+> Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
 
-This aligns the description of prio_args for path_latency prio and
-the actual code.
+Thanks!
 
-Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
----
- multipath/multipath.conf.5.in | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index c788c180..c4ebce97 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -437,11 +437,11 @@ Needs a value of the form "io_num=\fI<20>\fR base_num=\fI<10>\fR"
- .TP 8
- .I io_num
- The number of read IOs sent to the current path continuously, used to calculate the average path latency.
--Valid Values: Integer, [2, 200].
-+Valid Values: Integer, [20, 200].
- .TP
- .I base_num
--The base number value of logarithmic scale, used to partition different priority ranks. Valid Values: Integer,
--[2, 10]. And Max average latency value is 100s, min average latency value is 1us.
-+The base number value of logarithmic scale, used to partition different priority ranks. Valid Values:
-+Double-precision floating-point, [1.1, 10]. And Max average latency value is 100s, min average latency value is 1us.
- For example: If base_num=10, the paths will be grouped in priority groups with path latency <=1us, (1us, 10us],
- (10us, 100us], (100us, 1ms], (1ms, 10ms], (10ms, 100ms], (100ms, 1s], (1s, 10s], (10s, 100s], >100s.
- .RE
--- 
-2.27.0
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
