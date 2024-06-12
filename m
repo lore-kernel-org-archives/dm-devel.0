@@ -1,22 +1,22 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5484023769;
-	Wed, 12 Jun 2024 04:54:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 01654282F1;
+	Wed, 12 Jun 2024 04:58:32 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718168073; cv=none; b=sDTBYLgIpFb1v3asYZtQnxc6hFDYrO68XlR2dlSkvwPP8flPfMJirvPeKv0mNrBM7gthAKxwVwt1m8A0Tfl9Pr/r7fDKpcZsOUWQZ/aYyM0hoTTm80xmFoRxoBGMJTWLkUFAN5MhYH03jKjjaRPJ36kL0Mm8ujrZW09rihNYCAc=
+	t=1718168314; cv=none; b=FvycgLlEsoGgbNsmzWh8VxfRySOwYUqvKDG1XWfyFvOt52ZhnY7/pD7jBYWoPHTXXxM7pkqRQAyl7mOmuSYvALwUiXwc7uIL1gZsXS5oHq8pArJRSjRViAoDvlb4FZbqTouCS6PfFdtCNqJmZjwrjd9M2d5/xwic83ufeYmd694=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718168073; c=relaxed/simple;
-	bh=nM+nJLfCpFZS14IN7l4cfk/lGapv97cR2EMJitjBLJg=;
+	s=arc-20240116; t=1718168314; c=relaxed/simple;
+	bh=SAXdlm2t78uvwP6lbGBucu+NXd4/mt1SXHOAWS3+Nso=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=SCruE/Z8gCjBhDppRfLKGYGTz6hzp0yXnLdLQY/iDho1FkVB2Ue/YyuxXFwX9Pgk0fHK6wWr0sbfagDHZtijqec81BsEpfidyX5AW437vZs41s+wlXbnbeQ7xN2g3cEWjT3qf3VDCWV8V0oPLR2q/Qux0Q8sSRk84eoyDg+cbiY=
+	 Content-Type:Content-Disposition:In-Reply-To; b=WZ3gspmtgD1Zd/CS+EsXTWs24du76ZeJTCQk04p2HNAu2CliUa7FgNNBG9BufCF9/fcuUYtngAtvxT3zCo31LY1pLxWKK4BWCPcesunBcBrM3s+n/MsVDLiqXGzwoXGAgjUIdqQWebh44hZTc7lpo53eYJbySNQpdeSP/gIIohs=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id 6904768BEB; Wed, 12 Jun 2024 06:54:29 +0200 (CEST)
-Date: Wed, 12 Jun 2024 06:54:29 +0200
+	id 6FC9B68BFE; Wed, 12 Jun 2024 06:58:28 +0200 (CEST)
+Date: Wed, 12 Jun 2024 06:58:28 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Damien Le Moal <dlemoal@kernel.org>
 Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
@@ -43,10 +43,10 @@ Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
 	linux-mtd@lists.infradead.org, nvdimm@lists.linux.dev,
 	linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org,
 	linux-scsi@vger.kernel.org, linux-block@vger.kernel.org
-Subject: Re: [PATCH 13/26] block: move cache control settings out of
- queue->flags
-Message-ID: <20240612045429.GB26776@lst.de>
-References: <20240611051929.513387-1-hch@lst.de> <20240611051929.513387-14-hch@lst.de> <d21b162a-1fd3-4fd1-a17f-f127f964bdf1@kernel.org>
+Subject: Re: [PATCH 16/26] block: move the io_stat flag setting to
+ queue_limits
+Message-ID: <20240612045828.GC26776@lst.de>
+References: <20240611051929.513387-1-hch@lst.de> <20240611051929.513387-17-hch@lst.de> <d51e4163-99e3-4435-870d-faef3887ab6a@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -55,22 +55,21 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <d21b162a-1fd3-4fd1-a17f-f127f964bdf1@kernel.org>
+In-Reply-To: <d51e4163-99e3-4435-870d-faef3887ab6a@kernel.org>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Tue, Jun 11, 2024 at 04:55:04PM +0900, Damien Le Moal wrote:
+On Tue, Jun 11, 2024 at 05:09:45PM +0900, Damien Le Moal wrote:
 > On 6/11/24 2:19 PM, Christoph Hellwig wrote:
-> > Move the cache control settings into the queue_limits so that they
-> > can be set atomically and all I/O is frozen when changing the
-> > flags.
+> > Move the io_stat flag into the queue_limits feature field so that it
+> > can be set atomically and all I/O is frozen when changing the flag.
 > 
-> ...so that they can be set atomically with the device queue frozen when
-> changing the flags.
-> 
-> may be better.
+> Why a feature ? It seems more appropriate for io_stat to be a flag rather than
+> a feature as that is a block layer thing rather than a device characteristic, no ?
 
-Sure.
+Because it must actually be supported by the driver for bio based
+drivers.  Then again we also support chaning it through sysfs, so
+we might actually need both.  At least unlike say the cache it's
+not actively harmful when enabled despite not being supported.
 
-If there was anything below I've skipped it after skipping over two
-pages of full quotes.
-
+I can look into that, but I'll do it in another series after getting
+all the driver changes out.
