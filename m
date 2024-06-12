@@ -1,68 +1,92 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from out203-205-221-173.mail.qq.com (out203-205-221-173.mail.qq.com [203.205.221.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A0E6F282F1;
-	Wed, 12 Jun 2024 05:03:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B08313CAA7
+	for <dm-devel@lists.linux.dev>; Wed, 12 Jun 2024 06:19:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.205.221.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718168627; cv=none; b=qtXInUhEFoJibzq5vuqB3tzthyfgZMTxtcgJxWhjszQ5x/GAK7gxuAMdaZJkGWQCohXVS4WQTFRUSu1coEBJQxhU2lTRAnKNoNN1YA3Jjnp55oMroIRuKHlAZmgwkvCvKIwrQ8o/04UY6xJW3p8Q3ZyeSe7n4qIXXPAgz1FyY9c=
+	t=1718173165; cv=none; b=icERszymxkgSLjEuIdUPcCbiFeVsSqYZTc4Xw/k51WP50Bz0N7weKWLmUoDASrv+3yMHuIeCJPJwuV3mWRoDBQdSO3RGUf02wMvbDr3jepCG2uBnmba1KGHqSgZtf2iwJqBvnWq298f+pmhTBhrSI4mQdWsKNKBRiRiZiYEaRJA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718168627; c=relaxed/simple;
-	bh=yideDWBgYhb8gdrUDek21Tjymn+mofyCK/oOHbACXbQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=FAnmfMUG34tRaWqpD5u1On2mm9mjpXpSJcqEI3KeM7IsV29kwloOQnUQJ8q2k7Il+OZ84HGmrDZnws1NameBx5QPPWV7ycOsnnEiSdKv+3y2xhMMH51PDmD66wMOQrseOiDDLLmf2T/5uCc1bJ4+f0SSqLQlJj22Vb/mdb69sLI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 0069168C4E; Wed, 12 Jun 2024 07:03:41 +0200 (CEST)
-Date: Wed, 12 Jun 2024 07:03:41 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
-	Geert Uytterhoeven <geert@linux-m68k.org>,
-	Richard Weinberger <richard@nod.at>,
-	Philipp Reisner <philipp.reisner@linbit.com>,
-	Lars Ellenberg <lars.ellenberg@linbit.com>,
-	Christoph =?iso-8859-1?Q?B=F6hmwalder?= <christoph.boehmwalder@linbit.com>,
-	Josef Bacik <josef@toxicpanda.com>, Ming Lei <ming.lei@redhat.com>,
-	"Michael S. Tsirkin" <mst@redhat.com>,
-	Jason Wang <jasowang@redhat.com>,
-	Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
-	Yu Kuai <yukuai3@huawei.com>,
-	Vineeth Vijayan <vneethv@linux.ibm.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	linux-m68k@lists.linux-m68k.org, linux-um@lists.infradead.org,
-	drbd-dev@lists.linbit.com, nbd@other.debian.org,
-	linuxppc-dev@lists.ozlabs.org, ceph-devel@vger.kernel.org,
-	virtualization@lists.linux.dev, xen-devel@lists.xenproject.org,
-	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
-	linux-mtd@lists.infradead.org, nvdimm@lists.linux.dev,
-	linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org,
-	linux-scsi@vger.kernel.org, linux-block@vger.kernel.org
-Subject: Re: [PATCH 21/26] block: move the poll flag to queue_limits
-Message-ID: <20240612050341.GA27049@lst.de>
-References: <20240611051929.513387-1-hch@lst.de> <20240611051929.513387-22-hch@lst.de> <d1775d3f-daaa-4193-9f68-06ec47563b35@kernel.org>
+	s=arc-20240116; t=1718173165; c=relaxed/simple;
+	bh=rLR89pcCDeXOZyXMA5OMIoyk9zZvS6jUegquyT9rYUU=;
+	h=Message-ID:From:To:Cc:Subject:Date:MIME-Version; b=FMIGaFk72xzLjbNvEIFTU5ywZtrAFmB8erNnZL83QiT3cduUekYFF2z5dVzUPGVBSLoaxttHYeRvXhwoj1u8vA0diD2SSs39w73/QI7a/TqTgQMSb7zhUPI/bHsSfCQ5KNPLuQ0CgOQi82WyhUkXwdXPFpaFwLJWux5LuBQR4Wc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=Gnuab4LJ; arc=none smtp.client-ip=203.205.221.173
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="Gnuab4LJ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+	t=1718173148; bh=MDrbNW4fbT+LYEPotokNyHm+WAvMbodMYTf6IDC7q0I=;
+	h=From:To:Cc:Subject:Date;
+	b=Gnuab4LJvWV22khz4eMVxPGz1RQXGMQCdZG1o2I5X3WQIy2A1S3S4c1nOfiX9wn9i
+	 +hvM+LlR+POjE3mAOGBwSVmPtnHySHsYj9UxwRvarhNMYiQmGLGC1XHfV9lbNkKMM1
+	 sRpZwxaaU6VQo7ASw/jMJ1D9aaPTK/5BvQdNDWo8=
+Received: from localhost.localdomain ([123.150.8.42])
+	by newxmesmtplogicsvrsza10-0.qq.com (NewEsmtp) with SMTP
+	id 4C62643C; Wed, 12 Jun 2024 14:19:06 +0800
+X-QQ-mid: xmsmtpt1718173146t971n1mzo
+Message-ID: <tencent_28B810D5C1E1C6C30580729B90CA3CBFAF0A@qq.com>
+X-QQ-XMAILINFO: NhpLzBn2I3XwFzGOdN+p4J6dYi1G2ZouiDpC0MmckH8ML0XyYJiRg2MYhxBjcP
+	 VdA0i+iSdfVlCT5oUT2r05hFXh/ULpomyiKFqcrEcrKUwjwzwcG3k6w1Fxr1CX3AJ53+ttNMfhzc
+	 4ncM9lfcKCQNDZNXRbuqDrxNuUBH/JDiGu4L6z5lA8xT156067XschV2HIayMklRiNYUFU5rV02k
+	 TGgD5cMwXxpQmYFK9sdqkUN4cP9nKXgajPnuqZLB1GRGBDDl3Bnxj+07bmNjGPXx+x/1j4xmgcfs
+	 w1+dUIJCWgJq1AcdOsrdL6JjwvPjfh3AgT5qs/4Sn9pDvlXGaMCAQUh5cVecuKHuAy81VAX7RRGN
+	 Azw/LIoov9nnL2yOLjS5hEuc6z8PfsxQ8+aDjsFrs0kkZ56zmPC1DCYyfG2YFQJeK5M5Y/zaNSjC
+	 JKtL68YwRUK0cqCL/GFs6ruQ/GVzPXuH6DKXcrqLAazU/QZumNC3ZJcFAPVlP7XchIsqbfYgEghi
+	 lQKzlC+aoPcVYlX9EpPD9T5E9INNoHDcZivtynCj+Gn78QXgZffGbwNJo6fnBC6S0ODQCAB7Y03b
+	 FacR8nK5WRGx4BB/DfUC8rnOf+wOTSolfHEN+01AdY+b0os35g1wYaOydsqbbHcPYoJhn2sjU1YY
+	 UGTZZEDmlYcOVXgxOBZHSfZFFOtpj5uLSekhxIk8PNGCXUvD4779/Y1WagUbQsmenSuZlPqE7TdV
+	 3OmgeNOzncHDsCsF0nS3DA3Eot7iA/yi0W3t8PnkzqzewycH+8ooyYJ5HAUJFdxxypK2fjgKXLbF
+	 eYFRDvh6KOiFPKCMynlLCiynVx0rcMlGfV0qQNNoaz1a72e0QuuRD/tBoQ8mEFgoTSjPU3Nl/7pq
+	 IoXeoAz7595JWigL09wfkh3+Fru5xL1V2n/znmxLN1XhtLENO7SRp93RVziMXOrRVLadKX7Y5hCF
+	 gdoRY7wZ1Kg1/5co5lZ+pJLOz8F7nSM7zN739SfC6R6k9m8MuGNm7a1e0JfiiO
+X-QQ-XMRINFO: NI4Ajvh11aEj8Xl/2s1/T8w=
+From: 303146950@qq.com
+To: dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com,
+	mwilck@suse.com,
+	Kou Wenqi <kouwenqi@kylinos.cn>
+Subject: [PATCH] multipath.conf.5: fix the description of prio_args for path_latency prio
+Date: Wed, 12 Jun 2024 14:18:37 +0800
+X-OQ-MSGID: <20240612061837.68854-1-303146950@qq.com>
+X-Mailer: git-send-email 2.27.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <d1775d3f-daaa-4193-9f68-06ec47563b35@kernel.org>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Transfer-Encoding: 8bit
 
-On Tue, Jun 11, 2024 at 05:21:07PM +0900, Damien Le Moal wrote:
-> Kind of the same remark as for io_stat about this not really being a device
-> feature. But I guess seeing "features" as a queue feature rather than just a
-> device feature makes it OK to have poll (and io_stat) as a feature rather than
-> a flag.
+From: Kou Wenqi <kouwenqi@kylinos.cn>
 
-So unlike io_stat this very much is a feature and a feature only as
-we don't even allow changing it.  It purely exposes a device (or
-rather driver) capability.
+This aligns the description of prio_args for path_latency prio and
+the actual code.
+
+Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
+---
+ multipath/multipath.conf.5.in | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
+index c788c180..c4ebce97 100644
+--- a/multipath/multipath.conf.5.in
++++ b/multipath/multipath.conf.5.in
+@@ -437,11 +437,11 @@ Needs a value of the form "io_num=\fI<20>\fR base_num=\fI<10>\fR"
+ .TP 8
+ .I io_num
+ The number of read IOs sent to the current path continuously, used to calculate the average path latency.
+-Valid Values: Integer, [2, 200].
++Valid Values: Integer, [20, 200].
+ .TP
+ .I base_num
+-The base number value of logarithmic scale, used to partition different priority ranks. Valid Values: Integer,
+-[2, 10]. And Max average latency value is 100s, min average latency value is 1us.
++The base number value of logarithmic scale, used to partition different priority ranks. Valid Values:
++Double-precision floating-point, [1.1, 10]. And Max average latency value is 100s, min average latency value is 1us.
+ For example: If base_num=10, the paths will be grouped in priority groups with path latency <=1us, (1us, 10us],
+ (10us, 100us], (100us, 1ms], (1ms, 10ms], (10ms, 100ms], (100ms, 1s], (1s, 10s], (10s, 100s], >100s.
+ .RE
+-- 
+2.27.0
+
