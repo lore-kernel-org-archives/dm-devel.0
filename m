@@ -1,71 +1,96 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f41.google.com (mail-ot1-f41.google.com [209.85.210.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF97816E882
-	for <dm-devel@lists.linux.dev>; Wed, 12 Jun 2024 16:34:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2238181BAA
+	for <dm-devel@lists.linux.dev>; Wed, 12 Jun 2024 17:00:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718210080; cv=none; b=Z1+T4t7N1Dm+MRfbMmRDPknDHz4wPyF9A/CB7QLwb3ygYDMflLygQ1tNH5pmtFH8eJbpvB83cx2p4yPxdQNcd0bK28zSzghwRJZVlu/JYyalolFfKd3ccHnYsTQHseQiINOS8XdJsr4N0+CPrc5E7f6lY5Lc0dp6pghP0Rnwf8Y=
+	t=1718211633; cv=none; b=R+u9um4WKbRBlX3fUnHHImOJpeSU6EarZ2tJmak9qUaw2pE3POCzsL7YTBc3niCJAeQxujNWl8dU3rfVbzO5kdWVXCR78tHVn2QGQjkgJERUEV9MbtqPDdBsgz10xvKpJubgf7ypRCLiK9D7eUugTM6Cn+GYFNR6KVbr024ykKg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718210080; c=relaxed/simple;
-	bh=F/iQyB6SBb2pGFv8ok+kaiPv97yhfzwveuBMHXXXt28=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=JQQYQhg06XrY2CSP3QnnIaCWV3jq0ykGePT5EQmfeMtuRB9oeiqbC4PUIg1AuVTmN3XJqjf96sGZkN/5icU901WttX343Wg8yp/sp9mEcEgiccISK+kX3eN/YFj5ZEeZF8+/ROAsE9xKmOkVUSenihe20hAs/PhmawWsrEW6DX4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=UOnDHDkV; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1718211633; c=relaxed/simple;
+	bh=FGodosjCuK1l5IwdCzmgVPoV1DySj8ltOWup6queEB0=;
+	h=From:To:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type; b=vCNtfyFC6pTwJ4GOXVUrkC0NjPe49a/FmgONZGNGQUFQj7JUHe6/cyzJrqgtv37AZWGug3bR861XellKLGipuXaRKFxo6sdE9CLdegCAt8aaoacXcfCm4FHesatAj+8afn81ae7r6woIP9w3FoiSr4bucBFYDcpBYdTObJ7ieBQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=DoZhaj+L; arc=none smtp.client-ip=209.85.210.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="UOnDHDkV"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9D568C4AF51
-	for <dm-devel@lists.linux.dev>; Wed, 12 Jun 2024 16:34:39 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1718210079;
-	bh=F/iQyB6SBb2pGFv8ok+kaiPv97yhfzwveuBMHXXXt28=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=UOnDHDkVgdAkELWDJzY3QDQGnT9j1i/Cpd0EcbWBhu2Mao2cduOLF2SBZUsx8GH68
-	 QSfPq45Makorq16R1JtF2osfS7fFJB6IiiquKDrcNxxhxGxR038rp7WWkKvPJrsn0F
-	 iKBGbC5wxrfqtYovSZ1JB+yhOUptl4Mf1Jwnt+297KlQvNNtXpJ/CRn4eypmcb5HjM
-	 Ea4dy1tredWxNrmMOsrPY3rtQDzcZzrFN8tRRIlUevXDK09iQBeJGG5DC8AYTdCHxM
-	 POHo8hxPeKkk3lB9/ZqEJEvbc8i7aa2vftvxdo+UdGtlwJBDg7/+vuFuze6jLxd7Ff
-	 sGfyUBYNcXMPA==
-Received: by mail-lj1-f169.google.com with SMTP id 38308e7fff4ca-2ebd95f136bso25858291fa.0
-        for <dm-devel@lists.linux.dev>; Wed, 12 Jun 2024 09:34:39 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AJvYcCVwphyfuKboIMsnddiTR+yiItJ77bNxzgkXTqz2I6dhwJ0R3wzvUNEGDkVoOmvDIdyVohhUmxJya78uL4AH2Cj5n3Ekm7PA/Y4=
-X-Gm-Message-State: AOJu0Yz8NRCpoLlowyLtk7zQXPvO7Kx3sAAlU9bvWkmx9q25/jkl6Huj
-	/8zhbirJOcOFcnmCmNk+HkYZiG68dTrQ8wIyLWtlJsd5C65dQvPfINgHULdzmqtuew6c0PSF5wu
-	cXM5YuDtiKk7T6wjKzrCqKl1Yv2Y=
-X-Google-Smtp-Source: AGHT+IEA+KG+1p25ewpxhsKkVZ6R9CUyIVzpnD0XbAGoF+BMqPkMwxpgLTdrIDkxHWoHd8Z50eIIul5aDP4tlIVAufU=
-X-Received: by 2002:a05:651c:19a9:b0:2eb:f2cf:1e49 with SMTP id
- 38308e7fff4ca-2ebfc9bbf44mr16842341fa.2.1718210077883; Wed, 12 Jun 2024
- 09:34:37 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="DoZhaj+L"
+Received: by mail-ot1-f41.google.com with SMTP id 46e09a7af769-6f95aac8cdaso3044a34.0
+        for <dm-devel@lists.linux.dev>; Wed, 12 Jun 2024 10:00:31 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1718211631; x=1718816431; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:to:from:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=FLC7J8Mgipnai6tMkIu2Aw7sXa9Nh2VSSClMV3jWnwc=;
+        b=DoZhaj+LyiEtemPlagFRBosut9SqQt1mo1y1YX5zxbNTlqX5G4QVH38AkqnwXD7WU5
+         J226fUMLQhQvXqloYrm3SFryvNJzHhdeBUMp0M82It12gysACtu97w+/cQG69KL/hqLY
+         gRtoT2gGGfZZi6m1Slr12qJzNfBQvn+IcGWG4y5udRmZ/w9nWMZNblA7yOU/vBMhe5Za
+         RQ/DvLe422++0PtMohDT/e650P8TRyPBi1m8a31B+Gxs4xfJEjXDiYBiPvV3XwK8Yldz
+         NJi6zyinrU6MGj2ZeuJ6Nmxqs8imNqYKAhp0S1vxjcZRDOgBuPb1pN5NcNznu4fDbCix
+         QFdw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1718211631; x=1718816431;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=FLC7J8Mgipnai6tMkIu2Aw7sXa9Nh2VSSClMV3jWnwc=;
+        b=kR5EZs8vEnHoTEH6yMbajF60BRVi/uchUvbTbu3ohkNusjZ0Za7L/GXVzrxJuvUuYf
+         nFkMNq+54d7lVjjnA+NBXiMBzelGTEFusDDgXE8NMi/NqZNk+l69sT6kuBlTTW5Xh705
+         f/v/ZurrbO2ciAYsKzb+RAEmr+XmHYcIoAIZqEYEBRMmK1Rt6oB1ntqCanpye5tpUvLo
+         BIsb3WHzs7GdobZQuKIwu0XfuNVMgU54b7llt/MxtRiFmeRav+eAngjP1Wot60CYxHog
+         FrQI+dip0wnB93CzDqoNjcVIIis+RtlrUtT7af+G7XL7mcRWKferajuj/bq8WQcnEuLH
+         lkBA==
+X-Forwarded-Encrypted: i=1; AJvYcCWdEoUhKW2UEA+bW/YLmD9fGD/2/m+yGOIGi+FTyu9zKShDNnJmEFIi2b9X36sp8t55jWxQl6NkcBTkaJqU1l9Yd5agyRYV498=
+X-Gm-Message-State: AOJu0YwWK482YXbL7YdV91Lc01sd5k1zKQ+jb+hwsAs9xVYGV9WHK4XG
+	nPYw2NAvMaW/IzU9iwgrQpP2wLScqOMWOIJZ7JWhSTBZUYzsSDohtD4w5w6x5Xk=
+X-Google-Smtp-Source: AGHT+IGD7kMHTySUNBriw0c8o3eMwK51FQscs0lyEAF7fFxaQMPZPY4smWo7T75MMpdHCPqUCSdWaQ==
+X-Received: by 2002:a05:6808:1990:b0:3d2:2412:36a9 with SMTP id 5614622812f47-3d23e0d7019mr2901334b6e.3.1718211629808;
+        Wed, 12 Jun 2024 10:00:29 -0700 (PDT)
+Received: from [127.0.0.1] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id 5614622812f47-3d242affa88sm115841b6e.1.2024.06.12.10.00.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 12 Jun 2024 10:00:29 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
+ Damien Le Moal <dlemoal@kernel.org>
+In-Reply-To: <20240607002126.104227-1-dlemoal@kernel.org>
+References: <20240607002126.104227-1-dlemoal@kernel.org>
+Subject: Re: [PATCH] block: Optimize disk zone resource cleanup
+Message-Id: <171821162890.49689.5201501208480966687.b4-ty@kernel.dk>
+Date: Wed, 12 Jun 2024 11:00:28 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240611132251.1967786-1-yukuai1@huaweicloud.com> <12441f87-6e61-4618-a2f5-a2b2b202b26e@molgen.mpg.de>
-In-Reply-To: <12441f87-6e61-4618-a2f5-a2b2b202b26e@molgen.mpg.de>
-From: Song Liu <song@kernel.org>
-Date: Wed, 12 Jun 2024 09:34:26 -0700
-X-Gmail-Original-Message-ID: <CAPhsuW7Lz0-WBK=aSoHWpx6iEWfEhkdkJ+s3MmkDcFKA4Bq84w@mail.gmail.com>
-Message-ID: <CAPhsuW7Lz0-WBK=aSoHWpx6iEWfEhkdkJ+s3MmkDcFKA4Bq84w@mail.gmail.com>
-Subject: Re: [PATCH v2 md-6.11 00/12] md: refacotor and some fixes related to sync_thread
-To: Paul Menzel <pmenzel@molgen.mpg.de>
-Cc: Yu Kuai <yukuai1@huaweicloud.com>, agk@redhat.com, snitzer@kernel.org, 
-	mpatocka@redhat.com, xni@redhat.com, mariusz.tkaczyk@linux.intel.com, 
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-raid@vger.kernel.org, yukuai3@huawei.com, yi.zhang@huawei.com, 
-	yangerkun@huawei.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.12.5-dev-2aabd
 
-On Tue, Jun 11, 2024 at 7:11=E2=80=AFAM Paul Menzel <pmenzel@molgen.mpg.de>=
- wrote:
-[...]
-> >    md: use new helers in md_do_sync()
->
-> hel*p*ers
->
 
-Fixed this typo and applied to md-6.11. Thanks!
+On Fri, 07 Jun 2024 09:21:26 +0900, Damien Le Moal wrote:
+> For zoned block devices using zone write plugging, an rcu_barrier() call
+> is needed in disk_free_zone_resources() to synchronize freeing of zone
+> write plugs and the destrution of the mempool used to allocate the
+> plugs. The barrier call does slow down a little teardown of zoned block
+> devices but should not affect teardown of regular block devices or zoned
+> block devices that do not use zone write plugging (e.g. zoned DM devices
+> that do not require zone append emulation).
+> 
+> [...]
 
-Song
+Applied, thanks!
+
+[1/1] block: Optimize disk zone resource cleanup
+      commit: 1933192a91be0a570663a3c6310c46e4ce3b2baa
+
+Best regards,
+-- 
+Jens Axboe
+
+
+
