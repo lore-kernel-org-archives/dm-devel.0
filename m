@@ -1,98 +1,91 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C348E17E908;
-	Wed, 12 Jun 2024 15:00:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E1EE517C7C8;
+	Wed, 12 Jun 2024 15:27:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718204438; cv=none; b=U9olWZhmmpzkJVfQRScHPbS72Y5GyxohpNsDsNR2yQnvQ4jeYtPltRIhpkpqWcDZlajD9WSH10le9BLiVEuVtBAt59AKF/AiM2ahUliE7iUkMoLIo3Go26e7sFvfKXDtvOBH+GTnM5MYlvmeDC78YHkiP0hs8+3KtKIQ3KDedjc=
+	t=1718206030; cv=none; b=Db8HSM9XDeeTpuCknLNsddaI9LmgGPaykhUnKL1NHEF0AjmlEA6DWjh6j9a3pMgtXBAHLGASElvhiq9YKrW8lOFoE5j/TQxlgT3Gdf/bQP38bQoDN+85ffHz6y1Cw+RItNSzIjxgLRBpWdXDsChD3cTb1kW1i9j948/jHDc727U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718204438; c=relaxed/simple;
-	bh=D9AKY16RIxKwWo5ffG5YBSyB4zSbRy1JLPHVsaztKec=;
+	s=arc-20240116; t=1718206030; c=relaxed/simple;
+	bh=KE9bUaqEpu2RJsSsU4Se8f2nefjiYvwAZR+iz4KwldM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=KsG0DqrZW7xA8Ia6EKTijnXLeGE5rLIpIRrp6rY2N2yhoVdaEyNhlkjCoI5Q9yqmtROrEyc2Gljc/htTR9JLELRwPF9crjyVXY0bxaB0tEwRu3cOPzS4iMudCAbtyZI/eOzZS6kkq4TFWVGFlaBq7kZ42CX9cGhb5H0ek6v4U+Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 9E11668AFE; Wed, 12 Jun 2024 17:00:30 +0200 (CEST)
-Date: Wed, 12 Jun 2024 17:00:30 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
-	Geert Uytterhoeven <geert@linux-m68k.org>,
-	Richard Weinberger <richard@nod.at>,
-	Philipp Reisner <philipp.reisner@linbit.com>,
-	Lars Ellenberg <lars.ellenberg@linbit.com>,
-	Christoph =?iso-8859-1?Q?B=F6hmwalder?= <christoph.boehmwalder@linbit.com>,
-	Josef Bacik <josef@toxicpanda.com>, Ming Lei <ming.lei@redhat.com>,
-	"Michael S. Tsirkin" <mst@redhat.com>,
-	Jason Wang <jasowang@redhat.com>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
-	Yu Kuai <yukuai3@huawei.com>,
-	Vineeth Vijayan <vneethv@linux.ibm.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	linux-m68k@lists.linux-m68k.org, linux-um@lists.infradead.org,
-	drbd-dev@lists.linbit.com, nbd@other.debian.org,
-	linuxppc-dev@lists.ozlabs.org, ceph-devel@vger.kernel.org,
-	virtualization@lists.linux.dev, xen-devel@lists.xenproject.org,
-	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
-	linux-mtd@lists.infradead.org, nvdimm@lists.linux.dev,
-	linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org,
-	linux-scsi@vger.kernel.org, linux-block@vger.kernel.org
-Subject: Re: [PATCH 10/26] xen-blkfront: don't disable cache flushes when
- they fail
-Message-ID: <20240612150030.GA29188@lst.de>
-References: <20240611051929.513387-1-hch@lst.de> <20240611051929.513387-11-hch@lst.de> <ZmlVziizbaboaBSn@macbook>
+	 Content-Type:Content-Disposition:In-Reply-To; b=r0Cjz10Zba5Pt3Mq9FhqeX2QgYfN0hT6i3nCGwIGQ7zOiRRo/0BhJlzGHpLyBm5EUgBVmW0/2FoKcqE2QgjwD/ujTQ+OINZagHtg0P+n0evyN3EBtlGnkhgbrEEnv4m4xLngGi5ww7faZXm6pzxGKIeLGWIwTls5GDc8yzCfCqE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LXGyOHqV; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LXGyOHqV"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 77344C116B1;
+	Wed, 12 Jun 2024 15:27:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1718206029;
+	bh=KE9bUaqEpu2RJsSsU4Se8f2nefjiYvwAZR+iz4KwldM=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=LXGyOHqVVzVWn2OFkyZKMYG2RlYiAjOuhlc0b0XUFZyjWra87fCl0AMPj4fd1sPQS
+	 ygXpM+will0lrddn7C4PLYkJuxgnS1DBHlBYNrzWqubIjvrxgynZ/xBNeCASiSXz9/
+	 I/cyn9zNcH5TqLOpnC+LEtPMQfczR/tueRmqAbGNgfKDXSWU8SiXQolH2TqfC/OX0G
+	 RPYin3RE8sGHVFdR4RGlnUobks26qVAK1F8fFM8ve4CogOmzPdiPPBqehHxp/NSrl5
+	 frDgTuMyt/9AlcH/TPkQaD6Ww6frSjmPRwATxoJeQNnqB/X4pYAB9+BXu5nJzraa5Y
+	 mA2cxpQ7B93ag==
+Date: Wed, 12 Jun 2024 08:27:07 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: linux-crypto@vger.kernel.org, fsverity@lists.linux.dev,
+	dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v5 04/15] crypto: x86/sha256-ni - add support for finup_mb
+Message-ID: <20240612152707.GB1170@sol.localdomain>
+References: <20240611034822.36603-1-ebiggers@kernel.org>
+ <20240611034822.36603-5-ebiggers@kernel.org>
+ <ZmltfGWFTj2Kq7hN@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <ZmlVziizbaboaBSn@macbook>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <ZmltfGWFTj2Kq7hN@gondor.apana.org.au>
 
-On Wed, Jun 12, 2024 at 10:01:18AM +0200, Roger Pau Monné wrote:
-> On Tue, Jun 11, 2024 at 07:19:10AM +0200, Christoph Hellwig wrote:
-> > blkfront always had a robust negotiation protocol for detecting a write
-> > cache.  Stop simply disabling cache flushes when they fail as that is
-> > a grave error.
+On Wed, Jun 12, 2024 at 05:42:20PM +0800, Herbert Xu wrote:
+> On Mon, Jun 10, 2024 at 08:48:11PM -0700, Eric Biggers wrote:
+> > From: Eric Biggers <ebiggers@google.com>
+> > 
+> > Add an implementation of finup_mb to sha256-ni, using an interleaving
+> > factor of 2.  It interleaves a finup operation for two equal-length
+> > messages that share a common prefix.  dm-verity and fs-verity will take
 > 
-> It's my understanding the current code attempts to cover up for the
-> lack of guarantees the feature itself provides:
+> I think the limitation on equal length is artificial.  There is
+> no reason why the code couldn't handle two messages with different
+> lengths.  Simply execute in dual mode up until the shorter message
+> runs out.  Then carry on as if you have a single message.
 
-> So even when the feature is exposed, the backend might return
-> EOPNOTSUPP for the flush/barrier operations.
+Sure, as I mentioned the algorithm could fall back to single-buffer hashing once
+the messages get out of sync.  This would actually have to be implemented and
+tested, of course, which gets especially tricky with your proposal to support
+arbitrary scatterlists.  And there's no actual use case for adding that
+complexity yet.
 
-How is this supposed to work?  I mean in the worst case we could
-just immediately complete the flush requests in the driver, but
-we're really lying to any upper layer.
+> In fact, there is no reason why the two hashes have to start from
+> the same initial state either.  It has no bearing on the performance
+> of the actual hashing as far as I can see.
 
-> Such failure is tied on whether the underlying blkback storage
-> supports REQ_OP_WRITE with REQ_PREFLUSH operation.  blkback will
-> expose "feature-barrier" and/or "feature-flush-cache" without knowing
-> whether the underlying backend supports those operations, hence the
-> weird fallback in blkfront.
+The SHA-256 inner loop would indeed be the same, but the single state has
+several advantages:
 
-If we are just talking about the Linux blkback driver (I know there
-probably are a few other implementations) it won't every do that.
-I see it has code to do so, but the Linux block layer doesn't
-allow the flush operation to randomly fail if it was previously
-advertised.  Note that even blkfront conforms to this as it fixes
-up the return value when it gets this notsupp error to ok.
+- The caller only needs to allocate and prepare a single state.  This saves
+  per-IO memory and reduces overhead.
+- The glue code doesn't need to check that the number of internally buffered
+  bytes are synced up.
+- The assembly code only needs to load from the one state.
 
-> Overall blkback should ensure that REQ_PREFLUSH is supported before
-> exposing "feature-barrier" or "feature-flush-cache", as then the
-> exposed features would really match what the underlying backend
-> supports (rather than the commands blkback knows about).
+All of this simplifies the code slightly and boosts performance slightly.
 
-Yes.  The in-tree xen-blkback does that, but even without that the
-Linux block layer actually makes sure flushes sent by upper layers
-always succeed even when not supported.
+These advantages aren't *too* large, of course, and if a use case for supporting
+update arose, then support for multiple states would be added.  But it doesn't
+make sense to add this functionality prematurely before it actually has a user.
 
+- Eric
