@@ -1,207 +1,122 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 80FC812C80F;
-	Wed, 12 Jun 2024 20:54:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26B0E824A6
+	for <dm-devel@lists.linux.dev>; Thu, 13 Jun 2024 03:50:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718225674; cv=none; b=azl2JmNDlunYFK44YgHactESHNaVciTQwOXG+Vwo5NlbUqElMNvvUr0+VLwwS1rLYj+yqcnghN4lUYoabqV1ISrkpo7n4zG0tOPs2GuftJF1ZWB4K8GdKRfR08iNAEUmY8Giz3fW3hybaXdLV5H5DhSiI7aYbGa+E+3boSkXO0s=
+	t=1718250659; cv=none; b=W8sP2AMJb9Dh0fYiSNrcQqlvACHRVDJIu2F5rBrJOBpjKoPzs0tbj/tGsYtQDU/Z9PAFwQxw7Y/UM+ljokJkBTRC7dz6lMt9ztfnyMGPZMIW6VF9dJKX6ChWWL52uieTPFCxZdsL+IcV+fktbVVVt2yFlhxiFW5Eh3AvY9qrJOU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718225674; c=relaxed/simple;
-	bh=tVILRNA+10i0hkRlIosgMNPqnHFXimug2joZuxy2YOI=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=MvNrkOsMYeJqUn3Et2sgVzCmW71u2u+R4NNSN7KB87/L3q7yV+1dvBZbxHfkRQswgBJN0MvTDfsgPKA7vzBY1pEouLbTIsswL3tYH1LqWRDWNluVP7einkGodC+ROCyhPtp9nU0RoMi81HCaYWJVNf3a+opHdHjmuBUNvTj5hxc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=gxrF7MM2; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="gxrF7MM2"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E84FBC4AF49;
-	Wed, 12 Jun 2024 20:54:33 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1718225674;
-	bh=tVILRNA+10i0hkRlIosgMNPqnHFXimug2joZuxy2YOI=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=gxrF7MM2z/1SfSzr34rFnbmtOilWN+UeGZ8ImffgHGY+OhlEfVW6JYpUxuBPyVKG7
-	 aeVuxyoSIZ8qUjXxwU75rxdiXJ8LHD3mlo3JtyVhbMCfLygoeDcGb4VQhzaI+bzRrP
-	 K8IVMlII/kxMi1wWF31ok9wO3s07nTjdiVpEUtUeODjpo0jIg3cphCVv4dOQeOeQMc
-	 4R/as280MGUrbk3OfNRR1aloN9IVBFaAEjaSGybqZS3QhRWC45sjfz+wZE3i5HE2lO
-	 gwWl14Nn1BmZ5xtAG5SYeDP3MESNrtbe78j/1YpnmHQqIgLSfGv3AW5+g5Sqo3pSVj
-	 mXKci5CJ1cozQ==
-Date: Wed, 12 Jun 2024 13:54:33 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: John Garry <john.g.garry@oracle.com>
-Cc: axboe@kernel.dk, kbusch@kernel.org, hch@lst.de, sagi@grimberg.me,
-	jejb@linux.ibm.com, martin.petersen@oracle.com,
-	viro@zeniv.linux.org.uk, brauner@kernel.org, dchinner@redhat.com,
-	jack@suse.cz, linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
-	linux-fsdevel@vger.kernel.org, tytso@mit.edu, jbongio@google.com,
-	linux-scsi@vger.kernel.org, ojaswin@linux.ibm.com,
-	linux-aio@kvack.org, linux-btrfs@vger.kernel.org,
-	io-uring@vger.kernel.org, nilay@linux.ibm.com,
-	ritesh.list@gmail.com, willy@infradead.org, agk@redhat.com,
-	snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev,
-	hare@suse.de, Prasad Singamsetty <prasad.singamsetty@oracle.com>
-Subject: Re: [PATCH v8 04/10] fs: Add initial atomic write support info to
- statx
-Message-ID: <20240612205433.GC2764780@frogsfrogsfrogs>
-References: <20240610104329.3555488-1-john.g.garry@oracle.com>
- <20240610104329.3555488-5-john.g.garry@oracle.com>
+	s=arc-20240116; t=1718250659; c=relaxed/simple;
+	bh=CX0VQgc6x8qgjOzfr/Xi3oCY3N8hfmNkjJ86guHXysQ=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=jdsAU4AH9jMiSCL60z92N5S33yNt9Xhujb7sdYZDHfQx9Uv7JBwh18nMT3sAx0V1BZKDUUvTP7KB/TnOau1nEDRfThMV1yyRaOgbANZL2whhmfZwNE1GZ1I9/zeOSer/q9b2ErBr4udTNIxYtaIRk6B94nGDpitOZ5prqkcKJIw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4W07jb5fzfz4f3jMh
+	for <dm-devel@lists.linux.dev>; Thu, 13 Jun 2024 11:50:43 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.112])
+	by mail.maildlp.com (Postfix) with ESMTP id D72CA1A08D9
+	for <dm-devel@lists.linux.dev>; Thu, 13 Jun 2024 11:50:53 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP1 (Coremail) with SMTP id cCh0CgBHGBGcbGpmOqZaPQ--.63800S3;
+	Thu, 13 Jun 2024 11:50:53 +0800 (CST)
+Subject: Re: [PATCH v2] dm-raid: Fix WARN_ON_ONCE check for sync_thread in
+ raid_resume
+To: Benjamin Marzinski <bmarzins@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Song Liu <song@kernel.org>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, Xiao Ni <xni@redhat.com>,
+ dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
+ Yu Kuai <yukuai1@huaweicloud.com>, "yukuai (C)" <yukuai3@huawei.com>
+References: <20240612181222.877577-1-bmarzins@redhat.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <b4bae533-d4cb-37ab-b24c-42375c256448@huaweicloud.com>
+Date: Thu, 13 Jun 2024 11:50:51 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240610104329.3555488-5-john.g.garry@oracle.com>
+In-Reply-To: <20240612181222.877577-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:cCh0CgBHGBGcbGpmOqZaPQ--.63800S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7Zr1fZF4rXw1DCryUJr1fZwb_yoW8Zw1rp3
+	ykGas8Ar4DJr47Z39rJ3WDZa90vanFgrWjkrZxWa4rZ3WrGFsakryFkFyUXFWvkas3Aw1j
+	ya13Ja1xuryUKFJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9214x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
+	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
+	67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
+	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Jr0_Gr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E
+	3s1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYx
+	BIdaVFxhVjvjDU0xZFpf9x0JUdHUDUUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Mon, Jun 10, 2024 at 10:43:23AM +0000, John Garry wrote:
-> From: Prasad Singamsetty <prasad.singamsetty@oracle.com>
+Hi,
+
+ÔÚ 2024/06/13 2:12, Benjamin Marzinski Ð´µÀ:
+> rm-raid devices will occasionally trigger the following warning when
+dm-raid
+
+> being resumed after a table load because DM_RECOVERY_RUNNING is set:
 > 
-> Extend statx system call to return additional info for atomic write support
-> support for a file.
+> WARNING: CPU: 7 PID: 5660 at drivers/md/dm-raid.c:4105 raid_resume+0xee/0x100 [dm_raid]
 > 
-> Helper function generic_fill_statx_atomic_writes() can be used by FSes to
-> fill in the relevant statx fields. For now atomic_write_segments_max will
-> always be 1, otherwise some rules would need to be imposed on iovec length
-> and alignment, which we don't want now.
+> The failing check is:
+> WARN_ON_ONCE(test_bit(MD_RECOVERY_RUNNING, &mddev->recovery));
 > 
-> Signed-off-by: Prasad Singamsetty <prasad.singamsetty@oracle.com>
-> jpg: relocate bdev support to another patch
-> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> This check is designed to make sure that the sync thread isn't
+> registered, but md_check_recovery can set MD_RECOVERY_RUNNING without
+> the sync_thread ever getting registered. Instead of checking if
+> MD_RECOVERY_RUNNING is set, check if sync_thread is non-NULL.
+> 
+> Fixes: 16c4770c75b1 ("dm-raid: really frozen sync_thread during suspend")
+> Suggested-by: Yu Kuai <yukuai1@huaweicloud.com>
+Please use the address yukuai3@huawei.com
 
-Looks fine to me, assuming there's a manpage update lurking somewhere?
-Reviewed-by: Darrick J. Wong <djwong@kernel.org>
-
---D
-
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  fs/stat.c                 | 34 ++++++++++++++++++++++++++++++++++
->  include/linux/fs.h        |  3 +++
->  include/linux/stat.h      |  3 +++
->  include/uapi/linux/stat.h | 12 ++++++++++--
->  4 files changed, 50 insertions(+), 2 deletions(-)
+> Changes in v2:
+>   - Move mddev_lock_nointr() earlier to protect dereference and use
+>     rcu_dereference_protected() to access sync_thread
 > 
-> diff --git a/fs/stat.c b/fs/stat.c
-> index 70bd3e888cfa..72d0e6357b91 100644
-> --- a/fs/stat.c
-> +++ b/fs/stat.c
-> @@ -89,6 +89,37 @@ void generic_fill_statx_attr(struct inode *inode, struct kstat *stat)
->  }
->  EXPORT_SYMBOL(generic_fill_statx_attr);
->  
-> +/**
-> + * generic_fill_statx_atomic_writes - Fill in atomic writes statx attributes
-> + * @stat:	Where to fill in the attribute flags
-> + * @unit_min:	Minimum supported atomic write length in bytes
-> + * @unit_max:	Maximum supported atomic write length in bytes
-> + *
-> + * Fill in the STATX{_ATTR}_WRITE_ATOMIC flags in the kstat structure from
-> + * atomic write unit_min and unit_max values.
-> + */
-> +void generic_fill_statx_atomic_writes(struct kstat *stat,
-> +				      unsigned int unit_min,
-> +				      unsigned int unit_max)
-> +{
-> +	/* Confirm that the request type is known */
-> +	stat->result_mask |= STATX_WRITE_ATOMIC;
-> +
-> +	/* Confirm that the file attribute type is known */
-> +	stat->attributes_mask |= STATX_ATTR_WRITE_ATOMIC;
-> +
-> +	if (unit_min) {
-> +		stat->atomic_write_unit_min = unit_min;
-> +		stat->atomic_write_unit_max = unit_max;
-> +		/* Initially only allow 1x segment */
-> +		stat->atomic_write_segments_max = 1;
-> +
-> +		/* Confirm atomic writes are actually supported */
-> +		stat->attributes |= STATX_ATTR_WRITE_ATOMIC;
-> +	}
-> +}
-> +EXPORT_SYMBOL_GPL(generic_fill_statx_atomic_writes);
-> +
->  /**
->   * vfs_getattr_nosec - getattr without security checks
->   * @path: file to get attributes from
-> @@ -659,6 +690,9 @@ cp_statx(const struct kstat *stat, struct statx __user *buffer)
->  	tmp.stx_dio_mem_align = stat->dio_mem_align;
->  	tmp.stx_dio_offset_align = stat->dio_offset_align;
->  	tmp.stx_subvol = stat->subvol;
-> +	tmp.stx_atomic_write_unit_min = stat->atomic_write_unit_min;
-> +	tmp.stx_atomic_write_unit_max = stat->atomic_write_unit_max;
-> +	tmp.stx_atomic_write_segments_max = stat->atomic_write_segments_max;
->  
->  	return copy_to_user(buffer, &tmp, sizeof(tmp)) ? -EFAULT : 0;
->  }
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index e049414bef7d..db26b4a70c62 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -3235,6 +3235,9 @@ extern const struct inode_operations page_symlink_inode_operations;
->  extern void kfree_link(void *);
->  void generic_fillattr(struct mnt_idmap *, u32, struct inode *, struct kstat *);
->  void generic_fill_statx_attr(struct inode *inode, struct kstat *stat);
-> +void generic_fill_statx_atomic_writes(struct kstat *stat,
-> +				      unsigned int unit_min,
-> +				      unsigned int unit_max);
->  extern int vfs_getattr_nosec(const struct path *, struct kstat *, u32, unsigned int);
->  extern int vfs_getattr(const struct path *, struct kstat *, u32, unsigned int);
->  void __inode_add_bytes(struct inode *inode, loff_t bytes);
-> diff --git a/include/linux/stat.h b/include/linux/stat.h
-> index bf92441dbad2..3d900c86981c 100644
-> --- a/include/linux/stat.h
-> +++ b/include/linux/stat.h
-> @@ -54,6 +54,9 @@ struct kstat {
->  	u32		dio_offset_align;
->  	u64		change_cookie;
->  	u64		subvol;
-> +	u32		atomic_write_unit_min;
-> +	u32		atomic_write_unit_max;
-> +	u32		atomic_write_segments_max;
->  };
->  
->  /* These definitions are internal to the kernel for now. Mainly used by nfsd. */
-> diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-> index 67626d535316..887a25286441 100644
-> --- a/include/uapi/linux/stat.h
-> +++ b/include/uapi/linux/stat.h
-> @@ -126,9 +126,15 @@ struct statx {
->  	__u64	stx_mnt_id;
->  	__u32	stx_dio_mem_align;	/* Memory buffer alignment for direct I/O */
->  	__u32	stx_dio_offset_align;	/* File offset alignment for direct I/O */
-> -	__u64	stx_subvol;	/* Subvolume identifier */
->  	/* 0xa0 */
-> -	__u64	__spare3[11];	/* Spare space for future expansion */
-> +	__u64	stx_subvol;	/* Subvolume identifier */
-> +	__u32	stx_atomic_write_unit_min;	/* Min atomic write unit in bytes */
-> +	__u32	stx_atomic_write_unit_max;	/* Max atomic write unit in bytes */
-> +	/* 0xb0 */
-> +	__u32   stx_atomic_write_segments_max;	/* Max atomic write segment count */
-> +	__u32   __spare1[1];
-> +	/* 0xb8 */
-> +	__u64	__spare3[9];	/* Spare space for future expansion */
->  	/* 0x100 */
->  };
->  
-> @@ -157,6 +163,7 @@ struct statx {
->  #define STATX_DIOALIGN		0x00002000U	/* Want/got direct I/O alignment info */
->  #define STATX_MNT_ID_UNIQUE	0x00004000U	/* Want/got extended stx_mount_id */
->  #define STATX_SUBVOL		0x00008000U	/* Want/got stx_subvol */
-> +#define STATX_WRITE_ATOMIC	0x00010000U	/* Want/got atomic_write_* fields */
->  
->  #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
->  
-> @@ -192,6 +199,7 @@ struct statx {
->  #define STATX_ATTR_MOUNT_ROOT		0x00002000 /* Root of a mount */
->  #define STATX_ATTR_VERITY		0x00100000 /* [I] Verity protected file */
->  #define STATX_ATTR_DAX			0x00200000 /* File is currently in DAX state */
-> +#define STATX_ATTR_WRITE_ATOMIC		0x00400000 /* File supports atomic write operations */
->  
->  
->  #endif /* _UAPI_LINUX_STAT_H */
-> -- 
-> 2.31.1
+>   drivers/md/dm-raid.c | 5 +++--
+>   1 file changed, 3 insertions(+), 2 deletions(-)
 > 
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index abe88d1e6735..b149ac46a990 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -4101,10 +4101,11 @@ static void raid_resume(struct dm_target *ti)
+>   		if (mddev->delta_disks < 0)
+>   			rs_set_capacity(rs);
+>   
+> +		mddev_lock_nointr(mddev);
+>   		WARN_ON_ONCE(!test_bit(MD_RECOVERY_FROZEN, &mddev->recovery));
+> -		WARN_ON_ONCE(test_bit(MD_RECOVERY_RUNNING, &mddev->recovery));
+> +		WARN_ON_ONCE(rcu_dereference_protected(mddev->sync_thread,
+> +						       lockdep_is_held(&mddev->reconfig_mutex)));
+>   		clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
+> -		mddev_lock_nointr(mddev);
+
+Other than the typo, LGTM
+
+Suggested-and-reviewed-by: Yu Kuai <yukuai3@huawei.com>
+>   		mddev->ro = 0;
+>   		mddev->in_sync = 0;
+>   		md_unfrozen_sync_thread(mddev);
 > 
+
