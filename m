@@ -1,80 +1,135 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E958E155C8D;
-	Mon, 17 Jun 2024 18:56:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 155FA18FC80
+	for <dm-devel@lists.linux.dev>; Mon, 17 Jun 2024 22:00:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718650566; cv=none; b=AonyyqClKaKWbmTpiWBXoZnp3FmeVa5ctFaDUQb66WOgiFr+Sozib5aDlVE2ZPZaOI5hgUPQg8Su3l6HFsrh+NvWFIeTdVL8iyYj1P+ZizJDt6PSYHQ13XL2tLJH99pt7R5kFRUBt2BbNU50ojoKXuYWY/L9JcrkByl5MlPhuXY=
+	t=1718661648; cv=none; b=UItSd1zCYgi5cu1kemd5ZZ8UiJ3Hlm4JvREmliGZF29myHrQ/osTIFLhAWYWtHHMigyg4cf3BalaDkgiSmrzMxJYsaQTZuNDO38TJ0m7MiuwHGR8bvY+TN9I4qPDSZjsNaATw0ov7dLoVIXAng7J3AIMsRC8Ad4gmgU1IaRzZWY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718650566; c=relaxed/simple;
-	bh=g7rkmBq2pe99Z9GXbL+NVIJ/TMOoi7Iw0Lv6xVkToJA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=oEZcBXYbnz/FMDS3ZeaTiPWFAM9mPfVnyXQ3gzbuZi6JZfsXTg0r6gbvz15RJesPY1ZIhcHKwmuc7HcI81ttit/rKABZsYYUKeDj24bSKZWS2lEk+1Y6poo/dllsR5RDjHqFAMyuRCMDuTBwB54b8v7lo2CcetUz3fKAZzzSK+k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=q2++ArIa; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1718661648; c=relaxed/simple;
+	bh=h7LURKeDgeg16GkoPLAlSuc+hn1Z/vmMkPRPbzPj/J0=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=QBbIkMrRHXMXHO4bwgCBLYZqQfI2npLIHiNnp5sUabPlqaVX+1MYkgrgiCjEmYtXkG4lmiDcAtezA+A7oZCFMZ9c5WUJRuVvqyjJwPkTLh2SUR2cBylV3RucMo/FswfOJxDNr613cyYKxTKVaNZrHbWtRWx/Y2o7mo8OqLD/eDY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aCSL9zP7; arc=none smtp.client-ip=209.85.221.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="q2++ArIa"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A5D93C2BD10;
-	Mon, 17 Jun 2024 18:56:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1718650565;
-	bh=g7rkmBq2pe99Z9GXbL+NVIJ/TMOoi7Iw0Lv6xVkToJA=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=q2++ArIah/012FcoT7zryRSne2YU6H2RPdG7iBKuyfQrmxZbyv8Lx4xKP1XbxfRi4
-	 P9yShjbbBNPd5Z+pIYeIP1Db5YS3Pve2dMGtJ9MQbacqJtlAi1nHOUDKGST7luNl4S
-	 VT18yi6V9xiXWwuA1BAw5GJ4ydADTYRJMgezFx/borqv2g1Db4c7nv8jdEQcKkhy3o
-	 woEvNwsvdZ7EbXMnP814TsTEFIfxu95enQlEl1cSSv74R1Y4gUneBRc9DPkS12+urf
-	 6Erloj4I/sy3l2ecNNL80cFuj7jcXnVSsypQZ5zSuGonuDfO67EpStjz+LnqYx4GrU
-	 aGcp51DpIckgg==
-Date: Mon, 17 Jun 2024 12:56:01 -0600
-From: Keith Busch <kbusch@kernel.org>
-To: John Garry <john.g.garry@oracle.com>
-Cc: axboe@kernel.dk, hch@lst.de, sagi@grimberg.me, jejb@linux.ibm.com,
-	martin.petersen@oracle.com, viro@zeniv.linux.org.uk,
-	brauner@kernel.org, dchinner@redhat.com, jack@suse.cz,
-	djwong@kernel.org, linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
-	linux-fsdevel@vger.kernel.org, tytso@mit.edu, jbongio@google.com,
-	linux-scsi@vger.kernel.org, ojaswin@linux.ibm.com,
-	linux-aio@kvack.org, linux-btrfs@vger.kernel.org,
-	io-uring@vger.kernel.org, nilay@linux.ibm.com,
-	ritesh.list@gmail.com, willy@infradead.org, agk@redhat.com,
-	snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev,
-	hare@suse.de, Himanshu Madhani <himanshu.madhani@oracle.com>
-Subject: Re: [PATCH v8 05/10] block: Add core atomic write support
-Message-ID: <ZnCGwYomCC9kKIBY@kbusch-mbp.dhcp.thefacebook.com>
-References: <20240610104329.3555488-1-john.g.garry@oracle.com>
- <20240610104329.3555488-6-john.g.garry@oracle.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aCSL9zP7"
+Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-361c709e456so87421f8f.2
+        for <dm-devel@lists.linux.dev>; Mon, 17 Jun 2024 15:00:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1718661645; x=1719266445; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=416KkWXnjfFLt2Oo+8HRRnLDLrRrd/88t5tWGKXPE9M=;
+        b=aCSL9zP7L1vwyQ5DQjDnISfaavntTumEi5qKVA0SrM+HJKBN9hFryXuPZNBXzdsMK8
+         +O/9WZQU9If9JNweid47sLuaE1Zkb00m28xnWxUFYjpuau0WhvDQltpJmasQ3C4+YKOU
+         l1CnnOTh12ddrc2vZvfj1PgZh7MMBCNU6FDoTPEuHIliOrwWGFMILMA8rfAPGU8ovsWw
+         2hL9XDzM4GhbGKpls24CcEmTyBLv4EDabVdoO0qPbK3Hm4flljJK3D9FsXqDlRUuowX5
+         acGR7EoDzq/4YEE7aL3nfeMWJCV9foFdCiL7Ez33ej6FVWlIpcEelUH4hx2JPV4g8FLi
+         SOcA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1718661645; x=1719266445;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=416KkWXnjfFLt2Oo+8HRRnLDLrRrd/88t5tWGKXPE9M=;
+        b=gpbCO8p6F+PVCzUSFdVksCquoRTotFA0Gk3el0X5/zNueEmzNz/Y43G6Bz/UDTHcWI
+         jsqlrWsXX/nUFz2SX8XmEXdzwdCpNnc5i0hTP7g+gObjnXspaXUapWx3PnrSTUp6LXe9
+         THH56NoNBRwMi2yv9u7HXzNm3G34N3iTj9mWEMka02AfBT+YMk8j6A5D/NjJl1Pn4qYK
+         3eexPZHPXU+BvCDJUUNzBKxit4v2Pd+C+eeuKSAcSna+u0TzQk4IuI15bo2riyyfAHed
+         VGvaNAwcovtehUJLCClIUnLsGm8/8WGegoaau9BVJMBVmWm7b/yFQv1eL93EjEakyB5j
+         yeeQ==
+X-Gm-Message-State: AOJu0YwHq6X88QRTSmijEO3JEwlWRTG6SCK31kD2og+K164d57lRuSQt
+	4Tf78cZOzH2hXnI3gsUfipNhLG3pC7thVPknikmv7naPadcQQ6tnSLdvHNty
+X-Google-Smtp-Source: AGHT+IG5o4xZH4kzZgF4fnraRgX4xcrN+D3eUp8tmvJLGmDFU5B6UcPqxhBpoqlk5VM3k+yxOapp4w==
+X-Received: by 2002:a5d:65ca:0:b0:360:7139:ba28 with SMTP id ffacd0b85a97d-3607a783459mr9465144f8f.53.1718661644897;
+        Mon, 17 Jun 2024 15:00:44 -0700 (PDT)
+Received: from localhost ([137.220.120.171])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3607509c878sm12812355f8f.37.2024.06.17.15.00.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 17 Jun 2024 15:00:44 -0700 (PDT)
+From: luca.boccassi@gmail.com
+To: dm-devel@lists.linux.dev
+Cc: snitzer@kernel.org,
+	jmorris@namei.org,
+	paul@paul-moore.com
+Subject: [PATCH] dm verity: add support for signature verification with platform keyring
+Date: Mon, 17 Jun 2024 23:00:37 +0100
+Message-Id: <20240617220037.594792-1-luca.boccassi@gmail.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240610104329.3555488-6-john.g.garry@oracle.com>
+Content-Transfer-Encoding: 8bit
 
-On Mon, Jun 10, 2024 at 10:43:24AM +0000, John Garry wrote:
-> +static void blk_validate_atomic_write_limits(struct queue_limits *lim)
-> +{
-> +	unsigned int boundary_sectors_hw;
-> +
-> +	if (!lim->atomic_write_hw_max)
-> +		goto unsupported;
-> +
-> +	boundary_sectors_hw = lim->atomic_write_hw_boundary >> SECTOR_SHIFT;
-> +
-> +	if (boundary_sectors_hw) {
-> +		/* It doesn't make sense to allow different non-zero values */
-> +		if (lim->chunk_sectors &&
-> +		    lim->chunk_sectors != boundary_sectors_hw)
-> +			goto unsupported;
+From: Luca Boccassi <bluca@debian.org>
 
-I'm not sure I follow why these two need to be the same. I can see
-checking for 'chunk_sectors % boundary_sectors_hw == 0', but am I
-missing something else?
+Add a new configuration CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
+that enables verifying dm-verity signatures using the platform keyring,
+which is populated using the UEFI DB certificates. This is useful for
+self-enrolled systems that do not use MOK, as the secondary keyring which
+is already used for verification, if the relevant kconfig is enabled, is
+linked to the machine keyring, which gets its certificates loaded from MOK.
+On datacenter/virtual/cloud deployments it is more common to deploy one's
+own certificate chain directly in DB on first boot in unattended mode,
+rather than relying on MOK, as the latter typically requires interactive
+authentication to enroll, and is more suited for personal machines.
 
-The reason I ask, zone block devices redefine the "chunk_sectors" to
-mean the zone size, and I'm pretty sure the typical zone size is much
-larger than the any common atomic write size.
+Default to the same value as DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
+if not otherwise specified, as it is likely that if one wants to use
+MOK certificates to verify dm-verity volumes, DB certificates are
+going to be used too. Keys in DB are allowed to load a full kernel
+already anyway, so they are already highly privileged.
+
+Signed-off-by: Luca Boccassi <bluca@debian.org>
+---
+ drivers/md/Kconfig                | 10 ++++++++++
+ drivers/md/dm-verity-verify-sig.c |  7 +++++++
+ 2 files changed, 17 insertions(+)
+
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 35b1080752cd..1e9db8e4acdf 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -540,6 +540,16 @@ config DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
+ 
+ 	  If unsure, say N.
+ 
++config DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
++	bool "Verity data device root hash signature verification with platform keyring"
++	default DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
++	depends on DM_VERITY_VERIFY_ROOTHASH_SIG
++	depends on INTEGRITY_PLATFORM_KEYRING
++	help
++	  Rely also on the platform keyring to verify dm-verity signatures.
++
++	  If unsure, say N.
++
+ config DM_VERITY_FEC
+ 	bool "Verity forward error correction support"
+ 	depends on DM_VERITY
+diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+index 4836508ea50c..d351d7d39c60 100644
+--- a/drivers/md/dm-verity-verify-sig.c
++++ b/drivers/md/dm-verity-verify-sig.c
+@@ -126,6 +126,13 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+ 				NULL,
+ #endif
+ 				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
++#ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
++	if (ret == -ENOKEY)
++		ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
++					sig_len,
++					VERIFY_USE_PLATFORM_KEYRING,
++					VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
++#endif
+ 
+ 	return ret;
+ }
+-- 
+2.39.2
+
