@@ -1,85 +1,107 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com [209.85.160.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D1781822F3;
-	Mon, 17 Jun 2024 06:26:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33EB918FDC8
+	for <dm-devel@lists.linux.dev>; Mon, 17 Jun 2024 07:55:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718605589; cv=none; b=GXVwMdMmU6LdsyA6iCKdF85NBSnyPhCqRFGVjhQUvKMfmXhQJi1zKBj7xaD1OK0aFZYy8aqgyhkHKnQqmDmGgTxaj35HkDG/BctmidNVZ1/30gwNrTqx+GrL7b0UAbk9NFzMP9bPcmykpDOQsK22Fxn57FDhzHgkBHBIjbHfE4Y=
+	t=1718610955; cv=none; b=u41xDFHqhrtmXx+xkUgiXf6h+HqeaGfANzVIrcygfgDpA0Mhfqxvij9U64Xylr4oThJmVno4dO1nfvHVBQFz3jyp9J+r4RS21w7yykdyJk3MvM0LMotB9qKZLwurSSRvpTK1oCSDjvF3O7GwwtrOtWhYXJ4HYUStkA+kENI2ta8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718605589; c=relaxed/simple;
-	bh=5ukl1My1jMqhSyTqZEFqdGlI+72qAecy5V2ti5Kc46U=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=eS1CAG9ixn7Y+VSNE6byZVc8CNzyjNkpGUnwwey3TLWcyF1QQvtwGjDdtxm7OMESpfCIYjbwrQU2zIUVeF08vq1QN+OL4QG5sEzt9CEVcBGPnyx7+OmIEBesD8PEYQ+qNQ904xf5dewlwBAhc54Af7342kOwqGBKXCoVB7319QM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=OVa4VXa4; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1718610955; c=relaxed/simple;
+	bh=JhFXSTpTbZnynjs4GWaWiZ25aqQJvGOYbY3MGHI2j0s=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=ccskw7stQ/SPzznDsXWt4KST8pf2wVO6uWs9edt2HFlReVAjPysjYKZVKF3JAtZHReyWTTp8hAd1CqgNjwT/zgN6YLKge9frMi2qzcrSVMVwWIrs61iOmcf4mgYt6f9YMjineZrnObQUWuNpxHWtCZUrD9VUrsFVG84dVwiNV3s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=citrix.com; spf=pass smtp.mailfrom=cloud.com; dkim=pass (1024-bit key) header.d=citrix.com header.i=@citrix.com header.b=YcoZj8J2; arc=none smtp.client-ip=209.85.160.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=citrix.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cloud.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="OVa4VXa4"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 897D7C2BD10;
-	Mon, 17 Jun 2024 06:26:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1718605589;
-	bh=5ukl1My1jMqhSyTqZEFqdGlI+72qAecy5V2ti5Kc46U=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=OVa4VXa4gPyN4KTWboLud3pwf0TJbbk/rQ5BM4+Ufc5q6edplugfrWWUEhonGkfMR
-	 QHtsT5neG8mJ3vHyVK4COzgFtMwuBSA3Ltr1Kmgg0P9h/SDaPK/4D4vixnSs7AOdoo
-	 HP6agM24471d/vJb4Hh8SFe0zewqIqWCGc3aXNawn13hq27CQJOtkzwEi0TWYKBp4l
-	 c0TLeE0D0RKiKV3rNJyqOIzjVOG/87Bt7edT59MQLl5UfWjsDRSx6vZMzrYnvW4QJA
-	 /RoDuAqhbb/WQma0tOFHLAJHwURkZ+Z0rxy3rGxoovWXWM4rnyYIVDHULrocVjTDvQ
-	 k66Zct4kG1uEw==
-Message-ID: <c9871979-de72-49ca-879b-5f2bd773d517@kernel.org>
-Date: Mon, 17 Jun 2024 15:26:23 +0900
+	dkim=pass (1024-bit key) header.d=citrix.com header.i=@citrix.com header.b="YcoZj8J2"
+Received: by mail-qt1-f171.google.com with SMTP id d75a77b69052e-4415e623653so37857771cf.1
+        for <dm-devel@lists.linux.dev>; Mon, 17 Jun 2024 00:55:53 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=citrix.com; s=google; t=1718610952; x=1719215752; darn=lists.linux.dev;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=6I7HjTVD0FYGpGJyzdWr9lYyHGbtAeqv6wNa85E5Tlk=;
+        b=YcoZj8J2Z2ubiO3ZJR2z79eldCfjV7v/LodIv4Zsg4KsmAiiN+0z9Sgw6PhkrzGQ/f
+         rNJ0mosassppDU8ETQ2zgcE/uNe41LNQM9GKPBbeKAXPhvVAjcJHDLHX56GAU2EEatSs
+         xzMxtVZrq4Bx4REFCRuL7cNR1YA6hDoq6f7TA=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1718610952; x=1719215752;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=6I7HjTVD0FYGpGJyzdWr9lYyHGbtAeqv6wNa85E5Tlk=;
+        b=PNX2mji5mh49e/WZrZnS3GfqzBVjIF+1cO7XPVBDAHPMCuJjxtxpX/W2Sq9qJB9wDL
+         TaQ+mrC3nI5XPjY9EVKxL040/Sqr25sU1SFNOS9LB27kU031AWfyTU5unmCu1PXfTSWj
+         v/PVSNwTkOLO2WtyZD97NcXnHNAHBITkfGiNFbFyl8JH+bHWeqJVZrWHos/uzhTcsuVE
+         e0nmeRc2b1Hf8zpoFabBfcR4eA9tvChwiKsQU30slIZThEkg0NUUa8CvHMvydeudej8U
+         YfVSK959n0+3VbFYdCpFPCWgoZL69xGBbrfQPdIJyucWKcvizP7OZTX9lFDqOnypCQik
+         whsQ==
+X-Forwarded-Encrypted: i=1; AJvYcCW3+MJ5Se9LSAlDAqAkIb0ZPeQlFQcltg4xG0Sj01uKhrO0C8y4HJ7z+KyL+J9IsThXreKG9VYZxwpSqSrTymool7HxjKaM574=
+X-Gm-Message-State: AOJu0Yx9ZHK9UCUQM8RGUdKBH4ybzX0Pw+0C9WvXBMRQ3Kz9dfkBd/x3
+	8iVQT0P9Axbz7FGvvWnoo399b7V668E6J4ITRGhckogT3cfiKhM8T+xvv8quSLQ=
+X-Google-Smtp-Source: AGHT+IFxBb+fxu+zFP9/mPYH5nZSCdE6S/NGqQ55TdkfvSsNQ6okiuS1Itv2iysUUW0wZGmJIGDYbg==
+X-Received: by 2002:ac8:5e11:0:b0:440:10be:3ecf with SMTP id d75a77b69052e-4417ac402c0mr199666251cf.22.1718610952095;
+        Mon, 17 Jun 2024 00:55:52 -0700 (PDT)
+Received: from localhost ([213.195.124.163])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-441ef4eefaesm44094171cf.21.2024.06.17.00.55.51
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 17 Jun 2024 00:55:51 -0700 (PDT)
+Date: Mon, 17 Jun 2024 09:55:48 +0200
+From: Roger Pau =?utf-8?B?TW9ubsOp?= <roger.pau@citrix.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Geert Uytterhoeven <geert@linux-m68k.org>,
+	Richard Weinberger <richard@nod.at>,
+	Philipp Reisner <philipp.reisner@linbit.com>,
+	Lars Ellenberg <lars.ellenberg@linbit.com>,
+	Christoph =?utf-8?Q?B=C3=B6hmwalder?= <christoph.boehmwalder@linbit.com>,
+	Josef Bacik <josef@toxicpanda.com>, Ming Lei <ming.lei@redhat.com>,
+	"Michael S. Tsirkin" <mst@redhat.com>,
+	Jason Wang <jasowang@redhat.com>, Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
+	Yu Kuai <yukuai3@huawei.com>,
+	Vineeth Vijayan <vneethv@linux.ibm.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	linux-m68k@lists.linux-m68k.org, linux-um@lists.infradead.org,
+	drbd-dev@lists.linbit.com, nbd@other.debian.org,
+	linuxppc-dev@lists.ozlabs.org, ceph-devel@vger.kernel.org,
+	virtualization@lists.linux.dev, xen-devel@lists.xenproject.org,
+	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
+	linux-mtd@lists.infradead.org, nvdimm@lists.linux.dev,
+	linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org, linux-block@vger.kernel.org
+Subject: Re: [PATCH 01/26] xen-blkfront: don't disable cache flushes when
+ they fail
+Message-ID: <Zm_sBInagtSkOZtg@macbook>
+References: <20240617060532.127975-1-hch@lst.de>
+ <20240617060532.127975-2-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 19/26] block: move the nowait flag to queue_limits
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Cc: Geert Uytterhoeven <geert@linux-m68k.org>,
- Richard Weinberger <richard@nod.at>,
- Philipp Reisner <philipp.reisner@linbit.com>,
- Lars Ellenberg <lars.ellenberg@linbit.com>,
- =?UTF-8?Q?Christoph_B=C3=B6hmwalder?= <christoph.boehmwalder@linbit.com>,
- Josef Bacik <josef@toxicpanda.com>, Ming Lei <ming.lei@redhat.com>,
- "Michael S. Tsirkin" <mst@redhat.com>, Jason Wang <jasowang@redhat.com>,
- =?UTF-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.com>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
- Yu Kuai <yukuai3@huawei.com>, Vineeth Vijayan <vneethv@linux.ibm.com>,
- "Martin K. Petersen" <martin.petersen@oracle.com>,
- linux-m68k@lists.linux-m68k.org, linux-um@lists.infradead.org,
- drbd-dev@lists.linbit.com, nbd@other.debian.org,
- linuxppc-dev@lists.ozlabs.org, ceph-devel@vger.kernel.org,
- virtualization@lists.linux.dev, xen-devel@lists.xenproject.org,
- linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
- linux-mtd@lists.infradead.org, nvdimm@lists.linux.dev,
- linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org,
- linux-scsi@vger.kernel.org, linux-block@vger.kernel.org
-References: <20240617060532.127975-1-hch@lst.de>
- <20240617060532.127975-20-hch@lst.de>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <20240617060532.127975-20-hch@lst.de>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <20240617060532.127975-2-hch@lst.de>
 
-On 6/17/24 15:04, Christoph Hellwig wrote:
-> Move the nowait flag into the queue_limits feature field so that it can
-> be set atomically with the queue frozen.
-> 
-> Stacking drivers are simplified in that they now can simply set the
-> flag, and blk_stack_limits will clear it when the features is not
-> supported by any of the underlying devices.
+On Mon, Jun 17, 2024 at 08:04:28AM +0200, Christoph Hellwig wrote:
+> blkfront always had a robust negotiation protocol for detecting a write
+> cache.  Stop simply disabling cache flushes in the block layer as the
+> flags handling is moving to the atomic queue limits API that needs
+> user context to freeze the queue for that.  Instead handle the case
+> of the feature flags cleared inside of blkfront.  This removes old
+> debug code to check for such a mismatch which was previously impossible
+> to hit, including the check for passthrough requests that blkfront
+> never used to start with.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
+Acked-by: Roger Pau Monné <roger.pau@citrix.com>
 
--- 
-Damien Le Moal
-Western Digital Research
-
+Thanks, Roger.
