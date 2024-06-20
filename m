@@ -1,115 +1,161 @@
-Received: from mail-pg1-f179.google.com (mail-pg1-f179.google.com [209.85.215.179])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA81F1ACE67
-	for <dm-devel@lists.linux.dev>; Thu, 20 Jun 2024 12:56:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 376DF1AD499
+	for <dm-devel@lists.linux.dev>; Thu, 20 Jun 2024 14:12:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718888165; cv=none; b=kMjS9bRwrVNhr5oXPzCMwoVcPJ9RVX6cqnYSksfN0/I72Ci2SupNxrWflJta+AZZbT2BhImVtyDmAaC2UNrEKwxV0ee0VzDGCB1IklQNo04oG2wAxE0XEL0MMAGxF0ca8mWJGaXPgUKDw8wmT00FVXdKBJPOKpqGV9TOi+enEWM=
+	t=1718892778; cv=none; b=rZ1IXygB43zgWEcCDU/VxCN0ZK2AFW7Pxpiozjlf9+CJMmlrxXAObzJi6+PV7uaG8auytBpkVu5amrfFMihxivlcQXN6qnTCBQkVQfZMcFi6ePnZhE9dw4Wd1fvfUB5yohH9SURa5u+q8/4uvbG+Wd55+fBdzLLtSuxuH7XqP/4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718888165; c=relaxed/simple;
-	bh=RuJyc/vh7rRo84AoGK79y+sVnZDtFtSGukVmP5Nu3Mg=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=thWhLkje1DdNhCwlTQplwH/LIQZezSYSxyVKJhfbE7un1hUe0tpdREXExkA9F1GAeUI98Z3jHSY+I/QEKU1t7rZSFOXCalG0/ImZA5nopI4bc7RX1QCaV0dm/NddRP/tQKAOgCJ02AsAbU2foUdeCAsW7aJUs/8noJhWfcUV3xw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=JZEhoB8m; arc=none smtp.client-ip=209.85.215.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1718892778; c=relaxed/simple;
+	bh=a2igiApBU77fBP9Tg9BAAqeh+G6mxLYKf93fVQlTysI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=s01NqK6GU3r821pGpSzKqQkvKzjbUYT4wLZ1GRhvblHm1qISBgbqg/Uga571v+VsdegPuEtMFJ9rXwe0ZnIJ2ArmqOeBUo61N7UVNWzuUwRcV/kRhWJr5kv+RiciGp/Zs2mZUX+H1v53l0yDZGRHqW4bKnh+OxfpzdMqhAzJwEs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=zt1JXUWO; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=miN6IEO0; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=zt1JXUWO; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=miN6IEO0; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="JZEhoB8m"
-Received: by mail-pg1-f179.google.com with SMTP id 41be03b00d2f7-6c386a3ac43so104007a12.0
-        for <dm-devel@lists.linux.dev>; Thu, 20 Jun 2024 05:56:03 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1718888163; x=1719492963; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=7+GpvSy/VWf2OfE/fuIXNKg0MDOOI+VCks5t0p/pcdM=;
-        b=JZEhoB8my/zSITw/dzFwPXf2trPnma/uynLM1/e2Dk64zom2nrzWpwbS8OmxwBWGoi
-         346Fh51AePH/ikWQmDc/6w4z9e8mMOVlmRGY1HrUcRzs5voV3pITKhYhai8v92wWR8cp
-         SpJ7zxDrNdVdjfAaDL2PWV7rk1AfExJJr0cgi7aadUA34V+IB/7TO1Z8obXEK8mWuYO+
-         4vD1dY83YeUzmdeuWa7408GevZ1DWQjs92eZw/EcOjVsph4Lrzdh/4yKHwB9PX/EgodT
-         e022DbXoKTvATT0KxhBFh9Xf8nybVLmkfnkQU4pr/YD/TKHEqghXtBSRmxrrcKBi9vYH
-         Nqhw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718888163; x=1719492963;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=7+GpvSy/VWf2OfE/fuIXNKg0MDOOI+VCks5t0p/pcdM=;
-        b=GwR0rRDkmR3HIe1x8yTNNqJHUO7ItDcfEmK/RGjmOZVFyHoGdj8DuZIRGNCG26CQoT
-         sC5TYSu+s6Fi3LWtxdteip9MPN3p1dZm3+i7Ej0zUeAiS5OB9TOd17RurX7CLw7kLDPN
-         AC7e+EUSvv3gf7dzuaX4vYI94SOrr4myPwLSKBDykK5g7DLAVtb5dVoRhaBtLtR2IbEs
-         CahbgYLrJkbs2ZGPG4pz5NkMCQSN0SAoIdIL41s7pZ6Hydegl4Hl17gD6aJZV7Ve+kNV
-         ZHervarJpUUyuMTfyg3w+7mrs+qkq0ECy/9ZAJEyydotUBL/wL8W2k/mj7vek0GZiQf8
-         2Izg==
-X-Forwarded-Encrypted: i=1; AJvYcCVOC5+tHxvnQyAGCO9MbOeeyaAtsNroJeIvIbcRoqvxsr9DsXu3Vv7ThGRrLh5qKafysXgF+mFlTRtDkLH5PFUmXnHuLarzNJo=
-X-Gm-Message-State: AOJu0YwVFYSxCGd7jNBZ/fM5K+ekj8BRmIDTTsJk1E2YxYC9ZCcXLbxW
-	VEB4CpRrTxVAitGciVjBQ/f0Go8wGyyg54QKQYxa9RX/jzFwhNoHK1Fqn/F60sI=
-X-Google-Smtp-Source: AGHT+IGaFjmmqS8/vXfhaKJBvkqfuC0AIKhlPKIXJ/sieoz+3d1tNx2iS4ZjGF0ndyA+Z+pRDmp3zQ==
-X-Received: by 2002:a05:6a20:3c9e:b0:1af:aeb7:7a10 with SMTP id adf61e73a8af0-1bcbb586da9mr5418200637.1.1718888162785;
-        Thu, 20 Jun 2024 05:56:02 -0700 (PDT)
-Received: from [127.0.0.1] ([198.8.77.157])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-705ccb8eeb4sm12207576b3a.205.2024.06.20.05.56.01
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 20 Jun 2024 05:56:02 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, 
- dm-devel@lists.linux.dev, linux-raid@vger.kernel.org
-In-Reply-To: <20240619154623.450048-1-hch@lst.de>
-References: <20240619154623.450048-1-hch@lst.de>
-Subject: Re: misc queue_limits fixups
-Message-Id: <171888816188.139187.12750497286159297974.b4-ty@kernel.dk>
-Date: Thu, 20 Jun 2024 06:56:01 -0600
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="zt1JXUWO";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="miN6IEO0";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="zt1JXUWO";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="miN6IEO0"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 71E341F8A3;
+	Thu, 20 Jun 2024 14:12:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1718892775; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2bOUA5QxJ31WCm6TPcJHCbjgJxpPmWHLpzok2TtDYqc=;
+	b=zt1JXUWOXSP38EVlKaw+5G4O5YWCV2Nlcx6R+3dFKt1zVJGR4gP7Vbn6WZCxRqF0IwJM6j
+	pFAR7qiyPX5cF3RCLcLfSPDkvVLJIjUKdo40QMdT+lqWYp/hEYMpPZORETKBnTQsfPxUgz
+	nmePGnARD5yj1dAqT1Kx5i/XaR/Lqhg=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1718892775;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2bOUA5QxJ31WCm6TPcJHCbjgJxpPmWHLpzok2TtDYqc=;
+	b=miN6IEO0C7jAdufzLA7ujwgUOVZD2Kz32tibXGEWysr9O0buLyUIA2aBENYXrk12wrGJWa
+	nJp2TA0rIFLNnACA==
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1718892775; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2bOUA5QxJ31WCm6TPcJHCbjgJxpPmWHLpzok2TtDYqc=;
+	b=zt1JXUWOXSP38EVlKaw+5G4O5YWCV2Nlcx6R+3dFKt1zVJGR4gP7Vbn6WZCxRqF0IwJM6j
+	pFAR7qiyPX5cF3RCLcLfSPDkvVLJIjUKdo40QMdT+lqWYp/hEYMpPZORETKBnTQsfPxUgz
+	nmePGnARD5yj1dAqT1Kx5i/XaR/Lqhg=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1718892775;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2bOUA5QxJ31WCm6TPcJHCbjgJxpPmWHLpzok2TtDYqc=;
+	b=miN6IEO0C7jAdufzLA7ujwgUOVZD2Kz32tibXGEWysr9O0buLyUIA2aBENYXrk12wrGJWa
+	nJp2TA0rIFLNnACA==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 8419713AC1;
+	Thu, 20 Jun 2024 14:12:53 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id srm0HOU4dGZwWgAAD6G6ig
+	(envelope-from <hare@suse.de>); Thu, 20 Jun 2024 14:12:53 +0000
+Message-ID: <cfb9db60-6ff0-4c3a-9252-57d5e9c64d65@suse.de>
+Date: Thu, 20 Jun 2024 16:12:52 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.14.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [Patch v9 01/10] block: Pass blk_queue_get_max_sectors() a
+ request pointer
+Content-Language: en-US
+To: John Garry <john.g.garry@oracle.com>, axboe@kernel.dk, kbusch@kernel.org,
+ hch@lst.de, sagi@grimberg.me, jejb@linux.ibm.com,
+ martin.petersen@oracle.com, viro@zeniv.linux.org.uk, brauner@kernel.org,
+ dchinner@redhat.com, jack@suse.cz
+Cc: djwong@kernel.org, linux-block@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+ linux-fsdevel@vger.kernel.org, tytso@mit.edu, jbongio@google.com,
+ linux-scsi@vger.kernel.org, ojaswin@linux.ibm.com, linux-aio@kvack.org,
+ linux-btrfs@vger.kernel.org, io-uring@vger.kernel.org, nilay@linux.ibm.com,
+ ritesh.list@gmail.com, willy@infradead.org, agk@redhat.com,
+ snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev,
+ Luis Chamberlain <mcgrof@kernel.org>
+References: <20240620125359.2684798-1-john.g.garry@oracle.com>
+ <20240620125359.2684798-2-john.g.garry@oracle.com>
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20240620125359.2684798-2-john.g.garry@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Spam-Score: -2.79
+X-Spam-Level: 
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-2.79 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	XM_UA_NO_VERSION(0.01)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_TWELVE(0.00)[31];
+	TAGGED_RCPT(0.00)[];
+	ARC_NA(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	R_RATELIMIT(0.00)[to_ip_from(RLusjj3u5c53i6g8q6enupwtij)];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	FREEMAIL_CC(0.00)[kernel.org,vger.kernel.org,lists.infradead.org,mit.edu,google.com,linux.ibm.com,kvack.org,gmail.com,infradead.org,redhat.com,lists.linux.dev];
+	MID_RHS_MATCH_FROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	RCVD_COUNT_TWO(0.00)[2];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:email,imap1.dmz-prg2.suse.org:helo]
 
-
-On Wed, 19 Jun 2024 17:45:32 +0200, Christoph Hellwig wrote:
-> this series is a mix of a few fixups for the last round of queue_limits
-> fixed that I had prepared for a rev of the queue limits features series,
-> and a bunch of imcremental conversions that I didn't want to bloat that
-> series with.
+On 6/20/24 14:53, John Garry wrote:
+> Currently blk_queue_get_max_sectors() is passed a enum req_op. In future
+> the value returned from blk_queue_get_max_sectors() may depend on certain
+> request flags, so pass a request pointer.
 > 
-> Diffstat:
->  Documentation/block/writeback_cache_control.rst |    6 ++--
->  block/blk-settings.c                            |   34 +++++++-----------------
->  block/blk-sysfs.c                               |    6 ++--
->  drivers/md/bcache/super.c                       |    4 +-
->  drivers/md/dm-cache-target.c                    |    1
->  drivers/md/dm-clone-target.c                    |    1
->  drivers/md/dm-table.c                           |    1
->  drivers/md/raid5.c                              |    2 -
->  include/linux/blkdev.h                          |   25 +++++++----------
->  9 files changed, 29 insertions(+), 51 deletions(-)
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Keith Busch <kbusch@kernel.org>
+> Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
+> Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> ---
+>   block/blk-merge.c | 3 ++-
+>   block/blk-mq.c    | 2 +-
+>   block/blk.h       | 6 ++++--
+>   3 files changed, 7 insertions(+), 4 deletions(-)
 > 
-> [...]
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
-Applied, thanks!
+Cheers,
 
-[1/6] block: remove the unused blk_bounce enum
-      commit: f6860b6069b92559f5cdb65f48e2d82051eaebca
-[2/6] block: fix spelling and grammar for in writeback_cache_control.rst
-      commit: 4e54ea72edd68d074be2403f3efc67ff0541e298
-[3/6] block: renumber and rename the cache disabled flag
-      commit: bae1c74316b86c67c95658c3a0cd312cec9aad77
-[4/6] block: move the misaligned flag into the features field
-      commit: 5543217be468268dfedf504f4969771b9a377353
-[5/6] block: remove the discard_alignment flag
-      commit: 4cac3d3a712b5c76d462b29b73b9e58c0b6d9946
-[6/6] block: move the raid_partial_stripes_expensive flag into the features field
-      commit: 7d4dec525f5fd555037486af4d02dd3682655ba1
-
-Best regards,
+Hannes
 -- 
-Jens Axboe
-
-
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
 
