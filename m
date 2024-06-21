@@ -1,111 +1,200 @@
-Received: from out203-205-221-149.mail.qq.com (out203-205-221-149.mail.qq.com [203.205.221.149])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7837FBF3
-	for <dm-devel@lists.linux.dev>; Fri, 21 Jun 2024 05:50:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.205.221.149
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C12C3207
+	for <dm-devel@lists.linux.dev>; Fri, 21 Jun 2024 05:56:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718949042; cv=none; b=tnJVc9b/zlFHgCtJ9Z/uqQ+tnK1Td0kb5mlUfhFIWgjWxkp7NADC54GTvkRU2tEbT/ly6kVvumzX33sCRvRrtkFceeiA01TIXg8gSBAHknAi3npBgz0/nbXqnq5k0fC6oGhb65DAQ8AAGDrYlJjgtHAGLL9homd7BNhoTqAlukA=
+	t=1718949372; cv=none; b=uzbqjmvR/BzYAzMyY98JJ3ofXrBLF/FgRBJnecteLLydzRWgvZG5kZK+7RpSUQjj72Vy4uUZiPjhvfoNSZ4fAKQj5XpKWDO1f/A5Yt/kKaeJ18yEFRvKcXaKkpHYPVJNzBhETgrnRxhry4Ra0cvUp2YscmahZ5BidYNV7aIh+RU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718949042; c=relaxed/simple;
-	bh=Lb0SKkS9pokpBKNXfoBjTT4kCN1hqsP4Sm4uMO4tfgc=;
-	h=Message-ID:From:To:Cc:Subject:Date:MIME-Version; b=OLWr64ZICSKGoQ2X94t4HvQrtsIfegofGjtnbOK64inJbw+YeYb7htjLbPzHpLhWjiszoY1X5fe4T6gCiWl3ARIEdfWqyZHI11jBD+yHJeFsJCv8kBClyaWZc7iQVtqfPGxbEjtLOsppoMaOKh+TAuYZ0Psl5ARU1gaQuZDMNEc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=pKY0O6+Z; arc=none smtp.client-ip=203.205.221.149
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+	s=arc-20240116; t=1718949372; c=relaxed/simple;
+	bh=nunYsAPT5u4+SY+dfKlBWpXTDzBTFLCRvlpMwJeKB7g=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=T4jTrScW8gD6hCB62jF+ZR524HxcCjyljyx8C+Y3+3utDpLh9VNiWLIycSq8Uq9uICopQnC0IkaFaPiI5VW9fZCBinoB4/ysb8I96ErMpAyA7/0bx5GCnZre3FbZpU+R1PSKqyL8yy2jUjnk+rv6BvJGQWD2vnCkHJY0D17mtF8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=EMMK1RfI; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=4L8kd9sl; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=EMMK1RfI; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=4L8kd9sl; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="pKY0O6+Z"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
-	t=1718949031; bh=9UN+5mrz9/+dVZqayLcDV1SeJMFA1zY6fWx2LaYwIbE=;
-	h=From:To:Cc:Subject:Date;
-	b=pKY0O6+ZzBDCmaYDDwgVcg935ihqBZ+QZRCbUsqKraRUDiW4+bZKxXeitwO5eI7Ko
-	 1wpcDSowcllL9EYZ6BFwrQgCyqJoiCrF9CNDUz2or6M/Ei5bZZQBHG0BcX31I0Vnfy
-	 3EN6ijZR44haSWP8VeI34nt7WUDbGLSIj9fFOJlA=
-Received: from localhost.localdomain ([123.150.8.42])
-	by newxmesmtplogicsvrsza29-0.qq.com (NewEsmtp) with SMTP
-	id B12100B3; Fri, 21 Jun 2024 13:44:18 +0800
-X-QQ-mid: xmsmtpt1718948658td1eqxgec
-Message-ID: <tencent_3AC35DC56B065071A7930A3C4FAD98117D0A@qq.com>
-X-QQ-XMAILINFO: MRw/zKT/0BpP0U+3bzPOhdT3bVoRyitaIWFybxVC2fQhQOFN2mqy65hoC4rPDf
-	 ysDyod+zoQC24kKUCnMtPGLcbVMUi3/ZaRo8zEihbjmyxtq5N6wUYUnEKwQivM7LCcuWYV8v3TyZ
-	 qhc7BU0wmZAa2eLdnIJF+ucvwcUmt4/+nmAF3fBWpDcsikyZm9gYRsRiiXSasGeRusZVUTM0Mfgv
-	 cGGiT9cabpFd1SwxQgljEO5yXhKmqznjq9d5XSIAVo1uueSKj6PtQTJRkKwxfEUhnofHjoMi2ZC4
-	 8egS6RLGNe/LRX93c+ofSmi0Xciz2KEZ69fPf+8snzYtQECBXYmarfnR3bn5POr6X1O2o8+sFK8Y
-	 ozzNepvQAnM18hamGjLAjQ5XBeUW/H7i55ufLoZvFAU38ixeNzO22NdmkVCRDbQkIIr7P5r7wDqP
-	 T+OkcwOtyNrd9X8vpWVCSH3ZFV6NQDFIbmWRYwQ9uCgkzlybdmsyi8+CXRaaH7WMLEwbvprfkFHp
-	 vz2HGpdo8IrcyuOC9nfOBN3P4eqAVt6YiO3tSa+pRqXdI9krtCa8nSbLigK1LI/sWikfTJaHvlHe
-	 3YxM1sYNCNjE/aXs2KzT2ywFeGWouq/SFIw3zEmvPWFZO9QxHdYh9CNKQFTrIPIwh4Hn/RIygqSO
-	 yqSbyaZhM094wagVXJ+dXOiGGtNkKui2dk3f6fRPO0o/nFRz7Hu+8otiHHAJrf3oS4NqZNd3Zusw
-	 xav9yW17Ia2Ub7xWfkHW6IRcWbWUbWLtZpjY396ZcacL4F9FCbabHovUHVp4ufvZbHsM/NNspUsM
-	 d/WiBmlFTyUjU+G351wAIsg1KpsEHZ3nFhgACukDqtU0NEGBotf2AzS1DANbTHUEuNbUHu0GoEDQ
-	 Lfl5Skci8ugLMsiMaLxUG+3zP1ecfNontYZwqTru05RBo14HePdGQ=
-X-QQ-XMRINFO: NyFYKkN4Ny6FSmKK/uo/jdU=
-From: 303146950@qq.com
-To: dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com,
-	mwilck@suse.com,
-	Kou Wenqi <kouwenqi@kylinos.cn>
-Subject: [PATCH] multipath: do not change configuration when dumpping config
-Date: Fri, 21 Jun 2024 13:44:10 +0800
-X-OQ-MSGID: <20240621054410.7416-1-303146950@qq.com>
-X-Mailer: git-send-email 2.27.0
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="EMMK1RfI";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="4L8kd9sl";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="EMMK1RfI";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="4L8kd9sl"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 4A40D1FB51;
+	Fri, 21 Jun 2024 05:56:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1718949369; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Tzs1uWbqYDjrVbt6j5jc0RX32zWwNTB/IuFKdea3/lk=;
+	b=EMMK1RfIvC+AAjKvN1vCekL0/GtGFJ+n0cCaP9DBuqSREh5h4pZ8Pp5zcJ/qkSGksAgMuw
+	IOVQFo+6fRYrIIGuyWvIpNS8Ye5+HZJGpqXQukgSZ05IErTyMGxjjsVO4k7262Yaj/sTxb
+	/ij1hVOSvcg8Zl5iMR7yBRwyTf9OtLU=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1718949369;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Tzs1uWbqYDjrVbt6j5jc0RX32zWwNTB/IuFKdea3/lk=;
+	b=4L8kd9sl/Mdr03kr3F069mHEXM+zT1r18vc5GDFIUc6ljiV4C8m1g1wQ9mPmGswpS+0bd5
+	GFjdp5bcTK7hu8BQ==
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1718949369; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Tzs1uWbqYDjrVbt6j5jc0RX32zWwNTB/IuFKdea3/lk=;
+	b=EMMK1RfIvC+AAjKvN1vCekL0/GtGFJ+n0cCaP9DBuqSREh5h4pZ8Pp5zcJ/qkSGksAgMuw
+	IOVQFo+6fRYrIIGuyWvIpNS8Ye5+HZJGpqXQukgSZ05IErTyMGxjjsVO4k7262Yaj/sTxb
+	/ij1hVOSvcg8Zl5iMR7yBRwyTf9OtLU=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1718949369;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Tzs1uWbqYDjrVbt6j5jc0RX32zWwNTB/IuFKdea3/lk=;
+	b=4L8kd9sl/Mdr03kr3F069mHEXM+zT1r18vc5GDFIUc6ljiV4C8m1g1wQ9mPmGswpS+0bd5
+	GFjdp5bcTK7hu8BQ==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 0A86413ABD;
+	Fri, 21 Jun 2024 05:56:07 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id rKd1O/cVdWbQdwAAD6G6ig
+	(envelope-from <hare@suse.de>); Fri, 21 Jun 2024 05:56:07 +0000
+Message-ID: <373ec4bc-0919-47b1-bac1-55914c369e13@suse.de>
+Date: Fri, 21 Jun 2024 07:56:06 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [Patch v9 03/10] fs: Initial atomic write support
+Content-Language: en-US
+To: John Garry <john.g.garry@oracle.com>, axboe@kernel.dk, kbusch@kernel.org,
+ hch@lst.de, sagi@grimberg.me, jejb@linux.ibm.com,
+ martin.petersen@oracle.com, viro@zeniv.linux.org.uk, brauner@kernel.org,
+ dchinner@redhat.com, jack@suse.cz
+Cc: djwong@kernel.org, linux-block@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+ linux-fsdevel@vger.kernel.org, tytso@mit.edu, jbongio@google.com,
+ linux-scsi@vger.kernel.org, ojaswin@linux.ibm.com, linux-aio@kvack.org,
+ linux-btrfs@vger.kernel.org, io-uring@vger.kernel.org, nilay@linux.ibm.com,
+ ritesh.list@gmail.com, willy@infradead.org, agk@redhat.com,
+ snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev,
+ Prasad Singamsetty <prasad.singamsetty@oracle.com>
+References: <20240620125359.2684798-1-john.g.garry@oracle.com>
+ <20240620125359.2684798-4-john.g.garry@oracle.com>
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20240620125359.2684798-4-john.g.garry@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
+X-Spam-Score: -2.79
+X-Spam-Level: 
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-2.79 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	XM_UA_NO_VERSION(0.01)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_TWELVE(0.00)[31];
+	TAGGED_RCPT(0.00)[];
+	ARC_NA(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	R_RATELIMIT(0.00)[to_ip_from(RLusjj3u5c53i6g8q6enupwtij)];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	FREEMAIL_CC(0.00)[kernel.org,vger.kernel.org,lists.infradead.org,mit.edu,google.com,linux.ibm.com,kvack.org,gmail.com,infradead.org,redhat.com,lists.linux.dev,oracle.com];
+	MID_RHS_MATCH_FROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	RCVD_COUNT_TWO(0.00)[2];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:email]
 
-From: Kou Wenqi <kouwenqi@kylinos.cn>
+On 6/20/24 14:53, John Garry wrote:
+> From: Prasad Singamsetty <prasad.singamsetty@oracle.com>
+> 
+> An atomic write is a write issued with torn-write protection, meaning
+> that for a power failure or any other hardware failure, all or none of the
+> data from the write will be stored, but never a mix of old and new data.
+> 
+> Userspace may add flag RWF_ATOMIC to pwritev2() to indicate that the
+> write is to be issued with torn-write prevention, according to special
+> alignment and length rules.
+> 
+> For any syscall interface utilizing struct iocb, add IOCB_ATOMIC for
+> iocb->ki_flags field to indicate the same.
+> 
+> A call to statx will give the relevant atomic write info for a file:
+> - atomic_write_unit_min
+> - atomic_write_unit_max
+> - atomic_write_segments_max
+> 
+> Both min and max values must be a power-of-2.
+> 
+> Applications can avail of atomic write feature by ensuring that the total
+> length of a write is a power-of-2 in size and also sized between
+> atomic_write_unit_min and atomic_write_unit_max, inclusive. Applications
+> must ensure that the write is at a naturally-aligned offset in the file
+> wrt the total write length. The value in atomic_write_segments_max
+> indicates the upper limit for IOV_ITER iovcnt.
+> 
+> Add file mode flag FMODE_CAN_ATOMIC_WRITE, so files which do not have the
+> flag set will have RWF_ATOMIC rejected and not just ignored.
+> 
+> Add a type argument to kiocb_set_rw_flags() to allows reads which have
+> RWF_ATOMIC set to be rejected.
+> 
+> Helper function generic_atomic_write_valid() can be used by FSes to verify
+> compliant writes. There we check for iov_iter type is for ubuf, which
+> implies iovcnt==1 for pwritev2(), which is an initial restriction for
+> atomic_write_segments_max. Initially the only user will be bdev file
+> operations write handler. We will rely on the block BIO submission path to
+> ensure write sizes are compliant for the bdev, so we don't need to check
+> atomic writes sizes yet.
+> 
+> Signed-off-by: Prasad Singamsetty <prasad.singamsetty@oracle.com>
+> jpg: merge into single patch and much rewrite
+> Acked-by: "Darrick J. Wong" <djwong@kernel.org>
+> Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> ---
+>   fs/aio.c                |  8 ++++----
+>   fs/btrfs/ioctl.c        |  2 +-
+>   fs/read_write.c         | 18 +++++++++++++++++-
+>   include/linux/fs.h      | 17 +++++++++++++++--
+>   include/uapi/linux/fs.h |  5 ++++-
+>   io_uring/rw.c           |  9 ++++-----
+>   6 files changed, 45 insertions(+), 14 deletions(-)
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
-"multipath -t" and "multipath -T" might change multipathd
-configuration items "retrigger_tries" and "force_sync".
-Make sure they don't.
+Cheers,
 
-Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
----
- multipath/main.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
-
-diff --git a/multipath/main.c b/multipath/main.c
-index ce702e7f..f4abdad0 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -842,6 +842,8 @@ main (int argc, char *argv[])
- 	char *dev = NULL;
- 	struct config *conf;
- 	bool enable_foreign = false;
-+	int retrigger_tries_ori;
-+	int force_sync_ori;
- 
- 	libmultipath_init();
- 	if (atexit(dm_lib_exit) || atexit(libmultipath_exit))
-@@ -852,7 +854,9 @@ main (int argc, char *argv[])
- 	if (atexit(uninit_config))
- 		condlog(1, "failed to register cleanup handler for config: %m");
- 	conf = get_multipath_config();
-+	retrigger_tries_ori = conf->retrigger_tries;
- 	conf->retrigger_tries = 0;
-+	force_sync_ori = conf->force_sync;
- 	conf->force_sync = 1;
- 	if (atexit(cleanup_vecs))
- 		condlog(1, "failed to register cleanup handler for vecs: %m");
-@@ -924,10 +928,14 @@ main (int argc, char *argv[])
- 				conf->find_multipaths = FIND_MULTIPATHS_GREEDY;
- 			break;
- 		case 't':
-+			conf->retrigger_tries = retrigger_tries_ori;
-+			conf->force_sync = force_sync_ori;
- 			r = dump_config(conf, NULL, NULL) ? RTVL_FAIL : RTVL_OK;
- 			goto out;
- 		case 'T':
- 			cmd = CMD_DUMP_CONFIG;
-+			conf->retrigger_tries = retrigger_tries_ori;
-+			conf->force_sync = force_sync_ori;
- 			break;
- 		case 'h':
- 			usage(argv[0]);
+Hannes
 -- 
-2.27.0
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
 
