@@ -1,222 +1,160 @@
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 592FE208A1
-	for <dm-devel@lists.linux.dev>; Fri, 21 Jun 2024 14:42:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718980950; cv=fail; b=gMdVcq+KDBU4hjmHLQ5YpUVVwb1qzlRBJ/WsY1FmdizCS6/vAGyWbu7opurSVYBRbgNtcWLapJei7voqDhOCmqhmM9wnF+4q/kb/M//KC+twImzKqPKvcVBAA8Na70AJPETszXL8bWn2G8aVidWsXVdVmzl1VK4oTbUqMjrYW8I=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718980950; c=relaxed/simple;
-	bh=+J4SqbO1h3HVl1Pd3I39b25kMH+mm13+sgUOwB6w6W0=;
-	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=AhCji1m8CO99hKg2hRfhgb5VDBRAnMyaEMm855Zvxq1CxGlD+hWpX8x6RsfJZ6ceZyLdHZlOG1cKl7m3CaaaMvox4jg3/0HMNXoKvLoxhWwtCNIafBc1xEw42A2S8LdVQ/9c1pzeEc193lbZTEqywz4zS3UeV5fXvERHfmvrIn4=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=jh+o1wGc; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=LLuqG0uj; arc=fail smtp.client-ip=205.220.177.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3E5A52BD05;
+	Fri, 21 Jun 2024 17:00:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1718989216; cv=none; b=OUxaMpOvWpZy5DzU1axKxEs91gdTRlpZw083eFsf8IoNUe+HOr2moudJW9IyVvuY8Ib+dKM7IkBwbQzOHEAATOynuw5TE8J522sSpqfAeTQ7QSShftYI+ouhEWf6WsW3WJiEAGX5p6PpcvNhjw3LQlrnTznEA+zsSuT9cuV11D8=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1718989216; c=relaxed/simple;
+	bh=T5agsG03jsn5iNLlN/Q/8k0qiwUTJkBZqtzS0aWxZ64=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=qFfOJEVT37ozw8pKAseX7SHt7c7WH3DpEHwnHFLYY2TeJAJIPH8iJspb7amqoBW/sw72UtsuSD/hb1j49fDQ7eMSYHwnbbztWyztcSs+mddXFsoKnSrd91HxsVjnKesfuq8Al7QLujpWT4Pmwt8d0FuTSJbFrTkumuw9LLc7nzs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ojqrPTO5; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="jh+o1wGc";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="LLuqG0uj"
-Received: from pps.filterd (m0333520.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 45LEXPaq026149;
-	Fri, 21 Jun 2024 14:42:01 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=
-	message-id:date:subject:to:cc:references:from:in-reply-to
-	:content-type:content-transfer-encoding:mime-version; s=
-	corp-2023-11-20; bh=+J4SqbO1h3HVl1Pd3I39b25kMH+mm13+sgUOwB6w6W0=; b=
-	jh+o1wGc4G93Sf3B8sgLtFZxJ0ExFSN7VImu+cIt6Yz/58ukVosIuJBCQveQ3uOt
-	oMsSoIBuIIOjPWNnPlOAcGU6hECPmAspljsqGCaZ6nciHE+uvJ97EqhXpJXb67C1
-	muePBglfGLCxJMCKHliP/vpH5UgifBnmY93A5h1qQV285dhWZA16FXsMCc8SygE1
-	jbbbFAgQFoUub8EBU4CN10Rlu0dXYZp6TH/Tzj7eQHJCiBkzJBvw7eQOkSuJWQJW
-	y9S324h9snzEdtmdGX3tl2HLYNNonm6ShjTDHuY5DsmB0bE71UgE08jtgxSTfLGv
-	6ObUIzXYySbDtfL8BDe47w==
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3yvrkfsw2n-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 21 Jun 2024 14:42:00 +0000 (GMT)
-Received: from pps.filterd (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.19/8.17.1.19) with ESMTP id 45LDNaFl023654;
-	Fri, 21 Jun 2024 14:42:00 GMT
-Received: from nam12-dm6-obe.outbound.protection.outlook.com (mail-dm6nam12lp2169.outbound.protection.outlook.com [104.47.59.169])
-	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 3yvrn8pj04-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 21 Jun 2024 14:42:00 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=hrstjfB3ZWTnxgyLiPXPPs7PE3o7qDti+1DuW8MeI/PJNYiVvZtN9yESdjQ5laUXfvBAfa0ZH616au56Gh5Za07KOhl//5R7XnirXspjw30agp/lpDaFbdSRAO4wBFKsRKE4YdCaBmAOzi/EEww2+69XxXNz97VDXPDj4TMxDbNi9U2SyXjI4o9Ohk1MiqfJT3H8zAigi5btgB6Rbx3n6T/Z+PClsM02SyeoXGIeYuiMp1YyoxR2VabzjqMWFFPxfkYYK8/4LgKOyz1lWDywgncc9c7yAFtCAcoiXBQezlfIEn+717SABHpe1G0w/f3TIqKNIjGfcCfvtMHaYzla5w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=+J4SqbO1h3HVl1Pd3I39b25kMH+mm13+sgUOwB6w6W0=;
- b=hgTiZ92Yp/bEZrJ9Ctd+jmm+6iCIyf8WJljyErMYrae3RD39G66fa6TCq/SUuP/Oa/0eGSwINBtIbEgZX9PDC+lP3fwiYa+Lr/8KR5ykOQCvKa/i+kmIixQpKtMgCjScCpWe97Sj5LMC101RPdcdV4ljbjewasatQBBJBcQrkFFDDG4DdcWm5qCk+GknfGkn1c6wQqz0E8PT2QYRfh4KjVLAM3CFjJ+mo12eIWM060VjU/xujDhwyYzLzumF3ztmfQSZUwVZTHbHRWR1BGJdg13aKeI/mv0PjWFWo3SPeF3uENdluJ/DJAmfV9KVSVjDp9D/Mx9Ajici1D9b9YZAAQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
- dkim=pass header.d=oracle.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=+J4SqbO1h3HVl1Pd3I39b25kMH+mm13+sgUOwB6w6W0=;
- b=LLuqG0ujtId51IRrQ6mRllTbffzPyQMZcC7RxUsLPV1khHL1thvINw2N1ZpItbdsCD/h/A3KhGYslG4GN3vok1PGlkfB8rDEiQFomfsPft6s7zqnXlPR8QOZ+o17YpOWspdN+KEuaEDCgAfHtgzhk/G1DkNMI/0ZTUkbBrkpikM=
-Received: from DM6PR10MB4313.namprd10.prod.outlook.com (2603:10b6:5:212::20)
- by DM4PR10MB6791.namprd10.prod.outlook.com (2603:10b6:8:109::21) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7698.21; Fri, 21 Jun
- 2024 14:41:57 +0000
-Received: from DM6PR10MB4313.namprd10.prod.outlook.com
- ([fe80::4f45:f4ab:121:e088]) by DM6PR10MB4313.namprd10.prod.outlook.com
- ([fe80::4f45:f4ab:121:e088%6]) with mapi id 15.20.7698.020; Fri, 21 Jun 2024
- 14:41:57 +0000
-Message-ID: <351e602c-6af3-4d86-9c07-4a715f34cea4@oracle.com>
-Date: Fri, 21 Jun 2024 15:41:49 +0100
-User-Agent: Mozilla Thunderbird
-Subject: Re: [Patch v9 00/10] block atomic writes
-To: Jens Axboe <axboe@kernel.dk>, kbusch@kernel.org, hch@lst.de,
-        sagi@grimberg.me, jejb@linux.ibm.com, martin.petersen@oracle.com,
-        viro@zeniv.linux.org.uk, brauner@kernel.org, dchinner@redhat.com,
-        jack@suse.cz
-Cc: djwong@kernel.org, linux-block@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
-        linux-fsdevel@vger.kernel.org, tytso@mit.edu, jbongio@google.com,
-        linux-scsi@vger.kernel.org, ojaswin@linux.ibm.com, linux-aio@kvack.org,
-        linux-btrfs@vger.kernel.org, io-uring@vger.kernel.org,
-        nilay@linux.ibm.com, ritesh.list@gmail.com, willy@infradead.org,
-        agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
-        dm-devel@lists.linux.dev, hare@suse.de
-References: <20240620125359.2684798-1-john.g.garry@oracle.com>
- <171891858790.154563.14863944476258774433.b4-ty@kernel.dk>
- <674559cc-4ecf-43f0-9b76-94fa24a2cf72@oracle.com>
- <2159f1ad-98c0-4a71-acb9-5e0360e28bfc@kernel.dk>
-Content-Language: en-US
-From: John Garry <john.g.garry@oracle.com>
-Organization: Oracle Corporation
-In-Reply-To: <2159f1ad-98c0-4a71-acb9-5e0360e28bfc@kernel.dk>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: AM0PR02CA0158.eurprd02.prod.outlook.com
- (2603:10a6:20b:28d::25) To DM6PR10MB4313.namprd10.prod.outlook.com
- (2603:10b6:5:212::20)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ojqrPTO5"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 653DBC2BBFC;
+	Fri, 21 Jun 2024 17:00:15 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1718989215;
+	bh=T5agsG03jsn5iNLlN/Q/8k0qiwUTJkBZqtzS0aWxZ64=;
+	h=From:To:Cc:Subject:Date:From;
+	b=ojqrPTO5aTeKGpQCSMvF+zQ7FwXzf9ik9wd7WRt6ReT02MtlwSRsY7+900ySKryUf
+	 dAdusLYaBuAyVE1nLHzVzn44YGXrRj5is0xXoHmUaBYoCBME/uJO+QVB74dZZjc2qk
+	 tqiFh/sL3WTHXKl131e3AzIVmkR5c0AH50ObTUtyrWd6WhW3jlNmdfdSI11G9rRdzp
+	 AVQ3qTefuTgEq+qJ9KwUjM0CcAzNepeyx4BRYRftNtvA/k/ZcrVyy8W1bhNkprgX4z
+	 tgiostLDLm7s9EN80zODUNApObbKoLkasOAX2knaXamwq2PwtJySm1aT3fXbjnTgJo
+	 FbKRwk2ZijGrg==
+From: Eric Biggers <ebiggers@kernel.org>
+To: linux-crypto@vger.kernel.org,
+	fsverity@lists.linux.dev,
+	dm-devel@lists.linux.dev
+Cc: x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Bart Van Assche <bvanassche@acm.org>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH v6 00/15] Optimize dm-verity and fsverity using multibuffer hashing
+Date: Fri, 21 Jun 2024 09:59:07 -0700
+Message-ID: <20240621165922.77672-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DM6PR10MB4313:EE_|DM4PR10MB6791:EE_
-X-MS-Office365-Filtering-Correlation-Id: 71178e87-cd49-46be-93fe-08dc92004d52
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: 
-	BCL:0;ARA:13230037|7416011|376011|1800799021|366013|921017;
-X-Microsoft-Antispam-Message-Info: 
-	=?utf-8?B?V2c5aHJOcXZpNHlibkRQQ0hHMm5Sd2h6cm55cGhFYzM1Sk9lUTFKM0pJK05U?=
- =?utf-8?B?S093WloxYTBLdXloUUk3OFVxZGh6YWhqaTZPcnVaeVA5VGQ5UG5SOVAvdXUy?=
- =?utf-8?B?S0w1NytDbStKaUR5aWRMK3pqWWRVN05JVVlmSGMxVzNtSDhNSUMzelVoSlo0?=
- =?utf-8?B?d2VlblNVK3ovQmN0WHVRMUpIUTZyellibnBDV3laUnRrWVBjSEFYNy9VN1VS?=
- =?utf-8?B?YVhNZzZEaFJ1MjZWcGF6bmJkZ2ZZYWcvUEhKbWNsektpVlBBQ1pNaWJzcUc2?=
- =?utf-8?B?dTl6a3JCNm5SSnpYaDFBKzZwdDJyWkQ2YThYMEd0dVNHY1FodkhRaUV6c0Y0?=
- =?utf-8?B?M1ZnTStGS3cwYjJFcnJmVUQ3cFE1N015Z0RWektxZlFXTlRKS1U4K3d5a2hT?=
- =?utf-8?B?Sm52MWsyajd2dnFZdTlaK2ZGSUhTYjQ1QWoyem1ZZVVadFFvYXd5Zk9hQ1c4?=
- =?utf-8?B?aU5vOVpIK0ZORktUcTJ3a2EvMDZSclJoeUorNXBPRjhxaTd2VEJZcHRnYlQz?=
- =?utf-8?B?ZC9zaU5jZU9ld1R6WHB2QXVXZHZVWk5UZ21JRXdFcGlYMDUxdzJBTUNqZW9n?=
- =?utf-8?B?Vy9RWFpKUXZnVk5PMWh3RWtYMU5JRU4vN2xxUFdmUlBnNTg1U3c4SWMxWFBP?=
- =?utf-8?B?Kzc5OFpxUDFwRnFJQ2FMcjYweEpHbFR3blVxci9UdnhLUDR6UW50a2ZxUTZS?=
- =?utf-8?B?WWVyTGFaQXlOb3FKSzNaeUVNN3NaR1FqTjNkVG9HYVllWXA2dkpDMGF0V1ox?=
- =?utf-8?B?N1kvZlQrQVRwZ1ZneEdVbHIrL21HWTd0UzVZbk94TlN0SmxmSy81cENONFlF?=
- =?utf-8?B?aGxvbUNmbGpocHVMRkdib1VGaTF4NXJZWUM1aXdLRGU5VTFqOFBrODVTQkc4?=
- =?utf-8?B?aWZXak5DMzNzeTQ1dC9VaEU4SUNqT29nbXdPdkpoRTlJOGdycy84T0NCRTk1?=
- =?utf-8?B?TFAySm96d1F6SVBQY2RpSnlxRmtCM3ozWnhVQXFtb0JvajdMVmdtVWJLcUFy?=
- =?utf-8?B?Q2NQVkt1eUN0cWVpb1F6ZmUxV2lQRHM4K25LTEpNS0pFTTF0UkVhaFdVNEh3?=
- =?utf-8?B?NHlzWXkvb0xHajZHN1ZvY1gzWXM5T085R1dCSHFkNUdrUEttd0Y5WlRXb2w2?=
- =?utf-8?B?MG1mbk5IczQ5aUtiM0w5QXRxckJyWm9qclYzOHIwdTdSdy9SL3BydThUbTBm?=
- =?utf-8?B?MWp0RlpRdUhMZEo0MzVzYS92NzZ0TkI0dWcvQkJJalBqdVowSGtxZkRzMjI3?=
- =?utf-8?B?WUR2WFNMaW44M2Y5aW05M2RZeE56Mi9KS1psdHJ6aHluVSs3U0xFK1FuYkpv?=
- =?utf-8?B?SGd2a3N3YVc0dkZRL2RuQXJrdnVXaFFabmVabGJEdExXM1hSdVl1YTBhbENO?=
- =?utf-8?B?bjdjdlJ6RjNOUThrNFFQTWc4VzFxYld3U3RGdmE0MC9uYU9sL1VPK2diZHpM?=
- =?utf-8?B?TDhJMlZST2pNU0F1Njgwak9IY0pPSUc3b2h3SFBsd1VEdzYwYTRNSXdjc215?=
- =?utf-8?B?T0RlR25ZVmhab045OWMyRVI5NWxsaWlhRE9KTkxqQ2pzN0NMNlg1N3VQNEdC?=
- =?utf-8?B?WnVBdDVVUmlncG5FUnM2b1Ftc1prTlQrMEE5a3cyaXE0SnBBakhuUTZpUTdC?=
- =?utf-8?B?elhhU2cza3pQWTRteTlkTW1RSG1VbU9FTmJFZjlLdWRzaUY0aVorV2piQTgv?=
- =?utf-8?B?NWI1MUZJYnVUVnRFWUl6T3labDlCSGovTTE3akk5WHhaSEY1NE42bk85RkIz?=
- =?utf-8?B?OERmdEp1WjZhMS9tVFYzQ015NVBZSFRqckRJZXFuSndXbXV5Z2ZoaU1LMUJF?=
- =?utf-8?Q?laaCUkJETAeGQmOVraU7w/oyDLRpHIAYGcDd4=3D?=
-X-Forefront-Antispam-Report: 
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM6PR10MB4313.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230037)(7416011)(376011)(1800799021)(366013)(921017);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: 
-	=?utf-8?B?blFZeGl6dERZbkVHSGZMTmdZblRMOERReWhZbTFlOEcxRVhSZDYyU2w5WUFw?=
- =?utf-8?B?ZytpQTN4c01QYzJhSWVQakxwU2MrampNKzk1c1Y2YmZhSmRMa0RIVEJXZHRJ?=
- =?utf-8?B?SldXN01KbEE3VU9HSHpxTURvM0NFZm1OYjhTWkNnMkhyZHoxd1ZTbXJLWTJG?=
- =?utf-8?B?TkRPU09yTitWSjhEMjFGWjE0eFZXajYyQmNtbEJWVk93NWJETGg4ZXBNWEtL?=
- =?utf-8?B?akJIclgramRZemptcmF2UmM5OTd5aGtweXIyWk12YVF4MlM3TTdqSXhRUzcw?=
- =?utf-8?B?SGRQdUlBTklPc0RhWldQeWFqWVZjNFpnV3VsYWxNVzN5UFYvUWYxZFFVUEVF?=
- =?utf-8?B?c3Rla1JZTFRkbUh6cVowQlJUWEJGcXYyNEd2NFZXc2x3aXkzTVpSanNXR21l?=
- =?utf-8?B?eURBYlNlTHlHNG1oRldVdlNQai9PZDlwWG9PQmZGdXd0ZkpmdE50NHlyQzlz?=
- =?utf-8?B?cmY1MEZIeFoxdUFva0V0TW1YL2VkVEpFU3pYc28xRDY4RTBlZzJIOUlWR2Rr?=
- =?utf-8?B?OUdVdWJCK29SVGVVeDVMUW1Na0cyVzlFZzFDSzNhYWQyc1NXM1dwWWRoZjh0?=
- =?utf-8?B?NEdsK0ZUZVAxTHhwVTJ2UVpWVzl5WnZFaWhYNTJCbzhPTi9YSTVzMkNpM1JT?=
- =?utf-8?B?ZldXL1RZSi9yQlNkYlhaS3lobmdDUysvU3k2aVB1blpDekJML2J5elIzS2FV?=
- =?utf-8?B?WGhJSUVJRG5aTEdNTW9KQnN2MlZzbmYyeFIzNkptV1hiK3lKdktsZzJGbzNB?=
- =?utf-8?B?eHY0aTB4MDJGUEdWdHljOG82QWdvbkxQa1dMNVZZcEl4Uk1IWUxjOXhteFdl?=
- =?utf-8?B?MmlYeUtMT0NUV1BLZTB6dC83d3pGc25FK1hBczBGb0R6VGpCMHppa2Y4aTVi?=
- =?utf-8?B?Q2FPZ29WZjBLNEt4TzFPRGdGU2JqQ0NETUVaNUdZRGtIOTIySnRzRkgySjhr?=
- =?utf-8?B?VlJpYXdzNWVQbFZUWDZOVUE4UFplSEpPVlZUSlQ1QXl3aFdqanFFVWE4Zjkr?=
- =?utf-8?B?aCtVVXFwZVByQzJVNVJEU0lpazhYQzNobTBHaTQ2WGFqUW1zV0k0VkUvU2xY?=
- =?utf-8?B?M2dPdml5MHk4a01mQ1FSU1NGUEgxb3V5ZkpNL015c2R4MG1iQ2ozeWx0Y2xG?=
- =?utf-8?B?T0RESjZlUS9SVEhiUGloSDg3RjVCbjQ0YW54TVc5NnkxbGZjNHNranlUb1VV?=
- =?utf-8?B?VWxQNXdCREExLzZRYndiNWlseFByQm9MZFRyOVcvSlRXNjJMVTIvc0dzRWZI?=
- =?utf-8?B?Q2dIU1l4QnBzcHkrRWJoMEVyd0VtVnZlN0RneXlzUXBqQnpsVXFJODhNQWl1?=
- =?utf-8?B?RWh4NGVNVGt4bHY3KzEyU3ZOck5qSFI0b241cEVQZytjMjhITVlCOWh5RVNr?=
- =?utf-8?B?NlQ2ZElJVFNXS3lHMUlXaFlUU2NDa3JBOHkyek9PMEpvbW9JYTRaSDdrb2p4?=
- =?utf-8?B?dGpsU2h6WERxYkoxS0dnNnl4NWIxNW5CVDNZWHVUcUJHZ3duTWpGekEyM2FY?=
- =?utf-8?B?S3luc3BoOEJIZmpkRC9NWlZkWmkrdzBQQWdsbnUrOHpVTFZFclkvcEFSWFVo?=
- =?utf-8?B?UDlPbkJxeWUxZEZsZVZuY2plZmsxQnMyTWxacnRBOVhkdVdSc0E0dGxreTN2?=
- =?utf-8?B?SExCSFd6MG9KaTF6OXdabTdPay9nYmh1VXVHalVXZENkTy96dUlDN3lMVm9k?=
- =?utf-8?B?OS9qa0NaZTFHLzdmcnFuM3FKRlgzU2ZETkZLRFNKaHo3MXkxR3FxRVZ0bS9v?=
- =?utf-8?B?cUFmaWFTbGx2RHcyYnJPeDN5UGMvRXFaaHZMN25peW5qVU93eXRSRkdFdk1E?=
- =?utf-8?B?Rkh4bEdHZUR6NC85VmJZMG90UjBXMXkxRFVhUFlyKzRSSTlrQUNjQSt3Q211?=
- =?utf-8?B?RFFzRE5hQndDOTRaRUxraGxkaDdKWDRUbmFZU2Z2S29nVG41UDZJQUYwbXpk?=
- =?utf-8?B?dithRklSZDBocmJUMitXdnFVVHcvZ2hJZlJDSHgydGR2YmkzUzNsNkVLSC95?=
- =?utf-8?B?cFMzYlZDVldtTyticU41T3B0ZW9FTmNoalVYbFhiZjJGZWZCbkNGZ1ZKMGhj?=
- =?utf-8?B?RjJUS3ZVZTJ3d3pwdUVDUFdRR0xFN21YMjFFa251QWt0TEJXcXlyK3htOXEz?=
- =?utf-8?B?bkFWSG02dFppR1VzbDNwRHdOeHlTY2Q3WmhNNjBia3JNRS9Nb3RyaWt3K0dz?=
- =?utf-8?B?Vnc9PQ==?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: 
-	EERYT36ryfIyLcS84zJI4pVL/y5AlQ52cEHVgXzjhuf4HDSV/gRNRsBpcBjatbsmrwdl8uDAonugUKwKR3ROdjUcfji/D9uUXDTUgdQhMI2cybM0RHSwXSw9HvsvyBm3dOrkvW1PiS5nbC0K2fLdVMdm1NHYEOKY2FuZ+oeB8KX0IdEATko8sAZDc42y+F1sOgDvdgZiqkB+liw+/EjgTyM15t/8F+7FAPx02JklNWi4CmGnr1pqkPjgdNJiiGLUYtJ65d9slX7ICV/ww0X7WNKJyheImyZUcmy6Ng7kOeD9v/px/b45sQ9gQLW4brn50cPJeR2t6qVWB9C/9jPXqFRJpaCfwbrjKraofyk9WQkH5c9tpjMOWcTPyK11sHCGOkNXS8gxkou1NqxEyn6+5ypSGhTsoDivC5k6RTbRDDFbnPi+eoI2FH8ka/WgO2lmpM3ZRnOHhAkwe6X1/I99WtxU04IGKQq9bhb1tDepc94zt8nJKp6+3m/+53L1kt4G/XAig4DuIgUb9yC0MM7gLXwCNt0kZuTpXbF7ya2bj1Afi7nP1rDLi5wmRYgDuJV/gOpvzbV6JM9u29ui4FwG5kwbQdymi58CgZWVA1Yd4Zg=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 71178e87-cd49-46be-93fe-08dc92004d52
-X-MS-Exchange-CrossTenant-AuthSource: DM6PR10MB4313.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 21 Jun 2024 14:41:57.6949
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: X+DH1ugDypdCOWNSeOseOBaYIJvQdiQlyEBnS/IKzlQXPM1pY4moNa+KsOLWeV1gG1ATJxAlu7y7T4P1QPlEyw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM4PR10MB6791
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.28.16
- definitions=2024-06-21_06,2024-06-21_01,2024-05-17_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxscore=0 adultscore=0 bulkscore=0
- suspectscore=0 spamscore=0 mlxlogscore=999 malwarescore=0 phishscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2406180000
- definitions=main-2406210107
-X-Proofpoint-GUID: 4x1RdYhdJdj3lGWXTu-la4sgBhzp2Whe
-X-Proofpoint-ORIG-GUID: 4x1RdYhdJdj3lGWXTu-la4sgBhzp2Whe
+Content-Transfer-Encoding: 8bit
 
-On 21/06/2024 15:28, Jens Axboe wrote:
->> JFYI, we will probably notice a trivial conflict in
->> include/uapi/linux/stat.h when merging, as I fixed a comment there
->> which went into v6.10-rc4 . To resolve, the version in this series can
->> be used, as it also fixes that comment.
-> I did notice and resolved it when I merged it into my for-next branch.
-> And then was kind of annoyed when I noticed it was caused by a patch
-> from yourself as well, surely that should either have been part of the
-> series, just ignored for -git, or done after the fact. Kind of pointless
-> to cause conflicts with your own series right when it needs ready to go
-> into the for-next tree.
+On many modern CPUs, it is possible to compute the SHA-256 hash of two
+equal-length messages in about the same time as a single message, if all
+the instructions are interleaved.  This is because each SHA-256 (and
+also most other cryptographic hash functions) is inherently serialized
+and therefore can't always take advantage of the CPU's full throughput.
 
-ok, I will co-ordinate things better in future.
+An earlier attempt to support multibuffer hashing in Linux was based
+around the ahash API.  That approach had some major issues, as does the
+alternative ahash-based approach proposed by Herbert (see my response at
+https://lore.kernel.org/linux-crypto/20240610164258.GA3269@sol.localdomain/).
+This patchset instead takes a much simpler approach of just adding a
+synchronous API for hashing equal-length messages.
 
-Thanks again,
-John
+This works well for dm-verity and fsverity, which use Merkle trees and
+therefore hash large numbers of equal-length messages.
+
+This patchset is organized as follows:
+
+- Patch 1-3 add crypto_shash_finup_mb() and tests for it.
+- Patch 4-5 implement finup_mb on x86_64 and arm64, using an
+  interleaving factor of 2.
+- Patch 6 adds multibuffer hashing support to fsverity.
+- Patches 7-14 are cleanups and optimizations to dm-verity that prepare
+  the way for adding multibuffer hashing support.  These don't depend on
+  any of the previous patches.
+- Patch 15 adds multibuffer hashing support to dm-verity.
+
+On CPUs that support multiple concurrent SHA-256's (all arm64 CPUs I
+tested, and AMD Zen CPUs), raw SHA-256 hashing throughput increases by
+70-98%, and the throughput of cold-cache reads from dm-verity and
+fsverity increases by very roughly 35%.
+
+Changed in v6:
+  - All patches: added Reviewed-by and Acked-by tags
+  - "crypto: testmgr - add tests for finup_mb": Whitespace fix
+  - "crypto: testmgr - generate power-of-2 lengths more often":
+    Fixed undefined behavior
+  - "fsverity: improve performance by using multibuffer hashing":
+    Simplified a comment
+  - "dm-verity: reduce scope of real and wanted digests":
+    Fixed mention of nonexistent function in commit message
+  - "dm-verity: improve performance by using multibuffer hashing":
+    Two small optimizations, and simplified a comment
+
+Changed in v5:
+  - Reworked the dm-verity patches again.  Split the preparation work
+    into separate patches, fixed two bugs, and added some new cleanups.
+  - Other small cleanups
+
+Changed in v4:
+  - Reorganized the fsverity and dm-verity code to have a unified code
+    path for single-block vs. multi-block processing.  For data blocks
+    they now use only crypto_shash_finup_mb().
+
+Changed in v3:
+  - Change API from finup2x to finup_mb.  It now takes arrays of data
+    buffer and output buffers, avoiding hardcoding 2x in the API.
+
+Changed in v2:
+  - Rebase onto cryptodev/master
+  - Add more comments to assembly
+  - Reorganize some of the assembly slightly
+  - Fix the claimed throughput improvement on arm64
+  - Fix incorrect kunmap order in fs/verity/verify.c
+  - Adjust testmgr generation logic slightly
+  - Explicitly check for INT_MAX before casting unsigned int to int
+  - Mention SHA3 based parallel hashes
+  - Mention AVX512-based approach
+
+Eric Biggers (15):
+  crypto: shash - add support for finup_mb
+  crypto: testmgr - generate power-of-2 lengths more often
+  crypto: testmgr - add tests for finup_mb
+  crypto: x86/sha256-ni - add support for finup_mb
+  crypto: arm64/sha256-ce - add support for finup_mb
+  fsverity: improve performance by using multibuffer hashing
+  dm-verity: move hash algorithm setup into its own function
+  dm-verity: move data hash mismatch handling into its own function
+  dm-verity: make real_digest and want_digest fixed-length
+  dm-verity: provide dma_alignment limit in io_hints
+  dm-verity: always "map" the data blocks
+  dm-verity: make verity_hash() take dm_verity_io instead of
+    ahash_request
+  dm-verity: hash blocks with shash import+finup when possible
+  dm-verity: reduce scope of real and wanted digests
+  dm-verity: improve performance by using multibuffer hashing
+
+ arch/arm64/crypto/sha2-ce-core.S    | 281 +++++++++++++-
+ arch/arm64/crypto/sha2-ce-glue.c    |  40 ++
+ arch/x86/crypto/sha256_ni_asm.S     | 368 ++++++++++++++++++
+ arch/x86/crypto/sha256_ssse3_glue.c |  39 ++
+ crypto/shash.c                      |  58 +++
+ crypto/testmgr.c                    |  89 ++++-
+ drivers/md/dm-verity-fec.c          |  49 +--
+ drivers/md/dm-verity-fec.h          |   9 +-
+ drivers/md/dm-verity-target.c       | 581 ++++++++++++++++------------
+ drivers/md/dm-verity.h              |  65 ++--
+ fs/verity/fsverity_private.h        |   7 +
+ fs/verity/hash_algs.c               |   8 +-
+ fs/verity/verify.c                  | 169 ++++++--
+ include/crypto/hash.h               |  52 ++-
+ 14 files changed, 1436 insertions(+), 379 deletions(-)
+
+
+base-commit: ff33c2e6af99afcac3024a5c3ec8730d1e6b8ac7
+-- 
+2.45.2
+
