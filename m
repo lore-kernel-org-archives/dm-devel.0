@@ -1,98 +1,111 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from out203-205-221-149.mail.qq.com (out203-205-221-149.mail.qq.com [203.205.221.149])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ECA792904
-	for <dm-devel@lists.linux.dev>; Fri, 21 Jun 2024 03:55:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7837FBF3
+	for <dm-devel@lists.linux.dev>; Fri, 21 Jun 2024 05:50:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.205.221.149
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718942134; cv=none; b=VQZlJeEuC3X4E0yZHEWQ0lOizgLkkjLMFMeqvHBHXLWI2WraZwNywu+Ua9Yatf36qkAnAh3L2ttrQmciMZcv2rHrNE+Cn0TGkSwz0U45RmzAhiNUVOUXIh/dJH+uCwMD9waZ2z0UN131wwqcCN/FG3Wo/mIYbZ61YC8rG7nBsGU=
+	t=1718949042; cv=none; b=tnJVc9b/zlFHgCtJ9Z/uqQ+tnK1Td0kb5mlUfhFIWgjWxkp7NADC54GTvkRU2tEbT/ly6kVvumzX33sCRvRrtkFceeiA01TIXg8gSBAHknAi3npBgz0/nbXqnq5k0fC6oGhb65DAQ8AAGDrYlJjgtHAGLL9homd7BNhoTqAlukA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718942134; c=relaxed/simple;
-	bh=BUShC/j5ZJOltmNv9bSy5MavE8zdoZcZSVKHoSMMyNU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=uCa0fJsIl+JbqhSXIPNL5eT/fi3vr0MifpJtVL7Lqv1vbhqGruiBIHbc5veEPPZcEQ1cNdamobZT829DPjtoS3u3p3wsoauLnVHtBUM1BhV50TblQ4kj+qOFOp5R16extAD9vRGyKnWjz3yz+s4CSeLy+sG5f6bC3X9o8HmilQk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ux6t7iBh; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1718949042; c=relaxed/simple;
+	bh=Lb0SKkS9pokpBKNXfoBjTT4kCN1hqsP4Sm4uMO4tfgc=;
+	h=Message-ID:From:To:Cc:Subject:Date:MIME-Version; b=OLWr64ZICSKGoQ2X94t4HvQrtsIfegofGjtnbOK64inJbw+YeYb7htjLbPzHpLhWjiszoY1X5fe4T6gCiWl3ARIEdfWqyZHI11jBD+yHJeFsJCv8kBClyaWZc7iQVtqfPGxbEjtLOsppoMaOKh+TAuYZ0Psl5ARU1gaQuZDMNEc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=pKY0O6+Z; arc=none smtp.client-ip=203.205.221.149
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ux6t7iBh"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1718942131;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=13YS93zueXmgu148S4IJJCOQ3CHgvWUqYe0RJFBv8wM=;
-	b=Ux6t7iBhCCW0J3dXZY4h9h42LyGHUVdseMKtMWo8RdsvQG2LymWoJApRmpbTEGoI9y0JYY
-	2WrbuWJa6SuAHs2gEIm6T7D9x2NBxxT1Bk4Fo/SA0VMt5edRdv/ebAIEc/njzr6nVBM3Yw
-	EY3N6ZjrPts/9IXAlfXkIKIp+EZqu98=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-562-rvsGZ0_TNWGSJz2ernCmew-1; Thu,
- 20 Jun 2024 23:54:48 -0400
-X-MC-Unique: rvsGZ0_TNWGSJz2ernCmew-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7D46519560BF;
-	Fri, 21 Jun 2024 03:54:47 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CFE3A3000218;
-	Fri, 21 Jun 2024 03:54:46 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 45L3sjOg1194270
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 20 Jun 2024 23:54:45 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 45L3sjmW1194269;
-	Thu, 20 Jun 2024 23:54:45 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>
-Cc: dm-devel@lists.linux.dev
-Subject: [PATCH] dm init: Handle minors larger than 255
-Date: Thu, 20 Jun 2024 23:54:45 -0400
-Message-ID: <20240621035445.1194261-1-bmarzins@redhat.com>
+	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="pKY0O6+Z"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+	t=1718949031; bh=9UN+5mrz9/+dVZqayLcDV1SeJMFA1zY6fWx2LaYwIbE=;
+	h=From:To:Cc:Subject:Date;
+	b=pKY0O6+ZzBDCmaYDDwgVcg935ihqBZ+QZRCbUsqKraRUDiW4+bZKxXeitwO5eI7Ko
+	 1wpcDSowcllL9EYZ6BFwrQgCyqJoiCrF9CNDUz2or6M/Ei5bZZQBHG0BcX31I0Vnfy
+	 3EN6ijZR44haSWP8VeI34nt7WUDbGLSIj9fFOJlA=
+Received: from localhost.localdomain ([123.150.8.42])
+	by newxmesmtplogicsvrsza29-0.qq.com (NewEsmtp) with SMTP
+	id B12100B3; Fri, 21 Jun 2024 13:44:18 +0800
+X-QQ-mid: xmsmtpt1718948658td1eqxgec
+Message-ID: <tencent_3AC35DC56B065071A7930A3C4FAD98117D0A@qq.com>
+X-QQ-XMAILINFO: MRw/zKT/0BpP0U+3bzPOhdT3bVoRyitaIWFybxVC2fQhQOFN2mqy65hoC4rPDf
+	 ysDyod+zoQC24kKUCnMtPGLcbVMUi3/ZaRo8zEihbjmyxtq5N6wUYUnEKwQivM7LCcuWYV8v3TyZ
+	 qhc7BU0wmZAa2eLdnIJF+ucvwcUmt4/+nmAF3fBWpDcsikyZm9gYRsRiiXSasGeRusZVUTM0Mfgv
+	 cGGiT9cabpFd1SwxQgljEO5yXhKmqznjq9d5XSIAVo1uueSKj6PtQTJRkKwxfEUhnofHjoMi2ZC4
+	 8egS6RLGNe/LRX93c+ofSmi0Xciz2KEZ69fPf+8snzYtQECBXYmarfnR3bn5POr6X1O2o8+sFK8Y
+	 ozzNepvQAnM18hamGjLAjQ5XBeUW/H7i55ufLoZvFAU38ixeNzO22NdmkVCRDbQkIIr7P5r7wDqP
+	 T+OkcwOtyNrd9X8vpWVCSH3ZFV6NQDFIbmWRYwQ9uCgkzlybdmsyi8+CXRaaH7WMLEwbvprfkFHp
+	 vz2HGpdo8IrcyuOC9nfOBN3P4eqAVt6YiO3tSa+pRqXdI9krtCa8nSbLigK1LI/sWikfTJaHvlHe
+	 3YxM1sYNCNjE/aXs2KzT2ywFeGWouq/SFIw3zEmvPWFZO9QxHdYh9CNKQFTrIPIwh4Hn/RIygqSO
+	 yqSbyaZhM094wagVXJ+dXOiGGtNkKui2dk3f6fRPO0o/nFRz7Hu+8otiHHAJrf3oS4NqZNd3Zusw
+	 xav9yW17Ia2Ub7xWfkHW6IRcWbWUbWLtZpjY396ZcacL4F9FCbabHovUHVp4ufvZbHsM/NNspUsM
+	 d/WiBmlFTyUjU+G351wAIsg1KpsEHZ3nFhgACukDqtU0NEGBotf2AzS1DANbTHUEuNbUHu0GoEDQ
+	 Lfl5Skci8ugLMsiMaLxUG+3zP1ecfNontYZwqTru05RBo14HePdGQ=
+X-QQ-XMRINFO: NyFYKkN4Ny6FSmKK/uo/jdU=
+From: 303146950@qq.com
+To: dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com,
+	mwilck@suse.com,
+	Kou Wenqi <kouwenqi@kylinos.cn>
+Subject: [PATCH] multipath: do not change configuration when dumpping config
+Date: Fri, 21 Jun 2024 13:44:10 +0800
+X-OQ-MSGID: <20240621054410.7416-1-303146950@qq.com>
+X-Mailer: git-send-email 2.27.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-dm_parse_device_entry() simply copies the minor number into dmi.dev, but
-the dev_t format splits the minor number between the lowest 8 bytes and
-highest 12 bytes. If the minor number is larger than 255, part of it
-will end up getting treated as the major number
+From: Kou Wenqi <kouwenqi@kylinos.cn>
 
-Fix this by checking that the minor number is valid and then encoding it
-as a dev_t.
+"multipath -t" and "multipath -T" might change multipathd
+configuration items "retrigger_tries" and "force_sync".
+Make sure they don't.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
 ---
- drivers/md/dm-init.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ multipath/main.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
-index 2a71bcdba92d..b37bbe762500 100644
---- a/drivers/md/dm-init.c
-+++ b/drivers/md/dm-init.c
-@@ -212,8 +212,10 @@ static char __init *dm_parse_device_entry(struct dm_device *dev, char *str)
- 	strscpy(dev->dmi.uuid, field[1], sizeof(dev->dmi.uuid));
- 	/* minor */
- 	if (strlen(field[2])) {
--		if (kstrtoull(field[2], 0, &dev->dmi.dev))
-+		if (kstrtoull(field[2], 0, &dev->dmi.dev) ||
-+		    dev->dmi.dev >= (1 << MINORBITS))
- 			return ERR_PTR(-EINVAL);
-+		dev->dmi.dev = huge_encode_dev((dev_t)dev->dmi.dev);
- 		dev->dmi.flags |= DM_PERSISTENT_DEV_FLAG;
- 	}
- 	/* flags */
+diff --git a/multipath/main.c b/multipath/main.c
+index ce702e7f..f4abdad0 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -842,6 +842,8 @@ main (int argc, char *argv[])
+ 	char *dev = NULL;
+ 	struct config *conf;
+ 	bool enable_foreign = false;
++	int retrigger_tries_ori;
++	int force_sync_ori;
+ 
+ 	libmultipath_init();
+ 	if (atexit(dm_lib_exit) || atexit(libmultipath_exit))
+@@ -852,7 +854,9 @@ main (int argc, char *argv[])
+ 	if (atexit(uninit_config))
+ 		condlog(1, "failed to register cleanup handler for config: %m");
+ 	conf = get_multipath_config();
++	retrigger_tries_ori = conf->retrigger_tries;
+ 	conf->retrigger_tries = 0;
++	force_sync_ori = conf->force_sync;
+ 	conf->force_sync = 1;
+ 	if (atexit(cleanup_vecs))
+ 		condlog(1, "failed to register cleanup handler for vecs: %m");
+@@ -924,10 +928,14 @@ main (int argc, char *argv[])
+ 				conf->find_multipaths = FIND_MULTIPATHS_GREEDY;
+ 			break;
+ 		case 't':
++			conf->retrigger_tries = retrigger_tries_ori;
++			conf->force_sync = force_sync_ori;
+ 			r = dump_config(conf, NULL, NULL) ? RTVL_FAIL : RTVL_OK;
+ 			goto out;
+ 		case 'T':
+ 			cmd = CMD_DUMP_CONFIG;
++			conf->retrigger_tries = retrigger_tries_ori;
++			conf->force_sync = force_sync_ori;
+ 			break;
+ 		case 'h':
+ 			usage(argv[0]);
 -- 
-2.45.0
+2.27.0
 
