@@ -1,121 +1,98 @@
-Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com [209.85.214.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B22D140E30
-	for <dm-devel@lists.linux.dev>; Thu, 20 Jun 2024 21:23:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ECA792904
+	for <dm-devel@lists.linux.dev>; Fri, 21 Jun 2024 03:55:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1718918593; cv=none; b=ruaXRKnqt02UEBaJd47vTEGuKZVPMB+b4zICJocUFQTtrWBx+tGm6NWm+BhzsA30Ft3I1TMUB+rPdf5J5KKsdj/iYqJ8HSga2YYfT3JphKSYwri2W+8F0RopMkAorpXRA3bZ47pjnrR9JWGQR2MNS6eaVDCYPHfe1qQCosRQR44=
+	t=1718942134; cv=none; b=VQZlJeEuC3X4E0yZHEWQ0lOizgLkkjLMFMeqvHBHXLWI2WraZwNywu+Ua9Yatf36qkAnAh3L2ttrQmciMZcv2rHrNE+Cn0TGkSwz0U45RmzAhiNUVOUXIh/dJH+uCwMD9waZ2z0UN131wwqcCN/FG3Wo/mIYbZ61YC8rG7nBsGU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1718918593; c=relaxed/simple;
-	bh=FPohiolwroWBc3ESE42C7BsmagP7hLWG84tS43lYLxU=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=r14XmXtx88IymmvZ5a05Xe1lUEfElLZLuTNmoK9VI8u6eWbaB0P/EBD8XaMFQ5idoMvF01S0BGEc7BES2CzNf3fgPto0+JVkjhNdaJnCl991eDoT1fnUdzSEkexYe/HdODGRr6fwpnKaIi9TAgM/ZF108fdSdguWwcTbQTtX0PU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=BZ7SVjOm; arc=none smtp.client-ip=209.85.214.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1718942134; c=relaxed/simple;
+	bh=BUShC/j5ZJOltmNv9bSy5MavE8zdoZcZSVKHoSMMyNU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=uCa0fJsIl+JbqhSXIPNL5eT/fi3vr0MifpJtVL7Lqv1vbhqGruiBIHbc5veEPPZcEQ1cNdamobZT829DPjtoS3u3p3wsoauLnVHtBUM1BhV50TblQ4kj+qOFOp5R16extAD9vRGyKnWjz3yz+s4CSeLy+sG5f6bC3X9o8HmilQk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ux6t7iBh; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="BZ7SVjOm"
-Received: by mail-pl1-f171.google.com with SMTP id d9443c01a7336-1f9a617f88cso1251415ad.2
-        for <dm-devel@lists.linux.dev>; Thu, 20 Jun 2024 14:23:11 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1718918591; x=1719523391; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=q32PR8VJwyaaGnJCPVdwaybh8Bp1RWGH3YQnrF9Y1fw=;
-        b=BZ7SVjOmZbdJralWuGm0o+4js+QCenb1Vw+6cYjN4PjRQGbsiMNRnfDvgIgwEizJRq
-         LNDGqU9cGPrJ+TPyv84TU4HeYcWNUQ4gAcOzznh1heHSKA785TiHiH7UNHx86xz9GZgK
-         pD1sYLU51lcdBaDfNV4tG+XhLTxB5BNamVEzzTn0p5Gk60OdwfeODM/zfYiATK9RJCq/
-         OUGUNEV9EyfftLfU6IywHCnWZWIo4VCj996C109oBacCmw7r+SHfsyUL2LFzs5g6zgQ/
-         svGdjVWFESGqStkI70B0CsorPuOiztPxN17BmpPU1od+/OiQ06Qz6GKqtRD+SB00q+WM
-         JeDg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1718918591; x=1719523391;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=q32PR8VJwyaaGnJCPVdwaybh8Bp1RWGH3YQnrF9Y1fw=;
-        b=Oj3rLxEQvoKAB6c0GPxWwu3FGah7a8YRBFILioxixDOZ5p3wTsDuvHowK50jVl45N0
-         AxPYW9iRGoB4SZknnvDwlRMEqQqbq5aUNjDuSPujO06oQM5NieSkxkZ53WkdV4yx/RL8
-         IbP/9udqY2poHcKOJze+JeZHv7LYdcB4YLal1ui2bxtaDNlevTguyhoJQ9Ybn9w8zmCm
-         X7Eh8LSFC6joQiZhaN+x7WPASzqsJf5xjJQ8y59nJIfIzRf9kzC+K8hI2+KeUONvKz5U
-         c1PhrrCu++IOnToxom6lZc2L19l2CzQ+78JRiqB1QdzRTaF9E3fbdqxXfX1YWkChkG1Y
-         i18Q==
-X-Forwarded-Encrypted: i=1; AJvYcCV8DVub9U5glLdEkrOIYgWkwR4EfjF3fDtn2ylKGN5bzYJMQqvN4AkrTrmFKr8aPr89K3yYOJl5jwEd6C3GiBeWZ9StG7WGfGY=
-X-Gm-Message-State: AOJu0YzyyBy6z8EQ2d5suIvSacPPGlPKoYIp9bFoaEAkuryEwdW1FNYb
-	R0uhZE99dqycKgxm+QPT4Nhg5/byBG+b1lkYv74kaaRx8AuXcloBhYT/Yc7nhs0=
-X-Google-Smtp-Source: AGHT+IFpAE8rRXH210v7uuhhLHSJBtr+lAuPBX0TSREwLr72nwKk3bIU+qQDyxKzIteobELD9VqsaA==
-X-Received: by 2002:a17:903:1cc:b0:1f7:1a37:d0b5 with SMTP id d9443c01a7336-1f9aad9d286mr68451195ad.4.1718918591063;
-        Thu, 20 Jun 2024 14:23:11 -0700 (PDT)
-Received: from [127.0.0.1] ([2600:380:7562:ac7c:9f3c:87fb:fc6a:615c])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1f9eb3d5089sm668135ad.193.2024.06.20.14.23.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 20 Jun 2024 14:23:10 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: kbusch@kernel.org, hch@lst.de, sagi@grimberg.me, jejb@linux.ibm.com, 
- martin.petersen@oracle.com, viro@zeniv.linux.org.uk, brauner@kernel.org, 
- dchinner@redhat.com, jack@suse.cz, John Garry <john.g.garry@oracle.com>
-Cc: djwong@kernel.org, linux-block@vger.kernel.org, 
- linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, 
- linux-fsdevel@vger.kernel.org, tytso@mit.edu, jbongio@google.com, 
- linux-scsi@vger.kernel.org, ojaswin@linux.ibm.com, linux-aio@kvack.org, 
- linux-btrfs@vger.kernel.org, io-uring@vger.kernel.org, nilay@linux.ibm.com, 
- ritesh.list@gmail.com, willy@infradead.org, agk@redhat.com, 
- snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev, 
- hare@suse.de
-In-Reply-To: <20240620125359.2684798-1-john.g.garry@oracle.com>
-References: <20240620125359.2684798-1-john.g.garry@oracle.com>
-Subject: Re: [Patch v9 00/10] block atomic writes
-Message-Id: <171891858790.154563.14863944476258774433.b4-ty@kernel.dk>
-Date: Thu, 20 Jun 2024 15:23:07 -0600
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ux6t7iBh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1718942131;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=13YS93zueXmgu148S4IJJCOQ3CHgvWUqYe0RJFBv8wM=;
+	b=Ux6t7iBhCCW0J3dXZY4h9h42LyGHUVdseMKtMWo8RdsvQG2LymWoJApRmpbTEGoI9y0JYY
+	2WrbuWJa6SuAHs2gEIm6T7D9x2NBxxT1Bk4Fo/SA0VMt5edRdv/ebAIEc/njzr6nVBM3Yw
+	EY3N6ZjrPts/9IXAlfXkIKIp+EZqu98=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-562-rvsGZ0_TNWGSJz2ernCmew-1; Thu,
+ 20 Jun 2024 23:54:48 -0400
+X-MC-Unique: rvsGZ0_TNWGSJz2ernCmew-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7D46519560BF;
+	Fri, 21 Jun 2024 03:54:47 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CFE3A3000218;
+	Fri, 21 Jun 2024 03:54:46 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 45L3sjOg1194270
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 20 Jun 2024 23:54:45 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 45L3sjmW1194269;
+	Thu, 20 Jun 2024 23:54:45 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm init: Handle minors larger than 255
+Date: Thu, 20 Jun 2024 23:54:45 -0400
+Message-ID: <20240621035445.1194261-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.14.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
+dm_parse_device_entry() simply copies the minor number into dmi.dev, but
+the dev_t format splits the minor number between the lowest 8 bytes and
+highest 12 bytes. If the minor number is larger than 255, part of it
+will end up getting treated as the major number
 
-On Thu, 20 Jun 2024 12:53:49 +0000, John Garry wrote:
-> This series introduces a proposal to implementing atomic writes in the
-> kernel for torn-write protection.
-> 
-> This series takes the approach of adding a new "atomic" flag to each of
-> pwritev2() and iocb->ki_flags - RWF_ATOMIC and IOCB_ATOMIC, respectively.
-> When set, these indicate that we want the write issued "atomically".
-> 
-> [...]
+Fix this by checking that the minor number is valid and then encoding it
+as a dev_t.
 
-Applied, thanks!
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ drivers/md/dm-init.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-[01/10] block: Pass blk_queue_get_max_sectors() a request pointer
-        commit: 8d1dfd51c84e202df05a999ce82cb27554f7d152
-[02/10] block: Generalize chunk_sectors support as boundary support
-        commit: f70167a7a6e7e8a6911f3a216dc044cbfe7c1983
-[03/10] fs: Initial atomic write support
-        commit: c34fc6f26ab86d03a2d47446f42b6cd492dfdc56
-[04/10] fs: Add initial atomic write support info to statx
-        commit: 0f9ca80fa4f9670ba09721e4e36b8baf086a500c
-[05/10] block: Add core atomic write support
-        commit: 9da3d1e912f3953196e66991d75208cde3e845e1
-[06/10] block: Add atomic write support for statx
-        commit: 9abcfbd235f59fb5b6379e5bc0231dad831ebace
-[07/10] block: Add fops atomic write support
-        commit: caf336f81b3a3ca744e335972e86ec7244512d4a
-[08/10] scsi: sd: Atomic write support
-        commit: bf4ae8f2e6407a779c0368eb0f3e047a8333be17
-[09/10] scsi: scsi_debug: Atomic write support
-        commit: 84f3a3c01d70efba736bc42155cf32722067b327
-[10/10] nvme: Atomic write support
-        commit: 5f9bbea02f06110ec5cf95a3327019b3194b2d80
-
-Best regards,
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index 2a71bcdba92d..b37bbe762500 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -212,8 +212,10 @@ static char __init *dm_parse_device_entry(struct dm_device *dev, char *str)
+ 	strscpy(dev->dmi.uuid, field[1], sizeof(dev->dmi.uuid));
+ 	/* minor */
+ 	if (strlen(field[2])) {
+-		if (kstrtoull(field[2], 0, &dev->dmi.dev))
++		if (kstrtoull(field[2], 0, &dev->dmi.dev) ||
++		    dev->dmi.dev >= (1 << MINORBITS))
+ 			return ERR_PTR(-EINVAL);
++		dev->dmi.dev = huge_encode_dev((dev_t)dev->dmi.dev);
+ 		dev->dmi.flags |= DM_PERSISTENT_DEV_FLAG;
+ 	}
+ 	/* flags */
 -- 
-Jens Axboe
-
-
+2.45.0
 
