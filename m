@@ -1,125 +1,137 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from 009.lax.mailroute.net (009.lax.mailroute.net [199.89.1.12])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73B705A11D
-	for <dm-devel@lists.linux.dev>; Mon, 24 Jun 2024 16:04:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DCDBF19D073
+	for <dm-devel@lists.linux.dev>; Mon, 24 Jun 2024 16:25:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.1.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719245059; cv=none; b=tTTXfYUSoI3AL7lMxt+mvHNQYBjZTM0V2Gb6teQK7HcN7QsTlWbbtEYbSiKR+od7h80MU7w5HRttKMOfuifu2vHjio/Zp3dqmVrFFs3nZ+sonsM6t4Ka0ULnyBi5rO6Ji/2VzjTarVjnA+7Tf6xpAsWKlMEuq772Ke91uHvvXbQ=
+	t=1719246348; cv=none; b=X7CZ+tg0GPxGFnFrQhWuII1ocEzv9bOG8krc1l0BHz6AmUQ09oU/YvC0Yj5CxPWyVPjk+wzhLtIBdbvT/JD+I7eEj8O+JjfEgxsOueYl2be1qKJuQuUgzYuRoH4KEUe7Za3WqQvio3YDpGOxw2i5rJ2IMPyAKr2Lp1tIDfWqmno=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719245059; c=relaxed/simple;
-	bh=fZS4l3PEuYoO21ZHnM7hFqZm6dGfxc9d0lJqZ7TZxnE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=W4S9bKk8KzRD1KRgx2q/JbnqYLGfSS6gr5YFv0cOSFzIMrqGXHJlaPhY1A49764CozxyzyGpaWMxsndXgXbpoWnpRZslD2Daxe+AiOnlk4DXPsA4UfO4zCUwUdBaeD1fTebvhS0oy7o6PKZYjYeg8/ip6y89gCsUGrRGxkQUJ2U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QJHZuYEW; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1719246348; c=relaxed/simple;
+	bh=zc7081Y21FlTdwB7r1y80IdIKdEYx/IpzSp3yAgMxRY=;
+	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:References:
+	 In-Reply-To:Content-Type; b=FW3RKJMMA+n8u/f7LhiJvR2tJ6h4yf4/iEDIug2t9oWXtq4hIb2E0gqdEU2aD/wGB0vP+ax3WvSXh8oWAFL6HET9R3QH+7c8fOyWCgUFmaWoI20w03oQbQGkKpsMirYMKnSuZNL1QgUUcd6IPWoLxvynM3+xEuQ1rWYDzQtweys=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=ikAL02jY; arc=none smtp.client-ip=199.89.1.12
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QJHZuYEW"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1719245056;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ceXVl3uTb6RE9U3ONKR2K0O9UswuZED7mg5hcygn6xs=;
-	b=QJHZuYEWp3/LD40BLN9ucOeP3glO+t4LeSou/ndEDS33DMXGB6uKiYPT6ioiuoEYmhsdd5
-	97lVW45Yejj7vS4y+w/xRNQvIfAQXxz73Mrzmiu9l0p1YWzVaqx1+0Cv91wdS6fPPQ5VcK
-	E1WPeCu/y4xc7p+B8Y62WuSki99ingE=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-500-iLxOuLRzOZy5klkXn-PrkA-1; Mon,
- 24 Jun 2024 12:04:14 -0400
-X-MC-Unique: iLxOuLRzOZy5klkXn-PrkA-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="ikAL02jY"
+Received: from localhost (localhost [127.0.0.1])
+	by 009.lax.mailroute.net (Postfix) with ESMTP id 4W7Cxc1b4Czll9bs;
+	Mon, 24 Jun 2024 16:25:40 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:content-language:references:subject:subject:from:from
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1719246327; x=1721838328; bh=5YRbJCfER9/t7o2py5oZPcEO
+	b9O2alYeZUroDpPtXOU=; b=ikAL02jYcnW8oADCx4MyOFEykz3GGfzi6eWwiW9Z
+	qiD+dR0/fHNfI+Q6K0nONWMiiVlJ+aAomIKaZSKGu22m5ca76dqZkTNzCzXVftDr
+	j0DYgelboKWwKWHnBg+NV9g5B+h9mdpeKGFBC9vYwx6dye62o4gF7YLMcCV3+xMy
+	cnnlClziVI0W0ib/ncr7xzIVqTP/82AlTek/vbofMTYNyQaw7t5/parPScAR+eIs
+	ZWUEAB6AU5kfaH2lpyKjHEugC6rLSzGQualGEX1d9T5ytrnrpbdAE0IzQvz6FYTd
+	0ng0XDcORkIuLC53eCL7RCfIuhaNHKotvbEgrm+nv0kfJg==
+X-Virus-Scanned: by MailRoute
+Received: from 009.lax.mailroute.net ([127.0.0.1])
+ by localhost (009.lax [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id fRVPZY9Z3RGh; Mon, 24 Jun 2024 16:25:27 +0000 (UTC)
+Received: from [100.96.154.26] (unknown [104.132.0.90])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A0C2B19560B5;
-	Mon, 24 Jun 2024 16:04:12 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E93331956087;
-	Mon, 24 Jun 2024 16:04:11 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 45OG4AE11341163
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 24 Jun 2024 12:04:10 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 45OG48UA1341162;
-	Mon, 24 Jun 2024 12:04:08 -0400
-Date: Mon, 24 Jun 2024 12:04:08 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: 303146950@qq.com
-Cc: dm-devel@lists.linux.dev, mwilck@suse.com, Kou Wenqi <kouwenqi@kylinos.cn>
-Subject: Re: [PATCH v2] multipath: display the correct configuration when
- dumpping config
-Message-ID: <ZnmY-Mu2hcmU_4Qm@redhat.com>
-References: <tencent_FE02DEB8FF48DD9EE156F288BCE172E25709@qq.com>
+	(Authenticated sender: bvanassche@acm.org)
+	by 009.lax.mailroute.net (Postfix) with ESMTPSA id 4W7CxF1FMyzll9br;
+	Mon, 24 Jun 2024 16:25:20 +0000 (UTC)
+Message-ID: <4ea90738-afd1-486c-a9a9-f7e2775298ff@acm.org>
+Date: Mon, 24 Jun 2024 09:25:19 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <tencent_FE02DEB8FF48DD9EE156F288BCE172E25709@qq.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+From: Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
+ and request layer.
+To: Nitesh Shetty <nj.shetty@samsung.com>, Christoph Hellwig <hch@lst.de>
+Cc: Damien Le Moal <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+ Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
+ Chaitanya Kulkarni <kch@nvidia.com>, Alexander Viro
+ <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>,
+ Jan Kara <jack@suse.cz>, martin.petersen@oracle.com, david@fromorbit.com,
+ hare@suse.de, damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com,
+ joshi.k@samsung.com, nitheshshetty@gmail.com, gost.dev@samsung.com,
+ linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-doc@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
+References: <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org>
+ <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
+ <a866d5b5-5b01-44a2-9ccb-63bf30aa8a51@acm.org>
+ <665850bd.050a0220.a5e6b.5b72SMTPIN_ADDED_BROKEN@mx.google.com>
+ <abe8c209-d452-4fb5-90eb-f77b5ec1a2dc@acm.org> <20240601055931.GB5772@lst.de>
+ <d7ae00c8-c038-4bed-937e-222251bc627a@acm.org>
+ <20240604044042.GA29094@lst.de>
+ <4ffad358-a3e6-4a88-9a40-b7e5d05aa53c@acm.org>
+ <20240605082028.GC18688@lst.de>
+ <CGME20240624105121epcas5p3a5a8c73bd5ef19c02e922e5829a4dff0@epcas5p3.samsung.com>
+ <6679526f.170a0220.9ffd.aefaSMTPIN_ADDED_BROKEN@mx.google.com>
+Content-Language: en-US
+In-Reply-To: <6679526f.170a0220.9ffd.aefaSMTPIN_ADDED_BROKEN@mx.google.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Mon, Jun 24, 2024 at 09:45:27AM +0800, 303146950@qq.com wrote:
-> From: Kou Wenqi <kouwenqi@kylinos.cn>
+On 6/24/24 3:44 AM, Nitesh Shetty wrote:
+> For reference, I have listed the approaches we have taken in the past.
 > 
-> "multipath -t" and "multipath -T" might show the wrong
-> multipathd configuration items "retrigger_tries" and
-> "force_sync". Make sure they don't.
+> a. Token/payload based approach:
+> 1. Here we allocate a buffer/payload.
+> 2. First source BIO is sent along with the buffer.
+> 3. Once the buffer reaches driver, it is filled with the source LBA
+> and length and namespace info. And the request is completed.
+> 4. Then destination BIO is sent with same buffer.
+> 5. Once the buffer reaches driver, it retrieves the source information from
+> the BIO and forms a copy command and sends it down to device.
 > 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
-> ---
->  multipath/main.c | 8 ++++++++
->  1 file changed, 8 insertions(+)
-> 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index ce702e7f..f4abdad0 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -842,6 +842,8 @@ main (int argc, char *argv[])
->  	char *dev = NULL;
->  	struct config *conf;
->  	bool enable_foreign = false;
-> +	int retrigger_tries_ori;
-> +	int force_sync_ori;
->  
->  	libmultipath_init();
->  	if (atexit(dm_lib_exit) || atexit(libmultipath_exit))
-> @@ -852,7 +854,9 @@ main (int argc, char *argv[])
->  	if (atexit(uninit_config))
->  		condlog(1, "failed to register cleanup handler for config: %m");
->  	conf = get_multipath_config();
-> +	retrigger_tries_ori = conf->retrigger_tries;
->  	conf->retrigger_tries = 0;
-> +	force_sync_ori = conf->force_sync;
->  	conf->force_sync = 1;
->  	if (atexit(cleanup_vecs))
->  		condlog(1, "failed to register cleanup handler for vecs: %m");
-> @@ -924,10 +928,14 @@ main (int argc, char *argv[])
->  				conf->find_multipaths = FIND_MULTIPATHS_GREEDY;
->  			break;
->  		case 't':
-> +			conf->retrigger_tries = retrigger_tries_ori;
-> +			conf->force_sync = force_sync_ori;
->  			r = dump_config(conf, NULL, NULL) ? RTVL_FAIL : RTVL_OK;
->  			goto out;
->  		case 'T':
->  			cmd = CMD_DUMP_CONFIG;
-> +			conf->retrigger_tries = retrigger_tries_ori;
-> +			conf->force_sync = force_sync_ori;
->  			break;
->  		case 'h':
->  			usage(argv[0]);
-> -- 
-> 2.27.0
-> 
+> We received feedback that putting anything inside payload which is not
+> data, is not a good idea[1].
 
+A token-based approach (pairing copy_src and copy_dst based on a token)
+is completely different from a payload-based approach (copy offload
+parameters stored in the bio payload). From [1] (I agree with what has
+been quoted): "In general every time we tried to come up with a request
+payload that is not just data passed to the device it has been a
+nightmare." [ ... ] "The only thing we'd need is a sequence number / idr
+/ etc to find an input and output side match up, as long as we
+stick to the proper namespace scope."
+
+> c. List/ctx based approach:
+> A new member is added to bio, bio_copy_ctx, which will a union with
+> bi_integrity. Idea is once a copy bio reaches blk_mq_submit_bio, it will
+> add the bio to this list.
+> 1. Send the destination BIO, once this reaches blk_mq_submit_bio, this
+> will add the destination BIO to the list inside bi_copy_ctx and return
+> without forming any request.
+> 2. Send source BIO, once this reaches blk_mq_submit_bio, this will
+> retrieve the destination BIO from bi_copy_ctx and form a request with
+> destination BIO and source BIO. After this request will be sent to
+> driver.
+> 
+> This work is still in POC phase[2]. But this approach makes lifetime
+> management of BIO complicated, especially during failure cases.
+
+Associating src and dst operations by embedding a pointer to a third
+data structure in struct bio is an implementation choice and is not the
+only possibility for assocating src and dst operations. Hence, the
+bio lifetime complexity mentioned above is not inherent to the list
+based approach but is a result of the implementation choice made for
+associating src and dst operations.
+
+Has it been considered to combine the list-based approach for managing
+unpaired copy operations with the token based approach for pairing copy
+src and copy dst operations?
+
+Thanks,
+
+Bart.
