@@ -1,41 +1,47 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98F2C482C3;
-	Mon, 24 Jun 2024 08:35:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A42A61FEB;
+	Mon, 24 Jun 2024 08:43:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719218150; cv=none; b=lR7rjpSzd5kYBo9lnTJgxrbiGAbGMqp6Qkjgi1qCfIctfwi773YaM39ITItE4qands6uaZFCgMy+ZxeV5k46B4Rf46vJiQ+7pKxiQ3/6FGRRSJFHKHFX5SE0drdgD21v0u6CYoif3ge3ZneZmf4x7AYlu0OxnLnWJUKCMV5rbnU=
+	t=1719218593; cv=none; b=U1IXhPMWTL9dxMSkjt5ANT8BvdSfnNFT38ZrGqIsYtDI4AJGxQwQXoGRNQVDiGg9xR9IAQ9f3GfHSZLgDFWLq2/Dj5jqN94ku3lWrv6zfUm359ziiPrcXlhY0PB69KmuwXn+2GGaWubFB5acfJLbY77cih5BPTSYlLQEbgB/X3I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719218150; c=relaxed/simple;
-	bh=iQaPBQWjPOQlK9q4eiAviREeWvCKzzUxahs3Qk1DZfw=;
+	s=arc-20240116; t=1719218593; c=relaxed/simple;
+	bh=v0v6mdua10htkr5rmjnF+4yE/ELelGG2LLeUT4SmCz0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=cr4SKa/xXVMwIQmKS8LrVhqppz2AaIQFOMgkIV217iOar1wWvK0VMeK5HRDPgcDY9x1RgY410jwXaqF4ipiFw8fsauOvWCgGf5Cz6Ld4YwYQEMNlrHVgjoNIsAVsk9eKyy3ryZKMfdPX0+kJJZhSj1vzrHVcasRXyf1MSDGC5fk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 7971768B05; Mon, 24 Jun 2024 10:35:38 +0200 (CEST)
-Date: Mon, 24 Jun 2024 10:35:37 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: kernel test robot <oliver.sang@intel.com>
-Cc: Christoph Hellwig <hch@lst.de>, oe-lkp@lists.linux.dev, lkp@intel.com,
-	Jens Axboe <axboe@kernel.dk>, Damien Le Moal <dlemoal@kernel.org>,
-	Hannes Reinecke <hare@suse.de>, linux-m68k@lists.linux-m68k.org,
-	linux-um@lists.infradead.org, linux-kernel@vger.kernel.org,
-	linux-block@vger.kernel.org, drbd-dev@lists.linbit.com,
-	nbd@other.debian.org, linuxppc-dev@lists.ozlabs.org,
-	ceph-devel@vger.kernel.org, virtualization@lists.linux.dev,
-	xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
-	linux-mmc@vger.kernel.org, linux-mtd@lists.infradead.org,
-	nvdimm@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org,
-	ying.huang@intel.com, feng.tang@intel.com, fengwei.yin@intel.com
-Subject: Re: [axboe-block:for-next] [block]  bd4a633b6f:
- fsmark.files_per_sec -64.5% regression
-Message-ID: <20240624083537.GA19941@lst.de>
-References: <202406241546.6bbd44a7-oliver.sang@intel.com>
+	 Content-Type:Content-Disposition:In-Reply-To; b=Aq5WCSDoY1/PCxDsVKlCmf6zcVUJZ7DsqJfwVLZIfZzYgtHmLRAGomNrv7s3dSszALbOi3HFkwxzuJggKFp3tHUvpEfvTUSBz/Q7NJUpKKu/XU0TS8XhItoAWpUVj0ol1BfXn/GGZWfc+qzZq4RdVUmKbfr+vnCbNWW/K9NUqCQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=nIwx96pW; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="nIwx96pW"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=7X88en6kIJuV7GibrV5exBa9x7h2ezZRUiFA95jmMeI=; b=nIwx96pWhzjYwMhsnIUjXamBSk
+	vBPDl0fnd0QWA5jzXPGtk1s8Qx1doUOm7yFPQQ1fOtK/r+/KIVwizdSZRQ2S1tomhwx2ytFXfe8fF
+	PDsMC3EziK7U7ZvziO6J1+7rYx4NSceIKXWzr459sxxBZ42ORhAVsjqkv2mYOQhvO1Jr6lbN6n2Ic
+	aU03Uvk4SV03LMCDRh8aSrzqmImilVzid2Y5/A4tZpCKXxINA3Bw5dqm/9T7JwFhY07pbIU4MM7Gb
+	NvGvKcnkU2rJ5cB/ko16APoLb+eJNOrJRMzx4C9P3D7BOoCUgFA/ueh0WRnHUw4F2N7leqkxYkMyN
+	PLdqwwCw==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
+	id 1sLfI7-0000000G60A-1dJp;
+	Mon, 24 Jun 2024 08:43:11 +0000
+Date: Mon, 24 Jun 2024 01:43:11 -0700
+From: "hch@infradead.org" <hch@infradead.org>
+To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Cc: "hch@infradead.org" <hch@infradead.org>,
+	Bryan Gurney <bgurney@redhat.com>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
+Subject: Re: blktests dm/002 always fails for me
+Message-ID: <Znkxn7LymUjD3Wac@infradead.org>
+References: <ZmqrzUyLcUORPdOe@infradead.org>
+ <pysa5z7udtu2rotezahzhkxjif7kc4nutl3b2f74n3qi2sp7wr@nt5morq6exph>
+ <ZmvezI1KcsyE3Unl@infradead.org>
+ <42ecobcsduvlqh77iavjj2p3ewdh7u4opdz4xruauz4u5ddljz@yr7ye4fq72tr>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -44,10 +50,13 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <202406241546.6bbd44a7-oliver.sang@intel.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <42ecobcsduvlqh77iavjj2p3ewdh7u4opdz4xruauz4u5ddljz@yr7ye4fq72tr>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-This is odd to say at least.  Any chance you can check the value
-of /sys/block/$DEVICE/queue/rotational for the relevant device before
-and after this commit?  And is this an ATA or NVMe SSD?
+On Mon, Jun 24, 2024 at 04:58:29AM +0000, Shinichiro Kawasaki wrote:
+> Based on this guess, I guess a change below may avoid the failure.
+> 
+> Christoph, may I ask you to see if this change avoids the failure you observe?
+
+Still fails in exactly the same way with that patch.
 
