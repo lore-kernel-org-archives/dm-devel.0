@@ -1,152 +1,111 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from out162-62-57-210.mail.qq.com (out162-62-57-210.mail.qq.com [162.62.57.210])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD52D4A3F;
-	Fri, 21 Jun 2024 21:23:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D226624
+	for <dm-devel@lists.linux.dev>; Mon, 24 Jun 2024 01:46:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=162.62.57.210
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719005002; cv=none; b=YU+BxoZn1K6sxyI/7Ma29Z9wo0h2PJQVq1+0W2dqeWUajwVvXrpSU+TZCJTL9RkxhXbiatqiEWmgyCXmiUhBhGZJR8nfsBpgkOYfk3x2a00j7TsEu1uXDO3NdrqQivAq5t65WP/oyOzDKNTQ3CMJ5ltAABg4yTU3io7dCyiewbY=
+	t=1719193563; cv=none; b=BfmZX0WpQbYehbe3DcY78pe9VIEuZVlJxnfNzdchyhLXLQO6z7lqIYS4paKmMWM1Ghjp1f2k98XnU/0WEmWRzzzCH9AhNUVCGvNJTvY4iGicHBUxexNpXHBnxydQEAANhE8k3P2GkPqaWmqEgTPdoc1zIKNfqANMngTVQ+/Ip4w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719005002; c=relaxed/simple;
-	bh=N4ivVfcXJIy+QZ0gUdEeSMav33R3fT7xLRRwMgFHS5Q=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=tLfjNcD60yOIApyoRlTz4LMauwUZqmDE3f0q09H33ae+0p7Y+6vN6dHS4BrJ9QyJCgxeTRaArtQQzDqz5P1JPYRKHcr4ytLeqGNMvUsob/cjTkLvOdDDN7f3/LQ12LHrezBXSJ+p/TzP4lykAjrqHDiWFryOpn3Zy9tOnJpEUSk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=KIjoAo9d; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1719193563; c=relaxed/simple;
+	bh=9fD1cvn5h0pGoYhgIEHNsqdozgCAI6O+ikLKMryFpjs=;
+	h=Message-ID:From:To:Cc:Subject:Date:MIME-Version; b=u+Qh3tqPr/a+PCf5/aJCnEw8td02GMc4wYAvPQwrvGCVJZOZjGiubY+5XceI340W90NdMH9prwa6T5DYjpaxkCz85winmjKZUzAN/LWtTIbq8bn7AZJt7MvpYOHswauhIWTMtbmZEihbpQyAYk+uvThh4toCjxDwjw8yW06/8s0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=n1tx/1p+; arc=none smtp.client-ip=162.62.57.210
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="KIjoAo9d"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4D506C2BBFC;
-	Fri, 21 Jun 2024 21:23:21 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1719005001;
-	bh=N4ivVfcXJIy+QZ0gUdEeSMav33R3fT7xLRRwMgFHS5Q=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=KIjoAo9dVPq/wWSw7vIa+LUCdLv/cy0F+UpK0V0o6GG4XtJGpPyWD7XS6VYSOCLbE
-	 96RxruHq6fyaGWj3Fcup4m2H2zjHCiaQsk2cwLejwCGTDk1h+CDL9GsEpDBeR+358D
-	 eVikhWol4HvrtRbxIVuPnG8/eXP7DgKHQJuJc+DHT3QbmE/Ug77DxemimyxG+bwVLd
-	 ayCRr4u6b+0c/fvSbv7PmeG3MeTeJovAWkBSk4O562mzy8+vpo9vIy6eLQV2Tb8vex
-	 6s75hABhrSF177DZx/ED7ySzT1gVAEo80N7qgJFHW46uWn0nuJwTC9rbYIeMvVkLYN
-	 /Y3Eol8tZh44w==
-Date: Fri, 21 Jun 2024 14:23:20 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: John Garry <john.g.garry@oracle.com>
-Cc: Hannes Reinecke <hare@suse.de>, axboe@kernel.dk, kbusch@kernel.org,
-	hch@lst.de, sagi@grimberg.me, jejb@linux.ibm.com,
-	martin.petersen@oracle.com, viro@zeniv.linux.org.uk,
-	brauner@kernel.org, dchinner@redhat.com, jack@suse.cz,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org,
-	tytso@mit.edu, jbongio@google.com, linux-scsi@vger.kernel.org,
-	ojaswin@linux.ibm.com, linux-aio@kvack.org,
-	linux-btrfs@vger.kernel.org, io-uring@vger.kernel.org,
-	nilay@linux.ibm.com, ritesh.list@gmail.com, willy@infradead.org,
-	agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
-	dm-devel@lists.linux.dev
-Subject: Re: [Patch v9 07/10] block: Add fops atomic write support
-Message-ID: <20240621212320.GE103020@frogsfrogsfrogs>
-References: <20240620125359.2684798-1-john.g.garry@oracle.com>
- <20240620125359.2684798-8-john.g.garry@oracle.com>
- <680ce641-729b-4150-b875-531a98657682@suse.de>
- <d3332752-52b1-4d24-88cf-3b5e7aa4b74a@oracle.com>
+	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="n1tx/1p+"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+	t=1719193549; bh=Qn6FbS/vi/zduJxdCS9vtQS2pzRQ8M5Zl5odmZ9NOEo=;
+	h=From:To:Cc:Subject:Date;
+	b=n1tx/1p+un/gxCYz8nUA+VNoRzlWCnKTrSKqiHTTsYW/g91YTCUnMe1mwUstxrN2H
+	 IORe50XvRE2dEyGp8YOrjwESFWP+2A9uoREUz1BeXhBarGlyFfP2DoBDmeySiz24cX
+	 mE5dN1X9U8jz9RtTryVW/oVyEdDI3NbCIhe4SzeI=
+Received: from localhost.localdomain ([123.150.8.42])
+	by newxmesmtplogicsvrszb16-1.qq.com (NewEsmtp) with SMTP
+	id B64200F0; Mon, 24 Jun 2024 09:45:36 +0800
+X-QQ-mid: xmsmtpt1719193536t20l61l27
+Message-ID: <tencent_FE02DEB8FF48DD9EE156F288BCE172E25709@qq.com>
+X-QQ-XMAILINFO: OQhZ3T0tjf0auiQIUAhPd51+pV/yE/t1YwZOV6jlrRiKlUuJnwX1NyhLP1OnOF
+	 n/kaReaIHS7bRhni7fEQ4bmj8vBKCPhAHubRSRAUgszbaZifhdKrDB2M6GbHRKM2JrPciGJo6FlG
+	 Iy/rxl1YYtPNtcsedOVC7qwUqblFVm2l2e//C6UiJXiKhnjkdPlaTz6yyfGylHRgQkF/FtL2b9p6
+	 paMt7MSKGaf4K1DmN5Eh1F97eJa71ef1S40q26VLYTfhqnK4fzLAQkE67TZzx6AwTj9Xkv85Npky
+	 FdWCMIaVsB7+hD2qE3FKIWUDTTI6N41S/SLPxEbHZpPzCCNdq7iTMnKJspkYCgRo3depxvRW8tGp
+	 NQ45Lpwv9p71g64AzWUqAtg9mWTbHDQMFGCYxBt5j/WxjSsKf3sPt0tPSZzwG9fFXFuYOyxgtLGx
+	 Sq1xMuWoRhActgcF+2TvWxfArSuRJHZdIYgGmPeaeHXmJV7CY7vkKky4BEbRtibST0/TIp2ohVoC
+	 84O1GtbRFPk1tvGcLcwwVVIxPE2HzaXB/BwiDN1BKRTXcz9UXEtf1qiSoQSqQFUxKgex9iDTvK9C
+	 vrWbKfAk1CKqCeRCyhW+HupGrq0Z1Ameqwg2tFIxKQb+S3O1I8QUeFhAbYpi5GhZub1B/FCsJi61
+	 JDq8UAqo730aGD1QOt0dn39tBCqkOn5wmN/tPH5HJOfyh+rIKbk9PzuOP2ntADZ1dIs59oWwv9RL
+	 7mSIsF8ImunQLwQSccHAD/4G4GdWyibsLCMTFGipTRk/md2h5HdZzl00aQUgSs0EzL3qHujdughw
+	 OnNOWuHfESFsaN1GIiWisoCgzhN1GN+IXIAqq7r+oq1zxDEBDqyEA/BzBbWsc1kSPPe+xjPXVCjD
+	 pNjYOOCQevaKYSOaQAV4QzgzJxBy+nFNCq5TpkwGfkMfEbIcFMDNE2GkmvZqS2MA==
+X-QQ-XMRINFO: Nq+8W0+stu50PRdwbJxPCL0=
+From: 303146950@qq.com
+To: dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com,
+	mwilck@suse.com,
+	Kou Wenqi <kouwenqi@kylinos.cn>
+Subject: [PATCH v2] multipath: display the correct configuration when dumpping config
+Date: Mon, 24 Jun 2024 09:45:27 +0800
+X-OQ-MSGID: <20240624014527.155640-1-303146950@qq.com>
+X-Mailer: git-send-email 2.27.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <d3332752-52b1-4d24-88cf-3b5e7aa4b74a@oracle.com>
 
-On Fri, Jun 21, 2024 at 01:02:34PM +0100, John Garry wrote:
-> On 21/06/2024 07:13, Hannes Reinecke wrote:
-> > On 6/20/24 14:53, John Garry wrote:
-> > > Support atomic writes by submitting a single BIO with the REQ_ATOMIC set.
-> > > 
-> > > It must be ensured that the atomic write adheres to its rules, like
-> > > naturally aligned offset, so call blkdev_dio_invalid() ->
-> > > blkdev_atomic_write_valid() [with renaming blkdev_dio_unaligned() to
-> > > blkdev_dio_invalid()] for this purpose. The BIO submission path currently
-> > > checks for atomic writes which are too large, so no need to check here.
-> > > 
-> > > In blkdev_direct_IO(), if the nr_pages exceeds BIO_MAX_VECS, then we
-> > > cannot
-> > > produce a single BIO, so error in this case.
-> > > 
-> > > Finally set FMODE_CAN_ATOMIC_WRITE when the bdev can support atomic
-> > > writes
-> > > and the associated file flag is for O_DIRECT.
-> > > 
-> > > Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-> > > Signed-off-by: John Garry <john.g.garry@oracle.com>
-> > > ---
-> > >   block/fops.c | 20 +++++++++++++++++---
-> > >   1 file changed, 17 insertions(+), 3 deletions(-)
-> > > 
-> > > diff --git a/block/fops.c b/block/fops.c
-> > > index 376265935714..be36c9fbd500 100644
-> > > --- a/block/fops.c
-> > > +++ b/block/fops.c
-> > > @@ -34,9 +34,12 @@ static blk_opf_t dio_bio_write_op(struct kiocb *iocb)
-> > >       return opf;
-> > >   }
-> > > -static bool blkdev_dio_unaligned(struct block_device *bdev, loff_t pos,
-> > > -                  struct iov_iter *iter)
-> > > +static bool blkdev_dio_invalid(struct block_device *bdev, loff_t pos,
-> > > +                struct iov_iter *iter, bool is_atomic)
-> > >   {
-> > > +    if (is_atomic && !generic_atomic_write_valid(iter, pos))
-> > > +        return true;
-> > > +
-> > >       return pos & (bdev_logical_block_size(bdev) - 1) ||
-> > >           !bdev_iter_is_aligned(bdev, iter);
-> > >   }
-> > > @@ -72,6 +75,8 @@ static ssize_t __blkdev_direct_IO_simple(struct
-> > > kiocb *iocb,
-> > >       bio.bi_iter.bi_sector = pos >> SECTOR_SHIFT;
-> > >       bio.bi_write_hint = file_inode(iocb->ki_filp)->i_write_hint;
-> > >       bio.bi_ioprio = iocb->ki_ioprio;
-> > > +    if (iocb->ki_flags & IOCB_ATOMIC)
-> > > +        bio.bi_opf |= REQ_ATOMIC;
-> > >       ret = bio_iov_iter_get_pages(&bio, iter);
-> > >       if (unlikely(ret))
-> > > @@ -343,6 +348,9 @@ static ssize_t __blkdev_direct_IO_async(struct
-> > > kiocb *iocb,
-> > >           task_io_account_write(bio->bi_iter.bi_size);
-> > >       }
-> > > +    if (iocb->ki_flags & IOCB_ATOMIC)
-> > > +        bio->bi_opf |= REQ_ATOMIC;
-> > > +
-> > >       if (iocb->ki_flags & IOCB_NOWAIT)
-> > >           bio->bi_opf |= REQ_NOWAIT;
-> > > @@ -359,12 +367,13 @@ static ssize_t __blkdev_direct_IO_async(struct
-> > > kiocb *iocb,
-> > >   static ssize_t blkdev_direct_IO(struct kiocb *iocb, struct
-> > > iov_iter *iter)
-> > >   {
-> > >       struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
-> > > +    bool is_atomic = iocb->ki_flags & IOCB_ATOMIC;
-> > >       unsigned int nr_pages;
-> > >       if (!iov_iter_count(iter))
-> > >           return 0;
-> > > -    if (blkdev_dio_unaligned(bdev, iocb->ki_pos, iter))
-> > > +    if (blkdev_dio_invalid(bdev, iocb->ki_pos, iter, is_atomic))
-> > 
-> > Why not passing in iocb->ki_flags here?
-> > Or, indeed, the entire iocb?
-> 
-> We could (pass the iocb), but we only need to look up one thing - ki_pos. We
-> already have is_atomic local. I am just trying to make things as efficient
-> as possible. If you really think it's better (to pass iocb), then it can be
-> changed.
+From: Kou Wenqi <kouwenqi@kylinos.cn>
 
-I certainly do. ;)
+"multipath -t" and "multipath -T" might show the wrong
+multipathd configuration items "retrigger_tries" and
+"force_sync". Make sure they don't.
 
-https://lore.kernel.org/linux-xfs/20240620212401.GA3058325@frogsfrogsfrogs/
+Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
+---
+ multipath/main.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
---D
+diff --git a/multipath/main.c b/multipath/main.c
+index ce702e7f..f4abdad0 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -842,6 +842,8 @@ main (int argc, char *argv[])
+ 	char *dev = NULL;
+ 	struct config *conf;
+ 	bool enable_foreign = false;
++	int retrigger_tries_ori;
++	int force_sync_ori;
+ 
+ 	libmultipath_init();
+ 	if (atexit(dm_lib_exit) || atexit(libmultipath_exit))
+@@ -852,7 +854,9 @@ main (int argc, char *argv[])
+ 	if (atexit(uninit_config))
+ 		condlog(1, "failed to register cleanup handler for config: %m");
+ 	conf = get_multipath_config();
++	retrigger_tries_ori = conf->retrigger_tries;
+ 	conf->retrigger_tries = 0;
++	force_sync_ori = conf->force_sync;
+ 	conf->force_sync = 1;
+ 	if (atexit(cleanup_vecs))
+ 		condlog(1, "failed to register cleanup handler for vecs: %m");
+@@ -924,10 +928,14 @@ main (int argc, char *argv[])
+ 				conf->find_multipaths = FIND_MULTIPATHS_GREEDY;
+ 			break;
+ 		case 't':
++			conf->retrigger_tries = retrigger_tries_ori;
++			conf->force_sync = force_sync_ori;
+ 			r = dump_config(conf, NULL, NULL) ? RTVL_FAIL : RTVL_OK;
+ 			goto out;
+ 		case 'T':
+ 			cmd = CMD_DUMP_CONFIG;
++			conf->retrigger_tries = retrigger_tries_ori;
++			conf->force_sync = force_sync_ori;
+ 			break;
+ 		case 'h':
+ 			usage(argv[0]);
+-- 
+2.27.0
 
-> Thanks,
-> John
-> 
-> 
