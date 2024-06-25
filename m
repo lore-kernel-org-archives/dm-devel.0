@@ -1,199 +1,129 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8DCB113A252;
-	Tue, 25 Jun 2024 08:57:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C634A176225
+	for <dm-devel@lists.linux.dev>; Tue, 25 Jun 2024 17:57:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719305861; cv=none; b=cF7E2A/kjxISS89jPxfu+/gzYf1p44wOsKgGIxJaFuDV01ifrmm/dZ/CcspaeJogErQZDnI2Qcn4oR6uPb2e5NXOOzMhMnkyig/LY1x13nmQ0T1AB3pellaWj+OVmTV+QJQG2/glTvtV+7/7XFlXli2KVnhLJTxWAFOJWeEShfE=
+	t=1719338225; cv=none; b=rfy0ARtYJx3RoLMG9xlzSLk8DBBr+mOHgPIMMZ+5CmVKkihQHDZaqV21DMKpeLwy9BJL8O92dS15Tw+GJbzgFINMuRz+Nu4C76m2uQtG3NfMVR9QxaTmEc+IYW5njQc93rzUVFuIBKpd4JjygR6oY9cyNBdzepID2if6ohVdKnI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719305861; c=relaxed/simple;
-	bh=Z+RrsOLEVITIAl7yw5ohC8SHpoKA4nCfk4Q+CLDwT68=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=OOVPNa7fp3JPJC46igY5ZTNixgyP0dS/1p0jVZaa83Yj+Q/A/zrCNk4JwfjVuMXAH1oSgRnOrYzDRzBwEjoElWJNY3kyn64cDLtoMEGwhTedrxyB5rdWyVBfnjXybJVuVfAPrCg+/4IUfeT+ZGztqu8ICYsOP+/8UqY1ykk4Jmw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=iT2Kf8Ts; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1719338225; c=relaxed/simple;
+	bh=2YiUjNhzGrx6oyMeOAJWojuB5lnWLCy46jv1fqUGiUc=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=cw5Ri2xSb1ZBDcHp65c9874O+x3Mu7yIzLmcKiiS+ExGDwCIOuatjUIKkhGm3EvAkhkGIh+TOPnG8RbPtn78WgzvoWZL2FTpqW7nxGrRnq7VLcfn0mNYqFxG3TQe3fqiTV41AbFQj9JOKS+lJEIkaGB07nmXw0rSvmwYaiWNPU0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Cc24YJmD; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="iT2Kf8Ts"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=THcdDm0A+7qsrmlgD/s5mbaI1bo21sJBUVFRJUuckjU=; b=iT2Kf8Ts7SV0ZMpN1tnhXxPtMH
-	Ffv8ZJFKB4PVB/IdNXjk7V0C/EqzT+g2n4rI1ZqlvQji9lJIwZfjHfG1Y7Cb5TXIeVGCM4nTH9crp
-	4zyWvlsKZ4WoJ7XDaIrgLwNl3YRoXD5zh+VKywveOkw7i38S3zZmoxTmQHKWk7riwSg6VmFiReOf7
-	0vMD17gabcLDjQNIftPl8VaQ0ZrC/qk7EH/0G/IiWcIA8u56veyp3C42DoJVrtu8OAb3RerYCYvx8
-	kxEfDPsLLm6uiPifVX8Lcu0WzNjdMGJQI+mys12zLdW5z+VY7pu7ChDIbK8PMhXWCu88C5Voy7C5+
-	gU8eTZWA==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1sM1zb-00000002Btq-1pcn;
-	Tue, 25 Jun 2024 08:57:35 +0000
-Date: Tue, 25 Jun 2024 01:57:35 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: kernel test robot <oliver.sang@intel.com>
-Cc: Christoph Hellwig <hch@lst.de>, oe-lkp@lists.linux.dev, lkp@intel.com,
-	Jens Axboe <axboe@kernel.dk>, Ulf Hansson <ulf.hansson@linaro.org>,
-	Damien Le Moal <dlemoal@kernel.org>, Hannes Reinecke <hare@suse.de>,
-	linux-block@vger.kernel.org, linux-um@lists.infradead.org,
-	drbd-dev@lists.linbit.com, nbd@other.debian.org,
-	linuxppc-dev@lists.ozlabs.org, virtualization@lists.linux.dev,
-	xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
-	linux-mmc@vger.kernel.org, linux-mtd@lists.infradead.org,
-	nvdimm@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org, ying.huang@intel.com,
-	feng.tang@intel.com, fengwei.yin@intel.com
-Subject: Re: [axboe-block:for-next] [block]  1122c0c1cc:  aim7.jobs-per-min
- 22.6% improvement
-Message-ID: <ZnqGf49cvy6W-xWf@infradead.org>
-References: <202406250948.e0044f1d-oliver.sang@intel.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Cc24YJmD"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1719338222;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=0rpW0NQTyIQdUHLqnT4yOcOIbOm9Zd9PW1MKwLZ/FGM=;
+	b=Cc24YJmD6hox9rW+qlFle5mzcPgpAR7vIEizsNJuNJMwou3QOPSqYfyW6vhqV9AdGzGH3N
+	WsX9U+V8gYXMhJP7kT2a0M/PqaoHEQQ3GKjVXV/PtAJVRoeE2HqwR5AVPdvgDiz8c4DjNi
+	GjjP6VEejlR70zSr9Saw4CIpDleB0yI=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-197-ZTXraDkEMCGzswBSEE4jKQ-1; Tue,
+ 25 Jun 2024 13:56:59 -0400
+X-MC-Unique: ZTXraDkEMCGzswBSEE4jKQ-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1B0BA19560AE;
+	Tue, 25 Jun 2024 17:56:58 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CA6CF3000601;
+	Tue, 25 Jun 2024 17:56:57 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id BF9C230C1C04; Tue, 25 Jun 2024 17:56:56 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id BD15F3FB52;
+	Tue, 25 Jun 2024 19:56:56 +0200 (CEST)
+Date: Tue, 25 Jun 2024 19:56:56 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+cc: dm-devel@lists.linux.dev
+Subject: [PATCH 1/2] dm: introduce the target flag mempool_needs_integrity
+Message-ID: <a5896fbb-9538-2f79-29cf-c820152158@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <202406250948.e0044f1d-oliver.sang@intel.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-Hi Oliver,
+This commit introduces the dm target flag mempool_needs_integrity. When
+the flag is set, device mapper will call bioset_integrity_create on it's
+bio sets. The target can then call bio_integrity_alloc on the bios
+allocated from the table's mempool.
 
-can you test the patch below?  It restores the previous behavior if
-the device did not have a volatile write cache.  I think at least
-for raid0 and raid1 without bitmap the new behavior actually is correct
-and better, but it will need fixes for other modes.  If the underlying
-devices did have a volatile write cache I'm a bit lost what the problem
-was and this probably won't fix the issue.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
-From 81c816827197f811e14add7a79220ed9eef6af02 Mon Sep 17 00:00:00 2001
-From: Christoph Hellwig <hch@lst.de>
-Date: Tue, 25 Jun 2024 08:48:18 +0200
-Subject: md: set md-specific flags for all queue limits
+ drivers/md/dm-table.c         |    7 +++++--
+ include/linux/device-mapper.h |    6 ++++++
+ 2 files changed, 11 insertions(+), 2 deletions(-)
 
-The md driver wants to enforce a number of flags to an all devices, even
-when not inheriting them from the underlying devices.  To make sure these
-flags survive the queue_limits_set calls that md uses to update the
-queue limits without deriving them form the previous limits add a new
-md_init_stacking_limits helper that calls blk_set_stacking_limits and sets
-these flags.
-
-Fixes: 1122c0c1cc71 ("block: move cache control settings out of queue->flags")
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/md/md.c     | 13 ++++++++-----
- drivers/md/md.h     |  1 +
- drivers/md/raid0.c  |  2 +-
- drivers/md/raid1.c  |  2 +-
- drivers/md/raid10.c |  2 +-
- drivers/md/raid5.c  |  2 +-
- 6 files changed, 13 insertions(+), 9 deletions(-)
-
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 69ea54aedd99a1..8368438e58e989 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -5853,6 +5853,13 @@ static void mddev_delayed_delete(struct work_struct *ws)
- 	kobject_put(&mddev->kobj);
- }
- 
-+void md_init_stacking_limits(struct queue_limits *lim)
-+{
-+	blk_set_stacking_limits(lim);
-+	lim->features = BLK_FEAT_WRITE_CACHE | BLK_FEAT_FUA |
-+			BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT;
-+}
-+
- struct mddev *md_alloc(dev_t dev, char *name)
- {
- 	/*
-@@ -5871,10 +5878,6 @@ struct mddev *md_alloc(dev_t dev, char *name)
- 	int shift;
- 	int unit;
- 	int error;
--	struct queue_limits lim = {
--		.features		= BLK_FEAT_WRITE_CACHE | BLK_FEAT_FUA |
--					  BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT,
--	};
- 
- 	/*
- 	 * Wait for any previous instance of this device to be completely
-@@ -5914,7 +5917,7 @@ struct mddev *md_alloc(dev_t dev, char *name)
- 		 */
- 		mddev->hold_active = UNTIL_STOP;
- 
--	disk = blk_alloc_disk(&lim, NUMA_NO_NODE);
-+	disk = blk_alloc_disk(NULL, NUMA_NO_NODE);
- 	if (IS_ERR(disk)) {
- 		error = PTR_ERR(disk);
- 		goto out_free_mddev;
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index c4d7ebf9587d07..28cb4b0b6c1740 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -893,6 +893,7 @@ extern int strict_strtoul_scaled(const char *cp, unsigned long *res, int scale);
- 
- extern int mddev_init(struct mddev *mddev);
- extern void mddev_destroy(struct mddev *mddev);
-+void md_init_stacking_limits(struct queue_limits *lim);
- struct mddev *md_alloc(dev_t dev, char *name);
- void mddev_put(struct mddev *mddev);
- extern int md_run(struct mddev *mddev);
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index 62634e2a33bd0f..32d58752477847 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -379,7 +379,7 @@ static int raid0_set_limits(struct mddev *mddev)
- 	struct queue_limits lim;
- 	int err;
- 
--	blk_set_stacking_limits(&lim);
-+	md_init_stacking_limits(&lim);
- 	lim.max_hw_sectors = mddev->chunk_sectors;
- 	lim.max_write_zeroes_sectors = mddev->chunk_sectors;
- 	lim.io_min = mddev->chunk_sectors << 9;
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 1a0eba65b8a92b..04a0c2ca173245 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -3194,7 +3194,7 @@ static int raid1_set_limits(struct mddev *mddev)
- 	struct queue_limits lim;
- 	int err;
- 
--	blk_set_stacking_limits(&lim);
-+	md_init_stacking_limits(&lim);
- 	lim.max_write_zeroes_sectors = 0;
- 	err = mddev_stack_rdev_limits(mddev, &lim, MDDEV_STACK_INTEGRITY);
- 	if (err) {
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 3334aa803c8380..2a9c4ee982e023 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -3974,7 +3974,7 @@ static int raid10_set_queue_limits(struct mddev *mddev)
- 	struct queue_limits lim;
- 	int err;
- 
--	blk_set_stacking_limits(&lim);
-+	md_init_stacking_limits(&lim);
- 	lim.max_write_zeroes_sectors = 0;
- 	lim.io_min = mddev->chunk_sectors << 9;
- 	lim.io_opt = lim.io_min * raid10_nr_stripes(conf);
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 0192a6323f09ba..10219205160bbf 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -7708,7 +7708,7 @@ static int raid5_set_limits(struct mddev *mddev)
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h	2024-06-25 19:25:12.000000000 +0200
++++ linux-2.6/include/linux/device-mapper.h	2024-06-25 19:25:30.000000000 +0200
+@@ -397,6 +397,12 @@ struct dm_target {
+ 	 * bio_set_dev(). NOTE: ideally a target should _not_ need this.
  	 */
- 	stripe = roundup_pow_of_two(data_disks * (mddev->chunk_sectors << 9));
+ 	bool needs_bio_set_dev:1;
++
++	/*
++	 * Set if the target calls bio_integrity_alloc on bios received
++	 * in the map method.
++	 */
++	bool mempool_needs_integrity:1;
+ };
  
--	blk_set_stacking_limits(&lim);
-+	md_init_stacking_limits(&lim);
- 	lim.io_min = mddev->chunk_sectors << 9;
- 	lim.io_opt = lim.io_min * (conf->raid_disks - conf->max_degraded);
- 	lim.features |= BLK_FEAT_RAID_PARTIAL_STRIPES_EXPENSIVE;
--- 
-2.43.0
+ void *dm_per_bio_data(struct bio *bio, size_t data_size);
+Index: linux-2.6/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-table.c	2024-06-25 19:25:15.000000000 +0200
++++ linux-2.6/drivers/md/dm-table.c	2024-06-25 19:25:44.000000000 +0200
+@@ -1022,6 +1022,7 @@ static int dm_table_alloc_md_mempools(st
+ 	unsigned int per_io_data_size = 0, front_pad, io_front_pad;
+ 	unsigned int min_pool_size = 0, pool_size;
+ 	struct dm_md_mempools *pools;
++	bool mempool_needs_integrity = t->integrity_supported;
+ 
+ 	if (unlikely(type == DM_TYPE_NONE)) {
+ 		DMERR("no table type is set, can't allocate mempools");
+@@ -1043,6 +1044,8 @@ static int dm_table_alloc_md_mempools(st
+ 
+ 		per_io_data_size = max(per_io_data_size, ti->per_io_data_size);
+ 		min_pool_size = max(min_pool_size, ti->num_flush_bios);
++
++		mempool_needs_integrity |= ti->mempool_needs_integrity;
+ 	}
+ 	pool_size = max(dm_get_reserved_bio_based_ios(), min_pool_size);
+ 	front_pad = roundup(per_io_data_size,
+@@ -1053,13 +1056,13 @@ static int dm_table_alloc_md_mempools(st
+ 	if (bioset_init(&pools->io_bs, pool_size, io_front_pad,
+ 			dm_table_supports_poll(t) ? BIOSET_PERCPU_CACHE : 0))
+ 		goto out_free_pools;
+-	if (t->integrity_supported &&
++	if (mempool_needs_integrity &&
+ 	    bioset_integrity_create(&pools->io_bs, pool_size))
+ 		goto out_free_pools;
+ init_bs:
+ 	if (bioset_init(&pools->bs, pool_size, front_pad, 0))
+ 		goto out_free_pools;
+-	if (t->integrity_supported &&
++	if (mempool_needs_integrity &&
+ 	    bioset_integrity_create(&pools->bs, pool_size))
+ 		goto out_free_pools;
+ 
 
