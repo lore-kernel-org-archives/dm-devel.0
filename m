@@ -1,119 +1,100 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9CBC117C7AF
-	for <dm-devel@lists.linux.dev>; Tue, 25 Jun 2024 18:37:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA1F2181D16;
+	Tue, 25 Jun 2024 21:18:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719340651; cv=none; b=RmBWBTIXcVWxvQsXheKFeTkFI5USdTlH0Q21tYi7KdpT4eJIdtEV5mOt06VXexJDxdQ8CwTruFkyskUuZzDUcqwfcok2wps8X1bWjjK9ao70MCwDK7w5qvNJT4bI2sE0IOUowkbaRqghVV4c0yE3Hp6oD7QoZXSDJGB25kGy6jA=
+	t=1719350306; cv=none; b=fJ09/dSwS7xxd8pnb6JPRwl9rcjvaUYBKmRqpN4a4vDFPgeyopCRk2uzAuApEZEEzArpYsWM5RkW0XxnhTV4DGLzV2+tlJLd+hXTFLauQapXsaVMQJI2iFZLs0IcHg5wyuPC19r2aUDIfDJgILuBBPRMOBxHdFjTB3tRUo+a63o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719340651; c=relaxed/simple;
-	bh=xaBiOUCcbhsEiDDlr9ft/ApwQ3CgJk9n92ap/EN2vY4=;
+	s=arc-20240116; t=1719350306; c=relaxed/simple;
+	bh=KPOiqngDeZl30NH1XxIF5gTrFiubBnjvbTlQRWh4xYg=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=n89QgyqjWZ+s4mNVOkt7Fn9vNBPK3/SHi31Z/gpAtxIp9K07lJNOiwg0A2No7+cYPNA4L6uVzCJMssIo0yok2+m16yWWJpNz3gXTfpkuvdf53jff9wM45hyftNxhxy5Olpq0KZZgMBQRuP7lmhjA4WIsX/Y9IM4znitNDOTAk1I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Z0im+Bxi; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 In-Reply-To:Content-Type; b=ZBsSoabBQiGV8VYX737BpVkvQhInv1DycI9uCSOvEa6nR43yR5ecTy9yzkv70++e+qOcGLdmCmgy0+aBr0mGRoOfwbKu2a4LqusvbnlySO8fFNErM6Yg2gPIIRgOlHz8BdxOw5C/3KyX7KrQ2qcAsMpa5n02STkG693tk4fECkE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=t0hfLTOH; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Z0im+Bxi"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1719340648;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=rjP8zqa9DjMRaFNMcMFYFsi4VJ9TPziW2E5FbrHXUKo=;
-	b=Z0im+BxitRMpa3efI7Gc4GXDv6uxULwyAdkPmaMCbIq7S0H5uiVARBoEQnp4tnmEol2cJv
-	HDFAdCHpDWzOTZPslsqLVMtzF6VTHEiCwy0W/IbWrPMf6uimpMctrlUVpI9RMYoqM1VAle
-	yRRCFJqTg4iH789GEktvq9NaNX+hD2w=
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-437--50twuzgONe4NFK6YXKe-w-1; Tue, 25 Jun 2024 14:37:26 -0400
-X-MC-Unique: -50twuzgONe4NFK6YXKe-w-1
-Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-79c07db4b3dso145663385a.3
-        for <dm-devel@lists.linux.dev>; Tue, 25 Jun 2024 11:37:26 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1719340646; x=1719945446;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=rjP8zqa9DjMRaFNMcMFYFsi4VJ9TPziW2E5FbrHXUKo=;
-        b=wkIS1ruifTGbjkjfdReHTlAGu4EwXGHcLRZMP8bbvrhrWNJvTCWVEybDvxCLhm66Vl
-         Ls/PUK0G9s5vQCutENl9nRsPasWrDmxm1NAGkKoaToh2GXRk1MxD56Sn4L8uTIUUrv4f
-         +PEsH2WaDCnK9ohZTaCsgtXrAiRCad+87/zMNpS2MpuO2aF1lAUn9tKAiboAtm6MOlzy
-         pl7t1cVg4SezzLUkb0RcrKPYI6NTqDZUjrTU3svSnHIw8TO00oTzuXTTCL1UmXtoDel3
-         /hP6jEnLYxxH3P8shAqGfy4xnM1C7eyYRbYvlpxe6F0/6z7FLn23tPiYAsP0ppX+H7fK
-         96mw==
-X-Gm-Message-State: AOJu0YzbJnlxwzdKWqO/2vNxxuEmBbWdb/q9neXNUShY/wXwaPJi8ua0
-	QjGUKDzvHk4HKzt2GqkKWdoQFjy+hHEIBdNl2Ffd2XYq32lj4MpbzztN2BLPdZbbiYsNj1oJs3o
-	ZpWRn6NZmlyGNw79fJ/+cBnz1JLS3IZgZRRDUs2Ol4SU+wx2vJAjPJmlc
-X-Received: by 2002:a05:620a:838b:b0:797:9c76:32a6 with SMTP id af79cd13be357-79be6f1457dmr796242485a.56.1719340646353;
-        Tue, 25 Jun 2024 11:37:26 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IGoWPotw+0VrcrvK+GuskbqBpoUwqThBFYkTLju4QKTs3hCDfwBWUdZAosjHkIX634yXoPh6w==
-X-Received: by 2002:a05:620a:838b:b0:797:9c76:32a6 with SMTP id af79cd13be357-79be6f1457dmr796241185a.56.1719340646055;
-        Tue, 25 Jun 2024 11:37:26 -0700 (PDT)
-Received: from [192.168.1.152] ([70.22.187.239])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-79bce8b3777sm427599985a.54.2024.06.25.11.37.25
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 25 Jun 2024 11:37:25 -0700 (PDT)
-Message-ID: <c08ab47c-944c-7393-d403-e4435cb283dc@redhat.com>
-Date: Tue, 25 Jun 2024 14:37:24 -0400
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="t0hfLTOH"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 91760C32781;
+	Tue, 25 Jun 2024 21:18:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1719350305;
+	bh=KPOiqngDeZl30NH1XxIF5gTrFiubBnjvbTlQRWh4xYg=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=t0hfLTOHb4/Mwqe3tFIXULykvTPoVb2REU4j7462zAQty0DovUsgeBXIqkLjqTLCw
+	 HAGGft70l/PDuzHefiOHehrFlRKSrR2du/bLm5kK/kbDVcfh5m4xuWI0nWWxN56Lse
+	 xoUzU8Gzwq8KVXsiWU7/X+KQsUpd/zU0nzfWUbMkzVLwAg5YNaPWJvF4vmbMa+Jo//
+	 ejLlCdHGRNNyLNU47GweDERCIXIrzxqnH6i4N7xmQwTBfwy2yhYXdAO9k3GDtb+dyH
+	 MVVxfnSkqkn+xi+mkIsrRuWCPS7HdZdlkTRY04vfu/n9mTzh99hGbiMKV9MjDu+sWU
+	 wHnnw0LQ19EWA==
+Message-ID: <05c7c08d-f512-4727-ae3c-aba6e8f2973f@kernel.org>
+Date: Wed, 26 Jun 2024 06:18:18 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.12.0
-Subject: Re: [PATCH] dm cache metadata: remove unused struct 'thunk'
-To: linux@treblig.org, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-References: <20240523210550.309116-1-linux@treblig.org>
-From: Matthew Sakai <msakai@redhat.com>
-In-Reply-To: <20240523210550.309116-1-linux@treblig.org>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
+ and request layer.
+To: Bart Van Assche <bvanassche@acm.org>,
+ Nitesh Shetty <nj.shetty@samsung.com>, Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>,
+ Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+ martin.petersen@oracle.com, david@fromorbit.com, hare@suse.de,
+ damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com, joshi.k@samsung.com,
+ nitheshshetty@gmail.com, gost.dev@samsung.com, linux-block@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+ linux-fsdevel@vger.kernel.org
+References: <eda6c198-3a29-4da4-94db-305cfe28d3d6@acm.org>
+ <9f1ec1c1-e1b8-48ac-b7ff-8efb806a1bc8@kernel.org>
+ <a866d5b5-5b01-44a2-9ccb-63bf30aa8a51@acm.org>
+ <665850bd.050a0220.a5e6b.5b72SMTPIN_ADDED_BROKEN@mx.google.com>
+ <abe8c209-d452-4fb5-90eb-f77b5ec1a2dc@acm.org> <20240601055931.GB5772@lst.de>
+ <d7ae00c8-c038-4bed-937e-222251bc627a@acm.org>
+ <20240604044042.GA29094@lst.de>
+ <4ffad358-a3e6-4a88-9a40-b7e5d05aa53c@acm.org>
+ <20240605082028.GC18688@lst.de>
+ <CGME20240624105121epcas5p3a5a8c73bd5ef19c02e922e5829a4dff0@epcas5p3.samsung.com>
+ <6679526f.170a0220.9ffd.aefaSMTPIN_ADDED_BROKEN@mx.google.com>
+ <4ea90738-afd1-486c-a9a9-f7e2775298ff@acm.org>
+ <de54c406-9270-4145-ab96-5fc3dd51765e@kernel.org>
+ <b5d93f2c-29fc-4ee4-9936-0f134abc8063@acm.org>
+From: Damien Le Moal <dlemoal@kernel.org>
 Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Organization: Western Digital Research
+In-Reply-To: <b5d93f2c-29fc-4ee4-9936-0f134abc8063@acm.org>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
+On 6/26/24 03:18, Bart Van Assche wrote:
+> On 6/24/24 2:55 PM, Damien Le Moal wrote:
+>> I am still a little confused as to why we need 2 BIOs, one for src and one for
+>> dst... Is it because of the overly complex scsi extended copy support ?
+>>
+>> Given that the main use case is copy offload for data within the same device,
+>> using a single BIO which somehow can carry a list of LBA sources and a single
+>> destination LBA would be far simpler and perfectly matching nvme simple copy and
+>> ATA write gathered. And I think that this would also match the simplest case for
+>> scsi extended copy as well.
+> 
+> Hi Damien,
+> 
+> What are the implications for the device mapper code if the copy source
+> and destination LBAs are encoded in the bio payload instead of in
+> bio->bi_sector?
 
-On 5/23/24 17:05, linux@treblig.org wrote:
-> From: "Dr. David Alan Gilbert" <linux@treblig.org>
-> 
-> 'thunk' has been unused since
-> commit f177940a8091 ("dm cache metadata: switch to using the new
-> cursor api for loading metadata").
-> 
-> Remove it.
-> 
-> Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
-Reviewed-by: Matthew Sakai <msakai@redhat.com>
+DM can deal with "abnormal" BIOs on its own. There is code for that.
+See is_abnormal_io() and __process_abnormal_io(). Sure, that will need more code
+compared to a bio sector+size based simple split, but I do not think it is a big
+deal given the potential benefits of the offloading.
 
-> ---
->   drivers/md/dm-cache-metadata.c | 9 ---------
->   1 file changed, 9 deletions(-)
-> 
-> diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-> index 96751cd3d181..0ad9dc1824fa 100644
-> --- a/drivers/md/dm-cache-metadata.c
-> +++ b/drivers/md/dm-cache-metadata.c
-> @@ -1282,15 +1282,6 @@ int dm_cache_insert_mapping(struct dm_cache_metadata *cmd,
->   	return r;
->   }
->   
-> -struct thunk {
-> -	load_mapping_fn fn;
-> -	void *context;
-> -
-> -	struct dm_cache_metadata *cmd;
-> -	bool respect_dirty_flags;
-> -	bool hints_valid;
-> -};
-> -
->   static bool policy_unchanged(struct dm_cache_metadata *cmd,
->   			     struct dm_cache_policy *policy)
->   {
+-- 
+Damien Le Moal
+Western Digital Research
 
