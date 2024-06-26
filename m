@@ -1,56 +1,44 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82D0F61FE8;
-	Wed, 26 Jun 2024 03:39:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EABF413B78F
+	for <dm-devel@lists.linux.dev>; Wed, 26 Jun 2024 05:22:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719373197; cv=none; b=r8lU6K0IVDQwqeDtwIHaq2MVFxdmscqKToyPbhTjN0ORvnQejCJisFpz8F0rUTai8G1MuR4+fj5Oar16oaiadBRy8F1eTs6paE8Kh4thwL7W+CXDUWRE0BQGwoKrKRDgGPp4B3+odwTMcGBkHXwUO/seQHzx3bQeIdACYGUEgC4=
+	t=1719379365; cv=none; b=YGpf4Fq9iYPvq1pW+LRD28ZuHKgz3x+MHs+RdXkCU5NFCCyt/GFn6AkHs6K5gJYX1/ZDpiIlvk5hRwN1tCGzQ4GPKk3QbzpzNxYUjVyYazZcZlDLgA2upTHufGNPGwAFJkDi5fBjLIv3MkamUuww7Kla0sTDcQ6HowRnBmUX8t4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719373197; c=relaxed/simple;
-	bh=3Sqem+lMn+S52efuvN21xdPnqe1u52xD6z7JDEdxua8=;
+	s=arc-20240116; t=1719379365; c=relaxed/simple;
+	bh=4J1gRg7GEgUIDrpBJA7ovYIvxdiLeq8+P2V7QmUaA58=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=OKol9UXbZTbOWPXQZk1EPyVzbPBMeTyZvzDH7024sObyKuMqttJLzEuX8u+W3pSnPBwLnRurzoQYgZc2Fh5MjVC8ST6ylpjsda0Pbyr3CQFJ3kzOe/zRQNFSUvl9nsCVaFIx4RsxqAV3aIMYwwectaDCFWW4wLBtFxwnmgLG5bU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=v38aUgEx; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="v38aUgEx"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=q35hat2STPhlr4DAn4+ABXn/NxJWaK5wgb5DlM6xpCg=; b=v38aUgExch/0roE+EfRJ2Glql8
-	NJM5fN+YEIB1TYrzijSpWBKOBPz4ePJWBmxAeIq8Vy0dgCM+B8D7e2Uu/8N8Um6Vr/QojQ2rgIn5c
-	kZ0Qn4LEY3fOdOmfyKwMWEDOh9Ymv1GdTyRuFBajkXiPOidtU70du4sEE9xKuUof+3qQcWAWRaj21
-	Q277QHf25k5Hs4ZG2a3z7KhsZxdHv16NmcJJI6IIXWv8/dTL6K+es5s2mnReHc51vjem7WfsNQ2Oh
-	GFZANqqhPdUBbop3nLGkV+BdHz5dumNmTIDB8b0TUPLkhRAW/U3MN14I64qofM3LTvdEoRKFoAPJn
-	ZHT0K0YA==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1sMJVe-00000005Ecx-3HCZ;
-	Wed, 26 Jun 2024 03:39:50 +0000
-Date: Tue, 25 Jun 2024 20:39:50 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Oliver Sang <oliver.sang@intel.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Christoph Hellwig <hch@lst.de>,
-	oe-lkp@lists.linux.dev, lkp@intel.com, Jens Axboe <axboe@kernel.dk>,
-	Ulf Hansson <ulf.hansson@linaro.org>,
-	Damien Le Moal <dlemoal@kernel.org>, Hannes Reinecke <hare@suse.de>,
-	linux-block@vger.kernel.org, linux-um@lists.infradead.org,
-	drbd-dev@lists.linbit.com, nbd@other.debian.org,
-	linuxppc-dev@lists.ozlabs.org, virtualization@lists.linux.dev,
-	xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
-	linux-mmc@vger.kernel.org, linux-mtd@lists.infradead.org,
-	nvdimm@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org, ying.huang@intel.com,
-	feng.tang@intel.com, fengwei.yin@intel.com
-Subject: Re: [axboe-block:for-next] [block]  1122c0c1cc:  aim7.jobs-per-min
- 22.6% improvement
-Message-ID: <ZnuNhkH26nZi8fz6@infradead.org>
-References: <202406250948.e0044f1d-oliver.sang@intel.com>
- <ZnqGf49cvy6W-xWf@infradead.org>
- <Znt4qTr/NdeIPyNp@xsang-OptiPlex-9020>
+	 Content-Type:Content-Disposition:In-Reply-To; b=eR94zQiQvDjw7P/JakCdFb2SVuxv5CTxLpVoQ9tVTCUz+htbxAXnSwxajX7iQPGtx1bwqVt4iEUqmGp0HlTe6e6gt/P6dcy/kxy5FE274K6DK2e02bp4U7sJ2cOTZmUVvpI7BV4rU/18wbzU/2EDlwFjHpCAFLdtg3wAXpPPb7Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 04B43227A87; Wed, 26 Jun 2024 07:22:39 +0200 (CEST)
+Date: Wed, 26 Jun 2024 07:22:38 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: Bart Van Assche <bvanassche@acm.org>,
+	Nitesh Shetty <nj.shetty@samsung.com>,
+	Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
+	Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
+	Chaitanya Kulkarni <kch@nvidia.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+	martin.petersen@oracle.com, david@fromorbit.com, hare@suse.de,
+	damien.lemoal@opensource.wdc.com, anuj20.g@samsung.com,
+	joshi.k@samsung.com, nitheshshetty@gmail.com, gost.dev@samsung.com,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-doc@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH v20 02/12] Add infrastructure for copy offload in block
+ and request layer.
+Message-ID: <20240626052238.GC21996@lst.de>
+References: <d7ae00c8-c038-4bed-937e-222251bc627a@acm.org> <20240604044042.GA29094@lst.de> <4ffad358-a3e6-4a88-9a40-b7e5d05aa53c@acm.org> <20240605082028.GC18688@lst.de> <CGME20240624105121epcas5p3a5a8c73bd5ef19c02e922e5829a4dff0@epcas5p3.samsung.com> <6679526f.170a0220.9ffd.aefaSMTPIN_ADDED_BROKEN@mx.google.com> <4ea90738-afd1-486c-a9a9-f7e2775298ff@acm.org> <de54c406-9270-4145-ab96-5fc3dd51765e@kernel.org> <b5d93f2c-29fc-4ee4-9936-0f134abc8063@acm.org> <05c7c08d-f512-4727-ae3c-aba6e8f2973f@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -59,35 +47,19 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <Znt4qTr/NdeIPyNp@xsang-OptiPlex-9020>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <05c7c08d-f512-4727-ae3c-aba6e8f2973f@kernel.org>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Wed, Jun 26, 2024 at 10:10:49AM +0800, Oliver Sang wrote:
-> I'm not sure I understand this test request. as in title, we see a good
-> improvement of aim7 for 1122c0c1cc, and we didn't observe other issues for
-> this commit.
-
-The improvement suggests we are not sending cache flushes when we should
-send them, or at least just handle them in md.
-
-> do you mean this improvement is not expected or exposes some problems instead?
-> then by below patch, should the performance back to the level of parent of
-> 1122c0c1cc?
+On Wed, Jun 26, 2024 at 06:18:18AM +0900, Damien Le Moal wrote:
 > 
-> sure! it's our great pleasure to test your patches. I noticed there are
-> [1]
-> https://lore.kernel.org/all/20240625110603.50885-2-hch@lst.de/
-> which includes "[PATCH 1/7] md: set md-specific flags for all queue limits"
-> [2]
-> https://lore.kernel.org/all/20240625145955.115252-2-hch@lst.de/
-> which includes "[PATCH 1/8] md: set md-specific flags for all queue limits"
-> 
-> which one you suggest us to test?
-> do we only need to apply the first patch "md: set md-specific flags for all queue limits"
-> upon 1122c0c1cc?
-> then is the expectation the performance back to parent of 1122c0c1cc?
+> DM can deal with "abnormal" BIOs on its own. There is code for that.
+> See is_abnormal_io() and __process_abnormal_io(). Sure, that will need more code
+> compared to a bio sector+size based simple split, but I do not think it is a big
+> deal given the potential benefits of the offloading.
 
-Either just the patch in reply or the entire [2] series would be fine.
+It's not just dm.  You also need it in the partition remapping code
+(mandatory), md (nice to have), etc.
 
-Thanks!
-
+And then we have the whole mess of what is in the payload for the I/O
+stack vs what is in the payload for the on the wire protocol, which
+will have different formatting and potentially also different sizes.
