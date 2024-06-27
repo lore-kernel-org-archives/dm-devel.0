@@ -1,68 +1,66 @@
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
+Received: from mail-lj1-f174.google.com (mail-lj1-f174.google.com [209.85.208.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3BBCE23BE
-	for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 09:27:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F8AE1350FD
+	for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 09:31:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719480467; cv=none; b=UfkNFrzvKn3n9/QXrrzdxax4/RjROv/yfMpFt4H+W1Fo8vCEKRYamWmygOLAxMSRnODKAlNb2p+VyOe5u1Dl4hdX+vlhpin86lJxVDplTShgwzKq6oPIhPDrcFL7Kj4jqJ0PosV03ayn65ypzZr8akwXqJ29s2yklprRXAlvbwQ=
+	t=1719480682; cv=none; b=FdKaYWaWlyyzj6914LVBkbJYj0AZoQ9HTkmwk1MVWoql9jXwqG7LnOAlr/89LzNUyTPQwYNCH3sZrOZLZLNwnX2cBPxr9p3u2pGqTxfSA3+b5/sPg/qC9M/ULO/sujV4bEevBVlab7BsAB6sbPbyHhH1xzRrL0jhylql8KNOKrs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719480467; c=relaxed/simple;
-	bh=jrNnhSOzlXGLoYdAyPRykpao3aT8P1wvul/5Y1TsBD8=;
+	s=arc-20240116; t=1719480682; c=relaxed/simple;
+	bh=ZWboXsifv5Z8VagMgB4yGyZDiqa7VfmDZ+Zc+ziewOo=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=M9TpxHURRHy9KssCLEkjxIv8Hbc0szH7jyO4gnp26pJ6anDLdFdrD58zY+lkksjFW1Fy5Bh89yC+IZRQQ2kk4wHsmLBy5i32Y2Aqn4F/1jL8eYowKy6BqLXYYgYZXfSq5vJuiMgJ7/Dq0W2cbDp04QeFhJKbgHTopeTv+lqIB3I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=FchwhYz2; arc=none smtp.client-ip=209.85.218.41
+	 Content-Type:MIME-Version; b=m/EcKzfIWW0EPOJdgfDpCIYANAKBIzp/QeHs+KMd095xH1LA1Fmbp3GLMPTx0JsGPkWD6uVIt8nuYEh1nM8A0M/Cik+33y11TbtHERgs+fMGUUjOnmc5q87fY7mjBFDuj3b17IE9jTaiptNK7N0nMdsNWSS7JG2Jd1fP1qd9u3g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=JqCOQ76C; arc=none smtp.client-ip=209.85.208.174
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="FchwhYz2"
-Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-a6fd513f18bso765833866b.3
-        for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 02:27:44 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="JqCOQ76C"
+Received: by mail-lj1-f174.google.com with SMTP id 38308e7fff4ca-2eaea28868dso102861651fa.3
+        for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 02:31:19 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1719480463; x=1720085263; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1719480678; x=1720085478; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=JT/9VCqd6yTJtUbtDT6RiUm5LN8Gmvtf1iz6WlwoZg0=;
-        b=FchwhYz2g+girtfx4vLP/g06wpQzFESu546Pzig0M9NYr88lUPmj5SNfNlKbIJHaXp
-         wcbqh0ULLRLlpmHhxozsdA6gDA0E6+RnJ9DpPxoge4ZgnOaNmzOIHFZDC65UXyJK7hTf
-         mGTpx9se6wRtbL0csS1Opv/ssPvnK5A8nAqX0MUMRNWidqnNvoM3UsTOKcp3Bj+W+6kq
-         7DDZsdzSEfND0g2+s/m4TFNggsHdiT8jbqeAOXvXA9cp496lc3p2tNPuL+yw71KtiPxj
-         csFd0OrkLSparT+RQZqjdih8Vzd6UCH0I2DIuj12o8Zc2YdSqPZqrTDdneHQ17S13GQj
-         pu8g==
+        bh=DXkZ7I5pXMfk43H6NOuBQ53xs9q86Sm+RL4KsLsr5rU=;
+        b=JqCOQ76CNq0Pm6wfff1SbCN/9MguImTE0c2QOfPvpGMnMUSFEmiEYDPw26KXhntkxv
+         qEDkxlcBTgXKHHlgeYcGKVRZpFsLNxV4PZJnqzXBGJ3PxD9OSHEF6hYLXx0DGOb7ZbG0
+         6cx5J7fWeg/iRFhXVLHUWvH6oHZ7MIhxHmWFMb7NJEe3W2uAKV6jjfO4hYlMtBcWfIXc
+         MujBx4pW1rnBVzfWogbAKUgSvzmFB7+/6yN1Yctia7fRNGIgZTBBC8f9o4gq5mYZAe3m
+         5qXiZAGY7RkSzv0aMN++BUy0/P7dAzQfgTUq4Zf0I2viRBAhU/UGWsgFf511fzrN0eTY
+         LwAw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1719480463; x=1720085263;
+        d=1e100.net; s=20230601; t=1719480678; x=1720085478;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=JT/9VCqd6yTJtUbtDT6RiUm5LN8Gmvtf1iz6WlwoZg0=;
-        b=oaHdSYJ/ilm7g4nE0Rmaka3t8enpv0xaFuRBFkYdb9sVWmkkGD/kYkTfqC0xssAoTv
-         jZmhiOOz6v9cnAD5yZgv3qxYghUcMcJdWWGpx1Cqi6o02ESqnzv0WEW8WOcErkPrc/I6
-         V0UQVXENgRahTfyipoz96jlyVjQZyQzKxwVwokyINAWi96k/lw0upsx84K4ncBi2YIE9
-         wK7xrJoF2LgkQquoMfxSnS+jwk5LRJEru5RhGHNiC7RQrF5mye+wfDQynJIhlw9Mtpqb
-         5/FJAtEmuMVWw7Ywb5MfcOsuNbRe88/2ffU7jdCgBe69MNyZcD/uiD6PauPsPXmb2JBr
-         oWcw==
-X-Gm-Message-State: AOJu0YziBtv5Kf6k9n9ksebQbBsO7sHcLjzVxn2xeRVsTqw1lJnI3sDa
-	7Hj36Sf3XmsjD8yVCcu4QT7gsD0w+QLgFYgPkpilzTs3TICGqd4i5VcfEgEJvDXfKZvIdpScBac
-	8
-X-Google-Smtp-Source: AGHT+IHvY3fkOZQugBtMZsIwKHc1a/rUex2jvCR8Y5WRvAdfa01OKTpwZ0v8udgCYU1s6w6DWi3wNw==
-X-Received: by 2002:a17:906:2b05:b0:a6f:1025:8dd6 with SMTP id a640c23a62f3a-a7245c648admr678681166b.71.1719480463243;
-        Thu, 27 Jun 2024 02:27:43 -0700 (PDT)
+        bh=DXkZ7I5pXMfk43H6NOuBQ53xs9q86Sm+RL4KsLsr5rU=;
+        b=ZDa3KuEnuhJmJ32seCCiA+Zzst9BiJH04jU6+FNBK0YHrbAZ0W8ja/GuwrIzccvcEO
+         mV9f7RveoNXI/aMbln22yL1jnSCZSToQ3y3V1iG/HOdCHVNvdmpkbMnEQtcELzp/+Dge
+         d7XyI5MBjlEz5skz16YblTVf4IWS2CN+ln8XetWQ3KT3hm+DSC+FW0B3NPJTfRoVcWy2
+         GuzppKax2668C8AKinvcrcufrPdBCA18uK8xX507NGBeF8rqQInnfiUf/s9AXe9Jv15S
+         X0PEHjurRAzqF18x3DLPjkh2obd5SfLiiM5HWekl9utvKqMUuRNsX/MC4IO1h7HZ5aS/
+         r1nQ==
+X-Gm-Message-State: AOJu0Yy9Dx9IyJfhNybIB5MUTCoiX6ED4mrfh49pBhjWKawzR6wg9KJY
+	sYD3n9zD26OwdJCsqjM+BIr4mdUpN9BJcCtWHFjMKKc9ykp7V9X1Repk34hfVaQ=
+X-Google-Smtp-Source: AGHT+IHTHcUYEUUWp4s3N7i/nqrsv7BFtnZYNE/hf4TqKE4KDU442PcJVTQot4jJq+KcO9+KyuwK4w==
+X-Received: by 2002:a05:651c:1055:b0:2ec:efb:8b60 with SMTP id 38308e7fff4ca-2ec5b2d480amr99974171fa.13.1719480677968;
+        Thu, 27 Jun 2024 02:31:17 -0700 (PDT)
 Received: from ?IPv6:2003:de:3736:a00:e6b3:18ff:fe37:a690? (p200300de37360a00e6b318fffe37a690.dip0.t-ipconnect.de. [2003:de:3736:a00:e6b3:18ff:fe37:a690])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-367435852afsm1241639f8f.53.2024.06.27.02.27.42
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-424c82519b0sm57123365e9.14.2024.06.27.02.31.17
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 27 Jun 2024 02:27:43 -0700 (PDT)
-Message-ID: <6204dbb3f98a53b472e52c0356a16260f95ba2af.camel@suse.com>
-Subject: Re: [PATCH 4/7] libmultipath: add name and minor outputs for
- dm_map_present_by_uuid()
+        Thu, 27 Jun 2024 02:31:17 -0700 (PDT)
+Message-ID: <15bccd3ff56da7142ad64ad9f574ef64950fc5a8.camel@suse.com>
+Subject: Re: [PATCH 1/7] multipathd: fix flush check in flush_map()
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Thu, 27 Jun 2024 11:27:41 +0200
-In-Reply-To: <20240605232254.623290-5-bmarzins@redhat.com>
+Date: Thu, 27 Jun 2024 11:31:16 +0200
+In-Reply-To: <20240605232254.623290-2-bmarzins@redhat.com>
 References: <20240605232254.623290-1-bmarzins@redhat.com>
-	 <20240605232254.623290-5-bmarzins@redhat.com>
+	 <20240605232254.623290-2-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.52.2 
@@ -74,110 +72,36 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
 On Wed, 2024-06-05 at 19:22 -0400, Benjamin Marzinski wrote:
-> add arguments to dm_map_present_by_uuid() to allow optionally
-> fetching
-> the device name and minor number for the devices found by WWID. These
-> will be used by a later patch.
+> Forgot the comparison in the "if" statement.
+>=20
+> Fixes 8a3898339 ("multipathd: sync features on flush_map failure
+> corner case")
 >=20
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-I have to say I don't like this much. At least the function name should
-be changed. But actually, our handling of DM_DEVICE_INFO and
-DM_DEVICE_STATUS dm tasks needs refactoring. As far as the kernel is
-concerned, all dm ioctls that refer to an existing map will find the
-map either by uuid, by name, or by major/minor, and the map uuid and
-name will always be filled in.
+Ups. The reviewer was asleep, it seems.
 
-I'll see if I can come up with something to clean this up.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-Regards
-Martin=20
-
+(Btw, I am sorry for the long delay of this review).
 
 > ---
-> =C2=A0libmultipath/devmapper.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 | 11 ++++++++++-
-> =C2=A0libmultipath/devmapper.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 |=C2=A0 2 +-
-> =C2=A0libmultipath/libmultipath.version |=C2=A0 2 +-
-> =C2=A0libmultipath/valid.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +-
-> =C2=A04 files changed, 13 insertions(+), 4 deletions(-)
+> =C2=A0multipathd/main.c | 2 +-
+> =C2=A01 file changed, 1 insertion(+), 1 deletion(-)
 >=20
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index 08bb3c51..7fe68841 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -936,7 +936,7 @@ out:
-> =C2=A0 *=C2=A0 -1 : error
-> =C2=A0 */
-> =C2=A0int
-> -dm_map_present_by_uuid(const char *uuid)
-> +dm_map_present_by_uuid(const char *uuid, char **name_p, int *minor)
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 09286dd0..58afe14a 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -813,7 +813,7 @@ flush_map(struct multipath * mpp, struct vectors
+> * vecs)
 > =C2=A0{
-> =C2=A0	struct dm_task *dmt;
-> =C2=A0	struct dm_info info;
-> @@ -966,6 +966,15 @@ dm_map_present_by_uuid(const char *uuid)
-> =C2=A0		goto out_task;
-> =C2=A0
-> =C2=A0	r =3D !!info.exists;
-> +	if (!r)
-> +		goto out_task;
-> +
-> +	if (name_p) {
-> +		const char *name =3D dm_task_get_name(dmt);
-> +		*name_p =3D (name && strlen(name)) ? strdup(name) :
-> NULL;
-> +	}
-> +	if (minor)
-> +		*minor =3D info.minor;
-> =C2=A0
-> =C2=A0out_task:
-> =C2=A0	dm_task_destroy(dmt);
-> diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-> index 19b79c5b..d9c71e92 100644
-> --- a/libmultipath/devmapper.h
-> +++ b/libmultipath/devmapper.h
-> @@ -43,7 +43,7 @@ int dm_simplecmd_noflush (int task, const char
-> *name, uint16_t udev_flags);
-> =C2=A0int dm_addmap_create (struct multipath *mpp, char *params);
-> =C2=A0int dm_addmap_reload (struct multipath *mpp, char *params, int
-> flush);
-> =C2=A0int dm_map_present (const char *name);
-> -int dm_map_present_by_uuid(const char *uuid);
-> +int dm_map_present_by_uuid(const char *uuid, char **name_p, int
-> *minor);
-> =C2=A0int dm_get_map(const char *name, unsigned long long *size, char
-> **outparams);
-> =C2=A0int dm_get_status(const char *name, char **outstatus);
-> =C2=A0int dm_type(const char *name, char *type);
-> diff --git a/libmultipath/libmultipath.version
-> b/libmultipath/libmultipath.version
-> index eb511749..600de394 100644
-> --- a/libmultipath/libmultipath.version
-> +++ b/libmultipath/libmultipath.version
-> @@ -43,7 +43,7 @@ LIBMPATHCOMMON_1.0.0 {
-> =C2=A0	put_multipath_config;
-> =C2=A0};
-> =C2=A0
-> -LIBMULTIPATH_24.0.0 {
-> +LIBMULTIPATH_25.0.0 {
-> =C2=A0global:
-> =C2=A0	/* symbols referenced by multipath and multipathd */
-> =C2=A0	add_foreign;
-> diff --git a/libmultipath/valid.c b/libmultipath/valid.c
-> index f2237787..3b060192 100644
-> --- a/libmultipath/valid.c
-> +++ b/libmultipath/valid.c
-> @@ -360,7 +360,7 @@ is_path_valid(const char *name, struct config
-> *conf, struct path *pp,
-> =C2=A0	if (check_wwids_file(pp->wwid, 0) =3D=3D 0)
-> =C2=A0		return PATH_IS_VALID_NO_CHECK;
-> =C2=A0
-> -	if (dm_map_present_by_uuid(pp->wwid) =3D=3D 1)
-> +	if (dm_map_present_by_uuid(pp->wwid, NULL, NULL) =3D=3D 1)
-> =C2=A0		return PATH_IS_VALID;
-> =C2=A0
-> =C2=A0	/* all these act like FIND_MULTIPATHS_STRICT for finding if
-> a
+> =C2=A0	int r =3D dm_suspend_and_flush_map(mpp->alias, 0);
+> =C2=A0	if (r !=3D DM_FLUSH_OK) {
+> -		if (DM_FLUSH_FAIL_CANT_RESTORE)
+> +		if (r =3D=3D DM_FLUSH_FAIL_CANT_RESTORE)
+> =C2=A0			remove_feature(&mpp->features,
+> "queue_if_no_path");
+> =C2=A0		condlog(0, "%s: can't flush", mpp->alias);
+> =C2=A0		return r;
 
