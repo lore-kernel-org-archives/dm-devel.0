@@ -1,67 +1,66 @@
-Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
+Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 909032E3F2
-	for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 09:32:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3BB171386C6
+	for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 09:32:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719480727; cv=none; b=oo0mzM3qHQKqlyOPiIIpFJZpjtICEbCHjg3VHzGNjqrcOc66edJnzDeLG8k2QYheKVr5W1EO0gTPY8FOcQcVzFPk/3WqT5jMuCCqgoFdScGdLILrBnfpdQYYnC/uumbZ/DI7rmzWMIzOzWYtayg7ve9QzkGZiI7IZJhly6b2ijM=
+	t=1719480755; cv=none; b=Ulfe4t0lmDWmTgiC+vU0IOKebcIsmie+yGIHA1e1wSTSU9Mp6306/0Jj02B5NZTfPGPElDrWzNwiOx1iHFfMxagdykVt1C86JcjyijPrys2Mk9D2izuCghehVePnLu7LOTwUf2BnUp9kY5MDoDTCSu+S7Cra2mg/alV4INCajZQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719480727; c=relaxed/simple;
-	bh=TwucnY/pDNlhn7W5cAt+1NQxpPxEkkdVw49onneSAXg=;
+	s=arc-20240116; t=1719480755; c=relaxed/simple;
+	bh=6qWsDdf2aD/1zbkLKsROs36YwmaYTqL0WAI5jrSJilY=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=qXDndpZgQVFAWPO5N3u6pgMK6lYeGDJe0T4Z7KdFTbdIWppp/9nxcTwjqIdmAvDf524TYwlSaZWp6kusKz0m2jTNgNna1HR3Mj156nAYgOzA7SRH3MTiAUxu6utJwISmZHd2nWtK+sMJCyDQ6hxvf81iyVQnZIf+NwcGcRbDqh4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=QU6ViEZi; arc=none smtp.client-ip=209.85.128.44
+	 Content-Type:MIME-Version; b=s68ZtETQJCQlJS3r5CShXbf/E/S+nOrW9tsPA5OhXSWRfmrndaiNKlaOE+xdmA/l1U9szMK8Lzu7Z88NVqWn4hL3/XMhcHNGYA+Lh0ySjagL0jCX6/Yc/JItBfnRgqTe9EDDcZl0oStiwYvO9B3HgNEX17SkwxFg8QR/tOsudZI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=acHlJwpk; arc=none smtp.client-ip=209.85.208.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="QU6ViEZi"
-Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-42564a0d3ceso3323455e9.0
-        for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 02:32:05 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="acHlJwpk"
+Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-2ebe785b234so84790321fa.1
+        for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 02:32:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1719480724; x=1720085524; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1719480751; x=1720085551; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=TwucnY/pDNlhn7W5cAt+1NQxpPxEkkdVw49onneSAXg=;
-        b=QU6ViEZiqupoFI7amXepLjbnOCv3UpbMveX3JZFCVsAksfrweO+Y0APOyZfsYmuBxQ
-         caAINi4OOsyUV7HW26+fTyUD1t8lMkisc/0rx3tf0iyMezMEJ70Wq4tN5zMtqlX2D/3i
-         Dzy0pm3yjLTuXGN8zTj1eCSnZfbxRWWH71VwPZPDV1jR6cgW50gDl/dOdn6L21cTLUal
-         mQOmvSVZoidKW0WfXjz/iEQLkBzadSNgPtMnRvMQVKT+UQPOSkWkLMNQsvssWIqkPZNV
-         i+F0+iwvOhCqzJKS+uk7OKNQywqKbVTm7XFZXWAaSU2dczKOhs1p96BHZOKkVaEWAZWM
-         hwgg==
+        bh=6qWsDdf2aD/1zbkLKsROs36YwmaYTqL0WAI5jrSJilY=;
+        b=acHlJwpkD3XtVnAw0ZtHX17xF6itET0xewMNMFiOszecC+iw6eVTVjsqR3Pqh/imSZ
+         kymvsPvYya5Dii+yIvtGmmnV95NtfDGXOJDHW6HMa5qDyPlh8BxopiIJsp0ql+05Cc6u
+         HWmxDjr76elGqBr8//rzjGY68xK9GZWWxgqmqGpVjnrMERqVMNtHqddunROpRQFBSqMc
+         dHFRR9SXkz93AkqRw9y+zpZk/bpIr0dSQjwF7bBAZ20jQHxB4J6lbRHSvv0JJBa8QnVs
+         6lrnVfv9uzGUc0YZ3l2ZLQQiOrD70dZUBjWehqg0h7gA9cgs5wvS7XeUEWJd1QvA0gRR
+         XTMQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1719480724; x=1720085524;
+        d=1e100.net; s=20230601; t=1719480751; x=1720085551;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=TwucnY/pDNlhn7W5cAt+1NQxpPxEkkdVw49onneSAXg=;
-        b=pdF+RXVcbqwWz8Byu1d7qbpR3cNy7UCOPxG5lV7pv1CFFJvN0GMCh0L75wEwUliV3v
-         JmjfO7fXMRErcnTYW49dW7xSNuy8tF35VvVRoRzyGS2yp5dcHugPobJdxMZ2xcB2BuvI
-         /948zsNUT+skMUJZMep+F34Cab5ebFx+s0RYhq+Sa97uik0eKQdaVeXfJVLOhA+Vthop
-         Cg/pQSmeSvxRFu87Wk44RyQsmiXPZamMOkKQJYGOhI1+eaUUHaF4cbuv1OniktnaZ8oj
-         X1ZPoBtcQe67zDswEAMFR/pBPp2tQw2Pyk7Wz0F60wNqmfnJUlcbvTld9UW1tl9p35Gj
-         +tDw==
-X-Gm-Message-State: AOJu0YzYjbI9+kCEBrJ5gbqSWln5sHvCcSUaYhuU108MLUd+dvrWGekv
-	koWgRa/k62dWCqtKTkfr1Lmpu8+WT1uptAI7blos75JeKolWnzcg33WMR0uXAIY=
-X-Google-Smtp-Source: AGHT+IHTJ49PM8fHD/sF6cqK/CFHe4WXmc6Sw82KanRn2NhKDW1N/lxUu5yfrTkrfbIncQwwL35V5Q==
-X-Received: by 2002:a5d:6812:0:b0:35f:48e:fe59 with SMTP id ffacd0b85a97d-366e96576a4mr7708955f8f.66.1719480723718;
-        Thu, 27 Jun 2024 02:32:03 -0700 (PDT)
+        bh=6qWsDdf2aD/1zbkLKsROs36YwmaYTqL0WAI5jrSJilY=;
+        b=mPFmyjQuVi8ntuhWFfNuCpMf5s1suU0sZsDh0GwVUvjAFObjwTljSfDJ7XXwoGy8ac
+         cMiES4qXcFLlGJFvk4M/2bEcQRuCTN4crpCUchVDEtVvUmqA8NaPjkFEMBo5hWdpY0kg
+         K1pO9y+1qiNAlxiKs0lkuu4fnSlc1fYl/g2v6rYFT/QHknVkjXWYHJGhPlyAXfJFnZ+D
+         6Uq2tCxZhdXaGGeFjsmedTbhlNoBNYJgz1oVNYTAeyrhKkG372PMNcb66PR1ajFpynWU
+         lcrkT2pYibPu3LbvRnmVarp3jPMCViRBuYkKPUy22JC8XLEgUzcGsJLQY1ya26Ds4KJY
+         qf6g==
+X-Gm-Message-State: AOJu0YyIgAhIeqODAylI1l6YWcMf3cwaA5tfjh3+hAe2V+OOucDbu9o9
+	xomnWnlf5xwyY4kF5bi0nc2dP8+5dxUunQL5E4uKOjc8YR16wSrzog/KLyJm6q8=
+X-Google-Smtp-Source: AGHT+IGDQa08GCPb7mKw3jnscIS7Ry4/TXhXs5mFyGRpgX5cEcSFkfILVRWyF2iDowBFlyFnV6X4uA==
+X-Received: by 2002:a2e:a801:0:b0:2ee:4c2e:3d3b with SMTP id 38308e7fff4ca-2ee4c2e3ec8mr6282801fa.4.1719480751243;
+        Thu, 27 Jun 2024 02:32:31 -0700 (PDT)
 Received: from ?IPv6:2003:de:3736:a00:e6b3:18ff:fe37:a690? (p200300de37360a00e6b318fffe37a690.dip0.t-ipconnect.de. [2003:de:3736:a00:e6b3:18ff:fe37:a690])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3674357c025sm1243680f8f.22.2024.06.27.02.32.03
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3674369ed18sm1229808f8f.113.2024.06.27.02.32.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 27 Jun 2024 02:32:03 -0700 (PDT)
-Message-ID: <36b3dcc270b37bdc0fcd92a52696cd7a144cd7fb.camel@suse.com>
-Subject: Re: [PATCH 5/7] multipath-tools: Makefile.inc: compile with
- -fexceptions
+        Thu, 27 Jun 2024 02:32:31 -0700 (PDT)
+Message-ID: <511cfee98b64f50c792fe2096df80d95c67b38a2.camel@suse.com>
+Subject: Re: [PATCH 6/7] multipathd: free alias if cli_add_map() is cancelled
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Thu, 27 Jun 2024 11:32:02 +0200
-In-Reply-To: <20240605232254.623290-6-bmarzins@redhat.com>
+Date: Thu, 27 Jun 2024 11:32:30 +0200
+In-Reply-To: <20240605232254.623290-7-bmarzins@redhat.com>
 References: <20240605232254.623290-1-bmarzins@redhat.com>
-	 <20240605232254.623290-6-bmarzins@redhat.com>
+	 <20240605232254.623290-7-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.52.2 
@@ -73,14 +72,11 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
 On Wed, 2024-06-05 at 19:22 -0400, Benjamin Marzinski wrote:
-> multipath is not currently running the cleanup_functions from
-> __attribute__((cleanup(cleanup_function))) when threads are
-> cancelled.
-> To do this, it needs to be compiled with -fexceptions
+> Use the cleanup attribute to make sure that alias is freed if
+> cli_add_map() is cancelled.
 >=20
-> https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Common-Variable-Attributes.=
-html#index-cleanup-variable-attribute
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
+> =C2=A0
 
