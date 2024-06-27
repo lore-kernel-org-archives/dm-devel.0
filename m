@@ -1,87 +1,162 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EFF751804F;
-	Thu, 27 Jun 2024 04:54:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2DC0873451
+	for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 07:47:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719464050; cv=none; b=nSUO7vVMCtp3HWrJmzGt0/KEvtPktLA8aPn3g5TG5LbnzAhchdYiYkj0IzfjNF0TPTuoJNcsdbWLzCJQuHxPNQ35Qd0GXhryLaCsStQo+z9SP2KoqPcSVZ8kNDWFG2g3aIkzbTK+ViI4/P3rJeO48vyCFvKSlU73xglzEuW9K4k=
+	t=1719474459; cv=none; b=I5X8rjza7t4UVMZ4ZEuF0BcIlMXm1CxD7mKn6NX6WuuylyhMBKxJyDKGJjN5aAGuHuHWPepiiKRjw7FonfOOsZcs2FXZobbLXAABp1tW644VYYiitfsd3A5UBitemhcho+hzPd2XGIR7D1d8ospsnd3XWc+Kfyu/QjEjo9hBLwY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719464050; c=relaxed/simple;
-	bh=LlK0F5tTrVM/p36ygp+Mt3SiuwhdpQbrsHRgx3HnkSg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=jp9aRjc6bvVU7htso8INg4pjbpHLdL+us9mGkJjZnw4skL10P4+a7h8xuWf8D3+egiHhjtmZDEwKATxHoTHBnOJXa/j6T3Skly6CKJcEuRectplFZ07Zg3O821ZqomuBBnnnesTEGGW79CYhAGlrLjlERjnoPM5pVPB9OoMRNqA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=uzcGPgco; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1719474459; c=relaxed/simple;
+	bh=HQi1CzIVSlY/E80ptdWheJK/dsZyepsitzRidAgvsis=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=utP3w8RW1ruVlNu6ABuqqfzUaUPIftn8iip+n3iVbx9krRrtRXHj+IUy1lphB+jvk6tiqUMRfYfQzSWa9MGjLKtUouSQS8J2yRnW6H9/tZ3cV+EHOXmMcJwbZMErb4xr37Z5dxB3YXiRcQDrwW8C3M7OGiEtXxbn4ntxtXVHQQ0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=HpkkaZnq; arc=none smtp.client-ip=209.85.128.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="uzcGPgco"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=/fzE2yWElnzU7XRficmyE9tfka6WnF3hLS24PJakxl4=; b=uzcGPgconVlUhJahqA4o0y4rP2
-	YDkQfdW0m0w2u8N8BRaxbwBTF1twTy53aPn4xBPj/AfBrb0WxTzWJH8wD6oR43WzK3V70db4qXtWY
-	0IIZI+2mDcUbXHX9Anl5SaO8PZqQtBzUCFGUjAdJ7ExnkxJgGk1kclJpDyt1NPlhJH6k1SD2KJv1r
-	Y/aWT38dOOUqqw6WO2aC6zoYnYWj+859j2ETzBrnZoTEbtU0f3blIKoRcb5DyUh8Hm74KMCv5zkZg
-	gzrN7RVyue7JLzZcBns6ISX0k4yPom7ZauQBJlbkxj+mZ51Z3qG2KMut3g2uFWJoxlvZFyPWvc2cp
-	37dKQmlg==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.97.1 #2 (Red Hat Linux))
-	id 1sMh93-00000009D8d-4Br2;
-	Thu, 27 Jun 2024 04:54:06 +0000
-Date: Wed, 26 Jun 2024 21:54:05 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Oliver Sang <oliver.sang@intel.com>
-Cc: Christoph Hellwig <hch@infradead.org>, oe-lkp@lists.linux.dev,
-	lkp@intel.com, Jens Axboe <axboe@kernel.dk>,
-	Ulf Hansson <ulf.hansson@linaro.org>,
-	Damien Le Moal <dlemoal@kernel.org>, Hannes Reinecke <hare@suse.de>,
-	linux-block@vger.kernel.org, linux-um@lists.infradead.org,
-	drbd-dev@lists.linbit.com, nbd@other.debian.org,
-	linuxppc-dev@lists.ozlabs.org, virtualization@lists.linux.dev,
-	xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
-	linux-mmc@vger.kernel.org, linux-mtd@lists.infradead.org,
-	nvdimm@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org, ying.huang@intel.com,
-	feng.tang@intel.com, fengwei.yin@intel.com
-Subject: Re: [axboe-block:for-next] [block]  1122c0c1cc:  aim7.jobs-per-min
- 22.6% improvement
-Message-ID: <ZnzwbYSaIlT0SIEy@infradead.org>
-References: <202406250948.e0044f1d-oliver.sang@intel.com>
- <ZnqGf49cvy6W-xWf@infradead.org>
- <Znt4qTr/NdeIPyNp@xsang-OptiPlex-9020>
- <ZnuNhkH26nZi8fz6@infradead.org>
- <ZnzP+nUrk8+9bANK@xsang-OptiPlex-9020>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="HpkkaZnq"
+Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-424720e73e1so61269185e9.1
+        for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 00:47:36 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1719474455; x=1720079255; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=JFwQ0JYHoGmz3uRizIk9y5gpvmyPS2OW5/rXBKps8Zk=;
+        b=HpkkaZnqgw07NDeI9YuNQELm9zEeMdAuWjXY1BA0NKYZUrcmIL+T5qFEuobTn38dOh
+         BctgAJUszRdMxd44zhQDF++pY2E+E1YKwDjefDfEdAP3mbhT0azP+VtuLKt4lmI4MdWb
+         vD0+SaHLFqTjRQieLiQYcpS/a1I5HZytkoiyR4Xp9+U5X8r50E95NmPX/uhEMAlbuj9Z
+         YYRse5qBPAN9op3TQwjR6XOfHQf/mujChYHHM+eAb+2wACIYW3S2rmvoxcSAtD4TDgbx
+         ktdywt/dfX1w7JTpoipvn3H3L6vDfJcoY8SjwTuMBGCPS3/Jf3MkVrmH/ABIvlst1JLg
+         3oKw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1719474455; x=1720079255;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=JFwQ0JYHoGmz3uRizIk9y5gpvmyPS2OW5/rXBKps8Zk=;
+        b=mJYlXvId/oANyGW8Y4iLJRMoLzSxUO82WLI51y0XZUl5F53zCtRpFKDhwWs7+AyaIS
+         iYI7zvko3YN8gGpUG57fpLsF/PrTAsBsBPFZcrj4rT/6oFJw4uIAyRkdql6p6QmGPIUu
+         NypSdiYYSLfpGXjO6nfluKJ4LQS9/9hlo9yaMb+PXzrd+K/CFiL2ta/JcrMMfFfYszmI
+         2ETg2WtpJpZVYqj79RTza9hCf7khVE1ZE9OExpqgnFuMsmrYNsa1JTFfOYfZJW8OnhaJ
+         Ntd61ip/4i6z408LA5FdWo474QzPQnGVoo2pC0H2g6RFX4M3pw/eGeaMQqZ8F5etCaFe
+         KTng==
+X-Gm-Message-State: AOJu0YwWXN5uReKgCiq3l+w+2s3halCL8yHcvXd+U0mGO3xSWkDN0z4B
+	DAiHeaATRgBTFk0mprZNU9mhzTUU7iNhtZZodiue/wOAJwZAQqnXHljy1fzsQhU2ObWYL4qT4Tg
+	7
+X-Google-Smtp-Source: AGHT+IGatFdtBqxpdhXrFhyO0JBP2Oh7Z80SVDAVPuvFqu+F5yQw1akQty1arIod0FT4TjBuQAa0IQ==
+X-Received: by 2002:a05:600c:4d98:b0:424:a2d8:5fe9 with SMTP id 5b1f17b1804b1-424a2d8601cmr43228455e9.38.1719474455270;
+        Thu, 27 Jun 2024 00:47:35 -0700 (PDT)
+Received: from ?IPv6:2003:de:3736:a00:e6b3:18ff:fe37:a690? (p200300de37360a00e6b318fffe37a690.dip0.t-ipconnect.de. [2003:de:3736:a00:e6b3:18ff:fe37:a690])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3674357ff03sm993858f8f.45.2024.06.27.00.47.34
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 27 Jun 2024 00:47:35 -0700 (PDT)
+Message-ID: <7551690cc28e39dc733c57ae1a9e657c469aafb3.camel@suse.com>
+Subject: Re: [PATCH 3/7] multipathd: refresh multipath before calling
+ set_no_path_retry()
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Thu, 27 Jun 2024 09:47:33 +0200
+In-Reply-To: <20240605232254.623290-4-bmarzins@redhat.com>
+References: <20240605232254.623290-1-bmarzins@redhat.com>
+	 <20240605232254.623290-4-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ZnzP+nUrk8+9bANK@xsang-OptiPlex-9020>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Thu, Jun 27, 2024 at 10:35:38AM +0800, Oliver Sang wrote:
-> 
-> I failed to apply patch in your previous reply to 1122c0c1cc or current tip
-> of axboe-block/for-next:
-> c1440ed442a58 (axboe-block/for-next) Merge branch 'for-6.11/block' into for-next
+On Wed, 2024-06-05 at 19:22 -0400, Benjamin Marzinski wrote:
+> Make sure that all callers of set_no_path_retry() update the
+> multipath->features string from the kernel before calling it, so that
+> they have the current queueing state to check.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-That already includes it.
+I am not sure about this one.=C2=A0
 
-> 
-> but it's ok to apply upon next:
-> * 0fc4bfab2cd45 (tag: next-20240625) Add linux-next specific files for 20240625
-> 
-> I've already started the test based on this applyment.
-> is the expectation that patch should not introduce performance change comparing
-> to 0fc4bfab2cd45?
-> 
-> or if this applyment is not ok, please just give me guidance. Thanks!
+refresh_multipath() is not a cheap operation, requiring at least 3
+device-mapper ioctls, and we hold the multipath lock while we call it,
+meaning that multipathd can't take care of other important things while
+it's handling this CLI request.
 
-The expectation is that the latest block branch (and thus linux-next)
-doesn't see this performance change.
+OTOH, the kernel only changes the features string when the map is
+reloaded. Nobody should be reloading the map under normal conditions
+anyway, and if they do, we would see an uevent shortly afterwards. IOW,
+I think it's safe to assume that multipathd has the correct features
+string cached, except in pathological situations.
+
+Am I overlooking something? Do you have evidence of errors occuring
+because multipathd has a wrong features string cached?
+
+Regards
+Martin
+
+
+
+
+
+
+> ---
+> =C2=A0multipathd/cli_handlers.c | 12 ++++++++++++
+> =C2=A01 file changed, 12 insertions(+)
+>=20
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index 117570e1..3dc5e690 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -934,6 +934,8 @@ cli_restore_queueing(void *v, struct strbuf
+> *reply, void *data)
+> =C2=A0		pthread_cleanup_push(put_multipath_config, conf);
+> =C2=A0		select_no_path_retry(conf, mpp);
+> =C2=A0		pthread_cleanup_pop(1);
+> +		if (refresh_multipath(vecs, mpp))
+> +			return -ENODEV;
+> =C2=A0		set_no_path_retry(mpp);
+> =C2=A0	} else
+> =C2=A0		condlog(2, "%s: queueing not disabled. Nothing to
+> do", mapname);
+> @@ -956,6 +958,10 @@ cli_restore_all_queueing(void *v, struct strbuf
+> *reply, void *data)
+> =C2=A0			pthread_cleanup_push(put_multipath_config,
+> conf);
+> =C2=A0			select_no_path_retry(conf, mpp);
+> =C2=A0			pthread_cleanup_pop(1);
+> +			if (refresh_multipath(vecs, mpp)) {
+> +				i--;
+> +				continue;
+> +			}
+> =C2=A0			set_no_path_retry(mpp);
+> =C2=A0		} else
+> =C2=A0			condlog(2, "%s: queueing not disabled.
+> Nothing to do",
+> @@ -983,6 +989,8 @@ cli_disable_queueing(void *v, struct strbuf
+> *reply, void *data)
+> =C2=A0	mpp->retry_tick =3D 0;
+> =C2=A0	mpp->no_path_retry =3D NO_PATH_RETRY_FAIL;
+> =C2=A0	mpp->disable_queueing =3D 1;
+> +	if (refresh_multipath(vecs, mpp))
+> +		return -ENODEV;
+> =C2=A0	set_no_path_retry(mpp);
+> =C2=A0	return 0;
+> =C2=A0}
+> @@ -1001,6 +1009,10 @@ cli_disable_all_queueing(void *v, struct
+> strbuf *reply, void *data)
+> =C2=A0		mpp->retry_tick =3D 0;
+> =C2=A0		mpp->no_path_retry =3D NO_PATH_RETRY_FAIL;
+> =C2=A0		mpp->disable_queueing =3D 1;
+> +		if (refresh_multipath(vecs, mpp)) {
+> +			i--;
+> +			continue;
+> +		}
+> =C2=A0		set_no_path_retry(mpp);
+> =C2=A0	}
+> =C2=A0	return 0;
 
