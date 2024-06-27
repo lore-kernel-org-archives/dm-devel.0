@@ -1,66 +1,67 @@
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0504A2E3F2
-	for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 09:31:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 909032E3F2
+	for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 09:32:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719480703; cv=none; b=lzGdtRkmbYULcse2MygVwoHL/kUJEwUsqQ45CbMm87dXTvg2V4SMb17EGvZ/0tvpS5VV27bELNiawf1S8lZ0B0XjtW/zMA974teN/NRECcYTqOn/bsC8/byjawtEushQccNVexxu8ZkPdH+JHDSfBp9s+mIQ3WK/08/PMswageQ=
+	t=1719480727; cv=none; b=oo0mzM3qHQKqlyOPiIIpFJZpjtICEbCHjg3VHzGNjqrcOc66edJnzDeLG8k2QYheKVr5W1EO0gTPY8FOcQcVzFPk/3WqT5jMuCCqgoFdScGdLILrBnfpdQYYnC/uumbZ/DI7rmzWMIzOzWYtayg7ve9QzkGZiI7IZJhly6b2ijM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719480703; c=relaxed/simple;
-	bh=pug2oit183Jpf6fqGTo/4iSolV655as3BDwybKEDOtg=;
+	s=arc-20240116; t=1719480727; c=relaxed/simple;
+	bh=TwucnY/pDNlhn7W5cAt+1NQxpPxEkkdVw49onneSAXg=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=KrqIbkAe2kx8KJ0jSbiR1Lqe4SAOdVUQYz3Vfj/y4n9esTIYLN8fKUjB1HqvueYjTvrMZHmij/YiZbs7hwUbO0GiN+U8gNR14vytMDcutYtrWmzP8cR2aeBtb/pOberGeODzvOezJ5DdeNawvSg9pPo0a164pSiBl/1IPKUn3FY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=ZeOkylX7; arc=none smtp.client-ip=209.85.128.41
+	 Content-Type:MIME-Version; b=qXDndpZgQVFAWPO5N3u6pgMK6lYeGDJe0T4Z7KdFTbdIWppp/9nxcTwjqIdmAvDf524TYwlSaZWp6kusKz0m2jTNgNna1HR3Mj156nAYgOzA7SRH3MTiAUxu6utJwISmZHd2nWtK+sMJCyDQ6hxvf81iyVQnZIf+NwcGcRbDqh4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=QU6ViEZi; arc=none smtp.client-ip=209.85.128.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="ZeOkylX7"
-Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-421b9068274so65543885e9.1
-        for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 02:31:40 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="QU6ViEZi"
+Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-42564a0d3ceso3323455e9.0
+        for <dm-devel@lists.linux.dev>; Thu, 27 Jun 2024 02:32:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1719480699; x=1720085499; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1719480724; x=1720085524; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=pug2oit183Jpf6fqGTo/4iSolV655as3BDwybKEDOtg=;
-        b=ZeOkylX7Kw7yXY7AGAKdB7sc4HmrgTcXp2pUHMovtu05c0x8/1bQx/NUFf8aHehXj+
-         OrCouTs7DHDnV8LD9uZJf+8tTNqhXdnhN1Mf0+tkRDMTVY4H9x36UPYrSKK+Shvx4HAw
-         sm5TjFLppQBIZrzC7QNkhmkKHO4RMmJlGPDSOllxz7BLrFxdYEMY1gL91//P0cMY1h6C
-         lgLUKrn2lPtGUjXv+UVfG+YC2dMR50yO28D0LigaiabSMUYKruta5q0exkaBptUkOkR8
-         g9qO+z7g9YOKPmLvxfVA6p0bPS9Wf1R7c1RFvqY43KeUttyXXh3YJI7u9H8ulon5fwgT
-         wxwg==
+        bh=TwucnY/pDNlhn7W5cAt+1NQxpPxEkkdVw49onneSAXg=;
+        b=QU6ViEZiqupoFI7amXepLjbnOCv3UpbMveX3JZFCVsAksfrweO+Y0APOyZfsYmuBxQ
+         caAINi4OOsyUV7HW26+fTyUD1t8lMkisc/0rx3tf0iyMezMEJ70Wq4tN5zMtqlX2D/3i
+         Dzy0pm3yjLTuXGN8zTj1eCSnZfbxRWWH71VwPZPDV1jR6cgW50gDl/dOdn6L21cTLUal
+         mQOmvSVZoidKW0WfXjz/iEQLkBzadSNgPtMnRvMQVKT+UQPOSkWkLMNQsvssWIqkPZNV
+         i+F0+iwvOhCqzJKS+uk7OKNQywqKbVTm7XFZXWAaSU2dczKOhs1p96BHZOKkVaEWAZWM
+         hwgg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1719480699; x=1720085499;
+        d=1e100.net; s=20230601; t=1719480724; x=1720085524;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=pug2oit183Jpf6fqGTo/4iSolV655as3BDwybKEDOtg=;
-        b=WHtmmtKxNVcakxb13kwhb3jUAtiae0Z3BabqyUfGoBKYg6Ua5VjVH6Mezbsklya0rO
-         f7nZWqZJ0DSBAw+Xrb9AMyuMomHzkiFLgJ3gMJNgKAcRR0sViC1Bz6mLuy2u8aJLWKGB
-         /jH7Ww7GAKWXCae4tWqPq0r5nasoM/HyX5MOpOdSrU/4g0l70jC3Mm63owU6To7DdZSV
-         AgixLfG0dNN9HbBp/rEILLf9Dj7Ix3LkNOpy+m0NExZSzQKKSdZYc5AZW3QMVhD5BcKG
-         TydL1LJMHTG8j+V3kd19KZecI3/yO3D/tI4ddWKDLSb+UVkYDLvRzynOznUDJb0nCWY5
-         18zA==
-X-Gm-Message-State: AOJu0Yz0Ue2JeSwBe2A8RWAjNE04mivCLCUdSsZAG7/6qSZBlBUwor9Z
-	tmG5hOxc/EfDmRhTEMyjw+xXfzRare6tnySaCppbooFI5wG+07tpy4uC4P76VcU=
-X-Google-Smtp-Source: AGHT+IF4z0TDPVePlZPorsosiTslPcs2vERw4fDGB1swaqZyi0wQiD02YCcOmC9dSFrVPXSVq0w7Hw==
-X-Received: by 2002:a05:600c:1c90:b0:424:eeca:6bd0 with SMTP id 5b1f17b1804b1-424eeca6c69mr27421405e9.13.1719480699160;
-        Thu, 27 Jun 2024 02:31:39 -0700 (PDT)
+        bh=TwucnY/pDNlhn7W5cAt+1NQxpPxEkkdVw49onneSAXg=;
+        b=pdF+RXVcbqwWz8Byu1d7qbpR3cNy7UCOPxG5lV7pv1CFFJvN0GMCh0L75wEwUliV3v
+         JmjfO7fXMRErcnTYW49dW7xSNuy8tF35VvVRoRzyGS2yp5dcHugPobJdxMZ2xcB2BuvI
+         /948zsNUT+skMUJZMep+F34Cab5ebFx+s0RYhq+Sa97uik0eKQdaVeXfJVLOhA+Vthop
+         Cg/pQSmeSvxRFu87Wk44RyQsmiXPZamMOkKQJYGOhI1+eaUUHaF4cbuv1OniktnaZ8oj
+         X1ZPoBtcQe67zDswEAMFR/pBPp2tQw2Pyk7Wz0F60wNqmfnJUlcbvTld9UW1tl9p35Gj
+         +tDw==
+X-Gm-Message-State: AOJu0YzYjbI9+kCEBrJ5gbqSWln5sHvCcSUaYhuU108MLUd+dvrWGekv
+	koWgRa/k62dWCqtKTkfr1Lmpu8+WT1uptAI7blos75JeKolWnzcg33WMR0uXAIY=
+X-Google-Smtp-Source: AGHT+IHTJ49PM8fHD/sF6cqK/CFHe4WXmc6Sw82KanRn2NhKDW1N/lxUu5yfrTkrfbIncQwwL35V5Q==
+X-Received: by 2002:a5d:6812:0:b0:35f:48e:fe59 with SMTP id ffacd0b85a97d-366e96576a4mr7708955f8f.66.1719480723718;
+        Thu, 27 Jun 2024 02:32:03 -0700 (PDT)
 Received: from ?IPv6:2003:de:3736:a00:e6b3:18ff:fe37:a690? (p200300de37360a00e6b318fffe37a690.dip0.t-ipconnect.de. [2003:de:3736:a00:e6b3:18ff:fe37:a690])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-424c8266ae7sm55499245e9.20.2024.06.27.02.31.38
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3674357c025sm1243680f8f.22.2024.06.27.02.32.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 27 Jun 2024 02:31:39 -0700 (PDT)
-Message-ID: <93c0785391ff13ca580b40f6fcadffb7e6366cd1.camel@suse.com>
-Subject: Re: [PATCH 2/7] libmultipath: check for not PATH_UP in detect_alua
+        Thu, 27 Jun 2024 02:32:03 -0700 (PDT)
+Message-ID: <36b3dcc270b37bdc0fcd92a52696cd7a144cd7fb.camel@suse.com>
+Subject: Re: [PATCH 5/7] multipath-tools: Makefile.inc: compile with
+ -fexceptions
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Thu, 27 Jun 2024 11:31:38 +0200
-In-Reply-To: <20240605232254.623290-3-bmarzins@redhat.com>
+Date: Thu, 27 Jun 2024 11:32:02 +0200
+In-Reply-To: <20240605232254.623290-6-bmarzins@redhat.com>
 References: <20240605232254.623290-1-bmarzins@redhat.com>
-	 <20240605232254.623290-3-bmarzins@redhat.com>
+	 <20240605232254.623290-6-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.52.2 
@@ -72,15 +73,14 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
 On Wed, 2024-06-05 at 19:22 -0400, Benjamin Marzinski wrote:
-> Previously detect_alua was setting pp->tpgs if the path state was
-> either
-> PATH_UP or PATH_REMOVED. Setting pp->tpgs for PATH_REMOVED makes no
-> sense.=C2=A0 PATH_UP is the only state that path_offline() returns where
-> we
-> should set pp->tpgs, so just check for that, instead of checking for
-> all
-> the states where we shouldn't set pp->tpgs.
+> multipath is not currently running the cleanup_functions from
+> __attribute__((cleanup(cleanup_function))) when threads are
+> cancelled.
+> To do this, it needs to be compiled with -fexceptions
 >=20
+> https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Common-Variable-Attributes.=
+html#index-cleanup-variable-attribute
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
+
