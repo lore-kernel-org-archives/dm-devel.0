@@ -1,55 +1,54 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C330B1E49B
-	for <dm-devel@lists.linux.dev>; Mon,  1 Jul 2024 13:41:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7CF815E5BC
+	for <dm-devel@lists.linux.dev>; Mon,  1 Jul 2024 13:42:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1719841263; cv=none; b=lS4f2gmmkTuPX6HYr0LQ+8fc/6gXzOjyVn/EvkAFPH6BVyExhxlpropSI9ZIplq4+7Lx8oHY3Q61bPzwk4kCXhJMLGxnkHhW/0649zViZ2YlYNU4wK+HIG9ePK9vHv1F1Y6iXetmYExVrk8MsctkPNpGYocwangmy+klsn3Y7V8=
+	t=1719841361; cv=none; b=O5J62B0F7Ly2X7OresjvC7AqNm++mGxFALa9wuUnl826IddvTV8rVMBxsUPzYgaoeAA2onr8dB5ThKCbgrBSff762CG//XdKvRRCV1+coG6dp+hAacCV7WpvlOQPnFzlG5fjWmt0IhOMDpEvJNulRFNn9a9dzoZBNB1D/Np/naE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1719841263; c=relaxed/simple;
-	bh=7Ay1laCevjUlOnyjHqK0zzhVTrBp9D3JP4nWPTYLxeU=;
+	s=arc-20240116; t=1719841361; c=relaxed/simple;
+	bh=92/SR3+ittNLh2Rsy76Cz2RIU6V8eOAhn7AYJBLat38=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=GKN0LfUInfqbq+oOgFpnWO0wuHyuSWbw5HHgVWPmePRgLDmT+9oToMDmMbxeXw9y3f36RzBbQIwfzXaywQRfoHepz6TWYVD5LykZNwbI/rxKNaxKtg2BPp4TOqHcJGN76gxVh/trTnihJEDF8mNy4h7S1jcqvp5RBmhICMi7ly0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=R7fDIYRh; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=F/2GtN6I0pEM6I25qd4L+BRzcizi79y5Bipecak0MpDDSKvibpVjpRJ0L3UJ7p7/xBE9Bh8QMXleTOhW6zTv8+U0wfqtSN6RtUwGcDr9Xs5Alrqso+YxipX3ydx05csV0EcmiWUTxWssRqf5fB//n+DKRUGnkd1R/6ruMMWyx5s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=THb29ITa; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="R7fDIYRh"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="THb29ITa"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1719841260;
+	s=mimecast20190719; t=1719841358;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=hTYOayuneP6Ga6FNzZGkvmV+Bd9uCXqmhszSCbB9GN8=;
-	b=R7fDIYRh12/fViMzIhPTcYEWM7CM+QZLBvzXh79Emt0focAekQ4a9Elg4ZP2Jxd4guIzVN
-	4HTQkkjdp4N1xaHzrtZM2NtYIrA8K8KzDnrf+1tCUgF233HILZa8adjvEo4MTvolzss+ai
-	403U2Xfb9fw/Yc4tlEOJGF4t4woBiFU=
+	bh=E0HQdp4BRkZxb6hA/5Q0WjRUWoRI6uTvZSiyunG2Nc0=;
+	b=THb29ITa706ej8QS2Dvtnb76WVM8zPRlsWcNS8XClbzTYX8w7vJcakHW+spye1s4hrGCT2
+	I6PE8vbA7X9d6n5ZmcjRZh7NGmCob8cJuXlHKBwptQTz3Z+0SmDxFR7nuyVOGZZOURDBqm
+	dknawcF9yWi+BkibbXWf39P7Levmeo8=
 Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-184-ioAozpRcOd-J2dcxDXwTRg-1; Mon,
- 01 Jul 2024 09:40:56 -0400
-X-MC-Unique: ioAozpRcOd-J2dcxDXwTRg-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-527-gvXgAmFGPlWT2QszDnWHhA-1; Mon,
+ 01 Jul 2024 09:42:33 -0400
+X-MC-Unique: gvXgAmFGPlWT2QszDnWHhA-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 13C9F1933181;
-	Mon,  1 Jul 2024 13:40:55 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D41BA19560BA;
+	Mon,  1 Jul 2024 13:42:31 +0000 (UTC)
 Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6D6E61955E80;
-	Mon,  1 Jul 2024 13:40:54 +0000 (UTC)
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0AE4C3000223;
+	Mon,  1 Jul 2024 13:42:31 +0000 (UTC)
 Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 4B0DA30C1C14; Mon,  1 Jul 2024 13:40:53 +0000 (UTC)
+	id E9CE830C1C14; Mon,  1 Jul 2024 13:42:29 +0000 (UTC)
 Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 481ED3FB52;
-	Mon,  1 Jul 2024 15:40:53 +0200 (CEST)
-Date: Mon, 1 Jul 2024 15:40:53 +0200 (CEST)
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id E8E9D3FB52;
+	Mon,  1 Jul 2024 15:42:29 +0200 (CEST)
+Date: Mon, 1 Jul 2024 15:42:29 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: =?ISO-8859-15?Q?Daniel_P=2E_Berrang=E9?= <berrange@redhat.com>
-cc: =?ISO-8859-15?Q?Michal_Pr=EDvozn=EDk?= <mprivozn@redhat.com>, 
-    Tejun Heo <tj@kernel.org>, Lai Jiangshan <jiangshanlai@gmail.com>, 
+cc: Tejun Heo <tj@kernel.org>, Lai Jiangshan <jiangshanlai@gmail.com>, 
     Waiman Long <longman@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
     Laurence Oberman <loberman@redhat.com>, 
     Jonathan Brassow <jbrassow@redhat.com>, Ming Lei <minlei@redhat.com>, 
@@ -57,76 +56,86 @@ cc: =?ISO-8859-15?Q?Michal_Pr=EDvozn=EDk?= <mprivozn@redhat.com>,
     linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
     users@lists.libvirt.org
 Subject: Re: dm-crypt performance regression due to workqueue changes
-In-Reply-To: <ZoKuLzyhE8N4RaW4@redhat.com>
-Message-ID: <ede7d32c-5668-a2dc-ca9-e4b56cdfb42@redhat.com>
-References: <32fd8274-d5f-3eca-f5d2-1a9117fd8edb@redhat.com> <ZoGSJWMD9v1BxUDb@slm.duckdns.org> <e64c112-4fa9-74da-68ce-c1eec19460f2@redhat.com> <b0e364d2-0def-4909-98c6-ce7188b7819f@redhat.com> <ZoKuLzyhE8N4RaW4@redhat.com>
+In-Reply-To: <ZoKqYg7TKiozapmW@redhat.com>
+Message-ID: <e52c5a40-8ca9-38ae-1595-3785c6ac435@redhat.com>
+References: <32fd8274-d5f-3eca-f5d2-1a9117fd8edb@redhat.com> <ZoGSJWMD9v1BxUDb@slm.duckdns.org> <e64c112-4fa9-74da-68ce-c1eec19460f2@redhat.com> <ZoKqYg7TKiozapmW@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="185210117-1674295890-1719840823=:700989"
-Content-ID: <f9cdb176-e39e-5db6-cbb3-1e6d8f2a179d@redhat.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+Content-Type: multipart/mixed; BOUNDARY="185210117-223779599-1719839675=:700989"
+Content-ID: <42b1735e-969f-b8d6-2c61-eda77a311fc@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
   This message is in MIME format.  The first part should be readable text,
   while the remaining parts are likely unreadable without MIME-aware tools.
 
---185210117-1674295890-1719840823=:700989
+--185210117-223779599-1719839675=:700989
 Content-Type: text/plain; CHARSET=ISO-8859-15
 Content-Transfer-Encoding: 8BIT
-Content-ID: <766d6b71-af3a-cc50-6a1e-eeb13db77236@redhat.com>
+Content-ID: <69bd3f6f-9476-86a4-732-3fadbfafeb2@redhat.com>
 
 
 
 On Mon, 1 Jul 2024, Daniel P. Berrangé wrote:
 
-> On Mon, Jul 01, 2024 at 02:48:07PM +0200, Michal Prívozník wrote:
-> > On 6/30/24 20:49, Mikulas Patocka wrote:
-> > > 
-> > > 
-> > > On Sun, 30 Jun 2024, Tejun Heo wrote:
-> > >>
-> > >> Do you happen to know why libvirt is doing that? There are many other
-> > >> implications to configuring the system that way and I don't think we want to
-> > >> design kernel behaviors to suit topology information fed to VMs which can be
-> > >> arbitrary.
+> On Sun, Jun 30, 2024 at 08:49:48PM +0200, Mikulas Patocka wrote:
 > > 
-> > Firstly, libvirt's not doing anything. It very specifically avoids doing
-> > policy decisions. If something configures vCPUs so that they are in
-> > separate sockets, then we should look at that something. Alternatively,
-> > if "default" configuration does not work for your workflow well,
-> > document recommended configuration.
+> > 
+> > On Sun, 30 Jun 2024, Tejun Heo wrote:
+> > 
+> > > Do you happen to know why libvirt is doing that? There are many other
+> > > implications to configuring the system that way and I don't think we want to
+> > > design kernel behaviors to suit topology information fed to VMs which can be
+> > > arbitrary.
+> > > 
+> > > Thanks.
+> > 
+> > I don't know why. I added users@lists.libvirt.org to the CC.
+> > 
+> > How should libvirt properly advertise "we have 16 threads that are 
+> > dynamically scheduled by the host kernel, so the latencies between them 
+> > are changing and unpredictable"?
 > 
-> Actually in this particular case, it is strictly speaking libvirt.
-> If the guest XML config does not mention any <topology> info, then
-> libvirt explicitly tells QEMU to set sockets=N,cores=1,threads=1.
-> That matches QEMU's own historical built-in default topology.
+> NB, libvirt is just control plane, the actual virtual hardware exposed
+> is implemented across QEMU and the KVM kernel mod. Guest CPU topology
+> and/or NUMA cost information is the responsibility of QEMU.
 > 
-> None the less, my advice for mgmt applications using libvirt would
-> likely be to explicitly request sockets=1,cores=N,threads=1. This
-> is because it gives slightly better compatibility with unpleasant
-> software that applies licensing / subscription rules that penalize
-> use of many sockets, while being happy with any number of cores.
+> When QEMU's virtual CPUs are floating freely across host CPUs there's
+> no perfect answer. The host admin needs to make a tradeoff in their
+> configuration
 > 
+> They can optimize for density, by allowing guest CPUs to float freely
+> and allow CPU overcommit against host CPUs, and the guest CPU topology
+> is essentially a lie.
 > 
-> Either way though, the topology is a lie when the guest CPUs
-> are not pinned to host CPUs, so making performance decisions based
-> on this is unlikely to yield the desired results. Historically the
-> cores vs sockets distinction hasn't seemed to make much difference
-> to guest OS performance, as the OS' haven't made significant
-> decisions on this axis. Exposing threads != 1 though has always been
-> a big no though, unless strictly pinning 1:1 guest:host CPUs, as that
-> has had notable impacts on scheduling decisions.
+> They can optimize for predictable performance, by strictly pinning
+> guest CPUs 1:1 to host CPUs, and minimize CPU overcommit, and have
+> the guest CPU topology 1:1 match the host CPU topology.
 > 
 > With regards,
 > Daniel
 
-I think there should be some way how to tell the guest kernel "the vCPUs 
-are free-floating, the topology is a lie", so that it can stop making 
-incorrect decisions based on the fake topology.
+The problem that we have here is that the commit 
+63c5484e74952f60f5810256bd69814d167b8d22 ("workqueue: Add multiple 
+affinity scopes and interface to select them") changes the behavior of 
+unbound workqueues, so that work items are only executed on CPUs that 
+share last level cache with the task that submitted them.
+
+If there are 16 virtual CPUs that are freely floating across physical 
+CPUs, virt-manager by default selects a topology where it advertises 16 
+sockets, 1 CPU per socket, 1 thread per CPU. The result is that the 
+unbound workqueues are no longer unbound, they can't move work across 
+sockets and they are bound to just one virtual CPU, causing dm-crypt 
+performance degradation. (the crypto operations are no longer 
+parallelized).
+
+Whose bug is this? Is it a bug in virt-manager because it advertises 
+invalid topology? Is this a bug in that patch 63c5484e7495 because it 
+avoids moving work items across sockets?
 
 Mikulas
---185210117-1674295890-1719840823=:700989--
+--185210117-223779599-1719839675=:700989--
 
