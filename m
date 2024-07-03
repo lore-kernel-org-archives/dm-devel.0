@@ -1,41 +1,46 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72A331891B9
-	for <dm-devel@lists.linux.dev>; Wed,  3 Jul 2024 22:13:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8390D1C68D;
+	Wed,  3 Jul 2024 23:39:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720044820; cv=none; b=rOR1MeO5i44U+6r4abIAIijrkTjzQilY4mE50NJuPZPaYbCZISYUSwr09w6h1hGSRDPccLZQ9pFUlnvW0F9KmQ9fw9ejkLjsWo6G9rOTYLIs92etctoFHL21VGfiZb0ZYdbUdvAUipXYmsTbjttXCPqTghY10haEIuWyk7xxtWw=
+	t=1720049975; cv=none; b=HRA0yXiIPAM/ejokMBbzZ5YKC3eJcHkgK7n4NwHKI0OdY5VL5vHkNbKGHi8YYrt6RKDKUL6MObcsHX4oOraxyIygVLXl+l8Fh777VUAUattssv83Pev8paqOsCnm6iLzAnxPPp/81WBjltolfwu9xrH4iB5uf2dkTNzAJh43sg8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720044820; c=relaxed/simple;
-	bh=5NJtNNgyHGNLTd36BlygEHLyvmxn3zLSiLs0nKSxf7w=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=XYsSQgpZfcoDVcN/isMPSM49nO8skkK9KWGDyxx8qHZ1+C18CiRIdeRCunhAv+xH66XazqfBdplDzvzlWzhRul5GK1zhqm8wIjwBbIIQ6Mbm5jZhP3mBTg5vVGatpRNZEy95Mtffe2lszFyxdT8WenfoTCLD1hC41vAWdkBOVLU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=FhAjYol2; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1720049975; c=relaxed/simple;
+	bh=70oZk3WGpCc2R8nFA9z2IwUmbQv7wspIH1lOKMc/FmY=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=QCWLguf5Ee+GiFHteEdtof0S7v7oJ1qdFlklqW3udQEWcsrew6uvW4PmGxLILUYl+JmGRTBShXbkPcxrYYC4MjQg6E367qbnwqfs+9y0weJSaeKcIR0UqiRJwgWrc6U+wW7LZ2mXyk453Y+8C7xyWl8OiWVc8MyV/w4iKzsBZSE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=YaBcf6Ln; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="FhAjYol2"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 84E32C2BD10;
-	Wed,  3 Jul 2024 22:13:39 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="YaBcf6Ln"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C4B95C2BD10;
+	Wed,  3 Jul 2024 23:39:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1720044820;
-	bh=5NJtNNgyHGNLTd36BlygEHLyvmxn3zLSiLs0nKSxf7w=;
-	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=FhAjYol2KrSYgumUKF93PvviCLY37wNuurbTUoyBYcl0NDCwcf5tFR+WoMP6J876K
-	 Oz9UIa6lOUO4gZMYWxTh11M3MVhU9uur+UJ7gBGGN01NvlAJTIB1nHUQTasWl38jZt
-	 hBPx2FLBBr4apoQbBWWJQgL6fWb1PjV7/tycgHGPR1hLTxCdBe3OEfOq4sPBsnk//+
-	 g6lX47iYo4GHvlwaHiu4sRkwkGNTqJ95j9xpGelAssd+iXN3/6fNHG8cZtmQbUHBR8
-	 Oaffc/LBMunQXZT1bDadCaFqq4D0t+y/rCC4H0vY+N/X0wC5we06q+Xm0LWDgIj1wV
-	 c6mXs30SXo1Ow==
+	s=k20201202; t=1720049975;
+	bh=70oZk3WGpCc2R8nFA9z2IwUmbQv7wspIH1lOKMc/FmY=;
+	h=From:To:Subject:Date:From;
+	b=YaBcf6Lnd2MZyeVhF2AvgfefkjjxtCc9kLkHPzQ+ouW9dFheT415RrJ19oFWwXn+3
+	 tHaFXMPBQ6WBqQXPI9a6Ufph/E0SpDALbW1ulAw3D9pOlRvMD3ClRfsTEiU37z31NX
+	 HSzOzbWkrlphO8Yu9LzcbWyfZ6m1SamRN58D0ZKbT+gxDB843MdVGk51GpEAnEXh1L
+	 aodPd9FXrw7j80JVgA+Wt93jsGSbPETAlUSavhfax+uEsKmwdGIEuviKMVM2uAEOOc
+	 gdsTxDa6OYxHyZAMzGIOQhn38p/9DiPEecp0bkvEXjj5+Zo7R8yxcspgcD2/wyBSlZ
+	 M8mXCeSRlFbzQ==
 From: Damien Le Moal <dlemoal@kernel.org>
-To: dm-devel@lists.linux.dev,
+To: Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev,
 	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] dm: Remove max_secure_erase_granularity
-Date: Thu,  4 Jul 2024 07:13:36 +0900
-Message-ID: <20240703221336.503507-3-dlemoal@kernel.org>
+	Mikulas Patocka <mpatocka@redhat.com>,
+	linux-scsi@vger.kernel.org,
+	"Martin K . Petersen" <martin.petersen@oracle.com>,
+	Ming Lei <ming.lei@redhat.com>,
+	"Michael S . Tsirkin" <mst@redhat.com>,
+	Jason Wang <jasowang@redhat.com>,
+	Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 0/5] Remove zone reset all emulation
+Date: Thu,  4 Jul 2024 08:39:27 +0900
+Message-ID: <20240703233932.545228-1-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.45.2
-In-Reply-To: <20240703221336.503507-1-dlemoal@kernel.org>
-References: <20240703221336.503507-1-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -44,46 +49,59 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The max_secure_erase_granularity boolean of struct dm_target is used in
-__process_abnormal_io() but never set by any target. Remove this field
-and the dead code using it.
+Jens, Mike,
 
-Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
----
- drivers/md/dm.c               | 2 --
- include/linux/device-mapper.h | 6 ------
- 2 files changed, 8 deletions(-)
+Here is a set of patches based on block/for-next to remove the emulation
+for zone reset all from the block layer and move it to device mapper.
+This is done because device mapper is the only zoned device driver that
+does not natively support REQ_OP_ZONE_RESET_ALL. With this change, the
+emulation that may be required depending on a mapped device zone mapping
+is moved to device mapper and the reset all feature
+(BLK_FEAT_ZONE_RESETALL) can be deleted, as well as all the code
+handling this feature in blk-zoned.c. The DM-based handling of
+REQ_OP_ZONE_RESET_ALL can also be much faster than the block layer
+emulation as that operation can be forwarded as is to targets mapping
+all sequential write required zones.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index a63efa2a46ae..2abf2b6865ea 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1658,8 +1658,6 @@ static blk_status_t __process_abnormal_io(struct clone_info *ci,
- 	case REQ_OP_SECURE_ERASE:
- 		num_bios = ti->num_secure_erase_bios;
- 		max_sectors = limits->max_secure_erase_sectors;
--		if (ti->max_secure_erase_granularity)
--			max_granularity = max_sectors;
- 		break;
- 	case REQ_OP_WRITE_ZEROES:
- 		num_bios = ti->num_write_zeroes_bios;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 5b7e96653ec6..4ba2e73993bd 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -363,12 +363,6 @@ struct dm_target {
- 	 */
- 	bool max_discard_granularity:1;
- 
--	/*
--	 * Set if this target requires that secure_erases be split on
--	 * 'max_secure_erase_sectors' boundaries.
--	 */
--	bool max_secure_erase_granularity:1;
--
- 	/*
- 	 * Set if we need to limit the number of in-flight bios when swapping.
- 	 */
+Patch 1 modifies null_blk to add the zone_full parameter to initialize
+the sequential zones of a zoned null_blk device to be full. This is
+convenient when testing read workloads as well as zone management
+operations as that avoids having to first write to device to make the
+zones full.
+
+Patch 2 is a simple prep patch for patch 3. Patch 3 implements the
+emulation for zone reset all in device mapper core code.
+
+Patch 4 removes the block layer based emulation and modifies all drivers
+setting the BLK_FEAT_ZONE_RESETALL queue limit feature to not set this
+feature (and the feature is removed). This enables the use of the device
+mapper emulation.
+
+Patch 5 is a cleanup of blk-zoned.c made possible with patch 4.
+
+Damien Le Moal (5):
+  null_blk: Introduce the zone_full parameter
+  dm: Refactor is_abnormal_io()
+  dm: handle REQ_OP_ZONE_RESET_ALL
+  block: Remove REQ_OP_ZONE_RESET_ALL emulation
+  block: Remove blk_alloc_zone_bitmap()
+
+ block/blk-core.c                  |   2 +-
+ block/blk-zoned.c                 |  88 +----------------
+ drivers/block/null_blk/main.c     |   9 +-
+ drivers/block/null_blk/null_blk.h |   1 +
+ drivers/block/null_blk/zoned.c    |  12 ++-
+ drivers/block/ublk_drv.c          |   2 +-
+ drivers/block/virtio_blk.c        |   2 +-
+ drivers/md/dm-zone.c              |  50 +++++++++-
+ drivers/md/dm.c                   | 159 +++++++++++++++++++++++++++---
+ drivers/md/dm.h                   |  10 ++
+ drivers/nvme/host/zns.c           |   2 +-
+ drivers/scsi/sd_zbc.c             |   2 +-
+ include/linux/blkdev.h            |   5 -
+ include/linux/device-mapper.h     |   7 ++
+ 14 files changed, 236 insertions(+), 115 deletions(-)
+
 -- 
 2.45.2
 
