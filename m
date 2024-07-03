@@ -1,94 +1,108 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1648616F827
-	for <dm-devel@lists.linux.dev>; Wed,  3 Jul 2024 13:17:54 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A1A66178367;
+	Wed,  3 Jul 2024 19:02:34 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720012675; cv=none; b=nDa9qldKSrLBE+XMyxclxMscV+rylchh6cu4E+pXWCpkfaNCc9oy+vmLa136fhTodyEG8QI8xncEzPDJdFp2MRn2R9j2whpuoOBAi881DLK4deqo273gJePJoO5N5FWIUNkr8jCQTeHe/v/6SqTzegFh04DSZWFFtQI/4Jf98DA=
+	t=1720033354; cv=none; b=Lla3riHaN+KpdK9064tHtQRBshO6xOmFDA22E6FLmiJU6S3IdwbKKfq2yg23T1R5eTa34GCwsbfLDIHDgU5zIttkh9XfGPJwiJaPuPu2K0tgquIMoDOX740xjYp0avlTxQwaKGrihccNHn6Ls4Y5GRWEgKV3GpHQ6MLx1yogvok=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720012675; c=relaxed/simple;
-	bh=mcGItjPIizmSbcFM9bKM4HyIZ/49XolntPHiDMcp9ag=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=F+glL+Q/T73HySDkezRK+ecsaZu6+T5WzCOh/EsQiSRnnKSZpPBbb6w65JOp4JSIJxiTeTFUIdBxaGPZUW+qPEy4F9N/Mgr7Vm5eo4lXxfj2mmTZaolyvDdUNdUxBbLtAo973LDGyHUIAODeivwckCUnRgmOmsPOk+XEp/BcL6M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=d7U2+HaH; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1720033354; c=relaxed/simple;
+	bh=71g2nqc6FxOk/YKMFvTXoevyN3+HuT2J8B/us81Ujck=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=iv7vL2XBC3L0bIOk7uQChv2nkBOxppgz2XUjzbxOxNEVjC9ShIVKJaUeYUZzcH0t9wZ+Z0tekXoQsNNupPH2AVnpKT6dXZYJh37hmQf93RB5NFFe0ljKawGPFPqqc0f7XcYNy3P6c9FPftWlkg/9mviZsUr5BTf7M4uLfsZyGXw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=XQoLYDjc; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="d7U2+HaH"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B0239C2BD10
-	for <dm-devel@lists.linux.dev>; Wed,  3 Jul 2024 13:17:54 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="XQoLYDjc"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C256FC2BD10;
+	Wed,  3 Jul 2024 19:02:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1720012674;
-	bh=mcGItjPIizmSbcFM9bKM4HyIZ/49XolntPHiDMcp9ag=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=d7U2+HaHLLuKXsswaZjzdSc1oogrs0c0Jy30AkHmEV+xoOnGtLoFSs/mbyTqfQV7k
-	 g+QrE0AIO46YFDGztlttR0idTIcN77TJ+clHU3AsODzo0WyFhsVhEK+wyzRBu4ag+5
-	 psrjRGh3Txk1abGu17rQ8BRpGUu0BdhU5v+0iy1/k/skjbVtsTG6X6Qp278IL6Vnk3
-	 8DMqbpb0OvMi1y+tFoQXHzgU5QZ61VoFGmSFrPbqrZ1kX7H7ZadmiAc2eMHQ63FhQc
-	 U8p6TMP23mdkTfIDuuDWO3Isr4zBwz2SYlo0cyZH7Bebl81f8yoQa/vhhL1ZzC5+6o
-	 fu1DwBrfq54tQ==
-Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-2ee7885aa5fso19568611fa.1
-        for <dm-devel@lists.linux.dev>; Wed, 03 Jul 2024 06:17:54 -0700 (PDT)
-X-Gm-Message-State: AOJu0YyWfnhZI4tVW+rffdq0eFxWWZDEE1sdLV9WgbBgVOr6XPcZU0bv
-	y36hlSXZaCrO5msYz31G2bzbsZsARA5Sp8PDhQrg9CxawRHE6tyqvGdqCuT9LKKAzYMRqqAQZIT
-	3q0pN8mcMVL5sNNok2aPCH4l7M9I=
-X-Google-Smtp-Source: AGHT+IGxiMiHuZepoOYlg+kJEX/q3PKXT9+A8fl7xUC9BzW4sDICAOJ+wx0eiQ+SRsbDaZpa/81iQUr99dGxeEc+zT4=
-X-Received: by 2002:a2e:a802:0:b0:2ec:56ce:d50e with SMTP id
- 38308e7fff4ca-2ee5e337926mr107347521fa.3.1720012673010; Wed, 03 Jul 2024
- 06:17:53 -0700 (PDT)
+	s=k20201202; t=1720033354;
+	bh=71g2nqc6FxOk/YKMFvTXoevyN3+HuT2J8B/us81Ujck=;
+	h=From:To:Cc:Subject:Date:From;
+	b=XQoLYDjcQ2TtN25XS4Ipa0DRq52rIW9iJ75Ux5oqdj1gS8/BK2EffIqsXs1P8tDrM
+	 riuygMI4RCB6LBq2FaCd8Q0dD5SXkqrYev/sVbxrJWzHAwu+wpGiAPDEdAd5yi25+y
+	 FWXNT0wz9JnF0euwY+0yP3oZUW3Xeut6HqyJB4pG/SbuZlPyqAWYNV0bbKqTdfLjnJ
+	 XJy21QbGt7EVyIytH3aYvk3u6Vu7S2QWJzoFN9hqXNtxoa8uERRlk+CJb2FJ+R64pB
+	 KDHMO2phYJ/JTGktOZ7FmjqR0RuubrPdUWJ9Y/8iJSjCX81IzebutlVMnfYOy0blO3
+	 EXlKvMiY7TuVA==
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: linux-kernel@vger.kernel.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Bart Van Assche <bvanassche@acm.org>,
+	Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v2] dm-verity: provide dma_alignment limit in io_hints
+Date: Wed,  3 Jul 2024 12:01:41 -0700
+Message-ID: <20240703190141.5943-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240702064835.120541-1-ebiggers@kernel.org> <20240702064835.120541-8-ebiggers@kernel.org>
- <CAMj1kXFE45J9fDJ9XtMyJiUP1F-odZUmH0zLKkuZeWL_bLdDZQ@mail.gmail.com> <20240702171640.GA1049704@google.com>
-In-Reply-To: <20240702171640.GA1049704@google.com>
-From: Ard Biesheuvel <ardb@kernel.org>
-Date: Wed, 3 Jul 2024 15:17:41 +0200
-X-Gmail-Original-Message-ID: <CAMj1kXF2iCVboRR=6_2OnKYVf4+d3XHvgfwz21mWccxCVnOxeQ@mail.gmail.com>
-Message-ID: <CAMj1kXF2iCVboRR=6_2OnKYVf4+d3XHvgfwz21mWccxCVnOxeQ@mail.gmail.com>
-Subject: Re: [PATCH 7/7] dm-verity: hash blocks with shash import+finup when possible
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, 
-	Sami Tolvanen <samitolvanen@google.com>, Bart Van Assche <bvanassche@acm.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-On Tue, 2 Jul 2024 at 19:16, Eric Biggers <ebiggers@kernel.org> wrote:
->
-> Hi Ard,
->
-> On Tue, Jul 02, 2024 at 09:41:19AM +0200, Ard Biesheuvel wrote:
-> > >  int verity_hash(struct dm_verity *v, struct dm_verity_io *io,
-> > >                 const u8 *data, size_t len, u8 *digest, bool may_sleep)
-> > >  {
-> > > -       struct ahash_request *req = verity_io_hash_req(v, io);
-> > >         int r;
-> > > -       struct crypto_wait wait;
-> > > -
-> > > -       r = verity_hash_init(v, req, &wait, may_sleep);
-> > > -       if (unlikely(r < 0))
-> > > -               goto out;
-> > >
-> > > -       r = verity_hash_update(v, req, data, len, &wait);
-> > > -       if (unlikely(r < 0))
-> > > -               goto out;
-> > > +       if (static_branch_unlikely(&ahash_enabled) && !v->shash_tfm) {
-> >
-> > Is the static key really worth the hassle? Couldn't this just be
-> >
-> > if (unlikely(!v->shash_tfm)) {
-> >
-> > so that the ahash logic is moved to the cold path? We need to
-> > dereference v->shash_tfm right away in any case, and if it is never
-> > NULL, the branch predictor should be able to remember that.
->
-> The value of the static key is indeed marginal.  I included it because of the
-> precedent of dm-verity's existing use_bh_wq_enabled static key, which exists for
-> a similar purpose.  As long as we're going through the trouble of doing that, I
-> think it makes sense to use the same pattern for ahash too.  It's another rarely
-> needed option that can be patched in in the very rare case that it's needed.
->
+From: Eric Biggers <ebiggers@google.com>
 
-If it's an existing pattern, fair enough.
+Since Linux v6.1, some filesystems support submitting direct I/O that is
+aligned to only dma_alignment instead of the logical_block_size
+alignment that was required before.  I/O that is not aligned to the
+logical_block_size is difficult to handle in device-mapper targets that
+do cryptographic processing of data, as it makes the units of data that
+are hashed or encrypted possibly be split across pages, creating rarely
+used and rarely tested edge cases.
+
+As such, dm-crypt and dm-integrity have already opted out of this by
+setting dma_alignment to 'logical_block_size - 1'.
+
+Although dm-verity does have code that handles these cases (or at least
+is intended to do so), supporting direct I/O with such a low amount of
+alignment is not really useful on dm-verity devices.  So, opt dm-verity
+out of it too so that it's not necessary to handle these edge cases.
+
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Ard Biesheuvel <ardb@kernel.org>
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+
+v2: Added a comment, as requested by Christoph.
+
+    Resending as a standalone patch since the series was already applied
+    to linux-dm/for-next.
+    
+ drivers/md/dm-verity-target.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index bb5da66da4c1..90a13548028a 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -1013,10 +1013,18 @@ static void verity_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 
+ 	if (limits->physical_block_size < 1 << v->data_dev_block_bits)
+ 		limits->physical_block_size = 1 << v->data_dev_block_bits;
+ 
+ 	blk_limits_io_min(limits, limits->logical_block_size);
++
++	/*
++	 * Similar to what dm-crypt does, opt dm-verity out of support for
++	 * direct I/O that is aligned to less than the traditional direct I/O
++	 * alignment requirement of logical_block_size.  This prevents dm-verity
++	 * data blocks from crossing pages, eliminating various edge cases.
++	 */
++	limits->dma_alignment = limits->logical_block_size - 1;
+ }
+ 
+ static void verity_dtr(struct dm_target *ti)
+ {
+ 	struct dm_verity *v = ti->private;
+
+base-commit: 22a40d14b572deb80c0648557f4bd502d7e83826
+-- 
+2.45.2
+
