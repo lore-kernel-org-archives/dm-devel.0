@@ -1,130 +1,111 @@
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21A561A4F0F;
-	Thu,  4 Jul 2024 11:11:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7891C1B14F1
+	for <dm-devel@lists.linux.dev>; Thu,  4 Jul 2024 15:05:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720091482; cv=none; b=PJoaP74wnx/ZFbM4AhkojUya+HjNzwkq25Rmup69faIQKdosv9NCa160IoPwz56hqopnXw7ftgJl+VrwOcK/Tasjk7twKWmkg7YwrqLuSR9yhA32ZYkIXHue7IUMA4Zqr4PN7jS9NUY2ABeICjB2p/Fuj67RSP70RMSx3pxEOIA=
+	t=1720105534; cv=none; b=ekHWnyOmmEhOMvm1DU0pflzWrD77Pxr2pzc+KHu98frOG9HRQ7ZGVBAGxE3zBb31dcOlpBjFgzs2ZFqiOrjWUjlOew0U5iLijvrxAUX2Xi/kbUUy/Y2tRAO+oou2I9EDXncu2MyuJOfLeY8J0DoWTiOXIbFSrCj4PlJj7RVshgw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720091482; c=relaxed/simple;
-	bh=TwoVc/A5cvcKyYqBk85IeSoXm8WueZBsy4xxLnttTxM=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=tmwlqUlopYjHTOcnxa3V9+3j8EqLLbnYgx82qagPMZLyfpFxuBeT4b/djFcZQayRN9XbAO3OIG9al09zvhY24BWYjfvlsbnk/BATtaNP8UBqgVk4wONiv1uu7h3Ylgvui80xSvJ7coyAtAs0Y1bIDclyRnYsnEG/h0YvJ6WcyxM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VfoqL7kH; arc=none smtp.client-ip=209.85.221.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1720105534; c=relaxed/simple;
+	bh=N3FvdvqUI/RpaPvNgUHSb1vVzFHCisvI1Y3XeoEUkdo=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=YNJo8hMdgLVoc+rub5zX1V/GaEtvSuDR0gKiN86umeBsj4ib7x+DLt3a5XgXrbukopUqn5wNE0Dg6ils92EB/iuE2XhCN+REL9xP5q+0E8nXn08Cpb5VyUoKq97pqQNOai5ACd9MOYyjLWetHp2yZQBcOU75NiF9G0g+Iii+Gdc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Da8FYNKL; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VfoqL7kH"
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-367a2c2e41aso57604f8f.2;
-        Thu, 04 Jul 2024 04:11:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1720091479; x=1720696279; darn=lists.linux.dev;
-        h=to:references:message-id:content-transfer-encoding:cc:date
-         :in-reply-to:from:subject:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=qwBmB9TZGFjcG5R2+2N2tz93DvezoEGxh6PsIk8IO/w=;
-        b=VfoqL7kHS+CFzGSTNU8taQiIQZVQ8UspcjVfz8TkXTItwEphkPcuK1QaUSfm23RVkz
-         GoNu9vWReUdgwBqWnzrOwcU44jkJHYMQaoE8/+xeG8FJzDKWe4h4aN5b90FHlEZoTLzW
-         r37dBPbkdlYj1VlQ/Csohve6JzYbpoaaXdRaRCUVCutEnXI7PXkvKwbqBdmXM9TQMMQK
-         FeJ+QOpIjbIRkqqvZ9mXhwtlC8/lE0s1j/BUcAC8KENLKL6DBO/2HMrU4rhG+TetJ7Wu
-         PYTisL3/wEIVZKBRvwgvlXlo9uG6tcH2Z0ea5ASOpa6LZ5mrWdQQX38cV+nWyHtw/fKu
-         aYzQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720091479; x=1720696279;
-        h=to:references:message-id:content-transfer-encoding:cc:date
-         :in-reply-to:from:subject:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=qwBmB9TZGFjcG5R2+2N2tz93DvezoEGxh6PsIk8IO/w=;
-        b=JDG/ixm2X02No3hMCxpbXKgMwaElLaeNgPdkPhyW5h5Hbypm56RJ7dNCxcfuGCnS+2
-         Fr6VY/P98dUoUGPJPDGIJ36Geu5BWNQv3FtBTpnO/VBHXCCoiQfjoIWJZk0RWQ5cDkCa
-         OosMvmuSpOjjeFy0NIfDFo1aZLVjghTOL/+KN0GUdCT6Xl2haz5Gcbtjk5rKpttHo9GU
-         vZ6uQkrFGF+zhXNJRjabLj5n8TfgXDRAbLxzWkjk/xkht5JxTjz1+FDK38MbZgppTPMg
-         Lzp8T+zr5w09n71G23VzjrQMTXsZG5HIacZQ8Y/Vr8ab9UkPSu2OaqVsvtcDzMUVYfoh
-         fAsA==
-X-Forwarded-Encrypted: i=1; AJvYcCVA9FQfYAKWcjiGACD41UhAjmvA9ypcfFwY3S/mjoylzEwZ9iXu8mnwFuWOgN9+qZQKWvqPu1N9G9vpLdpWVJCDdAa4I1P3kuUPJllYZlbR4oWB0FDUzz6gP/MGaNdI21M0Ut6SiWsur+vRW+Po8FWdlpZBJc2vQSUXLorc0DzMZQ==
-X-Gm-Message-State: AOJu0Ywa3dorlnprnBD3DZaqvoX0IYjEOf+rUrxxX/z2N+aCxzFX4aKi
-	cMYA0T2mFoDGv3a2QXvDBMRpqTCPW/HvQ/cIFnSQeaFrDXNBb8l6
-X-Google-Smtp-Source: AGHT+IFEzvL2jC2faLe/uaMvaq/UCJ26KrH1XFm9Ol6h8w0Rebt6hjx4X+gdY7pIVUfbtqQYexMuPw==
-X-Received: by 2002:a5d:5712:0:b0:367:94e7:958a with SMTP id ffacd0b85a97d-3679dd17ec1mr1153338f8f.6.1720091479417;
-        Thu, 04 Jul 2024 04:11:19 -0700 (PDT)
-Received: from [10.14.0.2] ([139.28.176.164])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-36787db4d12sm6821051f8f.110.2024.07.04.04.11.17
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Thu, 04 Jul 2024 04:11:18 -0700 (PDT)
-Content-Type: text/plain;
-	charset=us-ascii
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Da8FYNKL"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1720105532;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=jT1nLd4pOr4eOcDqj2qthQWAmW5FIF2uUy9DJJrU6O4=;
+	b=Da8FYNKL4uhdz605QHFFnMfHptHkGi+MI/HnbhtmspPDYjjx8cIByMrpu8f7fYMyrUFcns
+	KdXGw4Wf9WMfAj1d9mSZYJjF+hflGkjOzAXZcBazjk/9aWqNUQgW4HGzdKcErM2t4wRhKT
+	QCLmoNQz3YWzDvWAaKFb8BvO2djoWF0=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-27-vxB6Zk_9NsKlaA6WLAUfGw-1; Thu,
+ 04 Jul 2024 11:05:29 -0400
+X-MC-Unique: vxB6Zk_9NsKlaA6WLAUfGw-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AF1531935850;
+	Thu,  4 Jul 2024 15:05:27 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 69E4B1955F3B;
+	Thu,  4 Jul 2024 15:05:27 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 68B6430C1C14; Thu,  4 Jul 2024 15:05:26 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 657543FB52;
+	Thu,  4 Jul 2024 17:05:26 +0200 (CEST)
+Date: Thu, 4 Jul 2024 17:05:26 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Eric Biggers <ebiggers@kernel.org>
+cc: linux-kernel@vger.kernel.org, Ard Biesheuvel <ardb@kernel.org>, 
+    Sami Tolvanen <samitolvanen@google.com>, 
+    Bart Van Assche <bvanassche@acm.org>, dm-devel@lists.linux.dev, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+Subject: Re: [PATCH 0/7] dm-verity cleanups and optimizations
+In-Reply-To: <20240703191546.GA1756@quark.localdomain>
+Message-ID: <448e290-2c88-72ae-eaa9-c5d4b9388a42@redhat.com>
+References: <20240702064835.120541-1-ebiggers@kernel.org> <20240703191546.GA1756@quark.localdomain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 13.4 \(3608.120.23.2.7\))
-Subject: Re: [PATCH 14/26] block: move the nonrot flag to queue_limits
-From: Simon Fernandez <fernandez.simon@gmail.com>
-In-Reply-To: <ZnmoANp0TgpxWuF-@kbusch-mbp.dhcp.thefacebook.com>
-Date: Thu, 4 Jul 2024 12:11:16 +0100
-Cc: Christoph Hellwig <hch@lst.de>,
- Jens Axboe <axboe@kernel.dk>,
- Geert Uytterhoeven <geert@linux-m68k.org>,
- Richard Weinberger <richard@nod.at>,
- Philipp Reisner <philipp.reisner@linbit.com>,
- Lars Ellenberg <lars.ellenberg@linbit.com>,
- =?utf-8?Q?Christoph_B=C3=B6hmwalder?= <christoph.boehmwalder@linbit.com>,
- Josef Bacik <josef@toxicpanda.com>,
- Ming Lei <ming.lei@redhat.com>,
- "Michael S. Tsirkin" <mst@redhat.com>,
- Jason Wang <jasowang@redhat.com>,
- =?utf-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.com>,
- Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Song Liu <song@kernel.org>,
- Yu Kuai <yukuai3@huawei.com>,
- Vineeth Vijayan <vneethv@linux.ibm.com>,
- "Martin K. Petersen" <martin.petersen@oracle.com>,
- linux-m68k@lists.linux-m68k.org,
- linux-um@lists.infradead.org,
- drbd-dev@lists.linbit.com,
- nbd@other.debian.org,
- linuxppc-dev@lists.ozlabs.org,
- ceph-devel@vger.kernel.org,
- virtualization@lists.linux.dev,
- xen-devel@lists.xenproject.org,
- linux-bcache@vger.kernel.org,
- dm-devel@lists.linux.dev,
- linux-raid@vger.kernel.org,
- linux-mmc@vger.kernel.org,
- linux-mtd@lists.infradead.org,
- nvdimm@lists.linux.dev,
- linux-nvme@lists.infradead.org,
- linux-s390@vger.kernel.org,
- linux-scsi@vger.kernel.org,
- linux-block@vger.kernel.org,
- Damien Le Moal <dlemoal@kernel.org>
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <78BDDF6A-1FC7-4DD7-AABF-E0B055772CBF@gmail.com>
-References: <20240617060532.127975-1-hch@lst.de>
- <20240617060532.127975-15-hch@lst.de>
- <ZnmoANp0TgpxWuF-@kbusch-mbp.dhcp.thefacebook.com>
-To: Keith Busch <kbusch@kernel.org>
-X-Mailer: Apple Mail (2.3608.120.23.2.7)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-Hi folks, how can I unsubscribe from this group.?
-Thanks in advance.
-S
 
-> On 24 Jun 2024, at 18:08, Keith Busch <kbusch@kernel.org> wrote:
->=20
-> On Mon, Jun 17, 2024 at 08:04:41AM +0200, Christoph Hellwig wrote:
->> -#define blk_queue_nonrot(q)	test_bit(QUEUE_FLAG_NONROT, =
-&(q)->queue_flags)
->> +#define blk_queue_nonrot(q)	((q)->limits.features & =
-BLK_FEAT_ROTATIONAL)
->=20
-> This is inverted. Should be:
->=20
-> #define blk_queue_nonrot(q)	(!((q)->limits.features & =
-BLK_FEAT_ROTATIONAL))
->=20
+
+On Wed, 3 Jul 2024, Eric Biggers wrote:
+
+> On Mon, Jul 01, 2024 at 11:48:28PM -0700, Eric Biggers wrote:
+> > This series contains some cleanups and optimizations for dm-verity that
+> > I've split out from my multibuffer hashing series
+> > https://lore.kernel.org/linux-crypto/20240621165922.77672-1-ebiggers@kernel.org/.
+> > 
+> > This series does not depend on any crypto API changes, so it can be
+> > applied right away.
+> > 
+> > Eric Biggers (7):
+> >   dm-verity: move hash algorithm setup into its own function
+> >   dm-verity: move data hash mismatch handling into its own function
+> >   dm-verity: make real_digest and want_digest fixed-length
+> >   dm-verity: provide dma_alignment limit in io_hints
+> >   dm-verity: always "map" the data blocks
+> >   dm-verity: make verity_hash() take dm_verity_io instead of
+> >     ahash_request
+> >   dm-verity: hash blocks with shash import+finup when possible
+> > 
+> >  drivers/md/dm-verity-fec.c    |  32 +--
+> >  drivers/md/dm-verity-fec.h    |   6 +-
+> >  drivers/md/dm-verity-target.c | 461 ++++++++++++++++------------------
+> >  drivers/md/dm-verity.h        |  39 ++-
+> >  4 files changed, 242 insertions(+), 296 deletions(-)
+> 
+> Thanks for applying this, Mikulas!
+> 
+> I sent out a new version of "dm-verity: provide dma_alignment limit in io_hints"
+> to address Christoph's comment.
+> 
+> Also, I noticed that when you applied the patches, patch 2 somehow ended up with
+> the same commit message as patch 1.  Can you fix that?  Thanks!
+> 
+> - Eric
+
+Hi
+
+It should be fixed now.
+
+Mikulas
 
