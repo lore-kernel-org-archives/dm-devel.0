@@ -1,102 +1,138 @@
-Received: from bedivere.hansenpartnership.com (bedivere.hansenpartnership.com [96.44.175.130])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8CAB1AED45
-	for <dm-devel@lists.linux.dev>; Thu,  4 Jul 2024 16:09:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=96.44.175.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9664E136E1B
+	for <dm-devel@lists.linux.dev>; Thu,  4 Jul 2024 19:00:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720109379; cv=none; b=a7KJPkpRZ3CcAlHShlf4zA0Fny/fJGgYPMP4L+dzqwH0p8Ep7LeZzAQRXE+OSytg0+aul5SASkMnZMRXuiqbzZM6nnuScE2KFHbCKBp7MsYsVHEkhSymp0z8/YQgh0uEYBabGoGT6fL7iJoJUW579gpYjphQoQu19RLk57BOykM=
+	t=1720119652; cv=none; b=OI0cUKXVefyNZjfnvpwGfm9X1TMhTH7Qzt8XPEDBVIYQ6r+hGLKCwjv6K6gRGKYFseHZmsmqEa5E+YHQYi8NDuSvyr+k3CIY9vgNpVntq1X/HvHqgtX08Fr6njP/ehcV0IGRrFPx4L5ZwebXcmLh8S2JoHTIFLql5XPq1gLn/nc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720109379; c=relaxed/simple;
-	bh=HtXK5ySOFaHbJOlE1sgbYdtN9N+9OaclzkOancLZJgQ=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Xf/l4FINQxq8hPgETEc3hoLpRAL/qJwz4dsEqfpcpYan97/jwiJWbEqh7z9/XyMNF2k9L0G1HMozxHv8ogT542FtvZHIzxAIrq/mkuzrGfLdZ1rfRTDIa/OaBzZg0jORJWOiE6SoSPfoy14Wi7xzT+qTZvFyjYU51OMAAbdgvIw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=HansenPartnership.com; spf=pass smtp.mailfrom=HansenPartnership.com; dkim=pass (1024-bit key) header.d=hansenpartnership.com header.i=@hansenpartnership.com header.b=guwCcIGm; dkim=pass (1024-bit key) header.d=hansenpartnership.com header.i=@hansenpartnership.com header.b=guwCcIGm; arc=none smtp.client-ip=96.44.175.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=HansenPartnership.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=HansenPartnership.com
+	s=arc-20240116; t=1720119652; c=relaxed/simple;
+	bh=NtItNwO/2aCZjg4nZ5dSSeFSK1mQZv/1XB0GzdvLLhc=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=c27r+Ou+GeA3Ty673sdLqbxNI5yR0o7YWwOSZTptlxH0xW6Cu+1115pkl1wGbbiT92tgOiuv02dx01p+q2MhSYDt4NlMQQNDUoDaRvusk5u7OkQwgOLh6qvD2SaFfFEeXmbGBgo3+LdpeYJsHLv6sakBb+jofDLyMgg9Fkx3X0c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=T0AlOo1M; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=hansenpartnership.com header.i=@hansenpartnership.com header.b="guwCcIGm";
-	dkim=pass (1024-bit key) header.d=hansenpartnership.com header.i=@hansenpartnership.com header.b="guwCcIGm"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-	d=hansenpartnership.com; s=20151216; t=1720109374;
-	bh=HtXK5ySOFaHbJOlE1sgbYdtN9N+9OaclzkOancLZJgQ=;
-	h=Message-ID:Subject:From:To:Date:In-Reply-To:References:From;
-	b=guwCcIGmCmwuol04EIA2k1pjfL/gzmxD8xfcaQEwN54iWvwtMwwulRMVKmzm2m0R4
-	 E10f7sC3GkIGciG3B+gGTRatikXCA0O5uoWZUhy0G8BpQBRPu4p4IbeAu6nkJxEduP
-	 RhrNQEP16RD6x+5Wtir0YIWiBmWDgM1GVswNLIJo=
-Received: from localhost (localhost [127.0.0.1])
-	by bedivere.hansenpartnership.com (Postfix) with ESMTP id CD184128184B;
-	Thu, 04 Jul 2024 12:09:34 -0400 (EDT)
-Received: from bedivere.hansenpartnership.com ([127.0.0.1])
- by localhost (bedivere.hansenpartnership.com [127.0.0.1]) (amavis, port 10024)
- with ESMTP id IRHOHPKvpp-M; Thu,  4 Jul 2024 12:09:34 -0400 (EDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-	d=hansenpartnership.com; s=20151216; t=1720109374;
-	bh=HtXK5ySOFaHbJOlE1sgbYdtN9N+9OaclzkOancLZJgQ=;
-	h=Message-ID:Subject:From:To:Date:In-Reply-To:References:From;
-	b=guwCcIGmCmwuol04EIA2k1pjfL/gzmxD8xfcaQEwN54iWvwtMwwulRMVKmzm2m0R4
-	 E10f7sC3GkIGciG3B+gGTRatikXCA0O5uoWZUhy0G8BpQBRPu4p4IbeAu6nkJxEduP
-	 RhrNQEP16RD6x+5Wtir0YIWiBmWDgM1GVswNLIJo=
-Received: from lingrow.int.hansenpartnership.com (unknown [IPv6:2601:5c4:4302:c21::a774])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="T0AlOo1M"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1720119649;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=W/qwYn98KjC1XCfQ1ZEHhXRILHt8fBZuMz3Loy8zZv8=;
+	b=T0AlOo1MYZs+2lGmHgIjeZs/vOmESOoMMaOe1+GfG0FqolfJC3FJFX4s2RUK64jS9F6J7w
+	0UbYGYhey2uZRAVJK991g+oRGUrzZBUvJTXEI0B8Pt8XANV5BIwu1t0B3BGmT9RYXiDPqC
+	ik2ynn/WCoRA9Pqy6uAslQR+dMJ5oDU=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-513-9qNX2hRbPFeIQ2o1uxLQ2A-1; Thu,
+ 04 Jul 2024 15:00:45 -0400
+X-MC-Unique: 9qNX2hRbPFeIQ2o1uxLQ2A-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(Client did not present a certificate)
-	by bedivere.hansenpartnership.com (Postfix) with ESMTPSA id 2B0651281233;
-	Thu, 04 Jul 2024 12:09:34 -0400 (EDT)
-Message-ID: <b81f499748b48d459febb980641921e1cbc4b36f.camel@HansenPartnership.com>
-Subject: Re: [PATCH] dm verity: add support for signature verification with
- platform keyring
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-To: Luca Boccassi <luca.boccassi@gmail.com>
-Cc: dm-devel@lists.linux.dev, snitzer@kernel.org, jmorris@namei.org, 
-	paul@paul-moore.com
-Date: Thu, 04 Jul 2024 12:09:32 -0400
-In-Reply-To: <CAMw=ZnQzAsNUg+AAbqZWWzz_=uBDwUzo4NKsaTAgzxCs7j9LkQ@mail.gmail.com>
-References: <20240617220037.594792-1-luca.boccassi@gmail.com>
-	 <544c16649bafe77d5ff4f6cecb09f3de3b97d9a6.camel@HansenPartnership.com>
-	 <CAMw=ZnQzAsNUg+AAbqZWWzz_=uBDwUzo4NKsaTAgzxCs7j9LkQ@mail.gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.42.4 
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5622B1955F49;
+	Thu,  4 Jul 2024 19:00:43 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8D70F3000180;
+	Thu,  4 Jul 2024 19:00:42 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id EB62130C1C14; Thu,  4 Jul 2024 19:00:40 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id E8BE23FB5B;
+	Thu,  4 Jul 2024 21:00:40 +0200 (CEST)
+Date: Thu, 4 Jul 2024 21:00:40 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Li Dong <lidong@vivo.com>, Damien Le Moal <dlemoal@kernel.org>, 
+    Naohiro Aota <naohiro.aota@wdc.com>, Johannes Thumshirn <jth@kernel.org>, 
+    Jens Axboe <axboe@kernel.dk>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    "open list:DEVICE-MAPPER  (LVM)" <dm-devel@lists.linux.dev>, 
+    open list <linux-kernel@vger.kernel.org>, opensource.kernel@vivo.com, 
+    linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org
+Subject: Non-power-of-2 zone size (was: [PATCH] dm-table:fix zone block_device
+ not aligned with zonesize)
+In-Reply-To: <cd05398-cffa-f4ca-2ac3-74433be2316c@redhat.com>
+Message-ID: <c4ee654e-3120-e1a9-80b6-cb7073aa5c1a@redhat.com>
+References: <20240704151549.1365-1-lidong@vivo.com> <cd05398-cffa-f4ca-2ac3-74433be2316c@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-On Thu, 2024-07-04 at 16:41 +0100, Luca Boccassi wrote:
-> On Thu, 4 Jul 2024 at 16:21, James Bottomley
-> <James.Bottomley@hansenpartnership.com> wrote:
-[...]
-> > But there's a reason we allow mok users to distrust DB through
-> > mokutil. It's because although you might be OK with these keys
-> > guarding the pre-boot environment (because if they don't do that
-> > Microsoft will be unhappy) and transferring control to SHIM via
-> > these keys, you wouldn't necessarily trust the owner of these keys
-> > to tamper with your kernel or install modules.  Doesn't a similar
-> > reasoning apply to dm-verity root hash signing?
+
+
+> On Thu, 4 Jul 2024, Li Dong wrote:
 > 
-> Yes, although to me it personally feels like the real benefit of that
-> is avoiding being too exposed to the kitchen sink that is the UEFI
-> 3rd party CA,
+> > For zone block devices, device_area_is_invalid may return an incorrect 
+> > value.
+> > 
+> > Failure log:
+> > [   19.337657]: device-mapper: table: 254:56: len=836960256 not aligned to
+> > h/w zone size 3244032 of sde
+> > [   19.337665]: device-mapper: core: Cannot calculate initial queue limits
+> > [   19.337667]: device-mapper: ioctl: unable to set up device queue for 
+> > new table.
+> > 
+> > Actually, the device's zone length is aligned to the zonesize.
+> > 
+> > Fixes: 5dea271b6d87 ("dm table: pass correct dev area size to device_area_is_valid")
+> > Signed-off-by: Li Dong <lidong@vivo.com>
+> > ---
+> >  drivers/md/dm-table.c | 4 ++--
+> >  1 file changed, 2 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> > index 33b7a1844ed4..0bddae0bee3c 100644
+> > --- a/drivers/md/dm-table.c
+> > +++ b/drivers/md/dm-table.c
+> > @@ -257,7 +257,7 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+> >  	if (bdev_is_zoned(bdev)) {
+> >  		unsigned int zone_sectors = bdev_zone_sectors(bdev);
+> >  
+> > -		if (start & (zone_sectors - 1)) {
+> > +		if (start % zone_sectors) {
+> >  			DMERR("%s: start=%llu not aligned to h/w zone size %u of %pg",
+> >  			      dm_device_name(ti->table->md),
+> >  			      (unsigned long long)start,
+> > @@ -274,7 +274,7 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+> >  		 * devices do not end up with a smaller zone in the middle of
+> >  		 * the sector range.
+> >  		 */
+> > -		if (len & (zone_sectors - 1)) {
+> > +		if (len % zone_sectors) {
+> >  			DMERR("%s: len=%llu not aligned to h/w zone size %u of %pg",
+> >  			      dm_device_name(ti->table->md),
+> >  			      (unsigned long long)len,
+> > -- 
+> > 2.31.1.windows.1
 
-That's precisely correct.  We trust the regulation of the pre-boot
-environment but don't want to encourage people to think db certs should
-be usable outside it.
+I grepped the kernel for bdev_zone_sectors and there are more assumptions 
+that bdev_zone_sectors is a power of 2.
 
->  more than protection against an intentionally malicious CA owner,
-> after all if you are malicious and control the first stage of the
-> chain of trust things are very dire at that point. However, this is
-> all moot because of the next point that you correctly raised:
+drivers/md/dm-zone.c:           sector_t mask = bdev_zone_sectors(disk->part0) - 1
+drivers/nvme/target/zns.c:      if (get_capacity(bd_disk) & (bdev_zone_sectors(ns->bdev) - 1))
+drivers/nvme/target/zns.c:      if (sect & (bdev_zone_sectors(req->ns->bdev) - 1)) {
+fs/zonefs/super.c:      sbi->s_zone_sectors_shift = ilog2(bdev_zone_sectors(sb->s_bdev));
+fs/btrfs/zoned.c:       return (sector_t)zone_number << ilog2(bdev_zone_sectors(bdev));
+fs/btrfs/zoned.c:	zone_info->zone_size_shift = ilog2(zone_info->zone_size);
+include/linux/blkdev.h: return sector & (bdev_zone_sectors(bdev) - 1);
+fs/f2fs/super.c:	if (nr_sectors & (zone_sectors - 1))
 
-I think we mostly agree the 3rd party CA is reasonably well regulated.
-The problem is actually OEMs and ODMs that add their own certs to DB
-outside of the 3rd party CA control (mostly so their own EFI tooling
-will run).  In theory they're still regulated by the MS Hardware
-Compatibility requirements, but we don't want them getting the idea
-that they can suddenly also sign linux kernel binary modules or
-additional IMA policies or add trusted keys to the system keyrings ...
+So, if we want to support non-power-of-2 zone size, we need some 
+systematic fix. Now it appears that Linux doesn't even attempt to support 
+disks non-power-of-2 zone size.
 
-James
+I added Damien Le Moal so that he can help with testing disks with 
+non-power-of-2 zone size (if WD is actually making them).
+
+Mikulas
 
