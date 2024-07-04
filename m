@@ -1,138 +1,130 @@
-Received: from mail-yb1-f171.google.com (mail-yb1-f171.google.com [209.85.219.171])
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2C1F1649CC
-	for <dm-devel@lists.linux.dev>; Thu,  4 Jul 2024 09:12:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21A561A4F0F;
+	Thu,  4 Jul 2024 11:11:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720084359; cv=none; b=TLi/3wv5e5r6wQ+Iv684ZkHmSL+lWFyZUB/17AhpT3YS2QfaDOX+U394VkEO9wEJZcADW6rhEq2Vk0B+DkT/AZhyTQahrh1r79HEmDwEQQl3963G+RAe8A+KT/SH/6DWgRBOsAxIdZKQEGXEXkTVnhAN9f1dLo4+YcNNWydgU2g=
+	t=1720091482; cv=none; b=PJoaP74wnx/ZFbM4AhkojUya+HjNzwkq25Rmup69faIQKdosv9NCa160IoPwz56hqopnXw7ftgJl+VrwOcK/Tasjk7twKWmkg7YwrqLuSR9yhA32ZYkIXHue7IUMA4Zqr4PN7jS9NUY2ABeICjB2p/Fuj67RSP70RMSx3pxEOIA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720084359; c=relaxed/simple;
-	bh=4Zy3A/R03Ea9KVeiTELXbEtMjlgFd5QKpAtjvYV8Ihs=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=LPIIiCT7ETt1i2paeO+hHdtlr+OGYhOWFJ27uc+PKoLZ6FWRU1PI8p3B+zPgeHOhGyVzuG4m7TFe6nAj/HPTe+q/MLFDMNXRrl+b5Tsd2mEMiWxZZ+DT1AtWhZWU3pmdOHrIkiNkzsZxA5w0EncLXXNhoEWvgwwx3FEgo/RoX/c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GpD8U0aR; arc=none smtp.client-ip=209.85.219.171
+	s=arc-20240116; t=1720091482; c=relaxed/simple;
+	bh=TwoVc/A5cvcKyYqBk85IeSoXm8WueZBsy4xxLnttTxM=;
+	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
+	 Message-Id:References:To; b=tmwlqUlopYjHTOcnxa3V9+3j8EqLLbnYgx82qagPMZLyfpFxuBeT4b/djFcZQayRN9XbAO3OIG9al09zvhY24BWYjfvlsbnk/BATtaNP8UBqgVk4wONiv1uu7h3Ylgvui80xSvJ7coyAtAs0Y1bIDclyRnYsnEG/h0YvJ6WcyxM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VfoqL7kH; arc=none smtp.client-ip=209.85.221.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GpD8U0aR"
-Received: by mail-yb1-f171.google.com with SMTP id 3f1490d57ef6-e03caab48a2so15849276.1
-        for <dm-devel@lists.linux.dev>; Thu, 04 Jul 2024 02:12:37 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VfoqL7kH"
+Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-367a2c2e41aso57604f8f.2;
+        Thu, 04 Jul 2024 04:11:20 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1720084357; x=1720689157; darn=lists.linux.dev;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=cViqdyaOCwn+ROKlv4dtSt/nqrwCEFM0XP/6otHc2rI=;
-        b=GpD8U0aRjlldHrecpE0Na9YGfMZgG2o9h3Ft8Vb373bFgj9nrqqA/tWDG02WpZvu1D
-         26/EQB4M2d8sqAVs8h1I5pmmQwoq/W3p5CaKEHkWzVT4eSHJSTEud2aRV1DpRtEngzpu
-         ox96PkeSk3/0fzp38IIkA2WBLhnzwzGx8pmhMlaknz4lO1wSbQXVZnbWV718iLd/Xwqd
-         m0v2uPQblNdm+BZWW7Uw5/Dad6sP4C+gJ1s2zH+QGDfcWDeiEdMU44lva6z1SuiJEuvT
-         HF8jGe1e5AnX83dNMH+g7w7pUnRN/di+tAldS8ocaCTFZEAPEApWfZUFxcayfuwWq2uV
-         csPA==
+        d=gmail.com; s=20230601; t=1720091479; x=1720696279; darn=lists.linux.dev;
+        h=to:references:message-id:content-transfer-encoding:cc:date
+         :in-reply-to:from:subject:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=qwBmB9TZGFjcG5R2+2N2tz93DvezoEGxh6PsIk8IO/w=;
+        b=VfoqL7kHS+CFzGSTNU8taQiIQZVQ8UspcjVfz8TkXTItwEphkPcuK1QaUSfm23RVkz
+         GoNu9vWReUdgwBqWnzrOwcU44jkJHYMQaoE8/+xeG8FJzDKWe4h4aN5b90FHlEZoTLzW
+         r37dBPbkdlYj1VlQ/Csohve6JzYbpoaaXdRaRCUVCutEnXI7PXkvKwbqBdmXM9TQMMQK
+         FeJ+QOpIjbIRkqqvZ9mXhwtlC8/lE0s1j/BUcAC8KENLKL6DBO/2HMrU4rhG+TetJ7Wu
+         PYTisL3/wEIVZKBRvwgvlXlo9uG6tcH2Z0ea5ASOpa6LZ5mrWdQQX38cV+nWyHtw/fKu
+         aYzQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720084357; x=1720689157;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=cViqdyaOCwn+ROKlv4dtSt/nqrwCEFM0XP/6otHc2rI=;
-        b=QP6xZXFKnCjl3WQD0gNmvZkwszcHlRWS+H/fXwET6s85g+C+r2jiXR5mnI2nlcCpmK
-         i71aQvGcxIKCniTj4EneWb+7Y0j+ROuGV0I2J91fP5eIB1UvrlfDYyKzOarPhS9oixKm
-         +mnWDzVb2wdD/jR4tRx37o1yIv51w9+6MYRjhvJHqNexAAtH+FDkH7jhzSCxr3mF5YzZ
-         1Ax2DdfiMhlshvjkqRf0jxJ/xL3/d5MYbIBbpUzMsmZrTnlc8DNBW48QRvwjMw0B0aCA
-         oseYSKpGtXmR/RhCYjwR3qFqyYG4vtGYazrH/qVHE9ZdzfXB8bfwDoIOeW/1YzMv6uA9
-         ftXw==
-X-Gm-Message-State: AOJu0Yw5Xhtz/Uq9kgZG5iZ6csGIecYS4lP0MudAbE11cIYzRCDP8p8I
-	EoqbRm5pHVg+M3VwWRwNFEJTpaWsq2kdW8vDvAMHfWzevDDOf1x3MtP8hiKDeNrBNfYGuxbG0th
-	sutQyLoU+n1glZ7kXLZK5/Y1vGp5kGUqq
-X-Google-Smtp-Source: AGHT+IGK9cO/Y3Kx7AjnAWYe8aljVXMGzquzBsbgTcYH0VQHl/lZ4BXdt1YQTy3egddkXiJCHNq1qxeGr6bUrWVKjfk=
-X-Received: by 2002:a5b:b05:0:b0:e03:61d1:2b88 with SMTP id
- 3f1490d57ef6-e03c2a17390mr488544276.15.1720084356615; Thu, 04 Jul 2024
- 02:12:36 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1720091479; x=1720696279;
+        h=to:references:message-id:content-transfer-encoding:cc:date
+         :in-reply-to:from:subject:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=qwBmB9TZGFjcG5R2+2N2tz93DvezoEGxh6PsIk8IO/w=;
+        b=JDG/ixm2X02No3hMCxpbXKgMwaElLaeNgPdkPhyW5h5Hbypm56RJ7dNCxcfuGCnS+2
+         Fr6VY/P98dUoUGPJPDGIJ36Geu5BWNQv3FtBTpnO/VBHXCCoiQfjoIWJZk0RWQ5cDkCa
+         OosMvmuSpOjjeFy0NIfDFo1aZLVjghTOL/+KN0GUdCT6Xl2haz5Gcbtjk5rKpttHo9GU
+         vZ6uQkrFGF+zhXNJRjabLj5n8TfgXDRAbLxzWkjk/xkht5JxTjz1+FDK38MbZgppTPMg
+         Lzp8T+zr5w09n71G23VzjrQMTXsZG5HIacZQ8Y/Vr8ab9UkPSu2OaqVsvtcDzMUVYfoh
+         fAsA==
+X-Forwarded-Encrypted: i=1; AJvYcCVA9FQfYAKWcjiGACD41UhAjmvA9ypcfFwY3S/mjoylzEwZ9iXu8mnwFuWOgN9+qZQKWvqPu1N9G9vpLdpWVJCDdAa4I1P3kuUPJllYZlbR4oWB0FDUzz6gP/MGaNdI21M0Ut6SiWsur+vRW+Po8FWdlpZBJc2vQSUXLorc0DzMZQ==
+X-Gm-Message-State: AOJu0Ywa3dorlnprnBD3DZaqvoX0IYjEOf+rUrxxX/z2N+aCxzFX4aKi
+	cMYA0T2mFoDGv3a2QXvDBMRpqTCPW/HvQ/cIFnSQeaFrDXNBb8l6
+X-Google-Smtp-Source: AGHT+IFEzvL2jC2faLe/uaMvaq/UCJ26KrH1XFm9Ol6h8w0Rebt6hjx4X+gdY7pIVUfbtqQYexMuPw==
+X-Received: by 2002:a5d:5712:0:b0:367:94e7:958a with SMTP id ffacd0b85a97d-3679dd17ec1mr1153338f8f.6.1720091479417;
+        Thu, 04 Jul 2024 04:11:19 -0700 (PDT)
+Received: from [10.14.0.2] ([139.28.176.164])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-36787db4d12sm6821051f8f.110.2024.07.04.04.11.17
+        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+        Thu, 04 Jul 2024 04:11:18 -0700 (PDT)
+Content-Type: text/plain;
+	charset=us-ascii
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-References: <20240617220037.594792-1-luca.boccassi@gmail.com>
-In-Reply-To: <20240617220037.594792-1-luca.boccassi@gmail.com>
-From: Luca Boccassi <luca.boccassi@gmail.com>
-Date: Thu, 4 Jul 2024 10:12:25 +0100
-Message-ID: <CAMw=ZnR9Eqw1Q6CnQhitBKHDGduQStVK7BfSPj-54xJjgSMqcw@mail.gmail.com>
-Subject: Re: [PATCH] dm verity: add support for signature verification with
- platform keyring
-To: dm-devel@lists.linux.dev, linux-security-module@vger.kernel.org
-Cc: snitzer@kernel.org, jmorris@namei.org, paul@paul-moore.com
-Content-Type: text/plain; charset="UTF-8"
+Mime-Version: 1.0 (Mac OS X Mail 13.4 \(3608.120.23.2.7\))
+Subject: Re: [PATCH 14/26] block: move the nonrot flag to queue_limits
+From: Simon Fernandez <fernandez.simon@gmail.com>
+In-Reply-To: <ZnmoANp0TgpxWuF-@kbusch-mbp.dhcp.thefacebook.com>
+Date: Thu, 4 Jul 2024 12:11:16 +0100
+Cc: Christoph Hellwig <hch@lst.de>,
+ Jens Axboe <axboe@kernel.dk>,
+ Geert Uytterhoeven <geert@linux-m68k.org>,
+ Richard Weinberger <richard@nod.at>,
+ Philipp Reisner <philipp.reisner@linbit.com>,
+ Lars Ellenberg <lars.ellenberg@linbit.com>,
+ =?utf-8?Q?Christoph_B=C3=B6hmwalder?= <christoph.boehmwalder@linbit.com>,
+ Josef Bacik <josef@toxicpanda.com>,
+ Ming Lei <ming.lei@redhat.com>,
+ "Michael S. Tsirkin" <mst@redhat.com>,
+ Jason Wang <jasowang@redhat.com>,
+ =?utf-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.com>,
+ Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>,
+ Song Liu <song@kernel.org>,
+ Yu Kuai <yukuai3@huawei.com>,
+ Vineeth Vijayan <vneethv@linux.ibm.com>,
+ "Martin K. Petersen" <martin.petersen@oracle.com>,
+ linux-m68k@lists.linux-m68k.org,
+ linux-um@lists.infradead.org,
+ drbd-dev@lists.linbit.com,
+ nbd@other.debian.org,
+ linuxppc-dev@lists.ozlabs.org,
+ ceph-devel@vger.kernel.org,
+ virtualization@lists.linux.dev,
+ xen-devel@lists.xenproject.org,
+ linux-bcache@vger.kernel.org,
+ dm-devel@lists.linux.dev,
+ linux-raid@vger.kernel.org,
+ linux-mmc@vger.kernel.org,
+ linux-mtd@lists.infradead.org,
+ nvdimm@lists.linux.dev,
+ linux-nvme@lists.infradead.org,
+ linux-s390@vger.kernel.org,
+ linux-scsi@vger.kernel.org,
+ linux-block@vger.kernel.org,
+ Damien Le Moal <dlemoal@kernel.org>
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <78BDDF6A-1FC7-4DD7-AABF-E0B055772CBF@gmail.com>
+References: <20240617060532.127975-1-hch@lst.de>
+ <20240617060532.127975-15-hch@lst.de>
+ <ZnmoANp0TgpxWuF-@kbusch-mbp.dhcp.thefacebook.com>
+To: Keith Busch <kbusch@kernel.org>
+X-Mailer: Apple Mail (2.3608.120.23.2.7)
 
-On Mon, 17 Jun 2024 at 23:00, <luca.boccassi@gmail.com> wrote:
->
-> From: Luca Boccassi <bluca@debian.org>
->
-> Add a new configuration CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
-> that enables verifying dm-verity signatures using the platform keyring,
-> which is populated using the UEFI DB certificates. This is useful for
-> self-enrolled systems that do not use MOK, as the secondary keyring which
-> is already used for verification, if the relevant kconfig is enabled, is
-> linked to the machine keyring, which gets its certificates loaded from MOK.
-> On datacenter/virtual/cloud deployments it is more common to deploy one's
-> own certificate chain directly in DB on first boot in unattended mode,
-> rather than relying on MOK, as the latter typically requires interactive
-> authentication to enroll, and is more suited for personal machines.
->
-> Default to the same value as DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
-> if not otherwise specified, as it is likely that if one wants to use
-> MOK certificates to verify dm-verity volumes, DB certificates are
-> going to be used too. Keys in DB are allowed to load a full kernel
-> already anyway, so they are already highly privileged.
->
-> Signed-off-by: Luca Boccassi <bluca@debian.org>
-> ---
->  drivers/md/Kconfig                | 10 ++++++++++
->  drivers/md/dm-verity-verify-sig.c |  7 +++++++
->  2 files changed, 17 insertions(+)
->
-> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-> index 35b1080752cd..1e9db8e4acdf 100644
-> --- a/drivers/md/Kconfig
-> +++ b/drivers/md/Kconfig
-> @@ -540,6 +540,16 @@ config DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
->
->           If unsure, say N.
->
-> +config DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
-> +       bool "Verity data device root hash signature verification with platform keyring"
-> +       default DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
-> +       depends on DM_VERITY_VERIFY_ROOTHASH_SIG
-> +       depends on INTEGRITY_PLATFORM_KEYRING
-> +       help
-> +         Rely also on the platform keyring to verify dm-verity signatures.
-> +
-> +         If unsure, say N.
-> +
->  config DM_VERITY_FEC
->         bool "Verity forward error correction support"
->         depends on DM_VERITY
-> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-> index 4836508ea50c..d351d7d39c60 100644
-> --- a/drivers/md/dm-verity-verify-sig.c
-> +++ b/drivers/md/dm-verity-verify-sig.c
-> @@ -126,6 +126,13 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
->                                 NULL,
->  #endif
->                                 VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
-> +#ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
-> +       if (ret == -ENOKEY)
-> +               ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
-> +                                       sig_len,
-> +                                       VERIFY_USE_PLATFORM_KEYRING,
-> +                                       VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
-> +#endif
->
->         return ret;
->  }
+Hi folks, how can I unsubscribe from this group.?
+Thanks in advance.
+S
 
-Gentle ping. Anything I can do to help move this patch forward? It
-fixes a gap in our dm-verity story that I'd really like to see sorted
-for the next release. We will use this in systemd, among other things.
-Thanks!
+> On 24 Jun 2024, at 18:08, Keith Busch <kbusch@kernel.org> wrote:
+>=20
+> On Mon, Jun 17, 2024 at 08:04:41AM +0200, Christoph Hellwig wrote:
+>> -#define blk_queue_nonrot(q)	test_bit(QUEUE_FLAG_NONROT, =
+&(q)->queue_flags)
+>> +#define blk_queue_nonrot(q)	((q)->limits.features & =
+BLK_FEAT_ROTATIONAL)
+>=20
+> This is inverted. Should be:
+>=20
+> #define blk_queue_nonrot(q)	(!((q)->limits.features & =
+BLK_FEAT_ROTATIONAL))
+>=20
+
