@@ -1,110 +1,84 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 155D01953AD;
-	Wed,  3 Jul 2024 23:39:42 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5F0C8BFF;
+	Thu,  4 Jul 2024 01:14:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720049983; cv=none; b=ul+yAK6BaXIaPOAE+uu7VH/Xt99wm4tpeP/NsXO2aCzBjQUQtqv/9l0clHu5JeeaGIlevTzKr72kQbOPxI4QC0xU2uGBpoSI7VVwerBqtJ9PjbE3QAwOq/pT3uDjPlkakPSyhQMAVjQu3SAaSqUeUPPqJvJ3qWyoNj8l33UdDrM=
+	t=1720055661; cv=none; b=Xf9KKolyy7x12XWIE3yh2mP209wxzVzLOz6P31evCpfPZKtaQrjLwG2gBYb9DcHwgh5a2ggEwN88uIM3aRk2rqmX7XiuvsLduzmcMBhJ0d1IA+U4HIrBMYVCjDiJA3vI51SONZFe4MfaKurcQwGiWMm4oqIJ1m11/8UeafIzP9I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720049983; c=relaxed/simple;
-	bh=+3exVKdsSUiXOtP+zbFK0kxihm1luEPUtQE0mCdFLdk=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Z8UquO56Ctkgr6Y7dom4BKrp06wTmPshG2SCUghfbRPAeSuN9TFLQV0YB5FnPcJ/DRo2BYpAwQGRe8bt8R+nLgS+C/GJWkPKaCKfB9SRdZQIqr7507xmpcirE+Go1WFiJ++L0iPlIE2E9YuieuOHwq8vQOoMQzzI35rUkkVdYbk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=JuQTvPt2; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1720055661; c=relaxed/simple;
+	bh=IT/0qmpouGjAntmssXPWkmLwzlopcZSsDDAtvyNgKEI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=q0LZkdv5EXOMSx+ISPJQvQzYe0GAc+ywC1Zs1LRPwX13/vQCsKLq4CTk+3Zjtmkz7xBpifzgO9e+42vyrV0YEl8qsFaPWbHuyTBsz2kEEFdQgVyzqtsO/Qf7BgIT9zpEujavU7l6kjodiuq1I2o55r6/thEgTTDaYaqLrbGbOv0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=bIUrsvSc; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="JuQTvPt2"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4E785C4AF0A;
-	Wed,  3 Jul 2024 23:39:41 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="bIUrsvSc"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E2958C2BD10;
+	Thu,  4 Jul 2024 01:14:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1720049982;
-	bh=+3exVKdsSUiXOtP+zbFK0kxihm1luEPUtQE0mCdFLdk=;
-	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=JuQTvPt20vljhL2oXB2VfYGZmg+q917AZpb8kn1rOgF/A1x72TlEfXOyaRzTjiM6u
-	 /UniKC+gvE8VOQLnJYeB89ZAlYyHx/yeflIZjkRDTGuUoADdo3uVmPEuWazGAcUDGP
-	 rVRRPV2zFkhPiol9Ad+CrooMI6xDKCAfUXOHm2NOHAvXS5cs7hsuACAXigz4DK4eZ3
-	 GK9/1q0lvATFKLdMqJBQL3viMPv9VZNzVcf9dLRFv5jSddM5UaLrPCDceYd3kPnT34
-	 fGrRijGsV6TdSD3VNFh/vBcNkiet/tkGOZLnIqO5N2UAL/GjZhW5B1YamED7ZOQP+t
-	 531jZ2S7mhKKw==
-From: Damien Le Moal <dlemoal@kernel.org>
-To: Jens Axboe <axboe@kernel.dk>,
-	linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	linux-scsi@vger.kernel.org,
-	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	Ming Lei <ming.lei@redhat.com>,
-	"Michael S . Tsirkin" <mst@redhat.com>,
-	Jason Wang <jasowang@redhat.com>,
-	Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 5/5] block: Remove blk_alloc_zone_bitmap()
-Date: Thu,  4 Jul 2024 08:39:32 +0900
-Message-ID: <20240703233932.545228-6-dlemoal@kernel.org>
-X-Mailer: git-send-email 2.45.2
-In-Reply-To: <20240703233932.545228-1-dlemoal@kernel.org>
-References: <20240703233932.545228-1-dlemoal@kernel.org>
+	s=k20201202; t=1720055660;
+	bh=IT/0qmpouGjAntmssXPWkmLwzlopcZSsDDAtvyNgKEI=;
+	h=Date:Subject:To:References:From:In-Reply-To:From;
+	b=bIUrsvScsVgHP5PZtTZzAEYE8G+B2DRTUd4NbTIpfBpU27Eh19za6EANkCFIEB/0Y
+	 0P0rGf4AvotTsziZ+/8U6tULA+zNfel+9XCB/+YxUIeN8fLJvEkGsxWm4jjyCKLL1G
+	 0MTwPILpAKPkDM1+1/a0qXzwVZXuxe2UmQahzN9H3pH8lM0NSIVWqP4bG/SNzyEHF0
+	 S64XrqXy0uaYQ/thWgtKJcMu6fgXg5+kHGnpd6OPHPMV3xpQR76mZ1UQDU8+9cwZl9
+	 pidfLOqu8r15doN+QqZJWo2M23Qz8ou4+LVCunG34K+zOkClBUOUY3qwaF809ut/3N
+	 xanmDc018kSrw==
+Message-ID: <b011fe29-3602-4857-ac30-f47ce84d43d5@kernel.org>
+Date: Thu, 4 Jul 2024 10:14:17 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 4/5] block: Remove REQ_OP_ZONE_RESET_ALL emulation
+To: =?UTF-8?B?RWQgVHNhaSAo6JSh5a6X6LuSKQ==?= <Ed.Tsai@mediatek.com>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ "hch@lst.de" <hch@lst.de>,
+ "martin.petersen@oracle.com" <martin.petersen@oracle.com>,
+ "axboe@kernel.dk" <axboe@kernel.dk>,
+ "ming.lei@redhat.com" <ming.lei@redhat.com>,
+ "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+ "mpatocka@redhat.com" <mpatocka@redhat.com>, "mst@redhat.com"
+ <mst@redhat.com>, "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+ "jasowang@redhat.com" <jasowang@redhat.com>,
+ "snitzer@kernel.org" <snitzer@kernel.org>
+References: <20240703233932.545228-1-dlemoal@kernel.org>
+ <20240703233932.545228-5-dlemoal@kernel.org>
+ <c2022791ae3b082d9da3694aadb4b089a991570a.camel@mediatek.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Content-Language: en-US
+Organization: Western Digital Research
+In-Reply-To: <c2022791ae3b082d9da3694aadb4b089a991570a.camel@mediatek.com>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Remove the helper function blk_alloc_zone_bitmap() and replace its
-single call site with a call to bitmap_alloc(). To be consistent with
-this change, use bitmap_free() to free a disk convnetional zone bitmap.
+On 7/4/24 09:07, Ed Tsai (蔡宗軒) wrote:
+>> diff --git a/block/blk-core.c b/block/blk-core.c
+>> index 71b7622c523a..0c25df9758d0 100644
+>> --- a/block/blk-core.c
+>> +++ b/block/blk-core.c
+>> @@ -834,7 +834,7 @@ void submit_bio_noacct(struct bio *bio)
+>>  			goto not_supported;
+>>  		break;
+>>  	case REQ_OP_ZONE_RESET_ALL:
+>> -		if (!bdev_is_zoned(bio->bi_bdev) ||
+>> !blk_queue_zone_resetall(q))
+>> +		if (!bdev_is_zoned(bio->bi_bdev))
+>>  			goto not_supported;
+>>  		break;
+>>  	case REQ_OP_DRV_IN:
+> 
+> It does the same thing as other zone operations, putting these together
+> will be more cleaner?
 
-Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
----
- block/blk-zoned.c | 12 ++----------
- 1 file changed, 2 insertions(+), 10 deletions(-)
+Indeed. Will do that in v2.
 
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index b104f5175783..af19296fa50d 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -150,13 +150,6 @@ int blkdev_report_zones(struct block_device *bdev, sector_t sector,
- }
- EXPORT_SYMBOL_GPL(blkdev_report_zones);
- 
--static inline unsigned long *blk_alloc_zone_bitmap(int node,
--						   unsigned int nr_zones)
--{
--	return kcalloc_node(BITS_TO_LONGS(nr_zones), sizeof(unsigned long),
--			    GFP_NOIO, node);
--}
--
- static int blkdev_zone_reset_all(struct block_device *bdev)
- {
- 	struct bio bio;
-@@ -1485,7 +1478,7 @@ void disk_free_zone_resources(struct gendisk *disk)
- 	mempool_destroy(disk->zone_wplugs_pool);
- 	disk->zone_wplugs_pool = NULL;
- 
--	kfree(disk->conv_zones_bitmap);
-+	bitmap_free(disk->conv_zones_bitmap);
- 	disk->conv_zones_bitmap = NULL;
- 	disk->zone_capacity = 0;
- 	disk->last_zone_capacity = 0;
-@@ -1607,7 +1600,6 @@ static int blk_revalidate_conv_zone(struct blk_zone *zone, unsigned int idx,
- 				    struct blk_revalidate_zone_args *args)
- {
- 	struct gendisk *disk = args->disk;
--	struct request_queue *q = disk->queue;
- 
- 	if (zone->capacity != zone->len) {
- 		pr_warn("%s: Invalid conventional zone capacity\n",
-@@ -1623,7 +1615,7 @@ static int blk_revalidate_conv_zone(struct blk_zone *zone, unsigned int idx,
- 
- 	if (!args->conv_zones_bitmap) {
- 		args->conv_zones_bitmap =
--			blk_alloc_zone_bitmap(q->node, args->nr_zones);
-+			bitmap_zalloc(args->nr_zones, GFP_NOIO);
- 		if (!args->conv_zones_bitmap)
- 			return -ENOMEM;
- 	}
 -- 
-2.45.2
+Damien Le Moal
+Western Digital Research
 
