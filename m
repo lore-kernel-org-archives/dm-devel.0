@@ -1,22 +1,22 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEE3A1CAB5
-	for <dm-devel@lists.linux.dev>; Thu,  4 Jul 2024 05:13:57 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86C78747F
+	for <dm-devel@lists.linux.dev>; Thu,  4 Jul 2024 05:17:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720070038; cv=none; b=Ln5CcIO533pvjvDT/nAmEPaBnz02iEzSehpGbpQfYq1teyhbZSbUqA53CNWXn+AfUP3WR4qqNuUBbtb35Ha9WuUTmweU8LiBhMuQYNy8qA8oxT0KMCWisqjOT4hBfcc2X6qNLhQ3117Uy1Q1dyzlHl9bMs6e4b6umT3fIuyn6KI=
+	t=1720070228; cv=none; b=CQ1jaOUorRMf0sG8SnMVqwh/XztVb/sGXfdbGA0Yr9fkELVocMkr4WFaOlk4Ep4Sx61MgzFDBnR0QFCgd92T+A5CI2JpXIHmLsmhhbLa3r+5hcSPlvICRDLbTLUc2eaadS8f/gbNWozZoAm531XA90OKQEdEwVTbk399hdbrXA4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720070038; c=relaxed/simple;
-	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=;
+	s=arc-20240116; t=1720070228; c=relaxed/simple;
+	bh=3ILCXgjbBWr2Q5Qdu7JevMO8Yg4UJyA0DZq1Pw0/djM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=rYYEJ9vp6vbwl2QlaoX+/CU1jNuSBBqjeuo6MczQewdltcauRAuN/nXqImwj+Z45g3v9MgWrzzI5cIU2ILdvGhnnwiA3msqaQbW0P9Ck0iOaA2yuMynCUkepF13pH7U1KmXJlsgJHiT7bKe9RnXv4c8IB/IK27l8hRQjrrJ+D5I=
+	 Content-Type:Content-Disposition:In-Reply-To; b=s1fvHisGIFRxon7f3qsqE3ukMs0i5/ZQTyZhRH8fFYN/KMGKu8tP51nFeTn/BNSTmiSLyhQaQS9MiFtsltyKeTvNGSYIqjLeBQMV6bqzYi0JLqujqng0fMzRZhfv2CffBhkp/GX0HSVSVOildcVHt01q5vk5SSPF60DyZ7aINn0=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id D706B68AFE; Thu,  4 Jul 2024 07:13:54 +0200 (CEST)
-Date: Thu, 4 Jul 2024 07:13:54 +0200
+	id D365568AFE; Thu,  4 Jul 2024 07:17:03 +0200 (CEST)
+Date: Thu, 4 Jul 2024 07:17:03 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Damien Le Moal <dlemoal@kernel.org>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
@@ -26,9 +26,9 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
 	Ming Lei <ming.lei@redhat.com>,
 	"Michael S . Tsirkin" <mst@redhat.com>,
 	Jason Wang <jasowang@redhat.com>, Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 2/5] dm: Refactor is_abnormal_io()
-Message-ID: <20240704051354.GC19411@lst.de>
-References: <20240703233932.545228-1-dlemoal@kernel.org> <20240703233932.545228-3-dlemoal@kernel.org>
+Subject: Re: [PATCH 3/5] dm: handle REQ_OP_ZONE_RESET_ALL
+Message-ID: <20240704051703.GD19411@lst.de>
+References: <20240703233932.545228-1-dlemoal@kernel.org> <20240703233932.545228-4-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -37,10 +37,22 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240703233932.545228-3-dlemoal@kernel.org>
+In-Reply-To: <20240703233932.545228-4-dlemoal@kernel.org>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-Looks good:
+> Targets that can natively support REQ_OP_ZONE_RESET_ALL are identified
+> using the new target field zone_reset_all_supported. This boolean is set
+> to true in for targets that have reliable zone limitsi, that is, targets
+
+s/limitsi/limits/
+
+> +		/*
+> +		 * Assume that the target can accept REQ_OP_ZONE_RESET_ALL.
+> +		 * device_get_zone_resource_limits() may adjust this if one of
+> +		 * the device used by the target does not have all its sequential
+
+Overly long line here.
+
+Otherwise looks good:
 
 Reviewed-by: Christoph Hellwig <hch@lst.de>
-
