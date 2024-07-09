@@ -1,114 +1,185 @@
-Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
+Received: from mail-ed1-f45.google.com (mail-ed1-f45.google.com [209.85.208.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA56B143C5B
-	for <dm-devel@lists.linux.dev>; Fri,  5 Jul 2024 06:42:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CBE771B86D4
+	for <dm-devel@lists.linux.dev>; Tue,  9 Jul 2024 21:39:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720161756; cv=none; b=lQ3eA9PsrwHiiq4Otm6zfmrCI46H0IKJW3xHh7oKNghTE4xjES9ChmmJJLYXz29viTp5kS3PgjYKcfYO2swoZqAjO+xmB3+1+5iaTf9AEI+9hEfi0zDEcZtWxAuWxUgfLq1mk2nXTkAiBzxNt2aFzBYGeD5uakOUUeQjz5GMfJ4=
+	t=1720561190; cv=none; b=suMlh7gPUpmc/C5MPH57yl081Gqw03vvvXZqvp1oy1pWuxM1xUZ0ad8H4vv4R08O2WPgUl/phweu3Kmtifuzjl4WmPrGDWvsHaw5XoM5D2KcqvdreSsFcISAJ/aoW2t0WEU3sVR9bzKSbI6JXFiuEJA4fEhwHp5usJTV5O7qwZM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720161756; c=relaxed/simple;
-	bh=CWl72ReHjXCYWhKlNG9N2O+IUodhLDJfcgQMkeLW04c=;
-	h=From:To:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=fjCQLJVWsD5+fHRb5ISPaiXqdlNVHeBlznaaLEtmWFw983yKT4/JGVFC3KYYPl9PbFykV0cCHjuoL8a7Fjqk0hYWGnXBzOddr+1jRc4xeOcCTGyJu+RAq/gtNaMhoZxMm4Ghv5tA2dr/nW5hhj+Udj3hwJ6DSpNCij/15wMmvDc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=1CQ0yJj4; arc=none smtp.client-ip=209.85.167.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1720561190; c=relaxed/simple;
+	bh=5ZrLh2Ok7hKJTaNrkFeiJ09ViHA0KJN4eI+e+3fRiSI=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=iuHnPJiyFqMgSp8HzEjnt+Tx62rQvyUZlAvT8UaaDV2yBnXWdLGs8zM8SolcSq7FYw6hN+IW8k3KHDamAq+Y0OK/3anU2WVZWE04n/1ER0q//tqhnQJlKpM5WOE2qDPJgdlMvVhurEWOcVwwREegSihuoF1CJPJ/UPpWo3GRuBY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=R6+6jztU; arc=none smtp.client-ip=209.85.208.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="1CQ0yJj4"
-Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-52e9d61a4b4so88997e87.3
-        for <dm-devel@lists.linux.dev>; Thu, 04 Jul 2024 23:42:34 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="R6+6jztU"
+Received: by mail-ed1-f45.google.com with SMTP id 4fb4d7f45d1cf-58b0dddab63so8508566a12.3
+        for <dm-devel@lists.linux.dev>; Tue, 09 Jul 2024 14:39:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1720161753; x=1720766553; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:to:from:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=waQspLv/Jp+UpTZ4iMwnmeyNv2/eDMBAOGCEYrIWEFg=;
-        b=1CQ0yJj4TohEO5nh4bkTAJzi0DN+WqpxEfJwrPwQssJBFiLLUYCTN+4Ei2Bo6YpWJM
-         rN+10+fjQQ6BHx9U/7CgIjkBAUPV05CS6BJ1T/fxSijiSQjACn0yI40wZ1GvT/PzQnc/
-         v4cWx5Sxdr6MNOmnNHBnoGhC9Pw0UK4ILB3pg1iVSFIOzw1c2u9BJw8tlPAUpaipqOSN
-         u8SSorSu//z/xqSrClKeK8miMAr9Qwyas99883KPA94ZtwoE14an/d3dF7aONNRcCbHh
-         s1aJu10pZxiQ2ViULgNr2SobZ6s6eZpLQ2VSLUcJoJbCwDFFXaFzUkayG6C26QzabPLy
-         /UAA==
+        d=suse.com; s=google; t=1720561186; x=1721165986; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=5hvafV7GMVW6RBiXeyaEJ7PuG0W2+DSUcc4+Yws7e/s=;
+        b=R6+6jztUf78w7Mj4BFCsQeQGGQxra/IboyZrLJY0xSmuKp6fYkNT5z90RunSd1V+Gi
+         pZFKNkR2COmDPNldL9JVkYZzqIH4Y4NQOla8ysK7Fc2OCtSxKPZ1m8qkGrKcCf+PUoGV
+         tSzcd7jrziEE91NEL6yZo2ODZPMVIkQISnT8BYUFUzb1rsPxpWC9HbnYs/IX/aJDsgcO
+         gtzuteOMWGbPWRwlg/t1AhGSf3nLoG/Ax0GLZg79VuQgzoHlN1B881N4NojgWG77UcLe
+         EjtZ0snwnzeIrwXAkpX0ZoITyYZzMu4fYfYuCb93geQlItL0nD+kCTUKH134fDYqZjB8
+         vFLA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720161753; x=1720766553;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=waQspLv/Jp+UpTZ4iMwnmeyNv2/eDMBAOGCEYrIWEFg=;
-        b=DsGYpzMxjYVx1MN+9F0R1kabWDr6QPs2TCtJdTVkkWhYCwZPxS3dMllmAbDpgp2IMu
-         09FFKDrdoCd4FE9Sep6/5m1ljZI1yF6EGe5JG+4gxFgiGUaPfeLu3I1F0SaE/MZ4MWYi
-         59RHMFiAkSt/Pb8d8dgllrEat6on7I5P5ZVZFeOkIW7QPlH06l7sNePDIvVUw34kDBxR
-         tcryHsqbMaNmDRT11y9mesU/xXn50+htbgCHMOk4TIpBAACZe0MmT0os9dT85UZe36Ed
-         CIH7ra9Q2RTI7N6PONGDRm0lp79CF+jLgX09CvlYw6haTZsl3M+kN1kGkIOlVg68qdXO
-         gOnQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXK8pbFArOLET2ogQOci7RGuT6kQfzZFNuh3HkYbeN/aWcFSuUQmsH6bBDMjqh5cyWopJPeXl9fDIvieDPTyiagn5k2iHfKzV8=
-X-Gm-Message-State: AOJu0YxFjULQ/0GOpkwzH0cAZVwBJ9/GzXVlxe70xePsRFodbtRcsZyr
-	/98uiPm8EWkdornfVIO5Jq/l6lfK1qPYglyxJTHvGInL3DxmL6qjj9MLteo2sUM=
-X-Google-Smtp-Source: AGHT+IHQVZfmP8Kf7Vg7+YOar8W+pG2xnl2rTo85ayKWXNSneGGBg+vqVXwSHucIKC0g6Fn0qMkveA==
-X-Received: by 2002:ac2:5a50:0:b0:52c:a7b6:bb11 with SMTP id 2adb3069b0e04-52ea0619e47mr2245356e87.1.1720161752595;
-        Thu, 04 Jul 2024 23:42:32 -0700 (PDT)
-Received: from [127.0.0.1] (87-52-80-167-dynamic.dk.customer.tdc.net. [87.52.80.167])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-52ea69513e4sm88226e87.289.2024.07.04.23.42.30
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Jul 2024 23:42:30 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
- linux-scsi@vger.kernel.org, 
- "Martin K . Petersen" <martin.petersen@oracle.com>, 
- Ming Lei <ming.lei@redhat.com>, "Michael S . Tsirkin" <mst@redhat.com>, 
- Jason Wang <jasowang@redhat.com>, Christoph Hellwig <hch@lst.de>, 
- Damien Le Moal <dlemoal@kernel.org>
-In-Reply-To: <20240704052816.623865-1-dlemoal@kernel.org>
-References: <20240704052816.623865-1-dlemoal@kernel.org>
-Subject: Re: [PATCH v2 0/5] Remove zone reset all emulation
-Message-Id: <172016175015.242380.5721463092175148141.b4-ty@kernel.dk>
-Date: Fri, 05 Jul 2024 00:42:30 -0600
+        d=1e100.net; s=20230601; t=1720561186; x=1721165986;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=5hvafV7GMVW6RBiXeyaEJ7PuG0W2+DSUcc4+Yws7e/s=;
+        b=P6GTHKK2kvlve/z34dqmVLq+RZvCwBFG5KlLqi1LJcOfCjrUEgrv8zDrw06uj+D+Mi
+         dSCAMvzY+TjB7fUSPuPSUkLx1nHF+Nta76U44fpPZ8nZ+tkTILVU9s5n4B/ZyLRoAAF4
+         7yaKEluMkOsqDem2WbieLQ/efxJe/59e7mMpR3nuzdCQj/VjRw8vq+m2AWKSnjZ6aD0m
+         3b5MfS1fY0slwUi0OuiF2H9dPdqgx8PGeAjTASwZTxbp1QdlGGpOzPXAOBhF8ulvXFOl
+         tc9Pg3ycoP3mwcF8d/+E+Ps2NHPpGPSITQTFFcLZHFgiIW2748ONHJbxatxMV+o3B8Jz
+         RyCw==
+X-Gm-Message-State: AOJu0Yw4uG+GVAliuA0trntJZxzsigu7asg0C6wzvwWl12GgtP2eJoZ7
+	ByUl/RgGo9h3AMlWOzOD678SPVYCwcKlm72JhS9TZHMqiLjfRNsM2CNUI1IM1Uc=
+X-Google-Smtp-Source: AGHT+IH8oMrwx9xlgBpH1QP1OqVXM/Zuf/Ba/n0Lk6P2xgdaBsExqnj2cbMD+VHklI7Bb7YPxDzJuA==
+X-Received: by 2002:a17:907:944f:b0:a77:db36:1ccf with SMTP id a640c23a62f3a-a780b70528emr345857266b.42.1720561185901;
+        Tue, 09 Jul 2024 14:39:45 -0700 (PDT)
+Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a6bcc47sm108525666b.11.2024.07.09.14.39.45
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 09 Jul 2024 14:39:45 -0700 (PDT)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev
+Subject: [PATCH 00/44] multipath-tools: devmapper API refactored
+Date: Tue,  9 Jul 2024 23:38:51 +0200
+Message-ID: <20240709213935.177028-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.14.0
+Content-Transfer-Encoding: 8bit
 
+Patch 1-9 are generic cleanups, partly targeting the previously reported
+issues with multipath-tools installation on NixOS by removing hard-coded
+paths as much as possible.
 
-On Thu, 04 Jul 2024 14:28:11 +0900, Damien Le Moal wrote:
-> Jens, Mike,
-> 
-> Here is a set of patches based on block/for-next to remove the emulation
-> for zone reset all from the block layer and move it to device mapper.
-> This is done because device mapper is the only zoned device driver that
-> does not natively support REQ_OP_ZONE_RESET_ALL. With this change, the
-> emulation that may be required depending on a mapped device zone mapping
-> is moved to device mapper and the reset all feature
-> (BLK_FEAT_ZONE_RESETALL) can be deleted, as well as all the code
-> handling this feature in blk-zoned.c. The DM-based handling of
-> REQ_OP_ZONE_RESET_ALL can also be much faster than the block layer
-> emulation as that operation can be forwarded as is to targets mapping
-> all sequential write required zones.
-> 
-> [...]
+Patch 10-16 are basic cleanups for the devmapper code.
 
-Applied, thanks!
+Patch 17 is the heart of this patch set, introducing the function
+libmp_mapinfo(), which is supposed to serve as general API for fetching
+information about maps from libdevmapper. It can work with arbitrary
+input for identifying a map, and produce any combination of desired
+outputs, with the most lightweight (combination of) ioctls possible.
+This part of the set removes some code that had been changed
+in patch 10-16. This is sort of suboptimal, but IMO it improves
+the readability of the set as  a whole.
 
-[1/5] null_blk: Introduce the zone_full parameter
-      commit: f4d5dc33c823ef1d7ccbbd2d1e40b871fad0012b
-[2/5] dm: Refactor is_abnormal_io()
-      commit: ae7e965b36e3132238d16b4ccd223f65162397b5
-[3/5] dm: handle REQ_OP_ZONE_RESET_ALL
-      commit: 81e7706345f06e1e97a092f59697b7e20a0ee868
-[4/5] block: Remove REQ_OP_ZONE_RESET_ALL emulation
-      commit: f2a7bea23710fceb99dac6da4ef82c3cc8932f7f
-[5/5] block: Remove blk_alloc_zone_bitmap()
-      commit: 2f20872ed43185780a5f30581472599342c86d4a
+Patch 18 adds unit tests for this function.
 
-Best regards,
+Patch 19-44 change the libmultipath code to use the new API everywhere,
+and add some additional minor improvements and fixes.
+
+The code is pushed to https://github.com/openSUSE/multipath-tools/tree/tip.
+
+Comments and reviews welcome.
+
+Martin Wilck (44):
+  multipath-tools CI: more fixes for arm/v7
+  multipath-tools CI: fix dmevents test for Debian Sid, arm/v7
+  create-config.mk: use printf instead of /bin/echo
+  multipathd.service.in: use @BINDIR@ instead of /sbin
+  Makefile.inc: replace @BINDIR@ with $(TGTDIR)/$(bindir)
+  kpartx.rules: use @BINDIR@ to locate kpartx
+  multipath-tools: Remove hard-coded paths to executables
+  multipath-tools: compile_commands.json fixes
+  multipath-tools: .gitignore: ignore o.wrap files for CI helpers
+  libmultipath: remove unused includes in devmapper.h
+  libmultipath: use DM_DEVICE_INFO in dm_mapname()
+  multipath-tools: don't call dm_task_no_open_count()
+  libmpathutil: export cleanup_udev_device()
+  libmpathutil: add cleanup_vector()
+  libmultipath: add cleanup helpers for struct multipath
+  libmultipath: add cleanup_dm_task(), and use it in devmapper.c
+  libmultipath: add libmp_mapinfo()
+  libmultipath tests: add tests for libmp_mapinfo()
+  libmultipath: implement dm_get_info() and dm_map_present() with new
+    API
+  libmultipath: remove dm_get_prefixed_uuid()
+  libmultipath: is_mpath_part(): improve parsing
+  libmultipath: rename dm_get_uuid() -> dm_get_wwid()
+  libmultipath: improve dm_get_wwid() return value logic
+  libmultipath: reimplement dm_map_name() with new API
+  libmultipath: reimplement dm_map_present_by_uuid()
+  libmultipath: reimplement dm_get_opencount() with new API
+  libmpathpersist: skip redundant dm_map_present() call
+  libmultipath: implement dm_is_mpath() with new API
+  libmultipath: implement dm_get_multipath() with new API
+  libmultipath: use libmp_mapinfo() in _dm_flush_map()
+  libmultipath: add is_mpath_uuid() helper
+  libmultipath: add is_mpath_part_uuid() helper
+  libmultipath: add dmp_errstr() helper
+  libmultipath: use libmp_mapinfo() in do_foreach_partmaps()
+  libmultipath: use libmp_pathinfo() in update_multipath_table()
+  libmultipath: update mpp->dmi in update_multipath_table()
+  libmultipath: drop extra call to dm_map_present() in domap()
+  libmultipath: split off update_multipath_table__()
+  multipath: implement check_usable_paths() with libmp_pathinfo()
+  multipathd: implement add_map_without_path() with libmp_mapinfo()
+  libmultipath: simplify dm_get_maps()
+  llibmultipath: fix return code check for dm_is_suspended()
+  libmpathpersist: use libmp_mapinfo() in get_mpvec()
+  libmpathpersist: use mpp->alias in do_mpath_persistent_reserve_out()
+
+ .gitignore                               |    4 +
+ Makefile                                 |    4 +-
+ Makefile.inc                             |   29 +-
+ create-config.mk                         |    4 +-
+ kpartx/Makefile                          |    4 +-
+ kpartx/devmapper.c                       |   15 -
+ kpartx/{kpartx.rules => kpartx.rules.in} |    2 +-
+ kpartx/kpartx_id                         |    8 +-
+ libmpathpersist/mpath_persist_int.c      |   85 +-
+ libmpathutil/libmpathutil.version        |    5 +
+ libmpathutil/util.c                      |    6 +
+ libmpathutil/util.h                      |    3 +
+ libmpathutil/vector.c                    |    6 +
+ libmpathutil/vector.h                    |    1 +
+ libmultipath/alias.c                     |    5 +-
+ libmultipath/configure.c                 |   27 +-
+ libmultipath/devmapper.c                 | 1020 ++++++++------------
+ libmultipath/devmapper.h                 |  101 +-
+ libmultipath/libmultipath.version        |   10 +-
+ libmultipath/print.c                     |    6 -
+ libmultipath/structs.c                   |   12 +
+ libmultipath/structs.h                   |    2 +
+ libmultipath/structs_vec.c               |   50 +-
+ libmultipath/structs_vec.h               |    2 +
+ libmultipath/valid.c                     |    2 +-
+ libmultipath/wwids.c                     |    2 +-
+ multipath/11-dm-mpath.rules.in           |    4 +-
+ multipath/main.c                         |   60 +-
+ multipath/multipath.rules.in             |    6 +-
+ multipathd/dmevents.c                    |    6 +-
+ multipathd/main.c                        |   71 +-
+ multipathd/multipathd.service.in         |    4 +-
+ multipathd/waiter.c                      |    2 -
+ tests/Makefile                           |    5 +-
+ tests/alias.c                            |   32 +-
+ tests/dmevents.c                         |   34 +-
+ tests/mapinfo.c                          | 1121 ++++++++++++++++++++++
+ tests/valid.c                            |   10 +-
+ tests/wrap64.h                           |    9 +-
+ 39 files changed, 1916 insertions(+), 863 deletions(-)
+ rename kpartx/{kpartx.rules => kpartx.rules.in} (96%)
+ create mode 100644 tests/mapinfo.c
+
 -- 
-Jens Axboe
-
-
+2.45.2
 
