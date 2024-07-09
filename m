@@ -1,54 +1,55 @@
-Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
+Received: from mail-ej1-f46.google.com (mail-ej1-f46.google.com [209.85.218.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3108918562D
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3F5A189F4B
 	for <dm-devel@lists.linux.dev>; Tue,  9 Jul 2024 21:40:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.53
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720561229; cv=none; b=QSPSujSN370JM8i8zzvNsAXBkUxeLPzY25402a1OQncoQNrt8W1ekLB0yOTRs9NbuV0R11HvUTsFELkLV7mL2rBjDpmf9Sp5aewKMYqCnsuyZiVAniPGZWMDMdNzVJpMhcKwAgNT7hJiFFg1WEuf9R1dpvmy14LDgbj3LNnBk2w=
+	t=1720561229; cv=none; b=GYrzHyMFzra0+dHcKvTsOeUfUUoDDpCxU/NJlD0q+3Ds/JEMzL7PpYJWe3e96ysypzZr+g8LTM5th7zKXj8IVXpRHNto4wlKDlNhXoEUW4VLqAooKE+17hCpHKI/xXp5oZO7VoIav2M/zBE9isgL2We1aL5LNw8TarJRkT6eOQ0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1720561229; c=relaxed/simple;
-	bh=0aP5E//cpd2+LFPciApI3ZGg8ZAX7pnmhH+F5MpfZzY=;
+	bh=/vNXK8ZwfNd3MH8NLgxmbSVgQ2JFuiCfn17tgWTwDUs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=HzRj7JzevYwiJZrNFToB8qr3L6w47hDVkSvA8svzPJButQ/NnG0MwErhY1U7Air1lagtsx3i531xamzwPdtQmZkAmB/V0A3m71AWSSZpUDJ0sCu5SEbHvlm2LZo4XHXyZm5Det86djVVm2WWbuXfQLKA9OaLNNt/CJ7pUtWj0v4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=RIeLH8ff; arc=none smtp.client-ip=209.85.167.53
+	 MIME-Version; b=iP1yJZWSfN/246R1Lko/HLz2Lv68dzCzuibzFxk4ejt7QlnYP3dB3/nc5W8gKp/pB+bx7yypbw1AWUA/0eUo55NAzxGNoVNNEX7eYuOKVglA21tGVzgKQc3LOOYDhunG66gK8F5aFhuknFWMutBOCgfsi3BRUESpiDRvbDPIDAY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=ENe2zwia; arc=none smtp.client-ip=209.85.218.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="RIeLH8ff"
-Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-52ea2ce7abaso7635750e87.0
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="ENe2zwia"
+Received: by mail-ej1-f46.google.com with SMTP id a640c23a62f3a-a77cc73d35fso35479766b.0
         for <dm-devel@lists.linux.dev>; Tue, 09 Jul 2024 14:40:27 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1720561225; x=1721166025; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1720561226; x=1721166026; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=7lpqCjYsPcG0uUiH2tzp+60eXf8ot/bmvAS/AsFKwIw=;
-        b=RIeLH8ffMO1qnU4MK7s6MgxmR9cYCx1FP8lxfZNyxMcx304LcqYe/x4I8kngkun1Xx
-         lOGN5pidvWn92rQ6NiUJfzxZt0UBOMAM3iy5/Tn5iaSQnD4WRf0MkGXb1Q7b9STpK3Kc
-         nqrRVxVLRvaF3J0lveN8ssMAQMrQiuaBXtO5Lm+8cWUaEIo7GwGaEnlRw4eaNZij12rC
-         SEJhfX/6iUEZZyYDEvtdhRyIoFIoufRRGPu5u8On6YZP/qfrjW1/Og91+/zQMiyCaRHe
-         GDMniJfkRcQhRuU3R6cd/IRGJoNqtz0Doxf/hn6JTzX7rjANAWyuvumFVPNnvdbO6Ygu
-         rfew==
+        bh=xothMHvVSxnWIQ9LZMHqLA249Sx3wnBWK8WN0S3U6VI=;
+        b=ENe2zwiausGrNhjdmeJkAz+YsTrCNZHHmjEvUejv9hCgGFzGzfBYFVK4TDbaE6MYnR
+         F65dvr7wht0NmBOPGVDrirco1XoBt5S8s6bdzPcsoTKPyt/eZxtKjSo3gl2+2KIpEbcN
+         8yQdYZ5oWqOEm7HOV2TTJzr7VOK0vKEBuHHXCDr4uIF61vdAXhyO23x6n/9IS0CG4dZa
+         BCg+B5KJ8Ft7ckgLNJLNfe2v6A3/X4M2b/5UZj8fiUZdhiU31YApKB7QPx9ikBSVjYCT
+         shYlxBebwsLlvbuJdFFUy4Zemhfq5tTFCBxv830Nvr+KxEwzB4GpGC0Tvw5ma+PaKVHV
+         voyg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720561225; x=1721166025;
+        d=1e100.net; s=20230601; t=1720561226; x=1721166026;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=7lpqCjYsPcG0uUiH2tzp+60eXf8ot/bmvAS/AsFKwIw=;
-        b=SEs61Gahlwa5lnnam6isFYdNms4b3CLOKnsJ6YPr9swk6zzBrtFmD2JIsrZFhGJlRW
-         bhiHAH2Mb/+Z+18vAVKPAEZLVGJRNKWa63C3mLknYqeg0YYpjhy3gy1kYynJGn4CVLlv
-         EfND1avt9KP3KrkF3yMQSjx81SAhKzRfhw6H6JcAqbGkdMelGQsniPVpKofnoEWP5BM4
-         HQPdIcoY6Rb9CHp0u3ubY2z/oX4G2OLpnq0p1Jd20X/ts//PrjnAvzwpsQnZ3riP5q9R
-         j8svS3r3vNLxY0CXom7lt6GtGjRWwrUJ2/Lg7vvAntMsAJVEgpTlVEXHfh9qc5ALGUrz
-         BgVQ==
-X-Gm-Message-State: AOJu0YxOOjn1DXFbvsznQiiJnyi2PDzEVmPoZUMHWD1ESVcLT2sovv7Z
-	ykL0LQWaoMEf/ks3PCuDakX1Cs0FeNeobVweVJuj6LpUEt1fDliX1FpYvg9b//I=
-X-Google-Smtp-Source: AGHT+IFls4kLacC2cUtPpws0IXCl3vb0Nxxr94hSgGvPh26iEjUxTkusST9OoglmDUFbVRVP/MbnFQ==
-X-Received: by 2002:a05:6512:3b20:b0:52c:adc4:137c with SMTP id 2adb3069b0e04-52eb99949a2mr2749743e87.20.1720561225188;
-        Tue, 09 Jul 2024 14:40:25 -0700 (PDT)
+        bh=xothMHvVSxnWIQ9LZMHqLA249Sx3wnBWK8WN0S3U6VI=;
+        b=Dcicr5lAbpgGOvKdzCq01PB0gQ9WAXQuol2fzhHL+ZW0Ur+xV6HobOoS7abYd/g2Ci
+         9Rj7zFAI+VaJ9+ZmM5DkiJ+LVGPDUuxqv8XQlm98nM5ollI3jgHiZao20m+RZ/lapJn4
+         UE690Vl7BJvu+5kGjyxj+6ziW73e99ypu1Ka5MIdUC7Qw1lRmfv2xu/c/zMSJ08KZJwS
+         uNsjRidzQ/pHQrHU0hJ+iS0nhxNH34tQv0cZhADCYm1maJCmLY3onadAdj7CiNCJU4wF
+         SoGuilAyzSAP3HoBin9IbIPo9zdeJnenGHivqs5CnFXcMffD/FpRaAzOw4cSV0SyxGIY
+         G5+g==
+X-Gm-Message-State: AOJu0YygXkSMbXU+KyCgRDvtmIZptcOtiR4N7LALbCIsxY6+Dg6UsKdW
+	Kfhg+puTnmXuVJOeY15Df/01n2LyN+GAYfMNMvslOaY1xqoKNI7quc+g2aQn+HCwkvu+6EihTOD
+	2
+X-Google-Smtp-Source: AGHT+IGJj9MEwa3K+tfnuy70eCwgFHQEQfsBkkMYxKoeH2ZLFOBejBkiLKvMUu9N5dFSdAwNyKR+4A==
+X-Received: by 2002:a17:906:f598:b0:a77:c7d8:7b4c with SMTP id a640c23a62f3a-a780d22e380mr374993966b.11.1720561226105;
+        Tue, 09 Jul 2024 14:40:26 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-594bbe2d006sm1467718a12.31.2024.07.09.14.40.24
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a8541f7sm108063566b.154.2024.07.09.14.40.25
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
         Tue, 09 Jul 2024 14:40:25 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
@@ -56,9 +57,9 @@ X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 40/44] multipathd: implement add_map_without_path() with libmp_mapinfo()
-Date: Tue,  9 Jul 2024 23:39:31 +0200
-Message-ID: <20240709213935.177028-41-mwilck@suse.com>
+Subject: [PATCH 41/44] libmultipath: simplify dm_get_maps()
+Date: Tue,  9 Jul 2024 23:39:32 +0200
+Message-ID: <20240709213935.177028-42-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240709213935.177028-1-mwilck@suse.com>
 References: <20240709213935.177028-1-mwilck@suse.com>
@@ -70,136 +71,118 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Also, change the return value to int, as this is more expressive and
-the returned struct multipath isn't used by the caller.
-
-Note: this removes the call to remove_map() at the end of the function,
-which doesn't make sense anyway, because update_multipath_table()
-would not return error unless the table disassembly failed, in which
-case nothing would have been added the the mpvec or pathvec yet.
-It should be sufficient to just cleanup the local data structures when
-add_map_without_path() fails.
+Make dm_get_multipath() return a distinct error code for non-multipath
+targets. This way the extra call to dm_is_mpath() is not necessary any
+more. As dm_get_maps() is the only caller of dm_get_multipath(), transform
+it into a static function.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 69 ++++++++++++++++++++++++-----------------------
- 1 file changed, 36 insertions(+), 33 deletions(-)
+ libmultipath/devmapper.c | 44 +++++++++++++++++++++-------------------
+ libmultipath/devmapper.h |  1 -
+ 2 files changed, 23 insertions(+), 22 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 442a154..9e82188 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -707,48 +707,53 @@ fail:
- 	return 0;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 105e838..e653ca6 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -1169,40 +1169,43 @@ dm_disablegroup(const char * mapname, int index)
+ 	return dm_groupmsg("disable", mapname, index);
  }
  
--static struct multipath *
--add_map_without_path (struct vectors *vecs, const char *alias)
-+static int add_map_without_path (struct vectors *vecs, const char *alias)
+-struct multipath *dm_get_multipath(const char *name)
++static int dm_get_multipath(const char *name, struct multipath **pmpp)
  {
--	struct multipath * mpp = alloc_multipath();
-+	struct multipath __attribute__((cleanup(cleanup_multipath_and_paths)))
-+		*mpp = alloc_multipath();
-+	char __attribute__((cleanup(cleanup_charp))) *params = NULL;
-+	char __attribute__((cleanup(cleanup_charp))) *status = NULL;
- 	struct config *conf;
-+	char uuid[DM_UUID_LEN];
-+	int rc = DMP_ERR;
+ 	struct multipath __attribute((cleanup(cleanup_multipath))) *mpp = NULL;
+ 	char uuid[DM_UUID_LEN];
++	int rc;
  
--	if (!mpp)
+ 	mpp = alloc_multipath();
+ 	if (!mpp)
 -		return NULL;
--	if (!alias) {
--		free(mpp);
--		return NULL;
--	}
-+	if (!mpp || !(mpp->alias = strdup(alias)))
 +		return DMP_ERR;
  
--	mpp->alias = strdup(alias);
+ 	mpp->alias = strdup(name);
+ 
+ 	if (!mpp->alias)
+-		return NULL;
++		return DMP_ERR;
+ 
+-	if (libmp_mapinfo(DM_MAP_BY_NAME,
 +	if ((rc = libmp_mapinfo(DM_MAP_BY_NAME,
-+				(mapid_t) { .str = mpp->alias },
-+				(mapinfo_t) {
-+					.uuid = uuid,
-+					.tgt_type = TGT_MPATH,
-+					.dmi = &mpp->dmi,
-+					.target = &params,
-+					.status = &status,
-+				})) != DMP_OK)
-+		return rc;
-+
-+	if (!is_mpath_uuid(uuid))
-+		return DMP_NO_MATCH;
-+	else
-+		strlcpy(mpp->wwid, uuid + UUID_PREFIX_LEN, sizeof(mpp->wwid));
- 
--	if (dm_get_info(mpp->alias, &mpp->dmi) != DMP_OK) {
--		condlog(3, "%s: cannot access table", mpp->alias);
--		goto out;
--	}
--	if (!strlen(mpp->wwid))
--		dm_get_wwid(mpp->alias, mpp->wwid, WWID_SIZE);
- 	if (!strlen(mpp->wwid))
- 		condlog(1, "%s: adding map with empty WWID", mpp->alias);
-+
- 	conf = get_multipath_config();
- 	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
- 	put_multipath_config(conf);
- 
--	if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK)
--		goto out;
-+	if ((rc = update_multipath_table__(mpp, vecs->pathvec, 0, params, status)) != DMP_OK)
-+		return DMP_ERR;
- 
- 	if (!vector_alloc_slot(vecs->mpvec))
--		goto out;
--
--	vector_set_slot(vecs->mpvec, mpp);
-+		return DMP_ERR;
-+	vector_set_slot(vecs->mpvec, steal_ptr(mpp));
- 
- 	if (update_map(mpp, vecs, 1) != 0) /* map removed */
+ 			  (mapid_t) { .str = name },
+ 			  (mapinfo_t) {
+ 				  .size = &mpp->size,
+ 				  .uuid = uuid,
+ 				  .dmi = &mpp->dmi,
+ 				  .tgt_type = TGT_MPATH
+-			  }) != DMP_OK)
 -		return NULL;
-+		return DMP_ERR;
++			  })) != DMP_OK)
++		return rc;
  
--	return mpp;
--out:
--	remove_map(mpp, vecs->pathvec, vecs->mpvec);
--	return NULL;
+ 	if (!is_mpath_uuid(uuid))
+-		return NULL;
++		return DMP_NO_MATCH;
+ 
+ 	strlcpy(mpp->wwid, uuid + UUID_PREFIX_LEN, sizeof(mpp->wwid));
+-	return steal_ptr(mpp);
++	*pmpp = steal_ptr(mpp);
++
 +	return DMP_OK;
  }
  
- static int
-@@ -862,14 +867,9 @@ int
- ev_add_map (char * dev, const char * alias, struct vectors * vecs)
+ int dm_get_maps(vector mp)
  {
- 	struct multipath * mpp;
--	int reassign_maps;
-+	int reassign_maps, rc;
- 	struct config *conf;
+-	struct multipath * mpp;
++	struct multipath *mpp = NULL;
+ 	struct dm_task __attribute__((cleanup(cleanup_dm_task))) *dmt = NULL;
+ 	struct dm_names *names;
+ 	unsigned next = 0;
+@@ -1227,20 +1230,19 @@ int dm_get_maps(vector mp)
+ 	}
  
--	if (dm_is_mpath(alias) != DM_IS_MPATH_YES) {
--		condlog(4, "%s: not a multipath map", alias);
--		return 0;
--	}
+ 	do {
+-		if (dm_is_mpath(names->name) != DM_IS_MPATH_YES)
+-			goto next;
 -
- 	mpp = find_mp_by_alias(vecs->mpvec, alias);
+-		mpp = dm_get_multipath(names->name);
+-		if (!mpp)
+-			return 1;
+-
+-		if (!vector_alloc_slot(mp)) {
+-			free_multipath(mpp, KEEP_PATHS);
++		switch (dm_get_multipath(names->name, &mpp)) {
++		case DMP_OK:
++			if (!vector_alloc_slot(mp)) {
++				free_multipath(mpp, KEEP_PATHS);
++				return 1;
++			}
++			vector_set_slot(mp, mpp);
++			break;
++		case DMP_NO_MATCH:
++			break;
++		default:
+ 			return 1;
+ 		}
+-
+-		vector_set_slot(mp, mpp);
+-next:
+ 		next = names->next;
+ 		names = (void *) names + next;
+ 	} while (next);
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index cb5151e..d9e9bcc 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -179,7 +179,6 @@ int dm_rename (const char * old, char * new, char * delim, int skip_kpartx);
+ int dm_reassign(const char * mapname);
+ int dm_reassign_table(const char *name, char *old, char *new);
+ int dm_setgeometry(struct multipath *mpp);
+-struct multipath *dm_get_multipath(const char *name);
  
- 	if (mpp) {
-@@ -907,10 +907,13 @@ ev_add_map (char * dev, const char * alias, struct vectors * vecs)
- 	/*
- 	 * now we can register the map
- 	 */
--	if ((mpp = add_map_without_path(vecs, alias))) {
-+	if ((rc = add_map_without_path(vecs, alias)) == DMP_OK) {
- 		sync_map_state(mpp);
- 		condlog(2, "%s: devmap %s registered", alias, dev);
- 		return 0;
-+	} else if (rc == DMP_NO_MATCH) {
-+		condlog(4, "%s: not a multipath map", alias);
-+		return 0;
- 	} else {
- 		condlog(2, "%s: ev_add_map failed", dev);
- 		return 1;
+ #define VERSION_GE(v, minv) ( \
+ 	(v[0] > minv[0]) || \
 -- 
 2.45.2
 
