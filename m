@@ -1,65 +1,64 @@
-Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com [209.85.208.41])
+Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87C90187879
-	for <dm-devel@lists.linux.dev>; Tue,  9 Jul 2024 21:40:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E38B189F4F
+	for <dm-devel@lists.linux.dev>; Tue,  9 Jul 2024 21:40:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720561230; cv=none; b=g9r3twXGJDcqFlp2nmhdig9TA9Hv81weVgs0ytlv7Ag2APhmTT581gdQZ0AarF7g8D7C1SFx9hFtuLIvbIyRNajuKNTj3vx0W1EhKx81xHVX7+Tzc9Xylr/qUU+b7I8lN+weLro5et5pMnTaiiHo/LJz51ii8wF6kBoD0aWcmOo=
+	t=1720561231; cv=none; b=dlKLEXz0pfVpGkGxyCuUsqDWjCRTcBOZTASLGfN28c+sHq403l0OGoOsePjBEvDtfGamzkDcWUT8fDxvmc1KHpDyeeob6HD0hnRh74mf1+9rwdBIpN4MA5yLbIiYXOCQFiQH9md0PYWgE4oO3In1aLUORyNIbLRjvyK6oq402oI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720561230; c=relaxed/simple;
-	bh=4iQdFJUqg1TGMM4SFDi+cPVzxU9O6Hc8Vu0lTxWr79o=;
+	s=arc-20240116; t=1720561231; c=relaxed/simple;
+	bh=9yPeYTyaES73Y0zvzexik6rdxaoE8fejNLQVUYBBf6k=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=KiyLsFSEdja/ajMIMPFyABEcgIgVmfDCL4cOdmwRdNWbOzMPv+7ousNSeSbjoJ64NG21J4SGQOS8MJP3AlVGrH4IoGsXhex62UzMWijsk4wq4rLySUujevwcU9hYrjXgOEVLlBLdb+ZRXd9wLOGA+NKap+RebXNQ93Bg4L1jF7g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Zv+9JMaV; arc=none smtp.client-ip=209.85.208.41
+	 MIME-Version; b=kUA6rQdiNgeHBLo4/33k2L6oaZf38uGol1X58CWa5lC1DCPWRs6CZ8v0N+FkgAHTgxaTfc8AzFC9izD/HqnGH7PUwJgWeqRqHJ//kaVq/Pkj8Xs9pwfNzjxyXG0Ntr1kIKPibXDHljfTwVrnSTYsY9iyMg56rGnQ90A+h4HmTDs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=X76wYZyh; arc=none smtp.client-ip=209.85.208.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Zv+9JMaV"
-Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-58b966b41fbso7196873a12.1
-        for <dm-devel@lists.linux.dev>; Tue, 09 Jul 2024 14:40:28 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="X76wYZyh"
+Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-58b966b4166so6855853a12.1
+        for <dm-devel@lists.linux.dev>; Tue, 09 Jul 2024 14:40:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1720561227; x=1721166027; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1720561228; x=1721166028; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=o/J7dgWf2/69kUcpJUs2AGuK82UmnBkiAPK9AVx4Hyc=;
-        b=Zv+9JMaVO+1U6/uLM8pWSMCu9XLrhur0HSn67BL5M72mQOrIgm6w30dYhGUqs2EN6X
-         y7PSheyi68MZ1IQuLitYEUkn5TY/JFsYt2bKxnvpu5MDVIJnLcSIB2rw4eMeBfVeB5+K
-         rK0ZGJ2zhpoOBe0wA6r2YziabukwwA/IYhfuGLkeHMZHfMt8vAgFtSdA1XyY/uOJZoI4
-         eVZw7BLC/eut746cF7KRFveooSII6sm19u3IiXbT3NBNGC9jSANBjLJJ59rUiHtUbLRr
-         yxfoJ9NQyOW1CPJqSEuboTswdlaQfL4d+ns49eRWEEOlsDa9I0k3+R9gnMQDOhbVHxfl
-         FZSA==
+        bh=YjplwhGsUUcOcz3UU0OLimLGXczxmpE6ecTou/suFyU=;
+        b=X76wYZyh5+FTms3aKWMBPnpf4VdgFXgAnEY5QPn/gKgbqRq9fsrZJako5w7eRgGec4
+         AeoXozNd530tQaTQPESj6bzwGSpU9wKPaDzjyZStx4WS+vfUNgt0LWQgy/Nh0PkvTR/f
+         WZNhQz7HmCQ9ACUmzHf2OHtgoul2hR3T29EKHfkdF86KuuV4mp7fn9UWkCnfEGnZjGkK
+         UTA/H+dd7eXneTVbZAAFrVmnpxskYkpRuJ6DtuXznbAWW/LIdeR3AtuFghC+HejGRsTF
+         3Hn8PQ9p5zNiGPx526nqxAzxJOmU05uDtymo/VUnqoVDybx7l1zL+gILXvjBQokRdas2
+         rIKw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720561227; x=1721166027;
+        d=1e100.net; s=20230601; t=1720561228; x=1721166028;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=o/J7dgWf2/69kUcpJUs2AGuK82UmnBkiAPK9AVx4Hyc=;
-        b=QuBXwZk3GuYr5KIoRzneffE9ZGXMUW7qt8PLxAMBCJ2TzvvU3kpdqMZrIyl+9w9IkY
-         M83vaOM7J2LLJFACwobIheNKKkwPXvkgne/nX94vy2MX8dgMP8X3i6PeG4BV9L2gWTvx
-         Fm6bCWqn2uRq2caOa7l/BCPWVUjNeYrgoqDFuKvwd2w7fEkWrTUl0iNFVnepNnzjDWkz
-         w59LHP1fkA5L3qXMCAXWesSYZv/cSCpiiTOUTFypO68u0WCePS+OR8agRO6zYBcj2bNG
-         YsfkUOYrAoHMbBDAl5z0tu4HM/hzEkq9mO5rGLPbBFyMz0I/DFNcWigqsQZooHYzA5cq
-         dEqw==
-X-Gm-Message-State: AOJu0YzxBTu0zj9ByLsLPgbP2W8NWygb+p+1b9eTMYWqGojGDuZqXD95
-	opsWXMG/A+0KupxXCoSaMMiKuJEFhOEHUD8kQsEfT27FwTszuRgOwaSFEl6Gq/lv2KamHqrY19o
-	p
-X-Google-Smtp-Source: AGHT+IGSKZgafv+fGOIVfhEKCxEBJfygrGK0a26LnqgQpV+Z4ScbNLrxIvN3d1ZSB+83d1PjbRhrmg==
-X-Received: by 2002:a17:907:6e88:b0:a72:7ae5:66df with SMTP id a640c23a62f3a-a780b89a23dmr284983866b.67.1720561226924;
-        Tue, 09 Jul 2024 14:40:26 -0700 (PDT)
+        bh=YjplwhGsUUcOcz3UU0OLimLGXczxmpE6ecTou/suFyU=;
+        b=o9trLxFoNt15bKRgoyMDtgjJyIBrziRCjXjCtgzMgUR/QK/26KIuski9UJkT+VHty0
+         U3/Ds6xDyIdEGpFxFeE49i+xGIe4r1Y1DS88a86UFKIKtM86BqSC2im4X6ia8a/Bm7Xp
+         D6pXlBUa1hEUMgIahaAwLMwRTZdYUU/FfttZJv0Jbs2xIgfaIpJDWFQVG376RCfwc3U9
+         WH0TF0cnCbxuDTwHbAeXShyMAytcgsWUD8kl1f5Z79dNHLl1ccKoD73rGWyP7emaSWR0
+         njtgI677A4lknn3yI2I+U53l/kf69azr1dLZQV4BtbwVVkjlpo1n4C5D2KS+SRhdz0BL
+         Johg==
+X-Gm-Message-State: AOJu0Yz5eEc9SktPr47rKsxxQNkekwlNGwfw4Z8dljUl+RfoR5gEY868
+	kEg+2P0RkZHeQiKsHmgng39mzbFaVWIxlnNkX4GMqAt9sWOlzRmuFSogg/Tu67s=
+X-Google-Smtp-Source: AGHT+IHgigBg6T7npMedWT2WqkmUKKeEvlYqwbPd+eoNf5ZugcJiy5Fn915rtiYrtwjy0OplJLkopA==
+X-Received: by 2002:aa7:da8b:0:b0:57c:5fcf:b570 with SMTP id 4fb4d7f45d1cf-594bc7ca0fbmr2312649a12.32.1720561227719;
+        Tue, 09 Jul 2024 14:40:27 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a6bc6cdsm108713466b.23.2024.07.09.14.40.26
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-594bda310a4sm1469019a12.90.2024.07.09.14.40.27
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 09 Jul 2024 14:40:26 -0700 (PDT)
+        Tue, 09 Jul 2024 14:40:27 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 42/44] llibmultipath: fix return code check for dm_is_suspended()
-Date: Tue,  9 Jul 2024 23:39:33 +0200
-Message-ID: <20240709213935.177028-43-mwilck@suse.com>
+Subject: [PATCH 43/44] libmpathpersist: use libmp_mapinfo() in get_mpvec()
+Date: Tue,  9 Jul 2024 23:39:34 +0200
+Message-ID: <20240709213935.177028-44-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240709213935.177028-1-mwilck@suse.com>
 References: <20240709213935.177028-1-mwilck@suse.com>
@@ -71,27 +70,101 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-dm_is_suspended returns non-null if it failed to obtain the device
-information. It's wrong to assume in this case that the device is suspended.
+When obtaining the map name, make sure right away that the map is a multipath
+device. This saves an ioctl and slightly simplifies the function.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmpathpersist/mpath_persist_int.c | 51 ++++++++++++++---------------
+ 1 file changed, 24 insertions(+), 27 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index e653ca6..e9a0103 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -604,7 +604,7 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
- 	/* If the resume failed, dm will leave the device suspended, and
- 	 * drop the new table, so doing a second resume will try using
- 	 * the original table */
--	if (dm_is_suspended(mpp->alias))
-+	if (dm_is_suspended(mpp->alias) == 1)
- 		dm_simplecmd(DM_DEVICE_RESUME, mpp->alias,
- 			     DMFL_NEED_SYNC | (flush ? 0 : DMFL_NO_FLUSH),
- 			     udev_flags);
+diff --git a/libmpathpersist/mpath_persist_int.c b/libmpathpersist/mpath_persist_int.c
+index 5a5ac3b..a3e7bd8 100644
+--- a/libmpathpersist/mpath_persist_int.c
++++ b/libmpathpersist/mpath_persist_int.c
+@@ -157,10 +157,9 @@ static int get_mpvec(vector curmp, vector pathvec, char *refwwid)
+ static int mpath_get_map(vector curmp, vector pathvec, int fd, char **palias,
+ 			 struct multipath **pmpp)
+ {
+-	int ret = MPATH_PR_DMMP_ERROR;
++	int rc;
+ 	struct stat info;
+-	int major, minor;
+-	char *alias;
++	char alias[WWID_SIZE], uuid[DM_UUID_LEN];
+ 	struct multipath *mpp;
+ 
+ 	if (fstat(fd, &info) != 0){
+@@ -172,47 +171,45 @@ static int mpath_get_map(vector curmp, vector pathvec, int fd, char **palias,
+ 		return MPATH_PR_FILE_ERROR;
+ 	}
+ 
+-	major = major(info.st_rdev);
+-	minor = minor(info.st_rdev);
+-	condlog(4, "Device  %d:%d", major, minor);
+-
+ 	/* get alias from major:minor*/
+-	alias = dm_mapname(major, minor);
+-	if (!alias){
+-		condlog(0, "%d:%d failed to get device alias.", major, minor);
++	rc = libmp_mapinfo(DM_MAP_BY_DEV,
++			   (mapid_t) { ._u = { major(info.st_rdev), minor(info.st_rdev) } },
++			   (mapinfo_t) {
++				   .name = alias,
++				   .uuid = uuid,
++				   .tgt_type = TGT_MPATH,
++			   });
++
++	if (rc == DMP_NO_MATCH || !is_mpath_uuid(uuid)) {
++		condlog(3, "%s: not a multipath device.", alias);
++		return MPATH_PR_DMMP_ERROR;
++	} else if (rc != DMP_OK) {
++		condlog(1, "%d:%d failed to get device alias.",
++			major(info.st_rdev), minor(info.st_rdev));
+ 		return MPATH_PR_DMMP_ERROR;
+ 	}
+ 
+-	condlog(3, "alias = %s", alias);
+-
+-	if (dm_is_mpath(alias) != DM_IS_MPATH_YES) {
+-		condlog(3, "%s: not a multipath device.", alias);
+-		goto out;
+-	}
++	condlog(4, "alias = %s", alias);
+ 
+ 	/* get info of all paths from the dm device     */
+-	if (get_mpvec(curmp, pathvec, alias)){
++	if (get_mpvec(curmp, pathvec, alias)) {
+ 		condlog(0, "%s: failed to get device info.", alias);
+-		goto out;
++		return MPATH_PR_DMMP_ERROR;
+ 	}
+ 
+ 	mpp = find_mp_by_alias(curmp, alias);
+ 
+ 	if (!mpp) {
+ 		condlog(0, "%s: devmap not registered.", alias);
+-		goto out;
++		return MPATH_PR_DMMP_ERROR;
+ 	}
+ 
+-	ret = MPATH_PR_SUCCESS;
+ 	if (pmpp)
+ 		*pmpp = mpp;
+-	if (palias) {
+-		*palias = alias;
+-		alias = NULL;
+-	}
+-out:
+-	free(alias);
+-	return ret;
++	if (palias && (*palias = strdup(alias)) == NULL)
++		return MPATH_PR_DMMP_ERROR;
++
++	return MPATH_PR_SUCCESS;
+ }
+ 
+ int do_mpath_persistent_reserve_in(vector curmp, vector pathvec,
 -- 
 2.45.2
 
