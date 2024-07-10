@@ -1,124 +1,144 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E1C2194A45
-	for <dm-devel@lists.linux.dev>; Wed, 10 Jul 2024 15:46:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA26B198E80
+	for <dm-devel@lists.linux.dev>; Wed, 10 Jul 2024 16:31:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720626394; cv=none; b=aQJDjGky0TJnCQ2zDuXU5IlHggcTAB+qPIGF31rR56Vofpe773uFn65TnT/s0+rBSIwmlN+jvG4bNLeLkFPVDDGBggSfJ7j7gn7MmAxr//bl4Jum8o+xeJyOoK/wX+NQIwup00HJlogF4SMY5qnmiN6jwPp//vBHwV+vqk544u0=
+	t=1720629065; cv=none; b=BlPOA5LE5yI1wGaAnT8BUykr0LREmMmx0yB08IXuL9eg3+hw5DCMmKvezea0BvgTElkCXy5L/lK8nLwtu84mwYAPAbQBhm4mbFuGY0+v1qjRQe44sw5Zpx7djd3JR3zQE2wseXPB2sR+LFtTwKswlDxrvhpycWenJxEVUHHnK20=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720626394; c=relaxed/simple;
-	bh=YLZkxBGjqD2NAo+Iq2HBUifNeuVDJddhpSDR7uVvQuI=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=k3hIguvUcKDvZioJezI3tKrmC8ycVUVCCemn72FaLTzouTtDPhsVr/Q3duogJqXP2rPUS6csgTCTZlAJ7syzhYqK4E9Qb7rRsBoL3YOwbUBcx4XQviU4MGD+xGAboJauOsB/jWNhBP/VwkTCtGURQOanvzw6P6umG8M41taH/GU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I/HclOn/; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1720629065; c=relaxed/simple;
+	bh=647qyCCarnKPBFnuidMLupkwwlECw8a71BbX5bI+erI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=VJcT6deqof/SlrQZ+2eHFuLLVrCZT7Rngg6F/W+rUXSDEuGa2dxWawovwYc3UXHzJ3wHERpgH7R0WVtEgPRuVkG0e7UmbZ2o3j9EvIGMuckq69rWPhydu6phX+5ZvM4RNFzSrEnsyxANk+MBsiMZEx39BvyMUOPd/x6FGP/uF0s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NZ++I+Rx; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I/HclOn/"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NZ++I+Rx"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1720626390;
+	s=mimecast20190719; t=1720629062;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=fb3PcI/pBVUB0MBEt97v8xh97i2M6YPEg2sdiVOw+Ig=;
-	b=I/HclOn/ZgIhWAHErGqv32lvRC0lM6pSNj6LgAEvXjAWVZaoUijXsWGDrniZm252HJVKgx
-	l1GgDw64yTbjkPaywFs6QO+SR0y1iiQoRFGlyzAm/xpB3O5izO4pqV9b38A/ZZ8ShLbwNQ
-	bmis8fJSYtKi05ldCOYmaHONwTCe1io=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	bh=D+iq3w4KLOgafkfujMH8WGp9rSv3jnYHbEgriYXVueA=;
+	b=NZ++I+RxWxY/ZKajM7pdHN3y7Gl16YaW8tLL70dHBLTtDhytzZLHEhA3F32LIhEFh4ZOa8
+	eAgQH3ZlqgKoDp1T5+bGcpSIVQp3y+efhWr6DXMeY05mLE8khK2sZ9Ep/rO1Uwxsvi600g
+	YGWAkM+FsLtplB3VIIh5U2o6pnogMJY=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-153-wqRP_APKN8SfGYrsZCiLJQ-1; Wed,
- 10 Jul 2024 11:46:26 -0400
-X-MC-Unique: wqRP_APKN8SfGYrsZCiLJQ-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-564-YyvnL3axNV2yNd5HlGdJTQ-1; Wed,
+ 10 Jul 2024 12:30:59 -0400
+X-MC-Unique: YyvnL3axNV2yNd5HlGdJTQ-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A7A201977000;
-	Wed, 10 Jul 2024 15:46:25 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5146C1955F3B;
-	Wed, 10 Jul 2024 15:46:25 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id BB19D30C1C1C; Wed, 10 Jul 2024 15:46:23 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id B7BD041970;
-	Wed, 10 Jul 2024 17:46:23 +0200 (CEST)
-Date: Wed, 10 Jul 2024 17:46:23 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Bryan Gurney <bgurney@redhat.com>
-cc: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>, 
-    linux-block@vger.kernel.org, dm-devel@lists.linux.dev, snitzer@kernel.org
-Subject: Re: [PATCH blktests] dm/002: repeat dmsetup remove command on failure
- with EBUSY
-In-Reply-To: <CAHhmqcT6F_b8ZJMbm9jbL0Zg-vv6zq9oxfMttzf1K4GH-zz=NQ@mail.gmail.com>
-Message-ID: <e767864a-7ecf-8459-30d5-daa654b4c0d2@redhat.com>
-References: <20240709124441.139769-1-shinichiro.kawasaki@wdc.com> <CAHhmqcT6F_b8ZJMbm9jbL0Zg-vv6zq9oxfMttzf1K4GH-zz=NQ@mail.gmail.com>
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 746E51955F56;
+	Wed, 10 Jul 2024 16:30:58 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 246A719560AE;
+	Wed, 10 Jul 2024 16:30:58 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46AGUuQE1910216
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 10 Jul 2024 12:30:56 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46AGUu3T1910215;
+	Wed, 10 Jul 2024 12:30:56 -0400
+Date: Wed, 10 Jul 2024 12:30:56 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev
+Subject: Re: [PATCH 06/44] kpartx.rules: use @BINDIR@ to locate kpartx
+Message-ID: <Zo63QKdTJPxeBwdo@redhat.com>
+References: <20240709213935.177028-1-mwilck@suse.com>
+ <20240709213935.177028-7-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="185210117-164662512-1720626383=:1964515"
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+In-Reply-To: <20240709213935.177028-7-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
---185210117-164662512-1720626383=:1964515
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-
-
-
-On Wed, 10 Jul 2024, Bryan Gurney wrote:
-
-> On Tue, Jul 9, 2024 at 8:44 AM Shin'ichiro Kawasaki
-> <shinichiro.kawasaki@wdc.com> wrote:
-> >
-> > The test case dm/002 rarely fails with the message below:
-> >
-> > dm/002 => nvme0n1 (dm-dust general functionality test)       [failed]
-> >     runtime  0.204s  ...  0.174s
-> >     --- tests/dm/002.out        2024-06-14 14:37:40.480794693 +0900
-> >     +++ /home/shin/Blktests/blktests/results/nvme0n1/dm/002.out.bad     2024-06-14 21:38:18.588976499 +0900
-> >     @@ -7,4 +7,6 @@
-> >      countbadblocks: 0 badblock(s) found
-> >      countbadblocks: 3 badblock(s) found
-> >      countbadblocks: 0 badblock(s) found
-> >     +device-mapper: remove ioctl on dust1  failed: Device or resource busy
-> >     +Command failed.
-> >      Test complete
-> > modprobe: FATAL: Module dm_dust is in use.
-> >
-> > This failure happens at "dmsetup remove" command, when the previous
-> > operation on the dm device is still ongoing. In this case,
-> > dm_open_count() is non-zero, then IOCTL for device remove fails and
-> > EBUSY is returned.
-> >
-> > To avoid the failure, retry the "dmsetup remove" command when it fails
-> > with EBUSY. Introduce the helper function _dm_remove for this purpose.
-> >
-> > Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+On Tue, Jul 09, 2024 at 11:38:57PM +0200, Martin Wilck wrote:
+> The path for kpartx should match the installed binary.
 > 
-> I think this looks good, and I tested it on my system:
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  .gitignore                               | 1 +
+>  kpartx/Makefile                          | 4 ++--
+>  kpartx/{kpartx.rules => kpartx.rules.in} | 2 +-
+>  3 files changed, 4 insertions(+), 3 deletions(-)
+>  rename kpartx/{kpartx.rules => kpartx.rules.in} (96%)
 > 
-> Reviewed-by: Bryan Gurney <bgurney@redhat.com>
-> 
-> 
-> I want to cc dm-devel and the device-mapper maintainers, in case there
-> are any questions on this test.  (It's probably a good idea to cc
-> dm-devel for any "dm" blktests.)
+> diff --git a/.gitignore b/.gitignore
+> index 049ffe8..355ddbb 100644
+> --- a/.gitignore
+> +++ b/.gitignore
+> @@ -12,6 +12,7 @@ config.mk
+>  cscope.files
+>  cscope.out
+>  kpartx/kpartx
+> +kpartx/kpartx.rules
+>  multipath/multipath
+>  multipath/multipath.8
+>  multipath/multipath.conf.5
+> diff --git a/kpartx/Makefile b/kpartx/Makefile
+> index 7720a74..0d4c798 100644
+> --- a/kpartx/Makefile
+> +++ b/kpartx/Makefile
 
-I think it would be better to find out which code keeps the DM device open 
-and fix that.
+Shouldn't we have
 
-It is generally assumed that a DM device can be removed when you close it. 
-If not, there's a bug somewhere else (and this patch is just papering over 
-the bug).
+all: $(EXEC) kpartx.rules
 
-Mikulas
---185210117-164662512-1720626383=:1964515--
+so that kpartx.rules gets create when running "make", like happens in the
+other makefiles?
+
+-Ben
+
+> @@ -19,7 +19,7 @@ $(EXEC): $(OBJS)
+>  	@echo building $@ because of $?
+>  	$(Q)$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+>  
+> -install: $(EXEC) $(EXEC).8
+> +install: $(EXEC) $(EXEC).8 kpartx.rules
+>  	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
+>  	$(Q)$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
+>  	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)
+> @@ -41,7 +41,7 @@ uninstall:
+>  	$(Q)$(RM) $(DESTDIR)$(libudevdir)/rules.d/68-del-part-nodes.rules
+>  
+>  clean: dep_clean
+> -	$(Q)$(RM) core *.o $(EXEC)
+> +	$(Q)$(RM) core *.o $(EXEC) kpartx.rules
+>  
+>  include $(wildcard $(OBJS:.o=.d))
+>  
+> diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules.in
+> similarity index 96%
+> rename from kpartx/kpartx.rules
+> rename to kpartx/kpartx.rules.in
+> index 8dd3369..9d87960 100644
+> --- a/kpartx/kpartx.rules
+> +++ b/kpartx/kpartx.rules.in
+> @@ -39,6 +39,6 @@ LABEL="mpath_kpartx_end"
+>  GOTO="kpartx_end"
+>  
+>  LABEL="run_kpartx"
+> -RUN+="/sbin/kpartx -un -p -part /dev/$name"
+> +RUN+="@BINDIR@/kpartx -un -p -part /dev/$name"
+>  
+>  LABEL="kpartx_end"
+> -- 
+> 2.45.2
 
