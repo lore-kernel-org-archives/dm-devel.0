@@ -1,68 +1,67 @@
-Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 489BB14532D
-	for <dm-devel@lists.linux.dev>; Thu, 11 Jul 2024 12:25:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC8BFD51C
+	for <dm-devel@lists.linux.dev>; Thu, 11 Jul 2024 12:32:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720700759; cv=none; b=lhG7nQnWEfgMKVzzfbr2M/wRoRVVG3yUrNyF/Y1iRr5uKJLWikVnzRor2YeDVDT0txgA+a+TM+U/j0xxLOMQwO+de0FuinhhtmB1iOqPexZBQfWzYthY5g0/TrmriutXbsarzmwJ+2NH5KuYyxhYhRHAt8j1TplpPnTojvqh7bo=
+	t=1720701169; cv=none; b=b6+Dx6J1nSGX39FMtp6JRt4A6DIqkK3diGVWrrYMcTMOco9eaBsAYGqFKSj2B0/gpmnbJGXX8EABTTa54lT27OizVgVAEyNwDoptalFK7vD7UiuFXKUoihFR2x9pa8oDL3WOk1KHzVdHbATmK8OZdFwv6+ZJzdYfer584bz9XB8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720700759; c=relaxed/simple;
-	bh=DUsj8ZeqKQUNoPV4nivxVDAcfeRynZ6DAsBfCkGJ1ks=;
+	s=arc-20240116; t=1720701169; c=relaxed/simple;
+	bh=gqVjUL28pmrJzLykFX2m4Kwjlfleh3MpLTW+kcfi6Q4=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Y5Ey2fNjl9dX3rvH2t6ym1tQ5HKrvZRMjFJmn5exS03uHYz9A2nkeyP3gT492xKAxPpr/weXyzDfhglAh//U6piObQSpe0v2tsb4PG4bvqaHzQ3B2U671A4+SnGMHcSaKumCxBkth9qX6AN1VxckuimlUi9NL9aqS+eJniS8+18=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=BNUcWRrP; arc=none smtp.client-ip=209.85.128.42
+	 Content-Type:MIME-Version; b=A78i48P0CTvxc1WMNidLw8eRCN9/3XysQdmi3nRfNOFucffwSI2aV46LQZ5CVeO51rKADc+aeHOrxVIv4tWNLupugaA3i5DklVMu1w6CJCcsNM7u/f8iSsXO1ehXGOuss+agVd1z0oruAnhOlBFtqYmY3lB612V69qilt2j8uQQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Q+nOvF9I; arc=none smtp.client-ip=209.85.221.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="BNUcWRrP"
-Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-4265c2b602aso5431625e9.3
-        for <dm-devel@lists.linux.dev>; Thu, 11 Jul 2024 05:25:56 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Q+nOvF9I"
+Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-367940c57ddso449539f8f.3
+        for <dm-devel@lists.linux.dev>; Thu, 11 Jul 2024 05:32:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1720700755; x=1721305555; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1720701165; x=1721305965; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=IJZwphXgyljxnv4KWbp98ZBtc0FndfD56F28+fsl/SM=;
-        b=BNUcWRrP4R7yz4U7MB3pt9/BVVHsSyL9kHf1ZJ12RB4OfMIjM5VbMxTbG0Gdd31T2i
-         ZjhZBdOjkqio2HgX3BgY58a0S9daJ1FejraWCe59N5xuN1kCSXiQ0wbURNe4I/sG+PBr
-         Ofn0NR4GXxE+GDCWPHHdZI0s5311aE1cUiYSBuMppf8RYCBOBn2g9QvC/+wp713muFKz
-         9pzS01L66Nh7YQBv5X4ErT1sFtfnKL/4Dp/0EYFcVzkH1ZVpATBb2kOQGNINr1rK5dol
-         tw4UAsODbS1aqDvPdTV8DaefNmjglaFUootqeAz7BL3QV0617upF6foYVw8ia9v4YnWZ
-         O8/w==
+        bh=voL+jZ69b5Ty3MytXNCJmzdK65MRsNhydQxzIrM8yEc=;
+        b=Q+nOvF9Ibn4X1KNKeaMs8AAd5SbXItUo7eD0UBBNEEt4WnJgj8uZ9FVA5ZqrEY9Y1D
+         BFQjwts0iyLsazfBIZ18ihpXBN2pcEC9QZtgVZeR/J35kh5U5fcqmO4bplEYwYK6hJuB
+         FoRwDdjEzsqd7eJhgKYrziEQrAcuA3Xb8e4NnXR+2U51ywBnZGLQbqMWn5Qzn6+zTqzX
+         ecSornepv5VMob7P8qSmZrN0Gh1cFGn/uzRcO760PgH/zOiGosw/qOqkQRmC2xdyGRHk
+         EUZrVSQHgclpYLpMG+NyonzHtVNXtgBW2PQVjQYrDzZlbbriPx6pGG4rl7clVEgdBMpx
+         cjOw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720700755; x=1721305555;
+        d=1e100.net; s=20230601; t=1720701165; x=1721305965;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=IJZwphXgyljxnv4KWbp98ZBtc0FndfD56F28+fsl/SM=;
-        b=udtxq8yfh5qzs41fPakejZS0fx0nHwqhxLixsJ9c72D0Dvl/gnRbwPj8tt7yA/oSlU
-         IlDGZZBBsuWlcALTdlajCPY86+KFqJqxj7u+rE4fn6AH50kdvY6R14ju8et4HyegY7fR
-         BgcLL+ct2dx8TXSoaEcZH5ZUTyJcx9ZtMIfOTCqZnGeBuVJPQ3GNIvU6h0yEOt8CDkFD
-         uL/aM6DbyYO6I2w+ZXNqamtD82BAUH7Ck1HTHNc0/II4pRdqjM0gWJd9k2QkW92T3J6z
-         tpn8Hz5ZROfmZYYtAYWTiRW+E0AWV+jf/LGOLj/+pdDZQCAFVgxjUQMypsKcSHhIFKoo
-         fzZw==
-X-Forwarded-Encrypted: i=1; AJvYcCWlzLB4QtBzifKlEAKi+TDXDJYD9LMhERcs1B0eF8lRKXESX9PbkvYhgNOBFM/2ZY4WtrTLZj0QSsEixcB4wbrl6NGgzyhjqGc=
-X-Gm-Message-State: AOJu0YyKRagn4rF2xQeG3L9M6EuG3smuYVwB8VKdhitJlyEzlnMuM9KZ
-	amZWKmFfHf6+fOpzONoHJHaWB0iExe6TKYarcrFsMTW4VyaMV/aPHolm4XLztZ8=
-X-Google-Smtp-Source: AGHT+IGUflcPniPjnNHBOCKD1QXz14V4auIngdSbxr+PR09zKFmMYn/ns8xZ4gqKq5FBKy+SgAhk2A==
-X-Received: by 2002:a05:600c:11c8:b0:426:607c:1863 with SMTP id 5b1f17b1804b1-426707e365fmr53391175e9.21.1720700755330;
-        Thu, 11 Jul 2024 05:25:55 -0700 (PDT)
+        bh=voL+jZ69b5Ty3MytXNCJmzdK65MRsNhydQxzIrM8yEc=;
+        b=gemSKj2rhszGFnV+9HDbyiRY9Y1mZ0Ix8fTDNH/OTzwZIrQCvuvd910Z2v7rl2Th4G
+         ncZLcQZaD4Cc4eT9xX4Jz0TytrSqoPy9UmeS3H2tsim/0X27knyMgEIbJ3ze8nqFATzY
+         uXrQ8WEHNF7pw0poHiNpNw+huSO/eRIf0Q1H3DjTLkxwmpjxjsNeVT95xcEt+bgo4qz5
+         EI9Xp4noWJePQA97gDikQ0UU1xU9uDOCbjxuWtx183svoz/hABIkaHAJjXj5uhVi9I/+
+         VJyjomHX6CbO6azzZtREBkr2xRcnYfVHmwYMoA7WQa71kI2zHwnc3L83iw2ltruYQxqW
+         8CYw==
+X-Forwarded-Encrypted: i=1; AJvYcCVv0ULpaJCI/lawzJPu1t/p2Eb3YxQUxRDCldRvboBswsWi5y5uWKTV7OyRvlDdfSMP8Dr9ceZVfpyCYrfX1U98uHfN+gT95Wc=
+X-Gm-Message-State: AOJu0Yy3pMdMF+YQayvDjLDLgwJ+q9mW/zbKnTx/fmTFTylcqjtaQKcF
+	n69pcpZQCdGN/t0OGuSY6alA/MnELjm4+sbostrUV5G2X1PwE2hvwrzNxD7xf9w=
+X-Google-Smtp-Source: AGHT+IEsgXXBzq9CWq1/V0pKBtLQX9UBo2Ll4znbJrigZlXWpi6jU7FKzKRtrYQ5s9nsgZE2W9XuQw==
+X-Received: by 2002:a5d:6346:0:b0:35f:24f5:e597 with SMTP id ffacd0b85a97d-367ceadb1afmr5417475f8f.65.1720701164833;
+        Thu, 11 Jul 2024 05:32:44 -0700 (PDT)
 Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4266f7430ffsm117101445e9.44.2024.07.11.05.25.54
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-367cdfb2327sm7646209f8f.116.2024.07.11.05.32.44
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 11 Jul 2024 05:25:55 -0700 (PDT)
-Message-ID: <c97168ac1c8d92b5403453f1be1190cda8a9d1e4.camel@suse.com>
-Subject: Re: [PATCH 23/44] libmultipath: improve dm_get_wwid() return value
- logic
+        Thu, 11 Jul 2024 05:32:44 -0700 (PDT)
+Message-ID: <9e2964e30e443c86488ceae6680edd1e1b59bff2.camel@suse.com>
+Subject: Re: [PATCH 28/44] libmultipath: implement dm_is_mpath() with new API
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
 	dm-devel@lists.linux.dev
-Date: Thu, 11 Jul 2024 14:25:54 +0200
-In-Reply-To: <Zo8aoNebaxrgKlzo@redhat.com>
+Date: Thu, 11 Jul 2024 14:32:43 +0200
+In-Reply-To: <Zo8lcu9JCzpZee8T@redhat.com>
 References: <20240709213935.177028-1-mwilck@suse.com>
-	 <20240709213935.177028-24-mwilck@suse.com> <Zo8aoNebaxrgKlzo@redhat.com>
+	 <20240709213935.177028-29-mwilck@suse.com> <Zo8lcu9JCzpZee8T@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.52.2 
@@ -73,184 +72,124 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Wed, 2024-07-10 at 19:34 -0400, Benjamin Marzinski wrote:
-> On Tue, Jul 09, 2024 at 11:39:14PM +0200, Martin Wilck wrote:
-> > Make dm_get_wwid() return different status codes for non-existing
-> > maps,
-> > maps that exists but are not multipath maps, and generic error
-> > case,
-> > and handle these return codes appropriately in callers.
-> >=20
+On Wed, 2024-07-10 at 20:21 -0400, Benjamin Marzinski wrote:
+> On Tue, Jul 09, 2024 at 11:39:19PM +0200, Martin Wilck wrote:
 > > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > > ---
-> > =C2=A0libmultipath/alias.c=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 5 +++--
-> > =C2=A0libmultipath/configure.c | 23 +++++++++++------------
-> > =C2=A0libmultipath/devmapper.c | 21 ++++++++++++++++-----
-> > =C2=A0libmultipath/wwids.c=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +-
-> > =C2=A0tests/alias.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 | 10 +++++-----
-> > =C2=A05 files changed, 36 insertions(+), 25 deletions(-)
+> > =C2=A0libmultipath/devmapper.c | 53 ++++++-----------------------------=
+-
+> > ----
+> > =C2=A01 file changed, 8 insertions(+), 45 deletions(-)
 > >=20
-> > diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-> > index 10e58a7..2ab9499 100644
-> > --- a/libmultipath/alias.c
-> > +++ b/libmultipath/alias.c
-> > @@ -408,13 +408,14 @@ static bool alias_already_taken(const char
-> > *alias, const char *map_wwid)
-> > =C2=A0{
-> > =C2=A0
-> > =C2=A0	char wwid[WWID_SIZE];
-> > +	int rc =3D dm_get_wwid(alias, wwid, sizeof(wwid));
-> > =C2=A0
-> > =C2=A0	/* If the map doesn't exist, it's fine */
-> > -	if (dm_get_wwid(alias, wwid, sizeof(wwid)) !=3D 0)
->=20
-> We used to assume the alias was not taken if dm_get_wwid() failed
-> with
-> an error. Now we assume that the alias is taken. I think we should
-> continue to assume we can use the alias if we get DM_ERR.
-
-I am not sure about this. but I can change it. I guess it's a corner
-case anyway, where there's no obvious right or wrong behavior.=C2=A0
-
-A DM_DEVICE_INFO call with this map name failed with an error other
-than ENXIO. By going on with this map name, we clearly risk that future
-failures will happen when we try to create or reload the map in
-question.
-
-
->=20
-> > +	if (rc =3D=3D DMP_NOT_FOUND)
-> > =C2=A0		return false;
-> > =C2=A0
-> > =C2=A0	/* If both the name and the wwid match, it's fine.*/
-> > -	if (strncmp(map_wwid, wwid, sizeof(wwid)) =3D=3D 0)
-> > +	if (rc =3D=3D DMP_OK && strncmp(map_wwid, wwid, sizeof(wwid))
-> > =3D=3D 0)
-> > =C2=A0		return false;
-> > =C2=A0
-> > =C2=A0	condlog(3, "%s: alias '%s' already taken, reselecting
-> > alias",
-> > diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> > index 666d4e8..565ea5c 100644
-> > --- a/libmultipath/configure.c
-> > +++ b/libmultipath/configure.c
-> > @@ -845,18 +845,17 @@ int domap(struct multipath *mpp, char
-> > *params, int is_daemon)
-> > =C2=A0
-> > =C2=A0	if (mpp->action =3D=3D ACT_CREATE && dm_map_present(mpp-
-> > >alias)) {
-> > =C2=A0		char wwid[WWID_SIZE];
-> > +		int rc =3D dm_get_wwid(mpp->alias, wwid,
-> > sizeof(wwid));
-> > =C2=A0
-> > -		if (dm_get_wwid(mpp->alias, wwid, sizeof(wwid)) =3D=3D
-> > 0) {
-> > -			if (!strncmp(mpp->wwid, wwid,
-> > sizeof(wwid))) {
-> > -				condlog(3, "%s: map already
-> > present",
-> > -					mpp->alias);
-> > -				mpp->action =3D ACT_RELOAD;
-> > -			} else {
-> > -				condlog(0, "%s: map \"%s\" already
-> > present with WWID %s, skipping",
-> > -					mpp->wwid, mpp->alias,
-> > wwid);
-> > -				condlog(0, "please check alias
-> > settings in config and bindings file");
-> > -				mpp->action =3D ACT_REJECT;
-> > -			}
-> > +		if (rc =3D=3D DMP_OK && !strncmp(mpp->wwid, wwid,
-> > sizeof(wwid))) {
-> > +			condlog(3, "%s: map already present",
-> > +				mpp->alias);
-> > +			mpp->action =3D ACT_RELOAD;
->=20
-> If we return DMP_NO_MATCH, we'll tell the user that the device is
-> already
-> present will a WWID of "". This is the same as before, but perhaps it
-> would be better to tell the user that the alias is in use by a
-> non-multipath device.
-
-Ok.
-
->=20
-> > +		} else if (rc =3D=3D DMP_OK || rc =3D=3D DMP_NO_MATCH) {
-> > +			condlog(1, "%s: map \"%s\" already present
-> > with WWID \"%s\", skipping\n"
-> > +				=C2=A0=C2=A0 "please check alias settings in
-> > config and bindings file",
-> > +				mpp->wwid, mpp->alias, wwid);
-> > +			mpp->action =3D ACT_REJECT;
-> > =C2=A0		}
-> > =C2=A0	}
-> > =C2=A0
-> > @@ -1320,7 +1319,7 @@ static int _get_refwwid(enum mpath_cmds cmd,
-> > const char *dev,
-> > =C2=A0		break;
-> > =C2=A0
-> > =C2=A0	case DEV_DEVMAP:
-> > -		if (((dm_get_wwid(dev, tmpwwid, WWID_SIZE)) =3D=3D 0)
-> > +		if (((dm_get_wwid(dev, tmpwwid, WWID_SIZE)) =3D=3D
-> > DMP_OK)
-> > =C2=A0		=C2=A0=C2=A0=C2=A0 && (strlen(tmpwwid)))
-> > =C2=A0			refwwid =3D tmpwwid;
-> > =C2=A0
 > > diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> > index 94ef369..1eebcb5 100644
+> > index 859a861..6276041 100644
 > > --- a/libmultipath/devmapper.c
 > > +++ b/libmultipath/devmapper.c
-> > @@ -829,19 +829,30 @@ int dm_get_map(const char *name, unsigned
-> > long long *size, char **outparams)
-> > =C2=A0	}
-> > =C2=A0}
+> > @@ -965,52 +965,15 @@ static int dm_type_match(const char *name,
+> > char *type)
 > > =C2=A0
-> > +/**
-> > + * dm_get_wwid(): return WWID for a multipath map
-> > + * @returns:
-> > + *=C2=A0=C2=A0=C2=A0 DMP_OK if successful
-> > + *=C2=A0=C2=A0=C2=A0 DMP_NOT_FOUND if the map doesn't exist
-> > + *=C2=A0=C2=A0=C2=A0 DMP_NO_MATCH if the map exists but is not a multi=
-path map
-> > + *=C2=A0=C2=A0=C2=A0 DMP_ERR for other errors
-> > + */
-> > =C2=A0int dm_get_wwid(const char *name, char *uuid, int uuid_len)
+> > =C2=A0int dm_is_mpath(const char *name)
 > > =C2=A0{
-> > =C2=A0	char tmp[DM_UUID_LEN];
-> > +	int rc =3D dm_get_dm_uuid(name, tmp);
+> > -	int r =3D DM_IS_MPATH_ERR;
+> > -	struct dm_task __attribute__((cleanup(cleanup_dm_task)))
+> > *dmt =3D NULL;
+> > -	struct dm_info info;
+> > -	uint64_t start, length;
+> > -	char *target_type =3D NULL;
+> > -	char *params;
+> > -	const char *uuid;
+> > +	char uuid[DM_UUID_LEN];
+> > +	int rc =3D libmp_mapinfo(DM_MAP_BY_NAME,
+> > +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 (mapid_t) { .str =3D name },
+> > +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 (mapinfo_t) { .uuid =3D uuid,
+> > .tgt_type =3D TGT_MPATH });
 > > =C2=A0
-> > -	if (dm_get_dm_uuid(name, tmp) !=3D DMP_OK)
-> > -		return 1;
-> > +	if (rc !=3D DMP_OK)
-> > +		return rc;
-> > =C2=A0
-> > =C2=A0	if (!strncmp(tmp, UUID_PREFIX, UUID_PREFIX_LEN))
-> > =C2=A0		strlcpy(uuid, tmp + UUID_PREFIX_LEN, uuid_len);
-> > -	else
-> > +	else {
+> > -	if (!(dmt =3D libmp_dm_task_create(DM_DEVICE_TABLE)))
+> > -		goto out;
+> > -
+> > -	if (!dm_task_set_name(dmt, name))
+> > -		goto out;
+> > -
+> > -	if (!libmp_dm_task_run(dmt)) {
+> > -		dm_log_error(3, DM_DEVICE_TABLE, dmt);
+> > -		goto out;
+> > -	}
+> > -
+> > -	if (!dm_task_get_info(dmt, &info))
+> > -		goto out;
+> > -
+> > -	r =3D DM_IS_MPATH_NO;
+> > -
+> > -	if (!info.exists)
+> > -		goto out;
+> > -
+> > -	uuid =3D dm_task_get_uuid(dmt);
+> > -
+> > -	if (!uuid || strncmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN)
+> > !=3D 0)
+> > -		goto out;
+> > -
+> > -	/* Fetch 1st target */
+> > -	if (dm_get_next_target(dmt, NULL, &start, &length,
+> > &target_type,
+> > -			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 &params) !=3D NULL)
+> > -		/* multiple targets */
+> > -		goto out;
+> > -
+> > -	if (!target_type || strcmp(target_type, TGT_MPATH) !=3D 0)
+> > -		goto out;
+> > -
+> > -	r =3D DM_IS_MPATH_YES;
+> > -out:
+> > -	if (r < 0)
+> > -		condlog(3, "%s: dm command failed in %s: %s",
+> > name, __func__, strerror(errno));
+> > -	return r;
 >=20
-> This seems a little inconsistent with the change in our returns.
-> Before, if we found a device but it wasn't multipath device,
-> dm_get_wwid() would exit with 0 but set uuid to an empty string. Now
-> we
-> return DMP_NO_MATCH in this case but we still clear uuid. It seems
-> like
-> perhaps we should either set uuid to an empty string for all cases
-> except DM_OK or we should not touch it for all cases except DM_OK.
-> Alternatively, perhaps I'm over-thinking this.
+> Since dm_get_events() and watch_dmevents() need to differentiate
+> between
+> DM_IS_MPATH_NO and DM_IS_MPATH_ERR, this function needs to return
+> DM_IS_MPATH_ERR if libmp_mapinfo() returns DM_ERR.
+>=20
+> Looking over this function, I did notice one thing.=C2=A0 It returns
+> DM_IS_MPATH_ERR if dm_task_get_info() fails, while libmp_mapinfo__()
+> returns DMP_NOT_FOUND if dm_task_get_info() fails.
+>  Looking at the
+> current lvm code, I can't see a way for dm_task_get_info() to fail
+> if we just called libmp_dm_task_run() and it succeeded. On the other
+> hand dm_task_get_info() failing does seem to be an error, not a
+> a sign that the device doesn't exist, so perhaps ibmp_mapinfo__()
+> should treat it like one. Although most of our code doesn't, and like
+> I
+> said, I don't see how it could fail unless dm_task_run() already
+> failed
+> (or wasn't called).
 
-Right. In libmp_mapinfo(), I followed the idea that no output should be
-touched if any errors happened. Here, I wanted to preserve the behavior
-but didn't do it correctly.
+Right. I also looked at the lvm code, and dm_task_get_XYZ functions
+hardly ever fail if running the task succeeded, and they probably never
+will. But we shouldn't make any assumptions about libdevmapper in
+libmultipath. I will change libmp_mapinfo() to return DMP_ERR in this
+case.
 
-I tend to think that "don't touch output in error case" is the correct
-behavior, but we'd need to review the callers and make sure that they
-don't assume the WWID will be automatically 0-terminated.
-
-I'll do that.
-
+Thanks,
 Martin
 
 
+>=20
+> Any thoughts?
+>=20
+> -Ben
+>=20
+>=20
+> > +	if (rc !=3D DMP_OK || strncmp(uuid, UUID_PREFIX,
+> > UUID_PREFIX_LEN))
+> > +		return DM_IS_MPATH_NO;
+> > +	else
+> > +		return DM_IS_MPATH_YES;
+> > =C2=A0}
+> > =C2=A0
+> > =C2=A0int dm_map_present_by_wwid(const char *wwid)
+> > --=20
+> > 2.45.2
+>=20
 
