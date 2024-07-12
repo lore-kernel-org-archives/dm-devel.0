@@ -1,65 +1,65 @@
-Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
+Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C7AF4171085
-	for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 17:15:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C366E1DFEF
+	for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 17:15:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720804541; cv=none; b=iY05T688UFNphQBY2fRPYCex/JWYJUF+BxWX2sg6H44Hqfh6CsKx32Ncj+iArxUL2mIyVe1LL5D7GZHM/F11MWB9E1GgxIV8/HR/W0GHBOxeo8NtuDstCymw6H3voAz4SfR8inKXyCfcAtH5rx2ZzM/p8nMqOc359oDoRyCo3yc=
+	t=1720804542; cv=none; b=BH9EtfhlktP6rce4VIsU7t5xiH88zhBE/qVwhjaxsBfnHCftlSDwlTMadUcgFAAY0Bzswew4k2dEpkLgUyijBMYsIGpiuHbHkVnNvbzDwlVkrsDSGOp2LZBn3Kx2ThSKXhDWACOZaF3gbXVEFU6h/rtCD/jJ2pFpFZDaK9n/qgs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720804541; c=relaxed/simple;
-	bh=rDlaQHCWZ3uVd71QutXHQDhnycZROvvbRCXjPGmZAXg=;
+	s=arc-20240116; t=1720804542; c=relaxed/simple;
+	bh=S6huMpydLTZ7DE9RnoBeBxzgQasmLdJ59j0iScYasbs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=c2MP5Mab3pwuo4jHwVE8foKeV2hjgnAbyy0LUmlI3HAaAAGax76EFph6GrSMsI4n24hERCBl6Q78JYn9JPF/7eiX/Mr1tXQslBqhufKfDe91kaJMukB//TrL2K3NIUY87O7BiwO82XNoXFtbssE0Q510/q/zcBC5XNokZqjhki8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=cK0HahNz; arc=none smtp.client-ip=209.85.218.53
+	 MIME-Version; b=GOxzFlKXQMUEC2iAcEx0chq/zg2MS/PzEAjEJCZaZKF3qPZUo/t/p08vJohLWOB1HiLy67lauO8NYE46XIzA3KPM/PvDicq81F8jB//EpIf+ubzXHXZWZjJmUy3kbGJ4jlzKjSqfMr1NwGXp2vYEsJCGnc2y8HjsCHIRlOsJy0w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Sihe0eZh; arc=none smtp.client-ip=209.85.218.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="cK0HahNz"
-Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-a77c080b521so282396966b.3
-        for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 10:15:38 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Sihe0eZh"
+Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-a77c25beae1so259244866b.2
+        for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 10:15:39 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1720804537; x=1721409337; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1720804538; x=1721409338; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=5J2XfElcXeeLrNofeMINOOTkKDTQ2yjH7D1MMLUFCq0=;
-        b=cK0HahNzwQIDJz+ugx2Y41MNgGS7NDtOlIqv/KN3xs84CFGWLJ3tXouluKnKHsaCAl
-         dqnZAVRW8Pc7l7xApO5S57QJXdnxLIbRBX1c1fGTuR4oJYJMEmlBJHEd5HWo0O3zRBY+
-         y1LYWhh3PqegjnrJnq/JNMqOXBdztq3xpm4jSwAynd8zFGDZZg2Tx2MBalRuU9OshQbk
-         u3wKhzB+civfxLqay3srZK8E0jqwgj+db5MQk4W1QsGwhp82NnmzLVc+QXC4bVU7lG56
-         /CwX0XnSJXyLuIV1eI9dydWcBMZdyeMoS3G/9sEp2bkZzLn8eCcMwURv5n1SisfG+Alq
-         fV+w==
+        bh=QyOyMsTWf666ToHkixtSQKwrdiNcha08nD2pvn99+zI=;
+        b=Sihe0eZh7WioNTek4p1M6Rc+IoRL3qUHva2acI8GcjJiTsFy86xesJYNng58W5CFTy
+         CfgeM8RQ5AKibmzpVO5wdeOW7vViCWQQV6dM+awh6KkhyOElvmNUhvebh5B5ZOkipj7N
+         kxfbscrZXZWFHtIIDmrzbvj7RiMziNshdgrPd/XQ4rolrWMZARs7NGZDxCZsPWazvqRS
+         T6vFD0OMFrn9iCEOqf2gbqD2Bg91UhvAGkWhSrEwWoMJ8Q4QLRXvUWHRWTaw10BasH3P
+         Oqt3bb+8TKV0zeQ20PquUPH2KBkH2lSXCAkNapH/41z7tHgIJ/QUAMys2QOS2qyZS/GT
+         GbmA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720804537; x=1721409337;
+        d=1e100.net; s=20230601; t=1720804538; x=1721409338;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=5J2XfElcXeeLrNofeMINOOTkKDTQ2yjH7D1MMLUFCq0=;
-        b=mvRb5SMq1OqMkyAuIIw0lC1TICakZFG4fr9iCbFB9a9iAS3FsgVo7U/IyiQmjAdQxb
-         w+kyFJvRAD6C6miMW2HQ89z2LefzzeaKdN/OpelDdBAuUo73nKWTz1WevEMjbA1muswZ
-         6RSlmVUztjIOorQtK1S3I4Kk/5Gr3iT6rnQJwyrwhyOpw+mLtvdJtRfDBjNzIBpbId5u
-         i0p7SuavZWa0IvtCcUbLc0MhvFWVkIPoGZMYvxd/2ZAX+wyyFO4Jy9kgV6f41a3k2/si
-         w/+t6XcEsn2dxYyGH2v21fPiAryCjfeRbIIJwBm8I80Ac9jmwRwsHTX6oahlq8dplCiT
-         y4wQ==
-X-Gm-Message-State: AOJu0YxDjlwEv22NNlc2RZbSnEhMzWPm55vgBLWO9Bvg105QPLwugTeS
-	YfHd1ZWfEQBonItYv7yBFPZFil0n/4/L4ijVE/Fp/8O82qrVJxb5MMUwqel5n1A=
-X-Google-Smtp-Source: AGHT+IF1YdZkB3WbL3rviyIfzeHOH9AlApQQj3c4ha6/qKT3aZUShbEr5XWRGjbs0JdqmkniHz3OZQ==
-X-Received: by 2002:a17:906:5a92:b0:a6f:51d8:1963 with SMTP id a640c23a62f3a-a780b6ff67amr803651066b.43.1720804536975;
-        Fri, 12 Jul 2024 10:15:36 -0700 (PDT)
+        bh=QyOyMsTWf666ToHkixtSQKwrdiNcha08nD2pvn99+zI=;
+        b=i2PVttMgMGqkXmanQFqfa0sUbL0d8IX7KyklxcEe4/+1sEoLsvK9D5x+jcE/6Szfc9
+         Mm451yhPdjuObGQWQ7jPJfmYoVImuteAGoVZHmOP20qPfZ9HiaENIKE52ZFeU+H8N2/a
+         VBz9oSoTmEir50rYickOJifdJq39myNDoifscMA8kaox4XZToF7nGOfon1TQlDZx4roZ
+         BJ0VBGv02CHO4LkO3NoRwbwAx2WWCZenqLhgVVnItxSwsjgRpagqqp12uO0v3iranRXF
+         rnLVL60GPXjzpfdlAk0MrG09O2G4LuO3pPR2EPCEYVbQasPpoxBo8djeIfpZMMvuKvZe
+         Y2zA==
+X-Gm-Message-State: AOJu0Yyf6KN0jAz2/5JdXZ6f/J/YjkyIm0Ye4dR+bcIkAK+b5s+uZ0Fq
+	VTcztd/XCQDbgfRgOdpf8RAzXtHUkyqe2Xe7hhXNRfvYMbnneaELYgoxcAPHZmw=
+X-Google-Smtp-Source: AGHT+IEbZ1Pk8oLIhufVOD9b5K/LpHYSQ+i2EyMtJ9pHjyClpl1H0aLJDMuJA2tAASUVId7wTPpW4A==
+X-Received: by 2002:a17:907:3f1a:b0:a79:82c1:a5b2 with SMTP id a640c23a62f3a-a7982c1a956mr721349866b.9.1720804537898;
+        Fri, 12 Jul 2024 10:15:37 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a6bcc8csm367681966b.17.2024.07.12.10.15.36
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a72fd39sm364322966b.91.2024.07.12.10.15.37
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 12 Jul 2024 10:15:36 -0700 (PDT)
+        Fri, 12 Jul 2024 10:15:37 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 07/49] multipath-tools: Remove hard-coded paths to executables
-Date: Fri, 12 Jul 2024 19:14:15 +0200
-Message-ID: <20240712171458.77611-8-mwilck@suse.com>
+Subject: [PATCH v2 08/49] multipath-tools: compile_commands.json fixes
+Date: Fri, 12 Jul 2024 19:14:16 +0200
+Message-ID: <20240712171458.77611-9-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240712171458.77611-1-mwilck@suse.com>
 References: <20240712171458.77611-1-mwilck@suse.com>
@@ -71,145 +71,83 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+compile_commands.json serves as input for clangd, while working with
+lsp under emacs. It's normal for functions and parameters to be unused while
+writing code. Therefore suppress -Werror for this use case. clangd will
+display the warnings.
+
+Use "make testprogs" to generate compile_commands.json, in order to be
+able to use clangd for the CI code, too.
+
+Finally, don't remove compile_commands.json with "make clean". Normally the
+compile commands remain the same, even if a clean rebuild of the binaries
+is necessary. Put the file into .gitignore instead.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- Makefile.inc                   | 17 ++++++++++++++---
- kpartx/kpartx_id               |  8 ++++----
- multipath/11-dm-mpath.rules.in |  4 ++--
- multipath/multipath.rules.in   |  6 +++---
- 4 files changed, 23 insertions(+), 12 deletions(-)
+ .gitignore   |  1 +
+ Makefile     |  4 ++--
+ Makefile.inc | 12 +++++++++---
+ 3 files changed, 12 insertions(+), 5 deletions(-)
 
+diff --git a/.gitignore b/.gitignore
+index 355ddbb..efdbd8a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -8,6 +8,7 @@
+ *.gz
+ *.d
+ \#*
++compile_commands.json
+ config.mk
+ cscope.files
+ cscope.out
+diff --git a/Makefile b/Makefile
+index 4df5f16..14bbac2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -83,7 +83,7 @@ abi-test:	abi reference-abi $(wildcard abi/*.abi)
+ # Requires bear (https://github.com/rizsotto/Bear)
+ compile_commands.json: Makefile Makefile.inc $(BUILDDIRS:=/Makefile)
+ 	$(Q)$(MAKE) clean
+-	$(Q)bear -- $(MAKE)
++	$(Q)bear -- $(MAKE) WARN_ONLY=1 test-progs || rm $@
+ 
+ libmpathutil libdmmp: libmpathcmd
+ libmultipath: libmpathutil
+@@ -109,7 +109,7 @@ $(BUILDDIRS:=.uninstall):
+ clean:
+ 	@touch config.mk
+ 	$(Q)$(MAKE) $(BUILDDIRS:=.clean) tests.clean || true
+-	$(Q)$(RM) -r abi abi.tar.gz abi-test compile_commands.json config.mk
++	$(Q)$(RM) -r abi abi.tar.gz abi-test config.mk
+ 
+ install: $(BUILDDIRS:=.install)
+ uninstall: $(BUILDDIRS:=.uninstall)
 diff --git a/Makefile.inc b/Makefile.inc
-index 28b6032..fe9f1bf 100644
+index fe9f1bf..729618b 100644
 --- a/Makefile.inc
 +++ b/Makefile.inc
-@@ -42,9 +42,11 @@ etc_prefix	:= $(prefix)
- # Where to install systemd-related files. systemd is usually installed under /usr
- # Note: systemd installations with "split-usr=true" use separate "prefixdir" and
- # "rootprefixdir". Our systemd_prefix corresponds to "prefixdir".
--# In this case, override only unitdir and libudevdir below to use
--# systemd's "rootprefixdir" instead of $(systemd_prefix)
-+# In this case, override only unitdir, libudevdir and sys_execprefix below
-+# to use systemd's "rootprefixdir" instead of $(systemd_prefix)
- systemd_prefix  := /usr
-+# Prefix for binaries that are owned by other packages (including systemd)
-+sys_execprefix  := /usr
+@@ -100,9 +100,15 @@ MODPROBE_UNIT := $(shell test "0$(SYSTEMD)" -lt 245 2>/dev/null || \
+ 			echo "modprobe@dm_multipath.service")
  
- # Make sure all prefix variables end in "/"
- append-slash = $(1)$(if $(filter %/,$(1)),,/)
-@@ -53,6 +55,7 @@ override exec_prefix     := $(call append-slash,$(exec_prefix))
- override usr_prefix      := $(call append-slash,$(usr_prefix))
- override etc_prefix      := $(call append-slash,$(etc_prefix))
- override systemd_prefix  := $(call append-slash,$(systemd_prefix))
-+override sys_execprefix  := $(call append-slash,$(sys_execprefix))
- 
- unitdir		:= $(systemd_prefix)lib/systemd/system
- tmpfilesdir	:= $(systemd_prefix)lib/tmpfiles.d
-@@ -74,6 +77,7 @@ runtimedir      := $(if $(shell test -L /var/run -o ! -d /var/run && echo 1),/ru
- devmapper_incdir := $(or $(shell $(PKG_CONFIG) --variable=includedir devmapper),/usr/include)
- libudev_incdir	:= $(or $(shell $(PKG_CONFIG) --variable=includedir libudev),/usr/include)
- kernel_incdir	:= /usr/include
-+sysdir_bin      := $(sys_execprefix)bin
- 
- ifeq ($(V),)
- Q		:= @
-@@ -150,4 +154,11 @@ NV_VERSION_SCRIPT = $(DEVLIB:%.so=%-nv.version)
- 
- %:	%.in
- 	@echo creating $@
--	$(Q)sed 's:@CONFIGFILE@:'$(TGTDIR)$(configfile)':g;s:@CONFIGDIR@:'$(TGTDIR)$(configdir)':g;s:@STATE_DIR@:'$(TGTDIR)$(statedir)':g;s:@RUNTIME_DIR@:'$(runtimedir)':g;s/@MODPROBE_UNIT@/'$(MODPROBE_UNIT)'/g;s:@BINDIR@:'$(TGTDIR)$(bindir)':g' $< >$@
-+	$(Q)sed -e 's:@CONFIGFILE@:'$(TGTDIR)$(configfile)':g' \
-+		-e 's:@CONFIGDIR@:'$(TGTDIR)$(configdir)':g' \
-+		-e 's:@STATE_DIR@:'$(TGTDIR)$(statedir)':g' \
-+		-e 's:@BINDIR@:'$(TGTDIR)$(bindir)':g' \
-+		-e 's:@SYSDIR_BIN@:'$(sysdir_bin)': g' \
-+		-e 's:@RUNTIME_DIR@:'$(runtimedir)':g' \
-+		-e 's/@MODPROBE_UNIT@/'$(MODPROBE_UNIT)'/g' \
-+		$< >$@
-diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
-index 4672927..f9211d2 100755
---- a/kpartx/kpartx_id
-+++ b/kpartx/kpartx_id
-@@ -21,8 +21,6 @@
- # sent upstream but has not been accepted yet.
- #
- 
--DMSETUP=/sbin/dmsetup
--
- MAJOR=$1
- MINOR=$2
- UUID=$3
-@@ -32,12 +30,14 @@ if [ -z "$MAJOR" -o -z "$MINOR" ]; then
-     exit 1;
- fi
- 
-+DMSETUP=$(command -v dmsetup) || DMSETUP=/sbin/dmsetup
+ OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
+-WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 $(WFORMATOVERFLOW) -Werror=implicit-int \
+-		  -Werror=implicit-function-declaration -Werror=format-security \
+-		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) $(W_URCU_TYPE_LIMITS)
 +
- # Device-mapper not installed; not an error
--if [ ! -x $DMSETUP ] ; then
-+if [ ! -x "$DMSETUP" ] ; then
-+    echo "$0: dmsetup not found" >&2
-     exit 0
- fi
- 
--
- # Table UUIDs are always '<type>-<uuid>'.
- dmuuid=${UUID#*-}
- dmtbl=${UUID%%-*}
-diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
-index 0562edd..30647b9 100644
---- a/multipath/11-dm-mpath.rules.in
-+++ b/multipath/11-dm-mpath.rules.in
-@@ -9,7 +9,7 @@ ENV{.DM_SUSPENDED}!="?*", ENV{.DM_SUSPENDED}="$env{DM_SUSPENDED}"
- 
- # Coldplug event while device is suspended (e.g. during a reload)
- ACTION=="add", ENV{DM_ACTIVATION}=="1", ENV{.DM_SUSPENDED}=="1", \
--	PROGRAM="/bin/logger -t 11-dm-mpath.rules -p daemon.warning \"Coldplug event for suspended device\"", \
-+	PROGRAM="@SYSDIR_BIN@/logger -t 11-dm-mpath.rules -p daemon.warning \"Coldplug event for suspended device\"", \
- 	ENV{DM_COLDPLUG_SUSPENDED}="1", GOTO="scan_import"
- 
- # Coldplug event. Import previously set properties.
-@@ -70,7 +70,7 @@ LABEL="check_mpath_unchanged"
- IMPORT{db}="DM_COLDPLUG_SUSPENDED"
- ENV{DM_COLDPLUG_SUSPENDED}=="1", ENV{.DM_SUSPENDED}!="1", \
- 	ENV{DM_ACTIVATION}="1", ENV{MPATH_UNCHANGED}="0", \
--	PROGRAM="/bin/logger -t 11-dm-mpath.rules -p daemon.notice \"Forcing activation of previously suspended device\"", \
-+	PROGRAM="@SYSDIR_BIN@/logger -t 11-dm-mpath.rules -p daemon.notice \"Forcing activation of previously suspended device\"", \
- 	GOTO="check_mpath_ready"
- 
- # DM_SUBSYSTEM_UDEV_FLAG0 is the "RELOAD" flag for multipath subsystem.
-diff --git a/multipath/multipath.rules.in b/multipath/multipath.rules.in
-index 780bf85..2ac1972 100644
---- a/multipath/multipath.rules.in
-+++ b/multipath/multipath.rules.in
-@@ -2,7 +2,7 @@
- SUBSYSTEM!="block", GOTO="end_mpath"
- KERNEL!="sd*|dasd*|nvme*", GOTO="end_mpath"
- ACTION=="remove", TEST=="@RUNTIME_DIR@/multipath/find_multipaths/$major:$minor", \
--	RUN+="/usr/bin/rm -f @RUNTIME_DIR@/multipath/find_multipaths/$major:$minor"
-+	RUN+="@SYSDIR_BIN@/rm -f @RUNTIME_DIR@/multipath/find_multipaths/$major:$minor"
- ACTION!="add|change", GOTO="end_mpath"
- 
- IMPORT{cmdline}="nompath"
-@@ -69,7 +69,7 @@ ENV{.SAVED_FM_WAIT_UNTIL}=="?*", GOTO="pretend_mpath"
- #
- # We must trigger an "add" event because LVM2 will only act on those.
- 
--RUN+="/usr/bin/systemd-run --unit=cancel-multipath-wait-$kernel --description 'cancel waiting for multipath siblings of $kernel' --no-block --timer-property DefaultDependencies=no --timer-property Conflicts=shutdown.target --timer-property Before=shutdown.target --timer-property Conflicts=initrd-cleanup.service --timer-property Before=initrd-cleanup.service --timer-property AccuracySec=500ms --property DefaultDependencies=no --property Conflicts=shutdown.target --property Before=shutdown.target --property Conflicts=initrd-cleanup.service --property Before=initrd-cleanup.service --on-active=$env{FIND_MULTIPATHS_WAIT_UNTIL} /usr/bin/udevadm trigger --action=add $sys$devpath"
-+RUN+="@SYSDIR_BIN@/systemd-run --unit=cancel-multipath-wait-$kernel --description 'cancel waiting for multipath siblings of $kernel' --no-block --timer-property DefaultDependencies=no --timer-property Conflicts=shutdown.target --timer-property Before=shutdown.target --timer-property Conflicts=initrd-cleanup.service --timer-property Before=initrd-cleanup.service --timer-property AccuracySec=500ms --property DefaultDependencies=no --property Conflicts=shutdown.target --property Before=shutdown.target --property Conflicts=initrd-cleanup.service --property Before=initrd-cleanup.service --on-active=$env{FIND_MULTIPATHS_WAIT_UNTIL} @SYSDIR_BIN@/udevadm trigger --action=add $sys$devpath"
- 
- LABEL="pretend_mpath"
- ENV{DM_MULTIPATH_DEVICE_PATH}="1"
-@@ -85,7 +85,7 @@ ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="?*", GOTO="end_mpath"
- ENV{FIND_MULTIPATHS_WAIT_UNTIL}=="0", GOTO="end_mpath"
- 
- ENV{FIND_MULTIPATHS_WAIT_CANCELLED}="1"
--RUN+="/usr/bin/systemctl stop cancel-multipath-wait-$kernel.timer"
-+RUN+="@SYSDIR_BIN@/systemctl stop cancel-multipath-wait-$kernel.timer"
- 
- # If "multipath -u" failed, no values are imported from the program,
- # and we are still using the values for DM_MULTIPATH_DEVICE_PATH and
++# Set WARN_ONLY=1 to avoid compilation erroring out due to warnings. Useful during development.
++WARN_ONLY       :=
++ERROR           := $(if $(WARN_ONLY),,error=)
++WERROR          := $(if $(WARN_ONLY),,-Werror)
++WARNFLAGS	:= $(WERROR) -Wall -Wextra -Wformat=2 $(WFORMATOVERFLOW) -W$(ERROR)implicit-int \
++		  -W$(ERROR)implicit-function-declaration -W$(ERROR)format-security \
++		  $(WNOCLOBBERED) -W$(ERROR)cast-qual $(ERROR_DISCARDED_QUALIFIERS) $(W_URCU_TYPE_LIMITS)
++
+ CPPFLAGS	:= $(FORTIFY_OPT) $(CPPFLAGS) $(D_URCU_VERSION) \
+ 		   -D_FILE_OFFSET_BITS=64 \
+ 		   -DBIN_DIR=\"$(bindir)\" -DMULTIPATH_DIR=\"$(TGTDIR)$(plugindir)\" \
 -- 
 2.45.2
 
