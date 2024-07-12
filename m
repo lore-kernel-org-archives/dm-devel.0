@@ -1,65 +1,66 @@
-Received: from mail-ej1-f52.google.com (mail-ej1-f52.google.com [209.85.218.52])
+Received: from mail-ed1-f48.google.com (mail-ed1-f48.google.com [209.85.208.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC82C176AB1
-	for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 17:15:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19018176ABE
+	for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 17:15:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720804539; cv=none; b=DBnQaapkJ51aNhJP7xnXxkcdqQP+orgtElcrxTjdRQDUUAAdNrz+4ys7nSGwtwbkxfAPX/Tcca05AFbERkIUZzkPwTEzwC3CHKqpa2588jvqRVO3QR07dlpbGAasQNoOnf+1m9VkYgFwxL96sDZG5Odv4m+WIB8b3PgzYk4D9mA=
+	t=1720804539; cv=none; b=SgGqy+Fr0Sq2zgcGNwBM/sJU1ECN6cbC6HzkWNmogRj6fWp+1YgmoBJYUd3mg4xj2V2CLowjHat76U/dcySKNIgYeNCOBmMNjT1OrqJZxoUSTXerXwP+GMsl1y4Pg53BW25HGY4z4a32ZdNYwu4SP7m1LyrWqVAJqKPolN0ZTo0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1720804539; c=relaxed/simple;
-	bh=7yu2FqZf1ktONrE7YCdwTRFBhKkKB09JfneUt1Kk8Xk=;
+	bh=9jt5Guh6ISKYfj1RD6Ts+RWxC5vRJx9WzJAyMCwWdkA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=pxriNV8wbJTIxH/s55rJHF1OZ2OvoI7s5JT9qIFntnkcIWSWuD8A+k+UnjROANmybEhl1pxfa69RmGvAs6z99ATsZvArQRfcHfHQJxI5X4gyBHPcHeincmtbmMha7ODFoMQHo3H3x6/4GxBUkKGmNFcz7rEmyoDeoYJFkJMr/G0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=MjjP/4K2; arc=none smtp.client-ip=209.85.218.52
+	 MIME-Version; b=Y44Pb8Um9L+09c9DbTgfVWpPxK9ONdRP8+YhTSENzD83nchiCiDAoNwjJ5dq9t5IjzUau4vMuSfuR9IhewjCYPD1oZoEi2ZJBOzzfGzryxsb1vuNGub2jAnaZEtFkE4DCSt4OVdWyOHfrBXL48mqEijV3mpUAZMZ3uT25UCTEow=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=TdSzj4us; arc=none smtp.client-ip=209.85.208.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="MjjP/4K2"
-Received: by mail-ej1-f52.google.com with SMTP id a640c23a62f3a-a6265d3ba8fso273079266b.0
-        for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 10:15:37 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="TdSzj4us"
+Received: by mail-ed1-f48.google.com with SMTP id 4fb4d7f45d1cf-58b966b4166so2747207a12.1
+        for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 10:15:36 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1720804536; x=1721409336; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1720804535; x=1721409335; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=p3IHQCv+CrraQVi20skPR3x5tckU0no605O5x1GaU40=;
-        b=MjjP/4K2k9jrzGDiQr+Oe4CeRTM/9oM31LJA+BggEKTNeXTDqU5KWmDy7XgaDAoPXi
-         BPh7coASslHtQFtyDj86hW9/CjEhvSNg/ySLj/8heW63BRkJ2RmgT61jJsJ8cMmBY0L7
-         54WSacHw0gPMc1FseqQhp7trDePSnpwhe/VpStU2h5DYcow1G8FjS/zxiRjUEN/mHgwG
-         i181DXk88DZXitCIKiWRN6kRBtHGZEvgscpdppMxn+grzd6Ys0H+ujy/RNuW0w8ouOx3
-         jmn14V5zbaSjvkdZ1zHtgmW7+Rs+A5PWeCPZ8ocM1AnRutK0PyGuLGgGsVEqjRWAzO8m
-         c08A==
+        bh=ePu3SC1iZasRALA8wuHfQT1WcdAaMxxqS8D8uK8AGzQ=;
+        b=TdSzj4usvsxBMSrENx994FYN0fhzJQER7B3+oxzMEHF2IWd6DTGYm67kX7ihW/455u
+         ecp5c2RWZh0iwUe6295Kk9HViseekPVJMIoxn8Xem4ZLWIE/iunkR8R+WfIZuHpJVKVb
+         2pmIYkRrH3UuYoTOAL3ToegCxGrcoVJ9hriQQD+b72kK3quxiiV+PpvmXE/UIIYUdtVZ
+         xx8UI/Up+mzN2cnA+b3CEDn6I7HS9H18J3tb1lCTPaqqExJIrdyF2MPlrFgG0GAi6kUe
+         6vgz5Dz0D9CbZhv6rL1f9UOmsYSFFnc6n532tHuLxIaJgBkcocX3rcCh2rbgI0XmcP6l
+         dDRA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720804536; x=1721409336;
+        d=1e100.net; s=20230601; t=1720804535; x=1721409335;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=p3IHQCv+CrraQVi20skPR3x5tckU0no605O5x1GaU40=;
-        b=ZHZn6KDEs53WAQ8k9RNrHlJAD2NoKfmfXgszPFKqdERpGXBuXeDxsgcurKhnnPiNIt
-         CbqbBYeOU3abV3G+h3tXtu+Cg/klNxLItARpNc9ewhvyr3NuJxWFVIsJH+Iy3H9yYLao
-         rBAN8KVKMcb9UeGdFFvJuX4RnBirca884AkP5E3ljnfX2Aud8tnZ7jdIdsUt8Nx4pRaY
-         KuOeLsad6tSvwGxNhMv/K1y1dESaG+bqafjmXpBzxiRHogCsFo1tWYasKKpFSMfJ4AuE
-         QJZMqhMhrV4qkPVLVOTwAmUjyUGSTAAUN7/xjZcJMd0qdlFU286YNdJzuNSnEubCiTWm
-         paQA==
-X-Gm-Message-State: AOJu0YzezScJUcvuU2tQRMyix6+HWFyV7GV1lzj454lfHyA7FUHzELbq
-	4Zfk7jkYiRhiKz7osQSkDGurHWrF4ChLStHdJN3BW8OtyhtDMRjq0NhjFpKP10s=
-X-Google-Smtp-Source: AGHT+IGLcjpJ/Cgw5UyVuX1FhkB6Z8sxktRxYHvMh+0ZBURcVzZ92lYtBlzXa3UrZaDZiyvPNVcrqA==
-X-Received: by 2002:a17:907:3f97:b0:a79:8290:ab with SMTP id a640c23a62f3a-a7982900482mr576624166b.15.1720804535751;
-        Fri, 12 Jul 2024 10:15:35 -0700 (PDT)
+        bh=ePu3SC1iZasRALA8wuHfQT1WcdAaMxxqS8D8uK8AGzQ=;
+        b=aFo2j5oOec3EzZcJyos9kXZ5HyMZlwt5TChVLOTo2zklNBx4lJwAjUuvfPUHxk1KS7
+         WwFns0N2zI7h95P+0eDyAFbrOCwFr9JoskKMZ7yYrtrIASX1TZ0gdQ6fzLhGpi3Gxlnz
+         9sycYA5k902IdyxuIslxo1zz5RNhPIJ+xUbN/DBaNCEBD0zh6/iwI1+me3vRFVRS5TOA
+         IuuacZBl3V5DRu8osAtmxHqJB1WJlPKoybZOjjvhkZfwfZaB+qPLk5N5vlXF9y70XIB0
+         Ajdh7RAN7dAYp8VQThfpErWhzZsGxOKIY5JgodfqwrLcf+2b0soO/UDmqS/c6LcDXhMv
+         UBJA==
+X-Gm-Message-State: AOJu0Yw/uRRz0DtXbQoPEiWv62TxtFcEMPMHDrJ6CECJmYZLuhOnvXOw
+	h2+bstZSp0kg1bkTpOfhpvkEJQBotaXHMOWVBhrHt2wLfiK6G+HZEikpPkpPgIKmcyU9LDUY7Xo
+	l
+X-Google-Smtp-Source: AGHT+IFoemqevxLEz+YDazk8f06DDSo/6GHTEPjFmdCZ1b6Ph0syjUM5JS+2hLFLRiXixEzwOx3ymQ==
+X-Received: by 2002:a05:6402:348d:b0:58d:81ac:ea90 with SMTP id 4fb4d7f45d1cf-594bcba77e6mr9764182a12.38.1720804534815;
+        Fri, 12 Jul 2024 10:15:34 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a6bc693sm362917266b.24.2024.07.12.10.15.35
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-594bbe2d338sm4812097a12.39.2024.07.12.10.15.34
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 12 Jul 2024 10:15:35 -0700 (PDT)
+        Fri, 12 Jul 2024 10:15:34 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 06/49] kpartx.rules: use @BINDIR@ to locate kpartx
-Date: Fri, 12 Jul 2024 19:14:14 +0200
-Message-ID: <20240712171458.77611-7-mwilck@suse.com>
+Subject: [PATCH v2 05/49] Makefile.inc: replace @BINDIR@ with $(TGTDIR)/$(bindir)
+Date: Fri, 12 Jul 2024 19:14:13 +0200
+Message-ID: <20240712171458.77611-6-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240712171458.77611-1-mwilck@suse.com>
 References: <20240712171458.77611-1-mwilck@suse.com>
@@ -71,72 +72,26 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The path for kpartx should match the installed binary.
+The unit files and udev rules that use @BINDIR@ for substitutions
+have the installation target's point of view, they must include
+$(TGTDIR) (which is empty by default).
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- .gitignore                               | 1 +
- kpartx/Makefile                          | 6 +++---
- kpartx/{kpartx.rules => kpartx.rules.in} | 2 +-
- 3 files changed, 5 insertions(+), 4 deletions(-)
- rename kpartx/{kpartx.rules => kpartx.rules.in} (96%)
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/.gitignore b/.gitignore
-index 049ffe8..355ddbb 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -12,6 +12,7 @@ config.mk
- cscope.files
- cscope.out
- kpartx/kpartx
-+kpartx/kpartx.rules
- multipath/multipath
- multipath/multipath.8
- multipath/multipath.conf.5
-diff --git a/kpartx/Makefile b/kpartx/Makefile
-index 7720a74..849fd36 100644
---- a/kpartx/Makefile
-+++ b/kpartx/Makefile
-@@ -13,13 +13,13 @@ LIBDEPS += -ldevmapper
- OBJS := bsd.o dos.o kpartx.o solaris.o unixware.o dasd.o sun.o \
- 	gpt.o mac.o ps3.o crc32.o lopart.o xstrncpy.o devmapper.o
+diff --git a/Makefile.inc b/Makefile.inc
+index ed4a423..28b6032 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -150,4 +150,4 @@ NV_VERSION_SCRIPT = $(DEVLIB:%.so=%-nv.version)
  
--all: $(EXEC)
-+all: $(EXEC) kpartx.rules
- 
- $(EXEC): $(OBJS)
- 	@echo building $@ because of $?
- 	$(Q)$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
- 
--install: $(EXEC) $(EXEC).8
-+install: $(EXEC) $(EXEC).8 kpartx.rules
- 	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
- 	$(Q)$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
- 	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)
-@@ -41,7 +41,7 @@ uninstall:
- 	$(Q)$(RM) $(DESTDIR)$(libudevdir)/rules.d/68-del-part-nodes.rules
- 
- clean: dep_clean
--	$(Q)$(RM) core *.o $(EXEC)
-+	$(Q)$(RM) core *.o $(EXEC) kpartx.rules
- 
- include $(wildcard $(OBJS:.o=.d))
- 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules.in
-similarity index 96%
-rename from kpartx/kpartx.rules
-rename to kpartx/kpartx.rules.in
-index 8dd3369..9d87960 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules.in
-@@ -39,6 +39,6 @@ LABEL="mpath_kpartx_end"
- GOTO="kpartx_end"
- 
- LABEL="run_kpartx"
--RUN+="/sbin/kpartx -un -p -part /dev/$name"
-+RUN+="@BINDIR@/kpartx -un -p -part /dev/$name"
- 
- LABEL="kpartx_end"
+ %:	%.in
+ 	@echo creating $@
+-	$(Q)sed 's:@CONFIGFILE@:'$(TGTDIR)$(configfile)':g;s:@CONFIGDIR@:'$(TGTDIR)$(configdir)':g;s:@STATE_DIR@:'$(TGTDIR)$(statedir)':g;s:@RUNTIME_DIR@:'$(runtimedir)':g;s/@MODPROBE_UNIT@/'$(MODPROBE_UNIT)'/g;s:@BINDIR@:'$(bindir)':g' $< >$@
++	$(Q)sed 's:@CONFIGFILE@:'$(TGTDIR)$(configfile)':g;s:@CONFIGDIR@:'$(TGTDIR)$(configdir)':g;s:@STATE_DIR@:'$(TGTDIR)$(statedir)':g;s:@RUNTIME_DIR@:'$(runtimedir)':g;s/@MODPROBE_UNIT@/'$(MODPROBE_UNIT)'/g;s:@BINDIR@:'$(TGTDIR)$(bindir)':g' $< >$@
 -- 
 2.45.2
 
