@@ -1,66 +1,65 @@
-Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
+Received: from mail-ed1-f51.google.com (mail-ed1-f51.google.com [209.85.208.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99F73176FA3
-	for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 17:15:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1823817C6B
+	for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 17:15:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720804543; cv=none; b=M78dBuTVw9lVNJqTF0tdmHx1sRaEi3LuIXqszWNvRmD4+NwDYL6Cobk1Jr2lJNYzjMGyiPEAiZXWFEVptSZRPvXcFYCcvYaqm39wkAIuCIx7ZPAcpOX0aYwa7edTpGfsczHOL7aqphUbQZInET1uUiiYkakq4iIVs7yWXIHAUvU=
+	t=1720804545; cv=none; b=q/yMn1IlEFNV1N3lggnlYiOD/CGEdZwaXhfNKBXOu21tU6RJVaz38ZNF56Q0P/o1AN/zaz3BDv8osWwfNaTR3rwzxSLz+q/N2ylD7k3rz4gMJd+mFn5w99W0Ny6V50PRtC/Wn8CCklM9YT5+upoHri+vZnG3vtD8qvjtDS4AdkQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720804543; c=relaxed/simple;
-	bh=DkpK5sEthTCt+y/GnS6D/M8eXItVAmzk+mJz+pD03Gg=;
+	s=arc-20240116; t=1720804545; c=relaxed/simple;
+	bh=EHVIdQjEPCn9dbQB+9y+hO7sTWOOE6Fx1oJK0zfY8VU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=sceLrb/slMpTGnlIrg/oyXwcvuFZ66R+8B9SIqIUp/rx5OcMxPSYjT6gD2YsB9AmQOdK5untu+aC98iOFNB9E6aXMnL7Al3+Gj8YLTSfmgoSX8U2vJMBSu1IRGJRJvQQ8u5IsiD69JaZy0dv+dljagsDN7m/I+65IXVIrFWVzjI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=DBoGr1Aj; arc=none smtp.client-ip=209.85.218.53
+	 MIME-Version; b=fA1fbaVhMpfmG7Ntl1YPnJ7YWFltEd0P2AvDWjxSXkGOQ5fEwEL5Nk3dPR/WLUrS8SRzlXwUYdqNqFmErd7+YOB/tI0L7sYCfBIlVvu+xTbgUf8eRkUu9sJAdj/Qytq0SnsWeBFBwXi6yGm/pG78cgX8jeIKd7TX7KHHIvKHm0Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=EUXOrVgQ; arc=none smtp.client-ip=209.85.208.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="DBoGr1Aj"
-Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-a77c1658c68so279267066b.0
-        for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 10:15:41 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="EUXOrVgQ"
+Received: by mail-ed1-f51.google.com with SMTP id 4fb4d7f45d1cf-58b447c5112so3121192a12.3
+        for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 10:15:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1720804540; x=1721409340; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1720804541; x=1721409341; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=2vPyUeFhrVt6vMKZJgkpTDZ38Ys1EHTjBOKpBEKY4tU=;
-        b=DBoGr1AjLIckZnuC6e4mmyqiz9FS/QJmVwnQeLh9cxVBY03O8wZPQIGvRiv1JpGPiK
-         s1OumeWc3L8MtDU2q2ZIqgoFEX9evKFUHN+c6vK2FtQuFflib3JDZvPjRKz+HJ2/n4gw
-         6iJw1/fUhm3junXSm2qhllndtmVyzm3hW3EKe2wq/poFGkgdUApu0h8Bt0oAJWC8FeCV
-         CMLeKxt+fAvIJNcAa/ZjuZlydoKQazb3CqOzVadwxuu7RuKjF2ulVVTQDN5+iIHoIUcp
-         0Ow8zScdhhm65z616wKJbnG47K6lvxwdoknbLr2Z566P/9WYa70/D+EBa9ma8jk6Y1Fd
-         7VGw==
+        bh=yhQBOEExdxLioLnfTE8uk5qUeyX81jGOGkpCXie+Nxg=;
+        b=EUXOrVgQxv0tzZnlRYcwm2kgGrGQviz2ggSqtIyvvb/yzLXvNtt+vF7l76Hg5gVBvN
+         ylzhjwhcB1GLV43mfNIx0Ro1KUb46lGEXfxLrioimHay+st5qMu+xi0nvQUMZeXnOVQK
+         Mq7I+I2eOCYHhiOfZWpTpLRkUWqdulnJw6bvfdQ04Swqv7jTJj96JliSx8MPSwWvU5fj
+         r7KlcfX/YBBD/ivQ696JiX6UqhEITd7khR0CikNOLNrIetCvIpiTSkJm8n6Zi+5e8GRO
+         ahLn+6rr9Ge9kKGj9xvKL060pGqhLMJpQXUO4kgTv4d0sE9KBL48/BoknCNd8PTkJP0g
+         VVXQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720804540; x=1721409340;
+        d=1e100.net; s=20230601; t=1720804541; x=1721409341;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=2vPyUeFhrVt6vMKZJgkpTDZ38Ys1EHTjBOKpBEKY4tU=;
-        b=HjiSnol1dm9mYRu7COOaBYvVBWIfJPNQAvhyNgxc+bmyjRuar2iWyKyoncsI9TA4v1
-         gqvZGS8yJYIn7ppiFF6tkxwhIgByflxCswhMY6dbALndwA+8V8xyAjW1ZUscpfCRVluO
-         Jr8mWLCvJw2FVUFEfT3YrOhSggeuOjnvDJaZxUlNqlwH1ZzOSuwku6XWH7s6N1V+qYOj
-         5l2u6X1ltT1k04slww1Xb/8bNpV/hv8stS8ifbTyYuVYwOqJRevo+jGVbGRm4oymcYhF
-         X67TJ5X3zmnIUnuEL5eqomquNMCqPz+AHNGdpcJFk0pZ2nbwDpdeDXnFJhBDnrktkufr
-         yi5A==
-X-Gm-Message-State: AOJu0YxloYB8/Svu3Dq2oRaJMHmbiINqcZclX/pWQGDYv3mMtQVhYytO
-	GoObFkKFKns06vi7UoX+jkE3Ce4RFfDtxP9HoTi+mbY1/mDAEK3E9z5ax+HjLum7PIxRZluX/9c
-	n
-X-Google-Smtp-Source: AGHT+IEyWWhmVtSZkpRtcusyklFTrnMNkltXi5Ogv71F2wylZNYBGBVfMu6mvoEjdl3u3XfLdrdhVw==
-X-Received: by 2002:a17:906:5650:b0:a72:8d2f:8594 with SMTP id a640c23a62f3a-a780b6b2f20mr773913066b.27.1720804540056;
-        Fri, 12 Jul 2024 10:15:40 -0700 (PDT)
+        bh=yhQBOEExdxLioLnfTE8uk5qUeyX81jGOGkpCXie+Nxg=;
+        b=neC9lMFsKOSx3gQcwP8JChYysIUQ3BHdBa1qX4c2wNWzodz+npHHLjhvsLXp+A8CnE
+         HCLgECJgLfu/LfUAN+EYPSoAGUD7w7VXYj8ApOi5lddwurHTR+U9UxdLfTb1afLQTGn4
+         jEuCUpJeFuFajo3p7jN7im00c1c7ymzRlDjEmOI/F0rFWIhO6yHC3mC/cP3nZK8nbsrB
+         HSB2KyNik0gHY1OYTfWCxM2+BsNLQCqXRF+b4HTu6/aahIDcMzWESairwLBuXAQT3x1J
+         nZQMxeKv3U2hfb0cCV0Y7cuZHc8psblaS33Fg4VBdNJ9ij1vixnQJvK0ZulI9auUEc13
+         d8CQ==
+X-Gm-Message-State: AOJu0Yz0hQFW3PUi/o0COcv0O24HwlvUTFt4HsAihW1QjFaL0ILIgQ8c
+	09s9Ap1gVtxj6EIrY1ugjQ52vDQwmdq/ABtiSWl+Vp7pnP2rueDAPrckNUIx5Ls=
+X-Google-Smtp-Source: AGHT+IHx6dvKIoVrBwED4uZlWxnzG17oHzEKCDtomQxwUjozxiEekiG8ypHOae7sojJ6ecojqJzkwg==
+X-Received: by 2002:a17:907:1759:b0:a6f:4bf2:daa2 with SMTP id a640c23a62f3a-a780b68a8a3mr797431866b.15.1720804541176;
+        Fri, 12 Jul 2024 10:15:41 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a855e24sm369204166b.177.2024.07.12.10.15.39
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a86ed05sm362568266b.188.2024.07.12.10.15.40
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 12 Jul 2024 10:15:39 -0700 (PDT)
+        Fri, 12 Jul 2024 10:15:41 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 10/49] libmultipath: remove unused includes in devmapper.h
-Date: Fri, 12 Jul 2024 19:14:18 +0200
-Message-ID: <20240712171458.77611-11-mwilck@suse.com>
+Subject: [PATCH v2 11/49] libmultipath: use DM_DEVICE_INFO in dm_mapname()
+Date: Fri, 12 Jul 2024 19:14:19 +0200
+Message-ID: <20240712171458.77611-12-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240712171458.77611-1-mwilck@suse.com>
 References: <20240712171458.77611-1-mwilck@suse.com>
@@ -72,30 +71,38 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+DM_DEVICE_INFO aka the kernel's DM_DEV_STATUS ioctl, is sufficient to
+fetch the map name, and more lightweight than DM_DEVICE_STATUS, which maps to
+the kernel's DM_TABLE_STATUS ioctl.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 2 --
- 1 file changed, 2 deletions(-)
+ libmultipath/devmapper.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 08bb3c5..3ee8555 100644
+index 3ee8555..baa1ead 100644
 --- a/libmultipath/devmapper.c
 +++ b/libmultipath/devmapper.c
-@@ -17,13 +17,11 @@
- #include <linux/dm-ioctl.h>
+@@ -1412,7 +1412,7 @@ dm_mapname(int major, int minor)
+ 	struct dm_task *dmt;
+ 	int r;
  
- #include "util.h"
--#include "checkers.h"
- #include "vector.h"
- #include "structs.h"
- #include "debug.h"
- #include "devmapper.h"
- #include "sysfs.h"
--#include "config.h"
- #include "wwids.h"
- #include "version.h"
- #include "time-util.h"
+-	if (!(dmt = libmp_dm_task_create(DM_DEVICE_STATUS)))
++	if (!(dmt = libmp_dm_task_create(DM_DEVICE_INFO)))
+ 		return NULL;
+ 
+ 	if (!dm_task_set_major(dmt, major) ||
+@@ -1422,7 +1422,7 @@ dm_mapname(int major, int minor)
+ 	dm_task_no_open_count(dmt);
+ 	r = libmp_dm_task_run(dmt);
+ 	if (!r) {
+-		dm_log_error(2, DM_DEVICE_STATUS, dmt);
++		dm_log_error(2, DM_DEVICE_INFO, dmt);
+ 		goto bad;
+ 	}
+ 
 -- 
 2.45.2
 
