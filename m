@@ -1,65 +1,65 @@
-Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com [209.85.208.49])
+Received: from mail-lf1-f48.google.com (mail-lf1-f48.google.com [209.85.167.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6032176ABE
-	for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 17:16:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13A9A176FAB
+	for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 17:16:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720804574; cv=none; b=FSNimaSZoWDY1ubralcU91lhfm63Oz4tul5hWRZFZHW0vtzi6jOIjziD+5kA4+bCoNbVWoYTD1sYQfDETQln5mlE8ik8Wl7Zc2tQDoMjIVEbUSrkVNyoj5coAGvEr1CEFoW+5W5tlKcyoJJfFph7M3bSi2PiAGqwKFkwYmF55nM=
+	t=1720804575; cv=none; b=o+HQX0INK0dftQNTdGhNMMrtL1SBuoJDKGNCj6ZMjgyH9yRqcxwgq565WbJeZ02jrcVRSznHT7NM8XRgRuPhzPxKglHuIOaQ6mrbiq9vS0FB/znx9yGEk1B3ju1qfCu+EtZq/ar1c1zUeTUjC+FP+NC+YE7JKRyohBwNro9RGqQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720804574; c=relaxed/simple;
-	bh=f6FJwVNd/STw2y9zRsAPqzEXHFiQ9ypYedvhDpRA+JE=;
+	s=arc-20240116; t=1720804575; c=relaxed/simple;
+	bh=3mJfe5elNzQEbuXYSPBcymKhL6AzUUma4FQY5aZnSCo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=c/1COba6zSdIwhoQqWCvLB5lmCRzDdUftchtxhIZlTgfUv6TPDLnxI0YunAGeww/EA937TOp8u6+LG138PmfeOC+GGp4KdamenJXypHAm5KOinPr3th2grYq2ObU+fPc3kJ0likA160Me1B3pRvmT5bG0r8Z64eyX256zQ21eJo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Ix3Rijmw; arc=none smtp.client-ip=209.85.208.49
+	 MIME-Version; b=To/l0ihGha5PnhGlIRG85gEmBpj6Lb24/Hac9NS3q1yqmX6ElsQXMT1pXhpkvROoCnBVVrdbAoQQ1x2k7NWLyvnlkRKqw4vULZmeXxP1gQIGbWXjYMXeZVKgBHbKnwSh5RlRTtvI9dyxaohDjCRPRCRdZxn9w55B9RHorja/X3c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Cf92xl9l; arc=none smtp.client-ip=209.85.167.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Ix3Rijmw"
-Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-58b447c5112so3121974a12.3
-        for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 10:16:12 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Cf92xl9l"
+Received: by mail-lf1-f48.google.com with SMTP id 2adb3069b0e04-52ea79e689eso3134507e87.1
+        for <dm-devel@lists.linux.dev>; Fri, 12 Jul 2024 10:16:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1720804571; x=1721409371; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1720804572; x=1721409372; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=jgjj4l5iw6Q6BQz/iiJXLjnYQf7taPZxWA6gM/urBSE=;
-        b=Ix3RijmwIWD714ikGOS3OsP3NlVR6VDyv3PWfB2ONLyoyBNeu7VDraHAnKqToTe5sY
-         Co+8ltNR5z2QaoEM8nVMPfPg5Hno3mnSoXoYPuNG6lmEjBoMtl18y2lbP5wmm0h643M7
-         BtZUNBGgcprf1TT1UaVYb/Cq7TCwl/DD98fg1bPSJwdvJChoXgA1AiD1MdU64ivfIjw0
-         k7F1HGDoYdLyxN8HOxwXqAhLmZbC2Et7ui0qMDl9AFfafgQmFTtpbogc7mC8FzwwpgyI
-         /N7wHI4QAtsHyRubfR2Vx+FWeJSC5AOSgmKdoDP46Fh4xTqBBMQYt6I/DPqyvqF2jTYL
-         0O6w==
+        bh=bxqsESTpjg9CK28sjPNodqMRrZfivIXhocnUtglpk1I=;
+        b=Cf92xl9lqBKKMOmde3hHKEzic6DLRWwkVYffBqxg/YYqbszkJicZQZHpjy0GOVvRK2
+         +faQwPcl4T9ySFVoveQFYEYWmwzqfDQjNmx59hxJmQP/kgneEJju+fls55GQ0shUjr98
+         zL5JYcFCMzKxkXuC43S3VDh7wYmu4EF0p2NjQBHVbG134iZtcPVS06WxOVYRgp6SNwuN
+         cZBt990/JNsXYopxb8tC0UcYwrokife9+HGAwXrogYUIBUHuGkSC0avtNxiOrX036a6k
+         Nx0hM5IMjN7VI9H0xxN9tftwhfVXnTK5mOqbWHgUzFiTNxD5bOFPYpqmU/xeNW+vmD2d
+         rOjA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720804571; x=1721409371;
+        d=1e100.net; s=20230601; t=1720804572; x=1721409372;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=jgjj4l5iw6Q6BQz/iiJXLjnYQf7taPZxWA6gM/urBSE=;
-        b=m8wti1BH7N7wdYaBcqUoyCIPAjr6ug3nskdVHKzxTzp7MhDS2FzrQeN6HStVTOilRE
-         K6QGhXaYzAnHZLgmu9IuWSy35vx6sZQWeDfCbPkwXXSHUseI4oO7PfDcbRvLSrh6inAI
-         V9gq1DgVOgrChfy2iU6dktQDnUz4g17KUf9i2UCfUNDae6D/OmLBLkEter2W9Uchl2uD
-         Bo2rV/NqkgKB1WTc0OWkLmrxCc06r+k8ZEW5EMUJ4tdnsDI1blYM2EuxJaHojB6VbC8M
-         9MNp5meqzd1TOeZoGD9VMMMn5VTMbZpAccfN77+U5R9a/rZuL4S6/ColOUbx5mrpdZMu
-         7NhQ==
-X-Gm-Message-State: AOJu0YyBu/WKdOcx3mqGd21w0+l7ytYt6cATGtMUlye+YLy6vVBEFUlD
-	jk3QAqwg5OFlG9XEO+0CrJ3LPpgv7lRdVehARj3XVaCLZmusC1rWx9wwkCd5uaE=
-X-Google-Smtp-Source: AGHT+IFJsaDX8QW2eRRBkkjaHwnilokSjpyAlFr9VO7bAaNSdkOlt0L87PeH9eFfvYwScfPEoNPWxg==
-X-Received: by 2002:a05:6402:34c8:b0:595:7c14:18da with SMTP id 4fb4d7f45d1cf-5957c141933mr8730657a12.34.1720804570974;
-        Fri, 12 Jul 2024 10:16:10 -0700 (PDT)
+        bh=bxqsESTpjg9CK28sjPNodqMRrZfivIXhocnUtglpk1I=;
+        b=OrrtUX02WXHkTR5M+qFFcEVS7z94rvGuPaQPH8cirHpYFNlHGA1UcLcn4TSxvKJGrk
+         5Dxem3z3ckf169kqLrv3dmjjdH851jWD8P1eNnthlGO+TZIC3JY9pT0AaIDZ1kzplS5F
+         Dx1g1Mw2MzEzwclfnsN2PHXtiJ6WsPvZaLQnCW65OqXkqGvrvDE6OUa7ODfwwOLUomFh
+         Vx2jrGYXAyFMxvJEXS5kXkLcF5z8aAyrLtmfXhSUcrAAS4LU+tGx2D6+JXQU3GniplCH
+         541KtLeLwv99acyj0Rl53Ku8L5LgMKWPINkjLcgkE4g/pPEiV7LvxmGNUXq1Uis9JxdR
+         OrAQ==
+X-Gm-Message-State: AOJu0YzlPQKw1K/+oLqF7ihMp23pft6FRwQmn8qgdQK+rtXyuvigIuwD
+	721FFXrqIuJFBQsZ8/1sdTckkehYVpAQz6X0PyDhsY2CWAFySgQnyqBkmXkgSW4=
+X-Google-Smtp-Source: AGHT+IH5vWp2D1RecFnwBAHqre6Ah50z2ylv0sB+PJj6sP4RaMdaoxKJ4geU7dP3pbCG27gS3xWeIg==
+X-Received: by 2002:a05:6512:3b9d:b0:52b:be6b:d16a with SMTP id 2adb3069b0e04-52eb99a3526mr11243463e87.31.1720804572160;
+        Fri, 12 Jul 2024 10:16:12 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5959bd1d4bdsm4003325a12.88.2024.07.12.10.16.10
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a780a6e37c4sm360583966b.82.2024.07.12.10.16.11
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 12 Jul 2024 10:16:10 -0700 (PDT)
+        Fri, 12 Jul 2024 10:16:12 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 38/49] libmultipath: update mpp->dmi in update_multipath_table()
-Date: Fri, 12 Jul 2024 19:14:46 +0200
-Message-ID: <20240712171458.77611-39-mwilck@suse.com>
+Subject: [PATCH v2 39/49] libmultipath: drop extra call to dm_map_present() in domap()
+Date: Fri, 12 Jul 2024 19:14:47 +0200
+Message-ID: <20240712171458.77611-40-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240712171458.77611-1-mwilck@suse.com>
 References: <20240712171458.77611-1-mwilck@suse.com>
@@ -71,26 +71,36 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This comes almost for free now.
+dm_get_wwid() will return DMP_NOT_FOUND if the map doesn't exist.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs_vec.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/configure.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index f2cfe31..295dac8 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -497,6 +497,7 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
- 				  .target = &params,
- 				  .status = &status,
- 				  .size = &mpp->size,
-+				  .dmi = &mpp->dmi,
- 			  });
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 2fdaca8..b4de863 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -834,6 +834,7 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ {
+ 	int r = DOMAP_FAIL;
+ 	struct config *conf;
++	char wwid[WWID_SIZE];
  
- 	if (r != DMP_OK) {
+ 	/*
+ 	 * last chance to quit before touching the devmaps
+@@ -843,8 +844,7 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ 		return DOMAP_DRY;
+ 	}
+ 
+-	if (mpp->action == ACT_CREATE && dm_map_present(mpp->alias)) {
+-		char wwid[WWID_SIZE];
++	if (mpp->action == ACT_CREATE) {
+ 		int rc = dm_get_wwid(mpp->alias, wwid, sizeof(wwid));
+ 
+ 		if (rc == DMP_OK && !strncmp(mpp->wwid, wwid, sizeof(wwid))) {
 -- 
 2.45.2
 
