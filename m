@@ -1,55 +1,57 @@
-Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com [209.85.167.51])
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 655A241C77
-	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 11:10:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 975767344C
+	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 11:10:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720869034; cv=none; b=Iu0ZjDYLFPF9ffkmTindHUUOFJhzNTjZKZYK78wfjQ+0DfaKMofJT7pVMjQtxO96Ki4aQgFwjYDcvMNX9FHODXFAe6w20UGoQgwc2lAcunTFpJ+RDbBWFrS9OqM1RAQag/A9JNwG3Vw1+e8xu9veGmxhet/ZFVLP8+r98DyOzXc=
+	t=1720869035; cv=none; b=puynIHlU7+aPUWi0Kx1oqUUWH6Dzf7gqvmZsEKn+zKOhAjU66OsuWGzQQIuQKFlGr8SY2JFh3L+mfZXnihXBjHY/0hqDq7BbJWrTUwO1inXAg/i+jsIdcX7OHPcJVb2ZoIx5PUyrWDDlxKSoum805WKp5CixdOxyZHSKzbO4lNE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720869034; c=relaxed/simple;
-	bh=vNmZCEARofUlbRfz6OIEvi5VfWgo8Akr1zQwniLks3Y=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=TNzf+GupWajSUR+LxVOYmPuS2jl0OQR29kCHbPcPBVW7mmIEj3XRjSh6ms2o1hQHT/cWQgAzSOdYvMXewKDfscW2FN4NDUXDcwUZIMMQ6AEf++gV7GjzBArUCUvmxeKYnvfGWiSYQlJ9H5eTwI9JEqYGxW2QHmDKe1OM2QP7m2k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iuTBJvkp; arc=none smtp.client-ip=209.85.167.51
+	s=arc-20240116; t=1720869035; c=relaxed/simple;
+	bh=QrlyuTd1BM70cIRhBIKCJpljKvBnBVBuRtzp01V95Nk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=Six7YqpH/IWwOWz4nxZ2LxGzr1eO0kY0mUmh/uuopeHX2SJUvr0T1vr5DrFIp5Acm9PDjFw8LdJehB+GPii7dExWQ7fiVNZvz0P/TNHChyne5YGA/8wF61s4nRTmoSCTFKGMqzXmxPEKRDY4+0cYEB0gv+117ZfQNqyNnvuC2rY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=T0e2PFNM; arc=none smtp.client-ip=209.85.221.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iuTBJvkp"
-Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-52ea7d2a039so2957658e87.3
-        for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 04:10:32 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="T0e2PFNM"
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-36798ea618bso1663822f8f.0
+        for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 04:10:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1720869030; x=1721473830; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=5Y++6usS3zSR+0SK1480TAjLlscRgSvO8w1f6s4XMbo=;
-        b=iuTBJvkpJa3g+ehIvIyDksBz3nTxmwhPVjOt4GB2Oz49g55O40XIjcdduadIDHY9rz
-         4l+1S89KTR3q46SnkGeMSlpM+h6/+k/h/f2gGGoXIQoqHZX0PcTe9PGdbJysD3ktQPpn
-         yhB6qcAXlNtaZ4XySKDCqen4VityzZz6Dec3hbvZvMYbh7inhCfVkM5vqDoGGTxKsR5E
-         8EQDcxlpgGKNZ+8topYUsYJZiud9mZgrRp8duR/KNCRu6WxZarBkKgtLi4foCIZe9iqn
-         yREde9U1w79KdEZj3KSXjuKXcKmzGPnL+d++HkihkSHgscpEn04SkxcA7izwaX4qIYiB
-         rSkQ==
+        d=gmail.com; s=20230601; t=1720869032; x=1721473832; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Hy2YGubFs6gCj81H0N6qANNGDUCnqG4ZJmrsWe7Dxzw=;
+        b=T0e2PFNMD7siDzmr5OND/MITvB2SFbCEEaigy+AljvPymX60LvrrsP/e2lhRK2yME6
+         XaUGiy0cQT3k6pW4erye1N2s7VYMYIqbHtJBjlwz3UHwlSyJ9OP6ZJJhhgWocbCn/6vp
+         9mLI7L0jimy6zFSoU3Ew5ltgrY21Q7f3YyVP5N2He46JdX6/QMWAff2nPNQVP+D/8muS
+         ysoyEk3p2vjDIFpTBuAuSppBlfjVVb8g1L6vXUhDdd73ldcD/xLEbtiM+1K0Rbx8cOFR
+         Dxw9rfbFQf6E+iZvkQYlpZAPJ4VcmjV2OBl4WI0falwiPikP2+IzS//oXBrfKoC73t3m
+         gf7A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1720869030; x=1721473830;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=5Y++6usS3zSR+0SK1480TAjLlscRgSvO8w1f6s4XMbo=;
-        b=hXaIqP9EVrMQ3XcCuofDh+MD1XeRec7lyOC1zF3wJYKeP7ZYuiZWPV5HCPzeZLi/9P
-         XcBvVXzXUOG5FKCWXi7y3Mimz/oIzwLPYnlO3jWFILpbCS1L57nhGdgriJhP4G9fA2fu
-         9fBx+8nXkWjApBRS3xut8k+MGnYHE6yQWPbJpDV2BOBLUB6rRYjCXETS5AyZi427rpY7
-         nrzbs57SWt6gZy4/LFxUKQkQxG2skj7kczEdwct2d+00NmvCM6j2NVl5oinRpQgYmOZ3
-         2GOSA3ub0M7inBuJeDDaChmVzvqP9yaxHmB8rY52QiDRGE2Zv8RgLFwfeLIwyEdQPIGN
-         tsIA==
-X-Forwarded-Encrypted: i=1; AJvYcCVDah1JFOmvuOFymGqtfDsINF6Z6aHlT58IBAXwZ4l0BhEQpDbWToVeDEEMsMiGV9tUsKivnNNRm7ytuDaTyQnHf98svb2R2lA=
-X-Gm-Message-State: AOJu0Yx5lL7ft5FKM1fCaPHaMrbbnxWPee/1nAfKmGJl/HFXYhs7hCI/
-	RHZmamBKW1Ir2D5ieUozvCzaT8YDV6r8CNZdbwLpv7YLe6MwW5U=
-X-Google-Smtp-Source: AGHT+IHTpJdiTKqBA3S6Chsc99BXlQAtuK+d1DMwl4STj6IcHJufTKf5ZVt4m5FbR/41C0j0b8imJA==
-X-Received: by 2002:a05:6512:3d0e:b0:52e:d0f8:2d30 with SMTP id 2adb3069b0e04-52ed0f82f30mr1455665e87.59.1720869030104;
-        Sat, 13 Jul 2024 04:10:30 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1720869032; x=1721473832;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=Hy2YGubFs6gCj81H0N6qANNGDUCnqG4ZJmrsWe7Dxzw=;
+        b=xUs6RBL/RBSu9AooEILs6IfwNB7/Xw++6HdL1r/lzYak17PFQf9hLVBWgTQIrpRcGL
+         eYs/CiBPfx1up7bNiJXL5OTYcneNH5j6RRXnvKwkzB5UVFPL4Me+RsgFb7TOmWYgFzI6
+         Izk43JKi6ebEaKpOzAqrPK33aft748f8j2ZXpCV+JaxAdXpxjd8A0k/bnIlNwgDUvNeX
+         oxWvfnGvuH8D3yd0zGaoBpI3mhL3gIX1i0hNij1mA9RuexBUcfbfcnwKHuAMzr70lEi3
+         kDzTKl2J3XvhBjfCsRlgEoHXmlTYg0c0YzYLAIRQXDUw1VESZmc+etOnABFiVoDN6Ixn
+         Uk3Q==
+X-Forwarded-Encrypted: i=1; AJvYcCV+ev9oI2oIjZ5R5UlY64WLeKgzQxL+8u9HZlByACoK8ukgmFjmGJfsxKLvyLw0qWBjCeE2Qb3RJaKlO0uUvmb+98MC7Qrhr7s=
+X-Gm-Message-State: AOJu0YzSqASuzkVuKnQPWO5zBWhOq3oWbSrpOZ4mW4dpaXQng68r/RVZ
+	XPVDOmS2/ygrz/e1P5qALnwgepScoSmt4ByowIz+9TTpO0KmysE=
+X-Google-Smtp-Source: AGHT+IFUMujRE6iThO3IGdo/gIUnNqoZNfsdQmtF0ZiA/Uweigfczr8/O5EZ0YCpF4DnbJyIrL4xlw==
+X-Received: by 2002:a5d:47c3:0:b0:362:52d8:6788 with SMTP id ffacd0b85a97d-367cea46642mr13294731f8f.2.1720869031568;
+        Sat, 13 Jul 2024 04:10:31 -0700 (PDT)
 Received: from localhost (14.red-81-44-167.dynamicip.rima-tde.net. [81.44.167.14])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4279f27877dsm50538085e9.26.2024.07.13.04.10.29
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3680db03851sm1121373f8f.90.2024.07.13.04.10.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 13 Jul 2024 04:10:29 -0700 (PDT)
+        Sat, 13 Jul 2024 04:10:31 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
@@ -57,10 +59,12 @@ Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM-DEVEL ML <dm-devel@lists.linux.dev>
-Subject: [PATCH 0/2] multipath-tools: add more HUAWEI devices and vendors IDs
-Date: Sat, 13 Jul 2024 13:10:19 +0200
-Message-ID: <20240713111025.104048-1-xose.vazquez@gmail.com>
+Subject: [PATCH 1/2] multipath-tools: add older HUAWEI models
+Date: Sat, 13 Jul 2024 13:10:20 +0200
+Message-ID: <20240713111025.104048-2-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.45.2
+In-Reply-To: <20240713111025.104048-1-xose.vazquez@gmail.com>
+References: <20240713111025.104048-1-xose.vazquez@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -145,26 +149,35 @@ HS      VIS6000
 HUAWEI  VIS6000
 HS      VIS6000T
 HUAWEI  VIS6000T
-AnyStor XSG1
-HUAWEI  XSG1
-Marstor XSG1
-NETPOSA XSG1
-SanM    XSG1
-SUGON   XSG1
-UDsafe  XSG1
 =====================
-
-Xose Vazquez Perez (2):
-  multipath-tools: add older HUAWEI models
-  multipath-tools: add more tags XSG1 vendors
-
- libmultipath/hwtable.c | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
 
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 9e008df6..095a9160 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1119,6 +1119,14 @@ static struct hwentry default_hw[] = {
+ 	/*
+ 	 * Huawei
+ 	 */
++	{
++		/* All, except OceanStor V3-V6 */
++		.vendor        = "^(HUAWEI|HUASY|HS)",
++		.product       = "^(Dorado|HVS8|S[23568]|V1[568]|VIS6000)",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.no_path_retry = 15,
++	},
+ 	{
+ 		/* OceanStor V3-V6 */
+ 		.vendor        = "HUAWEI",
 -- 
 2.45.2
