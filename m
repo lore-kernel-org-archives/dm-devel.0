@@ -1,125 +1,170 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com [209.85.167.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36316200A0
-	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 06:05:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 655A241C77
+	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 11:10:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720850725; cv=none; b=RYDngrdMtByqxYAcxHhSina8+o8g6dNj2DuUZtPp09OlLswA4iXk72Buiubm+XkkkyfBHec9fCisymEaGgIleeh66dvRi3xNU/9LqolDyeQRCqaBgPhXeA1Gux+B2rxa5QNeS7+xhWijvd2ApEhiZVjrJkdIm0ieOp3GvuUyd7M=
+	t=1720869034; cv=none; b=Iu0ZjDYLFPF9ffkmTindHUUOFJhzNTjZKZYK78wfjQ+0DfaKMofJT7pVMjQtxO96Ki4aQgFwjYDcvMNX9FHODXFAe6w20UGoQgwc2lAcunTFpJ+RDbBWFrS9OqM1RAQag/A9JNwG3Vw1+e8xu9veGmxhet/ZFVLP8+r98DyOzXc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720850725; c=relaxed/simple;
-	bh=5SGw1gHJ53LojK5SiLiLfBzyUDgTMg7qPj8AE8wCq38=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=t/qehW6Kaj1J+kEoP/cY29I0wzZ+WZbzp0xpBpQGlbcVKuOSPOWbep8JYIC9m0wWUw0vobEqEly9tXMM2JlkcIHmeOYTuoJKJssdO7jagf/2Uqr7uRiP02lK1rIX3B7516nb2OUCRjfPGQ4FlEBQ5JS1H7VyQZqnPJEJfmpAhic=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HV1sxE/e; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1720869034; c=relaxed/simple;
+	bh=vNmZCEARofUlbRfz6OIEvi5VfWgo8Akr1zQwniLks3Y=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=TNzf+GupWajSUR+LxVOYmPuS2jl0OQR29kCHbPcPBVW7mmIEj3XRjSh6ms2o1hQHT/cWQgAzSOdYvMXewKDfscW2FN4NDUXDcwUZIMMQ6AEf++gV7GjzBArUCUvmxeKYnvfGWiSYQlJ9H5eTwI9JEqYGxW2QHmDKe1OM2QP7m2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iuTBJvkp; arc=none smtp.client-ip=209.85.167.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HV1sxE/e"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1720850723;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=tx6YpNWFw5WUfSOZRRz3iv8PT2zeIEaHtowZzHg+DNI=;
-	b=HV1sxE/ebey5wzTIplXop27aOXB/DJV3OFZOR9VYxbNf3RzML0HN6H5b21vWosbBlbXzyf
-	uj8oAfQE6z/J8kWFjcWJyZeJnPYa0HCM0rpSdSN/fFhkzUA/VjPhnyGCPFTDls23TzYif+
-	Gk68plkB36Y2H7UOp6Plj20OEN6+/Os=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-693-XFuZx02VPgKU-Zw7asFcEg-1; Sat,
- 13 Jul 2024 02:05:12 -0400
-X-MC-Unique: XFuZx02VPgKU-Zw7asFcEg-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7A64A19560AB;
-	Sat, 13 Jul 2024 06:05:11 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1734019560AE;
-	Sat, 13 Jul 2024 06:05:10 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D6592a2015550
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Sat, 13 Jul 2024 02:05:09 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D659QD2015549;
-	Sat, 13 Jul 2024 02:05:09 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 14/22] multipathd: resync map after setup_map in resize_map
-Date: Sat, 13 Jul 2024 02:04:58 -0400
-Message-ID: <20240713060506.2015463-15-bmarzins@redhat.com>
-In-Reply-To: <20240713060506.2015463-1-bmarzins@redhat.com>
-References: <20240713060506.2015463-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iuTBJvkp"
+Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-52ea7d2a039so2957658e87.3
+        for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 04:10:32 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1720869030; x=1721473830; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=5Y++6usS3zSR+0SK1480TAjLlscRgSvO8w1f6s4XMbo=;
+        b=iuTBJvkpJa3g+ehIvIyDksBz3nTxmwhPVjOt4GB2Oz49g55O40XIjcdduadIDHY9rz
+         4l+1S89KTR3q46SnkGeMSlpM+h6/+k/h/f2gGGoXIQoqHZX0PcTe9PGdbJysD3ktQPpn
+         yhB6qcAXlNtaZ4XySKDCqen4VityzZz6Dec3hbvZvMYbh7inhCfVkM5vqDoGGTxKsR5E
+         8EQDcxlpgGKNZ+8topYUsYJZiud9mZgrRp8duR/KNCRu6WxZarBkKgtLi4foCIZe9iqn
+         yREde9U1w79KdEZj3KSXjuKXcKmzGPnL+d++HkihkSHgscpEn04SkxcA7izwaX4qIYiB
+         rSkQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1720869030; x=1721473830;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=5Y++6usS3zSR+0SK1480TAjLlscRgSvO8w1f6s4XMbo=;
+        b=hXaIqP9EVrMQ3XcCuofDh+MD1XeRec7lyOC1zF3wJYKeP7ZYuiZWPV5HCPzeZLi/9P
+         XcBvVXzXUOG5FKCWXi7y3Mimz/oIzwLPYnlO3jWFILpbCS1L57nhGdgriJhP4G9fA2fu
+         9fBx+8nXkWjApBRS3xut8k+MGnYHE6yQWPbJpDV2BOBLUB6rRYjCXETS5AyZi427rpY7
+         nrzbs57SWt6gZy4/LFxUKQkQxG2skj7kczEdwct2d+00NmvCM6j2NVl5oinRpQgYmOZ3
+         2GOSA3ub0M7inBuJeDDaChmVzvqP9yaxHmB8rY52QiDRGE2Zv8RgLFwfeLIwyEdQPIGN
+         tsIA==
+X-Forwarded-Encrypted: i=1; AJvYcCVDah1JFOmvuOFymGqtfDsINF6Z6aHlT58IBAXwZ4l0BhEQpDbWToVeDEEMsMiGV9tUsKivnNNRm7ytuDaTyQnHf98svb2R2lA=
+X-Gm-Message-State: AOJu0Yx5lL7ft5FKM1fCaPHaMrbbnxWPee/1nAfKmGJl/HFXYhs7hCI/
+	RHZmamBKW1Ir2D5ieUozvCzaT8YDV6r8CNZdbwLpv7YLe6MwW5U=
+X-Google-Smtp-Source: AGHT+IHTpJdiTKqBA3S6Chsc99BXlQAtuK+d1DMwl4STj6IcHJufTKf5ZVt4m5FbR/41C0j0b8imJA==
+X-Received: by 2002:a05:6512:3d0e:b0:52e:d0f8:2d30 with SMTP id 2adb3069b0e04-52ed0f82f30mr1455665e87.59.1720869030104;
+        Sat, 13 Jul 2024 04:10:30 -0700 (PDT)
+Received: from localhost (14.red-81-44-167.dynamicip.rima-tde.net. [81.44.167.14])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4279f27877dsm50538085e9.26.2024.07.13.04.10.29
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 13 Jul 2024 04:10:29 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: [PATCH 0/2] multipath-tools: add more HUAWEI devices and vendors IDs
+Date: Sat, 13 Jul 2024 13:10:19 +0200
+Message-ID: <20240713111025.104048-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
+X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-In resize_map() it was possible to exit after calling setup_map()
-without resyncing the mpp state with the kernel. This meant that the mpp
-state in multipathd might not match with the kernel state at all.
+Taken from Huawei UltraPath multipathing doc:
+https://support.huawei.com/enterprise/en/doc/EDOC1100362072/4a563777/showing-array-models-supported-by-the-ultrapath
 
-Once setup_map() has been called, setup_multipath() and sync_map_state()
-are now always called, to make sure the mpp matches the kernel state.
+=====================
+HUASY   Dorado2100
+HUAWEI  Dorado2100
+HUAWEI  Dorado2100 G2
+HUASY   Dorado5100
+HUAWEI  Dorado5100
+HUAWEI  HVS85T
+HUAWEI  HVS88T
+HS      S2100
+HUAWEI  S2100
+HUASY   S2200T
+HUAWEI  S2200T
+HS      S2300
+HUAWEI  S2300
+HS      S2300E
+HUAWEI  S2300E
+HS      S2600
+HUAWEI  S2600
+HS      S2600T
+HUASY   S2600T
+HUAWEI  S2600T
+HUAWEI  S2900
+HUASY   S3900
+HUAWEI  S3900
+HUASY   S3900-M200
+HUAWEI  S3900-M200
+HUASY   S3900-M300
+HUAWEI  S3900-M300
+HS      S5100
+HUAWEI  S5100
+HS      S5300
+HUASY   S5300
+HUAWEI  S5300
+HS      S5500
+HUAWEI  S5500
+HUASY   S5500T
+HUAWEI  S5500T
+HS      S5600
+HUAWEI  S5600
+HUASY   S5600T
+HUAWEI  S5600T
+HUASY   S5800T
+HUAWEI  S5800T
+HUASY   S5900-M100
+HUAWEI  S5900-M100
+HUASY   S5900-M200
+HUAWEI  S5900-M200
+HS      S6800E
+HUAWEI  S6800E
+HUASY   S6800T
+HUAWEI  S6800T
+HUASY   S6900
+HUAWEI  S6900
+HUASY   S6900-M100
+HUAWEI  S6900-M100
+HS      S8000
+HUAWEI  S8000
+HS      S8000-I
+HUASY   S8000-I
+HUAWEI  S8000-I
+HS      V1500
+HUAWEI  V1500
+HS      V1500N
+HUAWEI  V1500N
+HS      V1600N
+HUAWEI  V1600N
+HS      V1800
+HUAWEI  V1800
+HS      VIS6000
+HUAWEI  VIS6000
+HS      VIS6000T
+HUAWEI  VIS6000T
+AnyStor XSG1
+HUAWEI  XSG1
+Marstor XSG1
+NETPOSA XSG1
+SanM    XSG1
+SUGON   XSG1
+UDsafe  XSG1
+=====================
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+Xose Vazquez Perez (2):
+  multipath-tools: add older HUAWEI models
+  multipath-tools: add more tags XSG1 vendors
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3c84c2a0..c9cb9ac8 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1534,6 +1534,7 @@ needs_ro_update(struct multipath *mpp, int ro)
- int resize_map(struct multipath *mpp, unsigned long long size,
- 	       struct vectors * vecs)
- {
-+	int ret = 0;
- 	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
- 	unsigned long long orig_size = mpp->size;
- 
-@@ -1543,7 +1544,8 @@ int resize_map(struct multipath *mpp, unsigned long long size,
- 		condlog(0, "%s: failed to setup map for resize : %s",
- 			mpp->alias, strerror(errno));
- 		mpp->size = orig_size;
--		return 1;
-+		ret = 1;
-+		goto out;
- 	}
- 	mpp->action = ACT_RESIZE;
- 	mpp->force_udev_reload = 1;
-@@ -1551,13 +1553,14 @@ int resize_map(struct multipath *mpp, unsigned long long size,
- 		condlog(0, "%s: failed to resize map : %s", mpp->alias,
- 			strerror(errno));
- 		mpp->size = orig_size;
--		return 1;
-+		ret = 1;
- 	}
-+out:
- 	if (setup_multipath(vecs, mpp) != 0)
- 		return 2;
- 	sync_map_state(mpp);
- 
--	return 0;
-+	return ret;
- }
- 
- static int
+ libmultipath/hwtable.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 -- 
-2.45.0
-
+2.45.2
