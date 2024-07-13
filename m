@@ -1,60 +1,60 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D00F18C05
-	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 06:05:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B8C21BC4E
+	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 06:05:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720850716; cv=none; b=mSg5Fk3MY1XvmRKcBo05+DN2XfeyAcnfuf/gGy+7UKGnLsjsXpTCjTUgtcPvSr8bm3Osz9oYmyYxY2I5OfVr63pRZqedByCrAyzycSOYcLSiYWO6O1PO1iC3waLIdPBSn/dEOeYogITCGt93b0jXk+fOPI5zIXX2pqwCZMBGlYs=
+	t=1720850717; cv=none; b=qvq3ZqsncI48hrm5Osr93Lqkc2wy1xr1/EK0ut0OmPq7qXjATp8DgGgDFEop9DhwVcOlFPEBPUlxMmy1VAHWOxc2+HzRPJm7EvkMn7pHkBVuYdTvOtS9TlXojZqzPJk2rdVKcXfO+cgNDFku4QGikb+RvN5vZ62uhzbz7GiJNcs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720850716; c=relaxed/simple;
-	bh=D85aTLVA4iVcaBJBVSq3Lqr2gfaZpWsFSd3gAVs5E1c=;
+	s=arc-20240116; t=1720850717; c=relaxed/simple;
+	bh=kJLKLYaTYHR9c74F2iKzEb/74Bwwf25KkAkeIVLxK9I=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=WYtOCsuNzyims2QNNqoa+LR+lV9dXbnApSQLcU6T1KVSpF2hml3+tsZ72BSoB8vIEKdT9kRwcSuhI5D5AKnY3L7sFRHNzNzlnkFWg8BQUCKvFfKUQX70QaNILChe5A1UsDTVLiLK9g6vnvuEF/ASzVto4rvNPgd+J1ZCD+vEX2c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=b1BA2UN4; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=UlZco+4uxL8CTugqH9XxoZ9uo/iXKtw6qaTb82AuQC1DuKZJY/R1x9nWC0piaNJZ++D68egTZN2XmzSWOVooSGXFbI0l4c+cncQdx2PX6Jp/qZoZwSnx+0Y3F/tAm+sBxmWfhk3+8cFJXxtgL43lrgl2mLHx+ID62CUhCKXf29U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I2PXpDLh; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="b1BA2UN4"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I2PXpDLh"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1720850712;
+	s=mimecast20190719; t=1720850714;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=6BqUH7BeXziyi7bmuSpx/iosOsKz2cyeKRHJu015htM=;
-	b=b1BA2UN4ZMjhvkCgrQ/H/xm3giMJzbZbBQb785JcPj5xvztspCfMx4NvbN1lQbDSlYK9Pq
-	NAR6pZXS0UQWCnhNwSR0Y6UukMcNc68BWiRF4viLoPETwdjX730DqWgZAlHHlu5AQzxeEh
-	BmjABNj50TTwYJnmFD7cyF7iwGN+gJY=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+	bh=GwXyao30OVKmn+oeVbiL8f737Gd9oboWzjhSkkLHAN4=;
+	b=I2PXpDLhtA3/2sBGOwnWQtpXL8WC7ZQikiXsv0XE1aAObm57yhIVBMi8DsnxRhiqdHQOVD
+	mXnzDx/FVywgo6fCrEuydOXiDRhxqkfCC03sWCJkA7HR4IX7TzdkZNWDjbD3aUYEz5AAH2
+	P8/w0LDojRyNjbhCa5ae2VylNbQXTac=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-390-DGAgHC52NtuEM_wluilHjg-1; Sat,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-683-PzWB8HrSNTy8yLEMxg7eVg-1; Sat,
  13 Jul 2024 02:05:10 -0400
-X-MC-Unique: DGAgHC52NtuEM_wluilHjg-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+X-MC-Unique: PzWB8HrSNTy8yLEMxg7eVg-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5897519560B0;
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E2495195608A;
 	Sat, 13 Jul 2024 06:05:09 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CFFCF3000181;
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 435D3195606C;
 	Sat, 13 Jul 2024 06:05:08 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D657GY2015498
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D6579x2015502
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
 	Sat, 13 Jul 2024 02:05:07 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D657S32015497;
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D6579k2015501;
 	Sat, 13 Jul 2024 02:05:07 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 01/22] libmultipath: rename dm_map_present_by_wwid() and add outputs
-Date: Sat, 13 Jul 2024 02:04:45 -0400
-Message-ID: <20240713060506.2015463-2-bmarzins@redhat.com>
+Subject: [PATCH 02/22] multipathd: make cli_add_map() handle adding maps by WWID correctly
+Date: Sat, 13 Jul 2024 02:04:46 -0400
+Message-ID: <20240713060506.2015463-3-bmarzins@redhat.com>
 In-Reply-To: <20240713060506.2015463-1-bmarzins@redhat.com>
 References: <20240713060506.2015463-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -63,124 +63,121 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-add arguments to dm_map_present_by_wwid() to allow optionally fetching
-the device name and minor number for the devices found by WWID.  These
-will be used by a later patch. Since it can now also be used to get the
-name and minor number of a device from its WWID, rename it to
-dm_find_map_by_wwid()
+cli_add_map() runs filter_wwid() on the input param as if it were a
+WWID, but dm_get_major_minor() will never find the multipath device if
+the user actually passes in a WWID. To handle this case, call
+get_refwwid() early in the function, and use dm_find_map_by_wwid() to
+check if the map exists, and find its alias and minor number.
+
+Also, the do/while loop is unnecessarily confusing and only avoids one
+repeated function call. Remove it to simplify cli_add_map().
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 16 ++++++++++++----
- libmultipath/devmapper.h |  2 +-
- libmultipath/valid.c     |  2 +-
- tests/valid.c            | 12 ++++++------
- 4 files changed, 20 insertions(+), 12 deletions(-)
+ libmultipath/libmultipath.version |  5 +++
+ multipathd/cli_handlers.c         | 59 ++++++++++---------------------
+ 2 files changed, 24 insertions(+), 40 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index bbbadeee..60d786c6 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -872,16 +872,24 @@ int dm_is_mpath(const char *name)
- 	}
- }
- 
--int dm_map_present_by_wwid(const char *wwid)
-+/* if name is non-NULL, it must point to an array of WWID_SIZE bytes */
-+int dm_find_map_by_wwid(const char *wwid, char *name, int *minor)
- {
- 	char tmp[DM_UUID_LEN];
-+	struct dm_info dmi;
-+	int rc;
- 
- 	if (safe_sprintf(tmp, UUID_PREFIX "%s", wwid))
- 		return DMP_ERR;
- 
--	return libmp_mapinfo(DM_MAP_BY_UUID,
--			     (mapid_t) { .str = tmp },
--			     (mapinfo_t) { .name = NULL });
-+	rc = libmp_mapinfo(DM_MAP_BY_UUID,
-+			   (mapid_t) { .str = tmp },
-+			   (mapinfo_t) { .name = name,
-+					 .dmi = minor ? &dmi : NULL });
-+	if (rc == DMP_OK && minor)
-+		*minor = dmi.minor;
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index 959f675e..d074032b 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -242,3 +242,8 @@ global:
+ local:
+ 	*;
+ };
 +
-+	return rc;
- }
- 
- static int dm_dev_t (const char *mapname, char *dev_t, int len)
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index c28991fb..1de694c9 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -132,7 +132,7 @@ int dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags);
- int dm_simplecmd_noflush (int task, const char *name, uint16_t udev_flags);
- int dm_addmap_create (struct multipath *mpp, char *params);
- int dm_addmap_reload (struct multipath *mpp, char *params, int flush);
--int dm_map_present_by_wwid(const char *uuid);
-+int dm_find_map_by_wwid(const char *wwid, char *name, int *minor);
- 
- enum {
- 	DM_IS_MPATH_NO,
-diff --git a/libmultipath/valid.c b/libmultipath/valid.c
-index 9267cef9..b7e0cc9b 100644
---- a/libmultipath/valid.c
-+++ b/libmultipath/valid.c
-@@ -360,7 +360,7 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
- 	if (check_wwids_file(pp->wwid, 0) == 0)
- 		return PATH_IS_VALID_NO_CHECK;
- 
--	if (dm_map_present_by_wwid(pp->wwid) == DMP_OK)
-+	if (dm_find_map_by_wwid(pp->wwid, NULL, NULL) == DMP_OK)
- 		return PATH_IS_VALID;
- 
- 	/* all these act like FIND_MULTIPATHS_STRICT for finding if a
-diff --git a/tests/valid.c b/tests/valid.c
-index a93bbe50..d9325f8b 100644
---- a/tests/valid.c
-+++ b/tests/valid.c
-@@ -189,10 +189,10 @@ int __wrap_check_wwids_file(char *wwid, int write_wwid)
- 		return -1;
- }
- 
--int __wrap_dm_map_present_by_wwid(const char *uuid)
-+int __wrap_dm_find_map_by_wwid(const char *wwid, char *name, int *minor)
++LIBMULTIPATH_25.1.0 {
++global:
++	dm_find_map_by_wwid;
++} LIBMULTIPATH_25.0.0;
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 0106213e..0643be15 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -697,57 +697,36 @@ cli_add_map (void * v, struct strbuf *reply, void * data)
  {
- 	int ret = mock_type(int);
--	assert_string_equal(uuid, mock_ptr_type(char *));
-+	assert_string_equal(wwid, mock_ptr_type(char *));
- 	return ret;
- }
+ 	struct vectors * vecs = (struct vectors *)data;
+ 	char * param = get_keyparam(v, KEY_MAP);
+-	int major = -1, minor = -1;
+ 	char dev_path[FILE_NAME_SIZE];
+-	char *refwwid;
+-	char *alias __attribute__((cleanup(cleanup_charp))) = NULL;
+-	int rc, count = 0;
+-	struct config *conf;
+-	int invalid = 0;
++	char *refwwid __attribute__((cleanup(cleanup_charp))) = NULL;
++	char alias[WWID_SIZE];
++	int rc, minor = -1;
  
-@@ -271,8 +271,8 @@ static void setup_passing(char *name, char *wwid, unsigned int check_multipathd,
- 	will_return(__wrap_check_wwids_file, wwid);
- 	if (stage == STAGE_CHECK_WWIDS)
- 		return;
--	will_return(__wrap_dm_map_present_by_wwid, 0);
--	will_return(__wrap_dm_map_present_by_wwid, wwid);
-+	will_return(__wrap_dm_find_map_by_wwid, 0);
-+	will_return(__wrap_dm_find_map_by_wwid, wwid);
- }
+ 	param = convert_dev(param, 0);
+ 	condlog(2, "%s: add map (operator)", param);
  
- static void test_bad_arguments(void **state)
-@@ -516,8 +516,8 @@ static void test_check_uuid_present(void **state)
- 	memset(&pp, 0, sizeof(pp));
- 	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
- 	setup_passing(name, wwid, CHECK_MPATHD_RUNNING, STAGE_CHECK_WWIDS);
--	will_return(__wrap_dm_map_present_by_wwid, 1);
--	will_return(__wrap_dm_map_present_by_wwid, wwid);
-+	will_return(__wrap_dm_find_map_by_wwid, 1);
-+	will_return(__wrap_dm_find_map_by_wwid, wwid);
- 	assert_int_equal(is_path_valid(name, &conf, &pp, true),
- 			 PATH_IS_VALID);
- 	assert_string_equal(pp.dev, name);
+-	conf = get_multipath_config();
+-	pthread_cleanup_push(put_multipath_config, conf);
+-	if (filter_wwid(conf->blist_wwid, conf->elist_wwid, param, NULL) > 0)
+-		invalid = 1;
+-	pthread_cleanup_pop(1);
+-	if (invalid) {
++	if (get_refwwid(CMD_NONE, param, DEV_DEVMAP, vecs->pathvec, &refwwid) ==
++	    PATHINFO_SKIPPED) {
+ 		append_strbuf_str(reply, "blacklisted\n");
+ 		condlog(2, "%s: map blacklisted", param);
+ 		return 1;
++	} else if (!refwwid) {
++		condlog(2, "%s: unknown map.", param);
++		return -ENODEV;
+ 	}
+-	do {
+-		if (dm_get_major_minor(param, &major, &minor) < 0)
+-			condlog(count ? 2 : 3,
+-				"%s: not a device mapper table", param);
+-		else {
+-			sprintf(dev_path, "dm-%d", minor);
+-			alias = dm_mapname(major, minor);
++	if (dm_find_map_by_wwid(refwwid, alias, &minor) != DMP_OK) {
++		condlog(3, "%s: map not present. creating", param);
++		if (coalesce_paths(vecs, NULL, refwwid, FORCE_RELOAD_NONE,
++				   CMD_NONE) != CP_OK) {
++			condlog(2, "%s: coalesce_paths failed", param);
++			return 1;
++		}
++		if (dm_find_map_by_wwid(refwwid, alias, &minor) != DMP_OK) {
++			condlog(2, "%s: failed getting map", param);
++			return 1;
+ 		}
+-		/*if there is no mapname found, we first create the device*/
+-		if (!alias && !count) {
+-			condlog(3, "%s: mapname not found for %d:%d",
+-				param, major, minor);
+-			get_refwwid(CMD_NONE, param, DEV_DEVMAP,
+-				    vecs->pathvec, &refwwid);
+-			if (refwwid) {
+-				if (coalesce_paths(vecs, NULL, refwwid,
+-						   FORCE_RELOAD_NONE, CMD_NONE)
+-				    != CP_OK)
+-					condlog(2, "%s: coalesce_paths failed",
+-									param);
+-				free(refwwid);
+-			}
+-		} /*we attempt to create device only once*/
+-		count++;
+-	} while (!alias && (count < 2));
+-
+-	if (!alias) {
+-		condlog(2, "%s: add map failed", param);
+-		return 1;
+ 	}
++	sprintf(dev_path, "dm-%d", minor);
+ 	rc = ev_add_map(dev_path, alias, vecs);
+ 	return rc;
+ }
 -- 
 2.45.0
 
