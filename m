@@ -1,60 +1,60 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 44CD929406
-	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 06:05:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5964B29428
+	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 06:05:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720850719; cv=none; b=bEw40sxNq+HBsZMgQsofqmJ4d4L4cQdys1ZNcGFg+C3LgnA/RLDi/eWYdIZ6xXevIQwynV9IB/jXD+a/vNgtV5TBSGZD7AUMJToq5TSvmV3gGe4dfnx0ukL/0Jxv7Hk5W5jHtim+JYUI7/abqRFgcY91NKLYi1VdRr76qYgsVrU=
+	t=1720850719; cv=none; b=jznvW+0T2pRpgWMvR3f2/l/CPXaDj5pY8Kf63FcXYL3kDHDvqAIk2gnB5nGgNGBj8Gym0xbP+Vbo2Pkc474HiwNIDFmmY9Gk7yKuq6I5pJmlVZUXK4apIpK3MNXvfJC1Mts4bqEqzQXSmh+X1xyQlhhqL1BHTq7UlWDJwfOglcA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1720850719; c=relaxed/simple;
-	bh=42ev6G5X9EDDz17ZaVYZMZWDLHalnefha1KxgxyivQw=;
+	bh=We17LeLYHTE0WHG7s9Ywy6NHIWeIQBuq9SkxdAUUfe0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=paqA0nKR7DHdmR9eshnDzPBL9jRVc5ScDcYCn9Xd7997PWXv+0ywlZHHQ4WJMkQSKWVOlgV0gp8ZMb3pfj5AtSxQfmULLdKajoWqZT6s40gTcXHscOE4u0cO488v2NY9zRxmmpKxjMpxwl9SIBfft+lv/5wu6kUdoiwrd3djffw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Fzrx+gOM; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=KCW7kVodwJedQaGC9FDCaMC9Efmr0g5Y9c63GbhYGQg24NkfR2wQjp2bDqb2w4ZkrzTrcUc6X6cf0bjG0sYIccTi9kaiRH0ZrKIZrOlR0qZhe31JPdi/3krF3AweTfU64Pd2KPSiuWmfXPZrxlsC0RvOd4m7qGqGL/SAdGoYfbE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MCdgGGTs; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Fzrx+gOM"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MCdgGGTs"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1720850716;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=AI8ZXgC0fqweJEmaQuLatbI2yhcnKql8selzn32kDCs=;
-	b=Fzrx+gOMH8n93i7jjqnZ8SHOmfPjt0BKOC2CFxEaeeiJ5ABsVbicqTCIvzKtK/N8+pP+xi
-	9KlbgAldZ5AlgJpo8jJhpXZjShdHabR4oM8qDuL2BVgP9kgx0XW0+tF8KSJMes6XE2WB8J
-	M76QRrQBcU+Cc13sev6ai7Ufpt6uQ4k=
+	bh=kP0kY/RuEaJUhM7ZjBDUaLXgmLQ467ttPzobG3bF5W4=;
+	b=MCdgGGTsyAqsRrAfLtcpxFlqZR9Qc5lF5K8ICNqbHlt0sDOFzS0wJpFwclrAkETJ2e91Rc
+	f877rS+oCICUKTbbBsC1/V0zPNnxW2QB6AY/nJDLn35DFKz76HwRDCSkoi5o28FXqpEi7w
+	0HP0EE+U7nQSCnuJ+wtj7UIq4pmufNU=
 Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-500-EC_iDAeEP5unYGycop9AlQ-1; Sat,
- 13 Jul 2024 02:05:12 -0400
-X-MC-Unique: EC_iDAeEP5unYGycop9AlQ-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-687-9O0rKalcPPicntG6y1KYLQ-1; Sat,
+ 13 Jul 2024 02:05:11 -0400
+X-MC-Unique: 9O0rKalcPPicntG6y1KYLQ-1
 Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AA3F71955F42;
-	Sat, 13 Jul 2024 06:05:11 +0000 (UTC)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1DDEF195609D;
+	Sat, 13 Jul 2024 06:05:10 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 420821956066;
-	Sat, 13 Jul 2024 06:05:11 +0000 (UTC)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 92C2D1955F3B;
+	Sat, 13 Jul 2024 06:05:09 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D659Si2015558
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D658TR2015514
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Sat, 13 Jul 2024 02:05:10 -0400
+	Sat, 13 Jul 2024 02:05:08 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D659Am2015557;
-	Sat, 13 Jul 2024 02:05:09 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D6587Q2015513;
+	Sat, 13 Jul 2024 02:05:08 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 16/22] multipathd: correctly handle paths removed for a wwid change
-Date: Sat, 13 Jul 2024 02:05:00 -0400
-Message-ID: <20240713060506.2015463-17-bmarzins@redhat.com>
+Subject: [PATCH 05/22] multipathd: handle uninitialized paths in new function
+Date: Sat, 13 Jul 2024 02:04:49 -0400
+Message-ID: <20240713060506.2015463-6-bmarzins@redhat.com>
 In-Reply-To: <20240713060506.2015463-1-bmarzins@redhat.com>
 References: <20240713060506.2015463-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -69,132 +69,245 @@ X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-If check_path() exitted because the path's wwid changed and it was
-removed, checkerloop() wasn't decrementing the pathvec loop count.
-This caused the next path to be skipped by the checker loop.
-
-To solve this, make check_path() return -1 when a path is removed,
-make handle_uninitialized_path() also remove the path if it was
-blacklisted, and make checkerloop() just decrement the loop count
-when a path returns -1.
+Pull the code to handle uninitialized paths out of check_path() and into
+a new function called handle_uninitialized_paths(). This should cause
+no functional changes.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 33 ++++++++++++++++++++-------------
- multipathd/main.h |  2 +-
- 2 files changed, 21 insertions(+), 14 deletions(-)
+ multipathd/main.c | 171 ++++++++++++++++++++++++++++------------------
+ 1 file changed, 105 insertions(+), 66 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 0f763e29..e32af693 100644
+index 9b1b5226..9e329e89 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -974,20 +974,24 @@ rescan_path(struct udev_device *ud)
- 	}
- }
- 
--void
-+/* Returns true if the path was removed */
-+bool
- handle_path_wwid_change(struct path *pp, struct vectors *vecs)
- {
- 	struct udev_device *udd;
- 	static const char add[] = "add";
- 	ssize_t ret;
- 	char dev[FILE_NAME_SIZE];
-+	bool removed = false;
- 
- 	if (!pp || !pp->udev)
--		return;
-+		return removed;
- 
- 	strlcpy(dev, pp->dev, sizeof(dev));
- 	udd = udev_device_ref(pp->udev);
--	if (!(ev_remove_path(pp, vecs, 1) & REMOVE_PATH_SUCCESS) && pp->mpp) {
-+	if (ev_remove_path(pp, vecs, 1) & REMOVE_PATH_SUCCESS) {
-+		removed = true;
-+	} else if (pp->mpp) {
- 		pp->dmstate = PSTATE_FAILED;
- 		dm_fail_path(pp->mpp->alias, pp->dev_t);
- 	}
-@@ -997,6 +1001,7 @@ handle_path_wwid_change(struct path *pp, struct vectors *vecs)
- 	if (ret != sizeof(add) - 1)
- 		log_sysfs_attr_set_value(1, ret,
- 					 "%s: failed to trigger add event", dev);
-+	return removed;
- }
- 
- bool
-@@ -2377,7 +2382,8 @@ check_mpp(struct vectors * vecs, struct multipath *mpp, unsigned int ticks)
+@@ -2343,8 +2343,7 @@ check_path_state(struct path *pp)
  }
  
  /*
-- * Returns '1' if the path has been checked and '0' otherwise
-+ * Returns '1' if the path has been checked, -1 if the path was removed,
-+ * and '0' otherwise
+- * Returns '1' if the path has been checked, '-1' if it was blacklisted
+- * and '0' otherwise
++ * Returns '1' if the path has been checked and '0' otherwise
   */
- static int
+ int
  check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
-@@ -2434,8 +2440,7 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
- 	     pp->dmstate == PSTATE_FAILED) &&
- 	    check_path_wwid_change(pp)) {
- 		condlog(0, "%s: path wwid change detected. Removing", pp->dev);
--		handle_path_wwid_change(pp, vecs);
--		return 0;
-+		return handle_path_wwid_change(pp, vecs)? -1 : 0;
+@@ -2354,16 +2353,13 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	int chkr_new_path_up = 0;
+ 	int disable_reinstate = 0;
+ 	int oldchkrstate = pp->chkrstate;
+-	int retrigger_tries;
+ 	unsigned int checkint, max_checkint;
+ 	struct config *conf;
+ 	int marginal_pathgroups, marginal_changed = 0;
+ 	int ret;
+ 	bool need_reload;
+ 
+-	if (((pp->initialized == INIT_OK || pp->initialized == INIT_PARTIAL ||
+-	      pp->initialized == INIT_REQUESTED_UDEV) && !pp->mpp) ||
+-	    pp->initialized == INIT_REMOVED)
++	if (pp->initialized == INIT_REMOVED)
+ 		return 0;
+ 
+ 	if (pp->tick)
+@@ -2372,7 +2368,6 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 		return 0; /* don't check this path yet */
+ 
+ 	conf = get_multipath_config();
+-	retrigger_tries = conf->retrigger_tries;
+ 	checkint = conf->checkint;
+ 	max_checkint = conf->max_checkint;
+ 	marginal_pathgroups = conf->marginal_pathgroups;
+@@ -2383,38 +2378,6 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 		pp->checkint = checkint;
+ 	};
+ 
+-	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
+-		if (pp->retriggers < retrigger_tries) {
+-			static const char change[] = "change";
+-			ssize_t ret;
+-
+-			condlog(2, "%s: triggering change event to reinitialize",
+-				pp->dev);
+-			pp->initialized = INIT_REQUESTED_UDEV;
+-			pp->retriggers++;
+-			ret = sysfs_attr_set_value(pp->udev, "uevent", change,
+-						   sizeof(change) - 1);
+-			if (ret != sizeof(change) - 1)
+-				log_sysfs_attr_set_value(1, ret,
+-							 "%s: failed to trigger change event",
+-							 pp->dev);
+-			return 0;
+-		} else {
+-			condlog(1, "%s: not initialized after %d udev retriggers",
+-				pp->dev, retrigger_tries);
+-			/*
+-			 * Make sure that the "add missing path" code path
+-			 * below may reinstate the path later, if it ever
+-			 * comes up again.
+-			 * The WWID needs not be cleared; if it was set, the
+-			 * state hadn't been INIT_MISSING_UDEV in the first
+-			 * place.
+-			 */
+-			pp->initialized = INIT_FAILED;
+-			return 0;
+-		}
+-	}
+-
+ 	/*
+ 	 * provision a next check soonest,
+ 	 * in case we exit abnormally from here
+@@ -2435,32 +2398,6 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 		pp->checkint = checkint;
+ 		return 1;
  	}
- 	if (!pp->mpp->is_checked) {
- 		do_check_mpp(vecs, pp->mpp);
-@@ -2635,7 +2640,7 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+-	if (!pp->mpp) {
+-		if (!strlen(pp->wwid) &&
+-		    (pp->initialized == INIT_FAILED ||
+-		     pp->initialized == INIT_NEW) &&
+-		    (newstate == PATH_UP || newstate == PATH_GHOST)) {
+-			condlog(2, "%s: add missing path", pp->dev);
+-			conf = get_multipath_config();
+-			pthread_cleanup_push(put_multipath_config, conf);
+-			ret = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
+-			pthread_cleanup_pop(1);
+-			/* INIT_OK implies ret == PATHINFO_OK */
+-			if (pp->initialized == INIT_OK) {
+-				ev_add_path(pp, vecs, 1);
+-				pp->tick = 1;
+-			} else {
+-				if (ret == PATHINFO_SKIPPED)
+-					return -1;
+-				/*
+-				 * We failed multiple times to initialize this
+-				 * path properly. Don't re-check too often.
+-				 */
+-				pp->checkint = max_checkint;
+-			}
+-		}
+-		return 0;
+-	}
+ 	/*
+ 	 * Async IO in flight. Keep the previous path state
+ 	 * and reschedule as soon as possible
+@@ -2679,6 +2616,104 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	return 1;
  }
  
- /*
-- * Returns -1 if the path was blacklisted, and 0 otherwise
-+ * Returns -1 if the path was removed, and 0 otherwise
-  */
- static int
- handle_uninitialized_path(struct vectors * vecs, struct path * pp,
-@@ -2706,6 +2711,12 @@ handle_uninitialized_path(struct vectors * vecs, struct path * pp,
- 			ev_add_path(pp, vecs, 1);
- 			pp->tick = 1;
- 		} else if (ret == PATHINFO_SKIPPED) {
-+			int i;
++/*
++ * Returns -1 if the path was blacklisted, and 0 otherwise
++ */
++static int
++handle_uninitialized_path(struct vectors * vecs, struct path * pp,
++			  unsigned int ticks)
++{
++	int newstate;
++	int retrigger_tries;
++	unsigned int checkint, max_checkint;
++	struct config *conf;
++	int ret;
 +
-+			condlog(1, "%s: path blacklisted. removing", pp->dev);
-+			if ((i = find_slot(vecs->pathvec, (void *)pp)) != -1)
-+				vector_del_slot(vecs->pathvec, i);
-+			free_path(pp);
- 			return -1;
- 		}
- 	}
-@@ -2794,13 +2805,9 @@ checkerloop (void *ap)
- 				else
- 					rc = handle_uninitialized_path(vecs, pp,
- 								       ticks);
--				if (rc < 0) {
--					condlog(1, "%s: check_path() failed, removing",
--						pp->dev);
--					vector_del_slot(vecs->pathvec, i);
--					free_path(pp);
-+				if (rc < 0)
- 					i--;
--				} else
++	if (((pp->initialized == INIT_OK || pp->initialized == INIT_PARTIAL ||
++	      pp->initialized == INIT_REQUESTED_UDEV) && !pp->mpp) ||
++	    pp->initialized == INIT_REMOVED)
++		return 0;
++
++	if (pp->tick)
++		pp->tick -= (pp->tick > ticks) ? ticks : pp->tick;
++	if (pp->tick)
++		return 0; /* don't check this path yet */
++
++	conf = get_multipath_config();
++	retrigger_tries = conf->retrigger_tries;
++	checkint = conf->checkint;
++	max_checkint = conf->max_checkint;
++	put_multipath_config(conf);
++
++	if (!pp->mpp && pp->initialized == INIT_MISSING_UDEV) {
++		if (pp->retriggers < retrigger_tries) {
++			static const char change[] = "change";
++			ssize_t ret;
++
++			condlog(2, "%s: triggering change event to reinitialize",
++				pp->dev);
++			pp->initialized = INIT_REQUESTED_UDEV;
++			pp->retriggers++;
++			ret = sysfs_attr_set_value(pp->udev, "uevent", change,
++						   sizeof(change) - 1);
++			if (ret != sizeof(change) - 1)
++				log_sysfs_attr_set_value(1, ret,
++							 "%s: failed to trigger change event",
++							 pp->dev);
++			return 0;
++		} else {
++			condlog(1, "%s: not initialized after %d udev retriggers",
++				pp->dev, retrigger_tries);
++			/*
++			 * Make sure that the "add missing path" code path
++			 * below may reinstate the path later, if it ever
++			 * comes up again.
++			 * The WWID needs not be cleared; if it was set, the
++			 * state hadn't been INIT_MISSING_UDEV in the first
++			 * place.
++			 */
++			pp->initialized = INIT_FAILED;
++			return 0;
++		}
++	}
++
++	/*
++	 * provision a next check soonest,
++	 * in case we exit abnormally from here
++	 */
++	pp->tick = checkint;
++
++	newstate = check_path_state(pp);
++
++	if (!pp->mpp) {
++		if (!strlen(pp->wwid) &&
++		    (pp->initialized == INIT_FAILED ||
++		     pp->initialized == INIT_NEW) &&
++		    (newstate == PATH_UP || newstate == PATH_GHOST)) {
++			condlog(2, "%s: add missing path", pp->dev);
++			conf = get_multipath_config();
++			pthread_cleanup_push(put_multipath_config, conf);
++			ret = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
++			pthread_cleanup_pop(1);
++			/* INIT_OK implies ret == PATHINFO_OK */
++			if (pp->initialized == INIT_OK) {
++				ev_add_path(pp, vecs, 1);
++				pp->tick = 1;
++			} else {
++				if (ret == PATHINFO_SKIPPED)
++					return -1;
++				/*
++				 * We failed multiple times to initialize this
++				 * path properly. Don't re-check too often.
++				 */
++				pp->checkint = max_checkint;
++			}
++		}
++		return 0;
++	}
++	return 0;
++}
++
+ enum checker_state {
+ 	CHECKER_STARTING,
+ 	CHECKER_RUNNING,
+@@ -2751,7 +2786,11 @@ checkerloop (void *ap)
+ 				if (pp->is_checked)
+ 					continue;
+ 				pp->is_checked = true;
+-				rc = check_path(vecs, pp, ticks);
++				if (pp->mpp)
++					rc = check_path(vecs, pp, ticks);
 +				else
- 					num_paths += rc;
- 				if (++paths_checked % 128 == 0 &&
- 				    (lock_has_waiters(&vecs->lock) ||
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 4fcd6402..7aa93ca3 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -47,7 +47,7 @@ int setup_multipath(struct vectors * vecs, struct multipath * mpp);
- int update_multipath(struct vectors *vecs, char *mapname);
- int reload_and_sync_map(struct multipath *mpp, struct vectors *vecs);
- 
--void handle_path_wwid_change(struct path *pp, struct vectors *vecs);
-+bool handle_path_wwid_change(struct path *pp, struct vectors *vecs);
- bool check_path_wwid_change(struct path *pp);
- int finish_path_init(struct path *pp, struct vectors * vecs);
- int resize_map(struct multipath *mpp, unsigned long long size,
++					rc = handle_uninitialized_path(vecs, pp,
++								       ticks);
+ 				if (rc < 0) {
+ 					condlog(1, "%s: check_path() failed, removing",
+ 						pp->dev);
 -- 
 2.45.0
 
