@@ -1,148 +1,186 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D04919478
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D00F18C05
 	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 06:05:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720850715; cv=none; b=gYV/LLNgLovT+f1eEe81Z7q5xo5MBgm/rmw70SJgs/WHdZJ1Hfd/YobaFzzBEhyWV0II9O+eSEWOryjeSwAUDjCNcOjjcb1f9aR8MjH/kINUv90ZAQpbtz66K6H9f+9WlK9e+WzMUqcsW7DlSigc9EnW0GlDzqaremgQqLct/WQ=
+	t=1720850716; cv=none; b=mSg5Fk3MY1XvmRKcBo05+DN2XfeyAcnfuf/gGy+7UKGnLsjsXpTCjTUgtcPvSr8bm3Osz9oYmyYxY2I5OfVr63pRZqedByCrAyzycSOYcLSiYWO6O1PO1iC3waLIdPBSn/dEOeYogITCGt93b0jXk+fOPI5zIXX2pqwCZMBGlYs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720850715; c=relaxed/simple;
-	bh=mEUXdbG7tz8gcjMFEURgyWqfTE/RUQMwyANfERFrzYs=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=sxVMK9B7gX2L62SYxHtSnMrfcxl0Yn2xpF0dyApCf4+Bn/Ub1T2FArstvLMoEtjAFYDqECXRawkESYIKy06NAJripUYaT3C5gYF/bsD7UnOEc3KN9bn3ub24kaNgRwinbNB3EyXly/vRZt4BTpY5EgQ33pE+SeogfPV5GNTZHjY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=J/KHVtE8; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1720850716; c=relaxed/simple;
+	bh=D85aTLVA4iVcaBJBVSq3Lqr2gfaZpWsFSd3gAVs5E1c=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=WYtOCsuNzyims2QNNqoa+LR+lV9dXbnApSQLcU6T1KVSpF2hml3+tsZ72BSoB8vIEKdT9kRwcSuhI5D5AKnY3L7sFRHNzNzlnkFWg8BQUCKvFfKUQX70QaNILChe5A1UsDTVLiLK9g6vnvuEF/ASzVto4rvNPgd+J1ZCD+vEX2c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=b1BA2UN4; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J/KHVtE8"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="b1BA2UN4"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1720850712;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=g+btle4nr49q1EScqwGwZ9JaBQqZi+bzLCyYTV1VpBg=;
-	b=J/KHVtE8CeKzc87SLZx8LzV8l3cniD/PqcVv8lowp5/MyvmZDBbfnGRCZqzlm139quWqhh
-	J3WqvyhuEwEpi/AegaIwJGmhDTiS96BemVYGIXuxXpPnvwMMaDJYhKlzZYvHhKmQJjhX0M
-	/yk6qS5B7f0QMm+4l8rq4JXLlbhV+RY=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=6BqUH7BeXziyi7bmuSpx/iosOsKz2cyeKRHJu015htM=;
+	b=b1BA2UN4ZMjhvkCgrQ/H/xm3giMJzbZbBQb785JcPj5xvztspCfMx4NvbN1lQbDSlYK9Pq
+	NAR6pZXS0UQWCnhNwSR0Y6UukMcNc68BWiRF4viLoPETwdjX730DqWgZAlHHlu5AQzxeEh
+	BmjABNj50TTwYJnmFD7cyF7iwGN+gJY=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-214-VX-L-dk3NO6X5j968KPLew-1; Sat,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-390-DGAgHC52NtuEM_wluilHjg-1; Sat,
  13 Jul 2024 02:05:10 -0400
-X-MC-Unique: VX-L-dk3NO6X5j968KPLew-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+X-MC-Unique: DGAgHC52NtuEM_wluilHjg-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 94E611944D30;
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5897519560B0;
 	Sat, 13 Jul 2024 06:05:09 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CEB2F19560AE;
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CFFCF3000181;
 	Sat, 13 Jul 2024 06:05:08 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D657Wi2015494
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D657GY2015498
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
 	Sat, 13 Jul 2024 02:05:07 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D656DO2015493;
-	Sat, 13 Jul 2024 02:05:06 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D657S32015497;
+	Sat, 13 Jul 2024 02:05:07 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 00/22] path checker refactor and misc fixes
-Date: Sat, 13 Jul 2024 02:04:44 -0400
-Message-ID: <20240713060506.2015463-1-bmarzins@redhat.com>
+Subject: [PATCH 01/22] libmultipath: rename dm_map_present_by_wwid() and add outputs
+Date: Sat, 13 Jul 2024 02:04:45 -0400
+Message-ID: <20240713060506.2015463-2-bmarzins@redhat.com>
+In-Reply-To: <20240713060506.2015463-1-bmarzins@redhat.com>
+References: <20240713060506.2015463-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-This patchset is based on discussions I had with Martin Wilck about my
-last, partially applied patchset. It's based on top of his mwilck-tip
-branch, 6a312b6c "GitHub workflows: native.yml: run root tests". These
-patches are mostly orthogonal to the libmp_mapinfo() work. I'll rebase
-them if further changes to that patchset stop them form applying
-cleanly.
+add arguments to dm_map_present_by_wwid() to allow optionally fetching
+the device name and minor number for the devices found by WWID.  These
+will be used by a later patch. Since it can now also be used to get the
+name and minor number of a device from its WWID, rename it to
+dm_find_map_by_wwid()
 
-The first two patches are reposts of patches from my earlier patchset,
-redone to work with the new libmp_mapinfo() API. They make it possible
-to add maps by WWID with "multipathd add map".
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/devmapper.c | 16 ++++++++++++----
+ libmultipath/devmapper.h |  2 +-
+ libmultipath/valid.c     |  2 +-
+ tests/valid.c            | 12 ++++++------
+ 4 files changed, 20 insertions(+), 12 deletions(-)
 
-The rest of the patches are work and bugfixes related to refactoring
-checkerloop so that
-
-1. multipath devices get resynced with the kernel occasionally, even if
-they have not paths
-
-2. If multiple paths from a multipath device are checked in the same
-loop, the multipath device will only get resynced once.
-
-3. All the paths of a multipath device will converge to being checked at
-the same time (at least as much as their differing checkint values will
-allow).
-
-4. The times for checking the paths of each multipath device will spread
-out as much as possible so multipathd doesn't do all of it's checking in
-a burst.
-
-5. path checking is done my multipath device (for initialized paths,
-the uninitialized paths are handled after all the adopted paths are
-handled).
-
-Items 1 & 2 are handled by patch 12 and preceding patches.
-
-Items 3 & 4 and handled by patch 19 and preceding patches.
-
-Item 5 is handled by patch 20 and 21.
-
-Benjamin Marzinski (22):
-  libmultipath: rename dm_map_present_by_wwid() and add outputs
-  multipathd: make cli_add_map() handle adding maps by WWID correctly
-  multipathd: remove checker restart optimization
-  multipathd: refactor path state getting code into a helper
-  multipathd: handle uninitialized paths in new function
-  multipathd: make check_path() static
-  multipathd: remove redundant checks in handle_uninitialized_path()
-  multipathd: check paths immediately after failing udev initialization
-  multipathd: set pp->tick = max_checkint in handle_uninitialized_path
-  multipathd: return 0 from path_check() if that path wasn't checked
-  multipathd: reorder path state checks
-  multipathd: adjust when mpp is synced with the kernel
-  multipathd: resync map after setup_map in ev_remove_path
-  multipathd: resync map after setup_map in resize_map
-  multipathd: always resync map in reload_and_sync_map
-  multipathd: correctly handle paths removed for a wwid change
-  multipathd: handle changed wwid when adding partial path
-  multipathd: don't read conf->checkint twice in check_path
-  multipathd: make multipath devices manage their path check times
-  multipathd: factor out actual path checking loop from checkerloop
-  multipathd: check paths in order by mpp
-  multipathd: clean up the correct wwid in check_path_wwid_change
-
- libmultipath/config.c             |  13 +
- libmultipath/config.h             |   1 +
- libmultipath/configure.c          |   1 +
- libmultipath/devmapper.c          |  16 +-
- libmultipath/devmapper.h          |   2 +-
- libmultipath/libmultipath.version |   5 +
- libmultipath/structs.c            |   1 +
- libmultipath/structs.h            |   3 +
- libmultipath/structs_vec.c        |   6 +
- libmultipath/valid.c              |   2 +-
- multipathd/cli_handlers.c         |  65 ++--
- multipathd/main.c                 | 571 +++++++++++++++++++-----------
- multipathd/main.h                 |   2 +-
- tests/valid.c                     |  12 +-
- 14 files changed, 431 insertions(+), 269 deletions(-)
-
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index bbbadeee..60d786c6 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -872,16 +872,24 @@ int dm_is_mpath(const char *name)
+ 	}
+ }
+ 
+-int dm_map_present_by_wwid(const char *wwid)
++/* if name is non-NULL, it must point to an array of WWID_SIZE bytes */
++int dm_find_map_by_wwid(const char *wwid, char *name, int *minor)
+ {
+ 	char tmp[DM_UUID_LEN];
++	struct dm_info dmi;
++	int rc;
+ 
+ 	if (safe_sprintf(tmp, UUID_PREFIX "%s", wwid))
+ 		return DMP_ERR;
+ 
+-	return libmp_mapinfo(DM_MAP_BY_UUID,
+-			     (mapid_t) { .str = tmp },
+-			     (mapinfo_t) { .name = NULL });
++	rc = libmp_mapinfo(DM_MAP_BY_UUID,
++			   (mapid_t) { .str = tmp },
++			   (mapinfo_t) { .name = name,
++					 .dmi = minor ? &dmi : NULL });
++	if (rc == DMP_OK && minor)
++		*minor = dmi.minor;
++
++	return rc;
+ }
+ 
+ static int dm_dev_t (const char *mapname, char *dev_t, int len)
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index c28991fb..1de694c9 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -132,7 +132,7 @@ int dm_simplecmd_flush (int task, const char *name, uint16_t udev_flags);
+ int dm_simplecmd_noflush (int task, const char *name, uint16_t udev_flags);
+ int dm_addmap_create (struct multipath *mpp, char *params);
+ int dm_addmap_reload (struct multipath *mpp, char *params, int flush);
+-int dm_map_present_by_wwid(const char *uuid);
++int dm_find_map_by_wwid(const char *wwid, char *name, int *minor);
+ 
+ enum {
+ 	DM_IS_MPATH_NO,
+diff --git a/libmultipath/valid.c b/libmultipath/valid.c
+index 9267cef9..b7e0cc9b 100644
+--- a/libmultipath/valid.c
++++ b/libmultipath/valid.c
+@@ -360,7 +360,7 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
+ 	if (check_wwids_file(pp->wwid, 0) == 0)
+ 		return PATH_IS_VALID_NO_CHECK;
+ 
+-	if (dm_map_present_by_wwid(pp->wwid) == DMP_OK)
++	if (dm_find_map_by_wwid(pp->wwid, NULL, NULL) == DMP_OK)
+ 		return PATH_IS_VALID;
+ 
+ 	/* all these act like FIND_MULTIPATHS_STRICT for finding if a
+diff --git a/tests/valid.c b/tests/valid.c
+index a93bbe50..d9325f8b 100644
+--- a/tests/valid.c
++++ b/tests/valid.c
+@@ -189,10 +189,10 @@ int __wrap_check_wwids_file(char *wwid, int write_wwid)
+ 		return -1;
+ }
+ 
+-int __wrap_dm_map_present_by_wwid(const char *uuid)
++int __wrap_dm_find_map_by_wwid(const char *wwid, char *name, int *minor)
+ {
+ 	int ret = mock_type(int);
+-	assert_string_equal(uuid, mock_ptr_type(char *));
++	assert_string_equal(wwid, mock_ptr_type(char *));
+ 	return ret;
+ }
+ 
+@@ -271,8 +271,8 @@ static void setup_passing(char *name, char *wwid, unsigned int check_multipathd,
+ 	will_return(__wrap_check_wwids_file, wwid);
+ 	if (stage == STAGE_CHECK_WWIDS)
+ 		return;
+-	will_return(__wrap_dm_map_present_by_wwid, 0);
+-	will_return(__wrap_dm_map_present_by_wwid, wwid);
++	will_return(__wrap_dm_find_map_by_wwid, 0);
++	will_return(__wrap_dm_find_map_by_wwid, wwid);
+ }
+ 
+ static void test_bad_arguments(void **state)
+@@ -516,8 +516,8 @@ static void test_check_uuid_present(void **state)
+ 	memset(&pp, 0, sizeof(pp));
+ 	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
+ 	setup_passing(name, wwid, CHECK_MPATHD_RUNNING, STAGE_CHECK_WWIDS);
+-	will_return(__wrap_dm_map_present_by_wwid, 1);
+-	will_return(__wrap_dm_map_present_by_wwid, wwid);
++	will_return(__wrap_dm_find_map_by_wwid, 1);
++	will_return(__wrap_dm_find_map_by_wwid, wwid);
+ 	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+ 			 PATH_IS_VALID);
+ 	assert_string_equal(pp.dev, name);
 -- 
 2.45.0
 
