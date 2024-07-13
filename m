@@ -1,60 +1,60 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2E50F20328
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0037945945
 	for <dm-devel@lists.linux.dev>; Sat, 13 Jul 2024 06:05:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720850720; cv=none; b=UBZ++3/KZaLR7/kICsRaoOaYoh00n8zaEoY90AqHctBYz9N+ffAan9Qhc8Xc4Vxle3rad2uuCDr7099M6xOmjcdFX1F9WYrlv0DIV1Z7y3FpZOAmWXZEymZDPHk4ChdpQUHrFO5jjL3QuBrprekb0EUSBtbWGWn2LBFXH91CWn0=
+	t=1720850721; cv=none; b=hRjj5b7E0QZnXnTR+lrfcJMK0ar5g053j1XIktLNOFihfHl4FxmjMCXee2y/46keMmYNEAoyplFsnWo4rRtnKQDbg8sRkKf8dcQsb0uWiYw45Tsmiaok0Nff3U4ejFnKNUpSlMdzDHJarmCS2+4ef0ergv99CfAt/a3unub9Flo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720850720; c=relaxed/simple;
-	bh=3e+uQ1J31NGi4+5IsLm/1FNAFmRYgNg23wxt3EHTH7A=;
+	s=arc-20240116; t=1720850721; c=relaxed/simple;
+	bh=7epjJtBUShVaffUzRsDkazIF9K+mFPwcq2Wr4b1uVXU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=lqiCtlqEmr07kCXVF6zZl/qIzhMT1O8BDSxH36IoT0QEjQAnXhV9RlipzjYwyzDzF+mSkeIT2+3oOu8SsdUPz2lYDY+GC85N6BZHLhWigdUyGMyBgLwTKpbvr2+LF9MBvbfl6cKj+z3R/l5gh7apff2fDhuPHoShB/z/nOgbj/o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XdlVXGd8; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=fgzlOCyQDRYwgX3+busxozN+IqHSy1ozsnOOmAvPcAeE4f3lVnAfTEy0skNwNGcXHGbyFOqG1imZQJL5KRWuABlSoZ64zt9YNpWUXZjS1KHwrs7kJhf8UVut3oyzR+/y0GICWH6g/i1ZFtffgJiba9wz+0rDdsRpkQOhT/ysoos=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KlDrHebD; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XdlVXGd8"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KlDrHebD"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1720850718;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=mQ8m675KpiZw+7LTUB8+0A3MmVZA8ARQ7XQW6UJwFYI=;
-	b=XdlVXGd8FfKsl+o3fLrLvN8p8owmh4AiRj00AvsNRRCcB5FHFxH0Hd3dDL3pef9kqKf8f3
-	lPd2q0yPQ0vP/dQONckVX+pbPjOIBYYw+ynmXlolddapr5wJ/M01kTILJGB6/puedQz6Jh
-	MTumXjTe+BaueovZ/mmQapmUl9FGQFc=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+	bh=E0fKWvczRjCAgmWvZLc2pqQL4H2plMr0QhKZd8PUPjc=;
+	b=KlDrHebD1UecTSwbV1ljzsZU6HpZEJe+ty1tLGvT1zLkMNVkrcbPPE0uLm2j9bg9Kbi+xG
+	nak7yDENWBH+7/IIU0sURSXL7x/U2JRzs2z1qsmF/vHpJV8ylZLzShatrqnbszwHMMVXeE
+	X5OdqudRRAoJ8L8EXb5yIehgiOryi7w=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-396-0rKf8eD6Md2TS_8RRR19PQ-1; Sat,
- 13 Jul 2024 02:05:13 -0400
-X-MC-Unique: 0rKf8eD6Md2TS_8RRR19PQ-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-683-sLa-s2UWNCufTHu4fADtPw-1; Sat,
+ 13 Jul 2024 02:05:10 -0400
+X-MC-Unique: sLa-s2UWNCufTHu4fADtPw-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 377B219560B0;
-	Sat, 13 Jul 2024 06:05:12 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DAAE8196CDEF;
+	Sat, 13 Jul 2024 06:05:09 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E176D19560AE;
-	Sat, 13 Jul 2024 06:05:11 +0000 (UTC)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 32C8C1956066;
+	Sat, 13 Jul 2024 06:05:09 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D65AWr2015578
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46D6574q2015506
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Sat, 13 Jul 2024 02:05:10 -0400
+	Sat, 13 Jul 2024 02:05:07 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D65AM62015577;
-	Sat, 13 Jul 2024 02:05:10 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46D657Vd2015505;
+	Sat, 13 Jul 2024 02:05:07 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 21/22] multipathd: check paths in order by mpp
-Date: Sat, 13 Jul 2024 02:05:05 -0400
-Message-ID: <20240713060506.2015463-22-bmarzins@redhat.com>
+Subject: [PATCH 03/22] multipathd: remove checker restart optimization
+Date: Sat, 13 Jul 2024 02:04:47 -0400
+Message-ID: <20240713060506.2015463-4-bmarzins@redhat.com>
 In-Reply-To: <20240713060506.2015463-1-bmarzins@redhat.com>
 References: <20240713060506.2015463-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -63,166 +63,73 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Instead of checking all of the paths in vecs->pathvec in order, first
-check all the paths in each multipath device. Then check the
-uninitialized paths.
-
-One issue with checking paths this way is that the multipath device can
-be resynced or even removed while a path is being checked. The path can
-also be removed. If there is any change to the multipath device,
-multipathd needs to loop through its paths again, because the current
-indexes may not longer be valid.
-
-To do this change mpp->is_checked to an int called mpp->synced_count,
-and increment it whenever the multipath device gets resynced. After each
-path is checked, make sure that the multipath device still exists, that
-mpp->synced_count hasn't changed. If either has happened, restart
-checking at the current index in mpvec (which will either be the same
-mpp if it was just resynced, or the next mpp if the last one was
-deleted). Since the multipath device is resynced when its first path is
-checked, this restart will happen to every multipath device at least
-once per loop. But the paths themselves aren't rechecked, so it's not
-much overhead.
-
-If resyncing a multipath device fails in do_check_mpp(), there may be
-path devices that have pp->mpp set, but are no longer in one of the
-multipath device's pathgroups, and thus will not get checked. This
-almost definitely means the multipath device was deleted. If
-do_check_mpp() failed to resync the device, but it wasn't deleted, it
-will get called again in max_checkint seconds even if it no longer has
-mpp->pg set, and the paths will get checked again after that.
+Future commits will make this optimization unusable.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs.h     |  2 +-
- libmultipath/structs_vec.c |  1 +
- multipathd/main.c          | 54 ++++++++++++++++++++++++++++++++------
- 3 files changed, 48 insertions(+), 9 deletions(-)
+ multipathd/main.c | 27 +++++----------------------
+ 1 file changed, 5 insertions(+), 22 deletions(-)
 
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 457d7836..91509881 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -455,7 +455,7 @@ struct multipath {
- 	int ghost_delay_tick;
- 	int queue_mode;
- 	unsigned int sync_tick;
--	bool is_checked;
-+	int synced_count;
- 	uid_t uid;
- 	gid_t gid;
- 	mode_t mode;
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 60360c76..704e0f21 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -513,6 +513,7 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
- 	conf = get_multipath_config();
- 	mpp->sync_tick = conf->max_checkint;
- 	put_multipath_config(conf);
-+	mpp->synced_count++;
- 
- 	r = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY,
- 			  (mapid_t) { .str = mpp->alias },
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 27e18a0c..d51bc852 100644
+index 386cd076..0b0ebc8a 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2356,7 +2356,6 @@ do_check_mpp(struct vectors * vecs, struct multipath *mpp)
- 	int i, ret;
- 	struct path *pp;
+@@ -2704,7 +2704,7 @@ checkerloop (void *ap)
  
--	mpp->is_checked = true;
- 	ret = update_multipath_strings(mpp, vecs->pathvec);
- 	if (ret != DMP_OK) {
- 		condlog(1, "%s: %s", mpp->alias, ret == DMP_NOT_FOUND ?
-@@ -2428,7 +2427,7 @@ do_check_path (struct vectors * vecs, struct path * pp)
- 		condlog(0, "%s: path wwid change detected. Removing", pp->dev);
- 		return handle_path_wwid_change(pp, vecs)? -1 : 0;
- 	}
--	if (!pp->mpp->is_checked) {
-+	if (pp->mpp->synced_count == 0) {
- 		do_check_mpp(vecs, pp->mpp);
- 		/* if update_multipath_strings orphaned the path, quit early */
- 		if (!pp->mpp)
-@@ -2787,18 +2786,57 @@ check_paths(struct vectors *vecs, unsigned int ticks, int *num_paths_p)
- {
- 	unsigned int paths_checked = 0;
- 	struct timespec diff_time, start_time, end_time;
-+	struct multipath *mpp;
- 	struct path *pp;
- 	int i, rc;
+ 	while (1) {
+ 		struct timespec diff_time, start_time, end_time;
+-		int num_paths = 0, strict_timing, rc = 0, i = 0;
++		int num_paths = 0, strict_timing, rc = 0;
+ 		unsigned int ticks = 0;
+ 		enum checker_state checker_state = CHECKER_STARTING;
  
- 	get_monotonic_time(&start_time);
-+
-+	vector_foreach_slot(vecs->mpvec, mpp, i) {
-+		struct pathgroup *pgp;
-+		struct path *pp;
-+		int j, k;
-+		bool check_for_waiters = false;
-+		/* maps can be rechecked, so this is not always 0 */
-+		int synced_count = mpp->synced_count;
-+
-+		vector_foreach_slot (mpp->pg, pgp, j) {
-+			vector_foreach_slot (pgp->paths, pp, k) {
-+				if (!pp->mpp || pp->is_checked)
-+					continue;
-+				pp->is_checked = true;
-+				rc = check_path(vecs, pp, ticks,
-+						start_time.tv_sec);
-+				if (rc > 0)
-+					*num_paths_p += 1;
-+				if (++paths_checked % 128 == 0)
-+					check_for_waiters = true;
-+				/*
-+				 * mpp has been removed or resynced. Path may
-+				 * have been removed.
-+				 */
-+				if (VECTOR_SLOT(vecs->mpvec, i) != mpp ||
-+				    synced_count != mpp->synced_count) {
-+					i--;
-+					goto next_mpp;
-+				}
-+			}
-+		}
-+next_mpp:
-+		if (check_for_waiters &&
-+		    (lock_has_waiters(&vecs->lock) || waiting_clients())) {
-+			get_monotonic_time(&end_time);
-+			timespecsub(&end_time, &start_time, &diff_time);
-+			if (diff_time.tv_sec > 0)
-+				return CHECKER_RUNNING;
-+		}
-+	}
- 	vector_foreach_slot(vecs->pathvec, pp, i) {
--		if (pp->is_checked)
-+		if (pp->mpp || pp->is_checked)
- 			continue;
- 		pp->is_checked = true;
--		if (pp->mpp)
--			rc = check_path(vecs, pp, ticks, start_time.tv_sec);
--		else
--			rc = handle_uninitialized_path(vecs, pp, ticks);
-+
-+		rc = handle_uninitialized_path(vecs, pp, ticks);
- 		if (rc < 0)
- 			i--;
- 		else
-@@ -2871,7 +2909,7 @@ checkerloop (void *ap)
- 			lock(&vecs->lock);
- 			pthread_testcancel();
- 			vector_foreach_slot(vecs->mpvec, mpp, i)
--				mpp->is_checked = false;
-+				mpp->synced_count = 0;
+@@ -2723,7 +2723,7 @@ checkerloop (void *ap)
+ 			sd_notify(0, "WATCHDOG=1");
+ #endif
+ 		while (checker_state != CHECKER_FINISHED) {
+-			unsigned int paths_checked = 0;
++			unsigned int paths_checked = 0, i;
+ 			struct timespec chk_start_time;
+ 
+ 			pthread_cleanup_push(cleanup_lock, &vecs->lock);
+@@ -2733,28 +2733,11 @@ checkerloop (void *ap)
  			if (checker_state == CHECKER_STARTING) {
- 				vector_foreach_slot(vecs->mpvec, mpp, i)
- 					check_mpp(vecs, mpp, ticks);
+ 				vector_foreach_slot(vecs->pathvec, pp, i)
+ 					pp->is_checked = false;
+-				i = 0;
+ 				checker_state = CHECKER_RUNNING;
+-			} else {
+-				/*
+-				 * Paths could have been removed since we
+-				 * dropped the lock. Find the path to continue
+-				 * checking at. Since paths can be removed from
+-				 * anywhere in the vector, but can only be added
+-				 * at the end, the last checked path must be
+-				 * between its old location, and the start or
+-				 * the vector.
+-				 */
+-				if (i >= VECTOR_SIZE(vecs->pathvec))
+-					i = VECTOR_SIZE(vecs->pathvec) - 1;
+-				while ((pp = VECTOR_SLOT(vecs->pathvec, i))) {
+-					if (pp->is_checked == true)
+-						break;
+-					i--;
+-				}
+-				i++;
+ 			}
+-			vector_foreach_slot_after (vecs->pathvec, pp, i) {
++			vector_foreach_slot(vecs->pathvec, pp, i) {
++				if (pp->is_checked)
++					continue;
+ 				pp->is_checked = true;
+ 				rc = check_path(vecs, pp, ticks);
+ 				if (rc < 0) {
 -- 
 2.45.0
 
