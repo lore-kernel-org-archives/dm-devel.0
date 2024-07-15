@@ -1,87 +1,142 @@
-Received: from mail-lf1-f46.google.com (mail-lf1-f46.google.com [209.85.167.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4DC61804F
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jul 2024 21:22:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 405E320EB
+	for <dm-devel@lists.linux.dev>; Mon, 15 Jul 2024 22:09:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721078532; cv=none; b=LWxy7NYZaPGKbx5cLk875PlQ68R+6GKCwvgO3p0vbPwUVAbTM3Vt7hZUOIw52c/60xyR8AWkMW8zzMJFuPQDggu3DOzIdG3X9S6CVJityftiE9vly2fEGfgpKRt2lIsCxZhWIiy2ufC5EfSEI77nM12MqYCh+FUbtR5TbmDl/t0=
+	t=1721081346; cv=none; b=sZfUZJDsV7Q/3E5OT9saM9sR0aY8WG0L1cFBt2inECqIVUzuf6rKVSwVUjiNkhKQBZ+pl4At7v55S8vsX96iQtnM/wrh4/Rps2wjuo9+mMS0CB2AbySCr1k1oLHeFRGytP+v4A2sJkJqCA3w/afIO3cMFyXl2HBzw/FvzBTIWrY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721078532; c=relaxed/simple;
-	bh=E8e+HZvo/DKtjDmf1dNKxOTgrWWZuF1f2hW9g9IIAzc=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=X2cnQLJ1n6Jw43yvXHb9nEuiUIQ+SWzN7XP7YSNuhtBy60xeXHOOWWifPBmYpwE6SDCwYwGY751lH4tUsqwC6x2r3GG/fH5TbTKx/FcwIaKGRcrXjuARh8iIEoFc2bbP7DdKaCYjJOUNlqGW7j9EXE3Zf3Ie7EPg5wxoTGI6+Aw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Kxj8GJq/; arc=none smtp.client-ip=209.85.167.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1721081346; c=relaxed/simple;
+	bh=pgsjwmcK+ZO2hSW5ewsSEYhAlwX62QAK2rzuTPYVU8I=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=CAvEN9Oa4Jx3aZ2E34iDSmquYpgT6t6xJTnyUBtHUoi+2R+L9gI1czgq/9ZaW2WukWSPq+fouYUUedQcgvfasyLFY9qebpqbzekaaFpZ/h8tm/3E6QLO7vCG24SLd5uUuQEPWvy43y6cQ3/8gzVN7X+z1WYWyD+UHYmbELcGXBo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=F1ONwvEx; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Kxj8GJq/"
-Received: by mail-lf1-f46.google.com with SMTP id 2adb3069b0e04-52ea5dc3c66so7697585e87.3
-        for <dm-devel@lists.linux.dev>; Mon, 15 Jul 2024 14:22:09 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1721078528; x=1721683328; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=E8e+HZvo/DKtjDmf1dNKxOTgrWWZuF1f2hW9g9IIAzc=;
-        b=Kxj8GJq/cbI4B6UJF8Lzxnm9h2vXgWMFrl+KYuP0QvbA2FThPVmOPV9aY2AMoBE8DJ
-         /N9EiRSunVxQ5sO4j8dPogtUPQ+lmnhlACBv2VvQ6fUAssREWsrBcJGX/F3Ia23/nKMQ
-         FuQ2tXMtA0T9Kk9v9G/sU25EfEWiEPg87mTN7EaxGFstcPzMcNM3th4L5G2oV1Ml20Zh
-         mKjkiJeofh3Rvmgm+7BHis/fIvUMt7PiANMzKMVTtNLZsbRS0+hkkiM7nct5soLv57DU
-         fqFKnePPZeZkIwxSIqzTPLD6yJic0m6KHIAFY9jB72MJyubVGfWFqsXw72zGv8Ppp4Ou
-         KqXQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721078528; x=1721683328;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=E8e+HZvo/DKtjDmf1dNKxOTgrWWZuF1f2hW9g9IIAzc=;
-        b=pHz/KbctJCXTX48c0JoXeJYHjlGtwax+/3tJaTA6PlW8W59p15ChmT4kROOeMB9FXM
-         ebr6Cqv01NVs2uVgUvPran6F8VaX+7hGYUDJdZwxgdT2fGbFvNpMC9neqTi2kWr4cwlm
-         K8WnrP6cJcf3+7j8ZAXsAsJ/VtHgyQXa8Mrga4zv2zcPvGf6f2+HhAlEoX1rcdMhIRGF
-         wpS2D24tpVHc69f4WlVf2+SOUQ4jinLD31ukYrTA82XfUK8gn8MPt8nrVb7degXpOPzI
-         eCfmXVLWRy5gRnN5dPhvQYjMHjv9xomy5HMQ1R/2B4f+HHaGtK6UJeirI1/LWbYqknBI
-         HvmA==
-X-Gm-Message-State: AOJu0YyeexBeh28r0XmHwzkI8oeHs8yeVPaWBiubORbWqK50B33N73Ro
-	RORjbspm+ubP9IX0F4BESlqAAxKihMg9cvqNyNib2mvvmlKR32sGySWOR+Y1JPA=
-X-Google-Smtp-Source: AGHT+IE3ikCgnDpBM583HuLnYdTiCNAW6YF8XDD1NJtKeoC1fz6UWxrtzNalMe4NjZL+h9puZbAa9g==
-X-Received: by 2002:a05:6512:acb:b0:52e:8071:e89d with SMTP id 2adb3069b0e04-52edf02dd19mr138061e87.40.1721078527658;
-        Mon, 15 Jul 2024 14:22:07 -0700 (PDT)
-Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a79bc7f1d06sm244445166b.142.2024.07.15.14.22.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 15 Jul 2024 14:22:07 -0700 (PDT)
-Message-ID: <fab74ceeb25ded98f57fbfa59b6afbb9731b8502.camel@suse.com>
-Subject: Re: [PATCH 22/22] multipathd: clean up the correct wwid in
- check_path_wwid_change
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Mon, 15 Jul 2024 23:22:06 +0200
-In-Reply-To: <20240713060506.2015463-23-bmarzins@redhat.com>
-References: <20240713060506.2015463-1-bmarzins@redhat.com>
-	 <20240713060506.2015463-23-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.3 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="F1ONwvEx"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1721081344;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=xEylXcvo9UfwQaNfDPrPW3+PBd0puHB2tice0C23SRs=;
+	b=F1ONwvExIHdaZbQms0Mt71F2YLnc7fwisyUE/oF+U3/ui4FutdvoJ8YUpcrfMyBv44iQUY
+	BkbZoCoNkB4xmAK/zZYIznWl7Z+MFckA8In9yB0AdfoNTZQdGPnYk5WX5FAy0no2DO65v9
+	QJsRcoK3jnWOptOKyiVSYVx4Zqm5hBw=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-235-zcj4Nqd6PEOodSktevehuw-1; Mon,
+ 15 Jul 2024 18:09:02 -0400
+X-MC-Unique: zcj4Nqd6PEOodSktevehuw-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0F0081955D60;
+	Mon, 15 Jul 2024 22:09:01 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8188A1955F40;
+	Mon, 15 Jul 2024 22:09:00 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46FM8wod2095824
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 15 Jul 2024 18:08:59 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46FM8w342095823;
+	Mon, 15 Jul 2024 18:08:58 -0400
+Date: Mon, 15 Jul 2024 18:08:58 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 06/49] kpartx.rules: use @BINDIR@ to locate kpartx
+Message-ID: <ZpWd-nPy1SloOaVg@redhat.com>
+References: <20240712171458.77611-1-mwilck@suse.com>
+ <20240712171458.77611-7-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <20240712171458.77611-7-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Sat, 2024-07-13 at 02:05 -0400, Benjamin Marzinski wrote:
-> After check_path_wwid_change() grabbed a new copy of the wwid, it was
-> stripping trailing whitespace off of pp->wwid, instead of the copy it
-> just got.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-
-I'd suggest adding:
-4660cff ("multipathd: add recheck_wwid option to verify the path wwid")
-
+On Fri, Jul 12, 2024 at 07:14:14PM +0200, Martin Wilck wrote:
+> The path for kpartx should match the installed binary.
+> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  .gitignore                               | 1 +
+>  kpartx/Makefile                          | 6 +++---
+>  kpartx/{kpartx.rules => kpartx.rules.in} | 2 +-
+>  3 files changed, 5 insertions(+), 4 deletions(-)
+>  rename kpartx/{kpartx.rules => kpartx.rules.in} (96%)
+> 
+> diff --git a/.gitignore b/.gitignore
+> index 049ffe8..355ddbb 100644
+> --- a/.gitignore
+> +++ b/.gitignore
+> @@ -12,6 +12,7 @@ config.mk
+>  cscope.files
+>  cscope.out
+>  kpartx/kpartx
+> +kpartx/kpartx.rules
+>  multipath/multipath
+>  multipath/multipath.8
+>  multipath/multipath.conf.5
+> diff --git a/kpartx/Makefile b/kpartx/Makefile
+> index 7720a74..849fd36 100644
+> --- a/kpartx/Makefile
+> +++ b/kpartx/Makefile
+> @@ -13,13 +13,13 @@ LIBDEPS += -ldevmapper
+>  OBJS := bsd.o dos.o kpartx.o solaris.o unixware.o dasd.o sun.o \
+>  	gpt.o mac.o ps3.o crc32.o lopart.o xstrncpy.o devmapper.o
+>  
+> -all: $(EXEC)
+> +all: $(EXEC) kpartx.rules
+>  
+>  $(EXEC): $(OBJS)
+>  	@echo building $@ because of $?
+>  	$(Q)$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+>  
+> -install: $(EXEC) $(EXEC).8
+> +install: $(EXEC) $(EXEC).8 kpartx.rules
+>  	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
+>  	$(Q)$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
+>  	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)
+> @@ -41,7 +41,7 @@ uninstall:
+>  	$(Q)$(RM) $(DESTDIR)$(libudevdir)/rules.d/68-del-part-nodes.rules
+>  
+>  clean: dep_clean
+> -	$(Q)$(RM) core *.o $(EXEC)
+> +	$(Q)$(RM) core *.o $(EXEC) kpartx.rules
+>  
+>  include $(wildcard $(OBJS:.o=.d))
+>  
+> diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules.in
+> similarity index 96%
+> rename from kpartx/kpartx.rules
+> rename to kpartx/kpartx.rules.in
+> index 8dd3369..9d87960 100644
+> --- a/kpartx/kpartx.rules
+> +++ b/kpartx/kpartx.rules.in
+> @@ -39,6 +39,6 @@ LABEL="mpath_kpartx_end"
+>  GOTO="kpartx_end"
+>  
+>  LABEL="run_kpartx"
+> -RUN+="/sbin/kpartx -un -p -part /dev/$name"
+> +RUN+="@BINDIR@/kpartx -un -p -part /dev/$name"
+>  
+>  LABEL="kpartx_end"
+> -- 
+> 2.45.2
 
