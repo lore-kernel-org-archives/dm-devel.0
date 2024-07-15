@@ -1,68 +1,69 @@
-Received: from mail-lj1-f171.google.com (mail-lj1-f171.google.com [209.85.208.171])
+Received: from mail-ed1-f45.google.com (mail-ed1-f45.google.com [209.85.208.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15B7DF9EC
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jul 2024 15:39:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12607D53C
+	for <dm-devel@lists.linux.dev>; Mon, 15 Jul 2024 15:51:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721057980; cv=none; b=iA5YzGqKeecmDN25G+1yfRiAw0KEbfCfJ3EAocwxs+0XyMZI0fSc4kuTNqWHbH6q05LZzi0OoUR5CPZp36zxLvgKQiaGreQYGJN9aityBzltmkDOSuksNB8izrOZN0LKy0dAmqasCg0N2yT0IGONq0XPjkCFVjrM/gPF7jPHz0Y=
+	t=1721058681; cv=none; b=c+UvwAtifWb0/miuE6USKdCAHX4dZYtfy0+//iL9MvqtmiorU+/sWJHo/lwONMBDmLTVklnQgllCfCKsCatTQK3pdlePEPSh+17u2shX4RIWOO0YiipCF1pcB8T/xBPto/5Ns1OKVsnlSXJEIgVS8sJzBBB5OrTCmpY6+tuJkRI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721057980; c=relaxed/simple;
-	bh=sZrGP6YLVr1xKKu+v39CrmSYBT+mErFb87JCWk4MBMg=;
+	s=arc-20240116; t=1721058681; c=relaxed/simple;
+	bh=Ew+HxX6EbeNPlx2huNsGvvtu0QPYLy7n5AvxQnuKfas=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=hEFke6Vd8ZrLEAb1/a/TkaKrVIdZl5UE9vE0O5uulVF+y5JEBoCuIuqdFRrAXlXOzK1EG3eEm5McpRzijtqifUBUVLW8B3novfDWzedh3WB5vNTInUnctujF4z8Gt2z3iNKtOnp6CP+OL32a7TQpauRlw05r7c5O3+J042ntykc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=W5GGg/Mi; arc=none smtp.client-ip=209.85.208.171
+	 Content-Type:MIME-Version; b=rvbuNHRBEEzbMD0o77aJwDN1d1GapIeCxO2xb1tcXFGwDY2iUEEwmqWV4DTQIHTRjDFSXKKc8VEBMRz/jZhU8ikF6w2rVoSw7iNC3pO5gp1wexuWPkCDwjdAjFydugfLB2vnU/KI76pDGwxh0SWMiI/dwYIIvlutGhpjbF2Rk14=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=A5AzZupl; arc=none smtp.client-ip=209.85.208.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="W5GGg/Mi"
-Received: by mail-lj1-f171.google.com with SMTP id 38308e7fff4ca-2eede876fbfso26376421fa.1
-        for <dm-devel@lists.linux.dev>; Mon, 15 Jul 2024 08:39:37 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="A5AzZupl"
+Received: by mail-ed1-f45.google.com with SMTP id 4fb4d7f45d1cf-58b447c513aso4936129a12.2
+        for <dm-devel@lists.linux.dev>; Mon, 15 Jul 2024 08:51:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1721057976; x=1721662776; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1721058677; x=1721663477; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=sZrGP6YLVr1xKKu+v39CrmSYBT+mErFb87JCWk4MBMg=;
-        b=W5GGg/Mi3iCQ7UmXw+h2NVHAhKguNZEgNUIAqbkvz42pycYufoNQFjzHEpNFufkZ3v
-         NTkHDTs6DCkO3rPUEC9ZttLrNXebIjo6lBekPdjPAxO6o6pNiIhqeU2mV8oh+7nuRB1h
-         p2STDk5Kbg+G6TK1hhA5qi9Fo29J12mBdoUKhGHpNjWEKwitNT6lqCgATXN+qt7GNPy6
-         lGZj1yJlN1IZA3H+whkFbi1vqanNdTusksWqzJ82Y0Ut4WKEiE7JKQD1DwEC8GqV4n0f
-         AUVNG4DvOTgGWwO2rcHQ2JXwz4WkEywyXs0TCy74pYGSFxtfflc/ItANuN9wteinBpnN
-         SzEw==
+        bh=Ew+HxX6EbeNPlx2huNsGvvtu0QPYLy7n5AvxQnuKfas=;
+        b=A5AzZuplRH7ivGZW+POsixPjwKnhHtr/XrEpZbH+XImj4RF7byasW+MnyWFRtHQktx
+         n4qYj8h6JcQsXgwU0XZtYl52czLnXGjn6/x7Fsjphb+t0GFHu1miEJcdd5V0QKStEwLB
+         g+ZxvWm+rNhlXRVQM6tJpzJcQ3yITbpefDTDTD4K/SyNlGIO6dSfD+nb3KqR6TmvaYnA
+         SzqmX67pctdhbWLCimMkr9mKO1Q5XKj/2vK3a3iO3tbfaT05gv5EIiMSAWKti/04qB5o
+         fdNvzETJlQmcLQrgfs3erS5bz4z+EEoJPompVwnhmQDuFQ+6DN6tnGO5u/r+ri5C4xHV
+         eaOg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721057976; x=1721662776;
+        d=1e100.net; s=20230601; t=1721058677; x=1721663477;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=sZrGP6YLVr1xKKu+v39CrmSYBT+mErFb87JCWk4MBMg=;
-        b=Ky83AMCIN5w7bxQ7qayY0NzMuKiqmrKGZI8BpAoW2w00hrEfd7zumHdZRIm4oT+4tZ
-         0CI34b7r15NUDi2Gw4mz3lS5QB98F0BaTmrOSwIFRVs0fgMYFnBsmC8ze1SYsqlkfacm
-         I+rc5/S4QSJSBx/2OuVb9yfq9N++srrZqaLLqFpqna1cM/pTD7K+ROrKBjtTXLanD5NK
-         2WEK7ckIFLI+a9H7tkgsbhBxB77VdvblzLI+q9XmoHdixT5671hOH8ca+X023tms3hzo
-         CZRxxrtyFx/xXnXoAhXcA0KPG6wjI90BEDWMgsqCuY4jWD1oILXsPAqq9pj+Af8DIdSA
-         1omA==
-X-Gm-Message-State: AOJu0Yz3okWqnYjG/kwb0rZoO7BLIXNuHabM6xyTAhOMimpwaenxX9lf
-	8fwinzAKRmHrWuEJ1K10y3SvbB1qrh2KmbhMKd+k6KfdWXJmBydRBWj2MJqSAbnMbxn7Ja2fm0K
-	9
-X-Google-Smtp-Source: AGHT+IEkgS/v2iGBGdPVsFWjrH8s8huxWxIozokPQNyEa45oGRoZue/+sBJKirfaaeOeqVn6wIJqbQ==
-X-Received: by 2002:a05:651c:1198:b0:2ee:8839:8fbe with SMTP id 38308e7fff4ca-2eef2d7b326mr1875091fa.1.1721057975898;
-        Mon, 15 Jul 2024 08:39:35 -0700 (PDT)
+        bh=Ew+HxX6EbeNPlx2huNsGvvtu0QPYLy7n5AvxQnuKfas=;
+        b=t9eghTCsbCPq73E6pSBwpSzI2zVl7Toi3W6poi96FJcljvJrIq6V9c1xik5qkawTqY
+         03gIIQYXY12DFTdj8rMlb7Gv1TLaWB+y8QAeufsoMZKTeWha4DCvsqpTuR/jtfSFMmKp
+         sMu7myCSoGybCQYmMff7YaApJBuPIX03VZFzTkHH/DtydmrhfIOD3b3tMy9V/xEr/OMO
+         BDG+jKtERs/SYoh/wJu53Y9J5We5Mw82LJ2GYy0YstowTlv6xRNaQz1aFRKld6g1jjKM
+         Q6X0UWL/891c8bFh5mv+X+1zj8n8mQctssMzbL2lagGo21WCMmuLfv3vnyCnvJ0VAD0c
+         Jv9w==
+X-Gm-Message-State: AOJu0YwuP810kF2A+yRVOG1OJgVpErRFSPMEzvClN2kwRQwlbdpZSf3w
+	KHklfWWB/0ebgd3wA8zOXmYKBUWmThE8UEOiFFBv2xzSMM8Ds6xaMsc/cFvZMTAe2DV6262nvTh
+	4
+X-Google-Smtp-Source: AGHT+IF5Z2Slz4BomBPhm1VkVV5GG/itTieRnUZNOxY/mu97yBTw11mI3VkW3x1+yZa8aKnDsRd38A==
+X-Received: by 2002:a50:8d18:0:b0:59c:50c3:b061 with SMTP id 4fb4d7f45d1cf-59e9d085508mr160750a12.11.1721058676040;
+        Mon, 15 Jul 2024 08:51:16 -0700 (PDT)
 Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-59b268a29b9sm3473943a12.61.2024.07.15.08.39.35
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-59b26f61fcasm3522433a12.86.2024.07.15.08.51.15
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 15 Jul 2024 08:39:35 -0700 (PDT)
-Message-ID: <48a0f31b91ae3430d343a309ac794c00d7b9aa1b.camel@suse.com>
-Subject: Re: [PATCH 08/22] multipathd: check paths immediately after failing
- udev initialization
+        Mon, 15 Jul 2024 08:51:15 -0700 (PDT)
+Message-ID: <90514c6a67d1d6459e7a46d4f383983e822b7644.camel@suse.com>
+Subject: Re: [PATCH 01/22] libmultipath: rename dm_map_present_by_wwid() and
+ add outputs
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Mon, 15 Jul 2024 17:39:34 +0200
-In-Reply-To: <20240713060506.2015463-9-bmarzins@redhat.com>
+Date: Mon, 15 Jul 2024 17:51:14 +0200
+In-Reply-To: <f615dfb9053183adfe81279a77283203ca2663e9.camel@suse.com>
 References: <20240713060506.2015463-1-bmarzins@redhat.com>
-	 <20240713060506.2015463-9-bmarzins@redhat.com>
+	 <20240713060506.2015463-2-bmarzins@redhat.com>
+	 <f615dfb9053183adfe81279a77283203ca2663e9.camel@suse.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.52.3 
@@ -73,15 +74,30 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Sat, 2024-07-13 at 02:04 -0400, Benjamin Marzinski wrote:
-> When handle_uninitialized_path() moves a path from INIT_MISSING_UDEV
-> to
-> INIT_FAILED, it has already waited for conf->retrigger_delay seconds.
-> It
-> might as well check the path state now, instead of waiting for the
-> next
-> iteration.
+On Mon, 2024-07-15 at 12:53 +0200, Martin Wilck wrote:
+> Hi Ben,
 >=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+> On Sat, 2024-07-13 at 02:04 -0400, Benjamin Marzinski wrote:
+> > add arguments to dm_map_present_by_wwid() to allow optionally
+> > fetching
+> > the device name and minor number for the devices found by WWID.=C2=A0
+> > These
+> > will be used by a later patch. Since it can now also be used to get
+> > the
+> > name and minor number of a device from its WWID, rename it to
+> > dm_find_map_by_wwid()
+> >=20
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+>=20
+> Is this supposed to apply over my v1 patchseries? That patch series
+> needed major amends, and I'm getting merge conflicts trying to apply
+> it
+> on v2. I can untangle that, but it'd be easier to figure out if we'd
+> setted on a final reviewed version of my patch set.
+
+Never mind, my email filter seems to have swallowed part of the series.
+The full series applies cleanly to my v2 tree.
+
+Martin
+
 
