@@ -1,65 +1,64 @@
-Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AAB8955887
-	for <dm-devel@lists.linux.dev>; Tue, 16 Jul 2024 20:54:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9739C54F95
+	for <dm-devel@lists.linux.dev>; Tue, 16 Jul 2024 20:54:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721163250; cv=none; b=oAcgd+MaSIaFugtbtpquenKMEeArtz6fCX5fKXXq63HApPQ9wFM7gY+R3nakHNVR5LsrCjzPpGLcIoxxJB2OzGSuX6QNapcDz9ZVlq9pZPcKZobjLz/4tmbdHlAvWYt7FhGJ0uELF5nhoQ8XLA15rP1E/g3ueLwXZhDdvqkr7JA=
+	t=1721163250; cv=none; b=hHxXGZXvqA5+Q4JUyIH2BqTfsqHudLKd2eluSlW3itQIlPN1p6yxY5rtSx0jexp+h1JWzMcp/r7HPnL7jF5eucugsWl4DFfGohWMyke5LXXqE+w2Yu1KCyaJP9S/rb+GBirEja6HI4036dRelbAYUQ7EQJ2a2/e+2K2tl+NECh4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1721163250; c=relaxed/simple;
-	bh=KBNzzxmp9Uwvhd7LoNNhnjnllY3aB3qc6HqzdfhXcEg=;
+	bh=P3+BNHif6v8HpjvP6t7ikHMQ1mjMG+MSMGWRDKp1fus=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=JPOnIWpmeBx4ZTo2kOIsnfRdlF3UTVi1H6YCZYDRdEPrYHLG6tHlBvPGg4xshgty3PMxl/E4lPzq0pCQaEYG3B8PPnFH6m2Dmrfvfe/hv7JZIOyLrzyxypZ3YjEfE9efrZfGcsK7vTHRDMElxYWbwvyU3An66PsP/zeZT0jZdnE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=O+O90UrI; arc=none smtp.client-ip=209.85.208.42
+	 MIME-Version; b=jG1GyvCSrgdwUvxl6A4CR8O46KTH8T6exvJLK4lAKiqZVWQk550IhlH4hmS8hzliPRaFp38Cxu0ZGa8TKgjAx7Kt+DcUHXtHHlSG0gMkFCcWZW7OtH0T/pFsCkleVpTaEIl/F9w+cOdjwrNkjXkyH6uEkzNoLSKfQTaie6b5MiQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=CcnhvmlH; arc=none smtp.client-ip=209.85.221.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="O+O90UrI"
-Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-59f9f59b88cso1133579a12.3
-        for <dm-devel@lists.linux.dev>; Tue, 16 Jul 2024 13:54:07 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="CcnhvmlH"
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-3678f36f154so3593953f8f.2
+        for <dm-devel@lists.linux.dev>; Tue, 16 Jul 2024 13:54:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1721163246; x=1721768046; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1721163247; x=1721768047; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=3HPjIPC9OfQF0ldr5LtaR56w9OpZppFU3pyXpUE5ngQ=;
-        b=O+O90UrI7pdK21sBanwVNgWaDqzOghRNCfAy/xLiKQgupdRV8TYqExP2BNLFMq9zCL
-         SdtFSG+4C7HN1rJ3Wti30fYutVWh8djpEaN+mtpIElyQfiz7Qn3L3nDfC5QDcdNw80xk
-         E+UzrcUtVX79zGjx4WRUwCmxtCbjcwTSonEawPpAysJN1NKWVAPX2U1HCe89O6Cwi1dn
-         b2gtXme12jV1bHOQ34Yp0CNPTe5EL1N/YTeHUR89Y9jZtsg63yqxOuKX5Ep9auMYUx4X
-         AXOT1PWBzlLWOlEBs12YlzSOfPkUdVetAEfiD2kFIPTa0mOCS/F4RQAjVRoQRaCWFLyK
-         B5HA==
+        bh=uZlmDkSNB5/rTWFnOqgq7eKBBSYe3/9yGQfVskFcDZA=;
+        b=CcnhvmlHOBwajQ3I/6adh61bLWjjrzG42YvfFYAfxuk5ZetXEamiuNMN9R1hjbnr/x
+         szOjoePBDbkRnFjManYSIuPw+MCnNNgssBJ4GPzjhKrkMgGrcWZouxJFvgvKNZ07Scuf
+         ij5s1CM87GqEB+RaDI1Hs63WD0VCLep8gdGvrK5UFmoIghgVBqTTdDv4Yhe71SgN3TQu
+         qhBv7qfi8Z3LIsV0G8mJUmwep+YxVVYHpJQxddIzXx7BaqgIgVz3sY5X9H7BQPn+LqmH
+         YfDH7yjqczUz4no5mvuRtNMQ9I+/ejqErIrpWIXDa4lWiqtynKSY1TE/i+T9TFvK0ydi
+         zhZg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721163246; x=1721768046;
+        d=1e100.net; s=20230601; t=1721163247; x=1721768047;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=3HPjIPC9OfQF0ldr5LtaR56w9OpZppFU3pyXpUE5ngQ=;
-        b=bjjIv44Wz927PIutdb4yF9zb8UCgFVTZzflapcKg0ZmuYEGRRA1gsLPzJ1zC+2Gt6w
-         nMjH3DlXuM8e1JRbf/GGRcZOftgllH+TKyTF43XlAnU2Y5lp51mmuDQQuuRnM+2qa//f
-         L9M4oalToJIKXqMqfxjTsnMPFP/3IPFx0UgunInaquwpOR60XxV5O+rRfmD1Ak9aqnFh
-         kU6VXlxthzdOE9jAvZGhlXaFPhEalXUmIPOrgCplo6Xf4j36lK8ttES0Bb0h1AR/Z7pS
-         cyYXKlkp7PMaidvzv24uesX7Qv4T9BK9e41TZVS/x7kBXTT6965VqYTQg3QVRgwyMCJc
-         lOVA==
-X-Gm-Message-State: AOJu0Yx7gRbgddAa9XEUBWsIGaRdxQ6gL9c80yf5LHz5TJTpMPym3ykB
-	lv+AGAI/JOFz0/6dfoLdG/w1ojy8Tj2SSLJFOTmOER6iYBtwXC5JAabDONG/dn0H5ESEkbh5Gb7
-	S
-X-Google-Smtp-Source: AGHT+IG/HcupBLQp60I42pcZkYrJ9r8Pt7m2TD57sXAtHOO3L0NjkFKeWRFUYVcnFW9Voecrik7fKQ==
-X-Received: by 2002:a05:6402:510b:b0:57c:610a:6e7f with SMTP id 4fb4d7f45d1cf-59eeed2967emr2441488a12.11.1721163245741;
-        Tue, 16 Jul 2024 13:54:05 -0700 (PDT)
+        bh=uZlmDkSNB5/rTWFnOqgq7eKBBSYe3/9yGQfVskFcDZA=;
+        b=uoVsZxHanXvnLQrY5+HNYszv3bWXMndJ1b7i8bhHBLja9cTwPDiS4GQDDWYHiLZiCY
+         ZQvRcPqlNDxiBZXxzuJu0yJxpFeIrwIhBJW6m0Jb/ZIE3Fz3EWpNq9Y+874KILsTnXOY
+         o5r5JC6nK+cKg5Y5ZYFK2Hp6uim6SVL+q+8y92rRHhVTiGNb6M6xYd3fMS95rJKBUv9l
+         7U8L1X2RLzNFCzZmjR0bRWuyvYhgWSScm606uVnOAjQasFwpzlymUNFBFV3t2fuBNBx3
+         ZRLPsXkGj1bL3x/B+ofikchH6Y01AXeMMbti7dsMEC16Adclx7AYIOn5Ohl8q6EISKrc
+         W/dQ==
+X-Gm-Message-State: AOJu0Yz+Qwlnztk6xge834KCfiYB8pf5tDUTTLdEjeC1M8YJvraSacdB
+	x4Z20ccEsdYJLVSwZXFHFE2w3d+FynnDZH5RQrTaTseGWeJQKCvFnppqWuLHSc0=
+X-Google-Smtp-Source: AGHT+IHBcivsKQMyy/xlTwaT3091kWdx/T5IsXhq6CKBaH4069k9/suTRfrIyjTUyUj0/yf7TL8Ypw==
+X-Received: by 2002:a5d:6143:0:b0:367:9877:750e with SMTP id ffacd0b85a97d-3682609b526mr2060241f8f.25.1721163246652;
+        Tue, 16 Jul 2024 13:54:06 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-59b223b3321sm5541465a12.0.2024.07.16.13.54.05
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-59b24a76ef7sm5473453a12.10.2024.07.16.13.54.06
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 16 Jul 2024 13:54:05 -0700 (PDT)
+        Tue, 16 Jul 2024 13:54:06 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH v3 47/49] libmultipath: Move UUID check into libmp_pathinfo__()
-Date: Tue, 16 Jul 2024 22:53:43 +0200
-Message-ID: <20240716205344.146310-6-mwilck@suse.com>
+Subject: [PATCH v3 48/49] libmultipath: don't call do_foreach_partmaps() recursively
+Date: Tue, 16 Jul 2024 22:53:44 +0200
+Message-ID: <20240716205344.146310-7-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240716205344.146310-1-mwilck@suse.com>
 References: <20240716205344.146310-1-mwilck@suse.com>
@@ -71,507 +70,165 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-We have a couple of callers that check whether the map UUID conforms
-to the multipath convention ("mpath-xyz"). Move this check into
-libmp_mapinfo__(). Add another flag MAPINFO_CHECK_UUID for this
-purpose. This allows to simplify some callers, which only fetched
-the UUID in order to check it.
+We've removed partition mappings recursively since 83fb936 ("Correctly remove
+logical partition maps"). This was wrong, because kpartx doesn't create
+logical partitions as mappings onto the extended partition. Rather, logical
+partitions are created by kpartx as mappings to the multipath device, and
+afaics, this has always been the case. Therefore, the loop in
+do_foreach_partmaps() will detect all partition mappings (primary, extended,
+and logical) without recursion. At least since 4059e42 ("libmultipath: fix
+partition detection"), the recursion has actually been pointless, because
+is_mpath_part() would never have returned "true" for a pair of two partition
+mappings (one representing an extended partition and one a logical partition).
 
-Note that the UUID check is orthogonal to MAPINFO_MPATH_ONLY, which
-tests the target type. We shold make sure that both tests are in
-agreement, but this is postponed to a later patch set.
+Avoiding the recursion has the additional benefit that the complexity of
+removing maps scales with N, where N is the number of dm devices, rather than
+with N^2. Also, it simplifies the code.
 
-is_mpath_uuid() can now be converted to a static function.
+Split partmap_in_use() into two separate functions, mpath_in_use() (to be called
+for multipath maps) and count_partitions(), which is called from
+do_foreach_partmaps().
 
-Also add some unit tests for the WWID check.
+Because do_foreach_partmaps() is now only legitimately called for multipath
+maps, quit early if called for another map type.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist_int.c |  11 +-
- libmultipath/devmapper.c            |  52 +++----
- libmultipath/devmapper.h            |   3 +-
- libmultipath/libmultipath.version   |   1 -
- multipath/main.c                    |   5 +-
- multipathd/main.c                   |   7 +-
- tests/mapinfo.c                     | 226 ++++++++++++++++++++++++++++
- 7 files changed, 256 insertions(+), 49 deletions(-)
+ libmultipath/devmapper.c          | 48 +++++++++++++++++++------------
+ libmultipath/devmapper.h          |  2 +-
+ libmultipath/libmultipath.version |  2 +-
+ multipathd/main.c                 |  2 +-
+ 4 files changed, 33 insertions(+), 21 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist_int.c b/libmpathpersist/mpath_persist_int.c
-index 807415f..f4d9e7c 100644
---- a/libmpathpersist/mpath_persist_int.c
-+++ b/libmpathpersist/mpath_persist_int.c
-@@ -158,7 +158,7 @@ static int mpath_get_map(vector curmp, vector pathvec, int fd, struct multipath
- {
- 	int rc;
- 	struct stat info;
--	char alias[WWID_SIZE], uuid[DM_UUID_LEN];
-+	char alias[WWID_SIZE];
- 	struct multipath *mpp;
- 
- 	if (fstat(fd, &info) != 0){
-@@ -171,14 +171,11 @@ static int mpath_get_map(vector curmp, vector pathvec, int fd, struct multipath
- 	}
- 
- 	/* get alias from major:minor*/
--	rc = libmp_mapinfo(DM_MAP_BY_DEVT | MAPINFO_MPATH_ONLY,
-+	rc = libmp_mapinfo(DM_MAP_BY_DEVT | MAPINFO_MPATH_ONLY | MAPINFO_CHECK_UUID,
- 			   (mapid_t) { .devt = info.st_rdev },
--			   (mapinfo_t) {
--				   .name = alias,
--				   .uuid = uuid,
--			   });
-+			   (mapinfo_t) { .name = alias });
- 
--	if (rc == DMP_NO_MATCH || !is_mpath_uuid(uuid)) {
-+	if (rc == DMP_NO_MATCH) {
- 		condlog(3, "%s: not a multipath device.", alias);
- 		return MPATH_PR_DMMP_ERROR;
- 	} else if (rc != DMP_OK) {
 diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index e96b83e..455905a 100644
+index 455905a..3b2e8ac 100644
 --- a/libmultipath/devmapper.c
 +++ b/libmultipath/devmapper.c
-@@ -611,6 +611,11 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
+@@ -929,22 +929,37 @@ has_partmap(const char *name __attribute__((unused)),
+ 	return 1;
+ }
+ 
+-int
+-partmap_in_use(const char *name, void *data)
++/*
++ * This will be called from mpath_in_use, for each partition.
++ * If the partition itself in use, returns 1 immediately, causing
++ * do_foreach_partmaps() to stop iterating and return 1.
++ * Otherwise, increases the partition count.
++ */
++static int count_partitions(const char *name, void *data)
++{
++	int *ret_count = (int *)data;
++	int open_count = dm_get_opencount(name);
++
++	if (open_count)
++		return 1;
++	(*ret_count)++;
++	return 0;
++}
++
++int mpath_in_use(const char *name)
+ {
+-	int part_count, *ret_count = (int *)data;
+ 	int open_count = dm_get_opencount(name);
+ 
+-	if (ret_count)
+-		(*ret_count)++;
+-	part_count = 0;
+ 	if (open_count) {
+-		if (do_foreach_partmaps(name, partmap_in_use, &part_count))
+-			return 1;
+-		if (open_count != part_count) {
+-			condlog(2, "%s: map in use", name);
++		int part_count = 0;
++
++		if (do_foreach_partmaps(name, count_partitions, &part_count)) {
++			condlog(4, "%s: %s has open partitions", __func__, name);
+ 			return 1;
+ 		}
++		condlog(4, "%s: %s: %d openers, %d partitions", __func__, name,
++			open_count, part_count);
++		return open_count > part_count;
+ 	}
  	return 0;
  }
+@@ -968,7 +983,7 @@ int _dm_flush_map (const char *mapname, int flags, int retries)
  
-+static bool is_mpath_uuid(const char uuid[DM_UUID_LEN])
-+{
-+	return !strncmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN);
-+}
-+
- bool
- has_dm_info(const struct multipath *mpp)
- {
-@@ -736,11 +741,17 @@ static int libmp_mapinfo__(int flags, mapid_t id, mapinfo_t info, const char *ma
- 	 * If error is returned, don't touch any output parameters.
- 	 */
- 	if ((info.name && !(name = dm_task_get_name(dmt)))
--	    || (info.uuid && !(uuid = dm_task_get_uuid(dmt)))
-+	    || ((info.uuid || flags & MAPINFO_CHECK_UUID)
-+		&& !(uuid = dm_task_get_uuid(dmt)))
- 	    || (info.status && !(tmp_status = strdup(params)))
- 	    || (info.target && !tmp_target && !(tmp_target = strdup(params))))
- 		return DMP_ERR;
+ 	/* If you aren't doing a deferred remove, make sure that no
+ 	 * devices are in use */
+-	if (!(flags & DMFL_DEFERRED) && partmap_in_use(mapname, NULL))
++	if (!(flags & DMFL_DEFERRED) && mpath_in_use(mapname))
+ 			return DM_FLUSH_BUSY;
  
-+	if (flags & MAPINFO_CHECK_UUID && !is_mpath_uuid(uuid)) {
-+		condlog(3, "%s: UUID mismatch: %s", fname__, uuid);
-+		return DMP_NO_MATCH;
-+	}
-+
- 	if (info.name) {
- 		strlcpy(info.name, name, WWID_SIZE);
- 		condlog(4, "%s: %s: name: \"%s\"", fname__, map_id, info.name);
-@@ -810,18 +821,6 @@ int libmp_mapinfo(int flags, mapid_t id, mapinfo_t info)
- 			       libmp_map_identifier(flags, id, idbuf));
- }
+ 	if ((flags & DMFL_SUSPEND) &&
+@@ -1305,7 +1320,7 @@ do_foreach_partmaps (const char *mapname,
+ 	char map_uuid[DM_UUID_LEN];
+ 	struct dm_info info;
  
--static int dm_get_dm_uuid(const char *mapname, char uuid[DM_UUID_LEN])
--{
--	return libmp_mapinfo(DM_MAP_BY_NAME,
--			     (mapid_t) { .str = mapname },
--			     (mapinfo_t) { .uuid = uuid });
--}
--
--bool is_mpath_uuid(const char uuid[DM_UUID_LEN])
--{
--	return !strncmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN);
--}
--
- /**
-  * dm_get_wwid(): return WWID for a multipath map
-  * @returns:
-@@ -834,16 +833,14 @@ bool is_mpath_uuid(const char uuid[DM_UUID_LEN])
- int dm_get_wwid(const char *name, char *uuid, int uuid_len)
- {
- 	char tmp[DM_UUID_LEN];
--	int rc = dm_get_dm_uuid(name, tmp);
-+	int rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			       (mapid_t) { .str = name },
-+			       (mapinfo_t) { .uuid = tmp });
- 
- 	if (rc != DMP_OK)
- 		return rc;
- 
--	if (is_mpath_uuid(tmp))
--		strlcpy(uuid, tmp + UUID_PREFIX_LEN, uuid_len);
--	else
--		return DMP_NO_MATCH;
--
-+	strlcpy(uuid, tmp + UUID_PREFIX_LEN, uuid_len);
- 	return DMP_OK;
- }
- 
-@@ -861,16 +858,13 @@ static bool is_mpath_part_uuid(const char part_uuid[DM_UUID_LEN],
- 
- int dm_is_mpath(const char *name)
- {
--	char uuid[DM_UUID_LEN];
--	int rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY,
-+	int rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY | MAPINFO_CHECK_UUID,
- 			       (mapid_t) { .str = name },
--			       (mapinfo_t) { .uuid = uuid });
-+			       (mapinfo_t) { .uuid = NULL });
- 
- 	switch (rc) {
- 	case DMP_OK:
--		if (is_mpath_uuid(uuid))
--			return DM_IS_MPATH_YES;
--		/* fallthrough */
-+		return DM_IS_MPATH_YES;
- 	case DMP_NOT_FOUND:
- 	case DMP_NO_MATCH:
- 		return DM_IS_MPATH_NO;
-@@ -961,14 +955,10 @@ int _dm_flush_map (const char *mapname, int flags, int retries)
- 	int queue_if_no_path = 0;
- 	int udev_flags = 0;
- 	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
--	char uuid[DM_UUID_LEN];
- 
--	if (libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY,
-+	if (libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY | MAPINFO_CHECK_UUID,
+-	if (libmp_mapinfo(DM_MAP_BY_NAME,
++	if (libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
  			  (mapid_t) { .str = mapname },
--			  (mapinfo_t) {
--				  .uuid = uuid,
--				  .target = &params }) != DMP_OK
--	    || !is_mpath_uuid(uuid))
-+			  (mapinfo_t) { .target = &params }) != DMP_OK)
- 		return DM_FLUSH_OK; /* nothing to do */
+ 			  (mapinfo_t) { .uuid = map_uuid, .dmi = &info }) != DMP_OK)
+ 		return 1;
+@@ -1372,12 +1387,9 @@ remove_partmap(const char *name, void *data)
+ {
+ 	struct remove_data *rd = (struct remove_data *)data;
  
- 	/* if the device currently has no partitions, do not
+-	if (dm_get_opencount(name)) {
+-		dm_remove_partmaps(name, rd->flags);
+-		if (!(rd->flags & DMFL_DEFERRED) && dm_get_opencount(name)) {
+-			condlog(2, "%s: map in use", name);
+-			return DM_FLUSH_BUSY;
+-		}
++	if (!(rd->flags & DMFL_DEFERRED) && dm_get_opencount(name)) {
++		condlog(2, "%s: map in use", name);
++		return DM_FLUSH_BUSY;
+ 	}
+ 	condlog(4, "partition map %s removed", name);
+ 	dm_device_remove(name, rd->flags);
 diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index d0e20bf..7a551d9 100644
+index 7a551d9..f6d0017 100644
 --- a/libmultipath/devmapper.h
 +++ b/libmultipath/devmapper.h
-@@ -57,6 +57,8 @@ enum __mapinfo_flags {
- 	/* Fail if target type is not "partition" (linear) */
- 	MAPINFO_PART_ONLY   = (1 << 9),
- 	__MAPINFO_TGT_TYPE  = (MAPINFO_MPATH_ONLY | MAPINFO_PART_ONLY),
-+	/* Fail if the UUID doesn't match the multipath UUID format */
-+	MAPINFO_CHECK_UUID  = (1 << 10),
+@@ -150,7 +150,7 @@ enum {
+ 	DM_FLUSH_BUSY,
  };
  
- typedef union libmp_map_identifier {
-@@ -138,7 +140,6 @@ enum {
- 	DM_IS_MPATH_ERR,
- };
- 
--bool is_mpath_uuid(const char uuid[DM_UUID_LEN]);
- int dm_is_mpath(const char *name);
+-int partmap_in_use(const char *name, void *data);
++int mpath_in_use(const char *name);
  
  enum {
+ 	DMFL_NONE      = 0,
 diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 54b5a23..292a330 100644
+index 292a330..959f675 100644
 --- a/libmultipath/libmultipath.version
 +++ b/libmultipath/libmultipath.version
-@@ -127,7 +127,6 @@ global:
- 	init_foreign;
- 	init_prio;
- 	io_err_stat_handle_pathfail;
--	is_mpath_uuid;
- 	is_path_valid;
- 	libmp_dm_task_create;
- 	libmp_get_version;
-diff --git a/multipath/main.c b/multipath/main.c
-index 0d989dc..4b19d2e 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -254,7 +254,7 @@ static int check_usable_paths(struct config *conf,
- 	if (pathvec == NULL)
- 		return r;
- 
--	if (libmp_mapinfo(DM_MAP_BY_DEVT | MAPINFO_MPATH_ONLY,
-+	if (libmp_mapinfo(DM_MAP_BY_DEVT | MAPINFO_MPATH_ONLY | MAPINFO_CHECK_UUID,
- 			  (mapid_t) { .devt = devt },
- 			  (mapinfo_t) {
- 			      .name = mpp->alias,
-@@ -266,9 +266,6 @@ static int check_usable_paths(struct config *conf,
- 		      }) != DMP_OK)
- 		return r;
- 
--	if (!is_mpath_uuid(uuid))
--		return r;
--
- 	strlcpy(mpp->wwid, uuid + UUID_PREFIX_LEN, sizeof(mpp->wwid));
- 
- 	if (update_multipath_table__(mpp, pathvec, 0, params, status) != DMP_OK)
+@@ -138,10 +138,10 @@ global:
+ 	libmultipath_exit;
+ 	libmultipath_init;
+ 	load_config;
++	mpath_in_use;
+ 	need_io_err_check;
+ 	orphan_path;
+ 	parse_prkey_flags;
+-	partmap_in_use;
+ 	pathcount;
+ 	path_discovery;
+ 	path_get_tpgs;
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 32011c9..833c1e2 100644
+index 833c1e2..13ed6d0 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -720,7 +720,7 @@ static int add_map_without_path (struct vectors *vecs, const char *alias)
- 	if (!mpp || !(mpp->alias = strdup(alias)))
- 		return DMP_ERR;
- 
--	if ((rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY,
-+	if ((rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY | MAPINFO_CHECK_UUID,
- 				(mapid_t) { .str = mpp->alias },
- 				(mapinfo_t) {
- 					.uuid = uuid,
-@@ -731,10 +731,7 @@ static int add_map_without_path (struct vectors *vecs, const char *alias)
- 				})) != DMP_OK)
- 		return rc;
- 
--	if (!is_mpath_uuid(uuid))
--		return DMP_NO_MATCH;
--	else
--		strlcpy(mpp->wwid, uuid + UUID_PREFIX_LEN, sizeof(mpp->wwid));
-+	strlcpy(mpp->wwid, uuid + UUID_PREFIX_LEN, sizeof(mpp->wwid));
- 
- 	if (!strlen(mpp->wwid))
- 		condlog(1, "%s: adding map with empty WWID", mpp->alias);
-diff --git a/tests/mapinfo.c b/tests/mapinfo.c
-index f3a8440..f7ad868 100644
---- a/tests/mapinfo.c
-+++ b/tests/mapinfo.c
-@@ -54,6 +54,16 @@ static const char MPATH_STATUS_01[] =
- 	"A 0 3 2 65:32 A 0 0 1 67:64 A 0 0 1 69:96 A 0 0 1 "
- 	"E 0 3 2 8:16 A 0 0 1 66:48 A 0 0 1 68:80 A 0 0 1 ";
- 
-+static const char BAD_UUID_01[] = "";
-+static const char BAD_UUID_02[] = "mpath3600a098038302d414b2b4d4453474f62";
-+static const char BAD_UUID_03[] = " mpath-3600a098038302d414b2b4d4453474f62";
-+static const char BAD_UUID_04[] = "-mpath-3600a098038302d414b2b4d4453474f62";
-+static const char BAD_UUID_05[] = "mpth-3600a098038302d414b2b4d4453474f62";
-+static const char BAD_UUID_06[] = "part1-mpath-3600a098038302d414b2b4d4453474f62";
-+static const char BAD_UUID_07[] = "mpath 3600a098038302d414b2b4d4453474f62";
-+static const char BAD_UUID_08[] = "mpath";
-+static const char BAD_UUID_09[] = "mpath-";
-+
- char *__real_strdup(const char *str);
- char *__wrap_strdup(const char *str)
- {
-@@ -413,6 +423,208 @@ static void test_mapinfo_good_exists(void **state)
- 	assert_int_equal(rc, DMP_OK);
- }
- 
-+static void test_mapinfo_bad_check_uuid_00(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, NULL);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_ERR);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_01(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_01);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_NO_MATCH);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_02(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_02);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_NO_MATCH);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_03(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_03);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_NO_MATCH);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_04(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_04);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_NO_MATCH);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_05(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_05);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_NO_MATCH);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_06(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_06);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_NO_MATCH);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_07(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_07);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_NO_MATCH);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_08(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_08);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_NO_MATCH);
-+}
-+
-+static void test_mapinfo_bad_check_uuid_09(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, BAD_UUID_09);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_OK);
-+}
-+
-+static void test_mapinfo_good_check_uuid_01(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, MPATH_UUID_01);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_OK);
-+}
-+
-+static void test_mapinfo_good_check_uuid_02(void **state)
-+{
-+	int rc;
-+	char uuid[DM_UUID_LEN];
-+
-+	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_uuid, MPATH_UUID_01);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .uuid = uuid });
-+	assert_int_equal(rc, DMP_OK);
-+}
-+
-+static void test_mapinfo_good_check_uuid_03(void **state)
-+{
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_STATUS, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	mock_dm_get_next_target(12345, TGT_MPATH, MPATH_STATUS_01, NULL);
-+	will_return(__wrap_dm_task_get_uuid, MPATH_UUID_01);
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .name = NULL });
-+	assert_int_equal(rc, DMP_OK);
-+}
-+
-+static void test_mapinfo_good_check_uuid_04(void **state)
-+{
-+	char __attribute__((cleanup(cleanup_charp))) *target = NULL;
-+	int rc;
-+
-+	mock_mapinfo_name_1(DM_DEVICE_TABLE, 1, "foo", 1, 1, 0);
-+	WRAP_DM_TASK_GET_INFO(1);
-+	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	mock_dm_get_next_target(12345, TGT_MPATH, MPATH_STATUS_01, NULL);
-+	will_return(__wrap_dm_task_get_uuid, MPATH_UUID_01);
-+	will_return(__wrap_strdup, 1);
-+
-+	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY | MAPINFO_CHECK_UUID,
-+			   (mapid_t) { .str = "foo", },
-+			   (mapinfo_t) { .target = &target });
-+	assert_int_equal(rc, DMP_OK);
-+}
-+
- static void test_mapinfo_bad_set_uuid(void **state)
- {
- 	int rc;
-@@ -1126,6 +1338,20 @@ static int test_mapinfo(void)
- 		cmocka_unit_test(test_mapinfo_bad_get_info_03),
- 		cmocka_unit_test(test_mapinfo_bad_get_info_04),
- 		cmocka_unit_test(test_mapinfo_good_exists),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_00),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_01),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_02),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_03),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_04),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_05),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_06),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_07),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_08),
-+		cmocka_unit_test(test_mapinfo_bad_check_uuid_09),
-+		cmocka_unit_test(test_mapinfo_good_check_uuid_01),
-+		cmocka_unit_test(test_mapinfo_good_check_uuid_02),
-+		cmocka_unit_test(test_mapinfo_good_check_uuid_03),
-+		cmocka_unit_test(test_mapinfo_good_check_uuid_04),
- 		cmocka_unit_test(test_mapinfo_bad_set_uuid),
- 		cmocka_unit_test(test_mapinfo_bad_set_dev_01),
- 		cmocka_unit_test(test_mapinfo_bad_set_dev_02),
+@@ -597,7 +597,7 @@ flush_map_nopaths(struct multipath *mpp, struct vectors *vecs) {
+ 		return false;
+ 	}
+ 	if (mpp->flush_on_last_del == FLUSH_UNUSED &&
+-            partmap_in_use(mpp->alias, NULL) && is_queueing) {
++	    mpath_in_use(mpp->alias) && is_queueing) {
+ 		condlog(2, "%s: map in use and queueing, can't remove",
+ 			mpp->alias);
+ 		return false;
 -- 
 2.45.2
 
