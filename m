@@ -1,64 +1,64 @@
-Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
+Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F07954673
-	for <dm-devel@lists.linux.dev>; Tue, 16 Jul 2024 20:54:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6DC7208BA
+	for <dm-devel@lists.linux.dev>; Tue, 16 Jul 2024 20:54:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721163249; cv=none; b=TnMSSS32LFxVu1dJCXYDXpfIM6kvBAEEEq7eFXA6VMcgrNHj2cSLMFUAcWa5oDEo2R8w7sVUo6ReKTgpkFfTztFkAp3B72WdgtYybgg/Oywk4ONsw8asEZH0JWArqvFpdRImcZI2H5NG/bSnEeAovHxTD+HiEZy+mTcFRxn9Rwo=
+	t=1721163249; cv=none; b=s5qllQKklXIo6awyfVQeUl5SEClO+p+lEkoBblmGt/mp5f44iSfO/TkwD2WiF6sGR75LRmlH0ZEUJ9DyLx8B+jYu9XH4pEOF0GmtqzYiMS0Yc5+EGS7IuBnxUXrOZ7Kl6vL//uVlngspb97K63GVq4izPwW1GsDOoDu79kG6qEQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1721163249; c=relaxed/simple;
-	bh=GweVNAqcZa9BKq5VD8ofvk2pAhBaeBgRzh4dPQOvBbI=;
+	bh=RqS5OkdukJ/6NixKEHYVlFKH5k3SPN1uZ1rTaDPfy6Y=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Zq2417TN7TaZAlsUr4H1KnKx8FXTiKEH9ittF9VAaDNeZqJfHl9tzUfYRAKohyqLgZQF8boPRZ9XNH6X6H1aeD9AAaoGuxbti3Jv8oVgjdWABp4cuDBAjqc2rWRfeIOHF8KEc/yMK30pmjzHLCUGRvznki8kXP72iMhHXoKWbmg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=KmupzFgd; arc=none smtp.client-ip=209.85.167.53
+	 MIME-Version; b=RbTWGFGllTmZiY+KoJY7EgbohkATAXAIU6x7j+Ee9kLz/+JeEY4r/JXax4PEUE3iAYE8MsUObbEMcZeE02bKiiTEu0+UWEf1+Aqo08/v70/+7LlFwpU++ks9tIAJA4bb1HMRwtolZc24GotJj0H4MNc/5ZWMdUom96aZLAZ3VDk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=P19Ip/Zb; arc=none smtp.client-ip=209.85.167.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="KmupzFgd"
-Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-52ea34ffcdaso6505174e87.1
-        for <dm-devel@lists.linux.dev>; Tue, 16 Jul 2024 13:54:06 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="P19Ip/Zb"
+Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-52e99060b41so6261852e87.2
+        for <dm-devel@lists.linux.dev>; Tue, 16 Jul 2024 13:54:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1721163245; x=1721768045; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1721163244; x=1721768044; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=EO+kKpFf+oG6lWy22jU3Kfjo0Qyea68mUaTXA7pruVo=;
-        b=KmupzFgdRG5DlZr3wUH7ay6iePDaUhm0HIMKc7VldRL6/eaIAZwdYDAFlbxWtRyOJh
-         D789GSw7i281ImjLJXhc585mGlo9jg5zCp81uDFY2NeotAnrU2HrsAayspj8hsGK/nEk
-         HnbSf41/eVynaHhhQoLxmPLeBf6g2X9MKJO1qHK1gzzPrSSiWeBAJ1yhLvnyiQNz7ndY
-         BYhofrgJuaOySIakjzeVL37p4C4LvMcJZJFz8eAVG+lUM8MqEElbdmiRdb+rEg9sFPn0
-         cDx5uMpZKcQOPKyfmhmLOXNr6i9ZVheHgj2Su4D3qzqaNShuMEoeE1IVdY9SCYYsp6KB
-         zbng==
+        bh=0ojZN+hLTa0bKNhAR9crVk8ZyRoXR89FPSaOF6y6qOQ=;
+        b=P19Ip/ZbGtKTYFIqQEveb49B4bbFYamema8DHJD+yPQOsgXFPX5FRTm6Gtxydsw1pd
+         g7YaWUzLICLhoYMPHgDk58nwRBMncXO1rBTY/HQSvqgaMV+/OpU1grC0TV2lavLeBrOJ
+         j9IEQjUUblCnkjUZx5wgitTJkprRtZGgQaPhtv2PtE1WLJHGgKZwVprY9HCUox04yvY9
+         JBlaWIh7Yorsh8lTpFSnqKR9l/Tzivi4yo7kA8/QxOYaqsIKGA5XiHh9CfNSG8g3a8dv
+         eM+2IL7+iDP4XAa1m5NJfgmoJ1IKyDggtgplD2MzCsHkUfCe4SWzwhOWV6IzUMSualS+
+         0zqg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721163245; x=1721768045;
+        d=1e100.net; s=20230601; t=1721163244; x=1721768044;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=EO+kKpFf+oG6lWy22jU3Kfjo0Qyea68mUaTXA7pruVo=;
-        b=rJk5o2qySW9VJFMuG9l+OgIZc6bDZnM64FTNQp2VF7n5YNCmG4mPZNKTcpzWnm/gYs
-         jIf5AuZD73xU4q777MFbvSfgWy+oJS71+HUtOzf2derusJ/H+GtJdmMEz/s0kaYWCLYR
-         F586c3UjfthPJnbk+jdqX7NnGSJ2bPI6VvnvlMgiWib3JpBAEEzlDMOjZzgRIbiXTcMj
-         XtlVPi9TaVG9emuFqUWsEm1TeQc/I/UacQ8d1urTOnaVkU0i62xIyzZQ/6xbf0iUxv8o
-         FcPOlTtbGlfmoNwMB/zIjL8Ergyj1Jz0RrkoWdtcDfGYUasDUHrWlTNJka/WDUDYGK7t
-         ej1A==
-X-Gm-Message-State: AOJu0YyTTYyYKR7xTNppO0gpyWVDF55i5trS/ePYSsaJ9QcgZNLBc8+3
-	ioKj1ctULEP4diFegkQMj366JgZbC8QuQ9JfFyWv6UGwOje3O4GwNW6DIewguNQ=
-X-Google-Smtp-Source: AGHT+IFdF0cecF7ATqUOZeBEVARs3IKwee8082XMGNmjIC7glIEWBPe5u8k5N//ClJmrT0iNz1flJQ==
-X-Received: by 2002:a05:6512:ea6:b0:52c:db4e:8dfc with SMTP id 2adb3069b0e04-52edf032eb5mr2083603e87.65.1721163244527;
-        Tue, 16 Jul 2024 13:54:04 -0700 (PDT)
+        bh=0ojZN+hLTa0bKNhAR9crVk8ZyRoXR89FPSaOF6y6qOQ=;
+        b=UuLWXKDne/cP1fQZpFR6pFYboFuSWuMhAPJrDGLiN3/TFTMXS+SZoDgj6kuQ1zc0tx
+         4p+DbDd6swnGmAEakBhb4emyxm3u07byho/4+pLrxkrm0FjiQm107s366GOge9QH8Y94
+         P90DygXZd2xP2y25rbd6ohqaW6ewQoNKcADbTIbppLhz+yTDF42/E24kS0db2q0ho6CP
+         uDJsWQtlcF4hp0Bg5i2JJYG5hq2o+MhVmsS1szBUOD9C8FKypvdcbKHIWBp2C0iPbX0v
+         UIepKN/8J6StK2jOxJBN94iLS3AkesD1KHSX1JHEWoNbVJC3ccUHj2EiMB9AOVfgimtP
+         YX0Q==
+X-Gm-Message-State: AOJu0Ywn2e0T7/85iPdsyLkdwz5tA2nRUakteYVDocVDSVaJlmUgByuI
+	Bitnq3z2BaQgifh2MQAT8HLvUsgd9fMLDfV6Bwo/33GdbbGNQ5SsrifLiwn0RnA=
+X-Google-Smtp-Source: AGHT+IFWXIb5w+UNrPdg9GzSJf2pNXCY7MalSa4OW7lqoUjh5Sv5nEpD2wKjHwteTf7kcn108pY3Mg==
+X-Received: by 2002:ac2:4e07:0:b0:52e:767a:ada7 with SMTP id 2adb3069b0e04-52edf02c24bmr2154345e87.50.1721163243536;
+        Tue, 16 Jul 2024 13:54:03 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a79bc5b7edfsm361369066b.68.2024.07.16.13.54.04
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a79bc7f1bffsm356582666b.135.2024.07.16.13.54.03
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 16 Jul 2024 13:54:04 -0700 (PDT)
+        Tue, 16 Jul 2024 13:54:03 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH v3 42/49] multipathd: implement add_map_without_path() with libmp_mapinfo()
-Date: Tue, 16 Jul 2024 22:53:42 +0200
-Message-ID: <20240716205344.146310-5-mwilck@suse.com>
+Subject: [PATCH v3 36/49] libmultipath: use libmp_mapinfo() in do_foreach_partmaps()
+Date: Tue, 16 Jul 2024 22:53:41 +0200
+Message-ID: <20240716205344.146310-4-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240716205344.146310-1-mwilck@suse.com>
 References: <20240716205344.146310-1-mwilck@suse.com>
@@ -70,148 +70,167 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Also, change the return value to int, as this is more expressive and
-the returned struct multipath isn't used by the caller.
-
-Also remove the call to sync_map_state() in ev_add_map(), which is
-redundant because add_map_without_path() would have called update_map()
-and thus sync_map_state() already.
-
-Note: this removes the call to remove_map() at the end of the function,
-which doesn't make sense anyway, because update_multipath_table()
-would not return error unless the table disassembly failed, in which
-case nothing would have been added the the mpvec or pathvec yet.
-It should be sufficient to just cleanup the local data structures when
-add_map_without_path() fails.
+Also, simplify the if statement a bit.
+drop is_mpath_part() and dm_type_match, because do_foreach_partmaps() was the
+last user of these functions.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 79 ++++++++++++++++++++++++-----------------------
- 1 file changed, 41 insertions(+), 38 deletions(-)
+ libmultipath/devmapper.c | 100 ++++++++++-----------------------------
+ 1 file changed, 26 insertions(+), 74 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 1e7a6ac..32011c9 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -707,51 +707,57 @@ fail:
- 	return 0;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 1d41207..37d2578 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -948,60 +948,6 @@ out:
+ 	return r;
  }
  
--static struct multipath *
--add_map_without_path (struct vectors *vecs, const char *alias)
-+static int add_map_without_path (struct vectors *vecs, const char *alias)
- {
--	struct multipath * mpp = alloc_multipath();
-+	struct multipath __attribute__((cleanup(cleanup_multipath_and_paths)))
-+		*mpp = alloc_multipath();
-+	char __attribute__((cleanup(cleanup_charp))) *params = NULL;
-+	char __attribute__((cleanup(cleanup_charp))) *status = NULL;
- 	struct config *conf;
-+	char uuid[DM_UUID_LEN];
-+	int rc = DMP_ERR;
- 
--	if (!mpp)
--		return NULL;
--	if (!alias) {
--		free(mpp);
--		return NULL;
--	}
-+	if (!mpp || !(mpp->alias = strdup(alias)))
-+		return DMP_ERR;
- 
--	mpp->alias = strdup(alias);
-+	if ((rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY,
-+				(mapid_t) { .str = mpp->alias },
-+				(mapinfo_t) {
-+					.uuid = uuid,
-+					.dmi = &mpp->dmi,
-+					.size = &mpp->size,
-+					.target = &params,
-+					.status = &status,
-+				})) != DMP_OK)
-+		return rc;
-+
-+	if (!is_mpath_uuid(uuid))
-+		return DMP_NO_MATCH;
-+	else
-+		strlcpy(mpp->wwid, uuid + UUID_PREFIX_LEN, sizeof(mpp->wwid));
- 
--	if (dm_get_info(mpp->alias, &mpp->dmi) != DMP_OK) {
--		condlog(3, "%s: cannot access table", mpp->alias);
--		goto out;
--	}
--	if (!strlen(mpp->wwid) &&
--	    dm_get_wwid(mpp->alias, mpp->wwid, WWID_SIZE) != DMP_OK) {
--		condlog(3, "%s: cannot obtain WWID", mpp->alias);
--		goto out;
--	}
- 	if (!strlen(mpp->wwid))
- 		condlog(1, "%s: adding map with empty WWID", mpp->alias);
-+
- 	conf = get_multipath_config();
- 	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
- 	put_multipath_config(conf);
- 
--	if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK)
--		goto out;
-+	if ((rc = update_multipath_table__(mpp, vecs->pathvec, 0, params, status)) != DMP_OK)
-+		return DMP_ERR;
- 
- 	if (!vector_alloc_slot(vecs->mpvec))
--		goto out;
-+		return DMP_ERR;
-+	vector_set_slot(vecs->mpvec, steal_ptr(mpp));
- 
--	vector_set_slot(vecs->mpvec, mpp);
-+	/*
-+	 * We can't pass mpp here, steal_ptr() has just nullified it.
-+	 * vector_set_slot() just set the last slot, use that.
-+	 */
-+	if (update_map(VECTOR_LAST_SLOT(vecs->mpvec), vecs, 1) != 0) /* map removed */
-+		return DMP_ERR;
- 
--	if (update_map(mpp, vecs, 1) != 0) /* map removed */
--		return NULL;
+-enum {
+-	DM_TYPE_NOMATCH = 0,
+-	DM_TYPE_MATCH,
+-	/* more than 1 target */
+-	DM_TYPE_MULTI,
+-	/* empty map */
+-	DM_TYPE_EMPTY,
+-	DM_TYPE_ERR,
+-};
+-static int dm_type_match(const char *name, char *type)
+-{
+-	struct dm_task __attribute__((cleanup(cleanup_dm_task))) *dmt = NULL;
+-	uint64_t start, length;
+-	char *target_type = NULL;
+-	char *params;
 -
--	return mpp;
--out:
--	remove_map(mpp, vecs->pathvec, vecs->mpvec);
--	return NULL;
-+	return DMP_OK;
+-	if (!(dmt = libmp_dm_task_create(DM_DEVICE_TABLE)))
+-		return DM_TYPE_ERR;
+-
+-	if (!dm_task_set_name(dmt, name))
+-		return DM_TYPE_ERR;
+-
+-	if (!libmp_dm_task_run(dmt)) {
+-		dm_log_error(3, DM_DEVICE_TABLE, dmt);
+-		return DM_TYPE_ERR;
+-	}
+-
+-	/* Fetch 1st target */
+-	if (dm_get_next_target(dmt, NULL, &start, &length,
+-			       &target_type, &params) != NULL)
+-		/* multiple targets */
+-		return DM_TYPE_MULTI;
+-	else if (!target_type)
+-		return DM_TYPE_EMPTY;
+-	else if (!strcmp(target_type, type))
+-		return DM_TYPE_MATCH;
+-	else
+-		return DM_TYPE_NOMATCH;
+-}
+-
+-static bool is_mpath_part(const char *part_name, const char *map_name)
+-{
+-	char part_uuid[DM_UUID_LEN], map_uuid[DM_UUID_LEN];
+-
+-	if (dm_get_dm_uuid(map_name, map_uuid) != DMP_OK
+-	    || !is_mpath_uuid(map_uuid))
+-		return false;
+-
+-	if (dm_get_dm_uuid(part_name, part_uuid) != DMP_OK)
+-		return false;
+-
+-	return is_mpath_part_uuid(part_uuid, map_uuid);
+-}
+-
+ int dm_is_mpath(const char *name)
+ {
+ 	char uuid[DM_UUID_LEN];
+@@ -1443,7 +1389,7 @@ char *dm_mapname(int major, int minor)
  }
  
  static int
-@@ -865,14 +871,9 @@ int
- ev_add_map (char * dev, const char * alias, struct vectors * vecs)
+-do_foreach_partmaps (const char * mapname,
++do_foreach_partmaps (const char *mapname,
+ 		     int (*partmap_func)(const char *, void *),
+ 		     void *data)
  {
- 	struct multipath * mpp;
--	int reassign_maps;
-+	int reassign_maps, rc;
- 	struct config *conf;
+@@ -1451,9 +1397,18 @@ do_foreach_partmaps (const char * mapname,
+ 	char __attribute__((cleanup(cleanup_charp))) *params = NULL;
+ 	struct dm_names *names;
+ 	unsigned next = 0;
+-	unsigned long long size;
+-	char dev_t[32];
++	char dev_t[BLK_DEV_SIZE];
+ 	char *p;
++	char map_uuid[DM_UUID_LEN];
++	struct dm_info info;
++
++	if (libmp_mapinfo(DM_MAP_BY_NAME,
++			  (mapid_t) { .str = mapname },
++			  (mapinfo_t) { .uuid = map_uuid, .dmi = &info }) != DMP_OK)
++		return 1;
++
++	if (safe_sprintf(dev_t, "%i:%i", info.major, info.minor))
++		return 1;
  
--	if (dm_is_mpath(alias) != DM_IS_MPATH_YES) {
--		condlog(4, "%s: not a multipath map", alias);
--		return 0;
--	}
--
- 	mpp = find_mp_by_alias(vecs->mpvec, alias);
- 
- 	if (mpp) {
-@@ -910,10 +911,12 @@ ev_add_map (char * dev, const char * alias, struct vectors * vecs)
- 	/*
- 	 * now we can register the map
- 	 */
--	if ((mpp = add_map_without_path(vecs, alias))) {
--		sync_map_state(mpp);
-+	if ((rc = add_map_without_path(vecs, alias)) == DMP_OK) {
- 		condlog(2, "%s: devmap %s registered", alias, dev);
- 		return 0;
-+	} else if (rc == DMP_NO_MATCH) {
-+		condlog(4, "%s: not a multipath map", alias);
-+		return 0;
- 	} else {
- 		condlog(2, "%s: ev_add_map failed", dev);
+ 	if (!(dmt = libmp_dm_task_create(DM_DEVICE_LIST)))
  		return 1;
+@@ -1468,41 +1423,38 @@ do_foreach_partmaps (const char * mapname,
+ 		/* this is perfectly valid */
+ 		return 0;
+ 
+-	if (dm_dev_t(mapname, &dev_t[0], 32))
+-		return 1;
+-
+ 	do {
++		char part_uuid[DM_UUID_LEN];
++
+ 		if (
+ 		    /*
+ 		     * if there is only a single "linear" target
+ 		     */
+-		    (dm_type_match(names->name, TGT_PART) == DM_TYPE_MATCH) &&
+-
++		    libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_PART_ONLY,
++				  (mapid_t) { .str = names->name },
++				  (mapinfo_t) {
++					  .uuid = part_uuid,
++					  .target = &params,
++				  }) == DMP_OK &&
+ 		    /*
+ 		     * and the uuid of the target is a partition of the
+ 		     * uuid of the multipath device
+ 		     */
+-		    is_mpath_part(names->name, mapname) &&
+-
+-		    /*
+-		     * and we can fetch the map table from the kernel
+-		     */
+-		    dm_get_map(names->name, &size, &params) == DMP_OK &&
++		    is_mpath_part_uuid(part_uuid, map_uuid) &&
+ 
+ 		    /*
+ 		     * and the table maps over the multipath map
+ 		     */
+ 		    (p = strstr(params, dev_t)) &&
+-		    !isdigit(*(p + strlen(dev_t)))
+-		   ) {
+-			if (partmap_func(names->name, data) != 0)
+-				return 1;
+-		}
++		    !isdigit(*(p + strlen(dev_t))) &&
++
++		    (partmap_func(names->name, data) != 0))
++			return 1;
+ 
+ 		free(params);
+ 		params = NULL;
+ 		next = names->next;
+-		names = (void *) names + next;
++		names = (void*) names + next;
+ 	} while (next);
+ 
+ 	return 0;
 -- 
 2.45.2
 
