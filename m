@@ -1,165 +1,135 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7BBE57470
-	for <dm-devel@lists.linux.dev>; Wed, 17 Jul 2024 18:11:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F1B78183070
+	for <dm-devel@lists.linux.dev>; Wed, 17 Jul 2024 18:11:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721239877; cv=none; b=N/V3pI72ahhtd2leGX48tT6t54SJ8TFRR8bjxZTxxxvskwzG/Gw8TP9qesflesNMk6Uus4/68jk/OC1Ie015NI6SC0DyrDLUj3ktNuV8XJ8fQIqX6sIEKaJOMTbVanLZKYmACYBh6cmcA0w/o2KQ0OQ9uohKJR7a+k0WyfvsReU=
+	t=1721239877; cv=none; b=pKebZgVNNDdQptD6QjHltGw+qyQzLl2SAW9EGM/GLvekaoqOdo7SUeJBp+x5b82gH1lYI7w10buSb4FEJBeMtwSZLMmAlpJOxxq7ZUy9UV+OIA7Ot/DSHgqN7ZYODh8SkVPvRwMCyvDAuqYriNHvTN8ozKJTXEH3V4aV0uzYbZY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1721239877; c=relaxed/simple;
-	bh=yEwD/DYdFZRs+64PAHpbEU4ocTpWGQ/27GuU22x37ZI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=eLjvVo7r1qtuiD02ZdmGY50Os9R1f1uCDoX9aoLpjJy2CnZEbP5NgRFF4/ZnruxCfYISctn3+sUiFk2nhqskWb0qi9cPH7VbaGFlS0p8CDPKY0dK/80kpdTrtqiNPCVESqMu0SnNWY7aCNcTzRPcdMtrl52TiykCsV4hrE1r4v4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BnT0XeRz; arc=none smtp.client-ip=170.10.129.124
+	bh=jqNJ4U+mchHDIhAaQtCSgefWhJ0i1ENkDMQrnjdz1zk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=e6ZSOIJ37q5bd8QmuVI4/vC5V49x7ZABIzVvA2X+fydv5k8z96fxxO+FNr+cookRLG1a+0XZalf9DXzFIGRgtjL1W5RlUnZ/zoTQnemv+LNMLxHscEDs7ed49k7xEylsov3JGncd8Jwgmn26EyIoZktP2FsUOvuE3lR2wjEYm2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CTqv/JHt; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BnT0XeRz"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CTqv/JHt"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1721239874;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=4NGN03l+rlfzmWLUyBPlFp00/WC7z0F+ySMpiOkWOlw=;
-	b=BnT0XeRzNkgB0CfwaI6rkRxyeRfrKOlklQvloKaM3XCvVRKw3/zfyypZYE6ckWx00ofj8R
-	VhF1cU3wBV9wafZtOpugygqInPk9/ObTjeKUzB7T+eWbLqXIdtKlP5Fn3lb1FYXu9j6WOc
-	ImT3gOWKdDNZWaHWOCIVaXFocKP+4OE=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=wva9wNybVY9ylz8cbfE+NTS4AF8mdPbI+wjhMqW0LzA=;
+	b=CTqv/JHtTiGmBAVFKLVQ+6aQ9BCn5muD0+N7+f3IqpQn7ix2D1GVL1IAhht1iAzXhCLexq
+	pkuVI8w5lCOp8/3F/G+2sY6wlUKNqoBNAXnWCCpe0Utrb/jY38pDdeEri341EBhCw2dtuJ
+	iRsDJAb5scPe6fdLsPwYWHbJTR1qlQE=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-127-Ko8txbNTMACEAu_y9nFewg-1; Wed,
- 17 Jul 2024 14:11:10 -0400
-X-MC-Unique: Ko8txbNTMACEAu_y9nFewg-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-654-gcJRfNNJPHSn9dcBinx5oA-1; Wed,
+ 17 Jul 2024 14:11:12 -0400
+X-MC-Unique: gcJRfNNJPHSn9dcBinx5oA-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 230171955D4C;
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 923C31955F49;
 	Wed, 17 Jul 2024 18:11:09 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A015C3000185;
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 03E7B19560B2;
 	Wed, 17 Jul 2024 18:11:08 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46HIB7Pb2173556
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46HIB7VJ2173568
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
 	Wed, 17 Jul 2024 14:11:07 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46HIB6cO2173555;
-	Wed, 17 Jul 2024 14:11:06 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46HIB7182173567;
+	Wed, 17 Jul 2024 14:11:07 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 00/20] path checker refactor and misc fixes
-Date: Wed, 17 Jul 2024 14:10:46 -0400
-Message-ID: <20240717181106.2173527-1-bmarzins@redhat.com>
+Subject: [PATCH v2 03/20] multipathd: remove checker restart optimization
+Date: Wed, 17 Jul 2024 14:10:49 -0400
+Message-ID: <20240717181106.2173527-4-bmarzins@redhat.com>
+In-Reply-To: <20240717181106.2173527-1-bmarzins@redhat.com>
+References: <20240717181106.2173527-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-This patchset is based on discussions I had with Martin Wilck about my
-last, partially applied patchset. It's based on top of his mwilck-tip
-branch, 4ef98926 "fixup! Makefile: add targets for test-progs.cpio and
-test-progs.tar". These patches are mostly orthogonal to the
-libmp_mapinfo() work. I'll rebase them if further changes to that
-patchset stop them form applying cleanly.
+Future commits will make this optimization unusable.
 
-The first two patches are reposts of patches from my earlier patchset,
-redone to work with the new libmp_mapinfo() API. They make it possible
-to add maps by WWID with "multipathd add map".
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/main.c | 27 +++++----------------------
+ 1 file changed, 5 insertions(+), 22 deletions(-)
 
-The rest of the patches are work and bugfixes related to refactoring
-checkerloop so that
-
-1. multipath devices get resynced with the kernel occasionally, even if
-they have not paths
-
-2. If multiple paths from a multipath device are checked in the same
-loop, the multipath device will only get resynced once.
-
-3. All the paths of a multipath device will converge to being checked at
-the same time (at least as much as their differing checkint values will
-allow).
-
-4. The times for checking the paths of each multipath device will spread
-out as much as possible so multipathd doesn't do all of it's checking in
-a burst.
-
-5. path checking is done my multipath device (for initialized paths,
-the uninitialized paths are handled after all the adopted paths are
-handled).
-
-Items 1 & 2 are handled by patch 10 and preceding patches.
-
-Items 3 & 4 and handled by patch 17 and preceding patches.
-
-Item 5 is handled by patch 18 and 19.
-
-Changes in v2 (old patch number in quotes):
-01: change from returning minor number to dm info (Martin)
-02: adapt to change in patch 01
-05 (05-07): squash into one commit (Martin)
-08 (10): fix commit message (Matin)
-10 (12): rename do_check_mpp amd check_mpp
-11 (13): move the code that saved the path name to right before it was
-         removed (Martin)
-14 (16): use symbolic return codes (Martin)
-15 (17): set path state to PATH_UNCHECKED when orphaned, and skip paths
-         in INIT_REMOVED in sync_map_state() (Martin)
-17 (19): clear pp->pending_ticks in check_path() if the path is delayed
-         instead of pending. Use a different equation to check if we
-         need to modify the ticks, that can adjust the ticks on every
-         check. adapt to change in patch 14
-18 (20): adapt to change in patch 14
-19 (21): adapt to change in patch 10 and 14
-20 (22): Add fixes trailer
-
-Benjamin Marzinski (20):
-  libmultipath: rename dm_map_present_by_wwid() and add outputs
-  multipathd: make cli_add_map() handle adding maps by WWID correctly
-  multipathd: remove checker restart optimization
-  multipathd: refactor path state getting code into a helper
-  multipathd: handle uninitialized paths in new function
-  multipathd: check paths immediately after failing udev initialization
-  multipathd: set pp->tick = max_checkint in handle_uninitialized_path
-  multipathd: return 0 from check_path() if that path wasn't checked
-  multipathd: reorder path state checks
-  multipathd: adjust when mpp is synced with the kernel
-  multipathd: resync map after setup_map in ev_remove_path
-  multipathd: resync map after setup_map in resize_map
-  multipathd: always resync map in reload_and_sync_map
-  multipathd: correctly handle paths removed for a wwid change
-  multipathd: handle changed wwid when adding partial path
-  multipathd: don't read conf->checkint twice in check_path
-  multipathd: make multipath devices manage their path check times
-  multipathd: factor out actual path checking loop from checkerloop
-  multipathd: check paths in order by mpp
-  multipathd: clean up the correct wwid in check_path_wwid_change
-
- libmultipath/config.c             |  12 +
- libmultipath/config.h             |   1 +
- libmultipath/configure.c          |   1 +
- libmultipath/devmapper.c          |   5 +-
- libmultipath/devmapper.h          |   2 +-
- libmultipath/libmultipath.version |   5 +
- libmultipath/structs.c            |   2 +
- libmultipath/structs.h            |   3 +
- libmultipath/structs_vec.c        |   9 +-
- libmultipath/valid.c              |   2 +-
- multipathd/cli_handlers.c         |  66 ++--
- multipathd/main.c                 | 582 +++++++++++++++++++-----------
- multipathd/main.h                 |   2 +-
- tests/valid.c                     |  13 +-
- 14 files changed, 432 insertions(+), 273 deletions(-)
-
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 13ed6d05..eaef505a 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2704,7 +2704,7 @@ checkerloop (void *ap)
+ 
+ 	while (1) {
+ 		struct timespec diff_time, start_time, end_time;
+-		int num_paths = 0, strict_timing, rc = 0, i = 0;
++		int num_paths = 0, strict_timing, rc = 0;
+ 		unsigned int ticks = 0;
+ 		enum checker_state checker_state = CHECKER_STARTING;
+ 
+@@ -2723,7 +2723,7 @@ checkerloop (void *ap)
+ 			sd_notify(0, "WATCHDOG=1");
+ #endif
+ 		while (checker_state != CHECKER_FINISHED) {
+-			unsigned int paths_checked = 0;
++			unsigned int paths_checked = 0, i;
+ 			struct timespec chk_start_time;
+ 
+ 			pthread_cleanup_push(cleanup_lock, &vecs->lock);
+@@ -2733,28 +2733,11 @@ checkerloop (void *ap)
+ 			if (checker_state == CHECKER_STARTING) {
+ 				vector_foreach_slot(vecs->pathvec, pp, i)
+ 					pp->is_checked = false;
+-				i = 0;
+ 				checker_state = CHECKER_RUNNING;
+-			} else {
+-				/*
+-				 * Paths could have been removed since we
+-				 * dropped the lock. Find the path to continue
+-				 * checking at. Since paths can be removed from
+-				 * anywhere in the vector, but can only be added
+-				 * at the end, the last checked path must be
+-				 * between its old location, and the start or
+-				 * the vector.
+-				 */
+-				if (i >= VECTOR_SIZE(vecs->pathvec))
+-					i = VECTOR_SIZE(vecs->pathvec) - 1;
+-				while ((pp = VECTOR_SLOT(vecs->pathvec, i))) {
+-					if (pp->is_checked == true)
+-						break;
+-					i--;
+-				}
+-				i++;
+ 			}
+-			vector_foreach_slot_after (vecs->pathvec, pp, i) {
++			vector_foreach_slot(vecs->pathvec, pp, i) {
++				if (pp->is_checked)
++					continue;
+ 				pp->is_checked = true;
+ 				rc = check_path(vecs, pp, ticks);
+ 				if (rc < 0) {
 -- 
 2.45.0
 
