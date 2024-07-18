@@ -1,67 +1,65 @@
-Received: from mail-ej1-f51.google.com (mail-ej1-f51.google.com [209.85.218.51])
+Received: from mail-lf1-f46.google.com (mail-lf1-f46.google.com [209.85.167.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50E54145B2B
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jul 2024 20:24:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD8E1143C54
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jul 2024 20:35:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721334259; cv=none; b=dkrD3M36Cs1KciIMHvPLFqydkH/XpzDmNN0vXmD95ZjD6IN0sBtzAe646knqpARlNuQgh6r3C1BnG0d7c+iuEHdAhi6icy/T1C9W9V/IvBcKtjgtbCTxkwN9Ee/pZPMsWBfGH36yJcya9FqSjPSAzhZLhhW+rrqrIl7ZLdnjSyE=
+	t=1721334913; cv=none; b=iDiw9WSKZD5bWOzWXUxYWXr8jAdKA/48aesQVB8g94Zic4u+sBgewJsbeINTNhBcr2tyWqBgM538FyeR7LHkTf/htawfW77LA0pupKWyRVURsCUSW/Ze+TV43yQYfCOsFt5JnyPQmDrdZT1JCSMgT9LasLDrEhDlsnVNXfNw08A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721334259; c=relaxed/simple;
-	bh=mQEvs4ikyhSBdEEVMW8SKRzTV1AtOHefjGuNAtDatBY=;
+	s=arc-20240116; t=1721334913; c=relaxed/simple;
+	bh=gcTyiVvCQuj8SmY2rPOxMSZs+m48AR2E7NS357cSTXE=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=G2q9U0EXMv1jP++3NKdD0eZTz3tXi9YwHCdIGKf+cV+b7bLHrqTKl+0dbW6XN/iO+5cwM42GNqy2u5U19H/Ii58Y+D9CtdFot8j6IysGA7dY3VbCnDjJ9cU62k5Lldhdvjf/LalSfCY+Qf3mO5EF610qssyU58NhsO87OEB+ATI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=SFaHSsIM; arc=none smtp.client-ip=209.85.218.51
+	 Content-Type:MIME-Version; b=gok3kriRr6n5JrLLVZMqSWszc0RHUjT95SWwZGihH3UNs5HqVFBVXs0Qm2AT5AHrnJSrjp2NkOn499zZZ9InrAMoTvIvzRrNylqE90YgcV/NmqOndRqS9l5BBD8HU3w5k481dnX+uMRWVqeDukfFBsDYiXIziLI+vdjX/zvLNBY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=SiBeCICd; arc=none smtp.client-ip=209.85.167.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="SFaHSsIM"
-Received: by mail-ej1-f51.google.com with SMTP id a640c23a62f3a-a77c080b521so121898866b.3
-        for <dm-devel@lists.linux.dev>; Thu, 18 Jul 2024 13:24:16 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="SiBeCICd"
+Received: by mail-lf1-f46.google.com with SMTP id 2adb3069b0e04-52ed741fe46so1194660e87.0
+        for <dm-devel@lists.linux.dev>; Thu, 18 Jul 2024 13:35:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1721334255; x=1721939055; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1721334909; x=1721939709; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=6aUIsWJrPVxmiv+dyaoa+usoJAruDING7Buqkxx/sGA=;
-        b=SFaHSsIMxK2PA17cyY4UEbbXLEH3dkQvgErGC5yJuWGEfmIG5IXOam74z8ydCZkNH2
-         ekLzgv3kKG0MluGeSZumWry4pccdgBYgD0QrzDQrvoX6rR+oiI7xgXJ7wmySxXrKbmVG
-         eoab7noGysPBlUBmo2wzgQUjASF4hVX2fNU8kbfUWMK0RaUD6fI5XZ0zECHN1Wpp+M6b
-         GqV8nSWtNX0DU54PbZAT0DJDXUPYz2SfKuLedW5RHal4JqSxXU0o6mRfI4yYPQ7ZqkpB
-         jXmKrQm8N3JRp1aI7/hmZvH0ssby86D47V/reDX8+srKAcH7Tvp3OuxzPlOraH50BUo2
-         YlAA==
+        bh=gcTyiVvCQuj8SmY2rPOxMSZs+m48AR2E7NS357cSTXE=;
+        b=SiBeCICdb+HFREgk1RANGlWhdEEmS/POCPKwZqDNB+CEWFtZov5sr3dhgKfnnSpino
+         ZZltOertcP34hMa86Xn/XCcVyMeUlkA/DFHl8UENWwGbl8ZF7WidCizqXRxU3GmhMgrG
+         iSymJm8isDifOQLd7SpVHP4RVTfwRnnwVwDbZtLlN6VvIVlMllm+V0e0364IGr/LHI8v
+         LRrb6MJvN4hprBiZVEaRC9lK8D/9j+dCImf1yauOgMIhA2L/YkW2CqiKnjOgmJRa6qI+
+         5eBDm4/gjcPlEfN0qoBfn3DNyar72N/PxTyJf7dSL4wzsIMsoW6cxnj4BZdTfWod0qKw
+         URtw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721334255; x=1721939055;
+        d=1e100.net; s=20230601; t=1721334909; x=1721939709;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=6aUIsWJrPVxmiv+dyaoa+usoJAruDING7Buqkxx/sGA=;
-        b=t5F303LOZzumtBl8lhCVGR+DJ99alTpz0FHIoXXiFxRcLKMYZi7WRaYVcCu7CZKEJ2
-         0fScfPHK3c6TzFOe1v2t+h5usxriwB62Rs4VPAiPS7yUc2zOIOQuGixq2P1boG3FxbQm
-         WqE07q1Ez6Ash4alE/Vyw5PmDeULvSzIZSnch3y3n2tfkYUdjNgnllSlO1++rIfiBRc9
-         Y3j6HcnJS4fI9xQY8rEFX+GViXLWSNrWYLrGfeqqV+mNHKZdcE2ZJAT8N95o+CaFMCmx
-         Dt1yrJE+k0xenF6IDaDytvGWm24UvlayOJfKxTrWhzRezeLiflNRH3BPKtf1faOqKtB7
-         9YMA==
-X-Gm-Message-State: AOJu0YywxL5cB3ft6JTPkB+1HAvyk0AjMcX07u/5dYdGRDSjxERx8DHG
-	Crbir2yvi69t3qfQRlm3ngz1xXnw8+e383U5nIh2NloOcxcGSfZ07e+wJgRThsU=
-X-Google-Smtp-Source: AGHT+IGBb7Xjj1L2p3zM5bbvgjmS7zAL4XFIHMlIY8fUbdUTHLwD/JOVzHfoOD6gKiWjPfu1UpWPPg==
-X-Received: by 2002:a17:906:584d:b0:a77:dc70:b369 with SMTP id a640c23a62f3a-a7a01154251mr408379166b.22.1721334255204;
-        Thu, 18 Jul 2024 13:24:15 -0700 (PDT)
+        bh=gcTyiVvCQuj8SmY2rPOxMSZs+m48AR2E7NS357cSTXE=;
+        b=CGAezDds+wOpd+HVZoWIpoTDMEv7ix0kt6i2Cf4molh3UlbJih9lygYSrxx3p+dhZ7
+         G9CPLx5LDj3uV1gC5Z++FaJyPtVT5rgNMKn0O2sXaX8hhTIm6dcjRTE1BhiL8l79qNkA
+         f8W1Nub+s+eegEr55QmWKJFCLytNbAt/Lk4JtT/rtg8F39ScYAOF9M146JJEMzH8XlXP
+         yC9L8PsAggFBpiY7wLVHm+s0qigAcTMcT6b929NZ0h7Q6xT+uibJjsIf4c2Wg3CjWxD1
+         MdMVbqKRo1eAIM4DyGhOw6s9HpMJSWWsUypkrZll3man9UuP1jNbpByF52j1kF0AGGiX
+         QBXQ==
+X-Gm-Message-State: AOJu0YwTg7LtrkYxiaO2USEreo9l5PqlUrvMQq/hgpW7WY/H1yOwZNNh
+	dBFgSiOspnDyceSvBP8QAwiIfeDBzUDj6Wq44qGO9HYnJ8daeRSWbZ6hmzh7ibc=
+X-Google-Smtp-Source: AGHT+IFbXYLb1pwVb5boGIyIFlEmbfFH7kw9/sSXOjiAyM4KMmo6rql7Z7UUvh6iMN7Vnjp0A+nx4Q==
+X-Received: by 2002:a05:6512:12cc:b0:52e:9b92:49ad with SMTP id 2adb3069b0e04-52ee5208ce6mr4261227e87.0.1721334908573;
+        Thu, 18 Jul 2024 13:35:08 -0700 (PDT)
 Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a79bc7f2361sm596213766b.120.2024.07.18.13.24.14
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a79bc5b7f28sm596563366b.70.2024.07.18.13.35.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 18 Jul 2024 13:24:15 -0700 (PDT)
-Message-ID: <745dd5f5611bc3e571af1d03a563c370f9161c9c.camel@suse.com>
-Subject: Re: [PATCH v2 17/20] multipathd: make multipath devices manage
- their path check times
+        Thu, 18 Jul 2024 13:35:08 -0700 (PDT)
+Message-ID: <235ca7fa8c0054245d14e2ff5a5ba1d1055a8797.camel@suse.com>
+Subject: Re: [PATCH v2 00/20] path checker refactor and misc fixes
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Thu, 18 Jul 2024 22:24:13 +0200
-In-Reply-To: <20240717181106.2173527-18-bmarzins@redhat.com>
+Date: Thu, 18 Jul 2024 22:35:06 +0200
+In-Reply-To: <20240717181106.2173527-1-bmarzins@redhat.com>
 References: <20240717181106.2173527-1-bmarzins@redhat.com>
-	 <20240717181106.2173527-18-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.52.3 
@@ -72,212 +70,139 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Wed, 2024-07-17 at 14:11 -0400, Benjamin Marzinski wrote:
-> multipathd's path checking can be very bursty, with all the paths
-> running their path checkers at the same time, and then all doing
-> nothing
-> while waiting for the next check time. Alternatively, the paths in a
-> multipath device might all run their path checkers at a different
-> time,
-> which can keep the multipath device from having a coherent view of
-> the
-> state of all of its paths.
+On Wed, 2024-07-17 at 14:10 -0400, Benjamin Marzinski wrote:
+> This patchset is based on discussions I had with Martin Wilck about
+> my
+> last, partially applied patchset. It's based on top of his mwilck-tip
+> branch, 4ef98926 "fixup! Makefile: add targets for test-progs.cpio
+> and
+> test-progs.tar". These patches are mostly orthogonal to the
+> libmp_mapinfo() work. I'll rebase them if further changes to that
+> patchset stop them form applying cleanly.
 >=20
-> This patch makes all the paths of a multipath device converge to
-> running
-> their checkers at the same time, and spreads out when this time is
-> for
-> the different multipath devices.
+> The first two patches are reposts of patches from my earlier
+> patchset,
+> redone to work with the new libmp_mapinfo() API. They make it
+> possible
+> to add maps by WWID with "multipathd add map".
 >=20
-> To do this, the checking time is divided into adjustment intervals
-> (conf->adjust_int), so that the checkers run at some index within
-> this
-> interval. conf->adjust_int is chosen so that it is a multiple of all
-> possible pp->checkint values. This means that regardless of
-> pp->checkint, the path should always be checked on the same indexes,
-> each adjustement interval.
+> The rest of the patches are work and bugfixes related to refactoring
+> checkerloop so that
 >=20
-> Each multipath device has a goal index. These are evenly spread out
-> between 0 and conf->max_checkint. Every conf->adjust_int seconds,
-> each
-> multipath device should try to check all of its paths on its goal
-> index.
-> If the multipath device's check times are not aligned with the goal
-> index, then pp->tick for the next check will be decremented by one,
-> to
-> align it over time.
+> 1. multipath devices get resynced with the kernel occasionally, even
+> if
+> they have not paths
 >=20
-> In order for the path checkers to run every pp->checkint seconds,
-> multipathd needs to track how long a path check has been pending for,
-> and subtract that time from the number of ticks till the checker is
-> run
-> again. If the checker has been pending for more that pp->checkint,
-> the path will be rechecked on the next tick after the checker
-> returns.
+> 2. If multiple paths from a multipath device are checked in the same
+> loop, the multipath device will only get resynced once.
 >=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
-> =C2=A0libmultipath/config.c=C2=A0 | 12 ++++++
-> =C2=A0libmultipath/config.h=C2=A0 |=C2=A0 1 +
-> =C2=A0libmultipath/structs.c |=C2=A0 1 +
-> =C2=A0libmultipath/structs.h |=C2=A0 1 +
-> =C2=A0multipathd/main.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 91 ++++++++++++++=
-++++++++++++++++++++------
+> 3. All the paths of a multipath device will converge to being checked
+> at
+> the same time (at least as much as their differing checkint values
+> will
+> allow).
+>=20
+> 4. The times for checking the paths of each multipath device will
+> spread
+> out as much as possible so multipathd doesn't do all of it's checking
+> in
+> a burst.
+>=20
+> 5. path checking is done my multipath device (for initialized paths,
+> the uninitialized paths are handled after all the adopted paths are
+> handled).
+>=20
+> Items 1 & 2 are handled by patch 10 and preceding patches.
+>=20
+> Items 3 & 4 and handled by patch 17 and preceding patches.
+>=20
+> Item 5 is handled by patch 18 and 19.
+>=20
+> Changes in v2 (old patch number in quotes):
+> 01: change from returning minor number to dm info (Martin)
+> 02: adapt to change in patch 01
+> 05 (05-07): squash into one commit (Martin)
+> 08 (10): fix commit message (Matin)
+> 10 (12): rename do_check_mpp amd check_mpp
+> 11 (13): move the code that saved the path name to right before it
+> was
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 removed (Martin)
+> 14 (16): use symbolic return codes (Martin)
+> 15 (17): set path state to PATH_UNCHECKED when orphaned, and skip
+> paths
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 in INIT_REMOVED in sync_=
+map_state() (Martin)
+> 17 (19): clear pp->pending_ticks in check_path() if the path is
+> delayed
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 instead of pending. Use =
+a different equation to check if we
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 need to modify the ticks=
+, that can adjust the ticks on every
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 check. adapt to change i=
+n patch 14
+> 18 (20): adapt to change in patch 14
+> 19 (21): adapt to change in patch 10 and 14
+> 20 (22): Add fixes trailer
+>=20
+> Benjamin Marzinski (20):
+> =C2=A0 libmultipath: rename dm_map_present_by_wwid() and add outputs
+> =C2=A0 multipathd: make cli_add_map() handle adding maps by WWID correctl=
+y
+> =C2=A0 multipathd: remove checker restart optimization
+> =C2=A0 multipathd: refactor path state getting code into a helper
+> =C2=A0 multipathd: handle uninitialized paths in new function
+> =C2=A0 multipathd: check paths immediately after failing udev
+> initialization
+> =C2=A0 multipathd: set pp->tick =3D max_checkint in
+> handle_uninitialized_path
+> =C2=A0 multipathd: return 0 from check_path() if that path wasn't checked
+> =C2=A0 multipathd: reorder path state checks
+> =C2=A0 multipathd: adjust when mpp is synced with the kernel
+> =C2=A0 multipathd: resync map after setup_map in ev_remove_path
+> =C2=A0 multipathd: resync map after setup_map in resize_map
+> =C2=A0 multipathd: always resync map in reload_and_sync_map
+> =C2=A0 multipathd: correctly handle paths removed for a wwid change
+> =C2=A0 multipathd: handle changed wwid when adding partial path
+> =C2=A0 multipathd: don't read conf->checkint twice in check_path
+> =C2=A0 multipathd: make multipath devices manage their path check times
+> =C2=A0 multipathd: factor out actual path checking loop from checkerloop
+> =C2=A0 multipathd: check paths in order by mpp
+> =C2=A0 multipathd: clean up the correct wwid in check_path_wwid_change
+>=20
+> =C2=A0libmultipath/config.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 12 +
+> =C2=A0libmultipath/config.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 1 +
+> =C2=A0libmultipath/configure.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 |=C2=A0=C2=A0 1 +
+> =C2=A0libmultipath/devmapper.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 |=C2=A0=C2=A0 5 +-
+> =C2=A0libmultipath/devmapper.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 |=C2=A0=C2=A0 2 +-
+> =C2=A0libmultipath/libmultipath.version |=C2=A0=C2=A0 5 +
+> =C2=A0libmultipath/structs.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 2 +
+> =C2=A0libmultipath/structs.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 3 +
+> =C2=A0libmultipath/structs_vec.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 |=C2=A0=C2=A0 9 +-
+> =C2=A0libmultipath/valid.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 2 +-
+> =C2=A0multipathd/cli_handlers.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 |=C2=A0 66 ++--
+> =C2=A0multipathd/main.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 582 +++++++++++++++++++-=
+--------
 > --
-> =C2=A05 files changed, 89 insertions(+), 17 deletions(-)
+> =C2=A0multipathd/main.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 2 +-
+> =C2=A0tests/valid.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 =
+13 +-
+> =C2=A014 files changed, 432 insertions(+), 273 deletions(-)
 >=20
-> diff --git a/libmultipath/config.c b/libmultipath/config.c
-> index 83fa7369..a59533b5 100644
-> --- a/libmultipath/config.c
-> +++ b/libmultipath/config.c
-> @@ -982,6 +982,18 @@ int _init_config (const char *file, struct
-> config *conf)
-> =C2=A0		conf->checkint =3D conf->max_checkint;
-> =C2=A0	condlog(3, "polling interval: %d, max: %d",
-> =C2=A0		conf->checkint, conf->max_checkint);
-> +	/*
-> +	 * make sure that that adjust_int is a multiple of all
-> possible values
-> +	 * of pp->checkint.
-> +	 */
-> +	if (conf->max_checkint % conf->checkint =3D=3D 0) {
-> +		conf->adjust_int =3D conf->max_checkint;
-> +	} else {
-> +		conf->adjust_int =3D conf->checkint;
-> +		while (2 * conf->adjust_int < conf->max_checkint)
-> +			conf->adjust_int *=3D 2;
-> +		conf->adjust_int *=3D conf->max_checkint;
-> +	}
-> =C2=A0
-> =C2=A0	if (conf->blist_devnode =3D=3D NULL) {
-> =C2=A0		conf->blist_devnode =3D vector_alloc();
-> diff --git a/libmultipath/config.h b/libmultipath/config.h
-> index 384193ab..800c0ca9 100644
-> --- a/libmultipath/config.h
-> +++ b/libmultipath/config.h
-> @@ -147,6 +147,7 @@ struct config {
-> =C2=A0	int minio_rq;
-> =C2=A0	unsigned int checkint;
-> =C2=A0	unsigned int max_checkint;
-> +	unsigned int adjust_int;
-> =C2=A0	bool use_watchdog;
-> =C2=A0	int pgfailback;
-> =C2=A0	int rr_weight;
-> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-> index 0a26096a..232b4230 100644
-> --- a/libmultipath/structs.c
-> +++ b/libmultipath/structs.c
-> @@ -149,6 +149,7 @@ uninitialize_path(struct path *pp)
-> =C2=A0	pp->state =3D PATH_UNCHECKED;
-> =C2=A0	pp->uid_attribute =3D NULL;
-> =C2=A0	pp->checker_timeout =3D 0;
-> +	pp->pending_ticks =3D 0;
-> =C2=A0
-> =C2=A0	if (checker_selected(&pp->checker))
-> =C2=A0		checker_put(&pp->checker);
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index 002eeae1..457d7836 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -360,6 +360,7 @@ struct path {
-> =C2=A0	unsigned long long size;
-> =C2=A0	unsigned int checkint;
-> =C2=A0	unsigned int tick;
-> +	unsigned int pending_ticks;
-> =C2=A0	int bus;
-> =C2=A0	int offline;
-> =C2=A0	int state;
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 84450906..87ddb101 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2388,7 +2388,7 @@ enum check_path_return {
-> =C2=A0};
-> =C2=A0
-> =C2=A0static int
-> -check_path (struct vectors * vecs, struct path * pp, unsigned int
-> ticks)
-> +do_check_path (struct vectors * vecs, struct path * pp)
-> =C2=A0{
-> =C2=A0	int newstate;
-> =C2=A0	int new_path_up =3D 0;
-> @@ -2400,14 +2400,6 @@ check_path (struct vectors * vecs, struct path
-> * pp, unsigned int ticks)
-> =C2=A0	int marginal_pathgroups, marginal_changed =3D 0;
-> =C2=A0	bool need_reload;
-> =C2=A0
-> -	if (pp->initialized =3D=3D INIT_REMOVED)
-> -		return CHECK_PATH_SKIPPED;
-> -
-> -	if (pp->tick)
-> -		pp->tick -=3D (pp->tick > ticks) ? ticks : pp->tick;
-> -	if (pp->tick)
-> -		return CHECK_PATH_SKIPPED;
-> -
-> =C2=A0	conf =3D get_multipath_config();
-> =C2=A0	checkint =3D conf->checkint;
-> =C2=A0	max_checkint =3D conf->max_checkint;
-> @@ -2419,12 +2411,6 @@ check_path (struct vectors * vecs, struct path
-> * pp, unsigned int ticks)
-> =C2=A0		pp->checkint =3D checkint;
-> =C2=A0	};
-> =C2=A0
-> -	/*
-> -	 * provision a next check soonest,
-> -	 * in case we exit abnormally from here
-> -	 */
-> -	pp->tick =3D checkint;
-> -
-> =C2=A0	newstate =3D check_path_state(pp);
-> =C2=A0	if (newstate =3D=3D PATH_WILD || newstate =3D=3D PATH_UNCHECKED)
-> =C2=A0		return CHECK_PATH_SKIPPED;
-> @@ -2587,7 +2573,6 @@ check_path (struct vectors * vecs, struct path
-> * pp, unsigned int ticks)
-> =C2=A0				condlog(4, "%s: delay next check
-> %is",
-> =C2=A0					pp->dev_t, pp->checkint);
-> =C2=A0			}
-> -			pp->tick =3D pp->checkint;
-> =C2=A0		}
-> =C2=A0	}
-> =C2=A0	else if (newstate !=3D PATH_UP && newstate !=3D PATH_GHOST) {
-> @@ -2640,6 +2625,77 @@ check_path (struct vectors * vecs, struct path
-> * pp, unsigned int ticks)
-> =C2=A0	return CHECK_PATH_CHECKED;
-> =C2=A0}
-> =C2=A0
-> +static int
-> +check_path (struct vectors * vecs, struct path * pp, unsigned int
-> ticks,
-> +	=C2=A0=C2=A0=C2=A0 time_t start_secs)
-> +{
-> +	int r;
-> +	unsigned int adjust_int, max_checkint;
-> +	struct config *conf;
-> +	time_t next_idx, goal_idx;
-> +
-> +	if (pp->initialized =3D=3D INIT_REMOVED)
-> +		return CHECK_PATH_SKIPPED;
-> +
-> +	if (pp->tick)
-> +		pp->tick -=3D (pp->tick > ticks) ? ticks : pp->tick;
-> +	if (pp->tick)
-> +		return CHECK_PATH_SKIPPED;
-> +
-> +	conf =3D get_multipath_config();
-> +	max_checkint =3D conf->max_checkint;
-> +	adjust_int =3D conf->adjust_int;
-> +	put_multipath_config(conf);
-> +
-> +	r =3D do_check_path(vecs, pp);
-> +
-> +	/*
-> +	 * do_check_path() removed or orphaned the path.
-> +	 */
-> +	if (r < 0 || !pp->mpp)
-> +		return r;
 
-do_check_path() returns an enum now, so this should be r =3D=3D
-CHECK_PATH_REMOVED.
+For the series, except 17/20:=20
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
 
