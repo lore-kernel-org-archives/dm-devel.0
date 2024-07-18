@@ -1,64 +1,64 @@
-Received: from mail-lj1-f172.google.com (mail-lj1-f172.google.com [209.85.208.172])
+Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com [209.85.167.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F3B02145A1C
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jul 2024 19:14:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C774145A12
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jul 2024 19:14:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721330071; cv=none; b=E2FKTy2TQiDjmv4wLLlPNK+//wk97K2sJqtUHXZmKZ+I40cGNcddQppJplk5n2jVqGPim7MroBCa+dZ4M1fCorWrceBlwZmNyO8x6DeIbS4ZFASuwkJlt758qKUPCXde8+R2oAKFFNS6XPt2ry5Cp6tMf8ex1B4QjAi0vGY6Fjs=
+	t=1721330072; cv=none; b=KIxt36AWmCdRjGwvemDMaHBAddyQaPoW+1aFEYHD20kR72R65aPM9w98Y9fghBjpR1v8Wn1wPl94Jg0Pv7EPiWLVy8liN1RtGcFOaL8/CSYRF1QNmNHt/Y+VjPKjxl5KJ7wrOf3/vwfETGkEolOiAxbnkOUFHC5OOSa+pv8ZEnc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721330071; c=relaxed/simple;
-	bh=8W6vsdN86mClo99esXRdC3/jAL5K5Br8Z4kl8fFK8VU=;
+	s=arc-20240116; t=1721330072; c=relaxed/simple;
+	bh=nfAj7YTzofZYIU+z28DQZbdhsiA6ApZ5o0hBnk+PE3I=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=K5x8ptjyLxYFr3ZgDbEA279zyYKW5mZWunVFtktE++3oSRKy+UaDMXjLcQ240wovnUstdpJ95Qf8vtXA+t/gpPLU6XICFEIW+K0t1jy8ZFjLj2Wgjc8uaW9OXpNX217b/7D5Cehi/QzMqICipvacKHjM2PNEOGkc/MWMTZhpe7s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=TC+3vaHI; arc=none smtp.client-ip=209.85.208.172
+	 MIME-Version; b=YDZynwETq8o/6rpA/PArOFiwewNsgq7ZtE8Dd3C/PKGuqt9i7KP3LUVkiE/FezlKCoijJfDmMFwVmW/rJDuaGv0zmw9AbAh4XKjh2qoByh6ALI4/BqUTRezivGh4XSI2Cb/Pj4eLE2Yg3/lx+WIBTc24yb35Z93L8vIjjNhabfw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Gqb/j0Y8; arc=none smtp.client-ip=209.85.167.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="TC+3vaHI"
-Received: by mail-lj1-f172.google.com with SMTP id 38308e7fff4ca-2ebe40673d8so15189981fa.3
-        for <dm-devel@lists.linux.dev>; Thu, 18 Jul 2024 12:14:29 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Gqb/j0Y8"
+Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-52ea34ffcdaso815323e87.1
+        for <dm-devel@lists.linux.dev>; Thu, 18 Jul 2024 12:14:27 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1721330068; x=1721934868; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1721330066; x=1721934866; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=vWURQ6/hqvrXHEWST7ku8P4rUskhLBLuPDjw9+eSQyI=;
-        b=TC+3vaHIYl+WtpQ/TQRGLTFK1HSqLrCzCw16rwqjvQ0FpC1ELX8Gycz0bQEbshZdir
-         DvSInBIQqaLPr19AeKDKlYahN01/uHJ8YrWiPFLIzYJOVagm2aQ6AkjKNm+SBYfC2fuA
-         CXg/lXh/8b/vbmC2RdVMBTUVWzx0q4HXwwyh4W4DJzR1+Iqv+ESAHmluUXOAEi80ZanB
-         Zi2If5essCPKuYcL0qWa5LWcNNf41E+EC28157sEvZGxcvl+7v5X6n0UsUMZNKzbWZ05
-         9451beQM6a4SYE9EMk75ZjunV+7aheM8kLVdNd6O+L2PIHOU9p2ioDSydJd5gvL6npqo
-         eRNQ==
+        bh=d9WJCFuN1tvI6IUVsLnHSr7Ls9KijzOlDzyxqa86w6A=;
+        b=Gqb/j0Y8au5LJdsHjGyXGCFHkb6mSk24lWmpQbwfnX2SiCnzEesVI65w2UTd8xtjPa
+         PuaoBAj34mnj2t2k//sTmoVNcD6ig6hwWD6zCqo8c55HHSNyI0pOpshauBPWTAXuvwFY
+         MPB0hft7Q9rpG59e7/r82V+alRCghbwI5X6+c9n1nbuRi7k/XJ4Mf4EP5u8rRjXVWfVZ
+         Eqh+3gMjUjJ46Zn51C5TEoXThxh5efWFGxsZD2Z5McYVtt07FyA+0ex9+7AptD7tNOc7
+         pGv2Mz/UywXfZ8+1XsM0kN9ERUa1kEMgpbf4HXz3d1HycMywJqpQKsurtGa8TmUotn5e
+         ofBg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1721330068; x=1721934868;
+        d=1e100.net; s=20230601; t=1721330066; x=1721934866;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=vWURQ6/hqvrXHEWST7ku8P4rUskhLBLuPDjw9+eSQyI=;
-        b=ZVK3cwneNa48WZ0gqhlBJZ46FjgcIqcSLR9RowKoZrktgSs4ZTa/m3OSsEMz9XTH6j
-         C6lwn4mIetKyPdGrNxSYmdcYPvro20VnJQ+IgCNFlRv6OsAPKYC/dzayTDHlj9KbA3yO
-         yA0d2G30rV5/g90YaS8NrV38lzbL4Fa0Es3Ckqo5iuDmpr3+w1qEontGcQnpPiVCtFhT
-         2lfHyOCWnHzcmkTNK1UlP0FIQv/D/2Gtmkw6UJN8o5x60ipV4vXGtwN+z7N5aMVKl31z
-         Fqxbx6fKuO9xxri5ey5B0m7J00yXoRD5hJ23vThANqMTaRlIKn1uiqZK4AcmVcauJacN
-         FLpQ==
-X-Gm-Message-State: AOJu0Yx2Gh3GUzo0JFZPhjdRoDfS1NXYIVsHynD3rCYLM1yl4C1kUZsN
-	1ofCR/vAhA2KpyegpLodx67UfvA5aNS1xenckLEGJY6Nad+1LuwHXCvxQWX4jHM=
-X-Google-Smtp-Source: AGHT+IG/uIkkRptEDhoZcRMKa4ub+LN49HyKx3/XFBlARQHSKObwYih/UEW/9hnyLlUWEDgE9mNoyQ==
-X-Received: by 2002:a05:6512:6cf:b0:52e:9ec8:a407 with SMTP id 2adb3069b0e04-52ee543ff4fmr4319616e87.63.1721330067958;
-        Thu, 18 Jul 2024 12:14:27 -0700 (PDT)
+        bh=d9WJCFuN1tvI6IUVsLnHSr7Ls9KijzOlDzyxqa86w6A=;
+        b=DUHIO5QcJ+oLmxEGNtn9WQyKB4/QaPkO/2t+71TxYbvGxaOdokhIGk0/3lfT4sxUEd
+         DDiTpKon1oxvWBav103AiZ+lvmJQYxKPFeWtKjiC+84nkMY8WTmG7A7REzDePvJNd4Nl
+         jIcw9mAGowa+zH3f0tPCa4Smh+CQZCdb/kbamYFOVUrMPLtZvBVON7wTYB/hHuZhzbjH
+         +9tLZQ1HkOti15epXB9paldhdlVwzXugMIGX5x4U7SpzW1VRdbf6xFrOjYd6aOTbe3Wz
+         nyEmRULSd3BVeL67RZ+db3O/ai3G6sULuHH+Uc8Q2EVLjqdebifMsYWrLAwZxno2s5Pr
+         DqjQ==
+X-Gm-Message-State: AOJu0YyLLnowMBFuf/gyuJGdOA+Mm1n37zw2m9RNFgxWGI+aOrXraV0P
+	CdGkw44majSLxXNpOc6YyFVDYr1c+HFiO9vMTUQjr7mvp7XNdrb5tGlRbvVsgSQ=
+X-Google-Smtp-Source: AGHT+IGpM2+ZRFY6uLXCVXBoPMqF/HaNWZbmwoOGAKTWawEwdHQtiRUPbYWMZR/+x0yvr4uN3mojyQ==
+X-Received: by 2002:a05:6512:1318:b0:52c:dba6:b4cb with SMTP id 2adb3069b0e04-52ee53c3e0amr3736987e87.13.1721330066160;
+        Thu, 18 Jul 2024 12:14:26 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a79bc7f236esm593036666b.138.2024.07.18.12.14.27
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a79bc820e92sm585436766b.205.2024.07.18.12.14.25
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 18 Jul 2024 12:14:27 -0700 (PDT)
+        Thu, 18 Jul 2024 12:14:26 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 4/4] fixup "libmultipath: use libmp_pathinfo() in update_multipath_table()"
-Date: Thu, 18 Jul 2024 21:14:21 +0200
-Message-ID: <20240718191421.110487-5-mwilck@suse.com>
+Subject: [PATCH 2/4] multipath-tools: use signed loop variable in vector_foreach_slot
+Date: Thu, 18 Jul 2024 21:14:19 +0200
+Message-ID: <20240718191421.110487-3-mwilck@suse.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20240718191421.110487-1-mwilck@suse.com>
 References: <20240718191421.110487-1-mwilck@suse.com>
@@ -70,32 +70,67 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-We need to check for NULL before dereferencing mpp.
+If we delete entries in the vector_foreach_slot loop, the loop
+index may underflow. It's not a big issue because we re-increment
+it in the next iteration and use a cast to int in the loop end
+condition, but it's cleaner to use an int here.
+
 Found by coverity.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ multipathd/main.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 731b1bc..d58ef5a 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -504,11 +504,12 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
- 	int r = DMP_ERR;
- 	char __attribute__((cleanup(cleanup_charp))) *params = NULL;
- 	char __attribute__((cleanup(cleanup_charp))) *status = NULL;
--	unsigned long long size = mpp->size;
-+	unsigned long long size;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 13ed6d0..be35038 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -762,7 +762,7 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
+ {
+ 	struct multipath * ompp;
+ 	vector ompv = vecs->mpvec;
+-	unsigned int i, reassign_maps;
++	int i, reassign_maps;
+ 	struct config *conf;
  
- 	if (!mpp)
- 		return r;
+ 	conf = get_multipath_config();
+@@ -1748,7 +1748,7 @@ static int
+ map_discovery (struct vectors * vecs)
+ {
+ 	struct multipath * mpp;
+-	unsigned int i;
++	int i;
  
-+	size = mpp->size;
- 	r = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY,
- 			  (mapid_t) { .str = mpp->alias },
- 			  (mapinfo_t) {
+ 	if (dm_get_maps(vecs->mpvec))
+ 		return 1;
+@@ -1970,7 +1970,7 @@ static void
+ mpvec_garbage_collector (struct vectors * vecs)
+ {
+ 	struct multipath * mpp;
+-	unsigned int i;
++	int i;
+ 
+ 	if (!vecs->mpvec)
+ 		return;
+@@ -2014,7 +2014,7 @@ static void
+ missing_uev_wait_tick(struct vectors *vecs)
+ {
+ 	struct multipath * mpp;
+-	unsigned int i;
++	int i;
+ 	int timed_out = 0;
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i) {
+@@ -2039,7 +2039,7 @@ static void
+ ghost_delay_tick(struct vectors *vecs)
+ {
+ 	struct multipath * mpp;
+-	unsigned int i;
++	int i;
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i) {
+ 		if (mpp->ghost_delay_tick <= 0)
 -- 
 2.45.2
 
