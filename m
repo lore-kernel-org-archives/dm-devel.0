@@ -1,90 +1,63 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9BCAD2BB0D
-	for <dm-devel@lists.linux.dev>; Fri, 19 Jul 2024 17:26:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8915149018
+	for <dm-devel@lists.linux.dev>; Fri, 19 Jul 2024 18:09:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721410011; cv=none; b=AnqQoUsj0p1/S380bupQsNr+mcL2Ku36QZGzeGg/FlmOiE+218F2IWrXneirgcMHk+Fl2PHGfiQzdj3bgWxZyKQs5weL/2EwZUapbOeWnlJ7ZtXsGcHyA0k55qUwpc2OwuVJuk6zgqL85OpvgOu0+xkXI64fWCx2GryopDLMZNM=
+	t=1721412569; cv=none; b=Ha8tktz9fFG1Pi/bpXnaY/8VfX3SxZvblNS+6se6FA11C7+xlN+b0B3nwiCRtX74b242eWg1ZKTGi+XWhP3RpvXPAmYMJ7wgMBso93/VChuq+v2qebSpbnzWsqAhrpoGQW+/86NAS1lVO2hm2+XHCqYq49hqMK8GFHAbfcpVRqA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721410011; c=relaxed/simple;
-	bh=0HhjhMuJ75ubHKDHl1NRclB8Tpt56JJnim2tEbheNcg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=syNkmM/1K6b7vbtXm7Rfsx6fX0Ps9uZGxORid3qbFE6hIIbBpya7Pe1A9pRWj2lIBwp4FvLV8tEGjMWIySTXJ/QSWRiGoiCzON5DCWNnZ43VRDj1uRh3y8kStXkyx9Umd8NMBnFnBryzBr8vnUfoX0KQXt89/NJhprd1tu9YcXA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FbTTKJak; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1721412569; c=relaxed/simple;
+	bh=CLgSkH/Y5iVu2lUnrQRzzDH7bf6WFef9/R6sTKfWgAY=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=Gz0ZcMaz/6LQyitQx0W5bqsePiz5MCmVsbou8W87u/4SS1h9PpCIIFpXW+x++QcWeDeqK1vVOh3zH9sn18kdhTwaRkSdq5BlaH2VXutNuv6+ke8zqVOB01Dw5oNOwfphN2luDyXwfQZpN+1VfyWmOWuKk4qB05R12LrAH1aQrhY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=uAumEBDg; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FbTTKJak"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1721410008;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YUDZUXF04CdwHs6AcmwY2lt4IIqpr5UgvT+QpvfgtSo=;
-	b=FbTTKJakkHZzV4YkNxbrFoI8ZYoDAUC/HFugjBVDuctX8m9hropsbz4zpDCUJspn/8rx+N
-	ZcdMg5B3FHlpHCYIqEeKqsGD6dL7HtYCAsqLuZmlmGPxCTFwA+MajghHTpQR+AZImUequm
-	wTFEtJzbF8SvB9o0BTRtlxekcdWcGLs=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-641-M9FRCqbRPZqbxzcvhxMyew-1; Fri,
- 19 Jul 2024 13:26:45 -0400
-X-MC-Unique: M9FRCqbRPZqbxzcvhxMyew-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E56D41955D58;
-	Fri, 19 Jul 2024 17:26:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4A7893000188;
-	Fri, 19 Jul 2024 17:26:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46JHQfJS2367733
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 19 Jul 2024 13:26:41 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46JHQfDM2367732;
-	Fri, 19 Jul 2024 13:26:41 -0400
-Date: Fri, 19 Jul 2024 13:26:41 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev
-Subject: Re: [PATCH 0/4] multipath-tools: coverity fixes
-Message-ID: <Zpqh0Z2zKAr7DzUH@redhat.com>
-References: <20240718191421.110487-1-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="uAumEBDg"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 80927C32782;
+	Fri, 19 Jul 2024 18:09:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1721412569;
+	bh=CLgSkH/Y5iVu2lUnrQRzzDH7bf6WFef9/R6sTKfWgAY=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=uAumEBDggWLC6+r8PI4+F4eIOLR5W+57mBbF09FiSi0A0f8Cfa3Ym4Cbt0Qxw22ix
+	 H/YtL5cEIx/+l6JnJXgopVrRROmz2Ob2lSlN3PuuKtj3TIWNfiuxCZRSOf980JdcRB
+	 LtZCGV8VoRGOksw7BdaqUJpn5/+u8baNcgz+z9Ztjmxl7+Pslyk6kQhEdx1Z/Vatgc
+	 dmXxVOzRwV34gpEyLkNlH9K+aDh2yMsmuUn2urMdMbx9s5bEdmlklpsCw9ivbZe/0n
+	 U4dFvkT0pjrdSR9Qv5/g+p4Z6ZAv1ddsnt3318/BM7e520w0CQmL7pD8Y5XE5GAfMQ
+	 Y4dIZZ19qBrLg==
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 7172BC4332D;
+	Fri, 19 Jul 2024 18:09:29 +0000 (UTC)
+Subject: Re: [git pull] device mapper changes for 6.11
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <ce9cfca3-73bc-b79f-28ef-88c9ffc293d@redhat.com>
+References: <ce9cfca3-73bc-b79f-28ef-88c9ffc293d@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <ce9cfca3-73bc-b79f-28ef-88c9ffc293d@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.11/dm-changes
+X-PR-Tracked-Commit-Id: 7f1c4909a821dbfd258177db9ec96dda3ae91346
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 661fb4e68cf62bf52eacfcd9b3b0d93fe4260c5b
+Message-Id: <172141256945.2862.8511190240693841579.pr-tracker-bot@kernel.org>
+Date: Fri, 19 Jul 2024 18:09:29 +0000
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Benjamin Marzinski <bmarzins@redhat.com>, Damien Le Moal <dlemoal@kernel.org>, "Dr. David Alan Gilbert" <linux@treblig.org>, Eric Biggers <ebiggers@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, Christophe JAILLET <christophe.jaillet@wanadoo.fr>, Christoph Hellwig <hch@lst.de>, Jiapeng Chong <jiapeng.chong@linux.alibaba.com>, Luca Boccassi <bluca@debian.org>, Masatake YAMATO <yamato@redhat.com>, Matthew Sakai <msakai@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, device-mapper development <dm-devel@lists.linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-In-Reply-To: <20240718191421.110487-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-On Thu, Jul 18, 2024 at 09:14:17PM +0200, Martin Wilck wrote:
+The pull request you sent on Fri, 19 Jul 2024 12:43:19 +0200 (CEST):
 
-For the set:
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.11/dm-changes
 
-> Martin Wilck (4):
->   libmpathcmd: check len parameter in mpath_recv_reply_data()
->   multipath-tools: use signed loop variable in vector_foreach_slot
->   libmpathutil: avoid size_t underflow in strchop()
->   fixup "libmultipath: use libmp_pathinfo() in update_multipath_table()"
-> 
->  libmpathcmd/mpath_cmd.c    |  2 ++
->  libmpathutil/util.c        |  4 ++--
->  libmultipath/structs_vec.c |  3 ++-
->  multipathd/main.c          | 10 +++++-----
->  4 files changed, 11 insertions(+), 8 deletions(-)
-> 
-> -- 
-> 2.45.2
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/661fb4e68cf62bf52eacfcd9b3b0d93fe4260c5b
 
+Thank you!
+
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
