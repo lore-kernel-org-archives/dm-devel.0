@@ -1,165 +1,105 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from out-180.mta1.migadu.com (out-180.mta1.migadu.com [95.215.58.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 942C01487C1
-	for <dm-devel@lists.linux.dev>; Fri, 19 Jul 2024 19:41:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 95349145B18
+	for <dm-devel@lists.linux.dev>; Sat, 20 Jul 2024 15:48:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721418069; cv=none; b=lfkTCUfe/w+CrE/fKag8qu3fPeskQAFV2MWvlzPdWTGAgBahzneo8lDNtmoSAinhJ94q+NUhTtK9lcJxZzPxVLpEJpr5g9LU1FzHv/IQ/06FMosR4v3/ZHzuPlWQNTcQaKO6k+nQxALmRBtjWKlm8x1Vo3eU1Ig8Q8znB13TIQw=
+	t=1721490497; cv=none; b=K00eFFgW//fv09tHixVS4ldTUxji9/TnXpl7RVLvqi2hkj+ITsbWNbRw993tOcO/oBZ8v5PM0EUQeD9MRjyDa9GwNDjYbcCBdWO6Y4s462K3o9YG0xqbs0EFN4w9IplNU2MstzgQPSyPHxqQWKybCqsKh1b60FjUr60qaQYugRY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721418069; c=relaxed/simple;
-	bh=aeDvbfde2ZPUNOH1kn1j9VQztae+d40uERKJ+glcY7Y=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=CUdj/Y/i7sCU82cORSRnA5lO1wr1uPBQFXSVYTRYmngeV5ocW7+Mb8msp17Zxg/lhF8ou0iatdHJBHOCa8EeoJZVYW+WizDU2UTK3mWRqWrGWrFHHk28fUczoq/7Ih7xhavPmpV4IoK89JtDetHNOe8WjJeHLRkZQRkB26UpCGU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TwWf0+aw; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1721490497; c=relaxed/simple;
+	bh=hgEXpisTb2le0MriL6RtT7PRkbN6vTef/d/5WpYhM9o=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=eH+TRT1UTHDzCWt13DC5kk3SK0Lz9ZZ8HEeBQvl6acfYJMwXNxHVNJBpO9AjSdpiJ7PEVu+j3j7Qcb0paqYq0w0r4HYE9tBnmfyikjqCkgcETYG7nI1Xl8uJwQ3+X9x7/I6xvvClkGTSKw2daMLdmHxWqBcsp/kIGDOI6yuuq9w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=lE0FooT/; arc=none smtp.client-ip=95.215.58.180
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TwWf0+aw"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1721418066;
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="lE0FooT/"
+X-Envelope-To: tytso@mit.edu
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1721490492;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=jEzdxweULTk8P9LMik93eT3iAlaKa4XpKFs+f2D9S6Y=;
-	b=TwWf0+awGkluJFKLd6HCKuguRpLnGQEjBTo64wpzAyk0XJ1YZ727Og4w4ELQZw1DuzjjRe
-	InRy3t6/mGc+YJM10hFxZk+Yg1ox6+dBR8S7c/MP1tBpB1PZ88AqNNIisxwiyATwvpTPFK
-	OeWEbT8mD80X0/Vjk3Yqy84XhRvwgLs=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-591-pVg7NqpBOi-6hXob7X5cHg-1; Fri,
- 19 Jul 2024 15:41:00 -0400
-X-MC-Unique: pVg7NqpBOi-6hXob7X5cHg-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BEEC919560A1;
-	Fri, 19 Jul 2024 19:40:59 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 563721955D4D;
-	Fri, 19 Jul 2024 19:40:59 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46JJevwV2373083
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 19 Jul 2024 15:40:58 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46JJev0e2373082;
-	Fri, 19 Jul 2024 15:40:57 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v3 11/20] multipathd: resync map after setup_map in ev_remove_path
-Date: Fri, 19 Jul 2024 15:40:56 -0400
-Message-ID: <20240719194057.2373063-3-bmarzins@redhat.com>
-In-Reply-To: <20240719194057.2373063-1-bmarzins@redhat.com>
-References: <20240719194057.2373063-1-bmarzins@redhat.com>
+	bh=JNyq8DwjmN5WEK/I4PVTxJQ71hpCMep458KtZi3slTY=;
+	b=lE0FooT/fu2LaRQfZJA9XisTp9jN2XsVktg2NWMI4qPgm7ehnhZ8EwGH9LRCs8K2C8tgdR
+	WOkTzD6XD1nnvhs0CEQVL62+8vImVQjoWzDEEv/XRQ7ahJCNI65+1dIvgN4jCAiZ44Kapc
+	U/Enm/Kwk2ETYQoNG9o2+Rx1mk0BOSc=
+X-Envelope-To: torvalds@linux-foundation.org
+X-Envelope-To: linux-bcachefs@vger.kernel.org
+X-Envelope-To: linux-fsdevel@vger.kernel.org
+X-Envelope-To: linux-kernel@vger.kernel.org
+X-Envelope-To: snitzer@kernel.org
+X-Envelope-To: mpatocka@redhat.com
+X-Envelope-To: dm-devel@lists.linux.dev
+Date: Sat, 20 Jul 2024 11:48:09 -0400
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Kent Overstreet <kent.overstreet@linux.dev>
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, 
+	linux-bcachefs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev
+Subject: mounts failing with -EBUSY on device mapper (was: Re: [GIT PULL]
+ bcachefs changes for 6.11)
+Message-ID: <xp5nl7zi3k6ddkby4phm4swv2wi43slwtvw5fmve5g3jxtdw7w@ygiltwihp2hv>
+References: <r75jqqdjp24gikil2l26wwtxdxvqxpgfaixb2rqmuyzxnbhseq@6k34emck64hv>
+ <CAHk-=wigjHuE2OPyuT6GK66BcQSAukSp0sm8vYvVJeB7+V+ecQ@mail.gmail.com>
+ <5ypgzehnp2b3z2e5qfu2ezdtyk4dc4gnlvme54hm77aypl3flj@xlpjs7dbmkwu>
+ <CAHk-=wgzMxdCRi9Fqhq2Si+HzyKgWEvMupq=Q-QRQ1xgD_7n=Q@mail.gmail.com>
+ <4l32ehljkxjavy3d2lwegx3adec25apko3v355tnlnxhrs43r4@efhplbikcoqs>
+ <20240719143001.GA2333818@mit.edu>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240719143001.GA2333818@mit.edu>
+X-Migadu-Flow: FLOW_OUT
 
-In ev_remove_path() it was possible to exit after calling setup_map()
-without resyncing the mpp state with the kernel. This meant that the
-mpp state in multipathd might not match with the kernel state at all.
+On Fri, Jul 19, 2024 at 10:30:01AM GMT, Theodore Ts'o wrote:
+> On Thu, Jul 18, 2024 at 06:24:08PM -0400, Kent Overstreet wrote:
+> > 
+> > I've gotten essentially zero in the way of test feedback from
+> > for-next (except from Stephen Rothwell directly, the odd build
+> > warning or merge issue, but 0day mostly catches the build stuff
+> > before it hits next).
+> 
+> I am currently running regular testing on the new linux-next's fs-next
+> branch.  Things which are still blocking me from announcing it are:
+> 
+> *) Negotiating with Konstantin about the new lists.linux.dev mailing
+>    list.
+> 
+> *) A few minor bug fixes / robustification improves in the
+>    "gce-xfstests watch" --- for example, right now if git fetch fails
+>    due to load throttling / anti-DOS protections on git.kernel.org
+>    trip the git watcher dies.  Obviously, I need to teach it to do
+>    exponential backoff retries, because I'm not going to leave my
+>    kernel.org credentials on a VM running in the cloud to bypass the
+>    kernel.org DOS protections.  :-)
+> 
+> As far as bcachefs is concerned, my xfstests-bld infrastructure isn't
+> set up to build rust userspace, and Debian has a very ancient bcachefs
+> packages --- the latest version in Debian stable and unstable dates
+> from November 2022.  So I haven't enabled bcachefs support in
+> gce-xfstests and kvm-xfstests yet.  Patches gratefully accepted.  :-)
 
-It's safe to exit before calling setup_map() if either wait_for_udev is
-set or need_do_map is not set. In both cases, setup_map() will later be
-called, either by a uevent or by the calling function.
+I can apt install 1.9.1?
 
-Once setup_map() has been called, setup_multipath() and sync_map_state()
-are now always called, to make sure the mpp matches the kernel state.
+But I just discovered, because I had to switch my own testing to the
+debian package, that the mount helper wasn't being run previously
+(doesn't check /usr/local/sbin); and mounts with the mount helper are
+failing with -EBUSY.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 40 +++++++++++++++++++---------------------
- 1 file changed, 19 insertions(+), 21 deletions(-)
+Presumably there's a race, since before calling the mount syscall, our
+mount helper has to open and close the block device (we have to read the
+superblock to check if it's encrypted, we may need to ask for a
+passphrase). The delayed_fput stuff that was causing issues with
+io_uring - I suspect something similar.
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ae40f599..6a027213 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1395,6 +1395,8 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 	 * avoid referring to the map of an orphaned path
- 	 */
- 	if ((mpp = pp->mpp)) {
-+		char devt[BLK_DEV_SIZE];
-+
- 		/*
- 		 * Mark the path as removed. In case of success, we
- 		 * will delete it for good. Otherwise, it will be deleted
-@@ -1428,12 +1430,6 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 		    flush_map_nopaths(mpp, vecs))
- 			goto out;
- 
--		if (setup_map(mpp, &params, vecs)) {
--			condlog(0, "%s: failed to setup map for"
--				" removal of path %s", mpp->alias, pp->dev);
--			goto fail;
--		}
--
- 		if (mpp->wait_for_udev) {
- 			mpp->wait_for_udev = 2;
- 			retval = REMOVE_PATH_DELAY;
-@@ -1444,6 +1440,12 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 			retval = REMOVE_PATH_DELAY;
- 			goto out;
- 		}
-+
-+		if (setup_map(mpp, &params, vecs)) {
-+			condlog(0, "%s: failed to setup map for"
-+				" removal of path %s", mpp->alias, pp->dev);
-+			goto fail;
-+		}
- 		/*
- 		 * reload the map
- 		 */
-@@ -1453,24 +1455,20 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 				"removal of path %s",
- 				mpp->alias, pp->dev);
- 			retval = REMOVE_PATH_FAILURE;
--		} else {
--			/*
--			 * update our state from kernel
--			 */
--			char devt[BLK_DEV_SIZE];
--
--			strlcpy(devt, pp->dev_t, sizeof(devt));
--
--			/* setup_multipath will free the path
--			 * regardless of whether it succeeds or
--			 * fails */
--			if (setup_multipath(vecs, mpp))
--				return REMOVE_PATH_MAP_ERROR;
--			sync_map_state(mpp);
-+		}
-+		/*
-+		 * update mpp state from kernel even if domap failed.
-+		 * If the path was removed from the mpp, setup_multipath will
-+		 * free the path regardless of whether it succeeds or fails
-+		 */
-+		strlcpy(devt, pp->dev_t, sizeof(devt));
-+		if (setup_multipath(vecs, mpp))
-+			return REMOVE_PATH_MAP_ERROR;
-+		sync_map_state(mpp);
- 
-+		if (retval == REMOVE_PATH_SUCCESS)
- 			condlog(2, "%s: path removed from map %s",
- 				devt, mpp->alias);
--		}
- 	} else {
- 		/* mpp == NULL */
- 		if ((i = find_slot(vecs->pathvec, (void *)pp)) != -1)
--- 
-2.45.0
-
+But the plot thickens - all the failing tests are ones that use device
+mapper...
