@@ -1,107 +1,81 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from outgoing.mit.edu (outgoing-auth-1.mit.edu [18.9.28.11])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 312AB16DECA
-	for <dm-devel@lists.linux.dev>; Mon, 22 Jul 2024 09:52:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06B7E1640B
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jul 2024 11:45:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=18.9.28.11
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721641947; cv=none; b=rs13H6EoqRdCCC1oxDCzWlp3N0heQr1d+jG1hGT9pDHfgRosk8yBpMYCLdNniryoPmaQOTjPCq1eruQo7byoWVR4ykLuggvuY7ktd0SZYPWj2nCj99gx2558Zqv54arZqhPQndd+ms5GYxGRQCke/oI3xx4iCU3y1AgH1oatnVw=
+	t=1721648734; cv=none; b=Sp2HVWATCEFFRYYztP1agOFjP4EqdJU75sjx6f6DhOFnpSBt9cY0VAzwrz+r6Ef7ZBczzBhfBBeCiQLGS4uTA8sorCicu3hl8UnzCj1rjnn2MeM+8anyGIWzO0ZvYbDPfD0nm6KwYfBPiJZsKf83lJ8SnWU3/8ZahPGh8CPgjwU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721641947; c=relaxed/simple;
-	bh=tCibecf2fM4vbEWbLY4L0QX6bMGnn5WR+ksW88I7YmQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=onos4i1FlEUGHCSpePYVc7MUCYZWW/UWy4Hlal+IALQMe7ZrYo8HxLt1mVqmx/k6PzMZfE6T5ZHhcdR8iXd9ImIbwzcJHQmIzroVb11nTrJyejVdO8jxINCMqiTExXw3O6XL0JkVjZXjmoeEf4QbI6lMXDDkhNpSQBir6xhqLdI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KAMjPiMi; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1721648734; c=relaxed/simple;
+	bh=8F6Yx5uGHUiSVGdyffU911J9L+V8oHUHpXfo1JiltGE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=J/MJkQcADGtGzWio4UV++DhLX36dhXFG4CWN98q7ZnXmywKrrTVTy9alQgCSIjCR7xEzzH2gktsrQvA3/KNeFJPsVqotc3MRiMwtWHPFKuAGd6mT4Oibow5FlMqlHU7NCPmAJXq4CYUC0u4euQRF4VGIXYoUyOAkKS6IqXN+Law=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mit.edu; spf=pass smtp.mailfrom=mit.edu; dkim=pass (2048-bit key) header.d=mit.edu header.i=@mit.edu header.b=Ilm6RCdf; arc=none smtp.client-ip=18.9.28.11
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mit.edu
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mit.edu
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KAMjPiMi"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1721641943;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=zK1oO1fYgGLrd485w8+L5C+qb9sKJLP0AGDq82/9/KE=;
-	b=KAMjPiMi68qNaQYlTFEidxQJ+U98xEf3miU0RdipzjVz//FP5z/jxTHX8HTu2jnYdPDVK+
-	APjsGW6tnNWX+ucwC0GrDYimpm0azHfRjmEQhq/IMsWY5q9sEfafoykTyk08CZZ5kqPhV8
-	XnR2HgWH7qcT2kPy+xUPlHWVklJmzts=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-650-O_1nEsdWMXSQVAkm1foNqw-1; Mon,
- 22 Jul 2024 05:52:20 -0400
-X-MC-Unique: O_1nEsdWMXSQVAkm1foNqw-1
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0242E1956048;
-	Mon, 22 Jul 2024 09:52:19 +0000 (UTC)
-Received: from [10.43.17.8] (unknown [10.43.17.8])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 2B7CB195605A;
-	Mon, 22 Jul 2024 09:52:15 +0000 (UTC)
-Message-ID: <011a15cb-1f9e-456e-9374-5bca382d4e81@redhat.com>
-Date: Mon, 22 Jul 2024 11:52:14 +0200
+	dkim=pass (2048-bit key) header.d=mit.edu header.i=@mit.edu header.b="Ilm6RCdf"
+Received: from cwcc.thunk.org (pool-173-48-115-17.bstnma.fios.verizon.net [173.48.115.17])
+	(authenticated bits=0)
+        (User authenticated as tytso@ATHENA.MIT.EDU)
+	by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 46MBj4sV025431
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Mon, 22 Jul 2024 07:45:05 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mit.edu; s=outgoing;
+	t=1721648706; bh=tbBSjUa3aVRf1LpHb2pNF8m25+nI+R5jh6E4MKLm1ek=;
+	h=Date:From:Subject:Message-ID:MIME-Version:Content-Type;
+	b=Ilm6RCdfK36zM9yfQVhQPqVkxvGX+kaXMKOPZglOnPxOF9y2F1z0xFSLQUxS8OpBf
+	 Ok69i7cBwTAesYN9VK3y6W0Ux1unZ1w3GVH9ZV67Q6DJLkBsE5P6PU5LXOlTY1NyQh
+	 kAZVOxDu57NTX30F3xXUm1eF0BUNly3GwP6cNyiZDKqylrhFEykfRQ6hRO6DiFXtLe
+	 soH2x3HIWQt+nc8Cd9mROwrOGQP6lVNZWCBDinYJO8PTCOFYez3kUkkumeKTxhkF7l
+	 ACpfXj7xfdHAgaWD4hLR0UpMMaF0xmbhbFC08+gzpyX2ZNcVqFG+zbrUgcYk2I2I9W
+	 aIQZEeRk93sUw==
+Received: by cwcc.thunk.org (Postfix, from userid 15806)
+	id 1ED9815C029B; Mon, 22 Jul 2024 07:45:04 -0400 (EDT)
+Date: Mon, 22 Jul 2024 07:45:04 -0400
+From: "Theodore Ts'o" <tytso@mit.edu>
+To: Kent Overstreet <kent.overstreet@linux.dev>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>,
+        linux-bcachefs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
+        Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev
+Subject: Re: mounts failing with -EBUSY on device mapper (was: Re: [GIT PULL]
+ bcachefs changes for 6.11)
+Message-ID: <20240722114504.GA2309824@mit.edu>
+References: <r75jqqdjp24gikil2l26wwtxdxvqxpgfaixb2rqmuyzxnbhseq@6k34emck64hv>
+ <CAHk-=wigjHuE2OPyuT6GK66BcQSAukSp0sm8vYvVJeB7+V+ecQ@mail.gmail.com>
+ <5ypgzehnp2b3z2e5qfu2ezdtyk4dc4gnlvme54hm77aypl3flj@xlpjs7dbmkwu>
+ <CAHk-=wgzMxdCRi9Fqhq2Si+HzyKgWEvMupq=Q-QRQ1xgD_7n=Q@mail.gmail.com>
+ <4l32ehljkxjavy3d2lwegx3adec25apko3v355tnlnxhrs43r4@efhplbikcoqs>
+ <20240719143001.GA2333818@mit.edu>
+ <xp5nl7zi3k6ddkby4phm4swv2wi43slwtvw5fmve5g3jxtdw7w@ygiltwihp2hv>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH] dm ioctl: fix erroneous EINVAL when signaled
-To: Khazhy Kumykov <khazhy@chromium.org>,
- Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Joe Thornber <thornber@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>,
- dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-References: <20240717185640.1026114-1-khazhy@google.com>
- <43954d4-6130-f36a-384c-9f18eda892@redhat.com>
- <CACGdZYKbdyALADEMDV+Vg+eog+UjjgGigEpmJTSKw_64RM8rbA@mail.gmail.com>
-Content-Language: en-US, cs
-From: Zdenek Kabelac <zkabelac@redhat.com>
-In-Reply-To: <CACGdZYKbdyALADEMDV+Vg+eog+UjjgGigEpmJTSKw_64RM8rbA@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <xp5nl7zi3k6ddkby4phm4swv2wi43slwtvw5fmve5g3jxtdw7w@ygiltwihp2hv>
 
-Dne 17. 07. 24 v 21:52 Khazhy Kumykov napsal(a):
-> On Wed, Jul 17, 2024 at 12:45 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
->> Hi
->>
->> I am wondering why does do_resume need to call dm_suspend at all. Does
->> anyone here remember why is this code path needed?
-> In our case, we have a sequence with load_table followed by a resume,
-> with no suspend first. The resume path suspends if needed, swaps
-> tables, then resumes. Removing the suspend here would break existing
-> userspace, I'd imagine. It seems like minimizing the suspended time
-> would also be a nice benefit.
+On Sat, Jul 20, 2024 at 11:48:09AM -0400, Kent Overstreet wrote:
+> > As far as bcachefs is concerned, my xfstests-bld infrastructure isn't
+> > set up to build rust userspace, and Debian has a very ancient bcachefs
+> > packages --- the latest version in Debian stable and unstable dates
+> > from November 2022.  So I haven't enabled bcachefs support in
+> > gce-xfstests and kvm-xfstests yet.  Patches gratefully accepted.  :-)
+> 
+> I can apt install 1.9.1?
 
+Ah, I see.  bcachefs-tools is currently in Debian unstable, but not in
+Debian testing[1]; it's currently hung up due to the auto-libsodium
+transition[2].  Once that clears I can look at backporting it to
+debian-backports (since my test appliance runs on Debian stable,
+for better repeatable test appliance creation.  :-)
 
-lvm2 maintainer POV
+[1] https://tracker.debian.org/pkg/bcachefs-tools
+[2] https://release.debian.org/transitions/html/auto-libsodium.html
 
-Automatic 'suspend' for resume is a kernel 'feature' that should not be 
-normally used from the userspace. Userspace is supposed to call    'suspend'  
-- handle error cases - eventually drop preloaded table and resume existing 
-table that should work.
-
-If userspace is using ONLY  'resume'  without calling suspend upfront - there 
-are some unsolvable error cases.
-
-
-So no -  'minimizing'  suspend time is NOT the main reason here. The only 
-valid reason to use it is basically if you are  admin and you need to reload 
-table for a device you are running from - in this case calling 'dmsetup 
-suspend'  might leave your system in 'blocked' state since your rootfs will be 
-'frozen/suspend' and you would have no chance to  call 'dmsetup resume'.
-
-lvm2 app is locking itself in the RAM in this critical section so it can 
-proceed with regular sequence:    'write metadata - preload DM - suspend DM  - 
-commit metadata - resume DM'  which basicall all userland apps should be using.
-
-Regards
-
-
-Zdenek
-
+						- Ted
