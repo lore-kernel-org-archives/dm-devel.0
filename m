@@ -1,81 +1,173 @@
-Received: from outgoing.mit.edu (outgoing-auth-1.mit.edu [18.9.28.11])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06B7E1640B
-	for <dm-devel@lists.linux.dev>; Mon, 22 Jul 2024 11:45:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=18.9.28.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03E163CF74
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jul 2024 23:23:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721648734; cv=none; b=Sp2HVWATCEFFRYYztP1agOFjP4EqdJU75sjx6f6DhOFnpSBt9cY0VAzwrz+r6Ef7ZBczzBhfBBeCiQLGS4uTA8sorCicu3hl8UnzCj1rjnn2MeM+8anyGIWzO0ZvYbDPfD0nm6KwYfBPiJZsKf83lJ8SnWU3/8ZahPGh8CPgjwU=
+	t=1721690596; cv=none; b=UcYD9lVd9dmHXFn/UHkL9HnFpXiZeEBolGClzCOKc1a0b1dDeVFJ3vaeoZot/opca9zLyV4I4w+Qam0WlMzdsw5NRj6/7aeNGtlYO9StUtXD93NaIWWXfWF2Nai8A4QcvmyJhN2rPSTBErq3sefoSEXp9KDYsHPjDSIc0rAut78=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721648734; c=relaxed/simple;
-	bh=8F6Yx5uGHUiSVGdyffU911J9L+V8oHUHpXfo1JiltGE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=J/MJkQcADGtGzWio4UV++DhLX36dhXFG4CWN98q7ZnXmywKrrTVTy9alQgCSIjCR7xEzzH2gktsrQvA3/KNeFJPsVqotc3MRiMwtWHPFKuAGd6mT4Oibow5FlMqlHU7NCPmAJXq4CYUC0u4euQRF4VGIXYoUyOAkKS6IqXN+Law=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mit.edu; spf=pass smtp.mailfrom=mit.edu; dkim=pass (2048-bit key) header.d=mit.edu header.i=@mit.edu header.b=Ilm6RCdf; arc=none smtp.client-ip=18.9.28.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mit.edu
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mit.edu
+	s=arc-20240116; t=1721690596; c=relaxed/simple;
+	bh=DMzNWrnLx6uwcUSuEYN4IbX+W5RVvmRSnRABc4GGTck=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=O7+31sBCY87l5PC3LyyGFxYwRl19a4H/jfojKmHS4M917JOY2hfg1dfjlZ5mgFddrzlgygwmoCHvhM+yb91UNf+dwX+bqU7Goodv0+wuePrWkZyy13V6wTZwi6n8IMPOP6xCpiE7Gf30o9scd99Ou4qW4QpYCdJ61jlOY24XAQw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZmThcXQV; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=mit.edu header.i=@mit.edu header.b="Ilm6RCdf"
-Received: from cwcc.thunk.org (pool-173-48-115-17.bstnma.fios.verizon.net [173.48.115.17])
-	(authenticated bits=0)
-        (User authenticated as tytso@ATHENA.MIT.EDU)
-	by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 46MBj4sV025431
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 22 Jul 2024 07:45:05 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mit.edu; s=outgoing;
-	t=1721648706; bh=tbBSjUa3aVRf1LpHb2pNF8m25+nI+R5jh6E4MKLm1ek=;
-	h=Date:From:Subject:Message-ID:MIME-Version:Content-Type;
-	b=Ilm6RCdfK36zM9yfQVhQPqVkxvGX+kaXMKOPZglOnPxOF9y2F1z0xFSLQUxS8OpBf
-	 Ok69i7cBwTAesYN9VK3y6W0Ux1unZ1w3GVH9ZV67Q6DJLkBsE5P6PU5LXOlTY1NyQh
-	 kAZVOxDu57NTX30F3xXUm1eF0BUNly3GwP6cNyiZDKqylrhFEykfRQ6hRO6DiFXtLe
-	 soH2x3HIWQt+nc8Cd9mROwrOGQP6lVNZWCBDinYJO8PTCOFYez3kUkkumeKTxhkF7l
-	 ACpfXj7xfdHAgaWD4hLR0UpMMaF0xmbhbFC08+gzpyX2ZNcVqFG+zbrUgcYk2I2I9W
-	 aIQZEeRk93sUw==
-Received: by cwcc.thunk.org (Postfix, from userid 15806)
-	id 1ED9815C029B; Mon, 22 Jul 2024 07:45:04 -0400 (EDT)
-Date: Mon, 22 Jul 2024 07:45:04 -0400
-From: "Theodore Ts'o" <tytso@mit.edu>
-To: Kent Overstreet <kent.overstreet@linux.dev>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>,
-        linux-bcachefs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev
-Subject: Re: mounts failing with -EBUSY on device mapper (was: Re: [GIT PULL]
- bcachefs changes for 6.11)
-Message-ID: <20240722114504.GA2309824@mit.edu>
-References: <r75jqqdjp24gikil2l26wwtxdxvqxpgfaixb2rqmuyzxnbhseq@6k34emck64hv>
- <CAHk-=wigjHuE2OPyuT6GK66BcQSAukSp0sm8vYvVJeB7+V+ecQ@mail.gmail.com>
- <5ypgzehnp2b3z2e5qfu2ezdtyk4dc4gnlvme54hm77aypl3flj@xlpjs7dbmkwu>
- <CAHk-=wgzMxdCRi9Fqhq2Si+HzyKgWEvMupq=Q-QRQ1xgD_7n=Q@mail.gmail.com>
- <4l32ehljkxjavy3d2lwegx3adec25apko3v355tnlnxhrs43r4@efhplbikcoqs>
- <20240719143001.GA2333818@mit.edu>
- <xp5nl7zi3k6ddkby4phm4swv2wi43slwtvw5fmve5g3jxtdw7w@ygiltwihp2hv>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZmThcXQV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1721690593;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Y9rX9CzTJRRFDODWVrbXt73hpaALRjB2mtsXUatGiDw=;
+	b=ZmThcXQVlGOATe2RO2vw6c55et8B56fVahqlAmlfAS6l/ExPgtvrDg3+XpqovK3Ot1fvit
+	h8t2luL4C+uRxsphg6pJWQpTRP33VREvdIregFsxigWhM0qjq5GOl8B5LbBA1KC66rJhMa
+	fLyMf/6PkbwQOnm6KIedtErrEDbLbDI=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-628-0zz-mqbSOKOld08dVIuZKg-1; Mon,
+ 22 Jul 2024 19:23:12 -0400
+X-MC-Unique: 0zz-mqbSOKOld08dVIuZKg-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EADF319560AB;
+	Mon, 22 Jul 2024 23:23:10 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6D62E195605A;
+	Mon, 22 Jul 2024 23:23:10 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46MNN8tv2495968
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 22 Jul 2024 19:23:09 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46MNN8QD2495967;
+	Mon, 22 Jul 2024 19:23:08 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v3 00/20] path checker refactor and misc fixes
+Date: Mon, 22 Jul 2024 19:23:05 -0400
+Message-ID: <20240722232308.2495956-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <xp5nl7zi3k6ddkby4phm4swv2wi43slwtvw5fmve5g3jxtdw7w@ygiltwihp2hv>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-On Sat, Jul 20, 2024 at 11:48:09AM -0400, Kent Overstreet wrote:
-> > As far as bcachefs is concerned, my xfstests-bld infrastructure isn't
-> > set up to build rust userspace, and Debian has a very ancient bcachefs
-> > packages --- the latest version in Debian stable and unstable dates
-> > from November 2022.  So I haven't enabled bcachefs support in
-> > gce-xfstests and kvm-xfstests yet.  Patches gratefully accepted.  :-)
-> 
-> I can apt install 1.9.1?
+his patchset is based on discussions I had with Martin Wilck about my
+last, partially applied patchset. It's based on top of his
+mwilck/coverity branch, 27053732 fixup '"libmultipath: use
+libmp_pathinfo() in update_multipath_table()"'.
 
-Ah, I see.  bcachefs-tools is currently in Debian unstable, but not in
-Debian testing[1]; it's currently hung up due to the auto-libsodium
-transition[2].  Once that clears I can look at backporting it to
-debian-backports (since my test appliance runs on Debian stable,
-for better repeatable test appliance creation.  :-)
+The first two patches are reposts of patches from my earlier patchset,
+redone to work with the new libmp_mapinfo() API. They make it possible
+to add maps by WWID with "multipathd add map".
 
-[1] https://tracker.debian.org/pkg/bcachefs-tools
-[2] https://release.debian.org/transitions/html/auto-libsodium.html
+The rest of the patches are work and bugfixes related to refactoring
+checkerloop so that
 
-						- Ted
+1. multipath devices get resynced with the kernel occasionally, even if
+they have not paths
+
+2. If multiple paths from a multipath device are checked in the same
+loop, the multipath device will only get resynced once.
+
+3. All the paths of a multipath device will converge to being checked at
+the same time (at least as much as their differing checkint values will
+allow).
+
+4. The times for checking the paths of each multipath device will spread
+out as much as possible so multipathd doesn't do all of it's checking in
+a burst.
+
+5. path checking is done my multipath device (for initialized paths,
+the uninitialized paths are handled after all the adopted paths are
+handled).
+
+Items 1 & 2 are handled by patch 10 and preceding patches.
+
+Items 3 & 4 and handled by patch 17 and preceding patches.
+
+Item 5 is handled by patch 18 and 19.
+
+Changes in v3 (only posting the patches that have changed):
+10: adapt to 27053732 'fixup "libmultipath: use libmp_pathinfo() in
+    update_multipath_table()"'. This is identical to 1d564df4
+    ("multipathd: adjust when mpp is synced with the kernel") on
+    mwilck/tip.
+11: fix commit message (Martin)
+17: use symbolic return code (Martin)
+
+
+Changes in v2 (old patch number in quotes):
+01: change from returning minor number to dm info (Martin)
+02: adapt to change in patch 01
+05 (05-07): squash into one commit (Martin)
+08 (10): fix commit message (Matin)
+10 (12): rename do_check_mpp amd check_mpp
+11 (13): move the code that saved the path name to right before it was
+         removed (Martin)
+14 (16): use symbolic return codes (Martin)
+15 (17): set path state to PATH_UNCHECKED when orphaned, and skip paths
+         in INIT_REMOVED in sync_map_state() (Martin)
+17 (19): clear pp->pending_ticks in check_path() if the path is delayed
+         instead of pending. Use a different equation to check if we
+         need to modify the ticks, that can adjust the ticks on every
+         check. adapt to change in patch 14
+18 (20): adapt to change in patch 14
+19 (21): adapt to change in patch 10 and 14
+20 (22): Add fixes trailer
+
+
+Benjamin Marzinski (20):
+  libmultipath: rename dm_map_present_by_wwid() and add outputs
+  multipathd: make cli_add_map() handle adding maps by WWID correctly
+  multipathd: remove checker restart optimization
+  multipathd: refactor path state getting code into a helper
+  multipathd: handle uninitialized paths in new function
+  multipathd: check paths immediately after failing udev initialization
+  multipathd: set pp->tick = max_checkint in handle_uninitialized_path
+  multipathd: return 0 from check_path() if that path wasn't checked
+  multipathd: reorder path state checks
+  multipathd: adjust when mpp is synced with the kernel
+  multipathd: resync map after setup_map in ev_remove_path
+  multipathd: resync map after setup_map in resize_map
+  multipathd: always resync map in reload_and_sync_map
+  multipathd: correctly handle paths removed for a wwid change
+  multipathd: handle changed wwid when adding partial path
+  multipathd: don't read conf->checkint twice in check_path
+  multipathd: make multipath devices manage their path check times
+  multipathd: factor out actual path checking loop from checkerloop
+  multipathd: check paths in order by mpp
+  multipathd: clean up the correct wwid in check_path_wwid_change
+
+ libmultipath/config.c             |  12 +
+ libmultipath/config.h             |   1 +
+ libmultipath/configure.c          |   1 +
+ libmultipath/devmapper.c          |   5 +-
+ libmultipath/devmapper.h          |   2 +-
+ libmultipath/libmultipath.version |   5 +
+ libmultipath/structs.c            |   2 +
+ libmultipath/structs.h            |   3 +
+ libmultipath/structs_vec.c        |   9 +-
+ libmultipath/valid.c              |   2 +-
+ multipathd/cli_handlers.c         |  66 ++--
+ multipathd/main.c                 | 582 +++++++++++++++++++-----------
+ multipathd/main.h                 |   2 +-
+ tests/valid.c                     |  13 +-
+ 14 files changed, 432 insertions(+), 273 deletions(-)
+
+-- 
+2.45.0
+
