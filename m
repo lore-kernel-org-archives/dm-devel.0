@@ -1,270 +1,118 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 189548F5E
-	for <dm-devel@lists.linux.dev>; Mon, 22 Jul 2024 23:35:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 906168F5E
+	for <dm-devel@lists.linux.dev>; Mon, 22 Jul 2024 23:36:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721691362; cv=none; b=HfHxzsyJp7oZ8wSa0pAmk7jm3uAeKe8iDenW4CkLiqtBFyuahFkUCNajOli3yqnhaeWcsWLi4IVVhxCUQlV2GC5RYIlOsXXvtrSbtecaWtv4Pbc5EYrGDK89fc+UEhUmOX9A3TZTM8SabvzimOKNVsgnU9ICtCXVNniWFqsfylw=
+	t=1721691386; cv=none; b=NPRLxbPlxr9H31iI03TNkD9AFbQ0fZLzL6inWOdawc+NlCKsOBKY7gy1Zq+ABF0bX32dZDYcFN5nDGqiITqbslV1JwUk1cc2dPBMwlXXMlwXAVpHWA3mmaipTaQqODebpZGD+r+K+8Ww1GvrTSAD76yIUNbMF34iB7RJ+T94hh4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721691362; c=relaxed/simple;
-	bh=3X+WrLOSUhaAGPbIVH08zFVGg9oMHIvdPEriYMgdUrE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=LLARPUrb1aggkgHfMaekVlemd9YaOv8NxZDKhO43XD/4i/eCxoeFUSVVpPjqQm4smxasqxa2jCY6Swa9BUz1JkLG33RwbS/NpdM/jASnASEnfg6dnV8N4KZJWgCVkmbPyJ2uhYfZ9stUJ0KWghcMIOiSGVulnTv0IinAFhjCg9s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DvkGUk2O; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1721691386; c=relaxed/simple;
+	bh=34dozahHIkEEC2Cj+s7fjdII6eTi/sDZidYOmJbadnk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=BUZkJJ42BIQR0FJvHekyccprIvkVlJbfsY5kXHj41r4zFRMLsIVpijMUAOj/Oam9BFpLvjXBrAFep1c7YSt2xKkq+Pq7y4mRK+9agL7ZjaP/a07qYEAiNB7CJdpbezv44o23JDpdUnXmw+uP7C9Q7ZgizbgHqiJetudvr61pOgg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gN9OSax/; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DvkGUk2O"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gN9OSax/"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1721691358;
+	s=mimecast20190719; t=1721691383;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=OZKjycOnPxTFPBbL3fIuA23IYkvtSChnrqGOEqZHI2k=;
-	b=DvkGUk2OhFjxzrJ0x3tTUD0Dk4u8eeA9UlNgflAn9h3vai5s/P6oDYnQ6jFrWvsvSGAO01
-	4zdyf99+zNly0xzT6QcgvKKXtqdVVnw457P8vRHQp+D9T7D8P/vD3XuKDMO3wJzqT9i8KU
-	znJMM4ZZN4CHXOioiYxH7hRyhC1Qmkk=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=1zm5ZBkiy6sBufXDEz1K/3UXdiXYiJ1S03CF77yHwfU=;
+	b=gN9OSax/MebhtjnqNOMSleGL6QmsNIWhlZjdWisZUzVnNIRLnEqserCzzhNaSRb68+ufO8
+	4hlM6ncWEc4Iq+198WMCHPSFu+3qdvZtE94jAPwLbTtBijoaZ7hdBqVdZsa0AHxVsWd4Gp
+	3lw3D7Y2eXriYNBjj7sBK0vPSj8OdCs=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-646-LbIbtJGGPXekvpKOCnxQkw-1; Mon,
- 22 Jul 2024 19:35:55 -0400
-X-MC-Unique: LbIbtJGGPXekvpKOCnxQkw-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-21-8-a6wwncN92PSJMwNz8GFw-1; Mon,
+ 22 Jul 2024 19:36:19 -0400
+X-MC-Unique: 8-a6wwncN92PSJMwNz8GFw-1
 Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7950B1955D44;
-	Mon, 22 Jul 2024 23:35:54 +0000 (UTC)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CEC8619560A2;
+	Mon, 22 Jul 2024 23:36:18 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CA39E195605A;
-	Mon, 22 Jul 2024 23:35:53 +0000 (UTC)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0C75A195605A;
+	Mon, 22 Jul 2024 23:36:17 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46MNZq7J2496248
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 46MNaGPa2496286
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 22 Jul 2024 19:35:52 -0400
+	Mon, 22 Jul 2024 19:36:16 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46MNZquK2496247;
-	Mon, 22 Jul 2024 19:35:52 -0400
-Date: Mon, 22 Jul 2024 19:35:52 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 46MNaGk82496285;
+	Mon, 22 Jul 2024 19:36:16 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH v3 10/20] multipathd: adjust when mpp is synced with the
- kernel
-Message-ID: <Zp7s2JA_6gONgRSC@redhat.com>
-References: <20240722232308.2495956-1-bmarzins@redhat.com>
- <20240722232308.2495956-2-bmarzins@redhat.com>
+Subject: [PATCH] libmpathpersist: set mpp->mpe before selecting reservation_key
+Date: Mon, 22 Jul 2024 19:36:16 -0400
+Message-ID: <20240722233616.2496277-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240722232308.2495956-2-bmarzins@redhat.com>
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-These patches are identical to the ones I sent before. Please ignore the
-resend.
+libmpathpersist was not setting mpp->mpe before calling
+select_reservation_key(). This means that if the reservation key was set
+in the multipaths sections, it wasn't being selected.
 
-My apologies
--Ben
+This appeared to work for many commands because of an error in checking
+if the correct reservation key was used. If mpp->reservation key was
+unset, then it would considered to match if either the RK or SARK was
+unset in the command. mpathpersist should fail if it doesn't find a
+configured mpp->resevation key, with one exception. To make it easier to
+remove old keys, if --register-ignore is called, and the command SARK is
+0x0 so the device is being unregistered, allow mpp->reservation_key to
+be unset. The code already allows mpp->reservation_key to not match the
+command RK in this case.
 
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
 
-On Mon, Jul 22, 2024 at 07:23:06PM -0400, Benjamin Marzinski wrote:
-> Move the code to sync the mpp device state into a helper function and
-> add a counter to to make sure that the device is synced at least once
-> every max_checkint secs. This makes sure that multipath devices with no
-> paths will still get synced with the kernel.  Also, if multiple paths
-> are checked in the same loop, the multipath device will only be synced
-> with the kernel once, since every time the mpp is synced in any code
-> path, mpp->sync_tick is reset.
-> 
-> The code still syncs the mpp before updating the path state for two
-> main reasons.
-> 
-> 1. Sometimes multipathd leaves the mpp with a garbage state. Future
->    patches will fix most of these cases, but the code intentially
->    does not remove the mpp is resyncing fails while checking paths.
->    But this does leave the mpp with a garbage state.
-> 
-> 2. The kernel chages the multipath state independently of multipathd. If
->    the kernel fails a path, a uevent will arrive shortly. But the kernel
->    doesn't provide any notification when it switches the active
->    path group or if it ends up picking a different one than multipathd
->    selected. Multipathd needs to know the actual current pathgroup to
->    know when it should be switching them.
-> 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/configure.c   |  1 +
->  libmultipath/structs.h     |  2 ++
->  libmultipath/structs_vec.c |  5 +++
->  multipathd/main.c          | 64 +++++++++++++++++++++++++-------------
->  4 files changed, 50 insertions(+), 22 deletions(-)
-> 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index b4de863c..34158e31 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -358,6 +358,7 @@ int setup_map(struct multipath *mpp, char **params, struct vectors *vecs)
->  
->  	sysfs_set_scsi_tmo(conf, mpp);
->  	marginal_pathgroups = conf->marginal_pathgroups;
-> +	mpp->sync_tick = conf->max_checkint;
->  	pthread_cleanup_pop(1);
->  
->  	if (!mpp->features || !mpp->hwhandler || !mpp->selector) {
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index 3b91e39c..002eeae1 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -453,6 +453,8 @@ struct multipath {
->  	int ghost_delay;
->  	int ghost_delay_tick;
->  	int queue_mode;
-> +	unsigned int sync_tick;
-> +	bool is_checked;
->  	uid_t uid;
->  	gid_t gid;
->  	mode_t mode;
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index d58ef5a7..7f267ba0 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -505,11 +505,16 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
->  	char __attribute__((cleanup(cleanup_charp))) *params = NULL;
->  	char __attribute__((cleanup(cleanup_charp))) *status = NULL;
->  	unsigned long long size;
-> +	struct config *conf;
->  
->  	if (!mpp)
->  		return r;
->  
->  	size = mpp->size;
-> +	conf = get_multipath_config();
-> +	mpp->sync_tick = conf->max_checkint;
-> +	put_multipath_config(conf);
-> +
->  	r = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY,
->  			  (mapid_t) { .str = mpp->alias },
->  			  (mapinfo_t) {
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 86f7ab1f..ae40f599 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2342,6 +2342,37 @@ check_path_state(struct path *pp)
->  	return newstate;
->  }
->  
-> +static void
-> +do_sync_mpp(struct vectors * vecs, struct multipath *mpp)
-> +{
-> +	int i, ret;
-> +	struct path *pp;
-> +
-> +	mpp->is_checked = true;
-> +	ret = update_multipath_strings(mpp, vecs->pathvec);
-> +	if (ret != DMP_OK) {
-> +		condlog(1, "%s: %s", mpp->alias, ret == DMP_NOT_FOUND ?
-> +			"device not found" :
-> +			"couldn't synchronize with kernel state");
-> +		vector_foreach_slot (mpp->paths, pp, i)
-> +			pp->dmstate = PSTATE_UNDEF;
-> +		return;
-> +	}
-> +	set_no_path_retry(mpp);
-> +}
-> +
-> +static void
-> +sync_mpp(struct vectors * vecs, struct multipath *mpp, unsigned int ticks)
-> +{
-> +	if (mpp->sync_tick)
-> +		mpp->sync_tick -= (mpp->sync_tick > ticks) ? ticks :
-> +				  mpp->sync_tick;
-> +	if (mpp->sync_tick)
-> +		return;
-> +
-> +	do_sync_mpp(vecs, mpp);
-> +}
-> +
->  /*
->   * Returns '1' if the path has been checked and '0' otherwise
->   */
-> @@ -2356,7 +2387,6 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
->  	unsigned int checkint, max_checkint;
->  	struct config *conf;
->  	int marginal_pathgroups, marginal_changed = 0;
-> -	int ret;
->  	bool need_reload;
->  
->  	if (pp->initialized == INIT_REMOVED)
-> @@ -2395,26 +2425,6 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
->  		pp->tick = 1;
->  		return 0;
->  	}
-> -	/*
-> -	 * Synchronize with kernel state
-> -	 */
-> -	ret = update_multipath_strings(pp->mpp, vecs->pathvec);
-> -	if (ret != DMP_OK) {
-> -		if (ret == DMP_NOT_FOUND) {
-> -			/* multipath device missing. Likely removed */
-> -			condlog(1, "%s: multipath device '%s' not found",
-> -				pp->dev, pp->mpp ? pp->mpp->alias : "");
-> -			return 0;
-> -		} else
-> -			condlog(1, "%s: Couldn't synchronize with kernel state",
-> -				pp->dev);
-> -		pp->dmstate = PSTATE_UNDEF;
-> -	}
-> -	/* if update_multipath_strings orphaned the path, quit early */
-> -	if (!pp->mpp)
-> -		return 0;
-> -	set_no_path_retry(pp->mpp);
-> -
->  	if (pp->recheck_wwid == RECHECK_WWID_ON &&
->  	    (newstate == PATH_UP || newstate == PATH_GHOST) &&
->  	    ((pp->state != PATH_UP && pp->state != PATH_GHOST) ||
-> @@ -2424,7 +2434,12 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
->  		handle_path_wwid_change(pp, vecs);
->  		return 0;
->  	}
-> -
-> +	if (!pp->mpp->is_checked) {
-> +		do_sync_mpp(vecs, pp->mpp);
-> +		/* if update_multipath_strings orphaned the path, quit early */
-> +		if (!pp->mpp)
-> +			return 0;
-> +	}
->  	if ((newstate != PATH_UP && newstate != PATH_GHOST &&
->  	     newstate != PATH_PENDING) && (pp->state == PATH_DELAYED)) {
->  		/* If path state become failed again cancel path delay state */
-> @@ -2752,12 +2767,17 @@ checkerloop (void *ap)
->  		while (checker_state != CHECKER_FINISHED) {
->  			unsigned int paths_checked = 0, i;
->  			struct timespec chk_start_time;
-> +			struct multipath *mpp;
->  
->  			pthread_cleanup_push(cleanup_lock, &vecs->lock);
->  			lock(&vecs->lock);
->  			pthread_testcancel();
-> +			vector_foreach_slot(vecs->mpvec, mpp, i)
-> +				mpp->is_checked = false;
->  			get_monotonic_time(&chk_start_time);
->  			if (checker_state == CHECKER_STARTING) {
-> +				vector_foreach_slot(vecs->mpvec, mpp, i)
-> +					sync_mpp(vecs, mpp, ticks);
->  				vector_foreach_slot(vecs->pathvec, pp, i)
->  					pp->is_checked = false;
->  				checker_state = CHECKER_RUNNING;
-> -- 
-> 2.45.0
-> 
+This commit is based on mwilck/tip
+
+ libmpathpersist/mpath_persist_int.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libmpathpersist/mpath_persist_int.c b/libmpathpersist/mpath_persist_int.c
+index f4d9e7c8..5cae3fb7 100644
+--- a/libmpathpersist/mpath_persist_int.c
++++ b/libmpathpersist/mpath_persist_int.c
+@@ -652,6 +652,7 @@ int do_mpath_persistent_reserve_out(vector curmp, vector pathvec, int fd,
+ 		return ret;
+ 
+ 	conf = get_multipath_config();
++	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
+ 	select_reservation_key(conf, mpp);
+ 	select_all_tg_pt(conf, mpp);
+ 	put_multipath_config(conf);
+@@ -671,6 +672,13 @@ int do_mpath_persistent_reserve_out(vector curmp, vector pathvec, int fd,
+ 		}
+ 	}
+ 
++	if (!get_be64(mpp->reservation_key) &&
++	    (prkey || rq_servact != MPATH_PROUT_REG_IGN_SA)) {
++		condlog(0, "%s: no configured reservation key", alias);
++		ret = MPATH_PR_SYNTAX_ERROR;
++		goto out1;
++	}
++
+ 	if (memcmp(paramp->key, &mpp->reservation_key, 8) &&
+ 	    memcmp(paramp->sa_key, &mpp->reservation_key, 8) &&
+ 	    (prkey || rq_servact != MPATH_PROUT_REG_IGN_SA)) {
+-- 
+2.45.0
 
