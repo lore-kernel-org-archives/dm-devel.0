@@ -1,74 +1,103 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from andre.telenet-ops.be (andre.telenet-ops.be [195.130.132.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE8E919AD81;
-	Thu, 25 Jul 2024 13:00:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2AC9770E1
+	for <dm-devel@lists.linux.dev>; Mon, 29 Jul 2024 09:35:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.130.132.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1721912423; cv=none; b=piVj1rTmLYtf1++ZRODRnHx7Ds/O9ucw5nNe8mFL4auLxrkUZo0+qQKXRI6gH/5YUiis/VdzXXeXWB/680bixFgqnqsWweCA87NsquOMEvoToEl6TbNLFePmSxpnFTSr1hAO78GNUq0NR/VDko8PgeMc9wgjgwwOlk1g2tizUFk=
+	t=1722245752; cv=none; b=CZGJ2p9+5mw9SdIrPt9DCx/yS9B6mp7iooTAlvpcgHL8FaUbrs+mKUBvrodILx+yTIe2OHOSv+2lvSCuYxMGI5tLHUTtvS+izq3/i5ooWIIEDiBQuEBMiT5a6vh9VYmQGDy/WJMLK4gJHc54xmGRXGcHSvObAUcuOZLgVlHz7V8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1721912423; c=relaxed/simple;
-	bh=PsfRIOEWhAwEg2ifRiPfWEr2fzxq7OMgmm0RVDf/xgA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=TznT/GtLh9k2WTiOyvPCvcSj1AubLHRF1xxgRWrD7cl6T8d3z9aupRQvYOPa/R2F1aH3wOh+kuIPjbyayg8UDBZBJ7uBT95sR7mvvQvmsVhmFAOOu0oAYZA1JvuPj5FYs50zZ/MSYmItsl7JGgXCWFKvt+cuQlswkZuEeDWW7YQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id C4CD1227A8E; Thu, 25 Jul 2024 15:00:09 +0200 (CEST)
-Date: Thu, 25 Jul 2024 15:00:08 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Wouter Verhelst <w@uter.be>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
-	Geert Uytterhoeven <geert@linux-m68k.org>,
-	Richard Weinberger <richard@nod.at>,
-	Philipp Reisner <philipp.reisner@linbit.com>,
-	Lars Ellenberg <lars.ellenberg@linbit.com>,
-	Christoph =?iso-8859-1?Q?B=F6hmwalder?= <christoph.boehmwalder@linbit.com>,
-	Josef Bacik <josef@toxicpanda.com>, Ming Lei <ming.lei@redhat.com>,
-	"Michael S. Tsirkin" <mst@redhat.com>,
-	Jason Wang <jasowang@redhat.com>,
-	Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>,
-	Yu Kuai <yukuai3@huawei.com>,
-	Vineeth Vijayan <vneethv@linux.ibm.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	linux-m68k@lists.linux-m68k.org, linux-um@lists.infradead.org,
-	drbd-dev@lists.linbit.com, nbd@other.debian.org,
-	linuxppc-dev@lists.ozlabs.org, ceph-devel@vger.kernel.org,
-	virtualization@lists.linux.dev, xen-devel@lists.xenproject.org,
-	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
-	linux-mtd@lists.infradead.org, nvdimm@lists.linux.dev,
-	linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org,
-	linux-scsi@vger.kernel.org, linux-block@vger.kernel.org,
-	Damien Le Moal <dlemoal@kernel.org>
-Subject: Re: [PATCH 14/26] block: move the nonrot flag to queue_limits
-Message-ID: <20240725130008.GA22625@lst.de>
-References: <20240617060532.127975-1-hch@lst.de> <20240617060532.127975-15-hch@lst.de> <ZqI4kosy20WkLC2P@pc220518.home.grep.be>
+	s=arc-20240116; t=1722245752; c=relaxed/simple;
+	bh=u8fssbfHLReHgwFcYSSHWp/ORzdxoBuiW/cGlV/ryAs=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=cVUHFZRnv5lHVWGOf0k2AJIYb69EiaiaRbkMoOlowrLrpdfcTdDIXB1dLPHdfV+wngAvML1x/n9T++KOAZ8zcdFhgFh1GJHUikcxLKI/1DX8nz6bogDts8U8+O/7WvAG9CWMPKlcimEYrbfChp4zUx4W/+wDzXSfObEUp9rW0BM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=none smtp.mailfrom=linux-m68k.org; arc=none smtp.client-ip=195.130.132.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux-m68k.org
+Received: from ramsan.of.borg ([IPv6:2a02:1810:ac12:ed80:4441:3808:f850:4280])
+	by andre.telenet-ops.be with bizsmtp
+	id tMbo2C0080ZURL201MboMp; Mon, 29 Jul 2024 11:35:49 +0200
+Received: from geert (helo=localhost)
+	by ramsan.of.borg with local-esmtp (Exim 4.95)
+	(envelope-from <geert@linux-m68k.org>)
+	id 1sYMnE-003sYs-9i;
+	Mon, 29 Jul 2024 11:35:48 +0200
+Date: Mon, 29 Jul 2024 11:35:48 +0200 (CEST)
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+To: linux-kernel@vger.kernel.org
+cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, 
+    linux-mips@vger.kernel.org, dm-devel@lists.linux.dev, 
+    linuxppc-dev@lists.ozlabs.org, linux-btrfs@vger.kernel.org, 
+    intel-xe@lists.freedesktop.org, Arnd Bergmann <arnd@arndb.de>, 
+    linux-sh@vger.kernel.org, sparclinux@vger.kernel.org
+Subject: Re: Build regressions/improvements in v6.11-rc1
+In-Reply-To: <20240729092807.2235937-1-geert@linux-m68k.org>
+Message-ID: <bd4e9928-17b3-9257-8ba7-6b7f9bbb639a@linux-m68k.org>
+References: <CAHk-=wiyNokz0d3b=GRORij=mGvwoYHy=+bv6m2Hu_VqNdg66g@mail.gmail.com> <20240729092807.2235937-1-geert@linux-m68k.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ZqI4kosy20WkLC2P@pc220518.home.grep.be>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Type: text/plain; charset=US-ASCII; format=flowed
 
-On Thu, Jul 25, 2024 at 01:35:46PM +0200, Wouter Verhelst wrote:
-> NBD actually exports a flag for rotational devices; it's defined in
-> nbd.h in the NBD userland source as
-> 
-> #define NBD_FLAG_ROTATIONAL     (1 << 4)        /* Use elevator algorithm - rotational media */
-> 
-> which is passed in the same flags field which also contains the
-> NBD_FLAG_SEND_FLUSH and NBD_FLAG_SEND_FUA flags.
-> 
-> Perhaps we might want to look at that flag and set the device to
-> rotational if it is specified?
+On Mon, 29 Jul 2024, Geert Uytterhoeven wrote:
+> Below is the list of build error/warning regressions/improvements in
+> v6.11-rc1[1] compared to v6.10[2].
+>
+> Summarized:
+>  - build errors: +7/-22
 
-Yes, that sounds good.  Can you send a patch?
+> [1] http://kisskb.ellerman.id.au/kisskb/branch/linus/head/8400291e289ee6b2bf9779ff1c83a291501f017b/ (all 132 configs)
 
+> 7 error regressions:
+>  + /kisskb/src/arch/mips/sgi-ip22/ip22-gio.c: error: initialization of 'int (*)(struct device *, const struct device_driver *)' from incompatible pointer type 'int (*)(struct device *, struct device_driver *)' [-Werror=incompatible-pointer-types]:  => 384:14
+
+mips-gcc8/ip22_defconfig
+
+>  + /kisskb/src/drivers/md/dm-integrity.c: error: logical not is only applied to the left hand side of comparison [-Werror=logical-not-parentheses]:  => 4718:45
+
+powerpc-gcc5/powerpc-all{mod,yes}config
+powerpc-gcc5/ppc64le_allmodconfig
+
+>  + /kisskb/src/fs/btrfs/inode.c: error: 'location.objectid' may be used uninitialized in this function [-Werror=maybe-uninitialized]:  => 5603:9
+>  + /kisskb/src/fs/btrfs/inode.c: error: 'location.type' may be used uninitialized in this function [-Werror=maybe-uninitialized]:  => 5674:5
+
+m68k-gcc8/m68k-allmodconfig
+mips-gcc8/mips-allmodconfig
+powerpc-gcc5/powerpc-all{mod,yes}config
+powerpc-gcc5/ppc64_defconfig
+
+>  + /kisskb/src/include/linux/compiler_types.h: error: call to '__compiletime_assert_933' declared with attribute error: FIELD_GET: mask is not constant:  => 510:38
+>  + /kisskb/src/include/linux/compiler_types.h: error: call to '__compiletime_assert_934' declared with attribute error: FIELD_GET: mask is not constant:  => 510:38
+
+     inlined from 'xe_oa_set_prop_oa_format' at /kisskb/src/drivers/gpu/drm/xe/xe_oa.c:1664:6:
+
+powerpc-gcc5/powerpc-all{yes,mod}config
+powerpc-gcc5/powerpc-allmodconfig
+powerpc-gcc5/ppc64le_allmodconfig
+
+(fix sent)
+
+>  + /kisskb/src/kernel/fork.c: error: #warning clone3() entry point is missing, please fix [-Werror=cpp]:  => 3072:2
+
+sh4-gcc13/se{7619,7750}_defconfig
+sh4-gcc13/sh-all{mod,no,yes}config
+sh4-gcc13/sh-defconfig
+sparc64-gcc5/sparc-allnoconfig
+sparc64-gcc{5,13}/sparc32_defconfig
+sparc64-gcc{5,13}/sparc64-{allno,def}config
+sparc64-gcc13/sparc-all{mod,no}config
+sparc64-gcc13/sparc64-allmodconfig
+
+Gr{oetje,eeting}s,
+
+ 						Geert
+
+--
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+ 							    -- Linus Torvalds
