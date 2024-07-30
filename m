@@ -1,197 +1,419 @@
 Received: from esa6.hgst.iphmx.com (esa6.hgst.iphmx.com [216.71.154.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A8C8945A
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jul 2024 02:06:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=216.71.154.45
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722305184; cv=fail; b=gQdLmpK6+6s/owoBmJj7hSRcVGLDwPySFKCnpawIKaiceckcZXn3OX1zByKCDxHoxdFU6QiGWqGFWnsAmFOcT1jMHZp2rE1uQgUkJbSu+BSWL0Z5gene84ZUfMJzXnr8RAz8GF3h2oZ8QH3ku8ts5AHyKtN64n1JYONVopuepRA=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722305184; c=relaxed/simple;
-	bh=vinoHGwp7XFk3wemo2LJlCxbiaL9HP2x5oPHTgyA0iM=;
-	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
-	 Content-Type:MIME-Version; b=NS5YPYsKP0Lg1OVoouK7aULcgSEGc5UISRb6mHrIjUTKlT8fjoWb3pKsBDmghmvgYogWPkU3MqR0jyZbdBJlLGuQ/i/PMDI+CAxb/mUw4i/RDal63y3eNEfrrGuS+zDOMe+aqgOK/WS9xgHD6Lu24z08jbHT8/J2BJKS2VFYitE=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com; spf=pass smtp.mailfrom=wdc.com; dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b=c2cEJx/v; dkim=pass (1024-bit key) header.d=sharedspace.onmicrosoft.com header.i=@sharedspace.onmicrosoft.com header.b=JI0kvPOU; arc=fail smtp.client-ip=216.71.154.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B0B0D192B80
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jul 2024 07:51:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=216.71.154.45
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1722325895; cv=none; b=d0czUS5n71BOE9S3dFWh0BKMm4H+MnN/qbnkRxxAkQvJx3QHruFidsIpmRnVcxKoZOeeRieqr7dxmM8U1UYBbDD8QKdcV8xbzClStyZ65e88mkkS56gab45q418stv/PTOR+VpY5yKVVmFjjBmqSlSh5aaDEwdPwszaJ0R7pKOY=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1722325895; c=relaxed/simple;
+	bh=chJnbB32zvpzCYU7ijfQd5+WAcfrUM0IsaJez8gX0Ts=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Q6JtY4Fm0EqYbOTKVY5BF0vTqM826iSF3H7feg8PzudkaFUeIhTDGszXhXe3vOuRXEokvca4occNbFweNOGEb4caAp7doIVX7hvzd3s/cVC48zXrPoI6tpJgAdvQF9Ot6UB3RdupwP1GkIxUXKLUqE3Y7QgOBZ/+0rhumBfaw54=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com; spf=pass smtp.mailfrom=wdc.com; dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b=CqRIquU/; arc=none smtp.client-ip=216.71.154.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wdc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="c2cEJx/v";
-	dkim=pass (1024-bit key) header.d=sharedspace.onmicrosoft.com header.i=@sharedspace.onmicrosoft.com header.b="JI0kvPOU"
+	dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="CqRIquU/"
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
   d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1722305182; x=1753841182;
-  h=from:to:cc:subject:date:message-id:references:
-   in-reply-to:content-id:content-transfer-encoding:
-   mime-version;
-  bh=vinoHGwp7XFk3wemo2LJlCxbiaL9HP2x5oPHTgyA0iM=;
-  b=c2cEJx/vIBANLSIH9L96c94csdx+Cm4Ut4MFPnLLbU6OJCqGCMAqayAp
-   Q1aaQcKfduwMpL68WQaXijN9Vo69XE3tfpLhscwD1YbIc3CIV2K/FnBP/
-   yllHoYwvIkJTBDtaHJXqITMcNmVh0qYnelGkUtnH2Ktr4wtLh1vmimCJz
-   rfoJOlKimKVnGsaPSCwKKULptC2NziCX+VSL7z7z4S9qjpco1FN1Obja8
-   f3+kaoQjB8/C9c3rLbeoyEvLG+yiSG8Alms/fsh3ohcJf1BA1YOOTrXzI
-   qy3LX2Z33L4IhMBevhJ3gJeXFlXVDbxWKer3x6nr/j/ZnUWvOgt9svQDC
-   A==;
-X-CSE-ConnectionGUID: J8VHn4iQRm6YEX2wXIalkw==
-X-CSE-MsgGUID: Jus+T9hUT3yqhTRZSmgHuQ==
-X-IronPort-AV: E=Sophos;i="6.09,247,1716220800"; 
-   d="scan'208";a="23026402"
-Received: from mail-centralusazlp17010007.outbound.protection.outlook.com (HELO DM1PR04CU001.outbound.protection.outlook.com) ([40.93.13.7])
-  by ob1.hgst.iphmx.com with ESMTP; 30 Jul 2024 10:06:04 +0800
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=mf5khCpy3V4UpjpYlTTW+FMkbI+Rm8HY1gWE3Ls7GaPRMqb0R3KhJO7xrk097YoxGkt7QGafhMGVvUBx8W4Du1UkOPP+93wixY0amyw0TwTqL8wz8G/f1+YxhQykK5kqtGWB7hje9SchmMfv3kqZef5H+X/F1VejQCMsV/BcFpNvCaFxOFUaxj0vdReVBa0n8DMnvuJBiMNqZCvt+pJKmWkQaKLTmK30se+IfTLN0qA9fux01wAIRb4Lgnjl9UypA9pP3w7oSv7v5RfyEkmtxlD7JU+JSdk9p7FHnHfI4eL/KfBDNcCcmjqvtueQQUP177duY4ydnE4Cm4b2hgOKJA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=xZEdQr2eFLf2Ug45veUgwaJ0XhBJtW2sjlDP9revbAg=;
- b=Ewph0mJWT5R6YSNWPHZZRMr/CYE08/L1tgKOQijDlAOLA6ASBkM1fG0sZX0fWAFACl5hGcHdTKk/bpGxYkLcJK5g38abjGyPLD+Y0x5zGdg7X25fPmalYmvwb8jNfGw5FFRmHm5H8SBo0QH5cOB80dw7f29ZP2kzucTURd7IoM4xsAcGIMp4w+6dZGLfwSZrUs3rrdJrSLOEPAYlJMNFdZHVoDpfEVOBBms/8fiezpKejM92Vwy+1PoPJp5X9Kdw4aB0ezPw+7gFvEgHqPbl8VtaaunipxgZD6bfHvEg4+xYYaeixXqVLCHzGdh69Z3V9Ei6Lih5OpvORYHJHCljmg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=wdc.com; dmarc=pass action=none header.from=wdc.com; dkim=pass
- header.d=wdc.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=sharedspace.onmicrosoft.com; s=selector2-sharedspace-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=xZEdQr2eFLf2Ug45veUgwaJ0XhBJtW2sjlDP9revbAg=;
- b=JI0kvPOUGaToL/34g6BllEE5MbNcxnD3d+nnrwvLrnyuqZcjgriOHS/2GVckY0vN0eFUolKDEKrGOB1x0wUpUidMpTNWpmm5XuoYh+PsyfHembDtQMl571wYYld94EdNh9pC8xwc9CE5F5Z7o5/DV6fFO5ENC1oAPZecydzLYv8=
-Received: from DM8PR04MB8037.namprd04.prod.outlook.com (2603:10b6:8:f::6) by
- CH2PR04MB6617.namprd04.prod.outlook.com (2603:10b6:610:6e::22) with Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.7807.29; Tue, 30 Jul 2024 02:06:02 +0000
-Received: from DM8PR04MB8037.namprd04.prod.outlook.com
- ([fe80::b27f:cdfa:851:e89a]) by DM8PR04MB8037.namprd04.prod.outlook.com
- ([fe80::b27f:cdfa:851:e89a%4]) with mapi id 15.20.7807.026; Tue, 30 Jul 2024
- 02:06:02 +0000
-From: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-To: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
-CC: Bart Van Assche <bvanassche@acm.org>, Mikulas Patocka
-	<mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, Bryan Gurney
-	<bgurney@redhat.com>
-Subject: Re: [PATCH blktests v3] dm/002: add --retry option to dmsetup remove
- command
-Thread-Topic: [PATCH blktests v3] dm/002: add --retry option to dmsetup remove
- command
-Thread-Index: AQHa3L0KjbRSJtpijUqgl5KG7hIJbLIOkJKA
-Date: Tue, 30 Jul 2024 02:06:02 +0000
-Message-ID: <sjuuchp6fgxsa2apep7tfyhf5hcbovl4z6nxiwj3d5chk667we@zol3b3ezcoft>
-References: <20240723045855.304279-1-shinichiro.kawasaki@wdc.com>
-In-Reply-To: <20240723045855.304279-1-shinichiro.kawasaki@wdc.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=wdc.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: DM8PR04MB8037:EE_|CH2PR04MB6617:EE_
-x-ms-office365-filtering-correlation-id: 4c343a60-6107-445a-edbd-08dcb03c29a7
-wdcipoutbound: EOP-TRUE
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0;ARA:13230040|1800799024|376014|366016|38070700018;
-x-microsoft-antispam-message-info:
- =?us-ascii?Q?jPW6LKYw45+2XnFoCKpyf0DV/G1MJ13egYy+Y/bgLMHp6BXbF/oKFyuRNrUC?=
- =?us-ascii?Q?/f82TbR1PaXYb8UkRYP3Xd94l2rw2XSbM8AkeLrwHpc+Zlxc16Sz4D75wNaC?=
- =?us-ascii?Q?DluxvO/KDcNeyx5x1U8pWBNJDs2AzMENPDkAhafRvZIXeUQ/KHiZTbwLorX6?=
- =?us-ascii?Q?IURuTAtvXvpUenzbGHLm/btTjqauUAXiR2h9DwIx2R+r1Ofx1wIeXd5nvGsq?=
- =?us-ascii?Q?lDjrHNEs4/YTAPRGN3qgC/VGLNOrbJq+vKUyaNV+bwAgPos94mK3Ups3S39t?=
- =?us-ascii?Q?25iJMZ0EvE5VDkEzJTLFynBsgMv0gX3gFMJlxeoRiZ6KYCh+6mu0WCCl/JOo?=
- =?us-ascii?Q?/cZBxsdPYOyVWuVCCaxaowCljjF87PQrAPTWYJsIAttTHLcHwYiOud7j7kk1?=
- =?us-ascii?Q?zTPABcQ6l7VHWTTHaa8Nru9uKaFi+PPlsahKNLBu6hCGbuea5RJexerZFTXf?=
- =?us-ascii?Q?GiJH7mQstOQdSQl9nVPh9uHn8JJ0JOCfI9Ep/eeZnCqC6Msly3hFdNaOu5/H?=
- =?us-ascii?Q?iqCw1tFRhvwPmkHOpLgKlJsqef0ds79blx8e4ajvVvP/+hAhXWmKz3tN6Oab?=
- =?us-ascii?Q?7GYjQm1h7+N9NzOXPDTwz1cpUbkzhRygOZuIc/q+Qa5VKSSi+fv6pG4vsbSB?=
- =?us-ascii?Q?w6WvJXVF1kSzWJdKcig673RN7fikY3SrgxhMZIPciOuE5VO8Ah/OtTsztbEV?=
- =?us-ascii?Q?fgBa+x2O/z03+ZtxSYqXW3s7JoyZaabbeyzNd1bHcNUNdv5Cg+QRsfxSkteF?=
- =?us-ascii?Q?XaCD4vjGYVwsYZ8/me+m60JScZ7ebbBt0O+CWWksARKkQ4WWLTsU+3xkVZyM?=
- =?us-ascii?Q?NlcDnj7QkbX2CJdCW2CMwqXOeUqzOu9O/1QvX919SV44tMnYntO5i/FwEn5U?=
- =?us-ascii?Q?ZC102YjdpL+dHW3PihDFJdlpf63zmpkNJCWdsp/g86N1QGTRP7vtNHbl1jBq?=
- =?us-ascii?Q?Ce0sH7C9kPr4hm+WSRFVH2y2OzVEivZjJAWVeb0E5x2tzTMDQG0nreuCwUeA?=
- =?us-ascii?Q?5wa9bI6LxziQasefiPcpX+rmSd9O34wO/tNdzFgmWp30EIKSPbYFaR4E2Pv1?=
- =?us-ascii?Q?p7yTC31+eKiv7M8DYpw6ViE9hXVZzKLYrFq8bgGcD9aVnKb4DVXBZogD/ft5?=
- =?us-ascii?Q?p9WcmhwWlQs1hFhrhyMRKEy+M93YGIAalXhMXQYa7RpVu+Z3Bf4KB4aoeh3y?=
- =?us-ascii?Q?LY+lRjFvExEjHixXJfv2l1Ik+uZASAUJBNZM/TOXp1PyXjNQpkz3NCS6czB6?=
- =?us-ascii?Q?xUkGK3GHL9wpVZlQhzKktBl1uDoBl0wglgE+cft6BM3+ipNFKUCHfrhnDDBA?=
- =?us-ascii?Q?vvSpR1safCHXwZYw/5d590MNMd1sZgtL6zw7d9GkFLCbYgNzo+x658+0fOj7?=
- =?us-ascii?Q?8RTzmR6uEZ3yjj8op6PkwKpTi2oAwcaea045qpuw6LI27kdE9g=3D=3D?=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM8PR04MB8037.namprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(376014)(366016)(38070700018);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?us-ascii?Q?zvEvs87IwGrOD4HW1IJk7GyNRFPftq8wL/+GfORuNh7NQSJiUvNH/h/0Qpzs?=
- =?us-ascii?Q?BpdniuZue3DY62vkI6Pwt3iUk8SKvVBQaHCWNf45baNnXThAEaEb/9EHi43Z?=
- =?us-ascii?Q?sZtQ5AVT8XIF/uflM6/7K+8quTbYcu2W5hVnhu/CjTd5nIHjjyZB/Or55nUv?=
- =?us-ascii?Q?BW0owpigWoaBaIXbFzAklmI80cCs6KofkGvr2dv/V3AvWzS6PaUYy25irC3R?=
- =?us-ascii?Q?HnSrX50HH/JbFb4OX3GucFw/xIX1XHSKXzVQDlJyiugX4gT3Bf2gcwVXfuZL?=
- =?us-ascii?Q?pG0uf4Oyv2cUdXN+Zar41mqlv7E9xSUBcVZLf4fEjW9P/LGed0PzfPxloTmS?=
- =?us-ascii?Q?xApI+n+d4kh5USGUmuVwV4wxrXbHzYGLzIBs5CgKJFsVBHiamaZmYfzkJ2hx?=
- =?us-ascii?Q?Eo1zG9C7AaYOtXSevau5ABRhjTAoz1VLjWy3Ikh5dXUsU/+chaIhxhZcATTO?=
- =?us-ascii?Q?SxQ+rar5KYXCFCGeK4WTKnJ8+gIt6PEOT9lxxxQtGT9xaiKSnJo8PDxV8S6g?=
- =?us-ascii?Q?eci9di5trWlLbCGhaG897Vcdmr62f3b6EpS4qwYGcM2Nz/vp30s1/g8SFfG1?=
- =?us-ascii?Q?2l97d95JeFi4N7mS7gpOFLCFWWqtnuby2HAfFPLP5uOCXRepgE08dD4yT5h5?=
- =?us-ascii?Q?lgpjY48x15kUKEscwEiryDhYHRvzB3YdhmKOgiD6afONJpvicWY9doZe5sC3?=
- =?us-ascii?Q?M2WmOHTq735ZxBNaNj6VxXDb3+j5Tpl+APCOgb008evy4wrWd/M3QIH3XzyR?=
- =?us-ascii?Q?ex/34ZB8TP3NRglvnalK5JAoE2iMctSjM3cdNa6iL6VXqRs6+a+GRJh2zqgk?=
- =?us-ascii?Q?9+0PzHFXBWNX3evD8IH6E9yQyx10iRgHVmJgpjJ3PR+hldT5YW6sunLq8iyA?=
- =?us-ascii?Q?qEj6iyHKwJsrvZrStCeuWox8klcORuMCXvSGJZTM2MZVc9FaZZN7xu/jV+oQ?=
- =?us-ascii?Q?KTWVSebpWEvFQfTjiiyh2nrQCij3rSlSOn4LeQYBncDrD911cRV1F9ZM+F7m?=
- =?us-ascii?Q?Ew2iUs3+c3bS1h/5rPbvIML1ZRmRJhft7XiC09hyRomE3tqsdfyBCvkpnq5t?=
- =?us-ascii?Q?tbn7m9DbZo5iH0hJbEpUZeE6jFKwnn2c8NS52kSj6dlIjbStTgsU/TzT2TCn?=
- =?us-ascii?Q?gwlbPaNLaZ31NZnEYYqglvg+3BSjKlJa48UHOsG0clp19byprLdUkuwemcEB?=
- =?us-ascii?Q?7sAqZ/+TpH6foe8qESC6QmIuVdTsMpTSD/fJXyrKHpknxsVWxTq8yVPuxIEP?=
- =?us-ascii?Q?P72SCJiZExpWNmRrZobj7EnwPkm6EYLKxwFNmHhaThKZRkNw4/s42YTE+2Xo?=
- =?us-ascii?Q?E4RfTh37AIEAUPfZAItHUM3yhbg3sW6mv1Q5vgvu6Os4JRgb6Fw55xGEMsCS?=
- =?us-ascii?Q?FB2/Vew1IV+Qclkhn4DNOCg2jr0CeOa6BYUAUd/XLbC+dWKp8w34lvvU9nNG?=
- =?us-ascii?Q?XtsNyhHrTU5mqrr1dl/nmMrnKTWr/wfoIpw5MUQWRyTM3Sn7DoKV50QvSqNS?=
- =?us-ascii?Q?RMSadlm4QcPB25nGv2j+iFo/8SKSV/PduEJ5Fdf/4GuFOOZ3xJBF4qSw1ua1?=
- =?us-ascii?Q?0ZiRzgCWloEi1ykfv+FXCi/posZUrYPBA5MR1sTlEpShSiSOqMrpDsXPhWKx?=
- =?us-ascii?Q?gHIj188sQ6wxTAbvubuilVU=3D?=
-Content-Type: text/plain; charset="us-ascii"
-Content-ID: <E44216F07B60AA4CBD9E7CB9F3F35B16@namprd04.prod.outlook.com>
-Content-Transfer-Encoding: quoted-printable
+  t=1722325892; x=1753861892;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=chJnbB32zvpzCYU7ijfQd5+WAcfrUM0IsaJez8gX0Ts=;
+  b=CqRIquU/oLLHlOvLr77GVn1Gl+U/uTWeO5QsMusap4SkaouurMAl4tEI
+   +2s5CGA1izf0AO2SZWkVf9AXyXFVHgDuYfL9KMJaEdnQyF0Iao6EEwdJW
+   uQkRROgiA/+Af3cPff6k0AQ5AqOj5PE80Ol/F0crulfEfEGgnyRrODpSf
+   PhFXSBOZO20p7lTrylRlWpuzx4obXwOkAaszxGO8dYf+Qt/+oyJ8I/IfN
+   5Dgs/oq1T079KxUl1jc6+MvqRoj33DL8rs2I+RpaXLLwa47iE3YoZOEXL
+   2hfDesHoqBAv3zcSfns9JP6GtfZpaF+emMYd9VW1a8yrSgd8DfqNBCddC
+   w==;
+X-CSE-ConnectionGUID: bqPha4jPRiygKkHh5KTNgA==
+X-CSE-MsgGUID: 4mz7zKXDQhOl5TJxcYpwFA==
+X-IronPort-AV: E=Sophos;i="6.09,248,1716220800"; 
+   d="scan'208";a="23050863"
+Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com) ([199.255.45.14])
+  by ob1.hgst.iphmx.com with ESMTP; 30 Jul 2024 15:51:30 +0800
+IronPort-SDR: 66a88ee6_u/r7jbZ7Oz2ho+ogO5xB7z6SNEkqmo/j9nZHtZEze4bgzYW
+ ncEkg9mZc1p25eW+tRZRUF1rlURu0LMyMtWLlBg==
+Received: from uls-op-cesaip01.wdc.com ([10.248.3.36])
+  by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256; 29 Jul 2024 23:57:42 -0700
+WDCIronportException: Internal
+Received: from unknown (HELO shindev.ssa.fujisawa.hgst.com) ([10.149.66.30])
+  by uls-op-cesaip01.wdc.com with ESMTP; 30 Jul 2024 00:51:30 -0700
+From: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+To: linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Cc: Damien Le Moal <dlemoal@kernel.org>,
+	Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Subject: [PATCH blktests] zbd/011: add test for DM resource limits stacking
+Date: Tue, 30 Jul 2024 16:51:29 +0900
+Message-ID: <20240730075129.427245-1-shinichiro.kawasaki@wdc.com>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	iT5+tCp87z4Xp2eGvVn85GhpyDMk355ZW0IRDY9wu3L6Q2AU01W/GdRVpFd+kCMHbOO6rAycyP3s69Db8DiY67KdYAg4BfWnJLmrs22zooV5mpWHB25g8p/up1jHAfleDEUqFrlHaVsWZBnPG/X1eyMd5abOud4cFsOl9wfaFRZRg4RVPbVkr7JGX4SxJPvmgcacbOIyTGiUUffimXWR6JyQMds2NlMdvcUPErLLaM1rOPvxayZzL5un7xEw41GChcaTbIjnHnNu6dRIYGdMxGYKr83OZ0DQ/R1wV/5ecmazTzJlDJLJJMiQ71vHBi/Wvs19f9hOEl2ovpuDxLjvd84oTM7peOZ6nvkpDM+6f6vqGQ0dxui8z2JAOmTBymz+3OMZzLE3b2VWDcOEXoWuEhcfZdT+Tj/lEkJPBWHdjEaUWTpWJBwYcDUlx03a3Exb4s8XX34w0bWmGMdFCTZaIiTKdJaXNKbYSL9zlmRivIgCHdeUwWfa2P/2njystnXlqfPFL5+i36FHCFCQpWoMNs/Zyzx8qM3J1550INvZ84ZygT37pjHrMWra/5Bst/gS+exl7Zbz4ikFfNZplr4iQWeiyquu5VMpKsCEHmPdt4viLTJ9VQTjdWt/mF9cL+jv
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DM8PR04MB8037.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 4c343a60-6107-445a-edbd-08dcb03c29a7
-X-MS-Exchange-CrossTenant-originalarrivaltime: 30 Jul 2024 02:06:02.2555
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: HyFCtf7hmeLiXeoWksOPAeZyzGJZtqGSwRLc2zUT0ho2LS8njV7s37R9M2fKUWr1pX6zSAy1zn3c7TRkHm1MacC6pkqox5GbEmUXXr/tlA8=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH2PR04MB6617
+Content-Transfer-Encoding: 8bit
 
-On Jul 23, 2024 / 13:58, Shin'ichiro Kawasaki wrote:
-> The test case dm/002 rarely fails with the message below:
->=20
-> dm/002 =3D> nvme0n1 (dm-dust general functionality test)       [failed]
->     runtime  0.204s  ...  0.174s
->     --- tests/dm/002.out        2024-06-14 14:37:40.480794693 +0900
->     +++ /home/shin/Blktests/blktests/results/nvme0n1/dm/002.out.bad     2=
-024-06-14 21:38:18.588976499 +0900
->     @@ -7,4 +7,6 @@
->      countbadblocks: 0 badblock(s) found
->      countbadblocks: 3 badblock(s) found
->      countbadblocks: 0 badblock(s) found
->     +device-mapper: remove ioctl on dust1  failed: Device or resource bus=
-y
->     +Command failed.
->      Test complete
-> modprobe: FATAL: Module dm_dust is in use.
->=20
-> When udev opens the dm device, "dmsetup remove" command also tries to
-> open the device and fails with EBUSY. To avoid the failure, add the
-> --retry option to the dmsetup command.
->=20
-> Suggested-by: Milan Broz <gmazyland@gmail.com>
-> Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Since the kernel commit 73a74af0c72b ("dm: Improve zone resource limits
+handling"), zone resource limits (max open zones and max active zones)
+are propagated from target zoned devices to mapped devices. As the
+kernel commit message describes, the resource limit propagation shall
+follow the two rules below based on the number of sequential zones
+mapped by the targets:
 
-Thanks for the review and the test. I have applied the patch.=
+1) For a target mapping an entire zoned block device, the limits for the
+   target are set to the limits of the device.
+2) For a target partially mapping a zoned block device, the number of
+   mapped sequential zones is used to determine the limits: if the
+   target maps more sequential write required zones than the device
+   limits, then the limits of the device are used as-is. If the number
+   of mapped sequential zones is lower than the limits, then we assume
+   that the target has no limits (limits set to 0).
+
+Add a new test case to confirm that the resource limit propagation
+follows the rules. Prepare two zoned null_blk devices with different
+set ups: number of conventional zones, different max open zones and max
+active zones limits. Create variations of DMs using the null_blk devices
+and check if the max open zones and the max active zones have expected
+values.
+
+Suggested-by: Damien Le Moal <dlemoal@kernel.org>
+Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+---
+ tests/zbd/011     | 309 ++++++++++++++++++++++++++++++++++++++++++++++
+ tests/zbd/011.out |   2 +
+ 2 files changed, 311 insertions(+)
+ create mode 100755 tests/zbd/011
+ create mode 100644 tests/zbd/011.out
+
+diff --git a/tests/zbd/011 b/tests/zbd/011
+new file mode 100755
+index 0000000..1f667cd
+--- /dev/null
++++ b/tests/zbd/011
+@@ -0,0 +1,309 @@
++#!/bin/bash
++# SPDX-License-Identifier: GPL-3.0+
++# Copyright (C) 2024 Western Digital Corporation or its affiliates.
++#
++# Test DM zone resource limits stacking (max open zones and max active zones
++# limits). The limits shall follow these rules:
++# 1) For a target mapping an entire zoned block device, the limits for the
++#    target are set to the limits of the device.
++# 2) For a target partially mapping a zoned block device, the number of
++#    mapped sequential zones is used to determine the limits: if the
++#    target maps more sequential write required zones than the device
++#    limits, then the limits of the device are used as-is. If the number
++#    of mapped sequential zones is lower than the limits, then we assume
++#    that the target has no limits (limits set to 0).
++# As this evaluation is done for each target, the zone resource limits
++# for the mapped device are evaluated as the non-zero minimum of the
++# limits of all the targets.
++
++. tests/zbd/rc
++
++DESCRIPTION="DM zone resource limits stacking"
++QUICK=1
++
++requires() {
++	_have_kver 6 11
++	_have_driver dm-mod
++	_have_driver dm-crypt
++	_have_program dmsetup
++	_have_program cryptsetup
++}
++
++# setup_dm: <map_type> <zoned device> <start zone> [nr zones]>
++# Create a DM device using dm-linear, dm-error or dm-crypt.
++# If <nr_zones> is omitted, then all zones from <start zone> are mapped.
++setup_dm() {
++	local type devpath dname nrz mapzstart mapnrz zsz maplen mapoffset
++	local keyfile="$TMPDIR/keyfile"
++
++	type="$1"
++	devpath="$2"
++	dname="${devpath##*/}"
++	nrz=$(<"/sys/block/${dname}/queue/nr_zones")
++
++	mapzstart="$3"
++	if [ $# == 3 ]; then
++		mapnrz=$((nrz - mapzstart))
++	else
++		mapnrz="$4"
++		if ((mapnrz == 0)) || (( mapzstart + mapnrz > nrz )); then
++			mapnrz=$((nrz - mapzstart))
++		fi
++	fi
++
++	zsz=$(<"/sys/block/${dname}/queue/chunk_sectors")
++	maplen=$((mapnrz * zsz))
++	mapoffset=$((mapzstart * zsz))
++
++	case "$type" in
++	linear|error)
++		if echo "0 ${maplen} ${type} ${devpath} ${mapoffset}" | \
++				dmsetup create "zbd_011-${type}"; then
++			echo "zbd_011-${type}"
++		fi
++		;;
++	crypt)
++		# Generate a key (4096-bits)
++		dd if=/dev/random of="$keyfile" bs=1 count=512 &> /dev/null
++		if cryptsetup open --type plain --cipher null --key-size 512 \
++			      --key-file "$keyfile" --size ${maplen} \
++			      --offset ${mapoffset} "${devpath}" \
++			      "zbd_011-crypt"; then
++			echo "zbd_011-crypt"
++		fi
++		;;
++	esac
++}
++
++# setup_concat: <zoned dev0> <start_zone0> <nr zones0> <zoned dev1> <start_zone1> <nr zones1>
++# Use dm-linear to concatenate 2 sets of zones into a zoned block device.
++# If <nr_zonesX> is 0, then all zones from <start_zoneX> are mapped.
++setup_concat() {
++	local dev0 dname0 nrz0 mapzstart0 mapnrz0
++	local dev1 dname1 nrz1 mapzstart1 mapnrz1
++
++	dev0="$(realpath "$1")"
++	dname0="$(basename "${dev0}")"
++
++	dev1="$(realpath "$4")"
++	dname1="$(basename "${dev1}")"
++
++	nrz0=$(< "/sys/block/${dname0}/queue/nr_zones")
++	mapzstart0=$2
++	if ((mapzstart0 >= nrz0)); then
++		echo "Invalid start zone ${mapzstart0} / ${nrz0}"
++		exit 1
++	fi
++
++	mapnrz0=$3
++	if ((mapnrz0 == 0 || mapzstart0 + mapnrz0 > nrz0)); then
++		mapnrz0=$((nrz0 - mapzstart0))
++	fi
++
++	nrz1=$(< "/sys/block/${dname1}/queue/nr_zones")
++	mapzstart1=$5
++	if ((mapzstart1 >= nrz1)); then
++		echo "Invalid start zone ${mapzstart1} / ${nrz1}"
++		return 1
++	fi
++
++	mapnrz1=$6
++	if ((mapnrz1 == 0 || mapzstart1 + mapnrz1 > nrz1)); then
++		mapnrz1=$((nrz1 - mapzstart1))
++	fi
++
++	zsz=$(< "/sys/block/${dname0}/queue/chunk_sectors")
++	maplen0=$((mapnrz0 * zsz))
++	mapofst0=$((mapzstart0 * zsz))
++	maplen1=$((mapnrz1 * zsz))
++	mapofst1=$((mapzstart1 * zsz))
++
++	# Linear table entries: "start length linear device offset"
++	#  start: starting block in virtual device
++	#  length: length of this segment
++	#  device: block device, referenced by the device name or by major:minor
++	#  offset: starting offset of the mapping on the device
++
++	if echo -e "0 ${maplen0} linear /dev/${dname0} ${mapofst0}\n" \
++		"${maplen0} ${maplen1} linear /dev/${dname1} ${mapofst1}" | \
++			dmsetup create "zbd_011-concat"; then
++		echo "zbd_011-concat"
++	fi
++}
++
++# check_limits: <dev> <zoned model> <number of zones> <max open limit> <max active limit>
++# Check that the zoned model, number of zones and zone resource limits of a DM
++# device match the values of the arguments passed.
++check_limits() {
++	local ret=0
++	local devpath dname sysqueue model nrz moz maz
++
++	devpath=$(realpath "$1")
++	sysqueue="/sys/block/${devpath##*/}/queue"
++	model="$(< "${sysqueue}/zoned")"
++
++	if [[ "$model" != "$2" ]]; then
++		echo "Invalid zoned model: ${model} should be $2"
++		return 1
++	fi
++
++	nrz=$(< "${sysqueue}/nr_zones")
++	if [[ ${nrz} -ne $3 ]]; then
++		echo "Invalid number of zones: ${nrz} should be $3"
++		ret=1
++	fi
++
++	# Non-zoned block devices do not have max_open_zones and
++	# max_active_zones sysfs attributes.
++	[[ "$2" == "none" ]] && return $ret
++
++	moz=$(< "${sysqueue}/max_open_zones")
++	if [[ ${moz} -ne $4 ]]; then
++		echo "Invalid max open zones limit: ${moz} should be $4"
++		ret=1
++	fi
++
++	maz=$(< "${sysqueue}/max_active_zones")
++	if [[ ${maz} -ne $5 ]]; then
++		echo "Invalid max active zones limit: ${maz} should be $5"
++		ret=1
++	fi
++
++	return $ret
++}
++
++declare -a TEST_DESCRIPTIONS
++declare -a SETUP_COMMANDS
++declare -a EXPECTED_LIMITS
++
++# Test 1
++TEST_DESCRIPTIONS+=("Map all zones of the 1st nullb")
++SETUP_COMMANDS+=("setup_dm linear /dev/nullb_zbd_011_1 0")
++EXPECTED_LIMITS+=("host-managed 1152 64 64")
++
++# Test 2
++TEST_DESCRIPTIONS+=("Map all zones of the 2nd nullb")
++SETUP_COMMANDS+=("setup_dm linear /dev/nullb_zbd_011_2 0")
++EXPECTED_LIMITS+=("host-managed 512 48 0")
++
++# Test 3
++TEST_DESCRIPTIONS+=("Map all CNV zones of the 1st nullb")
++SETUP_COMMANDS+=("setup_dm linear /dev/nullb_zbd_011_1 0 128")
++EXPECTED_LIMITS+=("none 0 0 0")
++
++# Test 4
++TEST_DESCRIPTIONS+=("Map all SWR zones of the 1st nullb")
++SETUP_COMMANDS+=("setup_dm linear /dev/nullb_zbd_011_1 128")
++EXPECTED_LIMITS+=("host-managed 1024 64 64")
++
++# Test 5
++TEST_DESCRIPTIONS+=("Map 32 SWR zones of the 1st nullb")
++SETUP_COMMANDS+=("setup_dm linear /dev/nullb_zbd_011_1 128 32")
++EXPECTED_LIMITS+=("host-managed 32 0 0")
++
++# Test 6
++TEST_DESCRIPTIONS+=("Map 64 SWR zones of the 1st nullb")
++SETUP_COMMANDS+=("setup_dm linear /dev/nullb_zbd_011_1 128 64")
++EXPECTED_LIMITS+=("host-managed 64 0 0")
++
++# Test 7
++TEST_DESCRIPTIONS+=("Map 128 SWR zones of the 1st nullb")
++SETUP_COMMANDS+=("setup_dm linear /dev/nullb_zbd_011_1 128 128")
++EXPECTED_LIMITS+=("host-managed 128 64 64")
++
++# Test 8
++TEST_DESCRIPTIONS+=("Concatenate all zones of the 1st and 2nd nullb")
++SETUP_COMMANDS+=("setup_concat /dev/nullb_zbd_011_1 0 0 /dev/nullb_zbd_011_2 0 0")
++EXPECTED_LIMITS+=("host-managed 1664 48 64")
++
++# Test 9
++TEST_DESCRIPTIONS+=("Map 32 CNV zones of the 1st nullb and all SWR zones of the 2nd nullb")
++SETUP_COMMANDS+=("setup_concat /dev/nullb_zbd_011_1 0 32 /dev/nullb_zbd_011_2 0 0")
++EXPECTED_LIMITS+=("host-managed 544 48 0")
++
++# Test 10
++TEST_DESCRIPTIONS+=("Map all SWR zones of the 1st nullb and all SWR zones of the 2nd nullb")
++SETUP_COMMANDS+=("setup_concat /dev/nullb_zbd_011_1 128 0 /dev/nullb_zbd_011_2 0 0")
++EXPECTED_LIMITS+=("host-managed 1536 48 64")
++
++# Test 11
++TEST_DESCRIPTIONS+=("Map 32 SWR zones of the 1st nullb and all SWR zones of the 2nd nullb")
++SETUP_COMMANDS+=("setup_concat /dev/nullb_zbd_011_1 128 32 /dev/nullb_zbd_011_2 0 0")
++EXPECTED_LIMITS+=("host-managed 544 48 0")
++
++# Test 12
++TEST_DESCRIPTIONS+=("Map 128 SWR zones of the 1st nullb and 16 SWR zones of the 2nd nullb")
++SETUP_COMMANDS+=("setup_concat /dev/nullb_zbd_011_1 128 128 /dev/nullb_zbd_011_2 0 16")
++EXPECTED_LIMITS+=("host-managed 144 64 64")
++
++# Test 13
++TEST_DESCRIPTIONS+=("Map 32 SWR zones of the 1st nullb and 16 SWR zones of the 2nd nullb")
++SETUP_COMMANDS+=("setup_concat /dev/nullb_zbd_011_1 128 32 /dev/nullb_zbd_011_2 0 16")
++EXPECTED_LIMITS+=("host-managed 48 0 0")
++
++# Test 14
++TEST_DESCRIPTIONS+=("Map 32 SWR zones of the 1st nullb and 48 SWR zones of the 2nd nullb")
++SETUP_COMMANDS+=("setup_concat /dev/nullb_zbd_011_1 128 32 /dev/nullb_zbd_011_2 0 48")
++EXPECTED_LIMITS+=("host-managed 80 0 0")
++
++# Test 15
++TEST_DESCRIPTIONS+=("Map 32 SWR zones of the 1st nullb and 64 SWR zones of the 2nd nullb")
++SETUP_COMMANDS+=("setup_concat /dev/nullb_zbd_011_1 128 32 /dev/nullb_zbd_011_2 0 64")
++EXPECTED_LIMITS+=("host-managed 96 48 0")
++
++# Test 16
++TEST_DESCRIPTIONS+=("Insert dm-error on the 1st nullb")
++SETUP_COMMANDS+=("setup_dm error /dev/nullb_zbd_011_1 0")
++EXPECTED_LIMITS+=("host-managed 1152 64 64")
++
++# Test 17
++TEST_DESCRIPTIONS+=("Map all zones of the 1st nullb with dm-crypt")
++SETUP_COMMANDS+=("setup_dm crypt /dev/nullb_zbd_011_1 0")
++EXPECTED_LIMITS+=("host-managed 1152 64 64")
++
++# Test 18
++TEST_DESCRIPTIONS+=("Map all CNV zones of the 1st nullb with dm-crypt")
++SETUP_COMMANDS+=("setup_dm crypt /dev/nullb_zbd_011_1 0 128")
++EXPECTED_LIMITS+=("none 0 0 0")
++
++# Test 19
++TEST_DESCRIPTIONS+=("Map all CNV zones and 128 SWR zones of the 1st nullb with dm-crypt")
++SETUP_COMMANDS+=("setup_dm crypt /dev/nullb_zbd_011_1 0 256")
++EXPECTED_LIMITS+=("host-managed 256 64 64")
++
++# Test 20
++TEST_DESCRIPTIONS+=("Map 64 SWR zones of the 1st nullb with dm-crypt")
++SETUP_COMMANDS+=("setup_dm crypt /dev/nullb_zbd_011_1 128 64")
++EXPECTED_LIMITS+=("host-managed 64 0 0")
++
++# Test 21
++TEST_DESCRIPTIONS+=("Map all SWR zones of the 2nd nullb with dm-crypt")
++SETUP_COMMANDS+=("setup_dm crypt /dev/nullb_zbd_011_2 0")
++EXPECTED_LIMITS+=("host-managed 512 48 0")
++
++test() {
++	local i dm_name check_cmd
++
++	echo "Running ${TEST_NAME}"
++
++	_configure_null_blk nullb_zbd_011_1 size=2304 zoned=1 \
++			    zone_size=2 zone_nr_conv=128 \
++			    zone_max_open=64 zone_max_active=64 power=1
++	_configure_null_blk nullb_zbd_011_2 size=1024 zoned=1 \
++			    zone_size=2 zone_nr_conv=0 \
++			    zone_max_open=48 zone_max_active=0 power=1
++
++	for ((i = 0; i < ${#TEST_DESCRIPTIONS[@]}; i++)); do
++		dm_name=$(eval "${SETUP_COMMANDS[i]}")
++		check_cmd="check_limits /dev/mapper/$dm_name"
++		check_cmd+=" ${EXPECTED_LIMITS[i]}"
++		if ! eval "$check_cmd"; then
++			echo "Test $((i + 1)) failed: ${TEST_DESCRIPTIONS[i]}"
++		fi
++		dmsetup remove "$dm_name"
++	done
++
++	_exit_null_blk
++
++	echo "Test complete"
++}
+diff --git a/tests/zbd/011.out b/tests/zbd/011.out
+new file mode 100644
+index 0000000..aec7f70
+--- /dev/null
++++ b/tests/zbd/011.out
+@@ -0,0 +1,2 @@
++Running zbd/011
++Test complete
+-- 
+2.45.2
+
