@@ -1,192 +1,229 @@
-Received: from mail-pl1-f172.google.com (mail-pl1-f172.google.com [209.85.214.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from forward500a.mail.yandex.net (forward500a.mail.yandex.net [178.154.239.80])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D0E81AC458
-	for <dm-devel@lists.linux.dev>; Wed, 31 Jul 2024 14:19:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD152193079
+	for <dm-devel@lists.linux.dev>; Wed, 31 Jul 2024 14:21:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.154.239.80
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722435559; cv=none; b=bGBUCbQtuZurIETsPtu51rMbHC+/lmu7HgZW2nXgkE3mfuZO7HxJUxhFK7EBP3lGqUuaxnTHqZy7JuPzi8DQVJmfmFGa8EtFgIVZg/0sZV2xboYCklEw27EnU4GVOvKsvnq+R6GAtnJB9XOoq5Wjoy+0Y6T/JoRIeJMISHqfObM=
+	t=1722435680; cv=none; b=dBundWqWh5OZOPZDOP7D1GJf/K7W8VHtNwL4XtU4m3Lcbk87ILHGYRrNTj+9VfDWh5Brq8vwj39+9b8uVY1fitk0utgI/4wZPQtvdIfosCrg4kfGP0ystT3bRfs5VNnvN1lxgKdhigBRUpGwTJDNzJKE4Gsx5SsXJYn6xjELohE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722435559; c=relaxed/simple;
-	bh=QgFf5Fb0aUzAoJSn/KiQ8ULVbkzKNSzUuaxoj0cFGX4=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=L2S5IM33ThjZGIBa/BecludGk3OjbVQ+BnMJThHW3uuhiqQ0m8N+uMpxhOjmk3eqQof2GOsxXSNzjj0azBxftSnN85DrsuvaUqcA2N+EMJBGvDoTb5jME9GbdXMxtf9e5bHjzYe4ptfui6GDjg8Wd3LK8a43Nelzsp20KRZacXQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=broadcom.com; spf=fail smtp.mailfrom=broadcom.com; dkim=pass (1024-bit key) header.d=broadcom.com header.i=@broadcom.com header.b=Ag5Tgrgg; arc=none smtp.client-ip=209.85.214.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=broadcom.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=broadcom.com
+	s=arc-20240116; t=1722435680; c=relaxed/simple;
+	bh=UpRkHWkRUZpnx10VV5ws2Oa91Vy3M0E4fnIKxdx5l9E=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=T9WnhIZlAf+CzOg00vW+2PjLeb/23TnVrra/fGMspbR2Vb/W8hEs7PMDrfBNOPfyVfNkwskuVheMcl81G2zR9nhw+Ozb3r3ulcxr2B7Vc3DaxSC9FoEWKGc3rQuHEhVs7XS4T8ldSWl2WHCvpfvHCgOKQXeVPNjkUfNfFYl/Xl0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yandex.ru; spf=pass smtp.mailfrom=yandex.ru; dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.b=BcTB33vj; arc=none smtp.client-ip=178.154.239.80
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yandex.ru
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=yandex.ru
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=broadcom.com header.i=@broadcom.com header.b="Ag5Tgrgg"
-Received: by mail-pl1-f172.google.com with SMTP id d9443c01a7336-1fd640a6454so43867455ad.3
-        for <dm-devel@lists.linux.dev>; Wed, 31 Jul 2024 07:19:17 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=broadcom.com; s=google; t=1722435557; x=1723040357; darn=lists.linux.dev;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=QgFf5Fb0aUzAoJSn/KiQ8ULVbkzKNSzUuaxoj0cFGX4=;
-        b=Ag5TgrggUYSH+1qngFmNzbyzMKg6SWUT0VNOyXEsnbDoL8pLW48nPiljqveE60OXMp
-         HLMmowvSWLncnoOYpJ22Olm2SN0IWNVYnBaD7cMk2EB9UHiHbSvdt2pvwNHUg5aOduw9
-         LfwL+4Xjfn1OzkTEJnvfBuJFlTxmBUpyZkgWA=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1722435557; x=1723040357;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=QgFf5Fb0aUzAoJSn/KiQ8ULVbkzKNSzUuaxoj0cFGX4=;
-        b=sDJHPOVGHdFgKB3EcFdy6sDvoN01sH0jyM3DXCV3FKuliy2L26T6CpkDFQc6NxisdQ
-         YvWLCZHBMFXWesPBXSIJiew9dhAlAjvkyqN8y7iybusaNIBHG3fPLQvuiPSVxPWw8gi/
-         mafsp0jtms3uuBL+lKi6o8j8mEr+reVD13+Fj9BdKRc/KtEI4mfOvO07YNP/S6BYQ+e/
-         Z6ibWkIWp1n10cYW/XtnbuJiUEcao++K8V5CgKW8uI7xGm4CZfTR81ciEBKwKrZUcTBS
-         vCk1oMnq8fXeMB2I3bUN2eQA+Xb9sX+sK4hzAmYw7ZfSI29q5TbsMwpHIf3bpjgRdUAE
-         stag==
-X-Forwarded-Encrypted: i=1; AJvYcCVveaijfn8zsX1fernh3mMiOi9wFE8gzfaZbRWGyZ/4xZQLwRy0jyk6MZTZAvK5PEHxNM0JrUwryxZqSfRWXcKWw9vWDk6cv1k=
-X-Gm-Message-State: AOJu0YzEmWNQ4Kf0cTUVnESgRPSYys5iXCE7t/XtPoyf6TQy7A5tfixs
-	wwqjNLsh6+RpLo+lX0qnYO7vWFROFMZn/AE2k4pMGVEQnA/67ozsu+xXyGsBlRTxjYtpc5kbpAz
-	teSbSm388Xi2MAefSxnaBhiH8Lm+LFovv+gQT
-X-Google-Smtp-Source: AGHT+IG26ZPS43xsCqnDu7RvpNzGnASRsZDYRwgsMtdb4czD1DHjABcdSbZ6JAPFvHCtf183BVdDUBS33B9yxJ0TyJc=
-X-Received: by 2002:a17:902:ecd0:b0:1fd:88d2:47f6 with SMTP id
- d9443c01a7336-1ff048616a6mr147214595ad.38.1722435556319; Wed, 31 Jul 2024
- 07:19:16 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.b="BcTB33vj"
+Received: from mail-nwsmtp-smtp-production-main-81.myt.yp-c.yandex.net (mail-nwsmtp-smtp-production-main-81.myt.yp-c.yandex.net [IPv6:2a02:6b8:c12:3b1b:0:640:d43f:0])
+	by forward500a.mail.yandex.net (Yandex) with ESMTPS id C9E9860C8A;
+	Wed, 31 Jul 2024 17:14:35 +0300 (MSK)
+Received: by mail-nwsmtp-smtp-production-main-81.myt.yp-c.yandex.net (smtp/Yandex) with ESMTPSA id YEX6G9cX2uQ0-IGox0398;
+	Wed, 31 Jul 2024 17:14:34 +0300
+X-Yandex-Fwd: 1
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yandex.ru; s=mail;
+	t=1722435274; bh=eriLGYJahVXf7n6Ke6GN0wrykegYXIjB71hUidxOuY0=;
+	h=References:Date:In-Reply-To:Cc:To:From:Subject:Message-ID;
+	b=BcTB33vjVyPA6JDv0qBXnsP7XyHKxVT+07GZaquNT9j9kXJBG9aE4i74517ulkEwp
+	 zHzBAyxpm8n+bP36r7LeCnKbqB3s1cz7zba2fW3H5qypne+gWS53cVkgQR4dsD4M2e
+	 VquFkS+DdFw6Bf9bNmSOGV6PobgCtZKudUpObZg8=
+Authentication-Results: mail-nwsmtp-smtp-production-main-81.myt.yp-c.yandex.net; dkim=pass header.i=@yandex.ru
+Message-ID: <37df66ec9cf1a0570a86ec0b9f17ae18ed11b832.camel@yandex.ru>
+Subject: Re: Lockup of (raid5 or raid6) + vdo after taking out a disk under
+ load
+From: Konstantin Kharlamov <Hi-Angel@yandex.ru>
+To: Yu Kuai <yukuai1@huaweicloud.com>, Song Liu <song@kernel.org>, 
+ linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org,
+ "yangerkun@huawei.com" <yangerkun@huawei.com>, "yukuai (C)"
+ <yukuai3@huawei.com>
+Cc: dm-devel@lists.linux.dev, Matthew Sakai <msakai@redhat.com>
+Date: Wed, 31 Jul 2024 17:14:33 +0300
+In-Reply-To: <57241c91337e8fc3257b6d4a35c273af59875eff.camel@yandex.ru>
+References: <a6d068a26a90057fb3cdaa59f9d57a2af41a6b22.camel@yandex.ru>
+	 <1f879e67-4d64-4df0-5817-360d84ff8b89@huaweicloud.com>
+	 <29d69e586e628ef2e5f2fd7b9fe4e7062ff36ccf.camel@yandex.ru>
+	 <517243f0-77c5-9d67-a399-78c449f6afc6@huaweicloud.com>
+	 <810a319b846c7e16d85a7f52667d04252a9d0703.camel@yandex.ru>
+	 <9c60881e-d28f-d8d5-099c-b9678bd69db9@huaweicloud.com>
+	 <57241c91337e8fc3257b6d4a35c273af59875eff.camel@yandex.ru>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240730115838.3507302-1-quic_mdalam@quicinc.com> <cbf18ce7-f9bd-c05d-d22-f56ca4ae3240@redhat.com>
-In-Reply-To: <cbf18ce7-f9bd-c05d-d22-f56ca4ae3240@redhat.com>
-From: Kamal Dasu <kamal.dasu@broadcom.com>
-Date: Wed, 31 Jul 2024 10:18:39 -0400
-Message-ID: <CAKekbeuzqhcKGLiQER3Xo-eVXDaq5p-a=Ez_iYixYAefPX+05A@mail.gmail.com>
-Subject: Re: [PATCH 0/6] Add Additional algo mode for inline encryption
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk, gmazyland@gmail.com, 
-	agk@redhat.com, snitzer@kernel.org, adrian.hunter@intel.com, 
-	quic_asutoshd@quicinc.com, ritesh.list@gmail.com, ulf.hansson@linaro.org, 
-	andersson@kernel.org, konrad.dybcio@linaro.org, linux-block@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
-	linux-mmc@vger.kernel.org, linux-arm-msm@vger.kernel.org, 
-	quic_viswanat@quicinc.com, quic_srichara@quicinc.com, quic_varada@quicinc.com
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256;
-	boundary="000000000000897f60061e8bc748"
 
---000000000000897f60061e8bc748
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+CC'ing VDO maintainers, because the problem is only reproducible with
+VDO, so potentially they might have some ideas.
 
-This is not related to emulation, but was. upstream linux development
+On Mon, 2024-07-22 at 20:56 +0300, Konstantin Kharlamov wrote:
+> Hi, sorry for the delay, I had to give away the nodes and we had a
+> week
+> of teambuilding and company party, so for the past week I only
+> managed
+> to hack away stripping debug symbols, get another node and set it up.
+>=20
+> Experiments below are based off of vanilla 6.9.8 kernel *without*
+> your
+> patch.
+>=20
+> On Mon, 2024-07-15 at 09:56 +0800, Yu Kuai wrote:
+> > Line number will be helpful.
+>=20
+> So, after tinkering with building scripts I managed to build modules
+> with debug symbols (not the kernel itself but should be good enough),
+> but for some reason kernel doesn't show line numbers in stacktraces.
+> No
+> idea what could be causing it, so I had to decode line numbers
+> manually, below is an output where I inserted line numbers for
+> raid456
+> manually after decoding them with `gdb`.
+>=20
+> =C2=A0=C2=A0=C2=A0 [=E2=80=A6]
+> =C2=A0=C2=A0=C2=A0 [ 1677.293366]=C2=A0 <TASK>
+> =C2=A0=C2=A0=C2=A0 [ 1677.293661]=C2=A0 ? asm_sysvec_apic_timer_interrupt=
++0x16/0x20
+> =C2=A0=C2=A0=C2=A0 [ 1677.293972]=C2=A0 ? _raw_spin_unlock_irq+0x10/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1677.294276]=C2=A0 ? _raw_spin_unlock_irq+0xa/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1677.294586]=C2=A0 raid5d at drivers/md/raid5.c:6572
+> =C2=A0=C2=A0=C2=A0 [ 1677.294910]=C2=A0 md_thread+0xc1/0x170
+> =C2=A0=C2=A0=C2=A0 [ 1677.295228]=C2=A0 ? __pfx_autoremove_wake_function+=
+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1677.295545]=C2=A0 ? __pfx_md_thread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1677.295870]=C2=A0 kthread+0xff/0x130
+> =C2=A0=C2=A0=C2=A0 [ 1677.296189]=C2=A0 ? __pfx_kthread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1677.296498]=C2=A0 ret_from_fork+0x30/0x50
+> =C2=A0=C2=A0=C2=A0 [ 1677.296810]=C2=A0 ? __pfx_kthread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1677.297112]=C2=A0 ret_from_fork_asm+0x1a/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1677.297424]=C2=A0 </TASK>
+> =C2=A0=C2=A0=C2=A0 [=E2=80=A6]
+> =C2=A0=C2=A0=C2=A0 [ 1705.296253]=C2=A0 <TASK>
+> =C2=A0=C2=A0=C2=A0 [ 1705.296554]=C2=A0 ? asm_sysvec_apic_timer_interrupt=
++0x16/0x20
+> =C2=A0=C2=A0=C2=A0 [ 1705.296864]=C2=A0 ? _raw_spin_unlock_irq+0x10/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1705.297172]=C2=A0 ? _raw_spin_unlock_irq+0xa/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1677.294586]=C2=A0 raid5d at drivers/md/raid5.c:6597
+> =C2=A0=C2=A0=C2=A0 [ 1705.297794]=C2=A0 md_thread+0xc1/0x170
+> =C2=A0=C2=A0=C2=A0 [ 1705.298099]=C2=A0 ? __pfx_autoremove_wake_function+=
+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1705.298409]=C2=A0 ? __pfx_md_thread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1705.298714]=C2=A0 kthread+0xff/0x130
+> =C2=A0=C2=A0=C2=A0 [ 1705.299022]=C2=A0 ? __pfx_kthread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1705.299333]=C2=A0 ret_from_fork+0x30/0x50
+> =C2=A0=C2=A0=C2=A0 [ 1705.299641]=C2=A0 ? __pfx_kthread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1705.299947]=C2=A0 ret_from_fork_asm+0x1a/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1705.300257]=C2=A0 </TASK>
+> =C2=A0=C2=A0=C2=A0 [=E2=80=A6]
+> =C2=A0=C2=A0=C2=A0 [ 1733.296255]=C2=A0 <TASK>
+> =C2=A0=C2=A0=C2=A0 [ 1733.296556]=C2=A0 ? asm_sysvec_apic_timer_interrupt=
++0x16/0x20
+> =C2=A0=C2=A0=C2=A0 [ 1733.296862]=C2=A0 ? _raw_spin_unlock_irq+0x10/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1733.297170]=C2=A0 ? _raw_spin_unlock_irq+0xa/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1677.294586]=C2=A0 raid5d at drivers/md/raid5.c:6572
+> =C2=A0=C2=A0=C2=A0 [ 1733.297792]=C2=A0 md_thread+0xc1/0x170
+> =C2=A0=C2=A0=C2=A0 [ 1733.298096]=C2=A0 ? __pfx_autoremove_wake_function+=
+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1733.298403]=C2=A0 ? __pfx_md_thread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1733.298711]=C2=A0 kthread+0xff/0x130
+> =C2=A0=C2=A0=C2=A0 [ 1733.299018]=C2=A0 ? __pfx_kthread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1733.299330]=C2=A0 ret_from_fork+0x30/0x50
+> =C2=A0=C2=A0=C2=A0 [ 1733.299637]=C2=A0 ? __pfx_kthread+0x10/0x10
+> =C2=A0=C2=A0=C2=A0 [ 1733.299943]=C2=A0 ret_from_fork_asm+0x1a/0x30
+> =C2=A0=C2=A0=C2=A0 [ 1733.300251]=C2=A0 </TASK>
+>=20
+> > Meanwhile, can you check if the underlying
+> > disks has IO while raid5 stuck, by /sys/block/[device]/inflight.
+>=20
+> The two devices that are left after the 3rd one is removed has these
+> numbers that don't change with time:
+>=20
+> =C2=A0=C2=A0=C2=A0 [Mon Jul 22 20:18:06 @ ~]:> for d in dm-19 dm-17; do e=
+cho -n $d;
+> cat
+> =C2=A0=C2=A0=C2=A0 /sys/block/$d/inflight; done
+> =C2=A0=C2=A0=C2=A0 dm-19=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 9=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1
+> =C2=A0=C2=A0=C2=A0 dm-17=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 11=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 2
+> =C2=A0=C2=A0=C2=A0 [Mon Jul 22 20:18:11 @ ~]:> for d in dm-19 dm-17; do e=
+cho -n $d;
+> cat
+> =C2=A0=C2=A0=C2=A0 /sys/block/$d/inflight; done
+> =C2=A0=C2=A0=C2=A0 dm-19=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 9=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1
+> =C2=A0=C2=A0=C2=A0 dm-17=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 11=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 2
+>=20
+> They also don't change after I return the disk back (which is to be
+> expected I guess, given that the lockup doesn't go away).
+>=20
+> > >=20
+> > > > At first, can the problem reporduce with raid1/raid10? If not,
+> > > > this
+> > > > is
+> > > > probably a raid5 bug.
+> > >=20
+> > > This is not reproducible with raid1 (i.e. no lockups for raid1),
+> > > I
+> > > tested that. I didn't test raid10, if you want I can try (but
+> > > probably
+> > > only after the weekend, because today I was asked to give the
+> > > nodes
+> > > away, for the weekend at least, to someone else).
+> >=20
+> > Yes, please try raid10 as well. For now I'll say this is a raid5
+> > problem.
+>=20
+> Tested: raid10 works just fine, i.e. no lockup and fio continues
+> having non-zero IOPS.
+>=20
+> > > > The best will be that if I can reporduce this problem myself.
+> > > > The problem is that I don't understand the step 4: turning off
+> > > > jbod
+> > > > slot's power, is this only possible for a real machine, or can
+> > > > I
+> > > > do
+> > > > this in my VM?
+> > >=20
+> > > Well, let's say that if it is possible, I don't know a way to do
+> > > that.
+> > > The `sg_ses` commands that I used
+> > >=20
+> > > 	sg_ses --dev-slot-num=3D9 --set=3D3:4:1=C2=A0=C2=A0 /dev/sg26 #
+> > > turning
+> > > off
+> > > 	sg_ses --dev-slot-num=3D9 --clear=3D3:4:1 /dev/sg26 #
+> > > turning
+> > > on
+> > >=20
+> > > =E2=80=A6sets and clears the value of the 3:4:1 bit, where the bit is
+> > > defined
+> > > by the JBOD's manufacturer datasheet. The 3:4:1 specifically is
+> > > defined
+> > > by "AIC" manufacturer. That means the command as is unlikely to
+> > > work on
+> > > a different hardware.
+> >=20
+> > I never do this before, I'll try.
+> > >=20
+> > > Well, while on it, do you have any thoughts why just using a
+> > > `echo
+> > > 1 >
+> > > /sys/block/sdX/device/delete` doesn't reproduce it? Does perhaps
+> > > kernel
+> > > not emulate device disappearance too well?
+> >=20
+> > echo 1 > delete just delete the disk from kernel, and scsi/dm-raid
+> > will
+> > know that this disk is deleted. However, the disk will stay in
+> > kernel
+> > for the other way, dm-raid does not aware that underlying disks are
+> > problematic and IO will still be generated and issued.
+> >=20
+> > Thanks,
+> > Kuai
 
-Kamal
-
-On Wed, Jul 31, 2024 at 8:50=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
-m> wrote:
->
->
->
-> On Tue, 30 Jul 2024, Md Sadre Alam wrote:
->
-> > This series of patches add additional modes for inline encryption
-> >
-> > This series of patches depends on [1] Add inline encryption support for=
- dm-crypt
-> >
-> > [1]: https://lore.kernel.org/all/b45d3b40-2587-04dc-9601-a9251dacf806@o=
-pensource.wdc.com/T/#ma01f08a941107217c93680fa25e96e8d406df790
-> >
-> > These patches tested on IPQ9574 with eMMC ICE for raw partition
-> > encryption/decryption.
->
-> Hi
->
-> I discussed it with Milan Broz <gmazyland@gmail.com> and we concluded tha=
-t
-> there is no need to bloat dm-crypt with this logic.
->
-> We believe that you should create your own target (like
-> "dm-inline-crypt"), it would work like a linear target and it will attach
-> encryption requests to the bios that it processes.
->
-> Mikulas
->
->
-
---000000000000897f60061e8bc748
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
-
-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
-DxuNuBlySpn/GYqPcDcRZd8EENWqnZrjtjHMk0j7ZfrPGXq8sQkbG3OX+DOwSaefPRq1pLGWBZaZ
-YuUo5O7CNHo7h7Hc9GgjiW+6X9BjKAzSaDy8jwIDAQABo4IB2DCCAdQwDgYDVR0PAQH/BAQDAgWg
-MIGjBggrBgEFBQcBAQSBljCBkzBOBggrBgEFBQcwAoZCaHR0cDovL3NlY3VyZS5nbG9iYWxzaWdu
-LmNvbS9jYWNlcnQvZ3NnY2NyM3BlcnNvbmFsc2lnbjJjYTIwMjAuY3J0MEEGCCsGAQUFBzABhjVo
-dHRwOi8vb2NzcC5nbG9iYWxzaWduLmNvbS9nc2djY3IzcGVyc29uYWxzaWduMmNhMjAyMDBNBgNV
-HSAERjBEMEIGCisGAQQBoDIBKAowNDAyBggrBgEFBQcCARYmaHR0cHM6Ly93d3cuZ2xvYmFsc2ln
-bi5jb20vcmVwb3NpdG9yeS8wCQYDVR0TBAIwADBJBgNVHR8EQjBAMD6gPKA6hjhodHRwOi8vY3Js
-Lmdsb2JhbHNpZ24uY29tL2dzZ2NjcjNwZXJzb25hbHNpZ24yY2EyMDIwLmNybDAiBgNVHREEGzAZ
-gRdrYW1hbC5kYXN1QGJyb2FkY29tLmNvbTATBgNVHSUEDDAKBggrBgEFBQcDBDAfBgNVHSMEGDAW
-gBSWM9HmWBdbNHWKgVZk1b5I3qGPzzAdBgNVHQ4EFgQUcRYSWvAVyA3hgTrQ2c4AFquBsG0wDQYJ
-KoZIhvcNAQELBQADggEBAIKB2IOweF2sIYGBZTDm+Hwmhga+sjekM167Sk/KwxxvQFwZYP6i0SnR
-7aR59vbfVQVaAiZH/a+35EYxP/sXaIM4+E3bFykBuXwcGEnYyEn6MceiOCkjkWQq1Co2JyOdNvkP
-nAxyPoWlsJtr+N/MF1EYKGpYMdPM7S2T/gujjO9N56BCGu9yJElszWcXHmBl5IsaQqMS36vhsV0b
-NxffjNkeAdgfN/SS9S9Rj4WXD7pF1M0Xq8gPLCLyXrx1i2KkYOYJsj0PWlC6VRg6E1xXkYDte0VL
-fAAG4QsETU27E1HBNQyp5zF1PoPCPvq3EnWQnbLgYk+Jz2iwIUwiqwr/bDgxggJtMIICaQIBATBr
-MFsxCzAJBgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMTEwLwYDVQQDEyhHbG9i
-YWxTaWduIEdDQyBSMyBQZXJzb25hbFNpZ24gMiBDQSAyMDIwAgw89WX2Pp7ue922QVkwDQYJYIZI
-AWUDBAIBBQCggdQwLwYJKoZIhvcNAQkEMSIEIDs3ac3VqjLztdHHzgNRBXN1a+UqHay38jpgsX0V
-ADwVMBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTI0MDczMTE0MTkx
-N1owaQYJKoZIhvcNAQkPMVwwWjALBglghkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQB
-AjAKBggqhkiG9w0DBzALBgkqhkiG9w0BAQowCwYJKoZIhvcNAQEHMAsGCWCGSAFlAwQCATANBgkq
-hkiG9w0BAQEFAASCAQCatF8j4hhyhmUbNCdC9EYjve7lK60/tGNuPcRMJe4VT9/Tn7mFbO2xjGiC
-NuxFJGyDCwu/uAvd0nm7d2XuUbTssITm+mV+Jha0ET8atsSOlLyC3ABNgfKcq4FF1jeQj+VAGoQN
-mjVZZ6l38MFG+oOrO9u8gIZnnJ3VXr8NfE0+NuvvQhPkF/52waCk16nnZV+Dva/A+z594i2CzLmz
-TpoKOv5QZR8T8jAQU5AqbYICruH+ExWfzzpm2WnopZ39mz7HS46wfyQeYrbpCY9lUaaq9J71+Rza
-v5SxntIEyYw/CKXtWzBsOIE2PDKdelToBZMKiZR9AlGrJTYguJu6Zxbk
---000000000000897f60061e8bc748--
