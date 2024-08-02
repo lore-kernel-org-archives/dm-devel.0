@@ -1,115 +1,110 @@
-Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 976901849
-	for <dm-devel@lists.linux.dev>; Fri,  2 Aug 2024 04:24:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE05F136327
+	for <dm-devel@lists.linux.dev>; Fri,  2 Aug 2024 17:27:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722572649; cv=none; b=DPILHRwuTPqWVq5SG8J1YrhdatBKTN1qACBXpWUSHrR09e/56CG0osx9As0lKXKYeOWtnX20Zs9hhC12ky+694eoewJYsp8ZNugA+lC6pUZSnIYJtxzHtOYQhSDQMqD81MQbg0AiJ8rg177xIkVRXdBS1v+Z1pDn3DsdLD4E26U=
+	t=1722619626; cv=none; b=E60FgUoyK1ubvFNVKPNGxqoOX/voCY7bAaBJWlwKQisAKi9NWIFRPOyRBDo9FIFO6xmiBF/v7VJFG1GWcYPsVGGo1F/Eob9Twx0xfEWjYqKWsJ7oBMJbmnkrPy0ozyThXPJZgxMZSHNet9HrrAaLlBS1cIFd72ENtbNZGg2qY44=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722572649; c=relaxed/simple;
-	bh=QmNwr3lsB5Zwkp+KlwWIdj9bsNKp3PtP6oMvA/7wYT0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
-	 In-Reply-To:Content-Type; b=GKoEdzIFKpqoYXxnXVsfV0MUWgK2OFk/2dxL1h6ufhwufkWUM4G8KRY4r/Og3AboqueWIGo39KMEotyftgdXZtjh3e2eSTTJHVC7vGfJ2xiXmnJ45wQd6Wc3L/kWH48an/2evHqB6kjSC1+28D2iXpiXKrYyZ3XEiQIriC6taqw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=JoWQZFVy; arc=none smtp.client-ip=205.220.168.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
+	s=arc-20240116; t=1722619626; c=relaxed/simple;
+	bh=jKWrvZ4r301vjNZKQRQSQZR2LdfQUyugiQkkYULJ6Wo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=iPblZqbFpNsB3ns7o5EiZo45KEcsfhAd1tXkcJlPTpGfPoZVpgXPl/JFHbqMlilPj17mQKGmsEdRwU9oeULvBEtaKx4zRsXIiG8oLfTPj3GKsxcduFYfGtG+PlIVJQu/+TmGAP3zBAQIn4rTJPumHOb5W9H/pYgMxuRdM5XmNTA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DT0m1DLV; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="JoWQZFVy"
-Received: from pps.filterd (m0279865.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 471LaP75030334;
-	Fri, 2 Aug 2024 04:23:29 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
-	cc:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
-	Yc4I7idyrxzQa/AbB5FzqC6ekVPfwrY+aDIwwsos468=; b=JoWQZFVyDRJyENAS
-	VX77AYfJv4NSDZDUyaO9PHKZTq3Yv/T7ZJQqmziasgWeqxq1UWUnyWm5pC58sGhY
-	fx/BoAgq+bbnLBtr+HK2piGyYbfSweHSeWRLENoGtHme7OK8HvUiJiI3KlN3hHyN
-	99Dc09hUyQllEh4UOkTCT/cw2mGo/X9Zf6Y7tx/jzjCfvD8DPFgxTIOgM9sgtaL2
-	vU24PBRDgWontnWKwOLsTssS9UmQUVUrNKg4/CC1r0O5ZPiM1VFDJJshHEB4ZrGC
-	sNsJoAbruBxo4qfihUc78M1TEhjWb9cIhBz+HXaWK31kVz/qC/+ZsAsFbZTTAyDK
-	4q2Izw==
-Received: from nasanppmta03.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 40rje38nmf-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 02 Aug 2024 04:23:29 +0000 (GMT)
-Received: from nasanex01a.na.qualcomm.com (nasanex01a.na.qualcomm.com [10.52.223.231])
-	by NASANPPMTA03.qualcomm.com (8.17.1.19/8.17.1.19) with ESMTPS id 4724NSkJ023055
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 2 Aug 2024 04:23:28 GMT
-Received: from [10.216.16.55] (10.80.80.8) by nasanex01a.na.qualcomm.com
- (10.52.223.231) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.9; Thu, 1 Aug 2024
- 21:23:21 -0700
-Message-ID: <15eddfa1-aed4-b18e-dfbe-ab23bb411873@quicinc.com>
-Date: Fri, 2 Aug 2024 09:53:18 +0530
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DT0m1DLV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1722619623;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Yj/1k0gpQ3sMgWyMtXhMfq+juUdwE4ZtgvWc5Gq3qig=;
+	b=DT0m1DLVeER9wPsAtcZuWcE6nf1e12Coh6hwM4TddR6FgzGnEILJMPMJR7ReAQbsZAuVBs
+	Hq4QTgD0id1IhbYzmmrsw1wN9FRhvPGnNuZxD3db7ZWZxTS7p7/ONa+rVziSMhX8TYnlaC
+	ESuNJAQHkFD6bKdG+mEDSqJ76n3hOAk=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-75-umJQDMd7MQSyuoUKgUtN6Q-1; Fri,
+ 02 Aug 2024 13:27:00 -0400
+X-MC-Unique: umJQDMd7MQSyuoUKgUtN6Q-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 169A218B6680;
+	Fri,  2 Aug 2024 17:26:57 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 22F931955EAB;
+	Fri,  2 Aug 2024 17:26:55 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 472HQpD13063025
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 2 Aug 2024 13:26:51 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 472HQo6Q3063024;
+	Fri, 2 Aug 2024 13:26:50 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH] libmultipath: fix ontap prioritizer snprintf limits
+Date: Fri,  2 Aug 2024 13:26:50 -0400
+Message-ID: <20240802172650.3063016-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
- Thunderbird/102.9.1
-Subject: Re: [PATCH 0/6] Add Additional algo mode for inline encryption
-Content-Language: en-US
-To: Mikulas Patocka <mpatocka@redhat.com>
-CC: <axboe@kernel.dk>, <gmazyland@gmail.com>, <agk@redhat.com>,
-        <snitzer@kernel.org>, <adrian.hunter@intel.com>,
-        <quic_asutoshd@quicinc.com>, <ritesh.list@gmail.com>,
-        <ulf.hansson@linaro.org>, <andersson@kernel.org>,
-        <konrad.dybcio@linaro.org>, <linux-block@vger.kernel.org>,
-        <linux-kernel@vger.kernel.org>, <dm-devel@lists.linux.dev>,
-        <linux-mmc@vger.kernel.org>, <linux-arm-msm@vger.kernel.org>,
-        <quic_viswanat@quicinc.com>, <quic_srichara@quicinc.com>,
-        <quic_varada@quicinc.com>
-References: <20240730115838.3507302-1-quic_mdalam@quicinc.com>
- <cbf18ce7-f9bd-c05d-d22-f56ca4ae3240@redhat.com>
-From: Md Sadre Alam <quic_mdalam@quicinc.com>
-In-Reply-To: <cbf18ce7-f9bd-c05d-d22-f56ca4ae3240@redhat.com>
-Content-Type: text/plain; charset="UTF-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
- nasanex01a.na.qualcomm.com (10.52.223.231)
-X-QCInternal: smtphost
-X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-ORIG-GUID: YCUjs79D2phKMszWOC2fayLXduWCRL5F
-X-Proofpoint-GUID: YCUjs79D2phKMszWOC2fayLXduWCRL5F
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.28.16
- definitions=2024-08-02_01,2024-08-01_01,2024-05-17_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxlogscore=999
- lowpriorityscore=0 clxscore=1015 phishscore=0 impostorscore=0
- suspectscore=0 mlxscore=0 priorityscore=1501 malwarescore=0 adultscore=0
- spamscore=0 bulkscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2407110000 definitions=main-2408020027
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
+The ontap prioritizer functions dump_cdb() and process_sg_error() both
+incorrectly set the snprintf() limits larger than the available space.
+Instead of multiplying the number of elements to print by the size of an
+element to calculate the limit, they multiplied the number of elements
+to print by the maximum number of elements that the buffer could hold.
 
+Fix this, and also make sure that the number of elements to print is
+less than or equal to the maximum number that the buffer can hold.
 
-On 7/31/2024 6:18 PM, Mikulas Patocka wrote:
-> 
-> 
-> On Tue, 30 Jul 2024, Md Sadre Alam wrote:
-> 
->> This series of patches add additional modes for inline encryption
->>
->> This series of patches depends on [1] Add inline encryption support for dm-crypt
->>
->> [1]: https://lore.kernel.org/all/b45d3b40-2587-04dc-9601-a9251dacf806@opensource.wdc.com/T/#ma01f08a941107217c93680fa25e96e8d406df790
->>
->> These patches tested on IPQ9574 with eMMC ICE for raw partition
->> encryption/decryption.
-> 
-> Hi
-> 
-> I discussed it with Milan Broz <gmazyland@gmail.com> and we concluded that
-> there is no need to bloat dm-crypt with this logic.
-> 
-> We believe that you should create your own target (like
-> "dm-inline-crypt"), it would work like a linear target and it will attach
-> encryption requests to the bios that it processes.
-> 
-   Thanks for reviewing. Will create new target driver "dm-inline-crypt".
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/prioritizers/ontap.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-> Mikulas
-> 
+diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/ontap.c
+index 117886ea..28e663ac 100644
+--- a/libmultipath/prioritizers/ontap.c
++++ b/libmultipath/prioritizers/ontap.c
+@@ -39,8 +39,8 @@ static void dump_cdb(unsigned char *cdb, int size)
+ 	char * p = &buf[0];
+ 
+ 	condlog(0, "- SCSI CDB: ");
+-	for (i=0; i<size; i++) {
+-		p += snprintf(p, 10*(size-i), "0x%02x ", cdb[i]);
++	for (i = 0; i < size && i < 10; i++) {
++		p += snprintf(p, 5*(size-i), "0x%02x ", cdb[i]);
+ 	}
+ 	condlog(0, "%s", buf);
+ }
+@@ -56,8 +56,8 @@ static void process_sg_error(struct sg_io_hdr *io_hdr)
+ 		io_hdr->host_status, io_hdr->driver_status);
+ 	if (io_hdr->sb_len_wr > 0) {
+ 		condlog(0, "- SCSI sense data: ");
+-		for (i=0; i<io_hdr->sb_len_wr; i++) {
+-			p += snprintf(p, 128*(io_hdr->sb_len_wr-i), "0x%02x ",
++		for (i = 0; i < io_hdr->sb_len_wr && i < 128; i++) {
++			p += snprintf(p, 5*(io_hdr->sb_len_wr-i), "0x%02x ",
+ 				      io_hdr->sbp[i]);
+ 		}
+ 		condlog(0, "%s", buf);
+-- 
+2.45.0
+
