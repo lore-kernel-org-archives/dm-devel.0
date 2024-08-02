@@ -1,48 +1,48 @@
 Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 319DE1849
-	for <dm-devel@lists.linux.dev>; Fri,  2 Aug 2024 04:22:52 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 976901849
+	for <dm-devel@lists.linux.dev>; Fri,  2 Aug 2024 04:24:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722572574; cv=none; b=mtNzakz3put09tEAPNSkCMq8VCdaxY6oPuQdF4CSnQ7iqwZulv7yjNIUlXIFum3KVJYfkLuD18wLLvFzdBwbah+GaUKNfPiqxk0V6YMMcc+xeV4RmfADrXDFfU8ak22ZM5biE7Sj9Jqd4ENRBkvSGh6QcL8fxWbOVxLx5CpMrR8=
+	t=1722572649; cv=none; b=DPILHRwuTPqWVq5SG8J1YrhdatBKTN1qACBXpWUSHrR09e/56CG0osx9As0lKXKYeOWtnX20Zs9hhC12ky+694eoewJYsp8ZNugA+lC6pUZSnIYJtxzHtOYQhSDQMqD81MQbg0AiJ8rg177xIkVRXdBS1v+Z1pDn3DsdLD4E26U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722572574; c=relaxed/simple;
-	bh=3ORW/fD0Ep6n3DQmpaTVum7vWFjXkSkdTlzSd3jeshM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=k1KtH+Gua0OR78LCFl5EFt6JMv/rZDfsLGGS22hPfemLqtNGmWnYZXl/+ztbQ+E9JKUxwnpr5VXAODBn80cH4qcbcbgnUYTwdZxDOXYFBv3mLHPpUwa2Ib4timRzdMoOlszj+CXAMmhjNXEiUnSw9FznzUKjPZ28YzY+rLKwziw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=Oipho2WI; arc=none smtp.client-ip=205.220.168.131
+	s=arc-20240116; t=1722572649; c=relaxed/simple;
+	bh=QmNwr3lsB5Zwkp+KlwWIdj9bsNKp3PtP6oMvA/7wYT0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
+	 In-Reply-To:Content-Type; b=GKoEdzIFKpqoYXxnXVsfV0MUWgK2OFk/2dxL1h6ufhwufkWUM4G8KRY4r/Og3AboqueWIGo39KMEotyftgdXZtjh3e2eSTTJHVC7vGfJ2xiXmnJ45wQd6Wc3L/kWH48an/2evHqB6kjSC1+28D2iXpiXKrYyZ3XEiQIriC6taqw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=JoWQZFVy; arc=none smtp.client-ip=205.220.168.131
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="Oipho2WI"
-Received: from pps.filterd (m0279862.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 471LbKPH009482;
-	Fri, 2 Aug 2024 04:22:12 GMT
+	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="JoWQZFVy"
+Received: from pps.filterd (m0279865.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 471LaP75030334;
+	Fri, 2 Aug 2024 04:23:29 GMT
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
-	content-transfer-encoding:content-type:date:from:in-reply-to
+	cc:content-transfer-encoding:content-type:date:from:in-reply-to
 	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
-	eee2pD8O4aEZsVujc0se8xleY3KuTmsCvP2EL3/ttjk=; b=Oipho2WI2oaivVEF
-	eplSRrg5esmScWX0RSm9Zey5KArh+3md24UBr6/CtUZKKASscVTqkqW8mAl9HmxN
-	Jtzirkk9Q+FtCQhuTJTDkUqXVHmbQX4P6LXHnOt+IyYH56IFkPIHz4VC0zLi4zX7
-	kubtxKVJskh1cf+mKwTVjw8Nsair0LvGKkP5N6wRA2A5ffjZYEKAdd+XhkCr3qLq
-	6cudqa1T1XH3EIqHh8prFcRSeEqcEbMSWpjVoVPEYPiQLnKIuPmmIA5zkMKBf1yR
-	PgdeWpm28MNzkqVX8fc2tGi1BtObKVg7OCSexzYzE1ffEK+QIBbyYLwa6w7kY0e0
-	L9FVaA==
-Received: from nasanppmta01.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 40rje6rnc4-1
+	Yc4I7idyrxzQa/AbB5FzqC6ekVPfwrY+aDIwwsos468=; b=JoWQZFVyDRJyENAS
+	VX77AYfJv4NSDZDUyaO9PHKZTq3Yv/T7ZJQqmziasgWeqxq1UWUnyWm5pC58sGhY
+	fx/BoAgq+bbnLBtr+HK2piGyYbfSweHSeWRLENoGtHme7OK8HvUiJiI3KlN3hHyN
+	99Dc09hUyQllEh4UOkTCT/cw2mGo/X9Zf6Y7tx/jzjCfvD8DPFgxTIOgM9sgtaL2
+	vU24PBRDgWontnWKwOLsTssS9UmQUVUrNKg4/CC1r0O5ZPiM1VFDJJshHEB4ZrGC
+	sNsJoAbruBxo4qfihUc78M1TEhjWb9cIhBz+HXaWK31kVz/qC/+ZsAsFbZTTAyDK
+	4q2Izw==
+Received: from nasanppmta03.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 40rje38nmf-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 02 Aug 2024 04:22:12 +0000 (GMT)
+	Fri, 02 Aug 2024 04:23:29 +0000 (GMT)
 Received: from nasanex01a.na.qualcomm.com (nasanex01a.na.qualcomm.com [10.52.223.231])
-	by NASANPPMTA01.qualcomm.com (8.17.1.19/8.17.1.19) with ESMTPS id 4724MBnp015592
+	by NASANPPMTA03.qualcomm.com (8.17.1.19/8.17.1.19) with ESMTPS id 4724NSkJ023055
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 2 Aug 2024 04:22:11 GMT
+	Fri, 2 Aug 2024 04:23:28 GMT
 Received: from [10.216.16.55] (10.80.80.8) by nasanex01a.na.qualcomm.com
  (10.52.223.231) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.9; Thu, 1 Aug 2024
- 21:22:05 -0700
-Message-ID: <345bde7b-ac61-8265-8dce-d6a9dc1ca2fe@quicinc.com>
-Date: Fri, 2 Aug 2024 09:51:44 +0530
+ 21:23:21 -0700
+Message-ID: <15eddfa1-aed4-b18e-dfbe-ab23bb411873@quicinc.com>
+Date: Fri, 2 Aug 2024 09:53:18 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -51,10 +51,11 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
  Thunderbird/102.9.1
-Subject: Re: [PATCH 2/6] md: dm-crypt: Set cc->iv_size to 4 bytes
+Subject: Re: [PATCH 0/6] Add Additional algo mode for inline encryption
 Content-Language: en-US
-To: Milan Broz <gmazyland@gmail.com>, <axboe@kernel.dk>, <agk@redhat.com>,
-        <snitzer@kernel.org>, <mpatocka@redhat.com>, <adrian.hunter@intel.com>,
+To: Mikulas Patocka <mpatocka@redhat.com>
+CC: <axboe@kernel.dk>, <gmazyland@gmail.com>, <agk@redhat.com>,
+        <snitzer@kernel.org>, <adrian.hunter@intel.com>,
         <quic_asutoshd@quicinc.com>, <ritesh.list@gmail.com>,
         <ulf.hansson@linaro.org>, <andersson@kernel.org>,
         <konrad.dybcio@linaro.org>, <linux-block@vger.kernel.org>,
@@ -63,74 +64,52 @@ To: Milan Broz <gmazyland@gmail.com>, <axboe@kernel.dk>, <agk@redhat.com>,
         <quic_viswanat@quicinc.com>, <quic_srichara@quicinc.com>,
         <quic_varada@quicinc.com>
 References: <20240730115838.3507302-1-quic_mdalam@quicinc.com>
- <20240730115838.3507302-3-quic_mdalam@quicinc.com>
- <c897b521-0520-429e-9e94-ba7da74a921f@gmail.com>
+ <cbf18ce7-f9bd-c05d-d22-f56ca4ae3240@redhat.com>
 From: Md Sadre Alam <quic_mdalam@quicinc.com>
-In-Reply-To: <c897b521-0520-429e-9e94-ba7da74a921f@gmail.com>
+In-Reply-To: <cbf18ce7-f9bd-c05d-d22-f56ca4ae3240@redhat.com>
 Content-Type: text/plain; charset="UTF-8"; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
  nasanex01a.na.qualcomm.com (10.52.223.231)
 X-QCInternal: smtphost
 X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-ORIG-GUID: N2fic3gubwvizZS42k8gs0OxAHQmF50K
-X-Proofpoint-GUID: N2fic3gubwvizZS42k8gs0OxAHQmF50K
+X-Proofpoint-ORIG-GUID: YCUjs79D2phKMszWOC2fayLXduWCRL5F
+X-Proofpoint-GUID: YCUjs79D2phKMszWOC2fayLXduWCRL5F
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.28.16
  definitions=2024-08-02_01,2024-08-01_01,2024-05-17_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 malwarescore=0 phishscore=0
- spamscore=0 lowpriorityscore=0 impostorscore=0 mlxscore=0
- priorityscore=1501 suspectscore=0 mlxlogscore=999 clxscore=1011
- adultscore=0 bulkscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxlogscore=999
+ lowpriorityscore=0 clxscore=1015 phishscore=0 impostorscore=0
+ suspectscore=0 mlxscore=0 priorityscore=1501 malwarescore=0 adultscore=0
+ spamscore=0 bulkscore=0 classifier=spam adjust=0 reason=mlx scancount=1
  engine=8.19.0-2407110000 definitions=main-2408020027
 
 
 
-On 7/31/2024 6:11 PM, Milan Broz wrote:
-> On 7/30/24 1:58 PM, Md Sadre Alam wrote:
->> Set cc->iv_size to 4 bytes instead of 8 bytes, since
->> this cc->iv_size is passing as data unit bytes to
->> blk_crypto_init_key(). Since CQHCI driver having
->> limitation for data unit bytes to 32-bit only.
+On 7/31/2024 6:18 PM, Mikulas Patocka wrote:
 > 
-> In dm-crypt, plain64 IV is defined as "little-endian 64bit IV"
-> and was introduced to fix security problem when 32bit "plain" IV
-> overflows and IV is reused.
 > 
-> In that case you can move ciphertext sector between places with
-> the same IV (but different offsets) and these will be still
-> correctly decrypted.
+> On Tue, 30 Jul 2024, Md Sadre Alam wrote:
 > 
-> If I understand it correctly, this reintroduces the same problem here.
-> If you have 32bit only, just use "plain" and do not support plain64 here.
-> 
-> (In general, I do not understand why you are sending patches
-> for dm-crypt code that is clearly not upstream.
-> I hope this code will never be accepted.)
-
-  Thanks for reviewing. As Mikulas suggested for
-  new target driver for "inline-crypt". Will create
-  new target driver and post it.
-
-> 
-> Milan
-> 
+>> This series of patches add additional modes for inline encryption
 >>
->> Signed-off-by: Md Sadre Alam <quic_mdalam@quicinc.com>
->> ---
->>   drivers/md/dm-crypt.c | 2 +-
->>   1 file changed, 1 insertion(+), 1 deletion(-)
+>> This series of patches depends on [1] Add inline encryption support for dm-crypt
 >>
->> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
->> index 37add222b169..c0257d961968 100644
->> --- a/drivers/md/dm-crypt.c
->> +++ b/drivers/md/dm-crypt.c
->> @@ -2490,7 +2490,7 @@ static int crypt_select_inline_crypt_mode(struct dm_target *ti, char *cipher,
->>       }
->>       if (ivmode == NULL || (strcmp(ivmode, "plain64") == 0)) {
->> -        cc->iv_size = 8;
->> +        cc->iv_size = 4;
->>       } else {
->>           ti->error = "Invalid IV mode for inline_crypt";
->>           return -EINVAL;
+>> [1]: https://lore.kernel.org/all/b45d3b40-2587-04dc-9601-a9251dacf806@opensource.wdc.com/T/#ma01f08a941107217c93680fa25e96e8d406df790
+>>
+>> These patches tested on IPQ9574 with eMMC ICE for raw partition
+>> encryption/decryption.
+> 
+> Hi
+> 
+> I discussed it with Milan Broz <gmazyland@gmail.com> and we concluded that
+> there is no need to bloat dm-crypt with this logic.
+> 
+> We believe that you should create your own target (like
+> "dm-inline-crypt"), it would work like a linear target and it will attach
+> encryption requests to the bios that it processes.
+> 
+   Thanks for reviewing. Will create new target driver "dm-inline-crypt".
+
+> Mikulas
 > 
