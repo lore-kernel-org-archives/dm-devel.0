@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id EE0F114D293;
-	Sat,  3 Aug 2024 06:08:47 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id D659D14D2B4;
+	Sat,  3 Aug 2024 06:08:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722665333; cv=none; b=G1O3u1IXKqQ1jpBnhl1FtNO8PDL/OsXnLGs9pwa0wh9BHWY4NkH5RcLOgvjOsJScdmfD0Z73orMjqzUX48LC1UBzAUH5qgnCedYeftid1o3nnVZX9mXDi42QOBcR781VESDPIZ7z4+0otoil4ffti9DE4t30ttRtklBxbT1RWEw=
+	t=1722665333; cv=none; b=RsidOUERHUvBClSt0939oZ+DLlwoHlJE4B6l49kdV7nG6WoRoiQkzkPP2n2db5Lt3LVeKvDvKDakhH76TN3LFurpScwd737y+ydkSXBB8O581wG+W3LLncH3WfKt9t4XGBlgInXWurICP+oI/CIkuBbnU05dSsUpCqUivPbAyWE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1722665333; c=relaxed/simple;
-	bh=SpeLY3QYrPLbzOwA/B5BeJ6wXSFfjK03mPw9BBljPGY=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=V8kXOyVXXSgNX972HQFjrd33x3aoawO3+0LXKMJXUVvxq0ouJXRjVRmqwj+U7zrHmU1KPe4vqYlm7KSOfX1mOxIZWhf+KN14dFEHFsAolnXRZJVza9kxlAoUEMHKfrBQNfPsW5ND/4d45vGItLS+to2p41HbDIulw5g8hvoF/14=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=H6+LA1ib; arc=none smtp.client-ip=13.77.154.182
+	bh=Lr1/5762jolhoIVm1ES8kq8CiEkB/k7/d8Pc2rNy5t0=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=bDhJsdrOnFY29G6tcrrHQpNlRejqKabzXwDZxfq4/Ft9WXMbX/Gk4GPA/6g7nuyskijjQc2sByNuzEJWI/O8jJw/IlJ1iA84XZi/st+AGeyHhXfP95YGnD2iKYSBDmZMKyOcn36jLPNhfIZdGpSao/Qgdh3fN2jd+vZS+aUSO3E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=lHMHrX1Z; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="H6+LA1ib"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="lHMHrX1Z"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id BFCC620B7404; Fri,  2 Aug 2024 23:08:40 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com BFCC620B7404
+	id 04B4920B740C; Fri,  2 Aug 2024 23:08:40 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 04B4920B740C
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1722665320;
-	bh=8NsYu1UcYZC/kqgFfh+6cO5zyAqSfnlh5D0qwSaBrTc=;
+	s=default; t=1722665321;
+	bh=G/d8uGEfvyoI23HRjVx6kk8TYaHJTRH0ISGoK6pqpC4=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=H6+LA1ibEcYHuI7CB+EFnwO7WyrnzaFex41pjRy+d1zLez+EJMIjXHqdrwKEhe8lI
-	 HIUNJblsQ6ATFqs1qaivqaK3GiO2BzEme7CEecs2lhdMUmQ/Uh6NR/2DWc7CwOgiDJ
-	 OdYdeJVH/VlLuB8FNXmv4XOmw0i6/e1bqZOdWxIQ=
+	b=lHMHrX1ZHsyVfjTm5YZH+foTV/R3E4Zq8/cr+aqc6UAH0rZI5x5guZSxuGUJWJbhs
+	 77WxqEuZQjlZlByoVrFzM50c6B8atmLqg+g2SkuHQzcNodJ9vnGraAMX+fximqYAzY
+	 9V6x3xRK+lIZ0L1D+zmMeBWeZoyY3t9ZFkGa1O3E=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -44,11 +44,11 @@ Cc: linux-doc@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	audit@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
-	Deven Bowers <deven.desai@linux.microsoft.com>,
-	Fan Wu <wufan@linux.microsoft.com>
-Subject: [PATCH v20 12/20] dm verity: expose root hash digest and signature data to LSMs
-Date: Fri,  2 Aug 2024 23:08:26 -0700
-Message-Id: <1722665314-21156-13-git-send-email-wufan@linux.microsoft.com>
+	Fan Wu <wufan@linux.microsoft.com>,
+	Deven Bowers <deven.desai@linux.microsoft.com>
+Subject: [PATCH v20 16/20] ipe: enable support for fs-verity as a trust provider
+Date: Fri,  2 Aug 2024 23:08:30 -0700
+Message-Id: <1722665314-21156-17-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
 References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
@@ -58,339 +58,537 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
-From: Deven Bowers <deven.desai@linux.microsoft.com>
+Enable IPE policy authors to indicate trust for a singular fsverity
+file, identified by the digest information, through "fsverity_digest"
+and all files using valid fsverity builtin signatures via
+"fsverity_signature".
 
-dm-verity provides a strong guarantee of a block device's integrity. As
-a generic way to check the integrity of a block device, it provides
-those integrity guarantees to its higher layers, including the filesystem
-level.
+This enables file-level integrity claims to be expressed in IPE,
+allowing individual files to be authorized, giving some flexibility
+for policy authors. Such file-level claims are important to be expressed
+for enforcing the integrity of packages, as well as address some of the
+scalability issues in a sole dm-verity based solution (# of loop back
+devices, etc).
 
-However, critical security metadata like the dm-verity roothash and its
-signing information are not easily accessible to the LSMs.
-To address this limitation, this patch introduces a mechanism to store
-and manage these essential security details within a newly added LSM blob
-in the block_device structure.
-
-This addition allows LSMs to make access control decisions on the integrity
-data stored within the block_device, enabling more flexible security
-policies. For instance, LSMs can now revoke access to dm-verity devices
-based on their roothashes, ensuring that only authorized and verified
-content is accessible. Additionally, LSMs can enforce policies to only
-allow files from dm-verity devices that have a valid digital signature to
-execute, effectively blocking any unsigned files from execution, thus
-enhancing security against unauthorized modifications.
-
-The patch includes new hook calls, `security_bdev_setintegrity()`, in
-dm-verity to expose the dm-verity roothash and the roothash signature to
-LSMs via preresume() callback. By using the preresume() callback, it
-ensures that the security metadata is consistently in sync with the
-metadata of the dm-verity target in the current active mapping table.
-The hook calls are depended on CONFIG_SECURITY.
+This solution cannot be done in userspace as the minimum threat that
+IPE should mitigate is an attacker downloads malicious payload with
+all required dependencies. These dependencies can lack the userspace
+check, bypassing the protection entirely. A similar attack succeeds if
+the userspace component is replaced with a version that does not
+perform the check. As a result, this can only be done in the common
+entry point - the kernel.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+
 ---
-v2:
-  + No Changes
-
-v3:
-  + No changes
-
-v4:
-  + No changes
-
-v5:
-  + No changes
-
-v6:
-  + Fix an improper cleanup that can result in
-    a leak
+v1-v6:
+  + Not present
 
 v7:
-  + Squash patch 08/12, 10/12 to [11/16]
-  + Use part0 for block_device, to retrieve the block_device, when
-    calling security_bdev_setsecurity
+  Introduced
 
 v8:
-  + Undo squash of 08/12, 10/12 - separating drivers/md/ from
-    security/ & block/
-  + Use common-audit function for dmverity_signature.
-  + Change implementation for storing the dm-verity digest to use the
-    newly introduced dm_verity_digest structure introduced in patch
-    14/20.
-  + Create new structure, dm_verity_digest, containing digest algorithm,
-    size, and digest itself to pass to the LSM layer. V7 was missing the
-    algorithm.
-  + Create an associated public header containing this new structure and
-    the key values for the LSM hook, specific to dm-verity.
-  + Additional information added to commit, discussing the layering of
-    the changes and how the information passed will be used.
+  * Undo squash of 08/12, 10/12 - separating drivers/md/ from security/
+  * Use common-audit function for fsverity_signature.
+  + Change fsverity implementation to use fsverity_get_digest
+  + prevent unnecessary copy of fs-verity signature data, instead
+    just check for presence of signature data.
+  + Remove free_inode_security hook, as the digest is now acquired
+    at runtime instead of via LSM blob.
 
 v9:
-  + No changes
+  + Adapt to the new parser
 
 v10:
-  + No changes
+  + Update the fsverity get digest call
 
 v11:
-  + Add an optional field to save signature
-  + Move the security hook call to the new finalize hook
+  + No changes
 
 v12:
-  + No changes
+  + Fix audit format
+  + Simplify property evaluation
 
 v13:
-  + No changes
+  + Remove the CONFIG_IPE_PROP_FS_VERITY dependency inside the parser
+    to make the policy grammar independent of the kernel config.
 
 v14:
-  + Correct code format
-  + Remove unnecessary header and switch to dm_disk()
+  + No changes
 
 v15:
-  + Refactor security_bdev_setsecurity() to security_bdev_setintegrity()
-  + Remove unnecessary headers
+  + Fix on grammar issue in Kconfig
+  + Switch hook to security_inode_setintegrity()
 
 v16:
-  + Use kmemdup to duplicate signature
-  + Clean up lsm blob data in error case
+  + Rewrite fsverity signature part in Kconfig
 
 v17:
-  + Switch to depend on CONFIG_SECURITY
-  + Use new enum name LSM_INT_DMVERITY_SIG_VALID
+  + Fix documentation issues
+  + Use new enum name LSM_INT_FSVERITY_BUILTINSIG_VALID
 
 v18:
-  + Amend commit title
-  + Fix incorrect error handling
-  + Make signature exposure depends on CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG
-  + Fix inaccurate comment
-  + Remove include/linux/dm-verity.h
-  + use crypto_ahash_alg_name(v->tfm) instead of v->alg_name
+  + Add Kconfig IPE_PROP_FS_VERITY_BUILTIN_SIG and make both FS_VERITY
+    Kconfigs auto-selected
 
 v19:
-  + Drop finalize callback and switch to preresume callback
-  + Adding NULL check to avoid kmemdup when sig is NULL
+  + No changes
 
 v20:
-  + Adding more documentation regarding the new setintegrity hook call
-  + Update the code for getting hash algorithm from either v->ahash_tfm
-    or v->shash_tfm
+  + No changes
 ---
- drivers/md/dm-verity-target.c | 118 ++++++++++++++++++++++++++++++++++
- drivers/md/dm-verity.h        |   6 ++
- include/linux/security.h      |   9 ++-
- 3 files changed, 132 insertions(+), 1 deletion(-)
+ security/ipe/Kconfig         |  26 ++++++++
+ security/ipe/audit.c         |  17 +++++
+ security/ipe/eval.c          | 123 ++++++++++++++++++++++++++++++++++-
+ security/ipe/eval.h          |  12 ++++
+ security/ipe/hooks.c         |  29 +++++++++
+ security/ipe/hooks.h         |   6 ++
+ security/ipe/ipe.c           |  13 ++++
+ security/ipe/ipe.h           |   3 +
+ security/ipe/policy.h        |   3 +
+ security/ipe/policy_parser.c |   6 ++
+ 10 files changed, 237 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index cf659c8feb29..24ba9a10444c 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -22,6 +22,7 @@
- #include <linux/scatterlist.h>
- #include <linux/string.h>
- #include <linux/jump_label.h>
-+#include <linux/security.h>
+diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+index 8279dddf92ad..6bc487b689e0 100644
+--- a/security/ipe/Kconfig
++++ b/security/ipe/Kconfig
+@@ -10,6 +10,8 @@ menuconfig SECURITY_IPE
+ 	select SYSTEM_DATA_VERIFICATION
+ 	select IPE_PROP_DM_VERITY if DM_VERITY
+ 	select IPE_PROP_DM_VERITY_SIGNATURE if DM_VERITY && DM_VERITY_VERIFY_ROOTHASH_SIG
++	select IPE_PROP_FS_VERITY if FS_VERITY
++	select IPE_PROP_FS_VERITY_BUILTIN_SIG if FS_VERITY && FS_VERITY_BUILTIN_SIGNATURES
+ 	help
+ 	  This option enables the Integrity Policy Enforcement LSM
+ 	  allowing users to define a policy to enforce a trust-based access
+@@ -39,6 +41,30 @@ config IPE_PROP_DM_VERITY_SIGNATURE
+ 	  volume, which has been mounted with a valid signed root hash,
+ 	  is evaluated.
  
- #define DM_MSG_PREFIX			"verity"
++	  If unsure, answer Y.
++
++config IPE_PROP_FS_VERITY
++	bool "Enable support for fs-verity based on file digest"
++	depends on FS_VERITY
++	help
++	  This option enables the 'fsverity_digest' property within IPE
++	  policies. The property evaluates to TRUE when a file is fsverity
++	  enabled and its digest matches the supplied digest value in the
++	  policy.
++
++	  if unsure, answer Y.
++
++config IPE_PROP_FS_VERITY_BUILTIN_SIG
++	bool "Enable support for fs-verity based on builtin signature"
++	depends on FS_VERITY && FS_VERITY_BUILTIN_SIGNATURES
++	help
++	  This option enables the 'fsverity_signature' property within IPE
++	  policies. The property evaluates to TRUE when a file is fsverity
++	  enabled and it has a valid builtin signature whose signing cert
++	  is in the .fs-verity keyring.
++
++	  if unsure, answer Y.
++
+ endmenu
  
-@@ -930,6 +931,41 @@ static void verity_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	limits->dma_alignment = limits->logical_block_size - 1;
+ endif
+diff --git a/security/ipe/audit.c b/security/ipe/audit.c
+index 8e21879e96c7..f05f0caa4850 100644
+--- a/security/ipe/audit.c
++++ b/security/ipe/audit.c
+@@ -56,6 +56,9 @@ static const char *const audit_prop_names[__IPE_PROP_MAX] = {
+ 	"dmverity_roothash=",
+ 	"dmverity_signature=FALSE",
+ 	"dmverity_signature=TRUE",
++	"fsverity_digest=",
++	"fsverity_signature=FALSE",
++	"fsverity_signature=TRUE",
+ };
+ 
+ /**
+@@ -69,6 +72,17 @@ static void audit_dmv_roothash(struct audit_buffer *ab, const void *rh)
+ 	ipe_digest_audit(ab, rh);
  }
  
-+#ifdef CONFIG_SECURITY
-+
-+static int verity_init_sig(struct dm_verity *v, const void *sig,
-+			   size_t sig_size)
-+{
-+	v->sig_size = sig_size;
-+
-+	if (sig) {
-+		v->root_digest_sig = kmemdup(sig, v->sig_size, GFP_KERNEL);
-+		if (!v->root_digest_sig)
-+			return -ENOMEM;
-+	}
-+
-+	return 0;
-+}
-+
-+static void verity_free_sig(struct dm_verity *v)
-+{
-+	kfree(v->root_digest_sig);
-+}
-+
-+#else
-+
-+static inline int verity_init_sig(struct dm_verity *v, const void *sig,
-+				  size_t sig_size)
-+{
-+	return 0;
-+}
-+
-+static inline void verity_free_sig(struct dm_verity *v)
-+{
-+}
-+
-+#endif /* CONFIG_SECURITY */
-+
- static void verity_dtr(struct dm_target *ti)
- {
- 	struct dm_verity *v = ti->private;
-@@ -949,6 +985,7 @@ static void verity_dtr(struct dm_target *ti)
- 	kfree(v->initial_hashstate);
- 	kfree(v->root_digest);
- 	kfree(v->zero_digest);
-+	verity_free_sig(v);
- 
- 	if (v->ahash_tfm) {
- 		static_branch_dec(&ahash_enabled);
-@@ -1418,6 +1455,13 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		ti->error = "Root hash verification failed";
- 		goto bad;
- 	}
-+
-+	r = verity_init_sig(v, verify_args.sig, verify_args.sig_size);
-+	if (r < 0) {
-+		ti->error = "Cannot allocate root digest signature";
-+		goto bad;
-+	}
-+
- 	v->hash_per_block_bits =
- 		__fls((1 << v->hash_dev_block_bits) / v->digest_size);
- 
-@@ -1559,8 +1603,79 @@ int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest, unsigned i
- 	return 0;
- }
- 
-+#ifdef CONFIG_SECURITY
-+
-+#ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG
-+
-+static int verity_security_set_signature(struct block_device *bdev,
-+					 struct dm_verity *v)
-+{
-+	/*
-+	 * if the dm-verity target is unsigned, v->root_digest_sig will
-+	 * be NULL, and the hook call is still required to let LSMs mark
-+	 * the device as unsigned. This information is crucial for LSMs to
-+	 * block operations such as execution on unsigned files
-+	 */
-+	return security_bdev_setintegrity(bdev,
-+					  LSM_INT_DMVERITY_SIG_VALID,
-+					  v->root_digest_sig,
-+					  v->sig_size);
-+}
-+
-+#else
-+
-+static inline int verity_security_set_signature(struct block_device *bdev,
-+						struct dm_verity *v)
-+{
-+	return 0;
-+}
-+
-+#endif /* CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG */
-+
-+/*
-+ * Expose verity target's root hash and signature data to LSMs before resume.
-+ *
-+ * Returns 0 on success, or -ENOMEM if the system is out of memory.
++/**
++ * audit_fsv_digest() - audit the digest of a fsverity_digest property.
++ * @ab: Supplies a pointer to the audit_buffer to append to.
++ * @d: Supplies a pointer to the digest structure.
 + */
-+static int verity_preresume(struct dm_target *ti)
++static void audit_fsv_digest(struct audit_buffer *ab, const void *d)
 +{
-+	struct block_device *bdev;
-+	struct dm_verity_digest root_digest;
-+	struct dm_verity *v;
-+	int r;
-+
-+	v = ti->private;
-+	bdev = dm_disk(dm_table_get_md(ti->table))->part0;
-+	root_digest.digest = v->root_digest;
-+	root_digest.digest_len = v->digest_size;
-+	if (static_branch_unlikely(&ahash_enabled) && !v->shash_tfm)
-+		root_digest.alg = crypto_ahash_alg_name(v->ahash_tfm);
-+	else
-+		root_digest.alg = crypto_shash_alg_name(v->shash_tfm);
-+
-+	r = security_bdev_setintegrity(bdev, LSM_INT_DMVERITY_ROOTHASH, &root_digest,
-+				       sizeof(root_digest));
-+	if (r)
-+		return r;
-+
-+	r =  verity_security_set_signature(bdev, v);
-+	if (r)
-+		goto bad;
-+
-+	return 0;
-+
-+bad:
-+
-+	security_bdev_setintegrity(bdev, LSM_INT_DMVERITY_ROOTHASH, NULL, 0);
-+
-+	return r;
++	audit_log_format(ab, "%s", audit_prop_names[IPE_PROP_FSV_DIGEST]);
++	ipe_digest_audit(ab, d);
 +}
 +
-+#endif /* CONFIG_SECURITY */
+ /**
+  * audit_rule() - audit an IPE policy rule.
+  * @ab: Supplies a pointer to the audit_buffer to append to.
+@@ -85,6 +99,9 @@ static void audit_rule(struct audit_buffer *ab, const struct ipe_rule *r)
+ 		case IPE_PROP_DMV_ROOTHASH:
+ 			audit_dmv_roothash(ab, ptr->value);
+ 			break;
++		case IPE_PROP_FSV_DIGEST:
++			audit_fsv_digest(ab, ptr->value);
++			break;
+ 		default:
+ 			audit_log_format(ab, "%s", audit_prop_names[ptr->type]);
+ 			break;
+diff --git a/security/ipe/eval.c b/security/ipe/eval.c
+index 2b80cc399ac3..21439c5be336 100644
+--- a/security/ipe/eval.c
++++ b/security/ipe/eval.c
+@@ -10,6 +10,7 @@
+ #include <linux/sched.h>
+ #include <linux/rcupdate.h>
+ #include <linux/moduleparam.h>
++#include <linux/fsverity.h>
+ 
+ #include "ipe.h"
+ #include "eval.h"
+@@ -51,6 +52,36 @@ static void build_ipe_bdev_ctx(struct ipe_eval_ctx *ctx, const struct inode *con
+ }
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
+ 
++#ifdef CONFIG_IPE_PROP_FS_VERITY
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++static void build_ipe_inode_blob_ctx(struct ipe_eval_ctx *ctx,
++				     const struct inode *const ino)
++{
++	ctx->ipe_inode = ipe_inode(ctx->ino);
++}
++#else
++static inline void build_ipe_inode_blob_ctx(struct ipe_eval_ctx *ctx,
++					    const struct inode *const ino)
++{
++}
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
 +
- static struct target_type verity_target = {
- 	.name		= "verity",
-+/* Note: the LSMs depend on the singleton and immutable features */
- 	.features	= DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
- 	.version	= {1, 10, 0},
- 	.module		= THIS_MODULE,
-@@ -1571,6 +1686,9 @@ static struct target_type verity_target = {
- 	.prepare_ioctl	= verity_prepare_ioctl,
- 	.iterate_devices = verity_iterate_devices,
- 	.io_hints	= verity_io_hints,
-+#ifdef CONFIG_SECURITY
-+	.preresume	= verity_preresume,
-+#endif /* CONFIG_SECURITY */
- };
- module_dm(verity);
++/**
++ * build_ipe_inode_ctx() - Build inode fields of an evaluation context.
++ * @ctx: Supplies a pointer to the context to be populated.
++ * @ino: Supplies the inode struct of the file triggered IPE event.
++ */
++static void build_ipe_inode_ctx(struct ipe_eval_ctx *ctx, const struct inode *const ino)
++{
++	ctx->ino = ino;
++	build_ipe_inode_blob_ctx(ctx, ino);
++}
++#else
++static void build_ipe_inode_ctx(struct ipe_eval_ctx *ctx, const struct inode *const ino)
++{
++}
++#endif /* CONFIG_IPE_PROP_FS_VERITY */
++
+ /**
+  * ipe_build_eval_ctx() - Build an ipe evaluation context.
+  * @ctx: Supplies a pointer to the context to be populated.
+@@ -63,13 +94,17 @@ void ipe_build_eval_ctx(struct ipe_eval_ctx *ctx,
+ 			enum ipe_op_type op,
+ 			enum ipe_hook_type hook)
+ {
++	struct inode *ino;
++
+ 	ctx->file = file;
+ 	ctx->op = op;
+ 	ctx->hook = hook;
  
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index aac3a1b1d94a..ea2da450f173 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -45,6 +45,9 @@ struct dm_verity {
- 	u8 *salt;		/* salt: its size is salt_size */
- 	u8 *initial_hashstate;	/* salted initial state, if shash_tfm is set */
- 	u8 *zero_digest;	/* digest for a zero block */
-+#ifdef CONFIG_SECURITY
-+	u8 *root_digest_sig;	/* signature of the root digest */
-+#endif /* CONFIG_SECURITY */
- 	unsigned int salt_size;
- 	sector_t data_start;	/* data offset in 512-byte sectors */
- 	sector_t hash_start;	/* hash start in blocks */
-@@ -58,6 +61,9 @@ struct dm_verity {
- 	bool hash_failed:1;	/* set if hash of any block failed */
- 	bool use_bh_wq:1;	/* try to verify in BH wq before normal work-queue */
- 	unsigned int digest_size;	/* digest size for the current hash algorithm */
-+#ifdef CONFIG_SECURITY
-+	unsigned int sig_size;	/* root digest signature size */
-+#endif /* CONFIG_SECURITY */
- 	unsigned int hash_reqsize; /* the size of temporary space for crypto */
- 	enum verity_mode mode;	/* mode for handling verification errors */
- 	unsigned int corrupted_errs;/* Number of errors for corrupted blocks */
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 39aec1c96d6a..0604893f2f9e 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -83,8 +83,15 @@ enum lsm_event {
- 	LSM_POLICY_CHANGE,
- };
+ 	if (file) {
+ 		build_ipe_sb_ctx(ctx, file);
+-		build_ipe_bdev_ctx(ctx, d_real_inode(file->f_path.dentry));
++		ino = d_real_inode(file->f_path.dentry);
++		build_ipe_bdev_ctx(ctx, ino);
++		build_ipe_inode_ctx(ctx, ino);
+ 	}
+ }
  
-+struct dm_verity_digest {
-+	const char *alg;
-+	const u8 *digest;
-+	size_t digest_len;
+@@ -150,6 +185,86 @@ static bool evaluate_dmv_sig_true(const struct ipe_eval_ctx *const ctx)
+ }
+ #endif /* CONFIG_IPE_PROP_DM_VERITY_SIGNATURE */
+ 
++#ifdef CONFIG_IPE_PROP_FS_VERITY
++/**
++ * evaluate_fsv_digest() - Evaluate @ctx against a fsv digest property.
++ * @ctx: Supplies a pointer to the context being evaluated.
++ * @p: Supplies a pointer to the property being evaluated.
++ *
++ * Return:
++ * * %true	- The current @ctx match the @p
++ * * %false	- The current @ctx doesn't match the @p
++ */
++static bool evaluate_fsv_digest(const struct ipe_eval_ctx *const ctx,
++				struct ipe_prop *p)
++{
++	enum hash_algo alg;
++	u8 digest[FS_VERITY_MAX_DIGEST_SIZE];
++	struct digest_info info;
++
++	if (!ctx->ino)
++		return false;
++	if (!fsverity_get_digest((struct inode *)ctx->ino,
++				 digest,
++				 NULL,
++				 &alg))
++		return false;
++
++	info.alg = hash_algo_name[alg];
++	info.digest = digest;
++	info.digest_len = hash_digest_size[alg];
++
++	return ipe_digest_eval(p->value, &info);
++}
++#else
++static bool evaluate_fsv_digest(const struct ipe_eval_ctx *const ctx,
++				struct ipe_prop *p)
++{
++	return false;
++}
++#endif /* CONFIG_IPE_PROP_FS_VERITY */
++
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++/**
++ * evaluate_fsv_sig_false() - Evaluate @ctx against a fsv sig false property.
++ * @ctx: Supplies a pointer to the context being evaluated.
++ *
++ * Return:
++ * * %true	- The current @ctx match the property
++ * * %false	- The current @ctx doesn't match the property
++ */
++static bool evaluate_fsv_sig_false(const struct ipe_eval_ctx *const ctx)
++{
++	return !ctx->ino ||
++	       !IS_VERITY(ctx->ino) ||
++	       !ctx->ipe_inode ||
++	       !ctx->ipe_inode->fs_verity_signed;
++}
++
++/**
++ * evaluate_fsv_sig_true() - Evaluate @ctx against a fsv sig true property.
++ * @ctx: Supplies a pointer to the context being evaluated.
++ *
++ * Return:
++ * * %true - The current @ctx match the property
++ * * %false - The current @ctx doesn't match the property
++ */
++static bool evaluate_fsv_sig_true(const struct ipe_eval_ctx *const ctx)
++{
++	return !evaluate_fsv_sig_false(ctx);
++}
++#else
++static bool evaluate_fsv_sig_false(const struct ipe_eval_ctx *const ctx)
++{
++	return false;
++}
++
++static bool evaluate_fsv_sig_true(const struct ipe_eval_ctx *const ctx)
++{
++	return false;
++}
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
++
+ /**
+  * evaluate_property() - Analyze @ctx against a rule property.
+  * @ctx: Supplies a pointer to the context to be evaluated.
+@@ -176,6 +291,12 @@ static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
+ 		return evaluate_dmv_sig_false(ctx);
+ 	case IPE_PROP_DMV_SIG_TRUE:
+ 		return evaluate_dmv_sig_true(ctx);
++	case IPE_PROP_FSV_DIGEST:
++		return evaluate_fsv_digest(ctx, p);
++	case IPE_PROP_FSV_SIG_FALSE:
++		return evaluate_fsv_sig_false(ctx);
++	case IPE_PROP_FSV_SIG_TRUE:
++		return evaluate_fsv_sig_true(ctx);
+ 	default:
+ 		return false;
+ 	}
+diff --git a/security/ipe/eval.h b/security/ipe/eval.h
+index 4901df0e1369..fef65a36468c 100644
+--- a/security/ipe/eval.h
++++ b/security/ipe/eval.h
+@@ -31,6 +31,12 @@ struct ipe_bdev {
+ };
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
+ 
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++struct ipe_inode {
++	bool fs_verity_signed;
 +};
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
 +
- enum lsm_integrity_type {
--	__LSM_INT_MAX
-+	LSM_INT_DMVERITY_SIG_VALID,
-+	LSM_INT_DMVERITY_ROOTHASH,
+ struct ipe_eval_ctx {
+ 	enum ipe_op_type op;
+ 	enum ipe_hook_type hook;
+@@ -40,6 +46,12 @@ struct ipe_eval_ctx {
+ #ifdef CONFIG_IPE_PROP_DM_VERITY
+ 	const struct ipe_bdev *ipe_bdev;
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
++#ifdef CONFIG_IPE_PROP_FS_VERITY
++	const struct inode *ino;
++#endif /* CONFIG_IPE_PROP_FS_VERITY */
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++	const struct ipe_inode *ipe_inode;
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
  };
  
- /*
+ enum ipe_match {
+diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
+index 0b7c66dc15d3..d0323b81cd8f 100644
+--- a/security/ipe/hooks.c
++++ b/security/ipe/hooks.c
+@@ -283,3 +283,32 @@ int ipe_bdev_setintegrity(struct block_device *bdev, enum lsm_integrity_type typ
+ 	return -ENOMEM;
+ }
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
++
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++/**
++ * ipe_inode_setintegrity() - save integrity data from a inode to IPE's LSM blob.
++ * @inode: The inode to source the security blob from.
++ * @type: Supplies the integrity type.
++ * @value: The value to be stored.
++ * @size: The size of @value.
++ *
++ * This hook is currently used to save the existence of a validated fs-verity
++ * builtin signature into LSM blob.
++ *
++ * Return: %0 on success. If an error occurs, the function will return the
++ * -errno.
++ */
++int ipe_inode_setintegrity(const struct inode *inode,
++			   enum lsm_integrity_type type,
++			   const void *value, size_t size)
++{
++	struct ipe_inode *inode_sec = ipe_inode(inode);
++
++	if (type == LSM_INT_FSVERITY_BUILTINSIG_VALID) {
++		inode_sec->fs_verity_signed = size > 0 && value;
++		return 0;
++	}
++
++	return -EINVAL;
++}
++#endif /* CONFIG_CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
+diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
+index 4d585fb6ada3..38d4a387d039 100644
+--- a/security/ipe/hooks.h
++++ b/security/ipe/hooks.h
+@@ -9,6 +9,7 @@
+ #include <linux/binfmts.h>
+ #include <linux/security.h>
+ #include <linux/blk_types.h>
++#include <linux/fsverity.h>
+ 
+ enum ipe_hook_type {
+ 	IPE_HOOK_BPRM_CHECK = 0,
+@@ -43,4 +44,9 @@ int ipe_bdev_setintegrity(struct block_device *bdev, enum lsm_integrity_type typ
+ 			  const void *value, size_t len);
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
+ 
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++int ipe_inode_setintegrity(const struct inode *inode, enum lsm_integrity_type type,
++			   const void *value, size_t size);
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
++
+ #endif /* _IPE_HOOKS_H */
+diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+index 03c82a80744a..b410db0b486c 100644
+--- a/security/ipe/ipe.c
++++ b/security/ipe/ipe.c
+@@ -16,6 +16,9 @@ static struct lsm_blob_sizes ipe_blobs __ro_after_init = {
+ #ifdef CONFIG_IPE_PROP_DM_VERITY
+ 	.lbs_bdev = sizeof(struct ipe_bdev),
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++	.lbs_inode = sizeof(struct ipe_inode),
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
+ };
+ 
+ static const struct lsm_id ipe_lsmid = {
+@@ -35,6 +38,13 @@ struct ipe_bdev *ipe_bdev(struct block_device *b)
+ }
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
+ 
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++struct ipe_inode *ipe_inode(const struct inode *inode)
++{
++	return inode->i_security + ipe_blobs.lbs_inode;
++}
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
++
+ static struct security_hook_list ipe_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(bprm_check_security, ipe_bprm_check_security),
+ 	LSM_HOOK_INIT(mmap_file, ipe_mmap_file),
+@@ -46,6 +56,9 @@ static struct security_hook_list ipe_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(bdev_free_security, ipe_bdev_free_security),
+ 	LSM_HOOK_INIT(bdev_setintegrity, ipe_bdev_setintegrity),
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++	LSM_HOOK_INIT(inode_setintegrity, ipe_inode_setintegrity),
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
+ };
+ 
+ /**
+diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
+index 01f46286e383..fb37513812dd 100644
+--- a/security/ipe/ipe.h
++++ b/security/ipe/ipe.h
+@@ -19,5 +19,8 @@ extern bool ipe_enabled;
+ #ifdef CONFIG_IPE_PROP_DM_VERITY
+ struct ipe_bdev *ipe_bdev(struct block_device *b);
+ #endif /* CONFIG_IPE_PROP_DM_VERITY */
++#ifdef CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG
++struct ipe_inode *ipe_inode(const struct inode *inode);
++#endif /* CONFIG_IPE_PROP_FS_VERITY_BUILTIN_SIG */
+ 
+ #endif /* _IPE_H */
+diff --git a/security/ipe/policy.h b/security/ipe/policy.h
+index 26776092c710..5bfbdbddeef8 100644
+--- a/security/ipe/policy.h
++++ b/security/ipe/policy.h
+@@ -36,6 +36,9 @@ enum ipe_prop_type {
+ 	IPE_PROP_DMV_ROOTHASH,
+ 	IPE_PROP_DMV_SIG_FALSE,
+ 	IPE_PROP_DMV_SIG_TRUE,
++	IPE_PROP_FSV_DIGEST,
++	IPE_PROP_FSV_SIG_FALSE,
++	IPE_PROP_FSV_SIG_TRUE,
+ 	__IPE_PROP_MAX
+ };
+ 
+diff --git a/security/ipe/policy_parser.c b/security/ipe/policy_parser.c
+index 71c84b293029..5a182c006b0e 100644
+--- a/security/ipe/policy_parser.c
++++ b/security/ipe/policy_parser.c
+@@ -278,6 +278,9 @@ static const match_table_t property_tokens = {
+ 	{IPE_PROP_DMV_ROOTHASH,		"dmverity_roothash=%s"},
+ 	{IPE_PROP_DMV_SIG_FALSE,	"dmverity_signature=FALSE"},
+ 	{IPE_PROP_DMV_SIG_TRUE,		"dmverity_signature=TRUE"},
++	{IPE_PROP_FSV_DIGEST,		"fsverity_digest=%s"},
++	{IPE_PROP_FSV_SIG_FALSE,	"fsverity_signature=FALSE"},
++	{IPE_PROP_FSV_SIG_TRUE,		"fsverity_signature=TRUE"},
+ 	{IPE_PROP_INVALID,		NULL}
+ };
+ 
+@@ -310,6 +313,7 @@ static int parse_property(char *t, struct ipe_rule *r)
+ 
+ 	switch (token) {
+ 	case IPE_PROP_DMV_ROOTHASH:
++	case IPE_PROP_FSV_DIGEST:
+ 		dup = match_strdup(&args[0]);
+ 		if (!dup) {
+ 			rc = -ENOMEM;
+@@ -325,6 +329,8 @@ static int parse_property(char *t, struct ipe_rule *r)
+ 	case IPE_PROP_BOOT_VERIFIED_TRUE:
+ 	case IPE_PROP_DMV_SIG_FALSE:
+ 	case IPE_PROP_DMV_SIG_TRUE:
++	case IPE_PROP_FSV_SIG_FALSE:
++	case IPE_PROP_FSV_SIG_TRUE:
+ 		p->type = token;
+ 		break;
+ 	default:
 -- 
 2.44.0
 
