@@ -1,28 +1,28 @@
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id AFABA13D53E;
-	Sat,  3 Aug 2024 06:08:46 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id BA4CD14D28F;
+	Sat,  3 Aug 2024 06:08:47 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722665329; cv=none; b=SZhYXwm/akqX/1OaOh9vCp/W93GYp5SVrAR0EcAi+1jU6d9m4rJTy+XY0Za7/zFXOPKLjDeBPLg9gNfgovYnzNWRE6Pie+xMC0z/2jl5iQn9Ya0v3Qn+NnHN3gAV6Q9w54Vngg2/t9JhVn33w1Ly5gj9XCszrDTXQkLeFzWI8x4=
+	t=1722665331; cv=none; b=aiKgXRY0ejGf8WtO2ZDAEJaGte0AuAMgus+o6TyHF5Byi69/GXECflciBYwXriLVvOpCADQ2cuFzv+1Ce8s05m7Dp3KL/YgScCxADXYojcqZPGZgd8qbPWvb65bfI53JTGpqX0k21cl+nFgmGyAXrBHN7B90gUFP03Q068IBmx8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722665329; c=relaxed/simple;
-	bh=DaZLQ5Grr+DSXliLPAuv6b2R8DPEn2tthc9VW9XrWsc=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=mP/UbcY4rZbxrXfMF4rJmfwSmtYmDfolPg4v6s2bxRVk2mp2vuhxL5eSuvAlONVcCAAC0Nv4/YjPoicsefCoQpq5BdCdox751mQY4LNeizf926GsDuAVgNcPnSqdpv9rJShYNQbEKfwNYdpu1tDrqXzBmrS4p52hS4JL+AUKTHk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=gH9Yki6g; arc=none smtp.client-ip=13.77.154.182
+	s=arc-20240116; t=1722665331; c=relaxed/simple;
+	bh=w6q1cXUZ7DShFfcTgNGC6CBN1HjKfrW9GGQHr+vm5x8=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References; b=g4AIKVjcoQfNn0poJhOFYbMB6/MWClqqACmIiRv5gf1C9vYsjM/meIXfbLB8dplvEAyz8ErSaZXetVNmcA1uKUD/lZ/SicCKsVDYn14qG1sNvy7Bsjs9wCw+rArFJjP47mqhBiQwk1v+Xuhjiqkh2FnbRmoAath5zFljGWzXyBo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=DAKcqn17; arc=none smtp.client-ip=13.77.154.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="gH9Yki6g"
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="DAKcqn17"
 Received: by linux.microsoft.com (Postfix, from userid 1052)
-	id 85BFB20B6F35; Fri,  2 Aug 2024 23:08:40 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 85BFB20B6F35
+	id B179E20B7402; Fri,  2 Aug 2024 23:08:40 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com B179E20B7402
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
 	s=default; t=1722665320;
-	bh=qMDcg9Kz197sorPsFh16hxp3hWsVg4hDzDaNCgXUDKk=;
+	bh=NZSeHVo9vHls2aUUfbMlJIK0J2om7my0OruNaJq/06o=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=gH9Yki6g49Dtyog8fWkoYGBfsvp9r+b3Qgxk474CM8QIuqWdiS+kwNFHy8hrm1QMV
-	 S/EI7t4rH/NcJH4dzP6aRefinWi8k/hskjn7NdoeJx8ma4o50ffHTMxBrDbSED6ZB2
-	 xPxojqJJb2SLh+oAy16NVVCRszpYtI/g53kIXrbE=
+	b=DAKcqn17ThJvSr41lt68peXt/KhBoHugPebib593nO8DpV4svu4pOZ0onR+kBFf3L
+	 rL+u80Olkp+4xF9mL3xuOsw3Xc09F1ccYwizSghvoAOnO2lnnYOX5pSCUHLx5JDIcR
+	 rQhxTkNYM97qQZKPa9M1EOnZF36hG0zbrHiFm+kI=
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net,
 	zohar@linux.ibm.com,
@@ -46,9 +46,9 @@ Cc: linux-doc@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	Deven Bowers <deven.desai@linux.microsoft.com>,
 	Fan Wu <wufan@linux.microsoft.com>
-Subject: [PATCH v20 08/20] ipe: add userspace interface
-Date: Fri,  2 Aug 2024 23:08:22 -0700
-Message-Id: <1722665314-21156-9-git-send-email-wufan@linux.microsoft.com>
+Subject: [PATCH v20 11/20] block|lsm: Add LSM blob and new LSM hooks for block devices
+Date: Fri,  2 Aug 2024 23:08:25 -0700
+Message-Id: <1722665314-21156-12-git-send-email-wufan@linux.microsoft.com>
 X-Mailer: git-send-email 1.8.3.1
 In-Reply-To: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
 References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
@@ -60,99 +60,123 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-As is typical with LSMs, IPE uses securityfs as its interface with
-userspace. for a complete list of the interfaces and the respective
-inputs/outputs, please see the documentation under
-admin-guide/LSM/ipe.rst
+This patch introduces a new LSM blob to the block_device structure,
+enabling the security subsystem to store security-sensitive data related
+to block devices. Currently, for a device mapper's mapped device containing
+a dm-verity target, critical security information such as the roothash and
+its signing state are not readily accessible. Specifically, while the
+dm-verity volume creation process passes the dm-verity roothash and its
+signature from userspace to the kernel, the roothash is stored privately
+within the dm-verity target, and its signature is discarded
+post-verification. This makes it extremely hard for the security subsystem
+to utilize these data.
+
+With the addition of the LSM blob to the block_device structure, the
+security subsystem can now retain and manage important security metadata
+such as the roothash and the signing state of a dm-verity by storing them
+inside the blob. Access decisions can then be based on these stored data.
+
+The implementation follows the same approach used for security blobs in
+other structures like struct file, struct inode, and struct superblock.
+The initialization of the security blob occurs after the creation of the
+struct block_device, performed by the security subsystem. Similarly, the
+security blob is freed by the security subsystem before the struct
+block_device is deallocated or freed.
+
+This patch also introduces a new hook security_bdev_setintegrity() to save
+block device's integrity data to the new LSM blob. For example, for
+dm-verity, it can use this hook to expose its roothash and signing state
+to LSMs, then LSMs can save these data into the LSM blob.
+
+Please note that the new hook should be invoked every time the security
+information is updated to keep these data current. For example, in
+dm-verity, if the mapping table is reloaded and configured to use a
+different dm-verity target with a new roothash and signing information,
+the previously stored data in the LSM blob will become obsolete. It is
+crucial to re-invoke the hook to refresh these data and ensure they are up
+to date. This necessity arises from the design of device-mapper, where a
+device-mapper device is first created, and then targets are subsequently
+loaded into it. These targets can be modified multiple times during the
+device's lifetime. Therefore, while the LSM blob is allocated during the
+creation of the block device, its actual contents are not initialized at
+this stage and can change substantially over time. This includes
+alterations from data that the LSM 'trusts' to those it does not, making
+it essential to handle these changes correctly. Failure to address this
+dynamic aspect could potentially allow for bypassing LSM checks.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
 ---
 v2:
-  + Split evaluation loop, access control hooks,
-    and evaluation loop from policy parser and userspace
-    interface to pass mailing list character limit
+  + No Changes
 
 v3:
-  + Move policy load and activation audit event to 03/12
-  + Fix a potential panic when a policy failed to load.
-  + use pr_warn for a failure to parse instead of an
-    audit record
-  + Remove comments from headers
-  + Add lockdep assertions to ipe_update_active_policy and
-    ipe_activate_policy
-  + Fix up warnings with checkpatch --strict
-  + Use file_ns_capable for CAP_MAC_ADMIN for securityfs
-    nodes.
-  + Use memdup_user instead of kzalloc+simple_write_to_buffer.
-  + Remove strict_parse command line parameter, as it is added
-    by the sysctl command line.
-  + Prefix extern variables with ipe_
+  + Minor style changes from checkpatch --strict
 
 v4:
-  + Remove securityfs to reverse-dependency
-  + Add SHA1 reverse dependency.
-  + Add versioning scheme for IPE properties, and associated
-    interface to query the versioning scheme.
-  + Cause a parser to always return an error on unknown syntax.
-  + Remove strict_parse option
-  + Change active_policy interface from sysctl, to securityfs,
-    and change scheme.
+  + No Changes
 
 v5:
-  + Cause an error if a default action is not defined for each
-    operation.
-  + Minor function renames
+  + Allow multiple callers to call security_bdev_setsecurity
 
 v6:
-  + No changes
+  + Simplify security_bdev_setsecurity break condition
 
 v7:
-  + Propagating changes to support the new ipe_context structure in the
-    evaluation loop.
-
-  + Further split the parser and userspace interface changes into
-    separate commits.
-
-  + "raw" was renamed to "pkcs7" and made read only
-  + "raw"'s write functionality (update a policy) moved to "update"
-  + introduced "version", "policy_name" nodes.
-  + "content" renamed to "policy"
-  + changes to allow the compiled-in policy to be treated
-    identical to deployed-after-the-fact policies.
+  + Squash all dm-verity related patches to two patches,
+    the additions to dm-verity/fs, and the consumption of
+    the additions.
 
 v8:
-  + Prevent securityfs initialization if the LSM is disabled
+  + Split dm-verity related patches squashed in v7 to 3 commits based on
+    topic:
+      + New LSM hook
+      + Consumption of hook outside LSM
+      + Consumption of hook inside LSM.
+
+  + change return of security_bdev_alloc / security_bdev_setsecurity
+    to LSM_RET_DEFAULT instead of 0.
+
+  + Change return code to -EOPNOTSUPP, bring inline with other
+    setsecurity hooks.
 
 v9:
-  + Switch to securityfs_recursive_remove for policy folder deletion
+  + Add Reviewed-by: Casey Schaufler <casey@schaufler-ca.com>
+  + Remove unlikely when calling LSM hook
+  + Make the security field dependent on CONFIG_SECURITY
 
 v10:
-  + Simplify and correct concurrency
-  + Fix typos
+  + No changes
 
 v11:
-  + Correct code comments
+  + No changes
 
 v12:
-  + Correct locking and remove redundant code
+  + No changes
 
 v13:
-  + Move the free of old policy into the ipe_update_policy function
+  + No changes
 
 v14:
   + No changes
 
 v15:
-  + No changes
+  + Drop security_bdev_setsecurity() for new hook
+    security_bdev_setintegrity() in the next commit
+  + Update call_int_hook() for 260017f
 
 v16:
-  + No changes
+  + Drop Reviewed-by tag for the new changes
+  + Squash the security_bdev_setintegrity() into this commit
+  + Rename enum from lsm_intgr_type to lsm_integrity_type
+  + Switch to use call_int_hook() for bdev_setintegrity()
+  + Correct comment
+  + Fix return in security_bdev_alloc()
 
 v17:
-  + Add years to license header
-  + Fix code and documentation style issues
+  + Fix a typo
+  + Improve the commit subject line
 
 v18:
   + No changes
@@ -161,859 +185,282 @@ v19:
   + No changes
 
 v20:
-  + Fix incorrect rcu usage, change to only call synchronize_rcu()
-    before freeing a policy
+  + Rename *security to *bd_security;
+  + Add more documentation regarding the dynamic aspects of security
+    sensitive data of block devices
 ---
- security/ipe/Makefile    |   2 +
- security/ipe/fs.c        | 105 +++++++++
- security/ipe/fs.h        |  16 ++
- security/ipe/ipe.c       |   3 +
- security/ipe/ipe.h       |   2 +
- security/ipe/policy.c    | 120 ++++++++++
- security/ipe/policy.h    |   7 +
- security/ipe/policy_fs.c | 472 +++++++++++++++++++++++++++++++++++++++
- 8 files changed, 727 insertions(+)
- create mode 100644 security/ipe/fs.c
- create mode 100644 security/ipe/fs.h
- create mode 100644 security/ipe/policy_fs.c
+ block/bdev.c                  |   7 +++
+ include/linux/blk_types.h     |   3 +
+ include/linux/lsm_hook_defs.h |   5 ++
+ include/linux/lsm_hooks.h     |   1 +
+ include/linux/security.h      |  26 +++++++++
+ security/security.c           | 103 ++++++++++++++++++++++++++++++++++
+ 6 files changed, 145 insertions(+)
 
-diff --git a/security/ipe/Makefile b/security/ipe/Makefile
-index e1c27e974c5c..b97f8c10fe01 100644
---- a/security/ipe/Makefile
-+++ b/security/ipe/Makefile
-@@ -8,6 +8,8 @@
- obj-$(CONFIG_SECURITY_IPE) += \
- 	eval.o \
- 	hooks.o \
-+	fs.o \
- 	ipe.o \
- 	policy.o \
-+	policy_fs.o \
- 	policy_parser.o \
-diff --git a/security/ipe/fs.c b/security/ipe/fs.c
-new file mode 100644
-index 000000000000..49484c8feead
---- /dev/null
-+++ b/security/ipe/fs.c
-@@ -0,0 +1,105 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) 2020-2024 Microsoft Corporation. All rights reserved.
-+ */
-+
-+#include <linux/dcache.h>
+diff --git a/block/bdev.c b/block/bdev.c
+index c5507b6f63b8..33f9c4605e3a 100644
+--- a/block/bdev.c
++++ b/block/bdev.c
+@@ -24,6 +24,7 @@
+ #include <linux/pseudo_fs.h>
+ #include <linux/uio.h>
+ #include <linux/namei.h>
 +#include <linux/security.h>
+ #include <linux/part_stat.h>
+ #include <linux/uaccess.h>
+ #include <linux/stat.h>
+@@ -324,6 +325,11 @@ static struct inode *bdev_alloc_inode(struct super_block *sb)
+ 	if (!ei)
+ 		return NULL;
+ 	memset(&ei->bdev, 0, sizeof(ei->bdev));
 +
-+#include "ipe.h"
-+#include "fs.h"
-+#include "policy.h"
-+
-+static struct dentry *np __ro_after_init;
-+static struct dentry *root __ro_after_init;
-+struct dentry *policy_root __ro_after_init;
-+
-+/**
-+ * new_policy() - Write handler for the securityfs node, "ipe/new_policy".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-EPERM			- Insufficient permission
-+ * * %-ENOMEM			- Out of memory (OOM)
-+ * * %-EBADMSG			- Policy is invalid
-+ * * %-ERANGE			- Policy version number overflow
-+ * * %-EINVAL			- Policy version parsing error
-+ * * %-EEXIST			- Same name policy already deployed
-+ */
-+static ssize_t new_policy(struct file *f, const char __user *data,
-+			  size_t len, loff_t *offset)
-+{
-+	struct ipe_policy *p = NULL;
-+	char *copy = NULL;
-+	int rc = 0;
-+
-+	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
-+		return -EPERM;
-+
-+	copy = memdup_user_nul(data, len);
-+	if (IS_ERR(copy))
-+		return PTR_ERR(copy);
-+
-+	p = ipe_new_policy(NULL, 0, copy, len);
-+	if (IS_ERR(p)) {
-+		rc = PTR_ERR(p);
-+		goto out;
++	if (security_bdev_alloc(&ei->bdev)) {
++		kmem_cache_free(bdev_cachep, ei);
++		return NULL;
 +	}
-+
-+	rc = ipe_new_policyfs_node(p);
-+
-+out:
-+	if (rc < 0)
-+		ipe_free_policy(p);
-+	kfree(copy);
-+	return (rc < 0) ? rc : len;
-+}
-+
-+static const struct file_operations np_fops = {
-+	.write = new_policy,
-+};
-+
-+/**
-+ * ipe_init_securityfs() - Initialize IPE's securityfs tree at fsinit.
-+ *
-+ * Return: %0 on success. If an error occurs, the function will return
-+ * the -errno.
-+ */
-+static int __init ipe_init_securityfs(void)
-+{
-+	int rc = 0;
-+
-+	if (!ipe_enabled)
-+		return -EOPNOTSUPP;
-+
-+	root = securityfs_create_dir("ipe", NULL);
-+	if (IS_ERR(root)) {
-+		rc = PTR_ERR(root);
-+		goto err;
-+	}
-+
-+	policy_root = securityfs_create_dir("policies", root);
-+	if (IS_ERR(policy_root)) {
-+		rc = PTR_ERR(policy_root);
-+		goto err;
-+	}
-+
-+	np = securityfs_create_file("new_policy", 0200, root, NULL, &np_fops);
-+	if (IS_ERR(np)) {
-+		rc = PTR_ERR(np);
-+		goto err;
-+	}
-+
-+	return 0;
-+err:
-+	securityfs_remove(np);
-+	securityfs_remove(policy_root);
-+	securityfs_remove(root);
-+	return rc;
-+}
-+
-+fs_initcall(ipe_init_securityfs);
-diff --git a/security/ipe/fs.h b/security/ipe/fs.h
-new file mode 100644
-index 000000000000..0141ae8e86ec
---- /dev/null
-+++ b/security/ipe/fs.h
-@@ -0,0 +1,16 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) 2020-2024 Microsoft Corporation. All rights reserved.
-+ */
-+
-+#ifndef _IPE_FS_H
-+#define _IPE_FS_H
-+
-+#include "policy.h"
-+
-+extern struct dentry *policy_root __ro_after_init;
-+
-+int ipe_new_policyfs_node(struct ipe_policy *p);
-+void ipe_del_policyfs_node(struct ipe_policy *p);
-+
-+#endif /* _IPE_FS_H */
-diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-index 28555eadb7f3..53f2196b9bcc 100644
---- a/security/ipe/ipe.c
-+++ b/security/ipe/ipe.c
-@@ -8,6 +8,8 @@
- #include "eval.h"
- #include "hooks.h"
- 
-+bool ipe_enabled;
-+
- static struct lsm_blob_sizes ipe_blobs __ro_after_init = {
- 	.lbs_superblock = sizeof(struct ipe_superblock),
- };
-@@ -45,6 +47,7 @@ static struct security_hook_list ipe_hooks[] __ro_after_init = {
- static int __init ipe_init(void)
- {
- 	security_add_hooks(ipe_hooks, ARRAY_SIZE(ipe_hooks), &ipe_lsmid);
-+	ipe_enabled = true;
- 
- 	return 0;
+ 	return &ei->vfs_inode;
  }
-diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
-index 7f1c818193a0..4aa18d1d0525 100644
---- a/security/ipe/ipe.h
-+++ b/security/ipe/ipe.h
-@@ -14,4 +14,6 @@
- #include <linux/lsm_hooks.h>
- struct ipe_superblock *ipe_sb(const struct super_block *sb);
  
-+extern bool ipe_enabled;
-+
- #endif /* _IPE_H */
-diff --git a/security/ipe/policy.c b/security/ipe/policy.c
-index dd7b5b79903a..be9808b27e49 100644
---- a/security/ipe/policy.c
-+++ b/security/ipe/policy.c
-@@ -7,9 +7,36 @@
- #include <linux/verification.h>
+@@ -333,6 +339,7 @@ static void bdev_free_inode(struct inode *inode)
  
- #include "ipe.h"
-+#include "eval.h"
-+#include "fs.h"
- #include "policy.h"
- #include "policy_parser.h"
+ 	free_percpu(bdev->bd_stats);
+ 	kfree(bdev->bd_meta_info);
++	security_bdev_free(bdev);
  
-+/* lock for synchronizing writers across ipe policy */
-+DEFINE_MUTEX(ipe_policy_lock);
-+
-+/**
-+ * ver_to_u64() - Convert an internal ipe_policy_version to a u64.
-+ * @p: Policy to extract the version from.
-+ *
-+ * Bits (LSB is index 0):
-+ *	[48,32] -> Major
-+ *	[32,16] -> Minor
-+ *	[16, 0] -> Revision
-+ *
-+ * Return: u64 version of the embedded version structure.
-+ */
-+static inline u64 ver_to_u64(const struct ipe_policy *const p)
-+{
-+	u64 r;
-+
-+	r = (((u64)p->parsed->version.major) << 32)
-+	  | (((u64)p->parsed->version.minor) << 16)
-+	  | ((u64)(p->parsed->version.rev));
-+
-+	return r;
-+}
-+
- /**
-  * ipe_free_policy() - Deallocate a given IPE policy.
-  * @p: Supplies the policy to free.
-@@ -21,6 +48,7 @@ void ipe_free_policy(struct ipe_policy *p)
- 	if (IS_ERR_OR_NULL(p))
- 		return;
+ 	if (!bdev_is_partition(bdev)) {
+ 		if (bdev->bd_disk && bdev->bd_disk->bdi)
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 36ed96133217..413ebdff974b 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -71,6 +71,9 @@ struct block_device {
  
-+	ipe_del_policyfs_node(p);
- 	ipe_free_parsed_policy(p->parsed);
+ 	struct partition_meta_info *bd_meta_info;
+ 	int			bd_writers;
++#ifdef CONFIG_SECURITY
++	void			*bd_security;
++#endif
  	/*
- 	 * p->text is allocated only when p->pkcs7 is not NULL
-@@ -43,6 +71,66 @@ static int set_pkcs7_data(void *ctx, const void *data, size_t len,
+ 	 * keep this out-of-line as it's both big and not needed in the fast
+ 	 * path
+diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
+index 078161e51bd9..909cf6f4b9fe 100644
+--- a/include/linux/lsm_hook_defs.h
++++ b/include/linux/lsm_hook_defs.h
+@@ -454,3 +454,8 @@ LSM_HOOK(int, 0, uring_cmd, struct io_uring_cmd *ioucmd)
+ #endif /* CONFIG_IO_URING */
+ 
+ LSM_HOOK(void, LSM_RET_VOID, initramfs_populated, void)
++
++LSM_HOOK(int, 0, bdev_alloc_security, struct block_device *bdev)
++LSM_HOOK(void, LSM_RET_VOID, bdev_free_security, struct block_device *bdev)
++LSM_HOOK(int, 0, bdev_setintegrity, struct block_device *bdev,
++	 enum lsm_integrity_type type, const void *value, size_t size)
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+index a2ade0ffe9e7..f1692179aa56 100644
+--- a/include/linux/lsm_hooks.h
++++ b/include/linux/lsm_hooks.h
+@@ -78,6 +78,7 @@ struct lsm_blob_sizes {
+ 	int	lbs_msg_msg;
+ 	int	lbs_task;
+ 	int	lbs_xattr_count; /* number of xattr slots in new_xattrs array */
++	int	lbs_bdev;
+ };
+ 
+ /**
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 50fb627503f2..39aec1c96d6a 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -83,6 +83,10 @@ enum lsm_event {
+ 	LSM_POLICY_CHANGE,
+ };
+ 
++enum lsm_integrity_type {
++	__LSM_INT_MAX
++};
++
+ /*
+  * These are reasons that can be passed to the security_locked_down()
+  * LSM hook. Lockdown reasons that protect kernel integrity (ie, the
+@@ -509,6 +513,11 @@ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
+ int security_locked_down(enum lockdown_reason what);
+ int lsm_fill_user_ctx(struct lsm_ctx __user *uctx, u32 *uctx_len,
+ 		      void *val, size_t val_len, u64 id, u64 flags);
++int security_bdev_alloc(struct block_device *bdev);
++void security_bdev_free(struct block_device *bdev);
++int security_bdev_setintegrity(struct block_device *bdev,
++			       enum lsm_integrity_type type, const void *value,
++			       size_t size);
+ #else /* CONFIG_SECURITY */
+ 
+ static inline int call_blocking_lsm_notifier(enum lsm_event event, void *data)
+@@ -1483,6 +1492,23 @@ static inline int lsm_fill_user_ctx(struct lsm_ctx __user *uctx,
+ {
+ 	return -EOPNOTSUPP;
+ }
++
++static inline int security_bdev_alloc(struct block_device *bdev)
++{
++	return 0;
++}
++
++static inline void security_bdev_free(struct block_device *bdev)
++{
++}
++
++static inline int security_bdev_setintegrity(struct block_device *bdev,
++					     enum lsm_integrity_type type,
++					     const void *value, size_t size)
++{
++	return 0;
++}
++
+ #endif	/* CONFIG_SECURITY */
+ 
+ #if defined(CONFIG_SECURITY) && defined(CONFIG_WATCH_QUEUE)
+diff --git a/security/security.c b/security/security.c
+index 5126a3321a41..9baab988be7b 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -29,6 +29,7 @@
+ #include <linux/msg.h>
+ #include <linux/overflow.h>
+ #include <net/flow.h>
++#include <linux/fs.h>
+ 
+ /* How many LSMs were built into the kernel? */
+ #define LSM_COUNT (__end_lsm_info - __start_lsm_info)
+@@ -232,6 +233,7 @@ static void __init lsm_set_blob_sizes(struct lsm_blob_sizes *needed)
+ 	lsm_set_blob_size(&needed->lbs_task, &blob_sizes.lbs_task);
+ 	lsm_set_blob_size(&needed->lbs_xattr_count,
+ 			  &blob_sizes.lbs_xattr_count);
++	lsm_set_blob_size(&needed->lbs_bdev, &blob_sizes.lbs_bdev);
+ }
+ 
+ /* Prepare LSM for initialization. */
+@@ -405,6 +407,7 @@ static void __init ordered_lsm_init(void)
+ 	init_debug("superblock blob size = %d\n", blob_sizes.lbs_superblock);
+ 	init_debug("task blob size       = %d\n", blob_sizes.lbs_task);
+ 	init_debug("xattr slots          = %d\n", blob_sizes.lbs_xattr_count);
++	init_debug("bdev blob size       = %d\n", blob_sizes.lbs_bdev);
+ 
+ 	/*
+ 	 * Create any kmem_caches needed for blobs
+@@ -737,6 +740,28 @@ static int lsm_msg_msg_alloc(struct msg_msg *mp)
  	return 0;
  }
  
 +/**
-+ * ipe_update_policy() - parse a new policy and replace old with it.
-+ * @root: Supplies a pointer to the securityfs inode saved the policy.
-+ * @text: Supplies a pointer to the plain text policy.
-+ * @textlen: Supplies the length of @text.
-+ * @pkcs7: Supplies a pointer to a buffer containing a pkcs7 message.
-+ * @pkcs7len: Supplies the length of @pkcs7len.
++ * lsm_bdev_alloc - allocate a composite block_device blob
++ * @bdev: the block_device that needs a blob
 + *
-+ * @text/@textlen is mutually exclusive with @pkcs7/@pkcs7len - see
-+ * ipe_new_policy.
++ * Allocate the block_device blob for all the modules
 + *
-+ * Context: Requires root->i_rwsem to be held.
-+ * Return: %0 on success. If an error occurs, the function will return
-+ * the -errno.
++ * Returns 0, or -ENOMEM if memory can't be allocated.
 + */
-+int ipe_update_policy(struct inode *root, const char *text, size_t textlen,
-+		      const char *pkcs7, size_t pkcs7len)
++static int lsm_bdev_alloc(struct block_device *bdev)
 +{
-+	struct ipe_policy *old, *ap, *new = NULL;
-+	int rc = 0;
-+
-+	old = (struct ipe_policy *)root->i_private;
-+	if (!old)
-+		return -ENOENT;
-+
-+	new = ipe_new_policy(text, textlen, pkcs7, pkcs7len);
-+	if (IS_ERR(new))
-+		return PTR_ERR(new);
-+
-+	if (strcmp(new->parsed->name, old->parsed->name)) {
-+		rc = -EINVAL;
-+		goto err;
++	if (blob_sizes.lbs_bdev == 0) {
++		bdev->bd_security = NULL;
++		return 0;
 +	}
 +
-+	if (ver_to_u64(old) > ver_to_u64(new)) {
-+		rc = -EINVAL;
-+		goto err;
-+	}
-+
-+	root->i_private = new;
-+	swap(new->policyfs, old->policyfs);
-+
-+	mutex_lock(&ipe_policy_lock);
-+	ap = rcu_dereference_protected(ipe_active_policy,
-+				       lockdep_is_held(&ipe_policy_lock));
-+	if (old == ap) {
-+		rcu_assign_pointer(ipe_active_policy, new);
-+		mutex_unlock(&ipe_policy_lock);
-+	} else {
-+		mutex_unlock(&ipe_policy_lock);
-+	}
-+	synchronize_rcu();
-+	ipe_free_policy(old);
++	bdev->bd_security = kzalloc(blob_sizes.lbs_bdev, GFP_KERNEL);
++	if (!bdev->bd_security)
++		return -ENOMEM;
 +
 +	return 0;
-+err:
-+	ipe_free_policy(new);
-+	return rc;
 +}
 +
  /**
-  * ipe_new_policy() - Allocate and parse an ipe_policy structure.
-  *
-@@ -101,3 +189,35 @@ struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
- 	ipe_free_policy(new);
- 	return ERR_PTR(rc);
+  * lsm_early_task - during initialization allocate a composite task blob
+  * @task: the task that needs a blob
+@@ -5597,6 +5622,84 @@ int security_locked_down(enum lockdown_reason what)
  }
-+
+ EXPORT_SYMBOL(security_locked_down);
+ 
 +/**
-+ * ipe_set_active_pol() - Make @p the active policy.
-+ * @p: Supplies a pointer to the policy to make active.
++ * security_bdev_alloc() - Allocate a block device LSM blob
++ * @bdev: block device
 + *
-+ * Context: Requires root->i_rwsem, which i_private has the policy, to be held.
-+ * Return:
-+ * * %0	- Success
-+ * * %-EINVAL	- New active policy version is invalid
++ * Allocate and attach a security structure to @bdev->bd_security.  The
++ * security field is initialized to NULL when the bdev structure is
++ * allocated.
++ *
++ * Return: Return 0 if operation was successful.
 + */
-+int ipe_set_active_pol(const struct ipe_policy *p)
++int security_bdev_alloc(struct block_device *bdev)
 +{
-+	struct ipe_policy *ap = NULL;
-+
-+	mutex_lock(&ipe_policy_lock);
-+
-+	ap = rcu_dereference_protected(ipe_active_policy,
-+				       lockdep_is_held(&ipe_policy_lock));
-+	if (ap == p) {
-+		mutex_unlock(&ipe_policy_lock);
-+		return 0;
-+	}
-+	if (ap && ver_to_u64(ap) > ver_to_u64(p)) {
-+		mutex_unlock(&ipe_policy_lock);
-+		return -EINVAL;
-+	}
-+
-+	rcu_assign_pointer(ipe_active_policy, p);
-+	mutex_unlock(&ipe_policy_lock);
-+
-+	return 0;
-+}
-diff --git a/security/ipe/policy.h b/security/ipe/policy.h
-index 69ca8cdecd64..ffd60cc7fda6 100644
---- a/security/ipe/policy.h
-+++ b/security/ipe/policy.h
-@@ -7,6 +7,7 @@
- 
- #include <linux/list.h>
- #include <linux/types.h>
-+#include <linux/fs.h>
- 
- enum ipe_op_type {
- 	IPE_OP_EXEC = 0,
-@@ -76,10 +77,16 @@ struct ipe_policy {
- 	size_t textlen;
- 
- 	struct ipe_parsed_policy *parsed;
-+
-+	struct dentry *policyfs;
- };
- 
- struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
- 				  const char *pkcs7, size_t pkcs7len);
- void ipe_free_policy(struct ipe_policy *pol);
-+int ipe_update_policy(struct inode *root, const char *text, size_t textlen,
-+		      const char *pkcs7, size_t pkcs7len);
-+int ipe_set_active_pol(const struct ipe_policy *p);
-+extern struct mutex ipe_policy_lock;
- 
- #endif /* _IPE_POLICY_H */
-diff --git a/security/ipe/policy_fs.c b/security/ipe/policy_fs.c
-new file mode 100644
-index 000000000000..3bcd8cbd09df
---- /dev/null
-+++ b/security/ipe/policy_fs.c
-@@ -0,0 +1,472 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) 2020-2024 Microsoft Corporation. All rights reserved.
-+ */
-+#include <linux/fs.h>
-+#include <linux/namei.h>
-+#include <linux/types.h>
-+#include <linux/dcache.h>
-+#include <linux/security.h>
-+
-+#include "ipe.h"
-+#include "policy.h"
-+#include "eval.h"
-+#include "fs.h"
-+
-+#define MAX_VERSION_SIZE ARRAY_SIZE("65535.65535.65535")
-+
-+/**
-+ * ipefs_file - defines a file in securityfs.
-+ */
-+struct ipefs_file {
-+	const char *name;
-+	umode_t access;
-+	const struct file_operations *fops;
-+};
-+
-+/**
-+ * read_pkcs7() - Read handler for "ipe/policies/$name/pkcs7".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * @data will be populated with the pkcs7 blob representing the policy
-+ * on success. If the policy is unsigned (like the boot policy), this
-+ * will return -ENOENT.
-+ *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-ENOENT			- Policy initializing/deleted or is unsigned
-+ */
-+static ssize_t read_pkcs7(struct file *f, char __user *data,
-+			  size_t len, loff_t *offset)
-+{
-+	const struct ipe_policy *p = NULL;
-+	struct inode *root = NULL;
 +	int rc = 0;
 +
-+	root = d_inode(f->f_path.dentry->d_parent);
-+
-+	inode_lock_shared(root);
-+	p = (struct ipe_policy *)root->i_private;
-+	if (!p) {
-+		rc = -ENOENT;
-+		goto out;
-+	}
-+
-+	if (!p->pkcs7) {
-+		rc = -ENOENT;
-+		goto out;
-+	}
-+
-+	rc = simple_read_from_buffer(data, len, offset, p->pkcs7, p->pkcs7len);
-+
-+out:
-+	inode_unlock_shared(root);
-+
-+	return rc;
-+}
-+
-+/**
-+ * read_policy() - Read handler for "ipe/policies/$name/policy".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * @data will be populated with the plain-text version of the policy
-+ * on success.
-+ *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-ENOENT			- Policy initializing/deleted
-+ */
-+static ssize_t read_policy(struct file *f, char __user *data,
-+			   size_t len, loff_t *offset)
-+{
-+	const struct ipe_policy *p = NULL;
-+	struct inode *root = NULL;
-+	int rc = 0;
-+
-+	root = d_inode(f->f_path.dentry->d_parent);
-+
-+	inode_lock_shared(root);
-+	p = (struct ipe_policy *)root->i_private;
-+	if (!p) {
-+		rc = -ENOENT;
-+		goto out;
-+	}
-+
-+	rc = simple_read_from_buffer(data, len, offset, p->text, p->textlen);
-+
-+out:
-+	inode_unlock_shared(root);
-+
-+	return rc;
-+}
-+
-+/**
-+ * read_name() - Read handler for "ipe/policies/$name/name".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * @data will be populated with the policy_name attribute on success.
-+ *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-ENOENT			- Policy initializing/deleted
-+ */
-+static ssize_t read_name(struct file *f, char __user *data,
-+			 size_t len, loff_t *offset)
-+{
-+	const struct ipe_policy *p = NULL;
-+	struct inode *root = NULL;
-+	int rc = 0;
-+
-+	root = d_inode(f->f_path.dentry->d_parent);
-+
-+	inode_lock_shared(root);
-+	p = (struct ipe_policy *)root->i_private;
-+	if (!p) {
-+		rc = -ENOENT;
-+		goto out;
-+	}
-+
-+	rc = simple_read_from_buffer(data, len, offset, p->parsed->name,
-+				     strlen(p->parsed->name));
-+
-+out:
-+	inode_unlock_shared(root);
-+
-+	return rc;
-+}
-+
-+/**
-+ * read_version() - Read handler for "ipe/policies/$name/version".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * @data will be populated with the version string on success.
-+ *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-ENOENT			- Policy initializing/deleted
-+ */
-+static ssize_t read_version(struct file *f, char __user *data,
-+			    size_t len, loff_t *offset)
-+{
-+	char buffer[MAX_VERSION_SIZE] = { 0 };
-+	const struct ipe_policy *p = NULL;
-+	struct inode *root = NULL;
-+	size_t strsize = 0;
-+	ssize_t rc = 0;
-+
-+	root = d_inode(f->f_path.dentry->d_parent);
-+
-+	inode_lock_shared(root);
-+	p = (struct ipe_policy *)root->i_private;
-+	if (!p) {
-+		rc = -ENOENT;
-+		goto out;
-+	}
-+
-+	strsize = scnprintf(buffer, ARRAY_SIZE(buffer), "%hu.%hu.%hu",
-+			    p->parsed->version.major, p->parsed->version.minor,
-+			    p->parsed->version.rev);
-+
-+	rc = simple_read_from_buffer(data, len, offset, buffer, strsize);
-+
-+out:
-+	inode_unlock_shared(root);
-+
-+	return rc;
-+}
-+
-+/**
-+ * setactive() - Write handler for "ipe/policies/$name/active".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-EPERM			- Insufficient permission
-+ * * %-EINVAL			- Invalid input
-+ * * %-ENOENT			- Policy initializing/deleted
-+ */
-+static ssize_t setactive(struct file *f, const char __user *data,
-+			 size_t len, loff_t *offset)
-+{
-+	const struct ipe_policy *p = NULL;
-+	struct inode *root = NULL;
-+	bool value = false;
-+	int rc = 0;
-+
-+	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
-+		return -EPERM;
-+
-+	rc = kstrtobool_from_user(data, len, &value);
-+	if (rc)
++	rc = lsm_bdev_alloc(bdev);
++	if (unlikely(rc))
 +		return rc;
 +
-+	if (!value)
-+		return -EINVAL;
-+
-+	root = d_inode(f->f_path.dentry->d_parent);
-+	inode_lock(root);
-+
-+	p = (struct ipe_policy *)root->i_private;
-+	if (!p) {
-+		rc = -ENOENT;
-+		goto out;
-+	}
-+
-+	rc = ipe_set_active_pol(p);
-+
-+out:
-+	inode_unlock(root);
-+	return (rc < 0) ? rc : len;
-+}
-+
-+/**
-+ * getactive() - Read handler for "ipe/policies/$name/active".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
-+ *
-+ * @data will be populated with the 1 or 0 depending on if the
-+ * corresponding policy is active.
-+ *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-ENOENT			- Policy initializing/deleted
-+ */
-+static ssize_t getactive(struct file *f, char __user *data,
-+			 size_t len, loff_t *offset)
-+{
-+	const struct ipe_policy *p = NULL;
-+	struct inode *root = NULL;
-+	const char *str;
-+	int rc = 0;
-+
-+	root = d_inode(f->f_path.dentry->d_parent);
-+
-+	inode_lock_shared(root);
-+	p = (struct ipe_policy *)root->i_private;
-+	if (!p) {
-+		inode_unlock_shared(root);
-+		return -ENOENT;
-+	}
-+	inode_unlock_shared(root);
-+
-+	str = (p == rcu_access_pointer(ipe_active_policy)) ? "1" : "0";
-+	rc = simple_read_from_buffer(data, len, offset, str, 1);
++	rc = call_int_hook(bdev_alloc_security, bdev);
++	if (unlikely(rc))
++		security_bdev_free(bdev);
 +
 +	return rc;
 +}
++EXPORT_SYMBOL(security_bdev_alloc);
 +
 +/**
-+ * update_policy() - Write handler for "ipe/policies/$name/update".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
++ * security_bdev_free() - Free a block device's LSM blob
++ * @bdev: block device
 + *
-+ * On success this updates the policy represented by $name,
-+ * in-place.
-+ *
-+ * Return: Length of buffer written on success. If an error occurs,
-+ * the function will return the -errno.
++ * Deallocate the bdev security structure and set @bdev->bd_security to NULL.
 + */
-+static ssize_t update_policy(struct file *f, const char __user *data,
-+			     size_t len, loff_t *offset)
++void security_bdev_free(struct block_device *bdev)
 +{
-+	struct inode *root = NULL;
-+	char *copy = NULL;
-+	int rc = 0;
++	if (!bdev->bd_security)
++		return;
 +
-+	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
-+		return -EPERM;
++	call_void_hook(bdev_free_security, bdev);
 +
-+	copy = memdup_user(data, len);
-+	if (IS_ERR(copy))
-+		return PTR_ERR(copy);
-+
-+	root = d_inode(f->f_path.dentry->d_parent);
-+	inode_lock(root);
-+	rc = ipe_update_policy(root, NULL, 0, copy, len);
-+	inode_unlock(root);
-+
-+	kfree(copy);
-+	if (rc)
-+		return rc;
-+
-+	return len;
++	kfree(bdev->bd_security);
++	bdev->bd_security = NULL;
 +}
++EXPORT_SYMBOL(security_bdev_free);
 +
 +/**
-+ * delete_policy() - write handler for  "ipe/policies/$name/delete".
-+ * @f: Supplies a file structure representing the securityfs node.
-+ * @data: Supplies a buffer passed to the write syscall.
-+ * @len: Supplies the length of @data.
-+ * @offset: unused.
++ * security_bdev_setintegrity() - Set the device's integrity data
++ * @bdev: block device
++ * @type: type of integrity, e.g. hash digest, signature, etc
++ * @value: the integrity value
++ * @size: size of the integrity value
 + *
-+ * On success this deletes the policy represented by $name.
++ * Register a verified integrity measurement of a bdev with LSMs.
++ * LSMs should free the previously saved data if @value is NULL.
++ * Please note that the new hook should be invoked every time the security
++ * information is updated to keep these data current. For example, in dm-verity,
++ * if the mapping table is reloaded and configured to use a different dm-verity
++ * target with a new roothash and signing information, the previously stored data
++ * in the LSM blob will become obsolete. It is crucial to re-invoke the hook to
++ * refresh these data and ensure they are up to date. This necessity arises from
++ * the design of device-mapper, where a device-mapper device is first created, and
++ * then targets are subsequently loaded into it. These targets can be modified
++ * multiple times during the device's lifetime. Therefore, while the LSM blob is
++ * allocated during the creation of the block device, its actual contents are
++ * not initialized at this stage and can change substantially over time. This
++ * includes alterations from data that the LSMs 'trusts' to those they do not,
++ * making it essential to handle these changes correctly. Failure to address
++ * this dynamic aspect could potentially allow for bypassing LSM checks.
 + *
-+ * Return:
-+ * * Length of buffer written	- Success
-+ * * %-EPERM			- Insufficient permission/deleting active policy
-+ * * %-EINVAL			- Invalid input
-+ * * %-ENOENT			- Policy initializing/deleted
++ * Return: Returns 0 on success, negative values on failure.
 + */
-+static ssize_t delete_policy(struct file *f, const char __user *data,
-+			     size_t len, loff_t *offset)
++int security_bdev_setintegrity(struct block_device *bdev,
++			       enum lsm_integrity_type type, const void *value,
++			       size_t size)
 +{
-+	struct ipe_policy *ap = NULL;
-+	struct ipe_policy *p = NULL;
-+	struct inode *root = NULL;
-+	bool value = false;
-+	int rc = 0;
-+
-+	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
-+		return -EPERM;
-+
-+	rc = kstrtobool_from_user(data, len, &value);
-+	if (rc)
-+		return rc;
-+
-+	if (!value)
-+		return -EINVAL;
-+
-+	root = d_inode(f->f_path.dentry->d_parent);
-+	inode_lock(root);
-+	p = (struct ipe_policy *)root->i_private;
-+	if (!p) {
-+		inode_unlock(root);
-+		return -ENOENT;
-+	}
-+
-+	mutex_lock(&ipe_policy_lock);
-+	ap = rcu_dereference_protected(ipe_active_policy,
-+				       lockdep_is_held(&ipe_policy_lock));
-+	if (p == ap) {
-+		mutex_unlock(&ipe_policy_lock);
-+		inode_unlock(root);
-+		return -EPERM;
-+	}
-+	mutex_unlock(&ipe_policy_lock);
-+
-+	root->i_private = NULL;
-+	inode_unlock(root);
-+
-+	synchronize_rcu();
-+	ipe_free_policy(p);
-+
-+	return len;
++	return call_int_hook(bdev_setintegrity, bdev, type, value, size);
 +}
++EXPORT_SYMBOL(security_bdev_setintegrity);
 +
-+static const struct file_operations content_fops = {
-+	.read = read_policy,
-+};
-+
-+static const struct file_operations pkcs7_fops = {
-+	.read = read_pkcs7,
-+};
-+
-+static const struct file_operations name_fops = {
-+	.read = read_name,
-+};
-+
-+static const struct file_operations ver_fops = {
-+	.read = read_version,
-+};
-+
-+static const struct file_operations active_fops = {
-+	.write = setactive,
-+	.read = getactive,
-+};
-+
-+static const struct file_operations update_fops = {
-+	.write = update_policy,
-+};
-+
-+static const struct file_operations delete_fops = {
-+	.write = delete_policy,
-+};
-+
-+/**
-+ * policy_subdir - files under a policy subdirectory
-+ */
-+static const struct ipefs_file policy_subdir[] = {
-+	{ "pkcs7", 0444, &pkcs7_fops },
-+	{ "policy", 0444, &content_fops },
-+	{ "name", 0444, &name_fops },
-+	{ "version", 0444, &ver_fops },
-+	{ "active", 0600, &active_fops },
-+	{ "update", 0200, &update_fops },
-+	{ "delete", 0200, &delete_fops },
-+};
-+
-+/**
-+ * ipe_del_policyfs_node() - Delete a securityfs entry for @p.
-+ * @p: Supplies a pointer to the policy to delete a securityfs entry for.
-+ */
-+void ipe_del_policyfs_node(struct ipe_policy *p)
-+{
-+	securityfs_recursive_remove(p->policyfs);
-+	p->policyfs = NULL;
-+}
-+
-+/**
-+ * ipe_new_policyfs_node() - Create a securityfs entry for @p.
-+ * @p: Supplies a pointer to the policy to create a securityfs entry for.
-+ *
-+ * Return: %0 on success. If an error occurs, the function will return
-+ * the -errno.
-+ */
-+int ipe_new_policyfs_node(struct ipe_policy *p)
-+{
-+	const struct ipefs_file *f = NULL;
-+	struct dentry *policyfs = NULL;
-+	struct inode *root = NULL;
-+	struct dentry *d = NULL;
-+	size_t i = 0;
-+	int rc = 0;
-+
-+	if (p->policyfs)
-+		return 0;
-+
-+	policyfs = securityfs_create_dir(p->parsed->name, policy_root);
-+	if (IS_ERR(policyfs))
-+		return PTR_ERR(policyfs);
-+
-+	root = d_inode(policyfs);
-+
-+	for (i = 0; i < ARRAY_SIZE(policy_subdir); ++i) {
-+		f = &policy_subdir[i];
-+
-+		d = securityfs_create_file(f->name, f->access, policyfs,
-+					   NULL, f->fops);
-+		if (IS_ERR(d)) {
-+			rc = PTR_ERR(d);
-+			goto err;
-+		}
-+	}
-+
-+	inode_lock(root);
-+	p->policyfs = policyfs;
-+	root->i_private = p;
-+	inode_unlock(root);
-+
-+	return 0;
-+err:
-+	securityfs_recursive_remove(policyfs);
-+	return rc;
-+}
+ #ifdef CONFIG_PERF_EVENTS
+ /**
+  * security_perf_event_open() - Check if a perf event open is allowed
 -- 
 2.44.0
 
