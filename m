@@ -1,113 +1,85 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E61CF1547DC
-	for <dm-devel@lists.linux.dev>; Mon,  5 Aug 2024 15:40:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B6061D540;
+	Mon,  5 Aug 2024 18:51:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722872460; cv=none; b=RYkRMgZc3OaIKgLDYFfnXVTXP74zlm1AFmQhDTn1cyfkyDEK8/FdTvFor0rizVFLmsOdKSic1pKNaahVkzHCowSySydeD7M6k1g+15XmPPCQvS8uuChObjGQHpRCk/5Db2OEjY5UXpQHrJMGBsXRSh4hevOaRzdd31hq0fiqvBI=
+	t=1722883895; cv=none; b=rV6IlLO2tY6Me+jmagYzXgwDOmnyctXAEjm5Ln0EhKjB+JldjJubRjuIhIQh/3GHZQgBpCPGgEZ0ATRnWpbIds5uZX458UPK1GVaosCv7t2MTe0j1RJW1YoaE/OYPH4DHH010nRBZSp4MVwkz/FlEV7xPniq+qVInSfJagjr1oY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722872460; c=relaxed/simple;
-	bh=ckR95kzghM6AsvF5uMxEfeEUjIJLOkVRQ/eMIVsntOQ=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type; b=IAqavZ9UzNfdsgJ8n5vjKek7DRmUIuCe9NGKWA8hlthxGjEj+b7e0cQo8fEqjeeQ2PBJfpIl+27MnJBcj8X6WG8sORRqORLi8vw//u1ys4PRmBN4Ny7nbrjimSh5pq2bmkHvg3b2HJ95/dpsy+3XMZLufupK4G6Ey7DQScwJVHU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KP0ob3+Z; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1722883895; c=relaxed/simple;
+	bh=uf8ILAskZN/4P/S4F7SKa3SGrBWodGKtmv2kZoh7MLg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=AMsKY4XqP4toGx9mb03nqi6KmI/x0dlU076EHz7HoK4T9csZpZrFK/xIasHUaX1sUtJNMVb5JM2GErVDvunGba/p4ntmh0gi71cdJGXhigmdaTJjciD18Lz0a2o4ZXthrWW6GyW2RkcSAmiX87yMYUQYhaSvhi8YQOxl8lAw/+U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=F3pyDbbA; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KP0ob3+Z"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1722872457;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=lLSzwF1d/bXpw29WYzCzvdfDdw9sQIr/+WIQ3AvCeJY=;
-	b=KP0ob3+Z7QiwZNTshbJMqApkH3GQIZcpJKFX1NLkTmR01HDpopx6XW4ibZIZa2JcB2yN8X
-	7pPzePgvKdebBkqmkdcBwMzGieLVgtlhixRrEn9z9g7ZZnQpmJpXjVjqt2ZrMqMxi5Y1JH
-	ImUxn5TUJte/ZZPG1424syd2CoSujY4=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-47-gBlK8TCOMH2Bv5IyHZB09w-1; Mon,
- 05 Aug 2024 11:40:56 -0400
-X-MC-Unique: gBlK8TCOMH2Bv5IyHZB09w-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 080511955BD0;
-	Mon,  5 Aug 2024 15:40:55 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B44AF30001AA;
-	Mon,  5 Aug 2024 15:40:54 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id A6DC430F3625; Mon,  5 Aug 2024 15:40:53 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id A3EA745586;
-	Mon,  5 Aug 2024 17:40:53 +0200 (CEST)
-Date: Mon, 5 Aug 2024 17:40:53 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-    Khazhismel Kumykov <khazhy@google.com>, 
-    Zdenek Kabelac <zdenek.kabelac@gmail.com>
-Subject: [PATCH 2/2] dm resume: don't return EINVAL when signalled
-Message-ID: <ffe97384-f862-afe0-b83-bcfd2b65b72@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="F3pyDbbA"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 25914C32782;
+	Mon,  5 Aug 2024 18:51:34 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1722883894;
+	bh=uf8ILAskZN/4P/S4F7SKa3SGrBWodGKtmv2kZoh7MLg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=F3pyDbbAzcvONmuquDw8PZ6flxoE46it5ePJVAuMwygCo/wGsmYpgJVJ7p9MzEJqD
+	 9ectkAhOEZoTUJz9r5RZ54q/pujI84cU6X4o3xzNRV4IGgUaRUgmwJJNrsBp7qoyPs
+	 RYtYLOXeyPac2aKqmsjr3M3MExOj8mVd4KC8mmd6Rhdx5KTd75sw3mlQ1vma60VRe6
+	 IJKXxmRXfMEvWGx9NpeG7XCIxv8XKud0y24Gs+GEQP30a1QLMTPE6vpcVCexMz+Frr
+	 71TZOsBY0fwczfFhAYylvjyHoCcCvIHjfrDun0Xl/r+rM0zxm5kqHEn2OHEGN/fIMA
+	 A9ZYjjwyFvq7Q==
+Date: Mon, 5 Aug 2024 11:51:32 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: Fan Wu <wufan@linux.microsoft.com>
+Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org,
+	serge@hallyn.com, tytso@mit.edu, axboe@kernel.dk, agk@redhat.com,
+	snitzer@kernel.org, mpatocka@redhat.com, eparis@redhat.com,
+	paul@paul-moore.com, linux-doc@vger.kernel.org,
+	linux-integrity@vger.kernel.org,
+	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+	audit@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Deven Bowers <deven.desai@linux.microsoft.com>
+Subject: Re: [PATCH v20 15/20] fsverity: expose verified fsverity built-in
+ signatures to LSMs
+Message-ID: <20240805185132.GC1564@sol.localdomain>
+References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
+ <1722665314-21156-16-git-send-email-wufan@linux.microsoft.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <1722665314-21156-16-git-send-email-wufan@linux.microsoft.com>
 
-If the dm_resume method is called on a device that is not suspended, the
-method will suspend the device briefly, before resuming it (so that the
-table will be swapped).
+On Fri, Aug 02, 2024 at 11:08:29PM -0700, Fan Wu wrote:
+> This patch enhances fsverity's capabilities to support both integrity and
+> authenticity protection by introducing the exposure of built-in
+> signatures through a new LSM hook. This functionality allows LSMs,
+> e.g. IPE, to enforce policies based on the authenticity and integrity of
+> files, specifically focusing on built-in fsverity signatures. It enables
+> a policy enforcement layer within LSMs for fsverity, offering granular
+> control over the usage of authenticity claims. For instance, a policy
+> could be established to only permit the execution of all files with
+> verified built-in fsverity signatures.
+> 
+> The introduction of a security_inode_setintegrity() hook call within
+> fsverity's workflow ensures that the verified built-in signature of a file
+> is exposed to LSMs. This enables LSMs to recognize and label fsverity files
+> that contain a verified built-in fsverity signature. This hook is invoked
+> subsequent to the fsverity_verify_signature() process, guaranteeing the
+> signature's verification against fsverity's keyring. This mechanism is
+> crucial for maintaining system security, as it operates in kernel space,
+> effectively thwarting attempts by malicious binaries to bypass user space
+> stack interactions.
+> 
+> The second to last commit in this patch set will add a link to the IPE
+> documentation in fsverity.rst.
+> 
+> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
-However, there was a bug that the return value of dm_suspended_md was not
-checked. dm_suspended_md may return an error when it is interrupted by a
-signal. In this case, do_resume would call dm_swap_table, which would
-return -EINVAL.
+Acked-by: Eric Biggers <ebiggers@google.com>
 
-This commit fixes the logic, so that error returned by dm_suspend is
-checked and the reusme operation is undone.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Khazhismel Kumykov <khazhy@google.com>
-
----
- drivers/md/dm-ioctl.c |   20 ++++++++++++++++++--
- 1 file changed, 18 insertions(+), 2 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c	2024-05-15 16:55:57.000000000 +0200
-+++ linux-2.6/drivers/md/dm-ioctl.c	2024-08-05 17:35:32.000000000 +0200
-@@ -1181,8 +1181,24 @@ static int do_resume(struct dm_ioctl *pa
- 			suspend_flags &= ~DM_SUSPEND_LOCKFS_FLAG;
- 		if (param->flags & DM_NOFLUSH_FLAG)
- 			suspend_flags |= DM_SUSPEND_NOFLUSH_FLAG;
--		if (!dm_suspended_md(md))
--			dm_suspend(md, suspend_flags);
-+		if (!dm_suspended_md(md)) {
-+			r = dm_suspend(md, suspend_flags);
-+			if (r) {
-+				down_write(&_hash_lock);
-+				hc = dm_get_mdptr(md);
-+				if (hc && !hc->new_map) {
-+					hc->new_map = new_map;
-+					new_map = NULL;
-+				} else {
-+					r = -ENXIO;
-+				}
-+				up_write(&_hash_lock);
-+				if (new_map)
-+					dm_table_destroy(new_map);
-+				dm_put(md);
-+				return r;
-+			}
-+		}
- 
- 		old_size = dm_get_size(md);
- 		old_map = dm_swap_table(md, new_map);
-
+- Eric
