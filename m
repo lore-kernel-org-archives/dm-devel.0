@@ -1,114 +1,98 @@
-Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com [209.85.214.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF2791CD24
-	for <dm-devel@lists.linux.dev>; Sat,  3 Aug 2024 18:33:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55636770F5
+	for <dm-devel@lists.linux.dev>; Mon,  5 Aug 2024 15:27:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722709994; cv=none; b=q3n64xIpkxxOFlxba0ZA6YM4sqpiCHJRqcN5W/pMTN6QfJsrBuJeRsN+oEWWkrdUN+yyurT/LaGG/3ol4SMnPBf3XT9jjBJDtndEOnjkcdaG+oKleCuzYokjFTGfn0U+fBkbB4TlBi5E94RZaYCMrO/jzF/HpyfcOmz/J1jAoVI=
+	t=1722871662; cv=none; b=eezJr7I/tKjfmQw+zBXQtqnCo+LmKLcr+5+Y2AYALTpxcfuN81ytWeQNCRSV0ZO9SqZiEpfGRns0lDRquqV0ceR5vuy/2I/382dUdyDsFeZICzbPXNkdGdkm4cDCW83o42Agm91wYxZY4/QzDYqxknW5Q2H3qJOFwhg9M+8zA84=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722709994; c=relaxed/simple;
-	bh=rATF4I0UBm/YSsPSLhag8cqUaMrh2onGP0nh98LCzWk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=m8X+gYBJ5t+96f9/Q0g/CaUZNRRlit1sQh7bvGvtlAMmCM/kCe0P3XLV+4CC8klpZry6KnyDtDvj8uqZuUncUCaS4gfnVjXea3fKl9C29gasD+XWPsWef08Rt6t8hxK4Oi0LOe/P/Imy4CTC/qyKcl0c9HdhvtlHevKruLcwiGo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lv+ZqXCK; arc=none smtp.client-ip=209.85.214.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1722871662; c=relaxed/simple;
+	bh=hxRY3ugPzahtlJ8uky/sfXgV1yIeyy/QzuvDtaq8kEY=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type; b=Y2y+bpqlS0GHz9kxNa3N97J9ilaY2J+dWSp/LXnraHjjSdZ0Yem+ef1MlJGAnjjt+RN/POD4IhA0P4Zk7J94F1cA+D4hACQ/VlG6VCM4wuwc918r/c4D6ABXXYLCHNGDK9GyFgbPMedyWoJTWcCfIYEzkP/1+BOcnMGK2ZgPq8Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HsTKFQYK; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lv+ZqXCK"
-Received: by mail-pl1-f171.google.com with SMTP id d9443c01a7336-1ff4fa918afso21996915ad.1
-        for <dm-devel@lists.linux.dev>; Sat, 03 Aug 2024 11:33:12 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1722709992; x=1723314792; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=X2aakKcJP9JsSPtIr8v4x+tP3WdwFQXm3AQeWrFOwVQ=;
-        b=lv+ZqXCKslKNYC9Ci8WRjrkTH1TLZSqC3olyDnDBeNEb4D3/DMYqf1vt9FfNPqb5z4
-         fRkVEMLtEmqsonvxyK6WTdME/fBPbFjOlhbqSDJ/y6cFjzWyNOb7BjUwn/8HoPEEmux0
-         V7wSQ5Hw6Z/ccWwUlWkiZgomvw53V3HlK0LP7kc9239x6eSjeWv7yh+lTqFKD3ScEZn4
-         ikrx5ihb2POJiUWBA7mTXqshK0hDlA7AL75gbmPfRWD5bhhyhOgVpI5AWIioaLYfWKQJ
-         hQw91lCHKNyVPZCYpW8XxduKMQF256f1YgkqFTGum+/AjpWVfy0fh1i9ce5GKY/8K2rZ
-         IB5g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1722709992; x=1723314792;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=X2aakKcJP9JsSPtIr8v4x+tP3WdwFQXm3AQeWrFOwVQ=;
-        b=pjV7GbLoOsZlJew8Dz9leyASfjUI245WA3qYrttdoEoozcXSlrNDSLukSb/iGOTDN1
-         bXZ+iFEw6ZdBbymcH6HKloLgtXENDFv2f7NNVrdTdDJ/RlGxsEDjBdbLnSWqlERbKwon
-         dLrDVDJBOU73hSDdjr/7g7BD3YF9/ClJSmUZDJR+PGJM75ht9Pfmwvqvuhx4AE4dObHV
-         X0D0BA7MUaeeLBs2bHzz2N1FDTCWCU3TSdtzbLN/2FUjHlmwz6PGQQC2bZ9mklJw2Uw8
-         1y7g5OscU+U4zaFOFNaRGoVgOJrdB3gPUlluEYM/+p16Yt4xheQyXhuYetmqKZS5owbL
-         1QEw==
-X-Forwarded-Encrypted: i=1; AJvYcCWCkvqWDxW0GJoNg0JSJWLdzcWYp1yK3fPYPAPPUtYSbdYOjA9JoLt7o26sPdBxYq+BZf/U9duojQ1pNpGqROu9ZFYFt5DVm2c=
-X-Gm-Message-State: AOJu0Yy8USi2j1UYs/yKmscIwpDEUfKaP+rvGpa9r95J6qxSLBVFr9By
-	bE8TzuwpWGpI2fACMe/OrfCj4PIvTGb3N9WZ1DkgnOK4DjTsKKfY
-X-Google-Smtp-Source: AGHT+IHk2tCzpQmuh++pUzLvkOxxeNWPy2ZmkonA7aKva8irybQM9CH0bUHgy/A7WMxoONgpFVtJaw==
-X-Received: by 2002:a17:902:ec83:b0:1fd:9590:6550 with SMTP id d9443c01a7336-1ff574dfe01mr83592485ad.64.1722709991809;
-        Sat, 03 Aug 2024 11:33:11 -0700 (PDT)
-Received: from localhost ([103.121.155.92])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-1ff59058d7dsm37943325ad.142.2024.08.03.11.33.11
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 03 Aug 2024 11:33:11 -0700 (PDT)
-From: Shibu Kumar <shibukumar.bit@gmail.com>
-To: =agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	corbet@lwn.net
-Cc: Shibu Kumar <shibukumar.bit@gmail.com>,
-	dm-devel@lists.linux.dev,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] Removal of unexpected indentation error
-Date: Sun,  4 Aug 2024 00:03:03 +0530
-Message-ID: <20240803183306.32425-1-shibukumar.bit@gmail.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HsTKFQYK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1722871660;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=vNZpfi1ggYr8TiK+jucofPwRIqJVZNg4BEDMG6gzA30=;
+	b=HsTKFQYKZTG5DWiLYNqAvpUzop3WZBm38x/EhgbC/s3Y5VZHLbxH46YryZ8vM01MaL0J39
+	ayzNUkA4lUIf/qLZ6l080f7v9yDcS3RE2O5Nhy4eNaZEbdf5Wc9PgDPVVDYyjVkJC99Zt/
+	Cqp15aTp6wGspYQQmltowYpa5UO4Zck=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-502-m1vkRD4HNpO_A6RebKAxUA-1; Mon,
+ 05 Aug 2024 11:27:36 -0400
+X-MC-Unique: m1vkRD4HNpO_A6RebKAxUA-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9B3A01955BEF;
+	Mon,  5 Aug 2024 15:27:35 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1258919560AA;
+	Mon,  5 Aug 2024 15:27:35 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 04C4D30F3625; Mon,  5 Aug 2024 15:27:34 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 020FE45586;
+	Mon,  5 Aug 2024 17:27:34 +0200 (CEST)
+Date: Mon, 5 Aug 2024 17:27:33 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+    Khazhismel Kumykov <khazhy@google.com>, 
+    Zdenek Kabelac <zdenek.kabelac@gmail.com>
+Subject: [PATCH 1/2] dm suspend: return -ERESTARTSYS instead of -EINTR
+Message-ID: <ef2ae856-54dc-4428-a8e-47efedc52e1@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-While building kernel documention using make htmldocs command, I was getting unexpected indentation error. Single description was given for two module parameters with wrong indentation.So,I corrected the indentation of both the parameter and description and also added the description separately for both the module param.
+This commit changes device mapper, so that it returns -ERESTARTSYS
+instead of -EINTR when it is interrupted by a signal (so that the syscal
+will restart the ioctl).
 
-Signed-off-by: Shibu kumar shibukumar.bit@gmail.com
+The manpage signal(7) says that the ioctl function should be restarted if
+the signal was handled with SA_RESTART.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
- .../admin-guide/device-mapper/dm-crypt.rst    | 20 ++++++++++++-------
- 1 file changed, 13 insertions(+), 7 deletions(-)
+ drivers/md/dm.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-crypt.rst b/Documentation/admin-guide/device-mapper/dm-crypt.rst
-index e625830d335e..48a48bd09372 100644
---- a/Documentation/admin-guide/device-mapper/dm-crypt.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-crypt.rst
-@@ -162,13 +162,19 @@ iv_large_sectors
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2024-07-30 14:06:55.000000000 +0200
++++ linux-2.6/drivers/md/dm.c	2024-07-31 18:10:21.000000000 +0200
+@@ -2737,7 +2737,7 @@ static int dm_wait_for_bios_completion(s
+ 			break;
  
+ 		if (signal_pending_state(task_state, current)) {
+-			r = -EINTR;
++			r = -ERESTARTSYS;
+ 			break;
+ 		}
  
- Module parameters::
--max_read_size
--max_write_size
--   Maximum size of read or write requests. When a request larger than this size
--   is received, dm-crypt will split the request. The splitting improves
--   concurrency (the split requests could be encrypted in parallel by multiple
--   cores), but it also causes overhead. The user should tune these parameters to
--   fit the actual workload.
-+   max_read_size
-+      Maximum size of read requests. When a request larger than this size
-+      is received, dm-crypt will split the request. The splitting improves
-+      concurrency (the split requests could be encrypted in parallel by multiple
-+      cores), but it also causes overhead. The user should tune this parameters to
-+      fit the actual workload.
-+
-+   max_write_size
-+      Maximum size of write requests. When a request larger than this size
-+      is received, dm-crypt will split the request. The splitting improves
-+      concurrency (the split requests could be encrypted in parallel by multiple
-+      cores), but it also causes overhead. The user should tune this parameters to
-+      fit the actual workload.
+@@ -2762,7 +2762,7 @@ static int dm_wait_for_completion(struct
+ 			break;
  
+ 		if (signal_pending_state(task_state, current)) {
+-			r = -EINTR;
++			r = -ERESTARTSYS;
+ 			break;
+ 		}
  
- Example scripts
--- 
-2.43.0
 
