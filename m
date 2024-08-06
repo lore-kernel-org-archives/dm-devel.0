@@ -1,141 +1,157 @@
-Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
+Received: from mail-yb1-f172.google.com (mail-yb1-f172.google.com [209.85.219.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F135213F45F
-	for <dm-devel@lists.linux.dev>; Tue,  6 Aug 2024 19:12:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D81615B147
+	for <dm-devel@lists.linux.dev>; Tue,  6 Aug 2024 20:55:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722971551; cv=none; b=bisMr1ULVDQnjj1JxnZZlw6OLOKjcHFCCsd2uzf3kNQz7zNpJ6SxDjNUQMKnMD496BVJQQj7g0OOM2+6+G0cRLFdNgjVs9f0+XBiggyP5pbHOQGA+7iGM6Xd1Pth3nJ+/GOpEx4CWvPRvjostze6aYynm2UiD1Nvrpzm5Kd8yEM=
+	t=1722977710; cv=none; b=JdJsm47zHUbmM6ct1Xf+CVDGxM9OELURxKDGUQ8Xk0GGkeJZyEn97xN4KqP6jqb/WdAYhdriyDYMF2vr4V/kjud+H6uE8xe/JflgXU3lbxFl4G9DB5WRvJ2ws35vHmwOnvePiDyyalYABgl2QgRj9nLbPr4EwCyjlHpmiy7KQUo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722971551; c=relaxed/simple;
-	bh=ULwUyEyPebuFl5qnDeN8DY/QorxJjo5z10icVVrhioo=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=YcduB2HIg56empjm5XCZLIRH5Of5PsedcZH8Yb00DiSJqnRIw0i+gd+9ZLYaq0tML6ioJ1CagwhxOJfDaWp4KJTkv3MDl2Q+Tj+BGyYv/yJXgxyqignf97k93K3WO0OpcP9MNQNEVKnTHU8mLzvnWL8L9ncIdRHHLLaC67HAFW8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=DPBMSfvW; arc=none smtp.client-ip=209.85.208.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1722977710; c=relaxed/simple;
+	bh=Q1EFjItpPAJVvRpOJiKVEeB9t84orASFY/TzMasrm54=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=Dn2Iic+rmasp54kf3MbpGk22gYUooFySisgBlHL8EL9RSt9KwVxfsQOA2AA1RqFdDh951JbRMS0lmErgkpRZK7RctfUtCpM17C/t0m7h6hgvVlr4rJU62GIDFthyJLbTNGLEdXqYotWTWrUw5ZMHtCToGRm3NSpw13QiC872QSs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=ZN4j74PL; arc=none smtp.client-ip=209.85.219.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="DPBMSfvW"
-Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-5a108354819so1359393a12.0
-        for <dm-devel@lists.linux.dev>; Tue, 06 Aug 2024 12:12:25 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="ZN4j74PL"
+Received: by mail-yb1-f172.google.com with SMTP id 3f1490d57ef6-e0b2d502c6eso1011588276.0
+        for <dm-devel@lists.linux.dev>; Tue, 06 Aug 2024 13:55:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1722971544; x=1723576344; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=81Du6myh8JQw2GeaQg7AYSTpn68/UMSHcA817K24wBc=;
-        b=DPBMSfvWEBEEsbN8otw9SFkVMoffQJ0HNXHdT0XxuzYmOrz8Sr5qme4yZKVpOk7vBS
-         asR2Yl0UDj/UvLffJEAGhlJNq70ijM6uxE2KRnTOjfAWEmQspxTS9pwQZHMyyssjiUzA
-         1PDW0SOBaWXAjBgqk8n0Ygwl4tjRPlJ2VB7wGbRuBdEIH+LtcTIBrhVw8+rGBsWk7LcY
-         VZKOREU23f5oEp8rqDe7WY4uHFBkJkF+uGgwlQYqFkgoPin/13HJBa8+E42NtTtV4Vbh
-         hRFKKSfOAupYKRlNH0C/6XL7Ee9G7GLAbHMDybw8YBKTnStcAehmuEq9AQu/9JLjDlAJ
-         2oYQ==
+        d=paul-moore.com; s=google; t=1722977707; x=1723582507; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=ddUgUKkImUJBZRqaPBh4WpQntM2pgtbxW0LlNFNQthQ=;
+        b=ZN4j74PLIaZYxu8Tzci6neF7bnnY+BBRxHx2Vvd0nkHPmFs+GtH8QtkDn+MNv26Ypu
+         +KczsoqNF3639cp9MwjJLlPK2ynzlo/OkVVAL1YKFnR310Aefzh7J+yAWZyrPsnN6qpa
+         9zAxfQvzGd6F+GZNBABqwYHsRxV7slXYjAoP9J+3uNa5UYuewNTMEpqtL6GfqAn3tud+
+         RiNAonH4Pl3cQGo0PKjia8iIe1SuoGnYH9T7djmMR8PoGI/Xn42QRrlMiSPks6MDP08R
+         T4tjIzJL7nRFso+6AyRcqj+YnUuzZ7EE2g28Ulyyt8ffHP3n3PzCAAqyzs1ZIeLdaMWq
+         /92Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1722971544; x=1723576344;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=81Du6myh8JQw2GeaQg7AYSTpn68/UMSHcA817K24wBc=;
-        b=juIr0XPRJ4VxgIEBwL0LMhDX11uVi/c3+I7/xUOEpqoL/YPp/7YuroI8FiBMQ1H3q0
-         cB1ThAGffTPmA+CCvCVaLlpXLQM/8AAawBh2asC05aFyZB5eonbv8RbYaSyKQ1zhC0xv
-         slkjjRJnWWyqWqVe2ikTBFhtlTJGuiCek/O7h8kwdnFg//6+bisXTpS6g5Hkz5PFTMwK
-         roRJ3Nw1kossLSo4nA6ln2iSKkLvVX/iYb0JKwMQO7CK8YQ0nGDVPVWRmG7BiKwTVFom
-         USFENdt4Er1i1w1wH8wM9klvmK/1e080xSskrTiJeS3E0chMuPv6jlTw2S9KVk5my3W5
-         GAyA==
-X-Gm-Message-State: AOJu0YxTfPGQ6QEpqGAhi6LxQYTacBjpjG+0Lq/zzAWZ4hWu38Yi/Q5g
-	7d6hmPlV0cTvS5T8U2yZXQcfDJvyvpbyWEqCX3tfyVGDcthEReQuk9gDLMmgNRiuMaxLrR+FQg0
-	tXSs=
-X-Google-Smtp-Source: AGHT+IF+vvywuGUE2xytZrTD/+70Chkb3W+MHoTSBPyFjiqL3zCDqiRxLzlA0847DHiw7PGqA1gMqQ==
-X-Received: by 2002:a05:6402:270e:b0:5bb:8e10:176d with SMTP id 4fb4d7f45d1cf-5bb8e101872mr5736026a12.31.1722971543712;
-        Tue, 06 Aug 2024 12:12:23 -0700 (PDT)
-Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5b839c23417sm6196067a12.29.2024.08.06.12.12.23
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 06 Aug 2024 12:12:23 -0700 (PDT)
-Message-ID: <b2caea99035d97739460d8eb87231b16f57171ee.camel@suse.com>
-Subject: Re: [PATCH] libmultipath: fix ontap prioritizer snprintf limits
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Tue, 06 Aug 2024 21:12:21 +0200
-In-Reply-To: <20240802172650.3063016-1-bmarzins@redhat.com>
-References: <20240802172650.3063016-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.3 
+        d=1e100.net; s=20230601; t=1722977707; x=1723582507;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=ddUgUKkImUJBZRqaPBh4WpQntM2pgtbxW0LlNFNQthQ=;
+        b=PcYUCQY1zwGnxt+3rcD9+tuAa4IFgg+20/E7AiUVnRsDtEcVdmK1y8PJl8fqqzAovq
+         L0PT3fXBhm791fvEfU7tyTVu9gxKfTQuK4FqyvTTQR8nDKRDBNiWrdhpU2PMc/WLoPoB
+         Wg1jCL02pIRWceIB52PchTzBXVpAkzfYhUbEnZfyRDPJ0wWEwiB4tyuGW+ZNo9ki8nJn
+         NWzBwedgQEDAmuF2+K1sTudWWufPW7wxZ27olwPxxlvBFq5jFP3nL1nCV1xEzN8dI8KP
+         WXw6MTIFzB6aJhkNrKArERFfXit+gctNHSBaILJo2sqjO6VA+pgk5SDc+dD5IY7wHX3+
+         cL5w==
+X-Forwarded-Encrypted: i=1; AJvYcCXH+c2EyiCi2f+cpUYA7QnTJKVSBSgLhivGE5E5ebSwMCwpEWWHgWxcUitC6emr1D5GCNSR+b3XoA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwONDupHBkosDcKPoJwSYYdkXFlVztb2qH7/eGQgDoA0dP945kF
+	uFDr0IP9f2YfQND3xPCVqSYkkny06hcMX5tiOLQ2WuHZUxeSM2jCer86L5frXcg4fl/ufILnuMb
+	rAuPCgs5etSQBEGGq14jPBQsnsM6a2yQdja/N
+X-Google-Smtp-Source: AGHT+IEV3DoSxpbwywgyClpobkg3f96r+2vacgaYADkIDoHb8BVfBMUuKoLI3KKW3kNSXmapcP0+yqslrTw3VHo3MFI=
+X-Received: by 2002:a05:6902:dc9:b0:e03:5bca:aee6 with SMTP id
+ 3f1490d57ef6-e0e54be0a4amr8897314276.54.1722977707114; Tue, 06 Aug 2024
+ 13:55:07 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
+ <1722665314-21156-21-git-send-email-wufan@linux.microsoft.com> <de7857fb-63d9-42fc-af1e-12ffcdfcdda8@molgen.mpg.de>
+In-Reply-To: <de7857fb-63d9-42fc-af1e-12ffcdfcdda8@molgen.mpg.de>
+From: Paul Moore <paul@paul-moore.com>
+Date: Tue, 6 Aug 2024 16:54:56 -0400
+Message-ID: <CAHC9VhRmcReVM_Le5bYor2deotnSe4OT08UYhL6xhiKCu0+3kA@mail.gmail.com>
+Subject: Re: [PATCH v20 20/20] MAINTAINERS: ipe: add ipe maintainer information
+To: Paul Menzel <pmenzel@molgen.mpg.de>
+Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com, 
+	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
+	axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
+	eparis@redhat.com, linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
+	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, 
+	linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2024-08-02 at 13:26 -0400, Benjamin Marzinski wrote:
-> The ontap prioritizer functions dump_cdb() and process_sg_error()
-> both
-> incorrectly set the snprintf() limits larger than the available
-> space.
-> Instead of multiplying the number of elements to print by the size of
-> an
-> element to calculate the limit, they multiplied the number of
-> elements
-> to print by the maximum number of elements that the buffer could
-> hold.
->=20
-> Fix this, and also make sure that the number of elements to print is
-> less than or equal to the maximum number that the buffer can hold.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
-> =C2=A0libmultipath/prioritizers/ontap.c | 8 ++++----
-> =C2=A01 file changed, 4 insertions(+), 4 deletions(-)
->=20
-> diff --git a/libmultipath/prioritizers/ontap.c
-> b/libmultipath/prioritizers/ontap.c
-> index 117886ea..28e663ac 100644
-> --- a/libmultipath/prioritizers/ontap.c
-> +++ b/libmultipath/prioritizers/ontap.c
-> @@ -39,8 +39,8 @@ static void dump_cdb(unsigned char *cdb, int size)
-> =C2=A0	char * p =3D &buf[0];
-> =C2=A0
-> =C2=A0	condlog(0, "- SCSI CDB: ");
-> -	for (i=3D0; i<size; i++) {
-> -		p +=3D snprintf(p, 10*(size-i), "0x%02x ", cdb[i]);
-> +	for (i =3D 0; i < size && i < 10; i++) {
-> +		p +=3D snprintf(p, 5*(size-i), "0x%02x ", cdb[i]);
-> =C2=A0	}
+On Sat, Aug 3, 2024 at 4:15=E2=80=AFAM Paul Menzel <pmenzel@molgen.mpg.de> =
+wrote:
+>
+> Dear Fan,
+>
+>
+> Thank you very much for your patch. Two nits, should you sent another
+> interation: A more specific summary would avoid people having to look at
+> the message body or diff, and `git log --oneline` would be enough.
+>
+> MAINTAINERS: Add IPE entry with M: Fan Wu
+>
+> MAINTAINERS: Add IPE entry with Fan Wu as maintainer
+>
+> Am 03.08.24 um 08:08 schrieb Fan Wu:
+> > Update MAINTAINERS to include ipe maintainer information.
+>
+> I=E2=80=99d at least mention Integrity Policy Enforcement. As you not onl=
+y
+> include the maintainer information but add a new entry, I=E2=80=99d leave=
+ the
+> body out, or mention that a new entry is added.
+>
+> > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
-This seems incorrect, too. We should pass the remaining size of the
-buffer, which is ((10 - i) * 5 + 1), unless I am mistaken. It's bogus
-to use the "size" variable in the calculation of the remaining buffer
-size. Plus, we should break the loop if i >=3D 10, and check the return
-value of snprintf (if we don't, we might as well use sprintf in the
-first place).
+Working under the current assumption that a new revision is not
+needed, I can fix this up during the merge.  Fan, other-Paul, are you
+both okay with the following:
 
-Actually, this code is horrible and we should rather use strbuf.
-Strange that none of our many compilers found this, and even coverity
-didn't.
+  "MAINTAINERS: add IPE entry with Fan Wu as maintainer
 
-> =C2=A0	condlog(0, "%s", buf);
-> =C2=A0}
-> @@ -56,8 +56,8 @@ static void process_sg_error(struct sg_io_hdr
-> *io_hdr)
-> =C2=A0		io_hdr->host_status, io_hdr->driver_status);
-> =C2=A0	if (io_hdr->sb_len_wr > 0) {
-> =C2=A0		condlog(0, "- SCSI sense data: ");
-> -		for (i=3D0; i<io_hdr->sb_len_wr; i++) {
-> -			p +=3D snprintf(p, 128*(io_hdr->sb_len_wr-i),
-> "0x%02x ",
-> +		for (i =3D 0; i < io_hdr->sb_len_wr && i < 128; i++) {
-> +			p +=3D snprintf(p, 5*(io_hdr->sb_len_wr-i),
-> "0x%02x ",
-> =C2=A0				=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 io_hdr->sbp[i]);
-> =C2=A0		}
+   Add a MAINTAINERS entry for the Integrity Policy Enforcement (IPE) LSM."
 
-Same here, the remaining buffer size is (5 * (128 - i) + 1).
+> > --
+> > v1-v16:
+> >    + Not present
+> >
+> > v17:
+> >    + Introduced
+> >
+> > v18:
+> >    + No changes
+> >
+> > v19:
+> >    + No changes
+> >
+> > v20:
+> >    + No changes
+> > ---
+> >   MAINTAINERS | 10 ++++++++++
+> >   1 file changed, 10 insertions(+)
+> >
+> > diff --git a/MAINTAINERS b/MAINTAINERS
+> > index 8766f3e5e87e..4cdf2d5a2058 100644
+> > --- a/MAINTAINERS
+> > +++ b/MAINTAINERS
+> > @@ -11118,6 +11118,16 @@ T:   git git://git.kernel.org/pub/scm/linux/ke=
+rnel/git/zohar/linux-integrity.git
+> >   F:  security/integrity/
+> >   F:  security/integrity/ima/
+> >
+> > +INTEGRITY POLICY ENFORCEMENT (IPE)
+> > +M:   Fan Wu <wufan@linux.microsoft.com>
+> > +L:   linux-security-module@vger.kernel.org
+> > +S:   Supported
+> > +T:   git https://github.com/microsoft/ipe.git
+> > +F:   Documentation/admin-guide/LSM/ipe.rst
+> > +F:   Documentation/security/ipe.rst
+> > +F:   scripts/ipe/
+> > +F:   security/ipe/
+> > +
+> >   INTEL 810/815 FRAMEBUFFER DRIVER
+> >   M:  Antonino Daplas <adaplas@gmail.com>
+> >   L:  linux-fbdev@vger.kernel.org
+>
+> Kind regards,
+>
+> Paul
 
-Martin
-
-> =C2=A0		condlog(0, "%s", buf);
-
+--=20
+paul-moore.com
