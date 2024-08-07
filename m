@@ -1,90 +1,110 @@
-Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F69F28399
-	for <dm-devel@lists.linux.dev>; Wed,  7 Aug 2024 14:13:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.43
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 8152312FB0A;
+	Wed,  7 Aug 2024 18:01:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723040029; cv=none; b=Sbt1lOzZ+a9uD4T5fOHEqLpPz/sqrtgjlxDu5kdxzUWWyXiNx2G0wKcqszeijXTD3xugpDgDskuyt7EJw6oBSYjzfJBLqk8/qMl6m96bMxdhBbZuaPMKM0uq4U/NDh6ilXF1sq8FkskCf9Apj7SHp9HZLRD/1Cva47VS488S7fo=
+	t=1723053689; cv=none; b=RZ+PP23c7W5ofOwZ/pgJv8PGUXgOqw9nochpUUH+7R4PCY7UbWT+EQ2weShFhut3tFZKOBBgZuSuYjbLrLoNEZiCD5Ql88wmfkrGSxT6T6eTQFTRzys0v5AugxOsO9pkJ92ZgrruvLCsbHvT3v2vlvJXFmi0La5G68eGsV3rwZQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723040029; c=relaxed/simple;
-	bh=4h3P/21+jGF1Wrn+hHA8d1xVRbX2E2+j9b03qumh0WA=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=gMIoWlCzzZpHYGAIoq9Z4KVd15BINru+Bu15SfBX1LLoEq8pDljaf9HLb5msbe9p9i09bUgTiqmRU6r20qNHx3wEsXg1NbVx6bqe8ShlqmimmYTPPizQ1tmiW4GS79y++bAHUjg1t/QuvMd/DDun+Iuptr/+eoLXdGyrVmcscxs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Ipzn69vp; arc=none smtp.client-ip=209.85.167.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1723053689; c=relaxed/simple;
+	bh=yqp0uOSR8Q8K4/5lXUBRuESQesWcvdBjwX8QJL9PB5s=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Sunedk90meUAdCccxGLirvGYQIWGRpODkrvJKfkbOPdvZt3WBn0sXJAv3QEeEbrD2HAsq8gCh0b7yZy6Eu+WT9px501d057gEIyOquI7ZNtfvY3YZxoVEZEDsLMkR4+hh7StRhQt6mdbDGOEoUiJ2oklKNtU7AiKxkHC0TRafgw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=aunZM4VX; arc=none smtp.client-ip=13.77.154.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Ipzn69vp"
-Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-530d0882370so1865845e87.3
-        for <dm-devel@lists.linux.dev>; Wed, 07 Aug 2024 07:13:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723040025; x=1723644825; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=4h3P/21+jGF1Wrn+hHA8d1xVRbX2E2+j9b03qumh0WA=;
-        b=Ipzn69vpIpcr18oqVGipVxKxUftrGIJQZkKcatsE/Owm4TXfhWMIF/lfQTeVWKBp1R
-         1pdj4w+qy/i7E9+UOpzMswTessELzKjjvJZfptcLenxVb80bdHaZAhZGSX+py5Fg7bLp
-         gF3KiU4ciTvoPKc5xUzSD5SiBHLUncI/DAsD0hnrNm6/ppLJM58O8lMgbUC95CDY4fyU
-         nBmu2giFHHxBZRyrebar0wG7G6m4iqh0zo2P0c85fRJdpB4Wbx4FpyhM1PMU/a/HdGHE
-         DLl4z+AF1kRh8+ZYbru0WdfF84J0wzqEGAWNsETt3Kddy+wRKQb7jnYB1ze2jZaptNFx
-         DEqg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723040025; x=1723644825;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=4h3P/21+jGF1Wrn+hHA8d1xVRbX2E2+j9b03qumh0WA=;
-        b=pjM6oH0XMs4uWHw3Ki6KgP6ens0mUsFac4cJHDcWJi7KE+asxdx2fcwztEuAiNkl16
-         nyGj3184Ks+CFSGQPyqZYLqaHwY6sqrBoktrN7BSKDUTIB3GNw0hyQy0Mc8cp9+x5Z2e
-         fIrpnJkLQOm7AUfcLKsPibeywhKysqIewPUIt0Itoj/gVwaPL2Ueomx5q+I6/QfOQOa9
-         chKuRzRm/Co2HFOa42RikrrXsKeAHU4MGh6wov4QLhEczLQxCsAerUvnROTxrtIRoGgN
-         DKvZqpFHPBo5UZB4bJeOk7rQPNL3YdHIf0GkgANof30spu8FUZ6HkLfDhR/Lh5Lu5zuO
-         8njQ==
-X-Gm-Message-State: AOJu0Yxs1b2f6e7djC+jRyrSA9PDtd/7vxgPiAKmRIcLCvQOr2Qnv1EF
-	4gPe/RyCVznmV+AKXQ5bZicq/iXRwM2O9gWUWBZoyKW5Hs6GR0AZePteyNue8nU=
-X-Google-Smtp-Source: AGHT+IFIS7DfJLgfEIEL9cwxMT3Ew9DcF9i6HTOI4A4nipznsPj8yWg8cHEWwSqAarznYdHvU14TwA==
-X-Received: by 2002:a05:6512:ea4:b0:530:ae22:a6ea with SMTP id 2adb3069b0e04-530bb39b006mr14553853e87.40.1723040024635;
-        Wed, 07 Aug 2024 07:13:44 -0700 (PDT)
-Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5b83b92b970sm7114003a12.72.2024.08.07.07.13.43
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 07 Aug 2024 07:13:44 -0700 (PDT)
-Message-ID: <a4e0816c234a574894643e6cd78a8e27756e91c6.camel@suse.com>
-Subject: Re: [PATCH] multipathd: show pending reconfigs in 'show daemon'
- output
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Wed, 07 Aug 2024 16:13:43 +0200
-In-Reply-To: <20240806225441.3227895-1-bmarzins@redhat.com>
-References: <20240806225441.3227895-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.3 
+	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="aunZM4VX"
+Received: from [10.137.106.151] (unknown [131.107.174.23])
+	by linux.microsoft.com (Postfix) with ESMTPSA id C5D4820B7165;
+	Wed,  7 Aug 2024 11:01:21 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com C5D4820B7165
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
+	s=default; t=1723053682;
+	bh=JBD5S5GVsNdnH6wjmW/+nIlLS6fh9sw+q0ZHaDgSzqo=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=aunZM4VX0xcprS96+2RmSgZf60XSA27qvPVhz6D4bvlUDHm+AAedz7t9cP58XP5T7
+	 3Kw+15MQrOnztwHPz4/UKECWCiy/kTOPbSWECYJk+1FBYPIsOxRjrLe6i/+8l5mh0W
+	 ZoKEt4JNNiwgMXddXYZEieQG4zU6t4SqwHnsWmMw=
+Message-ID: <080c93d1-9c02-478f-a0be-f4bd3869c1fd@linux.microsoft.com>
+Date: Wed, 7 Aug 2024 11:01:21 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v20 20/20] MAINTAINERS: ipe: add ipe maintainer
+ information
+To: Paul Menzel <pmenzel@molgen.mpg.de>, Paul Moore <paul@paul-moore.com>
+Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
+ tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
+ snitzer@kernel.org, mpatocka@redhat.com, eparis@redhat.com,
+ linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
+ linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+ audit@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
+ <1722665314-21156-21-git-send-email-wufan@linux.microsoft.com>
+ <de7857fb-63d9-42fc-af1e-12ffcdfcdda8@molgen.mpg.de>
+ <CAHC9VhRmcReVM_Le5bYor2deotnSe4OT08UYhL6xhiKCu0+3kA@mail.gmail.com>
+ <5880e801-e896-4bf0-9a69-2cf5acb51ec3@molgen.mpg.de>
+Content-Language: en-US
+From: Fan Wu <wufan@linux.microsoft.com>
+In-Reply-To: <5880e801-e896-4bf0-9a69-2cf5acb51ec3@molgen.mpg.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On Tue, 2024-08-06 at 18:54 -0400, Benjamin Marzinski wrote:
-> Since the "multipathd reconfigure" command simply schedules a
-> reconfigure, and doesn't wait until it has occurred, it would be nice
-> to
-> be able to query multipathd to see if the reconfigure has completed.
-> "multipathd show daemon" doesn't work for this. The reconfigure could
-> be
-> delayed, and the output gives no indication that there is a pending
-> reconfigure.
->=20
-> Change the ouput to add " (pending reconfigure)" if a reconfigure is
-> pending.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+
+On 8/6/2024 9:48 PM, Paul Menzel wrote:
+> Dear Paul,
+> 
+> 
+> Am 06.08.24 um 22:54 schrieb Paul Moore:
+>> On Sat, Aug 3, 2024 at 4:15 AM Paul Menzel wrote:
+> 
+>>> Thank you very much for your patch. Two nits, should you sent another
+>>> interation: A more specific summary would avoid people having to look at
+>>> the message body or diff, and `git log --oneline` would be enough.
+>>>
+>>> MAINTAINERS: Add IPE entry with M: Fan Wu
+>>>
+>>> MAINTAINERS: Add IPE entry with Fan Wu as maintainer
+>>>
+>>> Am 03.08.24 um 08:08 schrieb Fan Wu:
+>>>> Update MAINTAINERS to include ipe maintainer information.
+>>>
+>>> I’d at least mention Integrity Policy Enforcement. As you not only
+>>> include the maintainer information but add a new entry, I’d leave the
+>>> body out, or mention that a new entry is added.
+>>>
+>>>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+>>
+>> Working under the current assumption that a new revision is not
+>> needed, I can fix this up during the merge.  Fan, other-Paul, are you
+>> both okay with the following:
+>>
+>>    "MAINTAINERS: add IPE entry with Fan Wu as maintainer
+>>
+>>     Add a MAINTAINERS entry for the Integrity Policy Enforcement (IPE) 
+>> LSM."
+> 
+> Thank you. That is fine by me.
+> 
+> 
+> Kind regards,
+> 
+> Paul
+> 
+> 
+
+Hi Paul and Paul,
+
+Thank you both for your feedback and coordination on this. I'm good with 
+the proposed changes and appreciate your efforts.
+
+-Fan
+
+
 
