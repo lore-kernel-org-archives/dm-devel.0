@@ -1,181 +1,131 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx3.molgen.mpg.de (mx3.molgen.mpg.de [141.14.17.11])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 38738374C4
-	for <dm-devel@lists.linux.dev>; Tue,  6 Aug 2024 22:54:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1A2E323D7;
+	Wed,  7 Aug 2024 04:49:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=141.14.17.11
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1722984891; cv=none; b=aEW7je2ooPkeRBF7pS6bc/4WUTIaj+40tDCDtlqZL1CiOlmKiKrEe5CFTDtw5j2QC+gTURGhZham439UuSzXeSlKIEGCHC4p6jWiqXKWk0gkQYWP4iDeQd+cMIMbUppH89nt3h0nSMPCoAJM0sqoshFXje1zuC+gGMuyCsCSagY=
+	t=1723006148; cv=none; b=fALlo8Lw+lcoH/2qV413rGRRUfLhkMqRLNTl0rf0iH6v0TjYo5RfgX9AyXW7fRiQuforIP9h+K+lznAUu9uhi8hpqjNzCKb10Y1p8O5yVse285KqEpGl6bAtSSoZf7FSKUkGUs1MLqPylNQEe8hgR38Vj0U1OI7KqZDC62XVtI4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1722984891; c=relaxed/simple;
-	bh=avq/gM21A/GXkFkH3VMLI8MvZKa4UpBBab6Wbp3ThQA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=QtQh5ZsIRctEwxKRBCpPe+BZzBGDgWY32jUnONQkIWPDvUztaLb91HO1qt8anv/5FvPLS8PSnDoYoFxH0heI/JIo8g8l30+brf5CsUK6W2K3lPue8xbphmuGP8clmdzKHpYVrSGZG/vtgy/tk/Qr3HhTArsNhPjzcxRgZYODLmM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fHJzGRZB; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fHJzGRZB"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1722984888;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=TpjA62yMurGGanq8vAxBKhHFRaTd2dHQp9l9dsgnyRw=;
-	b=fHJzGRZBb6srXcdVQOdS2XDxqadGaC4qHtZ1e8LBsYFM4jbGh4tsiUJoArjLcadnd2R4+M
-	wNIdr0wR9A+gbO8Xt33VZE3hn+QXNlVU3mkXHx1y1yhnl7unqCRrfLcyjNNG5gFfUUyPN1
-	lYrv4V9as6TMX3ZDtVHOCYT2IVLkRTA=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-395-BtMMLOr1MyG1DgVe2lbM8w-1; Tue,
- 06 Aug 2024 18:54:45 -0400
-X-MC-Unique: BtMMLOr1MyG1DgVe2lbM8w-1
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	s=arc-20240116; t=1723006148; c=relaxed/simple;
+	bh=qa39epjqjdsOVNsHgEqDKXlLdppVmF7MiqUmOzTRPYU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=s65zp0BYHhmENg/Ym7sODpQYyzlUnP2MZQ9Et7Pl1X+Cxnm9IRBBKHlk49vZIGQuX3/Z7uuYekMCF74eXQG3egwbUxU3ixufI+RqnDymdy/OVk13l0rCxBlW3EnSjVAB4qglfiNDPPo8tt/Df4PpIKbgnHYR8SEJr5DyBEik26g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=molgen.mpg.de; spf=pass smtp.mailfrom=molgen.mpg.de; arc=none smtp.client-ip=141.14.17.11
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=molgen.mpg.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=molgen.mpg.de
+Received: from [192.168.0.3] (ip5f5af7d2.dynamic.kabel-deutschland.de [95.90.247.210])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 749BD1955D52;
-	Tue,  6 Aug 2024 22:54:44 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CC3F319560AA;
-	Tue,  6 Aug 2024 22:54:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 476Msgsb3227904
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 6 Aug 2024 18:54:42 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 476MsfDX3227903;
-	Tue, 6 Aug 2024 18:54:41 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH] multipathd: show pending reconfigs in 'show daemon' output
-Date: Tue,  6 Aug 2024 18:54:41 -0400
-Message-ID: <20240806225441.3227895-1-bmarzins@redhat.com>
+	(Authenticated sender: pmenzel)
+	by mx.molgen.mpg.de (Postfix) with ESMTPSA id 4D7E161E5FE01;
+	Wed,  7 Aug 2024 06:48:21 +0200 (CEST)
+Message-ID: <5880e801-e896-4bf0-9a69-2cf5acb51ec3@molgen.mpg.de>
+Date: Wed, 7 Aug 2024 06:48:20 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v20 20/20] MAINTAINERS: ipe: add ipe maintainer
+ information
+To: Paul Moore <paul@paul-moore.com>
+Cc: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
+ jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
+ axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+ eparis@redhat.com, linux-doc@vger.kernel.org,
+ linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org,
+ fsverity@lists.linux.dev, linux-block@vger.kernel.org,
+ dm-devel@lists.linux.dev, audit@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
+ <1722665314-21156-21-git-send-email-wufan@linux.microsoft.com>
+ <de7857fb-63d9-42fc-af1e-12ffcdfcdda8@molgen.mpg.de>
+ <CAHC9VhRmcReVM_Le5bYor2deotnSe4OT08UYhL6xhiKCu0+3kA@mail.gmail.com>
+Content-Language: en-US
+From: Paul Menzel <pmenzel@molgen.mpg.de>
+In-Reply-To: <CAHC9VhRmcReVM_Le5bYor2deotnSe4OT08UYhL6xhiKCu0+3kA@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Since the "multipathd reconfigure" command simply schedules a
-reconfigure, and doesn't wait until it has occurred, it would be nice to
-be able to query multipathd to see if the reconfigure has completed.
-"multipathd show daemon" doesn't work for this. The reconfigure could be
-delayed, and the output gives no indication that there is a pending
-reconfigure.
+Dear Paul,
 
-Change the ouput to add " (pending reconfigure)" if a reconfigure is
-pending.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/cli_handlers.c | 11 +++++++++--
- multipathd/main.c         | 15 ++++++++-------
- multipathd/main.h         |  2 +-
- 3 files changed, 18 insertions(+), 10 deletions(-)
+Am 06.08.24 um 22:54 schrieb Paul Moore:
+> On Sat, Aug 3, 2024 at 4:15 AM Paul Menzel wrote:
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 4b6cfba2..ef5f53e2 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -342,8 +342,15 @@ show_status (struct strbuf *reply, struct vectors *vecs)
- static int
- show_daemon (struct strbuf *reply)
- {
--	if (print_strbuf(reply, "pid %d %s\n",
--			 daemon_pid, daemon_status()) < 0)
-+	const char *status;
-+	bool pending_reconfig;
-+
-+	status = daemon_status(&pending_reconfig);
-+	if (status == NULL)
-+		return 1;
-+	if (print_strbuf(reply, "pid %d %s%s\n",
-+			 daemon_pid, status,
-+			 pending_reconfig ? " (pending reconfigure)" : "") < 0)
- 		return 1;
- 
- 	return 0;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index daec9e93..f43ff549 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -132,6 +132,8 @@ static int poll_dmevents = 1;
- static enum daemon_status running_state = DAEMON_INIT;
- /* Don't access this variable without holding config_lock */
- static bool __delayed_reconfig;
-+/* Don't access this variable without holding config_lock */
-+static enum force_reload_types reconfigure_pending = FORCE_RELOAD_NONE;
- pid_t daemon_pid;
- static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
- static pthread_cond_t config_cond;
-@@ -142,19 +144,21 @@ static bool check_thr_started, uevent_thr_started, uxlsnr_thr_started,
- 	fpin_consumer_thr_started;
- static int pid_fd = -1;
- 
--static inline enum daemon_status get_running_state(void)
-+static inline enum daemon_status get_running_state(bool *pending_reconfig)
- {
- 	enum daemon_status st;
- 
- 	pthread_mutex_lock(&config_lock);
- 	st = running_state;
-+	if (pending_reconfig != NULL)
-+		*pending_reconfig = (reconfigure_pending != FORCE_RELOAD_NONE);
- 	pthread_mutex_unlock(&config_lock);
- 	return st;
- }
- 
- int should_exit(void)
- {
--	return get_running_state() == DAEMON_SHUTDOWN;
-+	return get_running_state(NULL) == DAEMON_SHUTDOWN;
- }
- 
- /*
-@@ -179,9 +183,9 @@ static const char *daemon_status_msg[DAEMON_STATUS_SIZE] = {
- };
- 
- const char *
--daemon_status(void)
-+daemon_status(bool *pending_reconfig)
- {
--	int status = get_running_state();
-+	int status = get_running_state(pending_reconfig);
- 
- 	if (status < DAEMON_INIT || status >= DAEMON_STATUS_SIZE)
- 		return NULL;
-@@ -277,9 +281,6 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
- 	return st;
- }
- 
--/* Don't access this variable without holding config_lock */
--static enum force_reload_types reconfigure_pending = FORCE_RELOAD_NONE;
--
- /* must be called with config_lock held */
- static void __post_config_state(enum daemon_status state)
- {
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 7aa93ca3..ef838a02 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -31,7 +31,7 @@ extern pid_t daemon_pid;
- extern int uxsock_timeout;
- 
- void exit_daemon(void);
--const char * daemon_status(void);
-+const char *daemon_status(bool *pending_reconfig);
- enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
- 					    unsigned long ms);
- void schedule_reconfigure(enum force_reload_types requested_type);
--- 
-2.45.0
+>> Thank you very much for your patch. Two nits, should you sent another
+>> interation: A more specific summary would avoid people having to look at
+>> the message body or diff, and `git log --oneline` would be enough.
+>>
+>> MAINTAINERS: Add IPE entry with M: Fan Wu
+>>
+>> MAINTAINERS: Add IPE entry with Fan Wu as maintainer
+>>
+>> Am 03.08.24 um 08:08 schrieb Fan Wu:
+>>> Update MAINTAINERS to include ipe maintainer information.
+>>
+>> I’d at least mention Integrity Policy Enforcement. As you not only
+>> include the maintainer information but add a new entry, I’d leave the
+>> body out, or mention that a new entry is added.
+>>
+>>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> 
+> Working under the current assumption that a new revision is not
+> needed, I can fix this up during the merge.  Fan, other-Paul, are you
+> both okay with the following:
+> 
+>    "MAINTAINERS: add IPE entry with Fan Wu as maintainer
+> 
+>     Add a MAINTAINERS entry for the Integrity Policy Enforcement (IPE) LSM."
 
+Thank you. That is fine by me.
+
+
+Kind regards,
+
+Paul
+
+
+>>> --
+>>> v1-v16:
+>>>     + Not present
+>>>
+>>> v17:
+>>>     + Introduced
+>>>
+>>> v18:
+>>>     + No changes
+>>>
+>>> v19:
+>>>     + No changes
+>>>
+>>> v20:
+>>>     + No changes
+>>> ---
+>>>    MAINTAINERS | 10 ++++++++++
+>>>    1 file changed, 10 insertions(+)
+>>>
+>>> diff --git a/MAINTAINERS b/MAINTAINERS
+>>> index 8766f3e5e87e..4cdf2d5a2058 100644
+>>> --- a/MAINTAINERS
+>>> +++ b/MAINTAINERS
+>>> @@ -11118,6 +11118,16 @@ T:   git git://git.kernel.org/pub/scm/linux/kernel/git/zohar/linux-integrity.git
+>>>    F:  security/integrity/
+>>>    F:  security/integrity/ima/
+>>>
+>>> +INTEGRITY POLICY ENFORCEMENT (IPE)
+>>> +M:   Fan Wu <wufan@linux.microsoft.com>
+>>> +L:   linux-security-module@vger.kernel.org
+>>> +S:   Supported
+>>> +T:   git https://github.com/microsoft/ipe.git
+>>> +F:   Documentation/admin-guide/LSM/ipe.rst
+>>> +F:   Documentation/security/ipe.rst
+>>> +F:   scripts/ipe/
+>>> +F:   security/ipe/
+>>> +
+>>>    INTEL 810/815 FRAMEBUFFER DRIVER
+>>>    M:  Antonino Daplas <adaplas@gmail.com>
+>>>    L:  linux-fbdev@vger.kernel.org
