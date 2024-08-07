@@ -1,89 +1,129 @@
-Received: from ms.lwn.net (ms.lwn.net [45.79.88.28])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yb1-f177.google.com (mail-yb1-f177.google.com [209.85.219.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A86178C7E
-	for <dm-devel@lists.linux.dev>; Wed,  7 Aug 2024 19:33:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.79.88.28
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4726144D1E
+	for <dm-devel@lists.linux.dev>; Wed,  7 Aug 2024 19:42:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723059242; cv=none; b=ASeJVIDj9z9qoX9IhxrAiB6NbiTepOKmwN/WJFHFfWZ62ue0FMEppnMRsm58fpI/5QYoyw4KQi1G56IJKCdTBLJGAwQfjxb4IkQO86gh397KY0PTJLaZtLJFy/z75DhPW1cKND3yKo14H/lJiDb2pJRiAFHUsZch8sy9C3EpCJE=
+	t=1723059778; cv=none; b=g2t3cAJcV35Fn7XqPhEQ4AvRcv5YNaGbAsK6D4Bp2G1G+Wf1YflmtMWw34tCLrwrNXxv9Rr8emTmZSUYtyeLP5yE46tUTX/0qgdWhCK6Ikvfsm8DheNy7Ov/s0DJc5agFnyGqM4+GLhmSFB6mxx5/Zq5LpbTPzRrZO/0KdmliJ0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723059242; c=relaxed/simple;
-	bh=GfgJ0uahyieexhF++78bvJjM+MOd0zlcggaXLt1RSNA=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=LYZ1PG8XLqSQ2bgZdZQtZRBskzrdvctcaB/CULykzTKnIGMnOFPSeF8RVvSICYvCiXMMyiZLAzSxMOtjNxbyyaH9QU9d4xY+FhGLJrwqDSfkm8B9BWioE5M8UFE1uMBao8ILFNS/QC6Up8lzNjTBbkzKTLdlsPNTjPGXeOowbF4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lwn.net; spf=pass smtp.mailfrom=lwn.net; dkim=pass (2048-bit key) header.d=lwn.net header.i=@lwn.net header.b=a4KewVce; arc=none smtp.client-ip=45.79.88.28
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lwn.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lwn.net
+	s=arc-20240116; t=1723059778; c=relaxed/simple;
+	bh=4vWmcMOGkkyE6SpKOg+lxuJbBZmqhBwk93+K8cVoiVk=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=qg+wrU3SrY5imaI61+2Qc2+2ynlQik5uaauJEulqlhaL7O2PwyIIzT+B7r3zAnfnQ3KHLplk5/UdQYF7iTFD4bwA5GJLQTgM/L7c89i/8xXgJsZPSuaTYqDejOsX+plkpY4jKlooLF4Kmiw7xNLGjG5VZu5WkqP2UjwpztttrVg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=ZWGLl+ZK; arc=none smtp.client-ip=209.85.219.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=lwn.net header.i=@lwn.net header.b="a4KewVce"
-DKIM-Filter: OpenDKIM Filter v2.11.0 ms.lwn.net 4C96741AB8
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=lwn.net; s=20201203;
-	t=1723059237; bh=NIDZV7w4XvptuW+/PhlC0IXD8oT0OHvantSGMMYSo0g=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:From;
-	b=a4KewVceYlZ+IpSi2alsIZrgzut49MW4bOzMq6afZOxVqaHYAKNz9ykEQJCMml3FN
-	 yvZ7vjdsmHOmZxRk4mERx/vXrLwGLvbWOPyE0pXd1S5dHEtZ+izB+mNpU5n8xdfX7a
-	 7Wm6jpmikgqWV/u2+HN5oY/7jaAaDzaGJ+gRjK5EtnU/MXP5ISutcxUh02+w7qk8oy
-	 jsEGCFoDyrnaatrowEaj4W790qWDubNgsYMc15w1EVHa0q0Qr9Dk4FKH/T0vKgWUF5
-	 9N8nh6YUHeQ1OjZNemPs6oVaEqt01GvFQ2ROaZ74OhCSViAL5f6cK195I08OKSt+1Q
-	 0Mi8h1PCxSatA==
-Received: from localhost (unknown [IPv6:2601:280:5e00:625::1fe])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by ms.lwn.net (Postfix) with ESMTPSA id 4C96741AB8;
-	Wed,  7 Aug 2024 19:33:57 +0000 (UTC)
-From: Jonathan Corbet <corbet@lwn.net>
-To: Daniel Yang <danielyangkang@gmail.com>, skhan@linuxfoundation.org
-Cc: danielyangkang@gmail.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer
- <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- dm-devel@lists.linux.dev, linux-doc@vger.kernel.org,
- linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] Documentation: dm-crypt.rst warning + error fix
-In-Reply-To: <20240807090121.61064-1-danielyangkang@gmail.com>
-References: <20240807090121.61064-1-danielyangkang@gmail.com>
-Date: Wed, 07 Aug 2024 13:33:56 -0600
-Message-ID: <87zfpoqg9n.fsf@trenco.lwn.net>
+	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="ZWGLl+ZK"
+Received: by mail-yb1-f177.google.com with SMTP id 3f1490d57ef6-dff17fd97b3so173644276.2
+        for <dm-devel@lists.linux.dev>; Wed, 07 Aug 2024 12:42:56 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=paul-moore.com; s=google; t=1723059776; x=1723664576; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=ti+dWnafsTGNMHs+vxXfaBVPCpOMl1fNQUR/dBh5t54=;
+        b=ZWGLl+ZKZOR3DNZEDgsVkUPY0p5KmYqu+GoSjC+ENdYOhcGDOJJdTRxRfpgBT0Z0oI
+         nhUiskUFt4Tqrx05i9X1S0AjmB+AGqkbUWu9uRuUI+xPjBrnber+n7MTKQtfR7UqxklL
+         7GucywtkfYApNNmwxELOOweSXnR0VK9M5mcjffkgrt+aKuVFRGB+liD2S3C0w/v5kta+
+         Fcays3B5IdCAcFRzcsn8cMP7qJo1nM0vjDmmc9BNuZDki5tYf97HEnSg0cqsZEdYvSxZ
+         RSg02/3RB9yufdal9t+NzG3PO34RZ+ZprD1p+5nKVgU+oTJc+w0+HM39EwC9PfTR6wGR
+         /6+Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1723059776; x=1723664576;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=ti+dWnafsTGNMHs+vxXfaBVPCpOMl1fNQUR/dBh5t54=;
+        b=fWHctZav2GULBQcne4IkJItvH0pY/u2Tq0eYhecCDOueWU1Fe4CSbOIhgRvPokKwCN
+         OqJCVnxgTzmSIix+r0QjiRfCzv7iySTPcderTK5LlohnyNSHaoJpnw+bmj6EXmb06R/4
+         BKP0dgk7EqLBSyn5xpibSV8Q9Eni5UWgNias1llo0SQxMuMMnqeCH2LN2pSdKu5jORg8
+         DI4d1UnxpRNIvV5r7gtptAnwZI/9KhScX869/NQe5yRA9aaC68Ao/+w/JL7mjtRWav5V
+         0dt3fjnn8QT55/WvYwJ37WiotaxMzTmOuiWcZ6zIenwOce6E45x4D5UCtFyW2KHkMvTe
+         BanQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUyFyrjrExoGIb97l2usEwODx7NLPDQ3g/PBejfahxYTkr5h9iDLZbD1eFg6RywSRfsJsWELhG6Z1ntHb+DUjrXIz0pDaLj4xk=
+X-Gm-Message-State: AOJu0YwYFNXcGFONDiq6nT+5v0r6+iguoy3JYrREZw/1G9Cd7yx/n/AR
+	tdZWUdWqb1YrZ2RNcJdxe4wrFpzsQC2SoW3P5VoUwCpezcquQk7eEpq/l82cAaTRUZHk0wz9Oga
+	MPgK0OEDX8f+GPy7R8q4KKC3W3HlIaJ3cLWHX
+X-Google-Smtp-Source: AGHT+IH0uDMTEvlhrjytzwDCCXqiKRWy1dc9NB4WG2rHn2putvbgMZXGt7BbJfYOpwZgKPiHTdtB1n+xOLBh+e8QgUw=
+X-Received: by 2002:a05:6902:2b8e:b0:e0b:6039:dea with SMTP id
+ 3f1490d57ef6-e0bde4ad354mr27003143276.40.1723059775981; Wed, 07 Aug 2024
+ 12:42:55 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain
+References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
+ <1722665314-21156-21-git-send-email-wufan@linux.microsoft.com>
+ <de7857fb-63d9-42fc-af1e-12ffcdfcdda8@molgen.mpg.de> <CAHC9VhRmcReVM_Le5bYor2deotnSe4OT08UYhL6xhiKCu0+3kA@mail.gmail.com>
+ <5880e801-e896-4bf0-9a69-2cf5acb51ec3@molgen.mpg.de> <080c93d1-9c02-478f-a0be-f4bd3869c1fd@linux.microsoft.com>
+In-Reply-To: <080c93d1-9c02-478f-a0be-f4bd3869c1fd@linux.microsoft.com>
+From: Paul Moore <paul@paul-moore.com>
+Date: Wed, 7 Aug 2024 15:42:45 -0400
+Message-ID: <CAHC9VhTNTqK5Q446nQHcbxnV6cakAg0NEnvkvs4Tai+4UXOuAw@mail.gmail.com>
+Subject: Re: [PATCH v20 20/20] MAINTAINERS: ipe: add ipe maintainer information
+To: Fan Wu <wufan@linux.microsoft.com>
+Cc: Paul Menzel <pmenzel@molgen.mpg.de>, corbet@lwn.net, zohar@linux.ibm.com, 
+	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
+	axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
+	eparis@redhat.com, linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
+	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, 
+	linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Daniel Yang <danielyangkang@gmail.com> writes:
-
-> Signed-off-by: Daniel Yang <danielyangkang@gmail.com>
-> ---
->  .../admin-guide/device-mapper/dm-crypt.rst        | 15 ++++++++-------
->  1 file changed, 8 insertions(+), 7 deletions(-)
+On Wed, Aug 7, 2024 at 2:01=E2=80=AFPM Fan Wu <wufan@linux.microsoft.com> w=
+rote:
+> On 8/6/2024 9:48 PM, Paul Menzel wrote:
+> > Dear Paul,
+> >
+> > Am 06.08.24 um 22:54 schrieb Paul Moore:
+> >> On Sat, Aug 3, 2024 at 4:15=E2=80=AFAM Paul Menzel wrote:
+> >
+> >>> Thank you very much for your patch. Two nits, should you sent another
+> >>> interation: A more specific summary would avoid people having to look=
+ at
+> >>> the message body or diff, and `git log --oneline` would be enough.
+> >>>
+> >>> MAINTAINERS: Add IPE entry with M: Fan Wu
+> >>>
+> >>> MAINTAINERS: Add IPE entry with Fan Wu as maintainer
+> >>>
+> >>> Am 03.08.24 um 08:08 schrieb Fan Wu:
+> >>>> Update MAINTAINERS to include ipe maintainer information.
+> >>>
+> >>> I=E2=80=99d at least mention Integrity Policy Enforcement. As you not=
+ only
+> >>> include the maintainer information but add a new entry, I=E2=80=99d l=
+eave the
+> >>> body out, or mention that a new entry is added.
+> >>>
+> >>>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> >>
+> >> Working under the current assumption that a new revision is not
+> >> needed, I can fix this up during the merge.  Fan, other-Paul, are you
+> >> both okay with the following:
+> >>
+> >>    "MAINTAINERS: add IPE entry with Fan Wu as maintainer
+> >>
+> >>     Add a MAINTAINERS entry for the Integrity Policy Enforcement (IPE)
+> >> LSM."
+> >
+> > Thank you. That is fine by me.
+> >
+> > Kind regards,
+> > Paul
 >
-> diff --git a/Documentation/admin-guide/device-mapper/dm-crypt.rst b/Documentation/admin-guide/device-mapper/dm-crypt.rst
-> index e625830d335..552c9155165 100644
-> --- a/Documentation/admin-guide/device-mapper/dm-crypt.rst
-> +++ b/Documentation/admin-guide/device-mapper/dm-crypt.rst
-> @@ -162,13 +162,14 @@ iv_large_sectors
->  
->  
->  Module parameters::
-> -max_read_size
-> -max_write_size
-> -   Maximum size of read or write requests. When a request larger than this size
-> -   is received, dm-crypt will split the request. The splitting improves
-> -   concurrency (the split requests could be encrypted in parallel by multiple
-> -   cores), but it also causes overhead. The user should tune these parameters to
-> -   fit the actual workload.
-> +
-> +   max_read_size
-> +   max_write_size
-> +      Maximum size of read or write requests. When a request larger than this size
-> +      is received, dm-crypt will split the request. The splitting improves
-> +      concurrency (the split requests could be encrypted in parallel by multiple
-> +      cores), but it also causes overhead. The user should tune these parameters to
-> +      fit the actual workload.
+> Hi Paul and Paul,
+>
+> Thank you both for your feedback and coordination on this. I'm good with
+> the proposed changes and appreciate your efforts.
 
-Thanks for the patch.  It would have been better to include a proper
-changelog, even for a simple change like this.  Unfortunately, I got
-another fix for this error a few days ago, and have applied that.
+Updated as shown above, thanks all.
 
-jon
+--=20
+paul-moore.com
