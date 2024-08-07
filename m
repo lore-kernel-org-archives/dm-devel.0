@@ -1,108 +1,90 @@
-Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com [209.85.214.180])
+Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0DDDE1C9DE1
-	for <dm-devel@lists.linux.dev>; Wed,  7 Aug 2024 09:01:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F69F28399
+	for <dm-devel@lists.linux.dev>; Wed,  7 Aug 2024 14:13:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723021289; cv=none; b=MOm9R0Fjc30J1f/zlQuuIU4VyfyxKlWJjYjUou5FFSk5mQmEr0ZnRKMXVYG+95dbGaIRArQKp+Lp7QViH0uNT6Iu5FkOYOkTufm8nXi6eXEFVaUIvGwDP3VYnV9W/W8Li7ATa8+7xUl1ke3JiHKLQivH/jEzB3nkuU4uf1/oEzo=
+	t=1723040029; cv=none; b=Sbt1lOzZ+a9uD4T5fOHEqLpPz/sqrtgjlxDu5kdxzUWWyXiNx2G0wKcqszeijXTD3xugpDgDskuyt7EJw6oBSYjzfJBLqk8/qMl6m96bMxdhBbZuaPMKM0uq4U/NDh6ilXF1sq8FkskCf9Apj7SHp9HZLRD/1Cva47VS488S7fo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723021289; c=relaxed/simple;
-	bh=SlX8DXsZ+LVAASbH3Cqud1npEMh02BJvpmBSpjguCLs=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=n4dVj9rvW0D0OwQ0mOMxDG30kCTTO7SDIbh90178eCBNM9p5pyTKAAMyGesCzefAsKKeRPM3Sit9YKEPv2BUyIn2V3fvD9Em1bkNhYtt4yFPXyKeYNMCZUgK8B+sNQZheoIa3ZdjqECR3PQHhq8Mz19CaW+Y5a+KhGD9SW1ijVU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HcM6hNst; arc=none smtp.client-ip=209.85.214.180
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1723040029; c=relaxed/simple;
+	bh=4h3P/21+jGF1Wrn+hHA8d1xVRbX2E2+j9b03qumh0WA=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=gMIoWlCzzZpHYGAIoq9Z4KVd15BINru+Bu15SfBX1LLoEq8pDljaf9HLb5msbe9p9i09bUgTiqmRU6r20qNHx3wEsXg1NbVx6bqe8ShlqmimmYTPPizQ1tmiW4GS79y++bAHUjg1t/QuvMd/DDun+Iuptr/+eoLXdGyrVmcscxs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Ipzn69vp; arc=none smtp.client-ip=209.85.167.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HcM6hNst"
-Received: by mail-pl1-f180.google.com with SMTP id d9443c01a7336-1fc52394c92so17131855ad.1
-        for <dm-devel@lists.linux.dev>; Wed, 07 Aug 2024 02:01:27 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Ipzn69vp"
+Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-530d0882370so1865845e87.3
+        for <dm-devel@lists.linux.dev>; Wed, 07 Aug 2024 07:13:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723021287; x=1723626087; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=vZyYZcWScXx3hCzshTooGI4mg6we9/4Iww+0qQQ3pQ0=;
-        b=HcM6hNstFGi3Wb5dNyR9v3TjcOHHuU1fPNkT/nUzLzT4uwxCMccNxPzJPaubyRX5Ld
-         rtXVoULPCF8rSuAlOnPwhaW+xteKW8THHsi5nTknjPqJ/pw533TWEgu28Qb4bsmAOCJN
-         aP1LDRj5CCuCoJYnLDVP+OhSJZpjig/4lwA+SL33jwvbpH0XvJ1f66pkQdFbVWOlCXZu
-         9FXen32ltK0MwT+ujL9qjp9pf/Kl/7bHRw8P1jIDp5gAW7fwgKma6ZgFtb8cwuYteikt
-         tD2Rrrd+JukDKu0mkYu5e/EaoVjZ6BkSNnF9aYbLC95vjMuI6QdqkK/+oU16GwH+MoE+
-         RKKw==
+        d=suse.com; s=google; t=1723040025; x=1723644825; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=4h3P/21+jGF1Wrn+hHA8d1xVRbX2E2+j9b03qumh0WA=;
+        b=Ipzn69vpIpcr18oqVGipVxKxUftrGIJQZkKcatsE/Owm4TXfhWMIF/lfQTeVWKBp1R
+         1pdj4w+qy/i7E9+UOpzMswTessELzKjjvJZfptcLenxVb80bdHaZAhZGSX+py5Fg7bLp
+         gF3KiU4ciTvoPKc5xUzSD5SiBHLUncI/DAsD0hnrNm6/ppLJM58O8lMgbUC95CDY4fyU
+         nBmu2giFHHxBZRyrebar0wG7G6m4iqh0zo2P0c85fRJdpB4Wbx4FpyhM1PMU/a/HdGHE
+         DLl4z+AF1kRh8+ZYbru0WdfF84J0wzqEGAWNsETt3Kddy+wRKQb7jnYB1ze2jZaptNFx
+         DEqg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723021287; x=1723626087;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=vZyYZcWScXx3hCzshTooGI4mg6we9/4Iww+0qQQ3pQ0=;
-        b=tCCnCFlIepSoacV33AXfPVfXx0WXa7oIIXr9bHqj9JHo2smBO660OUFNBxNbrfFYiI
-         fiQIf2GvO0Q6IC76fUpx58AghyUsjw10xsIDcmKSJRO3lrQjwu+4I3rDyItcyVtMIkOM
-         isBuE04sNXKgAasHdfyVtfW1LrHbp5FqnMgMEITqXH180TAEw6lKlosdfSqGDa1RmWwh
-         aORe6nrVMY9lrj9ndg3ahVs8Xu0qAoW2OQNsVOn98H3ir+XXbzSSjimBK3jb6hajaNUm
-         yEN4/nA0bbcuNztGGEyux4MVBX9vpFTKRV98lCe3HqdxNF6e1Ab559ZZKFqO0RGWEzL3
-         z0Dg==
-X-Forwarded-Encrypted: i=1; AJvYcCXpM6FNpwzZqPbzUYzHGYkun3Ot0EHSPRHrR0moftvlRMYS1cFsVIWzRkEtG7fpnCSVYtMM0OCvvNJbmn/ctW8uwZ7OhDt1mfo=
-X-Gm-Message-State: AOJu0YwkC4wzhumCcCRnRTJC2JXlLYu/zzu1DaG4i/KD5wxLP7gpEVIm
-	w/YnWMl94jqVuM7lKWc91cEG8g+/tBTLvvZCv7PNC2UD+awNrG3M
-X-Google-Smtp-Source: AGHT+IGS0K1I+nQ+fdK7tmFOM7XFjxcXffIfoQoZ1ulc1qDVT/0KTpNDWEz9eunY8iwx/PemP6mjFQ==
-X-Received: by 2002:a17:903:1251:b0:1fb:9b91:d7c9 with SMTP id d9443c01a7336-1ff5722d9aemr255334385ad.4.1723021286963;
-        Wed, 07 Aug 2024 02:01:26 -0700 (PDT)
-Received: from localhost.localdomain (c-76-133-147-99.hsd1.ca.comcast.net. [76.133.147.99])
-        by smtp.googlemail.com with ESMTPSA id d9443c01a7336-20077167703sm29747145ad.86.2024.08.07.02.01.25
+        d=1e100.net; s=20230601; t=1723040025; x=1723644825;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=4h3P/21+jGF1Wrn+hHA8d1xVRbX2E2+j9b03qumh0WA=;
+        b=pjM6oH0XMs4uWHw3Ki6KgP6ens0mUsFac4cJHDcWJi7KE+asxdx2fcwztEuAiNkl16
+         nyGj3184Ks+CFSGQPyqZYLqaHwY6sqrBoktrN7BSKDUTIB3GNw0hyQy0Mc8cp9+x5Z2e
+         fIrpnJkLQOm7AUfcLKsPibeywhKysqIewPUIt0Itoj/gVwaPL2Ueomx5q+I6/QfOQOa9
+         chKuRzRm/Co2HFOa42RikrrXsKeAHU4MGh6wov4QLhEczLQxCsAerUvnROTxrtIRoGgN
+         DKvZqpFHPBo5UZB4bJeOk7rQPNL3YdHIf0GkgANof30spu8FUZ6HkLfDhR/Lh5Lu5zuO
+         8njQ==
+X-Gm-Message-State: AOJu0Yxs1b2f6e7djC+jRyrSA9PDtd/7vxgPiAKmRIcLCvQOr2Qnv1EF
+	4gPe/RyCVznmV+AKXQ5bZicq/iXRwM2O9gWUWBZoyKW5Hs6GR0AZePteyNue8nU=
+X-Google-Smtp-Source: AGHT+IFIS7DfJLgfEIEL9cwxMT3Ew9DcF9i6HTOI4A4nipznsPj8yWg8cHEWwSqAarznYdHvU14TwA==
+X-Received: by 2002:a05:6512:ea4:b0:530:ae22:a6ea with SMTP id 2adb3069b0e04-530bb39b006mr14553853e87.40.1723040024635;
+        Wed, 07 Aug 2024 07:13:44 -0700 (PDT)
+Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5b83b92b970sm7114003a12.72.2024.08.07.07.13.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 07 Aug 2024 02:01:26 -0700 (PDT)
-From: Daniel Yang <danielyangkang@gmail.com>
-To: skhan@linuxfoundation.org
-Cc: danielyangkang@gmail.com,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	dm-devel@lists.linux.dev,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] Documentation: dm-crypt.rst warning + error fix
-Date: Wed,  7 Aug 2024 02:01:21 -0700
-Message-Id: <20240807090121.61064-1-danielyangkang@gmail.com>
-X-Mailer: git-send-email 2.39.2
+        Wed, 07 Aug 2024 07:13:44 -0700 (PDT)
+Message-ID: <a4e0816c234a574894643e6cd78a8e27756e91c6.camel@suse.com>
+Subject: Re: [PATCH] multipathd: show pending reconfigs in 'show daemon'
+ output
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Wed, 07 Aug 2024 16:13:43 +0200
+In-Reply-To: <20240806225441.3227895-1-bmarzins@redhat.com>
+References: <20240806225441.3227895-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-Signed-off-by: Daniel Yang <danielyangkang@gmail.com>
----
- .../admin-guide/device-mapper/dm-crypt.rst        | 15 ++++++++-------
- 1 file changed, 8 insertions(+), 7 deletions(-)
+On Tue, 2024-08-06 at 18:54 -0400, Benjamin Marzinski wrote:
+> Since the "multipathd reconfigure" command simply schedules a
+> reconfigure, and doesn't wait until it has occurred, it would be nice
+> to
+> be able to query multipathd to see if the reconfigure has completed.
+> "multipathd show daemon" doesn't work for this. The reconfigure could
+> be
+> delayed, and the output gives no indication that there is a pending
+> reconfigure.
+>=20
+> Change the ouput to add " (pending reconfigure)" if a reconfigure is
+> pending.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-crypt.rst b/Documentation/admin-guide/device-mapper/dm-crypt.rst
-index e625830d335..552c9155165 100644
---- a/Documentation/admin-guide/device-mapper/dm-crypt.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-crypt.rst
-@@ -162,13 +162,14 @@ iv_large_sectors
- 
- 
- Module parameters::
--max_read_size
--max_write_size
--   Maximum size of read or write requests. When a request larger than this size
--   is received, dm-crypt will split the request. The splitting improves
--   concurrency (the split requests could be encrypted in parallel by multiple
--   cores), but it also causes overhead. The user should tune these parameters to
--   fit the actual workload.
-+
-+   max_read_size
-+   max_write_size
-+      Maximum size of read or write requests. When a request larger than this size
-+      is received, dm-crypt will split the request. The splitting improves
-+      concurrency (the split requests could be encrypted in parallel by multiple
-+      cores), but it also causes overhead. The user should tune these parameters to
-+      fit the actual workload.
- 
- 
- Example scripts
--- 
-2.39.2
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
