@@ -1,129 +1,146 @@
-Received: from mail-yb1-f177.google.com (mail-yb1-f177.google.com [209.85.219.177])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4726144D1E
-	for <dm-devel@lists.linux.dev>; Wed,  7 Aug 2024 19:42:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7443B84A51
+	for <dm-devel@lists.linux.dev>; Wed,  7 Aug 2024 20:35:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723059778; cv=none; b=g2t3cAJcV35Fn7XqPhEQ4AvRcv5YNaGbAsK6D4Bp2G1G+Wf1YflmtMWw34tCLrwrNXxv9Rr8emTmZSUYtyeLP5yE46tUTX/0qgdWhCK6Ikvfsm8DheNy7Ov/s0DJc5agFnyGqM4+GLhmSFB6mxx5/Zq5LpbTPzRrZO/0KdmliJ0=
+	t=1723062950; cv=none; b=VmJJD0jFnhn+LK7NhP4VmwQxSVRfk1XhNNDKhATFocDaXy9RsrdNFxDtSyq8/iw0wV5FnG42Chn/SepXIMHWBo/NfhRHxnPkfnhyz9rLFlIVldY0eLppsyuwmVgLUVE36rsC8vEiXRS/Qd0dg5hUvlJv6L8Az+C5rXJ6vLBKfEo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723059778; c=relaxed/simple;
-	bh=4vWmcMOGkkyE6SpKOg+lxuJbBZmqhBwk93+K8cVoiVk=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=qg+wrU3SrY5imaI61+2Qc2+2ynlQik5uaauJEulqlhaL7O2PwyIIzT+B7r3zAnfnQ3KHLplk5/UdQYF7iTFD4bwA5GJLQTgM/L7c89i/8xXgJsZPSuaTYqDejOsX+plkpY4jKlooLF4Kmiw7xNLGjG5VZu5WkqP2UjwpztttrVg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=ZWGLl+ZK; arc=none smtp.client-ip=209.85.219.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
+	s=arc-20240116; t=1723062950; c=relaxed/simple;
+	bh=CvpcEutqJciU1sfO01v3Z5pbjqAw3fLkIrVF0e7m9LQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=Pt8vsX9Y3DdedszATpUCdM7hnniEi0n6dwjhJIvyxDXu5xEZrGPpNXd7XtpZCT6qkRy7V90Y25lhQ4bcwR3KsTp1GsSfs31SWDqa0KxmODbWuJZR7VLQwB5XT2Jhdr7DxAc5LzJKCEkhgoGQUyeSAYJVwJNaH2i42qlJLSvee6M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WADjvtAq; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="ZWGLl+ZK"
-Received: by mail-yb1-f177.google.com with SMTP id 3f1490d57ef6-dff17fd97b3so173644276.2
-        for <dm-devel@lists.linux.dev>; Wed, 07 Aug 2024 12:42:56 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1723059776; x=1723664576; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=ti+dWnafsTGNMHs+vxXfaBVPCpOMl1fNQUR/dBh5t54=;
-        b=ZWGLl+ZKZOR3DNZEDgsVkUPY0p5KmYqu+GoSjC+ENdYOhcGDOJJdTRxRfpgBT0Z0oI
-         nhUiskUFt4Tqrx05i9X1S0AjmB+AGqkbUWu9uRuUI+xPjBrnber+n7MTKQtfR7UqxklL
-         7GucywtkfYApNNmwxELOOweSXnR0VK9M5mcjffkgrt+aKuVFRGB+liD2S3C0w/v5kta+
-         Fcays3B5IdCAcFRzcsn8cMP7qJo1nM0vjDmmc9BNuZDki5tYf97HEnSg0cqsZEdYvSxZ
-         RSg02/3RB9yufdal9t+NzG3PO34RZ+ZprD1p+5nKVgU+oTJc+w0+HM39EwC9PfTR6wGR
-         /6+Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723059776; x=1723664576;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=ti+dWnafsTGNMHs+vxXfaBVPCpOMl1fNQUR/dBh5t54=;
-        b=fWHctZav2GULBQcne4IkJItvH0pY/u2Tq0eYhecCDOueWU1Fe4CSbOIhgRvPokKwCN
-         OqJCVnxgTzmSIix+r0QjiRfCzv7iySTPcderTK5LlohnyNSHaoJpnw+bmj6EXmb06R/4
-         BKP0dgk7EqLBSyn5xpibSV8Q9Eni5UWgNias1llo0SQxMuMMnqeCH2LN2pSdKu5jORg8
-         DI4d1UnxpRNIvV5r7gtptAnwZI/9KhScX869/NQe5yRA9aaC68Ao/+w/JL7mjtRWav5V
-         0dt3fjnn8QT55/WvYwJ37WiotaxMzTmOuiWcZ6zIenwOce6E45x4D5UCtFyW2KHkMvTe
-         BanQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUyFyrjrExoGIb97l2usEwODx7NLPDQ3g/PBejfahxYTkr5h9iDLZbD1eFg6RywSRfsJsWELhG6Z1ntHb+DUjrXIz0pDaLj4xk=
-X-Gm-Message-State: AOJu0YwYFNXcGFONDiq6nT+5v0r6+iguoy3JYrREZw/1G9Cd7yx/n/AR
-	tdZWUdWqb1YrZ2RNcJdxe4wrFpzsQC2SoW3P5VoUwCpezcquQk7eEpq/l82cAaTRUZHk0wz9Oga
-	MPgK0OEDX8f+GPy7R8q4KKC3W3HlIaJ3cLWHX
-X-Google-Smtp-Source: AGHT+IH0uDMTEvlhrjytzwDCCXqiKRWy1dc9NB4WG2rHn2putvbgMZXGt7BbJfYOpwZgKPiHTdtB1n+xOLBh+e8QgUw=
-X-Received: by 2002:a05:6902:2b8e:b0:e0b:6039:dea with SMTP id
- 3f1490d57ef6-e0bde4ad354mr27003143276.40.1723059775981; Wed, 07 Aug 2024
- 12:42:55 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WADjvtAq"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1723062947;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=nhfoZeCiJb4NspeCJGRi3F0x8ZSKb4MHjV1peYiM8wU=;
+	b=WADjvtAqlqD2BOlMEsf6lvW8Pb5bo37OlBiX6o8rS3hJfx9iMB6bsfFi+PGxETQN57sbvf
+	B5+XFGzVcWJnzqdkZKjNM5bQ2DVhEIE4EjlI4ACf8Iks7nJGik3uCqUsWDZhb3tdn/L1/R
+	G00KwQKT8GB5HKtVhXngudqrsa7Qny8=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-659-Rm0cGiFJPS6xwT45YiDeOg-1; Wed,
+ 07 Aug 2024 16:35:43 -0400
+X-MC-Unique: Rm0cGiFJPS6xwT45YiDeOg-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 315FF19560A2;
+	Wed,  7 Aug 2024 20:35:42 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C9A0A19560A7;
+	Wed,  7 Aug 2024 20:35:41 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 477KZema3261060
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 7 Aug 2024 16:35:40 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 477KZdMZ3261059;
+	Wed, 7 Aug 2024 16:35:39 -0400
+Date: Wed, 7 Aug 2024 16:35:39 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH] libmultipath: fix ontap prioritizer snprintf limits
+Message-ID: <ZrPamzWZwgINRIgt@redhat.com>
+References: <20240802172650.3063016-1-bmarzins@redhat.com>
+ <b2caea99035d97739460d8eb87231b16f57171ee.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
- <1722665314-21156-21-git-send-email-wufan@linux.microsoft.com>
- <de7857fb-63d9-42fc-af1e-12ffcdfcdda8@molgen.mpg.de> <CAHC9VhRmcReVM_Le5bYor2deotnSe4OT08UYhL6xhiKCu0+3kA@mail.gmail.com>
- <5880e801-e896-4bf0-9a69-2cf5acb51ec3@molgen.mpg.de> <080c93d1-9c02-478f-a0be-f4bd3869c1fd@linux.microsoft.com>
-In-Reply-To: <080c93d1-9c02-478f-a0be-f4bd3869c1fd@linux.microsoft.com>
-From: Paul Moore <paul@paul-moore.com>
-Date: Wed, 7 Aug 2024 15:42:45 -0400
-Message-ID: <CAHC9VhTNTqK5Q446nQHcbxnV6cakAg0NEnvkvs4Tai+4UXOuAw@mail.gmail.com>
-Subject: Re: [PATCH v20 20/20] MAINTAINERS: ipe: add ipe maintainer information
-To: Fan Wu <wufan@linux.microsoft.com>
-Cc: Paul Menzel <pmenzel@molgen.mpg.de>, corbet@lwn.net, zohar@linux.ibm.com, 
-	jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
-	axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
-	eparis@redhat.com, linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
-	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <b2caea99035d97739460d8eb87231b16f57171ee.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Wed, Aug 7, 2024 at 2:01=E2=80=AFPM Fan Wu <wufan@linux.microsoft.com> w=
-rote:
-> On 8/6/2024 9:48 PM, Paul Menzel wrote:
-> > Dear Paul,
-> >
-> > Am 06.08.24 um 22:54 schrieb Paul Moore:
-> >> On Sat, Aug 3, 2024 at 4:15=E2=80=AFAM Paul Menzel wrote:
-> >
-> >>> Thank you very much for your patch. Two nits, should you sent another
-> >>> interation: A more specific summary would avoid people having to look=
- at
-> >>> the message body or diff, and `git log --oneline` would be enough.
-> >>>
-> >>> MAINTAINERS: Add IPE entry with M: Fan Wu
-> >>>
-> >>> MAINTAINERS: Add IPE entry with Fan Wu as maintainer
-> >>>
-> >>> Am 03.08.24 um 08:08 schrieb Fan Wu:
-> >>>> Update MAINTAINERS to include ipe maintainer information.
-> >>>
-> >>> I=E2=80=99d at least mention Integrity Policy Enforcement. As you not=
- only
-> >>> include the maintainer information but add a new entry, I=E2=80=99d l=
-eave the
-> >>> body out, or mention that a new entry is added.
-> >>>
-> >>>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-> >>
-> >> Working under the current assumption that a new revision is not
-> >> needed, I can fix this up during the merge.  Fan, other-Paul, are you
-> >> both okay with the following:
-> >>
-> >>    "MAINTAINERS: add IPE entry with Fan Wu as maintainer
-> >>
-> >>     Add a MAINTAINERS entry for the Integrity Policy Enforcement (IPE)
-> >> LSM."
-> >
-> > Thank you. That is fine by me.
-> >
-> > Kind regards,
-> > Paul
->
-> Hi Paul and Paul,
->
-> Thank you both for your feedback and coordination on this. I'm good with
-> the proposed changes and appreciate your efforts.
+On Tue, Aug 06, 2024 at 09:12:21PM +0200, Martin Wilck wrote:
+> On Fri, 2024-08-02 at 13:26 -0400, Benjamin Marzinski wrote:
+> > The ontap prioritizer functions dump_cdb() and process_sg_error()
+> > both
+> > incorrectly set the snprintf() limits larger than the available
+> > space.
+> > Instead of multiplying the number of elements to print by the size of
+> > an
+> > element to calculate the limit, they multiplied the number of
+> > elements
+> > to print by the maximum number of elements that the buffer could
+> > hold.
+> > 
+> > Fix this, and also make sure that the number of elements to print is
+> > less than or equal to the maximum number that the buffer can hold.
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/prioritizers/ontap.c | 8 ++++----
+> >  1 file changed, 4 insertions(+), 4 deletions(-)
+> > 
+> > diff --git a/libmultipath/prioritizers/ontap.c
+> > b/libmultipath/prioritizers/ontap.c
+> > index 117886ea..28e663ac 100644
+> > --- a/libmultipath/prioritizers/ontap.c
+> > +++ b/libmultipath/prioritizers/ontap.c
+> > @@ -39,8 +39,8 @@ static void dump_cdb(unsigned char *cdb, int size)
+> >  	char * p = &buf[0];
+> >  
+> >  	condlog(0, "- SCSI CDB: ");
+> > -	for (i=0; i<size; i++) {
+> > -		p += snprintf(p, 10*(size-i), "0x%02x ", cdb[i]);
+> > +	for (i = 0; i < size && i < 10; i++) {
+> > +		p += snprintf(p, 5*(size-i), "0x%02x ", cdb[i]);
+> >  	}
+> 
+> This seems incorrect, too. We should pass the remaining size of the
+> buffer, which is ((10 - i) * 5 + 1), unless I am mistaken. It's bogus
+> to use the "size" variable in the calculation of the remaining buffer
+> size. Plus, we should break the loop if i >= 10, and check the return
+> value of snprintf (if we don't, we might as well use sprintf in the
+> first place).
+> 
+> Actually, this code is horrible and we should rather use strbuf.
+> Strange that none of our many compilers found this, and even coverity
+> didn't.
+> 
+> >  	condlog(0, "%s", buf);
+> >  }
+> > @@ -56,8 +56,8 @@ static void process_sg_error(struct sg_io_hdr
+> > *io_hdr)
+> >  		io_hdr->host_status, io_hdr->driver_status);
+> >  	if (io_hdr->sb_len_wr > 0) {
+> >  		condlog(0, "- SCSI sense data: ");
+> > -		for (i=0; i<io_hdr->sb_len_wr; i++) {
+> > -			p += snprintf(p, 128*(io_hdr->sb_len_wr-i),
+> > "0x%02x ",
+> > +		for (i = 0; i < io_hdr->sb_len_wr && i < 128; i++) {
+> > +			p += snprintf(p, 5*(io_hdr->sb_len_wr-i),
+> > "0x%02x ",
+> >  				      io_hdr->sbp[i]);
+> >  		}
+> 
+> Same here, the remaining buffer size is (5 * (128 - i) + 1).
 
-Updated as shown above, thanks all.
+Sure. I'll send a v2.
 
---=20
-paul-moore.com
+-Ben
+ 
+> Martin
+> 
+> >  		condlog(0, "%s", buf);
+
