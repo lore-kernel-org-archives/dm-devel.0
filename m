@@ -1,138 +1,138 @@
-Received: from mail-ed1-f51.google.com (mail-ed1-f51.google.com [209.85.208.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5173D189B92
-	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 08:55:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B6E1189BB6
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 11:53:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723107325; cv=none; b=fCyPWL3pIdbO8XMxFZcVNW3ec00NASY2m+a7sFn6AZEyvjdNNTkhb5Wj86szFzXQQbrpw+cOD45fv07e03nqCkmK4kuqoitG9cDeUZO6rZPbGuaZYdmMeR3wLlIKLJoIdtahax8AS0HEsd9lBU16hy81XAYLgGzEjnWXdKEhzPU=
+	t=1723117992; cv=none; b=LqzL8b2g1ISEiqwwQDNUlUXk1MKO9BUP5VDiiewXq5a8fIiQDnCRbgdpiR4drfICaNir8sSo+5wdcVh1dS6AlHNuuUb44wMjYIRTYIi8xjNPV1k3GWrIpHXTmh8I1RJNv21ZWvmNCPq3UyLivVeWDas6iObt7PKwdjVh91FDC1A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723107325; c=relaxed/simple;
-	bh=BNCYt3tRe1M6th7XJo+mEvTIcvdCn2ArvEgfVCO0HhY=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=OA4sb9ouoKVF8lPaUxM9H0DuaLKuUYJGVaZKFf7Ak7gkuzvlVvNDmJEjzyUMmXXJe/c9M5difH4MkWKwYtHoi2mSjlWwMSU57SDA3/+rmj5bS5Oq8Jxrgc9cOboM2XnRy9j+vwJaUiwEHOCg8uSreXXQtPgcZ35EOSU9hLbAXmc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=I309KzU4; arc=none smtp.client-ip=209.85.208.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1723117992; c=relaxed/simple;
+	bh=BdG3wCIknrKu95G5lSY6jXof1KmgIM43VhOUS3EXjXo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=dI/PaklGTwEVWoMO0XMacerEysDTTmRqgzV/16t5MTKHivQb1H3Sdnv3Mo9geTY0JVRHqml7iU70ONsF0OXRM6meK2UGmFdpNnIsdiGudybLK1Yc9aoQN2J8RtPCpvW272+HNBtFfTflCwhXZ00NUGjKl02QZEnzipS1k9AgFZE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=W2LP9lBu; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="I309KzU4"
-Received: by mail-ed1-f51.google.com with SMTP id 4fb4d7f45d1cf-5ba43b433beso731419a12.1
-        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 01:55:22 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723107321; x=1723712121; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=vEF5aPcVPmEO4SwaR5wpuhcLn9rHYs23mHV2Fi8pmYk=;
-        b=I309KzU4k/2h5lDaQh/X2iCNyBtKPxpS+/EymRiFGmLK2YwXbGRrkwQYzhB7yE1NNk
-         /MnUmifuB8Q9AG7tgScP7vrOzkKugbF1bZ+nf9kBI1C8/hUG4xPSK6DSWiuiLu6HuEkb
-         nl8UTjrVQcXnUkN9VyCb8TCakMyl0eBRPz/Ykj6eMjtGDjapr8jPRVIF08+ISUyUoh9g
-         5TtGxBUO90wgNTFLSndmpGAm31UnitC+10VUiOo0WCk4LvbFehdG/lh47qZwiZZClVv8
-         dyP0/pTX/TxROKbHNPeUhyQFF7cJIYD2LA7nyjiM7lNYHd2/ximW0okCzw93ZkHO3FTs
-         WMDw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723107321; x=1723712121;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=vEF5aPcVPmEO4SwaR5wpuhcLn9rHYs23mHV2Fi8pmYk=;
-        b=fvh1hGHOLSY+nKuEg93eYnA6iFM0wVQxFQN6IOsZmA2S35V4lBGBYV1MhRYq6B0MLV
-         ijCl7coXxBHGWxEvgK8SaozOPE9yKbCYqzlz4c69ZbD9y1GO7f6lZ8PTz9El7x1ww4IA
-         z45LgXRO2XMW/tEgsdHZQFSMUUqwdk2sbEhmEFOh7oMwffZOZc694IGdR9yPHu6UPuBN
-         K1EQ3M61+7qAbx+ZcxVFzc9ZgoANJI2B/PPznui9xDeh5oyARiRW0HCXFx+jV3JG2u2u
-         uYVh9JuTKVubSCcc2CRUcrwYOOkLkLsAa5reQE6noJTCgg5Tl8smo/KFfuSSAJMl2cYJ
-         v2jg==
-X-Gm-Message-State: AOJu0YwLtRbpeknByJ45oJEzlWNSOhWrVmGsYXCZhlU3z+V/FxatEsA/
-	gAJqE3xnS+6uHvFcRTpID20XublaYSgZh5FMrGVqzxNGsj8vaTZJ/wTGDoQC4Ys=
-X-Google-Smtp-Source: AGHT+IFQtbwdQ1nM+ZJPxBr4vTU1Vcpy2S0gKbhuHgsyFn1Wqqs/cnpZPcUHuxPCr1QtqRD4AohHzg==
-X-Received: by 2002:a05:6402:3489:b0:58b:2d93:ad83 with SMTP id 4fb4d7f45d1cf-5bbb2236e62mr957029a12.21.1723107321107;
-        Thu, 08 Aug 2024 01:55:21 -0700 (PDT)
-Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5bbb2d34895sm416313a12.62.2024.08.08.01.55.20
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 08 Aug 2024 01:55:20 -0700 (PDT)
-Message-ID: <c57cc983f1e226b284a67a9e801c97602fed0783.camel@suse.com>
-Subject: Re: [PATCH v2] libmultipath: fix ontap prioritizer snprintf limits
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Thu, 08 Aug 2024 10:55:19 +0200
-In-Reply-To: <20240807225910.3266004-1-bmarzins@redhat.com>
-References: <20240807225910.3266004-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.3 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="W2LP9lBu"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1723117989;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=nhICHQhvH9mxC4p/asewU1gNr7NRYgV/lVF2C9TrU3I=;
+	b=W2LP9lBuHoJNE8T8rrx47j4jeUcDXkter0F4QJy85CRGRLZMo0nph/ulxODerdCVmBP7zC
+	x+CMhizS54uGpKHMbxTiTLJZNIe8beOFu7tlTMU5GyWi+dNBC6pJV3QgHfQLIkhHAXg8Ai
+	OqWh4XHoEWFqHXDpGBQFLc/2i4M8B14=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-498-NNcZdIBYPHGUqCFKetb3aA-1; Thu,
+ 08 Aug 2024 07:53:07 -0400
+X-MC-Unique: NNcZdIBYPHGUqCFKetb3aA-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CEDDD1897FC4
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 11:51:11 +0000 (UTC)
+Received: from o.redhat.com (unknown [10.39.192.113])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id C3181196BBDC;
+	Thu,  8 Aug 2024 11:50:49 +0000 (UTC)
+From: heinzm@redhat.com
+To: dm-devel@lists.linux.dev
+Cc: mpatocka@redhat.com,
+	teigland@redhat.com
+Subject: [PATCH] dm delay: enhance kernel documentation
+Date: Thu,  8 Aug 2024 13:50:36 +0200
+Message-ID: <bafcd17226a993785c916cfa9ee30c8d432dc3c9.1723117545.git.heinzm@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-On Wed, 2024-08-07 at 18:59 -0400, Benjamin Marzinski wrote:
-> The ontap prioritizer functions dump_cdb() and process_sg_error()
-> both
-> incorrectly set the snprintf() limits larger than the available
-> space.
-> Instead of multiplying the number of elements to print by the size of
-> an
-> element to calculate the limit, they multiplied the number of
-> elements
-> to print by the maximum number of elements that the buffer could
-> hold.
->=20
-> Fix this by making these functions use strbufs instead.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->=20
-> changes in v2:
-> Use strbufs as suggested by Martin Wilck.
->=20
-> =C2=A0libmultipath/prioritizers/ontap.c | 28 +++++++++++++++-------------
-> =C2=A01 file changed, 15 insertions(+), 13 deletions(-)
->=20
-> diff --git a/libmultipath/prioritizers/ontap.c
-> b/libmultipath/prioritizers/ontap.c
-> index 117886ea..b508371d 100644
-> --- a/libmultipath/prioritizers/ontap.c
-> +++ b/libmultipath/prioritizers/ontap.c
-> @@ -23,6 +23,7 @@
-> =C2=A0#include "prio.h"
-> =C2=A0#include "structs.h"
-> =C2=A0#include "unaligned.h"
-> +#include "strbuf.h"
-> =C2=A0
-> =C2=A0#define INQUIRY_CMD	0x12
-> =C2=A0#define INQUIRY_CMDLEN	6
-> @@ -35,32 +36,33 @@
-> =C2=A0static void dump_cdb(unsigned char *cdb, int size)
-> =C2=A0{
-> =C2=A0	int i;
-> -	char buf[10*5+1];
-> -	char * p =3D &buf[0];
-> +	STRBUF_ON_STACK(buf);
-> =C2=A0
-> -	condlog(0, "- SCSI CDB: ");
-> -	for (i=3D0; i<size; i++) {
-> -		p +=3D snprintf(p, 10*(size-i), "0x%02x ", cdb[i]);
-> +	for (i =3D 0; i < size; i++) {
-> +		if (print_strbuf(&buf, "0x%02x ", cdb[i]) < 0) {
-> +			condlog(0, "ontap prio: failed to dump SCSI
-> CDB");
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-If print_strbuf() fails (very probably because it failed to allocate
-memory), condlog() is unlikely to succeed, either. I thought we agreed
-that trying to spit out error messages in this situation makes little
-sense.
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ .../admin-guide/device-mapper/delay.rst       | 45 ++++++++++++++-----
+ 1 file changed, 34 insertions(+), 11 deletions(-)
 
-Anyway, I guess the condlog call doesn't actually hurt, so:
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-
-(If you consent, I'll edit the commit and remove the condlog call).
-
-Regards,
-Martin
+diff --git a/Documentation/admin-guide/device-mapper/delay.rst b/Documentation/admin-guide/device-mapper/delay.rst
+index 917ba8c33359..53d79294e62a 100644
+--- a/Documentation/admin-guide/device-mapper/delay.rst
++++ b/Documentation/admin-guide/device-mapper/delay.rst
+@@ -3,29 +3,52 @@ dm-delay
+ ========
+ 
+ Device-Mapper's "delay" target delays reads and/or writes
+-and maps them to different devices.
++and/or flushs and optionally maps them to different devices.
+ 
+-Parameters::
++Arguments::
+ 
+     <device> <offset> <delay> [<write_device> <write_offset> <write_delay>
+ 			       [<flush_device> <flush_offset> <flush_delay>]]
+ 
+-With separate write parameters, the first set is only used for reads.
++Table line has to either have 3, 6 or 9 arguments:
++
++3: apply offset and delay to read, write and flush operations on device
++
++6: apply offset and delay to device, also apply write_offset and write_delay
++   to write and flush operations on optionally different write_device with
++   optionally different sector offset
++
++9: same as 6 arguments plus define flush_offset and flush_delay explicitely
++   on/with optionally different flush_device/flush_offset.
++
+ Offsets are specified in sectors.
++
+ Delays are specified in milliseconds.
+ 
++
+ Example scripts
+ ===============
+ 
+ ::
+-
+-	#!/bin/sh
+-	# Create device delaying rw operation for 500ms
+-	echo "0 `blockdev --getsz $1` delay $1 0 500" | dmsetup create delayed
++        #!/bin/sh
++        #
++	# Create mapped device named "delayed" delaying read, write and flush operations for 500ms.
++        #
++	dmsetup create delayed --table  "0 `blockdev --getsz $1` delay $1 0 500"
+ 
+ ::
++        #!/bin/sh
++        #
++	# Create mapped device delaying write and flush operations for 400ms and
++	# splitting reads to device $1 but writes and flushs to different device $2
++        # to different offsets of 2048 and 4096 sectors respectively.
++        #
++	dmsetup create delayed --table "0 `blockdev --getsz $1` delay $1 2048 0 $2 4096 400"
+ 
+-	#!/bin/sh
+-	# Create device delaying only write operation for 500ms and
+-	# splitting reads and writes to different devices $1 $2
+-	echo "0 `blockdev --getsz $1` delay $1 0 0 $2 0 500" | dmsetup create delayed
++::
++        #!/bin/sh
++        #
++        # Create mapped device delaying reads for 50ms, writes for 100ms and flushs for 333ms
++        # onto the same backing device at offset 0 sectors.
++        #
++        dmsetup create delayed --table "0 `blockdev --getsz $1` delay $1 0 50 $2 0 100 $1 0 333"
+-- 
+2.45.2
 
