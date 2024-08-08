@@ -1,64 +1,68 @@
-Received: from mail-ed1-f65.google.com (mail-ed1-f65.google.com [209.85.208.65])
+Received: from mail-ej1-f48.google.com (mail-ej1-f48.google.com [209.85.218.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7E24018E044
-	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:26:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.65
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6928818F2C1
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:26:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723130797; cv=none; b=Zx1rC+lRdabwNY5WwjBqAP9KsYhsQfbT3E+5O6Yi2QVVkATkqZuUg0fJRCFtYqt/LYsufJcrPrD4ub9To5DSJUSQKNPVe60WydopT8LpghYuo6u+EP7785TP1nPONNSnJpCCn07tFuu4EZvvXTQhmKuY7dQTWUD6FcD4k5mYOFI=
+	t=1723130798; cv=none; b=hg8bXA2isHAE5YqVsSWGrEi+AaxPD+2tCCVKsf5BKqvyGah4qS5SnkHUqUw4sqPEZ46ieeXNB6LpYJhe526CS7lRhJLo+uKhenvg1AOGJbpCJIvK4fDwrXEvaJC9kXoo70GUbIrsPm1mPxmfdwN+TCB30RNa6W5amQrihP5LwWg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723130797; c=relaxed/simple;
-	bh=vgXKwXxjbnb1udCFxY+NKVGdJdxppEt8UL6DmQPDiHE=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=JX2jK663wVXPYYTBZJLfAoQ3kXf9uMg5GrjLE3iJBKmTiwfYv+vwHWqq381VQRQNm6eBFcBZor1jyX63BE+GLv/aZQs70keZxpkMaI0abBplIsnywX1kqoxC//xwipMGoJ7jjmma8HS+YprDDBwRpBDH/wPuB3pLV7Pdm0VIgiA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UTIEiuEs; arc=none smtp.client-ip=209.85.208.65
+	s=arc-20240116; t=1723130798; c=relaxed/simple;
+	bh=d4l6Zdrj2dAxZ55hbewueGl6NyCfMz4ZAAq3qegHoBk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=FVP5BXYLBcW+cueK6Zot3s05KWM5eZBrRWWXI4XUMp6tkKFVhcKkrefXOWDt7BVmho3G6iWcT3E0p2UxFMD83NEK+ji6McVKvvTVPRdIB2KW4dkT0fvJED6l4xS/h2UO4MmhMnkajPbrJ5CU6AaOU2CfRBGzhiQL5ldttv8MJ18=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=YiFyYsAl; arc=none smtp.client-ip=209.85.218.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UTIEiuEs"
-Received: by mail-ed1-f65.google.com with SMTP id 4fb4d7f45d1cf-5a309d1a788so1128080a12.3
-        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:26:35 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="YiFyYsAl"
+Received: by mail-ej1-f48.google.com with SMTP id a640c23a62f3a-a7ad02501c3so135716766b.2
+        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:26:36 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723130794; x=1723735594; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=NoF7X797YcNyoH3h8XDW91mfOXc7D/4WJhnGub55ZiM=;
-        b=UTIEiuEshFGC5a7ozSkVozSuebkqoscrurE/hJbT3VYHSf+NF641x0NzyeNr0hJV4L
-         ljRxwH82oM2MUwG+dov2e4NAsshpS83fzsTrEpPQ96cByGjBOFgso5vrgmt8xS+DPJOq
-         AmTOBVBW9ZGfk7strG9fTi6vrZrIvRHQ8xcMyVhMAXZd3UXt2AaT7LZojJa5SpWCl46V
-         i0v0cWnhji9FTcsNse3u38r8l5y3WDaU9N29yTgYCckVE1F00tjoUZInHc6SgnqZEeDS
-         2cx7+uZFUbyAYdFbRM7Hs7JHKYAwwtq4tz+itLZLGVcKv93Szv7nd2a0XOlkvlht/4Wb
-         CUWA==
+        d=suse.com; s=google; t=1723130795; x=1723735595; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=alGp66DNaPrmoJFpQJ5nlyEFIQ7NpArivQ1RgTLtD/g=;
+        b=YiFyYsAlcCq8+KKrwePO8wjUIgsFSHqLlE01R7lQOHufCgqOvKqwI0dbR/F3KFsC/s
+         KvlPd68NV2hJxUs8FfviXdBPLdtTgZdnpTNXNZ1NLUt4IfA9bOVF0FPcbcHwS6bcvUoM
+         fl14XkwScT12c1EQpigNBabicus4oXDg2hbTbL+02Kqk8sGxiM4Oae0O1DRcIZq5qxRU
+         sdjn8eeTOpZxSnz/nthXCn9XEbxVNtQPHdn2R2RLGISH+YMbC5cTQwEnxELE1BKNCbA9
+         ZenmAKOqx1+5r8Fvuj+4128CDAZmAlecQ1lqD1xzF74bMIBkdks4JyM+TEiuAfxXSrf4
+         dcBQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723130794; x=1723735594;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=NoF7X797YcNyoH3h8XDW91mfOXc7D/4WJhnGub55ZiM=;
-        b=U/HwIXCsBVu+JNov2rrwAACMlbAYxxHTopb5GzWvLI5bMYln1bT8dTwJC19JZtFw5r
-         V83F3o2OSXjYbnsrpbbfymnFK/rcmW9Sl9//dVH1G7KRe6gwj0PkbVMfP/HZ/XhTUEv0
-         LcZ/v2dbcCeHt3K/mShLX081uiwsb3UAq7bZfvsHrAT8LjHGLtmaWlQj2EbK4LSNT1Yh
-         6BtZiaMByZXrhUtoWrCml9pFm2fLlu9rb/rrGEky+o1S4zfXv/bz6zdhZSFutUcnqm/i
-         6qqzqnUD5dggu1kwkV1OOcHPWTLLU6VuhblZoI0x5FdBp84xIrka84ZCy2w/sYxpJNMv
-         j5jw==
-X-Gm-Message-State: AOJu0YwQ6NJZ+ovNmAfIXHCgGc7p+6iVEA3uoEA0yAuI4VUfFyGIYhU5
-	ocpR/pST2dNC1Pu85N9BfjTwnFydUv83E31m6aPJi3dPaDYgahdu73a1K2PFUECJlTXrHa3RhLq
-	4lgmzVw==
-X-Google-Smtp-Source: AGHT+IEaYhKpnr+HDU3bAfikXFVX4cKjnP90WYYcUXAvNG+1mTxq7nJ6cmmNMx6uTbVfyhgK4QhEKQ==
-X-Received: by 2002:a05:6402:1913:b0:57d:10c7:aa4b with SMTP id 4fb4d7f45d1cf-5bbb23c7817mr1646679a12.30.1723130793396;
-        Thu, 08 Aug 2024 08:26:33 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1723130795; x=1723735595;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=alGp66DNaPrmoJFpQJ5nlyEFIQ7NpArivQ1RgTLtD/g=;
+        b=T2xDt/6rc6Rcj5Vcw+qPSk6scV7U9b+OHPWjpBgFrZFJFh1Teas1GS+k3j7qbLaHF1
+         V5DXnmwAbFbH+KR2vV3k/59CGY08atUOYgEblZdALQDnwHOt89FmPO8KbukJ5Wu12arn
+         5swk8MZy/YT24rpmN0MkNsqnQYEF39f8anv0RKzYvfWYMkXTI11pcHt3APu6Kq8sahVt
+         0Bt8DYCm+ro1ivPDKGrrscZQURU5Gj72tfsuXwdiQjTB7XNlVLwQCNGZNt2RRmlO0+mw
+         bvKNk3ueVyUG7mse/W3uQgYDMTB8ao0IokSRQagayzaP00oeE+toc5YSHg7YDs+cZPxO
+         +8tQ==
+X-Gm-Message-State: AOJu0YzMuxVZrrzaR3NKiGIieYqoDe5XYz5Y+owITxz5Jh4WXqvD2G1f
+	QKESmUn2xii24v+btN5w20hTz7Dw4ZLeUrUX+/nDM86FNbknb1aRxHy9ZtMuQz0XNRP+MZyhtm8
+	j1OE=
+X-Google-Smtp-Source: AGHT+IEZQz/Ge/sJdTGwXocZ/Iyzs0FRv8kt4z43ZjNpOK5OTwZ7xGLF1UwXrDme4f3TootD7puWWA==
+X-Received: by 2002:a17:907:6d2a:b0:a72:aeff:dfed with SMTP id a640c23a62f3a-a8090e62cdemr154759666b.53.1723130794489;
+        Thu, 08 Aug 2024 08:26:34 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5bbb2c409f8sm730711a12.38.2024.08.08.08.26.32
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9c12ad3sm753356466b.88.2024.08.08.08.26.34
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 08 Aug 2024 08:26:33 -0700 (PDT)
+        Thu, 08 Aug 2024 08:26:34 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 00/41] multipath-tools: comply with C library reserved names
-Date: Thu,  8 Aug 2024 17:25:39 +0200
-Message-ID: <20240808152620.93965-1-mwilck@suse.com>
+Subject: [PATCH 01/41] multipath-tools tests: make alias.test succeed with increased verbosity
+Date: Thu,  8 Aug 2024 17:25:40 +0200
+Message-ID: <20240808152620.93965-2-mwilck@suse.com>
 X-Mailer: git-send-email 2.46.0
+In-Reply-To: <20240808152620.93965-1-mwilck@suse.com>
+References: <20240808152620.93965-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -67,238 +71,194 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The first 2 patches are minor, independent fixes.
+With MPATHTEST_VERBOSITY > 3, the alias test fails because of an unexpected
+message at verbosity level 4. Fix it.
 
-The rest of the set renames identifiers that possibly conflict with reserved
-names of the C library, and should have no influence on the functionality
-of the code.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ tests/alias.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
 
-According to the glibc docs, user code must not redefine any type, function,
-variable, or macro names that are part of the ISO C standard [1]. Moreover,
-identifiers must not start with "__" (double underscore) or underscore and
-capital letter, and names starting with underscore are forbidden for globally
-visible symbols.
-
-This patch series tries to make the multipath-tools code comply with these
-requirements, at least to some extent. I haven't bothered renaming local
-or static variables, or variables like "__x" in macro bodies, for example.
-The starting point for the series was the request not to export strlcat
-and strlcpy any more [2].
-
-In most cases, I have simply replaced __xyz() or _xyz() by xyz__() (two
-underscores to make them better visible). In some cases, when xyz() was not
-defined, I've simply renamed _xyz() to xyz(). There are exceptions to these
-rules.
-
-The set also fixes some typos where __attribute__ was misspelled.
-
-[1] https://www.gnu.org/software/libc/manual/html_node/Reserved-Names.html
-[2] https://github.com/opensvc/multipath-tools/issues/91
-
-Martin Wilck (41):
-  multipath-tools tests: make alias.test succeed with increased
-    verbosity
-  libmpathutil: avoid extra memory allocation in print_strbuf()
-  libmpathutil: rename strlcat and strlcpy
-  libmpathutil.version: remove strlcpy and strlcat, and LIBMULTIPATH
-    section
-  libmpathutil: fix __attribute typo in log_pthread.c
-  libmultipath: devmapper.c: rename __DR_UNUSED__, and fix __attribute
-    typo
-  multipathd: fix __attribute typo
-  multipath-tools: use common convention for "header file included"
-    macros
-  libmpathcmd: rename __mpath_connect() to mpath_connect__()
-  libmpathutil: rename _MAX_CMD_LEN
-  libmpathutil: rename __append_strbuf_str() and __get_strbuf_buf()
-  libmpathutil: rename _log_bitfield_overflow()
-  libmpathutil: rename _install_keyword() to install_keyword__()
-  libmultipath: rename _NVME_LIB_C
-  libmultipath: checkers.h: fix __CHECKER_FIRST_MSG in comment
-  libmultipath: rename identifiers with leading underscores in
-    devmapper.h
-  libmultipath: rename identifiers with leading underscores in
-    discovery.h
-  libmultipath: rename __snprint_config()
-  libmultipath: rename __unlock()
-  libmultipath: rename __sysfs_attr_get_value()
-  libmultipath: rename __snprint_foreign_topology()
-  libmultipath: rename macros with double underscores in propsel.c
-  libmultipath: rename enum values with double underscores in structs.h
-  libmultipath: rename macros starting with underscore
-  libmultipath: rename __internal_config variable
-  libmultipath: rename _dm_flush_map() to dm_flush_map__()
-  libmultipath: foreign: rename _check() to check__()
-  libmultipath: rename _cleanup_foreign()
-  libmultipath: rename _init_config()
-  libmultipath: rename symbols starting with underscore in print.h
-  libmultipath: remove dead code in pgpolicies.h
-  libmultipath: remove struct and union names in cciss.h
-  libmpathpersist: rename functions with double leading underscore
-  libdmmp: rename macros starting with _DMMP
-  libdmmp: rename enum values and variables starting with _DMMP_
-  libdmmp: rename non-static functions starting with underscore
-  multipathd: rename symbols with double leading underscore
-  multipath-tools tests: rename functions with double underscores
-  kpartx: rename macros with leading underscores
-  libmpathutil: rename struct _vector to vector_s
-  libmultipath: don't define __user
-
- create-config.mk                         |  4 +-
- kpartx/byteorder.h                       |  6 +-
- kpartx/crc32.h                           |  6 +-
- kpartx/dasd.h                            |  6 +-
- kpartx/devmapper.c                       | 20 +++---
- kpartx/devmapper.h                       |  6 +-
- kpartx/dos.h                             |  2 +-
- kpartx/efi.h                             |  6 +-
- kpartx/gpt.h                             |  4 +-
- kpartx/kpartx.h                          |  6 +-
- kpartx/lopart.h                          |  3 +
- kpartx/mac.h                             |  4 +-
- kpartx/xstrncpy.h                        |  3 +
- libdmmp/libdmmp.c                        | 72 +++++++++----------
- libdmmp/libdmmp/libdmmp.h                |  6 +-
- libdmmp/libdmmp_misc.c                   | 10 +--
- libdmmp/libdmmp_mp.c                     | 12 ++--
- libdmmp/libdmmp_path.c                   | 22 +++---
- libdmmp/libdmmp_pg.c                     | 40 +++++------
- libdmmp/libdmmp_private.h                | 32 ++++-----
- libmpathcmd/libmpathcmd.version          |  4 +-
- libmpathcmd/mpath_cmd.c                  |  4 +-
- libmpathcmd/mpath_cmd.h                  |  8 +--
- libmpathpersist/libmpathpersist.version  |  6 +-
- libmpathpersist/mpath_persist.c          | 22 +++---
- libmpathpersist/mpath_persist.h          | 45 ++++++------
- libmpathpersist/mpath_persist_int.h      |  6 +-
- libmpathpersist/mpath_pr_ioctl.h         |  5 ++
- libmpathpersist/mpathpr.h                |  4 +-
- libmpathutil/debug.h                     |  6 +-
- libmpathutil/globals.h                   |  4 +-
- libmpathutil/libmpathutil.version        | 90 ++++++++++--------------
- libmpathutil/log.h                       |  6 +-
- libmpathutil/log_pthread.c               |  2 +-
- libmpathutil/log_pthread.h               |  6 +-
- libmpathutil/msort.h                     |  4 +-
- libmpathutil/parser.c                    |  6 +-
- libmpathutil/parser.h                    | 32 ++++-----
- libmpathutil/strbuf.c                    | 29 +++++---
- libmpathutil/strbuf.h                    | 10 +--
- libmpathutil/time-util.h                 |  6 +-
- libmpathutil/util.c                      |  6 +-
- libmpathutil/util.h                      | 25 ++++---
- libmpathutil/uxsock.h                    |  7 +-
- libmpathutil/vector.c                    |  2 +-
- libmpathutil/vector.h                    | 10 +--
- libmpathvalid/mpath_valid.h              |  6 +-
- libmultipath/alias.c                     |  4 +-
- libmultipath/alias.h                     |  6 +-
- libmultipath/blacklist.c                 | 14 ++--
- libmultipath/blacklist.h                 | 14 ++--
- libmultipath/checkers.h                  |  8 +--
- libmultipath/checkers/cciss.h            | 22 +++---
- libmultipath/checkers/directio.c         |  8 +--
- libmultipath/checkers/directio.h         |  6 +-
- libmultipath/checkers/emc_clariion.c     | 20 +++---
- libmultipath/checkers/emc_clariion.h     |  6 +-
- libmultipath/checkers/hp_sw.h            |  6 +-
- libmultipath/checkers/rdac.c             | 20 +++---
- libmultipath/checkers/rdac.h             |  6 +-
- libmultipath/checkers/readsector0.h      |  6 +-
- libmultipath/checkers/tur.c              | 10 +--
- libmultipath/checkers/tur.h              |  6 +-
- libmultipath/config.c                    | 30 ++++----
- libmultipath/config.h                    | 10 +--
- libmultipath/configure.c                 |  2 +-
- libmultipath/configure.h                 |  6 +-
- libmultipath/defaults.h                  |  7 +-
- libmultipath/devmapper.c                 | 28 ++++----
- libmultipath/devmapper.h                 | 27 +++----
- libmultipath/dict.c                      |  4 +-
- libmultipath/dict.h                      |  9 +--
- libmultipath/discovery.c                 | 18 ++---
- libmultipath/discovery.h                 | 38 +++++-----
- libmultipath/dm-generic.c                |  8 +--
- libmultipath/dm-generic.h                |  6 +-
- libmultipath/dmparser.c                  |  2 +-
- libmultipath/dmparser.h                  |  7 +-
- libmultipath/file.h                      |  6 +-
- libmultipath/foreign.c                   | 36 +++++-----
- libmultipath/foreign.h                   | 19 ++---
- libmultipath/foreign/nvme.c              | 50 ++++++-------
- libmultipath/generic.h                   | 14 ++--
- libmultipath/hwtable.h                   |  6 +-
- libmultipath/io_err_stat.c               |  4 +-
- libmultipath/io_err_stat.h               |  6 +-
- libmultipath/libmultipath.version        | 20 +++---
- libmultipath/libsg.h                     |  6 +-
- libmultipath/list.h                      |  6 +-
- libmultipath/lock.c                      |  4 +-
- libmultipath/lock.h                      |  8 +--
- libmultipath/nvme-lib.c                  |  2 +-
- libmultipath/nvme-lib.h                  |  8 +--
- libmultipath/nvme/argconfig.h            |  4 +-
- libmultipath/nvme/json.h                 |  4 +-
- libmultipath/nvme/linux/nvme.h           |  6 +-
- libmultipath/nvme/linux/nvme_ioctl.h     |  6 +-
- libmultipath/nvme/nvme-ioctl.h           |  6 +-
- libmultipath/nvme/nvme.h                 |  6 +-
- libmultipath/nvme/plugin.h               |  4 +-
- libmultipath/pgpolicies.h                | 10 +--
- libmultipath/print.c                     | 68 +++++++++---------
- libmultipath/print.h                     | 34 ++++-----
- libmultipath/prio.h                      |  6 +-
- libmultipath/prioritizers/alua.h         |  4 +-
- libmultipath/prioritizers/alua_rtpg.c    |  1 -
- libmultipath/prioritizers/alua_rtpg.h    |  6 +-
- libmultipath/prioritizers/alua_spc3.h    |  6 +-
- libmultipath/prioritizers/weightedpath.h |  4 +-
- libmultipath/prkey.h                     |  6 +-
- libmultipath/propsel.c                   | 10 +--
- libmultipath/propsel.h                   |  3 +
- libmultipath/sg_include.h                |  4 +-
- libmultipath/structs.c                   | 12 ++--
- libmultipath/structs.h                   | 22 +++---
- libmultipath/structs_vec.c               |  2 +-
- libmultipath/structs_vec.h               |  8 +--
- libmultipath/switchgroup.h               |  5 ++
- libmultipath/sysfs.c                     |  6 +-
- libmultipath/sysfs.h                     |  4 +-
- libmultipath/uevent.h                    |  6 +-
- libmultipath/unaligned.h                 |  6 +-
- libmultipath/valid.c                     | 14 ++--
- libmultipath/valid.h                     |  6 +-
- libmultipath/version.h                   |  6 +-
- libmultipath/wwids.h                     |  6 +-
- mpathpersist/main.c                      |  6 +-
- mpathpersist/main.h                      |  4 ++
- multipathd/cli.c                         |  6 +-
- multipathd/cli.h                         | 16 ++---
- multipathd/cli_handlers.c                |  8 +--
- multipathd/cli_handlers.h                |  4 +-
- multipathd/dmevents.c                    |  2 +-
- multipathd/dmevents.h                    |  6 +-
- multipathd/fpin.h                        |  4 +-
- multipathd/init_unwinder.h               |  4 +-
- multipathd/main.c                        | 36 +++++-----
- multipathd/main.h                        |  6 +-
- multipathd/pidfile.h                     |  4 ++
- multipathd/uxclnt.h                      |  5 ++
- multipathd/uxlsnr.c                      |  6 +-
- multipathd/uxlsnr.h                      |  4 +-
- multipathd/waiter.c                      |  2 +-
- multipathd/waiter.h                      |  6 +-
- tests/alias.c                            | 64 +++++++++++------
- tests/mpathvalid.c                       |  2 +-
- tests/strbuf.c                           | 80 +++++++++++++++++++--
- tests/sysfs.c                            | 20 +++---
- tests/test-lib.c                         |  4 +-
- tests/test-lib.h                         | 20 +++---
- tests/test-log.h                         |  4 +-
- tests/valid.c                            | 16 ++---
- tests/wrap64.h                           |  4 +-
- 153 files changed, 981 insertions(+), 853 deletions(-)
-
+diff --git a/tests/alias.c b/tests/alias.c
+index a95b308..4f23cf9 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -1438,6 +1438,7 @@ static void gufa_empty_new_rw(void **state) {
+ 
+ 	mock_bindings_file("");
+ 	mock_unused_alias("MPATHa");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 
+ 	mock_allocate_binding("MPATHa", "WWID0");
+@@ -1451,6 +1452,7 @@ static void gufa_empty_new_ro_1(void **state) {
+ 
+ 	mock_bindings_file("");
+ 	mock_unused_alias("MPATHa");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 	mock_allocate_binding_err("MPATHa", "WWID0", -EROFS, "Read-only file system");
+ 
+@@ -1462,6 +1464,7 @@ static void gufa_empty_new_ro_2(void **state) {
+ 	char *alias;
+ 
+ 	mock_bindings_file("");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 	mock_unused_alias("MPATHa");
+ 
+@@ -1473,6 +1476,7 @@ static void gufa_match_a_unused(void **state) {
+ 	char *alias;
+ 
+ 	mock_bindings_file("MPATHa WWID0");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, FOUND_STR("MPATHa", "WWID0"));
+ 	mock_unused_alias("MPATHa");
+ 	expect_condlog(3, EXISTING_STR("MPATHa", "WWID0"));
+@@ -1486,6 +1490,7 @@ static void gufa_match_a_self(void **state) {
+ 	char *alias;
+ 
+ 	mock_bindings_file("MPATHa WWID0");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, FOUND_STR("MPATHa", "WWID0"));
+ 	mock_self_alias("MPATHa", "WWID0");
+ 	expect_condlog(3, EXISTING_STR("MPATHa", "WWID0"));
+@@ -1500,6 +1505,7 @@ static void gufa_match_a_used(void **state) {
+ 
+ 
+ 	mock_bindings_file("MPATHa WWID0");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, FOUND_STR("MPATHa", "WWID0"));
+ 	mock_used_alias("MPATHa", "WWID0");
+ 
+@@ -1514,6 +1520,7 @@ static void gufa_nomatch_a_c(void **state) {
+ 
+ 	mock_bindings_file(bindings);
+ 	mock_unused_alias("MPATHb");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID1"));
+ 
+ 	mock_allocate_binding_len("MPATHb", "WWID1", strlen(bindings));
+@@ -1530,6 +1537,7 @@ static void gufa_nomatch_c_a(void **state) {
+ 
+ 	mock_bindings_file(bindings);
+ 	mock_unused_alias("MPATHb");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID1"));
+ 
+ 	mock_allocate_binding_len("MPATHb", "WWID1", sizeof(bindings) - 1);
+@@ -1545,6 +1553,7 @@ static void gufa_nomatch_c_b(void **state) {
+ 				 "MPATHb WWID1\n");
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 	mock_unused_alias("MPATHa");
+ 
+@@ -1561,6 +1570,7 @@ static void gufa_nomatch_c_b_used(void **state) {
+ 				 "MPATHb WWID1\n");
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID4"));
+ 	mock_used_alias("MPATHa", "WWID4");
+ 	mock_unused_alias("MPATHd");
+@@ -1579,6 +1589,7 @@ static void gufa_nomatch_b_f_a(void **state) {
+ 				 "MPATHa WWID0\n");
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID7"));
+ 	mock_unused_alias("MPATHc");
+ 
+@@ -1595,6 +1606,7 @@ static void gufa_nomatch_b_aa_a(void **state) {
+ 
+ 	fill_bindings(&buf, 0, 26);
+ 	mock_bindings_file(get_strbuf_str(&buf));
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID28"));
+ 	mock_unused_alias("MPATHab");
+ 	mock_allocate_binding_len("MPATHab", "WWID28", get_strbuf_len(&buf));
+@@ -1611,6 +1623,7 @@ static void gufa_nomatch_b_f_a_sorted(void **state) {
+ 				 "MPATHa WWID0\n");
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID7"));
+ 	mock_unused_alias("MPATHc");
+ 
+@@ -1626,6 +1639,7 @@ static void gufa_old_empty(void **state) {
+ 
+ 	/* rlookup_binding for ALIAS */
+ 	mock_bindings_file("");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_STR("MPATHz"));
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 
+@@ -1642,6 +1656,7 @@ static void gufa_old_match(void **state) {
+ 
+ 	mock_bindings_file("MPATHb WWID1\n"
+ 			   "MPATHz WWID0");
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, FOUND_ALIAS_STR("MPATHz", "WWID0"));
+ 
+ 	alias = get_user_friendly_alias("WWID0", "MPATHz", "MPATH", false);
+@@ -1654,6 +1669,7 @@ static void gufa_old_match_other(void **state) {
+ 	static const char bindings[] = "MPATHz WWID9\n";
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, FOUND_ALIAS_STR("MPATHz", "WWID9"));
+ 	expect_condlog(0, REUSE_STR("MPATHz", "WWID9"));
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+@@ -1671,6 +1687,7 @@ static void gufa_old_match_other_used(void **state) {
+ 	static const char bindings[] = "MPATHz WWID9\n";
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, FOUND_ALIAS_STR("MPATHz", "WWID9"));
+ 	expect_condlog(0, REUSE_STR("MPATHz", "WWID9"));
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+@@ -1689,6 +1706,7 @@ static void gufa_old_match_other_wwidmatch(void **state) {
+ 					"MPATHc WWID2");
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, FOUND_ALIAS_STR("MPATHz", "WWID9"));
+ 	expect_condlog(0, REUSE_STR("MPATHz", "WWID9"));
+ 	expect_condlog(3, FOUND_STR("MPATHc", "WWID2"));
+@@ -1706,6 +1724,7 @@ static void gufa_old_match_other_wwidmatch_used(void **state) {
+ 					"MPATHc WWID2");
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, FOUND_ALIAS_STR("MPATHz", "WWID9"));
+ 	expect_condlog(0, REUSE_STR("MPATHz", "WWID9"));
+ 	expect_condlog(3, FOUND_STR("MPATHc", "WWID2"));
+@@ -1720,6 +1739,7 @@ static void gufa_old_nomatch_wwidmatch(void **state) {
+ 	static const char bindings[] = "MPATHa WWID0";
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_STR("MPATHz"));
+ 	expect_condlog(3, FOUND_STR("MPATHa", "WWID0"));
+ 	mock_unused_alias("MPATHa");
+@@ -1735,6 +1755,7 @@ static void gufa_old_nomatch_wwidmatch_used(void **state) {
+ 	static const char bindings[] = "MPATHa WWID0";
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_STR("MPATHz"));
+ 	expect_condlog(3, FOUND_STR("MPATHa", "WWID0"));
+ 	mock_used_alias("MPATHa", "WWID0");
+@@ -1748,6 +1769,7 @@ static void gufa_old_nomatch_nowwidmatch(void **state) {
+ 	static const char bindings[] = "MPATHb WWID1\n";
+ 
+ 	mock_bindings_file(bindings);
++	expect_condlog(4, "_read_bindings_file: bindings are unchanged");
+ 	expect_condlog(3, NOMATCH_STR("MPATHz"));
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 
 -- 
 2.46.0
 
