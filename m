@@ -1,64 +1,64 @@
-Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
+Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com [209.85.218.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA20E190468
-	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:26:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D5FBF190475
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:26:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723130820; cv=none; b=VdHlhC4XN0YfBL1X6C14q4E9tFA15ZlsTLdhECpz9L1kdKrcyByfSL3IYvfOL+mkv3WF/a+H0gNucRe8/umVL8Xg+SiM28BSc88FwwvcDMLrGSdES236atJFJzKu8H5TcJnA6/ni5GAlRSSzgs0b8CMC0nmHaIERbQpixfOPdV4=
+	t=1723130821; cv=none; b=Xyz20G/mPPLVPE/VYL0X90FBXxEh3CA3BUullSaDkw5sXVGN7UU+VeWBtiTjumdlZi8PZjJXMDT60fJEhcujmqSFhnFyF1Gr8Y9EO7x/rZOVHb1FCxQQila8zir7jXxNwVfZOf9xaJ3T6eRpWntEUXcL0wUgUnLJ+OzenXJ7Tp4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723130820; c=relaxed/simple;
-	bh=9NDJb86pvCINZo73KdVCa640PlVd0wOamDKwb4U1LqQ=;
+	s=arc-20240116; t=1723130821; c=relaxed/simple;
+	bh=Acwc7K6VUtkipSQ+y5yJIKDM51C7wu1tVtZwh54RkfU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Uj164OzakKBop+884nu43qoqc18vCFmBSYr3msgJh+jpY3aR3/AqEjEw8NkUL8yhpGzckOXhwginE1WSBOEK3w35DwttKwklxMJAoLYk5UzOQjwl5TGzARzQP18yXNuQbSMf3HSZIxz0OJVNCqm5SCGFjK+ctYjY2TldT7NGFiA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=EjmyKakv; arc=none smtp.client-ip=209.85.208.44
+	 MIME-Version; b=rw4WZqxTKmmbp/mEAz8T+0517DiiAkB4EGbnT3DOPeGM81Pm1gTWlN+AhGIu4MOx2ycbKVStYoalV2WlvVL0o0UEJuic8G1tqX3cQTyaQ2eSF9Ir6nNjof+UJ/Q1my3/P1BbmfYiCwbdyBzWOVOzp4EwTcDol+X8CcIkQd5LRPw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=SzvvYGj/; arc=none smtp.client-ip=209.85.218.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="EjmyKakv"
-Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-5b01af9b0c9so1192485a12.3
-        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:26:58 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="SzvvYGj/"
+Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-a7aa4bf4d1eso141512866b.0
+        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:26:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723130817; x=1723735617; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1723130818; x=1723735618; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=hiyIz3ejGgt7sPKinx/mWchTJwGbSJpTPnR53Xsk+QU=;
-        b=EjmyKakvYxVDqn0lhBNun2IBbsdmGF/2JBjsv1ZHT90Aauswjhj2O0Lh8T9XiKygbz
-         eg198ng68JjXBsKAomT2dNN6Aca332aCIK4Ya+yguZFf1no5ij2SZ/pB+SR/i6harAb0
-         cdl/14vglPNI00NTwGzg66JF48M6fkgtlqBUvVeZT0z3uFuIX1TfF1vlN1OrerQuOk5T
-         PI8SmLoUvWhRnfuQTP7YOeRfry6bCt/5y8NXB/emRZBEX/sl2Or3gf8TYHLHUisKnfna
-         YQAB32U1zlCMgTTMBr+tjQ0+mHLEZ2XVcaMZRA0NzKeEg18Sf3CsYlVhkL3Cbt+DkT9h
-         csTA==
+        bh=pKWkBe/yzdeS/gkunkSE4OuaqidURsKkkxDKM/IXAjc=;
+        b=SzvvYGj/ObyfjiD/Tu+NJGA6+ZQnsnLTpDsozB74G244/zooFmLQTEuWt5Cs9nlvzV
+         M/JL80/l1h+uIpnZ8ofPHms8jrPUtIoCQDoXWfqld8quSWzUXhOmPEqBkL4MzAlMUm5j
+         nNDFoXT53Vo9AZ1Y+IkLfLP4C6YAmvSWJjOO9vvV1hvAkMf+verYFuyjStOH65aSeenj
+         jnqWPb5yiJ6UKRyBkY3SlrdLXDNXa/+zLpC0IA8LvM1NmrzIsX7cAnCEh7mIjvLCIHiR
+         AvcLPlx3ziHlxGFPArR6MbiOUjvPn0V5rJsMtc94PTTgNenaeIsMMoZUAEbsENMRQn/h
+         WhOQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723130817; x=1723735617;
+        d=1e100.net; s=20230601; t=1723130818; x=1723735618;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=hiyIz3ejGgt7sPKinx/mWchTJwGbSJpTPnR53Xsk+QU=;
-        b=Vip0rWI1ckYeIS8D+bruk0F4CGWftNod1pXGBAOJO5FUg4XcK5pP3RrLYkcIdmOAt0
-         9jdSK6jrOSDHlAWeag3CnvuFuzMgHuMKE/1AM2irzwz1RDG1sn0aFGj9OVkuytDRT/fT
-         kqhm5m/hHQxSjYqe4Evx5bweYsxwiGMGIy3RZuy6AU07FNoCt+myZm3defrccmHbKUxu
-         s5y88cvI6cWECYOBHG7EzcS/N6qVxYdNvwNPcBRNU9Qq9P2YfAq6cWq+xtTTx7sNUJ17
-         M9RxPcBOONQwZYHkG+agW6CJLkmzL+JHIo3S3O1d27WTzeY2vZpgOGGfhaZc7Hs0dtmV
-         M5IA==
-X-Gm-Message-State: AOJu0Yz9DlGk7RSC2fqJOw6ydLrrketvX+9kSyvQYjdP98AVwly+9iLq
-	6Tr/+aZMJ2ZCBIDut9LEVOKcTRwyCoKWBSm33D1egjaPjAcuzY4RnJGJjhUch6Y=
-X-Google-Smtp-Source: AGHT+IH45lcwIxZjgzC2/r8U7k8yjawQJgD+vStVv8RnrswmGDKs9TtbSiciWjXWL1VXQYpKZ+zT7A==
-X-Received: by 2002:a05:6402:50cd:b0:5a1:b42f:c93 with SMTP id 4fb4d7f45d1cf-5bbb221c324mr1788498a12.13.1723130816952;
-        Thu, 08 Aug 2024 08:26:56 -0700 (PDT)
+        bh=pKWkBe/yzdeS/gkunkSE4OuaqidURsKkkxDKM/IXAjc=;
+        b=dp48GiRk9BU9qWuwlagOS7wo9iE2zZUpZckLFTJeuZ8Moa3hcPI8mBcrHXJO7SqBdv
+         Y5aJdSRm7ufnBBF+8jlklbMfupb/AKXL5Pyb7k2eUqSKvzCxhgpvtTq8aVjEYduxmbYV
+         z0p6WQF6T5c/IFNBqGapgbFJUi4qwPltkVrO0yoNrntqhFd/Jfr4nodEpK9EYYPPOiFW
+         zOo0REzp1AypCBgAi96vXjBGPEubgDeTEUWYAd2vfBnRCmKUEChF9nMovjjs/0QcB94+
+         7DM4bYj3p73P5R3bK2v+ndw4abqoCxjvrOHURIdLAcP6QmyGzo2oB61/XhLTMz1Ba4L/
+         ZL4g==
+X-Gm-Message-State: AOJu0Yy+iQqSG3knWsBxZKUH2QYf4oG3wCZu4YWFg4CpNZtZ8H1QdO0A
+	27ntKna4qQ8sEY8H7OgQdLggGAPmlhtksmB6QxYL1QwVYnAFhfhyQVm2czha4ak=
+X-Google-Smtp-Source: AGHT+IGbOR89BeLDTSkG7bZbRWo7K8S5XUqhV9EQGIeLBQa4aAsJ/+U39rm05dAUPewJM7lA8GLXNg==
+X-Received: by 2002:a17:907:3f16:b0:a7a:a2b7:93ff with SMTP id a640c23a62f3a-a8090eabebfmr190193566b.57.1723130817905;
+        Thu, 08 Aug 2024 08:26:57 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5bbb2bf8e78sm729878a12.3.2024.08.08.08.26.56
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9e80e6asm754068266b.165.2024.08.08.08.26.57
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 08 Aug 2024 08:26:56 -0700 (PDT)
+        Thu, 08 Aug 2024 08:26:57 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 23/41] libmultipath: rename enum values with double underscores in structs.h
-Date: Thu,  8 Aug 2024 17:26:02 +0200
-Message-ID: <20240808152620.93965-24-mwilck@suse.com>
+Subject: [PATCH 24/41] libmultipath: rename macros starting with underscore
+Date: Thu,  8 Aug 2024 17:26:03 +0200
+Message-ID: <20240808152620.93965-25-mwilck@suse.com>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20240808152620.93965-1-mwilck@suse.com>
 References: <20240808152620.93965-1-mwilck@suse.com>
@@ -72,96 +72,160 @@ Content-Transfer-Encoding: 8bit
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dict.c    | 4 ++--
- libmultipath/print.c   | 2 +-
- libmultipath/structs.h | 4 ++--
- libmultipath/valid.c   | 2 +-
- tests/mpathvalid.c     | 2 +-
- 5 files changed, 7 insertions(+), 7 deletions(-)
+ libmultipath/checkers/directio.c     |  8 ++++----
+ libmultipath/checkers/emc_clariion.c | 20 ++++++++++----------
+ libmultipath/checkers/rdac.c         | 20 ++++++++++----------
+ libmultipath/checkers/tur.c          | 10 +++++-----
+ libmultipath/foreign/nvme.c          | 26 +++++++++++++-------------
+ 5 files changed, 42 insertions(+), 42 deletions(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 546103f..a06a613 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -568,7 +568,7 @@ def_find_multipaths_handler(struct config *conf, vector strvec,
- 	if (!buff)
- 		return 1;
- 
--	for (i = FIND_MULTIPATHS_OFF; i < __FIND_MULTIPATHS_LAST; i++) {
-+	for (i = FIND_MULTIPATHS_OFF; i < FIND_MULTIPATHS_LAST__; i++) {
- 		if (find_multipaths_optvals[i] != NULL &&
- 		    !strcmp(buff, find_multipaths_optvals[i])) {
- 			conf->find_multipaths = i;
-@@ -576,7 +576,7 @@ def_find_multipaths_handler(struct config *conf, vector strvec,
- 		}
- 	}
- 
--	if (i >= __FIND_MULTIPATHS_LAST) {
-+	if (i >= FIND_MULTIPATHS_LAST__) {
- 		if (strcmp(buff, "no") == 0 || strcmp(buff, "0") == 0)
- 			conf->find_multipaths = FIND_MULTIPATHS_OFF;
- 		else if (strcmp(buff, "yes") == 0 || strcmp(buff, "1") == 0)
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index b911802..b8868ea 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -575,7 +575,7 @@ static int snprint_initialized(struct strbuf *buff, const struct path * pp)
- 	};
- 	const char *str;
- 
--	if (pp->initialized < INIT_NEW || pp->initialized >= __INIT_LAST)
-+	if (pp->initialized < INIT_NEW || pp->initialized >= INIT_LAST__)
- 		str = "undef";
- 	else
- 		str = init_state_name[pp->initialized];
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 6b5de7a..56fb74b 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -99,7 +99,7 @@ enum find_multipaths_states {
- 	FIND_MULTIPATHS_GREEDY,
- 	FIND_MULTIPATHS_SMART,
- 	FIND_MULTIPATHS_STRICT,
--	__FIND_MULTIPATHS_LAST,
-+	FIND_MULTIPATHS_LAST__,
+diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
+index 12b8be4..8e87878 100644
+--- a/libmultipath/checkers/directio.c
++++ b/libmultipath/checkers/directio.c
+@@ -49,11 +49,11 @@ enum {
+ 	MSG_DIRECTIO_BLOCKSIZE,
  };
  
- enum marginal_pathgroups_mode {
-@@ -258,7 +258,7 @@ enum initialized_states {
- 	 * change uevent is received.
- 	 */
- 	INIT_PARTIAL,
--	__INIT_LAST,
-+	INIT_LAST__,
+-#define _IDX(x) (MSG_DIRECTIO_##x - CHECKER_FIRST_MSGID)
++#define IDX_(x) (MSG_DIRECTIO_##x - CHECKER_FIRST_MSGID)
+ const char *libcheck_msgtable[] = {
+-	[_IDX(UNKNOWN)] = " is not available",
+-	[_IDX(PENDING)] = " is waiting on aio",
+-	[_IDX(BLOCKSIZE)] = " cannot get blocksize, set default",
++	[IDX_(UNKNOWN)] = " is not available",
++	[IDX_(PENDING)] = " is waiting on aio",
++	[IDX_(BLOCKSIZE)] = " cannot get blocksize, set default",
+ 	NULL,
  };
  
- enum prkey_sources {
-diff --git a/libmultipath/valid.c b/libmultipath/valid.c
-index d751780..5df9b02 100644
---- a/libmultipath/valid.c
-+++ b/libmultipath/valid.c
-@@ -302,7 +302,7 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
- 		return PATH_IS_ERROR;
+diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+index 04635b5..bf0baab 100644
+--- a/libmultipath/checkers/emc_clariion.c
++++ b/libmultipath/checkers/emc_clariion.c
+@@ -57,20 +57,20 @@ enum {
+ 	MSG_CLARIION_PASSIVE_GOOD,
+ };
  
- 	if (conf->find_multipaths <= FIND_MULTIPATHS_UNDEF ||
--	    conf->find_multipaths >= __FIND_MULTIPATHS_LAST)
-+	    conf->find_multipaths >= FIND_MULTIPATHS_LAST__)
- 		return PATH_IS_ERROR;
+-#define _IDX(x) (MSG_CLARIION_ ## x - CHECKER_FIRST_MSGID)
++#define IDX_(x) (MSG_CLARIION_ ## x - CHECKER_FIRST_MSGID)
+ const char *libcheck_msgtable[] = {
+-	[_IDX(QUERY_FAILED)] = ": sending query command failed",
+-	[_IDX(QUERY_ERROR)] = ": query command indicates error",
+-	[_IDX(PATH_CONFIG)] =
++	[IDX_(QUERY_FAILED)] = ": sending query command failed",
++	[IDX_(QUERY_ERROR)] = ": query command indicates error",
++	[IDX_(PATH_CONFIG)] =
+ 	": Path not correctly configured for failover",
+-	[_IDX(UNIT_REPORT)] =
++	[IDX_(UNIT_REPORT)] =
+ 	": Path unit report page in unknown format",
+-	[_IDX(PATH_NOT_AVAIL)] =
++	[IDX_(PATH_NOT_AVAIL)] =
+ 	": Path not available for normal operations",
+-	[_IDX(LUN_UNBOUND)] = ": Logical Unit is unbound or LUNZ",
+-	[_IDX(WWN_CHANGED)] = ": Logical Unit WWN has changed",
+-	[_IDX(READ_ERROR)] = ": Read error",
+-	[_IDX(PASSIVE_GOOD)] = ": Active path is healthy",
++	[IDX_(LUN_UNBOUND)] = ": Logical Unit is unbound or LUNZ",
++	[IDX_(WWN_CHANGED)] = ": Logical Unit WWN has changed",
++	[IDX_(READ_ERROR)] = ": Read error",
++	[IDX_(PASSIVE_GOOD)] = ": Active path is healthy",
+ 	NULL,
+ };
  
- 	if (safe_sprintf(pp->dev, "%s", name))
-diff --git a/tests/mpathvalid.c b/tests/mpathvalid.c
-index df66ed6..134dfc9 100644
---- a/tests/mpathvalid.c
-+++ b/tests/mpathvalid.c
-@@ -130,7 +130,7 @@ void make_config_file(int findmp)
- 	char buf[64];
+diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
+index 9a3860f..87b8872 100644
+--- a/libmultipath/checkers/rdac.c
++++ b/libmultipath/checkers/rdac.c
+@@ -234,19 +234,19 @@ enum {
+ 	RDAC_MSGID_INQUIRY_FAILED,
+ };
  
- 	assert_true(findmp > FIND_MULTIPATHS_UNDEF &&
--		    findmp < __FIND_MULTIPATHS_LAST);
-+		    findmp < FIND_MULTIPATHS_LAST__);
+-#define _IDX(x) (RDAC_MSGID_##x - CHECKER_FIRST_MSGID)
++#define IDX_(x) (RDAC_MSGID_##x - CHECKER_FIRST_MSGID)
+ const char *libcheck_msgtable[] = {
+-	[_IDX(NOT_CONN)] = MSG_RDAC_DOWN_TYPE("lun not connected"),
+-	[_IDX(IN_STARTUP)] = MSG_RDAC_DOWN_TYPE("ctlr is in startup sequence"),
+-	[_IDX(NON_RESPONSIVE)] =
++	[IDX_(NOT_CONN)] = MSG_RDAC_DOWN_TYPE("lun not connected"),
++	[IDX_(IN_STARTUP)] = MSG_RDAC_DOWN_TYPE("ctlr is in startup sequence"),
++	[IDX_(NON_RESPONSIVE)] =
+ 	MSG_RDAC_DOWN_TYPE("non-responsive to queries"),
+-	[_IDX(IN_RESET)] = MSG_RDAC_DOWN_TYPE("ctlr held in reset"),
+-	[_IDX(FW_DOWNLOADING)] =
++	[IDX_(IN_RESET)] = MSG_RDAC_DOWN_TYPE("ctlr held in reset"),
++	[IDX_(FW_DOWNLOADING)] =
+ 	MSG_RDAC_DOWN_TYPE("ctlr firmware downloading"),
+-	[_IDX(QUIESCED)] = MSG_RDAC_DOWN_TYPE("ctlr quiesced by admin request"),
+-	[_IDX(SERVICE_MODE)] = MSG_RDAC_DOWN_TYPE("ctlr is in service mode"),
+-	[_IDX(UNAVAILABLE)] = MSG_RDAC_DOWN_TYPE("ctlr is unavailable"),
+-	[_IDX(INQUIRY_FAILED)] = MSG_RDAC_DOWN_TYPE("inquiry failed"),
++	[IDX_(QUIESCED)] = MSG_RDAC_DOWN_TYPE("ctlr quiesced by admin request"),
++	[IDX_(SERVICE_MODE)] = MSG_RDAC_DOWN_TYPE("ctlr is in service mode"),
++	[IDX_(UNAVAILABLE)] = MSG_RDAC_DOWN_TYPE("ctlr is unavailable"),
++	[IDX_(INQUIRY_FAILED)] = MSG_RDAC_DOWN_TYPE("inquiry failed"),
+ 	NULL,
+ };
  
- 	r = snprintf(buf, sizeof(buf), "defaults {\nfind_multipaths %s\n}\n",
- 		     find_multipaths_optvals[findmp]);
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 2800446..a2905af 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -35,12 +35,12 @@ enum {
+ 	MSG_TUR_TRANSITIONING,
+ };
+ 
+-#define _IDX(x) (MSG_ ## x - CHECKER_FIRST_MSGID)
++#define IDX_(x) (MSG_ ## x - CHECKER_FIRST_MSGID)
+ const char *libcheck_msgtable[] = {
+-	[_IDX(TUR_RUNNING)] = " still running",
+-	[_IDX(TUR_TIMEOUT)] = " timed out",
+-	[_IDX(TUR_FAILED)] = " failed to initialize",
+-	[_IDX(TUR_TRANSITIONING)] = " reports path is transitioning",
++	[IDX_(TUR_RUNNING)] = " still running",
++	[IDX_(TUR_TIMEOUT)] = " timed out",
++	[IDX_(TUR_FAILED)] = " failed to initialize",
++	[IDX_(TUR_TRANSITIONING)] = " reports path is transitioning",
+ 	NULL,
+ };
+ 
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index 6f2d880..9b26764 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -955,18 +955,18 @@ void release_paths(__attribute__((unused)) const struct context *ctx,
+ }
+ 
+ /* compile-time check whether all methods are present and correctly typed */
+-#define _METHOD_INIT(x) .x = x
++#define METHOD_INIT(x) .x = x
+ static struct foreign __methods __attribute__((unused)) = {
+-	_METHOD_INIT(init),
+-	_METHOD_INIT(cleanup),
+-	_METHOD_INIT(change),
+-	_METHOD_INIT(delete),
+-	_METHOD_INIT(delete_all),
+-	_METHOD_INIT(check),
+-	_METHOD_INIT(lock),
+-	_METHOD_INIT(unlock),
+-	_METHOD_INIT(get_multipaths),
+-	_METHOD_INIT(release_multipaths),
+-	_METHOD_INIT(get_paths),
+-	_METHOD_INIT(release_paths),
++	METHOD_INIT(init),
++	METHOD_INIT(cleanup),
++	METHOD_INIT(change),
++	METHOD_INIT(delete),
++	METHOD_INIT(delete_all),
++	METHOD_INIT(check),
++	METHOD_INIT(lock),
++	METHOD_INIT(unlock),
++	METHOD_INIT(get_multipaths),
++	METHOD_INIT(release_multipaths),
++	METHOD_INIT(get_paths),
++	METHOD_INIT(release_paths),
+ };
 -- 
 2.46.0
 
