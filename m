@@ -1,64 +1,64 @@
-Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
+Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11363190675
-	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:27:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17550190682
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:27:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723130835; cv=none; b=Dsv97KfeXyee/2+xFkptD0UAAxnjfImG7FCqBFufcrfB/UL4ylmAujw55cOMgIdJDaXtyy0JeN9Wch8BaOA8uY3K9fZ/dO2ccMfz/DYT9Acx1c3HHCthD7eM3xnLPfK1DF92+dwhvIB4psblsKubhEjDYNqzN5eYndAuoRUeBPE=
+	t=1723130836; cv=none; b=TRJAbcnRxSjdYf3djfIvVQMLdZILxGyf/jcd0OPDx5HgH8s/IE0R0LWuh7TB6CzaYiWWtt/LELHv6Qqn7dw0wtV02TgDSJrCLMT6miZBA2aPcRDcCcSJYjjX3UBtGwX8iL89v3dxcUbQH/i/SidfB6LE0O7Z9roovd/Ah/YYhBs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723130835; c=relaxed/simple;
-	bh=aCnLxAZJrxFK8csJsnDeMeLisoxPEm59hZVEOuPr8bU=;
+	s=arc-20240116; t=1723130836; c=relaxed/simple;
+	bh=UITF0GK3x0gHdrxw7aZ9RsS1odLlv/9Km/ahjukiO+0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=IPdVmMuPnkDjSMxiWtPnZ6H7eM6/jBlopD6+RVz41iR2wFriNpXzZx4a2GoYmdyzCoWtTLafJSnMaZHK8JKOUBIteBhl1V1voIwjtXWRvNiJv4Rluuf8GRbWWSYWUJtsgvQ6x5CCED09M52np0vRVUhrMvrx/s7TmMP9wYzNvVc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=eneoJjcy; arc=none smtp.client-ip=209.85.208.42
+	 MIME-Version; b=jedAFHg8MgxF2yCA4iYmd6LZCf4mWKJaOXf37LtIv9VWaR7BVxrtPchOpzeFMHqzqszCKPQq7zJQ1+2CP4Q96VRFW9OwE3ElsnVHqfepMnmoBr/9qhOZkgtZ2O/drW9QP2Z/Vz7yG4T+ho9BZOxT22I9nHktaxifRfwgCqeiLOU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=eZUyyz6E; arc=none smtp.client-ip=209.85.218.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="eneoJjcy"
-Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-5a10835487fso1474074a12.1
-        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:27:12 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="eZUyyz6E"
+Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-a7a843bef98so123077866b.2
+        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:27:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723130831; x=1723735631; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1723130832; x=1723735632; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=/8aM4huH9AEwE4yZ99m5usL/kiMBP+AqpRKwQr45UVg=;
-        b=eneoJjcyNllpR9RyYKfgdw3IiVuV7CTU8aLw/zq1DwMlBj96r9q5NYwLnCvUuqfSYD
-         uUCP+RFT1q1FR+OvYtjta/pNMMYWpOOBA9AlXUq5mLJU4RwVcMaGrwNeWOX2C5QubyyX
-         rmBoEqKEaAWsWeB2sCB/rTXxMsMcMNTn1yUTW31fX/BdqMwQSdj9GBIRyAbaoekukgqH
-         RY5wOuQKkYSHwzpL1RN3E5oN/++kylgdTFlB2HiG5Pb1wBsbg+K0ed2nuqJ+VcTxHQNG
-         pjRqb8O0r3CxFVG8pkpgXMa14Gi/GBhMBrh1vCp4HUCHdTjxgvEIwtGU8wo9uxDKGe2U
-         IIlg==
+        bh=lx2Ry9m27Y+YF0+rvsvzW+CFu1I6ZWccCIgkqAnmUFQ=;
+        b=eZUyyz6EQEtXHLY3ZBTLT1dJP4BnkR4HTpZSRsP+yI6rh8OBEOoNaWlHXYNU59pV4D
+         5Fqqa2FzWOjgjS0Vf+18rJEFk2H4LZo8+PvUQw/6MP7oECAvXgAYa9xKYMsrzdSjQ3d2
+         zhFVIPa6iKVvEr0bABSUg8uYy05vEu3bYv8zDLNaA5DHPZzo1PGgi4IXVWHsLtJKvRf2
+         tLYJ/LWqUvtW5YcHmegUOk3/K1/DNtOYGZoZ4cYRuOqBDZcD2ebe41eqUWlR56UCBfBG
+         vLVl6dVZKcxOJMHfbWyTOXQ/Ij3ZDIyK2XpvF3JVxVICo15fN7/sSs/6m9MkFRVwf5/2
+         Ycew==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723130831; x=1723735631;
+        d=1e100.net; s=20230601; t=1723130832; x=1723735632;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=/8aM4huH9AEwE4yZ99m5usL/kiMBP+AqpRKwQr45UVg=;
-        b=Encj9vmXGPPHsheZipcEG56eqp6UHHznjcaJHzzx9QSSMCMJxfzekHmbSTnA5X6eS0
-         FCTED3b+yVris3DgoHCNo1FUsb0x+TrvJ4+xY48BG+pvBf19NeAifBsoH3Tpddb8imyQ
-         t94H9rOJfjNZCbnS2bnJ4eXlZSbyRc2RBn2NbMW4h0exGC5mNQDFZHyOEUhWX7LlN8fQ
-         Rxz8cDmqZpACKrXpGTDXrYTS5up1zhXrcPkFg7kTIrPXluPn4iXkSWgWoD49Xu6bD6Ty
-         voBf/S3H4jaWgUtUnRjM65ENk9ky1odCDNlCZ78d85qnxGghY4Xul7lQzLdIbZdP6jNo
-         hCtw==
-X-Gm-Message-State: AOJu0Yz6KTYgZZhhpeQO34d7A3bON9aqR/7UrmsZNHC3n4FwKIt/0pzQ
-	m2dD//HAn5hHrxVYKdPk2VlfNCGPejyLLUMyU1ZybxHF6yiZcvavCXuGQMASNq4=
-X-Google-Smtp-Source: AGHT+IH7iTQ1l6QGddRYKcEz3KlKrGjTCH+kpDKXVB0345pq8b062mrza0VsC7LaegQYBp49St2/wg==
-X-Received: by 2002:a17:907:3e20:b0:a6f:586b:6c2 with SMTP id a640c23a62f3a-a8090f02e01mr184419866b.60.1723130831139;
-        Thu, 08 Aug 2024 08:27:11 -0700 (PDT)
+        bh=lx2Ry9m27Y+YF0+rvsvzW+CFu1I6ZWccCIgkqAnmUFQ=;
+        b=e09aIGQX85BsdMNA+rYwfFtbo6GOnfM7G3DTy353LRosqzGG+AL60mJ4ckq36wiQMI
+         gKK0oM4ktI0Ei7QfcDZr+TrvZTxa5dI0mn+HAQnsa+pAKsov0Q6gYJmUdjSzfFFu4S8L
+         TdH/uYWqED38zHeQUwliy9NU+BU8PCbiE7fhePS58MtAQhs66Qf1YizvFTQ3Mb/UYzr5
+         X7nUlBKRR+i5tjncfjpJIPmBrOPIFYrSkLSWd/D5TnansE94x/IbK1sfRA2sPSvmlrB+
+         Fff0DaNEmcjA3RrqtLuTfFtKLvNgPcjzqyQd7x9XszAwQaqDX4xCUy0eci4f38HPpkXG
+         56Pw==
+X-Gm-Message-State: AOJu0YxHIWpV/vPBeFJA676K4+VvktS+uM78VzICGoz7JPgs6k9veCkW
+	qsD0oT+z/fVKYUvEeM7hhYvpN0MRF1Thsdr/XTaHXDS/F6yMHyuMy/nFwpFjuz0=
+X-Google-Smtp-Source: AGHT+IG/KZ5qGeZpUtX1G1lRk9npFMgzRRBqz1Y9GkNTiTUYOct0lS0q+fBENto/4/srgyr+CkCIWw==
+X-Received: by 2002:a17:906:cae8:b0:a7a:8bf9:a6e8 with SMTP id a640c23a62f3a-a8090d94773mr162492966b.35.1723130832102;
+        Thu, 08 Aug 2024 08:27:12 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9e8676fsm746555566b.164.2024.08.08.08.27.10
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9ecad3esm748882566b.206.2024.08.08.08.27.11
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 08 Aug 2024 08:27:10 -0700 (PDT)
+        Thu, 08 Aug 2024 08:27:11 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 36/41] libdmmp: rename non-static functions starting with underscore
-Date: Thu,  8 Aug 2024 17:26:15 +0200
-Message-ID: <20240808152620.93965-37-mwilck@suse.com>
+Subject: [PATCH 37/41] multipathd: rename symbols with double leading underscore
+Date: Thu,  8 Aug 2024 17:26:16 +0200
+Message-ID: <20240808152620.93965-38-mwilck@suse.com>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20240808152620.93965-1-mwilck@suse.com>
 References: <20240808152620.93965-1-mwilck@suse.com>
@@ -70,281 +70,196 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
+Also remove last mentions of __setup_multipath(), which has been removed in
+e5debe0 ("multipathd: don't modify the multipath device on show commands").
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libdmmp/libdmmp.c         | 10 +++++-----
- libdmmp/libdmmp_misc.c    |  4 ++--
- libdmmp/libdmmp_mp.c      | 12 ++++++------
- libdmmp/libdmmp_path.c    |  8 ++++----
- libdmmp/libdmmp_pg.c      | 16 ++++++++--------
- libdmmp/libdmmp_private.h | 24 ++++++++++++------------
- 6 files changed, 37 insertions(+), 37 deletions(-)
+ multipathd/cli.c      |  2 +-
+ multipathd/cli.h      |  6 +++---
+ multipathd/dmevents.c |  2 +-
+ multipathd/main.c     | 30 +++++++++++++++---------------
+ multipathd/waiter.c   |  2 +-
+ 5 files changed, 21 insertions(+), 21 deletions(-)
 
-diff --git a/libdmmp/libdmmp.c b/libdmmp/libdmmp.c
-index 47f5b53..8b9686a 100644
---- a/libdmmp/libdmmp.c
-+++ b/libdmmp/libdmmp.c
-@@ -86,9 +86,9 @@ _dmmp_getter_func_gen(dmmp_last_error_msg, struct dmmp_context, ctx,
- 		      last_err_msg, const char *);
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index 0c89b7c..139a4c4 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -114,7 +114,7 @@ find_handler (uint32_t fp)
+ }
  
- _dmmp_array_free_func_gen(dmmp_mpath_array_free, struct dmmp_mpath,
--			  _dmmp_mpath_free);
-+			  dmmp_mpath_free);
- 
--void _dmmp_log(struct dmmp_context *ctx, int priority, const char *file,
-+void dmmp_log(struct dmmp_context *ctx, int priority, const char *file,
- 	       int line, const char *func_name, const char *format, ...)
+ int
+-__set_handler_callback (uint32_t fp, cli_handler *fn, bool locked)
++set_handler_callback__ (uint32_t fp, cli_handler *fn, bool locked)
  {
- 	va_list args;
-@@ -113,7 +113,7 @@ struct dmmp_context *dmmp_context_new(void)
- 	if (ctx == NULL)
- 		return NULL;
+ 	struct handler *h;
  
--	ctx->log_func = _dmmp_log_stderr;
-+	ctx->log_func = dmmp_log_stderr;
- 	ctx->log_priority = DMMP_LOG_PRIORITY_DEFAULT;
- 	ctx->userdata = NULL;
- 	ctx->tmo = DEFAULT_UXSOCK_TIMEOUT;
-@@ -250,10 +250,10 @@ int dmmp_mpath_array_get(struct dmmp_context *ctx,
- 			goto out;
- 		}
- 
--		dmmp_mp = _dmmp_mpath_new();
-+		dmmp_mp = dmmp_mpath_new();
- 		_dmmp_alloc_null_check(ctx, dmmp_mp, rc, out);
- 		(*dmmp_mps)[i] = dmmp_mp;
--		_good(_dmmp_mpath_update(ctx, dmmp_mp, j_obj_map), rc, out);
-+		_good(dmmp_mpath_update(ctx, dmmp_mp, j_obj_map), rc, out);
- 	}
- 
- out:
-diff --git a/libdmmp/libdmmp_misc.c b/libdmmp/libdmmp_misc.c
-index 51c71cd..92bbf8d 100644
---- a/libdmmp/libdmmp_misc.c
-+++ b/libdmmp/libdmmp_misc.c
-@@ -31,7 +31,7 @@
- #include "libdmmp_private.h"
- 
- #define DMMP_LOG_STRERR_ALIGN_WIDTH	80
--/* ^ Only used in _dmmp_log_stderr() for pretty log output.
-+/* ^ Only used in dmmp_log_stderr() for pretty log output.
-  *   When provided log message is less than 80 bytes, fill it with space, then
-  *   print code file name, function name, line after the 80th bytes.
-  */
-@@ -62,7 +62,7 @@ static const struct _num_str_conv _DMMP_PRI_CONV[] = {
+diff --git a/multipathd/cli.h b/multipathd/cli.h
+index 2940832..dd26a2c 100644
+--- a/multipathd/cli.h
++++ b/multipathd/cli.h
+@@ -137,9 +137,9 @@ struct handler {
  };
- _dmmp_str_func_gen(dmmp_log_priority_str, int, priority, _DMMP_PRI_CONV);
  
--void _dmmp_log_stderr(struct dmmp_context *ctx, int priority,
-+void dmmp_log_stderr(struct dmmp_context *ctx, int priority,
- 		      const char *file, int line, const char *func_name,
- 		      const char *format, va_list args)
- {
-diff --git a/libdmmp/libdmmp_mp.c b/libdmmp/libdmmp_mp.c
-index bc48d0e..1be8ba1 100644
---- a/libdmmp/libdmmp_mp.c
-+++ b/libdmmp/libdmmp_mp.c
-@@ -44,7 +44,7 @@ _dmmp_getter_func_gen(dmmp_mpath_wwid_get, struct dmmp_mpath, dmmp_mp,
- _dmmp_getter_func_gen(dmmp_mpath_kdev_name_get, struct dmmp_mpath, dmmp_mp,
- 		      kdev_name, const char *);
+ int alloc_handlers (void);
+-int __set_handler_callback (uint32_t fp, cli_handler *fn, bool locked);
+-#define set_handler_callback(fp, fn) __set_handler_callback(fp, fn, true)
+-#define set_unlocked_handler_callback(fp, fn) __set_handler_callback(fp, fn, false)
++int set_handler_callback__ (uint32_t fp, cli_handler *fn, bool locked);
++#define set_handler_callback(fp, fn) set_handler_callback__(fp, fn, true)
++#define set_unlocked_handler_callback(fp, fn) set_handler_callback__(fp, fn, false)
  
--struct dmmp_mpath *_dmmp_mpath_new(void)
-+struct dmmp_mpath *dmmp_mpath_new(void)
- {
- 	struct dmmp_mpath *dmmp_mp = NULL;
- 
-@@ -59,7 +59,7 @@ struct dmmp_mpath *_dmmp_mpath_new(void)
- 	return dmmp_mp;
+ int get_cmdvec (char *cmd, vector *v, bool allow_incomplete);
+ struct handler *find_handler_for_cmdvec(const struct _vector *v);
+diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
+index af1e12e..7a78b8f 100644
+--- a/multipathd/dmevents.c
++++ b/multipathd/dmevents.c
+@@ -202,7 +202,7 @@ fail:
+ 	return -1;
  }
  
--int _dmmp_mpath_update(struct dmmp_context *ctx, struct dmmp_mpath *dmmp_mp,
-+int dmmp_mpath_update(struct dmmp_context *ctx, struct dmmp_mpath *dmmp_mp,
- 		       json_object *j_obj_map)
+-/* You must call __setup_multipath() after calling this function, to
++/* You must call setup_multipath() after calling this function, to
+  * deal with any events that came in before the device was added */
+ int watch_dmevents(char *name)
  {
- 	int rc = DMMP_OK;
-@@ -113,10 +113,10 @@ int _dmmp_mpath_update(struct dmmp_context *ctx, struct dmmp_mpath *dmmp_mp,
- 		dmmp_mp->dmmp_pgs[i] = NULL;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index bb19c97..229b516 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -131,7 +131,7 @@ static int poll_dmevents = 1;
+ /* Don't access this variable without holding config_lock */
+ static enum daemon_status running_state = DAEMON_INIT;
+ /* Don't access this variable without holding config_lock */
+-static bool __delayed_reconfig;
++static bool delayed_reconfig;
+ /* Don't access this variable without holding config_lock */
+ static enum force_reload_types reconfigure_pending = FORCE_RELOAD_NONE;
+ pid_t daemon_pid;
+@@ -243,7 +243,7 @@ static void config_cleanup(__attribute__((unused)) void *arg)
+ 	pthread_mutex_unlock(&config_lock);
+ }
  
- 	for (i = 0; i < dmmp_mp->dmmp_pg_count; ++i) {
--		dmmp_pg = _dmmp_path_group_new();
-+		dmmp_pg = dmmp_path_group_new();
- 		_dmmp_alloc_null_check(ctx, dmmp_pg, rc, out);
- 		dmmp_mp->dmmp_pgs[i] = dmmp_pg;
--		_good(_dmmp_path_group_update(ctx, dmmp_pg,
-+		_good(dmmp_path_group_update(ctx, dmmp_pg,
- 					      array_list_get_idx(ar_pgs, i)),
- 		      rc, out);
+-#define __wait_for_state_change(condition, ms)				\
++#define wait_for_state_change__(condition, ms)				\
+ 	({								\
+ 		struct timespec tmo;					\
+ 		int rc = 0;						\
+@@ -275,14 +275,14 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
+ 
+ 	pthread_mutex_lock(&config_lock);
+ 	pthread_cleanup_push(config_cleanup, NULL);
+-	__wait_for_state_change(running_state == oldstate, ms);
++	wait_for_state_change__(running_state == oldstate, ms);
+ 	st = running_state;
+ 	pthread_cleanup_pop(1);
+ 	return st;
+ }
+ 
+ /* must be called with config_lock held */
+-static void __post_config_state(enum daemon_status state)
++static void post_config_state__(enum daemon_status state)
+ {
+ 	if (state != running_state && running_state != DAEMON_SHUTDOWN) {
+ 		enum daemon_status old_state = running_state;
+@@ -299,7 +299,7 @@ void post_config_state(enum daemon_status state)
+ {
+ 	pthread_mutex_lock(&config_lock);
+ 	pthread_cleanup_push(config_cleanup, NULL);
+-	__post_config_state(state);
++	post_config_state__(state);
+ 	pthread_cleanup_pop(1);
+ }
+ 
+@@ -308,15 +308,15 @@ static bool unblock_reconfigure(void)
+ 	bool was_delayed;
+ 
+ 	pthread_mutex_lock(&config_lock);
+-	was_delayed = __delayed_reconfig;
++	was_delayed = delayed_reconfig;
+ 	if (was_delayed) {
+-		__delayed_reconfig = false;
++		delayed_reconfig = false;
+ 		/*
+ 		 * In IDLE state, make sure child() is woken up
+ 		 * Otherwise it will wake up when state switches to IDLE
+ 		 */
+ 		if (running_state == DAEMON_IDLE)
+-			__post_config_state(DAEMON_CONFIGURE);
++			post_config_state__(DAEMON_CONFIGURE);
  	}
-@@ -126,11 +126,11 @@ int _dmmp_mpath_update(struct dmmp_context *ctx, struct dmmp_mpath *dmmp_mp,
- 
- out:
- 	if (rc != DMMP_OK)
--		_dmmp_mpath_free(dmmp_mp);
-+		dmmp_mpath_free(dmmp_mp);
- 	return rc;
- }
- 
--void _dmmp_mpath_free(struct dmmp_mpath *dmmp_mp)
-+void dmmp_mpath_free(struct dmmp_mpath *dmmp_mp)
- {
- 	if (dmmp_mp == NULL)
- 		return ;
-diff --git a/libdmmp/libdmmp_path.c b/libdmmp/libdmmp_path.c
-index 0650f8d..96a96f4 100644
---- a/libdmmp/libdmmp_path.c
-+++ b/libdmmp/libdmmp_path.c
-@@ -59,7 +59,7 @@ _dmmp_getter_func_gen(dmmp_path_blk_name_get, struct dmmp_path, dmmp_p,
- _dmmp_getter_func_gen(dmmp_path_status_get, struct dmmp_path, dmmp_p,
- 		      status, uint32_t);
- 
--struct dmmp_path *_dmmp_path_new(void)
-+struct dmmp_path *dmmp_path_new(void)
- {
- 	struct dmmp_path *dmmp_p = NULL;
- 
-@@ -72,7 +72,7 @@ struct dmmp_path *_dmmp_path_new(void)
- 	return dmmp_p;
- }
- 
--int _dmmp_path_update(struct dmmp_context *ctx, struct dmmp_path *dmmp_p,
-+int dmmp_path_update(struct dmmp_context *ctx, struct dmmp_path *dmmp_p,
- 		      json_object *j_obj_p)
- {
- 	int rc = DMMP_OK;
-@@ -102,11 +102,11 @@ int _dmmp_path_update(struct dmmp_context *ctx, struct dmmp_path *dmmp_p,
- 
- out:
- 	if (rc != DMMP_OK)
--		_dmmp_path_free(dmmp_p);
-+		dmmp_path_free(dmmp_p);
- 	return rc;
- }
- 
--void _dmmp_path_free(struct dmmp_path *dmmp_p)
-+void dmmp_path_free(struct dmmp_path *dmmp_p)
- {
- 	if (dmmp_p == NULL)
- 		return;
-diff --git a/libdmmp/libdmmp_pg.c b/libdmmp/libdmmp_pg.c
-index 42e87fe..68f1917 100644
---- a/libdmmp/libdmmp_pg.c
-+++ b/libdmmp/libdmmp_pg.c
-@@ -67,10 +67,10 @@ _dmmp_getter_func_gen(dmmp_path_group_priority_get, struct dmmp_path_group,
- _dmmp_getter_func_gen(dmmp_path_group_selector_get, struct dmmp_path_group,
- 		      dmmp_pg, selector, const char *);
- _dmmp_array_free_func_gen(_dmmp_path_group_array_free, struct dmmp_path_group,
--			  _dmmp_path_group_free);
-+			  dmmp_path_group_free);
- 
- 
--struct dmmp_path_group *_dmmp_path_group_new(void)
-+struct dmmp_path_group *dmmp_path_group_new(void)
- {
- 	struct dmmp_path_group *dmmp_pg = NULL;
- 
-@@ -87,7 +87,7 @@ struct dmmp_path_group *_dmmp_path_group_new(void)
+ 	pthread_mutex_unlock(&config_lock);
+ 	if (was_delayed)
+@@ -350,7 +350,7 @@ void schedule_reconfigure(enum force_reload_types requested_type)
+ 		break;
+ 	case DAEMON_IDLE:
+ 		reconfigure_pending = type;
+-		__post_config_state(DAEMON_CONFIGURE);
++		post_config_state__(DAEMON_CONFIGURE);
+ 		break;
+ 	case DAEMON_CONFIGURE:
+ 	case DAEMON_RUNNING:
+@@ -378,7 +378,7 @@ static enum daemon_status set_config_state(enum daemon_status state)
  	}
- 	return dmmp_pg;
- }
--int _dmmp_path_group_update(struct dmmp_context *ctx,
-+int dmmp_path_group_update(struct dmmp_context *ctx,
- 			    struct dmmp_path_group *dmmp_pg,
- 			    json_object *j_obj_pg)
- {
-@@ -157,10 +157,10 @@ int _dmmp_path_group_update(struct dmmp_context *ctx,
- 		dmmp_pg->dmmp_ps[i] = NULL;
  
- 	for (i = 0; i < dmmp_pg->dmmp_p_count; ++i) {
--		dmmp_p = _dmmp_path_new();
-+		dmmp_p = dmmp_path_new();
- 		_dmmp_alloc_null_check(ctx, dmmp_p, rc, out);
- 		dmmp_pg->dmmp_ps[i] = dmmp_p;
--		_good(_dmmp_path_update(ctx, dmmp_p,
-+		_good(dmmp_path_update(ctx, dmmp_p,
- 					array_list_get_idx(ar_ps, i)),
- 		      rc, out);
- 	}
-@@ -173,11 +173,11 @@ int _dmmp_path_group_update(struct dmmp_context *ctx,
+ 	if (rc == 0 && running_state == DAEMON_IDLE && state != DAEMON_IDLE)
+-		__post_config_state(state);
++		post_config_state__(state);
+ 	st = running_state;
  
- out:
- 	if (rc != DMMP_OK)
--		_dmmp_path_group_free(dmmp_pg);
-+		dmmp_path_group_free(dmmp_pg);
- 	return rc;
- }
+ 	pthread_cleanup_pop(1);
+@@ -3749,17 +3749,17 @@ child (__attribute__((unused)) void *param)
+ 		       /*
+ 			* Check if another reconfigure request was scheduled
+ 			* while we last ran reconfigure().
+-			* We have to test __delayed_reconfig here
++			* We have to test delayed_reconfig here
+ 			* to avoid a busy loop
+ 			*/
+ 		       (reconfigure_pending == FORCE_RELOAD_NONE
+-			 || __delayed_reconfig))
++			 || delayed_reconfig))
+ 			pthread_cond_wait(&config_cond, &config_lock);
  
--void _dmmp_path_group_free(struct dmmp_path_group *dmmp_pg)
-+void dmmp_path_group_free(struct dmmp_path_group *dmmp_pg)
- {
- 	uint32_t i = 0;
+ 		if (running_state != DAEMON_CONFIGURE &&
+ 		    running_state != DAEMON_SHUTDOWN)
+ 			/* This sets running_state to DAEMON_CONFIGURE */
+-			__post_config_state(DAEMON_CONFIGURE);
++			post_config_state__(DAEMON_CONFIGURE);
+ 		state = running_state;
+ 		pthread_cleanup_pop(1);
+ 		if (state == DAEMON_SHUTDOWN)
+@@ -3776,13 +3776,13 @@ child (__attribute__((unused)) void *param)
+ 			reload_type = reconfigure_pending == FORCE_RELOAD_YES ?
+ 				FORCE_RELOAD_YES : FORCE_RELOAD_WEAK;
+ 			reconfigure_pending = FORCE_RELOAD_NONE;
+-			__delayed_reconfig = false;
++			delayed_reconfig = false;
+ 			pthread_mutex_unlock(&config_lock);
  
-@@ -188,7 +188,7 @@ void _dmmp_path_group_free(struct dmmp_path_group *dmmp_pg)
- 
- 	if (dmmp_pg->dmmp_ps != NULL) {
- 		for (i = 0; i < dmmp_pg->dmmp_p_count; ++i) {
--			_dmmp_path_free(dmmp_pg->dmmp_ps[i]);
-+			dmmp_path_free(dmmp_pg->dmmp_ps[i]);
+ 			rc = reconfigure(vecs, reload_type);
+ 		} else {
+ 			pthread_mutex_lock(&config_lock);
+-			__delayed_reconfig = true;
++			delayed_reconfig = true;
+ 			pthread_mutex_unlock(&config_lock);
+ 			condlog(3, "delaying reconfigure()");
  		}
- 		free(dmmp_pg->dmmp_ps);
+diff --git a/multipathd/waiter.c b/multipathd/waiter.c
+index 1dd93c5..f251c50 100644
+--- a/multipathd/waiter.c
++++ b/multipathd/waiter.c
+@@ -56,7 +56,7 @@ void stop_waiter_thread (struct multipath *mpp)
+ 			mpp->alias);
+ 		return;
  	}
-diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h
-index 0c497b3..d154146 100644
---- a/libdmmp/libdmmp_private.h
-+++ b/libdmmp/libdmmp_private.h
-@@ -110,33 +110,33 @@ do { \
- DMMP_DLL_LOCAL int _dmmp_ipc_exec(struct dmmp_context *ctx, const char *cmd,
- 				  char **output);
- 
--DMMP_DLL_LOCAL struct dmmp_mpath *_dmmp_mpath_new(void);
--DMMP_DLL_LOCAL struct dmmp_path_group *_dmmp_path_group_new(void);
--DMMP_DLL_LOCAL struct dmmp_path *_dmmp_path_new(void);
-+DMMP_DLL_LOCAL struct dmmp_mpath *dmmp_mpath_new(void);
-+DMMP_DLL_LOCAL struct dmmp_path_group *dmmp_path_group_new(void);
-+DMMP_DLL_LOCAL struct dmmp_path *dmmp_path_new(void);
- 
--DMMP_DLL_LOCAL int _dmmp_mpath_update(struct dmmp_context *ctx,
-+DMMP_DLL_LOCAL int dmmp_mpath_update(struct dmmp_context *ctx,
- 				      struct dmmp_mpath *dmmp_mp,
- 				      json_object *j_obj_map);
--DMMP_DLL_LOCAL int _dmmp_path_group_update(struct dmmp_context *ctx,
-+DMMP_DLL_LOCAL int dmmp_path_group_update(struct dmmp_context *ctx,
- 					   struct dmmp_path_group *dmmp_pg,
- 					   json_object *j_obj_pg);
--DMMP_DLL_LOCAL int _dmmp_path_update(struct dmmp_context *ctx,
-+DMMP_DLL_LOCAL int dmmp_path_update(struct dmmp_context *ctx,
- 				     struct dmmp_path *dmmp_p,
- 				     json_object *j_obj_p);
- 
--DMMP_DLL_LOCAL void _dmmp_mpath_free(struct dmmp_mpath *dmmp_mp);
--DMMP_DLL_LOCAL void _dmmp_path_group_free(struct dmmp_path_group *dmmp_pg);
-+DMMP_DLL_LOCAL void dmmp_mpath_free(struct dmmp_mpath *dmmp_mp);
-+DMMP_DLL_LOCAL void dmmp_path_group_free(struct dmmp_path_group *dmmp_pg);
- DMMP_DLL_LOCAL void _dmmp_path_group_array_free
- 	(struct dmmp_path_group **dmmp_pgs, uint32_t dmmp_pg_count);
--DMMP_DLL_LOCAL void _dmmp_path_free(struct dmmp_path *dmmp_p);
--DMMP_DLL_LOCAL void _dmmp_log(struct dmmp_context *ctx, int priority,
-+DMMP_DLL_LOCAL void dmmp_path_free(struct dmmp_path *dmmp_p);
-+DMMP_DLL_LOCAL void dmmp_log(struct dmmp_context *ctx, int priority,
- 			      const char *file, int line,
- 			      const char *func_name,
- 			      const char *format, ...)
- 	__attribute__((format(printf, 6, 7)));
- DMMP_DLL_LOCAL void _dmmp_log_err_str(struct dmmp_context *ctx, int rc);
- 
--DMMP_DLL_LOCAL void _dmmp_log_stderr(struct dmmp_context *ctx, int priority,
-+DMMP_DLL_LOCAL void dmmp_log_stderr(struct dmmp_context *ctx, int priority,
- 				     const char *file, int line,
- 				     const char *func_name, const char *format,
- 				     va_list args)
-@@ -146,7 +146,7 @@ DMMP_DLL_LOCAL void _dmmp_log_stderr(struct dmmp_context *ctx, int priority,
- #define _dmmp_log_cond(ctx, prio, arg...) \
- 	do { \
- 		if (dmmp_context_log_priority_get(ctx) >= prio) \
--			_dmmp_log(ctx, prio, __FILE__, __LINE__, __FUNCTION__, \
-+			dmmp_log(ctx, prio, __FILE__, __LINE__, __FUNCTION__, \
- 				  ## arg); \
- 	} while (0)
- 
+-	/* Don't cancel yourself. __setup_multipath is called by
++	/* Don't cancel yourself. setup_multipath is called by
+ 	   by the waiter thread, and may remove a multipath device */
+ 	if (pthread_equal(mpp->waiter, pthread_self()))
+ 		return;
 -- 
 2.46.0
 
