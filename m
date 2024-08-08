@@ -1,65 +1,64 @@
-Received: from mail-ej1-f67.google.com (mail-ej1-f67.google.com [209.85.218.67])
+Received: from mail-ej1-f49.google.com (mail-ej1-f49.google.com [209.85.218.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFE8918F2EE
-	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:26:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.67
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B80FF18F2FC
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:26:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723130801; cv=none; b=NOCeU5yNuQgP3xlDuXlJJVkbL3Hr2S36bsIhEtRkJuvWBweSopeQBKo2SV7QYSO7YGwEQKHwKwVD22Nwj2QO+dYOPJpthG0eoUq45nZFD5OTIJWcR117e1+IPpOBOc74XyihuZNl6k5+WdZPBQTYbDkqRqTpRHpr7U/HWBPxVVI=
+	t=1723130801; cv=none; b=umIW500DwT7c7PM+asdTs/sbssKRYN1hh9EOGYcJOZwVi1GGCk6/Qy9MpshoWlwBImh1Usxyn2pVXdIMaiiHpwrT61eZauJqtL9AFxO5iw1XojdK94/pOY19ZcIBXSnkGm5SvJHSNrJ+bEpWvjIldeR39tML++w1QfduRn8nsrs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1723130801; c=relaxed/simple;
-	bh=h5HxFy5tNXsY6O2j8C3p+C/c9/uMC8wOQGCv8ZItPH0=;
+	bh=/ihWMef0SkxFAgSM3LCxgrSlFk7hwIRNdI4tGjaWkIc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=HS5Ip2E7GsIwUAZOhUvd3Q7pKOWISnBxLFDknPuFMvMDcC1M3g9+9T2jfjwJQHVdem6RONAblQ9tXQzX9Owqh7CLKSvhk2ziSf0QwoMH5mRiuLt1teVE8L37xGnifgHC93mfGk+QGAKPUtrmXZI0mbvsKTqZYqtNDBUUN3R7MmA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=MLxh41NM; arc=none smtp.client-ip=209.85.218.67
+	 MIME-Version; b=FKEwoJmrj09YfQDm89IzT6+aQ1W/MvLYfRG3XhBhnkqIXB1u5AWM5qlda7nhYRV2w7K59RD5R6303l5yREi39cnP1808VwYzRGmagAibG72ysxEz2JW6+xOsZf2V5v3GAP1ajLqny3MQVNUOiXH+Akzl0YqiVAF2YH9jpEO/dPQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=DPKo7RJR; arc=none smtp.client-ip=209.85.218.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="MLxh41NM"
-Received: by mail-ej1-f67.google.com with SMTP id a640c23a62f3a-a7a8e73b29cso114780666b.3
-        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:26:38 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="DPKo7RJR"
+Received: by mail-ej1-f49.google.com with SMTP id a640c23a62f3a-a7ad02501c3so135725366b.2
+        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:26:39 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723130797; x=1723735597; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1723130798; x=1723735598; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=+g2fgHo68V+z+6A3o8FNX+wO8CeXqUdvIDXO4qmZJnc=;
-        b=MLxh41NMD7UPHAlLXJHz344B+8YZsb9QPDvR9m9AVgceAtWy1abJ1XQI26c9NSSKBN
-         QlXKqd7UP7hgHkfvlUL7rJx0Lymp0zb6mJT6p0LLA+nFIeWFRMZak463A2DP+lsw9eUy
-         KLGJzkmTa/QunxzbbQn2EErT01CRlm+fporK+1jH+kPI05lklJjyRdOUrIH4ODZOIwOO
-         7L5KhG6gMMdOpg+qwPJnpgQni3wsEwgdgD9F3LJ9DjiXDuClgz+cwW2xXTxzxZjgOGEh
-         lZWIFy9I1zqvPUjs4NwtG95PX7kLHxwuTzmIinb0m2UexZqeswQ4WCgylGiGf6s7oZF2
-         d2Zg==
+        bh=W6nKzm1IQqQOnq247XwltMY3Rwyes2u/zt89jnzbWE4=;
+        b=DPKo7RJRhr0ZeAIlcgqSJ20wQSTNpvP3tD+2ElYTyMGRvvIWf9iNXFSRxIYH9LgLHo
+         O/lYOFbstIOuHN9knDFTshIJpHrYkrJtRh5usMlAtO5C1BKhv6JxwLD261qv55HU76Np
+         wPq8whEVDzMT9eS4jQUUbNG94TAfumaAQSHFAQu2X5uSIc3a+D2Z0OY7N8BqvMp/M1gn
+         ToBh88mhLR8M2BqbcY9MwzE6xzvg3Vx1zSI3eCZp4Vs7VzdrO1rWYtWqSlvDByfOAWRv
+         xzpZNHpJGMUGeFiWVqLstFimCViXhFlSuqSITy9H74S1XaZRaJxRefT/bdAXdiclF+P/
+         ttOg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723130797; x=1723735597;
+        d=1e100.net; s=20230601; t=1723130798; x=1723735598;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=+g2fgHo68V+z+6A3o8FNX+wO8CeXqUdvIDXO4qmZJnc=;
-        b=kbhQmUxbU04INN94TnNWMkNlbHBZBxvC1x4mb3X2TeJBzjVRmEd1dNCcW7ttI136Ar
-         ds3dGVRp9/9w0DmYPbXkR5y1NdhWVvH+raGTc7q5OsOPnwE5Hp7oPBr96iUWnGpD38RW
-         4GAZzCTs48/XT1UW8T3CLut1/q5hAOOgHXgZVcZ7BOJY9jp20EMY4019JqvfNTv5V7/6
-         eyCgTa6vYjrkJ+QkTr1sHcGXX0LYzyg0k7WsG7DT6wr/HZxPVZM1BQbqcstBkxQV7u2a
-         sLYwizZlGyp+jZHQcG112LBVLPVK3ppNrM9KLI414bF9gCSsfEopuBAnTkju/brku+Xp
-         2JYw==
-X-Gm-Message-State: AOJu0YxhUE4RBLF6HJ4c4VXt2TDe7hbW152CTje8WLaMExhxgNRLyIi/
-	5CNwFVBwkXpmRS4mlqyXH/8xVRybzVKyn+SmdRp0nuxF5LvJY04QXTw46pdpFStwC7vropPDrCK
-	wcaoFbA==
-X-Google-Smtp-Source: AGHT+IFmKjxsNk1qT49y69dIWpKHrHxPgdBGzKjg5XHSDVGy/rhuaystNpdSVi52F5ktOI+j5XTexA==
-X-Received: by 2002:a17:907:a08a:b0:a7a:387c:23f8 with SMTP id a640c23a62f3a-a8090c3256dmr176461366b.3.1723130796539;
-        Thu, 08 Aug 2024 08:26:36 -0700 (PDT)
+        bh=W6nKzm1IQqQOnq247XwltMY3Rwyes2u/zt89jnzbWE4=;
+        b=vYXi4ndFOHhhxxt94tMT8XIEiHvUHPGordXh7UUuqU3FEUbGShhtxjheVrUvzMxFJ5
+         BMvnI8A3+noLHWr6q6rtgQt9jVTdm3EtWuudJdCzGXsd/wGS/wnCg7zuRuvgQQGSLerD
+         4064zoTrfZRG7PEbPw+bAoGr5Kd7uYhYYB5pYA88c9Ipr6HyswTFYKN9yJTb3fxh/+Nv
+         H6px5sltnWjOaRz7hl8dJwXhrYB2Vhuw/ISKizJuQ+jsebLlYGTv202Aqnr/F6zAqTNR
+         BpCknRAkt2t7WYKYNZlgUNBm2aRJ5+pTvnlGERb1k1nWiyJOLRitCsAmMBFwWsdBqF6+
+         lOpQ==
+X-Gm-Message-State: AOJu0Yxdjpvd8uqUuhrxsySehVDY9mi7O+jxv72o4oRoLum9x662DBh1
+	F+0us6dEF0Ti75bFXmo27JfkZy+2ByhwAvuAbzfZBLk+1rBAmZm8Ffn98P3KWSE=
+X-Google-Smtp-Source: AGHT+IFP/XoC7Hj6wxWImVdUv6iQqoIrB9tpn1s5gQ4f2t/VGk6/AZwA+BeMuZRCSRq/V2OAPgdpTw==
+X-Received: by 2002:a17:907:97d1:b0:a7a:b070:92d1 with SMTP id a640c23a62f3a-a8090e632eemr160876266b.46.1723130797562;
+        Thu, 08 Aug 2024 08:26:37 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9d89a9fsm746899266b.156.2024.08.08.08.26.36
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9bcadbesm751341266b.21.2024.08.08.08.26.37
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 08 Aug 2024 08:26:36 -0700 (PDT)
+        Thu, 08 Aug 2024 08:26:37 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 03/41] libmpathutil: rename strlcat and strlcpy
-Date: Thu,  8 Aug 2024 17:25:42 +0200
-Message-ID: <20240808152620.93965-4-mwilck@suse.com>
+Subject: [PATCH 04/41] libmpathutil.version: remove strlcpy and strlcat, and LIBMULTIPATH section
+Date: Thu,  8 Aug 2024 17:25:43 +0200
+Message-ID: <20240808152620.93965-5-mwilck@suse.com>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20240808152620.93965-1-mwilck@suse.com>
 References: <20240808152620.93965-1-mwilck@suse.com>
@@ -71,83 +70,173 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-User programs are forbidden to use names of functions provided
-by the standard library [1]. Since glibc 2.38, strlcpy() and strlcat()
-are part of the system library. Rename our own functions to libmp_strlcpy()
-and libmp_strlcat(), respectively, and only use the short names if the C
-library doesn't have them.
+With the removal of strlcpy from the "symbols referenced by multipath
+and multipathd" section, this part of the ABI (which is actually the
+part of LIBMULTIPATH_16.0.0 which was moved to libmpathutil and exported
+to multipath and/or multipathd) has now changed for the first time since
+the split between libmpathutil and libmultipath.
 
-It turns out that msul libc has always had strlcat() and strlcpy(), so use the
-system library function with musl, too.
+It makes no sense to further track whether or not any symbols exported
+by libmpathutil are used by multipath or multipathd. It turns out that
+both executables were already using some symbols from the sections that
+were supposedly used by libmultipath only.
 
-[1] https://www.gnu.org/software/libc/manual/html_node/Reserved-Names.html
+Therefore, move all symbols to the new LIBMPATHUTIL_4.0 ABI.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathutil/util.c |  4 ++--
- libmpathutil/util.h | 15 ++++++++++-----
- 2 files changed, 12 insertions(+), 7 deletions(-)
+ libmpathutil/libmpathutil.version | 104 +++++++++++++-----------------
+ 1 file changed, 46 insertions(+), 58 deletions(-)
 
-diff --git a/libmpathutil/util.c b/libmpathutil/util.c
-index 9c422f1..136aa59 100644
---- a/libmpathutil/util.c
-+++ b/libmpathutil/util.c
-@@ -121,7 +121,7 @@ get_word (const char *sentence, char **word)
- 	return skip + len;
- }
- 
--size_t strlcpy(char * restrict dst, const char * restrict src, size_t size)
-+size_t libmp_strlcpy(char * restrict dst, const char * restrict src, size_t size)
- {
- 	size_t bytes = 0;
- 	char ch;
-@@ -138,7 +138,7 @@ size_t strlcpy(char * restrict dst, const char * restrict src, size_t size)
- 	return bytes;
- }
- 
--size_t strlcat(char * restrict dst, const char * restrict src, size_t size)
-+size_t libmp_strlcat(char * restrict dst, const char * restrict src, size_t size)
- {
- 	size_t bytes = 0;
- 	char ch;
-diff --git a/libmpathutil/util.h b/libmpathutil/util.h
-index c19f749..7bad855 100644
---- a/libmpathutil/util.h
-+++ b/libmpathutil/util.h
-@@ -12,6 +12,10 @@
- #include <stdio.h>
- #include <libudev.h>
- 
-+#ifndef __GLIBC_PREREQ
-+#define __GLIBC_PREREQ(x, y) 0
-+#endif
-+
- size_t strchop(char *);
- 
- const char *libmp_basename(const char *filename);
-@@ -22,8 +26,12 @@ int basenamecpy (const char *src, char *dst, size_t size);
- int filepresent (const char *run);
- char *get_next_string(char **temp, const char *split_char);
- int get_word (const char * sentence, char ** word);
--size_t strlcpy(char * restrict dst, const char * restrict src, size_t size);
--size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
-+size_t libmp_strlcpy(char * restrict dst, const char * restrict src, size_t size);
-+size_t libmp_strlcat(char * restrict dst, const char * restrict src, size_t size);
-+#if defined(__GLIBC__) && ! (__GLIBC_PREREQ(2, 38))
-+#define strlcpy(dst, src, size) libmp_strlcpy(dst, src, size)
-+#define strlcat(dst, src, size) libmp_strlcat(dst, src, size)
-+#endif
- dev_t parse_devt(const char *dev_t);
- char *convert_dev(char *dev, int is_path_device);
- void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
-@@ -62,9 +70,6 @@ struct scandir_result {
+diff --git a/libmpathutil/libmpathutil.version b/libmpathutil/libmpathutil.version
+index cb05231..8393b91 100644
+--- a/libmpathutil/libmpathutil.version
++++ b/libmpathutil/libmpathutil.version
+@@ -43,98 +43,86 @@ LIBMPATHCOMMON_1.0.0 {
+ 	put_multipath_config;
  };
- void free_scandir_result(struct scandir_result *);
  
--#ifndef __GLIBC_PREREQ
--#define __GLIBC_PREREQ(x, y) 0
--#endif
- /*
-  * ffsll() is also available on glibc < 2.27 if _GNU_SOURCE is defined.
-  * But relying on that would require that every program using this header file
+-/* symbols referenced by multipath and multipathd */
+-LIBMULTIPATH_16.0.0 {
++LIBMPATHUTIL_4.0 {
+ global:
++	alloc_bitfield;
+ 	alloc_strvec;
++	__append_strbuf_str;
+ 	append_strbuf_str;
++	append_strbuf_quoted;
++	basenamecpy;
+ 	cleanup_charp;
++	cleanup_fclose;
++	cleanup_fd_ptr;
++	cleanup_free_ptr;
+ 	cleanup_mutex;
+ 	cleanup_ucharp;
++	cleanup_udev_device;
++	cleanup_vector;
++	cleanup_vector_free;
+ 	convert_dev;
+ 	dlog;
++	filepresent;
+ 	fill_strbuf;
++	find_keyword;
+ 	find_slot;
++	free_keywords;
+ 	free_scandir_result;
+ 	free_strvec;
++	get_linux_version_code;
+ 	get_monotonic_time;
++	__get_strbuf_buf;
+ 	get_next_string;
+ 	get_strbuf_len;
+ 	get_strbuf_str;
+-	is_quote;
+-	libmp_verbosity;
+-	log_thread_reset;
+-	log_thread_start;
+-	log_thread_stop;
+-	logsink;
+-	normalize_timespec;
+-	print_strbuf;
+-	pthread_cond_init_mono;
+-	recv_packet;
+-	reset_strbuf;
+-	send_packet;
+-	set_max_fds;
+-	setup_thread_attr;
+-	strchop;
+-	strlcpy;
+-	timespeccmp;
+-	timespecsub;
+-	truncate_strbuf;
+-	ux_socket_listen;
+-	vector_alloc;
+-	vector_alloc_slot;
+-	vector_del_slot;
+-	vector_free;
+-	vector_reset;
+-	vector_set_slot;
+-
+-local:
+-	*;
+-};
+-
+-/* symbols referenced internally by libmultipath */
+-LIBMPATHUTIL_2.0 {
+-	alloc_bitfield;
+-	__append_strbuf_str;
+-	append_strbuf_quoted;
+-	basenamecpy;
+-	cleanup_fd_ptr;
+-	cleanup_free_ptr;
+-	cleanup_vector_free;
+-	cleanup_fclose;
+-	filepresent;
+-	find_keyword;
+-	free_keywords;
+-	get_linux_version_code;
+-	__get_strbuf_buf;
+ 	get_word;
+ 	_install_keyword;
+ 	install_sublevel;
+ 	install_sublevel_end;
++	is_quote;
+ 	keyword_alloc;
+ 	_log_bitfield_overflow;
++	libmp_basename;
++	libmp_strlcat;
++	libmp_strlcpy;
++	libmp_verbosity;
+ 	log_safe;
++	log_thread_reset;
++	log_thread_start;
++	log_thread_stop;
++	logsink;
+ 	msort;
++	normalize_timespec;
+ 	parse_devt;
++	print_strbuf;
+ 	process_file;
++	pthread_cond_init_mono;
++	recv_packet;
++	reset_strbuf;
+ 	safe_write;
++	send_packet;
++	set_max_fds;
+ 	set_value;
++	setup_thread_attr;
++	strchop;
+ 	should_exit;
+ 	snprint_keyword;
+ 	steal_strbuf_str;
+-	strlcat;
++	timespeccmp;
++	timespecsub;
++	truncate_strbuf;
+ 	validate_config_strvec;
++	ux_socket_listen;
++	vector_alloc;
++	vector_alloc_slot;
++	vector_del_slot;
+ 	vector_find_or_add_slot;
++	vector_free;
+ 	vector_insert_slot;
+ 	vector_move_up;
++	vector_reset;
++	vector_set_slot;
+ 	vector_sort;
+-};
+-
+-LIBMPATHUTIL_2.1 {
+-	libmp_basename;
+-};
+-
+-LIBMPATHUTIL_2.2 {
+-	cleanup_udev_device;
+-	cleanup_vector;
++local:
++	*;
+ };
 -- 
 2.46.0
 
