@@ -1,64 +1,65 @@
-Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
+Received: from mail-ej1-f67.google.com (mail-ej1-f67.google.com [209.85.218.67])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9F4B18EFF1
-	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:26:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFE8918F2EE
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:26:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.67
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723130800; cv=none; b=lLv4UIt0+OFuc97u0qzu5xpTuhmCmGC9iOYNONdO/eKpKGUF6jDzpCroWCAu77G0oxi3eJvJdSnFmvSoaxEj/sLg4wScY64+d02XxXjGnPRgsuwio45rKTTGWKhCX+3h2k1xbfB1wu7GSSYJ1q3JsdjKMMang1+U33dc1LpTSwQ=
+	t=1723130801; cv=none; b=NOCeU5yNuQgP3xlDuXlJJVkbL3Hr2S36bsIhEtRkJuvWBweSopeQBKo2SV7QYSO7YGwEQKHwKwVD22Nwj2QO+dYOPJpthG0eoUq45nZFD5OTIJWcR117e1+IPpOBOc74XyihuZNl6k5+WdZPBQTYbDkqRqTpRHpr7U/HWBPxVVI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723130800; c=relaxed/simple;
-	bh=4e7B3gw9NVEVg04YlIjII1PGEKp5UTsGx+J/EXdAoZM=;
+	s=arc-20240116; t=1723130801; c=relaxed/simple;
+	bh=h5HxFy5tNXsY6O2j8C3p+C/c9/uMC8wOQGCv8ZItPH0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=aGnaHUmufOvTvABqOQDD9bo+V6taudblfwJ2hwJdqvIGO2rvge+t+DdVp0+ntkM4YVrd9OWNVL/noW7RCxdH8F7SovZUEGs2iB1vgDly/IBJiS1+tUpfTr8SLGSHO9SO1LrLbQLJjNo4X17kqZODeZlZ7RKFvlvupKUgYf/ttKA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=bB40/XJ4; arc=none smtp.client-ip=209.85.167.44
+	 MIME-Version; b=HS5Ip2E7GsIwUAZOhUvd3Q7pKOWISnBxLFDknPuFMvMDcC1M3g9+9T2jfjwJQHVdem6RONAblQ9tXQzX9Owqh7CLKSvhk2ziSf0QwoMH5mRiuLt1teVE8L37xGnifgHC93mfGk+QGAKPUtrmXZI0mbvsKTqZYqtNDBUUN3R7MmA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=MLxh41NM; arc=none smtp.client-ip=209.85.218.67
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="bB40/XJ4"
-Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-52f04b4abdcso1476145e87.2
-        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:26:37 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="MLxh41NM"
+Received: by mail-ej1-f67.google.com with SMTP id a640c23a62f3a-a7a8e73b29cso114780666b.3
+        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:26:38 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723130796; x=1723735596; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1723130797; x=1723735597; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=wnb23KUTGi2kskRm2CmXuMG7AFya/4/GbJu+Fi0g2zM=;
-        b=bB40/XJ4zS8z7bwu04tUsq/WAF29BwtCU2KgeKW8JkAmXbG1J/a+ClelapWQUAQ/lm
-         4UBJpIkMFE76rdBSNsm9to7y0g5dATob2TGm6QGDzboTElgFUliGNdk3WhmFa0I/Nbfz
-         bYbjmplNaBITPhbKziUXO/U1XFnu6ml8geMLRFCIZhil6GCSm9388WFjKw5IVjG/0ljM
-         NvDX104FLdF9M+X3Ptwi37M0/Y6w85viv8rpRSO2L1RAWyVd6scuaHM1z5ngQAm9DBaq
-         qosHYRzJdbOZx/aOIBny0nNylM20THvSClGkroQqzF1b9eMdvZaRLIS3H48VfTtK7b/0
-         UWVg==
+        bh=+g2fgHo68V+z+6A3o8FNX+wO8CeXqUdvIDXO4qmZJnc=;
+        b=MLxh41NMD7UPHAlLXJHz344B+8YZsb9QPDvR9m9AVgceAtWy1abJ1XQI26c9NSSKBN
+         QlXKqd7UP7hgHkfvlUL7rJx0Lymp0zb6mJT6p0LLA+nFIeWFRMZak463A2DP+lsw9eUy
+         KLGJzkmTa/QunxzbbQn2EErT01CRlm+fporK+1jH+kPI05lklJjyRdOUrIH4ODZOIwOO
+         7L5KhG6gMMdOpg+qwPJnpgQni3wsEwgdgD9F3LJ9DjiXDuClgz+cwW2xXTxzxZjgOGEh
+         lZWIFy9I1zqvPUjs4NwtG95PX7kLHxwuTzmIinb0m2UexZqeswQ4WCgylGiGf6s7oZF2
+         d2Zg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723130796; x=1723735596;
+        d=1e100.net; s=20230601; t=1723130797; x=1723735597;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=wnb23KUTGi2kskRm2CmXuMG7AFya/4/GbJu+Fi0g2zM=;
-        b=i1HH/15quWtonT4lueckrUUPeaDom4GbFaQgo0zGyXun/QaniECZFukd9cZTmXyrnm
-         knrMZ9wlzwCO9HzXNX2s+yoPrxupAmRA5GSp7wzN4YquDHYdjfzVFqUqAlBVDuo4ShZp
-         hteFBTrrt4q0e4pGgMqoga4bWY5Z+DtQiYMK+AuPVbL3ynP+NpKE30FfExYuBXN+eZ+p
-         6h2vApur34j1dcyFvWIQoMMCqEECzbadbXEDi4s8w5jGF3ia2ZYDF1LejtLAdBhlZn6M
-         jaPCcWwoRI1DPAUxiyxTeQZEd2/RsxCz56/Lc3nKaGFMm0BOowDnAhfK18XSbORRIRoV
-         BTjg==
-X-Gm-Message-State: AOJu0YwT9otz6XlKsZnpentIzksxiDi7QvB6Q+UD4pWbcY5hMs9GVe+r
-	goSbVqIz4pJICQcZLUpPlbW/SW7kzaD+FLMcoBkQURGQSqDcxPAageEW5onOoAg=
-X-Google-Smtp-Source: AGHT+IE9s99cRohOvpvWphP8HtrEez0i0zPI9NfaWMH3qW/6ZuVifjuQxWgf2EBupyIh+4VR75bsEw==
-X-Received: by 2002:a05:6512:68b:b0:52c:d76a:867f with SMTP id 2adb3069b0e04-530e578fbc5mr1623749e87.0.1723130795546;
-        Thu, 08 Aug 2024 08:26:35 -0700 (PDT)
+        bh=+g2fgHo68V+z+6A3o8FNX+wO8CeXqUdvIDXO4qmZJnc=;
+        b=kbhQmUxbU04INN94TnNWMkNlbHBZBxvC1x4mb3X2TeJBzjVRmEd1dNCcW7ttI136Ar
+         ds3dGVRp9/9w0DmYPbXkR5y1NdhWVvH+raGTc7q5OsOPnwE5Hp7oPBr96iUWnGpD38RW
+         4GAZzCTs48/XT1UW8T3CLut1/q5hAOOgHXgZVcZ7BOJY9jp20EMY4019JqvfNTv5V7/6
+         eyCgTa6vYjrkJ+QkTr1sHcGXX0LYzyg0k7WsG7DT6wr/HZxPVZM1BQbqcstBkxQV7u2a
+         sLYwizZlGyp+jZHQcG112LBVLPVK3ppNrM9KLI414bF9gCSsfEopuBAnTkju/brku+Xp
+         2JYw==
+X-Gm-Message-State: AOJu0YxhUE4RBLF6HJ4c4VXt2TDe7hbW152CTje8WLaMExhxgNRLyIi/
+	5CNwFVBwkXpmRS4mlqyXH/8xVRybzVKyn+SmdRp0nuxF5LvJY04QXTw46pdpFStwC7vropPDrCK
+	wcaoFbA==
+X-Google-Smtp-Source: AGHT+IFmKjxsNk1qT49y69dIWpKHrHxPgdBGzKjg5XHSDVGy/rhuaystNpdSVi52F5ktOI+j5XTexA==
+X-Received: by 2002:a17:907:a08a:b0:a7a:387c:23f8 with SMTP id a640c23a62f3a-a8090c3256dmr176461366b.3.1723130796539;
+        Thu, 08 Aug 2024 08:26:36 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9d437easm753193166b.139.2024.08.08.08.26.35
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9d89a9fsm746899266b.156.2024.08.08.08.26.36
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 08 Aug 2024 08:26:35 -0700 (PDT)
+        Thu, 08 Aug 2024 08:26:36 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 02/41] libmpathutil: avoid extra memory allocation in print_strbuf()
-Date: Thu,  8 Aug 2024 17:25:41 +0200
-Message-ID: <20240808152620.93965-3-mwilck@suse.com>
+Subject: [PATCH 03/41] libmpathutil: rename strlcat and strlcpy
+Date: Thu,  8 Aug 2024 17:25:42 +0200
+Message-ID: <20240808152620.93965-4-mwilck@suse.com>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20240808152620.93965-1-mwilck@suse.com>
 References: <20240808152620.93965-1-mwilck@suse.com>
@@ -70,149 +71,83 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Instead of allocating a temporary buffer with vasprintf() and copying its
-contents to the strbuf, try to print directly into the strbuf and use the
-return value to expand the buffer if necessary. This saves a memory
-allocation on every invocation of print_strbuf(), and thus reduces the
-likelihood of failure and at the same time increases efficiency. We need
-an extra call to vsnprintf() if the buffer must be expanded, but vasprintf()
-will need to re-process the input internally as well after determining the
-required buffer size, therefore this probably won't hurt much.
+User programs are forbidden to use names of functions provided
+by the standard library [1]. Since glibc 2.38, strlcpy() and strlcat()
+are part of the system library. Rename our own functions to libmp_strlcpy()
+and libmp_strlcat(), respectively, and only use the short names if the C
+library doesn't have them.
 
-Add some more tests for print_strbuf() to make sure this works as intended.
+It turns out that msul libc has always had strlcat() and strlcpy(), so use the
+system library function with musl, too.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+[1] https://www.gnu.org/software/libc/manual/html_node/Reserved-Names.html
 ---
- libmpathutil/strbuf.c | 23 +++++++++++----
- tests/strbuf.c        | 68 +++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 86 insertions(+), 5 deletions(-)
+ libmpathutil/util.c |  4 ++--
+ libmpathutil/util.h | 15 ++++++++++-----
+ 2 files changed, 12 insertions(+), 7 deletions(-)
 
-diff --git a/libmpathutil/strbuf.c b/libmpathutil/strbuf.c
-index e23b65e..6e53c3f 100644
---- a/libmpathutil/strbuf.c
-+++ b/libmpathutil/strbuf.c
-@@ -196,17 +196,30 @@ int print_strbuf(struct strbuf *buf, const char *fmt, ...)
+diff --git a/libmpathutil/util.c b/libmpathutil/util.c
+index 9c422f1..136aa59 100644
+--- a/libmpathutil/util.c
++++ b/libmpathutil/util.c
+@@ -121,7 +121,7 @@ get_word (const char *sentence, char **word)
+ 	return skip + len;
+ }
+ 
+-size_t strlcpy(char * restrict dst, const char * restrict src, size_t size)
++size_t libmp_strlcpy(char * restrict dst, const char * restrict src, size_t size)
  {
- 	va_list ap;
- 	int ret;
--	char *tail;
-+	size_t space = buf->size - buf->offs;
- 
- 	va_start(ap, fmt);
--	ret = vasprintf(&tail, fmt, ap);
-+	ret = vsnprintf(buf->buf + buf->offs, space, fmt, ap);
- 	va_end(ap);
- 
- 	if (ret < 0)
--		return -ENOMEM;
-+		return ret;
-+	else if ((size_t)ret < space) {
-+		buf->offs += ret;
-+		return ret;
-+	}
- 
--	ret = __append_strbuf_str(buf, tail, ret);
-+	ret = expand_strbuf(buf, ret);
-+	if (ret < 0)
-+		return ret;
-+
-+	space = buf->size - buf->offs;
-+	va_start(ap, fmt);
-+	ret = vsnprintf(buf->buf + buf->offs, space, fmt, ap);
-+	va_end(ap);
-+
-+	if (ret >= 0)
-+		buf->offs += ret;
- 
--	free(tail);
- 	return ret;
- }
-diff --git a/tests/strbuf.c b/tests/strbuf.c
-index f8554da..d7d4cd9 100644
---- a/tests/strbuf.c
-+++ b/tests/strbuf.c
-@@ -279,6 +279,71 @@ static void test_print_strbuf(void **state)
- 	assert_int_equal(print_strbuf(&buf, "%d%% of %d is %0.2f",
- 				      5, 100, 0.05), 17);
- 	assert_string_equal(get_strbuf_str(&buf), "5% of 100 is 0.05");
-+
-+}
-+
-+/* length of string is not a divisor of chunk size */
-+static void test_print_strbuf_2(void **state)
-+{
-+	STRBUF_ON_STACK(buf);
-+	const char sentence[] = "This sentence has forty-seven (47) characters. ";
-+	const char *s;
-+	const int repeat = 100;
-+	int i;
-+
-+	for (i = 0; i < repeat; i++)
-+		assert_int_equal(print_strbuf(&buf, "%s", sentence),
-+				 sizeof(sentence) - 1);
-+
-+	s = get_strbuf_str(&buf);
-+	condlog(3, "%s", s);
-+	assert_int_equal(strlen(s), repeat * (sizeof(sentence) - 1));
-+	for (i = 0; i < repeat; i++)
-+		assert_int_equal(strncmp(s + i * (sizeof(sentence) - 1),
-+					 sentence, sizeof(sentence) - 1), 0);
-+}
-+
-+/* length of string is divisor of chunk size */
-+static void test_print_strbuf_3(void **state)
-+{
-+	STRBUF_ON_STACK(buf);
-+	const char sentence[] = "This sentence has 32 characters.";
-+	const char *s;
-+	const int repeat = 100;
-+	int i;
-+
-+	for (i = 0; i < repeat; i++)
-+		assert_int_equal(print_strbuf(&buf, "%s", sentence),
-+				 sizeof(sentence) - 1);
-+
-+	s = get_strbuf_str(&buf);
-+	condlog(3, "%s", s);
-+	assert_int_equal(strlen(s), repeat * (sizeof(sentence) - 1));
-+	for (i = 0; i < repeat; i++)
-+		assert_int_equal(strncmp(s + i * (sizeof(sentence) - 1),
-+					 sentence, sizeof(sentence) - 1), 0);
-+}
-+
-+static void test_print_strbuf_4(void **state)
-+{
-+	STRBUF_ON_STACK(buf);
-+	const char sentence[] = "This sentence has a lot of characters, "
-+		"which makes it hopefully longer than the chunk size given by "
-+		"the constant \"BUF_CHUNK\" in libmpathutil/strbuf.c. ";
-+	const char *s;
-+	const int repeat = 100;
-+	int i;
-+
-+	for (i = 0; i < repeat; i++)
-+		assert_int_equal(print_strbuf(&buf, "%s", sentence),
-+				 sizeof(sentence) - 1);
-+
-+	s = get_strbuf_str(&buf);
-+	condlog(3, "%s", s);
-+	assert_int_equal(strlen(s), repeat * (sizeof(sentence) - 1));
-+	for (i = 0; i < repeat; i++)
-+		assert_int_equal(strncmp(s + i * (sizeof(sentence) - 1),
-+					 sentence, sizeof(sentence) - 1), 0);
+ 	size_t bytes = 0;
+ 	char ch;
+@@ -138,7 +138,7 @@ size_t strlcpy(char * restrict dst, const char * restrict src, size_t size)
+ 	return bytes;
  }
  
- static void test_truncate_strbuf(void **state)
-@@ -394,6 +459,9 @@ static int test_strbuf(void)
- 		cmocka_unit_test(test_strbuf_quoted),
- 		cmocka_unit_test(test_strbuf_escaped),
- 		cmocka_unit_test(test_print_strbuf),
-+		cmocka_unit_test(test_print_strbuf_2),
-+		cmocka_unit_test(test_print_strbuf_3),
-+		cmocka_unit_test(test_print_strbuf_4),
- 		cmocka_unit_test(test_truncate_strbuf),
- 		cmocka_unit_test(test_fill_strbuf),
- 	};
+-size_t strlcat(char * restrict dst, const char * restrict src, size_t size)
++size_t libmp_strlcat(char * restrict dst, const char * restrict src, size_t size)
+ {
+ 	size_t bytes = 0;
+ 	char ch;
+diff --git a/libmpathutil/util.h b/libmpathutil/util.h
+index c19f749..7bad855 100644
+--- a/libmpathutil/util.h
++++ b/libmpathutil/util.h
+@@ -12,6 +12,10 @@
+ #include <stdio.h>
+ #include <libudev.h>
+ 
++#ifndef __GLIBC_PREREQ
++#define __GLIBC_PREREQ(x, y) 0
++#endif
++
+ size_t strchop(char *);
+ 
+ const char *libmp_basename(const char *filename);
+@@ -22,8 +26,12 @@ int basenamecpy (const char *src, char *dst, size_t size);
+ int filepresent (const char *run);
+ char *get_next_string(char **temp, const char *split_char);
+ int get_word (const char * sentence, char ** word);
+-size_t strlcpy(char * restrict dst, const char * restrict src, size_t size);
+-size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
++size_t libmp_strlcpy(char * restrict dst, const char * restrict src, size_t size);
++size_t libmp_strlcat(char * restrict dst, const char * restrict src, size_t size);
++#if defined(__GLIBC__) && ! (__GLIBC_PREREQ(2, 38))
++#define strlcpy(dst, src, size) libmp_strlcpy(dst, src, size)
++#define strlcat(dst, src, size) libmp_strlcat(dst, src, size)
++#endif
+ dev_t parse_devt(const char *dev_t);
+ char *convert_dev(char *dev, int is_path_device);
+ void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
+@@ -62,9 +70,6 @@ struct scandir_result {
+ };
+ void free_scandir_result(struct scandir_result *);
+ 
+-#ifndef __GLIBC_PREREQ
+-#define __GLIBC_PREREQ(x, y) 0
+-#endif
+ /*
+  * ffsll() is also available on glibc < 2.27 if _GNU_SOURCE is defined.
+  * But relying on that would require that every program using this header file
 -- 
 2.46.0
 
