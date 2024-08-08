@@ -1,64 +1,65 @@
-Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
+Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com [209.85.208.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9068019047A
-	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:27:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BCAE1190063
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:27:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723130822; cv=none; b=aQUTg8gTvoTZv7NVQ/3JV3J3Wpt6RrajIz7RiAONPzLHy8A6LuUnFQuaeOi5iaeiKKr681rJ/3TUu1/NRsu7cRqUfy9gru0GVG8/abclaGGSHEM7gHkJJacFApom+tlT+GDXSi8bB4s3TUdfgDEKqPefCKj63R7YxX+1jV4QIA4=
+	t=1723130823; cv=none; b=H5FbtiS5ywWbtzJff8UEIedU6bWyL0GY68TT1WoKheuuRDqRfM/D9/8q6C+I1XX9AHJifJAlPRSVe6kFmEFi964WDKmdpPldnMvmv0ZTQMD0Eba2sKgF3TaAoQe65Y86tzfMamUcj6QTArkOHJO4quCOnhWV1nlrNaMtmaeDSF8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723130822; c=relaxed/simple;
-	bh=gmRae4yZF0mXEA/sR1Wi2TDfcVj/DykINmRNErNregA=;
+	s=arc-20240116; t=1723130823; c=relaxed/simple;
+	bh=fXTIyXhsS6z6yT0MRAp5NN/+iSCq2WjnB+u6qhpcoog=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=n1kCZhbxGXEkjcyJ1y1HbWH6MZsJkuu/VDfxCXSc4Klqq4xdH9NRHX7Jkkw3nSJFKLSpGG7i4v+NuZqeBbTdaqEZ73bfm43edjSaZS/YjFLBGdG5iSofWH6wm4g9gke0jGxFP1+5fuYdoTgPVWzwZntONENvLvz2WDj0h4YL7ME=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=bFHGBJtn; arc=none smtp.client-ip=209.85.208.52
+	 MIME-Version; b=uSwBI0VuNqRMJlGMbqt3xT+ZpjfIbHmQ+E3MGMuLnTse+X3p0UbogrJ9vb4YtZsyfDEndxJ7ySxoMpCPY4PUDS5l1MdlnN3AgcrU+eTTsxPrAWBcxvk5TaqyXEYFtO3T2MfiaxOwqWLTtyF+hoy5F9Tstfqo8ulV8iXXy+OjVIM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=O7uhhQyh; arc=none smtp.client-ip=209.85.208.53
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="bFHGBJtn"
-Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-5b8c2a6135eso1652042a12.0
-        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:27:00 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="O7uhhQyh"
+Received: by mail-ed1-f53.google.com with SMTP id 4fb4d7f45d1cf-5b8c2a6135eso1652061a12.0
+        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:27:01 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723130819; x=1723735619; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1723130820; x=1723735620; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=KR7siNlYC4ymS5QtLxgHnwNoHyUWhkIPVBQGWioywrY=;
-        b=bFHGBJtnb3MB7WFQyMrSe8w+Ps8FfIjE+HrPjl8aIB1r5+e1zxewSXtaIpy+kH4UrY
-         MZD3B5+K2T03p8AgwKirQdPhD5tyYEGCSIhj0dYd77cSB8XfsuAN/bZOjB8XlH4HNOiv
-         yiiTlpMfHfRozRHwjW784bKXvv7AG6OannccClBP0s0wPaGiP661VHPGevcudnuqPQFi
-         QZC17sHUAsOVpEuFVSDf6zL+kKHIoS8I4hHOFUgRqwe2inA1a0gTGyCG9PjtDD2+SEHH
-         H1C17f6C1/GgjcmHVktxpeWBVb4NSt4wDERk0PDzNzi9SnGQQY/GrZ0kOrqfWPy6esBX
-         zc5Q==
+        bh=pyjbdEnUBdpI5/ZGj494ZmZAu7mldzv4y5T1N8U8l4E=;
+        b=O7uhhQyhHPMupbEh0OEywMsqQ2Y03syBEiItXhdbPFSf3++Om70w66WEFSlAq0+BRK
+         eBCueLDp4XUVpqQuZhOnWUCQcFoqnZUToGlJW4aj86TxZlrpLztRTXKq+uxDQMSKFNDB
+         +oH5SIXujJWQa8WBfboG8gUXlF4cV2V37P2hrwfzBdNtY8jGm+LIMMEmDASEgTmAoB4u
+         EgSDdMspgA/9ah5vucOfKEcssehzUgJ2Sa0AbU9MDSHRPfLjhGBTFBSxeNPG5JqiTwlB
+         wazVaSe2mWEOUYvSfCbmKVL+aipf+QbbhwWZ1xRn2HXuusnAJtJBwVDFyGmGBVR0+8X/
+         EeCA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723130819; x=1723735619;
+        d=1e100.net; s=20230601; t=1723130820; x=1723735620;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=KR7siNlYC4ymS5QtLxgHnwNoHyUWhkIPVBQGWioywrY=;
-        b=rbyFYVRsMxxaI7ssE7ev0Aku64IQALLW4ILs3K/gtP6N85BvmVqkleivtAtQOByy3L
-         cvKM3VG28FgA3x7qRvwTVupnV7xzaGxVHNvADBYHjHCxODSpeW6QnnQaK8Vr8sasIgyy
-         uGZUUTNPhENBJDNvvigoyqE6muUhhNrWb0IVF9WvZ2jvp53sf3QXquItumo/c7zeLRsE
-         YtwJKDe9gijhdhGXx/FEby6bvORuEgmTOl2fjey9+YuJkI63rZKyTWoWcYwjqSzdixd2
-         QPbAllZEJ6Oi69x446BaV/saovwtHxCzYY2NNhnWGmaEL9d+GQenbLemaToWdtx4sF8D
-         uT3g==
-X-Gm-Message-State: AOJu0YyDUCctKK6CulVZOq1WtotH0fyVD0rdE6WXI+hAEB7p/KNlc7H7
-	7qWjD7AgobAWRSEGtn2GY3JNyQqwZm6wrO+swbw3W69sOHJXCx4Z31+GwIAUrV4=
-X-Google-Smtp-Source: AGHT+IF9Qjxsdd/XiouIid6BTsTld+p4cTGvd3/0+QEulYfRSfelHWGieTaLZyGtaQLMV4MfviF60g==
-X-Received: by 2002:a05:6402:11cc:b0:5a1:5c0c:cbd6 with SMTP id 4fb4d7f45d1cf-5bbb3c18a79mr2168147a12.8.1723130818837;
-        Thu, 08 Aug 2024 08:26:58 -0700 (PDT)
+        bh=pyjbdEnUBdpI5/ZGj494ZmZAu7mldzv4y5T1N8U8l4E=;
+        b=CCVSvPSYtpyN+Fa5vNXObKn1MrMWeh8pD3O0jPQBLoX/NmFT+iJ6gLnxMDkWvYChBA
+         jFVFr9L+AoxKwisZE0cQKzdI6TuB+Bdxh2Jkv4keiFAbeHX3Sai2762Sc7g54Y8GDyvp
+         FUCPHzBy5gGXZnrSSWxBiAPxCZ6Z8t3e/N70lj07AhDHWze3EBvAtzW7PiEZJ+Qm6270
+         pJ2X5F4hmbDg0+mkVyzAcluAJH1mu8bawF0blCATvBIPhmGHWrmh/g51wYqORXS0fdb2
+         VCfp8v6XlOz54yub7QxShE6QitNAzKhcxWqsUg+qUE6gVuExeWYO0oK5idHZbF3NvfEH
+         4+mQ==
+X-Gm-Message-State: AOJu0YwJxkCCyP7xFaLjFWIvVM0wca6lnsLIS5MpYUgBJ8/VZdj4pZ9X
+	wsYSdVj7MoKST+I9zHzy5RqFrNzCckekyullqv9EmgDN4U+cQ4xnWeL2WIRf4c2qgp5Kw4LQBxE
+	T2WI=
+X-Google-Smtp-Source: AGHT+IH0mC2Z04ZjFxobbY+9LQJvAZIFNsPiw+bAmwcVMbhJLMCGoiAosxirxOTZu4TqC4SMGLCxnA==
+X-Received: by 2002:a05:6402:3547:b0:582:7394:a83d with SMTP id 4fb4d7f45d1cf-5bbb3d0bb2bmr1900448a12.12.1723130819767;
+        Thu, 08 Aug 2024 08:26:59 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5bbb2c1fc20sm725694a12.26.2024.08.08.08.26.58
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5bbb2d3518dsm767942a12.78.2024.08.08.08.26.59
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 08 Aug 2024 08:26:58 -0700 (PDT)
+        Thu, 08 Aug 2024 08:26:59 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 25/41] libmultipath: rename __internal_config variable
-Date: Thu,  8 Aug 2024 17:26:04 +0200
-Message-ID: <20240808152620.93965-26-mwilck@suse.com>
+Subject: [PATCH 26/41] libmultipath: rename _dm_flush_map() to dm_flush_map__()
+Date: Thu,  8 Aug 2024 17:26:05 +0200
+Message-ID: <20240808152620.93965-27-mwilck@suse.com>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20240808152620.93965-1-mwilck@suse.com>
 References: <20240808152620.93965-1-mwilck@suse.com>
@@ -72,74 +73,66 @@ Content-Transfer-Encoding: 8bit
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ libmultipath/devmapper.c          | 4 ++--
+ libmultipath/devmapper.h          | 8 ++++----
+ libmultipath/libmultipath.version | 2 +-
+ 3 files changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index a59533b..34cbb43 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -72,13 +72,13 @@ void libmultipath_exit(void)
- 	pthread_once(&_exit_once, _libmultipath_exit);
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 0a4b586..c497c22 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -965,7 +965,7 @@ int mpath_in_use(const char *name)
+ 	return 0;
  }
  
--static struct config __internal_config;
-+static struct config internal_config;
- struct config *libmp_get_multipath_config(void)
+-int _dm_flush_map (const char *mapname, int flags, int retries)
++int dm_flush_map__ (const char *mapname, int flags, int retries)
  {
--	if (!__internal_config.hwtable)
-+	if (!internal_config.hwtable)
- 		/* not initialized */
- 		return NULL;
--	return &__internal_config;
-+	return &internal_config;
+ 	int r;
+ 	int queue_if_no_path = 0;
+@@ -1050,7 +1050,7 @@ dm_flush_map_nopaths(const char *mapname, int deferred_remove DR_UNUSED__)
+ 		   deferred_remove == DEFERRED_REMOVE_IN_PROGRESS) ?
+ 		  DMFL_DEFERRED : 0);
+ #endif
+-	return _dm_flush_map(mapname, flags, 0);
++	return dm_flush_map__(mapname, flags, 0);
  }
  
- struct config *get_multipath_config(void)
-@@ -734,7 +734,7 @@ static void _uninit_config(struct config *conf)
- 	int i;
+ int dm_flush_maps(int retries)
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index d9c08fd..ba05e0a 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -161,11 +161,11 @@ enum {
+ 	DMFL_NO_FLUSH  = 1 << 3,
+ };
  
- 	if (!conf)
--		conf = &__internal_config;
-+		conf = &internal_config;
- 
- 	if (conf->selector)
- 		free(conf->selector);
-@@ -791,14 +791,14 @@ static void _uninit_config(struct config *conf)
- 
- void uninit_config(void)
- {
--	_uninit_config(&__internal_config);
-+	_uninit_config(&internal_config);
- }
- 
- void free_config(struct config *conf)
- {
- 	if (!conf)
- 		return;
--	else if (conf == &__internal_config) {
-+	else if (conf == &internal_config) {
- 		condlog(0, "ERROR: %s called for internal config. Use uninit_config() instead",
- 			__func__);
- 		return;
-@@ -883,7 +883,7 @@ static int _init_config (const char *file, struct config *conf);
- 
- int init_config(const char *file)
- {
--	return _init_config(file, &__internal_config);
-+	return _init_config(file, &internal_config);
- }
- 
- struct config *load_config(const char *file)
-@@ -901,7 +901,7 @@ int _init_config (const char *file, struct config *conf)
- {
- 
- 	if (!conf)
--		conf = &__internal_config;
-+		conf = &internal_config;
- 
- 	/*
- 	 * Processing the config file will overwrite conf->verbosity if set
+-int _dm_flush_map (const char *mapname, int flags, int retries);
+-#define dm_flush_map(mapname) _dm_flush_map(mapname, DMFL_NEED_SYNC, 0)
+-#define dm_flush_map_nosync(mapname) _dm_flush_map(mapname, DMFL_NONE, 0)
++int dm_flush_map__ (const char *mapname, int flags, int retries);
++#define dm_flush_map(mapname) dm_flush_map__(mapname, DMFL_NEED_SYNC, 0)
++#define dm_flush_map_nosync(mapname) dm_flush_map__(mapname, DMFL_NONE, 0)
+ #define dm_suspend_and_flush_map(mapname, retries) \
+-	_dm_flush_map(mapname, DMFL_NEED_SYNC|DMFL_SUSPEND, retries)
++	dm_flush_map__(mapname, DMFL_NEED_SYNC|DMFL_SUSPEND, retries)
+ int dm_flush_map_nopaths(const char * mapname, int deferred_remove);
+ int dm_cancel_deferred_remove(struct multipath *mpp);
+ int dm_flush_maps (int retries);
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index e6c6daf..f92f759 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -75,7 +75,7 @@ global:
+ 	dm_enablegroup;
+ 	dm_fail_path;
+ 	dm_find_map_by_wwid;
+-	_dm_flush_map;
++	dm_flush_map__;
+ 	dm_flush_map_nopaths;
+ 	dm_flush_maps;
+ 	dm_geteventnr;
 -- 
 2.46.0
 
