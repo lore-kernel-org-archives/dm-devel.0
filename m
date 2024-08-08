@@ -1,64 +1,64 @@
-Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
+Received: from mail-ej1-f42.google.com (mail-ej1-f42.google.com [209.85.218.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17550190682
-	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:27:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0EE5619046C
+	for <dm-devel@lists.linux.dev>; Thu,  8 Aug 2024 15:27:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723130836; cv=none; b=TRJAbcnRxSjdYf3djfIvVQMLdZILxGyf/jcd0OPDx5HgH8s/IE0R0LWuh7TB6CzaYiWWtt/LELHv6Qqn7dw0wtV02TgDSJrCLMT6miZBA2aPcRDcCcSJYjjX3UBtGwX8iL89v3dxcUbQH/i/SidfB6LE0O7Z9roovd/Ah/YYhBs=
+	t=1723130837; cv=none; b=F54AEEuM48MDSnKMw3LCEfa4jSghZrgZOW1J3afU9KQnC7huSutJYVSqGXA27GRr8f75QELcqwT0mLVTNwzDHW3WgHHTzB3HTVsRW5ea/CbVunDjMePUKxaF4rR+80asjT578UW4MIC1BWPb6DlljwG/OE93H9Xs33kefwt+AkA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723130836; c=relaxed/simple;
-	bh=UITF0GK3x0gHdrxw7aZ9RsS1odLlv/9Km/ahjukiO+0=;
+	s=arc-20240116; t=1723130837; c=relaxed/simple;
+	bh=CYbxxxt4EPqdTrKfRONwjdlRu2xuvzA3sG7xSjQwvco=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=jedAFHg8MgxF2yCA4iYmd6LZCf4mWKJaOXf37LtIv9VWaR7BVxrtPchOpzeFMHqzqszCKPQq7zJQ1+2CP4Q96VRFW9OwE3ElsnVHqfepMnmoBr/9qhOZkgtZ2O/drW9QP2Z/Vz7yG4T+ho9BZOxT22I9nHktaxifRfwgCqeiLOU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=eZUyyz6E; arc=none smtp.client-ip=209.85.218.54
+	 MIME-Version; b=ZGqxBVfrGRwXLNcagBLO5vWuLUYYaH6wfMMIjiyXxhpllu9xiXXNuNsHhwP6+hf/qq2GXc+AlS3AjwvF3bxBAa1gfbRcothaWZxu/o0HrG/7s/sSRl6VQefG8aaS9YMEsZVIdb1MlBm6yiOtbjwCEZDMO3ab6r+V/2OHiHAGTJ8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=bJtUmb1Q; arc=none smtp.client-ip=209.85.218.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="eZUyyz6E"
-Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-a7a843bef98so123077866b.2
-        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:27:13 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="bJtUmb1Q"
+Received: by mail-ej1-f42.google.com with SMTP id a640c23a62f3a-a7a94478a4eso352066366b.1
+        for <dm-devel@lists.linux.dev>; Thu, 08 Aug 2024 08:27:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723130832; x=1723735632; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1723130833; x=1723735633; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=lx2Ry9m27Y+YF0+rvsvzW+CFu1I6ZWccCIgkqAnmUFQ=;
-        b=eZUyyz6EQEtXHLY3ZBTLT1dJP4BnkR4HTpZSRsP+yI6rh8OBEOoNaWlHXYNU59pV4D
-         5Fqqa2FzWOjgjS0Vf+18rJEFk2H4LZo8+PvUQw/6MP7oECAvXgAYa9xKYMsrzdSjQ3d2
-         zhFVIPa6iKVvEr0bABSUg8uYy05vEu3bYv8zDLNaA5DHPZzo1PGgi4IXVWHsLtJKvRf2
-         tLYJ/LWqUvtW5YcHmegUOk3/K1/DNtOYGZoZ4cYRuOqBDZcD2ebe41eqUWlR56UCBfBG
-         vLVl6dVZKcxOJMHfbWyTOXQ/Ij3ZDIyK2XpvF3JVxVICo15fN7/sSs/6m9MkFRVwf5/2
-         Ycew==
+        bh=Y6iPYtrqlca+GAQmY0VXtcBcvQFpvgb9k62+cjGxXV0=;
+        b=bJtUmb1QGIjlzZfRVM14m6YlYQQ+qEKMWih22W4NkHhEn9MeHbT+Hde3Vm86N73GEj
+         aOIVI2Qnv6AALbFkTaUiaxhxcpSVjiokS2t5i0Nj8X/Et63IYiU9DfrwpesyZeWfQ7A6
+         CfZP75OhEEsw37n3Py/V5RbFdhtgULDcT2C0PrbQ9H/j2ti6Bv2eHDJCXmXu7WjhwxWv
+         U5p1Ex3UcwtakXagmRwsZ8eutQv5Y051SHTEXpBdfM+XqGzt/xAyYkAI3gGa5k2CzkUi
+         S3Sc65pGmAsvD/Xgoa5TWHbX9ZAn/QhLtnxjrO8AxEWvgOjIgnDevLcK/hFJ7EWiSAWD
+         GcWw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723130832; x=1723735632;
+        d=1e100.net; s=20230601; t=1723130833; x=1723735633;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=lx2Ry9m27Y+YF0+rvsvzW+CFu1I6ZWccCIgkqAnmUFQ=;
-        b=e09aIGQX85BsdMNA+rYwfFtbo6GOnfM7G3DTy353LRosqzGG+AL60mJ4ckq36wiQMI
-         gKK0oM4ktI0Ei7QfcDZr+TrvZTxa5dI0mn+HAQnsa+pAKsov0Q6gYJmUdjSzfFFu4S8L
-         TdH/uYWqED38zHeQUwliy9NU+BU8PCbiE7fhePS58MtAQhs66Qf1YizvFTQ3Mb/UYzr5
-         X7nUlBKRR+i5tjncfjpJIPmBrOPIFYrSkLSWd/D5TnansE94x/IbK1sfRA2sPSvmlrB+
-         Fff0DaNEmcjA3RrqtLuTfFtKLvNgPcjzqyQd7x9XszAwQaqDX4xCUy0eci4f38HPpkXG
-         56Pw==
-X-Gm-Message-State: AOJu0YxHIWpV/vPBeFJA676K4+VvktS+uM78VzICGoz7JPgs6k9veCkW
-	qsD0oT+z/fVKYUvEeM7hhYvpN0MRF1Thsdr/XTaHXDS/F6yMHyuMy/nFwpFjuz0=
-X-Google-Smtp-Source: AGHT+IG/KZ5qGeZpUtX1G1lRk9npFMgzRRBqz1Y9GkNTiTUYOct0lS0q+fBENto/4/srgyr+CkCIWw==
-X-Received: by 2002:a17:906:cae8:b0:a7a:8bf9:a6e8 with SMTP id a640c23a62f3a-a8090d94773mr162492966b.35.1723130832102;
-        Thu, 08 Aug 2024 08:27:12 -0700 (PDT)
+        bh=Y6iPYtrqlca+GAQmY0VXtcBcvQFpvgb9k62+cjGxXV0=;
+        b=h+4FuL1os7/n1vA+kDyZi7oPp846Q5sgxWRffwLX93vt2Glng9zgm+OQFyMOPf3NfY
+         tyuUWe8Z+iZC/imazfoKPjkDffjkHae+JMDLaf4iECPumu0cHJ8DXhg3Le4nK5W2ngh6
+         v34ejnHTZXjtHcT1OwRp+f7OCVgHjjGWpTCj9Lg4jo3acs/+xuXfirtsoUPsHzuMXt+C
+         ysMe475tI5nZVsRYgZe2D928NQEBcJUAhM2ooqk5DnjBHe2lYxcv1YDeA32uoyd/N0L/
+         C99CjZa7KGfsAqlX+TPFFPghMCteVgeY9l0lMcmvoSm7jnAEWhyWiEBSGoQuB4t2CcOO
+         CAnA==
+X-Gm-Message-State: AOJu0YyW7bmJyBtMkeQ/8+OqHfgiyq1/OiVeQ5vYFgKP6P/HQI48B6kS
+	hytJXvSyjfwAhnhmjvdTAPW+utdxgQzGIGgt5n/vLr/c+PDtaynmFYscPoiy4ww=
+X-Google-Smtp-Source: AGHT+IHyulFNhyBSJ4tBi/DlYtpWFXsnCUYxPLm+qE2/Jz7VwLhqkXIQsKXUlr2k1w29vho0hRk70g==
+X-Received: by 2002:a17:907:a0c:b0:a72:66d5:892c with SMTP id a640c23a62f3a-a8091f5aba8mr217492066b.18.1723130833143;
+        Thu, 08 Aug 2024 08:27:13 -0700 (PDT)
 Received: from localhost (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9ecad3esm748882566b.206.2024.08.08.08.27.11
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a7dc9c0cbe6sm751758766b.71.2024.08.08.08.27.12
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 08 Aug 2024 08:27:11 -0700 (PDT)
+        Thu, 08 Aug 2024 08:27:12 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 37/41] multipathd: rename symbols with double leading underscore
-Date: Thu,  8 Aug 2024 17:26:16 +0200
-Message-ID: <20240808152620.93965-38-mwilck@suse.com>
+Subject: [PATCH 38/41] multipath-tools tests: rename functions with double underscores
+Date: Thu,  8 Aug 2024 17:26:17 +0200
+Message-ID: <20240808152620.93965-39-mwilck@suse.com>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20240808152620.93965-1-mwilck@suse.com>
 References: <20240808152620.93965-1-mwilck@suse.com>
@@ -70,196 +70,267 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Also remove last mentions of __setup_multipath(), which has been removed in
-e5debe0 ("multipathd: don't modify the multipath device on show commands").
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/cli.c      |  2 +-
- multipathd/cli.h      |  6 +++---
- multipathd/dmevents.c |  2 +-
- multipathd/main.c     | 30 +++++++++++++++---------------
- multipathd/waiter.c   |  2 +-
- 5 files changed, 21 insertions(+), 21 deletions(-)
+ tests/alias.c    | 42 +++++++++++++++++++++---------------------
+ tests/test-lib.c |  4 ++--
+ tests/test-lib.h | 16 ++++++++--------
+ 3 files changed, 31 insertions(+), 31 deletions(-)
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index 0c89b7c..139a4c4 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -114,7 +114,7 @@ find_handler (uint32_t fp)
- }
+diff --git a/tests/alias.c b/tests/alias.c
+index 4f23cf9..163d9a7 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -25,7 +25,7 @@
+ #define MPATH_ID_INT_MAX_p1 "fxshrxx"
+ #endif
  
- int
--__set_handler_callback (uint32_t fp, cli_handler *fn, bool locked)
-+set_handler_callback__ (uint32_t fp, cli_handler *fn, bool locked)
+-static int __set_errno(int err)
++static int set_errno__(int err)
  {
- 	struct handler *h;
- 
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index 2940832..dd26a2c 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -137,9 +137,9 @@ struct handler {
- };
- 
- int alloc_handlers (void);
--int __set_handler_callback (uint32_t fp, cli_handler *fn, bool locked);
--#define set_handler_callback(fp, fn) __set_handler_callback(fp, fn, true)
--#define set_unlocked_handler_callback(fp, fn) __set_handler_callback(fp, fn, false)
-+int set_handler_callback__ (uint32_t fp, cli_handler *fn, bool locked);
-+#define set_handler_callback(fp, fn) set_handler_callback__(fp, fn, true)
-+#define set_unlocked_handler_callback(fp, fn) set_handler_callback__(fp, fn, false)
- 
- int get_cmdvec (char *cmd, vector *v, bool allow_incomplete);
- struct handler *find_handler_for_cmdvec(const struct _vector *v);
-diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
-index af1e12e..7a78b8f 100644
---- a/multipathd/dmevents.c
-+++ b/multipathd/dmevents.c
-@@ -202,7 +202,7 @@ fail:
- 	return -1;
+ 	if (err >= 0) {
+ 		errno = 0;
+@@ -63,12 +63,12 @@ ssize_t __wrap_write(int fd, const void *buf, size_t count)
+ 	start = strstr(start, binding);
+ 	check_expected(count);
+ 	assert_ptr_not_equal(start, NULL);
+-	return __set_errno(mock_type(int));
++	return set_errno__(mock_type(int));
  }
  
--/* You must call __setup_multipath() after calling this function, to
-+/* You must call setup_multipath() after calling this function, to
-  * deal with any events that came in before the device was added */
- int watch_dmevents(char *name)
+ int __wrap_rename(const char *old, const char *new)
  {
-diff --git a/multipathd/main.c b/multipathd/main.c
-index bb19c97..229b516 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -131,7 +131,7 @@ static int poll_dmevents = 1;
- /* Don't access this variable without holding config_lock */
- static enum daemon_status running_state = DAEMON_INIT;
- /* Don't access this variable without holding config_lock */
--static bool __delayed_reconfig;
-+static bool delayed_reconfig;
- /* Don't access this variable without holding config_lock */
- static enum force_reload_types reconfigure_pending = FORCE_RELOAD_NONE;
- pid_t daemon_pid;
-@@ -243,7 +243,7 @@ static void config_cleanup(__attribute__((unused)) void *arg)
- 	pthread_mutex_unlock(&config_lock);
+-	return __set_errno(mock_type(int));
++	return set_errno__(mock_type(int));
  }
  
--#define __wait_for_state_change(condition, ms)				\
-+#define wait_for_state_change__(condition, ms)				\
- 	({								\
- 		struct timespec tmo;					\
- 		int rc = 0;						\
-@@ -275,14 +275,14 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
+ int WRAP_FUNC(mkstemp)(char *template)
+@@ -134,7 +134,7 @@ int __wrap_pthread_mutex_unlock(pthread_mutex_t *mutex)
+ #define TEST_FPTR ((FILE *) 0xaffe)
  
- 	pthread_mutex_lock(&config_lock);
- 	pthread_cleanup_push(config_cleanup, NULL);
--	__wait_for_state_change(running_state == oldstate, ms);
-+	wait_for_state_change__(running_state == oldstate, ms);
- 	st = running_state;
- 	pthread_cleanup_pop(1);
- 	return st;
- }
- 
- /* must be called with config_lock held */
--static void __post_config_state(enum daemon_status state)
-+static void post_config_state__(enum daemon_status state)
+ /* strbuf wrapper for the old format_devname() */
+-static int __format_devname(char *name, int id, size_t len, const char *prefix)
++static int format_devname__(char *name, int id, size_t len, const char *prefix)
  {
- 	if (state != running_state && running_state != DAEMON_SHUTDOWN) {
- 		enum daemon_status old_state = running_state;
-@@ -299,7 +299,7 @@ void post_config_state(enum daemon_status state)
- {
- 	pthread_mutex_lock(&config_lock);
- 	pthread_cleanup_push(config_cleanup, NULL);
--	__post_config_state(state);
-+	post_config_state__(state);
- 	pthread_cleanup_pop(1);
+ 	STRBUF_ON_STACK(buf);
+ 
+@@ -151,7 +151,7 @@ static void fd_mpatha(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = __format_devname(buf, 1, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 1, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 4);
+ 	assert_string_equal(buf, "FOOa");
+ }
+@@ -162,7 +162,7 @@ static void fd_mpathz(void **state)
+ 	char buf[5];
+ 	int rc;
+ 
+-	rc = __format_devname(buf, 26, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 26, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 4);
+ 	assert_string_equal(buf, "FOOz");
+ }
+@@ -172,7 +172,7 @@ static void fd_mpathaa(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = __format_devname(buf, 26 + 1, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 26 + 1, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 5);
+ 	assert_string_equal(buf, "FOOaa");
+ }
+@@ -182,7 +182,7 @@ static void fd_mpathzz(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = __format_devname(buf, 26*26 + 26, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 26*26 + 26, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 5);
+ 	assert_string_equal(buf, "FOOzz");
+ }
+@@ -192,7 +192,7 @@ static void fd_mpathaaa(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = __format_devname(buf, 26*26 + 27, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 26*26 + 27, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 6);
+ 	assert_string_equal(buf, "FOOaaa");
+ }
+@@ -202,7 +202,7 @@ static void fd_mpathzzz(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = __format_devname(buf, 26*26*26 + 26*26 + 26, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 26*26*26 + 26*26 + 26, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 6);
+ 	assert_string_equal(buf, "FOOzzz");
+ }
+@@ -212,7 +212,7 @@ static void fd_mpathaaaa(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = __format_devname(buf, 26*26*26 + 26*26 + 27, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 26*26*26 + 26*26 + 27, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 7);
+ 	assert_string_equal(buf, "FOOaaaa");
+ }
+@@ -222,7 +222,7 @@ static void fd_mpathzzzz(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = __format_devname(buf, 26*26*26*26 + 26*26*26 + 26*26 + 26,
++	rc = format_devname__(buf, 26*26*26*26 + 26*26*26 + 26*26 + 26,
+ 			    sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 7);
+ 	assert_string_equal(buf, "FOOzzzz");
+@@ -234,7 +234,7 @@ static void fd_mpath_max(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc  = __format_devname(buf, INT_MAX, sizeof(buf), "");
++	rc  = format_devname__(buf, INT_MAX, sizeof(buf), "");
+ 	assert_int_equal(rc, strlen(MPATH_ID_INT_MAX));
+ 	assert_string_equal(buf, MPATH_ID_INT_MAX);
+ }
+@@ -245,7 +245,7 @@ static void fd_mpath_max1(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc  = __format_devname(buf, INT_MIN, sizeof(buf), "");
++	rc  = format_devname__(buf, INT_MIN, sizeof(buf), "");
+ 	assert_int_equal(rc, -1);
  }
  
-@@ -308,15 +308,15 @@ static bool unblock_reconfigure(void)
- 	bool was_delayed;
+@@ -254,7 +254,7 @@ static void fd_mpath_short(void **state)
+ 	char buf[4];
+ 	int rc;
  
- 	pthread_mutex_lock(&config_lock);
--	was_delayed = __delayed_reconfig;
-+	was_delayed = delayed_reconfig;
- 	if (was_delayed) {
--		__delayed_reconfig = false;
-+		delayed_reconfig = false;
- 		/*
- 		 * In IDLE state, make sure child() is woken up
- 		 * Otherwise it will wake up when state switches to IDLE
- 		 */
- 		if (running_state == DAEMON_IDLE)
--			__post_config_state(DAEMON_CONFIGURE);
-+			post_config_state__(DAEMON_CONFIGURE);
- 	}
- 	pthread_mutex_unlock(&config_lock);
- 	if (was_delayed)
-@@ -350,7 +350,7 @@ void schedule_reconfigure(enum force_reload_types requested_type)
- 		break;
- 	case DAEMON_IDLE:
- 		reconfigure_pending = type;
--		__post_config_state(DAEMON_CONFIGURE);
-+		post_config_state__(DAEMON_CONFIGURE);
- 		break;
- 	case DAEMON_CONFIGURE:
- 	case DAEMON_RUNNING:
-@@ -378,7 +378,7 @@ static enum daemon_status set_config_state(enum daemon_status state)
- 	}
+-	rc = __format_devname(buf, 1, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 1, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, -1);
+ }
  
- 	if (rc == 0 && running_state == DAEMON_IDLE && state != DAEMON_IDLE)
--		__post_config_state(state);
-+		post_config_state__(state);
- 	st = running_state;
+@@ -263,7 +263,7 @@ static void fd_mpath_short1(void **state)
+ 	char buf[5];
+ 	int rc;
  
- 	pthread_cleanup_pop(1);
-@@ -3749,17 +3749,17 @@ child (__attribute__((unused)) void *param)
- 		       /*
- 			* Check if another reconfigure request was scheduled
- 			* while we last ran reconfigure().
--			* We have to test __delayed_reconfig here
-+			* We have to test delayed_reconfig here
- 			* to avoid a busy loop
- 			*/
- 		       (reconfigure_pending == FORCE_RELOAD_NONE
--			 || __delayed_reconfig))
-+			 || delayed_reconfig))
- 			pthread_cond_wait(&config_cond, &config_lock);
+-	rc = __format_devname(buf, 27, sizeof(buf), "FOO");
++	rc = format_devname__(buf, 27, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, -1);
+ }
  
- 		if (running_state != DAEMON_CONFIGURE &&
- 		    running_state != DAEMON_SHUTDOWN)
- 			/* This sets running_state to DAEMON_CONFIGURE */
--			__post_config_state(DAEMON_CONFIGURE);
-+			post_config_state__(DAEMON_CONFIGURE);
- 		state = running_state;
- 		pthread_cleanup_pop(1);
- 		if (state == DAEMON_SHUTDOWN)
-@@ -3776,13 +3776,13 @@ child (__attribute__((unused)) void *param)
- 			reload_type = reconfigure_pending == FORCE_RELOAD_YES ?
- 				FORCE_RELOAD_YES : FORCE_RELOAD_WEAK;
- 			reconfigure_pending = FORCE_RELOAD_NONE;
--			__delayed_reconfig = false;
-+			delayed_reconfig = false;
- 			pthread_mutex_unlock(&config_lock);
+@@ -388,7 +388,7 @@ static void sd_fd_many(void **state)
+ 	int rc, i;
  
- 			rc = reconfigure(vecs, reload_type);
- 		} else {
- 			pthread_mutex_lock(&config_lock);
--			__delayed_reconfig = true;
-+			delayed_reconfig = true;
- 			pthread_mutex_unlock(&config_lock);
- 			condlog(3, "delaying reconfigure()");
- 		}
-diff --git a/multipathd/waiter.c b/multipathd/waiter.c
-index 1dd93c5..f251c50 100644
---- a/multipathd/waiter.c
-+++ b/multipathd/waiter.c
-@@ -56,7 +56,7 @@ void stop_waiter_thread (struct multipath *mpp)
- 			mpp->alias);
- 		return;
- 	}
--	/* Don't cancel yourself. __setup_multipath is called by
-+	/* Don't cancel yourself. setup_multipath is called by
- 	   by the waiter thread, and may remove a multipath device */
- 	if (pthread_equal(mpp->waiter, pthread_self()))
- 		return;
+ 	for (i = 1; i < 5000; i++) {
+-		rc = __format_devname(buf, i, sizeof(buf), "MPATH");
++		rc = format_devname__(buf, i, sizeof(buf), "MPATH");
+ 		assert_in_range(rc, 6, 8);
+ 		rc = scan_devname(buf, "MPATH");
+ 		assert_int_equal(rc, i);
+@@ -403,7 +403,7 @@ static void sd_fd_random(void **state)
+ 	srandom(1);
+ 	for (i = 1; i < 1000; i++) {
+ 		n = random() & 0xffff;
+-		rc = __format_devname(buf, n, sizeof(buf), "MPATH");
++		rc = format_devname__(buf, n, sizeof(buf), "MPATH");
+ 		assert_in_range(rc, 6, 9);
+ 		rc = scan_devname(buf, "MPATH");
+ 		assert_int_equal(rc, n);
+@@ -483,7 +483,7 @@ static void mock_self_alias(const char *alias, const char *wwid)
+ 		expect_condlog(3, USED_STR(alias, wwid));		\
+ 	} while(0)
+ 
+-static void __mock_bindings_file(const char *content, bool conflict_ok)
++static void mock_bindings_file__(const char *content, bool conflict_ok)
+ {
+ 	char *cnt __attribute__((cleanup(cleanup_charp))) = NULL;
+ 	char *token, *savep = NULL;
+@@ -509,7 +509,7 @@ static void __mock_bindings_file(const char *content, bool conflict_ok)
+ }
+ 
+ static void mock_bindings_file(const char *content) {
+-	return __mock_bindings_file(content, false);
++	return mock_bindings_file__(content, false);
+ }
+ 
+ static int teardown_bindings(void **state)
+@@ -1918,7 +1918,7 @@ static void order_test(int n, const struct random_aliases ra[], bool conflict_ok
+ 
+ 	for (j = 0; j < n; j++)
+ 		fill_bindings_random(&buf, ra[j].start, ra[j].end, ra[j].prefix);
+-	__mock_bindings_file(get_strbuf_str(&buf), conflict_ok);
++	mock_bindings_file__(get_strbuf_str(&buf), conflict_ok);
+ 
+ 	for (j = 0; j < n; j++) {
+ 		bdg = VECTOR_SLOT(bindings, 0);
+diff --git a/tests/test-lib.c b/tests/test-lib.c
+index 88f35e9..99beccc 100644
+--- a/tests/test-lib.c
++++ b/tests/test-lib.c
+@@ -367,7 +367,7 @@ void mock_store_pathinfo(int mask,  const struct mocked_path *mp)
+ 	mock_pathinfo(mask, mp);
+ }
+ 
+-struct path *__mock_path(vector pathvec,
++struct path *mock_path__(vector pathvec,
+ 			 const char *vnd, const char *prd,
+ 			 const char *rev, const char *wwid,
+ 			 const char *dev,
+@@ -395,7 +395,7 @@ struct path *__mock_path(vector pathvec,
+ }
+ 
+ 
+-struct multipath *__mock_multipath(struct vectors *vecs, struct path *pp)
++struct multipath *mock_multipath__(struct vectors *vecs, struct path *pp)
+ {
+ 	struct multipath *mp;
+ 	struct config *conf;
+diff --git a/tests/test-lib.h b/tests/test-lib.h
+index 61e67b2..ff54834 100644
+--- a/tests/test-lib.h
++++ b/tests/test-lib.h
+@@ -40,29 +40,29 @@ struct mocked_path *mocked_path_from_path(struct mocked_path *mp,
+ 
+ void mock_pathinfo(int mask, const struct mocked_path *mp);
+ void mock_store_pathinfo(int mask, const struct mocked_path *mp);
+-struct path *__mock_path(vector pathvec,
++struct path *mock_path__(vector pathvec,
+ 			 const char *vnd, const char *prd,
+ 			 const char *rev, const char *wwid,
+ 			 const char *dev,
+ 			 unsigned int flags, int mask);
+ 
+ #define mock_path(v, p) \
+-	__mock_path(hwt->vecs->pathvec,	(v), (p), "0", NULL, NULL,	\
++	mock_path__(hwt->vecs->pathvec,	(v), (p), "0", NULL, NULL,	\
+ 		    0, default_mask)
+ #define mock_path_flags(v, p, f) \
+-	__mock_path(hwt->vecs->pathvec,	(v), (p), "0", NULL, NULL, \
++	mock_path__(hwt->vecs->pathvec,	(v), (p), "0", NULL, NULL, \
+ 		    (f), default_mask)
+ #define mock_path_blacklisted(v, p) \
+-	__mock_path(hwt->vecs->pathvec,	(v), (p), "0", NULL, NULL, \
++	mock_path__(hwt->vecs->pathvec,	(v), (p), "0", NULL, NULL, \
+ 		    BL_BY_DEVICE, default_mask)
+ #define mock_path_wwid(v, p, w) \
+-	__mock_path(hwt->vecs->pathvec,	(v), (p), "0", (w), NULL,	\
++	mock_path__(hwt->vecs->pathvec,	(v), (p), "0", (w), NULL,	\
+ 		    0, default_mask)
+ #define mock_path_wwid_flags(v, p, w, f) \
+-	__mock_path(hwt->vecs->pathvec,	(v), (p), "0", (w),		\
++	mock_path__(hwt->vecs->pathvec,	(v), (p), "0", (w),		\
+ 		    NULL, (f), default_mask)
+ 
+-struct multipath *__mock_multipath(struct vectors *vecs, struct path *pp);
+-#define mock_multipath(pp) __mock_multipath(hwt->vecs, (pp))
++struct multipath *mock_multipath__(struct vectors *vecs, struct path *pp);
++#define mock_multipath(pp) mock_multipath__(hwt->vecs, (pp))
+ 
+ #endif
 -- 
 2.46.0
 
