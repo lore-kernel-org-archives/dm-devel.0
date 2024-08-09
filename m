@@ -1,313 +1,151 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mail.stoffel.org (mail.stoffel.org [172.104.24.175])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF28386AFA
-	for <dm-devel@lists.linux.dev>; Fri,  9 Aug 2024 18:14:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 019CB168487
+	for <dm-devel@lists.linux.dev>; Fri,  9 Aug 2024 22:52:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=172.104.24.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723227274; cv=none; b=XGs9r6e0uuI4g17BMN3XIpwoUXnnXxuSd0R2JYfl/0ipSVzdaUYF79gYyHZW89exbe6jKjcSKgqjc9A5OLb0PZ3JIijGc36GrFthEVvtsYsAwa9vGvd7+y/IwfDkL7BQD1iGY8/PMggrX5DDYpYCyVDG5f3yfp1R/UxpKn2s71M=
+	t=1723243924; cv=none; b=Ur+IKflzaPqzSwYPB9/oIJcNnF9txLKFZf0RDKRs1AXmdLYxzUQJ9l7XT8Na2cxlziVm4Eamizub0Bm22JxLBJqXvdPGTYJaP7+MBoiQLqX2fEescuyx+wmDjx0hYmi0J+bsK8ED+ijPy3NThjFRj4gxPL1kvdx8+g4Kvmm1py4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723227274; c=relaxed/simple;
-	bh=LlfxuJRnuRP99oLakhv8aWH8DvC4pyeD6lbG7JXuw+U=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=ij6M6vyRzPbpCFVd2pT6yV7e0UGDigMMFPV0R/oJbdqfLWL21N6luBznmDeldxQ3RqnBcTLdzPEoeKz5S/4ToQOepjLwyTGIOf2ldyUEFZxxy3QweEYvxceIjflvla3V64W05Vbf5MUlqsAnhyMJcjb7IrFs8Td26elyRoAgxQ0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EmQmguBB; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EmQmguBB"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1723227270;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=4WxCPj1lABsUp4BcLuD7oeGEHysAX1aEqtrVcaVE4kc=;
-	b=EmQmguBB+ilGbm2bB5VXu50xuw+slODYrONoOhzAs6swq+Cdv01NSzpf2FxbEzpuWBPjie
-	7WC+YGOtxccXWmLYca5yjRiLwMSgnSVgQ/t1QLBUrd4jO189hJl9PVkv59YGEf5TPonbf+
-	vkZdwpWp6VPyPGYF6yQNfwF95JyrZBo=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-329-ofu54qH2OhKWDDWGRQ3v8w-1; Fri,
- 09 Aug 2024 14:14:28 -0400
-X-MC-Unique: ofu54qH2OhKWDDWGRQ3v8w-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	s=arc-20240116; t=1723243924; c=relaxed/simple;
+	bh=4DKSeb6TG3TjjkAFwetl4Fka0WPYAYIXgXx/Do4sN3Q=;
+	h=MIME-Version:Content-Type:Message-ID:Date:From:To:Cc:Subject:
+	 In-Reply-To:References; b=Smra2jRQlC4yfnkZ2+YJlnCp6NH6Ok4z0x7HgNsLycuyEnrZQKrlgs3pOsIYSJ3hn7UtomNx1k+Yu3nqPmXv7f4DZzwNrD3l5BXAzEpeGNGhxXFCuylNz6ImsqHBdGGcJe8Aer14HWHnRABwGVZRpoJTQIckIT8MC2nkWagzDmw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org; spf=pass smtp.mailfrom=stoffel.org; arc=none smtp.client-ip=172.104.24.175
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stoffel.org
+Received: from quad.stoffel.org (syn-097-095-183-072.res.spectrum.com [97.95.183.72])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits))
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1ABFD19560A3;
-	Fri,  9 Aug 2024 18:14:27 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B5255300018D;
-	Fri,  9 Aug 2024 18:14:26 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 479IEPQu3340690
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 9 Aug 2024 14:14:25 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 479IEOB93340689;
-	Fri, 9 Aug 2024 14:14:24 -0400
-Date: Fri, 9 Aug 2024 14:14:24 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev
-Subject: Re: [PATCH 00/41] multipath-tools: comply with C library reserved
- names
-Message-ID: <ZrZcgEz8dHRvyXk-@redhat.com>
-References: <20240808152620.93965-1-mwilck@suse.com>
+	by mail.stoffel.org (Postfix) with ESMTPSA id 57B6E1E121;
+	Fri,  9 Aug 2024 18:51:55 -0400 (EDT)
+Received: by quad.stoffel.org (Postfix, from userid 1000)
+	id E8D05A08C6; Fri,  9 Aug 2024 18:51:54 -0400 (EDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240808152620.93965-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Message-ID: <26294.40330.924457.532299@quad.stoffel.home>
+Date: Fri, 9 Aug 2024 18:51:54 -0400
+From: "John Stoffel" <john@stoffel.org>
+To: Christian Theune <ct@flyingcircus.io>
+Cc: Yu Kuai <yukuai1@huaweicloud.com>,
+    John Stoffel <john@stoffel.org>,
+    "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+    dm-devel@lists.linux.dev,
+    "yukuai (C)" <yukuai3@huawei.com>
+Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
+ devices when rsyncing many files
+In-Reply-To: <30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
+References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
+	<316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
+	<58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
+	<EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
+	<22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
+	<26291.57727.410499.243125@quad.stoffel.home>
+	<2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
+	<1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
+	<4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
+	<C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
+	<e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
+	<30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
+X-Mailer: VM 8.3.x under 28.2 (x86_64-pc-linux-gnu)
 
-On Thu, Aug 08, 2024 at 05:25:39PM +0200, Martin Wilck wrote:
-> The first 2 patches are minor, independent fixes.
-> 
-> The rest of the set renames identifiers that possibly conflict with reserved
-> names of the C library, and should have no influence on the functionality
-> of the code.
-> 
-> According to the glibc docs, user code must not redefine any type, function,
-> variable, or macro names that are part of the ISO C standard [1]. Moreover,
-> identifiers must not start with "__" (double underscore) or underscore and
-> capital letter, and names starting with underscore are forbidden for globally
-> visible symbols.
-> 
-> This patch series tries to make the multipath-tools code comply with these
-> requirements, at least to some extent. I haven't bothered renaming local
-> or static variables, or variables like "__x" in macro bodies, for example.
-> The starting point for the series was the request not to export strlcat
-> and strlcpy any more [2].
-> 
-> In most cases, I have simply replaced __xyz() or _xyz() by xyz__() (two
-> underscores to make them better visible). In some cases, when xyz() was not
-> defined, I've simply renamed _xyz() to xyz(). There are exceptions to these
-> rules.
+>>>>> "Christian" =3D=3D Christian Theune <ct@flyingcircus.io> writes:
 
-Despite some small misgivings about renaming symbols (which quite
-possibly aren't being used by anyone) in our user-facing libraries,
-libpmathpersist and libmpathcmd, for the set:
+> Hi,
+>> On 9. Aug 2024, at 03:13, Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>=20
+>>=20
+>> Yes, for sure IO are stuck in md127 and never get dispatched to nvme=
+,
+>> for now I'll say this is a raid5 problem.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
- 
-> The set also fixes some typos where __attribute__ was misspelled.
-> 
-> [1] https://www.gnu.org/software/libc/manual/html_node/Reserved-Names.html
-> [2] https://github.com/opensvc/multipath-tools/issues/91
-> 
-> Martin Wilck (41):
->   multipath-tools tests: make alias.test succeed with increased
->     verbosity
->   libmpathutil: avoid extra memory allocation in print_strbuf()
->   libmpathutil: rename strlcat and strlcpy
->   libmpathutil.version: remove strlcpy and strlcat, and LIBMULTIPATH
->     section
->   libmpathutil: fix __attribute typo in log_pthread.c
->   libmultipath: devmapper.c: rename __DR_UNUSED__, and fix __attribute
->     typo
->   multipathd: fix __attribute typo
->   multipath-tools: use common convention for "header file included"
->     macros
->   libmpathcmd: rename __mpath_connect() to mpath_connect__()
->   libmpathutil: rename _MAX_CMD_LEN
->   libmpathutil: rename __append_strbuf_str() and __get_strbuf_buf()
->   libmpathutil: rename _log_bitfield_overflow()
->   libmpathutil: rename _install_keyword() to install_keyword__()
->   libmultipath: rename _NVME_LIB_C
->   libmultipath: checkers.h: fix __CHECKER_FIRST_MSG in comment
->   libmultipath: rename identifiers with leading underscores in
->     devmapper.h
->   libmultipath: rename identifiers with leading underscores in
->     discovery.h
->   libmultipath: rename __snprint_config()
->   libmultipath: rename __unlock()
->   libmultipath: rename __sysfs_attr_get_value()
->   libmultipath: rename __snprint_foreign_topology()
->   libmultipath: rename macros with double underscores in propsel.c
->   libmultipath: rename enum values with double underscores in structs.h
->   libmultipath: rename macros starting with underscore
->   libmultipath: rename __internal_config variable
->   libmultipath: rename _dm_flush_map() to dm_flush_map__()
->   libmultipath: foreign: rename _check() to check__()
->   libmultipath: rename _cleanup_foreign()
->   libmultipath: rename _init_config()
->   libmultipath: rename symbols starting with underscore in print.h
->   libmultipath: remove dead code in pgpolicies.h
->   libmultipath: remove struct and union names in cciss.h
->   libmpathpersist: rename functions with double leading underscore
->   libdmmp: rename macros starting with _DMMP
->   libdmmp: rename enum values and variables starting with _DMMP_
->   libdmmp: rename non-static functions starting with underscore
->   multipathd: rename symbols with double leading underscore
->   multipath-tools tests: rename functions with double underscores
->   kpartx: rename macros with leading underscores
->   libmpathutil: rename struct _vector to vector_s
->   libmultipath: don't define __user
-> 
->  create-config.mk                         |  4 +-
->  kpartx/byteorder.h                       |  6 +-
->  kpartx/crc32.h                           |  6 +-
->  kpartx/dasd.h                            |  6 +-
->  kpartx/devmapper.c                       | 20 +++---
->  kpartx/devmapper.h                       |  6 +-
->  kpartx/dos.h                             |  2 +-
->  kpartx/efi.h                             |  6 +-
->  kpartx/gpt.h                             |  4 +-
->  kpartx/kpartx.h                          |  6 +-
->  kpartx/lopart.h                          |  3 +
->  kpartx/mac.h                             |  4 +-
->  kpartx/xstrncpy.h                        |  3 +
->  libdmmp/libdmmp.c                        | 72 +++++++++----------
->  libdmmp/libdmmp/libdmmp.h                |  6 +-
->  libdmmp/libdmmp_misc.c                   | 10 +--
->  libdmmp/libdmmp_mp.c                     | 12 ++--
->  libdmmp/libdmmp_path.c                   | 22 +++---
->  libdmmp/libdmmp_pg.c                     | 40 +++++------
->  libdmmp/libdmmp_private.h                | 32 ++++-----
->  libmpathcmd/libmpathcmd.version          |  4 +-
->  libmpathcmd/mpath_cmd.c                  |  4 +-
->  libmpathcmd/mpath_cmd.h                  |  8 +--
->  libmpathpersist/libmpathpersist.version  |  6 +-
->  libmpathpersist/mpath_persist.c          | 22 +++---
->  libmpathpersist/mpath_persist.h          | 45 ++++++------
->  libmpathpersist/mpath_persist_int.h      |  6 +-
->  libmpathpersist/mpath_pr_ioctl.h         |  5 ++
->  libmpathpersist/mpathpr.h                |  4 +-
->  libmpathutil/debug.h                     |  6 +-
->  libmpathutil/globals.h                   |  4 +-
->  libmpathutil/libmpathutil.version        | 90 ++++++++++--------------
->  libmpathutil/log.h                       |  6 +-
->  libmpathutil/log_pthread.c               |  2 +-
->  libmpathutil/log_pthread.h               |  6 +-
->  libmpathutil/msort.h                     |  4 +-
->  libmpathutil/parser.c                    |  6 +-
->  libmpathutil/parser.h                    | 32 ++++-----
->  libmpathutil/strbuf.c                    | 29 +++++---
->  libmpathutil/strbuf.h                    | 10 +--
->  libmpathutil/time-util.h                 |  6 +-
->  libmpathutil/util.c                      |  6 +-
->  libmpathutil/util.h                      | 25 ++++---
->  libmpathutil/uxsock.h                    |  7 +-
->  libmpathutil/vector.c                    |  2 +-
->  libmpathutil/vector.h                    | 10 +--
->  libmpathvalid/mpath_valid.h              |  6 +-
->  libmultipath/alias.c                     |  4 +-
->  libmultipath/alias.h                     |  6 +-
->  libmultipath/blacklist.c                 | 14 ++--
->  libmultipath/blacklist.h                 | 14 ++--
->  libmultipath/checkers.h                  |  8 +--
->  libmultipath/checkers/cciss.h            | 22 +++---
->  libmultipath/checkers/directio.c         |  8 +--
->  libmultipath/checkers/directio.h         |  6 +-
->  libmultipath/checkers/emc_clariion.c     | 20 +++---
->  libmultipath/checkers/emc_clariion.h     |  6 +-
->  libmultipath/checkers/hp_sw.h            |  6 +-
->  libmultipath/checkers/rdac.c             | 20 +++---
->  libmultipath/checkers/rdac.h             |  6 +-
->  libmultipath/checkers/readsector0.h      |  6 +-
->  libmultipath/checkers/tur.c              | 10 +--
->  libmultipath/checkers/tur.h              |  6 +-
->  libmultipath/config.c                    | 30 ++++----
->  libmultipath/config.h                    | 10 +--
->  libmultipath/configure.c                 |  2 +-
->  libmultipath/configure.h                 |  6 +-
->  libmultipath/defaults.h                  |  7 +-
->  libmultipath/devmapper.c                 | 28 ++++----
->  libmultipath/devmapper.h                 | 27 +++----
->  libmultipath/dict.c                      |  4 +-
->  libmultipath/dict.h                      |  9 +--
->  libmultipath/discovery.c                 | 18 ++---
->  libmultipath/discovery.h                 | 38 +++++-----
->  libmultipath/dm-generic.c                |  8 +--
->  libmultipath/dm-generic.h                |  6 +-
->  libmultipath/dmparser.c                  |  2 +-
->  libmultipath/dmparser.h                  |  7 +-
->  libmultipath/file.h                      |  6 +-
->  libmultipath/foreign.c                   | 36 +++++-----
->  libmultipath/foreign.h                   | 19 ++---
->  libmultipath/foreign/nvme.c              | 50 ++++++-------
->  libmultipath/generic.h                   | 14 ++--
->  libmultipath/hwtable.h                   |  6 +-
->  libmultipath/io_err_stat.c               |  4 +-
->  libmultipath/io_err_stat.h               |  6 +-
->  libmultipath/libmultipath.version        | 20 +++---
->  libmultipath/libsg.h                     |  6 +-
->  libmultipath/list.h                      |  6 +-
->  libmultipath/lock.c                      |  4 +-
->  libmultipath/lock.h                      |  8 +--
->  libmultipath/nvme-lib.c                  |  2 +-
->  libmultipath/nvme-lib.h                  |  8 +--
->  libmultipath/nvme/argconfig.h            |  4 +-
->  libmultipath/nvme/json.h                 |  4 +-
->  libmultipath/nvme/linux/nvme.h           |  6 +-
->  libmultipath/nvme/linux/nvme_ioctl.h     |  6 +-
->  libmultipath/nvme/nvme-ioctl.h           |  6 +-
->  libmultipath/nvme/nvme.h                 |  6 +-
->  libmultipath/nvme/plugin.h               |  4 +-
->  libmultipath/pgpolicies.h                | 10 +--
->  libmultipath/print.c                     | 68 +++++++++---------
->  libmultipath/print.h                     | 34 ++++-----
->  libmultipath/prio.h                      |  6 +-
->  libmultipath/prioritizers/alua.h         |  4 +-
->  libmultipath/prioritizers/alua_rtpg.c    |  1 -
->  libmultipath/prioritizers/alua_rtpg.h    |  6 +-
->  libmultipath/prioritizers/alua_spc3.h    |  6 +-
->  libmultipath/prioritizers/weightedpath.h |  4 +-
->  libmultipath/prkey.h                     |  6 +-
->  libmultipath/propsel.c                   | 10 +--
->  libmultipath/propsel.h                   |  3 +
->  libmultipath/sg_include.h                |  4 +-
->  libmultipath/structs.c                   | 12 ++--
->  libmultipath/structs.h                   | 22 +++---
->  libmultipath/structs_vec.c               |  2 +-
->  libmultipath/structs_vec.h               |  8 +--
->  libmultipath/switchgroup.h               |  5 ++
->  libmultipath/sysfs.c                     |  6 +-
->  libmultipath/sysfs.h                     |  4 +-
->  libmultipath/uevent.h                    |  6 +-
->  libmultipath/unaligned.h                 |  6 +-
->  libmultipath/valid.c                     | 14 ++--
->  libmultipath/valid.h                     |  6 +-
->  libmultipath/version.h                   |  6 +-
->  libmultipath/wwids.h                     |  6 +-
->  mpathpersist/main.c                      |  6 +-
->  mpathpersist/main.h                      |  4 ++
->  multipathd/cli.c                         |  6 +-
->  multipathd/cli.h                         | 16 ++---
->  multipathd/cli_handlers.c                |  8 +--
->  multipathd/cli_handlers.h                |  4 +-
->  multipathd/dmevents.c                    |  2 +-
->  multipathd/dmevents.h                    |  6 +-
->  multipathd/fpin.h                        |  4 +-
->  multipathd/init_unwinder.h               |  4 +-
->  multipathd/main.c                        | 36 +++++-----
->  multipathd/main.h                        |  6 +-
->  multipathd/pidfile.h                     |  4 ++
->  multipathd/uxclnt.h                      |  5 ++
->  multipathd/uxlsnr.c                      |  6 +-
->  multipathd/uxlsnr.h                      |  4 +-
->  multipathd/waiter.c                      |  2 +-
->  multipathd/waiter.h                      |  6 +-
->  tests/alias.c                            | 64 +++++++++++------
->  tests/mpathvalid.c                       |  2 +-
->  tests/strbuf.c                           | 80 +++++++++++++++++++--
->  tests/sysfs.c                            | 20 +++---
->  tests/test-lib.c                         |  4 +-
->  tests/test-lib.h                         | 20 +++---
->  tests/test-log.h                         |  4 +-
->  tests/valid.c                            | 16 ++---
->  tests/wrap64.h                           |  4 +-
->  153 files changed, 981 insertions(+), 853 deletions(-)
-> 
-> -- 
-> 2.46.0
+> Note, that this is raid6, not raid5! Sorry, I never explicitly
+> mentioned that and it was buried in the mdstat output.
+
+That's good info. =20
+
+I wonder if you could setup some loop devices, build a RAID6 array,
+put XFS on it and try to replicate the problem by rsyncing a bunch of
+files.=20
+
+
+
+> Not sure whether that code is internally the same anyway=E2=80=A6
+
+>> Can you describe in steps how do you reporduce this problem? We must=
+
+>> figure out where are those IO and why they're not dispatched. I'll b=
+e
+>> easier to debug if I can reporduce it. Otherwise I'll have to give y=
+ou
+>> a debug patch.
+
+> My workload is pretty simple IMHO:
+
+> 1. This is on an XFS volume:
+
+> meta-data=3D/dev/mapper/backy      isize=3D512    agcount=3D112, agsi=
+ze=3D268435328 blks
+>          =3D                       sectsz=3D4096  attr=3D2, projid32b=
+it=3D1
+>          =3D                       crc=3D1        finobt=3D1, sparse=3D=
+1, rmapbt=3D0
+>          =3D                       reflink=3D1    bigtime=3D1
+> data     =3D                       bsize=3D4096   blocks=3D3000158720=
+0, imaxpct=3D1
+>          =3D                       sunit=3D128    swidth=3D1024 blks
+> naming   =3Dversion 2              bsize=3D4096   ascii-ci=3D0, ftype=
+=3D1
+> log      =3Dinternal log           bsize=3D4096   blocks=3D521728, ve=
+rsion=3D2
+>          =3D                       sectsz=3D4096  sunit=3D1 blks, laz=
+y-count=3D1
+> realtime =3Dnone                   extsz=3D4096   blocks=3D0, rtexten=
+ts=3D0
+
+> 2. I=E2=80=99m rsyncing a large number of files using:
+
+> rsync -avz =E2=80=9C<remote-machine>:/<remote-folder>" .
+
+> Specific aspects of the data that might come into play:
+
+> After 5-6 tries of syncing and locking up, I now have a directory on =
+that volume that contains 154.820 files directly and 1.828.933 files re=
+cursively. The recursive structure uses a /year/<hash prefix>/<hash>-fi=
+lename structure to spread out the 1.8 million files more evenly.
+
+> The total amount of data is 1.0 TiB at the moment. The smallest files=
+ are empty or just a few kilobytes. The mode of the filesizes is 180.98=
+4 bytes.
+
+> There is a second workload on the machine that has been running smoot=
+hly for a few weeks which backs up virtual machine images and creates a=
+ somewhat similarly (but more consistent) hashed structure but doesn=E2=
+=80=99t use rsync but a more complex diff + content hashing + compressi=
+on approach. However, that other tool does emit write barriers here and=
+ there -wWhich rsync doesn=E2=80=99t AFAIK.
+
+> I double checked, but the other workload was not active during my las=
+t lockup.
+
+> Happy to apply a debug patch to help diagnosing this.
+
+> Cheers,
+> Christian
+
+> --=20
+> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
+> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io=
+
+> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
+> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theu=
+ne, Christian Zagrodnick
+
 
