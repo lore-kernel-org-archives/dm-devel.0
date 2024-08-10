@@ -1,151 +1,104 @@
-Received: from mail.stoffel.org (mail.stoffel.org [172.104.24.175])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 019CB168487
-	for <dm-devel@lists.linux.dev>; Fri,  9 Aug 2024 22:52:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=172.104.24.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C190418D
+	for <dm-devel@lists.linux.dev>; Sat, 10 Aug 2024 02:43:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723243924; cv=none; b=Ur+IKflzaPqzSwYPB9/oIJcNnF9txLKFZf0RDKRs1AXmdLYxzUQJ9l7XT8Na2cxlziVm4Eamizub0Bm22JxLBJqXvdPGTYJaP7+MBoiQLqX2fEescuyx+wmDjx0hYmi0J+bsK8ED+ijPy3NThjFRj4gxPL1kvdx8+g4Kvmm1py4=
+	t=1723257809; cv=none; b=As+Ag10SjRlBcDQZyQQBjKGfJ6/dAc+HaUls3tbPUFptyrYBzypHgYydEgPd40FGXBShaxN2L6o1frAVdviPlRsCkewV3OWDXZSI8Oydf4MkBmrwr7CTBy8yPeTwa2Eur/rAW0WAT8EQ70ewIFihmThSMwGR/pID92RCS+q0TRY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723243924; c=relaxed/simple;
-	bh=4DKSeb6TG3TjjkAFwetl4Fka0WPYAYIXgXx/Do4sN3Q=;
-	h=MIME-Version:Content-Type:Message-ID:Date:From:To:Cc:Subject:
-	 In-Reply-To:References; b=Smra2jRQlC4yfnkZ2+YJlnCp6NH6Ok4z0x7HgNsLycuyEnrZQKrlgs3pOsIYSJ3hn7UtomNx1k+Yu3nqPmXv7f4DZzwNrD3l5BXAzEpeGNGhxXFCuylNz6ImsqHBdGGcJe8Aer14HWHnRABwGVZRpoJTQIckIT8MC2nkWagzDmw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org; spf=pass smtp.mailfrom=stoffel.org; arc=none smtp.client-ip=172.104.24.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stoffel.org
-Received: from quad.stoffel.org (syn-097-095-183-072.res.spectrum.com [97.95.183.72])
+	s=arc-20240116; t=1723257809; c=relaxed/simple;
+	bh=Nnklc57kgQVKL7OYZ9FYUZovUQHUW4fi5m9CECTwrY4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=EcuKl0+sFqdakRP0iT/bSlhohAj2Hf9GyoUUQMV/wjtyd1dBMFCLYtCC+VA+dBK38KcjnYmgjllwDxxb3pSdpIAlcAuuWEkNmlANxqDm+w1k3RWIrJDSVjKT+SATCa1QqOfYqI718coHtBto8Db2dPre4NQFSISClxsBZLYNgT4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SnH6WPcp; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SnH6WPcp"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1723257804;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=RSrO/NKrsmJvmdaxwZHtZKIR9SDlRkqRKD3bv6f/JX0=;
+	b=SnH6WPcp2m5gjJ7OAViV2pNw7+RvrTgPUvPJzfGEhWzZAKjjY6r9HHS87LczKIVayGpTrL
+	b08JjLDlVEvlIHn/B/YYMKfuiBbweuym68Ti5H5ambSVQ3tNwxmd4gSkPFqzM4lMLKNb+b
+	1pUiH/+Suw53LyCO6W3SgpS98Ke6VHE=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-383-fmzAVDsJPYqowP82Q51ZTA-1; Fri,
+ 09 Aug 2024 22:43:22 -0400
+X-MC-Unique: fmzAVDsJPYqowP82Q51ZTA-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits))
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail.stoffel.org (Postfix) with ESMTPSA id 57B6E1E121;
-	Fri,  9 Aug 2024 18:51:55 -0400 (EDT)
-Received: by quad.stoffel.org (Postfix, from userid 1000)
-	id E8D05A08C6; Fri,  9 Aug 2024 18:51:54 -0400 (EDT)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BAE641955BC1
+	for <dm-devel@lists.linux.dev>; Sat, 10 Aug 2024 02:43:21 +0000 (UTC)
+Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id F071F300018D;
+	Sat, 10 Aug 2024 02:43:20 +0000 (UTC)
+Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
+	id 326A854756; Fri,  9 Aug 2024 22:43:20 -0400 (EDT)
+From: Matthew Sakai <msakai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Ken Raeburn <raeburn@redhat.com>,
+	Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm vdo: don't refer to dedupe_context after releasing it
+Date: Fri,  9 Aug 2024 22:43:20 -0400
+Message-ID: <3363af9ad052e9158adbcf4bf73b77df32d8485c.1723248963.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Message-ID: <26294.40330.924457.532299@quad.stoffel.home>
-Date: Fri, 9 Aug 2024 18:51:54 -0400
-From: "John Stoffel" <john@stoffel.org>
-To: Christian Theune <ct@flyingcircus.io>
-Cc: Yu Kuai <yukuai1@huaweicloud.com>,
-    John Stoffel <john@stoffel.org>,
-    "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
-    dm-devel@lists.linux.dev,
-    "yukuai (C)" <yukuai3@huawei.com>
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-In-Reply-To: <30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
-	<316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
-	<58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
-	<EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
-	<22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
-	<26291.57727.410499.243125@quad.stoffel.home>
-	<2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
-	<1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
-	<4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
-	<C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
-	<e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
-	<30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
-X-Mailer: VM 8.3.x under 28.2 (x86_64-pc-linux-gnu)
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
->>>>> "Christian" =3D=3D Christian Theune <ct@flyingcircus.io> writes:
+From: Ken Raeburn <raeburn@redhat.com>
 
-> Hi,
->> On 9. Aug 2024, at 03:13, Yu Kuai <yukuai1@huaweicloud.com> wrote:
->>=20
->>=20
->> Yes, for sure IO are stuck in md127 and never get dispatched to nvme=
-,
->> for now I'll say this is a raid5 problem.
+Clear the dedupe_context pointer in a data_vio whenever ownership of
+the context is lost, so that vdo can't examine it accidentally.
 
-> Note, that this is raid6, not raid5! Sorry, I never explicitly
-> mentioned that and it was buried in the mdstat output.
+Signed-off-by: Ken Raeburn <raeburn@redhat.com>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
+---
+ drivers/md/dm-vdo/dedupe.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-That's good info. =20
-
-I wonder if you could setup some loop devices, build a RAID6 array,
-put XFS on it and try to replicate the problem by rsyncing a bunch of
-files.=20
-
-
-
-> Not sure whether that code is internally the same anyway=E2=80=A6
-
->> Can you describe in steps how do you reporduce this problem? We must=
-
->> figure out where are those IO and why they're not dispatched. I'll b=
-e
->> easier to debug if I can reporduce it. Otherwise I'll have to give y=
-ou
->> a debug patch.
-
-> My workload is pretty simple IMHO:
-
-> 1. This is on an XFS volume:
-
-> meta-data=3D/dev/mapper/backy      isize=3D512    agcount=3D112, agsi=
-ze=3D268435328 blks
->          =3D                       sectsz=3D4096  attr=3D2, projid32b=
-it=3D1
->          =3D                       crc=3D1        finobt=3D1, sparse=3D=
-1, rmapbt=3D0
->          =3D                       reflink=3D1    bigtime=3D1
-> data     =3D                       bsize=3D4096   blocks=3D3000158720=
-0, imaxpct=3D1
->          =3D                       sunit=3D128    swidth=3D1024 blks
-> naming   =3Dversion 2              bsize=3D4096   ascii-ci=3D0, ftype=
-=3D1
-> log      =3Dinternal log           bsize=3D4096   blocks=3D521728, ve=
-rsion=3D2
->          =3D                       sectsz=3D4096  sunit=3D1 blks, laz=
-y-count=3D1
-> realtime =3Dnone                   extsz=3D4096   blocks=3D0, rtexten=
-ts=3D0
-
-> 2. I=E2=80=99m rsyncing a large number of files using:
-
-> rsync -avz =E2=80=9C<remote-machine>:/<remote-folder>" .
-
-> Specific aspects of the data that might come into play:
-
-> After 5-6 tries of syncing and locking up, I now have a directory on =
-that volume that contains 154.820 files directly and 1.828.933 files re=
-cursively. The recursive structure uses a /year/<hash prefix>/<hash>-fi=
-lename structure to spread out the 1.8 million files more evenly.
-
-> The total amount of data is 1.0 TiB at the moment. The smallest files=
- are empty or just a few kilobytes. The mode of the filesizes is 180.98=
-4 bytes.
-
-> There is a second workload on the machine that has been running smoot=
-hly for a few weeks which backs up virtual machine images and creates a=
- somewhat similarly (but more consistent) hashed structure but doesn=E2=
-=80=99t use rsync but a more complex diff + content hashing + compressi=
-on approach. However, that other tool does emit write barriers here and=
- there -wWhich rsync doesn=E2=80=99t AFAIK.
-
-> I double checked, but the other workload was not active during my las=
-t lockup.
-
-> Happy to apply a debug patch to help diagnosing this.
-
-> Cheers,
-> Christian
-
-> --=20
-> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io=
-
-> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theu=
-ne, Christian Zagrodnick
-
+diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
+index 117266e1b3ae..28b41d5261f4 100644
+--- a/drivers/md/dm-vdo/dedupe.c
++++ b/drivers/md/dm-vdo/dedupe.c
+@@ -734,6 +734,7 @@ static void process_update_result(struct data_vio *agent)
+ 	    !change_context_state(context, DEDUPE_CONTEXT_COMPLETE, DEDUPE_CONTEXT_IDLE))
+ 		return;
+ 
++	agent->dedupe_context = NULL;
+ 	release_context(context);
+ }
+ 
+@@ -1653,6 +1654,7 @@ static void process_query_result(struct data_vio *agent)
+ 
+ 	if (change_context_state(context, DEDUPE_CONTEXT_COMPLETE, DEDUPE_CONTEXT_IDLE)) {
+ 		agent->is_duplicate = decode_uds_advice(context);
++		agent->dedupe_context = NULL;
+ 		release_context(context);
+ 	}
+ }
+@@ -2326,6 +2328,7 @@ static void timeout_index_operations_callback(struct vdo_completion *completion)
+ 		 * send its requestor on its way.
+ 		 */
+ 		list_del_init(&context->list_entry);
++		context->requestor->dedupe_context = NULL;
+ 		continue_data_vio(context->requestor);
+ 		timed_out++;
+ 	}
+-- 
+2.45.2
 
