@@ -1,130 +1,100 @@
-Received: from mail.stoffel.org (mail.stoffel.org [172.104.24.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D3EC18951F
-	for <dm-devel@lists.linux.dev>; Mon, 12 Aug 2024 18:37:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=172.104.24.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 44EEBC156
+	for <dm-devel@lists.linux.dev>; Mon, 12 Aug 2024 19:13:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723487843; cv=none; b=IL3avx9WtbSc4BeRNCuXvTAxx/QVjv0I7peKg7HUPmThbhCooPjX/Ya29JAfhpa3r9liyN5JfF9B+bQBF5vf9XSscOIJX9fcIKXQnSC8oEp+Nxfd2Vj0nfBkpDrOmneZAi4bmIjO/+NJ80Om/72JJ7A2lZt2ZBJwqmoGVvjrJSg=
+	t=1723490024; cv=none; b=O1gp7ulEuxi4URLTTEznPjd+t8r2sycheFToW/yQFfDBEbDRLIwYHpMq6llQOg+UvSpnY3aKKBoXezxpxmgVlax0WRfikD2BW7KY02KwI9HRz/bhpMJzmAooJzzJ2du/F2NBMr5at5qxRgldVEwolGYE7x94QxbnEG8RWxfmleM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723487843; c=relaxed/simple;
-	bh=N+6i5EwUSQ2uo26pWZiZNCy4GCz56QN66Udb1nfTArw=;
-	h=MIME-Version:Content-Type:Message-ID:Date:From:To:Cc:Subject:
-	 In-Reply-To:References; b=CqbRVOSAPk3P/Do9iRP/Ccsb6xLLdleaQmD/WncQIWufv2oBarcmPmSGyalybZEIpfKmtg3XxDYFkzmDyOi0KArYvcPRX+o4hUhvYFsvUXOnZ0teF2sLPKEECzLyAED03oUSUooK2vI+sNEH3oEHugg/i2KD0j7QjlkkTaM5eFU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org; spf=pass smtp.mailfrom=stoffel.org; arc=none smtp.client-ip=172.104.24.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stoffel.org
-Received: from quad.stoffel.org (syn-097-095-183-072.res.spectrum.com [97.95.183.72])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits))
-	(No client certificate requested)
-	by mail.stoffel.org (Postfix) with ESMTPSA id 25A181F3D6;
-	Mon, 12 Aug 2024 14:37:15 -0400 (EDT)
-Received: by quad.stoffel.org (Postfix, from userid 1000)
-	id CCCD3A08D2; Mon, 12 Aug 2024 14:37:14 -0400 (EDT)
+	s=arc-20240116; t=1723490024; c=relaxed/simple;
+	bh=uXutlcaNHk7eSVA2aFnCiyFf66uctLkjeJOsZtiHXk0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=pvHwoSSzLTcsIX0/Uga3eKPjxuoWMwaAQcKlrnLoHVUZMUwjgbJelaCG74uuIq/k3zPHoFJuyT7ResurCf9LSZbfxPqDLo9Ql0DIg6WQ6oE2nPMb3quT+O0ZPMAs5jAnqwP2S9W/MH+uVxqPnUFJcURmg2KSR7mtL+ZK41EiklE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mST3zu2U; arc=none smtp.client-ip=209.85.221.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mST3zu2U"
+Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-369c609d0c7so3340433f8f.3
+        for <dm-devel@lists.linux.dev>; Mon, 12 Aug 2024 12:13:42 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1723490021; x=1724094821; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=BBislmUkh7zm0mpkTc6hVg8PcphMtgEqYxchgcUMz/4=;
+        b=mST3zu2UdZHfDW/vGPmH9MhqUIVUx0YvET824ZsnBiq6oibo/nUaw/Hxw8rUHqi43P
+         /ry+dT8heDnT8P4oKJFFopkPWEoXzYD5xh36P3qhjm8ncD6aguzT/YSh8hf01WhGyw+4
+         IrI3Tf6Ph0grCA6wO1GuqEJbL470SasGiQxWjI3jzAiulkoAsHajoUCeeBIsw4X9yfvM
+         /P5ee7ONSqBwLz2XNouIYEGMCw1q/DWBfpYVRwMuSqy+VDXJ1J12t8p1IMVExAF8MbqN
+         aSZX7249oGi5FqriNoVnMRwsYpBBCyce0v6yZQuPwEvbYb3tHYyVZjjaE5cBNhJTLFPS
+         s0GQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1723490021; x=1724094821;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=BBislmUkh7zm0mpkTc6hVg8PcphMtgEqYxchgcUMz/4=;
+        b=ofxqDq0P5ltbM91hOaafX783pzV96/3OhavEHBfcpiuSWlJtoEvSW1jG0XhSY3Z/Y5
+         fpzLrbqQad1OvHKBZUte7P5Dh4kG3FjfYzo8eyGt+64v5kRT+D4mxHnEJiZuSfLCNnq1
+         OKW9nktNGxKxHKSTY6lx4trUVkj24Vs/a2xGWnnZLiofRp9otSAlAxcahgq0sFtkaoyS
+         UX2rWG6OABe/kwjMvgA1VBDnG/Qckg7geRzeokhzUTkHJTYA+zAv+Bk+0dWs/1R02b03
+         ObN8oGsYiAuIae3p7U9C8ih9rT13zBEsfqgpl5VEwGQE7T76DOibZm8pppbxPIqaAf92
+         Z5kg==
+X-Forwarded-Encrypted: i=1; AJvYcCXEJj929npR+Om4z5UT5ep520CsinOJb0xx8+RVfLjBJF+w8g6EJcrd8Bjvh2xpBJV1ObT57Cp1vRT6maeXSppXGDloINmfWlU=
+X-Gm-Message-State: AOJu0YyE3H+w/CgJ9N3rjPDZyUMgTgBxd7VtqOs0Cl/aTCaZIzG1hKzj
+	zNM7bAnBBoAaO95k8IXcdrrLAoa3QgZR/kpeMvngDRcWZzidhas=
+X-Google-Smtp-Source: AGHT+IFodHofAsrQb+bHS3S5/UTOs3+Cnrwfz2huXaXv0xNXRnsL67kZ2jVS7E0TCcQhqbWIiMrpFQ==
+X-Received: by 2002:a05:6000:10c5:b0:368:7868:2d76 with SMTP id ffacd0b85a97d-3716cd24e73mr1195666f8f.51.1723490020304;
+        Mon, 12 Aug 2024 12:13:40 -0700 (PDT)
+Received: from localhost (45.red-81-44-199.dynamicip.rima-tde.net. [81.44.199.45])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-36e4e51eb1bsm8169830f8f.86.2024.08.12.12.13.39
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 12 Aug 2024 12:13:39 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: [PATCH] multipath-tools: add more info about the tur checker to the man page
+Date: Mon, 12 Aug 2024 21:13:38 +0200
+Message-ID: <20240812191338.284581-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.46.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Message-ID: <26298.22106.810744.702395@quad.stoffel.home>
-Date: Mon, 12 Aug 2024 14:37:14 -0400
-From: "John Stoffel" <john@stoffel.org>
-To: Christian Theune <ct@flyingcircus.io>
-Cc: John Stoffel <john@stoffel.org>,
-    Yu Kuai <yukuai1@huaweicloud.com>,
-    "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
-    dm-devel@lists.linux.dev,
-    "yukuai (C)" <yukuai3@huawei.com>
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-In-Reply-To: <C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
-	<316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
-	<58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
-	<EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
-	<22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
-	<26291.57727.410499.243125@quad.stoffel.home>
-	<2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
-	<1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
-	<4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
-	<C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
-	<e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
-	<30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
-	<26294.40330.924457.532299@quad.stoffel.home>
-	<C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
-X-Mailer: VM 8.3.x under 28.2 (x86_64-pc-linux-gnu)
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
->>>>> "Christian" =3D=3D Christian Theune <ct@flyingcircus.io> writes:
+Hardware dependent, and only for SCSI devices.
 
-> Hi John,
-> Hi Yu,
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ multipath/multipath.conf.5.in | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
->> On 10. Aug 2024, at 00:51, John Stoffel <john@stoffel.org> wrote:
->>=20
->>>>>>> "Christian" =3D=3D Christian Theune <ct@flyingcircus.io> writes=
-:
->>=20
->>> Hi,
->>>> On 9. Aug 2024, at 03:13, Yu Kuai <yukuai1@huaweicloud.com> wrote:=
-
->>>>=20
->>>>=20
->>>> Yes, for sure IO are stuck in md127 and never get dispatched to nv=
-me,
->>>> for now I'll say this is a raid5 problem.
->>=20
->>> Note, that this is raid6, not raid5! Sorry, I never explicitly
->>> mentioned that and it was buried in the mdstat output.
->>=20
->> That's good info. =20
->>=20
->> I wonder if you could setup some loop devices, build a RAID6 array,
->> put XFS on it and try to replicate the problem by rsyncing a bunch o=
-f
->> files.=20
-
-> I was about to try this, but I=E2=80=99m wondering what backing devic=
-es you
-> had in mind here? If I place images for loop on the original
-> (defective) RAID 6 setup then this wouldn=E2=80=99t give us much info=
-.
-
-Just try it in RAM at first, if you can make it work.  Or put the
-files in /tmp which should be a tmpfs filesystem backed by swap.  =20
-
-> However, I could take the hot spare and run a sequence of tests
-> against that, first with a newer and potentially with an older
-> kernel if it doesn=E2=80=99t reproduce in its final form:
-
-That's one option of course. =20
-
-> - xfs directly on the nvme drive
-> - xfs on encrypted nvme drive
-> - xfs on raid 1 on nvme drive, split into two partitions
-> - xfs on raid 5 on nvme drive, split into a few partitions
-> - xfs on raid 6 on nvme drive, split into a few partitions
-> - repeat the tests with raid1/5//6 with encrypted partitions
-
-That's an awesome test setup to run through and might take a bunch of
-time. =20
-
-> As that will take some time and effort, I=E2=80=99d like to double ch=
-eck
-> whether that sounds sensible to you as well?
-
-I'd probably just do the RAID6 tests first, get them out of the way. =20=
-
-
-> --=20
-> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io=
-
-> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theu=
-ne, Christian Zagrodnick
-
+diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
+index e0794bac..f70cdc2f 100644
+--- a/multipath/multipath.conf.5.in
++++ b/multipath/multipath.conf.5.in
+@@ -526,7 +526,8 @@ second, until \fIchecker_timeout\fR seconds have elapsed. Possible values are:
+ deprecated, please use \fItur\fR or \fIdirectio\fR instead.
+ .TP
+ .I tur
+-Issue a \fITEST UNIT READY\fR command to the device.
++(Hardware-dependent)
++Issue a \fITEST UNIT READY\fR command to a SCSI device.
+ .TP
+ .I emc_clariion
+ (Hardware-dependent)
+-- 
+2.46.0
 
