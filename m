@@ -1,296 +1,111 @@
-Received: from mail.hallyn.com (mail.hallyn.com [178.63.66.53])
+Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30749433DD;
-	Sat, 10 Aug 2024 20:05:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.63.66.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E32401509BF
+	for <dm-devel@lists.linux.dev>; Mon, 12 Aug 2024 06:58:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723320332; cv=none; b=nz7IqkWxUDMONSIslL0HDVpshbPOCPo5ZE831tx117HGDO67C4mvNY6zmBKGcRZhxaY3dB7x/hRwlmKbM7VJQ8EgKec4CGtlXRSFi7gfvYaZsiomqRZ8a+a/ZtCOoWmnOuMODwu8ckm6/r7/7QIC0xm0y7tU6N9e8+i9kWbOQWY=
+	t=1723445918; cv=none; b=Ad/3vRdxRjo0mneh1y13neYHOR4WKxxrkAHa6FLnu3QDTuA4+SpHX2SXJ2VZj2MIr3VRkQoTh37kcp5oTAEzE4vDMW7RACo27d1ZhYjQz6HCIOMaWm1MB5RVscptJzbC/yIyygRfN8WgQh+EkgDiFpYJIrlu1sXzIA//HDAMsNA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723320332; c=relaxed/simple;
-	bh=V8k+LowYYOyKVujwCvCYLKZqEzPBWcRIa/WNWwRJxt4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=RuZ1e0SzYoqlrMN58IyV0KZX1Uw0UxC8tAfJrEex79KGqdMqt8C+Thm8OHiyJkDmFBqGcvmDrMtfKdM7aRXk5De6Kl0sZ+ns2GDe5nxnNCNoUA+dBRqyD8gEPWqg5vU0+c7i25TIg8+UWRDb4mkcsRO9G1dgC9Lnn6nD10zx140=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hallyn.com; spf=pass smtp.mailfrom=mail.hallyn.com; arc=none smtp.client-ip=178.63.66.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hallyn.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mail.hallyn.com
-Received: by mail.hallyn.com (Postfix, from userid 1001)
-	id 4E34950; Sat, 10 Aug 2024 15:05:26 -0500 (CDT)
-Date: Sat, 10 Aug 2024 15:05:26 -0500
-From: "Serge E. Hallyn" <serge@hallyn.com>
-To: Fan Wu <wufan@linux.microsoft.com>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org,
-	serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
-	axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org,
-	mpatocka@redhat.com, eparis@redhat.com, paul@paul-moore.com,
-	linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
-	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	audit@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Deven Bowers <deven.desai@linux.microsoft.com>
-Subject: Re: [PATCH v20 03/20] ipe: add evaluation loop
-Message-ID: <20240810200526.GA40028@mail.hallyn.com>
-References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
- <1722665314-21156-4-git-send-email-wufan@linux.microsoft.com>
+	s=arc-20240116; t=1723445918; c=relaxed/simple;
+	bh=ted9cOlCIvstDVE8stNtvqfrsmrHGXy1hBW2/+RcTDw=;
+	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
+	 Message-Id:References:To; b=Ihr9PDXm1jH1QpKXjo5Cl3qSbR0QNVWDBAivlCfZXwzM5PxjP7BuinAWEiBxN7AeDM89eV3hyu49oAtzaRVo6gepGRjpaigfUHeS+TScsOti4GbgMHPTBieHF/aIzP/ymW+sEoQj2L+OIC86ttLAITK/SUzS8slmlfZ4tuu4e7c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=July5Vvv; arc=none smtp.client-ip=212.122.41.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="July5Vvv"
+Content-Type: text/plain;
+	charset=utf-8
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
+	s=mail; t=1723445906;
+	bh=ted9cOlCIvstDVE8stNtvqfrsmrHGXy1hBW2/+RcTDw=;
+	h=Subject:From:In-Reply-To:Date:Cc:References:To;
+	b=July5Vvv3lGmK4vHAflgOqdgB0rue+U1k5BzF2KpxVXtPcFCR//HlVlTQa+6hXUIe
+	 fFQ19GQbbJDvOzZrHUH4YGhnRI9ecL3Wf5ffs00xhiR5ENiqU/4g1arDuLSn4FdJCf
+	 VjzJvbCrKFRX8zHebT8q7dPH3cGON6asc9Ub0mPg=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1722665314-21156-4-git-send-email-wufan@linux.microsoft.com>
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51\))
+Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
+ devices when rsyncing many files
+From: Christian Theune <ct@flyingcircus.io>
+In-Reply-To: <26294.40330.924457.532299@quad.stoffel.home>
+Date: Mon, 12 Aug 2024 08:58:05 +0200
+Cc: Yu Kuai <yukuai1@huaweicloud.com>,
+ "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+ dm-devel@lists.linux.dev,
+ "yukuai (C)" <yukuai3@huawei.com>
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
+References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
+ <316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
+ <58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
+ <EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
+ <22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
+ <26291.57727.410499.243125@quad.stoffel.home>
+ <2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
+ <1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
+ <4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
+ <C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
+ <e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
+ <30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
+ <26294.40330.924457.532299@quad.stoffel.home>
+To: John Stoffel <john@stoffel.org>
 
-On Fri, Aug 02, 2024 at 11:08:17PM -0700, Fan Wu wrote:
-> From: Deven Bowers <deven.desai@linux.microsoft.com>
-> 
-> Introduce a core evaluation function in IPE that will be triggered by
-> various security hooks (e.g., mmap, bprm_check, kexec). This function
-> systematically assesses actions against the defined IPE policy, by
-> iterating over rules specific to the action being taken. This critical
-> addition enables IPE to enforce its security policies effectively,
-> ensuring that actions intercepted by these hooks are scrutinized for policy
-> compliance before they are allowed to proceed.
-> 
-> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+Hi John,
+Hi Yu,
 
-(started at this longer than I care to admit)
+> On 10. Aug 2024, at 00:51, John Stoffel <john@stoffel.org> wrote:
+>=20
+>>>>>> "Christian" =3D=3D Christian Theune <ct@flyingcircus.io> writes:
+>=20
+>> Hi,
+>>> On 9. Aug 2024, at 03:13, Yu Kuai <yukuai1@huaweicloud.com> wrote:
+>>>=20
+>>>=20
+>>> Yes, for sure IO are stuck in md127 and never get dispatched to =
+nvme,
+>>> for now I'll say this is a raid5 problem.
+>=20
+>> Note, that this is raid6, not raid5! Sorry, I never explicitly
+>> mentioned that and it was buried in the mdstat output.
+>=20
+> That's good info. =20
+>=20
+> I wonder if you could setup some loop devices, build a RAID6 array,
+> put XFS on it and try to replicate the problem by rsyncing a bunch of
+> files.=20
 
-Reviewed-by: Serge Hallyn <serge@hallyn.com>
+I was about to try this, but I=E2=80=99m wondering what backing devices =
+you had in mind here? If I place images for loop on the original =
+(defective) RAID 6 setup then this wouldn=E2=80=99t give us much info.
 
-> 
-> ---
-> v2:
-> + Split evaluation loop, access control hooks, and evaluation loop from policy parser and userspace interface to pass mailing list character limit
-> 
-> v3:
-> + Move ipe_load_properties to patch 04.
-> + Remove useless 0-initializations Prefix extern variables with ipe_
-> + Remove kernel module parameters, as these are exposed through sysctls.
-> + Add more prose to the IPE base config option help text.
-> + Use GFP_KERNEL for audit_log_start.
-> + Remove unnecessary caching system.
-> + Remove comments from headers
-> + Use rcu_access_pointer for rcu-pointer null check
-> + Remove usage of reqprot; use prot only.
-> +Move policy load and activation audit event to 03/12
-> 
-> v4:
-> + Remove sysctls in favor of securityfs nodes
-> + Re-add kernel module parameters, as these are now exposed through securityfs.
-> + Refactor property audit loop to a separate function.
-> 
-> v5:
-> + fix minor grammatical errors
-> + do not group rule by curly-brace in audit record,
-> + reconstruct the exact rule.
-> 
-> v6:
-> + No changes
-> 
-> v7:
-> + Further split lsm creation into a separate commit from the evaluation loop and audit system, for easier review.
-> + Propagating changes to support the new ipe_context structure in the evaluation loop.
-> 
-> v8:
-> + Remove ipe_hook enumeration; hooks can be correlated via syscall record.
-> 
-> v9:
-> + Remove ipe_context related code and simplify the evaluation loop.
-> 
-> v10:
-> + Split eval part and boot_verified part
-> 
-> v11:
-> + Fix code style issues
-> 
-> v12:
-> + Correct an rcu_read_unlock usage
-> + Add a WARN to unknown op during evaluation
-> 
-> v13:
-> + No changes
-> 
-> v14:
-> + No changes
-> 
-> v15:
-> + No changes
-> 
-> v16:
-> + No changes
-> 
-> v17:
-> + Add years to license header
-> + Fix code and documentation style issues
-> 
-> v18:
-> + No changes
-> 
-> v19:
-> + No changes
-> 
-> v20:
-> + No changes
-> ---
->  security/ipe/Makefile |   1 +
->  security/ipe/eval.c   | 102 ++++++++++++++++++++++++++++++++++++++++++
->  security/ipe/eval.h   |  24 ++++++++++
->  3 files changed, 127 insertions(+)
->  create mode 100644 security/ipe/eval.c
->  create mode 100644 security/ipe/eval.h
-> 
-> diff --git a/security/ipe/Makefile b/security/ipe/Makefile
-> index 3093de1afd3e..4cc17eb92060 100644
-> --- a/security/ipe/Makefile
-> +++ b/security/ipe/Makefile
-> @@ -6,6 +6,7 @@
->  #
->  
->  obj-$(CONFIG_SECURITY_IPE) += \
-> +	eval.o \
->  	ipe.o \
->  	policy.o \
->  	policy_parser.o \
-> diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-> new file mode 100644
-> index 000000000000..f6a681ca49f6
-> --- /dev/null
-> +++ b/security/ipe/eval.c
-> @@ -0,0 +1,102 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * Copyright (C) 2020-2024 Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#include <linux/fs.h>
-> +#include <linux/types.h>
-> +#include <linux/slab.h>
-> +#include <linux/file.h>
-> +#include <linux/sched.h>
-> +#include <linux/rcupdate.h>
-> +
-> +#include "ipe.h"
-> +#include "eval.h"
-> +#include "policy.h"
-> +
-> +struct ipe_policy __rcu *ipe_active_policy;
-> +
-> +/**
-> + * evaluate_property() - Analyze @ctx against a rule property.
-> + * @ctx: Supplies a pointer to the context to be evaluated.
-> + * @p: Supplies a pointer to the property to be evaluated.
-> + *
-> + * This is a placeholder. The actual function will be introduced in the
-> + * latter commits.
-> + *
-> + * Return:
-> + * * %true	- The current @ctx match the @p
-> + * * %false	- The current @ctx doesn't match the @p
-> + */
-> +static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
-> +			      struct ipe_prop *p)
-> +{
-> +	return false;
-> +}
-> +
-> +/**
-> + * ipe_evaluate_event() - Analyze @ctx against the current active policy.
-> + * @ctx: Supplies a pointer to the context to be evaluated.
-> + *
-> + * This is the loop where all policy evaluations happen against the IPE policy.
-> + *
-> + * Return:
-> + * * %0		- Success
-> + * * %-EACCES	- @ctx did not pass evaluation
-> + */
-> +int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
-> +{
-> +	const struct ipe_op_table *rules = NULL;
-> +	const struct ipe_rule *rule = NULL;
-> +	struct ipe_policy *pol = NULL;
-> +	struct ipe_prop *prop = NULL;
-> +	enum ipe_action_type action;
-> +	bool match = false;
-> +
-> +	rcu_read_lock();
-> +
-> +	pol = rcu_dereference(ipe_active_policy);
-> +	if (!pol) {
-> +		rcu_read_unlock();
-> +		return 0;
-> +	}
-> +
-> +	if (ctx->op == IPE_OP_INVALID) {
-> +		if (pol->parsed->global_default_action == IPE_ACTION_DENY) {
-> +			rcu_read_unlock();
-> +			return -EACCES;
-> +		}
-> +		if (pol->parsed->global_default_action == IPE_ACTION_INVALID)
-> +			WARN(1, "no default rule set for unknown op, ALLOW it");
-> +		rcu_read_unlock();
-> +		return 0;
-> +	}
-> +
-> +	rules = &pol->parsed->rules[ctx->op];
-> +
-> +	list_for_each_entry(rule, &rules->rules, next) {
-> +		match = true;
-> +
-> +		list_for_each_entry(prop, &rule->props, next) {
-> +			match = evaluate_property(ctx, prop);
-> +			if (!match)
-> +				break;
-> +		}
-> +
-> +		if (match)
-> +			break;
-> +	}
-> +
-> +	if (match)
-> +		action = rule->action;
-> +	else if (rules->default_action != IPE_ACTION_INVALID)
-> +		action = rules->default_action;
-> +	else
-> +		action = pol->parsed->global_default_action;
-> +
-> +	rcu_read_unlock();
-> +	if (action == IPE_ACTION_DENY)
-> +		return -EACCES;
-> +
-> +	return 0;
-> +}
-> diff --git a/security/ipe/eval.h b/security/ipe/eval.h
-> new file mode 100644
-> index 000000000000..b137f2107852
-> --- /dev/null
-> +++ b/security/ipe/eval.h
-> @@ -0,0 +1,24 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
-> +/*
-> + * Copyright (C) 2020-2024 Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#ifndef _IPE_EVAL_H
-> +#define _IPE_EVAL_H
-> +
-> +#include <linux/file.h>
-> +#include <linux/types.h>
-> +
-> +#include "policy.h"
-> +
-> +extern struct ipe_policy __rcu *ipe_active_policy;
-> +
-> +struct ipe_eval_ctx {
-> +	enum ipe_op_type op;
-> +
-> +	const struct file *file;
-> +};
-> +
-> +int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
-> +
-> +#endif /* _IPE_EVAL_H */
-> -- 
-> 2.44.0
+However, I could take the hot spare and run a sequence of tests against =
+that, first with a newer and potentially with an older kernel if it =
+doesn=E2=80=99t reproduce in its final form:
+
+- xfs directly on the nvme drive
+- xfs on encrypted nvme drive
+- xfs on raid 1 on nvme drive, split into two partitions
+- xfs on raid 5 on nvme drive, split into a few partitions
+- xfs on raid 6 on nvme drive, split into a few partitions
+- repeat the tests with raid1/5//6 with encrypted partitions
+
+As that will take some time and effort, I=E2=80=99d like to double check =
+whether that sounds sensible to you as well?
+
+Cheers,
+Christian
+
+--=20
+Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
+Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
+Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
+HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
+Christian Zagrodnick
+
