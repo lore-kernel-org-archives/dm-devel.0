@@ -1,133 +1,96 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 358DB194C83
-	for <dm-devel@lists.linux.dev>; Mon, 12 Aug 2024 20:05:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 25BA874BE1
+	for <dm-devel@lists.linux.dev>; Mon, 12 Aug 2024 22:06:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723493138; cv=none; b=ObgJDlrPsWoSB8qMF5zRaOlq7CW4qnsnRIXPqYBXt64rqsimCp6J4u8AzWCyqUfvKYqtbUMlAQWdQHnnxq5+iUKT5nQdT23NU3sZv19aHYoTbJr5P7P3me08LjYrzsX1CPWke0tVCx+tTtfzK7EHRMsVFFvyYGlrLJrMU2bfmRM=
+	t=1723500404; cv=none; b=NLrO9alt7wZYDRFYb3ffMv63HBB8w1V5VOe2dVNpLGwK+NEsTjhB5nVUujP2uhVvHFdtV6wMhXQWkE7cfH3k1u88PRdIhwTuya6WnXBV3Byb+mC/V4nlb+0msf+L/8yiXOGlwhlivhPUEhkHGVhc6odJgjzf7HRrDBGS1ycC3YM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723493138; c=relaxed/simple;
-	bh=WRrerikHJ7lDi7b6+Dpa6zYefP4NDDrPv14XgRuKfyM=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=XB+TQ1IgjlfokBzk4p2wXlRMbU+R0Jn+qvt1BZDTgtrtmqk651Laq8xmiVVzNwjijxG4Z4/8EWLrOAQuRv5+hS//QD9TupMfk7UtZMcwPlLDoq99L3J9sCQaOyhum7S4sEOAdKbSn+4J2vw0vKJmYlLj77CNopBHu4snfEkzewU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=PhjBhoh7; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=PhjBhoh7; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1723500404; c=relaxed/simple;
+	bh=WYzThn+vv3XvBxUURNVNnLGK1qAs4dpwiouD4J/h7ZQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=K+iDQuAbJ/mmYqBeayKRgM1c94l027LkY+kswq9PLC3rG+hzqPUYEEXtHs4FJ2LdpgoX6AYxDNU9Xyp0GMgL3oIp8OZy0NhQ+o5vbRzVEnXg2u6+xpegFySna0rc+sbUEX4QoeeP5gaH7OSdryWN4Ydy8ZsDhoxTPv5sBgitJ8Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NsEsaHBk; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="PhjBhoh7";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="PhjBhoh7"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 14F27202D4;
-	Mon, 12 Aug 2024 20:05:34 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1723493134; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NsEsaHBk"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1723500400;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=WRrerikHJ7lDi7b6+Dpa6zYefP4NDDrPv14XgRuKfyM=;
-	b=PhjBhoh7Mil8o7x6Z+Q9e+iMXs4Vy7qe6Oiubmz/K7qQNcwVIzEz0Q+pQLKkGJxzHW8hYh
-	kN5q2Z4A68AMX0OFpNg7dVqCzmxOshSamOaXmxTZzPURJkqyoPfm+ihkH6QamQddx6QuHA
-	G91ZUQKbLk3z0Um0IfWYqC8iDWymaCw=
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1723493134; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=WRrerikHJ7lDi7b6+Dpa6zYefP4NDDrPv14XgRuKfyM=;
-	b=PhjBhoh7Mil8o7x6Z+Q9e+iMXs4Vy7qe6Oiubmz/K7qQNcwVIzEz0Q+pQLKkGJxzHW8hYh
-	kN5q2Z4A68AMX0OFpNg7dVqCzmxOshSamOaXmxTZzPURJkqyoPfm+ihkH6QamQddx6QuHA
-	G91ZUQKbLk3z0Um0IfWYqC8iDWymaCw=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=A01V0R6g3TcPXgAfebx4DHyesbgnRi9t5nzrSsGP5ps=;
+	b=NsEsaHBkvBdZYPCCFmWMziVUzf7LcAoeemELPHt4DqDynvRI3YKwnT5RleN/NYG8PbvMdJ
+	dXknkVcqfiritppYy1o4hWDNGXWZAl3Z4mQqU98AWHk/aD10GSHZzLSoLgoiCQHOmWdjQt
+	vEU1GQ7Z+etZHcjG6uYx+6Ir1gJnA8Q=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-250-MQd4KWsdOL69_948Pca3LQ-1; Mon,
+ 12 Aug 2024 18:06:34 -0400
+X-MC-Unique: MQd4KWsdOL69_948Pca3LQ-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id D8E3C13983;
-	Mon, 12 Aug 2024 20:05:33 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id 0DALMw1rumaNcwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 12 Aug 2024 20:05:33 +0000
-Message-ID: <faefa584f2536773402be7b765277d3401fffa79.camel@suse.com>
-Subject: Re: [PATCH] multipath-tools: add more info about the tur checker to
- the man page
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
-Date: Mon, 12 Aug 2024 22:05:33 +0200
-In-Reply-To: <20240812191338.284581-1-xose.vazquez@gmail.com>
-References: <20240812191338.284581-1-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.3 
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BBC8F1954B0F;
+	Mon, 12 Aug 2024 22:06:30 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4EB0419560AA;
+	Mon, 12 Aug 2024 22:06:30 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 47CM6Smr3457818
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 12 Aug 2024 18:06:28 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 47CM6SOo3457817;
+	Mon, 12 Aug 2024 18:06:28 -0400
+Date: Mon, 12 Aug 2024 18:06:28 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev
+Subject: Re: [PATCH 00/41] multipath-tools: comply with C library reserved
+ names
+Message-ID: <ZrqHZDgAZ6C7pokR@redhat.com>
+References: <20240808152620.93965-1-mwilck@suse.com>
+ <ZrZcgEz8dHRvyXk-@redhat.com>
+ <89cc73933e550cb26a380296f2f84d81cb062ba0.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Score: -2.80
-X-Spamd-Result: default: False [-2.80 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MID_RHS_MATCH_FROM(0.00)[];
-	FREEMAIL_TO(0.00)[gmail.com];
-	ARC_NA(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	TO_DN_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email]
-X-Spam-Flag: NO
-X-Spam-Level: 
+In-Reply-To: <89cc73933e550cb26a380296f2f84d81cb062ba0.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Mon, 2024-08-12 at 21:13 +0200, Xose Vazquez Perez wrote:
-> Hardware dependent, and only for SCSI devices.
->=20
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+On Mon, Aug 12, 2024 at 06:44:54PM +0200, Martin Wilck wrote:
+> On Fri, 2024-08-09 at 14:14 -0400, Benjamin Marzinski wrote:
+> > 
+> > Despite some small misgivings about renaming symbols (which quite
+> > possibly aren't being used by anyone) in our user-facing libraries,
+> > libpmathpersist and libmpathcmd, for the set:
+> 
+> As the functions are only renamed, we could use (weak) aliases here to
+> still provide the old function names if some caller requires them.
+> Would you prefer that?
+> 
+> We'd still be violating the glibc standards somewhat, but the
+> probability for an actual symbol name clash is very low, so I guess it
+> would be acceptable to do this in the name of backward compatibility.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+While it's not that big of a deal, I do think we should prioritize
+backwards compatibility over this level of standards compliance.
 
-> ---
-> =C2=A0multipath/multipath.conf.5.in | 3 ++-
-> =C2=A01 file changed, 2 insertions(+), 1 deletion(-)
->=20
-> diff --git a/multipath/multipath.conf.5.in
-> b/multipath/multipath.conf.5.in
-> index e0794bac..f70cdc2f 100644
-> --- a/multipath/multipath.conf.5.in
-> +++ b/multipath/multipath.conf.5.in
-> @@ -526,7 +526,8 @@ second, until \fIchecker_timeout\fR seconds have
-> elapsed. Possible values are:
-> =C2=A0deprecated, please use \fItur\fR or \fIdirectio\fR instead.
-> =C2=A0.TP
-> =C2=A0.I tur
-> -Issue a \fITEST UNIT READY\fR command to the device.
-> +(Hardware-dependent)
-> +Issue a \fITEST UNIT READY\fR command to a SCSI device.
-> =C2=A0.TP
-> =C2=A0.I emc_clariion
-> =C2=A0(Hardware-dependent)
+-Ben
+
+> 
+> Martin
 
