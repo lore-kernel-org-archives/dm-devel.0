@@ -1,154 +1,106 @@
-Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com [209.85.208.53])
+Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1EBB817F4F2
-	for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 09:41:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 557218BF3
+	for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 09:43:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723542107; cv=none; b=oPRWsmup9wLghUFT7xBYuofgS0PjzVgoWbtuZ/quC1ISHWhl9/RlRZ6sbil67u8B5nZ8zAmi/gKjSe5C6HwPDpCwP3LcSyUxA+qLpojwKdFP+8OXZlGV7Uj+0Yh8NXBm5quSG6Y4klg/hg5Letr48FOfgn6GG79r5dW1ga03f0w=
+	t=1723542195; cv=none; b=WrHvMEAH5OaGdKRQZQTxELkahI/gTFTPxs62RAJsSjMk1Sf3fYpmzLKCxo+eYIeBoi7H+waQFLX/oTbYfF/2AzBSsEnG3LUvvVvLGXbVPscY126CTYRSMzf/vDpnUFitfmElpLTlJSF5t0ZgOPVC9AHGX6xUllnLQrNIIYl4cF8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723542107; c=relaxed/simple;
-	bh=/gzGlUvORML+is9M3KbAn37aGUlG05wEhs98rAuUbwA=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lvEuJY4lEP2Sx5mB+kcTybk2I8WkvG+e4TD7vbcSN+tAbe5ePQAgSrijdAgSexeyLnhEHwB8TNO08unlUMKAcQWgw6SWO+RKZPy4tGpH6ZAMOt9ffIaXhh6sSf1YH5Z7QSX7OrfsNs/1IoysP7+dD8+bKnZOlfTWi6vSx9sbdKY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=aAeGvr8t; arc=none smtp.client-ip=209.85.208.53
+	s=arc-20240116; t=1723542195; c=relaxed/simple;
+	bh=fNFD50OxzpsuSsU83tTKZYbfG1MPV+n2WBzUCTiSq1g=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=EJ6BZHregUvZOaAn0+txS/KPhXWjPKkWQCQyBQ07YIscsMiEN73Dsng6SLs+kfodP90yve3TuJ6yqAQ/ztoyAt6qlTEQmweaZ+0JP5wdjh5D+Hp+CiaeVxrhOlPXFic0JomPqOgtvI09lSK0eedRKecq2Byi+AmeZZWTQzPI1V8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=eH1C6CbL; arc=none smtp.client-ip=209.85.208.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="aAeGvr8t"
-Received: by mail-ed1-f53.google.com with SMTP id 4fb4d7f45d1cf-5a1337cfbb5so6968421a12.3
-        for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 02:41:44 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="eH1C6CbL"
+Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-5bb477e3a6dso5060991a12.0
+        for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 02:43:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723542103; x=1724146903; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=jncRdj7NKphL0xOwvljwl0SQ+kZOAF6WY9y4OO+eay8=;
-        b=aAeGvr8twhBs8OUPwGag4cMg63CNK8jO12JZPAIb/FtkBKpkoTMAmsboKI/TK/dl1C
-         qxRbtygbQ6fnzekiyUgT/l9lV3eem5VqMgaQLf3bJ/ziJ6V3sflz4Mj/iuGJXg99wxz7
-         exB8PTjvE4ixAfD81zJZniEcZYhlOt/URxpAfkOnYl38qkGvsXPwbv4DPdA+qklccg4D
-         yKjfcWgsHvkeesMihK7KldOUHn351h8mDpxtYkWMVMn3or7d0exFaCWA8IwtO2OSYoQ9
-         Ti2lV2MfKfWu/pfQ4OSbYz5D6sKz7cM/lIegcxIZX0W7/IQ0dvs/Y5Nv3AV+yug3IIPi
-         9W4g==
+        d=suse.com; s=google; t=1723542192; x=1724146992; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=xu277OY4oWJOt5FWIKRz6zqj81YJDYp9wdM/kepwK08=;
+        b=eH1C6CbLEzfM/qUYUWQW2iZuOOxRK59/8U1Ji+nkCoeWI1PAhz5dmUKoXNA0PzxHCB
+         AVf7iKCXz9bEMV0YMpGzNhxbPqCwC5+V7g9FCcPsYbEjlQ5D+2Vga1iwnI5Sd4lgsMYy
+         S1ziQA4xjf1Dn4cvbYad2jCSqtpu6L6pzWvX2yAd06rxrzBZFw3U6PP7SyOhX00kWP9c
+         gQSHZWgluQ5031y0kb8Ys3vZXE4jEG7489fOk7eIsbU7MDL8UNnDF2blCWq7HhZ2rqP4
+         w9BM74fM4US1DvOkIcMJwNrNsSn+Gx64P81TB0V31bHNpZHNBAFf0Sk21ZVvV74m5NjR
+         JLqQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723542103; x=1724146903;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=jncRdj7NKphL0xOwvljwl0SQ+kZOAF6WY9y4OO+eay8=;
-        b=LJVI9egmXm87t5tonoWAYboQOXXH6gdhA4SWqLEarACa3J/o3SzjVxb6SEA1c45nMR
-         eFSMAPeKAHHghfBQU6u9Tno1iiNh7u6lpYAu5AhjLJpGnWk5UfLFQP2ve7v/MP77cdTX
-         LN/xjs/jh1/X02stvmXTiy1jJ5dD7hNClFLIjZWunt6kmyp13WjuHUF85Z/tscqkl/jO
-         YNuFru+hH9uPw9f9lE9K8L9Bcq1ZV4hLOF0xEqaL0IwPLILCXHX2iXmj2Zgvlm3FE6Z7
-         3WGIXhILu/XXF5EkeHG/t1QgA/1VDGAscdmmP54sDt7EMYgBP6yyGPjcf6pZKXkhvkYJ
-         XMwA==
-X-Gm-Message-State: AOJu0YxodBN2QjhbQ6sNd5a9nxvieNfkqrX9oSEg8SXyVMr32VtMDX35
-	E6oqoQ41fgqSBGrwWtV/AkXndl3MpAxCQPMM0JdJy+q3D80UowhNStvW+ZjOhFg=
-X-Google-Smtp-Source: AGHT+IGLRRwFs1ebEZHSUsXHRHxjwRT2rq01Psfynrn9++kiloy8mmdKC2Hq6mT6Zi2c67BJhVt1yA==
-X-Received: by 2002:a17:907:c8a9:b0:a7a:9447:3e8b with SMTP id a640c23a62f3a-a80ed1c2388mr230959566b.25.1723542102916;
-        Tue, 13 Aug 2024 02:41:42 -0700 (PDT)
-Received: from localhost (p200300de37360a00e6b318fffe37a690.dip0.t-ipconnect.de. [2003:de:3736:a00:e6b3:18ff:fe37:a690])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a80f3feab58sm54534566b.95.2024.08.13.02.41.42
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 13 Aug 2024 02:41:42 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1723542192; x=1724146992;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=xu277OY4oWJOt5FWIKRz6zqj81YJDYp9wdM/kepwK08=;
+        b=Db/qRbNJgWefq+ImH+8aNRI/NMkiJFn2VreHmYdW9cn5mzzS1dah2J16navQZZhtHn
+         WD62HZXzovaA43HeGfcCA7DAvjEXkVdFVeDaGJUH64pMkQEN/TA0CWytC56YCG08W4/Q
+         s/mLyjy/28+N+Xd+CNSvduhewIgk6BaVP5EyM/G5G5cPcd+OqwzojFs+VLUi8ZNY7oMk
+         TlKPCnFa4nhfFmNP+DRkFryLabmbXjQN7rjR+2X3uZ1Zj229XJoVR7Ni/Ki9LSff3k0v
+         DvmfnqNBJzFQBUhJWbQ9YMd5CEXAEEYVJci+sRkvAMsVNKpVzSeA7+rWJK/ffaM3ouW4
+         KkhA==
+X-Forwarded-Encrypted: i=1; AJvYcCXQo7mANC7g+lYLDl8axWBTidhSl1pVLsTOl6yjqmxkXMGIPisVEftOj2NHjc/x/M9aoXUdOHRcZ1s6FLk9IYjPw67xhixi4GQ=
+X-Gm-Message-State: AOJu0YyvG1a9m7yHmlxZ8hbmnHCqbXS+n+uPE5Q4mer8bNOuN8vFrMNN
+	7dfW3mRVt/zPnetalXCbBwTB14otDCHa98+j65QPwL96fqPrmPWmel6UvTdbzuQ=
+X-Google-Smtp-Source: AGHT+IESueDYFz/aB+/xnlGaJQV/VC7K2zzYo/BsYMgRSKFtRCbEZ1zE5U4xkLQjq1XWYjRCmGxdNA==
+X-Received: by 2002:a05:6402:354f:b0:5a1:7570:8914 with SMTP id 4fb4d7f45d1cf-5bd44c27370mr2121597a12.11.1723542191315;
+        Tue, 13 Aug 2024 02:43:11 -0700 (PDT)
+Received: from ?IPv6:2003:de:3736:a00:e6b3:18ff:fe37:a690? (p200300de37360a00e6b318fffe37a690.dip0.t-ipconnect.de. [2003:de:3736:a00:e6b3:18ff:fe37:a690])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5bd1a60214dsm2762089a12.91.2024.08.13.02.43.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 13 Aug 2024 02:43:11 -0700 (PDT)
+Message-ID: <61f99010436e6fd8f07e1592294de11bde2a28c8.camel@suse.com>
+Subject: Re: [PATCH 00/41] multipath-tools: comply with C library reserved
+ names
 From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/2] libmpathpersist: reinstate ABI 2.1.0
-Date: Tue, 13 Aug 2024 11:40:46 +0200
-Message-ID: <20240813094046.21644-2-mwilck@suse.com>
-X-Mailer: git-send-email 2.46.0
-In-Reply-To: <20240813094046.21644-1-mwilck@suse.com>
-References: <20240813094046.21644-1-mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
+	dm-devel@lists.linux.dev
+Date: Tue, 13 Aug 2024 11:43:09 +0200
+In-Reply-To: <ZrqHZDgAZ6C7pokR@redhat.com>
+References: <20240808152620.93965-1-mwilck@suse.com>
+	 <ZrZcgEz8dHRvyXk-@redhat.com>
+	 <89cc73933e550cb26a380296f2f84d81cb062ba0.camel@suse.com>
+	 <ZrqHZDgAZ6C7pokR@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-__mpath_persistent_reserve_{in,out}() were part of our public ABI. Instead of
-removing them completely, define it as a weak aliases.
-This way, programs linked against previous versions of libmpathpersist
-will continue to work.
+On Mon, 2024-08-12 at 18:06 -0400, Benjamin Marzinski wrote:
+> On Mon, Aug 12, 2024 at 06:44:54PM +0200, Martin Wilck wrote:
+> > On Fri, 2024-08-09 at 14:14 -0400, Benjamin Marzinski wrote:
+> > >=20
+> > > Despite some small misgivings about renaming symbols (which quite
+> > > possibly aren't being used by anyone) in our user-facing
+> > > libraries,
+> > > libpmathpersist and libmpathcmd, for the set:
+> >=20
+> > As the functions are only renamed, we could use (weak) aliases here
+> > to
+> > still provide the old function names if some caller requires them.
+> > Would you prefer that?
+> >=20
+> > We'd still be violating the glibc standards somewhat, but the
+> > probability for an actual symbol name clash is very low, so I guess
+> > it
+> > would be acceptable to do this in the name of backward
+> > compatibility.
+>=20
+> While it's not that big of a deal, I do think we should prioritize
+> backwards compatibility over this level of standards compliance.
 
-This shouldn't interfere with general symbol naming rules, as a weak
-symbol won't override a library symbol of the same name.
+Ok. Sending patches right now. I've given them quick tests with  qemu-
+pr-helper and some trivial test program that use the "old" ABI, but I'd
+be grateful if you could double-check.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmpathpersist/libmpathpersist.version | 17 ++++++++++++-----
- libmpathpersist/mpath_persist.c         |  6 ++++++
- 2 files changed, 18 insertions(+), 5 deletions(-)
-
-diff --git a/libmpathpersist/libmpathpersist.version b/libmpathpersist/libmpathpersist.version
-index f467d99..c7ddafb 100644
---- a/libmpathpersist/libmpathpersist.version
-+++ b/libmpathpersist/libmpathpersist.version
-@@ -10,23 +10,30 @@
-  *
-  * See libmultipath.version for general policy about version numbers.
-  */
--LIBMPATHPERSIST_3.0.0 {
-+/* Previous API for backward compatibility */
-+LIBMPATHPERSIST_2.1.0 {
- global:
--	/* public API as defined in mpath_persist.h */
- 	libmpathpersist_exit;
- 	libmpathpersist_init;
- 	mpath_lib_exit;
- 	mpath_lib_init;
- 	mpath_mx_alloc_len;
- 	mpath_persistent_reserve_free_vecs;
--	mpath_persistent_reserve_in__;
-+	__mpath_persistent_reserve_in;
- 	mpath_persistent_reserve_in;
- 	mpath_persistent_reserve_init_vecs;
--	mpath_persistent_reserve_out__;
-+	__mpath_persistent_reserve_out;
- 	mpath_persistent_reserve_out;
--local: *;
-+local:
-+	*;
- };
- 
-+LIBMPATHPERSIST_2.2.0 {
-+global:
-+	mpath_persistent_reserve_in__;
-+	mpath_persistent_reserve_out__;
-+} LIBMPATHPERSIST_2.1.0;
-+
- __LIBMPATHPERSIST_INT_1.0.0 {
- 	/* Internal use by multipath-tools */
- 	dumpHex;
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index ace91d7..f5267eb 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -127,6 +127,8 @@ int mpath_persistent_reserve_in__(int fd, int rq_servact,
- 					      resp, noisy);
- }
- 
-+extern int __mpath_persistent_reserve_in(int, int, struct prin_resp *, int)
-+	__attribute__((weak, alias("mpath_persistent_reserve_in__")));
- 
- int mpath_persistent_reserve_out__( int fd, int rq_servact, int rq_scope,
- 	unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy)
-@@ -136,6 +138,10 @@ int mpath_persistent_reserve_out__( int fd, int rq_servact, int rq_scope,
- 					       noisy);
- }
- 
-+extern int __mpath_persistent_reserve_out(int, int, int, unsigned int,
-+					  struct prout_param_descriptor *, int)
-+	__attribute__((weak, alias("mpath_persistent_reserve_out__")));
-+
- int mpath_persistent_reserve_in (int fd, int rq_servact,
- 	struct prin_resp *resp, int noisy, int verbose)
- {
--- 
-2.46.0
+Martin
 
