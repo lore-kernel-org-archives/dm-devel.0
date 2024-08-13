@@ -1,70 +1,68 @@
-Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 557218BF3
-	for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 09:43:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5865D18F2D4
+	for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 10:17:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723542195; cv=none; b=WrHvMEAH5OaGdKRQZQTxELkahI/gTFTPxs62RAJsSjMk1Sf3fYpmzLKCxo+eYIeBoi7H+waQFLX/oTbYfF/2AzBSsEnG3LUvvVvLGXbVPscY126CTYRSMzf/vDpnUFitfmElpLTlJSF5t0ZgOPVC9AHGX6xUllnLQrNIIYl4cF8=
+	t=1723544277; cv=none; b=CfYcA7Gq2BdkmAUO56Nb60NVbTTqE4gkV1o7YldMPJNeSxNSIVJxLsEdlCFd0WUYG7tbwrOgT83q/bpqTxcQ91XXVP/AhVJa2K9XuwtOM1hHTfIB0A81OS9DZQJ11i6TrLHS25KkQCuBRZ4bIym7QfgQhcgMWq7tH+kZg7sgPe0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723542195; c=relaxed/simple;
-	bh=fNFD50OxzpsuSsU83tTKZYbfG1MPV+n2WBzUCTiSq1g=;
+	s=arc-20240116; t=1723544277; c=relaxed/simple;
+	bh=KlRCIrmS/69Wi74Y0ZUNYcmqEmRp8d9UeFgmeZ3clE8=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=EJ6BZHregUvZOaAn0+txS/KPhXWjPKkWQCQyBQ07YIscsMiEN73Dsng6SLs+kfodP90yve3TuJ6yqAQ/ztoyAt6qlTEQmweaZ+0JP5wdjh5D+Hp+CiaeVxrhOlPXFic0JomPqOgtvI09lSK0eedRKecq2Byi+AmeZZWTQzPI1V8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=eH1C6CbL; arc=none smtp.client-ip=209.85.208.46
+	 Content-Type:MIME-Version; b=Q12bVDN+URDVz3aygG2Nlf+RHvIij4fDgnxVgAMhKluzqxYJ1eE+5DLMi3W+sL3ae4URT3yfEWmgflDvEWrobF9PErEz45uqJt3yPLPzle3hecIucgPLZ1KILr1Qdmm48603GlWl6VV/x5eT8M5OGpXaBREAIi4ypuY37P8axns=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=m411JSBd; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=m411JSBd; arc=none smtp.client-ip=195.135.223.130
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="eH1C6CbL"
-Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-5bb477e3a6dso5060991a12.0
-        for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 02:43:13 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1723542192; x=1724146992; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=xu277OY4oWJOt5FWIKRz6zqj81YJDYp9wdM/kepwK08=;
-        b=eH1C6CbLEzfM/qUYUWQW2iZuOOxRK59/8U1Ji+nkCoeWI1PAhz5dmUKoXNA0PzxHCB
-         AVf7iKCXz9bEMV0YMpGzNhxbPqCwC5+V7g9FCcPsYbEjlQ5D+2Vga1iwnI5Sd4lgsMYy
-         S1ziQA4xjf1Dn4cvbYad2jCSqtpu6L6pzWvX2yAd06rxrzBZFw3U6PP7SyOhX00kWP9c
-         gQSHZWgluQ5031y0kb8Ys3vZXE4jEG7489fOk7eIsbU7MDL8UNnDF2blCWq7HhZ2rqP4
-         w9BM74fM4US1DvOkIcMJwNrNsSn+Gx64P81TB0V31bHNpZHNBAFf0Sk21ZVvV74m5NjR
-         JLqQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723542192; x=1724146992;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=xu277OY4oWJOt5FWIKRz6zqj81YJDYp9wdM/kepwK08=;
-        b=Db/qRbNJgWefq+ImH+8aNRI/NMkiJFn2VreHmYdW9cn5mzzS1dah2J16navQZZhtHn
-         WD62HZXzovaA43HeGfcCA7DAvjEXkVdFVeDaGJUH64pMkQEN/TA0CWytC56YCG08W4/Q
-         s/mLyjy/28+N+Xd+CNSvduhewIgk6BaVP5EyM/G5G5cPcd+OqwzojFs+VLUi8ZNY7oMk
-         TlKPCnFa4nhfFmNP+DRkFryLabmbXjQN7rjR+2X3uZ1Zj229XJoVR7Ni/Ki9LSff3k0v
-         DvmfnqNBJzFQBUhJWbQ9YMd5CEXAEEYVJci+sRkvAMsVNKpVzSeA7+rWJK/ffaM3ouW4
-         KkhA==
-X-Forwarded-Encrypted: i=1; AJvYcCXQo7mANC7g+lYLDl8axWBTidhSl1pVLsTOl6yjqmxkXMGIPisVEftOj2NHjc/x/M9aoXUdOHRcZ1s6FLk9IYjPw67xhixi4GQ=
-X-Gm-Message-State: AOJu0YyvG1a9m7yHmlxZ8hbmnHCqbXS+n+uPE5Q4mer8bNOuN8vFrMNN
-	7dfW3mRVt/zPnetalXCbBwTB14otDCHa98+j65QPwL96fqPrmPWmel6UvTdbzuQ=
-X-Google-Smtp-Source: AGHT+IESueDYFz/aB+/xnlGaJQV/VC7K2zzYo/BsYMgRSKFtRCbEZ1zE5U4xkLQjq1XWYjRCmGxdNA==
-X-Received: by 2002:a05:6402:354f:b0:5a1:7570:8914 with SMTP id 4fb4d7f45d1cf-5bd44c27370mr2121597a12.11.1723542191315;
-        Tue, 13 Aug 2024 02:43:11 -0700 (PDT)
-Received: from ?IPv6:2003:de:3736:a00:e6b3:18ff:fe37:a690? (p200300de37360a00e6b318fffe37a690.dip0.t-ipconnect.de. [2003:de:3736:a00:e6b3:18ff:fe37:a690])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5bd1a60214dsm2762089a12.91.2024.08.13.02.43.10
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 13 Aug 2024 02:43:11 -0700 (PDT)
-Message-ID: <61f99010436e6fd8f07e1592294de11bde2a28c8.camel@suse.com>
-Subject: Re: [PATCH 00/41] multipath-tools: comply with C library reserved
- names
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
-	dm-devel@lists.linux.dev
-Date: Tue, 13 Aug 2024 11:43:09 +0200
-In-Reply-To: <ZrqHZDgAZ6C7pokR@redhat.com>
-References: <20240808152620.93965-1-mwilck@suse.com>
-	 <ZrZcgEz8dHRvyXk-@redhat.com>
-	 <89cc73933e550cb26a380296f2f84d81cb062ba0.camel@suse.com>
-	 <ZrqHZDgAZ6C7pokR@redhat.com>
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="m411JSBd";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="m411JSBd"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 6B63C22773;
+	Tue, 13 Aug 2024 10:17:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1723544272; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=KlRCIrmS/69Wi74Y0ZUNYcmqEmRp8d9UeFgmeZ3clE8=;
+	b=m411JSBdEa9LB2JNm38wKxfLBA3uhe3l3ZmxtpDG9PbljO9FqhdDa+oLNzuFiHJCF4Q4+r
+	/mmke3NWG9TEV5F8WFLhIimJ70AwxGc/1rvNA52GHkprFniQ1/DseEW17gbKwP/WoKs9l8
+	Aiw5VmaS3Uqa3qVQpAiU/oM1hZALZjE=
+Authentication-Results: smtp-out1.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=m411JSBd
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1723544272; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=KlRCIrmS/69Wi74Y0ZUNYcmqEmRp8d9UeFgmeZ3clE8=;
+	b=m411JSBdEa9LB2JNm38wKxfLBA3uhe3l3ZmxtpDG9PbljO9FqhdDa+oLNzuFiHJCF4Q4+r
+	/mmke3NWG9TEV5F8WFLhIimJ70AwxGc/1rvNA52GHkprFniQ1/DseEW17gbKwP/WoKs9l8
+	Aiw5VmaS3Uqa3qVQpAiU/oM1hZALZjE=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 3FC4213983;
+	Tue, 13 Aug 2024 10:17:52 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id RHGwDdAyu2bHVwAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Tue, 13 Aug 2024 10:17:52 +0000
+Message-ID: <7b7b84b847949819d11ef7b88a5fbf4c5c557d0c.camel@suse.com>
+Subject: Re: [PATCH v3] multipath: display the correct configuration when
+ dumpping config
+From: Martin Wilck <mwilck@suse.com>
+To: 303146950@qq.com, dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com, Kou Wenqi <kouwenqi@kylinos.cn>
+Date: Tue, 13 Aug 2024 12:17:51 +0200
+In-Reply-To: <tencent_C349DF9EE757FA8936E17CE2F90388B8B909@qq.com>
+References: <26f4b0532302bfff61bac465d9f97b8215c30d78.camel@suse.com>
+	 <tencent_C349DF9EE757FA8936E17CE2F90388B8B909@qq.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.52.3 
@@ -74,33 +72,49 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Rspamd-Queue-Id: 6B63C22773
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Spamd-Result: default: False [-6.42 / 50.00];
+	BAYES_HAM(-2.91)[99.61%];
+	DWL_DNSWL_MED(-2.00)[suse.com:dkim];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	FREEMAIL_TO(0.00)[qq.com,lists.linux.dev];
+	TO_DN_SOME(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FREEMAIL_ENVRCPT(0.00)[qq.com];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:mid,suse.com:email,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	DKIM_TRACE(0.00)[suse.com:+]
+X-Spam-Score: -6.42
+X-Rspamd-Action: no action
+X-Spam-Flag: NO
+X-Spam-Level: 
 
-On Mon, 2024-08-12 at 18:06 -0400, Benjamin Marzinski wrote:
-> On Mon, Aug 12, 2024 at 06:44:54PM +0200, Martin Wilck wrote:
-> > On Fri, 2024-08-09 at 14:14 -0400, Benjamin Marzinski wrote:
-> > >=20
-> > > Despite some small misgivings about renaming symbols (which quite
-> > > possibly aren't being used by anyone) in our user-facing
-> > > libraries,
-> > > libpmathpersist and libmpathcmd, for the set:
-> >=20
-> > As the functions are only renamed, we could use (weak) aliases here
-> > to
-> > still provide the old function names if some caller requires them.
-> > Would you prefer that?
-> >=20
-> > We'd still be violating the glibc standards somewhat, but the
-> > probability for an actual symbol name clash is very low, so I guess
-> > it
-> > would be acceptable to do this in the name of backward
-> > compatibility.
+On Tue, 2024-08-13 at 10:12 +0800, 303146950@qq.com wrote:
+> From: Kou Wenqi <kouwenqi@kylinos.cn>
 >=20
-> While it's not that big of a deal, I do think we should prioritize
-> backwards compatibility over this level of standards compliance.
+> Thanks for your review and revised opinion. Here is the new patch.
+>=20
+> "multipath -t" and "multipath -T" might show the wrong
+> multipathd configuration items "retrigger_tries" and
+> "force_sync". Make sure they don't.
+>=20
+> Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
+>=20
 
-Ok. Sending patches right now. I've given them quick tests with  qemu-
-pr-helper and some trivial test program that use the "old" ABI, but I'd
-be grateful if you could double-check.
-
-Martin
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
