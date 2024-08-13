@@ -1,58 +1,64 @@
-Received: from out162-62-57-210.mail.qq.com (out162-62-57-210.mail.qq.com [162.62.57.210])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f46.google.com (mail-ej1-f46.google.com [209.85.218.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FAD91862A
-	for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 02:13:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=162.62.57.210
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35F49183CA6
+	for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 09:41:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723515186; cv=none; b=nOtRKm5jrRq5X5JaTsAKP30SPO2mpP4AYkUoyJ1kNvOInDs4kBR6HkGOgpCcn70znifp8bTld/i1jSmH5V6ozVBfi3pTOvkj9Xc3s7whQkPb1kEpIKRrqhdRexttZJJgwF7dPBPW9vBPGG2j6WQ/dBh+Nn8bb2Ha2ktUDYLGAjw=
+	t=1723542106; cv=none; b=CZoGEnzyv50xqEI+B3QrGGl1cxngpDNy8De/ez0koT6o/2R5AbzEwe18jjnxifEXv+KgFPTo/3JuHCGrc4+1zEx6IJAtbzeAB7iF8j2orBzK2kAicISWFNWiWy+isntoIsPgUVjYyMWXZoR8WHdSC5J1M8ANiOKYVPqYgBxk4bk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723515186; c=relaxed/simple;
-	bh=ttgnl92IAANDYNOpO2ElvOSEP7rQWixwkptZL2uPqkg=;
-	h=Message-ID:From:To:Cc:Subject:Date:In-Reply-To:References:
-	 MIME-Version; b=iTPCr3YCpfSOSUiN876GlBjp7lB/Fdk70j505LBiFcr3Z79BemNs4hQjrfyS0eqlfq07ukgFjXd0pkLq/HzM78O84vceBGqk5prIIPa0MMRCwg5odXxyyhUrGmzX0JX7zHQnMTg+szpDiU4bL9ESu4ndMOLMzJ9ahS9UPe2vaUU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=G3yZU89+; arc=none smtp.client-ip=162.62.57.210
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+	s=arc-20240116; t=1723542106; c=relaxed/simple;
+	bh=sRvN9XgyXiTZOpKlVkafyP1TCYvXGNj3L41j51u9WmA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=CQwDSUta4mHmMJf9H7Qxv+9echg53eeenlMjvDx1MMjsathvnjBVeNQCaRWiuCDiPXqijMHVmwa1DcOSn6Nct14mkYyBmnK1nsXX0IlzzF3y1KmeiT0x+lJWlCbbwoCyMHsa0RCj7GMVKW9870Om6esyc3x0xMyh7AeQ5zFVDSw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=BSayWTRl; arc=none smtp.client-ip=209.85.218.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="G3yZU89+"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
-	t=1723515162; bh=hjJtuMXhQjs91SMFWx1eQp/A4n0LrrPVA87MoEm2EII=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=G3yZU89+GMAKzkTdI70KqQ86SS+kMOYMvR3thLSzY0iF9KTl80g+yf+X3vp21cd67
-	 78D/5UIUAnUA8P2JM0YwaBxmwgN4YZDBp517WeCm82/omN5ychut0SFG085NLex6Ts
-	 YRV3jA0x8X31J7TP+NCOzZboVFUrp3ZAqDIwJcOY=
-Received: from localhost.localdomain ([123.150.8.42])
-	by newxmesmtplogicsvrszc5-2.qq.com (NewEsmtp) with SMTP
-	id 3283D8AA; Tue, 13 Aug 2024 10:12:40 +0800
-X-QQ-mid: xmsmtpt1723515160tqhs6b6hf
-Message-ID: <tencent_C349DF9EE757FA8936E17CE2F90388B8B909@qq.com>
-X-QQ-XMAILINFO: MO96tf8oLeWliar79LxL6AkW42TZvdEp6JejhpBaEeqMUeCxD6P7lixeq7dWhZ
-	 U5YslGIk3lpFQCcztXeB11X/sPUIO3YXkKFMDe2jK54kqQRYpUosCPzLYV033ujjqGUYPVjd9hM3
-	 K6438AORvGcE2mOWlmzhg0sip4OSIPV1RsNJPGBbbs38ZyLrkeNHCJDnenmmp4OtXnAs2taPzvzM
-	 S3/6Xu662RHoMk1dEqwkTTZ4iTykBHnDndmL1Of3ntyarf05IKbKVoJ052FVazyOysTeZutxjHwq
-	 v3PSiFuyk8LIc52pf6i9eOymeHr3bwOgG9GK3x2qYtiuBYN+p3s4nNng7zBTHtSeoIbvae7YgvWA
-	 I3tZ4eNAb8rXbSODyWKaMlV+Rl7sm0gx1OAFORfVXpybguEh/CDQS08JMBJXWusE6uB1Xj278auU
-	 pO5kpHwo94XYqlewqfiwevBvqw/RDd6lkdidiqY5QvGyQfoWw1pfizpzGFU9ecLFJjZfxCziU3zJ
-	 5sGITne0oxBUpLATinHvqNF0VTf8lDmkDTEeD12E77dA9ZLpJnVdTbTlHfPkT/snJmn/zBkzGCjJ
-	 gVSvQD2/wN4mS6jNIVXWvDLTPR8RWwL0KQHO5UuJswhtyUyWogVbMvvaHDJ6govhwl2o4cncKyPQ
-	 DB2b8A2mHpKiv6dWxORMJgF7lVWpc0YL7JIkHiGq2AEzCqaMR7iBBvcSuPQRYPPHXBPgxmJL/QY3
-	 CgPRNZth+ZOx+DkXickDV2OPIEyrVAT3EdwxyyMzbS8QR5y2iNZBmXtyWTsBt6+mZsJ+EtIV9KsM
-	 W/it0buWG9XLv96OV3VwYnHL52RszdnFBymGR0om5E0+vpD1XoaolBX097bzMrmfGZ7ax7OJZO2k
-	 8BeudZgi8+O77LSbHxt03QYkvLMj50zGCy0oN3gPOlQGHCSY/VLyHzfTD7cmz3wOniM88OZU+XR/
-	 9nV9MZEfg=
-X-QQ-XMRINFO: OD9hHCdaPRBwq3WW+NvGbIU=
-From: 303146950@qq.com
-To: mwilck@suse.com,
-	dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com,
-	Kou Wenqi <kouwenqi@kylinos.cn>
-Subject: [PATCH v3] multipath: display the correct configuration when dumpping config
-Date: Tue, 13 Aug 2024 10:12:36 +0800
-X-OQ-MSGID: <20240813021236.116006-1-303146950@qq.com>
-X-Mailer: git-send-email 2.27.0
-In-Reply-To: <26f4b0532302bfff61bac465d9f97b8215c30d78.camel@suse.com>
-References: <26f4b0532302bfff61bac465d9f97b8215c30d78.camel@suse.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="BSayWTRl"
+Received: by mail-ej1-f46.google.com with SMTP id a640c23a62f3a-a7a9e25008aso68895766b.0
+        for <dm-devel@lists.linux.dev>; Tue, 13 Aug 2024 02:41:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1723542102; x=1724146902; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=4Fo9LICpxTPtb/Y2ahPZj5XEhi6E/QzStAAryutPs9Q=;
+        b=BSayWTRlw5eDblFVbkC+8r8YZQhK/gn718F3CNa6ULWo0XUtRZ1KyZSxIRR6kljS8F
+         Az9xEsuI0C7df9yE3Z9CirBYpK1/0rhHpqqTQj/NtNAiArD8zoifHO3/9O1Ph+fh1O1h
+         qNpvhdF6d8I0e831NfI79HlCugZl80UvQ29k5zdHgWy6sMM+YtxahePlf2QlCZaUykMH
+         N9Ub6vPSWI1d+llCNbJ1TC84vpvHxvwq1PNd8eBju8O//HOyaq5ZBN7kacUmErjnxeo5
+         L/jWq2TEP+UFxbiqqsl+gNRdsVyXIsNbhhaUfGnDZncB1AfRkl6EvjfjvKAW9LmGa7md
+         v4Mg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1723542102; x=1724146902;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=4Fo9LICpxTPtb/Y2ahPZj5XEhi6E/QzStAAryutPs9Q=;
+        b=Xh+7ajEi/nxd8whDacI8zbn68FyjTX2a4nWCJZpdRBQOsZBRKpkjuIzuCLztnE7P5s
+         zw1jHFYHjTosCSR0/C5BV0vFAglt4bqXn3Gp5gMEYO9jcagk/owyW5eaiQWc1wsvFQCF
+         z50Dv4zhGt73oDXG5xOtnmQX0MSqx8ZcUvXDzEKE8NGTBzQAtB4JLjyDjTfNCqaA8tKA
+         7KlN4qldQdvicTgtzGOpDjsHvdAvWYlu8rRMrv72fcSpivMnSN75rv5WzuPW+P8qLq5e
+         axyV2Zcw6uCq3y6Xpfpa8iwu2PN8hVbOBAk4FzAmjyOFFwl6HdUYElvF4M0SKdCHxlil
+         ZKcQ==
+X-Gm-Message-State: AOJu0YwI96TnTetkSGdGirnHINesaj5BgEd9LAxHdPeqOWYqH560UcIw
+	sIn6tynk4NsAK4cAv4D7/HNwtLiDuuSW3AxRrq+xnqPcLVr7x00saxxr/K2NfLc=
+X-Google-Smtp-Source: AGHT+IGLIoniWN9zhXX/4urfnI67oySg7LJ+wg+D1wIqvemqtwxSv5tkcdtwysLdf4WBXNf9QGA4OA==
+X-Received: by 2002:a17:907:7f27:b0:a7d:e84c:a9e7 with SMTP id a640c23a62f3a-a80ed2ca9a6mr235037966b.53.1723542101757;
+        Tue, 13 Aug 2024 02:41:41 -0700 (PDT)
+Received: from localhost (p200300de37360a00e6b318fffe37a690.dip0.t-ipconnect.de. [2003:de:3736:a00:e6b3:18ff:fe37:a690])
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-a80f3f47b4asm54827166b.36.2024.08.13.02.41.40
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 13 Aug 2024 02:41:41 -0700 (PDT)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 1/2] libmpathcmd: reinstate ABI 1.0.0
+Date: Tue, 13 Aug 2024 11:40:45 +0200
+Message-ID: <20240813094046.21644-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.46.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -61,72 +67,63 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Kou Wenqi <kouwenqi@kylinos.cn>
+__mpath_connect() was part of our public ABI. Instead of removing
+it completely, define it as a weak alias of the new mpath_connect__().
+This way, programs linked against previous versions of libmpathcmd
+will continue to work.
 
-On Fri, 2024-08-09 at 10:38 +0200, mwilck@suse.com wrote:
-> Thanks for the patch! I'd prefer the following, if you agree.
-> 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 4b19d2e..28e3a05 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -853,8 +853,6 @@ main (int argc, char *argv[])
->         if (atexit(uninit_config))
->                 condlog(1, "failed to register cleanup handler for config: %m");
->         conf = get_multipath_config();
-> -       conf->retrigger_tries = 0;
-> -       conf->force_sync = 1;
->         if (atexit(cleanup_vecs))
->                 condlog(1, "failed to register cleanup handler for vecs: %m");
->         if (atexit(cleanup_bindings))
-> @@ -1001,6 +999,11 @@ main (int argc, char *argv[])
->  
->         libmp_udev_set_sync_support(1);
->  
-> +       if (cmd != CMD_DUMP_CONFIG) {
-> +               conf->retrigger_tries = 0;
-> +               conf->force_sync = 1;
-> +       }
-> +
->         if ((cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) && enable_foreign)
->                 conf->enable_foreign = strdup("");
+This shouldn't interfere with general symbol naming rules, as a weak
+symbol won't override a library symbol of the same name.
 
-Thanks for your review and revised opinion. Here is the new patch.
-
-"multipath -t" and "multipath -T" might show the wrong
-multipathd configuration items "retrigger_tries" and
-"force_sync". Make sure they don't.
-
-Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ libmpathcmd/libmpathcmd.version | 12 ++++++++----
+ libmpathcmd/mpath_cmd.c         |  3 +++
+ 2 files changed, 11 insertions(+), 4 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index ce702e7f..69552896 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -852,8 +852,6 @@ main (int argc, char *argv[])
- 	if (atexit(uninit_config))
- 		condlog(1, "failed to register cleanup handler for config: %m");
- 	conf = get_multipath_config();
--	conf->retrigger_tries = 0;
--	conf->force_sync = 1;
- 	if (atexit(cleanup_vecs))
- 		condlog(1, "failed to register cleanup handler for vecs: %m");
- 	if (atexit(cleanup_bindings))
-@@ -1000,6 +998,11 @@ main (int argc, char *argv[])
- 
- 	libmp_udev_set_sync_support(1);
- 
-+	if (cmd != CMD_DUMP_CONFIG) {
-+		conf->retrigger_tries = 0;
-+		conf->force_sync = 1;
-+	}
+diff --git a/libmpathcmd/libmpathcmd.version b/libmpathcmd/libmpathcmd.version
+index a786c25..81bdb2b 100644
+--- a/libmpathcmd/libmpathcmd.version
++++ b/libmpathcmd/libmpathcmd.version
+@@ -10,16 +10,20 @@
+  *
+  * See libmultipath.version for general policy about version numbers.
+  */
+-LIBMPATHCMD_2.0.0 {
 +
- 	if ((cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) && enable_foreign)
- 		conf->enable_foreign = strdup("");
++LIBMPATHCMD_1.0.0 {
+ global:
+ 	mpath_connect;
+-	mpath_connect__;
++	__mpath_connect;
+ 	mpath_disconnect;
+ 	mpath_process_cmd;
+ 	mpath_recv_reply;
+ 	mpath_recv_reply_len;
+ 	mpath_recv_reply_data;
+ 	mpath_send_cmd;
+-local:
+-	*;
+ };
++
++LIBMPATHCMD_1.1.0 {
++global:
++	mpath_connect__;
++} LIBMPATHCMD_1.0.0;
+diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
+index 1fa036c..a38e8b6 100644
+--- a/libmpathcmd/mpath_cmd.c
++++ b/libmpathcmd/mpath_cmd.c
+@@ -133,6 +133,9 @@ int mpath_connect__(int nonblocking)
+ 	return fd;
+ }
  
++extern int __mpath_connect(int)
++	__attribute__((weak, alias("mpath_connect__")));
++
+ /*
+  * connect to a unix domain socket
+  */
 -- 
-2.27.0
+2.46.0
 
