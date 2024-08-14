@@ -1,153 +1,136 @@
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id AE2BA1B9B43;
-	Wed, 14 Aug 2024 18:23:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=13.77.154.182
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C23F1B0111
+	for <dm-devel@lists.linux.dev>; Wed, 14 Aug 2024 21:45:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723659827; cv=none; b=ecqMVYTAoQGQPVgtaSAWeGJhUfzGQp2f08y7fOVqbNqTm1M/P/PodtZd1J32iiUHcBLWhPEfa7XrBgK0VbByoawDDZzUa7qA9XfhQ9aQ6M4yhvNdfveEsOG95jssRdB6avaOfWphYYyZtqYUs+iNNJYbHIKLmXywMxB9wBHE+TU=
+	t=1723671931; cv=none; b=EInYXgtiQCrnkmPg35/hz5ExKR5myyh3cwkelIXam7Klyu/w8Tg//RXrDPt/2USWqI7nfkix2ttHJlYIZrMxYfYz2IWiNiFSiQ17G5Lc+78BMGM1xmV2k+04ZAUKLmfVAm43aWzCRpsGYol4VkYVQDLgcrotvvs6KmBb8UF8b7Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723659827; c=relaxed/simple;
-	bh=VP+QiCS6zOdtfbT9zGI9LEQCyWB6JQVT2Grcrrb4SEo=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=enA1H0FcnXfL5DuueGnZBjbkH2BuyYsOFykiRk/bf6sbi8llo9qlQImUIq/nox5knqN3KfrdkstTbo3K25OSbeWHLpk9mJ5UoA+aXXpYE2hiWGKXLa9nBUq6diUmizS9ryaBFM4pWmB/8HNlnzBevY83OAZFrvcuxzDK8jnBuHU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com; spf=pass smtp.mailfrom=linux.microsoft.com; dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b=arhIygC1; arc=none smtp.client-ip=13.77.154.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.microsoft.com
+	s=arc-20240116; t=1723671931; c=relaxed/simple;
+	bh=EUBokEGt+hHGB0+MK8ZiOyYc6RLgHPVcQXNk8BBNSSQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=nynEXXxkgfiE1G4Sw/i47SCjmnducZr0MYmm3xKJz2g+Y+eOiTz+dLO13D/l1F6JTBidGKy45s1mcNq8698MBKj2xyrQUg82MfJM+V4wIzkdJU2mVl0ckwCObjK9hH7P0vFoDf6aqrNoIGfGCldIevVtVWCiggi7GSQzTVmK7ds=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jCG/tFbW; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.microsoft.com header.i=@linux.microsoft.com header.b="arhIygC1"
-Received: from [10.137.106.151] (unknown [131.107.174.23])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 3D2C020B7165;
-	Wed, 14 Aug 2024 11:23:39 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 3D2C020B7165
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.microsoft.com;
-	s=default; t=1723659819;
-	bh=rQ4vq6TsUxv4l4kbIL+sjMudyLAkyj4vXkuWLSuksPI=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=arhIygC1hFg4TcYMA000C9oRAiO/qMK7FqChi4JOP6pNVnUW0LTKCD5XOeOTvqLjO
-	 OxWN/HJ2LGm2JmHXlgiaG0btNEqrqB5MZKuZtC7CvZRFE5dhaiW+q0w86YV5loKWME
-	 vgVOeLlN6FYqX4YJz687dnyfNgPTF6jdt4sY5pgY=
-Message-ID: <cbf1caa0-835b-4d1d-aed5-9741eb10cf8b@linux.microsoft.com>
-Date: Wed, 14 Aug 2024 11:23:39 -0700
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jCG/tFbW"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1723671925;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=abunyBNcJHigB8Yorid7Z1CgUuMuzaoD8QGJ4wZuvUk=;
+	b=jCG/tFbWD9YWpM9xhXzKoEGp8nsh4hWZ1rbWx1KCo0b9edLao7NbmOavnDcbVVX1dw7vfA
+	CxNLd1VPAQ7tsKIfRnQcy/fzKLFlBkMKkS21KsUAAVYsDxysBa2Y4eshCC2sspmhBY+nSE
+	zCcNDUpwuvFq0bdTnfHxmiYpMR2eUvk=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-438-Rlh157FMOX68u7okX48Q5Q-1; Wed,
+ 14 Aug 2024 17:45:21 -0400
+X-MC-Unique: Rlh157FMOX68u7okX48Q5Q-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3D74F19332AC;
+	Wed, 14 Aug 2024 21:45:18 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AC7E219560A3;
+	Wed, 14 Aug 2024 21:45:17 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 47ELjGVC3533564
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 14 Aug 2024 17:45:16 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 47ELjFXx3533563;
+	Wed, 14 Aug 2024 17:45:15 -0400
+Date: Wed, 14 Aug 2024 17:45:15 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/2] libmpathcmd: reinstate ABI 1.0.0
+Message-ID: <Zr0laySsCt7dfdjt@redhat.com>
+References: <20240813094046.21644-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v20 02/20] ipe: add policy parser
-To: Paul Moore <paul@paul-moore.com>, "Serge E. Hallyn" <serge@hallyn.com>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, tytso@mit.edu,
- ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org,
- mpatocka@redhat.com, eparis@redhat.com, linux-doc@vger.kernel.org,
- linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org,
- fsverity@lists.linux.dev, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, audit@vger.kernel.org,
- linux-kernel@vger.kernel.org, Deven Bowers <deven.desai@linux.microsoft.com>
-References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com>
- <1722665314-21156-3-git-send-email-wufan@linux.microsoft.com>
- <20240810155000.GA35219@mail.hallyn.com>
- <e1dd4dcf-8e2e-4e7b-9d40-533efd123103@linux.microsoft.com>
- <CAHC9VhTYT3RTG1FbnZQ2F68a16gU9_QJ-=LSGbroP-40tpRTiw@mail.gmail.com>
-Content-Language: en-US
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <CAHC9VhTYT3RTG1FbnZQ2F68a16gU9_QJ-=LSGbroP-40tpRTiw@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20240813094046.21644-1-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
+On Tue, Aug 13, 2024 at 11:40:45AM +0200, Martin Wilck wrote:
 
+For the set:
+Tested-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-On 8/13/2024 6:53 PM, Paul Moore wrote:
-> On Tue, Aug 13, 2024 at 1:54 PM Fan Wu <wufan@linux.microsoft.com> wrote:
->> On 8/10/2024 8:50 AM, Serge E. Hallyn wrote:
->>> On Fri, Aug 02, 2024 at 11:08:16PM -0700, Fan Wu wrote:
->>>> From: Deven Bowers <deven.desai@linux.microsoft.com>
->>>>
->>>> IPE's interpretation of the what the user trusts is accomplished through
->>>
->>> nit: "of what the user trusts" (drop the extra 'the')
->>>
->>>> its policy. IPE's design is to not provide support for a single trust
->>>> provider, but to support multiple providers to enable the end-user to
->>>> choose the best one to seek their needs.
->>>>
->>>> This requires the policy to be rather flexible and modular so that
->>>> integrity providers, like fs-verity, dm-verity, or some other system,
->>>> can plug into the policy with minimal code changes.
->>>>
->>>> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
->>>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
->>>
->>> This all looks fine.  Just one comment below.
->>>
->> Thank you for reviewing this!
->>
->>>
->>>> +/**
->>>> + * parse_rule() - parse a policy rule line.
->>>> + * @line: Supplies rule line to be parsed.
->>>> + * @p: Supplies the partial parsed policy.
->>>> + *
->>>> + * Return:
->>>> + * * 0              - Success
->>>> + * * %-ENOMEM       - Out of memory (OOM)
->>>> + * * %-EBADMSG      - Policy syntax error
->>>> + */
->>>> +static int parse_rule(char *line, struct ipe_parsed_policy *p)
->>>> +{
->>>> +    enum ipe_action_type action = IPE_ACTION_INVALID;
->>>> +    enum ipe_op_type op = IPE_OP_INVALID;
->>>> +    bool is_default_rule = false;
->>>> +    struct ipe_rule *r = NULL;
->>>> +    bool first_token = true;
->>>> +    bool op_parsed = false;
->>>> +    int rc = 0;
->>>> +    char *t;
->>>> +
->>>> +    r = kzalloc(sizeof(*r), GFP_KERNEL);
->>>> +    if (!r)
->>>> +            return -ENOMEM;
->>>> +
->>>> +    INIT_LIST_HEAD(&r->next);
->>>> +    INIT_LIST_HEAD(&r->props);
->>>> +
->>>> +    while (t = strsep(&line, IPE_POLICY_DELIM), line) {
->>>
->>> If line is passed in as NULL, t will be NULL on the first test.  Then
->>> you'll break out and call parse_action(NULL), which calls
->>> match_token(NULL, ...), which I do not think is safe.
->>>
->>> I realize the current caller won't pass in NULL, but it seems worth
->>> checking for here in case some future caller is added by someone
->>> who's unaware.
->>>
->>> Or, maybe add 'line must not be null' to the function description.
->>
->> Yes, I agree that adding a NULL check would be better. I will include it
->> in the next version.
+> __mpath_connect() was part of our public ABI. Instead of removing
+> it completely, define it as a weak alias of the new mpath_connect__().
+> This way, programs linked against previous versions of libmpathcmd
+> will continue to work.
 > 
-> We're still waiting to hear back from the device-mapper devs, but if
-> this is the only change required to the patchset I can add a NULL
-> check when I merge the patchset as it seems silly to resend the entire
-> patchset for this.  Fan, do you want to share the code snippet with
-> the NULL check so Serge can take a look?
+> This shouldn't interfere with general symbol naming rules, as a weak
+> symbol won't override a library symbol of the same name.
 > 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmpathcmd/libmpathcmd.version | 12 ++++++++----
+>  libmpathcmd/mpath_cmd.c         |  3 +++
+>  2 files changed, 11 insertions(+), 4 deletions(-)
+> 
+> diff --git a/libmpathcmd/libmpathcmd.version b/libmpathcmd/libmpathcmd.version
+> index a786c25..81bdb2b 100644
+> --- a/libmpathcmd/libmpathcmd.version
+> +++ b/libmpathcmd/libmpathcmd.version
+> @@ -10,16 +10,20 @@
+>   *
+>   * See libmultipath.version for general policy about version numbers.
+>   */
+> -LIBMPATHCMD_2.0.0 {
+> +
+> +LIBMPATHCMD_1.0.0 {
+>  global:
+>  	mpath_connect;
+> -	mpath_connect__;
+> +	__mpath_connect;
+>  	mpath_disconnect;
+>  	mpath_process_cmd;
+>  	mpath_recv_reply;
+>  	mpath_recv_reply_len;
+>  	mpath_recv_reply_data;
+>  	mpath_send_cmd;
+> -local:
+> -	*;
+>  };
+> +
+> +LIBMPATHCMD_1.1.0 {
+> +global:
+> +	mpath_connect__;
+> +} LIBMPATHCMD_1.0.0;
+> diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
+> index 1fa036c..a38e8b6 100644
+> --- a/libmpathcmd/mpath_cmd.c
+> +++ b/libmpathcmd/mpath_cmd.c
+> @@ -133,6 +133,9 @@ int mpath_connect__(int nonblocking)
+>  	return fd;
+>  }
+>  
+> +extern int __mpath_connect(int)
+> +	__attribute__((weak, alias("mpath_connect__")));
+> +
+>  /*
+>   * connect to a unix domain socket
+>   */
+> -- 
+> 2.46.0
 
-Sure, here is the diff.
-
-diff --git a/security/ipe/policy_parser.c b/security/ipe/policy_parser.c
-index 32064262348a..0926b442e32a 100644
---- a/security/ipe/policy_parser.c
-+++ b/security/ipe/policy_parser.c
-@@ -309,6 +309,9 @@ static int parse_rule(char *line, struct 
-ipe_parsed_policy *p)
-         int rc = 0;
-         char *t;
-
-+       if (IS_ERR_OR_NULL(line))
-+               return -EBADMSG;
-+
-         r = kzalloc(sizeof(*r), GFP_KERNEL);
-         if (!r)
-                 return -ENOMEM;
-
--Fan
