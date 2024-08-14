@@ -1,109 +1,114 @@
-Received: from mail-ot1-f44.google.com (mail-ot1-f44.google.com [209.85.210.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEB5E1BC082
-	for <dm-devel@lists.linux.dev>; Wed, 14 Aug 2024 17:48:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8ED6D1B4C3D
+	for <dm-devel@lists.linux.dev>; Wed, 14 Aug 2024 18:06:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723657699; cv=none; b=OKaUAflDt18C6ILjoiC7qO6bbbzHQol8lNWnxI4UBeSEjNyIVFBfeFuRNjR8jpQ72yvRd3I1Do4XR5hy96G+aMggJh8iNYKAyYgfLyZWB0IpynvXqLf4e/UkKeApW5NCe2b02svGKkHu4pAfHrBm/7T82I/b+5xgdC2H/h/nSD8=
+	t=1723658773; cv=none; b=C0KIGaB36DJ3HYA5XatdhH6/RXnH3/EyGnmX4R5D0+XDW/tVtZ8gEtyDEXyBj9oEaWFg7kirlXxpqlfDWhl5v4EBtFxE6GsClXEmHjH1raXyqPA7KovAYO+Z8++NhTIgOrwn75D8fxKzxWy0eBvqcXMZFiYmgxUB9YSZKlZivHo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723657699; c=relaxed/simple;
-	bh=I0q+hPjJFQPFw/7xMpBPGRI9GSR/XnF04oBYiCm3Esk=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=AfHZdt0/4/tgtmjRufV1rGXg/VvSMn1/UL1p8ypOnurCMPGaVEVKd03rI4CCbLW2eWArCPD7gBMT/r8mPNy7d+cse8NEbCHDipvfuZj8qJWikoacOIFgQhgTNHvwnDnW+q9UbScHx4nWpUyIE48esETLxoPNdkOt8sMQcJtxdSU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JgG3qJNh; arc=none smtp.client-ip=209.85.210.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1723658773; c=relaxed/simple;
+	bh=OgIYuErwO6Wha8ijUYepxLZo+72rXIbdzn155X1Axn8=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=faATK3PdQGwnJNZH5LVKqPNkB640mfnb9mQwBi5gZmqvO+zcdcX1EOJIg9bBCvzsuKngU8+7pldNU3d4xntT4P0jPf/my0TH7z5ljRdnjEvEbv60prP6ary5XygbfXPLvKZ4KBIKWbtHH6OBm98WxuRvtJGgUXufBScrHAeQue8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=T3rB77sJ; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JgG3qJNh"
-Received: by mail-ot1-f44.google.com with SMTP id 46e09a7af769-7093b53f315so29434a34.2
-        for <dm-devel@lists.linux.dev>; Wed, 14 Aug 2024 10:48:17 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723657697; x=1724262497; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=EqbPHwcB9FwXLops87ZQEDiiS6X0e1o/bVoiwi0c1Sw=;
-        b=JgG3qJNhYEuaPGiVUOr6s6UXGiTaXYDDzKSgKzPTYC1145eWOKltKexhI5zxq4PLT2
-         jECI+s67C4azWCQAFcV8S0bB9Hk7IKkLQN++ZzFLcE7oNMkrGKo6m8cRgw6QRyMTAohQ
-         R7EAksCng18iW3CttA8eUKN1mG1jUcK6pQla+WkBb26tCzarvkAuh8OT3mWapcWiqnYR
-         0tmwJMlWBgIHN+mZ1EsGw/6sYccC+CcVViVy1qisp5NKzX/P1XESueNrfkdfra6M6ckh
-         mFJ3d/XW6FOgEx+CO7p9n9m84K0TFSfwBortG3LfJC9cGdS4WMSvnQd4inkO8erjQQor
-         HlgQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723657697; x=1724262497;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=EqbPHwcB9FwXLops87ZQEDiiS6X0e1o/bVoiwi0c1Sw=;
-        b=mcAe7nFHhel/clYBep84Lssd8gHm1VqRJsosJcZaZyjq4mKYrr/PS3npw1KX/TtOsj
-         G4xGiNt4I7EZZFCjyJlsMr9ss0ahpZ3edbztK97dZLWfjas6dKGENDOCrC5XBVUxLOYz
-         tKDUGGwBrPZLc3v2eOOb0grxxjad6GVqFPnjzByWhtTq7Av0l3gIwPJDjvU1o6Y383vl
-         pgVo4RRwHdN3cgRPMACtNVs7+FhPzqoX8j4ZfinLdmO9d1yhNgEYLnSLho6UAzEK/M8c
-         phBMXBsQYGutx9JD/w/vjQ0iVE9OG8iH1nq5YWTz95U4DEwcHKyImdMSb7+8YZfbV3S9
-         xxrQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXSbY2GeaJcvXzwqYNPkqhh5csJo7/kM4QlnaiFz6zDZJKv0q2QRn3u3zkg6koq/bU6Ic4dqj9DS1ZQUFjCWxRwFy/HOG6P7uM=
-X-Gm-Message-State: AOJu0YxIXwqETAAIzswz1V3ux9dUY+FDkhp/0Rqpr+7fcDcjrDCrq8I+
-	f4a7L2xgJpi9IsfVGr+9GdsRD/k6t0W1GJiLLswNs0Ei2xzO8Cjw
-X-Google-Smtp-Source: AGHT+IEsrGqlWyV74T1sPq3DeKe4yW2wn02CrmPPea5WlxKLT+tDXQw4H/H07Ae7kpr58ShOEK8hMg==
-X-Received: by 2002:a05:6830:43a9:b0:703:6aa3:d091 with SMTP id 46e09a7af769-70c9d955a21mr4813776a34.2.1723657696732;
-        Wed, 14 Aug 2024 10:48:16 -0700 (PDT)
-Received: from localhost.localdomain (183.252.23.34.bc.googleusercontent.com. [34.23.252.183])
-        by smtp.gmail.com with ESMTPSA id 46e09a7af769-70c7b89c058sm2295637a34.79.2024.08.14.10.48.15
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 14 Aug 2024 10:48:16 -0700 (PDT)
-From: Eslam Khafagy <eslam.medhat1993@gmail.com>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	corbet@lwn.net,
-	skhan@linuxfoundation.org
-Cc: Eslam Khafagy <eslam.medhat1993@gmail.com>,
-	dm-devel@lists.linux.dev,
-	linux-doc@vger.kernel.org
-Subject: [PATCH] Documentation: dm-crypt: fix Unexpected indentation error.
-Date: Wed, 14 Aug 2024 17:48:12 +0000
-Message-Id: <20240814174812.3695813-1-eslam.medhat1993@gmail.com>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20240810211557.42874-1-eslam.medhat1993@gmail.com>
-References: <20240810211557.42874-1-eslam.medhat1993@gmail.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="T3rB77sJ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1723658770;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5Df9gZ6Z3uqpeeR66D13HP17LhwcRwrnrCAW9SGd/xw=;
+	b=T3rB77sJyo/vAp01LioSMATlDrt5dXbAu2/Ze8rbEX6jzRn9H+frVoojAxaagdss819T0H
+	Cy78t3aXyfG8WhaZ6bVbUXk5OR9ijK9iH7wx3XgH38mnFKVfif15x9DqoHFj8DTqgQ/Kkn
+	nhZe3JSPRo7S9rh6o5mtX4ec/+Reiv8=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-629-ai6-DSeFPPGh8QM_F2NpRQ-1; Wed,
+ 14 Aug 2024 14:06:06 -0400
+X-MC-Unique: ai6-DSeFPPGh8QM_F2NpRQ-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F21E6195419A;
+	Wed, 14 Aug 2024 18:06:04 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7FF8E19560AA;
+	Wed, 14 Aug 2024 18:06:04 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id 2649C30C1C18; Wed, 14 Aug 2024 18:06:03 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 21E243FB48;
+	Wed, 14 Aug 2024 20:06:03 +0200 (CEST)
+Date: Wed, 14 Aug 2024 20:06:02 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Eslam Khafagy <eslam.medhat1993@gmail.com>
+cc: agk@redhat.com, snitzer@kernel.org, corbet@lwn.net, 
+    skhan@linuxfoundation.org, Daniel Yang <danielyangkang@gmail.com>, 
+    dm-devel@lists.linux.dev, linux-doc@vger.kernel.org
+Subject: Re: [PATCH] Documentation: dm-crypt: fix Unexpected indentation
+ error.
+In-Reply-To: <20240814174812.3695813-1-eslam.medhat1993@gmail.com>
+Message-ID: <589acdb-3c5-fcef-ebcd-f6efc531df4b@redhat.com>
+References: <20240810211557.42874-1-eslam.medhat1993@gmail.com> <20240814174812.3695813-1-eslam.medhat1993@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-Fix indentation error at Documentation/admin-guide/device-mapper/
-dm-crypt.rst when compiling the documentation.
 
-As per sphinx documentation: Nested lists must be separated
-from the parent list items by blank lines
 
-to reproduce:
-	just run "make htmldocs"
-observed error:
-	Documentation/admin-guide/device-mapper/dm-crypt.rst:167: ERROR:
-	Unexpected indentation.
+On Wed, 14 Aug 2024, Eslam Khafagy wrote:
 
-Signed-off-by: Eslam Khafagy <eslam.medhat1993@gmail.com>
----
- Documentation/admin-guide/device-mapper/dm-crypt.rst | 1 +
- 1 file changed, 1 insertion(+)
+> Fix indentation error at Documentation/admin-guide/device-mapper/
+> dm-crypt.rst when compiling the documentation.
+> 
+> As per sphinx documentation: Nested lists must be separated
+> from the parent list items by blank lines
+> 
+> to reproduce:
+> 	just run "make htmldocs"
+> observed error:
+> 	Documentation/admin-guide/device-mapper/dm-crypt.rst:167: ERROR:
+> 	Unexpected indentation.
+> 
+> Signed-off-by: Eslam Khafagy <eslam.medhat1993@gmail.com>
+> ---
+>  Documentation/admin-guide/device-mapper/dm-crypt.rst | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/Documentation/admin-guide/device-mapper/dm-crypt.rst b/Documentation/admin-guide/device-mapper/dm-crypt.rst
+> index e625830d335e..dc6ded632b22 100644
+> --- a/Documentation/admin-guide/device-mapper/dm-crypt.rst
+> +++ b/Documentation/admin-guide/device-mapper/dm-crypt.rst
+> @@ -164,6 +164,7 @@ iv_large_sectors
+>  Module parameters::
+>  max_read_size
+>  max_write_size
+> +   
+>     Maximum size of read or write requests. When a request larger than this size
+>     is received, dm-crypt will split the request. The splitting improves
+>     concurrency (the split requests could be encrypted in parallel by multiple
+> -- 
+> 2.25.1
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-crypt.rst b/Documentation/admin-guide/device-mapper/dm-crypt.rst
-index e625830d335e..dc6ded632b22 100644
---- a/Documentation/admin-guide/device-mapper/dm-crypt.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-crypt.rst
-@@ -164,6 +164,7 @@ iv_large_sectors
- Module parameters::
- max_read_size
- max_write_size
-+   
-    Maximum size of read or write requests. When a request larger than this size
-    is received, dm-crypt will split the request. The splitting improves
-    concurrency (the split requests could be encrypted in parallel by multiple
--- 
-2.25.1
+Hi
+
+Daniel Yang <danielyangkang@gmail.com> already fixed it in 
+git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git 
+branch remotes/origin/dm-6.11
+
+If you think that his fix is insufficient, send a patch against his 
+version.
+
+Mikulas
 
