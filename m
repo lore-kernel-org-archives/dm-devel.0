@@ -1,111 +1,109 @@
-Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f44.google.com (mail-ot1-f44.google.com [209.85.210.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C124136658
-	for <dm-devel@lists.linux.dev>; Wed, 14 Aug 2024 08:53:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEB5E1BC082
+	for <dm-devel@lists.linux.dev>; Wed, 14 Aug 2024 17:48:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723625634; cv=none; b=eYSodF3ljKL6D+FUdDwD5x1W6pPQnCQc/Av+r7/1FAioobJ5Jdh0XbxCaYMGpwoSVJEaATZmwwGBKvfLckrUH01iCRTot0ArrjbfTLlFCiaL14wu64wuiRy3ywmakX0BXiCqoNQQUiyx23q/scJE1ms6U1Py1DjHiidv3Y0wjqQ=
+	t=1723657699; cv=none; b=OKaUAflDt18C6ILjoiC7qO6bbbzHQol8lNWnxI4UBeSEjNyIVFBfeFuRNjR8jpQ72yvRd3I1Do4XR5hy96G+aMggJh8iNYKAyYgfLyZWB0IpynvXqLf4e/UkKeApW5NCe2b02svGKkHu4pAfHrBm/7T82I/b+5xgdC2H/h/nSD8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723625634; c=relaxed/simple;
-	bh=n+ZdyjFAU3g/7V0oXofad1dQjArc6rjig3KsO9lS1Ks=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=p74bHxMquv6dSUufzVzGkcS9Ej0/eRcWh/w0Ha6xflVN3H9++rrrzIqZNJZ88Ck2aQ9S+/AkrTqv1vy0v9pBwsYl2BHFW53SKES6H0A3+HS/c8Otjvm4xuF3N9VCETFmBqg6LBopJZ/ayz91VqJT43b1+DEAKVNOD0onhZk0YT8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=Q1x2wNB0; arc=none smtp.client-ip=212.122.41.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
+	s=arc-20240116; t=1723657699; c=relaxed/simple;
+	bh=I0q+hPjJFQPFw/7xMpBPGRI9GSR/XnF04oBYiCm3Esk=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=AfHZdt0/4/tgtmjRufV1rGXg/VvSMn1/UL1p8ypOnurCMPGaVEVKd03rI4CCbLW2eWArCPD7gBMT/r8mPNy7d+cse8NEbCHDipvfuZj8qJWikoacOIFgQhgTNHvwnDnW+q9UbScHx4nWpUyIE48esETLxoPNdkOt8sMQcJtxdSU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JgG3qJNh; arc=none smtp.client-ip=209.85.210.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="Q1x2wNB0"
-Content-Type: text/plain;
-	charset=utf-8
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1723625620;
-	bh=5+GGU7syF0YgbK3HQi6a6LWoC+cGdja9bw9g89nM8Y4=;
-	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=Q1x2wNB0LUqeQxSnJoeDKKbciJVggUaYlJXCi7CVTMAYcTGh1rN7X0gTVwAvwtkmS
-	 CY0VSy5VEBI9lwrb48Oj9zj/IzvFCYbq93S8eGivjwrE4HJlIwcPxZxBWdKF0BHRjE
-	 lnE3w+hpa8r6GMisZ7/06cwywUPWXm/EVbOeQc6c=
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JgG3qJNh"
+Received: by mail-ot1-f44.google.com with SMTP id 46e09a7af769-7093b53f315so29434a34.2
+        for <dm-devel@lists.linux.dev>; Wed, 14 Aug 2024 10:48:17 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1723657697; x=1724262497; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=EqbPHwcB9FwXLops87ZQEDiiS6X0e1o/bVoiwi0c1Sw=;
+        b=JgG3qJNhYEuaPGiVUOr6s6UXGiTaXYDDzKSgKzPTYC1145eWOKltKexhI5zxq4PLT2
+         jECI+s67C4azWCQAFcV8S0bB9Hk7IKkLQN++ZzFLcE7oNMkrGKo6m8cRgw6QRyMTAohQ
+         R7EAksCng18iW3CttA8eUKN1mG1jUcK6pQla+WkBb26tCzarvkAuh8OT3mWapcWiqnYR
+         0tmwJMlWBgIHN+mZ1EsGw/6sYccC+CcVViVy1qisp5NKzX/P1XESueNrfkdfra6M6ckh
+         mFJ3d/XW6FOgEx+CO7p9n9m84K0TFSfwBortG3LfJC9cGdS4WMSvnQd4inkO8erjQQor
+         HlgQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1723657697; x=1724262497;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=EqbPHwcB9FwXLops87ZQEDiiS6X0e1o/bVoiwi0c1Sw=;
+        b=mcAe7nFHhel/clYBep84Lssd8gHm1VqRJsosJcZaZyjq4mKYrr/PS3npw1KX/TtOsj
+         G4xGiNt4I7EZZFCjyJlsMr9ss0ahpZ3edbztK97dZLWfjas6dKGENDOCrC5XBVUxLOYz
+         tKDUGGwBrPZLc3v2eOOb0grxxjad6GVqFPnjzByWhtTq7Av0l3gIwPJDjvU1o6Y383vl
+         pgVo4RRwHdN3cgRPMACtNVs7+FhPzqoX8j4ZfinLdmO9d1yhNgEYLnSLho6UAzEK/M8c
+         phBMXBsQYGutx9JD/w/vjQ0iVE9OG8iH1nq5YWTz95U4DEwcHKyImdMSb7+8YZfbV3S9
+         xxrQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXSbY2GeaJcvXzwqYNPkqhh5csJo7/kM4QlnaiFz6zDZJKv0q2QRn3u3zkg6koq/bU6Ic4dqj9DS1ZQUFjCWxRwFy/HOG6P7uM=
+X-Gm-Message-State: AOJu0YxIXwqETAAIzswz1V3ux9dUY+FDkhp/0Rqpr+7fcDcjrDCrq8I+
+	f4a7L2xgJpi9IsfVGr+9GdsRD/k6t0W1GJiLLswNs0Ei2xzO8Cjw
+X-Google-Smtp-Source: AGHT+IEsrGqlWyV74T1sPq3DeKe4yW2wn02CrmPPea5WlxKLT+tDXQw4H/H07Ae7kpr58ShOEK8hMg==
+X-Received: by 2002:a05:6830:43a9:b0:703:6aa3:d091 with SMTP id 46e09a7af769-70c9d955a21mr4813776a34.2.1723657696732;
+        Wed, 14 Aug 2024 10:48:16 -0700 (PDT)
+Received: from localhost.localdomain (183.252.23.34.bc.googleusercontent.com. [34.23.252.183])
+        by smtp.gmail.com with ESMTPSA id 46e09a7af769-70c7b89c058sm2295637a34.79.2024.08.14.10.48.15
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 14 Aug 2024 10:48:16 -0700 (PDT)
+From: Eslam Khafagy <eslam.medhat1993@gmail.com>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	corbet@lwn.net,
+	skhan@linuxfoundation.org
+Cc: Eslam Khafagy <eslam.medhat1993@gmail.com>,
+	dm-devel@lists.linux.dev,
+	linux-doc@vger.kernel.org
+Subject: [PATCH] Documentation: dm-crypt: fix Unexpected indentation error.
+Date: Wed, 14 Aug 2024 17:48:12 +0000
+Message-Id: <20240814174812.3695813-1-eslam.medhat1993@gmail.com>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20240810211557.42874-1-eslam.medhat1993@gmail.com>
+References: <20240810211557.42874-1-eslam.medhat1993@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51\))
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-From: Christian Theune <ct@flyingcircus.io>
-In-Reply-To: <26298.22106.810744.702395@quad.stoffel.home>
-Date: Wed, 14 Aug 2024 10:53:18 +0200
-Cc: Yu Kuai <yukuai1@huaweicloud.com>,
- "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- "yukuai (C)" <yukuai3@huawei.com>
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <EBC67418-E60C-435A-8F63-114C67F07583@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
- <316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
- <58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
- <EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
- <22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
- <26291.57727.410499.243125@quad.stoffel.home>
- <2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
- <1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
- <4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
- <C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
- <e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
- <30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
- <26294.40330.924457.532299@quad.stoffel.home>
- <C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
- <26298.22106.810744.702395@quad.stoffel.home>
-To: John Stoffel <john@stoffel.org>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Hi,
+Fix indentation error at Documentation/admin-guide/device-mapper/
+dm-crypt.rst when compiling the documentation.
 
-> On 12. Aug 2024, at 20:37, John Stoffel <john@stoffel.org> wrote:
->=20
-> Just try it in RAM at first, if you can make it work.  Or put the
-> files in /tmp which should be a tmpfs filesystem backed by swap.  =20
+As per sphinx documentation: Nested lists must be separated
+from the parent list items by blank lines
 
-Thanks, I kinda expected that, but wasn=E2=80=99t sure. I=E2=80=99ll see =
-whether I can make this trigger (reliably) before I run out of RAM. If I =
-do, I=E2=80=99ll have to see.=20
+to reproduce:
+	just run "make htmldocs"
+observed error:
+	Documentation/admin-guide/device-mapper/dm-crypt.rst:167: ERROR:
+	Unexpected indentation.
 
->> However, I could take the hot spare and run a sequence of tests
->> against that, first with a newer and potentially with an older
->> kernel if it doesn=E2=80=99t reproduce in its final form:
->=20
-> That's one option of course. =20
->=20
->> - xfs directly on the nvme drive
->> - xfs on encrypted nvme drive
->> - xfs on raid 1 on nvme drive, split into two partitions
->> - xfs on raid 5 on nvme drive, split into a few partitions
->> - xfs on raid 6 on nvme drive, split into a few partitions
->> - repeat the tests with raid1/5//6 with encrypted partitions
->=20
-> That's an awesome test setup to run through and might take a bunch of
-> time. =20
+Signed-off-by: Eslam Khafagy <eslam.medhat1993@gmail.com>
+---
+ Documentation/admin-guide/device-mapper/dm-crypt.rst | 1 +
+ 1 file changed, 1 insertion(+)
 
-I=E2=80=99ll try to prepare scripts to set this up. I currently have a =
-specific fileset that I=E2=80=99m using here, I hope I can replicate it =
-with a different fileset at some point =E2=80=A6 -_-
-
->> As that will take some time and effort, I=E2=80=99d like to double =
-check
->> whether that sounds sensible to you as well?
->=20
-> I'd probably just do the RAID6 tests first, get them out of the way. =20=
-
-
-Alright, those are running right now - I=E2=80=99ll let you know what =
-happens.
-
-Christian
-
---=20
-Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
-Christian Zagrodnick
+diff --git a/Documentation/admin-guide/device-mapper/dm-crypt.rst b/Documentation/admin-guide/device-mapper/dm-crypt.rst
+index e625830d335e..dc6ded632b22 100644
+--- a/Documentation/admin-guide/device-mapper/dm-crypt.rst
++++ b/Documentation/admin-guide/device-mapper/dm-crypt.rst
+@@ -164,6 +164,7 @@ iv_large_sectors
+ Module parameters::
+ max_read_size
+ max_write_size
++   
+    Maximum size of read or write requests. When a request larger than this size
+    is received, dm-crypt will split the request. The splitting improves
+    concurrency (the split requests could be encrypted in parallel by multiple
+-- 
+2.25.1
 
