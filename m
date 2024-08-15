@@ -1,108 +1,107 @@
-Received: from mail-wr1-f48.google.com (mail-wr1-f48.google.com [209.85.221.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.stoffel.org (mail.stoffel.org [172.104.24.175])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E1EC4C69
-	for <dm-devel@lists.linux.dev>; Thu, 15 Aug 2024 15:24:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C64F71B3756
+	for <dm-devel@lists.linux.dev>; Thu, 15 Aug 2024 15:53:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=172.104.24.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723735443; cv=none; b=T16GVTJibHCAo2nJMAY8GQk0tFzaIDHcbHyJx2aMTY9RzXGISMznqvJxOx29y1Ap/D97w+yeLbPWrY11MGbfgnhta6Dzlk6Istuh7smk2rpP3DAqj6rGnb/3tkRkmonZPW2S+/ZN8bBcjc/oYow47TQOKKS+tIFkbtkpQLBBR0Y=
+	t=1723737238; cv=none; b=YXi5USeJARvTJMbx86rSkpwVNlazdeVNiRWiyb3PJk/J4wRo4osQ7nBuw3M4QQ+3U2Wr8UE45RY2zNCh8eRI8n3jl3a2Rs4SHJhANd4B5Qbnau42Bt1ne3rK9CdUklpnyey+kEjZDc7GnUC/AMrQgKO2pynGcJroHBCh/9IUP2A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723735443; c=relaxed/simple;
-	bh=rkR8Lej2G9NOWE3pDuNeSqdWAY5nrlUddUmkajii4gY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DoAohG2bEPmbDsEiSmeZ0PiFOEH493NFZ+akTA4nT4mhKn1J1aNwROgyI8anoqmouZMjnQ+dxDjJZtfv3abcetakB9gUncgay+QNrnxpFa7wD8trRDOH0kTdVTFO+aCC5BqyY6M3u5QcYla0f7tRG8Mf5xFTzfMW8es/ghaMIqo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TIGzQ+u2; arc=none smtp.client-ip=209.85.221.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TIGzQ+u2"
-Received: by mail-wr1-f48.google.com with SMTP id ffacd0b85a97d-367963ea053so702311f8f.2
-        for <dm-devel@lists.linux.dev>; Thu, 15 Aug 2024 08:24:01 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723735440; x=1724340240; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=88y+/swP6/qOEaZXFW8YAv7XQxQ5BvUs24gTVhS1P7w=;
-        b=TIGzQ+u2fOilAw2MY8ar1iThfM2Y1YPSPCB0cYw4Bg+5nSvL4qwg4tt3IPM7gKpj2k
-         g46CIGBjIziNCbf96oDS2Jw4KZrvrIymOezaI8r72hkLZRI/7oUXPvrMmKYn4Lc3SUfX
-         MyzxJyR+QxoSmdVkcoYzGvqnq7WIGzM45XKaXeImZOigUZ73a/KEn9zVGMKrKZDnLNf8
-         SnqKnWKsXxoSPHCGEaLjlruiSVumIo8+7KbIO6n6fGPA1SIprwQRwrx5f3JkuvnAh63I
-         ikdJIcW9fJNIThNbCxprT80PG4tuePX8bT4hyKysWxY876bqBbflEDmqT6SR+bsSCt+K
-         APLw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723735440; x=1724340240;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=88y+/swP6/qOEaZXFW8YAv7XQxQ5BvUs24gTVhS1P7w=;
-        b=Frx/gsRer8QtJFPIt11RaxV365DAM2pac3DHWa/blhIvR0vJBc9ZMz25o19CAmLLuL
-         EvgBL4wl6dLfgQv+0J2ed8QL+8JJczeiTAJmnT/eGyEsu94mAt9p/nqOBj2Kcc4OXk5N
-         hPL3UPu6qjyg9ntiMiXA3Jlt90HPiKD0S985ZqsSjm6UHdgJKDXjtbZDgJDZHwTE6atV
-         uuLynTBKapFnnfRWL6sm0Xd97PU4up20B+y79E6InM9nkiYTwwVGezBz0aUzVxFBr1vO
-         39L1Ohc0kojavurqoFhrl1zLwt1hqp+OqKUuwo8aHJW0WLgd5hbHOqRfNRde099El+PR
-         XlvQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWuv2hds4402LOlsviSTkxvITBE1lBasKpHvCILFH2mz3Kw3dKZgP53+4E6Hd3X4ohKyGcycQGPCcszC13lsMDc95yvMdkLsOw=
-X-Gm-Message-State: AOJu0YzyDyLuGkBpkoSmC+ZyOPKZGOTN1Lm+vurmB9gOgSq6u5uQifS2
-	x+gH7Mviz5PrFMHJbAdLZJ6kZjuKK4EoZq+nmH8tpjODyySxewM=
-X-Google-Smtp-Source: AGHT+IFAtPG/uNkgih8TvaSwnbzV69T+O9j8IYkwdfisFqVosn9qv6KF50SzAkeVGwxsK7dywhLVwA==
-X-Received: by 2002:adf:e907:0:b0:371:8dc0:f90b with SMTP id ffacd0b85a97d-3718dc0fac3mr1206578f8f.55.1723735440165;
-        Thu, 15 Aug 2024 08:24:00 -0700 (PDT)
-Received: from localhost (45.red-81-44-199.dynamicip.rima-tde.net. [81.44.199.45])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3718983a2eesm1769387f8f.19.2024.08.15.08.23.59
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 15 Aug 2024 08:23:59 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM-DEVEL ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: update info about path_grouping_policy in the man page
-Date: Thu, 15 Aug 2024 17:23:57 +0200
-Message-ID: <20240815152358.233091-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.46.0
+	s=arc-20240116; t=1723737238; c=relaxed/simple;
+	bh=HxZvPXGHChfqPPAp3vcALChpZLgg1uRGLUO2mD8rneE=;
+	h=MIME-Version:Content-Type:Message-ID:Date:From:To:Cc:Subject:
+	 In-Reply-To:References; b=fEHZxiqnSHEqOF/u5jZvt3rGAZzOsAwq9/ahaRKrsFpt2IPz48B8xAM1CecOFEkJMTwZbPDG/eVWILcpxRCpmMju+2pkZsqIu4xf73GZk1p68N1EO4WDHrGGPkxmm+IuakDO+8GVyLchLoejsBHMIb45/dEkmpa/a8YqhPUvYNE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org; spf=pass smtp.mailfrom=stoffel.org; arc=none smtp.client-ip=172.104.24.175
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stoffel.org
+Received: from quad.stoffel.org (syn-097-095-183-072.res.spectrum.com [97.95.183.72])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.stoffel.org (Postfix) with ESMTPSA id 47F501F3D7;
+	Thu, 15 Aug 2024 11:53:50 -0400 (EDT)
+Received: by quad.stoffel.org (Postfix, from userid 1000)
+	id 3CE1DA08E2; Thu, 15 Aug 2024 11:53:49 -0400 (EDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Message-ID: <26302.9357.226392.717562@quad.stoffel.home>
+Date: Thu, 15 Aug 2024 11:53:49 -0400
+From: "John Stoffel" <john@stoffel.org>
+To: Christian Theune <ct@flyingcircus.io>
+Cc: John Stoffel <john@stoffel.org>,
+    Yu Kuai <yukuai1@huaweicloud.com>,
+    "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+    dm-devel@lists.linux.dev,
+    "yukuai (C)" <yukuai3@huawei.com>
+Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
+ devices when rsyncing many files
+In-Reply-To: <CEC90137-09B3-41AA-A115-1C172F9C6C4B@flyingcircus.io>
+References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
+	<316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
+	<58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
+	<EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
+	<22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
+	<26291.57727.410499.243125@quad.stoffel.home>
+	<2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
+	<1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
+	<4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
+	<C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
+	<e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
+	<30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
+	<26294.40330.924457.532299@quad.stoffel.home>
+	<C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
+	<26298.22106.810744.702395@quad.stoffel.home>
+	<EBC67418-E60C-435A-8F63-114C67F07583@flyingcircus.io>
+	<CEC90137-09B3-41AA-A115-1C172F9C6C4B@flyingcircus.io>
+X-Mailer: VM 8.3.x under 28.2 (x86_64-pc-linux-gnu)
 
-It's hardware dependent.
+>>>>> "Christian" =3D=3D Christian Theune <ct@flyingcircus.io> writes:
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- multipath/multipath.conf.5.in | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+> Hi,
+>> On 14. Aug 2024, at 10:53, Christian Theune <ct@flyingcircus.io> wro=
+te:
+>>=20
+>> Hi,
+>>=20
+>>> On 12. Aug 2024, at 20:37, John Stoffel <john@stoffel.org> wrote:
+>>>=20
+>>> I'd probably just do the RAID6 tests first, get them out of the way=
+. =20
+>>=20
+>> Alright, those are running right now - I=E2=80=99ll let you know wha=
+t happens.
 
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index 677b0823..4388baad 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -6,7 +6,7 @@
- .\" Update the date below if you make any significant change.
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH.CONF 5 2024-04-25 Linux
-+.TH MULTIPATH.CONF 5 2024-08-15 Linux
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -220,7 +220,7 @@ The default is: \fBservice-time 0\fR
- .
- .TP
- .B path_grouping_policy
--The default path grouping policy to apply to unspecified
-+(Hardware-dependent) The default path grouping policy to apply to unspecified
- multipaths. Possible values are:
- .RS
- .TP 12
--- 
-2.46.0
+> I=E2=80=99m not making progress here. I can=E2=80=99t reproduce those=
+ on in-memory
+> loopback raid 6. However: i can=E2=80=99t fully produce the rsync. Fo=
+r me
+> this only triggered after around 1.5hs of progress on the NVMe which
+> resulted in the hangup. I can only create around 20 GiB worth of
+> raid 6 volume on this machine. I=E2=80=99ve tried running rsync until=
+ it
+> exhausts the space, deleting the content and running rsync again,
+> but I feel like this isn=E2=80=99t suffient to trigger the issue. :(
+
+You're running on the older 5.13.x kernel or the newer 6.x kernel? =20
+
+> I=E2=80=99m trying to find whether any specific pattern in the files =
+around
+> the time it locks up might be relevant here and try to run the rsync
+> over that portion.
+
+That's a good idea.  Do you have highly compressed files which are
+maybe exploding in size when put into LUKS encrypted partitions?  Just
+a random thought, not a real idea.
+
+> On the plus side, I have a script now that can create the various
+> loopback settings quickly, so I can try out things as needed. Not
+> that valuable without a reproducer, yet, though.
+
+Yay!  Please share it.
 
