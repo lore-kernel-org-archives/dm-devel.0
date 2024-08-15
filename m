@@ -1,107 +1,119 @@
-Received: from mail.stoffel.org (mail.stoffel.org [172.104.24.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C64F71B3756
-	for <dm-devel@lists.linux.dev>; Thu, 15 Aug 2024 15:53:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=172.104.24.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D8102AF12
+	for <dm-devel@lists.linux.dev>; Thu, 15 Aug 2024 16:21:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723737238; cv=none; b=YXi5USeJARvTJMbx86rSkpwVNlazdeVNiRWiyb3PJk/J4wRo4osQ7nBuw3M4QQ+3U2Wr8UE45RY2zNCh8eRI8n3jl3a2Rs4SHJhANd4B5Qbnau42Bt1ne3rK9CdUklpnyey+kEjZDc7GnUC/AMrQgKO2pynGcJroHBCh/9IUP2A=
+	t=1723738906; cv=none; b=Pj7NDTaZtBTIvDUqqguOM49GoLWqpyQ0UcqxQrJop1Wdh9/i8eY5p9JGfHXK0yRVYDpmhWzxCNShXDclY8Lc//ZpJFGWnNU5abab3kb/HMk0gqFU/nsX79hgmbyYBbHYnofbuFIHhHc5MHE+89mtQfsL1t0mlpu3NVfhWrcYeG8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723737238; c=relaxed/simple;
-	bh=HxZvPXGHChfqPPAp3vcALChpZLgg1uRGLUO2mD8rneE=;
-	h=MIME-Version:Content-Type:Message-ID:Date:From:To:Cc:Subject:
-	 In-Reply-To:References; b=fEHZxiqnSHEqOF/u5jZvt3rGAZzOsAwq9/ahaRKrsFpt2IPz48B8xAM1CecOFEkJMTwZbPDG/eVWILcpxRCpmMju+2pkZsqIu4xf73GZk1p68N1EO4WDHrGGPkxmm+IuakDO+8GVyLchLoejsBHMIb45/dEkmpa/a8YqhPUvYNE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org; spf=pass smtp.mailfrom=stoffel.org; arc=none smtp.client-ip=172.104.24.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stoffel.org
-Received: from quad.stoffel.org (syn-097-095-183-072.res.spectrum.com [97.95.183.72])
+	s=arc-20240116; t=1723738906; c=relaxed/simple;
+	bh=9etfun8c8JgzSSXJJ/y2KCCwsMJZGhYNfuzdrDKaFbk=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=Q/I+uj6pQ3Jmubsa3oFOeF3TMNSSEAXTwbVsaQZGGfd/Xq7Ch8w8WM32YImDvdzKSgh/uRsbZELLLkpDzLMrSxr3wGsyJgonMgK7/jv2tmfi4yp0G9ofg328hRHjaLmSIeG29x4vrv1ZCvpbFK3bE5oAWU4qBRHpsidJ3zudcW8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=hULaVexb; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=hULaVexb; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="hULaVexb";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="hULaVexb"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mail.stoffel.org (Postfix) with ESMTPSA id 47F501F3D7;
-	Thu, 15 Aug 2024 11:53:50 -0400 (EDT)
-Received: by quad.stoffel.org (Postfix, from userid 1000)
-	id 3CE1DA08E2; Thu, 15 Aug 2024 11:53:49 -0400 (EDT)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 65E8720039;
+	Thu, 15 Aug 2024 16:21:42 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1723738902; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9etfun8c8JgzSSXJJ/y2KCCwsMJZGhYNfuzdrDKaFbk=;
+	b=hULaVexbnc5gQcu5I2n5ZRmcTY6JzjUvwPbWVqhcCU+XFJ16p4z5ac1HI16b258JsNKh3m
+	kUxi0W30dlbznRZZrMm1RAxWiXDoPqCgu5W9kgtGXxm7CeyO2yzUsSkzuOhG+mof3X8m6S
+	JJT0i8dJeRTsVdJxtsJ2i6rjf++HMaI=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=hULaVexb
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1723738902; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9etfun8c8JgzSSXJJ/y2KCCwsMJZGhYNfuzdrDKaFbk=;
+	b=hULaVexbnc5gQcu5I2n5ZRmcTY6JzjUvwPbWVqhcCU+XFJ16p4z5ac1HI16b258JsNKh3m
+	kUxi0W30dlbznRZZrMm1RAxWiXDoPqCgu5W9kgtGXxm7CeyO2yzUsSkzuOhG+mof3X8m6S
+	JJT0i8dJeRTsVdJxtsJ2i6rjf++HMaI=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 373441342D;
+	Thu, 15 Aug 2024 16:21:42 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id fMaLCxYrvmZ1HgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Thu, 15 Aug 2024 16:21:42 +0000
+Message-ID: <a16027a4fb29aaf0f86c043d6644f31926543de2.camel@suse.com>
+Subject: Re: [PATCH] multipath-tools: update info about path_grouping_policy
+ in the man page
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
+Date: Thu, 15 Aug 2024 18:21:41 +0200
+In-Reply-To: <20240815152358.233091-1-xose.vazquez@gmail.com>
+References: <20240815152358.233091-1-xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.4 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Message-ID: <26302.9357.226392.717562@quad.stoffel.home>
-Date: Thu, 15 Aug 2024 11:53:49 -0400
-From: "John Stoffel" <john@stoffel.org>
-To: Christian Theune <ct@flyingcircus.io>
-Cc: John Stoffel <john@stoffel.org>,
-    Yu Kuai <yukuai1@huaweicloud.com>,
-    "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
-    dm-devel@lists.linux.dev,
-    "yukuai (C)" <yukuai3@huawei.com>
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-In-Reply-To: <CEC90137-09B3-41AA-A115-1C172F9C6C4B@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
-	<316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
-	<58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
-	<EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
-	<22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
-	<26291.57727.410499.243125@quad.stoffel.home>
-	<2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
-	<1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
-	<4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
-	<C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
-	<e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
-	<30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
-	<26294.40330.924457.532299@quad.stoffel.home>
-	<C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
-	<26298.22106.810744.702395@quad.stoffel.home>
-	<EBC67418-E60C-435A-8F63-114C67F07583@flyingcircus.io>
-	<CEC90137-09B3-41AA-A115-1C172F9C6C4B@flyingcircus.io>
-X-Mailer: VM 8.3.x under 28.2 (x86_64-pc-linux-gnu)
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+X-Spamd-Result: default: False [-4.81 / 50.00];
+	BAYES_HAM(-2.80)[99.15%];
+	DWL_DNSWL_MED(-2.00)[suse.com:dkim];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	FREEMAIL_TO(0.00)[gmail.com];
+	TO_DN_ALL(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	ARC_NA(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_TRACE(0.00)[suse.com:+];
+	RCVD_COUNT_TWO(0.00)[2];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:mid,suse.com:email,linux.dev:email]
+X-Rspamd-Queue-Id: 65E8720039
+X-Spam-Flag: NO
+X-Rspamd-Action: no action
+X-Spam-Level: 
+X-Spam-Score: -4.81
 
->>>>> "Christian" =3D=3D Christian Theune <ct@flyingcircus.io> writes:
+On Thu, 2024-08-15 at 17:23 +0200, Xose Vazquez Perez wrote:
+> It's hardware dependent.
+>=20
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-> Hi,
->> On 14. Aug 2024, at 10:53, Christian Theune <ct@flyingcircus.io> wro=
-te:
->>=20
->> Hi,
->>=20
->>> On 12. Aug 2024, at 20:37, John Stoffel <john@stoffel.org> wrote:
->>>=20
->>> I'd probably just do the RAID6 tests first, get them out of the way=
-. =20
->>=20
->> Alright, those are running right now - I=E2=80=99ll let you know wha=
-t happens.
-
-> I=E2=80=99m not making progress here. I can=E2=80=99t reproduce those=
- on in-memory
-> loopback raid 6. However: i can=E2=80=99t fully produce the rsync. Fo=
-r me
-> this only triggered after around 1.5hs of progress on the NVMe which
-> resulted in the hangup. I can only create around 20 GiB worth of
-> raid 6 volume on this machine. I=E2=80=99ve tried running rsync until=
- it
-> exhausts the space, deleting the content and running rsync again,
-> but I feel like this isn=E2=80=99t suffient to trigger the issue. :(
-
-You're running on the older 5.13.x kernel or the newer 6.x kernel? =20
-
-> I=E2=80=99m trying to find whether any specific pattern in the files =
-around
-> the time it locks up might be relevant here and try to run the rsync
-> over that portion.
-
-That's a good idea.  Do you have highly compressed files which are
-maybe exploding in size when put into LUKS encrypted partitions?  Just
-a random thought, not a real idea.
-
-> On the plus side, I have a script now that can create the various
-> loopback settings quickly, so I can try out things as needed. Not
-> that valuable without a reproducer, yet, though.
-
-Yay!  Please share it.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
