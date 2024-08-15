@@ -1,136 +1,107 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C23F1B0111
-	for <dm-devel@lists.linux.dev>; Wed, 14 Aug 2024 21:45:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB87D18D62D
+	for <dm-devel@lists.linux.dev>; Thu, 15 Aug 2024 06:20:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723671931; cv=none; b=EInYXgtiQCrnkmPg35/hz5ExKR5myyh3cwkelIXam7Klyu/w8Tg//RXrDPt/2USWqI7nfkix2ttHJlYIZrMxYfYz2IWiNiFSiQ17G5Lc+78BMGM1xmV2k+04ZAUKLmfVAm43aWzCRpsGYol4VkYVQDLgcrotvvs6KmBb8UF8b7Y=
+	t=1723702808; cv=none; b=iaKtDEj+tVtgKR3899/9xkbsynA3rXzDrgG2hwP1TJ0yWxpeFvWaPPLi1oTOLI/hV55osPTrv0VE+wgb/QjHluEMzKQvPDmfMcYbjfDBXncGUVnyoqTLTw68qTce1gMTkZDW3Z/t2GGMuem21cj6Gi3c7YeMxb5w5hRs95P/uEw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723671931; c=relaxed/simple;
-	bh=EUBokEGt+hHGB0+MK8ZiOyYc6RLgHPVcQXNk8BBNSSQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=nynEXXxkgfiE1G4Sw/i47SCjmnducZr0MYmm3xKJz2g+Y+eOiTz+dLO13D/l1F6JTBidGKy45s1mcNq8698MBKj2xyrQUg82MfJM+V4wIzkdJU2mVl0ckwCObjK9hH7P0vFoDf6aqrNoIGfGCldIevVtVWCiggi7GSQzTVmK7ds=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jCG/tFbW; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1723702808; c=relaxed/simple;
+	bh=Su63kxGYW2axwphAAUUDD1hgczgZ+W0UW1TzzJ1y76Q=;
+	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
+	 Message-Id:References:To; b=SAqtS6jUURCmhefdlnz+15YUJXpSrnGMZJSSFhqJxHpVI44dgZFvRDLru7kR6GmWXXaJxqhIi+2Tme2AHz5kFGcddqwxq5/zCYs5UBpnHyJW6qYgI3mUDL6y2eeP7SrbPCBIpEyu4X6rqw4NObiTMeQvaKuprpPXtHonAanRVCM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=dPzWmRiK; arc=none smtp.client-ip=212.122.41.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jCG/tFbW"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1723671925;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=abunyBNcJHigB8Yorid7Z1CgUuMuzaoD8QGJ4wZuvUk=;
-	b=jCG/tFbWD9YWpM9xhXzKoEGp8nsh4hWZ1rbWx1KCo0b9edLao7NbmOavnDcbVVX1dw7vfA
-	CxNLd1VPAQ7tsKIfRnQcy/fzKLFlBkMKkS21KsUAAVYsDxysBa2Y4eshCC2sspmhBY+nSE
-	zCcNDUpwuvFq0bdTnfHxmiYpMR2eUvk=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-438-Rlh157FMOX68u7okX48Q5Q-1; Wed,
- 14 Aug 2024 17:45:21 -0400
-X-MC-Unique: Rlh157FMOX68u7okX48Q5Q-1
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3D74F19332AC;
-	Wed, 14 Aug 2024 21:45:18 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AC7E219560A3;
-	Wed, 14 Aug 2024 21:45:17 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 47ELjGVC3533564
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 14 Aug 2024 17:45:16 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 47ELjFXx3533563;
-	Wed, 14 Aug 2024 17:45:15 -0400
-Date: Wed, 14 Aug 2024 17:45:15 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] libmpathcmd: reinstate ABI 1.0.0
-Message-ID: <Zr0laySsCt7dfdjt@redhat.com>
-References: <20240813094046.21644-1-mwilck@suse.com>
+	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="dPzWmRiK"
+Content-Type: text/plain;
+	charset=utf-8
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
+	s=mail; t=1723702802;
+	bh=Su63kxGYW2axwphAAUUDD1hgczgZ+W0UW1TzzJ1y76Q=;
+	h=Subject:From:In-Reply-To:Date:Cc:References:To;
+	b=dPzWmRiKsTHHdmT9OvbnankfC1x2qpzDvVivZ0Ei9ElquPR79NuvKOzRuGnOyLC8D
+	 LYIeTaG6kQZLhPUCdh1jW06nXGzLBsPNveEgd8dCfALEQEJX2JUqgndWprdeHz6IDm
+	 BRBo3m2/VXIqwNP9/YjOXk7MdXfTOQgki/9BWldU=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-In-Reply-To: <20240813094046.21644-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51\))
+Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
+ devices when rsyncing many files
+From: Christian Theune <ct@flyingcircus.io>
+In-Reply-To: <EBC67418-E60C-435A-8F63-114C67F07583@flyingcircus.io>
+Date: Thu, 15 Aug 2024 08:19:41 +0200
+Cc: Yu Kuai <yukuai1@huaweicloud.com>,
+ "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+ dm-devel@lists.linux.dev,
+ "yukuai (C)" <yukuai3@huawei.com>
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <CEC90137-09B3-41AA-A115-1C172F9C6C4B@flyingcircus.io>
+References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
+ <316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
+ <58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
+ <EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
+ <22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
+ <26291.57727.410499.243125@quad.stoffel.home>
+ <2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
+ <1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
+ <4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
+ <C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
+ <e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
+ <30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
+ <26294.40330.924457.532299@quad.stoffel.home>
+ <C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
+ <26298.22106.810744.702395@quad.stoffel.home>
+ <EBC67418-E60C-435A-8F63-114C67F07583@flyingcircus.io>
+To: John Stoffel <john@stoffel.org>
 
-On Tue, Aug 13, 2024 at 11:40:45AM +0200, Martin Wilck wrote:
+Hi,
 
-For the set:
-Tested-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> On 14. Aug 2024, at 10:53, Christian Theune <ct@flyingcircus.io> =
+wrote:
+>=20
+> Hi,
+>=20
+>> On 12. Aug 2024, at 20:37, John Stoffel <john@stoffel.org> wrote:
+>>=20
+>> I'd probably just do the RAID6 tests first, get them out of the way. =20=
 
-> __mpath_connect() was part of our public ABI. Instead of removing
-> it completely, define it as a weak alias of the new mpath_connect__().
-> This way, programs linked against previous versions of libmpathcmd
-> will continue to work.
-> 
-> This shouldn't interfere with general symbol naming rules, as a weak
-> symbol won't override a library symbol of the same name.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmpathcmd/libmpathcmd.version | 12 ++++++++----
->  libmpathcmd/mpath_cmd.c         |  3 +++
->  2 files changed, 11 insertions(+), 4 deletions(-)
-> 
-> diff --git a/libmpathcmd/libmpathcmd.version b/libmpathcmd/libmpathcmd.version
-> index a786c25..81bdb2b 100644
-> --- a/libmpathcmd/libmpathcmd.version
-> +++ b/libmpathcmd/libmpathcmd.version
-> @@ -10,16 +10,20 @@
->   *
->   * See libmultipath.version for general policy about version numbers.
->   */
-> -LIBMPATHCMD_2.0.0 {
-> +
-> +LIBMPATHCMD_1.0.0 {
->  global:
->  	mpath_connect;
-> -	mpath_connect__;
-> +	__mpath_connect;
->  	mpath_disconnect;
->  	mpath_process_cmd;
->  	mpath_recv_reply;
->  	mpath_recv_reply_len;
->  	mpath_recv_reply_data;
->  	mpath_send_cmd;
-> -local:
-> -	*;
->  };
-> +
-> +LIBMPATHCMD_1.1.0 {
-> +global:
-> +	mpath_connect__;
-> +} LIBMPATHCMD_1.0.0;
-> diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-> index 1fa036c..a38e8b6 100644
-> --- a/libmpathcmd/mpath_cmd.c
-> +++ b/libmpathcmd/mpath_cmd.c
-> @@ -133,6 +133,9 @@ int mpath_connect__(int nonblocking)
->  	return fd;
->  }
->  
-> +extern int __mpath_connect(int)
-> +	__attribute__((weak, alias("mpath_connect__")));
-> +
->  /*
->   * connect to a unix domain socket
->   */
-> -- 
-> 2.46.0
+>=20
+> Alright, those are running right now - I=E2=80=99ll let you know what =
+happens.
+
+I=E2=80=99m not making progress here. I can=E2=80=99t reproduce those on =
+in-memory loopback raid 6. However: i can=E2=80=99t fully produce the =
+rsync. For me this only triggered after around 1.5hs of progress on the =
+NVMe which resulted in the hangup. I can only create around 20 GiB worth =
+of raid 6 volume on this machine. I=E2=80=99ve tried running rsync until =
+it exhausts the space, deleting the content and running rsync again, but =
+I feel like this isn=E2=80=99t suffient to trigger the issue. :(
+
+I=E2=80=99m trying to find whether any specific pattern in the files =
+around the time it locks up might be relevant here and try to run the =
+rsync over that=20
+portion.
+
+On the plus side, I have a script now that can create the various =
+loopback settings quickly, so I can try out things as needed. Not that =
+valuable without a reproducer, yet, though.
+
+@Yu: you mentioned that you might be able to provide me a kernel that =
+produces more error logging to diagnose this? Any chance we could try =
+that route?
+
+Christian
+
+--=20
+Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
+Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
+Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
+HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
+Christian Zagrodnick
 
