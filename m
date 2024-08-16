@@ -1,113 +1,63 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 419C01AD3FC
-	for <dm-devel@lists.linux.dev>; Fri, 16 Aug 2024 14:02:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35EAC1BCA0B
+	for <dm-devel@lists.linux.dev>; Fri, 16 Aug 2024 16:32:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723816948; cv=none; b=gmOECaEYbokj+0aI4FuYTmdJSYTuzPZLokuHpkXFafX6nBEoV1gMtD7r8Dk4qFjh5R8yo46LC+QyDJt7c7JJvLWK7FpP2r6NEjIZrJQXb61NSSO+ZhCMh95hprrb+MFrX0+psfif1TcGL0T4jKp7ERmK2kf7v8qOIWVRQHd4XOw=
+	t=1723825972; cv=none; b=OMjTQSsu+Ii4nIv1AE72YC9I6I1c8TO+fUWGPdnLQKwTgneR50pvGWIzICyeor1lrIpFTIKOK8tY17r0GbwDyPbWSXD5jLAJgcOvF0TD7HpE9Z6kZArVcy2CDeMJZnd5GmUDfpUEYhwatQlCq4jl2O8sxsQfOS7t/BvVwXzsxdA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723816948; c=relaxed/simple;
-	bh=+MVUxVJT49cQePQshGHILCMuTPFpiOvc46aGHJKspus=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=akf8q/5+I/PLQLFuO3H4Po/vRnZK2i1cJQMq4eCI2ONN7EKZz5Hau/tOQmtW9eePehsGtozxGdAlXEXMgmuv6FlQvSmzEI/iQKini6JYVl6gRLHqF98LE9wEJOOrJ6IjaM5z6Yv0XwoW5ncKZh6AkddoVsFeYPM8hGK3XBRemcI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gAHXu778; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1723825972; c=relaxed/simple;
+	bh=rV27fIrLrf5XjoyXEwb6fuVmCmQE/yB1Rx65y7DZxCQ=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=KI+xdsRYksNy2Fucx1K7Q9M18VmTOP+m9+1lSFLUJeJUcZ28KUHEctMvkvr9pCmhLJA61+BuiExMBZWdewFfArpAiIwiXE6euq/zv2oH/BWU0pLLFVHSJhpgjDAURrHxt0Vndgm0kuH2pvZRlpGHhuac9w0AV5BZsKESa5HJBGA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TiIb7x30; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gAHXu778"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1723816946;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=xLnf4qvWA6UGISQ6XXl/72aXKO7qCPF0u6JxMcT9BBY=;
-	b=gAHXu7781aB8HRZvdLbdVJYxWIPvPDIJSCFpJzEW7gGq2R3/pEB957pKhziBL+fmlP85sb
-	1toqQao+Vc7nJMl++EIc/dDe4QG1iwGdNnAqRc5Ijinhd+uCIxcox42qcYceIsRi8ydy1y
-	00bYAm/uPd/mVSpqfrlbDGN4CfZfraA=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-510-RF0aEGEcMTigxjMvsHig_g-1; Fri,
- 16 Aug 2024 10:02:25 -0400
-X-MC-Unique: RF0aEGEcMTigxjMvsHig_g-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C1B061955D48;
-	Fri, 16 Aug 2024 14:02:23 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4EE8C1955F38;
-	Fri, 16 Aug 2024 14:02:23 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 2582D30C1C1E; Fri, 16 Aug 2024 14:02:22 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 225943FB48;
-	Fri, 16 Aug 2024 16:02:22 +0200 (CEST)
-Date: Fri, 16 Aug 2024 16:02:22 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-cc: Daniel Yang <danielyangkang@gmail.com>, 
-    Khazhismel Kumykov <khazhy@google.com>, Alasdair Kergon <agk@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>, 
-    device-mapper development <dm-devel@lists.linux.dev>
-Subject: [git pull] device mapper fixes for 6.11
-Message-ID: <9ead5ab3-f5e1-3de6-f88-6bac6c3b1355@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TiIb7x30"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9F46DC32782;
+	Fri, 16 Aug 2024 16:32:51 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1723825971;
+	bh=rV27fIrLrf5XjoyXEwb6fuVmCmQE/yB1Rx65y7DZxCQ=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=TiIb7x30K+YVamzTNABJ4CI8MmU28Tiy4A1l6g1EqNPPeegWyTuPirAVR37MXgbTI
+	 JiX8wiqib4ZjZx61QVTo55lgIphg8KEUOMB/lBHpOgkstbdaKNZo1KqXf9e8hedWF6
+	 rDzFGw6hki3/2t0ACFx6OZS5pwZTTcJzvvXF1+gcgU3RWAmBQ59tR7XYgp5ZLXlCtP
+	 Z2vaTzS2HOnT+d2QSaYad50htXgUn/ZVNFrJ7XfPBxVGq3n9S4RVrq6ItJk+jIgQKC
+	 MFJZfH9M/GyviB9N4SSGwnNvOpc/93y0GlGBmg9k2TbXk4G0n+zCH8ZjL+CHWYj4jp
+	 hwU+/Ps+FOBUQ==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 3427538231F8;
+	Fri, 16 Aug 2024 16:32:52 +0000 (UTC)
+Subject: Re: [git pull] device mapper fixes for 6.11
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <9ead5ab3-f5e1-3de6-f88-6bac6c3b1355@redhat.com>
+References: <9ead5ab3-f5e1-3de6-f88-6bac6c3b1355@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <9ead5ab3-f5e1-3de6-f88-6bac6c3b1355@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.11/dm-fixes
+X-PR-Tracked-Commit-Id: faada2174c08662ae98b439c69efe3e79382c538
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 670c12ce09a8180ebe0c608d8a789a7e58fe7d8e
+Message-Id: <172382597073.3569819.14085314060780255282.pr-tracker-bot@kernel.org>
+Date: Fri, 16 Aug 2024 16:32:50 +0000
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Daniel Yang <danielyangkang@gmail.com>, Khazhismel Kumykov <khazhy@google.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, device-mapper development <dm-devel@lists.linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
 
-Hi Linus
+The pull request you sent on Fri, 16 Aug 2024 16:02:22 +0200 (CEST):
 
-The following changes since commit 7c626ce4bae1ac14f60076d00eafe71af30450ba:
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.11/dm-fixes
 
-  Linux 6.11-rc3 (2024-08-11 14:27:14 -0700)
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/670c12ce09a8180ebe0c608d8a789a7e58fe7d8e
 
-are available in the Git repository at:
+Thank you!
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.11/dm-fixes
-
-for you to fetch changes up to faada2174c08662ae98b439c69efe3e79382c538:
-
-  dm persistent data: fix memory allocation failure (2024-08-13 21:14:21 +0200)
-
-Please, pull, thanks
-Mikulas
-
-----------------------------------------------------------------
-- fix misbehavior if suspend or resume is interrupted by a signal
-
-- fix wrong indentation in dm-crypt.rst
-
-- fix memory allocation failure in dm-persistent-data
------BEGIN PGP SIGNATURE-----
-
-iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCZr9XxBQcbXBhdG9ja2FA
-cmVkaGF0LmNvbQAKCRATAyx9YGnhbWZGAQDNczuQiRv21Rrlb/hmvwyv1r9125Kk
-KKEl+/baxTL0qwD9GJo5l8C1RLp2M3AQyCF4JbY0lXBY42ywGLwOCC9KXw0=
-=e/lM
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Daniel Yang (1):
-      Documentation: dm-crypt.rst warning + error fix
-
-Khazhismel Kumykov (1):
-      dm resume: don't return EINVAL when signalled
-
-Mikulas Patocka (2):
-      dm suspend: return -ERESTARTSYS instead of -EINTR
-      dm persistent data: fix memory allocation failure
-
- .../admin-guide/device-mapper/dm-crypt.rst         | 15 ++++++++-------
- drivers/md/dm-ioctl.c                              | 22 ++++++++++++++++++++--
- drivers/md/dm.c                                    |  4 ++--
- drivers/md/persistent-data/dm-space-map-metadata.c |  4 ++--
- 4 files changed, 32 insertions(+), 13 deletions(-)
-
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
