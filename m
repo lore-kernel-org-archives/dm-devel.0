@@ -1,139 +1,113 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 986AE1BBBD2
-	for <dm-devel@lists.linux.dev>; Fri, 16 Aug 2024 13:35:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 419C01AD3FC
+	for <dm-devel@lists.linux.dev>; Fri, 16 Aug 2024 14:02:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723815313; cv=none; b=EPWH+jes/F2dxwUFpkD/Ee8DGEFEfa0TSsTyWkn87FlREQQd7h0hb2KHT37nqvmjJS5zwLkADb9aoKicRc8CO1UUE3a2jD4Nwy2hFa8UsKiLw23bPLXDyyiuMmuNMfT7Md4dLIrLmKlrFDTttRj7/lIiH+cINxfEcdtFaIcKTRw=
+	t=1723816948; cv=none; b=gmOECaEYbokj+0aI4FuYTmdJSYTuzPZLokuHpkXFafX6nBEoV1gMtD7r8Dk4qFjh5R8yo46LC+QyDJt7c7JJvLWK7FpP2r6NEjIZrJQXb61NSSO+ZhCMh95hprrb+MFrX0+psfif1TcGL0T4jKp7ERmK2kf7v8qOIWVRQHd4XOw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723815313; c=relaxed/simple;
-	bh=lDar9DmTlw3ePp5Q6kmmihzaxbm6I0P3DPXryScVANs=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=ZfnEfB1owCpGwBCiMU43+CfSPIBWt7H4GYYIjzGZtSfq2hEDny3WB1NkM3NsG/EEwrLctT9nZ2N1Giljtjj7NOOMeofUUGGUm5+yu9pt7OM98+xRmHNTz+3xdljgjZfiLXwUNEAoyR4L21cOGxmF2uZrScoH69EhTJB31EU2m30=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PBvFf9x3; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1723816948; c=relaxed/simple;
+	bh=+MVUxVJT49cQePQshGHILCMuTPFpiOvc46aGHJKspus=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=akf8q/5+I/PLQLFuO3H4Po/vRnZK2i1cJQMq4eCI2ONN7EKZz5Hau/tOQmtW9eePehsGtozxGdAlXEXMgmuv6FlQvSmzEI/iQKini6JYVl6gRLHqF98LE9wEJOOrJ6IjaM5z6Yv0XwoW5ncKZh6AkddoVsFeYPM8hGK3XBRemcI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gAHXu778; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PBvFf9x3"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gAHXu778"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1723815310;
+	s=mimecast20190719; t=1723816946;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=mDOEDproV6IdIvTfwNaoQVF0QCH62QV3M+COrHMBt9A=;
-	b=PBvFf9x3zpqahSayzhZW0WwohO3C8YXcLMCAu0oauaF4B+zfb294JTc8FDeqTHiWXWVKIv
-	liFVEXt2ACC87edSkFuI9/ksfxsmIdjld38N+LZFpEWGBrLV90kO5bvVSWdJ9dgFXYKmRA
-	P/GUXELVgHdosdWoJY18c4h7OPyLLRc=
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=xLnf4qvWA6UGISQ6XXl/72aXKO7qCPF0u6JxMcT9BBY=;
+	b=gAHXu7781aB8HRZvdLbdVJYxWIPvPDIJSCFpJzEW7gGq2R3/pEB957pKhziBL+fmlP85sb
+	1toqQao+Vc7nJMl++EIc/dDe4QG1iwGdNnAqRc5Ijinhd+uCIxcox42qcYceIsRi8ydy1y
+	00bYAm/uPd/mVSpqfrlbDGN4CfZfraA=
 Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-125-HGvqPeTXPKC2fZi24A5kRA-1; Fri,
- 16 Aug 2024 09:35:05 -0400
-X-MC-Unique: HGvqPeTXPKC2fZi24A5kRA-1
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-510-RF0aEGEcMTigxjMvsHig_g-1; Fri,
+ 16 Aug 2024 10:02:25 -0400
+X-MC-Unique: RF0aEGEcMTigxjMvsHig_g-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7FB19193E8F7;
-	Fri, 16 Aug 2024 13:35:03 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C1B061955D48;
+	Fri, 16 Aug 2024 14:02:23 +0000 (UTC)
 Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D9AB91956054;
-	Fri, 16 Aug 2024 13:35:02 +0000 (UTC)
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4EE8C1955F38;
+	Fri, 16 Aug 2024 14:02:23 +0000 (UTC)
 Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id A6B7E30C1C1E; Fri, 16 Aug 2024 13:35:01 +0000 (UTC)
+	id 2582D30C1C1E; Fri, 16 Aug 2024 14:02:22 +0000 (UTC)
 Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id A1F8B3FB48;
-	Fri, 16 Aug 2024 15:35:01 +0200 (CEST)
-Date: Fri, 16 Aug 2024 15:35:01 +0200 (CEST)
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 225943FB48;
+	Fri, 16 Aug 2024 16:02:22 +0200 (CEST)
+Date: Fri, 16 Aug 2024 16:02:22 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Paul Moore <paul@paul-moore.com>
-cc: Mike Snitzer <snitzer@kernel.org>, Alasdair Kergon <agk@redhat.com>, 
-    linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
-    linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
-    linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
-    audit@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v20 12/20] dm verity: expose root hash digest and signature
- data to LSMs
-In-Reply-To: <CAHC9VhQrnu8Sj=XnDvg=wGTBxacvMSW6OJyG3-tpwrsbGat6vA@mail.gmail.com>
-Message-ID: <88695db-efc0-6cc6-13ee-fd7c2abe61c@redhat.com>
-References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com> <1722665314-21156-13-git-send-email-wufan@linux.microsoft.com> <9dc30ca6-486c-4fa9-910d-ed1dc6da0e95@linux.microsoft.com>
- <CAHC9VhQrnu8Sj=XnDvg=wGTBxacvMSW6OJyG3-tpwrsbGat6vA@mail.gmail.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+cc: Daniel Yang <danielyangkang@gmail.com>, 
+    Khazhismel Kumykov <khazhy@google.com>, Alasdair Kergon <agk@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, 
+    device-mapper development <dm-devel@lists.linux.dev>
+Subject: [git pull] device mapper fixes for 6.11
+Message-ID: <9ead5ab3-f5e1-3de6-f88-6bac6c3b1355@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="185210117-1569210666-1723814889=:1417825"
-Content-ID: <5538cf-7394-958-6f84-c8dc4adbca47@redhat.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi Linus
 
---185210117-1569210666-1723814889=:1417825
-Content-Type: text/plain; CHARSET=UTF-8
-Content-Transfer-Encoding: 8BIT
-Content-ID: <e38cf2c9-a8f2-b095-bdda-7ca01566581a@redhat.com>
+The following changes since commit 7c626ce4bae1ac14f60076d00eafe71af30450ba:
 
+  Linux 6.11-rc3 (2024-08-11 14:27:14 -0700)
 
+are available in the Git repository at:
 
-On Thu, 15 Aug 2024, Paul Moore wrote:
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.11/dm-fixes
 
-> On Thu, Aug 8, 2024 at 6:38 PM Fan Wu <wufan@linux.microsoft.com> wrote:
-> >
-> > Hi Mikulas,
-> >
-> > I hope you’re doing well. I wanted to thank you again for your thorough
-> > review for the last version. I’ve since made some minor updates for this
-> > version, including adding more comments and refactoring the way the hash
-> > algorithm name is obtained due to recent changes in dm-verity.
-> >
-> > Would you mind if we keep the Review-by tag on the latest version since
-> > the changes are minor? Your feedback is greatly valued, and I’d
-> > appreciate it if you could take a quick look when you have a moment.
-> 
-> To add a bit more to this, this patchset now looks like it is in a
-> state where we would like to merge it into the LSM tree for the
-> upcoming merge window, but I would really like to make sure that the
-> device-mapper folks are okay with these changes; an
-> Acked-by/Reviewed-by on this patch would be appreciated, assuming you
-> are still okay with this patch.
-> 
-> For those who may be missing the context, the full patchset can be
-> found on lore at the link below:
-> 
-> https://lore.kernel.org/linux-security-module/1722665314-21156-1-git-send-email-wufan@linux.microsoft.com
+for you to fetch changes up to faada2174c08662ae98b439c69efe3e79382c538:
 
-Hi
+  dm persistent data: fix memory allocation failure (2024-08-13 21:14:21 +0200)
 
-I'm not an expert in Linux security subsystems. I skimmed through the 
-dm-verity patch, didn't find anything wrong with it, so you can add
-
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
-
-> > >
-> > > +#ifdef CONFIG_SECURITY
-> > > +     u8 *root_digest_sig;    /* signature of the root digest */
-> > > +#endif /* CONFIG_SECURITY */
-> > >       unsigned int salt_size;
-> > >       sector_t data_start;    /* data offset in 512-byte sectors */
-> > >       sector_t hash_start;    /* hash start in blocks */
-> > > @@ -58,6 +61,9 @@ struct dm_verity {
-> > >       bool hash_failed:1;     /* set if hash of any block failed */
-> > >       bool use_bh_wq:1;       /* try to verify in BH wq before normal work-queue */
-> > >       unsigned int digest_size;       /* digest size for the current hash algorithm */
-> > > +#ifdef CONFIG_SECURITY
-> > > +     unsigned int sig_size;  /* root digest signature size */
-> > > +#endif /* CONFIG_SECURITY */
-> > >       unsigned int hash_reqsize; /* the size of temporary space for crypto */
-> > >       enum verity_mode mode;  /* mode for handling verification errors */
-> > >       unsigned int corrupted_errs;/* Number of errors for corrupted blocks */
-
-Just nit-picking: I would move "unsigned int sig_size" up, after "u8 
-*root_digest_sig" entry.
-
+Please, pull, thanks
 Mikulas
---185210117-1569210666-1723814889=:1417825--
+
+----------------------------------------------------------------
+- fix misbehavior if suspend or resume is interrupted by a signal
+
+- fix wrong indentation in dm-crypt.rst
+
+- fix memory allocation failure in dm-persistent-data
+-----BEGIN PGP SIGNATURE-----
+
+iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCZr9XxBQcbXBhdG9ja2FA
+cmVkaGF0LmNvbQAKCRATAyx9YGnhbWZGAQDNczuQiRv21Rrlb/hmvwyv1r9125Kk
+KKEl+/baxTL0qwD9GJo5l8C1RLp2M3AQyCF4JbY0lXBY42ywGLwOCC9KXw0=
+=e/lM
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Daniel Yang (1):
+      Documentation: dm-crypt.rst warning + error fix
+
+Khazhismel Kumykov (1):
+      dm resume: don't return EINVAL when signalled
+
+Mikulas Patocka (2):
+      dm suspend: return -ERESTARTSYS instead of -EINTR
+      dm persistent data: fix memory allocation failure
+
+ .../admin-guide/device-mapper/dm-crypt.rst         | 15 ++++++++-------
+ drivers/md/dm-ioctl.c                              | 22 ++++++++++++++++++++--
+ drivers/md/dm.c                                    |  4 ++--
+ drivers/md/persistent-data/dm-space-map-metadata.c |  4 ++--
+ 4 files changed, 32 insertions(+), 13 deletions(-)
 
