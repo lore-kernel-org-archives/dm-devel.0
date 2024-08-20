@@ -1,104 +1,150 @@
-Received: from mail-yb1-f171.google.com (mail-yb1-f171.google.com [209.85.219.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9300D1C6B4
-	for <dm-devel@lists.linux.dev>; Tue, 20 Aug 2024 02:52:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 040A5194132
+	for <dm-devel@lists.linux.dev>; Tue, 20 Aug 2024 15:56:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724122330; cv=none; b=X0tbkJ8BuSaAOxBoC0zArbFm2zQKHPzi7Am51WGLQGXV5RM/iz45RJhEje/8rYxKHN9khqMhlK1mNYTN3r1vhNFoN4MB+IWOJeQzvlA6QTlxfIukGmoJH+WpJpkGMM8iwBRCH2/g2O+y7yNHQ6GKwJphgEl3fSSlZTx19ZIhr1g=
+	t=1724169397; cv=none; b=tX0TU0VyloZfKW6uHPasDejI4gDwJ22b5Ia7K3PerqAhUhz/q1FM2eu6/AeJI/djQwwXAZC9DBMdcxW836YxcgkL1Xmok+33c57TM9L1U5PpDFibvyTjwTmY829bvUpjreag1HscxO80ERgonjiTSP3eIU8GdAkUr6QVLzmY3Sk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724122330; c=relaxed/simple;
-	bh=ZDr5ZbxqvFQWLLGyxixOKscT+4fsLzUr364GEc8bx4k=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=vFcS0gjlFZfPtUBS0E23+I7Co+3Bn/StPpDay35L/bUVYXqfcfrjhIKgUFfqQhYuf+rnYoYDTNuG0KuxlZU9qeS/iXR+8wqWiq38Jxc+3x9kBm8jleXTI9OkPi2QJYnjfl/Y8vjMn6rqeEpORyku+AbVTZhdSg4PZNEo8iCPL5s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=c3JxdOjc; arc=none smtp.client-ip=209.85.219.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
+	s=arc-20240116; t=1724169397; c=relaxed/simple;
+	bh=Qva5+UXUYmHWOG2HRWEqsUfbZAKR1XQh8d0K7a81fAs=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=p4wEBwla3KYLXhwSDC8svhBRJ3PsqxXDbTKu86vit59N6Urb8p5bdzwUUe8PBzlypJCCpdUi+Fu3R7VksacwpARWH3izWaOip5WogENb7clOQ+Y9ivjFurMI6umgqxCeCGEXP5kCgLBxeGSHpzL27ywxp8tOj+U/LktvWb935Ag=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HUvC/SKG; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="c3JxdOjc"
-Received: by mail-yb1-f171.google.com with SMTP id 3f1490d57ef6-e1633202008so1664356276.2
-        for <dm-devel@lists.linux.dev>; Mon, 19 Aug 2024 19:52:08 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1724122327; x=1724727127; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=dMMqIhR8mNN7qbNLvHC3cSRq9saBfgJ6P2Pudx1fscs=;
-        b=c3JxdOjctdUq0VFWEd1HVu35bhGlvnLt8lGsMjbHr8aml9bui6rFgp/atBc5jY7J8O
-         J8Pts9AqOokh6TUrImva43b/aMyVZFP+qrnMvLiqwCA2WcL7e79keEAJKu2l1lRVgjPy
-         f5LVwSNRqOlJkYCF0kqsAm91ukeKFxayvCRQa6mVDGcukk5p4hwjD0JyZ4q+dDDtqZGW
-         mrQsouhU329H6kjP5j247xWrh6O/Kd1dtX1nO72PBwUS5zCCtYhlWoVDEjOMcI4MKyZt
-         NNP7MpTKmVYMqq8ecy4AKllXe8tuHdbcuFbLM6wf1ikfSGeu2lRTN+unk4SMGIG5ht2E
-         r8ZQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724122327; x=1724727127;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=dMMqIhR8mNN7qbNLvHC3cSRq9saBfgJ6P2Pudx1fscs=;
-        b=eSYtn34L683IOa69R9wFwdDcLn4jFBHgVF6ilmSYXcbZD22Mg0zSgg4458z9Jx7xWb
-         WYHuygfcCssIe5+cz0awqxzDkDUXowfE4ESnvexjudxDDw1MakgCxQ0FwiBOEhX+dWF7
-         Hsdl7oIcGG3BNNSBGkf4LHyZzzs9REQ9lb6ilgHWL48ZOJizJiUa0OAECuJ0W+1h26Qv
-         JJm9SkFY8jFBfi9xxGpoHqL4Dm6vGtX+D2+apj7qX3rpGIUCDjPtjUOhCHsEemadiL9N
-         O+p2XRUdb3BaYOCqxe10GYYRRnLEdEu5Bc7oCkOxh8Iz6a9cRuVxAYivEus5hLvtfjh6
-         jN/g==
-X-Forwarded-Encrypted: i=1; AJvYcCWE/7FqTGbNSBX7lQ7hVkuV9DPX2rOFqrys8ILYeq693B+7pFn37CNJbpzImi0Dba9UW5GFvCi0zQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yx78ypLJx3Yf4d36FmVypTNhrokoBvZUinQE5xIU+NTApk9OAdT
-	hwToraXwg0Go1dnYheSy9Z919wwSqR7nrk9jD7E0etn5sdzgZQqrjsctKBnOLROqC7pwDdsF0lc
-	k6kobc8eHhR6M+S7gzHV5AlYsj2JjpJMJiWH0
-X-Google-Smtp-Source: AGHT+IGx4BZUDH+LCtHEYeY3Jj6i77Krk/e4mCpEtrxZEdqLSGFNLBDOXv3VOnuXbn9YLa/m+2U6fa38CFBTVrK6h9g=
-X-Received: by 2002:a25:d8ce:0:b0:e11:83ac:a024 with SMTP id
- 3f1490d57ef6-e1183acaecemr11644146276.39.1724122327544; Mon, 19 Aug 2024
- 19:52:07 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HUvC/SKG"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1724169393;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=u0gli+bohzWPYwY7EeMzOqQfQ/TM582abbFLfRXH3iM=;
+	b=HUvC/SKG8OX0YtPcol1PKcKgYtkT/zoc/YXuu3qLUM1Ur//B9xZ8zgFYGP7XGhbpEPHGn0
+	I54wAcFcsI+/0TK47tor/ZdRS+W7Nugzeipl7Wzk65b7fP6R2jXmLTkb043YuGiqJPKjVV
+	0G32MGayymz3vxBUsEc//6B+saCrWbk=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-683-pQho3fLrMwWttLx1RQbnJw-1; Tue,
+ 20 Aug 2024 11:56:29 -0400
+X-MC-Unique: pQho3fLrMwWttLx1RQbnJw-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2E5AB1955D4B;
+	Tue, 20 Aug 2024 15:56:28 +0000 (UTC)
+Received: from [10.45.224.222] (unknown [10.45.224.222])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E4CF119560AA;
+	Tue, 20 Aug 2024 15:56:25 +0000 (UTC)
+Date: Tue, 20 Aug 2024 17:56:22 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Ingo Franzki <ifranzki@linux.ibm.com>
+cc: dm-devel@lists.linux.dev, agk@redhat.com, snitzer@kernel.org, 
+    gmazyland@gmail.com
+Subject: Re: [PATCH] dm-crypt: Allow to specify the integrity key size as
+ option
+In-Reply-To: <20240816112133.2100537-1-ifranzki@linux.ibm.com>
+Message-ID: <d75574e8-a829-0f48-2a99-8d79b0fdfb00@redhat.com>
+References: <20240816112133.2100537-1-ifranzki@linux.ibm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <1722665314-21156-1-git-send-email-wufan@linux.microsoft.com> <CAHC9VhQ3LobZks+JtcmOxiDH1_kbjXq3ao8th4V_VXO8VAh6YA@mail.gmail.com>
-In-Reply-To: <CAHC9VhQ3LobZks+JtcmOxiDH1_kbjXq3ao8th4V_VXO8VAh6YA@mail.gmail.com>
-From: Paul Moore <paul@paul-moore.com>
-Date: Mon, 19 Aug 2024 22:51:56 -0400
-Message-ID: <CAHC9VhR7CEBmzjnruFaHHpepYWSRu0bvPUxYk_jz7oXRS5yJUw@mail.gmail.com>
-Subject: Re: [PATCH v20 00/20] Integrity Policy Enforcement LSM (IPE)
-To: Fan Wu <wufan@linux.microsoft.com>
-Cc: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, 
-	tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com, 
-	snitzer@kernel.org, mpatocka@redhat.com, eparis@redhat.com, 
-	linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org, 
-	linux-security-module@vger.kernel.org, fsverity@lists.linux.dev, 
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, audit@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On Tue, Aug 6, 2024 at 4:59=E2=80=AFPM Paul Moore <paul@paul-moore.com> wro=
-te:
-> On Sat, Aug 3, 2024 at 2:08=E2=80=AFAM Fan Wu <wufan@linux.microsoft.com>=
- wrote:
-> >
-> > IPE is a Linux Security Module that takes a complementary approach to
-> > access control. Unlike traditional access control mechanisms that rely =
-on
-> > labels and paths for decision-making, IPE focuses on the immutable secu=
-rity
-> > properties inherent to system components. These properties are fundamen=
-tal
-> > attributes or features of a system component that cannot be altered,
-> > ensuring a consistent and reliable basis for security decisions.
-> >
-> > ...
->
-> There was some minor merge fuzz, a handful of overly long lines in the
-> comments, and some subject lines that needed some minor tweaking but
-> overall I think this looks good.  I only see one thing holding me back
-> from merging this into the LSM tree: an updated ACK from the
-> device-mapper folks; if we can get that within the next week or two
-> that would be great.
 
-I've just merged IPE into the lsm/dev branch, it should go up to Linus
-during the next merge window.  Thanks everyone!
 
---=20
-paul-moore.com
+On Fri, 16 Aug 2024, Ingo Franzki wrote:
+
+> For the MAC based integrity operation, the integrity key size (i.e.
+> key_mac_size) is currently set to the digest size of the used digest.
+> 
+> For wrapped key HMAC algorithms, the key size is independent of the
+> cryptographic key size. So there is no known size of the mac key in
+> such cases. The desired key size can optionally be specified as argument
+> when the dm-crypt device is configured via 'integrity_key_size:%u'.
+> If no integrity_key_size argument is specified, the mac key size
+> is still set to the digest size, as before.
+> 
+> Increase version number to 1.28.0 so that support for the new
+> argument can be detected by user space (i.e. cryptsetup).
+
+Hi
+
+I know you already discussed it with Milan. I'd like to ask, what's the 
+reason for this patch? Milan said that you need it for mainframes - 
+please, describe the specific configuration when this patch is needed.
+
+Mikulas
+
+
+> Signed-off-by: Ingo Franzki <ifranzki@linux.ibm.com>
+> ---
+>  Documentation/admin-guide/device-mapper/dm-crypt.rst |  4 ++++
+>  drivers/md/dm-crypt.c                                | 11 +++++++++--
+>  2 files changed, 13 insertions(+), 2 deletions(-)
+> 
+> diff --git a/Documentation/admin-guide/device-mapper/dm-crypt.rst b/Documentation/admin-guide/device-mapper/dm-crypt.rst
+> index e625830d335e..636b47c582f0 100644
+> --- a/Documentation/admin-guide/device-mapper/dm-crypt.rst
+> +++ b/Documentation/admin-guide/device-mapper/dm-crypt.rst
+> @@ -160,6 +160,10 @@ iv_large_sectors
+>     The <iv_offset> must be multiple of <sector_size> (in 512 bytes units)
+>     if this flag is specified.
+>  
+> +integrity_key_size:<bytes>
+> +   Use an integrity key of <bytes> size instead of using an integrity key size
+> +   of the digest size of the used HMAC algorithm.
+> +
+>  
+>  Module parameters::
+>  max_read_size
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 348b4b26c272..c4c706115870 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -2937,7 +2937,8 @@ static int crypt_ctr_auth_cipher(struct crypt_config *cc, char *cipher_api)
+>  	if (IS_ERR(mac))
+>  		return PTR_ERR(mac);
+>  
+> -	cc->key_mac_size = crypto_ahash_digestsize(mac);
+> +	if (!cc->key_mac_size)
+> +		cc->key_mac_size = crypto_ahash_digestsize(mac);
+>  	crypto_free_ahash(mac);
+>  
+>  	cc->authenc_key = kmalloc(crypt_authenckey_size(cc), GFP_KERNEL);
+> @@ -3219,6 +3220,12 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
+>  			cc->cipher_auth = kstrdup(sval, GFP_KERNEL);
+>  			if (!cc->cipher_auth)
+>  				return -ENOMEM;
+> +		} else if (sscanf(opt_string, "integrity_key_size:%u", &val) == 1) {
+> +			if (val == 0) {
+> +				ti->error = "Invalid integrity_key_size argument";
+> +				return -EINVAL;
+> +			}
+> +			cc->key_mac_size = val;
+>  		} else if (sscanf(opt_string, "sector_size:%hu%c", &cc->sector_size, &dummy) == 1) {
+>  			if (cc->sector_size < (1 << SECTOR_SHIFT) ||
+>  			    cc->sector_size > 4096 ||
+> @@ -3758,7 +3765,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
+>  
+>  static struct target_type crypt_target = {
+>  	.name   = "crypt",
+> -	.version = {1, 27, 0},
+> +	.version = {1, 28, 0},
+>  	.module = THIS_MODULE,
+>  	.ctr    = crypt_ctr,
+>  	.dtr    = crypt_dtr,
+> -- 
+> 2.43.0
+> 
+
