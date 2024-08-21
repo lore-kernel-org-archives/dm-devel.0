@@ -1,108 +1,123 @@
-Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
+Received: from mail-oa1-f53.google.com (mail-oa1-f53.google.com [209.85.160.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50F04170826
-	for <dm-devel@lists.linux.dev>; Wed, 21 Aug 2024 21:31:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B82D178372
+	for <dm-devel@lists.linux.dev>; Wed, 21 Aug 2024 21:39:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724275890; cv=none; b=NnfC3+fJ7/nzBQHcMlPysYMCPquEzJ/TiywdDuDfAG5VjemwtcnPwAmWu38DOOdkzsAvD8WJlThPLCx+2WMdbLKxHN7kDBBkYkfq6inMA7REN6JWrBS28oHTc/0krDa7WAv5ncJTcl7W1WPUIpz0IqOVbOifO/FoFVSMCAkmTEs=
+	t=1724276383; cv=none; b=nPalTBeKPsK6naCx2ZZ0rZI1BFrM9rlnbkE8vlBlGm18FDv1tBBjd04FqGLcphIgvdsVWNhrFUzeav30fiQJcC+oS1StriTwcosTdS/esa7CU5jgTBHUSdQg12UjlW36cSdH8wtMLH3lVtwkVsSMxvZn63e1lPjkZjInJX7PQ7k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724275890; c=relaxed/simple;
-	bh=13Gb/RMl6q3swlRFNwPCffDQHdXZXtufKiZG1cadPNg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Fb9L8GqOzYsdpAMB6Dhy1K6sgNx7hlkX6KCmmlGKEvDsaVe2NAsHRy+yvhTcWICAkxNXLLIu7M+g2FLvjyVZ3DObvtcUOmz6PkiV4xRGu1v2xl5Vo6Qm8SsECZzEOE9oSlsfT8YCNwRxG3GHrkO116yxNx+Yy7rk/xuGO45gO50=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aHRfOwWu; arc=none smtp.client-ip=209.85.208.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1724276383; c=relaxed/simple;
+	bh=pOwO2E8B+DbgMlyTF+nhtcaOGAY1lQANOYC5GF+z8ao=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=aRmZLSme8i5N1M3Jyl+LUMO5QoyUVsrbnHDJ00z1dlkHTKEUGqESvn4cwcnzB5uBkXcv2/GF3TFI0VKmkBjIuNfaUzd1XBIhu0HaPQ8DPZc9IYbYkLI2Fua7JsdhyQyCEZFpS8mI0cumFp+zax5OfTRIZaSgLb0/YF1BcdQL0QA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=berkeley.edu; spf=pass smtp.mailfrom=berkeley.edu; dkim=fail (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=T9okU7v3 reason="signature verification failed"; arc=none smtp.client-ip=170.10.129.124; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; arc=none smtp.client-ip=209.85.160.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=berkeley.edu
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=berkeley.edu
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aHRfOwWu"
-Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-5bebd3b7c22so2030664a12.0
-        for <dm-devel@lists.linux.dev>; Wed, 21 Aug 2024 14:31:29 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1724275888; x=1724880688; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=cyaVmd0NKFFDt4jDA5xpNFtWFHhwLK4nU/+8+CzA/xg=;
-        b=aHRfOwWuxs1+ygi7vTN44Yvzm1FQNrQIdT2i0dMLBIWBtoDmuYj4kQKwPUC9LhomP/
-         LK12JJl9GXDssV7kyqZwTsrSwgMmpAr+VOP4KS8Xsk9XKMKmTzv3zUVq2VR0bKnEk0HS
-         nOoAz4PKqmzrlK50GxY5xKYuhQGrX70ArrxEfD1f3d9QNmAkKocbkMBnfdK5cVdFrZ+0
-         NpQBlgShaci6jtigREl1f0ub7xEinJ6LMNJUoQa4xcvvm+WIGisAUI0DocjdNztnhafg
-         N9RO2WXfgcidanPDubx/RIcrpUsZMd+Qzeu2mPkiEh2wwCmdzaeP79AQ0KyTD2r7SG6F
-         1d1Q==
+	dkim=fail reason="signature verification failed" (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="T9okU7v3"
+Received: by mail-oa1-f53.google.com with SMTP id 586e51a60fabf-2689e7a941fso83541fac.3
+        for <dm-devel@lists.linux.dev>; Wed, 21 Aug 2024 14:39:41 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724275888; x=1724880688;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=cyaVmd0NKFFDt4jDA5xpNFtWFHhwLK4nU/+8+CzA/xg=;
-        b=xN700z83eGOSmzLvZ5qNDhprLUsyjY08N6PVn3DkXZbPVi1EXR7/asLN+LHv6vD0Ee
-         nBf/CPAPPuGaffv/fhXtCf5kUVIHkwOSqlRtFXdDFjbDntQQduxCvP1cBuNzLRgVPCmG
-         fpxlId13JlDxNdMAJKLsugClGOOMEmUVmoiOkrpqHfx5vRWnLmq+ggQ06DLv5BE/lA9/
-         5HAEXopmrU22sTCepXpb1tH+gj3HzCFsPAAhxkfiAdRWcUFUZP6pppkDeOattjx5zLvj
-         c2KjTsdvP/sAjMf2EaKj8RYsI+xvo0C22lD57ezaV9KZNBpYXoFuIP8StWafprX2MhLB
-         26aA==
-X-Forwarded-Encrypted: i=1; AJvYcCU6+yfDw5InEMT2TDz9+TcFuXfw+lsoHHc+9o79YkBYCRzjfUpgiGVbdEnCVCaHHkDnKhq0DKTGWg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yy/dOGy9jTgLIyrAMtNUD+/pW8TtihWT90DS+HylFDq/IMZcRIC
-	BWkBqRPy/4r5/2D2WZu8kTg9hmQ124rXbnrkhL8TnVfM4NZVWz7F3F30+w==
-X-Google-Smtp-Source: AGHT+IFLKTY9hGauEHRaP/JAEHEXViE3iNpe4vmfGq6Pa/xlFaqwEsIPBdIvpVqlkTOmzokW2Gkpgw==
-X-Received: by 2002:a17:906:5d5:b0:a86:8b5f:65e5 with SMTP id a640c23a62f3a-a868b5f6870mr64815466b.12.1724275887356;
-        Wed, 21 Aug 2024 14:31:27 -0700 (PDT)
-Received: from luk-pc.lan (093105062173.zamosc.vectranet.pl. [93.105.62.173])
-        by smtp.googlemail.com with ESMTPSA id a640c23a62f3a-a868f21fe5esm13755866b.8.2024.08.21.14.31.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Aug 2024 14:31:26 -0700 (PDT)
-From: =?UTF-8?q?=C5=81ukasz=20Patron?= <priv.luk@gmail.com>
-To: priv.luk@gmail.com
-Cc: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] dm: Implement set_read_only
-Date: Wed, 21 Aug 2024 23:30:41 +0200
-Message-ID: <20240821213048.726082-1-priv.luk@gmail.com>
-X-Mailer: git-send-email 2.46.0
+        d=1e100.net; s=20230601; t=1724276380; x=1724881180;
+        h=content-transfer-encoding:mime-version:list-unsubscribe
+         :list-subscribe:list-id:precedence:dkim-signature:references
+         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=PqlvP3RzvApaA6uBh8VzpcyOPcH0XWTzCP4WmrvJr9M=;
+        b=UyPilCIazSEssOOxttaGMIWFvapHsORjCKevMBXYJiVmv1DDFPlYtJiO0qrLYmdjWZ
+         llMdttsfJE1fuN/Vnyocn3orXpPlicCEJknMIRoTdaFBcj01K6U2Nt9hJsxvQ4/8cNGe
+         Ujcx/S/XPRuvOsQ8b+FZihvUCDwoY2A6iyQKRXxzFsrdT9hOHzV9T18WFBzWrNVR8M8j
+         jIiMPfTZuljXdf7KQ+1KbbNpwiOOJD7+4rpYgsOlNXTpFTLUN3F8pbGhpudT4ZgHvrlm
+         UuvrJd30Wj/HRQ3NmTr1u1Pa84rEeQPNFdcU8OMhrUfkWTqP7F798zHwkmIzJpFFsZGR
+         bJCw==
+X-Gm-Message-State: AOJu0YydJX4nWDX6A0m0pOC9kkNz6+JHnPSQ4DnliWYthS/2PXd9YYmO
+	goLNqHayaMyf6qI/VGLtYFWxL5K/pPj3xTT9/3+LhwMxKWSA5F06IswPoyzEng==
+X-Google-Smtp-Source: AGHT+IEIvhqCmkcUTfwvS9UErFgOeN0LioFxnXKP4KPK3nGRNhX7DX8LfFGk6WCa0h9QSA1SHhb7QA==
+X-Received: by 2002:a05:6870:71d6:b0:270:2c3:f362 with SMTP id 586e51a60fabf-2738be24ddemr3826859fac.32.1724276380052;
+        Wed, 21 Aug 2024 14:39:40 -0700 (PDT)
+Received: from localhost (dhcp-132-71.EECS.Berkeley.EDU. [128.32.132.71])
+        by smtp.gmail.com with UTF8SMTPSA id 41be03b00d2f7-7cd9acabac9sm66490a12.28.2024.08.21.14.39.38
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 21 Aug 2024 14:39:39 -0700 (PDT)
+From: David Chu <thedavidchu@berkeley.edu>
+To: mpatocka@redhat.com,
+	David Chu <thedavidchu@berkeley.edu>
+Cc: dm-devel@lists.linux.dev
+Subject: Re: dm-integrity and write reordering
+Date: Wed, 21 Aug 2024 14:39:08 -0700
+Message-ID: <219dcade-3d6b-b5ac-c11b-efb8dcd3bc63@redhat.com>
+X-Mailer: git-send-email 2.30.1
+In-Reply-To: <CAHge_00RZ7r8Np0F4PdH50hTsX-OrkXznKU2u+R9qD16=vx0_Q@mail.gmail.com>
+References: <CAHge_00RZ7r8Np0F4PdH50hTsX-OrkXznKU2u+R9qD16=vx0_Q@mail.gmail.com>
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124]) (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)) (No client certificate requested) by smtp.subspace.kernel.org (Postfix) with ESMTPS id A91071D12F4 for <dm-devel@lists.linux.dev>; Wed, 21 Aug 2024 20:08:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com; s=mimecast20190719; t=1724270900; h=from:from:reply-to:subject:subject:date:date:message-id:message-id: to:to:cc:cc:mime-version:mime-version:content-type:content-type: in-reply-to:in-reply-to:references:references; bh=fBQXoB3FDv+Jsur9P822UcZn4fuAMFTapF27zvyax9g=; b=T9okU7v3Pvb0LJDYNUWZADXe7y2VSpPfMiBMY3fti8qpygUuR80GsdGGHyZeW+521lOYj6 GwNM3tGK8YD70q6AsKd+LgCPrWVj6CbdK4X2NuwV23Rwzc8/EpItmk01UM5TnhjqAOQc6p nyrW0qwSBwlPYcJeWk8oqaqmniZz7AI=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id us-mta-361-S_TamtTLPIK-by7EKfcjSg-1; Wed, 21 Aug 2024 16:08:16 -0400
+X-MC-Unique: S_TamtTLPIK-by7EKfcjSg-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40]) (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits) key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256) (No client certificate requested) by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BA1BE19560AD; Wed, 21 Aug 2024 20:08:15 +0000 (UTC)
+Received: from [10.45.224.222] (unknown [10.45.224.222]) by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8E2EE19560AA; Wed, 21 Aug 2024 20:08:14 +0000 (UTC)
+Precedence: bulk
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 8bit
+Message-ID: <20240821213908.ncABY_hI_vgRL2_D6op6zyvqXFMDDMmEp86kM_0IhOo@z>
 
-This lets us change the read-only flag for device mapper block devices
-via the BLKROSET ioctl.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-Signed-off-by: Łukasz Patron <priv.luk@gmail.com>
----
- drivers/md/dm.c | 7 +++++++
- 1 file changed, 7 insertions(+)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 87bb90303435..538a93e596d7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -410,6 +410,12 @@ static int dm_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
- 	return dm_get_geometry(md, geo);
- }
- 
-+static int dm_blk_set_read_only(struct block_device *bdev, bool ro)
-+{
-+	set_disk_ro(bdev->bd_disk, ro);
-+	return 0;
-+}
-+
- static int dm_prepare_ioctl(struct mapped_device *md, int *srcu_idx,
- 			    struct block_device **bdev)
- {
-@@ -3666,6 +3672,7 @@ static const struct block_device_operations dm_blk_dops = {
- 	.release = dm_blk_close,
- 	.ioctl = dm_blk_ioctl,
- 	.getgeo = dm_blk_getgeo,
-+	.set_read_only = dm_blk_set_read_only,
- 	.report_zones = dm_blk_report_zones,
- 	.pr_ops = &dm_pr_ops,
- 	.owner = THIS_MODULE
--- 
-2.46.0
 
+
+
+Hi Mikulas,
+
+On Wed, 21 Aug 2024, Mikulas Patocka wrote:
+> 'D' - do nothing - dm-integrity doesn't do anything to try to maintain 
+> data/metadata integrity - if the system crashes, the metadata may be 
+> corrupted. It may be useful for things like operating system installation, 
+> where you don't recover from a crash at all.
+
+Thanks for the quick and detailed response! I am actually *not interested
+in crashes*, but in what happens during a normal run, when there are two data
+writes to the same sector on disk. Let's say these writes are write A and
+write B, and we are running dm-integrity in 'D' mode (so there is no journal).
+
+dm-integrity makes sure that if the writes' sector ranges intersect, then one
+write will not be sent to disk until the other returns, like so:
+
+  Write A and B
+    | 
+    v
+  -----------------------------------------
+  | dm-integrity                          |
+  -----------------------------------------
+    |             ^                    |
+    v Write A     | Write A end_io     v Write B
+  -----------------------------------------
+  | disk                                  |
+  -----------------------------------------
+
+dm-integrity then stores the hash of write B.
+
+This behavior suggests to me that dm-integrity assumes that if write A returns
+before write B is sent to disk, then write A must be written to disk *before*
+write B (or maybe write A is never written, but in any case, write B is the
+final write). Otherwise, if the disk reorders write A and write B, then there
+would be a mismatch between the hash that dm-integrity stores and the actual
+write on disk.
+
+Is this the assumption dm-integrity is making?
+And if so, how does it square with the hardware reordering I/O requests?
+
+Thanks,
+David
