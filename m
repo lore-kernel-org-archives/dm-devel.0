@@ -1,165 +1,124 @@
-Received: from APC01-TYZ-obe.outbound.protection.outlook.com (mail-tyzapc01on2080.outbound.protection.outlook.com [40.107.117.80])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 59D60171A1
-	for <dm-devel@lists.linux.dev>; Thu, 22 Aug 2024 02:14:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.117.80
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724292858; cv=fail; b=idSYovIElc27X8KRs70yVwrOkcun1ZwDSZJXGnJGoKh/KrK3ML8+TlNm803NxaLPtB9pdhW3y8KfuQ0wCUuvjW6VXfeILPdcltV25NCAGOId98DfjNhawDTJqD9q+1nWHrr7mLzVJSPv/aejiGExIS5Z+HUsZGTesWwyxj8nI8E=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724292858; c=relaxed/simple;
-	bh=G15m01zAPkOXwngZtca0E0SK6nP/H8h0ajAlOoAESSY=;
-	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=C5IF8ZJ2wjIPTqK/6VJzZ9NSnLgfUTV7TlfLIP5Bo2HVIoWGOBZ/5szPm3ZcwySDE2zn4atQuy3DZ4Rx4tuSayIo89+0ZUDFuuZ4XzMW/z15tVoEl8t49YIBj/biYnx046VAzrCZ5gj4jtQHQsPm7wfYhiGi6iqZWz2STzsmtx4=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=p8XvCc/t; arc=fail smtp.client-ip=40.107.117.80
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ACB04182DF
+	for <dm-devel@lists.linux.dev>; Thu, 22 Aug 2024 16:21:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1724343698; cv=none; b=m6J+5moEllAzOQNIAytXAUcTvYFM/GdrqwN6yj0M5YZrs/ds0lcuy/6wqwbMmMWRfj5TgIhSQa+BBdM78E+OB/urpfO8myKUAp47cT5zuyurNyxV9f9xWAXfHDJQvK49/hjd2Lx4K1NsP74GwXGAL7ez2lJy5LI6k8Gc1v07iT4=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1724343698; c=relaxed/simple;
+	bh=rY00msrCronJ+hillbBD8CRa+E5q5QkWZkXUOGBWDYg=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=Y6quckRsIenm6EDyS6ICeuFhPC3mYcGj1u7mlK9he4YH/2ukvxqdv0iIhuFTW2hD0fNfi8x+mKRQkjCVsRKWyfkLUs9qBPMu1rVizjqMewwebSi8JLN8VFhte7PmH/fqpyeuKrKRssX3Oo0tdWd7hCBm18cLg0jy+EBPFk6a9AM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EJGK6weM; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="p8XvCc/t"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=K0F6mrtKjzEvm9YoZUpXrr9m3RGL1CxT5fu6L393JOPtkbJbBnXP/Y+rYn2c5Zx9oBFiTxSivyfFeLeEoAF1id8ATAVf5Eq/SY+FaKeO+gV2XqbkPkQc9vdbkfHuIs5P7P8Rmop4aQP5WPKUR4TZq88ttnpNZWEk2t+8eSml1oxdbipC9BJ5ih3ITu9+dw0C0UOXcoFbrtBk74AINXkTKrVnzwIyMa5ED1L+YeB0GLveiKgefn2qTsHjiuHYz9xCEz2pJ80o+a8/L9CatXB9BxXgwF695Cjb8zutAOQmMU2yxZqZ26u+1as2hw9mYqgOf214Yt6ylKApXAEtYJz7aw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=FNXck4mm6GDgcUskKj/n7aujxxiroUMLGhXFAITJcaM=;
- b=QDXUCabDatOGWrFZyWU3vMs6aaTvStl6rPxi+GmVg0ncNxOCI7GMVwrpyC5ZRF5jcyVRyfCq35NaGRZSTHl+/7ieSUyvcUo75xGvmWuz+xNcdtWmPIeK0WGbflL1tfEgWirEV9alfvkv5SCFcMwCuyWyXvdQNT03BZGVBuAVkiWBLrGJk78JjGTTp2uA1wiiGJMbdrv9gnAET0pPxPe00vjavlgfo7jcKdPXcu/sEylAT1B3BC439Fk2TwjJyULTPqYdaVJORo14savipTIw1nW7/e8GmTKncyilLWqJjGKD5xxgFFzuYZJGeh4Rb9/pjG+FOCo5V5x8DJjBjKYY0A==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
- dkim=pass header.d=vivo.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=FNXck4mm6GDgcUskKj/n7aujxxiroUMLGhXFAITJcaM=;
- b=p8XvCc/tyovXfEmD1WuAVtIkRoeII3p4zPM3nRNtbrjLkWAsB+k63sHIyLpDYHBBkGzIkIGhkAyxKOBC6/Lm84QQ2vSRidzU1E5ZVTvAKySEJ/z/dOUC7wJ6gLWpQVXoGpMKv2CIn9YNwcJ2DvCH1R4HuzDIFwC0wOYh1VDs1ntpU6252t37hBOVr7JdI0nD0zllBrTCojly1fWLTXLmSYNRk+eYf7JoKI3p9Pmadvy2hQfQdQQmOuQqlRAzBmS8RI4XsjBcSL8ug1vSy1eaEOFp66ipVHfPD/oFtNOoo/Lnw9xbAtl77ZtBF+Dn7AhaFlcOxjjt1mp4jOi206GfyA==
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=vivo.com;
-Received: from PUZPR06MB5724.apcprd06.prod.outlook.com (2603:1096:301:f4::9)
- by TYSPR06MB6900.apcprd06.prod.outlook.com (2603:1096:400:46e::12) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7897.17; Thu, 22 Aug
- 2024 02:14:14 +0000
-Received: from PUZPR06MB5724.apcprd06.prod.outlook.com
- ([fe80::459b:70d3:1f01:e1d6]) by PUZPR06MB5724.apcprd06.prod.outlook.com
- ([fe80::459b:70d3:1f01:e1d6%3]) with mapi id 15.20.7897.014; Thu, 22 Aug 2024
- 02:14:14 +0000
-From: Yuesong Li <liyuesong@vivo.com>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	opensource.kernel@vivo.com,
-	Yuesong Li <liyuesong@vivo.com>
-Subject: [PATCH v1] driver:md:dm-bufio:Remove NULL check of list_entry()
-Date: Thu, 22 Aug 2024 10:14:00 +0800
-Message-Id: <20240822021400.1193855-1-liyuesong@vivo.com>
-X-Mailer: git-send-email 2.34.1
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: SE2P216CA0069.KORP216.PROD.OUTLOOK.COM
- (2603:1096:101:118::8) To PUZPR06MB5724.apcprd06.prod.outlook.com
- (2603:1096:301:f4::9)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EJGK6weM"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1724343695;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=lA23TV9dqmcZnRPhu3Mh5U1Igzbf93lvxjkmGzEIYSI=;
+	b=EJGK6weMmYg/DSlI6InmJVXgpo9bIgYxjM0xiPE886Ce6U6a899+8nVAvec10ntprvBKZS
+	t14VuCFtYX5SF1wNRWzd9SRCX9edMrLkQLWLbF6kc50hyvdpsle44U6QwviuPh2pf30Cei
+	2/I43Ngna8L6c9tl30qv1hJIKQ1bZNE=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-536-cwBFxrXAOxuGeIxFrGUiog-1; Thu,
+ 22 Aug 2024 12:21:31 -0400
+X-MC-Unique: cwBFxrXAOxuGeIxFrGUiog-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4AC481955F43;
+	Thu, 22 Aug 2024 16:21:30 +0000 (UTC)
+Received: from [10.45.224.222] (unknown [10.45.224.222])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5B8713001FE8;
+	Thu, 22 Aug 2024 16:21:27 +0000 (UTC)
+Date: Thu, 22 Aug 2024 18:21:23 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Ingo Franzki <ifranzki@linux.ibm.com>
+cc: dm-devel@lists.linux.dev, agk@redhat.com, snitzer@kernel.org, 
+    gmazyland@gmail.com
+Subject: Re: [PATCH] dm-crypt: Allow to specify the integrity key size as
+ option
+In-Reply-To: <5d1ae9a8-67cd-4787-9faf-2151f6b0fa4f@linux.ibm.com>
+Message-ID: <4a5bb6f7-0ef8-eee9-21f3-3885923d9c21@redhat.com>
+References: <20240816112133.2100537-1-ifranzki@linux.ibm.com> <d75574e8-a829-0f48-2a99-8d79b0fdfb00@redhat.com> <5d1ae9a8-67cd-4787-9faf-2151f6b0fa4f@linux.ibm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: PUZPR06MB5724:EE_|TYSPR06MB6900:EE_
-X-MS-Office365-Filtering-Correlation-Id: ac652a99-38d8-4d64-1f1a-08dcc2501e0f
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|376014|1800799024|52116014|366016|38350700014;
-X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?SWjp7AgfGCJgGH5fOCbAySj7bYp0VKVHy/x90BuaZ4mZ9imB7STw9hAtydIu?=
- =?us-ascii?Q?5uv3gpqzuIeA5Rf3QfYZYa0Czp0fZbu6IZ1ZC3Y6atnodExZTzUh8gYUldOg?=
- =?us-ascii?Q?hU8A9KdIP3ozk1RZLaUwd22oGvmbvS85zPKKoaEP7H+fsRrX1yENkmks0Oe8?=
- =?us-ascii?Q?TRdvC1UpuEvN2GO+hCrBZSlNJvAzjS8+ok8B+Tt4rrhjelZkrlwgpz16EIWb?=
- =?us-ascii?Q?9F8xAMM6DcBIG2LLF19N0eIttrLJgMx2GFM+GP4gru08/s4Y9KSXa+Y1G5BH?=
- =?us-ascii?Q?2EZLzPnv/VCUSmPwmfMwoSIYQi2d8DzvLp040Lfk7LZP/p00B6w5TFxQpYDd?=
- =?us-ascii?Q?BoKPRLI0FLiBiPoeN9McwvxaFbihQtgzGyHeSA+tW8T06BHRXdsYlE4Bz8Fw?=
- =?us-ascii?Q?qlMwdDbRGsgdTR/0cxPLNw0/qJD9eHPKBVrnnrYFccA0NZc4d/j/vFu42zKS?=
- =?us-ascii?Q?JzVqTuY8NUbCt30qFoZQKTYdO69oSh0h/ZBGrCgCu3s18wZmEbPydwQxfro/?=
- =?us-ascii?Q?UR5o1w82Wy9HNXIWLG9fSd8MLPhGUu3U0BMoRc0Dfi4VFV7JMEGLK5ORIH1E?=
- =?us-ascii?Q?zmGf2UMPPobMxeLma5qGPfFKUZfbPigSUl1QuipVT2j1qM8a8xunjY6hXaYR?=
- =?us-ascii?Q?/TBoUeQRQyq8CZYHTGUAY1uvLYtJ4STfLpBYWakbYoMmmNbBsoaU7o1iDkE7?=
- =?us-ascii?Q?TfT4F+vnP7+UKvXdULsGFdnGJ/yYXVHfpBhjFL4CP3JRIQOrzMN4bWYr9RRV?=
- =?us-ascii?Q?vHHmkCga0AXJiRAl+re6R+9kFM/WEoaH7MLVRqrXRgnr46nFiqJ7Hz7urYtd?=
- =?us-ascii?Q?J7SCig+KT5p2O9hv36149qjU9p8mTKekgxE0fDonzAq52T8v+l+QuYnjZVea?=
- =?us-ascii?Q?sWpCofkApe0vOP5UTq0+ka9a4mXdSXijUiKmTM48f+c1vdmU6DfjFEhgJldk?=
- =?us-ascii?Q?opWoFIhzSUE+dwGBaJVvq6/vN2CHtrvAFiBAwClMjIar3YUOkNMshqJgS6oP?=
- =?us-ascii?Q?za4VNY8ZBl+0CVIzfj5z142mNmxshSjNoWvr0RWI0UVzpokkACR8fZEF1seZ?=
- =?us-ascii?Q?6RG5XQnHCwV7ij3uj+pqHzcmFZRu6TEsuo6srUMbGij/ES0qyaoMxeyvX4RO?=
- =?us-ascii?Q?TPny0e6DXFRf51IVM7OHBwPYwWC/qfMp3+sFctknzXxTaJmib+DiopvfAaE7?=
- =?us-ascii?Q?IKL5o4c7qFLSvlyEc0aqsA6u+pzbIf4czyTyJS2Q9UIh00icZBKCkSsgw9Jh?=
- =?us-ascii?Q?U68Ht86gOjKFTHP3n/2/A7t36flJH0Gwt/RK36E+4hJr9WkS48xwmFqd/hvj?=
- =?us-ascii?Q?XMab22nG8FQhthRbHMvEPM1/pTdJgk/4Ol0aApdotpHdtCEN/XzHozKE/2Cq?=
- =?us-ascii?Q?Iz5kgEpOqGK0JmBJwrfWDfVKL+yAuSkFtvh3lF/8baHzWDOh4A=3D=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PUZPR06MB5724.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(1800799024)(52116014)(366016)(38350700014);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?P3gg5Jihp4DO6M828Gs+1sTf6+1x3ozAM4cEjUqF4ZNu2WQUxqbnwNQVTFLh?=
- =?us-ascii?Q?mm1NuGze6e3zxFy+2AqQuhagzPgLXKy8KaAjC53VR160hWvdRD+eKJBcKIXl?=
- =?us-ascii?Q?eGXnx4jPHPU4oRhvyzpfS5rVba74oKhFXFuy8atWeq8q+Gv7bQ4NH/+vsmFe?=
- =?us-ascii?Q?PzM6IeQ18VvbSe7szb53rHBkso4HXWn+ttH5mVYPdHn7smvXxxCBVYMNkquR?=
- =?us-ascii?Q?EfwX9Qy3+4hcRC5PIjLVlIJ2ucT5Lzb0p1S5tnlPU8m+URMRpui32VtTjRgQ?=
- =?us-ascii?Q?Ii0fXjToUjW86lhWvUoc6dj71q/aQu0z8lHRsGABc/9lNV868MVhJc0UgvoA?=
- =?us-ascii?Q?In9s7+VQ7S9olc2d5P3ToZQlenImq2mofDKHq3saR42u0YNbg3CrABMhBxpO?=
- =?us-ascii?Q?M13oUC0MQLyioZZyqlpk733OetbD2PcIqK2fgItPZmtkGQs/TlRTgiBFAli8?=
- =?us-ascii?Q?ZwCuotbm2KFOhyDrKgzSQJs4fARwV6JpnYiAzZ6wKaK4BoOuOE311qdG5ilC?=
- =?us-ascii?Q?Y1ZAhXr7Ao8oHs1oSz1Hfk957jFuxGPhZfh7qNYNpiAX5ho1KdCDnae1XSHc?=
- =?us-ascii?Q?3SDOpTTQUu7y9EVjDee8V9qToeNphKrWPqpMTYcOenZqTlT7VaWJzMpAn72g?=
- =?us-ascii?Q?9/znecXe4kQKGRuN9OZJ2t0RtwzSkp6Ya+0x9Xjjb4JHiyUdHxvIcV2MNtMq?=
- =?us-ascii?Q?J9J6BH5J5CI/hVbLC2KSMeMcxS2ZpkIxdyD7CNCGbD68EZbPaoseP/z1Iswb?=
- =?us-ascii?Q?WvMu+uL3W0CPtMx+zJ4BVM18Gtimq78kaDJ58FTC4TAtHxhIGwkn4RYSlMRZ?=
- =?us-ascii?Q?ohak0jYvMM0TnwR87BQvYfHTRFup+G96Bpo9ecJkEx8e2x/EJ6aohgqvJelc?=
- =?us-ascii?Q?feBbe1ds9JtbSqDISYxN254NWu3Uixq/4AN2nTR99of9P/lsam6UyxVLOdnJ?=
- =?us-ascii?Q?e9QyeRc8fbIBfFdexC7NAnIqC2ODsHzcGMqCvtY7gs8LLJJSMWIdXMeZPcV6?=
- =?us-ascii?Q?vEyjak+W8wBlKmTpldGI1y/fpBQwmC2zhfuBxThh3gZDnHCsOurX7Lv4c4PM?=
- =?us-ascii?Q?tKB3QF3gEzyoqfEpJhnsTJqZ7unimevNiQswocH3yXLQmUuyEdiCY1TiaWGa?=
- =?us-ascii?Q?wDTTeg/wbyTJ2tzqvfe615mQt9fmkXSesIwJZCkaLO+sk/M5bWXM/+LHNsR7?=
- =?us-ascii?Q?8EXj8BnW0jRYkSsGoX8gFsXBa5je9hjm1JawU4sgFniWQTpvrwXUFjyPvKvU?=
- =?us-ascii?Q?Vs65Mnw+wztZOXlIx0gEiElSYV8h5IhXH5Ugsk/CMAOriMm35YnubXCZN4db?=
- =?us-ascii?Q?UVmBZSreI451ylvKV4cJygJuhdMTgSc9fTvSISa1fhA/iULUuzEOnfmZNqg0?=
- =?us-ascii?Q?OH0wddtEdtVtpAYKfK5z1AXlYHgvoiwOMwqUc5u/Lky+PGBPZa+3RkUjNXgx?=
- =?us-ascii?Q?XOsxbf63HqJniT4B/p8Um0zWms78lEysl6mkQ7OSaZhHKbXzPlqO6rv0eOSr?=
- =?us-ascii?Q?J6n8mSdxly73mDac7HnIpf1W+cOgADRJXf/y015KkYe1JEfafzrRqq1e1ne9?=
- =?us-ascii?Q?REzKveKPcssQ7B5GmMZ7BEKYfT+GLsY/n7vpPysM?=
-X-OriginatorOrg: vivo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: ac652a99-38d8-4d64-1f1a-08dcc2501e0f
-X-MS-Exchange-CrossTenant-AuthSource: PUZPR06MB5724.apcprd06.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 22 Aug 2024 02:14:14.0843
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: uX9iZvUC3S251E+HMwLHz9O2dpTuv9kT/17uYmkaehcp/KIV77dACHstLYTfhNbKGmN4FS6umBoseRoALib1gg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYSPR06MB6900
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-list_entry() will never return a NULL pointer, thus remove the
-check.
 
-Signed-off-by: Yuesong Li <liyuesong@vivo.com>
----
- drivers/md/dm-bufio.c | 3 ---
- 1 file changed, 3 deletions(-)
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 098bf526136c..d478aafa02c9 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -529,9 +529,6 @@ static struct dm_buffer *list_to_buffer(struct list_head *l)
- {
- 	struct lru_entry *le = list_entry(l, struct lru_entry, list);
- 
--	if (!le)
--		return NULL;
--
- 	return le_to_buffer(le);
- }
- 
--- 
-2.34.1
+On Wed, 21 Aug 2024, Ingo Franzki wrote:
+
+> On 20.08.2024 17:56, Mikulas Patocka wrote:
+> > 
+> > 
+> > On Fri, 16 Aug 2024, Ingo Franzki wrote:
+> > 
+> >> For the MAC based integrity operation, the integrity key size (i.e.
+> >> key_mac_size) is currently set to the digest size of the used digest.
+> >>
+> >> For wrapped key HMAC algorithms, the key size is independent of the
+> >> cryptographic key size. So there is no known size of the mac key in
+> >> such cases. The desired key size can optionally be specified as argument
+> >> when the dm-crypt device is configured via 'integrity_key_size:%u'.
+> >> If no integrity_key_size argument is specified, the mac key size
+> >> is still set to the digest size, as before.
+> >>
+> >> Increase version number to 1.28.0 so that support for the new
+> >> argument can be detected by user space (i.e. cryptsetup).
+> > 
+> > Hi
+> > 
+> > I know you already discussed it with Milan. I'd like to ask, what's the 
+> > reason for this patch? Milan said that you need it for mainframes - 
+> > please, describe the specific configuration when this patch is needed.
+> > 
+> > Mikulas
+> 
+> Hi Mikulas,
+> 
+> thanks for looking into this.
+> 
+> In short: Yes, we need it for a new function on Linux on IBM Z platform 
+> (aka s390x), but the general concept of using wrapped keys is not 
+> limited to that platform but can be used by other platforms as well. 
+> Furthermore, the proposed change can also be beneficial for clear key 
+> HMAC integrity protection, to allow choosing the size of the integrity 
+> key.
+
+Hi
+
+Thanks for the explanation. I discussed it with Milan and we concluded 
+that the patch is OK and that we can stage it for the kernel 6.12.
+
+I added the patch to the device mapper repository. You can get it from 
+"git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git", 
+checkout branch "remotes/origin/dm-6.12".
+
+I fixed two bugs in the patch:
+1. crypt_status must report the new argument in its table line
+2. sscanf(opt_string, "integrity_key_size:%u"...) should really be 
+   sscanf(opt_string, "integrity_key_size:%u%c"...), so that we report 
+   syntax error if there are trailing characters after the number.
+
+Please, download the updated patch from the "linux-dm.git" repository and 
+test it.
+
+Mikulas
 
