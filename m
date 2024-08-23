@@ -1,85 +1,180 @@
-Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37EE7168C20
-	for <dm-devel@lists.linux.dev>; Thu, 22 Aug 2024 23:09:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17E255FBBA
+	for <dm-devel@lists.linux.dev>; Fri, 23 Aug 2024 07:27:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724368194; cv=none; b=pVJ0C49wuKPkmCpbcB31b0gRkxcCIP5EL6efkWSv/ldZMwaGFQ1KKzQWDw3OSDkggUlkYU8M9H8H6weQg0pOKJK1rHP4wKjylbobIVgQKVMypdjuCWx2Pxi+DOgrrFu/zLyoLP+stbDicSmwEjYamqv0L+k/EOgdbBi5cjzT9w8=
+	t=1724398023; cv=none; b=ci1EkAt9WtYHrr5YeKTTuyiThAkOCKNekIwGzv6Hxz3Kv1J2KECBd6Q0+c2XWxxwHN2ruIyYkE8d3ynEC0CSbGPhBRfBmvni+mlrtL2hWvzUUlY+YyTPA+g5qUS2egr2E2MzQ1XLtFeMzDilJ6B3kCug4wlXM9xGlxjbMTBdDmQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724368194; c=relaxed/simple;
-	bh=/FAGryAUh17PRxw5ivw+fa+hnFHaPve79zoeIE9qGVY=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=DKLgGJ9AHn/Pw/qs8CfDAs3eMF2vTT7KMXoCOSDAYV5l3xhWOnoIqJ6L7sErB6oD2SbteFQgEjvguIUyudcGjX5C1hvqHp7dN5rXe9HWadm0rqylB2B83XV6hQDJrjbsu1FWEV30LOYA0+jgOhVtXgIFWeZplhSOug3LF88Ai8k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=berkeley.edu; spf=pass smtp.mailfrom=berkeley.edu; dkim=pass (2048-bit key) header.d=berkeley.edu header.i=@berkeley.edu header.b=kC2d+l3Q; arc=none smtp.client-ip=209.85.167.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=berkeley.edu
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=berkeley.edu
+	s=arc-20240116; t=1724398023; c=relaxed/simple;
+	bh=ATGGberMd7bVhuaVObjf2skA9k1eTN+zR5RFAbfVLbU=;
+	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
+	 Content-Type:MIME-Version; b=uweP2aJ1ieRFmnHrWHst92dqDQFUGHpVaETztMPdKA1SSDP/AGRxdTegwuU5Kc/tpK0jS5nLzBNx9ioRM/329syNZVHbIB8Sv5zjnIFyxyj/fgZB3dCFDGFZAECY1cq4AqAV1GE7PHFj/cc0ZKiY8jvBbNwbf/RhVhU1Kq6lh9o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=RaljX9q3; arc=none smtp.client-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=berkeley.edu header.i=@berkeley.edu header.b="kC2d+l3Q"
-Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-52f04b4abdcso1644885e87.2
-        for <dm-devel@lists.linux.dev>; Thu, 22 Aug 2024 16:09:51 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=berkeley.edu; s=google; t=1724368190; x=1724972990; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=/FAGryAUh17PRxw5ivw+fa+hnFHaPve79zoeIE9qGVY=;
-        b=kC2d+l3QHdEBy5f2cVWQ/vGBLoTeXVrKUlShmPrdxr4bQMDEPGf6ae8P/0C3yHvO6g
-         Z8g2IMtIgiVyheLvJhMu1Xskn9BOU79i/ZgvmRwkgIpSgp1QIMweLO/Jisx7EecSeBz3
-         2XcrKP2Stb8jZsxxqXkrFXDHvdQFvbkKxvqMgUJqITk1HFRDErC9h4xvy26TCC/GYPKn
-         Mj9wbfA4+RABX2K8IKKW8dO7MgpI7JCxgeT1CjcxWdQ9mQwsumHV8yxHukJ87jqQUvwu
-         lLwa0VNwvtnEuRtcrvkTyX+bffhrcQldZr+JdTd2IO9XIPzMRHTI/bwLKSaBznYzrrIC
-         WG1Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724368190; x=1724972990;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=/FAGryAUh17PRxw5ivw+fa+hnFHaPve79zoeIE9qGVY=;
-        b=w78WOVfTTT6zzC3n8Vzo9UdHRCiMd9Ts5W88QPk+A61EPlGN7rwecZhqbzES1CuxYK
-         m1qhBdg81ViAqlxeZUojC4eq3mWxjSH8MpcQI2Qhv6TB9O2nNbQSXVMr3QWC0Gs277Es
-         gkkF20NzQtdXR+zn7xukPg3HDOL919+R54771T9UyOilIyG4OrPedTdaC61u/R8wmU0R
-         Ff16ObCLDUuUZL9f76x78Nqsc4KXRTTZ9BmYgB9FUqlHi12IdW6j4TuLnomQoF3R9j0X
-         lmEn58WUGXKWSoWUR/i91JY+HlUKG+B4L2XMRpqO4rWOWLpWQL6QiwZhmAtuxIZt3ICE
-         pWvQ==
-X-Gm-Message-State: AOJu0Yw3o79nDrGmQ93mWDHlAWIcQbhIVh2X2/z4cRV3HzRb+grktJ3e
-	bYW6Jdltyl6OCohGBq+QAizeTAYctoKJiUSbu5jj6niZni/Df31lg5m128t6v1dEyJg0uS53n6o
-	RwG1nQXoUtQXiK68L5WwNnH1l7UIUuZrJaaX2
-X-Google-Smtp-Source: AGHT+IFn9Uzh74dpNQWqI0lY8WFgkXlOMZO14NTEQ74k1kER0GjgVS/DAaQRU2D2YKRrJjC7wEnz7taA9GOjC9Iw1T8=
-X-Received: by 2002:a05:6512:3e0d:b0:533:4638:df40 with SMTP id
- 2adb3069b0e04-5343883b116mr190886e87.27.1724368189753; Thu, 22 Aug 2024
- 16:09:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="RaljX9q3"
+Received: from pps.filterd (m0356516.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 47N5wmau014700;
+	Fri, 23 Aug 2024 07:26:56 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=
+	message-id:date:subject:to:cc:references:from:in-reply-to
+	:content-type:content-transfer-encoding:mime-version; s=pp1; bh=
+	w/tYqoSIifI7NOeERHQBCiDFnJm29qCiBNUals8a3AI=; b=RaljX9q31nEc/QHy
+	5WqGK+O8ZnY1Wwb/0e6lMRkI/8Zuam4FtzMEVXmJY/ZTD2W15PdM4g9OrM0LY92E
+	fbGhlhI7FUDRxI47mgoyvOh3IaE61czWma9Nikvv6009i0wC/PGP483YH3hH0ska
+	THH/M6afQLm5fuuUu/burTcunnqJh/bk7bsSDCEeexPHLHWNRUaI3AqN7lWHn1q4
+	qhChe8hboyIq/PP6Tt/fqYf6LpCut1MD63wL8SdlClMZKT6IGtANf/SkKN04xa2K
+	cnD1ORLF7GH0Y1eYAokrvv0Lx2u9VKblHmd9gakH8QlIdH47v69k+ISDC93LCOVV
+	N5smDg==
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 412mcytvdu-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 23 Aug 2024 07:26:55 +0000 (GMT)
+Received: from m0356516.ppops.net (m0356516.ppops.net [127.0.0.1])
+	by pps.reinject (8.18.0.8/8.18.0.8) with ESMTP id 47N7Qto6025762;
+	Fri, 23 Aug 2024 07:26:55 GMT
+Received: from ppma22.wdc07v.mail.ibm.com (5c.69.3da9.ip4.static.sl-reverse.com [169.61.105.92])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 412mcytvds-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 23 Aug 2024 07:26:55 +0000 (GMT)
+Received: from pps.filterd (ppma22.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma22.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 47N6Ctx0002215;
+	Fri, 23 Aug 2024 07:26:54 GMT
+Received: from smtprelay05.fra02v.mail.ibm.com ([9.218.2.225])
+	by ppma22.wdc07v.mail.ibm.com (PPS) with ESMTPS id 4136k10x30-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 23 Aug 2024 07:26:54 +0000
+Received: from smtpav06.fra02v.mail.ibm.com (smtpav06.fra02v.mail.ibm.com [10.20.54.105])
+	by smtprelay05.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 47N7Qokp55443712
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 23 Aug 2024 07:26:52 GMT
+Received: from smtpav06.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id BD47420063;
+	Fri, 23 Aug 2024 07:26:50 +0000 (GMT)
+Received: from smtpav06.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 963612005A;
+	Fri, 23 Aug 2024 07:26:50 +0000 (GMT)
+Received: from [9.171.139.164] (unknown [9.171.139.164])
+	by smtpav06.fra02v.mail.ibm.com (Postfix) with ESMTP;
+	Fri, 23 Aug 2024 07:26:50 +0000 (GMT)
+Message-ID: <b16f93d6-9d4b-421b-98de-e07f0fe67086@linux.ibm.com>
+Date: Fri, 23 Aug 2024 09:26:50 +0200
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm-crypt: Allow to specify the integrity key size as
+ option
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, agk@redhat.com, snitzer@kernel.org,
+        gmazyland@gmail.com
+References: <20240816112133.2100537-1-ifranzki@linux.ibm.com>
+ <d75574e8-a829-0f48-2a99-8d79b0fdfb00@redhat.com>
+ <5d1ae9a8-67cd-4787-9faf-2151f6b0fa4f@linux.ibm.com>
+ <4a5bb6f7-0ef8-eee9-21f3-3885923d9c21@redhat.com>
+Content-Language: en-US, de-DE
+From: Ingo Franzki <ifranzki@linux.ibm.com>
+In-Reply-To: <4a5bb6f7-0ef8-eee9-21f3-3885923d9c21@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+X-TM-AS-GCONF: 00
+X-Proofpoint-ORIG-GUID: R4iVx0AxXVYo0bu3wYMPxfh0ZpCj58PC
+X-Proofpoint-GUID: CKkB3K9JI9Twd58fLsskuCaz290QBvpX
+Content-Transfer-Encoding: 8bit
+X-Proofpoint-UnRewURL: 0 URL was un-rewritten
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <CAHge_00RZ7r8Np0F4PdH50hTsX-OrkXznKU2u+R9qD16=vx0_Q@mail.gmail.com>
- <219dcade-3d6b-b5ac-c11b-efb8dcd3bc63@redhat.com> <66c00dfe-ac48-db3e-713e-9541468b9879@redhat.com>
-In-Reply-To: <66c00dfe-ac48-db3e-713e-9541468b9879@redhat.com>
-From: David Chu <thedavidchu@berkeley.edu>
-Date: Thu, 22 Aug 2024 16:09:38 -0700
-Message-ID: <CAHge_02ieUXoqDD-AzToj1XTrc+J=tNnmdDe6sSoG9miQUjH1Q@mail.gmail.com>
-Subject: Re: dm-integrity and write reordering
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.28.16
+ definitions=2024-08-23_04,2024-08-22_01,2024-05-17_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 adultscore=0
+ priorityscore=1501 phishscore=0 mlxscore=0 bulkscore=0 malwarescore=0
+ mlxlogscore=999 spamscore=0 lowpriorityscore=0 clxscore=1015
+ suspectscore=0 impostorscore=0 classifier=spam adjust=0 reason=mlx
+ scancount=1 engine=8.19.0-2407110000 definitions=main-2408230049
 
-Hi Mikulas,
+On 22.08.2024 18:21, Mikulas Patocka wrote:
+> 
+> 
+> On Wed, 21 Aug 2024, Ingo Franzki wrote:
+> 
+>> On 20.08.2024 17:56, Mikulas Patocka wrote:
+>>>
+>>>
+>>> On Fri, 16 Aug 2024, Ingo Franzki wrote:
+>>>
+>>>> For the MAC based integrity operation, the integrity key size (i.e.
+>>>> key_mac_size) is currently set to the digest size of the used digest.
+>>>>
+>>>> For wrapped key HMAC algorithms, the key size is independent of the
+>>>> cryptographic key size. So there is no known size of the mac key in
+>>>> such cases. The desired key size can optionally be specified as argument
+>>>> when the dm-crypt device is configured via 'integrity_key_size:%u'.
+>>>> If no integrity_key_size argument is specified, the mac key size
+>>>> is still set to the digest size, as before.
+>>>>
+>>>> Increase version number to 1.28.0 so that support for the new
+>>>> argument can be detected by user space (i.e. cryptsetup).
+>>>
+>>> Hi
+>>>
+>>> I know you already discussed it with Milan. I'd like to ask, what's the 
+>>> reason for this patch? Milan said that you need it for mainframes - 
+>>> please, describe the specific configuration when this patch is needed.
+>>>
+>>> Mikulas
+>>
+>> Hi Mikulas,
+>>
+>> thanks for looking into this.
+>>
+>> In short: Yes, we need it for a new function on Linux on IBM Z platform 
+>> (aka s390x), but the general concept of using wrapped keys is not 
+>> limited to that platform but can be used by other platforms as well. 
+>> Furthermore, the proposed change can also be beneficial for clear key 
+>> HMAC integrity protection, to allow choosing the size of the integrity 
+>> key.
+> 
+> Hi
+> 
+> Thanks for the explanation. I discussed it with Milan and we concluded 
+> that the patch is OK and that we can stage it for the kernel 6.12.
+> 
+> I added the patch to the device mapper repository. You can get it from 
+> "git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git", 
+> checkout branch "remotes/origin/dm-6.12".
+> 
+> I fixed two bugs in the patch:
+> 1. crypt_status must report the new argument in its table line
+> 2. sscanf(opt_string, "integrity_key_size:%u"...) should really be 
+>    sscanf(opt_string, "integrity_key_size:%u%c"...), so that we report 
+>    syntax error if there are trailing characters after the number.
+> 
+> Please, download the updated patch from the "linux-dm.git" repository and 
+> test it.
 
-On Thu, Aug 22, 2024 at 10:33=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.c=
-om> wrote:
-> Regarding disk-reordering - the disk may reorder I/Os, but if there is no
-> crash, the disk must appear to be coherent. Therefore, if we write A, get
-> A's endio and then write B, the disk must read B from this location, it
-> can't read A.
->
-> The reordering only becomes a problem, if the system crashes (in that
-> case, it is unknown if the disk will read A or B after a crash). I think
-> that the SCSI standard even allows reading garbage after a crash.
+Thanks for fixing these bugs. They all make very much sense. 
 
-This is the detail that I was looking for. Thank you!
+I have downloaded the patch from https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.12&id=4441686b24a1d7acf9834ca95864d67e3f97666a and tested it successfully on my system. Works great. 'dmsetup table' now also shows the 'integrity_key_size' option. 
 
-David
+@Milan: I noticed that now that dm-crypt also reports the integrity_key_size param in the status query, I need to also support that in my cryptsetup changes (i.e. in function _dm_target_query_crypt() in lib/libdevmapper.c). With this additional change, luksFormat and friends work fine with the updated dm-crypt module.
+
+> 
+> Mikulas
+> 
+
+
+-- 
+Ingo Franzki
+eMail: ifranzki@linux.ibm.com  
+Tel: ++49 (0)7031-16-4648
+Linux on IBM Z Development, Schoenaicher Str. 220, 71032 Boeblingen, Germany
+
+IBM Deutschland Research & Development GmbH
+Vorsitzender des Aufsichtsrats: Gregor Pillen
+Geschäftsführung: David Faller
+Sitz der Gesellschaft: Böblingen / Registergericht: Amtsgericht Stuttgart, HRB 243294
+IBM DATA Privacy Statement: https://www.ibm.com/privacy/us/en/
