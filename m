@@ -1,150 +1,153 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B97C2F34
-	for <dm-devel@lists.linux.dev>; Mon, 26 Aug 2024 09:23:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F0C1518D633
+	for <dm-devel@lists.linux.dev>; Mon, 26 Aug 2024 14:44:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724664221; cv=none; b=DU3U3ZfFh5e5hca6XCXbc1ClTSWvXnnyXWBqv+elcEaEAk7HNqAGSGq3hMhI4WSvsh93qcZq6a4+Gg+E4C3KnihHL0e/iV7KcsT0G/q99ImpAQx1T8nUEpku89cNXKE54xRgJjONXWwRMYBI5g0WtZcOFkkLKeotGk+tMWMzkZo=
+	t=1724683480; cv=none; b=cIHRIjzFm2W42ZA+p9ZlxLwDbHFoe1IcWBAbz+STXYNpFUifOoWifhPR3em97h0A4o2KbZT04TaG8rFXNgjckQz+BQwi2xdsy+T1y6owRhe1Kp39/HjNRFc2u93+xzAnhB3qXW6wy79qD53fW7AZ2lyGIMyrnwP51p/gQ7Q4YBE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724664221; c=relaxed/simple;
-	bh=71telQe5u2/lKw7RfN9qGHW1wjYgdID/jPjgDLWtRq0=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=q/O3qRlQdFuJuGpiKk8S8WM3IGQEUIv8l7R8sCz44rhUKa9dZmxvgX+wbgEgmgkapTuOZyis6XyrPEf5G/klx+xLIAbQhJCXc6Vnt3nywY+P2vEzSNxfcI1bF5oRqmQt9tgCpNqJQpQFU/RrBqZJo97T7FJzyuQFHzoewyXKKVw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CQB1/Yz2; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1724683480; c=relaxed/simple;
+	bh=Wgq+ci3qT04jdW6TMxeuX9NxGl7Odt92S9/kkmQVeVk=;
+	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
+	 Message-Id:References:To; b=Y92gJBKyp9jgZDrWQ2O3GJfwiRCZhn5wYaWHs3xB967xsnv+cDP5mL0Qi5Lwlm8PVBl3EQ5C6yXNa4XlmSe/71tiMPLbLA7f26vQCGPDqzQ7BnHvvs7vBPT8xwqTeXcxC1kCyZyN7/VPD4Hdelm7lAP3EHhBmfdU11Z5+xncxtc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=TrXqm+TB; arc=none smtp.client-ip=212.122.41.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CQB1/Yz2"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1724664218;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=MkjXy/+CcBoacZKR/Pjt2a/67DruiSDyT8kYHTqBAUg=;
-	b=CQB1/Yz2Jo3dC6P+jfr9MmyJk3KwA/rDDzBfxQyIED/8y4+E8Ahjz+dza1qfVUUOU9pw5K
-	F6SZ8QEV80dFZtw6ZY/FIOji5W/u2KlyhBd2Q72K8LlaUN+pcNd9PRLKk0PqZOCbjyB3L4
-	CTue+KFyRStN3ba4zyyWXUuU9rG2lDs=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-577-RMh53bYKOu6o21-_81pxJw-1; Mon,
- 26 Aug 2024 05:23:34 -0400
-X-MC-Unique: RMh53bYKOu6o21-_81pxJw-1
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2DB8E1955D47;
-	Mon, 26 Aug 2024 09:23:33 +0000 (UTC)
-Received: from [10.45.224.222] (unknown [10.45.224.222])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 07E1619560A3;
-	Mon, 26 Aug 2024 09:23:30 +0000 (UTC)
-Date: Mon, 26 Aug 2024 11:23:26 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: =?GB2312?B?s8LT8bey?= <chenyufan@vivo.com>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, 
-    "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, 
-    "opensource.kernel" <opensource.kernel@vivo.com>
-Subject: Re: [PATCH v1] Device-mapper(LVM): Convert to use time_after_eq
- macro
-In-Reply-To: <de43d61e-05c0-466f-b004-a97f2bf2ec39@vivo.com>
-Message-ID: <9cdc4de9-82b8-87fe-4845-6b18ffe26d18@redhat.com>
-References: <20240822015416.3627-1-chenyufan@vivo.com> <1abae895-7fb4-0342-21b9-1fd8e085dc9a@redhat.com> <bc1025c5-fa3c-4a49-9d91-d2d90e7423b4@vivo.com> <6f732dc5-b80e-0e79-a1dd-faebd0d91933@redhat.com> <de43d61e-05c0-466f-b004-a97f2bf2ec39@vivo.com>
+	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="TrXqm+TB"
+Content-Type: text/plain;
+	charset=utf-8
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
+	s=mail; t=1724683160;
+	bh=ojbIBl/msrDdF2thwISHcilC5x5EFGrcP4usEr80zrM=;
+	h=Subject:From:In-Reply-To:Date:Cc:References:To;
+	b=TrXqm+TB92OnCgIpB24vToz3BwemQZNnnGqwJfr0C7Mky1TyALF6syygwsZUNXjID
+	 tSEGeInTPJ9VJyip4dwwXt0XlIOFG/78tOhdbNMW9hlKFjyRe4zWKCrLJrp6mxOoEI
+	 eWrCGpWrZ5HXwgYnwHRpmnzyG6JJYnfloZO6ni2I=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463811712-1301487623-1724664212=:882105"
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51\))
+Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
+ devices when rsyncing many files
+From: Christian Theune <ct@flyingcircus.io>
+In-Reply-To: <D7998E5E-4FC1-40E1-A308-4A0E8A87950A@flyingcircus.io>
+Date: Mon, 26 Aug 2024 16:38:59 +0200
+Cc: Yu Kuai <yukuai1@huaweicloud.com>,
+ "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+ dm-devel@lists.linux.dev,
+ "yukuai (C)" <yukuai3@huawei.com>
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <59F26844-EB24-4613-82F3-578BEF032678@flyingcircus.io>
+References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
+ <316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
+ <58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
+ <EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
+ <22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
+ <26291.57727.410499.243125@quad.stoffel.home>
+ <2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
+ <1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
+ <4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
+ <C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
+ <e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
+ <30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
+ <26294.40330.924457.532299@quad.stoffel.home>
+ <C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
+ <26298.22106.810744.702395@quad.stoffel.home>
+ <EBC67418-E60C-435A-8F63-114C67F07583@flyingcircus.io>
+ <CEC90137-09B3-41AA-A115-1C172F9C6C4B@flyingcircus.io>
+ <26302.9357.226392.717562@quad.stoffel.home>
+ <D7998E5E-4FC1-40E1-A308-4A0E8A87950A@flyingcircus.io>
+To: John Stoffel <john@stoffel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi,
 
----1463811712-1301487623-1724664212=:882105
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+I still haven=E2=80=99t been able to create a reproducer based on a =
+tmpfs setup. I=E2=80=99ve run the xfstests with increased load and time =
+factors, but didn=E2=80=99t trigger a crash.
+
+@yukuai - I=E2=80=99m running out of ideas. Personally my preferred next =
+step would be to gather debug output. If that takes some time, then =
+I=E2=80=99ll remain patient. :)
+
+Something I do have on the horizon: I=E2=80=99ll receive a mostly =
+identical server in the next weeks and can try to reproduce the issue =
+there, taking a few disks aside for a separate debugging array.  Maybe =
+the number of disks is also relevant, so I=E2=80=99ll also try with the =
+full size.
+
+> On 15. Aug 2024, at 21:13, Christian Theune <ct@flyingcircus.io> =
+wrote:
+>=20
+>>> On the plus side, I have a script now that can create the various
+>>> loopback settings quickly, so I can try out things as needed. Not
+>>> that valuable without a reproducer, yet, though.
+>>=20
+>> Yay!  Please share it.
+>=20
+> Will do next week after a bit of cleanup.
+
+Here=E2=80=99s the setup I=E2=80=99ve been using with tmpfs backed =
+software raid:
+
+mkdir /srv/test-raid/
+mkdir /srv/test-raid/backing
+
+mount -t tmpfs none /srv/test-raid/backing
+
+loops=3D()
+
+for i in {0..3}; do=20
+    dd if=3D/dev/zero of=3D/srv/test-raid/backing/img${i}.bin bs=3D1M =
+seek=3D1100 count=3D1
+    loops+=3D($(losetup -f /srv/test-raid/backing/img${i}.bin --show))
+done
+
+mdadm --create /dev/md/test --level=3D6 --raid-devices=3D4 ${loops[@]}
+
+dd if=3D/dev/zero of=3D/srv/test-raid/backing/scratch.bin bs=3D1M =
+seek=3D1100 count=3D1
+SCRATCH_DEV=3D$(losetup -f /srv/test-raid/backing/scratch.bin --show)
+loops+=3D($SCRATCH_DEV)
+
+mkfs.xfs /dev/md/test
+
+mkdir /srv/test-raid/scratch
+mkdir /srv/test-raid/test
+#mount /dev/md/test /srv/test-raid/test
+
+export TEST_DEV=3D$(realpath /dev/md/test)
+export TEST_DIR=3D/srv/test-raid/test
+# export SCRATCH_DEV=3D/dev/loop1 # see above
+export SCRATCH_MNT=3D/srv/test-raid/scratch
+
+export LOAD_FACTOR=3D10
+export TIME_FACTOR=3D10
+# export SOAK_DURATION=3D1m
+
+xfstests-check
+
+# cleanup
+
+umount /srv/test-raid/test
+mdadm --stop /dev/md/test
+for x in "${loops[@]}"; do losetup -d $x; done
+
+umount /srv/test-raid/backing
+
+rm -r /srv/test-raid
 
 
+Hugs,
+Christian
 
-On Mon, 26 Aug 2024, 陈玉凡 wrote:
-
-> 在 2024/8/24 3:01, Mikulas Patocka 写道:
-> 
-> 
-> On Fri, 23 Aug 2024, 陈玉凡 wrote:
-> 
-> 在 2024/8/23 1:08, Mikulas Patocka 写道:
-> 
-> On Thu, 22 Aug 2024, Chen Yufan wrote:
-> 
-> Use time_after_eq macro instead of opening it for readability.
-> 
-> Signed-off-by: Chen Yufan <chenyufan@vivo.com>
-> ---
->   drivers/md/dm-writecache.c | 5 +++--
->   1 file changed, 3 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 7ce8847b3..548d4d37e 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -16,6 +16,7 @@
->   #include <linux/pfn_t.h>
->   #include <linux/libnvdimm.h>
->   #include <linux/delay.h>
-> +#include <linux/jiffies.h>
->   #include "dm-io-tracker.h"
->   
->   #define DM_MSG_PREFIX "writecache"
-> @@ -1994,8 +1995,8 @@ static void writecache_writeback(struct work_struct *work)
->   	while (!list_empty(&wc->lru) &&
->   	       (wc->writeback_all ||
->   		wc->freelist_size + wc->writeback_size <= wc->freelist_low_watermark ||
-> -		(jiffies - container_of(wc->lru.prev, struct wc_entry, lru)->age >=
-> -		 wc->max_age - wc->max_age / MAX_AGE_DIV))) {
-> +		(time_after_eq(jiffies, container_of(wc->lru.prev, struct wc_entry, lru)->age +
-> +		 (wc->max_age - wc->max_age / MAX_AGE_DIV))))) {
->   
->   		n_walked++;
->   		if (unlikely(n_walked > WRITEBACK_LATENCY) &&
-> -- 
-> 2.39.0
-> 
-> I'm not sure about this. The old and new code is not really equivalent.
-> 
-> Mikulas
-> 
-> The code here is susceptible to overflow issues, and the time_*() macros 
-> can handle this.
-> 
-> Chen
-> 
-> So, describe some case (i.e. the values of jiffies, 
-> container_of(wc->lru.prev, struct wc_entry, lru)->age and wc->max_age) 
-> where the old code misbehaves and the new code doesn't.
-> 
-> If we want to fix a bug, we need to know what the bug actually is.
-> 
-> Mikulas
-> 
-> When jiffies increased beyond the maximum value of unsigned long, it 
-> wraps around to zero, and the value of jiffies would be smaller than the 
-> container_of(wc->lru.prev, struct wc_entry, lru)->age value despite 
-> logically being larger. Eventurally, because of the wraparound, the 
-> result of the condition would be wrong.
-> 
-> Chen
-
-For example, if "jiffies" is 0x10 (because it wrapped around) and 
-"container_of(wc->lru.prev, struct wc_entry, lru)->age" is 0xfffffff0, 
-then the expression "jiffies - container_of(wc->lru.prev, struct wc_entry, 
-lru)->age" would be 0x20. That is the correct value, I don't see any 
-problem with this.
-
-Mikulas
----1463811712-1301487623-1724664212=:882105--
+--=20
+Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
+Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
+Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
+HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
+Christian Zagrodnick
 
