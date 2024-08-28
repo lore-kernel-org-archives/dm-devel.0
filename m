@@ -1,181 +1,135 @@
-Received: from mail-ed1-f48.google.com (mail-ed1-f48.google.com [209.85.208.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2DFE3165EE4
-	for <dm-devel@lists.linux.dev>; Wed, 28 Aug 2024 09:21:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 419521EB3D
+	for <dm-devel@lists.linux.dev>; Wed, 28 Aug 2024 13:49:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724836868; cv=none; b=qIULvIEMn0C0d2hKn9VNVtAElGj2Q9dTI8b9hRUC86CW0J7XVOOgKBvHJdle3NpWGzEGzncLa5g2gtty/TkJN2fTW0pHhMfXSvQ6XT2umrE9aerdHmVBHv4gq2KETnpQdSyudy6nskioMIwC7N9UiUez4VF0zYhnAkLcyCMVL6o=
+	t=1724852992; cv=none; b=tCRSSZ9baeWrqhb4GRRbLO6WwbP/d9YoT15zwDf2LhJ0S2J9O75jWWtindsDgPuAw9vpQ6vyqbhr17wZTjNOu9NWBDbWFwTlTP627dc4Y68Chb2XxosuhrZZyp0FJATeTwj3YYrMuLfTxW/niPPRLXvgicz1CfBntznlJcgB8wY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724836868; c=relaxed/simple;
-	bh=UrqnM+AHnstZJU9eY/MTnoTwWl9K3urYI1BT6ShVZuA=;
-	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:References:
-	 In-Reply-To:Content-Type; b=AK5owOPYN6RQKOn9CzRnfCCWvcOerAgx5c6UwjnHgmesL0yc/eZMocgkEoOeWiyCOxMeSDZhzn1jmaOws7TusGU3sA8C+VQwN0K2wFEQ4eGCG/CEsg1Rci7Hb9JzKEm0RcwKeJbXNskhiWOIKmts7492rsP0qOHUvi/ryvgh1MI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lo3MLc8l; arc=none smtp.client-ip=209.85.208.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1724852992; c=relaxed/simple;
+	bh=XdnxS+ThTom5ki5hiMAbnDn3XAJSkM7Zm9DKdFjTWLs=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=esWkHadGlYUNUvp4KorHkyyTrypaLqkuv0vAFJDI34+v0ruIdJx0b3qbsOWyuCXZpx3hwGQgy+u78j0/NVqAo+d+UB88gedoeMGg+PF6yHPfVXAmTaOe30D9K+/nAuwm5l5VHQLBntjX/A/ftrIDJag3Yba8qnswcodAYhQHFXQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PLelQTnX; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lo3MLc8l"
-Received: by mail-ed1-f48.google.com with SMTP id 4fb4d7f45d1cf-5bed0a2ae0fso8072815a12.1
-        for <dm-devel@lists.linux.dev>; Wed, 28 Aug 2024 02:21:05 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1724836864; x=1725441664; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:content-language:references
-         :cc:to:subject:from:user-agent:mime-version:date:message-id:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=5jxn5P8l1/bQbTPnHdWPNbFkGUkycrLbC1p5s9NgMbw=;
-        b=lo3MLc8lOdAqA7GJ9f3ZMnma1oMZkEixw4DY/I0fmHHnmpgwKObM0jneFilvcF17aT
-         wAF0UNMBkIYa+kns/jV38djaHPf7V/5hh0AW/y5anVnKCTcax7mV7sj8y40ESXsjPPps
-         gvTk7Qs8N6lIDppBbQTxiIP6Z7QGGC9j/WSWUzeOoTnbOJvM1EAC4wxHTUsWCkJrXMsA
-         t5bgzGtLjWA2M8yvRl18hPeqo628ROw/wtfquIXQ5E+jQMR54bydwsP1Xu1ciOrpsxE6
-         IMGv9pzpon9woJV2RykHAHzud64j3PpR8wFCj1pFE6mQiO4on8AGAfbvt8hNqpaTHdip
-         pUgQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724836864; x=1725441664;
-        h=content-transfer-encoding:in-reply-to:content-language:references
-         :cc:to:subject:from:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=5jxn5P8l1/bQbTPnHdWPNbFkGUkycrLbC1p5s9NgMbw=;
-        b=D777qeBeF6IEmHo5XPc5lcXW1Bbd9IpkvBl+ve8Rc4xwS+QlbbIoREFeu7h1zbx4fm
-         YYAoMjNrKtvbBeSgzu/BtZt+nB5hl3FViGZWQYNWfg0Yu8X6BxDavidLidvaXLo9fOmF
-         tjLThJWA7b6Tmj5k1zahief9wbdZaOl25lT9/N4sGm5rGusWS5TNLdnYJtUd1mqBFO5c
-         szRl/tPPkqFxsKFqIK0RizGp5powQBoZI4YdL7oBRUrvGGUYviX68EQYZyz9Qddp5uA4
-         OVsEWJ3IpAPl8R858SkF3t6MqWkr0U2KZz1z2Wvy/hLippEvFABYk2rqmzzVQD8dofBZ
-         gphg==
-X-Forwarded-Encrypted: i=1; AJvYcCX659AxRTBpgulr7g7k8FcP3pdkM4+Hak36TUpAMWQsZCCILo7MmwKa73xNsN4X2NcFxG5w3BNbQQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw7Wwu9xgdvwBsl2UjoDrLd7FyjIyOdAOCyqFFpd79SY/xY7iMw
-	HThPuwhmerX+4EkfL8/uxYJC5FprP5wPQb6TY1SQFvKLlmibBd+p
-X-Google-Smtp-Source: AGHT+IFX9edtfB2lZC+bNMQXKDg1hJnrIRnOMUI9Hn/nkayYjmtSrf0WjcmoPlZTTPAVPWwSKvGxDw==
-X-Received: by 2002:a05:6402:354c:b0:5c0:adad:98a2 with SMTP id 4fb4d7f45d1cf-5c0adad99f5mr5855755a12.1.1724836864230;
-        Wed, 28 Aug 2024 02:21:04 -0700 (PDT)
-Received: from [10.0.0.100] (093105062173.zamosc.vectranet.pl. [93.105.62.173])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5c0bb1e51c8sm2006209a12.34.2024.08.28.02.21.03
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 28 Aug 2024 02:21:03 -0700 (PDT)
-Message-ID: <0a02f887-aa70-4c7a-be58-3920596c175e@gmail.com>
-Date: Wed, 28 Aug 2024 11:21:02 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PLelQTnX"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1724852990;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=gJDSm433FYP55u2CYP1GWdEVQeqpBvgJzKAy8UxrTOE=;
+	b=PLelQTnXFRFikUTV+wgOZVLlNL60O6CGxt/fvlii8Ql6ch8XxHdJ51QeGlZZ8ztmoaD+h/
+	ttjrwMwlsXIUjgb6Q0PMU8riXZhPdCnX5WMnFCNoFVJVGyPLjblFRuKyUv0IugMslzSPqc
+	pevqlmTWc22y3uC76Q1o1ov9YYuM8FI=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-651-BT5Gj52DNgCyXLeFxjQAFg-1; Wed,
+ 28 Aug 2024 09:49:49 -0400
+X-MC-Unique: BT5Gj52DNgCyXLeFxjQAFg-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DA9411955BED;
+	Wed, 28 Aug 2024 13:49:47 +0000 (UTC)
+Received: from [10.45.224.222] (unknown [10.45.224.222])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9516919560A3;
+	Wed, 28 Aug 2024 13:49:45 +0000 (UTC)
+Date: Wed, 28 Aug 2024 15:49:41 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: =?ISO-8859-2?Q?=A3ukasz_Patron?= <priv.luk@gmail.com>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] dm: Implement set_read_only
+In-Reply-To: <0a02f887-aa70-4c7a-be58-3920596c175e@gmail.com>
+Message-ID: <0d430a00-192a-5aa3-4286-c5f47b9c7cd4@redhat.com>
+References: <20240821213048.726082-1-priv.luk@gmail.com> <da447e8f-0068-d847-b712-47081fa9f2e7@redhat.com> <0a02f887-aa70-4c7a-be58-3920596c175e@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-From: =?UTF-8?Q?=C5=81ukasz_Patron?= <priv.luk@gmail.com>
-Subject: Re: [PATCH] dm: Implement set_read_only
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-References: <20240821213048.726082-1-priv.luk@gmail.com>
- <da447e8f-0068-d847-b712-47081fa9f2e7@redhat.com>
-Content-Language: en-US
-In-Reply-To: <da447e8f-0068-d847-b712-47081fa9f2e7@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/mixed; boundary="-1463811712-1869205479-1724852987=:948041"
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-Hi
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
- >I'd like to ask why is this patch needed? Why do you want to set read-only
- >status using this ioctl instead of using the existing table flag?
-
-I basically just wanted to be able to use `blockdev --setrw {}` on
-Android for a block device that had its table mapped as read only. I
-believe that used to work on 5.10 or so, but not anymore.
-
- >If this is needed, we need to add another flag that is being set by
- >dm_blk_set_read_only, so that dm_blk_set_read_only and dm_resume won't
- >step over each other's changes.
-
-The following diff should address that, however I noticed that
-set_disk_ro() itself, triggers an uevent message that makes upstream
-lvm2/udev/10-dm.rules.in <http://10-dm.rules.in> disable a dm device, so 
-not sure if this is
-good to have, after all.
-
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -412,6 +412,19 @@ static int dm_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-  
-  static int dm_blk_set_read_only(struct block_device *bdev, bool ro)
-  {
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	int srcu_idx;
-+	struct dm_table *table;
-+
-+	table = dm_get_live_table(md, &srcu_idx);
-+	if (table) {
-+		if (ro)
-+			table->mode &= ~BLK_OPEN_WRITE;
-+		else
-+			table->mode = ~BLK_OPEN_WRITE;
-+	}
-+	dm_put_live_table(md, srcu_idx);
-+
-  	set_disk_ro(bdev->bd_disk, ro);
-  	return 0;
-  }
-
-
-On Tue, Aug 27, 2024 at 7:52 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
+---1463811712-1869205479-1724852987=:948041
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
 
 
-    On Wed, 21 Aug 2024, Łukasz Patron wrote:
+On Wed, 28 Aug 2024, Łukasz Patron wrote:
 
-     > This lets us change the read-only flag for device mapper block
-    devices
-     > via the BLKROSET ioctl.
-     >
-     > Signed-off-by: Łukasz Patron <priv.luk@gmail.com>
-     > ---
-     >  drivers/md/dm.c | 7 +++++++
-     >  1 file changed, 7 insertions(+)
-     >
-     > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-     > index 87bb90303435..538a93e596d7 100644
-     > --- a/drivers/md/dm.c
-     > +++ b/drivers/md/dm.c
-     > @@ -410,6 +410,12 @@ static int dm_blk_getgeo(struct block_device
-    *bdev, struct hd_geometry *geo)
-     >       return dm_get_geometry(md, geo);
-     >  }
-     >
-     > +static int dm_blk_set_read_only(struct block_device *bdev, bool ro)
-     > +{
-     > +     set_disk_ro(bdev->bd_disk, ro);
-     > +     return 0;
-     > +}
-     > +
-     >  static int dm_prepare_ioctl(struct mapped_device *md, int *srcu_idx,
-     >                           struct block_device **bdev)
-     >  {
-     > @@ -3666,6 +3672,7 @@ static const struct block_device_operations
-    dm_blk_dops = {
-     >       .release = dm_blk_close,
-     >       .ioctl = dm_blk_ioctl,
-     >       .getgeo = dm_blk_getgeo,
-     > +     .set_read_only = dm_blk_set_read_only,
-     >       .report_zones = dm_blk_report_zones,
-     >       .pr_ops = &dm_pr_ops,
-     >       .owner = THIS_MODULE
-     > --
-     > 2.46.0
+> Hi
+> 
+> >I'd like to ask why is this patch needed? Why do you want to set read-only
+> >status using this ioctl instead of using the existing table flag?
+> 
+> I basically just wanted to be able to use `blockdev --setrw {}` on
+> Android for a block device that had its table mapped as read only. I
+> believe that used to work on 5.10 or so, but not anymore.
 
-    Hi
+Yes, I looked at the older kernel and it will just flip the read-only flag 
+regardress of whether the driver supports it or not.
 
-    Device mapper already calls set_disk_ro in the do_resume function.
-    So, the
-    problem here is that the value set using set_read_only will be
-    overwritten
-    as soon as a new table will be loaded.
+What specific partition do you need to write to? Is it possible to just 
+reload the table instead of using blockdev --setrw?
 
-    I'd like to ask why is this patch needed? Why do you want to set
-    read-only
-    status using this ioctl instead of using the existing table flag?
+Is it required for rooting the phone or for some other activity?
 
-    If this is needed, we need to add another flag that is being set by
-    dm_blk_set_read_only, so that dm_blk_set_read_only and dm_resume won't
-    step over each other's changes.
+> >If this is needed, we need to add another flag that is being set by
+> >dm_blk_set_read_only, so that dm_blk_set_read_only and dm_resume won't
+> >step over each other's changes.
+> 
+> The following diff should address that, however I noticed that
+> set_disk_ro() itself, triggers an uevent message that makes upstream
+> lvm2/udev/10-dm.rules.in <http://10-dm.rules.in> disable a dm device, so not
+> sure if this is
+> good to have, after all.
 
-    Mikulas
+This patch doesn't address that - when someone loads a new table and then 
+does suspend+resume to swap the table, set_disk_ro will be called and the 
+value specified by dm_blk_set_read_only will be overwritten.
+
+Another problem is that if the table is read-only and you forcefully flip 
+it to read-write, then the underlying devices will still be read-only and 
+you would be writing to them. This is something that shouldn't be done. 
+Unforunatelly, older lvm does that - so the kernel just prints a warning 
+instead of rejecting the write. But I just don't want to add more places 
+where we are writing to read-only devices.
+
+Mikulas
+
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -412,6 +412,19 @@ static int dm_blk_getgeo(struct block_device *bdev,
+> struct hd_geometry *geo)
+>   static int dm_blk_set_read_only(struct block_device *bdev, bool ro)
+>  {
+> +	struct mapped_device *md = bdev->bd_disk->private_data;
+> +	int srcu_idx;
+> +	struct dm_table *table;
+> +
+> +	table = dm_get_live_table(md, &srcu_idx);
+> +	if (table) {
+> +		if (ro)
+> +			table->mode &= ~BLK_OPEN_WRITE;
+> +		else
+> +			table->mode = ~BLK_OPEN_WRITE;
+> +	}
+> +	dm_put_live_table(md, srcu_idx);
+> +
+>  	set_disk_ro(bdev->bd_disk, ro);
+>  	return 0;
+>  }
+---1463811712-1869205479-1724852987=:948041--
 
