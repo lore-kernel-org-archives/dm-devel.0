@@ -1,68 +1,65 @@
-Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
+Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F35FE13A276
-	for <dm-devel@lists.linux.dev>; Wed,  4 Sep 2024 20:05:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B8C31E8B67
+	for <dm-devel@lists.linux.dev>; Wed,  4 Sep 2024 20:07:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725480337; cv=none; b=juXSEDbjpkhAh9JZa8GZRrgofptx4ZYhB3VHYdVntlDxIjnjoJZWPCoQmNDmjGv8eF/+2Stjhe+m5B9JUu9dHDW/cu/yGeQFJfcuBCGWfNM+HwixGLQmcsmvGn2AMADM4G+E+dSoz8nC51irJ++Mr9xV1aoQGB9wCgtA0OYECMI=
+	t=1725480434; cv=none; b=D2KZIg5sEmbJHy6m34Qos58rk005kpltWDv8GzGh2apK/KAR+5mh3pnMkKlTvFGAB7hExpyAiI8LlRTE3j4+/B8UADKedzXMgi+uV0zMzSJIiLnO5+bG8hinBpLp+vQmWRwpKx7GazssbFBq3fWhjySkjq7KM33dSphVAURf0S4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725480337; c=relaxed/simple;
-	bh=CPQ1B0oYpu/5+N3Qvwp67Qsl2a7cWbUKoWUFePb0g6k=;
+	s=arc-20240116; t=1725480434; c=relaxed/simple;
+	bh=l9TQWAN1hWfavaOJo2D8CYde5CohMe7omB/yLMmmkew=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=TAf7vRAAMpYOrXxiNqQUlfgMz4X1Ff2jf3++QDJf3cN0GH8U673TeJnmsn1j7qBCZcN3ARvveoVJxbU2k+L/OqNc1oMDSVwRKyIqv33sGJxpJ/8CfztU44I6YgRbNMDwsJRnY8vy6ex/FAUhAo9YiDHxePe5V4EVsLxOcdtsfj0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Qi967qet; arc=none smtp.client-ip=209.85.208.50
+	 Content-Type:MIME-Version; b=Waheu/S0V1yGePFICITqfSPGYu07/WIdmFSrT+4NaOvEpa8PBOIGO92IV6VJ7JeI7fR4BKwxLatd7rfBBnuNhhQS7xqmI7ABQTHU4wm5+Ez8+c+hDwR4gsxe98UfV7tuZxBL08ybhW8Np5c1N5qgOKlIbWheQBSOo8ozkm01l0Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=L56FLZYE; arc=none smtp.client-ip=209.85.208.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Qi967qet"
-Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-5c263118780so3216732a12.2
-        for <dm-devel@lists.linux.dev>; Wed, 04 Sep 2024 13:05:34 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="L56FLZYE"
+Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-5c241feb80dso2323526a12.0
+        for <dm-devel@lists.linux.dev>; Wed, 04 Sep 2024 13:07:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1725480333; x=1726085133; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1725480431; x=1726085231; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=iAjtQJMEQqhaN7EHFgou/WCaKisO3iZH9t0H20dSC3Y=;
-        b=Qi967qet9hpBvTJee7yQE1W/7JOcg0PbR8DtiRJn8uHuSwxDsmZ1c1WX/J7ALQEbC1
-         x3ymk8iUipp4eRS9/828DgwohA3ok6zxkX/o/33hnt+V1UFUSOIYx0JT6F6G/TpujwZ+
-         6TgOzROCL2PTwZKU0SYlFNpIcB8R92Ebfwu9VvfF6XXRlTlaA32vKeDP116LX1WEG+yX
-         eNOLpFmWLYood6kOTwKzX5VrBCDWxuaLX91HaBBwOAGfK0nddEJ3Gcz8GSEHWrivbPOq
-         hms50+iodt76dXSt5eEjNSsTxZzYyqpZ5T0IIx0iXK1P6yLgHkLwhniIK7yakki0+etU
-         NT1g==
+        bh=l9TQWAN1hWfavaOJo2D8CYde5CohMe7omB/yLMmmkew=;
+        b=L56FLZYEtUpv/RiCXrpkhL/kRjoqdLskLRm4mJ91aBmdv72O32VKmpzYOLFUdM1yTo
+         ZAuTisBXKYz7MJL236wbefiLH+jC0VwJI3dpBE7AtdT3EjBGXJ/l1baglqB+UQwjA7G2
+         Bv5ecweQjzsWvTagPGyHsPRSiJ3AzW7rnynmzgoSJ+zBtDVoMSJ+qVuUJDlz+0EJ4Aal
+         qXak6Le+RhYti9rfYGmURaQwgeE6dlSiRrAYDKSbFyxXtu80y234/L5q/dCIbKiCLi4H
+         6Tenbi0HHazZLng+Y4Wdrr304bnS6lXZtKW3egP0RTGFXfN+XW2RKrAVZ9naN0EfY3Lj
+         Xkbg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1725480333; x=1726085133;
+        d=1e100.net; s=20230601; t=1725480431; x=1726085231;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=iAjtQJMEQqhaN7EHFgou/WCaKisO3iZH9t0H20dSC3Y=;
-        b=l+E+swKBpluDzJXJiFv+5xhpxXlPb1mK/seNNYcdfBQbDJXF2oj3KlrDoZjHZ7k4op
-         7pq/CjcvGGNeBIEzzlgdcprHGtnrIwFCXPVtxkVHJGCe8BrraY9Lxt4BXMcudP2Hacdo
-         9a2XQ+QoIf7WXId3MitweDWqFHNHf3JD+M5kljLHzNIcKxBenRoMlE5B1nsQeUujgWdx
-         /nmZpQDjewCzVPjcibN5jOtLclUOmoRodZLhJiSWHCaws4M/lkI7THAeiJhjz0DFjp5T
-         KF8TfoiQhcKoZGrDDgeoc6WB18I3oMbB7NBJHdZUdaZXf/9zYtaNd2A8Ll1Yk+Ky3tYd
-         cuOw==
-X-Gm-Message-State: AOJu0Yy06u+B+Gj6sAOmy0x0lodQvKI3uiyGsygQ1JauMKYQTQy0Fkr7
-	yDLgkXcbUbBzAczTIm00Yq6oVcwh7gQZ6cWUzvQNbDjAVndHZs0PEPh9I2Pz9j13PFJvFZANVdF
-	U
-X-Google-Smtp-Source: AGHT+IF2BcvJ96/ziSmx/M0iegaSy99XMsAhQmQocdUyf5dFb9XpZTehrotNJ2babKyBGeUrMfsKBg==
-X-Received: by 2002:a05:6402:51ca:b0:5c0:aa23:e1c1 with SMTP id 4fb4d7f45d1cf-5c25f23a831mr8436891a12.14.1725480332699;
-        Wed, 04 Sep 2024 13:05:32 -0700 (PDT)
+        bh=l9TQWAN1hWfavaOJo2D8CYde5CohMe7omB/yLMmmkew=;
+        b=L5QBsZKf95Lo+f2Jv4NQxJJ2/BIzOdQG4eR0hc4otL38VmPmwlhN/LU1Cf+2OVf9q6
+         zXRwWHGulvnkiSc59PHmSlgADTzYCivSiBUjaP3F3sQg+wA94JK1T0tq0Wavr9tJeptX
+         VSyYT0QTPsY5Q25C9oiVbRjwsD5GfhslgC7oOngSCVvEu56AJHyzQbcjrdX3F0Kl+vzV
+         w8ymbOFmZpOPQpFRyVtNYwEwSJMMQeIo8lK9UzK3rsRCH+kui7pBsCRyPXEwM8vL8x5T
+         APkUEGYrnQYIOh96iSZ2XvwEirO3qYCxrZ2IjXMUIPmjU+uTvmwjquePQRFoNnuRey4B
+         iRug==
+X-Gm-Message-State: AOJu0YzGkBA2wS8wDTJKV0uWOYZdqcrjeBwjf81Y+xUqHBOSvo8f/YkM
+	qGylgHp3VTdN/wL801gYvjO0ZH8wlHrdauzLLfuWo3ovu7x8M/h5uMKVHi0jwvM=
+X-Google-Smtp-Source: AGHT+IGRoSSqwuqrMt3I7fAcXJ+QnaWgGMeUmmOLc0+Wm9I6aBL6jqQUq5n8fR5GrqoE8Ho1UImiBA==
+X-Received: by 2002:a17:907:7e9d:b0:a86:8f9b:ef6e with SMTP id a640c23a62f3a-a8a43037c24mr366661066b.13.1725480430609;
+        Wed, 04 Sep 2024 13:07:10 -0700 (PDT)
 Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5c3cc6a7f5csm279666a12.94.2024.09.04.13.05.32
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a8a62037380sm32385966b.47.2024.09.04.13.07.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 04 Sep 2024 13:05:32 -0700 (PDT)
-Message-ID: <de20ab3264728d3ce0d56b7f6debe79315ae72fd.camel@suse.com>
-Subject: Re: [PATCH 04/15] libmultipath: remove pending wait code from
- libcheck_check calls
+        Wed, 04 Sep 2024 13:07:10 -0700 (PDT)
+Message-ID: <89d2938db859759bc6d730021cf8329fb0363867.camel@suse.com>
+Subject: Re: [PATCH 00/15] Yet Another path checker refactor
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Wed, 04 Sep 2024 22:05:30 +0200
-In-Reply-To: <20240828221757.4060548-5-bmarzins@redhat.com>
+Date: Wed, 04 Sep 2024 22:07:09 +0200
+In-Reply-To: <20240828221757.4060548-1-bmarzins@redhat.com>
 References: <20240828221757.4060548-1-bmarzins@redhat.com>
-	 <20240828221757.4060548-5-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.52.4 
@@ -74,265 +71,25 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
 On Wed, 2024-08-28 at 18:17 -0400, Benjamin Marzinski wrote:
-> When the tur and directio checkers start an asynchronous checker,
-> they
-> now immediately return with the path in PATH_PENDING, instead of
-> waiting in checker_check(). Instead the wait now happens in
-> checker_get_state().
 >=20
-> Additionally, the directio checker now waits for 1 ms, like the tur
-> checker does. Also like the tur checker it now only waits once. If it
-> is still pending after the first call to checker_get_state(). It will
-> not wait at all on future calls, and will just process the already
-> completed IOs.
+
+> With this patchset, the code now first starts the path checkers on
+> all
+> devices due for a path check. Then it goes back and updates the state
+> of
+> all the path devices, waiting at most a total of 1ms if there are
+> checkers that need waiting for. Once all of the paths have been
+> updated,
+> it goes through each multipath device, updating path priorities and
+> reloading the device as necessary.
 >=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> This allows multipathd to spend less time and do less redundant work
+> while checking paths, while making paths slightly more likely to not
+> spend a checker cycle marked as pending.
 
-Now I understand what you're doing, but I find it somewhat confusing. I
-believe this can be simplified after the split between starting the
-checkers and looking at their result.
+while I've already responded to several of the patches: Thanks a lot
+for this!! I've been thinking about a change like this for a long time,
+and this is definitely a change for the better.
 
-Why not just fire off the checkers, wait 1ms for _all_ the just started
-checkers in checkerloop() [*], and then do the pending test like it is
-now (but just in polling mode, with no c->timeout)?
-
-Regards
 Martin
-
-[*] or maybe even a little more, 5ms, say: we'd still be waiting far
-less time than we used to, but greatly increase the odds that most
-checkers actually complete.
-
-
-> ---
-> =C2=A0libmultipath/checkers.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 |=C2=A0 7 +++-
-> =C2=A0libmultipath/checkers/directio.c | 57 +++++++++++++++++------------=
--
-> --
-> =C2=A0libmultipath/checkers/tur.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 13 +++-=
-----
-> =C2=A03 files changed, 41 insertions(+), 36 deletions(-)
->=20
-> diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-> index 298aec78..b44b856a 100644
-> --- a/libmultipath/checkers.c
-> +++ b/libmultipath/checkers.c
-> @@ -303,7 +303,12 @@ void checker_put (struct checker * dst)
-> =C2=A0
-> =C2=A0int checker_get_state(struct checker *c)
-> =C2=A0{
-> -	return c ? c->path_state : PATH_UNCHECKED;
-> +	if (!c)
-> +		return PATH_UNCHECKED;
-> +	if (c->path_state !=3D PATH_PENDING || !c->cls->pending)
-> +		return c->path_state;
-> +	c->path_state =3D c->cls->pending(c);
-> +	return c->path_state;
-> =C2=A0}
-> =C2=A0
-> =C2=A0void checker_check (struct checker * c, int path_state)
-> diff --git a/libmultipath/checkers/directio.c
-> b/libmultipath/checkers/directio.c
-> index 3f88b40d..904e3071 100644
-> --- a/libmultipath/checkers/directio.c
-> +++ b/libmultipath/checkers/directio.c
-> @@ -60,10 +60,11 @@ const char *libcheck_msgtable[] =3D {
-> =C2=A0#define LOG(prio, fmt, args...) condlog(prio, "directio: " fmt,
-> ##args)
-> =C2=A0
-> =C2=A0struct directio_context {
-> -	int		running;
-> +	unsigned int	running;
-> =C2=A0	int		reset_flags;
-> =C2=A0	struct aio_group *aio_grp;
-> =C2=A0	struct async_req *req;
-> +	struct timespec endtime;
-> =C2=A0};
-> =C2=A0
-> =C2=A0static struct aio_group *
-> @@ -314,19 +315,16 @@ check_pending(struct directio_context *ct,
-> struct timespec endtime)
-> =C2=A0static int
-> =C2=A0check_state(int fd, struct directio_context *ct, int sync, int
-> timeout_secs)
-> =C2=A0{
-> -	struct timespec	timeout =3D { .tv_nsec =3D 1000 };
-> =C2=A0	struct stat	sb;
-> =C2=A0	int		rc;
-> +	struct io_event event;
-> =C2=A0	struct timespec endtime;
-> =C2=A0
-> =C2=A0	if (fstat(fd, &sb) =3D=3D 0) {
-> =C2=A0		LOG(4, "called for %x", (unsigned) sb.st_rdev);
-> =C2=A0	}
-> -	if (sync > 0) {
-> +	if (sync > 0)
-> =C2=A0		LOG(4, "called in synchronous mode");
-> -		timeout.tv_sec=C2=A0 =3D timeout_secs;
-> -		timeout.tv_nsec =3D 0;
-> -	}
-> =C2=A0
-> =C2=A0	if (ct->running) {
-> =C2=A0		if (ct->req->state !=3D PATH_PENDING) {
-> @@ -345,31 +343,26 @@ check_state(int fd, struct directio_context
-> *ct, int sync, int timeout_secs)
-> =C2=A0			LOG(3, "io_submit error %i", -rc);
-> =C2=A0			return PATH_UNCHECKED;
-> =C2=A0		}
-> +		get_monotonic_time(&ct->endtime);
-> +		ct->endtime.tv_nsec +=3D 1000 * 1000;
-> +		normalize_timespec(&ct->endtime);
-> =C2=A0	}
-> =C2=A0	ct->running++;
-> +	if (!sync)
-> +		return PATH_PENDING;
-> =C2=A0
-> =C2=A0	get_monotonic_time(&endtime);
-> -	endtime.tv_sec +=3D timeout.tv_sec;
-> -	endtime.tv_nsec +=3D timeout.tv_nsec;
-> +	endtime.tv_sec +=3D timeout_secs;
-> =C2=A0	normalize_timespec(&endtime);
-> =C2=A0
-> =C2=A0	check_pending(ct, endtime);
-> =C2=A0	if (ct->req->state !=3D PATH_PENDING)
-> =C2=A0		return ct->req->state;
-> =C2=A0
-> -	if (ct->running > timeout_secs || sync) {
-> -		struct io_event event;
-> -
-> -		LOG(3, "abort check on timeout");
-> -
-> -		io_cancel(ct->aio_grp->ioctx, &ct->req->io, &event);
-> -		rc =3D PATH_DOWN;
-> -	} else {
-> -		LOG(4, "async io pending");
-> -		rc =3D PATH_PENDING;
-> -	}
-> +	LOG(3, "abort check on timeout");
-> =C2=A0
-> -	return rc;
-> +	io_cancel(ct->aio_grp->ioctx, &ct->req->io, &event);
-> +	return PATH_DOWN;
-> =C2=A0}
-> =C2=A0
-> =C2=A0static void set_msgid(struct checker *c, int state)
-> @@ -395,21 +388,31 @@ static void set_msgid(struct checker *c, int
-> state)
-> =C2=A0
-> =C2=A0int libcheck_pending(struct checker *c)
-> =C2=A0{
-> -	struct timespec endtime;
-> +	int rc;
-> +	struct io_event event;
-> =C2=A0	struct directio_context *ct =3D (struct directio_context *)c-
-> >context;
-> =C2=A0
-> =C2=A0	/* The if path checker isn't running, just return the
-> exiting value. */
-> =C2=A0	if (!ct || !ct->running)
-> =C2=A0		return c->path_state;
-> =C2=A0
-> -	if (ct->req->state =3D=3D PATH_PENDING) {
-> -		get_monotonic_time(&endtime);
-> -		check_pending(ct, endtime);
-> -	} else
-> +	if (ct->req->state =3D=3D PATH_PENDING)
-> +		check_pending(ct, ct->endtime);
-> +	else
-> =C2=A0		ct->running =3D 0;
-> -	set_msgid(c, ct->req->state);
-> +	rc =3D ct->req->state;
-> +	if (rc =3D=3D PATH_PENDING) {
-> +		if (ct->running > c->timeout) {
-> +			LOG(3, "abort check on timeout");
-> +			io_cancel(ct->aio_grp->ioctx, &ct->req->io,
-> &event);
-> +			rc =3D PATH_DOWN;
-> +		}
-> +		else
-> +			LOG(4, "async io pending");
-> +	}
-> +	set_msgid(c, rc);
-> =C2=A0
-> -	return ct->req->state;
-> +	return rc;
-> =C2=A0}
-> =C2=A0
-> =C2=A0int libcheck_check (struct checker * c)
-> diff --git a/libmultipath/checkers/tur.c
-> b/libmultipath/checkers/tur.c
-> index 95af5214..81db565b 100644
-> --- a/libmultipath/checkers/tur.c
-> +++ b/libmultipath/checkers/tur.c
-> @@ -58,6 +58,7 @@ struct tur_checker_context {
-> =C2=A0	int msgid;
-> =C2=A0	struct checker_context ctx;
-> =C2=A0	unsigned int nr_timeouts;
-> +	struct timespec endtime;
-> =C2=A0};
-> =C2=A0
-> =C2=A0int libcheck_init (struct checker * c)
-> @@ -323,7 +324,7 @@ static int tur_check_async_timeout(struct checker
-> *c)
-> =C2=A0	return (now.tv_sec > ct->time);
-> =C2=A0}
-> =C2=A0
-> -int check_pending(struct checker *c, struct timespec endtime)
-> +int check_pending(struct checker *c)
-> =C2=A0{
-> =C2=A0	struct tur_checker_context *ct =3D c->context;
-> =C2=A0	int r, tur_status =3D PATH_PENDING;
-> @@ -333,7 +334,7 @@ int check_pending(struct checker *c, struct
-> timespec endtime)
-> =C2=A0	for (r =3D 0;
-> =C2=A0	=C2=A0=C2=A0=C2=A0=C2=A0 r =3D=3D 0 && ct->state =3D=3D PATH_PENDI=
-NG &&
-> =C2=A0	=C2=A0=C2=A0=C2=A0=C2=A0 ct->msgid =3D=3D MSG_TUR_RUNNING;
-> -	=C2=A0=C2=A0=C2=A0=C2=A0 r =3D pthread_cond_timedwait(&ct->active, &ct-=
->lock,
-> &endtime));
-> +	=C2=A0=C2=A0=C2=A0=C2=A0 r =3D pthread_cond_timedwait(&ct->active, &ct-=
->lock, &ct-
-> >endtime));
-> =C2=A0
-> =C2=A0	if (!r) {
-> =C2=A0		tur_status =3D ct->state;
-> @@ -355,21 +356,18 @@ int check_pending(struct checker *c, struct
-> timespec endtime)
-> =C2=A0
-> =C2=A0int libcheck_pending(struct checker *c)
-> =C2=A0{
-> -	struct timespec endtime;
-> =C2=A0	struct tur_checker_context *ct =3D c->context;
-> =C2=A0
-> =C2=A0	/* The if path checker isn't running, just return the
-> exiting value. */
-> =C2=A0	if (!ct || !ct->thread)
-> =C2=A0		return c->path_state;
-> =C2=A0
-> -	get_monotonic_time(&endtime);
-> -	return check_pending(c, endtime);
-> +	return check_pending(c);
-> =C2=A0}
-> =C2=A0
-> =C2=A0int libcheck_check(struct checker * c)
-> =C2=A0{
-> =C2=A0	struct tur_checker_context *ct =3D c->context;
-> -	struct timespec tsp;
-> =C2=A0	pthread_attr_t attr;
-> =C2=A0	int tur_status, r;
-> =C2=A0
-> @@ -479,8 +477,7 @@ int libcheck_check(struct checker * c)
-> =C2=A0				" sync mode", major(ct->devt),
-> minor(ct->devt));
-> =C2=A0			return tur_check(c->fd, c->timeout, &c-
-> >msgid);
-> =C2=A0		}
-> -		tur_timeout(&tsp);
-> -		tur_status =3D check_pending(c, tsp);
-> +		tur_timeout(&ct->endtime);
-> =C2=A0	}
-> =C2=A0
-> =C2=A0	return tur_status;
 
