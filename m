@@ -1,116 +1,87 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 270EB4317B
-	for <dm-devel@lists.linux.dev>; Wed,  4 Sep 2024 02:57:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F7D64EB2B;
+	Wed,  4 Sep 2024 04:05:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725418663; cv=none; b=EmM42wgv0V9ZBRzLZzqReMvi6qBFtYQXy4MfIxGd1DgbiBCBrWU6bZu4sO3aNy22jRNlcUo4/eH6pILXQ7ZHPrTIgkOCr5/LXGP6+IpkkUnojJyY+XzgXpP9FOLDKWEvDSiem0223gecqeAPSFlizDynr1Uwb/KaRVOi+q/nrCM=
+	t=1725422714; cv=none; b=cgZIfeOMf9+rnYD3WQeL1ZYyIswXu76NAbWBrlVtFEBvA7G/+1/OOoIFfReRmBX5OsMtD2PFGNEeSaCE+qwUIBTII4qM024wuCN8kYctibdeAcc2UVHAvEFPZJvwpoZ2SSDnNQWjpSCkKiCdHml5MYKaEnlcJi/mkT9/OcDyDqs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725418663; c=relaxed/simple;
-	bh=foqF30mnXx1GcKY7zbYXFFy3NBR51yPMKQzsrC74LuE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ZIwT//K8cVUdqfgL2F0orixjNXoqWZbB3UkP1E/N7WouMwIiUmk1rEroTVv/yA9WdlSRaxDzor/69/QwQxtHDFpyn0JfkKVrH8bMA//fExrRCO7hdS34K7WYKxa9+5F6Q94BeEIsCtkmLGk5DZeYo8IC5itvK4+XXgiA1fq1nag=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=E/CqsaLe; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1725422714; c=relaxed/simple;
+	bh=gU7VljMglbdj3Lw8JJeKa4ccbDe1OwyrXenD1IfQ948=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=sjiWzLGCH2CWPNA1n75RICuYXdLoJ0+5P0Nh9Sm6ZF5hKODlDup6gZ66gYg3bnHvPQ1i+aTk0plZO+j8iBDZsEuvOWOJ3vdw/h3Y7EMx2kf+a+rywhQVxSYdr9TGMBQ5xypwfNXzX9XqMiyq11+5ILjo+7wUTmFFbZ5mprqb3RU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=V0hZ+nqo; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="E/CqsaLe"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1725418661;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=iZg1+Cu2DLlxPh/lu/2PGq1H6RdumTvMLcval/dS4I4=;
-	b=E/CqsaLetxTDwswiPp44GE4edFIMjwz9QHontQuvaTCFB5gA+vGLr6UALyv765Inzk2jts
-	2yZFDwRgxUYR+gnlwfaA+jwrmrKiIE2Oszaed0tTKHIe59jHRe12vBHbLsvoouQl4YeW43
-	wKjDTIMopAPflZDCe4B9OSaQHRmzoQ4=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-574-PAA9kXFiOxaza9zn4QhoQg-1; Tue,
- 03 Sep 2024 22:57:38 -0400
-X-MC-Unique: PAA9kXFiOxaza9zn4QhoQg-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D5D2E1955BEE;
-	Wed,  4 Sep 2024 02:57:35 +0000 (UTC)
-Received: from fedora (unknown [10.72.116.130])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 147E330001A4;
-	Wed,  4 Sep 2024 02:57:28 +0000 (UTC)
-Date: Wed, 4 Sep 2024 10:57:23 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Jinyoung Choi <j-young.choi@samsung.com>,
-	Christoph Hellwig <hch@lst.de>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	ming.lei@redhat.com
-Subject: Re: [PATCH] bio-integrity: don't restrict the size of integrity
- metadata
-Message-ID: <ZtfMkzqP3ONMCZL0@fedora>
-References: <e41b3b8e-16c2-70cb-97cb-881234bb200d@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="V0hZ+nqo"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CC247C4CEC2;
+	Wed,  4 Sep 2024 04:05:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1725422714;
+	bh=gU7VljMglbdj3Lw8JJeKa4ccbDe1OwyrXenD1IfQ948=;
+	h=From:To:Cc:Subject:Date:From;
+	b=V0hZ+nqoc6SiidhET/uxPq4RnfIqqLYmRFnx74j8lPJIn6aflHuD2qVwls88i591K
+	 hpDfiqOzVOgwYXXdR1MvuvO/7awQb5l+nqzWC0bZ0dX5D1JV3aw9RtyUXCdMJMR8mB
+	 9XHukIpF1B5759iRC6InJFkzOmCr7XXvS80ARjJLj9jRjx/URpx2CCH+jxoP+BPCvN
+	 t00i55xf/OfkUOFSOI1osyGczd6SBWwVZt3TR5HUZ7gkTc+slUIod+zeMacjGKAzlU
+	 b2dfFUcutqYOx7JAa82U5ZwBHbyOwv7SJ9O4iIYeQBplkOam7KTGgfQB0YXWYQkac4
+	 ql0nCN2e0SvZw==
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: Tejun Heo <tj@kernel.org>,
+	Lai Jiangshan <jiangshanlai@gmail.com>,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	Sami Tolvanen <samitolvanen@google.com>
+Subject: [PATCH] dm verity: don't use WQ_MEM_RECLAIM
+Date: Tue,  3 Sep 2024 21:04:44 -0700
+Message-ID: <20240904040444.56070-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.46.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <e41b3b8e-16c2-70cb-97cb-881234bb200d@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+Content-Transfer-Encoding: 8bit
 
-On Tue, Sep 03, 2024 at 09:47:59PM +0200, Mikulas Patocka wrote:
-> Hi Jens
-> 
-> I added dm-integrity inline mode in the 6.11 merge window. I've found out
-> that it doesn't work with large bios - the reason is that the function
-> bio_integrity_add_page refuses to add more metadata than
-> queue_max_hw_sectors(q). This restriction is no longer needed, because
-> big bios are split automatically. I'd like to ask you if you could send
-> this commit to Linus before 6.11 comes out, so that the bug is fixed
-> before the final release.
-> 
-> Mikulas
-> 
-> 
-> From: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> bio_integrity_add_page restricts the size of the integrity metadata to
-> queue_max_hw_sectors(q). This restriction is not needed because oversized
-> bios are split automatically. This restriction causes problems with
-> dm-integrity 'inline' mode - if we send a large bio to dm-integrity and
-> the bio's metadata are larger than queue_max_hw_sectors(q),
-> bio_integrity_add_page fails and the bio is ended with BLK_STS_RESOURCE
-> error.
-> 
-> An example that triggers it:
-> 
-> # modprobe brd rd_size=1048576
-> # dmsetup create in1 --table '0 1847320 integrity /dev/ram0 0 64 D 1 fix_padding'
-> # dmsetup create in2 --table '0 1847312 integrity /dev/mapper/in1 0 64 I 1 internal_hash:sha512'
-> # dd if=/dev/zero of=/dev/mapper/in2 bs=1M oflag=direct status=progress
-> dd: error writing '/dev/mapper/in2': Cannot allocate memory
-> 1+0 records in
-> 0+0 records out
-> 0 bytes copied, 0.00169291 s, 0.0 kB/s
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Fixes: fb0987682c62 ("dm-integrity: introduce the Inline mode")
-> Fixes: 0ece1d649b6d ("bio-integrity: create multi-page bvecs in bio_integrity_add_page()")
+From: Eric Biggers <ebiggers@google.com>
 
-Firstly meta size is always < bio size.
+Since dm-verity doesn't support writes, the kernel's memory reclaim code
+will never wait on dm-verity work.  That makes the use of WQ_MEM_RECLAIM
+in dm-verity unnecessary.  WQ_MEM_RECLAIM has been present from the
+beginning of dm-verity, but I could not find a justification for it;
+I suspect it was just copied from dm-crypt which does support writes.
 
-Secondly the check isn't needed either bio_integrity_add_page() is called on
-to-be-splited bio(DM), or splited bio(blk-mq).
+Therefore, remove WQ_MEM_RECLAIM from dm-verity.  This eliminates the
+creation of an unnecessary rescuer thread per dm-verity device.
 
-Reviewed-by: Ming Lei <ming.lei@redhat.com>
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ drivers/md/dm-verity-target.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index cf659c8feb29f..051e84ca401dc 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -1488,11 +1488,11 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	 * Also as required for the "try_verify_in_tasklet" feature: WQ_HIGHPRI
+ 	 * allows verify_wq to preempt softirq since verification in BH workqueue
+ 	 * will fall-back to using it for error handling (or if the bufio cache
+ 	 * doesn't have required hashes).
+ 	 */
+-	v->verify_wq = alloc_workqueue("kverityd", WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
++	v->verify_wq = alloc_workqueue("kverityd", WQ_HIGHPRI, 0);
+ 	if (!v->verify_wq) {
+ 		ti->error = "Cannot allocate workqueue";
+ 		r = -ENOMEM;
+ 		goto bad;
+ 	}
 
-Thanks,
-Ming
+base-commit: 88fac17500f4ea49c7bac136cf1b27e7b9980075
+-- 
+2.46.0
 
