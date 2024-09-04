@@ -1,80 +1,82 @@
-Received: from mail-ot1-f53.google.com (mail-ot1-f53.google.com [209.85.210.53])
+Received: from mail-io1-f47.google.com (mail-io1-f47.google.com [209.85.166.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2157D1D88BB
-	for <dm-devel@lists.linux.dev>; Wed,  4 Sep 2024 13:03:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 749031CD25
+	for <dm-devel@lists.linux.dev>; Wed,  4 Sep 2024 13:17:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725454988; cv=none; b=CpVcvtsrS8xT9s6sVGuJJc8gsoB6S5RH1iMOV/jBMvOb1MbW4JEZMVoEzrHB+OTOpJ6kBZYYQuDnTSOHfhZm8NUzuNyd5cYVlo+FW5AW4fhbT/r76GuWN0a01D3wqTf3XSgirjIMSX6d0wafqQIgk12yCcm/C5sJrNhReUKZ26s=
+	t=1725455853; cv=none; b=YJPDMLICpCuANt5sF9RRfo5oAsXJJGaS1/03yy+ooPWhNb+/vwqgOIAV1JLE9UTdGVQgYlTjMWcuzCbpmXSwXi22Q4QiNPYGexCro8a2lJiuate3zhzg4Be5NKupB/uoDDxVNWM8LF4+q5tk2O1wtgcXmWsNuN+XgihOdBwA/Wc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725454988; c=relaxed/simple;
-	bh=uMbn66TtshGa3YU31X3Gw5391g9ZvSIZhpzDYDCHC9c=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=abV+e5BYzGQazUNR4LC0I+pytna7tWEaXPA0KmeAx7QSTMC9VtCmriZH/KybW2M9Ed1dl+J6rISqle8pJ29xbb4vgoB4YhLvi6rSn1x2gS320pR7BegSKI3vZG9xeoeVj6u37opn9zhcjnX6rSKjHuUIuE/DqPpbLIO4mdWRN6Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TnNdC0I9; arc=none smtp.client-ip=209.85.210.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1725455853; c=relaxed/simple;
+	bh=bRAtStrpjHf7s8fhqahQ4zdFVQ1e2mbdCQKy3TGj624=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type; b=SNiDmoPV8amC586MLc2O4LU+IOqRE7yOLdxkbvHJXuP7vh+jKmrSFCPqwa5HO7I1AvLo1PsGvFqd8BElcWvMy0PVnFA/634i/yj7FmfIjNSNgUzzCmGeFbJVwm/YvpE4dfgcPZr7a6qqV54u0VAt3WFqfmU9vPaD9bEtuB3cT3k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=nMFa+6by; arc=none smtp.client-ip=209.85.166.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TnNdC0I9"
-Received: by mail-ot1-f53.google.com with SMTP id 46e09a7af769-709339c91f9so3471762a34.0
-        for <dm-devel@lists.linux.dev>; Wed, 04 Sep 2024 06:03:06 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="nMFa+6by"
+Received: by mail-io1-f47.google.com with SMTP id ca18e2360f4ac-824ee14f7bfso265573739f.1
+        for <dm-devel@lists.linux.dev>; Wed, 04 Sep 2024 06:17:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1725454986; x=1726059786; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1725455849; x=1726060649; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=uMbn66TtshGa3YU31X3Gw5391g9ZvSIZhpzDYDCHC9c=;
-        b=TnNdC0I9Hjk6elnuu4npP48NRuhckkRfonE3YBPsEEzeWCZLWAQ7fhLBgOzigBYvgQ
-         xBT3cH2g2g7LhP/ZFBUEowz29bVw+nYGKVJrNdni0e8WrysWHkquaISLwckdmLlq+OYW
-         w4ODwFgeQljSWUU5EIBJPqh/pw2eXv6103bQHS+PEfsCqnZ2XswpxsryljWsAjsEh2LA
-         G6LPe0TBFLMWsqCI8NeoIk/PveD7/jxq81J4ZOocGYV1iq0kfxO7AsYhq3SrxzQ7i/on
-         q3Fzs3mJReWblUHkselm/qDtv9xw115L8x3e32OvkHUZTFbHrR3dYaDrDXbqeEsvduLQ
-         FAag==
+        bh=Mz/+r1kYYto6vaE1HN5Lr4ygnqrDF3yK2sRAOefUGM0=;
+        b=nMFa+6byqtmcsrHgN2j/L2RGa5heHPS+OyiWoMLHsSHOPlblWw69UE5UWM4qRO934t
+         PpqoKWxUc+4dESJX+pACrJzR5arzhaKwF5Lsk0Vvn/6JPnYN4iRgP28tp8W7YmE4cjG+
+         X54egj1za+U4CcnnZf7o1gpyj1eMwdj8L3wEamsdCbd5lHOJPu1Tfhf8KwRyUB1AyDvA
+         SEiibupLPFrumCsKrJhUGa5mqP7K7JA1MsSy2aEfgsmxvANC0jiefmEuiwi/7M/GLf19
+         Zzi9RaL1Al6faVT0uD6jzjOyMYTGH5PS4Gq/MllDAHEt8fudpDx7t4Bx/yqTxPbanR9J
+         uaNg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1725454986; x=1726059786;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+        d=1e100.net; s=20230601; t=1725455849; x=1726060649;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=uMbn66TtshGa3YU31X3Gw5391g9ZvSIZhpzDYDCHC9c=;
-        b=EgMIoGvUSZLiqWhYLA/1iqeHgjL1zmyJqD4fpp4eB8BJOGSFZaESIGqs0c+W61XLNN
-         1NhLyq6KaldWockWkARJHphzDVWF+GF2BUyhezGtijDv95NXmsYNxj29Sx4+DzTuaaiY
-         F+W3WEp4/sN504sW/CmUV5k8UvQtoQQnvMqns3NRBBaXSBnpNBWxT09blkpi0fFpunfE
-         Fjdv3Jyy7ys6CkvW4pYdOFIFEd/PiIAuT9HjR5kXpx8WuboHsY9kAcbF1ISV0bGQkeNb
-         vQKqSSAu1EpZzGswMqT/apFfnNUxiuOnBSqIqooZBrWjONoN34spJeNt8o44D6u6hVXE
-         uqhQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXX7WtKNa1hkpDiyJekmaht54DAloMcOBq2t2pC4nrEFVSMqWRsRxg4EeiLCGfJsd36Y3z7XGwKLg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxZ5TY+FnsqR0kysPcEBVwy2y2PbMfnA80K+IE+bjx31v0E92fx
-	NFmX44BSlJm+NmGS3PWTBWmnNTrCTweAecATll2XSQRBQIhumFLKY0svChnfaCAIxEkRjKbBjoP
-	1DyGPl8tfikuPbNsWxoe8PgXIBg==
-X-Google-Smtp-Source: AGHT+IEdulZw6u98/TxISvhCEB+PWEUOXDMgrcbat3567ZXIVe3pY1VGDwAU8mWSXTM+ZMpWQFg57+LANpm3aH7l26s=
-X-Received: by 2002:a05:6358:7e0e:b0:1b5:f74e:ae3a with SMTP id
- e5c5f4694b2df-1b7e37f1111mr1915202055d.15.1725454983839; Wed, 04 Sep 2024
- 06:03:03 -0700 (PDT)
+        bh=Mz/+r1kYYto6vaE1HN5Lr4ygnqrDF3yK2sRAOefUGM0=;
+        b=sNyumgZc8ycCwmsfMVA7l8NJdIv7vo5hCMkwI6h1k+sRrAE79ap/Y8lM5fjdFj5r+v
+         ndpvGFrLUqJhMh1mMd+FEKfxPKBz/WL10c8PLb/aG8GM2g4M3wBPLL4htmtAj1yl8cgR
+         WSB2JPQI/Qm+C1F6fPP6dUZoxQetz1Pe+rNiPvTVUYRAdu6OP3Dgu4U5B3lYtIO+2MO5
+         OnJn1KQnuvTcwVs/ISeLNf6mD7+pp1vF2ZlDp7HdgbIX+0LX2umzTzPEnvldGKvW//aH
+         lOysorwC29nJn/2TzvCrscpJOM4kTTktiriL3KuHlbdo0rG1c5HqYOr72VEb/CE2Pwbh
+         iN5A==
+X-Forwarded-Encrypted: i=1; AJvYcCV8viWN6XtpwfIy9lZ6NMD6fwb1aoO14JhO1jwjjiYmC8ihGLji3n0Ncj8g74cHgKTZqrHK1fi15Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yzx1udn8X3ngwPInXN/sveEA9GCfb7fO/EDC39UbAHrOWV26MXG
+	bjTMCznYUHZXDt3yarSowS8u5F5pdwCxtxNlqpUJ8vjaIv5w/MndEgMGPcgXe6o=
+X-Google-Smtp-Source: AGHT+IG1USYy7tqF1IkbtzHH4ZPJtKLMXIpGPGIRPp4DSTusYeKv+BCRJq3Gax192M3qUxFdzSbxgg==
+X-Received: by 2002:a05:6602:6b07:b0:82a:23b4:4c90 with SMTP id ca18e2360f4ac-82a23b44d62mr1864522239f.1.1725455849127;
+        Wed, 04 Sep 2024 06:17:29 -0700 (PDT)
+Received: from [127.0.0.1] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4ced2dcdf02sm3128987173.26.2024.09.04.06.17.27
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 04 Sep 2024 06:17:27 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jinyoung Choi <j-young.choi@samsung.com>, 
+ Christoph Hellwig <hch@lst.de>, 
+ "Martin K. Petersen" <martin.petersen@oracle.com>, 
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev
+In-Reply-To: <e41b3b8e-16c2-70cb-97cb-881234bb200d@redhat.com>
+References: <e41b3b8e-16c2-70cb-97cb-881234bb200d@redhat.com>
+Subject: Re: [PATCH] bio-integrity: don't restrict the size of integrity
+ metadata
+Message-Id: <172545584759.61712.16420606261657015873.b4-ty@kernel.dk>
+Date: Wed, 04 Sep 2024 07:17:27 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <e41b3b8e-16c2-70cb-97cb-881234bb200d@redhat.com>
-In-Reply-To: <e41b3b8e-16c2-70cb-97cb-881234bb200d@redhat.com>
-From: Anuj gupta <anuj1072538@gmail.com>
-Date: Wed, 4 Sep 2024 18:32:26 +0530
-Message-ID: <CACzX3Av88j1mAq7-VRcbO+azSTN+P=c-0-h5Jy=L7GyaHVrt_Q@mail.gmail.com>
-Subject: Re: [PATCH] bio-integrity: don't restrict the size of integrity metadata
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Jinyoung Choi <j-young.choi@samsung.com>, 
-	Christoph Hellwig <hch@lst.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, 
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, linux-block@vger.kernel.org, 
-	dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.14.1
 
-On Wed, Sep 4, 2024 at 1:18=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.com=
-> wrote:
->
-> Hi Jens
->
+
+On Tue, 03 Sep 2024 21:47:59 +0200, Mikulas Patocka wrote:
 > I added dm-integrity inline mode in the 6.11 merge window. I've found out
 > that it doesn't work with large bios - the reason is that the function
 > bio_integrity_add_page refuses to add more metadata than
@@ -82,5 +84,17 @@ On Wed, Sep 4, 2024 at 1:18=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.com=
 > big bios are split automatically. I'd like to ask you if you could send
 > this commit to Linus before 6.11 comes out, so that the bug is fixed
 > before the final release.
+> 
+> [...]
 
-Tested-by: Anuj Gupta <anuj20.g@samsung.com>
+Applied, thanks!
+
+[1/1] bio-integrity: don't restrict the size of integrity metadata
+      commit: b858a36fe9a1261dfd097aec855161ad135bed60
+
+Best regards,
+-- 
+Jens Axboe
+
+
+
