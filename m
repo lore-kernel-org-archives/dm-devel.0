@@ -1,87 +1,61 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F7D64EB2B;
-	Wed,  4 Sep 2024 04:05:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 76A57823AC
+	for <dm-devel@lists.linux.dev>; Wed,  4 Sep 2024 05:19:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725422714; cv=none; b=cgZIfeOMf9+rnYD3WQeL1ZYyIswXu76NAbWBrlVtFEBvA7G/+1/OOoIFfReRmBX5OsMtD2PFGNEeSaCE+qwUIBTII4qM024wuCN8kYctibdeAcc2UVHAvEFPZJvwpoZ2SSDnNQWjpSCkKiCdHml5MYKaEnlcJi/mkT9/OcDyDqs=
+	t=1725427166; cv=none; b=G4QgbBf6X09FqZGhhufQD29sNMr/mOvFn3HkF+PBF4EjYq1xOLbzd69beT3t7xqmpeuj8Vr5i3JlkatWhe1RqTlwDZROmILfeBHjaNz5N5OBajaEcx3k7RdbOJyrjZXrOnKfkNeFezxTc/9zKUI8nh10zI24AjoDzsAMfypS3kw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725422714; c=relaxed/simple;
-	bh=gU7VljMglbdj3Lw8JJeKa4ccbDe1OwyrXenD1IfQ948=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=sjiWzLGCH2CWPNA1n75RICuYXdLoJ0+5P0Nh9Sm6ZF5hKODlDup6gZ66gYg3bnHvPQ1i+aTk0plZO+j8iBDZsEuvOWOJ3vdw/h3Y7EMx2kf+a+rywhQVxSYdr9TGMBQ5xypwfNXzX9XqMiyq11+5ILjo+7wUTmFFbZ5mprqb3RU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=V0hZ+nqo; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="V0hZ+nqo"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id CC247C4CEC2;
-	Wed,  4 Sep 2024 04:05:13 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1725422714;
-	bh=gU7VljMglbdj3Lw8JJeKa4ccbDe1OwyrXenD1IfQ948=;
-	h=From:To:Cc:Subject:Date:From;
-	b=V0hZ+nqoc6SiidhET/uxPq4RnfIqqLYmRFnx74j8lPJIn6aflHuD2qVwls88i591K
-	 hpDfiqOzVOgwYXXdR1MvuvO/7awQb5l+nqzWC0bZ0dX5D1JV3aw9RtyUXCdMJMR8mB
-	 9XHukIpF1B5759iRC6InJFkzOmCr7XXvS80ARjJLj9jRjx/URpx2CCH+jxoP+BPCvN
-	 t00i55xf/OfkUOFSOI1osyGczd6SBWwVZt3TR5HUZ7gkTc+slUIod+zeMacjGKAzlU
-	 b2dfFUcutqYOx7JAa82U5ZwBHbyOwv7SJ9O4iIYeQBplkOam7KTGgfQB0YXWYQkac4
-	 ql0nCN2e0SvZw==
-From: Eric Biggers <ebiggers@kernel.org>
-To: dm-devel@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Cc: Tejun Heo <tj@kernel.org>,
-	Lai Jiangshan <jiangshanlai@gmail.com>,
-	linux-kernel@vger.kernel.org,
-	linux-mm@kvack.org,
-	Sami Tolvanen <samitolvanen@google.com>
-Subject: [PATCH] dm verity: don't use WQ_MEM_RECLAIM
-Date: Tue,  3 Sep 2024 21:04:44 -0700
-Message-ID: <20240904040444.56070-1-ebiggers@kernel.org>
-X-Mailer: git-send-email 2.46.0
+	s=arc-20240116; t=1725427166; c=relaxed/simple;
+	bh=k0w+8MjX9gmCSRlueN4R9IhVAtdMye+chfLj3TRmxVo=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=jrRuE9h9GZCzTeNNC9N5diIFaL1A/esmH7zqkNVOeDZ/u0j5CeCzGm3gAk3nUN9ntqd2bJUlenAFrUf6vM7+tTw9qjc9hg4KoQjdPc5Wu3O3PJq1V2Z56+dzAXVOY/mh6+HMK8u4rg3R8R4993R4f0l4fgcGEEDBnUfe+COn9OY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id CDF1668AA6; Wed,  4 Sep 2024 07:19:14 +0200 (CEST)
+Date: Wed, 4 Sep 2024 07:19:14 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Jinyoung Choi <j-young.choi@samsung.com>,
+	Christoph Hellwig <hch@lst.de>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: Re: [PATCH] bio-integrity: don't restrict the size of integrity
+ metadata
+Message-ID: <20240904051914.GA13967@lst.de>
+References: <e41b3b8e-16c2-70cb-97cb-881234bb200d@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <e41b3b8e-16c2-70cb-97cb-881234bb200d@redhat.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-From: Eric Biggers <ebiggers@google.com>
+On Tue, Sep 03, 2024 at 09:47:59PM +0200, Mikulas Patocka wrote:
+> Hi Jens
+> 
+> I added dm-integrity inline mode in the 6.11 merge window. I've found out
+> that it doesn't work with large bios - the reason is that the function
+> bio_integrity_add_page refuses to add more metadata than
+> queue_max_hw_sectors(q). This restriction is no longer needed, because
+> big bios are split automatically. I'd like to ask you if you could send
+> this commit to Linus before 6.11 comes out, so that the bug is fixed
+> before the final release.
 
-Since dm-verity doesn't support writes, the kernel's memory reclaim code
-will never wait on dm-verity work.  That makes the use of WQ_MEM_RECLAIM
-in dm-verity unnecessary.  WQ_MEM_RECLAIM has been present from the
-beginning of dm-verity, but I could not find a justification for it;
-I suspect it was just copied from dm-crypt which does support writes.
+This looks good:
 
-Therefore, remove WQ_MEM_RECLAIM from dm-verity.  This eliminates the
-creation of an unnecessary rescuer thread per dm-verity device.
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 
-Signed-off-by: Eric Biggers <ebiggers@google.com>
----
- drivers/md/dm-verity-target.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index cf659c8feb29f..051e84ca401dc 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -1488,11 +1488,11 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	 * Also as required for the "try_verify_in_tasklet" feature: WQ_HIGHPRI
- 	 * allows verify_wq to preempt softirq since verification in BH workqueue
- 	 * will fall-back to using it for error handling (or if the bufio cache
- 	 * doesn't have required hashes).
- 	 */
--	v->verify_wq = alloc_workqueue("kverityd", WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
-+	v->verify_wq = alloc_workqueue("kverityd", WQ_HIGHPRI, 0);
- 	if (!v->verify_wq) {
- 		ti->error = "Cannot allocate workqueue";
- 		r = -ENOMEM;
- 		goto bad;
- 	}
-
-base-commit: 88fac17500f4ea49c7bac136cf1b27e7b9980075
--- 
-2.46.0
+Although between the patches from Keith and the prep patch for the
+io_uring metadata series I'm not sure that splitting of bios with
+integrity actually fully works.  Although until we get the io_uring
+passthrough code in we also won't have an easy way to exercise it either.
 
