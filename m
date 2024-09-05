@@ -1,101 +1,190 @@
-Received: from cstnet.cn (smtp84.cstnet.cn [159.226.251.84])
-	(using TLSv1.2 with cipher DHE-RSA-AES256-SHA (256/256 bits))
+Received: from mail-ej1-f48.google.com (mail-ej1-f48.google.com [209.85.218.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA2AA946F
-	for <dm-devel@lists.linux.dev>; Thu,  5 Sep 2024 02:29:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=159.226.251.84
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B3625192D80
+	for <dm-devel@lists.linux.dev>; Thu,  5 Sep 2024 07:53:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725503398; cv=none; b=pZBaNYtUjuJLYvyDIKO+Ex0kjp4eAUO7tAbFNqX1cp6e/nHs2Fjt9ZMyEsdik6zT5YIKhvu/tvTbwqId6uLNSThyg2diNUnPcMmiBMg2w6pKd7eHUvk6ondlntQLkNjVwMLSWNluicNnVOZ0P/mSyPaVerZqXLl6WW8SN84CbH8=
+	t=1725522838; cv=none; b=ELyqw6zY1IpgNCp/N7ad4O4OlR9YWsxQArjWfU5aTRvspzz60SpHIwdhB773aIZBUbm4nFaP8kwLmsvJTZtWh8FpTbgRZb6caOX+J89G+NPNeqdq8ofcgv4n3b7ETBCa6Tzag2zB/vsWwAQs7oLxTYSsLA1qanJccwBO0hCM3z4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725503398; c=relaxed/simple;
-	bh=ae9fOuXZopXvmfOsqp0lz2GELEyMOiciacDszGvHOPU=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=TjEh5X6QziQSFR+9xjy23/ffi9gMjjfHFmMEOFv0J5wa/9qzMLL1GRaWt+hJEDSHDZNy6WYtYhPJxkX7NKNOSo1Jd29f3SPRhKLeO4sqcAxHE3XcIpqxDbiUv3LrhnwDXNUwiKPcbV7yvCUHLKpo+XoI2PkZRlt+MVESHOs85KE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=iscas.ac.cn; spf=pass smtp.mailfrom=iscas.ac.cn; arc=none smtp.client-ip=159.226.251.84
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=iscas.ac.cn
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=iscas.ac.cn
-Received: from localhost (unknown [124.16.138.129])
-	by APP-05 (Coremail) with SMTP id zQCowACHauqhF9lmv+ZZAQ--.15231S2;
-	Thu, 05 Sep 2024 10:29:53 +0800 (CST)
-From: Chen Ni <nichen@iscas.ac.cn>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	Chen Ni <nichen@iscas.ac.cn>
-Subject: [PATCH] dm integrity: Convert comma to semicolon
-Date: Thu,  5 Sep 2024 10:28:32 +0800
-Message-Id: <20240905022832.1642756-1-nichen@iscas.ac.cn>
-X-Mailer: git-send-email 2.25.1
+	s=arc-20240116; t=1725522838; c=relaxed/simple;
+	bh=yS+07PXc5/xgvY/sIIJryK5hY4xV8bAj7jy8IxBcF9c=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=WFdS6uAa8vof/iwEdGMMh/s6ROlXXtOuTZVwoCGxVLqtd427sja7Q5L5WNn6xIOE8dCdV0ahXGnLi4SxS9YStpwYZt4wFB0RgrpPXeMXOLnqfZMYOCnn4zlAsLH89Nf93FH72wytWf3p3MP/5JzIKfqLB+Ckz9Sa9CoZZLbMz+M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=EKnU6+ux; arc=none smtp.client-ip=209.85.218.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="EKnU6+ux"
+Received: by mail-ej1-f48.google.com with SMTP id a640c23a62f3a-a86859e2fc0so69060366b.3
+        for <dm-devel@lists.linux.dev>; Thu, 05 Sep 2024 00:53:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1725522834; x=1726127634; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=yS+07PXc5/xgvY/sIIJryK5hY4xV8bAj7jy8IxBcF9c=;
+        b=EKnU6+uxaDafCuLEbHDsrrImvk51nsfUEzuQu/PTpRR5oeCo/4UnLT85iZGEqvSEtZ
+         KXcgASpTHzqSAJGjofGFzlL/2eTSiLR/O4HhgXQYhroXIncHo998CZ6Rdscyt2++H4wx
+         0rxQSzfHan86d6+xjJaU5ckxViaHTD0j10z1+pNm8vVJoO7DFQMgu94VELm+Cv9ctNZh
+         NhakdRNCOJpGmmpGM5Li96slJO2BS2wPNEaH/qdPJMoT9PKLXSAtWT0AxP1ZzFH4wMwC
+         EIMVvGscc4GiBftLMJZuj6Kr+w854ISroBEwVlyWtuoR+PgGYOSvBtB2wwIm7XMqmKjf
+         JHWw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1725522834; x=1726127634;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=yS+07PXc5/xgvY/sIIJryK5hY4xV8bAj7jy8IxBcF9c=;
+        b=WaHt/WpSn/WfJ1bQv2QtQ4OF2n6/gr6Tavy3Z9ICUS9nUOXvIU3p50Pg86zn86fjXG
+         cWwjxR+OBcgDTsucXaHsosHe4bVr48KUk5DphJgZNCp9DdVaq9XSvkdVXa7d2hQW2WU6
+         pkaLXSEPsiqapv8YJOuUBze2E+8CcP/MPdPvza2hX4VMKMJJCZjcZvZPJzKDFj8VMuIJ
+         C4NQz/EQyo1xdzKU1saG4HlDY5ooQU1im6vCxtTop/1EDYzY9S4h6B0EAa6ymP8qW3bi
+         fgnHu6IdlX1dFt9VG6ATxrqW3UJiDk28vRDsquIq9yfSSvFTOTvqlS4+x5vnAIugyWRB
+         /n3g==
+X-Forwarded-Encrypted: i=1; AJvYcCUxLMflE9xJWKTPs4oG0bcwGdEX8OmX6/UiVHYfBlE29qrXPCojjMiknIIQlQZjGaZJeL3fUXQF6w==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwqITmFsi/SJo6NB+PW5jBR02Dto+QJbi8UjrkFS0n/Crk5snBK
+	e0eG6dCtTqnAq/3xFUNTvGOpi4CZj9mk5MJtf8szpwvyryYEMFLcLSAk8hqVhXJ95imCwP49AAe
+	M
+X-Google-Smtp-Source: AGHT+IHIQEp08cCxmN9JPKGYbe5dxErLstaXunqQNpMwTArBRx5/9Ev2ogAdPBvvKQRwvrN9QerK8g==
+X-Received: by 2002:a17:906:df46:b0:a8a:7062:23ef with SMTP id a640c23a62f3a-a8a70623650mr52371266b.32.1725522833622;
+        Thu, 05 Sep 2024 00:53:53 -0700 (PDT)
+Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a8a623c1ee0sm96306966b.160.2024.09.05.00.53.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 05 Sep 2024 00:53:53 -0700 (PDT)
+Message-ID: <95f3cdf6556991bf981e1d74e4cd6ce6ebb6f9cd.camel@suse.com>
+Subject: Re: [PATCH 04/15] libmultipath: remove pending wait code from
+ libcheck_check calls
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
+ development <dm-devel@lists.linux.dev>
+Date: Thu, 05 Sep 2024 09:53:52 +0200
+In-Reply-To: <ZtjOWgPfSNcHrOj1@redhat.com>
+References: <20240828221757.4060548-1-bmarzins@redhat.com>
+	 <20240828221757.4060548-5-bmarzins@redhat.com>
+	 <de20ab3264728d3ce0d56b7f6debe79315ae72fd.camel@suse.com>
+	 <ZtjOWgPfSNcHrOj1@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.52.4 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:zQCowACHauqhF9lmv+ZZAQ--.15231S2
-X-Coremail-Antispam: 1UD129KBjvJXoW7KF17ur4DKrWUZF4ktF1xGrg_yoW8Wryfpr
-	yj934ayrW8Ar1IkanFvF1fA3ZIgF97G3yUCayYy3s2qw4DAF18X3s5tFyUJrWUJF1fZF47
-	Wr1rtr1qvF4jkF7anT9S1TB71UUUUUDqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUvE14x267AKxVWUJVW8JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26ryj6F1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
-	6r4UJwA2z4x0Y4vEx4A2jsIE14v26r4UJVWxJr1l84ACjcxK6I8E87Iv6xkF7I0E14v26r
-	4UJVWxJr1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2Wl
-	Yx0E2Ix0cI8IcVAFwI0_JF0_Jw1lYx0Ex4A2jsIE14v26r4UJVWxJr1lOx8S6xCaFVCjc4
-	AY6r1j6r4UM4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwCY1x0262kK
-	e7AKxVWUAVWUtwCY02Avz4vE14v_Gr1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7
-	v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF
-	1VAY17CE14v26r126r1DMIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_JFI_Gr1lIx
-	AIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI
-	42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWI
-	evJa73UjIFyTuYvjfU5VbkUUUUU
-X-CM-SenderInfo: xqlfxv3q6l2u1dvotugofq/
 
-Replace comma between expressions with semicolons.
+On Wed, 2024-09-04 at 17:17 -0400, Benjamin Marzinski wrote:
+> On Wed, Sep 04, 2024 at 10:05:30PM +0200, Martin Wilck wrote:
+> > On Wed, 2024-08-28 at 18:17 -0400, Benjamin Marzinski wrote:
+> > > When the tur and directio checkers start an asynchronous checker,
+> > > they
+> > > now immediately return with the path in PATH_PENDING, instead of
+> > > waiting in checker_check(). Instead the wait now happens in
+> > > checker_get_state().
+> > >=20
+> > > Additionally, the directio checker now waits for 1 ms, like the
+> > > tur
+> > > checker does. Also like the tur checker it now only waits once.
+> > > If it
+> > > is still pending after the first call to checker_get_state(). It
+> > > will
+> > > not wait at all on future calls, and will just process the
+> > > already
+> > > completed IOs.
+> > >=20
+> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> >=20
+> > Now I understand what you're doing, but I find it somewhat
+> > confusing. I
+> > believe this can be simplified after the split between starting the
+> > checkers and looking at their result.
+> >=20
+> > Why not just fire off the checkers, wait 1ms for _all_ the just
+> > started
+> > checkers in checkerloop() [*], and then do the pending test like it
+> > is
+> > now (but just in polling mode, with no c->timeout)?
+>=20
+> That's probably possible. You would also need to put that wait in
+> pathinfo().
 
-Using a ',' in place of a ';' can have unintended side effects.
-Although that is not the case here, it is seems best to use ';'
-unless ',' is intended.
+pathinfo() is tricky because it's written with the assumption that the
+result is obtained synchronously. Maybe in pathinfo we should just fire
+up the checker and set the status to PENDING. But we might as well not
+run the checker at all, just set the checker interval to minimum, and
+let the checkers do their work. (I like that idea, actually).=C2=A0
 
-Found by inspection.
-No functional change intended.
-Compile tested only.
+Another idea would be to define an exception for pathinfo(), and
+actually wait for completion there, not until c->timeout expires, but
+somewhat longer than we currently do.
 
-Signed-off-by: Chen Ni <nichen@iscas.ac.cn>
----
- drivers/md/dm-integrity.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+> The big reason I did it this way was so nothing outside of the
+> checker
+> itself needed to care about things like if the checker was set to
+> async
+> and whether or not the checker was actually async capable and if this
+> was a newly started async check or if the checker had already been
+> pending for a cycle, where waiting another 1ms was pointless.
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index b3489d3fe7db..34fa98efa9fa 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -1500,15 +1500,15 @@ static void dm_integrity_flush_buffers(struct dm_integrity_c *ic, bool flush_dat
- 	if (!ic->meta_dev)
- 		flush_data = false;
- 	if (flush_data) {
--		fr.io_req.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC,
--		fr.io_req.mem.type = DM_IO_KMEM,
--		fr.io_req.mem.ptr.addr = NULL,
--		fr.io_req.notify.fn = flush_notify,
-+		fr.io_req.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
-+		fr.io_req.mem.type = DM_IO_KMEM;
-+		fr.io_req.mem.ptr.addr = NULL;
-+		fr.io_req.notify.fn = flush_notify;
- 		fr.io_req.notify.context = &fr;
--		fr.io_req.client = dm_bufio_get_dm_io_client(ic->bufio),
--		fr.io_reg.bdev = ic->dev->bdev,
--		fr.io_reg.sector = 0,
--		fr.io_reg.count = 0,
-+		fr.io_req.client = dm_bufio_get_dm_io_client(ic->bufio);
-+		fr.io_reg.bdev = ic->dev->bdev;
-+		fr.io_reg.sector = 0;
-+		fr.io_reg.count = 0;
- 		fr.ic = ic;
- 		init_completion(&fr.comp);
- 		r = dm_io(&fr.io_req, 1, &fr.io_reg, NULL, IOPRIO_DEFAULT);
--- 
-2.25.1
+Right, the sync property should be hidden. If sync checkers are in use,
+none of the recent changes will have much of a positive effect. I'd
+like to convert all checkers to async mode. Just need some time to do
+it :-/ AFAICS, the only sync checker that still matters is rdac.
+
+Below is some brainstorming from my side.=C2=A0
+Ignore it if it makes no sense.
+
+We currently use the path state, in particular PATH_PENDING, to infer
+the state of the checker (thread, aio request), but that doesn't give
+us the full picture.
+
+We should be able to distinguish the path state and the state of the
+checker itself, which can be IDLE, RUNNING, or DONE. The checker
+provides an API checker_state() (I can't think of a better name) to
+retrieve its state. The path state can (only) be retrieved in DONE
+checker state. When the path state is retrieved, the checker state
+switches to IDLE. checker_start() switches from IDLE to RUNNING.
+checker_wait(timeout) waits until the RUNNING checker reaches DONE, or
+the passed timeout is reached. A timed-out checker
+(wrt c->timeout) has state DONE with path state PATH_TIMEOUT.
+
+Sync checkers would have a degenerated API where checker_start() and
+checker_state() would be noops.
+
+> This way, you just call checker_get_state() on all the paths were you
+> ran the path checker, and if at least one of them needs to wait, then
+> the first one that does will wait, and the rest won't. If none of
+> them
+> need to wait, then none of them will.
+
+This makes sense.=C2=A0But the "wait" you're talking about is the 1ms delay=
+,
+after which the paths may well still be in PATH_PENDING. It's actually
+not much different from not waiting at all, we've just decreased the
+likelihood of PATH_PENDIN. 1ms is just an estimate, and, in my
+experience, too short in many environments.
+
+The real benefit of your patch set is that we now start all (async)
+checkers in parallel. Which means that we can wait longer, increasing
+the likelihood that the checkers have actually finished, while spending
+less total time waiting. "Waiting longer" is a bit hand-waving; IMO it
+should be handled further up in the stack rather than down in the
+checker code.
+
+We could achieve the behavior you describe in checkerloop, like this:
+
+ - record start_timestamp
+ - fire off all handlers
+ - calculate end_time as start_timestamp + some_delay=20
+ - use that end_time for waiting for results of all fired-off checkers
+
+Like in your example, we'd really wait for no more than 1 path.
+We could do this for the entire set of paths, or for each multipath map
+separately.
+
+Regards
+Martin
 
