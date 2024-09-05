@@ -1,117 +1,110 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3BAA187554
-	for <dm-devel@lists.linux.dev>; Thu,  5 Sep 2024 18:22:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 332621C2E
+	for <dm-devel@lists.linux.dev>; Thu,  5 Sep 2024 18:27:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725560523; cv=none; b=djf06RSQI4CIEnkkSJaXp6lJphuDqfc8UPQbzh+Quw12eVQGj3at/EDnWQS4jBS67dUZysFsBAtND623du+/UJH+11mHu/J3JTUgLC29zmgVro6OOgcyOXbYx1kz8rmSfMsdytIQMVFuwsltz74sgPmXl32Sz9Et8wRfrWTacZk=
+	t=1725560858; cv=none; b=q7tLRkaBcSJfJGIjgQZ46f3jsi68OQWKJ9yfzwFzrhnWS6l7cZldnKKPwZwqmd+sO2eUKjxYq9ms6bgHZ02J2onRX2DVnVCFbW7R+ph+NmPTPkLAjyTtiz8y8NYIwoJpKV1McqW1NyJP4hqX+a5dqEc0jy2pJNOyYciRjF/Bwfs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725560523; c=relaxed/simple;
-	bh=Hby1hOdwKYCfXNR4WIB+PqjAkcRH83kj+jNz8JiJ2Uc=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=j8LCN6bUNm5v/iTZPYlE3fh9hgEC/FPyR21LTOejFKDDE3W99vIRsflquDIkUDOStBAKKI3KoKNCnjk9PYWGlOnTbnzY4/rDZIJjLjYLfjNS8JNl0RXKQ/21+PXjU7NSnHcydYx89qNYQEwvXKhsgS3Vr0MWjtzI210brNmw6Zk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CUSC9FhZ; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1725560858; c=relaxed/simple;
+	bh=uNd/iGAt9jV52YpQsEIPrS0SyjdqfqxcMvqnMHBfGtA=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=LG5zy5qW6QXVGNNVud/FolIn2sFtgNW4I2fRSRDAWexBWtgd3bEXmDbF2dX7XHBU7vaadDQ39pHaYlZC9jVe796fLX6ogupdQ3xOwvPZKJ6SQvB9pIgyfMxM4Z+5V7I+vFv7nacKmTd2xHn/Nb15qENr1JOP+dpbhxD8Vbjo/4M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Cl4uh/Hj; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CUSC9FhZ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Cl4uh/Hj"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1725560520;
+	s=mimecast20190719; t=1725560856;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9ZVrq2tmtI8yniXwYB5nDBHMyXlS7xVzITGYCNH+G7Q=;
-	b=CUSC9FhZJARV5LZLnEWrXR7XL1jw61TbmjoHIyOlIHy5TPH9+Fc4ojLd4QZQFfVYsDjeAw
-	N26IAUYYqyochSp0kI6u1wvzP7U8+5BjLsNVtvOxciAg6eenh1drSATeRHqOn/auVjJ6rO
-	YdzCCC3dScOyadvJftF0pPIfnEoteJM=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=pBwTzRxpKr/e2BBe8urLQSQ//qz15pgHg8+4kLvxmRE=;
+	b=Cl4uh/Hjd+BqDMFG3xet46n0MGZPA9zD5n3l33ZTrFQpm1wSr849/VleCbE9nQXd8AmGa1
+	bFSsOfJZeQ/RYpSVeOI9Kr1aYMzxZsZ/LVrosRe/HBR4Wfo5ZLNBFkK+H5eUyKccMExknX
+	v3XAA8zHQHz7HLF55eGNsA26Bu04vS0=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-16-ixL1IET2MEKSKlEPYgR2kA-1; Thu,
- 05 Sep 2024 14:21:55 -0400
-X-MC-Unique: ixL1IET2MEKSKlEPYgR2kA-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-657-Gs-JyaW5Oq-Hus7l2XsekQ-1; Thu,
+ 05 Sep 2024 14:27:32 -0400
+X-MC-Unique: Gs-JyaW5Oq-Hus7l2XsekQ-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DE7DF195608B;
-	Thu,  5 Sep 2024 18:21:53 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E02471955F06;
+	Thu,  5 Sep 2024 18:27:31 +0000 (UTC)
 Received: from [10.45.224.222] (unknown [10.45.224.222])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B84F330001AB;
-	Thu,  5 Sep 2024 18:21:50 +0000 (UTC)
-Date: Thu, 5 Sep 2024 20:21:46 +0200 (CEST)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8FF681956048;
+	Thu,  5 Sep 2024 18:27:30 +0000 (UTC)
+Date: Thu, 5 Sep 2024 20:27:25 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Eric Biggers <ebiggers@kernel.org>
-cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>, Tejun Heo <tj@kernel.org>, 
-    Lai Jiangshan <jiangshanlai@gmail.com>, linux-kernel@vger.kernel.org, 
-    linux-mm@kvack.org, Sami Tolvanen <samitolvanen@google.com>
-Subject: Re: [PATCH] dm verity: don't use WQ_MEM_RECLAIM
-In-Reply-To: <20240904040444.56070-1-ebiggers@kernel.org>
-Message-ID: <086a76c4-98da-d9d1-9f2f-6249c3d55fe9@redhat.com>
-References: <20240904040444.56070-1-ebiggers@kernel.org>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm-integrity: fix a race condition when accessing
+ recalc_sector
+Message-ID: <45abc60c-25dd-4416-48be-72eb41390588@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
+There's a race condition when accessing the variable
+ic->sb->recalc_sector. The function integrity_recalc writes to this
+variable when it makes some progress and the function
+dm_integrity_map_continue may read this variable concurrently.
 
+One problem is that on 32-bit architectures the 64-bit variable is not
+read and written atomically - it may be possible to read garbage if read
+races with write.
 
-On Tue, 3 Sep 2024, Eric Biggers wrote:
+Another problem is that memory accesses to this variable are not guarded
+with memory barriers.
 
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> Since dm-verity doesn't support writes, the kernel's memory reclaim code
-> will never wait on dm-verity work.  That makes the use of WQ_MEM_RECLAIM
-> in dm-verity unnecessary.  WQ_MEM_RECLAIM has been present from the
-> beginning of dm-verity, but I could not find a justification for it;
-> I suspect it was just copied from dm-crypt which does support writes.
-> 
-> Therefore, remove WQ_MEM_RECLAIM from dm-verity.  This eliminates the
-> creation of an unnecessary rescuer thread per dm-verity device.
-> 
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
+This commit fixes the race - it moves reading ic->sb->recalc_sector to an
+earlier place where we hold &ic->endio_wait.lock.
 
-Hmm. I can think about a case where you have read-only dm-verity device, 
-on the top of that you have dm-snapshot device and on the top of that you 
-have a writable filesystem.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
-When the filesystem needs to write data, it submits some write bios. When 
-dm-snapshot receives these write bios, it will read from the dm-verity 
-device and write to the snapshot's exception store device. So, dm-verity 
-needs WQ_MEM_RECLAIM in this case.
+---
+ drivers/md/dm-integrity.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-Mikulas
-
-> ---
->  drivers/md/dm-verity-target.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index cf659c8feb29f..051e84ca401dc 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -1488,11 +1488,11 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	 * Also as required for the "try_verify_in_tasklet" feature: WQ_HIGHPRI
->  	 * allows verify_wq to preempt softirq since verification in BH workqueue
->  	 * will fall-back to using it for error handling (or if the bufio cache
->  	 * doesn't have required hashes).
->  	 */
-> -	v->verify_wq = alloc_workqueue("kverityd", WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
-> +	v->verify_wq = alloc_workqueue("kverityd", WQ_HIGHPRI, 0);
->  	if (!v->verify_wq) {
->  		ti->error = "Cannot allocate workqueue";
->  		r = -ENOMEM;
->  		goto bad;
->  	}
-> 
-> base-commit: 88fac17500f4ea49c7bac136cf1b27e7b9980075
-> -- 
-> 2.46.0
-> 
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2024-09-04 20:42:25.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2024-09-04 22:32:01.000000000 +0200
+@@ -2174,6 +2174,7 @@ static void dm_integrity_map_continue(st
+ 	struct bio *bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
+ 	unsigned int journal_section, journal_entry;
+ 	unsigned int journal_read_pos;
++	sector_t recalc_sector;
+ 	struct completion read_comp;
+ 	bool discard_retried = false;
+ 	bool need_sync_io = ic->internal_hash && dio->op == REQ_OP_READ;
+@@ -2314,6 +2315,7 @@ offload_to_thread:
+ 			goto lock_retry;
+ 		}
+ 	}
++	recalc_sector = le64_to_cpu(ic->sb->recalc_sector);
+ 	spin_unlock_irq(&ic->endio_wait.lock);
+ 
+ 	if (unlikely(journal_read_pos != NOT_FOUND)) {
+@@ -2368,7 +2370,7 @@ offload_to_thread:
+ 	if (need_sync_io) {
+ 		wait_for_completion_io(&read_comp);
+ 		if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING) &&
+-		    dio->range.logical_sector + dio->range.n_sectors > le64_to_cpu(ic->sb->recalc_sector))
++		    dio->range.logical_sector + dio->range.n_sectors > recalc_sector)
+ 			goto skip_check;
+ 		if (ic->mode == 'B') {
+ 			if (!block_bitmap_op(ic, ic->recalc_bitmap, dio->range.logical_sector,
 
