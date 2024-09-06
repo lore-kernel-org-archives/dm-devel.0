@@ -1,137 +1,247 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com [209.85.221.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FE41282ED
-	for <dm-devel@lists.linux.dev>; Fri,  6 Sep 2024 17:26:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFEB11D31B7
+	for <dm-devel@lists.linux.dev>; Fri,  6 Sep 2024 18:07:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725643619; cv=none; b=YtvP5mzQxpdM1c0RiBSCzMgsQE2VvwWtIIbjQYHBvAfySZS7VMZfOabc4Z6gMWgSG4gciF5USYnChJdNxNjf0gssBPFt6/rUlYXcK+qYoKmsr3KZlDo7s+0vy35kdFEHlTp/Ya+3PRRRzRwJNpRvpS/Tvv9oM9WA+6SWTShx/yk=
+	t=1725646048; cv=none; b=L5FO7iCvFn/4YXigoyLsIy4Iicot6nTevQBSRZ0TrAsuocIe8BJLvkTjCQxutu1FTJJVub9HFfqWYH+jqeuEUMZRmsWWt3fgpZJdT6Acib27Ba4zz6s9rnM/4fqjR4OiYDI2lIDmo+6vCzN6sehL2guqkHWGJ5fJm0bmAA6tvEc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725643619; c=relaxed/simple;
-	bh=2ikELtyYNbwr/uDDPbP8nuAMeXNd8K4Pudf6sZHQzCA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=MWr7uwyjYQ2DMzc+TYc1pblGzm3Ka2z/wePGZbfy/dDn2BIt+a97VM2MfZCSdJ443ej8u+uH3BtFyL6V09k9NjRe0tkw4WYEeqOeYVP9YUVvBsu3gwLG/RVaDfFIL/0hZoTAjYccpMkzcFAU9uxk7RJ3nOfPH6IMzAghgwq7dTE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=h9N99Sfi; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1725646048; c=relaxed/simple;
+	bh=aVAgf6Jw06Lql3bDOfE6zVcTVmPhHzcmNDJscnSeSew=;
+	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=fnegOApXjNzlVIPfAnofUBXXq2EIz6O3TnR+55BD7Wh55mpPJdx5jCep0xhZI3jlFZzceTN/posUxBPdfuE/rVhVc22u8+7E2O7eW2Of5SF75SyOa1Ac2voyXtisczToRejSYR63MhRSL6j5Rz7qydX61VuAEJKFDxWpuAsuggE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=bgdev.pl; spf=none smtp.mailfrom=bgdev.pl; dkim=pass (2048-bit key) header.d=bgdev-pl.20230601.gappssmtp.com header.i=@bgdev-pl.20230601.gappssmtp.com header.b=N4hID/4q; arc=none smtp.client-ip=209.85.221.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=bgdev.pl
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bgdev.pl
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="h9N99Sfi"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1725643616;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9gq4OnRig0w3MI54YxIqVYnrs8PaqzsLDk5yyyk6yzA=;
-	b=h9N99Sfi6tax0t26B5B9Irg4/lp20qJsvuvgcKeCTWDmoGSZlMMcWu/catLoIg3ZqC5C8N
-	pQOWAJjmpVX13WbdoVFRTVK7/Zco/IR4mbtUTIImz8RyMAivyWYe4gg93EAIrDHDs8WS/r
-	cDusu3SzZRg98kgmbK2YmaZXJE47vmU=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-265-FSNEwSlNMSKFpra70CCPKw-1; Fri,
- 06 Sep 2024 13:26:51 -0400
-X-MC-Unique: FSNEwSlNMSKFpra70CCPKw-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A56A31955BC1;
-	Fri,  6 Sep 2024 17:26:49 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0823B1956086;
-	Fri,  6 Sep 2024 17:26:48 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 486HQlp2550937
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 6 Sep 2024 13:26:47 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 486HQlGU550936;
-	Fri, 6 Sep 2024 13:26:47 -0400
-Date: Fri, 6 Sep 2024 13:26:47 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        device-mapper development <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH 04/15] libmultipath: remove pending wait code from
- libcheck_check calls
-Message-ID: <Zts7V4t7lMpLo7Ff@redhat.com>
-References: <20240828221757.4060548-1-bmarzins@redhat.com>
- <20240828221757.4060548-5-bmarzins@redhat.com>
- <de20ab3264728d3ce0d56b7f6debe79315ae72fd.camel@suse.com>
- <ZtjOWgPfSNcHrOj1@redhat.com>
- <95f3cdf6556991bf981e1d74e4cd6ce6ebb6f9cd.camel@suse.com>
+	dkim=pass (2048-bit key) header.d=bgdev-pl.20230601.gappssmtp.com header.i=@bgdev-pl.20230601.gappssmtp.com header.b="N4hID/4q"
+Received: by mail-wr1-f42.google.com with SMTP id ffacd0b85a97d-371ba7e46easo1444140f8f.0
+        for <dm-devel@lists.linux.dev>; Fri, 06 Sep 2024 11:07:26 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=bgdev-pl.20230601.gappssmtp.com; s=20230601; t=1725646045; x=1726250845; darn=lists.linux.dev;
+        h=cc:to:content-transfer-encoding:mime-version:message-id:date
+         :subject:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=+CkJo3Bz1wCo8cghBLvNHn5F/2d1ljMEB+CBPgFMiOM=;
+        b=N4hID/4qocxequjt/EG+smQSfsjNI2Nq1QVuqsceU9oXZGFPByeIIrcTlIjl64eKv3
+         VKA8lAEV37wFE7gsuqjEoTW8YmLWoHyPjSQososr4wsKse6wYvuFzLSnVMQ4F5tYGO5g
+         DtYeQ9jcxKRbdfdy7twmSZKSDbzJEbfZhk1bImHBS5QaKBPLlE9ygzr0U0eeA39i2fGD
+         eH72KbkW23FA6+C87mI+zlTWp5GsAwLud2vG2vDQgH2nVbf1Uh69YYGuxBID/JF/wNCo
+         8nCHALKTwoJWIuRqVwA57+MloJGLTPPx+yXoOlajLFLyopgs1p5DXkgyBYRDPUPb1ZA6
+         VZ0g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1725646045; x=1726250845;
+        h=cc:to:content-transfer-encoding:mime-version:message-id:date
+         :subject:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=+CkJo3Bz1wCo8cghBLvNHn5F/2d1ljMEB+CBPgFMiOM=;
+        b=gINcCIOxq5CjNSUviqv0wY3MoVbYXReYFUv/6VsbcH+hCuv5byWXy4b4lLrKk7eHr3
+         0ILBDZqKyK7HM4BYGpYvM2m1CpGV5nuQreNXyUiYSaVbRI9yxSg7BVaCOfejY8oHo3tI
+         C1uQ5sVKdvY4ccajFMtqoBzAeT9syLsvs3M8nnW0HIB1tsgaJFGGdoVIebSxsov8y4Tb
+         HXVJmwsU+pJxiUddMUiK8oXqmArFQe+/38fFutORWCFE/0vSwEG4P8YzGx32L9XyG5n8
+         0budtTMsd/AZbGJvZN1kRSaG0uh8/CEPV3aevkyd2Kr238FzCo2bXOwvnTSCgRn8n4qi
+         6EcQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUO+qvTzxN3anAQT1ZTBkz4ZQMEZaVcmTJy+b4k/79JPUCQGZ3AAOgt94AL8nrdaiDJTZGlfwm1ng==@lists.linux.dev
+X-Gm-Message-State: AOJu0Ywf3diuPNPBeI9jT8IfxqPO/FFsBAp90jKZDzqf4qk4jVKkZyg9
+	e3MpefUB8Av44wpOO6gnEgI/DlkAOjYIz1NCJD01kK6bQfSIHItjQZrRieLOksY=
+X-Google-Smtp-Source: AGHT+IHy1pIX6vPFN+GTLpQP7Rpewt0HZvI8JhY+ZgzCgA6fBvnlWfM8eNUCakcjVl0vKiyxCZY3pw==
+X-Received: by 2002:adf:f14a:0:b0:377:2ce0:a760 with SMTP id ffacd0b85a97d-378896a47eamr2289788f8f.49.1725646044865;
+        Fri, 06 Sep 2024 11:07:24 -0700 (PDT)
+Received: from [127.0.1.1] ([2a01:cb1d:dc:7e00:b9fc:a1e7:588c:1e37])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-42cac8543dbsm5880485e9.42.2024.09.06.11.07.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 06 Sep 2024 11:07:24 -0700 (PDT)
+From: Bartosz Golaszewski <brgl@bgdev.pl>
+Subject: [PATCH v6 00/17] Hardware wrapped key support for QCom ICE and UFS
+ core
+Date: Fri, 06 Sep 2024 20:07:03 +0200
+Message-Id: <20240906-wrapped-keys-v6-0-d59e61bc0cb4@linaro.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <95f3cdf6556991bf981e1d74e4cd6ce6ebb6f9cd.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIAMdE22YC/x3MSwqAIBRG4a3EHSdcLCLaSjSw/K1LYKLQA2nvS
+ cNvcE6mhChINFSZIk5JcviCrq5o2YxfocQWk2bdcs9aXdGEAKt2PEkBhrnRbnawVJIQ4eT+d+P
+ 0vh8aHOmmXgAAAA==
+To: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, 
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Adrian Hunter <adrian.hunter@intel.com>, 
+ Asutosh Das <quic_asutoshd@quicinc.com>, 
+ Ritesh Harjani <ritesh.list@gmail.com>, 
+ Ulf Hansson <ulf.hansson@linaro.org>, Alim Akhtar <alim.akhtar@samsung.com>, 
+ Avri Altman <avri.altman@wdc.com>, Bart Van Assche <bvanassche@acm.org>, 
+ "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>, 
+ "Martin K. Petersen" <martin.petersen@oracle.com>, 
+ Eric Biggers <ebiggers@kernel.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, 
+ Jaegeuk Kim <jaegeuk@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
+ Bjorn Andersson <andersson@kernel.org>, 
+ Konrad Dybcio <konradybcio@kernel.org>, 
+ Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>, 
+ Dmitry Baryshkov <dmitry.baryshkov@linaro.org>, 
+ Gaurav Kashyap <quic_gaurkash@quicinc.com>, 
+ Neil Armstrong <neil.armstrong@linaro.org>
+Cc: linux-block@vger.kernel.org, linux-doc@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+ linux-mmc@vger.kernel.org, linux-scsi@vger.kernel.org, 
+ linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+ linux-arm-msm@vger.kernel.org, 
+ Bartosz Golaszewski <bartosz.golaszewski@linaro.org>, 
+ Eric Biggers <ebiggers@google.com>, 
+ Om Prakash Singh <quic_omprsing@quicinc.com>
+X-Mailer: b4 0.13.0
+X-Developer-Signature: v=1; a=openpgp-sha256; l=6577;
+ i=bartosz.golaszewski@linaro.org; h=from:subject:message-id;
+ bh=aVAgf6Jw06Lql3bDOfE6zVcTVmPhHzcmNDJscnSeSew=;
+ b=owEBbQKS/ZANAwAKARGnLqAUcddyAcsmYgBm20TRVUK7s5AluIXTTb9EEpQr0K8OAnyTVliLo
+ nGHj15AhL6JAjMEAAEKAB0WIQQWnetsC8PEYBPSx58Rpy6gFHHXcgUCZttE0QAKCRARpy6gFHHX
+ cgslEAC8zF47axKM4eyrLbxAT7zfi+OlAXxoW7fVp6nbh2i+ikstA+dRIKyyAkw+09gVD629cnv
+ PPxeehFUKgVaHZshBdiP8ekuFLijPWDFySoOK8WrNHLAGcnyMYeKeEk/tGAuzVIQv5VUjSQvHXl
+ jfMYj/lxFMbIOGUdCkc8wMxYQTwwK6xD3PAUKEcjhGGEgDRgWYoH/OA5iYsnqKCQ0aaddlcyTYc
+ IDTedf3x5Xi4rM+caiUpdRwf5Q5zwHQJzGugfh5H0xba2vidjV3mlOu75lYHqnbKBJHjnfqt2zZ
+ Hmuv/PzCMq2gQZAhfpUTyFyqQYBxJtNeYGnlV1d2HRhHBkrbEt1Bgj1PJ/i8rw9yDvPWIA3NE4c
+ vttukKfAwu9UGl+szEG3nGdUuHn56GRJaS8xAfq5GjpALf1krP+HGkH0G/GNd/g9XijKVADUTyx
+ o2x0pHeMt7FoQqtpiiqzsK7G7KyNr3QHxziDtA/fhfEwBARI6lvGDX3EkFcIMx97RdI3PugB8SC
+ nOb/xe2w4qBxuHUSW5CGovmHNE7OUyl+37XuGY+odYSRw2viBjr2anYSHsJJIdF3vnZsfuMrm2H
+ bYhyu4zX5jsiygksTPOInurmIbq8XAjgyz7ddVW2tOlyDcdbk/Kg0tSLXpOGMrNIZmnlaoqQnHc
+ 53ysG6tzB32F0fw==
+X-Developer-Key: i=bartosz.golaszewski@linaro.org; a=openpgp;
+ fpr=169DEB6C0BC3C46013D2C79F11A72EA01471D772
 
-On Thu, Sep 05, 2024 at 09:53:52AM +0200, Martin Wilck wrote:
-> On Wed, 2024-09-04 at 17:17 -0400, Benjamin Marzinski wrote:
-> > On Wed, Sep 04, 2024 at 10:05:30PM +0200, Martin Wilck wrote:
-> > > On Wed, 2024-08-28 at 18:17 -0400, Benjamin Marzinski wrote:
+I took this work over from Gaurav Kashyap and integrated Eric's series
+into it for an easier discussion on the actual API to be used for
+wrapped keys as well as if and how to enable users to indicate whether
+wrapped keys should be used at all.
 
-<snip>
+I know Dmitry's opinion on that and expect this to be more of an RFC
+rather than a real patch series. That being said, what is here, works
+fine on sm8650.
 
-> > This way, you just call checker_get_state() on all the paths were you
-> > ran the path checker, and if at least one of them needs to wait, then
-> > the first one that does will wait, and the rest won't. If none of
-> > them
-> > need to wait, then none of them will.
-> 
-> This makes sense. But the "wait" you're talking about is the 1ms delay,
-> after which the paths may well still be in PATH_PENDING. It's actually
-> not much different from not waiting at all, we've just decreased the
-> likelihood of PATH_PENDIN. 1ms is just an estimate, and, in my
-> experience, too short in many environments.
-> 
-> The real benefit of your patch set is that we now start all (async)
-> checkers in parallel. Which means that we can wait longer, increasing
-> the likelihood that the checkers have actually finished, while spending
-> less total time waiting. "Waiting longer" is a bit hand-waving; IMO it
-> should be handled further up in the stack rather than down in the
-> checker code.
-> 
-> We could achieve the behavior you describe in checkerloop, like this:
-> 
->  - record start_timestamp
->  - fire off all handlers
->  - calculate end_time as start_timestamp + some_delay 
->  - use that end_time for waiting for results of all fired-off checkers
-> 
-> Like in your example, we'd really wait for no more than 1 path.
-> We could do this for the entire set of paths, or for each multipath map
-> separately.
+Hardware-wrapped keys are encrypted keys that can only be unwrapped
+(decrypted) and used by hardware - either by the inline encryption
+hardware itself, or by a dedicated hardware block that can directly
+provision keys to the inline encryption hardware. For more details,
+please see patches 1-3 in this series which extend the inline encryption
+docs with more information.
 
-Actually, now that I think about it, the biggest benefit of doing the
-wait in checkerloop itself is that the code already handles the case
-where we drop the vecs lock while there are paths that have started the
-checker, but not yet updated the device based on the results. Given
-that, we can just do the wait for pending paths without holding the vecs
-lock. It's sort of embarassing that I did all this work to cut down on
-the time we're waiting but didn't think about the fact that with just a
-bit more work, we could avoid sleeping while holding the lock
-altogether.
- 
-I already did some testing before to make sure that things like
-reconfigures, adding/removing paths and manually failing/restoring paths
-didn't mess things up if they happened in that window where we drop the
-lock in the middle of checking the paths, but I'll probably need to do
-some more tests and recheck that code if it's going to be non-rare
-occurance for other threads to run in the middle of checking paths. But
-this seems like too big of a benefit to avoid doing.
+This series adds support for wrapped keys to the block layer, fscrypt
+and then build upwards from there by implementing relevant callbacks in
+QCom SCM driver, then the ICE driver and finally in UFS core and QCom
+layer.
 
--Ben
+Tested on sm8650-qrd.
 
-> Regards
-> Martin
+How to test:
+
+Use the wip-wrapped-keys branch from https://github.com/ebiggers/fscryptctl
+to build a custom fscryptctl that supports generating wrapped keys.
+
+Enable the following config options:
+CONFIG_BLK_INLINE_ENCRYPTION=y
+CONFIG_QCOM_INLINE_CRYPTO_ENGINE=m
+CONFIG_FS_ENCRYPTION_INLINE_CRYPT=y
+CONFIG_SCSI_UFS_CRYPTO=y
+
+$ mkfs.ext4 -F -O encrypt,stable_inodes /dev/disk/by-partlabel/userdata
+$ mount /dev/disk/by-partlabel/userdata -o inlinecrypt /mnt
+$ fscryptctl generate_hw_wrapped_key /dev/disk/by-partlabel/userdata > /mnt/key.longterm
+$ fscryptctl prepare_hw_wrapped_key /dev/disk/by-partlabel/userdata < /mnt/key.longterm > /tmp/key.ephemeral
+$ KEYID=$(fscryptctl add_key --hw-wrapped-key < /tmp/key.ephemeral /mnt)
+$ rm -rf /mnt/dir
+$ mkdir /mnt/dir
+$ fscryptctl set_policy --hw-wrapped-key --iv-ino-lblk-64 "$KEYID" /mnt/dir
+$ dmesg > /mnt/dir/test.txt
+$ sync
+
+Reboot the board
+
+$ mount /dev/disk/by-partlabel/userdata -o inlinecrypt /mnt
+$ ls /mnt/dir
+$ fscryptctl prepare_hw_wrapped_key /dev/disk/by-partlabel/userdata < /mnt/key.longterm > /tmp/key.ephemeral
+$ KEYID=$(fscryptctl add_key --hw-wrapped-key < /tmp/key.ephemeral /mnt)
+$ fscryptctl set_policy --hw-wrapped-key --iv-ino-lblk-64 "$KEYID" /mnt/dir
+$ cat /mnt/dir/test.txt # File should now be decrypted
+
+Changes since v5:
+- add the wrapped key support from Eric Biggers to the series
+- remove the new DT property from the series and instead query the
+  at run-time rustZone to find out if wrapped keys are supported
+- make the wrapped key support into a UFS capability, not a quirk
+- improve kerneldocs
+- improve and rework coding style in most patches
+- improve and reformat commit messages
+- simplify the offset calculation for CRYPTOCFG
+- split out the DTS changes into a separate series
+
+Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
+---
+Bartosz Golaszewski (1):
+      firmware: qcom: scm: add a call for checking wrapped key support
+
+Eric Biggers (4):
+      blk-crypto: add basic hardware-wrapped key support
+      blk-crypto: show supported key types in sysfs
+      blk-crypto: add ioctls to create and prepare hardware-wrapped keys
+      fscrypt: add support for hardware-wrapped keys
+
+Gaurav Kashyap (12):
+      ice, ufs, mmc: use the blk_crypto_key struct when programming the key
+      firmware: qcom: scm: add a call for deriving the software secret
+      firmware: qcom: scm: add calls for creating, preparing and importing keys
+      soc: qcom: ice: add HWKM support to the ICE driver
+      soc: qcom: ice: add support for hardware wrapped keys
+      soc: qcom: ice: add support for generating, importing and preparing keys
+      ufs: core: add support for wrapped keys to UFS core
+      ufs: core: add support for deriving the software secret
+      ufs: core: add support for generating, importing and preparing keys
+      ufs: host: add support for wrapped keys in QCom UFS
+      ufs: host: add a callback for deriving software secrets and use it
+      ufs: host: add support for generating, importing and preparing wrapped keys
+
+ Documentation/ABI/stable/sysfs-block               |  18 ++
+ Documentation/block/inline-encryption.rst          | 245 +++++++++++++-
+ Documentation/filesystems/fscrypt.rst              | 154 ++++++++-
+ Documentation/userspace-api/ioctl/ioctl-number.rst |   2 +
+ block/blk-crypto-fallback.c                        |   5 +-
+ block/blk-crypto-internal.h                        |  10 +
+ block/blk-crypto-profile.c                         | 103 ++++++
+ block/blk-crypto-sysfs.c                           |  35 ++
+ block/blk-crypto.c                                 | 194 ++++++++++-
+ block/ioctl.c                                      |   5 +
+ drivers/firmware/qcom/qcom_scm.c                   | 233 ++++++++++++++
+ drivers/firmware/qcom/qcom_scm.h                   |   4 +
+ drivers/md/dm-table.c                              |   1 +
+ drivers/mmc/host/cqhci-crypto.c                    |   9 +-
+ drivers/mmc/host/cqhci.h                           |   2 +
+ drivers/mmc/host/sdhci-msm.c                       |   6 +-
+ drivers/soc/qcom/ice.c                             | 355 ++++++++++++++++++++-
+ drivers/ufs/core/ufshcd-crypto.c                   |  86 ++++-
+ drivers/ufs/host/ufs-qcom.c                        |  61 +++-
+ fs/crypto/fscrypt_private.h                        |  71 ++++-
+ fs/crypto/hkdf.c                                   |   4 +-
+ fs/crypto/inline_crypt.c                           |  44 ++-
+ fs/crypto/keyring.c                                | 124 +++++--
+ fs/crypto/keysetup.c                               |  54 +++-
+ fs/crypto/keysetup_v1.c                            |   5 +-
+ fs/crypto/policy.c                                 |  11 +-
+ include/linux/blk-crypto-profile.h                 |  73 +++++
+ include/linux/blk-crypto.h                         |  75 ++++-
+ include/linux/firmware/qcom/qcom_scm.h             |   8 +
+ include/soc/qcom/ice.h                             |  18 +-
+ include/uapi/linux/blk-crypto.h                    |  44 +++
+ include/uapi/linux/fs.h                            |   6 +-
+ include/uapi/linux/fscrypt.h                       |   7 +-
+ include/ufs/ufshcd.h                               |  21 ++
+ 34 files changed, 1958 insertions(+), 135 deletions(-)
+---
+base-commit: ad40aff1edffeccc412cde93894196dca7bc739e
+change-id: 20240802-wrapped-keys-eea0032fbfed
+
+Best regards,
+-- 
+Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
 
