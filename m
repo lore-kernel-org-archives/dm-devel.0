@@ -1,141 +1,119 @@
-Received: from mail-lj1-f181.google.com (mail-lj1-f181.google.com [209.85.208.181])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC46A14A629
-	for <dm-devel@lists.linux.dev>; Fri,  6 Sep 2024 07:45:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C2311CA6AA
+	for <dm-devel@lists.linux.dev>; Fri,  6 Sep 2024 10:59:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725608718; cv=none; b=IuUQ7FWeRGp7SMA/NVFNu1zxhVoA3lFy65WWCn+m/EfEknQ9hOZsT+zhhASyrkQqyjE/9Pjl6YFkmtUI8z2fone73SiOxmPTSfnOtUWXF9a0AJ0hSkgdAUuvvclmpS80yx6E3Sjhopt04T9jGBQ7+C79OjiQdpaYFzOjuBOxNtM=
+	t=1725620382; cv=none; b=budHf23bGJqfzHQ+73Ev9wnDtQV6PCcgzml4qzqBuRLaxvAc2HpkwkaFHOMJ17/S8ehMpxMMw1NLrz4braWE9h12WBmcdBNmrdw80oJeVe60B43G6UoM92PmyTcvjcz92G7Yaje2y+PIYz4+PNMEHiZYBCnBAz4txz1Jw7LeATU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725608718; c=relaxed/simple;
-	bh=3NoK7Hnkx0KBue0lw2BppxLFhdg73GFBeXjwtvlCZEo=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=RQNfMk+lGg9bqQYLJzxPAVAAMmpXgdpmWoi6mPKbgqZhj8RAzrlD2W7fRWNVlKqVOKChq+w9Tzur/diysVPVFplM2lXYl35ROJASO6UCzIuc9e4Ja3sZQxx0D2BjhhXcKbbzLxfHy8/M+J7oGCUp1Y4SVinzOvgEX459XVRu7vo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Cqnro2p8; arc=none smtp.client-ip=209.85.208.181
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1725620382; c=relaxed/simple;
+	bh=EtzK19wel6k8Ao3cms7f+E+8BJxjGUM+HfEDLVZrszI=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=u7vvTFSt+oJov6T6n2niJAbmJheh9oqGd+5AJQ9SPpHqKTNG30oMmrbBFUDZXjdP5bAdSueA1HiMGHnG30K0/9gE4IyDSntvKMKin7v74W3yJSyR2s7dYyl4h+/2zHKRksvaVzbaSLgkcUZbTDz3jWzZ/Wek+CbKEYZDarSP44U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hwHWAXW9; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Cqnro2p8"
-Received: by mail-lj1-f181.google.com with SMTP id 38308e7fff4ca-2f75428b9f8so3953371fa.3
-        for <dm-devel@lists.linux.dev>; Fri, 06 Sep 2024 00:45:15 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1725608714; x=1726213514; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=Jtm/jlRhW83bHNI0Rh7I6kI+BhOiw5kjaanQuhImyGw=;
-        b=Cqnro2p85MBDMfWs4N3SQ+d5nrdV4CqvM+7iDiQHpFYUU8w4oLVT3DCHkO8Rx8ctCo
-         QBsQvdt5Yw/fR/1qGGcQJwHR3nARsVa/fEpIlUP89l670rPPjiEisB8mNQgq2r4+V2hb
-         7AiGttPgNUyTHvDssrjBc13tM7UmnKfnTDd5qN5xlPwZR2nKIbkLUnl4W3e8yMfgI3Lo
-         8UR+qx0RMYD8vcSmon78QGW12WEZeWQRqWwVPUtWiaPDKzH+Yv4S6CjVy7pbKpFbiVbh
-         Qq+AO9LcEMQjbFMNttGT35h1gYD5mt0c7gXF2Op/Oe8RczxutubtdFkXLMKBTsVQZ2pg
-         xpjw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1725608714; x=1726213514;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=Jtm/jlRhW83bHNI0Rh7I6kI+BhOiw5kjaanQuhImyGw=;
-        b=cjxHM/LEtNSmqdMsImAhyMycX8ojnP2itFGQaw3EmCD1V1x88AGrUWN+LvX9XXuSff
-         l9lYYfJSWKnLUtm3sbyPFxA4UHUYwcq5hD7TgPtmDR1y7Re6jfcvM+84wgb9vpaRfyRn
-         jWgr19Xx4UI9YxGeNy9GR2PSEXzZbD5QP1MK+9K8ijUnjKjyJVNTra+Ovze+9dFHzcOl
-         Gls0r3OaOJOVgM/nl5KSOn7UHs5jnJoBvqlduC1Ie1fOV7fR8C3vRS5KWCxMgarV6WE6
-         SZsjOqDnhpt2gFpyL7Jc3U5CSynGnaYn6HPvy0QDEX9tR8QwphNiAjo49aKvNrTfu3oi
-         ak2w==
-X-Forwarded-Encrypted: i=1; AJvYcCUXLNPdA31El2mDo6h+AvlsQlLXNKr9MPajwWOm4yoRXJI+VGFmyNN5mWmSLe+Z3gDKpzVoDfj3KA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yzird8cazet7uTFhDvLt4mgjoYNexgty7hXM38aNLzjy2h4NNTc
-	Jw1zhkn782nDqLnMaVR+ip2wYoG+xGf5tB7XeI6mud/YrGu4SdTnAAPJ/1RfuvY=
-X-Google-Smtp-Source: AGHT+IEMyi3tgC7u03kg/GYqmqVm+G5oE1Et2vXSNbXP59lPzbxk55tLeW6krZQjcWFUE8GU9hn+tw==
-X-Received: by 2002:a2e:be2c:0:b0:2ee:52f4:266 with SMTP id 38308e7fff4ca-2f6105c47e0mr268405051fa.3.1725608712976;
-        Fri, 06 Sep 2024 00:45:12 -0700 (PDT)
-Received: from ?IPv6:2003:de:3736:a00:d7e5:6139:e909:29dd? (p200300de37360a00d7e56139e90929dd.dip0.t-ipconnect.de. [2003:de:3736:a00:d7e5:6139:e909:29dd])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a8a61fbb0dcsm237880266b.2.2024.09.06.00.45.12
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 06 Sep 2024 00:45:12 -0700 (PDT)
-Message-ID: <06b19ce3bb93d5d897b537e25ba6ca139cf28a8c.camel@suse.com>
-Subject: Re: [PATCH 10/15] multipathd: split check_path into two functions
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
- development <dm-devel@lists.linux.dev>
-Date: Fri, 06 Sep 2024 09:45:11 +0200
-In-Reply-To: <ZtoASjJZHbKltAJd@redhat.com>
-References: <20240828221757.4060548-1-bmarzins@redhat.com>
-	 <20240828221757.4060548-11-bmarzins@redhat.com>
-	 <131273007ab11d8a866e395c1e3aa80598aa1dbe.camel@suse.com>
-	 <ZtisJ_9A2-z0Gdly@redhat.com> <ZtoASjJZHbKltAJd@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.4 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hwHWAXW9"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1725620378;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Lii+zCyvH1nupBnz/bs5CIqcmUeaf64t1+wdh+5exj0=;
+	b=hwHWAXW9YOJeA8gneF/I74vPxa3t5zqm6OqIat45p8sygxPSKm6QpzQ2eOekzShTKe5uQm
+	KmJ4HH6XndNPzmaH7RQf3FGyZZnDIf42s+Ini/CVYCWlIcXwu69by7J6zFdlso59Ru3eUV
+	3ZnW/ldHkewr10OYk0mRDJRynQRr8oE=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-263-HweLr_pDN5ybzRciXidryw-1; Fri,
+ 06 Sep 2024 06:59:35 -0400
+X-MC-Unique: HweLr_pDN5ybzRciXidryw-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 028191955BC1;
+	Fri,  6 Sep 2024 10:59:34 +0000 (UTC)
+Received: from [10.45.224.222] (unknown [10.45.224.222])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E0B911956086;
+	Fri,  6 Sep 2024 10:59:30 +0000 (UTC)
+Date: Fri, 6 Sep 2024 12:59:25 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Eric Biggers <ebiggers@kernel.org>
+cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, Tejun Heo <tj@kernel.org>, 
+    Lai Jiangshan <jiangshanlai@gmail.com>, linux-kernel@vger.kernel.org, 
+    linux-mm@kvack.org, Sami Tolvanen <samitolvanen@google.com>
+Subject: Re: [PATCH] dm verity: don't use WQ_MEM_RECLAIM
+In-Reply-To: <20240905223555.GA1512@sol.localdomain>
+Message-ID: <c0002bca-efa0-b0b3-9c02-268c727c989c@redhat.com>
+References: <20240904040444.56070-1-ebiggers@kernel.org> <086a76c4-98da-d9d1-9f2f-6249c3d55fe9@redhat.com> <20240905223555.GA1512@sol.localdomain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-On Thu, 2024-09-05 at 15:02 -0400, Benjamin Marzinski wrote:
-> On Wed, Sep 04, 2024 at 02:51:19PM -0400, Benjamin Marzinski wrote:
-> > On Wed, Sep 04, 2024 at 05:38:52PM +0200, Martin Wilck wrote:
-> > > On Wed, 2024-08-28 at 18:17 -0400, Benjamin Marzinski wrote:
-> > > > Split out the code that updates a path's state and sets up the
-> > > > next
-> > > > check time into its own function, update_path().
-> > > >=20
-> > > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > > > ---
-> > > > =C2=A0multipathd/main.c | 31 ++++++++++++++++++++++---------
-> > > > =C2=A01 file changed, 22 insertions(+), 9 deletions(-)
-> > > >=20
-> > > > diff --git a/multipathd/main.c b/multipathd/main.c
-> > > > index 94d4e421..300f8247 100644
-> > > > --- a/multipathd/main.c
-> > > > +++ b/multipathd/main.c
-> > > > @@ -2390,6 +2390,7 @@ sync_mpp(struct vectors * vecs, struct
-> > > > multipath *mpp, unsigned int ticks)
-> > > > =C2=A0}
-> > > > =C2=A0
-> > > > =C2=A0enum check_path_return {
-> > > > +	CHECK_PATH_STARTED,
-> > > > =C2=A0	CHECK_PATH_CHECKED,
-> > > > =C2=A0	CHECK_PATH_SKIPPED,
-> > > > =C2=A0	CHECK_PATH_REMOVED,
-> > > > @@ -2629,13 +2630,10 @@ update_path_state (struct vectors *
-> > > > vecs,
-> > > > struct path * pp)
-> > > > =C2=A0}
-> > > > =C2=A0
-> > > > =C2=A0static int
-> > > > -check_path (struct vectors * vecs, struct path * pp, unsigned
-> > > > int
-> > > > ticks,
-> > > > -	=C2=A0=C2=A0=C2=A0 time_t start_secs)
-> > > > +check_path (struct path * pp, unsigned int ticks)
-> > >=20
-> > > check_path() used to be one of our core functions, and you now
-> > > re-
-> > > introduce it with quite different semantics.=C2=A0
-> > >=20
-> > > Perhaps choose a new name?
-> >=20
-> > Sure. Although the new check_path() is just the beginning part of
-> > the
-> > old check_path(), where we actually run the checker, so it seems
-> > reasonable to me. But your objection is also reasonable. I was just
-> > getting sick of coming up with new function names by this point.
-> >=20
-> > -Ben=20
->=20
-> Do you have ideas for the name, because I can't think of anything
-> that
-> makes more sense then check_path() in the code paths. Here's the code
-> paths
 
-Ok then, keep the name. I was hoping we could find something better
-because (as you correctly show) there's already quite some confusion
-because of multiple functions with very similar names.
 
-But if we can't, so be it.
+On Thu, 5 Sep 2024, Eric Biggers wrote:
 
-Martin
+> On Thu, Sep 05, 2024 at 08:21:46PM +0200, Mikulas Patocka wrote:
+> > 
+> > 
+> > On Tue, 3 Sep 2024, Eric Biggers wrote:
+> > 
+> > > From: Eric Biggers <ebiggers@google.com>
+> > > 
+> > > Since dm-verity doesn't support writes, the kernel's memory reclaim code
+> > > will never wait on dm-verity work.  That makes the use of WQ_MEM_RECLAIM
+> > > in dm-verity unnecessary.  WQ_MEM_RECLAIM has been present from the
+> > > beginning of dm-verity, but I could not find a justification for it;
+> > > I suspect it was just copied from dm-crypt which does support writes.
+> > > 
+> > > Therefore, remove WQ_MEM_RECLAIM from dm-verity.  This eliminates the
+> > > creation of an unnecessary rescuer thread per dm-verity device.
+> > > 
+> > > Signed-off-by: Eric Biggers <ebiggers@google.com>
+> > 
+> > Hmm. I can think about a case where you have read-only dm-verity device, 
+> > on the top of that you have dm-snapshot device and on the top of that you 
+> > have a writable filesystem.
+> > 
+> > When the filesystem needs to write data, it submits some write bios. When 
+> > dm-snapshot receives these write bios, it will read from the dm-verity 
+> > device and write to the snapshot's exception store device. So, dm-verity 
+> > needs WQ_MEM_RECLAIM in this case.
+> > 
+> > Mikulas
+> > 
+> 
+> Yes, unfortunately that sounds correct.
+> 
+> This means that any workqueue involved in fulfilling block device I/O,
+> regardless of whether that I/O is read or write, has to use WQ_MEM_RECLAIM.
+> 
+> I wonder if there's any way to safely share the rescuer threads.
+> 
+> - Eric
+
+When I thought about it, I think that removing WQ_MEM_RECLAIM would be 
+incorrect even without snapshot and it could deadlock even with a 
+read-only filesystem directly on the top of dm-verity.
+
+There is a limited number of workqueue kernel threads in the system. If 
+all the workqueue kernel threads are busy trying to read some data from a 
+filesystem that is on the top of dm-verity, then the system deadlocks. 
+Dm-verity would wait until one of the work items exits - and the work 
+items would wait for dm-verity to return the data.
+
+The probability that this happens is low, but theoretically it is wrong.
+
+Mikulas
 
