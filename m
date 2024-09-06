@@ -1,45 +1,47 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C4D254F87;
-	Thu,  5 Sep 2024 23:35:43 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2ADE01CA94;
+	Fri,  6 Sep 2024 01:34:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725579343; cv=none; b=IPlnunm+2A24eGcsu5zF+a/6fKftA7p0e5XKn3UzFauj2Lp2VY0yRfX/HWesBuwRz+Meu1lHrYvJJJq3isQB/dY4p44MgDx8JeemQn+jAVJpSxAEfbroj2eCpek/OF2GseDNh1ykytcMnlQHWfTtQQijchhK6jTzt8MwJwuiujQ=
+	t=1725586469; cv=none; b=LsbwGs99a9QB2MBQhX88wbrmQrDeSfV3YooPFkabQ3DnBO0fO9ni7IfFBfTVRzKAY/otvzpi2d7HISUF50w1y5i+f54QRmqV/tnleG+SjE/O//ifw4kvax7DhIr5hlwmxjp+GgvoUDWFE7SfYMMbJM0G3h2vVongpqvFDMUrly0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725579343; c=relaxed/simple;
-	bh=kdJBJm07vSWsMujAWNUkpnWYrq/ajC+MWp90UGPtRbc=;
+	s=arc-20240116; t=1725586469; c=relaxed/simple;
+	bh=DhY6rGfOlLTMtYFY6JMioPUvjaIkctEMK5oG3sIAKKA=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=LhR4+1na9d3O6CmLLwVwyXG/8tMDKLAgXP1pr46bwkB9XDLcgPCdXIMlu2Onl1eGnc8CiRUMwzzvXPucu15nIffBVyL2rNIC5DnyDuHCDZXw4HeaC8rh5B7pQ8Jkye91bcwRO1IJxRk0jp1J5RHRKSPv1KE8Lkg/T90JSkTUcEE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=U1jajGzU; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=YZj6DHM0BbZor4WEKxIwrhy6PX147HeXQq0Cx8fjDjWU1vGw+5sA76AQL3vZIH20tIA/Pp3FIBWGw4rcLDvWkGiJcGvfhX4ypDkBgth1P4+RNp5UR67ygPxYIOF9HzA/LWVsM9OiQF9nQ5FTDNGMTxsF0GMoMogPNsVxPqSZk6c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=UAW6geP+; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="U1jajGzU"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E3FA6C4CEC3;
-	Thu,  5 Sep 2024 23:35:42 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="UAW6geP+"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 931CFC4CEC3;
+	Fri,  6 Sep 2024 01:34:28 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1725579343;
-	bh=kdJBJm07vSWsMujAWNUkpnWYrq/ajC+MWp90UGPtRbc=;
+	s=k20201202; t=1725586468;
+	bh=DhY6rGfOlLTMtYFY6JMioPUvjaIkctEMK5oG3sIAKKA=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=U1jajGzUrXBq4LkcyHu9Gawoocw7falpk/v+3iLXUWwe0zfR6FB9ddMFQ5lHxbzVF
-	 NybCr2auPZbMJ6AjlNFbPuH4I3ustsyovf4+UZ3UAG9X9IDlYgdsDMfjYLcIeDTikx
-	 UVGePWLQ/7mJo7Yn8EVL6x0o7GEXLQ5/weIy4GYj4pLoAZEw9J0Bqc+mFKuKq2lAl2
-	 gwN3KPjfat0dhVFHYjpyMusXWkyxxwEsXjJG7cdCuC8hGG4lJZpSoJZHw6v8FQpPfQ
-	 uKgv07v5u1309uNVSwj6OJLDH0hBmcQt+VeofpTBj0l4uENtngmrt7fwBpheI3NQ5d
-	 17hw0avXtMsmQ==
-Date: Thu, 5 Sep 2024 19:35:41 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>, Tejun Heo <tj@kernel.org>,
+	b=UAW6geP+l/1A7xcK1gfy30FPnS/X9eRktTLABf0RTHny7zuS3fUAVgAYxkv9SUrN+
+	 A0v/Ji1O3R34gXq+nFwN4JMqgrxeE6dZDk2AQFFmT4F1LaV5NPXqtNlOB5OtE3gEmz
+	 j8WOiiUA4BAK1iisAzWQKVIK2LcBnr/v1qU58sa2D3cFk+jUfDtO6O2k6tgGaZMsLc
+	 VakmieRckRYZtwFhd4hN9syttFl2+06L+HqrWM2KTnVv8uxh5r1h2eAaBSJF2sA4og
+	 mY128FTnfL9EAO5ai4zKA+a9qfJ3/NnBLn7vcgYtwACUAHY5qlEmIxBNENOU3msnp+
+	 XYfkZBkT4qJ2A==
+Date: Thu, 5 Sep 2024 15:34:27 -1000
+From: Tejun Heo <tj@kernel.org>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Eric Biggers <ebiggers@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>,
 	Lai Jiangshan <jiangshanlai@gmail.com>,
 	linux-kernel@vger.kernel.org, linux-mm@kvack.org,
 	Sami Tolvanen <samitolvanen@google.com>, linux-nfs@vger.kernel.org
-Subject: sharing rescuer threads when WQ_MEM_RECLAIM needed? [was: Re: dm
+Subject: Re: sharing rescuer threads when WQ_MEM_RECLAIM needed? [was: Re: dm
  verity: don't use WQ_MEM_RECLAIM]
-Message-ID: <ZtpATbuopBFAzl89@kernel.org>
+Message-ID: <ZtpcI-Qv_Q6g0Q6Z@slm.duckdns.org>
 References: <20240904040444.56070-1-ebiggers@kernel.org>
  <086a76c4-98da-d9d1-9f2f-6249c3d55fe9@redhat.com>
  <20240905223555.GA1512@sol.localdomain>
+ <ZtpATbuopBFAzl89@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -48,58 +50,33 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240905223555.GA1512@sol.localdomain>
+In-Reply-To: <ZtpATbuopBFAzl89@kernel.org>
 
-On Thu, Sep 05, 2024 at 03:35:55PM -0700, Eric Biggers wrote:
-> On Thu, Sep 05, 2024 at 08:21:46PM +0200, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Tue, 3 Sep 2024, Eric Biggers wrote:
-> > 
-> > > From: Eric Biggers <ebiggers@google.com>
-> > > 
-> > > Since dm-verity doesn't support writes, the kernel's memory reclaim code
-> > > will never wait on dm-verity work.  That makes the use of WQ_MEM_RECLAIM
-> > > in dm-verity unnecessary.  WQ_MEM_RECLAIM has been present from the
-> > > beginning of dm-verity, but I could not find a justification for it;
-> > > I suspect it was just copied from dm-crypt which does support writes.
-> > > 
-> > > Therefore, remove WQ_MEM_RECLAIM from dm-verity.  This eliminates the
-> > > creation of an unnecessary rescuer thread per dm-verity device.
-> > > 
-> > > Signed-off-by: Eric Biggers <ebiggers@google.com>
-> > 
-> > Hmm. I can think about a case where you have read-only dm-verity device, 
-> > on the top of that you have dm-snapshot device and on the top of that you 
-> > have a writable filesystem.
-> > 
-> > When the filesystem needs to write data, it submits some write bios. When 
-> > dm-snapshot receives these write bios, it will read from the dm-verity 
-> > device and write to the snapshot's exception store device. So, dm-verity 
-> > needs WQ_MEM_RECLAIM in this case.
-> > 
-> > Mikulas
-> > 
+Hello,
+
+On Thu, Sep 05, 2024 at 07:35:41PM -0400, Mike Snitzer wrote:
+...
+> > I wonder if there's any way to safely share the rescuer threads.
 > 
-> Yes, unfortunately that sounds correct.
-> 
-> This means that any workqueue involved in fulfilling block device I/O,
-> regardless of whether that I/O is read or write, has to use WQ_MEM_RECLAIM.
-> 
-> I wonder if there's any way to safely share the rescuer threads.
+> Oh, I like that idea, yes please! (would be surprised if it exists,
+> but I love being surprised!).  Like Mikulas pointed out, we have had
+> to deal with fundamental deadlocks due to resource sharing in DM.
+> Hence the need for guaranteed forward progress that only
+> WQ_MEM_RECLAIM can provide.
 
-Oh, I like that idea, yes please! (would be surprised if it exists,
-but I love being surprised!).  Like Mikulas pointed out, we have had
-to deal with fundamental deadlocks due to resource sharing in DM.
-Hence the need for guaranteed forward progress that only
-WQ_MEM_RECLAIM can provide.
+The most straightforward way to do this would be simply sharing the
+workqueue across the entities that wanna be in the same forward progress
+guarantee domain. It shouldn't be that difficult to make workqueues share a
+rescuer either but may be a bit of an overkill.
 
-All said, I'd like the same for NFS LOCALIO, we unfortunately have to
-enable WQ_MEM_RECLAIM for LOCALIO writes:
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/commit/?h=nfs-localio-for-next&id=85cdb98067c1c784c2744a6624608efea2b561e7
+Taking a step back tho, how would you determine which ones can share a
+rescuer? Things which stack on top of each other can't share the rescuer cuz
+higher layer occupying the rescuer and stall lower layers and thus deadlock.
+The rescuers can be shared across independent stacks of dm devices but that
+sounds like that will probably involve some graph walking. Also, is this a
+real problem?
 
-But in general LOCALIO's write path is a prime candidate for further
-optimization -- I look forward to continue that line of development
-once LOCALIO lands upstream.
+Thanks.
 
-Mike
+-- 
+tejun
