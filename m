@@ -1,213 +1,171 @@
-Received: from mail-lj1-f174.google.com (mail-lj1-f174.google.com [209.85.208.174])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F31E21B29DB
-	for <dm-devel@lists.linux.dev>; Mon,  9 Sep 2024 09:44:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5EBF21AF4E4;
+	Mon,  9 Sep 2024 11:23:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725875050; cv=none; b=oZrr4J8AUeCF9arVtkNCFsmca0PM1054PznXuj/zaAekZ9hwyTXoCmXG3PQ/n0+0neGmjQ5TeusoYVrrgjEZjREX/OwpdgIhUKntTLFtiP26/sLV7YH3ZoJ45s/AU8IqOLWhcXFEK7cIMRpAGdDC4WmxVrn9VWUq5JXGn42Z7lA=
+	t=1725881033; cv=none; b=aAQnIIIJZzudhpLL1BrY2wHeUFhITBw4JqxxO1z79R1A/C8IHC77QS2poP3Vcuvh2FQW8T3clhbxTfHfU5vxZtkHQIAi1Z4zwS45rRiPyR9RCGPUWvlae8KkGB4BuclkORdG0Myvttx5clDh8Cy0xK+rwi5TYmlWzvNXKNwZUYI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725875050; c=relaxed/simple;
-	bh=bX5jM3kyQKkVdtMEpnz0qCHRxu0QYubOxMm9Z4e9e5I=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=AkveDxG1a0LA05pplLTDuPrr01GmqDhgBt7+9ywLBCbw1kKb/7gyUcQWNV5O1LXBHQ3WxBb61818TaeK0/srOjAaCNHlBN4EBqt+bKo319yjaSUbgfQ28I7irGSpNkBnpyrpu5oEBLF1fwsSD5pyNL6o9jZY8bcKmo6tkjAPpG8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=eB92Nigo; arc=none smtp.client-ip=209.85.208.174
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+	s=arc-20240116; t=1725881033; c=relaxed/simple;
+	bh=AQzT3bAV2JDDv98lxn2LYC9mXTmymBsjkG6LCRpyPxU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=gVZttwQ8tMcHh9fKPkulXvK/6ruxXE/VKglyyEKUkAr85jIpNTU1klaEgQDyGt9z/wMCzEE0SEzab4AJA4M44M45T/3IMwMUXxR0RYaoaWvokRBYvsCnpPwwv+iSo/EqPCYeZymUTMZ7GjDdSNtFTGtgK8QOTjqs+vQU507MhaQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fIxa7MfC; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="eB92Nigo"
-Received: by mail-lj1-f174.google.com with SMTP id 38308e7fff4ca-2f75b13c2a8so23618181fa.3
-        for <dm-devel@lists.linux.dev>; Mon, 09 Sep 2024 02:44:06 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1725875045; x=1726479845; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=ayxt9tW30pARsBtY4uNjtVx6woJrfLpJGoVganqLqLs=;
-        b=eB92NigoQFQ+/EjXebXctlAO3liq1Jx7F+b+2858/dg9mZV9bcuog5BXEZg+xTQayw
-         Hz4FJNYJLt0HCtgHzU52Gmv0f1W/HJ4lNpOxAopiGsGmj+cpIjx03ioAodpCgaDQkWQk
-         QxAd1LrRS2wEQSIl8qVBeG6kqj3cE9yykDzLI/t7/KAwID2balchirGdrLN5j7UcX3Ls
-         WxcnGGHbhpgleGoEJZW6apIM7nCwVTKKvr7Pu7/es7kXrFgv9FGCo59IYCoy0E/TAgvI
-         X+QMnZ/+3qbM/N/tuXsm1E7Kf5v4cqqpU9n0crVxz5qWJLq7q/fVwU3h33ShUD7OyWoM
-         bemg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1725875045; x=1726479845;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=ayxt9tW30pARsBtY4uNjtVx6woJrfLpJGoVganqLqLs=;
-        b=ozdwIkewEEHHTm2lcSQr/Qh3YIcL4ECF7+4v2t0sIhGSa6tfbDMMxa52lHWRPyvLK1
-         YzmfcWVk5HD3rPfTciot3GU7iMTikfUo/2oW4V//uPgHnx5uLK/eO6Lxs6BJZBYu7x7k
-         +Vvl5Up/a2AG/3BWuBx5nbdfjRwtaUdET6alkG+WM/RTw/T7Wt9LHAL/05slFZgylZ7Z
-         Wg8Gh7xLecz5HRl0092DsC4yLxqfA902PccQkfto7q3VFcAjsZqvfxORgl0cwL7PKKgD
-         r7by79gr5yOEV/Qco4nZtRJE2yRpOzLv+s/s3bWtT7RZbCWQYiqNrUoTQcqaEAPW7qRH
-         QX4Q==
-X-Forwarded-Encrypted: i=1; AJvYcCVPxZkNk1z95go5FENB5nvRieQ121N5gJ9Ded9njgSGAzCUhNGPxu30Mp4ahWPS1SSSTBfOCiIq8w==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxSoJqgEdPejzuM0zDRXmUMpa6ld0TVsCKNKQ4u+iKQEX5eKfbj
-	HkvmRBQECTHNHW8uX01NbgSal+OCGG1BalJHkPhboBwH+BABgb/8wDRhrw8yk+M=
-X-Google-Smtp-Source: AGHT+IFfJZf4aCicpleqZE+fxLlnGBGZEfKHivmNdx0kcBfFkbzhf0hjKD5P+CTHE0X5P4PgDl4WVQ==
-X-Received: by 2002:a05:651c:211e:b0:2ef:251f:785 with SMTP id 38308e7fff4ca-2f751eb30d8mr74440981fa.1.1725875044071;
-        Mon, 09 Sep 2024 02:44:04 -0700 (PDT)
-Received: from eriador.lumag.spb.ru (2001-14ba-a0c3-3a00--7a1.rev.dnainternet.fi. [2001:14ba:a0c3:3a00::7a1])
-        by smtp.gmail.com with ESMTPSA id 38308e7fff4ca-2f75c098cd3sm7416661fa.113.2024.09.09.02.44.03
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 09 Sep 2024 02:44:03 -0700 (PDT)
-Date: Mon, 9 Sep 2024 12:44:02 +0300
-From: Dmitry Baryshkov <dmitry.baryshkov@linaro.org>
-To: Neil Armstrong <neil.armstrong@linaro.org>
-Cc: Bartosz Golaszewski <brgl@bgdev.pl>, Jens Axboe <axboe@kernel.dk>, 
-	Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
-	Adrian Hunter <adrian.hunter@intel.com>, Asutosh Das <quic_asutoshd@quicinc.com>, 
-	Ritesh Harjani <ritesh.list@gmail.com>, Ulf Hansson <ulf.hansson@linaro.org>, 
-	Alim Akhtar <alim.akhtar@samsung.com>, Avri Altman <avri.altman@wdc.com>, 
-	Bart Van Assche <bvanassche@acm.org>, "James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>, 
-	"Martin K. Petersen" <martin.petersen@oracle.com>, Eric Biggers <ebiggers@kernel.org>, 
-	"Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
-	Bjorn Andersson <andersson@kernel.org>, Konrad Dybcio <konradybcio@kernel.org>, 
-	Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>, Gaurav Kashyap <quic_gaurkash@quicinc.com>, 
-	linux-block@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	dm-devel@lists.linux.dev, linux-mmc@vger.kernel.org, linux-scsi@vger.kernel.org, 
-	linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-arm-msm@vger.kernel.org, 
-	Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
-Subject: Re: [PATCH v6 09/17] soc: qcom: ice: add HWKM support to the ICE
- driver
-Message-ID: <ivibs6qqxhbikaevys3iga7s73xq6dzq3u43gwjri3lozkrblx@jxlmwe5wiq7e>
-References: <20240906-wrapped-keys-v6-0-d59e61bc0cb4@linaro.org>
- <20240906-wrapped-keys-v6-9-d59e61bc0cb4@linaro.org>
- <7uoq72bpiqmo2olwpnudpv3gtcowpnd6jrifff34ubmfpijgc6@k6rmnalu5z4o>
- <66953e65-2468-43b8-9ccf-54671613c4ab@linaro.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fIxa7MfC"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 23E05C4CEC5;
+	Mon,  9 Sep 2024 11:23:41 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1725881032;
+	bh=AQzT3bAV2JDDv98lxn2LYC9mXTmymBsjkG6LCRpyPxU=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=fIxa7MfCpT2NrhKQOzTCEcsR2Jj//3XNpMa32fzJWiV2Se2PY0rkOeaEEQI9zn5Cd
+	 bVsbJiFRXl6JbG9+j1hSknxLqbm5Igqm0wLyebgDU+ilL1yFpOEshwYSpF8xphZ0fO
+	 pNrGlj1uDMqDVJ2+SwefLeb3jg3dR9LLurP23ztS+FGFZfkneaPXMHZPiagCedVUCM
+	 Bex8xTF362cqZPzzT3DONjUW0lcaPkrjok9ogTrD3B9FWo2oEKB49ixdHuLsEY61OU
+	 Z3O+NUB4VeUdkFz666hVip30pCIEHrNJ0BJcP3eQLCGXlwkvY65VmEio0tued3SUtz
+	 dyippi+O8W0Kg==
+Message-ID: <fc780dc2-5a69-48d8-8caa-ca2ee97d10ef@kernel.org>
+Date: Mon, 9 Sep 2024 13:23:38 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <66953e65-2468-43b8-9ccf-54671613c4ab@linaro.org>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v6 06/17] firmware: qcom: scm: add a call for deriving the
+ software secret
+To: Bartosz Golaszewski <brgl@bgdev.pl>, Jens Axboe <axboe@kernel.dk>,
+ Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Adrian Hunter <adrian.hunter@intel.com>,
+ Asutosh Das <quic_asutoshd@quicinc.com>,
+ Ritesh Harjani <ritesh.list@gmail.com>, Ulf Hansson
+ <ulf.hansson@linaro.org>, Alim Akhtar <alim.akhtar@samsung.com>,
+ Avri Altman <avri.altman@wdc.com>, Bart Van Assche <bvanassche@acm.org>,
+ "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
+ "Martin K. Petersen" <martin.petersen@oracle.com>,
+ Eric Biggers <ebiggers@kernel.org>, "Theodore Y. Ts'o" <tytso@mit.edu>,
+ Jaegeuk Kim <jaegeuk@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+ Bjorn Andersson <andersson@kernel.org>,
+ Konrad Dybcio <konradybcio@kernel.org>,
+ Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>,
+ Dmitry Baryshkov <dmitry.baryshkov@linaro.org>,
+ Gaurav Kashyap <quic_gaurkash@quicinc.com>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+Cc: linux-block@vger.kernel.org, linux-doc@vger.kernel.org,
+ linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-mmc@vger.kernel.org, linux-scsi@vger.kernel.org,
+ linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ linux-arm-msm@vger.kernel.org,
+ Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
+References: <20240906-wrapped-keys-v6-0-d59e61bc0cb4@linaro.org>
+ <20240906-wrapped-keys-v6-6-d59e61bc0cb4@linaro.org>
+Content-Language: en-US
+From: Konrad Dybcio <konradybcio@kernel.org>
+In-Reply-To: <20240906-wrapped-keys-v6-6-d59e61bc0cb4@linaro.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Mon, Sep 09, 2024 at 10:58:30AM GMT, Neil Armstrong wrote:
-> On 07/09/2024 00:07, Dmitry Baryshkov wrote:
-> > On Fri, Sep 06, 2024 at 08:07:12PM GMT, Bartosz Golaszewski wrote:
-> > > From: Gaurav Kashyap <quic_gaurkash@quicinc.com>
-> > > 
-> > > Qualcomm's ICE (Inline Crypto Engine) contains a proprietary key
-> > > management hardware called Hardware Key Manager (HWKM). Add HWKM support
-> > > to the ICE driver if it is available on the platform. HWKM primarily
-> > > provides hardware wrapped key support where the ICE (storage) keys are
-> > > not available in software and instead protected in hardware.
-> > > 
-> > > When HWKM software support is not fully available (from Trustzone), there
-> > > can be a scenario where the ICE hardware supports HWKM, but it cannot be
-> > > used for wrapped keys. In this case, raw keys have to be used without
-> > > using the HWKM. We query the TZ at run-time to find out whether wrapped
-> > > keys support is available.
-> > > 
-> > > Tested-by: Neil Armstrong <neil.armstrong@linaro.org>
-> > > Signed-off-by: Gaurav Kashyap <quic_gaurkash@quicinc.com>
-> > > Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
-> > > ---
-> > >   drivers/soc/qcom/ice.c | 152 +++++++++++++++++++++++++++++++++++++++++++++++--
-> > >   include/soc/qcom/ice.h |   1 +
-> > >   2 files changed, 149 insertions(+), 4 deletions(-)
-> > > 
-> > >   int qcom_ice_enable(struct qcom_ice *ice)
-> > >   {
-> > > +	int err;
-> > > +
-> > >   	qcom_ice_low_power_mode_enable(ice);
-> > >   	qcom_ice_optimization_enable(ice);
-> > > -	return qcom_ice_wait_bist_status(ice);
-> > > +	if (ice->use_hwkm)
-> > > +		qcom_ice_enable_standard_mode(ice);
-> > > +
-> > > +	err = qcom_ice_wait_bist_status(ice);
-> > > +	if (err)
-> > > +		return err;
-> > > +
-> > > +	if (ice->use_hwkm)
-> > > +		qcom_ice_hwkm_init(ice);
-> > > +
-> > > +	return err;
-> > >   }
-> > >   EXPORT_SYMBOL_GPL(qcom_ice_enable);
-> > > @@ -150,6 +282,10 @@ int qcom_ice_resume(struct qcom_ice *ice)
-> > >   		return err;
-> > >   	}
-> > > +	if (ice->use_hwkm) {
-> > > +		qcom_ice_enable_standard_mode(ice);
-> > > +		qcom_ice_hwkm_init(ice);
-> > > +	}
-> > >   	return qcom_ice_wait_bist_status(ice);
-> > >   }
-> > >   EXPORT_SYMBOL_GPL(qcom_ice_resume);
-> > > @@ -157,6 +293,7 @@ EXPORT_SYMBOL_GPL(qcom_ice_resume);
-> > >   int qcom_ice_suspend(struct qcom_ice *ice)
-> > >   {
-> > >   	clk_disable_unprepare(ice->core_clk);
-> > > +	ice->hwkm_init_complete = false;
-> > >   	return 0;
-> > >   }
-> > > @@ -206,6 +343,12 @@ int qcom_ice_evict_key(struct qcom_ice *ice, int slot)
-> > >   }
-> > >   EXPORT_SYMBOL_GPL(qcom_ice_evict_key);
-> > > +bool qcom_ice_hwkm_supported(struct qcom_ice *ice)
-> > > +{
-> > > +	return ice->use_hwkm;
-> > > +}
-> > > +EXPORT_SYMBOL_GPL(qcom_ice_hwkm_supported);
-> > > +
-> > >   static struct qcom_ice *qcom_ice_create(struct device *dev,
-> > >   					void __iomem *base)
-> > >   {
-> > > @@ -240,6 +383,7 @@ static struct qcom_ice *qcom_ice_create(struct device *dev,
-> > >   		engine->core_clk = devm_clk_get_enabled(dev, NULL);
-> > >   	if (IS_ERR(engine->core_clk))
-> > >   		return ERR_CAST(engine->core_clk);
-> > > +	engine->use_hwkm = qcom_scm_has_wrapped_key_support();
-> > 
-> > This still makes the decision on whether to use HW-wrapped keys on
-> > behalf of a user. I suppose this is incorrect. The user must be able to
-> > use raw keys even if HW-wrapped keys are available on the platform. One
-> > of the examples for such use-cases is if a user prefers to be able to
-> > recover stored information in case of a device failure (such recovery
-> > will be impossible if SoC is damaged and HW-wrapped keys are used).
+On 6.09.2024 8:07 PM, Bartosz Golaszewski wrote:
+> From: Gaurav Kashyap <quic_gaurkash@quicinc.com>
 > 
-> Isn't that already the case ? the BLK_CRYPTO_KEY_TYPE_HW_WRAPPED size is
-> here to select HW-wrapped key, otherwise the ol' raw key is passed.
-> Just look the next patch.
+> Inline storage encryption may require deriving a software secret from
+> storage keys added to the kernel.
 > 
-> Or did I miss something ?
+> For raw keys, this can be directly done in the kernel as keys are not
+> encrypted in memory.
+> 
+> However, hardware wrapped keys can only be unwrapped by the HW wrapping
+> entity. In case of Qualcomm's wrapped key solution, this is done by the
+> Hardware Key Manager (HWKM) from Trustzone.
+> 
+> Add a new SCM call which provides a hook to the software secret crypto
+> profile API provided by the block layer.
+> 
+> Tested-by: Neil Armstrong <neil.armstrong@linaro.org>
+> Signed-off-by: Gaurav Kashyap <quic_gaurkash@quicinc.com>
+> Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@linaro.org>
+> Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
+> ---
+>  drivers/firmware/qcom/qcom_scm.c       | 65 ++++++++++++++++++++++++++++++++++
+>  drivers/firmware/qcom/qcom_scm.h       |  1 +
+>  include/linux/firmware/qcom/qcom_scm.h |  2 ++
+>  3 files changed, 68 insertions(+)
+> 
+> diff --git a/drivers/firmware/qcom/qcom_scm.c b/drivers/firmware/qcom/qcom_scm.c
+> index 10986cb11ec0..ad3f9e9ed35d 100644
+> --- a/drivers/firmware/qcom/qcom_scm.c
+> +++ b/drivers/firmware/qcom/qcom_scm.c
+> @@ -1252,6 +1252,71 @@ int qcom_scm_ice_set_key(u32 index, const u8 *key, u32 key_size,
+>  }
+>  EXPORT_SYMBOL_GPL(qcom_scm_ice_set_key);
+>  
+> +/**
+> + * qcom_scm_derive_sw_secret() - Derive software secret from wrapped key
+> + * @wkey: the hardware wrapped key inaccessible to software
+> + * @wkey_size: size of the wrapped key
+> + * @sw_secret: the secret to be derived which is exactly the secret size
+> + * @sw_secret_size: size of the sw_secret
+> + *
+> + * Derive a software secret from a hardware wrapped key for software crypto
+> + * operations.
+> + * For wrapped keys, the key needs to be unwrapped, in order to derive a
+> + * software secret, which can be done in the hardware from a secure execution
+> + * environment.
+> + *
+> + * For more information on sw secret, please refer to "Hardware-wrapped keys"
+> + * section of Documentation/block/inline-encryption.rst.
+> + *
+> + * Return: 0 on success; -errno on failure.
+> + */
+> +int qcom_scm_derive_sw_secret(const u8 *wkey, size_t wkey_size,
+> +			      u8 *sw_secret, size_t sw_secret_size)
+> +{
+> +	struct qcom_scm_desc desc = {
+> +		.svc = QCOM_SCM_SVC_ES,
+> +		.cmd =  QCOM_SCM_ES_DERIVE_SW_SECRET,
+> +		.arginfo = QCOM_SCM_ARGS(4, QCOM_SCM_RW,
+> +					 QCOM_SCM_VAL, QCOM_SCM_RW,
+> +					 QCOM_SCM_VAL),
+> +		.args[1] = wkey_size,
+> +		.args[3] = sw_secret_size,
+> +		.owner = ARM_SMCCC_OWNER_SIP,
+> +	};
+> +
+> +	int ret;
+> +
+> +	void *wkey_buf __free(qcom_tzmem) = qcom_tzmem_alloc(__scm->mempool,
+> +							    wkey_size,
+> +							    GFP_KERNEL);
+> +	if (!wkey_buf)
+> +		return -ENOMEM;
+> +
+> +	void *secret_buf __free(qcom_tzmem) = qcom_tzmem_alloc(__scm->mempool,
+> +							       sw_secret_size,
+> +							       GFP_KERNEL);
+> +	if (!secret_buf) {
+> +		ret = -ENOMEM;
+> +		goto out_free_wrapped;
+> +	}
+> +
+> +	memcpy(wkey_buf, wkey, wkey_size);
+> +	desc.args[0] = qcom_tzmem_to_phys(wkey_buf);
+> +	desc.args[2] = qcom_tzmem_to_phys(secret_buf);
+> +
+> +	ret = qcom_scm_call(__scm->dev, &desc, NULL);
+> +	if (!ret)
+> +		memcpy(sw_secret, secret_buf, sw_secret_size);
+> +
+> +	memzero_explicit(secret_buf, sw_secret_size);
+> +
+> +out_free_wrapped:
 
-That's a good question. If use_hwkm is set, ICE gets programmed to use
-hwkm (see qcom_ice_hwkm_init() call above). I'm not sure if it is
-expected to work properly if after such a call we pass raw key.
+Is there a reason to zero out the buffer that's being zero-allocated?
 
-> 
-> Neil
-> 
-> > 
-> > >   	if (!qcom_ice_check_supported(engine))
-> > >   		return ERR_PTR(-EOPNOTSUPP);
-> > > diff --git a/include/soc/qcom/ice.h b/include/soc/qcom/ice.h
-> > > index 9dd835dba2a7..1f52e82e3e1c 100644
-> > > --- a/include/soc/qcom/ice.h
-> > > +++ b/include/soc/qcom/ice.h
-> > > @@ -34,5 +34,6 @@ int qcom_ice_program_key(struct qcom_ice *ice,
-> > >   			 const struct blk_crypto_key *bkey,
-> > >   			 u8 data_unit_size, int slot);
-> > >   int qcom_ice_evict_key(struct qcom_ice *ice, int slot);
-> > > +bool qcom_ice_hwkm_supported(struct qcom_ice *ice);
-> > >   struct qcom_ice *of_qcom_ice_get(struct device *dev);
-> > >   #endif /* __QCOM_ICE_H__ */
-> > > 
-> > > -- 
-> > > 2.43.0
-> > > 
-> > 
-> 
+Konrad
 
--- 
-With best wishes
-Dmitry
+> +	memzero_explicit(wkey_buf, wkey_size);
