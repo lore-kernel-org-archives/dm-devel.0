@@ -1,33 +1,33 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1433B1B3B06;
-	Mon,  9 Sep 2024 11:25:13 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A35CB1B6525;
+	Mon,  9 Sep 2024 11:51:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725881114; cv=none; b=EBCb/jLQXMVqZhR9DFYVOl7tm6mWjY3xtUsTohv/U9OX4kBws/wrY+EUgSoaKNhP2NXkKcj+XemKYp43e0Gw/YhbB879nmmnoC48MshU/Nftqa++nVh3y8DuUWKo1VUb1RknXBXjSsrFbnRjukEELGGj3KDgWLUQKW8BC4tfXY8=
+	t=1725882707; cv=none; b=vEkYDnVifbrlJFbFQZ3PaHbo/28viZ2VSvC1gpgfGqCvsjQaI7Q3EhrELd5Yx8kN8kYLXyxJ34XIjJGhfa6rTHT6D/1nX5GL2w/CtiGqMw/FqOJjEmIKnINDzi6iSpqTN+i1b7Ar8nK4zIh5F6cdcpzYeNpeJtQi2QhVzY5z2G8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725881114; c=relaxed/simple;
-	bh=HqGZDyabs5Coh/PiTfcgyDuQNZQ1J9BORTIRtBnBjbQ=;
+	s=arc-20240116; t=1725882707; c=relaxed/simple;
+	bh=0JyaXQcVV7hV6+TsoSX2pVLz4WSNcsP5lbx3ypUfRNY=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=SLMB98dYnTksCV3Gye5p+zKtPHmY25ASd4tzTMAa1YLMkRWgbySstPRwcb4sJKJ6+tTaxHlREhQPXjH1LB+WrfBONn6jrztrd+x9N2DI5JLMiHTksypLwM/OEHFTRWFrA9a1SsdwzicnQF14VHwKioEYETkLWeHFmebvm8YLs1Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=BwV6dHyQ; arc=none smtp.client-ip=10.30.226.201
+	 In-Reply-To:Content-Type; b=QxN7GDkbeXhxYJddC2LU7A2X58mncQB30ZEtkaPkWIHkW3WpWaBif7/Tv6/JC9uzV3K++BAfdV3XlftxzJ90tmZK81kYjH35JNxQtNwdKwQaYOoiNMaDbhMUc1T1ZnoTsZXkqtaSUNUZzpbcaKcsjOlhm/C/xAFAWDU1Zt2h1RQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=KDX195re; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="BwV6dHyQ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 58A7FC4CEC5;
-	Mon,  9 Sep 2024 11:25:04 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="KDX195re"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 54DBEC4CEC7;
+	Mon,  9 Sep 2024 11:51:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1725881113;
-	bh=HqGZDyabs5Coh/PiTfcgyDuQNZQ1J9BORTIRtBnBjbQ=;
+	s=k20201202; t=1725882706;
+	bh=0JyaXQcVV7hV6+TsoSX2pVLz4WSNcsP5lbx3ypUfRNY=;
 	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=BwV6dHyQhvW44eDRtqePqfV8NXHxYZmvKm6ABQGA/Yyl0DtLpAiPJdyReWr9FUwEc
-	 mz4eaiwOB03zRUZaScy/ReKYvleCuwQx1a0i/bdzZjmwesbLtoYe1S5KlvaPCtipJW
-	 W8Xgvtg27VxhVuNcbjxBSABQT/j5lu+GPDHKWmwLgNI3gnI7buZqBI9hGgMCE6GsI1
-	 mRt12AmNsLQ+h3wYu3stDD6sjbUBmg4Yh12cDMPLZPPLqMgJS98bgOWDmBJsOy2YUG
-	 Sjo4MbJjJppW3wEQl9LDp4AcaLIfLS6q78CUtvS0yW0r2dH/TTpgzrz4X0p5ZXGh1D
-	 Kb+C3gR0Gmp8A==
-Message-ID: <7b46f129-2c9c-40ad-9c47-f3183dc33257@kernel.org>
-Date: Mon, 9 Sep 2024 13:25:02 +0200
+	b=KDX195re/Wb8hzBE3AWZJzabPkZjsDHLVwHFV0SCsWdSvZr8I2P7USdXFqva9tP9Y
+	 ukl8bMwjb1RQgdwX1h8f5jCiB7Gl6T+yd7oR3iUcsnjaIR0Z4drxbMybUJO954lZTy
+	 NiyiUeAVKW5bG3A9BE/0+X2hlsloMBfpMREn4TK+4OcFXji4mBrky8LZbBp0qsxh6I
+	 ecrhqKiN2qd3shH3eqmj97oR8JOWtnv16BPizbTJ73Qom+N94JsxSvNsEJKpD5jiLV
+	 p/WtDVZEEGCwezhB9sJ7GKRJf0pks9SdEtDG/LhkffmbzxqP7nby/WGd40bl1l5sI5
+	 BufwvRr/w0RCA==
+Message-ID: <88e20936-0400-47a3-8909-24e3609e714e@kernel.org>
+Date: Mon, 9 Sep 2024 13:51:33 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,8 +35,8 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v6 08/17] firmware: qcom: scm: add a call for checking
- wrapped key support
+Subject: Re: [PATCH v6 10/17] soc: qcom: ice: add support for hardware wrapped
+ keys
 To: Bartosz Golaszewski <brgl@bgdev.pl>, Jens Axboe <axboe@kernel.dk>,
  Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
  Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
@@ -61,29 +61,59 @@ Cc: linux-block@vger.kernel.org, linux-doc@vger.kernel.org,
  linux-mmc@vger.kernel.org, linux-scsi@vger.kernel.org,
  linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org,
  linux-arm-msm@vger.kernel.org,
- Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
+ Bartosz Golaszewski <bartosz.golaszewski@linaro.org>,
+ Om Prakash Singh <quic_omprsing@quicinc.com>
 References: <20240906-wrapped-keys-v6-0-d59e61bc0cb4@linaro.org>
- <20240906-wrapped-keys-v6-8-d59e61bc0cb4@linaro.org>
+ <20240906-wrapped-keys-v6-10-d59e61bc0cb4@linaro.org>
 Content-Language: en-US
 From: Konrad Dybcio <konradybcio@kernel.org>
-In-Reply-To: <20240906-wrapped-keys-v6-8-d59e61bc0cb4@linaro.org>
+In-Reply-To: <20240906-wrapped-keys-v6-10-d59e61bc0cb4@linaro.org>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
 On 6.09.2024 8:07 PM, Bartosz Golaszewski wrote:
-> From: Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
+> From: Gaurav Kashyap <quic_gaurkash@quicinc.com>
 > 
-> Add a helper that allows users to check if wrapped key support is
-> available on the platform by checking if the SCM call allowing to
-> derive the software secret from a wrapped key is enabled.
+> Now that HWKM support has been added to ICE, extend the ICE driver to
+> support hardware wrapped keys programming coming in from the storage
+> controllers (UFS and eMMC). This is similar to raw keys where the call is
+> forwarded to Trustzone, however we also need to clear and re-enable
+> CFGE before and after programming the key.
 > 
+> Derive software secret support is also added by forwarding the call to
+> the corresponding SCM API.
+> 
+> Tested-by: Neil Armstrong <neil.armstrong@linaro.org>
+> Reviewed-by: Om Prakash Singh <quic_omprsing@quicinc.com>
+> Signed-off-by: Gaurav Kashyap <quic_gaurkash@quicinc.com>
 > Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
 > ---
 
-I dearly hope that all firmwares that advertise this call, also
-advertise the other necessary ones
+[...]
 
 
-Reviewed-by: Konrad Dybcio <konradybcio@kernel.org>
+> +static int qcom_ice_program_wrapped_key(struct qcom_ice *ice,
+> +					const struct blk_crypto_key *key,
+> +					u8 data_unit_size, int slot)
+> +{
+> +	union crypto_cfg cfg;
+> +	int hwkm_slot;
+> +	int err;
+> +
+> +	hwkm_slot = translate_hwkm_slot(ice, slot);
+> +
+> +	memset(&cfg, 0, sizeof(cfg));
+
+union crypto_cfg cfg = { 0 };
+
+?
+
+> +	cfg.dusize = data_unit_size;
+> +	cfg.capidx = QCOM_SCM_ICE_CIPHER_AES_256_XTS;
+> +	cfg.cfge = 0x80;
+
+Or just partially initialize it at declaration time?
+
+Also, what's 0x80?
 
 Konrad
