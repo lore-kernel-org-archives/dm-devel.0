@@ -1,111 +1,90 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19EAA1A2875;
-	Tue, 10 Sep 2024 17:20:03 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA7271A2863
+	for <dm-devel@lists.linux.dev>; Tue, 10 Sep 2024 17:53:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725988804; cv=none; b=TPheUsBDprncCzpsohrnKkc8tSW6GJY2pGc9AwGJg7MNo73xbuFRreE/av7qO2/A3NZBqjaLXZRJViCoIXYuDcoaK1L72qZ5edzMPat3ZYg6qeJxuujh7zm65a21iIoxdppafP6mGQkC7pCypVt0TZn9QMTfp/sXIk8t4IKOunQ=
+	t=1725990808; cv=none; b=T/7KLzDjMQ6ZAOlCvi3r4pPi/19Kj2G+q9Pj3uebkANVd4hColdMWKmN9S62t5welUtcPN4VkzBGFqTtYe8JP4rPbAXD+oeWp9ybiSMY1X/RIjkHm0JbpEx6jnyx+E+knSKnucyNPnBflOKV2Q96izR1XKV/Mie84E31x02XawE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725988804; c=relaxed/simple;
-	bh=TvaB6J4SPaO1w4vDtpj2zNE8JWO+8r1xf8HiEUcu1xM=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=YUANcE93nofGveDODO+D2iCQk4Y4rFaf9zijBdtoJV7zLX5k6+WoaMdT6o4rNnecxFMXmaPULymn7FiicmA5dFKBDi9AEU5EJBptu+0HpZrfOVSSlRqxJy6DGre1xtSdvZ3ntw3TgYIETPdh55LjZXLs0jHRiF+kh4YCJ4BAEYg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=oKlsUtqj; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1725990808; c=relaxed/simple;
+	bh=6kVRmhcY27IMIshVdo37fwIRS0zn2TwOQy3S3U3AcmA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=TSYjDBy7SmkxaxmhzgsdZd8afsiasfp15cnHSYpi+FMSugFB/IhV3/mvYVp+V9LUvzeWTFZZE/0AUhjpj3euFetIp/HauQISBOapX2yy1zly0Ag7DmumqbeNUf1FfnHU9pE/qARTNqTeYNXhVvJC5KqRDgF7BZuftLZbTnbdKJg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Ngi5wxSz; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="oKlsUtqj"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 45769C4CEC3;
-	Tue, 10 Sep 2024 17:20:03 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Ngi5wxSz"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 13A43C4CEC3;
+	Tue, 10 Sep 2024 17:53:28 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1725988803;
-	bh=TvaB6J4SPaO1w4vDtpj2zNE8JWO+8r1xf8HiEUcu1xM=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=oKlsUtqjBxe9ewO+kBetG3hSNfCwXfigGim7srXmxu3ikqBMLUeL07dcBc+H13ZWr
-	 hyqLMpeBDI3h1zXJQliHtZeT3Rj3iTse2jtsU5BUaMooI6UBu1vHtqwiP3AKMWtg6Y
-	 xgPyys2WP3y7oSPbyq+pzBr3EEvEJ5p633EtOWqCUF/dZ8QCRqgxsmUUMPj8QEoVOU
-	 +epCFf2DMuKroLqg0rPFXbuApZZ2XTgnEJ8NhBsr7G/fl92Kkk0YlSGZAxSJifpmAm
-	 IvKM5fc4EuIWCnxJXZsUhvaggesPsBq1yqfnDApzX375T+/FfCdT/fNvxM00pSAUlF
-	 iOh3JGEQALfnA==
-Date: Tue, 10 Sep 2024 10:20:01 -0700
+	s=k20201202; t=1725990808;
+	bh=6kVRmhcY27IMIshVdo37fwIRS0zn2TwOQy3S3U3AcmA=;
+	h=From:To:Cc:Subject:Date:From;
+	b=Ngi5wxSzrDVWfEwrkOfd3XgqYgIkzz58esXHoBOLG4LmKySUQGyNxpiO37Xy/7o5g
+	 8GizjqGKJq5fnWU+cN6bS2xbB8bSt9lJyBTcnU8S1Nrgfvy710bO2IfPxjBVLj8VCY
+	 5EnuVvlLFfaZD+jaJ6trwIy1sewF3icD4kXuBXoayTF37v+56y7W5SxUtnpyksJyKi
+	 5zsPCgXGHNOU7YrqlRBHI7I1MLz98h7BnIcfoTQN6VoTipIQwOQq1syc421poc0p6u
+	 +SkuIKxWgrcB4PmCxsWJwE+tRTG1wyVfXDoeFwOvX5EjJhekqgZsOXAhAnb2RKa1Jf
+	 X4v14sCuy0B0w==
 From: Eric Biggers <ebiggers@kernel.org>
-To: Dan Carpenter <dan.carpenter@linaro.org>
-Cc: oe-kbuild@lists.linux.dev, lkp@intel.com, oe-kbuild-all@lists.linux.dev,
-	linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
 	dm-devel@lists.linux.dev
-Subject: Re: drivers/md/dm-integrity.c:521 sb_mac() error: __builtin_memcmp()
- 'actual_mac' too small (64 vs 448)
-Message-ID: <20240910172001.GD2642@sol.localdomain>
-References: <e8c80d61-2c74-4b50-ab50-2cf1291df9bc@stanley.mountain>
+Cc: kernel test robot <lkp@intel.com>,
+	Dan Carpenter <dan.carpenter@linaro.org>
+Subject: [PATCH] dm-integrity: check mac_size against HASH_MAX_DIGESTSIZE in sb_mac()
+Date: Tue, 10 Sep 2024 10:52:59 -0700
+Message-ID: <20240910175259.28620-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.46.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <e8c80d61-2c74-4b50-ab50-2cf1291df9bc@stanley.mountain>
+Content-Transfer-Encoding: 8bit
 
-[+Cc dm-devel@lists.linux.dev]
+From: Eric Biggers <ebiggers@google.com>
 
-On Tue, Sep 10, 2024 at 10:31:56AM +0300, Dan Carpenter wrote:
-> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git master
-> head:   b831f83e40a24f07c8dcba5be408d93beedc820f
-> commit: 070bb43ab01e891db1b742d4ddd7291c7f8d7022 dm integrity: use crypto_shash_digest() in sb_mac()
+sb_mac() verifies that the superblock + MAC don't exceed 512 bytes.
+Because the superblock is currently 64 bytes, this really verifies
+mac_size <= 448.  This confuses smatch into thinking that mac_size may
+be as large as 448, which is inconsistent with the later code that
+assumes the MAC fits in a buffer of size HASH_MAX_DIGESTSIZE (64).
 
-This commit seems unrelated, as the alleged issue existed in the code before
-that commit too (maybe smatch just didn't notice it yet).
+In fact mac_size <= HASH_MAX_DIGESTSIZE is guaranteed by the crypto API,
+as that is the whole point of HASH_MAX_DIGESTSIZE.  But, let's be
+defensive and explicitly check for this.  This suppresses the false
+positive smatch warning.  It does not fix an actual bug.
 
-> date:   10 months ago
-> config: i386-randconfig-141-20240906 (https://download.01.org/0day-ci/archive/20240906/202409061401.44rtN1bh-lkp@intel.com/config)
-> compiler: clang version 18.1.5 (https://github.com/llvm/llvm-project 617a15a9eac96088ae5e9134248d8236e34b91b1)
-> 
-> If you fix the issue in a separate patch/commit (i.e. not just a new version of
-> the same patch/commit), kindly add following tags
-> | Reported-by: kernel test robot <lkp@intel.com>
-> | Reported-by: Dan Carpenter <dan.carpenter@linaro.org>
-> | Closes: https://lore.kernel.org/r/202409061401.44rtN1bh-lkp@intel.com/
-> 
-> smatch warnings:
-> drivers/md/dm-integrity.c:521 sb_mac() error: __builtin_memcmp() 'actual_mac' too small (64 vs 448)
-> 
-> vim +/actual_mac +521 drivers/md/dm-integrity.c
-> 
-> 09d85f8d8909ec Mikulas Patocka   2021-01-21  492  static int sb_mac(struct dm_integrity_c *ic, bool wr)
-> 09d85f8d8909ec Mikulas Patocka   2021-01-21  493  {
-> 09d85f8d8909ec Mikulas Patocka   2021-01-21  494  	SHASH_DESC_ON_STACK(desc, ic->journal_mac);
-> 09d85f8d8909ec Mikulas Patocka   2021-01-21  495  	int r;
-> 070bb43ab01e89 Eric Biggers      2023-10-28  496  	unsigned int mac_size = crypto_shash_digestsize(ic->journal_mac);
-> 070bb43ab01e89 Eric Biggers      2023-10-28  497  	__u8 *sb = (__u8 *)ic->sb;
-> 070bb43ab01e89 Eric Biggers      2023-10-28  498  	__u8 *mac = sb + (1 << SECTOR_SHIFT) - mac_size;
-> 09d85f8d8909ec Mikulas Patocka   2021-01-21  499  
-> 070bb43ab01e89 Eric Biggers      2023-10-28  500  	if (sizeof(struct superblock) + mac_size > 1 << SECTOR_SHIFT) {
-> 
-> This is paired with the line before and prevents the subtraction from going
-> negative.  It limits the mac_size to 0-448.  Is it reasonable to have a mac_size
-> which is > HASH_MAX_DIGESTSIZE (64)?
+Reported-by: kernel test robot <lkp@intel.com>
+Reported-by: Dan Carpenter <dan.carpenter@linaro.org>
+Closes: https://lore.kernel.org/r/202409061401.44rtN1bh-lkp@intel.com/
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ drivers/md/dm-integrity.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-crypto_shash_digestsize() cannot return a value greater than HASH_MAX_DIGESTSIZE
-because the crypto API doesn't allow registering any hash algorithms with
-digests larger than that.  That's the whole point of HASH_MAX_DIGESTSIZE.
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 51e6964c13054..3b9738787c855 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -489,11 +489,12 @@ static int sb_mac(struct dm_integrity_c *ic, bool wr)
+ 	int r;
+ 	unsigned int mac_size = crypto_shash_digestsize(ic->journal_mac);
+ 	__u8 *sb = (__u8 *)ic->sb;
+ 	__u8 *mac = sb + (1 << SECTOR_SHIFT) - mac_size;
+ 
+-	if (sizeof(struct superblock) + mac_size > 1 << SECTOR_SHIFT) {
++	if (sizeof(struct superblock) + mac_size > 1 << SECTOR_SHIFT ||
++	    mac_size > HASH_MAX_DIGESTSIZE) {
+ 		dm_integrity_io_error(ic, "digest is too long", -EINVAL);
+ 		return -EINVAL;
+ 	}
+ 
+ 	desc->tfm = ic->journal_mac;
 
-> This buffer is only 64 bytes.
+base-commit: 8d8d276ba2fb5f9ac4984f5c10ae60858090babc
+-- 
+2.46.0
 
-Yes.
-
-> 0ef0b4717aa684 Heinz Mauelshagen 2023-02-01  515  
-> 070bb43ab01e89 Eric Biggers      2023-10-28  516  		r = crypto_shash_digest(desc, sb, mac - sb, actual_mac);
-> 09d85f8d8909ec Mikulas Patocka   2021-01-21  517  		if (unlikely(r < 0)) {
-> 070bb43ab01e89 Eric Biggers      2023-10-28  518  			dm_integrity_io_error(ic, "crypto_shash_digest", r);
-> 09d85f8d8909ec Mikulas Patocka   2021-01-21  519  			return r;
-> 09d85f8d8909ec Mikulas Patocka   2021-01-21  520  		}
-> 070bb43ab01e89 Eric Biggers      2023-10-28 @521  		if (memcmp(mac, actual_mac, mac_size)) {
->                                                                                 ^^^^^^^^^^
-> Read overflow.
-
-No, because mac_size <= 64.
-
-We might as well explicitly check that in the code to suppress the static
-analysis warning (I'll send a patch), but it's not fixing an actual bug.
-
-- Eric
