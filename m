@@ -1,60 +1,60 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 225F91BE857
-	for <dm-devel@lists.linux.dev>; Thu, 12 Sep 2024 21:49:58 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5AE0AA5F
+	for <dm-devel@lists.linux.dev>; Thu, 12 Sep 2024 21:50:52 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726177800; cv=none; b=gH3owxP5JpEsNEPc/yBf+Qoj0XSDJnKGLDrbD6pQiMLulzZXYWdJlnu8HEQWwPW3vlf51haux8wmHpu6niU8Kbyh5kuFF8cHiWrJ36Fwq1+XRdGfJKAqaTsdt9u1S5WEJC87J2vwP/VoWNllQG4n8kZChetAAEsfxU+pAbRQbFQ=
+	t=1726177853; cv=none; b=Q5hdu+XaDhdAgsHfh+xSLRP7anBhBsqIxSUD7c9gPHoa5GzS4v/Ifly+5fH24mnIRq9P0QnQAh/r8Myx7LlaTrIL2VkVluw8HqVJZTDXdfmQpuJEZUcEXiBFBXeUmLBcHtfvxNC2jA2uwA43dfcbb9PDvaLoDpnLs8YqAF4xFrE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1726177800; c=relaxed/simple;
-	bh=3meAz/MENqsuTMqfB9aYCOaDstuXxP+5cJujI0NDkcU=;
+	s=arc-20240116; t=1726177853; c=relaxed/simple;
+	bh=zXdyT0MEdD7O/I9l7zNSmAF7f87G9yXE/ZnfBPsvgQ4=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=sV0qm6h6ZCsr4GK+RnotU+AoP7zcF5orjzqfDaxhJcf12BmUzx7Ht9QEYNz2sB4m+42CLI0mnewaNz6zTDivKQivZcQ3Nqhfw7w6V+TcaD8kyaAyoFFv2YA4c+HJCOLhaCc0Gy3ruUSV37EwSbBuKSknuDCgXs3/naPjtX6OIy0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eGNrWbnU; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=oBnecuHBTWri6xySKIutLs09W9M0zOLqk4OaxSmQXLfUwE+GTDPwcw/I2aai/7ulWX+Hd7Iw6bPgeevD/BcvfkedQQEmpoNFi01tfh/z05pwgW28NkGOZAZjWFPvrNPOdwEY+e36q8lf+orCQx3jT2zwqElvmPmnfXzy9X3lBNI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SFbztTRT; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eGNrWbnU"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SFbztTRT"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1726177798;
+	s=mimecast20190719; t=1726177851;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=XGPOJ/OvyWXVlRRpZyldKK3/AnGBzZpa6doUjCedEew=;
-	b=eGNrWbnUE0zU0KCfpkmle8+BaytiznS8k4Ij8JfDBm3Q/pBZH7is0J5svuJaiN+teFoFFz
-	ARnx+ynwwsMlAoNikgAjseyKRESSAWGuOOV8EFLH5ik3u/ewDJ0fX+UGceBWSMR6n2oj/q
-	r6FPvYvsKPN3q+oHtLVT/A4Qev+QPSk=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=O/B/N4wI+Yf+gIJsmNzdZQcoRS1s3MNByHLVgSCAt50=;
+	b=SFbztTRTGyKbw5vT0JHs6oqv7vhBnFDzSUKTjfqMKQ5/29q/x1pAj8wCT8FMBIU88wwuQ3
+	A0aZquU9EygwBaV7ccVyAiYpm6I8VbDZslfCKYC+L7ZnJKlnppMQdD54avZCtu4CA+OkWu
+	Tnbvur4MerfWPzxda+uA5y+L4kMUWfk=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-631-_ZOCWJSsPiiDiqFjDEC0QA-1; Thu,
- 12 Sep 2024 17:49:54 -0400
-X-MC-Unique: _ZOCWJSsPiiDiqFjDEC0QA-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-179-csnj8K6zP3m1Vtzr_a8BkQ-1; Thu,
+ 12 Sep 2024 17:49:53 -0400
+X-MC-Unique: csnj8K6zP3m1Vtzr_a8BkQ-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0719B1955F44;
-	Thu, 12 Sep 2024 21:49:54 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3B4961956089;
+	Thu, 12 Sep 2024 21:49:52 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9819D3001D16;
-	Thu, 12 Sep 2024 21:49:53 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B2D961956052;
+	Thu, 12 Sep 2024 21:49:51 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 48CLnqgP783952
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 48CLnoZb783898
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 12 Sep 2024 17:49:52 -0400
+	Thu, 12 Sep 2024 17:49:50 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 48CLnqAg783951;
-	Thu, 12 Sep 2024 17:49:52 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 48CLnoSm783897;
+	Thu, 12 Sep 2024 17:49:50 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 22/22] multipath-tools tests: fix up directio tests
-Date: Thu, 12 Sep 2024 17:49:47 -0400
-Message-ID: <20240912214947.783819-23-bmarzins@redhat.com>
+Subject: [PATCH v2 12/22] multipathd: split check_paths into two functions
+Date: Thu, 12 Sep 2024 17:49:37 -0400
+Message-ID: <20240912214947.783819-13-bmarzins@redhat.com>
 In-Reply-To: <20240912214947.783819-1-bmarzins@redhat.com>
 References: <20240912214947.783819-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -63,229 +63,231 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Make the directio tests work with no waiting in the libcheck_pending()
-and the new libcheck_need_wait() call.
+Instead of checking and updating each path, the checkerloop now starts
+the checkers on all the paths in check_paths(), and then goes back and
+updates all the paths in update_paths(). Since the async checkers use an
+absolute time to wait for before returning PATH_PENDING, only one
+checker actually needs to be waited for in update_paths(). The rest will
+already have reached their timeout when update_path() is called for
+them.
+
+The check_paths() and update_paths() loop over the pathvec instead of
+looping through the multipath device paths to avoid having to restart
+checking of the device paths when the multipath device needs to be
+resynced while updating the paths.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- tests/directio.c | 49 +++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 46 insertions(+), 3 deletions(-)
+ libmultipath/structs.h |  10 +++-
+ multipathd/main.c      | 105 +++++++++++++++++++----------------------
+ 2 files changed, 57 insertions(+), 58 deletions(-)
 
-diff --git a/tests/directio.c b/tests/directio.c
-index 2e22f831..5ee482a8 100644
---- a/tests/directio.c
-+++ b/tests/directio.c
-@@ -313,23 +313,28 @@ static void test_init_reset_init(void **state)
- 	struct checker c = {.cls = NULL};
- 	struct aio_group *aio_grp, *tmp_grp;
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index d8231e95..af8e31e9 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -314,6 +314,14 @@ enum recheck_wwid_states {
+ 	RECHECK_WWID_ON = YNU_YES,
+ };
  
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	assert_true(list_empty(&aio_grp_list));
- 	will_return(__wrap_io_setup, 0);
- 	do_libcheck_init(&c, 4096, 0, NULL);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	aio_grp = get_aio_grp(&c);
- 	check_aio_grp(aio_grp, 1, 0);
- 	list_for_each_entry(tmp_grp, &aio_grp_list, node)
- 		assert_ptr_equal(aio_grp, tmp_grp);
- 	libcheck_free(&c);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	check_aio_grp(aio_grp, 0, 0);
- 	do_libcheck_reset(1);
- 	will_return(__wrap_io_setup, 0);
- 	do_libcheck_init(&c, 4096, 0, NULL);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	aio_grp = get_aio_grp(&c);
- 	check_aio_grp(aio_grp, 1, 0);
- 	list_for_each_entry(tmp_grp, &aio_grp_list, node)
- 		assert_ptr_equal(aio_grp, tmp_grp);
- 	libcheck_free(&c);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	check_aio_grp(aio_grp, 0, 0);
- 	do_libcheck_reset(1);
++enum check_path_states {
++	CHECK_PATH_UNCHECKED,
++	CHECK_PATH_STARTED,
++	CHECK_PATH_CHECKED,
++	CHECK_PATH_SKIPPED,
++	CHECK_PATH_REMOVED,
++};
++
+ struct vpd_vendor_page {
+ 	int pg;
+ 	const char *name;
+@@ -395,7 +403,7 @@ struct path {
+ 	int fast_io_fail;
+ 	unsigned int dev_loss;
+ 	int eh_deadline;
+-	bool is_checked;
++	enum check_path_states is_checked;
+ 	bool can_use_env_uid;
+ 	unsigned int checker_timeout;
+ 	/* configlet pointers */
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 45d40559..9519b6c5 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2389,13 +2389,6 @@ sync_mpp(struct vectors * vecs, struct multipath *mpp, unsigned int ticks)
+ 	do_sync_mpp(vecs, mpp);
  }
-@@ -433,6 +438,7 @@ static void test_check_state_simple(void **state)
- 	do_libcheck_init(&c, 4096, 30, &req);
- 	return_io_getevents_nr(NULL, 1, &req, &res);
- 	do_check_state(&c, 1, PATH_UP);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	libcheck_free(&c);
- 	do_libcheck_reset(1);
- }
-@@ -465,17 +471,25 @@ static void test_check_state_async_timeout(void **state)
- 	do_libcheck_init(&c, 4096, 3, NULL);
- 	aio_grp = get_aio_grp(&c);
- 	do_check_state(&c, 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), true);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	do_check_state(&c, 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	do_check_state(&c, 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	do_check_state(&c, 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c, PATH_DOWN);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	check_aio_grp(aio_grp, 1, 0);
- 	libcheck_free(&c);
- 	do_libcheck_reset(1);
-@@ -496,11 +510,16 @@ static void test_free_with_pending(void **state)
-         aio_grp = get_aio_grp(c);
-         do_check_state(&c[0], 0, PATH_PENDING);
- 	do_check_state(&c[1], 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[0]), true);
-+	assert_int_equal(libcheck_need_wait(&c[1]), true);
-         return_io_getevents_none();
- 	do_libcheck_pending(&c[0], PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
-+	assert_int_equal(libcheck_need_wait(&c[1]), true);
- 	return_io_getevents_nr(NULL, 1, &req, &res);
--	return_io_getevents_none();
- 	do_libcheck_pending(&c[1], PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
-+	assert_int_equal(libcheck_need_wait(&c[1]), false);
- 	assert_true(is_checker_running(&c[0]));
- 	assert_true(is_checker_running(&c[1]));
- 	check_aio_grp(aio_grp, 2, 0);
-@@ -523,8 +542,10 @@ static void test_orphaned_aio_group(void **state)
- 	for (i = 0; i < AIO_GROUP_SIZE; i++) {
- 		do_libcheck_init(&c[i], 4096, 30, NULL);
- 		do_check_state(&c[i], 0, PATH_PENDING);
-+		assert_int_equal(libcheck_need_wait(&c[i]), true);
- 		return_io_getevents_none();
- 		do_libcheck_pending(&c[i], PATH_PENDING);
-+		assert_int_equal(libcheck_need_wait(&c[i]), false);
+ 
+-enum check_path_return {
+-	CHECK_PATH_STARTED,
+-	CHECK_PATH_CHECKED,
+-	CHECK_PATH_SKIPPED,
+-	CHECK_PATH_REMOVED,
+-};
+-
+ static int
+ update_path_state (struct vectors * vecs, struct path * pp)
+ {
+@@ -2735,6 +2728,7 @@ check_uninitialized_path(struct path * pp, unsigned int ticks)
+ 	conf = get_multipath_config();
+ 	retrigger_tries = conf->retrigger_tries;
+ 	pp->tick = conf->max_checkint;
++	pp->checkint = conf->checkint;
+ 	put_multipath_config(conf);
+ 
+ 	if (pp->initialized == INIT_MISSING_UDEV) {
+@@ -2778,6 +2772,10 @@ update_uninitialized_path(struct vectors * vecs, struct path * pp)
+ 	int newstate, ret;
+ 	struct config *conf;
+ 
++	if (pp->initialized != INIT_NEW && pp->initialized != INIT_FAILED &&
++	    pp->initialized != INIT_MISSING_UDEV)
++		return CHECK_PATH_SKIPPED;
++
+ 	newstate = get_new_state(pp);
+ 
+ 	if (!strlen(pp->wwid) &&
+@@ -2807,80 +2805,69 @@ update_uninitialized_path(struct vectors * vecs, struct path * pp)
+ 
+ enum checker_state {
+ 	CHECKER_STARTING,
+-	CHECKER_RUNNING,
++	CHECKER_CHECKING_PATHS,
++	CHECKER_UPDATING_PATHS,
+ 	CHECKER_FINISHED,
+ };
+ 
+ static enum checker_state
+-check_paths(struct vectors *vecs, unsigned int ticks, int *num_paths_p)
++check_paths(struct vectors *vecs, unsigned int ticks)
+ {
+ 	unsigned int paths_checked = 0;
+ 	struct timespec diff_time, start_time, end_time;
+-	struct multipath *mpp;
+ 	struct path *pp;
+-	int i, rc;
++	int i;
+ 
+ 	get_monotonic_time(&start_time);
+ 
+-	vector_foreach_slot(vecs->mpvec, mpp, i) {
+-		struct pathgroup *pgp;
+-		struct path *pp;
+-		int j, k;
+-		bool check_for_waiters = false;
+-		/* maps can be rechecked, so this is not always 0 */
+-		int synced_count = mpp->synced_count;
+-
+-		vector_foreach_slot (mpp->pg, pgp, j) {
+-			vector_foreach_slot (pgp->paths, pp, k) {
+-				if (!pp->mpp || pp->is_checked)
+-					continue;
+-				pp->is_checked = true;
+-				rc = check_path(pp, ticks);
+-				if (rc == CHECK_PATH_STARTED)
+-					rc = update_path(vecs, pp,
+-							 start_time.tv_sec);
+-				if (rc == CHECK_PATH_CHECKED)
+-					(*num_paths_p)++;
+-				if (++paths_checked % 128 == 0)
+-					check_for_waiters = true;
+-				/*
+-				 * mpp has been removed or resynced. Path may
+-				 * have been removed.
+-				 */
+-				if (VECTOR_SLOT(vecs->mpvec, i) != mpp ||
+-				    synced_count != mpp->synced_count) {
+-					i--;
+-					goto next_mpp;
+-				}
+-			}
+-		}
+-next_mpp:
+-		if (check_for_waiters &&
++	vector_foreach_slot(vecs->pathvec, pp, i) {
++		if (pp->is_checked != CHECK_PATH_UNCHECKED)
++			continue;
++		if (pp->mpp)
++			pp->is_checked = check_path(pp, ticks);
++		else
++			pp->is_checked = check_uninitialized_path(pp, ticks);
++		if (++paths_checked % 128 == 0 &&
+ 		    (lock_has_waiters(&vecs->lock) || waiting_clients())) {
+ 			get_monotonic_time(&end_time);
+ 			timespecsub(&end_time, &start_time, &diff_time);
+ 			if (diff_time.tv_sec > 0)
+-				return CHECKER_RUNNING;
++				return CHECKER_CHECKING_PATHS;
+ 		}
  	}
- 	aio_grp = get_aio_grp(c);
- 	check_aio_grp(aio_grp, AIO_GROUP_SIZE, 0);
-@@ -560,15 +581,19 @@ static void test_timeout_cancel_failed(void **state)
- 	aio_grp = get_aio_grp(c);
- 	return_io_getevents_none();
- 	do_check_state(&c[0], 1, PATH_DOWN);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
- 	assert_true(is_checker_running(&c[0]));
- 	check_aio_grp(aio_grp, 2, 0);
- 	return_io_getevents_none();
- 	do_check_state(&c[0], 1, PATH_DOWN);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
- 	assert_true(is_checker_running(&c[0]));
- 	return_io_getevents_nr(NULL, 1, &reqs[0], &res[0]);
- 	return_io_getevents_nr(NULL, 1, &reqs[1], &res[1]);
- 	do_check_state(&c[1], 1, PATH_UP);
-+	assert_int_equal(libcheck_need_wait(&c[1]), false);
- 	do_check_state(&c[0], 1, PATH_UP);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
- 	for (i = 0; i < 2; i++) {
- 		assert_false(is_checker_running(&c[i]));
- 		libcheck_free(&c[i]);
-@@ -590,11 +615,15 @@ static void test_async_timeout_cancel_failed(void **state)
- 	for (i = 0; i < 2; i++)
- 		do_libcheck_init(&c[i], 4096, 2, &reqs[i]);
- 	do_check_state(&c[0], 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[0]), true);
- 	do_check_state(&c[1], 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[1]), true);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c[0], PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c[1], PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[1]), false);
- 	do_check_state(&c[0], 0, PATH_PENDING);
- 	do_check_state(&c[1], 0, PATH_PENDING);
- 	return_io_getevents_none();
-@@ -605,10 +634,12 @@ static void test_async_timeout_cancel_failed(void **state)
- 	do_check_state(&c[1], 0, PATH_PENDING);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c[0], PATH_DOWN);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
- 	if (!test_dev) {
- 		/* can't pick which even gets returned on real devices */
- 		return_io_getevents_nr(NULL, 1, &reqs[1], &res[1]);
- 		do_libcheck_pending(&c[1], PATH_UP);
-+		assert_int_equal(libcheck_need_wait(&c[1]), false);
++	return CHECKER_UPDATING_PATHS;
++}
++
++static enum checker_state
++update_paths(struct vectors *vecs, int *num_paths_p, time_t start_secs)
++{
++	unsigned int paths_checked = 0;
++	struct timespec diff_time, start_time, end_time;
++	struct path *pp;
++	int i, rc;
++
++	get_monotonic_time(&start_time);
++
+ 	vector_foreach_slot(vecs->pathvec, pp, i) {
+-		if (pp->mpp || pp->is_checked)
++		if (pp->is_checked != CHECK_PATH_STARTED)
+ 			continue;
+-		pp->is_checked = true;
+-
+-		rc = check_uninitialized_path(pp, ticks);
+-		if (rc == CHECK_PATH_STARTED)
++		if (pp->mpp)
++			rc = update_path(vecs, pp, start_secs);
++		else
+ 			rc = update_uninitialized_path(vecs, pp);
+ 		if (rc == CHECK_PATH_REMOVED)
+ 			i--;
+-		else if (rc == CHECK_PATH_CHECKED)
+-			(*num_paths_p)++;
++		else {
++			pp->is_checked = rc;
++			if (rc == CHECK_PATH_CHECKED)
++				(*num_paths_p)++;
++		}
+ 		if (++paths_checked % 128 == 0 &&
+ 		    (lock_has_waiters(&vecs->lock) || waiting_clients())) {
+ 			get_monotonic_time(&end_time);
+ 			timespecsub(&end_time, &start_time, &diff_time);
+ 			if (diff_time.tv_sec > 0)
+-				return CHECKER_RUNNING;
++				return CHECKER_UPDATING_PATHS;
+ 		}
  	}
- 	do_check_state(&c[0], 0, PATH_PENDING);
- 	return_io_getevents_none();
-@@ -641,14 +672,19 @@ static void test_orphan_checker_cleanup(void **state)
- 		do_libcheck_init(&c[i], 4096, 30, &reqs[i]);
- 	aio_grp = get_aio_grp(c);
- 	do_check_state(&c[0], 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[0]), true);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c[0], PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
- 	check_aio_grp(aio_grp, 2, 0);
- 	libcheck_free(&c[0]);
-+	assert_int_equal(libcheck_need_wait(&c[0]), false);
- 	check_aio_grp(aio_grp, 2, 1);
- 	do_check_state(&c[1], 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c[1]), true);
- 	return_io_getevents_nr(NULL, 2, reqs, res);
- 	do_libcheck_pending(&c[1], PATH_UP);
-+	assert_int_equal(libcheck_need_wait(&c[1]), false);
- 	check_aio_grp(aio_grp, 1, 0);
- 	libcheck_free(&c[1]);
- 	check_aio_grp(aio_grp, 0, 0);
-@@ -667,8 +703,10 @@ static void test_orphan_reset_cleanup(void **state)
- 	do_libcheck_init(&c, 4096, 30, NULL);
- 	orphan_aio_grp = get_aio_grp(&c);
- 	do_check_state(&c, 0, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), true);
- 	return_io_getevents_none();
- 	do_libcheck_pending(&c, PATH_PENDING);
-+	assert_int_equal(libcheck_need_wait(&c), false);
- 	check_aio_grp(orphan_aio_grp, 1, 0);
- 	libcheck_free(&c);
- 	check_aio_grp(orphan_aio_grp, 1, 1);
-@@ -704,6 +742,7 @@ static void test_check_state_blksize(void **state)
- 	for (i = 0; i < 3; i++) {
- 		return_io_getevents_nr(NULL, 1, &reqs[i], &res[i]);
- 		do_check_state(&c[i], 1, chk_state[i]);
-+		assert_int_equal(libcheck_need_wait(&c[i]), false);
- 	}
- 	for (i = 0; i < 3; i++) {
- 		assert_false(is_checker_running(&c[i]));
-@@ -727,18 +766,22 @@ static void test_check_state_async(void **state)
- 		do_libcheck_init(&c[i], 4096, 30, &reqs[i]);
- 	for (i = 0; i < 256; i++) {
- 		do_check_state(&c[i], 0, PATH_PENDING);
-+		assert_int_equal(libcheck_need_wait(&c[i]), true);
- 		return_io_getevents_none();
- 		do_libcheck_pending(&c[i], PATH_PENDING);
-+		assert_int_equal(libcheck_need_wait(&c[i]), false);
- 		assert_true(is_checker_running(&c[i]));
- 	}
- 	do_check_state(&c[256], 0, PATH_PENDING);
--	return_io_getevents_nr(&full_timeout, 256, reqs, res);
--	return_io_getevents_nr(NULL, 1, &reqs[256], &res[256]);
-+		assert_int_equal(libcheck_need_wait(&c[256]), true);
-+	return_io_getevents_nr(&full_timeout, 257, reqs, res);
- 	do_libcheck_pending(&c[256], PATH_UP);
-+		assert_int_equal(libcheck_need_wait(&c[256]), false);
- 	assert_false(is_checker_running(&c[256]));
- 	libcheck_free(&c[256]);
- 	for (i = 0; i < 256; i++) {
- 		do_check_state(&c[i], 0, PATH_UP);
-+		assert_int_equal(libcheck_need_wait(&c[i]), false);
- 		assert_false(is_checker_running(&c[i]));
- 		libcheck_free(&c[i]);
- 	}
+ 	return CHECKER_FINISHED;
+@@ -2948,10 +2935,14 @@ checkerloop (void *ap)
+ 				vector_foreach_slot(vecs->mpvec, mpp, i)
+ 					sync_mpp(vecs, mpp, ticks);
+ 				vector_foreach_slot(vecs->pathvec, pp, i)
+-					pp->is_checked = false;
+-				checker_state = CHECKER_RUNNING;
++					pp->is_checked = CHECK_PATH_UNCHECKED;
++				checker_state = CHECKER_CHECKING_PATHS;
+ 			}
+-			checker_state = check_paths(vecs, ticks, &num_paths);
++			if (checker_state == CHECKER_CHECKING_PATHS)
++				checker_state = check_paths(vecs, ticks);
++			if (checker_state == CHECKER_UPDATING_PATHS)
++				checker_state = update_paths(vecs, &num_paths,
++							     start_time.tv_sec);
+ 			lock_cleanup_pop(vecs->lock);
+ 			if (checker_state != CHECKER_FINISHED) {
+ 				/* Yield to waiters */
 -- 
 2.45.0
 
