@@ -1,60 +1,60 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E62771C245D
-	for <dm-devel@lists.linux.dev>; Thu, 12 Sep 2024 21:49:58 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C72F81C2DC6
+	for <dm-devel@lists.linux.dev>; Thu, 12 Sep 2024 21:49:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726177800; cv=none; b=JhDEmKzuk9ol1UmE0zIyX+P8q6khKomfIic51WvThwbertJP2NIzq41LFw4bgxkQJtbWUJfek7Qsxm7BN9ZKkHEvEp+8vVzV6bXTV2DiZMgh/RVSxC/EFbpNzt5rURTzGKQf+q1dWbFLNt50C0Q3ntajkkkNolcYWTvQBouYhVY=
+	t=1726177800; cv=none; b=PmXbpDNc+BLcz2vax2FupdviWN1Pe3Q80t7h2L52jpFjVPKOh/i4OKS+axfSB1sNUjxM3N9KlFU5u8e1i2NOl817mrMCZ7cL+Ka/QjfQqTqPnfLR7pXlttrbhDO+YleQ2BxnxqNumc3xnH1cD0ta0tQlfLATLT6VnXS71yM6HUk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1726177800; c=relaxed/simple;
-	bh=2eLNpWaXo5h2Uq+UVHA2/M46W0rFqWl9FNBoCE/SyaU=;
+	bh=Fl6VC3BoQB8azv6QD2y91I6l3L+mwdlq6YS6nDY+yFs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=YboY28o4vgtnuHiy2bjYnp3xOPz6GMks/Wyef4UPCM40S16ROXUG89j1v9Djcspb/ZKBJG8bLw5RQ6TMDgtIpHNaJhyQVsK7n8xfqh38h5MhIywInLYj1HxwCz88/bxHKeApy6XInSGWupqcN8+Bbfsgv7pik9A75WmyGQmtWr4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=faAFtZht; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=QkEsAdiKSVLJ3lYAKmHOmGbbwaq/wOsCLyTUkTRtWbWH1SOugNI46m5jtmQsRK+zhKXyQ52uf18bBlrFvD8lq+nhhn4d5C24Q57QmWW0XepORRyQpwBoK2eP99kYD0PWjgfZhjuyieuCRgJsdFzjElQm2B2230cM3RPNG5fR4gg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Md/Unbdl; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="faAFtZht"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Md/Unbdl"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1726177797;
+	s=mimecast20190719; t=1726177796;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Fr7UV04cweDXsSfa23fVp+PMT4jhkYva5CkHrehsnpk=;
-	b=faAFtZhtjHrce+CrUsDzWEOMZp19gWtSPoMJad79PM+GXFxCbu9n5G32XLD5FCTwpdiqTu
-	UT4iiCLga70GeoN03Kim5lfvfYkOo5TooQkefd0Er1J7Ej6YeeYejPtMy7w7VyhDdo4LMB
-	vK5uM4aG4t/KfhKx2bBVg5SnHgBOPR8=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	bh=RG+0/fvmOk/1FDx7VOybO3KvD/kxhaNATCSWSCMZqEM=;
+	b=Md/Unbdl4ao2Dq74Uihb0MfCuEH9bxcarODNQLp2GxHR8Ztlw6QBGzUHI8ssUzWCP+nzR9
+	iTNbhUw4bvOaptAe4mURY6elXAKxgX/lkF8Y9qUwqH4Xsc2Gwg4CH/1QxeTNbmc+DLZ5WI
+	0oYep9IOilL4z2VBTKKvkwPLGqbZCKo=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-548-ARje9lBMPAupLqbn0Ijr0w-1; Thu,
- 12 Sep 2024 17:49:54 -0400
-X-MC-Unique: ARje9lBMPAupLqbn0Ijr0w-1
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-516-cIQFMsH0MXSJKTu1yurHJQ-1; Thu,
+ 12 Sep 2024 17:49:53 -0400
+X-MC-Unique: cIQFMsH0MXSJKTu1yurHJQ-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 72031195604F;
-	Thu, 12 Sep 2024 21:49:53 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6DD8E1955D4B;
+	Thu, 12 Sep 2024 21:49:52 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1245D1955D4A;
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2ADF31955DC9;
 	Thu, 12 Sep 2024 21:49:52 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 48CLnp17783937
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 48CLnob0783906
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 12 Sep 2024 17:49:51 -0400
+	Thu, 12 Sep 2024 17:49:50 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 48CLnp93783931;
-	Thu, 12 Sep 2024 17:49:51 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 48CLno7j783905;
+	Thu, 12 Sep 2024 17:49:50 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 19/22] libmultipath: add libcheck_need_wait checker function
-Date: Thu, 12 Sep 2024 17:49:44 -0400
-Message-ID: <20240912214947.783819-20-bmarzins@redhat.com>
+Subject: [PATCH v2 14/22] multipathd: update priority once after updating all paths
+Date: Thu, 12 Sep 2024 17:49:39 -0400
+Message-ID: <20240912214947.783819-15-bmarzins@redhat.com>
 In-Reply-To: <20240912214947.783819-1-bmarzins@redhat.com>
 References: <20240912214947.783819-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -63,171 +63,337 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Add a new optional checker class function, libcheck_need_wait() and a
-new function to call it, checker_need_wait(). This can be used to see if
-a path_checker is currently running. This will be used to determine if
-there are pending checkers that need to be waited for.
+Instead of updating the path priorities and possibly reloading the
+multipath device when each path is updated, wait till all paths
+have been updated, and then go through the multipath devices updating
+the priorities once, reloading if necessary.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers.c          | 12 +++++++++++-
- libmultipath/checkers.h          |  4 +++-
- libmultipath/checkers/directio.c | 10 ++++++++++
- libmultipath/checkers/tur.c      | 10 ++++++++++
- 4 files changed, 34 insertions(+), 2 deletions(-)
+ libmultipath/structs.h |   9 +++
+ multipathd/main.c      | 169 ++++++++++++++++++++++++++---------------
+ 2 files changed, 118 insertions(+), 60 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index f3e98352..e2eda58d 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -27,6 +27,7 @@ struct checker_class {
- 	void (*reset)(void);		     /* to reset the global variables */
- 	void *(*thread)(void *);	     /* async thread entry point */
- 	int (*pending)(struct checker *);    /* to recheck pending paths */
-+	bool (*need_wait)(struct checker *); /* checker needs waiting for */
- 	const char **msgtable;
- 	short msgtable_size;
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index af8e31e9..1f531d30 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -318,6 +318,7 @@ enum check_path_states {
+ 	CHECK_PATH_UNCHECKED,
+ 	CHECK_PATH_STARTED,
+ 	CHECK_PATH_CHECKED,
++	CHECK_PATH_NEW_UP,
+ 	CHECK_PATH_SKIPPED,
+ 	CHECK_PATH_REMOVED,
  };
-@@ -182,7 +183,8 @@ static struct checker_class *add_checker_class(const char *name)
- 	c->reset = (void (*)(void)) dlsym(c->handle, "libcheck_reset");
- 	c->thread = (void *(*)(void*)) dlsym(c->handle, "libcheck_thread");
- 	c->pending = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_pending");
--	/* These 4 functions can be NULL. call dlerror() to clear out any
-+	c->need_wait = (bool (*)(struct checker *)) dlsym(c->handle, "libcheck_need_wait");
-+	/* These 5 functions can be NULL. call dlerror() to clear out any
- 	 * error string */
- 	dlerror();
+@@ -421,6 +422,13 @@ enum prflag_value {
+ 	PRFLAG_SET,
+ };
  
-@@ -313,6 +315,14 @@ int checker_get_state(struct checker *c)
- 	return c->path_state;
++enum prio_update_type {
++	PRIO_UPDATE_NONE,
++	PRIO_UPDATE_NORMAL,
++	PRIO_UPDATE_NEW_PATH,
++	PRIO_UPDATE_MARGINAL,
++};
++
+ struct multipath {
+ 	char wwid[WWID_SIZE];
+ 	char alias_old[WWID_SIZE];
+@@ -464,6 +472,7 @@ struct multipath {
+ 	int queue_mode;
+ 	unsigned int sync_tick;
+ 	int synced_count;
++	enum prio_update_type prio_update;
+ 	uid_t uid;
+ 	gid_t gid;
+ 	mode_t mode;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 9519b6c5..3cda3c18 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1996,15 +1996,13 @@ mpvec_garbage_collector (struct vectors * vecs)
+  * best pathgroup, and this is the first path in the pathgroup to come back
+  * up, then switch to this pathgroup */
+ static int
+-followover_should_failback(struct path * pp)
++do_followover_should_failback(struct path * pp)
+ {
+ 	struct pathgroup * pgp;
+ 	struct path *pp1;
+ 	int i;
+ 
+-	if (pp->mpp->pgfailback != -FAILBACK_FOLLOWOVER ||
+-	    !pp->mpp->pg || !pp->pgindex ||
+-	    pp->pgindex != pp->mpp->bestpg)
++	if (!pp->pgindex || pp->pgindex != pp->mpp->bestpg)
+ 		return 0;
+ 
+ 	pgp = VECTOR_SLOT(pp->mpp->pg, pp->pgindex - 1);
+@@ -2017,6 +2015,26 @@ followover_should_failback(struct path * pp)
+ 	return 1;
  }
  
-+bool checker_need_wait(struct checker *c)
++static int
++followover_should_failback(struct multipath *mpp)
 +{
-+	if (!c || !c->cls || c->path_state != PATH_PENDING ||
-+	    !c->cls->need_wait)
-+		return false;
-+	return c->cls->need_wait(c);
++	struct path *pp;
++	struct pathgroup * pgp;
++	int i, j;
++
++	if (mpp->pgfailback != -FAILBACK_FOLLOWOVER || !mpp->pg)
++		return 0;
++
++	vector_foreach_slot (mpp->pg, pgp, i) {
++		vector_foreach_slot (pgp->paths, pp, j) {
++			if (pp->is_checked == CHECK_PATH_NEW_UP &&
++			    do_followover_should_failback(pp))
++				return 1;
++		}
++	}
++	return 0;
 +}
 +
- void checker_check (struct checker * c, int path_state)
+ static void
+ missing_uev_wait_tick(struct vectors *vecs)
  {
- 	if (!c)
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index b2342a1b..da91f499 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -2,6 +2,7 @@
- #define CHECKERS_H_INCLUDED
+@@ -2132,41 +2150,53 @@ partial_retrigger_tick(vector pathvec)
+ 	}
+ }
  
- #include <pthread.h>
-+#include <stdbool.h>
- #include "list.h"
- #include "defaults.h"
+-static int update_prio(struct path *pp, int force_refresh_all)
++static bool update_prio(struct multipath *mpp, bool refresh_all)
+ {
+ 	int oldpriority;
+-	struct path *pp1;
++	struct path *pp;
+ 	struct pathgroup * pgp;
+-	int i, j, changed = 0;
++	int i, j;
++	bool changed = false;
++	bool skipped_path = false;
+ 	struct config *conf;
  
-@@ -171,6 +172,7 @@ struct checker_context {
- int start_checker_thread (pthread_t *thread, const pthread_attr_t *attr,
- 			  struct checker_context *ctx);
- int checker_get_state(struct checker *c);
-+bool checker_need_wait(struct checker *c);
- void checker_check (struct checker *, int);
- int checker_is_sync(const struct checker *);
- const char *checker_name (const struct checker *);
-@@ -191,7 +193,7 @@ void *libcheck_thread(struct checker_context *ctx);
- void libcheck_reset(void);
- int libcheck_mp_init(struct checker *);
- int libcheck_pending(struct checker *c);
+-	oldpriority = pp->priority;
+-	if (pp->state != PATH_DOWN) {
+-		conf = get_multipath_config();
+-		pthread_cleanup_push(put_multipath_config, conf);
+-		pathinfo(pp, conf, DI_PRIO);
+-		pthread_cleanup_pop(1);
++	vector_foreach_slot (mpp->pg, pgp, i) {
++		vector_foreach_slot (pgp->paths, pp, j) {
++			if (pp->state == PATH_DOWN)
++				continue;
++			if (!refresh_all &&
++			    pp->is_checked != CHECK_PATH_CHECKED) {
++				skipped_path = true;
++				continue;
++			}
++			oldpriority = pp->priority;
++			conf = get_multipath_config();
++			pthread_cleanup_push(put_multipath_config, conf);
++			pathinfo(pp, conf, DI_PRIO);
++			pthread_cleanup_pop(1);
++			if (pp->priority != oldpriority)
++				changed = true;
++		}
+ 	}
 -
-+bool libcheck_need_wait(struct checker *c);
- 
- /*
-  * msgid => message map.
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index 904e3071..4beed02e 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -65,6 +65,7 @@ struct directio_context {
- 	struct aio_group *aio_grp;
- 	struct async_req *req;
- 	struct timespec endtime;
-+	bool waited_for;
- };
- 
- static struct aio_group *
-@@ -295,6 +296,7 @@ check_pending(struct directio_context *ct, struct timespec endtime)
- 	int r;
- 	struct timespec currtime, timeout;
- 
-+	ct->waited_for = true;
- 	while(1) {
- 		get_monotonic_time(&currtime);
- 		timespecsub(&endtime, &currtime, &timeout);
-@@ -346,6 +348,7 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
- 		get_monotonic_time(&ct->endtime);
- 		ct->endtime.tv_nsec += 1000 * 1000;
- 		normalize_timespec(&ct->endtime);
-+		ct->waited_for = false;
+-	if (pp->priority != oldpriority)
+-		changed = 1;
+-	else if (!force_refresh_all)
+-		return 0;
+-
+-	vector_foreach_slot (pp->mpp->pg, pgp, i) {
+-		vector_foreach_slot (pgp->paths, pp1, j) {
+-			if (pp1 == pp || pp1->state == PATH_DOWN)
++	if (!changed || !skipped_path)
++		return changed;
++	/*
++	 * If a path changed priorities, refresh the priorities of any
++	 * paths we skipped
++	 */
++	vector_foreach_slot (mpp->pg, pgp, i) {
++		vector_foreach_slot (pgp->paths, pp, j) {
++			if (pp->state == PATH_DOWN)
++				continue;
++			if (pp->is_checked == CHECK_PATH_CHECKED)
+ 				continue;
+-			oldpriority = pp1->priority;
+ 			conf = get_multipath_config();
+ 			pthread_cleanup_push(put_multipath_config, conf);
+-			pathinfo(pp1, conf, DI_PRIO);
++			pathinfo(pp, conf, DI_PRIO);
+ 			pthread_cleanup_pop(1);
+-			if (pp1->priority != oldpriority)
+-				changed = 1;
+ 		}
  	}
- 	ct->running++;
- 	if (!sync)
-@@ -386,6 +389,13 @@ static void set_msgid(struct checker *c, int state)
- 	}
+-	return changed;
++	return true;
  }
  
-+bool libcheck_need_wait(struct checker *c)
-+{
-+	struct directio_context *ct = (struct directio_context *)c->context;
-+	return (ct && ct->running && ct->req->state == PATH_PENDING &&
-+		!ct->waited_for);
-+}
-+
- int libcheck_pending(struct checker *c)
+ static int reload_map(struct vectors *vecs, struct multipath *mpp,
+@@ -2393,14 +2423,12 @@ static int
+ update_path_state (struct vectors * vecs, struct path * pp)
  {
- 	int rc;
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 81db565b..41d6b9c3 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -59,6 +59,7 @@ struct tur_checker_context {
- 	struct checker_context ctx;
- 	unsigned int nr_timeouts;
- 	struct timespec endtime;
-+	bool waited_for;
- };
+ 	int newstate;
+-	int new_path_up = 0;
+ 	int chkr_new_path_up = 0;
+ 	int disable_reinstate = 0;
+ 	int oldchkrstate = pp->chkrstate;
+ 	unsigned int checkint, max_checkint;
+ 	struct config *conf;
+-	int marginal_pathgroups, marginal_changed = 0;
+-	bool need_reload;
++	int marginal_pathgroups;
  
- int libcheck_init (struct checker * c)
-@@ -351,9 +352,17 @@ int check_pending(struct checker *c)
- 		ct->thread = 0;
+ 	conf = get_multipath_config();
+ 	checkint = conf->checkint;
+@@ -2462,7 +2490,7 @@ update_path_state (struct vectors * vecs, struct path * pp)
+ 			}
+ 			if (!pp->marginal) {
+ 				pp->marginal = 1;
+-				marginal_changed = 1;
++				pp->mpp->prio_update = PRIO_UPDATE_MARGINAL;
+ 			}
+ 		} else {
+ 			if (pp->marginal || pp->state == PATH_DELAYED)
+@@ -2470,7 +2498,7 @@ update_path_state (struct vectors * vecs, struct path * pp)
+ 					pp->dev);
+ 			if (marginal_pathgroups && pp->marginal) {
+ 				pp->marginal = 0;
+-				marginal_changed = 1;
++				pp->mpp->prio_update = PRIO_UPDATE_MARGINAL;
+ 			}
+ 		}
  	}
+@@ -2537,7 +2565,8 @@ update_path_state (struct vectors * vecs, struct path * pp)
+ 		 */
+ 		if (!disable_reinstate)
+ 			reinstate_path(pp);
+-		new_path_up = 1;
++		if (pp->mpp->prio_update != PRIO_UPDATE_MARGINAL)
++			pp->mpp->prio_update = PRIO_UPDATE_NEW_PATH;
  
-+	ct->waited_for = true;
- 	return tur_status;
+ 		if (oldchkrstate != PATH_UP && oldchkrstate != PATH_GHOST)
+ 			chkr_new_path_up = 1;
+@@ -2588,38 +2617,48 @@ update_path_state (struct vectors * vecs, struct path * pp)
+ 				LOG_MSG(2, pp);
+ 		}
+ 	}
+-
++	if (pp->mpp->prio_update == PRIO_UPDATE_NONE &&
++            (newstate == PATH_UP || newstate == PATH_GHOST))
++		pp->mpp->prio_update = PRIO_UPDATE_NORMAL;
+ 	pp->state = newstate;
++	return chkr_new_path_up ? CHECK_PATH_NEW_UP : CHECK_PATH_CHECKED;
++}
+ 
+-	if (pp->mpp->wait_for_udev)
+-		return CHECK_PATH_CHECKED;
+-	/*
+-	 * path prio refreshing
+-	 */
+-	condlog(4, "path prio refresh");
+-
+-	if (marginal_changed) {
+-		update_prio(pp, 1);
+-		reload_and_sync_map(pp->mpp, vecs);
+-	} else if (update_prio(pp, new_path_up) &&
+-		   pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio &&
+-		   pp->mpp->pgfailback == -FAILBACK_IMMEDIATE) {
++static int
++update_mpp_prio(struct vectors *vecs, struct multipath *mpp)
++{
++	bool need_reload, changed;
++	enum prio_update_type prio_update = mpp->prio_update;
++	mpp->prio_update = PRIO_UPDATE_NONE;
++
++	if (mpp->wait_for_udev || prio_update == PRIO_UPDATE_NONE)
++		return 0;
++	condlog(4, "prio refresh");
++
++	changed = update_prio(mpp, prio_update != PRIO_UPDATE_NORMAL);
++	if (prio_update == PRIO_UPDATE_MARGINAL)
++		return reload_and_sync_map(mpp, vecs);
++	if (changed && mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio &&
++	    mpp->pgfailback == -FAILBACK_IMMEDIATE) {
+ 		condlog(2, "%s: path priorities changed. reloading",
+-			pp->mpp->alias);
+-		reload_and_sync_map(pp->mpp, vecs);
+-	} else if (need_switch_pathgroup(pp->mpp, &need_reload)) {
+-		if (pp->mpp->pgfailback > 0 &&
+-		    (new_path_up || pp->mpp->failback_tick <= 0))
+-			pp->mpp->failback_tick = pp->mpp->pgfailback + 1;
+-		else if (pp->mpp->pgfailback == -FAILBACK_IMMEDIATE ||
+-			 (chkr_new_path_up && followover_should_failback(pp))) {
++			mpp->alias);
++		return reload_and_sync_map(mpp, vecs);
++	}
++	if (need_switch_pathgroup(mpp, &need_reload)) {
++		if (mpp->pgfailback > 0 &&
++		    (prio_update == PRIO_UPDATE_NEW_PATH ||
++		     mpp->failback_tick <= 0))
++			mpp->failback_tick = mpp->pgfailback + 1;
++		else if (mpp->pgfailback == -FAILBACK_IMMEDIATE ||
++			 (prio_update == PRIO_UPDATE_NEW_PATH &&
++			  followover_should_failback(mpp))) {
+ 			if (need_reload)
+-				reload_and_sync_map(pp->mpp, vecs);
++				return reload_and_sync_map(mpp, vecs);
+ 			else
+-				switch_pathgroup(pp->mpp);
++				switch_pathgroup(mpp);
+ 		}
+ 	}
+-	return CHECK_PATH_CHECKED;
++	return 0;
  }
  
-+bool libcheck_need_wait(struct checker *c)
-+{
-+	struct tur_checker_context *ct = c->context;
-+	return (ct && ct->thread && uatomic_read(&ct->running) != 0 &&
-+		!ct->waited_for);
-+}
-+
- int libcheck_pending(struct checker *c)
- {
- 	struct tur_checker_context *ct = c->context;
-@@ -463,6 +472,7 @@ int libcheck_check(struct checker * c)
- 		pthread_mutex_unlock(&ct->lock);
- 		ct->fd = c->fd;
- 		ct->timeout = c->timeout;
-+		ct->waited_for = false;
- 		uatomic_add(&ct->holders, 1);
- 		uatomic_set(&ct->running, 1);
- 		tur_set_async_timeout(c);
+ static int
+@@ -2859,7 +2898,7 @@ update_paths(struct vectors *vecs, int *num_paths_p, time_t start_secs)
+ 			i--;
+ 		else {
+ 			pp->is_checked = rc;
+-			if (rc == CHECK_PATH_CHECKED)
++			if (rc == CHECK_PATH_CHECKED || rc == CHECK_PATH_NEW_UP)
+ 				(*num_paths_p)++;
+ 		}
+ 		if (++paths_checked % 128 == 0 &&
+@@ -2932,8 +2971,10 @@ checkerloop (void *ap)
+ 			vector_foreach_slot(vecs->mpvec, mpp, i)
+ 				mpp->synced_count = 0;
+ 			if (checker_state == CHECKER_STARTING) {
+-				vector_foreach_slot(vecs->mpvec, mpp, i)
++				vector_foreach_slot(vecs->mpvec, mpp, i) {
+ 					sync_mpp(vecs, mpp, ticks);
++					mpp->prio_update = PRIO_UPDATE_NONE;
++				}
+ 				vector_foreach_slot(vecs->pathvec, pp, i)
+ 					pp->is_checked = CHECK_PATH_UNCHECKED;
+ 				checker_state = CHECKER_CHECKING_PATHS;
+@@ -2943,6 +2984,14 @@ checkerloop (void *ap)
+ 			if (checker_state == CHECKER_UPDATING_PATHS)
+ 				checker_state = update_paths(vecs, &num_paths,
+ 							     start_time.tv_sec);
++			if (checker_state == CHECKER_FINISHED) {
++				vector_foreach_slot(vecs->mpvec, mpp, i) {
++					if (update_mpp_prio(vecs, mpp) == 2) {
++						/* multipath device deleted */
++						i--;
++					}
++				}
++			}
+ 			lock_cleanup_pop(vecs->lock);
+ 			if (checker_state != CHECKER_FINISHED) {
+ 				/* Yield to waiters */
 -- 
 2.45.0
 
