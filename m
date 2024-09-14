@@ -1,313 +1,163 @@
-Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com [209.85.167.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from HK2PR02CU002.outbound.protection.outlook.com (mail-eastasiaazon11010027.outbound.protection.outlook.com [52.101.128.27])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F4871D9324
-	for <dm-devel@lists.linux.dev>; Fri, 13 Sep 2024 12:21:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.51
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726230076; cv=none; b=B4jjcUNmpvuWF/iTM1uJYHpwbsikXfqKynXLxf+m+jYbA0IMhpypOFfoZNKBeny2DP+fF5VaIg9esKKMvBnkbS2mhdWXdH/Kk5uU+brRmTy+zGVtBq4J7cWFshF2bGqsAeynGj891WdfQRMzwTeUCnmabI/kGeGDPVRk7qHEoWI=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1726230076; c=relaxed/simple;
-	bh=625Oo2NDSYSjj2f8r/wEx8RCA+JzmVNn6YN3FDWjQJg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=uWAmnnGopaCNTd/nUiMjHp8hTwLHTvnmSeYFTTT/vg1SWZZ9L/TU2jx2K7lLzYFU+q3bc3QPSKYB6us8NOFGk/RPIUzLFe/Txi3TgxNT6koUN/IGPtcaXrcGo0bldErCccsTcMN2bH71/txRuNQ+/oRPXkl6coexlroHbKTG4gQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=U1aNY8RH; arc=none smtp.client-ip=209.85.167.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11BAB748D
+	for <dm-devel@lists.linux.dev>; Sat, 14 Sep 2024 06:38:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.128.27
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1726295914; cv=fail; b=TBs4eM3X92B6jbOF7cRTY6y6CrzmkSw8FqPvOUc+hfFuz/W2uL2euEOLOw4eDa0yVLIdQ5fPGEA8OthLGk5AMZ9Xik3olNmiYuVf0gFsQckNFLwmWbeeBZz0Yd2IHvvwKAzw4E/OW0u0iHtafecDWRnWQA7hu8UUyynl5p9KW98=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1726295914; c=relaxed/simple;
+	bh=fJ+tyGB8i1BiVrdB3EGjGln8fCuGsFSY5CgwgYbbqRg=;
+	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=qENaYCb3vvBsBUhYpaWWH76l789Xq04yuF8wDhJDIxcqWyZg78DxoiASayJL7S6qsgE3/S+fqyFZQcVkpW6aMZm0qUpHeGrPly1cX1/5Yhipp1vohc43V2lEKUHmM8ET4AHMQiceYqgrHdfbTbB2SJPovpnqrXca5sjBoyog1I0=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=jjqTyhJd; arc=fail smtp.client-ip=52.101.128.27
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="U1aNY8RH"
-Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-53660856a21so860445e87.2
-        for <dm-devel@lists.linux.dev>; Fri, 13 Sep 2024 05:21:12 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1726230071; x=1726834871; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=lo4ZVnqapTTwf1TxU7CAaNVwjVyFLb9hYsDih6bfwrs=;
-        b=U1aNY8RHnTqxtGX6Cf5ABPpK8OBJmfytyn8GGdPn9U1hynGmAo0pPiPFcykRwm0xvL
-         FmpMNOiwa3JD/99gYlMuuRFq9GqT46a+cRID6h+oYRX8y4m0B8qPKyf3bMkcLTmpc0K8
-         qQ2/8BozTOaSmyw0ZgzOZZKK0PQcisUsDqtJrXi9F5Hz8OKDWuXYq0oGa4N/sxRbZUrW
-         /fouEe70qcDD6qtMYeAXL4veCKwYq+3ZZ2ZuLW1mYhnRd83+9m1iAUYnSY5mHPYPRKnv
-         14RRGVY5m9hSXcB2wlFmfsGCjBHuUvrRVntGk1l5OmBIrOBwth0KknFLGtmiPaqhLFSo
-         3yIA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1726230071; x=1726834871;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=lo4ZVnqapTTwf1TxU7CAaNVwjVyFLb9hYsDih6bfwrs=;
-        b=BEZRAKNOGwX4txtupQpdY67TGCFyRoebu1NImPxNqi3T6Hbh4mTnO3JVB/0dHk+7pI
-         BgErQOUNybjdXwM1vELmAJVMdxHTp1nndZNcW8kfFNIL5G/sSMgn9HZpPiXvhGbe960k
-         wTlng/sSinYff72/3LUJlIpQaiLTrYJeadwHGWmGE9xPNkoqOANZGAIW1k0cp1r0ijBi
-         tH5NPckmSA+7GAw59G8WzbZlmMNXqc4/BqGKvOwe5PECREMCp+ei16PwMS+o9f+28C6R
-         Ob1d+UK8aQq3IOZ4hRsprCfoi7WjIsWqir2ZSxpyDQU4g4aXPaTcwmx8ullcVSxRxLkI
-         wwFA==
-X-Forwarded-Encrypted: i=1; AJvYcCWx0gmULOwIZ6159BijiqMlzJ5smQ5AGNYo2iXwhqgHq3ueQLUOYZBnj6Oj8VmR+WByItAKwqWGiQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwKJL4RWZtUyMIBO8P+9eT9ms62+BbRv7eeM3SUWLK0mfKYY6VB
-	7IfSZQ1W7BKVYmVfiUeCUj5fVuLhIXhQyoRJFnnafm6Rzthdm91LrbqVZ+JaXw4=
-X-Google-Smtp-Source: AGHT+IHTw5M9AaVBseki1oFupqjrbJ5LF7PaDftiWnMSBPnVi9nRpuuPAvJasGEWRAVEgo0fmUCmjg==
-X-Received: by 2002:a05:6512:6d2:b0:530:aeea:27e1 with SMTP id 2adb3069b0e04-5367ff33789mr1789612e87.50.1726230069590;
-        Fri, 13 Sep 2024 05:21:09 -0700 (PDT)
-Received: from eriador.lumag.spb.ru (2001-14ba-a0c3-3a00--7a1.rev.dnainternet.fi. [2001:14ba:a0c3:3a00::7a1])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5365f90e3besm2252267e87.299.2024.09.13.05.21.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 13 Sep 2024 05:21:09 -0700 (PDT)
-Date: Fri, 13 Sep 2024 15:21:07 +0300
-From: Dmitry Baryshkov <dmitry.baryshkov@linaro.org>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: "Gaurav Kashyap (QUIC)" <quic_gaurkash@quicinc.com>, 
-	Neil Armstrong <neil.armstrong@linaro.org>, Bartosz Golaszewski <brgl@bgdev.pl>, 
-	Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, 
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Adrian Hunter <adrian.hunter@intel.com>, 
-	Asutosh Das <quic_asutoshd@quicinc.com>, Ritesh Harjani <ritesh.list@gmail.com>, 
-	Ulf Hansson <ulf.hansson@linaro.org>, Alim Akhtar <alim.akhtar@samsung.com>, 
-	Avri Altman <avri.altman@wdc.com>, Bart Van Assche <bvanassche@acm.org>, 
-	"James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, 
-	"Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
-	Bjorn Andersson <andersson@kernel.org>, Konrad Dybcio <konradybcio@kernel.org>, 
-	"manivannan.sadhasivam@linaro.org" <manivannan.sadhasivam@linaro.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, 
-	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, 
-	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, "linux-mmc@vger.kernel.org" <linux-mmc@vger.kernel.org>, 
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-fscrypt@vger.kernel.org" <linux-fscrypt@vger.kernel.org>, 
-	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-arm-msm@vger.kernel.org" <linux-arm-msm@vger.kernel.org>, 
-	"bartosz.golaszewski" <bartosz.golaszewski@linaro.org>
-Subject: Re: [PATCH v6 09/17] soc: qcom: ice: add HWKM support to the ICE
- driver
-Message-ID: <egtwyk2rp3mtnw2ry6npq5xjfhjvtnymbxy66zevtdi7yvaav4@gcnmrmtqro4b>
-References: <20240906-wrapped-keys-v6-9-d59e61bc0cb4@linaro.org>
- <7uoq72bpiqmo2olwpnudpv3gtcowpnd6jrifff34ubmfpijgc6@k6rmnalu5z4o>
- <66953e65-2468-43b8-9ccf-54671613c4ab@linaro.org>
- <ivibs6qqxhbikaevys3iga7s73xq6dzq3u43gwjri3lozkrblx@jxlmwe5wiq7e>
- <98cc8d71d5d9476297a54774c382030d@quicinc.com>
- <CAA8EJpp_HY+YmMCRwdteeAHnSHtjuHb=nFar60O_PwLwjk0mNA@mail.gmail.com>
- <9bd0c9356e2b471385bcb2780ff2425b@quicinc.com>
- <20240912231735.GA2211970@google.com>
- <CAA8EJpq3sjfB0BsJTs3_r_ZFzhrrpy-A=9Dx9ks2KrDNYCntdg@mail.gmail.com>
- <20240913045716.GA2292625@google.com>
+	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="jjqTyhJd"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=tkFodL+/wJMvgPhTOBDoSw5cPe4DdK1BtVrwOqnCLI/r8uva9itw9bDCyWW0rMjB/56eL1STLQDdWA1GG98VDRFxEnCwthlD1iWdfH+MsrwXm48HXYogbwY/+QseUwcKPX18BoKhDYK9STMti4NovW5r797KduSvBjkCjyjkoqTgTbJDSDc1NlvuxFK7AW7AClQ+T1/J8t9fvohfDTxwmHmZi8k49IEdKfBA/e5vED99K5GLGkA+/MY/d4RDegXMyZk8me0av3148ov0bVWh6BuiAFt0xmaLDZpmUa2TSZE2XxYGzWLfZUcdkhqrwAXNnNY071D8IQJPX0wxAY1nOQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=Q/qfS9GNPnFZg6LSoys3wr4HTtl/VwgvOGK5noHbitE=;
+ b=TeDjCMWxgwi0VQRdnCiMyxTDO8i6o7joWfJJCUveeOpadS7CKaTgD/+kLcfrRNc+X7azyFYGbHg7BRBVJnkiM1kMV0ykLJ0xh/yIy0d9i9aC0UrasqTehCqSezUOpSYtG1vkPUxZ4wQVGet23POUhE0B+e5BeJp8iZV93C5z8fVqVmoz2UpwjepUnejeqopVAiJ9K5wPUC+zQfkLv8PUaD73S0UMMhBdXOcNk5TsJw30epLepx+EGY0AKRFBrSi+DCp3jQVKOMPH8PhVSwHVimu2Sua0nb+FZWQ3jTvAu/3QfQ4XN/PnHZzswF1VPi4qEZZM8vNoVQxB/jQrsIAdOw==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
+ dkim=pass header.d=vivo.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=Q/qfS9GNPnFZg6LSoys3wr4HTtl/VwgvOGK5noHbitE=;
+ b=jjqTyhJdv5TZ42orsU+HmzSdRHXLmR8rPysqnqlBheEwopUYEhrUPa+yXpINlacFIiELlrTZv7MnnSLYNIpg/x6xrRd3QfeOxaSnYv9fANt2IvhenVMZtI/9LBE2lsvQUO4ZZ8TgKSxlOREcWDfrzIReaoBzdamzYYgX4LhoP/k2HpJJWo2Mdko1qu82tkmfya4y5t3tS+X6GKYTvY0VPvNfxqS4QNKyIS9epcd1Kt1lKDO9qqsoKmxVOqS8pLHxs+sFI+iKDFtRnrjm/O3w8LPkrN9smwc4m573nyUXBSgWSSTlM9IJermEkUeSu61JJZcUcZzs50JfhurYlVFGtw==
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=vivo.com;
+Received: from SEZPR06MB5899.apcprd06.prod.outlook.com (2603:1096:101:e3::16)
+ by OS8PR06MB7322.apcprd06.prod.outlook.com (2603:1096:604:28c::13) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7939.24; Sat, 14 Sep
+ 2024 06:38:29 +0000
+Received: from SEZPR06MB5899.apcprd06.prod.outlook.com
+ ([fe80::8bfc:f1ee:8923:77ce]) by SEZPR06MB5899.apcprd06.prod.outlook.com
+ ([fe80::8bfc:f1ee:8923:77ce%3]) with mapi id 15.20.7962.021; Sat, 14 Sep 2024
+ 06:38:29 +0000
+From: Shen Lichuan <shenlichuan@vivo.com>
+To: msakai@redhat.com
+Cc: snitzer@kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	opensource.kernel@vivo.com,
+	Shen Lichuan <shenlichuan@vivo.com>
+Subject: [PATCH v1] dm vdo indexer: Convert comma to semicolon
+Date: Sat, 14 Sep 2024 14:38:08 +0800
+Message-Id: <20240914063808.3471-1-shenlichuan@vivo.com>
+X-Mailer: git-send-email 2.17.1
+Content-Type: text/plain
+X-ClientProxiedBy: SI2PR06CA0001.apcprd06.prod.outlook.com
+ (2603:1096:4:186::21) To SEZPR06MB5899.apcprd06.prod.outlook.com
+ (2603:1096:101:e3::16)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240913045716.GA2292625@google.com>
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SEZPR06MB5899:EE_|OS8PR06MB7322:EE_
+X-MS-Office365-Filtering-Correlation-Id: 5627f207-6c48-4788-429a-08dcd487d823
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|376014|52116014|366016|1800799024|38350700014;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?Bnx5tHmBIu21aBTh6KZuG+G6l2L/779rMGu5Pl/poA9p9yNMXXqyuZbc2YhI?=
+ =?us-ascii?Q?EiiN+n2/L4W8ovWlZLP1HBNqaoCT1DcjYK8m2FAf/QI1gy369yjsQPU0eIQ1?=
+ =?us-ascii?Q?pnRYv9xIXN0YmCOOyqAihsxZsm3Gofg0wf/gwjz4+mX5zps0LMR866B9qoDO?=
+ =?us-ascii?Q?WgUl3qm7RfYEYCT2vJfvRTWZs818D3Yd/4Vt6F9/vrdif9F5aJbIVBXH9QEx?=
+ =?us-ascii?Q?AWswAwpTFp2hvWQaCXNP6P7urBzEuHwGCeT+HhbrhGF+uJ9lb4/7b89Kf9dG?=
+ =?us-ascii?Q?zowlP/5YQSfJ8PxJgqc5B0XsUyyfzxlD3aGLD5fZpVXtDuweTJ1xCSm/2r+h?=
+ =?us-ascii?Q?CZcouDn00IuvHtLxrZgC0ARd80w89VPFpt/CP2Yt5xxc7cV8opQKu1pr/74K?=
+ =?us-ascii?Q?nTPWteLESJyZoSFJcrRfHaXiz3SuaJRkRWHtSB6lvhdR2bdOWa9x45iaIPmr?=
+ =?us-ascii?Q?jVM9aExcJPRyXc+VW1SWGu+Ylsi9uiZU50ZYVOlTDv2k2rgwFKlwBwYc+kNb?=
+ =?us-ascii?Q?w89ZzoqC5kb2w70cggg9RFEi7O6P/0dT33kCOFij1y+wQBuEpChy0VzphDU+?=
+ =?us-ascii?Q?qvmj+LgBkFWjV9rDGztf0BZSs/lAxPe9qK3dYYdwhT2haRhBK+dw9SsoYxzh?=
+ =?us-ascii?Q?v9d04Yj75EXBgO0go8/yv0fKGwR/m4pVl8VrRfWaJrlDyxet7+ciDKnSSU4Y?=
+ =?us-ascii?Q?q90env9lOywRlMrGRvyBl69r8giM0OuL8lV5Z3Gh8Xeihcx623yHSeEp7+Ox?=
+ =?us-ascii?Q?u0J6VBAjT7zloxbyC+bWPtOsN1qfpxPUEFkC+JoJ/pxYLELjAVQm0wM7YxSi?=
+ =?us-ascii?Q?b24u9e15LBQojleMl0qqBJv7gIwuRFBLRaE8LxNz5Cqbc4uGB6pVcvqvB/7L?=
+ =?us-ascii?Q?RDXfNIYWO8X6AOdt5IG1NNFD1/YJOwd2j8L9V2TesO1PQgZiaXvA9nVSGvnj?=
+ =?us-ascii?Q?6XB5H7PCe6FJtDPfLIaPnEoShpp7WHIKqfF0U9MlfcZbprgmRtuJuZO3roqJ?=
+ =?us-ascii?Q?62Fbe+JD0Etsy/CfHGqNk+/yCB+XUl7GOkqnINlavttvBzqHdKKJX1pxfxZ4?=
+ =?us-ascii?Q?FsDgLYdOpeGGnTjGG3KyVJrh58CuCQl54GNBMz+gimxRiSIBbiCbOFaFxlpp?=
+ =?us-ascii?Q?Nh40smVxrhfIua9rKsd0UwBofIofZOgdrHLXep2WZEHptdQoA4TDM1Bi2enT?=
+ =?us-ascii?Q?oDNGk0rG5jLwEdn4I1MTdTqXW2tCPzddDUGg/fR8s1fLT57mR36FQSAw2ll6?=
+ =?us-ascii?Q?NCRW+28drQUuMpVM8J9QtKt8aahdYc2JHTi+AkkdmqP+8TYLaPExq08pJkPf?=
+ =?us-ascii?Q?EdkMXJXMeFsxjSuCRwVeIs6B4deccOlyjx5POTmNF/bFTPyDz+ZVeIyRQdCC?=
+ =?us-ascii?Q?chm47gHeLxiO1UMdlKpIce2J/555y7K7tPT85wTUrmmj0ZMqYw=3D=3D?=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SEZPR06MB5899.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(52116014)(366016)(1800799024)(38350700014);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?ihsAet+QEPZ2GUwjD85KuMgxnfebThPedAOXSn9YP8LPO9dDOFlZWeNPwhKP?=
+ =?us-ascii?Q?hLFxIdzwKmUPMcccz3XrP1TP/kO7ZrqGzg53tGZO0RmKm9F+Fc/ALUznzr2G?=
+ =?us-ascii?Q?smV0NmoFvoj2o56tXOpSIb50TzvC3cASzWwj5pcC2qWF634gIpiV0HjFYgOC?=
+ =?us-ascii?Q?e3DwBwqYBqL0GecL0xUgpNoxej6lTiNKy4QKiVyJK7Apd7bu0Ri0sVKOWtWD?=
+ =?us-ascii?Q?6oRtkMSxs/VZCqqIld1lHbUrcfhav/NhOyw3MPm8Q0h064GBFkWVlLuMV0t1?=
+ =?us-ascii?Q?qdIOUSP9LHfaXyXb9zmEwg2xJ7xlO06zjzlCP6X16hfFeEjkWZUIxh68aVlA?=
+ =?us-ascii?Q?wTeCKGMAjbg4ZbOeamh1VZ3UHs7NC1YinSpCCAH8x+9qAUIbaLPI5GnqtM05?=
+ =?us-ascii?Q?++wKDkX3BZzQEE2AHmTXrO6a6CB0dEnljOw8saasD+0qBYzQsC6NbPCb00/Q?=
+ =?us-ascii?Q?izUY7T5HGZfa1CA3bM6yXvZ72rlgMX1L77IWdyxDPynoCiKJABMnilQqeJIt?=
+ =?us-ascii?Q?9yD2WTRgfIye9yWqwZV1YiJKJSWzqzv7Qgn0BZBe5ze3GNHUnJP7SSb+80mf?=
+ =?us-ascii?Q?5h4qS0YUeZXinTJEImW8ViDsnemtdSdesqUnAoUbmigV193hIPWY3NTs3UoP?=
+ =?us-ascii?Q?vnPKQu94mpipyVLv/zyf9x6h2/8eoIlzKin/wAA7XmsK4OIdhmGJ5haYguNe?=
+ =?us-ascii?Q?LPxh5yfbyD1U6vAtngx+iD5DSQ+q1eVkB3qWBBapRl6ZQ44FMRpw/vT7Wa5T?=
+ =?us-ascii?Q?GVJC25knHWnhYG8QxbCsFqwk2tGejjLSKWBFpR0fnFHo1NAuZh5uy2GfCGLM?=
+ =?us-ascii?Q?PYdB0u19NhXElAxTSoojkZC5LGC23lViQn3eUw6TZp5Pxmlbp33Fh1zOluxp?=
+ =?us-ascii?Q?1vepTiN6hWHZwJSH0vmkAhehQ8PDWx5EkFbI44IovIaS3J0TU27T+24QcnDb?=
+ =?us-ascii?Q?DhEouxBDc6Srsf19fvtnCHF2BuRcCcYbvaeruxn4WTv98bDDp+m969sKI6tj?=
+ =?us-ascii?Q?e0tQCgCcUZwJWopPEwOF7qgaIXOFvQyUjOlHAH9zxo7OSRtSVx61TmW1DvX/?=
+ =?us-ascii?Q?TscWxcj6pXpDxDLcp0NKxOzpdlfXNG4cNV8j6/dtieOgxg4+DkRedagyk+g/?=
+ =?us-ascii?Q?YV4/zFFyU7+2DJG2by+4XXekc0k+sQ7qJGsFdsdEezQBI86wk3/aTtZT3KSY?=
+ =?us-ascii?Q?QaAwq5GkenIcsoS7pS34RgrIzAVGqD0fbgRngj5xXXjizDC7PwLVDAXJG6d9?=
+ =?us-ascii?Q?23Q08j0uToJCWNy8M34hr4wyykJf1f3si4CxfqgwxL6vpdl+Q3H0qmp1QD7T?=
+ =?us-ascii?Q?9WCKgdp82PXeXUc3Nsdl8xdrrqkGZvB0EY1MyyHYzyWfMNlRaCQIiEXj1ndg?=
+ =?us-ascii?Q?Cc68E/y958+4284THBgbO7I70HUTmbsWUG0Lp49xlUKhJGTiOXDsvZ9JyhEY?=
+ =?us-ascii?Q?9zJYDkHxCjmIFdNfPEl00mZchgO8gfNgAKwOWQR0A8YEN+EEccJ5u7JcIYEW?=
+ =?us-ascii?Q?4+0EhuxNsrWUvIArv1AN/AWntNDFVkrYFqfjbZq9/0SeKUUMOq/OBK1qrVhi?=
+ =?us-ascii?Q?Qq6P8iKOhxMZxgRTwfn0j1DBnCFFi1X7RXKogVBV?=
+X-OriginatorOrg: vivo.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 5627f207-6c48-4788-429a-08dcd487d823
+X-MS-Exchange-CrossTenant-AuthSource: SEZPR06MB5899.apcprd06.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 14 Sep 2024 06:38:29.3516
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: FhvCsMnsCSv8Vgav9HpuGsF07oKXbsZ6jrk1k9E5A1EPF5ArleAxE17Z4yoop0nk/UYq5HPfRglh3+PBIf8Yew==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: OS8PR06MB7322
 
-On Fri, Sep 13, 2024 at 04:57:16AM GMT, Eric Biggers wrote:
-> On Fri, Sep 13, 2024 at 07:28:33AM +0300, Dmitry Baryshkov wrote:
-> > On Fri, 13 Sept 2024 at 02:17, Eric Biggers <ebiggers@kernel.org> wrote:
-> > >
-> > > On Thu, Sep 12, 2024 at 10:17:03PM +0000, Gaurav Kashyap (QUIC) wrote:
-> > > >
-> > > > On Monday, September 9, 2024 11:29 PM PDT, Dmitry Baryshkov wrote:
-> > > > > On Tue, 10 Sept 2024 at 03:51, Gaurav Kashyap (QUIC)
-> > > > > <quic_gaurkash@quicinc.com> wrote:
-> > > > > >
-> > > > > > Hello Dmitry and Neil
-> > > > > >
-> > > > > > On Monday, September 9, 2024 2:44 AM PDT, Dmitry Baryshkov wrote:
-> > > > > > > On Mon, Sep 09, 2024 at 10:58:30AM GMT, Neil Armstrong wrote:
-> > > > > > > > On 07/09/2024 00:07, Dmitry Baryshkov wrote:
-> > > > > > > > > On Fri, Sep 06, 2024 at 08:07:12PM GMT, Bartosz Golaszewski wrote:
-> > > > > > > > > > From: Gaurav Kashyap <quic_gaurkash@quicinc.com>
-> > > > > > > > > >
-> > > > > > > > > > Qualcomm's ICE (Inline Crypto Engine) contains a proprietary
-> > > > > > > > > > key management hardware called Hardware Key Manager (HWKM).
-> > > > > > > > > > Add
-> > > > > > > HWKM
-> > > > > > > > > > support to the ICE driver if it is available on the platform.
-> > > > > > > > > > HWKM primarily provides hardware wrapped key support where
-> > > > > the
-> > > > > > > > > > ICE
-> > > > > > > > > > (storage) keys are not available in software and instead
-> > > > > > > > > > protected in
-> > > > > > > hardware.
-> > > > > > > > > >
-> > > > > > > > > > When HWKM software support is not fully available (from
-> > > > > > > > > > Trustzone), there can be a scenario where the ICE hardware
-> > > > > > > > > > supports HWKM, but it cannot be used for wrapped keys. In this
-> > > > > > > > > > case, raw keys have to be used without using the HWKM. We
-> > > > > > > > > > query the TZ at run-time to find out whether wrapped keys
-> > > > > > > > > > support is
-> > > > > > > available.
-> > > > > > > > > >
-> > > > > > > > > > Tested-by: Neil Armstrong <neil.armstrong@linaro.org>
-> > > > > > > > > > Signed-off-by: Gaurav Kashyap <quic_gaurkash@quicinc.com>
-> > > > > > > > > > Signed-off-by: Bartosz Golaszewski
-> > > > > > > > > > <bartosz.golaszewski@linaro.org>
-> > > > > > > > > > ---
-> > > > > > > > > >   drivers/soc/qcom/ice.c | 152
-> > > > > > > +++++++++++++++++++++++++++++++++++++++++++++++--
-> > > > > > > > > >   include/soc/qcom/ice.h |   1 +
-> > > > > > > > > >   2 files changed, 149 insertions(+), 4 deletions(-)
-> > > > > > > > > >
-> > > > > > > > > >   int qcom_ice_enable(struct qcom_ice *ice)
-> > > > > > > > > >   {
-> > > > > > > > > > + int err;
-> > > > > > > > > > +
-> > > > > > > > > >           qcom_ice_low_power_mode_enable(ice);
-> > > > > > > > > >           qcom_ice_optimization_enable(ice);
-> > > > > > > > > > - return qcom_ice_wait_bist_status(ice);
-> > > > > > > > > > + if (ice->use_hwkm)
-> > > > > > > > > > +         qcom_ice_enable_standard_mode(ice);
-> > > > > > > > > > +
-> > > > > > > > > > + err = qcom_ice_wait_bist_status(ice); if (err)
-> > > > > > > > > > +         return err;
-> > > > > > > > > > +
-> > > > > > > > > > + if (ice->use_hwkm)
-> > > > > > > > > > +         qcom_ice_hwkm_init(ice);
-> > > > > > > > > > +
-> > > > > > > > > > + return err;
-> > > > > > > > > >   }
-> > > > > > > > > >   EXPORT_SYMBOL_GPL(qcom_ice_enable);
-> > > > > > > > > > @@ -150,6 +282,10 @@ int qcom_ice_resume(struct qcom_ice
-> > > > > *ice)
-> > > > > > > > > >                   return err;
-> > > > > > > > > >           }
-> > > > > > > > > > + if (ice->use_hwkm) {
-> > > > > > > > > > +         qcom_ice_enable_standard_mode(ice);
-> > > > > > > > > > +         qcom_ice_hwkm_init(ice); }
-> > > > > > > > > >           return qcom_ice_wait_bist_status(ice);
-> > > > > > > > > >   }
-> > > > > > > > > >   EXPORT_SYMBOL_GPL(qcom_ice_resume);
-> > > > > > > > > > @@ -157,6 +293,7 @@ EXPORT_SYMBOL_GPL(qcom_ice_resume);
-> > > > > > > > > >   int qcom_ice_suspend(struct qcom_ice *ice)
-> > > > > > > > > >   {
-> > > > > > > > > >           clk_disable_unprepare(ice->core_clk);
-> > > > > > > > > > + ice->hwkm_init_complete = false;
-> > > > > > > > > >           return 0;
-> > > > > > > > > >   }
-> > > > > > > > > > @@ -206,6 +343,12 @@ int qcom_ice_evict_key(struct qcom_ice
-> > > > > > > > > > *ice,
-> > > > > > > int slot)
-> > > > > > > > > >   }
-> > > > > > > > > >   EXPORT_SYMBOL_GPL(qcom_ice_evict_key);
-> > > > > > > > > > +bool qcom_ice_hwkm_supported(struct qcom_ice *ice) {  return
-> > > > > > > > > > +ice->use_hwkm; }
-> > > > > > > EXPORT_SYMBOL_GPL(qcom_ice_hwkm_supported);
-> > > > > > > > > > +
-> > > > > > > > > >   static struct qcom_ice *qcom_ice_create(struct device *dev,
-> > > > > > > > > >                                           void __iomem *base)
-> > > > > > > > > >   {
-> > > > > > > > > > @@ -240,6 +383,7 @@ static struct qcom_ice
-> > > > > > > > > > *qcom_ice_create(struct
-> > > > > > > device *dev,
-> > > > > > > > > >                   engine->core_clk = devm_clk_get_enabled(dev, NULL);
-> > > > > > > > > >           if (IS_ERR(engine->core_clk))
-> > > > > > > > > >                   return ERR_CAST(engine->core_clk);
-> > > > > > > > > > + engine->use_hwkm = qcom_scm_has_wrapped_key_support();
-> > > > > > > > >
-> > > > > > > > > This still makes the decision on whether to use HW-wrapped keys
-> > > > > > > > > on behalf of a user. I suppose this is incorrect. The user must
-> > > > > > > > > be able to use raw keys even if HW-wrapped keys are available on
-> > > > > > > > > the platform. One of the examples for such use-cases is if a
-> > > > > > > > > user prefers to be able to recover stored information in case of
-> > > > > > > > > a device failure (such recovery will be impossible if SoC is
-> > > > > > > > > damaged and HW-
-> > > > > > > wrapped keys are used).
-> > > > > > > >
-> > > > > > > > Isn't that already the case ? the
-> > > > > BLK_CRYPTO_KEY_TYPE_HW_WRAPPED
-> > > > > > > size
-> > > > > > > > is here to select HW-wrapped key, otherwise the ol' raw key is passed.
-> > > > > > > > Just look the next patch.
-> > > > > > > >
-> > > > > > > > Or did I miss something ?
-> > > > > > >
-> > > > > > > That's a good question. If use_hwkm is set, ICE gets programmed to
-> > > > > > > use hwkm (see qcom_ice_hwkm_init() call above). I'm not sure if it
-> > > > > > > is expected to work properly if after such a call we pass raw key.
-> > > > > > >
-> > > > > >
-> > > > > > Once ICE has moved to a HWKM mode, the firmware key programming
-> > > > > currently does not support raw keys.
-> > > > > > This support is being added for the next Qualcomm chipset in Trustzone to
-> > > > > support both at he same time, but that will take another year or two to hit
-> > > > > the market.
-> > > > > > Until that time, due to TZ (firmware) limitations , the driver can only
-> > > > > support one or the other.
-> > > > > >
-> > > > > > We also cannot keep moving ICE modes, due to the HWKM enablement
-> > > > > being a one-time configurable value at boot.
-> > > > >
-> > > > > So the init of HWKM should be delayed until the point where the user tells if
-> > > > > HWKM or raw keys should be used.
-> > > >
-> > > > Ack.
-> > > > I'll work with Bartosz to look into moving to HWKM mode only during the first key program request
-> > > >
-> > >
-> > > That would mean the driver would have to initially advertise support for both
-> > > HW-wrapped keys and raw keys, and then it would revoke the support for one of
-> > > them later (due to the other one being used).  However, runtime revocation of
-> > > crypto capabilities is not supported by the blk-crypto framework
-> > > (Documentation/block/inline-encryption.rst), and there is no clear path to
-> > > adding such support.  Upper layers may have already checked the crypto
-> > > capabilities and decided to use them.  It's too late to find out that the
-> > > support was revoked in the middle of an I/O request.  Upper layer code
-> > > (blk-crypto, fscrypt, etc.) is not prepared for this.  And even if it was, the
-> > > best it could do is cleanly fail the I/O, which is too late as e.g. it may
-> > > happen during background writeback and cause user data to be thrown away.
-> > 
-> > Can we check crypto capabilities when the user sets the key?
-> 
-> I think you mean when a key is programmed into a keyslot?  That happens during
-> I/O, which is too late as I've explained above.
-> 
-> > Compare this to the actual HSM used to secure communication or
-> > storage. It has certain capabilities, which can be enumerated, etc.
-> > But then at the time the user sets the key it is perfectly normal to
-> > return an error because HSM is out of resources. It might even have
-> > spare key slots, but it might be not enough to be able to program the
-> > required key (as a really crazy example, consider the HSM having at
-> > this time a single spare DES key slot, while the user wants to program
-> > 3DES key).
-> 
-> That isn't how the kernel handles inline encryption keyslots.  They are only
-> programmed as needed for I/O.  If they are all in-use by pending I/O requests,
-> then the kernel waits for an I/O request to finish and reprograms the keyslot it
-> was using.  There is never an error reported due to lack of keyslots.
+To ensure code clarity and prevent potential errors, it's advisable
+to employ the ';' as a statement separator, except when ',' are
+intentionally used for specific purposes.
 
-Does that mean that the I/O can be outstanding for the very long period
-of time? Or that if the ICE hardware has just a single keyslot, but
-there are two concurrent I/O processes using two different keys, the
-framework will be constantly swapping the keys programmed to the HW?
+Signed-off-by: Shen Lichuan <shenlichuan@vivo.com>
+---
+ drivers/md/dm-vdo/indexer/chapter-index.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-I think it might be prefereable for the drivers and the framework to
-support "preprogramming" of the keys, when the key is programmed to the
-hardware when it is set by the user.
-
-Another option might be to let the drivers validate the keys being set
-by userspace. This way in our case the driver might report that it
-supports both raw and wrapped keys, but start rejecting the keys once
-it gets notified that the user has programmed other kind of keys. This
-way key setup can fail, but the actual I/O can not. WDYT?
-
-> If I/O requests could randomly fail at any time when using inline encryption,
-> then no one would use inline encryption because it would not be reliable.
-
-Yes, I agree here.
-
-> 
-> > > So, the choice of support for HW-wrapped vs. raw will need to be made ahead of
-> > > time, rather than being implicitly set by the first use.  That is most easily
-> > > done using a module parameter like qcom_ice.hw_wrapped_keys=1.  Yes, it's a bit
-> > > inconvenient, but there's no realistic way around this currently.
-> > 
-> > This doesn't work for Android usecase. The user isn't able to setup modparams.
-> 
-> It does work for Android.  The encryption setting that Android uses is
-> configured in the build of Android for the device (by the OEM, or by whoever
-> made the build in the case of a custom build).  Refer to
-> https://source.android.com/docs/security/features/encryption/file-based#enabling-file-based-encryption
-> 
-> Anyone who can change that can also change the kernel command line.
-
-Ok. I think if the 'validation' or 'notify' proposal is declined, I'll
-have to agree to the modparam.
-
+diff --git a/drivers/md/dm-vdo/indexer/chapter-index.c b/drivers/md/dm-vdo/indexer/chapter-index.c
+index 7e32a25d3f2f..fb1db41c794b 100644
+--- a/drivers/md/dm-vdo/indexer/chapter-index.c
++++ b/drivers/md/dm-vdo/indexer/chapter-index.c
+@@ -177,7 +177,7 @@ int uds_pack_open_chapter_index_page(struct open_chapter_index *chapter_index,
+ 			if (list_number < 0)
+ 				return UDS_OVERFLOW;
+ 
+-			next_list = first_list + list_number--,
++			next_list = first_list + list_number--;
+ 			result = uds_start_delta_index_search(delta_index, next_list, 0,
+ 							      &entry);
+ 			if (result != UDS_SUCCESS)
 -- 
-With best wishes
-Dmitry
+2.17.1
+
