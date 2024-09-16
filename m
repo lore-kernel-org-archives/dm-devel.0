@@ -1,46 +1,46 @@
 Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84D37149013
-	for <dm-devel@lists.linux.dev>; Mon, 16 Sep 2024 08:58:26 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 953691465AB
+	for <dm-devel@lists.linux.dev>; Mon, 16 Sep 2024 08:58:40 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726477108; cv=none; b=Qokz31+OMbme8nHWPzezGnY9k/NLtC2tWL4f0SD6C/i5ewKOevOSfLJ7TknC5mhJS9h2jbftgxINwpyFwBIc9LgcS/5VyfUnWj3iUHoz7Uh7PIdhKTD0IyBvZfcdv+38dMd+1Kp8d4UhUhtwB/q6qgRIpIaNwH+NZYD4Z2MzCrI=
+	t=1726477122; cv=none; b=T+R0AtfKa46fecsxPefsi2Sdv8fZiOx6YuS5UUPumcByrGxc0lHtC0X13mO1j0GNcSLMViym5WUYW0R6Yj3FMv2SQ/dOsKwUtB2Ql21cOBw88ZTHRBxEOH2lwZB2Tm2xONjaYW4UVvUZT1WVqU6hwtINDd977SIPZXuSOquwM8Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1726477108; c=relaxed/simple;
-	bh=kfmNI7t+mXtlDq4rnA9DLI4/9lz7ejYy9PMlDjZfUZs=;
+	s=arc-20240116; t=1726477122; c=relaxed/simple;
+	bh=Ifc+Z515nGmOJfijfj91jhXJWyi8xFaVLjBUFszzRFA=;
 	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=cqDhOFNQcHV2sNWxvN908oddmdVymmu8LroA3ixnCjEiIrnAXT6maPpCQkYBSrWBDGgUQTSejtF/NET904t5JaCAxRTB0rX5m63Dt6NalMB4ImaaR0sI93MrwYjVufWoPqYKgLEYWpNylfgEYvUmZqyfrxslmQ+0VmwUNUBp3QE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=KpB34tPP; arc=none smtp.client-ip=205.220.180.131
+	 MIME-Version:Content-Type; b=CcjB60kdn8nWRjyvGqNEcuJSftWOQ92y//tpYdr+dciYqx+dInsL2cOlpJkz08kaiM3cMpv7PUIOie41IDT4rTl/kfcKM22rf9/VCtsQeH+jPgG9lolkjzGu1Ix4WQJXRtQT1pBVIThQJlcu60BBtOvV5O7fhBClfGyWrpZleOE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=hz7PPh4v; arc=none smtp.client-ip=205.220.180.131
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="KpB34tPP"
-Received: from pps.filterd (m0279873.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 48FMktaB019745;
-	Mon, 16 Sep 2024 08:58:12 GMT
+	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="hz7PPh4v"
+Received: from pps.filterd (m0279869.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 48FM94rG020571;
+	Mon, 16 Sep 2024 08:58:25 GMT
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
 	cc:content-transfer-encoding:content-type:date:from:in-reply-to
 	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
-	jRRmfJgp0h78Ygo0XZfbEophI+bvaQFaUDIwKSuIpMQ=; b=KpB34tPPLl+5FTU9
-	6PtqhhbX/jHRAor1R1/lstVUX5IEAdYX2OgeganxugBck1adYtBQKBD8WbxvqG9n
-	b/nW/vCL/bBg6SsAZREDj0qcLCGKIcQv1HYwBdk3wa8enFsKu47xZocEGo41SDve
-	RmOpRb3Jqmg+eD6R2+TrcrpJf0CWXRSCkvXpN5iPo/hD/Fz+NBCRKbUtUV1H9ym8
-	+/qhC7faC6uT1mFHMTUybyrX7Vl2ul1iy7OP4Ucxh2844kQ1OEkiMHvqjSOVFHPU
-	hullUyoTG9KBDXjcJSoA3i/1wYrogBTsct7dMwS4s2SG/DbjHmpp4nE4YYonecDU
-	a70G2w==
-Received: from nasanppmta03.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 41n4k0kdm5-1
+	/g1y7Oa6pAXIOYx5tbG1L7nPwwl90J1rUk/TLSvAG9Y=; b=hz7PPh4vgzUcjzQ4
+	KdN7oRcLcVJ9UJenmH1DWX8bPbJ5TeirdCpg+aQI5BRbdV5cxhKZGcC9DuTqXmdQ
+	XstQG2jsEDdyKEu4etylr5JcCdtYILD+pwv2LhXb2tp3dkrmJT7dssQDPYPg17Fz
+	7nIs4cn9/huxxqz9cqEKmD6IOYba5LLA6xMRy8r1aoN5cf1YsHizMPMGLzgDyqAU
+	4mBGT+XN1VTgCBEekaRFJmvlL5OCyJaw1QfoObLXYTG8iT4OVXUBgjFbqfl7JXLx
+	y9UdGRNOhRMo/V5v/KPJDAdfhuh4CV2s1tMg202qcz1kIicS2fbMAOyj0/OFlPMh
+	ZHD4Fw==
+Received: from nasanppmta01.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 41n4heud71-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 16 Sep 2024 08:58:11 +0000 (GMT)
+	Mon, 16 Sep 2024 08:58:25 +0000 (GMT)
 Received: from nasanex01a.na.qualcomm.com (nasanex01a.na.qualcomm.com [10.52.223.231])
-	by NASANPPMTA03.qualcomm.com (8.18.1.2/8.18.1.2) with ESMTPS id 48G8wAOQ017834
+	by NASANPPMTA01.qualcomm.com (8.18.1.2/8.18.1.2) with ESMTPS id 48G8wNNu006762
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 16 Sep 2024 08:58:10 GMT
+	Mon, 16 Sep 2024 08:58:23 GMT
 Received: from hu-mdalam-blr.qualcomm.com (10.80.80.8) by
  nasanex01a.na.qualcomm.com (10.52.223.231) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1544.9; Mon, 16 Sep 2024 01:58:03 -0700
+ 15.2.1544.9; Mon, 16 Sep 2024 01:58:17 -0700
 From: Md Sadre Alam <quic_mdalam@quicinc.com>
 To: <axboe@kernel.dk>, <song@kernel.org>, <yukuai3@huawei.com>,
         <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
@@ -53,9 +53,9 @@ To: <axboe@kernel.dk>, <song@kernel.org>, <yukuai3@huawei.com>,
         <linux-arm-msm@vger.kernel.org>, <linux-hardening@vger.kernel.org>
 CC: <quic_srichara@quicinc.com>, <quic_varada@quicinc.com>,
         <quic_mdalam@quicinc.com>
-Subject: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
-Date: Mon, 16 Sep 2024 14:27:39 +0530
-Message-ID: <20240916085741.1636554-2-quic_mdalam@quicinc.com>
+Subject: [PATCH v2 3/3] mmc: sdhci-msm: Add additional algo mode for inline encryption
+Date: Mon, 16 Sep 2024 14:27:41 +0530
+Message-ID: <20240916085741.1636554-4-quic_mdalam@quicinc.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240916085741.1636554-1-quic_mdalam@quicinc.com>
 References: <20240916085741.1636554-1-quic_mdalam@quicinc.com>
@@ -71,476 +71,164 @@ X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
  nasanex01a.na.qualcomm.com (10.52.223.231)
 X-QCInternal: smtphost
 X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-ORIG-GUID: qrADd5VqLVcjvylWOBOGQpNGuP_HkYXr
-X-Proofpoint-GUID: qrADd5VqLVcjvylWOBOGQpNGuP_HkYXr
+X-Proofpoint-ORIG-GUID: hdI8lqcDWWvvLB46JeOU4II4fRasrJTo
+X-Proofpoint-GUID: hdI8lqcDWWvvLB46JeOU4II4fRasrJTo
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.60.29
  definitions=2024-09-06_09,2024-09-06_01,2024-09-02_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxscore=0 lowpriorityscore=0
- suspectscore=0 adultscore=0 phishscore=0 spamscore=0 malwarescore=0
- bulkscore=0 impostorscore=0 mlxlogscore=999 clxscore=1015
- priorityscore=1501 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2408220000 definitions=main-2409160056
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501 mlxscore=0
+ suspectscore=0 bulkscore=0 lowpriorityscore=0 spamscore=0 clxscore=1015
+ mlxlogscore=999 adultscore=0 malwarescore=0 phishscore=0 impostorscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2408220000
+ definitions=main-2409160056
 
-QCOM SDCC controller supports Inline Crypto Engine
-This driver will enables inline encryption/decryption
-for ICE. The algorithm supported by ICE are XTS(AES)
-and CBC(AES).
+Add support for AES-XTS-128, AES-CBC-128 and AES-CBS-256 modes for
+inline encryption. Since ICE (Inline Crypto Engine) supports these
+all modes
 
 Signed-off-by: Md Sadre Alam <quic_mdalam@quicinc.com>
 ---
 
 Change in [v2]
 
-* Added dm-inlinecrypt driver support
-
-* squash the patch blk-crypto: Add additional algo modes for Inline
-  encryption and md: dm-crypt: Add additional algo modes for inline
-  encryption and added in this
+* No change
 
 Change in [v1]
 
-* This patch was not included in [v1]
+* Added AES-XTS-128, AES-CBC-128, AES-CBS-256 algo mode support
 
- block/blk-crypto.c           |  21 +++
- drivers/md/Kconfig           |   8 +
- drivers/md/Makefile          |   1 +
- drivers/md/dm-inline-crypt.c | 316 +++++++++++++++++++++++++++++++++++
- include/linux/blk-crypto.h   |   3 +
- 5 files changed, 349 insertions(+)
- create mode 100644 drivers/md/dm-inline-crypt.c
+ drivers/mmc/host/sdhci-msm.c | 10 ++----
+ drivers/soc/qcom/ice.c       | 65 +++++++++++++++++++++++++++++++-----
+ 2 files changed, 58 insertions(+), 17 deletions(-)
 
-diff --git a/block/blk-crypto.c b/block/blk-crypto.c
-index 4d760b092deb..e5bc3c7a405b 100644
---- a/block/blk-crypto.c
-+++ b/block/blk-crypto.c
-@@ -19,6 +19,12 @@
- #include "blk-crypto-internal.h"
+diff --git a/drivers/mmc/host/sdhci-msm.c b/drivers/mmc/host/sdhci-msm.c
+index e113b99a3eab..fc1db58373ce 100644
+--- a/drivers/mmc/host/sdhci-msm.c
++++ b/drivers/mmc/host/sdhci-msm.c
+@@ -1867,17 +1867,11 @@ static int sdhci_msm_program_key(struct cqhci_host *cq_host,
+ 	struct sdhci_msm_host *msm_host = sdhci_pltfm_priv(pltfm_host);
+ 	union cqhci_crypto_cap_entry cap;
  
- const struct blk_crypto_mode blk_crypto_modes[] = {
-+	[BLK_ENCRYPTION_MODE_AES_128_XTS] = {
-+		.name = "AES-128-XTS",
-+		.cipher_str = "xts(aes)",
-+		.keysize = 32,
-+		.ivsize = 16,
-+	},
- 	[BLK_ENCRYPTION_MODE_AES_256_XTS] = {
- 		.name = "AES-256-XTS",
- 		.cipher_str = "xts(aes)",
-@@ -43,6 +49,18 @@ const struct blk_crypto_mode blk_crypto_modes[] = {
- 		.keysize = 32,
- 		.ivsize = 16,
- 	},
-+	[BLK_ENCRYPTION_MODE_AES_128_CBC] = {
-+		.name = "AES-128-CBC",
-+		.cipher_str = "cbc(aes)",
-+		.keysize = 16,
-+		.ivsize = 16,
-+	},
-+	[BLK_ENCRYPTION_MODE_AES_256_CBC] = {
-+		.name = "AES-256-CBC",
-+		.cipher_str = "cbc(aes)",
-+		.keysize = 32,
-+		.ivsize = 16,
-+	},
- };
+-	/* Only AES-256-XTS has been tested so far. */
+ 	cap = cq_host->crypto_cap_array[cfg->crypto_cap_idx];
+-	if (cap.algorithm_id != CQHCI_CRYPTO_ALG_AES_XTS ||
+-		cap.key_size != CQHCI_CRYPTO_KEY_SIZE_256)
+-		return -EINVAL;
  
- /*
-@@ -106,6 +124,7 @@ void bio_crypt_set_ctx(struct bio *bio, const struct blk_crypto_key *key,
+ 	if (cfg->config_enable & CQHCI_CRYPTO_CONFIGURATION_ENABLE)
+-		return qcom_ice_program_key(msm_host->ice,
+-					    QCOM_ICE_CRYPTO_ALG_AES_XTS,
+-					    QCOM_ICE_CRYPTO_KEY_SIZE_256,
+-					    cfg->crypto_key,
++		return qcom_ice_program_key(msm_host->ice, cap.algorithm_id,
++					    cap.key_size, cfg->crypto_key,
+ 					    cfg->data_unit_size, slot);
+ 	else
+ 		return qcom_ice_evict_key(msm_host->ice, slot);
+diff --git a/drivers/soc/qcom/ice.c b/drivers/soc/qcom/ice.c
+index 50be7a9274a1..da0c1dfa6594 100644
+--- a/drivers/soc/qcom/ice.c
++++ b/drivers/soc/qcom/ice.c
+@@ -20,6 +20,9 @@
  
- 	bio->bi_crypt_context = bc;
+ #include <soc/qcom/ice.h>
+ 
++#define AES_128_CBC_KEY_SIZE			16
++#define AES_256_CBC_KEY_SIZE			32
++#define AES_128_XTS_KEY_SIZE			32
+ #define AES_256_XTS_KEY_SIZE			64
+ 
+ /* QCOM ICE registers */
+@@ -162,36 +165,80 @@ int qcom_ice_suspend(struct qcom_ice *ice)
  }
-+EXPORT_SYMBOL_GPL(bio_crypt_set_ctx);
+ EXPORT_SYMBOL_GPL(qcom_ice_suspend);
  
- void __bio_crypt_free_ctx(struct bio *bio)
++static int qcom_ice_get_algo_mode(struct qcom_ice *ice, u8 algorithm_id,
++				  u8 key_size, enum qcom_scm_ice_cipher *cipher,
++				  u32 *key_len)
++{
++	struct device *dev = ice->dev;
++
++	switch (key_size) {
++	case QCOM_ICE_CRYPTO_KEY_SIZE_128:
++		fallthrough;
++	case QCOM_ICE_CRYPTO_KEY_SIZE_256:
++		break;
++	default:
++		dev_err(dev, "Unhandled crypto key size %d\n", key_size);
++		return -EINVAL;
++	}
++
++	switch (algorithm_id) {
++	case QCOM_ICE_CRYPTO_ALG_AES_XTS:
++		if (key_size == QCOM_ICE_CRYPTO_KEY_SIZE_256) {
++			*cipher = QCOM_SCM_ICE_CIPHER_AES_256_XTS;
++			*key_len = AES_256_XTS_KEY_SIZE;
++		} else {
++			*cipher = QCOM_SCM_ICE_CIPHER_AES_128_XTS;
++			*key_len = AES_128_XTS_KEY_SIZE;
++		}
++		break;
++	case QCOM_ICE_CRYPTO_ALG_BITLOCKER_AES_CBC:
++		if (key_size == QCOM_ICE_CRYPTO_KEY_SIZE_256) {
++			*cipher = QCOM_SCM_ICE_CIPHER_AES_256_CBC;
++			*key_len = AES_256_CBC_KEY_SIZE;
++		} else {
++			*cipher = QCOM_SCM_ICE_CIPHER_AES_128_CBC;
++			*key_len = AES_128_CBC_KEY_SIZE;
++		}
++		break;
++	default:
++		dev_err_ratelimited(dev, "Unhandled crypto capability; algorithm_id=%d, key_size=%d\n",
++				    algorithm_id, key_size);
++		return -EINVAL;
++	}
++
++	dev_info(dev, "cipher: %d key_size: %d", *cipher, *key_len);
++
++	return 0;
++}
++
+ int qcom_ice_program_key(struct qcom_ice *ice,
+ 			 u8 algorithm_id, u8 key_size,
+ 			 const u8 crypto_key[], u8 data_unit_size,
+ 			 int slot)
  {
-@@ -356,6 +375,7 @@ int blk_crypto_init_key(struct blk_crypto_key *blk_key, const u8 *raw_key,
+ 	struct device *dev = ice->dev;
++	enum qcom_scm_ice_cipher cipher;
+ 	union {
+ 		u8 bytes[AES_256_XTS_KEY_SIZE];
+ 		u32 words[AES_256_XTS_KEY_SIZE / sizeof(u32)];
+ 	} key;
+ 	int i;
+ 	int err;
++	u32 key_len;
  
- 	return 0;
- }
-+EXPORT_SYMBOL_GPL(blk_crypto_init_key);
+-	/* Only AES-256-XTS has been tested so far. */
+-	if (algorithm_id != QCOM_ICE_CRYPTO_ALG_AES_XTS ||
+-	    key_size != QCOM_ICE_CRYPTO_KEY_SIZE_256) {
+-		dev_err_ratelimited(dev,
+-				    "Unhandled crypto capability; algorithm_id=%d, key_size=%d\n",
+-				    algorithm_id, key_size);
++	if (qcom_ice_get_algo_mode(ice, algorithm_id, key_size, &cipher, &key_len)) {
++		dev_err(dev, "Unhandled crypto capability; algorithm_id=%d, key_size=%d\n",
++			algorithm_id, key_size);
+ 		return -EINVAL;
+ 	}
  
- bool blk_crypto_config_supported_natively(struct block_device *bdev,
- 					  const struct blk_crypto_config *cfg)
-@@ -398,6 +418,7 @@ int blk_crypto_start_using_key(struct block_device *bdev,
- 		return 0;
- 	return blk_crypto_fallback_start_using_mode(key->crypto_cfg.crypto_mode);
- }
-+EXPORT_SYMBOL_GPL(blk_crypto_start_using_key);
+-	memcpy(key.bytes, crypto_key, AES_256_XTS_KEY_SIZE);
++	memcpy(key.bytes, crypto_key, key_len);
  
- /**
-  * blk_crypto_evict_key() - Evict a blk_crypto_key from a block_device
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 1e9db8e4acdf..272a6a3274bb 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -270,6 +270,14 @@ config DM_CRYPT
+ 	/* The SCM call requires that the key words are encoded in big endian */
+ 	for (i = 0; i < ARRAY_SIZE(key.words); i++)
+ 		__cpu_to_be32s(&key.words[i]);
  
- 	  If unsure, say N.
+-	err = qcom_scm_ice_set_key(slot, key.bytes, AES_256_XTS_KEY_SIZE,
+-				   QCOM_SCM_ICE_CIPHER_AES_256_XTS,
++	err = qcom_scm_ice_set_key(slot, key.bytes, key_len, cipher,
+ 				   data_unit_size);
  
-+config DM_INLINE_CRYPT
-+	tristate "Inline crypt target support"
-+	depends on BLK_DEV_DM || COMPILE_TEST
-+	help
-+	  This inline crypt device-mapper target allows to create a device
-+	  that transparently encrypts the data on it using inline crypto HW
-+	  engine.
-+
- config DM_SNAPSHOT
-        tristate "Snapshot target"
-        depends on BLK_DEV_DM
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index 476a214e4bdc..0e09b7665803 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -51,6 +51,7 @@ obj-$(CONFIG_DM_UNSTRIPED)	+= dm-unstripe.o
- obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
- obj-$(CONFIG_DM_BIO_PRISON)	+= dm-bio-prison.o
- obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
-+obj-$(CONFIG_DM_INLINE_CRYPT)  += dm-inline-crypt.o
- obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
- obj-$(CONFIG_DM_DUST)		+= dm-dust.o
- obj-$(CONFIG_DM_FLAKEY)		+= dm-flakey.o
-diff --git a/drivers/md/dm-inline-crypt.c b/drivers/md/dm-inline-crypt.c
-new file mode 100644
-index 000000000000..e94f86a3a5e0
---- /dev/null
-+++ b/drivers/md/dm-inline-crypt.c
-@@ -0,0 +1,316 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright (C) 2024, Qualcomm Innovation Center, Inc. All rights reserved
-+ *
-+ * Based on work by Israel Rukshin file: dm-crypt.c
-+ *
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/bio.h>
-+#include <linux/blkdev.h>
-+#include <linux/crypto.h>
-+#include <linux/blk-crypto.h>
-+#include <linux/device-mapper.h>
-+
-+#define DM_MSG_PREFIX "inline-crypt"
-+
-+struct inlinecrypt_config {
-+	struct dm_dev *dev;
-+	sector_t start;
-+	u64 iv_offset;
-+	unsigned int iv_size;
-+	unsigned short sector_size;
-+	unsigned char sector_shift;
-+	unsigned int key_size;
-+	enum blk_crypto_mode_num crypto_mode;
-+	struct blk_crypto_key *blk_key;
-+	u8 key[] __counted_by(key_size);
-+};
-+
-+#define DM_CRYPT_DEFAULT_MAX_READ_SIZE		131072
-+#define DM_CRYPT_DEFAULT_MAX_WRITE_SIZE		131072
-+
-+static unsigned int get_max_request_size(struct inlinecrypt_config *cc, bool wrt)
-+{
-+	unsigned int val, sector_align;
-+
-+	val = !wrt ? DM_CRYPT_DEFAULT_MAX_READ_SIZE : DM_CRYPT_DEFAULT_MAX_WRITE_SIZE;
-+	if (wrt) {
-+		if (unlikely(val > BIO_MAX_VECS << PAGE_SHIFT))
-+			val = BIO_MAX_VECS << PAGE_SHIFT;
-+	}
-+	sector_align = max(bdev_logical_block_size(cc->dev->bdev), (unsigned int)cc->sector_size);
-+	val = round_down(val, sector_align);
-+	if (unlikely(!val))
-+		val = sector_align;
-+	return val >> SECTOR_SHIFT;
-+}
-+
-+static int crypt_select_inline_crypt_mode(struct dm_target *ti, char *cipher,
-+					  char *ivmode)
-+{
-+	struct inlinecrypt_config *cc = ti->private;
-+
-+	if (strcmp(cipher, "xts(aes128)") == 0) {
-+		cc->crypto_mode = BLK_ENCRYPTION_MODE_AES_128_XTS;
-+	} else if (strcmp(cipher, "xts(aes256)") == 0) {
-+		cc->crypto_mode = BLK_ENCRYPTION_MODE_AES_256_XTS;
-+	} else if (strcmp(cipher, "cbc(aes128)") == 0) {
-+		cc->crypto_mode = BLK_ENCRYPTION_MODE_AES_128_CBC;
-+	} else if (strcmp(cipher, "cbc(aes256)") == 0) {
-+		cc->crypto_mode = BLK_ENCRYPTION_MODE_AES_256_CBC;
-+	} else {
-+		ti->error = "Invalid cipher for inline_crypt";
-+		return -EINVAL;
-+	}
-+
-+	cc->iv_size = 4;
-+
-+	return 0;
-+}
-+
-+static int crypt_prepare_inline_crypt_key(struct inlinecrypt_config *cc)
-+{
-+	int ret;
-+
-+	cc->blk_key = kzalloc(sizeof(*cc->blk_key), GFP_KERNEL);
-+	if (!cc->blk_key)
-+		return -ENOMEM;
-+
-+	ret = blk_crypto_init_key(cc->blk_key, cc->key, cc->crypto_mode,
-+				  cc->iv_size, cc->sector_size);
-+	if (ret) {
-+		DMERR("Failed to init inline encryption key");
-+		goto bad_key;
-+	}
-+
-+	ret = blk_crypto_start_using_key(cc->dev->bdev, cc->blk_key);
-+	if (ret) {
-+		DMERR("Failed to use inline encryption key");
-+		goto bad_key;
-+	}
-+
-+	return 0;
-+bad_key:
-+	kfree_sensitive(cc->blk_key);
-+	cc->blk_key = NULL;
-+	return ret;
-+}
-+
-+static void crypt_destroy_inline_crypt_key(struct inlinecrypt_config *cc)
-+{
-+	if (cc->blk_key) {
-+		blk_crypto_evict_key(cc->dev->bdev, cc->blk_key);
-+		kfree_sensitive(cc->blk_key);
-+		cc->blk_key = NULL;
-+	}
-+}
-+
-+static void crypt_inline_encrypt_submit(struct dm_target *ti, struct bio *bio)
-+{
-+	struct inlinecrypt_config *cc = ti->private;
-+	u64 dun[BLK_CRYPTO_DUN_ARRAY_SIZE];
-+
-+	bio_set_dev(bio, cc->dev->bdev);
-+	if (bio_sectors(bio)) {
-+		memset(dun, 0, BLK_CRYPTO_MAX_IV_SIZE);
-+		bio->bi_iter.bi_sector = cc->start +
-+			dm_target_offset(ti, bio->bi_iter.bi_sector);
-+		dun[0] = le64_to_cpu(bio->bi_iter.bi_sector + cc->iv_offset);
-+		bio_crypt_set_ctx(bio, cc->blk_key, dun, GFP_KERNEL);
-+	}
-+
-+	submit_bio_noacct(bio);
-+}
-+
-+static int inlinecrypt_setkey(struct inlinecrypt_config *cc)
-+{
-+	crypt_destroy_inline_crypt_key(cc);
-+
-+	return crypt_prepare_inline_crypt_key(cc);
-+
-+	return 0;
-+}
-+
-+static int inlinecrypt_set_key(struct inlinecrypt_config *cc, char *key)
-+{
-+	int r = -EINVAL;
-+	int key_string_len = strlen(key);
-+
-+	/* Decode key from its hex representation. */
-+	if (cc->key_size && hex2bin(cc->key, key, cc->key_size) < 0)
-+		goto out;
-+
-+	r = inlinecrypt_setkey(cc);
-+out:
-+	memset(key, '0', key_string_len);
-+
-+	return r;
-+}
-+
-+static void inlinecrypt_dtr(struct dm_target *ti)
-+{
-+	struct inlinecrypt_config *cc = ti->private;
-+
-+	ti->private = NULL;
-+
-+	if (!cc)
-+		return;
-+
-+	crypt_destroy_inline_crypt_key(cc);
-+
-+	if (cc->dev)
-+		dm_put_device(ti, cc->dev);
-+
-+	kfree_sensitive(cc);
-+}
-+
-+static int inlinecrypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	struct inlinecrypt_config *cc;
-+	char *cipher_api = NULL;
-+	char *cipher, *chainmode;
-+	unsigned long long tmpll;
-+	char *ivmode;
-+	int key_size;
-+	char dummy;
-+	int ret;
-+
-+	if (argc < 5) {
-+		ti->error = "Not enough arguments";
-+		return -EINVAL;
-+	}
-+
-+	key_size = strlen(argv[1]) >> 1;
-+
-+	cc = kzalloc(struct_size(cc, key, key_size), GFP_KERNEL);
-+	if (!cc) {
-+		ti->error = "Cannot allocate encryption context";
-+		return -ENOMEM;
-+	}
-+	cc->key_size = key_size;
-+	cc->sector_size = (1 << SECTOR_SHIFT);
-+	cc->sector_shift = 0;
-+
-+	ti->private = cc;
-+
-+	if ((sscanf(argv[2], "%llu%c", &tmpll, &dummy) != 1) ||
-+	    (tmpll & ((cc->sector_size >> SECTOR_SHIFT) - 1))) {
-+		ti->error = "Invalid iv_offset sector";
-+		goto bad;
-+	}
-+	cc->iv_offset = tmpll;
-+
-+	ret = dm_get_device(ti, argv[3], dm_table_get_mode(ti->table),
-+			    &cc->dev);
-+	if (ret) {
-+		ti->error = "Device lookup failed";
-+		goto bad;
-+	}
-+
-+	ret = -EINVAL;
-+	if (sscanf(argv[4], "%llu%c", &tmpll, &dummy) != 1 ||
-+	    tmpll != (sector_t)tmpll) {
-+		ti->error = "Invalid device sector";
-+		goto bad;
-+	}
-+
-+	cc->start = tmpll;
-+
-+	cipher = strsep(&argv[0], "-");
-+	chainmode = strsep(&argv[0], "-");
-+	ivmode = strsep(&argv[0], "-");
-+
-+	cipher_api = kmalloc(CRYPTO_MAX_ALG_NAME, GFP_KERNEL);
-+	if (!cipher_api)
-+		goto bad;
-+
-+	ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
-+		       "%s(%s)", chainmode, cipher);
-+	if (ret < 0 || ret >= CRYPTO_MAX_ALG_NAME) {
-+		kfree(cipher_api);
-+		ret = -ENOMEM;
-+		goto bad;
-+	}
-+
-+	ret = crypt_select_inline_crypt_mode(ti, cipher_api, ivmode);
-+
-+	/* Initialize and set key */
-+	ret = inlinecrypt_set_key(cc, argv[1]);
-+	if (ret < 0) {
-+		ti->error = "Error decoding and setting key";
-+		return ret;
-+	}
-+
-+	return 0;
-+bad:
-+	ti->error = "Error in inlinecrypt mapping";
-+	inlinecrypt_dtr(ti);
-+	return ret;
-+}
-+
-+static int inlinecrypt_map(struct dm_target *ti, struct bio *bio)
-+{
-+	struct inlinecrypt_config *cc = ti->private;
-+	unsigned int max_sectors;
-+
-+	/*
-+	 * If bio is REQ_PREFLUSH or REQ_OP_DISCARD, just bypass crypt queues.
-+	 * - for REQ_PREFLUSH device-mapper core ensures that no IO is in-flight
-+	 * - for REQ_OP_DISCARD caller must use flush if IO ordering matters
-+	 */
-+	if (unlikely(bio->bi_opf & REQ_PREFLUSH ||
-+		     bio_op(bio) == REQ_OP_DISCARD)) {
-+		bio_set_dev(bio, cc->dev->bdev);
-+		if (bio_sectors(bio))
-+			bio->bi_iter.bi_sector = cc->start +
-+				dm_target_offset(ti, bio->bi_iter.bi_sector);
-+		return DM_MAPIO_REMAPPED;
-+	}
-+
-+	/*
-+	 * Check if bio is too large, split as needed.
-+	 */
-+	max_sectors = get_max_request_size(cc, bio_data_dir(bio) == WRITE);
-+	if (unlikely(bio_sectors(bio) > max_sectors))
-+		dm_accept_partial_bio(bio, max_sectors);
-+
-+	/*
-+	 * Ensure that bio is a multiple of internal sector eninlinecryption size
-+	 * and is aligned to this size as defined in IO hints.
-+	 */
-+	if (unlikely((bio->bi_iter.bi_sector & ((cc->sector_size >> SECTOR_SHIFT) - 1)) != 0))
-+		return DM_MAPIO_KILL;
-+
-+	if (unlikely(bio->bi_iter.bi_size & (cc->sector_size - 1)))
-+		return DM_MAPIO_KILL;
-+
-+	crypt_inline_encrypt_submit(ti, bio);
-+		return DM_MAPIO_SUBMITTED;
-+
-+	return 0;
-+}
-+
-+static int inlinecrypt_iterate_devices(struct dm_target *ti,
-+				       iterate_devices_callout_fn fn, void *data)
-+{
-+	struct inlinecrypt_config *cc = ti->private;
-+
-+	return fn(ti, cc->dev, cc->start, ti->len, data);
-+}
-+
-+static struct target_type inlinecrypt_target = {
-+	.name   = "inline-crypt",
-+	.version = {1, 0, 0},
-+	.module = THIS_MODULE,
-+	.ctr    = inlinecrypt_ctr,
-+	.dtr    = inlinecrypt_dtr,
-+	.map    = inlinecrypt_map,
-+	.iterate_devices = inlinecrypt_iterate_devices,
-+};
-+module_dm(inlinecrypt);
-+
-+MODULE_AUTHOR("Md Sadre Alam <quic_mdalam@quicinc.com>");
-+MODULE_DESCRIPTION(DM_NAME " target for inline encryption / decryption");
-+MODULE_LICENSE("GPL");
-diff --git a/include/linux/blk-crypto.h b/include/linux/blk-crypto.h
-index 5e5822c18ee4..da503a05c5f6 100644
---- a/include/linux/blk-crypto.h
-+++ b/include/linux/blk-crypto.h
-@@ -10,10 +10,13 @@
- 
- enum blk_crypto_mode_num {
- 	BLK_ENCRYPTION_MODE_INVALID,
-+	BLK_ENCRYPTION_MODE_AES_128_XTS,
- 	BLK_ENCRYPTION_MODE_AES_256_XTS,
- 	BLK_ENCRYPTION_MODE_AES_128_CBC_ESSIV,
- 	BLK_ENCRYPTION_MODE_ADIANTUM,
- 	BLK_ENCRYPTION_MODE_SM4_XTS,
-+	BLK_ENCRYPTION_MODE_AES_128_CBC,
-+	BLK_ENCRYPTION_MODE_AES_256_CBC,
- 	BLK_ENCRYPTION_MODE_MAX,
- };
- 
+ 	memzero_explicit(&key, sizeof(key));
 -- 
 2.34.1
 
