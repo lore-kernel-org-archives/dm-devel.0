@@ -1,46 +1,46 @@
-Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
+Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 953691465AB
-	for <dm-devel@lists.linux.dev>; Mon, 16 Sep 2024 08:58:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6705B1A28C
+	for <dm-devel@lists.linux.dev>; Mon, 16 Sep 2024 09:03:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726477122; cv=none; b=T+R0AtfKa46fecsxPefsi2Sdv8fZiOx6YuS5UUPumcByrGxc0lHtC0X13mO1j0GNcSLMViym5WUYW0R6Yj3FMv2SQ/dOsKwUtB2Ql21cOBw88ZTHRBxEOH2lwZB2Tm2xONjaYW4UVvUZT1WVqU6hwtINDd977SIPZXuSOquwM8Q=
+	t=1726477414; cv=none; b=h9Erako0/mU2lt5/Ztt4PuN684beLu2fZ70+S/gn4ZY28c1c3ab2F2FC9pIBO7l4pXPQ0cPRGJ9ZRNc/W1+p6zc6IklnM+6J9tkagSlnFF4IyIFh5OzDWqMS7GSPSE4RH8HsbxU+VgOLbrgv5/9H+T53iqjIAPB1m/UEL7AZ4i8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1726477122; c=relaxed/simple;
-	bh=Ifc+Z515nGmOJfijfj91jhXJWyi8xFaVLjBUFszzRFA=;
+	s=arc-20240116; t=1726477414; c=relaxed/simple;
+	bh=yJDaWyE+xctHez5TzRUkNngyP/Cv5T8JPeZ4t0s/EYE=;
 	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=CcjB60kdn8nWRjyvGqNEcuJSftWOQ92y//tpYdr+dciYqx+dInsL2cOlpJkz08kaiM3cMpv7PUIOie41IDT4rTl/kfcKM22rf9/VCtsQeH+jPgG9lolkjzGu1Ix4WQJXRtQT1pBVIThQJlcu60BBtOvV5O7fhBClfGyWrpZleOE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=hz7PPh4v; arc=none smtp.client-ip=205.220.180.131
+	 MIME-Version:Content-Type; b=lV9c+GRMpQIgw6pkUeizhJmwNZsLEIZrkfjpBaJu9w0QtiiAu6WKkqX8IyBr3YPFoIdd+wLIekGMzSEaSWHRYM+IMc7s/PDI86QBWw2Zp6TVmMacDd25kRnSv7owc1guVXV2gTZVXwIbcaJC/Zw9f4z9hy/7gXr0RLe2ZVO90N8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com; spf=pass smtp.mailfrom=quicinc.com; dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b=iCNePA7U; arc=none smtp.client-ip=205.220.168.131
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=quicinc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="hz7PPh4v"
-Received: from pps.filterd (m0279869.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 48FM94rG020571;
-	Mon, 16 Sep 2024 08:58:25 GMT
+	dkim=pass (2048-bit key) header.d=quicinc.com header.i=@quicinc.com header.b="iCNePA7U"
+Received: from pps.filterd (m0279862.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 48G0Qr2N022323;
+	Mon, 16 Sep 2024 08:58:18 GMT
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quicinc.com; h=
 	cc:content-transfer-encoding:content-type:date:from:in-reply-to
 	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
-	/g1y7Oa6pAXIOYx5tbG1L7nPwwl90J1rUk/TLSvAG9Y=; b=hz7PPh4vgzUcjzQ4
-	KdN7oRcLcVJ9UJenmH1DWX8bPbJ5TeirdCpg+aQI5BRbdV5cxhKZGcC9DuTqXmdQ
-	XstQG2jsEDdyKEu4etylr5JcCdtYILD+pwv2LhXb2tp3dkrmJT7dssQDPYPg17Fz
-	7nIs4cn9/huxxqz9cqEKmD6IOYba5LLA6xMRy8r1aoN5cf1YsHizMPMGLzgDyqAU
-	4mBGT+XN1VTgCBEekaRFJmvlL5OCyJaw1QfoObLXYTG8iT4OVXUBgjFbqfl7JXLx
-	y9UdGRNOhRMo/V5v/KPJDAdfhuh4CV2s1tMg202qcz1kIicS2fbMAOyj0/OFlPMh
-	ZHD4Fw==
-Received: from nasanppmta01.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 41n4heud71-1
+	ucdUq9BZoE+qA79oygzpCCBfuQCsCjujEnF8FPE5/lE=; b=iCNePA7U5HBVUseO
+	wkNLCvKZXI67FN8f87SNBFe3ahZC30u5xLCoVuZhyF8d2NHDNRadOprjpJRWW+jc
+	nscl532E5xtuENTC1MnhyrZmdjVxFjoh18oHUOuPMZzWAKHoh5TzbSBX2Db6VXvx
+	p7fB++7Mm6fE2faBM1C9+YP/m37yrt5rM6urJqNGmwYv5WZ3gbGtzBwyrR6PKAsD
+	zeElla9acS6ReUi5BanifXmLpZPwnLrtS0Bsy+5WOLrAV1ztOt4b00aH00B3Y8Hc
+	diWHupRHEwpG3WizpSIGnSTeXbZZdg+8j08q1vA24pGOjGspjsipOq12H5B3uhRY
+	ymWOMg==
+Received: from nasanppmta02.qualcomm.com (i-global254.qualcomm.com [199.106.103.254])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 41n4gcudr5-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 16 Sep 2024 08:58:25 +0000 (GMT)
+	Mon, 16 Sep 2024 08:58:18 +0000 (GMT)
 Received: from nasanex01a.na.qualcomm.com (nasanex01a.na.qualcomm.com [10.52.223.231])
-	by NASANPPMTA01.qualcomm.com (8.18.1.2/8.18.1.2) with ESMTPS id 48G8wNNu006762
+	by NASANPPMTA02.qualcomm.com (8.18.1.2/8.18.1.2) with ESMTPS id 48G8wHET005029
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 16 Sep 2024 08:58:23 GMT
+	Mon, 16 Sep 2024 08:58:17 GMT
 Received: from hu-mdalam-blr.qualcomm.com (10.80.80.8) by
  nasanex01a.na.qualcomm.com (10.52.223.231) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1544.9; Mon, 16 Sep 2024 01:58:17 -0700
+ 15.2.1544.9; Mon, 16 Sep 2024 01:58:10 -0700
 From: Md Sadre Alam <quic_mdalam@quicinc.com>
 To: <axboe@kernel.dk>, <song@kernel.org>, <yukuai3@huawei.com>,
         <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
@@ -53,9 +53,9 @@ To: <axboe@kernel.dk>, <song@kernel.org>, <yukuai3@huawei.com>,
         <linux-arm-msm@vger.kernel.org>, <linux-hardening@vger.kernel.org>
 CC: <quic_srichara@quicinc.com>, <quic_varada@quicinc.com>,
         <quic_mdalam@quicinc.com>
-Subject: [PATCH v2 3/3] mmc: sdhci-msm: Add additional algo mode for inline encryption
-Date: Mon, 16 Sep 2024 14:27:41 +0530
-Message-ID: <20240916085741.1636554-4-quic_mdalam@quicinc.com>
+Subject: [PATCH v2 2/3] mmc: cqhci: Add additional algo mode for inline encryption
+Date: Mon, 16 Sep 2024 14:27:40 +0530
+Message-ID: <20240916085741.1636554-3-quic_mdalam@quicinc.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240916085741.1636554-1-quic_mdalam@quicinc.com>
 References: <20240916085741.1636554-1-quic_mdalam@quicinc.com>
@@ -71,20 +71,19 @@ X-ClientProxiedBy: nasanex01b.na.qualcomm.com (10.46.141.250) To
  nasanex01a.na.qualcomm.com (10.52.223.231)
 X-QCInternal: smtphost
 X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=5800 signatures=585085
-X-Proofpoint-ORIG-GUID: hdI8lqcDWWvvLB46JeOU4II4fRasrJTo
-X-Proofpoint-GUID: hdI8lqcDWWvvLB46JeOU4II4fRasrJTo
+X-Proofpoint-ORIG-GUID: FNt9voizb3GxUjTkHeCzJhGcvKywj3kB
+X-Proofpoint-GUID: FNt9voizb3GxUjTkHeCzJhGcvKywj3kB
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.60.29
  definitions=2024-09-06_09,2024-09-06_01,2024-09-02_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501 mlxscore=0
- suspectscore=0 bulkscore=0 lowpriorityscore=0 spamscore=0 clxscore=1015
- mlxlogscore=999 adultscore=0 malwarescore=0 phishscore=0 impostorscore=0
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 malwarescore=0 suspectscore=0
+ bulkscore=0 clxscore=1015 spamscore=0 adultscore=0 lowpriorityscore=0
+ mlxlogscore=999 impostorscore=0 mlxscore=0 priorityscore=1501 phishscore=0
  classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2408220000
  definitions=main-2409160056
 
-Add support for AES-XTS-128, AES-CBC-128 and AES-CBS-256 modes for
-inline encryption. Since ICE (Inline Crypto Engine) supports these
-all modes
+Add support for AES-XTS-256, AES-CBC-128 and AES-CBC-256 in
+cqhci_crypto_algs for inline encryption.
 
 Signed-off-by: Md Sadre Alam <quic_mdalam@quicinc.com>
 ---
@@ -95,140 +94,39 @@ Change in [v2]
 
 Change in [v1]
 
-* Added AES-XTS-128, AES-CBC-128, AES-CBS-256 algo mode support
+* Added alog mode AES-XTS-256, AES-CBC-128, AES-CBC-256 in 
+  cqhci
 
- drivers/mmc/host/sdhci-msm.c | 10 ++----
- drivers/soc/qcom/ice.c       | 65 +++++++++++++++++++++++++++++++-----
- 2 files changed, 58 insertions(+), 17 deletions(-)
+ drivers/mmc/host/cqhci-crypto.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
-diff --git a/drivers/mmc/host/sdhci-msm.c b/drivers/mmc/host/sdhci-msm.c
-index e113b99a3eab..fc1db58373ce 100644
---- a/drivers/mmc/host/sdhci-msm.c
-+++ b/drivers/mmc/host/sdhci-msm.c
-@@ -1867,17 +1867,11 @@ static int sdhci_msm_program_key(struct cqhci_host *cq_host,
- 	struct sdhci_msm_host *msm_host = sdhci_pltfm_priv(pltfm_host);
- 	union cqhci_crypto_cap_entry cap;
+diff --git a/drivers/mmc/host/cqhci-crypto.c b/drivers/mmc/host/cqhci-crypto.c
+index d5f4b6972f63..85ab7bb87886 100644
+--- a/drivers/mmc/host/cqhci-crypto.c
++++ b/drivers/mmc/host/cqhci-crypto.c
+@@ -16,10 +16,22 @@ static const struct cqhci_crypto_alg_entry {
+ 	enum cqhci_crypto_alg alg;
+ 	enum cqhci_crypto_key_size key_size;
+ } cqhci_crypto_algs[BLK_ENCRYPTION_MODE_MAX] = {
++	[BLK_ENCRYPTION_MODE_AES_128_XTS] = {
++		.alg = CQHCI_CRYPTO_ALG_AES_XTS,
++		.key_size = CQHCI_CRYPTO_KEY_SIZE_128,
++	},
+ 	[BLK_ENCRYPTION_MODE_AES_256_XTS] = {
+ 		.alg = CQHCI_CRYPTO_ALG_AES_XTS,
+ 		.key_size = CQHCI_CRYPTO_KEY_SIZE_256,
+ 	},
++	[BLK_ENCRYPTION_MODE_AES_128_CBC] = {
++		.alg = CQHCI_CRYPTO_ALG_BITLOCKER_AES_CBC,
++		.key_size = CQHCI_CRYPTO_KEY_SIZE_128,
++	},
++	[BLK_ENCRYPTION_MODE_AES_256_CBC] = {
++		.alg = CQHCI_CRYPTO_ALG_BITLOCKER_AES_CBC,
++		.key_size = CQHCI_CRYPTO_KEY_SIZE_256,
++	},
+ };
  
--	/* Only AES-256-XTS has been tested so far. */
- 	cap = cq_host->crypto_cap_array[cfg->crypto_cap_idx];
--	if (cap.algorithm_id != CQHCI_CRYPTO_ALG_AES_XTS ||
--		cap.key_size != CQHCI_CRYPTO_KEY_SIZE_256)
--		return -EINVAL;
- 
- 	if (cfg->config_enable & CQHCI_CRYPTO_CONFIGURATION_ENABLE)
--		return qcom_ice_program_key(msm_host->ice,
--					    QCOM_ICE_CRYPTO_ALG_AES_XTS,
--					    QCOM_ICE_CRYPTO_KEY_SIZE_256,
--					    cfg->crypto_key,
-+		return qcom_ice_program_key(msm_host->ice, cap.algorithm_id,
-+					    cap.key_size, cfg->crypto_key,
- 					    cfg->data_unit_size, slot);
- 	else
- 		return qcom_ice_evict_key(msm_host->ice, slot);
-diff --git a/drivers/soc/qcom/ice.c b/drivers/soc/qcom/ice.c
-index 50be7a9274a1..da0c1dfa6594 100644
---- a/drivers/soc/qcom/ice.c
-+++ b/drivers/soc/qcom/ice.c
-@@ -20,6 +20,9 @@
- 
- #include <soc/qcom/ice.h>
- 
-+#define AES_128_CBC_KEY_SIZE			16
-+#define AES_256_CBC_KEY_SIZE			32
-+#define AES_128_XTS_KEY_SIZE			32
- #define AES_256_XTS_KEY_SIZE			64
- 
- /* QCOM ICE registers */
-@@ -162,36 +165,80 @@ int qcom_ice_suspend(struct qcom_ice *ice)
- }
- EXPORT_SYMBOL_GPL(qcom_ice_suspend);
- 
-+static int qcom_ice_get_algo_mode(struct qcom_ice *ice, u8 algorithm_id,
-+				  u8 key_size, enum qcom_scm_ice_cipher *cipher,
-+				  u32 *key_len)
-+{
-+	struct device *dev = ice->dev;
-+
-+	switch (key_size) {
-+	case QCOM_ICE_CRYPTO_KEY_SIZE_128:
-+		fallthrough;
-+	case QCOM_ICE_CRYPTO_KEY_SIZE_256:
-+		break;
-+	default:
-+		dev_err(dev, "Unhandled crypto key size %d\n", key_size);
-+		return -EINVAL;
-+	}
-+
-+	switch (algorithm_id) {
-+	case QCOM_ICE_CRYPTO_ALG_AES_XTS:
-+		if (key_size == QCOM_ICE_CRYPTO_KEY_SIZE_256) {
-+			*cipher = QCOM_SCM_ICE_CIPHER_AES_256_XTS;
-+			*key_len = AES_256_XTS_KEY_SIZE;
-+		} else {
-+			*cipher = QCOM_SCM_ICE_CIPHER_AES_128_XTS;
-+			*key_len = AES_128_XTS_KEY_SIZE;
-+		}
-+		break;
-+	case QCOM_ICE_CRYPTO_ALG_BITLOCKER_AES_CBC:
-+		if (key_size == QCOM_ICE_CRYPTO_KEY_SIZE_256) {
-+			*cipher = QCOM_SCM_ICE_CIPHER_AES_256_CBC;
-+			*key_len = AES_256_CBC_KEY_SIZE;
-+		} else {
-+			*cipher = QCOM_SCM_ICE_CIPHER_AES_128_CBC;
-+			*key_len = AES_128_CBC_KEY_SIZE;
-+		}
-+		break;
-+	default:
-+		dev_err_ratelimited(dev, "Unhandled crypto capability; algorithm_id=%d, key_size=%d\n",
-+				    algorithm_id, key_size);
-+		return -EINVAL;
-+	}
-+
-+	dev_info(dev, "cipher: %d key_size: %d", *cipher, *key_len);
-+
-+	return 0;
-+}
-+
- int qcom_ice_program_key(struct qcom_ice *ice,
- 			 u8 algorithm_id, u8 key_size,
- 			 const u8 crypto_key[], u8 data_unit_size,
- 			 int slot)
- {
- 	struct device *dev = ice->dev;
-+	enum qcom_scm_ice_cipher cipher;
- 	union {
- 		u8 bytes[AES_256_XTS_KEY_SIZE];
- 		u32 words[AES_256_XTS_KEY_SIZE / sizeof(u32)];
- 	} key;
- 	int i;
- 	int err;
-+	u32 key_len;
- 
--	/* Only AES-256-XTS has been tested so far. */
--	if (algorithm_id != QCOM_ICE_CRYPTO_ALG_AES_XTS ||
--	    key_size != QCOM_ICE_CRYPTO_KEY_SIZE_256) {
--		dev_err_ratelimited(dev,
--				    "Unhandled crypto capability; algorithm_id=%d, key_size=%d\n",
--				    algorithm_id, key_size);
-+	if (qcom_ice_get_algo_mode(ice, algorithm_id, key_size, &cipher, &key_len)) {
-+		dev_err(dev, "Unhandled crypto capability; algorithm_id=%d, key_size=%d\n",
-+			algorithm_id, key_size);
- 		return -EINVAL;
- 	}
- 
--	memcpy(key.bytes, crypto_key, AES_256_XTS_KEY_SIZE);
-+	memcpy(key.bytes, crypto_key, key_len);
- 
- 	/* The SCM call requires that the key words are encoded in big endian */
- 	for (i = 0; i < ARRAY_SIZE(key.words); i++)
- 		__cpu_to_be32s(&key.words[i]);
- 
--	err = qcom_scm_ice_set_key(slot, key.bytes, AES_256_XTS_KEY_SIZE,
--				   QCOM_SCM_ICE_CIPHER_AES_256_XTS,
-+	err = qcom_scm_ice_set_key(slot, key.bytes, key_len, cipher,
- 				   data_unit_size);
- 
- 	memzero_explicit(&key, sizeof(key));
+ static inline struct cqhci_host *
 -- 
 2.34.1
 
