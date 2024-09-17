@@ -1,104 +1,180 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D95415ADB3
-	for <dm-devel@lists.linux.dev>; Mon, 16 Sep 2024 21:11:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5765C1F19A;
+	Tue, 17 Sep 2024 05:05:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.19
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726521105; cv=none; b=lb/JD1mqki4tGgwvRK6K5K2XtQsCC4O5/2dzlrIsPS2ZgmDdnYyym28nVsRwGsU76IIceWlGC19yqR/l5BQyKLf9vRtF/YibNkuRuXBxHtZM4w0RC+P2wmE55s8PyvlhKEI6585h25Pkpxlh0kGNl3cyMQ7If4+v9GjjPrSYIms=
+	t=1726549555; cv=none; b=A34nNXpE7ffdhqiKPPy7c+q0utPyPykZPLxQnBluhlJqNRgzxn6MYVdjmR6jY/6q35O379HYoeudFcGLypZZZJKuASIsceO748f19DNmtZ68OTaYowZ0jAqqb2pD6WBDqr4I+ki+Vrvl48YKIT6P85Ru91/x6VqndiAZm6IbTzM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1726521105; c=relaxed/simple;
-	bh=PGZ+lU1HRyuy6hJNYWsBOyMK/QUaQG7boXIMjaKBVmM=;
+	s=arc-20240116; t=1726549555; c=relaxed/simple;
+	bh=XqJJFeOp7MdyQLdxKtgi2ITW8F7GZDZkuwkfDas8Xb8=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=FO2VxlUWklxgtz/l1UdkzrIuELUFcXZ5oM14rOZYVgJWEHxhweO4cfQ0ZViHup37X0+GDRMJ6k2uOYXXCXhgvPi+5g+lSkfH+G2zQXR8aEaOf0pOkBbPNG1WHobDJm0iFNRo9RWw4INDqKwkhG7/6JTk3lUGvgi7R7LgncxV0DM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=A/ps+2/1; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=VwozU18aFUP8pvYWD34P0lddyghY/HKcL8FKFCTFMDIw38K+9d8fNSosdxF27K38HClfLeF/aPT5K4OwoobBLNGK8p9Lu7qXkQkhInb8Py5akjv+u5zupuGmzjjjPLwI5YBBy/virPnHfUKoFJ02wvIcaTx1mShftQNiVHwbxLw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=HlR564Qh; arc=none smtp.client-ip=192.198.163.19
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="A/ps+2/1"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1726521102;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=0QBTWCGXcISLwCtlbiJhxDX2TLS3XLjwMHvnpH2GAf8=;
-	b=A/ps+2/1As+QFSCA0VxiGrwUhLYP0AtqDh7Syhw07mF5OS0/adqrSPpT8kiBUZ5y2PfOpp
-	Dfwwoq0WLIkXzVmp5y9uBprhMQ2iPNIhFCe6ssj1ASvNznCAgJwVxmb4yshf8AeYIzORyg
-	nGapkaMk06Q8BKMt2hNCiBtK72c5jzk=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-349-kHUq6zbMObecFqtmijOSXw-1; Mon,
- 16 Sep 2024 17:11:40 -0400
-X-MC-Unique: kHUq6zbMObecFqtmijOSXw-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 99E9F1955BD2;
-	Mon, 16 Sep 2024 21:11:39 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 365DB1956086;
-	Mon, 16 Sep 2024 21:11:39 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 48GLBbBo930683
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 16 Sep 2024 17:11:37 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 48GLBbZK930682;
-	Mon, 16 Sep 2024 17:11:37 -0400
-Date: Mon, 16 Sep 2024 17:11:37 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        device-mapper development <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH v2 00/22] Yet Another path checker refactor
-Message-ID: <ZuifCU3K3sYojQQC@redhat.com>
-References: <20240912214947.783819-1-bmarzins@redhat.com>
- <c8ac1916a0595aa74fa8c63cd62648d89802a38c.camel@suse.com>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="HlR564Qh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1726549554; x=1758085554;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=XqJJFeOp7MdyQLdxKtgi2ITW8F7GZDZkuwkfDas8Xb8=;
+  b=HlR564Qh3/p5Sh0kkkGBUofPAQ65soGZ4CK5Z8nlxodHDyRb4O9uEMNC
+   DpV+aJsmo0HRNGZuht82DWlFbgxY2I0m8dqsFT7Lr6Jqgho6vwK5HATZj
+   D4lif6G+V0IoAnTXf7ERJvWNdQoZvsENNoMsIRFzCqIBURiQg5qVRX4I+
+   Vrcfz6xo3WXKkX3ML6bYshh0OKfK8HeEidDo5+OYMn6YfnRSoGKWmYLgZ
+   p7xcyOIrzUDsmfzq0F4sEG1B+dJ8IcnEpvkhM9h/k7JVg9LxvO/e2IO5c
+   MmLHFmWeyKGfnP00nhmLb0l1e4pbh/xWZdf9uXKaEVksQMoKjFbTzu1jA
+   g==;
+X-CSE-ConnectionGUID: y4LZBDeySf+33DABfjtkhg==
+X-CSE-MsgGUID: DzvMP7l4SPqO/aXrm1urSg==
+X-IronPort-AV: E=McAfee;i="6700,10204,11197"; a="24930145"
+X-IronPort-AV: E=Sophos;i="6.10,234,1719903600"; 
+   d="scan'208";a="24930145"
+Received: from orviesa010.jf.intel.com ([10.64.159.150])
+  by fmvoesa113.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Sep 2024 22:05:53 -0700
+X-CSE-ConnectionGUID: UDgYpWYHSw6tiyAgLVXzBA==
+X-CSE-MsgGUID: w5W0zApoSMCZMnGOleu5JA==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.10,234,1719903600"; 
+   d="scan'208";a="68954735"
+Received: from lkp-server01.sh.intel.com (HELO 53e96f405c61) ([10.239.97.150])
+  by orviesa010.jf.intel.com with ESMTP; 16 Sep 2024 22:05:47 -0700
+Received: from kbuild by 53e96f405c61 with local (Exim 4.96)
+	(envelope-from <lkp@intel.com>)
+	id 1sqQPI-000AoA-22;
+	Tue, 17 Sep 2024 05:05:44 +0000
+Date: Tue, 17 Sep 2024 13:05:03 +0800
+From: kernel test robot <lkp@intel.com>
+To: Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk,
+	song@kernel.org, yukuai3@huawei.com, agk@redhat.com,
+	snitzer@kernel.org, mpatocka@redhat.com, adrian.hunter@intel.com,
+	quic_asutoshd@quicinc.com, ritesh.list@gmail.com,
+	ulf.hansson@linaro.org, andersson@kernel.org,
+	konradybcio@kernel.org, kees@kernel.org, gustavoars@kernel.org,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-mmc@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+	linux-hardening@vger.kernel.org
+Cc: oe-kbuild-all@lists.linux.dev, quic_srichara@quicinc.com,
+	quic_varada@quicinc.com, quic_mdalam@quicinc.com
+Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
+Message-ID: <202409171209.aEtxsPez-lkp@intel.com>
+References: <20240916085741.1636554-2-quic_mdalam@quicinc.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <c8ac1916a0595aa74fa8c63cd62648d89802a38c.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <20240916085741.1636554-2-quic_mdalam@quicinc.com>
 
-On Fri, Sep 13, 2024 at 11:30:23AM +0200, Martin Wilck wrote:
-> On Thu, 2024-09-12 at 17:49 -0400, Benjamin Marzinski wrote:
-> > This patchset cleans up some of the ugly code from my last refactor,
-> > and
-> > speeds up multipathd path checking, by refactoring how paths are
-> > checked.
-> > 
-> 
-> I haven't started reviewing this yet, but I'm seeing a CI problem with
-> the sysfs test, only with clang 18 on Fedora 40:
-> https://github.com/openSUSE/multipath-tools/actions/runs/10845899189
+Hi Md,
+
+kernel test robot noticed the following build errors:
+
+[auto build test ERROR on device-mapper-dm/for-next]
+[also build test ERROR on axboe-block/for-next linus/master song-md/md-next v6.11 next-20240916]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch#_base_tree_information]
+
+url:    https://github.com/intel-lab-lkp/linux/commits/Md-Sadre-Alam/dm-inlinecrypt-Add-inline-encryption-support/20240916-170452
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+patch link:    https://lore.kernel.org/r/20240916085741.1636554-2-quic_mdalam%40quicinc.com
+patch subject: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
+config: openrisc-randconfig-r062-20240917 (https://download.01.org/0day-ci/archive/20240917/202409171209.aEtxsPez-lkp@intel.com/config)
+compiler: or1k-linux-gcc (GCC) 14.1.0
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20240917/202409171209.aEtxsPez-lkp@intel.com/reproduce)
+
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202409171209.aEtxsPez-lkp@intel.com/
+
+All errors (new ones prefixed by >>):
+
+   drivers/md/dm-inline-crypt.c: In function 'crypt_prepare_inline_crypt_key':
+>> drivers/md/dm-inline-crypt.c:81:15: error: implicit declaration of function 'blk_crypto_init_key' [-Wimplicit-function-declaration]
+      81 |         ret = blk_crypto_init_key(cc->blk_key, cc->key, cc->crypto_mode,
+         |               ^~~~~~~~~~~~~~~~~~~
+>> drivers/md/dm-inline-crypt.c:88:15: error: implicit declaration of function 'blk_crypto_start_using_key' [-Wimplicit-function-declaration]
+      88 |         ret = blk_crypto_start_using_key(cc->dev->bdev, cc->blk_key);
+         |               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+   drivers/md/dm-inline-crypt.c: In function 'crypt_destroy_inline_crypt_key':
+>> drivers/md/dm-inline-crypt.c:104:17: error: implicit declaration of function 'blk_crypto_evict_key'; did you mean 'blk_crypto_register'? [-Wimplicit-function-declaration]
+     104 |                 blk_crypto_evict_key(cc->dev->bdev, cc->blk_key);
+         |                 ^~~~~~~~~~~~~~~~~~~~
+         |                 blk_crypto_register
+   drivers/md/dm-inline-crypt.c: In function 'crypt_inline_encrypt_submit':
+>> drivers/md/dm-inline-crypt.c:121:17: error: implicit declaration of function 'bio_crypt_set_ctx' [-Wimplicit-function-declaration]
+     121 |                 bio_crypt_set_ctx(bio, cc->blk_key, dun, GFP_KERNEL);
+         |                 ^~~~~~~~~~~~~~~~~
 
 
-I'm not sure what this is and I've been entirely unable to reproduce it
-using Fedora 40 and clang 18.1.8 (the current f40 version of clang). It
-seems pretty obvious that I has nothing to do with my patchset. It
-looks like it's related to the renaming open() issues. Given the
+vim +/blk_crypto_init_key +81 drivers/md/dm-inline-crypt.c
 
-"%s() has remaining non-returned values."
+    72	
+    73	static int crypt_prepare_inline_crypt_key(struct inlinecrypt_config *cc)
+    74	{
+    75		int ret;
+    76	
+    77		cc->blk_key = kzalloc(sizeof(*cc->blk_key), GFP_KERNEL);
+    78		if (!cc->blk_key)
+    79			return -ENOMEM;
+    80	
+  > 81		ret = blk_crypto_init_key(cc->blk_key, cc->key, cc->crypto_mode,
+    82					  cc->iv_size, cc->sector_size);
+    83		if (ret) {
+    84			DMERR("Failed to init inline encryption key");
+    85			goto bad_key;
+    86		}
+    87	
+  > 88		ret = blk_crypto_start_using_key(cc->dev->bdev, cc->blk_key);
+    89		if (ret) {
+    90			DMERR("Failed to use inline encryption key");
+    91			goto bad_key;
+    92		}
+    93	
+    94		return 0;
+    95	bad_key:
+    96		kfree_sensitive(cc->blk_key);
+    97		cc->blk_key = NULL;
+    98		return ret;
+    99	}
+   100	
+   101	static void crypt_destroy_inline_crypt_key(struct inlinecrypt_config *cc)
+   102	{
+   103		if (cc->blk_key) {
+ > 104			blk_crypto_evict_key(cc->dev->bdev, cc->blk_key);
+   105			kfree_sensitive(cc->blk_key);
+   106			cc->blk_key = NULL;
+   107		}
+   108	}
+   109	
+   110	static void crypt_inline_encrypt_submit(struct dm_target *ti, struct bio *bio)
+   111	{
+   112		struct inlinecrypt_config *cc = ti->private;
+   113		u64 dun[BLK_CRYPTO_DUN_ARRAY_SIZE];
+   114	
+   115		bio_set_dev(bio, cc->dev->bdev);
+   116		if (bio_sectors(bio)) {
+   117			memset(dun, 0, BLK_CRYPTO_MAX_IV_SIZE);
+   118			bio->bi_iter.bi_sector = cc->start +
+   119				dm_target_offset(ti, bio->bi_iter.bi_sector);
+   120			dun[0] = le64_to_cpu(bio->bi_iter.bi_sector + cc->iv_offset);
+ > 121			bio_crypt_set_ctx(bio, cc->blk_key, dun, GFP_KERNEL);
+   122		}
+   123	
+   124		submit_bio_noacct(bio);
+   125	}
+   126	
 
-and
-
-"__wrap___open64_2: '%s' parameter still has values that haven't been
-checked."
-
-messages, I'm guessing something other than __open64_2() was called. But
-like I said, I can't reproduce this.
-
--Ben
-
-> 
-> Martin
-
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
