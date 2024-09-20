@@ -1,142 +1,92 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D7A7183CCA
-	for <dm-devel@lists.linux.dev>; Fri, 20 Sep 2024 22:13:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1CCA8605BA
+	for <dm-devel@lists.linux.dev>; Fri, 20 Sep 2024 22:17:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1726870430; cv=none; b=koXEpGOv2bMaAm1zxXC0gJHp9BOpIGg9TTt7PNf+/x/xquoOggwKZ8NvwRDkU2lphP0MZqXInwipCS92zspvpgrQQ90p2zxUTiPvnuRazCc5JzJS29C/5DrcfKhsz1GmKDq49LDirfoflfN5kUZ+8t9yUtG4WJ7WabqCQAPud/c=
+	t=1726870654; cv=none; b=BOnTfoVPVn2xwMSA4hOz+h5sy8F1GKYPfhamShWVLqyiLuSjoYKZrhRBx585SgUxOKG6WnW3qp42GHG37UzYmCtFiiVRoVM6vZuMqgmTFVKMqGtr3oEa/3/D6LLywJSuhhNX8i56sMP4SSI8tOTwBrDiX0GWvRvx8W00zzEmr14=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1726870430; c=relaxed/simple;
-	bh=rfTgDC3RMLjaRGxlJcXsJF5JYLxRx86obDX0d7aCVrU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=YpFaduDQ4XxpYgLLHO3sudg1XFZbC/79eZrtHKwtbQjw5VU2Avfz5THEX8djHcqYNzjIhoUEAcfvAE9pP0VppLdXTbJJgqgKQlmFVKyx/aCg3S5BB6ThEBYvMiuEPOGc3Me7kAzAEcQ0JgVYLGF152qPC0AmNtQVPuMTiG41fqQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VCDSt6+O; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1726870654; c=relaxed/simple;
+	bh=/ugUuj3RCj7Yd6GkflH1ycW4iEaA5vAyGTszn11Sc3s=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=lA8/ZjbCLOPpFiWV4K86Nr/x0arFLy0yYwRvu+WNjzfvQGXmOGDITncsM24VGpBacC9IVHzjISr/lsxroZ+zU9xqr9rC9VKIzHr1A1lGHD58Bn2V+Wf4IetB9z+/7iSLYuQutlfYujA4pFYGN4fHbzkOOo0Pbm/OsXVE+yC9hMw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fc6xBU9G; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VCDSt6+O"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fc6xBU9G"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1726870427;
+	s=mimecast20190719; t=1726870652;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding;
-	bh=Sst7k/jAU2BOcvV4AGmH2ZggpGvDC3qUU+7OFTXJKfM=;
-	b=VCDSt6+OVe94R3qrFPRABASwwPg5Ko9oteppaXoiiIplLL4RZ3KQC98+hUvekcHJSlF9bd
-	M0fP5y2dakU+YNWJQChyN0XObDgqexrvbenkvD5k6s73gZOGfUI3ZzFtCHJzorw2tnTZim
-	cboFZCyS+HplJqz5UYAhHd9cC0ca5vk=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	bh=MZO2dRFhI/rWcnvBm0+DN89YfSPrO7N4vc1GGTgs1Es=;
+	b=fc6xBU9GxpkVfpAmQIUfzrrn/v6TT27z16jEOK60+/gIGZ4Y2CxlekoYJNj1QirbOByXL/
+	D760FWgFomLUZ67GrYhr3DMMwGVEbiw+KhKg4JEkJInQ+/ufLyukAh5u4z3aYLKEwXMGdj
+	cRZAktCOphgtlha5Vvxe4R0m1o8Ok8g=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-549-17FcWVObPBK6eUs5MdY3NQ-1; Fri,
- 20 Sep 2024 18:13:46 -0400
-X-MC-Unique: 17FcWVObPBK6eUs5MdY3NQ-1
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.17])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-590-QIdhVkldMUOJtmeZlWGyQw-1; Fri,
+ 20 Sep 2024 18:17:30 -0400
+X-MC-Unique: QIdhVkldMUOJtmeZlWGyQw-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 301F91918DDD
-	for <dm-devel@lists.linux.dev>; Fri, 20 Sep 2024 22:13:45 +0000 (UTC)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D01791979202;
+	Fri, 20 Sep 2024 22:17:29 +0000 (UTC)
 Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 0F0301956052;
-	Fri, 20 Sep 2024 22:13:45 +0000 (UTC)
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 4EDEF1956086;
+	Fri, 20 Sep 2024 22:17:29 +0000 (UTC)
 Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 9A49A5710F; Fri, 20 Sep 2024 18:13:44 -0400 (EDT)
+	id D76B357111; Fri, 20 Sep 2024 18:17:28 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
-Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH] dm vdo: handle unaligned discards correctly
-Date: Fri, 20 Sep 2024 18:13:44 -0400
-Message-ID: <d5cee9e5a1d083fc366506dbbb6ad00b0ab6be79.1726869977.git.msakai@redhat.com>
+Cc: Shen Lichuan <shenlichuan@vivo.com>,
+	Ken Raeburn <raeburn@redhat.com>,
+	Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm vdo indexer: convert comma to semicolon
+Date: Fri, 20 Sep 2024 18:17:00 -0400
+Message-ID: <107371783910d44c3d9774f892cb58d80b30191f.1726870078.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Reset the data_vio properly for each discard block, and delay
-acknowledgement and cleanup until all discard blocks are complete.
+From: Shen Lichuan <shenlichuan@vivo.com>
 
+To ensure code clarity and prevent potential errors, it's advisable
+to employ the ';' as a statement separator, except when ',' are
+intentionally used for specific purposes.
+
+Signed-off-by: Shen Lichuan <shenlichuan@vivo.com>
+Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/data-vio.c | 15 +++++++++------
- 1 file changed, 9 insertions(+), 6 deletions(-)
+ drivers/md/dm-vdo/indexer/chapter-index.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-vdo/data-vio.c b/drivers/md/dm-vdo/data-vio.c
-index 94f6f1ccfb7d..79fbf34763a2 100644
---- a/drivers/md/dm-vdo/data-vio.c
-+++ b/drivers/md/dm-vdo/data-vio.c
-@@ -501,6 +501,7 @@ static void launch_data_vio(struct data_vio *data_vio, logical_block_number_t lb
+diff --git a/drivers/md/dm-vdo/indexer/chapter-index.c b/drivers/md/dm-vdo/indexer/chapter-index.c
+index 7e32a25d3f2f..fb1db41c794b 100644
+--- a/drivers/md/dm-vdo/indexer/chapter-index.c
++++ b/drivers/md/dm-vdo/indexer/chapter-index.c
+@@ -177,7 +177,7 @@ int uds_pack_open_chapter_index_page(struct open_chapter_index *chapter_index,
+ 			if (list_number < 0)
+ 				return UDS_OVERFLOW;
  
- 	memset(&data_vio->record_name, 0, sizeof(data_vio->record_name));
- 	memset(&data_vio->duplicate, 0, sizeof(data_vio->duplicate));
-+	vdo_reset_completion(&data_vio->decrement_completion);
- 	vdo_reset_completion(completion);
- 	completion->error_handler = handle_data_vio_error;
- 	set_data_vio_logical_callback(data_vio, attempt_logical_block_lock);
-@@ -1274,12 +1275,14 @@ static void clean_hash_lock(struct vdo_completion *completion)
- static void finish_cleanup(struct data_vio *data_vio)
- {
- 	struct vdo_completion *completion = &data_vio->vio.completion;
-+	u32 discard_size = min_t(u32, data_vio->remaining_discard,
-+				 VDO_BLOCK_SIZE - data_vio->offset);
- 
- 	VDO_ASSERT_LOG_ONLY(data_vio->allocation.lock == NULL,
- 			    "complete data_vio has no allocation lock");
- 	VDO_ASSERT_LOG_ONLY(data_vio->hash_lock == NULL,
- 			    "complete data_vio has no hash lock");
--	if ((data_vio->remaining_discard <= VDO_BLOCK_SIZE) ||
-+	if ((data_vio->remaining_discard <= discard_size) ||
- 	    (completion->result != VDO_SUCCESS)) {
- 		struct data_vio_pool *pool = completion->vdo->data_vio_pool;
- 
-@@ -1288,12 +1291,12 @@ static void finish_cleanup(struct data_vio *data_vio)
- 		return;
- 	}
- 
--	data_vio->remaining_discard -= min_t(u32, data_vio->remaining_discard,
--					     VDO_BLOCK_SIZE - data_vio->offset);
-+	data_vio->remaining_discard -= discard_size;
- 	data_vio->is_partial = (data_vio->remaining_discard < VDO_BLOCK_SIZE);
- 	data_vio->read = data_vio->is_partial;
- 	data_vio->offset = 0;
- 	completion->requeue = true;
-+	data_vio->first_reference_operation_complete = false;
- 	launch_data_vio(data_vio, data_vio->logical.lbn + 1);
- }
- 
-@@ -1966,7 +1969,8 @@ static void allocate_block(struct vdo_completion *completion)
- 		.state = VDO_MAPPING_STATE_UNCOMPRESSED,
- 	};
- 
--	if (data_vio->fua) {
-+	if (data_vio->fua ||
-+	    data_vio->remaining_discard > (u32) (VDO_BLOCK_SIZE - data_vio->offset)) {
- 		prepare_for_dedupe(data_vio);
- 		return;
- 	}
-@@ -2043,7 +2047,6 @@ void continue_data_vio_with_block_map_slot(struct vdo_completion *completion)
- 		return;
- 	}
- 
--
- 	/*
- 	 * We don't need to write any data, so skip allocation and just update the block map and
- 	 * reference counts (via the journal).
-@@ -2052,7 +2055,7 @@ void continue_data_vio_with_block_map_slot(struct vdo_completion *completion)
- 	if (data_vio->is_zero)
- 		data_vio->new_mapped.state = VDO_MAPPING_STATE_UNCOMPRESSED;
- 
--	if (data_vio->remaining_discard > VDO_BLOCK_SIZE) {
-+	if (data_vio->remaining_discard > (u32) (VDO_BLOCK_SIZE - data_vio->offset)) {
- 		/* This is not the final block of a discard so we can't acknowledge it yet. */
- 		update_metadata_for_data_vio_write(data_vio, NULL);
- 		return;
+-			next_list = first_list + list_number--,
++			next_list = first_list + list_number--;
+ 			result = uds_start_delta_index_search(delta_index, next_list, 0,
+ 							      &entry);
+ 			if (result != UDS_SUCCESS)
 -- 
 2.45.2
 
