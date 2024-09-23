@@ -1,55 +1,57 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0182019644B
-	for <dm-devel@lists.linux.dev>; Mon, 23 Sep 2024 13:27:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FB5919924A
+	for <dm-devel@lists.linux.dev>; Mon, 23 Sep 2024 14:04:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727098029; cv=none; b=CEEjs/XZuSfTvmpPgcU4FSxoa/lxY5kVAl57wXWKFAUHYxTldfj7/82NRY0ygnrYjlhUGO/gfhw14BVOx+0OBtaVxq8FR0rj2aAuZ1W5dMD8/Y85kVz7IstjtLVvizPVUxxprfzMwh1glZHnFxVH6/NUeweYl1zba0a24rHHcmk=
+	t=1727100270; cv=none; b=FRBjuvURYK/Z70DX4tHmFysrsu2ORwV96vq8IyS/SNXlwC1QqMUQeXByGFcXY0LzQl6UXnj8BAJmX/mzTbGu2uOshRpUzExz8ET1+/PeEAShzLVIaMOci0Bag5azyIe4YYwpqQ2LA9mISY/CbHw2FvE4XanHw6t/d51zordu7sU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727098029; c=relaxed/simple;
-	bh=dI2jexkoav3yhz6acugRW9+a907CmM5inGbCMhqpRXo=;
+	s=arc-20240116; t=1727100270; c=relaxed/simple;
+	bh=gSx9WElPoDc3GpnWNuZWuoC3lDWAnGUmRJLHC+V4aD0=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=IctJ74irWAakE3rUfNSbkQ5hoZuy4ZkEzTDuiRlSptEMpozVY3QLqkUjl6PjRlyl2TxZ3gDqqbJJEWyZC5CJq7/lOzpXxmnbovz6lSVA6NnS8+Y61gn09S1q2PsBzraYq/ktSxA5z8dwzDMAADFSeghuKlimgnH+13NB93hLQdY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FXuZGyHF; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=o1QL8b6WkxDNU8IMj1TYYeyIGoXYf4h6cOw/33lzZ0eDwcj284euqzJVeudo/MnQaQ0ypJtZo0wZUI7HPk1DsHWKcXTQSpJzHnk3TdAt8TsSEBttX0T4DXuaewtXu2vdjR3pi0sBc12ZOkL6xENjOByb794ox3wQmz+VBZmvOPA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=GF44Eq82; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FXuZGyHF"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GF44Eq82"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1727098025;
+	s=mimecast20190719; t=1727100268;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Uxrw8H9RJR3IFfbc3l75F3IOlJFRvDC/cWL5VOkjHL0=;
-	b=FXuZGyHFXWZGQZ0HbsglXTDVO+Mq5OFRruEBp41NEOP9UOV/sbjgADJHQSiiG3IWcBslAt
-	wXLeF5jo0+NvCYQWNBLx+YeXkqg4m7qnggZNPXdLJe/2yddNX9MLzTKD1stQXXCZlGn5k1
-	dA700CgdvO63fLTZYfVR5+kcV532hdk=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=BZBpzUBCLdRFe7Fe/66+8sc2jK73AsIgYMvGRGKjsF8=;
+	b=GF44Eq82hhMe6ojfqlJH/gvMXF5tZA96P8HykYhkUOz3wV3W0CEAbN0QI2QVkOOq11LPhv
+	qemqgzTzyz4Jh1KvaWf01SocH9klTk/9q7Nao9ceWvgX4Iv4qaeeORGwWZBjMYpFvhGRMS
+	JspWzksPKDCSEgdEUMS/D4P6INcgl28=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-286-BHMPsk0nOumgYKwG6ROz5A-1; Mon,
- 23 Sep 2024 09:27:02 -0400
-X-MC-Unique: BHMPsk0nOumgYKwG6ROz5A-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-653-J-NuBEIEN22XD9dWQO2_KQ-1; Mon,
+ 23 Sep 2024 10:04:24 -0400
+X-MC-Unique: J-NuBEIEN22XD9dWQO2_KQ-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 58DC718FFA5C;
-	Mon, 23 Sep 2024 13:27:00 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5B2021955D4B;
+	Mon, 23 Sep 2024 14:04:21 +0000 (UTC)
 Received: from [10.45.226.79] (unknown [10.45.226.79])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BC39619560AA;
-	Mon, 23 Sep 2024 13:26:58 +0000 (UTC)
-Date: Mon, 23 Sep 2024 15:26:56 +0200 (CEST)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0C34C19560A3;
+	Mon, 23 Sep 2024 14:04:17 +0000 (UTC)
+Date: Mon, 23 Sep 2024 16:04:15 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Dipendra Khadka <kdipendra88@gmail.com>
-cc: agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] Return error code for failure input for sscanf in
- parse_cblock_range()
-In-Reply-To: <20240922164702.49615-1-kdipendra88@gmail.com>
-Message-ID: <5c258e04-10b4-749d-6f15-94a432ab652e@redhat.com>
-References: <20240922164702.49615-1-kdipendra88@gmail.com>
+To: luca.boccassi@gmail.com
+cc: dm-devel@lists.linux.dev, snitzer@kernel.org, serge@hallyn.com, 
+    wufan@linux.microsoft.com, David Howells <dhowells@redhat.com>, 
+    Jarkko Sakkinen <jarkko@kernel.org>, keyrings@vger.kernel.org, 
+    linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>
+Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
+ trusted keyring is rejected
+In-Reply-To: <20240922161753.244476-1-luca.boccassi@gmail.com>
+Message-ID: <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com>
+References: <20240922161753.244476-1-luca.boccassi@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -57,63 +59,50 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+
+
+
+On Sun, 22 Sep 2024, luca.boccassi@gmail.com wrote:
+
+> From: Luca Boccassi <bluca@debian.org>
+> 
+> If enabled, we fallback to the platform keyring if the trusted keyring doesn't have
+> the key used to sign the roothash. But if pkcs7_verify() rejects the key for other
+> reasons, such as usage restrictions, we do not fallback. Do so.
+> 
+> Follow-up for 6fce1f40e95182ebbfe1ee3096b8fc0b37903269
+> 
+> Suggested-by: Serge Hallyn <serge@hallyn.com>
+> Signed-off-by: Luca Boccassi <bluca@debian.org>
 
 Hi
 
-I skimmed through the sscanf source code and it seems that it can't return 
-a negative value at all.
+I'm not an expert in keyrings.
 
-I think, this should be:
-	r = sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
-	if (r != 2)
-		return -EINVAL;
+I added keyring maintainers to the CC. Please review this patch and 
+Ack/Nack it.
 
 Mikulas
 
-On Sun, 22 Sep 2024, Dipendra Khadka wrote:
-
-> Smatch reported following:
-> '''
-> drivers/md/dm-cache-target.c:3204 parse_cblock_range() warn: sscanf doesn't return error codes
-> drivers/md/dm-cache-target.c:3217 parse_cblock_range() warn: sscanf doesn't return error codes
-> '''
-> 
-> Since, the only negative value that is returned by sscanf is -1.
-> Returning -ENVAL when sscanf returns -1.
-> 
-> Signed-off-by: Dipendra Khadka <kdipendra88@gmail.com>
 > ---
->  drivers/md/dm-cache-target.c | 8 ++++----
->  1 file changed, 4 insertions(+), 4 deletions(-)
+>  drivers/md/dm-verity-verify-sig.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-> index 17f0fab1e254..c35d65e310d6 100644
-> --- a/drivers/md/dm-cache-target.c
-> +++ b/drivers/md/dm-cache-target.c
-> @@ -3200,8 +3200,8 @@ static int parse_cblock_range(struct cache *cache, const char *str,
->  	 * Try and parse form (ii) first.
->  	 */
->  	r = sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
-> -	if (r < 0)
-> -		return r;
-> +	if (r == -1)
-> +		return -EINVAL;
->  
->  	if (r == 2) {
->  		result->begin = to_cblock(b);
-> @@ -3213,8 +3213,8 @@ static int parse_cblock_range(struct cache *cache, const char *str,
->  	 * That didn't work, try form (i).
->  	 */
->  	r = sscanf(str, "%llu%c", &b, &dummy);
-> -	if (r < 0)
-> -		return r;
-> +	if (r == -1)
-> +		return -EINVAL;
->  
->  	if (r == 1) {
->  		result->begin = to_cblock(b);
+> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+> index d351d7d39c60..a9e2c6c0a33c 100644
+> --- a/drivers/md/dm-verity-verify-sig.c
+> +++ b/drivers/md/dm-verity-verify-sig.c
+> @@ -127,7 +127,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+>  #endif
+>  				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
+>  #ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
+> -	if (ret == -ENOKEY)
+> +	if (ret == -ENOKEY || ret == -EKEYREJECTED)
+>  		ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
+>  					sig_len,
+>  					VERIFY_USE_PLATFORM_KEYRING,
 > -- 
-> 2.43.0
+> 2.39.5
 > 
 
