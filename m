@@ -1,114 +1,175 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A6B1224D7
-	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 13:18:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1CDB41A76D8
+	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 13:30:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727183923; cv=none; b=mJzOcmfOV8v289b6u4mjsO8KFJO7JXYLVdJXknDVt4/jRtQ0+/xevD74KI2nqLFm+QuNcZVTEl0sNgKeolWi1uLNoorB13yUZdBBqsphZFKoGAUVfXIRXjhBS05dUPB7MwbgCYchFwQ3kPJZUkW7meJ4mP//n/WscooGccXm5E4=
+	t=1727184610; cv=none; b=Lb0Cm0BVLHSBU+dOmdazpgBV0ZXlvz5AG1Z1WBZiywMkqklgtdY1ZGInN56XGRC9huoW3hO4QXFszEhuwUb5EUnQAlr5+q/bJb0DMv/OeZs/HrONfngG1A8o+7ID761AtmXd45z85DBSwVL+OYbey0xTxxcJYuR02VkxtDTTAQw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727183923; c=relaxed/simple;
-	bh=rfo+Iyl9dTnPfoGm/eo79IFlrWW8r5A7Cp18qk33+NQ=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=Vb6Cn0u8ZHbHFjfWqfAgTncz9Z7oyrrWG9ucyoAwCp6Ve4cB11URlBJziDCeefDJoLBtvDef4i5eDSdeqo20Fe4apZJjqyw1m+X66kj78pf2R7bgeXHtUKB+8OxLEmVt/rP/l73hnPtqXRs2MzpItX+vC1KW09sJapoTZvGPZdo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cft8sz8x; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1727184610; c=relaxed/simple;
+	bh=QHHq8Cr0Qh/e8CdARu1GwMnudjIsQH2f36zFKbQT8DQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=LlECAA+pw5umyCx6Zd1mTcBsyCYHf9v2LA4htX/Jqj8qFH/YrrXgI00h4kGd8myhvoIqdn8ITcKYac+38txTrtL6l+4eL/tBx/AizevsWXc3JXhXU8ms7qwFfKI/BXhVg9nt46zrxI7GxtRwmAmVbg9tii/yO4Bkzfipy0R6xo4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=b/xfwtoI; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cft8sz8x"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="b/xfwtoI"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1727183920;
+	s=mimecast20190719; t=1727184608;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=E53CkJAoSS6hzYSnMtWN7NqdKaBn5j7jh4QkuATrodk=;
-	b=cft8sz8xMDEUuYtZAR5djEXu7HXaxmb8ojgUjgpCW9pJ5Fd64gOhMfYrAJGVzV5L5BZVVq
-	NnYZCBxeGizDBSaQq9gukmCJfWqsBlRuVzoHkaNxLpRhFBnU5LhELTwb5ytwoRXcY1EfZ6
-	kT3CC+JgwvCGybMXpsrZcslF89aVT/w=
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=JnhTz+MJmpzIfB8gnq4thTTrTSgvngwAywtw5oQl+SA=;
+	b=b/xfwtoIQHtRZpkW0zTmXNhzKRiDpM48sZp5mt0KUCrlr430jTnSVHcNvIcjUrAoWBxJKE
+	txb6LjH2uPcqQ+6euk6wxkM9gnBuf3uPJLmiz7gMXZfQRQo/HuvCy1yl/Vl7CGCh8b+BOs
+	z6ADyrm1FMgxRISewfxQCX+COV402wk=
 Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-88-oQARatjfPfmMIUJaePb3IQ-1; Tue,
- 24 Sep 2024 09:18:37 -0400
-X-MC-Unique: oQARatjfPfmMIUJaePb3IQ-1
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.17])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-589-KNi4YbxHMo-cF07Ey4zLvg-1; Tue,
+ 24 Sep 2024 09:30:06 -0400
+X-MC-Unique: KNi4YbxHMo-cF07Ey4zLvg-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1129618EA96B;
-	Tue, 24 Sep 2024 13:18:36 +0000 (UTC)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 24EA718EA974;
+	Tue, 24 Sep 2024 13:30:03 +0000 (UTC)
 Received: from [10.45.226.79] (unknown [10.45.226.79])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E881B1956053;
-	Tue, 24 Sep 2024 13:18:33 +0000 (UTC)
-Date: Tue, 24 Sep 2024 15:18:29 +0200 (CEST)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D8EF218D5349;
+	Tue, 24 Sep 2024 13:23:10 +0000 (UTC)
+Date: Tue, 24 Sep 2024 15:23:08 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Maxim Suhanov <dfirblog@gmail.com>
-cc: Alasdair G Kergon <agk@redhat.com>, Greg KH <gregkh@linuxfoundation.org>, 
-    Mike Snitzer <snitzer@kernel.org>, security@kernel.org, 
-    dm-devel@lists.linux.dev
-Subject: [PATCH] dm-verity: restart or panic on an I/O error
-Message-ID: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com>
+To: Shen Lichuan <shenlichuan@vivo.com>
+cc: colyli@suse.de, kent.overstreet@linux.dev, agk@redhat.com, 
+    snitzer@kernel.org, song@kernel.org, yukuai3@huawei.com, 
+    linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, 
+    dm-devel@lists.linux.dev, linux-raid@vger.kernel.org
+Subject: Re: [PATCH v1] md: Correct typos in multiple comments across various
+ files
+In-Reply-To: <20240924091733.8370-1-shenlichuan@vivo.com>
+Message-ID: <d95d7419-7bac-802f-a5d6-456900539c32@redhat.com>
+References: <20240924091733.8370-1-shenlichuan@vivo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-Maxim Suhanov reported that dm-verity doesn't crash if an I/O error 
-happens. In theory, this could be used to subvert security, because an 
-attacker can create sectors that return error with the Write Uncorrectable 
-command. Some programs may misbehave if they have to deal with EIO.
+Hi
 
-This commit fixes dm-verity, so that if "panic_on_corruption" or
-"restart_on_corruption" was specified and an I/O error happens, the
-machine will panic or restart.
+I've applied the device mapper part of the patch.
 
-This commit also changes kernel_restart to emergency_restart -
-kernel_restart calls reboot notifiers and these reboot notifiers may wait
-for the bio that failed. emergency_restart doesn't call the notifiers.
+Mikulas
 
-Reported-by: Maxim Suhanov <dfirblog@gmail.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
 
----
- drivers/md/dm-verity-target.c |   15 ++++++++++++++-
- 1 file changed, 14 insertions(+), 1 deletion(-)
+On Tue, 24 Sep 2024, Shen Lichuan wrote:
 
-Index: linux-2.6/drivers/md/dm-verity-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-verity-target.c	2024-09-23 17:48:08.000000000 +0200
-+++ linux-2.6/drivers/md/dm-verity-target.c	2024-09-24 11:34:08.000000000 +0200
-@@ -273,7 +273,7 @@ out:
- 		return 0;
- 
- 	if (v->mode == DM_VERITY_MODE_RESTART)
--		kernel_restart("dm-verity device corrupted");
-+		emergency_restart();
- 
- 	if (v->mode == DM_VERITY_MODE_PANIC)
- 		panic("dm-verity device corrupted");
-@@ -596,6 +596,19 @@ static void verity_finish_io(struct dm_v
- 	if (!static_branch_unlikely(&use_bh_wq_enabled) || !io->in_bh)
- 		verity_fec_finish_io(io);
- 
-+	if (unlikely(status != BLK_STS_OK) && unlikely(!(bio->bi_opf & REQ_RAHEAD))) {
-+		if (v->mode == DM_VERITY_MODE_RESTART ||
-+		    v->mode == DM_VERITY_MODE_PANIC)
-+			DMERR_LIMIT("%s has error: %s", v->data_dev->name,
-+					blk_status_to_str(status));
-+
-+		if (v->mode == DM_VERITY_MODE_RESTART)
-+			emergency_restart();
-+
-+		if (v->mode == DM_VERITY_MODE_PANIC)
-+			panic("dm-verity device has I/O error");
-+	}
-+
- 	bio_endio(bio);
- }
- 
+> Fixed some confusing spelling errors that were currently identified,
+> the details are as follows:
+> 
+> -in the code comments:
+> 	writeback.c: 124:		overrite	==> overwrite
+> 	dm-cache-target.c: 1371:	exclussive	==> exclusive
+> 	dm-raid.c: 2522:		repective	==> respective
+> 	md-cluster.c: 552:		daemaon		==> daemon
+> 	md.c: 511:			entred		==> entered
+> 	raid5-ppl.c: 990:		parial		==> partial
+> 
+> Signed-off-by: Shen Lichuan <shenlichuan@vivo.com>
+> ---
+>  drivers/md/bcache/writeback.c | 2 +-
+>  drivers/md/dm-cache-target.c  | 2 +-
+>  drivers/md/dm-raid.c          | 2 +-
+>  drivers/md/md-cluster.c       | 2 +-
+>  drivers/md/md.c               | 2 +-
+>  drivers/md/raid5-ppl.c        | 2 +-
+>  6 files changed, 6 insertions(+), 6 deletions(-)
+> 
+> diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
+> index c1d28e365910..3354a5cd587c 100644
+> --- a/drivers/md/bcache/writeback.c
+> +++ b/drivers/md/bcache/writeback.c
+> @@ -121,7 +121,7 @@ static void __update_writeback_rate(struct cached_dev *dc)
+>  		}
+>  		fps = div_s64(dirty, dirty_buckets) * fp_term;
+>  		if (fragment > 3 && fps > proportional_scaled) {
+> -			/* Only overrite the p when fragment > 3 */
+> +			/* Only overwrite the p when fragment > 3 */
+>  			proportional_scaled = fps;
+>  		}
+>  	}
+> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+> index 17f0fab1e254..3e8be29c0a5e 100644
+> --- a/drivers/md/dm-cache-target.c
+> +++ b/drivers/md/dm-cache-target.c
+> @@ -1368,7 +1368,7 @@ static void mg_copy(struct work_struct *ws)
+>  			 */
+>  			bool rb = bio_detain_shared(mg->cache, mg->op->oblock, mg->overwrite_bio);
+>  
+> -			BUG_ON(rb); /* An exclussive lock must _not_ be held for this block */
+> +			BUG_ON(rb); /* An exclusive lock must _not_ be held for this block */
+>  			mg->overwrite_bio = NULL;
+>  			inc_io_migrations(mg->cache);
+>  			mg_full_copy(ws);
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index 63682d27fc8d..1e0d3b9b75d6 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -2519,7 +2519,7 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+>  		rdev->saved_raid_disk = rdev->raid_disk;
+>  	}
+>  
+> -	/* Reshape support -> restore repective data offsets */
+> +	/* Reshape support -> restore respective data offsets */
+>  	rdev->data_offset = le64_to_cpu(sb->data_offset);
+>  	rdev->new_data_offset = le64_to_cpu(sb->new_data_offset);
+>  
+> diff --git a/drivers/md/md-cluster.c b/drivers/md/md-cluster.c
+> index 6595f89becdb..867af995b767 100644
+> --- a/drivers/md/md-cluster.c
+> +++ b/drivers/md/md-cluster.c
+> @@ -549,7 +549,7 @@ static void process_metadata_update(struct mddev *mddev, struct cluster_msg *msg
+>  
+>  	dlm_lock_sync(cinfo->no_new_dev_lockres, DLM_LOCK_CR);
+>  
+> -	/* daemaon thread must exist */
+> +	/* daemon thread must exist */
+>  	thread = rcu_dereference_protected(mddev->thread, true);
+>  	wait_event(thread->wqueue,
+>  		   (got_lock = mddev_trylock(mddev)) ||
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 179ee4afe937..11078a4e4951 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -508,7 +508,7 @@ static void __mddev_resume(struct mddev *mddev, bool recovery_needed)
+>  		return;
+>  	}
+>  
+> -	/* entred the memalloc scope from mddev_suspend() */
+> +	/* entered the memalloc scope from mddev_suspend() */
+>  	memalloc_noio_restore(mddev->noio_flag);
+>  
+>  	percpu_ref_resurrect(&mddev->active_io);
+> diff --git a/drivers/md/raid5-ppl.c b/drivers/md/raid5-ppl.c
+> index a70cbec12ed0..5323025e7dd9 100644
+> --- a/drivers/md/raid5-ppl.c
+> +++ b/drivers/md/raid5-ppl.c
+> @@ -987,7 +987,7 @@ static int ppl_recover(struct ppl_log *log, struct ppl_header *pplhdr,
+>  		crc = ~0;
+>  		crc_stored = le32_to_cpu(e->checksum);
+>  
+> -		/* read parial parity for this entry and calculate its checksum */
+> +		/* read partial parity for this entry and calculate its checksum */
+>  		while (pp_size) {
+>  			int s = pp_size > PAGE_SIZE ? PAGE_SIZE : pp_size;
+>  
+> -- 
+> 2.17.1
+> 
 
