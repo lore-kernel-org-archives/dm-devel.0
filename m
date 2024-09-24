@@ -1,130 +1,74 @@
-Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12B6D80043
-	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 20:54:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B0D951448DF
+	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 21:24:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727211283; cv=none; b=HixQD7P5dbShLLpvfrNotY3r7gHETB2Uki4F64T3QtYqkcxzKz/YhI1B+rJzHPZ6ksP+s5oHhOzuLqP1cMbkQ0/LnUfCyukUUkJe2toDdmbiisatlT1VTyu6xig/2S2eF1DZ+G3FdfJh6oZ6QzN0K8QNAXRzUsCLE3qS0pZ61kc=
+	t=1727213089; cv=none; b=K1L4zOW9TJh6a0DiN1ENwiN0pvSpwTAlqD+H3RnNFdFJSpk5xOYHNmStoKQKiAFznWNAu/fyrBDQsYfT87Mt1QPzZuKifmMyQhp4u/ZUYogt1mWmEyEJx0CMsKjvp6egLuhkGNnnduNGdO5XKeJRlupECqsxSeIAaHV4GayN4/8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727211283; c=relaxed/simple;
-	bh=GvF5YOtdRQ3nQ8/UT5Tf7btTwteD8WTQP93ieooi7aI=;
+	s=arc-20240116; t=1727213089; c=relaxed/simple;
+	bh=Se2SeyxPn1YF8ln96fxH093MbqW12GotKj2gD9ytgGE=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ep9UnchNJ0P5rQ4Nd656jHbRdg3iviMrsO12rdiIxkgUpn1OOUdLR4+6L5WcNHg0MvyiJLWswmhHhK3usnAFrTuzLYo/bIDIHZ5A4W1f/nNr47c3SjwXTS8q8B/K52l44NSG+GO4sEz7+Pliq2w6aYO25IuJ9gmfkyicQQ+Md2s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=I04L02WD; arc=none smtp.client-ip=209.85.208.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	 To:Cc:Content-Type; b=BtQyR3xG3L4KIgISzBJi8pdqFz/pQJdqBwil59yLXZXWl8ozeUX1V+2THHj0zGa1fHaQfJ4XGlz4WouvZsQC8CRidO5FWM1ni2t7dVjHRaqF9XvGmut1/O/cDZvGv7a7pHWQcZVMZcSUEaVzqXBfJEEr2b2aNTU9nTbqMRDqswM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GSpF9X1a; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="I04L02WD"
-Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-5c247dd0899so2217a12.1
-        for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 13:54:41 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1727211280; x=1727816080; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=GvF5YOtdRQ3nQ8/UT5Tf7btTwteD8WTQP93ieooi7aI=;
-        b=I04L02WDtdsgYbx/GGqyuRC16aqrRE7GbS2wGrdj4G+b7Am//7UYweevs/+KILDGR2
-         ukYcHq/7K1MRX7nq5gZDZ+WHJkh9WYuDDbIQ9wp7F3/1p/mR0GOcgigrDpz7tOqSYHZo
-         CM6O4n0jwyQaqL5GDzk2r2HY3JtnqWFQkuJIRb+mr/0t9rTSGFiBGqL2VTWjDptbwGs8
-         7zoLvewGAe933Z7gnvNZoANx+Vib4Dm651IPbKEx5pIEmVbgbhcARZxVHyZeECZ8lDvs
-         LC1Nto2yIHvPRv2VaBxqE+zMdBZ9AO929HK8owB2o+Xux3cZOWYuoHnzA+cyc5yX5kuP
-         LUNA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727211280; x=1727816080;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=GvF5YOtdRQ3nQ8/UT5Tf7btTwteD8WTQP93ieooi7aI=;
-        b=sqlSLCwIPGyBM9yQEQyxqwn1K6Pe7t83U5uSvtZtAQ78obxC4OuRa8UE9CkPTG9oC/
-         hUPkOp8GP5KkN7TaO2nN4/LPauBhvr00Z05XHswBfd0Lxv4Ufdgt+41xPoLK6ug8XHp+
-         8RQaEg+ge1S3fx2pqjxk89mC2v/yYTZfQkc/Gz3X16Nnk+u+x9bsG6/bq5uMvZFQ5zFg
-         0jfIJD0/7SW0Fi9J2U+dLrCukL2zGb/fcoIGLKqpg4gol+4C+CHz8pcDLcNrsAZlgRdi
-         x8kaP97Sm0RlKtFogkMoPEYq5f3W1ERbicCY96+BTba897RnJcXy8GVhK6ScXyuzKyt4
-         ihNw==
-X-Forwarded-Encrypted: i=1; AJvYcCUxOTApvWNB9fZt3CY6r/KrLFOY2JmExZo7pl1g5euv6phH60euElrBh0wcNCx9jhu/6V5At0fOAw==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyd/wJlwdD6VoS2cJBms8XXeTz83ICx/gDALDKht6QNoeSFV64h
-	SbY7HzDpHjzJ4h6jQBU8sLFHcZcesBsKxOZs1sxuI/hHWusyzfyc2cUpLopdk6bFKCs3ZiuhDgs
-	PCxpUKcehySo+x1WoNekZvWXd+bLg6ke/y+a6
-X-Google-Smtp-Source: AGHT+IF9zLEeySDU7S2qlsZumrXByCG1GvyzkZnyv9xPXqpk/YFAiBraTSmn/qfb68au1I8pmsT75C1B3dhw156ZSOM=
-X-Received: by 2002:a05:6402:430d:b0:5c2:5251:ba5c with SMTP id
- 4fb4d7f45d1cf-5c720f4f073mr4502a12.0.1727211279863; Tue, 24 Sep 2024 13:54:39
- -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GSpF9X1a"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 47846C4CEC6
+	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 21:24:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1727213089;
+	bh=Se2SeyxPn1YF8ln96fxH093MbqW12GotKj2gD9ytgGE=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=GSpF9X1aEP5ShwEMMdwzFGiXnTFSHDwRhYQxUZDvuKGB/nIhnq2QKeyZ9+FgwI3J1
+	 MzQ6/uVcTfvB3PunJtfDAdrckXJdkweDYmb75mBHb+PiQZz0P+vQ4oTcdHPV7I8PTQ
+	 U/OXAIrJR/DibW16WO9FY8cpcYnDJSZcIbo5quVX2XOjRmUmk4o4s5pMKCl090hgck
+	 VFknEatVJilOvb8vOgbZF0SwLEHhhvQ039Asq0/OE/krJKYdA+DKDq/OEJ6mKWkxFs
+	 +BQHRQqBvW70ZPVC34LghNYRoq02iWd5vrnHO9uhOXdzqEfb6ghfw1gJ1vxAslohq2
+	 LyrgXavyywJ3g==
+Received: by mail-il1-f176.google.com with SMTP id e9e14a558f8ab-3a0ca7cfeb4so14161505ab.2
+        for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 14:24:49 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AJvYcCX72eoVTIZKwQ61r6FyqOQQmnZBqInY2Mf/GTKxTwuLZhsa5OaK3EZB0XOOb1m7fEO0MzcACZ9jTw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YybuhVzrJmk514eqcpIWBih5ZSjs6gGW5IVqy5kTf0gd6Yd9PaR
+	QIpqWlkH4YIdqQz2VShKhNMfndWMKtEKKQchEsP3O8KB4H5h6D+OMTQWHAgMXV0Ov4mix6fagmq
+	2yUKJoJNCEtYXSTznOBfF75MWOYo=
+X-Google-Smtp-Source: AGHT+IGDkW7WD2/JzFxCpyUwRB5/+sUMgv4hqELdvS0oE8C8Gvs3vzZAdADEd3f3M3MN9EO5an1dEVTf2Q18Yg4o5dM=
+X-Received: by 2002:a05:6e02:174a:b0:3a0:aa15:3497 with SMTP id
+ e9e14a558f8ab-3a26d6d97acmr10177795ab.1.1727213088499; Tue, 24 Sep 2024
+ 14:24:48 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com>
- <CABCJKudRQuA_kv8Gyu_9-1grZmVR=c=oywrPuUFprnQ1v_+Byg@mail.gmail.com>
- <CABSDvDLu9-uzbd9z-avUu-iLV9rgyy=LKzaOwdWnD0f7ruBizg@mail.gmail.com> <9dee84e8-6c94-7450-a0c4-a95cab8f66d4@redhat.com>
-In-Reply-To: <9dee84e8-6c94-7450-a0c4-a95cab8f66d4@redhat.com>
-From: Akilesh Kailash <akailash@google.com>
-Date: Tue, 24 Sep 2024 13:54:27 -0700
-Message-ID: <CABSDvD+PLF_HnGeJwVheW1HGcy8hV2BpfFw3NizkCYKxDeWURQ@mail.gmail.com>
-Subject: Re: [PATCH] dm-verity: restart or panic on an I/O error
+References: <20240924091733.8370-1-shenlichuan@vivo.com> <d95d7419-7bac-802f-a5d6-456900539c32@redhat.com>
+In-Reply-To: <d95d7419-7bac-802f-a5d6-456900539c32@redhat.com>
+From: Song Liu <song@kernel.org>
+Date: Tue, 24 Sep 2024 14:24:37 -0700
+X-Gmail-Original-Message-ID: <CAPhsuW51S=WfyNoP_cWvNVq3rPW0+iBrhzRVaKK=q3PLRA94UA@mail.gmail.com>
+Message-ID: <CAPhsuW51S=WfyNoP_cWvNVq3rPW0+iBrhzRVaKK=q3PLRA94UA@mail.gmail.com>
+Subject: Re: [PATCH v1] md: Correct typos in multiple comments across various files
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Sami Tolvanen <samitolvanen@google.com>, Maxim Suhanov <dfirblog@gmail.com>, 
-	Alasdair G Kergon <agk@redhat.com>, Greg KH <gregkh@linuxfoundation.org>, 
-	Mike Snitzer <snitzer@kernel.org>, security@kernel.org, dm-devel@lists.linux.dev, 
-	Eric Biggers <ebiggers@google.com>
+Cc: Shen Lichuan <shenlichuan@vivo.com>, colyli@suse.de, kent.overstreet@linux.dev, 
+	agk@redhat.com, snitzer@kernel.org, yukuai3@huawei.com, 
+	linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Sep 24, 2024 at 11:45=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.c=
-om> wrote:
->
->
->
-> On Tue, 24 Sep 2024, Akilesh Kailash wrote:
->
-> > On Tue, Sep 24, 2024 at 10:44=E2=80=AFAM Sami Tolvanen <samitolvanen@go=
-ogle.com> wrote:
-> > >
-> > > Hi Mikulas,
-> > >
-> > > On Tue, Sep 24, 2024 at 6:18=E2=80=AFAM Mikulas Patocka <mpatocka@red=
-hat.com> wrote:
-> > > >
-> > > > Maxim Suhanov reported that dm-verity doesn't crash if an I/O error
-> > > > happens. In theory, this could be used to subvert security, because=
- an
-> > > > attacker can create sectors that return error with the Write Uncorr=
-ectable
-> > > > command. Some programs may misbehave if they have to deal with EIO.
-> > >
-> > > I seem to recall that this was intentional. We used to restart/panic
-> > > on I/O errors with FEC enabled, but the behavior was changed in commi=
-t
-> > > 2c0468e054c0 ("dm verity: skip redundant verity_handle_err() on I/O
-> > > errors"). Akilesh, do you remember what exactly was the issue here?
-> > >
-> >
-> > I looked at the history and the original intent and the idea stems
-> > from this patch:
-> > https://lore.kernel.org/dm-devel/b004e7c7-f795-77ed-19b9-983785780e92@g=
-mail.com/T/#mec4df1ba3f3cb63846875fb2bfc1f8b3100f31f1
-> >
-> > I think the EIO should be propagated back up the stack; I think this
-> > will trigger panic
-> > even for genuine I/O errors.
->
-> Maxim Suhanov's point is that you should trigger panic for genuine I/O
-> errors. Otherwise the attacker could corrupt some sectors and let some
-> program receive EIO and the EIO could confuse the program to do something
-> insecure (for example, to not load a configuration file with security
-> policy).
->
+Hi Mikulas,
 
-Would it be ok to trigger the panic only when the system isn't shutting dow=
-n?
-During shutdown, we may end up with EIO requests from the underlying
-driver and this may
-inadvertently trigger the panic.
+On Tue, Sep 24, 2024 at 6:30=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
+>
+> Hi
+>
+> I've applied the device mapper part of the patch.
 
-verity_is_system_shutting_down() should already have that logic to
-skip during the shutdown path.
+Would you mind taking the whole patch instead? You can add
 
+Acked-by: Song Liu <song@kernel.org>
 
-> Mikulas
+Thanks,
+Song
