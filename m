@@ -1,47 +1,51 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 80DE613B7BC;
-	Tue, 24 Sep 2024 21:59:12 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86308146A87;
+	Tue, 24 Sep 2024 22:04:37 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727215152; cv=none; b=JUW2dp7+mptxV2ISMFbYVCDtxKkMLTdBXVYFHSse3CatbM6I9lLxjqwYU5LVUBvaxN1y4LprTj7IlDLp1CDwptgUjodJMQj7EzIHUrQBOI08xAIOKxvumXJejeU0RvrRiGTg61XdR6jjmPRJEYwXTF3qVNEC2kdSBxZ8MLjfHxY=
+	t=1727215477; cv=none; b=BW2MhH/pgwE8H+q8nXwHn+/mxm0YpiAw9dlbFcPTgxeUUzysWzBtbkv2aRbkeeFiwwR6MFj+v+tBR+Io+hF6EYj1N6R82/hk9QvQA93QN9JTXL1p7ekkoTTLiszoGPfOg7CFXbhida7BhiXMy99QTpXhbOm01clnoWFnzMOzmHw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727215152; c=relaxed/simple;
-	bh=F/QvxXAUbnSi1bOS2nFLFEUmzaLdLpoMAU42kIDG2i0=;
+	s=arc-20240116; t=1727215477; c=relaxed/simple;
+	bh=ph7TAmMw39B3nL4g9AnJGmFDqgpNUh2Ues8UMkyvezM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=CYTEqs5sKqmncATyGuLEXRKqNVv3mR2M0bCGwGtwwU18IV8XORE48LEnFG1VF9i1brM8LwSOMHy6bgNoy35lWDADIMDLCEgFel3q8kETAGToBdG9fAbdvD3O5wYCcCvwWVVEvNORQdW7XltTs2Y3BsIVbR2V1+Nw2sVSyrSkdJQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=BTktiKHr; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=Izsbm4Bja7r9Lke8BFpPkq+NO+1NOHwe6Hd4BOz81toboZnIQUDbF02hMW4zw+6lKNgpHZqfkL0J4L78a+3i5lSkjVBjZbSQU5shDwYY81TnojVetQjJ9FE8I7JGr+FYqWPzrMiDM7gOuVSnPPh5L4ntkRO5NRTvnlfXuGLsbGk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=YHSE/qt0; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="BTktiKHr"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id BF26BC4CEC4;
-	Tue, 24 Sep 2024 21:59:11 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="YHSE/qt0"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4BD6CC4CEC4;
+	Tue, 24 Sep 2024 22:04:36 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1727215152;
-	bh=F/QvxXAUbnSi1bOS2nFLFEUmzaLdLpoMAU42kIDG2i0=;
+	s=k20201202; t=1727215477;
+	bh=ph7TAmMw39B3nL4g9AnJGmFDqgpNUh2Ues8UMkyvezM=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=BTktiKHr3W5tcOIZDBbVE9H4UT92w7DSGURgFikZAqarzyb1ZMHQm7Hd9/x7DTPKV
-	 ZsJDDJSPFT0OEerzCHGTRPDSe6U+9PnzfQNqLCCBDIw7xEz1ZQmBq93OQC/Y37ZG/r
-	 bHLTA0wNCzm7UP8u7ksSxaYlTtOTWqT2PZjTDUb51xK3yvgtx0dSRvyy2XUkf07PWs
-	 3ddDiVHB0ktQ5Y0K29pAyM5wcrQ3CdCeGylCvwyzqD043l13vQIRdjmCHykGBjXUdY
-	 qFmWGf0DCGbgjjWnW2HFqDJPyOsgWWzSZxCjiPrDDkNg6CGD7ZqGhKzzy/0FXvHikT
-	 KFbk14mblOi3g==
-Date: Tue, 24 Sep 2024 14:59:10 -0700
+	b=YHSE/qt0AiT8AlwY1uSTrM4Z+ddSgOQ1IG50S21mOHCh5+bAm0FTiaj8U0tsSSsTY
+	 O2kH8wsJaPK9PB92jyQVw/lhH+5Jbye96igquHgFjB4OjUO8QZ81XWKyH+MfvQyTS2
+	 RdpMxn6MU3xPwqTU8MrZPY3VPdPRmSyRL9av7qiJhInMfvBKuynohB07s0T08Nbj7d
+	 lmPdObo40LTaycX8ebXQTapeJK/rULYRm/TJvFhl37j60cjcRl62ZDMWCaIKuF2Jgx
+	 p/6Di08hH6mRYEqPHHbE3jfXR+rHUKYV6+UymboTU/cEi164hzevz4dtd1IagSNl2M
+	 Pzod9bdNwPm+A==
+Date: Tue, 24 Sep 2024 15:04:34 -0700
 From: Eric Biggers <ebiggers@kernel.org>
-To: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, luca.boccassi@gmail.com,
-	dm-devel@lists.linux.dev, snitzer@kernel.org, serge@hallyn.com,
-	wufan@linux.microsoft.com, David Howells <dhowells@redhat.com>,
-	keyrings@vger.kernel.org, linux-integrity@vger.kernel.org,
-	Mimi Zohar <zohar@linux.ibm.com>
-Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
- trusted keyring is rejected
-Message-ID: <20240924215910.GA1585@sol.localdomain>
-References: <20240922161753.244476-1-luca.boccassi@gmail.com>
- <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com>
- <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
- <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com>
- <D4EU6G0VR6WO.24IWJJQC997Y9@kernel.org>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk,
+	song@kernel.org, yukuai3@huawei.com, agk@redhat.com,
+	snitzer@kernel.org, mpatocka@redhat.com, adrian.hunter@intel.com,
+	quic_asutoshd@quicinc.com, ritesh.list@gmail.com,
+	ulf.hansson@linaro.org, andersson@kernel.org,
+	konradybcio@kernel.org, kees@kernel.org, gustavoars@kernel.org,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-mmc@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+	linux-hardening@vger.kernel.org, quic_srichara@quicinc.com,
+	quic_varada@quicinc.com
+Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
+Message-ID: <20240924220434.GB1585@sol.localdomain>
+References: <20240916085741.1636554-1-quic_mdalam@quicinc.com>
+ <20240916085741.1636554-2-quic_mdalam@quicinc.com>
+ <20240921185519.GA2187@quark.localdomain>
+ <ZvJt9ceeL18XKrTc@infradead.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -50,97 +54,36 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <D4EU6G0VR6WO.24IWJJQC997Y9@kernel.org>
+In-Reply-To: <ZvJt9ceeL18XKrTc@infradead.org>
 
-On Wed, Sep 25, 2024 at 12:36:01AM +0300, Jarkko Sakkinen wrote:
-> On Tue Sep 24, 2024 at 9:27 PM EEST, Mikulas Patocka wrote:
-> >
-> >
-> > On Tue, 24 Sep 2024, Jarkko Sakkinen wrote:
-> >
-> > > On Mon Sep 23, 2024 at 5:04 PM EEST, Mikulas Patocka wrote:
-> > > >
-> > > >
-> > > > On Sun, 22 Sep 2024, luca.boccassi@gmail.com wrote:
-> > > >
-> > > > > From: Luca Boccassi <bluca@debian.org>
-> > > > > 
-> > > > > If enabled, we fallback to the platform keyring if the trusted keyring doesn't have
-> > > > > the key used to sign the roothash. But if pkcs7_verify() rejects the key for other
-> > > > > reasons, such as usage restrictions, we do not fallback. Do so.
-> > > > > 
-> > > > > Follow-up for 6fce1f40e95182ebbfe1ee3096b8fc0b37903269
-> > > > > 
-> > > > > Suggested-by: Serge Hallyn <serge@hallyn.com>
-> > > > > Signed-off-by: Luca Boccassi <bluca@debian.org>
-> > > >
-> > > > Hi
-> > > >
-> > > > I'm not an expert in keyrings.
-> > > >
-> > > > I added keyring maintainers to the CC. Please review this patch and 
-> > > > Ack/Nack it.
-> > > >
-> > > > Mikulas
-> > > >
-> > > > > ---
-> > > > >  drivers/md/dm-verity-verify-sig.c | 2 +-
-> > > > >  1 file changed, 1 insertion(+), 1 deletion(-)
-> > > > > 
-> > > > > diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-> > > > > index d351d7d39c60..a9e2c6c0a33c 100644
-> > > > > --- a/drivers/md/dm-verity-verify-sig.c
-> > > > > +++ b/drivers/md/dm-verity-verify-sig.c
-> > > > > @@ -127,7 +127,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
-> > > > >  #endif
-> > > > >  				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
-> > > > >  #ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
-> > > > > -	if (ret == -ENOKEY)
-> > > > > +	if (ret == -ENOKEY || ret == -EKEYREJECTED)
-> > > > >  		ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
-> > > > >  					sig_len,
-> > > > >  					VERIFY_USE_PLATFORM_KEYRING,
-> > > > > -- 
-> > > > > 2.39.5
-> > > > > 
-> > > 
-> > > I know nothing about dm-verity. What does it even do?
-> > > 
-> > > BR, Jarkko
-> >
-> > dm-verity provides a read-only device with integrity checking. dm-verity 
-> > stores hash for every block on the block device and checks the hash when 
-> > reading the block. If the hash doesn't match, it can do one of these 
-> > actions (depending on configuration):
-> > - return I/O error
-> > - try to correct the data using forward error correction
-> > - log the mismatch and do nothing
-> > - restart the machine
-> > - call panic()
-> >
-> > dm-verity is mostly used for the immutable system partition on Android 
-> > phones. For more info, see 
-> > Documentation/admin-guide/device-mapper/verity.rst
-> >
-> > The above patch changes the way that the signature of the root hash is 
-> > verified. I have no clue whether the patch can or can't subvert system 
-> > security, that's why I'd like to have some more reviews of the patch 
-> > before accepting it.
+On Tue, Sep 24, 2024 at 12:44:53AM -0700, Christoph Hellwig wrote:
+> On Sat, Sep 21, 2024 at 11:55:19AM -0700, Eric Biggers wrote:
+> > (https://android.googlesource.com/kernel/common/+/refs/heads/android-mainline/drivers/md/dm-default-key.c),
+> > and I've been looking for the best way to get the functionality upstream.  The
+> > main challenge is that dm-default-key is integrated with fscrypt, such that if
+> > fscrypt encrypts the data, then the data isn't also encrypted with the block
+> > device key.  There are also cases such as f2fs garbage collection in which
+> > filesystems read/write raw data without en/decryption by any key.  So
+> > essentially a passthrough mode is supported on individual I/O requests.
 > 
-> I guess someone who knows all this already should review it.
-> 
-> Doesn't dm-verity have a maintainer?
-> 
+> Adding a default key is not the job of a block remapping driver.  You'll
+> need to fit that into the file system and/or file system level helpers.
 
-This patch only affects dm-verity's in-kernel signature verification support,
-which has only been present since Linux v5.4 and is not used by Android or
-Chrome OS.  The whole feature seems weird to me, and it is prone to be misused;
-signatures are best verified by trusted userspace code instead (e.g. initramfs).
-But apparently there are people who use the dm-verity in-kernel signatures.  I
-think systemd has some support for it, as does the recently-upstreamed IPE LSM.
-I don't know what else.  The exact semantics of the "trusted" and "platform"
-keyrings are not entirely clear to me, but given that dm-verity already trusts
-keys from both keyrings this patch seems reasonable.  The people who actually
-use this feature are in the best position to make that call, though.
+What about a block device ioctl, as was previously proposed
+(https://lore.kernel.org/linux-block/1658316391-13472-1-git-send-email-israelr@nvidia.com/T/#u)?
+
+> > It looks like this patch not only does not support that, but it ignores the
+> > existence of fscrypt (or any other use of inline encryption by filesystems)
+> > entirely, and overrides any filesystem-provided key with the block device's.  At
+> > the very least, this case would need to be explicitly not supported initially,
+> > i.e. dm-inlinecrypt would error out if the upper layer already provided a key.
+> 
+> I agree that we have an incompatibility here, but simply erroring out
+> feels like the wrong way to approach the stacking.  If a stacking driver
+> consumes the inline encryption capability it must not advertise it to
+> the upper layers.
+
+Right, I missed that's actually already how it works.  The crypto capabilities
+are only passed through if the target sets DM_TARGET_PASSES_CRYPTO.
 
 - Eric
