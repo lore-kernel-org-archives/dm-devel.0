@@ -1,138 +1,111 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF09119AD9B
-	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 18:28:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 159601AC8BC
+	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 18:45:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727202491; cv=none; b=XFge1DNQpcuJBREUMeWPs9mlgrecdH2wScaZrqjgQAipGcBZwNAa7p7zhZ+DEUdTnCWRaRhrsUGGgwWveUfiZufUHzyQ6TIfvnCuBIb9s7f/+KtfbSDxWtcPDunBD+mi4sn4Fd10Jv7ygR/79Y92wLhQUYCumMzQNCj9ixUDsk0=
+	t=1727203514; cv=none; b=OWtg0Cfgmf1969tyawwi1Pad+B2YZgQPnnrOngpdRX1JSPrqRwI2qQ3NXIyrYYAk9rHi3o3e+kfDLeycOhN9lOmGt4m4vMzl2Y+SgBxSjseVDqYam6tva0CPvo4nARISyuSk08+Qn35yYzbqggRcc8s6PeyvIUDrxXgvfyJC08I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727202491; c=relaxed/simple;
-	bh=5SMjsrCjECPHKcC2m2WAYi0i4UBAszysMeFbCiUs5Yg=;
+	s=arc-20240116; t=1727203514; c=relaxed/simple;
+	bh=DvcSZ95SIoOG9royPMe2PcsmxG9sxbNnoBe9HRfVH90=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=DY6cZIZ5lUlN5FJL4M+kBkHXBkZ5NU3He3OJiaJv8aGCKNP2xidTs9WX6yToT3w6DwhG+7XyCDHtwsy0MpjSzFgAOds6kJ2aDG+eQITVCQl3lLI+3CdS9nPRShbP8qMY8CqaamtyLe70Sw9zlVeDCwJXpo0MtT89SxNh9vPJheM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gG/UXIpW; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=Svcyq0mu9clqUBfDNWAYNUMv0mWscXkDkL1TL3zTdspdj0SB68vbba9VCwAgJzgSooFwJYmN9l69SS14Tp9JmNoaDll4FfqxFlrBrFGkG6JmweAVS3oSe1e/eEIQB+c3ubelNPuEChD5ew1TJQZqzJ3PUBoJhLKDLnZUN++VOlI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FOsnRUQF; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gG/UXIpW"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FOsnRUQF"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1727202487;
+	s=mimecast20190719; t=1727203510;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=QP+1N8REoRxKBdYYuKpBVw7Tf3FYIj+GVn6G4LuDBlI=;
-	b=gG/UXIpW4OCvXI7vPIvaM5INx36+sSEZlaTR2u6oAPSwGtaziEChrF0icY3cOwH0ICWNt2
-	KNeghXC9DiolgWawCWDub9EG65owQFAHxZRrsCNxMRZQJJm49EGZGHhnB4JWLtfmM/men/
-	C8zY9Wk4z2VleKPPvjp5MTAPvpaHDMc=
+	bh=ruwNgo8gGjZ/UGoRyaOeUF7iT/c6vB+CTnGmC/8Yi/4=;
+	b=FOsnRUQFaryShHjRuaLoY0PovlI93PJFM7dEGTU64JUBW90n8vol/gQSLsZKVosr1KHUPQ
+	HAwwECiTqomMJKk/0ZVqXTJkZj1yW8SZrDf0VFazncJRxBxRFkm2eEym3URKrRcq4ftFNA
+	t3fM5zjhzj+kJ6KJbcVYlw56k3T7LNE=
 Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-658-qR6R8Ya_MzyQ87w8Qac1vQ-1; Tue,
- 24 Sep 2024 14:28:04 -0400
-X-MC-Unique: qR6R8Ya_MzyQ87w8Qac1vQ-1
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.40])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-41-J1YrNzFQMaqJmVqarJRrAA-1; Tue,
+ 24 Sep 2024 14:45:05 -0400
+X-MC-Unique: J1YrNzFQMaqJmVqarJRrAA-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 34FD218F94D3;
-	Tue, 24 Sep 2024 18:27:53 +0000 (UTC)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 16C7C190307E;
+	Tue, 24 Sep 2024 18:45:04 +0000 (UTC)
 Received: from [10.45.226.79] (unknown [10.45.226.79])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0FFF01956054;
-	Tue, 24 Sep 2024 18:27:49 +0000 (UTC)
-Date: Tue, 24 Sep 2024 20:27:47 +0200 (CEST)
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 079F5195ED11;
+	Tue, 24 Sep 2024 18:36:55 +0000 (UTC)
+Date: Tue, 24 Sep 2024 20:36:53 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Jarkko Sakkinen <jarkko@kernel.org>
-cc: luca.boccassi@gmail.com, dm-devel@lists.linux.dev, snitzer@kernel.org, 
-    serge@hallyn.com, wufan@linux.microsoft.com, 
-    David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org, 
-    linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>
-Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
- trusted keyring is rejected
-In-Reply-To: <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
-Message-ID: <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com>
-References: <20240922161753.244476-1-luca.boccassi@gmail.com> <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com> <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
+To: Akilesh Kailash <akailash@google.com>
+cc: Sami Tolvanen <samitolvanen@google.com>, 
+    Maxim Suhanov <dfirblog@gmail.com>, Alasdair G Kergon <agk@redhat.com>, 
+    Greg KH <gregkh@linuxfoundation.org>, Mike Snitzer <snitzer@kernel.org>, 
+    security@kernel.org, dm-devel@lists.linux.dev, 
+    Eric Biggers <ebiggers@google.com>
+Subject: Re: [PATCH] dm-verity: restart or panic on an I/O error
+In-Reply-To: <CABSDvDLu9-uzbd9z-avUu-iLV9rgyy=LKzaOwdWnD0f7ruBizg@mail.gmail.com>
+Message-ID: <9dee84e8-6c94-7450-a0c4-a95cab8f66d4@redhat.com>
+References: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com> <CABCJKudRQuA_kv8Gyu_9-1grZmVR=c=oywrPuUFprnQ1v_+Byg@mail.gmail.com> <CABSDvDLu9-uzbd9z-avUu-iLV9rgyy=LKzaOwdWnD0f7ruBizg@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; BOUNDARY="-1463811712-1637518873-1727202980=:2933431"
+Content-ID: <46f8c61e-734a-7e0f-8ce4-0c4f59bce7e6@redhat.com>
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463811712-1637518873-1727202980=:2933431
+Content-Type: text/plain; CHARSET=UTF-8
+Content-Transfer-Encoding: 8BIT
+Content-ID: <0929d95a-ac3a-2bc5-ef5c-9eb88a19d7d0@redhat.com>
 
 
 
-On Tue, 24 Sep 2024, Jarkko Sakkinen wrote:
+On Tue, 24 Sep 2024, Akilesh Kailash wrote:
 
-> On Mon Sep 23, 2024 at 5:04 PM EEST, Mikulas Patocka wrote:
+> On Tue, Sep 24, 2024 at 10:44 AM Sami Tolvanen <samitolvanen@google.com> wrote:
 > >
+> > Hi Mikulas,
 > >
-> > On Sun, 22 Sep 2024, luca.boccassi@gmail.com wrote:
+> > On Tue, Sep 24, 2024 at 6:18 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > >
+> > > Maxim Suhanov reported that dm-verity doesn't crash if an I/O error
+> > > happens. In theory, this could be used to subvert security, because an
+> > > attacker can create sectors that return error with the Write Uncorrectable
+> > > command. Some programs may misbehave if they have to deal with EIO.
 > >
-> > > From: Luca Boccassi <bluca@debian.org>
-> > > 
-> > > If enabled, we fallback to the platform keyring if the trusted keyring doesn't have
-> > > the key used to sign the roothash. But if pkcs7_verify() rejects the key for other
-> > > reasons, such as usage restrictions, we do not fallback. Do so.
-> > > 
-> > > Follow-up for 6fce1f40e95182ebbfe1ee3096b8fc0b37903269
-> > > 
-> > > Suggested-by: Serge Hallyn <serge@hallyn.com>
-> > > Signed-off-by: Luca Boccassi <bluca@debian.org>
+> > I seem to recall that this was intentional. We used to restart/panic
+> > on I/O errors with FEC enabled, but the behavior was changed in commit
+> > 2c0468e054c0 ("dm verity: skip redundant verity_handle_err() on I/O
+> > errors"). Akilesh, do you remember what exactly was the issue here?
 > >
-> > Hi
-> >
-> > I'm not an expert in keyrings.
-> >
-> > I added keyring maintainers to the CC. Please review this patch and 
-> > Ack/Nack it.
-> >
-> > Mikulas
-> >
-> > > ---
-> > >  drivers/md/dm-verity-verify-sig.c | 2 +-
-> > >  1 file changed, 1 insertion(+), 1 deletion(-)
-> > > 
-> > > diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-> > > index d351d7d39c60..a9e2c6c0a33c 100644
-> > > --- a/drivers/md/dm-verity-verify-sig.c
-> > > +++ b/drivers/md/dm-verity-verify-sig.c
-> > > @@ -127,7 +127,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
-> > >  #endif
-> > >  				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
-> > >  #ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
-> > > -	if (ret == -ENOKEY)
-> > > +	if (ret == -ENOKEY || ret == -EKEYREJECTED)
-> > >  		ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
-> > >  					sig_len,
-> > >  					VERIFY_USE_PLATFORM_KEYRING,
-> > > -- 
-> > > 2.39.5
-> > > 
 > 
-> I know nothing about dm-verity. What does it even do?
+> I looked at the history and the original intent and the idea stems
+> from this patch:
+> https://lore.kernel.org/dm-devel/b004e7c7-f795-77ed-19b9-983785780e92@gmail.com/T/#mec4df1ba3f3cb63846875fb2bfc1f8b3100f31f1
 > 
-> BR, Jarkko
+> I think the EIO should be propagated back up the stack; I think this
+> will trigger panic
+> even for genuine I/O errors.
 
-dm-verity provides a read-only device with integrity checking. dm-verity 
-stores hash for every block on the block device and checks the hash when 
-reading the block. If the hash doesn't match, it can do one of these 
-actions (depending on configuration):
-- return I/O error
-- try to correct the data using forward error correction
-- log the mismatch and do nothing
-- restart the machine
-- call panic()
-
-dm-verity is mostly used for the immutable system partition on Android 
-phones. For more info, see 
-Documentation/admin-guide/device-mapper/verity.rst
-
-The above patch changes the way that the signature of the root hash is 
-verified. I have no clue whether the patch can or can't subvert system 
-security, that's why I'd like to have some more reviews of the patch 
-before accepting it.
+Maxim Suhanov's point is that you should trigger panic for genuine I/O 
+errors. Otherwise the attacker could corrupt some sectors and let some 
+program receive EIO and the EIO could confuse the program to do something 
+insecure (for example, to not load a configuration file with security 
+policy).
 
 Mikulas
+---1463811712-1637518873-1727202980=:2933431--
 
