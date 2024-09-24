@@ -1,138 +1,138 @@
-Received: from mail-ed1-f45.google.com (mail-ed1-f45.google.com [209.85.208.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC46D11CA0
-	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 18:23:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF09119AD9B
+	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 18:28:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727202234; cv=none; b=rTbRJpibyKfSJtoLYEFVGYecLQNGCRh0mqossLr1gL8rY1I445x+84Cdpp2HHP46Fkx8zpW1a6YYVLOgMBwxcr0DQbJOqrNfzJ8j5Roi0+cLjakF8lCrGvHsvEKlGSyfQ5V1AbvEDsDrOw/WPhmK7z6S3/S9iMMyn4W/t6HPK7s=
+	t=1727202491; cv=none; b=XFge1DNQpcuJBREUMeWPs9mlgrecdH2wScaZrqjgQAipGcBZwNAa7p7zhZ+DEUdTnCWRaRhrsUGGgwWveUfiZufUHzyQ6TIfvnCuBIb9s7f/+KtfbSDxWtcPDunBD+mi4sn4Fd10Jv7ygR/79Y92wLhQUYCumMzQNCj9ixUDsk0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727202234; c=relaxed/simple;
-	bh=JgAseltbHcoPvYTZr4FDq+eO6BaW5x8dJGRj7nCwtWw=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=if6xCeLI/jOeaN2/4OWPGT47rTFpFRybUaLldFnuPzC4t0Vx9PJgA/iReBfRiiNPdV9PouOG2h0OmlEprZrycEIIBesUle8BgB+06+t84VQzwN+HZKA+hFuJtjZUTqyeKcyrVO6D1pY7reFDNzRkC1slMRyrrNqzLaU81Zm8OzE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=IKPfv5Pn; arc=none smtp.client-ip=209.85.208.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	s=arc-20240116; t=1727202491; c=relaxed/simple;
+	bh=5SMjsrCjECPHKcC2m2WAYi0i4UBAszysMeFbCiUs5Yg=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=DY6cZIZ5lUlN5FJL4M+kBkHXBkZ5NU3He3OJiaJv8aGCKNP2xidTs9WX6yToT3w6DwhG+7XyCDHtwsy0MpjSzFgAOds6kJ2aDG+eQITVCQl3lLI+3CdS9nPRShbP8qMY8CqaamtyLe70Sw9zlVeDCwJXpo0MtT89SxNh9vPJheM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gG/UXIpW; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="IKPfv5Pn"
-Received: by mail-ed1-f45.google.com with SMTP id 4fb4d7f45d1cf-5c2460e885dso2993a12.0
-        for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 11:23:52 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1727202231; x=1727807031; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=L2GZRbVLvSJYL5pvSH7ABhKOijW7RrztT8fIBc8MF5c=;
-        b=IKPfv5PnWstqpUWlPskNa2NN+bjYdiapVh+Qufas9ZcVLllRa0OiuHbMKcbeiqis0B
-         Fa2EtZr4pf3I4hkJa75OPqK6jk8iGOfuDjzUNrlqgT49U7Nu4SVe9AuGufaltqmMfnDU
-         sRGirSUXWpi7fXBSQBvK6BIGiWjvksS/KUf4jWG7Kjf84Z19U3JCRMHRJYK5YKDhkYDq
-         aVxQgWpHO7My6DjuBHOLh3EDArzxgrnXrn/abKdz3cR7KO+stSXy18DGDzOsL9zTYR/u
-         usemTFx6B8SDfXx+BHF7Wc7Y2bjtCt5IEuOpQ3t14U8rLSuGeNQtmSe/qrOBGjonwfHI
-         r6LQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727202231; x=1727807031;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=L2GZRbVLvSJYL5pvSH7ABhKOijW7RrztT8fIBc8MF5c=;
-        b=cm02NtSL9enpEI/e5bX6Yc36BGK57ChXnL2wc3InUAG4Mp+LUH9gj5Ltx5Yym1rhax
-         B2/UYWMZI9fGflqzxBHWKQj0jsqwLwFJDpae3TJQD/pHsNntGqq0JslhrsaHROy9fUVi
-         glf8xYQOv0bVWi1e+qIyZWriukmZ+GDLvpvxiiZXdtvJHZdFstx9GkCQQ4U9B5tTnDHG
-         EU1uygXDBw793AhRgs1pEA4aB14/V0qci7V/GltM0KSvXnp5MiTSd8PJgNJJxrMkTBih
-         I5gjA2icOHKYBotqwgFsZFVW6RJT/ZIbYLrHZs1bIiF4fN92T0I+JtSmenIAScjKF0Ga
-         88hg==
-X-Forwarded-Encrypted: i=1; AJvYcCWLBu8LGwiXm60W+6a0W/hr7Vir4kw6nNGm/lrkYfnpgH+BT74nPhmFOTRc9mc6TIDgNqgRmAvw6Q==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzSew2rqPIxdprl1z7RW50lfLvxsoZWHHa5rVzCnr8EOHEmfdx7
-	TPIuJ2f8saeMx7DvsZd9cIRtwitg9PUpCW4VJpUApn2v9jI9zHWLF7Wv9L3E2RJoEobfXNWeMQQ
-	8wsbpBeYHJIM45V+Oc43oeaF2zwkVoqBTGjVTHPO2Hto8MCFKpBQV
-X-Google-Smtp-Source: AGHT+IGozz28aMTKzaXwEX1b2882qeXCsxAWAgqXWn3zud67xGgn+L7N2uQAaNHSsaO+aM+U6msN+tRgzYAO50Sq+Is=
-X-Received: by 2002:a05:6402:84c:b0:5c2:5251:ba5c with SMTP id
- 4fb4d7f45d1cf-5c72073ddeemr54404a12.0.1727202230589; Tue, 24 Sep 2024
- 11:23:50 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gG/UXIpW"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1727202487;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=QP+1N8REoRxKBdYYuKpBVw7Tf3FYIj+GVn6G4LuDBlI=;
+	b=gG/UXIpW4OCvXI7vPIvaM5INx36+sSEZlaTR2u6oAPSwGtaziEChrF0icY3cOwH0ICWNt2
+	KNeghXC9DiolgWawCWDub9EG65owQFAHxZRrsCNxMRZQJJm49EGZGHhnB4JWLtfmM/men/
+	C8zY9Wk4z2VleKPPvjp5MTAPvpaHDMc=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-658-qR6R8Ya_MzyQ87w8Qac1vQ-1; Tue,
+ 24 Sep 2024 14:28:04 -0400
+X-MC-Unique: qR6R8Ya_MzyQ87w8Qac1vQ-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 34FD218F94D3;
+	Tue, 24 Sep 2024 18:27:53 +0000 (UTC)
+Received: from [10.45.226.79] (unknown [10.45.226.79])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0FFF01956054;
+	Tue, 24 Sep 2024 18:27:49 +0000 (UTC)
+Date: Tue, 24 Sep 2024 20:27:47 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Jarkko Sakkinen <jarkko@kernel.org>
+cc: luca.boccassi@gmail.com, dm-devel@lists.linux.dev, snitzer@kernel.org, 
+    serge@hallyn.com, wufan@linux.microsoft.com, 
+    David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org, 
+    linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>
+Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
+ trusted keyring is rejected
+In-Reply-To: <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
+Message-ID: <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com>
+References: <20240922161753.244476-1-luca.boccassi@gmail.com> <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com> <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com> <CABCJKudRQuA_kv8Gyu_9-1grZmVR=c=oywrPuUFprnQ1v_+Byg@mail.gmail.com>
-In-Reply-To: <CABCJKudRQuA_kv8Gyu_9-1grZmVR=c=oywrPuUFprnQ1v_+Byg@mail.gmail.com>
-From: Akilesh Kailash <akailash@google.com>
-Date: Tue, 24 Sep 2024 11:23:38 -0700
-Message-ID: <CABSDvDLu9-uzbd9z-avUu-iLV9rgyy=LKzaOwdWnD0f7ruBizg@mail.gmail.com>
-Subject: Re: [PATCH] dm-verity: restart or panic on an I/O error
-To: Sami Tolvanen <samitolvanen@google.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Maxim Suhanov <dfirblog@gmail.com>, 
-	Alasdair G Kergon <agk@redhat.com>, Greg KH <gregkh@linuxfoundation.org>, 
-	Mike Snitzer <snitzer@kernel.org>, security@kernel.org, dm-devel@lists.linux.dev, 
-	Eric Biggers <ebiggers@google.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-On Tue, Sep 24, 2024 at 10:44=E2=80=AFAM Sami Tolvanen <samitolvanen@google=
-.com> wrote:
->
-> Hi Mikulas,
->
-> On Tue, Sep 24, 2024 at 6:18=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.=
-com> wrote:
-> >
-> > Maxim Suhanov reported that dm-verity doesn't crash if an I/O error
-> > happens. In theory, this could be used to subvert security, because an
-> > attacker can create sectors that return error with the Write Uncorrecta=
-ble
-> > command. Some programs may misbehave if they have to deal with EIO.
->
-> I seem to recall that this was intentional. We used to restart/panic
-> on I/O errors with FEC enabled, but the behavior was changed in commit
-> 2c0468e054c0 ("dm verity: skip redundant verity_handle_err() on I/O
-> errors"). Akilesh, do you remember what exactly was the issue here?
->
 
-I looked at the history and the original intent and the idea stems
-from this patch:
-https://lore.kernel.org/dm-devel/b004e7c7-f795-77ed-19b9-983785780e92@gmail=
-.com/T/#mec4df1ba3f3cb63846875fb2bfc1f8b3100f31f1
 
-I think the EIO should be propagated back up the stack; I think this
-will trigger panic
-even for genuine I/O errors.
+On Tue, 24 Sep 2024, Jarkko Sakkinen wrote:
 
-> > This commit fixes dm-verity, so that if "panic_on_corruption" or
-> > "restart_on_corruption" was specified and an I/O error happens, the
-> > machine will panic or restart.
+> On Mon Sep 23, 2024 at 5:04 PM EEST, Mikulas Patocka wrote:
 > >
-> > This commit also changes kernel_restart to emergency_restart -
-> > kernel_restart calls reboot notifiers and these reboot notifiers may wa=
-it
-> > for the bio that failed. emergency_restart doesn't call the notifiers.
 > >
-> > Reported-by: Maxim Suhanov <dfirblog@gmail.com>
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org
+> > On Sun, 22 Sep 2024, luca.boccassi@gmail.com wrote:
 > >
-> > ---
-> >  drivers/md/dm-verity-target.c |   15 ++++++++++++++-
-> >  1 file changed, 14 insertions(+), 1 deletion(-)
+> > > From: Luca Boccassi <bluca@debian.org>
+> > > 
+> > > If enabled, we fallback to the platform keyring if the trusted keyring doesn't have
+> > > the key used to sign the roothash. But if pkcs7_verify() rejects the key for other
+> > > reasons, such as usage restrictions, we do not fallback. Do so.
+> > > 
+> > > Follow-up for 6fce1f40e95182ebbfe1ee3096b8fc0b37903269
+> > > 
+> > > Suggested-by: Serge Hallyn <serge@hallyn.com>
+> > > Signed-off-by: Luca Boccassi <bluca@debian.org>
 > >
-> > Index: linux-2.6/drivers/md/dm-verity-target.c
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > --- linux-2.6.orig/drivers/md/dm-verity-target.c        2024-09-23 17:4=
-8:08.000000000 +0200
-> > +++ linux-2.6/drivers/md/dm-verity-target.c     2024-09-24 11:34:08.000=
-000000 +0200
-> > @@ -273,7 +273,7 @@ out:
-> >                 return 0;
+> > Hi
 > >
-> >         if (v->mode =3D=3D DM_VERITY_MODE_RESTART)
-> > -               kernel_restart("dm-verity device corrupted");
-> > +               emergency_restart();
->
-> Can we still log the reason for the restart? I remember some folks
-> used to rely on the "dm-verity device corrupted" message in the kernel
-> log.
->
-> Sami
+> > I'm not an expert in keyrings.
+> >
+> > I added keyring maintainers to the CC. Please review this patch and 
+> > Ack/Nack it.
+> >
+> > Mikulas
+> >
+> > > ---
+> > >  drivers/md/dm-verity-verify-sig.c | 2 +-
+> > >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > > 
+> > > diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+> > > index d351d7d39c60..a9e2c6c0a33c 100644
+> > > --- a/drivers/md/dm-verity-verify-sig.c
+> > > +++ b/drivers/md/dm-verity-verify-sig.c
+> > > @@ -127,7 +127,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+> > >  #endif
+> > >  				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
+> > >  #ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
+> > > -	if (ret == -ENOKEY)
+> > > +	if (ret == -ENOKEY || ret == -EKEYREJECTED)
+> > >  		ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
+> > >  					sig_len,
+> > >  					VERIFY_USE_PLATFORM_KEYRING,
+> > > -- 
+> > > 2.39.5
+> > > 
+> 
+> I know nothing about dm-verity. What does it even do?
+> 
+> BR, Jarkko
+
+dm-verity provides a read-only device with integrity checking. dm-verity 
+stores hash for every block on the block device and checks the hash when 
+reading the block. If the hash doesn't match, it can do one of these 
+actions (depending on configuration):
+- return I/O error
+- try to correct the data using forward error correction
+- log the mismatch and do nothing
+- restart the machine
+- call panic()
+
+dm-verity is mostly used for the immutable system partition on Android 
+phones. For more info, see 
+Documentation/admin-guide/device-mapper/verity.rst
+
+The above patch changes the way that the signature of the root hash is 
+verified. I have no clue whether the patch can or can't subvert system 
+security, that's why I'd like to have some more reviews of the patch 
+before accepting it.
+
+Mikulas
+
