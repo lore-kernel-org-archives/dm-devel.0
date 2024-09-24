@@ -1,51 +1,41 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86308146A87;
-	Tue, 24 Sep 2024 22:04:37 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4BC8170A11
+	for <dm-devel@lists.linux.dev>; Tue, 24 Sep 2024 22:49:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727215477; cv=none; b=BW2MhH/pgwE8H+q8nXwHn+/mxm0YpiAw9dlbFcPTgxeUUzysWzBtbkv2aRbkeeFiwwR6MFj+v+tBR+Io+hF6EYj1N6R82/hk9QvQA93QN9JTXL1p7ekkoTTLiszoGPfOg7CFXbhida7BhiXMy99QTpXhbOm01clnoWFnzMOzmHw=
+	t=1727218192; cv=none; b=SVgsX0wjKmnSRx0nyXiZX2P7kzSN2dxUjNMM5KvV69dMkOF18WIOCNDgsaFFnsGTrJCoz39is9engiTpUlT/yJ98Vwz3M6yPQwu7GLdp1Qskwb4ZvBo4ZjxcP9LLUlLgRmos5j2DCaDH8UCMawAf7kxR+SKP+rdhKOhb8mLpyww=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727215477; c=relaxed/simple;
-	bh=ph7TAmMw39B3nL4g9AnJGmFDqgpNUh2Ues8UMkyvezM=;
+	s=arc-20240116; t=1727218192; c=relaxed/simple;
+	bh=yNCcmxqtK3q2HTg7iudl3ZGlGAfcxe/cg88oSH2jMj0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Izsbm4Bja7r9Lke8BFpPkq+NO+1NOHwe6Hd4BOz81toboZnIQUDbF02hMW4zw+6lKNgpHZqfkL0J4L78a+3i5lSkjVBjZbSQU5shDwYY81TnojVetQjJ9FE8I7JGr+FYqWPzrMiDM7gOuVSnPPh5L4ntkRO5NRTvnlfXuGLsbGk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=YHSE/qt0; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=Xf23baDjoyjaywMMhXYBW2CFi96g+X/liC4Kkhkee6bVGzSz649jWxhOo+ZtZHEClNnMcL2flzendRHMJ/CzsF32zvCxQR2C+RfYyKvuM0vRJBcZHOGIVtj6lSQwOuXW4TC935TrYl6bD/y516WLXLhPhbLiTc7XkBIYqGkmHyM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=C4n0eDCG; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="YHSE/qt0"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4BD6CC4CEC4;
-	Tue, 24 Sep 2024 22:04:36 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="C4n0eDCG"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 92A48C4CED0;
+	Tue, 24 Sep 2024 22:49:51 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1727215477;
-	bh=ph7TAmMw39B3nL4g9AnJGmFDqgpNUh2Ues8UMkyvezM=;
+	s=k20201202; t=1727218191;
+	bh=yNCcmxqtK3q2HTg7iudl3ZGlGAfcxe/cg88oSH2jMj0=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=YHSE/qt0AiT8AlwY1uSTrM4Z+ddSgOQ1IG50S21mOHCh5+bAm0FTiaj8U0tsSSsTY
-	 O2kH8wsJaPK9PB92jyQVw/lhH+5Jbye96igquHgFjB4OjUO8QZ81XWKyH+MfvQyTS2
-	 RdpMxn6MU3xPwqTU8MrZPY3VPdPRmSyRL9av7qiJhInMfvBKuynohB07s0T08Nbj7d
-	 lmPdObo40LTaycX8ebXQTapeJK/rULYRm/TJvFhl37j60cjcRl62ZDMWCaIKuF2Jgx
-	 p/6Di08hH6mRYEqPHHbE3jfXR+rHUKYV6+UymboTU/cEi164hzevz4dtd1IagSNl2M
-	 Pzod9bdNwPm+A==
-Date: Tue, 24 Sep 2024 15:04:34 -0700
+	b=C4n0eDCGbrZn2TwZdBRtbOJirepgD3xy0ZEND/IE/k3VvTKpWPofpGLEbEIxoFGq2
+	 ES4v40Mlh5vHVY1/xf/3rSufCJRV19X2K5CF07PQH50JYv1XTcppVJtYR+GwL2O4cz
+	 Pf4dTGFTIFchbJnFh6ityeWuHD/kohyPTVjJ8SK+3YoFQ8cqovdxf83cJ9aHHugikN
+	 5VeN47+jxhciIgI2U2cmjtD2bVbkgITi2VoaVOlvoAMgVEJ3oaQxrjO8P+Jm++0FGj
+	 4Mheu6r5f1cuPFsgrVfu07HQ+Xh9paOLXRJpNR6QytOR4dyihCmtUidrysPEhmgYTR
+	 UKTIEMTpRIdpA==
+Date: Tue, 24 Sep 2024 15:49:50 -0700
 From: Eric Biggers <ebiggers@kernel.org>
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk,
-	song@kernel.org, yukuai3@huawei.com, agk@redhat.com,
-	snitzer@kernel.org, mpatocka@redhat.com, adrian.hunter@intel.com,
-	quic_asutoshd@quicinc.com, ritesh.list@gmail.com,
-	ulf.hansson@linaro.org, andersson@kernel.org,
-	konradybcio@kernel.org, kees@kernel.org, gustavoars@kernel.org,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-mmc@vger.kernel.org, linux-arm-msm@vger.kernel.org,
-	linux-hardening@vger.kernel.org, quic_srichara@quicinc.com,
-	quic_varada@quicinc.com
-Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
-Message-ID: <20240924220434.GB1585@sol.localdomain>
-References: <20240916085741.1636554-1-quic_mdalam@quicinc.com>
- <20240916085741.1636554-2-quic_mdalam@quicinc.com>
- <20240921185519.GA2187@quark.localdomain>
- <ZvJt9ceeL18XKrTc@infradead.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Maxim Suhanov <dfirblog@gmail.com>, Alasdair G Kergon <agk@redhat.com>,
+	Greg KH <gregkh@linuxfoundation.org>,
+	Mike Snitzer <snitzer@kernel.org>, security@kernel.org,
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH] dm-verity: restart or panic on an I/O error
+Message-ID: <20240924224950.GD1585@sol.localdomain>
+References: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -54,36 +44,44 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ZvJt9ceeL18XKrTc@infradead.org>
+In-Reply-To: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com>
 
-On Tue, Sep 24, 2024 at 12:44:53AM -0700, Christoph Hellwig wrote:
-> On Sat, Sep 21, 2024 at 11:55:19AM -0700, Eric Biggers wrote:
-> > (https://android.googlesource.com/kernel/common/+/refs/heads/android-mainline/drivers/md/dm-default-key.c),
-> > and I've been looking for the best way to get the functionality upstream.  The
-> > main challenge is that dm-default-key is integrated with fscrypt, such that if
-> > fscrypt encrypts the data, then the data isn't also encrypted with the block
-> > device key.  There are also cases such as f2fs garbage collection in which
-> > filesystems read/write raw data without en/decryption by any key.  So
-> > essentially a passthrough mode is supported on individual I/O requests.
+On Tue, Sep 24, 2024 at 03:18:29PM +0200, Mikulas Patocka wrote:
+> Maxim Suhanov reported that dm-verity doesn't crash if an I/O error 
+> happens. In theory, this could be used to subvert security, because an 
+> attacker can create sectors that return error with the Write Uncorrectable 
+> command. Some programs may misbehave if they have to deal with EIO.
 > 
-> Adding a default key is not the job of a block remapping driver.  You'll
-> need to fit that into the file system and/or file system level helpers.
+> This commit fixes dm-verity, so that if "panic_on_corruption" or
+> "restart_on_corruption" was specified and an I/O error happens, the
+> machine will panic or restart.
 
-What about a block device ioctl, as was previously proposed
-(https://lore.kernel.org/linux-block/1658316391-13472-1-git-send-email-israelr@nvidia.com/T/#u)?
+How does this interact with FEC, which can correct for I/O errors on the
+underlying media by reconstructing the data?
 
-> > It looks like this patch not only does not support that, but it ignores the
-> > existence of fscrypt (or any other use of inline encryption by filesystems)
-> > entirely, and overrides any filesystem-provided key with the block device's.  At
-> > the very least, this case would need to be explicitly not supported initially,
-> > i.e. dm-inlinecrypt would error out if the upper layer already provided a key.
-> 
-> I agree that we have an incompatibility here, but simply erroring out
-> feels like the wrong way to approach the stacking.  If a stacking driver
-> consumes the inline encryption capability it must not advertise it to
-> the upper layers.
+> @@ -596,6 +596,19 @@ static void verity_finish_io(struct dm_v
+>  	if (!static_branch_unlikely(&use_bh_wq_enabled) || !io->in_bh)
+>  		verity_fec_finish_io(io);
+>  
+> +	if (unlikely(status != BLK_STS_OK) && unlikely(!(bio->bi_opf & REQ_RAHEAD))) {
+> +		if (v->mode == DM_VERITY_MODE_RESTART ||
+> +		    v->mode == DM_VERITY_MODE_PANIC)
+> +			DMERR_LIMIT("%s has error: %s", v->data_dev->name,
+> +					blk_status_to_str(status));
+> +
+> +		if (v->mode == DM_VERITY_MODE_RESTART)
+> +			emergency_restart();
+> +
+> +		if (v->mode == DM_VERITY_MODE_PANIC)
+> +			panic("dm-verity device has I/O error");
 
-Right, I missed that's actually already how it works.  The crypto capabilities
-are only passed through if the target sets DM_TARGET_PASSES_CRYPTO.
+The blk_status_t code that is checked above is usually the one that
+verity_verify_io() produced, not the original one.  This could be an error from
+a cause other than an I/O error on the underlying media, like data corruption
+detected by dm-verity, or an error from the crypto API.
+
+Maybe what you are trying to do is really "panic if an I/O error would be
+returned to the layer above", not "panic if an I/O error occurred on the
+underlying media"?  If so, this needs to be clearly explained.
 
 - Eric
