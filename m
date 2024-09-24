@@ -1,173 +1,85 @@
-Received: from mail-vs1-f54.google.com (mail-vs1-f54.google.com [209.85.217.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ACABF46B5
-	for <dm-devel@lists.linux.dev>; Mon, 23 Sep 2024 16:06:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.217.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 51436224EA;
+	Tue, 24 Sep 2024 07:45:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727107562; cv=none; b=OED1Wfc5+nz6L11IOksW4toBxh7Tp06uj3gRfHDtGgJQw6lU6ST0VNWxAJPWz3tS2suV+FU0qsnoGqXvHRovHWZml6FCOlxS+SPk1cEXmko9Jx71LSk2o0pviuifb+xKxFN82TaVUoHB8xEAZvr2FNSaYziKE9tYqGzi1aQk+fo=
+	t=1727163901; cv=none; b=p0IcrlSl5zMH9LzGBJRxmVRfwOce0u9jFSkh8WmVNyqN4AMt8E2+eXMWCT2aUL9+Oc9mJ8q0DcbUgNJOk6ESfn/PUPKlufU2gGTYT+GiM1S73dB147oryAVlZRxKSVCBCGlWAmxmui5WP2q2mq4ejyuDpHtnMOzmvsKJ4moOB0Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727107562; c=relaxed/simple;
-	bh=B6nj2YLT4D/wlqqzFmJa2BxfrWUGYUdzA6f5p6Tagew=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=mNjNemt4FdwMePVMDBHXjWeSFzxSo0HpfMoDLlMWuv5qGgu+AhEomXeMmzNDbAfPdxpnvcEdEvCX60GIE0vp/t6qUDy6Z0iyEiJ39LhRF2RdeHVV99qqHpI7W0YsXujO/qGNnjgFq3ExAgAXyWM3SVwBlb5W6FrKr8JxovK73hM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=A2Od0R61; arc=none smtp.client-ip=209.85.217.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1727163901; c=relaxed/simple;
+	bh=KLJAg8LEAPMGZJuG/KhSybXNlWLQIRi/+4OZ9O9a/XQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=aWLIajIGu3tVjLiaXpMNb5rGf5dgbWdRfH6M0e9FkPGf3zF6lXxE/ww7E+Wocd9q0Mx888NW4VrataM9Xpu4LKUeat1Qe3hKFsRXx1pSNbCXpswjGJhw04xk9S7MvM58dop4Oy8fIbhui4gQz7AOyGwKatZ1G6OBCRAS+hWaBFg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Hca81bFp; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="A2Od0R61"
-Received: by mail-vs1-f54.google.com with SMTP id ada2fe7eead31-49bd643f858so1511398137.0
-        for <dm-devel@lists.linux.dev>; Mon, 23 Sep 2024 09:06:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1727107559; x=1727712359; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=rjP2FVA9GyHqcqrVlHf4sMId3XeNp2zxUyT00XEy7YQ=;
-        b=A2Od0R61FUWhqJtesGREXZap9OitEKpuY+j0NdkawqgVIrFm6EyX74D9OQ3N8gEPkm
-         1nSBiYfA0dAOFQ8sg1B9aIcrIoYwNU9aUoEZuY5PUBfDG/B503NOsrdPfcs6ITKI9bPd
-         jLyBhRzaWH7T0WLK8SEJiFi7r/v4DJwIpl6ub1TfiJcoSGg/89WrkzxgA6qW9RS1FdKz
-         DqVi+9pEInLJwUhJyvb7rO6CAhiHK5V8wNqQtsptrOrEKr3FAxiPb5Bh3J2gJLX17nZE
-         lF5q21c/4RlgJhUEj8dilxh/1yn74AI3ZBdVrAve5/u1FATb4YsYvVTalV0rjT/VCVC1
-         mL/A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727107559; x=1727712359;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=rjP2FVA9GyHqcqrVlHf4sMId3XeNp2zxUyT00XEy7YQ=;
-        b=mqYkr5Z3P4rlZ/F7x6hv+LPgu7zJJRf1XX2T1MabBOlJ4KLawbs456ogRfXl5oMeZK
-         +5HO2o2f0M7Qc7gONHC5v7lUN3txUrFyU3+gM6eF1gcP5djCOJoWfR36an0jJKaQ8pAf
-         klrZRShjVzjmUeqhftFKKGvItln1Z73xANCJKYdGsowVjKNdiLmehP9jnoe+T/dPNj1B
-         9i5X3npIf/0n9IYw3C5WX9sS3SbUOEbC6cLYl7HWh5AZ8otWO/a1vo2QX3wC0I1C+J3n
-         f0XSlvwzAdSCHzd/8NQzDzspIhIBXvv2chghycc6+Uv772a+QLxk0wjkOGJRngpy26TV
-         HEqw==
-X-Forwarded-Encrypted: i=1; AJvYcCWQ6ktypLpQ6WG14PCDJ8v+55FvcYQC5+ltTTICckCF3vMZSectj5qdluXbtBtGjLJJ8OZYY6YWTg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyqTPN1sdZ6eywaJHEbyWrf28V16mAY4M8xq/WhDB/BJKT4AgH2
-	zSrVahccOeYdsA0uZneohJwZIs8jcQJ88L65mJ7v87PqlVaKLbcbGp9G22udBIBYX00sCCDY4MB
-	iDtW3out+2MpAxz9w/L9x3SUH9t8=
-X-Google-Smtp-Source: AGHT+IEUg2zXAfe1tkR8PdEPwTh7fron36ChAGsRCD55XcwH8aCFU7+yHgfNiQZvwn9eMgeSstUj4zvz+ZqjMe7+aGA=
-X-Received: by 2002:a05:6122:907:b0:4f5:2c0c:8528 with SMTP id
- 71dfb90a1353d-503e05501f1mr7220010e0c.11.1727107559294; Mon, 23 Sep 2024
- 09:05:59 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Hca81bFp"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=fT8t09p6erN3pDvzXMMBDzSN+OtEWMEQMRtR+c1AOX8=; b=Hca81bFp34vjVqqCSPc4FQw+/z
+	2pJW2t6D2slXOGZ/jwr4f3rL51d8T0OkQ5Pp8txkDx2MptwGnfl15NSfAOdtDMTsYQqqcFISprD5r
+	RG4q953GwKaPKnxF5JoupU6x4NoWRDi0ehK3H/H/Z12cE4H4Bb5Nt4v/AoTEZQ3rDCcZfgUh81BZq
+	gU2Ig+hCG1yCPiCNOhawBhj64CGm4Ib3/QxMT99XPRel8yV5fI8gDIldqpHDKqCFwrhPZ9ikKibFp
+	rbyEYqwS8PFuleCukeWwuKKMts2ytXcQ9QczU6L3MBKymVvLqgo15FyeJrV0iIzLGzvuqFDpChOny
+	y6odS+Dw==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
+	id 1st0E9-00000001TIz-3VJj;
+	Tue, 24 Sep 2024 07:44:53 +0000
+Date: Tue, 24 Sep 2024 00:44:53 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk,
+	song@kernel.org, yukuai3@huawei.com, agk@redhat.com,
+	snitzer@kernel.org, mpatocka@redhat.com, adrian.hunter@intel.com,
+	quic_asutoshd@quicinc.com, ritesh.list@gmail.com,
+	ulf.hansson@linaro.org, andersson@kernel.org,
+	konradybcio@kernel.org, kees@kernel.org, gustavoars@kernel.org,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-mmc@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+	linux-hardening@vger.kernel.org, quic_srichara@quicinc.com,
+	quic_varada@quicinc.com
+Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
+Message-ID: <ZvJt9ceeL18XKrTc@infradead.org>
+References: <20240916085741.1636554-1-quic_mdalam@quicinc.com>
+ <20240916085741.1636554-2-quic_mdalam@quicinc.com>
+ <20240921185519.GA2187@quark.localdomain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240922164702.49615-1-kdipendra88@gmail.com> <CAAYit8TfBD40aRchLiOWsvqwpAR0x6nW9zObza4vLVzg93N+eA@mail.gmail.com>
- <87139a89-4256-fceb-5ca2-c1077b036eef@redhat.com> <CAEKBCKMv4-dhWU=a2UnX2rBcQjVTJcF+wg6z6f3qtjA4td-62Q@mail.gmail.com>
- <28e1f99d-eb8e-2357-0afb-a9bb0d5b0a06@redhat.com>
-In-Reply-To: <28e1f99d-eb8e-2357-0afb-a9bb0d5b0a06@redhat.com>
-From: Dipendra Khadka <kdipendra88@gmail.com>
-Date: Mon, 23 Sep 2024 21:50:47 +0545
-Message-ID: <CAEKBCKOOm1UETLTgONr=eG8GY1MLkKdG_G=o8Wh0y1079Q1MeQ@mail.gmail.com>
-Subject: Re: [PATCH] Return error code for failure input for sscanf in parse_cblock_range()
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Ming-Hung Tsai <mingnus@gmail.com>, agk@redhat.com, snitzer@kernel.org, 
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240921185519.GA2187@quark.localdomain>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Mon, 23 Sept 2024 at 21:45, Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
->
-> On Mon, 23 Sep 2024, Dipendra Khadka wrote:
->
-> > Hi,
-> >
-> > On Mon, 23 Sept 2024 at 20:55, Mikulas Patocka <mpatocka@redhat.com> wr=
-ote:
-> > >
-> > >
-> > >
-> > > On Mon, 23 Sep 2024, Ming-Hung Tsai wrote:
-> > >
-> > > > On Mon, Sep 23, 2024 at 12:47=E2=80=AFAM Dipendra Khadka <kdipendra=
-88@gmail.com> wrote:
-> > > > >
-> > > > > Smatch reported following:
-> > > > > '''
-> > > > > drivers/md/dm-cache-target.c:3204 parse_cblock_range() warn: ssca=
-nf doesn't return error codes
-> > > > > drivers/md/dm-cache-target.c:3217 parse_cblock_range() warn: ssca=
-nf doesn't return error codes
-> > > > > '''
-> > > > >
-> > > > > Since, the only negative value that is returned by sscanf is -1.
-> > > > > Returning -ENVAL when sscanf returns -1.
-> > > > >
-> > > > > Signed-off-by: Dipendra Khadka <kdipendra88@gmail.com>
-> > > > > ---
-> > > > >  drivers/md/dm-cache-target.c | 8 ++++----
-> > > > >  1 file changed, 4 insertions(+), 4 deletions(-)
-> > > > >
-> > > > > diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-t=
-arget.c
-> > > > > index 17f0fab1e254..c35d65e310d6 100644
-> > > > > --- a/drivers/md/dm-cache-target.c
-> > > > > +++ b/drivers/md/dm-cache-target.c
-> > > > > @@ -3200,8 +3200,8 @@ static int parse_cblock_range(struct cache =
-*cache, const char *str,
-> > > > >          * Try and parse form (ii) first.
-> > > > >          */
-> > > > >         r =3D sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
-> > > > > -       if (r < 0)
-> > > > > -               return r;
-> > > > > +       if (r =3D=3D -1)
-> > > > > +               return -EINVAL;
-> > > > >
-> > > > >         if (r =3D=3D 2) {
-> > > > >                 result->begin =3D to_cblock(b);
-> > > > > @@ -3213,8 +3213,8 @@ static int parse_cblock_range(struct cache =
-*cache, const char *str,
-> > > > >          * That didn't work, try form (i).
-> > > > >          */
-> > > > >         r =3D sscanf(str, "%llu%c", &b, &dummy);
-> > > > > -       if (r < 0)
-> > > > > -               return r;
-> > > > > +       if (r =3D=3D -1)
-> > > > > +               return -EINVAL;
-> > > > >
-> > > > >         if (r =3D=3D 1) {
-> > > > >                 result->begin =3D to_cblock(b);
-> > > >
-> > > >
-> > > > Could you please clarify how to reproduce unexpected results? From
-> > > > what I observe, the kernel's sscanf doesn't return -1 on an empty
-> > > > input. Even if a negative value other than -EINVAL is returned, it =
-is
-> > > > handled by the callers.
-> > > >
-> > > > Hank
-> > >
-> > > I applied the patch, but I deleted the conditions "if (r =3D=3D -1) r=
-eturn
-> > > -EINVAL;"
-> > >
-> > > sscanf in the kernel doesn't return negative numbers.
-> > >
-> >
-> > Do I have to send v2 with
-> > if (r !=3D 2)
-> >  return -EINVAL;
-> >
-> > or what should I do now?
-> > > Mikulas
-> >
-> > Best Regards,
-> > Dipendra
->
-> You can do nothing :)
->
-> I fixed the patch and I'll send it to Linus in this merge window.
->
+On Sat, Sep 21, 2024 at 11:55:19AM -0700, Eric Biggers wrote:
+> (https://android.googlesource.com/kernel/common/+/refs/heads/android-mainline/drivers/md/dm-default-key.c),
+> and I've been looking for the best way to get the functionality upstream.  The
+> main challenge is that dm-default-key is integrated with fscrypt, such that if
+> fscrypt encrypts the data, then the data isn't also encrypted with the block
+> device key.  There are also cases such as f2fs garbage collection in which
+> filesystems read/write raw data without en/decryption by any key.  So
+> essentially a passthrough mode is supported on individual I/O requests.
 
-Oh, ok. Thank you for your time.
+Adding a default key is not the job of a block remapping driver.  You'll
+need to fit that into the file system and/or file system level helpers.
 
-> Mikulas
+> 
+> It looks like this patch not only does not support that, but it ignores the
+> existence of fscrypt (or any other use of inline encryption by filesystems)
+> entirely, and overrides any filesystem-provided key with the block device's.  At
+> the very least, this case would need to be explicitly not supported initially,
+> i.e. dm-inlinecrypt would error out if the upper layer already provided a key.
 
-Best Regards,
-Dipendra.
+I agree that we have an incompatibility here, but simply erroring out
+feels like the wrong way to approach the stacking.  If a stacking driver
+consumes the inline encryption capability it must not advertise it to
+the upper layers.
+
