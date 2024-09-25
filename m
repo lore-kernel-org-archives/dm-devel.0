@@ -1,117 +1,112 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DECDA1D5AA5;
-	Wed, 25 Sep 2024 14:50:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C1B701D554
+	for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 15:38:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727275805; cv=none; b=HV5adYf0PDUY3XBAXBeXBl4mbI1QvnODyt5qKNcZxeqln5b7B+YtMkFejQ59kQrn+lEsU2Q/UiyrqsT41ZIt9XxBiphmioyGAPjRkiujE1VuQQWXHQmL7bc1DNaK37jhqqEjS3LEt/eKL2nAd0AdvQhylzRdMOxI2eZhd52tL68=
+	t=1727278687; cv=none; b=DFHwQ9kB9kOqiO22qFz430RTaEGhHn8A4Px7vwqYdyfF+BR3gYy3EhkvjCzooAurDflIWqfIJxy0ah4Y9Py5GKm5ud5kPuXtdw+RqidKdO5IwenWKf1y2hRZA1fzHOoNj2rXmkkbnM/n8xaseEXBYZMya7oo9OggGhm52K3+xcM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727275805; c=relaxed/simple;
-	bh=A6lHYYoIUTwCFHtjTkUyIQbcl7VrwYZCEI8SuBc97jw=;
-	h=Mime-Version:Content-Type:Date:Message-Id:Cc:Subject:From:To:
-	 References:In-Reply-To; b=nBR3+nGmbF/99avLJtZttW+LkR7dN2C7EXxuWnsWke99Sst86Oz71/pw35tY9sivBAFc+35f89/V/IOdz1g3cASxHE10e2HjNLHXVRPli3CQmovoS+BcWjbnf5n0hNYSq5Ty9yHk9DaIYj1zfeRfzbhpmqbNrtGn4klhL3J8UQc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=h0uVq6Y0; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1727278687; c=relaxed/simple;
+	bh=Qjbcu/zSHX8m+j5MsL49vbJLu6NNufJ/DNgPuDXoRbE=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=ht8n01GPN3vDwaMtvKVdaf2cjYdiJW1KmxiaLz8bCw1Iu8fhzKrGOAbfwZRf/3uremD2+I8upLvgiELPtXXYYOhuyyTzepfQmyqFskyWNyeNJXbM+0aYEzokQrsmquOVQpgqn/KYIYlTANkQUgevRsrZHfkAlpatZb/NlN2NsII=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=GarHZnpC; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="h0uVq6Y0"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D80CBC4CEC3;
-	Wed, 25 Sep 2024 14:50:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1727275804;
-	bh=A6lHYYoIUTwCFHtjTkUyIQbcl7VrwYZCEI8SuBc97jw=;
-	h=Date:Cc:Subject:From:To:References:In-Reply-To:From;
-	b=h0uVq6Y0lWaLgbnioXk5aBimJVyq//okFg6gUgX8oPqOeFq1iC8LzP10h+DFPi8wi
-	 NkKLf15Aw0rb9S89ZqfNxMQmnsYH8tY8Gt0gFvTmYxcOrYqovqJpgmostLmd0b8dky
-	 UJa2WM3C7AjpKqE7vs/j/+ZVwv0Bpmcv/QnrcDCnyjvnyeDJJw16DvooBCXA46PNDG
-	 rpLOMoc/vHFqVe+X1FlXxcHzok0XFjvBP7dUAyEv7qtBDJdosAbVgebQI10ICW+DO7
-	 2mDImCRJjNW1wE2xeJeirG8I0EFVF06GFGgojuw/bL1aUqAzPKuDRny7fBMiwE6TXl
-	 cBJjhDcLJdFPg==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GarHZnpC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1727278684;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=v+Vw/y+Un4gc140eaobYaC3W+YmumcsjIVB1KbRhzQk=;
+	b=GarHZnpCiQYAM2m/sPZO7rZQGqsbT1VLs4O9coDmCZIotW2qr4739oIjyqYO0qAMnmh1bt
+	H3M3ItTaHvFVE6aK4I1eXjNgrFD00iVBgpKazN8jmeyGcf6uWkQpoRSYubW/I0JoGpDctA
+	ualkmQ1WSEg2z2sTeNf+YrLEIu/g1gU=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-375-vQ868Zm-M8qXRubIzK11yg-1; Wed,
+ 25 Sep 2024 11:38:03 -0400
+X-MC-Unique: vQ868Zm-M8qXRubIzK11yg-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4C2691887E10;
+	Wed, 25 Sep 2024 15:38:02 +0000 (UTC)
+Received: from [10.45.225.58] (unknown [10.45.225.58])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 585E719560B0;
+	Wed, 25 Sep 2024 15:38:00 +0000 (UTC)
+Date: Wed, 25 Sep 2024 17:37:57 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: luca.boccassi@gmail.com
+cc: dm-devel@lists.linux.dev, snitzer@kernel.org, serge@hallyn.com, 
+    wufan@linux.microsoft.com
+Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
+ trusted keyring is rejected
+In-Reply-To: <20240922161753.244476-1-luca.boccassi@gmail.com>
+Message-ID: <8b212fc8-c67a-2973-fc5c-0cb61d165fd5@redhat.com>
+References: <20240922161753.244476-1-luca.boccassi@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset=UTF-8
-Date: Wed, 25 Sep 2024 17:50:00 +0300
-Message-Id: <D4FG64CUKGV9.1PWCC0FHOW21P@kernel.org>
-Cc: "Milan Broz" <gmazyland@gmail.com>, "Eric Biggers"
- <ebiggers@kernel.org>, "Mikulas Patocka" <mpatocka@redhat.com>,
- <luca.boccassi@gmail.com>, <dm-devel@lists.linux.dev>,
- <snitzer@kernel.org>, <wufan@linux.microsoft.com>, "David Howells"
- <dhowells@redhat.com>, <keyrings@vger.kernel.org>,
- <linux-integrity@vger.kernel.org>, "Mimi Zohar" <zohar@linux.ibm.com>,
- "Tycho Andersen" <tycho@tycho.ws>, "Mike McCracken" <mikmccra@cisco.com>
-Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
- trusted keyring is rejected
-From: "Jarkko Sakkinen" <jarkko@kernel.org>
-To: "Serge E. Hallyn" <serge@hallyn.com>
-X-Mailer: aerc 0.18.2
-References: <20240922161753.244476-1-luca.boccassi@gmail.com>
- <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com>
- <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
- <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com>
- <D4EU6G0VR6WO.24IWJJQC997Y9@kernel.org>
- <20240924215910.GA1585@sol.localdomain>
- <df791a04-feae-4708-865f-193360b35fad@gmail.com>
- <D4F8UQ7EQ1AH.28Y6BJIM287S1@kernel.org>
- <20240925125717.GA653365@mail.hallyn.com>
-In-Reply-To: <20240925125717.GA653365@mail.hallyn.com>
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On Wed Sep 25, 2024 at 3:57 PM EEST, Serge E. Hallyn wrote:
-> On Wed, Sep 25, 2024 at 12:05:59PM +0300, Jarkko Sakkinen wrote:
-> > On Wed Sep 25, 2024 at 11:03 AM EEST, Milan Broz wrote:
-> > > >> Doesn't dm-verity have a maintainer?
-> > >
-> > > (This reminds me of a nice comment from Neil about "little walled
-> > > gardens" between MD & DM.  Apparently it applies to other subsystems
-> > > as well. Sorry, I couldn't resist to mention it :-)
-> >=20
-> > Np, it's just that last and only time I've ever read anything about
-> > dm-verity was 2011 article :-)
-> >=20
-> > I will rephrase question: does dm-verity have a user? ;-)
->
-> It gets used for integrity guarantees in certain containers, where
-> the layers of tarballs are replaced by layers of squashfs, with the
-> dmverity root hash for each layer listed in the signed manifest, e.g.
->
-> github.com/project-stacker/stacker
-> github.com/project-machine/atomfs
->
-> This is used of course to verify container integrity, and also gets used =
-by
-> some projects and products to create an RFS from such images during initr=
-d
->
-> github.com/project-machine/mos
 
-OK got it!
 
-I did some studying and query and to put short it is a merkle tree
-for rootfs for devices like phones and tablets for instance. I.e.
-when you modify only on "system update".=20
+On Sun, 22 Sep 2024, luca.boccassi@gmail.com wrote:
 
-So... let's check the mainatainers list:
+> From: Luca Boccassi <bluca@debian.org>
+> 
+> If enabled, we fallback to the platform keyring if the trusted keyring doesn't have
+> the key used to sign the roothash. But if pkcs7_verify() rejects the key for other
+> reasons, such as usage restrictions, we do not fallback. Do so.
+> 
+> Follow-up for 6fce1f40e95182ebbfe1ee3096b8fc0b37903269
+> 
+> Suggested-by: Serge Hallyn <serge@hallyn.com>
+> Signed-off-by: Luca Boccassi <bluca@debian.org>
+> ---
+>  drivers/md/dm-verity-verify-sig.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+> index d351d7d39c60..a9e2c6c0a33c 100644
+> --- a/drivers/md/dm-verity-verify-sig.c
+> +++ b/drivers/md/dm-verity-verify-sig.c
+> @@ -127,7 +127,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+>  #endif
+>  				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
+>  #ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
+> -	if (ret == -ENOKEY)
+> +	if (ret == -ENOKEY || ret == -EKEYREJECTED)
+>  		ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
+>  					sig_len,
+>  					VERIFY_USE_PLATFORM_KEYRING,
+> -- 
+> 2.39.5
 
-=E2=9D=AF scripts/get_maintainer.pl drivers/md/dm-verity-verify-sig.c
-Alasdair Kergon <agk@redhat.com> (maintainer:DEVICE-MAPPER  (LVM))
-Mike Snitzer <snitzer@kernel.org> (maintainer:DEVICE-MAPPER  (LVM))
-Mikulas Patocka <mpatocka@redhat.com> (maintainer:DEVICE-MAPPER  (LVM))
-dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM))
-linux-kernel@vger.kernel.org (open list)
+Hi
 
-Mikulas, I guess you take care of this if I just ack the return value?
+Please describe what problem does this patch solve. I.e. why would anyone 
+put a key into the trusted keyring that could sign the roothash and 
+restrict its usage so that it can't be used to sign the roothash?
 
-If that holds, and given that I actually know what verify_pkcs7_signature()
-does, I think the code patch makes sense to me, and thus:
+In the other places of the kernel, only -ENOKEY is tested:
+kexec_kernel_verify_pe_sig:
+if (ret == -ENOKEY && IS_ENABLED(CONFIG_INTEGRITY_PLATFORM_KEYRING))
+s390_verify_sig:
+if (ret == -ENOKEY && IS_ENABLED(CONFIG_INTEGRITY_PLATFORM_KEYRING))
+do they need to be converted to -EKEYREJECTED too?
 
-Acked-by: Jarkko Sakkinen <jarkko@kernel.org>
+Mikulas
 
-I.e. I think it uses API correctly.
-
->
-> -serge
-
-BR, Jarkko
