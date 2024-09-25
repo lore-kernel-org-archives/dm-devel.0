@@ -1,96 +1,70 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7605915A864
-	for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 09:05:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0972712D20D;
+	Wed, 25 Sep 2024 09:06:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727255131; cv=none; b=jmFXy6RDLoMRJq/GyZ5640PbYNRStJngbvTFbSz6MD89fmak2u3mTwucqvPV8JgqAtWUWY5lRlP0mwTVZWOFlfAig8wYT0+YKP1pczC2BzNMie5XkD12P22Qop9wHZ0JmuldPXkoshv7/9FKKdv5yVufqx3MOztV7892vqnmlqY=
+	t=1727255164; cv=none; b=BeXFHBbuXkl13NP2fhbsQDnMqo/kl9bN4S37zODJVWSKJU8/gIQmdWg+t9zdP3y8MR8FeqUd8L23bwNO6t3tQ8Cruw+lnQ7fzr3iMhRoSi9exQiamQ2PK9p+tiaqgLCxcbxbOvmB97rfnasPyCkJ1fo3qcpEIjzmUo5aFDYZBXM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727255131; c=relaxed/simple;
-	bh=+cONzHrk7zpOTzu5yxEITF6cqEnqFLEKXmn44uaJRp4=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=b3aJt0JyFtoL2dF3RVA+MwGih3dJ8OwWIOmOgHTZEn2fkS3FfPdxYEzWGd/QA8Eeoh6+9vuu0hPDhh3EuTyUoM31MElLnvFSLozx1KyyN93bTHYWfIJ+54qTK5Sag+tiho3XZTkjYbI827BiaiJugnHg1d5RIyIDuX8n2ed/Ibs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=V/Fyz04x; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1727255164; c=relaxed/simple;
+	bh=Qc3vcqMtefGSPRw8PeY81lOlPjoknKL/5PRl5184CCg=;
+	h=Mime-Version:Content-Type:Date:Message-Id:Cc:Subject:From:To:
+	 References:In-Reply-To; b=dDHsmB7f6Bmkqm9NetKKLrLtwd5qltrKyB29y8zPljtO/BJYQmR4j6wY5L+J0wMLndJCwWNTuByTjbtqO4gQLUU6+wslCZz7ZwwsVMWFbS9URCrG601Odk2lF4W6BRWG5c+OKUs69Q/vcnDlHMjm4NGzarhLpjmO0mc9mHHR2OM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=QdXxxy/f; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="V/Fyz04x"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1727255129;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=CsaacKXy3sl3N6SSRdjs/BVpOGZEc2AswllD9kisABA=;
-	b=V/Fyz04xCUiOALAyUbZIQ2A0pxg52dysFZjgTdpLgv8HVOBRlZUvxPI03ZkGaSRh9L3isJ
-	wEACTtRmk38QcRmarwZTWhMqcvRlD5rzj5Y2xb/YwNjSZAZ88PrcrQTv0Zezd6dtZEyyaf
-	WmKj5F4n75qr/9KhIxwKEra1SXbJQus=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-94-CW2EtpPNNhqVDtPiLXNdxA-1; Wed,
- 25 Sep 2024 05:05:26 -0400
-X-MC-Unique: CW2EtpPNNhqVDtPiLXNdxA-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5E0EE1955F3D;
-	Wed, 25 Sep 2024 09:05:24 +0000 (UTC)
-Received: from [10.45.226.79] (unknown [10.45.226.79])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AB367195608A;
-	Wed, 25 Sep 2024 09:05:19 +0000 (UTC)
-Date: Wed, 25 Sep 2024 11:05:15 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Song Liu <song@kernel.org>
-cc: Shen Lichuan <shenlichuan@vivo.com>, colyli@suse.de, 
-    kent.overstreet@linux.dev, agk@redhat.com, snitzer@kernel.org, 
-    yukuai3@huawei.com, linux-bcache@vger.kernel.org, 
-    linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
-    linux-raid@vger.kernel.org
-Subject: Re: [PATCH v1] md: Correct typos in multiple comments across various
- files
-In-Reply-To: <CAPhsuW51S=WfyNoP_cWvNVq3rPW0+iBrhzRVaKK=q3PLRA94UA@mail.gmail.com>
-Message-ID: <d3bfe143-1b96-c28b-8ef1-f7d86c8e5b54@redhat.com>
-References: <20240924091733.8370-1-shenlichuan@vivo.com> <d95d7419-7bac-802f-a5d6-456900539c32@redhat.com> <CAPhsuW51S=WfyNoP_cWvNVq3rPW0+iBrhzRVaKK=q3PLRA94UA@mail.gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="QdXxxy/f"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 41767C4CEC7;
+	Wed, 25 Sep 2024 09:06:03 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1727255163;
+	bh=Qc3vcqMtefGSPRw8PeY81lOlPjoknKL/5PRl5184CCg=;
+	h=Date:Cc:Subject:From:To:References:In-Reply-To:From;
+	b=QdXxxy/faZ3L+Yn3g3fe7myCP5Y7ivhszVLy2OWxVjr5NO9vZa342/nTtF6pmCfPj
+	 RGtkgyhDlYEuhcL/4t4mjgvde2OpI3q02gXzLMbLS95y3D70agPPDgLAjL3g2eR7Id
+	 zmXt3NOUYQtwRkC9OXVlkbM3rSuE9txd1Jz8c/wB+7U9HEmo1/gDP9Gy19T+7xY3dQ
+	 9vLy217XiAaEVR/MOmU8wm2W2LpS7j3txQyI1W1Vco3oawA2XDVf83c03ftu+BAWRw
+	 N8V01CUozxtZe1OzjCi9yodGNEiGpMETmf3LSteExDCIOO0r+1mzBbdvzBkmvfNHDv
+	 8P+dqoSXwjaqg==
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463811712-289647186-1727255124=:2979785"
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
----1463811712-289647186-1727255124=:2979785
+Mime-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Date: Wed, 25 Sep 2024 12:05:59 +0300
+Message-Id: <D4F8UQ7EQ1AH.28Y6BJIM287S1@kernel.org>
+Cc: "Mikulas Patocka" <mpatocka@redhat.com>, <luca.boccassi@gmail.com>,
+ <dm-devel@lists.linux.dev>, <snitzer@kernel.org>, <serge@hallyn.com>,
+ <wufan@linux.microsoft.com>, "David Howells" <dhowells@redhat.com>,
+ <keyrings@vger.kernel.org>, <linux-integrity@vger.kernel.org>, "Mimi Zohar"
+ <zohar@linux.ibm.com>
+Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
+ trusted keyring is rejected
+From: "Jarkko Sakkinen" <jarkko@kernel.org>
+To: "Milan Broz" <gmazyland@gmail.com>, "Eric Biggers" <ebiggers@kernel.org>
+X-Mailer: aerc 0.18.2
+References: <20240922161753.244476-1-luca.boccassi@gmail.com>
+ <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com>
+ <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
+ <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com>
+ <D4EU6G0VR6WO.24IWJJQC997Y9@kernel.org>
+ <20240924215910.GA1585@sol.localdomain>
+ <df791a04-feae-4708-865f-193360b35fad@gmail.com>
+In-Reply-To: <df791a04-feae-4708-865f-193360b35fad@gmail.com>
 
+On Wed Sep 25, 2024 at 11:03 AM EEST, Milan Broz wrote:
+> >> Doesn't dm-verity have a maintainer?
+>
+> (This reminds me of a nice comment from Neil about "little walled
+> gardens" between MD & DM.  Apparently it applies to other subsystems
+> as well. Sorry, I couldn't resist to mention it :-)
 
+Np, it's just that last and only time I've ever read anything about
+dm-verity was 2011 article :-)
 
-On Tue, 24 Sep 2024, Song Liu wrote:
+I will rephrase question: does dm-verity have a user? ;-)
 
-> Hi Mikulas,
-> 
-> On Tue, Sep 24, 2024 at 6:30 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
-> >
-> > Hi
-> >
-> > I've applied the device mapper part of the patch.
-> 
-> Would you mind taking the whole patch instead? You can add
-> 
-> Acked-by: Song Liu <song@kernel.org>
-> 
-> Thanks,
-> Song
-
-I'm not a maintainer of MD and BCACHE. The MD and BCACHE part of the patch 
-should go through their tree.
-
-Mikulas
----1463811712-289647186-1727255124=:2979785--
-
+BR, Jarkko
