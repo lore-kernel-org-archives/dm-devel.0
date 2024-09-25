@@ -1,160 +1,182 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8900D15535B
-	for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 07:20:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED59B147C9B;
+	Wed, 25 Sep 2024 07:51:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727248822; cv=none; b=MR6q2tsfywlRCon6yti6OzhAo3yHN+eMDIns+O7720h/QAhMZpQkHZLvkHCZz49QmltIxWKa2qxgISM47wahxRcRpqE+I1wmo3IX6m7wXAVd4jcSDI75YjBwYSuNZRjhJt1OHlUusoMAkTqd3zvvZrOLfktFHgRJOkGvQg1BsyI=
+	t=1727250699; cv=none; b=qdGsGqwrBYPIrtUCneh0uMK1uECv0/VEakUgbJuOzoNSMZjMaXKWkQaIozRg8Rbmc1csMJ28igXnOHtaUEg6Ij69k1Xx0vaJBXwq7bmsdBTnge3YhLOV3+96pAh7V9Z+qovA2X9gUgsyO/C/YZEpWS9C6OticHGoS6nE9ZfCXbo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727248822; c=relaxed/simple;
-	bh=AUtjNNq0evqNjWtooVdnKEclfCGj01YVhm40ZRt3UsI=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=WYEGnk2BED08N8H4DZfL0dCmgtiLOkuR1dl1m9i4KnYNTc0/9UFgf1mCbnpx5xfhWDThyHU5Dyr65+IILN5yf4aXdagQRSmfrSUPDiRa0d3VsA5Q48yrR7p1DgZHlb7PL7uUmKbp7caQG8h73G/8WSFXh8OrOlWoL5k10klBI8M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=JC+KEUQv; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=VzDHHtBw; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=JC+KEUQv; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=VzDHHtBw; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	s=arc-20240116; t=1727250699; c=relaxed/simple;
+	bh=aPtVdD4i0rp8fodPzF3sa54QtUAHnu1iyH03WYgopBI=;
+	h=Mime-Version:Content-Type:Date:Message-Id:To:Cc:Subject:From:
+	 References:In-Reply-To; b=qiMvE2W5weV/OVgoY6/rLj66yQhrsi3dAEEwJkHP0jI3iCS9xqK2p/aWIGVSNTcZ2UM7vj/Ru/1+ftRAkKlYCUzrx0gGKpcx07rCNYX2B56bWo6w/jTenkgfqg3VlRs1T+StebdP6zDUkGPaHjJcAiXm3pVDzsZYCLrJhASjOxU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pi+6W0lP; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="JC+KEUQv";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="VzDHHtBw";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="JC+KEUQv";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="VzDHHtBw"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id D13F9219C1;
-	Wed, 25 Sep 2024 07:20:11 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1727248811; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AUtjNNq0evqNjWtooVdnKEclfCGj01YVhm40ZRt3UsI=;
-	b=JC+KEUQv/qXOtDfaSdMNyvTmiPMHN5etUXc5GxVbzpWqUXHOC/Yxm3m0oehFQz7wX7wDBP
-	RSOmBOeSZ48o+VTcajn7FBRSKclgZMjnBqaBZ96PF7ahFECBfAiOQI/0XGKKn3sr86QEc4
-	ZYrKEl47m06iVeWcSZ6ChSmtS4+rBNg=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1727248811;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AUtjNNq0evqNjWtooVdnKEclfCGj01YVhm40ZRt3UsI=;
-	b=VzDHHtBw0x2bz4y1FrZ2FnIXaPqJC6j7hxpKpCBg0VW0DetHLV8cLM0XpZaQ9I/QzBBMFF
-	oMoPCgxiyuwo77Cg==
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1727248811; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AUtjNNq0evqNjWtooVdnKEclfCGj01YVhm40ZRt3UsI=;
-	b=JC+KEUQv/qXOtDfaSdMNyvTmiPMHN5etUXc5GxVbzpWqUXHOC/Yxm3m0oehFQz7wX7wDBP
-	RSOmBOeSZ48o+VTcajn7FBRSKclgZMjnBqaBZ96PF7ahFECBfAiOQI/0XGKKn3sr86QEc4
-	ZYrKEl47m06iVeWcSZ6ChSmtS4+rBNg=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1727248811;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AUtjNNq0evqNjWtooVdnKEclfCGj01YVhm40ZRt3UsI=;
-	b=VzDHHtBw0x2bz4y1FrZ2FnIXaPqJC6j7hxpKpCBg0VW0DetHLV8cLM0XpZaQ9I/QzBBMFF
-	oMoPCgxiyuwo77Cg==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id AD21F13793;
-	Wed, 25 Sep 2024 07:20:08 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id AzeAGqi582YdbQAAD6G6ig
-	(envelope-from <colyli@suse.de>); Wed, 25 Sep 2024 07:20:08 +0000
-Content-Type: text/plain;
-	charset=utf-8
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pi+6W0lP"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 34A2DC4CEC3;
+	Wed, 25 Sep 2024 07:51:38 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1727250698;
+	bh=aPtVdD4i0rp8fodPzF3sa54QtUAHnu1iyH03WYgopBI=;
+	h=Date:To:Cc:Subject:From:References:In-Reply-To:From;
+	b=pi+6W0lPzek1C6yVSuL84U2YtH57tS0hAFiDfswg9Exx3/bOa/fnKRu1kL6+4+uSx
+	 7NcY0g1eQ4k1EFF+MTZL/y+yZGygdNQ8LgpkguZCOBnKW71sv8x1YralZs2bFkQnLi
+	 pjD+G6c3H7jg66SywQuTHaSDFSUQ39OAuNaOiUCJkd9mh5wDV6CcKa8oLl+DEYMXBx
+	 BIsBQ2c5YwvCgt57V3FQV+GISygznS/sseRB33sAA2KApQ3LuRQiW9iBIBbytuQR+T
+	 erFRZREvOD0uYtE/cHlrg6TbSwTWxDe/FWMHcmMoU3RtjyPBmypcfZfgS65qAH55+F
+	 aViRMNQv+rbzQ==
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51\))
-Subject: Re: [PATCH v1] md: Correct typos in multiple comments across various
- files
-From: Coly Li <colyli@suse.de>
-In-Reply-To: <CAPhsuW51S=WfyNoP_cWvNVq3rPW0+iBrhzRVaKK=q3PLRA94UA@mail.gmail.com>
-Date: Wed, 25 Sep 2024 15:19:52 +0800
-Cc: Shen Lichuan <shenlichuan@vivo.com>,
- Kent Overstreet <kent.overstreet@linux.dev>,
- Alasdair Kergon <agk@redhat.com>,
- snitzer@kernel.org,
- "yukuai (C)" <yukuai3@huawei.com>,
- Bcache Linux <linux-bcache@vger.kernel.org>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- "Kernel.org-Linux-RAID" <linux-raid@vger.kernel.org>
+Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
-Message-Id: <E9AFA16B-E8E4-4932-AC9F-A30BA1A8C924@suse.de>
-References: <20240924091733.8370-1-shenlichuan@vivo.com>
- <d95d7419-7bac-802f-a5d6-456900539c32@redhat.com>
- <CAPhsuW51S=WfyNoP_cWvNVq3rPW0+iBrhzRVaKK=q3PLRA94UA@mail.gmail.com>
-To: Song Liu <song@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>
-X-Mailer: Apple Mail (2.3776.700.51)
-X-Spam-Score: -4.30
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	APPLE_MAILER_COMMON(0.00)[];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[11];
-	RCVD_TLS_ALL(0.00)[];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:mid]
-X-Spam-Flag: NO
-X-Spam-Level: 
+Content-Type: text/plain; charset=UTF-8
+Date: Wed, 25 Sep 2024 10:51:34 +0300
+Message-Id: <D4F79QY76VNH.2VA0SMMNTXUR@kernel.org>
+To: "Eric Biggers" <ebiggers@kernel.org>
+Cc: "Mikulas Patocka" <mpatocka@redhat.com>, <luca.boccassi@gmail.com>,
+ <dm-devel@lists.linux.dev>, <snitzer@kernel.org>, <serge@hallyn.com>,
+ <wufan@linux.microsoft.com>, "David Howells" <dhowells@redhat.com>,
+ <keyrings@vger.kernel.org>, <linux-integrity@vger.kernel.org>, "Mimi Zohar"
+ <zohar@linux.ibm.com>
+Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
+ trusted keyring is rejected
+From: "Jarkko Sakkinen" <jarkko@kernel.org>
+X-Mailer: aerc 0.18.2
+References: <20240922161753.244476-1-luca.boccassi@gmail.com>
+ <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com>
+ <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
+ <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com>
+ <D4EU6G0VR6WO.24IWJJQC997Y9@kernel.org>
+ <20240924215910.GA1585@sol.localdomain>
+In-Reply-To: <20240924215910.GA1585@sol.localdomain>
 
+On Wed Sep 25, 2024 at 12:59 AM EEST, Eric Biggers wrote:
+> On Wed, Sep 25, 2024 at 12:36:01AM +0300, Jarkko Sakkinen wrote:
+> > On Tue Sep 24, 2024 at 9:27 PM EEST, Mikulas Patocka wrote:
+> > >
+> > >
+> > > On Tue, 24 Sep 2024, Jarkko Sakkinen wrote:
+> > >
+> > > > On Mon Sep 23, 2024 at 5:04 PM EEST, Mikulas Patocka wrote:
+> > > > >
+> > > > >
+> > > > > On Sun, 22 Sep 2024, luca.boccassi@gmail.com wrote:
+> > > > >
+> > > > > > From: Luca Boccassi <bluca@debian.org>
+> > > > > >=20
+> > > > > > If enabled, we fallback to the platform keyring if the trusted =
+keyring doesn't have
+> > > > > > the key used to sign the roothash. But if pkcs7_verify() reject=
+s the key for other
+> > > > > > reasons, such as usage restrictions, we do not fallback. Do so.
+> > > > > >=20
+> > > > > > Follow-up for 6fce1f40e95182ebbfe1ee3096b8fc0b37903269
+> > > > > >=20
+> > > > > > Suggested-by: Serge Hallyn <serge@hallyn.com>
+> > > > > > Signed-off-by: Luca Boccassi <bluca@debian.org>
+> > > > >
+> > > > > Hi
+> > > > >
+> > > > > I'm not an expert in keyrings.
+> > > > >
+> > > > > I added keyring maintainers to the CC. Please review this patch a=
+nd=20
+> > > > > Ack/Nack it.
+> > > > >
+> > > > > Mikulas
+> > > > >
+> > > > > > ---
+> > > > > >  drivers/md/dm-verity-verify-sig.c | 2 +-
+> > > > > >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > > > > >=20
+> > > > > > diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-=
+verity-verify-sig.c
+> > > > > > index d351d7d39c60..a9e2c6c0a33c 100644
+> > > > > > --- a/drivers/md/dm-verity-verify-sig.c
+> > > > > > +++ b/drivers/md/dm-verity-verify-sig.c
+> > > > > > @@ -127,7 +127,7 @@ int verity_verify_root_hash(const void *roo=
+t_hash, size_t root_hash_len,
+> > > > > >  #endif
+> > > > > >  				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
+> > > > > >  #ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
+> > > > > > -	if (ret =3D=3D -ENOKEY)
+> > > > > > +	if (ret =3D=3D -ENOKEY || ret =3D=3D -EKEYREJECTED)
+> > > > > >  		ret =3D verify_pkcs7_signature(root_hash, root_hash_len, sig=
+_data,
+> > > > > >  					sig_len,
+> > > > > >  					VERIFY_USE_PLATFORM_KEYRING,
+> > > > > > --=20
+> > > > > > 2.39.5
+> > > > > >=20
+> > > >=20
+> > > > I know nothing about dm-verity. What does it even do?
+> > > >=20
+> > > > BR, Jarkko
+> > >
+> > > dm-verity provides a read-only device with integrity checking. dm-ver=
+ity=20
+> > > stores hash for every block on the block device and checks the hash w=
+hen=20
+> > > reading the block. If the hash doesn't match, it can do one of these=
+=20
+> > > actions (depending on configuration):
+> > > - return I/O error
+> > > - try to correct the data using forward error correction
+> > > - log the mismatch and do nothing
+> > > - restart the machine
+> > > - call panic()
+> > >
+> > > dm-verity is mostly used for the immutable system partition on Androi=
+d=20
+> > > phones. For more info, see=20
+> > > Documentation/admin-guide/device-mapper/verity.rst
+> > >
+> > > The above patch changes the way that the signature of the root hash i=
+s=20
+> > > verified. I have no clue whether the patch can or can't subvert syste=
+m=20
+> > > security, that's why I'd like to have some more reviews of the patch=
+=20
+> > > before accepting it.
+> >=20
+> > I guess someone who knows all this already should review it.
+> >=20
+> > Doesn't dm-verity have a maintainer?
+> >=20
+>
+> This patch only affects dm-verity's in-kernel signature verification supp=
+ort,
+> which has only been present since Linux v5.4 and is not used by Android o=
+r
+> Chrome OS.  The whole feature seems weird to me, and it is prone to be mi=
+sused;
+> signatures are best verified by trusted userspace code instead (e.g. init=
+ramfs).
+> But apparently there are people who use the dm-verity in-kernel signature=
+s.  I
+> think systemd has some support for it, as does the recently-upstreamed IP=
+E LSM.
+> I don't know what else.  The exact semantics of the "trusted" and "platfo=
+rm"
+> keyrings are not entirely clear to me, but given that dm-verity already t=
+rusts
+> keys from both keyrings this patch seems reasonable.  The people who actu=
+ally
+> use this feature are in the best position to make that call, though.
 
+https://lwn.net/Articles/459420/
 
-> 2024=E5=B9=B49=E6=9C=8825=E6=97=A5 05:24=EF=BC=8CSong Liu =
-<song@kernel.org> =E5=86=99=E9=81=93=EF=BC=9A
->=20
-> Hi Mikulas,
->=20
-> On Tue, Sep 24, 2024 at 6:30=E2=80=AFAM Mikulas Patocka =
-<mpatocka@redhat.com> wrote:
->>=20
->> Hi
->>=20
->> I've applied the device mapper part of the patch.
->=20
-> Would you mind taking the whole patch instead? You can add
->=20
-> Acked-by: Song Liu <song@kernel.org>
+Isn't Netflix using FreeBSD these days? :-)
 
-Normally I don=E2=80=99t have interest for this type of patches, because =
-it may introduce potential workload for downstream backport.
+Right, and Chromebooks also mentioned in the same article (from 2011).
 
-If this patch may go into upstream from other path, I don=E2=80=99t have =
-objection neither. And if any comment wanted from me, I=E2=80=99d like =
-to suggest to split this patch into multiple ones by different =
-subsystem, it may be easier for downstream developers to do their =
-backport.
+For me this looks almost like abaddonware...
 
-Thanks.
+>
+> - Eric
 
-Coly Li
-
+BR, Jarkko
