@@ -1,210 +1,136 @@
-Received: from mail-yb1-f172.google.com (mail-yb1-f172.google.com [209.85.219.172])
+Received: from mail-yw1-f177.google.com (mail-yw1-f177.google.com [209.85.128.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50327156677
-	for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 21:28:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D887314A4F7
+	for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 21:38:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727299706; cv=none; b=G5SHIy7PZnPyjC3/Ddn1TkzSJ75W1m+D/Fy69s888x4kYgy9Yc+Oa0lutUZpDf7GqBq+hmkJTxbxcxI2TQOCZwCwme0yZNgjhy0stGPdYoqI5zoPYjCrC2QZEttNawTjz9AuWbI2iveNhPew+q65oKwvwfETV1ki3jXd1YhlJY8=
+	t=1727300290; cv=none; b=LrXO8YOdFriEdOoGeJVfofcBwOU/cdOc6Jqtnme8R1jOywTlDD1WPalz0pEedLWW6ZwGf/1o/UZ7KhQaJOm20IvnJKd6hNJt84h8y3FJ6jdO+v2KCch72/y42UGXFnq6AauzjSCFH/7PhBOQ1VHXBG84L/4Mc3G+MLY/D1+iXus=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727299706; c=relaxed/simple;
-	bh=TEbMdjHCrNeADAZkuopWhRQtiefadpFr7JS8kYOMbUw=;
+	s=arc-20240116; t=1727300290; c=relaxed/simple;
+	bh=xhO9Utrq1GvQAR21AfwpFkujyu/w0PlgWgaVnO8p6f0=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=Gj2lpcjrbgsblGJH3mG4Wnvj5q9ni4uI50J1tsoHYyT5w8LYWaISu5t1Tpugqse7xCaMLYrGzZpYk3bknWTvEifKfPnlrgfLpCLW35ywkiy8bf4U2+gxIRstECFetIrn/AYex1LI3+wJcZdSDnVVq+8BWOX2O/fQoWeTYi5tR7I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ASc+Knhy; arc=none smtp.client-ip=209.85.219.172
+	 To:Cc:Content-Type; b=nUG1H4qB5mU3N7phn10/JePk1ipfsMa1XK7amoHMZvJtBU9pEx1XoV/oKEjZU2ngt5hhLLoHAvIp4WFUDAegJVOPnb91vzNgwq6X2Or0FENUj6XRxA5KHMqHuQpmAhO/GbmrRXysLfsKg4it4TxMKPgEVIdSQw+Y1dh4YqWK/TQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=nVmPc7JV; arc=none smtp.client-ip=209.85.128.177
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ASc+Knhy"
-Received: by mail-yb1-f172.google.com with SMTP id 3f1490d57ef6-e03caab48a2so307992276.1
-        for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 14:28:24 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="nVmPc7JV"
+Received: by mail-yw1-f177.google.com with SMTP id 00721157ae682-68518bc1407so4176607b3.2
+        for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 14:38:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1727299703; x=1727904503; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1727300288; x=1727905088; darn=lists.linux.dev;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=HIBeS2n7KF9/n5SkrStAMqnyNGIdf54yNApzBdxSE4s=;
-        b=ASc+KnhyxN3A0FfjSS8A2VmGdml2neisp1R3rIbhg81UkujpD9EuXrzcgsgvmQtW+/
-         m+acdSEI5HQYFMkVNfjD2oE0fLf6dBOgf0zAL3V7eTHVW+4K6ZZHl1S9R1ospk0c9MTJ
-         PsKM6J/ednMJwgexdjAth3yaATgR1gdgLjrd/7c56vpiI8GtxcAHXhw+zsPdN+iNkh02
-         nKioMJLP+SiJ99PdQj9LOBwen4/w6/TXdvQGyXSx9yv3M1qjt5b6r1bi+OFVBlnIVvzT
-         uKAa9umXtJV6FCdt4PuYpmBSYUbbbgabyAQEyyROAeDXvh4apM7o+a4C9lydH+DwAI4Z
-         RWLw==
+        bh=RBdtfod6/SGfKvqVNGYuOI0V/rC4LlxT5oHx7XyTzEU=;
+        b=nVmPc7JVdCJr1yxnXrjgHuy1OSlgnzOF0/hFnck56QIRjJf2810ASEBBMViM5s/dez
+         2vCdO+zHEGA3EIPbCd56abxr7Rk+wBpgYhVZp2DZbD82rGBzx02ujiSA1ssnLOCuXVVn
+         sH9nBT+XImDGSILp120+IZ0TQtVjDrnPRufIkadabhiNAWB/gSI3482XQp0yMSDxMFsE
+         EpOJ4ZxrHbEbCZmI//HfJIMBEwBeYq7ZW857bFMJM6c2sAg2ZvSBvI1XmfU0fkzIkl3Z
+         DZq3jRYiBD8sxde6wEk8PXVMJpfXp/CmZXsLELDVly6Ub+DWOs4ZCxaxWY198kTe07N4
+         sQXA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727299703; x=1727904503;
+        d=1e100.net; s=20230601; t=1727300288; x=1727905088;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=HIBeS2n7KF9/n5SkrStAMqnyNGIdf54yNApzBdxSE4s=;
-        b=Z/RoDSOBVm14Qs6k9hQBwpzcPRHbWu6yMQiK5GfuMrzacP5MCAkdHd8n7+PjcWumq+
-         G/9eTcZ6/wHB47nBuug6WQXoDnlevKoz/NJ2pi+5p30DDXUvKs7+rXTCChL/HIquK2Zw
-         /T5v01lBQyFj8lGYXrc0P7C2WoSiXI6gRtmMTRv/5QoysGm0bThABj8Y6bDM+szpKcVz
-         IXaCllWESJ8JWt0T7EE7Xoi5bqE7iyyrX1LsVFQNop4iGXALi0EbbwkhmCAW2cw0j+Hu
-         nrC0c+KVTbB0iC/mKpCL2J73EJU5N6lXEcea0rVXB3AyK14ucp0SlMip08N987eBUFk6
-         HKiw==
-X-Forwarded-Encrypted: i=1; AJvYcCVbZNGS3U7PICl0wq2VPXDELT4kZcbNp8ySVdlDsgV1o55qbaQCeSh7gBQR8jsLt8RnWqFhKW+d8w==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzdF+gM7Kcv69umXaC06loyFyCtA5Qxee3SMor3w/rGFKfkYeGu
-	xZn+bWIwOvWHVtPC3DWLbG/CBBjBXgHJgho16GZlzUPpIjP7Oza7es3wID8Ow8J8tsp6H3Wentd
-	Rcs1i6zrAJw1tuJcIFxG6G90HLIc=
-X-Google-Smtp-Source: AGHT+IHqS4KyMSd5xh+DamiFRB3gg5TKfjsULrg1wZR9BYFD94MMQOq7D+dI5gqU/yU8Un4nooZ40nra4DVZapHfjD8=
-X-Received: by 2002:a05:6902:2b82:b0:e22:6bd0:46a5 with SMTP id
- 3f1490d57ef6-e25ca96a3fdmr817693276.21.1727299703011; Wed, 25 Sep 2024
- 14:28:23 -0700 (PDT)
+        bh=RBdtfod6/SGfKvqVNGYuOI0V/rC4LlxT5oHx7XyTzEU=;
+        b=inoTlMs5oEvM6/FeVbOM2jiRCQcshxjYN4dIg99+0j4wZoeu5ZUhbClBtiDrJSJJFY
+         akZmy4Rw9ZcGGcUsv3wb/AA35vXEU/POkJk+rtT6Jj2oG1FeFoGXDE1IeATBS/c6wXY5
+         PB+MJlZM+ll9r2GymuaXW4cbKIpikpCb46+PeEGrD5q+MWiXTkWyt26oc7tLsQZCM2PW
+         0Uvru6foK3ICFMK79GfM47HpfLW2SXanBAIsLZ9QR/Y3r7YEStqReCu6n7CINqhTAqdn
+         SFPjTC47aOjM+0ICB1JIKrFPSZziTwjcy/OFztBJMz+IiBgOUyc+tg4NggLPtka0zOuc
+         ignQ==
+X-Gm-Message-State: AOJu0Yy529hztoRfC21vPr7fXbrX7FmPwodEES+IPo4JJJPKojm9M0MO
+	G/77W4jDEchUjqmiKeXNv2TXr7BxQI0osGcPQG3A4bNdZGiFAf3VdSpB/KbsOfvujef0OOsaC52
+	b8R2tH1Y7QRP+el3BKvSEU0JZ43KNX4sPAuC1arjX
+X-Google-Smtp-Source: AGHT+IESmfov4HQOFPCYCx1KJ/4jEGIcbm4R0igEcLP8p13EA5A/O/rI3RfcyPlweSJVe1ciGuSD8K7FAIS2hpj3d5k=
+X-Received: by 2002:a05:690c:6ac5:b0:6c3:7d68:b400 with SMTP id
+ 00721157ae682-6e21d705474mr38571057b3.10.1727300287595; Wed, 25 Sep 2024
+ 14:38:07 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240922161753.244476-1-luca.boccassi@gmail.com>
- <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com> <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
- <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com> <D4EU6G0VR6WO.24IWJJQC997Y9@kernel.org>
- <20240924215910.GA1585@sol.localdomain> <df791a04-feae-4708-865f-193360b35fad@gmail.com>
-In-Reply-To: <df791a04-feae-4708-865f-193360b35fad@gmail.com>
+References: <20240922161753.244476-1-luca.boccassi@gmail.com> <8b212fc8-c67a-2973-fc5c-0cb61d165fd5@redhat.com>
+In-Reply-To: <8b212fc8-c67a-2973-fc5c-0cb61d165fd5@redhat.com>
 From: Luca Boccassi <luca.boccassi@gmail.com>
-Date: Wed, 25 Sep 2024 23:28:12 +0200
-Message-ID: <CAMw=ZnT=3n+1n6z0HE7JPNFX07fAJS+5W+SeO4pddrcUcEpjZA@mail.gmail.com>
+Date: Wed, 25 Sep 2024 23:37:55 +0200
+Message-ID: <CAMw=ZnRO3WTm4Ad=MA99ehiDei4cAYG7zSQFEMUYhUKaUmmb=Q@mail.gmail.com>
 Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
  trusted keyring is rejected
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Eric Biggers <ebiggers@kernel.org>, Jarkko Sakkinen <jarkko@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, snitzer@kernel.org, 
-	serge@hallyn.com, wufan@linux.microsoft.com, 
-	David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org, 
-	linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, snitzer@kernel.org, serge@hallyn.com, 
+	wufan@linux.microsoft.com
 Content-Type: text/plain; charset="UTF-8"
 
-On Wed, 25 Sept 2024 at 10:03, Milan Broz <gmazyland@gmail.com> wrote:
+On Wed, 25 Sept 2024 at 17:38, Mikulas Patocka <mpatocka@redhat.com> wrote:
 >
-> On 9/24/24 11:59 PM, Eric Biggers wrote:
-> > On Wed, Sep 25, 2024 at 12:36:01AM +0300, Jarkko Sakkinen wrote:
-> >> On Tue Sep 24, 2024 at 9:27 PM EEST, Mikulas Patocka wrote:
-> >>>
-> >>>
-> >>> On Tue, 24 Sep 2024, Jarkko Sakkinen wrote:
-> >>>
-> >>>> On Mon Sep 23, 2024 at 5:04 PM EEST, Mikulas Patocka wrote:
-> >>>>>
-> >>>>>
-> >>>>> On Sun, 22 Sep 2024, luca.boccassi@gmail.com wrote:
-> >>>>>
-> >>>>>> From: Luca Boccassi <bluca@debian.org>
-> >>>>>>
-> >>>>>> If enabled, we fallback to the platform keyring if the trusted keyring doesn't have
-> >>>>>> the key used to sign the roothash. But if pkcs7_verify() rejects the key for other
-> >>>>>> reasons, such as usage restrictions, we do not fallback. Do so.
-> >>>>>>
-> >>>>>> Follow-up for 6fce1f40e95182ebbfe1ee3096b8fc0b37903269
-> >>>>>>
-> >>>>>> Suggested-by: Serge Hallyn <serge@hallyn.com>
-> >>>>>> Signed-off-by: Luca Boccassi <bluca@debian.org>
-> >>>>>
-> >>>>> Hi
-> >>>>>
-> >>>>> I'm not an expert in keyrings.
-> >>>>>
-> >>>>> I added keyring maintainers to the CC. Please review this patch and
-> >>>>> Ack/Nack it.
-> >>>>>
-> >>>>> Mikulas
-> >>>>>
-> >>>>>> ---
-> >>>>>>   drivers/md/dm-verity-verify-sig.c | 2 +-
-> >>>>>>   1 file changed, 1 insertion(+), 1 deletion(-)
-> >>>>>>
-> >>>>>> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-> >>>>>> index d351d7d39c60..a9e2c6c0a33c 100644
-> >>>>>> --- a/drivers/md/dm-verity-verify-sig.c
-> >>>>>> +++ b/drivers/md/dm-verity-verify-sig.c
-> >>>>>> @@ -127,7 +127,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
-> >>>>>>   #endif
-> >>>>>>                                  VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
-> >>>>>>   #ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
-> >>>>>> -        if (ret == -ENOKEY)
-> >>>>>> +        if (ret == -ENOKEY || ret == -EKEYREJECTED)
-> >>>>>>                  ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
-> >>>>>>                                          sig_len,
-> >>>>>>                                          VERIFY_USE_PLATFORM_KEYRING,
-> >>>>>> --
-> >>>>>> 2.39.5
-> >>>>>>
-> >>>>
-> >>>> I know nothing about dm-verity. What does it even do?
-> >>>>
-> >>>> BR, Jarkko
-> >>>
-> >>> dm-verity provides a read-only device with integrity checking. dm-verity
-> >>> stores hash for every block on the block device and checks the hash when
-> >>> reading the block. If the hash doesn't match, it can do one of these
-> >>> actions (depending on configuration):
-> >>> - return I/O error
-> >>> - try to correct the data using forward error correction
-> >>> - log the mismatch and do nothing
-> >>> - restart the machine
-> >>> - call panic()
-> >>>
-> >>> dm-verity is mostly used for the immutable system partition on Android
-> >>> phones. For more info, see
-> >>> Documentation/admin-guide/device-mapper/verity.rst
-> >>>
-> >>> The above patch changes the way that the signature of the root hash is
-> >>> verified. I have no clue whether the patch can or can't subvert system
-> >>> security, that's why I'd like to have some more reviews of the patch
-> >>> before accepting it.
-> >>
-> >> I guess someone who knows all this already should review it.
-> >>
-> >> Doesn't dm-verity have a maintainer?
 >
-> (This reminds me of a nice comment from Neil about "little walled gardens" between MD & DM.
-> Apparently it applies to other subsystems as well. Sorry, I couldn't resist to mention it :-)
 >
-> > This patch only affects dm-verity's in-kernel signature verification support,
-> > which has only been present since Linux v5.4 and is not used by Android or
-> > Chrome OS.  The whole feature seems weird to me, and it is prone to be misused;
-> > signatures are best verified by trusted userspace code instead (e.g. initramfs).
-> > But apparently there are people who use the dm-verity in-kernel signatures.  I
-> > think systemd has some support for it, as does the recently-upstreamed IPE LSM.
-> > I don't know what else.  The exact semantics of the "trusted" and "platform"
-> > keyrings are not entirely clear to me, but given that dm-verity already trusts
-> > keys from both keyrings this patch seems reasonable.  The people who actually
-> > use this feature are in the best position to make that call, though.
+> On Sun, 22 Sep 2024, luca.boccassi@gmail.com wrote:
 >
-> When we added support for this to veritysetup (--root-hash-signature), I think it was
-> a requirement from Microsoft.
+> > From: Luca Boccassi <bluca@debian.org>
+> >
+> > If enabled, we fallback to the platform keyring if the trusted keyring doesn't have
+> > the key used to sign the roothash. But if pkcs7_verify() rejects the key for other
+> > reasons, such as usage restrictions, we do not fallback. Do so.
+> >
+> > Follow-up for 6fce1f40e95182ebbfe1ee3096b8fc0b37903269
+> >
+> > Suggested-by: Serge Hallyn <serge@hallyn.com>
+> > Signed-off-by: Luca Boccassi <bluca@debian.org>
+> > ---
+> >  drivers/md/dm-verity-verify-sig.c | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> >
+> > diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+> > index d351d7d39c60..a9e2c6c0a33c 100644
+> > --- a/drivers/md/dm-verity-verify-sig.c
+> > +++ b/drivers/md/dm-verity-verify-sig.c
+> > @@ -127,7 +127,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+> >  #endif
+> >                               VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
+> >  #ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
+> > -     if (ret == -ENOKEY)
+> > +     if (ret == -ENOKEY || ret == -EKEYREJECTED)
+> >               ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
+> >                                       sig_len,
+> >                                       VERIFY_USE_PLATFORM_KEYRING,
+> > --
+> > 2.39.5
 >
-> Anyway, if you have a trusted key compiled-in the kernel in one keyring, I do not think
-> it would cause problems if stored in another.
+> Hi
 >
-> But it scares me that we cannot easily test userspace for this in CI, as it requires compiling
-> own kernel with our own keys.
+> Please describe what problem does this patch solve. I.e. why would anyone
+> put a key into the trusted keyring that could sign the roothash and
+> restrict its usage so that it can't be used to sign the roothash?
 >
-> Do people use veritysetup (libcryptsetup) here, or does it run with its separate userspace tooling?
+> In the other places of the kernel, only -ENOKEY is tested:
+> kexec_kernel_verify_pe_sig:
+> if (ret == -ENOKEY && IS_ENABLED(CONFIG_INTEGRITY_PLATFORM_KEYRING))
+> s390_verify_sig:
+> if (ret == -ENOKEY && IS_ENABLED(CONFIG_INTEGRITY_PLATFORM_KEYRING))
+> do they need to be converted to -EKEYREJECTED too?
 
-This is used with libcryptsetup commonly, and often with veritysetup.
-It is fairly easy to test in a VM or on baremetal, it is not required
-to build your own kernel - that's the reason for supporting
-secondary+platform keyrings (the first one allows you to enroll keys
-in MOK, the second one for UEFI DB).
-We would even have a CI testing this for every PR and merge in systemd
-on Github, _except_ there is currently an issue (unrelated to
-dmverity) that happens when nesting KVM with UEFI secure boot enabled
-on top of HyperV, which means it cannot be used reliably on Github
-Actions. Once that is solved, this will be again part of the systemd
-CI integration tests. But it is used regularly by developers on their
-machines.
+To be perfectly honest, I do not have a use case for the EKEYREJECTED
+fallback - it was suggested by Serge when I was working on the IPE
+keyrings usage:
 
-It might not be commonly used by kernel developers, I do not know as I
-am not a kernel developer, but it is becoming more and more common in
-userspace and among image builders. For example the mkosi image
-builder, using systemd-repart, can very easily build distro images
-using signed dm verity. I am at All Systems Go and just today there
-were multiple talks by multiple people using dmverity images for their
-distros/platforms/products, especially with systemd-sysext, which is
-all about signed dm-verity.
+https://lore.kernel.org/all/20240920020217.GA528455@mail.hallyn.com/
 
-In 6.12 we will also have IPE which allows to enable trusted code
-integrity checks that cannot be trivially bypassed by other userspace
-processes running with root or caps. This has been, still is and will
-be for the foreseeable future, in use in the Azure infrastructure.
+I would like to maintain the usage of keyrings in sync between the two
+components given they are used together, for consistency, so I
+counter-proposed to send the change to dmverity first. I am following
+up on that promise with this patch.
+If there are reasons not to take this change, or if there are no
+convincing reasons to take it, I do not have strong opinions either
+way so I don't mind what the outcome is either way, as I am just
+following up on that review comment. I'll let Serge explain the
+reasoning for the request, if he wants to do it.
 
-Hope this provides some clarity, let me know if you need more info.
+If this change is accepted, I will send the same for IPE. If not, I
+won't. I do not directly use other subsystems that use these keyrings,
+so I will not send changes for those even if this goes in.
