@@ -1,116 +1,75 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mail.hallyn.com (mail.hallyn.com [178.63.66.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 270041537B9
-	for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 09:15:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 575511A4F0C
+	for <dm-devel@lists.linux.dev>; Wed, 25 Sep 2024 12:57:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.63.66.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727255722; cv=none; b=Pf3777T/BQ11+8CNrvyeTBQadRvYZprf1R5z7bnDBdDdN76xjJROJ/d/xlcAE6KQm2vZf7DedQTVs4vSmFI0QhI2cnT9QFpAgqiWKwOSlYxGh6A9CDr5RspUTmDPxknxlFzAzze9XDqzrApykZoBR8AtBdkmooIwO717YdzGnUQ=
+	t=1727269041; cv=none; b=SXuAhmggO67blylrtHdZ5yx23N4QS4/SgBbKZniUIjQdIYAn5lAEefAtzydt+O7cM2g14v60EAwYEDrAyMwW71E0QC3ts3mTGZMOby46PbL1lFN5BV5SlnUfXdN+WinEcNd/IdM/rrhNoTdmSRd1fJDl7lv9z3vWe6LtmDTHbFQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727255722; c=relaxed/simple;
-	bh=mfBB284wwfChSg7t0qFDugWT6M7vDw0FfnPt1nTGNnM=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=XNwjRnlCwZHO2st5MBBktvxcuFPo4SjsCpyYb6Ubw+4qHoWVfCIGXvllixm+WBzcP1Dt50N4d0CVUbCdv2tzcaQA7f/04nrbzrmuTqBM5eeQLYz4GEyXdMFLp8jcfKXiEIkYqCDOhqI8fKSZV1VSF15hqWqyQr8W7BV/ZLR9RFQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gygTKlUE; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gygTKlUE"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1727255720;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=0a9nHEf0B2hLBriwSpx9p07Lvvvk2EihZ6nrwSco3YU=;
-	b=gygTKlUE5a559gY2uFzaQ0Sz8i2ULPG36BhNaRBZoVjcDBNvVvi2hBZyr1evw2kCQysI2/
-	dAuKcKp2/4b2a3w1YlhXFfB6lOpoUIKIvvXSqHQ4wi1Q6/K38Z/l4PfOekH1bK4pDG5zT7
-	ZM8+CpNpEG++PfVw8tfxh5dOSUn5Ju0=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-62-WnKxo2izN7Wm09HxgEzg7g-1; Wed,
- 25 Sep 2024 05:15:18 -0400
-X-MC-Unique: WnKxo2izN7Wm09HxgEzg7g-1
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8BAC819344E9;
-	Wed, 25 Sep 2024 09:15:17 +0000 (UTC)
-Received: from [10.45.226.79] (unknown [10.45.226.79])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5D71A19560A3;
-	Wed, 25 Sep 2024 09:15:15 +0000 (UTC)
-Date: Wed, 25 Sep 2024 11:15:12 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Eric Biggers <ebiggers@kernel.org>
-cc: Maxim Suhanov <dfirblog@gmail.com>, Alasdair G Kergon <agk@redhat.com>, 
-    Greg KH <gregkh@linuxfoundation.org>, Mike Snitzer <snitzer@kernel.org>, 
-    security@kernel.org, dm-devel@lists.linux.dev
-Subject: Re: [PATCH] dm-verity: restart or panic on an I/O error
-In-Reply-To: <20240924224950.GD1585@sol.localdomain>
-Message-ID: <ca52b93d-e1da-5c29-4c4e-31a083538a7a@redhat.com>
-References: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com> <20240924224950.GD1585@sol.localdomain>
+	s=arc-20240116; t=1727269041; c=relaxed/simple;
+	bh=h9y4gY3/47lj3mOUJL9BDXr/IXY0v8IwKjVzqJwVOVc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=WoZtn8OwSaCqoMRQl6IHu4CKuRibdhrkyEsAE7CMas1vBVdXqY37K2Tna3CgL6X554JjUlgEsDRtjFhLZp8Xcpzbdln2ypZanpsYshUEwCKz3gVDybvSdoCsIqm9LmyPlX81+OYX/oZ7mxUyA3oG5lll0PCQLSDe6k5UoEo5b5k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hallyn.com; spf=pass smtp.mailfrom=mail.hallyn.com; arc=none smtp.client-ip=178.63.66.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hallyn.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mail.hallyn.com
+Received: by mail.hallyn.com (Postfix, from userid 1001)
+	id 50092A05; Wed, 25 Sep 2024 07:57:17 -0500 (CDT)
+Date: Wed, 25 Sep 2024 07:57:17 -0500
+From: "Serge E. Hallyn" <serge@hallyn.com>
+To: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: Milan Broz <gmazyland@gmail.com>, Eric Biggers <ebiggers@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, luca.boccassi@gmail.com,
+	dm-devel@lists.linux.dev, snitzer@kernel.org, serge@hallyn.com,
+	wufan@linux.microsoft.com, David Howells <dhowells@redhat.com>,
+	keyrings@vger.kernel.org, linux-integrity@vger.kernel.org,
+	Mimi Zohar <zohar@linux.ibm.com>, Tycho Andersen <tycho@tycho.ws>,
+	Mike McCracken <mikmccra@cisco.com>
+Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
+ trusted keyring is rejected
+Message-ID: <20240925125717.GA653365@mail.hallyn.com>
+References: <20240922161753.244476-1-luca.boccassi@gmail.com>
+ <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com>
+ <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
+ <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com>
+ <D4EU6G0VR6WO.24IWJJQC997Y9@kernel.org>
+ <20240924215910.GA1585@sol.localdomain>
+ <df791a04-feae-4708-865f-193360b35fad@gmail.com>
+ <D4F8UQ7EQ1AH.28Y6BJIM287S1@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <D4F8UQ7EQ1AH.28Y6BJIM287S1@kernel.org>
 
-
-
-On Tue, 24 Sep 2024, Eric Biggers wrote:
-
-> On Tue, Sep 24, 2024 at 03:18:29PM +0200, Mikulas Patocka wrote:
-> > Maxim Suhanov reported that dm-verity doesn't crash if an I/O error 
-> > happens. In theory, this could be used to subvert security, because an 
-> > attacker can create sectors that return error with the Write Uncorrectable 
-> > command. Some programs may misbehave if they have to deal with EIO.
-> > 
-> > This commit fixes dm-verity, so that if "panic_on_corruption" or
-> > "restart_on_corruption" was specified and an I/O error happens, the
-> > machine will panic or restart.
+On Wed, Sep 25, 2024 at 12:05:59PM +0300, Jarkko Sakkinen wrote:
+> On Wed Sep 25, 2024 at 11:03 AM EEST, Milan Broz wrote:
+> > >> Doesn't dm-verity have a maintainer?
+> >
+> > (This reminds me of a nice comment from Neil about "little walled
+> > gardens" between MD & DM.  Apparently it applies to other subsystems
+> > as well. Sorry, I couldn't resist to mention it :-)
 > 
-> How does this interact with FEC, which can correct for I/O errors on the
-> underlying media by reconstructing the data?
-
-It tries to do FEC, if it succeeds, it continues, if it doesn't succeed, 
-it panics or restarts.
-
-> > @@ -596,6 +596,19 @@ static void verity_finish_io(struct dm_v
-> >  	if (!static_branch_unlikely(&use_bh_wq_enabled) || !io->in_bh)
-> >  		verity_fec_finish_io(io);
-> >  
-> > +	if (unlikely(status != BLK_STS_OK) && unlikely(!(bio->bi_opf & REQ_RAHEAD))) {
-> > +		if (v->mode == DM_VERITY_MODE_RESTART ||
-> > +		    v->mode == DM_VERITY_MODE_PANIC)
-> > +			DMERR_LIMIT("%s has error: %s", v->data_dev->name,
-> > +					blk_status_to_str(status));
-> > +
-> > +		if (v->mode == DM_VERITY_MODE_RESTART)
-> > +			emergency_restart();
-> > +
-> > +		if (v->mode == DM_VERITY_MODE_PANIC)
-> > +			panic("dm-verity device has I/O error");
+> Np, it's just that last and only time I've ever read anything about
+> dm-verity was 2011 article :-)
 > 
-> The blk_status_t code that is checked above is usually the one that
-> verity_verify_io() produced, not the original one.  This could be an error from
-> a cause other than an I/O error on the underlying media, like data corruption
-> detected by dm-verity, or an error from the crypto API.
-> 
-> Maybe what you are trying to do is really "panic if an I/O error would be
-> returned to the layer above", not "panic if an I/O error occurred on the
-> underlying media"?  If so, this needs to be clearly explained.
-> 
-> - Eric
+> I will rephrase question: does dm-verity have a user? ;-)
 
-The function verity_finish_io is called when we are going to return the 
-bio to the upper layer. So, the semantics is "panic if an I/O error would 
-be returned to the layer above".
+It gets used for integrity guarantees in certain containers, where
+the layers of tarballs are replaced by layers of squashfs, with the
+dmverity root hash for each layer listed in the signed manifest, e.g.
 
-Mikulas
+github.com/project-stacker/stacker
+github.com/project-machine/atomfs
 
+This is used of course to verify container integrity, and also gets used by
+some projects and products to create an RFS from such images during initrd
+
+github.com/project-machine/mos
+
+-serge
