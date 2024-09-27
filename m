@@ -1,216 +1,171 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f181.google.com (mail-qt1-f181.google.com [209.85.160.181])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6BE52AD00
-	for <dm-devel@lists.linux.dev>; Fri, 27 Sep 2024 14:03:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97ABF18DF9E
+	for <dm-devel@lists.linux.dev>; Fri, 27 Sep 2024 14:55:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727445795; cv=none; b=L2VEJSvc7n38e4yaEfE/N7+RNchrcai2+CAT9rpCZMnSF5RlrnEmB7AB85RgvAdK7upFGS7NulT60bAonAgW91ctpjGqgC4cAMNzCkqcy7+WptCqucFAOKLJi+UloOmunRbvYMJ9m24gKxxPEP8vkKnRWmO5/IEVucItzpw2koc=
+	t=1727448934; cv=none; b=EeIjU9AlOcVEk5Ayc6eFrcEgYqPSf9HrHufBRtGUftSgLysgWySbIPpjonIqFt2J8QLPq1y0JFM8MvFZ1rTZeXCz4XG5bmbYMKNiRTqdGGrmYBU7mNaavtuOSfhsXHLacH+4GxYurXnndq/Wk7qsRmbASHlft49CJSM/ZDLzE1U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727445795; c=relaxed/simple;
-	bh=xiRjspU1Lexs3Jl+q7dLupDdRE9Zf+UMeiT2k5PFJqQ=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=rSEfij/Trh8E8FexMUS88fZNtR5ioGZROy8Up0CzxqmTYf9VsFVW/sTrilARjv0veBM/elUJu++Wh9IXAlloFNIovIGK5N1+x7pLYn5vLgJgNa0b8KatdMc86XHcWQmVOy2eTaNnb8VXAo1Sa9gJN+R7XtaN3ODthLJQF5rT4l4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bRuasOxR; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1727448934; c=relaxed/simple;
+	bh=0EVepbn+bVVSpEU+e8lsjJdWhXyK12vHg3Bb0EdwGKI=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=mdUyhd97aK38WlOrZ0UJZlD0hdlpBj/Kna191wrng3GbCyCIBcfCjScBEpg4RV98yV94nQPuffiY/Ndo7LY2YdOLcCRzLSk8UCAl8rVrYhRTwJisTAm4xxkMoCxweexUy3J4F/zpcolblNC115bBJjXdwM9ab9oRjOPNyHpBkq8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=cYfXbFcc; arc=none smtp.client-ip=209.85.160.181
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bRuasOxR"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1727445792;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=HIhCeofmRHfWV8/qu6FMovYzVe7PoxIXAlxFqo4wU8k=;
-	b=bRuasOxR9RgciwcOzal4MYru9nI80KHCSLlyrQndiDQnJf1ZduzJ9kEuxPpRTInIK02wV9
-	4ycPPnTprY7QRlwH22XP5nFCqiP0Mfqf6t1FVLotb6Uzx7GqZjOzEzdWLRhYfchctjsVvN
-	m6/8+HDWfjDxWGPFrwX19NO0g2M5Aok=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-587-TEONvkdMMkWC694GUl_n4Q-1; Fri,
- 27 Sep 2024 10:03:09 -0400
-X-MC-Unique: TEONvkdMMkWC694GUl_n4Q-1
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A87A919034FE;
-	Fri, 27 Sep 2024 14:03:06 +0000 (UTC)
-Received: from [10.45.225.58] (unknown [10.45.225.58])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1EACF1955D90;
-	Fri, 27 Sep 2024 14:02:59 +0000 (UTC)
-Date: Fri, 27 Sep 2024 16:02:55 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-cc: Bruce Johnston <bjohnsto@redhat.com>, 
-    Dipendra Khadka <kdipendra88@gmail.com>, 
-    Eric Biggers <ebiggers@google.com>, Heinz Mauelshagen <heinzm@redhat.com>, 
-    Hongbo Li <lihongbo22@huawei.com>, Chen Ni <nichen@iscas.ac.cn>, 
-    Ingo Franzki <ifranzki@linux.ibm.com>, Ken Raeburn <raeburn@redhat.com>, 
-    Luca Boccassi <bluca@debian.org>, 
-    Markus Elfring <elfring@users.sourceforge.net>, 
-    Matthew Sakai <msakai@redhat.com>, Shen Lichuan <shenlichuan@vivo.com>, 
-    Susan LeGendre-McGhee <slegendr@redhat.com>, 
-    Yue Haibing <yuehaibing@huawei.com>, Yuesong Li <liyuesong@vivo.com>, 
-    Zhang Zekun <zhangzekun11@huawei.com>, Alasdair Kergon <agk@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>, 
-    device-mapper development <dm-devel@lists.linux.dev>
-Subject: [git pull] device mapper changes for 6.12
-Message-ID: <892af38e-2c56-181d-94ef-eb53de22e234@redhat.com>
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="cYfXbFcc"
+Received: by mail-qt1-f181.google.com with SMTP id d75a77b69052e-4581cec6079so249421cf.0
+        for <dm-devel@lists.linux.dev>; Fri, 27 Sep 2024 07:55:31 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1727448930; x=1728053730; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=/Odqifz+Dyhn6BLCOyjrRmY5ol1zncEXDXvRmlscksU=;
+        b=cYfXbFccEL+O7O8A//sAvdmlZJcF0ptbiIO6aUXhcnOqkGAdIdwNwrTM4K90Tn5/Av
+         Yhra9aq4rHfpChtU1jNAo1+U45Tif4WPyqjrhNegGJks1ZWY1UV9uNb1l5leYj+d9D6+
+         fKzoD/GTM/jQSkvVl/biKm4HfyB3M/yBkN18Ts7hX8U/MxqM6+KS7/6/4q0KjWR/Knj4
+         7Mf3uOjoQQbX1TcZEYJdnAvNOC19+vrirBARnIdCGEHVCL9Vo3Gwduy+IDYg4CaDXVzD
+         3ZyZ5UTVZ+C6lRqgeBCeu3EhA5oIAyULzrRhludV7BJlgQrhZLfcHzQRIj3XjU5Iyd+8
+         pY2g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1727448930; x=1728053730;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=/Odqifz+Dyhn6BLCOyjrRmY5ol1zncEXDXvRmlscksU=;
+        b=MvjqBWeFG98UZp74kNYGXW5tnl12+t3Q91ObaBN0L49ShIBtGwJQhe6mbogosbiH/g
+         A4la81157HtfadeAcKv91srYayfe+CPCxsHKOR9XNdbVaOsGyqaVx9X+RlQ2d0AxB0xN
+         0iC4mFjnD0LY85i/YP5buFabLzt2Gz0LTr+mJ0WmdSfX0PVcuJ3MbqIK0EPq7jjWnh4w
+         UpKQ1QY6VvxYiFVtwccZFzyHhKF/+PBIlPcIxbNb+gmrNzR8C9UTtsGIFglPgek0ZTZq
+         JOaRT6dgwFFq+LREGsqu3u9swNT7heWoN/tKuOe1hhAoQlaor0lsonghbUGEJeH82R/i
+         Xc5w==
+X-Forwarded-Encrypted: i=1; AJvYcCUUWn5SOiUua85gj9+YzK9GGsCBVNKoN+KDaSCJoVlSX6xiZyfLiISOOc+6fQ79DxNBg96GTILECQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyCu6LrMFSnB7fP0lkHE2UxG3+y+bEEcdq9wxHK9uzJskxwRSaZ
+	8FRnWn1XAjkX/PyRCkoG0AsCbP/D7gMc9G7acaWYp2dk56S642OT/kBYo9rOeH7J54h9PfG/EIl
+	NdzdXz7CHWCz358w0DR+3G8wPVlnk79HIOk/o
+X-Google-Smtp-Source: AGHT+IG4JYPGU3pRiTrbLvUgpfzi065M1ItnSDmUQVRBu4ylg9JiCHc7Y9AIHoobTfeo69eg+AacnOVN0XLaMKVxsLA=
+X-Received: by 2002:a05:622a:4393:b0:44f:9db1:7fca with SMTP id
+ d75a77b69052e-45ca025ff63mr3542841cf.28.1727448930023; Fri, 27 Sep 2024
+ 07:55:30 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+References: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com>
+ <CABCJKudRQuA_kv8Gyu_9-1grZmVR=c=oywrPuUFprnQ1v_+Byg@mail.gmail.com>
+ <CABSDvDLu9-uzbd9z-avUu-iLV9rgyy=LKzaOwdWnD0f7ruBizg@mail.gmail.com>
+ <9dee84e8-6c94-7450-a0c4-a95cab8f66d4@redhat.com> <b65d67cf-9904-4182-a113-2d9a241dd668@gmail.com>
+ <CAKeu6dUEC-j5G+KOTFUdfinMe+HTBSm6idxhHQzwVr8Sp_MfMg@mail.gmail.com>
+ <3d31625f-3b26-47d7-b933-0bd6a89b748b@gmail.com> <CABCJKuf3bkJXS2dzud5w7MrfEcYa21mbKa=ssEOQxPzfDtzE2g@mail.gmail.com>
+ <1229c48a-a225-e426-7f39-465146754975@redhat.com>
+In-Reply-To: <1229c48a-a225-e426-7f39-465146754975@redhat.com>
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 27 Sep 2024 07:54:50 -0700
+Message-ID: <CABCJKudUHS_vzW1G08_24JxLbSmZwKUUUtaWkFSjv6gFz6+GXw@mail.gmail.com>
+Subject: Re: [PATCH] dm-verity: restart or panic on an I/O error
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Milan Broz <gmazyland@gmail.com>, Maxim Suhanov <dfirblog@gmail.com>, 
+	Akilesh Kailash <akailash@google.com>, Alasdair G Kergon <agk@redhat.com>, 
+	Greg KH <gregkh@linuxfoundation.org>, Mike Snitzer <snitzer@kernel.org>, security@kernel.org, 
+	dm-devel@lists.linux.dev, Eric Biggers <ebiggers@google.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi Linus
+On Thu, Sep 26, 2024 at 1:44=E2=80=AFPM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
+>
+>
+>
+> On Thu, 26 Sep 2024, Sami Tolvanen wrote:
+>
+> > On Tue, Sep 24, 2024 at 11:35=E2=80=AFPM Milan Broz <gmazyland@gmail.co=
+m> wrote:
+> > >
+> > > On 9/25/24 8:09 AM, Maxim Suhanov wrote:
+> > > > Hello.
+> > > >
+> > > >> This is a very strange reasoning. I can say that restarting on an =
+IO error
+> > > >> (that can happen in normal situations) could cause another securit=
+y issue,
+> > > >> such as DoS. EIO is not a data integrity error; it can happen even=
+ higher
+> > > >> in the storage stack... and the application should handle it anywa=
+y.
+> > > >
+> > > > In the default mode of operation, there should be no panic/reboot o=
+n
+> > > > an I/O error.
+> > > >
+> > > > The issue and the proposed patch affect the non-default modes:
+> > > > panic_on_corruption and restart_on_corruption.
+> > > > Users relying on one of those two modes expect the system to crash =
+if
+> > > > something goes wrong [1]. So, DoS is expected here. Returning I/O
+> > > > errors to the reader isn't something that is expected here (see [1]=
+).
+> > > >
+> > > > The issue allows the attacker to "downgrade" the "panic_on_corrupti=
+on"
+> > > > and "restart_on_corruption" modes to the default one by creating
+> > > > unreadable sectors on the underlying media (e.g., through the Write
+> > > > Uncorrectable command).
+> > >
+> > > Sorry, but I do agree with this.
+> > >
+> > > Panic/Restart should happen on data corruption (or failed Reed-Solomo=
+n
+> > > FEC data recovery fail). IO error (and other errors that basically tr=
+anslates
+> > > to this) can mean something else and userspace application must proce=
+ss
+> > > it in error path (think about network failure).
+> > >
+> > > This is how is the dm-verity flag is documented:
+> > >
+> > > restart_on_corruption
+> > >      Restart the system when a corrupted block is discovered. This op=
+tion is
+> > >      not compatible with ignore_corruption and requires user space su=
+pport to
+> > >      avoid restart loops.
+> > >
+> > > It says nothing about restart on other error, that can come from cryp=
+to, network
+> > > or whatever. You are redefining the policy here.
+> >
+> > I thought about this a bit more, and I agree with Milan. I/O errors
+> > can be temporary and applications should be expected to handle them.
+> > IMO we should trigger a restart/panic only if the underlying device
+> > has corrupted data. If there's a use case for restarting on I/O errors
+> > too, there should be a separate flag for that.
+>
+> See for example openssh, the function read_config_file_depth. There is:
+>
+> while (getline(&line, &linesize, f) !=3D -1) {
+>         ... process_config_line_depth
+> }
+> free(line);
+> fclose(f)
+> if (bad_options > 0)
+>         fatal("%s: terminating, %d bad configuration options",
+>                 filename, bad_options);A
+> return 1;
+>
+> So, the function doesn't distinguish between error and eof. If reading th=
+e
+> config file returns -EIO, the function exits with 1 as if the file was
+> empty.
 
-The following changes since commit 47ac09b91befbb6a235ab620c32af719f8208399:
+Sounds like OpenSSH's threat model doesn't include an attacker who can
+trigger arbitrary I/O errors. If you want dm-verity to protect against
+this, why not add a new restart_on_errors flag instead of changing the
+semantics of the restart_on_corruption flag and risk breaking existing
+users?
 
-  Linux 6.11-rc4 (2024-08-18 13:17:27 -0700)
-
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.12/dm-changes
-
-for you to fetch changes up to 579b2ba40ece57f3f9150f59dfe327e60a5445b5:
-
-  dm verity: fallback to platform keyring also if key in trusted keyring is rejected (2024-09-26 17:27:08 +0200)
-
-Please, pull, thanks
-Mikulas
-
-
-----------------------------------------------------------------
-- Misc VDO fixes
-
-- Remove unused declarations dm_get_rq_mapinfo() and dm_zone_map_bio()
-
-- Dm-delay: Improve kernel documentation
-
-- Dm-crypt: Allow to specify the integrity key size as an option
-
-- Dm-bufio: Remove pointless NULL check
-
-- Small code cleanups: Use ERR_CAST; remove unlikely() around IS_ERR; use
-  __assign_bit
-
-- Dm-integrity: Fix gcc 5 warning; convert comma to semicolon; fix smatch
-  warning
-
-- Dm-integrity: Support recalculation in the 'I' mode
-
-- Revert "dm: requeue IO if mapping table not yet available"
-
-- Dm-crypt: Small refactoring to make the code more readable
-
-- Dm-cache: Remove pointless error check
-
-- Dm: Fix spelling errors
-
-- Dm-verity: Restart or panic on an I/O error if restart or panic was
-  requested
-
-- Dm-verity: Fallback to platform keyring also if key in trusted keyring
-  is rejected
------BEGIN PGP SIGNATURE-----
-
-iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCZvapzRQcbXBhdG9ja2FA
-cmVkaGF0LmNvbQAKCRATAyx9YGnhbdKAAP4gHNU7aRmwTPcmvytEqBO4Pcz4eGB/
-tytj2+o1orph3AD/YD2X75YHOrdNKTLq+N0ecetAt0yDVUnJAUtKiOnx6Q8=
-=0f9T
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Bruce Johnston (1):
-      dm vdo: add dmsetup message for returning configuration info
-
-Chen Ni (1):
-      dm integrity: Convert comma to semicolon
-
-Dipendra Khadka (1):
-      dm-cache: remove pointless error check
-
-Eric Biggers (1):
-      dm-integrity: check mac_size against HASH_MAX_DIGESTSIZE in sb_mac()
-
-Heinz Mauelshagen (1):
-      dm delay: enhance kernel documentation
-
-Hongbo Li (2):
-      dm integrity: Remove extra unlikely helper
-      dm: Make use of __assign_bit() API
-
-Ingo Franzki (1):
-      dm-crypt: Allow to specify the integrity key size as option
-
-Ken Raeburn (2):
-      dm vdo: don't refer to dedupe_context after releasing it
-      dm vdo: remove bad check of bi_next field
-
-Luca Boccassi (1):
-      dm verity: fallback to platform keyring also if key in trusted keyring is rejected
-
-Markus Elfring (2):
-      dm-crypt: Use up_read() together with key_put() only once in crypt_set_keyring_key()
-      dm-crypt: Use common error handling code in crypt_set_keyring_key()
-
-Matthew Sakai (1):
-      dm vdo: handle unaligned discards correctly
-
-Mikulas Patocka (4):
-      dm integrity: fix gcc 5 warning
-      dm-integrity: support recalculation in the 'I' mode
-      Revert "dm: requeue IO if mapping table not yet available"
-      dm-verity: restart or panic on an I/O error
-
-Shen Lichuan (2):
-      dm vdo indexer: Convert comma to semicolon
-      dm: fix spelling errors
-
-Susan LeGendre-McGhee (2):
-      dm vdo: abort loading dirty VDO with the old recovery journal format
-      dm vdo: force read-only mode for a corrupt recovery journal
-
-Yue Haibing (1):
-      dm: Remove unused declaration dm_get_rq_mapinfo()
-
-Yuesong Li (2):
-      dm bufio: Remove NULL check of list_entry()
-      dm: Convert to use ERR_CAST()
-
-Zhang Zekun (1):
-      dm: Remove unused declaration and empty definition "dm_zone_map_bio"
-
- Documentation/admin-guide/device-mapper/delay.rst  |  41 ++-
- .../admin-guide/device-mapper/dm-crypt.rst         |   4 +
- Documentation/admin-guide/device-mapper/vdo.rst    |   7 +-
- drivers/md/dm-bufio.c                              |   3 -
- drivers/md/dm-cache-target.c                       |   6 +-
- drivers/md/dm-clone-metadata.c                     |   5 +-
- drivers/md/dm-crypt.c                              |  47 +--
- drivers/md/dm-integrity.c                          | 326 +++++++++++++++++----
- drivers/md/dm-raid.c                               |   2 +-
- drivers/md/dm-rq.c                                 |   4 +-
- drivers/md/dm-thin.c                               |   2 +-
- drivers/md/dm-vdo/data-vio.c                       |  15 +-
- drivers/md/dm-vdo/dedupe.c                         |   3 +
- drivers/md/dm-vdo/dm-vdo-target.c                  |  29 +-
- drivers/md/dm-vdo/indexer/chapter-index.c          |   2 +-
- drivers/md/dm-vdo/io-submitter.c                   |   1 -
- drivers/md/dm-vdo/message-stats.c                  |  48 +++
- drivers/md/dm-vdo/message-stats.h                  |   1 +
- drivers/md/dm-vdo/repair.c                         |  41 +--
- drivers/md/dm-vdo/status-codes.c                   |   2 +-
- drivers/md/dm-vdo/status-codes.h                   |   2 +-
- drivers/md/dm-verity-target.c                      |  23 +-
- drivers/md/dm-verity-verify-sig.c                  |   2 +-
- drivers/md/dm.c                                    |  11 +-
- drivers/md/dm.h                                    |   5 -
- include/linux/device-mapper.h                      |   1 -
- 26 files changed, 487 insertions(+), 146 deletions(-)
-
+Sami
