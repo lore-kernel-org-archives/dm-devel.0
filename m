@@ -1,174 +1,216 @@
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C40FA1662E7
-	for <dm-devel@lists.linux.dev>; Fri, 27 Sep 2024 07:12:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6BE52AD00
+	for <dm-devel@lists.linux.dev>; Fri, 27 Sep 2024 14:03:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727421165; cv=none; b=RbKd3WJEJtshJs9ZQX8/+IeYaik487/VNdHwdmM0+BkDQjyx7EgpyuJtjzr4E+1HbO75Bk2bD59LBe28C2JRcLxe2gzQGqv2Blk0k0/6UHqibP6e7x6Uf8eUOZXl7RoDgmFe2hYgL5tyEmmIs7aoWqtbzL23f79MTuO3nIg4Ie8=
+	t=1727445795; cv=none; b=L2VEJSvc7n38e4yaEfE/N7+RNchrcai2+CAT9rpCZMnSF5RlrnEmB7AB85RgvAdK7upFGS7NulT60bAonAgW91ctpjGqgC4cAMNzCkqcy7+WptCqucFAOKLJi+UloOmunRbvYMJ9m24gKxxPEP8vkKnRWmO5/IEVucItzpw2koc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727421165; c=relaxed/simple;
-	bh=cio1o5IurKNwuIpAly/OV6gI1NaIP2BOcW/IDsaOapg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=CFg7X7XU9tJjv1/1whEwyfWYUwH4ZV5ZkM0ha07T6U+I0E8K+rw1G4tev/52EKlMUtMfXNTslHEUgIdzb4HT29slz17F6UDYmTBdQxXipQZ/Ahus8PY5sEWyqH1ZKqDAOCE0fh78mc1gYfF2E9wXVTq/yPlDLLd75jWgaSbsrBQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=hPAORX5L; arc=none smtp.client-ip=209.85.218.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1727445795; c=relaxed/simple;
+	bh=xiRjspU1Lexs3Jl+q7dLupDdRE9Zf+UMeiT2k5PFJqQ=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=rSEfij/Trh8E8FexMUS88fZNtR5ioGZROy8Up0CzxqmTYf9VsFVW/sTrilARjv0veBM/elUJu++Wh9IXAlloFNIovIGK5N1+x7pLYn5vLgJgNa0b8KatdMc86XHcWQmVOy2eTaNnb8VXAo1Sa9gJN+R7XtaN3ODthLJQF5rT4l4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bRuasOxR; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hPAORX5L"
-Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-a8d43657255so256990966b.0
-        for <dm-devel@lists.linux.dev>; Fri, 27 Sep 2024 00:12:43 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1727421162; x=1728025962; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=y+Ffj+Tps2rgenFO7SDx+Hw2LCXpsYIAcy4tw3rNXyQ=;
-        b=hPAORX5L/EXYCoVtIGeR/JNhiwcYRSRmKCvfwbAZh2mncWXF5sTZ8QeEjqEjmPjX/L
-         XGnidgkArBH/cBite6m+DyRdqHl4lq1lM8Etg7r9/tTqPFBg6Bx5OVwP67rDt4pPwgz/
-         a3Q5sruYn09+obIM32gVyVeQtwKvsHUg16gaksVh4/gsix2lpv7McTb/1FDEvBemy9s+
-         KNh4gbtVybVW30dGJdwn49blDlaot22MZUJt0iQ8DmAW6QIOYdLMsApWm/+Ox+1IKLCe
-         fjYmMNLHxfzSnUMVNCNuHKylgMqCyUQn7s6gn0Xie8OFT94ZJTpJOrMgkPVhD01O+UWD
-         HI7A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727421162; x=1728025962;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=y+Ffj+Tps2rgenFO7SDx+Hw2LCXpsYIAcy4tw3rNXyQ=;
-        b=xJ4QG/a3wL2QJEQoEZqBtVkq1iakzyRc/rK7sLeulbMSD0MbMqTmMC7hPjWVv2TkcX
-         2eeG7aG7kWjBWQEHCftzLugDnUWTc/twtHLRPvAr0avSUHOx11cJ60aXjqGdE0eM71Yk
-         84HUrKyfh8T8SxCWwAl98oK2FzLNiu6h8Jh8ccfqMkv2okqc6yg9bkpbjwKd4/Y9+/7C
-         h6bRz3iwMzXAMJ7v2yBOW0qQTY9qaAU/y28U5IU1g5gKnLvoG0L4kNOh/Dbi1CUPACru
-         w/saAWJdPXkR6GQUQOL+fBskNNiNJLZzG6s0+BB+ff8hExnMk9iJYGfEwHP8X33533BJ
-         6Q3A==
-X-Forwarded-Encrypted: i=1; AJvYcCWpzzecyrdyLdsV9I1Ipa/dty+puWYB8ksnuaIdDEJjTs2MphRmZ8QqgiBdstwgPFw6H2lfX44LGQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yzq7M7XA6EHc8ePJ8gAhA1XIphgSZDrBCOFAPh9UKplwHwBafix
-	lM1WK4/anpihzPilQKacwlJNm4t5q0+1odz9c0rBZg6D/uhyhHao
-X-Google-Smtp-Source: AGHT+IHxmODD/qFIHB5xnYxt+qaFwv616CLTVcHa9VfoKBfORQh79v5gKph6zFK7BABbBwNgGfyjtA==
-X-Received: by 2002:a17:907:981:b0:a86:43c0:4270 with SMTP id a640c23a62f3a-a93c48e900cmr191497066b.13.1727421161716;
-        Fri, 27 Sep 2024 00:12:41 -0700 (PDT)
-Received: from [147.251.42.107] (laomedon.fi.muni.cz. [147.251.42.107])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a93c27776cesm91496366b.40.2024.09.27.00.12.40
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 27 Sep 2024 00:12:40 -0700 (PDT)
-Message-ID: <08fe559f-f5b8-497f-b7aa-6e61e5c1aeb3@gmail.com>
-Date: Fri, 27 Sep 2024 09:12:40 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bRuasOxR"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1727445792;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=HIhCeofmRHfWV8/qu6FMovYzVe7PoxIXAlxFqo4wU8k=;
+	b=bRuasOxR9RgciwcOzal4MYru9nI80KHCSLlyrQndiDQnJf1ZduzJ9kEuxPpRTInIK02wV9
+	4ycPPnTprY7QRlwH22XP5nFCqiP0Mfqf6t1FVLotb6Uzx7GqZjOzEzdWLRhYfchctjsVvN
+	m6/8+HDWfjDxWGPFrwX19NO0g2M5Aok=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-587-TEONvkdMMkWC694GUl_n4Q-1; Fri,
+ 27 Sep 2024 10:03:09 -0400
+X-MC-Unique: TEONvkdMMkWC694GUl_n4Q-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (unknown [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A87A919034FE;
+	Fri, 27 Sep 2024 14:03:06 +0000 (UTC)
+Received: from [10.45.225.58] (unknown [10.45.225.58])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1EACF1955D90;
+	Fri, 27 Sep 2024 14:02:59 +0000 (UTC)
+Date: Fri, 27 Sep 2024 16:02:55 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+cc: Bruce Johnston <bjohnsto@redhat.com>, 
+    Dipendra Khadka <kdipendra88@gmail.com>, 
+    Eric Biggers <ebiggers@google.com>, Heinz Mauelshagen <heinzm@redhat.com>, 
+    Hongbo Li <lihongbo22@huawei.com>, Chen Ni <nichen@iscas.ac.cn>, 
+    Ingo Franzki <ifranzki@linux.ibm.com>, Ken Raeburn <raeburn@redhat.com>, 
+    Luca Boccassi <bluca@debian.org>, 
+    Markus Elfring <elfring@users.sourceforge.net>, 
+    Matthew Sakai <msakai@redhat.com>, Shen Lichuan <shenlichuan@vivo.com>, 
+    Susan LeGendre-McGhee <slegendr@redhat.com>, 
+    Yue Haibing <yuehaibing@huawei.com>, Yuesong Li <liyuesong@vivo.com>, 
+    Zhang Zekun <zhangzekun11@huawei.com>, Alasdair Kergon <agk@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, 
+    device-mapper development <dm-devel@lists.linux.dev>
+Subject: [git pull] device mapper changes for 6.12
+Message-ID: <892af38e-2c56-181d-94ef-eb53de22e234@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird Beta
-Subject: Re: [PATCH] dm verity: fallback to platform keyring also if key in
- trusted keyring is rejected
-To: Luca Boccassi <luca.boccassi@gmail.com>
-Cc: Eric Biggers <ebiggers@kernel.org>, Jarkko Sakkinen <jarkko@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
- snitzer@kernel.org, serge@hallyn.com, wufan@linux.microsoft.com,
- David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org,
- linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>
-References: <20240922161753.244476-1-luca.boccassi@gmail.com>
- <6b3e0e45-5efe-3032-62b8-75dcd45c879c@redhat.com>
- <D4EMWUMBIM94.3PM88QAV6LG6B@kernel.org>
- <7c40c30a-5154-08eb-d44e-6598087c53e6@redhat.com>
- <D4EU6G0VR6WO.24IWJJQC997Y9@kernel.org>
- <20240924215910.GA1585@sol.localdomain>
- <df791a04-feae-4708-865f-193360b35fad@gmail.com>
- <CAMw=ZnT=3n+1n6z0HE7JPNFX07fAJS+5W+SeO4pddrcUcEpjZA@mail.gmail.com>
-Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- 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
-In-Reply-To: <CAMw=ZnT=3n+1n6z0HE7JPNFX07fAJS+5W+SeO4pddrcUcEpjZA@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On 9/25/24 11:28 PM, Luca Boccassi wrote:
->>
->> Do people use veritysetup (libcryptsetup) here, or does it run with its separate userspace tooling?
-> 
-> This is used with libcryptsetup commonly, and often with veritysetup.
-> It is fairly easy to test in a VM or on baremetal, it is not required
-> to build your own kernel - that's the reason for supporting
-> secondary+platform keyrings (the first one allows you to enroll keys
-> in MOK, the second one for UEFI DB).
-> We would even have a CI testing this for every PR and merge in systemd
-> on Github, _except_ there is currently an issue (unrelated to
-> dmverity) that happens when nesting KVM with UEFI secure boot enabled
-> on top of HyperV, which means it cannot be used reliably on Github
-> Actions. Once that is solved, this will be again part of the systemd
-> CI integration tests. But it is used regularly by developers on their
-> machines.
+Hi Linus
 
-Hi Luca,
+The following changes since commit 47ac09b91befbb6a235ab620c32af719f8208399:
 
-good to know that libcryptswtup userspace is then used here, thanks for the info!
+  Linux 6.11-rc4 (2024-08-18 13:17:27 -0700)
 
-I have some more questions, but that is not related to this thread,
-I will ask in another mail later.
+are available in the Git repository at:
 
-Thanks,
-Milan
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.12/dm-changes
+
+for you to fetch changes up to 579b2ba40ece57f3f9150f59dfe327e60a5445b5:
+
+  dm verity: fallback to platform keyring also if key in trusted keyring is rejected (2024-09-26 17:27:08 +0200)
+
+Please, pull, thanks
+Mikulas
 
 
-> 
-> It might not be commonly used by kernel developers, I do not know as I
-> am not a kernel developer, but it is becoming more and more common in
-> userspace and among image builders. For example the mkosi image
-> builder, using systemd-repart, can very easily build distro images
-> using signed dm verity. I am at All Systems Go and just today there
-> were multiple talks by multiple people using dmverity images for their
-> distros/platforms/products, especially with systemd-sysext, which is
-> all about signed dm-verity.
-> 
-> In 6.12 we will also have IPE which allows to enable trusted code
-> integrity checks that cannot be trivially bypassed by other userspace
-> processes running with root or caps. This has been, still is and will
-> be for the foreseeable future, in use in the Azure infrastructure.
-> 
-> Hope this provides some clarity, let me know if you need more info.
+----------------------------------------------------------------
+- Misc VDO fixes
+
+- Remove unused declarations dm_get_rq_mapinfo() and dm_zone_map_bio()
+
+- Dm-delay: Improve kernel documentation
+
+- Dm-crypt: Allow to specify the integrity key size as an option
+
+- Dm-bufio: Remove pointless NULL check
+
+- Small code cleanups: Use ERR_CAST; remove unlikely() around IS_ERR; use
+  __assign_bit
+
+- Dm-integrity: Fix gcc 5 warning; convert comma to semicolon; fix smatch
+  warning
+
+- Dm-integrity: Support recalculation in the 'I' mode
+
+- Revert "dm: requeue IO if mapping table not yet available"
+
+- Dm-crypt: Small refactoring to make the code more readable
+
+- Dm-cache: Remove pointless error check
+
+- Dm: Fix spelling errors
+
+- Dm-verity: Restart or panic on an I/O error if restart or panic was
+  requested
+
+- Dm-verity: Fallback to platform keyring also if key in trusted keyring
+  is rejected
+-----BEGIN PGP SIGNATURE-----
+
+iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCZvapzRQcbXBhdG9ja2FA
+cmVkaGF0LmNvbQAKCRATAyx9YGnhbdKAAP4gHNU7aRmwTPcmvytEqBO4Pcz4eGB/
+tytj2+o1orph3AD/YD2X75YHOrdNKTLq+N0ecetAt0yDVUnJAUtKiOnx6Q8=
+=0f9T
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Bruce Johnston (1):
+      dm vdo: add dmsetup message for returning configuration info
+
+Chen Ni (1):
+      dm integrity: Convert comma to semicolon
+
+Dipendra Khadka (1):
+      dm-cache: remove pointless error check
+
+Eric Biggers (1):
+      dm-integrity: check mac_size against HASH_MAX_DIGESTSIZE in sb_mac()
+
+Heinz Mauelshagen (1):
+      dm delay: enhance kernel documentation
+
+Hongbo Li (2):
+      dm integrity: Remove extra unlikely helper
+      dm: Make use of __assign_bit() API
+
+Ingo Franzki (1):
+      dm-crypt: Allow to specify the integrity key size as option
+
+Ken Raeburn (2):
+      dm vdo: don't refer to dedupe_context after releasing it
+      dm vdo: remove bad check of bi_next field
+
+Luca Boccassi (1):
+      dm verity: fallback to platform keyring also if key in trusted keyring is rejected
+
+Markus Elfring (2):
+      dm-crypt: Use up_read() together with key_put() only once in crypt_set_keyring_key()
+      dm-crypt: Use common error handling code in crypt_set_keyring_key()
+
+Matthew Sakai (1):
+      dm vdo: handle unaligned discards correctly
+
+Mikulas Patocka (4):
+      dm integrity: fix gcc 5 warning
+      dm-integrity: support recalculation in the 'I' mode
+      Revert "dm: requeue IO if mapping table not yet available"
+      dm-verity: restart or panic on an I/O error
+
+Shen Lichuan (2):
+      dm vdo indexer: Convert comma to semicolon
+      dm: fix spelling errors
+
+Susan LeGendre-McGhee (2):
+      dm vdo: abort loading dirty VDO with the old recovery journal format
+      dm vdo: force read-only mode for a corrupt recovery journal
+
+Yue Haibing (1):
+      dm: Remove unused declaration dm_get_rq_mapinfo()
+
+Yuesong Li (2):
+      dm bufio: Remove NULL check of list_entry()
+      dm: Convert to use ERR_CAST()
+
+Zhang Zekun (1):
+      dm: Remove unused declaration and empty definition "dm_zone_map_bio"
+
+ Documentation/admin-guide/device-mapper/delay.rst  |  41 ++-
+ .../admin-guide/device-mapper/dm-crypt.rst         |   4 +
+ Documentation/admin-guide/device-mapper/vdo.rst    |   7 +-
+ drivers/md/dm-bufio.c                              |   3 -
+ drivers/md/dm-cache-target.c                       |   6 +-
+ drivers/md/dm-clone-metadata.c                     |   5 +-
+ drivers/md/dm-crypt.c                              |  47 +--
+ drivers/md/dm-integrity.c                          | 326 +++++++++++++++++----
+ drivers/md/dm-raid.c                               |   2 +-
+ drivers/md/dm-rq.c                                 |   4 +-
+ drivers/md/dm-thin.c                               |   2 +-
+ drivers/md/dm-vdo/data-vio.c                       |  15 +-
+ drivers/md/dm-vdo/dedupe.c                         |   3 +
+ drivers/md/dm-vdo/dm-vdo-target.c                  |  29 +-
+ drivers/md/dm-vdo/indexer/chapter-index.c          |   2 +-
+ drivers/md/dm-vdo/io-submitter.c                   |   1 -
+ drivers/md/dm-vdo/message-stats.c                  |  48 +++
+ drivers/md/dm-vdo/message-stats.h                  |   1 +
+ drivers/md/dm-vdo/repair.c                         |  41 +--
+ drivers/md/dm-vdo/status-codes.c                   |   2 +-
+ drivers/md/dm-vdo/status-codes.h                   |   2 +-
+ drivers/md/dm-verity-target.c                      |  23 +-
+ drivers/md/dm-verity-verify-sig.c                  |   2 +-
+ drivers/md/dm.c                                    |  11 +-
+ drivers/md/dm.h                                    |   5 -
+ include/linux/device-mapper.h                      |   1 -
+ 26 files changed, 487 insertions(+), 146 deletions(-)
 
