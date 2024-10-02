@@ -1,116 +1,119 @@
-Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com [209.85.160.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C7121CB321
-	for <dm-devel@lists.linux.dev>; Tue,  1 Oct 2024 18:33:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F23CC1D0DF4
+	for <dm-devel@lists.linux.dev>; Wed,  2 Oct 2024 13:56:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727807613; cv=none; b=UaTgXngMiaZsi39IZMv8VuT7GQ0T922b567aGSk6crEopGEmmnsgZcmVRTUkQ/6O6Qtqj3NtrQxzpbnnTF9LaNc3uh4RqrZkhK9oiGKLARCDFqGsgk1NOhK+lBRUx8HjtnVNSkzloXdjTp8qwxGvooyfDKcUZ0yhyTMRItUwJuE=
+	t=1727877395; cv=none; b=VCZIjotHvpHID5FKk6g/5E8544zsJ5udLVjCaIo7sUUj5ayLyEAIEuU1DHdU0cX6RIxOKv7b13c7OFZVH0mNjEpC4lq90mw+KU88y68PVpDMiWEyTGNy09j14bnHW/sIThG8kG1FPAV8H0m6CM4/EFWPppi2ZebSb1By8cO+ZY8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727807613; c=relaxed/simple;
-	bh=f5EWmyoHZ+S8fj0owUKHtkKPZPVuffgssNi+7STNS6w=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=RnkSmPOF5aupw9J0gG0QNIXh1HM4pRybKTZB4jSaP8C3AauNDYTn9Ti92gg/XVD7N1fpkYuj6qC0X739bsaNNS0MXRySgW777cb4wyToy5LbSjB4cu0n0a0P9QUxEH8Z6ySU0JKe5LXIKx6SPTvQxVMLem3xSvSQJJDtWRF3TPo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=0XaDfKy9; arc=none smtp.client-ip=209.85.160.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	s=arc-20240116; t=1727877395; c=relaxed/simple;
+	bh=p9QDWfFM/arOFQukKAKYjJ+JQPzoITFygWlqf6kyM5k=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=JyliE+OU7ZlWx+/1R6Injm9faGsCIu4tqh5oyONg3ZRvrnGPySyCvj/gMzNnckARg46iFvW0ZJO9jD8bcUGIa/dF5P8zElKTDnIOsyEkadPft/jwT+1c5Za+T+XAb0ZFS6PmNLZdKoyuKTLOxHcLwXoD9YFcW1SB2dVonLbdB9k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=URtEwEG4; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="0XaDfKy9"
-Received: by mail-qt1-f171.google.com with SMTP id d75a77b69052e-45b4e638a9aso43611cf.1
-        for <dm-devel@lists.linux.dev>; Tue, 01 Oct 2024 11:33:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1727807611; x=1728412411; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=f5EWmyoHZ+S8fj0owUKHtkKPZPVuffgssNi+7STNS6w=;
-        b=0XaDfKy9zSqKmNc7lPMSXGHzpcqVOk/9IfNBjhRRMXmnFu2Cys5wYfURnfTc8/I18O
-         PN06ktKh+AZYEshg7WoVJQNu+QE4oDrFRaJ697cKbZX1Q6KcRWztDYwd8pVBPZnw2cNV
-         JDQgv8sWiZVkUT1BE7JTK0pPmYRe9UJ/nT5uVMmgUxqlHW7BCHiaG4FVFGGKL5olu74N
-         asEYA9JbIM6SCXd3q5ycMitp4HVD9zzwEgnpg9hjFMz3xkpnn1sHON8sQwDo/YXaOvhS
-         s51ofTHYmovb6zCb6QlOlItfAfeP4RO/PR+xQ3YW/m3FANZC+NBdNYcRIdl7FM58EVtR
-         YJZQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727807611; x=1728412411;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=f5EWmyoHZ+S8fj0owUKHtkKPZPVuffgssNi+7STNS6w=;
-        b=uVY3834l/ATnVgP/q6NBf2ieW0XBzxJeKVg3n2JMeo3gm09Dx644jDlq+2YnkYRLii
-         lGWKXVl5W1tb6oeoS4uYnpAfJdbrS7pQzSRY7HriuPEw0+I9zSefvLM3/H43TngekpTa
-         3DMzsEXYaoz/vFq/03YOzVrjkAxxnDLWZkq0yOvW/IaYD4dm1JBIsYc/DVDB8aoiG240
-         PvhC0a6RQMxQRmbvrCbN9q3W/Z3YRNgVKzyg7U0sB1T4HQROiMtIIQqb6ixMnEUUfuqU
-         07iSiKt7QRjsZpHMwQphspWTBK7+jkls8kZh8SzUiGHgo/4lw7mIoeaKz7KPAmH/sFQ8
-         /9Mg==
-X-Forwarded-Encrypted: i=1; AJvYcCXbuymOEdGWhEnOpw9y/EkWNAEgi5uisb/n6HMzg7ewBbudx4d9NtOkSbsxyIhalkGfKsn8UN0/CQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yxw7hOB7j5CYXerq6RkMaZ2/2O+E/jnhnuFRISWemVX+U0DPd7v
-	aAQEjJUHv7AhhTJyzBhKohr7SZCekna2/rVnWpG1/V2XjWTdWFO7GWXZY5ZIOJNCGLdW2u+m40P
-	9Zt3LQkhqFsaf/2Dol7CzBQWbIAPH8jlwmPKr
-X-Google-Smtp-Source: AGHT+IEnlu57wPDgTxnGEveVw99UE8l+5Ist3RtzV4dSx4UHzRYhF5uh5chyGKaBxaKjXUuH/2JsSStdVGT10dnKUuM=
-X-Received: by 2002:ac8:7fc1:0:b0:44f:e12e:3015 with SMTP id
- d75a77b69052e-45d8206e760mr244471cf.25.1727807610903; Tue, 01 Oct 2024
- 11:33:30 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="URtEwEG4"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1727877392;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=R58KhJbVzBQ2H8vytAKSM/gULX5O9ZaEjURs09gwjls=;
+	b=URtEwEG46cD0X3NjSL7ZMP61vITuV/wGBUrIfthd/lgOvCtSjodrYiHHUZgeTBiRX8OyF4
+	7F40cox028VHibUTxe5CM2/OFfsyTW8UQAlZnXP+LixWfsFICSH9ZZMNzTmT48wuxMORlh
+	2xplQwF1amcvvJ7wP66fRvCkcUkXP9w=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-141-aDDa65rlOYeqACuowoCllQ-1; Wed,
+ 02 Oct 2024 09:56:28 -0400
+X-MC-Unique: aDDa65rlOYeqACuowoCllQ-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B7B201955D64;
+	Wed,  2 Oct 2024 13:56:25 +0000 (UTC)
+Received: from [10.45.225.58] (unknown [10.45.225.58])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A2B7D19560A3;
+	Wed,  2 Oct 2024 13:56:22 +0000 (UTC)
+Date: Wed, 2 Oct 2024 15:56:18 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: dm-devel@lists.linux.dev
+cc: Will Drewry <wad@chromium.org>, Sami Tolvanen <samitolvanen@google.com>, 
+    Maxim Suhanov <dfirblog@gmail.com>, Milan Broz <gmazyland@gmail.com>, 
+    Akilesh Kailash <akailash@google.com>, Alasdair G Kergon <agk@redhat.com>, 
+    Greg KH <gregkh@linuxfoundation.org>, Mike Snitzer <snitzer@kernel.org>, 
+    security@kernel.org, Eric Biggers <ebiggers@google.com>
+Subject: [PATCH 1/2] Revert: "dm-verity: restart or panic on an I/O error"
+Message-ID: <6414ad63-a9d2-b6bb-2995-54f9a6299c3c@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <cad3f86f-09bf-bc5f-c086-fc623ad223f4@redhat.com>
- <CABCJKudRQuA_kv8Gyu_9-1grZmVR=c=oywrPuUFprnQ1v_+Byg@mail.gmail.com>
- <CABSDvDLu9-uzbd9z-avUu-iLV9rgyy=LKzaOwdWnD0f7ruBizg@mail.gmail.com>
- <9dee84e8-6c94-7450-a0c4-a95cab8f66d4@redhat.com> <b65d67cf-9904-4182-a113-2d9a241dd668@gmail.com>
- <CAKeu6dUEC-j5G+KOTFUdfinMe+HTBSm6idxhHQzwVr8Sp_MfMg@mail.gmail.com>
- <3d31625f-3b26-47d7-b933-0bd6a89b748b@gmail.com> <CABCJKuf3bkJXS2dzud5w7MrfEcYa21mbKa=ssEOQxPzfDtzE2g@mail.gmail.com>
- <1229c48a-a225-e426-7f39-465146754975@redhat.com> <CABCJKudUHS_vzW1G08_24JxLbSmZwKUUUtaWkFSjv6gFz6+GXw@mail.gmail.com>
- <4c6ef1cd-9eab-c8d2-a641-50a7d6994632@redhat.com> <CAAFS_9H2EnYwRxx+j-f9TkXKdgCN7-Lgm5p0Q-RZggJaSt2g9g@mail.gmail.com>
- <c1e91fc3-41f6-9eec-1f9f-45d89b2ec241@redhat.com> <CAAFS_9HyeD795N4RFKWYcP5VCFBCxmoXgGg9UbGy80Bxz7j1mg@mail.gmail.com>
- <CABCJKuedOj+E15YLZrC4nePx4g4YLO-3dzc3tyyx1S1_6HysJg@mail.gmail.com>
- <CAAFS_9FuSb7PZwQ2itUh_H7ZdhvAEiiX7fhxJ4kmmv9JCaHmkA@mail.gmail.com> <dfc65621-bb43-1ab7-82a7-3ab15fb9f95f@redhat.com>
-In-Reply-To: <dfc65621-bb43-1ab7-82a7-3ab15fb9f95f@redhat.com>
-From: Sami Tolvanen <samitolvanen@google.com>
-Date: Tue, 1 Oct 2024 11:32:52 -0700
-Message-ID: <CABCJKucBT_7rOygoq4gMRyOPpgy+KTMG4ut4S40sBizX8QcF1Q@mail.gmail.com>
-Subject: Re: [PATCH] dm-verity: restart or panic on an I/O error
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Will Drewry <wad@chromium.org>, Milan Broz <gmazyland@gmail.com>, 
-	Maxim Suhanov <dfirblog@gmail.com>, Akilesh Kailash <akailash@google.com>, 
-	Alasdair G Kergon <agk@redhat.com>, Greg KH <gregkh@linuxfoundation.org>, 
-	Mike Snitzer <snitzer@kernel.org>, security@kernel.org, dm-devel@lists.linux.dev, 
-	Eric Biggers <ebiggers@google.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On Tue, Oct 1, 2024 at 2:12=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.com=
-> wrote:
->
-> On Mon, 30 Sep 2024, Will Drewry wrote:
->
-> > On Mon, Sep 30, 2024 at 1:07=E2=80=AFPM Sami Tolvanen <samitolvanen@goo=
-gle.com> wrote:
-> > >
-> > > While I agree that this sounds good in principle, devices that use th=
-e
-> > > restart feature typically need to pass the reboot reason to a PMU, fo=
-r
-> > > example, and it looks like Android devices depend on reboot notifiers
-> > > for this. Here's a recent Pixel implementation that checks for the
-> > > "dm-verity device corrupted" command as an example:
-> > >
-> > > https://android.googlesource.com/kernel/google-modules/power/reset/+/=
-refs/heads/android-gs-comet-6.1-android15/pixel-zuma-reboot.c#81
-> >
-> > Good catch! (It's a shame it's using text as the API!) I totally
-> > spaced on that, and depending on where the corruption is, you mind end
-> > up in a boot loop.
->
-> If I add that 'reboot-on-eio' flag, should it also restart the kernel wit=
-h
-> kernel_restart("dm-verity device corrupted")? Or, should it use a
-> different string?
+This reverts commit e6a3531dd542cb127c8de32ab1e54a48ae19962b.
 
-I think it could be a different string since there are no existing
-users of this flag and the restart isn't actually caused by
-corruption, but I don't have strong feelings about this.
+The problem that the commit e6a3531dd542cb127c8de32ab1e54a48ae19962b
+fixes was reported as a security bug, but Google engineers working on
+Android and ChromeOS didn't want to change the default behavior, they
+want to get -EIO rather than restarting the system, so I am reverting
+that commit.
 
-Sami
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+Fixes: e6a3531dd542 ("dm-verity: restart or panic on an I/O error")
+
+---
+ drivers/md/dm-verity-target.c |   23 ++---------------------
+ 1 file changed, 2 insertions(+), 21 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-verity-target.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-verity-target.c	2024-10-02 12:40:18.000000000 +0200
++++ linux-2.6/drivers/md/dm-verity-target.c	2024-10-02 12:40:18.000000000 +0200
+@@ -273,10 +273,8 @@ out:
+ 	if (v->mode == DM_VERITY_MODE_LOGGING)
+ 		return 0;
+ 
+-	if (v->mode == DM_VERITY_MODE_RESTART) {
+-		pr_emerg("dm-verity device corrupted\n");
+-		emergency_restart();
+-	}
++	if (v->mode == DM_VERITY_MODE_RESTART)
++		kernel_restart("dm-verity device corrupted");
+ 
+ 	if (v->mode == DM_VERITY_MODE_PANIC)
+ 		panic("dm-verity device corrupted");
+@@ -599,23 +597,6 @@ static void verity_finish_io(struct dm_v
+ 	if (!static_branch_unlikely(&use_bh_wq_enabled) || !io->in_bh)
+ 		verity_fec_finish_io(io);
+ 
+-	if (unlikely(status != BLK_STS_OK) &&
+-	    unlikely(!(bio->bi_opf & REQ_RAHEAD)) &&
+-	    !verity_is_system_shutting_down()) {
+-		if (v->mode == DM_VERITY_MODE_RESTART ||
+-		    v->mode == DM_VERITY_MODE_PANIC)
+-			DMERR_LIMIT("%s has error: %s", v->data_dev->name,
+-					blk_status_to_str(status));
+-
+-		if (v->mode == DM_VERITY_MODE_RESTART) {
+-			pr_emerg("dm-verity device corrupted\n");
+-			emergency_restart();
+-		}
+-
+-		if (v->mode == DM_VERITY_MODE_PANIC)
+-			panic("dm-verity device corrupted");
+-	}
+-
+ 	bio_endio(bio);
+ }
+ 
+
