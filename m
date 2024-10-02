@@ -1,97 +1,63 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C69BD405FB
-	for <dm-devel@lists.linux.dev>; Wed,  2 Oct 2024 14:42:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9357216A01
+	for <dm-devel@lists.linux.dev>; Wed,  2 Oct 2024 19:52:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727880181; cv=none; b=NNb04iUrjplKR7i5Yzk+0FG+QvrVNbWl+AzU/p2MOefL6egX7sVbjcgBo7K/l+D6lhHfWQFC0uC/9Vz7dY7L6fto2F0q5/lE7UGDEv+AkEZkKtPzGjLv8iefZwJPY8E0zn7aNyzD4lcusiCGnXtFwWGTX3nZDqBim9SToEYJ/YM=
+	t=1727898738; cv=none; b=qH8xr4o40f+OEDa66TTXRHCpTgEnkktHyIjV3HPpZrraXJQImHaVUz4SN++YBvzxL+1xIrxqmWoJIPktgSG0BW3M07P6bvVBOzcESoXCQKJRxzWlV0E096EKEj5rE09E7LeH6w37JqtZ5BUf0vQEnjppvEvhgWSBKctrAY6Nd9k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727880181; c=relaxed/simple;
-	bh=k2chyUKBkefQImvxp7g6wewT9eb3xa/ufurtSBEvpKk=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=DCrActWUwtC8MPB1TzEmNvimLX9a0+8rS2YdZW84iqCCdBWEkVLZnIM0b9G9AaomfpoIBpw2ctb4yP1fnzC4YWn7Rai1bT/Gg2fSZQYrT59HL33oO/BbXFjE4fsuvK40H5h4ghWlKlH/KErZ1FgaQ1qnuVm9OLhvd+Bm5MaXjfo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NUkI92fU; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1727898738; c=relaxed/simple;
+	bh=zjd+lwvWbqhd17TjJLPZNy5SEViZPBaU1T3q9QkrcD0=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=k18KCoQyJjx4qpUQPSJGcVdtbfzcE0YNP+SymnCmPPTCk8XxVJLHPARE8AsoBEyDKxLrGk5DJdZrRq2zW7R/+uE6o2heKtRd2/vzrve0URZ535Q9xYYuEmDBEt8ZkRC83zMdLA2allrVVCEHw9tF7JKHYpsXqjlTIeEHSMj4nOU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fYUTOBJV; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NUkI92fU"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1727880178;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=vkBDBSOEUheM76YZq+ISQrbYge/JfrxmXXmCjyUI1b8=;
-	b=NUkI92fUxrI3n2oAbkQXT8UWJQ0g8ta+6MiU03xnqyaxvrtbhbtXLdmH3PF8D9Csauc4pt
-	iBZId5EB+PngI7Wwc9IWHlSS3P02vnTD0LQ1erDeOAHdnCKylUdrgsk9gSGS7dazLk1VTg
-	s+gnovRKGvfuWN6PfBADMOokppJb4Dk=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-224-DLABvQLhNciuclTXL9i8jg-1; Wed,
- 02 Oct 2024 10:42:57 -0400
-X-MC-Unique: DLABvQLhNciuclTXL9i8jg-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 736EA1955EE7;
-	Wed,  2 Oct 2024 14:42:56 +0000 (UTC)
-Received: from [10.45.225.58] (unknown [10.45.225.58])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9FB0619560A2;
-	Wed,  2 Oct 2024 14:42:54 +0000 (UTC)
-Date: Wed, 2 Oct 2024 16:42:51 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-cc: Sami Tolvanen <samitolvanen@google.com>, Will Drewry <wad@chromium.org>, 
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    dm-devel@lists.linux.dev
-Subject: [git pull] device mapper fixes for 6.12
-Message-ID: <2790bb57-22bd-f146-570b-9f4956838a6e@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fYUTOBJV"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id AA98DC4CEC2;
+	Wed,  2 Oct 2024 19:52:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1727898738;
+	bh=zjd+lwvWbqhd17TjJLPZNy5SEViZPBaU1T3q9QkrcD0=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=fYUTOBJVTKiF0hho6vDHnahka5FDiR5c321MkSODhDcCJjc/Y9i54heqZ2RiNEWw+
+	 xiIKN4L442hOvBKg6IzDVDhtLOp4OrxLjlCw3OnY31y+kufqnnGSTmsr7x5SL9hly5
+	 iw0ZVm8ipxPbhpoytGnwuL/ndkzg5Pidx+SGDpI4iAlNVCuh0IhySq2PCoUj/VeJTu
+	 p4MOhh+WPG2VD4a1Qlfl5eYBrghisUWTwXwzNkmkfMj0Ck4wZADU0Lsd5qmM/kJoXD
+	 PWV05WIILIY0cz/XwVqv9MousIOSfIajLx2G8lNYE1sRsIj/KX2X9kVsz/8CVWLFHi
+	 En8YR9wl4CS9A==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 3572D380DBD1;
+	Wed,  2 Oct 2024 19:52:23 +0000 (UTC)
+Subject: Re: [git pull] device mapper fixes for 6.12
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <2790bb57-22bd-f146-570b-9f4956838a6e@redhat.com>
+References: <2790bb57-22bd-f146-570b-9f4956838a6e@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <2790bb57-22bd-f146-570b-9f4956838a6e@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.12/dm-fixes
+X-PR-Tracked-Commit-Id: f811b83879fb6717cdb288e34253cf26d135b019
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 359cdf5a328360fdc41e5ca979f22625f4aceb44
+Message-Id: <172789874169.1292614.889729422000820385.pr-tracker-bot@kernel.org>
+Date: Wed, 02 Oct 2024 19:52:21 +0000
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Sami Tolvanen <samitolvanen@google.com>, Will Drewry <wad@chromium.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
 
-Hi Linus
+The pull request you sent on Wed, 2 Oct 2024 16:42:51 +0200 (CEST):
 
-The following changes since commit 9852d85ec9d492ebef56dc5f229416c925758edc:
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.12/dm-fixes
 
-  Linux 6.12-rc1 (2024-09-29 15:06:19 -0700)
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/359cdf5a328360fdc41e5ca979f22625f4aceb44
 
-are available in the Git repository at:
+Thank you!
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.12/dm-fixes
-
-for you to fetch changes up to f811b83879fb6717cdb288e34253cf26d135b019:
-
-  dm-verity: introduce the options restart_on_error and panic_on_error (2024-10-02 16:21:08 +0200)
-
-Please, pull, thanks
-Mikulas
-
-----------------------------------------------------------------
-- revert the patch that makes dm-verity restart or panic on I/O errors
-
-- add new options that enable restart or panic on I/O errors
------BEGIN PGP SIGNATURE-----
-
-iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCZv1YFxQcbXBhdG9ja2FA
-cmVkaGF0LmNvbQAKCRATAyx9YGnhbTXKAQD29bvBnFN69zYYvrX3X7fHy6o/eOxU
-oZJbFpvA2G+NigD+McEsLzOvOE1ZC/okkB/UUfju/ChEvACIgsNXGkPK2Ag=
-=ygvr
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Mikulas Patocka (2):
-      Revert: "dm-verity: restart or panic on an I/O error"
-      dm-verity: introduce the options restart_on_error and panic_on_error
-
- drivers/md/dm-verity-target.c | 94 +++++++++++++++++++++++++++++++++++--------
- drivers/md/dm-verity.h        |  1 +
- 2 files changed, 79 insertions(+), 16 deletions(-)
-
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
