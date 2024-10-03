@@ -1,164 +1,160 @@
-Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C50CE10940;
-	Thu,  3 Oct 2024 01:16:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B2AE1A3AB7
+	for <dm-devel@lists.linux.dev>; Thu,  3 Oct 2024 15:43:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727918184; cv=none; b=qbz5xXHdYcouXQRv7ljHbEXNXrYZJ1y6hKuQGQPIkUcVCqOMo64Dl6xLWJoOozbq0/deQQZHMJFeQfACr1BQ/J3Hco3aewiE47JyfD9b0v6I0e7RoImrq5sQ1nVqqhNJZ8Q48wb95goFQFe+Hf2JcliaOAVvNZDKSrIjBdUlTZY=
+	t=1727970192; cv=none; b=aB6+xL+QCXE/uXpK2NkgyFy9Pw2otv2wqGYV1He8AFhnW9jAnjIkXqKe8h+beZOt63E2LBO6b9V5CfdGCewPt0j/d9q5Bkrr30KiEuT096jUKj7xIJ94KGJoTNImMrfZz4n7TIRhht7dbW2XXB6aKrxasIXysp1BNW/NR6csT9Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727918184; c=relaxed/simple;
-	bh=TN42O+dPCc9rpN7i5uzpW1iB7+KL+xeALQWTXTx2TB4=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=X+Tbr1yXl3Y2nbbrAy49ZJrtC86H7hJryA6uqRhEKkulBD7AmO6IQJu400OWTlIm0Mqdwg6pzwA1xhNWWslASZdQydMUHoE9ar/nXiRTaTlGncODYfAAsiaZ/8hBS1p0CCJcJFuRxs23qM7g4vrBQSsitXzOUlwgjuPyy/ju47g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=fd4gtFQt; arc=none smtp.client-ip=46.235.229.95
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
+	s=arc-20240116; t=1727970192; c=relaxed/simple;
+	bh=3thy6fYLE1XrZlk8CwbAZRJK/EBujv0/7YIVTHt9QmA=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=cQCjRJDifmk/VchSu7UKr+4DTch4adNQBqNF5Tbr923oFgb8XmsSHSccRhXs9ZA1WSRIKDH70ZT3lFpiW6LJdSrXCViCSrZFgPOYBQdZTeJc/2bWKHsBLEgZ+QqVAROSvSalDsFH5xpkGRLWcQrZt+2kBJRDEB/WTEMedRUJKxY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iy/j0x64; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="fd4gtFQt"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
-	; s=bytemarkmx; h=MIME-Version:Message-ID:Date:Subject:From:Content-Type:From
-	:Subject; bh=h8lTTXfuK6RUBS+BUnUa8xbmT/8DZa1iUX/wpjTb1G0=; b=fd4gtFQt2HSZtktr
-	MY3ZQKUr7AQK5YpTfMuLGleyUxPPi2c7U9VAfIQ4DkapknjFEolid1ylqintkqlLC8t21gBpME9hX
-	Uz6mp0ddKnSnKYXlc9qJ/bT1tfwdTI8sor2jyZp0QHMxQsfOcyJnbNrRIl7iFEXilNw6ayPahg186
-	CXze/Ib04s6PYaXgE2vzZeZNQ9qWEwTdazKV4hY/teXOzh3mpuj8ZPEMt2TvP8zi0elqdDjP00u6+
-	zDCo3j7qW0McbSV9N9rpYuxrgyvqxjZ+zmVjL0chKn6BbBe6T+gcE5iXv3GTcq1rswFuw4SfmVN1j
-	sePiF8l8xC4t1W9kcg==;
-Received: from localhost ([127.0.0.1] helo=dalek.home.treblig.org)
-	by mx.treblig.org with esmtp (Exim 4.96)
-	(envelope-from <linux@treblig.org>)
-	id 1swARu-008Zju-22;
-	Thu, 03 Oct 2024 01:16:10 +0000
-From: linux@treblig.org
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	msakai@redhat.com
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	"Dr. David Alan Gilbert" <linux@treblig.org>
-Subject: [PATCH 4/9] dm cache: Remove unused functions in bio-prison-v1
-Date: Thu,  3 Oct 2024 02:15:49 +0100
-Message-ID: <20241003011554.266654-5-linux@treblig.org>
-X-Mailer: git-send-email 2.46.2
-In-Reply-To: <20241003011554.266654-1-linux@treblig.org>
-References: <20241003011554.266654-1-linux@treblig.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iy/j0x64"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1727970188;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=sKwfG7LI5xbJlyd4LReKRmAkPjHtixJufHf0iofjNso=;
+	b=iy/j0x64FugYjdRnDgIU1rEtfJXw6xNvLjYeq5VMuG3TkcRynqxv0WjkevCip4w5bTKD8S
+	Ve+VUSW19HPTDLXLq3WwCgL4xmDTrTb3FPAqTIR1OoI5gUnfZ+F5jr/F4f9esiXezSLtm8
+	4mE9lBDHSyco8hKS1StV8V9S8KWdsPs=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-573--Z42y9nYONmWUXIFrAPdNA-1; Thu, 03 Oct 2024 11:43:07 -0400
+X-MC-Unique: -Z42y9nYONmWUXIFrAPdNA-1
+Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-7a99fdae7bbso198235585a.3
+        for <dm-devel@lists.linux.dev>; Thu, 03 Oct 2024 08:43:07 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1727970187; x=1728574987;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=sKwfG7LI5xbJlyd4LReKRmAkPjHtixJufHf0iofjNso=;
+        b=jmXl8ohfNxOUjdPmuF0+aviwIWWdQf0CbWpHId8QTzwjMhvNmmPc9IBPD+I785LlK0
+         Yv1Oycj+RP0pg+bezyPn2oHSa0IgJPkxvFg0RZJUafo0sN+ZiANFwGp0XoDcLN2ywHlk
+         9ky5AK3Ifuig61K6R2R5cpALDMVmUURtwb6sqv4rzUFFnLjjmpWSlEEK312BN/BTAjDu
+         j7dUAE9rzAfbwiO5xxAHewTkR6boM43njvVV7MTI5z3+FiL2yb9Fan9kINEIYY/t+cbr
+         OsraNJrUKbd5gskPhT8WAacXeKLCOquK66mp8AeevOqHzDX+8bJYJbXHquohM4A1TJaS
+         utUQ==
+X-Gm-Message-State: AOJu0YwMzzMPktjHQdafzmQ7HgY7kopGCoinkUbM5/Ys6+6JzAW6Qi/i
+	ooR8xsgL3Y6+sghm1ChuWZ6KXI09gbSLPEvtvqmm7raRi8LNZXU9uIG0a0aT+D2/tfbfNdhxzfv
+	sb4/vdZbbsEiI0dJ4CBfkZMBRzKx8Wbt2pjph/anT9bSSA4PNZzxIud7I
+X-Received: by 2002:a05:620a:4154:b0:7a9:ccbd:36f5 with SMTP id af79cd13be357-7ae626ac37bmr1024510585a.13.1727970187369;
+        Thu, 03 Oct 2024 08:43:07 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IExDXfHv4ql/VsRehAef9jA9CVotUtBYFlZaiom3PTW8LpTFLLM0SHcKrOX7MMcPdTOVQHW7Q==
+X-Received: by 2002:a05:620a:4154:b0:7a9:ccbd:36f5 with SMTP id af79cd13be357-7ae626ac37bmr1024508285a.13.1727970187048;
+        Thu, 03 Oct 2024 08:43:07 -0700 (PDT)
+Received: from [192.168.1.165] ([70.22.187.239])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7ae6b29e1eesm60775485a.27.2024.10.03.08.43.06
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 03 Oct 2024 08:43:06 -0700 (PDT)
+Message-ID: <030fa38b-5dd4-4a8c-acac-a4821a11dfbd@redhat.com>
+Date: Thu, 3 Oct 2024 11:43:06 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 8/9] dm vdo: Remove unused functions
+To: linux@treblig.org, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <20241003011554.266654-1-linux@treblig.org>
+ <20241003011554.266654-9-linux@treblig.org>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20241003011554.266654-9-linux@treblig.org>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-From: "Dr. David Alan Gilbert" <linux@treblig.org>
+On 10/2/24 9:15 PM, linux@treblig.org wrote:
+> From: "Dr. David Alan Gilbert" <linux@treblig.org>
+> 
+> get_data_vio_pool_active_discards()
+> get_data_vio_pool_discard_limit()
+> get_data_vio_pool_maximum_discards()
+> set_data_vio_pool_discard_limit()
+> 
+> are all unused since commit
+> a9da0fb6d8c6 ("dm vdo: remove all sysfs interfaces")
+> 
+> Remove them.
+> 
+> Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
 
-dm_cache_size() and dm_cache_dump() are unused since commit
-b29d4986d0da ("dm cache: significant rework to leverage dm-bio-prison-v2")
+Reviewed-by: Matthew Sakai <msakai@redhat.com>
 
-Remove them.
-
-Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
----
- drivers/md/dm-bio-prison-v1.c | 35 -----------------------------------
- drivers/md/dm-bio-prison-v1.h | 24 ------------------------
- 2 files changed, 59 deletions(-)
-
-diff --git a/drivers/md/dm-bio-prison-v1.c b/drivers/md/dm-bio-prison-v1.c
-index bca0f39e15b8..b4d1c4329df3 100644
---- a/drivers/md/dm-bio-prison-v1.c
-+++ b/drivers/md/dm-bio-prison-v1.c
-@@ -198,15 +198,6 @@ int dm_bio_detain(struct dm_bio_prison *prison,
- }
- EXPORT_SYMBOL_GPL(dm_bio_detain);
- 
--int dm_get_cell(struct dm_bio_prison *prison,
--		struct dm_cell_key *key,
--		struct dm_bio_prison_cell *cell_prealloc,
--		struct dm_bio_prison_cell **cell_result)
--{
--	return bio_detain(prison, key, NULL, cell_prealloc, cell_result);
--}
--EXPORT_SYMBOL_GPL(dm_get_cell);
--
- /*
-  * @inmates must have been initialised prior to this call
-  */
-@@ -288,32 +279,6 @@ void dm_cell_visit_release(struct dm_bio_prison *prison,
- }
- EXPORT_SYMBOL_GPL(dm_cell_visit_release);
- 
--static int __promote_or_release(struct rb_root *root,
--				struct dm_bio_prison_cell *cell)
--{
--	if (bio_list_empty(&cell->bios)) {
--		rb_erase(&cell->node, root);
--		return 1;
--	}
--
--	cell->holder = bio_list_pop(&cell->bios);
--	return 0;
--}
--
--int dm_cell_promote_or_release(struct dm_bio_prison *prison,
--			       struct dm_bio_prison_cell *cell)
--{
--	int r;
--	unsigned l = lock_nr(&cell->key, prison->num_locks);
--
--	spin_lock_irq(&prison->regions[l].lock);
--	r = __promote_or_release(&prison->regions[l].cell, cell);
--	spin_unlock_irq(&prison->regions[l].lock);
--
--	return r;
--}
--EXPORT_SYMBOL_GPL(dm_cell_promote_or_release);
--
- /*----------------------------------------------------------------*/
- 
- #define DEFERRED_SET_SIZE 64
-diff --git a/drivers/md/dm-bio-prison-v1.h b/drivers/md/dm-bio-prison-v1.h
-index 2a097ed0d85e..d39706c48447 100644
---- a/drivers/md/dm-bio-prison-v1.h
-+++ b/drivers/md/dm-bio-prison-v1.h
-@@ -72,17 +72,6 @@ struct dm_bio_prison_cell *dm_bio_prison_alloc_cell(struct dm_bio_prison *prison
- void dm_bio_prison_free_cell(struct dm_bio_prison *prison,
- 			     struct dm_bio_prison_cell *cell);
- 
--/*
-- * Creates, or retrieves a cell that overlaps the given key.
-- *
-- * Returns 1 if pre-existing cell returned, zero if new cell created using
-- * @cell_prealloc.
-- */
--int dm_get_cell(struct dm_bio_prison *prison,
--		struct dm_cell_key *key,
--		struct dm_bio_prison_cell *cell_prealloc,
--		struct dm_bio_prison_cell **cell_result);
--
- /*
-  * Returns false if key is beyond BIO_PRISON_MAX_RANGE or spans a boundary.
-  */
-@@ -117,19 +106,6 @@ void dm_cell_visit_release(struct dm_bio_prison *prison,
- 			   void (*visit_fn)(void *, struct dm_bio_prison_cell *),
- 			   void *context, struct dm_bio_prison_cell *cell);
- 
--/*
-- * Rather than always releasing the prisoners in a cell, the client may
-- * want to promote one of them to be the new holder.  There is a race here
-- * though between releasing an empty cell, and other threads adding new
-- * inmates.  So this function makes the decision with its lock held.
-- *
-- * This function can have two outcomes:
-- * i) An inmate is promoted to be the holder of the cell (return value of 0).
-- * ii) The cell has no inmate for promotion and is released (return value of 1).
-- */
--int dm_cell_promote_or_release(struct dm_bio_prison *prison,
--			       struct dm_bio_prison_cell *cell);
--
- /*----------------------------------------------------------------*/
- 
- /*
--- 
-2.46.2
+> ---
+>   drivers/md/dm-vdo/data-vio.c | 29 -----------------------------
+>   drivers/md/dm-vdo/data-vio.h |  5 -----
+>   2 files changed, 34 deletions(-)
+> 
+> diff --git a/drivers/md/dm-vdo/data-vio.c b/drivers/md/dm-vdo/data-vio.c
+> index 0d502f6a86ad..2b489e37538e 100644
+> --- a/drivers/md/dm-vdo/data-vio.c
+> +++ b/drivers/md/dm-vdo/data-vio.c
+> @@ -1074,35 +1074,6 @@ void dump_data_vio_pool(struct data_vio_pool *pool, bool dump_vios)
+>   	spin_unlock(&pool->lock);
+>   }
+>   
+> -data_vio_count_t get_data_vio_pool_active_discards(struct data_vio_pool *pool)
+> -{
+> -	return READ_ONCE(pool->discard_limiter.busy);
+> -}
+> -
+> -data_vio_count_t get_data_vio_pool_discard_limit(struct data_vio_pool *pool)
+> -{
+> -	return READ_ONCE(pool->discard_limiter.limit);
+> -}
+> -
+> -data_vio_count_t get_data_vio_pool_maximum_discards(struct data_vio_pool *pool)
+> -{
+> -	return READ_ONCE(pool->discard_limiter.max_busy);
+> -}
+> -
+> -int set_data_vio_pool_discard_limit(struct data_vio_pool *pool, data_vio_count_t limit)
+> -{
+> -	if (get_data_vio_pool_request_limit(pool) < limit) {
+> -		// The discard limit may not be higher than the data_vio limit.
+> -		return -EINVAL;
+> -	}
+> -
+> -	spin_lock(&pool->lock);
+> -	pool->discard_limiter.limit = limit;
+> -	spin_unlock(&pool->lock);
+> -
+> -	return VDO_SUCCESS;
+> -}
+> -
+>   data_vio_count_t get_data_vio_pool_active_requests(struct data_vio_pool *pool)
+>   {
+>   	return READ_ONCE(pool->limiter.busy);
+> diff --git a/drivers/md/dm-vdo/data-vio.h b/drivers/md/dm-vdo/data-vio.h
+> index 25926b6cd98b..067b983bb291 100644
+> --- a/drivers/md/dm-vdo/data-vio.h
+> +++ b/drivers/md/dm-vdo/data-vio.h
+> @@ -336,11 +336,6 @@ void drain_data_vio_pool(struct data_vio_pool *pool, struct vdo_completion *comp
+>   void resume_data_vio_pool(struct data_vio_pool *pool, struct vdo_completion *completion);
+>   
+>   void dump_data_vio_pool(struct data_vio_pool *pool, bool dump_vios);
+> -data_vio_count_t get_data_vio_pool_active_discards(struct data_vio_pool *pool);
+> -data_vio_count_t get_data_vio_pool_discard_limit(struct data_vio_pool *pool);
+> -data_vio_count_t get_data_vio_pool_maximum_discards(struct data_vio_pool *pool);
+> -int __must_check set_data_vio_pool_discard_limit(struct data_vio_pool *pool,
+> -						 data_vio_count_t limit);
+>   data_vio_count_t get_data_vio_pool_active_requests(struct data_vio_pool *pool);
+>   data_vio_count_t get_data_vio_pool_request_limit(struct data_vio_pool *pool);
+>   data_vio_count_t get_data_vio_pool_maximum_requests(struct data_vio_pool *pool);
 
