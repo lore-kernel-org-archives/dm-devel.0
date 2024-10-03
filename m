@@ -1,34 +1,34 @@
 Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F58E4437C;
-	Thu,  3 Oct 2024 01:16:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BD9C54FAD;
+	Thu,  3 Oct 2024 01:16:22 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727918182; cv=none; b=KuNZD8RufjKc8haoZ5nj64sWJDpSc0JIKxpK15ecXrI1Wf1gfLSxdReRRU3F14EoW7WpvobfdNPc4HZSQkxacGyqdVGoELQ95p2OsPQTB3aCc/ISNVV4GAsGexRtH+qM1Ecstc060mV8/qzcIX3KIS7gS/3zs2iYokzxZisSMus=
+	t=1727918184; cv=none; b=V4cJlZPR5Pq4iZ0doHNknA+YUGZ2TQrFJm3Q2VtTxq/gpxezMdRCCBgwB02utOFG0I0A2DSE8948GSV8mbrlF7T91Z7TM3F7hLIPPCPQMCMkgXMjI4BVQ+FMssC7EtUjcMBe3YJyao/BUQI306s+DCPeG6+i37fQQUW8z/WqzFs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727918182; c=relaxed/simple;
-	bh=O4wWmZOmnQDTIfnLRfHJgK8ZZRDyEqiBvAdnnVSOIGU=;
+	s=arc-20240116; t=1727918184; c=relaxed/simple;
+	bh=yRyRu09rjWWRWVV1/aff06NT17wDw3k6NqMkdlOVvWs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=bCmbbjb38cEMtRB9p5F0mIBcS/bJ8SKDwhNBaj7QkKEXjO6vvSBuLRYZwAy69IaubhZDvhtg1/LiqtZ9QD/PAtBZPNlUSKHVgso0aKnfYJOgLTsw6vAjZ8pTsXiAOSFZ1bDgomdA2HF95FdGwzt/C3kLCMQL+waTks1QLacaI+g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=Pi1PpPM1; arc=none smtp.client-ip=46.235.229.95
+	 MIME-Version; b=T+y1KoGfP78MtyQFiDp2srkRZD0U77mRW1JYQW5F/B2UQ2sAtraO64nXlK/0UMqQFZdS80YUy0tDKW8wCRGd1Ev9IdD+1rJ4HxdqPRgRcpw7HpEBYm/BnKz9k4PD7f9qjWqo9BLGQqNVn9Rp4znIEfJ6qtob/7H0v9UilyrnkEA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=Plu6LJo0; arc=none smtp.client-ip=46.235.229.95
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="Pi1PpPM1"
+	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="Plu6LJo0"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
 	; s=bytemarkmx; h=MIME-Version:Message-ID:Date:Subject:From:Content-Type:From
-	:Subject; bh=3EfSajfBqzhPSYPG8IWTbiTKuq4G6Jjw1zAYEzHhRaA=; b=Pi1PpPM13tT6rRms
-	+7ZGRvhuo4Hj5xfN2K4pqiNs5eMfleMJQ0jnqppUGnX6ZpaSwr+2KreOnsDLsPVpSB2AwGxc1WO9t
-	G5X8VGY2pTxCGJs6flRcySbO6wLGbjb8qEe/RVPP/HpEiSDnOibemZRUz8WkJaXTYog4MZ5wZ7afQ
-	HCO7o0kjv1KkJzIBR/NBUqquCfT4S3xL6chOQRLwr32hxZKaqKDs5zWZd11fgcf2m2rpC7nZ9ShFG
-	mz4bRUFsSmbjzn64MxRzH8QQV89LKMoP2WsJIxNvsdTNdjGcpj/c8aFTB6hwLBovMfMTB3iBUxt6G
-	sCK6WUaLtuVY/x3J8A==;
+	:Subject; bh=PdU9COH57s3vSHoEOCAqWIpM+hbAu2HfjusrmOZfRXM=; b=Plu6LJo0UcIThH5g
+	oi4hWfeLULlgjGuzO4UNU+KhEQoudNFc725ZkUskq3ZO9PmGJhmz+Fp0NdBBV++o7jPT03cZw06kb
+	B/mL20z9F94+rvmDgtYlCta5dRLlIq33ZhFNXEaVJezOTPFdEHUTSong/DMW76nAKm31OPtB3r+iQ
+	dHn8EczfYIcDdqAEpjym/HeYG0jMWwliKZItW0OJWS91neZtB2tIgn0Yy6fsAADpyYXWI+WcMCEyl
+	/VPmfKZGMyFOgyCW0ugeMH2gzsPcL0UET5YHlgnn4KXEkcK/QTYypIn2ugyXBfPEbRMdkvJGQ950t
+	t/YE6BFzwc1EPUuqjw==;
 Received: from localhost ([127.0.0.1] helo=dalek.home.treblig.org)
 	by mx.treblig.org with esmtp (Exim 4.96)
 	(envelope-from <linux@treblig.org>)
-	id 1swARs-008Zju-2W;
-	Thu, 03 Oct 2024 01:16:08 +0000
+	id 1swARu-008Zju-07;
+	Thu, 03 Oct 2024 01:16:10 +0000
 From: linux@treblig.org
 To: agk@redhat.com,
 	snitzer@kernel.org,
@@ -37,9 +37,9 @@ To: agk@redhat.com,
 Cc: dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org,
 	"Dr. David Alan Gilbert" <linux@treblig.org>
-Subject: [PATCH 1/9] dm cache: Remove unused btracker_nr_writebacks_queued
-Date: Thu,  3 Oct 2024 02:15:46 +0100
-Message-ID: <20241003011554.266654-2-linux@treblig.org>
+Subject: [PATCH 3/9] dm cache: Remove unused dm_cache_size
+Date: Thu,  3 Oct 2024 02:15:48 +0100
+Message-ID: <20241003011554.266654-4-linux@treblig.org>
 X-Mailer: git-send-email 2.46.2
 In-Reply-To: <20241003011554.266654-1-linux@treblig.org>
 References: <20241003011554.266654-1-linux@treblig.org>
@@ -53,46 +53,49 @@ Content-Transfer-Encoding: 8bit
 
 From: "Dr. David Alan Gilbert" <linux@treblig.org>
 
-btracker_nr_writebacks_queued() has been unused since commit
-2e63309507c8 ("dm cache policy smq: don't do any writebacks unless IDLE")
+dm_cache_size() has been unused since the original commit
+c6b4fcbad044 ("dm: add cache target")
 
 Remove it.
 
 Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
 ---
- drivers/md/dm-cache-background-tracker.c | 6 ------
- drivers/md/dm-cache-background-tracker.h | 1 -
- 2 files changed, 7 deletions(-)
+ drivers/md/dm-cache-metadata.c | 9 ---------
+ drivers/md/dm-cache-metadata.h | 1 -
+ 2 files changed, 10 deletions(-)
 
-diff --git a/drivers/md/dm-cache-background-tracker.c b/drivers/md/dm-cache-background-tracker.c
-index 9c5308298cf1..504299bb7310 100644
---- a/drivers/md/dm-cache-background-tracker.c
-+++ b/drivers/md/dm-cache-background-tracker.c
-@@ -156,12 +156,6 @@ static void update_stats(struct background_tracker *b, struct policy_work *w, in
- 	}
+diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+index 5c757603ab36..a9a1ab284076 100644
+--- a/drivers/md/dm-cache-metadata.c
++++ b/drivers/md/dm-cache-metadata.c
+@@ -1218,15 +1218,6 @@ int dm_cache_load_discards(struct dm_cache_metadata *cmd,
+ 	return r;
  }
  
--unsigned int btracker_nr_writebacks_queued(struct background_tracker *b)
+-int dm_cache_size(struct dm_cache_metadata *cmd, dm_cblock_t *result)
 -{
--	return atomic_read(&b->pending_writebacks);
--}
--EXPORT_SYMBOL_GPL(btracker_nr_writebacks_queued);
+-	READ_LOCK(cmd);
+-	*result = cmd->cache_blocks;
+-	READ_UNLOCK(cmd);
 -
- unsigned int btracker_nr_demotions_queued(struct background_tracker *b)
+-	return 0;
+-}
+-
+ static int __remove(struct dm_cache_metadata *cmd, dm_cblock_t cblock)
  {
- 	return atomic_read(&b->pending_demotes);
-diff --git a/drivers/md/dm-cache-background-tracker.h b/drivers/md/dm-cache-background-tracker.h
-index 5b8f5c667b81..7e66ad58efa6 100644
---- a/drivers/md/dm-cache-background-tracker.h
-+++ b/drivers/md/dm-cache-background-tracker.h
-@@ -42,7 +42,6 @@ struct background_tracker *btracker_create(unsigned int max_work);
+ 	int r;
+diff --git a/drivers/md/dm-cache-metadata.h b/drivers/md/dm-cache-metadata.h
+index 3e5472173baa..5f77890207fe 100644
+--- a/drivers/md/dm-cache-metadata.h
++++ b/drivers/md/dm-cache-metadata.h
+@@ -71,7 +71,6 @@ void dm_cache_metadata_close(struct dm_cache_metadata *cmd);
+  * origin blocks to map to.
   */
- void btracker_destroy(struct background_tracker *b);
+ int dm_cache_resize(struct dm_cache_metadata *cmd, dm_cblock_t new_cache_size);
+-int dm_cache_size(struct dm_cache_metadata *cmd, dm_cblock_t *result);
  
--unsigned int btracker_nr_writebacks_queued(struct background_tracker *b);
- unsigned int btracker_nr_demotions_queued(struct background_tracker *b);
- 
- /*
+ int dm_cache_discard_bitset_resize(struct dm_cache_metadata *cmd,
+ 				   sector_t discard_block_size,
 -- 
 2.46.2
 
