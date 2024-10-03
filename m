@@ -1,33 +1,33 @@
 Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BD9C54FAD;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C50CE10940;
 	Thu,  3 Oct 2024 01:16:22 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727918184; cv=none; b=V4cJlZPR5Pq4iZ0doHNknA+YUGZ2TQrFJm3Q2VtTxq/gpxezMdRCCBgwB02utOFG0I0A2DSE8948GSV8mbrlF7T91Z7TM3F7hLIPPCPQMCMkgXMjI4BVQ+FMssC7EtUjcMBe3YJyao/BUQI306s+DCPeG6+i37fQQUW8z/WqzFs=
+	t=1727918184; cv=none; b=qbz5xXHdYcouXQRv7ljHbEXNXrYZJ1y6hKuQGQPIkUcVCqOMo64Dl6xLWJoOozbq0/deQQZHMJFeQfACr1BQ/J3Hco3aewiE47JyfD9b0v6I0e7RoImrq5sQ1nVqqhNJZ8Q48wb95goFQFe+Hf2JcliaOAVvNZDKSrIjBdUlTZY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1727918184; c=relaxed/simple;
-	bh=yRyRu09rjWWRWVV1/aff06NT17wDw3k6NqMkdlOVvWs=;
+	bh=TN42O+dPCc9rpN7i5uzpW1iB7+KL+xeALQWTXTx2TB4=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=T+y1KoGfP78MtyQFiDp2srkRZD0U77mRW1JYQW5F/B2UQ2sAtraO64nXlK/0UMqQFZdS80YUy0tDKW8wCRGd1Ev9IdD+1rJ4HxdqPRgRcpw7HpEBYm/BnKz9k4PD7f9qjWqo9BLGQqNVn9Rp4znIEfJ6qtob/7H0v9UilyrnkEA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=Plu6LJo0; arc=none smtp.client-ip=46.235.229.95
+	 MIME-Version; b=X+Tbr1yXl3Y2nbbrAy49ZJrtC86H7hJryA6uqRhEKkulBD7AmO6IQJu400OWTlIm0Mqdwg6pzwA1xhNWWslASZdQydMUHoE9ar/nXiRTaTlGncODYfAAsiaZ/8hBS1p0CCJcJFuRxs23qM7g4vrBQSsitXzOUlwgjuPyy/ju47g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=fd4gtFQt; arc=none smtp.client-ip=46.235.229.95
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="Plu6LJo0"
+	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="fd4gtFQt"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
 	; s=bytemarkmx; h=MIME-Version:Message-ID:Date:Subject:From:Content-Type:From
-	:Subject; bh=PdU9COH57s3vSHoEOCAqWIpM+hbAu2HfjusrmOZfRXM=; b=Plu6LJo0UcIThH5g
-	oi4hWfeLULlgjGuzO4UNU+KhEQoudNFc725ZkUskq3ZO9PmGJhmz+Fp0NdBBV++o7jPT03cZw06kb
-	B/mL20z9F94+rvmDgtYlCta5dRLlIq33ZhFNXEaVJezOTPFdEHUTSong/DMW76nAKm31OPtB3r+iQ
-	dHn8EczfYIcDdqAEpjym/HeYG0jMWwliKZItW0OJWS91neZtB2tIgn0Yy6fsAADpyYXWI+WcMCEyl
-	/VPmfKZGMyFOgyCW0ugeMH2gzsPcL0UET5YHlgnn4KXEkcK/QTYypIn2ugyXBfPEbRMdkvJGQ950t
-	t/YE6BFzwc1EPUuqjw==;
+	:Subject; bh=h8lTTXfuK6RUBS+BUnUa8xbmT/8DZa1iUX/wpjTb1G0=; b=fd4gtFQt2HSZtktr
+	MY3ZQKUr7AQK5YpTfMuLGleyUxPPi2c7U9VAfIQ4DkapknjFEolid1ylqintkqlLC8t21gBpME9hX
+	Uz6mp0ddKnSnKYXlc9qJ/bT1tfwdTI8sor2jyZp0QHMxQsfOcyJnbNrRIl7iFEXilNw6ayPahg186
+	CXze/Ib04s6PYaXgE2vzZeZNQ9qWEwTdazKV4hY/teXOzh3mpuj8ZPEMt2TvP8zi0elqdDjP00u6+
+	zDCo3j7qW0McbSV9N9rpYuxrgyvqxjZ+zmVjL0chKn6BbBe6T+gcE5iXv3GTcq1rswFuw4SfmVN1j
+	sePiF8l8xC4t1W9kcg==;
 Received: from localhost ([127.0.0.1] helo=dalek.home.treblig.org)
 	by mx.treblig.org with esmtp (Exim 4.96)
 	(envelope-from <linux@treblig.org>)
-	id 1swARu-008Zju-07;
+	id 1swARu-008Zju-22;
 	Thu, 03 Oct 2024 01:16:10 +0000
 From: linux@treblig.org
 To: agk@redhat.com,
@@ -37,9 +37,9 @@ To: agk@redhat.com,
 Cc: dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org,
 	"Dr. David Alan Gilbert" <linux@treblig.org>
-Subject: [PATCH 3/9] dm cache: Remove unused dm_cache_size
-Date: Thu,  3 Oct 2024 02:15:48 +0100
-Message-ID: <20241003011554.266654-4-linux@treblig.org>
+Subject: [PATCH 4/9] dm cache: Remove unused functions in bio-prison-v1
+Date: Thu,  3 Oct 2024 02:15:49 +0100
+Message-ID: <20241003011554.266654-5-linux@treblig.org>
 X-Mailer: git-send-email 2.46.2
 In-Reply-To: <20241003011554.266654-1-linux@treblig.org>
 References: <20241003011554.266654-1-linux@treblig.org>
@@ -53,49 +53,112 @@ Content-Transfer-Encoding: 8bit
 
 From: "Dr. David Alan Gilbert" <linux@treblig.org>
 
-dm_cache_size() has been unused since the original commit
-c6b4fcbad044 ("dm: add cache target")
+dm_cache_size() and dm_cache_dump() are unused since commit
+b29d4986d0da ("dm cache: significant rework to leverage dm-bio-prison-v2")
 
-Remove it.
+Remove them.
 
 Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
 ---
- drivers/md/dm-cache-metadata.c | 9 ---------
- drivers/md/dm-cache-metadata.h | 1 -
- 2 files changed, 10 deletions(-)
+ drivers/md/dm-bio-prison-v1.c | 35 -----------------------------------
+ drivers/md/dm-bio-prison-v1.h | 24 ------------------------
+ 2 files changed, 59 deletions(-)
 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index 5c757603ab36..a9a1ab284076 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -1218,15 +1218,6 @@ int dm_cache_load_discards(struct dm_cache_metadata *cmd,
- 	return r;
+diff --git a/drivers/md/dm-bio-prison-v1.c b/drivers/md/dm-bio-prison-v1.c
+index bca0f39e15b8..b4d1c4329df3 100644
+--- a/drivers/md/dm-bio-prison-v1.c
++++ b/drivers/md/dm-bio-prison-v1.c
+@@ -198,15 +198,6 @@ int dm_bio_detain(struct dm_bio_prison *prison,
  }
+ EXPORT_SYMBOL_GPL(dm_bio_detain);
  
--int dm_cache_size(struct dm_cache_metadata *cmd, dm_cblock_t *result)
+-int dm_get_cell(struct dm_bio_prison *prison,
+-		struct dm_cell_key *key,
+-		struct dm_bio_prison_cell *cell_prealloc,
+-		struct dm_bio_prison_cell **cell_result)
 -{
--	READ_LOCK(cmd);
--	*result = cmd->cache_blocks;
--	READ_UNLOCK(cmd);
+-	return bio_detain(prison, key, NULL, cell_prealloc, cell_result);
+-}
+-EXPORT_SYMBOL_GPL(dm_get_cell);
 -
+ /*
+  * @inmates must have been initialised prior to this call
+  */
+@@ -288,32 +279,6 @@ void dm_cell_visit_release(struct dm_bio_prison *prison,
+ }
+ EXPORT_SYMBOL_GPL(dm_cell_visit_release);
+ 
+-static int __promote_or_release(struct rb_root *root,
+-				struct dm_bio_prison_cell *cell)
+-{
+-	if (bio_list_empty(&cell->bios)) {
+-		rb_erase(&cell->node, root);
+-		return 1;
+-	}
+-
+-	cell->holder = bio_list_pop(&cell->bios);
 -	return 0;
 -}
 -
- static int __remove(struct dm_cache_metadata *cmd, dm_cblock_t cblock)
- {
- 	int r;
-diff --git a/drivers/md/dm-cache-metadata.h b/drivers/md/dm-cache-metadata.h
-index 3e5472173baa..5f77890207fe 100644
---- a/drivers/md/dm-cache-metadata.h
-+++ b/drivers/md/dm-cache-metadata.h
-@@ -71,7 +71,6 @@ void dm_cache_metadata_close(struct dm_cache_metadata *cmd);
-  * origin blocks to map to.
-  */
- int dm_cache_resize(struct dm_cache_metadata *cmd, dm_cblock_t new_cache_size);
--int dm_cache_size(struct dm_cache_metadata *cmd, dm_cblock_t *result);
+-int dm_cell_promote_or_release(struct dm_bio_prison *prison,
+-			       struct dm_bio_prison_cell *cell)
+-{
+-	int r;
+-	unsigned l = lock_nr(&cell->key, prison->num_locks);
+-
+-	spin_lock_irq(&prison->regions[l].lock);
+-	r = __promote_or_release(&prison->regions[l].cell, cell);
+-	spin_unlock_irq(&prison->regions[l].lock);
+-
+-	return r;
+-}
+-EXPORT_SYMBOL_GPL(dm_cell_promote_or_release);
+-
+ /*----------------------------------------------------------------*/
  
- int dm_cache_discard_bitset_resize(struct dm_cache_metadata *cmd,
- 				   sector_t discard_block_size,
+ #define DEFERRED_SET_SIZE 64
+diff --git a/drivers/md/dm-bio-prison-v1.h b/drivers/md/dm-bio-prison-v1.h
+index 2a097ed0d85e..d39706c48447 100644
+--- a/drivers/md/dm-bio-prison-v1.h
++++ b/drivers/md/dm-bio-prison-v1.h
+@@ -72,17 +72,6 @@ struct dm_bio_prison_cell *dm_bio_prison_alloc_cell(struct dm_bio_prison *prison
+ void dm_bio_prison_free_cell(struct dm_bio_prison *prison,
+ 			     struct dm_bio_prison_cell *cell);
+ 
+-/*
+- * Creates, or retrieves a cell that overlaps the given key.
+- *
+- * Returns 1 if pre-existing cell returned, zero if new cell created using
+- * @cell_prealloc.
+- */
+-int dm_get_cell(struct dm_bio_prison *prison,
+-		struct dm_cell_key *key,
+-		struct dm_bio_prison_cell *cell_prealloc,
+-		struct dm_bio_prison_cell **cell_result);
+-
+ /*
+  * Returns false if key is beyond BIO_PRISON_MAX_RANGE or spans a boundary.
+  */
+@@ -117,19 +106,6 @@ void dm_cell_visit_release(struct dm_bio_prison *prison,
+ 			   void (*visit_fn)(void *, struct dm_bio_prison_cell *),
+ 			   void *context, struct dm_bio_prison_cell *cell);
+ 
+-/*
+- * Rather than always releasing the prisoners in a cell, the client may
+- * want to promote one of them to be the new holder.  There is a race here
+- * though between releasing an empty cell, and other threads adding new
+- * inmates.  So this function makes the decision with its lock held.
+- *
+- * This function can have two outcomes:
+- * i) An inmate is promoted to be the holder of the cell (return value of 0).
+- * ii) The cell has no inmate for promotion and is released (return value of 1).
+- */
+-int dm_cell_promote_or_release(struct dm_bio_prison *prison,
+-			       struct dm_bio_prison_cell *cell);
+-
+ /*----------------------------------------------------------------*/
+ 
+ /*
 -- 
 2.46.2
 
