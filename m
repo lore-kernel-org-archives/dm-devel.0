@@ -1,34 +1,34 @@
 Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BF6C17BBF;
-	Thu,  3 Oct 2024 01:16:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 01CCE17BB6;
+	Thu,  3 Oct 2024 01:16:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727918177; cv=none; b=B/14Kr9ghnKg8r8o0oLhjH8xtPm7zF6cmm7XNyHDelrcrHgZeJKQeZkoDb00YELFJ9N6QCOfzYyXgZs7fULgbzl3OVLj41J/4ohiZwh1Wm0B9MRczPBr6aT34djuhj5FCvnSN4DmOQr0pDlwGkhggEcK0SUOzfTbbQXye5SeUZk=
+	t=1727918177; cv=none; b=A6b4R0nzKvzy2rszN6pUsOIz9sUF6YS9hx1mFVjN8BYnZ4S876lc5B+UzfOn4u6RRPkJ0X5cVHN0a4qt5BsOgPI3iPywo8y8qBEg1VeOyfrO31Pl+Zhsrg4zwtHK9oYKwX+CX4+fuHDZtt94yls1i9YtY6zvCCbHM7msXOGH0iY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1727918177; c=relaxed/simple;
-	bh=JRC906exSE9WB+qYkiBV4/PRS03ooo6xcMkMgYsjK/4=;
+	bh=EpYZoNR/IU1qKBDFNxBkkRtrmlKPw9YQyQdWkhpZN4I=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=QCsYNRQ6bGtoRvY6dSac9nToKUSr/ZqvFJK70W01LcpczTqQ4IBxVmw9+5GbbNYygR/dI/3VLtAgRq7zHZ13Y0lmqb7zLnGz0I5Yd/rCSXwwo/0rhaY/Ww9tfAeY//DDZboVLtpkDeO4SuJzJknbKIr8O3XoG9fuy2qmwkW+/vE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=TUavmXh3; arc=none smtp.client-ip=46.235.229.95
+	 MIME-Version; b=iukUz9Y+jlDBTuO6HTpdW+MFuBCbNj0VJFmBd7zsxMWMujP+3GSGiAptL8f7VOVq0Cse8JyU2zciZ9rxDWI32ZErnjpnJ5QpH35S39iMsRIuWmOY1uNTAb6kTBShtHiMxoLVbi0/AVfLLa3kt4fIxIrUnGF3jnkMz4KJcn+ASGI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=BcprqNvu; arc=none smtp.client-ip=46.235.229.95
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="TUavmXh3"
+	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="BcprqNvu"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
 	; s=bytemarkmx; h=MIME-Version:Message-ID:Date:Subject:From:Content-Type:From
-	:Subject; bh=Xf623GrtvbUSnaBJBS1171I3r1qDM08Bu2TkB7MDTSE=; b=TUavmXh34z0zrjDs
-	4cfzYhRq19BmQfINPpax0gYvN2rbI4v23Fcfl6fsfadsE5Yac5H34UOoXnTiQhM8XLnTx02ryeMdq
-	ZEhtOOerz8pCdTfPTBj4wMRkvCNp4A5yvzJa7pA42wygfjDQAIHNK7RF+hzWxja7NBwU+E6tbpvPf
-	4fj1yPvIR6+d1twhanLDHbO1nDw837w6T0a3HMPcW+/ztQxPMoJM6aP/uyk/3KvKjCXOLT6hO4mhT
-	RIspBR6R16OadclTVpgyOw8wy7eGzJ29XtjVnJphKvKbfuF02wC/US3xT+EpMNreCNm74lkImjA00
-	/HL6ewudxBFKkMIzdg==;
+	:Subject; bh=H3JQLHPWDS2GmOiIkpOwMQLDiiaYcGQvArj/9yvjlMA=; b=BcprqNvuIVseM5cj
+	wfBzZ8KH/EcF9O3SBSTlEFe6vKGe4bdyJZCfmSLSjHTwMyzw2opdx4U1y+5fxba/4Frc9PM1yRgSK
+	wr3PiC7yWwHMPI/CipX97GvvuEpVSWOXp4joOlmchHHjJkEJ7hNDRVCMQWfsS3E+EseoUTPu/GM/s
+	Scahh/l2zeFZ0YEVidT7eG5TLuNqiXeLOUdTfInnTb966WQLpnY2IuXGvfQW/0vDl/KAKkL3cwdL0
+	jDh1R6WF315W1DD9nGxV7Eh5Ullzy+JAlBMc74GoOhzFQOxbQUnHmwLkaq6PtlX6omz6P0lZFsPcE
+	NmZuUIi59W3nSppkTA==;
 Received: from localhost ([127.0.0.1] helo=dalek.home.treblig.org)
 	by mx.treblig.org with esmtp (Exim 4.96)
 	(envelope-from <linux@treblig.org>)
-	id 1swARv-008Zju-0Y;
-	Thu, 03 Oct 2024 01:16:11 +0000
+	id 1swARt-008Zju-1M;
+	Thu, 03 Oct 2024 01:16:09 +0000
 From: linux@treblig.org
 To: agk@redhat.com,
 	snitzer@kernel.org,
@@ -37,9 +37,9 @@ To: agk@redhat.com,
 Cc: dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org,
 	"Dr. David Alan Gilbert" <linux@treblig.org>
-Subject: [PATCH 5/9] dm: Remove unused dm_set_md_type
-Date: Thu,  3 Oct 2024 02:15:50 +0100
-Message-ID: <20241003011554.266654-6-linux@treblig.org>
+Subject: [PATCH 2/9] dm cache: Remove unused dm_cache_dump
+Date: Thu,  3 Oct 2024 02:15:47 +0100
+Message-ID: <20241003011554.266654-3-linux@treblig.org>
 X-Mailer: git-send-email 2.46.2
 In-Reply-To: <20241003011554.266654-1-linux@treblig.org>
 References: <20241003011554.266654-1-linux@treblig.org>
@@ -53,46 +53,65 @@ Content-Transfer-Encoding: 8bit
 
 From: "Dr. David Alan Gilbert" <linux@treblig.org>
 
-dm_set_md_type() has been unused since commit
-ba30585936b0 ("dm: move setting md->type into dm_setup_md_queue")
+dm_cache_dump() has been unused since the original commit
+c6b4fcbad044 ("dm: add cache target")
 
 Remove it.
 
 Signed-off-by: Dr. David Alan Gilbert <linux@treblig.org>
 ---
- drivers/md/dm.c | 6 ------
- drivers/md/dm.h | 1 -
- 2 files changed, 7 deletions(-)
+ drivers/md/dm-cache-metadata.c | 24 ------------------------
+ drivers/md/dm-cache-metadata.h |  2 --
+ 2 files changed, 26 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ff4a6b570b76..6630e89cea4a 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2515,12 +2515,6 @@ void dm_unlock_md_type(struct mapped_device *md)
- 	mutex_unlock(&md->type_lock);
+diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+index 24cd87fddf75..5c757603ab36 100644
+--- a/drivers/md/dm-cache-metadata.c
++++ b/drivers/md/dm-cache-metadata.c
+@@ -1507,30 +1507,6 @@ int dm_cache_load_mappings(struct dm_cache_metadata *cmd,
+ 	return r;
  }
  
--void dm_set_md_type(struct mapped_device *md, enum dm_queue_mode type)
+-static int __dump_mapping(void *context, uint64_t cblock, void *leaf)
 -{
--	BUG_ON(!mutex_is_locked(&md->type_lock));
--	md->type = type;
+-	__le64 value;
+-	dm_oblock_t oblock;
+-	unsigned int flags;
+-
+-	memcpy(&value, leaf, sizeof(value));
+-	unpack_value(value, &oblock, &flags);
+-
+-	return 0;
 -}
 -
- enum dm_queue_mode dm_get_md_type(struct mapped_device *md)
+-static int __dump_mappings(struct dm_cache_metadata *cmd)
+-{
+-	return dm_array_walk(&cmd->info, cmd->root, __dump_mapping, NULL);
+-}
+-
+-void dm_cache_dump(struct dm_cache_metadata *cmd)
+-{
+-	READ_LOCK_VOID(cmd);
+-	__dump_mappings(cmd);
+-	READ_UNLOCK(cmd);
+-}
+-
+ int dm_cache_changed_this_transaction(struct dm_cache_metadata *cmd)
  {
- 	return md->type;
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 8ad782249af8..d4062c3154db 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -76,7 +76,6 @@ bool dm_table_request_based(struct dm_table *t);
+ 	int r;
+diff --git a/drivers/md/dm-cache-metadata.h b/drivers/md/dm-cache-metadata.h
+index 57afc7047947..3e5472173baa 100644
+--- a/drivers/md/dm-cache-metadata.h
++++ b/drivers/md/dm-cache-metadata.h
+@@ -123,8 +123,6 @@ int dm_cache_get_free_metadata_block_count(struct dm_cache_metadata *cmd,
+ int dm_cache_get_metadata_dev_size(struct dm_cache_metadata *cmd,
+ 				   dm_block_t *result);
  
- void dm_lock_md_type(struct mapped_device *md);
- void dm_unlock_md_type(struct mapped_device *md);
--void dm_set_md_type(struct mapped_device *md, enum dm_queue_mode type);
- enum dm_queue_mode dm_get_md_type(struct mapped_device *md);
- struct target_type *dm_get_immutable_target_type(struct mapped_device *md);
- 
+-void dm_cache_dump(struct dm_cache_metadata *cmd);
+-
+ /*
+  * The policy is invited to save a 32bit hint value for every cblock (eg,
+  * for a hit count).  These are stored against the policy name.  If
 -- 
 2.46.2
 
