@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C6011E96F2;
-	Fri,  4 Oct 2024 18:20:34 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DE9B61FCC46;
+	Fri,  4 Oct 2024 18:23:56 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728066034; cv=none; b=J7fM4bhyLCBGamku9YgtWrCZEpZ6/BhUnhxkrt1Qb+8N4VmYi2govKhxnjGM5Syu2H4hBWwszbxmRRl6NJnOITZAdcTAMPbSf5WfRKniK8IQrcO47JX1Jujhtj/3dZVoasXrTFF5aHLDxeojt83LjVWAAu99/ZqxF0PTtBkNKmw=
+	t=1728066237; cv=none; b=flM6zWZMIWmC9OKwHA/WsKebphJlHrWZahn+Rph66yohVMsTWnKw8FrKcZpEj3vo/49dTV5rgPqbUhzOCVm+mb7wR2NFPv9GaP3gcgXkkdeWvKR7pQ6Dy28CA1vTSvgMtOGCFApUY5G90gWpGJax0boX18I37YI43grc2x9QbcM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728066034; c=relaxed/simple;
-	bh=vvhWvb4c9e9c/D6XuT9QWZB4VOqVh+V14u4C5Nc21QU=;
+	s=arc-20240116; t=1728066237; c=relaxed/simple;
+	bh=Efcfh40coe8lTYot+luTmyVmHaIjn/egYX0OcqlC44c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=EGHlMiCafhR22aDMY2VwftmRjqrTxJiuH+4WqDcmQSV7TrTo+lAmmQ9Vdt3dqg0El7IwL4gCtZf2hdUuGgKSmagdOKUKMri2ILeXr/g8wjsVE3KnPg9qRLAT02aMiRksOymIQo5jFI4wEcwDdiJrt+YbhVRIsoZuY6slViV2F5o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Qx5XTd35; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=GzdCyg+5jJSuw2vELj8FvpJraRLh06KOp7X9MniMf+XyCIeMiqX+q7cO7yEZznevRHTdnvexJZFMTvULR00PT24IqfpgLzQZgvy8Ni9bEDqkgXVvqYfgTp9xUjACGgR7HgPBKu/MbAZk0Cl7NwBKXUDNvwJin32oS6u7k6MKTOU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MWT2v7uB; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Qx5XTd35"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8531AC4CED3;
-	Fri,  4 Oct 2024 18:20:33 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MWT2v7uB"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F336CC4CECE;
+	Fri,  4 Oct 2024 18:23:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1728066034;
-	bh=vvhWvb4c9e9c/D6XuT9QWZB4VOqVh+V14u4C5Nc21QU=;
+	s=k20201202; t=1728066236;
+	bh=Efcfh40coe8lTYot+luTmyVmHaIjn/egYX0OcqlC44c=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=Qx5XTd35xzE3DlgJZJR7IxxlSwZcfjCjwa98K35yzIflFdhOLDfDzWPJjpbRTtX5B
-	 dAP2a6d5zTCAlIlqVdonISro108AzLs+NQvVCiSs7zpPbvcGEkMjjkklGMhJyzBR2Y
-	 Uy5R9gHc3LiVgLgeiR09BAEaMwJpkgCFgBuuGEaq6kIN3QJCdsQnBVFSH899/7ECg0
-	 j061dsJR86OImGRDodNgH8TgKS/K2g6ia37e+Y8Tgc7FY/zJRfoh0Uyko4BcDmKeZA
-	 uZxq2b0BvcDPF2+Dbtt7ghzq7GpQAkjVq5raMTnMCNBDuBSMGohkvze5Rrp2WjjngT
-	 /EOdEWtW9b7CQ==
+	b=MWT2v7uBRExG7bEW6MEbjfykQfoabjSH0/1qumcd0Ec0ozk0SjN+b2Mpdj3p7Gjn7
+	 oJdy89X5X1akvJ/leLORJnR8l56N9aE0Ri+bHLEX7VryYRZ5rmdgBVL28MR51VrOwB
+	 STgMKM02/D1OQg6rdx3DiyaWQ5DclDDmmXgOkChgbubUxEOrgV3p7qvwBlvk8ns9fD
+	 2UOhlEumxGyydscJsFqb+We+QDEY8eeX4D5NfdxuE7us107rUKyyTSlQqAZf6uVhPK
+	 ATKIKhTOaIibtLAhNjbUbZSIhvmC6GEOCqBO6IWUzHbaxQBND76uh4VxOmHjhaXwah
+	 1uknenjZpjj2A==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org
@@ -34,12 +34,12 @@ Cc: Ken Raeburn <raeburn@redhat.com>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Sasha Levin <sashal@kernel.org>,
 	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 6.11 65/76] dm vdo: don't refer to dedupe_context after releasing it
-Date: Fri,  4 Oct 2024 14:17:22 -0400
-Message-ID: <20241004181828.3669209-65-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 6.10 59/70] dm vdo: don't refer to dedupe_context after releasing it
+Date: Fri,  4 Oct 2024 14:20:57 -0400
+Message-ID: <20241004182200.3670903-59-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20241004181828.3669209-1-sashal@kernel.org>
-References: <20241004181828.3669209-1-sashal@kernel.org>
+In-Reply-To: <20241004182200.3670903-1-sashal@kernel.org>
+References: <20241004182200.3670903-1-sashal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -48,7 +48,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
-X-stable-base: Linux 6.11.2
+X-stable-base: Linux 6.10.13
 Content-Transfer-Encoding: 8bit
 
 From: Ken Raeburn <raeburn@redhat.com>
@@ -67,10 +67,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
-index 39ac68614419f..80628ae93fbac 100644
+index 117266e1b3ae1..28b41d5261f4c 100644
 --- a/drivers/md/dm-vdo/dedupe.c
 +++ b/drivers/md/dm-vdo/dedupe.c
-@@ -729,6 +729,7 @@ static void process_update_result(struct data_vio *agent)
+@@ -734,6 +734,7 @@ static void process_update_result(struct data_vio *agent)
  	    !change_context_state(context, DEDUPE_CONTEXT_COMPLETE, DEDUPE_CONTEXT_IDLE))
  		return;
  
@@ -78,7 +78,7 @@ index 39ac68614419f..80628ae93fbac 100644
  	release_context(context);
  }
  
-@@ -1648,6 +1649,7 @@ static void process_query_result(struct data_vio *agent)
+@@ -1653,6 +1654,7 @@ static void process_query_result(struct data_vio *agent)
  
  	if (change_context_state(context, DEDUPE_CONTEXT_COMPLETE, DEDUPE_CONTEXT_IDLE)) {
  		agent->is_duplicate = decode_uds_advice(context);
@@ -86,7 +86,7 @@ index 39ac68614419f..80628ae93fbac 100644
  		release_context(context);
  	}
  }
-@@ -2321,6 +2323,7 @@ static void timeout_index_operations_callback(struct vdo_completion *completion)
+@@ -2326,6 +2328,7 @@ static void timeout_index_operations_callback(struct vdo_completion *completion)
  		 * send its requestor on its way.
  		 */
  		list_del_init(&context->list_entry);
