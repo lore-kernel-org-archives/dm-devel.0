@@ -1,99 +1,81 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DE9B61FCC46;
-	Fri,  4 Oct 2024 18:23:56 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB9771EF09D;
+	Fri,  4 Oct 2024 18:48:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728066237; cv=none; b=flM6zWZMIWmC9OKwHA/WsKebphJlHrWZahn+Rph66yohVMsTWnKw8FrKcZpEj3vo/49dTV5rgPqbUhzOCVm+mb7wR2NFPv9GaP3gcgXkkdeWvKR7pQ6Dy28CA1vTSvgMtOGCFApUY5G90gWpGJax0boX18I37YI43grc2x9QbcM=
+	t=1728067701; cv=none; b=gv+cnvkdZQv9jCmQOBaJpGOJ90GofELB9wA4IdKMCSGuJm4+DkrvP9amE7HJ01mHRf+9AiHXd/CQ0dY2ORkmMih/X3hv4Y+jBIvbJWNkL1gIGC2Q/o2hGws48SqY/RZjyf4tHzPW5lY/NTU12ymkcrH+JROrgCvPOtZHtDfUMhM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728066237; c=relaxed/simple;
-	bh=Efcfh40coe8lTYot+luTmyVmHaIjn/egYX0OcqlC44c=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GzdCyg+5jJSuw2vELj8FvpJraRLh06KOp7X9MniMf+XyCIeMiqX+q7cO7yEZznevRHTdnvexJZFMTvULR00PT24IqfpgLzQZgvy8Ni9bEDqkgXVvqYfgTp9xUjACGgR7HgPBKu/MbAZk0Cl7NwBKXUDNvwJin32oS6u7k6MKTOU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MWT2v7uB; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1728067701; c=relaxed/simple;
+	bh=1HqgdvKOc/m4/qLy85gUA+bM5IvgY3Z2AWC8955moa0=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=uaFdPYJDB7nA8OIA7YwdSMQ1msSCj59eUiol4NpcdorhInZ3ZLZ6+YhpDTFx/kfYlSujQt4wioiAR6iGXuqQZbjc1DT/slKOHAtyRtdDMPUThZ1pU+p4I5RDIhhwdFZZdLfu8HSkGuJnrvHG1CWhVpKrEz38eXTeauiJ3F5NaqM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jDfuHnFp; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MWT2v7uB"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F336CC4CECE;
-	Fri,  4 Oct 2024 18:23:55 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jDfuHnFp"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5258EC4CEC6;
+	Fri,  4 Oct 2024 18:48:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1728066236;
-	bh=Efcfh40coe8lTYot+luTmyVmHaIjn/egYX0OcqlC44c=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=MWT2v7uBRExG7bEW6MEbjfykQfoabjSH0/1qumcd0Ec0ozk0SjN+b2Mpdj3p7Gjn7
-	 oJdy89X5X1akvJ/leLORJnR8l56N9aE0Ri+bHLEX7VryYRZ5rmdgBVL28MR51VrOwB
-	 STgMKM02/D1OQg6rdx3DiyaWQ5DclDDmmXgOkChgbubUxEOrgV3p7qvwBlvk8ns9fD
-	 2UOhlEumxGyydscJsFqb+We+QDEY8eeX4D5NfdxuE7us107rUKyyTSlQqAZf6uVhPK
-	 ATKIKhTOaIibtLAhNjbUbZSIhvmC6GEOCqBO6IWUzHbaxQBND76uh4VxOmHjhaXwah
-	 1uknenjZpjj2A==
-From: Sasha Levin <sashal@kernel.org>
-To: linux-kernel@vger.kernel.org,
-	stable@vger.kernel.org
-Cc: Ken Raeburn <raeburn@redhat.com>,
-	Matthew Sakai <msakai@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Sasha Levin <sashal@kernel.org>,
-	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 6.10 59/70] dm vdo: don't refer to dedupe_context after releasing it
-Date: Fri,  4 Oct 2024 14:20:57 -0400
-Message-ID: <20241004182200.3670903-59-sashal@kernel.org>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20241004182200.3670903-1-sashal@kernel.org>
-References: <20241004182200.3670903-1-sashal@kernel.org>
+	s=k20201202; t=1728067701;
+	bh=1HqgdvKOc/m4/qLy85gUA+bM5IvgY3Z2AWC8955moa0=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=jDfuHnFpMa2Kke9DJFgMsuFPRzKuZeZGJu9ZOakdPAneuj3mEz17czBe1gn2bDqsQ
+	 dThauq2ASkkZ+8UlNcBQXm0n1wiBhN1LySl7trtOX2jNNWLhP1TiJFUBj/Bx4bqF8O
+	 WYU9jqOh33DSRChvrclLBXiXD3ERk7TwYBMFCvxwHFlGZhSYaxeZtxjuXMGOZnufLA
+	 BynRKILRbJW7AEwcF8MxkyDcGiPnsqjGJhPM7GT/InUycDZ4flRg0podnKhi1toROU
+	 xmGMUOKggYwvD+6qq3mgBGszKj+CAu5aaCHYxG8bLK1u882PnP+N81sJI2vE4/Vvsx
+	 RVf2Er26ZaMvw==
+Date: Fri, 4 Oct 2024 18:48:19 +0000
+From: Eric Biggers <ebiggers@kernel.org>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Md Sadre Alam <quic_mdalam@quicinc.com>,
+	Israel Rukshin <israelr@nvidia.com>,
+	Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC PATCH] dm-inlinecrypt: add target for inline block device
+ encryption
+Message-ID: <20241004184819.GA86456@google.com>
+References: <20241004004152.8845-1-ebiggers@kernel.org>
+ <Zv-Ap9E2r1bRT2Wm@infradead.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-stable: review
-X-Patchwork-Hint: Ignore
-X-stable-base: Linux 6.10.13
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <Zv-Ap9E2r1bRT2Wm@infradead.org>
 
-From: Ken Raeburn <raeburn@redhat.com>
+On Thu, Oct 03, 2024 at 10:44:07PM -0700, Christoph Hellwig wrote:
+> On Thu, Oct 03, 2024 at 05:41:52PM -0700, Eric Biggers wrote:
+> > From: Eric Biggers <ebiggers@google.com>
+> > 
+> > Add a new device-mapper target "dm-inlinecrypt" that is similar to
+> > dm-crypt but uses the blk-crypto API instead of the regular crypto API.
+> > This allows it to take advantage of inline encryption hardware such as
+> > that commonly built into UFS host controllers.
+> > 
+> > The table syntax matches dm-crypt's, but for now only a stripped-down
+> > set of parameters is supported.  For example, for now AES-256-XTS is the
+> > only supported cipher.
+> 
+> Maybe I'm stepping into a mine-field here, but if this simply uses
+> blk-crypto to accellerate a subset of dm-crypt, why isn't dm-crypt
+> simply enhanced to use blk-crypto when available?
+> compatible,
+> 
 
-[ Upstream commit 0808ebf2f80b962e75741a41ced372a7116f1e26 ]
+Milan Broz (cryptsetup maintainer) has said that he prefers a separate dm
+target.  See
+https://lore.kernel.org/dm-devel/9ef95bbc-4eee-4c00-f199-0daa3cdd03ed@gmail.com/
 
-Clear the dedupe_context pointer in a data_vio whenever ownership of
-the context is lost, so that vdo can't examine it accidentally.
+That was a couple years ago though, and this discussion seems to have gone
+around in a circle.  Maybe things have changed.
 
-Signed-off-by: Ken Raeburn <raeburn@redhat.com>
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- drivers/md/dm-vdo/dedupe.c | 3 +++
- 1 file changed, 3 insertions(+)
+A dm-crypt extension sounds fine to me too, though keep in mind there will
+eventually be inline crypto exclusive features such as hardware-wrapped keys.
 
-diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
-index 117266e1b3ae1..28b41d5261f4c 100644
---- a/drivers/md/dm-vdo/dedupe.c
-+++ b/drivers/md/dm-vdo/dedupe.c
-@@ -734,6 +734,7 @@ static void process_update_result(struct data_vio *agent)
- 	    !change_context_state(context, DEDUPE_CONTEXT_COMPLETE, DEDUPE_CONTEXT_IDLE))
- 		return;
- 
-+	agent->dedupe_context = NULL;
- 	release_context(context);
- }
- 
-@@ -1653,6 +1654,7 @@ static void process_query_result(struct data_vio *agent)
- 
- 	if (change_context_state(context, DEDUPE_CONTEXT_COMPLETE, DEDUPE_CONTEXT_IDLE)) {
- 		agent->is_duplicate = decode_uds_advice(context);
-+		agent->dedupe_context = NULL;
- 		release_context(context);
- 	}
- }
-@@ -2326,6 +2328,7 @@ static void timeout_index_operations_callback(struct vdo_completion *completion)
- 		 * send its requestor on its way.
- 		 */
- 		list_del_init(&context->list_entry);
-+		context->requestor->dedupe_context = NULL;
- 		continue_data_vio(context->requestor);
- 		timed_out++;
- 	}
--- 
-2.43.0
-
+- Eric
