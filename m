@@ -1,154 +1,160 @@
-Received: from mail-lj1-f169.google.com (mail-lj1-f169.google.com [209.85.208.169])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F02D917BEC7
-	for <dm-devel@lists.linux.dev>; Mon,  7 Oct 2024 08:25:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69FE9101C4
+	for <dm-devel@lists.linux.dev>; Mon,  7 Oct 2024 11:38:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728289561; cv=none; b=seGr/0a+z8CFQzhmhSlSkIDMaVhI/NURavX1b+4hvt3U0ljDBF9LuCANXh0WNUrTkTcsZzkOPex/oMzMdTojnQL84DHZxvvT0IPRIVx4uDtLT/lL6QOkghdiZ2zajcxAPvC7wLRibMIzgp3NiqPsY7/SWXDrgTKgi7mFn4YKBng=
+	t=1728301105; cv=none; b=Fu1qcoj2uoVR2+mZ5AHauzC5fWsHWlnR3uCi+00o8+hpUrFOKR0HZG2BMpUayEL72wsFX66wrcuMboBnSEfnOLfOlCzvYv+hZrqf9yiJwKw2/zHuFOIDGjszzECLrdmbNLjE3grpbsx+GSAFlpshVcTy3R0HFTQKVBCUV1Uam2I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728289561; c=relaxed/simple;
-	bh=QXVzZVpPu6Dv1kvMZgAEHEn7/SvektNGv55P242Yc5Y=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=D1Q/ZSInfYbiG8xzi0IIQZWA8v+bzBQ3SvCfii2FHqkORwEmpmER5jRcL5n11p74B/eNRUENigP4209aRf3sOeiOvjlZgVlz+o2hK/w2PlrNdTk1LS8IMWNXpkCV04nuOCDWxbkK+4KATxgPFNfEgPk8N3LHW6dr4E+3rAuoAe4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=azi0Vh7M; arc=none smtp.client-ip=209.85.208.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1728301105; c=relaxed/simple;
+	bh=/wsRLnEjanUm/zzzr/pxwF1qJ/NNWIXYKSEavIjgAyQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=qjcjPkKacXeqigAUtnvHa2s2bMHNXdW51WPMJ5cDkwQsoBzRjrTWQkvN6kZ6fWnUoh+46NOZvZ4EGSqpsSkSrGGA+uh0SrfOwauxlOCXvnJmkUYrzVn1d6uHFPIMF1Epu8ejofeloXGxiBXNUCQLoircusqGOesXW3f3FzLIE3E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RAur/VRP; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="azi0Vh7M"
-Received: by mail-lj1-f169.google.com with SMTP id 38308e7fff4ca-2facf48166bso46398671fa.0
-        for <dm-devel@lists.linux.dev>; Mon, 07 Oct 2024 01:25:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1728289558; x=1728894358; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=nEC4sxdix5mxm3eDfSssfdfmktWvyvI83Va28TOv6gw=;
-        b=azi0Vh7MpFChFDHQ0C0Iu5/jeSzqpZ0ukllZB1yKbEtPZ2oohdmjsN2d1dyKXcvpoS
-         FVAfLmTZwO0KdlC16RtCfZ9qHuh64sw3lL70ajRKCsX4Xof1LMxpjGRwK4+nFcAI04tM
-         XmSsqx77tTYqvNAVTZu15paUYAs7EdAvbRp4Ddd8KmTxmRmfJZCiARmB71dBPNe8YM31
-         bhdyvJlpYaUQ/g3k6+cC2LpBLhM1gG+wchpcZT0uQzYBdmEIS1dVR0KO7q20JHuVOOJo
-         8oQYrvQkiAt/8Pg90NVbVEJLs6EWs3/7HbXCzNC0uykUd8AJWzMylD3hYFjpi5umatoz
-         qx8A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1728289558; x=1728894358;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=nEC4sxdix5mxm3eDfSssfdfmktWvyvI83Va28TOv6gw=;
-        b=Il3CenjmqiaKp0orJDZjS4kkkSpn9ypRdkb6RAYeoDhAlJIBokmB1QtyuyJ3aTXx7e
-         6dkJRTKvVQnjHgZDwXSwyovl9aIX1e940EGmNFRrE/PgBp4nEWdWUK3Hpu1+145tLIVX
-         JtoCXOLdeZK5H1UcILUzfQieXM0LD+iLN2tavsQkHBUwmCmas8haA0HI00ayaz4OMT92
-         FXMZ2y4GbD0iN3Xwgu/IsGrTh2wDzrxhTBcmNGgNusqt4O93KsnIXVID8MsoBa9DfBNi
-         WTjWobEt0vtLwe60ObQLITLJHb4JrUP3hTMavQNd/ECDdh236P4n623pEdSwnLQIXlNi
-         ve7g==
-X-Forwarded-Encrypted: i=1; AJvYcCWbxWZcPQPlze9tXR1BXZC8h91PJV3LrAzH+G4hM8skYi5RXdak9tqQTHt2ahH+p039bYIY+XPsQQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Ywcj6W7TjPOiCyfO4GRUU+XbCMAwof9TjL8ccuUEE6gop8iIakF
-	4OcWGm8unmVZy0If9v4WYhMHSrz2YpUnNzhPcB+2XR9MJLs9qpZC
-X-Google-Smtp-Source: AGHT+IE8uRm7fdVL7fZ5UE27WP/vnyz3LbdSSyHRpcGH9V0w+NzvxpYmSvCehkR54tLsCb29nlxLMA==
-X-Received: by 2002:a05:6512:b9c:b0:530:aeea:27e1 with SMTP id 2adb3069b0e04-539ab9e6cfcmr5580255e87.50.1728289557884;
-        Mon, 07 Oct 2024 01:25:57 -0700 (PDT)
-Received: from [192.168.2.30] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a992e5bbda0sm349079666b.27.2024.10.07.01.25.56
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 07 Oct 2024 01:25:57 -0700 (PDT)
-Message-ID: <89fe49aa-4c7c-42ef-a59c-c962f4403145@gmail.com>
-Date: Mon, 7 Oct 2024 10:25:56 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RAur/VRP"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1728301101;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=uXvunVyytdZMOqYsf1u6Uqw4XrsVQP3pD2JmmJ6aowk=;
+	b=RAur/VRPmPhZuUGmtVx3quPpBW/Gb6cZBAsCh06Zhr5F64Y4Pr8lOQmSV6O5jkdd5iEIxB
+	2n/k3IGpKxFePdcn8aY3J/7H1zD7WghN6hM5GuRJnCJ4t7vG+c5VK2Dakf3gp+Ob+y0xfM
+	0FkGW72a0fBoejbmSTw5Y63Y/1cCcb8=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-283-JKTJSLNXPh-Ve3fQDmuWwQ-1; Mon,
+ 07 Oct 2024 07:38:20 -0400
+X-MC-Unique: JKTJSLNXPh-Ve3fQDmuWwQ-1
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D7EDE1944A82;
+	Mon,  7 Oct 2024 11:38:18 +0000 (UTC)
+Received: from [10.45.225.58] (unknown [10.45.225.58])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 41C961956052;
+	Mon,  7 Oct 2024 11:38:16 +0000 (UTC)
+Date: Mon, 7 Oct 2024 13:38:12 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Chenyuan Yang <chenyuan0y@gmail.com>
+cc: agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev, 
+    Zijie Zhao <zzjas98@gmail.com>, syzkaller@googlegroups.com, 
+    secalert@redhat.com
+Subject: [PATCH] dm: fix a crash if blk_alloc_disk fails
+In-Reply-To: <CALGdzuo-1QZgk4ZmNXf8_Nyb+d9JLRktCR-3pJZsdVUmKjaXhQ@mail.gmail.com>
+Message-ID: <16e9030d-e55c-47eb-1a2a-dff8a50e6627@redhat.com>
+References: <CALGdzuo-1QZgk4ZmNXf8_Nyb+d9JLRktCR-3pJZsdVUmKjaXhQ@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird Beta
-Subject: Re: [RFC PATCH] dm-inlinecrypt: add target for inline block device
- encryption
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Eric Biggers <ebiggers@kernel.org>, dm-devel@lists.linux.dev,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- Md Sadre Alam <quic_mdalam@quicinc.com>, Israel Rukshin <israelr@nvidia.com>
-References: <20241004004152.8845-1-ebiggers@kernel.org>
- <Zv-Ap9E2r1bRT2Wm@infradead.org> <20241004184819.GA86456@google.com>
- <f335366a-3752-4272-8592-fe1ed9f43aee@gmail.com>
- <ZwN1hDK34h0du5qp@infradead.org>
-Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- xsFNBE94p38BEADZRET8y1gVxlfDk44/XwBbFjC7eM6EanyCuivUPMmPwYDo9qRey0JdOGhW
- hAZeutGGxsKliozmeTL25Z6wWICu2oeY+ZfbgJQYHFeQ01NVwoYy57hhytZw/6IMLFRcIaWS
- Hd7oNdneQg6mVJcGdA/BOX68uo3RKSHj6Q8GoQ54F/NpCotzVcP1ORpVJ5ptyG0x6OZm5Esn
- 61pKE979wcHsz7EzcDYl+3MS63gZm+O3D1u80bUMmBUlxyEiC5jo5ksTFheA8m/5CAPQtxzY
- vgezYlLLS3nkxaq2ERK5DhvMv0NktXSutfWQsOI5WLjG7UWStwAnO2W+CVZLcnZV0K6OKDaF
- bCj4ovg5HV0FyQZknN2O5QbxesNlNWkMOJAnnX6c/zowO7jq8GCpa3oJl3xxmwFbCZtH4z3f
- EVw0wAFc2JlnufR4dhaax9fhNoUJ4OSVTi9zqstxhEyywkazakEvAYwOlC5+1FKoc9UIvApA
- GvgcTJGTOp7MuHptHGwWvGZEaJqcsqoy7rsYPxtDQ7bJuJJblzGIUxWAl8qsUsF8M4ISxBkf
- fcUYiR0wh1luUhXFo2rRTKT+Ic/nJDE66Ee4Ecn9+BPlNODhlEG1vk62rhiYSnyzy5MAUhUl
- stDxuEjYK+NGd2aYH0VANZalqlUZFTEdOdA6NYROxkYZVsVtXQARAQABzSBNaWxhbiBCcm96
- IDxnbWF6eWxhbmRAZ21haWwuY29tPsLBlQQTAQgAPwIbAwYLCQgHAwIGFQgCCQoLBBYCAwEC
- HgECF4AWIQQqKRgkP95GZI0GhvnZsFd72T6Y/AUCYaUUZgUJJPhv5wAKCRDZsFd72T6Y/D5N
- D/438pkYd5NyycQ2Gu8YAjF57Od2GfeiftCDBOMXzh1XxIx7gLosLHvzCZ0SaRYPVF/Nr/X9
- sreJVrMkwd1ILNdCQB1rLBhhKzwYFztmOYvdCG9LRrBVJPgtaYqO/0493CzXwQ7FfkEc4OVB
- uhBs4YwFu+kmhh0NngcP4jaaaIziHw/rQ9vLiAi28p1WeVTzOjtBt8QisTidS2VkZ+/iAgqB
- 9zz2UPkE1UXBAPU4iEsGCVXGWRz99IULsTNjP4K3p8ZpdZ6ovy7X6EN3lYhbpmXYLzZ3RXst
- PEojSvqpkSQsjUksR5VBE0GnaY4B8ZlM3Ng2o7vcxbToQOsOkbVGn+59rpBKgiRadRFuT+2D
- x80VrwWBccaph+VOfll9/4FVv+SBQ1wSPOUHl11TWVpdMFKtQgA5/HHldVqrcEssWJb9/tew
- 9pqxTDn6RHV/pfzKCspiiLVkI66BF802cpyboLBBSvcDuLHbOBHrpC+IXCZ7mgkCrgMlZMql
- wFWBjAu8Zlc5tQJPgE9eeQAQrfZRcLgux88PtxhVihA1OsMNoqYapgMzMTubLUMYCCsjrHZe
- nzw5uTcjig0RHz9ilMJlvVbhwVVLmmmf4p/R37QYaqm1RycLpvkUZUzSz2NCyTcZp9nM6ooR
- GhpDQWmUdH1Jz9T6E9//KIhI6xt4//P15ZfiIs7BTQRPeKd/ARAA3oR1fJ/D3GvnoInVqydD
- U9LGnMQaVSwQe+fjBy5/ILwo3pUZSVHdaKeVoa84gLO9g6JLToTo+ooMSBtsCkGHb//oiGTU
- 7KdLTLiFh6kmL6my11eiK53o1BI1CVwWMJ8jxbMBPet6exUubBzceBFbmqq3lVz4RZ2D1zKV
- njxB0/KjdbI53anIv7Ko1k+MwaKMTzO/O6vBmI71oGQkKO6WpcyzVjLIip9PEpDUYJRCrhKg
- hBeMPwe+AntP9Om4N/3AWF6icarGImnFvTYswR2Q+C6AoiAbqI4WmXOuzJLKiImwZrSYnSfQ
- 7qtdDGXWYr/N1+C+bgI8O6NuAg2cjFHE96xwJVhyaMzyROUZgm4qngaBvBvCQIhKzit61oBe
- I/drZ/d5JolzlKdZZrcmofmiCQRa+57OM3Fbl8ykFazN1ASyCex2UrftX5oHmhaeeRlGVaTV
- iEbAvU4PP4RnNKwaWQivsFhqQrfFFhvFV9CRSvsR6qu5eiFI6c8CjB49gBcKKAJ9a8gkyWs8
- sg4PYY7L15XdRn8kOf/tg98UCM1vSBV2moEJA0f98/Z48LQXNb7dgvVRtH6owARspsV6nJyD
- vktsLTyMW5BW9q4NC1rgQC8GQXjrQ+iyQLNwy5ESe2MzGKkHogxKg4Pvi1wZh9Snr+RyB0Rq
- rIrzbXhyi47+7wcAEQEAAcLBfAQYAQgAJgIbDBYhBCopGCQ/3kZkjQaG+dmwV3vZPpj8BQJh
- pRSXBQkk+HAYAAoJENmwV3vZPpj8BPMP/iZV+XROOhs/MsKd7ngQeFgETkmt8YVhb2Rg3Vgp
- AQe9cn6aw9jk3CnB0ecNBdoyyt33t3vGNau6iCwlRfaTdXg9qtIyctuCQSewY2YMk5AS8Mmb
- XoGvjH1Z/irrVsoSz+N7HFPKIlAy8D/aRwS1CHm9saPQiGoeR/zThciVYncRG/U9J6sV8XH9
- OEPnQQR4w/V1bYI9Sk+suGcSFN7pMRMsSslOma429A3bEbZ7Ikt9WTJnUY9XfL5ZqQnjLeRl
- 8243OTfuHSth26upjZIQ2esccZMYpQg0/MOlHvuFuFu6MFL/gZDNzH8jAcBrNd/6ABKsecYT
- nBInKH2TONc0kC65oAhrSSBNLudTuPHce/YBCsUCAEMwgJTybdpMQh9NkS68WxQtXxU6neoQ
- U7kEJGGFsc7/yXiQXuVvJUkK/Xs04X6j0l1f/6KLoNQ9ep/2In596B0BcvvaKv7gdDt1Trgg
- vlB+GpT+iFRLvhCBe5kAERREfRfmWJq1bHod/ulrp/VLGAaZlOBTgsCzufWF5SOLbZkmV2b5
- xy2F/AU3oQUZncCvFMTWpBC+gO/o3kZCyyGCaQdQe4jS/FUJqR1suVwNMzcOJOP/LMQwujE/
- Ch7XLM35VICo9qqhih4OvLHUAWzC5dNSipL+rSGHvWBdfXDhbezJIl6sp7/1rJfS8qPs
-In-Reply-To: <ZwN1hDK34h0du5qp@infradead.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-
-On 10/7/24 7:45 AM, Christoph Hellwig wrote:
-> On Fri, Oct 04, 2024 at 09:21:47PM +0200, Milan Broz wrote:
->> There was another discussion recently. I also discussed this with Mikulas
->> as DM maintainer, and we agreed this is the best way.
->>
->> Extending dm-crypt is possible, but the dm-crypt threat model should not allow
->> pushing plaintext down the level.
+> Modules linked in:
+> ---[ end trace 0000000000000000 ]---
+> RIP: 0010:cleanup_mapped_device+0x202/0x580 drivers/md/dm.c:2198
+> Code: 03 80 3c 02 00 0f 85 28 03 00 00 48 8b 9d 08 02 00 00 48 b8 00
+> 00 00 00 00 fc ff df 48 8d bb 98 00 00 00 48 89 fa 48 c1 ea 03 <80> 3c
+> 02 00 0f 85 19 03 00 00 48 c7 c7 00 57 39 8f 48 c7 83 98 00
+> RSP: 0018:ffffc9000e5f7b80 EFLAGS: 00010217
+> RAX: dffffc0000000000 RBX: fffffffffffffff4 RCX: ffffffff8169176c
+> RDX: 0000000000000011 RSI: 0000000000000004 RDI: 000000000000008c
+> RBP: ffff888047717000 R08: 0000000000000001 R09: fffff52001cbef62
+> R10: 0000000000000003 R11: 0000000000000000 R12: ffff888047717208
+> R13: ffff888047717090 R14: ffff888047717208 R15: ffff88802ba3d9e8
+> FS:  00005555642a83c0(0000) GS:ffff88802ba00000(0000) knlGS:0000000000000000
+> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> CR2: 00007fe48631f1f8 CR3: 0000000000c22000 CR4: 0000000000750ef0
+> PKRU: 55555554
+> ----------------
+> Code disassembly (best guess):
+>    0: 03 80 3c 02 00 0f     add    0xf00023c(%rax),%eax
+>    6: 85 28                 test   %ebp,(%rax)
+>    8: 03 00                 add    (%rax),%eax
+>    a: 00 48 8b             add    %cl,-0x75(%rax)
+>    d: 9d                   popf
+>    e: 08 02                 or     %al,(%rdx)
+>   10: 00 00                 add    %al,(%rax)
+>   12: 48 b8 00 00 00 00 00 movabs $0xdffffc0000000000,%rax
+>   19: fc ff df
+>   1c: 48 8d bb 98 00 00 00 lea    0x98(%rbx),%rdi
+>   23: 48 89 fa             mov    %rdi,%rdx
+>   26: 48 c1 ea 03           shr    $0x3,%rdx
+> * 2a: 80 3c 02 00           cmpb   $0x0,(%rdx,%rax,1) <-- trapping instruction
+>   2e: 0f 85 19 03 00 00     jne    0x34d
+>   34: 48 c7 c7 00 57 39 8f mov    $0xffffffff8f395700,%rdi
+>   3b: 48                   rex.W
+>   3c: c7                   .byte 0xc7
+>   3d: 83                   .byte 0x83
+>   3e: 98                   cwtl
 > 
-> As should any other stackable crypto driver, so that's not an argument
-> per se.  Allowing to bypass encryption in a lower layer is simply
-> broken, no matter what you call the target.
+> 
+> Syzkaller reproducer:
+> # {Threaded:false Repeat:true RepeatTimes:0 Procs:1 Slowdown:1
+> Sandbox: SandboxArg:0 Leak:false NetInjection:false NetDevices:false
+> NetReset:false Cgroups:false BinfmtMisc:false CloseFDs:false
+> KCSAN:false DevlinkPCI:false NicVF:false USB:false VhciInjection:false
+> Wifi:false IEEE802154:false Sysctl:false Swap:false UseTmpDir:false
+> HandleSegv:false Trace:false LegacyOptions:{Collide:false Fault:false
+> FaultCall:0 FaultNth:0}}
+> ioctl$KGPT_CEC_ADAP_S_LOG_ADDRS(0xffffffffffffffff, 0xc05c6104,
+> &(0x7f0000000080)={"8072609d", 0x4, 0x6, 0x8, 0xffff, 0x6,
+> "000780427bee50eb00", '\x00\a\x00', "8529b501", "3bf5c9d5",
+> ["f1c758509a071a2ded4470ab", "fe1285a1e9c9879d543c15d2",
+> "d6de4e2d5ae55cebb6bac1e1", "dd8866305b4f75e67daa6d8b"]})
+> r0 = openat$KGPT_SYZKALM_dm_ctl(0xffffffffffffff9c, &(0x7f0000000040), 0x2, 0x0)
+> ioctl$KGPT_DM_DEV_STATUS(r0, 0xc138fd07,
+> &(0x7f0000000080)="58c18237165e55872d5dacbed6a0")
+> ioctl$KGPT_DM_DEV_CREATE(r0, 0xc138fd03, &(0x7f0000000080)) (fail_nth: 8)
 
-I am talking from the security point of view. Now, dm-crypt does not trust
-storage devices. Storage devices will never see plaintext (or key).
-With inline crypto, it needs to see both.
+Hi
 
-My goal is to mitigate these risks completely with dm-crypt, while clearly
-saying dm-inlinecrypt will have a different threat model.
+Here I'm submitting a patch for this bug.
 
-(Yes, if inline crypto is used through crypto API, we have the same problem,
-but you can mitigate it by turning off specific crypto modules.)
+Mikulas
 
-You are right that such a system is broken, but it is too late if it leaks.
 
-I see several self-encryption hardware where it was so broken that vendors
-basically say, "use sw crypto" but this will not stop users from using it
-in a broken state.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-Milan
+If blk_alloc_disk fails, the variable md->disk is set to an error value. 
+cleanup_mapped_device will see that md->disk is non-NULL and it will 
+attempt to access it, causing a crash on this statement 
+"md->disk->private_data = NULL;".
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Reported-by: Chenyuan Yang <chenyuan0y@gmail.com>
+Closes: https://marc.info/?l=dm-devel&m=172824125004329&w=2
+Cc: stable@vger.kernel.org
+
+---
+ drivers/md/dm.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2024-09-30 16:40:54.000000000 +0200
++++ linux-2.6/drivers/md/dm.c	2024-10-07 13:23:40.000000000 +0200
+@@ -2290,8 +2290,10 @@ static struct mapped_device *alloc_dev(i
+ 	 * override accordingly.
+ 	 */
+ 	md->disk = blk_alloc_disk(NULL, md->numa_node_id);
+-	if (IS_ERR(md->disk))
++	if (IS_ERR(md->disk)) {
++		md->disk = NULL;
+ 		goto bad;
++	}
+ 	md->queue = md->disk->queue;
+ 
+ 	init_waitqueue_head(&md->wait);
 
