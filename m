@@ -1,194 +1,217 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A86F41FEFC9
-	for <dm-devel@lists.linux.dev>; Tue,  8 Oct 2024 19:16:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CDD01E0E1F
+	for <dm-devel@lists.linux.dev>; Tue,  8 Oct 2024 19:17:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728414982; cv=none; b=eWiRul0okVH1KqAf2P7ncIDvY87rC+wqtLj7ccKLWs482OH9jhQoPCUgT45L36qpWI7lm6x/9fymN8aON6YAK8lUdN8/xaLzlB9aRoErFcThWIVZqYPEXGBG0x2AK0Wp4dZDvEKWP5Oc5sZWJ51mncJPW2xTAXOyujILI9mtQsY=
+	t=1728415036; cv=none; b=Wadu28oL8W5Viiy3vyjgxreYUUl5ZXhKFsHXdPQ2G73mt7Pr4ekTosBpBuOvLuUSbatbRiZUHpVFaJIFgJ00+dTRwkfQ/58PSXAp+gOLL7Af3n18v1QSYHxE7Pm7w/AkjLOlsWIgWyHgriGuOAII6WnT72WxjHqfKDR05kuEtjg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728414982; c=relaxed/simple;
-	bh=7rVqTzrd1fuHWoRVSUe9e3j6vjx4Cv5JoMsVtXvzMBY=;
+	s=arc-20240116; t=1728415036; c=relaxed/simple;
+	bh=27lKZVxTPRfeTapcoZvxIg7ehHKKMn63fThsfNUGHVQ=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=B+iOdRNb7TOvmg0CToNelNmReC1I+QdMTPdbgvpcJ+xduhXTQnjM8DWjuEONgS5NgwWyzvrGbH5Q6ySGAITlvP402hYCrLV3NEFQrxeymrwSGvzOWPMrZ3qBT0zOwHjsXzWm3c6N7Wa7g7cBLJM6Eg/tfTdukkWOV62biYI9lkQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JTIxDfUD; arc=none smtp.client-ip=170.10.133.124
+	 In-Reply-To:Content-Type:Content-Disposition; b=q3JiwIFs+zjoSXthlSW/xoa1a9zJWKO6EHewVTiDVZI+zPW/M7zOboeTku7iSpZGO+RTxId33pageyReZdiM5QLO/AJGACgIbep/IFKH8yOCb46MbJoVe86vEAuoMjG1r7wsdZPzSd9yt6qtrnFmFzOdIoZt37p2oBc66TZotJY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RLttOve7; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JTIxDfUD"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RLttOve7"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1728414979;
+	s=mimecast20190719; t=1728415033;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=gFJguITKpi5EDCjuIXv0HXQK7Va0j7jY1Uxmb3pDCXw=;
-	b=JTIxDfUDCa2pxQ6fxHDK4maXz6jkLsUT4jeRwUdJRulIOKBlHDPue6p4y3Bqf0I2GMhwVG
-	df8Dxf9FUXEVuzLsRiAqeUmk2hZavVI5Y+Eh6LKFbSsYN++AzGRIS29exItUtx6b1KkrHG
-	khAGNcRLHNaf9x7Mn779+jpGIgaoFq4=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=HmSB4LRrQD2cdsMy/Kymm3CfsPEJ2nUa3dG77r8Qp5E=;
+	b=RLttOve7UZKVkyma7do5S206RMT1tPQVCVzSv7IMuGyxGIyCPg1VqcWPZnPU5CEG2TyFph
+	nPz+nK/YCWypGuef/MR4mgNDbYzFGtvS21kJRg3TxwIOObf1vpv/c5U4+iplzMUNXdTaTc
+	2ttTpYT8sio+r27PU5JhfCpit94QomM=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-170-GvvckyQYPvC2V9sdj9Cs6A-1; Tue,
- 08 Oct 2024 15:16:14 -0400
-X-MC-Unique: GvvckyQYPvC2V9sdj9Cs6A-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-520-pT3DwYKPP5q77r4T0VNAhQ-1; Tue,
+ 08 Oct 2024 15:17:10 -0400
+X-MC-Unique: pT3DwYKPP5q77r4T0VNAhQ-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EFAC51956046;
-	Tue,  8 Oct 2024 19:16:12 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 21D7C1955D80;
+	Tue,  8 Oct 2024 19:17:09 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AD9E719560AE;
-	Tue,  8 Oct 2024 19:16:12 +0000 (UTC)
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CD146300018D;
+	Tue,  8 Oct 2024 19:17:08 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 498JGBjx2369462
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 498JH7oC2369487
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 8 Oct 2024 15:16:11 -0400
+	Tue, 8 Oct 2024 15:17:07 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 498JGBuO2369461;
-	Tue, 8 Oct 2024 15:16:11 -0400
-Date: Tue, 8 Oct 2024 15:16:11 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 498JH7cf2369486;
+	Tue, 8 Oct 2024 15:17:07 -0400
+Date: Tue, 8 Oct 2024 15:17:07 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Martin Wilck <martin.wilck@suse.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
         device-mapper development <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH v2 12/22] multipathd: split check_paths into two functions
-Message-ID: <ZwWE--JLpEMyqOwx@redhat.com>
+Subject: Re: [PATCH v2 14/22] multipathd: update priority once after updating
+ all paths
+Message-ID: <ZwWFMwUxI5zVf5Dm@redhat.com>
 References: <20240912214947.783819-1-bmarzins@redhat.com>
- <20240912214947.783819-13-bmarzins@redhat.com>
- <eb63e364321e7af634dc9aa8296e1820d3355e45.camel@suse.com>
+ <20240912214947.783819-15-bmarzins@redhat.com>
+ <be3a772cdd136269ddd0bb3287f522e7eeb1e6ba.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <eb63e364321e7af634dc9aa8296e1820d3355e45.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+In-Reply-To: <be3a772cdd136269ddd0bb3287f522e7eeb1e6ba.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 
-On Thu, Oct 03, 2024 at 10:41:20PM +0200, Martin Wilck wrote:
+On Thu, Oct 03, 2024 at 11:00:20PM +0200, Martin Wilck wrote:
 > On Thu, 2024-09-12 at 17:49 -0400, Benjamin Marzinski wrote:
-> > Instead of checking and updating each path, the checkerloop now
-> > starts
-> > the checkers on all the paths in check_paths(), and then goes back
-> > and
-> > updates all the paths in update_paths(). Since the async checkers use
-> > an
-> > absolute time to wait for before returning PATH_PENDING, only one
-> > checker actually needs to be waited for in update_paths(). The rest
-> > will
-> > already have reached their timeout when update_path() is called for
-> > them.
-> > 
-> > The check_paths() and update_paths() loop over the pathvec instead of
-> > looping through the multipath device paths to avoid having to restart
-> > checking of the device paths when the multipath device needs to be
-> > resynced while updating the paths.
+> > Instead of updating the path priorities and possibly reloading the
+> > multipath device when each path is updated, wait till all paths
+> > have been updated, and then go through the multipath devices updating
+> > the priorities once, reloading if necessary.
 > > 
 > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > > ---
-> >  libmultipath/structs.h |  10 +++-
-> >  multipathd/main.c      | 105 +++++++++++++++++++--------------------
+> >  libmultipath/structs.h |   9 +++
+> >  multipathd/main.c      | 169 ++++++++++++++++++++++++++-------------
 > > --
-> >  2 files changed, 57 insertions(+), 58 deletions(-)
+> >  2 files changed, 118 insertions(+), 60 deletions(-)
 > > 
 > > diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> > index d8231e95..af8e31e9 100644
+> > index af8e31e9..1f531d30 100644
 > > --- a/libmultipath/structs.h
 > > +++ b/libmultipath/structs.h
-> > @@ -314,6 +314,14 @@ enum recheck_wwid_states {
-> >  	RECHECK_WWID_ON = YNU_YES,
+> > @@ -318,6 +318,7 @@ enum check_path_states {
+> >  	CHECK_PATH_UNCHECKED,
+> >  	CHECK_PATH_STARTED,
+> >  	CHECK_PATH_CHECKED,
+> > +	CHECK_PATH_NEW_UP,
+> >  	CHECK_PATH_SKIPPED,
+> >  	CHECK_PATH_REMOVED,
+> >  };
+> > @@ -421,6 +422,13 @@ enum prflag_value {
+> >  	PRFLAG_SET,
 > >  };
 > >  
-> > +enum check_path_states {
-> > +	CHECK_PATH_UNCHECKED,
-> > +	CHECK_PATH_STARTED,
-> > +	CHECK_PATH_CHECKED,
-> > +	CHECK_PATH_SKIPPED,
-> > +	CHECK_PATH_REMOVED,
+> > +enum prio_update_type {
+> > +	PRIO_UPDATE_NONE,
+> > +	PRIO_UPDATE_NORMAL,
+> > +	PRIO_UPDATE_NEW_PATH,
+> > +	PRIO_UPDATE_MARGINAL,
 > > +};
 > > +
-> >  struct vpd_vendor_page {
-> >  	int pg;
-> >  	const char *name;
-> > @@ -395,7 +403,7 @@ struct path {
-> >  	int fast_io_fail;
-> >  	unsigned int dev_loss;
-> >  	int eh_deadline;
-> > -	bool is_checked;
-> > +	enum check_path_states is_checked;
-> >  	bool can_use_env_uid;
-> >  	unsigned int checker_timeout;
-> >  	/* configlet pointers */
+> >  struct multipath {
+> >  	char wwid[WWID_SIZE];
+> >  	char alias_old[WWID_SIZE];
+> > @@ -464,6 +472,7 @@ struct multipath {
+> >  	int queue_mode;
+> >  	unsigned int sync_tick;
+> >  	int synced_count;
+> > +	enum prio_update_type prio_update;
+> >  	uid_t uid;
+> >  	gid_t gid;
+> >  	mode_t mode;
 > > diff --git a/multipathd/main.c b/multipathd/main.c
-> > index 45d40559..9519b6c5 100644
+> > index 9519b6c5..3cda3c18 100644
 > > --- a/multipathd/main.c
 > > +++ b/multipathd/main.c
-> > @@ -2389,13 +2389,6 @@ sync_mpp(struct vectors * vecs, struct
-> > multipath *mpp, unsigned int ticks)
-> >  	do_sync_mpp(vecs, mpp);
+> > @@ -1996,15 +1996,13 @@ mpvec_garbage_collector (struct vectors *
+> > vecs)
+> >   * best pathgroup, and this is the first path in the pathgroup to
+> > come back
+> >   * up, then switch to this pathgroup */
+> >  static int
+> > -followover_should_failback(struct path * pp)
+> > +do_followover_should_failback(struct path * pp)
+> >  {
+> >  	struct pathgroup * pgp;
+> >  	struct path *pp1;
+> >  	int i;
+> >  
+> > -	if (pp->mpp->pgfailback != -FAILBACK_FOLLOWOVER ||
+> > -	    !pp->mpp->pg || !pp->pgindex ||
+> > -	    pp->pgindex != pp->mpp->bestpg)
+> > +	if (!pp->pgindex || pp->pgindex != pp->mpp->bestpg)
+> >  		return 0;
+> >  
+> >  	pgp = VECTOR_SLOT(pp->mpp->pg, pp->pgindex - 1);
+> > @@ -2017,6 +2015,26 @@ followover_should_failback(struct path * pp)
+> >  	return 1;
 > >  }
 > >  
-> > -enum check_path_return {
-> > -	CHECK_PATH_STARTED,
-> > -	CHECK_PATH_CHECKED,
-> > -	CHECK_PATH_SKIPPED,
-> > -	CHECK_PATH_REMOVED,
-> > -};
-> > -
-> >  static int
-> >  update_path_state (struct vectors * vecs, struct path * pp)
+> > +static int
+> > +followover_should_failback(struct multipath *mpp)
+> > +{
+> > +	struct path *pp;
+> > +	struct pathgroup * pgp;
+> > +	int i, j;
+> > +
+> > +	if (mpp->pgfailback != -FAILBACK_FOLLOWOVER || !mpp->pg)
+> > +		return 0;
+> > +
+> > +	vector_foreach_slot (mpp->pg, pgp, i) {
+> > +		vector_foreach_slot (pgp->paths, pp, j) {
+> > +			if (pp->is_checked == CHECK_PATH_NEW_UP &&
+> > +			    do_followover_should_failback(pp))
+> > +				return 1;
+> > +		}
+> > +	}
+> > +	return 0;
+> > +}
+> > +
+> >  static void
+> >  missing_uev_wait_tick(struct vectors *vecs)
 > >  {
-> > @@ -2735,6 +2728,7 @@ check_uninitialized_path(struct path * pp,
-> > unsigned int ticks)
-> >  	conf = get_multipath_config();
-> >  	retrigger_tries = conf->retrigger_tries;
-> >  	pp->tick = conf->max_checkint;
-> > +	pp->checkint = conf->checkint;
-> >  	put_multipath_config(conf);
+> > @@ -2132,41 +2150,53 @@ partial_retrigger_tick(vector pathvec)
+> >  	}
+> >  }
 > >  
-> >  	if (pp->initialized == INIT_MISSING_UDEV) {
-> > @@ -2778,6 +2772,10 @@ update_uninitialized_path(struct vectors *
-> > vecs, struct path * pp)
-> >  	int newstate, ret;
+> > -static int update_prio(struct path *pp, int force_refresh_all)
+> > +static bool update_prio(struct multipath *mpp, bool refresh_all)
+> >  {
+> >  	int oldpriority;
+> > -	struct path *pp1;
+> > +	struct path *pp;
+> >  	struct pathgroup * pgp;
+> > -	int i, j, changed = 0;
+> > +	int i, j;
+> > +	bool changed = false;
+> > +	bool skipped_path = false;
 > >  	struct config *conf;
 > >  
-> > +	if (pp->initialized != INIT_NEW && pp->initialized !=
-> > INIT_FAILED &&
-> > +	    pp->initialized != INIT_MISSING_UDEV)
-> > +		return CHECK_PATH_SKIPPED;
-> > +
-> >  	newstate = get_new_state(pp);
-> >  
+> > -	oldpriority = pp->priority;
+> > -	if (pp->state != PATH_DOWN) {
+> > -		conf = get_multipath_config();
+> > -		pthread_cleanup_push(put_multipath_config, conf);
+> > -		pathinfo(pp, conf, DI_PRIO);
+> > -		pthread_cleanup_pop(1);
+> > +	vector_foreach_slot (mpp->pg, pgp, i) {
+> > +		vector_foreach_slot (pgp->paths, pp, j) {
+> > +			if (pp->state == PATH_DOWN)
+> > +				continue;
+> > +			if (!refresh_all &&
+> > +			    pp->is_checked != CHECK_PATH_CHECKED) {
+> > +				skipped_path = true;
+> > +				continue;
+> > +			}
 > 
-> It seems to me that this hunk and the previous one belong into 11/22.
+> Nit: My first thought here was that this would skip paths for which 
+> pp->is_checked == CHECK_PATH_NEW_UP. Then I realized that if there was
+> a new path up, refresh_all would be set, which is not immediately
+> obvious. Can you add a comment?
 
-Setting pp->checkint could certainly go in the earlier patch. It's just
-there to match check_path(), although to be honest, I'm still not sure
-that there is any way for either check_path() or
-check_uninitialized_path() to get called with pp->checkint unset.
- 
-The checking the path->initialized state in update_uninitialized_path()
-makes less sense. That code is already in check_unintialized_path(). In
-11/22, update_uninitialized_path() is always called immediately after
-check_unintialized_path() if it's called at all, and pp->initialized
-never has a chance to change.
+Sure.
 
-In this patch, check_unintialized_path() is called in check_paths(), and
-it's possible that path checking takes too long, and we need take a
-break and yield to other vecs lock waiters before we call
-update_paths(), where update_uninitialized_path() is called. In this
-case, it's possible that a uevent got processed and changed
-pp->initialized, so we need to recheck it in
-update_uninitialized_path().
-
--Ben
-
+> 
 > Martin
 
