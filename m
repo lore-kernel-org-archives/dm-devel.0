@@ -1,60 +1,60 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E7451D69E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8761210FB
 	for <dm-devel@lists.linux.dev>; Wed,  9 Oct 2024 01:15:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728436534; cv=none; b=ZDNAQ/4LhLBrg3W8gCr9zcYV434Geg7a2LEhdcir99N+E2rnOzWN05yxf/gMgHyva2kptrI8jk86Mt/deLFFdtg1tW+6APY2RdbxmrhcXXGmtXh2UfhaNIhgUckqotSrMC1eoA+h0u4SxrrWuStEomr7hIPklRkdgrqw9sEhxaU=
+	t=1728436534; cv=none; b=aHWKZxenOsAjRiWrQ8ln1bgiBscq3IkzhL7BlExnCXojCk+dVQcPunB3MKddjqjlmTkTQDAp66n2knZosr1E84pchEGmtIqyaKDdo2/anCVDrWmgokrEbTX5vpKYHyjaUMtfcH31WfwUtsPBRJ07eyChtJn8AlNVlo1SGW9igY0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1728436534; c=relaxed/simple;
-	bh=e6OzqhsAonj4bA/TeGJUiRtgmpbsZ7PzyPONeAorJIE=;
+	bh=ag4LoPZGTQKSadSxgqREFDqvcz5GzuEwdtaJacB+dKk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=A2fSRL2e5JAfnWeUXprsS6Rk06bU8dQSgb9/OdbN+kLl0VJbPkEFoqb8GEgRVJw5qaIoVNP3d9oPYo7/vYY9nciHHB4LWXxwqs5O2YA1RgGElWc3Io3kqpeYhsjcXEt2guBv04F4a9+jUNtODvwjbcxbYhPz5GmlmynKIhAsmiY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YXeELukt; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=gGxxAjwTBeZefakoAh+2vO9lHLt0t4EqGdFck73X5SDDRIZSpsSWItku4RrQEonIhQCCL9kF1hs7uib37UusyqeTuBs0LWyDA2zc/enZwBrtz92JlcpEeK9xNYtPmLoUq7JT58L8cQ7BcAhf4KN9XpHi3XzxMZiA1N//c8/UR94=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HTLzixKH; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YXeELukt"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HTLzixKH"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1728436530;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Q0amrwaMhpzwHVsclVNYT1+bKgK5IvtHmiQkFNtvjBE=;
-	b=YXeELuktuv9MNHqMEE5tqM7qA499NqZhQ62oBf+a0jP5H9rCCm+Ya6+oxMMehCrE1whvCE
-	Q8CXjZc8mdz3kUY8Et75fC2HMX/Kv5YE+EeY3jwMpoPW+hx7r+QJM/g/n9RKuYzOm2XX4X
-	eJBFquPysln6yrQ2ypmf+2gOjaFt0sU=
+	bh=b3MeuiXHpoDkGrIha11WWIwSL5siHJTfu9lyMXGZ7iA=;
+	b=HTLzixKH7v730B9fnJEeCL0aPG13RbN/g+tkg+ebAQS2b9kuiLiJAyJMADgmRdnHG8c9UY
+	U1lztlMJPDfmm+8Au+BuwzuWXGPicLcU9R+sDexib547bCUeQreRkuWEJiFwO4UFh0EAdo
+	UEpNltF/k/XFUmL76Dd9LQzmiQKuwzY=
 Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-468-XxDCrwLNOnm2llaWwGa0pw-1; Tue,
- 08 Oct 2024 21:15:28 -0400
-X-MC-Unique: XxDCrwLNOnm2llaWwGa0pw-1
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-561-3b7y_gtpN0eBAxDQ7zuuuw-1; Tue,
+ 08 Oct 2024 21:15:27 -0400
+X-MC-Unique: 3b7y_gtpN0eBAxDQ7zuuuw-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CAB3F1955F40;
-	Wed,  9 Oct 2024 01:15:27 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7C05F19560BD;
+	Wed,  9 Oct 2024 01:15:26 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8774719560A3;
-	Wed,  9 Oct 2024 01:15:27 +0000 (UTC)
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 35F5E19560A7;
+	Wed,  9 Oct 2024 01:15:26 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4991FQKv2381664
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4991FO8Y2381628
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 8 Oct 2024 21:15:26 -0400
+	Tue, 8 Oct 2024 21:15:24 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4991FQGL2381663;
-	Tue, 8 Oct 2024 21:15:26 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4991FO882381627;
+	Tue, 8 Oct 2024 21:15:24 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v4 14/22] multipathd: update priority once after updating all paths
-Date: Tue,  8 Oct 2024 21:15:15 -0400
-Message-ID: <20241009011523.2381575-15-bmarzins@redhat.com>
+        Martin Wilck <Martin.Wilck@suse.com>, Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v4 05/22] multipath-tools tests: fix up directio tests
+Date: Tue,  8 Oct 2024 21:15:06 -0400
+Message-ID: <20241009011523.2381575-6-bmarzins@redhat.com>
 In-Reply-To: <20241009011523.2381575-1-bmarzins@redhat.com>
 References: <20241009011523.2381575-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -63,342 +63,348 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Instead of updating the path priorities and possibly reloading the
-multipath device when each path is updated, wait till all paths
-have been updated, and then go through the multipath devices updating
-the priorities once, reloading if necessary.
+Make the directio tests work with libcheck_pending() being separate from
+libcheck_check
 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs.h |   9 +++
- multipathd/main.c      | 174 +++++++++++++++++++++++++++--------------
- 2 files changed, 123 insertions(+), 60 deletions(-)
+ tests/directio.c | 133 +++++++++++++++++++++++++++++------------------
+ 1 file changed, 82 insertions(+), 51 deletions(-)
 
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index af8e31e9..1f531d30 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -318,6 +318,7 @@ enum check_path_states {
- 	CHECK_PATH_UNCHECKED,
- 	CHECK_PATH_STARTED,
- 	CHECK_PATH_CHECKED,
-+	CHECK_PATH_NEW_UP,
- 	CHECK_PATH_SKIPPED,
- 	CHECK_PATH_REMOVED,
- };
-@@ -421,6 +422,13 @@ enum prflag_value {
- 	PRFLAG_SET,
- };
- 
-+enum prio_update_type {
-+	PRIO_UPDATE_NONE,
-+	PRIO_UPDATE_NORMAL,
-+	PRIO_UPDATE_NEW_PATH,
-+	PRIO_UPDATE_MARGINAL,
-+};
-+
- struct multipath {
- 	char wwid[WWID_SIZE];
- 	char alias_old[WWID_SIZE];
-@@ -464,6 +472,7 @@ struct multipath {
- 	int queue_mode;
- 	unsigned int sync_tick;
- 	int synced_count;
-+	enum prio_update_type prio_update;
- 	uid_t uid;
- 	gid_t gid;
- 	mode_t mode;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ca84331d..f48dbe25 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1996,15 +1996,13 @@ mpvec_garbage_collector (struct vectors * vecs)
-  * best pathgroup, and this is the first path in the pathgroup to come back
-  * up, then switch to this pathgroup */
- static int
--followover_should_failback(struct path * pp)
-+do_followover_should_failback(struct path * pp)
- {
- 	struct pathgroup * pgp;
- 	struct path *pp1;
- 	int i;
- 
--	if (pp->mpp->pgfailback != -FAILBACK_FOLLOWOVER ||
--	    !pp->mpp->pg || !pp->pgindex ||
--	    pp->pgindex != pp->mpp->bestpg)
-+	if (!pp->pgindex || pp->pgindex != pp->mpp->bestpg)
- 		return 0;
- 
- 	pgp = VECTOR_SLOT(pp->mpp->pg, pp->pgindex - 1);
-@@ -2017,6 +2015,26 @@ followover_should_failback(struct path * pp)
- 	return 1;
+diff --git a/tests/directio.c b/tests/directio.c
+index 763929e5..2e22f831 100644
+--- a/tests/directio.c
++++ b/tests/directio.c
+@@ -219,13 +219,22 @@ static void return_io_getevents_nr(struct timespec *ts, int nr,
+ 	ev_off += i;
  }
  
-+static int
-+followover_should_failback(struct multipath *mpp)
-+{
-+	struct path *pp;
-+	struct pathgroup * pgp;
-+	int i, j;
-+
-+	if (mpp->pgfailback != -FAILBACK_FOLLOWOVER || !mpp->pg)
-+		return 0;
-+
-+	vector_foreach_slot (mpp->pg, pgp, i) {
-+		vector_foreach_slot (pgp->paths, pp, j) {
-+			if (pp->is_checked == CHECK_PATH_NEW_UP &&
-+			    do_followover_should_failback(pp))
-+				return 1;
-+		}
+-void do_check_state(struct checker *c, int sync, int timeout, int chk_state)
++void do_check_state(struct checker *c, int sync, int chk_state)
+ {
+ 	struct directio_context * ct = (struct directio_context *)c->context;
+ 
+ 	if (!ct->running)
+ 		will_return(__wrap_io_submit, 1);
+-	assert_int_equal(check_state(test_fd, ct, sync, timeout), chk_state);
++	assert_int_equal(check_state(test_fd, ct, sync, c->timeout), chk_state);
++	if (sync) {
++		assert_int_equal(ev_off, 0);
++		memset(mock_events, 0, sizeof(mock_events));
 +	}
-+	return 0;
 +}
 +
- static void
- missing_uev_wait_tick(struct vectors *vecs)
- {
-@@ -2132,41 +2150,58 @@ partial_retrigger_tick(vector pathvec)
- 	}
++void do_libcheck_pending(struct checker *c, int chk_state)
++{
++	assert_int_equal(libcheck_pending(c), chk_state);
+ 	assert_int_equal(ev_off, 0);
+ 	memset(mock_events, 0, sizeof(mock_events));
+ }
+@@ -245,12 +254,13 @@ void do_libcheck_reset(int nr_aio_grps)
+ 	assert_int_equal(ioctx_count, 0);
  }
  
--static int update_prio(struct path *pp, int force_refresh_all)
-+static bool update_prio(struct multipath *mpp, bool refresh_all)
+-static void do_libcheck_init(struct checker *c, int blocksize,
++static void do_libcheck_init(struct checker *c, int blocksize, int timeout,
+ 			     struct async_req **req)
  {
- 	int oldpriority;
--	struct path *pp1;
-+	struct path *pp;
- 	struct pathgroup * pgp;
--	int i, j, changed = 0;
-+	int i, j;
-+	bool changed = false;
-+	bool skipped_path = false;
- 	struct config *conf;
+ 	struct directio_context * ct;
  
--	oldpriority = pp->priority;
--	if (pp->state != PATH_DOWN) {
--		conf = get_multipath_config();
--		pthread_cleanup_push(put_multipath_config, conf);
--		pathinfo(pp, conf, DI_PRIO);
--		pthread_cleanup_pop(1);
-+	vector_foreach_slot (mpp->pg, pgp, i) {
-+		vector_foreach_slot (pgp->paths, pp, j) {
-+			if (pp->state == PATH_DOWN)
-+				continue;
-+			/*
-+			 * refresh_all will be set if the mpp has any path
-+			 * for whom pp->marginal switched values or for whom
-+			 * pp->is_checked == CHECK_PATH_NEW_UP
-+			 */
-+			if (!refresh_all &&
-+			    pp->is_checked != CHECK_PATH_CHECKED) {
-+				skipped_path = true;
-+				continue;
-+			}
-+			oldpriority = pp->priority;
-+			conf = get_multipath_config();
-+			pthread_cleanup_push(put_multipath_config, conf);
-+			pathinfo(pp, conf, DI_PRIO);
-+			pthread_cleanup_pop(1);
-+			if (pp->priority != oldpriority)
-+				changed = true;
-+		}
- 	}
--
--	if (pp->priority != oldpriority)
--		changed = 1;
--	else if (!force_refresh_all)
--		return 0;
--
--	vector_foreach_slot (pp->mpp->pg, pgp, i) {
--		vector_foreach_slot (pgp->paths, pp1, j) {
--			if (pp1 == pp || pp1->state == PATH_DOWN)
-+	if (!changed || !skipped_path)
-+		return changed;
-+	/*
-+	 * If a path changed priorities, refresh the priorities of any
-+	 * paths we skipped
-+	 */
-+	vector_foreach_slot (mpp->pg, pgp, i) {
-+		vector_foreach_slot (pgp->paths, pp, j) {
-+			if (pp->state == PATH_DOWN)
-+				continue;
-+			if (pp->is_checked == CHECK_PATH_CHECKED)
- 				continue;
--			oldpriority = pp1->priority;
- 			conf = get_multipath_config();
- 			pthread_cleanup_push(put_multipath_config, conf);
--			pathinfo(pp1, conf, DI_PRIO);
-+			pathinfo(pp, conf, DI_PRIO);
- 			pthread_cleanup_pop(1);
--			if (pp1->priority != oldpriority)
--				changed = 1;
- 		}
- 	}
--	return changed;
-+	return true;
- }
+ 	c->fd = test_fd;
++	c->timeout = timeout;
+ 	wrap_will_return(WRAP_IOCTL, blocksize);
+ 	assert_int_equal(libcheck_init(c), 0);
+ 	ct = (struct directio_context *)c->context;
+@@ -305,7 +315,7 @@ static void test_init_reset_init(void **state)
  
- static int reload_map(struct vectors *vecs, struct multipath *mpp,
-@@ -2393,14 +2428,12 @@ static int
- update_path_state (struct vectors * vecs, struct path * pp)
- {
- 	int newstate;
--	int new_path_up = 0;
- 	int chkr_new_path_up = 0;
- 	int disable_reinstate = 0;
- 	int oldchkrstate = pp->chkrstate;
- 	unsigned int checkint, max_checkint;
- 	struct config *conf;
--	int marginal_pathgroups, marginal_changed = 0;
--	bool need_reload;
-+	int marginal_pathgroups;
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+-	do_libcheck_init(&c, 4096, NULL);
++	do_libcheck_init(&c, 4096, 0, NULL);
+ 	aio_grp = get_aio_grp(&c);
+ 	check_aio_grp(aio_grp, 1, 0);
+ 	list_for_each_entry(tmp_grp, &aio_grp_list, node)
+@@ -314,7 +324,7 @@ static void test_init_reset_init(void **state)
+ 	check_aio_grp(aio_grp, 0, 0);
+ 	do_libcheck_reset(1);
+ 	will_return(__wrap_io_setup, 0);
+-	do_libcheck_init(&c, 4096, NULL);
++	do_libcheck_init(&c, 4096, 0, NULL);
+ 	aio_grp = get_aio_grp(&c);
+ 	check_aio_grp(aio_grp, 1, 0);
+ 	list_for_each_entry(tmp_grp, &aio_grp_list, node)
+@@ -340,11 +350,11 @@ static void test_init_free(void **state)
+ 		struct directio_context * ct;
  
- 	conf = get_multipath_config();
- 	checkint = conf->checkint;
-@@ -2462,7 +2495,7 @@ update_path_state (struct vectors * vecs, struct path * pp)
- 			}
- 			if (!pp->marginal) {
- 				pp->marginal = 1;
--				marginal_changed = 1;
-+				pp->mpp->prio_update = PRIO_UPDATE_MARGINAL;
- 			}
+ 		if (i % 3 == 0)
+-			do_libcheck_init(&c[i], 512, NULL);
++			do_libcheck_init(&c[i], 512, 0, NULL);
+ 		else if (i % 3 == 1)
+-			do_libcheck_init(&c[i], 1024, NULL);
++			do_libcheck_init(&c[i], 1024, 0, NULL);
+ 		else
+-			do_libcheck_init(&c[i], 4096, NULL);
++			do_libcheck_init(&c[i], 4096, 0, NULL);
+ 		ct = (struct directio_context *)c[i].context;
+ 		assert_non_null(ct->aio_grp);
+ 		if ((i & 1023) == 0)
+@@ -385,7 +395,7 @@ static void test_multi_init_free(void **state)
+ 	for (count = 0, i = 0; i < 4096; count++) {
+ 		/* usually init, but occasionally free checkers */
+ 		if (count == 0 || (count % 5 != 0 && count % 7 != 0)) {
+-			do_libcheck_init(&c[i], 4096, NULL);
++			do_libcheck_init(&c[i], 4096, 0, NULL);
+ 			i++;
  		} else {
- 			if (pp->marginal || pp->state == PATH_DELAYED)
-@@ -2470,7 +2503,7 @@ update_path_state (struct vectors * vecs, struct path * pp)
- 					pp->dev);
- 			if (marginal_pathgroups && pp->marginal) {
- 				pp->marginal = 0;
--				marginal_changed = 1;
-+				pp->mpp->prio_update = PRIO_UPDATE_MARGINAL;
- 			}
- 		}
- 	}
-@@ -2537,7 +2570,8 @@ update_path_state (struct vectors * vecs, struct path * pp)
- 		 */
- 		if (!disable_reinstate)
- 			reinstate_path(pp);
--		new_path_up = 1;
-+		if (pp->mpp->prio_update != PRIO_UPDATE_MARGINAL)
-+			pp->mpp->prio_update = PRIO_UPDATE_NEW_PATH;
- 
- 		if (oldchkrstate != PATH_UP && oldchkrstate != PATH_GHOST)
- 			chkr_new_path_up = 1;
-@@ -2588,38 +2622,48 @@ update_path_state (struct vectors * vecs, struct path * pp)
- 				LOG_MSG(2, pp);
- 		}
- 	}
--
-+	if (pp->mpp->prio_update == PRIO_UPDATE_NONE &&
-+            (newstate == PATH_UP || newstate == PATH_GHOST))
-+		pp->mpp->prio_update = PRIO_UPDATE_NORMAL;
- 	pp->state = newstate;
-+	return chkr_new_path_up ? CHECK_PATH_NEW_UP : CHECK_PATH_CHECKED;
-+}
- 
--	if (pp->mpp->wait_for_udev)
--		return CHECK_PATH_CHECKED;
--	/*
--	 * path prio refreshing
--	 */
--	condlog(4, "path prio refresh");
--
--	if (marginal_changed) {
--		update_prio(pp, 1);
--		reload_and_sync_map(pp->mpp, vecs);
--	} else if (update_prio(pp, new_path_up) &&
--		   pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio &&
--		   pp->mpp->pgfailback == -FAILBACK_IMMEDIATE) {
-+static int
-+update_mpp_prio(struct vectors *vecs, struct multipath *mpp)
-+{
-+	bool need_reload, changed;
-+	enum prio_update_type prio_update = mpp->prio_update;
-+	mpp->prio_update = PRIO_UPDATE_NONE;
-+
-+	if (mpp->wait_for_udev || prio_update == PRIO_UPDATE_NONE)
-+		return 0;
-+	condlog(4, "prio refresh");
-+
-+	changed = update_prio(mpp, prio_update != PRIO_UPDATE_NORMAL);
-+	if (prio_update == PRIO_UPDATE_MARGINAL)
-+		return reload_and_sync_map(mpp, vecs);
-+	if (changed && mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio &&
-+	    mpp->pgfailback == -FAILBACK_IMMEDIATE) {
- 		condlog(2, "%s: path priorities changed. reloading",
--			pp->mpp->alias);
--		reload_and_sync_map(pp->mpp, vecs);
--	} else if (need_switch_pathgroup(pp->mpp, &need_reload)) {
--		if (pp->mpp->pgfailback > 0 &&
--		    (new_path_up || pp->mpp->failback_tick <= 0))
--			pp->mpp->failback_tick = pp->mpp->pgfailback + 1;
--		else if (pp->mpp->pgfailback == -FAILBACK_IMMEDIATE ||
--			 (chkr_new_path_up && followover_should_failback(pp))) {
-+			mpp->alias);
-+		return reload_and_sync_map(mpp, vecs);
-+	}
-+	if (need_switch_pathgroup(mpp, &need_reload)) {
-+		if (mpp->pgfailback > 0 &&
-+		    (prio_update == PRIO_UPDATE_NEW_PATH ||
-+		     mpp->failback_tick <= 0))
-+			mpp->failback_tick = mpp->pgfailback + 1;
-+		else if (mpp->pgfailback == -FAILBACK_IMMEDIATE ||
-+			 (prio_update == PRIO_UPDATE_NEW_PATH &&
-+			  followover_should_failback(mpp))) {
- 			if (need_reload)
--				reload_and_sync_map(pp->mpp, vecs);
-+				return reload_and_sync_map(mpp, vecs);
- 			else
--				switch_pathgroup(pp->mpp);
-+				switch_pathgroup(mpp);
- 		}
- 	}
--	return CHECK_PATH_CHECKED;
-+	return 0;
- }
- 
- static int
-@@ -2856,7 +2900,7 @@ update_paths(struct vectors *vecs, int *num_paths_p, time_t start_secs)
  			i--;
- 		else {
- 			pp->is_checked = rc;
--			if (rc == CHECK_PATH_CHECKED)
-+			if (rc == CHECK_PATH_CHECKED || rc == CHECK_PATH_NEW_UP)
- 				(*num_paths_p)++;
+@@ -404,7 +414,7 @@ static void test_multi_init_free(void **state)
+ 			i--;
+ 			libcheck_free(&c[i]);
+ 		} else {
+-			do_libcheck_init(&c[i], 4096, NULL);
++			do_libcheck_init(&c[i], 4096, 0, NULL);
+ 			i++;
  		}
- 		if (++paths_checked % 128 == 0 &&
-@@ -2929,8 +2973,10 @@ checkerloop (void *ap)
- 			vector_foreach_slot(vecs->mpvec, mpp, i)
- 				mpp->synced_count = 0;
- 			if (checker_state == CHECKER_STARTING) {
--				vector_foreach_slot(vecs->mpvec, mpp, i)
-+				vector_foreach_slot(vecs->mpvec, mpp, i) {
- 					sync_mpp(vecs, mpp, ticks);
-+					mpp->prio_update = PRIO_UPDATE_NONE;
-+				}
- 				vector_foreach_slot(vecs->pathvec, pp, i)
- 					pp->is_checked = CHECK_PATH_UNCHECKED;
- 				checker_state = CHECKER_CHECKING_PATHS;
-@@ -2940,6 +2986,14 @@ checkerloop (void *ap)
- 			if (checker_state == CHECKER_UPDATING_PATHS)
- 				checker_state = update_paths(vecs, &num_paths,
- 							     start_time.tv_sec);
-+			if (checker_state == CHECKER_FINISHED) {
-+				vector_foreach_slot(vecs->mpvec, mpp, i) {
-+					if (update_mpp_prio(vecs, mpp) == 2) {
-+						/* multipath device deleted */
-+						i--;
-+					}
-+				}
-+			}
- 			lock_cleanup_pop(vecs->lock);
- 			if (checker_state != CHECKER_FINISHED) {
- 				/* Yield to waiters */
+ 	}
+@@ -420,9 +430,9 @@ static void test_check_state_simple(void **state)
+ 
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+-	do_libcheck_init(&c, 4096, &req);
++	do_libcheck_init(&c, 4096, 30, &req);
+ 	return_io_getevents_nr(NULL, 1, &req, &res);
+-	do_check_state(&c, 1, 30, PATH_UP);
++	do_check_state(&c, 1, PATH_UP);
+ 	libcheck_free(&c);
+ 	do_libcheck_reset(1);
+ }
+@@ -435,10 +445,10 @@ static void test_check_state_timeout(void **state)
+ 
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+-	do_libcheck_init(&c, 4096, NULL);
++	do_libcheck_init(&c, 4096, 30, NULL);
+ 	aio_grp = get_aio_grp(&c);
+ 	return_io_getevents_none();
+-	do_check_state(&c, 1, 30, PATH_DOWN);
++	do_check_state(&c, 1, PATH_DOWN);
+ 	check_aio_grp(aio_grp, 1, 0);
+ 	libcheck_free(&c);
+ 	do_libcheck_reset(1);
+@@ -452,16 +462,20 @@ static void test_check_state_async_timeout(void **state)
+ 
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+-	do_libcheck_init(&c, 4096, NULL);
++	do_libcheck_init(&c, 4096, 3, NULL);
+ 	aio_grp = get_aio_grp(&c);
++	do_check_state(&c, 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c, 0, 3, PATH_PENDING);
++	do_libcheck_pending(&c, PATH_PENDING);
++	do_check_state(&c, 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c, 0, 3, PATH_PENDING);
++	do_libcheck_pending(&c, PATH_PENDING);
++	do_check_state(&c, 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c, 0, 3, PATH_PENDING);
++	do_libcheck_pending(&c, PATH_PENDING);
++	do_check_state(&c, 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c, 0, 3, PATH_DOWN);
++	do_libcheck_pending(&c, PATH_DOWN);
+ 	check_aio_grp(aio_grp, 1, 0);
+ 	libcheck_free(&c);
+ 	do_libcheck_reset(1);
+@@ -477,14 +491,16 @@ static void test_free_with_pending(void **state)
+ 
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+-        do_libcheck_init(&c[0], 4096, &req);
+-	do_libcheck_init(&c[1], 4096, NULL);
++        do_libcheck_init(&c[0], 4096, 30, &req);
++	do_libcheck_init(&c[1], 4096, 30, NULL);
+         aio_grp = get_aio_grp(c);
++        do_check_state(&c[0], 0, PATH_PENDING);
++	do_check_state(&c[1], 0, PATH_PENDING);
+         return_io_getevents_none();
+-        do_check_state(&c[0], 0, 30, PATH_PENDING);
++	do_libcheck_pending(&c[0], PATH_PENDING);
+ 	return_io_getevents_nr(NULL, 1, &req, &res);
+ 	return_io_getevents_none();
+-	do_check_state(&c[1], 0, 30, PATH_PENDING);
++	do_libcheck_pending(&c[1], PATH_PENDING);
+ 	assert_true(is_checker_running(&c[0]));
+ 	assert_true(is_checker_running(&c[1]));
+ 	check_aio_grp(aio_grp, 2, 0);
+@@ -505,9 +521,10 @@ static void test_orphaned_aio_group(void **state)
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+ 	for (i = 0; i < AIO_GROUP_SIZE; i++) {
+-		do_libcheck_init(&c[i], 4096, NULL);
++		do_libcheck_init(&c[i], 4096, 30, NULL);
++		do_check_state(&c[i], 0, PATH_PENDING);
+ 		return_io_getevents_none();
+-		do_check_state(&c[i], 0, 30, PATH_PENDING);
++		do_libcheck_pending(&c[i], PATH_PENDING);
+ 	}
+ 	aio_grp = get_aio_grp(c);
+ 	check_aio_grp(aio_grp, AIO_GROUP_SIZE, 0);
+@@ -539,19 +556,19 @@ static void test_timeout_cancel_failed(void **state)
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+ 	for (i = 0; i < 2; i++)
+-		do_libcheck_init(&c[i], 4096, &reqs[i]);
++		do_libcheck_init(&c[i], 4096, 30, &reqs[i]);
+ 	aio_grp = get_aio_grp(c);
+ 	return_io_getevents_none();
+-	do_check_state(&c[0], 1, 30, PATH_DOWN);
++	do_check_state(&c[0], 1, PATH_DOWN);
+ 	assert_true(is_checker_running(&c[0]));
+ 	check_aio_grp(aio_grp, 2, 0);
+ 	return_io_getevents_none();
+-	do_check_state(&c[0], 1, 30, PATH_DOWN);
++	do_check_state(&c[0], 1, PATH_DOWN);
+ 	assert_true(is_checker_running(&c[0]));
+ 	return_io_getevents_nr(NULL, 1, &reqs[0], &res[0]);
+ 	return_io_getevents_nr(NULL, 1, &reqs[1], &res[1]);
+-	do_check_state(&c[1], 1, 30, PATH_UP);
+-	do_check_state(&c[0], 1, 30, PATH_UP);
++	do_check_state(&c[1], 1, PATH_UP);
++	do_check_state(&c[0], 1, PATH_UP);
+ 	for (i = 0; i < 2; i++) {
+ 		assert_false(is_checker_running(&c[i]));
+ 		libcheck_free(&c[i]);
+@@ -571,28 +588,37 @@ static void test_async_timeout_cancel_failed(void **state)
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+ 	for (i = 0; i < 2; i++)
+-		do_libcheck_init(&c[i], 4096, &reqs[i]);
++		do_libcheck_init(&c[i], 4096, 2, &reqs[i]);
++	do_check_state(&c[0], 0, PATH_PENDING);
++	do_check_state(&c[1], 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c[0], 0, 2, PATH_PENDING);
++	do_libcheck_pending(&c[0], PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c[1], 0, 2, PATH_PENDING);
++	do_libcheck_pending(&c[1], PATH_PENDING);
++	do_check_state(&c[0], 0, PATH_PENDING);
++	do_check_state(&c[1], 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c[0], 0, 2, PATH_PENDING);
++	do_libcheck_pending(&c[0], PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c[1], 0, 2, PATH_PENDING);
++	do_libcheck_pending(&c[1], PATH_PENDING);
++	do_check_state(&c[0], 0, PATH_PENDING);
++	do_check_state(&c[1], 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c[0], 0, 2, PATH_DOWN);
++	do_libcheck_pending(&c[0], PATH_DOWN);
+ 	if (!test_dev) {
+ 		/* can't pick which even gets returned on real devices */
+ 		return_io_getevents_nr(NULL, 1, &reqs[1], &res[1]);
+-		do_check_state(&c[1], 0, 2, PATH_UP);
++		do_libcheck_pending(&c[1], PATH_UP);
+ 	}
++	do_check_state(&c[0], 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c[0], 0, 2, PATH_DOWN);
++	do_libcheck_pending(&c[0], PATH_DOWN);
+ 	assert_true(is_checker_running(&c[0]));
++	do_check_state(&c[1], 0, PATH_PENDING);
++	do_check_state(&c[0], 0, PATH_PENDING);
+ 	return_io_getevents_nr(NULL, 2, reqs, res);
+-	do_check_state(&c[1], 0, 2, PATH_UP);
+-	do_check_state(&c[0], 0, 2, PATH_UP);
++	do_libcheck_pending(&c[1], PATH_UP);
++	do_libcheck_pending(&c[0], PATH_UP);
+ 	for (i = 0; i < 2; i++) {
+ 		assert_false(is_checker_running(&c[i]));
+ 		libcheck_free(&c[i]);
+@@ -612,15 +638,17 @@ static void test_orphan_checker_cleanup(void **state)
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+ 	for (i = 0; i < 2; i++)
+-		do_libcheck_init(&c[i], 4096, &reqs[i]);
++		do_libcheck_init(&c[i], 4096, 30, &reqs[i]);
+ 	aio_grp = get_aio_grp(c);
++	do_check_state(&c[0], 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c[0], 0, 30, PATH_PENDING);
++	do_libcheck_pending(&c[0], PATH_PENDING);
+ 	check_aio_grp(aio_grp, 2, 0);
+ 	libcheck_free(&c[0]);
+ 	check_aio_grp(aio_grp, 2, 1);
++	do_check_state(&c[1], 0, PATH_PENDING);
+ 	return_io_getevents_nr(NULL, 2, reqs, res);
+-	do_check_state(&c[1], 0, 2, PATH_UP);
++	do_libcheck_pending(&c[1], PATH_UP);
+ 	check_aio_grp(aio_grp, 1, 0);
+ 	libcheck_free(&c[1]);
+ 	check_aio_grp(aio_grp, 0, 0);
+@@ -636,10 +664,11 @@ static void test_orphan_reset_cleanup(void **state)
+ 
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+-	do_libcheck_init(&c, 4096, NULL);
++	do_libcheck_init(&c, 4096, 30, NULL);
+ 	orphan_aio_grp = get_aio_grp(&c);
++	do_check_state(&c, 0, PATH_PENDING);
+ 	return_io_getevents_none();
+-	do_check_state(&c, 0, 30, PATH_PENDING);
++	do_libcheck_pending(&c, PATH_PENDING);
+ 	check_aio_grp(orphan_aio_grp, 1, 0);
+ 	libcheck_free(&c);
+ 	check_aio_grp(orphan_aio_grp, 1, 1);
+@@ -671,10 +700,10 @@ static void test_check_state_blksize(void **state)
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+ 	for (i = 0; i < 3; i++)
+-		do_libcheck_init(&c[i], blksize[i], &reqs[i]);
++		do_libcheck_init(&c[i], blksize[i], 30, &reqs[i]);
+ 	for (i = 0; i < 3; i++) {
+ 		return_io_getevents_nr(NULL, 1, &reqs[i], &res[i]);
+-		do_check_state(&c[i], 1, 30, chk_state[i]);
++		do_check_state(&c[i], 1, chk_state[i]);
+ 	}
+ 	for (i = 0; i < 3; i++) {
+ 		assert_false(is_checker_running(&c[i]));
+@@ -695,19 +724,21 @@ static void test_check_state_async(void **state)
+ 	assert_true(list_empty(&aio_grp_list));
+ 	will_return(__wrap_io_setup, 0);
+ 	for (i = 0; i < 257; i++)
+-		do_libcheck_init(&c[i], 4096, &reqs[i]);
++		do_libcheck_init(&c[i], 4096, 30, &reqs[i]);
+ 	for (i = 0; i < 256; i++) {
++		do_check_state(&c[i], 0, PATH_PENDING);
+ 		return_io_getevents_none();
+-		do_check_state(&c[i], 0, 30, PATH_PENDING);
++		do_libcheck_pending(&c[i], PATH_PENDING);
+ 		assert_true(is_checker_running(&c[i]));
+ 	}
++	do_check_state(&c[256], 0, PATH_PENDING);
+ 	return_io_getevents_nr(&full_timeout, 256, reqs, res);
+ 	return_io_getevents_nr(NULL, 1, &reqs[256], &res[256]);
+-	do_check_state(&c[256], 0, 30, PATH_UP);
++	do_libcheck_pending(&c[256], PATH_UP);
+ 	assert_false(is_checker_running(&c[256]));
+ 	libcheck_free(&c[256]);
+ 	for (i = 0; i < 256; i++) {
+-		do_check_state(&c[i], 0, 30, PATH_UP);
++		do_check_state(&c[i], 0, PATH_UP);
+ 		assert_false(is_checker_running(&c[i]));
+ 		libcheck_free(&c[i]);
+ 	}
 -- 
 2.45.0
 
