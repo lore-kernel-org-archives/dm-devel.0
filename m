@@ -1,443 +1,191 @@
-Received: from mail-wm1-f43.google.com (mail-wm1-f43.google.com [209.85.128.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4F422A1D3
-	for <dm-devel@lists.linux.dev>; Thu, 10 Oct 2024 16:18:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6DC919ABBF
+	for <dm-devel@lists.linux.dev>; Thu, 10 Oct 2024 19:46:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728577102; cv=none; b=B03Ou007oQBvMozfIWyG0Y2199r3Rr9vDgJFPF/Gl5D1FzYeoIRAAMJOocypEGbxhNq++ufAycWbioBW6ZP5JXVFPOQANtQ4C4X6Xy95aMCWufB/gu8HKahlj96Ytqd0KqskDyxvRFSKn62T/nz60XueYu6PxrTx9YFFSyPXUOc=
+	t=1728589564; cv=none; b=sgbCIvMyMuPcyytmXrO8fN/Bn6tlLdldoLpFduzkNkx1vGuY+tQ727RkS4j1VAJI/h2EbRbYss262hWN8yfAaw56I35JJ6951HpmY+W8ZkylEEUjoGGZtGs8/W+SzOWr80pYp4f39zkVQoA7B+AGCSSZXMBewUYtK10WdAzjcIk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728577102; c=relaxed/simple;
-	bh=/6O9Wj76an5y3+2rWGUnrDNx+xgD2dlind8dW6J1bOg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=HYI/gvsy1+hG1nYWjms4GDOrePLUSLG6IsssFfkcH6HAYovRxiCphghZoUK5ZJZkD+3qHXUOo5DyC+PUVAdqXKOlX4F9kvkeClFUvHi/UAm+O5m0EOn2UU8qdUgIOf/ng00iCE6AVVMaJhSi9/3X3YzRkdYnrPk2IXpQja36rCI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cGkPCleK; arc=none smtp.client-ip=209.85.128.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1728589564; c=relaxed/simple;
+	bh=2iUoj3kYcRfoq7HMjMm0/Lqgcqa0x0PCfFfqm1pwvX8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=CqQtGzpHe4Xgi6mZA7NdcnExdSrGgzGhUdygYyGGVXq0iH1AQSP8reQY9TKKVbuBHbk/eUobkWxsU0lbkoBIm8Bsc0SWrGprUe1IrU4tZML5P1raKfiUrFgODJB1eUXcThz2KL3ECCtx/Zw0T/tlSz8WG7XNxIDT5Ofaam1+a0I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KrQLRY50; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cGkPCleK"
-Received: by mail-wm1-f43.google.com with SMTP id 5b1f17b1804b1-43111bdd54cso1730725e9.1
-        for <dm-devel@lists.linux.dev>; Thu, 10 Oct 2024 09:18:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1728577099; x=1729181899; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=a+hjqgmaqVks8EgYvRTo9UGRbThd+10iiz7ECf2eUOU=;
-        b=cGkPCleKILEVNY82ECzcfkdk5eOzd1/XyT0OTEfFl3Jhv/IG3iPSn4GHBULJ467oGh
-         KTBMafTZfgDcEH51i58FwMNoStf5YkrrfACNqj3/H6orUhasyXhu+N10DrmBWPBlAGcD
-         cQaZUubArzBEReVEPM+Ycz36ZCAzkWrKXtMfcTIElEpvBfwUgXgSr5I6fwXzwb8LzXdF
-         vQa/ft6928+5qvmZ4lbsXWA39S1Oofe7EshdaWNnThoQ7lOBXW2JXeB3yxgX8KDxlaQo
-         2SNunM9ERaaPBK91+FfmojqMw2pwUz4LY4XzmRlD4uc6Y7Mt8q16weFUMtseiTyRFfVL
-         du6w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1728577099; x=1729181899;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=a+hjqgmaqVks8EgYvRTo9UGRbThd+10iiz7ECf2eUOU=;
-        b=wChQvLNqW6jrAex8/eBX2ahsCRbKnMrFA3OKcT9kUha4tiqXcxpJtaN3lQb6cY/Rfq
-         eF9fgWztFRbRDwlKmWRBWhffrOpf//qB5sc2SAs/VV/e9l21aOqY8USoLhIQY1KNBLld
-         VJ/NxMXblHPoXBXMOsTQiDXbevq0tli8k33I5OVqkdNlAKI3zzO/qoh+STRm/wYfx+3Y
-         G3izzKsyKPYlC5TUgi5LDeYP+v3Q/nHU3vY8seuOItDm4GRKHf/HxfFwkppOfn+6QiMs
-         au9i2GDz+znubgEyYJOeRH/VLle37fOCJBi7r9Flp1sAWCkQwMFz+x1Klr/zCuIOBBbN
-         JrqQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVfUe2bgMG/xNpwpcwiw2lHh0oaUhbFjNUz6c4g6tnCVAkXghVG3SSguYXQZv3jpe9lxDzWIF0MZA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxS3tqrgg+q+LzpY2OMfnh/fwRuls5cvcXdVI/ggcVtonCCrU51
-	b9z+xUo+5d430xbKWniVIuVEFxTIpRFLHICVQrErgBh8/3wA1Ic=
-X-Google-Smtp-Source: AGHT+IFCKMiaSxQseZEL0I06OrtUhIDoXs44kOxD/ByhQvMHccrQ48yLoD5QyfQW22lv1vMd427SqQ==
-X-Received: by 2002:a5d:5982:0:b0:37d:50a3:f35e with SMTP id ffacd0b85a97d-37d50a3f7f0mr695420f8f.10.1728577098914;
-        Thu, 10 Oct 2024 09:18:18 -0700 (PDT)
-Received: from localhost (106.red-88-28-26.dynamicip.rima-tde.net. [88.28.26.106])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-37d4b6a859fsm1921931f8f.2.2024.10.10.09.18.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 10 Oct 2024 09:18:08 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM-DEVEL ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: remove hwhandler from all hwtable configs
-Date: Thu, 10 Oct 2024 18:18:06 +0200
-Message-ID: <20241010161806.14950-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.47.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KrQLRY50"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1728589561;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=b7B0pyS0yhT/6/6NuMAvOc3GozDLYv9YhzpKtNbKJ3Y=;
+	b=KrQLRY50Gpa700syo8IlvBTJbJpNYqwMxWqEDaJpOOf3bm13UFsDNneXmLZ+fiJcBz6XYG
+	gNavTxV3VQKTif2gtSN87y9CzFWgM5l+oJeel/HLCP+xEHpUTAdgB4raVVvKnb3zl5bcbG
+	U6CJlozNyZ38j/SCDptecWAMtNjcPOA=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-498-q4TeiMOQOgWSSVRy-wM_dQ-1; Thu,
+ 10 Oct 2024 15:45:59 -0400
+X-MC-Unique: q4TeiMOQOgWSSVRy-wM_dQ-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6F9171956080;
+	Thu, 10 Oct 2024 19:45:58 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E7D4919560A2;
+	Thu, 10 Oct 2024 19:45:57 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 49AJjujc2538993
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 10 Oct 2024 15:45:56 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 49AJjupK2538992;
+	Thu, 10 Oct 2024 15:45:56 -0400
+Date: Thu, 10 Oct 2024 15:45:56 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH v4 04/22] libmultipath: remove pending wait code from
+ libcheck_check calls
+Message-ID: <Zwgu9KvN1ZTkCkJL@redhat.com>
+References: <20241009011523.2381575-1-bmarzins@redhat.com>
+ <20241009011523.2381575-5-bmarzins@redhat.com>
+ <061a44d1ab78bd95b10bd908ffbfeb2bbd436ca0.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
+In-Reply-To: <061a44d1ab78bd95b10bd908ffbfeb2bbd436ca0.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 
-Useless, automatically handled by the kernel since 4.3.
-(4.3 was released nine years ago)
+On Wed, Oct 09, 2024 at 05:00:55PM +0200, Martin Wilck wrote:
+> On Tue, 2024-10-08 at 21:15 -0400, Benjamin Marzinski wrote:
+> > When the tur and directio checkers start an asynchronous checker,
+> > they
+> > now immediately return with the path in PATH_PENDING, instead of
+> > waiting in checker_check(). Instead the wait now happens in
+> > checker_get_state().
+> > 
+> > Additionally, the directio checker now waits for 1 ms, like the tur
+> > checker does. Also like the tur checker it now only waits once. If it
+> > is still pending after the first call to checker_get_state(). It will
+> > not wait at all on future calls, and will just process the already
+> > completed IOs.
+> > 
+> > Reviewed-by: Martin Wilck <mwilck@suse.com>
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/checkers.c          |  7 +++-
+> >  libmultipath/checkers/directio.c | 57 +++++++++++++++++-------------
+> > --
+> >  libmultipath/checkers/tur.c      | 13 +++-----
+> >  3 files changed, 41 insertions(+), 36 deletions(-)
+> > 
+> > diff --git a/libmultipath/checkers/directio.c
+> > b/libmultipath/checkers/directio.c
+> > index 3f88b40d..904e3071 100644
+> > --- a/libmultipath/checkers/directio.c
+> > +++ b/libmultipath/checkers/directio.c
+> > @@ -60,10 +60,11 @@ const char *libcheck_msgtable[] = {
+> >  #define LOG(prio, fmt, args...) condlog(prio, "directio: " fmt,
+> > ##args)
+> >  
+> >  struct directio_context {
+> > -	int		running;
+> > +	unsigned int	running;
+> >  	int		reset_flags;
+> >  	struct aio_group *aio_grp;
+> >  	struct async_req *req;
+> > +	struct timespec endtime;
+> >  };
+> >  
+> >  static struct aio_group *
+> > @@ -314,19 +315,16 @@ check_pending(struct directio_context *ct,
+> > struct timespec endtime)
+> >  static int
+> >  check_state(int fd, struct directio_context *ct, int sync, int
+> > timeout_secs)
+> >  {
+> > -	struct timespec	timeout = { .tv_nsec = 1000 };
+> >  	struct stat	sb;
+> >  	int		rc;
+> > +	struct io_event event;
+> >  	struct timespec endtime;
+> >  
+> >  	if (fstat(fd, &sb) == 0) {
+> >  		LOG(4, "called for %x", (unsigned) sb.st_rdev);
+> >  	}
+> > -	if (sync > 0) {
+> > +	if (sync > 0)
+> >  		LOG(4, "called in synchronous mode");
+> > -		timeout.tv_sec  = timeout_secs;
+> > -		timeout.tv_nsec = 0;
+> > -	}
+> >  
+> >  	if (ct->running) {
+> >  		if (ct->req->state != PATH_PENDING) {
+> > @@ -345,31 +343,26 @@ check_state(int fd, struct directio_context
+> > *ct, int sync, int timeout_secs)
+> >  			LOG(3, "io_submit error %i", -rc);
+> >  			return PATH_UNCHECKED;
+> >  		}
+> > +		get_monotonic_time(&ct->endtime);
+> > +		ct->endtime.tv_nsec += 1000 * 1000;
+> > +		normalize_timespec(&ct->endtime);
+> >  	}
+> >  	ct->running++;
+> 
+> Sorry, I have another concern here, despite my reviewed-by. This very
+> old statement, combined with "if (ct->running > c->timeout)" below,
+> somehow assumes that "running" counts seconds, which means that this
+> code must be called once a second. I guess this has been approximately
+> true in the past, when this code was originally written. It has never
+> been clean, we should have compared time stamps instead. 
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 44 ------------------------------------------
- 1 file changed, 44 deletions(-)
+Yeah. That makes sense.
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 74575eb1..cf39a50d 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -115,7 +115,6 @@ static struct hwentry default_hw[] = {
- 		.product       = "VV",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
--		.hwhandler     = "1 alua",
- 		.prio_name     = PRIO_ALUA,
- 		.no_path_retry = 18,
- 		.fast_io_fail  = 10,
-@@ -134,7 +133,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "DEC",
- 		.product       = "HSG80",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
--		.hwhandler     = "1 hp_sw",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = HP_SW,
- 		.prio_name     = PRIO_HP_SW,
-@@ -150,7 +148,6 @@ static struct hwentry default_hw[] = {
- 		/* MSA 1000/1500 and EVA 3000/5000, with old firmware */
- 		.vendor        = "(COMPAQ|HP)",
- 		.product       = "(MSA|HSV)1[01]0",
--		.hwhandler     = "1 hp_sw",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.no_path_retry = 12,
- 		.checker_name  = HP_SW,
-@@ -203,7 +200,6 @@ static struct hwentry default_hw[] = {
- 		/* SAN Virtualization Services Platform */
- 		.vendor        = "HP",
- 		.product       = "(HSVX700|HSVX740)",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 12,
-@@ -238,7 +234,6 @@ static struct hwentry default_hw[] = {
- 		/* Nimble Storage / HPE Alletra 5000/6000 */
- 		.vendor        = "Nimble",
- 		.product       = "Server",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
-@@ -259,7 +254,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -272,7 +266,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -326,7 +319,6 @@ static struct hwentry default_hw[] = {
- 		/* Tegile IntelliFlash */
- 		.vendor        = "TEGILE",
- 		.product       = "(ZEBI-(FC|ISCSI)|INTELLIFLASH)",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
-@@ -353,7 +345,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "^DGC",
- 		.product       = "^(RAID|DISK|VRAID)",
- 		.bl_product    = "LUNZ",
--		.hwhandler     = "1 emc",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = (300 / DEFAULT_CHECKINT),
-@@ -391,7 +382,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -402,7 +392,6 @@ static struct hwentry default_hw[] = {
- 		.product       = "PowerStore",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.prio_name     = PRIO_ALUA,
--		.hwhandler     = "1 alua",
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 3,
- 		.fast_io_fail  = 15,
-@@ -419,7 +408,6 @@ static struct hwentry default_hw[] = {
- 		.product       = "^ME",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.prio_name     = PRIO_ALUA,
--		.hwhandler     = "1 alua",
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 	},
- 	/*
-@@ -474,7 +462,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -524,7 +511,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -537,7 +523,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -550,7 +535,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -563,7 +547,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -576,7 +559,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -589,7 +571,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -602,7 +583,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -615,7 +595,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -628,7 +607,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -641,7 +619,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -654,7 +631,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -724,7 +700,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "IBM",
- 		.product       = "^IPR",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
-@@ -789,7 +764,6 @@ static struct hwentry default_hw[] = {
- 		/* AIX NVDISK */
- 		.vendor        = "AIX",
- 		.product       = "NVDISK",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = (300 / DEFAULT_CHECKINT),
-@@ -810,7 +784,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -847,7 +820,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -876,7 +848,6 @@ static struct hwentry default_hw[] = {
- 		/* M-Series */
- 		.vendor        = "NEC",
- 		.product       = "DISK ARRAY",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
-@@ -914,7 +885,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -927,7 +897,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -940,7 +909,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -959,7 +927,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -972,7 +939,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -985,7 +951,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -998,7 +963,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -1011,7 +975,6 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.checker_name  = RDAC,
- 		.features      = "2 pg_init_retries 50",
--		.hwhandler     = "1 rdac",
- 		.prio_name     = PRIO_RDAC,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
-@@ -1054,7 +1017,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "(Intel|INTEL)",
- 		.product       = "Multi-Flex",
- 		.bl_product    = "VTrak V-LUN",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
-@@ -1067,7 +1029,6 @@ static struct hwentry default_hw[] = {
- 		/* Linux-IO (LIO) Target */
- 		.vendor        = "(LIO-ORG|SUSE)",
- 		.product       = ".*",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 12,
-@@ -1105,7 +1066,6 @@ static struct hwentry default_hw[] = {
- 		.product       = "FlashArray",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
--		.hwhandler     = "1 alua",
- 		.prio_name     = PRIO_ALUA,
- 		.detect_prio   = DETECT_PRIO_OFF,
- 		.fast_io_fail  = 10,
-@@ -1206,7 +1166,6 @@ static struct hwentry default_hw[] = {
- 		/* NST / UNITY */
- 		.vendor        = "Nexsan",
- 		.product       = "(NestOS|NST5000)",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
-@@ -1224,7 +1183,6 @@ static struct hwentry default_hw[] = {
- 		/* 3000 / 6000 Series (ALUA mode) */
- 		.vendor        = "VIOLIN",
- 		.product       = "SAN ARRAY ALUA",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
-@@ -1275,7 +1233,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "Promise",
- 		.product       = "VTrak",
- 		.bl_product    = "VTrak V-LUN",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
-@@ -1286,7 +1243,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "Promise",
- 		.product       = "Vess",
- 		.bl_product    = "Vess V-LUN",
--		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
--- 
-2.47.0
+> 
+> But now, it seems to be plain wrong, "running" will never have a higher
+> value than 1 as it is only called once from libcheck_check(), and the
+> (ct->running - c->timeout) statement is broken.
+> 
+> Am I misreading this code?
+
+Either you are or I am. libcheck_check() is called by start_checker()
+each time a path comes up for checking. libcheck_check() calls
+check_state() with the number of seconds that the checker should wait
+till it times out. If ct->running is non-zero, but the path is still
+pending, check_state() increments ct->running and returns PATH_PENDING.
+
+libcheck_pending() is called by get_state() every time a path gets
+checked and its state is PATH_PENDING. If ct->running is greater than
+c->timeout then the checker has timed out (it assumes that ct->running is
+counting seconds) and gets cancelled.
+
+Also, I only see (ct->running > c->timeout), not
+(ct->running - c->timeout) are you talking about something else in the
+code that I'm missing?
+
+At any rate, I can change this to use actual timestamps instead of our
+ct->running assumptions.
+
+-Ben
+
+> 
+> Martin
 
