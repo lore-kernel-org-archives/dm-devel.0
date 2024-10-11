@@ -1,164 +1,249 @@
-Received: from mail-lj1-f193.google.com (mail-lj1-f193.google.com [209.85.208.193])
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com [209.85.221.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8DC22207A30
-	for <dm-devel@lists.linux.dev>; Fri, 11 Oct 2024 07:40:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.193
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6ED9B1D015A
+	for <dm-devel@lists.linux.dev>; Fri, 11 Oct 2024 18:54:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728632422; cv=none; b=GUToEr+Wu38sqtkik0gxrsf9IVFcg14vNyeUJLtd38VKmatZDJvBhvgRFE4VCmpsMcFqpKMr0sfKWmKskjvINUQrvl/XLJ9/b4KioH6MQOvaxEA9DjtiuWi1mtX5Kg8/1LIZp/guGJ+ESI2FF0ZiNib88xFpDS5ylSG1sTJdK8Q=
+	t=1728672873; cv=none; b=pBVZu4V8OjUY9OKw7snRfSmxcwD+8x8uXacgvGAkhMFTA8xpN4PX5GP+O6W2nfk8+Ck7MWpdsS3F+a8tSM4+dSA1Y17WwkmSsPZtn33hrbYN9v60aF960dlWKuWhoj0x30DP4SelmyThgINHOapicWWfhGx96Ef3XkdhOGaZMgU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728632422; c=relaxed/simple;
-	bh=O7KSZ+qDaPq/4x0BCMP1iEiGU6rU9BJxLa3z5Xh+go8=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=cdklYNJeuBfIEzjHzBtsFm8ns3hZjvbibopzaEjsA4nnD5EdnyiObR7fRab3KOSaKJNpqtlskeHaUuGORaprlyLfN1i/1U+vIaVGWEnS34tY5Tsu6YS7XcxE015ldxFqOQtm3ktgcFnD+mgrcmruggLHWl4+ZxkbOkgvCuVoZaQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=KFd03FlL; arc=none smtp.client-ip=209.85.208.193
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1728672873; c=relaxed/simple;
+	bh=V+W549yZR4YXE4o9ySJ5Sa4Yc/1frqei+R9VTkOnjww=;
+	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=IUmSIj54arEHqhLV2JVVeQVB4MW6vh0sq+5YwfTkCliR/pTG+AQ1ewQhszo+yOF+1IXRoAXN7t1paE5YOrQLxMKXbCBZIpaUyvJZ97oc6BTxf2VQYjj+x9o5G7wrgR3Qn5tC55MFk8ij17zS5TCcjiexqnpNK4zT0My2ASHI0zA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=bgdev.pl; spf=none smtp.mailfrom=bgdev.pl; dkim=pass (2048-bit key) header.d=bgdev-pl.20230601.gappssmtp.com header.i=@bgdev-pl.20230601.gappssmtp.com header.b=AnQmOGtK; arc=none smtp.client-ip=209.85.221.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=bgdev.pl
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bgdev.pl
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="KFd03FlL"
-Received: by mail-lj1-f193.google.com with SMTP id 38308e7fff4ca-2fad5024b8dso19933411fa.1
-        for <dm-devel@lists.linux.dev>; Fri, 11 Oct 2024 00:40:17 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=bgdev-pl.20230601.gappssmtp.com header.i=@bgdev-pl.20230601.gappssmtp.com header.b="AnQmOGtK"
+Received: by mail-wr1-f50.google.com with SMTP id ffacd0b85a97d-37d4fd00574so1221941f8f.0
+        for <dm-devel@lists.linux.dev>; Fri, 11 Oct 2024 11:54:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1728632416; x=1729237216; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=/0B9BC1OSag79aK72QLGfEMRJCzn0e0ZZ0Q2b/HVawU=;
-        b=KFd03FlLIX67UYCYuxPM3lzUQ3OZRzvgLJWd1EoLdlWj6NxWq1HnDSAKl7/MoLfkX7
-         0eT/VacyFI/R7n+JQ5D+38EcDml1aiWpQpezj7nSiOgqCq5ZEhxuP1XjtDjBMUOprFqY
-         LXYK7dCU04fejtVj1jOTJ6J+qSFDrh5VCvAxC2LE3+FUwHfQQww2kePpJX8MWyb704Xx
-         85f0IWIj55Uuzkdkgr5IcptnkbIfz8jQpeOGIAE44/wYdqO0Ji3952UhGrnmOIv8HoXX
-         5+OCt3XUddF2awgYQSeZTOgH2mZcZ+yoGbCQz2UoJ0I6abeMAzB+SlGLLh2yi255giTE
-         +r8g==
+        d=bgdev-pl.20230601.gappssmtp.com; s=20230601; t=1728672868; x=1729277668; darn=lists.linux.dev;
+        h=cc:to:content-transfer-encoding:mime-version:message-id:date
+         :subject:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=CMw51FgUh2hUVjZgjRJM4Ju1tWp7eQweTumzW/cQKyE=;
+        b=AnQmOGtKYwUuvMw9zaUgzJdEcH6wjROgcS/YN5daFVOeyS6HFMJeQzYjf7bmie0IkF
+         j9W1YdzWzggZNJVeFCjRF7M5hv5D9HVNuO+hHWEn4VmmgAD6YDM7svPTl23XLIivVRBK
+         W+J6poGHUj2FLY2DmCK2gtorhAo7Z5BY+lrufBeVDv8qjlxD9YrqSbjCz1ZLRC14uHdL
+         VBe91CNK66cT8BBBoZ1CrRy2QkY3XrhAxibR6LbL6HwsYW2ByDD4ZQZuhbkUURpkml7a
+         2pwCHgA9rozAf+Wvqcz0gQQkPmL252PoETZj1pusWeu9wM/cGUSQQSekgiB60U3kR119
+         medA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1728632416; x=1729237216;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=/0B9BC1OSag79aK72QLGfEMRJCzn0e0ZZ0Q2b/HVawU=;
-        b=EgNjdDXBr4MIJWmq5PHySEJ29wD8VV7FlcwPiaR8bC1gLByG/hG0pBFh4cV0r1lSyb
-         9GzrstPpU7k0f/RR+JDS6JJjMlJZrYfYG0L4yltolXHaFR5zkWzx0YsrhwU7RJPb8hts
-         hnBz/fVQNd/L3e59iGZMsOzaHVeI21tHkXBwZ62cVDQf1uzwQY1lj/L0V5QD2DZ1oUWM
-         to6Imgn3Z5mh1rGXkm3MIZ1hXN7wniAh1EgiS6NyCCtDDYecWg30mHhtgNqe4grZXlWy
-         eLonxei63R9522z5/CSvCN7LQif+Z8hP085WXZDBFJt9DjL2n9r4Xd43xivWeRQmAQfl
-         XM8g==
-X-Forwarded-Encrypted: i=1; AJvYcCXlHfN6sBqjGXAe+JdZwiBelw5vJifqaVXaiXAC1eiYnibfaO7MdKr1iqD5tI1fowQiMwjWiUpnXw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzrokQqpEYp0L7GD7CGBuzZ5otXhY3fiMwLM9RMCjPAcm1S9c5K
-	JTAtt4anAJa+oyMCfhlu5YQRJv59WUM/S91bfi8FBDkrMDVT96/kNF21a9XbF00=
-X-Google-Smtp-Source: AGHT+IEmedRPtzfoM8kGj1kzcCjJXhVb/nc6OM98tjZN3SEtukYvggcvVHeUCuZDMSTHpbNbcP1+KA==
-X-Received: by 2002:a2e:742:0:b0:2f7:7031:dc31 with SMTP id 38308e7fff4ca-2fb32780f04mr6942171fa.27.1728632414905;
-        Fri, 11 Oct 2024 00:40:14 -0700 (PDT)
-Received: from ?IPv6:2003:de:3707:9400:b9ee:e7ce:aa91:658e? (p200300de37079400b9eee7ceaa91658e.dip0.t-ipconnect.de. [2003:de:3707:9400:b9ee:e7ce:aa91:658e])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5c93711ba52sm1626330a12.26.2024.10.11.00.40.14
+        d=1e100.net; s=20230601; t=1728672868; x=1729277668;
+        h=cc:to:content-transfer-encoding:mime-version:message-id:date
+         :subject:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=CMw51FgUh2hUVjZgjRJM4Ju1tWp7eQweTumzW/cQKyE=;
+        b=wvElD369J2EBrIw6MDyULyg/70qgxSwAc9U/3hk9qzBqMb7y7lC/S9I96CtKb8WS4S
+         P1aCOsJpFnC9fs7c/GE7X852NXCyFjkIJQZuJ7uaa1U4zI3wIZ5uaP9DnIShTJFBCnGS
+         f1l1Lc7ebw980PJrfOjyzJ7x9z/MnsZxZWV8AoBwJRVfSl+NgaRSY+sxOWEAVl74Sms2
+         3Bs4Id+s3M0k15TFTnWKbZxPHu0q9NBPQzp9K1kdw7ywhiTmKhxpirhTPqqFHG01olKy
+         c15nqvGuL/dC4KtfS4BQaI7YavAhFPSin2ZkhipYJtMpv3ygr/7yyEEehXBFirHftbfb
+         7l4A==
+X-Forwarded-Encrypted: i=1; AJvYcCUMtf7DU7xoK6bWrLcISubIgW4NP3TxhZ3hJEXNQAr/VyrWpbvdnG231W0AeWZUs6T7iXEVFlKeKQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzxB7rYNcwAAE1yoWI2+tLRFpT4Br+DqVsPwlsp8+HPAdJbM9WY
+	oKwpCS/Nf3HHK0y+RuXwo8eNoHVmVFK2mhX9WHzRvRtho5tD7btv+9ZwDrpWZtg=
+X-Google-Smtp-Source: AGHT+IHlglhANRvpdTESP3LsM2lgJBYup01gWvrpmxLiylK//L7bzFq3mNfdN8XOV1pwMyWsj+dc6w==
+X-Received: by 2002:a5d:44c5:0:b0:37d:3141:5b6 with SMTP id ffacd0b85a97d-37d551d6533mr3343204f8f.12.1728672867357;
+        Fri, 11 Oct 2024 11:54:27 -0700 (PDT)
+Received: from [127.0.1.1] ([2a01:cb1d:dc:7e00:68b8:bef:b7eb:538f])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-37d4b79fe7csm4559161f8f.70.2024.10.11.11.54.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 11 Oct 2024 00:40:14 -0700 (PDT)
-Message-ID: <178cfe2729c00dda22656fae5f6ff7260976f5a2.camel@suse.com>
-Subject: Re: [PATCH v4 04/22] libmultipath: remove pending wait code from
- libcheck_check calls
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
- development <dm-devel@lists.linux.dev>
-Date: Fri, 11 Oct 2024 09:40:13 +0200
-In-Reply-To: <Zwgu9KvN1ZTkCkJL@redhat.com>
-References: <20241009011523.2381575-1-bmarzins@redhat.com>
-	 <20241009011523.2381575-5-bmarzins@redhat.com>
-	 <061a44d1ab78bd95b10bd908ffbfeb2bbd436ca0.camel@suse.com>
-	 <Zwgu9KvN1ZTkCkJL@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.52.4 
+        Fri, 11 Oct 2024 11:54:27 -0700 (PDT)
+From: Bartosz Golaszewski <brgl@bgdev.pl>
+Subject: [PATCH v7 00/17] Hardware wrapped key support for QCom ICE and UFS
+ core
+Date: Fri, 11 Oct 2024 20:53:59 +0200
+Message-Id: <20241011-wrapped-keys-v7-0-e3f7a752059b@linaro.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIAEd0CWcC/1XMQQ6CMBCF4auQWVszVqzCynsYFi0dYKKhZGqqh
+ HB3K65c/i953wKRhClCXSwglDhyGHOcdwW0gx17Uuxzg0Zd4gW1eomdJvLqTnNURBbxqDvXkYd
+ 8mYQ6fm/crck9cHwGmTc9me/6gyo0/1AyCpU/VWQOrsXWldcHj1bCPkgPzbquH6oQeNSpAAAA
+To: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, 
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Adrian Hunter <adrian.hunter@intel.com>, 
+ Asutosh Das <quic_asutoshd@quicinc.com>, 
+ Ritesh Harjani <ritesh.list@gmail.com>, 
+ Ulf Hansson <ulf.hansson@linaro.org>, Alim Akhtar <alim.akhtar@samsung.com>, 
+ Avri Altman <avri.altman@wdc.com>, Bart Van Assche <bvanassche@acm.org>, 
+ "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>, 
+ "Martin K. Petersen" <martin.petersen@oracle.com>, 
+ Eric Biggers <ebiggers@kernel.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, 
+ Jaegeuk Kim <jaegeuk@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
+ Bjorn Andersson <andersson@kernel.org>, 
+ Konrad Dybcio <konradybcio@kernel.org>, 
+ Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>, 
+ Dmitry Baryshkov <dmitry.baryshkov@linaro.org>, 
+ Gaurav Kashyap <quic_gaurkash@quicinc.com>, 
+ Neil Armstrong <neil.armstrong@linaro.org>
+Cc: linux-block@vger.kernel.org, linux-doc@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+ linux-mmc@vger.kernel.org, linux-scsi@vger.kernel.org, 
+ linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+ linux-arm-msm@vger.kernel.org, 
+ Bartosz Golaszewski <bartosz.golaszewski@linaro.org>, 
+ Eric Biggers <ebiggers@google.com>, 
+ Om Prakash Singh <quic_omprsing@quicinc.com>
+X-Mailer: b4 0.13.0
+X-Developer-Signature: v=1; a=openpgp-sha256; l=6675;
+ i=bartosz.golaszewski@linaro.org; h=from:subject:message-id;
+ bh=V+W549yZR4YXE4o9ySJ5Sa4Yc/1frqei+R9VTkOnjww=;
+ b=owEBbQKS/ZANAwAKARGnLqAUcddyAcsmYgBnCXRXheFkvmAfCwx0Kc8rJKoU5BpA3kyWjxAV/
+ 35LTWYZNfmJAjMEAAEKAB0WIQQWnetsC8PEYBPSx58Rpy6gFHHXcgUCZwl0VwAKCRARpy6gFHHX
+ cgA0D/4p3Bi0fXlOemSeU2xvKKK25ZEN3/EmT9KnIyEvzW9pkACbc3kmA+hczDu+fEwMdi4SpF5
+ wHgSASml14w4srJR/lEyN8QjLuq4WJB5aMwzRR/uLmxIkqI5oONlowHYqbrYs3fL2pUaiEmc9Xf
+ z2jBXeZl7d1yLJMHyDke9WIB1jsEVzqsKBYbLnK1APKctF9NBkIOpsEmMEA1TKwlh8W9W9QJ1UM
+ JwnX7CINZdXBI4gA2W3uUcF6lcovxO2QZRkViLGcgMQZfJlsFWP0sI0bOuPXejQMp3T71S2/Arm
+ SlCRJ2mrhY6Gj0ycUjt8bH57j14pS8Q05CvGuwFDfcCZl+uF1GAjhw21G/dxCOaS7WglRuOq55x
+ ZTQT1UsptQVVfQTCvY2OKUWPSrdBKCw60tXAYC1KDkbRWkTDurZnoLbls3SoS2c6IBJsMKeDa40
+ GdDpfPRU8AWr3oXYwo34OoYMI1aR7zKd6dCxJwuYX2EqT5fTDhgGm61Fz3OqxMPYkIU6wxbZopK
+ sBpaN3p5QYVq+HcVlblb1TJE2rnT/J3nekeHAO1Nd3G0y6VFoE3P8Z7Wet05HOSJzH8hKjDHIgX
+ ekggBI63eC4hPHcK9Ayb21XHlt2yzjO0Hd/6aeS7v8sLL960tlGQ0ElhucsvwZiyE2IFqQD1MaD
+ ph2BvhVDuk9LM6A==
+X-Developer-Key: i=bartosz.golaszewski@linaro.org; a=openpgp;
+ fpr=169DEB6C0BC3C46013D2C79F11A72EA01471D772
 
-On Thu, 2024-10-10 at 15:45 -0400, Benjamin Marzinski wrote:
-> On Wed, Oct 09, 2024 at 05:00:55PM +0200, Martin Wilck wrote:
-> > On Tue, 2024-10-08 at 21:15 -0400, Benjamin Marzinski wrote:
-> > > =C2=A0
-> > > =C2=A0	if (ct->running) {
-> > > =C2=A0		if (ct->req->state !=3D PATH_PENDING) {
-> > > @@ -345,31 +343,26 @@ check_state(int fd, struct directio_context
-> > > *ct, int sync, int timeout_secs)
-> > > =C2=A0			LOG(3, "io_submit error %i", -rc);
-> > > =C2=A0			return PATH_UNCHECKED;
-> > > =C2=A0		}
-> > > +		get_monotonic_time(&ct->endtime);
-> > > +		ct->endtime.tv_nsec +=3D 1000 * 1000;
-> > > +		normalize_timespec(&ct->endtime);
-> > > =C2=A0	}
-> > > =C2=A0	ct->running++;
-> >=20
-> > Sorry, I have another concern here, despite my reviewed-by. This
-> > very
-> > old statement, combined with "if (ct->running > c->timeout)" below,
-> > somehow assumes that "running" counts seconds, which means that
-> > this
-> > code must be called once a second. I guess this has been
-> > approximately
-> > true in the past, when this code was originally written. It has
-> > never
-> > been clean, we should have compared time stamps instead.=C2=A0
->=20
-> Yeah. That makes sense.
->=20
-> >=20
-> > But now, it seems to be plain wrong, "running" will never have a
-> > higher
-> > value than 1 as it is only called once from libcheck_check(), and
-> > the
-> > (ct->running - c->timeout) statement is broken.
-> >=20
-> > Am I misreading this code?
->=20
-> Either you are or I am.=C2=A0
+The preferred solution to the HWKM configuration issue seems to be
+using a module param so this is what I did in this iteration.
 
-I am :-)
+Hardware-wrapped keys are encrypted keys that can only be unwrapped
+(decrypted) and used by hardware - either by the inline encryption
+hardware itself, or by a dedicated hardware block that can directly
+provision keys to the inline encryption hardware. For more details,
+please see patches 1-3 in this series which extend the inline encryption
+docs with more information.
 
-> libcheck_check() is called by start_checker()
-> each time a path comes up for checking. libcheck_check() calls
-> check_state() with the number of seconds that the checker should wait
-> till it times out. If ct->running is non-zero, but the path is still
-> pending, check_state() increments ct->running and returns
-> PATH_PENDING.
+This series adds support for wrapped keys to the block layer, fscrypt
+and then build upwards from there by implementing relevant callbacks in
+QCom SCM driver, then the ICE driver and finally in UFS core and QCom
+layer.
 
-My misconception was that we call libcheck_check() once, and then call
-libcheck_pending() repeatedly until the checker either finishes or
-times out.=C2=A0The isn't true even with your patch set, both functions are
-called in every checkerloop, just that libcheck_check() doesn't restart
-the checker instance if it's already running (it just increments
-running, as you mentioned).
+Tested on sm8650-qrd.
 
-(Why I had this "misconception"? I think it's kind of a vague idea that
-I had in my mind how it should work; it's not in your code, and I'm not
-asking your to change the code in this way).
+How to test:
 
-> libcheck_pending() is called by get_state() every time a path gets
-> checked and its state is PATH_PENDING. If ct->running is greater than
-> c->timeout then the checker has timed out (it assumes that ct-
-> >running is
-> counting seconds) and gets cancelled.
+Use the wip-wrapped-keys branch from https://github.com/ebiggers/fscryptctl
+to build a custom fscryptctl that supports generating wrapped keys.
 
->=20
-> Also, I only see (ct->running > c->timeout), not
-> (ct->running - c->timeout) are you talking about something else in
-> the
-> code that I'm missing?
+Enable the following config options:
+CONFIG_BLK_INLINE_ENCRYPTION=y
+CONFIG_QCOM_INLINE_CRYPTO_ENGINE=m
+CONFIG_FS_ENCRYPTION_INLINE_CRYPT=y
+CONFIG_SCSI_UFS_CRYPTO=y
 
-No, typo.
+$ mkfs.ext4 -F -O encrypt,stable_inodes /dev/disk/by-partlabel/userdata
+$ mount /dev/disk/by-partlabel/userdata -o inlinecrypt /mnt
+$ fscryptctl generate_hw_wrapped_key /dev/disk/by-partlabel/userdata > /mnt/key.longterm
+$ fscryptctl prepare_hw_wrapped_key /dev/disk/by-partlabel/userdata < /mnt/key.longterm > /tmp/key.ephemeral
+$ KEYID=$(fscryptctl add_key --hw-wrapped-key < /tmp/key.ephemeral /mnt)
+$ rm -rf /mnt/dir
+$ mkdir /mnt/dir
+$ fscryptctl set_policy --hw-wrapped-key --iv-ino-lblk-64 "$KEYID" /mnt/dir
+$ dmesg > /mnt/dir/test.txt
+$ sync
 
-> At any rate, I can change this to use actual timestamps instead of
-> our
-> ct->running assumptions.
+Reboot the board
 
-Yes, please. "counting seconds" this way is wrong and confusing.
+$ mount /dev/disk/by-partlabel/userdata -o inlinecrypt /mnt
+$ ls /mnt/dir
+$ fscryptctl prepare_hw_wrapped_key /dev/disk/by-partlabel/userdata < /mnt/key.longterm > /tmp/key.ephemeral
+$ KEYID=$(fscryptctl add_key --hw-wrapped-key < /tmp/key.ephemeral /mnt)
+$ fscryptctl set_policy --hw-wrapped-key --iv-ino-lblk-64 "$KEYID" /mnt/dir
+$ cat /mnt/dir/test.txt # File should now be decrypted
 
-Regards,
-Martin
+Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
+---
+Changes in v7:
+- use a module param in conjunction with checking the platform support
+  at run-time to determine whether to use wrapped keys in the ICE driver
+- various minor refactorings, replacing magic numbers with defines etc.
+- fix kernel doc issues raised by autobuilders
+- Link to v6: https://lore.kernel.org/r/20240906-wrapped-keys-v6-0-d59e61bc0cb4@linaro.org
 
-PS: I'll be out of office for 2 weeks, so final review of your series
-will probably be delayed again. Sorry about that.
+Changes in v6:
+- add the wrapped key support from Eric Biggers to the series
+- remove the new DT property from the series and instead query the
+  at run-time rustZone to find out if wrapped keys are supported
+- make the wrapped key support into a UFS capability, not a quirk
+- improve kerneldocs
+- improve and rework coding style in most patches
+- improve and reformat commit messages
+- simplify the offset calculation for CRYPTOCFG
+- split out the DTS changes into a separate series
+
+---
+Bartosz Golaszewski (1):
+      firmware: qcom: scm: add a call for checking wrapped key support
+
+Eric Biggers (4):
+      blk-crypto: add basic hardware-wrapped key support
+      blk-crypto: show supported key types in sysfs
+      blk-crypto: add ioctls to create and prepare hardware-wrapped keys
+      fscrypt: add support for hardware-wrapped keys
+
+Gaurav Kashyap (12):
+      ice, ufs, mmc: use the blk_crypto_key struct when programming the key
+      firmware: qcom: scm: add a call for deriving the software secret
+      firmware: qcom: scm: add calls for creating, preparing and importing keys
+      soc: qcom: ice: add HWKM support to the ICE driver
+      soc: qcom: ice: add support for hardware wrapped keys
+      soc: qcom: ice: add support for generating, importing and preparing keys
+      ufs: core: add support for wrapped keys to UFS core
+      ufs: core: add support for deriving the software secret
+      ufs: core: add support for generating, importing and preparing keys
+      ufs: host: add support for wrapped keys in QCom UFS
+      ufs: host: add a callback for deriving software secrets and use it
+      ufs: host: add support for generating, importing and preparing wrapped keys
+
+ Documentation/ABI/stable/sysfs-block               |  18 +
+ Documentation/block/inline-encryption.rst          | 245 +++++++++++++-
+ Documentation/filesystems/fscrypt.rst              | 154 ++++++++-
+ Documentation/userspace-api/ioctl/ioctl-number.rst |   2 +
+ block/blk-crypto-fallback.c                        |   5 +-
+ block/blk-crypto-internal.h                        |  10 +
+ block/blk-crypto-profile.c                         | 103 ++++++
+ block/blk-crypto-sysfs.c                           |  35 ++
+ block/blk-crypto.c                                 | 194 ++++++++++-
+ block/ioctl.c                                      |   5 +
+ drivers/firmware/qcom/qcom_scm.c                   | 233 +++++++++++++
+ drivers/firmware/qcom/qcom_scm.h                   |   4 +
+ drivers/md/dm-table.c                              |   1 +
+ drivers/mmc/host/cqhci-crypto.c                    |   9 +-
+ drivers/mmc/host/cqhci.h                           |   2 +
+ drivers/mmc/host/sdhci-msm.c                       |   6 +-
+ drivers/soc/qcom/ice.c                             | 365 ++++++++++++++++++++-
+ drivers/ufs/core/ufshcd-crypto.c                   |  86 ++++-
+ drivers/ufs/host/ufs-qcom.c                        |  61 +++-
+ fs/crypto/fscrypt_private.h                        |  71 +++-
+ fs/crypto/hkdf.c                                   |   4 +-
+ fs/crypto/inline_crypt.c                           |  44 ++-
+ fs/crypto/keyring.c                                | 124 +++++--
+ fs/crypto/keysetup.c                               |  54 ++-
+ fs/crypto/keysetup_v1.c                            |   5 +-
+ fs/crypto/policy.c                                 |  11 +-
+ include/linux/blk-crypto-profile.h                 |  73 +++++
+ include/linux/blk-crypto.h                         |  75 ++++-
+ include/linux/firmware/qcom/qcom_scm.h             |   8 +
+ include/soc/qcom/ice.h                             |  18 +-
+ include/uapi/linux/blk-crypto.h                    |  44 +++
+ include/uapi/linux/fs.h                            |   6 +-
+ include/uapi/linux/fscrypt.h                       |   7 +-
+ include/ufs/ufshcd.h                               |  21 ++
+ 34 files changed, 1968 insertions(+), 135 deletions(-)
+---
+base-commit: eae80d86fb04e37032e5bdaec64e0b70316d11ae
+change-id: 20240802-wrapped-keys-eea0032fbfed
+
+Best regards,
+-- 
+Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
 
