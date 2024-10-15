@@ -1,60 +1,60 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C362171E65
-	for <dm-devel@lists.linux.dev>; Tue, 15 Oct 2024 03:28:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E74841714CC
+	for <dm-devel@lists.linux.dev>; Tue, 15 Oct 2024 03:28:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728962927; cv=none; b=QXN3Dwku//W2aMmQ2F1KdzwMdssHVSretrpS+XoaGZ0p5nya85/xNZ4gu/9TzlmdHzQA0zhli3A3M77Q1fxiMW6EpDrqW3DnCwOVgzMlH3w1stO9bBwu3bpzTjZH5+C8EtpzQdpLyMQayLLZ6O23a0pCYlq8WleRFYMb6AnUKBA=
+	t=1728962927; cv=none; b=GhX5w1CmpVzp8vZPopsuEA8pwKnK328C/3hNIkS0YZlABKTI6Br4CXyeSKrCuijWAoQVsdlVTHmfjgRDVY3VhwslVestZxIy8E51AkO+WbA0oyw/j4yJJRIE1NAQqnwcUeqj/OVJKvE+T6vZf0ibyNdbwZtI01lITwwjO9yE3Sk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1728962927; c=relaxed/simple;
-	bh=wQ1nePph6dUXU7bvFvowIYwNCYq8PFKyHFWr8UlTcHI=;
+	bh=VDbE0x5886dg1Q4JogrsSN1jO4LASeBe6qliyHPK8AA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=GTFi61+OgS7un6kAxTQkGbexOGAHKvqI6OPa61DpWyXEdAa5d79qlgaLTE/DAnVmaB7NhHUngNZglQ+rcI47t1Uupn/DxV4WyqF43u5vpKkrhNzAHSLAt/sx7efyVO8j5QW5sbgqDJzh4u4m4R4Ev2spNsUaDTSeXWiHdxGxsv8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=g3I+eXCq; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=gdvs8G4dwDGLqAlg7nDI1ZGyK4InVrr8eEznNqR705zDKJDbb+1yCY7TspSxXbEWpMosOJXguBPkY6lMFeLfqvYkDPrIE8ySLvKM6CJ2WjKhkX1yQycUFPRwMEwXVMS4qxkUGpTf6etycLmxQJmucAnHxeAol5CYhh+43EBKmEM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=aMcAwWr2; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="g3I+eXCq"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aMcAwWr2"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1728962923;
+	s=mimecast20190719; t=1728962922;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=i/IF6FkL0st3WJlofb0F9sBmzyu28qPBTHH4HvimkHs=;
-	b=g3I+eXCqxv80jWNurxX3Gr3oEYZOtmmQS0qQJPc/M9OTjXIo0ft+QWHnNHaAhXtp0F1Dfd
-	KcGOssQp/gnKdctgeDcxCTI7jliMf94qoBJaolPjTArIwqNTmsYumbiN+mkZ0D5+oTdjak
-	P5HCIuxjP8Y2fS4YvrfQBLaeKj15xS4=
+	bh=Trk8JV6w/ZdQPRK33bjSsbgKTL9TRmdgDAwoQzFLOAY=;
+	b=aMcAwWr2A4NqUmUbEvTcgxAZOex1lzfLkAx9XHsvjaIsOjacwVwTTN4pOX6+o02b1qLX1P
+	1UrYQZlxFKrtN8nlbhFW6ifI/2dc/FVSfav1CmaUMS1GPdDf4v8w3n550NBIVI+B+XTxYK
+	XNRNquXHAC5q5kGveGCvWjUNbSoG41s=
 Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-640-593OGlR_MZSdXvv0qEQmlw-1; Mon,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-499-4w8xBhQmPJaSRpwIyh8rUg-1; Mon,
  14 Oct 2024 23:28:41 -0400
-X-MC-Unique: 593OGlR_MZSdXvv0qEQmlw-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+X-MC-Unique: 4w8xBhQmPJaSRpwIyh8rUg-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 45D0119560A5;
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7230119560AE;
 	Tue, 15 Oct 2024 03:28:40 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 102581955F43;
-	Tue, 15 Oct 2024 03:28:39 +0000 (UTC)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3CB3F1956054;
+	Tue, 15 Oct 2024 03:28:40 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 49F3Scdw2693363
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 49F3Sdvs2693371
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 14 Oct 2024 23:28:38 -0400
+	Mon, 14 Oct 2024 23:28:39 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 49F3ScBj2693362;
-	Mon, 14 Oct 2024 23:28:38 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 49F3SdLF2693370;
+	Mon, 14 Oct 2024 23:28:39 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>, Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 21/23] multipathd: wait for checkers to complete
-Date: Mon, 14 Oct 2024 23:28:33 -0400
-Message-ID: <20241015032835.2693247-22-bmarzins@redhat.com>
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v5 23/23] multipathd: use timestamps to tell when the directio checker timed out
+Date: Mon, 14 Oct 2024 23:28:35 -0400
+Message-ID: <20241015032835.2693247-24-bmarzins@redhat.com>
 In-Reply-To: <20241015032835.2693247-1-bmarzins@redhat.com>
 References: <20241015032835.2693247-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -63,110 +63,137 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Multipath again waits for running checkers to complete. In pathinfo(),
-mutipath will just wait 1ms if the checker is running. In checkerloop(),
-if there are running checkers, multipathd will drop the vecs lock and
-wait for 5ms. The difference it wait times is because multipathd cannot
-drop the vecs lock in pathinfo.
+Instead of counting the number of times the path checker has been
+called and treating that as the number of seconds that have passed,
+calculate the actual timestamp when the checker will time out, and
+check that instead.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c          |  9 ++++++++-
- libmultipath/libmultipath.version |  1 +
- multipathd/main.c                 | 12 +++++++++++-
- 3 files changed, 20 insertions(+), 2 deletions(-)
+ libmultipath/checkers/directio.c | 44 ++++++++++++++++++++++----------
+ 1 file changed, 31 insertions(+), 13 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 6ccdfa0b..1d48c30a 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -2467,8 +2467,15 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 	if (mask & DI_CHECKER) {
- 		if (path_state == PATH_UP) {
- 			int newstate = PATH_UNCHECKED;
--			if (start_checker(pp, conf, 0, path_state) == 0)
-+			if (start_checker(pp, conf, 0, path_state) == 0) {
-+				if (checker_need_wait(&pp->checker)) {
-+					struct timespec wait = {
-+						.tv_nsec = 1000 * 1000,
-+					};
-+					nanosleep(&wait, NULL);
-+				}
- 				newstate = get_state(pp);
-+			}
- 			if (newstate != PATH_PENDING ||
- 			    pp->state == PATH_UNCHECKED ||
- 			    pp->state == PATH_WILD)
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 6439d3a7..c2e5f552 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -62,6 +62,7 @@ global:
- 	checker_enable;
- 	checker_message;
- 	checker_name;
-+	checker_need_wait;
- 	checker_state_name;
- 	check_foreign;
- 	cleanup_bindings;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 846be5a9..e92f3ebd 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2850,6 +2850,7 @@ update_uninitialized_path(struct vectors * vecs, struct path * pp)
- enum checker_state {
- 	CHECKER_STARTING,
- 	CHECKER_CHECKING_PATHS,
-+	CHECKER_WAITING_FOR_PATHS,
- 	CHECKER_UPDATING_PATHS,
- 	CHECKER_FINISHED,
+diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
+index 27227894..d35a6bac 100644
+--- a/libmultipath/checkers/directio.c
++++ b/libmultipath/checkers/directio.c
+@@ -60,13 +60,28 @@ const char *libcheck_msgtable[] = {
+ #define LOG(prio, fmt, args...) condlog(prio, "directio: " fmt, ##args)
+ 
+ struct directio_context {
+-	unsigned int	running;
+-	int		reset_flags;
++	time_t timeout;
++	int reset_flags;
+ 	struct aio_group *aio_grp;
+ 	struct async_req *req;
+ 	bool checked_state;
  };
-@@ -2861,6 +2862,7 @@ check_paths(struct vectors *vecs, unsigned int ticks)
- 	struct timespec diff_time, start_time, end_time;
- 	struct path *pp;
- 	int i;
-+	bool need_wait = false;
  
- 	get_monotonic_time(&start_time);
- 
-@@ -2871,6 +2873,9 @@ check_paths(struct vectors *vecs, unsigned int ticks)
- 			pp->is_checked = check_path(pp, ticks);
- 		else
- 			pp->is_checked = check_uninitialized_path(pp, ticks);
-+		if (pp->is_checked == CHECK_PATH_STARTED &&
-+		    checker_need_wait(&pp->checker))
-+			need_wait = true;
- 		if (++paths_checked % 128 == 0 &&
- 		    (lock_has_waiters(&vecs->lock) || waiting_clients())) {
- 			get_monotonic_time(&end_time);
-@@ -2879,7 +2884,7 @@ check_paths(struct vectors *vecs, unsigned int ticks)
- 				return CHECKER_CHECKING_PATHS;
++bool is_running(struct directio_context *ct) {
++	return (ct->timeout != 0);
++}
++
++void start_running(struct directio_context *ct, int timeout_secs) {
++	struct timespec now;
++
++	get_monotonic_time(&now);
++	ct->timeout = now.tv_sec + timeout_secs;
++}
++
++void stop_running(struct directio_context *ct) {
++	ct->timeout = 0;
++}
++
+ static struct aio_group *
+ add_aio_group(void)
+ {
+@@ -234,9 +249,9 @@ void libcheck_free (struct checker * c)
  		}
  	}
--	return CHECKER_UPDATING_PATHS;
-+	return need_wait ? CHECKER_WAITING_FOR_PATHS : CHECKER_UPDATING_PATHS;
+ 
+-	if (ct->running && ct->req->state != PATH_PENDING)
+-		ct->running = 0;
+-	if (!ct->running) {
++	if (is_running(ct) && ct->req->state != PATH_PENDING)
++		stop_running(ct);
++	if (!is_running(ct)) {
+ 		free(ct->req->buf);
+ 		free(ct->req);
+ 		ct->aio_grp->holders--;
+@@ -304,7 +319,7 @@ check_pending(struct directio_context *ct, struct timespec timeout)
+ 		r = get_events(ct->aio_grp, &timeout);
+ 
+ 		if (ct->req->state != PATH_PENDING) {
+-			ct->running = 0;
++			stop_running(ct);
+ 			return;
+ 		} else if (r == 0 ||
+ 			   (timeout.tv_sec == 0 && timeout.tv_nsec == 0))
+@@ -330,10 +345,10 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ 	if (sync > 0)
+ 		LOG(4, "called in synchronous mode");
+ 
+-	if (ct->running) {
++	if (is_running(ct)) {
+ 		ct->checked_state = true;
+ 		if (ct->req->state != PATH_PENDING) {
+-			ct->running = 0;
++			stop_running(ct);
+ 			return ct->req->state;
+ 		}
+ 	} else {
+@@ -348,9 +363,9 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ 			LOG(3, "io_submit error %i", -rc);
+ 			return PATH_UNCHECKED;
+ 		}
++		start_running(ct, timeout_secs);
+ 		ct->checked_state = false;
+ 	}
+-	ct->running++;
+ 	if (!sync)
+ 		return PATH_PENDING;
+ 
+@@ -388,7 +403,7 @@ static void set_msgid(struct checker *c, int state)
+ bool libcheck_need_wait(struct checker *c)
+ {
+ 	struct directio_context *ct = (struct directio_context *)c->context;
+-	return (ct && ct->running && ct->req->state == PATH_PENDING &&
++	return (ct && is_running(ct) && ct->req->state == PATH_PENDING &&
+ 		!ct->checked_state);
  }
  
- static enum checker_state
-@@ -3001,6 +3006,11 @@ checkerloop (void *ap)
- 			if (checker_state != CHECKER_FINISHED) {
- 				/* Yield to waiters */
- 				struct timespec wait = { .tv_nsec = 10000, };
-+				if (checker_state == CHECKER_WAITING_FOR_PATHS) {
-+					/* wait 5ms */
-+					wait.tv_nsec = 5 * 1000 * 1000;
-+					checker_state = CHECKER_UPDATING_PATHS;
-+				}
- 				nanosleep(&wait, NULL);
- 			}
- 		}
+@@ -400,7 +415,7 @@ int libcheck_pending(struct checker *c)
+ 	struct timespec no_wait = { .tv_sec = 0 };
+ 
+ 	/* The if path checker isn't running, just return the exiting value. */
+-	if (!ct || !ct->running) {
++	if (!ct || !is_running(ct)) {
+ 		rc = c->path_state;
+ 		goto out;
+ 	}
+@@ -408,10 +423,13 @@ int libcheck_pending(struct checker *c)
+ 	if (ct->req->state == PATH_PENDING)
+ 		check_pending(ct, no_wait);
+ 	else
+-		ct->running = 0;
++		stop_running(ct);
+ 	rc = ct->req->state;
+ 	if (rc == PATH_PENDING) {
+-		if (ct->running > c->timeout) {
++		struct timespec now;
++
++		get_monotonic_time(&now);
++		if (now.tv_sec > ct->timeout) {
+ 			LOG(3, "abort check on timeout");
+ 			io_cancel(ct->aio_grp->ioctx, &ct->req->io, &event);
+ 			rc = PATH_DOWN;
 -- 
 2.45.0
 
