@@ -1,60 +1,60 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A7E81714BE
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6F6F1714BD
 	for <dm-devel@lists.linux.dev>; Tue, 15 Oct 2024 03:28:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728962925; cv=none; b=DR2Jc5RViIO0yNh1IoSrOAwE/CUWq6SFsBj5UxkoT8x4dqBJWAECIWZpekMfixeESssBAujIum06PKfJ2uqIJFTKRcaISYyql5OFxjjYPvcUOxyNyE6LBrphYXv64CaJy0Ic8BvNL/GrUuw/2ucfvCePaze8gNey8Idv3Gz6uQ4=
+	t=1728962925; cv=none; b=re2HFmOH2BfoMZ29eSeXAgJMuRf9prCBrl0z1HVgjV5qg2N/T1vpiIplsYbUfXHGG+wdRN80AGa3mscJ23bl0VKninGp+/v+DLUf3VNQ3DyeTKgXVFRe0RnUDbPTvWqzTXhnowVbTL+miVw400i94XBx5jX6c8pGpRKzhEm0Wmo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1728962925; c=relaxed/simple;
-	bh=mA9bug/wjM6NVN3hGIgpfQ5/c+bEOey9J9VlY6D2yqY=;
+	bh=9T8Hn2v/DAA05EWxuLl/0vPGncBmmOjV0Qau/nh5324=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=lAtslNJJfbhVg809FSoJGWCTuK4BWjSh8mDVrB6SUBKlmr7nvnNV0tMXY5MXQE3llaZkKF1+vYIa/YW/MLawJX1NlpFlQAflyxnskAU66PMCm6BYo66rc712te6Z+k5+bfaBhBbsXUcpsIQ0vqDQfoP32GBAReD/8+poIII9sIA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HoDXJ0CM; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=pJViEDa1+SVLmx8AYlYVSays+usR/TQ7TBXdl28vZ2aFbal5Cg81+sP/RoMkSHmbhwpeKR3FEjbpD6+cP4xZLzeaxH9czASrgSei+F9H8sym7F9sDjIV/u+yTJHJvvolfvyTl/e4RuNAry5/jbiv9rqT73etT8/HIX9RSiu8Uvc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Iv688+PW; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HoDXJ0CM"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Iv688+PW"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1728962922;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=X+5TCCZC21OsLunQEarU+AbAt+6HTEvgDbEmt+d8pas=;
-	b=HoDXJ0CMD3JQLpCuJqokCxNGJOkqDPnlXRydWkx5jrQH3NHQE2FOB6pZc1XA20CsDfGbO+
-	kbzTcaanfcYfw8KkRRNfZiyuWwMMsmLWjNxsHr6L/mIDPrTmwKHTlYv6d8Lpqf28NVFH34
-	KMoM1FcscjdMwpMk6x+gR+W2mo0kXZs=
+	bh=aSJMRVFe0C+Fen574tMyVMu/sjlFYHEciXXA4GnGkuw=;
+	b=Iv688+PWrEXxYpdSwB04dm0NLut5rktsAUNy89NtLzsJ4FiXyV7C8ra3kAu+G6sWxp72lx
+	dtz85gBZX6XCU7iJpkpFsuYUqdfyHyNcszhPGRlpk4bW0shXOCexY5ybISFtnwdKINmZUC
+	Y+q7pBjF9cNaGfySKCRIs2UsmKxPqh4=
 Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-499--MDOB4QrNN2ZZTHzNfB6bQ-1; Mon,
- 14 Oct 2024 23:28:41 -0400
-X-MC-Unique: -MDOB4QrNN2ZZTHzNfB6bQ-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-435-qGi7ZMJ8PuSjJERQYuPsBg-1; Mon,
+ 14 Oct 2024 23:28:39 -0400
+X-MC-Unique: qGi7ZMJ8PuSjJERQYuPsBg-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0717819560BE;
-	Tue, 15 Oct 2024 03:28:40 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7EFC219560B1;
+	Tue, 15 Oct 2024 03:28:38 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C48B519560A2;
-	Tue, 15 Oct 2024 03:28:39 +0000 (UTC)
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3F56F1956089;
+	Tue, 15 Oct 2024 03:28:38 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 49F3ScZS2693359
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 49F3SbfG2693315
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 14 Oct 2024 23:28:38 -0400
+	Mon, 14 Oct 2024 23:28:37 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 49F3Sc3L2693358;
-	Mon, 14 Oct 2024 23:28:38 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 49F3Sbbg2693314;
+	Mon, 14 Oct 2024 23:28:37 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>, Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 20/23] libmultipath: don't wait in libcheck_pending
-Date: Mon, 14 Oct 2024 23:28:32 -0400
-Message-ID: <20241015032835.2693247-21-bmarzins@redhat.com>
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v5 09/23] multipathd: rename do_check_path to update_path_state
+Date: Mon, 14 Oct 2024 23:28:21 -0400
+Message-ID: <20241015032835.2693247-10-bmarzins@redhat.com>
 In-Reply-To: <20241015032835.2693247-1-bmarzins@redhat.com>
 References: <20241015032835.2693247-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -63,188 +63,80 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Disable waiting in the libcheck_pending() checker class functions.
-Instead, they now just check if the checker has already completed.
-A future patch will re-add waiting outside of libcheck_pending().
+Move the code that starts the path checker from do_check_path() into
+check_path(), rename the remainder of do_check_path() to
+update_path_state() and call that from check_path().
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/directio.c | 41 ++++++++++++++++----------------
- libmultipath/checkers/tur.c      | 20 +++-------------
- 2 files changed, 23 insertions(+), 38 deletions(-)
+ multipathd/main.c | 21 +++++++++++----------
+ 1 file changed, 11 insertions(+), 10 deletions(-)
 
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index 54c12f7b..27227894 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -64,7 +64,6 @@ struct directio_context {
- 	int		reset_flags;
- 	struct aio_group *aio_grp;
- 	struct async_req *req;
--	struct timespec endtime;
- 	bool checked_state;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 16c0531e..488aa225 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2396,7 +2396,7 @@ enum check_path_return {
  };
  
-@@ -291,18 +290,17 @@ get_events(struct aio_group *aio_grp, struct timespec *timeout)
- }
+ static int
+-do_check_path (struct vectors * vecs, struct path * pp)
++update_path_state (struct vectors * vecs, struct path * pp)
+ {
+ 	int newstate;
+ 	int new_path_up = 0;
+@@ -2414,12 +2414,6 @@ do_check_path (struct vectors * vecs, struct path * pp)
+ 	marginal_pathgroups = conf->marginal_pathgroups;
+ 	put_multipath_config(conf);
  
- static void
--check_pending(struct directio_context *ct, struct timespec endtime)
-+check_pending(struct directio_context *ct, struct timespec timeout)
+-	if (pp->checkint == CHECKINT_UNDEF) {
+-		condlog(0, "%s: BUG: checkint is not set", pp->dev);
+-		pp->checkint = checkint;
+-	};
+-
+-	start_path_check(pp);
+ 	newstate = get_new_state(pp);
+ 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED)
+ 		return CHECK_PATH_SKIPPED;
+@@ -2639,7 +2633,7 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks,
+ 	    time_t start_secs)
  {
  	int r;
--	struct timespec currtime, timeout;
-+	struct timespec endtime, currtime;
+-	unsigned int adjust_int, max_checkint;
++	unsigned int adjust_int, checkint, max_checkint;
+ 	struct config *conf;
+ 	time_t next_idx, goal_idx;
  
- 	ct->checked_state = true;
-+	get_monotonic_time(&endtime);
-+	endtime.tv_sec += timeout.tv_sec;
-+	endtime.tv_nsec += timeout.tv_nsec;
-+	normalize_timespec(&endtime);
- 	while(1) {
--		get_monotonic_time(&currtime);
--		timespecsub(&endtime, &currtime, &timeout);
--		if (timeout.tv_sec < 0)
--			timeout.tv_sec = timeout.tv_nsec = 0;
--
- 		r = get_events(ct->aio_grp, &timeout);
+@@ -2652,14 +2646,21 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks,
+ 		return CHECK_PATH_SKIPPED;
  
- 		if (ct->req->state != PATH_PENDING) {
-@@ -311,6 +309,10 @@ check_pending(struct directio_context *ct, struct timespec endtime)
- 		} else if (r == 0 ||
- 			   (timeout.tv_sec == 0 && timeout.tv_nsec == 0))
- 			return;
-+		get_monotonic_time(&currtime);
-+		timespecsub(&endtime, &currtime, &timeout);
-+		if (timeout.tv_sec < 0)
-+			timeout.tv_sec = timeout.tv_nsec = 0;
- 	}
- }
+ 	conf = get_multipath_config();
++	checkint = conf->checkint;
+ 	max_checkint = conf->max_checkint;
+ 	adjust_int = conf->adjust_int;
+ 	put_multipath_config(conf);
  
-@@ -320,7 +322,7 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
- 	struct stat	sb;
- 	int		rc;
- 	struct io_event event;
--	struct timespec endtime;
-+	struct timespec timeout = { .tv_sec = timeout_secs };
- 
- 	if (fstat(fd, &sb) == 0) {
- 		LOG(4, "called for %x", (unsigned) sb.st_rdev);
-@@ -346,20 +348,13 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
- 			LOG(3, "io_submit error %i", -rc);
- 			return PATH_UNCHECKED;
- 		}
--		get_monotonic_time(&ct->endtime);
--		ct->endtime.tv_nsec += 1000 * 1000;
--		normalize_timespec(&ct->endtime);
- 		ct->checked_state = false;
- 	}
- 	ct->running++;
- 	if (!sync)
- 		return PATH_PENDING;
- 
--	get_monotonic_time(&endtime);
--	endtime.tv_sec += timeout_secs;
--	normalize_timespec(&endtime);
--
--	check_pending(ct, endtime);
-+	check_pending(ct, timeout);
- 	if (ct->req->state != PATH_PENDING)
- 		return ct->req->state;
- 
-@@ -402,13 +397,16 @@ int libcheck_pending(struct checker *c)
- 	int rc;
- 	struct io_event event;
- 	struct directio_context *ct = (struct directio_context *)c->context;
-+	struct timespec no_wait = { .tv_sec = 0 };
- 
- 	/* The if path checker isn't running, just return the exiting value. */
--	if (!ct || !ct->running)
--		return c->path_state;
-+	if (!ct || !ct->running) {
-+		rc = c->path_state;
-+		goto out;
+-	r = do_check_path(vecs, pp);
++	if (pp->checkint == CHECKINT_UNDEF) {
++		condlog(0, "%s: BUG: checkint is not set", pp->dev);
++		pp->checkint = checkint;
 +	}
++
++	start_path_check(pp);
++	r = update_path_state(vecs, pp);
  
- 	if (ct->req->state == PATH_PENDING)
--		check_pending(ct, ct->endtime);
-+		check_pending(ct, no_wait);
- 	else
- 		ct->running = 0;
- 	rc = ct->req->state;
-@@ -421,8 +419,9 @@ int libcheck_pending(struct checker *c)
- 		else
- 			LOG(4, "async io pending");
- 	}
--	set_msgid(c, rc);
- 
-+out:
-+	set_msgid(c, rc);
- 	return rc;
- }
- 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index f7e6a483..e70a2e11 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -58,7 +58,6 @@ struct tur_checker_context {
- 	int msgid;
- 	struct checker_context ctx;
- 	unsigned int nr_timeouts;
--	struct timespec endtime;
- 	bool checked_state;
- };
- 
-@@ -299,14 +298,6 @@ void *libcheck_thread(struct checker_context *ctx)
- 	return ((void *)0);
- }
- 
--
--static void tur_timeout(struct timespec *tsp)
--{
--	get_monotonic_time(tsp);
--	tsp->tv_nsec += 1000 * 1000; /* 1 millisecond */
--	normalize_timespec(tsp);
--}
--
- static void tur_set_async_timeout(struct checker *c)
- {
- 	struct tur_checker_context *ct = c->context;
-@@ -328,16 +319,12 @@ static int tur_check_async_timeout(struct checker *c)
- int check_pending(struct checker *c)
- {
- 	struct tur_checker_context *ct = c->context;
--	int r, tur_status = PATH_PENDING;
-+	int tur_status = PATH_PENDING;
- 
- 	pthread_mutex_lock(&ct->lock);
- 
--	for (r = 0;
--	     r == 0 && ct->state == PATH_PENDING &&
--	     ct->msgid == MSG_TUR_RUNNING;
--	     r = pthread_cond_timedwait(&ct->active, &ct->lock, &ct->endtime));
--
--	if (!r) {
-+	if (ct->state != PATH_PENDING || ct->msgid != MSG_TUR_RUNNING)
-+	{
- 		tur_status = ct->state;
- 		c->msgid = ct->msgid;
- 	}
-@@ -488,7 +475,6 @@ int libcheck_check(struct checker * c)
- 				" sync mode", major(ct->devt), minor(ct->devt));
- 			return tur_check(c->fd, c->timeout, &c->msgid);
- 		}
--		tur_timeout(&ct->endtime);
- 	}
- 
- 	return tur_status;
+ 	/*
+-	 * do_check_path() removed or orphaned the path.
++	 * update_path_state() removed or orphaned the path.
+ 	 */
+ 	if (r == CHECK_PATH_REMOVED || !pp->mpp)
+ 		return r;
 -- 
 2.45.0
 
