@@ -1,60 +1,60 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6B551714C6
-	for <dm-devel@lists.linux.dev>; Tue, 15 Oct 2024 03:28:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 23E36172BCE
+	for <dm-devel@lists.linux.dev>; Tue, 15 Oct 2024 03:28:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728962927; cv=none; b=PGjcLZWUvvM8qzamKFmUbEDOg/MwsMc9ABiWSB5nI+DDSDnqBQvItxrrWvlIMDhbsGymRvDQjO+Iq1TdzMha3Hk/pRLE/tkjhol/olvlF6CXqm6iCaMBg8OmP7uKbKnHUpJlpC2IAzr0tpU5i6cGdnkxrsQgo8MQNEQl1yAF5YE=
+	t=1728962927; cv=none; b=o/+bMArQfM/oyGfRYYhhWy1SeP+N5qzNackC2A8CmksSvBDbjJzJeOjMBdTNpBV4b8E3eE5NcrSbFKxC1tcuxGmm6+M8HxN3QJG2LaWj/fsZM2Tl4n5vIC36CdcA84TRyI8J3iWblyI5lXXCJecU7Rl3w0wkblc0T1Gtyl7QVyk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1728962927; c=relaxed/simple;
-	bh=DZTb0BWSmeyBfjiIkjFphYb8nQXGB1t8tf042fhVx2c=;
+	bh=XYrA09mkFsb2Fo7BUR6/8WmKh2VrTUllBGTwXh6awXk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=ARzSC6lCFFFBHGe4Ga/Tn03zTg3V6WJ4W2h5DKVEpq+O5zVERcKjV85Zwl9oxAPfA/2hvrUh/mn/85+feZ4mfwkCmZEherHhDB6r7SfW37I1Z3AiUhXxRjFm81TskyOM0WpgeBGJXDpMHiUqnHDts43DD5MmwogpnlftJkXkvdI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=L1zIlkSg; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=qcIfxQG7ZD6TWxKkdDpHCYbYfMmALH2Dn14B8IYaO/Rt7Vox3Kqq5KbxK2Mgjx2oDsOM1iebSsApDpuks4caRBJjn2/qW6Ccq04xmpWbT51V2NMe+Jr9iqtlpxSDfn/iIyikp9EESHtbMR8EHkiAGGiE6szsSruNp8RoOcmfOsE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NjxV9MhU; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="L1zIlkSg"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NjxV9MhU"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1728962922;
+	s=mimecast20190719; t=1728962923;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=CxVWR9mGuSCvNQeAMZWWeiixsel1OjZZaSBgvQsHKWs=;
-	b=L1zIlkSgsyb3WuiLPVobRvboF3f4dqj/uaQBO5MhZlL2FR5syeXNHlp7t9kwL+N3LHJkIR
-	0mEobYcxHsl441P0AnIBYHqnOLPbf7ETxJXS9yNlzFe6cllq+Zg3+aQHqhon5EYg21AG8b
-	2TIGRDBpG42mBAz+7NMbwOq9MgLX8x4=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=7HWCQyiqKQb3VwL7z1bSCn9lfcUcYkeaxu5HGByVueA=;
+	b=NjxV9MhUmzBb1hNIyYHwJws4FAvqnnASamFCb0wpXwoqVZIiAZysAVHMFrzoGEV2BJwcJv
+	JyNas9EmvSLYRShRlKXRRihq9klMlV8D0Sl0JrjUgfeBedl0aeWvThZl1muBE8ZuVz1+rr
+	8c9lFqu/DTLpOha6c6yYtxIUduaTaTg=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-590-MQqgUpL2OK2aH5ABbllDng-1; Mon,
- 14 Oct 2024 23:28:39 -0400
-X-MC-Unique: MQqgUpL2OK2aH5ABbllDng-1
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-433-tfes7t1tNpagolYCGttZeQ-1; Mon,
+ 14 Oct 2024 23:28:38 -0400
+X-MC-Unique: tfes7t1tNpagolYCGttZeQ-1
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 030391956080;
-	Tue, 15 Oct 2024 03:28:38 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9CB72195608C;
+	Tue, 15 Oct 2024 03:28:37 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C214019560A2;
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 66B5E1955F43;
 	Tue, 15 Oct 2024 03:28:37 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 49F3SatN2693303
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 49F3Sa232693291
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
 	Mon, 14 Oct 2024 23:28:36 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 49F3Sa1S2693302;
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 49F3SaxM2693290;
 	Mon, 14 Oct 2024 23:28:36 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>, Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 06/23] libmultipath: split get_state into two functions
-Date: Mon, 14 Oct 2024 23:28:18 -0400
-Message-ID: <20241015032835.2693247-7-bmarzins@redhat.com>
+Subject: [PATCH v5 03/23] libmultipath: split out the code to wait for pending checkers
+Date: Mon, 14 Oct 2024 23:28:15 -0400
+Message-ID: <20241015032835.2693247-4-bmarzins@redhat.com>
 In-Reply-To: <20241015032835.2693247-1-bmarzins@redhat.com>
 References: <20241015032835.2693247-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -63,133 +63,272 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-get_state() is now split into start_checker(), which runs the checker
-but doesn't wait for async checkers, and get_state(), which returns the
-state from the checker, after waiting for async checkers if necessary.
+This patch adds a new optional symbol for the dynamic path checker
+libraries, libcheck_pending. This is currently unused, but can be called
+on pending checkers to check if they've completed and return their value.
+The "tur" and "directio" checkers are the only ones which can return
+PATH_PENDING. They now implement libcheck_pending() as a wrapper around
+the code that libcheck_check uses to wait for pending paths, which has
+been broken out into its own function.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c          | 22 ++++++++++++++++------
- libmultipath/discovery.h          |  4 +++-
- libmultipath/libmultipath.version |  1 +
- multipathd/main.c                 |  4 +++-
- 4 files changed, 23 insertions(+), 8 deletions(-)
+ libmultipath/checkers.c          |  4 +-
+ libmultipath/checkers.h          |  1 +
+ libmultipath/checkers/directio.c | 86 ++++++++++++++++++++++----------
+ libmultipath/checkers/tur.c      | 65 ++++++++++++++++--------
+ 4 files changed, 109 insertions(+), 47 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 5648be60..e0f46ff2 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1974,30 +1974,29 @@ cciss_ioctl_pathinfo(struct path *pp)
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index c4918d28..298aec78 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -26,6 +26,7 @@ struct checker_class {
+ 	void (*free)(struct checker *);      /* to free the context */
+ 	void (*reset)(void);		     /* to reset the global variables */
+ 	void *(*thread)(void *);	     /* async thread entry point */
++	int (*pending)(struct checker *);    /* to recheck pending paths */
+ 	const char **msgtable;
+ 	short msgtable_size;
+ };
+@@ -180,7 +181,8 @@ static struct checker_class *add_checker_class(const char *name)
+ 	c->mp_init = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_mp_init");
+ 	c->reset = (void (*)(void)) dlsym(c->handle, "libcheck_reset");
+ 	c->thread = (void *(*)(void*)) dlsym(c->handle, "libcheck_thread");
+-	/* These 3 functions can be NULL. call dlerror() to clear out any
++	c->pending = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_pending");
++	/* These 4 functions can be NULL. call dlerror() to clear out any
+ 	 * error string */
+ 	dlerror();
+ 
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index fb1160af..b2342a1b 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -190,6 +190,7 @@ void libcheck_free(struct checker *);
+ void *libcheck_thread(struct checker_context *ctx);
+ void libcheck_reset(void);
+ int libcheck_mp_init(struct checker *);
++int libcheck_pending(struct checker *c);
+ 
+ 
+ /*
+diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
+index 8e87878b..3f88b40d 100644
+--- a/libmultipath/checkers/directio.c
++++ b/libmultipath/checkers/directio.c
+@@ -288,14 +288,36 @@ get_events(struct aio_group *aio_grp, struct timespec *timeout)
+ 	return got_events;
  }
  
- int
--get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
-+start_checker (struct path * pp, struct config *conf, int daemon, int oldstate)
- {
- 	struct checker * c = &pp->checker;
--	int state;
- 
- 	if (!checker_selected(c)) {
- 		if (daemon) {
- 			if (pathinfo(pp, conf, DI_SYSFS) != PATHINFO_OK) {
- 				condlog(3, "%s: couldn't get sysfs pathinfo",
- 					pp->dev);
--				return PATH_UNCHECKED;
-+				return -1;
- 			}
- 		}
- 		select_detect_checker(conf, pp);
- 		select_checker(conf, pp);
- 		if (!checker_selected(c)) {
- 			condlog(3, "%s: No checker selected", pp->dev);
--			return PATH_UNCHECKED;
-+			return -1;
- 		}
- 		checker_set_fd(c, pp->fd);
- 		if (checker_init(c, pp->mpp?&pp->mpp->mpcontext:NULL)) {
- 			checker_clear(c);
- 			condlog(3, "%s: checker init failed", pp->dev);
--			return PATH_UNCHECKED;
-+			return -1;
- 		}
- 	}
- 	if (pp->mpp && !c->mpcontext)
-@@ -2008,6 +2007,15 @@ get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
- 	else
- 		checker_set_sync(c);
- 	checker_check(c, oldstate);
-+	return 0;
++static void
++check_pending(struct directio_context *ct, struct timespec endtime)
++{
++	int r;
++	struct timespec currtime, timeout;
++
++	while(1) {
++		get_monotonic_time(&currtime);
++		timespecsub(&endtime, &currtime, &timeout);
++		if (timeout.tv_sec < 0)
++			timeout.tv_sec = timeout.tv_nsec = 0;
++
++		r = get_events(ct->aio_grp, &timeout);
++
++		if (ct->req->state != PATH_PENDING) {
++			ct->running = 0;
++			return;
++		} else if (r == 0 ||
++			   (timeout.tv_sec == 0 && timeout.tv_nsec == 0))
++			return;
++	}
 +}
 +
-+int
-+get_state (struct path * pp)
-+{
-+	struct checker * c = &pp->checker;
-+	int state;
-+
- 	state = checker_get_state(c);
- 	condlog(3, "%s: %s state = %s", pp->dev,
- 		checker_name(c), checker_state_name(state));
-@@ -2455,7 +2463,9 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ static int
+ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ {
+ 	struct timespec	timeout = { .tv_nsec = 1000 };
+ 	struct stat	sb;
+ 	int		rc;
+-	long		r;
+-	struct timespec currtime, endtime;
++	struct timespec endtime;
  
- 	if (mask & DI_CHECKER) {
- 		if (path_state == PATH_UP) {
--			int newstate = get_state(pp, conf, 0, path_state);
-+			int newstate = PATH_UNCHECKED;
-+			if (start_checker(pp, conf, 0, path_state) == 0)
-+				newstate = get_state(pp);
- 			if (newstate != PATH_PENDING ||
- 			    pp->state == PATH_UNCHECKED ||
- 			    pp->state == PATH_WILD)
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index c93abf1c..f3e0c618 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -34,7 +34,9 @@ int path_discovery (vector pathvec, int flag);
- int path_get_tpgs(struct path *pp); /* This function never returns TPGS_UNDEF */
- int do_tur (char *);
- int path_offline (struct path *);
--int get_state (struct path * pp, struct config * conf, int daemon, int state);
-+int start_checker(struct path * pp, struct config * conf, int daemon,
-+		  int state);
-+int get_state(struct path * pp);
- int get_vpd_sgio (int fd, int pg, int vend_id, char * str, int maxlen);
- int pathinfo (struct path * pp, struct config * conf, int mask);
- int alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 21d48da6..bb34d9e8 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -160,6 +160,7 @@ global:
- 	remove_wwid;
- 	replace_wwids;
- 	reset_checker_classes;
-+	start_checker;
- 	select_all_tg_pt;
- 	select_action;
- 	select_find_multipaths_timeout;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 1b7fd04f..4f752adb 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2324,7 +2324,9 @@ check_path_state(struct path *pp)
- 	if (newstate == PATH_UP) {
- 		conf = get_multipath_config();
- 		pthread_cleanup_push(put_multipath_config, conf);
--		newstate = get_state(pp, conf, 1, newstate);
-+		newstate = PATH_UNCHECKED;
-+		if (start_checker(pp, conf, 1, newstate) == 0)
-+			newstate = get_state(pp);
- 		pthread_cleanup_pop(1);
- 	} else {
- 		checker_clear_message(&pp->checker);
+ 	if (fstat(fd, &sb) == 0) {
+ 		LOG(4, "called for %x", (unsigned) sb.st_rdev);
+@@ -330,21 +352,11 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ 	endtime.tv_sec += timeout.tv_sec;
+ 	endtime.tv_nsec += timeout.tv_nsec;
+ 	normalize_timespec(&endtime);
+-	while(1) {
+-		r = get_events(ct->aio_grp, &timeout);
+ 
+-		if (ct->req->state != PATH_PENDING) {
+-			ct->running = 0;
+-			return ct->req->state;
+-		} else if (r == 0 ||
+-			   (timeout.tv_sec == 0 && timeout.tv_nsec == 0))
+-			break;
++	check_pending(ct, endtime);
++	if (ct->req->state != PATH_PENDING)
++		return ct->req->state;
+ 
+-		get_monotonic_time(&currtime);
+-		timespecsub(&endtime, &currtime, &timeout);
+-		if (timeout.tv_sec < 0)
+-			timeout.tv_sec = timeout.tv_nsec = 0;
+-	}
+ 	if (ct->running > timeout_secs || sync) {
+ 		struct io_event event;
+ 
+@@ -360,17 +372,9 @@ check_state(int fd, struct directio_context *ct, int sync, int timeout_secs)
+ 	return rc;
+ }
+ 
+-int libcheck_check (struct checker * c)
++static void set_msgid(struct checker *c, int state)
+ {
+-	int ret;
+-	struct directio_context * ct = (struct directio_context *)c->context;
+-
+-	if (!ct)
+-		return PATH_UNCHECKED;
+-
+-	ret = check_state(c->fd, ct, checker_is_sync(c), c->timeout);
+-
+-	switch (ret)
++	switch (state)
+ 	{
+ 	case PATH_UNCHECKED:
+ 		c->msgid = MSG_DIRECTIO_UNKNOWN;
+@@ -387,5 +391,37 @@ int libcheck_check (struct checker * c)
+ 	default:
+ 		break;
+ 	}
++}
++
++int libcheck_pending(struct checker *c)
++{
++	struct timespec endtime;
++	struct directio_context *ct = (struct directio_context *)c->context;
++
++	/* The if path checker isn't running, just return the exiting value. */
++	if (!ct || !ct->running)
++		return c->path_state;
++
++	if (ct->req->state == PATH_PENDING) {
++		get_monotonic_time(&endtime);
++		check_pending(ct, endtime);
++	} else
++		ct->running = 0;
++	set_msgid(c, ct->req->state);
++
++	return ct->req->state;
++}
++
++int libcheck_check (struct checker * c)
++{
++	int ret;
++	struct directio_context * ct = (struct directio_context *)c->context;
++
++	if (!ct)
++		return PATH_UNCHECKED;
++
++	ret = check_state(c->fd, ct, checker_is_sync(c), c->timeout);
++	set_msgid(c, ret);
++
+ 	return ret;
+ }
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index a2905af5..95af5214 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -323,6 +323,49 @@ static int tur_check_async_timeout(struct checker *c)
+ 	return (now.tv_sec > ct->time);
+ }
+ 
++int check_pending(struct checker *c, struct timespec endtime)
++{
++	struct tur_checker_context *ct = c->context;
++	int r, tur_status = PATH_PENDING;
++
++	pthread_mutex_lock(&ct->lock);
++
++	for (r = 0;
++	     r == 0 && ct->state == PATH_PENDING &&
++	     ct->msgid == MSG_TUR_RUNNING;
++	     r = pthread_cond_timedwait(&ct->active, &ct->lock, &endtime));
++
++	if (!r) {
++		tur_status = ct->state;
++		c->msgid = ct->msgid;
++	}
++	pthread_mutex_unlock(&ct->lock);
++	if (tur_status == PATH_PENDING && c->msgid == MSG_TUR_RUNNING) {
++		condlog(4, "%d:%d : tur checker still running",
++			major(ct->devt), minor(ct->devt));
++	} else {
++		int running = uatomic_xchg(&ct->running, 0);
++		if (running)
++			pthread_cancel(ct->thread);
++		ct->thread = 0;
++	}
++
++	return tur_status;
++}
++
++int libcheck_pending(struct checker *c)
++{
++	struct timespec endtime;
++	struct tur_checker_context *ct = c->context;
++
++	/* The if path checker isn't running, just return the exiting value. */
++	if (!ct || !ct->thread)
++		return c->path_state;
++
++	get_monotonic_time(&endtime);
++	return check_pending(c, endtime);
++}
++
+ int libcheck_check(struct checker * c)
+ {
+ 	struct tur_checker_context *ct = c->context;
+@@ -437,27 +480,7 @@ int libcheck_check(struct checker * c)
+ 			return tur_check(c->fd, c->timeout, &c->msgid);
+ 		}
+ 		tur_timeout(&tsp);
+-		pthread_mutex_lock(&ct->lock);
+-
+-		for (r = 0;
+-		     r == 0 && ct->state == PATH_PENDING &&
+-			     ct->msgid == MSG_TUR_RUNNING;
+-		     r = pthread_cond_timedwait(&ct->active, &ct->lock, &tsp));
+-
+-		if (!r) {
+-			tur_status = ct->state;
+-			c->msgid = ct->msgid;
+-		}
+-		pthread_mutex_unlock(&ct->lock);
+-		if (tur_status == PATH_PENDING && c->msgid == MSG_TUR_RUNNING) {
+-			condlog(4, "%d:%d : tur checker still running",
+-				major(ct->devt), minor(ct->devt));
+-		} else {
+-			int running = uatomic_xchg(&ct->running, 0);
+-			if (running)
+-				pthread_cancel(ct->thread);
+-			ct->thread = 0;
+-		}
++		tur_status = check_pending(c, tsp);
+ 	}
+ 
+ 	return tur_status;
 -- 
 2.45.0
 
