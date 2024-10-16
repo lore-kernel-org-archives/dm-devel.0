@@ -1,113 +1,83 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F2631E8833
-	for <dm-devel@lists.linux.dev>; Tue, 15 Oct 2024 10:59:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06DE914EC47;
+	Wed, 16 Oct 2024 23:28:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728989974; cv=none; b=SLuY80NoeT8/kI+PTD7J+5wfmaf0MSDfyQdEmDqghtCPSbxwXP5MdibKKSpwyA1G0T4h5IKzIEl8fXGDa8vCEyyvzFBQZYBoL79FY/h65BtZKPljCMVWb/S6IhRf32xjuyK9jXkkTVtq8cRMijkM7nA+EOgrMk0G4kd+8qyLSDI=
+	t=1729121310; cv=none; b=H81N3HfIu8H5xnDZAfyypz2FRLeAwXqT6TcMU/cMXaKRJnb0pAVoDP88aUq4HGPq0dbi8cuAdGmLE7zqDLxTvh7QMwJqf3upJyaF/Bk672isW61J0RF6VI+jcvry0OIxzPOYBjQH/Pkfvbk34rxPXN6hTVY6JiZJFtdMQ1lytPQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728989974; c=relaxed/simple;
-	bh=ly/NC2kwZ3cRKwWiABDoQjTvFKH0kh1X0ePiMlqGNMA=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Nk4r3PJKleWpUaJc196Jf9jECO1YQBx8Uj/XQ4UlaiysbnCXDhpZvFZR6TGOftRSwFyhbWofQj+4wG9t1oDvoz7nHvFR/MMv5jX5MfAKaZZMHDymOFabXZvuKKvkaKXAJbKHy5GhM7nmkiMCkqTie/feMibnJ+UmWQCge8rFD44=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AIFpXME9; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1729121310; c=relaxed/simple;
+	bh=Cf2GH1PBloo5u/SL/FWRlv6cAAqFO5p0+n+kcE4KN6Y=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mtXnkex0x4mZs6RuejM9oN0MYrhyhoCF1noXf5G7ElUZOcwH07C7sUKyHnVKc7RvNLPJ19Z3QUhZmFi49JqCQIdrTzjDn/yYLgOdrN/XF2w62GscGFaErHp1ia9oT8tWmPv4t1L7e6zsn/aTVF+bk8a01yWP+5NjhPzDP7RiUpk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=srDjm2OR; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AIFpXME9"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1728989972;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ybTiS+fP0SSadAHt+F77jSZOWRj/uDfaIQfdA4Tihlk=;
-	b=AIFpXME92W0tsakp05HOWNfyEAuTDyO4Jspk/sTcZxYK+AWrefUIs3KoNOwnCRzKux0c8t
-	YY73tHK+oaMwz3w7u0lgzvyOEjcEqz6l7+NWV7De4KDx+twdBV1pRZ3KSJD/oiVlDTZxcw
-	tnwmIX9dTOWxCuzFOPY7aS3zVQe8E9M=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-614-MzYKfzDZNr6jLeY-LjMoDg-1; Tue,
- 15 Oct 2024 06:59:27 -0400
-X-MC-Unique: MzYKfzDZNr6jLeY-LjMoDg-1
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3150A1955D59;
-	Tue, 15 Oct 2024 10:59:23 +0000 (UTC)
-Received: from [10.45.226.64] (unknown [10.45.226.64])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 79B2330001A3;
-	Tue, 15 Oct 2024 10:59:16 +0000 (UTC)
-Date: Tue, 15 Oct 2024 12:59:13 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Md Sadre Alam <quic_mdalam@quicinc.com>
-cc: axboe@kernel.dk, song@kernel.org, yukuai3@huawei.com, agk@redhat.com, 
-    snitzer@kernel.org, adrian.hunter@intel.com, quic_asutoshd@quicinc.com, 
-    ritesh.list@gmail.com, ulf.hansson@linaro.org, andersson@kernel.org, 
-    konradybcio@kernel.org, kees@kernel.org, gustavoars@kernel.org, 
-    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-    linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
-    linux-mmc@vger.kernel.org, linux-arm-msm@vger.kernel.org, 
-    linux-hardening@vger.kernel.org, quic_srichara@quicinc.com, 
-    quic_varada@quicinc.com
-Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
-In-Reply-To: <20240916085741.1636554-2-quic_mdalam@quicinc.com>
-Message-ID: <3161a67d-66f6-775e-c67e-3b5ca1aa2e1b@redhat.com>
-References: <20240916085741.1636554-1-quic_mdalam@quicinc.com> <20240916085741.1636554-2-quic_mdalam@quicinc.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="srDjm2OR"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6B1F6C4CEC5;
+	Wed, 16 Oct 2024 23:28:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1729121309;
+	bh=Cf2GH1PBloo5u/SL/FWRlv6cAAqFO5p0+n+kcE4KN6Y=;
+	h=From:To:Cc:Subject:Date:From;
+	b=srDjm2OR+icJr6InORy6hB9Et8mZt7YKSYCYKk8rd9PM8f15H6wXjPfsW5BWBcxtA
+	 rfzs9xlCI1KZ5e1+FWD7W69gMw7D1Of7Ezc816dZM7D8x2ulF9Urb4d8GJh6W2IeWt
+	 YECUnauGjoBOjPIbd0dayFBbR/YjoogtnWmN1iOuwAsDZVjTx1GvSgjumKnwVNq+N9
+	 G5/KlyH7nPYg2bGxbGbsPu71INdgmOtJ6GlTgPEjYOsa19V3oVopHoWzG0XO+p527o
+	 LMHGSeE4mPM6Y6hCT9rNSRaj8HkAT0RgCXBVTYNRU7p0mceDkOa32deaQA3ktNejKk
+	 n99Y5QGRhMXzQ==
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Md Sadre Alam <quic_mdalam@quicinc.com>,
+	Israel Rukshin <israelr@nvidia.com>,
+	Milan Broz <gmazyland@gmail.com>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: [RFC PATCH v2 0/2] dm-inlinecrypt: add target for inline block device encryption
+Date: Wed, 16 Oct 2024 16:27:46 -0700
+Message-ID: <20241016232748.134211-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+Content-Transfer-Encoding: 8bit
 
-Hi
+This is yet another proposal for dm-inlinecrypt, this one resulting from
+the conversation at
+https://lore.kernel.org/linux-block/20240916085741.1636554-2-quic_mdalam@quicinc.com/T/#u.
+This brings in the work that was already done in Android's
+dm-default-key but drops the passthrough support, as it doesn't seem
+like that will go anywhere upstream anytime soon.  This makes the
+proposal suitable as a replacement for dm-crypt only.
 
-The patch seems OK. Should it go in via the device mapper tree or the 
-block layer tree?
+Compared to the other patch linked above, this patch addresses a large
+number of issues, the main ones being mentioned at
+https://lore.kernel.org/linux-block/20240921185519.GA2187@quark.localdomain/
+
+Changed in v2:
+- Split block exports into a separate patch.
+- Return the key from STATUSTYPE_TABLE.  This is a misfeature, but it's
+  needed to comply with the device-mapper UAPI.
+- Don't pass uninitialized key to blk_crypto_evict_key().
+- Use {} instead of {0}.
+- Simplify inlinecrypt_prepare_ioctl().
+
+Eric Biggers (2):
+  block: export blk-crypto symbols required by dm-inlinecrypt
+  dm-inlinecrypt: add target for inline block device encryption
+
+ block/blk-crypto.c          |   3 +
+ drivers/md/Kconfig          |  10 +
+ drivers/md/Makefile         |   1 +
+ drivers/md/dm-inlinecrypt.c | 417 ++++++++++++++++++++++++++++++++++++
+ 4 files changed, 431 insertions(+)
+ create mode 100644 drivers/md/dm-inlinecrypt.c
 
 
-On Mon, 16 Sep 2024, Md Sadre Alam wrote:
-
-> +#define DM_CRYPT_DEFAULT_MAX_READ_SIZE		131072
-> +#define DM_CRYPT_DEFAULT_MAX_WRITE_SIZE		131072
-> +
-> +static unsigned int get_max_request_size(struct inlinecrypt_config *cc, bool wrt)
-> +{
-> +	unsigned int val, sector_align;
-> +
-> +	val = !wrt ? DM_CRYPT_DEFAULT_MAX_READ_SIZE : DM_CRYPT_DEFAULT_MAX_WRITE_SIZE;
-> +	if (wrt) {
-> +		if (unlikely(val > BIO_MAX_VECS << PAGE_SHIFT))
-> +			val = BIO_MAX_VECS << PAGE_SHIFT;
-> +	}
-> +	sector_align = max(bdev_logical_block_size(cc->dev->bdev), (unsigned int)cc->sector_size);
-> +	val = round_down(val, sector_align);
-> +	if (unlikely(!val))
-> +		val = sector_align;
-> +	return val >> SECTOR_SHIFT;
-> +}
-
-This piece of code was copied from the dm-crypt target. For dm-crypt, I 
-was actually benchmarking the performance for various 
-DM_CRYPT_DEFAULT_MAX_READ_SIZE and DM_CRYPT_DEFAULT_MAX_WRITE_SIZE values 
-and I selected the values that resulted in the best performance.
-
-You should benchmark it too to find the optimal I/O size. Perhaps you find 
-out that there is no need to split big requests and this piece of code can 
-be dropped.
-
-> +               /* Omit the key for now. */
-> +               DMEMIT("%s - %llu %s %llu", ctx->cipher_string, ctx->iv_offset,
-> +                      ctx->dev->name, (unsigned long long)ctx->start);
-
-What if someone reloads the table? I think you should display the key. 
-dmsetup does not display the key if the "--showkeys" parameter is not 
-specified.
-
-Mikulas
+base-commit: c964ced7726294d40913f2127c3f185a92cb4a41
+-- 
+2.47.0
 
