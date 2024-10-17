@@ -1,50 +1,44 @@
-Received: from out-184.mta0.migadu.com (out-184.mta0.migadu.com [91.218.175.184])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFAFE13B298
-	for <dm-devel@lists.linux.dev>; Thu, 17 Oct 2024 10:46:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.184
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6234D193409;
+	Thu, 17 Oct 2024 19:44:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729161985; cv=none; b=cvCFRmlaGkP/sMHaUgjfLzv86CEGK8CxpOjtaV/FhStcMdy7d+llbm5UI8YEnmUfYV/BOOWK4ZKdRnhFL/nf1j5LaHzhcBmnz9wjV2l2EJ/izwjKF0eWh2tA6XaKdymCD+OA9l/26lb9jruxFyocY3CMeqVHo/tQAQ1NF/1uJlQ=
+	t=1729194257; cv=none; b=Gw3igwhiJ3PH2b7tU8n2dUhsr6iVOANIUIswy2KhWJBKt+MXVh5Mg279S60YFiufycjZkC0ntZ1i2dEVqrhWBztYe4dSb7uB1ia3gm7KZyAmOFZvg+XHwOZqBeAovB0mXFvBTHVZHwdB7mJtSOUvHCv6ttDOoy/IGIY2P1nJGBk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729161985; c=relaxed/simple;
-	bh=ksJfOqZ0F+aqfgOXPTdsDbbytvSSQ9OVM/xbZDl3uy8=;
+	s=arc-20240116; t=1729194257; c=relaxed/simple;
+	bh=3XFUiq+FrQjOla6ffWyuWjodsUa4VVjrvMC6hXatxzA=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=syvLsPVPugca8LqI3WwD+SIj0LyTlBCfWZrHCAtn6tgmWnZeID8eH2RZep0HCxp3TC+3BdJ/bJQRMmw/XiIkJgDRbquSnbxS7NnJ55gKbIjyAM6C6suvjPNNEDWE8wAxeqnjbyyOcQBR5/E2bdEbeAcZbS3IxeUxPmTXhwXucbA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=NyNYbsHD; arc=none smtp.client-ip=91.218.175.184
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	 Content-Type:Content-Disposition:In-Reply-To; b=JLbOjgL2FGNs6qXQgJZZzRt2kdLCQvOcN8NVFSa71vWV55afmBicv6wpaBraj8mjwbGWL60W2LDQx25KCVFPqvu0HZp5mQtM7++fBmvODPAiC8Qev/gy7k4AqQ2MEZrVDr1pY8yUnH2o4Divgcv4o9zD10/XfWvWZx7dv/3ngZM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=kA0ZtQvA; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="NyNYbsHD"
-Date: Thu, 17 Oct 2024 06:46:15 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1729161981;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TuEkyXRK4a+z24nUqtPTb40oaVXyvk6oaPG3UBwJUew=;
-	b=NyNYbsHDJQPkgXNY5JdRUA7Zh5I4863hzQEO7Dmv0Pc1JnNfmFBiE0GU89OHQ0JZkRtGAD
-	u74yRbmA1j782KQL4lIBEySIJKlhXPHoeEHDtPRxh/nDRf/7SYcgbI4bonoeLaDIGvDsQI
-	W9trTM7Iw3OYTp34mGWXyCqzAedPDsc=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Kuan-Wei Chiu <visitorckw@gmail.com>, colyli@suse.de, 
-	msakai@redhat.com, corbet@lwn.net, mingo@redhat.com, acme@kernel.org, 
-	namhyung@kernel.org, akpm@linux-foundation.org, mark.rutland@arm.com, 
-	alexander.shishkin@linux.intel.com, jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com, 
-	kan.liang@linux.intel.com, jserv@ccns.ncku.edu.tw, linux-kernel@vger.kernel.org, 
-	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev, linux-bcachefs@vger.kernel.org, 
-	linux-perf-users@vger.kernel.org, linux-doc@vger.kernel.org
-Subject: Re: [PATCH 1/3] lib/min_heap: Introduce non-inline versions of min
- heap API functions
-Message-ID: <zne3invtehte3ym34ufnydtggigxazdb2ltfa26ca4tykvprls@rcawukx5hhcn>
-References: <20241013184703.659652-1-visitorckw@gmail.com>
- <20241013184703.659652-2-visitorckw@gmail.com>
- <20241014081358.GS17263@noisy.programming.kicks-ass.net>
- <ZwznQzdZsg82KNT4@visitorckw-System-Product-Name>
- <xb2gihmastm3wjn2o2sufvtglvjkelhiiwhnlzoiz4qncywyga@txf4vvnyxhvu>
- <20241017095520.GV16066@noisy.programming.kicks-ass.net>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="kA0ZtQvA"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id AFAFCC4CECD;
+	Thu, 17 Oct 2024 19:44:16 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1729194256;
+	bh=3XFUiq+FrQjOla6ffWyuWjodsUa4VVjrvMC6hXatxzA=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=kA0ZtQvA4neszzT+VvxYFyQcMq4hk/0l38j9tekH24z2z7K8aCVbiFdzh2INgtrKE
+	 p7PXSjecvEb4oGol5st8u8ZaHCP46RXL7ezJ1pBXXL5A2W0cseEQDfdb+70yGeGluU
+	 WkftJZefoYRutWkUQpInrewm8HW5ZPt8DJqR+e8T0wYQD972SwccPlcz4TAJngAiNC
+	 t5Cy0yFrZEVuVDxF8EApP9fERtpIWOvafVTpFv1u97V8QNNwgl04zYpnc5n8Dgfk4E
+	 sdDHYPmZ5K3ng1XHNTnFEu/rlcJYbpqNXAOYbM5u6JWxpOPkZHRJBft0O+tU11SDLE
+	 BrOL7y57A5hyg==
+Date: Thu, 17 Oct 2024 12:44:15 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Md Sadre Alam <quic_mdalam@quicinc.com>,
+	Israel Rukshin <israelr@nvidia.com>,
+	Milan Broz <gmazyland@gmail.com>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [RFC PATCH v2 2/2] dm-inlinecrypt: add target for inline block
+ device encryption
+Message-ID: <20241017194415.GA11717@sol.localdomain>
+References: <20241016232748.134211-1-ebiggers@kernel.org>
+ <20241016232748.134211-3-ebiggers@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -53,24 +47,21 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20241017095520.GV16066@noisy.programming.kicks-ass.net>
-X-Migadu-Flow: FLOW_OUT
+In-Reply-To: <20241016232748.134211-3-ebiggers@kernel.org>
 
-On Thu, Oct 17, 2024 at 11:55:20AM +0200, Peter Zijlstra wrote:
-> On Wed, Oct 16, 2024 at 11:26:30PM -0400, Kent Overstreet wrote:
-> 
-> > yeah, I think we would prefer smaller codesize, by default.
-> > 
-> > it'd be well worth checking the code size difference on inlined vs. not,
-> > and then the really think to do would be to provide optional _inlined()
-> > helpers that we can switch to if/when a particular codepath shows up in
-> > a profile
-> 
-> Make sure to build with kCFI and IBT enabled when you do this and enjoy
-> seeing ec_stripes_heap_cmp turn into this:
+On Wed, Oct 16, 2024 at 04:27:48PM -0700, Eric Biggers wrote:
+> Add a new device-mapper target "dm-inlinecrypt" that is similar to
+> dm-crypt but uses the blk-crypto API instead of the regular crypto API.
+> This allows it to take advantage of inline encryption hardware such as
+> that commonly built into UFS host controllers.
 
-I wouldn't worry too much about the stripes heap, I'm going to replace
-that with a persistent LRU.
+A slight difference in behavior vs. dm-crypt that I just became aware of:
+dm-crypt allows XTS keys whose first half equals the second half, i.e.
+cipher key == tweak key.  dm-inlinecrypt typically will not allow this.  Inline
+encryption hardware typically rejects such keys, and blk-crypto-fallback rejects
+them too because it uses CRYPTO_TFM_REQ_FORBID_WEAK_KEYS.
 
-After that it looks like the only heap left in bcachefs will be in the
-clock code. Shame, they're one of my favorite data structures...
+IMO, rejecting these weak keys is desirable, and the fact that dm-inlinecrypt
+fixes this issue with dm-crypt will just need to be documented.
+
+- Eric
