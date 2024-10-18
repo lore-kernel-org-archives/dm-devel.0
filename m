@@ -1,93 +1,93 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB7232036F0;
-	Fri, 18 Oct 2024 17:33:25 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C7F34204018;
+	Fri, 18 Oct 2024 18:45:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729272806; cv=none; b=BsBupir9Qq5KxkRE/tK/MhLR+i7pMMzCTzH1zvpftLVSgmtJ4rSxGg+Ns8vdUOeKcvw0GZFdxqRd6a280pI4jc/UZIHX7WYgxtQj999SumA3JonLi7nHWfLWL8EiR2anDclMnSNlswbDqXSe4ankPUOWIEqzd+Ncu2OR5eIOvSY=
+	t=1729277105; cv=none; b=TRnoUqxd5EkqjTWZt+goNO7RWMYuDd+s8yjloVy4Bemccakiwu3s37v0TXzLjX5Popul1FxDMlFxHZK+qpDy2gn6Tx3hoRXMIiq43CFGsn9dyTYQooMCDlR68meNeJ9RxYBD7jbtkzK7vDztAmuw8FIQuOeaYa1AJviyia1ztYk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729272806; c=relaxed/simple;
-	bh=5TQXWa/QPquJfO4y4bgGgLNqEKC99NnpoIpYhQzW82Q=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=sdi+1G0XbiG11cNH6pSQ+Fs83y5eFoPtvF/1H1QoWxz1r4kAonY1VJ5cjbcoTnueRldUScWUiSFZqm0mX6csZcaX3bt7xMTUrimSZEYJwTWKZjykCVGxWxiuJhb0ojVEH7I/+Qe0z8HEIkCWIhnGitmdKdxszsRyUgOSQ3sU5y4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hrqB8NRm; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1729277105; c=relaxed/simple;
+	bh=ezUq8Gu+1gxpe+LETiT3thtchxlc506pUFTtsAKJMHY=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=d6XOWs1o9eS+pvVMoAXu2tNFpqGzyQJHq1eEtRQKwbYRKVcu58OVqZOWtHwkhFuG3Q+WC4YIQdZ9mwCmcvZZfMGjA/860RHUV+8flDrZxUA3gm1Kg4Ny88me+j78BZYJu1qZTn9NxJCknSDTxoppTBBmvopjG5M/zHnMM2QUiXs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pCWm9W6j; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hrqB8NRm"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 16033C4CEC3;
-	Fri, 18 Oct 2024 17:33:25 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pCWm9W6j"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 14439C4CEC3;
+	Fri, 18 Oct 2024 18:45:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1729272805;
-	bh=5TQXWa/QPquJfO4y4bgGgLNqEKC99NnpoIpYhQzW82Q=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=hrqB8NRmHmZU+X3tECkCHthZ5vXEEG35Lj54BBygbuqtD98xb6NHW6gDtJjic9QEC
-	 9ARbmC1+Kd9eCr4sYrCmIrIcWznMHfhOsHhm9jzv/FXpNIEjP32vkLc+Z5fbM/GDQm
-	 ruVIfzODjx7Nhgh3s6MU2h1ulkfjGOdEsVqKv3KLk1asKDiDcsGB465kseh27LaKRx
-	 tXECdLCCInrI/vV64opY8/79sJNfDfluDXLDAD/19I0JA2iWM68pKNBQEryUkk5wfK
-	 QUTG8WkPlZx2MGpbcvnsIw0gImrB9lLp/wBtmYDAHMUyPfmwt8FxVQ9ob3ZBcQ40ID
-	 z1Ua73VNzzHyA==
-Date: Fri, 18 Oct 2024 10:33:23 -0700
+	s=k20201202; t=1729277104;
+	bh=ezUq8Gu+1gxpe+LETiT3thtchxlc506pUFTtsAKJMHY=;
+	h=From:To:Cc:Subject:Date:From;
+	b=pCWm9W6j1rRPWi/RGVpopSxu3ME0YjjlmGkuaCHtilbMI1n5K/lgFXujKcxZnVOgP
+	 Z+vXZ0iwvbcZ5E4GN3qQ7nn2jZOliV130WPq95w6cfhKn1Nlv+iwaLQPy+lyPPM75O
+	 NdvkdEXUJURhHQ7+IVOPEtTDnu/CXYF81uv5ndOwn/itHHNFFZksshsRGq5Gu53Jvz
+	 GoTO+HvohehDrrO7b1/c1+gEpjy2Rgok0knackTkbYqgPkbe4Lhq3JVa3++EMzou/K
+	 YMtOpONL0Pmkhfzx9qOgs9EA3kJq3cvfdOM/S54m43F4DShItmMIsCucWQTupUAwTT
+	 fszVNEg8x4hGg==
 From: Eric Biggers <ebiggers@kernel.org>
-To: Adrian Vovk <adrianvovk@gmail.com>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+To: dm-devel@lists.linux.dev
+Cc: linux-block@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
+	linux-fscrypt@vger.kernel.org,
+	linux-ext4@vger.kernel.org,
+	linux-f2fs-devel@lists.sourceforge.net,
 	Md Sadre Alam <quic_mdalam@quicinc.com>,
 	Israel Rukshin <israelr@nvidia.com>,
 	Milan Broz <gmazyland@gmail.com>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [RFC PATCH v2 2/2] dm-inlinecrypt: add target for inline block
- device encryption
-Message-ID: <20241018173323.GA1127@sol.localdomain>
-References: <20241016232748.134211-1-ebiggers@kernel.org>
- <20241016232748.134211-3-ebiggers@kernel.org>
- <681a6d2e-a80a-4e81-a049-841d7e8582ba@gmail.com>
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Adrian Vovk <adrianvovk@gmail.com>
+Subject: [RFC PATCH 0/4] dm-default-key: target for filesystem metadata encryption
+Date: Fri, 18 Oct 2024 11:43:35 -0700
+Message-ID: <20241018184339.66601-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <681a6d2e-a80a-4e81-a049-841d7e8582ba@gmail.com>
+Content-Transfer-Encoding: 8bit
 
-On Thu, Oct 17, 2024 at 10:52:42PM -0400, Adrian Vovk wrote:
-> Hello,
-> 
-> On 10/16/24 19:27, Eric Biggers wrote:
-> > From: Eric Biggers <ebiggers@google.com>
-> > 
-> > Add a new device-mapper target "dm-inlinecrypt" that is similar to
-> > dm-crypt but uses the blk-crypto API instead of the regular crypto API.
-> > This allows it to take advantage of inline encryption hardware such as
-> > that commonly built into UFS host controllers.
-> 
-> Wow! Thank you for this patch! This is something we really want in systemd
-> and in GNOME, and I came across this patchset on accident while trying to
-> find a way to get someone to work on it for us.
-> 
-> > The table syntax matches dm-crypt's, but for now only a stripped-down
-> > set of parameters is supported.  For example, for now AES-256-XTS is the
-> > only supported cipher.
-> > 
-> > dm-inlinecrypt is based on Android's dm-default-key with the
-> > controversial passthrough support removed.
-> 
-> That's quite unfortunate. I'd say this passthrough support is probably the
-> most powerful thing about dm-default-key.
-> 
-> Could you elaborate on why you removed it?
+This series adds "metadata encryption" support to ext4 and f2fs via a
+new device-mapper target dm-default-key.  dm-default-key encrypts all
+data on a block device that isn't already encrypted by the filesystem.
 
-Well, see the conversation you've been having with Christoph.  It seems the
-passthrough / "metadata encryption" support will need to be reworked into a
-filesystem native feature in order to have a chance at upstream.
+Except for the passthrough support, dm-default-key is basically the same
+as the proposed dm-inlinecrypt which omits that feature
+(https://lore.kernel.org/dm-devel/20241016232748.134211-1-ebiggers@kernel.org/).
 
-Meanwhile there are people who have been waiting for basically "dm-crypt with
-blk-crypto", without the passthrough support.  I hoped that I could help with
-that in the meantime -- hence this patchset.
+I am sending this out for reference, as dm-default-key (which Android
+has been using for a while) hasn't previously been sent to the lists in
+full, and there has been interest in it.  However, my current impression
+is that this feature will need to be redesigned as a filesystem native
+feature in order to make it upstream.  If that is indeed the case, then
+IMO it would make sense to merge dm-inlinecrypt in the mean time instead
+(or add its functionality to dm-crypt) so that anyone who just wants
+"dm-crypt + inline encryption hardware" gets a solution for that.
 
-I'll go ahead and send out the full dm-default-key patches too as an RFC just so
-that people can see what it involves exactly.  But be warned -- it is a bit ugly
-with changes in multiple layers (not just the dm target itself).
+Eric Biggers (4):
+  block: export blk-crypto symbols required by dm-default-key
+  block: add the bi_skip_dm_default_key flag
+  dm-default-key: add target for filesystem metadata encryption
+  ext4,f2fs: support metadata encryption via dm-default-key
 
-- Eric
+ block/bio.c                 |   3 +
+ block/blk-crypto-fallback.c |   2 +
+ block/blk-crypto.c          |   3 +
+ drivers/md/Kconfig          |  20 ++
+ drivers/md/Makefile         |   1 +
+ drivers/md/dm-default-key.c | 431 ++++++++++++++++++++++++++++++++++++
+ fs/crypto/inline_crypt.c    |  14 +-
+ fs/f2fs/data.c              |   6 +-
+ include/linux/blk-crypto.h  |  36 +++
+ include/linux/blk_types.h   |   3 +
+ include/linux/fscrypt.h     |  14 ++
+ 11 files changed, 531 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/md/dm-default-key.c
+
+
+base-commit: c964ced7726294d40913f2127c3f185a92cb4a41
+-- 
+2.47.0
+
