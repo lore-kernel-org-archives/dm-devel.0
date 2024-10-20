@@ -1,57 +1,57 @@
-Received: from mail-pg1-f180.google.com (mail-pg1-f180.google.com [209.85.215.180])
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com [209.85.216.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5C5718EFED
-	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:03:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CEB0419259F
+	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:03:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729396989; cv=none; b=ByokQgVRhLfklPxWjEEkEupLUHWS73C68IvZdjBw2prhmu3NOJIW/M/9bD+24Ialn+7JbIK3+LGVJVEjgKqSp8d1ulETJS0nLFfRE1kEa5/tcDhewRHxW9i7lRMBub94or84HS2niV2tfjDXWccOO3Z1jBvjEJwZuOzGcQBdMNo=
+	t=1729396994; cv=none; b=aRc5BGEZYZMKDFmqXXdzZaTFPvFolWBzIRFMjeEJF2MysZNmbF9M77HUb82KIe9bbxpDOCm99A59ySPAvgT/CbrNJvzsO6V8mIU2roJsy6eRaiZgvl2C3RsUct44FgiIKMC6BfuMPbgrFBY5UnFBGGnBpBDDXWvswhcc7mIjFc4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729396989; c=relaxed/simple;
-	bh=6iG+P5m+bTysqxHfMQjYbIP6SmuhjAt2CP2aCR2eqWk=;
+	s=arc-20240116; t=1729396994; c=relaxed/simple;
+	bh=P8v7bl0HUC8PgdWG90Udu7/e7VMI09byj7xPkrgmymQ=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=TcEj9rveGJVhOf4BhEZzzU94yqk/goOiZJskBtVpDaJkwBmH5hIQEK0wd1z3Bb3s1H3MDZ9UzGwWFcVM7ZQa3YEOM/+jafLIfsIeiklbXTvW1KRno1le1uEvw3A7rxwyCIQjUQVjv+u47QJFzQSRFcOcnHYgEfmP2UVeQnPTdh4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KrFCzC94; arc=none smtp.client-ip=209.85.215.180
+	 MIME-Version; b=HGDDTJud4Wtwl/4Bd19UOijk4Rju4pT91izAPFXooy9RRrJf0eQEfCCSQIcIbH4lnzFOrb5EtlXasX4OEZz+DjUdsNyUWURLr3ZB+CjGHnJN2gvriuT5hq5wxV43f8S6Dyh0sFbD/gd/V0k6HfuQ8RQ+o33u5qJVB1tZGpoT7tE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=fNu8rUYF; arc=none smtp.client-ip=209.85.216.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KrFCzC94"
-Received: by mail-pg1-f180.google.com with SMTP id 41be03b00d2f7-7ea7d509e61so1536531a12.1
-        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:03:07 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="fNu8rUYF"
+Received: by mail-pj1-f41.google.com with SMTP id 98e67ed59e1d1-2e2bb1efe78so2283298a91.1
+        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:03:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729396987; x=1730001787; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1729396992; x=1730001792; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=IpkOmRAz/DQoNyfUWCSgBoembbEPvsuuea47lWbGPwA=;
-        b=KrFCzC94szIrUIatGCJctzQV14Cg//EtiWOVZldRADTWlGdJZSHjJUSlZcxuwMncre
-         QLfv4/n4aZAky0kQhwIpcJjkibDNKoVmvyeqydYdeMKIIVUb+tmtnu7NJq/2kuLzG/hb
-         lmsyf3h066dz2X+TbRNnWtcb/sG625kvj8YUeb5uS8DHFqs5UVMbVSNURYzUDWXcgh7I
-         L+0rMiMt5PsXdfHb8DMtj4F8t763hwybICsdVD0YpbUQImyR3JpzjM4HJjg3TFUzVHpQ
-         GK8lSBrtDMNJa4M1C1xQhRRHAmgvEFO/Ub0i5XZC/wrzVILD+pHTuhrLhuP6gUeJypHh
-         J5CA==
+        bh=PfhCaNqjkwqDBbL7z5yBWj9nWr3RVKAleAhUoJxmWMY=;
+        b=fNu8rUYFnITldijiu1L5Rm8/x7gwWX/Z+lFjlMJ+hGvR4D8AJVnMWYC771uqU5M1iP
+         Zl/IF9CUdCRU7oEzFu+BK8LCPcfFD2JkBvZ/UjvXDUpuO1FnTBrGwOPZZCDyZP1oGECp
+         JBtyRC1x630r3IC9ngwwYoTYULYLW4jnOwY3CS4NzZ8mTbLh2IMNn9B9E592B0qucXxE
+         Ga0MGqLiJNyOL8A2+AlNpfycI6scIMdfj0kzs6skekmAI3ykfCSsCacQecIxuJNIN+e9
+         iO1uzdu4OMxYk6I/KnKusemZ5yk3RAW1krNAU+URRApCaVfyynPPFRFRn7s02cqz2k6V
+         0gjg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729396987; x=1730001787;
+        d=1e100.net; s=20230601; t=1729396992; x=1730001792;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=IpkOmRAz/DQoNyfUWCSgBoembbEPvsuuea47lWbGPwA=;
-        b=YdWz5NYGOqAPlqLLVjrLsN621IXTsEx2M9WGi+1mktwXCeGC79JoH2QQhPNnHBsm8Q
-         57SBIYZOT9dvqzU76KeLSd4BrUqch4Ml+fN6HFz+WPcc6z9Z5j2asRcT9/dosvwlVhmM
-         umk5QSGJIPBtI5I0qKnbFrabTGb3S6Y/SAgbL08scCe4ra5rodv3TfXEbUcTa6luRbkt
-         y9SIwxD0T/9j81coCL+/n4sLmpePKmbBFU3L/xaGwTkrdIncUIgmPwQBenii9aEUEm5E
-         KYvq/VQQNAhaABjCGbP5agwBpp6sFx7hzi+TrRBCB+hPg61C1/YtFrIahpJw0Y2k7HwH
-         AQQw==
-X-Forwarded-Encrypted: i=1; AJvYcCWElsf+aVQhfOj9z2kMx0AKRnymX/xPlAiVy3ODsSRsYrwrQ0T113EpUZm4cfXvnn5EX+hf0mNhcQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yxj2OJUm85brwSisUbpGPeaBSG62C5d7q2CXyxz5OJqTuEj/NBV
-	EsBO72Uivo4f+dJ3dyOV5Z/t+DaqCY15Zy90v9hdexP1SAiUQx4j
-X-Google-Smtp-Source: AGHT+IHJf9nXrjmUo/+hBd+ZogFXKHjqpeJ0l0sVyl8/8bUCcHMXr+vmkofLASs6jl6dEFOEoGT9gw==
-X-Received: by 2002:a17:90b:1a88:b0:2d8:dd14:79ed with SMTP id 98e67ed59e1d1-2e561900d44mr8457372a91.31.1729396986825;
-        Sat, 19 Oct 2024 21:03:06 -0700 (PDT)
+        bh=PfhCaNqjkwqDBbL7z5yBWj9nWr3RVKAleAhUoJxmWMY=;
+        b=VrzBVO+mP7sxkla+xgDF7lybySxxiYjlJQ5Zu9e9t+FdyAflFOLdT0r1oiY6JdLDG1
+         GzE6U+DXneKap6QsQ2fKrMO/9hW6W8dADqmZY3oFYtUA0P56b0N+qdOII/Buxo+OSA44
+         qkDOBpuxlSGlrZvWWSrO9ZEZ/B0k98/0D7BKgVvWMEufKQQWW4+eTVQJmG+e0/itFRtL
+         Z81DbEAAeW2dzjmerK5kheiqD+ytYrnOKplAIgM1Nk0Zcm2lans9dSh/7HBpshiuDs69
+         uylOynKFqw6eaI0t0ltYgNyKOjCoQK6mU1yqFzB3PXIk9UXqJToMDsI96BYmeV42fZ7/
+         Z1jQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXuH0fPcYxC2Hxf/t0B6yx2c2YPYhmma4lxcjKG/XGf6uohzexGPxgdrtg88UwrpBROoNvX/BGV6Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yw6MSlj93Bwr87s1OaL1+4LO9aVSMQDjQwdRqmK/fdavtMjh9t/
+	L++B+nz6rHKn3lSX4wHBrmt06z/Hh9fXHwLLSP8tEN8w0xUMnPFl
+X-Google-Smtp-Source: AGHT+IGRS93cFoJkaSz24BSwCStwXbRxjwOMLShcvR70iLhHYFKXqmS8/9zXr3Tt016pUsTc/n4+5g==
+X-Received: by 2002:a17:90b:4c12:b0:2e3:bc3e:feef with SMTP id 98e67ed59e1d1-2e5644991c9mr10156817a91.3.1729396991894;
+        Sat, 19 Oct 2024 21:03:11 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.03.02
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.03.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 19 Oct 2024 21:03:06 -0700 (PDT)
+        Sat, 19 Oct 2024 21:03:11 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -77,9 +77,9 @@ Cc: mark.rutland@arm.com,
 	linux-perf-users@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v2 09/10] bcachefs: Update min_heap_callbacks to use default builtin swap
-Date: Sun, 20 Oct 2024 12:01:59 +0800
-Message-Id: <20241020040200.939973-10-visitorckw@gmail.com>
+Subject: [PATCH v2 10/10] Documentation/core-api: Add min heap API introduction
+Date: Sun, 20 Oct 2024 12:02:00 +0800
+Message-Id: <20241020040200.939973-11-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20241020040200.939973-1-visitorckw@gmail.com>
 References: <20241020040200.939973-1-visitorckw@gmail.com>
@@ -91,39 +91,343 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Replace the swp function pointer in the min_heap_callbacks of bcachefs
-with NULL, allowing direct usage of the default builtin swap
-implementation. This modification simplifies the code and improves
-performance by removing unnecessary function indirection.
+Introduce an overview of the min heap API, detailing its usage and
+functionality. The documentation aims to provide developers with a
+clear understanding of how to implement and utilize min heaps within
+the Linux kernel, enhancing the overall accessibility of this data
+structure.
 
 Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 ---
- fs/bcachefs/clock.c | 10 +---------
- 1 file changed, 1 insertion(+), 9 deletions(-)
+Changes in v2:
+- Wrapped lines at 80 columns.
+- Updated Example Usage.
+- Added documentation for the ability to pass NULL to the swp in
+  min_heap_callbacks to use the builtin swap.
 
-diff --git a/fs/bcachefs/clock.c b/fs/bcachefs/clock.c
-index 1fcfcb5fd44f..1f8e035d7119 100644
---- a/fs/bcachefs/clock.c
-+++ b/fs/bcachefs/clock.c
-@@ -14,17 +14,9 @@ static inline bool io_timer_cmp(const void *l, const void *r, void __always_unus
- 	return (*_l)->expire < (*_r)->expire;
- }
+ Documentation/core-api/index.rst    |   1 +
+ Documentation/core-api/min_heap.rst | 300 ++++++++++++++++++++++++++++
+ 2 files changed, 301 insertions(+)
+ create mode 100644 Documentation/core-api/min_heap.rst
+
+diff --git a/Documentation/core-api/index.rst b/Documentation/core-api/index.rst
+index 6a875743dd4b..563b8fc0002f 100644
+--- a/Documentation/core-api/index.rst
++++ b/Documentation/core-api/index.rst
+@@ -52,6 +52,7 @@ Library functionality that is used throughout the kernel.
+    wrappers/atomic_bitops
+    floating-point
+    union_find
++   min_heap
  
--static inline void io_timer_swp(void *l, void *r, void __always_unused *args)
--{
--	struct io_timer **_l = (struct io_timer **)l;
--	struct io_timer **_r = (struct io_timer **)r;
--
--	swap(*_l, *_r);
--}
--
- static const struct min_heap_callbacks callbacks = {
- 	.less = io_timer_cmp,
--	.swp = io_timer_swp,
-+	.swp = NULL,
- };
- 
- void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
+ Low level entry and exit
+ ========================
+diff --git a/Documentation/core-api/min_heap.rst b/Documentation/core-api/min_heap.rst
+new file mode 100644
+index 000000000000..0c636c8b7aa5
+--- /dev/null
++++ b/Documentation/core-api/min_heap.rst
+@@ -0,0 +1,300 @@
++.. SPDX-License-Identifier: GPL-2.0
++
++============
++Min Heap API
++============
++
++Introduction
++============
++
++The Min Heap API provides a set of functions and macros for managing min-heaps
++in the Linux kernel. A min-heap is a binary tree structure where the value of
++each node is less than or equal to the values of its children, ensuring that
++the smallest element is always at the root.
++
++This document provides a guide to the Min Heap API, detailing how to define and
++use min-heaps. Users should not directly call functions with **__min_heap_*()**
++prefixes, but should instead use the provided macro wrappers.
++
++In addition to the standard version of the functions, the API also includes a
++set of inline versions for performance-critical scenarios. These inline
++functions have the same names as their non-inline counterparts but include an
++**_inline** suffix. For example, **__min_heap_init_inline** and its
++corresponding macro wrapper **min_heap_init_inline**. The inline versions allow
++custom comparison and swap functions to be called directly, rather than through
++indirect function calls. This can significantly reduce overhead, especially
++when CONFIG_MITIGATION_RETPOLINE is enabled, as indirect function calls become
++more expensive. As with the non-inline versions, it is important to use the
++macro wrappers for inline functions instead of directly calling the functions
++themselves.
++
++Data Structures
++===============
++
++Min-Heap Definition
++-------------------
++
++The core data structure for representing a min-heap is defined using the
++**MIN_HEAP_PREALLOCATED** and **DEFINE_MIN_HEAP** macros. These macros allow
++you to define a min-heap with a preallocated buffer or dynamically allocated
++memory.
++
++Example:
++
++.. code-block:: c
++
++    #define MIN_HEAP_PREALLOCATED(_type, _name, _nr)
++    struct _name {
++        int nr;         /* Number of elements in the heap */
++        int size;       /* Maximum number of elements that can be held */
++        _type *data;    /* Pointer to the heap data */
++        _type preallocated[_nr];  /* Static preallocated array */
++    }
++
++    #define DEFINE_MIN_HEAP(_type, _name) MIN_HEAP_PREALLOCATED(_type, _name, 0)
++
++A typical heap structure will include a counter for the number of elements
++(`nr`), the maximum capacity of the heap (`size`), and a pointer to an array of
++elements (`data`). Optionally, you can specify a static array for preallocated
++heap storage using **MIN_HEAP_PREALLOCATED**.
++
++Min Heap Callbacks
++------------------
++
++The **struct min_heap_callbacks** provides customization options for ordering
++elements in the heap and swapping them. It contains two function pointers:
++
++.. code-block:: c
++
++    struct min_heap_callbacks {
++        bool (*less)(const void *lhs, const void *rhs, void *args);
++        void (*swp)(void *lhs, void *rhs, void *args);
++    };
++
++- **less** is the comparison function used to establish the order of elements.
++- **swp** is a function for swapping elements in the heap. If swp is set to
++  NULL, the default swap function will be used, which swaps the elements based on their size
++
++Macro Wrappers
++==============
++
++The following macro wrappers are provided for interacting with the heap in a
++user-friendly manner. Each macro corresponds to a function that operates on the
++heap, and they abstract away direct calls to internal functions.
++
++Each macro accepts various parameters that are detailed below.
++
++Heap Initialization
++--------------------
++
++.. code-block:: c
++
++    min_heap_init(heap, data, size);
++
++- **heap**: A pointer to the min-heap structure to be initialized.
++- **data**: A pointer to the buffer where the heap elements will be stored. If
++  `NULL`, the preallocated buffer within the heap structure will be used.
++- **size**: The maximum number of elements the heap can hold.
++
++This macro initializes the heap, setting its initial state. If `data` is
++`NULL`, the preallocated memory inside the heap structure will be used for
++storage. Otherwise, the user-provided buffer is used. The operation is **O(1)**.
++
++**Inline Version:** min_heap_init_inline(heap, data, size)
++
++Accessing the Top Element
++-------------------------
++
++.. code-block:: c
++
++    element = min_heap_peek(heap);
++
++- **heap**: A pointer to the min-heap from which to retrieve the smallest
++  element.
++
++This macro returns a pointer to the smallest element (the root) of the heap, or
++`NULL` if the heap is empty. The operation is **O(1)**.
++
++**Inline Version:** min_heap_peek_inline(heap)
++
++Heap Insertion
++--------------
++
++.. code-block:: c
++
++    success = min_heap_push(heap, element, callbacks, args);
++
++- **heap**: A pointer to the min-heap into which the element should be inserted.
++- **element**: A pointer to the element to be inserted into the heap.
++- **callbacks**: A pointer to a `struct min_heap_callbacks` providing the
++  `less` and `swp` functions.
++- **args**: Optional arguments passed to the `less` and `swp` functions.
++
++This macro inserts an element into the heap. It returns `true` if the insertion
++was successful and `false` if the heap is full. The operation is **O(log n)**.
++
++**Inline Version:** min_heap_push_inline(heap, element, callbacks, args)
++
++Heap Removal
++------------
++
++.. code-block:: c
++
++    success = min_heap_pop(heap, callbacks, args);
++
++- **heap**: A pointer to the min-heap from which to remove the smallest element.
++- **callbacks**: A pointer to a `struct min_heap_callbacks` providing the
++  `less` and `swp` functions.
++- **args**: Optional arguments passed to the `less` and `swp` functions.
++
++This macro removes the smallest element (the root) from the heap. It returns
++`true` if the element was successfully removed, or `false` if the heap is
++empty. The operation is **O(log n)**.
++
++**Inline Version:** min_heap_pop_inline(heap, callbacks, args)
++
++Heap Maintenance
++----------------
++
++You can use the following macros to maintain the heap's structure:
++
++.. code-block:: c
++
++    min_heap_sift_down(heap, pos, callbacks, args);
++
++- **heap**: A pointer to the min-heap.
++- **pos**: The index from which to start sifting down.
++- **callbacks**: A pointer to a `struct min_heap_callbacks` providing the
++  `less` and `swp` functions.
++- **args**: Optional arguments passed to the `less` and `swp` functions.
++
++This macro restores the heap property by moving the element at the specified
++index (`pos`) down the heap until it is in the correct position. The operation
++is **O(log n)**.
++
++**Inline Version:** min_heap_sift_down_inline(heap, pos, callbacks, args)
++
++.. code-block:: c
++
++    min_heap_sift_up(heap, idx, callbacks, args);
++
++- **heap**: A pointer to the min-heap.
++- **idx**: The index of the element to sift up.
++- **callbacks**: A pointer to a `struct min_heap_callbacks` providing the
++  `less` and `swp` functions.
++- **args**: Optional arguments passed to the `less` and `swp` functions.
++
++This macro restores the heap property by moving the element at the specified
++index (`idx`) up the heap. The operation is **O(log n)**.
++
++**Inline Version:** min_heap_sift_up_inline(heap, idx, callbacks, args)
++
++.. code-block:: c
++
++    min_heapify_all(heap, callbacks, args);
++
++- **heap**: A pointer to the min-heap.
++- **callbacks**: A pointer to a `struct min_heap_callbacks` providing the
++  `less` and `swp` functions.
++- **args**: Optional arguments passed to the `less` and `swp` functions.
++
++This macro ensures that the entire heap satisfies the heap property. It is
++called when the heap is built from scratch or after many modifications. The
++operation is **O(n)**.
++
++**Inline Version:** min_heapify_all_inline(heap, callbacks, args)
++
++Removing Specific Elements
++--------------------------
++
++.. code-block:: c
++
++    success = min_heap_del(heap, idx, callbacks, args);
++
++- **heap**: A pointer to the min-heap.
++- **idx**: The index of the element to delete.
++- **callbacks**: A pointer to a `struct min_heap_callbacks` providing the
++  `less` and `swp` functions.
++- **args**: Optional arguments passed to the `less` and `swp` functions.
++
++This macro removes an element at the specified index (`idx`) from the heap and
++restores the heap property. The operation is **O(log n)**.
++
++**Inline Version:** min_heap_del_inline(heap, idx, callbacks, args)
++
++Other Utilities
++===============
++
++- **min_heap_full(heap)**: Checks whether the heap is full.
++  Complexity: **O(1)**.
++
++.. code-block:: c
++
++    bool full = min_heap_full(heap);
++
++- `heap`: A pointer to the min-heap to check.
++
++This macro returns `true` if the heap is full, otherwise `false`.
++
++**Inline Version:** min_heap_full_inline(heap)
++
++- **min_heap_empty(heap)**: Checks whether the heap is empty.
++  Complexity: **O(1)**.
++
++.. code-block:: c
++
++    bool empty = min_heap_empty(heap);
++
++- `heap`: A pointer to the min-heap to check.
++
++This macro returns `true` if the heap is empty, otherwise `false`.
++
++**Inline Version:** min_heap_empty_inline(heap)
++
++Example Usage
++=============
++
++An example usage of the min-heap API would involve defining a heap structure,
++initializing it, and inserting and removing elements as needed.
++
++.. code-block:: c
++
++    #include <linux/min_heap.h>
++
++    int my_less_function(const void *lhs, const void *rhs, void *args) {
++        return (*(int *)lhs < *(int *)rhs);
++    }
++
++    struct min_heap_callbacks heap_cb = {
++        .less = my_less_function,    /* Comparison function for heap order */
++        .swp  = NULL,                /* Use default swap function */
++    };
++
++    void example_usage(void) {
++        /* Pre-populate the buffer with elements */
++        int buffer[5] = {5, 2, 8, 1, 3};
++        /* Declare a min-heap */
++        DEFINE_MIN_HEAP(int, my_heap);
++
++        /* Initialize the heap with preallocated buffer and size */
++        min_heap_init(&my_heap, buffer, 5);
++
++        /* Build the heap using min_heapify_all */
++        my_heap.nr = 5;  /* Set the number of elements in the heap */
++        min_heapify_all(&my_heap, &heap_cb, NULL);
++
++        /* Peek at the top element (should be 1 in this case) */
++        int *top = min_heap_peek(&my_heap);
++        pr_info("Top element: %d\n", *top);
++
++        /* Pop the top element (1) and get the new top (2) */
++        min_heap_pop(&my_heap, &heap_cb, NULL);
++        top = min_heap_peek(&my_heap);
++        pr_info("New top element: %d\n", *top);
++
++        /* Insert a new element (0) and recheck the top */
++        int new_element = 0;
++        min_heap_push(&my_heap, &new_element, &heap_cb, NULL);
++        top = min_heap_peek(&my_heap);
++        pr_info("Top element after insertion: %d\n", *top);
++    }
 -- 
 2.34.1
 
