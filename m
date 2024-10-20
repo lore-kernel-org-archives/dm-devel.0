@@ -1,57 +1,57 @@
-Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com [209.85.216.54])
+Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com [209.85.216.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5FB9D748F
-	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:02:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9841013C816
+	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:02:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729396974; cv=none; b=evUk/R80W17BC9iudEac5vBg8u6DZJ/oUXAFjYzW0Pt2EpT2RvXNfhRpvrzmIjYcQCngFR7pxI5/94ElHzZiIc4TY9jKAcvrEtUF5dXYzmcdsf4xPBgVakV1OwkaTVIvAvKgoe37vQV5xN9W2lC7iyyxtROkDRTjMlnUE18f3Nc=
+	t=1729396980; cv=none; b=nGs9HPp483xJGKyx99gX6Ni714MD7oZepPpVLlQLn7MCQNm9wPcFZtYfEtge+Dx52ST3zzCcXa1CY+W2i+LaYXXCsWJNnNgZetiJrM90h/X5nfkMpK3hGib1Sfp0doheVLNPYY8fMVybJP2cSFq/HBdhakxR7lCiNU+iktcvpLM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729396974; c=relaxed/simple;
-	bh=/9mUaFvmlKksdPlONLh36cpvswwCLSGpPrI0BGH0Huo=;
+	s=arc-20240116; t=1729396980; c=relaxed/simple;
+	bh=FXrcKA4kv0Y0H6AHaICGqhxwnnRf14RLEiJ/iEAwoxU=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=ghsx+P7nb+0Llhqb3emXJTQJos73+/MYq46FcJK7r+CwyFwljVvBndzflcbpM0QFfqQLJX0X4756jtYhuGBazzqfRsep4jpGurVjxE41uzvh7f/4PRSvwDWwr+XhlBIIpteoR553HqOa1cVUIo0Guvuo+4wo6Rmtr70fDqZMvS0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aNqyangk; arc=none smtp.client-ip=209.85.216.54
+	 MIME-Version; b=aihw4sNpVXe5Spn0QO5+oskQnpo1Fj2RXQApEyqGa0VbXi9Hh8AM1ftDbwnWC+7wjgdIDZAXTHugOTukUs52tWHuXr5GJzTTDcZiU+B+9+4Z7itvLwv0LHVK4cM3Rj7NRQHp6fgfv85HGO/sgOOjnWOJHJwrB0W/w4UQ6VNwrN0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dHtnLxHb; arc=none smtp.client-ip=209.85.216.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aNqyangk"
-Received: by mail-pj1-f54.google.com with SMTP id 98e67ed59e1d1-2e2e23f2931so2799925a91.0
-        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:02:52 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dHtnLxHb"
+Received: by mail-pj1-f51.google.com with SMTP id 98e67ed59e1d1-2e2e8c8915eso2781164a91.3
+        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:02:57 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729396972; x=1730001772; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1729396977; x=1730001777; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=rziSmC5tfzn2cnt/wqwyaZwuuHhuMcA3Csb1Fp91fpY=;
-        b=aNqyangkWV5MOusHaczzhOxFAiXRsPs4I7fPU24+InuDfyG6rUJM8mv6FSquI4I24F
-         Z9wbzEGlUXDTcJAYGDAzgeuqZWyXH6o6u7QJ5SVy2s+Gn2mMON1BjWuupcrHHCrGXBje
-         +7GTnhdoCbnEJul5+/QILpLPuo5M4YwL1zHPLv3pBetsVJx14TArHZPmVWceRh+j8tTw
-         4R8fKk0vkKyGTMEWZSisAiqbh8uy5tzieTnYLaAxbi3SvdEJONtmoFJ40MfbFaqaz5VW
-         df71Oba7e+h87ihT8dW05ch3Tw0mHlHA0LhoE5mzSgn19B0DFcfCobmTJHDdDzK/bPgu
-         zh4g==
+        bh=gLYYPN6VMSbce5qBI6UYe5zetX0JUYbruyELXEOs2l4=;
+        b=dHtnLxHb5L5adq+J78kbpVTehYLqaletEB9Cd2ySiHTKHQ2y+sfKEeIurvFf2Nj24H
+         ta6npY4gWu1/qXAzsgvXeGuWzsRgAQgoNxsFeSvXCCbc3hzfr3MgL99mebxZplW48m9M
+         GxcEw6QZNTO6LyKTbI2PgbqFPOwWfcHR9bhgmGnREYMjVUv0RG8Bdefwter3Gkn136hr
+         eGyfUPv6eAuGSPHyzUzruw3LUGKBaT3hbeGoSc+b0w9SSGTuvfe2CVut601Psa2bvv7S
+         vdlwkPwf35qif/aP+UCh67MjH6rWbsbL4RdzknvU4fkKqSc4RGLGQlCsEhYpfRBuPuLM
+         epBg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729396972; x=1730001772;
+        d=1e100.net; s=20230601; t=1729396977; x=1730001777;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=rziSmC5tfzn2cnt/wqwyaZwuuHhuMcA3Csb1Fp91fpY=;
-        b=t9eebm2uTt8VacdrhQ4NImHwliXRddJNN5JlxMq9VyZwjq2ge071SiMUfdqgQ9UuYX
-         T7PUBua795GP+72EY0JzCEldLJVrSJp7B3Jeay/Dl6vT9a441m3yv/dup1gYYmxGmyEo
-         W0ZVwhdQ3PiWLs5VpG9juK7VB1eXwqN/EJ2XwKLSq7UPakAnTY7yPJoZTeW2HcDBNuUi
-         imAU5r/6FBDdpGhM1tZPscYQk7T53pasydkKutcscY01SunJUPgCrGLwCcnA5389Wu2Y
-         AmCOJsUKew2Y9+XS8CzbXCtUN944JV/J6NlErNMhA8RI1fqlYFW09k9aWlsyvv1OLXu3
-         WJ9Q==
-X-Forwarded-Encrypted: i=1; AJvYcCXmXVRAC/lbt7OntxD5YKtHL9+W5S5PGP+aSomAZU1cZGfAGybOO8IvwQqimoBf0Or5lbf/CSkH3w==@lists.linux.dev
-X-Gm-Message-State: AOJu0YylpNffjGubtdbVcXqwpzFiJJai3L49x6S+/c6u5MZ2TW5xJgKP
-	V3oKkqO2LNbfrFA0IuAEVIgY6Z1DN7hnt5+eWD3LKEJwhnRz953d
-X-Google-Smtp-Source: AGHT+IHMW+qjGNk25MwSR4+vnQ0D8s1Tp6FfxwQfHJa9nSOWn+djBGN5YnBTiCdS6y5VPlsk0p2NZQ==
-X-Received: by 2002:a17:90b:3658:b0:2e2:cd6b:c6ca with SMTP id 98e67ed59e1d1-2e5618f0839mr8748941a91.25.1729396971559;
-        Sat, 19 Oct 2024 21:02:51 -0700 (PDT)
+        bh=gLYYPN6VMSbce5qBI6UYe5zetX0JUYbruyELXEOs2l4=;
+        b=SZttyQ7x7mN0C0lNHLVelYhZC7V6RvFj6kByWfzDy7weU4yC2R2x2i5RaBh71KGDzr
+         JN31kMVCfMcP/wO8k2NEAvMCH/baXqolpbe9CnzQAFI3LZfKELzD7CIh9Euir4sbeFzh
+         KSJXpkkqeA32zcGEUxTn9VFQWHGqep6m1Vb6XnMkvuul1bnpj5ncRCApmTaBHBVVMhco
+         ac2RN/RHUUNJN6wN2VSPCy3aWdsACsEImvaAeYCghe+6u218bcsIM5kHxZ/A30iscJrC
+         O7qaDDLqD2HPF8v6euqvd73xOYtogP4giZ4vnMxJpw32/OA1aVvXKpnXr9XQ3Kuxt2xt
+         bPEg==
+X-Forwarded-Encrypted: i=1; AJvYcCW7lZcExPKuqtsUycWtMwUtyC7eDK2gWQZXref/CtVQ6hafpNRq6SEiFV7OxMwHTYG/p0El/59uBg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyeoQvnFoBU6dEDV+IRDiIUhWkvIUXGUyVwCBtN2O+9TiBNI6/Q
+	f4uo+1slp/VB0jXAZypGbYrgaqi3rdZAj3dCOZJQy4GQ7YaO5y/S
+X-Google-Smtp-Source: AGHT+IGmB89UrsezcJFZU2nJR9oDRLe6wYCSOkA1vdtsM80cdAb4yFIlb3IMQvYcc+0FOIBAkWPSGw==
+X-Received: by 2002:a17:90b:4b0c:b0:2e2:c681:51ce with SMTP id 98e67ed59e1d1-2e5616c6659mr9349283a91.1.1729396976634;
+        Sat, 19 Oct 2024 21:02:56 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.02.47
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.02.52
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 19 Oct 2024 21:02:51 -0700 (PDT)
+        Sat, 19 Oct 2024 21:02:56 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -77,9 +77,9 @@ Cc: mark.rutland@arm.com,
 	linux-perf-users@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v2 06/10] dm vdo: Update min_heap_callbacks to use default builtin swap
-Date: Sun, 20 Oct 2024 12:01:56 +0800
-Message-Id: <20241020040200.939973-7-visitorckw@gmail.com>
+Subject: [PATCH v2 07/10] bcache: Update min_heap_callbacks to use default builtin swap
+Date: Sun, 20 Oct 2024 12:01:57 +0800
+Message-Id: <20241020040200.939973-8-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20241020040200.939973-1-visitorckw@gmail.com>
 References: <20241020040200.939973-1-visitorckw@gmail.com>
@@ -91,53 +91,149 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Replace the swp function pointer in the min_heap_callbacks of dm-vdo
+Replace the swp function pointer in the min_heap_callbacks of bcache
 with NULL, allowing direct usage of the default builtin swap
 implementation. This modification simplifies the code and improves
 performance by removing unnecessary function indirection.
 
 Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 ---
- drivers/md/dm-vdo/repair.c     |  2 +-
- drivers/md/dm-vdo/slab-depot.c | 10 +---------
- 2 files changed, 2 insertions(+), 10 deletions(-)
+ drivers/md/bcache/alloc.c    | 11 ++---------
+ drivers/md/bcache/bset.c     | 14 +++-----------
+ drivers/md/bcache/extents.c  | 10 +---------
+ drivers/md/bcache/movinggc.c | 10 +---------
+ 4 files changed, 7 insertions(+), 38 deletions(-)
 
-diff --git a/drivers/md/dm-vdo/repair.c b/drivers/md/dm-vdo/repair.c
-index ffff2c999518..8c006fb3afcf 100644
---- a/drivers/md/dm-vdo/repair.c
-+++ b/drivers/md/dm-vdo/repair.c
-@@ -166,7 +166,7 @@ static void swap_mappings(void *item1, void *item2, void __always_unused *args)
- 
- static const struct min_heap_callbacks repair_min_heap = {
- 	.less = mapping_is_less_than,
--	.swp = swap_mappings,
-+	.swp = NULL,
- };
- 
- static struct numbered_block_mapping *sort_next_heap_element(struct repair_completion *repair)
-diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
-index 274f9ccd072f..ccf7b2eac131 100644
---- a/drivers/md/dm-vdo/slab-depot.c
-+++ b/drivers/md/dm-vdo/slab-depot.c
-@@ -3301,17 +3301,9 @@ static bool slab_status_is_less_than(const void *item1, const void *item2,
- 	return info1->slab_number < info2->slab_number;
+diff --git a/drivers/md/bcache/alloc.c b/drivers/md/bcache/alloc.c
+index da50f6661bae..8998e61efa40 100644
+--- a/drivers/md/bcache/alloc.c
++++ b/drivers/md/bcache/alloc.c
+@@ -189,23 +189,16 @@ static inline bool new_bucket_min_cmp(const void *l, const void *r, void *args)
+ 	return new_bucket_prio(ca, *lhs) < new_bucket_prio(ca, *rhs);
  }
  
--static void swap_slab_statuses(void *item1, void *item2, void __always_unused *args)
+-static inline void new_bucket_swap(void *l, void *r, void __always_unused *args)
 -{
--	struct slab_status *info1 = item1;
--	struct slab_status *info2 = item2;
+-	struct bucket **lhs = l, **rhs = r;
 -
--	swap(*info1, *info2);
+-	swap(*lhs, *rhs);
 -}
 -
- static const struct min_heap_callbacks slab_status_min_heap = {
- 	.less = slab_status_is_less_than,
--	.swp = swap_slab_statuses,
-+	.swp = NULL,
- };
+ static void invalidate_buckets_lru(struct cache *ca)
+ {
+ 	struct bucket *b;
+ 	const struct min_heap_callbacks bucket_max_cmp_callback = {
+ 		.less = new_bucket_max_cmp,
+-		.swp = new_bucket_swap,
++		.swp = NULL,
+ 	};
+ 	const struct min_heap_callbacks bucket_min_cmp_callback = {
+ 		.less = new_bucket_min_cmp,
+-		.swp = new_bucket_swap,
++		.swp = NULL,
+ 	};
  
- /* Inform the slab actor that a action has finished on some slab; used by apply_to_slabs(). */
+ 	ca->heap.nr = 0;
+diff --git a/drivers/md/bcache/bset.c b/drivers/md/bcache/bset.c
+index bd97d8626887..68258a16e125 100644
+--- a/drivers/md/bcache/bset.c
++++ b/drivers/md/bcache/bset.c
+@@ -1093,14 +1093,6 @@ static inline bool new_btree_iter_cmp(const void *l, const void *r, void __alway
+ 	return bkey_cmp(_l->k, _r->k) <= 0;
+ }
+ 
+-static inline void new_btree_iter_swap(void *iter1, void *iter2, void __always_unused *args)
+-{
+-	struct btree_iter_set *_iter1 = iter1;
+-	struct btree_iter_set *_iter2 = iter2;
+-
+-	swap(*_iter1, *_iter2);
+-}
+-
+ static inline bool btree_iter_end(struct btree_iter *iter)
+ {
+ 	return !iter->heap.nr;
+@@ -1111,7 +1103,7 @@ void bch_btree_iter_push(struct btree_iter *iter, struct bkey *k,
+ {
+ 	const struct min_heap_callbacks callbacks = {
+ 		.less = new_btree_iter_cmp,
+-		.swp = new_btree_iter_swap,
++		.swp = NULL,
+ 	};
+ 
+ 	if (k != end)
+@@ -1157,7 +1149,7 @@ static inline struct bkey *__bch_btree_iter_next(struct btree_iter *iter,
+ 	struct bkey *ret = NULL;
+ 	const struct min_heap_callbacks callbacks = {
+ 		.less = cmp,
+-		.swp = new_btree_iter_swap,
++		.swp = NULL,
+ 	};
+ 
+ 	if (!btree_iter_end(iter)) {
+@@ -1231,7 +1223,7 @@ static void btree_mergesort(struct btree_keys *b, struct bset *out,
+ 		: bch_ptr_invalid;
+ 	const struct min_heap_callbacks callbacks = {
+ 		.less = b->ops->sort_cmp,
+-		.swp = new_btree_iter_swap,
++		.swp = NULL,
+ 	};
+ 
+ 	/* Heapify the iterator, using our comparison function */
+diff --git a/drivers/md/bcache/extents.c b/drivers/md/bcache/extents.c
+index a7221e5dbe81..4b84fda1530a 100644
+--- a/drivers/md/bcache/extents.c
++++ b/drivers/md/bcache/extents.c
+@@ -266,20 +266,12 @@ static bool new_bch_extent_sort_cmp(const void *l, const void *r, void __always_
+ 	return !(c ? c > 0 : _l->k < _r->k);
+ }
+ 
+-static inline void new_btree_iter_swap(void *iter1, void *iter2, void __always_unused *args)
+-{
+-	struct btree_iter_set *_iter1 = iter1;
+-	struct btree_iter_set *_iter2 = iter2;
+-
+-	swap(*_iter1, *_iter2);
+-}
+-
+ static struct bkey *bch_extent_sort_fixup(struct btree_iter *iter,
+ 					  struct bkey *tmp)
+ {
+ 	const struct min_heap_callbacks callbacks = {
+ 		.less = new_bch_extent_sort_cmp,
+-		.swp = new_btree_iter_swap,
++		.swp = NULL,
+ 	};
+ 	while (iter->heap.nr > 1) {
+ 		struct btree_iter_set *top = iter->heap.data, *i = top + 1;
+diff --git a/drivers/md/bcache/movinggc.c b/drivers/md/bcache/movinggc.c
+index 7f482729c56d..ef6abf33f926 100644
+--- a/drivers/md/bcache/movinggc.c
++++ b/drivers/md/bcache/movinggc.c
+@@ -190,14 +190,6 @@ static bool new_bucket_cmp(const void *l, const void *r, void __always_unused *a
+ 	return GC_SECTORS_USED(*_l) >= GC_SECTORS_USED(*_r);
+ }
+ 
+-static void new_bucket_swap(void *l, void *r, void __always_unused *args)
+-{
+-	struct bucket **_l = l;
+-	struct bucket **_r = r;
+-
+-	swap(*_l, *_r);
+-}
+-
+ static unsigned int bucket_heap_top(struct cache *ca)
+ {
+ 	struct bucket *b;
+@@ -212,7 +204,7 @@ void bch_moving_gc(struct cache_set *c)
+ 	unsigned long sectors_to_move, reserve_sectors;
+ 	const struct min_heap_callbacks callbacks = {
+ 		.less = new_bucket_cmp,
+-		.swp = new_bucket_swap,
++		.swp = NULL,
+ 	};
+ 
+ 	if (!c->copy_gc_enabled)
 -- 
 2.34.1
 
