@@ -1,57 +1,57 @@
-Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com [209.85.216.54])
+Received: from mail-pj1-f50.google.com (mail-pj1-f50.google.com [209.85.216.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB8E640855
-	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:02:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF29ABA2D
+	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:02:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729396964; cv=none; b=hl3Dvw4pUMrBepjN3Y4BgIi/NckPQh0JR9pKP9M73j3W8cz4dOCUaA8JNvsLmWBOA6jhEa6cxWUzPe2siR5wyPI2p+EW4bI3RpP/vw+l/tyxcxHmSK00y7dSg2kQioxdpvlx1u1ck7Af+Gkmr2uyRGq9g0oWTqDhYX6DnZoTPCc=
+	t=1729396968; cv=none; b=lv/0P9EbRPLawEKZrmj6HofBOzfKytE7Y/7hXg7TAWlDZ5SPu6f6eshbL4hPXdE+XAXXz3l14inwoBR46z52b94I9DMf1MOk+fFxf2q7HUG5N+Fiwzs18JSZ4nB+jV+s2ivm+O4LLTapPT0Q6USz/jnLuaWJGwKEA8k1/kXitO4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729396964; c=relaxed/simple;
-	bh=uWD7X4+G72y+WuvTqwWeg7t00M9IRkb3ifQpqG/L/hM=;
+	s=arc-20240116; t=1729396968; c=relaxed/simple;
+	bh=gyiMjnOkGCmWLW5uchvMDnKTgZ6y7fEOmN1SFiFPiH4=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=mU3BKeGqdOXPzy7+RL4tMFXGPzAZxCmMEz2gbDsShzDYzL9TeCzGuqUMOKNDLl/F8Rzq9RjQKjuaD0yfocdy8q1ezLS6jKB/hGsb8oIrdKLobasXTt6za/wol7naGHdH/cqJ05YsW+EI9AFbi5aLPTcM0a+LkIUVb2ai4VwSLCk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QENr7SZB; arc=none smtp.client-ip=209.85.216.54
+	 MIME-Version; b=qXJ+E1P7KgAYq26apSoLC34bqXyHmcSoJHjI6pSAsK25+INyUv/kv/oB2b8TJPK5xipn+9qszAXYLu9g6RCqQj3LHTqhqku7JCykqNGLew9xHq9/XXczS5ZF3Hx9U2RzXnzqu+hU6BLMMI4sHXAjHHZkmKQ+xZgTlcDh3Asg2jQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=h1mIQZg6; arc=none smtp.client-ip=209.85.216.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QENr7SZB"
-Received: by mail-pj1-f54.google.com with SMTP id 98e67ed59e1d1-2e2ed59a35eso2850457a91.0
-        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:02:41 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="h1mIQZg6"
+Received: by mail-pj1-f50.google.com with SMTP id 98e67ed59e1d1-2e2ed2230d8so2532724a91.0
+        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:02:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729396961; x=1730001761; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1729396966; x=1730001766; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=rSsO9eyAnWGRK9JqMw2hZIz60NRvRqk+DUJGCBdVXsc=;
-        b=QENr7SZBiNRnyMrAkGJ8Gdl0f11a/ca0eMYClUXDHbm0PO0ffI8GHuRThnupfzBkUj
-         St9dMauL4E88YYHsECm2PPT5ycwXMph2jqWHtFFXU+nRXK9IJAz6E30qLDR273CN7ioL
-         GtrZCjMFnRU4KVssUcJjmZqDMWpx6Eddy8PzILTehU20Rpn7caD2ug5JT08jDqhcfVvx
-         dx4qgWM5683ZagqgV75ZW+8xJ2H4yegqupMoqFF1SRSY72rAqevheJXPpEmlSEm4T3S/
-         7aZlIE9M/HiUUcSGK1Crjut2Rl13uYzaLGWViGNqwzcOwhThaFo90xtsy2Q7G1P4BPDy
-         HqOA==
+        bh=6iUBoTJj+mB6KW0shlxuElBqdCTCqkeGFMIEQuiMOBQ=;
+        b=h1mIQZg6h5hDSKjDKQWfa0ya5zx2bQ9SpkyomQaqID94U5vPLgRLqvLTA6bnJ0jAJK
+         lpIkvDJ6X779NQptblJc9XuS9bnIkzZCuez8BptikRrYLJyo+E71QPouepT9+LcMDhe1
+         la5oUGEknmuv0kQilhPtUW0py7I4ZgbnWWYGt40zRIOfA7R65HmizQtdgV6XPicHr13E
+         6Zf9afSj38cAmX8T1ZEMd6lI3tL61d5II+UY/M4KxuysQiXY80TnyulM3dT2kta4+1b0
+         vTm68Hb+uYEuI1ibLsYpRV0Ep6hlW4dFFpHR0CXsbjAeN4H9Z4rtL8cuO9Otl3+gBZLH
+         hgqg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729396961; x=1730001761;
+        d=1e100.net; s=20230601; t=1729396966; x=1730001766;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=rSsO9eyAnWGRK9JqMw2hZIz60NRvRqk+DUJGCBdVXsc=;
-        b=Ctuy3hgv5vle4tmGkqrXBQm2poKXwy7Y2a3hJFRA+l/BxS+gnxaCn9IAQ7Rxwqcx8U
-         8UXNsXKKoRghsApXtJDftZsufRw/vU4PMnHSBIY9t/tgBHJQEy/YWC+E+1XSct5SP2vq
-         mPaHpBYPuEfoSGQAYmngyAmnkE7ycVk55cfCZFLnFxqsouFb8z3y2XY0NrrQU4GhG9fR
-         Xx1LWD6OXqpDwKIsoDqXNPqOc7tuc9m7q/e8KLHgZxYJFjYCTARt2K43OTsT9ASlQ+rB
-         E7eRNsMvSKWb6V5QD6c7bo4CBhpr8XFRIhZ2baeZY1VJZHqIyObdlrckcoFkh/lOla0S
-         XUog==
-X-Forwarded-Encrypted: i=1; AJvYcCXqqA+fjJt0YEoSS6oItsxv7cJE3wdXgdxiFDBufPKFaGOS+Vg+Tr1pzEkEGCVY+y5WpfKvObRoLQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz028D4DrVdvGG6kf5kLOY4r6xrKkEylwS8DSUxrgWIgzb56cID
-	Jz1qOXad4oNIe30Cx4uov9xAbscHsKh9rRIMLeoaciiwXONWT31t
-X-Google-Smtp-Source: AGHT+IGdWI08SJwvOyOfpihMxUYT3OOzFomu22UrUlY7s271MCitpKDj02EZ1IaoGzOFhlnHCnE38Q==
-X-Received: by 2002:a17:90b:3c47:b0:2e2:bd68:b8d8 with SMTP id 98e67ed59e1d1-2e5616dea4dmr8067411a91.8.1729396961160;
-        Sat, 19 Oct 2024 21:02:41 -0700 (PDT)
+        bh=6iUBoTJj+mB6KW0shlxuElBqdCTCqkeGFMIEQuiMOBQ=;
+        b=oekFtanO3b5wAKCPWSXi7KiSH0aRTIfypCXdp+JCJAJ8VkvRbn7HIcVqGXGxO/GxXT
+         1nyhC5dZXdmkQTnkmHARy/N8+R3h/xqreUNPcTiTCBNwyr3icHx5Wcv6E6o/mfwMb1xB
+         36cka8ERoRQHeLWfM79xUe+3U61BDXmhtJfETeK7KbzXvhPiPCShP7YFuPLUC8bCYzYt
+         3C6b4Z1psyOCXxQdoehXP57Z2jHLMTpT2eOLCRqvsFhayx7g7M6WjwQMKnPbvQ39SUAO
+         HTKxLLnJkWVyQ6+QV6+ApFcn2JX30oX/YMJqr/BTT8wmuhemhLTRh4ogPIWRYSa4gNrq
+         wTQw==
+X-Forwarded-Encrypted: i=1; AJvYcCWBT8E9l6TsC66cDYOn3SFLb2qf/AWIvbCeoI9oPFPXZxmrx6Ppdg5RdLpi+za+i0VHvEIczwEnHQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyAPdxOQPBaY3HiwJDu+woBsTp5UvAo/zwSLbU2eV5zSpOh5y3O
+	eI2BTXKNRqNyVg06lbtCR2LAeY8SrxjNSOLYlmm1GFb2ZqFPGEDh
+X-Google-Smtp-Source: AGHT+IFe5P6BuiYtbffd1mimYFoXtDFoEUK324MarnzRvMXI0QJHbhnkpia1+tu9/eVZZvKy7OgAww==
+X-Received: by 2002:a17:90b:4b4a:b0:2e2:b211:a4da with SMTP id 98e67ed59e1d1-2e5616ec45bmr9060331a91.14.1729396966000;
+        Sat, 19 Oct 2024 21:02:46 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.02.37
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.02.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 19 Oct 2024 21:02:40 -0700 (PDT)
+        Sat, 19 Oct 2024 21:02:45 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -77,9 +77,9 @@ Cc: mark.rutland@arm.com,
 	linux-perf-users@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v2 04/10] lib/test_min_heap: Update min_heap_callbacks to use default builtin swap
-Date: Sun, 20 Oct 2024 12:01:54 +0800
-Message-Id: <20241020040200.939973-5-visitorckw@gmail.com>
+Subject: [PATCH v2 05/10] perf/core: Update min_heap_callbacks to use default builtin swap
+Date: Sun, 20 Oct 2024 12:01:55 +0800
+Message-Id: <20241020040200.939973-6-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20241020040200.939973-1-visitorckw@gmail.com>
 References: <20241020040200.939973-1-visitorckw@gmail.com>
@@ -91,73 +91,40 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Replace the swp function pointer in the min_heap_callbacks of
-test_min_heap with NULL, allowing direct usage of the default builtin
-swap implementation. This modification simplifies the code and improves
-performance by removing unnecessary function indirection.
+After introducing the default builtin swap implementation, update the
+min_heap_callbacks to replace the swp function pointer with NULL. This
+change allows the min heap to directly utilize the builtin swap,
+simplifying the code.
 
 Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 ---
-Tested with test_min_heap module.
+ kernel/events/core.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
 
- lib/test_min_heap.c | 16 ++++------------
- 1 file changed, 4 insertions(+), 12 deletions(-)
-
-diff --git a/lib/test_min_heap.c b/lib/test_min_heap.c
-index 64c877e73b64..e6fbb798558b 100644
---- a/lib/test_min_heap.c
-+++ b/lib/test_min_heap.c
-@@ -23,14 +23,6 @@ static __init bool greater_than(const void *lhs, const void *rhs, void __always_
- 	return *(int *)lhs > *(int *)rhs;
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index cbf365e67f6e..0e9be5b323e4 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -3778,18 +3778,11 @@ static bool perf_less_group_idx(const void *l, const void *r, void __always_unus
+ 	return le->group_index < re->group_index;
  }
  
--static __init void swap_ints(void *lhs, void *rhs, void __always_unused *args)
+-static void swap_ptr(void *l, void *r, void __always_unused *args)
 -{
--	int temp = *(int *)lhs;
+-	void **lp = l, **rp = r;
 -
--	*(int *)lhs = *(int *)rhs;
--	*(int *)rhs = temp;
+-	swap(*lp, *rp);
 -}
 -
- static __init int pop_verify_heap(bool min_heap,
- 				struct min_heap_test *heap,
- 				const struct min_heap_callbacks *funcs)
-@@ -72,7 +64,7 @@ static __init int test_heapify_all(bool min_heap)
- 	};
- 	struct min_heap_callbacks funcs = {
- 		.less = min_heap ? less_than : greater_than,
--		.swp = swap_ints,
-+		.swp = NULL,
- 	};
- 	int i, err;
+ DEFINE_MIN_HEAP(struct perf_event *, perf_event_min_heap);
  
-@@ -104,7 +96,7 @@ static __init int test_heap_push(bool min_heap)
- 	};
- 	struct min_heap_callbacks funcs = {
- 		.less = min_heap ? less_than : greater_than,
--		.swp = swap_ints,
-+		.swp = NULL,
- 	};
- 	int i, temp, err;
+ static const struct min_heap_callbacks perf_min_heap = {
+ 	.less = perf_less_group_idx,
+-	.swp = swap_ptr,
++	.swp = NULL,
+ };
  
-@@ -136,7 +128,7 @@ static __init int test_heap_pop_push(bool min_heap)
- 	};
- 	struct min_heap_callbacks funcs = {
- 		.less = min_heap ? less_than : greater_than,
--		.swp = swap_ints,
-+		.swp = NULL,
- 	};
- 	int i, temp, err;
- 
-@@ -175,7 +167,7 @@ static __init int test_heap_del(bool min_heap)
- 	heap.nr = ARRAY_SIZE(values);
- 	struct min_heap_callbacks funcs = {
- 		.less = min_heap ? less_than : greater_than,
--		.swp = swap_ints,
-+		.swp = NULL,
- 	};
- 	int i, err;
- 
+ static void __heap_add(struct perf_event_min_heap *heap, struct perf_event *event)
 -- 
 2.34.1
 
