@@ -1,55 +1,57 @@
-Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com [209.85.216.47])
+Received: from mail-pj1-f49.google.com (mail-pj1-f49.google.com [209.85.216.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D4804431
-	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:02:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5ED8EADA
+	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:02:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729396943; cv=none; b=D0Li3yjhOy4f87917Yeco0EnmYdHMG75B88iRlwGF2A3QWFO3t4sFyXnso6x2nJcI2jnMurbHsB+3uDCUlOeFXXlKrkmRhecwuDmOdNV6LyGxur8ehh7mE/DTebzxDSh/greWXBgQC3n1KfjUQejXAWY474a7s3wOCM5cic5q68=
+	t=1729396949; cv=none; b=ZJYGiZnpYXfnuqRr12hDFKwbrKVgjQpkFk0UVrLVsG+FjskiAOFvi0/qwr1dtHqXo3KIPRkPtkO6U8ilp5rxkFsx3sh17dZh67lLkly7bNHwLdyETB2OAlWfaRbrHaQnh2mEddS7TUo9449cjnowj6LWsqm4lvuc77pXug1fe0M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729396943; c=relaxed/simple;
-	bh=PPZcedfeN2xci0bMtr41qkobsQvnGAlUSAMTUIbyAS4=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=j5J1r9F1yAoc0JOXKFhPeBVzCysYj6CkGBNBgnImAkSDocXq1IxOxyTaoiKkw81I9/IAfl1zxXV99iN3JaY3km1OAp1qrz6vcI1YNB02p0KJHL6o3kcE+yJLfWz5maYfrmluCxzMKUw9bh5j/gqtZo66/nPshjBjuAv7VpPhKQU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=B8/7rOgu; arc=none smtp.client-ip=209.85.216.47
+	s=arc-20240116; t=1729396949; c=relaxed/simple;
+	bh=AuW17kDORWd0KDHQZdR2xWDyCr+wDKId6jBES0rwfzA=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=RUKYM8CTB82iOoL+sWb1yZcLkIZdhlIF6hPetU6KQhCy/pF4a5gDq6yhaliyC6Ly+GoDcEUqZOf9hAjgi7HS9HrzztUn0NVKHyxBSjIESVUMtV0e0BKGqLfp3ZJoORqWdxeL1Pp6XqaSgSjx7o0ExPSHVvO8jqggHoovhY4cKss=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XTCJSNQD; arc=none smtp.client-ip=209.85.216.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="B8/7rOgu"
-Received: by mail-pj1-f47.google.com with SMTP id 98e67ed59e1d1-2e2ed59a35eso2850365a91.0
-        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:02:21 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XTCJSNQD"
+Received: by mail-pj1-f49.google.com with SMTP id 98e67ed59e1d1-2e30db524c2so2522425a91.1
+        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:02:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729396941; x=1730001741; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=PT29tbH0TQkyRmcXcOhR5RBzyV0h0z0uVsdQMLDTPYc=;
-        b=B8/7rOguXhcXtDdPoD1ydw6pZQak3wqtC3HPrPdb3E+tWFMSPwWtHwZbX4QTLAbqbt
-         TiDdOh2VD1sdT2lyAl/wo/njxPxHBpq1udD6b2TqB+8HsRAmQy50ZXjoAlOO/czr4sBO
-         F1L6eJcYiijYtiIGHWk6UKX1jCF3Y018gGB/e4VfUThFE/ya16vZ7uSPwctF75MhQEem
-         N8OGiXtjxV8PHQPWtxvHzFoCCuhkfonICWh6xPFrcrHchwozymMwc02Mf2VM9AeKx34J
-         4li9DBxLNPBTnrlHCZEZNrch9UZS/sjcXiwOEv4nYyX66roSSJhqosBIZzISNHeBQsTq
-         uSvw==
+        d=gmail.com; s=20230601; t=1729396946; x=1730001746; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=ocJAjO3VEDnwWXU1UORPzcLbPWZJaMhjLdoDnx0hezA=;
+        b=XTCJSNQDt6SJBnEk+DjoKV0M6dMLIEzG64ABYIWfoUsjT27tbYs5NXj4+Fcntr+sVu
+         FUVDGaUStwCXqyiZ7MLktLuMFTPD7fa1WOC0YfhxG3t2KlhFCVJ8+VxgQJwQS7LpYDne
+         jh1zQr/DeFuQ0yA86PJJA+mgsdMFx3y6OAJS3epkTOlqxZJ0JzzY8kYpyJFo5rFn68D3
+         XSfmzaUUOiMUETpArJNtCTZHs9QQOsgO2PMThUo23gkRGL3bXwTjDtw3SLAhi8ROUIV8
+         17snqvnE6/x4ujqoNWWeVj/K2oncaaxhDYiytX57aAcBqoZRsVLwssWBdvogZobYrZe1
+         qtZQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729396941; x=1730001741;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=PT29tbH0TQkyRmcXcOhR5RBzyV0h0z0uVsdQMLDTPYc=;
-        b=Q5qimMOkuuNNBpF0S8wxxDXzoTwwoT56XB//6f0a+NUJlCeqpROczc1K7q7wBV8aDQ
-         AdXZl+KyC9VvB7NruF1p+6J3slqgdWpsFCFb7ADQvuFdODr8nOuPMCfIteLW/CJSwHha
-         NAzPghVx4Q7fn6LNNV0yuvJhc5+CjLYLeMA04u87JUjqrWhSROkm4Ki2gvDs6Yw8jesL
-         t/HTpDwPpUL8RV3M3bhG3OSYAMjntS3DlL3w45TayK/K9YBzBlYIjJ6y79FHJTEIc0QO
-         7APopjo3u6SBwIhW9KzI5xn2ufZ6VtcHh4AGmF0ADgdv22kS9SyGuAXYi3uwqBZ59Rp3
-         Rv/w==
-X-Forwarded-Encrypted: i=1; AJvYcCWXyebLkWqxda6h+8dazdpXZfd+ql7C0hGwn0g70ryBZEzdU0AJs14UcuUnyg8U++elnnFz5Enzjg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yxdcng2kUYwJZvpO5THNcOAXZiwfcTC3KnJ67o5QQot7pqfg/6V
-	QF5zUoNJn3cGspqCL9lUYJE6qmcrBHJAbbK4jhuyyT+ImUiR7umk
-X-Google-Smtp-Source: AGHT+IGmbAyhBDIy64nkkXVLYjxt6z953fnbtTFvv+n4vjmyvQ+UsqLXOPoUEJ4jHZKyS4u8EuhTMQ==
-X-Received: by 2002:a17:90a:8a91:b0:2e2:cc47:f1b0 with SMTP id 98e67ed59e1d1-2e5616e667bmr8376177a91.3.1729396940670;
-        Sat, 19 Oct 2024 21:02:20 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1729396946; x=1730001746;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=ocJAjO3VEDnwWXU1UORPzcLbPWZJaMhjLdoDnx0hezA=;
+        b=qbJ07TKq9YQFEGkpUXkU75anvSz65mJX1myAxRgxbcE6gFXc42TmjJgv6ps/NonR8K
+         iV1Am1CODJ4N6S2tJPVFXxUIj3zqoteCRt2p6mxm+HMjiBKUgqOrb2P0oxcvxSqMRyvc
+         is19ljV+Hy2dN0VjGiCwwNyRmU+cglabAHGWLkFrdrStqifzk2UJ6FaHy6R/EAS78xjT
+         WF0hC3YF4/y4eeFmGaKsuAnVbjMngcipvJbuzVnpCOoqSJCo5gA6YZRnCNW3pjdoiJO2
+         M080uU0NpwQO+pbO2JnLUrn6SL3YsBit+ufr0P72obN1qaIKS+XMsALRcRWcxlPbe3BK
+         poew==
+X-Forwarded-Encrypted: i=1; AJvYcCVKjK7u0oU4VtzKA5zosZYfwLrH28RrGAmgemto+aQ+j1p/jZKkkUXDfvnrpCb7Le9pMzoo3jOq1A==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwXQqg35WviP4XILIGMGgae3EDGUohaPkEy27aJF1j9MukVIDzK
+	+5dntDDZ+8w/Ojq4I8dGTy6CtWLEnFVQP5IfpjSZPiEvij+SIhCysApaaw==
+X-Google-Smtp-Source: AGHT+IFVG/U8s3V87FeUqj8Nc4N7rb/VosY5/redFg5afiXWk0Rer4YIpFZdFk+EoegzMF4SH9tSTw==
+X-Received: by 2002:a17:90b:4b4a:b0:2e2:b211:a4da with SMTP id 98e67ed59e1d1-2e5616ec45bmr9059569a91.14.1729396945986;
+        Sat, 19 Oct 2024 21:02:25 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.02.16
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.02.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 19 Oct 2024 21:02:20 -0700 (PDT)
+        Sat, 19 Oct 2024 21:02:25 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -75,10 +77,12 @@ Cc: mark.rutland@arm.com,
 	linux-perf-users@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v2 00/10] Enhance min heap API with non-inline functions and optimizations
-Date: Sun, 20 Oct 2024 12:01:50 +0800
-Message-Id: <20241020040200.939973-1-visitorckw@gmail.com>
+Subject: [PATCH v2 01/10] lib/min_heap: Introduce non-inline versions of min heap API functions
+Date: Sun, 20 Oct 2024 12:01:51 +0800
+Message-Id: <20241020040200.939973-2-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20241020040200.939973-1-visitorckw@gmail.com>
+References: <20241020040200.939973-1-visitorckw@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -87,70 +91,495 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add non-inline versions of the min heap API functions in lib/min_heap.c
-and updates all users outside of kernel/events/core.c to use these
-non-inline versions. To mitigate the performance impact of indirect
-function calls caused by the non-inline versions of the swap and
-compare functions, a builtin swap has been introduced that swaps
-elements based on their size. Additionally, it micro-optimizes the
-efficiency of the min heap by pre-scaling the counter, following the
-same approach as in lib/sort.c. Documentation for the min heap API has
-also been added to the core-api section.
+All current min heap API functions are marked with '__always_inline'.
+However, as the number of users increases, inlining these functions
+everywhere leads to a increase in kernel size.
 
-Regards,
-Kuan-Wei
+In performance-critical paths, such as when perf events are enabled and
+min heap functions are called on every context switch, it is important
+to retain the inline versions for optimal performance. To balance this,
+the original inline functions are kept, and additional non-inline
+versions of the functions have been added in lib/min_heap.c.
 
+Link: https://lore.kernel.org/20240522161048.8d8bbc7b153b4ecd92c50666@linux-foundation.org
+Suggested-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 ---
+Code size for bcache:
+Before:
+   text	   data	    bss	    dec	    hex	filename
+   7257	    302	      0	   7559	   1d87	./drivers/md/bcache/alloc.o
+  10786	    515	      0	  11301	   2c25	./drivers/md/bcache/bset.o
+  33246	   1596	      8	  34850	   8822	./drivers/md/bcache/btree.o
+   7195	    256	      0	   7451	   1d1b	./drivers/md/bcache/extents.o
+   3524	    174	      0	   3698	    e72	./drivers/md/bcache/movinggc.o
+  17424	   2816	      0	  20240	   4f10	./drivers/md/bcache/sysfs.o
+   8994	    328	      0	   9322	   246a	./drivers/md/bcache/writeback.o
+After:
+   text	   data	    bss	    dec	    hex	filename
+   6339	    300	      0	   6639	   19ef	./drivers/md/bcache/alloc.o
+  10428	    537	      0	  10965	   2ad5	./drivers/md/bcache/bset.o
+  33134	   1596	      8	  34738	   87b2	./drivers/md/bcache/btree.o
+   6619	    264	      0	   6883	   1ae3	./drivers/md/bcache/extents.o
+   2958	    152	      0	   3110	    c26	./drivers/md/bcache/movinggc.o
+  17408	   2816	      0	  20224	   4f00	./drivers/md/bcache/sysfs.o
+   8962	    328	      0	   9290	   244a	./drivers/md/bcache/writeback.o
 
-Changes in v2:
-- Added a builtin swap to reduce the performance impact of indirect
-  function calls.
-- Cleaned up duplicate min_heap_callbacks in bcachefs.
-- Wrapped documentation at 80 columns.
-- Updated Example Usage.
-- Included documentation explaining that NULL can be passed to the
-  swp in min_heap_callbacks to use the builtin swap.
+Code size for bcachefs:
+Before:
+   text	   data	    bss	    dec	    hex	filename
+   2286	    155	      0	   2441	    989	./fs/bcachefs/clock.o
+  41481	   1634	     20	  43135	   a87f	./fs/bcachefs/ec.o
+After:
+   text	   data	    bss	    dec	    hex	filename
+   1928	    132	      0	   2060	    80c	./fs/bcachefs/clock.o
+  40259	   1624	     20	  41903	   a3af	./fs/bcachefs/ec.o
 
-v1: https://lore.kernel.org/lkml/20241013184703.659652-1-visitorckw@gmail.com
+Code size for dm-vdo:
+Before:
+   text	   data	    bss	    dec	    hex	filename
+  14047	    264	      0	  14311	   37e7	./drivers/md/dm-vdo/repair.o
+  37432	    944	      0	  38376	   95e8	./drivers/md/dm-vdo/slab-depot.o
+After:
+   text	   data	    bss	    dec	    hex	filename
+  13697	    264	      0	  13961	   3689	./drivers/md/dm-vdo/repair.o
+  37074	    960	      0	  38034	   9492	./drivers/md/dm-vdo/slab-depot.o
 
-Kuan-Wei Chiu (10):
-  lib/min_heap: Introduce non-inline versions of min heap API functions
-  lib min_heap: Optimize min heap by prescaling counters for better
-    performance
-  lib min_heap: Avoid indirect function call by providing default swap
-  lib/test_min_heap: Update min_heap_callbacks to use default builtin
-    swap
-  perf/core: Update min_heap_callbacks to use default builtin swap
-  dm vdo: Update min_heap_callbacks to use default builtin swap
-  bcache: Update min_heap_callbacks to use default builtin swap
-  bcachefs: Clean up duplicate min_heap_callbacks declarations
-  bcachefs: Update min_heap_callbacks to use default builtin swap
-  Documentation/core-api: Add min heap API introduction
+Code size for test_min_heap:
+Before:
+   text	   data	    bss	    dec	    hex	filename
+   5499	    171	      0	   5670	   1626	./lib/test_min_heap.o
+After:
+   text	   data	    bss	    dec	    hex	filename
+   2581	     96	      0	   2677	    a75	./lib/test_min_heap.o
 
- Documentation/core-api/index.rst    |   1 +
- Documentation/core-api/min_heap.rst | 300 +++++++++++++++++++++++
- drivers/md/bcache/Kconfig           |   1 +
- drivers/md/bcache/alloc.c           |  11 +-
- drivers/md/bcache/bset.c            |  14 +-
- drivers/md/bcache/extents.c         |  10 +-
- drivers/md/bcache/movinggc.c        |  10 +-
- drivers/md/dm-vdo/Kconfig           |   1 +
- drivers/md/dm-vdo/repair.c          |   2 +-
- drivers/md/dm-vdo/slab-depot.c      |  10 +-
- fs/bcachefs/Kconfig                 |   1 +
- fs/bcachefs/clock.c                 |  25 +-
- fs/bcachefs/ec.c                    |  19 +-
- include/linux/min_heap.h            | 357 ++++++++++++++++++++++------
- kernel/events/core.c                |  15 +-
- lib/Kconfig                         |   3 +
- lib/Kconfig.debug                   |   1 +
- lib/Makefile                        |   1 +
- lib/min_heap.c                      |  70 ++++++
- lib/test_min_heap.c                 |  16 +-
- 20 files changed, 694 insertions(+), 174 deletions(-)
- create mode 100644 Documentation/core-api/min_heap.rst
+ drivers/md/bcache/Kconfig |   1 +
+ drivers/md/dm-vdo/Kconfig |   1 +
+ fs/bcachefs/Kconfig       |   1 +
+ include/linux/min_heap.h  | 129 +++++++++++++++++++++++++-------------
+ kernel/events/core.c      |   6 +-
+ lib/Kconfig               |   3 +
+ lib/Kconfig.debug         |   1 +
+ lib/Makefile              |   1 +
+ lib/min_heap.c            |  70 +++++++++++++++++++++
+ 9 files changed, 167 insertions(+), 46 deletions(-)
  create mode 100644 lib/min_heap.c
 
+diff --git a/drivers/md/bcache/Kconfig b/drivers/md/bcache/Kconfig
+index b2d10063d35f..d4697e79d5a3 100644
+--- a/drivers/md/bcache/Kconfig
++++ b/drivers/md/bcache/Kconfig
+@@ -5,6 +5,7 @@ config BCACHE
+ 	select BLOCK_HOLDER_DEPRECATED if SYSFS
+ 	select CRC64
+ 	select CLOSURES
++	select MIN_HEAP
+ 	help
+ 	Allows a block device to be used as cache for other devices; uses
+ 	a btree for indexing and the layout is optimized for SSDs.
+diff --git a/drivers/md/dm-vdo/Kconfig b/drivers/md/dm-vdo/Kconfig
+index 111ecd2c2a24..2400b2bc4bc7 100644
+--- a/drivers/md/dm-vdo/Kconfig
++++ b/drivers/md/dm-vdo/Kconfig
+@@ -7,6 +7,7 @@ config DM_VDO
+ 	select DM_BUFIO
+ 	select LZ4_COMPRESS
+ 	select LZ4_DECOMPRESS
++	select MIN_HEAP
+ 	help
+ 	  This device mapper target presents a block device with
+ 	  deduplication, compression and thin-provisioning.
+diff --git a/fs/bcachefs/Kconfig b/fs/bcachefs/Kconfig
+index 5bac803ea367..ab6c95b895b3 100644
+--- a/fs/bcachefs/Kconfig
++++ b/fs/bcachefs/Kconfig
+@@ -24,6 +24,7 @@ config BCACHEFS_FS
+ 	select XXHASH
+ 	select SRCU
+ 	select SYMBOLIC_ERRNAME
++	select MIN_HEAP
+ 	help
+ 	The bcachefs filesystem - a modern, copy on write filesystem, with
+ 	support for multiple devices, compression, checksumming, etc.
+diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
+index 43a7b9dcf15e..0abb21173979 100644
+--- a/include/linux/min_heap.h
++++ b/include/linux/min_heap.h
+@@ -40,7 +40,7 @@ struct min_heap_callbacks {
+ 
+ /* Initialize a min-heap. */
+ static __always_inline
+-void __min_heap_init(min_heap_char *heap, void *data, int size)
++void __min_heap_init_inline(min_heap_char *heap, void *data, int size)
+ {
+ 	heap->nr = 0;
+ 	heap->size = size;
+@@ -50,33 +50,33 @@ void __min_heap_init(min_heap_char *heap, void *data, int size)
+ 		heap->data = heap->preallocated;
+ }
+ 
+-#define min_heap_init(_heap, _data, _size)	\
+-	__min_heap_init((min_heap_char *)_heap, _data, _size)
++#define min_heap_init_inline(_heap, _data, _size)	\
++	__min_heap_init_inline((min_heap_char *)_heap, _data, _size)
+ 
+ /* Get the minimum element from the heap. */
+ static __always_inline
+-void *__min_heap_peek(struct min_heap_char *heap)
++void *__min_heap_peek_inline(struct min_heap_char *heap)
+ {
+ 	return heap->nr ? heap->data : NULL;
+ }
+ 
+-#define min_heap_peek(_heap)	\
+-	(__minheap_cast(_heap) __min_heap_peek((min_heap_char *)_heap))
++#define min_heap_peek_inline(_heap)	\
++	(__minheap_cast(_heap) __min_heap_peek_inline((min_heap_char *)_heap))
+ 
+ /* Check if the heap is full. */
+ static __always_inline
+-bool __min_heap_full(min_heap_char *heap)
++bool __min_heap_full_inline(min_heap_char *heap)
+ {
+ 	return heap->nr == heap->size;
+ }
+ 
+-#define min_heap_full(_heap)	\
+-	__min_heap_full((min_heap_char *)_heap)
++#define min_heap_full_inline(_heap)	\
++	__min_heap_full_inline((min_heap_char *)_heap)
+ 
+ /* Sift the element at pos down the heap. */
+ static __always_inline
+-void __min_heap_sift_down(min_heap_char *heap, int pos, size_t elem_size,
+-		const struct min_heap_callbacks *func, void *args)
++void __min_heap_sift_down_inline(min_heap_char *heap, int pos, size_t elem_size,
++				 const struct min_heap_callbacks *func, void *args)
+ {
+ 	void *left, *right;
+ 	void *data = heap->data;
+@@ -108,13 +108,14 @@ void __min_heap_sift_down(min_heap_char *heap, int pos, size_t elem_size,
+ 	}
+ }
+ 
+-#define min_heap_sift_down(_heap, _pos, _func, _args)	\
+-	__min_heap_sift_down((min_heap_char *)_heap, _pos, __minheap_obj_size(_heap), _func, _args)
++#define min_heap_sift_down_inline(_heap, _pos, _func, _args)	\
++	__min_heap_sift_down_inline((min_heap_char *)_heap, _pos, __minheap_obj_size(_heap),	\
++				    _func, _args)
+ 
+ /* Sift up ith element from the heap, O(log2(nr)). */
+ static __always_inline
+-void __min_heap_sift_up(min_heap_char *heap, size_t elem_size, size_t idx,
+-		const struct min_heap_callbacks *func, void *args)
++void __min_heap_sift_up_inline(min_heap_char *heap, size_t elem_size, size_t idx,
++			       const struct min_heap_callbacks *func, void *args)
+ {
+ 	void *data = heap->data;
+ 	size_t parent;
+@@ -128,27 +129,28 @@ void __min_heap_sift_up(min_heap_char *heap, size_t elem_size, size_t idx,
+ 	}
+ }
+ 
+-#define min_heap_sift_up(_heap, _idx, _func, _args)	\
+-	__min_heap_sift_up((min_heap_char *)_heap, __minheap_obj_size(_heap), _idx, _func, _args)
++#define min_heap_sift_up_inline(_heap, _idx, _func, _args)	\
++	__min_heap_sift_up_inline((min_heap_char *)_heap, __minheap_obj_size(_heap), _idx,	\
++				  _func, _args)
+ 
+ /* Floyd's approach to heapification that is O(nr). */
+ static __always_inline
+-void __min_heapify_all(min_heap_char *heap, size_t elem_size,
+-		const struct min_heap_callbacks *func, void *args)
++void __min_heapify_all_inline(min_heap_char *heap, size_t elem_size,
++			      const struct min_heap_callbacks *func, void *args)
+ {
+ 	int i;
+ 
+ 	for (i = heap->nr / 2 - 1; i >= 0; i--)
+-		__min_heap_sift_down(heap, i, elem_size, func, args);
++		__min_heap_sift_down_inline(heap, i, elem_size, func, args);
+ }
+ 
+-#define min_heapify_all(_heap, _func, _args)	\
+-	__min_heapify_all((min_heap_char *)_heap, __minheap_obj_size(_heap), _func, _args)
++#define min_heapify_all_inline(_heap, _func, _args)	\
++	__min_heapify_all_inline((min_heap_char *)_heap, __minheap_obj_size(_heap), _func, _args)
+ 
+ /* Remove minimum element from the heap, O(log2(nr)). */
+ static __always_inline
+-bool __min_heap_pop(min_heap_char *heap, size_t elem_size,
+-		const struct min_heap_callbacks *func, void *args)
++bool __min_heap_pop_inline(min_heap_char *heap, size_t elem_size,
++			   const struct min_heap_callbacks *func, void *args)
+ {
+ 	void *data = heap->data;
+ 
+@@ -158,13 +160,13 @@ bool __min_heap_pop(min_heap_char *heap, size_t elem_size,
+ 	/* Place last element at the root (position 0) and then sift down. */
+ 	heap->nr--;
+ 	memcpy(data, data + (heap->nr * elem_size), elem_size);
+-	__min_heap_sift_down(heap, 0, elem_size, func, args);
++	__min_heap_sift_down_inline(heap, 0, elem_size, func, args);
+ 
+ 	return true;
+ }
+ 
+-#define min_heap_pop(_heap, _func, _args)	\
+-	__min_heap_pop((min_heap_char *)_heap, __minheap_obj_size(_heap), _func, _args)
++#define min_heap_pop_inline(_heap, _func, _args)	\
++	__min_heap_pop_inline((min_heap_char *)_heap, __minheap_obj_size(_heap), _func, _args)
+ 
+ /*
+  * Remove the minimum element and then push the given element. The
+@@ -172,22 +174,21 @@ bool __min_heap_pop(min_heap_char *heap, size_t elem_size,
+  * efficient than a pop followed by a push that does 2.
+  */
+ static __always_inline
+-void __min_heap_pop_push(min_heap_char *heap,
+-		const void *element, size_t elem_size,
+-		const struct min_heap_callbacks *func,
+-		void *args)
++void __min_heap_pop_push_inline(min_heap_char *heap, const void *element, size_t elem_size,
++				const struct min_heap_callbacks *func, void *args)
+ {
+ 	memcpy(heap->data, element, elem_size);
+-	__min_heap_sift_down(heap, 0, elem_size, func, args);
++	__min_heap_sift_down_inline(heap, 0, elem_size, func, args);
+ }
+ 
+-#define min_heap_pop_push(_heap, _element, _func, _args)	\
+-	__min_heap_pop_push((min_heap_char *)_heap, _element, __minheap_obj_size(_heap), _func, _args)
++#define min_heap_pop_push_inline(_heap, _element, _func, _args)	\
++	__min_heap_pop_push_inline((min_heap_char *)_heap, _element, __minheap_obj_size(_heap),	\
++				   _func, _args)
+ 
+ /* Push an element on to the heap, O(log2(nr)). */
+ static __always_inline
+-bool __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
+-		const struct min_heap_callbacks *func, void *args)
++bool __min_heap_push_inline(min_heap_char *heap, const void *element, size_t elem_size,
++			    const struct min_heap_callbacks *func, void *args)
+ {
+ 	void *data = heap->data;
+ 	int pos;
+@@ -201,18 +202,19 @@ bool __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
+ 	heap->nr++;
+ 
+ 	/* Sift child at pos up. */
+-	__min_heap_sift_up(heap, elem_size, pos, func, args);
++	__min_heap_sift_up_inline(heap, elem_size, pos, func, args);
+ 
+ 	return true;
+ }
+ 
+-#define min_heap_push(_heap, _element, _func, _args)	\
+-	__min_heap_push((min_heap_char *)_heap, _element, __minheap_obj_size(_heap), _func, _args)
++#define min_heap_push_inline(_heap, _element, _func, _args)	\
++	__min_heap_push_inline((min_heap_char *)_heap, _element, __minheap_obj_size(_heap),	\
++			       _func, _args)
+ 
+ /* Remove ith element from the heap, O(log2(nr)). */
+ static __always_inline
+-bool __min_heap_del(min_heap_char *heap, size_t elem_size, size_t idx,
+-		const struct min_heap_callbacks *func, void *args)
++bool __min_heap_del_inline(min_heap_char *heap, size_t elem_size, size_t idx,
++			   const struct min_heap_callbacks *func, void *args)
+ {
+ 	void *data = heap->data;
+ 
+@@ -224,12 +226,53 @@ bool __min_heap_del(min_heap_char *heap, size_t elem_size, size_t idx,
+ 	if (idx == heap->nr)
+ 		return true;
+ 	func->swp(data + (idx * elem_size), data + (heap->nr * elem_size), args);
+-	__min_heap_sift_up(heap, elem_size, idx, func, args);
+-	__min_heap_sift_down(heap, idx, elem_size, func, args);
++	__min_heap_sift_up_inline(heap, elem_size, idx, func, args);
++	__min_heap_sift_down_inline(heap, idx, elem_size, func, args);
+ 
+ 	return true;
+ }
+ 
++#define min_heap_del_inline(_heap, _idx, _func, _args)	\
++	__min_heap_del_inline((min_heap_char *)_heap, __minheap_obj_size(_heap), _idx,	\
++			      _func, _args)
++
++void __min_heap_init(min_heap_char *heap, void *data, int size);
++void *__min_heap_peek(struct min_heap_char *heap);
++bool __min_heap_full(min_heap_char *heap);
++void __min_heap_sift_down(min_heap_char *heap, int pos, size_t elem_size,
++			  const struct min_heap_callbacks *func, void *args);
++void __min_heap_sift_up(min_heap_char *heap, size_t elem_size, size_t idx,
++			const struct min_heap_callbacks *func, void *args);
++void __min_heapify_all(min_heap_char *heap, size_t elem_size,
++		       const struct min_heap_callbacks *func, void *args);
++bool __min_heap_pop(min_heap_char *heap, size_t elem_size,
++		    const struct min_heap_callbacks *func, void *args);
++void __min_heap_pop_push(min_heap_char *heap, const void *element, size_t elem_size,
++			 const struct min_heap_callbacks *func, void *args);
++bool __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
++		     const struct min_heap_callbacks *func, void *args);
++bool __min_heap_del(min_heap_char *heap, size_t elem_size, size_t idx,
++		    const struct min_heap_callbacks *func, void *args);
++
++#define min_heap_init(_heap, _data, _size)	\
++	__min_heap_init((min_heap_char *)_heap, _data, _size)
++#define min_heap_peek(_heap)	\
++	(__minheap_cast(_heap) __min_heap_peek((min_heap_char *)_heap))
++#define min_heap_full(_heap)	\
++	__min_heap_full((min_heap_char *)_heap)
++#define min_heap_sift_down(_heap, _pos, _func, _args)	\
++	__min_heap_sift_down((min_heap_char *)_heap, _pos, __minheap_obj_size(_heap), _func, _args)
++#define min_heap_sift_up(_heap, _idx, _func, _args)	\
++	__min_heap_sift_up((min_heap_char *)_heap, __minheap_obj_size(_heap), _idx, _func, _args)
++#define min_heapify_all(_heap, _func, _args)	\
++	__min_heapify_all((min_heap_char *)_heap, __minheap_obj_size(_heap), _func, _args)
++#define min_heap_pop(_heap, _func, _args)	\
++	__min_heap_pop((min_heap_char *)_heap, __minheap_obj_size(_heap), _func, _args)
++#define min_heap_pop_push(_heap, _element, _func, _args)	\
++	__min_heap_pop_push((min_heap_char *)_heap, _element, __minheap_obj_size(_heap),	\
++			    _func, _args)
++#define min_heap_push(_heap, _element, _func, _args)	\
++	__min_heap_push((min_heap_char *)_heap, _element, __minheap_obj_size(_heap), _func, _args)
+ #define min_heap_del(_heap, _idx, _func, _args)	\
+ 	__min_heap_del((min_heap_char *)_heap, __minheap_obj_size(_heap), _idx, _func, _args)
+ 
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index e3589c4287cb..cbf365e67f6e 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -3870,7 +3870,7 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
+ 		perf_assert_pmu_disabled((*evt)->pmu_ctx->pmu);
+ 	}
+ 
+-	min_heapify_all(&event_heap, &perf_min_heap, NULL);
++	min_heapify_all_inline(&event_heap, &perf_min_heap, NULL);
+ 
+ 	while (event_heap.nr) {
+ 		ret = func(*evt, data);
+@@ -3879,9 +3879,9 @@ static noinline int visit_groups_merge(struct perf_event_context *ctx,
+ 
+ 		*evt = perf_event_groups_next(*evt, pmu);
+ 		if (*evt)
+-			min_heap_sift_down(&event_heap, 0, &perf_min_heap, NULL);
++			min_heap_sift_down_inline(&event_heap, 0, &perf_min_heap, NULL);
+ 		else
+-			min_heap_pop(&event_heap, &perf_min_heap, NULL);
++			min_heap_pop_inline(&event_heap, &perf_min_heap, NULL);
+ 	}
+ 
+ 	return 0;
+diff --git a/lib/Kconfig b/lib/Kconfig
+index b38849af6f13..037a84731b7d 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -777,3 +777,6 @@ config POLYNOMIAL
+ 
+ config FIRMWARE_TABLE
+ 	bool
++
++config MIN_HEAP
++	bool
+diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
+index 7312ae7c3cc5..c9e6ce184044 100644
+--- a/lib/Kconfig.debug
++++ b/lib/Kconfig.debug
+@@ -2279,6 +2279,7 @@ config TEST_LIST_SORT
+ config TEST_MIN_HEAP
+ 	tristate "Min heap test"
+ 	depends on DEBUG_KERNEL || m
++	select MIN_HEAP
+ 	help
+ 	  Enable this to turn on min heap function tests. This test is
+ 	  executed only once during system boot (so affects only boot time),
+diff --git a/lib/Makefile b/lib/Makefile
+index 773adf88af41..e7ffee03e186 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -39,6 +39,7 @@ lib-y := ctype.o string.o vsprintf.o cmdline.o \
+ 
+ lib-$(CONFIG_PRINTK) += dump_stack.o
+ lib-$(CONFIG_SMP) += cpumask.o
++lib-$(CONFIG_MIN_HEAP) += min_heap.o
+ 
+ lib-y	+= kobject.o klist.o
+ obj-y	+= lockref.o
+diff --git a/lib/min_heap.c b/lib/min_heap.c
+new file mode 100644
+index 000000000000..4485372ff3b1
+--- /dev/null
++++ b/lib/min_heap.c
+@@ -0,0 +1,70 @@
++// SPDX-License-Identifier: GPL-2.0
++#include <linux/export.h>
++#include <linux/min_heap.h>
++
++void __min_heap_init(min_heap_char *heap, void *data, int size)
++{
++	__min_heap_init_inline(heap, data, size);
++}
++EXPORT_SYMBOL(__min_heap_init);
++
++void *__min_heap_peek(struct min_heap_char *heap)
++{
++	return __min_heap_peek_inline(heap);
++}
++EXPORT_SYMBOL(__min_heap_peek);
++
++bool __min_heap_full(min_heap_char *heap)
++{
++	return __min_heap_full_inline(heap);
++}
++EXPORT_SYMBOL(__min_heap_full);
++
++void __min_heap_sift_down(min_heap_char *heap, int pos, size_t elem_size,
++			  const struct min_heap_callbacks *func, void *args)
++{
++	__min_heap_sift_down_inline(heap, pos, elem_size, func, args);
++}
++EXPORT_SYMBOL(__min_heap_sift_down);
++
++void __min_heap_sift_up(min_heap_char *heap, size_t elem_size, size_t idx,
++			const struct min_heap_callbacks *func, void *args)
++{
++	__min_heap_sift_up_inline(heap, elem_size, idx, func, args);
++}
++EXPORT_SYMBOL(__min_heap_sift_up);
++
++void __min_heapify_all(min_heap_char *heap, size_t elem_size,
++		       const struct min_heap_callbacks *func, void *args)
++{
++	__min_heapify_all_inline(heap, elem_size, func, args);
++}
++EXPORT_SYMBOL(__min_heapify_all);
++
++bool __min_heap_pop(min_heap_char *heap, size_t elem_size,
++		    const struct min_heap_callbacks *func, void *args)
++{
++	return __min_heap_pop_inline(heap, elem_size, func, args);
++}
++EXPORT_SYMBOL(__min_heap_pop);
++
++void __min_heap_pop_push(min_heap_char *heap, const void *element, size_t elem_size,
++			 const struct min_heap_callbacks *func, void *args)
++{
++	__min_heap_pop_push_inline(heap, element, elem_size, func, args);
++}
++EXPORT_SYMBOL(__min_heap_pop_push);
++
++bool __min_heap_push(min_heap_char *heap, const void *element, size_t elem_size,
++		     const struct min_heap_callbacks *func, void *args)
++{
++	return __min_heap_push_inline(heap, element, elem_size, func, args);
++}
++EXPORT_SYMBOL(__min_heap_push);
++
++bool __min_heap_del(min_heap_char *heap, size_t elem_size, size_t idx,
++		    const struct min_heap_callbacks *func, void *args)
++{
++	return __min_heap_del_inline(heap, elem_size, idx, func, args);
++}
++EXPORT_SYMBOL(__min_heap_del);
 -- 
 2.34.1
 
