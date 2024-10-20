@@ -1,57 +1,57 @@
-Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com [209.85.216.51])
+Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com [209.85.216.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9841013C816
-	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:02:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D68917B421
+	for <dm-devel@lists.linux.dev>; Sun, 20 Oct 2024 04:03:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729396980; cv=none; b=nGs9HPp483xJGKyx99gX6Ni714MD7oZepPpVLlQLn7MCQNm9wPcFZtYfEtge+Dx52ST3zzCcXa1CY+W2i+LaYXXCsWJNnNgZetiJrM90h/X5nfkMpK3hGib1Sfp0doheVLNPYY8fMVybJP2cSFq/HBdhakxR7lCiNU+iktcvpLM=
+	t=1729396984; cv=none; b=B6W13x+2GVIfbEAaJm789BUroxgPCvjs+Ctt1VlGIOTmb40/RniT2azaLvu+1yW2Bl1p62GuPcFI64UzKd21tGJvssxCc1r4CWY6ySYVgwK76fPOxKHpHRHE3H9XT6o1Kl1I/IZB/iXZXtMURzwDvL9aqif9FqQyPl9cTqtXMOQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729396980; c=relaxed/simple;
-	bh=FXrcKA4kv0Y0H6AHaICGqhxwnnRf14RLEiJ/iEAwoxU=;
+	s=arc-20240116; t=1729396984; c=relaxed/simple;
+	bh=n8isBE3MN50NKJqA8PJEYk21R5urgQClhVIMe0Dv/fw=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=aihw4sNpVXe5Spn0QO5+oskQnpo1Fj2RXQApEyqGa0VbXi9Hh8AM1ftDbwnWC+7wjgdIDZAXTHugOTukUs52tWHuXr5GJzTTDcZiU+B+9+4Z7itvLwv0LHVK4cM3Rj7NRQHp6fgfv85HGO/sgOOjnWOJHJwrB0W/w4UQ6VNwrN0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dHtnLxHb; arc=none smtp.client-ip=209.85.216.51
+	 MIME-Version; b=HBxsipTaWboB19k9qk3yVYjwq2YZpEsdv12RZh3TjdMawXlKgYBc8s2+CopV4DueH9pdKbDcCI5wdXuohCOL2lsfE7nsf7CtQZOCm59DM1xBOp16ruYCacjx9qly/o3DWcD+VtfbokajJ41uTiYNUmmYN3/rNzQe5yjIwNFDNEA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ZxA7xr6U; arc=none smtp.client-ip=209.85.216.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dHtnLxHb"
-Received: by mail-pj1-f51.google.com with SMTP id 98e67ed59e1d1-2e2e8c8915eso2781164a91.3
-        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:02:57 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZxA7xr6U"
+Received: by mail-pj1-f48.google.com with SMTP id 98e67ed59e1d1-2e5a0177531so312166a91.2
+        for <dm-devel@lists.linux.dev>; Sat, 19 Oct 2024 21:03:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729396977; x=1730001777; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1729396982; x=1730001782; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=gLYYPN6VMSbce5qBI6UYe5zetX0JUYbruyELXEOs2l4=;
-        b=dHtnLxHb5L5adq+J78kbpVTehYLqaletEB9Cd2ySiHTKHQ2y+sfKEeIurvFf2Nj24H
-         ta6npY4gWu1/qXAzsgvXeGuWzsRgAQgoNxsFeSvXCCbc3hzfr3MgL99mebxZplW48m9M
-         GxcEw6QZNTO6LyKTbI2PgbqFPOwWfcHR9bhgmGnREYMjVUv0RG8Bdefwter3Gkn136hr
-         eGyfUPv6eAuGSPHyzUzruw3LUGKBaT3hbeGoSc+b0w9SSGTuvfe2CVut601Psa2bvv7S
-         vdlwkPwf35qif/aP+UCh67MjH6rWbsbL4RdzknvU4fkKqSc4RGLGQlCsEhYpfRBuPuLM
-         epBg==
+        bh=y2WpY9CipWcCt1Q+dpvLbF+kv/AA/FlDoXHDWd/V5GE=;
+        b=ZxA7xr6UwdrQYxYk8j5l6kolmma8igsiRln5RvpKC+M17AKTSs+Dcmc9N9nPZeAmpc
+         PTyWMT54rGnC5/rxU99bwjwPIMA5h89Tk/UxpBCKIR0DRZxFCUGtVXOR/8pCtVpIaR3I
+         DrcpTGuFCAI+br/do61UyiwU0t48h2gcdlDKUrRAhgJ7nycd3Mcj6UJxZzZmGxIoWzGU
+         f5EROKjUnsB8BK9h0ZTJA5o+mO7dSkmDFhgrmPlRUZO9Ffh2h8CNXzPX4a+8RCFl/Dj3
+         ZAUZm5LfnxhpjSDFcMT5uCB3VZ9zmgGdMMKV7MLd2m9C1o7muFuzuK7aZuF0F7WXlnF6
+         XUKQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729396977; x=1730001777;
+        d=1e100.net; s=20230601; t=1729396982; x=1730001782;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=gLYYPN6VMSbce5qBI6UYe5zetX0JUYbruyELXEOs2l4=;
-        b=SZttyQ7x7mN0C0lNHLVelYhZC7V6RvFj6kByWfzDy7weU4yC2R2x2i5RaBh71KGDzr
-         JN31kMVCfMcP/wO8k2NEAvMCH/baXqolpbe9CnzQAFI3LZfKELzD7CIh9Euir4sbeFzh
-         KSJXpkkqeA32zcGEUxTn9VFQWHGqep6m1Vb6XnMkvuul1bnpj5ncRCApmTaBHBVVMhco
-         ac2RN/RHUUNJN6wN2VSPCy3aWdsACsEImvaAeYCghe+6u218bcsIM5kHxZ/A30iscJrC
-         O7qaDDLqD2HPF8v6euqvd73xOYtogP4giZ4vnMxJpw32/OA1aVvXKpnXr9XQ3Kuxt2xt
-         bPEg==
-X-Forwarded-Encrypted: i=1; AJvYcCW7lZcExPKuqtsUycWtMwUtyC7eDK2gWQZXref/CtVQ6hafpNRq6SEiFV7OxMwHTYG/p0El/59uBg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyeoQvnFoBU6dEDV+IRDiIUhWkvIUXGUyVwCBtN2O+9TiBNI6/Q
-	f4uo+1slp/VB0jXAZypGbYrgaqi3rdZAj3dCOZJQy4GQ7YaO5y/S
-X-Google-Smtp-Source: AGHT+IGmB89UrsezcJFZU2nJR9oDRLe6wYCSOkA1vdtsM80cdAb4yFIlb3IMQvYcc+0FOIBAkWPSGw==
-X-Received: by 2002:a17:90b:4b0c:b0:2e2:c681:51ce with SMTP id 98e67ed59e1d1-2e5616c6659mr9349283a91.1.1729396976634;
-        Sat, 19 Oct 2024 21:02:56 -0700 (PDT)
+        bh=y2WpY9CipWcCt1Q+dpvLbF+kv/AA/FlDoXHDWd/V5GE=;
+        b=ToZUAIsB8Y/ReLcqXFkiMFcYn7luhpyzruAIcsRgpQ5Yz1E2sjn+OAuV0lY88HfkU/
+         I0T8EJU712IWCuYAwmFLAv1LlKTECfBND9EsPujrkDxQfmtHIiT0BlasDqkGqOmNZcM3
+         9sk14pAgGPBlrC+tXgXPElZz/19+rK8I9BgNdNOaTRquRbBokCzEc2xGcHjHrqmU7svE
+         GX89oUILoT6ucHtAR6gXpbvAuoHnf+C6nfaWs3d47tM1A0P9TakaCIucPQqfTzmL+z+D
+         5/EJH5EEf2AKtC++MQojnNwKUhHsMH9Yi0X1AFE6gOK8tv9N5AX20QlUoZdYsqCYy174
+         wA2w==
+X-Forwarded-Encrypted: i=1; AJvYcCWnIcHqEPzXfZGGeYayMSokTF95NuKrn5XYw3df94yoO20lSm0Xx4w2IMmrUSwYRA55v5gtGVxxtw==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yw+DWOjQ5S7p8L7+M4pzYa4GIXBrhkxvIj4F5xhctp43xTIJpFR
+	pLNPQTgTbJJZ1dpgeKRj68QLbk8wL5zr4mzj+nj990OEpGklR+Sc
+X-Google-Smtp-Source: AGHT+IH54s8bJnfmuveWObV3S7Rz7YBN+EE45vAptSs0RDb+pOmoExhRB5pOMmx0MvRYyg7vgzn+7w==
+X-Received: by 2002:a17:90b:3002:b0:2e2:e6bf:534b with SMTP id 98e67ed59e1d1-2e56172c054mr7219281a91.40.1729396981742;
+        Sat, 19 Oct 2024 21:03:01 -0700 (PDT)
 Received: from visitorckw-System-Product-Name.. ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.02.52
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad3678d3sm633668a91.24.2024.10.19.21.02.57
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 19 Oct 2024 21:02:56 -0700 (PDT)
+        Sat, 19 Oct 2024 21:03:01 -0700 (PDT)
 From: Kuan-Wei Chiu <visitorckw@gmail.com>
 To: colyli@suse.de,
 	kent.overstreet@linux.dev,
@@ -77,9 +77,9 @@ Cc: mark.rutland@arm.com,
 	linux-perf-users@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	Kuan-Wei Chiu <visitorckw@gmail.com>
-Subject: [PATCH v2 07/10] bcache: Update min_heap_callbacks to use default builtin swap
-Date: Sun, 20 Oct 2024 12:01:57 +0800
-Message-Id: <20241020040200.939973-8-visitorckw@gmail.com>
+Subject: [PATCH v2 08/10] bcachefs: Clean up duplicate min_heap_callbacks declarations
+Date: Sun, 20 Oct 2024 12:01:58 +0800
+Message-Id: <20241020040200.939973-9-visitorckw@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20241020040200.939973-1-visitorckw@gmail.com>
 References: <20241020040200.939973-1-visitorckw@gmail.com>
@@ -91,149 +91,115 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Replace the swp function pointer in the min_heap_callbacks of bcache
-with NULL, allowing direct usage of the default builtin swap
-implementation. This modification simplifies the code and improves
-performance by removing unnecessary function indirection.
+Refactor the bcachefs code to remove multiple redundant declarations of
+min_heap_callbacks, ensuring that each unique declaration appears only
+once.
 
+Link: https://lore.kernel.org/20241017095520.GV16066@noisy.programming.kicks-ass.net
+Suggested-by: Peter Zijlstra <peterz@infradead.org>
 Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
 ---
- drivers/md/bcache/alloc.c    | 11 ++---------
- drivers/md/bcache/bset.c     | 14 +++-----------
- drivers/md/bcache/extents.c  | 10 +---------
- drivers/md/bcache/movinggc.c | 10 +---------
- 4 files changed, 7 insertions(+), 38 deletions(-)
+ fs/bcachefs/clock.c | 19 +++++--------------
+ fs/bcachefs/ec.c    | 19 +++++--------------
+ 2 files changed, 10 insertions(+), 28 deletions(-)
 
-diff --git a/drivers/md/bcache/alloc.c b/drivers/md/bcache/alloc.c
-index da50f6661bae..8998e61efa40 100644
---- a/drivers/md/bcache/alloc.c
-+++ b/drivers/md/bcache/alloc.c
-@@ -189,23 +189,16 @@ static inline bool new_bucket_min_cmp(const void *l, const void *r, void *args)
- 	return new_bucket_prio(ca, *lhs) < new_bucket_prio(ca, *rhs);
+diff --git a/fs/bcachefs/clock.c b/fs/bcachefs/clock.c
+index 1d6b691e8da6..1fcfcb5fd44f 100644
+--- a/fs/bcachefs/clock.c
++++ b/fs/bcachefs/clock.c
+@@ -22,13 +22,13 @@ static inline void io_timer_swp(void *l, void *r, void __always_unused *args)
+ 	swap(*_l, *_r);
  }
  
--static inline void new_bucket_swap(void *l, void *r, void __always_unused *args)
--{
--	struct bucket **lhs = l, **rhs = r;
--
--	swap(*lhs, *rhs);
--}
--
- static void invalidate_buckets_lru(struct cache *ca)
++static const struct min_heap_callbacks callbacks = {
++	.less = io_timer_cmp,
++	.swp = io_timer_swp,
++};
++
+ void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
  {
- 	struct bucket *b;
- 	const struct min_heap_callbacks bucket_max_cmp_callback = {
- 		.less = new_bucket_max_cmp,
--		.swp = new_bucket_swap,
-+		.swp = NULL,
- 	};
- 	const struct min_heap_callbacks bucket_min_cmp_callback = {
- 		.less = new_bucket_min_cmp,
--		.swp = new_bucket_swap,
-+		.swp = NULL,
- 	};
+-	const struct min_heap_callbacks callbacks = {
+-		.less = io_timer_cmp,
+-		.swp = io_timer_swp,
+-	};
+-
+ 	spin_lock(&clock->timer_lock);
  
- 	ca->heap.nr = 0;
-diff --git a/drivers/md/bcache/bset.c b/drivers/md/bcache/bset.c
-index bd97d8626887..68258a16e125 100644
---- a/drivers/md/bcache/bset.c
-+++ b/drivers/md/bcache/bset.c
-@@ -1093,14 +1093,6 @@ static inline bool new_btree_iter_cmp(const void *l, const void *r, void __alway
- 	return bkey_cmp(_l->k, _r->k) <= 0;
+ 	if (time_after_eq64((u64) atomic64_read(&clock->now), timer->expire)) {
+@@ -48,11 +48,6 @@ void bch2_io_timer_add(struct io_clock *clock, struct io_timer *timer)
+ 
+ void bch2_io_timer_del(struct io_clock *clock, struct io_timer *timer)
+ {
+-	const struct min_heap_callbacks callbacks = {
+-		.less = io_timer_cmp,
+-		.swp = io_timer_swp,
+-	};
+-
+ 	spin_lock(&clock->timer_lock);
+ 
+ 	for (size_t i = 0; i < clock->timers.nr; i++)
+@@ -142,10 +137,6 @@ void bch2_kthread_io_clock_wait(struct io_clock *clock,
+ static struct io_timer *get_expired_timer(struct io_clock *clock, u64 now)
+ {
+ 	struct io_timer *ret = NULL;
+-	const struct min_heap_callbacks callbacks = {
+-		.less = io_timer_cmp,
+-		.swp = io_timer_swp,
+-	};
+ 
+ 	if (clock->timers.nr &&
+ 	    time_after_eq64(now, clock->timers.data[0]->expire)) {
+diff --git a/fs/bcachefs/ec.c b/fs/bcachefs/ec.c
+index e410cfe37b1a..c88f10d0606f 100644
+--- a/fs/bcachefs/ec.c
++++ b/fs/bcachefs/ec.c
+@@ -1057,6 +1057,11 @@ static inline void ec_stripes_heap_swap(void *l, void *r, void *h)
+ 	ec_stripes_heap_set_backpointer(_h, j);
  }
  
--static inline void new_btree_iter_swap(void *iter1, void *iter2, void __always_unused *args)
--{
--	struct btree_iter_set *_iter1 = iter1;
--	struct btree_iter_set *_iter2 = iter2;
--
--	swap(*_iter1, *_iter2);
--}
--
- static inline bool btree_iter_end(struct btree_iter *iter)
++static const struct min_heap_callbacks callbacks = {
++	.less = ec_stripes_heap_cmp,
++	.swp = ec_stripes_heap_swap,
++};
++
+ static void heap_verify_backpointer(struct bch_fs *c, size_t idx)
  {
- 	return !iter->heap.nr;
-@@ -1111,7 +1103,7 @@ void bch_btree_iter_push(struct btree_iter *iter, struct bkey *k,
+ 	ec_stripes_heap *h = &c->ec_stripes_heap;
+@@ -1069,11 +1074,6 @@ static void heap_verify_backpointer(struct bch_fs *c, size_t idx)
+ void bch2_stripes_heap_del(struct bch_fs *c,
+ 			   struct stripe *m, size_t idx)
  {
- 	const struct min_heap_callbacks callbacks = {
- 		.less = new_btree_iter_cmp,
--		.swp = new_btree_iter_swap,
-+		.swp = NULL,
- 	};
- 
- 	if (k != end)
-@@ -1157,7 +1149,7 @@ static inline struct bkey *__bch_btree_iter_next(struct btree_iter *iter,
- 	struct bkey *ret = NULL;
- 	const struct min_heap_callbacks callbacks = {
- 		.less = cmp,
--		.swp = new_btree_iter_swap,
-+		.swp = NULL,
- 	};
- 
- 	if (!btree_iter_end(iter)) {
-@@ -1231,7 +1223,7 @@ static void btree_mergesort(struct btree_keys *b, struct bset *out,
- 		: bch_ptr_invalid;
- 	const struct min_heap_callbacks callbacks = {
- 		.less = b->ops->sort_cmp,
--		.swp = new_btree_iter_swap,
-+		.swp = NULL,
- 	};
- 
- 	/* Heapify the iterator, using our comparison function */
-diff --git a/drivers/md/bcache/extents.c b/drivers/md/bcache/extents.c
-index a7221e5dbe81..4b84fda1530a 100644
---- a/drivers/md/bcache/extents.c
-+++ b/drivers/md/bcache/extents.c
-@@ -266,20 +266,12 @@ static bool new_bch_extent_sort_cmp(const void *l, const void *r, void __always_
- 	return !(c ? c > 0 : _l->k < _r->k);
- }
- 
--static inline void new_btree_iter_swap(void *iter1, void *iter2, void __always_unused *args)
--{
--	struct btree_iter_set *_iter1 = iter1;
--	struct btree_iter_set *_iter2 = iter2;
+-	const struct min_heap_callbacks callbacks = {
+-		.less = ec_stripes_heap_cmp,
+-		.swp = ec_stripes_heap_swap,
+-	};
 -
--	swap(*_iter1, *_iter2);
--}
--
- static struct bkey *bch_extent_sort_fixup(struct btree_iter *iter,
- 					  struct bkey *tmp)
+ 	mutex_lock(&c->ec_stripes_heap_lock);
+ 	heap_verify_backpointer(c, idx);
+ 
+@@ -1084,11 +1084,6 @@ void bch2_stripes_heap_del(struct bch_fs *c,
+ void bch2_stripes_heap_insert(struct bch_fs *c,
+ 			      struct stripe *m, size_t idx)
  {
- 	const struct min_heap_callbacks callbacks = {
- 		.less = new_bch_extent_sort_cmp,
--		.swp = new_btree_iter_swap,
-+		.swp = NULL,
- 	};
- 	while (iter->heap.nr > 1) {
- 		struct btree_iter_set *top = iter->heap.data, *i = top + 1;
-diff --git a/drivers/md/bcache/movinggc.c b/drivers/md/bcache/movinggc.c
-index 7f482729c56d..ef6abf33f926 100644
---- a/drivers/md/bcache/movinggc.c
-+++ b/drivers/md/bcache/movinggc.c
-@@ -190,14 +190,6 @@ static bool new_bucket_cmp(const void *l, const void *r, void __always_unused *a
- 	return GC_SECTORS_USED(*_l) >= GC_SECTORS_USED(*_r);
- }
+-	const struct min_heap_callbacks callbacks = {
+-		.less = ec_stripes_heap_cmp,
+-		.swp = ec_stripes_heap_swap,
+-	};
+-
+ 	mutex_lock(&c->ec_stripes_heap_lock);
+ 	BUG_ON(min_heap_full(&c->ec_stripes_heap));
  
--static void new_bucket_swap(void *l, void *r, void __always_unused *args)
--{
--	struct bucket **_l = l;
--	struct bucket **_r = r;
--
--	swap(*_l, *_r);
--}
--
- static unsigned int bucket_heap_top(struct cache *ca)
+@@ -1107,10 +1102,6 @@ void bch2_stripes_heap_insert(struct bch_fs *c,
+ void bch2_stripes_heap_update(struct bch_fs *c,
+ 			      struct stripe *m, size_t idx)
  {
- 	struct bucket *b;
-@@ -212,7 +204,7 @@ void bch_moving_gc(struct cache_set *c)
- 	unsigned long sectors_to_move, reserve_sectors;
- 	const struct min_heap_callbacks callbacks = {
- 		.less = new_bucket_cmp,
--		.swp = new_bucket_swap,
-+		.swp = NULL,
- 	};
- 
- 	if (!c->copy_gc_enabled)
+-	const struct min_heap_callbacks callbacks = {
+-		.less = ec_stripes_heap_cmp,
+-		.swp = ec_stripes_heap_swap,
+-	};
+ 	ec_stripes_heap *h = &c->ec_stripes_heap;
+ 	bool do_deletes;
+ 	size_t i;
 -- 
 2.34.1
 
