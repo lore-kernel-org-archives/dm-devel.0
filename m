@@ -1,115 +1,110 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f194.google.com (mail-qk1-f194.google.com [209.85.222.194])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 461F01FB3F6;
-	Mon, 21 Oct 2024 19:10:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF7581CEEBB
+	for <dm-devel@lists.linux.dev>; Mon, 21 Oct 2024 19:55:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.194
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729537811; cv=none; b=XCZxHvge8gzyGL74wUvodmHGQfhc2iMKRM07IuqJg4LKpZBRiRm+oT0RfDpFt2RjvPq/CgybFcU1Oblz8IRC2F403VOCjjGGnA/lYGXHT0+Te/dd7J6KiO/nN7PaT6u5b13FaAkgqFmf6rqQ69ZUlCnZ6upmWTiLDyY1U1ePjrM=
+	t=1729540508; cv=none; b=N4ySfVq2mqktUCH8woMuRfBHUuRScTZrTvgrV/e/jA5LR2glTTzwphn+PD+83xCrBoIZr7wsUOC5Z+TygTRRzthkQ/Rd6Zhc6IovWJ23fxZKlbb+jh2g3sJsuC+Tgv5nCvrxYGw0RTWTMFv3P3XID295AA3S8amsERGZ2OnUhVw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729537811; c=relaxed/simple;
-	bh=LYfZM6Q6uUneW9KRYJEfi2BKTV//PDb/wWBvvJxwfR8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=XalskxB4sUZR84qRhzQ9+EHfvIq3+uHP5jn2v0XoUV52GeLpCoDQi6uJEEAci64b8Rf0E+m6EB5/udhouqpmRzqMDGqMawcokaowwkZZp2eLu7qMIoZQLIcoR2rZOYsZ2CYgO6Jq0KfkBev0SGdrpQlDJdMvuH5Zp0/qYzjgEgI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fhS8MIpP; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1729540508; c=relaxed/simple;
+	bh=zumXDRytnD0gytZLritbd5U0x7pIvjiTTT5QZmHWlvw=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=J6PyJw0KXFA59l1Vkv4gsay5D8ptLnFOe6H8E4UGapv9Nz2f4JEX2aiYMMyRDvCdbzWH7fE8jq4XWAOcuv3gc25llCOqjBlZQiEAUtD0qgkPcDTj+WApPr0Zy4dIjKLrHmizB1sRWlJD4NTez1CJ3+ZXJjyrdEeyzxm8TYBXVXc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=THxCLJBw; arc=none smtp.client-ip=209.85.222.194
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fhS8MIpP"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8F563C4CEE5;
-	Mon, 21 Oct 2024 19:10:10 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1729537810;
-	bh=LYfZM6Q6uUneW9KRYJEfi2BKTV//PDb/wWBvvJxwfR8=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=fhS8MIpPoWxTg9VRlPO9/Q30BPSxXPRqalwXfqAi/ZezydoSfQSqJz9IdPNGv08sn
-	 BX2WZirNj0hQXfKA8AAb64kCR8J3dlJ3/VQN7x/KDyiF3vBRaHAitmtksGjTRx3Gmh
-	 HxwZnTmVBWmOP4JW4TYRMztJgo8rsRGWD4T4P2cUsb3VsB8pHWQ1loS3BNwaJvgnVn
-	 OwaXjtFFQjM6gT8tKQqbte4wxL1995C2rWoRXAjx4886cGz6IkulPql2Hz5cgcgD09
-	 4pAZDg+6PHfU+0VgddrHP5LEVQRt0fnzCrTwrz1DbsA+TzNBMRNb6NL2XSCuzbpxZD
-	 5CmcqjjNnusfA==
-Date: Mon, 21 Oct 2024 19:10:08 +0000
-From: Eric Biggers <ebiggers@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org,
-	linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
-	Md Sadre Alam <quic_mdalam@quicinc.com>,
-	Israel Rukshin <israelr@nvidia.com>,
-	Milan Broz <gmazyland@gmail.com>,
-	Adrian Vovk <adrianvovk@gmail.com>
-Subject: Re: [RFC PATCH 0/4] dm-default-key: target for filesystem metadata
- encryption
-Message-ID: <20241021191008.GB1395714@google.com>
-References: <20241018184339.66601-1-ebiggers@kernel.org>
- <b56689c6-c0cd-c44e-16fb-8a73c460aa87@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="THxCLJBw"
+Received: by mail-qk1-f194.google.com with SMTP id af79cd13be357-7b155cca097so316959185a.1
+        for <dm-devel@lists.linux.dev>; Mon, 21 Oct 2024 12:55:06 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1729540506; x=1730145306; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=NoB96vqf07bgO8TLKXEoddJsTDp29hkCSzGD992tAew=;
+        b=THxCLJBwtDINXh2bYPHKwafNh7Ioqddc+EvKa+349q7uUs7fUJsTTdPegS69kYOpA8
+         h/vSBTRZ/3KPzQf5Q8ei8Vge4Rj5+sUEF/HMek0X2qm5BYxZxClaxuy8TLfjpbBOtMiB
+         1VLwmSrBzUZStb119asz7muVfjhkr8iQ3Q8YwcF1eSToFPKSovVS4VWRMt4gULFxKlC7
+         rAQPx94VPb0243qcNK9nFDqrfsRLWSnqvvKP+Shx33kmS/FVRpOpJSoHzEUeZSwey778
+         eo3EP+U6wa2y9CfGtzS/Pxl64wLoCH2+RQbh/9Wl+P5QJh9GSGDnzPC5Ih21j8avzUXb
+         PHSA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1729540506; x=1730145306;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=NoB96vqf07bgO8TLKXEoddJsTDp29hkCSzGD992tAew=;
+        b=vX7LI7zmS2Z33leedlcjjlznA8M0H7UXhC39bUTtGh89C30Q9zkMtWiTys7nzlGVYs
+         18rHVi+7oeeo1GcZ0ePRgRMj4WPqJq9e1rNqj2YO+SoKoImb0vHtV4cbAyLPXf5aT7EB
+         gX3vJXZlYiGnTLFE/rnrgEE9t4/DDl8R293+bJztoOgXeUPRFh3jIA7ncUW8ftwhdDck
+         0Qg+IvYlGfUVjpT8/kedc9hhKDUURzSvwNlVSzsl91egyn3bEBByiS/3f41GpAC2Sckf
+         Y2ko931+P4zRxW4a38zj8R4cRmsq505WM3MMHzm7quNqXZeu16lL2JEhMHOmE9thKzPi
+         yM+A==
+X-Gm-Message-State: AOJu0YzOegqT9c5cq8wZD5D6XusDk3vdHrDabpNde+f/Sl84gUftb3fK
+	4dHuSin8xWWQEjRV1/bM+iZqkfk4cMQj3ZBW9fZdrmCX5Qn0JrB9o8PnnIV/mqYxPkDQv38=
+X-Google-Smtp-Source: AGHT+IHNyXERodpxsHI7szIu81Mr/2Z6QrSLHF/qrZuMGUVynYBM/zqTBRGy8BeEI1oeXH/nVsFr9Q==
+X-Received: by 2002:a05:620a:4481:b0:7a9:b2f4:42e0 with SMTP id af79cd13be357-7b175596368mr139304085a.15.1729540505748;
+        Mon, 21 Oct 2024 12:55:05 -0700 (PDT)
+Received: from localhost.localdomain (mobile-130-126-255-54.near.illinois.edu. [130.126.255.54])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6ce009ffeebsm20658646d6.138.2024.10.21.12.55.04
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 21 Oct 2024 12:55:05 -0700 (PDT)
+From: Gax-c <zichenxie0106@gmail.com>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	heinzm@redhat.com,
+	kbusch@kernel.org,
+	scott.bauer@intel.com
+Cc: dm-devel@lists.linux.dev,
+	zzjas98@gmail.com,
+	chenyuan0y@gmail.com,
+	Zichen Xie <zichenxie0106@gmail.com>
+Subject: [PATCH] dm: Cast an operand to sector_t to prevent potential uint32_t overflow in unstripe_ctr()
+Date: Mon, 21 Oct 2024 14:54:45 -0500
+Message-Id: <20241021195444.13237-1-zichenxie0106@gmail.com>
+X-Mailer: git-send-email 2.25.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <b56689c6-c0cd-c44e-16fb-8a73c460aa87@redhat.com>
+Content-Transfer-Encoding: 8bit
 
-On Mon, Oct 21, 2024 at 01:52:58PM +0200, Mikulas Patocka wrote:
-> On Fri, 18 Oct 2024, Eric Biggers wrote:
-> 
-> > This series adds "metadata encryption" support to ext4 and f2fs via a
-> > new device-mapper target dm-default-key.  dm-default-key encrypts all
-> > data on a block device that isn't already encrypted by the filesystem.
-> > 
-> > Except for the passthrough support, dm-default-key is basically the same
-> > as the proposed dm-inlinecrypt which omits that feature
-> > (https://lore.kernel.org/dm-devel/20241016232748.134211-1-ebiggers@kernel.org/).
-> > 
-> > I am sending this out for reference, as dm-default-key (which Android
-> > has been using for a while) hasn't previously been sent to the lists in
-> > full, and there has been interest in it.  However, my current impression
-> > is that this feature will need to be redesigned as a filesystem native
-> > feature in order to make it upstream.  If that is indeed the case, then
-> > IMO it would make sense to merge dm-inlinecrypt in the mean time instead
-> > (or add its functionality to dm-crypt) so that anyone who just wants
-> > "dm-crypt + inline encryption hardware" gets a solution for that.
-> 
-> I we merge dm-inlinecrypt, we can't remove it later because users will 
-> depend on it. I think it is not sensible to have two targets 
-> (dm-inlinecrypt and dm-default-key) that do almost the same thing.
+From: Zichen Xie <zichenxie0106@gmail.com>
 
-The code would not need to be duplicated, though.  E.g. dm-default-key
-functionality could be added as an enable_passthrough option to dm-inlinecrypt.
-Or the same .c file could register both targets sharing most of the same code.
+This was found by a static analyzer.
+There may be a potential integer overflow issue in
+unstripe_ctr(). uc->unstripe_offset and uc->unstripe_width are
+defined as "sector_t"(uint64_t), while uc->unstripe,
+uc->chunk_size and uc->stripes are all defined as "uint32_t".
+The result of the calculation will be limited to "uint32_t"
+without correct casting.
+So, we recommend adding an extra cast to prevent potential
+integer overflow.
 
-> I've got another idea - what about a new target "dm-metadata-switch" that 
-> will take two block devices as arguments and it will pass metadata bios to 
-> the first device and data bios to the second device - so that the logic 
-> to decide where the bio will go would be decoupled from the encryption. 
-> Then, you can put dm-crypt or dm-inlinecrypt underneath 
-> "dm-metadata-switch".
-> 
-> ----------------------
-> |     filesystem     |
-> ----------------------
->           |
->           V
-> ----------------------
-> | dm-metadata-switch |
-> ----------------------
->       |           |
->       V           |
-> ------------      |
-> | dm-crypt |      |
-> ------------      |
->       |           |
->       V           V
-> -------------------------
-> | physical block device |
-> -------------------------
+Fixes: 18a5bf270532 ("dm: add unstriped target")
+Signed-off-by: Zichen Xie <zichenxie0106@gmail.com>
+---
+ drivers/md/dm-unstripe.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Would this have any use case other than what dm-default-key does?
+diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
+index 48587c16c445..e8a9432057dc 100644
+--- a/drivers/md/dm-unstripe.c
++++ b/drivers/md/dm-unstripe.c
+@@ -85,8 +85,8 @@ static int unstripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 	uc->physical_start = start;
+ 
+-	uc->unstripe_offset = uc->unstripe * uc->chunk_size;
+-	uc->unstripe_width = (uc->stripes - 1) * uc->chunk_size;
++	uc->unstripe_offset = (sector_t)uc->unstripe * uc->chunk_size;
++	uc->unstripe_width = (sector_t)(uc->stripes - 1) * uc->chunk_size;
+ 	uc->chunk_shift = is_power_of_2(uc->chunk_size) ? fls(uc->chunk_size) - 1 : 0;
+ 
+ 	tmp_len = ti->len;
+-- 
+2.34.1
 
-Keep in mind that dm-metadata-switch would have to pass through all sector
-addresses unchanged.  So if you wanted to reuse this to actually put your
-filesystem metadata on one disk and data on another, this wouldn't be very
-effective at that, as both data and metadata would take up the full space.
-
-- Eric
