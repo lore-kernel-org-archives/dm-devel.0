@@ -1,182 +1,113 @@
-Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAF971A00D6
-	for <dm-devel@lists.linux.dev>; Tue, 22 Oct 2024 15:09:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5EDD612B93
+	for <dm-devel@lists.linux.dev>; Tue, 22 Oct 2024 23:33:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729609796; cv=none; b=MrbJvZQeZoyFPM0V1dHwsEQ1S6Wt/smIyt4vTw407VxKQjpj22Rkf8yaJ/YC6NZ28NRWbo9+RTeCo+5WYk5JUUOI3O+dlA9wA+gM6BIssvZU4aonmloFdrK5DS416sS+hRQFA+EqXO1e9KekSUxNyap/OFdx1Y1I1NsE45AaTEY=
+	t=1729640039; cv=none; b=OeICHXYMtHk3UA29g7jyPpuXOEJVojQIdy8brOs8fB816cRPd5/UUCwntnLMxcwlOC30R5FehroxEcW95DPEW8AJ40C78/K/azAkYFY0+brm3vZIvhGs+C9740JT4oEAWvL4+CNs2UAIxP6o8+rUp5T9v5YK+jDrrma4Kzr0Naw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729609796; c=relaxed/simple;
-	bh=nJrYftdx8QXah6mi/GMMJUgd1Os063wMzcIYBaJ7vzY=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=Bzk1Ktlni2auiIN5Mx2ItZ5CgSlMzHxgZzFqx/cgmqTws4l7AbXe52EFjLwr1sTRaU7aXSNiKykbr3CR08wpoycK7OK3mxmBbvLO4za3Dc0FOCFlnVeK9m/pL6FblZCDzCPejbcoDKz6DottrxkC8deiode4LOUdpuzcuVELuOU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=BiNopmWT; arc=none smtp.client-ip=212.122.41.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
+	s=arc-20240116; t=1729640039; c=relaxed/simple;
+	bh=OEPSzHhumT3P+IUtYoDLxJLLpGy3EtRxlv+rOgRRb6M=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=AB8hQLI70DFeIufqEMjuHqlBcqLauJ5EfJNXlYjPsHFcgIbzP3jCtco5ZTG4NW4e06wa8n1kWRuQ1I4QZOCfB1Ak/m6lcG4XwPi8z8SJzUba352nt/UMoEOPtNjzVCv92SSn19q1BwL6uQQ9dRpDgDAG5tvDMhHMcI7Wnr8PYsw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AYrVSNkh; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="BiNopmWT"
-Content-Type: text/plain;
-	charset=utf-8
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1729609354;
-	bh=x8fbwZ1TB/Z/qk+VHGjHi328pkyjcTgL0m2LWKOLM4I=;
-	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=BiNopmWTtqK4uazXeviLTdnaSywdw8HD5rdluYNEsl4E4vsnID+rhN6FNUtZVnoeA
-	 yNPbZhigG2TJd99gVm07ODKawOL/5AWuHjMioBjblG7QWY88MhPC+gTQavvSgMYyOQ
-	 Mnu4dCzjMHWbhFpGFF9HV1UpJ6AV/8rjY8G1azYE=
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AYrVSNkh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1729640036;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=9t6vEsu3WyG70T55zypqLBtSK0J0L7O94sZVBB2YVks=;
+	b=AYrVSNkh3AuDLW+2lVwErWTmPxrYvGdfa29LgNVx3ZjBTCEaP5YJDNWCTgH5E3QPWkvkig
+	q1hI9uIunbGSsfHx6n+zPnRMWh7dxN92tlBqHUnB1BNlig5KcNRzIej0BdEpS+M6lOgMdm
+	93twF90f4pWaU2jg41kmC7ewWQC0qMk=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-265-NikhB4aVORiKbeK7lW71aw-1; Tue,
+ 22 Oct 2024 19:33:52 -0400
+X-MC-Unique: NikhB4aVORiKbeK7lW71aw-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C4F4919560B8;
+	Tue, 22 Oct 2024 23:33:51 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4962519560A2;
+	Tue, 22 Oct 2024 23:33:51 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 49MNXnsK247096
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 22 Oct 2024 19:33:49 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 49MNXnJb247095;
+	Tue, 22 Oct 2024 19:33:49 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>,
+        Peter Rajnoha <prajnoha@redhat.com>
+Subject: [RFC PATCH] 11-dm-mpath.rules: Disable blkid runs when updating the device
+Date: Tue, 22 Oct 2024 19:33:49 -0400
+Message-ID: <20241022233349.247087-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3818.100.11.1.3\))
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-From: Christian Theune <ct@flyingcircus.io>
-In-Reply-To: <adee77ef-f785-acd6-485a-fe2d0a1b9a92@huaweicloud.com>
-Date: Tue, 22 Oct 2024 17:02:12 +0200
-Cc: John Stoffel <john@stoffel.org>,
- "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- "yukuai (C)" <yukuai3@huawei.com>
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <143E09BF-BD10-43EB-B0F1-7421F8200DB1@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
- <316050c6-fac2-b022-6350-eaedcc7d953a@huaweicloud.com>
- <58450ED6-EBC3-4770-9C5C-01ABB29468D6@flyingcircus.io>
- <EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
- <22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
- <26291.57727.410499.243125@quad.stoffel.home>
- <2EE0A3CE-CFF2-460C-97CD-262D686BFA8C@flyingcircus.io>
- <1dfc4792-02b2-5b3c-c3d1-bf1b187a182e@huaweicloud.com>
- <4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
- <C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
- <e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
- <30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
- <26294.40330.924457.532299@quad.stoffel.home>
- <C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
- <26298.22106.810744.702395@quad.stoffel.home>
- <EBC67418-E60C-435A-8F63-114C67F07583@flyingcircus.io>
- <CEC90137-09B3-41AA-A115-1C172F9C6C4B@flyingcircus.io>
- <2F5F9789-1827-4105-934F-516582018540@flyingcircus.io>
- <adee77ef-f785-acd6-485a-fe2d0a1b9a92@huaweicloud.com>
-To: Yu Kuai <yukuai1@huaweicloud.com>
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-Hi,
+When multipath reloads a device or fails or restores a path, the udev
+rules disable LVM scanning, but since .DM_NOSCAN isn't set, blkid is
+still run on the device. When multipath devices that are set to
+queue_if_no_path lose all their paths at close to the same time, udev
+workers can hang trying to run blkid. The blkid results shouldn't
+change when multipathd is adding, removing, failing or reinstating
+paths, aside from avoiding hanging udev processes, we're skipping
+unnecessary work.
 
-I had to put this issue aside and as Yu indicated he was busy I didn=E2=80=
-=99t follow up yet.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipath/11-dm-mpath.rules.in | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-@Yu: I don=E2=80=99t have new insights, but I have a basically identical =
-machine that I will start adding new data with a similar structure soon.=20=
-
-
-I couldn=E2=80=99t directly reproduce the issue there - likely because =
-the network is a bit slower as it=E2=80=99s connected from a remote side =
-and has only 1G instead of 10G, due to the long distances.
-
-Let me know if you=E2=80=99re interested in following up here and I=E2=80=99=
-ll try to make room on my side to get you more input as needed.
-
-Christian
-
-> On 15. Aug 2024, at 13:14, Yu Kuai <yukuai1@huaweicloud.com> wrote:
->=20
-> Hi,
->=20
-> =E5=9C=A8 2024/08/15 18:03, Christian Theune =E5=86=99=E9=81=93:
->> Hi,
->> small insight: even given my dataset that can reliably trigger this =
-(after around 1.5 hours of rsyncing) it does not trigger on a specific =
-set of files. I=E2=80=99ve deleted the data and started the rsync on a =
-fresh directory (not a fresh filesystem, I can=E2=80=99t delete that as =
-it carries important data) but it doesn=E2=80=99t always get stuck on =
-the same files, even though rsync processes them in a repeatable order.
->> I=E2=80=99m wondering how to generate more insights from that. Maybe =
-keeping a blktrace log might help?
->> It sounds like the specific pattern relies on XFS doing a specific =
-thing there =E2=80=A6
->> Wild idea: maybe running the xfstest suite on an in-memory raid 6 =
-setup could reproduce this?
->> I=E2=80=99m guessing that the xfs people do not regularly run their =
-test suite on a layered setup like mine with encryption and software =
-raid?
->=20
-> That sounds greate.
->>  Christian
->>> On 15. Aug 2024, at 08:19, Christian Theune <ct@flyingcircus.io> =
-wrote:
->>>=20
->>> Hi,
->>>=20
->>>> On 14. Aug 2024, at 10:53, Christian Theune <ct@flyingcircus.io> =
-wrote:
->>>>=20
->>>> Hi,
->>>>=20
->>>>> On 12. Aug 2024, at 20:37, John Stoffel <john@stoffel.org> wrote:
->>>>>=20
->>>>> I'd probably just do the RAID6 tests first, get them out of the =
-way.
->>>>=20
->>>> Alright, those are running right now - I=E2=80=99ll let you know =
-what happens.
->>>=20
->>> I=E2=80=99m not making progress here. I can=E2=80=99t reproduce =
-those on in-memory loopback raid 6. However: i can=E2=80=99t fully =
-produce the rsync. For me this only triggered after around 1.5hs of =
-progress on the NVMe which resulted in the hangup. I can only create =
-around 20 GiB worth of raid 6 volume on this machine. I=E2=80=99ve tried =
-running rsync until it exhausts the space, deleting the content and =
-running rsync again, but I feel like this isn=E2=80=99t suffient to =
-trigger the issue. :(
->>>=20
->>> I=E2=80=99m trying to find whether any specific pattern in the files =
-around the time it locks up might be relevant here and try to run the =
-rsync over that
->>> portion.
->>>=20
->>> On the plus side, I have a script now that can create the various =
-loopback settings quickly, so I can try out things as needed. Not that =
-valuable without a reproducer, yet, though.
->>>=20
->>> @Yu: you mentioned that you might be able to provide me a kernel =
-that produces more error logging to diagnose this? Any chance we could =
-try that route?
->=20
-> Yes, however, I still need some time to sort out the internal process =
-of
-> raid5. I'm quite busy with some other work stuff and I'm familiar with
-> raid1/10, but not too much about raid5. :(
->=20
-> Main idea is to figure out why IO are not dispatched to underlying
-> disks.
->=20
-> Thanks,
-> Kuai
->=20
->>>=20
->>> Christian
->>>=20
->>> --=20
->>> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
->>> Flying Circus Internet Operations GmbH =C2=B7 =
-https://flyingcircus.io
->>> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
->>> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
-Theune, Christian Zagrodnick
->> Liebe Gr=C3=BC=C3=9Fe,
->> Christian Theune
-
-
-Liebe Gr=C3=BC=C3=9Fe,
-Christian Theune
-
---=20
-Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
-Christian Zagrodnick
+diff --git a/multipath/11-dm-mpath.rules.in b/multipath/11-dm-mpath.rules.in
+index 30647b99..6a76a348 100644
+--- a/multipath/11-dm-mpath.rules.in
++++ b/multipath/11-dm-mpath.rules.in
+@@ -80,12 +80,12 @@ ENV{DM_COLDPLUG_SUSPENDED}=="1", ENV{.DM_SUSPENDED}!="1", \
+ # It's exactly mpath's job to provide *seamless* device access to any of the
+ # paths that are available underneath.
+ ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", \
+-	ENV{DM_ACTIVATION}="0", ENV{MPATH_UNCHANGED}="1"
++	ENV{DM_ACTIVATION}="0", ENV{.DM_NOSCAN}="1", ENV{MPATH_UNCHANGED}="1"
+ 
+ # For path failed or reinstated events, unset DM_ACTIVATION.
+ # This is similar to the DM_SUBSYSTEM_UDEV_FLAG0 case above.
+ ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", \
+-	ENV{DM_ACTIVATION}="0", ENV{MPATH_UNCHANGED}="1"
++	ENV{DM_ACTIVATION}="0", ENV{.DM_NOSCAN}="1", ENV{MPATH_UNCHANGED}="1"
+ 
+ LABEL="check_mpath_ready"
+ 
+@@ -113,7 +113,7 @@ LABEL="mpath_is_ready"
+ ENV{.MPATH_DEVICE_READY_OLD}!="0", GOTO="scan_import"
+ ENV{.DM_SUSPENDED}=="1", ENV{MPATH_DEVICE_READY}="0", GOTO="scan_import"
+ 
+-ENV{DM_ACTIVATION}="1", ENV{MPATH_UNCHANGED}="0"
++ENV{DM_ACTIVATION}="1", ENV{.DM_NOSCAN}="0", ENV{MPATH_UNCHANGED}="0"
+ 
+ # The code to check multipath state ends here. We need to set
+ # properties and symlinks regardless whether the map is usable or
+-- 
+2.46.2
 
