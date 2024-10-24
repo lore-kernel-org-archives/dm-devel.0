@@ -1,181 +1,140 @@
-Received: from mail-yw1-f170.google.com (mail-yw1-f170.google.com [209.85.128.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.stoffel.org (mail.stoffel.org [172.104.24.175])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B26491F4707
-	for <dm-devel@lists.linux.dev>; Thu, 24 Oct 2024 16:24:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A4E0922B644
+	for <dm-devel@lists.linux.dev>; Thu, 24 Oct 2024 19:21:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=172.104.24.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729787042; cv=none; b=OvIJE7WbXC1Md3jPF6Gh9ks7FSfdEaUq8Rz0LKbnI/aCyfkKgqJgu8ZPrlHYupRtJC8sfHrS+4Efikti/DaF8NeiD2w/bTe0MucitgKq8FWlVsuVERMTVKeQ6pjKYeQNxkX2ktKwRHmv6f9zHSrjGhCz+1aYpfSBO61V7rP8yV4=
+	t=1729797700; cv=none; b=mo8XlBYoy1cKbrWBABWxxOSRJg04U+W6a1PknHUM5rGX4fRZVMFu4OMtl39VSUM1zjcRbM6rkBHPeuSZz0uoXDi4kdRDIBy/JXE7E3U33O/OO52nmdNLWEZHKYWneYtPQn+bVcfcXE6C7GYW0Lyml03qUMplPk4XoRaOQUcs/pk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729787042; c=relaxed/simple;
-	bh=f18gmjvDDOpzp1FkWkb7PHbYJOLjERviv7qoUyayLKo=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=oe4d1iZJEE/LAaCVkvJS7oQ/emryfjDHh3YawjWtgSpAhU97EvNyn7Pq6oVaZ8BHul/P/Vxd+R+alL7Cidon9Fme4RnJTnDrZHJ8DKW+mExfVlTHigzvOLVD9dTLcN4NN7R0FqFlcNM6x+7YkuSMcaTj6objzCiSa2py7QmONIM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=E6791QgT; arc=none smtp.client-ip=209.85.128.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="E6791QgT"
-Received: by mail-yw1-f170.google.com with SMTP id 00721157ae682-6e34fa656a2so11695057b3.1
-        for <dm-devel@lists.linux.dev>; Thu, 24 Oct 2024 09:24:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729787040; x=1730391840; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=V9NK7Z+Ngm315TPPgtg78S7xRTYOPCuLS/UsgPBTsds=;
-        b=E6791QgTddpX8Nh2LvY8U7gy1ZbYvO8suRMX36VkM9uiQxhc2CD3zTbRc/CMxg4IGs
-         h0hhbcOuwaQQWdTQOg58soA3THEgP/E9Fv0rsH8UtXUDwFHqpJiygqE/qq4MedrShSd8
-         VQfKgQ9iD8S4iDXZP08t/7l6lHftyNBVUkKA8H2b1l9QwLEZkMEdWacpCyyNBhPzLrQ4
-         JEDUimkormkoB4xbPdKAXDgaZw3eSon3NIaixuHExO84hYqIMLMdpka6LnVhNKIlURJr
-         4RyJY7K6cDMYscS8Vgyro2VK9BPXAUHoZqYbBaZGCN7JcpIAmea49Nsc0I6SD9aYC13a
-         kqAA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729787040; x=1730391840;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=V9NK7Z+Ngm315TPPgtg78S7xRTYOPCuLS/UsgPBTsds=;
-        b=eIxPuVIz+HaSuz1gHjeBLzuGMblplQJkPhwmFZrI0nkSYhCI86WmPltWQQq1K5am0S
-         /N3+cP6ErVDj+CcxkRswskXY7k8nkjbxOuTSlOFNnAaqX3C0MPIjMEy7oKk/MgTJyfG8
-         bbRPgd+0HRqjQq535d+M2YuEB+l0KKD78dpWSHtgY+SpdADTbPXx45VOk0HOPcxihdcL
-         6/IAbVIQhG5usJoXnwftiQ8Ynu/nnTlnozVP3b04dofAfDbzSOLw6fjmWYp5Zc+VWjWP
-         cRXmdboataHC/6MSNTxHHMC8e8WWurGYYfs0M5ultSeHu7mCzlTaBsWKm8mxJv0KxZci
-         ZjXQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXvCj8Exr/LNP3FmtMoo0oJULEqWX4SQEYGudirBYVYpt4U8sJqD3jLlj4jn8hu+I91G5DSzQymcA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwwsihZGCmYa4+kMLseWM/IE9xaWETkloePRDTK5uWOje4cNbHw
-	ke/hLkuXgdcIQpOmUI5Gy3/YFMO9KOpu3QpjqdbNUDXeLE/eAOBdwFkJRK9JIEgQIP9ELIqWLpp
-	qREb8cUd6ondWGJe+qJt62EgWgvY=
-X-Google-Smtp-Source: AGHT+IEiSnw3xc3o0GD+aCII4uuqttpRYCWli0c8mbnI6vmERD9GFMgMpU//iIU/A2qv4SMpA2Y1PA+3QtY5X2wHU3w=
-X-Received: by 2002:a05:690c:9987:b0:6e3:16da:e74 with SMTP id
- 00721157ae682-6e7f0e05389mr77322977b3.16.1729787039682; Thu, 24 Oct 2024
- 09:23:59 -0700 (PDT)
+	s=arc-20240116; t=1729797700; c=relaxed/simple;
+	bh=x5W7AHA7QoAl5BXhjCt2PyWAEngxusuwMWAjkEDBeo0=;
+	h=MIME-Version:Content-Type:Message-ID:Date:From:To:Cc:Subject:
+	 In-Reply-To:References; b=PrVr/T9qa3jcN8D2BaFfphnZ2JAaVrj1tqf+jFumbG4CCwA5CawKNmq7bZyj63w51a/1FHp+PFXvN88ha0WnDex6XtODORLoufujQ1gOz8fX3V4QwPAybpTrNFwgg3jJiICGjcr3qHKpn1hHMopKz4eNZmCVktHzp/2VveoXPj8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org; spf=pass smtp.mailfrom=stoffel.org; arc=none smtp.client-ip=172.104.24.175
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=stoffel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=stoffel.org
+Received: from quad.stoffel.org (syn-097-095-183-072.res.spectrum.com [97.95.183.72])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.stoffel.org (Postfix) with ESMTPSA id B72191E468;
+	Thu, 24 Oct 2024 15:21:37 -0400 (EDT)
+Received: by quad.stoffel.org (Postfix, from userid 1000)
+	id 15731A0A8C; Thu, 24 Oct 2024 15:21:37 -0400 (EDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <ZxHwgsm2iP2Z_3at@infradead.org> <CAAdYy_mVy3uXPqWbjPzK_i8w7Okq73wKBQyc95TbnonE36rPgQ@mail.gmail.com>
- <ZxH4lnkQNhTP5fe6@infradead.org> <D96294E2-F17A-4E58-90FB-1D17747048E5@gmail.com>
- <ZxieZPlH-S9pakYW@infradead.org> <CAAdYy_ms=VmvxZy9QiMkwcNk21a2kVy73c8-NxUh4dNJuLefCg@mail.gmail.com>
- <Zxnl4VnD6K6No4UQ@infradead.org> <14126375-5F6F-484A-B34B-F0C011F3A9C5@gmail.com>
- <ZxoNgmwFVCXivbd3@infradead.org> <CAAdYy_kKHx-91hWxETu_4TJKr+h=-Q0WdoyQwXjRZiwiXCOOYQ@mail.gmail.com>
- <Zxpuzbjtq0eNP49Z@infradead.org>
-In-Reply-To: <Zxpuzbjtq0eNP49Z@infradead.org>
-From: Adrian Vovk <adrianvovk@gmail.com>
-Date: Thu, 24 Oct 2024 12:23:48 -0400
-Message-ID: <CAAdYy_n7GC6VHjiVN2DLxx4VGFi16RENC96tgkt-284xdOdNzg@mail.gmail.com>
-Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Eric Biggers <ebiggers@kernel.org>, Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk, 
-	song@kernel.org, yukuai3@huawei.com, agk@redhat.com, snitzer@kernel.org, 
-	Mikulas Patocka <mpatocka@redhat.com>, adrian.hunter@intel.com, quic_asutoshd@quicinc.com, 
-	ritesh.list@gmail.com, ulf.hansson@linaro.org, andersson@kernel.org, 
-	konradybcio@kernel.org, kees@kernel.org, gustavoars@kernel.org, 
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
-	linux-mmc@vger.kernel.org, linux-arm-msm@vger.kernel.org, 
-	linux-hardening@vger.kernel.org, quic_srichara@quicinc.com, 
-	quic_varada@quicinc.com
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
+Message-ID: <26394.40513.57614.718772@quad.stoffel.home>
+Date: Thu, 24 Oct 2024 15:21:37 -0400
+From: "John Stoffel" <john@stoffel.org>
+To: Adrian Vovk <adrianvovk@gmail.com>
+Cc: Geoff Back <geoff@demonlair.co.uk>,
+    Christoph Hellwig <hch@infradead.org>,
+    Eric Biggers <ebiggers@kernel.org>,
+    Md Sadre Alam <quic_mdalam@quicinc.com>,
+    axboe@kernel.dk,
+    song@kernel.org,
+    yukuai3@huawei.com,
+    agk@redhat.com,
+    snitzer@kernel.org,
+    Mikulas Patocka <mpatocka@redhat.com>,
+    adrian.hunter@intel.com,
+    quic_asutoshd@quicinc.com,
+    ritesh.list@gmail.com,
+    ulf.hansson@linaro.org,
+    andersson@kernel.org,
+    konradybcio@kernel.org,
+    kees@kernel.org,
+    gustavoars@kernel.org,
+    linux-block@vger.kernel.org,
+    linux-kernel@vger.kernel.org,
+    linux-raid@vger.kernel.org,
+    dm-devel@lists.linux.dev,
+    linux-mmc@vger.kernel.org,
+    linux-arm-msm@vger.kernel.org,
+    linux-hardening@vger.kernel.org,
+    quic_srichara@quicinc.com,
+    quic_varada@quicinc.com
+X-Clacks-Overhead: GNU Terry Pratchett
+Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
+In-Reply-To: <CAAdYy_=n19fT2U1KUcF+etvbLGiOgdVZ7DceBQiHqEtXcOa-Ow@mail.gmail.com>
+References: <20240916085741.1636554-1-quic_mdalam@quicinc.com>
+	<20240916085741.1636554-2-quic_mdalam@quicinc.com>
+	<20240921185519.GA2187@quark.localdomain>
+	<ZvJt9ceeL18XKrTc@infradead.org>
+	<ef3c9a17-79f3-4937-965e-52e2b9e66ac2@gmail.com>
+	<ZxHwgsm2iP2Z_3at@infradead.org>
+	<CAAdYy_mVy3uXPqWbjPzK_i8w7Okq73wKBQyc95TbnonE36rPgQ@mail.gmail.com>
+	<ZxH4lnkQNhTP5fe6@infradead.org>
+	<D96294E2-F17A-4E58-90FB-1D17747048E5@gmail.com>
+	<ZxieZPlH-S9pakYW@infradead.org>
+	<CAAdYy_ms=VmvxZy9QiMkwcNk21a2kVy73c8-NxUh4dNJuLefCg@mail.gmail.com>
+	<dfe48df3-5527-4aed-889a-224221cbd190@demonlair.co.uk>
+	<CAAdYy_=n19fT2U1KUcF+etvbLGiOgdVZ7DceBQiHqEtXcOa-Ow@mail.gmail.com>
+X-Mailer: VM 8.3.x under 28.2 (x86_64-pc-linux-gnu)
 
-On Thu, Oct 24, 2024 at 11:59=E2=80=AFAM Christoph Hellwig <hch@infradead.o=
-rg> wrote:
->
-> On Thu, Oct 24, 2024 at 11:32:58AM -0400, Adrian Vovk wrote:
-> > >> I'm not assuming. That's the behavior of dm-crypt without passthroug=
-h.
-> > >> It just encrypts everything that moves through it. If I stack two
-> > >> layers of dm-crypt on top of each other my data is encrypted twice.
-> > >
-> > >Sure.  But why would you do that?
-> >
-> > As mentioned earlier in the thread: I don't have a usecase
-> > specifically for this and it was an example of a situation where
-> > passthrough is necessary and no filesystem is involved at all. Though,
-> > as I also pointed out, a usecase where you're putting encrypted
-> > virtual partitions on an encrypted LVM setup isn't all that absurd.
->
-> It's a little odd but not entirely absurd indeed.  But it can also
-> be easily handled by setting up a dm-crypt table just for the
-> partition table.
+>>>>> "Adrian" =3D=3D Adrian Vovk <adrianvovk@gmail.com> writes:
 
-That doesn't cover it. Not all of the virtual partitions necessarily
-need to have their own dm-crypt, so they should be encrypted by the
-underlying dm-crypt.
+> On Thu, Oct 24, 2024 at 4:11=E2=80=AFAM Geoff Back <geoff@demonlair.c=
+o.uk> wrote:
+>>=20
+>>=20
+>> On 24/10/2024 03:52, Adrian Vovk wrote:
+>> > On Wed, Oct 23, 2024 at 2:57=E2=80=AFAM Christoph Hellwig <hch@inf=
+radead.org> wrote:
+>> >> On Fri, Oct 18, 2024 at 11:03:50AM -0400, Adrian Vovk wrote:
+>> >>> Sure, but then this way you're encrypting each partition twice. =
+Once by the dm-crypt inside of the partition, and again by the dm-crypt=
+ that's under the partition table. This double encryption is ruinous fo=
+r performance, so it's just not a feasible solution and thus people don=
+'t do this. Would be nice if we had the flexibility though.
+>>=20
+>> As an encrypted-systems administrator, I would actively expect and
+>> require that stacked encryption layers WOULD each encrypt.  If I hav=
+e
+>> set up full disk encryption, then as an administrator I expect that =
+to
+>> be obeyed without exception, regardless of whether some higher level=
 
-So the dm-crypt doesn't just need to cover the partition table, but
-also arbitrary ranges within the whole partition
+>> file system has done encryption already.
+>>=20
+>> Anything that allows a higher level to bypass the full disk encrypti=
+on
+>> layer is, in my opinion, a bug and a serious security hole.
 
-> > In my real-world case, I'm putting encrypted loop devices on top of a
-> > filesystem that holds its own sensitive data. Each loop device has
-> > dm-crypt inside and uses a unique key, but the filesystem needs to be
-> > encrypted too (because, again, it has its own sensitive data outside
-> > of the loop devices). The loop devices cannot be put onto their own
-> > separate partition because there's no good way to know ahead of time
-> > how much space either of the partitions would need: sometimes the loop
-> > devices need to take up loads of space on the partition, and other
-> > times the non-loop-device data needs to take up that space. And to top
-> > it all off, the distribution of allocated space needs to change
-> > dynamically.
->
-> And that's exactly the case I worry about.  The file system can't
-> trust a layer entirely above it.  If we want to be able to have a
-> space pool between a file systems with one encryption policy and
-> images with another we'll need to replace the loop driver with a
-> block driver taking blocks from the file system space pool.  Which
-> might be a good idea for various other reasons.
+> Sure I'm sure there's usecases where passthrough doesn't make sense.
+> It should absolutely be an opt-in flag on the dm target, so you the
+> administrator at setup time can choose whether or not you perform
+> double-encryption (and it defaults to doing so). Because there are
+> usecases where it doesn't matter, and for those usecases we'd set
+> the flag and allow passthrough for performance reasons.
 
-I don't quite understand the difference between a loopback file, and a
-block driver that uses space from a filesystem space pool. Isn't that
-what a loopback file is?
+If you're so concerend about security that you're double or triple
+encrypting data at various layers, then obviously skipping encryption
+at a lower layer just because an upper layer says "He, I already
+encrypted this!" just doesn't make any sense. =20
 
->
-> > Ultimately, I'm unsure what the concern is here.
-> >
-> > It's a glaringly loud opt-in marker that encryption was already
-> > performed or is otherwise intentionally unnecessary. The flag existing
-> > isn't what punches through the security model. It's the use of the
-> > flag that does. I can't imagine anything setting the flag by accident.
-> > So what are you actually concerned about? How are you expecting this
-> > flag to actually be misused?
-> >
-> > As for third party modules that might punch holes, so what? 3rd party
-> > modules aren't the kernel's responsibility or problem
->
-> On the one hand they are not.  On the other if you have a file system
-> encryption scheme that is bypassed by a random other loadable code
-> setting a single flag I would not consider it very trust worth or in
-> fact actively dangerous.
+So how does your scheme defend against bad actors?  I'm on a system
+with an encrypted disk.  I make a file and mount it with loop, and the
+encrypt it.  But it's slow!  So I turn off encryption.  Now I shutdown
+the loop device cleanly, unmount, and reboot the system.  So what
+should I be seing in those blocks if I examine the plain file that's
+now not mounted? =20
 
-I'd expect that the lower encryption layer has an opt-in flag to turn
-on and off passthrough functionality. I think I neglected to mention
-that before; it was discussed in other threads and I just kinda
-assumed that it would be there.
+Could this be a way to smuggle data out because now the data written
+to the low level disk is encypted with a much weaker algorithm?  So I
+can just take the system disk and read the raw data and find the data? =
+=20
 
-So, with that in mind: the loadable code could set the flag, but the
-underlying dm-inlinecrypt would need to opt into the weaker security
-too. If the system administrator has opted the lower layer into
-passthrough, then they've considered the risks of what could happen if
-an upper layer sets the flag and decided that it's OK. If the
-administrator didn't opt in, then the flag has no effect. Does that
-sound more acceptable?
+I'm not saying it's going to be easy or simple, but is it possible? =20=
 
->
-> > In my loopback file scenario, what would be the one layer that could
-> > handle the encryption?
->
-> But getting rid of loopback devices.
 
-I can't get rid of the loopback devices. They're an essential part of
-this. I should be able to take the encrypted loopback file, send it to
-a different machine, and have it keep working the same as it always
-has.
+John
 
-Without the loopback device, I'm stuck with fscrypt. Which isn't
-supported by all filesystems, and encrypts much less data than we
-require.
 
-- Adrian
