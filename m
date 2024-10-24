@@ -1,79 +1,105 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B824B1B4F32;
-	Thu, 24 Oct 2024 09:04:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC11B1B392A
+	for <dm-devel@lists.linux.dev>; Thu, 24 Oct 2024 11:04:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729760651; cv=none; b=fvW/uFGIRuiDnZTaIq8MJfMo3qpREZMdNs/+bSMr7xKu7V4VKzUpg91t7bt2mkCbi/gkgNGzRURPDIRGNTCvdxbuNQP6e6lGdrzXE1nnEQgOP1BEjV0/jGcxRdbj4qQTddPJSftmS0mX9P4oG90kIbepyflprA5jk0+SRXQCTZk=
+	t=1729767876; cv=none; b=nHRqUks7iv3mRU2C5Kg/RrsIFlMJkAgktAHVSF/BBYOyZNivuhS6h9jwVD35EjqqwH30TySBWV/QkKHZNEGfS54OXDy6KBZC88azYIzDGApb3sl/iA5B1hf2ffPr//2/v9LjlvNeKaHpGt4orYZ58GHivlWdAZeXfo83/g4RIaQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729760651; c=relaxed/simple;
-	bh=EyPmGCUfQ8Y6M9C7NmD4I3C5x0XLdLsYt0oZ7HJm5gg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=V7kVIhswyZb0XoNifghbCZNT87RXM0BCMze9vjiAYfbdajzEoJMEH0AXTLBkWVbGqKRgk5jkULL0lxKCc8hUOV+mWaTIvFozNDgEaHXFmf8TE1q8eRNQTvLmkUfZcDeYOswnTSLviYjs5MtVxKFkqTeRiGh9JSn1uxWDfO5fkNc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=2iCuWIsV; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1729767876; c=relaxed/simple;
+	bh=iqUHT538y1XZ2FPWcMn9nqaJe+HywOwuSLzBsMlplkc=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version:Content-Type; b=HMRKN1++6O9HoAzhq+QFgEhrgoW75uYspOwCRNjfSj8S5t+PtecLDJZGsyJ+eAkOl+6qWqMJh5kcJFHuWC4tnrZZ1Cms9oAQqwbZU+2dvshWtl46uDjtaykigiI5WG0ZX6FDy+OEMBCFWZcOW+u7p8f1Y65WbOtr+q6lfiU7kDg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eVEebVxa; arc=none smtp.client-ip=209.85.221.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="2iCuWIsV"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=gc7TIYx8RU4Q8PM3q2bw2LoJRKDeD/wqCcHiZkboyi8=; b=2iCuWIsV6og9kCCjBAMgNtgAFB
-	NkVgJ1lGp9IE//O8ftcsOdgO7RgipukKx3iKsr021YPA5+RsQyUC4SAv630Hlu3EVxBB+DHAptfMR
-	Ul4s2+O+ncSyqrwggtvEw4IU2TT8hENWji8jnJvzRs2ee5euvq9maSgxoSh2NBYtZKFtRdKQYH3xU
-	vJhnvjkafdLRVlqhx2oAfIcvpdYB0wP340JhJWwU2rFLBvIoofkMYsFlzVYQvFxNAnmuY7Bxo1I6f
-	voIPgQSJC+yCKsFA9deNbxXbEIkBfo+HsB5xI3Qg7mllvOhTISoueY2QJz1qfHbu1OReQ1sp7s+RF
-	H7pC19zg==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
-	id 1t3tlC-0000000HNxA-3eJc;
-	Thu, 24 Oct 2024 09:04:02 +0000
-Date: Thu, 24 Oct 2024 02:04:02 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Adrian Vovk <adrianvovk@gmail.com>
-Cc: Christoph Hellwig <hch@infradead.org>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk,
-	song@kernel.org, yukuai3@huawei.com, agk@redhat.com,
-	snitzer@kernel.org, Mikulas Patocka <mpatocka@redhat.com>,
-	adrian.hunter@intel.com, quic_asutoshd@quicinc.com,
-	ritesh.list@gmail.com, ulf.hansson@linaro.org, andersson@kernel.org,
-	konradybcio@kernel.org, kees@kernel.org, gustavoars@kernel.org,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-mmc@vger.kernel.org, linux-arm-msm@vger.kernel.org,
-	linux-hardening@vger.kernel.org, quic_srichara@quicinc.com,
-	quic_varada@quicinc.com
-Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
-Message-ID: <ZxoNgmwFVCXivbd3@infradead.org>
-References: <ZvJt9ceeL18XKrTc@infradead.org>
- <ef3c9a17-79f3-4937-965e-52e2b9e66ac2@gmail.com>
- <ZxHwgsm2iP2Z_3at@infradead.org>
- <CAAdYy_mVy3uXPqWbjPzK_i8w7Okq73wKBQyc95TbnonE36rPgQ@mail.gmail.com>
- <ZxH4lnkQNhTP5fe6@infradead.org>
- <D96294E2-F17A-4E58-90FB-1D17747048E5@gmail.com>
- <ZxieZPlH-S9pakYW@infradead.org>
- <CAAdYy_ms=VmvxZy9QiMkwcNk21a2kVy73c8-NxUh4dNJuLefCg@mail.gmail.com>
- <Zxnl4VnD6K6No4UQ@infradead.org>
- <14126375-5F6F-484A-B34B-F0C011F3A9C5@gmail.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eVEebVxa"
+Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-37d3ecad390so1364864f8f.1
+        for <dm-devel@lists.linux.dev>; Thu, 24 Oct 2024 04:04:34 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1729767873; x=1730372673; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=3Hp3MZ2J5nvjPXe4owm1R1USO0JqDtTZ1bRIkLYYf4c=;
+        b=eVEebVxaRLGGaCYD6a1bxzS8SLs3tE26yql+yt1eQt/LtPnfp1mIXcrRqIJSSYNTUZ
+         La75yZqKgSGRm6Mt1/qMVGzr1ZbJ1xCd7IO7ZDhFt0qHa3FRRrPhG9HauTn+K+LSuJuP
+         IoQmg76Qtljd2k9C/1Q3sK2rMZwXJVgneh0BZMnbJQQOpQYMWU1qqsRgX6HPKB5xD6d4
+         LuKOYuBYPoYb7yDGcwK4r2Cq92z2FSSzGwk/Ufp2BfMXwagyQGmg2SAmLXs4R4Yhe/9d
+         HDSHnpnulr0E3mDNT0nOTAuFfeei0ezRdL467eCEhix8YP8F1UiaHP0QHMGDvY8dwLKp
+         7rTw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1729767873; x=1730372673;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=3Hp3MZ2J5nvjPXe4owm1R1USO0JqDtTZ1bRIkLYYf4c=;
+        b=CazW5Z+7QsLUKbccv35W0AXPimPn5mJYO5bJV+zY28vmWROyj9WCPh+jjsIwje8US1
+         E9cW5+t75r1m5HBUD98VvDCJWRFnnVBhaX1wjppRGlYduAb+GiqtF3tAiePu6gbxRvxQ
+         de963/BWE+yec69hwnUxaD/bTO6HGyVkh0eQ3MsEJSuon7pLWVdq9xZqAvj/U1Mt3L0s
+         v7njdKP/MsipQrgnetAZrF+vLPAk6ibAlu7kH4gJA88KRMS1jZMgXIQ76h8cMGdfIuDB
+         DiVmrIlbGntdlWAcCsozGZNs+EyMVWg0wVExSB2wmyH9lh19c9OGangIiF5mpb/NlMot
+         6sCQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUD//owiEwEFT4Qk1b1nItBrUTY1HzySABAKPE1ak42LxeYjHMDZLRtBwD5L+vJ525ysHLTkvP9aQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwnzkngLYpVh7zQxOVV1Lg2paZGZSg0RTLTqOoNo+WA9PKfez6Q
+	uwIMKxR1CgqyOrC+0lAmI2TCC8tLp0L9TdJpu7w8CFclegcIq+LN
+X-Google-Smtp-Source: AGHT+IHvwFm17skStNFtAvwBetWlAr6wTNMIcnXZh06SN4NQvfSTJYIsr0Uu7Vb9CZ6jFfl6Ufp29A==
+X-Received: by 2002:a5d:4fcb:0:b0:374:c33d:377d with SMTP id ffacd0b85a97d-380458812bbmr1052145f8f.28.1729767872710;
+        Thu, 24 Oct 2024 04:04:32 -0700 (PDT)
+Received: from localhost ([194.120.133.34])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-43186c15684sm41770165e9.39.2024.10.24.04.04.31
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 24 Oct 2024 04:04:32 -0700 (PDT)
+From: Colin Ian King <colin.i.king@gmail.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev
+Cc: linux-kernel@vger.kernel.org
+Subject: [PATCH][next] dm ioctl: rate limit a couple of ioctl based error messages
+Date: Thu, 24 Oct 2024 12:04:31 +0100
+Message-Id: <20241024110431.1906858-1-colin.i.king@gmail.com>
+X-Mailer: git-send-email 2.39.5
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <14126375-5F6F-484A-B34B-F0C011F3A9C5@gmail.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 
-On Thu, Oct 24, 2024 at 03:52:24AM -0400, Adrian Vovk wrote:
-> >
-> >Sure.  But why would you do that?
-> 
-> As mentioned earlier in the thread: I don't have a usecase specifically for this and it was an example of a situation where passthrough is necessary and no filesystem is involved at all. Though, as I also pointed out, a usecase where you're putting encrypted virtual partitions on an encrypted LVM setup isn't all that absurd.
+It is possible to spam the kernel log with a misbehaving user process that
+is passing incorrect dm ioctls to /dev/mapper/control. Use a rate limit
+on these error messages to reduce the noise.
 
-Can you please fix your mailer?  It's creating crazy long lines
-that are completely unreadable.
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ drivers/md/dm-ioctl.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index f299ff393a6a..d42eac944eb5 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1912,7 +1912,7 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user,
+ 
+ 	if ((kernel_params->version[0] != DM_VERSION_MAJOR) ||
+ 	    (kernel_params->version[1] > DM_VERSION_MINOR)) {
+-		DMERR("ioctl interface mismatch: kernel(%u.%u.%u), user(%u.%u.%u), cmd(%d)",
++		DMERR_LIMIT("ioctl interface mismatch: kernel(%u.%u.%u), user(%u.%u.%u), cmd(%d)",
+ 		      DM_VERSION_MAJOR, DM_VERSION_MINOR,
+ 		      DM_VERSION_PATCHLEVEL,
+ 		      kernel_params->version[0],
+@@ -1961,7 +1961,7 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
+ 
+ 	if (unlikely(param_kernel->data_size < minimum_data_size) ||
+ 	    unlikely(param_kernel->data_size > DM_MAX_TARGETS * DM_MAX_TARGET_PARAMS)) {
+-		DMERR("Invalid data size in the ioctl structure: %u",
++		DMERR_LIMIT("Invalid data size in the ioctl structure: %u",
+ 		      param_kernel->data_size);
+ 		return -EINVAL;
+ 	}
+-- 
+2.39.5
 
