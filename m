@@ -1,86 +1,97 @@
-Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pj1-f46.google.com (mail-pj1-f46.google.com [209.85.216.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CD7C1D357B
-	for <dm-devel@lists.linux.dev>; Sat, 26 Oct 2024 12:11:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5AB1D38DD3
+	for <dm-devel@lists.linux.dev>; Sat, 26 Oct 2024 12:44:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729944699; cv=none; b=QkZIIWkYc/UOOzoXvWwY4DmAkMAAQWiNO5EkZ+cF6H3FVrXxIgp1MYlA54SU7dVsZoEwtase4mdW60AiL88k3K2rmfkkQw8hgjnxW5cedC/jhy/1VC8bbJ+L+EHwbEGh1/b/gCILlADPSjuiPNeqz6NIyvz9oGdJoxYhsl+MUyY=
+	t=1729946677; cv=none; b=NfNy3YCzYT/jVfJpofOPJQQ6ov60lS5u08UToag6+qXlPh6Kw0ugpCAugr+ihpvJ4SMcmUMJAUJT3VHa1oXHBP5C5MvAj/BDbb/No6uyl/r5aXfF6Y0jqJMCBprDPOETsOQ6clNU6NbLbRb4uTvA6Amx7XgA9Azu8v7QECs3yXk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729944699; c=relaxed/simple;
-	bh=GRVougec6yTJyFkH6kfC4zumHWETkUftmhzKl9MlSF0=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=JiarhBEelJz5fPbsEns88pBRYu4HW7jQt6HsKJJ8vv3bFeDiKP3aqgP0ik+Ta6VuZv48rkrAF3DzaqFetlaux/5dNOwFd76yNbWKhXCn7/yH4nFJYlUH6uoUjikHjDtUGjGvRkV/Ab/NFE/Dt3Z0AiEaX1heYS4dNMc+AWPIFq8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=EVhYEOKl; arc=none smtp.client-ip=212.122.41.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
+	s=arc-20240116; t=1729946677; c=relaxed/simple;
+	bh=hlYMxGuvPb703Lut6KKMmkeksJOnNiX3d4CG1prtUWA=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=FVqpUqVJQSRoz9Oe/eMeYJ6YrYyXflyrg4LHQuCd9BKwC4Gijs4HdNXjcwr9TZeueaPS/oGUd7zpz0Qx5m8y7aNeNvI52nJ/9rDgCTmnD42COJObU2GyfuCnIFU+1MdeebWl5NxpBDJxXRxkyHFbgGQMSVKRRXkWdGMyBsTEY38=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mnnrCnKQ; arc=none smtp.client-ip=209.85.216.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="EVhYEOKl"
-Content-Type: text/plain;
-	charset=utf-8
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1729944695;
-	bh=GRVougec6yTJyFkH6kfC4zumHWETkUftmhzKl9MlSF0=;
-	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=EVhYEOKlgILdYf24FQUmuz7Yh5xEekFZFWdV7U5r5dZ25osDf4RVKjbExakwBb7sS
-	 sg/bbcixIbMniCimkAIQV7ScIiN0+2eApz+UwNluaFPueRYbL7h8dF6TYFFBDNNRss
-	 XENvfHDSqW89PVum6I0MW5ZLx8iuJlvXe2OCHExo=
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mnnrCnKQ"
+Received: by mail-pj1-f46.google.com with SMTP id 98e67ed59e1d1-2e3fca72a41so2300856a91.1
+        for <dm-devel@lists.linux.dev>; Sat, 26 Oct 2024 05:44:35 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1729946674; x=1730551474; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=hlYMxGuvPb703Lut6KKMmkeksJOnNiX3d4CG1prtUWA=;
+        b=mnnrCnKQLGo8Y5jF7NK3ebz76nuRiU4aiqqSgKWuTsdOfYqe+qlfnWG9mjtvoF4qc2
+         2kTIquFo1CqbspxL2r/k9RIrf9+aFsqJE1GNTBvXACMOICFbGdeLCFyw5wOqci1v8jLg
+         scHUVD3cL+JSLkZHAkI/2twaaczd/9cJCS9oUzCllqTdMgl4lkhO+JtAFLfM7Fl3Qc7j
+         JZnOsWebpQLjkE0uSTs1W4Qw+vVKLCwBedVUdlLY1zcniKZ5xRr+UtW2KnorPRuz5/aY
+         mZ+6sfHWNaQjzh1fdo0hnxc+VCcq8ok35RTGxcUbKMWGXR9fFgvRqQxg353lrxcbliy2
+         AXDQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1729946674; x=1730551474;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=hlYMxGuvPb703Lut6KKMmkeksJOnNiX3d4CG1prtUWA=;
+        b=wT2kH36qOfauO6vdAJM9BuNRT9CIADaqWStDTbWKiHk5eHWCBlfc/sYFNXpaGdFo+M
+         ZpbZZxqAmt3Dd28l5TLiyhglsWWv56q4EfTpUZ4OSUqpHiNxcg667sqSTr7QF4FyLh0g
+         Zmwl8OWV4T/GAFFj7I9eDZ63Yyk11lhGxQDZwI2/5kO+QlWHpZVz5s9wkj3NzlPzf2Jv
+         01axl45cMpyeXtgiTPD+KGSpTqvJpWc3imL0dHH3Wc/yJqsuimFSwgPQ4wrEv9yLfQPa
+         LVjBZwuvzWphpZwEhd1cfYUcLJYq2gSxVsG6mMvFvAVke6CzTuIeXMewTKO3dj8qms2l
+         1TuQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWZtT4Y0T4Dwa3Uoznyzn8nyUBeeJvYqbtmSRis/Bir9b5rFH7ohVc/DLg2txriaDAqjuo0TA6NNA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx84fb6AnELnT+FODH2Moza4/QujWMsJ6txOCmu/vGfJG9FAY0Y
+	g591uhAPWBEVBMxPwv0KIy9kjZJakt6woao3l8OimnDLojemg8WR
+X-Google-Smtp-Source: AGHT+IG5ZhDGETx6o3Y/ScrrP5AVxts1TmCd+x6OU8AF59dnaIuGpNAB6tw4k+6hqYITHYo+ZCSzTA==
+X-Received: by 2002:a17:90b:1c07:b0:2e7:89df:858c with SMTP id 98e67ed59e1d1-2e8f0f52f70mr2797590a91.6.1729946674353;
+        Sat, 26 Oct 2024 05:44:34 -0700 (PDT)
+Received: from visitorckw-System-Product-Name ([140.113.216.168])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e77e5a4ec4sm5396093a91.54.2024.10.26.05.44.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 26 Oct 2024 05:44:33 -0700 (PDT)
+Date: Sat, 26 Oct 2024 20:44:28 +0800
+From: Kuan-Wei Chiu <visitorckw@gmail.com>
+To: kent.overstreet@linux.dev
+Cc: mark.rutland@arm.com, alexander.shishkin@linux.intel.com,
+	jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com,
+	kan.liang@linux.intel.com, willy@infradead.org,
+	jserv@ccns.ncku.edu.tw, linux-kernel@vger.kernel.org,
+	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org,
+	linux-doc@vger.kernel.org, colyli@suse.de, msakai@redhat.com,
+	corbet@lwn.net, peterz@infradead.org, mingo@redhat.com,
+	acme@kernel.org, namhyung@kernel.org, akpm@linux-foundation.org
+Subject: Re: [PATCH v2 00/10] Enhance min heap API with non-inline functions
+ and optimizations
+Message-ID: <ZxzkLJmhn3a/1ALQ@visitorckw-System-Product-Name>
+References: <20241020040200.939973-1-visitorckw@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3818.100.11.1.3\))
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-From: Christian Theune <ct@flyingcircus.io>
-In-Reply-To: <3CF4B28B-52D7-414E-96A1-FDFA5A5EF172@flyingcircus.io>
-Date: Sat, 26 Oct 2024 14:11:14 +0200
-Cc: John Stoffel <john@stoffel.org>,
- "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>,
- "yukuai (C)" <yukuai3@huawei.com>
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <3DB33849-56C5-4C5C-BF56-F54205BEFCF2@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
- <4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
- <C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
- <e92ccf15-be2a-a1aa-5ea2-a88def82e681@huaweicloud.com>
- <30D680B2-F494-42F5-8498-6ED586E05766@flyingcircus.io>
- <26294.40330.924457.532299@quad.stoffel.home>
- <C9A9855D-B0A2-4B13-947E-01AF5BA6DF04@flyingcircus.io>
- <26298.22106.810744.702395@quad.stoffel.home>
- <EBC67418-E60C-435A-8F63-114C67F07583@flyingcircus.io>
- <CEC90137-09B3-41AA-A115-1C172F9C6C4B@flyingcircus.io>
- <2F5F9789-1827-4105-934F-516582018540@flyingcircus.io>
- <adee77ef-f785-acd6-485a-fe2d0a1b9a92@huaweicloud.com>
- <143E09BF-BD10-43EB-B0F1-7421F8200DB1@flyingcircus.io>
- <1bbc86a8-1abf-11a1-e724-b6868a8d9f88@huaweicloud.com>
- <69D8A311-E619-40C2-985A-FB15D0336ADE@flyingcircus.io>
- <CALtW_agiOj2PJ_vsWym0qR8w1Q9iotHKPGuP5RohktkqeXt2mw@mail.gmail.com>
- <E893A1D9-4042-4515-88AE-C69B078A3E43@flyingcircus.io>
- <A74EC4F5-2FF8-4274-A1EB-28D527F143F1@flyingcircus.io>
- <2d85e9ab-1d0f-70a1-fab2-1e469764ef28@huaweicloud.com>
- <3CF4B28B-52D7-414E-96A1-FDFA5A5EF172@flyingcircus.io>
-To: Yu Kuai <yukuai1@huaweicloud.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20241020040200.939973-1-visitorckw@gmail.com>
 
+On Sun, Oct 20, 2024 at 12:01:50PM +0800, Kuan-Wei Chiu wrote:
+> Add non-inline versions of the min heap API functions in lib/min_heap.c
+> and updates all users outside of kernel/events/core.c to use these
+> non-inline versions. To mitigate the performance impact of indirect
+> function calls caused by the non-inline versions of the swap and
+> compare functions, a builtin swap has been introduced that swaps
+> elements based on their size. Additionally, it micro-optimizes the
+> efficiency of the min heap by pre-scaling the counter, following the
+> same approach as in lib/sort.c. Documentation for the min heap API has
+> also been added to the core-api section.
+>
+Hi Kent,
 
+FWIW, here are the bcachefs CI test results for this patch series:
+https://evilpiepirate.org/~testdashboard/ci?user=visitorckw&branch=min-heap-update
 
-> On 26. Oct 2024, at 14:07, Christian Theune <ct@flyingcircus.io> =
-wrote:
->=20
-> Hi,
->=20
-> I can=E2=80=99t apply this on 6.10.5 and trying to manually =
-reconstruct your patch lets me directly stumble into:
-
-6.11.5 of course
-
---=20
-Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
-Christian Zagrodnick
-
+Regards,
+Kuan-Wei
