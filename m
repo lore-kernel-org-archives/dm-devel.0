@@ -1,30 +1,30 @@
 Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BAFB91D3565
-	for <dm-devel@lists.linux.dev>; Sat, 26 Oct 2024 11:51:45 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9686410E5
+	for <dm-devel@lists.linux.dev>; Sat, 26 Oct 2024 12:08:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729943508; cv=none; b=FlrdfCxZ/oOUA3GYFMjMDNDmWj3jnCVvd/UvLahkMknlPobSiw3BVguZlbsZFtnKaA90iboqcJ+jLHLhtJgaAbeS1tK8qG7L5gz11Ljihh73PNmgsQSuFDnu9JUDbECiWYQh3GNCY1Ip/fMVJW3YYO7qYcQLwjND0wnfQ+BJRpk=
+	t=1729944501; cv=none; b=We0cxC2tibSHAz5mHkNiaQgn/a4q/5XYGAm7L3zOekBRNxaRcBizIu27nIIMKFdULVeqwJln/cDCZazpHHZV/FlOMWyu/W1N4tMYZ0ELbKgyiutTbG6a2X7fSCH8xPGNCbB/+od/55zxvSibqV1U9h8a0P9T9++v9WQySB0WfR4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729943508; c=relaxed/simple;
-	bh=Uw+rjngUGA+r/vJPAk01WiVElpFYgKn5H9XtMolWgJ8=;
+	s=arc-20240116; t=1729944501; c=relaxed/simple;
+	bh=05y5b2qb/+GNAxuITCws9Co+5hGhtRDK5jCGPhvQ4tE=;
 	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=DLtfBzkXEeBgWjyYvx+oSUV8lsaDfiAd9d30PLItNQYp82VH/uZLxRQOgz7/ugGITslhoV416eYJPJbYJkycgztz7OxK1qsGwyTjaduDRN+7Fy42oq97MYrimtS/Dg7w9rV3K/Y+U3CNilzJX+mkhGbh1MImhrfca5+oYBoGmYI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=fhHM6i9j; arc=none smtp.client-ip=212.122.41.197
+	 Message-Id:References:To; b=BJvvrVyWtfhNHX3OgTJ1uCbBQNp1qN/Pra3p45dUTJ6LJ9fVTLYtscMSPIGxoJOf8zXHkmsECV98q02UroU1Zv/KhyZLxPIURZGsUy1o3DPZjxHXy2rlUzmpSSnYsFebZxsa0XT6OL+RRfo+vwhoe7p2p9ABWUcpSLbagl0GCxI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=ajaQNbPY; arc=none smtp.client-ip=212.122.41.197
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="fhHM6i9j"
+	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="ajaQNbPY"
 Content-Type: text/plain;
 	charset=utf-8
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1729943496;
-	bh=Uw+rjngUGA+r/vJPAk01WiVElpFYgKn5H9XtMolWgJ8=;
+	s=mail; t=1729944495;
+	bh=1CyHuSwN0gUIoW6VugDa3hFK0S+UCpr+RSLTbF+Db/E=;
 	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=fhHM6i9jyfJTLJttKqQ/INQFUpN6u82nIwhIr2IyXEV7k+GeLMPIKzzlnJPb4qGsd
-	 KS6eS9FSksZWcvhoMTLCOaDr46IaA9AYh09rppYmrhtd9sGTw1uRaCyUohJJBiSQ9c
-	 nGK3Lwe+uC4HLTRIYH2ThuvQawc/t92+GX6Oznow=
+	b=ajaQNbPY2k9k5M+yBku+wTZHHXCkvrRCaPkPR9T7EC5erIPJcdxbe2TD2mP0Gi5GO
+	 QZK4SPBBEJU8itfHVzwLt9RKow419qM8N3dBOu+OwHHJf4toWV2IusAEj6ay250N74
+	 FuKWyp89F6ZunvbaQiIXwnCNXE6mg57pCBIoyzWM=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,14 +35,14 @@ Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
  devices when rsyncing many files
 From: Christian Theune <ct@flyingcircus.io>
 In-Reply-To: <2d85e9ab-1d0f-70a1-fab2-1e469764ef28@huaweicloud.com>
-Date: Sat, 26 Oct 2024 13:51:14 +0200
+Date: Sat, 26 Oct 2024 14:07:53 +0200
 Cc: John Stoffel <john@stoffel.org>,
  "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
  dm-devel@lists.linux.dev,
  =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>,
  "yukuai (C)" <yukuai3@huawei.com>
 Content-Transfer-Encoding: quoted-printable
-Message-Id: <FDC89A24-7AB6-45AC-8C7C-2839EF54DAC9@flyingcircus.io>
+Message-Id: <3CF4B28B-52D7-414E-96A1-FDFA5A5EF172@flyingcircus.io>
 References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
  <4363F3A3-46C2-419E-B43A-4CDA8C293CEB@flyingcircus.io>
  <C832C22B-E720-4457-83C6-CA259AD667B2@flyingcircus.io>
@@ -64,14 +64,168 @@ References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
  <2d85e9ab-1d0f-70a1-fab2-1e469764ef28@huaweicloud.com>
 To: Yu Kuai <yukuai1@huaweicloud.com>
 
+Hi,
 
+I can=E2=80=99t apply this on 6.10.5 and trying to manually reconstruct =
+your patch lets me directly stumble into:
+
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index c14cf2410365..ce5466d4791a 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -2366,7 +2366,7 @@ static struct stripe_head *alloc_stripe(struct =
+kmem_cache *sc, gfp_t gfp,
+                INIT_LIST_HEAD(&sh->lru);
+                INIT_LIST_HEAD(&sh->r5c);
+                INIT_LIST_HEAD(&sh->log_list);
+-               atomic_set(&sh->count, 1);
++               atomic_set(&sh->count, 0);
+                sh->raid_conf =3D conf;
+                sh->log_start =3D MaxSector;
+
+Which version is your patch based on?
+
+Christian
 
 > On 26. Oct 2024, at 11:07, Yu Kuai <yukuai1@huaweicloud.com> wrote:
 >=20
+> Hi,
+>=20
+> =E5=9C=A8 2024/10/26 13:37, Christian Theune =E5=86=99=E9=81=93:
+>>> On 25. Oct 2024, at 16:02, Christian Theune <ct@flyingcircus.io> =
+wrote:
+>>>=20
+>>> Yeah, this was more directed towards the question whether Yu needs =
+me to run the patch that he posted earlier.
+>>>=20
+>>> So. The current status is: previously this crashed within 2-3 hours. =
+Both machines are now running with the bitmap turned off as described =
+above and have been syncing data for about 7 hours. This seems to =
+indicate that the bitmap is involved here.
+>> Update: both machines have been able to finish their multi-TiB rsync =
+job that previously caused reliable lockups. So: the bitmap code seems =
+to be the culprit here =E2=80=A6
+>> Christian
 >=20
 > Then, can you enable bitmap and test the following debug patch:
+>=20
+> Thanks,
+> Kuai
+>=20
+> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+> index 58f71c3e1368..b2a75a904209 100644
+> --- a/drivers/md/raid5.c
+> +++ b/drivers/md/raid5.c
+> @@ -2369,6 +2369,7 @@ static struct stripe_head *alloc_stripe(struct =
+kmem_cache *sc, gfp_t gfp,
+>                atomic_set(&sh->count, 1);
+>                sh->raid_conf =3D conf;
+>                sh->log_start =3D MaxSector;
+> +               atomic_set(&sh->bitmap_counts, 0);
+>=20
+>                if (raid5_has_ppl(conf)) {
+>                        sh->ppl_page =3D alloc_page(gfp);
+> @@ -3565,6 +3566,7 @@ static void __add_stripe_bio(struct stripe_head =
+*sh, struct bio *bi,
+>                spin_unlock_irq(&sh->stripe_lock);
+>                conf->mddev->bitmap_ops->startwrite(conf->mddev, =
+sh->sector,
+>                                        RAID5_STRIPE_SECTORS(conf), =
+false);
+> +               printk("%s: %s: start %px(%llu+%lu) %u\n", __func__, =
+mdname(conf->mddev), sh, sh->sector, RAID5_STRIPE_SECTORS(conf), =
+atomic_inc_return(&sh->bitmap_counts));
+>                spin_lock_irq(&sh->stripe_lock);
+>                clear_bit(STRIPE_BITMAP_PENDING, &sh->state);
+>                if (!sh->batch_head) {
+> @@ -3662,10 +3664,12 @@ handle_failed_stripe(struct r5conf *conf, =
+struct stripe_head *sh,
+>                        bio_io_error(bi);
+>                        bi =3D nextbi;
+>                }
+> -               if (bitmap_end)
+> +               if (bitmap_end) {
+>                        conf->mddev->bitmap_ops->endwrite(conf->mddev,
+>                                        sh->sector, =
+RAID5_STRIPE_SECTORS(conf),
+>                                        false, false);
+> +                       printk("%s: %s: end %px(%llu+%lu) %u\n", =
+__func__, mdname(conf->mddev), sh, sh->sector, =
+RAID5_STRIPE_SECTORS(conf), atomic_dec_return(&sh->bitmap_counts));
+> +               }
+>                bitmap_end =3D 0;
+>                /* and fail all 'written' */
+>                bi =3D sh->dev[i].written;
+> @@ -3709,10 +3713,12 @@ handle_failed_stripe(struct r5conf *conf, =
+struct stripe_head *sh,
+>                                bi =3D nextbi;
+>                        }
+>                }
+> -               if (bitmap_end)
+> +               if (bitmap_end) {
+>                        conf->mddev->bitmap_ops->endwrite(conf->mddev,
+>                                        sh->sector, =
+RAID5_STRIPE_SECTORS(conf),
+>                                        false, false);
+> +                       printk("%s: %s: end %px(%llu+%lu) %u\n", =
+__func__, mdname(conf->mddev), sh, sh->sector, =
+RAID5_STRIPE_SECTORS(conf), atomic_dec_return(&sh->bitmap_counts));
+> +               }
+>                /* If we were in the middle of a write the parity block =
+might
+>                 * still be locked - so just clear all R5_LOCKED flags
+>                 */
+> @@ -4065,6 +4071,7 @@ static void handle_stripe_clean_event(struct =
+r5conf *conf,
+>                                        sh->sector, =
+RAID5_STRIPE_SECTORS(conf),
+>                                        !test_bit(STRIPE_DEGRADED, =
+&sh->state),
+>                                        false);
+> +                               printk("%s: %s: end %px(%llu+%lu) =
+%u\n", __func__, mdname(conf->mddev), sh, sh->sector, =
+RAID5_STRIPE_SECTORS(conf), atomic_dec_return(&sh->bitmap_counts));
+>                                if (head_sh->batch_head) {
+>                                        sh =3D =
+list_first_entry(&sh->batch_list,
+>                                                              struct =
+stripe_head,
+> @@ -5785,9 +5792,11 @@ static void make_discard_request(struct mddev =
+*mddev, struct bio *bi)
+>                spin_unlock_irq(&sh->stripe_lock);
+>                if (conf->mddev->bitmap) {
+>                        for (d =3D 0; d < conf->raid_disks - =
+conf->max_degraded;
+> -                            d++)
+> +                            d++) {
+>                                mddev->bitmap_ops->startwrite(mddev, =
+sh->sector,
+>                                        RAID5_STRIPE_SECTORS(conf), =
+false);
+> +                               printk("%s: %s: start %px(%llu+%lu) =
+%u\n", __func__, mdname(conf->mddev), sh, sh->sector, =
+RAID5_STRIPE_SECTORS(conf), atomic_inc_return(&sh->bitmap_counts));
+> +                       }
+>                        sh->bm_seq =3D conf->seq_flush + 1;
+>                        set_bit(STRIPE_BIT_DELAY, &sh->state);
+>                }
+> diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
+> index 896ecfc4afa6..12024249245e 100644
+> --- a/drivers/md/raid5.h
+> +++ b/drivers/md/raid5.h
+> @@ -255,6 +255,7 @@ struct stripe_head {
+>        int     nr_pages;       /* page array size */
+>        int     stripes_per_page;
+> #endif
+> +       atomic_t bitmap_counts;
+>        struct r5dev {
+>                /* rreq and rvec are used for the replacement device =
+when
+>                 * writing data to both devices.
 
-Thanks, trying on 6.11.5 now.
+
+Liebe Gr=C3=BC=C3=9Fe,
+Christian Theune
 
 --=20
 Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
