@@ -1,30 +1,30 @@
 Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12B0C70802
-	for <dm-devel@lists.linux.dev>; Fri, 25 Oct 2024 14:03:05 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B29D72AEE3
+	for <dm-devel@lists.linux.dev>; Sat, 26 Oct 2024 05:37:40 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729864988; cv=none; b=EChNz9NWG8MXowXl6vyFgiT5uYcQXRUXPBJZthbhidXQ3FD5YT/xr49Tyl2LZke39iQ9GSRtD3B7RLJujqJcyi7VW5drvwPAqcugeqXr33yf3qKhShLOKzdfr+YAyoLnQ84A1W5uH0XpORUfEthFG7AorDk0qwKDjepAY65nC10=
+	t=1729921063; cv=none; b=rfrEnO8dBkK2vPFo7sKh6ZvYXtlgyLjzZQjk4zbSQdSaVff6AzQauxtcF4Kc+5j2eUD3Fpro9lchGOdMbe8NjSLvjrGy2HSGgP6yFUnQU2SYNcLgi9+A7PQcygvIR4pglB8ULSAXQ+qNc0Lk2lR7RtnoMdqhcTX8kCr5WVCBIWs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729864988; c=relaxed/simple;
-	bh=CtCpXlyBQiM74vutT7KETUkiz7TorjsXNWVM5Yc33NI=;
+	s=arc-20240116; t=1729921063; c=relaxed/simple;
+	bh=bMmw7m2ENpHY5/+nHMoxgQ2W0sNgsJVAWW6/0g2B2Qc=;
 	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=G2hQAUYiUyjbXsHwjTkuQWZEiRdiRD420VnV5LvhF8MOS8TZqTO+MTnlH1DChWC5l7SLXiigV0uuOowNEdRl+4G8KTmTg2WTI1e2NG4GnXZ6P8rb0iek2azEbAmLAMIHJG3dasQAudzWndH1R1qGr7thSNDvh0fVylRvq8dgplY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=XEdfc8Qa; arc=none smtp.client-ip=212.122.41.197
+	 Message-Id:References:To; b=lrv3Zgk2fynLS7pxhI4dJx8+vHUQU3Pev0oS7u182wcLNBr9gMDDUakm1fgRvhuvEfqHbpZ5FiTeqa2lFtWhi6ZH5XvqAsUQWPYAJZLK+mOMvOVxKzIhiOuouDsEeVKxDZoBRMds+cftubK9Yim4VXBLaUPIm/xCHdsnFu1FwfQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=K0H+k7EF; arc=none smtp.client-ip=212.122.41.197
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="XEdfc8Qa"
+	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="K0H+k7EF"
 Content-Type: text/plain;
 	charset=utf-8
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1729864983;
-	bh=CtCpXlyBQiM74vutT7KETUkiz7TorjsXNWVM5Yc33NI=;
+	s=mail; t=1729921056;
+	bh=bMmw7m2ENpHY5/+nHMoxgQ2W0sNgsJVAWW6/0g2B2Qc=;
 	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=XEdfc8QaBTixRCJOFj36R8/Sr84nanByJKyBO1Ho714dfmPJctgTLEWNi2HmX1LcT
-	 oUnyI/GIvLGXdxrE+4NUM56R7W0GM7jpgJ3RpLVMAMEHuO7/RdCGcYe0CMuCWyLvWB
-	 Fltlg4xwS/t41P5YY60soetRx02ZBMIYnhMQvCUg=
+	b=K0H+k7EFgHoz2kafGRq5rZq6T2mOcWrdJ/+3cV0VHk6SeSCKfy7qJIx7aHX1tsv1q
+	 rZX9c2bxhMHgURfwKYnKXKbMcRbOwTxQUFvTJ7y7yIVO+Wj2z5oiqtQPFMwfDRcd6M
+	 tv7WKujix2omm50QVSIJYZsAkk546EMgMpGy+kGk=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -34,15 +34,15 @@ Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3818.100.11.1.3\))
 Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
  devices when rsyncing many files
 From: Christian Theune <ct@flyingcircus.io>
-In-Reply-To: <CALtW_agiOj2PJ_vsWym0qR8w1Q9iotHKPGuP5RohktkqeXt2mw@mail.gmail.com>
-Date: Fri, 25 Oct 2024 16:02:40 +0200
-Cc: Yu Kuai <yukuai1@huaweicloud.com>,
- John Stoffel <john@stoffel.org>,
+In-Reply-To: <E893A1D9-4042-4515-88AE-C69B078A3E43@flyingcircus.io>
+Date: Sat, 26 Oct 2024 07:37:14 +0200
+Cc: John Stoffel <john@stoffel.org>,
  "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
  dm-devel@lists.linux.dev,
- "yukuai (C)" <yukuai3@huawei.com>
+ "yukuai (C)" <yukuai3@huawei.com>,
+ =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>
 Content-Transfer-Encoding: quoted-printable
-Message-Id: <E893A1D9-4042-4515-88AE-C69B078A3E43@flyingcircus.io>
+Message-Id: <A74EC4F5-2FF8-4274-A1EB-28D527F143F1@flyingcircus.io>
 References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
  <EACD5B78-93F6-443C-BB5A-19C9174A1C5C@flyingcircus.io>
  <22C5E55F-9C50-4DB7-B656-08BEC238C8A7@flyingcircus.io>
@@ -64,28 +64,24 @@ References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
  <1bbc86a8-1abf-11a1-e724-b6868a8d9f88@huaweicloud.com>
  <69D8A311-E619-40C2-985A-FB15D0336ADE@flyingcircus.io>
  <CALtW_agiOj2PJ_vsWym0qR8w1Q9iotHKPGuP5RohktkqeXt2mw@mail.gmail.com>
-To: =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>
+ <E893A1D9-4042-4515-88AE-C69B078A3E43@flyingcircus.io>
+To: Yu Kuai <yukuai1@huaweicloud.com>
 
-Hi,
 
-> On 25. Oct 2024, at 15:31, Dragan Milivojevi=C4=87 =
-<galileo@pkm-inc.com> wrote:
+> On 25. Oct 2024, at 16:02, Christian Theune <ct@flyingcircus.io> =
+wrote:
 >=20
-> Take this with a grain of salt,
-> since I'm not a kernel developer:
+> Yeah, this was more directed towards the question whether Yu needs me =
+to run the patch that he posted earlier.
 >=20
-> If you can trigger the issue with bitmap=3Dnone
-> I would say that is a valuable data point.
-
-Yeah, this was more directed towards the question whether Yu needs me to =
-run the patch that he posted earlier.
-
-So. The current status is: previously this crashed within 2-3 hours. =
+> So. The current status is: previously this crashed within 2-3 hours. =
 Both machines are now running with the bitmap turned off as described =
 above and have been syncing data for about 7 hours. This seems to =
 indicate that the bitmap is involved here.
 
-@Yu: let me know what next step you=E2=80=99d like to get from me.
+Update: both machines have been able to finish their multi-TiB rsync job =
+that previously caused reliable lockups. So: the bitmap code seems to be =
+the culprit here =E2=80=A6=20
 
 Christian
 
