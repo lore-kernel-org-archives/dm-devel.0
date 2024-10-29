@@ -1,109 +1,109 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16AE920C49D
-	for <dm-devel@lists.linux.dev>; Tue, 29 Oct 2024 10:53:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AC5B20515F
+	for <dm-devel@lists.linux.dev>; Tue, 29 Oct 2024 11:09:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730199203; cv=none; b=HcYpA+ZQgO5gWqtTPj6hzdJN4GQPoDRTDHMSqVAkkSJwiwJesDoiiv6ElFik16iA7+ZQXTGDQFYg1g6xu+NNJlvp71JvSK86DgU7KK/aq2ZRrsYV5NZBVHXe15Qkh9h44y9tstTekcp9fKySFja1+RjNAI0qhADj6wfXOxBSIcI=
+	t=1730200149; cv=none; b=UDzUGPepHaatg7edtxaq9rRU4kPQCbocXvdfrQJo/xft24aTE/J1GJLriTaJfhb5genijXdjgvt9k1hvbfL6jWFAjjsu7ahvDzO7gjZ2Gpjrm/Z7lGteNSETIaPixGW5riEBYnqIYi9t0QlDhK/6fxsxiqqO1UFL3EjzGo2oue4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730199203; c=relaxed/simple;
-	bh=3f2I4gTtnrvWS0xKIAK7sUX3Hh1MzRe7dq2pvYIdrJM=;
+	s=arc-20240116; t=1730200149; c=relaxed/simple;
+	bh=rRAEgyNOWwhOyxMUbVEYKP+9w548eZ2zWldFy83pZag=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=r3jR+Y7M/1SdNgnw7u//DbaZIzv7J+43qm8iKjNoXliCW9FvKSm5/nxbUir+7XLaxfBTeGnHAFCdV3vuatLs00OdEwJDsTY9iCA/Tf9s9zb1uxkQB0JYq3Ewcmh6bn0/EbWmQdSggYii/VYPy8fZHovcAecgB7QR6/cXS4oPaPQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gB02tLZ1; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=SF8Y0AYDLJ8w3a5tlhE0Zd8XsXUkwHcrl9W/bD0ePvrnHg+xliNFDH4D4i8mwsiGa9HdOf1tUYIQpNHaz+RJKRbV07F6BuUpvEKzqgl7WAAlZo1ZlEm5jnBtkpsyYPkZZwJf1R9Xs1U39t3l8zP8k8Ga/EyPdEhLD5lNCHZX7C4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IIBfB0wp; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gB02tLZ1"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IIBfB0wp"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1730199199;
+	s=mimecast20190719; t=1730200146;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=TyxY+Tcf2+DbuDgYiWlY8cZLoVEhHtFLOIqDPlDrUmg=;
-	b=gB02tLZ1Oly4JFfwO2zt+6dKutDmh7KQku1wyZJHd7sx9ocvzxeY7nbdhWAmNfgAjFnzPf
-	uxVLxCvrVeDIMB1DWFAFl4U+QQ+aDcW5CM9fSq5HYWToz+FQGAx5+To04v3mV/aZkVWN/V
-	ueSd++T3WnCKxTZeEP5EEqIelEI9eZo=
+	bh=XNsXWr8C4+pGAB/ZzZscQZye/5tnLQlo7HFEntqVYd0=;
+	b=IIBfB0wpP3nfuFg1GNwwKQH71Xzsx15ZLHADJld8xiKiPIeCFky4rYjcOwvcdTn/6Xfhxs
+	p0qBw6S6Lx831x1vzyC9BdR3XZkd7rMeMX/vmYQzV/FMV2TJvMlDQvo/bIiQBbIex0Wjyh
+	+CLSrkonVxqNOo5xpZVD4oQgWbnhNrc=
 Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-487-Qb9zetvtPCGhY82Bhixx2Q-1; Tue,
- 29 Oct 2024 06:53:18 -0400
-X-MC-Unique: Qb9zetvtPCGhY82Bhixx2Q-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-674-OiGAK7LwPRCg8Cw3M5RuZg-1; Tue,
+ 29 Oct 2024 07:09:00 -0400
+X-MC-Unique: OiGAK7LwPRCg8Cw3M5RuZg-1
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7E7AA19560BE;
-	Tue, 29 Oct 2024 10:53:17 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 52DEC19560AA;
+	Tue, 29 Oct 2024 11:08:56 +0000 (UTC)
 Received: from [10.45.226.64] (unknown [10.45.226.64])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 95D9E19560A3;
-	Tue, 29 Oct 2024 10:53:14 +0000 (UTC)
-Date: Tue, 29 Oct 2024 11:53:11 +0100 (CET)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 81B7D1955F21;
+	Tue, 29 Oct 2024 11:08:49 +0000 (UTC)
+Date: Tue, 29 Oct 2024 12:08:44 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Gax-c <zichenxie0106@gmail.com>
-cc: agk@redhat.com, snitzer@kernel.org, heinzm@redhat.com, kbusch@kernel.org, 
-    scott.bauer@intel.com, dm-devel@lists.linux.dev, zzjas98@gmail.com, 
-    chenyuan0y@gmail.com
-Subject: Re: [PATCH] dm: Cast an operand to sector_t to prevent potential
- uint32_t overflow in unstripe_ctr()
-In-Reply-To: <20241021195444.13237-1-zichenxie0106@gmail.com>
-Message-ID: <fa85ad18-4725-8ac7-1429-83eef450b7e1@redhat.com>
-References: <20241021195444.13237-1-zichenxie0106@gmail.com>
+To: Adrian Vovk <adrianvovk@gmail.com>
+cc: Christoph Hellwig <hch@infradead.org>, Eric Biggers <ebiggers@kernel.org>, 
+    Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk, song@kernel.org, 
+    yukuai3@huawei.com, agk@redhat.com, snitzer@kernel.org, 
+    adrian.hunter@intel.com, quic_asutoshd@quicinc.com, ritesh.list@gmail.com, 
+    ulf.hansson@linaro.org, andersson@kernel.org, konradybcio@kernel.org, 
+    kees@kernel.org, gustavoars@kernel.org, linux-block@vger.kernel.org, 
+    linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
+    dm-devel@lists.linux.dev, linux-mmc@vger.kernel.org, 
+    linux-arm-msm@vger.kernel.org, linux-hardening@vger.kernel.org, 
+    quic_srichara@quicinc.com, quic_varada@quicinc.com
+Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
+In-Reply-To: <14126375-5F6F-484A-B34B-F0C011F3A9C5@gmail.com>
+Message-ID: <74adbf13-c778-ee00-0cd6-3931a4a518ec@redhat.com>
+References: <20240916085741.1636554-2-quic_mdalam@quicinc.com> <20240921185519.GA2187@quark.localdomain> <ZvJt9ceeL18XKrTc@infradead.org> <ef3c9a17-79f3-4937-965e-52e2b9e66ac2@gmail.com> <ZxHwgsm2iP2Z_3at@infradead.org> <CAAdYy_mVy3uXPqWbjPzK_i8w7Okq73wKBQyc95TbnonE36rPgQ@mail.gmail.com>
+ <ZxH4lnkQNhTP5fe6@infradead.org> <D96294E2-F17A-4E58-90FB-1D17747048E5@gmail.com> <ZxieZPlH-S9pakYW@infradead.org> <CAAdYy_ms=VmvxZy9QiMkwcNk21a2kVy73c8-NxUh4dNJuLefCg@mail.gmail.com> <Zxnl4VnD6K6No4UQ@infradead.org>
+ <14126375-5F6F-484A-B34B-F0C011F3A9C5@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-Accepted, Thanks.
+
+
+On Thu, 24 Oct 2024, Adrian Vovk wrote:
+
+> >Sure.  But why would you do that?
+> 
+> As mentioned earlier in the thread: I don't have a usecase specifically 
+> for this and it was an example of a situation where passthrough is 
+> necessary and no filesystem is involved at all. Though, as I also 
+> pointed out, a usecase where you're putting encrypted virtual partitions 
+> on an encrypted LVM setup isn't all that absurd.
+> 
+> In my real-world case, I'm putting encrypted loop devices on top of a 
+> filesystem that holds its own sensitive data. Each loop device has 
+> dm-crypt inside and uses a unique key, but the filesystem needs to be 
+> encrypted too (because, again, it has its own sensitive data outside of 
+> the loop devices). The loop devices cannot be put onto their own 
+> separate partition because there's no good way to know ahead of time how 
+> much space either of the partitions would need: sometimes the loop 
+> devices need to take up loads of space on the partition, and other times 
+> the non-loop-device data needs to take up that space. And to top it all 
+> off, the distribution of allocated space needs to change dynamically.
+> 
+> The current Linux kernel does not support this use-case without double 
+> encryption. The loop devices are encrypted once with their own dm-crypt 
+> instance. Then that same data is encrypted a second time over by the 
+> partition.
+
+You can add a flag to an inode, then you can modify the page cache code so 
+that if it is reading/writing a flagged file, it will attach the flag to 
+the bio. Then, you can create a device-mapper target "dm-flag-switch" that 
+will forward unflagged bios to one underlying device and flagged bios to 
+another underlying device.
+
+I think this is not impossible. But this change needs to go through the 
+VFS tree, so I suggest that you start asking about it there.
 
 Mikulas
-
-
-
-On Mon, 21 Oct 2024, Gax-c wrote:
-
-> From: Zichen Xie <zichenxie0106@gmail.com>
-> 
-> This was found by a static analyzer.
-> There may be a potential integer overflow issue in
-> unstripe_ctr(). uc->unstripe_offset and uc->unstripe_width are
-> defined as "sector_t"(uint64_t), while uc->unstripe,
-> uc->chunk_size and uc->stripes are all defined as "uint32_t".
-> The result of the calculation will be limited to "uint32_t"
-> without correct casting.
-> So, we recommend adding an extra cast to prevent potential
-> integer overflow.
-> 
-> Fixes: 18a5bf270532 ("dm: add unstriped target")
-> Signed-off-by: Zichen Xie <zichenxie0106@gmail.com>
-> ---
->  drivers/md/dm-unstripe.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
-> index 48587c16c445..e8a9432057dc 100644
-> --- a/drivers/md/dm-unstripe.c
-> +++ b/drivers/md/dm-unstripe.c
-> @@ -85,8 +85,8 @@ static int unstripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	}
->  	uc->physical_start = start;
->  
-> -	uc->unstripe_offset = uc->unstripe * uc->chunk_size;
-> -	uc->unstripe_width = (uc->stripes - 1) * uc->chunk_size;
-> +	uc->unstripe_offset = (sector_t)uc->unstripe * uc->chunk_size;
-> +	uc->unstripe_width = (sector_t)(uc->stripes - 1) * uc->chunk_size;
->  	uc->chunk_shift = is_power_of_2(uc->chunk_size) ? fls(uc->chunk_size) - 1 : 0;
->  
->  	tmp_len = ti->len;
-> -- 
-> 2.34.1
-> 
 
