@@ -1,109 +1,130 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AC5B20515F
-	for <dm-devel@lists.linux.dev>; Tue, 29 Oct 2024 11:09:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD3FC1DEFE2
+	for <dm-devel@lists.linux.dev>; Tue, 29 Oct 2024 11:17:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730200149; cv=none; b=UDzUGPepHaatg7edtxaq9rRU4kPQCbocXvdfrQJo/xft24aTE/J1GJLriTaJfhb5genijXdjgvt9k1hvbfL6jWFAjjsu7ahvDzO7gjZ2Gpjrm/Z7lGteNSETIaPixGW5riEBYnqIYi9t0QlDhK/6fxsxiqqO1UFL3EjzGo2oue4=
+	t=1730200643; cv=none; b=B2tE261sCtANpuoqqAsmvaqloK5oQ0BYRw8wUhMDXxiq29/6VJaxfFd/K9riFmnO8CxTyMorIs3O9JjiDrMG3imTMZBA8xN44B8OlsbpxyV5JwrqkRmi3aLvypFinqswQxA1PZtZ2UJYLzhjau5pelT8iiniqPQThKJ1d8A0aLg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730200149; c=relaxed/simple;
-	bh=rRAEgyNOWwhOyxMUbVEYKP+9w548eZ2zWldFy83pZag=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=SF8Y0AYDLJ8w3a5tlhE0Zd8XsXUkwHcrl9W/bD0ePvrnHg+xliNFDH4D4i8mwsiGa9HdOf1tUYIQpNHaz+RJKRbV07F6BuUpvEKzqgl7WAAlZo1ZlEm5jnBtkpsyYPkZZwJf1R9Xs1U39t3l8zP8k8Ga/EyPdEhLD5lNCHZX7C4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IIBfB0wp; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1730200643; c=relaxed/simple;
+	bh=dkGzGyg7pdKTMS+3YZbBUPxaK0vjC+JMzFAdFP9wlQI=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=ergOj+7eFbDNKA0luYJ2stlEx5qP6UoSUSU9RlPHUcTv9mId9vmXYr7aMfxq8RYwuXBtANxQyLODLDN6zMjaIzfG3EiK09brW4C6WGRlR3JWPvna/LQsWhJ5/x8XtdHnnIZC4OjSmY8K6fQqNdJGAegqCC3iZvp/ZW7mMfQ0F7Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CxK6sYts; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IIBfB0wp"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CxK6sYts"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1730200146;
+	s=mimecast20190719; t=1730200640;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=XNsXWr8C4+pGAB/ZzZscQZye/5tnLQlo7HFEntqVYd0=;
-	b=IIBfB0wpP3nfuFg1GNwwKQH71Xzsx15ZLHADJld8xiKiPIeCFky4rYjcOwvcdTn/6Xfhxs
-	p0qBw6S6Lx831x1vzyC9BdR3XZkd7rMeMX/vmYQzV/FMV2TJvMlDQvo/bIiQBbIex0Wjyh
-	+CLSrkonVxqNOo5xpZVD4oQgWbnhNrc=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=GC/YdOJ4KcSCF7T2Hs84AdUEiIyx1+HRMTLf6wuefPE=;
+	b=CxK6sYtspkkhCAaPZcTdxMxMHcg21t461duVf9pIno1c8BcC+n/4KWhYMAns4KRUFpWh0I
+	SAYPiTi6FJkZ94Yzj02G27dXDRfcHSm6Fjdj/8w+c0HMTCOXkho88fc4tmoZlbF2TGoLWV
+	rgLcJu6HKI7swBfCUZH94AFQV506ntU=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-674-OiGAK7LwPRCg8Cw3M5RuZg-1; Tue,
- 29 Oct 2024 07:09:00 -0400
-X-MC-Unique: OiGAK7LwPRCg8Cw3M5RuZg-1
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-682-Otcs7_m-MiKvsicdP3jNvA-1; Tue,
+ 29 Oct 2024 07:17:19 -0400
+X-MC-Unique: Otcs7_m-MiKvsicdP3jNvA-1
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 52DEC19560AA;
-	Tue, 29 Oct 2024 11:08:56 +0000 (UTC)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 52BD919560A5;
+	Tue, 29 Oct 2024 11:17:18 +0000 (UTC)
 Received: from [10.45.226.64] (unknown [10.45.226.64])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 81B7D1955F21;
-	Tue, 29 Oct 2024 11:08:49 +0000 (UTC)
-Date: Tue, 29 Oct 2024 12:08:44 +0100 (CET)
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5D4C5300018D;
+	Tue, 29 Oct 2024 11:17:16 +0000 (UTC)
+Date: Tue, 29 Oct 2024 12:17:13 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Adrian Vovk <adrianvovk@gmail.com>
-cc: Christoph Hellwig <hch@infradead.org>, Eric Biggers <ebiggers@kernel.org>, 
-    Md Sadre Alam <quic_mdalam@quicinc.com>, axboe@kernel.dk, song@kernel.org, 
-    yukuai3@huawei.com, agk@redhat.com, snitzer@kernel.org, 
-    adrian.hunter@intel.com, quic_asutoshd@quicinc.com, ritesh.list@gmail.com, 
-    ulf.hansson@linaro.org, andersson@kernel.org, konradybcio@kernel.org, 
-    kees@kernel.org, gustavoars@kernel.org, linux-block@vger.kernel.org, 
-    linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
-    dm-devel@lists.linux.dev, linux-mmc@vger.kernel.org, 
-    linux-arm-msm@vger.kernel.org, linux-hardening@vger.kernel.org, 
-    quic_srichara@quicinc.com, quic_varada@quicinc.com
-Subject: Re: [PATCH v2 1/3] dm-inlinecrypt: Add inline encryption support
-In-Reply-To: <14126375-5F6F-484A-B34B-F0C011F3A9C5@gmail.com>
-Message-ID: <74adbf13-c778-ee00-0cd6-3931a4a518ec@redhat.com>
-References: <20240916085741.1636554-2-quic_mdalam@quicinc.com> <20240921185519.GA2187@quark.localdomain> <ZvJt9ceeL18XKrTc@infradead.org> <ef3c9a17-79f3-4937-965e-52e2b9e66ac2@gmail.com> <ZxHwgsm2iP2Z_3at@infradead.org> <CAAdYy_mVy3uXPqWbjPzK_i8w7Okq73wKBQyc95TbnonE36rPgQ@mail.gmail.com>
- <ZxH4lnkQNhTP5fe6@infradead.org> <D96294E2-F17A-4E58-90FB-1D17747048E5@gmail.com> <ZxieZPlH-S9pakYW@infradead.org> <CAAdYy_ms=VmvxZy9QiMkwcNk21a2kVy73c8-NxUh4dNJuLefCg@mail.gmail.com> <Zxnl4VnD6K6No4UQ@infradead.org>
- <14126375-5F6F-484A-B34B-F0C011F3A9C5@gmail.com>
+To: dm-devel@lists.linux.dev
+cc: Sami Tolvanen <samitolvanen@google.com>, Will Drewry <wad@chromium.org>, 
+    agk@redhat.com, snitzer@kernel.org, 
+    Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] dm-verity: don't crash if panic_on_corruption is not
+ selected
+Message-ID: <5f7c2e37-fd4f-4371-3b0d-633b5a99743a@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
+If the user sets panic_on_error and doesn't set panic_on_corruption,
+dm-verity should not panic on data mismatch. But, currently it panics,
+because it treats data mismatch as I/O error.
 
+This commit fixes the logic so that if there is data mismatch and
+panic_on_corruption or restart_on_corruption is not selected, the system
+won't restart or panic.
 
-On Thu, 24 Oct 2024, Adrian Vovk wrote:
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: f811b83879fb ("dm-verity: introduce the options restart_on_error and panic_on_error")
 
-> >Sure.  But why would you do that?
-> 
-> As mentioned earlier in the thread: I don't have a usecase specifically 
-> for this and it was an example of a situation where passthrough is 
-> necessary and no filesystem is involved at all. Though, as I also 
-> pointed out, a usecase where you're putting encrypted virtual partitions 
-> on an encrypted LVM setup isn't all that absurd.
-> 
-> In my real-world case, I'm putting encrypted loop devices on top of a 
-> filesystem that holds its own sensitive data. Each loop device has 
-> dm-crypt inside and uses a unique key, but the filesystem needs to be 
-> encrypted too (because, again, it has its own sensitive data outside of 
-> the loop devices). The loop devices cannot be put onto their own 
-> separate partition because there's no good way to know ahead of time how 
-> much space either of the partitions would need: sometimes the loop 
-> devices need to take up loads of space on the partition, and other times 
-> the non-loop-device data needs to take up that space. And to top it all 
-> off, the distribution of allocated space needs to change dynamically.
-> 
-> The current Linux kernel does not support this use-case without double 
-> encryption. The loop devices are encrypted once with their own dm-crypt 
-> instance. Then that same data is encrypted a second time over by the 
-> partition.
+---
+ drivers/md/dm-verity-target.c |    9 ++++++---
+ drivers/md/dm-verity.h        |    1 +
+ 2 files changed, 7 insertions(+), 3 deletions(-)
 
-You can add a flag to an inode, then you can modify the page cache code so 
-that if it is reading/writing a flagged file, it will attach the flag to 
-the bio. Then, you can create a device-mapper target "dm-flag-switch" that 
-will forward unflagged bios to one underlying device and flagged bios to 
-another underlying device.
-
-I think this is not impossible. But this change needs to go through the 
-VFS tree, so I suggest that you start asking about it there.
-
-Mikulas
+Index: linux-2.6/drivers/md/dm-verity-target.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-verity-target.c	2024-10-16 16:42:46.000000000 +0200
++++ linux-2.6/drivers/md/dm-verity-target.c	2024-10-16 17:11:13.000000000 +0200
+@@ -356,9 +356,9 @@ static int verity_verify_level(struct dm
+ 		else if (verity_handle_err(v,
+ 					   DM_VERITY_BLOCK_TYPE_METADATA,
+ 					   hash_block)) {
+-			struct bio *bio =
+-				dm_bio_from_per_bio_data(io,
+-							 v->ti->per_io_data_size);
++			struct bio *bio;
++			io->had_mismatch = true;
++			bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+ 			dm_audit_log_bio(DM_MSG_PREFIX, "verify-metadata", bio,
+ 					 block, 0);
+ 			r = -EIO;
+@@ -482,6 +482,7 @@ static int verity_handle_data_hash_misma
+ 		return -EIO; /* Error correction failed; Just return error */
+ 
+ 	if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA, blkno)) {
++		io->had_mismatch = true;
+ 		dm_audit_log_bio(DM_MSG_PREFIX, "verify-data", bio, blkno, 0);
+ 		return -EIO;
+ 	}
+@@ -606,6 +607,7 @@ static void verity_finish_io(struct dm_v
+ 
+ 	if (unlikely(status != BLK_STS_OK) &&
+ 	    unlikely(!(bio->bi_opf & REQ_RAHEAD)) &&
++	    !io->had_mismatch &&
+ 	    !verity_is_system_shutting_down()) {
+ 		if (v->error_mode == DM_VERITY_MODE_PANIC) {
+ 			panic("dm-verity device has I/O error");
+@@ -779,6 +781,7 @@ static int verity_map(struct dm_target *
+ 	io->orig_bi_end_io = bio->bi_end_io;
+ 	io->block = bio->bi_iter.bi_sector >> (v->data_dev_block_bits - SECTOR_SHIFT);
+ 	io->n_blocks = bio->bi_iter.bi_size >> v->data_dev_block_bits;
++	io->had_mismatch = false;
+ 
+ 	bio->bi_end_io = verity_end_io;
+ 	bio->bi_private = io;
+Index: linux-2.6/drivers/md/dm-verity.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-verity.h	2024-10-16 16:41:30.000000000 +0200
++++ linux-2.6/drivers/md/dm-verity.h	2024-10-16 17:06:37.000000000 +0200
+@@ -92,6 +92,7 @@ struct dm_verity_io {
+ 	sector_t block;
+ 	unsigned int n_blocks;
+ 	bool in_bh;
++	bool had_mismatch;
+ 
+ 	struct work_struct work;
+ 	struct work_struct bh_work;
 
