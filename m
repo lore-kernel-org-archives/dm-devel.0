@@ -1,79 +1,164 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19D39C13C;
-	Wed, 30 Oct 2024 14:24:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EDE731CFEA7
+	for <dm-devel@lists.linux.dev>; Wed, 30 Oct 2024 17:10:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730298253; cv=none; b=gsL1JC27kndK+L07I+QT4ILy4lDetWRca29NHmVgttc11EN2Zmafgi1OBEuIjJZKTZO5O/7OV77vpWH8YFvlzjX41/wRomeZ2nG23nFhneTaNZiBHQ8zzqtPuAo+g1roww7Ebn26QHmbmvf0Hp2wGRA5/UCskznzcn3v+x2a8Ak=
+	t=1730308219; cv=none; b=FcKIlFexr+vKLhchkXdLQ0OF/gX5oBrgUgsnHvcxTvM4VrcwqBPgLV8ATKvKxM7223JW0tHX0sgR0ijR31pAm69tH2akVeNCB/pnHEyorxAWrV/WC8nV3fziiSsP5sGgPMg8vlClIxyTGpqwKGAwV4enZ4hbq/OQikMCK35EJ+I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730298253; c=relaxed/simple;
-	bh=Jlbh46uYMoPvjrSStd9G+ktfLv4AQ7h39qoGLB1NO/I=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=EQUpsorwUGPSnuM7drIliXOUD0mZP00jIX0PU+P0QSF3772fLWAy3Nl5m4Rj3LlAPJ5EV+Pi6bvShhSQibQE9NXcrDJUr4ydx43SBk8jx6fgs2JRVypR/YQwhh1OjAtqbmI7Sl9hOgSxFuvQyc0e8c9f10qFn5OZubMilf5ChsQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VQ1fKz5n; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1730308219; c=relaxed/simple;
+	bh=+4Q4hemRS0ToOC53VZoDmplZqxEbtlcz0xsNgIyzLHE=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=VDlrOncWNUamBpbTafTX/w0+yTtWNTESD/2IVnsIHdgil1/UJ1ZDY+Kheh7j3D4W2VYenmgqun1yajnVX10zQBh9LLsrWOJLFdCuYEyG33od7skWXsz39uVzq321JU1Oh9eSi3jjYJJLT35bO73tcKlehWA8eskEATNIegiH0iU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=hjxYWaB5; arc=none smtp.client-ip=209.85.128.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VQ1fKz5n"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7279FC4CECE;
-	Wed, 30 Oct 2024 14:24:12 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1730298252;
-	bh=Jlbh46uYMoPvjrSStd9G+ktfLv4AQ7h39qoGLB1NO/I=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=VQ1fKz5n5gpG5qsi3p9A70C23TC6oh0G2CRmTwZ87+HIJnfE5gmPL+TWHiyxq8Y07
-	 o8xbOjSH9jzPfcKLcU04a2izqaB7XdObE1JejMyqvXN0vCEgFudqQqe6b+yy4YOnep
-	 CQGpjj6Yenk4WeBtC7i8yPCv9UsmOI9jXMT0oRRdchPANSIGs5Izvyj5TQi62Lbjuc
-	 qLnC7Kz46JfqPNeZKo9mj4CzWRX8BJm+VxAFbjA8wLpf7SPRoIyKGP+/vRe+cR+a/4
-	 OLoAuuUnnP9d3kNx7RXAgFOF9EMQCsBAmPrVI+KVUA51sw0fKq+a9OtTcI/eA0qPdp
-	 inCYkmP6SB5kQ==
-Date: Wed, 30 Oct 2024 10:24:11 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Benjamin Coddington <bcodding@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-	linux-nfs@vger.kernel.org
-Subject: Re: dm: add support for get_unique_id
-Message-ID: <ZyJBi68xWvTgUV5g@kernel.org>
-References: <f3657efae72f9abb93d3169308052e77bf0dbad6.1730292757.git.bcodding@redhat.com>
- <20241030135214.GA28166@lst.de>
- <ABD563AE-C7F3-43C2-A698-479C7D5924BF@redhat.com>
- <20241030140823.GA29475@lst.de>
- <313BC47B-6069-4AB4-BD44-F71461726F8B@redhat.com>
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="hjxYWaB5"
+Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-43150ea2db6so15085e9.0
+        for <dm-devel@lists.linux.dev>; Wed, 30 Oct 2024 10:10:16 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1730308215; x=1730913015; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=RjXe2VDg+r9zVYiRMdvo19/hgVeIZBaZUrCq0g7UQpQ=;
+        b=hjxYWaB5i4ry1IzFQPw8cFVJtN9YcWg90RHvVHyrRN73/bKIPYcZdJU3z5ZlJox+fU
+         gDzvs7FxuLV6xNZ/FKxGOOBBYlmgPRUMJAH23WM4YkiXC44jwNSzWsirFBE5bTylnggc
+         QmL8P846L70ELCseuWWnbRxvMjrd2CJoXMa6bQwBjDGQbxUllgFHohMCfBtsohhluo3t
+         9aQgUFQv4J881v6WhXrHNqX6HTuUBmn143IUgYoQjG1ddqSaMk0FUwTdx8674qamacmk
+         7CuibHcJiVZU2ZojQS2V08/IbH1C+qzxnnEUUqjzlHV+ptVzd+87LCzdvfzbyAZiGVEP
+         Vytg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1730308215; x=1730913015;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=RjXe2VDg+r9zVYiRMdvo19/hgVeIZBaZUrCq0g7UQpQ=;
+        b=lyCATHFJlyP0/yMV4FX33IqUI4ZmJ5CA+vCVZW5ZxA8vGLdLK8zOnN0BuxT4nNTMVr
+         Fg/jSlb7FxfqBHyC6WjZvPE0Hxy5ko+cOcibITPnjKru/C9NJlsOo7PBPaQ5+ykMgSYC
+         GzpAr3ld3BlRSeebpFZaDgF1TAYNZ+nLCosCNalWGncw/fNS11zTXzXNu7MQAGyR7Avx
+         Fnkae0RegC6WztZQRGSr795/vkvI2qW6X4NE9wBR63KFE+uhxJYm6/myGhNsfb1ytgSn
+         ii3rXe/yEchCLQ5/Kp3F9HINTdNv7a9kTIIHGGTOi0VzJ0TEPP4C1qTjNMNVhlMxXPN2
+         Mv9g==
+X-Gm-Message-State: AOJu0YwSstMh3AJPG2Wj+wH07SUFfAQ9uLSsygNrJnENXQEIboCgT13Y
+	XErPZ9/aIq7JyHPCa2CcHUXMmnzW5gXqRBI97Ln5vRWUICcafRogLM2r33nQTViEm49aNeoGcvO
+	jJWwtburyZTHCaK3yz+j/GBN74dY3HsSGP0eX
+X-Gm-Gg: ASbGncvRahybWWhBflOHIbzes+qYoo8A1QfSINfcoXZH2iIMPSz+2LTNH33FHV6BRx+
+	HKqFWRrmMzF/Wwt+f+KKv+8PdlkYHwI+/iiPaiL44TUKcsQauTok0vNNaCQs=
+X-Google-Smtp-Source: AGHT+IE31ypjup31t8Bje/YTdqRgoIstDZrZhC8ySAh9uDrFDDRZSi2u5DW5NP+g+iCOruP5vSaFPJ0NSXA5Jh3tokM=
+X-Received: by 2002:a05:600c:c16:b0:42b:a8fc:3937 with SMTP id
+ 5b1f17b1804b1-431b3cdeb36mr11522565e9.4.1730308215091; Wed, 30 Oct 2024
+ 10:10:15 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <313BC47B-6069-4AB4-BD44-F71461726F8B@redhat.com>
+References: <5f7c2e37-fd4f-4371-3b0d-633b5a99743a@redhat.com>
+In-Reply-To: <5f7c2e37-fd4f-4371-3b0d-633b5a99743a@redhat.com>
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Wed, 30 Oct 2024 17:09:36 +0000
+Message-ID: <CABCJKudysj2zNqftwocvSsCAn+4G5WyiLa5sPkRxfL2+YWwBnA@mail.gmail.com>
+Subject: Re: [PATCH] dm-verity: don't crash if panic_on_corruption is not selected
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, Will Drewry <wad@chromium.org>, agk@redhat.com, 
+	snitzer@kernel.org, Benjamin Marzinski <bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Wed, Oct 30, 2024 at 10:19:11AM -0400, Benjamin Coddington wrote:
-> On 30 Oct 2024, at 10:08, Christoph Hellwig wrote:
-> 
-> > On Wed, Oct 30, 2024 at 10:05:03AM -0400, Benjamin Coddington wrote:
-> >> Match each other in a multipath device you mean?  No, this will just return
-> >> the first one where get_unique_id returns non-zero.  Can they actually be
-> >> different, and if so should we return an error?
-> >
-> > That's what I've been wondering.  IIRC you can in theory create a
-> > kernel mpath table for any devices you want.  multipathd only creates
-> > them when the ids match, but do we want to rely on that?  It might be
-> > perfectly fine to say if you break you keep the pieces, but then
-> > I'd expected a comment about it in the comment.
-> 
-> Comment is easier than comparing them all, I'm happy to add it.  Seems like
-> a mpath table with different devices would make little pieces of anything
-> you try to put on it, and you wouldn't even get to keep those pieces.
-> 
-> Maybe other dm experts can think of ways that might break things.. I'll wait
-> a day or so.
+Hi Mikulas,
 
-It would be a concern for multipathd, you don't need to worry about this.
+On Tue, Oct 29, 2024 at 11:17=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.c=
+om> wrote:
+>
+> If the user sets panic_on_error and doesn't set panic_on_corruption,
+> dm-verity should not panic on data mismatch. But, currently it panics,
+> because it treats data mismatch as I/O error.
+>
+> This commit fixes the logic so that if there is data mismatch and
+> panic_on_corruption or restart_on_corruption is not selected, the system
+> won't restart or panic.
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: f811b83879fb ("dm-verity: introduce the options restart_on_error a=
+nd panic_on_error")
+>
+> ---
+>  drivers/md/dm-verity-target.c |    9 ++++++---
+>  drivers/md/dm-verity.h        |    1 +
+>  2 files changed, 7 insertions(+), 3 deletions(-)
+>
+> Index: linux-2.6/drivers/md/dm-verity-target.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/drivers/md/dm-verity-target.c        2024-10-16 16:42:=
+46.000000000 +0200
+> +++ linux-2.6/drivers/md/dm-verity-target.c     2024-10-16 17:11:13.00000=
+0000 +0200
+> @@ -356,9 +356,9 @@ static int verity_verify_level(struct dm
+>                 else if (verity_handle_err(v,
+>                                            DM_VERITY_BLOCK_TYPE_METADATA,
+>                                            hash_block)) {
+> -                       struct bio *bio =3D
+> -                               dm_bio_from_per_bio_data(io,
+> -                                                        v->ti->per_io_da=
+ta_size);
+> +                       struct bio *bio;
+> +                       io->had_mismatch =3D true;
+> +                       bio =3D dm_bio_from_per_bio_data(io, v->ti->per_i=
+o_data_size);
+>                         dm_audit_log_bio(DM_MSG_PREFIX, "verify-metadata"=
+, bio,
+>                                          block, 0);
+>                         r =3D -EIO;
+> @@ -482,6 +482,7 @@ static int verity_handle_data_hash_misma
+>                 return -EIO; /* Error correction failed; Just return erro=
+r */
+>
+>         if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA, blkno)) {
+> +               io->had_mismatch =3D true;
+>                 dm_audit_log_bio(DM_MSG_PREFIX, "verify-data", bio, blkno=
+, 0);
+>                 return -EIO;
+>         }
+> @@ -606,6 +607,7 @@ static void verity_finish_io(struct dm_v
+>
+>         if (unlikely(status !=3D BLK_STS_OK) &&
+>             unlikely(!(bio->bi_opf & REQ_RAHEAD)) &&
+> +           !io->had_mismatch &&
+>             !verity_is_system_shutting_down()) {
+>                 if (v->error_mode =3D=3D DM_VERITY_MODE_PANIC) {
+>                         panic("dm-verity device has I/O error");
+> @@ -779,6 +781,7 @@ static int verity_map(struct dm_target *
+>         io->orig_bi_end_io =3D bio->bi_end_io;
+>         io->block =3D bio->bi_iter.bi_sector >> (v->data_dev_block_bits -=
+ SECTOR_SHIFT);
+>         io->n_blocks =3D bio->bi_iter.bi_size >> v->data_dev_block_bits;
+> +       io->had_mismatch =3D false;
+>
+>         bio->bi_end_io =3D verity_end_io;
+>         bio->bi_private =3D io;
+> Index: linux-2.6/drivers/md/dm-verity.h
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/drivers/md/dm-verity.h       2024-10-16 16:41:30.00000=
+0000 +0200
+> +++ linux-2.6/drivers/md/dm-verity.h    2024-10-16 17:06:37.000000000 +02=
+00
+> @@ -92,6 +92,7 @@ struct dm_verity_io {
+>         sector_t block;
+>         unsigned int n_blocks;
+>         bool in_bh;
+> +       bool had_mismatch;
 
-Documenting that dm_blk_get_unique_id returns the uuid from the
-first underlying device that supports ->get_unique_id should be
-sufficient.
+This looks correct to me, although I assume wanting to panic only on
+I/O errors is probably rare.
 
-Mike
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+
+Sami
