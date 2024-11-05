@@ -1,99 +1,94 @@
-Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E39D71A76A4
-	for <dm-devel@lists.linux.dev>; Mon,  4 Nov 2024 23:50:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 024A01FC3
+	for <dm-devel@lists.linux.dev>; Tue,  5 Nov 2024 00:19:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730764215; cv=none; b=j3ZC7wgymbFzWNAYPhmGNo+g69MDvQSlGW8Ru5RQ68HW2k8TNMSxtn/o4i3/7Iy2sQiK5qW4OvtsnmSLuXh5RY14X1O1d6IjLT4Gqix1vSWSUoK7ONiTdKEYwSI4KoTHTqhG0vGZb0q1NWvSEivPURgrJ0/vi21U3rXS9Rs/poc=
+	t=1730765942; cv=none; b=XzjUmObbSyScLtr4W9XXFV47D9MWraJHebvG3EIpk9SAD02BNAcikaXj3rfbs++PhK0ap/rK9FyZ3CKBRAxhfS+yr9fqWXAhC/UlifWdRL1Tmgo4DOyXMElYw6B289Kvz7sbxjY6sApfUxs9uL3di9FginJS216TewhH8U3oiA4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730764215; c=relaxed/simple;
-	bh=Wacav9rSiftcbTQ8k4ZdrSjFcMU6xqF6khCaPbV+iVc=;
-	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:References:
-	 In-Reply-To:Content-Type; b=ggPizpoeTH2GF7xUmkV0tqlJUa5V9kpap9JazWyv60BS8Sw/BUFcPbeK1zNWHVXa+jYRC3dElp5UmFnwixZM4Zp8n5UKeDUb8nCDyinAZ/5HnCWYXrj1F/3rttCPlADs2ep+/SVcsyh7Zk1XHPoGvHYaMQYe05+UY71xr+e2FMo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WfS5CJG9; arc=none smtp.client-ip=209.85.221.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1730765942; c=relaxed/simple;
+	bh=hgP6/LdnAqik2c1PnTOV9R39vDIKKJmEbvwW+ww0jf4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=nuDOuaTGpsGCqvKXf02S7lWOHRX9hTjpkGpQ3KOOu121vae6/IMX0Eci08ry5tSNrde5/fUubOiFjRx1QbXuks+d9xdn4ePczxD0TWm1kTYnuGk6o1ujEn1LFXW0qrZH3hQoBUlN0t06rpN2KGyQPIs16tVMXPXWgG71GU9pqDc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gP9+UsRY; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WfS5CJG9"
-Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-37d6716e200so546125f8f.3
-        for <dm-devel@lists.linux.dev>; Mon, 04 Nov 2024 15:50:13 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1730764212; x=1731369012; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:content-language:references
-         :cc:to:subject:from:mime-version:date:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=EHyz6PqbFUPnViwx2pe8SAk2t9PuaBGC2w9E91LMtfY=;
-        b=WfS5CJG92COvfDJtHs4DI+L6SyKNEOJuPXk3+8A+yQpuZOIf0iF7eu4TqlDdEOkRR/
-         UxB5WH2y2nTCSXKx9j2dRKO86bwGsvn/H9ch6N2GuVpnDfj9HSmB8huxt7DffPrQP0yS
-         IR5hZ4rC/hVBnBk+Rho+64ujrn+Je4n/pW6gadR2noQTt698HWCGNSbCpe6cbX6Oo0sE
-         O2dGucfHnRlxOMO4G9IIqUi77jK3bT42ZoKEffTZ4zAwwm5K3m/vcKBZkolHPzAYBgyt
-         ydgTTQnnvCqjB25FFHoIdkfcpDkKN2csSuFEzK7+N2+h6aBjnaibtxC/CC1w5I9BPYic
-         aKCg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1730764212; x=1731369012;
-        h=content-transfer-encoding:in-reply-to:content-language:references
-         :cc:to:subject:from:mime-version:date:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=EHyz6PqbFUPnViwx2pe8SAk2t9PuaBGC2w9E91LMtfY=;
-        b=ScRmBwz2Hhot6GvAIRtb03ikxoW+pMJ8XU2gETMMFQlxcAK6OJm7lJpLvX5bCKdkbn
-         H54MHAHVmQv5nGo1E1yxxcT5mOPmxpiVV46uqczzlCyhdOZRI2NLnZGHIKrg9OJO8eOF
-         N8ZKebQLZrF2THHHatEnBkhOxY35+GopB23G+Eu5kiShJe2dk9KroJs3OiOQvE4ZTO2a
-         JBHzH3disJTiB0Iqvep1VLHD7hMAjfXNHlvieqH/N+OvowdXpkFMyDx9oQJKlJqWICeh
-         Lxi5kEtBDQ+52mbLEwA7d4NlnGnUphb0vFHZD/PO1dFtB42nw90OL6AdU6v2u19A9KQn
-         7+kA==
-X-Forwarded-Encrypted: i=1; AJvYcCWnRPu0NT6x8NIrd98Rey5St2oTdTUQGv8mwo5hbjqEMPwr0vPGlllT/LGgaUGbKvLGInXzHUkyAg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz1/PMZWl8HSn2jTzyFxv7KX211p1bS2lRsPya966IAxS2xi9NL
-	wgG7PjJvp0f0c4RrvV2KlSFZRB3ndgE/Dui/1yD6/i93MbPXbM0=
-X-Google-Smtp-Source: AGHT+IFH6zZHe8C3h1ivqqTLs/Xklpb5BO0OQ0kdiDnMTlAF/865pEN9W6nVS2UsjRKkxDnxIQ2QoQ==
-X-Received: by 2002:a05:600c:1c1a:b0:42c:ba83:3f08 with SMTP id 5b1f17b1804b1-4319ac743a0mr129836035e9.2.1730764211744;
-        Mon, 04 Nov 2024 15:50:11 -0800 (PST)
-Received: from localhost (145.red-81-44-150.dynamicip.rima-tde.net. [81.44.150.145])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4327d5ab297sm168152785e9.8.2024.11.04.15.50.09
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 04 Nov 2024 15:50:10 -0800 (PST)
-Message-ID: <2cea56e4-d065-41a4-aa12-54243f738717@gmail.com>
-Date: Tue, 5 Nov 2024 00:50:08 +0100
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gP9+UsRY"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1730765939;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=qz7Wx/v506K7+c7Xt4ADaW5De69dcrbj9iL0ItQiBAQ=;
+	b=gP9+UsRYTtoN+wjh+wSXf7KH+jRiusPWCOeWEMFZKxmtzcUImb+OuTBqrp+HLB+h80wetT
+	ZPmIM1GuyUJK63Lbpvj8LcSR6kDhvicMna+lccjLDE03ObLruUhAeofpE8Obo2Vp95DqV3
+	j1tQt63hJJ1SrUMn0GTQqYMI//qnM+Q=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-492-FR1DHoQ2Mc2ua3kAYW_I-g-1; Mon,
+ 04 Nov 2024 19:18:58 -0500
+X-MC-Unique: FR1DHoQ2Mc2ua3kAYW_I-g-1
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B3109195608C
+	for <dm-devel@lists.linux.dev>; Tue,  5 Nov 2024 00:18:57 +0000 (UTC)
+Received: from vdo-builder-msakai.permabit.com (vdo-builder-msakai.permabit.lab.eng.bos.redhat.com [10.0.103.170])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 7A6D319560AD;
+	Tue,  5 Nov 2024 00:18:57 +0000 (UTC)
+Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
+	id E73D559E5E; Mon,  4 Nov 2024 19:18:56 -0500 (EST)
+From: Matthew Sakai <msakai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Susan LeGendre-McGhee <slegendr@redhat.con>,
+	Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm-vdo murmurhash: remove u64 alignment requirement
+Date: Mon,  4 Nov 2024 19:18:56 -0500
+Message-ID: <20241105001856.866095-1-msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: remove hwhandler from all hwtable
- configs
-To: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- DM-DEVEL ML <dm-devel@lists.linux.dev>
-References: <20241010161806.14950-1-xose.vazquez@gmail.com>
- <1ecfb9236dd2703d90727b3468dfe3381987b4b4.camel@suse.com>
-Content-Language: en-US, en-GB, es-ES
-In-Reply-To: <1ecfb9236dd2703d90727b3468dfe3381987b4b4.camel@suse.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-On 11/3/24 10:21 PM, Martin Wilck wrote:
+From: Susan LeGendre-McGhee <slegendr@redhat.con>
 
-> On Thu, 2024-10-10 at 18:18 +0200, Xose Vazquez Perez wrote:
->> Useless, automatically handled by the kernel since 4.3.
->> (4.3 was released nine years ago)
->>
->> Cc: Martin Wilck <mwilck@suse.com>
->> Cc: Benjamin Marzinski <bmarzins@redhat.com>
->> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
->> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
->> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->> ---
->>   libmultipath/hwtable.c | 44 ----------------------------------------
->> --
->>   1 file changed, 44 deletions(-)
-> 
-> Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Susan LeGendre-McGhee <slegendr@redhat.com>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
+---
+ drivers/md/dm-vdo/murmurhash3.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
-Two previous ones are pending:
-https://marc.info/?l=dm-devel&m=172722205013845
-https://marc.info/?l=dm-devel&m=172842303913121
+diff --git a/drivers/md/dm-vdo/murmurhash3.c b/drivers/md/dm-vdo/murmurhash3.c
+index 3a989efae142..ec9fc992441c 100644
+--- a/drivers/md/dm-vdo/murmurhash3.c
++++ b/drivers/md/dm-vdo/murmurhash3.c
+@@ -44,14 +44,11 @@ void murmurhash3_128(const void *key, const int len, const u32 seed, void *out)
+ 	u64 *hash_out = out;
+ 
+ 	/* body */
+-
+-	const u64 *blocks = (const u64 *)(data);
+-
+ 	int i;
+ 
+ 	for (i = 0; i < nblocks; i++) {
+-		u64 k1 = get_unaligned_le64(&blocks[i * 2]);
+-		u64 k2 = get_unaligned_le64(&blocks[i * 2 + 1]);
++		u64 k1 = get_unaligned_le64(&data[i * 16]);
++		u64 k2 = get_unaligned_le64(&data[i * 16 + 8]);
+ 
+ 		k1 *= c1;
+ 		k1 = ROTL64(k1, 31);
+-- 
+2.45.2
 
-Thanks.
