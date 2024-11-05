@@ -1,115 +1,115 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB6651CB9E6
-	for <dm-devel@lists.linux.dev>; Tue,  5 Nov 2024 16:22:27 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36C3BBE4E
+	for <dm-devel@lists.linux.dev>; Tue,  5 Nov 2024 16:47:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730823749; cv=none; b=P+Uisbh4Vw8Nm+wIxaDyYMCrgG1X1jORvQP+3Cu7Ue7EQiDkFANE/sEnlLpe4xXa5gHTrJmUX14N70sO483Uq4GX0MEf7T+Iz82eo+fDXEIJmYRef5wBfgIWZVQJrZT6n1XdCESkaIY7aDOU3fiTpq1A/DhRbT0yvRsN2+sv+8A=
+	t=1730825273; cv=none; b=mc0vN2JA5oPae2YCPqkMOH7dosoOIVMPpaAMnGVXD5nZtW7EcdgwzQnXoGePKhxuONH4qQOF4EdB2KzqcDk1qehbluisDndu/kAJyrgEaCYESeH+AK91VY8OZ80OLkIKxEg9qlVnl1ilK38581jvphcPOMSsAmvEni8CKjSdHHo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730823749; c=relaxed/simple;
-	bh=PIGAarUdUVz4dgUSq/0utXLUhMn2y5oFkPoKavjO2Bo=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=pBjjcSEVSfYb4J3kKR8hluw/+eQgclLBE8dMf8aMzjWYZH0L867fQoR9eUq+BYoOWmeVlEkqfsPgHAd7cgQTV86eGVgB4LnF/jfH9422xsgXl4AVLAAU+fB9TPl8FVGyGCsuDyGPWTcVmALmy9m+aRZfKGCgeMLXlls1Q+fhkh8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=M48y2teQ; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1730825273; c=relaxed/simple;
+	bh=SnfYH3vXTXusGTjck5yxRuO0pzFrrmyQkqIwiFFJBGI=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=oHd3VC3TH9nMTlLN6jAh5W47EMJud8GbYNcJy1l/swquTp43Nj8Hd7lS6Ktl/bnxR7FKfqY0olaZ6IpQoklzgvUScrgT1MF8gxAKdz2q3q5/zrt4aGaQP1Akm8f9eJ/zSaOP+G/Cq6D5MwA7vfjfyP4shOX8IXKgIqyEYDaHI0o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NPKS9Azg; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="M48y2teQ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NPKS9Azg"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1730823746;
+	s=mimecast20190719; t=1730825270;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=oFZBxEyeKfBYKEq5HGozZDuDcJ+Fsz4qDByA+V+i9aw=;
-	b=M48y2teQhrune8vF+G/JHd6rzpJJKmpMcKK2JfbNegwJe/JoF/wgFBeAYft8WN6ZHXLYdl
-	7lIzc+wCokAIyDS/SDbBGY+ChXbCWXjIK8JPhqIJt5wYipPfiLk6JI1p1Bp2mF/wDbQk70
-	S5qhHEkoZnAn5rZa9yngdrm/HUmuN2A=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=3VENzBYvFejhZBcWldUHtuDaNX62COgzILABI9nQ1q0=;
+	b=NPKS9Azg4MJr3Sz9E3IxbKICbXxRftn51eB0VWzavllky/EyCp/zYFUdSQ6Jdp+OaFlT7O
+	VJhhWPXu9qrS9tDpGItximCxIr+NtAbeW2RK3qsJiyuLmyzEr2A5gElKvbOO2ZjaftfB1s
+	oi51jYGPIoz22b84hp0EzPbcct4S59M=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-199-cDHrQMy6PQOUilbkXm16OQ-1; Tue,
- 05 Nov 2024 11:22:25 -0500
-X-MC-Unique: cDHrQMy6PQOUilbkXm16OQ-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-517-3Ze06erQMcyjA-UKoe4amw-1; Tue,
+ 05 Nov 2024 11:47:49 -0500
+X-MC-Unique: 3Ze06erQMcyjA-UKoe4amw-1
 Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4F4BE1955EEA;
-	Tue,  5 Nov 2024 16:22:24 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D1F1819560A3;
-	Tue,  5 Nov 2024 16:22:23 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4A5GMLjl457439
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 5 Nov 2024 11:22:22 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4A5GMLbq457438;
-	Tue, 5 Nov 2024 11:22:21 -0500
-Date: Tue, 5 Nov 2024 11:22:21 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>,
-        Muneendra Kumar <muneendra.kumar@broadcom.com>
-Subject: Re: [PATCH] multipathd: checker port_state before setting it.
-Message-ID: <ZypGPZOaJt9HnZQU@redhat.com>
-References: <20240917155858.959835-1-bmarzins@redhat.com>
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 61CED19560B6;
+	Tue,  5 Nov 2024 16:47:48 +0000 (UTC)
+Received: from [10.45.225.180] (unknown [10.45.225.180])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1D36D19560A2;
+	Tue,  5 Nov 2024 16:47:45 +0000 (UTC)
+Date: Tue, 5 Nov 2024 17:47:41 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+cc: Ming-Hung Tsai <mtsai@redhat.com>, Zichen Xie <zichenxie0106@gmail.com>, 
+    Sami Tolvanen <samitolvanen@google.com>, Will Drewry <wad@chromium.org>, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    dm-devel@lists.linux.dev
+Subject: [git pull] device mapper fixes 2 for 6.12
+Message-ID: <17b8149d-5d70-9423-a904-fd0ff6aa243c@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20240917155858.959835-1-bmarzins@redhat.com>
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
 
-On Tue, Sep 17, 2024 at 11:58:58AM -0400, Benjamin Marzinski wrote:
-> If the rport port_state is already Marginal, trying to set it to
-> Marginal causes an error like the following:
-> 
-> multipathd[365376]: /sys/devices/pci0000:c0/0000:c0:01.1/0000:c4:00.0/host0/rport-0:0-5/fc_remote_ports/rport-0:0-5: failed to set port_state to marginal: Invalid argument
-> 
-> To avoid causing this confusing error message, check if the port_state
-> is already marginal before trying to set it.
-> 
-> Cc: Muneendra Kumar <muneendra.kumar@broadcom.com>
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Hi Linus
 
-Ping. My in-kernel fix for this was accepted, but it would be nice to
-have this work on older kernels as well.
+The following changes since commit 8e929cb546ee42c9a61d24fae60605e9e3192354:
 
--Ben
+  Linux 6.12-rc3 (2024-10-13 14:33:32 -0700)
 
-> ---
->  multipathd/fpin_handlers.c | 5 +++++
->  1 file changed, 5 insertions(+)
-> 
-> diff --git a/multipathd/fpin_handlers.c b/multipathd/fpin_handlers.c
-> index be087ca0..6b56f9b7 100644
-> --- a/multipathd/fpin_handlers.c
-> +++ b/multipathd/fpin_handlers.c
-> @@ -169,9 +169,14 @@ fpin_els_add_li_frame(struct fc_nl_event *fc_event)
->  /*Sets the rport port_state to marginal*/
->  static void fpin_set_rport_marginal(struct udev_device *rport_dev)
->  {
-> +	char old_value[20]; /* match kernel show_fc_rport_port_state() size */
->  	static const char marginal[] = "Marginal";
->  	ssize_t ret;
->  
-> +	ret = sysfs_attr_get_value(rport_dev, "port_state",
-> +				   old_value, sizeof(old_value));
-> +	if (ret == sizeof(marginal) - 1 && strcmp(old_value, marginal) == 0)
-> +		return;
->  	ret = sysfs_attr_set_value(rport_dev, "port_state",
->  				   marginal, sizeof(marginal) - 1);
->  	if (ret != sizeof(marginal) - 1)
-> -- 
-> 2.45.0
-> 
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.12/dm-fixes-2
+
+for you to fetch changes up to c0ade5d98979585d4f5a93e4514c2e9a65afa08d:
+
+  dm cache: fix potential out-of-bounds access on the first resume (2024-11-04 17:39:31 +0100)
+
+Please, pull, thanks
+Mikulas
+
+----------------------------------------------------------------
+- fix memory safety bugs in dm-cache
+
+- fix restart/panic logic in dm-verity
+
+- fix 32-bit unsigned integer overflow in dm-unstriped
+
+- fix a device mapper crash if blk_alloc_disk fails
+-----BEGIN PGP SIGNATURE-----
+
+iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCZyj5MhQcbXBhdG9ja2FA
+cmVkaGF0LmNvbQAKCRATAyx9YGnhbSpeAQCcyhjrFxvFQuTJm/nv65Txwqw3+nvu
+i45pJ1DbK1awEQD/W0xUhhWrHfXwnb2dHV/mowLSnlou7uUh/JUx9q24OQg=
+=5qjV
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Mikulas Patocka (2):
+      dm: fix a crash if blk_alloc_disk fails
+      dm-verity: don't crash if panic_on_corruption is not selected
+
+Ming-Hung Tsai (5):
+      dm cache: correct the number of origin blocks to match the target length
+      dm cache: fix flushing uninitialized delayed_work on cache_ctr error
+      dm cache: fix out-of-bounds access to the dirty bitset when resizing
+      dm cache: optimize dirty bit checking with find_next_bit when resizing
+      dm cache: fix potential out-of-bounds access on the first resume
+
+Zichen Xie (1):
+      dm-unstriped: cast an operand to sector_t to prevent potential uint32_t overflow
+
+ drivers/md/dm-cache-target.c  | 59 ++++++++++++++++++++++---------------------
+ drivers/md/dm-unstripe.c      |  4 +--
+ drivers/md/dm-verity-target.c |  9 ++++---
+ drivers/md/dm-verity.h        |  1 +
+ drivers/md/dm.c               |  4 ++-
+ 5 files changed, 42 insertions(+), 35 deletions(-)
 
