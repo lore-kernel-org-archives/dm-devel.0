@@ -1,238 +1,98 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA8D644C81
-	for <dm-devel@lists.linux.dev>; Tue,  5 Nov 2024 03:00:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F0613D9E
+	for <dm-devel@lists.linux.dev>; Tue,  5 Nov 2024 05:10:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730775651; cv=none; b=ToVXAJh7wRDCbiDIgxA13MttvulFJAzV/i9kAvOH90Z9qtogA/AvQye6/zmdpITRl8XOHmbTB79lh68YNc4tMFN9UKmUh1+MKgCeFMGujrmtBeOfkmU4OYdlNunLpypvpzJW312HEkPCoYpXR37V9MnREF7GDrC4BVWfd9bIvtE=
+	t=1730783410; cv=none; b=WABA480VgnvHkEf2YSBz/6KzVrkDcN8lO3r/fxHEaVOtxO7DhTZKXWVtNewGIFlScpceR/H0bQYCxjwJX/psd5E3L2wZQovU+MiEV7sMLgd6DCedcJbxSla9bEahh5oNAbmn2YVCbAKGSy1fm/uqu6V4/OSLTJIxM7yvskuD3oI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730775651; c=relaxed/simple;
-	bh=+RXjeL6VjoT8W/ji8SGsqbTFKlzTKHG4k6ZaNr85j2k=;
+	s=arc-20240116; t=1730783410; c=relaxed/simple;
+	bh=MvJR1kL11YmOOFh2FswUyDJySHsO1gQRX0ySVdWs9Kg=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=hwze7XrqRE3elrH5YVUNt0+RNtRoC7kksdV0/OQaHVmz/jVajJaDg985OxWiobt3vXEdM1u8oP8k+G888cN2KJ5sE6nTlvW8KXxlao0zoSG1rcT5Sp6lY6Q088VAWxuPY19YjOrNhQFwJ3z2ojqxl4oPSW6BFKfXNyjck3EQJk8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ER3EgaUb; arc=none smtp.client-ip=170.10.133.124
+	 In-Reply-To:Content-Type:Content-Disposition; b=j/KePDhMy59X5uTKWa9AOBBcjEBG/aTdE/xuegAkHy7EUAI9k8J4uUcxWbMbzdFmuLVjbddjmHyDwRjNvY+iABGRKi6F5ZeQA5i8Y3uckBQggqSvtyQpop9aoqQPjEMJmW5NRTLWqFROM8vYB+59Jzf2/AOlzeHhS3GJtRxBy9Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gcLzgv9w; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ER3EgaUb"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gcLzgv9w"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1730775648;
+	s=mimecast20190719; t=1730783407;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=uwsBIP3+HfdNXSkpd38j9b8VTUy4JdI0qv8HblIOMDw=;
-	b=ER3EgaUbo6zCG/zZC9sB5GjTxt2SuMK2lnLpp6G/+rJFc/RA6iAwqqw7j6d6HpGJOcpFBn
-	hh0ZJmfatn5rAurBUknjRUd69BZrly0Gu4/5cpGLPkGicC/Cs8ztwkOI6g9iIXHFPKGZky
-	eDj2EbcoFNdutfUa2w49nnNgpM75TlQ=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=IQCFBBjDiv84p1/VzA7yRS9eA2Didc0ZWgU5jyZmtBc=;
+	b=gcLzgv9wgWc01S8kMDu3vOcwQOhR2bDmWgKkAtUKBRNu8jCudtHcUrYAakYo1AIkooBe+G
+	Kr/PQfx+H6iDFGbu/KZ7xqy+RMVR5NAHeJ24gU2WRQL+HsuF/sB8gYEGKHVnMU0ap5W8PD
+	wThtcK+GfJglO+0fuPSGjWBEXFHTAJI=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-626-Klv9indPOg6OyagycCv9jQ-1; Mon,
- 04 Nov 2024 22:00:45 -0500
-X-MC-Unique: Klv9indPOg6OyagycCv9jQ-1
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-454-Lo3__W0MPmKXZGh-GmHrDw-1; Tue,
+ 05 Nov 2024 00:10:01 -0500
+X-MC-Unique: Lo3__W0MPmKXZGh-GmHrDw-1
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 493841956095;
-	Tue,  5 Nov 2024 03:00:44 +0000 (UTC)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 782F71955D99;
+	Tue,  5 Nov 2024 05:10:00 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CC13B1956086;
-	Tue,  5 Nov 2024 03:00:43 +0000 (UTC)
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DA79519560A3;
+	Tue,  5 Nov 2024 05:09:59 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4A530g1k450489
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4A559wGw451804
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 4 Nov 2024 22:00:42 -0500
+	Tue, 5 Nov 2024 00:09:58 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4A530gfi450488;
-	Mon, 4 Nov 2024 22:00:42 -0500
-Date: Mon, 4 Nov 2024 22:00:42 -0500
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4A559wfi451803;
+	Tue, 5 Nov 2024 00:09:58 -0500
+Date: Tue, 5 Nov 2024 00:09:58 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Martin Wilck <martin.wilck@suse.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        device-mapper development <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH v5 23/23] multipathd: use timestamps to tell when the
- directio checker timed out
-Message-ID: <ZymKWtzy2TqA1O4l@redhat.com>
-References: <20241015032835.2693247-1-bmarzins@redhat.com>
- <20241015032835.2693247-24-bmarzins@redhat.com>
- <f13217ad2bca4c8a013251471fccdf296d925818.camel@suse.com>
+        Martin Wilck <mwilck@suse.com>, dm-devel@lists.linux.dev
+Subject: Re: [PATCH v2 0/5] multipath-tools: udev rule fixes
+Message-ID: <Zymopi3HKoXeX8WQ@redhat.com>
+References: <20241103224349.42582-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <f13217ad2bca4c8a013251471fccdf296d925818.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+In-Reply-To: <20241103224349.42582-1-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
 
-On Sun, Nov 03, 2024 at 09:56:40PM +0100, Martin Wilck wrote:
-> On Mon, 2024-10-14 at 23:28 -0400, Benjamin Marzinski wrote:
-> > Instead of counting the number of times the path checker has been
-> > called and treating that as the number of seconds that have passed,
-> > calculate the actual timestamp when the checker will time out, and
-> > check that instead.
-> > 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  libmultipath/checkers/directio.c | 44 ++++++++++++++++++++++--------
-> > --
-> >  1 file changed, 31 insertions(+), 13 deletions(-)
-> > 
-> > diff --git a/libmultipath/checkers/directio.c
-> > b/libmultipath/checkers/directio.c
-> > index 27227894..d35a6bac 100644
-> > --- a/libmultipath/checkers/directio.c
-> > +++ b/libmultipath/checkers/directio.c
-> > @@ -60,13 +60,28 @@ const char *libcheck_msgtable[] = {
-> >  #define LOG(prio, fmt, args...) condlog(prio, "directio: " fmt,
-> > ##args)
-> >  
-> >  struct directio_context {
-> > -	unsigned int	running;
-> > -	int		reset_flags;
-> > +	time_t timeout;
+On Sun, Nov 03, 2024 at 11:43:44PM +0100, Martin Wilck wrote:
+> Here are more fixes for the multipath udev rules. 2/5 is an actual fix,
+> 1/5, 3/5 and 4/5 are minor cleanups / code clarifications.
 > 
+> 5/5 implements the fix originally submitted by Ben [1].
 > 
-> I'd have used a struct timespec here rather than time_t.
-
-Sure.
-
-> 
-> > +	int reset_flags;
-> >  	struct aio_group *aio_grp;
-> >  	struct async_req *req;
-> >  	bool checked_state;
-> >  };
-> >  
-> > +bool is_running(struct directio_context *ct) {
-> > +	return (ct->timeout != 0);
-> > +}
-> > +
-> > +void start_running(struct directio_context *ct, int timeout_secs) {
-> > +	struct timespec now;
-> > +
-> > +	get_monotonic_time(&now);
-> > +	ct->timeout = now.tv_sec + timeout_secs;
-> > +}
-> > +
-> > +void stop_running(struct directio_context *ct) {
-> > +	ct->timeout = 0;
-> > +}
-> > +
-> 
-> I think the 3 functions above should be static.
-
-Oops. Yeah. Sending a new version.
-
--Ben
-
-> 
-> >  static struct aio_group *
-> >  add_aio_group(void)
-> >  {
-> > @@ -234,9 +249,9 @@ void libcheck_free (struct checker * c)
-> >  		}
-> >  	}
-> >  
-> > -	if (ct->running && ct->req->state != PATH_PENDING)
-> > -		ct->running = 0;
-> > -	if (!ct->running) {
-> > +	if (is_running(ct) && ct->req->state != PATH_PENDING)
-> > +		stop_running(ct);
-> > +	if (!is_running(ct)) {
-> >  		free(ct->req->buf);
-> >  		free(ct->req);
-> >  		ct->aio_grp->holders--;
-> > @@ -304,7 +319,7 @@ check_pending(struct directio_context *ct, struct
-> > timespec timeout)
-> >  		r = get_events(ct->aio_grp, &timeout);
-> >  
-> >  		if (ct->req->state != PATH_PENDING) {
-> > -			ct->running = 0;
-> > +			stop_running(ct);
-> >  			return;
-> >  		} else if (r == 0 ||
-> >  			   (timeout.tv_sec == 0 && timeout.tv_nsec
-> > == 0))
-> > @@ -330,10 +345,10 @@ check_state(int fd, struct directio_context
-> > *ct, int sync, int timeout_secs)
-> >  	if (sync > 0)
-> >  		LOG(4, "called in synchronous mode");
-> >  
-> > -	if (ct->running) {
-> > +	if (is_running(ct)) {
-> >  		ct->checked_state = true;
-> >  		if (ct->req->state != PATH_PENDING) {
-> > -			ct->running = 0;
-> > +			stop_running(ct);
-> >  			return ct->req->state;
-> >  		}
-> >  	} else {
-> > @@ -348,9 +363,9 @@ check_state(int fd, struct directio_context *ct,
-> > int sync, int timeout_secs)
-> >  			LOG(3, "io_submit error %i", -rc);
-> >  			return PATH_UNCHECKED;
-> >  		}
-> > +		start_running(ct, timeout_secs);
-> >  		ct->checked_state = false;
-> >  	}
-> > -	ct->running++;
-> >  	if (!sync)
-> >  		return PATH_PENDING;
-> >  
-> > @@ -388,7 +403,7 @@ static void set_msgid(struct checker *c, int
-> > state)
-> >  bool libcheck_need_wait(struct checker *c)
-> >  {
-> >  	struct directio_context *ct = (struct directio_context *)c-
-> > >context;
-> > -	return (ct && ct->running && ct->req->state == PATH_PENDING
-> > &&
-> > +	return (ct && is_running(ct) && ct->req->state ==
-> > PATH_PENDING &&
-> >  		!ct->checked_state);
-> >  }
-> >  
-> > @@ -400,7 +415,7 @@ int libcheck_pending(struct checker *c)
-> >  	struct timespec no_wait = { .tv_sec = 0 };
-> >  
-> >  	/* The if path checker isn't running, just return the
-> > exiting value. */
-> > -	if (!ct || !ct->running) {
-> > +	if (!ct || !is_running(ct)) {
-> >  		rc = c->path_state;
-> >  		goto out;
-> >  	}
-> > @@ -408,10 +423,13 @@ int libcheck_pending(struct checker *c)
-> >  	if (ct->req->state == PATH_PENDING)
-> >  		check_pending(ct, no_wait);
-> >  	else
-> > -		ct->running = 0;
-> > +		stop_running(ct);
-> >  	rc = ct->req->state;
-> >  	if (rc == PATH_PENDING) {
-> > -		if (ct->running > c->timeout) {
-> > +		struct timespec now;
-> > +
-> > +		get_monotonic_time(&now);
-> > +		if (now.tv_sec > ct->timeout) {
-> 
-> We could timeout a second too late here, that's why I'd suggest using
-> timespec.
-> 
-> >  			LOG(3, "abort check on timeout");
-> >  			io_cancel(ct->aio_grp->ioctx, &ct->req->io,
-> > &event);
-> >  			rc = PATH_DOWN;
-> 
-> Regards
+> Reviews and comments welcome.
 > Martin
+
+For the set:
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+> 
+> [1] https://lore.kernel.org/dm-devel/20241022233349.247087-1-bmarzins@redhat.com/
+> 
+> Martin Wilck (5):
+>   11-dm-mpath.rules.in: import DM_COLDPLUG_SUSPENDED only once
+>   11-dm-mpath.rules.in: handle inactive suspended devices correctly
+>   11-dm-mpath.rules.in: clarify DM_ACTIVATION logic
+>   11-dm-mpath-rules.in: skip one .DM_NOSCAN check
+>   11-dm-mpath.rules.in: set .DM_NOSCAN if MPATH_UNCHANGED is set
+> 
+>  multipath/11-dm-mpath.rules.in | 44 ++++++++++++++++++++--------------
+>  1 file changed, 26 insertions(+), 18 deletions(-)
+> 
+> -- 
+> 2.47.0
 
