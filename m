@@ -1,107 +1,92 @@
-Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19F01192B60
-	for <dm-devel@lists.linux.dev>; Wed,  6 Nov 2024 06:40:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 288801E0480
+	for <dm-devel@lists.linux.dev>; Wed,  6 Nov 2024 14:59:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730875237; cv=none; b=LbOKIO3jHo0oeIZKrVrXvN0q3COnJmTYxzYMjqQorG247B7X2869qKuqUySuIFcudum7bZLTNAFI8IEXFEH8wthBgigRkJg+li85AUPUQpC8DGAnTs0lLQvlhJ5agiIuEBC0crD2Q6G8l6CKV87dHu71TQMar2GZEnrF0WLsQzI=
+	t=1730905157; cv=none; b=KIvNMRRKAJaZmc+0+3a6XhE4sqDFS/+6O6jX+iAFitH1agXyUrxqSinLZxZFTYLRVq1UVyuHIUy6UdFDdXyHSSJyohAoF+/JgN9IxWvB1nSIw52dwn850cvgu6KHLMzeKLSR3h9H7Ga4M/RePXaR2I4q0XxsEnKidPcHUSwXuRs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730875237; c=relaxed/simple;
-	bh=bpuH4doxst/8b8Sn56ZtckVLGhyBoI5RU7GcdqyH1bw=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=fKflsInhxYW6N4jHrIhVOQa3biuKKOkgMJwU5mHOEolpx7eRu7R+53kYwxKsGttx6VsYimwnjahSgu8ZGwK9/8BdkQ3iknfjpeqJwA05njJXdf8HBj1GZTCfm8H9BzocV97koR0nsfZ6+Jfu0fIQXUM7rBlCGuc93QDt4ryMASg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=iO/91pZa; arc=none smtp.client-ip=212.122.41.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
+	s=arc-20240116; t=1730905157; c=relaxed/simple;
+	bh=ALXDvHXn3Q8wMu3fWsM27h7XTmcxn1SOJ6aDokYeCGg=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=vFSbtplPAuaqf5QM111tB0AHs5WKFOQQUpjjj8uy8twZoNKj5lhgyg1k8g7Se5WzV3cEFOpb242zwkt0hu0p4aNwzis8PD0ESf2Tsq6HVpDBLuHa4dBD9PGscFaXueZY2LNAgtFEILkMlhzjGT/uOtjT8+ZTjXHj4iwOYRc56wE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=PUDd0dW0; arc=none smtp.client-ip=209.85.218.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="iO/91pZa"
-Content-Type: text/plain;
-	charset=utf-8
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1730875226;
-	bh=bpuH4doxst/8b8Sn56ZtckVLGhyBoI5RU7GcdqyH1bw=;
-	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=iO/91pZaUQcs8R/so+Ol8qPbhiIxALXKRmXvHMPXj9wYgZm7ieYHTz3eGtfadbGxa
-	 J4yuZDRt7J8m4vovxiZZiu/HQkl5X4AC36e+hnTJIwUszyCImd5cDpCSmMWQMBBiL3
-	 4sa36q8vWLxqfQADTRbZ8P1+wdTBiYWUC+VEMuMA=
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="PUDd0dW0"
+Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-a9eb68e0bd1so248669066b.3
+        for <dm-devel@lists.linux.dev>; Wed, 06 Nov 2024 06:59:14 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1730905153; x=1731509953; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=ALXDvHXn3Q8wMu3fWsM27h7XTmcxn1SOJ6aDokYeCGg=;
+        b=PUDd0dW05Z0PWzxpag3iNR7KrMFZXdcVvMp0iLBYoHch4yfvMwpWON9abg0oPiB0oX
+         VSd9sF/98hfjQEDfLULSgNvdXW+WZd/fWuaGm3Eq4IiALj7Cfk8TRiLhruaZFowMeYt+
+         TnGxAfGBgzndzI5U0K9hYkHS24nTCpYM7lsL03q0/6GwAn7jZ39Rs73htcew5GAZECqk
+         4JBFk8Wl0nPZhTt6iyJbEFbrrZO1f3d+pG3mALLVAiMpCLVwI2NcRVAgIE7iGdso6elU
+         YU57oQB+7O9Dp/VPINi0G9m8vqetIezpEYlCyTNVbcpLAKVZqwOsOKkAz+n1KrnDpDx6
+         HRqA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1730905153; x=1731509953;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=ALXDvHXn3Q8wMu3fWsM27h7XTmcxn1SOJ6aDokYeCGg=;
+        b=Gheho31o++NZUZ2DTeeBxgFLmF4XzNvWob6MDdvv8MNtGJg6p1sethJmoaafKEzzyw
+         AdCoewU0PNJHOg0WgbT5VqZu4wA1XJpKkJI9pICxDK7Z9Kht2HxHJMo6V5XqoifkydW4
+         u1oYMd4xJqPMqRi0SHGTNQKS4hP8XrjINdpApDyO559vWUIOM0yKLkp+d/wAikrIwzaz
+         rDvYcur+ex/2Ggn8G3evDMa1O8bYXrcIg+bPzrwCj7EXGQnRz29ySlT6Nda3pP7Ryv8P
+         gDDWSBRsayxDKhT7/RRmzrbS6mXmzyblLlIiMMSF5HOWt3akch70ube8fiooqAhlNfDM
+         yLmA==
+X-Gm-Message-State: AOJu0Ywj9kJHiaCU/w9NBeNNEqyOc3N61ihmfV8FFQJP8BUgRfwK+oUd
+	pRAaqTJjiGh281AErALg3nhqWycMoW8ci5eLS+GiKZNbS4MIkIyCKFgH0eU0dsFS82OPidQac8C
+	K
+X-Google-Smtp-Source: AGHT+IHuXRs0uKs828sJZE23mq7FCvev2m2r2bXXfcvN9QSSuTVC9BCMKFpggIrBbVqYUqCHGU7AsQ==
+X-Received: by 2002:a17:907:7206:b0:a8d:2b7a:ff44 with SMTP id a640c23a62f3a-a9e654fb607mr1848749566b.32.1730905151655;
+        Wed, 06 Nov 2024 06:59:11 -0800 (PST)
+Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-a9eb16dbd38sm290037166b.73.2024.11.06.06.59.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 06 Nov 2024 06:59:11 -0800 (PST)
+Message-ID: <dd330f29f6d1af2b6297ad0baff9098fa897a2ac.camel@suse.com>
+Subject: Re: [PATCH] multipathd: checker port_state before setting it.
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>, Muneendra Kumar
+	 <muneendra.kumar@broadcom.com>
+Date: Wed, 06 Nov 2024 15:59:10 +0100
+In-Reply-To: <20240917155858.959835-1-bmarzins@redhat.com>
+References: <20240917155858.959835-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3818.100.11.1.3\))
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-From: Christian Theune <ct@flyingcircus.io>
-In-Reply-To: <b2a654e7-6c71-a44e-645c-686eed9d5cd8@huaweicloud.com>
-Date: Wed, 6 Nov 2024 07:40:04 +0100
-Cc: John Stoffel <john@stoffel.org>,
- "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>,
- "yukuai (C)" <yukuai3@huawei.com>
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <240E3553-1EDD-49C8-88B8-FB3A7F0CE39C@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
- <1f2c74f4-8ba9-1a9f-0c11-018a25e785e5@huaweicloud.com>
- <22A202B1-A802-406F-8F38-F4F486A92F81@flyingcircus.io>
- <45d44ed5-da7c-6480-9143-f611385b2e92@huaweicloud.com>
- <9C03DED0-3A6A-42F8-B935-6EB500F8BCE2@flyingcircus.io>
- <DD99A1F0-56E7-473D-B917-66885810233E@flyingcircus.io>
- <78517565-B1AB-4441-B4F8-EB380E98EB0F@flyingcircus.io>
- <26403.59789.480428.418012@quad.stoffel.home>
- <5fb0a6f0-066d-c490-3010-8a047aae2c29@huaweicloud.com>
- <F8CEEB15-0E3C-4F67-951D-12E165D6CC05@flyingcircus.io>
- <B6D76C57-B940-4BFD-9C40-D6E463D2A09F@flyingcircus.io>
- <5170f0d2-cb0f-2e0f-eb5e-31aa9d6ff65d@huawei.com>
- <2b093abc-cd9a-0b84-bcba-baec689fa153@huaweicloud.com>
- <63DE1813-C719-49B7-9012-641DB3DECA26@flyingcircus.io>
- <F8A5ABD5-0773-414D-BBBC-538481BCD0F4@flyingcircus.io>
- <753611d4-5c54-ee0d-30ab-9321274fd749@huaweicloud.com>
- <9A0AE411-B4B8-424A-B9F6-AF933F6544F9@flyingcircus.io>
- <BE85CBCF-1B09-48D0-9931-AA8D298F1D6B@flyingcircus.io>
- <b2a654e7-6c71-a44e-645c-686eed9d5cd8@huaweicloud.com>
-To: Yu Kuai <yukuai1@huaweicloud.com>
+MIME-Version: 1.0
 
-Hi,
-
-> On 6. Nov 2024, at 07:35, Yu Kuai <yukuai1@huaweicloud.com> wrote:
+On Tue, 2024-09-17 at 11:58 -0400, Benjamin Marzinski wrote:
+> If the rport port_state is already Marginal, trying to set it to
+> Marginal causes an error like the following:
 >=20
-> Hi,
+> multipathd[365376]:
+> /sys/devices/pci0000:c0/0000:c0:01.1/0000:c4:00.0/host0/rport-0:0-
+> 5/fc_remote_ports/rport-0:0-5: failed to set port_state to marginal:
+> Invalid argument
 >=20
-> =E5=9C=A8 2024/11/05 18:15, Christian Theune =E5=86=99=E9=81=93:
->> Hi,
->> after about 2 hours it stalled again. Here=E2=80=99s the full blocked =
-process dump. (Tell me if this isn=E2=80=99t helpful, otherwise I=E2=80=99=
-ll keep posting that as it=E2=80=99s the only real data I can show)
+> To avoid causing this confusing error message, check if the
+> port_state
+> is already marginal before trying to set it.
 >=20
-> This is bad news :(
+> Cc: Muneendra Kumar <muneendra.kumar@broadcom.com>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Yeah. But: the good new is that we aren=E2=80=99t eating any data so far =
-=E2=80=A6 ;)
-
-> While reviewing related code, I come up with a plan to move bitmap
-> start/end write ops to the upper layer. Make sure each write IO from
-> upper layer only start once and end once, this is easy to make sure
-> they are balanced and can avoid many calls to improve performance as
-> well.
-
-Sounds like a plan!
-
-> However, I need a few days to cooke a patch after work.
-
-Sure thing! I=E2=80=99ll switch off bitmaps for that time - I=E2=80=99m =
-happy we found a workaround so we can take time to resolve it cleanly. =
-:)
-
-Thanks a lot for your help!
-Christian
-
---=20
-Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
-Christian Zagrodnick
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
