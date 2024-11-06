@@ -1,143 +1,102 @@
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.7])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D474015E8B;
-	Wed,  6 Nov 2024 02:03:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.7
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D76E8824A3
+	for <dm-devel@lists.linux.dev>; Wed,  6 Nov 2024 06:35:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730858641; cv=none; b=U5M1wd3BrgZLOOTKqzK6gh6vPcqct75nb12hSXyh648f0h6o39is8guUpK3PZfItg4/VTUsnh3mh8xQB3Hl1ZJfof+VXeqZaIAOVMBTyxpOL/SWFm80FykqOsSDZ9LMxutgHy69A8OExJeuZpdq2V3s+CxgdwI9jyvIVdBPl2uI=
+	t=1730874938; cv=none; b=jVLiyyv1fTR2UwKW7THwQqfxo7DCHwJ0JGw29RhDRb7QX+2kwKmK3HG74oHQM1dV1iqHyNo1+3mnz4R2sQOqywOp+4VX/FvLkx+Uv5JSdrz+T2z4MkTdhsxJFaOZnCfvuRR69rzIA/p5buwwwAmJA7vdFrsXtMw+jVWZ1LA0oQY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730858641; c=relaxed/simple;
-	bh=8xOHKdysz0I1thehXlHDuwIhJm1l23HMPTz/Hczj7tI=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=agFjCSuCmmb10CzPXrYmBvpFa9EWHGIrTPq9af6/bmkkEZ+L9iN8Wc5jW5N3HE6l9wzNz76gJ46P4HDKV/bKIM5ElHZk7DECa4AUWOpk3tKv0ckiJTExnBqSKnSA1HFMcNcES08DDvd2QL0IVEOgvWzhC1UOABMg5sj89cXkevw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=CQ3YX3AE; arc=none smtp.client-ip=192.198.163.7
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="CQ3YX3AE"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1730858640; x=1762394640;
-  h=date:from:to:cc:subject:message-id:mime-version;
-  bh=8xOHKdysz0I1thehXlHDuwIhJm1l23HMPTz/Hczj7tI=;
-  b=CQ3YX3AEV5jkQlcO0IVQY+1aHMYvlkXcRIP2Qpm2flgqGRC5vx7On58R
-   pKRvk0/vrxkSkqS+MCZNC2K+WBuLGBkUR/hxTEvJMzCn94O+CQ3voF/Ut
-   Vrg9xJFncYHe8+fufmTbqhF/coo4rTwU9SZz5VkZGgKjxz9FiBj6PCjd1
-   BIm98Eeem/UkzL68rBLdyQLOyyGJ8/tpFdzDyGtmSqXTxmPGByJaIZcFZ
-   mXdYpQZCo26bvBCFd1q4tiM6RTJOeDM+YtG1Xy41xQlMDyarnZSyKB/9B
-   DKWVw4J3FuzPdKJPS56GMM+ChS5Qh9K2pFkWzxF/08/DEN/+w1M+BaW9q
-   A==;
-X-CSE-ConnectionGUID: sniITUv7RwGvJ/ZaNrTiRg==
-X-CSE-MsgGUID: Bc2G3WEMRrqi2uz50U2kWA==
-X-IronPort-AV: E=McAfee;i="6700,10204,11247"; a="56036255"
-X-IronPort-AV: E=Sophos;i="6.11,261,1725346800"; 
-   d="scan'208";a="56036255"
-Received: from fmviesa010.fm.intel.com ([10.60.135.150])
-  by fmvoesa101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 05 Nov 2024 18:03:59 -0800
-X-CSE-ConnectionGUID: vqpyg6bmQoiEieVq1NtUBg==
-X-CSE-MsgGUID: ew3ZM7iQTfCGc42aAWpoog==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.11,261,1725346800"; 
-   d="scan'208";a="84600419"
-Received: from lkp-server01.sh.intel.com (HELO a48cf1aa22e8) ([10.239.97.150])
-  by fmviesa010.fm.intel.com with ESMTP; 05 Nov 2024 18:03:58 -0800
-Received: from kbuild by a48cf1aa22e8 with local (Exim 4.96)
-	(envelope-from <lkp@intel.com>)
-	id 1t8VOl-000mjr-1e;
-	Wed, 06 Nov 2024 02:03:55 +0000
-Date: Wed, 6 Nov 2024 10:03:12 +0800
-From: kernel test robot <lkp@intel.com>
-To: Matthew Sakai <msakai@redhat.com>
-Cc: oe-kbuild-all@lists.linux.dev, dm-devel@lists.linux.dev,
-	Mikulas Patocka <mpatocka@redhat.com>
-Subject: [device-mapper-dm:for-next 15/15]
- drivers/md/dm-vdo/recovery-journal.c:1369: warning: Function parameter or
- struct member 'context' not described in 'write_block'
-Message-ID: <202411060937.ogzFm46t-lkp@intel.com>
+	s=arc-20240116; t=1730874938; c=relaxed/simple;
+	bh=6b71Oq3CfNvVOa+ygajIET0OFY+ZxaW4Vf2duRr2+xw=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=is5Rry88LtWq0B396MG1m+82idKT9KW3sTbAzQg8rdJuNkJIJBu0/opjn639QxsSu/W4GCcMug3OUrvp7vGCNB4tw6gyI8iFsu5A1OFCJqZqqRu65VuEIC3fUnlb6jGnLoK+6/3a1m6BFRFoUE/IfUhudQGzHzu76fFLqb58Jl4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=none smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4XjwS83rBVz4f3kpK
+	for <dm-devel@lists.linux.dev>; Wed,  6 Nov 2024 14:35:20 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 686781A0359
+	for <dm-devel@lists.linux.dev>; Wed,  6 Nov 2024 14:35:33 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP4 (Coremail) with SMTP id gCh0CgB3U4czDitnj_H4Aw--.26724S3;
+	Wed, 06 Nov 2024 14:35:33 +0800 (CST)
+Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
+ devices when rsyncing many files
+To: Christian Theune <ct@flyingcircus.io>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: John Stoffel <john@stoffel.org>,
+ "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+ dm-devel@lists.linux.dev, =?UTF-8?Q?Dragan_Milivojevi=c4=87?=
+ <galileo@pkm-inc.com>, "yukuai (C)" <yukuai3@huawei.com>
+References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
+ <1f2c74f4-8ba9-1a9f-0c11-018a25e785e5@huaweicloud.com>
+ <22A202B1-A802-406F-8F38-F4F486A92F81@flyingcircus.io>
+ <45d44ed5-da7c-6480-9143-f611385b2e92@huaweicloud.com>
+ <9C03DED0-3A6A-42F8-B935-6EB500F8BCE2@flyingcircus.io>
+ <DD99A1F0-56E7-473D-B917-66885810233E@flyingcircus.io>
+ <78517565-B1AB-4441-B4F8-EB380E98EB0F@flyingcircus.io>
+ <26403.59789.480428.418012@quad.stoffel.home>
+ <5fb0a6f0-066d-c490-3010-8a047aae2c29@huaweicloud.com>
+ <F8CEEB15-0E3C-4F67-951D-12E165D6CC05@flyingcircus.io>
+ <B6D76C57-B940-4BFD-9C40-D6E463D2A09F@flyingcircus.io>
+ <5170f0d2-cb0f-2e0f-eb5e-31aa9d6ff65d@huawei.com>
+ <2b093abc-cd9a-0b84-bcba-baec689fa153@huaweicloud.com>
+ <63DE1813-C719-49B7-9012-641DB3DECA26@flyingcircus.io>
+ <F8A5ABD5-0773-414D-BBBC-538481BCD0F4@flyingcircus.io>
+ <753611d4-5c54-ee0d-30ab-9321274fd749@huaweicloud.com>
+ <9A0AE411-B4B8-424A-B9F6-AF933F6544F9@flyingcircus.io>
+ <BE85CBCF-1B09-48D0-9931-AA8D298F1D6B@flyingcircus.io>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <b2a654e7-6c71-a44e-645c-686eed9d5cd8@huaweicloud.com>
+Date: Wed, 6 Nov 2024 14:35:31 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+In-Reply-To: <BE85CBCF-1B09-48D0-9931-AA8D298F1D6B@flyingcircus.io>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgB3U4czDitnj_H4Aw--.26724S3
+X-Coremail-Antispam: 1UD129KBjDUn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73
+	VFW2AGmfu7bjvjm3AaLaJ3UjIYCTnIWjp_UUUYk7AC8VAFwI0_Gr0_Xr1l1xkIjI8I6I8E
+	6xAIw20EY4v20xvaj40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28Cjx
+	kF64kEwVA0rcxSw2x7M28EF7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8I
+	cVCY1x0267AKxVW8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87
+	Iv6xkF7I0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE
+	6c02F40Ex7xfMcIj6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72
+	CE4IkC6x0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7Mxk0
+	xIA0c2IEe2xFo4CEbIxvr21l42xK82IYc2Ij64vIr41l4c8EcI0Ec7CjxVAaw2AFwI0_JF
+	0_Jw1l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8G
+	jcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r126r1DMIIYrxkI7VAKI48JMIIF0xvE2I
+	x0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42xK
+	8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I
+	0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfUoOJ5UUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-head:   02f655ded53008ff0f45bfd96b82581fcd61d2c2
-commit: 02f655ded53008ff0f45bfd96b82581fcd61d2c2 [15/15] dm vdo: fix function doc comment formatting
-config: alpha-allyesconfig (https://download.01.org/0day-ci/archive/20241106/202411060937.ogzFm46t-lkp@intel.com/config)
-compiler: alpha-linux-gcc (GCC) 13.3.0
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20241106/202411060937.ogzFm46t-lkp@intel.com/reproduce)
+Hi,
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202411060937.ogzFm46t-lkp@intel.com/
+在 2024/11/05 18:15, Christian Theune 写道:
+> Hi,
+> 
+> 
+> after about 2 hours it stalled again. Here’s the full blocked process dump. (Tell me if this isn’t helpful, otherwise I’ll keep posting that as it’s the only real data I can show)
 
-All warnings (new ones prefixed by >>):
+This is bad news :(
 
-   drivers/md/dm-vdo/recovery-journal.c:268: warning: Function parameter or struct member 'waiter' not described in 'continue_waiter'
-   drivers/md/dm-vdo/recovery-journal.c:268: warning: Function parameter or struct member 'context' not described in 'continue_waiter'
-   drivers/md/dm-vdo/recovery-journal.c:1085: warning: Function parameter or struct member 'waiter' not described in 'assign_entry'
-   drivers/md/dm-vdo/recovery-journal.c:1085: warning: Function parameter or struct member 'context' not described in 'assign_entry'
-   drivers/md/dm-vdo/recovery-journal.c:1172: warning: Function parameter or struct member 'waiter' not described in 'continue_committed_waiter'
-   drivers/md/dm-vdo/recovery-journal.c:1172: warning: Function parameter or struct member 'context' not described in 'continue_committed_waiter'
-   drivers/md/dm-vdo/recovery-journal.c:1369: warning: Function parameter or struct member 'waiter' not described in 'write_block'
->> drivers/md/dm-vdo/recovery-journal.c:1369: warning: Function parameter or struct member 'context' not described in 'write_block'
-   drivers/md/dm-vdo/recovery-journal.c:1620: warning: Function parameter or struct member 'state' not described in 'initiate_drain'
+While reviewing related code, I come up with a plan to move bitmap
+start/end write ops to the upper layer. Make sure each write IO from
+upper layer only start once and end once, this is easy to make sure
+they are balanced and can avoid many calls to improve performance as
+well.
 
+However, I need a few days to cooke a patch after work.
 
-vim +1369 drivers/md/dm-vdo/recovery-journal.c
+Thanks,
+Kuai
 
-95a72357688803 Matthew Sakai 2023-11-16  1362  
-95a72357688803 Matthew Sakai 2023-11-16  1363  /**
-95a72357688803 Matthew Sakai 2023-11-16  1364   * write_block() - Issue a block for writing.
-95a72357688803 Matthew Sakai 2023-11-16  1365   *
-95a72357688803 Matthew Sakai 2023-11-16  1366   * Implements waiter_callback_fn.
-95a72357688803 Matthew Sakai 2023-11-16  1367   */
-02f655ded53008 Matthew Sakai 2024-10-02  1368  static void write_block(struct vdo_waiter *waiter, void __always_unused *context)
-95a72357688803 Matthew Sakai 2023-11-16 @1369  {
-95a72357688803 Matthew Sakai 2023-11-16  1370  	struct recovery_journal_block *block =
-95a72357688803 Matthew Sakai 2023-11-16  1371  		container_of(waiter, struct recovery_journal_block, write_waiter);
-95a72357688803 Matthew Sakai 2023-11-16  1372  	struct recovery_journal *journal = block->journal;
-95a72357688803 Matthew Sakai 2023-11-16  1373  	struct packed_journal_header *header = get_block_header(block);
-95a72357688803 Matthew Sakai 2023-11-16  1374  
-d6e260cc426164 Mike Snitzer  2023-11-20  1375  	if (block->committing || !vdo_waitq_has_waiters(&block->entry_waiters) ||
-d6e260cc426164 Mike Snitzer  2023-11-20  1376  	    is_read_only(journal))
-95a72357688803 Matthew Sakai 2023-11-16  1377  		return;
-95a72357688803 Matthew Sakai 2023-11-16  1378  
-d6e260cc426164 Mike Snitzer  2023-11-20  1379  	block->entries_in_commit = vdo_waitq_num_waiters(&block->entry_waiters);
-95a72357688803 Matthew Sakai 2023-11-16  1380  	add_queued_recovery_entries(block);
-95a72357688803 Matthew Sakai 2023-11-16  1381  
-95a72357688803 Matthew Sakai 2023-11-16  1382  	journal->pending_write_count += 1;
-95a72357688803 Matthew Sakai 2023-11-16  1383  	journal->events.blocks.written += 1;
-95a72357688803 Matthew Sakai 2023-11-16  1384  	journal->events.entries.written += block->entries_in_commit;
-95a72357688803 Matthew Sakai 2023-11-16  1385  
-95a72357688803 Matthew Sakai 2023-11-16  1386  	header->block_map_head = __cpu_to_le64(journal->block_map_head);
-95a72357688803 Matthew Sakai 2023-11-16  1387  	header->slab_journal_head = __cpu_to_le64(journal->slab_journal_head);
-95a72357688803 Matthew Sakai 2023-11-16  1388  	header->entry_count = __cpu_to_le16(block->entry_count);
-95a72357688803 Matthew Sakai 2023-11-16  1389  
-95a72357688803 Matthew Sakai 2023-11-16  1390  	block->committing = true;
-95a72357688803 Matthew Sakai 2023-11-16  1391  
-95a72357688803 Matthew Sakai 2023-11-16  1392  	/*
-95a72357688803 Matthew Sakai 2023-11-16  1393  	 * We must issue a flush and a FUA for every commit. The flush is necessary to ensure that
-95a72357688803 Matthew Sakai 2023-11-16  1394  	 * the data being referenced is stable. The FUA is necessary to ensure that the journal
-95a72357688803 Matthew Sakai 2023-11-16  1395  	 * block itself is stable before allowing overwrites of the lbn's previous data.
-95a72357688803 Matthew Sakai 2023-11-16  1396  	 */
-f7f46761ccd9b4 Mike Snitzer  2023-08-25  1397  	vdo_submit_metadata_vio(&block->vio, journal->origin + block->block_number,
-b863d7f7503c42 Mike Snitzer  2024-02-05  1398  				complete_write_endio, handle_write_error,
-b863d7f7503c42 Mike Snitzer  2024-02-05  1399  				REQ_OP_WRITE | REQ_PRIO | REQ_PREFLUSH | REQ_SYNC | REQ_FUA);
-95a72357688803 Matthew Sakai 2023-11-16  1400  }
-95a72357688803 Matthew Sakai 2023-11-16  1401  
-
-:::::: The code at line 1369 was first introduced by commit
-:::::: 95a72357688803736bf60db973cbf94c0ff3a6da dm vdo: add the recovery journal
-
-:::::: TO: Matthew Sakai <msakai@redhat.com>
-:::::: CC: Mike Snitzer <snitzer@kernel.org>
-
--- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
