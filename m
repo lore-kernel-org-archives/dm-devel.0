@@ -1,133 +1,203 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com [209.85.221.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6925621642A
-	for <dm-devel@lists.linux.dev>; Thu,  7 Nov 2024 18:35:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15E0912C499
+	for <dm-devel@lists.linux.dev>; Fri,  8 Nov 2024 09:40:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731004517; cv=none; b=CkFggr9x1LMMN8cLxidOWdiKQFpgIXXG9rt1A5Jw54HLNXWGekIZFzKZ452vZjdUWfG8udjTW5bmWqN410OCvkHxRyrzbEgpg+vjiGK14tQ1B+2ym6CB2+qP+jviEW17ndi5ZxWGyT/z7vvRZl9NKmmtJmB4+0Psb1BEZGJIHcw=
+	t=1731058822; cv=none; b=EYM7Gpn8wkGBDqkjD+3cqdG5ZMxJn+Hk5waX30JpAVf7OH9wQabhhtVz/om1Ov9HG/u3z3/uXuH4vnL4YZTIZkIbEOqBJmccashqeh93amI1w7GG/x7KcHGtgtK+oJ6TiMjnfquYleTgM8Tp2Yc/Gd7Bl3dAKsUmGJeCPGFqIcw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731004517; c=relaxed/simple;
-	bh=Dr3iBqAxUkSSUIfdL2QO5ZpRjAKqgwn4ITBFIpDTva0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=e4xOdaOIAr82VTJnEmgxfdbuM+lNd5SMDMPaP4IZtaMrvTGoHsI4+VQMoaFPFQ7SVHiaOt61BdIwVmZwnys36XfDIgRkD/uyLlFhrRIJ4mCIXjdIrrTDNMg7+ym/Y8+YqOxLd1apked+efmO60RJjl5Ipvw4bKqSxbyPEAEqLIY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EDOjt9bn; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1731058822; c=relaxed/simple;
+	bh=VE7ZtmTA2RgauIlgQabrVAZcfhXilfwl5mvfgMV1yU8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=XcrrPrMXxpmTXjJE1Zte9axbtrMP0nRzTz7sTbTBZFXL5Sd49Ams64yGfbq9AzUrjsM8itzYeWaGEBiJzMAG88ugcvKEreCyFtsliCe5qcQzzGWVnVOHq+9Hh2yN3/ob9/rA0RxkfZUs2q/r5pE1SEGSQTpZnyscGUUW5UeKH2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VYKfIF0u; arc=none smtp.client-ip=209.85.221.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EDOjt9bn"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1731004514;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=0BV4cQjK6r4k+nnOA3H++TZCIX5jl2A4n+o/usvE3U4=;
-	b=EDOjt9bnoRQr9DH5X9PqRiT/4RwoY08buS96+G5gb/JSPZM2tSQuwzptc6+emIPkl9XEgz
-	YK8SUzMSTW6dlLXJh3v75h28ebFNsi+neS76WG/0iM8FK5Sx/1/7Q4zq0V9uaRrLaH+8NA
-	H/YKkTSHUKpfW3SisgSoDbAR9kt5rd8=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-594-hY2Lgo2jObuaFFDtiQ22ow-1; Thu,
- 07 Nov 2024 13:35:13 -0500
-X-MC-Unique: hY2Lgo2jObuaFFDtiQ22ow-1
-X-Mimecast-MFC-AGG-ID: hY2Lgo2jObuaFFDtiQ22ow
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 505F819792FC;
-	Thu,  7 Nov 2024 18:35:09 +0000 (UTC)
-Received: from [10.22.88.108] (unknown [10.22.88.108])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id DC8651956054;
-	Thu,  7 Nov 2024 18:35:05 +0000 (UTC)
-Message-ID: <643e61a8-b0cb-4c9d-831a-879aa86d888e@redhat.com>
-Date: Thu, 7 Nov 2024 13:35:04 -0500
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VYKfIF0u"
+Received: by mail-wr1-f50.google.com with SMTP id ffacd0b85a97d-37d5231f71cso211498f8f.2
+        for <dm-devel@lists.linux.dev>; Fri, 08 Nov 2024 01:40:18 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1731058817; x=1731663617; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=cFU4yL5w4o6vZ05/kFwCUnadp/E1GWsPzTDQKu8MwG4=;
+        b=VYKfIF0ueqxrZqmuPXF8UHCOMoqPbAoZ4MdW4OUa9bzSYtzaNcgvipb8ZAilexuIke
+         Wp/aS9b4yhpo+JtLNIuVNLs5Kv6rI+tD115JyUZFWXKvtIZKljVa6VBr2tgL6IQlot08
+         nllJO0Jar2oNFk0R1La+ElikG6SP5SKDXJWlLWoc/aAGr+StreN/cLCwy9cynN5DpZph
+         WxDgCuv6WfD3pdnGMq9sneZAOEUw3QQgq8PxgqGqhK+1xLXE1d2sbE6Rj0P1obACVE/i
+         SQuhLif9ndOLA+1gs1PfRqNmsalko6PchwHF+0dhfi/KqRG+p2o3aoTdjxtmXIdaMd4p
+         ATVw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731058817; x=1731663617;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=cFU4yL5w4o6vZ05/kFwCUnadp/E1GWsPzTDQKu8MwG4=;
+        b=lW/E/Jhj5U9nMGjT2QwpAdn2pVSmOZ9eTyGNOmqJfQB/ovrPkX1do/JytaCprWgNLw
+         Aw4YDxOmjqIOL/bxrrUOaFvLgQsKEfuryCBxL5xEdR0ug9XP8zuzF9DsN9rNKFqvnzma
+         aPkdTAkS1nphV1oXCjyYu/feHkG833uqdPClgqxPZgybe34jWyB74hYBGRmn47qgFUfY
+         5nq3+6txfdYb3l7sgs3V0BRfX6lF5ddMBj2nPtY9llIsl1J7PtJm2WM8M+vdWl0QBb5t
+         gHASOWKuegmQMFb40Dip7VM/QaV5Uk5fZcXDR3yUELX/iSVBL4rsQ5EJJ1kNlbsJ/01C
+         2sig==
+X-Forwarded-Encrypted: i=1; AJvYcCU/uj4ZccY+O8SNyw1RkqjT5iJV5Akcu4poKD6UuXHKtNCCkwCZqOuaeXuJ6qVTjyVUKXDUh03Iyw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxDbh7zUkXf5VeJuqi9asbPpFDWJA57Rx6TwZtE5+HeNVzRzAwI
+	Krfbh5uU7Zj6g1Oz3v4oKmWyb4AjJBbs/eWkST304mVcN6y313E=
+X-Google-Smtp-Source: AGHT+IEBPfb7bmOqzyoc2dlzyrZC33Xe0/yK/8XLEzkNZd64LKFDV/6PqCP8hNViFOUhH0VvmIgAVA==
+X-Received: by 2002:a05:6000:178b:b0:37c:c815:a204 with SMTP id ffacd0b85a97d-381f171441emr747117f8f.3.1731058817031;
+        Fri, 08 Nov 2024 01:40:17 -0800 (PST)
+Received: from localhost (145.red-81-44-150.dynamicip.rima-tde.net. [81.44.150.145])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-381ed97cd97sm4051152f8f.27.2024.11.08.01.40.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 08 Nov 2024 01:40:16 -0800 (PST)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: [PATCH] multipath-tools: refresh fsf licences
+Date: Fri,  8 Nov 2024 10:40:15 +0100
+Message-ID: <20241108094015.383481-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: DMMP request-queue vs. BiO
-To: linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-scsi@vger.kernel.org
-Cc: Chris Leech <cleech@redhat.com>, Hannes Reinecke <hare@suse.de>,
- Christoph Hellwig <hch@lst.de>, snitzer@kernel.org,
- Ming Lei <minlei@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>,
- Jonathan Brassow <jbrassow@redhat.com>, Ewan Milne <emilne@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>, bmarson@redhat.com,
- Jeff Moyer <jmoyer@redhat.com>, "spetrovi@redhat.com" <spetrovi@redhat.com>,
- Rob Evers <revers@redhat.com>
-References: <2d5fe016-2941-43a4-8b7c-850b8ee1d6ce@redhat.com>
- <20241104073547.GA20614@lst.de>
- <d9733713-eb7b-4efa-ad6b-e6b41d1df93b@suse.de> <20241105103307.GA1385@lst.de>
-Content-Language: en-US
-From: John Meneghini <jmeneghi@redhat.com>
-Organization: RHEL Core Storge Team
-In-Reply-To: <20241105103307.GA1385@lst.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
-I've been asked to move this conversation to a public thread on the upstream email distros.
+Old licences have been modified, because FSF postal address was changed:
+https://lists.gnu.org/archive/html/info-gnu/2024-09/msg00000.html
+https://www.fsf.org/blogs/community/fsf-office-closing-party
 
-Background:
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+https://www.gnu.org/licenses/old-licenses/lgpl-2.0.txt
+https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
 
-At ALPSS last month (Sept. 2024) Hannes and Christoph spoke with Chris and I about how they'd like to remove the 
-request-interface from DMMP and asked if Red Hat would be willing to help out by running some DMMP/Bio vs. DMMP/req performance 
-tests and share the results.The idea was: with some of the recent performance improvements in the BIO path upstream we believe 
-there may not be much of a performance difference between these two code paths and would like Red Hat's help in demonstrating that.
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ LICENSES/GPL-2.0  |  9 ++++-----
+ LICENSES/LGPL-2.0 | 11 +++++------
+ LICENSES/LGPL-2.1 |  9 ++++-----
+ 3 files changed, 13 insertions(+), 16 deletions(-)
 
-So Chris and I returned to Red Hat and broached this subject here internally. The Red Hat performance team has agreed to work 
-work with us on an ad hoc basis to do this and we've made some preliminary plans to build a test bed that can used to do some 
-performance tests with DMMP on an upstream kernel using iSCSI and FCP. Then we talked to the DMMP guys about it. They have some 
-questions and asked me discuss this topic in an email thread on linux-scsi, linux-block and dm-devel.
-
-Some questions are:
-
-What are the exact patches which make us think the BIO path is now performant?
-
-Is it Ming's immutable bvecs and moving the splitting down to the driver?
-
-I've been told these changes are only applicable if a filesystem is involved. Databases can make direct use of the dmmp device, 
-so late bio splitting not applicable for them. It is filesystems that are building larger bios. See the comments from Hannes and 
-Christoph below.
-
-I think Red Hat can help out with the performance testing but we will need to answer some of these questions. It will also be 
-important to determine exactly what kind of workload we should use with any DMMP performance tests. Will a simple workload 
-generated with fio work, or do we need to test some actual data base work loads as well?
-
-Please reply to this public thread with your thoughts and ideas.
-
-Thanks,
-
-John A. Meneghini
-Senior Principal Platform Storage Engineer
-RHEL SST - Platform Storage Group
-jmeneghi@redhat.com
-
-On 11/5/24 05:33, Christoph Hellwig wrote:
-> On Tue, Nov 05, 2024 at 08:44:45AM +0100, Hannes Reinecke wrote:
->>> I think the big change is really Ming's immutable bvecs and moving the
->>> splitting down to the driver.  This means bios are much bigger (and
->>> even bigger now with large folios for file systems supporting it).
->>>
->> Exactly. With the current code we should never merge requests; all
->> data should be assembled in the bio already.
->> (I wonder if we could trigger a WARN_ON if request merging is
->> attempted ...)
-> 
-> Request merging is obviosuly still pretty common.  For one because
-> a lot of crappy file systems submit a buffer_head per block (none of
-> the should be relevant for multipathing), but also because we reach
-> the bio size at some point and just need to split.  While large folios
-> reduce that a lot, not all file systems that matter support that.
-> (that what the plug callback would fix IFF it turns out to be an
-> issue) and last but not least I/O schedulers delay I/O to be able to
-> do better merging.  My theory is that this not important for the kind
-> of storage we use multipathing for, or rather not for the pathing
-> decisions.
+diff --git a/LICENSES/GPL-2.0 b/LICENSES/GPL-2.0
+index d159169d..9efa6fbc 100644
+--- a/LICENSES/GPL-2.0
++++ b/LICENSES/GPL-2.0
+@@ -2,7 +2,7 @@
+                        Version 2, June 1991
+ 
+  Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ <https://fsf.org/>
+  Everyone is permitted to copy and distribute verbatim copies
+  of this license document, but changing it is not allowed.
+ 
+@@ -304,8 +304,7 @@ the "copyright" line and a pointer to where the full notice is found.
+     GNU General Public License for more details.
+ 
+     You should have received a copy of the GNU General Public License along
+-    with this program; if not, write to the Free Software Foundation, Inc.,
+-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++    with this program; if not, see <https://www.gnu.org/licenses/>.
+ 
+ Also add information on how to contact you by electronic and paper mail.
+ 
+@@ -329,8 +328,8 @@ necessary.  Here is a sample; alter the names:
+   Yoyodyne, Inc., hereby disclaims all copyright interest in the program
+   `Gnomovision' (which makes passes at compilers) written by James Hacker.
+ 
+-  <signature of Ty Coon>, 1 April 1989
+-  Ty Coon, President of Vice
++  <signature of Moe Ghoul>, 1 April 1989
++  Moe Ghoul, President of Vice
+ 
+ This General Public License does not permit incorporating your program into
+ proprietary programs.  If your program is a subroutine library, you may
+diff --git a/LICENSES/LGPL-2.0 b/LICENSES/LGPL-2.0
+index 5bc8fb2c..ede5d544 100644
+--- a/LICENSES/LGPL-2.0
++++ b/LICENSES/LGPL-2.0
+@@ -2,7 +2,7 @@
+                        Version 2, June 1991
+ 
+  Copyright (C) 1991 Free Software Foundation, Inc.
+- 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ <https://fsf.org/>
+  Everyone is permitted to copy and distribute verbatim copies
+  of this license document, but changing it is not allowed.
+ 
+@@ -133,7 +133,7 @@ such a program is covered only if its contents constitute a work based
+ on the Library (independent of the use of the Library in a tool for
+ writing it).  Whether that is true depends on what the Library does
+ and what the program that uses the Library does.
+-  
++
+   1. You may copy and distribute verbatim copies of the Library's
+ complete source code as you receive it, in any medium, provided that
+ you conspicuously and appropriately publish on each copy an
+@@ -463,8 +463,7 @@ convey the exclusion of warranty; and each file should have at least the
+     Library General Public License for more details.
+ 
+     You should have received a copy of the GNU Library General Public
+-    License along with this library; if not, write to the Free Software
+-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++    License along with this library; if not, see <https://www.gnu.org/licenses/>.
+ 
+ Also add information on how to contact you by electronic and paper mail.
+ 
+@@ -475,7 +474,7 @@ necessary.  Here is a sample; alter the names:
+   Yoyodyne, Inc., hereby disclaims all copyright interest in the
+   library `Frob' (a library for tweaking knobs) written by James Random Hacker.
+ 
+-  <signature of Ty Coon>, 1 April 1990
+-  Ty Coon, President of Vice
++  <signature of Moe Ghoul>, 1 April 1990
++  Moe Ghoul, President of Vice
+ 
+ That's all there is to it!
+diff --git a/LICENSES/LGPL-2.1 b/LICENSES/LGPL-2.1
+index 4362b491..f6683e74 100644
+--- a/LICENSES/LGPL-2.1
++++ b/LICENSES/LGPL-2.1
+@@ -2,7 +2,7 @@
+                        Version 2.1, February 1999
+ 
+  Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+- 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ <https://fsf.org/>
+  Everyone is permitted to copy and distribute verbatim copies
+  of this license document, but changing it is not allowed.
+ 
+@@ -484,8 +484,7 @@ convey the exclusion of warranty; and each file should have at least the
+     Lesser General Public License for more details.
+ 
+     You should have received a copy of the GNU Lesser General Public
+-    License along with this library; if not, write to the Free Software
+-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++    License along with this library; if not, see <https://www.gnu.org/licenses/>.
+ 
+ Also add information on how to contact you by electronic and paper mail.
+ 
+@@ -496,7 +495,7 @@ necessary.  Here is a sample; alter the names:
+   Yoyodyne, Inc., hereby disclaims all copyright interest in the
+   library `Frob' (a library for tweaking knobs) written by James Random Hacker.
+ 
+-  <signature of Ty Coon>, 1 April 1990
+-  Ty Coon, President of Vice
++  <signature of Moe Ghoul>, 1 April 1990
++  Moe Ghoul, President of Vice
+ 
+ That's all there is to it!
+-- 
+2.47.0
 
