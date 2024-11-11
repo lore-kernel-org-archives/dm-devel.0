@@ -1,240 +1,226 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 28C8E25777
-	for <dm-devel@lists.linux.dev>; Mon, 11 Nov 2024 15:51:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 31057219ED
+	for <dm-devel@lists.linux.dev>; Mon, 11 Nov 2024 16:49:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731340274; cv=none; b=XgaRCr/8O9GiqO3cwFoQskg1YNfcUA91zwzq9iO89AUlnIZDMJWrNhnfTs0vyJNMzo1k9IpY7wsvacB9gBqf3DUTO72E5h9gvdX4it/eGhe2d8F7nO9YEHg7/IQsq1hZllYoMdRmu9Cxe5iL1bG3UvQOlkcmVSuHvSwLiXnqBps=
+	t=1731343766; cv=none; b=mZt2RMBKSfzHvL8auMG4AUAbiM2SDjg2hH29+RyvglGD3f5c/IyRfAdL0I/5JbTNBeKmC1grpsQaefPER854okJpScxeJ5+84IfQAD8VZJ93IpOtakJkkmUXlczoBBiGmpsmWFO0OnEbIzPP8ZmAprB7mxao3xDRYn0Tf8GfRck=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731340274; c=relaxed/simple;
-	bh=nuWQz96HwDzIgjwxI8pqyzb9RBzxzXnVHZte4zg1fBM=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=bQ8Tng9MBBmpvAedeKtcW3hBKEaxN2YmtX1/1f96oUT3uIUg5leiiBFhgyR5zdEidZG1IbCecdjvW1yJtP3jEB74FFtDvkto4Y8FOfzrxHVVR4/D02/rW4tkpoLC0Hi0HC0SvA3RdkZ0TCKa3MOrDZu5yucbGYD2dQfPIykBtxs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NNEXKmA0; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1731343766; c=relaxed/simple;
+	bh=cYz2Fe8zODcJmhs6g5OiYPzRM0HsJj4cXz7z1N6fnHQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=seO/9Lp121tcfVMYm4xNo2MtWFANu3w4sibmgwdvas98oxHtzFhVGSWQkkWiXZWDq17TfVGtt9qapiNGUrcZiVdIThm3C6M5vkHdAdjGQMUmM+4sDq9JC81g0x8qUGu9AWu/fHt7OaAams/zlWA+CkeR5xeLSsVbtWepLs23FX0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I+gDA9cr; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NNEXKmA0"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I+gDA9cr"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1731340271;
+	s=mimecast20190719; t=1731343763;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=z6Q+ir5N6eJu90qu2K4VX7P3M5083H2BO+bWPATa7qs=;
-	b=NNEXKmA0XLCXBc1EcsKDaRLoPmwjg5IASWTCY+ucvmJ61jVNo35i1qkVCF8lnpmDbEBSPJ
-	HVgqvX7M4ysdWAs3PI7pHX+FMZhmFcTz6PVc8YulQB+AlLmRYl0zGc0rOc7vT4Ju0jgAGk
-	wqqAqIM1snykQFP5XY8RPbXiz+zy+ig=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=CSXVEA0rpomwVEqDS4htCNFm/a7L/Pue3FLDNrsCQFE=;
+	b=I+gDA9crNoGM7KxZ1JK1CH6DJZZXQFn9bpIcn5AP2yHOrM8YKa+bFyYlu5Iaf/+idMcAij
+	DItvYf4c0sPmps1GfAHWm0dXSl63fqMR+vLXsVqxYHjSt3vlp2X5pYp0uvQtpmUmvTC9PA
+	UU+btAaqcC7rUZpREyJRsT/mWesJJOE=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-80-bw2fbYPEM7m8E7CTTOAkrQ-1; Mon,
- 11 Nov 2024 10:51:08 -0500
-X-MC-Unique: bw2fbYPEM7m8E7CTTOAkrQ-1
-X-Mimecast-MFC-AGG-ID: bw2fbYPEM7m8E7CTTOAkrQ
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-526-bhRCz-7wNcyzAZgigaaGMw-1; Mon,
+ 11 Nov 2024 11:49:20 -0500
+X-MC-Unique: bhRCz-7wNcyzAZgigaaGMw-1
+X-Mimecast-MFC-AGG-ID: bhRCz-7wNcyzAZgigaaGMw
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6E6B01955F41;
-	Mon, 11 Nov 2024 15:51:07 +0000 (UTC)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DBAFB1955F57;
+	Mon, 11 Nov 2024 16:49:18 +0000 (UTC)
 Received: from [10.45.225.96] (unknown [10.45.225.96])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AABBA1956086;
-	Mon, 11 Nov 2024 15:51:05 +0000 (UTC)
-Date: Mon, 11 Nov 2024 16:51:02 +0100 (CET)
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2FE1C19560A3;
+	Mon, 11 Nov 2024 16:49:16 +0000 (UTC)
+Date: Mon, 11 Nov 2024 17:49:14 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    thornber@redhat.com
-cc: dm-devel@lists.linux.dev
-Subject: dm-cache: fix warnings about duplicate slab caches
-Message-ID: <43a07711-2055-a3c1-62b1-dfa6b3b324f3@redhat.com>
+To: Jooyung Han <jooyung@google.com>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    zkabelac@redhat.com, dm-devel@lists.linux.dev
+Subject: [PATCH] dm: make it possible to open underlying devices in shareable
+ mode
+In-Reply-To: <CAO-8PLa3Qxhy1M1C_ZDTpOyXrhQ=UQKeKoDOmy-bbShb4rV03A@mail.gmail.com>
+Message-ID: <dcaed20c-2132-d453-9c04-b22417ba4010@redhat.com>
+References: <CAO-8PLb0azRAuu2yJ3=K1EwiSXASDJ8nVBttbuOUV77==Xd2ug@mail.gmail.com> <94c895e2-0a71-73b2-2692-af8bf62fb340@redhat.com> <CAO-8PLYMFd3YLvfue_an7mc-O19fixJY4ZKybvjehxcm2tRYvA@mail.gmail.com>
+ <CAO-8PLa3Qxhy1M1C_ZDTpOyXrhQ=UQKeKoDOmy-bbShb4rV03A@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 2Yahblww1gsxgD8qGBy8KKCWCT_LotOAagPJhrvIu2U_1731340267
+X-Mimecast-MFC-PROC-ID: GU92bI4SToRjDT2nnbN6dcGGGMYY0be52ARliC17UOg_1731343759
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: multipart/mixed; BOUNDARY="-1463811712-960038954-1731343215=:871346"
+Content-ID: <c390a657-9d30-735f-c832-6a305f881207@redhat.com>
 
-The commit 4c39529663b9 adds a warning about duplicate cache names if
-CONFIG_DEBUG_VM is selected. These warnings are triggered by the dm-cache
-code.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463811712-960038954-1731343215=:871346
+Content-Type: text/plain; CHARSET=ISO-8859-15
+Content-Transfer-Encoding: 8BIT
+Content-ID: <1cf96310-ab7f-eee8-8c18-fda593a53657@redhat.com>
 
-The dm-cache code allocates a slab cache for each device. This commit
-changes it to allocate just one slab cache in the module init function.
+Hi
+
+On Fri, 8 Nov 2024, Jooyung Han wrote:
+
+> Hi Mikulas,
+>
+> Would it be reasonable to allow this? Or, to reduce the risk or impact 
+> on other users, how about introducing a flag for dm-linear constructor 
+> to open a table device without setting the holder. I don't know how to 
+> describe this, not-exclusive? The dm-linear constructor would look like 
+> "<dev_path> <offset> [no_exclusive]", when "no_exclusive" is set, it 
+> will open a table device without setting a holder.
+> 
+> I'd like to get your opinion about this idea. Especially if there's any 
+> risks about not setting the holder when opening a DM table device. 
+> 
+> Besides, there's one more question about dm-verity. Even though there's 
+> a field named "data_start" (comment saying it's "data offset in 512-byte 
+> sectors"): https://elixir.bootlin.com/linux/v6.11.4/source/drivers/md/dm-verity.h#L49, 
+> it's not set in its constructor and always zero after initialization. I 
+> think it's reasonable for the constructor to set it with an argument 
+> passed. What do you think?
+
+Yes, we could set it in the constructor.
+
+> Thanks.
+
+I've created this (totally untested) patch that makes it possible to add a 
+flag DM_OPEN_SHARED to the flags in the create ioctl - when the flag is 
+used, all devices open by the specified device are open in a shared mode. 
+Does the patch work for you?
+
+Mikulas
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+This commit adds a new flag DM_OPEN_SHARED. The flag may be used on the
+create ioctl. When it is used, the underlying devices that are opened
+will be open in a shareable mode, so that the user can mount filesystems
+on them or perform other activity.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Fixes: 4c39529663b9 ("slab: Warn on duplicate cache names when DEBUG_VM=y")
 
 ---
- drivers/md/dm-cache-background-tracker.c |   25 ++++++-------------------
- drivers/md/dm-cache-background-tracker.h |    8 ++++++++
- drivers/md/dm-cache-target.c             |   25 ++++++++++++++++++++-----
- 3 files changed, 34 insertions(+), 24 deletions(-)
+ drivers/md/dm-core.h          |    1 +
+ drivers/md/dm-ioctl.c         |    4 ++--
+ drivers/md/dm.c               |    9 +++++++--
+ include/linux/device-mapper.h |    2 +-
+ include/uapi/linux/dm-ioctl.h |    6 ++++++
+ 5 files changed, 17 insertions(+), 5 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-cache-background-tracker.c
+Index: linux-2.6/drivers/md/dm-core.h
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-cache-background-tracker.c	2023-09-05 14:45:58.000000000 +0200
-+++ linux-2.6/drivers/md/dm-cache-background-tracker.c	2024-11-07 15:54:05.000000000 +0100
-@@ -11,12 +11,6 @@
+--- linux-2.6.orig/drivers/md/dm-core.h	2024-07-30 14:06:48.000000000 +0200
++++ linux-2.6/drivers/md/dm-core.h	2024-11-11 17:34:13.000000000 +0100
+@@ -161,6 +161,7 @@ struct mapped_device {
+ #define DMF_SUSPENDED_INTERNALLY 7
+ #define DMF_POST_SUSPENDING 8
+ #define DMF_EMULATE_ZONE_APPEND 9
++#define DMF_OPEN_SHARED 10
  
- #define DM_MSG_PREFIX "dm-background-tracker"
- 
--struct bt_work {
--	struct list_head list;
--	struct rb_node node;
--	struct policy_work work;
--};
--
- struct background_tracker {
- 	unsigned int max_work;
- 	atomic_t pending_promotes;
-@@ -26,10 +20,10 @@ struct background_tracker {
- 	struct list_head issued;
- 	struct list_head queued;
- 	struct rb_root pending;
--
--	struct kmem_cache *work_cache;
- };
- 
-+struct kmem_cache *btracker_work_cache = NULL;
-+
- struct background_tracker *btracker_create(unsigned int max_work)
- {
- 	struct background_tracker *b = kmalloc(sizeof(*b), GFP_KERNEL);
-@@ -48,12 +42,6 @@ struct background_tracker *btracker_crea
- 	INIT_LIST_HEAD(&b->queued);
- 
- 	b->pending = RB_ROOT;
--	b->work_cache = KMEM_CACHE(bt_work, 0);
--	if (!b->work_cache) {
--		DMERR("couldn't create mempool for background work items");
--		kfree(b);
--		b = NULL;
--	}
- 
- 	return b;
- }
-@@ -66,10 +54,9 @@ void btracker_destroy(struct background_
- 	BUG_ON(!list_empty(&b->issued));
- 	list_for_each_entry_safe (w, tmp, &b->queued, list) {
- 		list_del(&w->list);
--		kmem_cache_free(b->work_cache, w);
-+		kmem_cache_free(btracker_work_cache, w);
- 	}
- 
--	kmem_cache_destroy(b->work_cache);
- 	kfree(b);
- }
- EXPORT_SYMBOL_GPL(btracker_destroy);
-@@ -180,7 +167,7 @@ static struct bt_work *alloc_work(struct
- 	if (max_work_reached(b))
- 		return NULL;
- 
--	return kmem_cache_alloc(b->work_cache, GFP_NOWAIT);
-+	return kmem_cache_alloc(btracker_work_cache, GFP_NOWAIT);
- }
- 
- int btracker_queue(struct background_tracker *b,
-@@ -203,7 +190,7 @@ int btracker_queue(struct background_tra
- 		 * There was a race, we'll just ignore this second
- 		 * bit of work for the same oblock.
- 		 */
--		kmem_cache_free(b->work_cache, w);
-+		kmem_cache_free(btracker_work_cache, w);
- 		return -EINVAL;
- 	}
- 
-@@ -244,7 +231,7 @@ void btracker_complete(struct background
- 	update_stats(b, &w->work, -1);
- 	rb_erase(&w->node, &b->pending);
- 	list_del(&w->list);
--	kmem_cache_free(b->work_cache, w);
-+	kmem_cache_free(btracker_work_cache, w);
- }
- EXPORT_SYMBOL_GPL(btracker_complete);
- 
-Index: linux-2.6/drivers/md/dm-cache-background-tracker.h
+ void disable_discard(struct mapped_device *md);
+ void disable_write_zeroes(struct mapped_device *md);
+Index: linux-2.6/drivers/md/dm-ioctl.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-cache-background-tracker.h	2023-09-05 14:45:58.000000000 +0200
-+++ linux-2.6/drivers/md/dm-cache-background-tracker.h	2024-11-07 15:53:42.000000000 +0100
-@@ -26,6 +26,14 @@
-  * protected with a spinlock.
+--- linux-2.6.orig/drivers/md/dm-ioctl.c	2024-09-02 17:35:39.000000000 +0200
++++ linux-2.6/drivers/md/dm-ioctl.c	2024-11-11 17:35:51.000000000 +0100
+@@ -888,7 +888,7 @@ static int dev_create(struct file *filp,
+ 	if (param->flags & DM_PERSISTENT_DEV_FLAG)
+ 		m = MINOR(huge_decode_dev(param->dev));
+ 
+-	r = dm_create(m, &md);
++	r = dm_create(m, param->flags, &md);
+ 	if (r)
+ 		return r;
+ 
+@@ -2283,7 +2283,7 @@ int __init dm_early_create(struct dm_ioc
+ 		m = MINOR(huge_decode_dev(dmi->dev));
+ 
+ 	/* alloc dm device */
+-	r = dm_create(m, &md);
++	r = dm_create(m, 0, &md);
+ 	if (r)
+ 		return r;
+ 
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2024-11-07 12:49:13.000000000 +0100
++++ linux-2.6/drivers/md/dm.c	2024-11-11 17:35:05.000000000 +0100
+@@ -737,7 +737,9 @@ static struct table_device *open_table_d
+ 		return ERR_PTR(-ENOMEM);
+ 	refcount_set(&td->count, 1);
+ 
+-	bdev_file = bdev_file_open_by_dev(dev, mode, _dm_claim_ptr, NULL);
++	bdev_file = bdev_file_open_by_dev(dev, mode,
++		test_bit(DMF_OPEN_SHARED, &md->flags) ? NULL :_dm_claim_ptr,
++		NULL);
+ 	if (IS_ERR(bdev_file)) {
+ 		r = PTR_ERR(bdev_file);
+ 		goto out_free_td;
+@@ -2489,7 +2491,7 @@ static struct dm_table *__unbind(struct
+ /*
+  * Constructor for a new device.
   */
- 
-+struct bt_work {
-+	struct list_head list;
-+	struct rb_node node;
-+	struct policy_work work;
-+};
-+
-+extern struct kmem_cache *btracker_work_cache;
-+
- struct background_work;
- struct background_tracker;
- 
-Index: linux-2.6/drivers/md/dm-cache-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-cache-target.c	2024-11-07 12:47:50.000000000 +0100
-+++ linux-2.6/drivers/md/dm-cache-target.c	2024-11-07 15:58:34.000000000 +0100
-@@ -10,6 +10,7 @@
- #include "dm-bio-record.h"
- #include "dm-cache-metadata.h"
- #include "dm-io-tracker.h"
-+#include "dm-cache-background-tracker.h"
- 
- #include <linux/dm-io.h>
- #include <linux/dm-kcopyd.h>
-@@ -2263,7 +2264,7 @@ static int parse_cache_args(struct cache
- 
- /*----------------------------------------------------------------*/
- 
--static struct kmem_cache *migration_cache;
-+static struct kmem_cache *migration_cache = NULL;
- 
- #define NOT_CORE_OPTION 1
- 
-@@ -3445,22 +3446,36 @@ static int __init dm_cache_init(void)
- 	int r;
- 
- 	migration_cache = KMEM_CACHE(dm_cache_migration, 0);
--	if (!migration_cache)
--		return -ENOMEM;
-+	if (!migration_cache) {
-+		r = -ENOMEM;
-+		goto err;
-+	}
-+
-+	btracker_work_cache = kmem_cache_create("dm_cache_bt_work",
-+		sizeof(struct bt_work), __alignof__(struct bt_work), 0, NULL);
-+	if (!btracker_work_cache) {
-+		r = -ENOMEM;
-+		goto err;
-+	}
- 
- 	r = dm_register_target(&cache_target);
- 	if (r) {
--		kmem_cache_destroy(migration_cache);
--		return r;
-+		goto err;
- 	}
- 
- 	return 0;
-+
-+err:
-+	kmem_cache_destroy(migration_cache);
-+	kmem_cache_destroy(btracker_work_cache);
-+	return r;
- }
- 
- static void __exit dm_cache_exit(void)
+-int dm_create(int minor, struct mapped_device **result)
++int dm_create(int minor, uint32_t flags, struct mapped_device **result)
  {
- 	dm_unregister_target(&cache_target);
- 	kmem_cache_destroy(migration_cache);
-+	kmem_cache_destroy(btracker_work_cache);
- }
+ 	struct mapped_device *md;
  
- module_init(dm_cache_init);
+@@ -2497,6 +2499,9 @@ int dm_create(int minor, struct mapped_d
+ 	if (!md)
+ 		return -ENXIO;
+ 
++	if (flags & DM_OPEN_SHARED)
++		set_bit(DMF_OPEN_SHARED, &md->flags);
++
+ 	dm_ima_reset_data(md);
+ 
+ 	*result = md;
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h	2024-10-16 16:41:33.000000000 +0200
++++ linux-2.6/include/linux/device-mapper.h	2024-11-11 17:31:32.000000000 +0100
+@@ -483,7 +483,7 @@ void dm_consume_args(struct dm_arg_set *
+  * DM_ANY_MINOR chooses the next available minor number.
+  */
+ #define DM_ANY_MINOR (-1)
+-int dm_create(int minor, struct mapped_device **md);
++int dm_create(int minor, uint32_t flags, struct mapped_device **md);
+ 
+ /*
+  * Reference counting for md.
+Index: linux-2.6/include/uapi/linux/dm-ioctl.h
+===================================================================
+--- linux-2.6.orig/include/uapi/linux/dm-ioctl.h	2023-09-05 14:46:02.000000000 +0200
++++ linux-2.6/include/uapi/linux/dm-ioctl.h	2024-11-11 17:33:33.000000000 +0100
+@@ -382,4 +382,10 @@ enum {
+  */
+ #define DM_IMA_MEASUREMENT_FLAG	(1 << 19) /* In */
+ 
++/*
++ * Open underlying devices in the shareable mode, so that the user can mount
++ * filesystems on them.
++ */
++#define DM_OPEN_SHARED		(1 << 20) /* In */
++
+ #endif				/* _LINUX_DM_IOCTL_H */
+
+---1463811712-960038954-1731343215=:871346--
 
