@@ -1,226 +1,160 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 31057219ED
-	for <dm-devel@lists.linux.dev>; Mon, 11 Nov 2024 16:49:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6F591A302E
+	for <dm-devel@lists.linux.dev>; Mon, 11 Nov 2024 17:17:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731343766; cv=none; b=mZt2RMBKSfzHvL8auMG4AUAbiM2SDjg2hH29+RyvglGD3f5c/IyRfAdL0I/5JbTNBeKmC1grpsQaefPER854okJpScxeJ5+84IfQAD8VZJ93IpOtakJkkmUXlczoBBiGmpsmWFO0OnEbIzPP8ZmAprB7mxao3xDRYn0Tf8GfRck=
+	t=1731345447; cv=none; b=Tl19n8z0suFyeMYBPrQ5Dmvf9vBI2QaIuBlhO4eEUplloXj8y4G+PltTBgKA8+r7Fye7hPCeqPb/Vrl/AdgZYT1sBeKanS/hEuYPCsLV6dSh6QSDM+g8/uzun5MRp4oUv6k94Plzy8XJ/o/PtTCmuW5uUc2DytShv2t7zHYubKg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731343766; c=relaxed/simple;
-	bh=cYz2Fe8zODcJmhs6g5OiYPzRM0HsJj4cXz7z1N6fnHQ=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=seO/9Lp121tcfVMYm4xNo2MtWFANu3w4sibmgwdvas98oxHtzFhVGSWQkkWiXZWDq17TfVGtt9qapiNGUrcZiVdIThm3C6M5vkHdAdjGQMUmM+4sDq9JC81g0x8qUGu9AWu/fHt7OaAams/zlWA+CkeR5xeLSsVbtWepLs23FX0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I+gDA9cr; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1731345447; c=relaxed/simple;
+	bh=A36kBCnoWEhCmCiId7KIUVyTSYfSeS87/IoFY/7AOQo=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=iszCRhH9ej7MiSEdnA/iw4420d1H/vTxOWK2RuSaYx20JTUD/Dxt88k9Pgpod3cO7QNAIrw3yhStjdUZEIJKB6+WENL23lH1t0ufpHzbjqTgnxeHCn1RH8hzuM4ywZqhBgaIPIHgw0w5SSfRsBi96B58oisKi2wBtxCYi4i+cE0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PmN3V3GV; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I+gDA9cr"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PmN3V3GV"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1731343763;
+	s=mimecast20190719; t=1731345444;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=CSXVEA0rpomwVEqDS4htCNFm/a7L/Pue3FLDNrsCQFE=;
-	b=I+gDA9crNoGM7KxZ1JK1CH6DJZZXQFn9bpIcn5AP2yHOrM8YKa+bFyYlu5Iaf/+idMcAij
-	DItvYf4c0sPmps1GfAHWm0dXSl63fqMR+vLXsVqxYHjSt3vlp2X5pYp0uvQtpmUmvTC9PA
-	UU+btAaqcC7rUZpREyJRsT/mWesJJOE=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+	bh=oA6YaIJKV0Fud+RNR0JBkpQ9taZWmeDP/N6BqtZlWas=;
+	b=PmN3V3GVpBVg3Eeu3yJ0t3SSKTDX/5uGUFKTvRSznPZ3+j2O9V8A54dG2uOtMyTjot9iV8
+	1xl7+5pEDlvxUdZp4gOSCvW9xnJoBlo94/Q38cZB6GaAF6JvpGHYVdf3PNXtrhakZ4qTc0
+	yGEJZDVpgD/x4m8V5KQ1O0C5vZOdM20=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-526-bhRCz-7wNcyzAZgigaaGMw-1; Mon,
- 11 Nov 2024 11:49:20 -0500
-X-MC-Unique: bhRCz-7wNcyzAZgigaaGMw-1
-X-Mimecast-MFC-AGG-ID: bhRCz-7wNcyzAZgigaaGMw
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-21-RNQGGa4AMXSv5-iVW2FukQ-1; Mon,
+ 11 Nov 2024 12:17:21 -0500
+X-MC-Unique: RNQGGa4AMXSv5-iVW2FukQ-1
+X-Mimecast-MFC-AGG-ID: RNQGGa4AMXSv5-iVW2FukQ
 Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DBAFB1955F57;
-	Mon, 11 Nov 2024 16:49:18 +0000 (UTC)
-Received: from [10.45.225.96] (unknown [10.45.225.96])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2FE1C19560A3;
-	Mon, 11 Nov 2024 16:49:16 +0000 (UTC)
-Date: Mon, 11 Nov 2024 17:49:14 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Jooyung Han <jooyung@google.com>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    zkabelac@redhat.com, dm-devel@lists.linux.dev
-Subject: [PATCH] dm: make it possible to open underlying devices in shareable
- mode
-In-Reply-To: <CAO-8PLa3Qxhy1M1C_ZDTpOyXrhQ=UQKeKoDOmy-bbShb4rV03A@mail.gmail.com>
-Message-ID: <dcaed20c-2132-d453-9c04-b22417ba4010@redhat.com>
-References: <CAO-8PLb0azRAuu2yJ3=K1EwiSXASDJ8nVBttbuOUV77==Xd2ug@mail.gmail.com> <94c895e2-0a71-73b2-2692-af8bf62fb340@redhat.com> <CAO-8PLYMFd3YLvfue_an7mc-O19fixJY4ZKybvjehxcm2tRYvA@mail.gmail.com>
- <CAO-8PLa3Qxhy1M1C_ZDTpOyXrhQ=UQKeKoDOmy-bbShb4rV03A@mail.gmail.com>
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3003519560AB;
+	Mon, 11 Nov 2024 17:17:20 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C0B28195E480;
+	Mon, 11 Nov 2024 17:17:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4ABHHI8t563633
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 11 Nov 2024 12:17:18 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4ABHHHFt563632;
+	Mon, 11 Nov 2024 12:17:17 -0500
+Date: Mon, 11 Nov 2024 12:17:17 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH 0/8] multipath fixes to tableless device handling
+Message-ID: <ZzI8HbwgmBQSLbLk@redhat.com>
+References: <20241031183301.391416-1-bmarzins@redhat.com>
+ <268bc68ab339ff6d6546f836329ee673fe734458.camel@suse.com>
+ <bc44c44523af9f1014c6e96842371bce422f18a7.camel@suse.com>
+ <Zyz8SFDAkIggpuND@redhat.com>
+ <692cb30cad72ed8165b8efd0751c8c5cb1f03993.camel@suse.com>
+ <Zy6Lz1y0-dVXvodH@redhat.com>
+ <a7b6076cc759383e407ac9e46ff39be14f5a1b6d.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <a7b6076cc759383e407ac9e46ff39be14f5a1b6d.camel@suse.com>
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: GU92bI4SToRjDT2nnbN6dcGGGMYY0be52ARliC17UOg_1731343759
+X-Mimecast-MFC-PROC-ID: AsBFk-v52nw1RA-quqb1XtFgvjO9X6lRPXW4m2Adu1o_1731345440
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; BOUNDARY="-1463811712-960038954-1731343215=:871346"
-Content-ID: <c390a657-9d30-735f-c832-6a305f881207@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
----1463811712-960038954-1731343215=:871346
-Content-Type: text/plain; CHARSET=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
-Content-ID: <1cf96310-ab7f-eee8-8c18-fda593a53657@redhat.com>
-
-Hi
-
-On Fri, 8 Nov 2024, Jooyung Han wrote:
-
-> Hi Mikulas,
->
-> Would it be reasonable to allow this? Or, to reduce the risk or impact 
-> on other users, how about introducing a flag for dm-linear constructor 
-> to open a table device without setting the holder. I don't know how to 
-> describe this, not-exclusive? The dm-linear constructor would look like 
-> "<dev_path> <offset> [no_exclusive]", when "no_exclusive" is set, it 
-> will open a table device without setting a holder.
+On Sat, Nov 09, 2024 at 12:03:33AM +0100, Martin Wilck wrote:
+> On Fri, 2024-11-08 at 17:08 -0500, Benjamin Marzinski wrote:
+> > On Thu, Nov 07, 2024 at 07:02:11PM +0100, Martin Wilck wrote:
+> > > On Thu, 2024-11-07 at 12:43 -0500, Benjamin Marzinski wrote:
+> > > > On Thu, Nov 07, 2024 at 01:20:09PM +0100, Martin Wilck wrote:
+> > > > > 
+> > > > > Thinking about it, I believe we should actually accept devices
+> > > > > that
+> > > > > have an mpath UUID and an empty table, and add them to our
+> > > > > mpvec.
+> > > > > We
+> > > > > should treat them like devices that have a multipath target but
+> > > > > no
+> > > > > path
+> > > > > devices. If any matching paths become available, the map will
+> > > > > be
+> > > > > reloaded and the issue will be fixed. IMO, this is less prone
+> > > > > to
+> > > > > race
+> > > > > conditions than trying to delete and re-add the devices.
+> > > > 
+> > > > I'm not sure off the top of my head how easy it will be to handle
+> > > > devices with no dm table at all, but I'll take a look into this.
+> > > 
+> > > I tried this on a system with 0.9.9 yesterday. 0.9.9 will not add
+> > > the
+> > > map into the mpvec. But in coalesce_paths(), it will just reload
+> > > the
+> > > map:
+> > 
+> > Given that the code already does the right thing without needing any
+> > changes to handle tableless maps makes me feel like just removing the
+> > final patch is the best idea.
 > 
-> I'd like to get your opinion about this idea. Especially if there's any 
-> risks about not setting the holder when opening a DM table device. 
+> If we do this, do we still need the special case for DMP_BAD_DEV? IMO
+> we just need to make sure that dm_get_maps() doesn't return an error if
+> it encounters an empty map.
+
+Depends. If we fail attempting to create a device, we could have raced
+with something else attempting to create it.  Just checking for
+dm_map_present() before we remove the device won't distinguish between
+these two cases at all.
+
+On the other hand, there is still a window where the program that we
+raced with is in the middle of creating the device, but it doesn't have
+a live table yet. In this case, even the DMP_BAD_DEV code won't be able
+to distinguish between a map that didn't get created correctly and one
+that is in the process of getting created. It would reduce the window
+where we could accidentally delete a working device, however.
+
+Since it doesn't add much complexity, I lean towards keeping it, but it
+is one more state we need to handle on returns from libmp_mapinfo(), so
+I'm open to an argument that it's not worth it.
+ 
+> > The only issue with the current code is that if you have a device
+> > with
+> > no table with the UUID of a multipath device but a different name
+> > than
+> > that multipath device should have, multipath will try to create a new
+> > device instead of reload it, and this fails, since the UUID is
+> > already
+> > in use.
 > 
-> Besides, there's one more question about dm-verity. Even though there's 
-> a field named "data_start" (comment saying it's "data offset in 512-byte 
-> sectors"): https://elixir.bootlin.com/linux/v6.11.4/source/drivers/md/dm-verity.h#L49, 
-> it's not set in its constructor and always zero after initialization. I 
-> think it's reasonable for the constructor to set it with an argument 
-> passed. What do you think?
+> That should be handled in coalesce_paths(). It's basically the scenario
+> that occurs if we enable or disable user_friendly names.
 
-Yes, we could set it in the constructor.
+Except that we have a mpp for the other device if it has a table. If the
+device doesn't have a table, then a mpp isn't created, so
+coalesce_paths() doesn't track it. We could add code to create mpps for
+these tableless devices, but it's another trade off of added complexity
+to handle a rare corner case, and I'm not sure this one is worth it.
 
-> Thanks.
-
-I've created this (totally untested) patch that makes it possible to add a 
-flag DM_OPEN_SHARED to the flags in the create ioctl - when the flag is 
-used, all devices open by the specified device are open in a shared mode. 
-Does the patch work for you?
-
-Mikulas
-
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-This commit adds a new flag DM_OPEN_SHARED. The flag may be used on the
-create ioctl. When it is used, the underlying devices that are opened
-will be open in a shareable mode, so that the user can mount filesystems
-on them or perform other activity.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-core.h          |    1 +
- drivers/md/dm-ioctl.c         |    4 ++--
- drivers/md/dm.c               |    9 +++++++--
- include/linux/device-mapper.h |    2 +-
- include/uapi/linux/dm-ioctl.h |    6 ++++++
- 5 files changed, 17 insertions(+), 5 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-core.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-core.h	2024-07-30 14:06:48.000000000 +0200
-+++ linux-2.6/drivers/md/dm-core.h	2024-11-11 17:34:13.000000000 +0100
-@@ -161,6 +161,7 @@ struct mapped_device {
- #define DMF_SUSPENDED_INTERNALLY 7
- #define DMF_POST_SUSPENDING 8
- #define DMF_EMULATE_ZONE_APPEND 9
-+#define DMF_OPEN_SHARED 10
+-Ben
  
- void disable_discard(struct mapped_device *md);
- void disable_write_zeroes(struct mapped_device *md);
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c	2024-09-02 17:35:39.000000000 +0200
-+++ linux-2.6/drivers/md/dm-ioctl.c	2024-11-11 17:35:51.000000000 +0100
-@@ -888,7 +888,7 @@ static int dev_create(struct file *filp,
- 	if (param->flags & DM_PERSISTENT_DEV_FLAG)
- 		m = MINOR(huge_decode_dev(param->dev));
- 
--	r = dm_create(m, &md);
-+	r = dm_create(m, param->flags, &md);
- 	if (r)
- 		return r;
- 
-@@ -2283,7 +2283,7 @@ int __init dm_early_create(struct dm_ioc
- 		m = MINOR(huge_decode_dev(dmi->dev));
- 
- 	/* alloc dm device */
--	r = dm_create(m, &md);
-+	r = dm_create(m, 0, &md);
- 	if (r)
- 		return r;
- 
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2024-11-07 12:49:13.000000000 +0100
-+++ linux-2.6/drivers/md/dm.c	2024-11-11 17:35:05.000000000 +0100
-@@ -737,7 +737,9 @@ static struct table_device *open_table_d
- 		return ERR_PTR(-ENOMEM);
- 	refcount_set(&td->count, 1);
- 
--	bdev_file = bdev_file_open_by_dev(dev, mode, _dm_claim_ptr, NULL);
-+	bdev_file = bdev_file_open_by_dev(dev, mode,
-+		test_bit(DMF_OPEN_SHARED, &md->flags) ? NULL :_dm_claim_ptr,
-+		NULL);
- 	if (IS_ERR(bdev_file)) {
- 		r = PTR_ERR(bdev_file);
- 		goto out_free_td;
-@@ -2489,7 +2491,7 @@ static struct dm_table *__unbind(struct
- /*
-  * Constructor for a new device.
-  */
--int dm_create(int minor, struct mapped_device **result)
-+int dm_create(int minor, uint32_t flags, struct mapped_device **result)
- {
- 	struct mapped_device *md;
- 
-@@ -2497,6 +2499,9 @@ int dm_create(int minor, struct mapped_d
- 	if (!md)
- 		return -ENXIO;
- 
-+	if (flags & DM_OPEN_SHARED)
-+		set_bit(DMF_OPEN_SHARED, &md->flags);
-+
- 	dm_ima_reset_data(md);
- 
- 	*result = md;
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h	2024-10-16 16:41:33.000000000 +0200
-+++ linux-2.6/include/linux/device-mapper.h	2024-11-11 17:31:32.000000000 +0100
-@@ -483,7 +483,7 @@ void dm_consume_args(struct dm_arg_set *
-  * DM_ANY_MINOR chooses the next available minor number.
-  */
- #define DM_ANY_MINOR (-1)
--int dm_create(int minor, struct mapped_device **md);
-+int dm_create(int minor, uint32_t flags, struct mapped_device **md);
- 
- /*
-  * Reference counting for md.
-Index: linux-2.6/include/uapi/linux/dm-ioctl.h
-===================================================================
---- linux-2.6.orig/include/uapi/linux/dm-ioctl.h	2023-09-05 14:46:02.000000000 +0200
-+++ linux-2.6/include/uapi/linux/dm-ioctl.h	2024-11-11 17:33:33.000000000 +0100
-@@ -382,4 +382,10 @@ enum {
-  */
- #define DM_IMA_MEASUREMENT_FLAG	(1 << 19) /* In */
- 
-+/*
-+ * Open underlying devices in the shareable mode, so that the user can mount
-+ * filesystems on them.
-+ */
-+#define DM_OPEN_SHARED		(1 << 20) /* In */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
-
----1463811712-960038954-1731343215=:871346--
+> > That should probably be handled by making the multipath code pay more
+> > attention to the device UUID and less to the device name, but that's
+> > work for a different patchset. 
+> 
+> Yes, definitely.
+> 
+> Martin
 
