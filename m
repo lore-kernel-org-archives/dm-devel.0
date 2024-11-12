@@ -1,429 +1,191 @@
-Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com [209.85.221.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81A9120A5DF
-	for <dm-devel@lists.linux.dev>; Tue, 12 Nov 2024 06:57:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 89CB11990AF
+	for <dm-devel@lists.linux.dev>; Tue, 12 Nov 2024 07:46:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731394649; cv=none; b=j7t+Ns5cADY0Pr3zzo174WgIJjQrbzTTXQrkk28+uqVjrPatDLi5E8fTJe1imVVQYMbRvQ81wbJI2fxOCE035eOcN2HwPVEU0O8CJxBv5lVr/rBmRLt4trZXTxwOtInWMdDW9mf1gd+b0tVswBFEh5E/KcMmrMh7jKkH8AyeX7M=
+	t=1731397618; cv=none; b=Jwvr9gR/qE9qYXX3kyIUM5OjkYME891IYmDxLfGXWj+q9MRWXHLpJ6/vjVIzJE/f2/PI3Zh7KnD4LvfMEOkLWBYTaHiLz/toeZDnXNkFXix29lewJQJog9+R/La+Rr9bEOltmsBVMyALLaG8d2r49IaRlAs45BoOACVmqApNo5s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731394649; c=relaxed/simple;
-	bh=8iViThyzzaMDS61EWleHby4dlGXzVpIfaUFbl7NtZ5M=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=aD5MoShDCmjWFGF5L0Nm/qb/ns9tdsui7+xKj5VJSOjleDDidTfkUfZOoQsjNPKZFGviZ0dAKdxN0J6GArpwIC0DHo6PBAldd1Kwgh8wSQmTa6E7XwPSQJKWf5wqkBb+Wdn4t/beKlX5f0k1RdsUv76MtWfMF8FEks+VgqfSIqQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=eR4x1w69; arc=none smtp.client-ip=212.122.41.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
+	s=arc-20240116; t=1731397618; c=relaxed/simple;
+	bh=EW90kHgVCP6Jo+hxB5U4/0NlUkmkECYqO7KOnrXpKxk=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=pG47BEL8RSH0irQW9u5I/wfea0/C5fcifyOCHnzyit615OHm9EBbTADHlwjiRuosGzJZIPc4x1Gm5YOSKpAWxwKdkCfn6UEioh3CDludBF1hb91s5ZdURQdWMsLnggrpdFxL2ngvEmNGBx3v4VuWmVhh1V884Tw3JQtlRp6ZNQQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Xlnxxde0; arc=none smtp.client-ip=209.85.221.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="eR4x1w69"
-Content-Type: text/plain;
-	charset=utf-8
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1731394642;
-	bh=Or39yv7m0QiWw4CogdT4BDa5rjAwFUVYii2tMYjFjlY=;
-	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=eR4x1w69galjJtSWDsYNffpnCrTTDUEft7bGas9F1Av40zUlMIS7OcnksaPUybvUB
-	 +CKTDKg+LSn9zNXJHNCDUQkjOt/qJHCl9OL4lFfobPrq1ZAN/D9Dg1z0qTavKq+wvP
-	 KzYLSXDw6LZQ+olSbHjxN0DuJhmiFbwbcvQNDEZY=
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Xlnxxde0"
+Received: by mail-wr1-f50.google.com with SMTP id ffacd0b85a97d-37d5aedd177so3132979f8f.1
+        for <dm-devel@lists.linux.dev>; Mon, 11 Nov 2024 23:46:56 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1731397615; x=1732002415; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=EW90kHgVCP6Jo+hxB5U4/0NlUkmkECYqO7KOnrXpKxk=;
+        b=Xlnxxde0UMvHVxoFV6BwXJrHMyyKb8VD/8LDkHU4R3nQeT4MV/JaSV2FG4xj2RSAaB
+         gowh+H3jubkzJ2jmS/jcGHda8tJR6n/LU1rx5Nj7nqD7ArfdVAl8pVgsj+8CkFdviz5H
+         Rkr+B6fjsmy67d8GFfM7tCR2pBYyLFZxcl1Z9SoydW2n1V4thav1bXwvkanxtl13EGCF
+         B7HacrKunzZZGvg5aWHGLaeiDuf2+uHf09ujhqE69veuxb5kOKP3/k0dH01Fkw0NRGCn
+         PhxPhGFqzkIGW5U8unMPzQVZtKTuAaepeaQ3XRhClJF8EaHjQY5NEyPicZVXSHHG3nFe
+         YEWA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731397615; x=1732002415;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=EW90kHgVCP6Jo+hxB5U4/0NlUkmkECYqO7KOnrXpKxk=;
+        b=QQ/kJroDCt5GWT6ad7jbHz2NCtBya4sdFPani1iuIkW1xk3GV7q3pSRE+TgIUzD3VI
+         kUl2LiBDbv9M9lU0eH27RbwBQKMvr/de9EtQcy6FLDX9lk1v9Xpd2y8cnPCLzIR5r9A+
+         coJKcNR3IKeCXq0Qt9t35N3v9A/vCKd2JMsm6+6/ZX+Mp+f0GDBCeGPlQM9B4EC42ksW
+         VM9GjG8b+LStEdDeCvC5Eq7j/6EQTR6SQQvTU/UxwTSthaCYvONookxC+7lbl6+XLLYm
+         FFtYZsMqdt8/gLDkXY3J4OUl2PIRyZsBs2av+DDY5GbjR3WGModXvp/zOjxbuZITKpTp
+         wAcA==
+X-Forwarded-Encrypted: i=1; AJvYcCVZmoIJ1/l7sUkzuAIVhP2nGO4indZ7bwkvSWjbbitLS5FP2suJktkK3KotlvHvd+GNWGTO2NP9nA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YylVsZaHTkGeiDob/iORIVTWKyEyefCPFM+0IMQHV++EO0KafRd
+	4wFbbopg61WPPf1Claj+1TvitvPO+bZ+IckzhXDWvEWkaFc/oeuHTKpH/wAI30Q=
+X-Google-Smtp-Source: AGHT+IGB75uY9rAt/SZ2CXrSP/6MeCkK/kVxEXMSBlcBd8w3Lz3x6RAwJ/0nUkhWAZ8SuDFH/wvDkA==
+X-Received: by 2002:a5d:6c69:0:b0:37d:94d6:5e20 with SMTP id ffacd0b85a97d-381f17261d6mr14078062f8f.4.1731397614380;
+        Mon, 11 Nov 2024 23:46:54 -0800 (PST)
+Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-381ed970d10sm14500889f8f.20.2024.11.11.23.46.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 11 Nov 2024 23:46:54 -0800 (PST)
+Message-ID: <b46184d0ccf8f0c1f492a53313fe88ea33a0269e.camel@suse.com>
+Subject: Re: [PATCH 0/8] multipath fixes to tableless device handling
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
+ development <dm-devel@lists.linux.dev>
+Date: Tue, 12 Nov 2024 08:46:52 +0100
+In-Reply-To: <ZzI8HbwgmBQSLbLk@redhat.com>
+References: <20241031183301.391416-1-bmarzins@redhat.com>
+	 <268bc68ab339ff6d6546f836329ee673fe734458.camel@suse.com>
+	 <bc44c44523af9f1014c6e96842371bce422f18a7.camel@suse.com>
+	 <Zyz8SFDAkIggpuND@redhat.com>
+	 <692cb30cad72ed8165b8efd0751c8c5cb1f03993.camel@suse.com>
+	 <Zy6Lz1y0-dVXvodH@redhat.com>
+	 <a7b6076cc759383e407ac9e46ff39be14f5a1b6d.camel@suse.com>
+	 <ZzI8HbwgmBQSLbLk@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.200.121\))
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-From: Christian Theune <ct@flyingcircus.io>
-In-Reply-To: <C3A9A473-0F0E-4168-BB96-5AB140C6A9FC@flyingcircus.io>
-Date: Tue, 12 Nov 2024 07:57:00 +0100
-Cc: Yu Kuai <yukuai1@huaweicloud.com>,
- John Stoffel <john@stoffel.org>,
- "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>,
- "yangerkun@huawei.com" <yangerkun@huawei.com>,
- "yukuai (C)" <yukuai3@huawei.com>,
- David Jeffery <djeffery@redhat.com>
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <0B1D29D1-523C-4E42-95F9-62B32B741930@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
- <45d44ed5-da7c-6480-9143-f611385b2e92@huaweicloud.com>
- <9C03DED0-3A6A-42F8-B935-6EB500F8BCE2@flyingcircus.io>
- <DD99A1F0-56E7-473D-B917-66885810233E@flyingcircus.io>
- <78517565-B1AB-4441-B4F8-EB380E98EB0F@flyingcircus.io>
- <26403.59789.480428.418012@quad.stoffel.home>
- <5fb0a6f0-066d-c490-3010-8a047aae2c29@huaweicloud.com>
- <F8CEEB15-0E3C-4F67-951D-12E165D6CC05@flyingcircus.io>
- <B6D76C57-B940-4BFD-9C40-D6E463D2A09F@flyingcircus.io>
- <5170f0d2-cb0f-2e0f-eb5e-31aa9d6ff65d@huawei.com>
- <2b093abc-cd9a-0b84-bcba-baec689fa153@huaweicloud.com>
- <63DE1813-C719-49B7-9012-641DB3DECA26@flyingcircus.io>
- <F8A5ABD5-0773-414D-BBBC-538481BCD0F4@flyingcircus.io>
- <753611d4-5c54-ee0d-30ab-9321274fd749@huaweicloud.com>
- <9A0AE411-B4B8-424A-B9F6-AF933F6544F9@flyingcircus.io>
- <BE85CBCF-1B09-48D0-9931-AA8D298F1D6B@flyingcircus.io>
- <b2a654e7-6c71-a44e-645c-686eed9d5cd8@huaweicloud.com>
- <240E3553-1EDD-49C8-88B8-FB3A7F0CE39C@flyingcircus.io>
- <12295067-fc9a-8847-b370-7d86b2b66426@huaweicloud.com>
- <CALTww28iP_pGU7jmhZrXX9D-xL5Xb6w=9jLxS=fvv_6HgqZ6qw@mail.gmail.com>
- <09338D11-6B73-4C4B-A19A-6BDC6489C91D@flyingcircus.io>
- <C3A9A473-0F0E-4168-BB96-5AB140C6A9FC@flyingcircus.io>
-To: Xiao Ni <xni@redhat.com>
+MIME-Version: 1.0
 
-Hi,
-
-my workload has been running for 22 hours now successfully - it seems =
-that the patch works.
-
-If this gets accepted then I=E2=80=99d kindly ask for an LTS backport to =
-6.6.
-
-Thanks to everyone for helping figuring this out and fixing it!
-
-Christian
-
-> On 11. Nov 2024, at 15:34, Christian Theune <ct@flyingcircus.io> =
-wrote:
+On Mon, 2024-11-11 at 12:17 -0500, Benjamin Marzinski wrote:
+> On Sat, Nov 09, 2024 at 12:03:33AM +0100, Martin Wilck wrote:
+> > On Fri, 2024-11-08 at 17:08 -0500, Benjamin Marzinski wrote:
+> > >=20
+> > > Given that the code already does the right thing without needing
+> > > any
+> > > changes to handle tableless maps makes me feel like just removing
+> > > the
+> > > final patch is the best idea.
+> >=20
+> > If we do this, do we still need the special case for DMP_BAD_DEV?
+> > IMO
+> > we just need to make sure that dm_get_maps() doesn't return an
+> > error if
+> > it encounters an empty map.
 >=20
-> I=E2=80=99ve been running withy my workflow that is known to trigger =
-the issue reliably for about 6 hours now. This is longer than it worked =
-before.
-> I=E2=80=99m leaving the office for today and will leave things running =
-over night and report back tomorrow.
->=20
-> Christian
->=20
->> On 11. Nov 2024, at 09:00, Christian Theune <ct@flyingcircus.io> =
-wrote:
->>=20
->> Hi,
->>=20
->> I=E2=80=99m trying this with 6.11.7 today.
->>=20
->> Christian
->>=20
->>> On 9. Nov 2024, at 12:35, Xiao Ni <xni@redhat.com> wrote:
->>>=20
->>> On Thu, Nov 7, 2024 at 3:55=E2=80=AFPM Yu Kuai =
-<yukuai1@huaweicloud.com> wrote:
->>>>=20
->>>> Hi!
->>>>=20
->>>> =E5=9C=A8 2024/11/06 14:40, Christian Theune =E5=86=99=E9=81=93:
->>>>> Hi,
->>>>>=20
->>>>>> On 6. Nov 2024, at 07:35, Yu Kuai <yukuai1@huaweicloud.com> =
-wrote:
->>>>>>=20
->>>>>> Hi,
->>>>>>=20
->>>>>> =E5=9C=A8 2024/11/05 18:15, Christian Theune =E5=86=99=E9=81=93:
->>>>>>> Hi,
->>>>>>> after about 2 hours it stalled again. Here=E2=80=99s the full =
-blocked process dump. (Tell me if this isn=E2=80=99t helpful, otherwise =
-I=E2=80=99ll keep posting that as it=E2=80=99s the only real data I can =
-show)
->>>>>>=20
->>>>>> This is bad news :(
->>>>>=20
->>>>> Yeah. But: the good new is that we aren=E2=80=99t eating any data =
-so far =E2=80=A6 ;)
->>>>>=20
->>>>>> While reviewing related code, I come up with a plan to move =
-bitmap
->>>>>> start/end write ops to the upper layer. Make sure each write IO =
-from
->>>>>> upper layer only start once and end once, this is easy to make =
-sure
->>>>>> they are balanced and can avoid many calls to improve performance =
-as
->>>>>> well.
->>>>>=20
->>>>> Sounds like a plan!
->>>>>=20
->>>>>> However, I need a few days to cooke a patch after work.
->>>>>=20
->>>>> Sure thing! I=E2=80=99ll switch off bitmaps for that time - I=E2=80=99=
-m happy we found a workaround so we can take time to resolve it cleanly. =
-:)
->>>>=20
->>>> I wrote a simple and crude version, please give it a test again.
->>>>=20
->>>> Thanks,
->>>> Kuai
->>>>=20
->>>> diff --git a/drivers/md/md.c b/drivers/md/md.c
->>>> index d3a837506a36..5e1a82b79e41 100644
->>>> --- a/drivers/md/md.c
->>>> +++ b/drivers/md/md.c
->>>> @@ -8753,6 +8753,30 @@ void md_submit_discard_bio(struct mddev =
-*mddev,
->>>> struct md_rdev *rdev,
->>>> }
->>>> EXPORT_SYMBOL_GPL(md_submit_discard_bio);
->>>>=20
->>>> +static bool is_raid456(struct mddev *mddev)
->>>> +{
->>>> +       return mddev->pers->level =3D=3D 4 || mddev->pers->level =3D=3D=
- 5 ||
->>>> +              mddev->pers->level =3D=3D 6;
->>>> +}
->>>> +
->>>> +static void bitmap_startwrite(struct mddev *mddev, struct bio =
-*bio)
->>>> +{
->>>> +       if (!is_raid456(mddev) || !mddev->bitmap)
->>>> +               return;
->>>> +
->>>> +       md_bitmap_startwrite(mddev->bitmap, bio_offset(bio),
->>>> bio_sectors(bio),
->>>> +                            0);
->>>> +}
->>>> +
->>>> +static void bitmap_endwrite(struct mddev *mddev, struct bio *bio,
->>>> sector_t sectors)
->>>> +{
->>>> +       if (!is_raid456(mddev) || !mddev->bitmap)
->>>> +               return;
->>>> +
->>>> +       md_bitmap_endwrite(mddev->bitmap, bio_offset(bio), =
-sectors,o
->>>> +                          bio->bi_status =3D=3D BLK_STS_OK, 0);
->>>> +}
->>>> +
->>>> static void md_end_clone_io(struct bio *bio)
->>>> {
->>>>      struct md_io_clone *md_io_clone =3D bio->bi_private;
->>>> @@ -8765,6 +8789,7 @@ static void md_end_clone_io(struct bio *bio)
->>>>      if (md_io_clone->start_time)
->>>>              bio_end_io_acct(orig_bio, md_io_clone->start_time);
->>>>=20
->>>> +       bitmap_endwrite(mddev, orig_bio, md_io_clone->sectors);
->>>>      bio_put(bio);
->>>>      bio_endio(orig_bio);
->>>>      percpu_ref_put(&mddev->active_io);
->>>> @@ -8778,6 +8803,7 @@ static void md_clone_bio(struct mddev *mddev,
->>>> struct bio **bio)
->>>>              bio_alloc_clone(bdev, *bio, GFP_NOIO,
->>>> &mddev->io_clone_set);
->>>>=20
->>>>      md_io_clone =3D container_of(clone, struct md_io_clone, =
-bio_clone);
->>>> +       md_io_clone->sectors =3D bio_sectors(*bio);
->>>>      md_io_clone->orig_bio =3D *bio;
->>>>      md_io_clone->mddev =3D mddev;
->>>>      if (blk_queue_io_stat(bdev->bd_disk->queue))
->>>> @@ -8790,6 +8816,7 @@ static void md_clone_bio(struct mddev *mddev,
->>>> struct bio **bio)
->>>>=20
->>>> void md_account_bio(struct mddev *mddev, struct bio **bio)
->>>> {
->>>> +       bitmap_startwrite(mddev, *bio);
->>>>      percpu_ref_get(&mddev->active_io);
->>>>      md_clone_bio(mddev, bio);
->>>> }
->>>> @@ -8807,6 +8834,8 @@ void md_free_cloned_bio(struct bio *bio)
->>>>      if (md_io_clone->start_time)
->>>>              bio_end_io_acct(orig_bio, md_io_clone->start_time);
->>>>=20
->>>> +       bitmap_endwrite(mddev, orig_bio, md_io_clone->sectors);
->>>> +
->>>>      bio_put(bio);
->>>>      percpu_ref_put(&mddev->active_io);
->>>> }
->>>> diff --git a/drivers/md/md.h b/drivers/md/md.h
->>>> index a0d6827dced9..0c2794230e0a 100644
->>>> --- a/drivers/md/md.h
->>>> +++ b/drivers/md/md.h
->>>> @@ -837,6 +837,7 @@ struct md_io_clone {
->>>>      struct mddev    *mddev;
->>>>      struct bio      *orig_bio;
->>>>      unsigned long   start_time;
->>>> +       sector_t        sectors;
->>>>      struct bio      bio_clone;
->>>> };
->>>> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
->>>> index c14cf2410365..4f009e32f68a 100644
->>>> --- a/drivers/md/raid5.c
->>>> +++ b/drivers/md/raid5.c
->>>> @@ -3561,12 +3561,6 @@ static void __add_stripe_bio(struct =
-stripe_head
->>>> *sh, struct bio *bi,
->>>>               * is added to a batch, STRIPE_BIT_DELAY cannot be =
-changed
->>>>               * any more.
->>>>               */
->>>> -               set_bit(STRIPE_BITMAP_PENDING, &sh->state);
->>>> -               spin_unlock_irq(&sh->stripe_lock);
->>>> -               md_bitmap_startwrite(conf->mddev->bitmap, =
-sh->sector,
->>>> -                                    RAID5_STRIPE_SECTORS(conf), =
-0);
->>>> -               spin_lock_irq(&sh->stripe_lock);
->>>> -               clear_bit(STRIPE_BITMAP_PENDING, &sh->state);
->>>>              if (!sh->batch_head) {
->>>>                      sh->bm_seq =3D conf->seq_flush+1;
->>>>                      set_bit(STRIPE_BIT_DELAY, &sh->state);
->>>> @@ -3621,7 +3615,6 @@ handle_failed_stripe(struct r5conf *conf, =
-struct
->>>> stripe_head *sh,
->>>>      BUG_ON(sh->batch_head);
->>>>      for (i =3D disks; i--; ) {
->>>>              struct bio *bi;
->>>> -               int bitmap_end =3D 0;
->>>>=20
->>>>              if (test_bit(R5_ReadError, &sh->dev[i].flags)) {
->>>>                      struct md_rdev *rdev =3D conf->disks[i].rdev;
->>>> @@ -3646,8 +3639,6 @@ handle_failed_stripe(struct r5conf *conf, =
-struct
->>>> stripe_head *sh,
->>>>              sh->dev[i].towrite =3D NULL;
->>>>              sh->overwrite_disks =3D 0;
->>>>              spin_unlock_irq(&sh->stripe_lock);
->>>> -               if (bi)
->>>> -                       bitmap_end =3D 1;
->>>>=20
->>>>              log_stripe_write_finished(sh);
->>>> @@ -3662,10 +3653,6 @@ handle_failed_stripe(struct r5conf *conf, =
-struct
->>>> stripe_head *sh,
->>>>                      bio_io_error(bi);
->>>>                      bi =3D nextbi;
->>>>              }
->>>> -               if (bitmap_end)
->>>> -                       md_bitmap_endwrite(conf->mddev->bitmap, =
-sh->sector,
->>>> -                                          =
-RAID5_STRIPE_SECTORS(conf),
->>>> 0, 0);
->>>> -               bitmap_end =3D 0;
->>>>              /* and fail all 'written' */
->>>>              bi =3D sh->dev[i].written;
->>>>              sh->dev[i].written =3D NULL;
->>>> @@ -3674,7 +3661,6 @@ handle_failed_stripe(struct r5conf *conf, =
-struct
->>>> stripe_head *sh,
->>>>                      sh->dev[i].page =3D sh->dev[i].orig_page;
->>>>              }
->>>>=20
->>>> -               if (bi) bitmap_end =3D 1;
->>>>              while (bi && bi->bi_iter.bi_sector <
->>>>                     sh->dev[i].sector + RAID5_STRIPE_SECTORS(conf)) =
-{
->>>>                      struct bio *bi2 =3D r5_next_bio(conf, bi,
->>>> sh->dev[i].sector);
->>>> @@ -3708,9 +3694,6 @@ handle_failed_stripe(struct r5conf *conf, =
-struct
->>>> stripe_head *sh,
->>>>                              bi =3D nextbi;
->>>>                      }
->>>>              }
->>>> -               if (bitmap_end)
->>>> -                       md_bitmap_endwrite(conf->mddev->bitmap, =
-sh->sector,
->>>> -                                          =
-RAID5_STRIPE_SECTORS(conf),
->>>> 0, 0);
->>>>              /* If we were in the middle of a write the parity =
-block
->>>> might
->>>>               * still be locked - so just clear all R5_LOCKED flags
->>>>               */
->>>> @@ -4059,10 +4042,6 @@ static void handle_stripe_clean_event(struct
->>>> r5conf *conf,
->>>>                                      bio_endio(wbi);
->>>>                                      wbi =3D wbi2;
->>>>                              }
->>>> -                               =
-md_bitmap_endwrite(conf->mddev->bitmap,
->>>> sh->sector,
->>>> -
->>>> RAID5_STRIPE_SECTORS(conf),
->>>> -
->>>> !test_bit(STRIPE_DEGRADED, &sh->state),
->>>> -                                                  0);
->>>>                              if (head_sh->batch_head) {
->>>>                                      sh =3D
->>>> list_first_entry(&sh->batch_list,
->>>>                                                            struct
->>>> stripe_head,
->>>> @@ -5788,13 +5767,6 @@ static void make_discard_request(struct =
-mddev
->>>> *mddev, struct bio *bi)
->>>>              }
->>>>              spin_unlock_irq(&sh->stripe_lock);
->>>>              if (conf->mddev->bitmap) {
->>>> -                       for (d =3D 0;
->>>> -                            d < conf->raid_disks - =
-conf->max_degraded;
->>>> -                            d++)
->>>> -                               md_bitmap_startwrite(mddev->bitmap,
->>>> -                                                    sh->sector,
->>>> -
->>>> RAID5_STRIPE_SECTORS(conf),
->>>> -                                                    0);
->>>>                      sh->bm_seq =3D conf->seq_flush + 1;
->>>>                      set_bit(STRIPE_BIT_DELAY, &sh->state);
->>>>              }
->>>>=20
->>>>=20
->>>>=20
->>>>>=20
->>>>> Thanks a lot for your help!
->>>>> Christian
->>>>>=20
->>>>=20
->>>>=20
->>>=20
->>> Hi Kuai
->>>=20
->>> Maybe it's not good to put the bitmap operation from raid5 to md =
-which
->>> the new api is only used for raid5. And the bitmap region which =
-raid5
->>> needs to handle is based on the member disk. It should be calculated
->>> rather than the bio address space. Because the bio address space is
->>> for the whole array.
->>>=20
->>> We have a customer who reports a similar problem. There is a patch
->>> from David. I put it in the attachment.
->>>=20
->>> @Christian, can you have a try with the patch? It can be applied
->>> cleanly on 6.11-rc6
->>>=20
->>> Regards
->>> Xiao
->>> <md_raid5_one_bitmap_claim_per_stripe_head.patch>
->>=20
->> Liebe Gr=C3=BC=C3=9Fe,
->> Christian Theune
->>=20
->> --=20
->> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
->> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
->> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
->> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
-Theune, Christian Zagrodnick
->>=20
->=20
-> Liebe Gr=C3=BC=C3=9Fe,
-> Christian Theune
->=20
-> --=20
-> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
-Theune, Christian Zagrodnick
->=20
+> Depends. If we fail attempting to create a device, we could have
+> raced
+> with something else attempting to create it.=C2=A0 Just checking for
+> dm_map_present() before we remove the device won't distinguish
+> between
+> these two cases at all.
 
-Liebe Gr=C3=BC=C3=9Fe,
-Christian Theune
+I would like to keep things as simple as possible.=20
 
---=20
-Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
-Christian Zagrodnick
+The main mistake that I made in bf3a4ad ("libmultipath: simplify
+dm_get_maps()") was that I'd changed dm_get_maps() such that returned
+error if anything went wrong for a single map. That was wrong, it
+should just skip the map in question (IMO that even includes the
+DMP_ERR case, but that's up to discussion). Just changing the behavior
+of dm_get_maps() would fix the regressions reported on GitHub (correct
+me if I'm wrong).
+
+Wrt libmp_mapinfo:
+
+From my PoV, there's no difference between "has no table" and "has no
+targets".=C2=A0There _is_ a difference between "no targets" and "multiple
+targets" though, as the former can be reloaded as a proper multipath
+table whereas the latter cannot. So these two cases must be treated
+differently.
+
+I think we should actually introduce a new return code.
+
+ - DMP_NOT_FOUND should actually mean that the given map does not exist
+at all
+ - DMP_NO_MATCH should mean that it has targets that don't match
+(either multiple targets, or something non-multipath), or that the UUID
+doesn't match (if MAPINFO_CHECK_UUID is set).
+ - We should have another rc code for "exists but is empty", but that
+should be called DMP_EMPTY rather than DMP_BAD_DEV.
+
+> On the other hand, there is still a window where the program that we
+> raced with is in the middle of creating the device, but it doesn't
+> have
+> a live table yet. In this case, even the DMP_BAD_DEV code won't be
+> able
+> to distinguish between a map that didn't get created correctly and
+> one
+> that is in the process of getting created. It would reduce the window
+> where we could accidentally delete a working device, however.
+
+I wouldn't bother about this kind of race too much. If multipathd just
+ignores this kind of maps as it used to, it won't do any harm AFAICT.
+We shouldn't alter this behavior, IOW multipathd should neither remove
+these maps nor add them to its internal tables unless they become
+populated with paths.
+
+If anything, we should finally get down to delegating map creation from
+multipath to multipathd.
+
+> Since it doesn't add much complexity, I lean towards keeping it, but
+> it
+> is one more state we need to handle on returns from libmp_mapinfo(),
+> so
+> I'm open to an argument that it's not worth it.
+
+I agree, comments above.
+
+> > > The only issue with the current code is that if you have a device
+> > > with
+> > > no table with the UUID of a multipath device but a different name
+> > > than
+> > > that multipath device should have, multipath will try to create a
+> > > new
+> > > device instead of reload it, and this fails, since the UUID is
+> > > already
+> > > in use.
+> >=20
+> > That should be handled in coalesce_paths(). It's basically the
+> > scenario
+> > that occurs if we enable or disable user_friendly names.
+>=20
+> Except that we have a mpp for the other device if it has a table. If
+> the
+> device doesn't have a table, then a mpp isn't created, so
+> coalesce_paths() doesn't track it. We could add code to create mpps
+> for
+> these tableless devices, but it's another trade off of added
+> complexity
+> to handle a rare corner case, and I'm not sure this one is worth it.
+
+What I meant is that if there are matching path devices,
+coalesce_paths() will create an mpp and reload the table. Otherwise,
+the table will continue lurking around without being tracked, which
+doesn't do harm even if it may not seem optimal. If a matching path is
+added, again, uev_add_path() should reload the map (to be tested).
+
+I think that behavior is sane enough for a corner case like this.
+
+Martin
 
