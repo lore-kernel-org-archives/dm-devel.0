@@ -1,128 +1,89 @@
-Received: from mail-pj1-f44.google.com (mail-pj1-f44.google.com [209.85.216.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 703EB21767C
-	for <dm-devel@lists.linux.dev>; Tue, 12 Nov 2024 18:00:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.44
+Received: from osmtp.synthetel.com (osmtp.synthetel.com [149.56.45.145])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 4B13420B218
+	for <dm-devel@lists.linux.dev>; Tue, 12 Nov 2024 19:40:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=149.56.45.145
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731434411; cv=none; b=A8YFN7IicfcsRFC42/bknKsnCkFnXQXYXTA3CvgA1NCVW0s4GTAp2Ldb/0WQ8fVAF3CKHNb1SjIXbHqbYgEPrIGkIanX80hd+JjZT4eJ7V9MXxYkqHfK2eWWhv+Frw560qFQrgyaQN2n/0UOcgi3AXxuKdOwlvjpVzVZ9NSh2U8=
+	t=1731440429; cv=none; b=WmWMN7oWjIHIuFiy/SC0w2WA8mRvIeeuDTWTYznCVwfu9CSXVdRjCxN7ZB2W5Cak+Wzpw3DbWhvZikaZlSgJnehba8PKe+QEkGvzeCpbf7+BsXoc6my6KA7nYstBVnOiHG3fvDoeyaMcgX8xUxhAJYePXj5fN7Jv9onTAHG0+5Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731434411; c=relaxed/simple;
-	bh=XNIbje+vYA/inNW64dUHI3KFTiSNhHjq8byWTNrabQ4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=cfQgRjIaWuidrZcCeMK8vsRB81or3+aIwNhBlpZIc8IYKiUGSNi5IrXPUyXxmPPT+txVHpeDxjuFMrNmpyWZEDRuWBB7LTp62zSt9kBQKaXIvUc4MvUj6Skj+rIV2OLXN4GcB5cirf9OZzQWIVQ9kmiMizUS4jLbBQ/5JL5+I9g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=di4D55oN; arc=none smtp.client-ip=209.85.216.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1731440429; c=relaxed/simple;
+	bh=jkWW1/lhwQLfOn5yHGdwXWP+iu325JKjA1yVW6kwAqs=;
+	h=MIME-Version:Content-Type:Date:From:To:Subject:Message-ID; b=jXQRczOr3Dbaq209n49rDh6tvbkbnFSH54C+lWX9YlFHLhNruMaY5K23Jsyw7fri57WMO3riyf3cBBjsrAbGexGoBhBXOIMvEc8IIZL1WjveBE8a9xhW+z7iVYaZ9Xa2nM/ErOZM0/+WXS+R1YivA9ZzgbdwviED2/d11oKxG6I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=synthetel.com; spf=pass smtp.mailfrom=synthetel.com; dkim=pass (1024-bit key) header.d=synthetel.com header.i=@synthetel.com header.b=rY94BWZr; arc=none smtp.client-ip=149.56.45.145
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=synthetel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=synthetel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="di4D55oN"
-Received: by mail-pj1-f44.google.com with SMTP id 98e67ed59e1d1-2e2dc61bc41so4370572a91.1
-        for <dm-devel@lists.linux.dev>; Tue, 12 Nov 2024 10:00:09 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1731434407; x=1732039207; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=54q4eYyScDWFGKt3cp1r2MjmiDAz8++iYp48KLTi77k=;
-        b=di4D55oNiqqHUvYjogFiSkZb+upXSv/x/frjZBCeUqcfyTeKlkJDm52sa75xPBQT4Z
-         H1E28IKYmn6MKQWmfLFoAG1CHt+yQfIAPGVWmlMELAQTkCNVfUZ7WRna6a7fOVz+tZHG
-         rkVzBLoT9PodqLV60y3D/0WEdkpvmkDlh1sbbywIRIN2sKHmCgOrdqillAD44jrvc88M
-         sckZ73x7EutoYRp/Ab97Vi+C2H9cL2Ov6FwE/E5tfrglXszOl+BkfgwOmDqAB9d1ZT/1
-         AD6V384ComgE+fyYrH99GNc/8grMAYS+JNKkJPwMidCEopyc8IY6uZ6BOXcFzX11w6fJ
-         HqHg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731434407; x=1732039207;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=54q4eYyScDWFGKt3cp1r2MjmiDAz8++iYp48KLTi77k=;
-        b=vNNXX4GKgPqgkbY3sDyk3KKjHeDLMNsTD8lTs9pVsqNtMAwwopdDluJAFQdCMER3/B
-         bbJTAzt9diANKUv+72gHmbejZJLWVRp6W5z3FsLRGzTyugPUGnCJTNevQ1ng3nLhEM5x
-         E/B10bgQd7HK6Po9PIfhvDgr79r7wctjqC6NBnjkiUXXFAOoGGaN0gKF2Ve5SsvfWVLj
-         NXz+5NwCNy6rgxc3vDKGhVnIoWW/fAonDwEjSuKR797ZSbvGF9h2YiNNx3RIXSRbCFhS
-         p7hAo+1L1P+Y+CIrRkMoz3syMsnE7u2RzJCDZ8eQyBpF3avR8ZujmI4JYJZPjfLwhSYY
-         59xw==
-X-Gm-Message-State: AOJu0Yxrjgyvh0/rcVOK0PbiriAHc5uVCSJqnVGgTAlvj3rpirMDgmZj
-	YRCoNmfmJGtfJKSyadnO/L+RhFoTTVbs7MysFflLuJT4sHhZEt3E
-X-Google-Smtp-Source: AGHT+IEjmGmPUXgN/Z4en4rN1VSNsF+Q+L/QIi86m1uy8qTTse9NP+UITQiTgLlpUNTK99xDnRxDGw==
-X-Received: by 2002:a17:90a:e7cb:b0:2e2:a8dd:9bb5 with SMTP id 98e67ed59e1d1-2e9b170d9f4mr21955617a91.12.1731434406489;
-        Tue, 12 Nov 2024 10:00:06 -0800 (PST)
-Received: from archlinux.. ([2405:201:e00c:517f:5e87:9cff:fe63:6000])
-        by smtp.googlemail.com with ESMTPSA id 98e67ed59e1d1-2e99a541da0sm14458797a91.13.2024.11.12.10.00.03
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 12 Nov 2024 10:00:06 -0800 (PST)
-From: Mohammed Anees <pvmohammedanees2003@gmail.com>
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	Mohammed Anees <pvmohammedanees2003@gmail.com>
-Subject: [PATCH] dm: Allow the use of escaped characters in str_field_delimit()
-Date: Tue, 12 Nov 2024 23:27:58 +0530
-Message-ID: <20241112175758.114080-1-pvmohammedanees2003@gmail.com>
-X-Mailer: git-send-email 2.47.0
+	dkim=pass (1024-bit key) header.d=synthetel.com header.i=@synthetel.com header.b="rY94BWZr"
+Received: from sha0.net (unknown [10.0.0.13])
+	by osmtp.synthetel.com (Postfix) with ESMTPSA id F32C0C0DAD
+	for <dm-devel@lists.linux.dev>; Tue, 12 Nov 2024 19:40:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=synthetel.com;
+	s=default; t=1731440423;
+	bh=jkWW1/lhwQLfOn5yHGdwXWP+iu325JKjA1yVW6kwAqs=;
+	h=Date:From:To:Subject;
+	b=rY94BWZrnxfD7GqY2w3cJZABpNWJTUAzLEZnJwVfKPoFnnJfZ6ozDpAQYy7yrs2Cj
+	 lkEWO5GPx856xfn0VMTa8iZ87QVv6osJi91e/B3DFmhVdjSxhm3RC2g3AvbtMfw81h
+	 8kPr/KHuai6PQ/XlpcO2UvBcjiCPGGVypeMZ6R7U=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
+Content-Transfer-Encoding: 7bit
+Date: Tue, 12 Nov 2024 11:40:23 -0800
+From: Shao Miller <device.mapper@synthetel.com>
+To: dm-devel@lists.linux.dev
+Subject: Copy on Read
+Organization: Synthetel Corporation
+Message-ID: <db1f26b55bd68277b0944179dd11b298@synthetel.com>
+X-Sender: device.mapper@synthetel.com
+User-Agent: Roundcube Webmail/1.0.12
 
-Escape characters were not handled before, which could lead to
-unwanted issues. Some device-mapper names may contain backslashes (`\`)
-as valid characters and should not be treated as escape characters. Only
-escape characters followed directly by the separator are considered
-valid and need to be processed. After handling, the escape characters
-are removed to ensure the final string is correctly parsed without
-unwanted escape sequences which were used only for escaping.
+Good day, Device Mapper Folks.
 
-Signed-off-by: Mohammed Anees <pvmohammedanees2003@gmail.com>
----
- drivers/md/dm-init.c | 28 ++++++++++++++++++++++++----
- 1 file changed, 24 insertions(+), 4 deletions(-)
+In the format of an X Y Problem:
 
-diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
-index b37bbe762500..dad9d523f7fb 100644
---- a/drivers/md/dm-init.c
-+++ b/drivers/md/dm-init.c
-@@ -88,13 +88,33 @@ static void __init dm_setup_cleanup(struct list_head *devices)
- static char __init *str_field_delimit(char **str, char separator)
- {
- 	char *s;
-+	/* This variable handles removing escape characters, which are
-+	 * only used to avoid the separator and aren't needed in the
-+	 * final string.
-+	 */
-+	char *write;
- 
--	/* TODO: add support for escaped characters */
- 	*str = skip_spaces(*str);
--	s = strchr(*str, separator);
-+	s = *str;
-+	write = *str;
-+
-+	/* Find the separator and handle escape character */
-+	while (*s) {
-+		/* If '\' is followed by the separator, skip '\' by
-+		 * incrementing s, write will then overwrite the
-+		 * escape character with the separator.
-+		 */
-+		if (*s == '\\' && *(s + 1) != '\0' && *(s + 1) == separator)
-+			s++;
-+		else if (*s == separator)
-+			break;
-+
-+		*write++ = *s++;
-+	}
-+
- 	/* Delimit the field and remove trailing spaces */
--	if (s)
--		*s = '\0';
-+	if (write)
-+		*write = '\0';
- 	*str = strim(*str);
- 	return s ? ++s : NULL;
- }
--- 
-2.47.0
+[Almost] Real goal (X): I would like to read storage-blocks locally from 
+a far-away (remote, high latency) source and keep costs (for local 
+storage, for network-traffic) to a minimum.  95% of the remote source 
+will never be read and 5% will be read frequently.  If I read a 
+storage-block 1,000,000 times over 10 years, ideally it should only 
+traverse the network once during that time.
 
+There is no mention of writes, so far.
+
+Sub-goal (Y): Identify whether or not there is a device-mapper target 
+with copy-on-read, read-only behaviour.  This seems like it could be 
+useful in certain forensic situations in which "accesses" ought to be 
+recorded.  "We" (device-mapper users) have the "write half" of 
+"accesses" covered, already, with snapshots.
+
+dm-cache might work out, except that it appears to've been designed with 
+considerations for writes, which are irrelevant to the goal(s).
+
+dm-snapshot might work out, except that I'd like to copy-on-read, 
+instead of copy-on-write.
+
+dm-thin appears to pass reads to the source, so doesn't seem to be 
+appropriate.
+
+dm-clone doesn't keep costs low because it copies the 95% unused 
+storage-blocks.  dm-clone without any writes happening and with 
+"hydration" disabled might work out, except that it appears to pass 
+reads to the source, with "hydration" disabled.
+
+Mirroring doesn't keep costs low because it copies the 95% unused 
+storage-blocks.
+
+Please forgive my ignorance/forgetfulness: is there already a 
+device-mapper target or a stack of targets which seem(s) appropriate for 
+the goal(s)?  The idea is pretty much read-caching, which might be 
+argued is also available at filesystem layers, but files aren't 
+mentioned in the goal(s).
+
+Thank you for your generous device-mapper efforts.
+
+- Shao Miller
+Synthetel Corporation
