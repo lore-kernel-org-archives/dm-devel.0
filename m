@@ -1,130 +1,112 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46B1C382
-	for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 00:12:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11E361FB89A
+	for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 10:40:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731456772; cv=none; b=VtZg3KI6748KwEQ/hdBvIzB3meC+RqMrU2Cf3Lev8l1ybe0bgqg+ib5yDKhMPQgGBo1FDZbmiYrBspvOjN9uEHq1rU3pV5Rjbpx0ntj94299xhsB1GhQhX0AJzehvkJYIxi9X4xrc9+uqkIIQ8z0iq4z2s1q5OSrlr9Z9gpimKU=
+	t=1731494404; cv=none; b=h/1sDbP5dYEEj6KsIYTsZRpIyLzo6h7I7urrs9OwwOEwRI5Bl9CUSRkPigwC7b1aA5Uv3T+SXbe0Y0ZcUIN8bVgWkOAV9znYvK9QkJrcv78lKyT6z5HZVHJ+LAolw33Gq4PmAyM746REJPr1L1oBnBQ3cfOjhF1jZ3VOEmFVjzI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731456772; c=relaxed/simple;
-	bh=aCJN+lavo2lTsAvOdQElVTCeGjTAQwkF8H7L2JkUPXM=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=EhUf6WAgwaIb+XsBvmXBhNT3hSr1xnn5jU5zodz+v9qiaLnRNkIo6oYddeOEpcOgjBDLw4VZiOXtSXi9PrcNlQW1HQvHC+rRTeK1NvcB6xaNwtsLnX+1yCNmZn47l7huDvjWiSgWE+4MvxIrSzqSqn5JJWsKwkJ8M2Go+u3Soco=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Fjn0iDAL; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1731494404; c=relaxed/simple;
+	bh=CVBLgO9PCTR1EzxJ5XBaCJ7HXIlrxXyjwaYXCyT6JjA=;
+	h=From:Message-ID:Date:MIME-Version:Subject:To:Cc:References:
+	 In-Reply-To:Content-Type; b=W0mhN2uMycLw6SVIYUrluZ9vDnErxMDckXuOYarlxpf1aJPPASpgVctL83cWmqsQQuTI2QeCCKXLE7+IC3NuIgwuCv2OQtdTecyTdq9m3LhWIFrFMdbnHziF3JURjIyxUal4lW/kCwFpgIU2Rpj9aNRilQLY1rl6BVJWDvsm5aI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lqnXe0r6; arc=none smtp.client-ip=209.85.128.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Fjn0iDAL"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1731456769;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Q3Cu+BvxiAYfdtOUW3pS2r7cFTAg/bD+JWkAYXKWLbc=;
-	b=Fjn0iDALCJygjtB0bcSNv8Tz1R7Iso+UK/nDKEKiRpP1C/p28kXsE1+eXd2OYN4i+dHs5b
-	lJGb3OCPYF/U+HW34Lqo2q7K++qqRFrmVnU85ioTUJbK6ItDVJ0Fx1X/rvHUtUBQVyZ5Hl
-	jJW/Vf729tL3NFVAkJab5i447Q3L54I=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-6-btlOB-iCP6WmeatOPMcQOw-1; Tue,
- 12 Nov 2024 19:12:45 -0500
-X-MC-Unique: btlOB-iCP6WmeatOPMcQOw-1
-X-Mimecast-MFC-AGG-ID: btlOB-iCP6WmeatOPMcQOw
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 71CB719560B2;
-	Wed, 13 Nov 2024 00:12:44 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1F0AD1956086;
-	Wed, 13 Nov 2024 00:12:44 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4AD0CgVt580825
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 12 Nov 2024 19:12:42 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4AD0CgX1580824;
-	Tue, 12 Nov 2024 19:12:42 -0500
-Date: Tue, 12 Nov 2024 19:12:42 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 00/12] multipath fixes to tableless device handling
-Message-ID: <ZzPu-rJP_10cJgnc@redhat.com>
-References: <20241112150215.90182-1-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lqnXe0r6"
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4315eeb2601so83820565e9.2
+        for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 02:40:02 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1731494401; x=1732099201; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:content-language:references
+         :cc:to:subject:user-agent:mime-version:date:message-id:from:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=s/Thv3s5fZYiC+uXrouI6KDRRkyx5pHxDuOMRZSWEns=;
+        b=lqnXe0r6RCXBLIP+9sAUHZmFrvxt42H5UibZR5pAd1LHy7suJog6Ak/VKdKuzQoVpq
+         JQ2QzokLbIC3iGsSr1C9+RsbdTfb/PVh8RPYIF0mKFC6rvyLgMZOKg1wydi6udiuc049
+         HVhHJdJyVDxgKlEsaUL6W71CH4u6cWDBq/b0Cq+wzkNuZFCa06o+TFBkpdN9I+v80FBG
+         DgSsrnG2YseReqcFYKyfNZuF71KBHhIsrvAl8dBQiPkh05sI1aMbG3b61j90HOYhWrfd
+         llOu7oCIazevgF1iaj/Kpy8UfDFEc1y0Zrtd9eyvR1UIVKnXNNGBoTzth1p4AoP1Yli+
+         FrtA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731494401; x=1732099201;
+        h=content-transfer-encoding:in-reply-to:content-language:references
+         :cc:to:subject:user-agent:mime-version:date:message-id:from
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=s/Thv3s5fZYiC+uXrouI6KDRRkyx5pHxDuOMRZSWEns=;
+        b=vZ4sCcVFQqilxhbjKOLfszrQtziryJYLTm8x2TdybyE0ZdV0LteIEW2w6TJ72/Ey93
+         Dc3/KBB8zS2mnouxIZTpvOEPs58c4DGlb6QrZgH7yWAlLM3odGlC2TD6UVNsLQ86ev41
+         iYzj/TY+aGHlOg1DtKF8yyP9zJT+Lx7pHYHnmbB2yCXIhkSk6fjnXmAZ8bqi+nZYwe4k
+         oVs4DL9JxHLrfb9XcOClYq8p51c9mDDVSfXRfiV5kua+UaAGoLbeUsaROvGvQj2lpgFS
+         6OXY4G+lMKPY/wpYmt59u6QCcgK0pTADfP2an3EtuNfYlQ8mgkSJL8GTOxQ8Kw+TusX0
+         OeoA==
+X-Gm-Message-State: AOJu0YxHDf3L2rGlClVVvBKH1YTUMT1upUYJmGj/CO+YZ6UCikwHZvPX
+	Kr+8cB1EkxM9jnvafrpctNfHhLQDkv2rEyLRfm++4DlaH6GUu0JY
+X-Google-Smtp-Source: AGHT+IFnil+UTWcCqyM9NjYstgzVsxFPy7IlsYJou1rBFeOgAM88fn5h5zIa7wuIyMJtqy1fKWia8Q==
+X-Received: by 2002:a05:600c:4f10:b0:431:52a3:d9d5 with SMTP id 5b1f17b1804b1-432b74a07femr230288035e9.0.1731494401028;
+        Wed, 13 Nov 2024 02:40:01 -0800 (PST)
+Received: from ?IPV6:2a03:a900:1000:7e9:403e:7c8b:351b:f333? ([2a03:a900:1000:7e9:403e:7c8b:351b:f333])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-432d4788c2asm17787935e9.0.2024.11.13.02.40.00
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 13 Nov 2024 02:40:00 -0800 (PST)
+From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
+X-Google-Original-From: Zdenek Kabelac <zkabelac@redhat.com>
+Message-ID: <caa63670-ec53-4700-945a-e282a8d09827@redhat.com>
+Date: Wed, 13 Nov 2024 11:39:59 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20241112150215.90182-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: P2zvfnebA5Nqhv6MZ4u8MXh_psr0_X6C37TGXDjV2Po_1731456764
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm: Allow the use of escaped characters in
+ str_field_delimit()
+To: Mohammed Anees <pvmohammedanees2003@gmail.com>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <20241112175758.114080-1-pvmohammedanees2003@gmail.com>
+Content-Language: en-US, cs
+In-Reply-To: <20241112175758.114080-1-pvmohammedanees2003@gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On Tue, Nov 12, 2024 at 04:02:03PM +0100, Martin Wilck wrote:
-> This patch set is a re-spin of Ben's previous series by the same name [1].
+Dne 12. 11. 24 v 18:57 Mohammed Anees napsal(a):
+> Escape characters were not handled before, which could lead to
+> unwanted issues. Some device-mapper names may contain backslashes (`\`)
+> as valid characters and should not be treated as escape characters. Only
+> escape characters followed directly by the separator are considered
+> valid and need to be processed. After handling, the escape characters
+> are removed to ensure the final string is correctly parsed without
+> unwanted escape sequences which were used only for escaping.
+>
+> Signed-off-by: Mohammed Anees <pvmohammedanees2003@gmail.com>
+> ---
+>   drivers/md/dm-init.c | 28 ++++++++++++++++++++++++----
+>   1 file changed, 24 insertions(+), 4 deletions(-)
+>
+> diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+> index b37bbe762500..dad9d523f7fb 100644
+> --- a/drivers/md/dm-init.c
+> +++ b/drivers/md/dm-init.c
+> @@ -88,13 +88,33 @@ static void __init dm_setup_cleanup(struct list_head *devices)
+>   static char __init *str_field_delimit(char **str, char separator)
+>   {
+>
 
-For the set:
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
- 
-> Patch 1 is my take on fixing the regression with map detection
-> in multipath-tools 0.10.0. The basic idea is to never fail in dm_get_maps(),
-> even if libmp_mapinfo() fails on one or more maps. The behavior wrt "empty"
-> maps, or maps without table, is the same as in 0.9.9 and older, these
-> maps are simply ignored by multipathd.
-> 
-> Patch 2 improves the semantics for decting maps with multiple targets.
-> 
-> Patch 3-6 are from Ben's original series, with unit test fixes added in
-> patch 3.
-> 
-> Patch 7 and 8 improve the semantics of MAPINFO_CHECK_UUID for partitions.
-> 
-> Patch 9-11 are minor logging improvements.
-> 
-> Patch 12 is an independent bug fix I discovered recently.
-> 
-> As usual, comments and reviews welcome.
-> 
-> Martin
-> 
-> [1] https://lore.kernel.org/dm-devel/20241031183301.391416-1-bmarzins@redhat.com/
-> 
-> Benjamin Marzinski (4):
->   libmultipath: check DM UUID earlier in libmp_mapinfo__
->   libmultipath: use MAPINFO_CHECK_UUID in dm_get_multipath
->   multipathd: print an error when failing to connect to multipathd
->   multipathd.service: restart multipathd on failure
-> 
-> Martin Wilck (8):
->   libmultipath: dm_get_maps(): don't bail out for single-map failures
->   libmultipath: libmp_mapinfo(): return DMP_NO_MATCH for multi-target
->     maps
->   libmultipath: make MAPINFO_CHECK_UUID work with partitions
->   libmultipath: check map UUID in do_foreach_partmaps
->   libmultipath: increase log level for removing partitions
->   libmultipath: reduce log level of libmp_mapinfo() messages
->   libmultipath: don't log boring state messages at level 3
->   libmultipath: don't set dev_loss_tmo to 0 for NO_PATH_RETRY_FAIL
-> 
->  libmultipath/devmapper.c         | 70 ++++++++++++++++----------------
->  libmultipath/devmapper.h         |  8 +++-
->  libmultipath/discovery.c         | 13 ++++--
->  libmultipath/structs.h           |  1 +
->  multipathd/multipathd.service.in |  3 ++
->  multipathd/uxclnt.c              |  4 +-
->  tests/mapinfo.c                  | 17 +++++---
->  7 files changed, 71 insertions(+), 45 deletions(-)
-> 
-> -- 
-> 2.47.0
+There is libdevmapper  project  (ATM distirbuted through lvm2 project) which 
+is handling the management of name & uuid with mangling - so they are properly 
+visible on systems with udev.
+
+IMHO this escape handling does not belong to kernel and is rather related to 
+the actual user space running on top.
+
+
+Regards
+
+
+Zdenek
 
