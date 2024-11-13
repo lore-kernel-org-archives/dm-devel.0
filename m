@@ -1,60 +1,61 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11E361FB89A
-	for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 10:40:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 71D0216DEB4
+	for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 10:59:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731494404; cv=none; b=h/1sDbP5dYEEj6KsIYTsZRpIyLzo6h7I7urrs9OwwOEwRI5Bl9CUSRkPigwC7b1aA5Uv3T+SXbe0Y0ZcUIN8bVgWkOAV9znYvK9QkJrcv78lKyT6z5HZVHJ+LAolw33Gq4PmAyM746REJPr1L1oBnBQ3cfOjhF1jZ3VOEmFVjzI=
+	t=1731495548; cv=none; b=fHV05lq9TxncyKdeTsmjN5f+JSna5F64tgLgiWUufO/Jl9mpFdBEpt188GBfTK9g92X1S58DBnh7ZQLFdP2o0nXaKRfsr4sx7C0d2pChlO8L7IYOgOqaa4SNZL3u8tFU1FkkEp7HPKhm5vYcNot/bY9Gh4E6BcwZSZzdh0pGTVY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731494404; c=relaxed/simple;
-	bh=CVBLgO9PCTR1EzxJ5XBaCJ7HXIlrxXyjwaYXCyT6JjA=;
-	h=From:Message-ID:Date:MIME-Version:Subject:To:Cc:References:
-	 In-Reply-To:Content-Type; b=W0mhN2uMycLw6SVIYUrluZ9vDnErxMDckXuOYarlxpf1aJPPASpgVctL83cWmqsQQuTI2QeCCKXLE7+IC3NuIgwuCv2OQtdTecyTdq9m3LhWIFrFMdbnHziF3JURjIyxUal4lW/kCwFpgIU2Rpj9aNRilQLY1rl6BVJWDvsm5aI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lqnXe0r6; arc=none smtp.client-ip=209.85.128.54
+	s=arc-20240116; t=1731495548; c=relaxed/simple;
+	bh=Lck+cAj4eHDT7/cZStFv9s6pk5MGdeg9MG8q5T0QVF8=;
+	h=From:Message-ID:Date:MIME-Version:Subject:To:References:
+	 In-Reply-To:Content-Type; b=kRj9M8+AlLsonY5fkVzVJdw6s+3y2VkZ7QorXpgcBfk25dRBLSmY5XTs8MjVWInVJoVQlqya4+M4GMkhrd/EJkG9Yi84TRdYftMhvYhAajevrwTVfiPea4kSAwAxn9JImgyoOZKiBKnXZpI2fBLbheF1ktU5/MqiDmNM4wyqzTU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CH9trQJf; arc=none smtp.client-ip=209.85.128.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lqnXe0r6"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4315eeb2601so83820565e9.2
-        for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 02:40:02 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CH9trQJf"
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-4315baa51d8so59222835e9.0
+        for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 02:59:06 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1731494401; x=1732099201; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1731495545; x=1732100345; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:content-language:references
-         :cc:to:subject:user-agent:mime-version:date:message-id:from:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=s/Thv3s5fZYiC+uXrouI6KDRRkyx5pHxDuOMRZSWEns=;
-        b=lqnXe0r6RCXBLIP+9sAUHZmFrvxt42H5UibZR5pAd1LHy7suJog6Ak/VKdKuzQoVpq
-         JQ2QzokLbIC3iGsSr1C9+RsbdTfb/PVh8RPYIF0mKFC6rvyLgMZOKg1wydi6udiuc049
-         HVhHJdJyVDxgKlEsaUL6W71CH4u6cWDBq/b0Cq+wzkNuZFCa06o+TFBkpdN9I+v80FBG
-         DgSsrnG2YseReqcFYKyfNZuF71KBHhIsrvAl8dBQiPkh05sI1aMbG3b61j90HOYhWrfd
-         llOu7oCIazevgF1iaj/Kpy8UfDFEc1y0Zrtd9eyvR1UIVKnXNNGBoTzth1p4AoP1Yli+
-         FrtA==
+         :to:subject:user-agent:mime-version:date:message-id:from:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=BAmilerga4pcTHJ+7bs8yOEZmrgLYV3C6K/NENv1sSE=;
+        b=CH9trQJfY10/QK9HiFNtDU2LBn/FVxYi9OXzuhtfFUWUwhzSjLbcwX7TH1UajqZUb3
+         Ws2XzoSBBZmY4kHktvO/y9eg5Rica4SYmDL1f3khoJT5PfZdzYeGvu0Zdko60pWgYUcF
+         hS3WoTa9tkjZOwowqcfb9nBWJTL9E4x/k5zmscU1oGJFgkOsKoqFFCXjUXwERvofmltf
+         Q8khxyO6/fLpSQYy7of+kGhmug/Jtk2qLRFygg5kK3PDRKDDsO+azMLJKKhFYULmFG1p
+         I8D+ivbRt6ndH7xfZ7/fn49jjpMChUUCLo6Ia/OcUVQIamcom4HNQULCC6RtfdJtRsSK
+         QCEw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731494401; x=1732099201;
+        d=1e100.net; s=20230601; t=1731495545; x=1732100345;
         h=content-transfer-encoding:in-reply-to:content-language:references
-         :cc:to:subject:user-agent:mime-version:date:message-id:from
+         :to:subject:user-agent:mime-version:date:message-id:from
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=s/Thv3s5fZYiC+uXrouI6KDRRkyx5pHxDuOMRZSWEns=;
-        b=vZ4sCcVFQqilxhbjKOLfszrQtziryJYLTm8x2TdybyE0ZdV0LteIEW2w6TJ72/Ey93
-         Dc3/KBB8zS2mnouxIZTpvOEPs58c4DGlb6QrZgH7yWAlLM3odGlC2TD6UVNsLQ86ev41
-         iYzj/TY+aGHlOg1DtKF8yyP9zJT+Lx7pHYHnmbB2yCXIhkSk6fjnXmAZ8bqi+nZYwe4k
-         oVs4DL9JxHLrfb9XcOClYq8p51c9mDDVSfXRfiV5kua+UaAGoLbeUsaROvGvQj2lpgFS
-         6OXY4G+lMKPY/wpYmt59u6QCcgK0pTADfP2an3EtuNfYlQ8mgkSJL8GTOxQ8Kw+TusX0
-         OeoA==
-X-Gm-Message-State: AOJu0YxHDf3L2rGlClVVvBKH1YTUMT1upUYJmGj/CO+YZ6UCikwHZvPX
-	Kr+8cB1EkxM9jnvafrpctNfHhLQDkv2rEyLRfm++4DlaH6GUu0JY
-X-Google-Smtp-Source: AGHT+IFnil+UTWcCqyM9NjYstgzVsxFPy7IlsYJou1rBFeOgAM88fn5h5zIa7wuIyMJtqy1fKWia8Q==
-X-Received: by 2002:a05:600c:4f10:b0:431:52a3:d9d5 with SMTP id 5b1f17b1804b1-432b74a07femr230288035e9.0.1731494401028;
-        Wed, 13 Nov 2024 02:40:01 -0800 (PST)
+        bh=BAmilerga4pcTHJ+7bs8yOEZmrgLYV3C6K/NENv1sSE=;
+        b=u8ABjNlU9Nc2iFXlbArfmMR2UXcStxIk6jVahU/644Shtxf4d5Rt2pA+zN6A14bA5h
+         m71keVXJJiSi15ERFzbYqC+DWPJR+qagglLFenG5tAAtyWY5byobC/r1Wx50XFvHnZUL
+         K9Cv8fJtIMHLDw9Aip1qul6NeqspaqPG6UErtPty1Wh/SjVfGlWaiZejq2/gtdG8bsro
+         AeZj3LsM2wmsYw1YF/2PLgsAodKtHrDEo8DduZaKzGKH4nVo2qE6qwxY7DkyPLwLPqf6
+         mvN4n+PPr0UFTc+JyNhFLK2+qv9BLz/ssY60J/v3cgx7A1/nuD6NZWukzO84llopkWj4
+         OAzA==
+X-Forwarded-Encrypted: i=1; AJvYcCWiiSND7YnCWs5uGKf+HK8uHvb+zXtALmTnNCj8PbzSGnyfHGeAj6rt8zWr2SLzxMxpL4abUTvZMg==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy7SzToQeqvmJt0ZNMgNk2xFpaZkRv2z4QAvylv3cabDUP/JxlL
+	VHWOBuuM4l+p1sCXm7WT4pQBrVajT4prfAmdSAGrbMP/oER0rd06lTfrKY6O
+X-Google-Smtp-Source: AGHT+IEMeykgBVt2BGDLyzXzmISy9QRmGh5fZ1s5ePxuCtRl9/6ZvdH+zRezTrCC2c5fMprYPBUs/A==
+X-Received: by 2002:a05:600c:5008:b0:42c:b9c7:f54b with SMTP id 5b1f17b1804b1-432d4ab926bmr26176165e9.16.1731495544441;
+        Wed, 13 Nov 2024 02:59:04 -0800 (PST)
 Received: from ?IPV6:2a03:a900:1000:7e9:403e:7c8b:351b:f333? ([2a03:a900:1000:7e9:403e:7c8b:351b:f333])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-432d4788c2asm17787935e9.0.2024.11.13.02.40.00
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-432d48bb442sm17054215e9.1.2024.11.13.02.59.03
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 13 Nov 2024 02:40:00 -0800 (PST)
+        Wed, 13 Nov 2024 02:59:04 -0800 (PST)
 From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
 X-Google-Original-From: Zdenek Kabelac <zkabelac@redhat.com>
-Message-ID: <caa63670-ec53-4700-945a-e282a8d09827@redhat.com>
-Date: Wed, 13 Nov 2024 11:39:59 +0100
+Message-ID: <687e5f5d-b763-4255-afed-8adc4e1df0be@redhat.com>
+Date: Wed, 13 Nov 2024 11:59:02 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -62,48 +63,58 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] dm: Allow the use of escaped characters in
- str_field_delimit()
-To: Mohammed Anees <pvmohammedanees2003@gmail.com>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-References: <20241112175758.114080-1-pvmohammedanees2003@gmail.com>
+Subject: Re: Copy on Read
+To: Shao Miller <device.mapper@synthetel.com>, dm-devel@lists.linux.dev
+References: <db1f26b55bd68277b0944179dd11b298@synthetel.com>
 Content-Language: en-US, cs
-In-Reply-To: <20241112175758.114080-1-pvmohammedanees2003@gmail.com>
+In-Reply-To: <db1f26b55bd68277b0944179dd11b298@synthetel.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-Dne 12. 11. 24 v 18:57 Mohammed Anees napsal(a):
-> Escape characters were not handled before, which could lead to
-> unwanted issues. Some device-mapper names may contain backslashes (`\`)
-> as valid characters and should not be treated as escape characters. Only
-> escape characters followed directly by the separator are considered
-> valid and need to be processed. After handling, the escape characters
-> are removed to ensure the final string is correctly parsed without
-> unwanted escape sequences which were used only for escaping.
+Dne 12. 11. 24 v 20:40 Shao Miller napsal(a):
+> Good day, Device Mapper Folks.
 >
-> Signed-off-by: Mohammed Anees <pvmohammedanees2003@gmail.com>
-> ---
->   drivers/md/dm-init.c | 28 ++++++++++++++++++++++++----
->   1 file changed, 24 insertions(+), 4 deletions(-)
+> In the format of an X Y Problem:
 >
-> diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
-> index b37bbe762500..dad9d523f7fb 100644
-> --- a/drivers/md/dm-init.c
-> +++ b/drivers/md/dm-init.c
-> @@ -88,13 +88,33 @@ static void __init dm_setup_cleanup(struct list_head *devices)
->   static char __init *str_field_delimit(char **str, char separator)
->   {
+> [Almost] Real goal (X): I would like to read storage-blocks locally from a 
+> far-away (remote, high latency) source and keep costs (for local storage, 
+> for network-traffic) to a minimum.  95% of the remote source will never be 
+> read and 5% will be read frequently.  If I read a storage-block 1,000,000 
+> times over 10 years, ideally it should only traverse the network once during 
+> that time.
+>
+> There is no mention of writes, so far.
+>
+> Sub-goal (Y): Identify whether or not there is a device-mapper target with 
+> copy-on-read, read-only behaviour.  This seems like it could be useful in 
+> certain forensic situations in which "accesses" ought to be recorded.  "We" 
+> (device-mapper users) have the "write half" of "accesses" covered, already, 
+> with snapshots.
+>
+> dm-cache might work out, except that it appears to've been designed with 
+> considerations for writes, which are irrelevant to the goal(s).
 >
 
-There is libdevmapper  project  (ATM distirbuted through lvm2 project) which 
-is handling the management of name & uuid with mangling - so they are properly 
-visible on systems with udev.
+Hi
 
-IMHO this escape handling does not belong to kernel and is rather related to 
-the actual user space running on top.
+dm-cache should be likely your 'favorite'  since it's designed to handle 
+different policies - for some reason not too many policies were ever written 
+(maybe existing one is good enough for most to bother), but the idea behind 
+was to be modular and handle different need of users - if they simply 'know 
+more' upfront then the current  'heuristic' smq policy might ever learn from 
+observing  IO traffic within cached device.
 
+So I'd highly recommend to read about those policies and eventually write a 
+better one for you specific case (like instantly promote any blocks until 
+cache is 100% full)
+
+Although you should probably try to use the existing one first -and you might 
+be surprised how good it will get over the time in picking your hot spots of 
+your disks - although there might be some 'extra' reads from your origin 
+device before the cache considers a block to be 'promoted' to cache.
+
+As for your 'write' concerns - they are actually irrelevant itself - since if 
+there is no write - there is no need to maintain the place for it....
 
 Regards
 
