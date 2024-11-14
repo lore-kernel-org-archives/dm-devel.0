@@ -1,123 +1,86 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90D0418C32C
-	for <dm-devel@lists.linux.dev>; Thu, 14 Nov 2024 11:53:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F3C62EAE5
+	for <dm-devel@lists.linux.dev>; Thu, 14 Nov 2024 14:42:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731585183; cv=none; b=E4UrWDP+4ylpRMtDRgwXQA+1XHF7U2RRoDiOcxk9a+OCskowb4bad9YAbbUgxxr2kfPxwULbfkj/SlCyNhz5WXi+TTQcTcRMMr+tp4vM0Bx5FlnJc6+X9K9gWx+FT4YEktp5k67VJ4psbIwenJJyptQc/iDlj5+6jX+/Loou20A=
+	t=1731595358; cv=none; b=QcOL9D7Oqhiw9oQobN/nfeUQRDaBCke0ydnSjN92K/oiHEr7jYWZvPa/6NzqhKrTRNkRD1k1nAw3rVcAKzr1jQt04yfKmpLLFLxS78VWxrJikRzlZ3v8PadJNbgZjgZsKHPKDiLq7xgV9Te4fWXTRA2naBohF4sPsrrsOtRy7YA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731585183; c=relaxed/simple;
-	bh=zCa5Fh3htp1rTFM2a0REC9zUahAF+CJ/sS/ug00Uqzc=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=XGQtqPyM8CMiXFqsOkP4BgZtKAEYA4IhLWpDEfO9R1pUuBzzOhsntnPDzPFACoUKxsaF0zX23dbeDB/xehsZvr4v1VmC5FHwP0L2oE++V5As7SkRpSiepb91ftKPu6jvIIF/mIGeuGiCdR20ms8mW4r+MJ3hWxNu6WM+8sxT3/U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Cq3KS+GK; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1731595358; c=relaxed/simple;
+	bh=YjXAZ08kUphChUBYGnvT4LTL6iLpGtgX5huCIRry76s=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=l39A8aZmx3+I6rb0a2exF+K72sbvB2iqDeriwdJwACXS6LeO3aSILd1Luv9sEDCOAgI0U4oJP/Y+Jgfai0oRUBPqmEoayZb/9BYXk7IbG1fVY1kVJgiG4AvRQl/xexr4T35ZkMRJd3mc4OT/wrBjQkTmQXE7WFU31f2jTmTAAVw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=E1HcPlqz; arc=none smtp.client-ip=209.85.128.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Cq3KS+GK"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1731585180;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=CDgvIe7Dumrnez9vkncEVNQLsu1Vtx62ikTQTnwYCHI=;
-	b=Cq3KS+GK//PpN7NblUCUJOzKvBYkg7a2Y5HhD9Kp75KLXsOrxfogsGtM9qScgnotKL+RiV
-	7oS8TujOktAji5NjLx/88Sx3i/dOlW6r1c+lW/X+Xz22Jh9FFA+09+RmtW5w+bsFZZOx8l
-	EO9dbi5Ih0BMAUzsK+1oUOtz1adx/r0=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-687-MzbkMhXGM5CcWu2ZWZ03eA-1; Thu,
- 14 Nov 2024 06:52:57 -0500
-X-MC-Unique: MzbkMhXGM5CcWu2ZWZ03eA-1
-X-Mimecast-MFC-AGG-ID: MzbkMhXGM5CcWu2ZWZ03eA
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 254751955F35;
-	Thu, 14 Nov 2024 11:52:56 +0000 (UTC)
-Received: from [10.45.225.96] (unknown [10.45.225.96])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DC2431956089;
-	Thu, 14 Nov 2024 11:52:53 +0000 (UTC)
-Date: Thu, 14 Nov 2024 12:52:50 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Red Hat Product Security <secalert@redhat.com>
-cc: syzkaller@googlegroups.com, dm-devel@lists.linux.dev, chenyuan0y@gmail.com, 
-    agk@redhat.com, snitzer@kernel.org, zzjas98@gmail.com
-Subject: Re: [drivers/md/dm.c] general protection fault in
- cleanup_mapped_device
-In-Reply-To: <341212200.103258.1731582827130@app132157.ycg201.service-now.com>
-Message-ID: <d83d7d8f-de7b-8191-5c61-e8cfe28c92b3@redhat.com>
-References: <341212200.103258.1731582827130@app132157.ycg201.service-now.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="E1HcPlqz"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-43169902057so6262925e9.0
+        for <dm-devel@lists.linux.dev>; Thu, 14 Nov 2024 06:42:36 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1731595355; x=1732200155; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=wp7wFc//RMkAG1NGqbZAn7i6vbByR+YGl2WBJCfAsX8=;
+        b=E1HcPlqzK+I1pjDclinzxZQW0sb/xHnAAHt+YC4WaVsXx67mG8rkRbEHf2963+9y78
+         +8vP4Dy5JeGqClqoYz9mWNVZh/E9sagY8VHlZaH/OdO6lxSD59uHb4hUby3Fh/cajwlu
+         WSGDw2mPngk4ikF2TcELZ2Bq9BZIIm2ghGQdj0GNXAX4lLTeQfABVPcXV/CTN/LagcoY
+         5Q+fOYngK1x011ggyofzNCD/t8aSZ4NbcVv1Mp1IqItIwQDlrzFDA9qVo5NBZ/xDqFhn
+         kTWqWYEsn1Ehu+daqgDsMsJ8K9lkkP9mwM5hCRY2rWaFKA9H4qE63Og6UQv3YpJOdAWe
+         Zi2w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731595355; x=1732200155;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=wp7wFc//RMkAG1NGqbZAn7i6vbByR+YGl2WBJCfAsX8=;
+        b=vKZIDDOUXyjjsW4LpMAaJPZv5spTdEaPsox4NajdiBr/nZpw/HfPOzmCfebesE3d6a
+         6v8ZLSyMklswxBBj1SIIwgzrIVEFeEz/uTrElFxTPbmbxlrr+2hpU9ZSJq1jUYGSDg/9
+         KKVJmUIb1E/8xxz6l+hAJZLFR9f8tzcgjScXe0BbHkDV3/9qlmJmJgpi4hfYjs2JbClL
+         YPry8ekk/WRobQkbRnC5n6+y4GcRL66uaqUFH3viulJ0C19EVedeMjWmlSQOGGpzaq6D
+         lalTtVSytXlfvs/0X3H3ZpNUdNSY9pKCTCRHwK3mdDAGX2KG5hhKQeRVD5kA8vghCydF
+         OO7w==
+X-Forwarded-Encrypted: i=1; AJvYcCXw6m7RwQtFyjMsOMJVy7Oh2baRXmQDqOfNn040H0IZ6K441wdIICIMn+M6AIRH69XcRgin+r2jqA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyGTjMD5TPb/Zde33bFYx1//+aw+N1rMObYSticA8ev1BY2qfq2
+	gtiKRqwJBpwzbK/+bV87lD3DrqpDZqE176ze/hGIqNlan2IWGSfCP8lwwJVFkjA=
+X-Google-Smtp-Source: AGHT+IGP7zjy1uhW4P/JBc0nG19NqVU4SAVRb0vqbZO4Yj45QZtd50MgLgwRZYdJ5sU6daJOBaWDQg==
+X-Received: by 2002:a05:600c:4451:b0:431:5632:4497 with SMTP id 5b1f17b1804b1-432cd4748f8mr86674615e9.26.1731595354490;
+        Thu, 14 Nov 2024 06:42:34 -0800 (PST)
+Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-432dab78783sm22763635e9.12.2024.11.14.06.42.33
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 14 Nov 2024 06:42:34 -0800 (PST)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>,
+	dm-devel@lists.linux.dev
+Subject: [PATCH 0/3] multipath-tools: fixes for systemd watchdog
+Date: Thu, 14 Nov 2024 15:42:21 +0100
+Message-ID: <20241114144224.248606-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: _1YLNi0_FP-rvl5avsAZPRLnh0RgTI1iCl8VxJTxHmQ_1731585176
-X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="-1463811712-138866749-1731585175=:1055718"
+Content-Transfer-Encoding: 8bit
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
----1463811712-138866749-1731585175=:1055718
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+A set of small fixes to make multipathd better adhere to the conventions
+for systemd's WatchdogSec= setting.
 
-Hi
+Martin Wilck (3):
+  libmultipath: don't print error message if WATCHDOG_USEC is 0
+  libmultipath: honor WATCHDOG_PID setting
+  libmultipath: cut watchdog interval in half
 
+ libmultipath/config.c             | 21 ++++++++++++++++++---
+ libmultipath/config.h             |  2 ++
+ libmultipath/libmultipath.version |  1 +
+ 3 files changed, 21 insertions(+), 3 deletions(-)
 
-On Thu, 14 Nov 2024, Red Hat Product Security wrote:
-
-> 
-> Hello!
-> 
-> INC3151607 ([drivers/md/dm.c] general protection fault in cleanup_mapped_device) has been acknowledged.
-> 
-> Opened for: chenyuan0y@gmail.com
-> Followers: Alasdair Kergon, snitzer@kernel.org, Mikulas Patocka, dm-devel@lists.linux.dev, zzjas98@gmail.com, syzkaller@googlegroups.com
-> 
-> Rohit Keshri updated your request with the following comments:
-> 
-> Hello Chenyuan,
->  
-> It seems, This is with fault-injection turned on, which is an artificial use case.
->  
-> Can this be triggered by a user without that enabled?
-
-No. Normally, small memory allocations don't fail (the kernel will 
-activate the OOM killer when it is running out of memory). So, this bug 
-can't happen under normal circumstances and you don't need to escalate it 
-as a security issue.
-
-> If not, It would be right to send a normal fix for this to the developers for the subsystem
-
-The upstream fix is fed13a5478680614ba97fc87e71f16e2e197912e. You can 
-backport it to RHEL.
-
-Mikulas
-
-> Please let us know your thoughts.
->  
-> Regards,
-> Rohit
-> 
-> How can I track and update my request?
-> 
-> To respond, reply to this email. You may also create a new email and 
-> include the request number (INC3151607) in the subject.
-> 
-> Thank you,
-> Product Security
-> 
->  
-> Ref:MSG97709557
-> 
-> 
----1463811712-138866749-1731585175=:1055718--
+-- 
+2.47.0
 
