@@ -1,66 +1,66 @@
-Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
+Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB57A45C18
-	for <dm-devel@lists.linux.dev>; Thu, 14 Nov 2024 14:42:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3DF0E2FE33
+	for <dm-devel@lists.linux.dev>; Thu, 14 Nov 2024 14:42:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731595360; cv=none; b=pNTZmVOO/HDuPs4Unm5K32myZZ0s48wbLMZ60EFU8D7lgc5PPIMAeGOTbD8yAtrrAMepKz/qzqdE/31j449OPRSukdQygDckbLOftBloqe6vzeIv/+C1lCEmvAy0CtmaisCuk6FlGJp8/X5XZAVwfE4/BvZaBoOskQqxG18wdtg=
+	t=1731595362; cv=none; b=My01U5CbVDdDc6jG3RXSmk1cwzb71p047ZiWfNFIW4l8TY4upyaqeBisH8c+fbpihlrdj0gS3Ohl/1F+CHHpVW+AGA+K18s2DuI17PxUj4MOx7UvIp7yR3uas6eoblhEi0BbEIfwKVEN/zcSZ/gJW9bw3mdnE/OpuGy2ysU6yHk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731595360; c=relaxed/simple;
-	bh=yAG0qv2d+Qh5uxg2NvNXw/tDnsPDLMNVVvf1KmsFESU=;
+	s=arc-20240116; t=1731595362; c=relaxed/simple;
+	bh=Dz7cvLq4LYAOlB7mTnsx9sdEa/ddbqHMoBBYrlH+rFo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=HV3piuuyF8rJrSdt7Ev4GSNRYbpSE3wG6SGtYjmmzAct4aGdqB0P8+VYggXnNmZVdgTn6ys6Hi3zjiId4KMTt8mdocN8LSGRhGj54jSjCx71rkdTp2PavhViLXvaVBqxLcvxFV5LwtqeUB2I/K/bEsBstCT4cdAADOHA4xDq+Dc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=ea58ZNnl; arc=none smtp.client-ip=209.85.221.46
+	 MIME-Version; b=iV2OkuNNml93OD8PaEZAd6/yzUlc0VwMrMjz1qD4bB9walvq/I8aXT2DT4kwymwaKgfjLdHJctDJz2cZvpO50O73X2xz7aqMGFBGQ4f+PnmwuEeB4wTiD+yqhtT+p0XYPgGzTv/MrTMXkL/I0X5jTOFKPKKUNCuV9wraW4qovC0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Hhz3Ut7V; arc=none smtp.client-ip=209.85.167.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="ea58ZNnl"
-Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-38221c82827so182301f8f.3
-        for <dm-devel@lists.linux.dev>; Thu, 14 Nov 2024 06:42:38 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Hhz3Ut7V"
+Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-53da5511f3cso651788e87.3
+        for <dm-devel@lists.linux.dev>; Thu, 14 Nov 2024 06:42:39 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1731595357; x=1732200157; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1731595358; x=1732200158; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=mm0Xwgp4FKHGchaHdgV2QumoU9iC5QKjm4n5CZvhvfo=;
-        b=ea58ZNnljZ7Bpsd9OxIKDghpeQMY832KboHvZNUOGDjvxYr2nxQs89WvfsTa3OvBZM
-         d4h5+KmjMHC5jKUhfZB/jFBrG0eTeiiR1sqsvTd2v3CfKTa7JNBkCJQfyG1XRikoL58d
-         h0I9w3Ewbxv4PkqI6wabIiyyAlJwIhPfsWdWT7m4C7YVSCcetbPoNdIHVupH7QQGaP7K
-         gRpMBX1HorbJ4EiOJaaWmyrR0WSmGRfhkvqezRksPL+LV5h0FeVgSkZ6w9fl1ouVAave
-         88ay4gR9V3h+AWgs9gr72BTtyqAplcr8GfSexcSBl38yzIDNOcXrrphVtRQnpCTwwj6v
-         C5bg==
+        bh=/Ob7OKEo+ClsIU7yWKh0/QMz/ftFWrfp8Xj8xVGqngM=;
+        b=Hhz3Ut7VYY0KGAtcEI8m/kSdKdl7NF6kNzmGGGaJmjjeaJFRBZft4wtW7Dq8aqjeuL
+         k+p34N7EbyqB+5xC4+F0FabqkwnxLn6VLG+OmmUxgUb6DlFP646GPgi7zJ5IHddc+1Vf
+         DT5lznb2pHXTruFjfmgdtTQx35omBUMXvTW4xQsrWMpjy2WpuFJyG8f2LYoM9I2FnP5p
+         BOusiQBBIWCaWnwLbbkeWupMshV5gKpWjndhFJ/drNg9gBrRcO2ThFmnxFEFudp13zoO
+         FFm/gMPRNHoQOtbIx4+L2u6Mj48/mi0wD1ec9RiFnQC0F+DBA9n7u3kP1Vimhh10ydAp
+         5K/Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731595357; x=1732200157;
+        d=1e100.net; s=20230601; t=1731595358; x=1732200158;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=mm0Xwgp4FKHGchaHdgV2QumoU9iC5QKjm4n5CZvhvfo=;
-        b=fr5U+VwUpjfiiku6rEA7ZNQGN/2mYhUw17l+d5SIWzR5z2Lk0cNojYNta/MYqg+woC
-         dNqCXNaJIFK69sdJNvXqm9itnzW2gmCPErYLzxfYm3v2Wbm5s3ACfafssdWOzbyPECwC
-         7TjLqhEHy7Z+WdD28scWUvDx+qz3JPLZVaY5RmSrPtO+SGsXnWhLQwsp6S32ffkq2CXE
-         J8QBmAVlYM+JuksXSOdy5hAxIPQKZsRe+WK7Ro123yvxawdRjdbYap5oO/4kArKaoyv5
-         uYBaOoahHzkGWJz+2yCQwE/zSgz7VvHppHiRT5nlZZvJmtL8kTV+HBrrBnETFYLubzAs
-         uyqA==
-X-Forwarded-Encrypted: i=1; AJvYcCV+kCvGid4kKB9gzZ3iNzgDzIKTyFJ/NUoOsqlh3WQhHuqyPxRMU5eLgoyD2aVLFB8JvkRKMKGtag==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw3G25kJkrEoIny2PUBCJQDp0YDQjD6sZjGGud7pYWC0ltpAtGG
-	yeFSpxAtik+unZJCKAeFOI84hMsMpe5Fni7kDfObh0VnRAKVWcLV43ALvv2nl9A=
-X-Google-Smtp-Source: AGHT+IE/YS2IhCCpzmSlY0AVqYuDQz70z6yFBA9/Ts3pEY7oXOclbiV4x/+LUBmSvAiUx3cAQ5PmRQ==
-X-Received: by 2002:a5d:6481:0:b0:37d:525d:5a60 with SMTP id ffacd0b85a97d-381f18672e4mr17343674f8f.8.1731595356856;
-        Thu, 14 Nov 2024 06:42:36 -0800 (PST)
+        bh=/Ob7OKEo+ClsIU7yWKh0/QMz/ftFWrfp8Xj8xVGqngM=;
+        b=SeUlXGl2/GWucBW0dXPF94cVAJRtIBewTdx7FEPgi0z1kGuvGCQTbRBcRluCuewIJA
+         uCR67pYgVOqMIGffnIpt6slD8eHuLWhciAuel5HDRCQsstWhVm2/gzmjcRTRKb2fjkBL
+         WRjhaDXSwiKYiN71kpYDiY5wGtPSYoLKz4At+/E8ggWaQJl4wUGGYY4clVxZ7IK6BFXr
+         h/2wx1Q6+59UsWD2GKFl01XW5sN4r33eSgiCKYo5AlZAC+B26FG7vPmctx8uuOlXGgZJ
+         csgY029PZQTSQnckqq5jFzo87kJIiInNCY6VL8GoKMLaa8e09dNGMVQ4+vlgGqNC37g3
+         kE6g==
+X-Forwarded-Encrypted: i=1; AJvYcCVq0HcLLYGq57+F5K9rxg/mN4n8c0SZfgU7ICK8M2+YT4xF5rkYnSUyqLLvkPBNEV6ni0+Y6nNYLg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxQo/PgP+QQ0m/i3pFgrX4L7SBYrer0uLlrYhCtPcyT64M8mwOw
+	/ZqhEiFkxB3cnBV2hW6sMvB3De4t9RO8PWZaE7q+u6ER8piOVSeoKRMQ1HWT5P8=
+X-Google-Smtp-Source: AGHT+IHX+pI1/EcwbleE9DNztsWbvxZdJ8aKkCphv+4ytpGWMvMw1Ks6sANH8UGMQq4dS7fnWe4qbA==
+X-Received: by 2002:a05:6512:3e0e:b0:539:eb82:d453 with SMTP id 2adb3069b0e04-53d9a42dfc4mr5936868e87.39.1731595357918;
+        Thu, 14 Nov 2024 06:42:37 -0800 (PST)
 Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3821ada408dsm1634385f8f.10.2024.11.14.06.42.36
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3821ae154d9sm1683394f8f.82.2024.11.14.06.42.37
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 14 Nov 2024 06:42:36 -0800 (PST)
+        Thu, 14 Nov 2024 06:42:37 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>,
 	dm-devel@lists.linux.dev
-Subject: [PATCH 2/3] libmultipath: honor WATCHDOG_PID setting
-Date: Thu, 14 Nov 2024 15:42:23 +0100
-Message-ID: <20241114144224.248606-3-mwilck@suse.com>
+Subject: [PATCH 3/3] libmultipath: cut watchdog interval in half
+Date: Thu, 14 Nov 2024 15:42:24 +0100
+Message-ID: <20241114144224.248606-4-mwilck@suse.com>
 X-Mailer: git-send-email 2.47.0
 In-Reply-To: <20241114144224.248606-1-mwilck@suse.com>
 References: <20241114144224.248606-1-mwilck@suse.com>
@@ -72,71 +72,34 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-WATCHDOG_USEC should only be evaluated if WATCHDOG_PID is either
-unset (systemd <= 208) or set to the main daemon's pid [1].
-
-Passing the daemon's PID to set_max_checkint_from_watchdog() requires
-a mechanism similar to what we've been using for get_multipath_config().
+According to [1], a daemon should trigger the watchdog every half of the time
+that is communicated via WATCHDOG_USEC.
 
 [1] https://www.freedesktop.org/software/systemd/man/latest/sd_watchdog_enabled.html
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c             | 11 ++++++++++-
- libmultipath/config.h             |  2 ++
- libmultipath/libmultipath.version |  1 +
- 3 files changed, 13 insertions(+), 1 deletion(-)
+ libmultipath/config.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 226ddec..bd199fa 100644
+index bd199fa..4d457b8 100644
 --- a/libmultipath/config.c
 +++ b/libmultipath/config.c
-@@ -858,12 +858,21 @@ process_config_dir(struct config *conf, char *dir)
- 	pthread_cleanup_pop(1);
- }
- 
-+__attribute__((weak)) pid_t daemon_pid = -1;
-+
- #ifdef USE_SYSTEMD
- static void set_max_checkint_from_watchdog(struct config *conf)
- {
--	char *envp = getenv("WATCHDOG_USEC");
-+	const char *envp;
- 	unsigned long checkint;
-+	long pid;
- 
-+	envp = getenv("WATCHDOG_PID");
-+	/* See sd_watchdog_enabled(3) */
-+	if (envp && sscanf(envp, "%lu", &pid) == 1 && pid != daemon_pid)
-+		return;
-+
-+	envp = getenv("WATCHDOG_USEC");
- 	if (envp && sscanf(envp, "%lu", &checkint) == 1) {
+@@ -877,8 +877,11 @@ static void set_max_checkint_from_watchdog(struct config *conf)
  		if (checkint == 0)
  			/* watchdog disabled */
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 94cdf25..d12f63e 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -315,4 +315,6 @@ int parse_uid_attrs(char *uid_attrs, struct config *conf);
- const char *get_uid_attribute_by_attrs(const struct config *conf,
- 				       const char *path_dev);
- 
-+/* Weak dummy function, meant to be overridden by multipathd */
-+extern pid_t daemon_pid;
- #endif
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 6bdf694..a898f7a 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -70,6 +70,7 @@ global:
- 	cleanup_multipath_and_paths;
- 	coalesce_paths;
- 	count_active_paths;
-+	daemon_pid;
- 	delete_all_foreign;
- 	delete_foreign;
- 	dm_cancel_deferred_remove;
+ 			return;
+-		/* Value is in microseconds */
+-		checkint /= 1000000;
++		/*
++		 * Value is in microseconds, and we should trigger the watchdog
++		 * twice per interval.
++		 */
++		checkint /= 2000000;
+ 		if (checkint < 1 || checkint > UINT_MAX) {
+ 			condlog(1, "invalid value for WatchdogSec: \"%s\"", envp);
+ 			return;
 -- 
 2.47.0
 
