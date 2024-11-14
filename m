@@ -1,107 +1,159 @@
-Received: from osmtp.synthetel.com (osmtp.synthetel.com [149.56.45.145])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id DB4F618B48F
-	for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 21:19:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=149.56.45.145
+Received: from mail-pg1-f170.google.com (mail-pg1-f170.google.com [209.85.215.170])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D35B2309B8
+	for <dm-devel@lists.linux.dev>; Thu, 14 Nov 2024 01:32:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731532798; cv=none; b=NZN0tyBSgDJn4XewpEn3xoX6Yb0JxYmSXMygMSZF9SMgboXBegtkFFdQCmeXXJT71wYuGgWvCwWHBuwlGhFY1wNufi2Nrhjni+CoERLgOMkjsNYLermtzmYoBEIhKZsIgFTTNCy5Gr3JI7fvKXa1yT/nk12Lp61smaYekdJQhdI=
+	t=1731547965; cv=none; b=V+pE12Q5F+ibz9uuuep+PMGBM18MkGZM3AxIFtIEMXen2GIQ8Q0wpGzcAxJKVv9rphHzYpB6OHOLoE6kmVgvIwSPaAd0k3p9UpIEh8mkWEOLGADDd6Ak7o6oAoJ6Rdvm/Og1ciqZzwhmu040CaGlAmQwkmWnNzZ7pcjZ8clM06Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731532798; c=relaxed/simple;
-	bh=u6vDIChTW6Rfu+ZeAXIgPgPoGtcl0csXi+jzI6cFHdI=;
-	h=MIME-Version:Content-Type:Date:From:To:Cc:Subject:In-Reply-To:
-	 References:Message-ID; b=uab9ahPn2hvWdLAnkA9KNWODJ4ONPwGvUhTwa3YogCS7Ly/GjhKX8AZUPi35gIOUJ5FIKOPsV1UmDzM6sAdFJlZg+CPl2wSb6A14JTFRZ3xlJaMsFJ499E1qoiZ3TWZ2ZQgU3IZk4tkT0Dl9MbhIvcfp+MoQCHs/sHHFhWscS+g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=synthetel.com; spf=pass smtp.mailfrom=synthetel.com; dkim=pass (1024-bit key) header.d=synthetel.com header.i=@synthetel.com header.b=SZc6Ha45; arc=none smtp.client-ip=149.56.45.145
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=synthetel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=synthetel.com
+	s=arc-20240116; t=1731547965; c=relaxed/simple;
+	bh=uqiqhJUhTarQqj1Ecro+WFBTjwKtTJw1WbZEpuplcbU=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=YSucZOSkhHO/3xe61kH+s9yrW8jzU3aK82oAsRlORC3uzW6vrIJ0AmFSWeC5xalw0YqEfx5dani/3KQGhiUKO5fVJZJFy/TIs+nmf78N/dEDppxzzKYnxl/qXK9vDjrb+CKgHmq3SkmvuGWf1v2eiyYTx04IiY2iqkikSvigT2o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=kHkD71LR; arc=none smtp.client-ip=209.85.215.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=synthetel.com header.i=@synthetel.com header.b="SZc6Ha45"
-Received: from sha0.net (unknown [10.0.0.13])
-	by osmtp.synthetel.com (Postfix) with ESMTPSA id 01A80C0DAB;
-	Wed, 13 Nov 2024 21:19:48 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=synthetel.com;
-	s=default; t=1731532788;
-	bh=u6vDIChTW6Rfu+ZeAXIgPgPoGtcl0csXi+jzI6cFHdI=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References;
-	b=SZc6Ha45F64RG32vQ9zMas3NuBXV03ZDWR9cxnkU1hFW+uCVZk92W1Or9+5duxNqX
-	 e9qDiPutVHXKucKtJYA0ffWW5apB+yl1Q4l++uVLQO4G+5MhDNgwz3YMQAGFvtnMKX
-	 FH+7Pqe+mBQTyoBN/x78jBDqgVZKbSA70gAIXuo8=
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="kHkD71LR"
+Received: by mail-pg1-f170.google.com with SMTP id 41be03b00d2f7-7ea8c4ce232so49157a12.0
+        for <dm-devel@lists.linux.dev>; Wed, 13 Nov 2024 17:32:43 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1731547963; x=1732152763; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=uqiqhJUhTarQqj1Ecro+WFBTjwKtTJw1WbZEpuplcbU=;
+        b=kHkD71LRBjgUIEuOJR5B7U8bvzNuL0LSLVXs14MlX87mQjRO/AfZlQIjpQkkbL1ZGD
+         3NiPSrQcQ99VnHbJP7SvSr0UcPCidcWJJY2Ijy0/7EUW9Bms3RluUvxTSDwxE72/FNoG
+         tv9sTIT+cbzF6UYetfhyn44rdW5WlTLTaZhqld4qDlTG6oc0JdgsLyAZic7dDxh6lOhq
+         JRVgwPxyODi/0nCvkqdZ7N5kGkWmvmmJukSqgPT8rOf949jbm/cboNhCscwcjY1JnbgQ
+         BuXsuEAcbujb+u7CKiN/uCxuvgftqOTE/lTZpm0Ly0+ytkyAzOqvq2T0Rp6r3Uwbd5wD
+         5Icg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731547963; x=1732152763;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=uqiqhJUhTarQqj1Ecro+WFBTjwKtTJw1WbZEpuplcbU=;
+        b=YTfuM8/pLdj9hSuZbuaTJcspAMTT4OiQ/xzuSwcNCSaQQ4CwuXippQuJbZvlUp3Jmb
+         SvPSmu1RI57aFIuAigmczFcawZ666/pI4S8XwA7u9aZtfU/Uir2x5CwphjBi542jU5MT
+         JaGpaaL29yUAgqONlBw69PlLgwbgjqSLQRoihEYEVrcSYHavI1YDfY4jhsWuOlDT14y1
+         5xOs/nXqNgvf8gf4Kix9XBBMaC36RAOfy+lBE2vDzQnzdMmTkQH7sHfy+kSimeFxSYOf
+         K4PlXEOWpkXoXFT4EnEba4vx1VdXaXLAoOZteL/R3foNQDczMG+d/Dz/u68UYiUzL6Fp
+         aGjA==
+X-Forwarded-Encrypted: i=1; AJvYcCV05NIZFIzyP3CeP7wtWp1vGoZf/n9WwgRvV15BceVcl25Gvh1Z+FR1axjMM851aL4zGsLqW3IgQQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyyKbT8WM1JTv+ZUnX7BRF/DA8BrjGSLO1qaEhUgS45+dcxjFvT
+	himKyah5LJeBldnjNMxdB9eXDo4LbzYAfwc/i1SwHchMKjXs3HWeCAyKHdOB8S37z6W/HbKrPj5
+	vKYoDHhzMS6/NHDusWfMDTRDLeqYSsJlCnoDB
+X-Google-Smtp-Source: AGHT+IH4ntnWEWbAgXYnT07o/PZI1nlk9a5LtZr+PAeXr3XfdfRy96Y5xQqjtRTYnWxLUF8GwABvipm7ZfWmWe9n/CM=
+X-Received: by 2002:a05:6a20:7f93:b0:1db:eb5b:be50 with SMTP id
+ adf61e73a8af0-1dc832e4455mr841220637.4.1731547963194; Wed, 13 Nov 2024
+ 17:32:43 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
- format=flowed
-Content-Transfer-Encoding: 8bit
-Date: Wed, 13 Nov 2024 13:19:47 -0800
-From: Shao Miller <device.mapper@synthetel.com>
-To: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-Cc: dm-devel@lists.linux.dev
-Subject: Re: Copy on Read
-Organization: Synthetel Corporation
-In-Reply-To: <687e5f5d-b763-4255-afed-8adc4e1df0be@redhat.com>
-References: <db1f26b55bd68277b0944179dd11b298@synthetel.com>
- <687e5f5d-b763-4255-afed-8adc4e1df0be@redhat.com>
-Message-ID: <46200486d8cf95b5278bad934abaa913@synthetel.com>
-X-Sender: device.mapper@synthetel.com
-User-Agent: Roundcube Webmail/1.0.12
+References: <CAO-8PLb0azRAuu2yJ3=K1EwiSXASDJ8nVBttbuOUV77==Xd2ug@mail.gmail.com>
+ <94c895e2-0a71-73b2-2692-af8bf62fb340@redhat.com> <CAO-8PLYMFd3YLvfue_an7mc-O19fixJY4ZKybvjehxcm2tRYvA@mail.gmail.com>
+ <CAO-8PLa3Qxhy1M1C_ZDTpOyXrhQ=UQKeKoDOmy-bbShb4rV03A@mail.gmail.com>
+ <dcaed20c-2132-d453-9c04-b22417ba4010@redhat.com> <CAO-8PLbTAMO867ifaHOdSWQrErV+vfsg2udWF27PK_VKmrMFgw@mail.gmail.com>
+ <aa42a2ba-ae99-c209-1289-a2b22dd3b6e8@redhat.com>
+In-Reply-To: <aa42a2ba-ae99-c209-1289-a2b22dd3b6e8@redhat.com>
+From: Jooyung Han <jooyung@google.com>
+Date: Thu, 14 Nov 2024 10:32:30 +0900
+Message-ID: <CAO-8PLbbsn=6KQ19oi7WpW2PcVHLfy13RT2Ce-5ePp-0j0sYEA@mail.gmail.com>
+Subject: Re: [PATCH] dm: make it possible to open underlying devices in
+ shareable mode
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, zkabelac@redhat.com, 
+	dm-devel@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On 2024-11-13 02:59, Zdenek Kabelac wrote:
-> Dne 12. 11. 24 v 20:40 Shao Miller napsal(a):
->> Good day, Device Mapper Folks.
->> 
->> In the format of an X Y Problem:
->> 
->> [Almost] Real goal (X): I would like to read storage-blocks locally 
->> from a far-away (remote, high latency) source and keep costs (for 
->> local storage, for network-traffic) to a minimum.  95% of the remote 
->> source will never be read and 5% will be read frequently.  If I read a 
->> storage-block 1,000,000 times over 10 years, ideally it should only 
->> traverse the network once during that time.
->> 
->> There is no mention of writes, so far.
->> 
->> Sub-goal (Y): Identify whether or not there is a device-mapper target 
->> with copy-on-read, read-only behaviour.  This seems like it could be 
->> useful in certain forensic situations in which "accesses" ought to be 
->> recorded.  "We" (device-mapper users) have the "write half" of 
->> "accesses" covered, already, with snapshots.
->> 
->> dm-cache might work out, except that it appears to've been designed 
->> with considerations for writes, which are irrelevant to the goal(s).
->> 
-> 
-> [...]
-> 
-> dm-cache should be likely your 'favorite'  since it's designed to
-> handle different policies - for some reason not too many policies were
-> ever written (maybe existing one is good enough for most to bother),
-> but the idea behind was to be modular and handle different need of
-> users - if they simply 'know more' upfront then the current 
-> 'heuristic' smq policy might ever learn from observing  IO traffic
-> within cached device.
-> 
-> So I'd highly recommend to read about those policies and eventually
-> write a better one for you specific case (like instantly promote any
-> blocks until cache is 100% full)
-> 
-> Although you should probably try to use the existing one first -and
-> you might be surprised how good it will get over the time in picking
-> your hot spots of your disks - although there might be some 'extra'
-> reads from your origin device before the cache considers a block to be
-> 'promoted' to cache.
-> 
-> As for your 'write' concerns - they are actually irrelevant itself -
-> since if there is no write - there is no need to maintain the place
-> for it....
-> 
-> [...]
+Thank you Mikulas and Alasdair for your thoughts and ideas about alternativ=
+es.
 
-OK, thanks.  I guess dm-cache "writeback" could work: reads will 
-hopefully populate the cache and since no writes will ever happen, the 
-details about writes are irrelevant.  That didn't seem to occur to me, 
-the first time I read about it:
-- https://www.kernel.org/doc/Documentation/device-mapper/cache.txt
+I'm aware of those alternatives. Android already uses DIO for loop
+devices for read performance for APEX mounts. Having an extra DM
+device was in fact our immediate fallback solution when I found this
+issue. Then, I thought that, if DM-device owned by another DM-device
+can be shared, why not share it with another read-only filesystem.
 
-- Shao Miller
-Synthetel Corporation
+> confuse dependencies in udev,
+
+What would it be like when a DM device is shared by two other DM
+devices like your suggestion #1 or #3? In #1 for example, a dm-verity
+device is shared by two dm-linear devices: one for /system filesystem
+mount and the other for APEX mount. I hope we can fix the issue around
+udev dependencies if there's any.
+
+> Will there be some performance degradation due to the extra linear device=
+?
+> Could you measure it?
+
+I'll! There're two aspects: device creation and read performance. Both
+will affect syshealth. Fewer devices should definitely be a win.
+That's why I brought this to you ;-) If your patch can't make it, #1
+is most likely the only option I have so I hope there's not much
+degradation.
+
+Thanks again.
+
+On Thu, Nov 14, 2024 at 2:25=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
+>
+>
+>
+> On Tue, 12 Nov 2024, Jooyung Han wrote:
+>
+> > Thanks Mikulas for the patch!
+> >
+> > This works like a charm. Here's how I tested: On Android, for an APEX
+> > file in /system partition, I create a dm-linear device with "shared"
+> > mode on top of the dm-verity device underlying the system partition.
+> > Previously, this failed with EBUSY because the dm-verity device is
+> > owned by the /system filesystem. But I was able to create it in a
+> > shared mode with your patch applied. Thanks again!
+> >
+> > Jooyung
+>
+> Hi
+>
+> I discussed this patch with Alasdair Kergon <agk@redhat.com> and he said
+> that it may confuse dependencies in udev, so the patch will likely not go
+> in.
+>
+> But there are some alternatives:
+>
+> 1. create a linear device that maps the dm-verity device in 1:1
+> relationship. Then, mount the filesystem on this linear device. The
+> filesystem will claim only this linear device, so that you can create mor=
+e
+> linear devices on the top of the dm-verity device.
+>
+> Will there be some performance degradation due to the extra linear device=
+?
+> Could you measure it?
+>
+> 2. use the loop device and enable direct I/O mode (use the ioctl
+> LOOP_SET_DIRECT_IO) - this should avoid double-caching and it should
+> increase the performance of the loop device. Does it improve performance?
+>
+> 3. use two dm-verity instances over one physical device - then, you can
+> mount the filesystem on one instance and create linear devices on the
+> other.
+>
+> 4. use the dm-loop target - https://www.sourceware.org/lvm2/wiki/DMLoop
+> https://patchwork.kernel.org/project/dm-devel/patch/1b84af841912065fc57cf=
+e395d5214f4eee0f0fc.1516124587.git.heinzm@redhat.com/
+> Some times ago we had a dm-loop target that queried the filesystem for a
+> layout of a file and then remapped the bios quickly according to this
+> layout tree. But now it's unmaintained and not updated to the latest
+> kernel. Perhaps it could be used for your purpose. I'm not sure what
+> filesystme maintainers will say about it.
+>
+> Mikulas
+>
