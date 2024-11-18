@@ -1,165 +1,274 @@
-Received: from sfwd05.p.bluenet.ch (sfwd05.p.bluenet.ch [193.247.246.195])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEBCE1BD9E1
-	for <dm-devel@lists.linux.dev>; Mon, 18 Nov 2024 20:32:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.247.246.195
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 190FB197531
+	for <dm-devel@lists.linux.dev>; Mon, 18 Nov 2024 20:56:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731961955; cv=none; b=aMg3PQS7X1kpRYpFuWJgn1jTZa7knwESqFzscN6lDjVKzVKKNtu5mhwv8Ya4sSrlbe1kDxg5d4jeG9Zx3y+vVNhK/XUI4+NWsX4/XH+ib49S206dY6EPZdFJisnyEYNWns6WwA0E+Nk94Co2Zi13fl5LXQT1P4up0AI+4ohArIk=
+	t=1731963384; cv=none; b=ac9vl/2xXueOYr0+616ZPv9s7TcF+Km+D7haQ4S/9sIDmZIQJLO8fi4iAuXEgPxbRc3/gpgJ5BKGkP3N6wdNsEAfaxken0RiMK+yZO+AwTzCVHxiGxBjRy5sdBSog/V20FTvqIpl5Af0wsSF/ZXaqVmpy8iNDt1lAxK7rcVlNI0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731961955; c=relaxed/simple;
-	bh=/vpbiatyM2PblSQYI+y3yGn2e/2zutYGYGWqVnZQlPo=;
-	h=Message-ID:Date:Subject:From:To:MIME-Version:Content-Type; b=p+8jul39lIzItDRw1+/ZWd1R53LZ+kywL/A5Aqc+wrN7r1/Wdts6IbLtQoLkdmQAYhkgeyxB+IfqLW4d3Z6Lr2y0YqKdffQr3y6MJS/eS2yVa8byL4cnD0u9WJ1NDQl4hguwxdRUfr3C8gVqL+IBG6BnbgxGbeH1846sc+65Sms=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch; spf=pass smtp.mailfrom=bluewin.ch; dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b=T98LFSin; arc=none smtp.client-ip=193.247.246.195
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bluewin.ch
+	s=arc-20240116; t=1731963384; c=relaxed/simple;
+	bh=9ze9iqGmzVjVOnIKUb1LAEBobeP3Dft5NhuA0174WIQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=bMyMNu4hBft1+5dbuYPV8/wBtvWFLow8X/pxUKy+ZMlLinzhb7GCFym4qcJD299Z7IWq7HNjlGO0eUHlOrqBh8PAEamZRI0ndpHiZVbinNlTzeSGbkDL0jEZvVXhHIIfIQXIHKHcVJALewXgftYvpqoGzv9ad8sJAdn83BpKETg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JaXsWx0r; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b="T98LFSin"
-Received: from main ([84.227.21.131])
-	by vimdzmsp-sfwd05.bluewin.ch Swisscom AG with ESMTPA
-	id D8O7tQRYb0k5JD8O7tjkBc; Mon, 18 Nov 2024 21:30:23 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bluewin.ch;
-	s=fxzs-2048-20230414; t=1731961823;
-	bh=KO4nC7FWuDm/G9Gw3PbxCahkaLgin9HYleMsnx7vzOs=;
-	h=Message-ID:Date:Subject:From:To:MIME-Version;
-	b=T98LFSinJx6+jZzRYOpjLCZUlrGLPHNT3xEVLHURBqBbx6FG73tC1IiY0ZZcsvDCL
-	 60TL/sJjb1SGYufB/lt3OuS0WcMOp8iIQ6Um5XmwZZOTtMR7SpAKKbhNwtJV8Ra+IB
-	 1zuCbXtDiaNM3QOKmmJRmJ0xiHpetyG2HGjJwJNBXFHvIZeyP8BC3DFXk/FYn7L2WT
-	 +b12+1RtoUstBe4ddjXqLyC+EMqIW6VRtGDjdaTXOJSh3KM8N+hFNd5fKja21PnErW
-	 6Ab2BV4psj1YdTh7y+FBgbOlimEVI1HAXhHryUWJa3VANQrbhOKD2mZhBZIvFfkc91
-	 SPB1kUg/wV8mQ==
-X-Bluewin-Spam-Analysis: v=2.4 cv=UKV+Hzfy c=1 sm=1 tr=0 ts=673ba3df
- a=ig9bzvNBGao8Dw96AwO3EA==:117 a=ig9bzvNBGao8Dw96AwO3EA==:17
- a=8nJEP1OIZ-IA:10 a=VlfZXiiP6vEA:10 a=LLPZWm0_0O8A:10
- a=zdeXWzcDJinJY2TJB_QA:9 a=3ZKOabzyN94A:10 a=wPNLvfGTeEIA:10
-X-Bluewin-Spam-Score: 0.00
-X-FXIT-IP: IPv4[84.227.21.131] Epoch[1731961823]
-X-Bluewin-AuthAs: public0x05bf@bluewin.ch
-Received: from 10.235.1.189
-        (SquirrelMail authenticated user public0x05bf)
-        by main with HTTP;
-        Mon, 18 Nov 2024 21:14:38 +0100
-Message-ID: <2316655d90ef08ed99e1911f2953da3b.squirrel@main>
-Date: Mon, 18 Nov 2024 21:14:38 +0100
-Subject: (Re ** 4): Extending "thin_trim"
-From: =?iso-8859-1?Q?=22Thomas_Br=FCcker=22?= <public0x05bf@bluewin.ch>
-To: "Zdenek Kabelac" <zdenek.kabelac@gmail.com>,
- dm-devel@lists.linux.dev
-User-Agent: SquirrelMail/1.4.21
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JaXsWx0r"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1731963381;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ZXjG0Xb+SSFVZGaQjWitUsvTm2ixUeQK4MKJwTZyaI4=;
+	b=JaXsWx0rFq8n6G6gJ1MNc/aaeKjhz0VldReyqtz7W/VxIDsbxnH3YJng3Qk/V8dN93oiFP
+	8k2npBmNVplzFZ+mEI1xbnOeImL/CdLZhbwA5CU4q41x+eqscm0DbIiA52eC8PfW5RMQfY
+	Y5gPR5rCgyAiHb7ABn7bMYk7uwg1s7U=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-384-6CFytj7pPQubrbUdBWvV7g-1; Mon,
+ 18 Nov 2024 15:56:19 -0500
+X-MC-Unique: 6CFytj7pPQubrbUdBWvV7g-1
+X-Mimecast-MFC-AGG-ID: 6CFytj7pPQubrbUdBWvV7g
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 65DF019541A0;
+	Mon, 18 Nov 2024 20:56:18 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 017001956054;
+	Mon, 18 Nov 2024 20:56:17 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4AIKuG5i667708
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 18 Nov 2024 15:56:16 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4AIKuGMS667707;
+	Mon, 18 Nov 2024 15:56:16 -0500
+Date: Mon, 18 Nov 2024 15:56:16 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 1/1] multipathd: move systemd watchdog handling into
+ daemon
+Message-ID: <Zzup8FZf4XYuTeyH@redhat.com>
+References: <20241118130447.554773-1-mwilck@suse.com>
+ <20241118130447.554773-2-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-X-Priority: 3 (Normal)
-Importance: Normal
-X-CMAE-Envelope: MS4xfKtNtDNnl/wBjWRQyoVvnRxOrFARq61LG1ShQIa2qpmZkwqXb1LZASXTA9Q2U7dJywDgm4Wk9vdrPAUtrjFPf+Ik9GDo7fhnkV18N7PRZbxL8LJLAIzx
- eS2IkyeYDsUvsrRw2gBugSdw3V4CilOLBpB4VK347esIeDMRtJraK4cdzzwhPnAsddXFjZ+Br+swPyIEfg4ZcQvneDklXwKNRjPd6rfTjTdiMzbdfFYXt00k
- w2YVBkCck2H9Zh1SHaBgozLaJmz73p0g2i8pwMKRXh4=
+In-Reply-To: <20241118130447.554773-2-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: PrSVjHNHfzTu1xQcG_ghppK07TJYKDByeUTeL5MBXtI_1731963378
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Dear Mr. Kabelac,
+On Mon, Nov 18, 2024 at 02:04:47PM +0100, Martin Wilck wrote:
+> Only multipathd needs to take care of notifying systemd. There's
+> no need to track this information in struct config, or to limit our
+> checker interval to it, as checkerloop() wakes up every second anyway.
+> 
+> While at it, fix the watchdog enablement logic:
+> 
+> - the watchdog should only be active if WATCHDOG_PID is either unset,
+>   or matches the daemon's PID, and if WATCHDOG_USEC is not 0.
+> - the watchdog should trigger twice per systemd-set interval.
+> - if WatchdogSec= is set to an unreasonable value, make a smarter
+>   choice than just disabling the watchdog, and print a more meaningful
+>   error message.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/config.c | 25 ----------------
+>  libmultipath/config.h |  1 -
+>  multipathd/main.c     | 67 ++++++++++++++++++++++++++++++++++---------
+>  3 files changed, 53 insertions(+), 40 deletions(-)
+> 
+> diff --git a/libmultipath/config.c b/libmultipath/config.c
+> index 0e3a5cc..8b424d1 100644
+> --- a/libmultipath/config.c
+> +++ b/libmultipath/config.c
+> @@ -858,27 +858,6 @@ process_config_dir(struct config *conf, char *dir)
+>  	pthread_cleanup_pop(1);
+>  }
+>  
+> -#ifdef USE_SYSTEMD
+> -static void set_max_checkint_from_watchdog(struct config *conf)
+> -{
+> -	char *envp = getenv("WATCHDOG_USEC");
+> -	unsigned long checkint;
+> -
+> -	if (envp && sscanf(envp, "%lu", &checkint) == 1) {
+> -		/* Value is in microseconds */
+> -		checkint /= 1000000;
+> -		if (checkint < 1 || checkint > UINT_MAX) {
+> -			condlog(1, "invalid value for WatchdogSec: \"%s\"", envp);
+> -			return;
+> -		}
+> -		if (conf->max_checkint == 0 || conf->max_checkint > checkint)
+> -			conf->max_checkint = checkint;
+> -		condlog(3, "enabling watchdog, interval %ld", checkint);
+> -		conf->use_watchdog = true;
+> -	}
+> -}
+> -#endif
+> -
+>  static int init_config__ (const char *file, struct config *conf);
+>  
+>  int init_config(const char *file)
+> @@ -916,7 +895,6 @@ int init_config__ (const char *file, struct config *conf)
+>  	conf->attribute_flags = 0;
+>  	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
+>  	conf->checkint = CHECKINT_UNDEF;
+> -	conf->use_watchdog = false;
+>  	conf->max_checkint = 0;
+>  	conf->force_sync = DEFAULT_FORCE_SYNC;
+>  	conf->partition_delim = (default_partition_delim != NULL ?
+> @@ -967,9 +945,6 @@ int init_config__ (const char *file, struct config *conf)
+>  	/*
+>  	 * fill the voids left in the config file
+>  	 */
+> -#ifdef USE_SYSTEMD
+> -	set_max_checkint_from_watchdog(conf);
+> -#endif
+>  	if (conf->max_checkint == 0) {
+>  		if (conf->checkint == CHECKINT_UNDEF)
+>  			conf->checkint = DEFAULT_CHECKINT;
+> diff --git a/libmultipath/config.h b/libmultipath/config.h
+> index 94cdf25..5b4ebf8 100644
+> --- a/libmultipath/config.h
+> +++ b/libmultipath/config.h
+> @@ -148,7 +148,6 @@ struct config {
+>  	unsigned int checkint;
+>  	unsigned int max_checkint;
+>  	unsigned int adjust_int;
+> -	bool use_watchdog;
+>  	int pgfailback;
+>  	int rr_weight;
+>  	int no_path_retry;
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index a99da81..1f0d02c 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2153,6 +2153,58 @@ partial_retrigger_tick(vector pathvec)
+>  	}
+>  }
+>  
+> +#ifdef USE_SYSTEMD
+> +static int get_watchdog_interval(void)
+> +{
+> +	char *envp;
+> +	long checkint;
+> +	long pid;
+> +
+> +	envp = getenv("WATCHDOG_PID");
+> +	/* See sd_watchdog_enabled(3) */
+> +	if (envp && sscanf(envp, "%lu", &pid) == 1 && pid != daemon_pid)
+> +		return -1;
+> +
+> +	envp = getenv("WATCHDOG_USEC");
+> +	if (!envp || sscanf(envp, "%lu", &checkint) != 1 || checkint == 0)
+> +		return -1;
+> +
+> +	/*
+> +	 * Value is in microseconds, and the watchdog should be triggered
+> +	 * twice per interval.
+> +	 */
+> +	checkint /= 2000000;
+> +	if (checkint > INT_MAX / 2) {
 
-I am sorry for stealing your precious time. You are right, I could get
-the allocated blocks by the the text-output from thin_rmap. It is easier
-to recognize, if the output of thin_rmap changes (whenever at all?), than
-dealing direct with the metadata.
-Besides I like to
-* make experiments with things e.g. metadata.
-* have ideas on how to make something, and program it, e.g. backup program.
-I must admit, that "blk_archive" is more sophisticated than my things.
+If we're worried that WATCHDOG_USEC might be larger than INT_MAX, we
+should probably make checkint a "unsigned long long", because I believe
+it's possible to run multipath on a 32-bit system. We can still return
+an int, of course.
 
-Although 'blaming' me, you have helped me a lot.
+> +		condlog(1, "WatchdogSec=%ld is too high, assuming %d",
+> +			checkint * 2, INT_MAX);
+> +			checkint = INT_MAX / 2;
+> +	} else if (checkint < 1) {
+> +		condlog(1, "WatchdogSec=1 is too low, daemon will be killed by systemd!");
+> +		checkint = 1;
+> +	}
+> +
+> +	condlog(3, "enabling watchdog, interval %lds", checkint);
+> +	return checkint;
+> +}
+> +
+> +static void watchdog_tick(void) {
 
+Instead of assuming one tick here, we should either pass in ticks or
+pass in the current time (start_tile) from checkerloop(). Otherwise, if
+the checkers take too long and more than two seconds elapse on average
+between loops, we might not send our notification soon enough for the
+watchdog timer.
 
-Sincerley
+-Ben
 
-Thomas
-
-
-===========================================================================
-On Mon, November 18, 2024 10:28 am, Zdenek Kabelac wrote:
-> Dne 17. 11. 24 v 11:26 "Thomas Brücker" napsal(a):
->> Hello developers and others,
->>
->> I agree fully with your '2TB-argument'. So no longer zeroing.
->>
->> I have taken a closer look to "blk-archive". "Packing to a remote
->> archive"
->> there not yet works. I have an ((alpha ** n); n --> infinity)-solution
->> of
->> my own, which can do this (it is accessible as an nbd device).
->> Furthermore I sometimes really need to copy the data device to another
->> location (see crazy-rationale, if you want).
->> Somehow I like modularity, leading to "<progr. a> | <progr. b> | ... "
->> (here
->> "<...>" means a variable to be set).
->> (In further text, "data device" means solely a data device of a thin
->> pool.)
->>
->> Whats with / (I prefer to develop) an utility similar to "dd" (stealing
->> code
->> from "dd" and "blk-archive" [I hope its all "GPL" or similar]), which
->> skips
->> unallocated blocks either on a thin device(got idea from "blk-archive")
->> or a
->> data device.
->
->
-> Hi
->
->
-> Of course you can always recreate the wheel as long as you have fun doing
-> that
-> - so yep you can full be inspired how to deal with 'thin-pool' metadata to
-> know which areas have some real data inside - although I'd  probably
-> highly
-> recommend to stick with the use of original 'thin tools' - since those are
-> the
-> 'real tools' to work with thin-pool metadata - they know the format - they
-> are
-> regularly updated when format change and so on...    once you do you
-> 'copy' of
-> this rust code - you are loosing all those feature -  IMHO not
-> worth.    (Note
-> - sooner or later there will be a new format of metadata...)
->
->
-> And if there are missing features in blk-archive - let's open the issue -
-> AFAIK this tool is still in development - so reasonable feature requests
-> will
-> be certainly implemented - you just need to write some good
-> examples/justifications  how the feature should be working.
->
->
-> Regards
->
-> Zdenek
->
->
->>
->> Sincerely
->>
->> Thomas Bruecker
->>
->> PS:
->> crazy rationale (to be skipped):
->> * My name: "pseudo-raid": raid5 with legs on the same device, especially
->> a
->>    hard disk. Ok, I admit, its slow.
->>    * Reason:
->>      * Modern hard disks are able to correct defective sectors, if the
->> driver
->>        knows, what should be in these sectors.
->>      * You may not equip a notebook with additional hard disk.
->
->
-> Is this some sort of   'raid1 + writemostly'  ?
->
-> And there is also another target -   'dm-era'   - which is however not
-> supported (yet)  by lvm2...
-
-
+> +	static int watchdog_interval, watchdog_tick;
+> +
+> +	if (watchdog_interval == 0)
+> +		watchdog_interval = get_watchdog_interval();
+> +	if (watchdog_interval < 0)
+> +		return;
+> +
+> +	if (--watchdog_tick < 0) {
+> +		condlog(4, "%s: sending watchdog message", __func__);
+> +		sd_notify(0, "WATCHDOG=1");
+> +		watchdog_tick = watchdog_interval;
+> +	}
+> +}
+> +#else
+> +static void watchdog_tick(void) {}
+> +#endif
+> +
+>  static bool update_prio(struct multipath *mpp, bool refresh_all)
+>  {
+>  	int oldpriority;
+> @@ -2931,9 +2983,6 @@ checkerloop (void *ap)
+>  	struct timespec last_time;
+>  	struct config *conf;
+>  	int foreign_tick = 0;
+> -#ifdef USE_SYSTEMD
+> -	bool use_watchdog;
+> -#endif
+>  
+>  	pthread_cleanup_push(rcu_unregister, NULL);
+>  	rcu_register_thread();
+> @@ -2944,13 +2993,6 @@ checkerloop (void *ap)
+>  	get_monotonic_time(&last_time);
+>  	last_time.tv_sec -= 1;
+>  
+> -	/* use_watchdog is set from process environment and never changes */
+> -	conf = get_multipath_config();
+> -#ifdef USE_SYSTEMD
+> -	use_watchdog = conf->use_watchdog;
+> -#endif
+> -	put_multipath_config(conf);
+> -
+>  	while (1) {
+>  		struct timespec diff_time, start_time, end_time;
+>  		int num_paths = 0, strict_timing;
+> @@ -2967,10 +3009,7 @@ checkerloop (void *ap)
+>  			(long)diff_time.tv_sec, diff_time.tv_nsec / 1000);
+>  		last_time = start_time;
+>  		ticks = diff_time.tv_sec;
+> -#ifdef USE_SYSTEMD
+> -		if (use_watchdog)
+> -			sd_notify(0, "WATCHDOG=1");
+> -#endif
+> +		watchdog_tick();
+>  		while (checker_state != CHECKER_FINISHED) {
+>  			struct multipath *mpp;
+>  			int i;
+> -- 
+> 2.47.0
 
