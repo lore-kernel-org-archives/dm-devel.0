@@ -1,152 +1,140 @@
-Received: from vimdzmsp-sfwd05.bluewin.ch (vimdzmsp-sfwd05.bluewin.ch [195.186.120.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D9E46AA7
-	for <dm-devel@lists.linux.dev>; Sun, 17 Nov 2024 10:43:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.186.120.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CDCE11917F0
+	for <dm-devel@lists.linux.dev>; Mon, 18 Nov 2024 09:28:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731840201; cv=none; b=IJXi6sNTqebTNjayGjUrUGbu0AYIYlj48Jhaf8qhun+QXpPAr2v2bdJa1QcqKq+jxGNMiv7xAxhFYvFXCQEg60JabPonJFIm3KX9L0u2k8T5SDQIuAQzjTb4YHpwE/56mRvnbILdKvElGE4CXCqYML1c4YsBsVNYm3zL/GlFUtk=
+	t=1731922130; cv=none; b=E3M5r0ah6iXQ0kH0frhBusGH4GHC39jMNC3inJZui2PFV/S/jO6uqgkjLNstwwy0SIUIR75olCjDHR/wP/6NiAqQJqce3rmmUN9zjyC/OVDGv4UUJE/mU/fx3dyYVXerm5nVPXdDHSEgzSXZ0xEa3BpzOHBlZJDHGiYzacjHMtI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731840201; c=relaxed/simple;
-	bh=vkLySTGaB0GSzm/b0sL3nt09pbH2GM8cXW0/y/gEOdg=;
-	h=Message-ID:Date:Subject:From:To:MIME-Version:Content-Type; b=Xo+Fybd8wk6z17oJoyL9X7HFAalLMi9uUZRGMja6AcXI6MW7Lk1xXAIFhdMq772JoSUNZAKkkCtLMxANZmjayBTy5IJ1XLBI3+jtTIMCzNjAY72wD9T0HdT3VTFSfH/zm5t/2ztA881enErOgIwrZTd9aobbUSuyfC3sld/Urag=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch; spf=pass smtp.mailfrom=bluewin.ch; dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b=Cx68qROq; arc=none smtp.client-ip=195.186.120.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bluewin.ch
+	s=arc-20240116; t=1731922130; c=relaxed/simple;
+	bh=gWhgBf/k2lIm7QcnLmUikqMC9Y6bb9h3dwSH2gKGUFc=;
+	h=From:Message-ID:Date:MIME-Version:Subject:To:References:
+	 In-Reply-To:Content-Type; b=XeTEO/HyW2WlEz3UqgnWHlBxnvIU7WhIwOX2irjg/zyb+0llx9zEOAFtrwNrV0raRYp2tAJ9CXdAb5QAwytbIwif+JRFxhbodqEcK4GyK3JYENoXeQjAcJ91V59o0nkNH+u3I8auClOlPkgofObWKbg8X7MNc6ZRJytFmnabTYI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VwhPHdZn; arc=none smtp.client-ip=209.85.128.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b="Cx68qROq"
-Received: from main ([84.227.21.131])
-	by vimdzmsp-sfwd05.bluewin.ch Swisscom AG with ESMTPA
-	id CciKtMJOF0k5JCciKtiSOd; Sun, 17 Nov 2024 11:41:08 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bluewin.ch;
-	s=fxzs-2048-20230414; t=1731840068;
-	bh=HWv6D8vEK9gorYee9irVtQEUh+JSOz4TeqJZq+DrpbQ=;
-	h=Message-ID:Date:Subject:From:To:MIME-Version;
-	b=Cx68qROqw4N5WNVfWjwsDKQGK3QENc35ohh9iJB8WWUz2Y8dg8HbhLNnkubNb95GG
-	 X6AE8QMJdT1vEgVk9BR3RtYVh2mh8qBssJYq+Pm1ceFb00X4euHMsbH9iUdhriAH9S
-	 ACiONpr8jSeu3A6P+TbTI4QLtnLLwPJkP+xg9Gm5KogUX/bU8/E/+a3YBLIspU2zXR
-	 Tn3Q6AVY9s8SlN4yOAImAyEshgzur9m3In5K/Q91GN11BFX4dUi4cq2tivbNt1a2j1
-	 icC5wpzhm84GNY6nWElhIZhftbSoS2tK1D5y617gulP1bCHDai7bV/DY84iDolJouv
-	 niq0wh8uKRG4g==
-X-Bluewin-Spam-Analysis: v=2.4 cv=UKV+Hzfy c=1 sm=1 tr=0 ts=6739c844
- a=ig9bzvNBGao8Dw96AwO3EA==:117 a=ig9bzvNBGao8Dw96AwO3EA==:17
- a=8nJEP1OIZ-IA:10 a=VlfZXiiP6vEA:10 a=LLPZWm0_0O8A:10 a=NEAV23lmAAAA:8
- a=T8-9mwnY4gpxhNQUfmoA:9 a=wPNLvfGTeEIA:10
-X-Bluewin-Spam-Score: 0.00
-X-FXIT-IP: IPv4[84.227.21.131] Epoch[1731840068]
-X-Bluewin-AuthAs: public0x05bf@bluewin.ch
-Received: from 10.235.2.12
-        (SquirrelMail authenticated user public0x05bf)
-        by main with HTTP;
-        Sun, 17 Nov 2024 11:26:03 +0100
-Message-ID: <980e288be81cac6aa86b9934009571c6.squirrel@main>
-Date: Sun, 17 Nov 2024 11:26:03 +0100
-Subject: (Re * Re): Extending "thin_trim"
-From: =?iso-8859-1?Q?=22Thomas_Br=FCcker=22?= <public0x05bf@bluewin.ch>
-To: dm-devel@lists.linux.dev
-User-Agent: SquirrelMail/1.4.21
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VwhPHdZn"
+Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-431548bd1b4so14652445e9.3
+        for <dm-devel@lists.linux.dev>; Mon, 18 Nov 2024 01:28:48 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1731922127; x=1732526927; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:content-language:references
+         :to:subject:user-agent:mime-version:date:message-id:from:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=XwpEjSeZJJPkn2epboKwgYNb2MAgt9hGWwshsniKUag=;
+        b=VwhPHdZnLbSV1vs2BQywsp9uFakomQ0Qc+2KrKDwHaIjW8uamFqaf9Pz+lEL2VH7QG
+         1BJctpNrstvAZg5DwOVnvYr4T7vCYxWDPx6V93H2TW1akGWeALhjW+jGkvzXOpzSKW53
+         j/8SsX32y47KcgtNwFRlKHDwPfZC267ZuWWhmVgo/SBN/enMkS9U/sbYWX/j7kZ8ZeK1
+         MFjsUc1Ez9EgE5Uppf96klsmxfjlvCs0lwsPBQJ9Y61gQrUnyjB4Jm4JTNSgZYMopZxm
+         y9MOzpBDw2Ydm4GmDlilmprb1yxcPHwhF+hvYu1fBxo5myDjAsgAclZ4Pg+I4dk6L9ao
+         32vg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731922127; x=1732526927;
+        h=content-transfer-encoding:in-reply-to:content-language:references
+         :to:subject:user-agent:mime-version:date:message-id:from
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=XwpEjSeZJJPkn2epboKwgYNb2MAgt9hGWwshsniKUag=;
+        b=jvm+v1fBIP3mrO0SruSjIum6/PpvESBEPMF9BZO5J2Xa7iTD1pHZoRPID5WhUsRekd
+         mR/R/u1arE1f4YWoJGZ1IO6SKIBtDBhQ9XPHBfpprNumKc6/i8j49PBVs5JjHfnwB/w5
+         fK1deaBAK9SdpXP08oWaWN3ALxJ7GxZkR96TM4n9kghbX6oJVwzt2nqHAC40emi+VpPN
+         5uSw1To7BUn3H9jsppxE/CuSNvH0I6io7hE1EOkCukqI5ghxEAFnfyOW1TzxJuUPBNBf
+         J5YhPqRljILxCHjk8sVe1x/HWGgaId1xhNchCjxHWh5DHH7SWZcWnQ9PFeHW9OrSnvhU
+         dAqA==
+X-Forwarded-Encrypted: i=1; AJvYcCVQfRnWuiqMLkETiULWPCNsKb/P2dmGUur/dHfKgA2POtbVCL913WsRRRWc+JoNbrGX+XPyqED1Bg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwVftxKoofHuJju69YWe6Klkr7oFahFCgBCAT4XM9SECba3G3Xh
+	6NQJLNM+Oty33lnKNFMHL5hUS6YypA3xGE33b0DIA26fIRFdv1Th
+X-Google-Smtp-Source: AGHT+IHmNF33ArUgbE22junHGnn/90PQzVvjzLOyXH//8iETzD2qPoOFdaFzIbis9gbVTBic+FvHcA==
+X-Received: by 2002:a05:600c:46cc:b0:431:52f5:f48d with SMTP id 5b1f17b1804b1-432df78d75fmr101574855e9.31.1731922126939;
+        Mon, 18 Nov 2024 01:28:46 -0800 (PST)
+Received: from ?IPV6:2a03:a900:1000:7e9:403e:7c8b:351b:f333? ([2a03:a900:1000:7e9:403e:7c8b:351b:f333])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-432dab788e1sm147718175e9.15.2024.11.18.01.28.45
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 18 Nov 2024 01:28:46 -0800 (PST)
+From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
+X-Google-Original-From: Zdenek Kabelac <zkabelac@redhat.com>
+Message-ID: <97961466-eb9f-413e-95cc-dcd4f011625d@redhat.com>
+Date: Mon, 18 Nov 2024 10:28:45 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
+User-Agent: Mozilla Thunderbird
+Subject: Re: (Re * Re): Extending "thin_trim"
+To: =?UTF-8?Q?Thomas_Br=C3=BCcker?= <public0x05bf@bluewin.ch>,
+ dm-devel@lists.linux.dev
+References: <980e288be81cac6aa86b9934009571c6.squirrel@main>
+Content-Language: en-US, cs
+In-Reply-To: <980e288be81cac6aa86b9934009571c6.squirrel@main>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-Priority: 3 (Normal)
-Importance: Normal
-X-CMAE-Envelope: MS4xfA+oLRfNo4t8vmQp3GKernTrCl/8XZImXwmW73giJmmH+xnTuBQ3rdfg1ZQCYLqrhlcDy1V1taggvoSUWqbSEoCjFWyeHjXsLw7W5yoGxSZJV+rCFxmj
- cEX0YGxQeJQfSaBx0iaW5iQKEMa9R0GuCX9LGyfAXE529bCJq1kE8TNk/yTcB6aPHMtd5Wip51iCv2ONNdIt7ecbHgiNlw3B/LQFDvg+ToINag7c9EBfBXHL
 
-Hello developers and others,
-
-I agree fully with your '2TB-argument'. So no longer zeroing.
-
-I have taken a closer look to "blk-archive". "Packing to a remote archive"
-there not yet works. I have an ((alpha ** n); n --> infinity)-solution of
-my own, which can do this (it is accessible as an nbd device).
-Furthermore I sometimes really need to copy the data device to another
-location (see crazy-rationale, if you want).
-Somehow I like modularity, leading to "<progr. a> | <progr. b> | ... " (here
-"<...>" means a variable to be set).
-(In further text, "data device" means solely a data device of a thin pool.)
-
-Whats with / (I prefer to develop) an utility similar to "dd" (stealing code
-from "dd" and "blk-archive" [I hope its all "GPL" or similar]), which skips
-unallocated blocks either on a thin device(got idea from "blk-archive") or a
-data device.
-
-Sincerely
-
-Thomas Bruecker
-
-PS:
-crazy rationale (to be skipped):
-* My name: "pseudo-raid": raid5 with legs on the same device, especially a
-  hard disk. Ok, I admit, its slow.
-  * Reason:
-    * Modern hard disks are able to correct defective sectors, if the driver
-      knows, what should be in these sectors.
-    * You may not equip a notebook with additional hard disk.
-
-* I have an (experimental) server lacking of slots for additional hard disks.
-  I just needed more disk space there, and was just able to insert one
-additio-
-  nal disk.
-  I intended to use this diskd for experimental purpose (--> no important
-  data).
-  I just had (and wanted to use) a hard disk with defective sectors
-  (<-- "smartclt"), no longer using this disk in a serious production
-  environment.
-  I put a "pseudo-raid" on this disk (to protect 'me' from further emerging
-  defective sectors).
-  On the "pseudo-raid", I installed a thin-provisioning-device combination
-  (data, metadata).
-  Years passed by.
-  Then I had to migrate a server from one location to a not yet existing
-  other location. So I temporarely stored the server on THIS experimental
-  disk, running it on the experimental server.
-  It should have been for some weeks, ev. months.
-  Years passed by (in german we say "Providurium" aka. Provisorium).
-  Then suddenly another hard disk, also with defective sectors, crashed
-  (finally no longer beeing able to start the disk).
-  I though Oh, what is with my 'semi-'defective hard disk with the server on
-  it, if it crashes ... .
-  To copy an about 450G data device (maybe nearly empty) to another location
-  by "dd" ...
-  So I 'put a raid1 on the "pseudo raid"' (one leg "pseudo-raid", other leg
-  a [well working] hard disk).
-  Things work slower and slower ... .
-  Actually I should renovate the whole combination to a simple raid<n>,
-  but copying the data device by "dd" ...
-  A "dd" that skips unallocated blocks would really be fine.
-
-===============================================================================
-On Sat, November 16, 2024 8:41 pm, Zdenek Kabelac wrote:
-> Dne 16. 11. 24 v 17:10 "Thomas Bruecker" napsal(a):
->> Hello developers and others,
->>
->> ['extending "thin_trim", so that it zeroes unallocated blocks.'] [...]
->> [...]
->>
->>Sincerely
->>
->>Thomas Bruecker
->>Wydacker 43A
->>CH-3083 Trimtstein
+Dne 17. 11. 24 v 11:26 "Thomas Brücker" napsal(a):
+> Hello developers and others,
 >
-> Hi
-> I think you should pro probably examine this project:
-> https://github.com/jthornber/blk-archive
+> I agree fully with your '2TB-argument'. So no longer zeroing.
 >
-> IMHO zeroing would likely not be so good plan - i.e. imagine you have
-> mostly empty 2TiB thinpool...
+> I have taken a closer look to "blk-archive". "Packing to a remote archive"
+> there not yet works. I have an ((alpha ** n); n --> infinity)-solution of
+> my own, which can do this (it is accessible as an nbd device).
+> Furthermore I sometimes really need to copy the data device to another
+> location (see crazy-rationale, if you want).
+> Somehow I like modularity, leading to "<progr. a> | <progr. b> | ... " (here
+> "<...>" means a variable to be set).
+> (In further text, "data device" means solely a data device of a thin pool.)
 >
-> blk-archive solves this way more efficiently.
+> Whats with / (I prefer to develop) an utility similar to "dd" (stealing code
+> from "dd" and "blk-archive" [I hope its all "GPL" or similar]), which skips
+> unallocated blocks either on a thin device(got idea from "blk-archive") or a
+> data device.
+
+
+Hi
+
+
+Of course you can always recreate the wheel as long as you have fun doing that 
+- so yep you can full be inspired how to deal with 'thin-pool' metadata to 
+know which areas have some real data inside - although I'd  probably highly 
+recommend to stick with the use of original 'thin tools' - since those are the 
+'real tools' to work with thin-pool metadata - they know the format - they are 
+regularly updated when format change and so on...    once you do you 'copy' of 
+this rust code - you are loosing all those feature -  IMHO not worth.    (Note 
+- sooner or later there will be a new format of metadata...)
+
+
+And if there are missing features in blk-archive - let's open the issue - 
+AFAIK this tool is still in development - so reasonable feature requests will 
+be certainly implemented - you just need to write some good 
+examples/justifications  how the feature should be working.
+
+
+Regards
+
+Zdenek
+
+
 >
-> Regards
+> Sincerely
 >
-> Zdenek
+> Thomas Bruecker
+>
+> PS:
+> crazy rationale (to be skipped):
+> * My name: "pseudo-raid": raid5 with legs on the same device, especially a
+>    hard disk. Ok, I admit, its slow.
+>    * Reason:
+>      * Modern hard disks are able to correct defective sectors, if the driver
+>        knows, what should be in these sectors.
+>      * You may not equip a notebook with additional hard disk.
+
+
+Is this some sort of   'raid1 + writemostly'  ?
+
+And there is also another target -   'dm-era'   - which is however not 
+supported (yet)  by lvm2...
 
 
 
