@@ -1,144 +1,165 @@
-Received: from mail-43167.protonmail.ch (mail-43167.protonmail.ch [185.70.43.167])
+Received: from sfwd05.p.bluenet.ch (sfwd05.p.bluenet.ch [193.247.246.195])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAD9348CFC
-	for <dm-devel@lists.linux.dev>; Mon, 18 Nov 2024 18:09:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.70.43.167
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEBCE1BD9E1
+	for <dm-devel@lists.linux.dev>; Mon, 18 Nov 2024 20:32:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.247.246.195
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731953394; cv=none; b=qWZMopTVAMMLkCFWyxOdSil1/msgqzMXi0Xb8jnFac+vHpFnS7SxLlqVtyU4AH6ZQW+FgNDGzdyNs7MwbTCw7gHlY2+uGbKjqhHiRcqbvJ7i4e64eMu2J55mxa9puAtSOGmOn93+Y1JyEm6nG973p8yjvdOeZywpevQ2qgQskjI=
+	t=1731961955; cv=none; b=aMg3PQS7X1kpRYpFuWJgn1jTZa7knwESqFzscN6lDjVKzVKKNtu5mhwv8Ya4sSrlbe1kDxg5d4jeG9Zx3y+vVNhK/XUI4+NWsX4/XH+ib49S206dY6EPZdFJisnyEYNWns6WwA0E+Nk94Co2Zi13fl5LXQT1P4up0AI+4ohArIk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731953394; c=relaxed/simple;
-	bh=UOi16vCaffKE5AvGDjAcA66m6HzGkEIG0iTZpmVlxOg=;
-	h=Date:To:From:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=F86xRAS9IKUMs9PCPoA7eETWjQfE2/+V5aAtvzbvAWWOOsA1oPDfF5A/XLB++oFsak9i2x/dR6CFM/NuO0O6kjt4gvIYrWqTvzsoLJdqmykc+1J1NDYbHpMmgIkHU+2la6Uh3gxZMNCXoRJkGAyGvKzvN+cgR/i0utMw54ubWjg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=protonmail.com; spf=pass smtp.mailfrom=protonmail.com; dkim=pass (2048-bit key) header.d=protonmail.com header.i=@protonmail.com header.b=C/BQIKLy; arc=none smtp.client-ip=185.70.43.167
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=protonmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=protonmail.com
+	s=arc-20240116; t=1731961955; c=relaxed/simple;
+	bh=/vpbiatyM2PblSQYI+y3yGn2e/2zutYGYGWqVnZQlPo=;
+	h=Message-ID:Date:Subject:From:To:MIME-Version:Content-Type; b=p+8jul39lIzItDRw1+/ZWd1R53LZ+kywL/A5Aqc+wrN7r1/Wdts6IbLtQoLkdmQAYhkgeyxB+IfqLW4d3Z6Lr2y0YqKdffQr3y6MJS/eS2yVa8byL4cnD0u9WJ1NDQl4hguwxdRUfr3C8gVqL+IBG6BnbgxGbeH1846sc+65Sms=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch; spf=pass smtp.mailfrom=bluewin.ch; dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b=T98LFSin; arc=none smtp.client-ip=193.247.246.195
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bluewin.ch
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=protonmail.com header.i=@protonmail.com header.b="C/BQIKLy"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=protonmail.com;
-	s=protonmail3; t=1731953385; x=1732212585;
-	bh=dqNkuFi3YwsoyGjtQxU+exyAXwr7r/D2i+EgfCQi8ok=;
-	h=Date:To:From:Cc:Subject:Message-ID:In-Reply-To:References:
-	 Feedback-ID:From:To:Cc:Date:Subject:Reply-To:Feedback-ID:
-	 Message-ID:BIMI-Selector:List-Unsubscribe:List-Unsubscribe-Post;
-	b=C/BQIKLyGnTZEOiKp2QhLgayLMR1AFtPNGG/tqAPtFqKfIFlx5YomckfqwDUeX2oc
-	 E+tnNg4gadytS7d0qV/OLOn1YxkkTg4ciIWRXz6ZWyaIJeDyL+yR/vPIHRb5nCivjM
-	 sMcrosWwNSaD1R4CXez9wFAIPnuYvW1ymmu7YSjPQDR/PWgV5yMextanD144EqZIE/
-	 RtIOFXb/r+5nMUfBTaGCPInmXsmWetMfIwVWnjTThWnP/jR18mWWtI/GbUVzZLFpEJ
-	 znxj+yumqtI1m3BDz2K/DvM2oUJoS6tApP94hm1ycEFhVrfYRyxVbaGNSv+Rz/w8ls
-	 k2aold0Z7dBbQ==
-Date: Mon, 18 Nov 2024 18:09:42 +0000
-To: Mikulas Patocka <mpatocka@redhat.com>
-From: dap581 <dap581@protonmail.com>
-Cc: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, Milan Broz <gmazyland@gmail.com>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>, Damien Le Moal <dlemoal@kernel.org>, Ilya Dryomov <idryomov@gmail.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <axboe@kernel.dk>
-Subject: Re: kernel 6.12-rc7 device-mapper inconsistency
-Message-ID: <DoKVvqoZo7ojL0ngDU4K1mTnR5gEyBiMRv-CUdMSMQRRVWLHKEJeI_lQ-K6cqlMEaqopKktzxNEvCPHY2Q-sGYqJdYZ46_socrbsk5XZqZQ=@protonmail.com>
-In-Reply-To: <1426ad71-79b4-4062-b2bf-84278be66a5d@redhat.com>
-References: <sL6OHvHA2vueSjCGptT5XUvM5jjGMf3xGWrAW6npODvitd85paTESdsxpbircJbDh9VVyBNDNiqOcU39-LM7WwuldK5Tk4UkRSZjsycWdpo=@protonmail.com> <1426ad71-79b4-4062-b2bf-84278be66a5d@redhat.com>
-Feedback-ID: 43237694:user:proton
-X-Pm-Message-ID: 541ed2c90e05e37082e8124a09b95b52f84c18d1
+	dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b="T98LFSin"
+Received: from main ([84.227.21.131])
+	by vimdzmsp-sfwd05.bluewin.ch Swisscom AG with ESMTPA
+	id D8O7tQRYb0k5JD8O7tjkBc; Mon, 18 Nov 2024 21:30:23 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bluewin.ch;
+	s=fxzs-2048-20230414; t=1731961823;
+	bh=KO4nC7FWuDm/G9Gw3PbxCahkaLgin9HYleMsnx7vzOs=;
+	h=Message-ID:Date:Subject:From:To:MIME-Version;
+	b=T98LFSinJx6+jZzRYOpjLCZUlrGLPHNT3xEVLHURBqBbx6FG73tC1IiY0ZZcsvDCL
+	 60TL/sJjb1SGYufB/lt3OuS0WcMOp8iIQ6Um5XmwZZOTtMR7SpAKKbhNwtJV8Ra+IB
+	 1zuCbXtDiaNM3QOKmmJRmJ0xiHpetyG2HGjJwJNBXFHvIZeyP8BC3DFXk/FYn7L2WT
+	 +b12+1RtoUstBe4ddjXqLyC+EMqIW6VRtGDjdaTXOJSh3KM8N+hFNd5fKja21PnErW
+	 6Ab2BV4psj1YdTh7y+FBgbOlimEVI1HAXhHryUWJa3VANQrbhOKD2mZhBZIvFfkc91
+	 SPB1kUg/wV8mQ==
+X-Bluewin-Spam-Analysis: v=2.4 cv=UKV+Hzfy c=1 sm=1 tr=0 ts=673ba3df
+ a=ig9bzvNBGao8Dw96AwO3EA==:117 a=ig9bzvNBGao8Dw96AwO3EA==:17
+ a=8nJEP1OIZ-IA:10 a=VlfZXiiP6vEA:10 a=LLPZWm0_0O8A:10
+ a=zdeXWzcDJinJY2TJB_QA:9 a=3ZKOabzyN94A:10 a=wPNLvfGTeEIA:10
+X-Bluewin-Spam-Score: 0.00
+X-FXIT-IP: IPv4[84.227.21.131] Epoch[1731961823]
+X-Bluewin-AuthAs: public0x05bf@bluewin.ch
+Received: from 10.235.1.189
+        (SquirrelMail authenticated user public0x05bf)
+        by main with HTTP;
+        Mon, 18 Nov 2024 21:14:38 +0100
+Message-ID: <2316655d90ef08ed99e1911f2953da3b.squirrel@main>
+Date: Mon, 18 Nov 2024 21:14:38 +0100
+Subject: (Re ** 4): Extending "thin_trim"
+From: =?iso-8859-1?Q?=22Thomas_Br=FCcker=22?= <public0x05bf@bluewin.ch>
+To: "Zdenek Kabelac" <zdenek.kabelac@gmail.com>,
+ dm-devel@lists.linux.dev
+User-Agent: SquirrelMail/1.4.21
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Priority: 3 (Normal)
+Importance: Normal
+X-CMAE-Envelope: MS4xfKtNtDNnl/wBjWRQyoVvnRxOrFARq61LG1ShQIa2qpmZkwqXb1LZASXTA9Q2U7dJywDgm4Wk9vdrPAUtrjFPf+Ik9GDo7fhnkV18N7PRZbxL8LJLAIzx
+ eS2IkyeYDsUvsrRw2gBugSdw3V4CilOLBpB4VK347esIeDMRtJraK4cdzzwhPnAsddXFjZ+Br+swPyIEfg4ZcQvneDklXwKNRjPd6rfTjTdiMzbdfFYXt00k
+ w2YVBkCck2H9Zh1SHaBgozLaJmz73p0g2i8pwMKRXh4=
 
->On Monday, November 18th, 2024 at 1:27 PM, Mikulas Patocka <mpatocka@redha=
-t.com> wrote:
-> Hi=20
-> Please apply this patch and report what it prints. So, that we can find
-> out which limits cause the problem.
-> Mikulas
+Dear Mr. Kabelac,
 
-Hello,
-Sorry for the delay, with patch applied to 6.12.0 released today:
-dmesg output after running luksOpen on hdd (sda)
+I am sorry for stealing your precious time. You are right, I could get
+the allocated blocks by the the text-output from thin_rmap. It is easier
+to recognize, if the output of thin_rmap changes (whenever at all?), than
+dealing direct with the metadata.
+Besides I like to
+* make experiments with things e.g. metadata.
+* have ideas on how to make something, and program it, e.g. backup program.
+I must admit, that "blk_archive" is more sophisticated than my things.
 
-[  109.421097] failure 4: fffe00, 1000
-[  109.421112] device-mapper: table: 254:1: adding target device sda1 cause=
-d an alignment inconsistency: physical_block_size=3D4096, logical_block_siz=
-e=3D512, alignment_offset=3D0, start=3D16777216
-[  109.421123] failure 4: fffe00, 1000
-[  109.421126] device-mapper: table: 254:1: adding target device sda1 cause=
-d an alignment inconsistency: physical_block_size=3D4096, logical_block_siz=
-e=3D512, alignment_offset=3D0, start=3D16777216
-[  109.421379] failure 4: fffe00, 1000
-[  109.421384] device-mapper: table: 254:1: adding target device sda1 cause=
-d an alignment inconsistency: physical_block_size=3D4096, logical_block_siz=
-e=3D512, alignment_offset=3D0, start=3D16777216
-[  109.421392] failure 4: fffe00, 1000
-[  109.421395] device-mapper: table: 254:1: adding target device sda1 cause=
-d an alignment inconsistency: physical_block_size=3D4096, logical_block_siz=
-e=3D512, alignment_offset=3D0, start=3D16777216
+Although 'blaming' me, you have helped me a lot.
 
->Hi
->Does this patch fix it?
----
- block/blk-settings.c |    7 +++++++
- 1 file changed, 7 insertions(+)
 
-Index: linux-2.6/block/blk-settings.c
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- linux-2.6.orig/block/blk-settings.c=092024-11-18 15:24:18.000000000 +01=
-00
-+++ linux-2.6/block/blk-settings.c=092024-11-18 15:29:24.000000000 +0100
-@@ -250,6 +250,13 @@ static int blk_validate_limits(struct qu
- =09=09lim->io_min =3D lim->physical_block_size;
-=20
- =09/*
-+=09 * The optimal I/O size may not be aligned to physical block size
-+=09 * (because it may be limited by dma engines which have no clue about
-+=09 * block size of the disks attached to them), so we round it down here.
-+=09 */
-+=09lim->io_opt =3D round_down(lim->io_opt, lim->physical_block_size);
-+
-+=09/*
- =09 * max_hw_sectors has a somewhat weird default for historical reason,
- =09 * but driver really should set their own instead of relying on this
- =09 * value.
+Sincerley
 
-----
+Thomas
 
-Yes!
-With the above patch applied (blk-settings: round down io_opt to physical_b=
-lock_size)
-No more "device-mapper inconsistency" when I unlock my hdd, I also tried th=
-e other hdd to make sure.
-All good.
 
-lsblk -t
+===========================================================================
+On Mon, November 18, 2024 10:28 am, Zdenek Kabelac wrote:
+> Dne 17. 11. 24 v 11:26 "Thomas Brücker" napsal(a):
+>> Hello developers and others,
+>>
+>> I agree fully with your '2TB-argument'. So no longer zeroing.
+>>
+>> I have taken a closer look to "blk-archive". "Packing to a remote
+>> archive"
+>> there not yet works. I have an ((alpha ** n); n --> infinity)-solution
+>> of
+>> my own, which can do this (it is accessible as an nbd device).
+>> Furthermore I sometimes really need to copy the data device to another
+>> location (see crazy-rationale, if you want).
+>> Somehow I like modularity, leading to "<progr. a> | <progr. b> | ... "
+>> (here
+>> "<...>" means a variable to be set).
+>> (In further text, "data device" means solely a data device of a thin
+>> pool.)
+>>
+>> Whats with / (I prefer to develop) an utility similar to "dd" (stealing
+>> code
+>> from "dd" and "blk-archive" [I hope its all "GPL" or similar]), which
+>> skips
+>> unallocated blocks either on a thin device(got idea from "blk-archive")
+>> or a
+>> data device.
+>
+>
+> Hi
+>
+>
+> Of course you can always recreate the wheel as long as you have fun doing
+> that
+> - so yep you can full be inspired how to deal with 'thin-pool' metadata to
+> know which areas have some real data inside - although I'd  probably
+> highly
+> recommend to stick with the use of original 'thin tools' - since those are
+> the
+> 'real tools' to work with thin-pool metadata - they know the format - they
+> are
+> regularly updated when format change and so on...    once you do you
+> 'copy' of
+> this rust code - you are loosing all those feature -  IMHO not
+> worth.    (Note
+> - sooner or later there will be a new format of metadata...)
+>
+>
+> And if there are missing features in blk-archive - let's open the issue -
+> AFAIK this tool is still in development - so reasonable feature requests
+> will
+> be certainly implemented - you just need to write some good
+> examples/justifications  how the feature should be working.
+>
+>
+> Regards
+>
+> Zdenek
+>
+>
+>>
+>> Sincerely
+>>
+>> Thomas Bruecker
+>>
+>> PS:
+>> crazy rationale (to be skipped):
+>> * My name: "pseudo-raid": raid5 with legs on the same device, especially
+>> a
+>>    hard disk. Ok, I admit, its slow.
+>>    * Reason:
+>>      * Modern hard disks are able to correct defective sectors, if the
+>> driver
+>>        knows, what should be in these sectors.
+>>      * You may not equip a notebook with additional hard disk.
+>
+>
+> Is this some sort of   'raid1 + writemostly'  ?
+>
+> And there is also another target -   'dm-era'   - which is however not
+> supported (yet)  by lvm2...
 
-NAME          ALIGNMENT MIN-IO   OPT-IO PHY-SEC LOG-SEC ROTA SCHED RQ-SIZE =
-   RA WSAME
-sda                   0   4096 16773120    4096     512    1 bfq       256 =
-32760    0B
-=E2=94=94=E2=94=80sda1                0   4096 16773120    4096     512    =
-1 bfq       256 32760    0B
-  =E2=94=94=E2=94=80raid-hdd4         0   4096 16773120    4096    4096    =
-1               32760    0B
-sdb                   0   4096 16773120    4096     512    1 bfq       256 =
-32760    0B
-=E2=94=94=E2=94=80sdb1                0   4096 16773120    4096     512    =
-1 bfq       256 32760    0B
-  =E2=94=94=E2=94=80raid-hdd3         0   4096 16773120    4096    4096    =
-1               32760    0B
-sdc                   0   4096 16773120    4096     512    1 bfq       256 =
-32760    0B
-=E2=94=94=E2=94=80sdc1                0   4096 16773120    4096     512    =
-1 bfq       256 32760    0B
-  =E2=94=94=E2=94=80raid-hdd2         0   4096 16773120    4096    4096    =
-1               32760    0B
-sdd                   0   4096 16773120    4096     512    1 bfq       256 =
-32760    0B
-=E2=94=94=E2=94=80sdd1                0   4096 16773120    4096     512    =
-1 bfq       256 32760    0B
-  =E2=94=94=E2=94=80raid-hdd1         0   4096 16773120    4096    4096    =
-1               32760    0B
 
-Thanks!
+
