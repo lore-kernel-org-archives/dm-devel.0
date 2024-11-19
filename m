@@ -1,133 +1,95 @@
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E1C914A639
-	for <dm-devel@lists.linux.dev>; Tue, 19 Nov 2024 16:40:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 405FE1D0E10
+	for <dm-devel@lists.linux.dev>; Tue, 19 Nov 2024 17:08:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732034424; cv=none; b=Apy5mXC2hPegDpR/YuSRCbXrKRjx03wp+5glZYprzdmI0rpnlCxLAko+AM1X7EeBfFg3LofpZ60OhdBjP3twmqFLc62p3+GU0LboAWyTBlN3mB8TnRlayf0x5RE3ZjBhA4SynA68n3aFZOzEWwu1gDicnw6f2+eNKd1GqJ+rqrU=
+	t=1732036107; cv=none; b=Q/QCe2oruzWEGCu4ouM/IwnHm7bvsbhamtINXF9uxWn/k8ulU+du3Q6VHqMpvwiokyQwFFzigK9LWLj81ao78fbHGqN2cbsbjDJiZzlrdg0GpdibOnF/kDbSeM9FLF5Hy+W/u/GqtYmShi3R7hlbNURGzDhBKagFt6ra4UituSc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732034424; c=relaxed/simple;
-	bh=9f84cj2BK31kRw7DQbzHDCArT0fY1EmZZEmJG53Bylw=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=CivnFM1sIpp5BEjWZM9CWKO7FrvFW+8LHu+BlULCzA8glrOSUc7RxmeaTHvIrTfB5916A7u11n7qDTs0eVX7y2LXjhabISMsFDeUR4K8c1yXUJzW1TloJz2K3V/OUxqoupD/D+LIhVDOTj+EKB17pcpe4qqbyr6/tnAyYrjynM8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=MMz3v2kr; arc=none smtp.client-ip=209.85.128.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1732036107; c=relaxed/simple;
+	bh=S6w3OyA+NP2yt0uYRYODmZ3BAMqBfR2nRoWuJCCFL74=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=hiDcjQGr6XMOGZ1MCFcaids07aOIfd7dq4edRmVQGWYGMgv/OnI89rCmPcEDjscOCMe1On9qmEbwOx6B2LjuBN/N4+B3ObkBsONWSraVUEdnA6osA5F5mUcfUBigvoZRNEKTqFgWC2hVovUMu/b8vWKT0pIGT6bbEfqqON70FKg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DDZrhlUj; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="MMz3v2kr"
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-4316a44d1bbso38314655e9.3
-        for <dm-devel@lists.linux.dev>; Tue, 19 Nov 2024 08:40:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1732034420; x=1732639220; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=9f84cj2BK31kRw7DQbzHDCArT0fY1EmZZEmJG53Bylw=;
-        b=MMz3v2krYVBgmLWcASle+36Ug4UvywG9ZTJ2Ia1QYDHxswm5C6P17WqPNmgqZ43iUR
-         4TghFRq0bLSACl+Bna7tK8UXpnFy+D/eiYkCEoNpJPZEHh2Sy6tymNieuAO0ORjVTdLb
-         s3jPr1ABTMlAHt0pQLUxKVoLXZIBTimm/Gxnjb5U8jlLuQfaQt3TidieJsHuJxtsuyGm
-         eJ/Z8d3ghTvyH5UEcUx4MpzFLyWNgWs6Jpk+iCa3Ml/Ua1jwk2hT6ucuprc1dKuX39lb
-         FiKz8hclXwzRsLlPPUgLPm+6YJ1FyGdfXNzuKhp9TGNbpGbJpZ1qZhoatuPyCSldD6hE
-         LMgg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732034420; x=1732639220;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=9f84cj2BK31kRw7DQbzHDCArT0fY1EmZZEmJG53Bylw=;
-        b=HWIz1bI9S8GQz6MaE44BeVbpDf3xnLQi3oGRKqRP57SELfQPhQklhb6OEgXHkhWESb
-         411TW2YiAJmelGY61X49k8sGYs+kcOgXae4Ut/iXNbpwv0WglupqGjvdkbdNU8OaAyOz
-         udIfzP4oDwWK1PzU4lss/yy3R5K4JRGV07n/cnGx6rNu3PVvrxCxdE33rKSQql218jed
-         0rbAwoCcIynUw5oi4iHSjduoVLanAAXoVFHj/olxtcY05p5HeOoKuaCc/3CbRuCOg8JS
-         OClLAraOnRaeYJ2oEjLFO6e6iIPhXVr8abrOnzAzsxSd2eBL4jJ+N9bgtJNK4YclXW0l
-         abGQ==
-X-Forwarded-Encrypted: i=1; AJvYcCW25e2eUEqPFwErBDFOfI63UThRh0zi0U/gYBuBcFL1t2O6D9eFihNpHyvyrxWM06Awu0dMgQhxFQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyDI3J2pnuOAwPELXlMEE619UFjIusv3Z8Jg68d5oymB7cASDvx
-	ALiz0PgIGyltMWgy1I/V15CiwduyXqXfqM3UP8dkez7UlMkuXl9T2b+MHseS8es=
-X-Google-Smtp-Source: AGHT+IHXbXOCbV8BTOoXmvN8iDTi7kCmlHUitquGk8QjlhfQrqIFtXu743hrFgFBeZrEVQhItPQsRA==
-X-Received: by 2002:a05:600c:511b:b0:431:1d0a:38e2 with SMTP id 5b1f17b1804b1-432df78e1a9mr126934525e9.21.1732034420316;
-        Tue, 19 Nov 2024 08:40:20 -0800 (PST)
-Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-432da28bc11sm199941485e9.31.2024.11.19.08.40.19
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Nov 2024 08:40:20 -0800 (PST)
-Message-ID: <1a516ff0aaf34d88da065a1f504606450eb871bc.camel@suse.com>
-Subject: Re: [PATCH 0/6] multipath-tools: Handle tableless DM devices
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
- development <dm-devel@lists.linux.dev>
-Date: Tue, 19 Nov 2024 17:40:19 +0100
-In-Reply-To: <23860ac02355acab86798e2ce3d582ebed61a0d6.camel@suse.com>
-References: <20241115232256.627933-1-bmarzins@redhat.com>
-		 <fbab2026d6850617f84da01c9c075f468295aa3b.camel@suse.com>
-		 <ZzuuUTMJgFPWV16s@redhat.com>
-	 <23860ac02355acab86798e2ce3d582ebed61a0d6.camel@suse.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.54.1 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DDZrhlUj"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1732036104;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=91DEb04hWHXdF9Kf+KOV4Pk4mN3jPMYJU86Mkvm+Q1A=;
+	b=DDZrhlUjCsHUVqB5yR/is3eQuhHH19zzRWqe145myn0wLUMpM+s50BUA+fZtE67cxy9hqc
+	MWApeGDXQELTEezFuBT73z6iFl2+8jEGJof/vSpgh3jmyFHQuE4wnjbOMMOt6ie7ttJzUA
+	8SQOPhO/pOAp7iZx5uxOC9QhY6G+NQQ=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-620-bv4pDfqIOyOFn2Ul7f6BOg-1; Tue,
+ 19 Nov 2024 12:08:22 -0500
+X-MC-Unique: bv4pDfqIOyOFn2Ul7f6BOg-1
+X-Mimecast-MFC-AGG-ID: bv4pDfqIOyOFn2Ul7f6BOg
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8E44B195419F;
+	Tue, 19 Nov 2024 17:08:21 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3749F19560A3;
+	Tue, 19 Nov 2024 17:08:21 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4AJH8Jsx678371
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 19 Nov 2024 12:08:19 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4AJH8J66678370;
+	Tue, 19 Nov 2024 12:08:19 -0500
+Date: Tue, 19 Nov 2024 12:08:19 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3 1/1] multipathd: move systemd watchdog handling into
+ daemon
+Message-ID: <ZzzGAyrIvujCOMG6@redhat.com>
+References: <20241119161218.708117-1-mwilck@suse.com>
+ <20241119161218.708117-2-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <20241119161218.708117-2-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: G3EqldFWUrosr_knrcSzX7U_LckzSCTKw1hlNhI1uuo_1732036101
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Tue, 2024-11-19 at 13:20 +0100, Martin Wilck wrote:
-> On Mon, 2024-11-18 at 16:14 -0500, Benjamin Marzinski wrote:
-> > On Mon, Nov 18, 2024 at 12:18:20PM +0100, Martin Wilck wrote:
-> > > On Fri, 2024-11-15 at 18:22 -0500, Benjamin Marzinski wrote:
-> > > >=20
-> > > > I'm not completely happy with the MAPINFO_ID_IF_FOUND flag. An
-> > > > alternative would be to run a second libmp_mapinfo() call
-> > > > without
-> > > > MAPINFO_MPATH_ONLY to grab the name, if the first failed with
-> > > > DMP_EMPTY.
-> > > > If people think that's a better way to solve this, I can rework
-> > > > those
-> > > > patches.
-> > >=20
-> > > We could simply choose to always fill in this information if the
-> > > the caller has requested it, without an additional input flag.
-> > > It's
-> > > not
-> > > an expensive operation.=C2=A0Is there a reason not to do this?
-> >=20
-> > Your comments in the code said that libmp_mapinfo() will not touch
-> > any
-> > of the output parameters if it doesn't succeed. I didn't audit the
-> > code,
-> > but I can certainly imagine a situation where you passed in
-> > pointers
-> > to
-> > some varaibles that already had values and you didn't want those
-> > values
-> > overwritten unless libmp_mapinfo() returned DMP_OK.
-> >=20
-> > But I can go look and see if any callers would get messed up if
-> > name
-> > or
-> > uuid got set, even when the found device didn't match.
->=20
-> I am pretty sure that that shouldn't happen. The memory must be
-> allocated anyway, and callers can't ignore the return value. But
-> double-checking is a good idea, of course, and we should adapt the
-> documentation.
+On Tue, Nov 19, 2024 at 05:12:18PM +0100, Martin Wilck wrote:
+> Only multipathd needs to take care of notifying systemd. There's
+> no need to track this information in struct config, or to limit our
+> checker interval to it, as checkerloop() wakes up every second anyway.
+> 
+> While at it, fix the watchdog enablement logic:
+> 
+> - the watchdog should only be active if WATCHDOG_PID is either unset,
+>   or matches the daemon's PID, and if WATCHDOG_USEC is not 0.
+> - the watchdog should trigger twice per systemd-set interval.
+> - if WatchdogSec= is set to an unreasonable value, make a smarter
+>   choice than just disabling the watchdog, and print a more meaningful
+>   error message.
+> 
+> Use timestamp comparison to make sure the watchdog is triggered even
+> if a checkerloop iteration takes more than a second.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 
-I just looked through the code. Except for the unit tests, I only found
-one call where this matters:
-
-dm_find_map_by_wwid() fills in the name if non-NULL. This is only used
-by cli_add_map(), where it doesn't cause an issue.
-
-Martin
-
-
-
-
-
->=20
-> Martin
->=20
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
