@@ -1,263 +1,92 @@
-Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78AC61C68BE
-	for <dm-devel@lists.linux.dev>; Tue, 19 Nov 2024 16:12:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB38C14A639
+	for <dm-devel@lists.linux.dev>; Tue, 19 Nov 2024 16:39:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732032753; cv=none; b=UA6YVQQVp10C4wAYTsjAPYwYLyWtgrgzG5pyHtA3t33eaBuVfG/+e1BD6KJifkStEZ/gltc4BKeWNe9a9v0EOa/X7g33JAHXmu9PrWZDPBnzv4bKO2JfkxeiCrtIxIspI0Q3XczPPXa3hkrhyrRoPqHJFRgIPmtolSMGON6g4BA=
+	t=1732034372; cv=none; b=XSkr91ybvRCpXfxWodWxqQ3uQ0tyRy9LYlG7VVvIj88yGbQnKpN4P5IuDeGC0iVdibl4mFtrq/9FqZd/tJbalCQmidS00fSZ8e49dezi7brKP6Ug2YZtVPxE3QQWci9+5E5RGr/dMhJROjY8psuKYbqM2RiRIqZFadxr9/xzGnU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732032753; c=relaxed/simple;
-	bh=Yl+qMOdKhN3Bh33dTs7LXhiGItLLdyn+SEFJgwFayVM=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=rzIlZG/aEnl/QbCQ5UDCweLm699siqxlDulyplUbtoFHrJEq0HQqZUKJvNEbX0Ufjy3lmzYCgZAvd0ky9o0ZZnCXsjSadZYuz1FRP308TTeuorNqplEg7cZrJ+sUyAT/5a7lGxwavM6FAJ2BSvH9yN07yHfAxiu9kzuAXaUnKZU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UXX+kVvq; arc=none smtp.client-ip=209.85.167.41
+	s=arc-20240116; t=1732034372; c=relaxed/simple;
+	bh=PToJUso/w7unGRw0wuFuvU5BwAxsx4y0wg+fjosZBZY=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=W3gMcutu44MmeqBTwYGXAnS8vytxDffMFN3E6BSZ+pOjTKtz2To1AG2s83UuPlUZ/TCvvQrqEqWP7Dw6/yLjdhDzSB5bW4RCjPmz1P6+NN8FQB/LJKhjNu+hPMgMloOrXuXxWPAN+wRXFiZ++1LFPYTBvkrw5YGqzIFufwvP9gc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=fa4wBR2y; arc=none smtp.client-ip=209.85.128.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UXX+kVvq"
-Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-539eb97f26aso6130235e87.2
-        for <dm-devel@lists.linux.dev>; Tue, 19 Nov 2024 08:12:31 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="fa4wBR2y"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-4316cce103dso47111905e9.3
+        for <dm-devel@lists.linux.dev>; Tue, 19 Nov 2024 08:39:29 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1732032749; x=1732637549; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=8bIFqYXULyPsioaTRNShPwGe775dP8pfxkKvpCFucgU=;
-        b=UXX+kVvqNG1vkNBOwQirwhfTdGIsh2ePcvkD+3oDCnewXrma13C4rGUjmCUQ39wdO9
-         /fACPsy9UF4pfHzfCqEnfDhb8RYlaIwH7umh21fcbVmVlOnFQWrgisYc6U7+3Jhx7iea
-         mxs/vDwJV2cf11dIEARkkKRcL3HB3tnx4rnNDcWAO/nUekT6N3NDJKL/xvofXY6pywPR
-         nnxU7zXeY8uCjpWYGNZHRKPbhrHivWq5IaVPJlO/kbn6HDvraiE/QRbWDqJgteDBk8HE
-         8zYLT4PBSbUzFu3U9DZ1RO5fH+f2/AG0sxDVlPFJtfnLlstGLSmONngBRrS3ajz0u/qy
-         VYHw==
+        d=suse.com; s=google; t=1732034368; x=1732639168; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=PToJUso/w7unGRw0wuFuvU5BwAxsx4y0wg+fjosZBZY=;
+        b=fa4wBR2yrxHWRVq1QTa9WeJp1l0m38hw0YEmu+vZKmyCfI2gxtDRPZ7w9l3Lfl3LZ2
+         S/zdskcfxUO/o4NFprtu1qj2KbDE7p2/6zYnIBq98mlKcANvFDa/xQLwA6SYhkU3m65L
+         EXQVxK7B7SQgoMS1D2heZTWLk1d70YUKyKHTV7fvuI5Frnsu9iCrhq9JPO5oKusoHlXV
+         /VJgHtcr2qd35A2+FtlEGJN0gSk3PtFuVlMS/oWdfZ6Z0toozpH2lb4Oe4U3p6yLNoOJ
+         fQSJNx/4o6Wk1Gvd8SOf7Iv+2tIDBU0le/RO1YNZmexiC+nVprq93WXqlKcUydNJyS5O
+         4wSw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732032749; x=1732637549;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=8bIFqYXULyPsioaTRNShPwGe775dP8pfxkKvpCFucgU=;
-        b=BXyzrqHJU3NFbxwj1fNotjj5eKpDdcRaBMwRNZHbmgb1wu0FJ9sBMk9Ng2+BCj2oDo
-         TyapLbq86yxaIE8/w0tCgi6M9xz/JdUrQ3N7B2LFSAtl3A4gKhGnlmX4i7mjsZn/T738
-         56vplLSvlv8/rR9tGqr1rVA4r1sa33lgHFRuKlGpGmp8DZlLpQ9/QRVBC1OZRcxkxaGD
-         h2zQjMS5nqgp9TnKBAplCbv7NRHJlNQT16y8O7tm3c4oPadGGKZEy5t6DD/wZl2zkjcB
-         4mEKwRiTCx5JbD/uRyn3VyfkKJmJSKbHULrYJGVTIggQtHFOlU725x3cZ+wxPougnY5w
-         +IxA==
-X-Gm-Message-State: AOJu0YzQBiwg2F4ugK7zn0XuzwXx46fgvPKNXZ5QXETVewRNAk7/Bv9b
-	jVj7pDFbc3fr+mg1V274s/oh0b5EjAXfJ6fnXji/6bzlss3DbHOmpXxXFbDs8kg=
-X-Google-Smtp-Source: AGHT+IFi77UktGOVPj8sRvZ8HgR5OWD3aI2kgjdR+jdJuNrftgJH/Zjz1vmLb3CIIQT03kd9u//p5Q==
-X-Received: by 2002:a05:6512:230f:b0:53d:a4f3:29ed with SMTP id 2adb3069b0e04-53dab2a6397mr6606529e87.27.1732032749267;
-        Tue, 19 Nov 2024 08:12:29 -0800 (PST)
-Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-432dac0ae04sm195571075e9.33.2024.11.19.08.12.28
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 19 Nov 2024 08:12:29 -0800 (PST)
+        d=1e100.net; s=20230601; t=1732034368; x=1732639168;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=PToJUso/w7unGRw0wuFuvU5BwAxsx4y0wg+fjosZBZY=;
+        b=i2nMorYDC3Ps+1HQG/WK78mRLXg76fAEQTEHWzN5QCCkl4Jg7C7p9xROBRnK7LhX+U
+         vFalzoks2PxaDeqZ7VBJ0kOz7FWW9lJ9zVujvfdA/D/OiBGnf4UoUYhRlwG6MMsse3Vf
+         rIudslkD9XEGywA1wSH+snQg9BdV3mOVRuXZ1BcKuTrMpMjC7aTLh1LCNJuM+0yOjvvx
+         yHzDhjw7sd3/SqVrR87fBWdx1+AgTIUp26ZDXaaht2slanTywNm6P7wcyPs9fEAPsBeb
+         uu7fgh8KhioCNsEmCpaM0AoZcaiK5MkobCd257vP6fM4aUkqDXykf3DjE2KTbm54Aelq
+         qhpA==
+X-Gm-Message-State: AOJu0YySFnqswPIMbuoATWX1Bzz8F910/X8dwDlYyIMMtZ9th3XiAT9U
+	KmSG5Umj9bnh+4COUZoQnnECbYL4DnUPVt7iWGLk9KWAP3EBEYJmXWg7gitTbv8=
+X-Google-Smtp-Source: AGHT+IE07147oxeAaTUAjf8X7AbUudKjFShZrm3HoOewrh+y5wHrBPwQL46sE1Q2KHe0pp9T+jgreg==
+X-Received: by 2002:a05:600c:19c6:b0:431:5533:8f0d with SMTP id 5b1f17b1804b1-432df793dd5mr199168925e9.30.1732034367989;
+        Tue, 19 Nov 2024 08:39:27 -0800 (PST)
+Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3824259dda3sm8284915f8f.77.2024.11.19.08.39.27
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 19 Nov 2024 08:39:27 -0800 (PST)
+Message-ID: <8f74ed950515b775def323b2d04fb5092ad615de.camel@suse.com>
+Subject: Re: [PATCH 1/6] libmultipath: signal device with no table in
+ libmp_mapinfo
 From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 1/1] multipathd: move systemd watchdog handling into daemon
-Date: Tue, 19 Nov 2024 17:12:18 +0100
-Message-ID: <20241119161218.708117-2-mwilck@suse.com>
-X-Mailer: git-send-email 2.47.0
-In-Reply-To: <20241119161218.708117-1-mwilck@suse.com>
-References: <20241119161218.708117-1-mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Tue, 19 Nov 2024 17:39:26 +0100
+In-Reply-To: <20241115232256.627933-2-bmarzins@redhat.com>
+References: <20241115232256.627933-1-bmarzins@redhat.com>
+	 <20241115232256.627933-2-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-Only multipathd needs to take care of notifying systemd. There's
-no need to track this information in struct config, or to limit our
-checker interval to it, as checkerloop() wakes up every second anyway.
+On Fri, 2024-11-15 at 18:22 -0500, Benjamin Marzinski wrote:
+> if libmp_mapinfo() is run on a device that has no active table,
+> it will now return with a new exit code, DMP_EMPTY, to signal this.
+> Currently all code paths treat this identically to DMP_NOT_FOUND.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-While at it, fix the watchdog enablement logic:
+I just looked through the code again. I think with this change, we need
+to modify dm_flush_map__() and do_foreach_partmaps(). They should
+remove / act on empty maps. What do you think?
 
-- the watchdog should only be active if WATCHDOG_PID is either unset,
-  or matches the daemon's PID, and if WATCHDOG_USEC is not 0.
-- the watchdog should trigger twice per systemd-set interval.
-- if WatchdogSec= is set to an unreasonable value, make a smarter
-  choice than just disabling the watchdog, and print a more meaningful
-  error message.
+Also, we can skip the call to is_mpath_part_uuid() in
+do_foreach_partmaps() after my "make MAPINFO_CHECK_UUID work with
+partitions" patch. I can submit a patch myself, but as you're at
+already, maybe you want to do that?
 
-Use timestamp comparison to make sure the watchdog is triggered even
-if a checkerloop iteration takes more than a second.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/config.c | 25 ----------------
- libmultipath/config.h |  1 -
- multipathd/main.c     | 70 ++++++++++++++++++++++++++++++++++---------
- 3 files changed, 56 insertions(+), 40 deletions(-)
-
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 0e3a5cc..8b424d1 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -858,27 +858,6 @@ process_config_dir(struct config *conf, char *dir)
- 	pthread_cleanup_pop(1);
- }
- 
--#ifdef USE_SYSTEMD
--static void set_max_checkint_from_watchdog(struct config *conf)
--{
--	char *envp = getenv("WATCHDOG_USEC");
--	unsigned long checkint;
--
--	if (envp && sscanf(envp, "%lu", &checkint) == 1) {
--		/* Value is in microseconds */
--		checkint /= 1000000;
--		if (checkint < 1 || checkint > UINT_MAX) {
--			condlog(1, "invalid value for WatchdogSec: \"%s\"", envp);
--			return;
--		}
--		if (conf->max_checkint == 0 || conf->max_checkint > checkint)
--			conf->max_checkint = checkint;
--		condlog(3, "enabling watchdog, interval %ld", checkint);
--		conf->use_watchdog = true;
--	}
--}
--#endif
--
- static int init_config__ (const char *file, struct config *conf);
- 
- int init_config(const char *file)
-@@ -916,7 +895,6 @@ int init_config__ (const char *file, struct config *conf)
- 	conf->attribute_flags = 0;
- 	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
- 	conf->checkint = CHECKINT_UNDEF;
--	conf->use_watchdog = false;
- 	conf->max_checkint = 0;
- 	conf->force_sync = DEFAULT_FORCE_SYNC;
- 	conf->partition_delim = (default_partition_delim != NULL ?
-@@ -967,9 +945,6 @@ int init_config__ (const char *file, struct config *conf)
- 	/*
- 	 * fill the voids left in the config file
- 	 */
--#ifdef USE_SYSTEMD
--	set_max_checkint_from_watchdog(conf);
--#endif
- 	if (conf->max_checkint == 0) {
- 		if (conf->checkint == CHECKINT_UNDEF)
- 			conf->checkint = DEFAULT_CHECKINT;
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 94cdf25..5b4ebf8 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -148,7 +148,6 @@ struct config {
- 	unsigned int checkint;
- 	unsigned int max_checkint;
- 	unsigned int adjust_int;
--	bool use_watchdog;
- 	int pgfailback;
- 	int rr_weight;
- 	int no_path_retry;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index a99da81..f96d61a 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2153,6 +2153,61 @@ partial_retrigger_tick(vector pathvec)
- 	}
- }
- 
-+#ifdef USE_SYSTEMD
-+static int get_watchdog_interval(void)
-+{
-+	const char *envp;
-+	long long checkint;
-+	long pid;
-+
-+	envp = getenv("WATCHDOG_PID");
-+	/* See sd_watchdog_enabled(3) */
-+	if (envp && sscanf(envp, "%lu", &pid) == 1 && pid != daemon_pid)
-+		return -1;
-+
-+	envp = getenv("WATCHDOG_USEC");
-+	if (!envp || sscanf(envp, "%llu", &checkint) != 1 || checkint == 0)
-+		return -1;
-+
-+	/*
-+	 * Value is in microseconds, and the watchdog should be triggered
-+	 * twice per interval.
-+	 */
-+	checkint /= 2000000;
-+	if (checkint > INT_MAX / 2) {
-+		condlog(1, "WatchdogSec=%lld is too high, assuming %d",
-+			checkint * 2, INT_MAX);
-+			checkint = INT_MAX / 2;
-+	} else if (checkint < 1) {
-+		condlog(1, "WatchdogSec=1 is too low, daemon will be killed by systemd!");
-+		checkint = 1;
-+	}
-+
-+	condlog(3, "enabling watchdog, interval %llds", checkint);
-+	return checkint;
-+}
-+
-+static void watchdog_tick(const struct timespec *time) {
-+	static int watchdog_interval;
-+	static struct timespec last_time;
-+	struct timespec diff_time;
-+
-+	if (watchdog_interval == 0)
-+		watchdog_interval = get_watchdog_interval();
-+	if (watchdog_interval < 0)
-+		return;
-+
-+	timespecsub(time, &last_time, &diff_time);
-+	if (diff_time.tv_sec >= watchdog_interval) {
-+		condlog(4, "%s: sending watchdog message", __func__);
-+		sd_notify(0, "WATCHDOG=1");
-+		last_time = *time;
-+	}
-+}
-+#else
-+static void watchdog_tick(const struct timespec *time __attribute__((unused))) {}
-+#endif
-+
- static bool update_prio(struct multipath *mpp, bool refresh_all)
- {
- 	int oldpriority;
-@@ -2931,9 +2986,6 @@ checkerloop (void *ap)
- 	struct timespec last_time;
- 	struct config *conf;
- 	int foreign_tick = 0;
--#ifdef USE_SYSTEMD
--	bool use_watchdog;
--#endif
- 
- 	pthread_cleanup_push(rcu_unregister, NULL);
- 	rcu_register_thread();
-@@ -2944,13 +2996,6 @@ checkerloop (void *ap)
- 	get_monotonic_time(&last_time);
- 	last_time.tv_sec -= 1;
- 
--	/* use_watchdog is set from process environment and never changes */
--	conf = get_multipath_config();
--#ifdef USE_SYSTEMD
--	use_watchdog = conf->use_watchdog;
--#endif
--	put_multipath_config(conf);
--
- 	while (1) {
- 		struct timespec diff_time, start_time, end_time;
- 		int num_paths = 0, strict_timing;
-@@ -2967,10 +3012,7 @@ checkerloop (void *ap)
- 			(long)diff_time.tv_sec, diff_time.tv_nsec / 1000);
- 		last_time = start_time;
- 		ticks = diff_time.tv_sec;
--#ifdef USE_SYSTEMD
--		if (use_watchdog)
--			sd_notify(0, "WATCHDOG=1");
--#endif
-+		watchdog_tick(&start_time);
- 		while (checker_state != CHECKER_FINISHED) {
- 			struct multipath *mpp;
- 			int i;
--- 
-2.47.0
+Martin
 
