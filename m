@@ -1,111 +1,136 @@
-Received: from mail-oo1-f42.google.com (mail-oo1-f42.google.com [209.85.161.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from sfwd06.p.bluenet.ch (sfwd06.p.bluenet.ch [193.247.246.19])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35AB9150981
-	for <dm-devel@lists.linux.dev>; Mon, 18 Nov 2024 21:54:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D77A6136337
+	for <dm-devel@lists.linux.dev>; Tue, 19 Nov 2024 02:29:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.247.246.19
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731966861; cv=none; b=bbAzOsR6ImruUk/pEBvFPPVqDhnLDsByaD4fCyMTeGx1fTqeNdSEg/fV3zDOoBQvQLUOHk70w+qpY2yjg629h1RPwPvk6vj9HLlFmMg5IPdVnQ21a2Kc5spkDcna3w0MEP4UU812iz6/duoWjkLPT4uqLXYybzRWc2XkVxUixOE=
+	t=1731983379; cv=none; b=W6eAU4UhLHYax87MJgvFskPS+1RHWke+PjXf1k3m1GSyOqVI7ljO42o8/h1Q8Oyowro7V2ZjYpgUrFhC+hNIM/r4No9dgR98FL/ninVmJSpg4gWv/6huiMtKohKfzPO+5wS0ImrL/ggth83w4RoJ6X8V6sCv17qYxK//7jCfN5Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731966861; c=relaxed/simple;
-	bh=GH7HNAuf+PdY7xrhVdBxBmK3NME4WJylXv4OpU58B5E=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=ftXkWhaClqNJPAHLPFSp138Sg/jbk2IDU6uTW8ZUH5vZJzweDLa6AFJUsgHSWmsUDgMdrezkUpceqRZ4gJ4GHY3OfgQbsZCsMDXkqz2wM/Gpzobw0OBXXLAWpDyeIYpGXIBnSh3ukxweZqCm2iQhT5f2sYk0oUMJ+ci31Uc9KPQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=TNNv4cyT; arc=none smtp.client-ip=209.85.161.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1731983379; c=relaxed/simple;
+	bh=lyq2Gvwz+rd3RyhgmFbtNJ25AUH555iQKSqWQSaqiQw=;
+	h=Message-ID:Date:Subject:From:To:MIME-Version:Content-Type; b=N9/ukGxp835GTjxZNyeZOBaMKui/0ro8kWsI4LJ5/qdVtYeJrgitt9f+XAtDrDeXouG2KG5J2Su3ZO6A/20s1PYOEYvCtF684ERnF1J9MQJiJWjq97QPIcn0huYdh6eBqpKuMMRtQwivMRO/wBGf4+rHxYFzA0WxiBMC9LUTZ7c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch; spf=pass smtp.mailfrom=bluewin.ch; dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b=NKyfH/o2; arc=none smtp.client-ip=193.247.246.19
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bluewin.ch
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="TNNv4cyT"
-Received: by mail-oo1-f42.google.com with SMTP id 006d021491bc7-5ee58c5c2e3so1603119eaf.2
-        for <dm-devel@lists.linux.dev>; Mon, 18 Nov 2024 13:54:17 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1731966857; x=1732571657; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=p18Ou65sSW7nZEBgBZ8V2Ng+FEYRVPVefFIAS08hir4=;
-        b=TNNv4cyTEf/JqdBza14YT6fMjkRK8uUS6T6rwdPY06YYpthtZGkTPZYZWrrk+qFcoV
-         YqLIfY2P9fgqkCSXeCSp2SkFlq7Zh1EGvZuNWinJJ7sya1Dqy7UBNBLrhC7JGtH23NK5
-         1aQiz/0hv7eDAN+T1+NzTWYePUH5VlOvN6c1GeUdnEEWppXdb6L8B9a7Q2eIVgpugDjr
-         0XH3ZF3bui0/ZpItU3OnAngx03J9q7qCPFN8aDycPkCh0Z3PQWcCnc2Riya22hcJxmtI
-         8Oggf8H7i7XLR/e9WL9YAX5LLzVNxD82OHSVRQi9p+Y4+CrnuJYDeoaULt1IdiVribYC
-         N90A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731966857; x=1732571657;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=p18Ou65sSW7nZEBgBZ8V2Ng+FEYRVPVefFIAS08hir4=;
-        b=FRtTjzh+UXQ8OeW3RYDwgmyfRIJTKFpmf7RA/aR3hCyADP07HmsGO28smUbPqSR62b
-         VBN5DnJ87ToL/aLxEgyZHBUrFi9j9rFmFQ+zIBUxLZuGmioUDEVdlnoSMDahPVvrVUeF
-         Z8jy5W9K7H4fGldKhRFzj6tDjHNN9nHYAPaNfh5jI5RfWJ6LLs7TAD5A8DdOvYj3xBBQ
-         +Xjrj5RFW+EPmzbQL0vpVnQ30EXQk8Yuf72WOAYsehGZsb8fbkxqnWTdY5vZ7WYwwIbp
-         hYvd6FPKpMS44H0WeigX9NnYPgvKa6LGoI4jvE49L0hG4TQMzEmpKM377aTf+DqehyZK
-         t0Yg==
-X-Gm-Message-State: AOJu0YwWN33tHLL+7LyYPA0en2Wlj1F6ADI7glQKCRqw7EYzEhtHgBDz
-	eMyDByemwoKWdWMQVrpnNw6NwZvqlu8iM4DwM2I3GSCC6oERelGrHtqj5iuSnepV7dqpEby1jSs
-	lAWE=
-X-Google-Smtp-Source: AGHT+IGWCGPZXazVsmOYV6Lyd3HrTZGGG9lvfgUhdSO/ZdxZR+CiOfiMpkwTCklRca0zaIYE/TotEA==
-X-Received: by 2002:a05:6820:2d43:b0:5ee:dc92:ffb4 with SMTP id 006d021491bc7-5eedc93055amr270745eaf.5.1731966856837;
-        Mon, 18 Nov 2024 13:54:16 -0800 (PST)
-Received: from [127.0.0.1] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id 46e09a7af769-71a780fed32sm3007781a34.26.2024.11.18.13.54.15
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 18 Nov 2024 13:54:15 -0800 (PST)
-From: Jens Axboe <axboe@kernel.dk>
-To: dap581 <dap581@protonmail.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev, Milan Broz <gmazyland@gmail.com>, 
- Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>, 
- Damien Le Moal <dlemoal@kernel.org>, Ilya Dryomov <idryomov@gmail.com>, 
- "Martin K. Petersen" <martin.petersen@oracle.com>
-In-Reply-To: <3dc0014b-9690-dc38-81c9-4a316a2d4fb2@redhat.com>
-References: <sL6OHvHA2vueSjCGptT5XUvM5jjGMf3xGWrAW6npODvitd85paTESdsxpbircJbDh9VVyBNDNiqOcU39-LM7WwuldK5Tk4UkRSZjsycWdpo=@protonmail.com>
- <1426ad71-79b4-4062-b2bf-84278be66a5d@redhat.com>
- <3dc0014b-9690-dc38-81c9-4a316a2d4fb2@redhat.com>
-Subject: Re: [PATCH] blk-settings: round down io_opt to physical_block_size
-Message-Id: <173196685541.27078.10116047267109203022.b4-ty@kernel.dk>
-Date: Mon, 18 Nov 2024 14:54:15 -0700
+	dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b="NKyfH/o2"
+Received: from main ([84.227.21.131])
+	by vimdzmsp-sfwd06.bluewin.ch Swisscom AG with ESMTPA
+	id DDxetjmttWdHXDDxetrWPB; Tue, 19 Nov 2024 03:27:27 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bluewin.ch;
+	s=fxzs-2048-20230414; t=1731983247;
+	bh=5novlyOmOxrp7FrQH+bqX03fKBi4SUXYi8nASWV6I1Q=;
+	h=Message-ID:Date:Subject:From:To:MIME-Version;
+	b=NKyfH/o2Kzbfozj3V/09QGyl/SLAac21VhcsqDYVzSZDj1ylr7FOP3wcMcrrvYF6y
+	 IptnG+b9AjJxk/3ytdCCZ2CNw6I9SaKQ2vdza+fOxgJbxZiyTBzNUkpUdFQ5+QB9JD
+	 SnupGVfTX9mssAimzdGuzNv251/TJYfByooiikzwkpuX6D5jfI8HkLWCqm3ADgEFfx
+	 xL7jyNo1A2b2vlwG0jQcfTUYktH/yX7YyXKs9v7Pke8bijZjQK6/kpvZDlv/0EoJHl
+	 PSPHpYCt9X7y16CTWOo/r/q8w1l8QALnVghKmRfPatZrbvF6nfLjxkKtJD0kTFih7T
+	 a+z9xi4v96DGQ==
+X-Bluewin-Spam-Analysis: v=2.4 cv=M5juKDws c=1 sm=1 tr=0 ts=673bf78f
+ a=ig9bzvNBGao8Dw96AwO3EA==:117 a=ig9bzvNBGao8Dw96AwO3EA==:17
+ a=8nJEP1OIZ-IA:10 a=VlfZXiiP6vEA:10 a=LLPZWm0_0O8A:10
+ a=67-_CUpwOAyJreL14z8A:9 a=3ZKOabzyN94A:10 a=wPNLvfGTeEIA:10
+X-Bluewin-Spam-Score: 0.00
+X-FXIT-IP: IPv4[84.227.21.131] Epoch[1731983247]
+X-Bluewin-AuthAs: public0x05bf@bluewin.ch
+Received: from 10.235.1.189
+        (SquirrelMail authenticated user public0x05bf)
+        by main with HTTP;
+        Tue, 19 Nov 2024 03:11:36 +0100
+Message-ID: <d50d1467115519a407d7a987e3e1fa0a.squirrel@main>
+Date: Tue, 19 Nov 2024 03:11:36 +0100
+Subject: (Re ** 4)[1]: Extending "thin_trim" (about pseudo-raid)
+From: =?iso-8859-1?Q?=22Thomas_Br=FCcker=22?= <public0x05bf@bluewin.ch>
+To: "Zdenek Kabelac" <zdenek.kabelac@gmail.com>,
+ dm-devel@lists.linux.dev
+User-Agent: SquirrelMail/1.4.21
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.14.3-dev-86319
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Priority: 3 (Normal)
+Importance: Normal
+X-CMAE-Envelope: MS4xfDO2miVqf9JxUpauBMX+4GBb8UytMqEdew2CpkNmijeEWqI/NgQyn3Pkk9Z3Uzek0ulTXm9bsNdhZQNxl+zZbVUlRUXPsVjcut2OgVyckwM22XzMZzte
+ AH199jQHu9YxzCJkY3YsfUtiqRNtpqggihcWXbFCZ0zU5LdDrinLxx9ZFtwr+zE6/B/d4aDilGzHKNrEWEpocOwcytBJLtY54IDMEzGEkEpcLIkBzuBFmvqo
+ sUQmW1FgCX0BUjnbAvaSeOab7dl2+eqhCsN+ImoZEmA=
+
+Dear Mr. Kabelac,
+
+I have (at first) not been aware, that at the end of your mail, you asked
+me probably 'about pseudo-raid'. It is difficult for me to give you an
+abstract definition of it, so I give you an example:
+
+* splitting the device '8:16' == /dev/sdb into 17 chunks of equal size by
+  the following table:
+
+* "dmsetup table ..." --> extended by the mappig 'from the names' to
+  /dev/dm-<n> (omitting "dmsetup ls", --> mapping "name -> /dev/dm-<n>"
+  in a separate list).
+  /dev/dm-20 <-- AFE37B55.A0:  0 86183752 linear 8:16 8
+  /dev/dm-21 <-- AFE37B55.A1:  0 86183752 linear 8:16 86183760
+  /dev/dm-22 <-- AFE37B55.A2:  0 86183752 linear 8:16 172367512
+  /dev/dm-23 <-- AFE37B55.A3:  0 86183752 linear 8:16 258551264
+  /dev/dm-24 <-- AFE37B55.A4:  0 86183752 linear 8:16 344735016
+  /dev/dm-25 <-- AFE37B55.A5:  0 86183752 linear 8:16 430918768
+  /dev/dm-26 <-- AFE37B55.A6:  0 86183752 linear 8:16 517102520
+  /dev/dm-27 <-- AFE37B55.A7:  0 86183752 linear 8:16 603286272
+  /dev/dm-28 <-- AFE37B55.A8:  0 86183752 linear 8:16 689470024
+  /dev/dm-29 <-- AFE37B55.A9:  0 86183752 linear 8:16 775653776
+  /dev/dm-30 <-- AFE37B55.A10: 0 86183752 linear 8:16 861837528
+  /dev/dm-31 <-- AFE37B55.A11: 0 86183752 linear 8:16 948021280
+  /dev/dm-32 <-- AFE37B55.A12: 0 86183752 linear 8:16 1034205032
+  /dev/dm-33 <-- AFE37B55.A13: 0 86183752 linear 8:16 1120388784
+  /dev/dm-34 <-- AFE37B55.A14: 0 86183752 linear 8:16 1206572536
+  /dev/dm-35 <-- AFE37B55.A15: 0 86183752 linear 8:16 1292756288
+  /dev/dm-36 <-- AFE37B55.A16: 0 86183752 linear 8:16 1378940040
+
+* having a raid4 with these chunks (see /proc/mdstat):
+  md255 : active raid4 dm-36[17] dm-35[15] dm-34[14] dm-33[13] \
+          dm-32[12]    dm-31[11] dm-30[10] dm-29[9]  dm-28[8]  \
+          dm-27[7]     dm-26[6]  dm-25[5]  dm-24[4]  dm-23[3]  \
+          dm-22[2]     dm-21[1]  dm-20[0]
+          689438720 blocks super 1.0 level 4, 4096k chunk,     \
+          algorithm 0 [17/17] [UUUUUUUUUUUUUUUUU]
+
+  (Ok. its actually "raid4", because distributing reads / writes on diffe-
+  rent legs is not sensible, if these legs reside on the same disk.)
+
+* according to them man page "md": MD(4)
+  [...]
+  In later kernels, a read-error  will  instead
+  cause  md  to  attempt a recovery by overwriting the bad block. i.e. it
+  will find the correct data from elsewhere, write it over the block that
+  failed, and then try to read it back again.
+  [Modern hard disks have spare sectors; a defective sector is at least,
+  when it is written to,(sorry for my english) replaced by such a spare-
+  sector.]
+  [...]
 
 
-On Mon, 18 Nov 2024 15:52:50 +0100, Mikulas Patocka wrote:
-> On Mon, 18 Nov 2024, Mikulas Patocka wrote:
-> 
-> > On Sat, 16 Nov 2024, dap581 wrote:
-> >
-> > > Hello,
-> > > Starting with kernel 6.11.x series up to current 6.12-rc7
-> > > when I unlock my encrypted hdd (storage, not root) with cryptsetup:
-> > >
-> > > cryptsetup luksOpen /dev/sda1 hdd5 -d keyfile_hdd5
-> > >
-> > > it triggers an alignment inconsistency:
-> > > In dmesg log, I read:
-> > > ----
-> > > [  105.841278] device-mapper: table: 254:1: adding target device sda1 caused an alignment inconsistency: physical_block_size=4096, logical_block_size=512, alignment_offset=0, start=16777216
-> > > [  105.841292] device-mapper: table: 254:1: adding target device sda1 caused an alignment inconsistency: physical_block_size=4096, logical_block_size=512, alignment_offset=0, start=16777216
-> > > [  105.841601] device-mapper: table: 254:1: adding target device sda1 caused an alignment inconsistency: physical_block_size=4096, logical_block_size=512, alignment_offset=0, start=16777216
-> > > [  105.841607] device-mapper: table: 254:1: adding target device sda1 caused an alignment inconsistency: physical_block_size=4096, logical_block_size=512, alignment_offset=0, start=16777216
-> > > ----
-> 
-> [...]
+Sincerely
 
-Applied, thanks!
+Thomas
 
-[1/1] blk-settings: round down io_opt to physical_block_size
-      commit: df199821cd4bf0c77c4fc4ca2fa978cedf5c8bcf
-
-Best regards,
--- 
-Jens Axboe
-
+============================================================================
+On Mon, November 18, 2024 10:28 am, Zdenek Kabelac wrote:
+> Dne 17. 11. 24 v 11:26 "Thomas Bruecker" napsal(a):
+>> [...]
+>  [...]
+>> [...]
+>> * My name: "pseudo-raid": raid5 with legs on the same device, especially
+>>   a hard disk. Ok, I admit, its slow.
+>>   * Reason:
+>>     * Modern hard disks are able to correct defective sectors, if the
+>>       driver ('md') knows, what should be in these sectors.
+>>     * You may not equip a notebook with additional hard disk.
+> Is this some sort of 'raid1 + writemostly' ?
+> And there is also another target 'dm-era' - which is however not
+> supported (yet)  by lvm2...
 
 
