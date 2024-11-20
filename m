@@ -1,70 +1,72 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72AB51779BB
-	for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 08:49:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0419219ED
+	for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 08:51:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732092563; cv=none; b=qptKlSqvzH+ulRinbDYsdAoSwqvPQtl8mITtZ4kI5TWzeBFotY+QOLHGvlFFMIgnE2yo412L73ktysGqZ9RVRfS6kt4HT6DXEoo6L9nlkM7xaRSpCxQJdFkgoyQnErYs0A593ly/YaVNE26lfZ8lR6GL4HrGklHaDrMFlC8qoPo=
+	t=1732092683; cv=none; b=jUdqqYe0uMIF8qlfoi+nz1/6hpTanAHT4qYu3KHjwb94A5YuMtYSqG6dfvY61H3G+NVwQuQkeY5MBQfhexN/71XZ+wb+xregL/YTQCvrQIKAoyYg3AgzcBO5hPtZWcRPnWSV3f95dSIxj5p3Ip8cu3GDFQ/PGitPs9kLuu1s70w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732092563; c=relaxed/simple;
-	bh=sRCDMxZhmSxeApATVnvfwfAzLHZtkDjQMjr9MwHIxwI=;
+	s=arc-20240116; t=1732092683; c=relaxed/simple;
+	bh=gsjqxlDBPjgkOxPu2NRl4UR1JjRgL14coHx21EzqML8=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=fhe0I2ZDjCLCEBFJMzF4jKWVUDXgPalAG2EOle6KNf92sG8vfMIQFJTDfSIfXdyCps0hT2EAibb+y7qi4dxKziUmitwtSxXIHGdCf3VRZCoS4XcShydJfnBTBGCKC333QJoigniX55lSaJ2i+ayumysWAosGoFRF6wim2ItzKFo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=DYB6SLks; arc=none smtp.client-ip=209.85.128.54
+	 Content-Type:MIME-Version; b=MGkZGBgBRolLQS5YPMjcYwT/fxJSmpZNOtnMnbjKyy9H7Lq0h3NDQUjxbR1F10fhOZbccLubhgm4XOU1sTSjfG7fo6r9drP1o1HwJY4O1wqrV2yYIE1uPaU79DK6xbyvHHp9EU34oSt4lgHixrqL47gKOONkV86hk/E999P2kzc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UW5KT2xk; arc=none smtp.client-ip=209.85.128.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="DYB6SLks"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-43152b79d25so44499765e9.1
-        for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 00:49:21 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UW5KT2xk"
+Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-43167ff0f91so46783475e9.1
+        for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 00:51:19 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1732092560; x=1732697360; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1732092678; x=1732697478; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=sRCDMxZhmSxeApATVnvfwfAzLHZtkDjQMjr9MwHIxwI=;
-        b=DYB6SLks2GvvCojvgCAMT3kK/dcZsW25cjhV+CkgE0A5brZn7FGy+dflJyfDMh7VM4
-         vMfLSu/adq+2PP2v1zlLp7Z4FX7/M62h4YNeEGvu8n6I7pdSzxu+UJLkdRKiquN0dqdH
-         M92iPwemJBdll3GeiZdix2tXY7P7C8XFbUq/3eD6iAJt47xs8JmCCWGm1TOTcH/rypY1
-         QC0EEdvF1lTtESjuAAlY/e0OT4pEuIQZAqbLRKJtXrPMxpZO2Jn4tTkaXe5IIT6yOLJL
-         jUObwcy+3LtNVjriUyBnbRBSDX41vNs+CiXhBGHY+shrwbgHKsLKxVOu9jH/USG3cRrQ
-         cjTQ==
+        bh=gsjqxlDBPjgkOxPu2NRl4UR1JjRgL14coHx21EzqML8=;
+        b=UW5KT2xksjRBHZo/dS5C8a0U9mBWfsXnjNRr1EWsiJKAbBNZopxhx7+wY1H4BZTeIa
+         QuFAnGSj7linkN8V/h5jcP312w0A5th96kkfPHwZFwAogZqMDV9HVJPKzSt2dPSqxCGr
+         qnUdlNb9mBNBokQC+jSLNii32wvpdxlIYX0wLgQ15UehCH2pp+6adDHuEi7P4kgzY8wK
+         At7hesMYnmWH4ey3urW5cLklD+OPlOyWGc6E/eVcGpKvZRrvamumMCUOTr7Y97Wv/lp7
+         IbvhQaMv8qSI0x/0daYg1MFZfl0WmxQWfxesSBwfUx/aK4rG4tjxYhL/xnk2yj8FQxTL
+         dauA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732092560; x=1732697360;
+        d=1e100.net; s=20230601; t=1732092678; x=1732697478;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=sRCDMxZhmSxeApATVnvfwfAzLHZtkDjQMjr9MwHIxwI=;
-        b=bYuTKcRcuRetyJ2QprQtOHWgpH8taa+kDfm5JQRH3sVoVKuLiDzY+Pcf1iH78FPtIB
-         8+/h3tlFMNxT1k7V1ya+jo1h4mBta2BTkqVGtPLd+S45b3Ohzdm0Za+Ujtk+HT1M2bri
-         mD16DsvsrToVOP8H/deLqqOxTW0wBHuJtTcedJLg3RN+3dzzj8wed8wDQTIw6XJECV6R
-         Ns4qvSTXhyVcskBCzDNklPNK1SI5Ho8eN+ZRjS9U815yP6gOlVZTmekPvbmV1RkI9+bj
-         j6BI/PR8Bu3SPADlVXvWX4NRuj4hZ5Z34spEQASaYrgHlEtUi/INg7ydi1KdQYrBO7Gf
-         NJlw==
-X-Forwarded-Encrypted: i=1; AJvYcCW3e2Jj9fKqCXzjtrf/RUIYzy6sSmb8trL6AzNZ1vH0qXhmyzTje6OkwIZjgErNdKENmmqSj3Q/Hg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw1aSelzDOL4ypoTU18Nd8z93QD83+em5qw01N6+I4begTyOyO/
-	D4qTHxCihfHgln+UfC5VvmvaaGfT9nZiE0tYOizakmf/qH1YoZ4zuJM4B6aHvAQ=
-X-Google-Smtp-Source: AGHT+IH9fZapEdKmvveiyAeTPhsDTmq/4SMdEWhbGv2OCoRiuIv+lqeVyasAnq+cMf3mP0UxM8xPig==
-X-Received: by 2002:a05:600c:4713:b0:431:51e5:22fb with SMTP id 5b1f17b1804b1-433489b2d49mr17337635e9.14.1732092559441;
-        Wed, 20 Nov 2024 00:49:19 -0800 (PST)
+        bh=gsjqxlDBPjgkOxPu2NRl4UR1JjRgL14coHx21EzqML8=;
+        b=TMq9h5t09TScfkbg3+luq0S2PcHaR5G3v9tpeAA6WXWL1oDbdEEcLUByrIWC5JtxG5
+         gmpjm+5PZl0CMs+JuBcs0PVEYZGNK602fG8pr/6dVRGBrwYLMumRVd1TtYpMkvAGMeqT
+         FKMdNcPsffhUkCtEDhP+mePQEDjXo1khaLK4mT6UzgcNEHZdHBD1d5/PaH710SWeez0N
+         ltpa6cK3mtzzL/BNVKf1+GFJI7qt5sYrLvpbXszm2BMMBVXkJduIEU2ohK7ymU686/JS
+         Cs0yzrFmRF7UaFuqA9fgeynqiUollzy/zHC4KhmaJQ/ZHUJTvC1plWNNVCO6GHMfSoZ/
+         g9vA==
+X-Forwarded-Encrypted: i=1; AJvYcCXxGPJAcH6utoAo9LbBzAePsyp7Bdrb29VkR1ZB3TVgH+7ru15BIGURFq5sJ5xB2dB/FTzqVk5Mew==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yw/VwIY9IGRWhcV8JfU6JpjLzwldAP8iuNIbGHZOQyUmUYrBJQ1
+	bu9ceSZurUdA6SrU7+KSF6hXRFl3nQ3l5CObfJFghkQtglUn2Y1YXsF9YWyCoI+6A7VbDYxL1gt
+	J
+X-Google-Smtp-Source: AGHT+IFGrj4G9weywtFLf2guO1uFKdQcts+UvbQjQrId25ZBDDxpn0OHuQar/ceieBfHZlMylV8qkw==
+X-Received: by 2002:a05:600c:524d:b0:431:4f5e:1f61 with SMTP id 5b1f17b1804b1-433489b599cmr17539975e9.14.1732092677605;
+        Wed, 20 Nov 2024 00:51:17 -0800 (PST)
 Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-433b46021e6sm11301055e9.17.2024.11.20.00.49.18
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-433b45d1d09sm11635725e9.4.2024.11.20.00.51.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 20 Nov 2024 00:49:18 -0800 (PST)
-Message-ID: <b74031fd331a5825b45d4c44a5567cc7d5d96bbf.camel@suse.com>
-Subject: Re: [PATCH 1/6] libmultipath: signal device with no table in
- libmp_mapinfo
+        Wed, 20 Nov 2024 00:51:17 -0800 (PST)
+Message-ID: <82668d7b5aec590e92f89cf13933476eed9f9b01.camel@suse.com>
+Subject: Re: [PATCH 0/6] multipath-tools: Handle tableless DM devices
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
  development <dm-devel@lists.linux.dev>
-Date: Wed, 20 Nov 2024 09:49:17 +0100
-In-Reply-To: <Zzz2E-UC1m8rezOH@redhat.com>
+Date: Wed, 20 Nov 2024 09:51:16 +0100
+In-Reply-To: <ZzzjTcBHm2T5AXQu@redhat.com>
 References: <20241115232256.627933-1-bmarzins@redhat.com>
-	 <20241115232256.627933-2-bmarzins@redhat.com>
-	 <8f74ed950515b775def323b2d04fb5092ad615de.camel@suse.com>
-	 <Zzz2E-UC1m8rezOH@redhat.com>
+	 <fbab2026d6850617f84da01c9c075f468295aa3b.camel@suse.com>
+	 <ZzuuUTMJgFPWV16s@redhat.com>
+	 <23860ac02355acab86798e2ce3d582ebed61a0d6.camel@suse.com>
+	 <1a516ff0aaf34d88da065a1f504606450eb871bc.camel@suse.com>
+	 <ZzzjTcBHm2T5AXQu@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.54.1 
@@ -75,70 +77,107 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Tue, 2024-11-19 at 15:33 -0500, Benjamin Marzinski wrote:
-> On Tue, Nov 19, 2024 at 05:39:26PM +0100, Martin Wilck wrote:
-> > On Fri, 2024-11-15 at 18:22 -0500, Benjamin Marzinski wrote:
-> > > if libmp_mapinfo() is run on a device that has no active table,
-> > > it will now return with a new exit code, DMP_EMPTY, to signal
-> > > this.
-> > > Currently all code paths treat this identically to DMP_NOT_FOUND.
+On Tue, 2024-11-19 at 14:13 -0500, Benjamin Marzinski wrote:
+> On Tue, Nov 19, 2024 at 05:40:19PM +0100, Martin Wilck wrote:
+> > On Tue, 2024-11-19 at 13:20 +0100, Martin Wilck wrote:
+> > > On Mon, 2024-11-18 at 16:14 -0500, Benjamin Marzinski wrote:
+> > > > On Mon, Nov 18, 2024 at 12:18:20PM +0100, Martin Wilck wrote:
+> > > > > On Fri, 2024-11-15 at 18:22 -0500, Benjamin Marzinski wrote:
+> > > > > >=20
+> > > > > > I'm not completely happy with the MAPINFO_ID_IF_FOUND flag.
+> > > > > > An
+> > > > > > alternative would be to run a second libmp_mapinfo() call
+> > > > > > without
+> > > > > > MAPINFO_MPATH_ONLY to grab the name, if the first failed
+> > > > > > with
+> > > > > > DMP_EMPTY.
+> > > > > > If people think that's a better way to solve this, I can
+> > > > > > rework
+> > > > > > those
+> > > > > > patches.
+> > > > >=20
+> > > > > We could simply choose to always fill in this information if
+> > > > > the
+> > > > > the caller has requested it, without an additional input
+> > > > > flag.
+> > > > > It's
+> > > > > not
+> > > > > an expensive operation.=C2=A0Is there a reason not to do this?
+> > > >=20
+> > > > Your comments in the code said that libmp_mapinfo() will not
+> > > > touch
+> > > > any
+> > > > of the output parameters if it doesn't succeed. I didn't audit
+> > > > the
+> > > > code,
+> > > > but I can certainly imagine a situation where you passed in
+> > > > pointers
+> > > > to
+> > > > some varaibles that already had values and you didn't want
+> > > > those
+> > > > values
+> > > > overwritten unless libmp_mapinfo() returned DMP_OK.
+> > > >=20
+> > > > But I can go look and see if any callers would get messed up if
+> > > > name
+> > > > or
+> > > > uuid got set, even when the found device didn't match.
 > > >=20
-> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > > I am pretty sure that that shouldn't happen. The memory must be
+> > > allocated anyway, and callers can't ignore the return value. But
+> > > double-checking is a good idea, of course, and we should adapt
+> > > the
+> > > documentation.
 > >=20
-> > I just looked through the code again. I think with this change, we
-> > need
-> > to modify dm_flush_map__() and do_foreach_partmaps(). They should
-> > remove / act on empty maps. What do you think?
+> > I just looked through the code. Except for the unit tests, I only
+> > found
+> > one call where this matters:
+> >=20
+> > dm_find_map_by_wwid() fills in the name if non-NULL. This is only
+> > used
+> > by cli_add_map(), where it doesn't cause an issue.
 >=20
-> I'm not sure that we need to add extra code to handle the possiblity
-> that an empty device could appear at any time, since like I said,
-> this is a corner case that I've never actually seen in the wild. So
-> if
-> a device was previously a valid multipath device, I don't think we
-> need
-> to worry about the possibility that it suddenly became empty.=20
+> Yep. In my patch that adds MAPINFO_ID_IF_FOUND to
+> dm_find_map_by_wwid(),
+> I even use the returned name to print out a better error message.
+> Which,
+> BTW I noticed that mpath_get_map() also does, even though we haven't
+> been setting name on DMP_NO_MATCH returns, so this has been broken.=20
 >=20
-> But I can see the value in running something like
->=20
-> # multipath -F
->=20
-> and having it clean up any empty multipath devices. As for
-> do_foreach_partmaps(), are you thinking about cleaning up empty
-> partition devices or non-empty partition devices on top of empty
-> multipath devices?
->=20
-> Non-empty partition devices on top of empty multipath devices would
-> imply that a multipath device was valid at one point, and then became
-> empty, which I don't see an easy way of happening.
->=20
-> The problem with empty partition devices is that partition devices
+> I was also wondering if we could do the same thing with info.dmi,
+> since
+> that will also be set whenever we find a device, even if it doesn't
+> match the type of device we're looking for. The only problem with
+> that
+> is that update_multipath_table() would then set mpp->dmi even on
+> DMP_NO_MATCH or DMP_EMPTY. Now, if update_multipath_table() returns
+> one of those values, something is already very wrong. But even still,
+> I think we should not overwrite the existing dmi value. Of course
+> it's
+> simple to just create a tmp dmi variable, and only overwrite the
+> mpp->dmi on DMP_OK.
+
+Absolutely, yes. Do we have use for the dmi information in cases where
+there's no match?
+
+> I should note that just removing the MAPINFO_ID_IF_FOUND flag won't
+> remove most of the complexity of ("libmultipath: Add flag to always
+> return device ID when found"), since most of the code exists to make
+> sure that the other output variables aren't updated if allocating
+> space
+> for the status and target outputs fail. This means that no outputs
 > are
-> created by kpartx completely asynchronously to us. That empty
-> partition
-> device could be in the process of being created.
+> ever touched when we return DMP_ERR.=20
+>=20
+> If we don't care about that, and just say that the uuid, name, and
+> dmi
+> output parameters may be overwritten regardless of the return status
+> of libmp_mapinfo(), then we can set those values as soon as we know
+> them, and most of that patch becomes very small. I'm not sure if it
+> really matters one way or the other.
+>=20
 
-Right, but multipathd is in the process of deleting the map. If there's
-actually a race and kpartx finishes creating the partition map,
-multipathd will fail to remove the multipath map. The likely outcome
-will be a multipath map with just one partition device. If multipathd
-comes first, kpartx will fail, but there's a good chance that
-multipathd will succeed in flushing the multipath map, so we'll end up
-with a consistent state.
-
-If kpartx had run a little earlier and had finished setting up the map,
-multipathd would have removed it, and if kpartx had run a little later,
-it would have failed because of a missing target.
-
-> So I'm not against checking for DMP_EMPTY in dm_flush_map__() and
-> removing the empty device if its opencount is 0. But I'd rather not
-> try messing with partmaps. Do you have a specific case you are
-> worried
-> about?
-
-From the argument above, I'd say that flushing empty partition maps is
-the right thing to do, for consistency reasons.
-
-But now I may be overlooking something.
+I like this idea.
 
 Martin
 
