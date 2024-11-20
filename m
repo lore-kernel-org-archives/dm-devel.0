@@ -1,129 +1,144 @@
-Received: from sfwd06.p.bluenet.ch (sfwd06.p.bluenet.ch [193.247.246.19])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B619848C
-	for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 01:44:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.247.246.19
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72AB51779BB
+	for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 08:49:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732067087; cv=none; b=teNI2SeQoIX3P6fQzmnWIF8D3ESoRsRVuF+K0Ah/rMKl8mMWHLr1p3TK73whjuzaaf+bOYhsMwSUlZDVSjnbirsQKTcn+LnBp6miCL9rYEFKkQeQDyqPSRdl0q4J7CN5fh6E4DJuWMGsGtLpJtRNUnHzPwayW8gR+4SdomI65JQ=
+	t=1732092563; cv=none; b=qptKlSqvzH+ulRinbDYsdAoSwqvPQtl8mITtZ4kI5TWzeBFotY+QOLHGvlFFMIgnE2yo412L73ktysGqZ9RVRfS6kt4HT6DXEoo6L9nlkM7xaRSpCxQJdFkgoyQnErYs0A593ly/YaVNE26lfZ8lR6GL4HrGklHaDrMFlC8qoPo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732067087; c=relaxed/simple;
-	bh=dPow0NurtUZLwUqen1D27znT0lg9YsKQgWUMrTGZqT0=;
-	h=Message-ID:Date:Subject:From:To:MIME-Version:Content-Type; b=YO87SvA8bEuIxHgHMx8++IiVE+TZg8UTy02KtcmwG4EutzpSUknxhSRVNJMdH9KIoIiicDf+FM46CSj3aRJEGde16osU72DR+quSugpPFlQ16aR5soMuRqQ2ph3DsoyKFHwBmW7nvTIb4k3K1Cjl+j1dIHCuMdX6HVe6Mp+ram4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch; spf=pass smtp.mailfrom=bluewin.ch; dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b=NtdVgSEm; arc=none smtp.client-ip=193.247.246.19
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=bluewin.ch
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bluewin.ch
+	s=arc-20240116; t=1732092563; c=relaxed/simple;
+	bh=sRCDMxZhmSxeApATVnvfwfAzLHZtkDjQMjr9MwHIxwI=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=fhe0I2ZDjCLCEBFJMzF4jKWVUDXgPalAG2EOle6KNf92sG8vfMIQFJTDfSIfXdyCps0hT2EAibb+y7qi4dxKziUmitwtSxXIHGdCf3VRZCoS4XcShydJfnBTBGCKC333QJoigniX55lSaJ2i+ayumysWAosGoFRF6wim2ItzKFo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=DYB6SLks; arc=none smtp.client-ip=209.85.128.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=bluewin.ch header.i=@bluewin.ch header.b="NtdVgSEm"
-Received: from main ([84.227.21.131])
-	by vimdzmsp-sfwd06.bluewin.ch Swisscom AG with ESMTPA
-	id DZlqto3f6WdHXDZlqtur5M; Wed, 20 Nov 2024 02:44:42 +0100
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bluewin.ch;
-	s=fxzs-2048-20230414; t=1732067082;
-	bh=JnTWB2RJYO299iaEG9S8vcDCuum8fys3QnL6mK3l8Es=;
-	h=Message-ID:Date:Subject:From:To:MIME-Version;
-	b=NtdVgSEmHz/zcHSN7d3mLr6Db2rnMRISpTwRRHrwXpO3U53U/5hTrMSymzVjNfhK7
-	 ljZjyb00xibIMJZNo0ulBNFs/6XgBD9PT25jFxTAgDpJWeOZvy3sh5IOywEkEz6sbe
-	 uoMTBHFLwatroJBXP7FHMEXrwgMiVi4V0anrs0agf6rdfrqG5DR2M2sw0t3YchTxrQ
-	 TABlw5kPvf+rIrJXJnXkt1W0tGwWP8NZD8VdVUBhYrqYmAaRhkwgSClUZiJoJMEfOD
-	 cqXzSBF3QjnxcUkF++emPE0pypQTWjbpaGB25XV5vM/JHhXci3LwJx6+C9RKonPodp
-	 qiAWw0K6fphlg==
-X-Bluewin-Spam-Analysis: v=2.4 cv=M5juKDws c=1 sm=1 tr=0 ts=673d3f0a
- a=ig9bzvNBGao8Dw96AwO3EA==:117 a=ig9bzvNBGao8Dw96AwO3EA==:17
- a=8nJEP1OIZ-IA:10 a=VlfZXiiP6vEA:10 a=LLPZWm0_0O8A:10 a=UnFn9vWkAAAA:8
- a=-hsQUwj1i2190egUvwYA:9 a=wPNLvfGTeEIA:10 a=5uXxjHYwiSDyE7QCaOg_:22
-X-Bluewin-Spam-Score: 0.00
-X-FXIT-IP: IPv4[84.227.21.131] Epoch[1732067082]
-X-Bluewin-AuthAs: public0x05bf@bluewin.ch
-Received: from 10.235.1.189
-        (SquirrelMail authenticated user public0x05bf)
-        by main with HTTP;
-        Wed, 20 Nov 2024 02:28:39 +0100
-Message-ID: <16c198593dc27302ab90ca7fe39bb71c.squirrel@main>
-Date: Wed, 20 Nov 2024 02:28:39 +0100
-Subject: (Re ** 6)[1]: Extending "thin_trim" (about pseudo-raid: Why!)
-From: =?iso-8859-1?Q?=22Thomas_Br=FCcker=22?= <public0x05bf@bluewin.ch>
-To: "Zdenek Kabelac" <zdenek.kabelac@gmail.com>,
- dm-devel@lists.linux.dev
-User-Agent: SquirrelMail/1.4.21
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="DYB6SLks"
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-43152b79d25so44499765e9.1
+        for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 00:49:21 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1732092560; x=1732697360; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=sRCDMxZhmSxeApATVnvfwfAzLHZtkDjQMjr9MwHIxwI=;
+        b=DYB6SLks2GvvCojvgCAMT3kK/dcZsW25cjhV+CkgE0A5brZn7FGy+dflJyfDMh7VM4
+         vMfLSu/adq+2PP2v1zlLp7Z4FX7/M62h4YNeEGvu8n6I7pdSzxu+UJLkdRKiquN0dqdH
+         M92iPwemJBdll3GeiZdix2tXY7P7C8XFbUq/3eD6iAJt47xs8JmCCWGm1TOTcH/rypY1
+         QC0EEdvF1lTtESjuAAlY/e0OT4pEuIQZAqbLRKJtXrPMxpZO2Jn4tTkaXe5IIT6yOLJL
+         jUObwcy+3LtNVjriUyBnbRBSDX41vNs+CiXhBGHY+shrwbgHKsLKxVOu9jH/USG3cRrQ
+         cjTQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1732092560; x=1732697360;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=sRCDMxZhmSxeApATVnvfwfAzLHZtkDjQMjr9MwHIxwI=;
+        b=bYuTKcRcuRetyJ2QprQtOHWgpH8taa+kDfm5JQRH3sVoVKuLiDzY+Pcf1iH78FPtIB
+         8+/h3tlFMNxT1k7V1ya+jo1h4mBta2BTkqVGtPLd+S45b3Ohzdm0Za+Ujtk+HT1M2bri
+         mD16DsvsrToVOP8H/deLqqOxTW0wBHuJtTcedJLg3RN+3dzzj8wed8wDQTIw6XJECV6R
+         Ns4qvSTXhyVcskBCzDNklPNK1SI5Ho8eN+ZRjS9U815yP6gOlVZTmekPvbmV1RkI9+bj
+         j6BI/PR8Bu3SPADlVXvWX4NRuj4hZ5Z34spEQASaYrgHlEtUi/INg7ydi1KdQYrBO7Gf
+         NJlw==
+X-Forwarded-Encrypted: i=1; AJvYcCW3e2Jj9fKqCXzjtrf/RUIYzy6sSmb8trL6AzNZ1vH0qXhmyzTje6OkwIZjgErNdKENmmqSj3Q/Hg==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yw1aSelzDOL4ypoTU18Nd8z93QD83+em5qw01N6+I4begTyOyO/
+	D4qTHxCihfHgln+UfC5VvmvaaGfT9nZiE0tYOizakmf/qH1YoZ4zuJM4B6aHvAQ=
+X-Google-Smtp-Source: AGHT+IH9fZapEdKmvveiyAeTPhsDTmq/4SMdEWhbGv2OCoRiuIv+lqeVyasAnq+cMf3mP0UxM8xPig==
+X-Received: by 2002:a05:600c:4713:b0:431:51e5:22fb with SMTP id 5b1f17b1804b1-433489b2d49mr17337635e9.14.1732092559441;
+        Wed, 20 Nov 2024 00:49:19 -0800 (PST)
+Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-433b46021e6sm11301055e9.17.2024.11.20.00.49.18
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 20 Nov 2024 00:49:18 -0800 (PST)
+Message-ID: <b74031fd331a5825b45d4c44a5567cc7d5d96bbf.camel@suse.com>
+Subject: Re: [PATCH 1/6] libmultipath: signal device with no table in
+ libmp_mapinfo
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
+ development <dm-devel@lists.linux.dev>
+Date: Wed, 20 Nov 2024 09:49:17 +0100
+In-Reply-To: <Zzz2E-UC1m8rezOH@redhat.com>
+References: <20241115232256.627933-1-bmarzins@redhat.com>
+	 <20241115232256.627933-2-bmarzins@redhat.com>
+	 <8f74ed950515b775def323b2d04fb5092ad615de.camel@suse.com>
+	 <Zzz2E-UC1m8rezOH@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-X-Priority: 3 (Normal)
-Importance: Normal
-X-CMAE-Envelope: MS4xfKB5hU+3sM+cLKo9onaSJBI/886VIvUXShNe0/8vK3p2kQgVgboC1Ts7tceHNVFstHLllXxq6T4vlx/XxjLPRgznzi6bBOb+tV+9tBMmMJRHDZvG83/w
- CPvk6W7rEAKB/OKFT7ZdNjfaq8TdqAFsZ9ELvF/te2xQCai0DmOnZucX6BvR8L12nM/ja9TXWqsTb5VmtjeGuxNTV1dPtvZwXaXpN/FOxvVwZi22AIXx+fyo
- Xl/SbOAKjF7TRhH8htq/AF+tr/si6ftYVWs1lzSxmPA=
 
-Dear Mr. Kabelac,
+On Tue, 2024-11-19 at 15:33 -0500, Benjamin Marzinski wrote:
+> On Tue, Nov 19, 2024 at 05:39:26PM +0100, Martin Wilck wrote:
+> > On Fri, 2024-11-15 at 18:22 -0500, Benjamin Marzinski wrote:
+> > > if libmp_mapinfo() is run on a device that has no active table,
+> > > it will now return with a new exit code, DMP_EMPTY, to signal
+> > > this.
+> > > Currently all code paths treat this identically to DMP_NOT_FOUND.
+> > >=20
+> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> >=20
+> > I just looked through the code again. I think with this change, we
+> > need
+> > to modify dm_flush_map__() and do_foreach_partmaps(). They should
+> > remove / act on empty maps. What do you think?
+>=20
+> I'm not sure that we need to add extra code to handle the possiblity
+> that an empty device could appear at any time, since like I said,
+> this is a corner case that I've never actually seen in the wild. So
+> if
+> a device was previously a valid multipath device, I don't think we
+> need
+> to worry about the possibility that it suddenly became empty.=20
+>=20
+> But I can see the value in running something like
+>=20
+> # multipath -F
+>=20
+> and having it clean up any empty multipath devices. As for
+> do_foreach_partmaps(), are you thinking about cleaning up empty
+> partition devices or non-empty partition devices on top of empty
+> multipath devices?
+>=20
+> Non-empty partition devices on top of empty multipath devices would
+> imply that a multipath device was valid at one point, and then became
+> empty, which I don't see an easy way of happening.
+>=20
+> The problem with empty partition devices is that partition devices
+> are
+> created by kpartx completely asynchronously to us. That empty
+> partition
+> device could be in the process of being created.
 
-* I have had two (real!) cases which three mechanical harddisks, that have
-had defective sectors (within warranty time!), not just announced as
-defective, but really unreadable.
+Right, but multipathd is in the process of deleting the map. If there's
+actually a race and kpartx finishes creating the partition map,
+multipathd will fail to remove the multipath map. The likely outcome
+will be a multipath map with just one partition device. If multipathd
+comes first, kpartx will fail, but there's a good chance that
+multipathd will succeed in flushing the multipath map, so we'll end up
+with a consistent state.
 
-1st case: Two ecolocical, energy saving samsung disks, that have both got
-unreadable sectors, happyly mutually not on the same location, connected
-as raid1: All data could be read and saved.
+If kpartx had run a little earlier and had finished setting up the map,
+multipathd would have removed it, and if kpartx had run a little later,
+it would have failed because of a missing target.
 
-2nd case: An usb-disk that had got unreadable sectors with a 'pseudo-raid'
-on it: All data could be read and saved.
+> So I'm not against checking for DMP_EMPTY in dm_flush_map__() and
+> removing the empty device if its opencount is 0. But I'd rather not
+> try messing with partmaps. Do you have a specific case you are
+> worried
+> about?
 
-* Experimental case: Test of 'pseudo-raid' on a dvd, the dvd was scratched
-and could partially not be read: The pseudo raid could be read without any
-problem (
-* ok. if the metadata on the dvd, which is responsible to have access to
-  the dvd at all, is scratched, you loose everything.
-* about a read-only!-dvd with 'raid' on it ...: I use another 'strange'
-  construct with dm-target dm-snapshot to protect the dvd from writing to.
-).
+From the argument above, I'd say that flushing empty partition maps is
+the right thing to do, for consistency reasons.
 
-* I have had at least two (real) cases of harddisks with each having a
-unreadable first sector (== the partition table): The laptops could
-neither
-been started, nor could the data.been accessed, After rewriting the
-partition table, the disks worked just long enough, to copy a complete
-image of them.
-(either the disk has a partiton at the 'usual' location, or you may search
-for the begin of the filesystem...)
+But now I may be overlooking something.
 
-* Link (I don't want to attach and clutter your mail server with unneces-
-  sary images) to: Defective disk in harddisk device.
-  "http://www.thomas-r-bruecker.ch/favorites/io/disk/Defective_disk.jpg".
-  (It begins mostly with defective sectors and ends in a crash.)
-
-* So, for me, it is a good idea, to protect myself from defective sectors.
-
-* 'Normal' raid(1):
-  * notebooks with two harddisks in it ...?
-  * travelling with a laptop and two usb-harddisks ...?
-
-
-Sincerely
-
-Thomas
-
-============================================================================
-On Tue, November 19, 2024 2:37 pm, Zdenek Kabelac wrote:
-> Dne 19. 11. 24 v 3:11 "Thomas Bruecker" napsal(a):
->> ]...]
-
-> [...]
-> And while I can 'see' a small value in having the same data stored
-> multiple times on the same drive - the protection you get from this is
-> close to nothing
-> [...]
-> With prices of storage these days I'd simply recommend to simply use the
-> raid the way it's supposed to be used.
-> [...]
-
-
-
-
-
-
+Martin
 
