@@ -1,144 +1,192 @@
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8CEB0199E94
-	for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 10:42:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 714B3158A13
+	for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 19:50:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732099345; cv=none; b=Vy2bHDhZ9t+n8C8fvrQjs9Iz+bVIMKXWWM6PDJmJ/JW2ugpGhV0OsCUZz94bgy1CCU/XV+mgDVr4Pd4ZlJ6TpzKUCMrSaQSxmKeo3eYidJ5HAcR+vhHkR1pRCfJRN3WJCDPvpWyhs7zb+BjcoJUmIIgljj0nLIWjJR4mxermsng=
+	t=1732132222; cv=none; b=YDngeqGmAzVLP/QxuiZB6XLuxhqzF9sTrreCOlfU5ww1hZVXZ16dZyJr+x+BAo78t/NCsU1o+uH8Hq3jfX00Z0FYsH2CcqE4oKEfHcADIHBm1i2WVjBr2qqq2UHFq0NcgJPLUVop+y7iXWMMToTDyAusVB2troG6MQlTOz4G3TQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732099345; c=relaxed/simple;
-	bh=XyODa1LCzuhYX4RqTNQ6KQqHj00PZAoaT6QpjBVjnBQ=;
-	h=From:Message-ID:Date:MIME-Version:Subject:To:References:
-	 In-Reply-To:Content-Type; b=UnrprYE1K93FuBoBlMTbUmmyezPNZfnsaq2GBJYf0bqfBrR4To6OPj4d1Jn7Xm8B0wBh86OWAxxni5jZDwXkeKKdBiJUjtLlz0S/INFatISBZd0cN4MCJwo8kaOM7LSIWFt+5zh3VRTA1gwaMQvZ7WLD0JXMrFGKV14be15pCFM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YrYBNhh6; arc=none smtp.client-ip=209.85.221.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1732132222; c=relaxed/simple;
+	bh=KP0iY903cmvBG7mZ3mVstEQx/28Dx8r3Yv1Zwzbg79M=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=D2xi2E3BchBYkNIhRdJ6Mf1yQqHTuflEdKracb8QJI/iFYy9V8ZY2NLi1DAwEbhmHLugumB/wELsDuDFe1UWt/0KJ6TaqYwxG5WEC/6YbYtp3fAuKJVaRDNUgOBmzMwMbX2KO6rf0OYAJ4qoHbVgHO6UopqxLwZklGuYqdrGxss=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Qwx6p6Fu; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YrYBNhh6"
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-382026ba43eso4040685f8f.1
-        for <dm-devel@lists.linux.dev>; Wed, 20 Nov 2024 02:42:23 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1732099342; x=1732704142; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:content-language:references
-         :to:subject:user-agent:mime-version:date:message-id:from:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=ScJfAgXX0lE+CCVupy6tpeJiinu5z4i+DcsVPJlyG7s=;
-        b=YrYBNhh6Td+Fomasi3cof8WsInhmphTIYDtEmgyFxtCBDNP/1OSMW4MJG+t2SanthF
-         DHq1T1FaG7GchOKwg89r96fan4JlOBjz7ID3tbRZeHrjBxJ7/P8+hOJd2dV/kF4RKaqH
-         /W2BYDPusCpGsF295sOcyMn4TnBjqgL3C1v7w734syOEBnZLy9CqUV6q4tKhU4KSL8Y9
-         e+NS5MUM47OuODQ9KNB3JqJsVWt0Ab0tj2wrnOeeYecd5HsP8GsH1l6MWRZy/YLVTEJF
-         wypL7+EyxbMUUyjIdiQFHQUkbKVaeHNeGxTMVH2cWi8tX7anrOBSe9xJI1CxeV6TamP0
-         b6Bg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732099342; x=1732704142;
-        h=content-transfer-encoding:in-reply-to:content-language:references
-         :to:subject:user-agent:mime-version:date:message-id:from
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ScJfAgXX0lE+CCVupy6tpeJiinu5z4i+DcsVPJlyG7s=;
-        b=ok2mppEKKDIAAkbXtwPGtH2sdEOW47SgFX5DebXc1NhFQp5Xk3zfRAdw5DFp4tElOQ
-         Swmr93MmLl8WSJYu86Wv72QNH5Jn8WUgGxHlH0zYK6mEEjoGra6/aYqRqnd6LyCWFkPr
-         p8Wi8MLWfPcGjW3PiVdPk6SsAPYvRPq5+vQojGUCfi5JoqUv5cN6qZl7Ny0mSlAB+8xG
-         hfQ3kDuycf0QIDV/AxF95d7Hnu8xdKWRY30ZxiqTbLayvlsRYQO8N2V3YLxkPLsw9HIm
-         3rTA4EekAhX4SK9q5F9anBx0iNYTmkb7EqjYecIDfIHQkxe/s0NBby+chWlsxnQMC64P
-         iJtg==
-X-Forwarded-Encrypted: i=1; AJvYcCVp5AITqBYMCLkMpQwIqumiOOH7ua2uTbupAgJ0kce4PMLKqMfkHq9ctmn6tIUVzuxDkpk9CXGtyQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyvyTF1WSyYkXDEWtE0pJNqn0RJcnRIvCDG/yjS8I4hCu1wCAay
-	UEZEUAINJy6YxpMxYgogZ5qKbIpbXXIwQxfnRVGcTjg5OBcfXPE2wiTW9A==
-X-Google-Smtp-Source: AGHT+IHEXHQz6vTfGMdeFyyHcucT5EaBSjb9jyFC9tt5/6kUvROuwXJhhU6RY2tttec4ZZ5WGHsYNg==
-X-Received: by 2002:a05:6000:1a85:b0:382:31a1:8dc3 with SMTP id ffacd0b85a97d-38254b014fdmr1390617f8f.35.1732099341586;
-        Wed, 20 Nov 2024 02:42:21 -0800 (PST)
-Received: from [10.43.17.62] (nat-pool-brq-t.redhat.com. [213.175.37.10])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3825494ca3fsm1682729f8f.111.2024.11.20.02.42.20
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 20 Nov 2024 02:42:21 -0800 (PST)
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-X-Google-Original-From: Zdenek Kabelac <zkabelac@redhat.com>
-Message-ID: <91d94f48-bae4-48eb-8604-a7522f7062c8@redhat.com>
-Date: Wed, 20 Nov 2024 11:42:20 +0100
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Qwx6p6Fu"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1732132219;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=C1YWO595LNU1nqiIIlKSPxjzvEJVDIcJnQ1I832ynZ0=;
+	b=Qwx6p6FufHbeUlsu+i72trHqJHGUbAAmDajGTZkTs/QZz4BQkVd86mzNVUOWoGCBYsyYht
+	lJuKYBDtayb9fL6ZNjSdjt/sxMT4IqFPEOZR2IDT3lWK6EdPcATfPuiLB/ML2gahgNfmQY
+	ja8AzNucqebvPHsWm+vu/4nUMcMi5hE=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-574-jcMcX9zlNrO6pMv1hgbOuA-1; Wed,
+ 20 Nov 2024 14:50:18 -0500
+X-MC-Unique: jcMcX9zlNrO6pMv1hgbOuA-1
+X-Mimecast-MFC-AGG-ID: jcMcX9zlNrO6pMv1hgbOuA
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B4A0C195604F;
+	Wed, 20 Nov 2024 19:50:16 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1ED1F19560A3;
+	Wed, 20 Nov 2024 19:50:16 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4AKJoEE4697255
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 20 Nov 2024 14:50:14 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4AKJoEVj697254;
+	Wed, 20 Nov 2024 14:50:14 -0500
+Date: Wed, 20 Nov 2024 14:50:14 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH 0/6] multipath-tools: Handle tableless DM devices
+Message-ID: <Zz49dvvW59M1Aq9Z@redhat.com>
+References: <20241115232256.627933-1-bmarzins@redhat.com>
+ <fbab2026d6850617f84da01c9c075f468295aa3b.camel@suse.com>
+ <ZzuuUTMJgFPWV16s@redhat.com>
+ <23860ac02355acab86798e2ce3d582ebed61a0d6.camel@suse.com>
+ <1a516ff0aaf34d88da065a1f504606450eb871bc.camel@suse.com>
+ <ZzzjTcBHm2T5AXQu@redhat.com>
+ <82668d7b5aec590e92f89cf13933476eed9f9b01.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: (Re ** 6)[1]: Extending "thin_trim" (about pseudo-raid: Why!)
-To: =?UTF-8?Q?Thomas_Br=C3=BCcker?= <public0x05bf@bluewin.ch>,
- Zdenek Kabelac <zdenek.kabelac@gmail.com>, dm-devel@lists.linux.dev
-References: <16c198593dc27302ab90ca7fe39bb71c.squirrel@main>
-Content-Language: en-US, cs
-In-Reply-To: <16c198593dc27302ab90ca7fe39bb71c.squirrel@main>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+In-Reply-To: <82668d7b5aec590e92f89cf13933476eed9f9b01.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: n9NpMB_FKDDn55wWMpoyzMg_C3DLVCRJRjviGS_5Uwg_1732132217
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 
-Dne 20. 11. 24 v 2:28 "Thomas Brücker" napsal(a):
-> Dear Mr. Kabelac,
->
-> * I have had two (real!) cases which three mechanical harddisks, that have
-> had defective sectors (within warranty time!), not just announced as
-> defective, but really unreadable.
->
-> 1st case: Two ecolocical, energy saving samsung disks, that have both got
-> unreadable sectors, happyly mutually not on the same location, connected
-> as raid1: All data could be read and saved.
->
-> 2nd case: An usb-disk that had got unreadable sectors with a 'pseudo-raid'
-> on it: All data could be read and saved.
+On Wed, Nov 20, 2024 at 09:51:16AM +0100, Martin Wilck wrote:
+> On Tue, 2024-11-19 at 14:13 -0500, Benjamin Marzinski wrote:
+> > On Tue, Nov 19, 2024 at 05:40:19PM +0100, Martin Wilck wrote:
+> > > On Tue, 2024-11-19 at 13:20 +0100, Martin Wilck wrote:
+> > > > On Mon, 2024-11-18 at 16:14 -0500, Benjamin Marzinski wrote:
+> > > > > On Mon, Nov 18, 2024 at 12:18:20PM +0100, Martin Wilck wrote:
+> > > > > > On Fri, 2024-11-15 at 18:22 -0500, Benjamin Marzinski wrote:
+> > > > > > > 
+> > > > > > > I'm not completely happy with the MAPINFO_ID_IF_FOUND flag.
+> > > > > > > An
+> > > > > > > alternative would be to run a second libmp_mapinfo() call
+> > > > > > > without
+> > > > > > > MAPINFO_MPATH_ONLY to grab the name, if the first failed
+> > > > > > > with
+> > > > > > > DMP_EMPTY.
+> > > > > > > If people think that's a better way to solve this, I can
+> > > > > > > rework
+> > > > > > > those
+> > > > > > > patches.
+> > > > > > 
+> > > > > > We could simply choose to always fill in this information if
+> > > > > > the
+> > > > > > the caller has requested it, without an additional input
+> > > > > > flag.
+> > > > > > It's
+> > > > > > not
+> > > > > > an expensive operation.�Is there a reason not to do this?
+> > > > > 
+> > > > > Your comments in the code said that libmp_mapinfo() will not
+> > > > > touch
+> > > > > any
+> > > > > of the output parameters if it doesn't succeed. I didn't audit
+> > > > > the
+> > > > > code,
+> > > > > but I can certainly imagine a situation where you passed in
+> > > > > pointers
+> > > > > to
+> > > > > some varaibles that already had values and you didn't want
+> > > > > those
+> > > > > values
+> > > > > overwritten unless libmp_mapinfo() returned DMP_OK.
+> > > > > 
+> > > > > But I can go look and see if any callers would get messed up if
+> > > > > name
+> > > > > or
+> > > > > uuid got set, even when the found device didn't match.
+> > > > 
+> > > > I am pretty sure that that shouldn't happen. The memory must be
+> > > > allocated anyway, and callers can't ignore the return value. But
+> > > > double-checking is a good idea, of course, and we should adapt
+> > > > the
+> > > > documentation.
+> > > 
+> > > I just looked through the code. Except for the unit tests, I only
+> > > found
+> > > one call where this matters:
+> > > 
+> > > dm_find_map_by_wwid() fills in the name if non-NULL. This is only
+> > > used
+> > > by cli_add_map(), where it doesn't cause an issue.
+> > 
+> > Yep. In my patch that adds MAPINFO_ID_IF_FOUND to
+> > dm_find_map_by_wwid(),
+> > I even use the returned name to print out a better error message.
+> > Which,
+> > BTW I noticed that mpath_get_map() also does, even though we haven't
+> > been setting name on DMP_NO_MATCH returns, so this has been broken. 
+> > 
+> > I was also wondering if we could do the same thing with info.dmi,
+> > since
+> > that will also be set whenever we find a device, even if it doesn't
+> > match the type of device we're looking for. The only problem with
+> > that
+> > is that update_multipath_table() would then set mpp->dmi even on
+> > DMP_NO_MATCH or DMP_EMPTY. Now, if update_multipath_table() returns
+> > one of those values, something is already very wrong. But even still,
+> > I think we should not overwrite the existing dmi value. Of course
+> > it's
+> > simple to just create a tmp dmi variable, and only overwrite the
+> > mpp->dmi on DMP_OK.
+> 
+> Absolutely, yes. Do we have use for the dmi information in cases where
+> there's no match?
 
-
-Hi
-
-
-Any device that is showing  'error' sectors (aka  smartctl shows badblocks, 
-uncorrectable errors)   should be ASAP 'recovered/copied' to another new disk 
-- and such faulty disk should no longer be used for anything you care about!
-
-If you think  the disk is still 'good enough' to not be thrown to 
-trash/recycle bin -  you could probably do a surface analysis - and i.e. 
-allocate partitions on a drive in such a way that HUGE portion of drive before 
-and after the error  is left  as not being used/allocated   (works for HDD -   
-for SSD/NVMe this obviously makes no sense) -  so then HDD reading heads are 
-not damaging those errori places any more - and then you can try to use it to 
-store something unimportant - i.e.  3rd. backup of something....
-
-Using faulty drive as 'daily work  disk'  with the idea you've 'saved' 
-something  makes no sense - you are just preparing yourself big troubles....
-
-
-> * Experimental case: Test of 'pseudo-raid' on a dvd, the dvd was scratched
-> and could partially not be read: The pseudo raid could be read without any
-> problem (
-
-
-Just backup all your DVDs on TiB drives  while they are still readable....
-
-
->
-> * I have had at least two (real) cases of harddisks with each having a
-> unreadable first sector (== the partition table): The laptops could
-> neither
-
-Such drives are simply an electronic waste for recycling...
-
-
-> * So, for me, it is a good idea, to protect myself from defective sectors.
->
-> * 'Normal' raid(1):
->    * notebooks with two harddisks in it ...?
->    * travelling with a laptop and two usb-harddisks ...?
-
-
-Seriously you should really use real  raid1 instead of these rather highly 
-'questionable' data protection ideas...  (if you care about your data)
-
-And yes - all notebooks I know  have at least  2 slots for drives - one is 
-typically equipped when being sold - other one is usually empty - one just has 
-to dismount laptop cover and add the drive to unused slot...
-
-
-Regards
-
-Zdenek
-
+There's definitely information we could use. I'm not sure if it would
+actually cut down on any current function calls. But, for instance, you
+get the major:minor of the device that you did find. If the device is
+empty, you can see if it has an inactive table or any openers. So I
+certainly can see ways it would either cut down on calls or make the
+code be able to act more intelligently.
+ 
+> > I should note that just removing the MAPINFO_ID_IF_FOUND flag won't
+> > remove most of the complexity of ("libmultipath: Add flag to always
+> > return device ID when found"), since most of the code exists to make
+> > sure that the other output variables aren't updated if allocating
+> > space
+> > for the status and target outputs fail. This means that no outputs
+> > are
+> > ever touched when we return DMP_ERR. 
+> > 
+> > If we don't care about that, and just say that the uuid, name, and
+> > dmi
+> > output parameters may be overwritten regardless of the return status
+> > of libmp_mapinfo(), then we can set those values as soon as we know
+> > them, and most of that patch becomes very small. I'm not sure if it
+> > really matters one way or the other.
+> > 
+> 
+> I like this idea.
+> 
+> Martin
 
