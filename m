@@ -1,73 +1,73 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4DDA187344
-	for <dm-devel@lists.linux.dev>; Fri, 22 Nov 2024 22:03:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D52C176AAE
+	for <dm-devel@lists.linux.dev>; Fri, 22 Nov 2024 22:03:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732312990; cv=none; b=OZLqhiuG9v84XRd1WQKEWHWf5nR0Gu8f63N/ZqOAYaVvoyW+uzJGMGlb1YsShyhVU22d8cfQrQ6dHsmMKxto3KOKEPi15DRza5ATGOXBQLycEXbfEW4EOna4dQ+AaScif60hMD7TRoZVOD9hp80OFVuUXEobNRg0sVHCgoObbo0=
+	t=1732313037; cv=none; b=B5VsU0MT4nJDMlixj7Dx+8pVW6PqVThOZHUvgfTBBTOIyD9iUbq/rcZkZjhfDFNj0EG0bgjRqyNre0z7tj8E5zlANOeAxozI1w008Hnc2ZPyC6aUpIK2wY0pD6WSpAXqqvruQHLGjE3RfRn16mMvWtHLuGUiQI6dlYsjD62NHnA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732312990; c=relaxed/simple;
-	bh=7qq5RjOr87vpibeK4kW05N9YlxESN0/KNm/X2Xr9IiI=;
+	s=arc-20240116; t=1732313037; c=relaxed/simple;
+	bh=7q4nB8kPTl6NItjJUNAt/aOtOrrl6xYYy+URcQr7DUg=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=q/Qa9Ovesvk6WGQSFpH4H38OY/XNap4n2BkjBNY6L+Gqf+zZHc79l6wTy03AuGbdKGAhPpZwIJupYlFVWw3WDD9Afv4VJIuR00h7UnUohTFmZ5hoHPlyx//+ztI3frXGvYtBbkQIku5Tso0N5MAly7HqYTyOOHtXtgLOyCG2JQY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=MQODoQg3; arc=none smtp.client-ip=209.85.128.54
+	 Content-Type:MIME-Version; b=kVhVJ4JomY8oQP5UAACWPvttO5tGGecioV/adYe/QaZUz06dgKbR1Ct4Vl/E/1CiPcrBVSvBc4B+Fv0jmhirUtXSEp2nOjxWAOxcEuLUxurfE+ga2e36k1QseK090qnvfwWvCCOaoTlg1EMQ8Nu+QTZCyowzmqOakXWp1rkbdqM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=SQYkjgU1; arc=none smtp.client-ip=209.85.221.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="MQODoQg3"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-43169902057so22594865e9.0
-        for <dm-devel@lists.linux.dev>; Fri, 22 Nov 2024 14:03:07 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="SQYkjgU1"
+Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-382433611d0so2068317f8f.3
+        for <dm-devel@lists.linux.dev>; Fri, 22 Nov 2024 14:03:54 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1732312986; x=1732917786; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1732313033; x=1732917833; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=7qq5RjOr87vpibeK4kW05N9YlxESN0/KNm/X2Xr9IiI=;
-        b=MQODoQg3QCqq2gBB/tqMG7K3VDwwVH7Lr5DgWEAE53za/ZVea0GOxIs2OdYUU01Zp2
-         XrYkqS+AWbA2MQDgiVOGJZOWIbHFjs9d8CnWFxhdzMGOZvQMHNgEUNx0Wld5QiHHkC7j
-         n7iFvRLbylwTxfkZWtBpI6Xbt0EWHByKfPk9TCWhLTdxBzAr0MJaXH3XIkz7ncHZ7huY
-         95a04yTd3DAs7m7B0e/YhIyB5r5rZQ8JwJH8FU4bgdvY2R+j6NNpWm8ujBMBs2Pkeyi1
-         AAztv9eox542jCmwAhqavgYtAqZUd97pYYRpEfjeh4Y+EFyVBWh7RLQtWF5vt+pxYApz
-         ae4Q==
+        bh=7q4nB8kPTl6NItjJUNAt/aOtOrrl6xYYy+URcQr7DUg=;
+        b=SQYkjgU1FDseTxmkhB2KmFlG9GwGhFVcD9FagqMPRhAMvWp53iFlaBuua1id12pJi4
+         nN+tBKpu0ogxOzdCHy8ttE28OmeHcYF6xXEPkEqBTCA/hjpTBiWhkCNPH8S5vn1gomtI
+         jB6RAScKIambUZgIAexiu2Gi/97j1tWJqkMUmU5zTVoDzFqEWFGaQP3wDtKfEtguYHJ0
+         g4PTUHFCke5mGg1bR+CVrGHC9dkE40IAXTaMO/CY3JrKY5Wg2bzXwLBKPjNi3rcxpWDm
+         jp14aJynu6EvnEgZYpCqqUYraEtrCkXYSWtVRN+xBkhjY4/22S7Wi5Z6S7sRct4Q8EDR
+         2aoQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732312986; x=1732917786;
+        d=1e100.net; s=20230601; t=1732313033; x=1732917833;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=7qq5RjOr87vpibeK4kW05N9YlxESN0/KNm/X2Xr9IiI=;
-        b=VuyVSwUiGtWgUAPm3At5Hzmg8ylrtzaAp8v3U5vtfbLcM3lAS9wznsJCtET/IxNDhv
-         RYEOBbJ+27B/jvHD/a/fAVODVa8jE/IlkEDsveCtS7iArn494v5QENKA7oJQmlgZg6Vz
-         kSV9/mVw4TWwg1kR7/hJW2XPXcuFaBtrXPhqI+zIelUKgHWeS4d7O1iKw1glza1rhPVP
-         mMZWoS2u221FZJoJIVncWnjfRqw6EThdx2ZdavvcCke+phb5JLjLzttyY05uvHtEZDBQ
-         dntzlsqBEMobEpyoISzuaNu70leeySM9a4uPm3iMx55wonh2HadhH9W3tnvwzU13OWKX
-         HGqg==
-X-Gm-Message-State: AOJu0Yym0t5ngBHWcQWLU6XxqBOKb8Bq6YcKH5Vaa3O4dCuhkFpfwhyj
-	dNOKGsTmqB4TAqv7o7dVlYeK8AkQwp27n1Lv5sZQL7b6iCh7ubaFzsHvpN3iJSY=
-X-Gm-Gg: ASbGnctKQkBJ0NFLiKv7maIJOIGXswLCOu9phUdET4UoYmnUFLyDT6tVBc6hXITAJC/
-	FRPouJ8UwFHh6R/a6gNJiI9ighH4gMOB0TPiePYdqKIOde0MavVwDv9VyYImpOMQbGdrcRV3Zc4
-	2TvmmyYUAL2SwDDEsoe03DVRYw9XxiUiBcOP25Cc8Jz+gTelHi3WAU7gFFF5hX4GGvTo7UInxOs
-	I+N2FdWhqQKx6DXLCj8nOjewHIqb242qlht/9fi3m/5Ov5DkxG5SdHGSSeTwcYJ38DGX7rUgzRZ
-	5d/zbbIN0odjCNLibrCRSqvyed6bmKz9hd4Q2RPMeyJzJSV77IXn4y0L9zfY8e7IS/S/cr1fS98
-	k/Elc4g==
-X-Google-Smtp-Source: AGHT+IHZrq54uEFQzeL1xtAMCrpjIC7a54Qur7ivGYIpbB0O3uYaEGQp2wT31hPbtyo5KyOcvPuHpQ==
-X-Received: by 2002:a05:600c:4690:b0:431:2b66:44f7 with SMTP id 5b1f17b1804b1-433ce4d4c6emr44768765e9.31.1732312985943;
-        Fri, 22 Nov 2024 14:03:05 -0800 (PST)
+        bh=7q4nB8kPTl6NItjJUNAt/aOtOrrl6xYYy+URcQr7DUg=;
+        b=Hb6VFEWSOG2gabrU0dmTEKEh0gO/StIlCHNZCgE1KwxGE81ZgnHyTXSTxx5a9+7cpX
+         R84EAjEgps7HHPgf9tUt3C9UuRsM3789VthK/2mH6dMhUEaa8ossVAwhfTyBFDUUjjP7
+         gJIQaNKbNgl8hKX1Z3jy31TjetLl7JwTsHs+wmiKGuiJau6WmGOJ9QaEIidsxDUMu8q0
+         k2kfjQaecqois9ZzL2tDohN02MZ0e2eoamopcbqC30kVSQpsaxyFUrkJVTKcmSU1k96Q
+         xyxiXlQVqQRnW/vk1qATilgwIgQgkl61G9dJ2w42wetxVM09E/5PL92fRa23dL3xcKfg
+         MO7A==
+X-Gm-Message-State: AOJu0YxIPXT9u09JxFoxN1Aa56chbuCTKGQOk1SkIkXVqCtC6wXh8GMU
+	1SqW/gM3c6ysfU8qpm/X6eGYg4IQMXIk+GxNvEK8a/XiA1q7BuWZCkzEORubETQ=
+X-Gm-Gg: ASbGncvkEa8fPAYbuCxcuLJtLngXCfsEmqoRA0S557ZH61B8mpJb2BVJIQaAJ8hQBvA
+	hl9eRansS9BCoxycdPQWtg4PU/CaoLOcs/mR1TAXbmA7Ywn3gKJ+DsqipBQq58N7FvzAmkkB+2S
+	0nhYcXaTiNI8ZGfYYCEFVAXbkL/nB4NomAK5FeGEjctCy2UiiCWYKYi+O8FMikPrES/a6CrrP51
+	bAdN9ShfcYi/zdPPW68JGRxcMdpSKwXg0NX6rQnWhKNF0LBpxQc26Oto33tGpvBi12Di4+rCf8p
+	ggmWYNC3zd4wwfkQB7uWPtD5XegnKrnqKhQnxA/JAyJPU+v1DqZGLE80mA57RSrN6a+KHQ4drtM
+	XqwY8RQ==
+X-Google-Smtp-Source: AGHT+IHbGkj1Rsgv0/sMIPUMEMlm+VJhHwoPHqOUGKPy/YuQ5WWuof4VjL/cI01vfwEG4AU3i8S3Fg==
+X-Received: by 2002:a05:6000:2d06:b0:382:4fee:c263 with SMTP id ffacd0b85a97d-38260b5385emr3499622f8f.20.1732313032688;
+        Fri, 22 Nov 2024 14:03:52 -0800 (PST)
 Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3825fb36612sm3426949f8f.59.2024.11.22.14.03.05
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3825fbc3defsm3565798f8f.70.2024.11.22.14.03.52
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 22 Nov 2024 14:03:05 -0800 (PST)
-Message-ID: <3e3849afe0f279848078158382596f0c11d8d149.camel@suse.com>
-Subject: Re: [PATCH v2 10/13] libmultipath: move dm_rename__ before
- rename_partmap
+        Fri, 22 Nov 2024 14:03:52 -0800 (PST)
+Message-ID: <52a2933ce3c24a0db5d5ae696f4ee7671cb0b57c.camel@suse.com>
+Subject: Re: [PATCH v2 08/13] libmultipath: factor out code to check if a
+ device is a parition
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Fri, 22 Nov 2024 23:03:04 +0100
-In-Reply-To: <20241122211133.718861-11-bmarzins@redhat.com>
+Date: Fri, 22 Nov 2024 23:03:51 +0100
+In-Reply-To: <20241122211133.718861-9-bmarzins@redhat.com>
 References: <20241122211133.718861-1-bmarzins@redhat.com>
-	 <20241122211133.718861-11-bmarzins@redhat.com>
+	 <20241122211133.718861-9-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.54.1 
@@ -79,11 +79,6 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
 On Fri, 2024-11-22 at 16:11 -0500, Benjamin Marzinski wrote:
-> No functional changes.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Move the code to check if a device is a valid parition of a multipath
 
-I suggest squashing this into the previous patch.
-
-Martin
-
+Nit: "parition" (subject line too).
