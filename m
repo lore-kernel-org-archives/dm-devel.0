@@ -1,153 +1,145 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB89B178CF6
-	for <dm-devel@lists.linux.dev>; Fri, 22 Nov 2024 21:11:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A4A0A1CA9C
+	for <dm-devel@lists.linux.dev>; Fri, 22 Nov 2024 21:54:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732309905; cv=none; b=T7hWwlcJPsbOtmbew6PxICKsD5TbRB4ZHoobhj2T4lnrFkMAgfRUCQU5eWuO2tBGRpZMQGKQf2L1+r8QdyQMGml/PYehjjrgH1lLY8juj4ia96KwE6RvJQJ2VZzpi3l3l1V778hkGxQ9fyq45FKaFidNvSOdSliR5NKMHweD6q8=
+	t=1732312477; cv=none; b=eKx0c7pP+8EvlF7WZzOukR83pdQqMLfPc3RS0HpmIAdN2IpxAHLkTi/QNSrd8YtC3SlImtuOXZrZrqKWG6MbJQsaHvOzNVJPFYiCnLrO9gW6+AHjHwNCGm1Xo0hwpGEcKGmTxYQrm8qoldT5l0qrbIRcbYdcro0cDQPwzKOeF0o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732309905; c=relaxed/simple;
-	bh=hNp8aWzVrgDcvGmpvL3KKXveArT/1inn8TGDDT63C7c=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=lZAdhW8LnLJcUHezHcj9LEIxQJhygJZ44tSrcTmj0GoKuSlAYqGIPGMpCfGfvc+wDXAhnBw2wAzLLCdt+wR3OmNAKpAdbV9bk/tYwhpnnpDY5QqygT8ugHLFMcmHehN1tj9Bymf8pdO3v8mBFBDbcAzUIBkcj0kCAHMlo/eu0lo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=C4RieKK1; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1732312477; c=relaxed/simple;
+	bh=HNghjqtBDbGbb/AQ8UsUnVl37ydKvGpTZ8Bdq75+kk4=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=W55ByGFcW7jdm5hPzL7VtOSKpP3c7J6UU9ZAMIah083p4pSiIoCxDJ8mM0BHlQOpQc5yKbIEV4lzhlYp2ljjW7wOLDpn4oSr289ijjIddaV0c3U4jz3qZvEoNhoL1ddicMVQWCt2M3sQPhAGxqoPyEm66bhFbALDRFoeJ+nlwO4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=AhFJnptd; arc=none smtp.client-ip=209.85.128.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="C4RieKK1"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1732309901;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=47tzZZFAwY5Er/bvu2kHSwnueG5bGT0+04j0TwjAM7Q=;
-	b=C4RieKK19cgOidjGYcT5USnZcqMSLSZHazZx5surtdcdh7CBBzYy/f8ifz7QVadfRPcCy5
-	TYHhRL+GuhcEF7mjSkDvt1TsGV0Wsz9wL0VvIy8fISBOYjoEp9RbyyCD8za0u8rM4FqhEg
-	Bbjdv6tyYCPxQRu5KykYDBfqCky4NwY=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-444-cQNnjzaJOmuZX2ocJTm6FQ-1; Fri,
- 22 Nov 2024 16:11:38 -0500
-X-MC-Unique: cQNnjzaJOmuZX2ocJTm6FQ-1
-X-Mimecast-MFC-AGG-ID: cQNnjzaJOmuZX2ocJTm6FQ
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 38D70195609F;
-	Fri, 22 Nov 2024 21:11:37 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DE1811955E9E;
-	Fri, 22 Nov 2024 21:11:36 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4AMLBZsi718919
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 22 Nov 2024 16:11:35 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4AMLBZSp718918;
-	Fri, 22 Nov 2024 16:11:35 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 09/13] libmultipath: remove recursive calls in partmap_funcs
-Date: Fri, 22 Nov 2024 16:11:29 -0500
-Message-ID: <20241122211133.718861-10-bmarzins@redhat.com>
-In-Reply-To: <20241122211133.718861-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="AhFJnptd"
+Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4315abed18aso22811195e9.2
+        for <dm-devel@lists.linux.dev>; Fri, 22 Nov 2024 13:54:34 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1732312473; x=1732917273; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=bR5yntziVMmiQIVkX9Pn4y3ARvm+zFzAXkg2zHSqtDs=;
+        b=AhFJnptdI7AKqoAiJpzBkCiMbUKvpASGPO1yfSS7dWO/mn5OkCikuw+TmT9F+q1yIa
+         Pw2PsYw+OOOAUt1vO9aP06aiid7pVsm6gmNE7Wiq7V1dewDo0Rn7a3kVGKDjnORrOt9A
+         GhcgbxR/fEHn3fXT8RDbu2/6B0JjCZwqN1N7rDAAFguDnjhvQRHneP7ukvksB3LV0Klp
+         BBJIgoinvPTBbnsMH/zoqWKgS0KC5ZCpG/YFvFosfAERyfJZO07O6A4e0MJt1N0CzvLo
+         tQwltQ4HfAHkQMM2RT7iCfqWf1Skh6spVEreDQdLoy3CNg4kAimrAyQQAw+pz336jSfG
+         mzIg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1732312473; x=1732917273;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=bR5yntziVMmiQIVkX9Pn4y3ARvm+zFzAXkg2zHSqtDs=;
+        b=c4aMimY6aAYZdZMOUBr5dNP30iku8ntfsd1lcl+dpzW9lcaEP6azI5nb+XOBrAFD2v
+         2PCen8na0NHFl0CP3+s8iOQG7FeMa+CUULofVgLpvlC3slBt4kXhIraJWXQhxV+M+69k
+         EhJytrDgWaS+rqsAV1xFo3S1ZuGkhqaLfGouR9aaeAjPnwld7eu+Kq1VQGrGzYYV+x8d
+         mKw9niqz5CIGa3IYxnlyx3jj+gDelGMclCV9bhUtn4d0rlH2dd8AzeIFpNRXwTlY307V
+         MCJYD2vlvI438a/xyxnVJGYCqFFz/9qswocBAcf64GYu9A+1CHdvRpTeuhxK2IIb8idW
+         Sb5A==
+X-Gm-Message-State: AOJu0Yzzbv4xajihaMagvQ7WHqDAG1saFCBmKVMG+T64Q7XDZNgIf1Hz
+	r6CHBemN5+gBiACgdpnhNsXKNhUoj9HUQOb6GbECXqzzF9kSoLE4FkxGUCevVMg=
+X-Gm-Gg: ASbGncvcONTtp2o7W/GdMbcVRNCUHgqElpE2LlWPCgqcN5RtwBxcH1xcuIaD39345lT
+	6+1JCfN8AWncLuk/ddkT+tuDF8u7zlTHAORhjQNPYStJank6lZHZuyhK+k2agsT6g1Oai6a/v3v
+	InkbEzr/2on13mN1fUex0MRwPtDeXkMB+bYz0EEzR57FYLxzYbx7Ve4rzRlUP7uw+mRQXFip4mu
+	A3Zeg/tFHcE9sBjMXL7hNYsA6TwcOLugLqUvzwrHCTk0vOTGXqcqGOCpodlalHI8ZkOLwNtQzAe
+	fGUsvEsJ2kx1j/x1jQ1b6t7cccnrPlLBE/E0ak6wskbc15FULCHMahNBOrHaimhVC5aZF0sJBpo
+	XSJDr6w==
+X-Google-Smtp-Source: AGHT+IFczj8lP49upndEqExnqgd3eou8LgOJ5TlqDVYOkzXWVI+apusdvqJnVXEImI67jTTBMRhxIA==
+X-Received: by 2002:a05:600c:5249:b0:431:5aea:95f with SMTP id 5b1f17b1804b1-433ce430fecmr44950225e9.16.1732312472641;
+        Fri, 22 Nov 2024 13:54:32 -0800 (PST)
+Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-433cde97c68sm40057425e9.36.2024.11.22.13.54.32
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 22 Nov 2024 13:54:32 -0800 (PST)
+Message-ID: <e1b620534c909d8ea01e193292ec5dd1ad652ab0.camel@suse.com>
+Subject: Re: [PATCH v2 06/13] libmultipath: handle a create corner case for
+ empty devices
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Fri, 22 Nov 2024 22:54:31 +0100
+In-Reply-To: <20241122211133.718861-7-bmarzins@redhat.com>
 References: <20241122211133.718861-1-bmarzins@redhat.com>
+	 <20241122211133.718861-7-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: QhKoOmdcxHugaszoi3KGaFb6Q7j8quo7fCYhNhDMm7c_1732309897
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
 
-cancel_remove_partmap() and rename_partmap() both could end up calling
-do_foreach_partmaps() with the partition instead of the original
-multipath device. This won't ever do anything, since
-do_foreach_partmaps() checks that it's called with a multipath device.
+On Fri, 2024-11-22 at 16:11 -0500, Benjamin Marzinski wrote:
+> Multipath already notices if there is any empty device with the same
+> alias and wwid as a device it is trying to create, and switches to a
+> reload. However, if the empty device has a different alias but the
+> same
+> wwid, instead of reloading and renaming the device like it would for
+> a device with a table. multipath will attempt to create a new device
+> and fail.
+>=20
+> Fix this by checking for these devices, and doing a reload and
+> rename.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+> =C2=A0libmultipath/configure.c | 21 ++++++++++++++++++++-
+> =C2=A01 file changed, 20 insertions(+), 1 deletion(-)
+>=20
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index a7257981..d0e9c958 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -835,7 +835,6 @@ int domap(struct multipath *mpp, char *params,
+> int is_daemon)
+> =C2=A0{
+> =C2=A0	int r =3D DOMAP_FAIL;
+> =C2=A0	struct config *conf;
+> -	char wwid[WWID_SIZE];
+> =C2=A0
+> =C2=A0	/*
+> =C2=A0	 * last chance to quit before touching the devmaps
+> @@ -846,6 +845,7 @@ int domap(struct multipath *mpp, char *params,
+> int is_daemon)
+> =C2=A0	}
+> =C2=A0
+> =C2=A0	if (mpp->action =3D=3D ACT_CREATE) {
+> +		char wwid[WWID_SIZE];
+> =C2=A0		int rc =3D dm_get_wwid(mpp->alias, wwid,
+> sizeof(wwid));
+> =C2=A0
+> =C2=A0		if (rc =3D=3D DMP_OK && !strncmp(mpp->wwid, wwid,
+> sizeof(wwid))) {
+> @@ -863,7 +863,26 @@ int domap(struct multipath *mpp, char *params,
+> int is_daemon)
+> =C2=A0			mpp->action =3D ACT_REJECT;
+> =C2=A0		}
+> =C2=A0	}
+> +	if (mpp->action =3D=3D ACT_CREATE) {
+> +		char alias[WWID_SIZE];
+> +		int rc =3D dm_find_map_by_wwid(mpp->wwid, alias,
+> NULL);
+> =C2=A0
+> +		if (rc =3D=3D DMP_NO_MATCH) {
+> +			condlog(1, "%s: wwid \"%s\" already in use
+> by non-multipath map \"%s\"",
+> +				mpp->alias, mpp->wwid, alias);
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/devmapper.c | 22 ++++++++++++++--------
- 1 file changed, 14 insertions(+), 8 deletions(-)
+Nitpick: This is almost the same message that dm_find_map_by_wwid() has
+printed immediately before. Similar messages are also printed in all
+other callers of dm_find_map_by_wwid(). I suggest that we either remove
+the log message in the callers or in dm_find_map_by_wwid() itself.
+Probably the latter, then we can decide on a case by case basis in the
+caller whether the situation needs to be logged.
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 0df9ee40..daaeebb4 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -1421,8 +1421,6 @@ dm_remove_partmaps (const char * mapname, int flags)
- static int
- cancel_remove_partmap (const char *name, void *unused __attribute__((unused)))
- {
--	if (dm_get_opencount(name))
--		dm_cancel_remove_partmaps(name);
- 	if (dm_message(name, "@cancel_deferred_remove") != 0)
- 		condlog(0, "%s: can't cancel deferred remove: %s", name,
- 			strerror(errno));
-@@ -1481,6 +1479,9 @@ struct rename_data {
- 	char *delim;
- };
- 
-+static int
-+dm_rename__(const char *old, char *new, int skip_kpartx);
-+
- static int
- rename_partmap (const char *name, void *data)
- {
-@@ -1492,7 +1493,7 @@ rename_partmap (const char *name, void *data)
- 		return 0;
- 	for (offset = strlen(rd->old); name[offset] && !(isdigit(name[offset])); offset++); /* do nothing */
- 	if (asprintf(&buff, "%s%s%s", rd->new, rd->delim, name + offset) >= 0) {
--		dm_rename(name, buff, rd->delim, SKIP_KPARTX_OFF);
-+		dm_rename__(name, buff, SKIP_KPARTX_OFF);
- 		free(buff);
- 		condlog(4, "partition map %s renamed", name);
- 	} else
-@@ -1519,17 +1520,14 @@ dm_rename_partmaps (const char * old, char * new, char *delim)
- 	return do_foreach_partmaps(old, rename_partmap, &rd);
- }
- 
--int
--dm_rename (const char * old, char * new, char *delim, int skip_kpartx)
-+static int
-+dm_rename__(const char *old, char *new, int skip_kpartx)
- {
- 	int r = 0;
- 	struct dm_task __attribute__((cleanup(cleanup_dm_task))) *dmt = NULL;
- 	uint32_t cookie = 0;
- 	uint16_t udev_flags = DM_UDEV_DISABLE_LIBRARY_FALLBACK | ((skip_kpartx == SKIP_KPARTX_ON)? MPATH_UDEV_NO_KPARTX_FLAG : 0);
- 
--	if (dm_rename_partmaps(old, new, delim))
--		return r;
--
- 	if (!(dmt = libmp_dm_task_create(DM_DEVICE_RENAME)))
- 		return r;
- 
-@@ -1550,6 +1548,14 @@ dm_rename (const char * old, char * new, char *delim, int skip_kpartx)
- 	return r;
- }
- 
-+int
-+dm_rename (const char * old, char * new, char *delim, int skip_kpartx)
-+{
-+	if (dm_rename_partmaps(old, new, delim))
-+		return 0;
-+	return dm_rename__(old, new, skip_kpartx);
-+}
-+
- void dm_reassign_deps(char *table, const char *dep, const char *newdep)
- {
- 	char *n, *newtable;
--- 
-2.46.2
+Martin
 
