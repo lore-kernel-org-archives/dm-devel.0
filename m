@@ -1,162 +1,177 @@
-Received: from mail-ej1-f43.google.com (mail-ej1-f43.google.com [209.85.218.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E60981B0F1F
-	for <dm-devel@lists.linux.dev>; Mon, 25 Nov 2024 14:32:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3F1621AD418
+	for <dm-devel@lists.linux.dev>; Mon, 25 Nov 2024 16:57:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732545162; cv=none; b=BbA/85gtbzgbXyiSU3TGFiFUhSKCeGc/VLKVFDYWbV8Htz7N7+mjWx8AsWLZ+HMINMCNwzD8WaZoq9JnaFObtI2OkAPJa6DWilZuyLJXiQng6gMfiMWYz6YEsSZ/dWoDrSMGfuoeYXUeP76H+b2XGZRGv+uucMD1OjQ6LdXnC+g=
+	t=1732553827; cv=none; b=f7M+sR9avHIpw4n0htD71GB7z825xAbCGRVwPfDKyChjzjvoPh5JRUWODGatqdnuooJJyKVkcm1aGHC96R/YNsPXNL4cGAZCcJ5zBpnMiAJhp7JsCjv8T4jQPTPsWH+avcLKrVZ/+RWkvIfStKEXDKV9+Gf3et2yFUDF9vY6hJA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732545162; c=relaxed/simple;
-	bh=X6WF3C+sKubs7eXRB7P8XQYktmSOPIvvL0j2EQJ+9gk=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=cbi8SyMm2aAi+WTEC7M7r7peFHcwrgOha7cXECM3TrOrZOjHh/I78TmOHypQgHNFdZKcHGkWljhx/2YgMDvRXhKDhm+p5aF49RFEVzLU87OXx/x6Pn0M5gS3W6o3DMsWsjb6HwVmHjOzAhZ3j+7RAlAtkNjx2HA1YYkTPEXyNTE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=JAi2fWKs; arc=none smtp.client-ip=209.85.218.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1732553827; c=relaxed/simple;
+	bh=GKlsVvaF8t5x4Q38PbH2AfrI9OnLSEBTaamoROEgCTU=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=dBfg8f8O1hYtrM6bsAspkEg4M9jLBj2702EhUry4dgj6hJ2PgrItXitRI2tHgmUDDLAy/S/J0R2+jLDiqq5uc+t/M/LIOR4h5upOe1wLCAZSJ4q9wVCS910fJLyyr97Xx6KqeiE1zT0Tb/7Sh8PtSFDXdlSVmR5TtkBcEwXwuRo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=C56vZZD8; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="JAi2fWKs"
-Received: by mail-ej1-f43.google.com with SMTP id a640c23a62f3a-aa5500f7a75so177263366b.0
-        for <dm-devel@lists.linux.dev>; Mon, 25 Nov 2024 06:32:40 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1732545159; x=1733149959; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=n4mZuSscAilrbAaeYlUTldnht2aXSmKXbBabplDcNPU=;
-        b=JAi2fWKsuGsTDFBHMKpxzfYgD5OjzgygCDLgneEWXXAOuy3dBLozqkDVbkXaemCcRd
-         9ylJ4e2ANBCXcxexXh3LxabsgyWCLPomL6pUSMwswe1XNREAfVNsy2kcwXWxFeHS7qIw
-         MfnIZEPwOaLB3ZFyeGj4K3jZs21d6lSWKA5NjSlE/4JryFKbqbqKfzwuB9pK/bwpDC8L
-         QuyWKpv4xSTlWXBjhnl9Cv4Nm4c/f06sgtF4OYIGHc9RTqsvtXfpmLg2iooBCwQ7Sh9u
-         eBbEOUgjOuwwCU8sJMOmZOxTGwAc71xkug8i11GM9o47e0GsRAW0LzafIlt/Q9OFDBkh
-         nfxg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732545159; x=1733149959;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=n4mZuSscAilrbAaeYlUTldnht2aXSmKXbBabplDcNPU=;
-        b=B83GQBvUWc2Pc19b1UCX/rv1vWHxl37I1cqJEqXyrNSHr71XD3k9MIrv8k6mbas1yX
-         BhwxDwZqCXTDiLGurPbEQmNzsf3u0mPnfYyUrMlVyUTv+MVFdNaZSssuvCmdUaJVk3yg
-         wG4aax/hAu4l/d0HFHBHFjvXUyWOtHiT2VBndkF/eeJF65QSThNyVOcKFol8smhVUx7u
-         NXjUQxKs9WNKloMKuX2Iolyub8pNOYmbEM+kjHBX2K4s+BsffYDhefme08G1Alo4fDNF
-         bWAqp1nrfaiAQ9RzrqcVV+J2YfXQP/buJs7/KawndwMH2zk+uuIycpN8mT3lHvvFNteQ
-         9VfA==
-X-Gm-Message-State: AOJu0YxM9T/2FKMT4KkUzSZwt5T+9lICWk7aXyAbJRuv2/3Xv6NvCr81
-	GfEP97x9ZbtVq12l2y/M0iztngaEovO1jFYNF7NSQZJ1Qdp7ifpGpt0apeZfuNM=
-X-Gm-Gg: ASbGncucPvO1hiRWL7I0zUpZtW4IG53eqRTyKG7xPPjiM6b1lMv1TZmp+syJtOS0A+/
-	43vVTbMp051oLhJcMWzr1L2ly9KkxzLHx8BKBy/nXzXoE75eRJHp69IJqgqW7lXF+M0jiLzAWK4
-	BafQs6ntA4k4mtadqznsTHpjvVczstdxM83T6HDeMj7kEUROFRCOS21mvhV2KS6inMEY9wDtbBp
-	eGHhFrvy8/PfVqAjaZcRSPCT0/R5yzt20+X09H36PJ25CtmNSjtM500xxeWQryfHw26lKd9ZClP
-	H5qXC6Hs5NuznJj42/T+V9bG7J86IG3a3/tq
-X-Google-Smtp-Source: AGHT+IE0MaIqqx9xUXZuVYBXwWZDgm06Xob0hEDdV+cKTCwCeac8a9Snn6MtNxdsIMdpKrseFp0fYQ==
-X-Received: by 2002:a17:906:3101:b0:a9e:b287:2813 with SMTP id a640c23a62f3a-aa509906366mr1196372266b.5.1732545158946;
-        Mon, 25 Nov 2024 06:32:38 -0800 (PST)
-Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-aa535bd5bb1sm317526566b.48.2024.11.25.06.32.38
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 25 Nov 2024 06:32:38 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/3] libmultipath: move pathcmp() to configure.c
-Date: Mon, 25 Nov 2024 15:32:24 +0100
-Message-ID: <20241125143224.51934-4-mwilck@suse.com>
-X-Mailer: git-send-email 2.47.0
-In-Reply-To: <20241125143224.51934-1-mwilck@suse.com>
-References: <20241125143224.51934-1-mwilck@suse.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="C56vZZD8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1732553824;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=wrsafgW7HmyCdfzbZGGkBhEiO+o/yCFqZReFyAZf+6I=;
+	b=C56vZZD8UqaGGJt55EZGImxv9S2oY3K+vbejFPMer63ojiiXOJ9uJfzDiIrpdqbz45fnPk
+	/b9utgVGSUIUn73/V2cemZsdPXpKDjLEW4/oYuHTPS8NLTXNAaoZDx6knRfffm/46T8UGa
+	NILJ13pJvQ0cpTbG56TRrBhVKY69xR0=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-631-w8R7UoDOMcegvb3JUA_hGg-1; Mon,
+ 25 Nov 2024 11:57:00 -0500
+X-MC-Unique: w8R7UoDOMcegvb3JUA_hGg-1
+X-Mimecast-MFC-AGG-ID: w8R7UoDOMcegvb3JUA_hGg
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 66F3D1955F43;
+	Mon, 25 Nov 2024 16:56:58 +0000 (UTC)
+Received: from [10.45.225.96] (unknown [10.45.225.96])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A45AE1956052;
+	Mon, 25 Nov 2024 16:56:54 +0000 (UTC)
+Date: Mon, 25 Nov 2024 17:56:51 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+cc: Benjamin Coddington <bcodding@redhat.com>, 
+    Colin Ian King <colin.i.king@gmail.com>, 
+    "Dr. David Alan Gilbert" <linux@treblig.org>, 
+    Matthew Sakai <msakai@redhat.com>, Ssuhung Yeh <ssuhung@gmail.com>, 
+    Susan LeGendre-McGhee <slegendr@redhat.com>, Yuan Can <yuancan@huawei.com>, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    dm-devel@lists.linux.dev
+Subject: [git pull] device mapper changes for 6.13
+Message-ID: <3a4c7559-166b-d618-0d3b-c09d62b0a4a6@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: J2g2tBd4C2FwoMfUgrq40jiwKlgrxLM08L6WNm4CgCA_1732553818
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-... as it has only one caller, and make it static. No functional changes.
+Hi Linus
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/configure.c | 19 +++++++++++++++++++
- libmultipath/structs.c   | 19 -------------------
- libmultipath/structs.h   |  1 -
- 3 files changed, 19 insertions(+), 20 deletions(-)
+The following changes since commit adc218676eef25575469234709c2d87185ca223a:
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 55140d0..6f79a4f 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -426,6 +426,25 @@ compute_pgid(struct pathgroup * pgp)
- 		pgp->id ^= (long)pp;
- }
- 
-+static int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
-+{
-+	int i, j;
-+	struct path *pp, *cpp;
-+	int pnum = 0, found = 0;
-+
-+	vector_foreach_slot(pgp->paths, pp, i) {
-+		pnum++;
-+		vector_foreach_slot(cpgp->paths, cpp, j) {
-+			if ((long)pp == (long)cpp) {
-+				found++;
-+				break;
-+			}
-+		}
-+	}
-+
-+	return pnum - found;
-+}
-+
- static int
- pgcmp (struct multipath * mpp, struct multipath * cmpp)
- {
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 4851725..dfa547b 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -627,25 +627,6 @@ int count_active_pending_paths(const struct multipath *mpp)
- 	return do_pathcount(mpp, states, 3);
- }
- 
--int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
--{
--	int i, j;
--	struct path *pp, *cpp;
--	int pnum = 0, found = 0;
--
--	vector_foreach_slot(pgp->paths, pp, i) {
--		pnum++;
--		vector_foreach_slot(cpgp->paths, cpp, j) {
--			if ((long)pp == (long)cpp) {
--				found++;
--				break;
--			}
--		}
--	}
--
--	return pnum - found;
--}
--
- struct path *
- first_path (const struct multipath * mpp)
- {
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 4821f19..49d9a2f 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -598,7 +598,6 @@ struct path *mp_find_path_by_devt(const struct multipath *mpp, const char *devt)
- int pathcount (const struct multipath *, int);
- int count_active_paths(const struct multipath *);
- int count_active_pending_paths(const struct multipath *);
--int pathcmp (const struct pathgroup *, const struct pathgroup *);
- int add_feature (char **, const char *);
- int remove_feature (char **, const char *);
- 
--- 
-2.47.0
+  Linux 6.12 (2024-11-17 14:15:08 -0800)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.13/dm-changes
+
+for you to fetch changes up to a573e404cbf269d46b3a96b18f7316aa57161fdf:
+
+  dm-verity: remove the unused "data_start" variable (2024-11-20 11:44:44 +0100)
+
+Please, pull, thanks
+Mikulas
+
+----------------------------------------------------------------
+- Dm: remove unused functions and variables
+
+- Dm-ioctl: rate-limit error messages in syslog
+
+- Dm-persistent-data: fix typo
+
+- Dm-vdo murmurhash: remove u64 alignment requirement
+
+- Dm-vdo: reset bi_ioprio to the default
+
+- Dm: add support for get_unique_id
+
+- Dm thin: Add missing destroy_work_on_stack()
+
+- Dm-bufio: use kmalloc to allocate power-of-two sized buffers
+-----BEGIN PGP SIGNATURE-----
+
+iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCZ0SJnBQcbXBhdG9ja2FA
+cmVkaGF0LmNvbQAKCRATAyx9YGnhbV8xAP0dcS6O29X8HzSI8gVIgT8KYCpg3Ms2
+amPDlm/RDewdSQD/Z5+CHlyrlYqnKejAIs7cbZlfxD/0avcg/Kc0h4ijGws=
+=2dtc
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Benjamin Coddington (1):
+      dm: add support for get_unique_id
+
+Colin Ian King (1):
+      dm ioctl: rate limit a couple of ioctl based error messages
+
+Dr. David Alan Gilbert (9):
+      dm cache: Remove unused btracker_nr_writebacks_queued
+      dm cache: Remove unused dm_cache_dump
+      dm cache: Remove unused dm_cache_size
+      dm cache: Remove unused functions in bio-prison-v1
+      dm: Remove unused dm_set_md_type
+      dm: Remove unused dm_table_bio_based
+      dm: zoned: Remove unused functions
+      dm vdo: Remove unused functions
+      dm vdo: Remove unused uds_compute_index_size
+
+Matthew Sakai (2):
+      dm vdo int-map: remove unused parameters
+      dm vdo: fix function doc comment formatting
+
+Mikulas Patocka (2):
+      dm-bufio: use kmalloc to allocate power-of-two sized buffers
+      dm-verity: remove the unused "data_start" variable
+
+Ssuhung Yeh (1):
+      dm: Fix typo in error message
+
+Susan LeGendre-McGhee (2):
+      dm-vdo murmurhash: remove u64 alignment requirement
+      dm-vdo: reset bi_ioprio to the default value when the bio is reset
+
+Yuan Can (1):
+      dm thin: Add missing destroy_work_on_stack()
+
+ drivers/md/dm-bio-prison-v1.c                    | 35 --------------
+ drivers/md/dm-bio-prison-v1.h                    | 24 ----------
+ drivers/md/dm-bufio.c                            | 25 ++++++++--
+ drivers/md/dm-cache-background-tracker.c         |  6 ---
+ drivers/md/dm-cache-background-tracker.h         |  1 -
+ drivers/md/dm-cache-metadata.c                   | 33 -------------
+ drivers/md/dm-cache-metadata.h                   |  3 --
+ drivers/md/dm-ioctl.c                            |  4 +-
+ drivers/md/dm-table.c                            |  5 --
+ drivers/md/dm-thin.c                             |  1 +
+ drivers/md/dm-vdo/block-map.c                    |  2 -
+ drivers/md/dm-vdo/data-vio.c                     | 36 ++------------
+ drivers/md/dm-vdo/data-vio.h                     |  5 --
+ drivers/md/dm-vdo/dedupe.c                       |  9 ++--
+ drivers/md/dm-vdo/encodings.c                    |  2 +-
+ drivers/md/dm-vdo/indexer/index-layout.c         | 26 ----------
+ drivers/md/dm-vdo/indexer/indexer.h              |  4 --
+ drivers/md/dm-vdo/int-map.c                      | 28 +++++------
+ drivers/md/dm-vdo/io-submitter.c                 |  2 +-
+ drivers/md/dm-vdo/murmurhash3.c                  |  7 +--
+ drivers/md/dm-vdo/packer.c                       |  3 +-
+ drivers/md/dm-vdo/physical-zone.c                |  2 +-
+ drivers/md/dm-vdo/recovery-journal.c             |  2 +-
+ drivers/md/dm-vdo/slab-depot.c                   |  9 ++--
+ drivers/md/dm-vdo/vdo.c                          |  4 +-
+ drivers/md/dm-vdo/vio.c                          |  1 +
+ drivers/md/dm-verity-target.c                    |  6 +--
+ drivers/md/dm-verity.h                           |  1 -
+ drivers/md/dm-zoned-metadata.c                   | 50 -------------------
+ drivers/md/dm-zoned.h                            |  2 -
+ drivers/md/dm.c                                  | 61 +++++++++++++++++++++---
+ drivers/md/dm.h                                  |  2 -
+ drivers/md/persistent-data/dm-space-map-common.c |  2 +-
+ 33 files changed, 115 insertions(+), 288 deletions(-)
 
