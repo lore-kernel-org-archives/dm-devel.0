@@ -1,160 +1,200 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9507517548
-	for <dm-devel@lists.linux.dev>; Mon, 25 Nov 2024 18:05:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78C2E14F9CF
+	for <dm-devel@lists.linux.dev>; Mon, 25 Nov 2024 20:31:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732557935; cv=none; b=VpPKS0YG5R5zSS0JXeuEOs5p2xj6BZ+696zsOl04PW6Fk5YRq0cnqRWaoydrjytWNtd+AQWb/B91Ioyu1+2h4ASkPNcALvvKhkaxO9Y414mmsicepLP3qXC0AkDSBIlXUaCsf6Zt840ba5A4yQaQHu3tK6z/cL2rKHIuEEnNjus=
+	t=1732566685; cv=none; b=KKtX6gWi0rVNKFKMbecLkMTWIZhUCYZIb7pVa6G9/RYtcDAD6mpxUbNcz//jAsjGWK7yylDjkOEvaGlR59/ao9yY9H2xZYz95bNCm5boar07rNuWvc/yTOuVVsxDKv8sbBf54IB7DCJgFSsopC/dBOJljm2Y4MCN5n8noEpMuB4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732557935; c=relaxed/simple;
-	bh=v/R1VM7mcGkcfAvAUUXadEoZSGRWhiw/WzRSzRWagdY=;
+	s=arc-20240116; t=1732566685; c=relaxed/simple;
+	bh=O/U6UAOtRE8NnKWzDbDUoEvQjy4IQ2Ws97GpcHOEfg0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=XV55DIXCtBS4FPS5DsRQhLcW5WDc6VvF/JqQONHP3IdYILZNNzjhkIVgb+g+jv6r1Vh5QYg7Yh7uQXFZhF3VkOQ9ytLAUd9s/kV4rEY3ItHnpsU7PyfhmGOeD9lUyOf1Es9E0jHkdo0ZTjQx1yNz221ylar4EtAzyXox6KWOGts=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UrMnnMf5; arc=none smtp.client-ip=170.10.129.124
+	 In-Reply-To:Content-Type:Content-Disposition; b=LrQIfQc2VBNGEMbQw2jNA/T2t4K/A9GpHgfgLjU6p5UaFIQkW0AO7uLwHIQIYS5st3hyd6NUQFh+aWvER4hgkhF9CeyXkwiuUKLuNrGcunrPxiKeWxHX+JW7mjOXcyiwwVF8Oysy4bcRvZl9WYphHxgeuhodtG598oVLCngYl1Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DW3Fzlut; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UrMnnMf5"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DW3Fzlut"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1732557932;
+	s=mimecast20190719; t=1732566682;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=MNND5DUCah/LTo7+IHrH63le3wXj6M9Z9f05nmFL/yY=;
-	b=UrMnnMf5lg67bfoijxfvKJQPwA19WgaadcejmK1jx9SM3kgd/1yTK270vXe+2QPUNfE53M
-	PlIjPSFk4qxoVtRaV5ZJQIAzLyT1YqvH1lEEBetHpUogk9PGTKms4z/4mnyT2HxBq1MouH
-	OH3pDDB3NxEss2Hy33HsQ9ZLZfv5Hgs=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	bh=TSTEBqQjAYW6IvZBopxll58LsKHpzlb9Xpl5UR/2tho=;
+	b=DW3FzlutXaKCsu5SPQt+cnicRD3qjyDrr/IERgmP9oqDg2j76itA0YELeW4Mg6UarkpPpv
+	1uLNpp5ZZ5nc81v3K4NMqp673fwsUqlWCpRRGfHXQEQ4xib722d43fw4oqCBDYsYjtAQA6
+	EZv9fOfJsMlU0Zvp4MU5gn4JDykCPVo=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-661-vG5OpdPjNB667T1cr6YHHQ-1; Mon,
- 25 Nov 2024 13:05:29 -0500
-X-MC-Unique: vG5OpdPjNB667T1cr6YHHQ-1
-X-Mimecast-MFC-AGG-ID: vG5OpdPjNB667T1cr6YHHQ
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-96-g0C_KW43NNyV3BaQKkhVPA-1; Mon,
+ 25 Nov 2024 15:31:17 -0500
+X-MC-Unique: g0C_KW43NNyV3BaQKkhVPA-1
+X-Mimecast-MFC-AGG-ID: g0C_KW43NNyV3BaQKkhVPA
 Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 54FF91956048;
-	Mon, 25 Nov 2024 18:05:28 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6EC281956046;
+	Mon, 25 Nov 2024 20:31:16 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C356330000DF;
-	Mon, 25 Nov 2024 18:05:27 +0000 (UTC)
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0E4FB30000DF;
+	Mon, 25 Nov 2024 20:31:15 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4API5QTf759555
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4APKVEgl761879
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 25 Nov 2024 13:05:26 -0500
+	Mon, 25 Nov 2024 15:31:14 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4API5QL9759554;
-	Mon, 25 Nov 2024 13:05:26 -0500
-Date: Mon, 25 Nov 2024 13:05:26 -0500
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4APKVE84761878;
+	Mon, 25 Nov 2024 15:31:14 -0500
+Date: Mon, 25 Nov 2024 15:31:14 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Martin Wilck <martin.wilck@suse.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        device-mapper development <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH v2 06/13] libmultipath: handle a create corner case for
- empty devices
-Message-ID: <Z0S8ZgQ4sI4gRvcQ@redhat.com>
-References: <20241122211133.718861-1-bmarzins@redhat.com>
- <20241122211133.718861-7-bmarzins@redhat.com>
- <e1b620534c909d8ea01e193292ec5dd1ad652ab0.camel@suse.com>
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/3] libmultipath: fix handling of pp->pgindex
+Message-ID: <Z0TeksRGcJ9k4cqx@redhat.com>
+References: <20241125143224.51934-1-mwilck@suse.com>
+ <20241125143224.51934-2-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <e1b620534c909d8ea01e193292ec5dd1ad652ab0.camel@suse.com>
+In-Reply-To: <20241125143224.51934-2-mwilck@suse.com>
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: UdmAjglpq187IQcOxWsr6jiMJt2saGfB3gIAwt51ELc_1732557928
+X-Mimecast-MFC-PROC-ID: a9gIyoKWtXmO1KpZu88_QyUKuHaQkM__zcYVqBeIu6k_1732566676
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
 
-On Fri, Nov 22, 2024 at 10:54:31PM +0100, Martin Wilck wrote:
-> On Fri, 2024-11-22 at 16:11 -0500, Benjamin Marzinski wrote:
-> > Multipath already notices if there is any empty device with the same
-> > alias and wwid as a device it is trying to create, and switches to a
-> > reload. However, if the empty device has a different alias but the
-> > same
-> > wwid, instead of reloading and renaming the device like it would for
-> > a device with a table. multipath will attempt to create a new device
-> > and fail.
-> > 
-> > Fix this by checking for these devices, and doing a reload and
-> > rename.
-> > 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  libmultipath/configure.c | 21 ++++++++++++++++++++-
-> >  1 file changed, 20 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> > index a7257981..d0e9c958 100644
-> > --- a/libmultipath/configure.c
-> > +++ b/libmultipath/configure.c
-> > @@ -835,7 +835,6 @@ int domap(struct multipath *mpp, char *params,
-> > int is_daemon)
-> >  {
-> >  	int r = DOMAP_FAIL;
-> >  	struct config *conf;
-> > -	char wwid[WWID_SIZE];
-> >  
-> >  	/*
-> >  	 * last chance to quit before touching the devmaps
-> > @@ -846,6 +845,7 @@ int domap(struct multipath *mpp, char *params,
-> > int is_daemon)
-> >  	}
-> >  
-> >  	if (mpp->action == ACT_CREATE) {
-> > +		char wwid[WWID_SIZE];
-> >  		int rc = dm_get_wwid(mpp->alias, wwid,
-> > sizeof(wwid));
-> >  
-> >  		if (rc == DMP_OK && !strncmp(mpp->wwid, wwid,
-> > sizeof(wwid))) {
-> > @@ -863,7 +863,26 @@ int domap(struct multipath *mpp, char *params,
-> > int is_daemon)
-> >  			mpp->action = ACT_REJECT;
-> >  		}
-> >  	}
-> > +	if (mpp->action == ACT_CREATE) {
-> > +		char alias[WWID_SIZE];
-> > +		int rc = dm_find_map_by_wwid(mpp->wwid, alias,
-> > NULL);
-> >  
-> > +		if (rc == DMP_NO_MATCH) {
-> > +			condlog(1, "%s: wwid \"%s\" already in use
-> > by non-multipath map \"%s\"",
-> > +				mpp->alias, mpp->wwid, alias);
+On Mon, Nov 25, 2024 at 03:32:22PM +0100, Martin Wilck wrote:
+> pp->pgindex is set in disassemble_map() when a map is parsed.
+> There are various possiblities for this index to become invalid.
+> pp->pgindex is only used in enable_group() and followover_should_fallback(),
+> and both callers take no action if it is 0, which is the right
+> thing to do if we don't know the path's pathgroup.
 > 
-> Nitpick: This is almost the same message that dm_find_map_by_wwid() has
-> printed immediately before. Similar messages are also printed in all
-> other callers of dm_find_map_by_wwid(). I suggest that we either remove
-> the log message in the callers or in dm_find_map_by_wwid() itself.
-> Probably the latter, then we can decide on a case by case basis in the
-> caller whether the situation needs to be logged.
+> Make sure pp->pgindex is reset to 0 in various places:
+> - when it's orphaned,
+> - before (re)grouping paths,
+> - when we detect a bad mpp assignment in update_pathvec_from_dm().
+> 
+> The hunk in group_paths is mostly redundant with the hunk in free_pgvec(), but
+> because we're looping over pg->paths in the former and over pg->pgp in
+> the latter, I think it's better too play safe.
 
-I'm confused here. dm_find_map_by_wwid() doesn't print any message
-itself. It calls libmp_mapinfo__(), which could print either:
+I'm not sure this will always fix issue #105. Perhaps I'm overlooking
+the connection in the code and this just needs a more explicit
+explanation to aid clueless reviewers, but here's what I don't get.
 
-condlog(lvl, "%s: map %s has multiple targets", fname__, map_id);
+As far as I can see, the only change here that would effect the reported
+issue is the change to update_pathvec_from_dm(). While I totally agree
+that if you have a path that appears to be two multipath devices, you
+can't trust pp->pgindex, I believe there's also another problem.
 
-or:
+Say you have a multipath device with two path groups (pgp1 and pgp2)
+each with one path (pp1 in pgp1 and pp2 in pgp2). In this case,
+pp1->pgindex == 1 and pp2->pgindex == 2. If update_pathvec_from_dm()
+discovers that pp1 is part of another multipath device, and removes it,
+that will mean that pgp1 is now empty, so update_pathvec_from_dm() will
+also remove that (at the delete_pg label).  But pp2->pgindex will still
+be set to 2 even though there's only one path group, so it will now
+point off the end of the pgp list. Right?
 
-condlog(lvl, "%s: target type mismatch: \"%s\" != \"%s\"",
-        fname__, tgt_type, target_type);
-
-in this case, but at level 4 verbosity, and these are used to
-distinguish between the various reasons why DMP_NO_MATCH could be
-returned, which seems like a reasonable thing at that verbosity. 
+At any rate, updating pgindex seems finicky and perhaps we should just
+drop it. It's not that much work to scan the path groups for the path in
+enable_group() and since we're already reading through the path groups
+in followover_should_failback(), we can just refactor the code a little
+bit to avoid needing pgindex at all.
 
 -Ben
-
+ 
+> Fixes: 99db1bd ("[multipathd] re-enable disabled PG when at least one path is up")
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/pgpolicies.c  |  6 ++++++
+>  libmultipath/structs.c     | 12 +++++++++++-
+>  libmultipath/structs_vec.c |  8 ++++++++
+>  3 files changed, 25 insertions(+), 1 deletion(-)
 > 
-> Martin
+> diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
+> index edc3c61..23ef2bd 100644
+> --- a/libmultipath/pgpolicies.c
+> +++ b/libmultipath/pgpolicies.c
+> @@ -127,6 +127,8 @@ fail:
+>  int group_paths(struct multipath *mp, int marginal_pathgroups)
+>  {
+>  	vector normal, marginal;
+> +	struct path *pp;
+> +	int i;
+>  
+>  	if (!mp->pg)
+>  		mp->pg = vector_alloc();
+> @@ -138,6 +140,10 @@ int group_paths(struct multipath *mp, int marginal_pathgroups)
+>  	if (!mp->pgpolicyfn)
+>  		goto fail;
+>  
+> +	/* Reset pgindex, we're going to invalidate it */
+> +	vector_foreach_slot(mp->paths, pp, i)
+> +		pp->pgindex = 0;
+> +
+>  	if (!marginal_pathgroups ||
+>  	    split_marginal_paths(mp->paths, &normal, &marginal) != 0) {
+>  		if (mp->pgpolicyfn(mp, mp->paths) != 0)
+> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> index 61c8f32..4851725 100644
+> --- a/libmultipath/structs.c
+> +++ b/libmultipath/structs.c
+> @@ -239,8 +239,18 @@ free_pgvec (vector pgvec, enum free_path_mode free_paths)
+>  	if (!pgvec)
+>  		return;
+>  
+> -	vector_foreach_slot(pgvec, pgp, i)
+> +	vector_foreach_slot(pgvec, pgp, i) {
+> +
+> +		/* paths are going to be re-grouped, reset pgindex */
+> +		if (free_paths != FREE_PATHS) {
+> +			struct path *pp;
+> +			int j;
+> +
+> +			vector_foreach_slot(pgp->paths, pp, j)
+> +				pp->pgindex = 0;
+> +		}
+>  		free_pathgroup(pgp, free_paths);
+> +	}
+>  
+>  	vector_free(pgvec);
+>  }
+> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+> index d22056c..64c5ad5 100644
+> --- a/libmultipath/structs_vec.c
+> +++ b/libmultipath/structs_vec.c
+> @@ -139,6 +139,13 @@ static bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+>  				must_reload = true;
+>  				dm_fail_path(mpp->alias, pp->dev_t);
+>  				vector_del_slot(pgp->paths, j--);
+> +				/*
+> +				 * pp->pgindex has been set in disassemble_map(),
+> +				 * which has probably been called just before for
+> +				 * mpp. So he pgindex relates to mpp and may be
+> +				 * wrong for pp->mpp. Invalidate it.
+> +				 */
+> +				pp->pgindex = 0;
+>  				continue;
+>  			}
+>  			pp->mpp = mpp;
+> @@ -354,6 +361,7 @@ void orphan_path(struct path *pp, const char *reason)
+>  {
+>  	condlog(3, "%s: orphan path, %s", pp->dev, reason);
+>  	pp->mpp = NULL;
+> +	pp->pgindex = 0;
+>  	uninitialize_path(pp);
+>  }
+>  
+> -- 
+> 2.47.0
 
