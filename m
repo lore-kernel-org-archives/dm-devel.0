@@ -1,82 +1,68 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5001F43169
-	for <dm-devel@lists.linux.dev>; Mon, 25 Nov 2024 06:07:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C713F364D6
+	for <dm-devel@lists.linux.dev>; Mon, 25 Nov 2024 06:11:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732514860; cv=none; b=Wtig0a1YGIF4Zu3z6jQLRvLogM0NdUCMfk2lMYA4DJQiCvkc/2ZJELzC8yKm/nxz8CD9xvC+H0nj1NH8ZPtgp9e2P+cruI328csnEIuMrH7DCnxK4k1WWdCSpamuzymlWZsLtQe8DZhsl7AG1DIXOGJsAZLapWyhXuKZ9YmZ/W0=
+	t=1732515083; cv=none; b=iBkoG1WX45pHeaFibZd5/X3xjBYA106huwnEWRQH7OdTgVmsJhTFbAFgO+q3YVyWoMrQtOyU6/dD6CWYrKjh1MXVUefovMFfsCJS47vTBj0fDsfz1IlBQLJFO3G/KhHcgxSArOyfzPW91+1rPo6l7xGjf2kYRjwyHNPqgtQCY0g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732514860; c=relaxed/simple;
-	bh=EaF8LP6Cw0Q1IJbfvqHTKFcFWHP5cGdVqoQKdmZP+bA=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=rRVrTzsItT9c9MDBxl1ApIRvXStQkVvEATEb6kpzNgH5NNXkZg871kAEh4J0XTn3qv5nXV9IqI8udQk0m8PRswtY1BXJYNNnI62ks8v9e5H/A1pAPXFISeTjDOclDZ78vVSHq8J+U0dKmGQO61wE67cZoOcACmObDdU4ZvZtGWg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=CWocc4w8; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1732515083; c=relaxed/simple;
+	bh=nRSl5fXKNqYlZjMRG0Mtuvnlq2GuvX8aXram9ZgrUUY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=hkyFyjTKMhQwXzHeJjRf2BBPNPpJhI9u2PnJL57Drms4hZBdJq/y6oA+xeU8VhLHjXTQAMWcb1qYZ4Ensf8QhMsAZvbypN2XWmEf5FSkJCMdsupc1kIUkvhBIQdGalbsnEWs3VmbelAgz022Ap6TqGnNzHBjX2XQJTNdnVhxQ1g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=w4N9zXhJ; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="CWocc4w8"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id EBB10C4CECE;
-	Mon, 25 Nov 2024 06:07:38 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1732514859;
-	bh=EaF8LP6Cw0Q1IJbfvqHTKFcFWHP5cGdVqoQKdmZP+bA=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=CWocc4w8zC+Aj5dO+lV/PqTS0XKOuRukbPjzY2T9Qdisp11lZW6jF9KkkFufAqCEK
-	 wr5ylMr35pClvbrdq1u3Qax5siidcx7+z5JNbGfDzmT6sGtv4LAKVUM2tzG0Y6tuhf
-	 AMeu3uBik+MPI5C9fvFtHCpWgTLOO5ZbXepxfk9NuHcDtuKmhgdd1DWUYCmh7a+bvZ
-	 bPVvJV+a/h53+GD5nbTiHy0S0brqjF9lshVotQXdtcNYKPbJpUBwp6tLcr0+v36SuA
-	 pXrsUlC6/9HQblIEC/whvYaEjL8jNEjLghhZ2cTxiR+6jxQvWvDlKMoqjzTofqdSM2
-	 aTEHDEUIEhOVw==
-Message-ID: <b01f1929-f1bc-4ed6-ae57-dded68f23e26@kernel.org>
-Date: Mon, 25 Nov 2024 15:07:24 +0900
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="w4N9zXhJ"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=lqfEwiii0RFf+iWBB395SxN+IJUaOUzZo6cMBeJONho=; b=w4N9zXhJmD0RjhjpD4gBhGfhLZ
+	e33w4y6ulNgLThtv8i0K5ZU+XHBCdoVA1zk+BdkMLYDrKuxw5Q/bwNtTw9M3wy4qbesm6geyxvNwY
+	35K8bUjvbbAYYHNsWLLhG5hhb92sxjZB1yitW8xU8p39BE3CRsqVYjWLcgDuNv2uqjo1DFHFxhMGX
+	3/7KYS3QJ+jYUWrjpqTKfuSKG8jo5W06HjuSXXgwtzMq0c5+JyPsQ183IjndEtVwRIIJRibn/6PJc
+	I9gyBDNhGiJju3EiYtzRbv6Ibu+0fl+C78aoJVo4zq9tQzdNgu0m9kjMlFvNVBlSCrH4kpy/MC9Jl
+	KORjw79Q==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
+	id 1tFSJd-000000079JY-1Jhg;
+	Mon, 25 Nov 2024 06:11:21 +0000
+Date: Sun, 24 Nov 2024 22:11:21 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: Christoph Hellwig <hch@infradead.org>,
+	=?utf-8?B?6Z+m6b6Z5bmzKEdyb290KQ==?= <weilongping@oppo.com>,
+	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+	"snitzer@redhat.com" <snitzer@redhat.com>,
+	"bvanassche@acm.org" <bvanassche@acm.org>,
+	"ebiggers@google.com" <ebiggers@google.com>
+Subject: Re: [PATCH] dm-crypt: set max_io_len as chunk_sectors of zoned device
+Message-ID: <Z0QVCemvU5_5REWB@infradead.org>
+References: <SEZPR02MB7967C480572B3B15D5F57F92D42E2@SEZPR02MB7967.apcprd02.prod.outlook.com>
+ <Z0QSqndKs1fyiOmJ@infradead.org>
+ <b01f1929-f1bc-4ed6-ae57-dded68f23e26@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] dm-crypt: set max_io_len as chunk_sectors of zoned device
-To: Christoph Hellwig <hch@infradead.org>, =?UTF-8?B?6Z+m6b6Z5bmzKEdyb290?=
- =?UTF-8?Q?=29?= <weilongping@oppo.com>
-Cc: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
- "snitzer@redhat.com" <snitzer@redhat.com>,
- "bvanassche@acm.org" <bvanassche@acm.org>,
- "ebiggers@google.com" <ebiggers@google.com>
-References: <SEZPR02MB7967C480572B3B15D5F57F92D42E2@SEZPR02MB7967.apcprd02.prod.outlook.com>
- <Z0QSqndKs1fyiOmJ@infradead.org>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <Z0QSqndKs1fyiOmJ@infradead.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <b01f1929-f1bc-4ed6-ae57-dded68f23e26@kernel.org>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On 11/25/24 3:01 PM, Christoph Hellwig wrote:
-> On Mon, Nov 25, 2024 at 05:58:22AM +0000, 韦龙平(Groot) wrote:
->>> What is ZWL?  And why mention 6.6?  And why do you care about ordering?
->> ZWL is Zone-Write-Locking and it was replaced by Zone-Write-Plugging on 6.12.
-> 
-> That's not a generally accepted acronym.  But more importantly it's all
-> gone now, so completely irrelevant.
-> 
->>
->>> There is no real ordering requirement in the block layer.
->> According to the design constraints of zoned device, write requests in the same
->> zone must be dispatched in order of address and there can be no holes in the middle
-> 
-> Yes.  But none of that matters at the device mapper layer.  Either the
-> submitter needs to ensure ordering, or you must use zone append.
+On Mon, Nov 25, 2024 at 03:07:24PM +0900, Damien Le Moal wrote:
+> 100% agree. But in this case, dm-crypt sees a single BIO which gets split when
+> submitted to the underlying device. But the split issues the requests in
+> reverse order, which breaks write ordering.
 
-100% agree. But in this case, dm-crypt sees a single BIO which gets split when
-submitted to the underlying device. But the split issues the requests in
-reverse order, which breaks write ordering. So this seems like an issue with
-the block layer rather than dm-crypt. Though I do not understand why I have
-never seen this issue before, despite all the testing we do with all the zone
-block devices, dm and FS combinations we run every week (including f2fs). So I
-am not sure that the story is complete here... Never had to play with that dm
-max_io_len before to get things running correctly.
+I'd like to see verification of this.  People who send these kinds of
+odd old kernel reports tend to have weird patches applied to their tree
+as well.
 
+Without an upstream reproducer that actually shows issues I think
+this can be safely ignored.
 
--- 
-Damien Le Moal
-Western Digital Research
