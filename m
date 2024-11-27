@@ -1,338 +1,247 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pf1-f177.google.com (mail-pf1-f177.google.com [209.85.210.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 53A451DF74F
-	for <dm-devel@lists.linux.dev>; Tue, 26 Nov 2024 18:42:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 80E506A8D2
+	for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 02:59:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732646557; cv=none; b=G0WRxKvyMkQpxI3ROldzzSCKfKw4mYGU1Da0MqK4OoC+VXJSDSb9RJHbWCc6xZYS1Opyma2w4wy0iZacPGn8x77ZWo3Dmaa03dIXrn1Y1ugxleTp0SHm4ymtNyMoc7H3xqzH3gJmoE02uS5FfGemKSsmFKin+SO5QADI/fHuSIs=
+	t=1732676384; cv=none; b=PQPy/F8rPeadKcThfs450yaBY4vaQdevH9QdjpHrRryOOwJbUsF2AV7qQHyCV0/mEBiOoCN4lY1w/Fi9OjQqlTUjEqJgxkGW8u2XPjwZUYc3rUfdj2zxN2Tm9sWoLFNFWYTyMGxKcWZ2cm6lpbqyD0BPClDYahsxTozan0F5wcA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732646557; c=relaxed/simple;
-	bh=8CqEHJZ8IkdD1jm+3b3+QvLYYU3GJD/yeMPjL/hYofU=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=U2zodNUafOzXW3NbXyw780uEiAJfJCiB3rhoR36TlwtUgJiedS0iWqQW73w5gxJ0GjDlFl4OIhGWYKMVNE8IKb/h7klRrFx0pdGpvNTD3P2zxqn6t/vVwhxKoKDlZOJfJuGv1xNJiKeOsSdRV6EChROea8zH6JzuAo2caMPqm24=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZGPqIrIL; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1732676384; c=relaxed/simple;
+	bh=UWmMiGZqLwobInZyxFH3bSZUtPpteFtRWw6WLfPhbAs=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Bsx0vu+dztUwg4C/X77DZzhVmfg741V9FUrXfP9Y/z8HkhVJHYpxlPX3E1n4JYcYXlAYXewJnEt6eP2Bpk6UzApFvfX1x54WOoKZUlrEp3QM/MSU4YerZhwviFqrp15qBc0/2G0CYU0Zq6vCrUGIwycSuEGEMpmQpAgP8VwVHnQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VNYEHVP2; arc=none smtp.client-ip=209.85.210.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZGPqIrIL"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1732646553;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8ODbx21KGX5odUdOUaLqgD30E01W2HFjjeLx8ADhCgs=;
-	b=ZGPqIrIL45yJU3pg8i+kBkZx8hJKVM+S9Qa9nfzDboMMDVL/Jl62BXnGpriUMVHngOm7l0
-	GG29eH25Nsz+spk6Qoo4wV4kvsxnaIe6rfHUwo9rMI4mc9OvdF+ShtJzk4Qi+MhcOMk9rE
-	rFU0R5QsM0enbp2vxPV60VpSbum42ik=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-140-gzfiGTDTOUuMUprpPRPDUw-1; Tue,
- 26 Nov 2024 13:42:29 -0500
-X-MC-Unique: gzfiGTDTOUuMUprpPRPDUw-1
-X-Mimecast-MFC-AGG-ID: gzfiGTDTOUuMUprpPRPDUw
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4207B1955E94;
-	Tue, 26 Nov 2024 18:42:27 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E89061956054;
-	Tue, 26 Nov 2024 18:42:26 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4AQIgPDg855496
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 26 Nov 2024 13:42:25 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4AQIgPeB855495;
-	Tue, 26 Nov 2024 13:42:25 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>, Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 04/12] libmultipath: set uuid, name, and dmi if a device is found
-Date: Tue, 26 Nov 2024 13:42:16 -0500
-Message-ID: <20241126184224.855459-5-bmarzins@redhat.com>
-In-Reply-To: <20241126184224.855459-1-bmarzins@redhat.com>
-References: <20241126184224.855459-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VNYEHVP2"
+Received: by mail-pf1-f177.google.com with SMTP id d2e1a72fcca58-724ffe64923so3633014b3a.2
+        for <dm-devel@lists.linux.dev>; Tue, 26 Nov 2024 18:59:41 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1732676381; x=1733281181; darn=lists.linux.dev;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=vDren5ADtiyyuDojahly2+sSPvL0WRct0w89l8MBRc4=;
+        b=VNYEHVP22/QzxmpMoSss5V4Hh0BB32tqKL72Gc7ojoSKFCxcWIFn20cGFdGvfvdbii
+         z+NM5/3Z0gerRwkqMeKC40/NIhbXCLypYc2VYhfRzOh0oqYyFfVKBViCKZnHmqDoGcsV
+         C0RK9jQjqsh42SQliiQwrIfsT6FoHypMs6c3LPE9WLCZWjBdTeLO+3LXz2pFgYQhsces
+         G6coh7uZ4UMowJ5Y2QrvTY04Y86XR12UI1orv0JFXC3FtCPugJc7ko/jDdImC76bRr4s
+         2m3vAdDxbiAMBJYkJJ+rSu8ZeVlbbux4eA+XP3U0lb5SDL9ACulCDBhWhrbHAcZnj84W
+         YOGw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1732676381; x=1733281181;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=vDren5ADtiyyuDojahly2+sSPvL0WRct0w89l8MBRc4=;
+        b=tfq9nBOxUvgMBUUF6lYn9Pfbg+rq2HY9jlvSMcJSBVx+/fXPejCsekXn/kfRnlter+
+         JyCVpfuCy6+ZwO0A/5e6tsXn+3oPCd04XR8fDCXBsRyJ3y59/r1wjLMzGGOkw82fD1mZ
+         c9ZdxmgJs/Yf/6C0ZngBdHiBccLgVe28cK+uJ6y76w1EEOAHdyibTOUksZVt/Rj6R5wc
+         1yv+yIKfq+oMCdD5d7DkeozpSzVITo7hYYAYDJckELafNxNUB++GihFDcf1ChBhJR+ej
+         5sboyOkcpueXDH+oZZRDfDs0aTgcZIDkaum40YBc+ORdCykKZwJY7MpfvnX9U6C3Nqhp
+         m5bQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUYpMFMktBafWpg/oLbWyRMl3VQMIaKW0S5naDkSCtZ2q4hrkKc3iyR8yV/ronHVi8Oq6+w9DL3/g==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxuzOdOleo6p30hv8v/sXex7PVcMBA2RD8+j8+Iu0WS70XF5lH0
+	SXZRvb3Q1edUvrcnRF+YQCW+P8OnFezJjRPsJhGrss7jJ/Fe8+9M
+X-Gm-Gg: ASbGncuJwg4QT83HwBBv7qaf/KQ3NjPbHGpcBREwZAACLYy+TUlrkMVQwibLdowuOdt
+	s/gUSxy56af7ZoxuyjzSBbnDRE5QP74NAFy5wrNtqjE24mqf26atiA8rYP7g1gWd5JcIaZ63TI+
+	GrAV5W0VtdtLOF0p6HL8nYYuerS+8V2l1sIr8LoPS+o75BfI8QUKIgcct65ddIbeorUgzrdQt73
+	ltf8utDP8JIGOuTGbdaU5+vQWpt3MmwLQJbvvV9e0hW38tzlX+47LjULp5tFWFs7q+Rszg32ho2
+	mw==
+X-Google-Smtp-Source: AGHT+IFYiHisxMljvlFNcELzBIZNtvqA9E+SoH+TzdKr80+88ifldFSahzOnnXPVC3c2OejQpqXMZw==
+X-Received: by 2002:a05:6a00:1da1:b0:725:3305:1a7e with SMTP id d2e1a72fcca58-72533051bb8mr723576b3a.9.1732676380691;
+        Tue, 26 Nov 2024 18:59:40 -0800 (PST)
+Received: from visitorckw-System-Product-Name ([140.113.216.168])
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-7fbcc40143esm9471790a12.80.2024.11.26.18.59.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 Nov 2024 18:59:40 -0800 (PST)
+Date: Wed, 27 Nov 2024 10:59:34 +0800
+From: Kuan-Wei Chiu <visitorckw@gmail.com>
+To: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com,
+	corbet@lwn.net, peterz@infradead.org, mingo@redhat.com,
+	acme@kernel.org, namhyung@kernel.org, akpm@linux-foundation.org,
+	mark.rutland@arm.com, alexander.shishkin@linux.intel.com,
+	jolsa@kernel.org, irogers@google.com, adrian.hunter@intel.com,
+	kan.liang@linux.intel.com, willy@infradead.org,
+	jserv@ccns.ncku.edu.tw, linux-kernel@vger.kernel.org,
+	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	"open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>
+Subject: Re: [PATCH v2 01/10] lib/min_heap: Introduce non-inline versions of
+ min heap API functions
+Message-ID: <Z0aLFidHu/msXbXq@visitorckw-System-Product-Name>
+References: <20241020040200.939973-1-visitorckw@gmail.com>
+ <20241020040200.939973-2-visitorckw@gmail.com>
+ <CAMuHMdVO5DPuD9HYWBFqKDHphx7+0BEhreUxtVC40A=8p6VAhQ@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: mVKbasyHqne8ZEMPVFG0bH8u-zJaAJEuUIW8L3QbCPA_1732646547
-X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+In-Reply-To: <CAMuHMdVO5DPuD9HYWBFqKDHphx7+0BEhreUxtVC40A=8p6VAhQ@mail.gmail.com>
 
-Instead of only setting the uuid, name, and dmi on DMP_OK, return them
-whenever we find a device, even if that device doesn't match. To make the
-code simpler, we set these values before checks that could possibly return
-DMP_ERR.
+Hi Geert,
 
-The only caller of libmp_mapinfo() that could update a multipath value
-incorrectly because of this is update_multipath_table(). Fix that.
+On Tue, Nov 26, 2024 at 02:27:09PM +0100, Geert Uytterhoeven wrote:
+> Hi Kuan-Wei,
+> 
+> On Sun, Oct 20, 2024 at 6:02 AM Kuan-Wei Chiu <visitorckw@gmail.com> wrote:
+> > All current min heap API functions are marked with '__always_inline'.
+> > However, as the number of users increases, inlining these functions
+> > everywhere leads to a increase in kernel size.
+> >
+> > In performance-critical paths, such as when perf events are enabled and
+> > min heap functions are called on every context switch, it is important
+> > to retain the inline versions for optimal performance. To balance this,
+> > the original inline functions are kept, and additional non-inline
+> > versions of the functions have been added in lib/min_heap.c.
+> >
+> > Link: https://lore.kernel.org/20240522161048.8d8bbc7b153b4ecd92c50666@linux-foundation.org
+> > Suggested-by: Andrew Morton <akpm@linux-foundation.org>
+> > Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
+> 
+> Thanks for your patch, which is now commit 92a8b224b833e82d
+> ("lib/min_heap: introduce non-inline versions of min heap API
+> functions") upstream.
+> 
+> > --- a/include/linux/min_heap.h
+> > +++ b/include/linux/min_heap.h
+> 
+> > @@ -50,33 +50,33 @@ void __min_heap_init(min_heap_char *heap, void *data, int size)
+> >                 heap->data = heap->preallocated;
+> >  }
+> >
+> > -#define min_heap_init(_heap, _data, _size)     \
+> > -       __min_heap_init((min_heap_char *)_heap, _data, _size)
+> > +#define min_heap_init_inline(_heap, _data, _size)      \
+> > +       __min_heap_init_inline((min_heap_char *)_heap, _data, _size)
+> 
+> Casting macro parameters without any further checks prevents the
+> compiler from detecting silly mistakes.  Would it be possible to
+> add safety-nets here and below, using e.g. container_of() or typeof()
+> checks?
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/devmapper.c   | 47 +++++++++++++++++++-------------------
- libmultipath/devmapper.h   |  5 +++-
- libmultipath/structs_vec.c |  5 +++-
- tests/mapinfo.c            | 45 +++++++++++++++++++++++++-----------
- 4 files changed, 63 insertions(+), 39 deletions(-)
+IIUC, the concern is that passing a pointer that is not of type
+min_heap might lead to compiler errors being missed. To address this,
+one possible solution could be to expand the members of struct min_heap
+into individual parameters for the function.
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 42176667..38c49bd5 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -736,6 +736,29 @@ static int libmp_mapinfo__(int flags, mapid_t id, mapinfo_t info, const char *ma
- 		&& !(uuid = dm_task_get_uuid(dmt))))
- 		return DMP_ERR;
- 
-+	if (info.name) {
-+		strlcpy(info.name, name, WWID_SIZE);
-+		condlog(4, "%s: %s: name: \"%s\"", fname__, map_id, info.name);
-+	}
-+	if (info.uuid) {
-+		strlcpy(info.uuid, uuid, DM_UUID_LEN);
-+		condlog(4, "%s: %s: uuid: \"%s\"", fname__, map_id, info.uuid);
-+	}
-+
-+	if (info.dmi) {
-+		memcpy(info.dmi, &dmi, sizeof(*info.dmi));
-+		condlog(4, "%s: %s %d:%d, %d targets, %s table, %s, %s, %d opened, %u events",
-+			fname__, map_id,
-+			info.dmi->major, info.dmi->minor,
-+			info.dmi->target_count,
-+			info.dmi->live_table ? "live" :
-+				info.dmi->inactive_table ? "inactive" : "no",
-+			info.dmi->suspended ? "suspended" : "active",
-+			info.dmi->read_only ? "ro" : "rw",
-+			info.dmi->open_count,
-+			info.dmi->event_nr);
-+	}
-+
- 	if (flags & MAPINFO_CHECK_UUID &&
- 	    ((flags & MAPINFO_PART_ONLY && !is_mpath_part_uuid(uuid, NULL)) ||
- 	     (!(flags & MAPINFO_PART_ONLY) && !is_mpath_uuid(uuid)))) {
-@@ -768,40 +791,16 @@ static int libmp_mapinfo__(int flags, mapid_t id, mapinfo_t info, const char *ma
- 
- 	/*
- 	 * Check possible error conditions.
--	 * If error is returned, don't touch any output parameters.
- 	 */
- 	if ((info.status && !(tmp_status = strdup(params)))
- 	    || (info.target && !tmp_target && !(tmp_target = strdup(params))))
- 		return DMP_ERR;
- 
--	if (info.name) {
--		strlcpy(info.name, name, WWID_SIZE);
--		condlog(4, "%s: %s: name: \"%s\"", fname__, map_id, info.name);
--	}
--	if (info.uuid) {
--		strlcpy(info.uuid, uuid, DM_UUID_LEN);
--		condlog(4, "%s: %s: uuid: \"%s\"", fname__, map_id, info.uuid);
--	}
--
- 	if (info.size) {
- 		*info.size = length;
- 		condlog(4, "%s: %s: size: %lld", fname__, map_id, *info.size);
- 	}
- 
--	if (info.dmi) {
--		memcpy(info.dmi, &dmi, sizeof(*info.dmi));
--		condlog(4, "%s: %s %d:%d, %d targets, %s table, %s, %s, %d opened, %u events",
--			fname__, map_id,
--			info.dmi->major, info.dmi->minor,
--			info.dmi->target_count,
--			info.dmi->live_table ? "live" :
--				info.dmi->inactive_table ? "inactive" : "no",
--			info.dmi->suspended ? "suspended" : "active",
--			info.dmi->read_only ? "ro" : "rw",
--			info.dmi->open_count,
--			info.dmi->event_nr);
--	}
--
- 	if (info.target) {
- 		*info.target = steal_ptr(tmp_target);
- 		if (!tgt_set)
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 0bd2b907..4aeefad1 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -115,7 +115,10 @@ typedef struct libmp_map_info {
-  *
-  * This function obtains the requested information for the device-mapper map
-  * identified by the input parameters.
-- * Output parameters are only filled in if the return value is DMP_OK.
-+ * If non-NULL, the name, uuid, and dmi output paramters may be filled in for
-+ * any return value besides DMP_NOT_FOUND and will always be filled in for
-+ * return values other than DMP_NOT_FOUND and DMP_ERR.
-+ * The other parameters are only filled in if the return value is DMP_OK.
-  * For target / status / size information, the  map's table should contain
-  * only one target (usually multipath or linear).
-  */
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 5df495b3..d22056ca 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -504,6 +504,8 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
- 	int r = DMP_ERR;
- 	char __attribute__((cleanup(cleanup_charp))) *params = NULL;
- 	char __attribute__((cleanup(cleanup_charp))) *status = NULL;
-+	/* only set the actual mpp->dmi if libmp_mapinfo returns DMP_OK */
-+	struct dm_info dmi;
- 	unsigned long long size;
- 	struct config *conf;
- 
-@@ -522,7 +524,7 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
- 				  .target = &params,
- 				  .status = &status,
- 				  .size = &mpp->size,
--				  .dmi = &mpp->dmi,
-+				  .dmi = &dmi,
- 			  });
- 
- 	if (r != DMP_OK) {
-@@ -531,6 +533,7 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
- 	} else if (size != mpp->size)
- 		condlog(0, "%s: size changed from %llu to %llu", mpp->alias, size, mpp->size);
- 
-+	mpp->dmi = dmi;
- 	return update_multipath_table__(mpp, pathvec, flags, params, status);
- }
- 
-diff --git a/tests/mapinfo.c b/tests/mapinfo.c
-index ee487989..36511607 100644
---- a/tests/mapinfo.c
-+++ b/tests/mapinfo.c
-@@ -451,15 +451,21 @@ static void test_mapinfo_bad_check_uuid_00(void **state)
- static void test_mapinfo_bad_check_uuid_01(void **state)
+diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
+index e781727c8916..ebd577003f0b 100644
+--- a/include/linux/min_heap.h
++++ b/include/linux/min_heap.h
+@@ -207,18 +207,20 @@ static size_t parent(size_t i, unsigned int lsbit, size_t size)
+
+ /* Initialize a min-heap. */
+ static __always_inline
+-void __min_heap_init_inline(min_heap_char *heap, void *data, int size)
++void __min_heap_init_inline(int *heap_nr, int *heap_size, void **heap_data,
++			    void *heap_preallocated, void *data, int size)
  {
- 	int rc;
-+	struct dm_info dmi = { .suspended = 0 };
-+	char name[WWID_SIZE] = { 0 };
-+	char uuid[DM_UUID_LEN] = { 0 };
- 
- 	mock_mapinfo_name_1(DM_DEVICE_INFO, 1, "foo", 1, 1, 0);
- 	WRAP_DM_TASK_GET_INFO(1);
- 	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_01);
-+	will_return(__wrap_dm_task_get_name, MPATH_NAME_01);
- 	will_return(__wrap_dm_task_get_uuid, BAD_UUID_01);
- 	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID,
- 			   (mapid_t) { .str = "foo", },
--			   (mapinfo_t) { .name = NULL });
-+			   (mapinfo_t) { .dmi = &dmi, .name = name, .uuid = uuid });
- 	assert_int_equal(rc, DMP_NO_MATCH);
-+	assert_true(!strcmp(name, MPATH_NAME_01));
-+	assert_true(!strcmp(uuid, BAD_UUID_01));
+-	heap->nr = 0;
+-	heap->size = size;
++	*heap_nr = 0;
++	*heap_size = size;
+ 	if (data)
+-		heap->data = data;
++		*heap_data = data;
+ 	else
+-		heap->data = heap->preallocated;
++		*heap_data = heap_preallocated;
  }
- 
- static void test_mapinfo_bad_check_uuid_02(void **state)
-@@ -887,17 +893,26 @@ static void test_mapinfo_bad_next_target_01(void **state)
- static void test_mapinfo_bad_next_target_02(void **state)
- {
- 	int rc;
--	unsigned long long size;
-+	struct dm_info dmi = { .suspended = 0 };
-+	char name[WWID_SIZE] = { 0 };
-+	char uuid[DM_UUID_LEN] = { 0 };
-+	unsigned long long size = 0;
- 
- 	mock_mapinfo_name_1(DM_DEVICE_STATUS, 1, "foo", 1, 1, 0);
- 	WRAP_DM_TASK_GET_INFO(1);
- 	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_02);
-+	will_return(__wrap_dm_task_get_name, MPATH_NAME_01);
-+	will_return(__wrap_dm_task_get_uuid, MPATH_UUID_01);
- 	/* no targets */
- 	mock_dm_get_next_target(0, NULL, NULL, NULL);
- 	rc = libmp_mapinfo(DM_MAP_BY_NAME,
- 			   (mapid_t) { .str = "foo", },
--			   (mapinfo_t) { .size = &size });
-+			   (mapinfo_t) { .dmi = &dmi, .name = name, .uuid = uuid, .size = &size });
- 	assert_int_equal(rc, DMP_EMPTY);
-+	assert_int_equal(size, 0);
-+	assert_memory_equal(&dmi, &MPATH_DMI_02, sizeof(dmi));
-+	assert_true(!strcmp(name, MPATH_NAME_01));
-+	assert_true(!strcmp(uuid, MPATH_UUID_01));
- }
- 
- /* libmp_mapinfo needs to do a DM_DEVICE_STATUS ioctl */
-@@ -946,10 +961,10 @@ static void test_mapinfo_bad_target_type_03(void **state)
- 			   (mapid_t) { .str = "foo", },
- 			   (mapinfo_t) { .dmi = &dmi, .name = name, .uuid = uuid });
- 	assert_int_equal(rc, DMP_NO_MATCH);
--	/* make sure memory content is not changed */
--	assert_memory_equal(&dmi, &((struct dm_info) { .exists = 0 }), sizeof(dmi));
--	assert_memory_equal(&name, &((char[WWID_SIZE]) { 0 }), WWID_SIZE);
--	assert_memory_equal(&uuid, &((char[DM_UUID_LEN]) { 0 }), DM_UUID_LEN);
-+	/* make sure that the ouput was filled in */
-+	assert_memory_equal(&dmi, &MPATH_DMI_01, sizeof(dmi));
-+	assert_true(!strcmp(name, MPATH_NAME_01));
-+	assert_true(!strcmp(uuid, MPATH_UUID_01));
- }
- 
- static void test_mapinfo_bad_target_type_04(void **state)
-@@ -1065,23 +1080,32 @@ static void test_mapinfo_no_table_01(void **state)
- 			   (mapid_t) { .str = "foo", },
- 			   (mapinfo_t) { .dmi = &dmi });
- 	assert_int_equal(rc, DMP_EMPTY);
-+	assert_memory_equal(&dmi, &MPATH_DMI_02, sizeof(dmi));
- }
- 
- static void test_mapinfo_no_table_02(void **state)
- {
- 	int rc;
- 	struct dm_info dmi = { .suspended = 0 };
-+	char name[WWID_SIZE] = { 0 };
-+	char uuid[DM_UUID_LEN] = { 0 };
-+	unsigned long long size = 0;
- 
- 	mock_mapinfo_name_1(DM_DEVICE_STATUS, 1, "foo", 1, 1, 0);
- 	WRAP_DM_TASK_GET_INFO(1);
- 	/* DMI with no live table, MAPINFO_CHECK_UUID set */
- 	WRAP_DM_TASK_GET_INFO(&MPATH_DMI_02);
-+	will_return(__wrap_dm_task_get_name, MPATH_NAME_01);
- 	mock_dm_get_next_target(0, NULL, NULL, NULL);
- 	will_return(__wrap_dm_task_get_uuid, MPATH_UUID_01);
- 	rc = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_CHECK_UUID | MAPINFO_MPATH_ONLY,
- 			   (mapid_t) { .str = "foo", },
--			   (mapinfo_t) { .dmi = &dmi });
-+			   (mapinfo_t) { .dmi = &dmi, .name = name, .uuid = uuid, .size = &size });
- 	assert_int_equal(rc, DMP_EMPTY);
-+	assert_int_equal(size, 0);
-+	assert_memory_equal(&dmi, &MPATH_DMI_02, sizeof(dmi));
-+	assert_true(!strcmp(name, MPATH_NAME_01));
-+	assert_true(!strcmp(uuid, MPATH_UUID_01));
- }
- 
- static void test_mapinfo_good_status_01(void **state)
-@@ -1121,8 +1145,6 @@ static void test_mapinfo_bad_strdup_01(void **state)
- 			   (mapinfo_t) { .status = &status, .uuid = uuid, .name = name });
- 	assert_int_equal(rc, DMP_ERR);
- 	assert_null(status);
--	assert_memory_equal(&name, &((char[WWID_SIZE]) { 0 }), WWID_SIZE);
--	assert_memory_equal(&uuid, &((char[DM_UUID_LEN]) { 0 }), DM_UUID_LEN);
- 
- }
- 
-@@ -1284,9 +1306,6 @@ static void test_mapinfo_bad_strdup_02(void **state)
- 	assert_int_equal(rc, DMP_ERR);
- 	assert_null(status);
- 	assert_null(target);
--	assert_memory_equal(&dmi, &((struct dm_info) { .suspended = 0 }), sizeof(dmi));
--	assert_memory_equal(&name, &((char[WWID_SIZE]) { 0 }), WWID_SIZE);
--	assert_memory_equal(&uuid, &((char[DM_UUID_LEN]) { 0 }), DM_UUID_LEN);
- }
- 
- static void test_mapinfo_bad_strdup_03(void **state)
--- 
-2.46.2
 
+ #define min_heap_init_inline(_heap, _data, _size)	\
+-	__min_heap_init_inline((min_heap_char *)_heap, _data, _size)
++	__min_heap_init_inline(&(_heap)->nr, &(_heap)->size, (void**)&(_heap)->data,	\
++			       &(_heap)->preallocated, _data, _size)
+
+ /* Get the minimum element from the heap. */
+ static __always_inline
+
+Alternatively, we could use container_of() for type safety.
+
+diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
+index e781727c8916..fb96b1b82fb0 100644
+--- a/include/linux/min_heap.h
++++ b/include/linux/min_heap.h
+@@ -218,7 +218,7 @@ void __min_heap_init_inline(min_heap_char *heap, void *data, int size)
+ }
+
+ #define min_heap_init_inline(_heap, _data, _size)	\
+-	__min_heap_init_inline((min_heap_char *)_heap, _data, _size)
++	__min_heap_init_inline(container_of(&(_heap)->nr, min_heap_char, nr), _data, _size)
+
+ /* Get the minimum element from the heap. */
+ static __always_inline
+
+The first approach has better readability, while the second minimizes
+the changes needed. Please let me know your thoughts.
+> 
+> > --- a/lib/Kconfig
+> > +++ b/lib/Kconfig
+> > @@ -777,3 +777,6 @@ config POLYNOMIAL
+> >
+> >  config FIRMWARE_TABLE
+> >         bool
+> > +
+> > +config MIN_HEAP
+> > +       bool
+> 
+> Perhaps tristate? See also below.
+> 
+> > --- a/lib/Kconfig.debug
+> > +++ b/lib/Kconfig.debug
+> > @@ -2279,6 +2279,7 @@ config TEST_LIST_SORT
+> >  config TEST_MIN_HEAP
+> >         tristate "Min heap test"
+> >         depends on DEBUG_KERNEL || m
+> > +       select MIN_HEAP
+> 
+> Ideally, tests should not select functionality, to prevent increasing the
+> attack vector by merely enabling (modular) tests.
+> 
+Makes sense. Thanks for catching this.
+
+> In this particular case, just using "depends on MIN_HEAP" is not an
+> option, as MIN_HEAP is not user-visible, and thus cannot be enabled
+> by the user on its own.  However, making MIN_HEAP tristate could be
+> a first step for the modular case.
+> 
+> The builtin case is harder to fix, as e.g.
+> 
+>         depends on MIN_HEAP || COMPILE_TEST
+>         select MIN_HEAP if COMPILE_TEST
+> 
+> would still trigger a recursive dependency error.
+> 
+> Alternatively, the test could just keep on using the inline variants,
+> unless CONFIG_MIN_HEAP=y? Or event test both for the latter?
+> 
+I think that having min_heap_test continue using the inline variants
+might be the simplest solution?
+
+Regards,
+Kuan-Wei
+
+> >         help
+> >           Enable this to turn on min heap function tests. This test is
+> >           executed only once during system boot (so affects only boot time),
+> 
+> Gr{oetje,eeting}s,
+> 
+>                         Geert
+> 
+> -- 
+> Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+> 
+> In personal conversations with technical people, I call myself a hacker. But
+> when I'm talking to journalists I just say "programmer" or something like that.
+>                                 -- Linus Torvalds
