@@ -1,70 +1,71 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 012D2202F71
-	for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 23:04:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 44BC6204088
+	for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 23:04:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732748682; cv=none; b=qIPfWMI+P0QpMMGsHwtXbSl61Yxg/PFnxQDoh0vhsQTsGtuc4ncqekOJoVmHPVEI/ClJNXowYmQyNUMR9rPEHCev2jz2cAhHH0djecfcKrvYWi+z2HMN/jfnjUrH7pELEpQeSMZaoWnPT/a3gvz+S4uEvh+Chn48kdhRiVv0jS4=
+	t=1732748684; cv=none; b=Gz+n+r+lUGMDS4wF7J1qoB537dbxspd2bhR1kFnWi0TUjlUUu+0vBionYaSxC8bpyONxo6faIpBW8IWdxwnQrpL6PtV3yv2s/4wUrd4MavqU3hewnxg5KYhIzakBEvG8XNO8FdwuMzL9OGLar6QDlIR2ixwcObrEaIJe2fdn76g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732748682; c=relaxed/simple;
-	bh=VP699SPieS4EpYkuuwK5suHCqsorrOXQSYXuM3atX/M=;
+	s=arc-20240116; t=1732748684; c=relaxed/simple;
+	bh=sUIxznycnwi1m4nI8M0HKXt9hyXo6YgNy8VyZ3WmGIs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=XMJVXwvREYdRjuPPaWTHKItopIQzumR1u7LWffU2Ljk/Q4UM0UhFakT6+jIsS0adLnReZ6ziUSyYEmDYjdzskPZKvaeisiHdZ0YmTy8P87mOCHRFHOt4v+OoFQRo18P4plZ9IL0xdI8lOecV/n2c/pKYtjdVWAhawI9nfzzPzXg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=d4svfP/L; arc=none smtp.client-ip=209.85.128.51
+	 MIME-Version; b=mV/DQcuM7vFKTW93K51eYttYFenlQ1Ha1foOsq4mpcJu5pw43QoCcXl9Wa1N4GrPwmcOKpmJxmHJoWxnMiXfamBZimnBvOemWdfCyLhcoJ2pC6lI28uAMGoZwB05sS8vF7wkFzxY9M1i6W4OLOryNLtCAdc8MOMv0rNpHIhmNiI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UuS0HAtR; arc=none smtp.client-ip=209.85.128.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="d4svfP/L"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-434ab938e37so1106205e9.0
-        for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 15:04:39 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UuS0HAtR"
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-434a752140eso1535535e9.3
+        for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 15:04:41 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1732748678; x=1733353478; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1732748680; x=1733353480; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=GIL0oYsqG4cDKJBSXjIgjmATe2D58BHvG6PUTe0fWfQ=;
-        b=d4svfP/LjdTzghJszVDWdr2bGAUJXPiWSsMxFGPX0K95+UohUP1/3P7I0Fnzm15huP
-         1kLx9D6nKVyzi6z3QWw6t9xXbGbCtpYkCak/YElFIyZ4oREoZ5AdRgI1Ffz/WGDyNA8T
-         BI4mC4LWFbPXcUubWxFRdm6ezPIDhvdtFR3Qn9a0YfwiETmpe55DD7phxFchJuR65qPL
-         JcYAmX41UEV4K75I/747TynzZSNBqmI5TybOXK02MFDjk0qXu1hn9eJtYLZ5Rn+78Naw
-         s1UD7HfAlWHL2b5TU1rBcX+Jbd35h1GiXnmoXsISNUb94mxo9+PuZrMRb2ouctzPy2o7
-         bNPA==
+        bh=uv2uUZ0sjLsGvtiky7aXyhDgrUtNOPpcenjftxXZL28=;
+        b=UuS0HAtRzGIavHoej0vGuGZrUS1UF/F8TL38+hpcQp0OsPNkDuDySNskTByGVLDyat
+         EBOFfNd1+vXbP7/2e7H5yzubHhqhXvxT0wnN0YkfiG2iypOw0ix4DSGfqtK9O4SUY7eB
+         O9Xg2bZj1PdeuZJsgxO/u3WGVtyGrcnUAjJxT6rHcmnpq2TT/Az8kNCdeHKJ8LsoO+e0
+         W0nb0wT6AWz03ydYdttQwUrbIqvkvvIfjkmtcovbQicke71tJUQzm2/QMDLPakVfFa9v
+         dZSPshZ4LtC8T9eGqkHsfYnLkMNBhbDJdGE05gkJ4/XxsxmJDH/9qqn9on+LDoN4puMF
+         MNVQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732748678; x=1733353478;
+        d=1e100.net; s=20230601; t=1732748680; x=1733353480;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=GIL0oYsqG4cDKJBSXjIgjmATe2D58BHvG6PUTe0fWfQ=;
-        b=t577GBB+ych+zyqs9ZDFG3+BSoY0bpmT/XtvBhyHxgtJidGHqVgnjuJUJ1EB1TvvI8
-         jhgQcCDf3t7SMuMwU+EHxk4CTDa3MiSL7U9QFbsl7BwiSTEkdD+YXzrj3lPL3XlvQRIm
-         zTO1XS3n/D/4iId2tbdRb4kk+td5cPoscnVx24lm54X3Ywev3y5hy5zuO/NyjUXzeS65
-         UabOQlDsWlvGmYcSjAbKZnpQkZb9wtFJZRwQuwTTtX2TmMmnR+e+HTEeHGtsBcUnXzOZ
-         /8iHQTzqRkQg41Zuzcmd7Ylf+J8CWoaHJiN9pIB+aEbppiam4XjHjgIkcw2CGQRSq/H4
-         BXqQ==
-X-Gm-Message-State: AOJu0YzczeHi4BtKvehkiAYjCaPlQcQQzQzFSVMNNtQIAmsdfHlUuu0A
-	+nuCTOgmmTGmwMr8XDACLtyrui7b6TZioqiRndcFe2zkMUojQbWsPlu9/7/py28=
-X-Gm-Gg: ASbGncus3OohzHiKTQlp393MhxsItnSL94wDva/+U9D25bplsWXd1pHPzEHnnwVw6EY
-	EOd885U4hFmUMP1lO7U8jrsZHDv1OHw2HGTiJIwE/TSXIO/W32GRERNU+0VARIUCIjBRnAvRvCw
-	9uc1Dy4WPL3LKLHhQ60irHyfbuQFbfSoiv/ldRdjcwr4l7p09Wuf6ZMBHxOigY1rYFywvGYgA4m
-	R2nY5iRrJxEB5yB0rAa+OrbKZKJBs5aDu3kzqr7RCTFtxDc5DlVIkT2mU0M4RFjby1ZvyLcsoBE
-	P63UitwxYjf6ZtfRU0DHFF1PFCw/rFD47IcN
-X-Google-Smtp-Source: AGHT+IH+QqLc0ulfgKKUGPsh+how/Rp9n0iuM5E5Q04hcLtTQy1WMxLMtLXg32LKXrbUyg+U133E8w==
-X-Received: by 2002:a05:600c:3546:b0:431:5044:e388 with SMTP id 5b1f17b1804b1-434a9de78d0mr40726085e9.22.1732748678143;
-        Wed, 27 Nov 2024 15:04:38 -0800 (PST)
+        bh=uv2uUZ0sjLsGvtiky7aXyhDgrUtNOPpcenjftxXZL28=;
+        b=cMAS21OoXfEjQ2gpSZ3yXEQtLkjBdR2cSgyvuLBqUpd3QKdprb/Bpw5DA07lzK/KJS
+         2me+a9CnMoT+8OnMfZOCvOIRa3lMEE5bhDn8Ywxqme4fd57G+jSh2KT1PSw4TTDLkHiT
+         6PJpSV3rQVoyYnpiga/YB6h55SmZHon6jQEfjr89rU7O469xxRUxM1vl7OHb0BRb7IfV
+         +Kr1hqtHWRPn5jWzxuITywpyw+KJGFIW+6q5GNSyWatRhQKtem3JUSsmrRg8cusxdN76
+         2ji2WF4kf9AQyzF66d9pCTmtwYkgZOBg032YNn7/YbEthCsTrIDKGNGbYhxD+Pn4TtMc
+         ZQOg==
+X-Gm-Message-State: AOJu0Yx3owAsh1z0FcAp/3EIt3hCA6xfzaCk2ohtPPlPRdkmS2bgeoxG
+	7fb6G37jrUFEOn9fEPnmTxOGFDbY2an9Nr2PN5Pi2rpVI0atmq207oWKEJJk8e7xx6BgGst2JbV
+	w
+X-Gm-Gg: ASbGncv+LzgJFYdRuu0V3sGCTahRBZ+bhEZZCU1QESviSQ2+BZoeQUpoEnyxLveVRjx
+	JS0bRwn1t5X/PfOzmj9EgiwrCqEaQ5oLHkPVnqFp/1x2B9OBJhE74pxsJmu1ZebOKNCviDXhgXW
+	Zhu4Pu5lBoYTsb4KBapxLPuCQodhhvu17fBaz8NLdCzP77BMmSR1eh+A20Az3A3Uv4HoC0tbV2k
+	ACwtC662tlf2/d0JMMvVGkYiKRHiXq+6l42NMSN5CpKQPxde+nPulqPa/IViFf8uacdSeXmVS9v
+	+1OnATPX+j7/tz1qWLA+XcTJD08J9hhjdFDA
+X-Google-Smtp-Source: AGHT+IHSGYTh4cW+yfJMl/X4qcOCBSClQPRkXKueBQUcqVIzMEXD0O6CAfe324LWQ+qQZvoG476dOQ==
+X-Received: by 2002:a5d:59af:0:b0:382:5088:9372 with SMTP id ffacd0b85a97d-385c6ed7667mr3899103f8f.43.1732748680380;
+        Wed, 27 Nov 2024 15:04:40 -0800 (PST)
 Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-434aa7804fbsm34732595e9.21.2024.11.27.15.04.37
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-385ccd36a02sm76993f8f.37.2024.11.27.15.04.39
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 27 Nov 2024 15:04:37 -0800 (PST)
+        Wed, 27 Nov 2024 15:04:40 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 1/8] libmultipath: fix handling of pp->pgindex
-Date: Thu, 28 Nov 2024 00:04:23 +0100
-Message-ID: <20241127230430.139639-2-mwilck@suse.com>
+Subject: [PATCH v2 3/8] libmpathutil: add cleanup_bitfield()
+Date: Thu, 28 Nov 2024 00:04:25 +0100
+Message-ID: <20241127230430.139639-4-mwilck@suse.com>
 X-Mailer: git-send-email 2.47.0
 In-Reply-To: <20241127230430.139639-1-mwilck@suse.com>
 References: <20241127230430.139639-1-mwilck@suse.com>
@@ -76,135 +77,52 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-pp->pgindex is set in disassemble_map() when a map is parsed.
-There are various possiblities for this index to become invalid.
-pp->pgindex is only used in enable_group() and followover_should_fallback(),
-and both callers take no action if it is 0, which is the right
-thing to do if we don't know the path's pathgroup.
-
-Make sure pp->pgindex is reset to 0 in various places:
-- when it's orphaned,
-- before (re)grouping paths,
-- when we detect a bad mpp assignment in update_pathvec_from_dm().
-- when a pathgroup is deleted in update_pathvec_from_dm(). In this
-  case, pgindex needs to be invalidated for all paths in all pathgroups
-  after the one that was deleted.
-
-The hunk in group_paths is mostly redundant with the hunk in free_pgvec(), but
-because we're looping over pg->paths in the former and over pg->pgp in
-the latter, I think it's better too play safe.
-
-Fixes: 99db1bd ("[multipathd] re-enable disabled PG when at least one path is up")
-Fixes: https://github.com/opensvc/multipath-tools/issues/105
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/pgpolicies.c  |  6 ++++++
- libmultipath/structs.c     | 12 +++++++++++-
- libmultipath/structs_vec.c | 15 +++++++++++++++
- 3 files changed, 32 insertions(+), 1 deletion(-)
+ libmpathutil/libmpathutil.version | 1 +
+ libmpathutil/util.c               | 5 +++++
+ libmpathutil/util.h               | 2 +-
+ 3 files changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index edc3c61..23ef2bd 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -127,6 +127,8 @@ fail:
- int group_paths(struct multipath *mp, int marginal_pathgroups)
- {
- 	vector normal, marginal;
-+	struct path *pp;
-+	int i;
- 
- 	if (!mp->pg)
- 		mp->pg = vector_alloc();
-@@ -138,6 +140,10 @@ int group_paths(struct multipath *mp, int marginal_pathgroups)
- 	if (!mp->pgpolicyfn)
- 		goto fail;
- 
-+	/* Reset pgindex, we're going to invalidate it */
-+	vector_foreach_slot(mp->paths, pp, i)
-+		pp->pgindex = 0;
-+
- 	if (!marginal_pathgroups ||
- 	    split_marginal_paths(mp->paths, &normal, &marginal) != 0) {
- 		if (mp->pgpolicyfn(mp, mp->paths) != 0)
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 61c8f32..4851725 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -239,8 +239,18 @@ free_pgvec (vector pgvec, enum free_path_mode free_paths)
- 	if (!pgvec)
- 		return;
- 
--	vector_foreach_slot(pgvec, pgp, i)
-+	vector_foreach_slot(pgvec, pgp, i) {
-+
-+		/* paths are going to be re-grouped, reset pgindex */
-+		if (free_paths != FREE_PATHS) {
-+			struct path *pp;
-+			int j;
-+
-+			vector_foreach_slot(pgp->paths, pp, j)
-+				pp->pgindex = 0;
-+		}
- 		free_pathgroup(pgp, free_paths);
-+	}
- 
- 	vector_free(pgvec);
- }
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index d22056c..35883fc 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -108,6 +108,7 @@ static bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
- 	struct config *conf;
- 	bool mpp_has_wwid;
- 	bool must_reload = false;
-+	bool pg_deleted = false;
- 
- 	if (!mpp->pg)
- 		return false;
-@@ -125,6 +126,10 @@ static bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
- 
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 
-+			/* A pathgroup has been deleted before. Invalidate pgindex */
-+			if (pg_deleted)
-+				pp->pgindex = 0;
-+
- 			if (pp->mpp && pp->mpp != mpp) {
- 				condlog(0, "BUG: %s: found path %s which is already in %s",
- 					mpp->alias, pp->dev, pp->mpp->alias);
-@@ -139,6 +144,13 @@ static bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
- 				must_reload = true;
- 				dm_fail_path(mpp->alias, pp->dev_t);
- 				vector_del_slot(pgp->paths, j--);
-+				/*
-+				 * pp->pgindex has been set in disassemble_map(),
-+				 * which has probably been called just before for
-+				 * mpp. So he pgindex relates to mpp and may be
-+				 * wrong for pp->mpp. Invalidate it.
-+				 */
-+				pp->pgindex = 0;
- 				continue;
- 			}
- 			pp->mpp = mpp;
-@@ -237,6 +249,8 @@ static bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
- 		vector_del_slot(mpp->pg, i--);
- 		free_pathgroup(pgp, KEEP_PATHS);
- 		must_reload = true;
-+		/* Invalidate pgindex for all other pathgroups */
-+		pg_deleted = true;
- 	}
- 	mpp->need_reload = mpp->need_reload || must_reload;
- 	return must_reload;
-@@ -354,6 +368,7 @@ void orphan_path(struct path *pp, const char *reason)
- {
- 	condlog(3, "%s: orphan path, %s", pp->dev, reason);
- 	pp->mpp = NULL;
-+	pp->pgindex = 0;
- 	uninitialize_path(pp);
+diff --git a/libmpathutil/libmpathutil.version b/libmpathutil/libmpathutil.version
+index fb92f72..14aa083 100644
+--- a/libmpathutil/libmpathutil.version
++++ b/libmpathutil/libmpathutil.version
+@@ -51,6 +51,7 @@ global:
+ 	append_strbuf_str__;
+ 	append_strbuf_quoted;
+ 	basenamecpy;
++	cleanup_bitfield;
+ 	cleanup_charp;
+ 	cleanup_fclose;
+ 	cleanup_fd_ptr;
+diff --git a/libmpathutil/util.c b/libmpathutil/util.c
+index 1255974..38e984f 100644
+--- a/libmpathutil/util.c
++++ b/libmpathutil/util.c
+@@ -337,6 +337,11 @@ void cleanup_fclose(void *p)
+ 		fclose(p);
  }
  
++void cleanup_bitfield(struct bitfield **p)
++{
++	free(*p);
++}
++
+ struct bitfield *alloc_bitfield(unsigned int maxbit)
+ {
+ 	unsigned int n;
+diff --git a/libmpathutil/util.h b/libmpathutil/util.h
+index df7f91e..3799fd4 100644
+--- a/libmpathutil/util.h
++++ b/libmpathutil/util.h
+@@ -146,5 +146,5 @@ static inline void clear_bit_in_bitfield(unsigned int bit, struct bitfield *bf)
+ void cleanup_charp(char **p);
+ void cleanup_ucharp(unsigned char **p);
+ void cleanup_udev_device(struct udev_device **udd);
+-
++void cleanup_bitfield(struct bitfield **p);
+ #endif /* UTIL_H_INCLUDED */
 -- 
 2.47.0
 
