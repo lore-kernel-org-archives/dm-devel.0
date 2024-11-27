@@ -1,244 +1,132 @@
-Received: from mail-lj1-f172.google.com (mail-lj1-f172.google.com [209.85.208.172])
+Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com [209.85.221.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99B9B153812
-	for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 08:04:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E11952010E1
+	for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 23:04:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1732694687; cv=none; b=qysptFDQBKBseSY3p1EZ8nEd7vJ5jYwW/+jRNtG8/t9xjqcoaBwtQ1LyOJD7Usny1PzByywXdKSOYHJgOn6POZhr6hk+uDG22WBSu0out9lYOxojahhMjjAsBadJzEJxoxZyyvxHU7+K0TZYGtAPi1zDXQkT9hO2R14x17a460g=
+	t=1732748681; cv=none; b=iJVQ73Xl7xbfQio5VzJmk/orNY9m8qTgJgkwPLxdvOIKeJ4P9EgJJOAkWZC33msyNV933bT9qOdBVdxjFFYDIJjRKiGkEjXIgcItNfRjzZQlT4qBU/4l75yAacocFKMqF1QB8wLW79gSsXDSqp1+XpWMENlHRyu7psfK3zSzuek=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1732694687; c=relaxed/simple;
-	bh=SXMUsolydLhLlh0RYa90/Fp6yYGJOG2VlShDRyUu/0Y=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ofYIsyNy6/8LHRQ7iwK/zaLPa4R+Y4+4+LYV+NeiPuVoUvlpRQAJgKYxg1FIrjVeHoIzkxjp4ln6FKJ18tPMM02Wxfgiwd+5seosnHAA8ruCtjTIarDYN55hrGb8BTXehI0Br6Rsp0BWlNN9NpkeVtuZch7tvQ1IRg3ZktFTDkY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.208.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-lj1-f172.google.com with SMTP id 38308e7fff4ca-2ffd6b7d77aso5609761fa.0
-        for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 00:04:43 -0800 (PST)
+	s=arc-20240116; t=1732748681; c=relaxed/simple;
+	bh=pJO2Azn4qHtpo8WwFwrnecAE0hSrdF50hsM0GWT8hSk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Vjf981qkWOwXwKEjPkQUfAo7LAxuNzFHedIeels5Ggc5gvkfwsK9OzhtAGYqa5aM4zE6bmUSGQzPCmbXRAW91PEfcyjpF/TTJg7v02kTqduSs7uUwLLFkhNq7PhNY20Dt4kJQRZKqXbGQaFOf1Pkc+1VJb6rcnujqVnNttkol4w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=VpGtsF5N; arc=none smtp.client-ip=209.85.221.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="VpGtsF5N"
+Received: by mail-wr1-f42.google.com with SMTP id ffacd0b85a97d-3824709ee03so177635f8f.2
+        for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 15:04:38 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1732748677; x=1733353477; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=TRU83PLpj1VY5A9sZ+9bWMjgZ04Vw+MMhCtI4c5KCK0=;
+        b=VpGtsF5NNSV1+izDr6l96qyaZ9EDYpYBuU6cluq/bMY50F0ayo2chQorERb75as+7V
+         AhDGcWK3xpOQAMF3eWjou0Gbj1bJS3rnSd4C/rkycwS5p4tuFHHLQcHws4Qh7cLIUe3z
+         snpVDHYP1XQBHvBzGnWcK/A3tBwt8m94JIK3hp8b7UIqiw2T7SjUTGLWGzgM9dCfovqZ
+         UQNClK7xuxQ7Dvj3nJYRNaN7ZlQ6I41V76DJ65Ezil/6RwDMerjnXB3y541h3QSDU3HS
+         +E0phTislexZ4sXFfG+RPbvson/Vx2g9PYk+HgyG9rVcMkgvtSsYVSgSdhflHGQag5jL
+         1iMg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1732694678; x=1733299478;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=aJwxTYx2memGrlAcayO/d+D9wemFJ5kB8ER25ZwyFGQ=;
-        b=NNcNFvuD9fyPZVZrsKacQq7qDxS7Js7fRsMjclFKHDXqFwNfEwOYNXZURSlCJh5+V6
-         35O/Mp8ww2LR9fP5A8V86Q1ofJK1MEhPCNX3+3g2Ifw4wK+XwIUiiyvrDsiG64vA2Vwt
-         P6O7f70cjINAYGCnjuQ0JzftXsYU/bN3kcOV6m/mSF2wJDN9e5JhpcnTZuUOUAIVcYJ9
-         0gBHQmRnt8BvtnBcVLrgm78d4jx+BdF4HrVzxY4LkO2H7NmTDRBk7eZ7+x+//4j6yZau
-         98Qe1vgfNPZQXeCsJJdcy8AWaRDxxbvyQJShiWZsIQB/XaFYXVh+/k+vr0EydgZ1n5G+
-         eLKQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVllxHHDPZRMuj7PnvELeIk2auhxdDB1SWUY4lCvnL3jZhIPMC1F5EtcRCKnPyCfS6dbeqfOGrrMA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwznhSHE5utFkGpQLxAQuUlRB/AvLhzd1yHDcsMipH1GwpwEy/j
-	FDEUtwGD48s5CyrF0v4I2WpU/sRV6FcDwyEPKAiEtRBUheRDvL+uyxKJNz8/XB7cSA==
-X-Gm-Gg: ASbGncvzhzcVCXNlvlVKxI7inaX9mRLlf4NFmU4+b4MS4go7ymb3EWkwdgWKxclk1Mj
-	X6iuLJAqTAkZUREdXUp6nkHlJHXtKR9uT3je/rVpdtR0W70UNC7vFsHTK0F52ArTCtP/PwcAnFR
-	mw6kk5xZ6EeuxAc35MCRFGqHI84yY7XazseYcj6T94vKrrvy5si4cdt8qB4oCSHE927uiQznOpo
-	2ayySUlIguz7I6JeSMdDgOQxTJii875VNRhIkko8YMc6gQyG8n4ty/DHbKEWY6HoGOyKhvTH5vp
-	WOm0Hvl0zLyq
-X-Google-Smtp-Source: AGHT+IHyOuRurg40SVxUdAyVuaK1t9ME/TgViN+DE1+l3ZWwjK+BRsnhHf0965hVWI/bnyd1yFPhCQ==
-X-Received: by 2002:a05:6512:20cb:b0:53d:eef6:bb6a with SMTP id 2adb3069b0e04-53df01148a9mr821480e87.54.1732694677371;
-        Wed, 27 Nov 2024 00:04:37 -0800 (PST)
-Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com. [209.85.218.45])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aa53e87d050sm472120966b.188.2024.11.27.00.04.34
-        for <dm-devel@lists.linux.dev>
+        d=1e100.net; s=20230601; t=1732748677; x=1733353477;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=TRU83PLpj1VY5A9sZ+9bWMjgZ04Vw+MMhCtI4c5KCK0=;
+        b=JhtIkoQodwMnmUbLOHxQjcz/sgEpHjT7/FnJHBfzOKWXZX5+iVIDPZF0Ofm0cOSXWn
+         BosDU8DzCp5GVrEHsjownQyKw0w/AGmENZzZVzw0Mind+eOATlmmhcTOKJtFOILmL3RV
+         YSaBYnstea9KrV3WXi4KJtC52iKhzZ/pWW9yHTYkGlJU6IiEstrinmCmH8tUv0Hzyj7S
+         oKlxHdo3NdqdV3CReusw5zg6kEiP6j2cyFiyZTXOt7Wq+jM4b482mcVL15iJsizTH4VS
+         tPmG2eAIsez4PPXKkIWq0uiToyb1E1hXqkmrwjW+nSIec8aaXV31Mh+74Niho1SOpce+
+         QCIg==
+X-Gm-Message-State: AOJu0YxYF63bGqdYsj2agWQ3M73UeBr8KMCAKnQ8kj8SydRnHL+b1DW7
+	83c90X8Jojo5S0SnGMrmJJUGDSk8Z7Jihlb5TWJV2gR1sDktOIt86wZdH/ewH5g=
+X-Gm-Gg: ASbGnctUDFmi5+jEmOun/8EJ4UNBCWl2vyrIn42FpJHeVGEI+Eul4FFZ/WJY63BBFRI
+	u5y6PSnLWq8ykNDGSsaZdt4vtT/EeobGsXAdGcqAa2uFgnPVqPk57yxSr1fVZETyL1kMW/72FKw
+	RglmzgtfqaxRa8nXP+ZMmWU1iWV5nHaGc0GLxukgE6C/5AO+M/2t/ykPQwuJEfZktPTh9Kg8fkL
+	1Y4o2Hvc7aKxYZU6stKrD7aLfeAfQu9mPXkWuuoV2SbIWFB92VeHVQj4l6KcAu1cbWio0Sdrowe
+	lOYcTooe/TBseRloi8+bh9ty/MffHiIrMn6H
+X-Google-Smtp-Source: AGHT+IHgeFxPGU+rrNodpBWALKqMqHZVYLUgZBxctceRPPrC1UN7l1KE02EAuxe9XE+hIfCU6YL7wQ==
+X-Received: by 2002:a5d:6d0b:0:b0:382:450c:25ee with SMTP id ffacd0b85a97d-385c6ed74c9mr3972025f8f.40.1732748676868;
+        Wed, 27 Nov 2024 15:04:36 -0800 (PST)
+Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-385ccd2e405sm79817f8f.22.2024.11.27.15.04.36
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 27 Nov 2024 00:04:34 -0800 (PST)
-Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-a9a68480164so885817566b.3
-        for <dm-devel@lists.linux.dev>; Wed, 27 Nov 2024 00:04:34 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCWKer6ydRa1LNJFVrsg6jpNv3sgufeYwuA8S9udhI/DcI+kYzc9xEKzGPC6nUKqIEY3w+6UFCu9+A==@lists.linux.dev
-X-Received: by 2002:a17:906:5a6b:b0:a99:fc3d:7c76 with SMTP id
- a640c23a62f3a-aa581057f64mr101384466b.37.1732694673930; Wed, 27 Nov 2024
- 00:04:33 -0800 (PST)
+        Wed, 27 Nov 2024 15:04:36 -0800 (PST)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v2 0/8] multipath-tools fixes
+Date: Thu, 28 Nov 2024 00:04:22 +0100
+Message-ID: <20241127230430.139639-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20241020040200.939973-1-visitorckw@gmail.com> <20241020040200.939973-2-visitorckw@gmail.com>
- <CAMuHMdVO5DPuD9HYWBFqKDHphx7+0BEhreUxtVC40A=8p6VAhQ@mail.gmail.com> <Z0aLFidHu/msXbXq@visitorckw-System-Product-Name>
-In-Reply-To: <Z0aLFidHu/msXbXq@visitorckw-System-Product-Name>
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Date: Wed, 27 Nov 2024 09:04:19 +0100
-X-Gmail-Original-Message-ID: <CAMuHMdUVfQvA_d+ERuqRbd_aRVabUX4N=kKd+gc7RK+EArwi+w@mail.gmail.com>
-Message-ID: <CAMuHMdUVfQvA_d+ERuqRbd_aRVabUX4N=kKd+gc7RK+EArwi+w@mail.gmail.com>
-Subject: Re: [PATCH v2 01/10] lib/min_heap: Introduce non-inline versions of
- min heap API functions
-To: Kuan-Wei Chiu <visitorckw@gmail.com>
-Cc: colyli@suse.de, kent.overstreet@linux.dev, msakai@redhat.com, 
-	corbet@lwn.net, peterz@infradead.org, mingo@redhat.com, acme@kernel.org, 
-	namhyung@kernel.org, akpm@linux-foundation.org, mark.rutland@arm.com, 
-	alexander.shishkin@linux.intel.com, jolsa@kernel.org, irogers@google.com, 
-	adrian.hunter@intel.com, kan.liang@linux.intel.com, willy@infradead.org, 
-	jserv@ccns.ncku.edu.tw, linux-kernel@vger.kernel.org, 
-	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev, 
-	linux-bcachefs@vger.kernel.org, linux-perf-users@vger.kernel.org, 
-	linux-doc@vger.kernel.org, 
-	"open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-Hi Kuan-Wei,
+The first patch is an attempt to fix
+https://github.com/opensvc/multipath-tools/issues/105.
 
-On Wed, Nov 27, 2024 at 3:59=E2=80=AFAM Kuan-Wei Chiu <visitorckw@gmail.com=
-> wrote:
-> On Tue, Nov 26, 2024 at 02:27:09PM +0100, Geert Uytterhoeven wrote:
-> > On Sun, Oct 20, 2024 at 6:02=E2=80=AFAM Kuan-Wei Chiu <visitorckw@gmail=
-.com> wrote:
-> > > All current min heap API functions are marked with '__always_inline'.
-> > > However, as the number of users increases, inlining these functions
-> > > everywhere leads to a increase in kernel size.
-> > >
-> > > In performance-critical paths, such as when perf events are enabled a=
-nd
-> > > min heap functions are called on every context switch, it is importan=
-t
-> > > to retain the inline versions for optimal performance. To balance thi=
-s,
-> > > the original inline functions are kept, and additional non-inline
-> > > versions of the functions have been added in lib/min_heap.c.
-> > >
-> > > Link: https://lore.kernel.org/20240522161048.8d8bbc7b153b4ecd92c50666=
-@linux-foundation.org
-> > > Suggested-by: Andrew Morton <akpm@linux-foundation.org>
-> > > Signed-off-by: Kuan-Wei Chiu <visitorckw@gmail.com>
-> >
-> > Thanks for your patch, which is now commit 92a8b224b833e82d
-> > ("lib/min_heap: introduce non-inline versions of min heap API
-> > functions") upstream.
-> >
-> > > --- a/include/linux/min_heap.h
-> > > +++ b/include/linux/min_heap.h
-> >
-> > > @@ -50,33 +50,33 @@ void __min_heap_init(min_heap_char *heap, void *d=
-ata, int size)
-> > >                 heap->data =3D heap->preallocated;
-> > >  }
-> > >
-> > > -#define min_heap_init(_heap, _data, _size)     \
-> > > -       __min_heap_init((min_heap_char *)_heap, _data, _size)
-> > > +#define min_heap_init_inline(_heap, _data, _size)      \
-> > > +       __min_heap_init_inline((min_heap_char *)_heap, _data, _size)
-> >
-> > Casting macro parameters without any further checks prevents the
-> > compiler from detecting silly mistakes.  Would it be possible to
-> > add safety-nets here and below, using e.g. container_of() or typeof()
-> > checks?
->
-> IIUC, the concern is that passing a pointer that is not of type
-> min_heap might lead to compiler errors being missed. To address this,
+Patch 2-5 provide a re-implementation of pgcmp() without relying on
+pgp->id, as discussed during the review of v1 of this series.
 
-Exactly.
+Patch 6 and 7 change the way multipathd triggers uevents when
+it detects configuration changes, motivated by
+https://github.com/opensvc/multipath-tools/issues/105.
 
-> one possible solution could be to expand the members of struct min_heap
-> into individual parameters for the function.
->
-> diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
-> index e781727c8916..ebd577003f0b 100644
-> --- a/include/linux/min_heap.h
-> +++ b/include/linux/min_heap.h
-> @@ -207,18 +207,20 @@ static size_t parent(size_t i, unsigned int lsbit, =
-size_t size)
->
->  /* Initialize a min-heap. */
->  static __always_inline
-> -void __min_heap_init_inline(min_heap_char *heap, void *data, int size)
-> +void __min_heap_init_inline(int *heap_nr, int *heap_size, void **heap_da=
-ta,
-> +                           void *heap_preallocated, void *data, int size=
-)
->  {
+Up to now, multipathd had done this basically only if the "failed" state of a
+map had changed. This would miss cases where e.g. with find_multipaths strict,
+a path had been added to the WWIDs file and "multipathd reconfigure" had been
+run. In such cases, the paths would be added to the map, but udev would still
+not see them.  The same holds for changes of the blacklist.
 
-Which means all functions and users must be updated now, and possibly
-again in the future (when there is ever a need to change the struct).
+With this set, when a map is created, or when map creation fails, multipathd
+checks whether udev already sees the correct properties for the device, and
+triggers an uevent otherwise.
 
-> Alternatively, we could use container_of() for type safety.
->
-> diff --git a/include/linux/min_heap.h b/include/linux/min_heap.h
-> index e781727c8916..fb96b1b82fb0 100644
-> --- a/include/linux/min_heap.h
-> +++ b/include/linux/min_heap.h
-> @@ -218,7 +218,7 @@ void __min_heap_init_inline(min_heap_char *heap, void=
- *data, int size)
->  }
->
->  #define min_heap_init_inline(_heap, _data, _size)      \
-> -       __min_heap_init_inline((min_heap_char *)_heap, _data, _size)
-> +       __min_heap_init_inline(container_of(&(_heap)->nr, min_heap_char, =
-nr), _data, _size)
->
->  /* Get the minimum element from the heap. */
->  static __always_inline
->
-> The first approach has better readability, while the second minimizes
-> the changes needed. Please let me know your thoughts.
+When maps are to be removed because of configuration changes in
+coalesce_maps() (for example if a WWID has been removed from the WWIDs file),
+multipathd now also triggers uevents for the respective path devices. This
+is only done in coalesce_maps(), where current configuration changes are
+reflected. We can't do it after a "remove map" CLI command, for example,
+because that is by definition a temporary change. If we triggered an uevent
+for that, multipathd would recreate the map it just removed as soone as it
+receives the uevents.
 
-container_of() is a well-known idiom in the Linux kernel, so I would go
-for this solution, for min_heap_init_inline() and all other functions
-currently using such a cast.
+Patch 8 is a minor log message change.
 
-> > > --- a/lib/Kconfig
-> > > +++ b/lib/Kconfig
-> > > @@ -777,3 +777,6 @@ config POLYNOMIAL
-> > >
-> > >  config FIRMWARE_TABLE
-> > >         bool
-> > > +
-> > > +config MIN_HEAP
-> > > +       bool
-> >
-> > Perhaps tristate? See also below.
-> >
-> > > --- a/lib/Kconfig.debug
-> > > +++ b/lib/Kconfig.debug
-> > > @@ -2279,6 +2279,7 @@ config TEST_LIST_SORT
-> > >  config TEST_MIN_HEAP
-> > >         tristate "Min heap test"
-> > >         depends on DEBUG_KERNEL || m
-> > > +       select MIN_HEAP
-> >
-> > Ideally, tests should not select functionality, to prevent increasing t=
-he
-> > attack vector by merely enabling (modular) tests.
-> >
-> Makes sense. Thanks for catching this.
->
-> > In this particular case, just using "depends on MIN_HEAP" is not an
-> > option, as MIN_HEAP is not user-visible, and thus cannot be enabled
-> > by the user on its own.  However, making MIN_HEAP tristate could be
-> > a first step for the modular case.
-> >
-> > The builtin case is harder to fix, as e.g.
-> >
-> >         depends on MIN_HEAP || COMPILE_TEST
-> >         select MIN_HEAP if COMPILE_TEST
-> >
-> > would still trigger a recursive dependency error.
-> >
-> > Alternatively, the test could just keep on using the inline variants,
-> > unless CONFIG_MIN_HEAP=3Dy? Or event test both for the latter?
-> >
-> I think that having min_heap_test continue using the inline variants
-> might be the simplest solution?
+Martin Wilck (8):
+  libmultipath: fix handling of pp->pgindex
+  libmpathutil: change STATIC_BITFIELD to BITFIELD
+  libmpathutil: add cleanup_bitfield()
+  libmultipath: move pathcmp() to configure.c
+  libmultipath: re-implement pgcmp without the pathgroup id
+  libmultipath: trigger uevents upon map creation in domap()
+  multipathd: trigger uevents upon map removal in coalesce_maps()
+  multipathd: improve a log message in coalesce_maps()
 
-As lib/min_heap.c contains just wrappers around the inline functions,
-that would be fine for me.  If/when lib/min_heap.c gains more
-functionality, tests for that can be added to lib/test_min_heap.c
-inside an #ifdef CONFIG_MIN_HEAP/#endif block.
+ libmpathutil/libmpathutil.version |   1 +
+ libmpathutil/util.c               |   5 ++
+ libmpathutil/util.h               |  10 +--
+ libmultipath/configure.c          | 124 ++++++++++++++++++++----------
+ libmultipath/devmapper.c          |   9 +--
+ libmultipath/discovery.c          |   2 +-
+ libmultipath/dmparser.c           |   1 -
+ libmultipath/pgpolicies.c         |   6 ++
+ libmultipath/structs.c            |  31 +++-----
+ libmultipath/structs.h            |   3 -
+ libmultipath/structs_vec.c        |  15 ++++
+ multipathd/main.c                 |   6 +-
+ 12 files changed, 135 insertions(+), 78 deletions(-)
 
-Thanks!
+-- 
+2.47.0
 
-Gr{oetje,eeting}s,
-
-                        Geert
-
---=20
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k=
-.org
-
-In personal conversations with technical people, I call myself a hacker. Bu=
-t
-when I'm talking to journalists I just say "programmer" or something like t=
-hat.
-                                -- Linus Torvalds
