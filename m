@@ -1,228 +1,185 @@
-Received: from mail-lf1-f48.google.com (mail-lf1-f48.google.com [209.85.167.48])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEB401FF5F3
-	for <dm-devel@lists.linux.dev>; Mon,  2 Dec 2024 12:17:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD47217C9F1
+	for <dm-devel@lists.linux.dev>; Mon,  2 Dec 2024 16:21:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733141864; cv=none; b=mOkPymMDyG/G/vnBu6kGEQNsAumVD6H9ouzNYmPzBHoUiQIZt4e1NJ6VPcOFX6qY3Q7GVCOOt8sKRf3oG0LWsy79oIjTW+FtB5FdmqtirFJ9On9nlu5bxI0diZIfg0dVwiJfaQj7tVrZsAW0PpVmiHcN4t78pfRE0qaex5Yll0A=
+	t=1733156481; cv=none; b=O7pHvglw2+b7spWX68a7Cvj/R83rpraOiZDJnhTqF0QlRQHUjB2GkfOzMNlEafMOBjteVQLVaYnRpgsnjBc0XE2snVsH4Cfpb6by2jGtiQ+kc5UYvYiw/tGUH0fZp75uPsXNeiedFt/D6Wr4EdY38KWJ3DZ7OuW+XHz0yicl93U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733141864; c=relaxed/simple;
-	bh=cjwiLpyces7oEH/gnZel3kh0F0XZ3KiDL4+nGbd7cRw=;
+	s=arc-20240116; t=1733156481; c=relaxed/simple;
+	bh=GepOY+2bSH0E/kWJpHBLyw1FRYVtuWSxRHGQ1U8w1N0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=pU5SL+ewFqw/3kHNqdxrAtmKiy8ia529pSmnPKEVSAbZJfbh/te4mau8O2+TQQm79TJFlJF3nk1RYtP9I01j3GFTjq5yfhCFiAh6AAJvsCjIIdRu1HkKUPiFnMqd8xHfzeG7JMYqXwSd5HbDgzYyt17llhruuEbr67aw+E2NpSQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=LycO6XuC; arc=none smtp.client-ip=209.85.167.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+	 Content-Type:Content-Disposition:In-Reply-To; b=dXPYTiOILfYlv5Qndn3vaXIY/Cbv0ypkGzL291vyPtsNELrk8f+79/n41WZD/G7chlinm6KTcuAmlql5T27x4LBdeob5gifA6Lph2hOUKue/yPopoqcRCgoPUUp3yIy41ktFClCwOTkhqLisPGmuyYAX6lHUgv80S4V9Sf9WLKA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=ahqwgH8C; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=RNGkqSZy; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=fyYYPtB3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=jWlh3xnw; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="LycO6XuC"
-Received: by mail-lf1-f48.google.com with SMTP id 2adb3069b0e04-53e0844ee50so1212855e87.0
-        for <dm-devel@lists.linux.dev>; Mon, 02 Dec 2024 04:17:41 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1733141860; x=1733746660; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=bUoLIZvVtbQSISsGIJiv88vjB94vxHsf2pfqlKAM26U=;
-        b=LycO6XuCB+uEcCvrDROll5oMUbx4+M/l1nuY77x/3Fj4IiDxcPZLjAVo0FwsbcYQrq
-         2cU6O/6AbS2fmBPDbxUXl1DNa1T6y9nPTlSbO0jyv5h4+RlblTWmWWLm43Nxh6WVPaMU
-         6m37BSzaopTpj+G5qa87WfiOg8OJwatewQ3QHSam45NxXUWZ7YYDSAZQ4wsQYtaxbX85
-         zaVy4IKu8Bg4cS3tvmGl7yysuDB9Mn38K6wNhNbJMdVlFsHEWsVuVvplIj/N6txnJp0a
-         CSfZzoOEpKvBhvtSGvTRT2CB6NePUbH0AkyNdscZOMktridcRFlL9yxX94Bghk1vzoAA
-         eEgQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1733141860; x=1733746660;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=bUoLIZvVtbQSISsGIJiv88vjB94vxHsf2pfqlKAM26U=;
-        b=OkFUNalgQNIRzbhBi6NiJKNdndgbyR4qrEecdM1VgMA96TjHnOQZzBFHJ8Id7myj0n
-         MffWrz0Lc3xI8PhDrzriHWxIwAOlhZh2/9AlvJSEHhkTXvcVX6HBjMVlHHATtGu64V5T
-         DxxZVeMQS5BrQIBrC/aFxI9IbVtREBbMF1DZfwlboOpzMkiYb2O5zOBnowX9U7lVDRde
-         AVqlSE7r+l8c7IyzJEgWWWE3qfbT33me1AXZqlpAs4H+NM4yKDJPn5ziEPXn9Z/JgEV6
-         9fwBBw/u2i2bPGP+lF8xj3mkTRG5PnCyce6D9bgwqVO+yaA1bfMCU5pkIxTxtmwVQFLJ
-         pKdg==
-X-Forwarded-Encrypted: i=1; AJvYcCXxwOE+fOTohUTyH6z20fYFk8AaPH1fdf6TZm8hspWfjbUfFP6lYQhmSORc8UkpGUh0QQ5jET2KHA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzKk3zI+JieGZLqwb+EKZ7J/Sjm8ehbn1im7UMi1bAWu3EGFwAH
-	QmwrlYoxb4wqjdms9WxqQh6PVbOQm/6c/6ktGYwJRVAKxS8alPMJdWW2uz1PKFg=
-X-Gm-Gg: ASbGncvb/cniklz96VzJKenp7aFea55z5KHU4qEsF9YUrlAS6QdILG7zo7Za6Xr74S9
-	hp2SCiNDoqHFjLzDMTtS6Ms6+HbsFswshx3PSigKkUqX/deZLjOtjWrTqzL261j9FYYPQKhzpUN
-	UvUmt8HESkRvkCexZYFnOUoAAzIuN3Yu7P7dQVJb2Wcbqq1FTW/3AoH6s0HpOrERDIzqwrQlUpc
-	ajuw/k5DfyP/r/e66jlG9YAZApBlbUXYoE1Rp0KQqFZfXYaiWeQQSxOZeLp0fX/i55X6jQZedJ1
-	Fg1iNV69DPpf1Dg4lWfxNXv3utwUdA==
-X-Google-Smtp-Source: AGHT+IGhAvYybqFJhAz3sCBw+CQSHdAjkvqJ/iPZp81uMYhUbES1NVq6qCCpGOPW79Fcg/GhD/p3Tw==
-X-Received: by 2002:a05:6512:2304:b0:53d:e76b:5e6e with SMTP id 2adb3069b0e04-53df00d9cf4mr11692080e87.31.1733141860084;
-        Mon, 02 Dec 2024 04:17:40 -0800 (PST)
-Received: from eriador.lumag.spb.ru (2001-14ba-a0c3-3a00--b8c.rev.dnainternet.fi. [2001:14ba:a0c3:3a00::b8c])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-53df6497197sm1475981e87.224.2024.12.02.04.17.37
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 02 Dec 2024 04:17:38 -0800 (PST)
-Date: Mon, 2 Dec 2024 14:17:36 +0200
-From: Dmitry Baryshkov <dmitry.baryshkov@linaro.org>
-To: Bartosz Golaszewski <brgl@bgdev.pl>
-Cc: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, 
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Adrian Hunter <adrian.hunter@intel.com>, 
-	Asutosh Das <quic_asutoshd@quicinc.com>, Ritesh Harjani <ritesh.list@gmail.com>, 
-	Ulf Hansson <ulf.hansson@linaro.org>, Alim Akhtar <alim.akhtar@samsung.com>, 
-	Avri Altman <avri.altman@wdc.com>, Bart Van Assche <bvanassche@acm.org>, 
-	"James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>, Gaurav Kashyap <quic_gaurkash@quicinc.com>, 
-	Neil Armstrong <neil.armstrong@linaro.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, 
-	Eric Biggers <ebiggers@kernel.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, 
-	Jaegeuk Kim <jaegeuk@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, Bjorn Andersson <andersson@kernel.org>, 
-	Konrad Dybcio <konradybcio@kernel.org>, Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>, 
-	linux-block@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	dm-devel@lists.linux.dev, linux-mmc@vger.kernel.org, linux-scsi@vger.kernel.org, 
-	linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-arm-msm@vger.kernel.org, 
-	Bartosz Golaszewski <bartosz.golaszewski@linaro.org>, Om Prakash Singh <quic_omprsing@quicinc.com>
-Subject: Re: [PATCH RESEND v7 10/17] soc: qcom: ice: add support for hardware
- wrapped keys
-Message-ID: <45epch3o66skwhemavcqniqw62zfqyh4qrv2q4ay3esd2kxslu@qv6j4ivp4l3a>
-References: <20241202-wrapped-keys-v7-0-67c3ca3f3282@linaro.org>
- <20241202-wrapped-keys-v7-10-67c3ca3f3282@linaro.org>
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="ahqwgH8C";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="RNGkqSZy";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="fyYYPtB3";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="jWlh3xnw"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id D2ECD2116E;
+	Mon,  2 Dec 2024 16:21:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1733156478; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=1z4TbU/Qkr/jvGw5g0HDhjUZVdLmjABAsTzcryF/YSQ=;
+	b=ahqwgH8Cm7IMlLSR5xUALMENPXVrfiVZYRM2EnGvSOz1cHJn9o4PPUF31fVJKP26sNONwj
+	/BNFGzGzx2KvFNH68BSPa82uwszqyhuxmMfZg0NiV6dsoXiMkakgIXNSzxpQyoJGdSyuHV
+	egZjdixQ7CgOiRl41c70hLgOAilmCFg=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1733156478;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=1z4TbU/Qkr/jvGw5g0HDhjUZVdLmjABAsTzcryF/YSQ=;
+	b=RNGkqSZyu8FikIALm4xcffpc0Mp2YnxHSUWMw1XbaLWfFmW1tJoLw/O/RE7tPPdsu5Di9g
+	MwNpvhoDhZ5MxiCg==
+Authentication-Results: smtp-out1.suse.de;
+	dkim=pass header.d=suse.de header.s=susede2_rsa header.b=fyYYPtB3;
+	dkim=pass header.d=suse.de header.s=susede2_ed25519 header.b=jWlh3xnw
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1733156477; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=1z4TbU/Qkr/jvGw5g0HDhjUZVdLmjABAsTzcryF/YSQ=;
+	b=fyYYPtB3IU3lSwDkK02nZlnsUkmLxcj3SJs69Ykiq83EpNod6P26mmQtjYymLOBE4pLYRP
+	Md6K1iSYMs+S6z+/SQxqOCDp29VJHyb6AONouXiCHMsbUhJWbMr5Se7zFdgEZm3uJSSykP
+	6tt3BE+ZeN49klRPVsjp1FTcAbbc7zo=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1733156477;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=1z4TbU/Qkr/jvGw5g0HDhjUZVdLmjABAsTzcryF/YSQ=;
+	b=jWlh3xnwkmNY4Q/NgVKE3IcFrN09XgEpMmPNnHxrnv3XnjUq1MMnges55t4yysr2tZ8j3h
+	X8uhfoPaiadUgJCg==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id D865713A31;
+	Mon,  2 Dec 2024 16:21:13 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 5Q0oJXneTWfUQgAAD6G6ig
+	(envelope-from <colyli@suse.de>); Mon, 02 Dec 2024 16:21:13 +0000
+Date: Tue, 3 Dec 2024 00:21:07 +0800
+From: Coly Li <colyli@suse.de>
+To: John Garry <john.g.garry@oracle.com>
+Cc: axboe@kernel.dk, haris.iqbal@ionos.com, jinpu.wang@ionos.com, 
+	kent.overstreet@linux.dev, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org, 
+	dm-devel@lists.linux.dev, linux-bcachefs@vger.kernel.org, hch@lst.de
+Subject: Re: [PATCH 2/2] block: Delete bio_set_prio()
+Message-ID: <xrrvym37rltbopjxuz2cozkladm7nlklms46dnddexlpxva373@xrsrq3y54qsv>
+References: <20241202111957.2311683-1-john.g.garry@oracle.com>
+ <20241202111957.2311683-3-john.g.garry@oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20241202-wrapped-keys-v7-10-67c3ca3f3282@linaro.org>
+In-Reply-To: <20241202111957.2311683-3-john.g.garry@oracle.com>
+X-Rspamd-Queue-Id: D2ECD2116E
+X-Spam-Score: -4.01
+X-Rspamd-Action: no action
+X-Spamd-Result: default: False [-4.01 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	R_DKIM_ALLOW(-0.20)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	MISSING_XM_UA(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	ARC_NA(0.00)[];
+	RCPT_COUNT_TWELVE(0.00)[14];
+	MIME_TRACE(0.00)[0:+];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.de:email,suse.de:dkim,oracle.com:email];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DKIM_TRACE(0.00)[suse.de:+]
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+X-Spam-Flag: NO
+X-Spam-Level: 
 
-On Mon, Dec 02, 2024 at 01:02:26PM +0100, Bartosz Golaszewski wrote:
-> From: Gaurav Kashyap <quic_gaurkash@quicinc.com>
+On Mon, Dec 02, 2024 at 11:19:57AM +0000, John Garry wrote:
+> Since commit 43b62ce3ff0a ("block: move bio io prio to a new field"), macro
+> bio_set_prio() does nothing but set bio->bi_ioprio. All other places just
+> set bio->bi_ioprio directly, so replace bio_set_prio() remaining
+> callsites with setting bio->bi_ioprio directly and delete that macro.
 > 
-> Now that HWKM support has been added to ICE, extend the ICE driver to
-> support hardware wrapped keys programming coming in from the storage
-> controllers (UFS and eMMC). This is similar to raw keys where the call is
-> forwarded to Trustzone, however we also need to clear and re-enable
-> CFGE before and after programming the key.
-> 
-> Derive software secret support is also added by forwarding the call to
-> the corresponding SCM API.
-> 
-> Wrapped keys are only used if the new module parameter is set AND the
-> architecture supports HWKM.
-> 
-> Tested-by: Neil Armstrong <neil.armstrong@linaro.org>
-> Reviewed-by: Om Prakash Singh <quic_omprsing@quicinc.com>
-> Signed-off-by: Gaurav Kashyap <quic_gaurkash@quicinc.com>
-> Signed-off-by: Bartosz Golaszewski <bartosz.golaszewski@linaro.org>
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
 > ---
->  drivers/soc/qcom/ice.c | 128 ++++++++++++++++++++++++++++++++++++++++++++-----
->  include/soc/qcom/ice.h |   4 ++
->  2 files changed, 121 insertions(+), 11 deletions(-)
+>  drivers/block/rnbd/rnbd-srv.c | 2 +-
+>  drivers/md/bcache/movinggc.c  | 2 +-
+>  drivers/md/bcache/writeback.c | 2 +-
+>  fs/bcachefs/move.c            | 6 +++---
+>  include/linux/bio.h           | 2 --
+>  5 files changed, 6 insertions(+), 8 deletions(-)
 > 
-> diff --git a/drivers/soc/qcom/ice.c b/drivers/soc/qcom/ice.c
-> index 5f138e278554c..e83e74e39e44f 100644
-> --- a/drivers/soc/qcom/ice.c
-> +++ b/drivers/soc/qcom/ice.c
-> @@ -28,6 +28,8 @@
->  #define QCOM_ICE_REG_BIST_STATUS		0x0070
->  #define QCOM_ICE_REG_ADVANCED_CONTROL		0x1000
->  #define QCOM_ICE_REG_CONTROL			0x0
-> +#define QCOM_ICE_LUT_KEYS_CRYPTOCFG_R16		0x4040
-> +
->  /* QCOM ICE HWKM registers */
->  #define QCOM_ICE_REG_HWKM_TZ_KM_CTL			0x1000
->  #define QCOM_ICE_REG_HWKM_TZ_KM_STATUS			0x1004
-> @@ -62,6 +64,8 @@
->  #define QCOM_ICE_HWKM_DISABLE_CRC_CHECKS_VAL	(BIT(1) | BIT(2))
->  #define QCOM_ICE_HWKM_RSP_FIFO_CLEAR_VAL	BIT(3)
+> diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.c
+> index 08ce6d96d04c..2ee6e9bd4e28 100644
+> --- a/drivers/block/rnbd/rnbd-srv.c
+> +++ b/drivers/block/rnbd/rnbd-srv.c
+> @@ -167,7 +167,7 @@ static int process_rdma(struct rnbd_srv_session *srv_sess,
+>  	bio->bi_iter.bi_sector = le64_to_cpu(msg->sector);
+>  	prio = srv_sess->ver < RNBD_PROTO_VER_MAJOR ||
+>  	       usrlen < sizeof(*msg) ? 0 : le16_to_cpu(msg->prio);
+> -	bio_set_prio(bio, prio);
+> +	bio->bi_ioprio = prio;
 >  
-> +#define QCOM_ICE_HWKM_CFG_ENABLE_VAL		BIT(7)
-> +
->  /* BIST ("built-in self-test") status flags */
->  #define QCOM_ICE_BIST_STATUS_MASK		GENMASK(31, 28)
+>  	submit_bio(bio);
 >  
-> @@ -69,6 +73,8 @@
->  #define QCOM_ICE_FORCE_HW_KEY0_SETTING_MASK	0x2
->  #define QCOM_ICE_FORCE_HW_KEY1_SETTING_MASK	0x4
+> diff --git a/drivers/md/bcache/movinggc.c b/drivers/md/bcache/movinggc.c
+> index ef6abf33f926..45ca134cbf02 100644
+> --- a/drivers/md/bcache/movinggc.c
+> +++ b/drivers/md/bcache/movinggc.c
+> @@ -82,7 +82,7 @@ static void moving_init(struct moving_io *io)
+>  	bio_init(bio, NULL, bio->bi_inline_vecs,
+>  		 DIV_ROUND_UP(KEY_SIZE(&io->w->key), PAGE_SECTORS), 0);
+>  	bio_get(bio);
+> -	bio_set_prio(bio, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
+> +	bio->bi_ioprio = IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0);
 >  
-> +#define QCOM_ICE_LUT_KEYS_CRYPTOCFG_OFFSET	0x80
-> +
->  #define QCOM_ICE_HWKM_REG_OFFSET	0x8000
->  #define HWKM_OFFSET(reg)		((reg) + QCOM_ICE_HWKM_REG_OFFSET)
+>  	bio->bi_iter.bi_size	= KEY_SIZE(&io->w->key) << 9;
+>  	bio->bi_private		= &io->cl;
+> diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
+> index c1d28e365910..453efbbdc8ee 100644
+> --- a/drivers/md/bcache/writeback.c
+> +++ b/drivers/md/bcache/writeback.c
+> @@ -334,7 +334,7 @@ static void dirty_init(struct keybuf_key *w)
+>  	bio_init(bio, NULL, bio->bi_inline_vecs,
+>  		 DIV_ROUND_UP(KEY_SIZE(&w->key), PAGE_SECTORS), 0);
+>  	if (!io->dc->writeback_percent)
+> -		bio_set_prio(bio, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
+> +		bio->bi_ioprio = IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0);
 >  
-> @@ -78,6 +84,15 @@
->  #define qcom_ice_readl(engine, reg)	\
->  	readl((engine)->base + (reg))
->  
-> +#define QCOM_ICE_LUT_CRYPTOCFG_SLOT_OFFSET(slot) \
-> +	(QCOM_ICE_LUT_KEYS_CRYPTOCFG_R16 + \
-> +	 QCOM_ICE_LUT_KEYS_CRYPTOCFG_OFFSET * slot)
-> +
-> +static bool ufs_qcom_use_wrapped_keys;
-> +module_param_named(use_wrapped_keys, ufs_qcom_use_wrapped_keys, bool, 0660);
-> +MODULE_PARM_DESC(use_wrapped_keys,
-> +"Use HWKM for wrapped keys support if available on the platform");
+>  	bio->bi_iter.bi_size	= KEY_SIZE(&w->key) << 9;
+>  	bio->bi_private		= w;
 
-This should go into the previous patch and it should be handled in
-qcom_ice_check_supported() instead.
 
-> +
->  struct qcom_ice {
->  	struct device *dev;
->  	void __iomem *base;
+For bcache part, Acked-by: Coly Li <colyli@suse.de>
 
-[...]
+Thanks.
 
-> @@ -313,24 +378,40 @@ int qcom_ice_program_key(struct qcom_ice *ice,
->  
->  	/* Only AES-256-XTS has been tested so far. */
->  	if (algorithm_id != QCOM_ICE_CRYPTO_ALG_AES_XTS ||
-> -	    key_size != QCOM_ICE_CRYPTO_KEY_SIZE_256) {
-> +	    (key_size != QCOM_ICE_CRYPTO_KEY_SIZE_256 &&
-> +	    key_size != QCOM_ICE_CRYPTO_KEY_SIZE_WRAPPED)) {
->  		dev_err_ratelimited(dev,
->  				    "Unhandled crypto capability; algorithm_id=%d, key_size=%d\n",
->  				    algorithm_id, key_size);
->  		return -EINVAL;
->  	}
->  
-> -	memcpy(key.bytes, bkey->raw, AES_256_XTS_KEY_SIZE);
-> +	if (ufs_qcom_use_wrapped_keys &&
-
-I think it's too late to have the check here.
-
-> +	    (bkey->crypto_cfg.key_type == BLK_CRYPTO_KEY_TYPE_HW_WRAPPED)) {
-> +		/* It is expected that HWKM init has completed before programming wrapped keys */
-> +		if (!ice->use_hwkm || !ice->hwkm_init_complete) {
-> +			dev_err_ratelimited(dev, "HWKM not currently used or initialized\n");
-> +			return -EINVAL;
-> +		}
-> +		err = qcom_ice_program_wrapped_key(ice, bkey, data_unit_size,
-> +						   slot);
-> +	} else {
-> +		if (bkey->size != QCOM_ICE_CRYPTO_KEY_SIZE_256)
-> +			dev_err_ratelimited(dev,
-> +					    "Incorrect key size; bkey->size=%d\n",
-> +					    algorithm_id);
-> +		return -EINVAL;
-> +		memcpy(key.bytes, bkey->raw, AES_256_XTS_KEY_SIZE);
->  
-> -	/* The SCM call requires that the key words are encoded in big endian */
-> -	for (i = 0; i < ARRAY_SIZE(key.words); i++)
-> -		__cpu_to_be32s(&key.words[i]);
-> +		/* The SCM call requires that the key words are encoded in big endian */
-> +		for (i = 0; i < ARRAY_SIZE(key.words); i++)
-> +			__cpu_to_be32s(&key.words[i]);
->  
-> -	err = qcom_scm_ice_set_key(slot, key.bytes, AES_256_XTS_KEY_SIZE,
-> -				   QCOM_SCM_ICE_CIPHER_AES_256_XTS,
-> -				   data_unit_size);
-> -
-> -	memzero_explicit(&key, sizeof(key));
-> +		err = qcom_scm_ice_set_key(slot, key.bytes, AES_256_XTS_KEY_SIZE,
-> +					   QCOM_SCM_ICE_CIPHER_AES_256_XTS,
-> +					   data_unit_size);
-> +		memzero_explicit(&key, sizeof(key));
-> +	}
->  
->  	return err;
->  }
-
--- 
-With best wishes
-Dmitry
+Coly Li
