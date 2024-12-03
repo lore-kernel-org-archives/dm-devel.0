@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 747B91F8AD2
-	for <dm-devel@lists.linux.dev>; Tue,  3 Dec 2024 17:39:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9AC3C1FBEBF
+	for <dm-devel@lists.linux.dev>; Tue,  3 Dec 2024 17:47:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733247548; cv=none; b=LxSOYmnssBuoz18iEErEUzFA62Xz9cKsLwqLB6EyhYP/wWzU661ZFrTuKvG60nxFtrEgIV3j8QOkMGguIHmpCsmTJ6hC4G06LX7+KNhM8OCPgQE/v8Z5TwjdfTnMQE3wxXQeN1m6CczMoN8+NITxqIM03s02lQ7hk68SdXWpH98=
+	t=1733248051; cv=none; b=IgbXt3zN24e2kqaeCaFx93HV+DnPcMjDaq96j4HfLEHQSrmFvwmG1jF4TSWbZkAznK7XmBAjAgkYDG1gDiUfUNpKQ5bDvornG9YAg2vHo4dTwEdAjxlS1gspKoLLFPKpYtgf9+gkkbIPBgfcW1heowrCTSwU2+pe9pzbnf5eEss=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733247548; c=relaxed/simple;
+	s=arc-20240116; t=1733248051; c=relaxed/simple;
 	bh=cnf4vNSINpKH8eXM2kpr7r2gin3qLFoBtzgS2hpkGoM=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=FwRIWB5UIzsT5xrXIEzfmTuv8sQdSYzP82xgPFbCp2MjokQiWOkyjFInybKJe5KZJLEPW143PgM4pv7PppHFHNifoz6YEJZLW6dysXuHazlIDULr2xgucJ7EJOtVszq8EK/0JsPOOxbXKVNkNB129y/veHKJJt+NGlM78YlFqEk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RyXY6swt; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:content-type; b=XaAU3jQ/yn4pUEQ4pyaEYHbAVnoqyR9Qvb9PtLiAQZB1hF+hQlWHDFLya2f/x02XCGg6Tcyr7wIb4E/lB6U1y91ba+XuWikHmlyRkraURJBtBWTNGmnV49w0zzbNM5eXp1IGD2aM6Qdyy4cKEC3vzvNemdX7k5nBqekFZAoh1NI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KxQIvMi4; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RyXY6swt"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KxQIvMi4"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1733247545;
+	s=mimecast20190719; t=1733248048;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
 	bh=PVZwHTojO+ZL0SimvTlVGTrW6hfMS7wtkNK0d6n7hvg=;
-	b=RyXY6swtMckJQiH7mYjQSWiTt0aRT7DElZmqs4ikk+MRuMxmp2xyrRrtKk53k8sk1Kd1nP
-	XhAbmn9IFg1pDBLaLejHF1pioAASysRvGrjyyt8YwW1fmvaxzdo+SUXGf6d/TlDWr6Yevv
-	loYRnfFqvmdT23eiadXbBRfjag53SVw=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+	b=KxQIvMi4CZ4XXD9+h56+7lLxiQDzqYppfFYh9DIuShuNejBDTrzLKmexCulWlCbfzbJpn9
+	4eV9imBv4NyAuBAAGFXXo3WvrvhN9IPouZLI8s+UvPB3foE+UNwqbCb8Vu5nnnv6Q17bNx
+	a+5pPLfFowjTCoJrG7vcCQY9aDPo7ro=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-622-8Mn_iC-qOVac0haezrmTpQ-1; Tue,
- 03 Dec 2024 12:39:03 -0500
-X-MC-Unique: 8Mn_iC-qOVac0haezrmTpQ-1
-X-Mimecast-MFC-AGG-ID: 8Mn_iC-qOVac0haezrmTpQ
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-648-oG6IzbLgO7KAf8qsoFp4aA-1; Tue,
+ 03 Dec 2024 12:47:27 -0500
+X-MC-Unique: oG6IzbLgO7KAf8qsoFp4aA-1
+X-Mimecast-MFC-AGG-ID: oG6IzbLgO7KAf8qsoFp4aA
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0988619560A2;
-	Tue,  3 Dec 2024 17:39:03 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 680CC1955DA1;
+	Tue,  3 Dec 2024 17:47:26 +0000 (UTC)
 Received: from thinkpad.redhat.com (unknown [10.67.24.41])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 708671956054;
-	Tue,  3 Dec 2024 17:38:59 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 51F1B1956052;
+	Tue,  3 Dec 2024 17:47:21 +0000 (UTC)
 From: Ming-Hung Tsai <mtsai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Mikulas Patocka <mpatocka@redhat.com>,
@@ -50,19 +50,19 @@ Cc: Mikulas Patocka <mpatocka@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	Ming-Hung Tsai <mtsai@redhat.com>
 Subject: [PATCH 1/3] dm array: fix releasing a faulty array block twice in dm_array_cursor_end
-Date: Wed,  4 Dec 2024 01:38:49 +0800
-Message-ID: <20241203173849.1258066-1-mtsai@redhat.com>
-In-Reply-To: <20241203173658.1257887-1-mtsai@redhat.com>
-References: <20241203173658.1257887-1-mtsai@redhat.com>
+Date: Wed,  4 Dec 2024 01:46:43 +0800
+Message-ID: <20241203174643.1259197-1-mtsai@redhat.com>
+In-Reply-To: <20241203173756.1257967-1-mtsai@redhat.com>
+References: <20241203173756.1257967-1-mtsai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 5qACcumsKOxSc5ke4nrZUJ89Orpb_SSCpmfW433WVPc_1733247543
+X-Mimecast-MFC-PROC-ID: DQuu9yfHBqjfHu7bo0YJ3JL98yuRoNPBTO2di8HEtQQ_1733248046
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 content-type: text/plain; charset="US-ASCII"; x-default=true
