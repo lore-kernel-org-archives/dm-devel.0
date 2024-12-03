@@ -1,261 +1,177 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from NAM10-MW2-obe.outbound.protection.outlook.com (mail-mw2nam10on2057.outbound.protection.outlook.com [40.107.94.57])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B01B10E3
-	for <dm-devel@lists.linux.dev>; Tue,  3 Dec 2024 00:17:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733185034; cv=none; b=lIuCHj6C85rC77DIdrEjuZ2UyCc5t6VBViL4PoQNC7ghH9YIwq1/1BAr6PBaGpFkuo3f3PIeHT/hkH0Yp8FIlC5TQbEV8faIaPF6soxnuBDi/Jsl5kM03l8n7sWPk9gEjrVz70jK38PqCfJExEapooezleQZies26iZf070zwIk=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733185034; c=relaxed/simple;
-	bh=vXUaeoWOctlEor5ADms0SRlUXfRgh8Zuu4VFsV4huj4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=SiX6HiVvuHnGectRiyHxkz2F9pAUcOQpf6OuNBPEd9nhlLZMp9MY2lQwrgyzKqJKWX589hWMTtx0876bJQs46X+M8z3fdJzMBL68lp0beAM5bGZyNz/by+zBfEYzLKKOfzugVE92PxkX+RZiPexfIF3QGQsDo7CCstxykAo0T9A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WZpUuURF; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FCA084A35
+	for <dm-devel@lists.linux.dev>; Tue,  3 Dec 2024 02:10:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.94.57
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1733191837; cv=fail; b=rr8HgaB/WObjy7IhwrKk6u2XzZPJJCbXE02MXVNuIU1IuEiBux6fZUSiQa/x/wcdmHd0tOxSKOfALrDVi7voLTds2IDgFTr1eEwrmRNzRrSn8f/NznYI8iF85OCR0A5TywmM/Ck/8if6vKT2pU+ABKq+gCvUKseS2YQQa6F5Gsw=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1733191837; c=relaxed/simple;
+	bh=4c3pfNU8Og954UBow9Otpx7CmGo0CiwTLaNpwuLNpdU=;
+	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
+	 Content-Type:MIME-Version; b=ouEKXUm3NqUbx2eSsD1+bsO6PcTdyOWv/Z0gL3WeT7E/1xQefHywFk6aBx7EBz1WxJtglph19xzqjjwkjvGVxrZ8XlQ9e/x2TxPkO4StJ1NUgFG04WgKmBzEDLRyCgoOgGFX9kl803bDEi093Wf14JB1LkwFLTyr1eHWdvRXIWQ=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=nvidia.com; spf=fail smtp.mailfrom=nvidia.com; dkim=pass (2048-bit key) header.d=Nvidia.com header.i=@Nvidia.com header.b=AGFQ6q9X; arc=fail smtp.client-ip=40.107.94.57
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=nvidia.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=nvidia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WZpUuURF"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1733185031;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Jkwpo7U8uLLi1bUpVokHP+849munELT601U+7VjwSoA=;
-	b=WZpUuURFDEFwxSG+BjeYBywJHwxRyUVUjdjXHTbc9rEQj6UcWjdcp8h3f68M5k23VD1Gsn
-	jPcdcxN4u7TkvHSbm5F6aiSyIoHS8PLhrmXlRGoHefCKjht2CV2bXm0WDt9gRlWsWsMZzP
-	bjjwTlgcIFVMYTTNiikeSjf5fj8rOFw=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-652-vmVtEvOxNXGtMGwnWm_KFw-1; Mon,
- 02 Dec 2024 19:17:10 -0500
-X-MC-Unique: vmVtEvOxNXGtMGwnWm_KFw-1
-X-Mimecast-MFC-AGG-ID: vmVtEvOxNXGtMGwnWm_KFw
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DB5CB1955D91;
-	Tue,  3 Dec 2024 00:17:08 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 81AE21956052;
-	Tue,  3 Dec 2024 00:17:08 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4B30H6ej1146285
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 2 Dec 2024 19:17:07 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4B30H6711146284;
-	Mon, 2 Dec 2024 19:17:06 -0500
-Date: Mon, 2 Dec 2024 19:17:06 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 5/8] libmultipath: re-implement pgcmp without the
- pathgroup id
-Message-ID: <Z05OAl5bhpsruTLh@redhat.com>
-References: <20241127230430.139639-1-mwilck@suse.com>
- <20241127230430.139639-6-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=Nvidia.com header.i=@Nvidia.com header.b="AGFQ6q9X"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=QXkY9bZo9ma6mxSiWLImHcVMfLwuh2fiD/qLw2tqcxn5MvhwHcCjYlKH82d9Fmqn8tgOywAxgMyHc3RNDRUAVg89FVxRqKh5Bp6Y/NIFBNhT7Kn0UOEHI3qk9RmEdetYLsz7UaXJO47/o8KIUyT31sI1hlwiVmFJ20UCNOYIOMw9CzhSRXMokfqE3XNYUx/xccUho9xggoaY6GvcVevxngNHxzX3dNGLG7deDG0aixhFHZms2PGmXGLjY1LFHxtzz9vM5wV/rz2XLX9Jh9PxZurZ/5msK7BMw5X7CeXRYkPQLjYPLiYM2TdHna5PV1E/ETq9h75RjOKwF/VAtCcp2Q==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=4c3pfNU8Og954UBow9Otpx7CmGo0CiwTLaNpwuLNpdU=;
+ b=N9AlKZnkfqgz6qAeMB9VldUsG6HJYOASa73w2A3UdcxBFHaL9ImqarC36zm5ZAS5J7GOYMiSCXgziKnxAD7vGHQf1K0fDuzruP+1OMJxe+umE8sA3f0QRHZYlxgCkzhOJIK/j1hbu1VOc/2Va387qGo/oPf1hMPWxwAtFrX/AG4i7FnnfaD6fz4gt4y/7o88V4PCEOU8k8lb944yRDWKH3HxvtqkylT0ocI40mWkatydAKMxNDSj346edjvNFn4LH9DEQK7PzkQMoFmttW/sHJHe+etzJxkMemzIhPDuqFT1AFWuSx7XL+EhBvAv8dcVY3YMqA0T1eCT0iCgFizWdg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=nvidia.com; dmarc=pass action=none header.from=nvidia.com;
+ dkim=pass header.d=nvidia.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=Nvidia.com;
+ s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=4c3pfNU8Og954UBow9Otpx7CmGo0CiwTLaNpwuLNpdU=;
+ b=AGFQ6q9X2jOUSMYF3qa5vxJUTCK156mmcnzZma8FbqTWbPFzCWGxY1B6wt7il5H1SB7jB8LgjD3hP1cu7QT0hloEvzVhNd4gpqXQIZsTcOZZv9ST0ASKSFRXaVjq8+xvh/QK+OBXNmpPWK54yfsywyU7DNC01MO5vKm70ik7UQcoCVY58NvfenB5UXmXlJukcITIBUDPn1ZwHpomHtyYOQ0Zq+ouJyeY0Aj9Sj7/EIFnBlVoDhATVODth13INYc+4njrWuu0wFULvANYyjIN7cV9yKPz9irYNGWC5D0hgSoRxr/ahSaUCOcSd2gs3uzjEvwrQKhcyfVBl6uAX+kdnA==
+Received: from LV3PR12MB9404.namprd12.prod.outlook.com (2603:10b6:408:219::9)
+ by MW4PR12MB8612.namprd12.prod.outlook.com (2603:10b6:303:1ec::13) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8207.18; Tue, 3 Dec
+ 2024 02:10:31 +0000
+Received: from LV3PR12MB9404.namprd12.prod.outlook.com
+ ([fe80::57ac:82e6:1ec5:f40b]) by LV3PR12MB9404.namprd12.prod.outlook.com
+ ([fe80::57ac:82e6:1ec5:f40b%5]) with mapi id 15.20.8207.017; Tue, 3 Dec 2024
+ 02:10:31 +0000
+From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
+To: John Garry <john.g.garry@oracle.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+CC: "haris.iqbal@ionos.com" <haris.iqbal@ionos.com>, "jinpu.wang@ionos.com"
+	<jinpu.wang@ionos.com>, "colyli@suse.de" <colyli@suse.de>,
+	"kent.overstreet@linux.dev" <kent.overstreet@linux.dev>, "agk@redhat.com"
+	<agk@redhat.com>, "snitzer@kernel.org" <snitzer@kernel.org>,
+	"mpatocka@redhat.com" <mpatocka@redhat.com>, "linux-block@vger.kernel.org"
+	<linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org"
+	<linux-kernel@vger.kernel.org>, "linux-bcache@vger.kernel.org"
+	<linux-bcache@vger.kernel.org>, "dm-devel@lists.linux.dev"
+	<dm-devel@lists.linux.dev>, "linux-bcachefs@vger.kernel.org"
+	<linux-bcachefs@vger.kernel.org>, "hch@lst.de" <hch@lst.de>
+Subject: Re: [PATCH 0/2] block: Delete bio_set_prio() and bio_prio()
+Thread-Topic: [PATCH 0/2] block: Delete bio_set_prio() and bio_prio()
+Thread-Index: AQHbRK3BWCOuQtxdHECPqDuSufibnrLTx7OA
+Date: Tue, 3 Dec 2024 02:10:31 +0000
+Message-ID: <14da2382-5523-4207-90e0-ddef7c69e496@nvidia.com>
+References: <20241202111957.2311683-1-john.g.garry@oracle.com>
+In-Reply-To: <20241202111957.2311683-1-john.g.garry@oracle.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+user-agent: Mozilla Thunderbird
+authentication-results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=nvidia.com;
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: LV3PR12MB9404:EE_|MW4PR12MB8612:EE_
+x-ms-office365-filtering-correlation-id: 295fa57a-8098-42ca-8a69-08dd133faa3d
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam:
+ BCL:0;ARA:13230040|7416014|376014|1800799024|366016|10070799003|38070700018;
+x-microsoft-antispam-message-info:
+ =?utf-8?B?YTJqMTVaZ0ZlaDJkdlFDM0ptdzNWcG41VlAvY3dtaEZwQUZXV3BEOVhWbGh1?=
+ =?utf-8?B?cDB6a2xDcVJ2YTdjNmpSam05eEY5c0cwam5xKzQ0R2xCTXJJT3N2bDFMZkFu?=
+ =?utf-8?B?RkU1ak13QVZCRXoyY2JrMzVQSnQvbmJHM09ESkNDR0JUVnZ0MlA4Ny9EeGVl?=
+ =?utf-8?B?UWQyMVF4c3lYM0wvN0RRcm1ESDJWTUdqZkZ5ajdRU3FVMnI1d2YwcG1vZW5H?=
+ =?utf-8?B?Y1JpYkI1WXNwelFBSVhxeXFRUWhqVGF3V2lnUmY4eUtsUnVIeEQ3a1czN1Mw?=
+ =?utf-8?B?bGdlSDZnQ3NaUWZnYzVQakJ1Q0xlODlrTlpUWHpNMEpzUnVHRkFBUUVkVFNU?=
+ =?utf-8?B?clA4NW80TGZBbzZmQjdhT0w0a3FlM2M4WElLeWpEb01WbXB6N2IxVXVVMXRR?=
+ =?utf-8?B?WndJVHRKYnBqMWZ4OUxIUFR5NENYcDJqbklaeEZVZHVnd0U2U1AwYWZmV09P?=
+ =?utf-8?B?YWt4dG5DeGVnb2lkL3ZleHd1M1k1cmgzSFl2UkxaYTlLM3FrWmF3RFp5S05P?=
+ =?utf-8?B?Y3hneGhZM21Ubjdhbk1wVkNBLzE2VHdZR1VXM2NkWG05MVNjZXF5NGhnUUxl?=
+ =?utf-8?B?VVBLT1RKenNDb1crV0x4ajNzcHdwMlVGazZmRDRDcWN1bUFlWFVXVGtDM3NS?=
+ =?utf-8?B?bU5XZmpRem5jVGdGSTdPUlhNdFBlRXlTdUpMejJ5czh6R0RvZzh4YmRPNldW?=
+ =?utf-8?B?ZENwUFpSVnZ1UWNOZlJwK0N4RGltczFWM0pZMTR5UUF5dVFCclZlN3dCTWtw?=
+ =?utf-8?B?RUg1b2ZXSm9KbStTMExid1dPYmROSWpVTXhMNTdqYS9QMEE0cEsxNGJORWRG?=
+ =?utf-8?B?ZWl6d2FmaGU3V1c3akFSa0VVaDlUUEhUUFFiWlJUaThLM0pjZkRxSDdPTzVi?=
+ =?utf-8?B?eVB4dG9aTHNmUStOMDQ5QXpPWHg5eDNuOGpVUmFkaFgxMUt3WGhOQnFxTENp?=
+ =?utf-8?B?MDBmUDFuVlVNbzJkTzl5cnhZZTkvL2pxTXczOXArNVl5U2dLejJGUXZEVGI2?=
+ =?utf-8?B?RjNBOW1LSG1BZnFGNHNicmErN3dFbkdsRHBFYXJzYW5mUmhQKzlmcHFHNERD?=
+ =?utf-8?B?QjdsMXh4Tyt5K0taYlNCKy9zSjFVV1ZvYkhaZ3lBRXNjOSsvU2lsRE52UHU0?=
+ =?utf-8?B?YnIyMnlYcHpIL2VIM1JraHY5VndnSXpNNEF6bytRT2JOTER1ckU0M1dSdlJq?=
+ =?utf-8?B?YmNMa3lGWXpQR3dSU1NJYnc5SmQvQ3pmN0x1WG1VQjU0UXJucnBNNHl1SjlV?=
+ =?utf-8?B?c3Z5dUdIbWtWSDFadkNUSUF4N0Njb0RzSC9XZTdnOGJEdit2QkN0T3k1ZHda?=
+ =?utf-8?B?bGNWbVRNMzlFd3Q2MVc3QWRUN2xIR2I5ZlpqVHlCaWxWUVZ6S1BBd2ZhV1k3?=
+ =?utf-8?B?U1YxV2hTSCtLL09GMFYxTm5aZ2xzcjFVZkZqdElVR1l3eGZaVmcxSXExU0pm?=
+ =?utf-8?B?aTJqczRjakhSalFXTWpYZzNPQkVXK1VwbnNpU045TDVhMnZvY2VvM1dRZkk1?=
+ =?utf-8?B?N0sxM3d2dXVFM21CWUs4OWJNQjhMcVJraW8zdWJTMCtBRFpZRW5TREtqQzRB?=
+ =?utf-8?B?VXBEYThaZUJCU3JaMEtZMWVUNHNFN0tobEtuZEhPdjlFWFJpdC9JQzRKcU5k?=
+ =?utf-8?B?eXdkUFdHTkdPQUtGb01TcXVHQzdRcy85T29yMXUxRmdxT2t0YWx0K290NC81?=
+ =?utf-8?B?TGpPOU5ROHpYbzd4M3NwY2FmWXNtcTVrUWJ1ZG5JNlVyM0QzS3lvQ29JKzg1?=
+ =?utf-8?B?VkxTM0JaQ3cwOXNMdmNDdDFta29FNWlFZGJ3ZEZ5VkhTaWZZOWx4NkZ3QXZv?=
+ =?utf-8?B?UVBQazNFUGxNYUFTS3k1bjVSYnFQMmlWZUxPSm9Gak85WkVGdVRaWmdnNGVt?=
+ =?utf-8?B?WWdrdWVJYVVETy9ubC8wUUVrUnFjWXJRQW54Z2t3dkxLV1E9PQ==?=
+x-forefront-antispam-report:
+ CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:LV3PR12MB9404.namprd12.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(7416014)(376014)(1800799024)(366016)(10070799003)(38070700018);DIR:OUT;SFP:1101;
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0:
+ =?utf-8?B?OXY0OFVuRjJpUXNERThrS1VSWjNZQ0dMT1VXYzFiT2pyM1NNaGk1NCt4MlR1?=
+ =?utf-8?B?L1U2MjdUZ3prL3pWWDdDa2RlcDVFNmFubkJsZFdMSHJ5a3RIMVd0Um5qSHZU?=
+ =?utf-8?B?S1B0WlJvNHYrQjVUbTkyeE9iL09kbWsyZk4zMWR3UnZYVitSd3lvd2J0S3k3?=
+ =?utf-8?B?RDlWWE8yVXc3TTk3OHQ1Y2owdWFwYytVQkJ0RHpSd0daMllHeWF0T2dkb1NN?=
+ =?utf-8?B?Ymg3Y2tYK0hYK0Rja2VNM2JPMDhBRWIyRnZ2cGZuMlFYWU4zSXpqREZWaEgw?=
+ =?utf-8?B?RnZ5bUlScjJjNm1WQk5Mc1JTOCtJUlFvRUl1MDA1WGJ6L2lubW40SHByN0VE?=
+ =?utf-8?B?MUhkQklVTjVyT0FkR0NjV25raWlkcWEwK0JXWnc2NlhJVVc2OWoyRlV5bTJ1?=
+ =?utf-8?B?VHFscmxDZEZNa2dhN2RrbU0wOFJ5VGxjRW5Bc2hVTk9rMmxRd1BnM1N0cjNM?=
+ =?utf-8?B?cGNUNmNBc05jWldDV0J5TFhLTHhCNHZLR0NxTGhuZGpDd0xwSzJlZzZTTHpU?=
+ =?utf-8?B?aXVTMEtuZ0xOZytEQVNYU3JFajZubXgreWxYcGU0SERuUGNGRVpTb05xS0Vx?=
+ =?utf-8?B?Y1hwRktIbzVsVFVJOTNRRFVYRnpiV2psdGI0b2ZjNDNiNnhFYU5NUndrY3Jw?=
+ =?utf-8?B?a0tJUWxFTmpuWmg5TWIzaS9KRDhhM0xZcXB5dFJEK0VlTU9KSW9lYjNOamFp?=
+ =?utf-8?B?NGNER2xIQWtqaXZTdHBhanNpaDVsYnpWMWZydlF2YlY1SitZTkNyNHAxb3NV?=
+ =?utf-8?B?THNjd0pyUmVOV2xwV1F0ZVFxNEZWKzZhZVozS3IxUmVyT3dGZXVpQ3A0eHNP?=
+ =?utf-8?B?VTJoOGNJa2l6eHRGS1d3cHhZT25sVFRwRDZVSkpoZnc0cHNDUndYZ1VnM0Ew?=
+ =?utf-8?B?Q2RPOGhpeDFMbjJkRVdxeUZhQng0R1p0Q1YwVERUNFdnalVBRUZVL3lESm5H?=
+ =?utf-8?B?czJyYmlMaVRYRFdXcDlWS05xdFlYWjNCV2NKak9LbVhFZk1lV0R0eWE4NGtw?=
+ =?utf-8?B?a0VWdXQ0cjNOUFBKRFB3eEFVQUtoaFZTbUltaWFHcFNYbFdLdTBPdnplbENE?=
+ =?utf-8?B?VUJWTUFBYTM5OWJmRTAzNW00aTkvVXkyUVlmL1BuVFpNbkMreWdHRHg4OHo4?=
+ =?utf-8?B?RXhhQWVZTVdHSU9NNGtkc1VSblZRRUZTcDZLU05YcGxiK01JM1MzNWRLQzl3?=
+ =?utf-8?B?aWtFTk1ieVBqYkFGMG1MbTZhYWt0MmYrenJtLytRK08xZ3RMc2p0aFN1cTNI?=
+ =?utf-8?B?WEpOMnowVWUxMFpKcmJoVzZPdkZTWUtYSDNNWnRBTXR0M09OaFJ3cmk5a2I5?=
+ =?utf-8?B?dFZTVTN1RnpXVmxEczlGMTlkNjB4VGpOdGlYZDhQMzNBbURxeE9vTEZuNG9F?=
+ =?utf-8?B?TTgwckRNM0VCdUdmNWZ6TU9CUzY5UlJQd2dybkFvSEJhbnlUVUhOaTQzRWpi?=
+ =?utf-8?B?V1B4SkVkUVhiWnh0VG1IUzJBVlpQUSs3T2VRcGdiRzdRZEFPdWhQN1VZckx0?=
+ =?utf-8?B?cTJmRGUrTGZnOGRKR2pWaTJKdW5TWk5pcy9VQ3BXQjlhS0FWZkFmOXI2MUxr?=
+ =?utf-8?B?dktFQSt2MTJTRDY5M01kdFJ0SnZCSkNDcm1LN2thaGFiU1IySFNHMkFKcFB1?=
+ =?utf-8?B?cmRWeEhYQ0YyQnFkUUZ5bHpuV25RQndWSnNCSENqa2xHTFAwKzNYZFVVeGg1?=
+ =?utf-8?B?YmtuRGR6MW1tQmRyV0NVWjlpK2hPTTNEL1hSVlhQSHEzUnBxTm0zTjdySHNp?=
+ =?utf-8?B?NmltUjA4eHdTbVFjZjh1ci9NQkFhYlFjT1RnMkRRdi8rdmV5dHNSZ1NwOEcz?=
+ =?utf-8?B?aTNNUXZqQVJiRnoyYndSbHJFS2s4cE13ZFJhOFBITUlrNDF6QXJYRlFpUkp4?=
+ =?utf-8?B?WWlXR01sTmx4TVlKVVNwVUlvNExDNzRFeGxmZFFJRDJpMkRDdCtFM3NocWUy?=
+ =?utf-8?B?Q2N0UERCN09TZTJ6ZXJoSWhJdGtiSlJDaTJuVUVuVmRYUDFGZmw0ajh2VHhZ?=
+ =?utf-8?B?TDJOYkRFUVA0akxNVGlzS0NMVG5lWFNPczNxb2xCclMwQWhhVG5vM2NRaStQ?=
+ =?utf-8?B?WFU3NFB4SThpYkZkYUlOMEREN2ZqempDcENPVkZ2UWlLOURoOElBZkRxempn?=
+ =?utf-8?B?ejdhS010b2pCQmlCSGhHanVTWWxJNFdwRTUwYnZiSGt1WW5wSEc3MzVxQ3R1?=
+ =?utf-8?Q?43zmDx5TplPwj73kydq420od6UKcdGwb44KoAwoglZUU?=
+Content-Type: text/plain; charset="utf-8"
+Content-ID: <22744782040DDC4CAEFAACE27DCAA8F1@namprd12.prod.outlook.com>
+Content-Transfer-Encoding: base64
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20241127230430.139639-6-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: eNJ3BTCPzBbNVba-68pStMjVoNWOcmJSuw0JHQsY0SQ_1733185029
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+X-OriginatorOrg: Nvidia.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: LV3PR12MB9404.namprd12.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 295fa57a-8098-42ca-8a69-08dd133faa3d
+X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Dec 2024 02:10:31.6327
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: YvkQuyPlM62Jyjn12NtZ8iqgD4wcoXThJj435+opwM7R06Iex8nkw7In/ObsMFo0JMstaIbVUA1DIhXLqn00iQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MW4PR12MB8612
 
-On Thu, Nov 28, 2024 at 12:04:27AM +0100, Martin Wilck wrote:
-> pgp->id is not only calculated with a weak XOR hash, it can also
-> get wrong if any path regrouping occurs. As it's not a big gain
-> performance-wise, just drop pgp->id and compare path groups
-> directly.
-> 
-> The previous algorithm didn't detect the case case where cpgp
-> contained a path that was not contained in pgp. Fix this, too,
-> by comparing the number of paths in the path groups and making
-> sure that each pg of mpp is matched by exactly one pg of cmpp.
-> 
-> Fixes: 90773ba ("libmultipath: resolve hash collisions in pgcmp()")
-> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/configure.c | 94 ++++++++++++++++++++++++++--------------
->  libmultipath/dmparser.c  |  1 -
->  libmultipath/structs.h   |  1 -
->  3 files changed, 61 insertions(+), 35 deletions(-)
-> 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index 9ab84d5..bd71e68 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -416,16 +416,6 @@ int setup_map(struct multipath *mpp, char **params, struct vectors *vecs)
->  	return 0;
->  }
->  
-> -static void
-> -compute_pgid(struct pathgroup * pgp)
-> -{
-> -	struct path * pp;
-> -	int i;
-> -
-> -	vector_foreach_slot (pgp->paths, pp, i)
-> -		pgp->id ^= (long)pp;
-> -}
-> -
->  static int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
->  {
->  	int i, j;
-> @@ -445,32 +435,74 @@ static int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
->  	return pnum - found;
->  }
->  
-> -static int
-> -pgcmp (struct multipath * mpp, struct multipath * cmpp)
-> +static int pgcmp(struct multipath *mpp, struct multipath *cmpp)
->  {
->  	int i, j;
-> -	struct pathgroup * pgp;
-> -	struct pathgroup * cpgp;
-> -	int r = 0;
-> +	struct pathgroup *pgp, *cpgp;
-> +	BITFIELD(bf, bits_per_slot);
-> +	struct bitfield *bf__  __attribute__((cleanup(cleanup_bitfield))) = NULL;
-
-Nitpick. I'm pretty sure we can't call pgcmp() unless mpp and cmpp are
-set. It seems like we should either trust the parameters (this is a
-static function with one caller) or check both of them.
-
->  	if (!mpp)
->  		return 0;
->  
-> -	vector_foreach_slot (mpp->pg, pgp, i) {
-> -		compute_pgid(pgp);
-> +	if (VECTOR_SIZE(mpp->pg) != VECTOR_SIZE(cmpp->pg))
-> +		return 1;
->  
-> -		vector_foreach_slot (cmpp->pg, cpgp, j) {
-> -			if (pgp->id == cpgp->id &&
-> -			    !pathcmp(pgp, cpgp)) {
-> -				r = 0;
-> -				break;
-> -			}
-> -			r++;
-> -		}
-> -		if (r)
-> -			return r;
-> +	/* handle the unlikely case of more than 64 pgs */
-> +	if ((unsigned int)VECTOR_SIZE(cmpp->pg) > bits_per_slot) {
-> +		bf__ = alloc_bitfield(VECTOR_SIZE(cmpp->pg));
-> +		if (bf__ == NULL)
-> +			/* error - if in doubt, assume not equal */
-> +			return 1;
-> +		bf = bf__;
->  	}
-> -	return r;
-> +
-> +	vector_foreach_slot (mpp->pg, pgp, i) {
-> +
-> +		if (VECTOR_SIZE(pgp->paths) == 0) {
-> +			bool found = false;
-> +
-> +			vector_foreach_slot (cmpp->pg, cpgp, j) {
-> +				if (!is_bit_set_in_bitfield(j, bf) &&
-> +				    VECTOR_SIZE(cpgp->paths) == 0) {
-> +					set_bit_in_bitfield(j, bf);
-> +					found = true;
-> +					break;
-> +				}
-> +			}
-> +			if (!found)
-> +				return 1;
-> +		} else {
-> +			bool found = false;
-> +			struct path *pp = VECTOR_SLOT(pgp->paths, 0);
-> +
-> +			/* search for a pg in cmpp that contains pp */
-> +			vector_foreach_slot (cmpp->pg, cpgp, j) {
-> +				if (!is_bit_set_in_bitfield(j, bf) &&
-> +				    VECTOR_SIZE(cpgp->paths) == VECTOR_SIZE(pgp->paths)) {
-> +					int k;
-> +					struct path *cpp;
-> +
-> +					vector_foreach_slot(cpgp->paths, cpp, k) {
-> +						if (cpp != pp)
-> +							continue;
-> +						/*
-> +						 * cpgp contains pp.
-> +						 * See if it's identical.
-> +						 */
-> +						set_bit_in_bitfield(j, bf);
-> +						if (pathcmp(pgp, cpgp))
-> +							return 1;
-> +						found = true;
-> +						break;
-> +					}
-> +				}
-> +			}
-> +			if (!found)
-> +				return 1;
-> +		}
-> +	}
-> +	return 0;
->  }
->  
->  void trigger_partitions_udev_change(struct udev_device *dev,
-> @@ -763,11 +795,7 @@ void select_action (struct multipath *mpp, const struct vector_s *curmp,
->  		select_reload_action(mpp, "minio change");
->  		return;
->  	}
-> -	if (!cmpp->pg || VECTOR_SIZE(cmpp->pg) != VECTOR_SIZE(mpp->pg)) {
-> -		select_reload_action(mpp, "path group number change");
-> -		return;
-> -	}
-> -	if (pgcmp(mpp, cmpp)) {
-> +	if (!cmpp->pg || pgcmp(mpp, cmpp)) {
-
-I know that the code did this before, but is there a reason why we
-always reload if cmpp->pg is NULL? I'm pretty sure it's possible to call
-select action when neither mpp nor cmpp have any paths. (cli_reload on a
-pathless device should do that). In this case, the topology isn't
-changing, and AFAICS pgcmp() should work with no pathgroups.
-
--Ben
-
->  		select_reload_action(mpp, "path group topology change");
->  		return;
->  	}
-> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-> index 1d0506d..c8c47e0 100644
-> --- a/libmultipath/dmparser.c
-> +++ b/libmultipath/dmparser.c
-> @@ -307,7 +307,6 @@ int disassemble_map(const struct vector_s *pathvec,
->  
->  			free(word);
->  
-> -			pgp->id ^= (long)pp;
->  			pp->pgindex = i + 1;
->  
->  			for (k = 0; k < num_paths_args; k++)
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index 49d9a2f..2159cb3 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -531,7 +531,6 @@ static inline int san_path_check_enabled(const struct multipath *mpp)
->  }
->  
->  struct pathgroup {
-> -	long id;
->  	int status;
->  	int priority;
->  	int enabled_paths;
-> -- 
-> 2.47.0
-
+T24gMTIvMi8yNCAwMzoxOSwgSm9obiBHYXJyeSB3cm90ZToNCj4gTWFjcm9zIGJpb19zZXRfcHJp
+bygpIGFuZCBiaW9fcHJpbygpIGRvIG5vdGhpbmcgc3BlY2lhbCBpbiB0ZXJtcyBvZg0KPiBzZXR0
+aW5nIGFuZCBnZXR0aW5nIHRoZSBiaW8gaW8gcHJpbyBtZW1iZXIsIHNvIGp1c3QgZGVsZXRlIHRo
+ZW0uDQo+DQo+IFByaW9yIHRvIGNvbW1pdCA0M2I2MmNlM2ZmMGEsIHRoZXkgd291bGQgYWN0dWFs
+bHkgZW5jb2RlIGFuZCBkZWNvZGUgdGhlDQo+IHByaW8gaW4gdGhlIG5vdy1kZWxldGVkIGJpX3J3
+IG1lbWJlci4NCg0KTG9va3MgZ29vZC4NCg0KUmV2aWV3ZWQtYnk6IENoYWl0YW55YSBLdWxrYXJu
+aSA8a2NoQG52aWRpYS5jb20+DQoNCi1jaw0KDQoNCg==
