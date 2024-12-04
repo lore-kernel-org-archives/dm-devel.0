@@ -1,110 +1,245 @@
-Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E9951A256C
-	for <dm-devel@lists.linux.dev>; Tue,  3 Dec 2024 21:47:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC51A14287
+	for <dm-devel@lists.linux.dev>; Wed,  4 Dec 2024 17:10:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733262440; cv=none; b=FS1TJlrMOgKNyC5hWznmrD4GTc3MN8WLU8lvzjfnjc8bf1omVyy5wbACnURjKivbOGub6sfgW0p6xmY5s86bFT79TM/qsb7hQAgL++g78MvqqbasCjC0J9F/3CCC04xF51bdMIv96n3bODw5OtT1CtGm8CkTM3CbF+bCEc+yhDA=
+	t=1733332228; cv=none; b=nlN416nCjcsKYxIZWv7mtTqDd7iH/sBes5wqIAI3f+FC3E/dvuhrQHDlQmGIqBvUqCNC/bolHfd1A54LdaJWo33KB6FHbyh/0qKjFH7maWoix35FbGNXanaSVL4S+gBB0ckiDuXI5kbsugK64OcUdQmDalQORVPt2z4+/zx6jtg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733262440; c=relaxed/simple;
-	bh=FZnSpUGzUi1p2tC9xFEfjUupvzrBcjsofmHIz1i+VpM=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=oh2z6qtll3vpiHiKRlw89u8L8Rc9ELrqLgir7cFXSFiNWn/ZMiG3y73wHincVZo0ZWjYKhbSyxW3aLS4KlIgvaeYUe84dURu6GsMGYy2TpLp1evKJAMSbhZcGC4soT6ocR47jHgvHfafaKZDQ7XBG9EKWgQh+l1lFdKaNEE3WnU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=OiLi57lX; arc=none smtp.client-ip=209.85.128.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1733332228; c=relaxed/simple;
+	bh=5c06fUlPUQvUk8H7EcfZn4NjPsnf/f2yz793zWozwKs=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=nkEVY1dP8Hjn8fdjWJ9XUlG9QubYe9crP5Ifun7kwXYyfpFpE7kz81+eowMOMg9IcvFsxWHoXEWu2v0RDMy3FGQfrceTU99g0whxHAGEkZ1j6OuSmxaDvufM5Oh2CI/bvjC7yu3CjWuYDictcRaWiBU+8KcICb/7fL8zb2UY5Dk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Sw07tUxf; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="OiLi57lX"
-Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-434acf1f9abso55836515e9.2
-        for <dm-devel@lists.linux.dev>; Tue, 03 Dec 2024 13:47:15 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1733262434; x=1733867234; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=krH+QR7yJAREMDnKO9KXDRcqEAuf/Z7N04mC2uc/W2k=;
-        b=OiLi57lX9nEE134oo5LnCrmXcBQZwFvVJ+Yog32EalS1i66/STj0fwXW1L7n9pm2U0
-         iA2fH9EclhL4X/01Mm1rki+E+gPUcI+KA0gLsqcLsUF71mLcJDGFdoqtlfY9o6esGUd5
-         ZBi4tpRnIjPluXRAWFRP7xMUk1nGcnwNMFvA1uqP+a3gesakUViUVhw76OHbojU3EOLG
-         H9dPf/U3RcCksGDfpoamelJjhJPnErmDlmLUplT0KDWR2NeMBbArFktF51nx/RSPyNSV
-         s+tL/MGWPqlCxkUG6X2++ELhgrDn+BVKR7JswLMXbmYSPspugIU3Bs2X0fXLCFm/Blc6
-         3i6A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1733262434; x=1733867234;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=krH+QR7yJAREMDnKO9KXDRcqEAuf/Z7N04mC2uc/W2k=;
-        b=QcXvVj6/RlR+nPF8BpOFAaseaHH2Njt2XEWHoDjyDKYc6iO6NLGnQilBsDbEoWbYIB
-         bZiD1/FoBBgjH0XoMTchqrNl1iTMy3AstFdmP6SJaiZHB0ar28rYbP7i5Eqa1g3hM4gZ
-         tOmc2gow3quPVp3gaXYgWqvT/hfUI4u6B48hnYawCdi6j/asJPFrpV913BK3WlTMUVTC
-         0S5s89+I3uJRR4xskbRWei+jsZsA2Svroy9hKvSmhw6cEDZMdraf1Ox4y9je6lnDWpFC
-         iUXbCohMiE/IRVpR0FOazDEvdjdcooSAqgXOpqJyuRBr2Qd/PlHSDjVV+SUQifs6OU4C
-         YgVA==
-X-Gm-Message-State: AOJu0YzHQdjdENIeb0nNLYbbBdUfC/lmS85S451gom6W5yOAsZGcHCpm
-	y8EMbZrY2d/H9QbvdBdLP0CYILNc3rqRfLvs3WhEELEesxIWxmR9vWJBIl4Pkxo=
-X-Gm-Gg: ASbGncuoc+C/66lssQEdzKLnzJYk9geIeHfsn3WltPYJ80ftk8aeP6e/QzvtL/m6TS8
-	218wVL1fhWC/ApSQarhal07hAR9XFGSTwz1x/Yk0WN6NeY0vApRucAMvn8inSRHoKRxM2OsG6lz
-	aAHG/SKDXFXng1GI1GsKmLMooc+38HSYz/92nr9+v6HaWQ/YXlYCB5lfTUfwdmpPM1ERoq53PYI
-	9hFhRBOPrFm0xFiSFPR3eD1U0CxZ88Hz/Jj0zVisjymS3NJZ4TxjNG/L/SXvJXUHWpZZvELL4IM
-	kCOSDgeqhVLarAgtNAVTdnmVE1zh8dUVlDHq
-X-Google-Smtp-Source: AGHT+IGRlp8QwJeqgdMwkoz6Gj1LyqcQFfX5MrVhVEYU6cx+QnZIOcAvJGoE8y1S5wdMS7CNBOA7wA==
-X-Received: by 2002:a05:600c:46ca:b0:434:a2a6:ed0d with SMTP id 5b1f17b1804b1-434d0a23a81mr35633065e9.29.1733262433670;
-        Tue, 03 Dec 2024 13:47:13 -0800 (PST)
-Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-434d52cbd72sm1182085e9.44.2024.12.03.13.47.12
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 03 Dec 2024 13:47:13 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 0/8] multipath-tools fixes
-Date: Tue,  3 Dec 2024 22:47:01 +0100
-Message-ID: <20241203214702.107918-1-mwilck@suse.com>
-X-Mailer: git-send-email 2.47.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Sw07tUxf"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1733332224;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+paZgBmhd6Qlp001VFNuT00WnceoHsAQqEYg22YY9r8=;
+	b=Sw07tUxfH2UQD8heqn7qtajSKPuqqBXu27RiCkZ5yTh86803W6/+XTgKyJR+aIpSmePuWH
+	qs+PQ7Dfyvb4eKjkO54T51eCOKQ8WHD1x9I7xl7JYD1k1xTv2L+XeFS1SrvibxdSnKPAh1
+	pkioKHVhqUffBQ2n2i4RewqJl4H6gMg=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-156-mi0AI-eKMzmUd2W6_NZAzQ-1; Wed,
+ 04 Dec 2024 12:10:21 -0500
+X-MC-Unique: mi0AI-eKMzmUd2W6_NZAzQ-1
+X-Mimecast-MFC-AGG-ID: mi0AI-eKMzmUd2W6_NZAzQ
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 488C91956087;
+	Wed,  4 Dec 2024 17:10:20 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B6B101955F42;
+	Wed,  4 Dec 2024 17:10:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4B4HAI3Y1201563
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 4 Dec 2024 12:10:18 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4B4HAHGc1201562;
+	Wed, 4 Dec 2024 12:10:17 -0500
+Date: Wed, 4 Dec 2024 12:10:17 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3 5/8] libmultipath: re-implement pgcmp without the
+ pathgroup id
+Message-ID: <Z1CM-ZsJxEy197kg@redhat.com>
+References: <20241203214702.107918-1-mwilck@suse.com>
+ <20241203214702.107918-2-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20241203214702.107918-2-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: N4Vcnsm4RgXhU9aAgutcERehA9hPFfO9VxWpZNI4Iuk_1733332220
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Re-sending only patch 5/8 after Ben's review.
+On Tue, Dec 03, 2024 at 10:47:02PM +0100, Martin Wilck wrote:
+> pgp->id is not only calculated with a weak XOR hash, it can also
+> get wrong if any path regrouping occurs. As it's not a big gain
+> performance-wise, just drop pgp->id and compare path groups
+> directly.
+> 
+> The previous algorithm didn't detect the case case where cpgp
+> contained a path that was not contained in pgp. Fix this, too,
+> by comparing the number of paths in the path groups and making
+> sure that each pg of mpp is matched by exactly one pg of cmpp.
+> 
+> Fixes: 90773ba ("libmultipath: resolve hash collisions in pgcmp()")
+> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 
-Patch 2-5 provide a re-implementation of pgcmp() without relying on
-pgp->id, as discussed during the review of v1 of this series.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Changes v2->v3:
-Removed two superfluous NULL checks, as noted by Ben Marzinski.
-
-
-Martin Wilck (8):
-  libmultipath: fix handling of pp->pgindex
-  libmpathutil: change STATIC_BITFIELD to BITFIELD
-  libmpathutil: add cleanup_bitfield()
-  libmultipath: move pathcmp() to configure.c
-  libmultipath: re-implement pgcmp without the pathgroup id
-  libmultipath: trigger uevents upon map creation in domap()
-  multipathd: trigger uevents upon map removal in coalesce_maps()
-  multipathd: improve a log message in coalesce_maps()
-
- libmpathutil/libmpathutil.version |   1 +
- libmpathutil/util.c               |   5 ++
- libmpathutil/util.h               |  10 +--
- libmultipath/configure.c          | 121 ++++++++++++++++++++----------
- libmultipath/devmapper.c          |   9 +--
- libmultipath/discovery.c          |   2 +-
- libmultipath/dmparser.c           |   1 -
- libmultipath/pgpolicies.c         |   6 ++
- libmultipath/structs.c            |  31 +++-----
- libmultipath/structs.h            |   3 -
- libmultipath/structs_vec.c        |  15 ++++
- multipathd/main.c                 |   6 +-
- 12 files changed, 132 insertions(+), 78 deletions(-)
-
--- 
-2.47.0
+> ---
+>  libmultipath/configure.c | 87 ++++++++++++++++++++++++++--------------
+>  libmultipath/dmparser.c  |  1 -
+>  libmultipath/structs.h   |  1 -
+>  3 files changed, 56 insertions(+), 33 deletions(-)
+> 
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index 9ab84d5..bfa8a39 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -416,16 +416,6 @@ int setup_map(struct multipath *mpp, char **params, struct vectors *vecs)
+>  	return 0;
+>  }
+>  
+> -static void
+> -compute_pgid(struct pathgroup * pgp)
+> -{
+> -	struct path * pp;
+> -	int i;
+> -
+> -	vector_foreach_slot (pgp->paths, pp, i)
+> -		pgp->id ^= (long)pp;
+> -}
+> -
+>  static int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
+>  {
+>  	int i, j;
+> @@ -445,32 +435,71 @@ static int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
+>  	return pnum - found;
+>  }
+>  
+> -static int
+> -pgcmp (struct multipath * mpp, struct multipath * cmpp)
+> +static int pgcmp(struct multipath *mpp, struct multipath *cmpp)
+>  {
+>  	int i, j;
+> -	struct pathgroup * pgp;
+> -	struct pathgroup * cpgp;
+> -	int r = 0;
+> +	struct pathgroup *pgp, *cpgp;
+> +	BITFIELD(bf, bits_per_slot);
+> +	struct bitfield *bf__  __attribute__((cleanup(cleanup_bitfield))) = NULL;
+>  
+> -	if (!mpp)
+> -		return 0;
+> +	if (VECTOR_SIZE(mpp->pg) != VECTOR_SIZE(cmpp->pg))
+> +		return 1;
+> +
+> +	/* handle the unlikely case of more than 64 pgs */
+> +	if ((unsigned int)VECTOR_SIZE(cmpp->pg) > bits_per_slot) {
+> +		bf__ = alloc_bitfield(VECTOR_SIZE(cmpp->pg));
+> +		if (bf__ == NULL)
+> +			/* error - if in doubt, assume not equal */
+> +			return 1;
+> +		bf = bf__;
+> +	}
+>  
+>  	vector_foreach_slot (mpp->pg, pgp, i) {
+> -		compute_pgid(pgp);
+>  
+> -		vector_foreach_slot (cmpp->pg, cpgp, j) {
+> -			if (pgp->id == cpgp->id &&
+> -			    !pathcmp(pgp, cpgp)) {
+> -				r = 0;
+> -				break;
+> +		if (VECTOR_SIZE(pgp->paths) == 0) {
+> +			bool found = false;
+> +
+> +			vector_foreach_slot (cmpp->pg, cpgp, j) {
+> +				if (!is_bit_set_in_bitfield(j, bf) &&
+> +				    VECTOR_SIZE(cpgp->paths) == 0) {
+> +					set_bit_in_bitfield(j, bf);
+> +					found = true;
+> +					break;
+> +				}
+>  			}
+> -			r++;
+> +			if (!found)
+> +				return 1;
+> +		} else {
+> +			bool found = false;
+> +			struct path *pp = VECTOR_SLOT(pgp->paths, 0);
+> +
+> +			/* search for a pg in cmpp that contains pp */
+> +			vector_foreach_slot (cmpp->pg, cpgp, j) {
+> +				if (!is_bit_set_in_bitfield(j, bf) &&
+> +				    VECTOR_SIZE(cpgp->paths) == VECTOR_SIZE(pgp->paths)) {
+> +					int k;
+> +					struct path *cpp;
+> +
+> +					vector_foreach_slot(cpgp->paths, cpp, k) {
+> +						if (cpp != pp)
+> +							continue;
+> +						/*
+> +						 * cpgp contains pp.
+> +						 * See if it's identical.
+> +						 */
+> +						set_bit_in_bitfield(j, bf);
+> +						if (pathcmp(pgp, cpgp))
+> +							return 1;
+> +						found = true;
+> +						break;
+> +					}
+> +				}
+> +			}
+> +			if (!found)
+> +				return 1;
+>  		}
+> -		if (r)
+> -			return r;
+>  	}
+> -	return r;
+> +	return 0;
+>  }
+>  
+>  void trigger_partitions_udev_change(struct udev_device *dev,
+> @@ -763,10 +792,6 @@ void select_action (struct multipath *mpp, const struct vector_s *curmp,
+>  		select_reload_action(mpp, "minio change");
+>  		return;
+>  	}
+> -	if (!cmpp->pg || VECTOR_SIZE(cmpp->pg) != VECTOR_SIZE(mpp->pg)) {
+> -		select_reload_action(mpp, "path group number change");
+> -		return;
+> -	}
+>  	if (pgcmp(mpp, cmpp)) {
+>  		select_reload_action(mpp, "path group topology change");
+>  		return;
+> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> index 1d0506d..c8c47e0 100644
+> --- a/libmultipath/dmparser.c
+> +++ b/libmultipath/dmparser.c
+> @@ -307,7 +307,6 @@ int disassemble_map(const struct vector_s *pathvec,
+>  
+>  			free(word);
+>  
+> -			pgp->id ^= (long)pp;
+>  			pp->pgindex = i + 1;
+>  
+>  			for (k = 0; k < num_paths_args; k++)
+> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> index 49d9a2f..2159cb3 100644
+> --- a/libmultipath/structs.h
+> +++ b/libmultipath/structs.h
+> @@ -531,7 +531,6 @@ static inline int san_path_check_enabled(const struct multipath *mpp)
+>  }
+>  
+>  struct pathgroup {
+> -	long id;
+>  	int status;
+>  	int priority;
+>  	int enabled_paths;
+> -- 
+> 2.47.0
 
