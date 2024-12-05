@@ -1,187 +1,116 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 04E57221461
-	for <dm-devel@lists.linux.dev>; Thu,  5 Dec 2024 18:41:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF4401AF0BE
+	for <dm-devel@lists.linux.dev>; Thu,  5 Dec 2024 19:02:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733424093; cv=none; b=VTmhYEqcBkEmgZVejekYPctS1SpeQn5pUX0RhIF3RX8M6GweIa5KuTY7o4+yerCrbVLTF7ggHCC+QOeQsR2HmZp7DX8a0bKcP/7LEaDSNxF8U70ZyfpdrlcwwZUfgNWtsv5UUwUoAKjMkxu2pegxyB9yRVTWaD5QtU8AHlQ8J+8=
+	t=1733425338; cv=none; b=HN3otUTPlZ5CC7JTiaH/RaBzVHGSi3GWLUdoPBQ32Xmtm7QttL3guO371C+EXvfE1pMSsN938nPTGRz+AH6tvDSrPbu3TeNFQ4PgWl0Ykk+pwvQR3rd0m1BAo6Wje8C8bcPAMpEodeZz+bnwwl6VpBGxDL0H3RMmJm/5Fsojil4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733424093; c=relaxed/simple;
-	bh=nYjPO8KvYKp/t+Fp+oX5rtEpQR3WBCV5AqQuSZiwtps=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=qUW10pfWRIZyvzuMnfAOI3NTZdmQYi9Pm08FI1OYKio3xzNbpODPDhhTZwwDtuhYkWZm0BcQa6uIKGp7JxicohKJvM+uEFXoBMq3xrEsZ7zeeIjWKcu+GiaWI05HGs0e8LtdItb41I5DpgAbaV+ju81IXw4DlQhyKZJTqmy6jb4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=c/XAe0my; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=c/XAe0my; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1733425338; c=relaxed/simple;
+	bh=8yGRYrj63UszA///hvh7X24Hm71xebL4lMYPxZcUJZI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=Ghm/5oFkJdRJ9CBRUtNnGKOjWC+a10E30RW53cWzsLJyl4IHUREwL+1bB1U+pIr3JagCFXeB6Ty6mLNwsiK7QiauJHtHCdefNgr0U+OIdQpPE1PZWwU5inJSGiEl2lhhS483tAvBtBHCnvjEIL1+V27BD9xYnz2eBw4ytbhyxL8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RkNG45Un; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="c/XAe0my";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="c/XAe0my"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 068F21F38F;
-	Thu,  5 Dec 2024 18:41:29 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1733424089; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RkNG45Un"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1733425334;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=ubKy7S4X2cEak+9Hsz842h2I/c6GipB08+T+NFLShOA=;
-	b=c/XAe0myITEJk/ukISUKFXezkHZifbvbaAzv8DUHI7T6NSVYK1NePr6jZg8Yhwrz7qBBoO
-	d5ngB/Qynpw8JOyjdj5SrKrzrUnE/s/QDISKb68XJ3AF2Bn8pWrzeqfZhvNcV/hX2KI9fi
-	eVGcHsULkCJk4NxVXI0tsgyN0no5oEw=
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1733424089; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ubKy7S4X2cEak+9Hsz842h2I/c6GipB08+T+NFLShOA=;
-	b=c/XAe0myITEJk/ukISUKFXezkHZifbvbaAzv8DUHI7T6NSVYK1NePr6jZg8Yhwrz7qBBoO
-	d5ngB/Qynpw8JOyjdj5SrKrzrUnE/s/QDISKb68XJ3AF2Bn8pWrzeqfZhvNcV/hX2KI9fi
-	eVGcHsULkCJk4NxVXI0tsgyN0no5oEw=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=uuFbOK5yU6pSYqPsOhjBiG6LilUEpI4g23WBw5RVYaA=;
+	b=RkNG45Un+WytLEmh96RKBaOSDax79rTY/323MRU+WTKRUJk3McSzAe5BiBESwfecJNNyBh
+	tlI30RYzSRmYMPL57OWMlLW40c6GHgt9MHzWtE0Kegp5kXN/fgy4f6YUzGfPXbnOem49xk
+	WYI0HLHzmXvHDZsUO90h1GvJZbE1Zfs=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-112-nb-VoXfKNCOWejLY7RG6jg-1; Thu,
+ 05 Dec 2024 14:02:13 -0500
+X-MC-Unique: nb-VoXfKNCOWejLY7RG6jg-1
+X-Mimecast-MFC-AGG-ID: nb-VoXfKNCOWejLY7RG6jg
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id D3CEA132EB;
-	Thu,  5 Dec 2024 18:41:28 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id lH4KMtjzUWd6MwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Thu, 05 Dec 2024 18:41:28 +0000
-Message-ID: <8665d6bd9ca83d5674139e43345926be7a4b1e3e.camel@suse.com>
-Subject: Re: [PATCH 2/3] multipathd: reload maps in checkerloop() if
- necessary.
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Thu, 05 Dec 2024 19:41:28 +0100
-In-Reply-To: <20241205035638.1218953-3-bmarzins@redhat.com>
-References: <20241205035638.1218953-1-bmarzins@redhat.com>
-	 <20241205035638.1218953-3-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.54.1 
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 27B361955D47;
+	Thu,  5 Dec 2024 19:02:11 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 524BD1955F3E;
+	Thu,  5 Dec 2024 19:02:10 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4B5J28T31240506
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 5 Dec 2024 14:02:08 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4B5J27Ou1240504;
+	Thu, 5 Dec 2024 14:02:07 -0500
+Date: Thu, 5 Dec 2024 14:02:07 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Gleb Chesnokov <gleb.chesnokov@scst.dev>,
+        Bart Van Assche <bvanassche@acm.org>,
+        Vladislav Bolkhovitin <vst@vlnb.net>, Martin Wilck <mwilck@suse.com>,
+        Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH] multipath-tools: add SCST to hwtable
+Message-ID: <Z1H4r9Nbg_a2LfZ5@redhat.com>
+References: <20241129120916.302317-1-xose.vazquez@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Score: -4.30
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_TLS_ALL(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	TO_DN_ALL(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[3];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:email]
-X-Spam-Flag: NO
-X-Spam-Level: 
+In-Reply-To: <20241129120916.302317-1-xose.vazquez@gmail.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: ngShQT6WQccVkHCxAkR2eH5_f4FZvVNiNpmHVy8NlXM_1733425331
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Wed, 2024-12-04 at 22:56 -0500, Benjamin Marzinski wrote:
-> update_pathvec_from_dm() may set mpp->need_reload if it finds
-> inconsistent settings. In this case, the map should be reloaded, but
-> so
-> far we don't do this reliably. Add a call to reload_and_sync_map()
-> when updating the maps at the end of a loop in checkerloop().
->=20
-> Suggested-by: Martin Wilck <mwilck@suse.com>
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Fri, Nov 29, 2024 at 01:09:16PM +0100, Xose Vazquez Perez wrote:
+> Based on: https://github.com/SCST-project/scst/blob/master/scst/README#L1905-L1908
+> 
+> Cc: Gleb Chesnokov <gleb.chesnokov@scst.dev>
+> Cc: Bart Van Assche <bvanassche@acm.org>
+> Cc: Vladislav Bolkhovitin <vst@vlnb.net>
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
 > ---
-> =C2=A0multipathd/main.c | 5 ++++-
-> =C2=A01 file changed, 4 insertions(+), 1 deletion(-)
->=20
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index fcab1ed3..c1ae44f2 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -3038,7 +3038,10 @@ checkerloop (void *ap)
-> =C2=A0							=C2=A0=C2=A0=C2=A0=C2=A0
-> start_time.tv_sec);
-> =C2=A0			if (checker_state =3D=3D CHECKER_FINISHED) {
-> =C2=A0				vector_foreach_slot(vecs->mpvec,
-> mpp, i) {
-> -					if (update_mpp_prio(vecs,
-> mpp) =3D=3D 2) {
-> +					if (update_mpp_prio(vecs,
-> mpp) =3D=3D 2 ||
-> +					=C2=A0=C2=A0=C2=A0 (mpp->need_reload &&
-> +					=C2=A0=C2=A0=C2=A0=C2=A0 mpp->synced_count > 0
-> &&
-> +					=C2=A0=C2=A0=C2=A0=C2=A0
-> reload_and_sync_map(mpp, vecs) =3D=3D 2)) {
-> =C2=A0						/* multipath device
-> deleted */
-> =C2=A0						i--;
->=20
-
-
-The general logic is ok, but as noted on
-https://github.com/opensvc/multipath-tools/issues/105), I believe that
-do_sync_mpp() is the more natural point in the code to attempt the
-reload, but I think it doesn't hurt to do both.
-
-What I don't like so much about this patch is that from this point in
-the code, we can call reload_and_sync_map() directly, or indirectly
-through update_mpp_prio(). I find that confusing. I think we should
-change update_mpp_prio() to just set the need_reload() flag, and then
-simply look at the flag in checkerloop(). The "minor" actions in
-update_mpp_prio, such as switching path group, can still be done
-directly from there.
-
-I can send a patch on top of yours if that's ok with you.
-
-I have some questions. I've spent some time today pulling my hair over
-the many functions in the multipath-tools code that are related to=20
-syncing states. I'm kind of wound up in my own thinking, perhaps you
-can help me break out of the loop :-)
-
-1) I observe that update_map() and reload_and_sync_map() are very
-similar. They both set up the map from multipathd's internal state,
-reload it, and then update multipathd's state. The differences are as
-follows:
-   - update_map() calls adopt_paths() and verify_paths() before
-setup_map(), while reload_map() only calls update_mpp_paths().=C2=A0
-     - It looks like an oversight to me that we don't call
-update_mpp_paths() in update_map(), what do you think?
-     - What about verify_paths(), why do we call it only in the
-update_map() code path?
-   - update_map() retries, while reload_and_sync_map() does not.
-   - update_map() calls the persistent-reservation related code.
-These differences are few enough I think update_map() could actually
-call reload_and_sync_map() as a helper.
-
-2) update_map() is called from missing_uev_wait_tick() and
-ghost_delay_tick(), while deferred_failback_tick() and the
-update_mpp_prio() code path above "only" call reload_and_sync_map().
-Is this intentional? If yes, I am missing the rationale (I believe that
-just calling reload_and_sync_map() from all the _tick() functions would
-be sufficient, but I may be overlooking something).
-
-I'd love it if we could integrate the various _tick() calls with the
-rest of the map-reload logic. Ideally the checkerloop and the tick()
-functions would just set the need_reload flag, and then we'd do the
-reload once at the end of the loop.
-
-Regards,
-Martin
-
+>  libmultipath/hwtable.c | 9 +++++++++
+>  1 file changed, 9 insertions(+)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index cf39a50d..8612fb21 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -1036,6 +1036,15 @@ static struct hwentry default_hw[] = {
+>  		.checker_name  = DIRECTIO,
+>  		.detect_checker = DETECT_CHECKER_OFF,
+>  	},
+> +	{
+> +		/* Generic SCSI Target Subsystem for Linux (SCST) */
+> +		.vendor        = "^SCST_",
+> +		.product       = ".*",
+> +		.pgpolicy      = GROUP_BY_PRIO,
+> +		.pgfailback    = -FAILBACK_IMMEDIATE,
+> +		.no_path_retry = 12,
+> +		.prio_name     = PRIO_ALUA,
+> +	},
+>  	/*
+>  	 * DataCore
+>  	 */
+> -- 
+> 2.47.1
 
