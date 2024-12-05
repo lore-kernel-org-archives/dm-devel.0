@@ -1,162 +1,103 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0AB12207E12
-	for <dm-devel@lists.linux.dev>; Thu,  5 Dec 2024 11:42:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA9B714A8B
+	for <dm-devel@lists.linux.dev>; Thu,  5 Dec 2024 16:32:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733398976; cv=none; b=XBpNIvMdL28FJ2DKJyFRzvgyBDzmbCTdgOO3RiOPlHS3aSY4UX/NFlwRyg4UUVAEcp27kV/cmmn9aYVO1p3USfFwaFoAng9FuV0iEpXkxwaPpTorznRJQnFwc5TXnDSd6TT3F3GnVos58YlvM2mjOb+EZF2+5VRhICUiJL0YjXw=
+	t=1733416353; cv=none; b=tbJ+v2vh4d/aJaWm/wAcGLz8YTMuVW2B/0J+GD+nTfkMK2hPSPoBm2FlZKtaVUGqeZNqWI+HqCrn3GOvthNCqMBXgQo0EdN4W9LGjhOZJCUBCrELgjGTb82PACw/Sw2ZHmLPYWcrjNFt7u+ySbW5hKxRJGTs71TocpYX0Nnh8GU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733398976; c=relaxed/simple;
-	bh=xHuJ2Z2bSmCo0Hm1iTg1LQEKiRWGqlQk4PzkWmtuxYs=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=oWKlb4iqpsk/rzkP/d0ZBmUWabW6+n6Aopow3bwKm+6p4zxnBRw1/zYCeNfyGT2ihLF94TyoOrlHmOFaAPChycSITcM1ZyOMuaLAVyWUUGEUfm2wE/8e0OvmnEVIE3WiYnqt0Ati232Ak+5SBl9ZVwgFPQX69qP3s9/JA8AtAds=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X06cNDfC; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1733416353; c=relaxed/simple;
+	bh=woE6BLbNIFruVf29D3McqoOYj36StGE3E9odpo1R4pQ=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=XDpZXUkzw2Xktd4gNWz7YHAvb5TxTZpjt0Sn35Ifz2Fgvyvw5VDERcYA/t4We8slmbjoE51ldrG0kfHwTwjfSSYhdrgDze6fevmEckfTvPsW/Kd8J+VeSDEhgwF/TJL+BYs1OFSPY3guOmV2Voi574WBmLk1LkDQnRov2TFSKVo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=YvfTEevJ; arc=none smtp.client-ip=209.85.208.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X06cNDfC"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1733398974;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Te8ZvVw+O5gq4halpcCzze57tU3DuBnleFTWqguRczw=;
-	b=X06cNDfCoZZQtLrEwV8KnK6LlK6k6n0n4oB+MGAnOUIMhi7cP+y7SnBhC7S0ZQK/hI45lW
-	j15eOWuJB+zMa0WA3J5sIkx4QmGmEZIG2h7WLsAqDNvmyemAy3k4HCCC7td+lHVheYnmgc
-	yTRa1IUEcFuD9bSU67IIAD2eRXaB3DA=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-427-2nmQ7ydEO_61CuwQZFidyQ-1; Thu,
- 05 Dec 2024 06:42:22 -0500
-X-MC-Unique: 2nmQ7ydEO_61CuwQZFidyQ-1
-X-Mimecast-MFC-AGG-ID: 2nmQ7ydEO_61CuwQZFidyQ
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 987F91955F43;
-	Thu,  5 Dec 2024 11:42:21 +0000 (UTC)
-Received: from thinkpad.redhat.com (unknown [10.67.24.108])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4607D1956094;
-	Thu,  5 Dec 2024 11:42:17 +0000 (UTC)
-From: Ming-Hung Tsai <mtsai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-	Joe Thornber <thornber@redhat.com>,
-	Heinz Mauelshagen <heinzm@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Ming-Hung Tsai <mtsai@redhat.com>
-Subject: [PATCH v2 1/3] dm array: fix releasing a faulty array block twice in dm_array_cursor_end
-Date: Thu,  5 Dec 2024 19:41:51 +0800
-Message-ID: <20241205114153.1496986-2-mtsai@redhat.com>
-In-Reply-To: <20241205114153.1496986-1-mtsai@redhat.com>
-References: <20241205114153.1496986-1-mtsai@redhat.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="YvfTEevJ"
+Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-5d3ab136821so406713a12.0
+        for <dm-devel@lists.linux.dev>; Thu, 05 Dec 2024 08:32:30 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1733416349; x=1734021149; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=woE6BLbNIFruVf29D3McqoOYj36StGE3E9odpo1R4pQ=;
+        b=YvfTEevJsFLvkunb1nz+Ko9oIB8W6CpEbEdTm6EOsiTPxmspdROigL8K0z5WklN9+m
+         XIXRJJbza7ro0i7C8VbbWsQMSCnC1vKDV9q1PPbRHe0Alk9EwwlkXJnzwh2Lj+U3Ts9r
+         2dmPrdSnfsaCTmn7B4zCyK+jG3/iBwTGPM2THaSyPyLHSfPU+IcVtY4O3ao9WWwkQZgk
+         e4laZylaihe2tc3MXNLCwmN51yGhRbRpg+DeDGcSECUIR0FcgRMm5ckmvx0HXUyl+rzm
+         tYOZ07J1BYnf97K/BPEzdgh1HlzEr8AFZjxqSmO6V2Ro2YRaZPBMIwbL5CJnl8HknB5N
+         4/Xg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1733416349; x=1734021149;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=woE6BLbNIFruVf29D3McqoOYj36StGE3E9odpo1R4pQ=;
+        b=ZPvBWsuWOmq00tzERADge1SlKuGf454xuaCsOUxSnfjMEmdMfgM91EXAFRs0hCV4bV
+         9g6vhMCiQ2pyAhpV2RB2T3LMyDrvZ6b/vfU80wWflTKnDK+ONdjlCjwRODqTtsfnXFGK
+         7IBbbt3/q2t24EYAYwIxm+ztVKLFSIHlFLVKVihYm1rVFXMst7BgCou1b20wL9074u1U
+         NQEdhFHN7NHxADlgKrJ9ycW37bqtu8bj7hbPxXMa3um8ess7O5e1mnoxxTrxVrgzOyvg
+         ULAi9CUZFJfPSuCrYi4mNd4Vi6fGo0Rc8IlgqIrk88SCeZM0PEpoL3hYIaeOlJ8E5NGg
+         yaFw==
+X-Gm-Message-State: AOJu0Yx+gAqo8X6363afgQrWKAEO/eJaBdEMklpY1EPpK+exOwVSoPGx
+	Tr7ZmQaPT4wpQB/VIeERdSz96rLhflC7z4/VUkzY1RZ5AeA4XPQ5Mqfw2GoFadr4avPuCciAyAe
+	t
+X-Gm-Gg: ASbGncuYXFfL8he2ZzBfPW6BhRoeHIO8gSyaqNaUFpG3uuC1O/98LWRj/mWTq/jWNpS
+	W3ogcaPgtuPkgADspZ4TLPgNVVAwRywkCdBEti4DR8nfpg1TBTIoIi4xeQRQLpPLJyEYFrRfuzh
+	iqCFIGGxwzj/N5oD0xbqAOrD9WoQe6vsncZsQ4Pqlk1sPG5Jv6cx3Bp8lvsI4cctpbj/K0zftPB
+	QAzwp46vDZ9aeizR2IuXlQrW0QXKTIkVdXR+Mx+2ltFSKbCX4gy9xdW9u3PNuHqs1IeClBBFdRb
+	o1U6wDcRKeYewVz/ocumf35dOM5M5ZglknQ4N7ZZaBsBlj4lI7kHlMTZUZanjgAznLUcnJX2YOC
+	AloqulA==
+X-Google-Smtp-Source: AGHT+IFPEF3AZACd3oTjq/4pFC7UYJJeH6ShnK+Udm+DyUkcaa5JNraNpEVrAa1XkZN8MhosbfLTaw==
+X-Received: by 2002:a05:6402:2687:b0:5d3:bab1:513f with SMTP id 4fb4d7f45d1cf-5d3bab1562cmr635502a12.18.1733416348779;
+        Thu, 05 Dec 2024 08:32:28 -0800 (PST)
+Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aa62608d32bsm113082866b.147.2024.12.05.08.32.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 05 Dec 2024 08:32:28 -0800 (PST)
+Message-ID: <ee904358fdad062577f00eb10695277a4b13ad8a.camel@suse.com>
+Subject: Re: [PATCH 3/3] multipathd: Don't call select_action in reload_map
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Thu, 05 Dec 2024 17:32:27 +0100
+In-Reply-To: <20241205035638.1218953-4-bmarzins@redhat.com>
+References: <20241205035638.1218953-1-bmarzins@redhat.com>
+	 <20241205035638.1218953-4-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: H3am9WRaS2APCSc0CKDjl41BRYhyDads6rYky7Ct31g_1733398941
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
 
-When dm_bm_read_lock() fails due to locking or checksum errors, it
-releases the faulty block implicitly while leaving an invalid output
-pointer behind. The caller of dm_bm_read_lock() should not operate on
-this invalid dm_block pointer, or it will lead to undefined result.
-For example, the dm_array_cursor incorrectly caches the invalid pointer
-on reading a faulty array block, causing a double release in
-dm_array_cursor_end(), then hitting the BUG_ON in dm-bufio cache_put().
+On Wed, 2024-12-04 at 22:56 -0500, Benjamin Marzinski wrote:
+> reload_map() was calling select_action() with force_reload set. Since
+> mpp will always be a member of vecs->mpvec when reload_map() is
+> called,
+> when cmpp and cmpp_by_name are looked up in select_action(), they
+> will
+> just point to mpp. This means that none of the early checks related
+> to
+> cmpp in select_action() will do anything, and the action will always
+> end up being ACT_RELOAD. So we can just set ACT_RELOAD in
+> reload_map()
+> and skip the work.
+>=20
+> Additionally, calling select_action() with force_reload set will set
+> force_udev_reload. This isn't necessary for any of the reload_map()
+> callers, and will just cause udev to do extra work. I did set
+> force_udev_reload in cli_reload(), so that it works like calling
+> "multipath -r", which does force udev to rescan the device.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Reproduce steps:
-
-1. initialize a cache device
-
-dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-dmsetup create cdata --table "0 65536 linear /dev/sdc 8192"
-dmsetup create corig --table "0 524288 linear /dev/sdc $262144"
-dd if=/dev/zero of=/dev/mapper/cmeta bs=4k count=1
-dmsetup create cache --table "0 524288 cache /dev/mapper/cmeta \
-/dev/mapper/cdata /dev/mapper/corig 128 2 metadata2 writethrough smq 0"
-
-2. wipe the second array block offline
-
-dmsteup remove cache cmeta cdata corig
-mapping_root=$(dd if=/dev/sdc bs=1c count=8 skip=192 \
-2>/dev/null | hexdump -e '1/8 "%u\n"')
-ablock=$(dd if=/dev/sdc bs=1c count=8 skip=$((4096*mapping_root+2056)) \
-2>/dev/null | hexdump -e '1/8 "%u\n"')
-dd if=/dev/zero of=/dev/sdc bs=4k count=1 seek=$ablock
-
-3. try reopen the cache device
-
-dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-dmsetup create cdata --table "0 65536 linear /dev/sdc 8192"
-dmsetup create corig --table "0 524288 linear /dev/sdc $262144"
-dmsetup create cache --table "0 524288 cache /dev/mapper/cmeta \
-/dev/mapper/cdata /dev/mapper/corig 128 2 metadata2 writethrough smq 0"
-
-Kernel logs:
-
-(snip)
-device-mapper: array: array_block_check failed: blocknr 0 != wanted 10
-device-mapper: block manager: array validator check failed for block 10
-device-mapper: array: get_ablock failed
-device-mapper: cache metadata: dm_array_cursor_next for mapping failed
-------------[ cut here ]------------
-kernel BUG at drivers/md/dm-bufio.c:638!
-
-Fix by setting the cached block pointer to NULL on errors.
-
-Signed-off-by: Ming-Hung Tsai <mtsai@redhat.com>
-Fixes: fdd1315aa5f0 ("dm array: introduce cursor api")
----
- drivers/md/persistent-data/dm-array.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/md/persistent-data/dm-array.c b/drivers/md/persistent-data/dm-array.c
-index 157c9bd2fed7..4866ff56125f 100644
---- a/drivers/md/persistent-data/dm-array.c
-+++ b/drivers/md/persistent-data/dm-array.c
-@@ -917,23 +917,27 @@ static int load_ablock(struct dm_array_cursor *c)
- 	if (c->block)
- 		unlock_ablock(c->info, c->block);
- 
--	c->block = NULL;
--	c->ab = NULL;
- 	c->index = 0;
- 
- 	r = dm_btree_cursor_get_value(&c->cursor, &key, &value_le);
- 	if (r) {
- 		DMERR("dm_btree_cursor_get_value failed");
--		dm_btree_cursor_end(&c->cursor);
-+		goto out;
- 
- 	} else {
- 		r = get_ablock(c->info, le64_to_cpu(value_le), &c->block, &c->ab);
- 		if (r) {
- 			DMERR("get_ablock failed");
--			dm_btree_cursor_end(&c->cursor);
-+			goto out;
- 		}
- 	}
- 
-+	return 0;
-+
-+out:
-+	dm_btree_cursor_end(&c->cursor);
-+	c->block = NULL;
-+	c->ab = NULL;
- 	return r;
- }
- 
--- 
-2.47.0
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
