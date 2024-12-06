@@ -1,94 +1,127 @@
 Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com [209.85.208.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6943522C6CD
-	for <dm-devel@lists.linux.dev>; Fri,  6 Dec 2024 23:15:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F82F1C548E
+	for <dm-devel@lists.linux.dev>; Fri,  6 Dec 2024 23:36:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733526934; cv=none; b=nCfrFYB1UgJRrEFk/Ihpd8obIVj5MB5OoQ1qJXsG6tAENBSGmesGwDUcy8Rko1Hb3uMFMafUUTej4sdKDMEwujSQa7iwTlreJL7VlFSASgGTsnsQ8/weTeqrgpzTPPl/R8OYrWQWG3iqbqvjDdX1SycNdUaD4YSP99yG36nz3Is=
+	t=1733528205; cv=none; b=tWXDmO1BzBcKr9MM4nrOWBcry0djYGfoUY0yRIzQ4xjwvqLM6/+z1VqFdmZ+ULfRXoCZoOjCh7fKf8gXK1SiYju5Bal837PYpquARAWZZFAMVThwd/I3xt6fzh5v4OqacdmUE9wViTNLPxdqka3LOWCkLcAR2m//AdytlZuJCTw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733526934; c=relaxed/simple;
-	bh=uJxpTnD6zEeYNBgUqvJgN5wxfR3rO7XcH+lb9QikHno=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Uu/GCJLCv1+5DB9QulqZGizeLTdO046mmqEkedvp+svvy5HqsPrnBJ5lA33DMwZc5Zy6SeRI5Us9B/KTXnwUZWERZHSCut3Jvw9RYUPY9oXKZu8+n9OQvahSxCIIJTuOi2sEpsD4iMxoKZF8UPw3wEWuf1CoTS4QWTwEFI/O48E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=U7/7PEfq; arc=none smtp.client-ip=209.85.208.41
+	s=arc-20240116; t=1733528205; c=relaxed/simple;
+	bh=QIzee7sVMinIN1v+8cLwWeN0tz+1JtnlC77e/AQCOxM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=nNL1sxOnDl8/WGsfVAWs4ixGiHIVoip0/E+dNxoY14CbNJ8T9Gxgv0eC5HIq9WhiJ4Yre9PRtbhUNzSsUNtU1Uvd1mj6RS5GyCSMmNGWVQKuZvZTPs35vVBoBhhteXFKnCXuN4FcbRJJTN9XMn71qfDYcuASrKnTGCm0IjYHiJs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=FDkT0TZ6; arc=none smtp.client-ip=209.85.208.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="U7/7PEfq"
-Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-5d0ac27b412so3110084a12.1
-        for <dm-devel@lists.linux.dev>; Fri, 06 Dec 2024 15:15:32 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="FDkT0TZ6"
+Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-5d3d143376dso1108716a12.3
+        for <dm-devel@lists.linux.dev>; Fri, 06 Dec 2024 15:36:42 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1733526931; x=1734131731; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=uJxpTnD6zEeYNBgUqvJgN5wxfR3rO7XcH+lb9QikHno=;
-        b=U7/7PEfqM9tj05k7Aokl8T/SpHMGThJfFe9XXmcU9A9LUBaOFYubOS5C+65TYW2Q4F
-         CCXHCRZZF1mT0yKNgw3+O8sqJGiIfF6r9cOnnLG7CfdMC0tdEzALyRVC0BqITp9uEocl
-         cKlNo8r588t7IQNKZedlD+Jq9mypjB6gji0cyBX2En9bRYCxO3Lpyvfyz3QjbZRYmYtN
-         eX2EoTpEDo4VPeIlZ8tS2Bzbg4IUo4CPBm+2RMhvHa9R9HAKhb1hVGATavvF49/TJv7/
-         V/t6JqNSslaoBB6tncV83WYaS8cyHKJWyVZDcJTkm7ETCnNLvTj9ct3QxhgL2I0SBvTE
-         KUcw==
+        d=suse.com; s=google; t=1733528201; x=1734133001; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=yW2pfcC35FsdsCgWqmDspIB8diiueQwqDj3a4cWQqgk=;
+        b=FDkT0TZ6W8iPnV02azrKxEipbDgcCZVQujAkTUXdJSdpquITjscSeFsMcp0TYz/SKv
+         OrGc8e3J6dl2nDoeCjfx/cgZlqIoFRodpZBi+bemWATQlzdd+KJnaa9ZQe7fWMkTItP8
+         XZlTt2tJ4xGFAUs486agE4ONpd5q/YmUWY+oVNsUKOJQJrvs0Bc5V6EJsNSf8DMMmVLu
+         aklMgd9OIdQ76UgzDN38WR2/sd2UBdsUGlUrEkNq38iiVM8ePD+dCW6kFAoe9bZ7hwAr
+         0+QEFBQCtB/JQtibymmadq381sPTfJ5KMjutU+64iAc8uxk/02SHkqbOXBmdnLNUNEnj
+         k06w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1733526931; x=1734131731;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=uJxpTnD6zEeYNBgUqvJgN5wxfR3rO7XcH+lb9QikHno=;
-        b=MqR3GeSTgvhIccQ1QXOJwXfiJpudsX58/sUxT6JM6SpzP14krI+5FgfFf+j2SnR1C+
-         eUAgDNCWFj1Kd3TSgn19L8nKdTGCPqJZJ+RhX+CEZDayP5RwsYpLjsvSOAJZirushe1Q
-         /DFWnZEycZwrmqqhxNH3GtqGmtplHEQnzV4rJ4V0TYZL83PdkQf8fAAS9WJT8zQz7xps
-         /83vXbu2v95DnOPkEfPCJk9FOCwfThLjQP1rCS2OGWImVi7m4uxiBZsBqPlYTuSkrgcf
-         dIAGpPPzcppa2F1S/rcAKt8qn7ToTyd0S5cY1/4PZjrFopNPgNipOF6jZa2S0/Aiug8W
-         cIyg==
-X-Gm-Message-State: AOJu0YwgUtnjq0rMfwsU7cOEMZDA2myFRPTsAtKxtKV4GQrpqj5q9w71
-	BMPy+hw7rUaafruNvFCkLYPLxFJxMHWMLRml3XrSVQr8Nsy+dgLIWs0ivNBVUWA=
-X-Gm-Gg: ASbGncvB9IWU+4FIat+/+F0qX43qTVonPzWx1TivWsVuV4qsQMsouS0wGI+yIS3U7zm
-	FjUTQDr+7OC0L0sVJNU7wFYWsSpz/6oNt8VerZFZKVfqaBkpaSbNRiQVHTPEWP6orAbmr2DEPtM
-	1uANAJHvGrcK8iWHUOsZonF+1Ye1qIY8FRWMCUyUcZnAD8ncJh4nAc8+nr74w4N0N1c0NslrrnZ
-	gx+e9Mgs44CAxdGG7IbjRHp7ZHEAiwzilEnxuCAG1r26ov1mdnuYC+ZkY0Xx0dNiK1xDU02WbR/
-	lAuTTApNfK04EddMw2Y0+L3nfz0dGbAjYkh9HuC6sjolqJhcvhg1IGZZmQICjTbr5cufQwSxdVl
-	YWYpmTw==
-X-Google-Smtp-Source: AGHT+IGR1+2MCQHfdKC9S1wYeaGJ1SQpppavqxFkaTZbS6dC+IWa6p1qfb79mufoSO71bDa2g1GuoQ==
-X-Received: by 2002:a05:6402:42c2:b0:5d0:bbfd:f3e4 with SMTP id 4fb4d7f45d1cf-5d3be6d3514mr5118220a12.20.1733526930398;
-        Fri, 06 Dec 2024 15:15:30 -0800 (PST)
-Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5d3d00a0370sm1049263a12.6.2024.12.06.15.15.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 06 Dec 2024 15:15:30 -0800 (PST)
-Message-ID: <d8a879d57bc92f635b8e2dd5b7fe2329f91c0bed.camel@suse.com>
-Subject: Re: [PATCH 2/3] multipathd: reload maps in checkerloop() if
- necessary.
+        d=1e100.net; s=20230601; t=1733528201; x=1734133001;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=yW2pfcC35FsdsCgWqmDspIB8diiueQwqDj3a4cWQqgk=;
+        b=gtx2nq1N3Yo10uCikjR2AGECYbWAHCS36G1ATJYyIb6G2XwaUa749rrC5qjmOy8aeJ
+         Q7b3gAPwrNcJXxOwdIa2IXBL/vMLe3dBTl3rTPOX1gHzTig7qHDjPbyLB4iTnhTA6eQY
+         c+dsVuOsCMuipWdP1c0mxPRvLWDB2mmcqZukarNLriZMNccbFnP6d3j8pLny3Au/BQj6
+         6X5+kPsboKPasRUfAWuMbJhERnFZgwAKMZ+rsEFOttkq7zL6+UPsp7Nlq1LchSiFbDcp
+         5liAIhMztxMmPAE9Z98XDYg9M/jQTzyuX4Z7lXMD54WJ/0QijH+xU0+oakANcnOEjDP9
+         k9kg==
+X-Gm-Message-State: AOJu0YzBwoc6SwUoE+rDe30jx2M70iEeC5nmPkrt+HNwN4Jd3klDErnO
+	RIa/7SvxnvI1TjW11oG4vpsPdKyqg5c8+6ZZWInxZPp2S3g/2bOE3SxNxzG5N80=
+X-Gm-Gg: ASbGncv3UyU2LJwEbr8Aufcj2Kx2L8gQmjQcFk58+z7QCF2JGy+4LGETlCbVkOjOm/E
+	JvNJNXsAj9kld0p3n9CxYRmaQ+wHsc9s+DgU3dk0QfwNZH7rHFv1JvvubadZE4qY6Nk7CwmNeTb
+	QcKj/qkcaRjhO173DU4YuxFj4LLLpwNt/GlJDsF4Nf0+oTfllRkQZ6Nej0/NOUIJhyABCEKPSlg
+	q5XOHUt0bal3qMzNmo6CieEBMqzNFpIUVSWV8jUdpnbcVMRPBCDojMZYAyrhV6nazU1tVfaM6p3
+	3+GxyuaM1TLaatRPsnWs60qkYy4JehTUOESR
+X-Google-Smtp-Source: AGHT+IHSAecJ6apOg12HsaJXkhC5ncEHBvCpO3zb6bdNZG1GM5GkZo4k9kXkfDXKACdwROKru/kXFA==
+X-Received: by 2002:a05:6402:4487:b0:5d0:8664:9f56 with SMTP id 4fb4d7f45d1cf-5d3be680c85mr4784660a12.11.1733528201092;
+        Fri, 06 Dec 2024 15:36:41 -0800 (PST)
+Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5d149a25f09sm2814785a12.1.2024.12.06.15.36.40
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 06 Dec 2024 15:36:40 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Sat, 07 Dec 2024 00:15:28 +0100
-In-Reply-To: <20241205035638.1218953-3-bmarzins@redhat.com>
-References: <20241205035638.1218953-1-bmarzins@redhat.com>
-	 <20241205035638.1218953-3-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.54.1 
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 00/13] multipathd: More map reload handling, and checkerloop work
+Date: Sat,  7 Dec 2024 00:36:04 +0100
+Message-ID: <20241206233617.382200-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-On Wed, 2024-12-04 at 22:56 -0500, Benjamin Marzinski wrote:
-> update_pathvec_from_dm() may set mpp->need_reload if it finds
-> inconsistent settings. In this case, the map should be reloaded, but
-> so
-> far we don't do this reliably. Add a call to reload_and_sync_map()
-> when updating the maps at the end of a loop in checkerloop().
->=20
-> Suggested-by: Martin Wilck <mwilck@suse.com>
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+This patch set goes on top of Ben's set [1] for github issue 105 [2].
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+The first patch implements the remark I had on patch 2 on Ben's set.
 
-(I'll send a couple of patches on top of yours)
+Patch 2-4 add map reload logic for the case when update_pathvec_from_dm()
+detects an inconsistency: in this case, the map is now reloaded before
+the checkers are actually started. If the inconsistency can't be cleared,
+another attempt will be made when the checkers have finished.
+
+Patch 5 ff. reshuffle the code in checkerloop(). There is now one function,
+checker_finished(), that takes all actions that need to be done with the vecs
+lock taken after the checkers have finished. checkerloop() enters this
+function immediately when the checkers have finished, without dropping and
+re-acquiring the vecs lock. The map reload logic is completely handled in this
+function.
+
+The various _tick() functions don't loop over mpvec any more; they are now
+just called for a single mpp, and they simply return true if a map reload is
+required.  The actual reload action differs: if missing_uev_wait_tick()
+requests a reload, it needs to be a full update_map() (which calls
+adopt_paths()), whereas in the other cases, reload_and_sync_map() is sufficient.
+The last patch changes the reload action for the ghost delay tick.
+
+Reviews & comments welcome.
+
+Regards
+Martin
+
+[1] https://lore.kernel.org/dm-devel/20241205035638.1218953-1-bmarzins@redhat.com/
+[2] https://github.com/opensvc/multipath-tools/issues/105
+
+Martin Wilck (13):
+  multipathd: don't reload map in update_mpp_prio()
+  multipathd: remove dm_get_info() call from refresh_multipath()
+  multipathd: allow map removal in do_sync_mpp()
+  multipathd: reload maps in do_sync_mpp() if necessary
+  multipathd: move yielding for waiters to start of checkerloop
+  multipathd: add checker_finished()
+  multipathd: move "tick" calls into checker_finished()
+  multipathd: remove mpvec_garbage_collector()
+  multipathd: don't call reload_and_sync_map() from
+    deferred_failback_tick()
+  multipathd: move retry_count_tick() into existing mpvec loop
+  multipathd: don't call update_map() from missing_uev_wait_tick()
+  multipathd: don't call udpate_map() from ghost_delay_tick()
+  multipathd: only call reload_and_sync_map() when ghost delay expires
+
+ multipathd/main.c | 295 +++++++++++++++++++---------------------------
+ 1 file changed, 120 insertions(+), 175 deletions(-)
+
+-- 
+2.47.0
 
