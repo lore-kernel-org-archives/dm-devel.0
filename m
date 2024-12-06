@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CEEF145A18;
-	Fri,  6 Dec 2024 01:53:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0933514830F;
+	Fri,  6 Dec 2024 01:53:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733449987; cv=none; b=se4VRGKcdJu5ep5qLSTtPee8mGithvt4+G1TGq/8fADD2jPaHz+zHjpdYZv4nINpgsMieMmtMvF84atUleJC7TfY1uS1rt8SEjSn2ypQ8EsaBy5P4VT8yLnBHMNqBBGkO4oBmQtMZ+Etoo9l56lPYUx5L8gcmFnS533zbXvO4qQ=
+	t=1733449989; cv=none; b=Qf7DYSsImq5azMntzpQYUJpFPrwR/kHYhb01VjZLbYXcCrdxVFDyzcoL1dWK17OeoAP7cPSLb7pDl7p6u8dVEzIZvfpLCrDtJDhKz3AQCnP0Zuqd3r/drzcD/SQ5gyYLl9hMN/J59ey3h6Wx0EgK28QCBUchDLxvFeGkdP8C9eg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733449987; c=relaxed/simple;
-	bh=oGh1AdL0EiJzAPcq5IAST2ZCVFNBL3pqbpmFOnzEIxo=;
+	s=arc-20240116; t=1733449989; c=relaxed/simple;
+	bh=tvwEJa+HuxJwJKXdyVG4h7yXxY+ifQcs5H+f/smRLtY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=XMOcu6q3WMyd938EDx1a/QbdHUL8g7aaa9YmF0IAvhx3nEAxXctR8CQCrMHcb2hOqJaHysKtikMqCcaJHGwZdTLzaZkdv17lQ8JQhoM6YhEezwtlQpn8KkOnK3rJ2SOWRLkc6nqI2uDqgQEo4yEYIDZLMEzwsxcnXZktHdQGlIs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=nOv/wr82; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=IziFpVmonDdT1AFBnMzK5m2AoH/lNX1majYFUi/Ti7wL9sIBL4pXwwR0S/Zb40K288ml8hSw1SbJXuvt9+gVKFBMUQgi8IYtCmp6QYaPvtN/oiHsTNaPZNGmcEAQmrBr9CDFwO9WJaO3kIAhoTHToixN2UPHaDRMa4KACtMY/CI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TaQK8+ff; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="nOv/wr82"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8EF9BC4CEE0;
-	Fri,  6 Dec 2024 01:53:05 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TaQK8+ff"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 450DDC4CEDD;
+	Fri,  6 Dec 2024 01:53:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1733449986;
-	bh=oGh1AdL0EiJzAPcq5IAST2ZCVFNBL3pqbpmFOnzEIxo=;
+	s=k20201202; t=1733449988;
+	bh=tvwEJa+HuxJwJKXdyVG4h7yXxY+ifQcs5H+f/smRLtY=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=nOv/wr82WQqfmPsMtF1goIn2RdouXIEWNkTsd0ZoHh0A2lz8j3yuGnApezvjt1ZUh
-	 dQPAIFWbBG+R+V0RURzEVv244G2qXsCOmf/piqHwc1eZOwDcAOwutoGULlylzmFaG4
-	 MTYw3TAk9NYhE6VkCJxrc/6uv/j3EIyF7Ear3ShtBImq/QIzTN7s2jYCEPLa8CmYGp
-	 dDrIOzhxrq9NgGRwpIsn18S6IyIwzD45QaCmzGoGOWx3xelEWpbcY3dPy1y9xGNFmP
-	 ifDvl/PhNFwzogRQfcXFae06e3x3vTba70HkD7BzxsZK3O5u+2zvH1ya4zSq38JqXx
-	 1Y++EdB2DtVCA==
+	b=TaQK8+ffr2Q3hupSDiPEkGNaAoTQJw4jf1HA1oOwJ2C4x/51esGggfaXK6UMQu/S5
+	 tut4oSqePD4z0NkN6x2Y8TblSgsqsQ6NU436cgoaI831FHfmZaFyO+vk7szWufQJ8N
+	 1DfUU11S+6bi7GJRPHeNXMLx43PYNW/xC7dlq/xf98oxJ1PTUTQZl1/0UVQF0Oemne
+	 oZkLz+WRRw2lUL3yPvg+vm3lmiaKOlpX3ILtjty8bwacg0io3mEl4rvRet+K3Oar0W
+	 PpPJErOmC7Cs/9hxTEYDadv5iXZTzqGLg1pDWWFhifWEgTSZclIyw7Ts7pvvfNwNGO
+	 jTfY1h55xnA0Q==
 From: Damien Le Moal <dlemoal@kernel.org>
 To: linux-block@vger.kernel.org,
 	Jens Axboe <axboe@kernel.dk>,
@@ -34,9 +34,9 @@ To: linux-block@vger.kernel.org,
 	dm-devel@lists.linux.dev
 Cc: Christoph Hellwig <hch@lst.de>,
 	Bart Van Assche <bvanassche@acm.org>
-Subject: [PATCH 1/4] block: Use a zone write plug BIO work for REQ_NOWAIT BIOs
-Date: Fri,  6 Dec 2024 10:52:37 +0900
-Message-ID: <20241206015240.6862-2-dlemoal@kernel.org>
+Subject: [PATCH 2/4] block: Ignore REQ_NOWAIT for zone reset and zone finish operations
+Date: Fri,  6 Dec 2024 10:52:38 +0900
+Message-ID: <20241206015240.6862-3-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.47.1
 In-Reply-To: <20241206015240.6862-1-dlemoal@kernel.org>
 References: <20241206015240.6862-1-dlemoal@kernel.org>
@@ -48,160 +48,41 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-For zoned block devices, a write BIO issued to a zone that has no
-on-going writes will be prepared for execution and allowed to execute
-immediately by blk_zone_wplug_handle_write() (called from
-blk_zone_plug_bio()). However, if this BIO specifies REQ_NOWAIT, the
-allocation of a request for its execution in blk_mq_submit_bio() may
-fail after blk_zone_plug_bio() completed, marking the target zone of the
-BIO as plugged. When this BIO is retried later on, it will be blocked as
-the zone write plug of the target zone is in a plugged state without any
-on-going write operation (completion of write operations trigger
-unplugging of the next write BIOs for a zone). This leads to a BIO that
-is stuck in a zone write plug and never completes, which results in
-various issues such as hung tasks.
+There are currently any issuer of REQ_OP_ZONE_RESET and
+REQ_OP_ZONE_FINISH operations that set REQ_NOWAIT. However, as we cannot
+handle this flag correctly due to the potential request allocation
+failure that may happen in blk_mq_submit_bio() after blk_zone_plug_bio()
+has handled the zone write plug write pointer updates for the targeted
+zones, modify blk_zone_wplug_handle_reset_or_finish() to warn if this
+flag is set and ignore it.
 
-Avoid this problem by always executing REQ_NOWAIT write BIOs using the
-BIO work of a zone write plug. This ensure that we never block the BIO
-issuer and can thus safely ignore the REQ_NOWAIT flag when executing the
-BIO from the zone write plug BIO work.
-
-Since such BIO may be the first write BIO issued to a zone with no
-on-going write, modify disk_zone_wplug_add_bio() to schedule the zone
-write plug BIO work if the write plug is not already marked with the
-BLK_ZONE_WPLUG_PLUGGED flag. This scheduling is otherwise not necessary
-as the completion of the on-going write for the zone will schedule the
-execution of the next plugged BIOs.
-
-blk_zone_wplug_handle_write() is also fixed to better handle zone write
-plug allocation failures for REQ_NOWAIT BIOs by failing a write BIO
-using bio_wouldblock_error() instead of bio_io_error().
-
-Reported-by: Bart Van Assche <bvanassche@acm.org>
 Fixes: dd291d77cc90 ("block: Introduce zone write plugging")
 Cc: stable@vger.kernel.org
 Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
 ---
- block/blk-zoned.c | 62 ++++++++++++++++++++++++++++++++---------------
- 1 file changed, 42 insertions(+), 20 deletions(-)
+ block/blk-zoned.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
 diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 263e28b72053..7982b9494d63 100644
+index 7982b9494d63..ee9c67121c6c 100644
 --- a/block/blk-zoned.c
 +++ b/block/blk-zoned.c
-@@ -746,9 +746,25 @@ static bool blk_zone_wplug_handle_reset_all(struct bio *bio)
- 	return false;
- }
- 
--static inline void blk_zone_wplug_add_bio(struct blk_zone_wplug *zwplug,
--					  struct bio *bio, unsigned int nr_segs)
-+static void disk_zone_wplug_schedule_bio_work(struct gendisk *disk,
-+					      struct blk_zone_wplug *zwplug)
-+{
-+	/*
-+	 * Take a reference on the zone write plug and schedule the submission
-+	 * of the next plugged BIO. blk_zone_wplug_bio_work() will release the
-+	 * reference we take here.
-+	 */
-+	WARN_ON_ONCE(!(zwplug->flags & BLK_ZONE_WPLUG_PLUGGED));
-+	refcount_inc(&zwplug->ref);
-+	queue_work(disk->zone_wplugs_wq, &zwplug->bio_work);
-+}
-+
-+static inline void disk_zone_wplug_add_bio(struct gendisk *disk,
-+				struct blk_zone_wplug *zwplug,
-+				struct bio *bio, unsigned int nr_segs)
- {
-+	bool schedule_bio_work = false;
-+
- 	/*
- 	 * Grab an extra reference on the BIO request queue usage counter.
- 	 * This reference will be reused to submit a request for the BIO for
-@@ -764,6 +780,16 @@ static inline void blk_zone_wplug_add_bio(struct blk_zone_wplug *zwplug,
- 	 */
- 	bio_clear_polled(bio);
- 
-+	/*
-+	 * REQ_NOWAIT BIOs are always handled using the zone write plug BIO
-+	 * work, which can block. So clear the REQ_NOWAIT flag and schedule the
-+	 * work if this is the first BIO we are plugging.
-+	 */
-+	if (bio->bi_opf & REQ_NOWAIT) {
-+		schedule_bio_work = !(zwplug->flags & BLK_ZONE_WPLUG_PLUGGED);
-+		bio->bi_opf &= ~REQ_NOWAIT;
-+	}
-+
- 	/*
- 	 * Reuse the poll cookie field to store the number of segments when
- 	 * split to the hardware limits.
-@@ -777,6 +803,11 @@ static inline void blk_zone_wplug_add_bio(struct blk_zone_wplug *zwplug,
- 	 * at the tail of the list to preserve the sequential write order.
- 	 */
- 	bio_list_add(&zwplug->bio_list, bio);
-+
-+	zwplug->flags |= BLK_ZONE_WPLUG_PLUGGED;
-+
-+	if (schedule_bio_work)
-+		disk_zone_wplug_schedule_bio_work(disk, zwplug);
- }
- 
- /*
-@@ -970,7 +1001,10 @@ static bool blk_zone_wplug_handle_write(struct bio *bio, unsigned int nr_segs)
- 
- 	zwplug = disk_get_and_lock_zone_wplug(disk, sector, gfp_mask, &flags);
- 	if (!zwplug) {
--		bio_io_error(bio);
-+		if (bio->bi_opf & REQ_NOWAIT)
-+			bio_wouldblock_error(bio);
-+		else
-+			bio_io_error(bio);
+@@ -707,6 +707,15 @@ static bool blk_zone_wplug_handle_reset_or_finish(struct bio *bio,
  		return true;
  	}
  
-@@ -979,9 +1013,11 @@ static bool blk_zone_wplug_handle_write(struct bio *bio, unsigned int nr_segs)
- 
++	/*
++	 * No-wait reset or finish BIOs do not make much sense as the callers
++	 * issue these as blocking operations in most cases. To avoid issues
++	 * the BIO execution potentially failing with BLK_STS_AGAIN, warn about
++	 * REQ_NOWAIT being set and ignore that flag.
++	 */
++	if (WARN_ON_ONCE(bio->bi_opf & REQ_NOWAIT))
++		bio->bi_opf &= ~REQ_NOWAIT;
++
  	/*
- 	 * If the zone is already plugged or has a pending error, add the BIO
--	 * to the plug BIO list. Otherwise, plug and let the BIO execute.
-+	 * to the plug BIO list. Do the same for REQ_NOWAIT BIOs to ensure that
-+	 * we will not see a BLK_STS_AGAIN failure if we let the BIO execute.
-+	 * Otherwise, plug and let the BIO execute.
- 	 */
--	if (zwplug->flags & BLK_ZONE_WPLUG_BUSY)
-+	if (zwplug->flags & BLK_ZONE_WPLUG_BUSY || (bio->bi_opf & REQ_NOWAIT))
- 		goto plug;
- 
- 	/*
-@@ -998,8 +1034,7 @@ static bool blk_zone_wplug_handle_write(struct bio *bio, unsigned int nr_segs)
- 	return false;
- 
- plug:
--	zwplug->flags |= BLK_ZONE_WPLUG_PLUGGED;
--	blk_zone_wplug_add_bio(zwplug, bio, nr_segs);
-+	disk_zone_wplug_add_bio(disk, zwplug, bio, nr_segs);
- 
- 	spin_unlock_irqrestore(&zwplug->lock, flags);
- 
-@@ -1083,19 +1118,6 @@ bool blk_zone_plug_bio(struct bio *bio, unsigned int nr_segs)
- }
- EXPORT_SYMBOL_GPL(blk_zone_plug_bio);
- 
--static void disk_zone_wplug_schedule_bio_work(struct gendisk *disk,
--					      struct blk_zone_wplug *zwplug)
--{
--	/*
--	 * Take a reference on the zone write plug and schedule the submission
--	 * of the next plugged BIO. blk_zone_wplug_bio_work() will release the
--	 * reference we take here.
--	 */
--	WARN_ON_ONCE(!(zwplug->flags & BLK_ZONE_WPLUG_PLUGGED));
--	refcount_inc(&zwplug->ref);
--	queue_work(disk->zone_wplugs_wq, &zwplug->bio_work);
--}
--
- static void disk_zone_wplug_unplug_bio(struct gendisk *disk,
- 				       struct blk_zone_wplug *zwplug)
- {
+ 	 * If we have a zone write plug, set its write pointer offset to 0
+ 	 * (reset case) or to the zone size (finish case). This will abort all
 -- 
 2.47.0
 
