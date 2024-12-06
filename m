@@ -1,70 +1,71 @@
-Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC92D213E7D
-	for <dm-devel@lists.linux.dev>; Fri,  6 Dec 2024 23:36:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 269B5212FB3
+	for <dm-devel@lists.linux.dev>; Fri,  6 Dec 2024 23:36:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733528219; cv=none; b=gs7QJLBBCaCyIkI09e83ZlGIFklY78Ea0XwmEe7kNZbXvf0Ex3sYIvKMtJUkZ5ae6hrFbu+p/1MzmJ8c6AUqQRbr+7yQ5ZWMjxWEO9ANbHBaP5C5oG+m6YN5VoV4hL/MunIaSi/Qt+cWkbHLJlEI6jKBpzqsivWQPACFwE6VSf4=
+	t=1733528221; cv=none; b=DWltz38j9jqZ5xAue1upIqdQ5A2sFaRmDWsGnsdce/K3Zly9IqgWTADLwCWU09DVR6MaYUqu+YpsCMC/YzkMEwZ82yrlYj4kw0IOyoMIzKo4Pf40U/LBEm54VlKU35te0sxcMnyXaNChXefSWziZv04mT7VN4L8Yp4sk2ly1eNE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733528219; c=relaxed/simple;
-	bh=GfC1nm9+X/faPxfcqZ/PB/BecgIqy52UXFPltpeQmBU=;
+	s=arc-20240116; t=1733528221; c=relaxed/simple;
+	bh=TRqhWHgH+AzImzjo3waFv0T9gLn7dfgtOGPpGqmkugc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Igusd4ggEh6QCGXoTrnNz8cE356xkzeKhkcvoyWDNmM9nbaPG543jWUTO2zSrZgu4GARX1uGZwKwrqyKq7S9s9JZqQ5FPTaosTfa85P/oFRGau0co5UGU/Tgxug9be/A/xNeI9v31RWBGSM7lvRbuN3dcKK9PpryGOn5hgCD8ag=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=cACdxTFf; arc=none smtp.client-ip=209.85.208.54
+	 MIME-Version; b=VnNoc4bxl/U543VBU/qgA6ZVWCkwqGvxfkzpAvnCzwtkZYx+q32KwIikzwFDJ0RU+18+Mc/hjnS3fsToMoRQSb+5s62hmg5pseAMK0JyvTT0sz0IMVdfb0v/1rH93+gnnYHzWzde+RhxDPjiZtxoPMs/hhiLP2QC+EI85YBahPg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=TaAZgWlb; arc=none smtp.client-ip=209.85.128.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="cACdxTFf"
-Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-5cf6f804233so3108715a12.2
-        for <dm-devel@lists.linux.dev>; Fri, 06 Dec 2024 15:36:57 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="TaAZgWlb"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-434e84b65e7so1976845e9.3
+        for <dm-devel@lists.linux.dev>; Fri, 06 Dec 2024 15:36:58 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1733528216; x=1734133016; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1733528217; x=1734133017; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=QJnxfetFbqLwprc1wQl+h8lTOcL+KxH/Cdw1Ln3cl9M=;
-        b=cACdxTFfEIpO1HyxjH6uObTZJCPclD0meIa7ITq+SgDkuLTEo8vM2tKnABuwZzqj99
-         JteoqISrRkjY3U3nJrx5oettUq96cfkBpCm8vi+A6W8sh70NnOVNwNO7XBSo9jm/6aSy
-         QETAr5dYV8lOjrpWQvanNjGcT/AzGDHL7zItRb+1cS6DwljL2FyGTFVNsKjiEIAwH/BO
-         Z3dCeLEjYx5ZBVFRTjnd23rxU0nTov3buoUilftmYFs9TEPhorib3OBCtB7sQYKn+RfJ
-         Yt3SmT+q/WUdMAKRfpzuO1vuYNsnDeUAGwN8yj/duAqPNpyR9fENeEzAA1IPhbqQiAYD
-         vCLg==
+        bh=u2Ee4y7zBb9XuPKxkrgzZL0Igd4w44GZZQWAh8Lp0rs=;
+        b=TaAZgWlbObLIkN1sLbYoiUr9OdcelfXBrvKtF5r3tXVWFRmkv1KZVkfqtJzmOL3n72
+         Cdl0Ax3ILX/yeuGyGw0b0xbJg5nW9zoRej3FDWe0WCIh+SVuZpSoZVxeY7haQtxfRMCU
+         b86pMMEHdI9RtXZ6M09QxEL1IO3pXC2Z7y464fOPDUMotcZiUgBkFLSGMwHvsPx6A4Al
+         I3JJpsfs9WY7omsZHrlVvu/LGY6SITTHr14i79z50p3Eza9ZzDzHRPt19JA8c07rZqO1
+         4s4DVXTNlozTmDzdlsmuUICGJp0Vm3UNoX5w59FlfzD0slTACe36StuYO/gY9DQ8/TeC
+         wZXg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1733528216; x=1734133016;
+        d=1e100.net; s=20230601; t=1733528217; x=1734133017;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=QJnxfetFbqLwprc1wQl+h8lTOcL+KxH/Cdw1Ln3cl9M=;
-        b=FqF2zjZHdlFyNH/NlYxGF6vYoVvb/RN/qenOjj8cVnzLNJfCEfzA3H46MO3TcXt7wZ
-         9mypJk2AKviDe8fLjdD0wuIEwqBeFmhaxzacGGpjqX8MmkW7z2JaRdgkjEC/Ut8SZpZ/
-         MfD80Ye5IW8mHlgLjnP0fYtN/3oCk6oTmtGJygRtNzCj2UIAz3IbV7PhNhaNli7pGs3U
-         qYpJChWS8OMDwOJbTnnK3uhcY/GTrZ/2y9ZfRuYUaLhwrjCy+kWIMf68L7Tuq9015N6M
-         6m3P+wrOku3bJ34iLpl0iHyoD36jtNcnOunA953WmBZPYL5p5nVZTS3YHLkUZn/f0ekN
-         Hmag==
-X-Gm-Message-State: AOJu0Yz6+3o7m4Ej0DzuhksBNSk6PqstQmXSnT2x4kyDc58Spt11M5L7
-	1XB6A8K7Lej9v2qsMtrSl4eYKTc0ygCzw2wCi22dSfhb/YfIocRfEkKTjQ+gxII=
-X-Gm-Gg: ASbGncuqOLb1raKy8tpDnULsC+UlJcCStvQU6ELZAhCWA5heO0dx+HV67LTFo98ziZd
-	F+4zZmGWqob1J4lHRNEJf2TW/3uSfP/5CHvWRRMR+NhK+472f2KTaFiC1Y9w5symNgpVJHXTdqF
-	lJC36HRc3fzZYJBJNQx6dTTiqUmEGRgYv3MNl72qAb+yTh8GVgCoOWOBcO0kqssCcpt5wYqfnpO
-	98iSEhfBh7h/4eYCF9hADSBOGmV3zVO2J9XGu8i4RKgpnkj7JnBvujWvJgz+KCH9LMqcUK20BbB
-	4fw90WLCUExU6hyoqzvndyHsyzaDwQSzyjc9
-X-Google-Smtp-Source: AGHT+IE3q4iPeOxtWqzRHx9ZF8jWFgMPR7ZFBK0DDS0xLNWwEcJdAKTFUkKNcq86oFShA4b60No35A==
-X-Received: by 2002:a05:6402:2749:b0:5d2:7270:6135 with SMTP id 4fb4d7f45d1cf-5d3be75625emr5076828a12.33.1733528216065;
-        Fri, 06 Dec 2024 15:36:56 -0800 (PST)
+        bh=u2Ee4y7zBb9XuPKxkrgzZL0Igd4w44GZZQWAh8Lp0rs=;
+        b=I01/IiIUNrAl1/yQprcpqQsZ8x7vB7h4SZNUv0zjGPHapSn9j13yLd2dG5FKG+LkGH
+         ytXJakHplmHALzH0wv5+u+XoXMIJT7jKJYtVSpbfWQbWoxiL/9+b5Pg5uROXYCHOASBJ
+         92FAheg4e8daDXcBKQ70SxVQ2fXvUHoHy4jp3rLecc3iH88RtF7X4RQwuWFLwF2XKuok
+         +oQ2nLYTCgxtTGxA82ewmx3uFzMRSTQvOeANS79B2gSlhVtRN/sjtBqZHwsbUq7Urf+A
+         jESqNHMqJvfcM8norFBn2r5WJgt8GpkS1asQMuhhKrQliPZvT3kIZ6zETo6/aCfH4GMj
+         p57g==
+X-Gm-Message-State: AOJu0Yx87Tfeoby2c7DHS0nsqMvHKdpojKXulXynYtTLCK2AQdIUQg6H
+	pw4Ic5R7cFfqTMrj0VfLR645/+iem+JaqmmktJGWcnVWxbgHJxOfW/ltxKORKelL2yx+T6fCYji
+	/
+X-Gm-Gg: ASbGncsD114MjfLePRbcVp1w32/tlZ7bGZOW1luyCMzcwso51cPwf2dUjzYETg4ZRl1
+	i0SwH/g71G8F6vTY8bVdyjaO6m9w6/Hml14zcxRbeHkTX5OLx8yk3Fy7mw/rASblu5hrK5bhpKn
+	MlWPD5tIYmffELuFZtKnJSaE/CW3VklnYbAGOZZw2aQPake4VYg/Y1ALyPHtqQkddxdESqvZkC4
+	9iwAJ/mXVHkJ9x8bA094mFxhvQS8ehVGPO7t4vCKDa9psV9F45+BE4rTiHpxFvFOYzXMCnr5WID
+	iW6Ms2tVcuGPrwx8M1VOa3dgl3NpK/keMhPG
+X-Google-Smtp-Source: AGHT+IHtWenoLuiqq6p4/lFYrzNPq5L5jEdRZUypKD55JtdTyC6H+FmmXmsh2s/GXNaq5bt1gYdV6Q==
+X-Received: by 2002:a5d:6c6a:0:b0:385:dedb:a156 with SMTP id ffacd0b85a97d-3862b332737mr3863032f8f.6.1733528217243;
+        Fri, 06 Dec 2024 15:36:57 -0800 (PST)
 Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5d3da2c242esm314268a12.33.2024.12.06.15.36.55
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5d14c799224sm2705203a12.69.2024.12.06.15.36.56
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 06 Dec 2024 15:36:55 -0800 (PST)
+        Fri, 06 Dec 2024 15:36:56 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 11/13] multipathd: don't call update_map() from missing_uev_wait_tick()
-Date: Sat,  7 Dec 2024 00:36:15 +0100
-Message-ID: <20241206233617.382200-12-mwilck@suse.com>
+Subject: [PATCH 12/13] multipathd: don't call udpate_map() from ghost_delay_tick()
+Date: Sat,  7 Dec 2024 00:36:16 +0100
+Message-ID: <20241206233617.382200-13-mwilck@suse.com>
 X-Mailer: git-send-email 2.47.0
 In-Reply-To: <20241206233617.382200-1-mwilck@suse.com>
 References: <20241206233617.382200-1-mwilck@suse.com>
@@ -76,87 +77,72 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Instead, check for missing uevents in the existing mpvec loop.
-Note that if the uevent tick expires, we need to call update_map() rather than
-reload_and_sync_map(), because the paths have not been added to the multipath
-(see wait_for_udev handling ev_add_path()).
+Instead, move the call into the existing mpvec loop and call update_map()
+from checker_finished().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 40 +++++++++++++++++++---------------------
- 1 file changed, 19 insertions(+), 21 deletions(-)
+ multipathd/main.c | 31 +++++++++++--------------------
+ 1 file changed, 11 insertions(+), 20 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 4cf5493..4478cc9 100644
+index 4478cc9..e48fa79 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2011,29 +2011,19 @@ followover_should_failback(struct multipath *mpp)
- 	return 0;
+@@ -2026,26 +2026,17 @@ missing_uev_wait_tick(struct multipath *mpp, bool *timed_out)
+ 	return false;
  }
  
 -static void
--missing_uev_wait_tick(struct vectors *vecs)
-+/* Returns true if update_map() needs to be called */
+-ghost_delay_tick(struct vectors *vecs)
 +static bool
-+missing_uev_wait_tick(struct multipath *mpp, bool *timed_out)
++ghost_delay_tick(struct  multipath * mpp)
  {
 -	struct multipath * mpp;
 -	int i;
--	int timed_out = 0;
-+	if (mpp->wait_for_udev && --mpp->uev_wait_tick <= 0) {
-+		int wait = mpp->wait_for_udev;
- 
+-
 -	vector_foreach_slot (vecs->mpvec, mpp, i) {
--		if (mpp->wait_for_udev && --mpp->uev_wait_tick <= 0) {
--			timed_out = 1;
--			condlog(0, "%s: timeout waiting on creation uevent. enabling reloads", mpp->alias);
--			if (mpp->wait_for_udev > 1 &&
--			    update_map(mpp, vecs, 0)) {
+-		if (mpp->ghost_delay_tick <= 0)
+-			continue;
+-		if (--mpp->ghost_delay_tick <= 0) {
+-			condlog(0, "%s: timed out waiting for active path",
+-				mpp->alias);
+-			mpp->force_udev_reload = 1;
+-			if (update_map(mpp, vecs, 0) != 0) {
 -				/* update_map removed map */
 -				i--;
 -				continue;
 -			}
--			mpp->wait_for_udev = 0;
 -		}
-+		mpp->wait_for_udev = 0;
-+		*timed_out = true;
-+		condlog(0, "%s: timeout waiting on creation uevent. enabling reloads", mpp->alias);
-+		return wait > 1;
++	if (mpp->ghost_delay_tick <= 0)
++		return false;
++	if (--mpp->ghost_delay_tick <= 0) {
++		condlog(0, "%s: timed out waiting for active path", mpp->alias);
++		mpp->force_udev_reload = 1;
++		return true;
  	}
--
--	if (timed_out && !need_to_delay_reconfig(vecs))
--		unblock_reconfigure();
 +	return false;
  }
  
- static void
-@@ -2947,9 +2937,16 @@ update_paths(struct vectors *vecs, int *num_paths_p, time_t start_secs)
- static void checker_finished(struct vectors *vecs)
- {
- 	struct multipath *mpp;
-+	bool uev_timed_out = false;
+ static bool deferred_failback_tick(struct multipath *mpp)
+@@ -2941,7 +2932,8 @@ static void checker_finished(struct vectors *vecs)
  	int i;
  
  	vector_foreach_slot(vecs->mpvec, mpp, i) {
-+		if (missing_uev_wait_tick(mpp, &uev_timed_out) &&
-+		    update_map(mpp, vecs, 0)) {
-+			/* multipath device deleted */
-+			i--;
-+			continue;
-+		}
- 		if ((update_mpp_prio(mpp) ||
- 		     (mpp->need_reload && mpp->synced_count > 0) ||
- 		     deferred_failback_tick(mpp)) &&
-@@ -2959,7 +2956,8 @@ static void checker_finished(struct vectors *vecs)
- 		else
- 			retry_count_tick(mpp);
+-		if (missing_uev_wait_tick(mpp, &uev_timed_out) &&
++		if ((missing_uev_wait_tick(mpp, &uev_timed_out) ||
++		     ghost_delay_tick(mpp)) &&
+ 		    update_map(mpp, vecs, 0)) {
+ 			/* multipath device deleted */
+ 			i--;
+@@ -2958,7 +2950,6 @@ static void checker_finished(struct vectors *vecs)
  	}
--	missing_uev_wait_tick(vecs);
-+	if (uev_timed_out && !need_to_delay_reconfig(vecs))
-+		unblock_reconfigure();
- 	ghost_delay_tick(vecs);
+ 	if (uev_timed_out && !need_to_delay_reconfig(vecs))
+ 		unblock_reconfigure();
+-	ghost_delay_tick(vecs);
  	partial_retrigger_tick(vecs->pathvec);
  }
+ 
 -- 
 2.47.0
 
