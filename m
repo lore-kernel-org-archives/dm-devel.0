@@ -1,61 +1,81 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C88E189B85
-	for <dm-devel@lists.linux.dev>; Mon,  9 Dec 2024 08:21:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4EC2D215191;
+	Mon,  9 Dec 2024 08:38:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733732490; cv=none; b=U3Qk8F20qYm0z5D8H/Xo3SHlEzpQ3nIVj9DrQAYoGug5A42amv4VXR7sd+G0Nab3goifsrkJ/bgqVlJNnApDHJhiAqaqVbd1eRpvzg01gPwopP5RzAjNinLorXdsRJc0taZc04SwnUm/zKUU/apXBXIr0H2xImeU59unkrNGm9k=
+	t=1733733523; cv=none; b=NREY6qXGmbSiddfmAj3ulHtJxEal/lTAIXRCQUq9oKka8AecUy9Etq14h/kKcTUQP2gKupPre70MtBQmA74LH7HoMCKMQ6M1T+6ISMaMiIQTZ9dMwcjgaEJwYau+kjJBYSWda9EkApqDvbfyOEs3Dmv+30dxpT/TNYyoGNfJG0s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733732490; c=relaxed/simple;
-	bh=zgFbBlWRkMJYqaGp8CUjR10eu8MnI68VhLIMBBTLrh0=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=YswB4p9jrinOHNstGKbfPo/qfJGnmsRitvf46rKjGfXIx+87OFXP0YsHhJFaV5uSNqKv8qEN+PxirjeAeDBV+ylmreURyh7899IB0mUQ8938NNVh4+W2m4mY7iEBXII1YsCiyxyfVgdGewF7kE5CY7EFDsw4Cds8L0vFmwWD8Pk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id D4D4168AA6; Mon,  9 Dec 2024 09:21:24 +0100 (CET)
-Date: Mon, 9 Dec 2024 09:21:24 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>, linux-block@vger.kernel.org,
-	Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-	Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH v2 3/4] block: Prevent potential deadlocks in zone
- write plug error recovery
-Message-ID: <20241209082124.GA25530@lst.de>
-References: <20241208225758.219228-1-dlemoal@kernel.org> <20241208225758.219228-4-dlemoal@kernel.org> <20241209075743.GD24323@lst.de> <3496570f-d434-42e9-b06f-51a1305f0555@kernel.org>
+	s=arc-20240116; t=1733733523; c=relaxed/simple;
+	bh=P9ZhCNc2wcrqmMZsNL7ztx9Ss2egh36Osy894lq2CRc=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=uuG/v3TR7fq/JdPMJXpicJUb+i1ZuRkNsHAVEbXaMecNX0y3qiExbY791K52gHIhmdy7fvzW2nfngWD2DgnpC6r2K2Q/X7xVreY3PDvqAj5e6jFogum9oD0JBELCwztApsL+vJjyaLIn+pdc6P330ugzxiYApNFYHMB6RxbKPSU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=HskT8TnZ; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="HskT8TnZ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0503EC4CED1;
+	Mon,  9 Dec 2024 08:38:41 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1733733523;
+	bh=P9ZhCNc2wcrqmMZsNL7ztx9Ss2egh36Osy894lq2CRc=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=HskT8TnZ0cJnmqM++Co4xjivZnP9a0D9THdbAix2d2cjwSPNk13oMmWEQDyH05WAa
+	 wSChpWoyW5ZRbbK95B6YDfi8zRE7Bc+Y4Key1gL13nwQcRozgNq5YyB495MxGmU4a/
+	 dlOQT7VmuF1++4+4l9tmRAMdymCRjmcl782j5ESOp5woI80XO5SZZrQQdl3vTLRAvO
+	 h3F+n8lSuae0hD5UT585pEXvvtqQb1Tzh0p0NbsRKrR7WCLM4izYqdhQ7vf/R73htW
+	 LtFLsffxh5gAYp7onASSrdTcKXsck9WjJPsot1BaJ80nNhMfhMKTLBX9BbxoNYoMMq
+	 kPkfF4fs3S7BQ==
+Message-ID: <56ee11bb-0dbc-4498-a529-b2f47e92e934@kernel.org>
+Date: Mon, 9 Dec 2024 17:38:40 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <3496570f-d434-42e9-b06f-51a1305f0555@kernel.org>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 4/4] dm: Fix dm-zoned-reclaim zone write pointer
+ alignment
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ dm-devel@lists.linux.dev, Bart Van Assche <bvanassche@acm.org>
+References: <20241208225758.219228-1-dlemoal@kernel.org>
+ <20241208225758.219228-5-dlemoal@kernel.org> <20241209074408.GA24323@lst.de>
+From: Damien Le Moal <dlemoal@kernel.org>
+Content-Language: en-US
+Organization: Western Digital Research
+In-Reply-To: <20241209074408.GA24323@lst.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Mon, Dec 09, 2024 at 05:18:00PM +0900, Damien Le Moal wrote:
+On 12/9/24 16:44, Christoph Hellwig wrote:
+> On Mon, Dec 09, 2024 at 07:57:58AM +0900, Damien Le Moal wrote:
+>> +int blkdev_issue_zone_zeroout(struct block_device *bdev, sector_t sector,
+>> +		sector_t nr_sects, gfp_t gfp_mask)
 > 
-> Yep. But even that one is actually coded in scsi to return a -EIO instead of
-> ENOTSUPP. We can patch that (return ENOTSUPP for an invalid opcode error), but I
-> am not sure if that is safe to do given that this has been like this for ages.
+> Nit: Would blk_zone_issue_zeroout be a better name?
+
+Yes.
+
+> Also I think this needs to be re-ordered before the previous patch to
+> preserve bisectability.
+
+The problem with doing that is that there is absolutely nothing to patch/fix
+before the previous patch, since the "recovery/report zones" was done
+automatically. So if anything, maybe I should just squash this patch together
+with the previous one to be consistent against bisect ? That does make sense
+since this patch is needed *because* of the previous patch change.
+
+>> +EXPORT_SYMBOL(blkdev_issue_zone_zeroout);
 > 
-> This is all to say that we cannot even reliably distinguish special/valid error
-> cases that can be recovered from actual medium/hard errors.
+> EXPORT_SYMBOL_GPL is used for all other zoned code, I'd do the same
+> here for consitency.
 
-I think we can't change the return value, as the whole thing is messy.
-I just meant EOPNOTSUP-like.  The exact error should not matter for
-the handling anyway, just reasoning about use cases.
+Indeed. Will do.
 
-> I have test cases for zonefs already. That is because zonefs has the
-> "recover-error" mount option which forces a recovery of a file size (== write
-> pointer position) if a write fails or is torn. The default even for zonefs is to
-> go read-only since there is indeed not much we can do about failed writes.
 
-Yes, that іs the sensible way to handle errors as far as I'm conerned.
-
+-- 
+Damien Le Moal
+Western Digital Research
