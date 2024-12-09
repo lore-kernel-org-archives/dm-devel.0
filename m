@@ -1,66 +1,55 @@
-Received: from cmccmta3.chinamobile.com (cmccmta6.chinamobile.com [111.22.67.139])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 6DE914A02
-	for <dm-devel@lists.linux.dev>; Mon,  9 Dec 2024 03:11:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=111.22.67.139
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4592215575F
+	for <dm-devel@lists.linux.dev>; Mon,  9 Dec 2024 07:44:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733713869; cv=none; b=B5W8rHxZOK+x9pS3dEZbt8AaMIxXRtuXPbqUOcG6NmqlV3J95XC6EH1XYtbfQWwXekQupEpML1un9B9YKoS2O/uOuvGFZbxE1h+uolvJLiT1BvbaPHaZ4+T3woAzY45hHjP6Qxrfoy32sFsxicftBBkK8T/whnGbjPkk1su+ezI=
+	t=1733730261; cv=none; b=PTm9RAwoON/6wXNrgsFuOrh94I36MsZSJ3jDZ5J78LS6y2m0m7Pg1xz8g80FKw93aWUMLZ6SLe/1PgboEZ7KgQKxRJJ3ynICYi9PsWGvyNCTarIui/cJK+wkwpRB+wPKAGu6qpA2r3P8puNqfvzZINeUonJOd8lXP4EhL7+MPpA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733713869; c=relaxed/simple;
-	bh=QiNj9btLSB6aFxtzkuLOXfX0M3KRoHvxch7Ck/iDEeo=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=NqruTGKH0m7DuDzR6pJWVarL+cflLLLVCF44zG0hB9/GHKj+ylXCbkLYCANZrhs0vIM0w8vcs0kgt8oKOawaeaocRSycKs3Qmu4l1NFu0jC5Db8Qpgz88mzIoukI9bVzxTqBXFih6b7CbDX9twJzJpzbAra7949Z61a5xaUBFCg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=cmss.chinamobile.com; spf=pass smtp.mailfrom=cmss.chinamobile.com; arc=none smtp.client-ip=111.22.67.139
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=cmss.chinamobile.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cmss.chinamobile.com
-X-RM-TagInfo: emlType=0                                       
-X-RM-SPAM-FLAG:00000000
-Received:from spf.mail.chinamobile.com (unknown[10.188.0.87])
-	by rmmx-syy-dmz-app09-12009 (RichMail) with SMTP id 2ee967565fc2948-f5966;
-	Mon, 09 Dec 2024 11:10:58 +0800 (CST)
-X-RM-TRANSID:2ee967565fc2948-f5966
-X-RM-TagInfo: emlType=0                                       
-X-RM-SPAM-FLAG:00000000
-Received:from localhost.localdomain (unknown[10.55.1.71])
-	by rmsmtp-syy-appsvr07-12007 (RichMail) with SMTP id 2ee767565fc0d41-9d738;
-	Mon, 09 Dec 2024 11:10:57 +0800 (CST)
-X-RM-TRANSID:2ee767565fc0d41-9d738
-From: liujing <liujing@cmss.chinamobile.com>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	liujing <liujing@cmss.chinamobile.com>
-Subject: [PATCH] dm raid: fix spelling errors in raid_ctr()
-Date: Mon,  9 Dec 2024 11:10:55 +0800
-Message-Id: <20241209031055.2806-1-liujing@cmss.chinamobile.com>
-X-Mailer: git-send-email 2.27.0
+	s=arc-20240116; t=1733730261; c=relaxed/simple;
+	bh=NLbWVFxo5p0mUZ426qlpICcmfEgGn3ky+MDzRVVdCsM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=LaRRJzIDs4fdbZ//4sC2yKpQcW07BAvPxsj4gVBkHyk/WR9T2si3efsOuLAHfnsPqdB/GTfYfcweDceyeQp1AhDCH7usogjLkGe9y6VwEh8NoDWkKg3sE99gTrwGAETCqOqlYzEnRWxXhVVWAcfPBDSbq4C2l0XUfgfhZ7crDBU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id ED0F268AA6; Mon,  9 Dec 2024 08:44:08 +0100 (CET)
+Date: Mon, 9 Dec 2024 08:44:08 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+	Christoph Hellwig <hch@lst.de>,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v2 4/4] dm: Fix dm-zoned-reclaim zone write pointer
+ alignment
+Message-ID: <20241209074408.GA24323@lst.de>
+References: <20241208225758.219228-1-dlemoal@kernel.org> <20241208225758.219228-5-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20241208225758.219228-5-dlemoal@kernel.org>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-Fix the respective spelling errors in raid_ctr() function.
+On Mon, Dec 09, 2024 at 07:57:58AM +0900, Damien Le Moal wrote:
+> +int blkdev_issue_zone_zeroout(struct block_device *bdev, sector_t sector,
+> +		sector_t nr_sects, gfp_t gfp_mask)
 
-Signed-off-by: liujing <liujing@cmss.chinamobile.com>
+Nit: Would blk_zone_issue_zeroout be a better name?
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 1e0d3b9b75d6..6adc55fd90d3 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3196,7 +3196,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		if (reshape_sectors || rs_is_raid1(rs)) {
- 			/*
- 			 * We can only prepare for a reshape here, because the
--			 * raid set needs to run to provide the repective reshape
-+			 * raid set needs to run to provide the respective reshape
- 			 * check functions via its MD personality instance.
- 			 *
- 			 * So do the reshape check after md_run() succeeded.
--- 
-2.27.0
+Also I think this needs to be re-ordered before the previous patch to
+preserve bisectability.
 
+> +EXPORT_SYMBOL(blkdev_issue_zone_zeroout);
 
+EXPORT_SYMBOL_GPL is used for all other zoned code, I'd do the same
+here for consitency.
 
