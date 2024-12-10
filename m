@@ -1,162 +1,98 @@
-Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4EFB022F3A9
-	for <dm-devel@lists.linux.dev>; Tue, 10 Dec 2024 08:33:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 848901A0711;
+	Tue, 10 Dec 2024 16:13:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733819639; cv=none; b=GIMw6Szw6BUvBR2uOFHrUkvk1FslVL7p6EUVVopKHmnRtY0/Cew4q5PGyoz+3sWqnaqiLEXmVYfMlaO0NlaZIAsbsK/vZMYeT8Jc7doc9EboFfGad4Zj8hf2OccrhU2j+b7D7P5PVt63+5GzHDucRCeAGE6yk+vPfNDEMnUmTBs=
+	t=1733847180; cv=none; b=i6dMKfwtux5H5AJ/S/AFQkr49FD66jhlHMe4dXSyJE/MAvwYZRVXwwxVi4VWZmXZV/B7eM/vN5Xltq1XmpMWbO7RFBw6sOJn6B2YAEOImHaKz9SS7q2OWU6vdDL+VlmEcq++mgA+Nf/okDz9lE4wLXcI0rR7PyMqWvLr+CL3CZs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733819639; c=relaxed/simple;
-	bh=5xYpqswINe3tmRBXFyu3WDLwEjz2J+C5NygQ2TQM5Ew=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=LbBFY6gSvYHyAQCjMN09tq1/twNvc/IpvQloWPubnp9nG6gG2OiRwbaHojrWUxSSnc+4d5P8DUt6K9mYS1y79HUCaX93FMruN5uLJ+n5egC4zHENjGtRaChHfcU6NtLlFQpgfW1ojo5YsuCyNr9Okx5I4sYWkiDbKPsbOYakh4U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=EjhAXP22; arc=none smtp.client-ip=212.122.41.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
+	s=arc-20240116; t=1733847180; c=relaxed/simple;
+	bh=BWiMLCg3QCfswfh6mo16EAszQa+YcITPWKUgOMEfI94=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=oWNtHOHFu0cJRkvl43wC0+3vdq4UyOqyS1n+eo9mEBjAIQUfinv4/BT8Ns5UXi4NNhwcdui87OGhFPvNkfl8aJ6la9OzzvSXBZDnncEr9uM+qb7J6vRZ5OX+TlBhqTZ1+l55LI73hwThYBvyltMHdYw1QKTdWDxnc0HftMFTM6U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GjiQJXnd; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="EjhAXP22"
-Content-Type: text/plain;
-	charset=utf-8
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1733819634;
-	bh=5xYpqswINe3tmRBXFyu3WDLwEjz2J+C5NygQ2TQM5Ew=;
-	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=EjhAXP22CN4gOnzwEau8pfWWQL6XPsu+ai7qF/uPxZvDZ01xrVSY/UkxvpxXost/U
-	 CBk7RbWLDKpdjxRbE6FxsCnME/z0swvrAQYo3nlID3mvLaZs4aeAkpVU4YJL73x7xt
-	 9n5f51hNa+7PwXVbmh/733z13P9IHlT2oxGDcCFk=
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GjiQJXnd"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C9964C4CED6;
+	Tue, 10 Dec 2024 16:12:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1733847180;
+	bh=BWiMLCg3QCfswfh6mo16EAszQa+YcITPWKUgOMEfI94=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=GjiQJXndJXOXrLzJ5Iox0uG/ANrKNFFp6VEPp0pruZfpcu9WFPzG1/VARmNUJIfrJ
+	 Ptrzn2ArQHr1YusyzlCD6YK8HOdJp787I3IW9vG/bGpEl4ppMTiglUefr6c4F3Q/Ig
+	 ZdqaKK/HJLLxcOTiqFmZctyiWBuzNdEwuz5Let1R0ZlgCkdKKUue1IQB2s0vwjmY1o
+	 B+4jt7oqxEUkg9F3qT2FBPuHE6oVj3fT2ZmjUHPthwIcTHld73n9jKCz6yhGhRZ24F
+	 fQCc1dHQSbuvEV4LDJHqy1hY1Wz/2xsthhSkRyKEajT1DGV45o7B1nMmWABU2Ofp73
+	 8jLd+0N5UR7Dg==
+Date: Tue, 10 Dec 2024 11:12:58 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+	Christoph Hellwig <hch@lst.de>,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v3 3/4] dm: Fix dm-zoned-reclaim zone write pointer
+ alignment
+Message-ID: <Z1hoipf4L1CFc6E7@kernel.org>
+References: <20241209122357.47838-1-dlemoal@kernel.org>
+ <20241209122357.47838-4-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.200.121\))
-Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
- devices when rsyncing many files
-From: Christian Theune <ct@flyingcircus.io>
-In-Reply-To: <DD7FDB11-1BC5-4FA9-9398-23434CBDB6F8@flyingcircus.io>
-Date: Tue, 10 Dec 2024 09:33:33 +0100
-Cc: Yu Kuai <yukuai1@huaweicloud.com>,
- John Stoffel <john@stoffel.org>,
- "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>,
- "yangerkun@huawei.com" <yangerkun@huawei.com>,
- "yukuai (C)" <yukuai3@huawei.com>,
- David Jeffery <djeffery@redhat.com>
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <F9738805-DB6B-4249-A4B0-EC989AD6C399@flyingcircus.io>
-References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
- <45d44ed5-da7c-6480-9143-f611385b2e92@huaweicloud.com>
- <9C03DED0-3A6A-42F8-B935-6EB500F8BCE2@flyingcircus.io>
- <DD99A1F0-56E7-473D-B917-66885810233E@flyingcircus.io>
- <78517565-B1AB-4441-B4F8-EB380E98EB0F@flyingcircus.io>
- <26403.59789.480428.418012@quad.stoffel.home>
- <5fb0a6f0-066d-c490-3010-8a047aae2c29@huaweicloud.com>
- <F8CEEB15-0E3C-4F67-951D-12E165D6CC05@flyingcircus.io>
- <B6D76C57-B940-4BFD-9C40-D6E463D2A09F@flyingcircus.io>
- <5170f0d2-cb0f-2e0f-eb5e-31aa9d6ff65d@huawei.com>
- <2b093abc-cd9a-0b84-bcba-baec689fa153@huaweicloud.com>
- <63DE1813-C719-49B7-9012-641DB3DECA26@flyingcircus.io>
- <F8A5ABD5-0773-414D-BBBC-538481BCD0F4@flyingcircus.io>
- <753611d4-5c54-ee0d-30ab-9321274fd749@huaweicloud.com>
- <9A0AE411-B4B8-424A-B9F6-AF933F6544F9@flyingcircus.io>
- <BE85CBCF-1B09-48D0-9931-AA8D298F1D6B@flyingcircus.io>
- <b2a654e7-6c71-a44e-645c-686eed9d5cd8@huaweicloud.com>
- <240E3553-1EDD-49C8-88B8-FB3A7F0CE39C@flyingcircus.io>
- <12295067-fc9a-8847-b370-7d86b2b66426@huaweicloud.com>
- <CALTww28iP_pGU7jmhZrXX9D-xL5Xb6w=9jLxS=fvv_6HgqZ6qw@mail.gmail.com>
- <09338D11-6B73-4C4B-A19A-6BDC6489C91D@flyingcircus.io>
- <C3A9A473-0F0E-4168-BB96-5AB140C6A9FC@flyingcircus.io>
- <0B1D29D1-523C-4E42-95F9-62B32B741930@flyingcircus.io>
- <4DA6F1FE-D465-40C7-A116-F49CF6A2CFF0@flyingcircus.io>
- <CALTww292Dwduh=k1W4=u+N2K6WYK7RXQyPWG3Yn-JpLY9QDbDQ@mail.gmail.com>
- <362DFCF4-14C5-464C-A73F-72C9A3871E2F@flyingcircus.io>
- <CALTww280ztWNUW23-Y+8w_S4ZAR4UYdtAmZU4b_wLHjjpTRPJQ@mail.gmail.com>
- <DD7FDB11-1BC5-4FA9-9398-23434CBDB6F8@flyingcircus.io>
-To: Xiao Ni <xni@redhat.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20241209122357.47838-4-dlemoal@kernel.org>
 
-Just a quick update: i=E2=80=99ve been out sick and only am getting =
-around to start testing the patch on 6.6. it applied cleanly as you =
-suggested and I=E2=80=99m waiting for the compile to finish. I=E2=80=99ll =
-get back to you in the next days how it worked out.
+On Mon, Dec 09, 2024 at 09:23:56PM +0900, Damien Le Moal wrote:
+> The zone reclaim processing of the dm-zoned device mapper uses
+> blkdev_issue_zeroout() to align the write pointer of a zone being used
+> for reclaiming another zone, to write the valid data blocks from the
+> zone being reclaimed at the same position relative to the zone start in
+> the reclaim target zone.
+> 
+> The first call to blkdev_issue_zeroout() will try to use hardware
+> offload using a REQ_OP_WRITE_ZEROES operation if the device reports a
+> non-zero max_write_zeroes_sectors queue limit. If this operation fails
+> because of the lack of hardware support, blkdev_issue_zeroout() falls
+> back to using a regular write operation with the zero-page as buffer.
+> Currently, such REQ_OP_WRITE_ZEROES failure is automatically handled by
+> the block layer zone write plugging code which will execute a report
+> zones operation to ensure that the write pointer of the target zone of
+> the failed operation has not changed and to "rewind" the zone write
+> pointer offset of the target zone as it was advanced when the write zero
+> operation was submitted. So the REQ_OP_WRITE_ZEROES failure does not
+> cause any issue and blkdev_issue_zeroout() works as expected.
+> 
+> However, since the automatic recovery of zone write pointers by the zone
+> write plugging code can potentially cause deadlocks with queue freeze
+> operations, a different recovery must be implemented in preparation for
+> the removal of zone write plugging report zones based recovery.
+> 
+> Do this by introducing the new function blk_zone_issue_zeroout(). This
+> function first calls blkdev_issue_zeroout() with the flag
+> BLKDEV_ZERO_NOFALLBACK to intercept failures on the first execution
+> which attempt to use the device hardware offload with the
+> REQ_OP_WRITE_ZEROES operation. If this attempt fails, a report zone
+> operation is issued to restore the zone write pointer offset of the
+> target zone to the correct position and blkdev_issue_zeroout() is called
+> again without the BLKDEV_ZERO_NOFALLBACK flag. The report zones
+> operation performing this recovery is implemented using the helper
+> function disk_zone_sync_wp_offset() which calls the gendisk report_zones
+> file operation with the callback disk_report_zones_cb(). This callback
+> updates the target write pointer offset of the target zone using the new
+> function disk_zone_wplug_sync_wp_offset().
+> 
+> dmz_reclaim_align_wp() is modified to change its call to
+> blkdev_issue_zeroout() to a call to blk_zone_issue_zeroout() without any
+> other change needed as the two functions are functionnally equivalent.
+> 
+> Fixes: dd291d77cc90 ("block: Introduce zone write plugging")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
 
-> On 15. Nov 2024, at 12:06, Christian Theune <ct@flyingcircus.io> =
-wrote:
->=20
-> Will do that!
->=20
->> On 15. Nov 2024, at 11:11, Xiao Ni <xni@redhat.com> wrote:
->>=20
->> On Fri, Nov 15, 2024 at 4:45=E2=80=AFPM Christian Theune =
-<ct@flyingcircus.io> wrote:
->>>=20
->>> Hi,
->>>=20
->>>> On 15. Nov 2024, at 09:07, Xiao Ni <xni@redhat.com> wrote:
->>>>=20
->>>> On Thu, Nov 14, 2024 at 11:07=E2=80=AFPM Christian Theune =
-<ct@flyingcircus.io> wrote:
->>>>>=20
->>>>> Hi,
->>>>>=20
->>>>> just a followup: the system ran over 2 days without my workload =
-being able to trigger the issue. I=E2=80=99ve seen there is another =
-thread where this patch wasn=E2=80=99t sufficient and if i understand =
-correctly, Yu and Xiao are working on an amalgamated fix?
->>>>>=20
->>>>> Christian
->>>>=20
->>>> Hi Christian
->>>>=20
->>>> Beside the bitmap stuck problem, the other thread has a new =
-problem.
->>>> But it looks like you don't have the new problem because you =
-already
->>>> ran without failure for 2 days. I'll send patches against 6.13 and
->>>> 6.11.
->>>=20
->>> Great, thanks!
->>>=20
->>> What do I need to do to get patches towards 6.6?
->>=20
->> Hi
->>=20
->> This patch can apply to 6.6 cleanly. You can have a try on 6.6 with
->> this patch to see if it works.
->>=20
->> Regards
->> Xiao
->>>=20
->>> Christian
->>>=20
->>> --
->>> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
->>> Flying Circus Internet Operations GmbH =C2=B7 =
-https://flyingcircus.io
->>> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
->>> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
-Theune, Christian Zagrodnick
->=20
->=20
-> Liebe Gr=C3=BC=C3=9Fe,
-> Christian Theune
->=20
-> --=20
-> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
-Theune, Christian Zagrodnick
->=20
-
-Liebe Gr=C3=BC=C3=9Fe,
-Christian Theune
-
---=20
-Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
-Christian Zagrodnick
-
+Acked-by: Mike Snitzer <snitzer@kernel.org>
