@@ -1,47 +1,41 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C68AA18A94C
-	for <dm-devel@lists.linux.dev>; Tue, 10 Dec 2024 16:20:03 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CA8923DEAD;
+	Tue, 10 Dec 2024 16:25:33 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733847603; cv=none; b=HXrLg20IyOLe+h02HLAaQXywfV9Js7m/d+DziqyKl+fSyjWt03VSwJDVGQkj0mvh6bxFAliVkOyrPiAGt0diR5Dc58ve6HYXsRMAE1EkTHx164gKxtwxf6Lovb/Q5V22Vp7niRZabb6jgjUDCjStGbnveDJNESFSPGAftO7rzZw=
+	t=1733847934; cv=none; b=MRjMpYVhH7btvMRtT3V+YjFBRSdfakEraixVFyYMBttaswqyZ+CkcJTGi8WXTWWFnzGmG75XcG5uFJOb83DeXMQGWOqYs3hfkBXIG4JBO6IuRmCRzxnA/+RLgq7AhTihaMLUAbTZPcxAak8ih2Zbc7M3KPj3UBymr0oEgRv4PYc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733847603; c=relaxed/simple;
-	bh=WvufVm2JTUQopNYwcjumL2S8v4R9r6o9UwatVDefcOU=;
+	s=arc-20240116; t=1733847934; c=relaxed/simple;
+	bh=bMY2y3X7jHv/QHiqsH1Rp1Wjo8/cKcuBZu7oYLVL7xE=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=U/AzPLGkEvdwi0JPrUfiOUgQehmKfuOwwPJR/GLDhEteqG31jatEaABgyCNsqy9FIJB8vl7vTfNh0Zkep6VD6881gujuZWSBkdVY2kFMsCPABYy3/3oFcsjAsu0oiBqA0n1b7oatbaic+PUAcPotvFjPtqqAQxKfsZx9Cdk4OnU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VnbXI/Ry; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=jB1DnJlDwwE8bzelwxij87xkMoTv9ueLz+3N9LD8EczJtJiyga7n7pVcucYmUEznrWRKTc64JmV9regXhcdUWuTIFNjS/uFGSFONAYVD1PNimlGle0gSsnor6TNPmXuWfTnoeh6bg6IV3AJUyFmtSwbUyanpCPVBMCmaW/fYn9w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Iu/uhRg4; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VnbXI/Ry"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id BAFECC4CEE6;
-	Tue, 10 Dec 2024 16:20:02 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Iu/uhRg4"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9D65FC4CED6;
+	Tue, 10 Dec 2024 16:25:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1733847603;
-	bh=WvufVm2JTUQopNYwcjumL2S8v4R9r6o9UwatVDefcOU=;
+	s=k20201202; t=1733847933;
+	bh=bMY2y3X7jHv/QHiqsH1Rp1Wjo8/cKcuBZu7oYLVL7xE=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=VnbXI/RyKLchkzLz/Nk/zI1YIwtiG1ZwYwR+GvlC/ZVDAtWdZKGXuLyRFfOwCcaN2
-	 GlCMXbp4tnqLHl/WLAIMIBclYvQ+qrG/6rtvaA6Bk612/uLLILtAdosy4h6IPQU4I1
-	 rlyeaUIfuzh6lVuUXBzpJkjW6QLd+pRje1Cd0o0RdLJf8AqiqjuJ36cHBkvbeL43fl
-	 NLI7Up38zr82f60JWk/oSlENoZZtpUx4rXWyFoYv5hDNkzERTeeCoEXqsITFRSVaxP
-	 EwUMOV9Uns0F1KRNCigZg4Lxq9UE3WgtMr063W5pywtwhFqkQa4mcjj6gbz8s71esY
-	 y0rsr+O0v/yog==
-Date: Tue, 10 Dec 2024 11:20:01 -0500
+	b=Iu/uhRg40/zoiiay7C24fF9Jt1DBUQdKppAS8gM0enk9/iJsRL5+moWrIVfWsF+kx
+	 3VdGi5kO/H47NoqCQXiBrv9UOLJgzlKDapW+v1ZAje3H6nj8SojUHxqw5R6zi8A8HD
+	 hOQYBt1rOWvOmD+unCbJKpiYpbk8uc7p0wpn4eUaOdHxzryJfbXohtHqZN056awPAu
+	 COEzFx8Jr9r/dljOppQCtQhRETEi/nZDxWRB4xGies2973R+4DwntvAJHkIYMAYJLJ
+	 z5EcQgw9xKjgCBQaKo/MAWPNr6TEyzc6Lm+2mg71ufauJh1ljzP+H2KS9/hy66mCtG
+	 b32MyyXnQ3RkQ==
+Date: Tue, 10 Dec 2024 11:25:32 -0500
 From: Mike Snitzer <snitzer@kernel.org>
-To: LongPing Wei <weilongping@oppo.com>
-Cc: Christoph Hellwig <hch@infradead.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
-	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"bvanassche@acm.org" <bvanassche@acm.org>,
-	"ebiggers@google.com" <ebiggers@google.com>
-Subject: Re: dm-crypt: set max_io_len as chunk_sectors of zoned device
-Message-ID: <Z1hqMSI-got7s_Od@kernel.org>
-References: <SEZPR02MB7967C480572B3B15D5F57F92D42E2@SEZPR02MB7967.apcprd02.prod.outlook.com>
- <Z0QSqndKs1fyiOmJ@infradead.org>
- <b01f1929-f1bc-4ed6-ae57-dded68f23e26@kernel.org>
- <Z0QVCemvU5_5REWB@infradead.org>
- <ec6f2bb7-95d8-4c1b-9654-4c597e1f0da4@oppo.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, zkabelac@redhat.com
+Cc: Mohammed Anees <pvmohammedanees2003@gmail.com>,
+	Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Subject: Re: dm: Allow the use of escaped characters in str_field_delimit()
+Message-ID: <Z1hrfMRedzEJb26O@kernel.org>
+References: <20241112175758.114080-1-pvmohammedanees2003@gmail.com>
+ <d62bac7e-432e-23bc-3d4c-d860e164dcaf@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -50,28 +44,34 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ec6f2bb7-95d8-4c1b-9654-4c597e1f0da4@oppo.com>
+In-Reply-To: <d62bac7e-432e-23bc-3d4c-d860e164dcaf@redhat.com>
 
-On Mon, Nov 25, 2024 at 03:49:01PM +0800, LongPing Wei wrote:
-> On 2024/11/25 14:11, Christoph Hellwig wrote:
-> > On Mon, Nov 25, 2024 at 03:07:24PM +0900, Damien Le Moal wrote:
-> > > 100% agree. But in this case, dm-crypt sees a single BIO which gets split when
-> > > submitted to the underlying device. But the split issues the requests in
-> > > reverse order, which breaks write ordering.
-> > 
-> > I'd like to see verification of this.  People who send these kinds of
-> > odd old kernel reports tend to have weird patches applied to their tree
-> > as well.
-> > 
-> > Without an upstream reproducer that actually shows issues I think
-> > this can be safely ignored.
-> > 
-> Thanks for your suggestions.
-> I will try to make another patch of fault injection to reproduce it on qemu.
+On Mon, Nov 18, 2024 at 11:38:05AM +0100, Mikulas Patocka wrote:
 > 
+> 
+> On Tue, 12 Nov 2024, Mohammed Anees wrote:
+> 
+> > Escape characters were not handled before, which could lead to
+> > unwanted issues. Some device-mapper names may contain backslashes (`\`)
+> > as valid characters and should not be treated as escape characters. Only
+> > escape characters followed directly by the separator are considered
+> > valid and need to be processed. After handling, the escape characters
+> > are removed to ensure the final string is correctly parsed without
+> > unwanted escape sequences which were used only for escaping.
+> > 
+> > Signed-off-by: Mohammed Anees <pvmohammedanees2003@gmail.com>
+> 
+> Hi
+> 
+> Does anyone really need this? Is there some use case for using escape 
+> characters in device mapper names?
 
-If/when you do find it is relevant for latest upstream and/or
-6.6-only: please add a "Fixes:" tag and also be explicit about which
-kernel(s) your fix is applicable to.
+It would seem Mohammed cared enough to write the patch, but not reply
+to you with further clarification on why it needed...
+
+BUT, in this instance it follows that: if lvm2 is allowing weird names
+which require escacped characters _and_ dm-init is used then dm-init
+needs to support handling them (dm-init is all about _not_ using
+normal initramfs with lvm2 in all its glory).
 
 Mike
