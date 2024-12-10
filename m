@@ -1,199 +1,162 @@
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
+Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D415382
-	for <dm-devel@lists.linux.dev>; Tue, 10 Dec 2024 01:28:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733794128; cv=fail; b=lXyKrJn8jhbqgMvSUeOC8CdWV7KbcZnQogXDMKjjTF6uZvI13oc7Tu3UtSMH0niGAnPaadpfQ9hVGow/ViT8ZhC3B1ZVjHassDnt6Xfk6Jwby0W/0wNoLXZq9EYseUF3HIgYmean4Dz0xT4OUyldqvj+ZzW9X2XUbHLKc0CENH4=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733794128; c=relaxed/simple;
-	bh=U1lQTTOAkHSTf8UuUFTI3/flE1wIn0DqSW9LEnicW3k=;
-	h=To:Cc:Subject:From:In-Reply-To:Message-ID:References:Date:
-	 Content-Type:MIME-Version; b=eRS2WVnNs2Y7PsID+UpbngagaS4hEPga8n0Hznv/K1LN4eEJpMdJRzHYWV0ox7fP2dC+RRwfvaIzOTeB1g9/yZ7sgoNH9LhscoK7Ed/2wfnJBqFM5fStNEB89VzEhVOxVgk/FTkOfxyTlce5qJ6/vBdSZ+/lAkFnwuEqHA6oAu4=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=Q8pXQn1f; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=rlNRDL8J; arc=fail smtp.client-ip=205.220.177.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4EFB022F3A9
+	for <dm-devel@lists.linux.dev>; Tue, 10 Dec 2024 08:33:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1733819639; cv=none; b=GIMw6Szw6BUvBR2uOFHrUkvk1FslVL7p6EUVVopKHmnRtY0/Cew4q5PGyoz+3sWqnaqiLEXmVYfMlaO0NlaZIAsbsK/vZMYeT8Jc7doc9EboFfGad4Zj8hf2OccrhU2j+b7D7P5PVt63+5GzHDucRCeAGE6yk+vPfNDEMnUmTBs=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1733819639; c=relaxed/simple;
+	bh=5xYpqswINe3tmRBXFyu3WDLwEjz2J+C5NygQ2TQM5Ew=;
+	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
+	 Message-Id:References:To; b=LbBFY6gSvYHyAQCjMN09tq1/twNvc/IpvQloWPubnp9nG6gG2OiRwbaHojrWUxSSnc+4d5P8DUt6K9mYS1y79HUCaX93FMruN5uLJ+n5egC4zHENjGtRaChHfcU6NtLlFQpgfW1ojo5YsuCyNr9Okx5I4sYWkiDbKPsbOYakh4U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=EjhAXP22; arc=none smtp.client-ip=212.122.41.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="Q8pXQn1f";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="rlNRDL8J"
-Received: from pps.filterd (m0333520.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 4BA1Br9s015768;
-	Tue, 10 Dec 2024 01:28:29 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-type:date:from:in-reply-to:message-id:mime-version
-	:references:subject:to; s=corp-2023-11-20; bh=UctlmO7/vd4NQl4Xvg
-	s3YM1mIHjH0lZYuWnhx/SpYzA=; b=Q8pXQn1fPAX4BUYECVJQgrhOzlFhqhdqHP
-	r/+PERnVUW/wUAjuzN4CKYkEJYN1zCWI2rjY5jH22g6/vmzkMVQoMSEs5LKSCeV4
-	CGy/QZtd37qGxZad54gxI04QcnEUm5wRUyb0O2sZ9ev930zI6ELMMzs4g24YL5I1
-	AMa5kHNU4z9fsyjcZAUsDiMlgHivaO8meuy4cTcIbdLx66LVQLjtdH3wDRm01bWI
-	ZaDebc00XYIcnCNvdjLtGKLi1o+T3CGmE4Vby1JxJkEDfOLEp6W63sQoQ5uDmle1
-	N9qgkFujOG0Uh/f5xrsv6w26Xr5D+2kVPze9v/mISWMMlYYRTQqQ==
-Received: from phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta01.appoci.oracle.com [138.1.114.2])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 43cedc4p08-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 10 Dec 2024 01:28:28 +0000 (GMT)
-Received: from pps.filterd (phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
-	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 4BA1AeQK035607;
-	Tue, 10 Dec 2024 01:28:27 GMT
-Received: from nam04-mw2-obe.outbound.protection.outlook.com (mail-mw2nam04lp2174.outbound.protection.outlook.com [104.47.73.174])
-	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 43cct822ca-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 10 Dec 2024 01:28:27 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=audtdUJIfcw9FMzXOL2eh/VV9JdZT2Fh8llRBBVPW/R0D8EdABSxmrkY1mvjyEUalld3D1qpdoqqYCRwpGczx6Lbtq2poeDKZckVHhvbzCmoyeCPikvkNn5Axh8ym9VPwf4A3tqE2uWM3egdQGKfI5HpQYlvBBdHu+7hQqO+wNf7lN/QcvuJarbQmG5/N4W5rJDgXGTzMoVxXBPLXJQC+8O/waVDnzF9Y6AjNhgqRLvZFJuSRyVntG8SEx0+fKAEEpyly5HiG95cJVJ3xHpRP/tfDCWn7EtTHl7YFNtFN1CUYtGjt3k6Q1IYDHykAX0VbjB+q7cJzCI865F4HgaFFw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=UctlmO7/vd4NQl4Xvgs3YM1mIHjH0lZYuWnhx/SpYzA=;
- b=hRp08cTWzqwDlbXGxzkna1Ol/KPvWmHByOlN8B9xf2JWRVY9CxQ1wQQijz9Wm9d6fYCTwPpkI6fhOYvv3O9w5bWZi3m4DCKh58LFlxcKg3rn4Y831oB5mm5nzsMfiFdSTHWou9O783GeDO1OsSxj5FWlfN7cAivwmOanjBmKrf5znsbtePSrb/vJ20w25ba/1YMk3Efr9zxp5p6mOKzeqY+oqUIlyVJ0kHvur0Ko/e565mDtaU5C9uj9Dq/1jioVbeKF5JQSEa3ucMRWI7u0rlQgnkIHiorVgd7724N2GCpB1wO4x8SN7zGtjAUrUdswXgz33gvPkWL2YKrIL4c01w==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
- dkim=pass header.d=oracle.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=UctlmO7/vd4NQl4Xvgs3YM1mIHjH0lZYuWnhx/SpYzA=;
- b=rlNRDL8Jvv5Z+9DyzGcYocbI/LeFsIKkro9WX5j0saE388dil48TkFm3527HXk55KmPtACLoTWAlWFIW3bluWroNnH6XQH9tHET2WBg981TW82zmNwvcAvGl1F69wYcVxa9wNCEh2CjPwgjLPEzowNaUiZp3sGVIFXzlwfzlZf8=
-Received: from CH0PR10MB5338.namprd10.prod.outlook.com (2603:10b6:610:cb::8)
- by CH0PR10MB4826.namprd10.prod.outlook.com (2603:10b6:610:c4::6) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8207.19; Tue, 10 Dec
- 2024 01:27:46 +0000
-Received: from CH0PR10MB5338.namprd10.prod.outlook.com
- ([fe80::5cca:2bcc:cedb:d9bf]) by CH0PR10MB5338.namprd10.prod.outlook.com
- ([fe80::5cca:2bcc:cedb:d9bf%5]) with mapi id 15.20.8230.016; Tue, 10 Dec 2024
- 01:27:45 +0000
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
-        Mike
- Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-        Christoph Hellwig <hch@lst.de>, Bart Van
- Assche <bvanassche@acm.org>
-Subject: Re: [PATCH v3 0/4] Zone write plugging fixes
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-In-Reply-To: <20241209122357.47838-1-dlemoal@kernel.org> (Damien Le Moal's
-	message of "Mon, 9 Dec 2024 21:23:53 +0900")
-Organization: Oracle Corporation
-Message-ID: <yq17c88miq0.fsf@ca-mkp.ca.oracle.com>
-References: <20241209122357.47838-1-dlemoal@kernel.org>
-Date: Mon, 09 Dec 2024 20:27:44 -0500
-Content-Type: text/plain
-X-ClientProxiedBy: BL0PR05CA0024.namprd05.prod.outlook.com
- (2603:10b6:208:91::34) To CH0PR10MB5338.namprd10.prod.outlook.com
- (2603:10b6:610:cb::8)
+	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="EjhAXP22"
+Content-Type: text/plain;
+	charset=utf-8
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
+	s=mail; t=1733819634;
+	bh=5xYpqswINe3tmRBXFyu3WDLwEjz2J+C5NygQ2TQM5Ew=;
+	h=Subject:From:In-Reply-To:Date:Cc:References:To;
+	b=EjhAXP22CN4gOnzwEau8pfWWQL6XPsu+ai7qF/uPxZvDZ01xrVSY/UkxvpxXost/U
+	 CBk7RbWLDKpdjxRbE6FxsCnME/z0swvrAQYo3nlID3mvLaZs4aeAkpVU4YJL73x7xt
+	 9n5f51hNa+7PwXVbmh/733z13P9IHlT2oxGDcCFk=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: CH0PR10MB5338:EE_|CH0PR10MB4826:EE_
-X-MS-Office365-Filtering-Correlation-Id: 48265acd-1947-4469-f3a7-08dd18b9d986
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|376014|1800799024|366016;
-X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?NykzCfgqbNmxc4ZpPmdaYTUOyUw0U/w0uwx/myKNjld0a4hwitjuDbxeAljt?=
- =?us-ascii?Q?3uzczzQG7T5iL2deHq/GYuGjoVvf9LNO1iGMLRqbCuzL4I8Vg8T7h4thwy59?=
- =?us-ascii?Q?cszMWU0gaDRg9q5x/Ott+OMneiqYZpSJyu/YZEe30yszMXCAYvN2EK8+yK7C?=
- =?us-ascii?Q?ldGKBasLX7/GD3uqRLgNT5sY23Xcyz1PiEEwHiaD9EckzROQlF/OP3Nug5kU?=
- =?us-ascii?Q?klgehW/dhXrC8sjkrvna20SQ0TQzSuloone5ztRIu1ZW85ElRmzgfR6WM7k4?=
- =?us-ascii?Q?/f5jKT7hoLVskILfHDUowZC4OL75o3Rf7tURDh8iDUbpEY2VwnegZ4ZKiymk?=
- =?us-ascii?Q?Gyfo4YYGKQrohcxo8xPljI/3G0yt8Pmrou1V07ga041f8zhE1Lhez5DCBdgY?=
- =?us-ascii?Q?/NT10vaRMzDTPvejrSLshi3FFG/+eWHGtCU73lTLcvJ1/ITt/gZGxNPxA/yg?=
- =?us-ascii?Q?fPqNeyUJSPRlWF7OV39QqXzr5UHD2Hosqyv9zwha8yg6lz+OEbGq766M0xLp?=
- =?us-ascii?Q?JXvUSvp0IP9mUpXLzcU+Wmf4FK6rJgEhsLL1/mt8JY9jWEySoMGslHEPJJ/Y?=
- =?us-ascii?Q?wCx3j0Xfe8YvdcwlSxPe6jDO6n4zZ+CG/vOhSqwUUoKn9DLfz7FfBzEPICtn?=
- =?us-ascii?Q?bZT5okWyk3VsCCcT/6rf/vQvk4ZOCiKSVXdNYOGI44wy1fBnimvV9fkq+rpl?=
- =?us-ascii?Q?xZF/+C3fKtUaiFb1XEhLDYatGgGfcRyTbzarCE9LT15FWlGVTgCUmuLk0LvT?=
- =?us-ascii?Q?IMzhNOnabTaMPOe22LnZwDAwhLOgJGhvAhv44x2qYA8mMgbuehnrRBcF3E93?=
- =?us-ascii?Q?Um+Jfzoen3YMQCDaThONubi3KXNHGtuvOdiaHyS/hGKnvKnlUWXge5B2Qc78?=
- =?us-ascii?Q?SCU4CImhcBXY33wapv8g9l2YTOSBVfhU9+chJkrqxOS+uXRVxnxxsvJaicJc?=
- =?us-ascii?Q?hUFdlSlWDMGX1Sd0ZZvfX8oY73NnKvVZzaIlFJOKXENcB1CkQ6wqEIOyXouC?=
- =?us-ascii?Q?zaSH0f5VzljEBuHptLBkffBD1MlaSm+WBDSnXJlf4xy1RiK59f2Bc2qMgNvI?=
- =?us-ascii?Q?gAmZVoiK4Qr3Tk6dF5OkH5kfBK1QB6bi/MRnCyaUAzQ4v2CSAb3ieRreIPBT?=
- =?us-ascii?Q?fWAs8W3QMvEDV4yzAlnJ51muAf0KTH+NNZBMjwjncoDVs4d2vEsbTsBD4Iyp?=
- =?us-ascii?Q?vrtx/sixbiX29JVFrw4QysErDWaY+Y8QDek10dfQ7qrnoxsbm/RRJt/9M+h6?=
- =?us-ascii?Q?JqrbE8LOSUF/oxiDMD5yCAIusbFfIXfexS8C9IEaRIyQaefXxV4E2u2YXLHe?=
- =?us-ascii?Q?8GvbRj547LGpau9QsgCn7wb5KPnKW15lVo8MghVBqyMThw=3D=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:CH0PR10MB5338.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(1800799024)(366016);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?GyuJi9Imfht5t42p85pwT0BDBI+1HQQJx3lica3zKgqdvVcwMB6WqcnwJ+qL?=
- =?us-ascii?Q?3SvW1V9Q7roVMMO6+QT8OQmuGGBSsWUibKdOEiRfCOszQVsBSuEyauGvbky2?=
- =?us-ascii?Q?jP4mmGAibs73fwcM68jWIX50NU1izUZNbu9ZnR07iR5IDMPWBNZIyigYGhF2?=
- =?us-ascii?Q?TV3U7zBldQLZx4GyTikL6Kd18pvIFxeFrSWugvrHCv4Ots6IzrDCJCvKP4Ut?=
- =?us-ascii?Q?s0XZ0jBSrYur00ke3kGN6PPa5AHBl6jzh4824RQcM1/3rSaQewT0XjcWS4Le?=
- =?us-ascii?Q?6XuDzErxCnu7eIz5brFY1TKXj+S81mGL2qpiZlCKBrVu6B84OsnDaqfu06XG?=
- =?us-ascii?Q?pgygqgfRZSemomQaGz7d5qIJ+ThS7LynIP+IMi/LuetbTord2TKqhr37n70n?=
- =?us-ascii?Q?fZra7pmDYb3cRDEDgM4lS9F6VY8JzLBaA4MaXYXWjyAVRyuCMMFIRZ7k5F2E?=
- =?us-ascii?Q?+xbvp/YoNP5p4twPMVEcWEfuF4cfmbWFm8Jv1nn5WFGNMSKw2REBq/akQ8sX?=
- =?us-ascii?Q?MQ0MU/WX4741OFweMjzul+gTFN7CmNYR0DqGz7XYBFEKWrjHr3F7w5htaWBK?=
- =?us-ascii?Q?TzYpxMOxvUjmJtViMegvzRJAT2EGbV2NNMxUMrgGK2ZORx7lozzBAzl1wORE?=
- =?us-ascii?Q?lMiPUslSb+yiI5MdDAi2I4FtAA30aaFD7Mx9Dkvgo9d/AblEB1xDjppqPt7b?=
- =?us-ascii?Q?WAY9K0cKa11eg52EiKf9kOv4iedBOnsS6VxLzCiJCIc4iX7KRADufLKski2x?=
- =?us-ascii?Q?+lLwTa/H2jw03KfPzzh26bpO/OSwatmV09VPXCLw4cyYscrVLht2zYHbkumL?=
- =?us-ascii?Q?lWQQiJSPoD+EROraPHiqd/3s3jicETIHV2vCq/86oXNrvw/2NMz9v6++v+pu?=
- =?us-ascii?Q?LkUuLKzooeu3qX/eAiL7kmIujcSwvB/1Q0FX3G/gdIVIXUv9nPDqUfzik3rl?=
- =?us-ascii?Q?DcGW33IFpluJgL6vDB5YKik52o5v1vRfUdVRirq+s74e2vRlBbN0/NacEgCa?=
- =?us-ascii?Q?hsU/MQH0qQtZn+AnIJaf4qFGTVcITsvJjk+2EqeeIJcdaq5AStLCg3w7kSWp?=
- =?us-ascii?Q?jeYiF0kv/IRWWIWje8EtZIABuWvLcVG5C2ZQbppMQBLgG3jIwwdRSyPbUj2t?=
- =?us-ascii?Q?LLDQSsSSfAVc3YHk9styUELZXxJHMrJcppJVORR6FQ+MaX0zcbjhpbOEv0B/?=
- =?us-ascii?Q?Wr3c1hZQlYSygQCNORRnJGvl1pTPwuOYDYwYFFPp8SOUD16B5qY6bG7Z1v+G?=
- =?us-ascii?Q?Tye2K0vLUDPydo+RjCjJ2FVenLUU0OWXQV8+yVCCj2FefSfGJRiyO2lihcpY?=
- =?us-ascii?Q?hd8Lup/PyCY1uS/o6MT6yWAgv/VazBwgwQht0Q2U04CX9yTuJczvv7UXlAZU?=
- =?us-ascii?Q?RVf6S6sFB6VA57iVPDn1fWlshmlnmTKWwXAHZ5hIguFm5gFeIPn9ddmGhgRR?=
- =?us-ascii?Q?/rK84yagJsUtROeZYWCadhZc3XjsxxIWXJD6EEBxRpfmDtbvWfWnn4lXWuHE?=
- =?us-ascii?Q?DEPDlCG1GD+bFIdh3ATRQ1zy6o9DhBaz0VxI+jn5uTtGBrjc+w2WvnFtCZOT?=
- =?us-ascii?Q?RVy52aLTXxGzKrv/QwzwEpMt2AcvG6s2GR0vWfLIx4q09zf83rhmN1LLMf2S?=
- =?us-ascii?Q?TA=3D=3D?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	B1J8lKFABXCZqN04fHiFZ8A+bkugxUR8egRRe8bvCok/hlMnEy0y2X74kyJxgail86iI0nATtiE624rbK8TyrrDXDC+fZ/5djgs/vED6rNUuh0qQPiNEylWE14lkpIK29xEfaPl7hBOVRvUohlYr0aeWSP7YnTI5CgErnCM5ex0lN1NmxG7dxKWNIGsyOqQxBkOOnAijX/VyY2I6Y/eAoMxOzBKFflgSSGRA/EkY3m8+a8nvM0BjAGcfMx8gQTfw5uTwoGmWsHKQiIm1+sg++/y9Arqq6mAchS3mKrfFd32Yp7HA2NMlII2iUHab8xQ4mh2K7Mw+2FUAAlP3fDjLa48Gdnp3fduCXVKfv/LvTbTJeT+WOutmpmhrBLUDmys2ultTkceoiq3CHTuizkDHxqOLG+dR3yYD0wU9cWzeL3XD7Jv499yLPvd31pE90GkXcwAvcsfX3tJRnBOT962XS0/CbDGnzLQ4KqIa+NGJvYqgmzU2yyozUZUY6r8e87NXrwCVvRy7rP7bqiGQdCgSqq3ddtLaEECuZHjwI/KZDqTl6vQykpuqkkDgpBOesglGOeNS43Hyc5DBaJ+wWWn1E3do5piNM6Ch/gdSAP0u30A=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 48265acd-1947-4469-f3a7-08dd18b9d986
-X-MS-Exchange-CrossTenant-AuthSource: CH0PR10MB5338.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 10 Dec 2024 01:27:45.5226
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: nBKyO0AwDHzQHDD1YS0UOpAtXEfuAxhFagCZcCGkyE0SNszkhbiECWIiljfzIehC0SsUuJ8HXJWielUZTxt4z9ka149xIEix+2gBjwXn4I0=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH0PR10MB4826
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1057,Hydra:6.0.680,FMLib:17.12.68.34
- definitions=2024-12-09_22,2024-12-09_05,2024-11-22_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0 suspectscore=0 spamscore=0
- mlxlogscore=999 malwarescore=0 adultscore=0 phishscore=0 mlxscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2411120000
- definitions=main-2412100008
-X-Proofpoint-ORIG-GUID: X0w1ox95tKIM2oQXiuB1t3u7kqk1E6Dj
-X-Proofpoint-GUID: X0w1ox95tKIM2oQXiuB1t3u7kqk1E6Dj
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.200.121\))
+Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
+ devices when rsyncing many files
+From: Christian Theune <ct@flyingcircus.io>
+In-Reply-To: <DD7FDB11-1BC5-4FA9-9398-23434CBDB6F8@flyingcircus.io>
+Date: Tue, 10 Dec 2024 09:33:33 +0100
+Cc: Yu Kuai <yukuai1@huaweicloud.com>,
+ John Stoffel <john@stoffel.org>,
+ "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+ dm-devel@lists.linux.dev,
+ =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>,
+ "yangerkun@huawei.com" <yangerkun@huawei.com>,
+ "yukuai (C)" <yukuai3@huawei.com>,
+ David Jeffery <djeffery@redhat.com>
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <F9738805-DB6B-4249-A4B0-EC989AD6C399@flyingcircus.io>
+References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
+ <45d44ed5-da7c-6480-9143-f611385b2e92@huaweicloud.com>
+ <9C03DED0-3A6A-42F8-B935-6EB500F8BCE2@flyingcircus.io>
+ <DD99A1F0-56E7-473D-B917-66885810233E@flyingcircus.io>
+ <78517565-B1AB-4441-B4F8-EB380E98EB0F@flyingcircus.io>
+ <26403.59789.480428.418012@quad.stoffel.home>
+ <5fb0a6f0-066d-c490-3010-8a047aae2c29@huaweicloud.com>
+ <F8CEEB15-0E3C-4F67-951D-12E165D6CC05@flyingcircus.io>
+ <B6D76C57-B940-4BFD-9C40-D6E463D2A09F@flyingcircus.io>
+ <5170f0d2-cb0f-2e0f-eb5e-31aa9d6ff65d@huawei.com>
+ <2b093abc-cd9a-0b84-bcba-baec689fa153@huaweicloud.com>
+ <63DE1813-C719-49B7-9012-641DB3DECA26@flyingcircus.io>
+ <F8A5ABD5-0773-414D-BBBC-538481BCD0F4@flyingcircus.io>
+ <753611d4-5c54-ee0d-30ab-9321274fd749@huaweicloud.com>
+ <9A0AE411-B4B8-424A-B9F6-AF933F6544F9@flyingcircus.io>
+ <BE85CBCF-1B09-48D0-9931-AA8D298F1D6B@flyingcircus.io>
+ <b2a654e7-6c71-a44e-645c-686eed9d5cd8@huaweicloud.com>
+ <240E3553-1EDD-49C8-88B8-FB3A7F0CE39C@flyingcircus.io>
+ <12295067-fc9a-8847-b370-7d86b2b66426@huaweicloud.com>
+ <CALTww28iP_pGU7jmhZrXX9D-xL5Xb6w=9jLxS=fvv_6HgqZ6qw@mail.gmail.com>
+ <09338D11-6B73-4C4B-A19A-6BDC6489C91D@flyingcircus.io>
+ <C3A9A473-0F0E-4168-BB96-5AB140C6A9FC@flyingcircus.io>
+ <0B1D29D1-523C-4E42-95F9-62B32B741930@flyingcircus.io>
+ <4DA6F1FE-D465-40C7-A116-F49CF6A2CFF0@flyingcircus.io>
+ <CALTww292Dwduh=k1W4=u+N2K6WYK7RXQyPWG3Yn-JpLY9QDbDQ@mail.gmail.com>
+ <362DFCF4-14C5-464C-A73F-72C9A3871E2F@flyingcircus.io>
+ <CALTww280ztWNUW23-Y+8w_S4ZAR4UYdtAmZU4b_wLHjjpTRPJQ@mail.gmail.com>
+ <DD7FDB11-1BC5-4FA9-9398-23434CBDB6F8@flyingcircus.io>
+To: Xiao Ni <xni@redhat.com>
 
+Just a quick update: i=E2=80=99ve been out sick and only am getting =
+around to start testing the patch on 6.6. it applied cleanly as you =
+suggested and I=E2=80=99m waiting for the compile to finish. I=E2=80=99ll =
+get back to you in the next days how it worked out.
 
-Damien,
+> On 15. Nov 2024, at 12:06, Christian Theune <ct@flyingcircus.io> =
+wrote:
+>=20
+> Will do that!
+>=20
+>> On 15. Nov 2024, at 11:11, Xiao Ni <xni@redhat.com> wrote:
+>>=20
+>> On Fri, Nov 15, 2024 at 4:45=E2=80=AFPM Christian Theune =
+<ct@flyingcircus.io> wrote:
+>>>=20
+>>> Hi,
+>>>=20
+>>>> On 15. Nov 2024, at 09:07, Xiao Ni <xni@redhat.com> wrote:
+>>>>=20
+>>>> On Thu, Nov 14, 2024 at 11:07=E2=80=AFPM Christian Theune =
+<ct@flyingcircus.io> wrote:
+>>>>>=20
+>>>>> Hi,
+>>>>>=20
+>>>>> just a followup: the system ran over 2 days without my workload =
+being able to trigger the issue. I=E2=80=99ve seen there is another =
+thread where this patch wasn=E2=80=99t sufficient and if i understand =
+correctly, Yu and Xiao are working on an amalgamated fix?
+>>>>>=20
+>>>>> Christian
+>>>>=20
+>>>> Hi Christian
+>>>>=20
+>>>> Beside the bitmap stuck problem, the other thread has a new =
+problem.
+>>>> But it looks like you don't have the new problem because you =
+already
+>>>> ran without failure for 2 days. I'll send patches against 6.13 and
+>>>> 6.11.
+>>>=20
+>>> Great, thanks!
+>>>=20
+>>> What do I need to do to get patches towards 6.6?
+>>=20
+>> Hi
+>>=20
+>> This patch can apply to 6.6 cleanly. You can have a try on 6.6 with
+>> this patch to see if it works.
+>>=20
+>> Regards
+>> Xiao
+>>>=20
+>>> Christian
+>>>=20
+>>> --
+>>> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
+>>> Flying Circus Internet Operations GmbH =C2=B7 =
+https://flyingcircus.io
+>>> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
+>>> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
+Theune, Christian Zagrodnick
+>=20
+>=20
+> Liebe Gr=C3=BC=C3=9Fe,
+> Christian Theune
+>=20
+> --=20
+> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
+> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
+> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
+> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
+Theune, Christian Zagrodnick
+>=20
 
-> These patches address potential issues with zone write plugging.
-> The first 2 patches fix handling of REQ_NOWAIT BIOs as these can be
-> "failed" after going through the zone write plugging and changing the
-> target zone plug zone write pointer offset.
->
-> Patch 3 is a bigger fix and address a potential deadlock issue due to
-> the zone write plugging internally issuing zone report operations to
-> recover from write errors. This zone report operation is removed by this
-> patch and replaced with an automatic recovery when the BIO issuer
-> execute a zone report. This change in behavior results in a problem with
-> REQ_OP_WRITE_ZEROES handling and failures in the dm-zoned device mapper.
-> That is fixed in patch 4.
+Liebe Gr=C3=BC=C3=9Fe,
+Christian Theune
 
-Complicated set of fixes but they all look good to me.
+--=20
+Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
+Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
+Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
+HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
+Christian Zagrodnick
 
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
