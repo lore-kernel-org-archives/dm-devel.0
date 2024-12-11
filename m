@@ -1,145 +1,111 @@
-Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 321A51F2C25
-	for <dm-devel@lists.linux.dev>; Wed, 11 Dec 2024 22:59:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 714C81F2C3B
+	for <dm-devel@lists.linux.dev>; Wed, 11 Dec 2024 23:16:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733957998; cv=none; b=Ggzd3PRnfA8TvXh9g4ymF48EqT+mnbtAIp+bXQ1bytoyrbY87ysHiXchLXoRE8KtDTrAzqErlZN93Mb0oD2AdIid3kKvWYuCUNqp7052kFeX50IPbbYc4dUmIGJz3SWJYO2AAVqHUQsyDdfBPyTyMPqlgWMa+QonZJvs+CorlYA=
+	t=1733959020; cv=none; b=POnMgkJ+hltBXfr6vR6KUXOlsTpsrUsnjePEUqHRD88sKfrsAp1GQgyB4MyZG8UepTLppmNuwpH0QlZ1S1Qw7C3oOwa2CPzaC527ztemtqhgFaOr27dEGvjoKVqUQFpI6wmkXggpHnNvxd3EiZXBAcjOY9zP9/auWz2fuXMmAhc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733957998; c=relaxed/simple;
-	bh=6j3+WRbuSlVrNfQ3Q90ksjso3L1HhU3ZQVfad+/28Kc=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=HYcXnjPZkzyISuWv+FVbgdA42VijCYkUUQzinalBM2v2umHm4lIPRgNKihieVuYKu+6VBRsjIVuGPC3ociadhDqCeiWMJFcoVPS8/RCAc3ARcoLpEo+7M2p9hVmugS57j1pRTIEqZ9oG5IF09s84NgNChzdm4JOMsOyJWJsDZU8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=H0yYqfqZ; arc=none smtp.client-ip=209.85.218.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1733959020; c=relaxed/simple;
+	bh=jS2RIlCYTjn95mW9puixZzdFfo4DoZslvs5oqU2Jq+k=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=Ht7DvxHFWjCsrOFLrCY6AQut8vPYOYxANWMmOPkfRxUaMM6/s8rlesAR0yRD4eUwlpTA8DLnvjCcfvfOMez+Q1ziJa6fXijLoo4Gu9e0/XjabX/2r7Aa0c7E4Dvojwculhz5RJSjXnuIjBLSLHI8swecTQhRtd+yAv6C/Qk3lQ0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ovs9mHMy; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="H0yYqfqZ"
-Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-aa67ac42819so709797166b.0
-        for <dm-devel@lists.linux.dev>; Wed, 11 Dec 2024 14:59:55 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1733957994; x=1734562794; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=UUyyo0iIKGnQnX8alrh9k2AK2MSYQRXSOtx7dP+3pZI=;
-        b=H0yYqfqZuAkTgwMaWkxLe9HxrG/xq+0JNNThY5XXw5p/DxmqATlnouASPYnf5Qc131
-         NQalOM1vSKVYMXIwBn7a/xUY4su8UpY80VGDrOLAIwh4CizkUiiWQtMk4A40JWkiPKQi
-         p4tY0gMM5hWF9Lju0rVUpLx4QJXaTBKqvIHGLsD9lIrEOlWkdhTW+7E6h2kEjzHA2LiU
-         UsBDGzjuMuR0qx1YSVywBk6/hoY8w1WACLZPPPuqBJlauQIWU+KVRlRS+4sv5LGf6V4d
-         6f7CX0xPKW6As4NYCuDkZ5hR6aeO1rugzecZvLB0qD8aIkCm5JGyXEKd2FkTr9sk2ykf
-         VeKA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1733957994; x=1734562794;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=UUyyo0iIKGnQnX8alrh9k2AK2MSYQRXSOtx7dP+3pZI=;
-        b=sSyAoogMZ1SGX1SlhHURFTBu+Vy4RWK8R+F4CVKVQ0jKf9IbY6i6LRMx222X4v7Xwt
-         O5WMZYJM6JBdVF683SAc04B7oBm+MNPGCf1nU3TYbzkKCC8YCxX5hYOxRiSoIcyKTfyY
-         sF5h2n0gI5mF6RMzP7tC08KK9CEcZiprA7PWS7sifQpfu8lbPLs9D2m6dO26UHqZuVXb
-         N3AfLM/EKFxPgutwKI2bpw3PMDvjA9snAlHlFzW3pfDPiz1PRRXe3NX2HPOZSpHZTeY7
-         GjzfVFxP2eL8BLr1jj25k+wesouI+BV7diu+tKtRdNGyu7SlN0VLmZgoMrKbupKxEctE
-         ZQrQ==
-X-Gm-Message-State: AOJu0YzK7uDxjF7jWKB9TLYrerceUIUPWofJyDbI0k0fi5bj/C0I/S8g
-	lvK70nUmOv5EzrRL5lqGotdT17VZhWDRsLHHxQ02yXhJAPYDqXo09tUyc4KTUP8=
-X-Gm-Gg: ASbGnct7RiMEysZ9pN/YYzPzOKwg48DxYnSGax6Meg2QPLj/6kfyBnlR7hdg5iW+/AK
-	/W3Wp5m0aPMwPX3rD68sHYh7QQUWZKijm065xeSWHLldW+lG4a8SBOSX3L/8AdsXcQjG9LRTXY2
-	5KzXdoqlN/GZYyQlkNxADbiFHmhUT7/7pTvHhbqe9kgKNLo9Tuqu6galUKjmJ8AC7n132eXia0B
-	tCjf5pI2D3JELcYIYo4tVGQLV4lvi1Q41ARMEjb+yh0y9lNg4AxFXD/m+J1xvWayShdBA/8dcit
-	ytY2pAGwZHYy90PZP1QWySiquuMeb/54jriXbVlr
-X-Google-Smtp-Source: AGHT+IEF7RqmEexzHd7JWCMvKkRZX3bUNNI8xTArNvuhyqq/xi8hmTLIRqfztPd86CkCs2e+o7vOOg==
-X-Received: by 2002:a17:906:cc2:b0:aa6:7165:504b with SMTP id a640c23a62f3a-aa6c1b1dfa6mr157955766b.31.1733957994281;
-        Wed, 11 Dec 2024 14:59:54 -0800 (PST)
-Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-aa677c4970bsm616489866b.112.2024.12.11.14.59.53
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 11 Dec 2024 14:59:54 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 14/14] multipathd: remove mpvec_garbage_collector()
-Date: Wed, 11 Dec 2024 23:59:09 +0100
-Message-ID: <20241211225909.298770-15-mwilck@suse.com>
-X-Mailer: git-send-email 2.47.0
-In-Reply-To: <20241211225909.298770-1-mwilck@suse.com>
-References: <20241211225909.298770-1-mwilck@suse.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ovs9mHMy"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1733959017;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=twaXyF6vBqJm/Vmcy7a5kzIxVb+/t/067m6XB95+7TY=;
+	b=Ovs9mHMypf3Y/0hUhbwE98D2bk0PCtLRxfNjmcIu5flqxlNomXFjLN4a0yy/PyO09bQmJp
+	mpSl1Gsw7wEADRBJ0Iz05ojnWKkJllEvlgG/UWJDfxZo/YC11LQm08u+fg6l6LzF/Xae68
+	Q8KCtRXq+LYRgnRPdiAagPWwmrxQhLw=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-494-kHLxtiKZMDGvh35zOgKhaw-1; Wed,
+ 11 Dec 2024 18:16:54 -0500
+X-MC-Unique: kHLxtiKZMDGvh35zOgKhaw-1
+X-Mimecast-MFC-AGG-ID: kHLxtiKZMDGvh35zOgKhaw
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 88C1019560B6;
+	Wed, 11 Dec 2024 23:16:52 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1830B1956054;
+	Wed, 11 Dec 2024 23:16:52 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4BBNGomT1463128
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 11 Dec 2024 18:16:50 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4BBNGoaL1463127;
+	Wed, 11 Dec 2024 18:16:50 -0500
+Date: Wed, 11 Dec 2024 18:16:50 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Jon Paul <Jon.Paul@hpe.com>, Martin Wilck <mwilck@suse.com>,
+        Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH RFC] multipath-tools: add HPE MSA Gen7 (2070/2072) to
+ hwtable
+Message-ID: <Z1odYq4fnXv-8VZu@redhat.com>
+References: <20241205224917.7104-1-xose.vazquez@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20241205224917.7104-1-xose.vazquez@gmail.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 3251NHRgGAgRmxfT_sEzlGNnuWlA9Z9PzSMWxOimc1Q_1733959012
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-This function duplicates functionality that we now have in the
-checker_finished() code path. Remove it.
+On Thu, Dec 05, 2024 at 11:49:16PM +0100, Xose Vazquez Perez wrote:
+> https://support.hpe.com/connect/s/product?kmpmoid=1014856412
+> 
+> Just guessing, confirmation from manufacturer is needed.
+> 
+> Cc: Jon Paul <Jon.Paul@hpe.com>
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 31 -------------------------------
- 1 file changed, 31 deletions(-)
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 138ddd0..941ec68 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1967,24 +1967,6 @@ enable_group(struct path * pp)
- 	}
- }
- 
--static void
--mpvec_garbage_collector (struct vectors * vecs)
--{
--	struct multipath * mpp;
--	int i;
--
--	if (!vecs->mpvec)
--		return;
--
--	vector_foreach_slot (vecs->mpvec, mpp, i) {
--		if (mpp && mpp->alias && !dm_map_present(mpp->alias)) {
--			condlog(2, "%s: remove dead map", mpp->alias);
--			remove_map_and_stop_waiter(mpp, vecs);
--			i--;
--		}
--	}
--}
--
- /* This is called after a path has started working again. It the multipath
-  * device for this path uses the followover failback type, and this is the
-  * best pathgroup, and this is the first path in the pathgroup to come back
-@@ -2983,7 +2965,6 @@ checkerloop (void *ap)
- {
- 	struct vectors *vecs;
- 	struct path *pp;
--	int count = 0;
- 	struct timespec last_time;
- 	struct config *conf;
- 	int foreign_tick = 0;
-@@ -3050,18 +3031,6 @@ checkerloop (void *ap)
- 			lock_cleanup_pop(vecs->lock);
- 		}
- 
--		if (count)
--			count--;
--		else {
--			pthread_cleanup_push(cleanup_lock, &vecs->lock);
--			lock(&vecs->lock);
--			pthread_testcancel();
--			condlog(4, "map garbage collection");
--			mpvec_garbage_collector(vecs);
--			count = MAPGCINT;
--			lock_cleanup_pop(vecs->lock);
--		}
--
- 		get_monotonic_time(&end_time);
- 		timespecsub(&end_time, &start_time, &diff_time);
- 		if (num_paths) {
--- 
-2.47.0
+> ---
+>  libmultipath/hwtable.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 32118339..543f0bc1 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -188,9 +188,9 @@ static struct hwentry default_hw[] = {
+>  		.prio_name     = PRIO_ALUA,
+>  	},
+>  	{
+> -		/* MSA 1040, 1050, 1060, 2040, 2050 and 2060 families */
+> +		/* MSA 1040, 1050, 1060, 2040, 2050, 2060 and 2070 families */
+>  		.vendor        = "(HP|HPE)",
+> -		.product       = "MSA [12]0[456]0 (SAN|SAS|FC|iSCSI)",
+> +		.product       = "MSA [12]0[4567]0 (SAN|SAS|FC|iSCSI)",
+>  		.pgpolicy      = GROUP_BY_PRIO,
+>  		.pgfailback    = -FAILBACK_IMMEDIATE,
+>  		.no_path_retry = 18,
+> -- 
+> 2.47.1
 
