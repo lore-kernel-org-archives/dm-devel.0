@@ -1,119 +1,181 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1270D1C6F59
-	for <dm-devel@lists.linux.dev>; Wed, 11 Dec 2024 07:54:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A046D225A2C
+	for <dm-devel@lists.linux.dev>; Wed, 11 Dec 2024 12:06:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733903699; cv=none; b=uVc+I24ffPBTBXTsH2r9QfnS8v4cV9chvLojEa2Y3UYwXEDDIKiVvFxzsEMLTscZVE8qMFmVuBTPPNR52nNCLNJLM4IOgk/7HVMS1EZ4prnACzq4dWvCLJEmylF+7oad6+939kBW5q3pB0XHW/eWeYNSw0ibO63W56+BLknh88k=
+	t=1733918811; cv=none; b=pMoINPrDpf5ljZ09xZsBIQToVhQJPlO8KlgqSXrwFnQkLnewCj5bDNKW+rRIZm6M/tucUFB6vLxzlKhpzyBZsPFDAMtzC0r49YONwqR/WBQUlMkLhGKa6tWJXbko4R9HRg16GJsoal33HC25nS/bZUPtc8mp26s7NE5qsDFIb7Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733903699; c=relaxed/simple;
-	bh=reg0AQY7mjftKRF7IfdX6Xr/J+jUdveZCJ9/GkDeeCQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=RoOqJFE4wl0DsuWF9ZKlMPKHKG7x1gGfQqexl1UMIMwXmSWfVVRJea8klgFwpXwVeyfZdpsBxOmeAifuiqoCSBdsPjMXs8Jdv6Fmu6foN82/QwqCAtCH9fppgoCx0kSn13Nly4vgfWDnm81f0ra3APNd6D59m7n2KnYp8ddz9/o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fI1WulCm; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1733918811; c=relaxed/simple;
+	bh=ZIxXJYhCpXuyZIRyXsdAlcc73D8caRmNCtH08g5UX4s=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=Ere6pD/8JPPSwYigmq3jsURgltBH/ISl26uMcpxz+kcCFGwKxyzbowJQqikYSsPTTC1OP8cjJOcCnKrFD5wWMAsyO5/+slVNyIkH4nH028VPkWODmLlnN3bK2l9SIUKSLe33WIKnA0uwHqglt2c3MBjwgGBxUhrQ9iVBbFveifY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=snFrrRjx; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=snFrrRjx; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fI1WulCm"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1733903697;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="snFrrRjx";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="snFrrRjx"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id A51491F38C;
+	Wed, 11 Dec 2024 12:06:47 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1733918807; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=GgzuRPDbF2R/ajGjI3dtLdOOA2tO+dp4ddXv8ckSFR8=;
-	b=fI1WulCm2NBsDpIHo5gyCU8XIjT2myovNkmngyGsdUEl8RvDoJnia0PYz/wzMtMEPKuESy
-	zDRte9M0CZ93Dzdd23toeDoWIcugUpUY9rFf3ydwjXHaazM7xkgK776dRgyIXSov4dGohR
-	dMnF0FyOoTjOv/8a7VIoWgaAmgWm7uI=
-Received: from mail-oi1-f197.google.com (mail-oi1-f197.google.com
- [209.85.167.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-669-Ay43H0bQNACZdxum0texpw-1; Wed, 11 Dec 2024 02:54:56 -0500
-X-MC-Unique: Ay43H0bQNACZdxum0texpw-1
-X-Mimecast-MFC-AGG-ID: Ay43H0bQNACZdxum0texpw
-Received: by mail-oi1-f197.google.com with SMTP id 5614622812f47-3eb34fc865cso2776184b6e.3
-        for <dm-devel@lists.linux.dev>; Tue, 10 Dec 2024 23:54:55 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1733903695; x=1734508495;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=GgzuRPDbF2R/ajGjI3dtLdOOA2tO+dp4ddXv8ckSFR8=;
-        b=BUdtPRykNXffX/29uKSm8Mk7PbLvkL1xwH7/twCgzN0vvBYtcE6vec8CDBQNwvpln5
-         3G8xHI+oIZaLFoTjIaQTULoN+OzanMJoPpNp7T8ObIUeshxGw+CFOVpcXRY40k1RBA7v
-         NOwTkCFmraQhIz5bTpVNcV6RIP2JOEhb0HISC2AiKckuISlD3cXdvpi1uLsHwiFqxFgf
-         p1IzIssnW0Tgyxu6YIlPW7opr0md04UM52mZeJN/ocjUPBmZjLmLSPvCcwfUgFpYOWV+
-         Ce3Te6gzp2pkgMOQRVMgaIoZPPBb9qSXlBRxZx3tE6WK2i2FzpSTz7uW+0EziJHIXp/T
-         Q3cg==
-X-Gm-Message-State: AOJu0Ywi40G54A7tcpPTCPKr4/wZ4otj03pDyZO+r+FDJem1VUdDoSN3
-	kFOGxZibn9joJx6mL9WdtlmDKrWI4R5jSh7ABKtoutXaaQlqlsqqjOoshQ9qSTSipAeHoISVrCB
-	jwORKJAFIQt7N7J2XCFjYmAgtd7b7890AgirPD2eBooFhrLyZZtBN5Qni0Q7wlf5jAnbZhJ7qPR
-	Rc/5kCGIplB6vQ6Pw48fgfNBYd7uBnPSb+K/WA7UzWNmk=
-X-Gm-Gg: ASbGnctoNF8FoMzpPLdhrQkXjsOkHOHDgqS+N/VZqfCDTOXapujRApLfXTPvRB23m9o
-	AcnwjYBUfctxnrDCi+pyJBcXX9NBaBxW4FKQs
-X-Received: by 2002:a05:6808:21a4:b0:3eb:3b6e:a731 with SMTP id 5614622812f47-3eb85c3faa7mr1071160b6e.6.1733903695058;
-        Tue, 10 Dec 2024 23:54:55 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IHpuu9MBeCFgSUx8aNTw5rAuIEK/lQ1QfQ63c7797UsDv6w3p5Fs2wB2IYSP9ncXeERbHUtNuFOA1/VhOUlpnQ=
-X-Received: by 2002:a05:6808:21a4:b0:3eb:3b6e:a731 with SMTP id
- 5614622812f47-3eb85c3faa7mr1071154b6e.6.1733903694844; Tue, 10 Dec 2024
- 23:54:54 -0800 (PST)
+	bh=ZIxXJYhCpXuyZIRyXsdAlcc73D8caRmNCtH08g5UX4s=;
+	b=snFrrRjxKezFjGHTZlU9imx0XbZfZAQq8+/V60SyfCu6BUVCWHFrjpTExzG+gIoJvbvY7F
+	/+icQUQXOJZLWpU3bUFUAnmr8bmTkHUa9SOhAFoZjwpUTg9Rd47UDhq0PRXr5EQHlJzBFC
+	pvcnJHD8/7JQ5iagghkvrQGZm6q73TM=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=snFrrRjx
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1733918807; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ZIxXJYhCpXuyZIRyXsdAlcc73D8caRmNCtH08g5UX4s=;
+	b=snFrrRjxKezFjGHTZlU9imx0XbZfZAQq8+/V60SyfCu6BUVCWHFrjpTExzG+gIoJvbvY7F
+	/+icQUQXOJZLWpU3bUFUAnmr8bmTkHUa9SOhAFoZjwpUTg9Rd47UDhq0PRXr5EQHlJzBFC
+	pvcnJHD8/7JQ5iagghkvrQGZm6q73TM=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 7EF6113983;
+	Wed, 11 Dec 2024 12:06:47 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 47xvHVeAWWeKfQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 11 Dec 2024 12:06:47 +0000
+Message-ID: <ee6fcbda31fd1f13969653782417fbed748f5bc7.camel@suse.com>
+Subject: Re: [PATCH 03/13] multipathd: allow map removal in do_sync_mpp()
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
+	dm-devel@lists.linux.dev
+Date: Wed, 11 Dec 2024 13:06:46 +0100
+In-Reply-To: <Z1jPMVejcI61qP9z@redhat.com>
+References: <20241206233617.382200-1-mwilck@suse.com>
+	 <20241206233617.382200-4-mwilck@suse.com> <Z1jPMVejcI61qP9z@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20241205114153.1496986-1-mtsai@redhat.com> <20241205114153.1496986-4-mtsai@redhat.com>
-In-Reply-To: <20241205114153.1496986-4-mtsai@redhat.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Wed, 11 Dec 2024 15:54:43 +0800
-Message-ID: <CALjSBEvuW0iG5gj9h2zPLUYKh7sn1mSUqUrLYByTYcnMFzuu=g@mail.gmail.com>
-Subject: Re: [PATCH v2 3/3] dm array: fix cursor index when skipping across
- block boundaries
-To: dm-devel@lists.linux.dev
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Joe Thornber <thornber@redhat.com>, 
-	Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <snitzer@kernel.org>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 9MvUhuJfPotWW35uVTmJwHbg59i1tLMAx6ZNVvjJMWk_1733903695
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Rspamd-Queue-Id: A51491F38C
+X-Spam-Level: 
+X-Spamd-Result: default: False [-4.51 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	MID_RHS_MATCH_FROM(0.00)[];
+	TO_DN_SOME(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:mid];
+	DKIM_TRACE(0.00)[suse.com:+]
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Rspamd-Action: no action
+X-Spam-Score: -4.51
+X-Spam-Flag: NO
 
-On Thu, Dec 5, 2024 at 7:42=E2=80=AFPM Ming-Hung Tsai <mtsai@redhat.com> wr=
-ote:
->
-> This bug affects cache resizing in v2 metadata and could lead to data
-> loss if the fast device is shrunk during the first-time resume. For
-> example:
->
-> 1. create a cache metadata consists of 32768 blocks, with a dirty block
->    assigned to the second bitmap block. cache_restore v1.0 is required.
->
-> cat <<EOF >> cmeta.xml
-> <superblock uuid=3D"" block_size=3D"64" nr_cache_blocks=3D"32768" \
-> policy=3D"smq" hint_width=3D"4">
->   <mappings>
->     <mapping cache_block=3D"32767" origin_block=3D"0" dirty=3D"true"/>
->   </mappings>
-> </superblock>
-> EOF
-> dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-> cache_restore -i cmeta.xml -o /dev/mapper/cmeta --metadata-version=3D2
->
-> 2. bring up the cache while attempt to discard all the blocks belonging
->    to the second bitmap block (block# 32576 to 32767). The last command
->    is expected to fail, but it actually succeeds.
->
-> dmsetup create cdata --table "0 2084864 linear /dev/sdc 8192"
-> dmsetup create corig --table "0 65536 linear /dev/sdc 2105344"
-> dmsetup create cache --table "0 65536 cache /dev/mapper/cmeta \
-> /dev/mapper/cdata /dev/mapper/corig 64 2 metadata2 writeback smq \
-> 2 migration_threshold 0"
->
+On Tue, 2024-12-10 at 18:30 -0500, Benjamin Marzinski wrote:
+> On Sat, Dec 07, 2024 at 12:36:07AM +0100, Martin Wilck wrote:
+> > We previously didn't allow map removal inside the checker loop. But
+> > with the late updates to the checkerloop code, it should be safe to
+> > orphan
+> > paths and delete maps even in this situation. We remove such maps
+> > everywhere
+> > else in the code already, whenever refresh_multipath() or
+> > setup_multipath()
+> > is called.
+>=20
+> Actually, thinking about this more, what do we get by proactively
+> deleting the multipath device if something goes wrong in the checker?
+> If
+> we successfully reload a device, but can't sync it with the kernel,
+> that's one thing, But that was triggered by a change in the device,
+> and
+> we know that when we reloaded the device, device-mapper was working.
+> I'm
+> leery of possibly deleting the map because of a transient device-
+> mapper
+> issue.=C2=A0 I'm not sure if on a check that we do repeatedly, we should
+> delete the device on an error.=C2=A0 We haven't in the past, and as far a=
+s
+> I
+> know, it doesn't cause problems.=C2=A0=20
 
-In addition to the reproducer described above, the patch can be verified
-using the "array_cursor/skip" tests in dm-unit:
+I don't disagree. But the same can be said for basically all call
+chains where setup_multipath() is called for an existing map. I was
+just following the pattern that we use e.g. in ev_add_path(), or in
+update_mpp_prio(). Why would we treat the checker and path addition
+differently in this respect?
 
-dm-unit run /pdata/array_cursor/skip/ --kernel-dir <KERNEL_DIR>
+If we look at this pragmatically (assuming that multipathd gets the
+parameters right), the most probable reason for a map reload failure is
+failure to open a path device in bdev_open(), either because the device
+doesn't exist, or because it's busy or otherwise unavailable. If this
+happens in ev_add_path(), the likely reason is that the path just added
+was busy, and the smartest action upon such a failure would probably be
+to just undo that addition. We currently don't do that; we remove the
+entire map, which is questionable, as you state correctly.
+
+In the checker, this can't happen. Obviously, no other process can grab
+a path device while the device mapper is holding it, so -EBUSY won't
+occur if we reload an existing map. Even device deletion doesn't cause
+failure on reload. It is possible to delete a SCSI device while it's
+mapped, and execute a table reload / suspend / resume cycle on the map
+while referencing the deleted device. The kernel keeps holding the
+reference to the deleted device, and will simply mark it as
+failed.=C2=A0This holds also if the mapped paths are re-grouped or re-
+ordered in the table. Failure occurs only if we temporarily remove the
+device from the map and re-add it, because as soon as the device is
+removed from the map's dm table, its refcount drops to zero, and it's
+gone for good.
+
+IOW, reloading a map with a table containing only already-mapped
+devices will never fail, except in extreme situations like kernel OOM.
+
+Thus, AFAICS, the only relevant scenario where a reloading would fail
+is trying to add a path device that was not previously mapped, and
+that's either busy (perhaps in another map) or has been deleted, IOW
+only when we reload after calling adopt_paths(). This is where we could
+improve. If we fail to reload after adopting new paths, we could fall
+back to the existing table, and perhaps try to add paths one by one.
+Again, this is post-0.11 material.
+
+OTOH, practially impossible is not totally impossible, so we need to be
+prepared to map reload failure either way. IMO the best thing we can do
+in this case is to keep using the kernel's map, and retry reloading
+later.=C2=A0
+
+The only critical situation is WWID change of path devices. We must try
+to fix this situation ASAP when we detect it. I'm unsure what the best
+action is if a reload fails in that situation, though (other than
+failing the path, as we already do).
+
+Martin
 
