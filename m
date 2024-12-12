@@ -1,133 +1,140 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8563236938
-	for <dm-devel@lists.linux.dev>; Thu, 12 Dec 2024 16:46:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3D54221DBE
+	for <dm-devel@lists.linux.dev>; Thu, 12 Dec 2024 17:12:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734021969; cv=none; b=tdlAVuHwLlDVTZe1os0kZY0iM+jCiaq8eWCGzdaE6eaxZk2Yglv9IqXhvUrcJNnVQkMNffn77E8wp5e7qgZ60hCdH0MUSo2DqiVQxXbNQ0lX82ePDiJbwYtRjy+HBYnJwXCI4j08TNVek8jDUpSd76TmOLORGzNdxZ+76g8il1k=
+	t=1734023570; cv=none; b=WHGbmv7tNIDWmF8AxmI1y5qZVrZ38g84+P82UDdswoXOkp4vQqlo5A8bt4DAXbCM7wv26rN1dYbumRLEFsyFy0Uyf9YIr0M0o5eLnyUFAb3EkBuc2hRgWt/zqcPzNMRdrr72VMH2UIaAUqPCDB28ThenmTJ9v0xnJByfgVxwGkY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734021969; c=relaxed/simple;
-	bh=P6oMbLJnrGLUQUUMuqOqCv+ESf1L23xH3Rcv42SX628=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=FIe/OifL2cmECQIFihsKsYkPyFhPi3YqY4MRbzBlZNQq7E96q34W/tbuvvrLOg1aF99QTfZ/2Oeu/Rn3H8z0WiDhtltB47bp/BlJDpNOVfNmQP+7lQGPhWLUjrML2Qz44AbP3gsUpwQX2jFgcQD10sJH543ZQH9F+DGk2RvXu2Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Ro6rNhFl; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=jbvfHfHu; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1734023570; c=relaxed/simple;
+	bh=QNBJnS6cbMelxwkxX8KvXPkBai+xQ59bjESd0QxAlG8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=DLHPMlNReqaiyC0SIU/evI6k1Fk6xo6hjMfiogb8+753gULbP7NHlRl/5v7rNY9LKEyvYIQTBehwI99XnLyN0zRckwzpSuEjzqMrZkXwMcJXnzwrMMTO04RIKOzfmqzmCEo0ooKqX7/d0E8O8dRWXucJxo0dcC5+2Ic01DHjNF8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=E1YJNSi0; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Ro6rNhFl";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="jbvfHfHu"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id C63151F37C;
-	Thu, 12 Dec 2024 16:46:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1734021964; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="E1YJNSi0"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1734023567;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=P6oMbLJnrGLUQUUMuqOqCv+ESf1L23xH3Rcv42SX628=;
-	b=Ro6rNhFl0OAQiZ+/7HjcN6XNWNR9C0XANa0nyptmaztVrCJQ3VtPLynokSiTtcFol7HALd
-	q6SjKa3zBvDrLkXIWHPKWWw6U6u8D8IfsqVrCxjM7nICCGQMRS4GtF32oKqxrIVn3Ll1hL
-	vbo7drhe4t6qTWiv4VqfujcDRGgFcpc=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=jbvfHfHu
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1734021963; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=P6oMbLJnrGLUQUUMuqOqCv+ESf1L23xH3Rcv42SX628=;
-	b=jbvfHfHuBmQQxvAmo1CtybslY59PibaAZNwvQfyfnDkIuOEcvp/yq3+CgOfdMOnsWML04P
-	F/8eYZxLMgL1g5v/rzx53iw6DDwRvNnEo9ex/HlhGolp32gk2swLxv4wMdPdygdRvLtRBG
-	9vC1fevQ0HeUpOcAJxnWJGdap8H8Ll4=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=uXNYZMptfRX2uIy+AQKqfiBJ1jW1y548PKEIVna4a6Y=;
+	b=E1YJNSi00GefBFjusUYcigUdfqX3Eyh6raNYieKK9B0VX2Bp+TZf0ikj8toYRbgM9XPjS3
+	hBvui/+N4rHFpIn96B4vkti3EAwKPQstZ1DB2QqxX89zNr5V2gTXI22fpWo0PozEGFyRh8
+	+cRUh2O3ubgqZb2NR8YQeUYAhU5PdEs=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-335-ph5J4fCnPJy_CPw__HEsDg-1; Thu,
+ 12 Dec 2024 12:12:42 -0500
+X-MC-Unique: ph5J4fCnPJy_CPw__HEsDg-1
+X-Mimecast-MFC-AGG-ID: ph5J4fCnPJy_CPw__HEsDg
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 927CF13939;
-	Thu, 12 Dec 2024 16:46:03 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id 0AIsIksTW2eAGwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Thu, 12 Dec 2024 16:46:03 +0000
-Message-ID: <9c8c2fa621b71e25ec07acb169aa4787d4a8472c.camel@suse.com>
-Subject: Re: [PATCH RFC] multipath-tools: add HPE MSA Gen7 (2070/2072) to
- hwtable
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Xose Vazquez Perez
-	 <xose.vazquez@gmail.com>
-Cc: Jon Paul <Jon.Paul@hpe.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
-Date: Thu, 12 Dec 2024 17:46:03 +0100
-In-Reply-To: <Z1odYq4fnXv-8VZu@redhat.com>
-References: <20241205224917.7104-1-xose.vazquez@gmail.com>
-	 <Z1odYq4fnXv-8VZu@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.54.1 
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EE5D019560BD;
+	Thu, 12 Dec 2024 17:12:40 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9EBA61956086;
+	Thu, 12 Dec 2024 17:12:40 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4BCHCdqJ1488871
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 12 Dec 2024 12:12:39 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4BCHCdUa1488870;
+	Thu, 12 Dec 2024 12:12:39 -0500
+Date: Thu, 12 Dec 2024 12:12:39 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev
+Subject: Re: [PATCH 03/13] multipathd: allow map removal in do_sync_mpp()
+Message-ID: <Z1sZh1WLCucwL61e@redhat.com>
+References: <20241206233617.382200-1-mwilck@suse.com>
+ <20241206233617.382200-4-mwilck@suse.com>
+ <Z1jPMVejcI61qP9z@redhat.com>
+ <ee6fcbda31fd1f13969653782417fbed748f5bc7.camel@suse.com>
+ <Z1nHUk8o3_qqPwED@redhat.com>
+ <30fccbf041abd3af27f0228b51df431a2ca8438a.camel@suse.com>
+ <422fff82ad35293d9406ec07820ddad5b122d1f6.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Rspamd-Queue-Id: C63151F37C
-X-Spam-Score: -3.01
-X-Rspamd-Action: no action
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	URIBL_BLOCKED(0.00)[suse.com:dkim,suse.com:mid,suse.com:email,opensvc.com:email,hpe.com:url,hpe.com:email,linux.dev:email,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo];
-	TO_DN_ALL(0.00)[];
-	FREEMAIL_TO(0.00)[redhat.com,gmail.com];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	MID_RHS_MATCH_FROM(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[5];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	ASN(0.00)[asn:25478, ipnet:::/0, country:RU];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,linux.dev:email,suse.com:dkim,suse.com:mid,suse.com:email]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spam-Flag: NO
-X-Spam-Level: 
+In-Reply-To: <422fff82ad35293d9406ec07820ddad5b122d1f6.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: kzQUmpGc2gQbNML-r4J_gFG943mL8e6hJf3im4u_s3Y_1734023561
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Wed, 2024-12-11 at 18:16 -0500, Benjamin Marzinski wrote:
-> On Thu, Dec 05, 2024 at 11:49:16PM +0100, Xose Vazquez Perez wrote:
-> > https://support.hpe.com/connect/s/product?kmpmoid=3D1014856412
-> >=20
-> > Just guessing, confirmation from manufacturer is needed.
-> >=20
-> > Cc: Jon Paul <Jon.Paul@hpe.com>
-> > Cc: Martin Wilck <mwilck@suse.com>
-> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> > Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->=20
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Wed, Dec 11, 2024 at 09:33:40PM +0100, Martin Wilck wrote:
+> On Wed, 2024-12-11 at 21:20 +0100, Martin Wilck wrote:
+> > On Wed, 2024-12-11 at 12:09 -0500, Benjamin Marzinski wrote:
+> > 
+> > 
+> > > I'm not actually worried about the kernel so much as libdevmapper.
+> > > It
+> > > is
+> > > not designed for multi-threaded processes, and that has bitten us
+> > > in
+> > > the
+> > > past. For intance, it's why we don't delete devices in
+> > > dmevent_loop()
+> > > on
+> > > libdevmapper errors. dm_get_events() just waits and retries if
+> > > getting
+> > > the device list fails, and for each device, it calls dm_is_mpath
+> > > and
+> > > will only delete a device on DM_IS_MPATH_NO, which is what I
+> > > suggested
+> > > for the cleanup function.
+> > > 
+> > > I'm pretty sure we've handled all of the known issues here, with
+> > > fixes
+> > > like:
+> > > 02d4bf07 ("libmultipath: protect racy libdevmapper calls with a
+> > > mutex")
+> > > 34e01d2f ("multipath-tools: don't call dm_lib_release() any more")
+> > > 
+> > > I'd rather not risk having missed some issue that could cause a
+> > > temporary error in a function that we call every couple of seconds
+> > > (almost always unnecessarily).
+> > 
+> > Ok, getting it. I thought that an error in DM_TABLE_STATUS must
+> > almost
+> > neccessarily mean -ENXIO (from the kernel pov), which would mean that
+> > some external entity removed the device, and that we should act as if
+> > someone had used the "remove map" CLI command. But I didn't think
+> > about
+> > libdevmapper.
+> 
+> But will libdevmapper return ENXIO if it's somehow interally confused?
+> I don't think so. I believe that if we see this error code, removing
+> the map is the right thing to do.
 
-I've already pushed this patch the "queue" branch, as Jon had ack'd it.
+I don't think that shouldn't ever happen.
 
-Martin
+https://github.com/lvmteam/lvm2/blob/928b8e9c6eaf871b3405b91c64eac5ea854f2572/device_mapper/ioctl/libdm-iface.c#L2100
+
+If libdevmapper gets an ENXIO from the kernel, it ends up setting
+dmi.exists to 0 instead of returning the error.
+
+-Ben
+ 
+> I consider adding a patch on top of the v4 series that does this. 
+> If you reject it, fine :-)
+> 
+> Regards,
+> Martin
 
