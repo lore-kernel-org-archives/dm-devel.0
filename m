@@ -1,157 +1,163 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 142FD2080D9
-	for <dm-devel@lists.linux.dev>; Thu, 12 Dec 2024 17:50:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 682231552FC;
+	Fri, 13 Dec 2024 07:16:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734025850; cv=none; b=K5Kna/JZf+wOfeXgqwe6o24GPhbbkRFLlrWhppdfteuhq4yAgd+YPDtYU6qo5ghY+V+Z42GKB81QBD1ydmxAy8xtHOZqYacqKjb4YqUE8jFEa3OyRLox0zCuuvTMWcf2jEBatQhP2VjDHSHjNMidEpk+95YrkbYKGna/89fxOYI=
+	t=1734074186; cv=none; b=fzXsGutNdxi07LiyC47StKw+qup67IGO/nsvbRJkWvYpSrbJ1+p29jR0hAEEGsKn5/ANodqLKGMBO41pTuWuHFqsTVd6mX89XnL3zo9wVlc36qee5JYXiaSGhKS90OR+fR5COBtnu+Xwh1CoMl0CLIZfs0Ha/ZuAmKf3k0ec2nU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734025850; c=relaxed/simple;
-	bh=6uLHudWOyr5SNXJ6LJ7GSiOkTJcFcmVWvEX+gPf4itU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=KkRQIriczDLGV2QtkwAY5LP0jNzHMYbUj7ZMy5CxRR5IgIW/Eh/u+DvXNuZnBRQltVpHkqV+JHHzFNQYCIhn2EK1Zeg9bvXzIN9XX8ZN7bSF5uWFJvGaJNCdynDGszKCDE4CQVdCwTeKxbOHiqTo9qxcdaY26Z7cS9kiQXouPdU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VIvxVgqd; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1734074186; c=relaxed/simple;
+	bh=Hr3hwFuzFkYYHl1m8O4baQEsPK0Xs3hONmPqtZrPWYc=;
+	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:Content-Type; b=BsRQoMIjzA/YodXluZK/Ym4ryBQaOYbICx1/qIlzk43nc4BcF6G/ZECbQrPDWze/9/uQUA2hh1hElIlrlen1gxgWVUomXQ3PthIFCmWXIfVPEawnyfpm1La2HyI4JqXuXh9SAKMbDsvp8Gcly9ABJXimJVAcAP86vml/3EHdosY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=VNxsQp+m; arc=none smtp.client-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VIvxVgqd"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1734025847;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=tZbwbyUxbNUH4aANajkuk3IvSfmIaK2fwhdVbWlBTCc=;
-	b=VIvxVgqdVHRAnTtvHQYhBsAKGwcWAFpHMsKoGh9OI42EmTJTQa/X+eeUUAm8Cwjz/cpwlN
-	2F6ce6wkL6F7rkfTLBLpUA85Y86rafGLcorUW0RrqeYV+1jiG+RgTkoffQbs09JslZYj6B
-	t+NWmnNcNEZ/HFDEhVrsOV6oHhc4uuo=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-221-f0Z58Y9RN5iaIEZ2ACgvrw-1; Thu,
- 12 Dec 2024 12:50:44 -0500
-X-MC-Unique: f0Z58Y9RN5iaIEZ2ACgvrw-1
-X-Mimecast-MFC-AGG-ID: f0Z58Y9RN5iaIEZ2ACgvrw
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9B1C2195609D;
-	Thu, 12 Dec 2024 17:50:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 563E11953951;
-	Thu, 12 Dec 2024 17:50:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 4BCHog251489834
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 12 Dec 2024 12:50:42 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 4BCHog1D1489833;
-	Thu, 12 Dec 2024 12:50:42 -0500
-Date: Thu, 12 Dec 2024 12:50:41 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <mwilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev
-Subject: Re: [PATCH 03/13] multipathd: allow map removal in do_sync_mpp()
-Message-ID: <Z1sicdU64iwB9r5X@redhat.com>
-References: <20241206233617.382200-1-mwilck@suse.com>
- <20241206233617.382200-4-mwilck@suse.com>
- <Z1jPMVejcI61qP9z@redhat.com>
- <ee6fcbda31fd1f13969653782417fbed748f5bc7.camel@suse.com>
- <Z1nHUk8o3_qqPwED@redhat.com>
- <30fccbf041abd3af27f0228b51df431a2ca8438a.camel@suse.com>
- <422fff82ad35293d9406ec07820ddad5b122d1f6.camel@suse.com>
- <Z1sZh1WLCucwL61e@redhat.com>
- <2920c30528493029653ab01c2cdd56d5b0736a28.camel@suse.com>
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="VNxsQp+m"
+Received: from pps.filterd (m0353725.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 4BD3xiEj029658;
+	Fri, 13 Dec 2024 07:16:23 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:message-id
+	:mime-version:subject:to; s=pp1; bh=IgZ7cZ+16ESsDPfDeuwM+zyJIXs1
+	iIg6IinIyl1DzJY=; b=VNxsQp+mfl4yyF6yv0wlkFqu4pQMv8j2C+IyyJ7o4WeS
+	iNdKgImEqbT/dCfeIdQbSsrrdIOz6xTA4j0psqeF0Ft8S89xpNe91aq/CE0dkqlm
+	OBSVL9vM+HHNG5iMBDHH1yK8AYBnHx+H1Kl9/JtkoAn6+PGgBLQqUalDvkfjoG/Q
+	q1Xyx+VU5ZTrOJRg1NPfPl18gUimPD11vu+5qWwRpSrzOlQEJAVgRvMK9YclgZCp
+	XXrek4mIKi4Ux/T/zPg9lpB7Pgz0Y8e2vrvxVsDUY0UYqoPCP/3SwG7v87TV16oG
+	tdmyWzrhYhtwtIytIT8REy0mImLTHL47dW+XJFCiTg==
+Received: from ppma11.dal12v.mail.ibm.com (db.9e.1632.ip4.static.sl-reverse.com [50.22.158.219])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 43ccsjyfc9-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 13 Dec 2024 07:16:22 +0000 (GMT)
+Received: from pps.filterd (ppma11.dal12v.mail.ibm.com [127.0.0.1])
+	by ppma11.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 4BD34Fih029309;
+	Fri, 13 Dec 2024 07:16:22 GMT
+Received: from smtprelay02.wdc07v.mail.ibm.com ([172.16.1.69])
+	by ppma11.dal12v.mail.ibm.com (PPS) with ESMTPS id 43gcprrv2n-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 13 Dec 2024 07:16:22 +0000
+Received: from smtpav03.wdc07v.mail.ibm.com (smtpav03.wdc07v.mail.ibm.com [10.39.53.230])
+	by smtprelay02.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 4BD7GKuM25297624
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 13 Dec 2024 07:16:20 GMT
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 959E15805F;
+	Fri, 13 Dec 2024 07:16:20 +0000 (GMT)
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id AF8B35805D;
+	Fri, 13 Dec 2024 07:16:16 +0000 (GMT)
+Received: from [9.43.77.91] (unknown [9.43.77.91])
+	by smtpav03.wdc07v.mail.ibm.com (Postfix) with ESMTP;
+	Fri, 13 Dec 2024 07:16:16 +0000 (GMT)
+Message-ID: <f6130475-3ccd-45d2-abde-3ccceada0f0a@linux.ibm.com>
+Date: Fri, 13 Dec 2024 12:46:14 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <2920c30528493029653ab01c2cdd56d5b0736a28.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: LGYeJUrGC6BFrKLtSZNiPaSb2gWvUo-_ytXOxfGcdac_1734025843
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+From: M Nikhil <nikh1092@linux.ibm.com>
+Subject: Change in reported values of some block integrity sysfs attributes
+To: linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+        linux-raid@vger.kernel.org, nvdimm@lists.linux.dev,
+        linux-scsi@vger.kernel.org, hare@suse.de, hch@lst.de
+Cc: steffen Maier <maier@linux.ibm.com>,
+        Benjamin Block
+ <bblock@linux.ibm.com>,
+        Nihar Panda <niharp@linux.ibm.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-GUID: pNrUCGEOCIZLXuwnpAdUiLLv66Vx_bzk
+X-Proofpoint-ORIG-GUID: pNrUCGEOCIZLXuwnpAdUiLLv66Vx_bzk
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1051,Hydra:6.0.680,FMLib:17.12.62.30
+ definitions=2024-10-15_01,2024-10-11_01,2024-09-30_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 clxscore=1011 adultscore=0
+ impostorscore=0 spamscore=0 lowpriorityscore=0 bulkscore=0 mlxlogscore=554
+ mlxscore=0 priorityscore=1501 suspectscore=0 malwarescore=0 phishscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.19.0-2411120000
+ definitions=main-2412130049
 
-On Thu, Dec 12, 2024 at 06:18:40PM +0100, Martin Wilck wrote:
-> On Thu, 2024-12-12 at 12:12 -0500, Benjamin Marzinski wrote:
-> > On Wed, Dec 11, 2024 at 09:33:40PM +0100, Martin Wilck wrote:
-> > > On Wed, 2024-12-11 at 21:20 +0100, Martin Wilck wrote:
-> > > > On Wed, 2024-12-11 at 12:09 -0500, Benjamin Marzinski wrote:
-> > > > 
-> > > > 
-> > > > > I'm not actually worried about the kernel so much as
-> > > > > libdevmapper.
-> > > > > It
-> > > > > is
-> > > > > not designed for multi-threaded processes, and that has bitten
-> > > > > us
-> > > > > in
-> > > > > the
-> > > > > past. For intance, it's why we don't delete devices in
-> > > > > dmevent_loop()
-> > > > > on
-> > > > > libdevmapper errors. dm_get_events() just waits and retries if
-> > > > > getting
-> > > > > the device list fails, and for each device, it calls
-> > > > > dm_is_mpath
-> > > > > and
-> > > > > will only delete a device on DM_IS_MPATH_NO, which is what I
-> > > > > suggested
-> > > > > for the cleanup function.
-> > > > > 
-> > > > > I'm pretty sure we've handled all of the known issues here,
-> > > > > with
-> > > > > fixes
-> > > > > like:
-> > > > > 02d4bf07 ("libmultipath: protect racy libdevmapper calls with a
-> > > > > mutex")
-> > > > > 34e01d2f ("multipath-tools: don't call dm_lib_release() any
-> > > > > more")
-> > > > > 
-> > > > > I'd rather not risk having missed some issue that could cause a
-> > > > > temporary error in a function that we call every couple of
-> > > > > seconds
-> > > > > (almost always unnecessarily).
-> > > > 
-> > > > Ok, getting it. I thought that an error in DM_TABLE_STATUS must
-> > > > almost
-> > > > neccessarily mean -ENXIO (from the kernel pov), which would mean
-> > > > that
-> > > > some external entity removed the device, and that we should act
-> > > > as if
-> > > > someone had used the "remove map" CLI command. But I didn't think
-> > > > about
-> > > > libdevmapper.
-> > > 
-> > > But will libdevmapper return ENXIO if it's somehow interally
-> > > confused?
-> > > I don't think so. I believe that if we see this error code,
-> > > removing
-> > > the map is the right thing to do.
-> > 
-> > I don't think that shouldn't ever happen.
-> > 
-> > https://github.com/lvmteam/lvm2/blob/928b8e9c6eaf871b3405b91c64eac5ea854f2572/device_mapper/ioctl/libdm-iface.c#L2100
-> > 
-> > If libdevmapper gets an ENXIO from the kernel, it ends up setting
-> > dmi.exists to 0 instead of returning the error.
-> 
-> I meant the kernel ioctl return code. Sorry for being unclear.
-> 
-> >From the the point of view of libmultipath, it doesn't matter.
-> libmp_mapinfo tests for ENXIO and dmi.exists, and returns DMP_NOT_FOUND
-> in both cases.
+Hi Everyone,
 
-Sure, that makes sense then. If libdevmapper told us the device doesn't
-exist, we can safely remove it.
+  * We have observed change in the values of some of the block integrity
+    sysfs attributes for the block devices on the master branch. The
+    sysfs attributes related to block device integrity , write_generate
+    and read_verify are  enabled for the block device when the parameter
+    device_is_integrity_capable is disabled. This behaviour is seen on
+    the scsi disks irrespective of DIF protection enabled or disabled on
+    the disks.
 
--Ben
- 
-> Martin
+    *Logs of the block integrity sysfs attributes for one of the block
+    device:*
+
+a3560030:~ # cat /sys/block/sda/integrity/write_generate
+
+1
+
+a3560030:~ # cat /sys/block/sda/integrity/read_verify
+
+1
+
+a3560030:~ # cat /sys/block/sda/integrity/device_is_integrity_capable
+
+0
+
+  * Similarly unexpected values of block integrity sysfs attributes are
+    seen for multipath devices as well. Multipath device reporting value
+    1 for device_is_integrity_capable even though it is based on SCSI
+    disk devices, which all have 0 for device_is_integrity_capable.
+
+a3560030:~ # cat /sys/block/dm-0/integrity/device_is_integrity_capable
+
+1
+
+a3560030:~ # cat /sys/block/dm-0/integrity/read_verify
+
+1
+
+a3560030:~ # cat /sys/block/dm-0/integrity/write_generate
+
+1
+
+  * Earlier the block integrity sysfs parameters "write_generate" and
+    "read_verify" reported value 0 when the sysfs attribute
+    device_is_integrity_capable was not set. But when tested with a
+    recent upstream kernel, there is a change in the block device
+    integrity sysfs attributes.
+  * In the process of finding the kernel changes which might have caused
+    the change in functionality, we have identified the below commit
+    which was leading to the change in the sysfs attributes.
+    9f4aa46f2a74 ("block: invert the BLK_INTEGRITY_{GENERATE,VERIFY} flags")
+  * By reverting the code changes which are part of above commit and
+    when tested the values of attributes read_verify and write_generate
+    were set to 0 which was the older functionality.
+   * From the description in the patch related to above commit, what we
+    understand is that the changes are meant to invert the block
+    integrity flags(READ_VERIFY and WRITE_GENERATE) vs the values in
+    sysfs for making the user values persistent.
+  * We would like to know if the change in the values of sysfs
+    attributes write_generate and read_verify is expected?
+  * And some additional information on in which scenario the attributes
+    will be disabled or set to 0 and the affect of other block integrity
+    attribute device_is_integrity_capable on attributes read_verify and
+    write_generate.
+
+
+Regards,
+
+*M Nikhil
+*
+
+Software Engineer
+
+ISDL, Bangalore, India
+
+Linux on IBM Z and LinuxONE
 
