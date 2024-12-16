@@ -1,65 +1,37 @@
-Received: from mail.flyingcircus.io (mail.flyingcircus.io [212.122.41.197])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0929120551E
-	for <dm-devel@lists.linux.dev>; Mon, 16 Dec 2024 13:25:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.122.41.197
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83076205ABB
+	for <dm-devel@lists.linux.dev>; Mon, 16 Dec 2024 13:36:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734355538; cv=none; b=OPfEDeX+wdQsOtwrxq8FeVfF2V84H6LKKFG8jcz6+I6oOpcjOAcuJdXx3LKWr2fUrSs0YZaJQKMDBEL3V/JJt1jHEHEcYjzszOyaRZgOCNaRUqGx58O/spyRLM3jDeD+jH1n/+t/BCgRcppAGXO61Z40V7lVQiM/mtX6McJ4TEM=
+	t=1734356212; cv=none; b=VDZXbOjZDokhBFhEhyTpCW0a3YkwxtmJuY2bs1D7HJJ/QOsDG6g8zx5ydhfrVDaftg+ggos3U1tVblO89CxyiOILJFLDFGsD2zmewYbRsLUZT97ZbwavRRMlo98fgHAY6oPJCP9hYW4IYX8+uZ4wTNc9CyZJMoGBI+N7VTaXiAE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734355538; c=relaxed/simple;
-	bh=Bltqxf62+OyxRUwLdmzfwJY1cwCIKT/msJ3ox8vE/gY=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=jHrZBcT4EK8pxhAxT5hx+Ie5lXwDVG/EGl7+6yGwH/lLlT0HBvI7Jm6h6Drkpzm2jCSRY12tWaNtUjQSe+kqAYuFLP66ewwnVX48w/GgkkvXxB8oaZRFxR9l5m+B9GWx/F/H7aj4e3F+6mTJmzxy//yv9V96gHUY1cqVXhcmC8U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io; spf=pass smtp.mailfrom=flyingcircus.io; dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b=o7s8VPYV; arc=none smtp.client-ip=212.122.41.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=flyingcircus.io
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flyingcircus.io
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=flyingcircus.io header.i=@flyingcircus.io header.b="o7s8VPYV"
-Content-Type: text/plain;
-	charset=utf-8
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=flyingcircus.io;
-	s=mail; t=1734355526;
-	bh=Bltqxf62+OyxRUwLdmzfwJY1cwCIKT/msJ3ox8vE/gY=;
-	h=Subject:From:In-Reply-To:Date:Cc:References:To;
-	b=o7s8VPYVxtVGmcYZ2gnXSJ9vgnieLZlUPWXNkowUhmwcyjCDl/dn81SV28lXdDFk8
-	 VCYeuzrq876yZt+wvZ4Hd2/o9TTFwhOAStSWAbkIVfV5caB4mRawQFDVSB92CBOpuR
-	 AdUP1hTFi2R8QqeFm3RRXpgHb+r9Ly3d83m4F8p8=
-Precedence: bulk
-X-Mailing-List: dm-devel@lists.linux.dev
-List-Id: <dm-devel.lists.linux.dev>
-List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
-List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.200.121\))
+	s=arc-20240116; t=1734356212; c=relaxed/simple;
+	bh=3x2YQ5HVZ2OjXccJi3A6P1XlPFZaQIJfUHvRRf66QRo=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=m3QYIhfAHqUbsstAd76Q2PaN18osm9AQfrx1z6/AmUDFYuUuuqUDAGd1Tyx0NTmrwHkJD6RndiKweZ8ZWzMimHSjvDgrFJkSqWSZt8vc25/limHNzNjKJGiLOOj7WYBrOTKu8d1L18SdP/5K2tvEYagvuy4ezcui7flANXs6mcQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4YBgvg2qp6z4f3jjx
+	for <dm-devel@lists.linux.dev>; Mon, 16 Dec 2024 21:36:31 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id CACA41A0194
+	for <dm-devel@lists.linux.dev>; Mon, 16 Dec 2024 21:36:45 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+	by APP4 (Coremail) with SMTP id gCh0CgB3noLpLGBnVPkTEw--.38413S3;
+	Mon, 16 Dec 2024 21:36:43 +0800 (CST)
 Subject: Re: PROBLEM: repeatable lockup on RAID-6 with LUKS dm-crypt on NVMe
  devices when rsyncing many files
-From: Christian Theune <ct@flyingcircus.io>
-In-Reply-To: <F9738805-DB6B-4249-A4B0-EC989AD6C399@flyingcircus.io>
-Date: Mon, 16 Dec 2024 14:25:04 +0100
-Cc: Yu Kuai <yukuai1@huaweicloud.com>,
- John Stoffel <john@stoffel.org>,
+To: Christian Theune <ct@flyingcircus.io>, Xiao Ni <xni@redhat.com>
+Cc: Yu Kuai <yukuai1@huaweicloud.com>, John Stoffel <john@stoffel.org>,
  "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
- dm-devel@lists.linux.dev,
- =?utf-8?Q?Dragan_Milivojevi=C4=87?= <galileo@pkm-inc.com>,
- "yangerkun@huawei.com" <yangerkun@huawei.com>,
- "yukuai (C)" <yukuai3@huawei.com>,
- David Jeffery <djeffery@redhat.com>
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <FE6CA342-7C31-4280-A62B-EFA222675DAD@flyingcircus.io>
+ dm-devel@lists.linux.dev, =?UTF-8?Q?Dragan_Milivojevi=c4=87?=
+ <galileo@pkm-inc.com>, "yangerkun@huawei.com" <yangerkun@huawei.com>,
+ David Jeffery <djeffery@redhat.com>, "yukuai (C)" <yukuai3@huawei.com>
 References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
- <45d44ed5-da7c-6480-9143-f611385b2e92@huaweicloud.com>
- <9C03DED0-3A6A-42F8-B935-6EB500F8BCE2@flyingcircus.io>
- <DD99A1F0-56E7-473D-B917-66885810233E@flyingcircus.io>
- <78517565-B1AB-4441-B4F8-EB380E98EB0F@flyingcircus.io>
- <26403.59789.480428.418012@quad.stoffel.home>
- <5fb0a6f0-066d-c490-3010-8a047aae2c29@huaweicloud.com>
- <F8CEEB15-0E3C-4F67-951D-12E165D6CC05@flyingcircus.io>
- <B6D76C57-B940-4BFD-9C40-D6E463D2A09F@flyingcircus.io>
- <5170f0d2-cb0f-2e0f-eb5e-31aa9d6ff65d@huawei.com>
- <2b093abc-cd9a-0b84-bcba-baec689fa153@huaweicloud.com>
- <63DE1813-C719-49B7-9012-641DB3DECA26@flyingcircus.io>
- <F8A5ABD5-0773-414D-BBBC-538481BCD0F4@flyingcircus.io>
- <753611d4-5c54-ee0d-30ab-9321274fd749@huaweicloud.com>
  <9A0AE411-B4B8-424A-B9F6-AF933F6544F9@flyingcircus.io>
  <BE85CBCF-1B09-48D0-9931-AA8D298F1D6B@flyingcircus.io>
  <b2a654e7-6c71-a44e-645c-686eed9d5cd8@huaweicloud.com>
@@ -75,113 +47,138 @@ References: <ADF7D720-5764-4AF3-B68E-1845988737AA@flyingcircus.io>
  <CALTww280ztWNUW23-Y+8w_S4ZAR4UYdtAmZU4b_wLHjjpTRPJQ@mail.gmail.com>
  <DD7FDB11-1BC5-4FA9-9398-23434CBDB6F8@flyingcircus.io>
  <F9738805-DB6B-4249-A4B0-EC989AD6C399@flyingcircus.io>
-To: Xiao Ni <xni@redhat.com>
+ <FE6CA342-7C31-4280-A62B-EFA222675DAD@flyingcircus.io>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <f34b49b2-6be2-3a5f-d8b2-ea49f5249dd6@huaweicloud.com>
+Date: Mon, 16 Dec 2024 21:36:41 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
+Precedence: bulk
+X-Mailing-List: dm-devel@lists.linux.dev
+List-Id: <dm-devel.lists.linux.dev>
+List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+In-Reply-To: <FE6CA342-7C31-4280-A62B-EFA222675DAD@flyingcircus.io>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgB3noLpLGBnVPkTEw--.38413S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxAF1DtFykCF17tryxXFy5Jwb_yoW5ury8p3
+	s8JFsIvF13Jr17Gr1Iy34FqF1YyF43Jrn0gr18GryUZw4qyr90vFyIkr4YgF18ZrW8Xw18
+	ZrWSqw1xXFWxCaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUB014x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26r4j6ryUM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
+	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxkF7I0En4kS14v26r1q6r43MxAIw28IcxkI7V
+	AKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCj
+	r7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6x
+	IIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVWUJVW8JwCI42IY6xAI
+	w20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x
+	0267AKxVWUJVW8JbIYCTnIWIevJa73UjIFyTuYvjfUonmRUUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 Hi,
 
-both my servers that exhibited this issue have been running fine with =
-6.6.64 and the proposed patch.
+在 2024/12/16 21:25, Christian Theune 写道:
+> Hi,
+> 
+> both my servers that exhibited this issue have been running fine with 6.6.64 and the proposed patch.
+> 
+> @yu I’d love to get this backported, is there anything I can/need to do?
 
-@yu I=E2=80=99d love to get this backported, is there anything I =
-can/need to do?
+Looks like you're testing the wrong patch. We'll not go with this patch
+in upstream.
 
-Christian
+Do you still remember the patch set from following thread?
 
-> On 10. Dec 2024, at 09:33, Christian Theune <ct@flyingcircus.io> =
-wrote:
->=20
-> Just a quick update: i=E2=80=99ve been out sick and only am getting =
-around to start testing the patch on 6.6. it applied cleanly as you =
-suggested and I=E2=80=99m waiting for the compile to finish. I=E2=80=99ll =
-get back to you in the next days how it worked out.
->=20
->> On 15. Nov 2024, at 12:06, Christian Theune <ct@flyingcircus.io> =
-wrote:
->>=20
->> Will do that!
->>=20
->>> On 15. Nov 2024, at 11:11, Xiao Ni <xni@redhat.com> wrote:
->>>=20
->>> On Fri, Nov 15, 2024 at 4:45=E2=80=AFPM Christian Theune =
-<ct@flyingcircus.io> wrote:
->>>>=20
->>>> Hi,
->>>>=20
->>>>> On 15. Nov 2024, at 09:07, Xiao Ni <xni@redhat.com> wrote:
->>>>>=20
->>>>> On Thu, Nov 14, 2024 at 11:07=E2=80=AFPM Christian Theune =
-<ct@flyingcircus.io> wrote:
->>>>>>=20
->>>>>> Hi,
->>>>>>=20
->>>>>> just a followup: the system ran over 2 days without my workload =
-being able to trigger the issue. I=E2=80=99ve seen there is another =
-thread where this patch wasn=E2=80=99t sufficient and if i understand =
-correctly, Yu and Xiao are working on an amalgamated fix?
->>>>>>=20
->>>>>> Christian
->>>>>=20
->>>>> Hi Christian
->>>>>=20
->>>>> Beside the bitmap stuck problem, the other thread has a new =
-problem.
->>>>> But it looks like you don't have the new problem because you =
-already
->>>>> ran without failure for 2 days. I'll send patches against 6.13 and
->>>>> 6.11.
->>>>=20
->>>> Great, thanks!
->>>>=20
->>>> What do I need to do to get patches towards 6.6?
->>>=20
->>> Hi
->>>=20
->>> This patch can apply to 6.6 cleanly. You can have a try on 6.6 with
->>> this patch to see if it works.
->>>=20
->>> Regards
->>> Xiao
->>>>=20
->>>> Christian
->>>>=20
->>>> --
->>>> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
->>>> Flying Circus Internet Operations GmbH =C2=B7 =
-https://flyingcircus.io
->>>> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
->>>> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
-Theune, Christian Zagrodnick
->>=20
->>=20
->> Liebe Gr=C3=BC=C3=9Fe,
+https://lore.kernel.org/all/5D6DF34A-81EF-47EE-B280-6A243A28011D@flyingcircus.io/
+
+Sorry that I was busy with other things, I'll push this in the next
+merge window v6.14-rc1, unless it fails your test. :)
+
+Thanks,
+Kuai
+
+> 
+> Christian
+> 
+>> On 10. Dec 2024, at 09:33, Christian Theune <ct@flyingcircus.io> wrote:
+>>
+>> Just a quick update: i’ve been out sick and only am getting around to start testing the patch on 6.6. it applied cleanly as you suggested and I’m waiting for the compile to finish. I’ll get back to you in the next days how it worked out.
+>>
+>>> On 15. Nov 2024, at 12:06, Christian Theune <ct@flyingcircus.io> wrote:
+>>>
+>>> Will do that!
+>>>
+>>>> On 15. Nov 2024, at 11:11, Xiao Ni <xni@redhat.com> wrote:
+>>>>
+>>>> On Fri, Nov 15, 2024 at 4:45 PM Christian Theune <ct@flyingcircus.io> wrote:
+>>>>>
+>>>>> Hi,
+>>>>>
+>>>>>> On 15. Nov 2024, at 09:07, Xiao Ni <xni@redhat.com> wrote:
+>>>>>>
+>>>>>> On Thu, Nov 14, 2024 at 11:07 PM Christian Theune <ct@flyingcircus.io> wrote:
+>>>>>>>
+>>>>>>> Hi,
+>>>>>>>
+>>>>>>> just a followup: the system ran over 2 days without my workload being able to trigger the issue. I’ve seen there is another thread where this patch wasn’t sufficient and if i understand correctly, Yu and Xiao are working on an amalgamated fix?
+>>>>>>>
+>>>>>>> Christian
+>>>>>>
+>>>>>> Hi Christian
+>>>>>>
+>>>>>> Beside the bitmap stuck problem, the other thread has a new problem.
+>>>>>> But it looks like you don't have the new problem because you already
+>>>>>> ran without failure for 2 days. I'll send patches against 6.13 and
+>>>>>> 6.11.
+>>>>>
+>>>>> Great, thanks!
+>>>>>
+>>>>> What do I need to do to get patches towards 6.6?
+>>>>
+>>>> Hi
+>>>>
+>>>> This patch can apply to 6.6 cleanly. You can have a try on 6.6 with
+>>>> this patch to see if it works.
+>>>>
+>>>> Regards
+>>>> Xiao
+>>>>>
+>>>>> Christian
+>>>>>
+>>>>> --
+>>>>> Christian Theune · ct@flyingcircus.io · +49 345 219401 0
+>>>>> Flying Circus Internet Operations GmbH · https://flyingcircus.io
+>>>>> Leipziger Str. 70/71 · 06108 Halle (Saale) · Deutschland
+>>>>> HR Stendal HRB 21169 · Geschäftsführer: Christian Theune, Christian Zagrodnick
+>>>
+>>>
+>>> Liebe Grüße,
+>>> Christian Theune
+>>>
+>>> -- 
+>>> Christian Theune · ct@flyingcircus.io · +49 345 219401 0
+>>> Flying Circus Internet Operations GmbH · https://flyingcircus.io
+>>> Leipziger Str. 70/71 · 06108 Halle (Saale) · Deutschland
+>>> HR Stendal HRB 21169 · Geschäftsführer: Christian Theune, Christian Zagrodnick
+>>>
+>>
+>> Liebe Grüße,
 >> Christian Theune
->>=20
->> --=20
->> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
->> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
->> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
->> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
-Theune, Christian Zagrodnick
->>=20
->=20
-> Liebe Gr=C3=BC=C3=9Fe,
+>>
+>> -- 
+>> Christian Theune · ct@flyingcircus.io · +49 345 219401 0
+>> Flying Circus Internet Operations GmbH · https://flyingcircus.io
+>> Leipziger Str. 70/71 · 06108 Halle (Saale) · Deutschland
+>> HR Stendal HRB 21169 · Geschäftsführer: Christian Theune, Christian Zagrodnick
+>>
+> 
+> Liebe Grüße,
 > Christian Theune
->=20
-> --=20
-> Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-> Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-> Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-> HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian =
-Theune, Christian Zagrodnick
->=20
-
-Liebe Gr=C3=BC=C3=9Fe,
-Christian Theune
-
---=20
-Christian Theune =C2=B7 ct@flyingcircus.io =C2=B7 +49 345 219401 0
-Flying Circus Internet Operations GmbH =C2=B7 https://flyingcircus.io
-Leipziger Str. 70/71 =C2=B7 06108 Halle (Saale) =C2=B7 Deutschland
-HR Stendal HRB 21169 =C2=B7 Gesch=C3=A4ftsf=C3=BChrer: Christian Theune, =
-Christian Zagrodnick
+> 
 
