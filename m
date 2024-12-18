@@ -1,70 +1,73 @@
-Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
+Received: from mail-ej1-f51.google.com (mail-ej1-f51.google.com [209.85.218.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C484519CD01
-	for <dm-devel@lists.linux.dev>; Wed, 18 Dec 2024 12:57:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 656A71AA1D1
+	for <dm-devel@lists.linux.dev>; Wed, 18 Dec 2024 12:57:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734526651; cv=none; b=YoOMaU5UCymhH5bZFQpgG0Vb/u6pg7Ny7BYDLNJ2WV3VtWRg55uvfNv7M/bziTQ2M0Lh7CS4KmtX9tpzXw1X1IrHtY/fSfackwX400imWfAiYAe13XwMx7ezHyUrZx+APmG71EB6lYZZNOZukO9mVwxVwRVc/GuDGpGJP1yCSzk=
+	t=1734526652; cv=none; b=lOdtzrow1wPJAMA/AAn3KGKiW6u+aQAstY3Ao5XdWo0/jhWtM5HBwXio4PckMN8olHWe/rEMhczv/6WXPo0crSOdSyh7COG+VXWrVWwAXH8IoVPX6mEkIGcdIeoh81P2625Batf813+NIXyEq0H6KJwDLpxUJuMljEWabQHhMmU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734526651; c=relaxed/simple;
-	bh=z8wms88ORT9j6FOpNaVYrgGG7JWgrQzacqQ5JCsYVho=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=p217eC1gm8BwZXnWai/rHe9pemnJyiCD+RyAXGAGuMDs7ahWKm70/O6/CACuW3m9K/ShFOnRpctdcDsJ36KfhhAGqZRcyTC6wnmaHApPVYwc+lx+J/N2w0wogMK7ZmtFRuhCOuGFYPSxoVxRfOwL4xmPCgsbYSXFjkACna/5pmQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XAYDV01Q; arc=none smtp.client-ip=209.85.218.53
+	s=arc-20240116; t=1734526652; c=relaxed/simple;
+	bh=dpwVm52km41SHecITSys5pQpDL52BRnmNBIKWoKvEVE=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=k/i1H2j71HZFyghVU5BCdfiQX0/POt9PGGysliVyywAiljCxgvg06/wWe0wkCYafUb3f2E4Hr5WGq49VTB/shXlqnAbcvwhQ5SsgNKoWt9u0SCKC/Zxfm6pF1Oe4bNU/7dhpAgp95HAAMkjqDnqhA+BfwDUYJmlhn23Ty6ZP/e8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=F/Mtl9jI; arc=none smtp.client-ip=209.85.218.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XAYDV01Q"
-Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-aa6c0d1833eso1151646966b.1
-        for <dm-devel@lists.linux.dev>; Wed, 18 Dec 2024 04:57:29 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="F/Mtl9jI"
+Received: by mail-ej1-f51.google.com with SMTP id a640c23a62f3a-aa6c0d1833eso1151648666b.1
+        for <dm-devel@lists.linux.dev>; Wed, 18 Dec 2024 04:57:30 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1734526648; x=1735131448; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=rCPMR6EORe91bOxjKN4OfMPqLEjWnpVbBSIjTYcJc1w=;
-        b=XAYDV01Qh29OEwGXIskbjHYsrPDP6phIzd6jwO9BTWMMzrdrnVLEockVllAAe1GR/P
-         RQsqC9Y04jJf3yxyqc4WD5Rl3tuSLMxQZodw4a8hTD6aDMtIQD1YJjIlj3FEKH4+4pA0
-         dkbPF6abeUCFSZPbDRP4E9S6O6BV2SwBwIXaie0hXkdlGvW3S2ioFMMwqOIwSjJ79BSn
-         b6jqjBcmXB/pcq4Sx19ewP8/BrSE2rbVhgoXEpZXqetfUUsPL0Yr4s4dEQg6Ggehe1bU
-         ymBFrZt2gMRNJ1L1mW3s4JVpRH3ZDMbZb2sQoylL8yq8ZxQI1MTswlCoZOC3VIYAVcxW
-         6CjA==
+        d=gmail.com; s=20230601; t=1734526649; x=1735131449; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=FOxK+btZDYuB+m3Y/BcsT4E8aBM3APrwUNkgX6eOIzM=;
+        b=F/Mtl9jIXznoUtr4hhQKiWosD8t8Sq068Vcib/E2R6IqAEnX1cOVOg998QwcOgRFb8
+         BnV355yKxERa0zazJBJDqV8JYGAs4djTqi34wEC/RCM428J2YMmlsA1PPkJICwyh0KML
+         TDMg+EDwzaC3P4ramyNcv49ZPK0SsGUAKjHUoTQyJermkFLEldjr7dav0dkmxZ7SMkU+
+         tLbO/zHAQycrlsN5cXMRsEcA7XBJEkqtc7nMGTaxFmq9c21tyAKX5iysuiN6ZM718CCS
+         Dq4z12V76SKMfz902tupTZ7tlYseFZtSP9FiuMJibP/tAK3I9Pe5ZgJM8pMm/pNITsA3
+         B2Dw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1734526648; x=1735131448;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=rCPMR6EORe91bOxjKN4OfMPqLEjWnpVbBSIjTYcJc1w=;
-        b=B0Aswt30Ft1SyLZ1E18DHlhFWYeWRvClKGDav2y2Et1mEQR4AZdtWKdgRJLiUxhPFA
-         9I0y93gmIjgiFXXqqWiSy6Yz8sNNLxoi5SdgNGwRVqZs9c+WhirKm14kAiKgLhxgMTXB
-         0MTojuMvUIcZDFwI5Nkb9fWcx+lZwcuEmu/6Ax9RF7xdSWoHNkRJL/rrb6aDg83lq12f
-         t9kmCYmT6+iVRUpRkkX4mxt6C273ULjWXqippNvXB4aGIGKKA9ZihAHJ2LmjUYTMpUnL
-         LYTgXBcbpP+Ix5zhdpClQCKvA5ZphdjaxwxIqin5lcMuLZhXo+q1JK3FaZm9OwEKKEQp
-         c4DA==
-X-Gm-Message-State: AOJu0YzHkWqC4ese/hgiloEiadJtpOkUqfu/jU/ZX8s5ay5U7n9KwsR+
-	tfoUi0gawusnUWegNcXxCR7dfb/4c55LOEBqCKcTblabPi2tEHctQyAPbvHq
-X-Gm-Gg: ASbGnctY7wNg24p0CwaM3f7MjHGX/wsQQifw7WLZQtONBHftCXNG4gSB9vPXXIfGRUo
-	XEiOlZLfvIKpJ+D6xPrWBG5ozY25nuNurqclAeD6R0qwNvjdYxYn210hCpw3KJZpGtLrshQpLHi
-	HyvXMQVhmkO/aXx8jQCPTaWo3edAZNOoJY2Afhq7h8slOAkjMcGHJ79KvHC20eOXyVjw9aDntIk
-	mIRhPFHWiCEyvpz4xUiVbABU6XH1T+oZlZ3dvQs6F9kN3SQy4G+PVcnOHobRik=
-X-Google-Smtp-Source: AGHT+IH6xphJbzBB0clZE8WO90m1ArQbyWne+sZk3kJAASTuFfHPXnqqCDdwobQVEXgXsMJb4BK/tg==
-X-Received: by 2002:a17:906:3297:b0:aa6:66bc:8788 with SMTP id a640c23a62f3a-aabf48cf088mr209274066b.45.1734526647725;
-        Wed, 18 Dec 2024 04:57:27 -0800 (PST)
+        d=1e100.net; s=20230601; t=1734526649; x=1735131449;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=FOxK+btZDYuB+m3Y/BcsT4E8aBM3APrwUNkgX6eOIzM=;
+        b=JrvEF3FSCrXgIfOjvRHMeLgpyBszXuFWj7Pc9WmHgX8T0kMPu0/9tBsuhqR6pYr46T
+         MwauZu0lSUlDAeehlz/y2gdZ22yxoL5tqcEhyEbXG96uaj+IG967czVaD/Ui8KQrsOXY
+         zRCdq+rrobsbvoqXzIxbwznWNaeuZlG3UjQti+wWnJZ2ldSz/PVR7tz8w0laBXKGgX3q
+         z0uQW6/23yfuxvPDPtPa/ngn+4jHCLaVp0new04OrmL++rdsYkQeLQKqiTbeuCZJAB29
+         AOupHLrQ754jJ5A6UvG5NawqG0P0vH+zZWsxbFiSM47IOHZCAJ4/+KilbyMsZFEbBIFh
+         xN8Q==
+X-Gm-Message-State: AOJu0YwR2WncVlBvuy2biZ1EP/GAZL692IkW1CQJmUOMp5A1kBrp90yQ
+	yRgdPabyewPy21zCfhrnvUSpJPqBcP2cO20JQi4wrJBxPLvLaLWbeKvp0A==
+X-Gm-Gg: ASbGncv6HCaNOTCbj9bQ7YNG6MRhHw6qxGqbFZjyJButYIRAX1d4Ex5zsuHdrYfSSYK
+	RZtXZMuIe7uUJmwuSGQIA5WL4AlRhOqjzFCi3SxG9RcwZWlwH/+4T1YQok9J/QlYELGci7g5bxh
+	lq+VU5RBykE6D8ICzAjUWAFu1cQQyFslww5Q2R1jFXTlQ27CpNxkGI1tBpjT+6KCeJEUORxJXNs
+	20+WqfCv0gg5Afmc5sKpne9qPLHv0c6YLx2lbP2/rvkEFwYtiPE+/Mg0366dUI=
+X-Google-Smtp-Source: AGHT+IGjwB+KGaz9IxPiPoUO4BRYEVgKODcuoLUHzuVxFxj6tbHcXYJgE0gFmUExylPTg29ml9dQmg==
+X-Received: by 2002:a17:907:9507:b0:aa6:707a:af59 with SMTP id a640c23a62f3a-aabf4911484mr200259766b.50.1734526648438;
+        Wed, 18 Dec 2024 04:57:28 -0800 (PST)
 Received: from syrah.fi.muni.cz ([2001:718:801:22c:1369:c402:50e6:7236])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aab963598c2sm555116966b.96.2024.12.18.04.57.26
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aab963598c2sm555116966b.96.2024.12.18.04.57.27
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Dec 2024 04:57:27 -0800 (PST)
+        Wed, 18 Dec 2024 04:57:28 -0800 (PST)
 From: Milan Broz <gmazyland@gmail.com>
 To: dm-devel@lists.linux.dev
 Cc: snitzer@kernel.org,
 	mpatocka@redhat.com,
 	samitolvanen@google.com,
 	jaegeuk@google.com,
-	Milan Broz <gmazyland@gmail.com>,
-	stable@vger.kernel.org
-Subject: [PATCH 1/2] dm-verity FEC: Fix RS FEC repair for roots unaligned to block size (take 2)
-Date: Wed, 18 Dec 2024 13:56:58 +0100
-Message-ID: <20241218125659.743433-1-gmazyland@gmail.com>
+	Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH 2/2] dm-verity FEC: Avoid copying RS parity bytes twice.
+Date: Wed, 18 Dec 2024 13:56:59 +0100
+Message-ID: <20241218125659.743433-2-gmazyland@gmail.com>
 X-Mailer: git-send-email 2.45.2
+In-Reply-To: <20241218125659.743433-1-gmazyland@gmail.com>
+References: <20241218125659.743433-1-gmazyland@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -73,157 +76,79 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This patch fixes an issue that was fixed in the commit
-  df7b59ba9245 ("dm verity: fix FEC for RS roots unaligned to block size")
-but later broken again in the commit
-  8ca7cab82bda ("dm verity fec: fix misaligned RS roots IO")
+Caching RS parity bytes is already done in fec_decode_bufs() now,
+no need to use yet another buffer for conversion to uint16_t.
 
-If the Reed-Solomon roots setting spans multiple blocks, the code does not
-use proper parity bytes and randomly fails to repair even trivial errors.
-
-This bug cannot happen if the sector size is multiple of RS roots
-setting (Android case with roots 2).
-
-The previous solution was to find a dm-bufio block size that is multiple
-of the device sector size and roots size. Unfortunately, the optimization
-in commit 8ca7cab82bda ("dm verity fec: fix misaligned RS roots IO")
-is incorrect and uses data block size for some roots (for example, it uses
-4096 block size for roots = 20).
-
-This patch uses a different approach:
-
- - It always uses a configured data block size for dm-bufio to avoid
- possible misaligned IOs.
-
- - and it caches the processed parity bytes, so it can join it
- if it spans two blocks.
-
-As the RS calculation is called only if an error is detected and
-the process is computationally intensive, copying a few more bytes
-should not introduce performance issues.
-
-The issue was reported to cryptsetup with trivial reproducer
-  https://gitlab.com/cryptsetup/cryptsetup/-/issues/923
-
-Reproducer (with roots=20):
-
- # create verity device with RS FEC
- dd if=/dev/urandom of=data.img bs=4096 count=8 status=none
- veritysetup format data.img hash.img --fec-device=fec.img --fec-roots=20 | \
- awk '/^Root hash/{ print $3 }' >roothash
-
- # create an erasure that should always be repairable with this roots setting
- dd if=/dev/zero of=data.img conv=notrunc bs=1 count=4 seek=4 status=none
-
- # try to read it through dm-verity
- veritysetup open data.img test hash.img --fec-device=fec.img --fec-roots=20 $(cat roothash)
- dd if=/dev/mapper/test of=/dev/null bs=4096 status=noxfer
-
- Even now the log says it cannot repair it:
-   : verity-fec: 7:1: FEC 0: failed to correct: -74
-   : device-mapper: verity: 7:1: data block 0 is corrupted
-   ...
-
-With this fix, errors are properly repaired.
-   : verity-fec: 7:1: FEC 0: corrected 4 errors
+This patch removes that double copy of RS parity bytes.
 
 Signed-off-by: Milan Broz <gmazyland@gmail.com>
-Fixes: 8ca7cab82bda ("dm verity fec: fix misaligned RS roots IO")
-Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-verity-fec.c | 40 +++++++++++++++++++++++++-------------
- 1 file changed, 26 insertions(+), 14 deletions(-)
+ drivers/md/dm-verity-fec.c | 31 ++++++++++---------------------
+ 1 file changed, 10 insertions(+), 21 deletions(-)
 
 diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index 62b1a44b8dd2..6bd9848518d4 100644
+index 6bd9848518d4..e61855da6461 100644
 --- a/drivers/md/dm-verity-fec.c
 +++ b/drivers/md/dm-verity-fec.c
-@@ -60,15 +60,19 @@ static int fec_decode_rs8(struct dm_verity *v, struct dm_verity_fec_io *fio,
+@@ -39,22 +39,6 @@ static inline u64 fec_interleave(struct dm_verity *v, u64 offset)
+ 	return offset + mod * (v->fec->rounds << v->data_dev_block_bits);
+ }
+ 
+-/*
+- * Decode an RS block using Reed-Solomon.
+- */
+-static int fec_decode_rs8(struct dm_verity *v, struct dm_verity_fec_io *fio,
+-			  u8 *data, u8 *fec, int neras)
+-{
+-	int i;
+-	uint16_t par[DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN];
+-
+-	for (i = 0; i < v->fec->roots; i++)
+-		par[i] = fec[i];
+-
+-	return decode_rs8(fio->rs, data, par, v->fec->rsn, NULL, neras,
+-			  fio->erasures, 0, NULL);
+-}
+-
+ /*
+  * Read error-correcting codes for the requested RS block. Returns a pointer
   * to the data block. Caller is responsible for releasing buf.
-  */
- static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
--			   unsigned int *offset, struct dm_buffer **buf,
--			   unsigned short ioprio)
-+			   unsigned int *offset, unsigned int par_buf_offset,
-+			   struct dm_buffer **buf, unsigned short ioprio)
- {
- 	u64 position, block, rem;
- 	u8 *res;
- 
-+	/* We have already part of parity bytes read, skip to the next block */
-+	if (par_buf_offset)
-+		index++;
-+
- 	position = (index + rsb) * v->fec->roots;
- 	block = div64_u64_rem(position, v->fec->io_size, &rem);
--	*offset = (unsigned int)rem;
-+	*offset = par_buf_offset ? 0 : (unsigned int)rem;
- 
- 	res = dm_bufio_read_with_ioprio(v->fec->bufio, block, buf, ioprio);
- 	if (IS_ERR(res)) {
-@@ -128,11 +132,12 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+@@ -132,8 +116,9 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
  {
  	int r, corrected = 0, res;
  	struct dm_buffer *buf;
--	unsigned int n, i, offset;
--	u8 *par, *block;
-+	unsigned int n, i, offset, par_buf_offset = 0;
-+	u8 *par, *block, par_buf[DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN];
+-	unsigned int n, i, offset, par_buf_offset = 0;
+-	u8 *par, *block, par_buf[DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN];
++	unsigned int n, i, j, offset, par_buf_offset = 0;
++	uint16_t par_buf[DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN];
++	u8 *par, *block;
  	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
  
--	par = fec_read_parity(v, rsb, block_offset, &offset, &buf, bio_prio(bio));
-+	par = fec_read_parity(v, rsb, block_offset, &offset,
-+			      par_buf_offset, &buf, bio_prio(bio));
- 	if (IS_ERR(par))
- 		return PTR_ERR(par);
- 
-@@ -142,7 +147,8 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 	par = fec_read_parity(v, rsb, block_offset, &offset,
+@@ -147,8 +132,11 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
  	 */
  	fec_for_each_buffer_rs_block(fio, n, i) {
  		block = fec_buffer_rs_block(v, fio, n, i);
--		res = fec_decode_rs8(v, fio, block, &par[offset], neras);
-+		memcpy(&par_buf[par_buf_offset], &par[offset], v->fec->roots - par_buf_offset);
-+		res = fec_decode_rs8(v, fio, block, par_buf, neras);
+-		memcpy(&par_buf[par_buf_offset], &par[offset], v->fec->roots - par_buf_offset);
+-		res = fec_decode_rs8(v, fio, block, par_buf, neras);
++		for (j = 0; j < v->fec->roots - par_buf_offset; j++)
++			par_buf[par_buf_offset + j] = par[offset + j];
++		/* Decode an RS block using Reed-Solomon */
++		res = decode_rs8(fio->rs, block, par_buf, v->fec->rsn,
++				 NULL, neras, fio->erasures, 0, NULL);
  		if (res < 0) {
  			r = res;
  			goto error;
-@@ -155,12 +161,21 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 		if (block_offset >= 1 << v->data_dev_block_bits)
- 			goto done;
- 
--		/* read the next block when we run out of parity bytes */
--		offset += v->fec->roots;
-+		/* Read the next block when we run out of parity bytes */
-+		offset += (v->fec->roots - par_buf_offset);
-+		/* Check if parity bytes are split between blocks */
-+		if (offset < v->fec->io_size && (offset + v->fec->roots) > v->fec->io_size) {
-+			par_buf_offset = v->fec->io_size - offset;
-+			memcpy(par_buf, &par[offset], par_buf_offset);
-+			offset += par_buf_offset;
-+		} else
-+			par_buf_offset = 0;
-+
- 		if (offset >= v->fec->io_size) {
- 			dm_bufio_release(buf);
- 
--			par = fec_read_parity(v, rsb, block_offset, &offset, &buf, bio_prio(bio));
-+			par = fec_read_parity(v, rsb, block_offset, &offset,
-+					      par_buf_offset, &buf, bio_prio(bio));
- 			if (IS_ERR(par))
- 				return PTR_ERR(par);
- 		}
-@@ -724,10 +739,7 @@ int verity_fec_ctr(struct dm_verity *v)
- 		return -E2BIG;
- 	}
- 
--	if ((f->roots << SECTOR_SHIFT) & ((1 << v->data_dev_block_bits) - 1))
--		f->io_size = 1 << v->data_dev_block_bits;
--	else
--		f->io_size = v->fec->roots << SECTOR_SHIFT;
-+	f->io_size = 1 << v->data_dev_block_bits;
- 
- 	f->bufio = dm_bufio_client_create(f->dev->bdev,
- 					  f->io_size,
+@@ -166,7 +154,8 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 		/* Check if parity bytes are split between blocks */
+ 		if (offset < v->fec->io_size && (offset + v->fec->roots) > v->fec->io_size) {
+ 			par_buf_offset = v->fec->io_size - offset;
+-			memcpy(par_buf, &par[offset], par_buf_offset);
++			for (j = 0; j < par_buf_offset; j++)
++				par_buf[j] = par[offset + j];
+ 			offset += par_buf_offset;
+ 		} else
+ 			par_buf_offset = 0;
 -- 
 2.45.2
 
