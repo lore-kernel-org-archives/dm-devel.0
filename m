@@ -1,93 +1,75 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from mail-4317.proton.ch (mail-4317.proton.ch [185.70.43.17])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 158492AE77
-	for <dm-devel@lists.linux.dev>; Sat, 21 Dec 2024 02:34:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D06E15383B
+	for <dm-devel@lists.linux.dev>; Tue, 24 Dec 2024 22:13:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.70.43.17
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734748459; cv=none; b=OaOrbO+//g0eOQMN3LLa5Mdb0tLVD0WYjvfBqRnqFbpxIhyyXOn5xWhM6yzu6KUBwvdOYOiDY4I4Mi3eM3POGr3rtoQF9lcKsOct+KFueSKQPFkec7xL27VdbBGLoy89PtaR3nkNAxMkOpekfzYWQfgXKtMHQZDMnULNp7o+MjY=
+	t=1735078416; cv=none; b=eokinBH90SYCsAt+KLhrPNHj0sjXuyZgA3VAp43bKYIXMhC1NbdnuOj67MAAnxFCj1i2Vo23aqSLnK/YmSYE519QlVyO3FEtPlAIUn8FGROAtsHc99AyKdzr4O3An8/8DttDt+/GsJVyr8z9nqGt7ZOP0fUucyrojykH/THvwM0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734748459; c=relaxed/simple;
-	bh=ITJv1jAxpqYbeMnOODyIjFLwzbxKRE5ow5Fh06ZFLj0=;
-	h=From:Subject:To:Message-ID:Date:MIME-Version:Content-Type; b=WfwZu2jFVIpBmKJPyiMDqewk3EbH4KiacNL/X+uZ7X8ygf8NY3HCOjZBYuhKhnRK9jA+DPjq/lNPeX3qcqtwBuGZ1je0SyAlWFZtaJHHUqbNjxjZXMvSVq4wx70Kg7om8U/Bab8nZ6jeqmv8r3USou6SFkJU8DMvvOakCsNeAk4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4YFSyh1lzVz4f3jMw
-	for <dm-devel@lists.linux.dev>; Sat, 21 Dec 2024 10:33:48 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id CDB0B1A0568
-	for <dm-devel@lists.linux.dev>; Sat, 21 Dec 2024 10:34:07 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
-	by APP4 (Coremail) with SMTP id gCh0CgCnzoIeKWZnmM7CFA--.62580S3;
-	Sat, 21 Dec 2024 10:34:07 +0800 (CST)
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Subject: [discussion] proposal to bypass zero data for dm-crypt
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
- lkml <linux-kernel@vger.kernel.org>, "yukuai (C)" <yukuai3@huawei.com>
-Message-ID: <73152f2b-2a3e-37a7-4578-9a4ae7ec903f@huaweicloud.com>
-Date: Sat, 21 Dec 2024 10:34:05 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1735078416; c=relaxed/simple;
+	bh=xcsYzwkfoJw/YDrO0iTnx/T1E4z0B7tmt4VgVKC6+/c=;
+	h=Date:To:From:Cc:Subject:Message-ID:MIME-Version:Content-Type; b=j5H5JDA2SOYdIrmGP861bPI6pzzu4I5XZ1IctNsU43GWd3C+N88ax7jDXGR8Vt1L8kfWZNLrgZ9HdpUYfo0IEph+PxIXDT+ru6QvHBN7pNNXWlHbogmw6Tt7VhKSMoklN7eJUzOOMXujncfcOAUrA/snoVJcPN0G1VQDSYYcb84=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ethancedwards.com; spf=pass smtp.mailfrom=ethancedwards.com; dkim=pass (2048-bit key) header.d=ethancedwards.com header.i=@ethancedwards.com header.b=g28Ue7yO; arc=none smtp.client-ip=185.70.43.17
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ethancedwards.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ethancedwards.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=ethancedwards.com header.i=@ethancedwards.com header.b="g28Ue7yO"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ethancedwards.com;
+	s=protonmail3; t=1735078405; x=1735337605;
+	bh=s8tMHzHmmJ+SEcYAfDqFaGKe7WAZQZkom1vhjssxqCQ=;
+	h=Date:To:From:Cc:Subject:Message-ID:Feedback-ID:From:To:Cc:Date:
+	 Subject:Reply-To:Feedback-ID:Message-ID:BIMI-Selector:
+	 List-Unsubscribe:List-Unsubscribe-Post;
+	b=g28Ue7yOjQ6O1kcuB8CWz0KBgP2K6zpLG0B477sgyMzxUOqKIPxfPYqtu9begsRmg
+	 4ePlIlZ5EcqlxNl3swuVONFkjxzbhUZoRL6+2tFh+JqZLJTkg6bYzBEIE8b5qjHFts
+	 MhkqI4iCUmUYBAaZf1ljmRMLyAF5DUS0x+FGbm+eYoX+y5SvSofpwxXzLD+2Sqv9Qr
+	 8ADd3NUbxgwi3ZpvyUE9I6Y7viRQ9w+mFzD7GVkJdQBYLTdzzjdp4KZ5rcdaX/lV3/
+	 EEcVcR81nCkPhu+ukXTZUFmDRv4Y5DW8/ESj6ARmNVvwTVe6ErwnHGfj9ZErsq/R5V
+	 ODtgGAMW/u0lw==
+Date: Tue, 24 Dec 2024 22:13:21 +0000
+To: "agk@redhat.com" <agk@redhat.com>
+From: Ethan Carter Edwards <ethan@ethancedwards.com>
+Cc: "snitzer@kernel.org" <snitzer@kernel.org>, "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, "linux-hardening@vger.kernel.org" <linux-hardening@vger.kernel.org>, "mpatocka@redhat.com" <mpatocka@redhat.com>
+Subject: [PATCH] dm: change kzalloc to kcalloc
+Message-ID: <Z7XWRfRi3Fn25wT4Dg19JRN4xrKcCt3TxaxZwsR_0LDR2C6fQxCiLrsMBfJg8f_ZqSAx3u6aPm-TR02dC6bLpMmqSI_jp_ADiJ_qW_27puk=@ethancedwards.com>
+Feedback-ID: 28410670:user:proton
+X-Pm-Message-ID: 1bd655178d25c363227416789bb2d5305d0fba03
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: 7bit
-X-CM-TRANSID:gCh0CgCnzoIeKWZnmM7CFA--.62580S3
-X-Coremail-Antispam: 1UD129KBjvdXoWrKF1UCry3XF1fAFW7ArW7CFg_yoWfJrb_XF
-	98WrWDG340yrWrAa17tFWfXr9xtrZ0kayrXayUt3ZrK3s5XwnxXFnrurWvv34Iqw45JF4k
-	ur4fXFyxWw15WjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
-	9fnUUIcSsGvfJTRUUUb4kYFVCjjxCrM7AC8VAFwI0_Gr0_Xr1l1xkIjI8I6I8E6xAIw20E
-	Y4v20xvaj40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28CjxkF64kEwV
-	A0rcxSw2x7M28EF7xvwVC0I7IYx2IY67AKxVW5JVW7JwA2z4x0Y4vE2Ix0cI8IcVCY1x02
-	67AKxVWxJVW8Jr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxV
-	AFwI0_GcCE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2
-	j2WlYx0E2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7x
-	kEbVWUJVW8JwACjcxG0xvEwIxGrwCYjI0SjxkI62AI1cAE67vIY487MxkF7I0En4kS14v2
-	6r126r1DMxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrV
-	AFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUAVWUtwCI
-	c40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267
-	AKxVWUJVW8JwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr0_
-	Gr1lIxAIcVC2z280aVCY1x0267AKxVWUJVW8JbIYCTnIWIevJa73UjIFyTuYvjxUwxhLUU
-	UUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Background
+Use 2-factor multiplication argument form kcalloc() instead
+of instead of the deprecated kzalloc() [1].
 
-We provide virtual machines for customers to use, which include an 
-important feature: in the initial state, the disks in the virtual 
-machine do not occupy actual storage space, and the data read by users 
-is all zeros until the user writes data for the first time. This can 
-save a large amount of storage.
+[1] https://www.kernel.org/doc/html/next/process/deprecated.html#open-coded=
+-arithmetic-in-allocator-arguments
+Link: https://github.com/KSPP/linux/issues/162
 
-Problem
+Signed-off-by: Ethan Carter Edwards <ethan@ethancedwards.com>
+---
+ drivers/md/dm-ps-io-affinity.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-However, after introducing dm-crypt, this feature has failed. Because we 
-expect the data read by users in the initial state to be zero, we have 
-to write all zeros from dm-crypt.
-
-Hence we'd like to propose to bypass zero data for dm-crypt, for
-example:
-
-before:
-zero data -> encrypted zero data
-decrypted zero data -> zero data
-others
-
-after:
-zero data -> zero data
-decrypted zero data -> encrypted zero data
-others(doesn't change)
-
-We'd like to hear from the community for suggestions first, before we
-start. :)
-
-Thanks,
-Kuai
-
+diff --git a/drivers/md/dm-ps-io-affinity.c b/drivers/md/dm-ps-io-affinity.=
+c
+index 461ee6b2044d..716807e511ee 100644
+--- a/drivers/md/dm-ps-io-affinity.c
++++ b/drivers/md/dm-ps-io-affinity.c
+@@ -116,7 +116,7 @@ static int ioa_create(struct path_selector *ps, unsigne=
+d int argc, char **argv)
+ =09if (!s)
+ =09=09return -ENOMEM;
+=20
+-=09s->path_map =3D kzalloc(nr_cpu_ids * sizeof(struct path_info *),
++=09s->path_map =3D kcalloc(nr_cpu_ids, sizeof(struct path_info *),
+ =09=09=09     GFP_KERNEL);
+ =09if (!s->path_map)
+ =09=09goto free_selector;
+--=20
+2.47.1
