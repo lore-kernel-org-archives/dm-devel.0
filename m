@@ -1,41 +1,55 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ua1-f54.google.com (mail-ua1-f54.google.com [209.85.222.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7501414B06E
-	for <dm-devel@lists.linux.dev>; Fri, 27 Dec 2024 08:43:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B60416DC3C
+	for <dm-devel@lists.linux.dev>; Mon, 30 Dec 2024 11:05:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1735288994; cv=none; b=b4GX2wr8Bgmi+rg/1jBtzGuObIku16tuCCJF0jXJe2hImnzxC1+ABoy5CfkAawkQaVXwbM/YvQZJJfsCW0576U6ggoMhofRjcHd3BMU0m/OWUsgPkRKLHtSOi3dJRyaqdE1XYeryZVWDzMBimvCZVIYJaiqLdnjEGxapsqO6rXw=
+	t=1735556720; cv=none; b=FRu9jVhCPYcdH+lZbtDEMjQCEbL5LNOWfjQdkZjWDepkDEJZyCpUnT8XHOmRiYq2gT0iGcxXkRHlFqCKPuVpIOfYDx36DBRrR4N8imghi+i4u2Ct4ESpeYZJYx1xQ66Hr53oqkTieN6hskIB/X5xAVb5gZN9sjfJsZ04iQg1ka0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1735288994; c=relaxed/simple;
-	bh=RhhhWSx/EreyZNGNV47lSpm8OnSp6XFtaFvMGz+S+og=;
+	s=arc-20240116; t=1735556720; c=relaxed/simple;
+	bh=qfb7DHzgExVzKgGWJHPlFxeVctNnqLg3iDSUuMPUUXc=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=jXi3NGUEJqobFnPx6RPtvITmTI5YVALhx9o2wUgDKHS1sNvGqzJGSFrwQC541jzGS7BH2iMAvhBOYVeGwEOPMmYaqwbyy08Q3WmjGyr45nhNFbbZMSJJcA081XN7pa4Kk3D6s4fhOn53OHBC0SZ722nvMhe252GCIaUdUZpGbW0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DTb7zFgr; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DTb7zFgr"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 52FA7C4CED0
-	for <dm-devel@lists.linux.dev>; Fri, 27 Dec 2024 08:43:14 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1735288994;
-	bh=RhhhWSx/EreyZNGNV47lSpm8OnSp6XFtaFvMGz+S+og=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=DTb7zFgr8jttbWVUgyp6ZKwZ3oHWQEC1vBDsG8gjybBZxqqmAxXiWRQKEFvJijy9v
-	 xGo4rBT7rq3wQtOiGiBX7mU5GEaAv5o09PZqYJM2RF8qtTc1c8NDosGbdjrkdn8mfk
-	 6ari/pRd3uuTcj8T4NxXa4xBXgiOggokbDJ5IPW/U+OyBoGlcsb/7zJCul81KD7Ref
-	 S/bc8mzLhCUndqmbdF+GOGJauKBs2Vz6fSWKNddsAi9LMKQpCqvpn7y9g2C3G5LMS3
-	 LwEzL3mYdSIASzCfQUccYkR6htAI5U8adH6Moi3RI8KoXI3rmvvFoGaF29kWNL27PO
-	 4kSn7aLJDNuFw==
-Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-5401e6efffcso8603193e87.3
-        for <dm-devel@lists.linux.dev>; Fri, 27 Dec 2024 00:43:14 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCX9ep2/rhZA4ZAQmRlST6N03HbKpSAIEqWurbzmULlxkfvXCVtHqcV4tTBuYOBhE094Neejv814pg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzjIv4AVU6Yn0N2jx/fmErgyLpRigV9rk+NQVkPhcoe+0KuyAh4
-	W5z+3n9HappUSjUWflWyn4xpINlvHU6kMykwsyfbm1qnEaXmeNfPkYBX7BthEpzE/l6355HPRDT
-	dXXQjHAECDDLCOpVuQ285xDc6AKg=
-X-Google-Smtp-Source: AGHT+IE9sTgBL15+HlHDoJP/WBKAy5PoB9bXCVJNqWoyGljD224wRAOPPbZypLIldMeb4VqafyVyjDcI9RgdmiX520c=
-X-Received: by 2002:a05:6512:334e:b0:542:2972:4e1e with SMTP id
- 2adb3069b0e04-54229724e74mr5957772e87.12.1735288992659; Fri, 27 Dec 2024
- 00:43:12 -0800 (PST)
+	 To:Cc:Content-Type; b=P8gUFvViu9ZNd8czHLYexMimPFumiocK4nMqTK9C5P5wMdWvYiQPLL7/7Z9VqygnRVLfu0zG3SkplQC2lYZtd6vyy3QGKs8KObVX59yNhskkvGKS2PpYfB4t9idsqb6J5cjPNr3bTk/bFlfYnsWysOmNVwrGm+icRw2OKlA70ew=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.222.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-ua1-f54.google.com with SMTP id a1e0cc1a2514c-85c662ebbc3so1328482241.0
+        for <dm-devel@lists.linux.dev>; Mon, 30 Dec 2024 03:05:17 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1735556716; x=1736161516;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=id47K/4a6U+QFVGteH4iyr7Ptsppi8ire0OS89OefHg=;
+        b=fc8X/rjw8ay1EbmvS+eOfNl+zSN52zsu8Kn9uncksjea8E8KLsXHK/gwdJ3CUIlZ1B
+         iQn0xOmkRSNkYE+b04+u0eQhK6GfMe40w6hWxAK/cPpuo8lEjD9RlGpYvpCg+kGztCxc
+         rCP6ggfPAT7fNm2ef8MJea/a8NrDlFHgJSa/IIvwERwyZcVWa6Q8Fbg7j9yMMxx9NUg1
+         qiQx5ZLzFFUE6HJorT44nvbmhXZgcKrvJ4ePh25pypScIQ/UTUpwvyUQc3pP3CtkKCWy
+         dvlbO3R1nJh9XB7VIfqIYwOG7qtawO2WTuhxRFkDZsv6S3M2xuIzjI1tVRlvtgmpg2c4
+         P3cA==
+X-Forwarded-Encrypted: i=1; AJvYcCWtW3eDvizQdrqV8R0nkrs5OcRItujHKRiZS+BrpMIPA864l2OQwe2zOLq/mPuVEG4jhxVMWSbOug==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyrQQN0WeeqUHpGJ4lj/1XOHXtPUOtuxf/RQCnFNwjq5kZl7ZYo
+	mKKR8XRoZL5uMufDvyjnNZrnQwYp6T/LQPP0WHO41xEra9BEMxpve7vxkX54
+X-Gm-Gg: ASbGncsEI3L9+zfL8WQ+JfVEv18XWkYuRVyorHIHxiOnvAb5INRHuz3Pal2xf+WuEHL
+	LrLy9NYMqKklRYU/VYTZPoVbL++ZycQjDb0//FmLWN8BJDW1T7Ps2CQLryoCzu8KLohZxvlEBP0
+	VWOu+fmWKTdVgXJ/Aa2H5BrNhVd3rKvpG8OuSqu3Mu2VnmNzSWHJC3H+y7elQF038AcsmDF+sl8
+	po5rydx8MvMKz3YkLM4KCXKWdN8tSD1h6Phc8dkQGzPfIxG5k0Pu5PlBvbPJmSOeZrKwBAKFheM
+	fMKt7/zAhxgsVfL5NPU=
+X-Google-Smtp-Source: AGHT+IE3N5VultzgER7447i+hR5X2LIk38op29KtUElMI46whbcsAEYSqJ7hKB34DTl33TcVjH1GZA==
+X-Received: by 2002:a05:6102:5686:b0:4af:de38:dff7 with SMTP id ada2fe7eead31-4b2cc128d93mr29178651137.0.1735556715951;
+        Mon, 30 Dec 2024 03:05:15 -0800 (PST)
+Received: from mail-vs1-f43.google.com (mail-vs1-f43.google.com. [209.85.217.43])
+        by smtp.gmail.com with ESMTPSA id a1e0cc1a2514c-8610ad5a546sm3937108241.34.2024.12.30.03.05.15
+        for <dm-devel@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 30 Dec 2024 03:05:15 -0800 (PST)
+Received: by mail-vs1-f43.google.com with SMTP id ada2fe7eead31-4afefc876c6so2790936137.2
+        for <dm-devel@lists.linux.dev>; Mon, 30 Dec 2024 03:05:15 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCXBnlSo94OGuWZLxlO1ZcEtObo28cbydQJaxPchTLyCZ6FG7jUdXll57UMUODepjRTS4bGRY94T+Q==@lists.linux.dev
+X-Received: by 2002:a05:6102:c02:b0:4b2:5c72:cd55 with SMTP id
+ ada2fe7eead31-4b2cc31f256mr28218146137.5.1735556715611; Mon, 30 Dec 2024
+ 03:05:15 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -44,19 +58,20 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 References: <20241226194309.27733-1-ebiggers@kernel.org>
 In-Reply-To: <20241226194309.27733-1-ebiggers@kernel.org>
-From: Ard Biesheuvel <ardb@kernel.org>
-Date: Fri, 27 Dec 2024 09:43:01 +0100
-X-Gmail-Original-Message-ID: <CAMj1kXEufcfUMoNW3M4T2CvnvJP4NyNF=YRAj8vh_pSyVywJ2g@mail.gmail.com>
-Message-ID: <CAMj1kXEufcfUMoNW3M4T2CvnvJP4NyNF=YRAj8vh_pSyVywJ2g@mail.gmail.com>
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+Date: Mon, 30 Dec 2024 12:05:03 +0100
+X-Gmail-Original-Message-ID: <CAMuHMdWRim0-vjzRSAhrSmukVxo_gzY_dDrtY_mYOPU2An9h+Q@mail.gmail.com>
+Message-ID: <CAMuHMdWRim0-vjzRSAhrSmukVxo_gzY_dDrtY_mYOPU2An9h+Q@mail.gmail.com>
 Subject: Re: [PATCH] crypto: vmac - remove unused VMAC algorithm
 To: Eric Biggers <ebiggers@kernel.org>
 Cc: linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, 
 	dm-devel@lists.linux.dev, Atharva Tiwari <evepolonium@gmail.com>, 
 	Shane Wang <shane.wang@intel.com>
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Thu, 26 Dec 2024 at 20:44, Eric Biggers <ebiggers@kernel.org> wrote:
->
+On Thu, Dec 26, 2024 at 8:44=E2=80=AFPM Eric Biggers <ebiggers@kernel.org> =
+wrote:
 > From: Eric Biggers <ebiggers@google.com>
 >
 > Remove the vmac64 template, as it has no known users.  It also continues
@@ -106,11 +121,6 @@ On Thu, 26 Dec 2024 at 20:44, Eric Biggers <ebiggers@kernel.org> wrote:
 > Cc: Shane Wang <shane.wang@intel.com>
 > Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-Acked-by: Ard Biesheuvel <ardb@kernel.org>
-
-> ---
->  arch/arm/configs/pxa_defconfig             |   1 -
->  arch/loongarch/configs/loongson3_defconfig |   1 -
 >  arch/m68k/configs/amiga_defconfig          |   1 -
 >  arch/m68k/configs/apollo_defconfig         |   1 -
 >  arch/m68k/configs/atari_defconfig          |   1 -
@@ -123,21 +133,19 @@ Acked-by: Ard Biesheuvel <ardb@kernel.org>
 >  arch/m68k/configs/q40_defconfig            |   1 -
 >  arch/m68k/configs/sun3_defconfig           |   1 -
 >  arch/m68k/configs/sun3x_defconfig          |   1 -
->  arch/mips/configs/bigsur_defconfig         |   1 -
->  arch/mips/configs/decstation_64_defconfig  |   1 -
->  arch/mips/configs/decstation_defconfig     |   1 -
->  arch/mips/configs/decstation_r4k_defconfig |   1 -
->  arch/mips/configs/ip27_defconfig           |   1 -
->  arch/mips/configs/ip30_defconfig           |   1 -
->  arch/s390/configs/debug_defconfig          |   1 -
->  arch/s390/configs/defconfig                |   1 -
->  crypto/Kconfig                             |  10 -
->  crypto/Makefile                            |   1 -
->  crypto/tcrypt.c                            |   4 -
->  crypto/testmgr.c                           |   6 -
->  crypto/testmgr.h                           | 153 -----
->  crypto/vmac.c                              | 696 ---------------------
->  28 files changed, 892 deletions(-)
->  delete mode 100644 crypto/vmac.c
->
-...
+
+Acked-by: Geert Uytterhoeven <geert@linux-m68k.org> # m68k
+
+Gr{oetje,eeting}s,
+
+                        Geert
+
+--=20
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k=
+.org
+
+In personal conversations with technical people, I call myself a hacker. Bu=
+t
+when I'm talking to journalists I just say "programmer" or something like t=
+hat.
+                                -- Linus Torvalds
