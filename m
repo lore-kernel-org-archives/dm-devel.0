@@ -1,99 +1,135 @@
-Received: from mail-ua1-f54.google.com (mail-ua1-f54.google.com [209.85.222.54])
+Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com [209.85.218.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B60416DC3C
-	for <dm-devel@lists.linux.dev>; Mon, 30 Dec 2024 11:05:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7E8F118FDC8
+	for <dm-devel@lists.linux.dev>; Thu,  2 Jan 2025 08:49:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1735556720; cv=none; b=FRu9jVhCPYcdH+lZbtDEMjQCEbL5LNOWfjQdkZjWDepkDEJZyCpUnT8XHOmRiYq2gT0iGcxXkRHlFqCKPuVpIOfYDx36DBRrR4N8imghi+i4u2Ct4ESpeYZJYx1xQ66Hr53oqkTieN6hskIB/X5xAVb5gZN9sjfJsZ04iQg1ka0=
+	t=1735807790; cv=none; b=WOn7xI9FU3PlSGf7WF1gXL69g5JEKLS+NBTjW5CExn81gXjzFKaK5nMVTPmA76ksZuaDPqLADZKOycfJJTSSJ+J7FaLv1Y2MeAJ++iEXD425a9N0a3UDxwaeriWcNmiHZh95XRuzXEM0JRKKTAEP88b2+1F1KCVs/d1fN1Q6IAM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1735556720; c=relaxed/simple;
-	bh=qfb7DHzgExVzKgGWJHPlFxeVctNnqLg3iDSUuMPUUXc=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=P8gUFvViu9ZNd8czHLYexMimPFumiocK4nMqTK9C5P5wMdWvYiQPLL7/7Z9VqygnRVLfu0zG3SkplQC2lYZtd6vyy3QGKs8KObVX59yNhskkvGKS2PpYfB4t9idsqb6J5cjPNr3bTk/bFlfYnsWysOmNVwrGm+icRw2OKlA70ew=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.222.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
+	s=arc-20240116; t=1735807790; c=relaxed/simple;
+	bh=WUK1SMs8GoW5u3MdAb41usLLlfEP0svpUzHtinjtVFs=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Op9/aaf1t7E1/L5agag/wA2fUgb+qE1cBJyFTl7bolkDiLByo6tM7B9LuTiNn2yNsI8+/XK/bvxVG8mwyCoMmwIIEPZqYCNF0DG8nEmyNMpchQ+jKYe1FFmnTdSyGONP1cXzDV9PG3SSLaQ3HN/4g5i8t6loybBrKSGzW/xW9YI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ZzEFqM9f; arc=none smtp.client-ip=209.85.218.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-ua1-f54.google.com with SMTP id a1e0cc1a2514c-85c662ebbc3so1328482241.0
-        for <dm-devel@lists.linux.dev>; Mon, 30 Dec 2024 03:05:17 -0800 (PST)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZzEFqM9f"
+Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-aab925654d9so1930542166b.2
+        for <dm-devel@lists.linux.dev>; Thu, 02 Jan 2025 00:49:48 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1735807787; x=1736412587; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
+        bh=VfGIzY3hMcgxJ/ViB/BOPn4C/1Cm0PNkLobtpeWUwuY=;
+        b=ZzEFqM9fPfzQvVFDIKf1jeTH2sD/VbgzYZDoehcofZjsRILnM+udHs0QhvvmPdm04f
+         uv0tzJuL9lHXt2jZ+V+gMOfe4tQiEiExkGV23cqLG4MFLUH3KMU98ru6j8oBosnxsRa9
+         Ns0Fg5z8KHDhG3J4TZTXvaZs7qt+mGFa2Hhf3MAJXRaRWDrN4W+wJvsALQpDdN3z3huK
+         +efOXn4rKIdJ1OnGB+SaxE3mg2NL0KC9WargB6ZO1ACRot64pDg1QdpjMRQyc9HXe3CW
+         qjOrgFlil/S0UxNWEnDnxkRGe9uaPpnHwReoRtD3aYuFSMU46Dp8WNfhh9GcFab68+KQ
+         Y1MQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1735556716; x=1736161516;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=id47K/4a6U+QFVGteH4iyr7Ptsppi8ire0OS89OefHg=;
-        b=fc8X/rjw8ay1EbmvS+eOfNl+zSN52zsu8Kn9uncksjea8E8KLsXHK/gwdJ3CUIlZ1B
-         iQn0xOmkRSNkYE+b04+u0eQhK6GfMe40w6hWxAK/cPpuo8lEjD9RlGpYvpCg+kGztCxc
-         rCP6ggfPAT7fNm2ef8MJea/a8NrDlFHgJSa/IIvwERwyZcVWa6Q8Fbg7j9yMMxx9NUg1
-         qiQx5ZLzFFUE6HJorT44nvbmhXZgcKrvJ4ePh25pypScIQ/UTUpwvyUQc3pP3CtkKCWy
-         dvlbO3R1nJh9XB7VIfqIYwOG7qtawO2WTuhxRFkDZsv6S3M2xuIzjI1tVRlvtgmpg2c4
-         P3cA==
-X-Forwarded-Encrypted: i=1; AJvYcCWtW3eDvizQdrqV8R0nkrs5OcRItujHKRiZS+BrpMIPA864l2OQwe2zOLq/mPuVEG4jhxVMWSbOug==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyrQQN0WeeqUHpGJ4lj/1XOHXtPUOtuxf/RQCnFNwjq5kZl7ZYo
-	mKKR8XRoZL5uMufDvyjnNZrnQwYp6T/LQPP0WHO41xEra9BEMxpve7vxkX54
-X-Gm-Gg: ASbGncsEI3L9+zfL8WQ+JfVEv18XWkYuRVyorHIHxiOnvAb5INRHuz3Pal2xf+WuEHL
-	LrLy9NYMqKklRYU/VYTZPoVbL++ZycQjDb0//FmLWN8BJDW1T7Ps2CQLryoCzu8KLohZxvlEBP0
-	VWOu+fmWKTdVgXJ/Aa2H5BrNhVd3rKvpG8OuSqu3Mu2VnmNzSWHJC3H+y7elQF038AcsmDF+sl8
-	po5rydx8MvMKz3YkLM4KCXKWdN8tSD1h6Phc8dkQGzPfIxG5k0Pu5PlBvbPJmSOeZrKwBAKFheM
-	fMKt7/zAhxgsVfL5NPU=
-X-Google-Smtp-Source: AGHT+IE3N5VultzgER7447i+hR5X2LIk38op29KtUElMI46whbcsAEYSqJ7hKB34DTl33TcVjH1GZA==
-X-Received: by 2002:a05:6102:5686:b0:4af:de38:dff7 with SMTP id ada2fe7eead31-4b2cc128d93mr29178651137.0.1735556715951;
-        Mon, 30 Dec 2024 03:05:15 -0800 (PST)
-Received: from mail-vs1-f43.google.com (mail-vs1-f43.google.com. [209.85.217.43])
-        by smtp.gmail.com with ESMTPSA id a1e0cc1a2514c-8610ad5a546sm3937108241.34.2024.12.30.03.05.15
-        for <dm-devel@lists.linux.dev>
+        d=1e100.net; s=20230601; t=1735807787; x=1736412587;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=VfGIzY3hMcgxJ/ViB/BOPn4C/1Cm0PNkLobtpeWUwuY=;
+        b=AjZcZgXqKwAVuSC6G9B1kR/hF1F4Pnamm/7f6HdpHAF+OEm0j86Qo6zao8hQw2CsKo
+         oCDn6wmtaJPG6njUnaHdgvcAo4RzSeoD5DCGgtzNEs9olxeIwBSCwQxkHOvV1xTFmJBI
+         lq/TOJVGVWlwgK9HPpi8lX+y77u/xil7oSL8lJyLyKla4TMyL0IyNetrZf1ctWea/oIi
+         pNIwZIpDCNegXO9pm2ouZbaWJb2oPYxi1omt0jLDyXCuyOrO8uTDDfcQHQOZ/XsRTVtw
+         Xgc9SPhxLCbTPygEOkL44CM/X0VYfx437cyi8SxaK4DE2OC78SB57kw2F88r0OoXMwsL
+         Z5Gg==
+X-Forwarded-Encrypted: i=1; AJvYcCVoqiVUFfl6tSFVoNwKdy4qHhd/yoQcmhtDfwrAE4tuUHp366Q3Nphqse0XFWp3SzN1ZNHCrimEzg==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yz0B0AEQuoCo6Hu76fNmk0/t/FgzEkiovRRY1MtdlXO2xGqRrBZ
+	PPK8V4zbH5OwEVJKL0Pxdru6cgpHtEhdG/GkIw+pSwIe+l8OdwQt
+X-Gm-Gg: ASbGncsfm3COqMJG6Ie/YYcWMmKGSqRXg6hcLABW+tU8R60tps3dSQLBYsbKbNJyygd
+	3GTGxCC3iX4G4ZchUreItxRGQHvlxjVLbnthSEHezYU0TTngBdCPW3IsYMFc1wM5TyihQlPr0Ss
+	DCIdW40vwW4KbXZ39susgoUDs4g6EApPGNgYpTKkxfo/MTjKzSuXaI4lN9qNv4S16Y8yBKbicFG
+	LalbKMz0WEVcazpJG+FdbWqUnrYgeXV04cdBCNKTO2/NOLyJBzITcnj8ABnFnEw5Vt9PnqY86H+
+	SLr0
+X-Google-Smtp-Source: AGHT+IGR6w55Z2SZ3nZ3oj2p1eo1H7ALyhhR760ZcjCEU/ByjDQUNJ9BeQGetfSa6UDnitD3OWjP1Q==
+X-Received: by 2002:a17:907:7250:b0:aa6:7737:199c with SMTP id a640c23a62f3a-aac2b0a5b5cmr4943543566b.15.1735807786354;
+        Thu, 02 Jan 2025 00:49:46 -0800 (PST)
+Received: from [147.251.42.106] (fosforos.fi.muni.cz. [147.251.42.106])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aac0f0159b8sm1766632566b.157.2025.01.02.00.49.45
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 30 Dec 2024 03:05:15 -0800 (PST)
-Received: by mail-vs1-f43.google.com with SMTP id ada2fe7eead31-4afefc876c6so2790936137.2
-        for <dm-devel@lists.linux.dev>; Mon, 30 Dec 2024 03:05:15 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCXBnlSo94OGuWZLxlO1ZcEtObo28cbydQJaxPchTLyCZ6FG7jUdXll57UMUODepjRTS4bGRY94T+Q==@lists.linux.dev
-X-Received: by 2002:a05:6102:c02:b0:4b2:5c72:cd55 with SMTP id
- ada2fe7eead31-4b2cc31f256mr28218146137.5.1735556715611; Mon, 30 Dec 2024
- 03:05:15 -0800 (PST)
+        Thu, 02 Jan 2025 00:49:45 -0800 (PST)
+Message-ID: <86e3502f-5d24-4779-9d3b-3cd79288fa0d@gmail.com>
+Date: Thu, 2 Jan 2025 09:49:45 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20241226194309.27733-1-ebiggers@kernel.org>
-In-Reply-To: <20241226194309.27733-1-ebiggers@kernel.org>
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Date: Mon, 30 Dec 2024 12:05:03 +0100
-X-Gmail-Original-Message-ID: <CAMuHMdWRim0-vjzRSAhrSmukVxo_gzY_dDrtY_mYOPU2An9h+Q@mail.gmail.com>
-Message-ID: <CAMuHMdWRim0-vjzRSAhrSmukVxo_gzY_dDrtY_mYOPU2An9h+Q@mail.gmail.com>
+User-Agent: Mozilla Thunderbird
 Subject: Re: [PATCH] crypto: vmac - remove unused VMAC algorithm
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	dm-devel@lists.linux.dev, Atharva Tiwari <evepolonium@gmail.com>, 
-	Shane Wang <shane.wang@intel.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+To: Eric Biggers <ebiggers@kernel.org>, linux-crypto@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+ Atharva Tiwari <evepolonium@gmail.com>, Shane Wang <shane.wang@intel.com>
+References: <20241226194309.27733-1-ebiggers@kernel.org>
+Content-Language: en-US
+From: Milan Broz <gmazyland@gmail.com>
+Autocrypt: addr=gmazyland@gmail.com; keydata=
+ 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
+In-Reply-To: <20241226194309.27733-1-ebiggers@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Thu, Dec 26, 2024 at 8:44=E2=80=AFPM Eric Biggers <ebiggers@kernel.org> =
-wrote:
+On 12/26/24 8:43 PM, Eric Biggers wrote:
 > From: Eric Biggers <ebiggers@google.com>
->
+> 
 > Remove the vmac64 template, as it has no known users.  It also continues
 > to have longstanding bugs such as alignment violations (see
 > https://lore.kernel.org/r/20241226134847.6690-1-evepolonium@gmail.com/).
->
-> This code was added in 2009 by commit f1939f7c5645 ("crypto: vmac - New
-> hash algorithm for intel_txt support").  Based on the mention of
-> intel_txt support in the commit title, it seems it was added as a
-> prerequisite for the contemporaneous patch
-> "intel_txt: add s3 userspace memory integrity verification"
-> (https://lore.kernel.org/r/4ABF2B50.6070106@intel.com/).  In the design
-> proposed by that patch, when an Intel Trusted Execution Technology (TXT)
-> enabled system resumed from suspend, the "tboot" trusted executable
-> launched the Linux kernel without verifying userspace memory, and then
-> the Linux kernel used VMAC to verify userspace memory.
->
-> However, that patch was never merged, as reviewers had objected to the
-> design.  It was later reworked into commit 4bd96a7a8185 ("x86, tboot:
-> Add support for S3 memory integrity protection") which made tboot verify
-> the memory instead.  Thus the VMAC support in Linux was never used.
->
+
+...
+
 > No in-tree user has appeared since then, other than potentially the
 > usual components that allow specifying arbitrary hash algorithms by
 > name, namely AF_ALG and dm-integrity.  However there are no indications
@@ -102,50 +138,12 @@ wrote:
 > results other than the kernel itself, suggesting that it does not appear
 > in any other code or documentation.  Explicitly grepping the source code
 > of the usual suspects (libell, iwd, cryptsetup) finds no matches either.
->
-> Before 2018, the vmac code was also completely broken due to using a
-> hardcoded nonce and the wrong endianness for the MAC.  It was then fixed
-> by commit ed331adab35b ("crypto: vmac - add nonced version with big
-> endian digest") and commit 0917b873127c ("crypto: vmac - remove insecure
-> version with hardcoded nonce").  These were intentionally breaking
-> changes that changed all the computed MAC values as well as the
-> algorithm name ("vmac" to "vmac64").  No complaints were ever received
-> about these breaking changes, strongly suggesting the absence of users.
->
-> The reason I had put some effort into fixing this code in 2018 is
-> because it was used by an out-of-tree driver.  But if it is still needed
-> in that particular out-of-tree driver, the code can be carried in that
-> driver instead.  There is no need to carry it upstream.
->
-> Cc: Atharva Tiwari <evepolonium@gmail.com>
-> Cc: Shane Wang <shane.wang@intel.com>
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
->  arch/m68k/configs/amiga_defconfig          |   1 -
->  arch/m68k/configs/apollo_defconfig         |   1 -
->  arch/m68k/configs/atari_defconfig          |   1 -
->  arch/m68k/configs/bvme6000_defconfig       |   1 -
->  arch/m68k/configs/hp300_defconfig          |   1 -
->  arch/m68k/configs/mac_defconfig            |   1 -
->  arch/m68k/configs/multi_defconfig          |   1 -
->  arch/m68k/configs/mvme147_defconfig        |   1 -
->  arch/m68k/configs/mvme16x_defconfig        |   1 -
->  arch/m68k/configs/q40_defconfig            |   1 -
->  arch/m68k/configs/sun3_defconfig           |   1 -
->  arch/m68k/configs/sun3x_defconfig          |   1 -
+AFAIK it was never used for dm-integrity / cryptsetup and I am not even able
+to make it work for test now (isn't the vmac64 alg module init even broken?).
 
-Acked-by: Geert Uytterhoeven <geert@linux-m68k.org> # m68k
+Just remove it...
 
-Gr{oetje,eeting}s,
+Thanks,
+Milan
 
-                        Geert
-
---=20
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k=
-.org
-
-In personal conversations with technical people, I call myself a hacker. Bu=
-t
-when I'm talking to journalists I just say "programmer" or something like t=
-hat.
-                                -- Linus Torvalds
