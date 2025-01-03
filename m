@@ -1,149 +1,226 @@
-Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com [209.85.218.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7E8F118FDC8
-	for <dm-devel@lists.linux.dev>; Thu,  2 Jan 2025 08:49:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D0C7F1FBCAA
+	for <dm-devel@lists.linux.dev>; Fri,  3 Jan 2025 16:13:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1735807790; cv=none; b=WOn7xI9FU3PlSGf7WF1gXL69g5JEKLS+NBTjW5CExn81gXjzFKaK5nMVTPmA76ksZuaDPqLADZKOycfJJTSSJ+J7FaLv1Y2MeAJ++iEXD425a9N0a3UDxwaeriWcNmiHZh95XRuzXEM0JRKKTAEP88b2+1F1KCVs/d1fN1Q6IAM=
+	t=1735920822; cv=none; b=QASU5iBr4sH/VslOdPokQ4Fxqu1Ccqw5xIdzbRjVQ2ZPd9zCAfB4CeILr+FDdVPII3WRz0Rxq76LUjRRfPKvdAw/41RvTGKrfKtnlcRpLioTv1IsaH/E8U3awLPSNGIANh+im/JD9oK1M7A24nN627atd6pEgcR75WEWlY11Gio=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1735807790; c=relaxed/simple;
-	bh=WUK1SMs8GoW5u3MdAb41usLLlfEP0svpUzHtinjtVFs=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Op9/aaf1t7E1/L5agag/wA2fUgb+qE1cBJyFTl7bolkDiLByo6tM7B9LuTiNn2yNsI8+/XK/bvxVG8mwyCoMmwIIEPZqYCNF0DG8nEmyNMpchQ+jKYe1FFmnTdSyGONP1cXzDV9PG3SSLaQ3HN/4g5i8t6loybBrKSGzW/xW9YI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ZzEFqM9f; arc=none smtp.client-ip=209.85.218.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1735920822; c=relaxed/simple;
+	bh=4FEuJDlDI0B16gkXu6wLgeyZ5PrTnKaroqnftxcmUjg=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=dV4wqV2WNK0PFEWEo5A2vE7BRRbBRLi1ZSh7JjTBJyS6fLSXckk52i/bWiH6K+iC4r59lOhEJ7X6ybcRhVRnY9Wkobcy8M5wRhyWCiW5MgD6zAFyR827H8nqccr+Ge+gKdStS5ThPd3Gn09aKxMhjVOUAi5g6+c5ltLDiUJfxH4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=LhxN4yoq; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZzEFqM9f"
-Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-aab925654d9so1930542166b.2
-        for <dm-devel@lists.linux.dev>; Thu, 02 Jan 2025 00:49:48 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1735807787; x=1736412587; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=VfGIzY3hMcgxJ/ViB/BOPn4C/1Cm0PNkLobtpeWUwuY=;
-        b=ZzEFqM9fPfzQvVFDIKf1jeTH2sD/VbgzYZDoehcofZjsRILnM+udHs0QhvvmPdm04f
-         uv0tzJuL9lHXt2jZ+V+gMOfe4tQiEiExkGV23cqLG4MFLUH3KMU98ru6j8oBosnxsRa9
-         Ns0Fg5z8KHDhG3J4TZTXvaZs7qt+mGFa2Hhf3MAJXRaRWDrN4W+wJvsALQpDdN3z3huK
-         +efOXn4rKIdJ1OnGB+SaxE3mg2NL0KC9WargB6ZO1ACRot64pDg1QdpjMRQyc9HXe3CW
-         qjOrgFlil/S0UxNWEnDnxkRGe9uaPpnHwReoRtD3aYuFSMU46Dp8WNfhh9GcFab68+KQ
-         Y1MQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1735807787; x=1736412587;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=VfGIzY3hMcgxJ/ViB/BOPn4C/1Cm0PNkLobtpeWUwuY=;
-        b=AjZcZgXqKwAVuSC6G9B1kR/hF1F4Pnamm/7f6HdpHAF+OEm0j86Qo6zao8hQw2CsKo
-         oCDn6wmtaJPG6njUnaHdgvcAo4RzSeoD5DCGgtzNEs9olxeIwBSCwQxkHOvV1xTFmJBI
-         lq/TOJVGVWlwgK9HPpi8lX+y77u/xil7oSL8lJyLyKla4TMyL0IyNetrZf1ctWea/oIi
-         pNIwZIpDCNegXO9pm2ouZbaWJb2oPYxi1omt0jLDyXCuyOrO8uTDDfcQHQOZ/XsRTVtw
-         Xgc9SPhxLCbTPygEOkL44CM/X0VYfx437cyi8SxaK4DE2OC78SB57kw2F88r0OoXMwsL
-         Z5Gg==
-X-Forwarded-Encrypted: i=1; AJvYcCVoqiVUFfl6tSFVoNwKdy4qHhd/yoQcmhtDfwrAE4tuUHp366Q3Nphqse0XFWp3SzN1ZNHCrimEzg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz0B0AEQuoCo6Hu76fNmk0/t/FgzEkiovRRY1MtdlXO2xGqRrBZ
-	PPK8V4zbH5OwEVJKL0Pxdru6cgpHtEhdG/GkIw+pSwIe+l8OdwQt
-X-Gm-Gg: ASbGncsfm3COqMJG6Ie/YYcWMmKGSqRXg6hcLABW+tU8R60tps3dSQLBYsbKbNJyygd
-	3GTGxCC3iX4G4ZchUreItxRGQHvlxjVLbnthSEHezYU0TTngBdCPW3IsYMFc1wM5TyihQlPr0Ss
-	DCIdW40vwW4KbXZ39susgoUDs4g6EApPGNgYpTKkxfo/MTjKzSuXaI4lN9qNv4S16Y8yBKbicFG
-	LalbKMz0WEVcazpJG+FdbWqUnrYgeXV04cdBCNKTO2/NOLyJBzITcnj8ABnFnEw5Vt9PnqY86H+
-	SLr0
-X-Google-Smtp-Source: AGHT+IGR6w55Z2SZ3nZ3oj2p1eo1H7ALyhhR760ZcjCEU/ByjDQUNJ9BeQGetfSa6UDnitD3OWjP1Q==
-X-Received: by 2002:a17:907:7250:b0:aa6:7737:199c with SMTP id a640c23a62f3a-aac2b0a5b5cmr4943543566b.15.1735807786354;
-        Thu, 02 Jan 2025 00:49:46 -0800 (PST)
-Received: from [147.251.42.106] (fosforos.fi.muni.cz. [147.251.42.106])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aac0f0159b8sm1766632566b.157.2025.01.02.00.49.45
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 02 Jan 2025 00:49:45 -0800 (PST)
-Message-ID: <86e3502f-5d24-4779-9d3b-3cd79288fa0d@gmail.com>
-Date: Thu, 2 Jan 2025 09:49:45 +0100
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LhxN4yoq"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1735920817;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=JPe8/8TErK3TKOg87HTQS07RBZ/QcY+iITVQnBjOqwA=;
+	b=LhxN4yoq33sMwb8hf91TmaYEs+5D7iBinnAYfW9jNE90Fu/5ptVUMkQcHdY9s9nsaphvbR
+	Pw1BGDfE/vXTQd0L2LDhBvohUaDz8wiI9ZM2Q349f+7KHH5HFcIr8W2bleT5aM1CgaMA8M
+	eNFonIMdKao/+qflZhENlUbpjiXDgvk=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-56-mzHjFFuyM7u1RlklwwaNbg-1; Fri,
+ 03 Jan 2025 11:13:34 -0500
+X-MC-Unique: mzHjFFuyM7u1RlklwwaNbg-1
+X-Mimecast-MFC-AGG-ID: mzHjFFuyM7u1RlklwwaNbg
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7DB79195608E;
+	Fri,  3 Jan 2025 16:13:32 +0000 (UTC)
+Received: from [10.45.224.27] (unknown [10.45.224.27])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7A49519560AA;
+	Fri,  3 Jan 2025 16:13:30 +0000 (UTC)
+Date: Fri, 3 Jan 2025 17:13:24 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+cc: dm-devel@lists.linux.dev, snitzer@kernel.org, samitolvanen@google.com, 
+    jaegeuk@google.com, stable@vger.kernel.org
+Subject: Re: [PATCH 1/2] dm-verity FEC: Fix RS FEC repair for roots unaligned
+ to block size (take 2)
+In-Reply-To: <20241218125659.743433-1-gmazyland@gmail.com>
+Message-ID: <7c7aff1c-a05b-0027-f484-66447d39bced@redhat.com>
+References: <20241218125659.743433-1-gmazyland@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] crypto: vmac - remove unused VMAC algorithm
-To: Eric Biggers <ebiggers@kernel.org>, linux-crypto@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
- Atharva Tiwari <evepolonium@gmail.com>, Shane Wang <shane.wang@intel.com>
-References: <20241226194309.27733-1-ebiggers@kernel.org>
-Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- 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
-In-Reply-To: <20241226194309.27733-1-ebiggers@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-On 12/26/24 8:43 PM, Eric Biggers wrote:
-> From: Eric Biggers <ebiggers@google.com>
+Hi
+
+I staged both patches for 6.13.
+
+Mikulas
+
+
+On Wed, 18 Dec 2024, Milan Broz wrote:
+
+> This patch fixes an issue that was fixed in the commit
+>   df7b59ba9245 ("dm verity: fix FEC for RS roots unaligned to block size")
+> but later broken again in the commit
+>   8ca7cab82bda ("dm verity fec: fix misaligned RS roots IO")
 > 
-> Remove the vmac64 template, as it has no known users.  It also continues
-> to have longstanding bugs such as alignment violations (see
-> https://lore.kernel.org/r/20241226134847.6690-1-evepolonium@gmail.com/).
-
-...
-
-> No in-tree user has appeared since then, other than potentially the
-> usual components that allow specifying arbitrary hash algorithms by
-> name, namely AF_ALG and dm-integrity.  However there are no indications
-> that VMAC is being used with these components.  Debian Code Search and
-> web searches for "vmac64" (the actual algorithm name) do not return any
-> results other than the kernel itself, suggesting that it does not appear
-> in any other code or documentation.  Explicitly grepping the source code
-> of the usual suspects (libell, iwd, cryptsetup) finds no matches either.
-
-AFAIK it was never used for dm-integrity / cryptsetup and I am not even able
-to make it work for test now (isn't the vmac64 alg module init even broken?).
-
-Just remove it...
-
-Thanks,
-Milan
+> If the Reed-Solomon roots setting spans multiple blocks, the code does not
+> use proper parity bytes and randomly fails to repair even trivial errors.
+> 
+> This bug cannot happen if the sector size is multiple of RS roots
+> setting (Android case with roots 2).
+> 
+> The previous solution was to find a dm-bufio block size that is multiple
+> of the device sector size and roots size. Unfortunately, the optimization
+> in commit 8ca7cab82bda ("dm verity fec: fix misaligned RS roots IO")
+> is incorrect and uses data block size for some roots (for example, it uses
+> 4096 block size for roots = 20).
+> 
+> This patch uses a different approach:
+> 
+>  - It always uses a configured data block size for dm-bufio to avoid
+>  possible misaligned IOs.
+> 
+>  - and it caches the processed parity bytes, so it can join it
+>  if it spans two blocks.
+> 
+> As the RS calculation is called only if an error is detected and
+> the process is computationally intensive, copying a few more bytes
+> should not introduce performance issues.
+> 
+> The issue was reported to cryptsetup with trivial reproducer
+>   https://gitlab.com/cryptsetup/cryptsetup/-/issues/923
+> 
+> Reproducer (with roots=20):
+> 
+>  # create verity device with RS FEC
+>  dd if=/dev/urandom of=data.img bs=4096 count=8 status=none
+>  veritysetup format data.img hash.img --fec-device=fec.img --fec-roots=20 | \
+>  awk '/^Root hash/{ print $3 }' >roothash
+> 
+>  # create an erasure that should always be repairable with this roots setting
+>  dd if=/dev/zero of=data.img conv=notrunc bs=1 count=4 seek=4 status=none
+> 
+>  # try to read it through dm-verity
+>  veritysetup open data.img test hash.img --fec-device=fec.img --fec-roots=20 $(cat roothash)
+>  dd if=/dev/mapper/test of=/dev/null bs=4096 status=noxfer
+> 
+>  Even now the log says it cannot repair it:
+>    : verity-fec: 7:1: FEC 0: failed to correct: -74
+>    : device-mapper: verity: 7:1: data block 0 is corrupted
+>    ...
+> 
+> With this fix, errors are properly repaired.
+>    : verity-fec: 7:1: FEC 0: corrected 4 errors
+> 
+> Signed-off-by: Milan Broz <gmazyland@gmail.com>
+> Fixes: 8ca7cab82bda ("dm verity fec: fix misaligned RS roots IO")
+> Cc: stable@vger.kernel.org
+> ---
+>  drivers/md/dm-verity-fec.c | 40 +++++++++++++++++++++++++-------------
+>  1 file changed, 26 insertions(+), 14 deletions(-)
+> 
+> diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+> index 62b1a44b8dd2..6bd9848518d4 100644
+> --- a/drivers/md/dm-verity-fec.c
+> +++ b/drivers/md/dm-verity-fec.c
+> @@ -60,15 +60,19 @@ static int fec_decode_rs8(struct dm_verity *v, struct dm_verity_fec_io *fio,
+>   * to the data block. Caller is responsible for releasing buf.
+>   */
+>  static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
+> -			   unsigned int *offset, struct dm_buffer **buf,
+> -			   unsigned short ioprio)
+> +			   unsigned int *offset, unsigned int par_buf_offset,
+> +			   struct dm_buffer **buf, unsigned short ioprio)
+>  {
+>  	u64 position, block, rem;
+>  	u8 *res;
+>  
+> +	/* We have already part of parity bytes read, skip to the next block */
+> +	if (par_buf_offset)
+> +		index++;
+> +
+>  	position = (index + rsb) * v->fec->roots;
+>  	block = div64_u64_rem(position, v->fec->io_size, &rem);
+> -	*offset = (unsigned int)rem;
+> +	*offset = par_buf_offset ? 0 : (unsigned int)rem;
+>  
+>  	res = dm_bufio_read_with_ioprio(v->fec->bufio, block, buf, ioprio);
+>  	if (IS_ERR(res)) {
+> @@ -128,11 +132,12 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+>  {
+>  	int r, corrected = 0, res;
+>  	struct dm_buffer *buf;
+> -	unsigned int n, i, offset;
+> -	u8 *par, *block;
+> +	unsigned int n, i, offset, par_buf_offset = 0;
+> +	u8 *par, *block, par_buf[DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN];
+>  	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+>  
+> -	par = fec_read_parity(v, rsb, block_offset, &offset, &buf, bio_prio(bio));
+> +	par = fec_read_parity(v, rsb, block_offset, &offset,
+> +			      par_buf_offset, &buf, bio_prio(bio));
+>  	if (IS_ERR(par))
+>  		return PTR_ERR(par);
+>  
+> @@ -142,7 +147,8 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+>  	 */
+>  	fec_for_each_buffer_rs_block(fio, n, i) {
+>  		block = fec_buffer_rs_block(v, fio, n, i);
+> -		res = fec_decode_rs8(v, fio, block, &par[offset], neras);
+> +		memcpy(&par_buf[par_buf_offset], &par[offset], v->fec->roots - par_buf_offset);
+> +		res = fec_decode_rs8(v, fio, block, par_buf, neras);
+>  		if (res < 0) {
+>  			r = res;
+>  			goto error;
+> @@ -155,12 +161,21 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+>  		if (block_offset >= 1 << v->data_dev_block_bits)
+>  			goto done;
+>  
+> -		/* read the next block when we run out of parity bytes */
+> -		offset += v->fec->roots;
+> +		/* Read the next block when we run out of parity bytes */
+> +		offset += (v->fec->roots - par_buf_offset);
+> +		/* Check if parity bytes are split between blocks */
+> +		if (offset < v->fec->io_size && (offset + v->fec->roots) > v->fec->io_size) {
+> +			par_buf_offset = v->fec->io_size - offset;
+> +			memcpy(par_buf, &par[offset], par_buf_offset);
+> +			offset += par_buf_offset;
+> +		} else
+> +			par_buf_offset = 0;
+> +
+>  		if (offset >= v->fec->io_size) {
+>  			dm_bufio_release(buf);
+>  
+> -			par = fec_read_parity(v, rsb, block_offset, &offset, &buf, bio_prio(bio));
+> +			par = fec_read_parity(v, rsb, block_offset, &offset,
+> +					      par_buf_offset, &buf, bio_prio(bio));
+>  			if (IS_ERR(par))
+>  				return PTR_ERR(par);
+>  		}
+> @@ -724,10 +739,7 @@ int verity_fec_ctr(struct dm_verity *v)
+>  		return -E2BIG;
+>  	}
+>  
+> -	if ((f->roots << SECTOR_SHIFT) & ((1 << v->data_dev_block_bits) - 1))
+> -		f->io_size = 1 << v->data_dev_block_bits;
+> -	else
+> -		f->io_size = v->fec->roots << SECTOR_SHIFT;
+> +	f->io_size = 1 << v->data_dev_block_bits;
+>  
+>  	f->bufio = dm_bufio_client_create(f->dev->bdev,
+>  					  f->io_size,
+> -- 
+> 2.45.2
+> 
 
