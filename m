@@ -1,103 +1,140 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E3A71FBCB5
-	for <dm-devel@lists.linux.dev>; Fri,  3 Jan 2025 16:26:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BCF6628FC;
+	Sat,  4 Jan 2025 01:18:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1735921576; cv=none; b=mVaG1KgD2fVKW658FwLNWhfBPBJZUfOQm/qjmeG6+mgvyWBM5eY9plTii14/97WQKYHRa9i5lCbodbuneTBfDiolhTt5Jxp4M2y83SnLnp5FNTi9mWzSn86uBovFLuJ+zyD14h7hnAQ01UZpg0oyc/+pSIHX/JLjs8MChTQnmOk=
+	t=1735953505; cv=none; b=E9FUG67BuaG4pXH8X+C0Mz9Mr21KlPcGzJusARVRjFT7ouNvdTEOsY9C2N9X3ILW7d1PgTZOYuRNTxKXNqwmvhcs1xwvFA3V3Mmd5ldO6wAJZPD3rOhexADS6nysdOoVdTcDxcC0SBN+jAuYNDmBMOYwE04t7cYsQFNokU71dIQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1735921576; c=relaxed/simple;
-	bh=Q3w2dL/c0bmN+PhHzf0legAJ8tIT85/iB+H0N1YmgnY=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=CmNW3qHEfKFLamZkf8SBrk2Fc9fzthxFEd5uaKVOgkGR8S2QVRHXDXIVugb9kyWO3M6jliEyXIep2cyW4eMlaNX+TzIdbEN2T/8maCp9sqA+lvNalVfROL0QqecJM0HdF5QThJQJuSF3NNoXROhIdWUaiPdai68aWn9VhohMw5A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=h1rHbC6T; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1735953505; c=relaxed/simple;
+	bh=4Vjg1+cUI6ho2/pWUSrT2vmqJqTp9HZzCDI9E0FjTRA=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To; b=i2rDyIxz9SrJVI5tux7g0e573Yv5+3qUzxGlyYFFDd6qXHlypgV7WfqmoktoSwtSM2d6NjePjPxbiX5zy5xjr+b9Q0qjouxZdrEierSj9ty8Q2FLdp2PPeX8E9JWw4LEMinBxjXB3Cy1PrM+Z/rQGMV8a1KDwpNXuO8D1CG7ctY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=MU7XJm3A; arc=none smtp.client-ip=144.6.53.87
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="h1rHbC6T"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1735921573;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=BxyR2TWPRX70PM14Fh5D3B0xcHWgh50t9/PWS3/mk98=;
-	b=h1rHbC6TtFcrjFTIPVY7C+QzupUn4ZI49qRqgGAB6khoZDacNejDT9rlpfjwyPkBwmNnwD
-	b+55ZC07YeUQDnPqHgpyR1J6ejlr/RcH47HSNjK61XrsNt2l5mw0MY4vy1dEFcmze9nNyv
-	E2M9cTE0ulEo0hL/j2S1Bbo13YWzZ8Q=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-660-vladBGe6MPa6jL5bke46uQ-1; Fri,
- 03 Jan 2025 11:26:09 -0500
-X-MC-Unique: vladBGe6MPa6jL5bke46uQ-1
-X-Mimecast-MFC-AGG-ID: vladBGe6MPa6jL5bke46uQ
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A9B2A1955F45;
-	Fri,  3 Jan 2025 16:26:07 +0000 (UTC)
-Received: from [10.45.224.27] (unknown [10.45.224.27])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 04F873000197;
-	Fri,  3 Jan 2025 16:26:04 +0000 (UTC)
-Date: Fri, 3 Jan 2025 17:25:59 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Milan Broz <gmazyland@gmail.com>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    dm-devel@lists.linux.dev, Yu Kuai <yukuai1@huaweicloud.com>, 
-    lkml <linux-kernel@vger.kernel.org>, "yukuai (C)" <yukuai3@huawei.com>
-Subject: Re: [discussion] proposal to bypass zero data for dm-crypt
-In-Reply-To: <73152f2b-2a3e-37a7-4578-9a4ae7ec903f@huaweicloud.com>
-Message-ID: <3181bbd4-40df-eecf-c9b2-45b09018b8af@redhat.com>
-References: <73152f2b-2a3e-37a7-4578-9a4ae7ec903f@huaweicloud.com>
+	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="MU7XJm3A"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
+	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:Message-ID:Subject:Cc:To:
+	From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+	:Resent-Message-ID:References:List-Id:List-Help:List-Unsubscribe:
+	List-Subscribe:List-Post:List-Owner:List-Archive;
+	bh=5MxNWj9HOlakeZLFeYKbtljltb9M2p1Iww9nM1BniIQ=; b=MU7XJm3AHmYVvvP7xSEOtmt5za
+	/AWT99+TYXJuE9di3LfVTVtArn5Fye+lw5GBoTDVWkRZ+p7YPd+tF2fFBPRUSg1CzeWkpl6TCA3pX
+	dMIT5OZE3cDKBFTjbZAYMYBjr5ho8FDqjkFOUclkivA5CrXU87ztFbrjp7pr9XqOno/4m+FRV0gFI
+	hgjovkzpuaUL9yNi1BzxNFUteU9oIgvOLYSO3hhYlLB8jWWbEpPS18NUZTAEf3ODvT1EnRSn9MUUu
+	WLIhqyE6sM1pGHN9AlkVNHnBc2Lfu3V9JB6r3Ec6jB6aOH+wz8Z/yb7dPODgGtUbE/DCSUHd5qlB3
+	hb/suHEQ==;
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1tTsb3-005fbF-0P;
+	Sat, 04 Jan 2025 09:18:18 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Sat, 04 Jan 2025 09:18:17 +0800
+Date: Sat, 4 Jan 2025 09:18:17 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev, evepolonium@gmail.com,
+	shane.wang@intel.com
+Subject: Re: [PATCH] crypto: vmac - remove unused VMAC algorithm
+Message-ID: <Z3iMWXwCLg36eous@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20241226194309.27733-1-ebiggers@kernel.org>
+X-Newsgroups: apana.lists.os.linux.cryptoapi,apana.lists.os.linux.kernel
 
-Milan, what do you think about this from a cryptographic point of view? 
-Does it make sense to add an option that would detect zero data and skip 
-decryption in this case?
+Eric Biggers <ebiggers@kernel.org> wrote:
+> From: Eric Biggers <ebiggers@google.com>
+> 
+> Remove the vmac64 template, as it has no known users.  It also continues
+> to have longstanding bugs such as alignment violations (see
+> https://lore.kernel.org/r/20241226134847.6690-1-evepolonium@gmail.com/).
+> 
+> This code was added in 2009 by commit f1939f7c5645 ("crypto: vmac - New
+> hash algorithm for intel_txt support").  Based on the mention of
+> intel_txt support in the commit title, it seems it was added as a
+> prerequisite for the contemporaneous patch
+> "intel_txt: add s3 userspace memory integrity verification"
+> (https://lore.kernel.org/r/4ABF2B50.6070106@intel.com/).  In the design
+> proposed by that patch, when an Intel Trusted Execution Technology (TXT)
+> enabled system resumed from suspend, the "tboot" trusted executable
+> launched the Linux kernel without verifying userspace memory, and then
+> the Linux kernel used VMAC to verify userspace memory.
+> 
+> However, that patch was never merged, as reviewers had objected to the
+> design.  It was later reworked into commit 4bd96a7a8185 ("x86, tboot:
+> Add support for S3 memory integrity protection") which made tboot verify
+> the memory instead.  Thus the VMAC support in Linux was never used.
+> 
+> No in-tree user has appeared since then, other than potentially the
+> usual components that allow specifying arbitrary hash algorithms by
+> name, namely AF_ALG and dm-integrity.  However there are no indications
+> that VMAC is being used with these components.  Debian Code Search and
+> web searches for "vmac64" (the actual algorithm name) do not return any
+> results other than the kernel itself, suggesting that it does not appear
+> in any other code or documentation.  Explicitly grepping the source code
+> of the usual suspects (libell, iwd, cryptsetup) finds no matches either.
+> 
+> Before 2018, the vmac code was also completely broken due to using a
+> hardcoded nonce and the wrong endianness for the MAC.  It was then fixed
+> by commit ed331adab35b ("crypto: vmac - add nonced version with big
+> endian digest") and commit 0917b873127c ("crypto: vmac - remove insecure
+> version with hardcoded nonce").  These were intentionally breaking
+> changes that changed all the computed MAC values as well as the
+> algorithm name ("vmac" to "vmac64").  No complaints were ever received
+> about these breaking changes, strongly suggesting the absence of users.
+> 
+> The reason I had put some effort into fixing this code in 2018 is
+> because it was used by an out-of-tree driver.  But if it is still needed
+> in that particular out-of-tree driver, the code can be carried in that
+> driver instead.  There is no need to carry it upstream.
+> 
+> Cc: Atharva Tiwari <evepolonium@gmail.com>
+> Cc: Shane Wang <shane.wang@intel.com>
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
+> ---
+> arch/arm/configs/pxa_defconfig             |   1 -
+> arch/loongarch/configs/loongson3_defconfig |   1 -
+> arch/m68k/configs/amiga_defconfig          |   1 -
+> arch/m68k/configs/apollo_defconfig         |   1 -
+> arch/m68k/configs/atari_defconfig          |   1 -
+> arch/m68k/configs/bvme6000_defconfig       |   1 -
+> arch/m68k/configs/hp300_defconfig          |   1 -
+> arch/m68k/configs/mac_defconfig            |   1 -
+> arch/m68k/configs/multi_defconfig          |   1 -
+> arch/m68k/configs/mvme147_defconfig        |   1 -
+> arch/m68k/configs/mvme16x_defconfig        |   1 -
+> arch/m68k/configs/q40_defconfig            |   1 -
+> arch/m68k/configs/sun3_defconfig           |   1 -
+> arch/m68k/configs/sun3x_defconfig          |   1 -
+> arch/mips/configs/bigsur_defconfig         |   1 -
+> arch/mips/configs/decstation_64_defconfig  |   1 -
+> arch/mips/configs/decstation_defconfig     |   1 -
+> arch/mips/configs/decstation_r4k_defconfig |   1 -
+> arch/mips/configs/ip27_defconfig           |   1 -
+> arch/mips/configs/ip30_defconfig           |   1 -
+> arch/s390/configs/debug_defconfig          |   1 -
+> arch/s390/configs/defconfig                |   1 -
+> crypto/Kconfig                             |  10 -
+> crypto/Makefile                            |   1 -
+> crypto/tcrypt.c                            |   4 -
+> crypto/testmgr.c                           |   6 -
+> crypto/testmgr.h                           | 153 -----
+> crypto/vmac.c                              | 696 ---------------------
+> 28 files changed, 892 deletions(-)
+> delete mode 100644 crypto/vmac.c
 
-Mikulas
-
-On Sat, 21 Dec 2024, Yu Kuai wrote:
-
-> Background
-> 
-> We provide virtual machines for customers to use, which include an important
-> feature: in the initial state, the disks in the virtual machine do not occupy
-> actual storage space, and the data read by users is all zeros until the user
-> writes data for the first time. This can save a large amount of storage.
-> 
-> Problem
-> 
-> However, after introducing dm-crypt, this feature has failed. Because we
-> expect the data read by users in the initial state to be zero, we have to
-> write all zeros from dm-crypt.
-> 
-> Hence we'd like to propose to bypass zero data for dm-crypt, for
-> example:
-> 
-> before:
-> zero data -> encrypted zero data
-> decrypted zero data -> zero data
-> others
-> 
-> after:
-> zero data -> zero data
-> decrypted zero data -> encrypted zero data
-> others(doesn't change)
-> 
-> We'd like to hear from the community for suggestions first, before we
-> start. :)
-> 
-> Thanks,
-> Kuai
-> 
-
+Patch applied.  Thanks.
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
