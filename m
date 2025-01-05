@@ -1,140 +1,190 @@
-Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BCF6628FC;
-	Sat,  4 Jan 2025 01:18:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED7D7A29
+	for <dm-devel@lists.linux.dev>; Sun,  5 Jan 2025 20:54:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1735953505; cv=none; b=E9FUG67BuaG4pXH8X+C0Mz9Mr21KlPcGzJusARVRjFT7ouNvdTEOsY9C2N9X3ILW7d1PgTZOYuRNTxKXNqwmvhcs1xwvFA3V3Mmd5ldO6wAJZPD3rOhexADS6nysdOoVdTcDxcC0SBN+jAuYNDmBMOYwE04t7cYsQFNokU71dIQ=
+	t=1736110451; cv=none; b=NG8kHM70oxS60upFPLMIut0mnVWpRelD+tJDKF6HIfiT1vsUfu/yf32kD6X0/hyaztrOCfiLn+6+OwptgLW6sw1p5ORrhctO685WsUIskEdgJncCi6JDAuRApd11PkAAaQ+W0IZ7PtBvoi9Be96r9AEWBWwiYov6iElySZxRcfk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1735953505; c=relaxed/simple;
-	bh=4Vjg1+cUI6ho2/pWUSrT2vmqJqTp9HZzCDI9E0FjTRA=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition:In-Reply-To; b=i2rDyIxz9SrJVI5tux7g0e573Yv5+3qUzxGlyYFFDd6qXHlypgV7WfqmoktoSwtSM2d6NjePjPxbiX5zy5xjr+b9Q0qjouxZdrEierSj9ty8Q2FLdp2PPeX8E9JWw4LEMinBxjXB3Cy1PrM+Z/rQGMV8a1KDwpNXuO8D1CG7ctY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=MU7XJm3A; arc=none smtp.client-ip=144.6.53.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	s=arc-20240116; t=1736110451; c=relaxed/simple;
+	bh=gkCPVwthd0rXE/crmBf9WZzkX8CCIIcc7MS8YeAvfiI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=fbwDauf5yrbUGjj1DGYYdWYbc1e4cX4EKFMUc23kBB2MYNpZRZBk7GCUrVoRiR6hXoC87COQKv4GTmG/XJAM/5xc7MqVoJwVx78IzaFPa7PQ9PXI5aBb3vucxQKzSoqkT9IXkaK6nGD6IkrWg0p3v+pKZXDR5IO87LUNzEqDjpg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=S7Wz0AOD; arc=none smtp.client-ip=209.85.208.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="MU7XJm3A"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
-	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:Message-ID:Subject:Cc:To:
-	From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:References:List-Id:List-Help:List-Unsubscribe:
-	List-Subscribe:List-Post:List-Owner:List-Archive;
-	bh=5MxNWj9HOlakeZLFeYKbtljltb9M2p1Iww9nM1BniIQ=; b=MU7XJm3AHmYVvvP7xSEOtmt5za
-	/AWT99+TYXJuE9di3LfVTVtArn5Fye+lw5GBoTDVWkRZ+p7YPd+tF2fFBPRUSg1CzeWkpl6TCA3pX
-	dMIT5OZE3cDKBFTjbZAYMYBjr5ho8FDqjkFOUclkivA5CrXU87ztFbrjp7pr9XqOno/4m+FRV0gFI
-	hgjovkzpuaUL9yNi1BzxNFUteU9oIgvOLYSO3hhYlLB8jWWbEpPS18NUZTAEf3ODvT1EnRSn9MUUu
-	WLIhqyE6sM1pGHN9AlkVNHnBc2Lfu3V9JB6r3Ec6jB6aOH+wz8Z/yb7dPODgGtUbE/DCSUHd5qlB3
-	hb/suHEQ==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
-	id 1tTsb3-005fbF-0P;
-	Sat, 04 Jan 2025 09:18:18 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Sat, 04 Jan 2025 09:18:17 +0800
-Date: Sat, 4 Jan 2025 09:18:17 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev, evepolonium@gmail.com,
-	shane.wang@intel.com
-Subject: Re: [PATCH] crypto: vmac - remove unused VMAC algorithm
-Message-ID: <Z3iMWXwCLg36eous@gondor.apana.org.au>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="S7Wz0AOD"
+Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-5d3e6274015so24532665a12.0
+        for <dm-devel@lists.linux.dev>; Sun, 05 Jan 2025 12:54:09 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1736110448; x=1736715248; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
+        bh=YzQgJ5yOTiy2g9pht2qzz0PODwie6lH1EyHoiKlLxqo=;
+        b=S7Wz0AODnDFBcXTp8epxaru2C29PNLm5RNCD4ACF4q9C92ovXb71iUIFfRYJrilwxg
+         1GbCsGGOOZjj85hdK2NXRUMnMGSB+IUm+83rEV15lU/x/RjT0SoQoACekGk32bzCTBZP
+         RSnxD2Pmt+0Ol78kvq1oljs+xj0U4slmhyXe9/B+grakmbb2GeR4BpvkJ/ptihnwsDHQ
+         7lnwyeS06k3Mdp9upwGapi2jA3kUUXyEGDFqvNsADqw9W8sKPDJvFWLhXskPZw6fwqXm
+         tk8I1McQK0HRXOG0K1iByn2b1R15jQ1e0UPBL+xrgeKnEFnAtxTaLOePUFnHg96hGAvn
+         F+0g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1736110448; x=1736715248;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=YzQgJ5yOTiy2g9pht2qzz0PODwie6lH1EyHoiKlLxqo=;
+        b=OZyxi0EUvwLkk9yGszPVer0shZgzuby7MRDZF+dOPN809tsrOTS+lEqIYWIvTwpdki
+         Fw26BPbKk8Byc7KXvKfSMvN1CwO6XR5lnS9ikxoPiRmzr6Wu3EUP2XqVsHTPTzsZ9k7z
+         AV2qYDCC8aAvcoITXRdaDNlNQ8L9YKhzTCBGYwLKmH39BcPHyCXxbHgSsVnBqL7GD9iU
+         2L6N0UFHEMnVU+l49jlynDEnKKr5H/b/WHa+ir8N9/7pDzliVso/P4a83HkM1DoZGXAt
+         k2CDaAbCbm4c9Lr6aTbTByYGFyXkWRO5pzrHvIcANSXY+UriLUXBFf40kMeAl5fKpw2A
+         Ecnw==
+X-Forwarded-Encrypted: i=1; AJvYcCXqvs6nj//im+cBL6xux9F5mEh9pjFK3RPphkHg1SI9Ov2ra9tNYOTm91jqFEPAvqZY+7WkU8rPVg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzXHuvM1oyaAEpkH0VJEJBqT56MXA7DbexoRA/Cb8uPnsYI4UYL
+	DW77ElVUuigUhi4unPcpkbEoZRlgVsMS/Epownt+eyhYaSOZfvzkmbEaWA==
+X-Gm-Gg: ASbGncs9I2S1YmHMk2FXhy2PMsVNCEqF1JHy1mKeylCDBegcUtXqA4TCyKqzOC1k33y
+	Gr2JCDEpEtosDenOT+8HoQg1y+sxN47JF5JIkJ7SCVKKGaeO2/J2EvG0g/tJbY29AX1MrVY9xsd
+	ZfMSgTSeEc/Ix6JmuG+U6BTmz0aHLypS7SFeWBfAwSaaUz4YarpFjezKmW+bdcW59/BK9Y6VSnl
+	i2znDDn64BeSJ3vaEaWlrCv7C4J6tqgF2T50dDQpEPmmOq3tXBztD5iZhM92ZPibiELiewNraD3
+	YfFAjg==
+X-Google-Smtp-Source: AGHT+IGaTUuCSLv6QhKKMsuaz/EyNtMrBzSEqlbrqhXOyD2wjrb20aNzynsC82kMXdlOiL3V6Z3wQg==
+X-Received: by 2002:a05:6402:274a:b0:5d3:e9fd:9a15 with SMTP id 4fb4d7f45d1cf-5d81de2dc8emr48086589a12.32.1736110448027;
+        Sun, 05 Jan 2025 12:54:08 -0800 (PST)
+Received: from [192.168.2.22] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5d80679efc9sm22088974a12.47.2025.01.05.12.54.06
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sun, 05 Jan 2025 12:54:07 -0800 (PST)
+Message-ID: <4351b4fa-2558-4b73-8604-81a4b1eef9dc@gmail.com>
+Date: Sun, 5 Jan 2025 21:54:06 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20241226194309.27733-1-ebiggers@kernel.org>
-X-Newsgroups: apana.lists.os.linux.cryptoapi,apana.lists.os.linux.kernel
+User-Agent: Mozilla Thunderbird
+Subject: Re: [discussion] proposal to bypass zero data for dm-crypt
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@lists.linux.dev, Yu Kuai <yukuai1@huaweicloud.com>,
+ lkml <linux-kernel@vger.kernel.org>, "yukuai (C)" <yukuai3@huawei.com>
+References: <73152f2b-2a3e-37a7-4578-9a4ae7ec903f@huaweicloud.com>
+ <3181bbd4-40df-eecf-c9b2-45b09018b8af@redhat.com>
+Content-Language: en-US
+From: Milan Broz <gmazyland@gmail.com>
+Autocrypt: addr=gmazyland@gmail.com; keydata=
+ xsFNBE94p38BEADZRET8y1gVxlfDk44/XwBbFjC7eM6EanyCuivUPMmPwYDo9qRey0JdOGhW
+ hAZeutGGxsKliozmeTL25Z6wWICu2oeY+ZfbgJQYHFeQ01NVwoYy57hhytZw/6IMLFRcIaWS
+ Hd7oNdneQg6mVJcGdA/BOX68uo3RKSHj6Q8GoQ54F/NpCotzVcP1ORpVJ5ptyG0x6OZm5Esn
+ 61pKE979wcHsz7EzcDYl+3MS63gZm+O3D1u80bUMmBUlxyEiC5jo5ksTFheA8m/5CAPQtxzY
+ vgezYlLLS3nkxaq2ERK5DhvMv0NktXSutfWQsOI5WLjG7UWStwAnO2W+CVZLcnZV0K6OKDaF
+ bCj4ovg5HV0FyQZknN2O5QbxesNlNWkMOJAnnX6c/zowO7jq8GCpa3oJl3xxmwFbCZtH4z3f
+ EVw0wAFc2JlnufR4dhaax9fhNoUJ4OSVTi9zqstxhEyywkazakEvAYwOlC5+1FKoc9UIvApA
+ GvgcTJGTOp7MuHptHGwWvGZEaJqcsqoy7rsYPxtDQ7bJuJJblzGIUxWAl8qsUsF8M4ISxBkf
+ fcUYiR0wh1luUhXFo2rRTKT+Ic/nJDE66Ee4Ecn9+BPlNODhlEG1vk62rhiYSnyzy5MAUhUl
+ stDxuEjYK+NGd2aYH0VANZalqlUZFTEdOdA6NYROxkYZVsVtXQARAQABzSBNaWxhbiBCcm96
+ IDxnbWF6eWxhbmRAZ21haWwuY29tPsLBlQQTAQgAPwIbAwYLCQgHAwIGFQgCCQoLBBYCAwEC
+ HgECF4AWIQQqKRgkP95GZI0GhvnZsFd72T6Y/AUCYaUUZgUJJPhv5wAKCRDZsFd72T6Y/D5N
+ D/438pkYd5NyycQ2Gu8YAjF57Od2GfeiftCDBOMXzh1XxIx7gLosLHvzCZ0SaRYPVF/Nr/X9
+ sreJVrMkwd1ILNdCQB1rLBhhKzwYFztmOYvdCG9LRrBVJPgtaYqO/0493CzXwQ7FfkEc4OVB
+ uhBs4YwFu+kmhh0NngcP4jaaaIziHw/rQ9vLiAi28p1WeVTzOjtBt8QisTidS2VkZ+/iAgqB
+ 9zz2UPkE1UXBAPU4iEsGCVXGWRz99IULsTNjP4K3p8ZpdZ6ovy7X6EN3lYhbpmXYLzZ3RXst
+ PEojSvqpkSQsjUksR5VBE0GnaY4B8ZlM3Ng2o7vcxbToQOsOkbVGn+59rpBKgiRadRFuT+2D
+ x80VrwWBccaph+VOfll9/4FVv+SBQ1wSPOUHl11TWVpdMFKtQgA5/HHldVqrcEssWJb9/tew
+ 9pqxTDn6RHV/pfzKCspiiLVkI66BF802cpyboLBBSvcDuLHbOBHrpC+IXCZ7mgkCrgMlZMql
+ wFWBjAu8Zlc5tQJPgE9eeQAQrfZRcLgux88PtxhVihA1OsMNoqYapgMzMTubLUMYCCsjrHZe
+ nzw5uTcjig0RHz9ilMJlvVbhwVVLmmmf4p/R37QYaqm1RycLpvkUZUzSz2NCyTcZp9nM6ooR
+ GhpDQWmUdH1Jz9T6E9//KIhI6xt4//P15ZfiIs7BTQRPeKd/ARAA3oR1fJ/D3GvnoInVqydD
+ U9LGnMQaVSwQe+fjBy5/ILwo3pUZSVHdaKeVoa84gLO9g6JLToTo+ooMSBtsCkGHb//oiGTU
+ 7KdLTLiFh6kmL6my11eiK53o1BI1CVwWMJ8jxbMBPet6exUubBzceBFbmqq3lVz4RZ2D1zKV
+ njxB0/KjdbI53anIv7Ko1k+MwaKMTzO/O6vBmI71oGQkKO6WpcyzVjLIip9PEpDUYJRCrhKg
+ hBeMPwe+AntP9Om4N/3AWF6icarGImnFvTYswR2Q+C6AoiAbqI4WmXOuzJLKiImwZrSYnSfQ
+ 7qtdDGXWYr/N1+C+bgI8O6NuAg2cjFHE96xwJVhyaMzyROUZgm4qngaBvBvCQIhKzit61oBe
+ I/drZ/d5JolzlKdZZrcmofmiCQRa+57OM3Fbl8ykFazN1ASyCex2UrftX5oHmhaeeRlGVaTV
+ iEbAvU4PP4RnNKwaWQivsFhqQrfFFhvFV9CRSvsR6qu5eiFI6c8CjB49gBcKKAJ9a8gkyWs8
+ sg4PYY7L15XdRn8kOf/tg98UCM1vSBV2moEJA0f98/Z48LQXNb7dgvVRtH6owARspsV6nJyD
+ vktsLTyMW5BW9q4NC1rgQC8GQXjrQ+iyQLNwy5ESe2MzGKkHogxKg4Pvi1wZh9Snr+RyB0Rq
+ rIrzbXhyi47+7wcAEQEAAcLBfAQYAQgAJgIbDBYhBCopGCQ/3kZkjQaG+dmwV3vZPpj8BQJh
+ pRSXBQkk+HAYAAoJENmwV3vZPpj8BPMP/iZV+XROOhs/MsKd7ngQeFgETkmt8YVhb2Rg3Vgp
+ AQe9cn6aw9jk3CnB0ecNBdoyyt33t3vGNau6iCwlRfaTdXg9qtIyctuCQSewY2YMk5AS8Mmb
+ XoGvjH1Z/irrVsoSz+N7HFPKIlAy8D/aRwS1CHm9saPQiGoeR/zThciVYncRG/U9J6sV8XH9
+ OEPnQQR4w/V1bYI9Sk+suGcSFN7pMRMsSslOma429A3bEbZ7Ikt9WTJnUY9XfL5ZqQnjLeRl
+ 8243OTfuHSth26upjZIQ2esccZMYpQg0/MOlHvuFuFu6MFL/gZDNzH8jAcBrNd/6ABKsecYT
+ nBInKH2TONc0kC65oAhrSSBNLudTuPHce/YBCsUCAEMwgJTybdpMQh9NkS68WxQtXxU6neoQ
+ U7kEJGGFsc7/yXiQXuVvJUkK/Xs04X6j0l1f/6KLoNQ9ep/2In596B0BcvvaKv7gdDt1Trgg
+ vlB+GpT+iFRLvhCBe5kAERREfRfmWJq1bHod/ulrp/VLGAaZlOBTgsCzufWF5SOLbZkmV2b5
+ xy2F/AU3oQUZncCvFMTWpBC+gO/o3kZCyyGCaQdQe4jS/FUJqR1suVwNMzcOJOP/LMQwujE/
+ Ch7XLM35VICo9qqhih4OvLHUAWzC5dNSipL+rSGHvWBdfXDhbezJIl6sp7/1rJfS8qPs
+In-Reply-To: <3181bbd4-40df-eecf-c9b2-45b09018b8af@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Eric Biggers <ebiggers@kernel.org> wrote:
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> Remove the vmac64 template, as it has no known users.  It also continues
-> to have longstanding bugs such as alignment violations (see
-> https://lore.kernel.org/r/20241226134847.6690-1-evepolonium@gmail.com/).
-> 
-> This code was added in 2009 by commit f1939f7c5645 ("crypto: vmac - New
-> hash algorithm for intel_txt support").  Based on the mention of
-> intel_txt support in the commit title, it seems it was added as a
-> prerequisite for the contemporaneous patch
-> "intel_txt: add s3 userspace memory integrity verification"
-> (https://lore.kernel.org/r/4ABF2B50.6070106@intel.com/).  In the design
-> proposed by that patch, when an Intel Trusted Execution Technology (TXT)
-> enabled system resumed from suspend, the "tboot" trusted executable
-> launched the Linux kernel without verifying userspace memory, and then
-> the Linux kernel used VMAC to verify userspace memory.
-> 
-> However, that patch was never merged, as reviewers had objected to the
-> design.  It was later reworked into commit 4bd96a7a8185 ("x86, tboot:
-> Add support for S3 memory integrity protection") which made tboot verify
-> the memory instead.  Thus the VMAC support in Linux was never used.
-> 
-> No in-tree user has appeared since then, other than potentially the
-> usual components that allow specifying arbitrary hash algorithms by
-> name, namely AF_ALG and dm-integrity.  However there are no indications
-> that VMAC is being used with these components.  Debian Code Search and
-> web searches for "vmac64" (the actual algorithm name) do not return any
-> results other than the kernel itself, suggesting that it does not appear
-> in any other code or documentation.  Explicitly grepping the source code
-> of the usual suspects (libell, iwd, cryptsetup) finds no matches either.
-> 
-> Before 2018, the vmac code was also completely broken due to using a
-> hardcoded nonce and the wrong endianness for the MAC.  It was then fixed
-> by commit ed331adab35b ("crypto: vmac - add nonced version with big
-> endian digest") and commit 0917b873127c ("crypto: vmac - remove insecure
-> version with hardcoded nonce").  These were intentionally breaking
-> changes that changed all the computed MAC values as well as the
-> algorithm name ("vmac" to "vmac64").  No complaints were ever received
-> about these breaking changes, strongly suggesting the absence of users.
-> 
-> The reason I had put some effort into fixing this code in 2018 is
-> because it was used by an out-of-tree driver.  But if it is still needed
-> in that particular out-of-tree driver, the code can be carried in that
-> driver instead.  There is no need to carry it upstream.
-> 
-> Cc: Atharva Tiwari <evepolonium@gmail.com>
-> Cc: Shane Wang <shane.wang@intel.com>
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
-> ---
-> arch/arm/configs/pxa_defconfig             |   1 -
-> arch/loongarch/configs/loongson3_defconfig |   1 -
-> arch/m68k/configs/amiga_defconfig          |   1 -
-> arch/m68k/configs/apollo_defconfig         |   1 -
-> arch/m68k/configs/atari_defconfig          |   1 -
-> arch/m68k/configs/bvme6000_defconfig       |   1 -
-> arch/m68k/configs/hp300_defconfig          |   1 -
-> arch/m68k/configs/mac_defconfig            |   1 -
-> arch/m68k/configs/multi_defconfig          |   1 -
-> arch/m68k/configs/mvme147_defconfig        |   1 -
-> arch/m68k/configs/mvme16x_defconfig        |   1 -
-> arch/m68k/configs/q40_defconfig            |   1 -
-> arch/m68k/configs/sun3_defconfig           |   1 -
-> arch/m68k/configs/sun3x_defconfig          |   1 -
-> arch/mips/configs/bigsur_defconfig         |   1 -
-> arch/mips/configs/decstation_64_defconfig  |   1 -
-> arch/mips/configs/decstation_defconfig     |   1 -
-> arch/mips/configs/decstation_r4k_defconfig |   1 -
-> arch/mips/configs/ip27_defconfig           |   1 -
-> arch/mips/configs/ip30_defconfig           |   1 -
-> arch/s390/configs/debug_defconfig          |   1 -
-> arch/s390/configs/defconfig                |   1 -
-> crypto/Kconfig                             |  10 -
-> crypto/Makefile                            |   1 -
-> crypto/tcrypt.c                            |   4 -
-> crypto/testmgr.c                           |   6 -
-> crypto/testmgr.h                           | 153 -----
-> crypto/vmac.c                              | 696 ---------------------
-> 28 files changed, 892 deletions(-)
-> delete mode 100644 crypto/vmac.c
 
-Patch applied.  Thanks.
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+On 1/3/25 5:25 PM, Mikulas Patocka wrote:
+> Milan, what do you think about this from a cryptographic point of view?
+> Does it make sense to add an option that would detect zero data and skip
+> decryption in this case?
+
+It is a very dangerous thing.
+
+Disk encryption is a length-preserving encryption, so it cannot prevent
+decryption of modified ciphertext. However, such ciphertext modification
+(without key knowledge) will cause a pseudorandom plaintext output
+(IOW attacker cannot easily flip bits or whole sectors by ciphertext
+modification).
+
+If you allow the zeroed sector to transform to valid plaintext directly,
+the attacker can wipe arbitrary plaintext sector. It can lead to fatal
+issues (for example, wiping filesystem metadata bitmaps on some known
+location).
+
+Stack FDE (dm-crypt) below the filesystem or other storage layer
+(like thin provision) that supports sparse data, and you will get
+the expected behavior without such tricks.
+
+Milan
+
+
+> 
+> Mikulas
+> 
+> On Sat, 21 Dec 2024, Yu Kuai wrote:
+> 
+>> Background
+>>
+>> We provide virtual machines for customers to use, which include an important
+>> feature: in the initial state, the disks in the virtual machine do not occupy
+>> actual storage space, and the data read by users is all zeros until the user
+>> writes data for the first time. This can save a large amount of storage.
+>>
+>> Problem
+>>
+>> However, after introducing dm-crypt, this feature has failed. Because we
+>> expect the data read by users in the initial state to be zero, we have to
+>> write all zeros from dm-crypt.
+>>
+>> Hence we'd like to propose to bypass zero data for dm-crypt, for
+>> example:
+>>
+>> before:
+>> zero data -> encrypted zero data
+>> decrypted zero data -> zero data
+>> others
+>>
+>> after:
+>> zero data -> zero data
+>> decrypted zero data -> encrypted zero data
+>> others(doesn't change)
+>>
+>> We'd like to hear from the community for suggestions first, before we
+>> start. :)
+>>
+>> Thanks,
+>> Kuai
+>>
+> 
+
