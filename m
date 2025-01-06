@@ -1,171 +1,314 @@
-Received: from NAM04-DM6-obe.outbound.protection.outlook.com (mail-dm6nam04on2125.outbound.protection.outlook.com [40.107.102.125])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 325AF1DEFDD
-	for <dm-devel@lists.linux.dev>; Mon,  6 Jan 2025 17:26:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.102.125
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736184419; cv=fail; b=uu1qm5CUH/Xwhly9gU4TyXD0VqZ+x5CqPQirMPlX7QMUUMYjPkZ9Hp21iRYqZ74Y0hnoajyOynWc/TfJIRy5w0Lakg7zmDdsqdF3venFjdxYYVjwWI33uHm/bsCPvoP5BWG+4ALB6wuXLGUG2H4nhIrH/BYhH7lFiD69dd4B7+M=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736184419; c=relaxed/simple;
-	bh=g0jKjAktmV13AZ4DQGepX+K6gtd9jeuQai23JlgBf4I=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:Content-Type:
-	 Content-Disposition:In-Reply-To:MIME-Version; b=o4M9BE0ajScAxR22pUloNMo0HMuDIVKjX+gu3sinPXJPXzfSBqlqprixBBVA4ozWM8F0gEyjIXOtbBj2UcCF+Ed944zq6x6ud/FCVVPAevIOQYhiGB7lflGRAyaA8SOfe6cUoqgdq8Gb4T1Z0NtvbtXhUa3M+SVcKcuOkcbkrXY=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=hammerspace.com; spf=pass smtp.mailfrom=hammerspace.com; dkim=pass (1024-bit key) header.d=hammerspace.com header.i=@hammerspace.com header.b=XZGdHjoA; arc=fail smtp.client-ip=40.107.102.125
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=hammerspace.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=hammerspace.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A014E18A6AC
+	for <dm-devel@lists.linux.dev>; Mon,  6 Jan 2025 17:39:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1736185185; cv=none; b=n/6Ns1I2acfRt7QWr702SVvMOnK+HJCsuf6cAQhnnex+6tsEFpYekrmqDFrTu+e9x2spZLgBwfJGsPlIkyJnDOsrLGitbfpYo6CUrRgYSZWDdBAdZkUtb+SGHJSw39l17cdhHnZhK6Y20xM4oeQ6vfat0nVFs+vjpqpNwmYhDdQ=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1736185185; c=relaxed/simple;
+	bh=R0eQYhLWMqj0ekFFbgxV0fnP7R+ciTQAhMCSyKszko8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=Ny/r8uJ0JLrca/j8vJ2aoYIpbzwkYwo/6efKOvy3aIjiirfp9hUT9PDlunCophJDhbC3TlBhCuUzFHCjJsOTuVlvg0p9UttIuIWEqCC/fgfCgvMBq8b8LaG23qP6bORWPBwPAuXNirjqEeXhUkA6olCJ6L4jzFKvZBXsvV9EW40=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DbecCeOK; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=hammerspace.com header.i=@hammerspace.com header.b="XZGdHjoA"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=urFNT8/UiP3S34/WyFLuJX6tcwhvKwqmmxAnbZDrXDf230jvulGBnUWS+CBmAiOHY7raHZcz6xOUFkutjS6hG7ecMyHvlLmbO4XjPowhW4+qRi3xibTtyFWFn5kVSEy9Ub+CB1ZpjQAucxNsHD0qnUENKOeo3PNouMo/lWNUQnkJej5bi+PGCqx4thC5bsA5l4uP9cXUikHVKT/o/hqruk8x2N1HR/pZiXJU6dbHzuPV59OhKoKIMbn4fi+bw3408pDQROXRiH45HQ2XI0K+S/TQfVxK9MXQkH1KOv+UJmcTU9/zc/f3qt74dUBZS1Khxhfdr468hyFxuxNUtmhY0w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=OvaNweLt2kO4+vJ/JNHmry1HL22qqa+DFUFv739h+oY=;
- b=LMHC/Fflcpaf4YX/GeWV92/QTqj1VMrs97QrIqVIUJM60dMLw38U+ZE+oIecyYU9igsE++G9u2n+PjxryhLrHbede5ezbM5icc4WQuVKXSwwP5Y48SrepDlfw779CADRIxu3SPYnL6cfBmDmeKIrK8hEGlmAWC6PBnK1PY91JgRp0RxcNkeuzsocRDO1Z3SUt32bsyL0tUjNJDMW0l2isWv5KlDWRONMEv2V29NsqLM5hhUwj+4kJ2BScI2YHIRoUb3YQkmrYdueHegL1arTLXxJXoXWF5J+JRkTOrQ/9khXyO+J1uz0pQGCa3QveTNx624ztKMTGqSZG6vII7Y3nw==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=hammerspace.com; dmarc=pass action=none
- header.from=hammerspace.com; dkim=pass header.d=hammerspace.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=hammerspace.com;
- s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=OvaNweLt2kO4+vJ/JNHmry1HL22qqa+DFUFv739h+oY=;
- b=XZGdHjoAXQzdyi6SiY2Q4RdaaKCtlsUbGJ1/qzT5CrlXz5UVn7lhLfYo2Io65VDM+H11ExlqlbPA6epgGT6iQa5MRm/iSxnHm5ZUQLXiLvN0KkPGxfVmGwEeZTFThE71y4J6Ar41A3hPDwOXIErwHNaun2hxKfmDCn3mbCsfUD0=
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=hammerspace.com;
-Received: from DM6PR13MB4036.namprd13.prod.outlook.com (2603:10b6:5:2a7::14)
- by DM6PR13MB4560.namprd13.prod.outlook.com (2603:10b6:5:209::15) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8314.17; Mon, 6 Jan
- 2025 17:26:49 +0000
-Received: from DM6PR13MB4036.namprd13.prod.outlook.com
- ([fe80::2a78:7a0:a33:cecd]) by DM6PR13MB4036.namprd13.prod.outlook.com
- ([fe80::2a78:7a0:a33:cecd%7]) with mapi id 15.20.8314.018; Mon, 6 Jan 2025
- 17:26:49 +0000
-Date: Mon, 6 Jan 2025 12:26:47 -0500
-From: Mike Snitzer <snitzer@hammerspace.com>
-To: John Garry <john.g.garry@oracle.com>
-Cc: axboe@kernel.dk, agk@redhat.com, hch@lst.de, mpatocka@redhat.com,
-	martin.petersen@oracle.com, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH RFC 0/5] device mapper atomic write support
-Message-ID: <Z3wSV0YkR39muivP@hammerspace.com>
-References: <20250106124119.1318428-1-john.g.garry@oracle.com>
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250106124119.1318428-1-john.g.garry@oracle.com>
-X-ClientProxiedBy: BL1PR13CA0008.namprd13.prod.outlook.com
- (2603:10b6:208:256::13) To DM6PR13MB4036.namprd13.prod.outlook.com
- (2603:10b6:5:2a7::14)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DbecCeOK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1736185182;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=qM871UlWG4Aynsm7L3T0mQAX/Osb5X/GmjLw5N1vE60=;
+	b=DbecCeOKtDCIiTsb0/2E1G6F1FIhiiM930weawhy/RX2StoPHqmw/Hf9kZxhB/K7t+lcii
+	wpIW/C1KESORNQAdiwJwfKuVBaMJtXG1913k4CUXpXNRxPJ1QzNAxktSF4VP2k/NAwGvMB
+	jCxNQgA0DGEM4cm9qqzLAdoJc1pwAVU=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-193-7v0YPEesNPO3HBxX81slow-1; Mon,
+ 06 Jan 2025 12:39:39 -0500
+X-MC-Unique: 7v0YPEesNPO3HBxX81slow-1
+X-Mimecast-MFC-AGG-ID: 7v0YPEesNPO3HBxX81slow
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0CBAA19560A3;
+	Mon,  6 Jan 2025 17:39:36 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ABD073000197;
+	Mon,  6 Jan 2025 17:39:35 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 506HdYO82385572
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 6 Jan 2025 12:39:34 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 506HdYIK2385571;
+	Mon, 6 Jan 2025 12:39:34 -0500
+Date: Mon, 6 Jan 2025 12:39:34 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Muneendra Kumar M <muneendra.kumar@broadcom.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 2/2] multipathd: set rport port_state to marginal for
+ NVMe devices
+Message-ID: <Z3wVVg0AgLLq4EUN@redhat.com>
+References: <20241220020235.1759375-1-bmarzins@redhat.com>
+ <20241220020235.1759375-3-bmarzins@redhat.com>
+ <c7641dfc68b568dc78297c60c56a9ee8@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DM6PR13MB4036:EE_|DM6PR13MB4560:EE_
-X-MS-Office365-Filtering-Correlation-Id: 8acc12ac-be99-465a-8227-08dd2e774d9c
-X-MS-Exchange-AtpMessageProperties: SA
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|376014|366016|1800799024;
-X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?uNfHoJUKzZe30ZlzCF3J4XFEaH0PjA+Y92kLqZRlAQGjtQ5WX4MRqE72I8nB?=
- =?us-ascii?Q?Yt3PrGFfQetj+r6ypLSKt39Rgojj8NruHRidjJaN3Ex6QRgiFAvvqVjwLgkQ?=
- =?us-ascii?Q?Ume5pwuQJyjITl+rGn0tA3Q137Y4C+rf2GaqNUVdeswpbbDJoaPUT3XFHl0E?=
- =?us-ascii?Q?RmSXNDtHFnAKB8fKAguICR2UqoMndsTJgUJRcH3pi3RAUHXZdSJQYYt+/NLP?=
- =?us-ascii?Q?KpZICPQY7xNjfyARKfkpWGTah1vkbcH8/7aRrTx2jPexdbCb1yl1oNUrDxjD?=
- =?us-ascii?Q?JwVYmNYcBW2mAGunmesWsPwIwXmeJgxs8qMafO/Y6+0iBf26Axveyg6tOLB+?=
- =?us-ascii?Q?aRWZuIzERtfXLl3xMDI9g40gce7at5Qtv9dREHKAq72ynt9xTrRHN3YHGg77?=
- =?us-ascii?Q?gQO5ZUgu/dHXHClF0fHoc63ZMeNrjiLa2NbfkSxlIunalP/1sS/zy5FNt7Cr?=
- =?us-ascii?Q?2A56Pks5FbE24MEZgz8suh4j6xqlfOxYCGrS0OaqqeokUeRtzeZgt1FZ1gDa?=
- =?us-ascii?Q?F98RjNVUiI5Jtdy1yfIQWBlHNRwS9FajOCHTotBVY8U/SvkEZDOXooBdJEVJ?=
- =?us-ascii?Q?RfB/M/cJsOEN+jjfHtiehSla4iqxCGDnHk7DXM+KRw0J6EM1TKNCUcoJDYZ+?=
- =?us-ascii?Q?E9R34x54z1SX1Pwz7fVSXizuCIr9SW2k1GB1Z9SEDNTLaO6pTBSda8BvHdZi?=
- =?us-ascii?Q?yxSfpDhmTyjjo5YFIJRvOWaA/QOKZDCxv47v99olDg1kScH2Vxhk3nwkIlir?=
- =?us-ascii?Q?UnHNRnr/AXjT/Z5sRkpkROqnZ93wiuK4bTaFYABd3tJO2TfKOV455BOFhLjU?=
- =?us-ascii?Q?zCbD9+ag5ZSdcVikRQ4pqS7A6g2ebkgbImE8eQDJu+K/6wlJmtM/HunJ9D7N?=
- =?us-ascii?Q?pptBDEEDxQ9TGijkYaFjdLI/MEuEq6RpwH0E1jh8JQipio7/CpaThcav0Tqu?=
- =?us-ascii?Q?i0AmhVslwAC+WNXRqbKnqGoxSjV8SRz/GxmGZaetylZP+AgJ7+VBDmPkovFA?=
- =?us-ascii?Q?0jUuxXax5wds2Fw54nKVP01jtzH1+I4SbWrvERxgbam+eJbUdtOjeWaG8FBE?=
- =?us-ascii?Q?6RWyWt05/KxjgdH66mqpqeXJCbJ7qB3FVxhtcj9cJxXMAZaqU47CvD6d8zjI?=
- =?us-ascii?Q?xs9+fmL8Hi1kyBKGmGXJYkldgyDMZlFaJ5SD6GQyH1FgzBqr3ANgiV7zmnwb?=
- =?us-ascii?Q?RIZLd8Dm+F3oWpP7lznsYl1nI3ETFxEB42uwYRCg+wK/kvnfFx7js8djKbfS?=
- =?us-ascii?Q?tm/3nXK/UV6DpP4HYcRr0C0kcW0wMnDVHqK+5P0UCNJjS2BSqu34SOZkEH17?=
- =?us-ascii?Q?pPUKe7q8oYicqH2b2s9jOmgDLqJPC/zG0/d1cHo3g+r2tvRIDI1bl1qD6Kzh?=
- =?us-ascii?Q?N1isKpyi5nsSLv2E3/dp57O8XjW2?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM6PR13MB4036.namprd13.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(366016)(1800799024);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?AMkHU8Yyq7oobNq/+lgVjjROmmyY6i9h8DaZmqLZANIcaAF9QJ5S0X2KQBwc?=
- =?us-ascii?Q?++Ye79s+sb4Z3iDtl9lEbw0ldS6srfnwVUKA3R+PkBrdbU5imc3QrPIv/pIr?=
- =?us-ascii?Q?BoWOqt/EGWZrg2faDHf1dWYrcQVZLP1J8ZkjP+XMfzwN8At3MN2eDkwKrQH9?=
- =?us-ascii?Q?2aC4d2SE5I7e5Mv4zA8bXODi0XvtGhNvYD4if3UXBr+Xj6tmp0RauIgjByWF?=
- =?us-ascii?Q?xO2GNMhII5NwrYDy+sabn9Fb0OawChJOK3bGlaDZBDkXE+/p32pSZ4iSMLeY?=
- =?us-ascii?Q?zE11M2Zexn9xP8AlYjPpDGpnk5BwFONuuBOoKdQ1CFDrTuyBXla3D4FIKx3q?=
- =?us-ascii?Q?MOVW7uhRCR/0HfMZWf35H7cbJ3I+J/CDWBASHANes4IKrNMNm7BdLN+2FVQE?=
- =?us-ascii?Q?FZAoFZIA1BKnzoK3wVgbcZlDyGn3LGAQEer82M/CokNcGC9HjCJQXv6WsScO?=
- =?us-ascii?Q?DwUMqVt2syh77PANIGsAIG5ol5ZrOIw0nEFnMvqBHfjdwZZU0RKVOLc31l6x?=
- =?us-ascii?Q?IBCEnANUkVCc3mFqvMRKR/l0w449pERQVFj8QrZtyLIbAtgGDUo2CtvgqXYF?=
- =?us-ascii?Q?PIzZA3ZBa/g2efHAHbd0f9WTg68h8ddMeeyjaOtL2wnBd8VU559k3YRJVwUI?=
- =?us-ascii?Q?lnqSmt2tTwJOtvhtgs837ljk/8r9CxAS3Pu4P+6fnNGPhH980orYST+3mpyn?=
- =?us-ascii?Q?XUB9PIE4ZcJfgg0zx2WYSwUDEBW73JTwPKxo8cEKm8BvK7SQY8hD11JoD6Iv?=
- =?us-ascii?Q?/9tkm70sf3CoU7EOIdkp1ExV2xI1gom9b1py4wq6PZW+g0ICCdJW/80Rzv+T?=
- =?us-ascii?Q?Xdq4mHhjmHzRtegW65UQpGiHQX9ktmZ8JasA10GXhU8KpgRI7QRPu5htBD0C?=
- =?us-ascii?Q?EDcjtyXBw/dXUxpXKBV6hJGEIWya+EaA6ZrNJrW5EUtfva6KO6YR129O6LLD?=
- =?us-ascii?Q?nNz7Bjb3CUCcfrBqrMe8DWEccYbkSyF7arxGFHPP8MrJm8xwuBeyh7pw2/SK?=
- =?us-ascii?Q?+egs+vwsh1HQ15+dRzQl2rrdzLsQDdkx/h79160cNwA14fVmZbUcDXboM29i?=
- =?us-ascii?Q?0Lr7i0x7OXjvsaODFMNNG9pvo3DcJe7oqcbRDlRiwkpqPPRoYmxoscMruFFB?=
- =?us-ascii?Q?L+1FudrYSmXQ2tif1YctwWbqbRzbXDhY67SNcHAOSP+nhPFEG/3an/JpAlm+?=
- =?us-ascii?Q?wKjl+wGyMn/W2SAwkH6T3ulOc/qrCbhxxCZDM/Stu6D+CMo1PPuaxMUiS/Ap?=
- =?us-ascii?Q?VXdsvZLA8ZEnJnPj+A8JcNAh4AztPt4zMPBMbACY8UfUSYfDYQ51ZfJTOOfU?=
- =?us-ascii?Q?9NdGQRPPZ4EQVM0Q9ko1MIlIqrnvcV915ED5wNZtJHorRiNSTSmUaxnqZwMN?=
- =?us-ascii?Q?MjUgSjqAPHQr4qbBGv5ObZyR0vH8QXAz+L7yc5UrXm73bT2gL+NPW3saJ7kL?=
- =?us-ascii?Q?EhYWdkeFAOEeLbzB6EZBr8N1UsI+afQEhcR7ioLu3NH8H2ZQ6Yjl5mKxsSS7?=
- =?us-ascii?Q?35OraC4KgY6Gar1fLKvIjKwM2ioo0Mzg5hv0UxHMQEFoAD7OuZnHTneUl/yi?=
- =?us-ascii?Q?5PdfUDJjfCWlLIMcmmtXFb3Dxohga81PdxC+b4Xq+D4TJg4heOH3XZKFuqI6?=
- =?us-ascii?Q?TA=3D=3D?=
-X-OriginatorOrg: hammerspace.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 8acc12ac-be99-465a-8227-08dd2e774d9c
-X-MS-Exchange-CrossTenant-AuthSource: DM6PR13MB4036.namprd13.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Jan 2025 17:26:49.6004
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 0d4fed5c-3a70-46fe-9430-ece41741f59e
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: NGn5AhfhxlkNqUduXhczvbBu3UCDdT02R6lHRu2oUC7baMaYDP1gyTlc4C3z1BvX+bTC1fhUFly/2vAkrno005sDRvqZCdqo+q7r07j33/0=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR13MB4560
+In-Reply-To: <c7641dfc68b568dc78297c60c56a9ee8@mail.gmail.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: y5Nhj7i82hfeEHvpvclwvqInCrzrTiSt3ECANrJPmmk_1736185176
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Mon, Jan 06, 2025 at 12:41:14PM +0000, John Garry wrote:
-> This series introduces initial device mapper atomic write support.
+On Fri, Dec 20, 2024 at 04:25:22PM +0530, Muneendra Kumar M wrote:
+> Hi Benjamin,
+> Thanks for the changes.
+> But below is the reason why we didn't add support to set the rport
+> port_state to marginal for NVMe devices
 > 
-> Since we already support stacking atomic writes limits, it's quite
-> straightforward to support.
+> In the case of SCSI  once rport-state is set to Marginal ,
+> If any pending I/O's on the marginal path hit's the scsi-timeout (after
+> abort success) the scsi-layer checks the rport-state  and If the
+> rport-state is set to Marginal it will not do any retries on the Marginal
+> path instead the I/O
+> Will be retried on the other Active paths.
 > 
-> Only dm-linear is supported for now, but other personalities could
-> be supported.
 > 
-> Patch #1 is a proper fix, but the rest of the series is RFC - this is
-> because I have not fully tested and we are close to the end of this
-> development cycle.
+> This particular functionality(checking the rport-state and acting
+> accordingly) we didn't add( as far I know) in the case of NVME and we need
+> to check how we can handle this in the case of NVME .
+> That's the reason we didn't set the port state to Marginal in the case of
+> NVMe.
+> 
+> 
+> In a brief SCSI layer handles the case when the rport-state is set to
+> Marginal whereas in NVMe it doesn't(AFIK).
+> 
+> Atleast with the below changes we make sure that once we get the FPIN-LI
+> notification we will set the affected path , as well as the rport-state to
+> Marginal irrespective of SCSI and NVMe.
+> 
+> I am just thinking that until we have some changes in the NVME driver to
+> handle (the rport-state to marginal) this changes doesn't show any impact
+> in the case of NVMe
+>  other then keeping it  on par with SCSI implementation.
+> 
+> Please let me know your opinion on the same.
 
-In general, looks reasonable.  But I would prefer to see atomic write
-support added to dm-striped as well.  Not that I have some need, but
-because it will help verify the correctness of the general stacking
-code changes (in both block and DM core).  I wrote and/or fixed a fair
-amount of the non-atomic block limits stacking code over the
-years.. so this is just me trying to inform this effort based on
-limits stacking gotchas we've experienced to this point.
+The request to do this came because the user wanted to see which target
+ports were effected, but when they looked, none of them we in the
+Marginal state. So there is some value in this for users, even if the
+systems behavior doesn't change because of it.
 
-Looks like adding dm-striped support would just need to ensure that
-the chunk_size is multiple of atomic write size (so chunk_size >=
-atomic write size).
+-Ben
 
-Relative to linear, testing limits stacking in terms of linear should
-also verify that concatenated volumes work.
+> 
+> 
+> Regards,
+> Muneendra.
+> 
+> 
+> 
+> -----Original Message-----
+> From: Benjamin Marzinski <bmarzins@redhat.com>
+> Sent: Friday, December 20, 2024 7:33 AM
+> To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@lists.linux.dev>; Martin Wilck
+> <Martin.Wilck@suse.com>; Muneendra Kumar <muneendra.kumar@broadcom.com>
+> Subject: [PATCH 2/2] multipathd: set rport port_state to marginal for NVMe
+> devices
+> 
+> When a scsi path device is set to marginal, it updates the rport state.
+> Do this for NVMe devices as well.
+> 
+> Fixes: 1cada778 ("multipathd: Added support to handle FPIN-Li events for
+> FC-NVMe")
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  multipathd/fpin_handlers.c | 74 ++++++++++++++++++++++++++++++++++----
+>  1 file changed, 68 insertions(+), 6 deletions(-)
+> 
+> diff --git a/multipathd/fpin_handlers.c b/multipathd/fpin_handlers.c index
+> 6b56f9b7..8b436067 100644
+> --- a/multipathd/fpin_handlers.c
+> +++ b/multipathd/fpin_handlers.c
+> @@ -15,6 +15,7 @@
+>  #include "debug.h"
+>  #include "util.h"
+>  #include "sysfs.h"
+> +#include "discovery.h"
+> 
+>  #include "fpin.h"
+>  #include "devmapper.h"
+> @@ -253,7 +254,7 @@ static int  extract_nvme_addresses_chk_path_pwwn(const
+> char *address,
+>   * with the els wwpn ,attached_wwpn and sets the path state to
+>   * Marginal
+>   */
+> -static void fpin_check_set_nvme_path_marginal(uint16_t host_num, struct
+> path *pp,
+> +static bool fpin_check_set_nvme_path_marginal(uint16_t host_num, struct
+> +path *pp,
+>  		uint64_t els_wwpn, uint64_t attached_wwpn)  {
+>  	struct udev_device *ctl = NULL;
+> @@ -263,21 +264,79 @@ static void
+> fpin_check_set_nvme_path_marginal(uint16_t host_num, struct path *pp
+>  	ctl = udev_device_get_parent_with_subsystem_devtype(pp->udev,
+> "nvme", NULL);
+>  	if (ctl == NULL) {
+>  		condlog(2, "%s: No parent device for ", pp->dev);
+> -		return;
+> +		return false;
+>  	}
+>  	address = udev_device_get_sysattr_value(ctl, "address");
+>  	if (!address) {
+>  		condlog(2, "%s: unable to get the address ", pp->dev);
+> -		return;
+> +		return false;
+>  	}
+>  	condlog(4, "\n address %s: dev :%s\n", address, pp->dev);
+>  	ret = extract_nvme_addresses_chk_path_pwwn(address, els_wwpn,
+> attached_wwpn);
+>  	if (ret <= 0)
+> -		return;
+> +		return false;
+>  	ret = fpin_add_marginal_dev_info(host_num, pp->dev);
+>  	if (ret < 0)
+> -		return;
+> +		return false;
+>  	fpin_path_setmarginal(pp);
+> +	return true;
+> +}
+> +
+> +static void fpin_nvme_set_rport_marginal(uint16_t host_num, uint64_t
+> +els_wwpn) {
+> +	struct udev_enumerate *udev_enum = NULL;
+> +	struct udev_list_entry *entry;
+> +
+> +	pthread_cleanup_push(cleanup_udev_enumerate_ptr, &udev_enum);
+> +	udev_enum = udev_enumerate_new(udev);
+> +	if (!udev_enum) {
+> +		condlog(0, "fpin: rport udev_enumerate_new() failed: %m");
+> +		goto out;
+> +	}
+> +	if (udev_enumerate_add_match_subsystem(udev_enum,
+> "fc_remote_ports") < 0 ||
+> +	    udev_enumerate_add_match_is_initialized(udev_enum) < 0 ||
+> +	    udev_enumerate_scan_devices(udev_enum) < 0) {
+> +		condlog(0, "fpin: error setting up rport enumeration:
+> %m");
+> +		goto out;
+> +	}
+> +	udev_list_entry_foreach(entry,
+> +				udev_enumerate_get_list_entry(udev_enum))
+> {
+> +		const char *devpath;
+> +		const char *rport_id, *value;
+> +		struct udev_device *rport_dev = NULL;
+> +		uint16_t rport_hostnum;
+> +		uint64_t rport_wwpn;
+> +		unsigned int unused;
+> +
+> +		pthread_cleanup_push(cleanup_udev_device_ptr, &rport_dev);
+> +		devpath = udev_list_entry_get_name(entry);
+> +		if (!devpath)
+> +			goto next;
+> +		rport_id = libmp_basename(devpath);
+> +		if (sscanf(rport_id, "rport-%hu:%u-%u", &rport_hostnum,
+> &unused,
+> +			   &unused) != 3 || rport_hostnum != host_num)
+> +			goto next;
+> +
+> +		rport_dev = udev_device_new_from_syspath(udev, devpath);
+> +		if (!rport_dev) {
+> +			condlog(0, "%s: error getting rport dev: %m",
+> rport_id);
+> +			goto next;
+> +		}
+> +		value = udev_device_get_sysattr_value(rport_dev,
+> "port_name");
+> +		if (!value) {
+> +			condlog(0, "%s: error getting port_name: %m",
+> rport_id);
+> +			goto next;
+> +		}
+> +
+> +		rport_wwpn = strtol(value, NULL, 16);
+> +		/* If the rport wwpn matches, set the port state to
+> marginal */
+> +		if (rport_wwpn == els_wwpn)
+> +			fpin_set_rport_marginal(rport_dev);
+> +next:
+> +		pthread_cleanup_pop(1);
+> +	}
+> +out:
+> +	pthread_cleanup_pop(1);
+>  }
+> 
+>  /*
+> @@ -338,6 +397,7 @@ static int  fpin_chk_wwn_setpath_marginal(uint16_t
+> host_num,  struct vectors *ve
+>  	struct multipath *mpp;
+>  	int i, k;
+>  	int ret = 0;
+> +	bool found_nvme = false;
+> 
+>  	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+>  	lock(&vecs->lock);
+> @@ -348,7 +408,7 @@ static int  fpin_chk_wwn_setpath_marginal(uint16_t
+> host_num,  struct vectors *ve
+>  			continue;
+>  		/*checks if the bus type is nvme  and the protocol is
+> FC-NVMe*/
+>  		if ((pp->bus == SYSFS_BUS_NVME) && (pp->sg_id.proto_id ==
+> NVME_PROTOCOL_FC)) {
+> -			fpin_check_set_nvme_path_marginal(host_num, pp,
+> els_wwpn, attached_wwpn);
+> +			found_nvme =
+> fpin_check_set_nvme_path_marginal(host_num, pp,
+> +els_wwpn, attached_wwpn) || found_nvme;
+>  		} else if ((pp->bus == SYSFS_BUS_SCSI) &&
+>  			(pp->sg_id.proto_id == SCSI_PROTOCOL_FCP) &&
+>  			(host_num ==  pp->sg_id.host_no)) {
+> @@ -356,6 +416,8 @@ static int  fpin_chk_wwn_setpath_marginal(uint16_t
+> host_num,  struct vectors *ve
+>  			fpin_check_set_scsi_path_marginal(host_num, pp,
+> els_wwpn);
+>  		}
+>  	}
+> +	if (found_nvme)
+> +		fpin_nvme_set_rport_marginal(host_num, els_wwpn);
+>  	/* walk backwards because reload_and_sync_map() can remove mpp */
+>  	vector_foreach_slot_backwards(vecs->mpvec, mpp, i) {
+>  		if (mpp->fpin_must_reload) {
+> --
+> 2.46.2
+> 
+> -- 
+> This electronic communication and the information and any files transmitted 
+> with it, or attached to it, are confidential and are intended solely for 
+> the use of the individual or entity to whom it is addressed and may contain 
+> information that is confidential, legally privileged, protected by privacy 
+> laws, or otherwise restricted from disclosure to anyone else. If you are 
+> not the intended recipient or the person responsible for delivering the 
+> e-mail to the intended recipient, you are hereby notified that any use, 
+> copying, distributing, dissemination, forwarding, printing, or copying of 
+> this e-mail is strictly prohibited. If you received this e-mail in error, 
+> please return the e-mail to the sender, delete it from your computer, and 
+> destroy any printed copy of it.
 
-Thanks,
-Mike
+
