@@ -1,87 +1,103 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E66EE18950A
-	for <dm-devel@lists.linux.dev>; Tue,  7 Jan 2025 16:47:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50EAC1F709D
+	for <dm-devel@lists.linux.dev>; Tue,  7 Jan 2025 17:13:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736268433; cv=none; b=Sx9e2hetTt6wkzNwFIQROIOKWLQOZ3IsCR32dVL4ujorhSJu8ewF/kfvIzFj+MFS4Bail81MFt0YpOn2qSb+m6b1vTWltqCSu0D/3m88Q4N04gCkiNiiwyK+Q/WLMvcFj6KGI4mCOGs9WY0wbiDaS94V1lDkDvQXuZ8GtOeDvWk=
+	t=1736270011; cv=none; b=KGCdN4LTyoidU+tiji7DJKIchrqbcAEF5Gz0vb6a6jjrZgTxeYdbb5y1Byjaz0x9msqvE4mkqOl7VEWvM95NA+kJHF0pngm7Tg5tYVcsrRySx/Ga+G+t5tU06ngBSLlfDD2LPp8lo1CTXlekyosLrpn/MttFYkFkdzVSTGKwoZc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736268433; c=relaxed/simple;
-	bh=VCI7R33YqrhIfiPk5hzhs6Gwn2T9ph5/y81fB42K5pM=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=P2zDzS6Eno2i4IuiFSTtKMbwiX6o6O0SMBxzlD2bDNDhXeX/iu89U8hHtiEDX39G9MCrAvnsfn80HJhTjymqt5epONfgiLKkrdTw+uGxIYBepUZ16tpPnh1RIM19dxaBIJM34WpuWIbmU58pyJBksi0P8tYNd28wjaWUroDmN8I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=H9aHdi+b; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1736270011; c=relaxed/simple;
+	bh=4DWnlFnuo2BwdVJurloqLZyr6SJGkDY8Mh7D5ebrUHc=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=mAJGqJ1/HiqipbHLHVRD9to7L/urVgnaZQp3Zrb+BIRH5IAk0OhHwkHr2OyQMkDtcqEfFwV0SETsQx9YvHMHzjZqK/t8+9QRTLgJtK5CptCGoktVOHWpe6PwSPHM3c7L0vxJntOMnvjVvhjpFXe2K/i7N+nsGtnqKoy71TY7cvI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fWoaHBLj; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="H9aHdi+b"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fWoaHBLj"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1736268430;
+	s=mimecast20190719; t=1736270009;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=eFFuV2Ix2BLO4MtjiKfqIacdFHXlOpdtcXnWD9UDlz4=;
-	b=H9aHdi+b4czKzNpKiAe4nWv/YTxBkgKGgxW9/kyjPaJpjBvLV6IVe5zwIR46uKMJJBfUqj
-	hY006C/IBnkc6RpuM8qs5H3EpNLF1maKKn0XVcb884a4Yy0ouSj1CJ7gMSKl9+PnFpbuYM
-	3OwNZ9GEELitANUn1zT3BoYkF6hhAKg=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=lpA+wm1NYm8XCjdkhq6EDQzPo7soPLlFgVc4ywtxYOo=;
+	b=fWoaHBLjrE5roCTpi0OPzWDrQpuz3cLYICVhYF6O+8SCL69rpL7u0BUeqFaAIi1Sj2hs9D
+	SAYdj7vtNNDMFHN0iE3iId0OUtmoDTDbKnHYP14l3hNLmwisEF/vwKavb+9ouYIdOfAFVg
+	OgvmWLdUf8Q06I7yJqd+6GoDBPR9XDM=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-620-Vn1r5lghONuNVJTJG6XS2A-1; Tue,
- 07 Jan 2025 11:47:09 -0500
-X-MC-Unique: Vn1r5lghONuNVJTJG6XS2A-1
-X-Mimecast-MFC-AGG-ID: Vn1r5lghONuNVJTJG6XS2A
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-138-uVr3HftzMgGzih4Dj80qVA-1; Tue,
+ 07 Jan 2025 12:13:23 -0500
+X-MC-Unique: uVr3HftzMgGzih4Dj80qVA-1
+X-Mimecast-MFC-AGG-ID: uVr3HftzMgGzih4Dj80qVA
 Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 64C2D1955F34;
-	Tue,  7 Jan 2025 16:47:08 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 55FBF1955E99;
+	Tue,  7 Jan 2025 17:13:21 +0000 (UTC)
 Received: from [10.45.224.27] (unknown [10.45.224.27])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DEED9195606B;
-	Tue,  7 Jan 2025 16:47:06 +0000 (UTC)
-Date: Tue, 7 Jan 2025 17:47:01 +0100 (CET)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EB2861955F40;
+	Tue,  7 Jan 2025 17:13:17 +0000 (UTC)
+Date: Tue, 7 Jan 2025 18:13:14 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Heinz Mauelshagen <heinzm@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>
-cc: dm-devel@lists.linux.dev
-Subject: [PATCH] dm-ebs: don't set the flag DM_TARGET_PASSES_INTEGRITY
-Message-ID: <0f3156b2-af3c-9276-9158-af43fcebe3b7@redhat.com>
+To: John Garry <john.g.garry@oracle.com>
+cc: Mike Snitzer <snitzer@hammerspace.com>, axboe@kernel.dk, agk@redhat.com, 
+    hch@lst.de, martin.petersen@oracle.com, linux-block@vger.kernel.org, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH RFC 0/5] device mapper atomic write support
+In-Reply-To: <dcbaadea-66c1-4d98-8a37-945d8b336d5b@oracle.com>
+Message-ID: <5328db9a-8345-2938-7204-3d4cdb138ee4@redhat.com>
+References: <20250106124119.1318428-1-john.g.garry@oracle.com> <Z3wSV0YkR39muivP@hammerspace.com> <dcbaadea-66c1-4d98-8a37-945d8b336d5b@oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: R9jyODvwLj139achSgEXhH1hrGXIPLn8FZriIcdXJwk_1736268428
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-dm-ebs uses dm-bufio to process requests that are not aligned on logical
-sector size. dm-bufio doesn't support passing integrity data (and it is
-unclear how should it do it), so we shouldn't set the
-DM_TARGET_PASSES_INTEGRITY flag.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-Fixes: d3c7b35c20d6 ("dm: add emulated block size target")
 
----
- drivers/md/dm-ebs-target.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On Mon, 6 Jan 2025, John Garry wrote:
 
-Index: linux-2.6/drivers/md/dm-ebs-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ebs-target.c	2024-07-30 14:06:48.000000000 +0200
-+++ linux-2.6/drivers/md/dm-ebs-target.c	2025-01-03 17:49:32.000000000 +0100
-@@ -442,7 +442,7 @@ static int ebs_iterate_devices(struct dm
- static struct target_type ebs_target = {
- 	.name		 = "ebs",
- 	.version	 = {1, 0, 1},
--	.features	 = DM_TARGET_PASSES_INTEGRITY,
-+	.features	 = 0,
- 	.module		 = THIS_MODULE,
- 	.ctr		 = ebs_ctr,
- 	.dtr		 = ebs_dtr,
+> On 06/01/2025 17:26, Mike Snitzer wrote:
+> > On Mon, Jan 06, 2025 at 12:41:14PM +0000, John Garry wrote:
+> > > This series introduces initial device mapper atomic write support.
+> > > 
+> > > Since we already support stacking atomic writes limits, it's quite
+> > > straightforward to support.
+> > > 
+> > > Only dm-linear is supported for now, but other personalities could
+> > > be supported.
+> > > 
+> > > Patch #1 is a proper fix, but the rest of the series is RFC - this is
+> > > because I have not fully tested and we are close to the end of this
+> > > development cycle.
+> > In general, looks reasonable.  But I would prefer to see atomic write
+> > support added to dm-striped as well.  Not that I have some need, but
+> > because it will help verify the correctness of the general stacking
+> > code changes (in both block and DM core). 
+> 
+> That should be fine. We already have md raid0 support working (for atomic
+> writes), so I would expect much of the required support is already available.
+
+BTW. could it be possible to add dm-mirror support as well? dm-mirror is 
+used when the user moves the logical volume to another physical volume, so 
+it would be nice if this worked without resulting in not-supported errors.
+
+dm-mirror uses dm-io to perform the writes on multiple mirror legs (see 
+the function do_write() -> dm_io()), I looked at the code and it seems 
+that the support for atomic writes in dm-mirror and dm-io would be 
+straightforward.
+
+Another possibility would be dm-snapshot support, assuming that the atomic 
+i/o size <= snapshot chunk size, the support should be easy - i.e. just 
+pass the flag REQ_ATOMIC through. Perhaps it could be supported for 
+dm-thin as well.
+
+Mikulas
 
