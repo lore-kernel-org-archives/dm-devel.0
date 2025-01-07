@@ -1,192 +1,170 @@
-Received: from NAM02-DM3-obe.outbound.protection.outlook.com (mail-dm3nam02on2125.outbound.protection.outlook.com [40.107.95.125])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A7E591DF983
-	for <dm-devel@lists.linux.dev>; Mon,  6 Jan 2025 21:27:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.95.125
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736198838; cv=fail; b=IbzH309RKk0fF5Ux0Jvn6I8Ni3A+Ll7sM3keZzI3wb105Rg4hlUk9auoZXtJgnoKygSYR/YhdBk3mz9owb1/rEkebqmGJ7AnbsUFxUUw4NJzZZbXpSX4Xht3dLlhyJwEnsnRMrEsSTk6M4Dyf1WGEQusyk01s73KQJIrnKxUUJc=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736198838; c=relaxed/simple;
-	bh=ans5TKHIOReh/6bEn1dHcoyFBQPXce51nWjLchp10WU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:Content-Type:
-	 Content-Disposition:In-Reply-To:MIME-Version; b=Ttd7CdTv11J6vBZjtRlWzUqBdlHilg1Rp/1ZW3wefjual5uXb5ehGh3IOA53cNruM3y3I8uXbEHhO7m0QeOKVT1AjLL6Pklz6lWMGnAJq6hp/p3kGhDUcVKeCVW6Qrp16l/Nb9M6nS5XVloRuIIof1U3HLW7g2SeUdYPMMM2+eM=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=hammerspace.com; spf=pass smtp.mailfrom=hammerspace.com; dkim=fail (1024-bit key) header.d=hammerspace.com header.i=@hammerspace.com header.b=N2cEUetr reason="signature verification failed"; arc=fail smtp.client-ip=40.107.95.125
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=hammerspace.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=hammerspace.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2BB92F46
+	for <dm-devel@lists.linux.dev>; Tue,  7 Jan 2025 01:24:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1736213093; cv=none; b=YK8QteEhLgJDIO7xA/Ekk+o88/e0vVBEjCO7CBbqrRoOQrKFOTmSdUqyoasewo88ZIqbu91aTJDzG0bWXcpIcBD6t0Hy0U6WMFff9sTPgCU6YqsfnNGL728Np6MMjhKm5jkci/qQ0Pao2qHXPekQ4IUciF1CoUIj4EKeCvt37BI=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1736213093; c=relaxed/simple;
+	bh=EQirzO9PJiBt4zjm8YwXhZ0hhDBJ+X3ZzRCPMVEDFIo=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=G5vdpwzeBA30Cf+H9C+QHPGQ1xkoL9FCAsb2dx5Lf6gODw1AaYJDANL3xj0mFUAKiwEQ+y6FBKtnLUU2HqC69RSXcaPDnMP7XhMUbZewlQzVfrCmWcG6uFUbPBAO/YYPdXgW72OmcRkOrSLY/3n9VXkPIhWMXceVWyftqG3QkhA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=J6Pq7hyg; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=fail reason="signature verification failed" (1024-bit key) header.d=hammerspace.com header.i=@hammerspace.com header.b="N2cEUetr"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=kfhgxQ6h/Btp+4PE751i18f0lddbhXCc8k5qEveiF+tKLSba2/vKohk9b6bqVYVa6i2T5rvjWqaQn7LIQTj8oFDUo8d/UW81uiZuhJKcPSc+vIOdb2M8GWwh5SYLecOOdxFyG2K9J0aQecG0iJ09s80e1hCdOzFd82TUtK/QrHT/CpIgVZIPSlA62uDo+UY1Un/LF0ZTTRExrguiPj9qCjnu7ULHnYFIixsFm63sNSgWjcqrd99AStdUjSU+eKqAcuWYSlyHWNmWWjmpjRPkx4n87rPDEuBVt/O5N18gScsTbk4B0f3TcQduKSYYjsXbbBLzBTOj0BbEmYIn8VLDmw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=ADAux4hBv9nua/DnNrCBcqVmGhEqwQr/YiDJ7P6MOcE=;
- b=mxFcS1F4nNjY7K7iqsKxDc+99LAnTO0Y/shGbVIKyrZpJSHXlt+/Dr8gkVyfI4wyv+Bz8lUaBqNj0kL4KekIgXIKMNbDihi3aE2Gq4GE8ahqcgyxfcEhyjz43kxdZrDcVdD42JrBG371MydViBVOSHchUeENp96JMbm/U5PHSsPORtFUUEsY/yYSYlH915fxDSf/bN0B3yGT3jSh3DUoqDwwLCi4dYa5WumpPSsHyLv77zwm07qz81QILJdHXfpFiH2fH8HETZbbMOsINlI1EGdeG7d4g14QHHIn9OnVqMTQMGJcnZ+81KZXj2/u3GyzbP9TPvZC9cLTJJgl4HUCrw==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=hammerspace.com; dmarc=pass action=none
- header.from=hammerspace.com; dkim=pass header.d=hammerspace.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=hammerspace.com;
- s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=ADAux4hBv9nua/DnNrCBcqVmGhEqwQr/YiDJ7P6MOcE=;
- b=N2cEUetrv2zbhYe9psQ/w7EgK+r9Yelh6MHwmKky0hTZb/Skr8/rC77WKSEy3QfXKPDuuIkj2Bhx0jysI4SDKsr6LWSgvsmsdIWqr8OzHq5EMa3P5w575cZKG7Vm2+xBYbb5mxyKPo9UK+POiVfN/sDuZuatTJH+WWwNFCpBG48=
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=hammerspace.com;
-Received: from DM6PR13MB4036.namprd13.prod.outlook.com (2603:10b6:5:2a7::14)
- by BY3PR13MB4961.namprd13.prod.outlook.com (2603:10b6:a03:36d::21) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8314.17; Mon, 6 Jan
- 2025 21:27:08 +0000
-Received: from DM6PR13MB4036.namprd13.prod.outlook.com
- ([fe80::2a78:7a0:a33:cecd]) by DM6PR13MB4036.namprd13.prod.outlook.com
- ([fe80::2a78:7a0:a33:cecd%7]) with mapi id 15.20.8314.018; Mon, 6 Jan 2025
- 21:27:08 +0000
-Date: Mon, 6 Jan 2025 16:27:07 -0500
-From: Mike Snitzer <snitzer@hammerspace.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mohammed Anees <pvmohammedanees2003@gmail.com>, agk@redhat.com,
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
-	zkabelac@redhat.com
-Subject: Re: dm: Allow the use of escaped characters in str_field_delimit()
-Message-ID: <Z3xKkYyNCQaRqzjZ@hammerspace.com>
-References: <Z1hrfMRedzEJb26O@kernel.org>
- <20241215101336.1456-1-pvmohammedanees2003@gmail.com>
- <034eaa34-1737-6f75-2227-4e0dfbc753cf@redhat.com>
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <034eaa34-1737-6f75-2227-4e0dfbc753cf@redhat.com>
-X-ClientProxiedBy: BN9PR03CA0067.namprd03.prod.outlook.com
- (2603:10b6:408:fc::12) To DM6PR13MB4036.namprd13.prod.outlook.com
- (2603:10b6:5:2a7::14)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J6Pq7hyg"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1736213088;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Yg712Yn+z0RJYnuZCNfHYnCS5dwWsWsb5SZxMdPzpTI=;
+	b=J6Pq7hygxvvaPWcwJvQcy3oNHZ/tTMr5yPOwrDf8SB0Mx2P2V5vki+V1hOicbsp0U20nVr
+	M5BXI4tOOzGMG747s1t1Ni+dfz3uQStCc6WgrvhDFoRY16eFNBov8Qjqs2+YGegVdd2+AL
+	sO0x93D++c3YWMj21uyY7KFxrxx5QIQ=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-2--gBFHgVZNmqUZUk8qkOUtg-1; Mon, 06 Jan 2025 20:24:47 -0500
+X-MC-Unique: -gBFHgVZNmqUZUk8qkOUtg-1
+X-Mimecast-MFC-AGG-ID: -gBFHgVZNmqUZUk8qkOUtg
+Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-7b6e852eeabso2222740385a.0
+        for <dm-devel@lists.linux.dev>; Mon, 06 Jan 2025 17:24:47 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1736213087; x=1736817887;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Yg712Yn+z0RJYnuZCNfHYnCS5dwWsWsb5SZxMdPzpTI=;
+        b=u/lxQIZA2CUJNIcSu597ErVtVU8u1zrRD/8z0xt0OQC5CMyqiY0eFfQHgwisj2Azi8
+         pMkNVBWQYxM+zJLSnP5PUpZErDZfPD8mjgtZGaTAIF/H16JCe5/JD8pe4eQW0vaVex5G
+         UKJp7IBzDy0JbWWnL6hOQ3WFUR2M5/kpqEXnm3e8YTY11Kzbe+56Avoly6vkDqMUECW8
+         XyjeQM7+tM153xb2TRtSPjlGTSd6tUqkEpiTFV/kGwjtUhrS0twHFm3XoFKeeY6nkOft
+         AEEERCQATaBSouHf9ye9kzmJwHtVOnmRKKzU0TY87gYUNQ7EQxo7cy9aXzYCnXnqca3e
+         frsw==
+X-Gm-Message-State: AOJu0YzSiXmUNG4/ww6PlXWXDrXtuMsPyHmjeXqNPjV49Nq24TCitiUi
+	GZWaiU4V/9oZLQmrpStQoyMSXKEzZ2C0m3Z4Xf450pYa52sn1mTE807SFnbC6WD3EbUcihISW9y
+	6QWhGoPYwzgz5kYEzYJ9uCRctvBbYCRzyDqdETTV2Vxg6PbnR41fIUauoK/Yg0q6G
+X-Gm-Gg: ASbGncsvbaVd+VqN1R28wT9fIiDZPnuAvYpP8QqJ4WtYglWWthyo+v7isOtIDU/JDm0
+	zII3paDSTKEDbEDYFO6PozQtblEasFLQoOJezSQQ8aIXxqQDu3YxL9y4iCPV8rCGFStGLsUBhmh
+	5ysFtULAQRqAb0jGS92ZZktUl41yl7msI+vEKHT1Ul50DEKFsieEwVO6tCj5T442AH8lZfLWAel
+	Ci0xwhYTu+Rkefle6/IS9Ea7EnDR8NpbATMPK3dgEyzmcmRjq6Aenwg1A==
+X-Received: by 2002:a05:620a:284b:b0:7b6:66d0:5ac2 with SMTP id af79cd13be357-7b9ba81f887mr10061128885a.54.1736213087002;
+        Mon, 06 Jan 2025 17:24:47 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEtf4sKQX1YxLWJSLC4ZqDBudsGGWMJ6DcaXDS7XRRyAFIoETiJ89lZv3jcCqwE0+tqC+OboQ==
+X-Received: by 2002:a05:620a:284b:b0:7b6:66d0:5ac2 with SMTP id af79cd13be357-7b9ba81f887mr10061126885a.54.1736213086695;
+        Mon, 06 Jan 2025 17:24:46 -0800 (PST)
+Received: from [192.168.1.165] ([70.22.187.239])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7b9ac2df39fsm1555027385a.38.2025.01.06.17.24.45
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 06 Jan 2025 17:24:46 -0800 (PST)
+Message-ID: <1d3beb46-c244-4ecf-8bd6-1895954c8e4d@redhat.com>
+Date: Mon, 6 Jan 2025 20:24:45 -0500
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DM6PR13MB4036:EE_|BY3PR13MB4961:EE_
-X-MS-Office365-Filtering-Correlation-Id: 875a3555-6844-4b63-afca-08dd2e98dffb
-X-MS-Exchange-AtpMessageProperties: SA
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|376014|1800799024;
-X-Microsoft-Antispam-Message-Info:
-	=?iso-8859-1?Q?wqWThJuYrhPDJc+JdkkTV5+sxbkJIxfZJCBhHA7b942Cu2RapN/GuwUqA0?=
- =?iso-8859-1?Q?yuN2YyL3pPBRVc7OxxR9GBSc7gl9h38pDa5Z+/CSD8QYWUEJZNY9b17BLz?=
- =?iso-8859-1?Q?o37iYMMqNOf3AmRrD4nvPDjxunSqTVzept5MZLqtED0/d+fcpMsumxE5tA?=
- =?iso-8859-1?Q?aXSKA7662T6p4+mzrShOCe+Y6ZMVxycTsdg8Xh7o8iOVy0oT2naZIX/ryK?=
- =?iso-8859-1?Q?txzH6UPmSkROsHtU3C1GC3AbSefbPzvWi8mrogsGR4zgCB+4bTgDb+br+R?=
- =?iso-8859-1?Q?7goeJtUc5N5GwfZdq2u7WUsu8NkJvuHEUzn+FsK5ZUYtCgr6ZyRaI+qCJt?=
- =?iso-8859-1?Q?RGZsRHxZxWPNfCdM18l6diLRZS/94xi/eub3lcw8zW+cN3zbA4hFbcbk3+?=
- =?iso-8859-1?Q?KvlYiWXnUQEm5zVdwVVkxMA9mV2g36hMscII7fUrrChyvoRCvksc16pq20?=
- =?iso-8859-1?Q?IZmRj5mbjGVgtg8gwgxY855lN+tdePsAK85sEROEV94mUeAp8j3s/rsQjS?=
- =?iso-8859-1?Q?fCCQhmQYFPGnCBDOPsBP+CM7AkTHwoW4+9bz5bm0rGTC+Dsw0+cS8Ebvsa?=
- =?iso-8859-1?Q?E1PP8n0e5H5KnK4Ds3IfJZJ+LVXpSbUGy6e7Fp3b82Ru6ao1vEBSObs6wq?=
- =?iso-8859-1?Q?lbqjO34go7PmMH3ynDlQ6MaHdLBcwe4DxNYUA+JFL21boNCtGIhwHCcWV7?=
- =?iso-8859-1?Q?GRa60RVUZ5bNLoF5hkPrI7REfHsGY69Mjfg9b9O7K8J4CMSM9EAbQ64iYb?=
- =?iso-8859-1?Q?c/uhPBmyYFgRJwtEp8ZDYyoKuE+tpI9JOGCGaEO7fpKQGePBr/bwyltdaq?=
- =?iso-8859-1?Q?RFHAg58XtuexZ4YF8CQf/0iUoVCiVl/58OvesxVmrNF+pI7e6zF5SHfhRG?=
- =?iso-8859-1?Q?tkw+Y7lOk9Ah9j+uyrfb8f8pXwXbF7Xs1Fl6oNvuv1xGMgRPJ7BgC5kRU8?=
- =?iso-8859-1?Q?dgDq4H91z2jNaUDdQdlgnxXA4RlYefXgV/k9i6cPx5ewM10hNWjmEoJwU5?=
- =?iso-8859-1?Q?J2PCAl3WXq7srIm6BfU+35wxnBgk2NSfLbGqcrM42n8JMeUzweuWr+2bcV?=
- =?iso-8859-1?Q?CfEuQfN6OTT0/BHNHJAofo7YEKUE76QkXHZ0xJbcv/aNUHekWh7hDiaBfw?=
- =?iso-8859-1?Q?rP1UCVn2vB3FgSUmkm9+vmKFCJD7Dj3rTeQD/hhkwQ8xcYO071K0pti515?=
- =?iso-8859-1?Q?1EDxMHRdq5Hr9mhr/CduiqYQRedl3dYmKKIt0GpO3D/a+MpyTU9coNdBE+?=
- =?iso-8859-1?Q?mnLt+AbMUs6DzqdkJM52sM2f7IDHxPpvAxgxXsT0Y/ixjQkCD4hchaWC2g?=
- =?iso-8859-1?Q?+KV2Tc7tIAEDU3izp2zmA1utlt3+2BCZqOpF5C9WV4Zb9wWaShcp4QHiH5?=
- =?iso-8859-1?Q?dUumnG2hBPs90s2B9Waj7Xn6pa2MLXisNSuNpKCANUiamo9rm5mcvTquEE?=
- =?iso-8859-1?Q?wbXByqDLS+lCwO1k?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM6PR13MB4036.namprd13.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(376014)(1800799024);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?iso-8859-1?Q?st6nN5tQUb5O2A8/HbdQcZdDqjnUDBq9GIxJ9NzZaQDgktBhhc4U48oBgz?=
- =?iso-8859-1?Q?/Npq3K0ASR8xMHhDh3hlp1zlaruAPvoc8EMXZeKmDD2OFWVluTHB5sVMtA?=
- =?iso-8859-1?Q?gZm/Y9FZJGqiySJVrAZl2YcODHtRFYsH6Kkw5V2udwik/Pl65RYPcyGgZu?=
- =?iso-8859-1?Q?iPJDUFOyiPhEefhdh6Vt//EyTZgQKzHlENWzXD+1xy6d7caIyFHFvlWa03?=
- =?iso-8859-1?Q?wGUMPjQINmSQBg9QNfK3ZDdQiTaB6X8iEF/aTVfu+TmV2RtA3nakStQaGB?=
- =?iso-8859-1?Q?AvnOEyAxBEnqBKZNBsvTscy1NplF2qhsn/Xe72DG5DtySdjkm4LM7IaDWu?=
- =?iso-8859-1?Q?eeFYXaV2yBfzJY3ncqhlQbfUTuZvZqntilXGAQDqamC0zDwebBHvGPUbwa?=
- =?iso-8859-1?Q?Cphdp8TZkC3eVrxr8DYR7aOn8w+3IYDrcT/ejY11IWVA7FQyhL4MsndtFp?=
- =?iso-8859-1?Q?tvjykfVuBN4D1Z2iOzxA3PFk6prPBIQZEb74XKU2TuZbUYdAbKhSQlyIE8?=
- =?iso-8859-1?Q?TyW1EzI5tu3eyp1awvCm7tBkCRmIWSIzw2U36IB+mCarTYMGEd4m/FmYHC?=
- =?iso-8859-1?Q?woJxz9CRh5TXvq2qh91/jQh4RnZAlmJJGhr6REvHc9gtn3cOzTbFPe2O3O?=
- =?iso-8859-1?Q?1G8z6/8o/VFW/hO2Ohj3Phn9X4eh/w9Bq2eNy/nsqHgqZD5Y/zF8wfb6Gc?=
- =?iso-8859-1?Q?PcdWgkJH3urKZeeB73jM5FMXEm7lWFIGUm6G99J+mnfAlcsVX061zT3fCh?=
- =?iso-8859-1?Q?CedB5LqvQD4AnesyC87la5F1WxOVJa7tm9ZXo3mAGRPFFTtsfH8DYVYv0l?=
- =?iso-8859-1?Q?F5ekFz3i+X5s8qpNUv7vj3mRAvVIo8IuZ4pS8EZgTMQjZy4A8WWNC3/20a?=
- =?iso-8859-1?Q?LlEIm+XElHievqt7fUpFCuY5EF1v8Sn78gKFg2vzv42GUmKPRabhJ+ECJ0?=
- =?iso-8859-1?Q?ebI0FoN2r6y9QSZP3AqCyPweuZ/KYGg+M8/7l31stSQ9F/X0/sjzwBTFvQ?=
- =?iso-8859-1?Q?1UC+TRskw5UNa280ezCNQHPk1C88O4/aB2MB+H67Q5cAPX6PZ1mSwgfmRq?=
- =?iso-8859-1?Q?pwp9abYofDi0DwwvCbPOl2xmLdRiQlm6nQi4SQI92ixd/cRjyyU1TzztkR?=
- =?iso-8859-1?Q?JkeTGY3snP3SB8G1mAt1HZj6mTkHadfyNOtgf/aIkLhiaB61k0vrNnIQx1?=
- =?iso-8859-1?Q?PwY8JmxDwwZqPK8YWEE41RVRFTzilYP2388FpcSQuI66NhuJQt+Niqrdln?=
- =?iso-8859-1?Q?GjJEh2Eus0kihsuZNX+Ro8YnBBCamm1JLdZ6KeWND4VzSg/QdYhdeMtWkI?=
- =?iso-8859-1?Q?s3WzjpzCNJ7ON5rqdFzGE7/cmTcTZT2fFlGaFaUsIwCEYscAFU3SPCVFmr?=
- =?iso-8859-1?Q?Zen8voR6VD8vNei+EITYmfsynmcFzz5vmU3OQLYfwyRBdiwrqOda2FynU0?=
- =?iso-8859-1?Q?Nisv6vQWf/GYo+turdYc1Fx8byRUJjdzS4XK21fdT+/yEmszw4aGpq9hUG?=
- =?iso-8859-1?Q?YT+17vO03sKEzA+5s+OIaDceliPynzR7yR25dYCgniako4ekZotG8wb0V0?=
- =?iso-8859-1?Q?eapI1HMIyd3OCzVmYogbHkix9vaFGYxNP/vZZHrHkWAAkJEYFdTlyJthy4?=
- =?iso-8859-1?Q?/bXDK0xrXDaYE0+CmQjOQp20iUU0zQV9JqkQAAwWvOc0DUtG4vVt0hjg?=
- =?iso-8859-1?Q?=3D=3D?=
-X-OriginatorOrg: hammerspace.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 875a3555-6844-4b63-afca-08dd2e98dffb
-X-MS-Exchange-CrossTenant-AuthSource: DM6PR13MB4036.namprd13.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Jan 2025 21:27:08.6055
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 0d4fed5c-3a70-46fe-9430-ece41741f59e
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 4OCnt23RH7JbGXDTeKMLGkqbEl8hOgX3v2OmBCv6ewu0LbWuGpB/HY5ea+LuYFr5eNJlrR2fPh4Z1OHOaVfmpVKmB+EGPnn4hSR2yI+BM0w=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BY3PR13MB4961
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm vdo: Fix W=1 allmodconfig build error
+To: John Garry <john.g.garry@oracle.com>
+Cc: dm-devel@lists.linux.dev
+References: <20250106141731.1341034-1-john.g.garry@oracle.com>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20250106141731.1341034-1-john.g.garry@oracle.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 12S8fNlU_v0Lq-GIwpctu1h6_Oh4ebH7a7Qk4F_mT1I_1736213087
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On Fri, Jan 03, 2025 at 05:21:13PM +0100, Mikulas Patocka wrote:
+Hi John,
+
+I'm all for getting rid of warnings where we can, but I'm not convinced 
+this is the right approach here.
+
+First, we use snprintf here because we really do want to limit the
+string to 15 bytes. Making this constant larger doesn't maintain that. 
+This change also increases the size of struct vdo (in vdo.h) by about 50 
+bytes. While that's not a lot, it does seem unnecessary.
+
+In practice, we know that the our module name is only about 6 bytes, and 
+the instance number will never be more than 3, so snprintf will never 
+actually truncate anything here. Would checking for a non-zero return 
+value suppress the error?
+
+I'm also confused because I don't understand the difference between this 
+line and the similar use of snprintf at 
+drivers/md/dm-vdo/funnel-workqueue.c:430, which I presume does not 
+trigger a warning?
+
+Anyway, I'd be happy with a version that suppresses the warning without 
+changing the size of any structures.
+
+Matt Sakai
+
+On 1/6/25 9:17 AM, John Garry wrote:
+> For an allmodconfig build, I currently get this error when building with
+> W=1:
 > 
+> $ make W=1 drivers/md/dm-vdo/vdo.o
+>    CALL    scripts/checksyscalls.sh
+>    DESCEND objtool
+>    INSTALL libsubcmd_headers
+>    CC [M]  drivers/md/dm-vdo/vdo.o
+> drivers/md/dm-vdo/vdo.c: In function ‘vdo_make’:
+> drivers/md/dm-vdo/vdo.c:564:5: error: ‘%s’ directive output may be truncated writing up to 55 bytes into a region of size 16 [-Werror=format-truncation=]
+>      "%s%u", MODULE_NAME, instance);
+>       ^~
+> drivers/md/dm-vdo/vdo.c:563:2: note: ‘snprintf’ output between 2 and 66 bytes into a destination of size 16
+>    snprintf(vdo->thread_name_prefix, sizeof(vdo->thread_name_prefix),
+>    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+>      "%s%u", MODULE_NAME, instance);
+>      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 > 
-> On Sun, 15 Dec 2024, Mohammed Anees wrote:
+> Fix by defining MAX_VDO_WORK_QUEUE_NAME_LEN to be sum of MODULE_NAME_LEN
+> plus 11 - 11 comes from number of characters required to print max unsigned
+> int plus NUL terminator.
 > 
-> > > It would seem Mohammed cared enough to write the patch, but not reply
-> > > to you with further clarification on why it needed...
-> > 
-> > I thought I had already replied to the concern, but it seems 
-> > the message didn�t get sent, apologies for that oversight!
-> > College academics kept me tied up, and I lost track of this,
-> > apologies once again.
-> > 
-> > > BUT, in this instance it follows that: if lvm2 is allowing weird names
-> > > which require escacped characters _and_ dm-init is used then dm-init
-> > > needs to support handling them (dm-init is all about _not_ using
-> > > normal initramfs with lvm2 in all its glory).
-> > 
-> > I completely agree with your point and am more than happy to 
-> > provide further details or make any additional updates to 
-> > the patch if needed, please let me know if anything else if needed. 
-> > Thank you for your time.
-> > 
-> > Regards
-> > Mohammed Anees
+> Also relocate the include of sched.h to the only c file which it is
+> actually needed.
 > 
-> Hi
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
 > 
-> I don't want to bloat the code with the logic that no one uses. I would 
-> only accept the patch if there were some real scenario where you need to 
-> use escaped characters in device names or table parameters.
+> diff --git a/drivers/md/dm-vdo/funnel-workqueue.c b/drivers/md/dm-vdo/funnel-workqueue.c
+> index ae11941c90a9..7e42342263ab 100644
+> --- a/drivers/md/dm-vdo/funnel-workqueue.c
+> +++ b/drivers/md/dm-vdo/funnel-workqueue.c
+> @@ -11,6 +11,7 @@
+>   #include <linux/err.h>
+>   #include <linux/kthread.h>
+>   #include <linux/percpu.h>
+> +#include <linux/sched.h>
+>   
+>   #include "funnel-queue.h"
+>   #include "logger.h"
+> diff --git a/drivers/md/dm-vdo/funnel-workqueue.h b/drivers/md/dm-vdo/funnel-workqueue.h
+> index b5be6e9e83bc..3447aac5b188 100644
+> --- a/drivers/md/dm-vdo/funnel-workqueue.h
+> +++ b/drivers/md/dm-vdo/funnel-workqueue.h
+> @@ -6,12 +6,10 @@
+>   #ifndef VDO_WORK_QUEUE_H
+>   #define VDO_WORK_QUEUE_H
+>   
+> -#include <linux/sched.h> /* for TASK_COMM_LEN */
+> -
+>   #include "types.h"
+>   
+>   enum {
+> -	MAX_VDO_WORK_QUEUE_NAME_LEN = TASK_COMM_LEN,
+> +	MAX_VDO_WORK_QUEUE_NAME_LEN = MODULE_NAME_LEN + 11,
+>   };
+>   
+>   struct vdo_work_queue_type {
 
-Please read my reply in this thread (which you quoted above).  The
-real scenario was already answered.
-
-Either:
-
-1) remove dm-init entirely
-
-or
-
-2) fix it so that it works with naming that requires escaped
-   characters 
-or
-
-3) say: "sorry, dm-init doesn't support escaped characters."
