@@ -1,129 +1,102 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF59679D0
-	for <dm-devel@lists.linux.dev>; Thu,  9 Jan 2025 00:26:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47E6C1426C
+	for <dm-devel@lists.linux.dev>; Thu,  9 Jan 2025 02:02:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736382421; cv=none; b=FVVNiGjoix4lU2n95kt+cO348QgWGs2RkTW7RUrWgq4RoX9Rf7hIZb01PllMXtjfosZPV2fsuPe7U014B2rZNl9b5RYijQ26gP0ZkIMeKK8oOY0SKt/fJO3XFHo7a5+ffKFKFVL7SK3HcpwKUgAGHFIlgXWqPNIAuwv2EkkHP5A=
+	t=1736388124; cv=none; b=MrWIr5lVOtAG1LCld6dhsrAXH05ui3bsKy31VG/wuqAeGUkEzPliANGxlEKsf0odJC2e0DWLaxDVWQTUoW4xoDOhBRkuSdu9OFX3nmWEFmjUNCo4r4nKtbjND3rmh0919QgvPq5ylqGCdvcaLkPYx84hgn/++jG7q8Vv99g5HtU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736382421; c=relaxed/simple;
-	bh=RsyEVUERJ404bgiVEtLPt5OLTendKAoarL3lekNHDyE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=YZRLzoFIuc5yzRJY7P6yHlcO2JDz3toXk30exye1NzyZM3R58DzF+RwntYvnBg/m1Kj+z+MFN4HBeHWStjlMYxNN8Druhw4qWAmTQhH8SYpYpz82SNhG4eFiLFAzWy1akT459QFGhuZmhkmBL++59dsSq3IQPjvkEgw567f98Ng=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PxrZnnVu; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PxrZnnVu"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1736382418;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=yYJo5m9LN2R1FadpQdsIlpoxqLoiHOChbisJUT3H7Zg=;
-	b=PxrZnnVuy/6POg8OGm33v4VWiXhfK9gV1vAuTLAzAEOSnIC8pHYoEDEcpkK87J6n8MjyPr
-	PowxLcSnilI3SK3V46oWEPkQR4cjTSNTVxFnXMzvSCcvQUMIFthcOVbHlT/3wasyl/DAQL
-	ILdhCi4WxWfzETfNK941pNjMijJhpCQ=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-436-LFQOR2TsPy2Brd2YMpDkUA-1; Wed,
- 08 Jan 2025 19:26:57 -0500
-X-MC-Unique: LFQOR2TsPy2Brd2YMpDkUA-1
-X-Mimecast-MFC-AGG-ID: LFQOR2TsPy2Brd2YMpDkUA
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 58F841944CEE;
-	Thu,  9 Jan 2025 00:26:56 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 19C17300018D;
-	Thu,  9 Jan 2025 00:26:56 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 5090Qsai2470106
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 8 Jan 2025 19:26:55 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 5090Qsln2470105;
-	Wed, 8 Jan 2025 19:26:54 -0500
-Date: Wed, 8 Jan 2025 19:26:54 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH] libmultipath/foreign: fix memory leak in nvme foreign
- handler
-Message-ID: <Z38XzlEsDLchkUIi@redhat.com>
-References: <20250109000653.2469651-1-bmarzins@redhat.com>
+	s=arc-20240116; t=1736388124; c=relaxed/simple;
+	bh=mnUCHlYsxeIqi1Cgibtn+SF/94oLHH3xtJdMiX7jkrY=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=oDDK0WrJ/Z6qpsoXA8Eu24WYGfgz/CqHSWz6SHDoarXHz+Oek6ui6pkQnc56sMGhL/T2yEO5BOjJJjEjKF9Jfo9sjmHzR2jham32v3Fq9s0JOXG1EcO3GcqKgKKX1Fij1Ei0Zmm2szEg/HGGbjhqsKPdihS6E/nAs6Ci/EZJpf0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4YT7Lp5G28z4f3jHt
+	for <dm-devel@lists.linux.dev>; Thu,  9 Jan 2025 10:01:38 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 260751A084D
+	for <dm-devel@lists.linux.dev>; Thu,  9 Jan 2025 10:02:00 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP4 (Coremail) with SMTP id gCh0CgCnCl8XLn9nqDrAAQ--.985S4;
+	Thu, 09 Jan 2025 10:02:00 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: song@kernel.org,
+	yukuai3@huawei.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com
+Cc: linux-raid@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH v2 md-6.14 00/12] md/md-bitmap: introducet CONFIG_MD_BITMAP
+Date: Thu,  9 Jan 2025 09:56:52 +0800
+Message-Id: <20250109015704.216128-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250109000653.2469651-1-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: PoAfJOAzCaNE8wSI1za6Pb-sl9S3SD8khlKT6Kc3WiI_1736382416
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgCnCl8XLn9nqDrAAQ--.985S4
+X-Coremail-Antispam: 1UD129KBjvJXoW7WrWfJFyktry7tryrKFW7Arb_yoW8GrW8pa
+	9xt34a9w15GFWavFnxJryjkFyrXr1xtasFkr97Cw4rWFyUZFy3Jr48GFW0y34qgryrJ3Zr
+	Jr15Jw1xGry8Xa7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9F14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1lc7CjxVAaw2AFwI0_Jw0_GFyl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
+	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
+	zVAF1VAY17CE14v26r1q6r43MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_JFI_Gr
+	1lIxAIcVC0I7IYx2IY6xkF7I0E14v26F4j6r4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_
+	JF4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcS
+	sGvfC2KfnxnUUI43ZEXa7VU13ku3UUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Wed, Jan 08, 2025 at 07:06:53PM -0500, Benjamin Marzinski wrote:
-> _find_controllers() needs to free the udev device if it doesn't get
-> added to a path. Otherwise it can leak memory whenever check_foreign()
-> is called, causing multipathd's memory usage to continually grow.
-> 
+From: Yu Kuai <yukuai3@huawei.com>
 
-This also belongs in the stable branch.
+Changes in v2:
+ - don't export apis, and don't support build md-bitmap as module
 
--Ben
+Yu Kuai (12):
+  md/md-bitmap: remove the parameter 'init' for bitmap_ops->resize()
+  md/md-bitmap: merge md_bitmap_group into bitmap_operations
+  md/md-bitmap: add md_bitmap_registered/enabled() helper
+  md/md-bitmap: handle the case bitmap is not enabled before
+    start_sync()
+  md/md-bitmap: handle the case bitmap is not enabled before end_sync()
+  md/dm-raid: check if bitmap is registered in raid_ctr()
+  md/raid1: check bitmap before behind write
+  md/raid1: check before deferencing mddev->bitmap_ops
+  md/raid10: check before deferencing mddev->bitmap_ops
+  md/raid5: check before deferencing mddev->bitmap_ops
+  md: check before deferencing mddev->bitmap_ops
+  md/md-bitmap: introducet CONFIG_MD_BITMAP
 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/foreign/nvme.c | 9 +++++----
->  1 file changed, 5 insertions(+), 4 deletions(-)
-> 
-> diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-> index 0b7f4eab..cde660ce 100644
-> --- a/libmultipath/foreign/nvme.c
-> +++ b/libmultipath/foreign/nvme.c
-> @@ -675,7 +675,8 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
->  	pthread_cleanup_push_cast(free_scandir_result, &sr);
->  	for (i = 0; i < r; i++) {
->  		char *fn = di[i]->d_name;
-> -		struct udev_device *ctrl, *udev;
-> +		struct udev_device *ctrl;
-> +		struct udev_device *udev __attribute__((cleanup(cleanup_udev_device))) = NULL;
->  
->  		if (safe_snprintf(pathbuf + n, sizeof(pathbuf) - n, "/%s", fn))
->  			continue;
-> @@ -719,11 +720,11 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
->  			continue;
->  
->  		path->gen.ops = &nvme_path_ops;
-> -		path->udev = udev;
-> +		path->udev = steal_ptr(udev);
->  		path->seen = true;
->  		path->map = map;
->  		path->ctl = udev_device_get_parent_with_subsystem_devtype
-> -			(udev, "nvme", NULL);
-> +			(path->udev, "nvme", NULL);
->  		if (path->ctl == NULL) {
->  			condlog(1, "%s: %s: failed to get controller for %s",
->  				__func__, THIS, fn);
-> @@ -744,7 +745,7 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
->  		}
->  		vector_set_slot(&map->pgvec, &path->pg);
->  		condlog(3, "%s: %s: new path %s added to %s",
-> -			__func__, THIS, udev_device_get_sysname(udev),
-> +			__func__, THIS, udev_device_get_sysname(path->udev),
->  			udev_device_get_sysname(map->udev));
->  	}
->  	pthread_cleanup_pop(1);
-> -- 
-> 2.46.2
-> 
+ drivers/md/Kconfig      |  18 +++++
+ drivers/md/dm-raid.c    |   5 +-
+ drivers/md/md-bitmap.c  |  65 ++++++++---------
+ drivers/md/md-bitmap.h  |  66 +++++++++++++++--
+ drivers/md/md-cluster.c |   2 +-
+ drivers/md/md.c         | 154 +++++++++++++++++++++++++++++++---------
+ drivers/md/md.h         |   2 -
+ drivers/md/raid1-10.c   |   2 +-
+ drivers/md/raid1.c      |  79 ++++++++++++---------
+ drivers/md/raid10.c     |  48 ++++++-------
+ drivers/md/raid5.c      |  30 ++++----
+ 11 files changed, 325 insertions(+), 146 deletions(-)
+
+-- 
+2.39.2
 
