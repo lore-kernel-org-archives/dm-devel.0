@@ -1,59 +1,56 @@
-Received: from mail-pj1-f50.google.com (mail-pj1-f50.google.com [209.85.216.50])
+Received: from mail-pj1-f45.google.com (mail-pj1-f45.google.com [209.85.216.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33BF64AEE0
-	for <dm-devel@lists.linux.dev>; Fri, 10 Jan 2025 04:49:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6643188A3A
+	for <dm-devel@lists.linux.dev>; Fri, 10 Jan 2025 06:07:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736484560; cv=none; b=gPs/FKc27alhsbirrWIEZWpWGgXmlOqfJuCXM0V/oOzEX4HfrapUAwzM7rPYe9h7LYhywxjvsIeAOU1OnOqfEXvG56GJh+t6oHLG4r8nAS+WcxRI0zloc9WjvE+ygiKo2kuX1IpsUndE2epuNKnEU/8CwwZI3PYFztedS3Q7lAk=
+	t=1736489269; cv=none; b=K48ZkCq0XEEC3lLtaJ2iUzJerZ5tfgMroJxO5kmJFf1jT4xAZ4TY6P6dDySj4cBgBzQRlmL4V1PbzZu5XTQSBuSZ3NurYf6w8BSG8n26o6PTN6aEJmWCKJLrQCfj+kXMYDbOeOqt0qrRz0hgx4WU04CgKB7fphKnOtcXBHpl2jo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736484560; c=relaxed/simple;
-	bh=IuXtxjqYA/RrFdZpch/1H0Xy9msDKCxXVFltc5380/U=;
+	s=arc-20240116; t=1736489269; c=relaxed/simple;
+	bh=ZVoWyOCrpGarg44j7l0yKo585lFr9Zt4rMolEU/aa6A=;
 	h=From:References:In-Reply-To:MIME-Version:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=s+kqt01DfbuNAn5L9+wQG1e6F5yo4b+Iqm3HN6Rc2Vp6giH4wGakLleBn3bRNgX73HKqPorkadjEv3znQz42GPXsnGErLKUAXr1cLoV+MGOxLtWSG9cnhFPmb6q74YrOPxj9Bt/AqsPnPKdnxE1sV06kt4L4LY5dWUs2nrDaEHg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=broadcom.com; spf=fail smtp.mailfrom=broadcom.com; dkim=pass (1024-bit key) header.d=broadcom.com header.i=@broadcom.com header.b=Ix6wB29d; arc=none smtp.client-ip=209.85.216.50
+	 To:Cc:Content-Type; b=NG8lTgeuqBrLl2bmHm4+SakesFFC7CvmN6BUWUeuwr1a9inqiS0r4GgYohpfhfiFowjppKf1uDNA/0GqGQFx8wYlUtyNnp2FTEE8XnrA/h1UI60JsStj2E+d7ZliaBNWdhnvjUP5Kf0tXM/+m2yc4/AytCi1VIm/9gDrL1qNTTU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=broadcom.com; spf=fail smtp.mailfrom=broadcom.com; dkim=pass (1024-bit key) header.d=broadcom.com header.i=@broadcom.com header.b=Phatj4eC; arc=none smtp.client-ip=209.85.216.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=broadcom.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=broadcom.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=broadcom.com header.i=@broadcom.com header.b="Ix6wB29d"
-Received: by mail-pj1-f50.google.com with SMTP id 98e67ed59e1d1-2ef6c56032eso2158897a91.2
-        for <dm-devel@lists.linux.dev>; Thu, 09 Jan 2025 20:49:18 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=broadcom.com header.i=@broadcom.com header.b="Phatj4eC"
+Received: by mail-pj1-f45.google.com with SMTP id 98e67ed59e1d1-2f441791e40so2280312a91.3
+        for <dm-devel@lists.linux.dev>; Thu, 09 Jan 2025 22:07:47 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=broadcom.com; s=google; t=1736484557; x=1737089357; darn=lists.linux.dev;
+        d=broadcom.com; s=google; t=1736489267; x=1737094067; darn=lists.linux.dev;
         h=cc:to:subject:message-id:date:thread-index:mime-version:in-reply-to
          :references:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=ob9ooUCi/JyNnyaoO52XCM7EAAqIQaiKweTUcZTLUIE=;
-        b=Ix6wB29dx8VPiV21wqXQ+WimdLmP6B2y7fKWYS5h7pRuuQ8HGIbyaOjC5iA82abEM4
-         HWopGhFNn9ev1rm8I1tTKPF8NNXfjhgijQZYFOC71fy/v6CcKZscAUO+R5OjWPdwUey3
-         ZJ2os24qe6WgjwwyN8iuVdOhw2mhuOaBxFUl4=
+        bh=+ctj2avSKBtWNNCtOTF74TfBUaCFGH8Q0QhgEP8brXQ=;
+        b=Phatj4eCWnqq2NqnpjbOU8nQc9GI9ktFi+wU+1Fld2drlBAMWddDwqhvAXVMRqWz5f
+         Zv8hX19HJsT4H2qZrtheFe0bWBv5R28P4R3OBjd7Z9VQ7kihMmk1Clqyq08k2hXoU2od
+         n7K/7meRLzdOpYFmcBb8SbVhw1qn3P8g34bIU=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736484557; x=1737089357;
+        d=1e100.net; s=20230601; t=1736489267; x=1737094067;
         h=cc:to:subject:message-id:date:thread-index:mime-version:in-reply-to
          :references:from:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=ob9ooUCi/JyNnyaoO52XCM7EAAqIQaiKweTUcZTLUIE=;
-        b=p6qpW6OwL5Q5fgu1R2uFTD+9v5Ytr3U8FOilN2zIyWG0LWgQmHf+A0Kr6/OUtJ9v4u
-         0kkRyfkj+YHEtNkaju4qHDRyP3uf2BX7RRWNMrEi8zn5xcaeoYoDCo1AqBGp3zvK48FL
-         671R8WGE4GhYp06MW9BPK3HhLMaaN7fsR5Axl99Avd9EDP5XvvvSTCIQrgngaA718ISE
-         9JZMwoshfYVRQqD+KFtL97ZNbuz8U+fALBX8/LI62cVwf44WPm9d/J9GsqZ8rolgZbYE
-         THCCfV6mm88htw1z9vQIVS8JywUZMl7J/vQon3RfjmWo7MKQKZ3ACEuJZB9kdC96zxsI
-         +j0g==
-X-Forwarded-Encrypted: i=1; AJvYcCVQpoj3JuqhLH6x1nLo56HI5OBmW7loAtDn/9rbOYFfAwMHd6CQ1Gm187PoQXgiJkBeQ0Je4iHzgg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxKw+mbcJXA+XooWjgr7tvVXpICrN/wNWVWhJnRTZgMOa+uypj1
-	7AFeKg+s8BxJ2XqHYaTdqR2oX+eO+s9FdVJ3eGWyxqGfqxXmmIszpf724LAYw6YGdT7iq69LD/j
-	WGRCe3zmfUWkU6mcwYTMoWVHLKedUTnWWOcFr+YpJazCRn3QI5ZlUA+0amr6xJvAg7P7HNbR7RO
-	zQ8Cbg4YjLZxzZJAdhAxEB
-X-Gm-Gg: ASbGncts3Y0iEyDqn4U8ZotVDIGfmxm81YF2GzkKvdSekTDXlR+C78FOdVW374FlB2h
-	2yvPTJ0VGXb08L3BjzWtFXoeHaylFayl2oqvKKqs=
-X-Google-Smtp-Source: AGHT+IFpkZXkn+comFrKIWiW7AlpO4H8TwKNAp2PJF4c2+eTjBsZMyd/lbGKUCt53Wf7F1TpF+lqh4I6Gceabl4Jt70=
-X-Received: by 2002:a17:90b:258c:b0:2ee:5691:774e with SMTP id
- 98e67ed59e1d1-2f548ea6252mr14246974a91.2.1736484557438; Thu, 09 Jan 2025
- 20:49:17 -0800 (PST)
+        bh=+ctj2avSKBtWNNCtOTF74TfBUaCFGH8Q0QhgEP8brXQ=;
+        b=stEMcKYjJth25qVAb55Uqpf9rq4VKNo4ZIyuc7jD4gA/M7qyS/e6Z/AsJiWMg6PXY9
+         ERyjcgQrJjdeA3rhjGUshG8H2bXaIahg25tWajmHYOeSwoTJzDTrZGrlcd9GqegSZp1k
+         m42ESTk4ZfAsv8D6GCMpANMH+Mz53hKP+sa1AHw02jk95HvHk/ve3oNW4Of3R8Zak4Lv
+         BatPl1bJdWCIKIp5UAd3sk8S8L0GFhG8GveaoPeBhNzXFN72Lj1lZsIzauLLwrdKFJ6F
+         T99ZhVeepu+Xz/xj2EXFH3CDaTel3oFRLGOOIilJn5AxI5+7gm3TjS2wLQi6X1dfvOGI
+         dqDg==
+X-Gm-Message-State: AOJu0YyQRMg80fax0xz32GvmOwPYVtZ6ihu4FA9AFk7utCyOhCExP2x4
+	P7dSgzhNhUin1TwJvUggsq6XFTg2mog/+T/KIT/yv7mFeAKu/4aHN8ERXmfHR9REpA9fGwxfsc3
+	F2RFN0IYi1wUwDSrX0ALcYQCRtHb1jrIu470B7/vkSMoTulnkdkOhYVkfrJtrbyUKfihKHnIW4M
+	jaB7KvgmIEXkuJlK8MIz7C
+X-Gm-Gg: ASbGncue9yysrGMKfFxULCSL34hO5F7ZGpyB11g4FZ1WiAbzhXV6TukESljDk1QRlZ4
+	LB9FWArk/Cbbjy0ZzbgnialWpcu11WQoHD3KwJZs=
+X-Google-Smtp-Source: AGHT+IHGubp4CEKJunSET+CUT8Rajh/L9d0/z52WNwK3oBkkn01vLMK5CRbHbQ4F2xcxtntVsvFHKHUYh9DyPbQLoEQ=
+X-Received: by 2002:a17:90b:33d2:b0:2f1:4715:5987 with SMTP id
+ 98e67ed59e1d1-2f548f32f7fmr14853994a91.9.1736489267130; Thu, 09 Jan 2025
+ 22:07:47 -0800 (PST)
 From: Muneendra Kumar M <muneendra.kumar@broadcom.com>
-References: <20241220020235.1759375-1-bmarzins@redhat.com> <20241220020235.1759375-3-bmarzins@redhat.com>
- <c7641dfc68b568dc78297c60c56a9ee8@mail.gmail.com> <Z3wVVg0AgLLq4EUN@redhat.com>
- 343e7de82e800e453699728b03ad82d5@mail.gmail.com
-In-Reply-To: 343e7de82e800e453699728b03ad82d5@mail.gmail.com
+References: <20241220020235.1759375-1-bmarzins@redhat.com> <20241220020235.1759375-2-bmarzins@redhat.com>
+In-Reply-To: <20241220020235.1759375-2-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -61,297 +58,97 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-Mailer: Microsoft Outlook 16.0
-Thread-Index: AQK+UvY9qFv7vwQ9njHSAGX1b/VgggHju/x/AdKr010Bc7c9gLEewU7ggAF9r4A=
-Date: Fri, 10 Jan 2025 10:19:13 +0530
-X-Gm-Features: AbW1kvbWxqG_Q3N0Id5-TGUd6MEra5gbNJN6PMTneMX5IYmvCEI8DN7WsuevmCY
-Message-ID: <458b6c87dd346a372d3be2cb818cf35a@mail.gmail.com>
-Subject: RE: [PATCH 2/2] multipathd: set rport port_state to marginal for NVMe devices
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
-	device-mapper development <dm-devel@lists.linux.dev>, Martin Wilck <Martin.Wilck@suse.com>
+Thread-Index: AQK+UvY9qFv7vwQ9njHSAGX1b/VgggJlia8ZsTZ5crA=
+Date: Fri, 10 Jan 2025 11:37:43 +0530
+X-Gm-Features: AbW1kvZlUcpsZ5uNE4ua7S8pv7PqRpBJ4XyuCWEH7-J0W0QpBugHYzvy9TtqihE
+Message-ID: <6225db84e3c8ee78c5b677cc3a577e8a@mail.gmail.com>
+Subject: RE: [PATCH 1/2] libmultipath: export udev pthread cleanup functions
+To: Benjamin Marzinski <bmarzins@redhat.com>, 
+	Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>, Martin Wilck <Martin.Wilck@suse.com>
 Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256;
-	boundary="0000000000003ab417062b52d1a4"
+	boundary="000000000000f03cd1062b53e959"
 
---0000000000003ab417062b52d1a4
+--000000000000f03cd1062b53e959
 Content-Type: text/plain; charset="UTF-8"
+
+Hi Benjamin,
+Change's looks good.
 
 Reviewed-by: Muneendra Kumar <muneendra.kumar@broadcom.com>
 
------Original Message-----
-From: Muneendra Kumar M <muneendra.kumar@broadcom.com>
-Sent: Thursday, January 9, 2025 11:34 AM
-To: 'Benjamin Marzinski' <bmarzins@redhat.com>
-Cc: 'Christophe Varoqui' <christophe.varoqui@opensvc.com>; 'device-mapper
-development' <dm-devel@lists.linux.dev>; 'Martin Wilck'
-<Martin.Wilck@suse.com>
-Subject: RE: [PATCH 2/2] multipathd: set rport port_state to marginal for
-NVMe devices
 
-Hi Benjamin,
-
->>The request to do this came because the user wanted to see which target
-ports were effected, but when they looked, none of them we in the Marginal
-state. So there is some value in this for users, even if the systems
-behavior doesn't change because of it.
-
-Thanks for the clarification.
-The changes looks good.
-
-Regards,
-Muneendra.
 
 -----Original Message-----
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Sent: Monday, January 6, 2025 11:10 PM
-To: Muneendra Kumar M <muneendra.kumar@broadcom.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>; device-mapper
-development <dm-devel@lists.linux.dev>; Martin Wilck
-<Martin.Wilck@suse.com>
-Subject: Re: [PATCH 2/2] multipathd: set rport port_state to marginal for
-NVMe devices
+Sent: Friday, December 20, 2024 7:33 AM
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>; Martin Wilck
+<Martin.Wilck@suse.com>; Muneendra Kumar <muneendra.kumar@broadcom.com>
+Subject: [PATCH 1/2] libmultipath: export udev pthread cleanup functions
 
-On Fri, Dec 20, 2024 at 04:25:22PM +0530, Muneendra Kumar M wrote:
-> Hi Benjamin,
-> Thanks for the changes.
-> But below is the reason why we didn't add support to set the rport
-> port_state to marginal for NVMe devices
->
-> In the case of SCSI  once rport-state is set to Marginal , If any
-> pending I/O's on the marginal path hit's the scsi-timeout (after abort
-> success) the scsi-layer checks the rport-state  and If the rport-state
-> is set to Marginal it will not do any retries on the Marginal path
-> instead the I/O Will be retried on the other Active paths.
->
->
-> This particular functionality(checking the rport-state and acting
-> accordingly) we didn't add( as far I know) in the case of NVME and we
-> need to check how we can handle this in the case of NVME .
-> That's the reason we didn't set the port state to Marginal in the case
-> of NVMe.
->
->
-> In a brief SCSI layer handles the case when the rport-state is set to
-> Marginal whereas in NVMe it doesn't(AFIK).
->
-> Atleast with the below changes we make sure that once we get the
-> FPIN-LI notification we will set the affected path , as well as the
-> rport-state to Marginal irrespective of SCSI and NVMe.
->
-> I am just thinking that until we have some changes in the NVME driver
-> to handle (the rport-state to marginal) this changes doesn't show any
-> impact in the case of NVMe  other then keeping it  on par with SCSI
-> implementation.
->
-> Please let me know your opinion on the same.
+A future patch will make use of cleanup_udev_enumerate_ptr() and
+cleanup_udev_device_ptr().
 
-The request to do this came because the user wanted to see which target
-ports were effected, but when they looked, none of them we in the Marginal
-state. So there is some value in this for users, even if the systems
-behavior doesn't change because of it.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/discovery.c          | 4 ++--
+ libmultipath/discovery.h          | 2 ++
+ libmultipath/libmultipath.version | 6 ++++++
+ 3 files changed, 10 insertions(+), 2 deletions(-)
 
--Ben
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c index
+b5851561..72ea0c98 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -146,7 +146,7 @@ path_discover (vector pathvec, struct config * conf,
+ 		return pathinfo(pp, conf, flag);
+ }
 
->
->
-> Regards,
-> Muneendra.
->
->
->
-> -----Original Message-----
-> From: Benjamin Marzinski <bmarzins@redhat.com>
-> Sent: Friday, December 20, 2024 7:33 AM
-> To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@lists.linux.dev>; Martin Wilck
-> <Martin.Wilck@suse.com>; Muneendra Kumar
-> <muneendra.kumar@broadcom.com>
-> Subject: [PATCH 2/2] multipathd: set rport port_state to marginal for
-> NVMe devices
->
-> When a scsi path device is set to marginal, it updates the rport state.
-> Do this for NVMe devices as well.
->
-> Fixes: 1cada778 ("multipathd: Added support to handle FPIN-Li events
-> for
-> FC-NVMe")
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  multipathd/fpin_handlers.c | 74
-> ++++++++++++++++++++++++++++++++++----
->  1 file changed, 68 insertions(+), 6 deletions(-)
->
-> diff --git a/multipathd/fpin_handlers.c b/multipathd/fpin_handlers.c
-> index
-> 6b56f9b7..8b436067 100644
-> --- a/multipathd/fpin_handlers.c
-> +++ b/multipathd/fpin_handlers.c
-> @@ -15,6 +15,7 @@
->  #include "debug.h"
->  #include "util.h"
->  #include "sysfs.h"
-> +#include "discovery.h"
->
->  #include "fpin.h"
->  #include "devmapper.h"
-> @@ -253,7 +254,7 @@ static int
-> extract_nvme_addresses_chk_path_pwwn(const
-> char *address,
->   * with the els wwpn ,attached_wwpn and sets the path state to
->   * Marginal
->   */
-> -static void fpin_check_set_nvme_path_marginal(uint16_t host_num,
-> struct path *pp,
-> +static bool fpin_check_set_nvme_path_marginal(uint16_t host_num,
-> +struct path *pp,
->  		uint64_t els_wwpn, uint64_t attached_wwpn)  {
->  	struct udev_device *ctl = NULL;
-> @@ -263,21 +264,79 @@ static void
-> fpin_check_set_nvme_path_marginal(uint16_t host_num, struct path *pp
->  	ctl = udev_device_get_parent_with_subsystem_devtype(pp->udev,
-> "nvme", NULL);
->  	if (ctl == NULL) {
->  		condlog(2, "%s: No parent device for ", pp->dev);
-> -		return;
-> +		return false;
->  	}
->  	address = udev_device_get_sysattr_value(ctl, "address");
->  	if (!address) {
->  		condlog(2, "%s: unable to get the address ", pp->dev);
-> -		return;
-> +		return false;
->  	}
->  	condlog(4, "\n address %s: dev :%s\n", address, pp->dev);
->  	ret = extract_nvme_addresses_chk_path_pwwn(address, els_wwpn,
-> attached_wwpn);
->  	if (ret <= 0)
-> -		return;
-> +		return false;
->  	ret = fpin_add_marginal_dev_info(host_num, pp->dev);
->  	if (ret < 0)
-> -		return;
-> +		return false;
->  	fpin_path_setmarginal(pp);
-> +	return true;
-> +}
-> +
-> +static void fpin_nvme_set_rport_marginal(uint16_t host_num, uint64_t
-> +els_wwpn) {
-> +	struct udev_enumerate *udev_enum = NULL;
-> +	struct udev_list_entry *entry;
-> +
-> +	pthread_cleanup_push(cleanup_udev_enumerate_ptr, &udev_enum);
-> +	udev_enum = udev_enumerate_new(udev);
-> +	if (!udev_enum) {
-> +		condlog(0, "fpin: rport udev_enumerate_new() failed: %m");
-> +		goto out;
-> +	}
-> +	if (udev_enumerate_add_match_subsystem(udev_enum,
-> "fc_remote_ports") < 0 ||
-> +	    udev_enumerate_add_match_is_initialized(udev_enum) < 0 ||
-> +	    udev_enumerate_scan_devices(udev_enum) < 0) {
-> +		condlog(0, "fpin: error setting up rport enumeration:
-> %m");
-> +		goto out;
-> +	}
-> +	udev_list_entry_foreach(entry,
-> +				udev_enumerate_get_list_entry(udev_enum))
-> {
-> +		const char *devpath;
-> +		const char *rport_id, *value;
-> +		struct udev_device *rport_dev = NULL;
-> +		uint16_t rport_hostnum;
-> +		uint64_t rport_wwpn;
-> +		unsigned int unused;
-> +
-> +		pthread_cleanup_push(cleanup_udev_device_ptr, &rport_dev);
-> +		devpath = udev_list_entry_get_name(entry);
-> +		if (!devpath)
-> +			goto next;
-> +		rport_id = libmp_basename(devpath);
-> +		if (sscanf(rport_id, "rport-%hu:%u-%u", &rport_hostnum,
-> &unused,
-> +			   &unused) != 3 || rport_hostnum != host_num)
-> +			goto next;
-> +
-> +		rport_dev = udev_device_new_from_syspath(udev, devpath);
-> +		if (!rport_dev) {
-> +			condlog(0, "%s: error getting rport dev: %m",
-> rport_id);
-> +			goto next;
-> +		}
-> +		value = udev_device_get_sysattr_value(rport_dev,
-> "port_name");
-> +		if (!value) {
-> +			condlog(0, "%s: error getting port_name: %m",
-> rport_id);
-> +			goto next;
-> +		}
-> +
-> +		rport_wwpn = strtol(value, NULL, 16);
-> +		/* If the rport wwpn matches, set the port state to
-> marginal */
-> +		if (rport_wwpn == els_wwpn)
-> +			fpin_set_rport_marginal(rport_dev);
-> +next:
-> +		pthread_cleanup_pop(1);
-> +	}
-> +out:
-> +	pthread_cleanup_pop(1);
->  }
->
->  /*
-> @@ -338,6 +397,7 @@ static int  fpin_chk_wwn_setpath_marginal(uint16_t
-> host_num,  struct vectors *ve
->  	struct multipath *mpp;
->  	int i, k;
->  	int ret = 0;
-> +	bool found_nvme = false;
->
->  	pthread_cleanup_push(cleanup_lock, &vecs->lock);
->  	lock(&vecs->lock);
-> @@ -348,7 +408,7 @@ static int  fpin_chk_wwn_setpath_marginal(uint16_t
-> host_num,  struct vectors *ve
->  			continue;
->  		/*checks if the bus type is nvme  and the protocol is
-FC-NVMe*/
->  		if ((pp->bus == SYSFS_BUS_NVME) && (pp->sg_id.proto_id ==
-> NVME_PROTOCOL_FC)) {
-> -			fpin_check_set_nvme_path_marginal(host_num, pp,
-> els_wwpn, attached_wwpn);
-> +			found_nvme =
-> fpin_check_set_nvme_path_marginal(host_num, pp,
-> +els_wwpn, attached_wwpn) || found_nvme;
->  		} else if ((pp->bus == SYSFS_BUS_SCSI) &&
->  			(pp->sg_id.proto_id == SCSI_PROTOCOL_FCP) &&
->  			(host_num ==  pp->sg_id.host_no)) { @@ -356,6
-+416,8 @@ static int
-> fpin_chk_wwn_setpath_marginal(uint16_t
-> host_num,  struct vectors *ve
->  			fpin_check_set_scsi_path_marginal(host_num, pp,
-els_wwpn);
->  		}
->  	}
-> +	if (found_nvme)
-> +		fpin_nvme_set_rport_marginal(host_num, els_wwpn);
->  	/* walk backwards because reload_and_sync_map() can remove mpp */
->  	vector_foreach_slot_backwards(vecs->mpvec, mpp, i) {
->  		if (mpp->fpin_must_reload) {
-> --
-> 2.46.2
->
-> --
-> This electronic communication and the information and any files
-> transmitted with it, or attached to it, are confidential and are
-> intended solely for the use of the individual or entity to whom it is
-> addressed and may contain information that is confidential, legally
-> privileged, protected by privacy laws, or otherwise restricted from
-> disclosure to anyone else. If you are not the intended recipient or
-> the person responsible for delivering the e-mail to the intended
-> recipient, you are hereby notified that any use, copying,
-> distributing, dissemination, forwarding, printing, or copying of this
-> e-mail is strictly prohibited. If you received this e-mail in error,
-> please return the e-mail to the sender, delete it from your computer,
-and destroy any printed copy of it.
+-static void cleanup_udev_enumerate_ptr(void *arg)
++void cleanup_udev_enumerate_ptr(void *arg)
+ {
+ 	struct udev_enumerate *ue;
+
+@@ -157,7 +157,7 @@ static void cleanup_udev_enumerate_ptr(void *arg)
+ 		(void)udev_enumerate_unref(ue);
+ }
+
+-static void cleanup_udev_device_ptr(void *arg)
++void cleanup_udev_device_ptr(void *arg)
+ {
+ 	struct udev_device *ud;
+
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h index
+7d42eae5..1f7a6e20 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -59,6 +59,8 @@ bool has_uid_fallback(struct path *pp);  int
+get_uid(struct path * pp, int path_state, struct udev_device *udev,
+ 	    int allow_fallback);
+ bool is_vpd_page_supported(int fd, int pg);
++void cleanup_udev_enumerate_ptr(void *arg); void
++cleanup_udev_device_ptr(void *arg);
+
+ /*
+  * discovery bitmask
+diff --git a/libmultipath/libmultipath.version
+b/libmultipath/libmultipath.version
+index 6bdf6944..63f970b7 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -244,3 +244,9 @@ global:
+ local:
+ 	*;
+ };
++
++LIBMULTIPATH_27.1.0 {
++global:
++	cleanup_udev_enumerate_ptr;
++	cleanup_udev_device_ptr;
++} LIBMULTIPATH_27.0.0;
+--
+2.46.2
 
 -- 
 This electronic communication and the information and any files transmitted 
@@ -366,7 +163,7 @@ this e-mail is strictly prohibited. If you received this e-mail in error,
 please return the e-mail to the sender, delete it from your computer, and 
 destroy any printed copy of it.
 
---0000000000003ab417062b52d1a4
+--000000000000f03cd1062b53e959
 Content-Type: application/pkcs7-signature; name="smime.p7s"
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="smime.p7s"
@@ -437,14 +234,14 @@ t8KBiojEq4d7/scDRRtEsaL6Hl7cAYNMrS5EpijZrYjNYercaQNHcHP38l/XM9n36jllylt12koc
 Dfj3D142STRRnexoNURmkc9EAKyZPRv/JRGz6YP0i2y1JqgpjF8CggD2osV3pA9e8ecXWQ7/ZJly
 zHlFgjGCAm0wggJpAgEBMGswWzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 c2ExMTAvBgNVBAMTKEdsb2JhbFNpZ24gR0NDIFIzIFBlcnNvbmFsU2lnbiAyIENBIDIwMjACDEnR
-Sel9Ku9INR0BhDANBglghkgBZQMEAgEFAKCB1DAvBgkqhkiG9w0BCQQxIgQg0VPx/lb92vb2ltVX
-hfjCCvt76Nn8lQf7ZvrT0nqo4OUwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
-CQUxDxcNMjUwMTEwMDQ0OTE3WjBpBgkqhkiG9w0BCQ8xXDBaMAsGCWCGSAFlAwQBKjALBglghkgB
+Sel9Ku9INR0BhDANBglghkgBZQMEAgEFAKCB1DAvBgkqhkiG9w0BCQQxIgQgyptfcAF7Z6KPuc28
+ddCRIPpbA5R8DMRozt6NDq4JCtEwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
+CQUxDxcNMjUwMTEwMDYwNzQ3WjBpBgkqhkiG9w0BCQ8xXDBaMAsGCWCGSAFlAwQBKjALBglghkgB
 ZQMEARYwCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMAsGCSqGSIb3DQEBCjALBgkqhkiG9w0BAQcw
-CwYJYIZIAWUDBAIBMA0GCSqGSIb3DQEBAQUABIIBAIsWkmbmiqYmNYuxbfZ3yqblYYcoxPDaxUiD
-yJL2vxk0ftxXhvshy4pOaJUw/ryL+RUuP0S7QwfH+tIawZ6sYIIoR1UlOw87hqNlg1q0b0AawADg
-1zMHgzRIpObfrZ9O6HiP6NHURTPMmrOhutuh9hmQApb27A0DPKwMVPv3pUqy5azscHhXbydgbiAs
-G+2r8izXFgeoGSRcuFfbf6Yb6yv8EXq29Zz87tsLIdZjqSp/z7V8548Dz/GjZV9r6iS1Vdz5j+yF
-Va9HOdoOoAu9ZpjHh+T9C8Yzw3u5yn2nPdBKMG3ewcgeMcHuZoRY/KF89rF93lOQnXQlZj2FLnmD
-W+o=
---0000000000003ab417062b52d1a4--
+CwYJYIZIAWUDBAIBMA0GCSqGSIb3DQEBAQUABIIBAKj1/tLrrew0hEhnzj2RHxmD14lGGx4EzJUm
+SyMuLy4Q3MNsqYshwvODDaj5cMvq42i7Og//vr42610waS2JGrDoDq1S0LyZClBUgl+YqVdU/cfl
+/7ajT3dfk2AJaI5247i/sEqBumA3Anyz/qnVrSQ/BE42RWUstFK1jmf/vnR6PO42MrfxoM4rdiGU
+NxRNu68cw+G9KQ0q1fgjqUnsufXQ9T1W1mbQABr7c14fZSQlya9aZGzO0oJW7MCdmY4ti7KJD9kh
+F3R6/s8JhzVFsICfHqN2/LReFlelg4dde0ifPtiTEdZRQf/MGwNdBGO9SFrvMOmd7LTI1OH+0dOd
+cxs=
+--000000000000f03cd1062b53e959--
