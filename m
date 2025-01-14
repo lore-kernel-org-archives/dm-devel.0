@@ -1,72 +1,72 @@
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
+Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46D2D213246
-	for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 21:45:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15FEE4644E
+	for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 22:23:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736891106; cv=none; b=GdTzCY/vMTKGJfb5WNh5GdNbddZDG2wKEAQMvm0ZGTGxhDaWwoRir61gCeKyn4QLS9U9VZKZXYj1nXBQFS7gU6122FDITq50oPd4h6s9umslO3mfScgkA9pMPF/UHshFqkI5koSMeSJ3XvOhtexaSgElgJQaDpdZ5y5I+EKlJvc=
+	t=1736893425; cv=none; b=bDMOpoM0BiR57ib1ixJOhl5sI7fNoqIaSj+ningQkxsRwOrEXx1Uh3Wjjc2B1x7iIMm2H9+yQPA12cJKU9RUePtsgxsI6GcIzI7RPFkExDS9BTZ1yUa5h9JIaKmdwtGGJnQ8F4r5jIu98sYG89J3KEdW6+6qKV00x8PU1gQsCr0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736891106; c=relaxed/simple;
-	bh=zGXnw+i1i7TKU3wgniRuqaVSkfXsQxGAs0xvFF6Zyxg=;
+	s=arc-20240116; t=1736893425; c=relaxed/simple;
+	bh=NAqKQzoRYr9uWTsfSDflRSE8JjpVQVKg6ZNKn4jLnR0=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=YO+oBOn3BIWTe+MtVLWTV3esiOoICzYbucavInQ9HEKrNsV3tpjfCcKFima6bpIgu0VWF7pgQ4n0RutpWhwyuWd+lRDK5qXsQ/toL0csanPeYz9sb6UbgMEvdZmPJ/a9QsU/oxu5KInhukNRdy4AeOacFHiC1CNMHq07sXdyHHY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Nz5K1zFV; arc=none smtp.client-ip=209.85.221.51
+	 Content-Type:MIME-Version; b=TMNm6VurfSMGLneQkm4kMq65+Eiz7HdFz4t/A9eZRb9xXzZ/hpzTkAvmQl/Odm2rjMVAzA+wz3m98DRKmV+ZX7wW0ZtfDqjFWBn3BICRbDqX3M4KACiZQ3ozz11gD9Dawa8D8VXyUXzEmZq5bQ8izHvvJ5z6QQU2Qs5bmvEbAYk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Zg3xdzbp; arc=none smtp.client-ip=209.85.208.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Nz5K1zFV"
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-385d7f19f20so3084272f8f.1
-        for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 13:45:04 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Zg3xdzbp"
+Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-5d3cf094768so10443574a12.0
+        for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 14:23:41 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1736891102; x=1737495902; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1736893420; x=1737498220; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=zGXnw+i1i7TKU3wgniRuqaVSkfXsQxGAs0xvFF6Zyxg=;
-        b=Nz5K1zFVMTA+e1CQ71J0Zbikrsq2krRmlNlkTwZed11CH50B/sA3il2soeY+UpUltm
-         am0vq8PqGAAKU/UzVICCTKwX6FZ1KYs2OnkLM/WcGrQeTaXpC+9KxWhhhmihwZNsd981
-         J7OtEoHb9e2II54DWtBAy0f31mfgXG7GLGCVicivQid2yGjr3hOFXcBXhU/cK160IGsI
-         PZdzYtWKocehQ1SXriSceQvUZfDRhlDDolJNJ0+aVUMB8004o+uDqHe0yBbOxBuo8adV
-         M8d5hrz3M+x04K7XHZk/3YoDbchFUSXVZPS8U+qymcemAL7S9KY7PZoFFpCWKwCMGW6d
-         vhDA==
+        bh=NAqKQzoRYr9uWTsfSDflRSE8JjpVQVKg6ZNKn4jLnR0=;
+        b=Zg3xdzbpRco8ngEU7Op5Ub/onotCuRHZV5n6+DY1M5XX8KBk9Cv73+JaqeZfXByMZL
+         vQcg00OhLS/7wNRTFd0QAL2e88MaVr5GYlbYTc+f9gBDrxSratR87RIZT18E34jqw7fP
+         QntYPPMc6zR+U2mZqK//cdM0Y0g0Rna7dPtbnbFP6aJ7fOTsyYwCOb53TBewn9RaRgiJ
+         hn/yvHlGC3laCqDTMjr/+95hYcsmomJiSCDbNwq9oQ0bwVMmxX0+Wsqj6qmsE4Nd7mC8
+         6MmSO4pygFnDsJP818YQfZXiAl0RIvQ/wtRaGPG4Z6QxrYvUuc5x0Ei/X2a6yBrQNVl6
+         PzZA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736891102; x=1737495902;
+        d=1e100.net; s=20230601; t=1736893420; x=1737498220;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=zGXnw+i1i7TKU3wgniRuqaVSkfXsQxGAs0xvFF6Zyxg=;
-        b=rivRgmHrQe1CTHIX6IQbJbbnBGHbTnxB+radieHm+FL2nETpMM5o8FWur0P+coDiN9
-         1RjmE8wiie/bZydBjaSANlSUWIqAGrRsTUiCMFCRBZY8bGt5htkbV/WrCK/guSSUYnqU
-         lJ4pA7QISyacgD59PGzaXThGv1UHuAb/js3rMaWd5MSW3jDSd6JoMMsfTDolOCJZN/w+
-         xjOxKTq9rQJoalkWPG9TAEeFbdszfygDN0I9fz8zXcFhFdt6xdmtmvr9a38Nqhn64KCf
-         50npBXWm6G65OBAcGeWumQ8sCV73jkZ3B+JzmPa/t1EfpS4PQGF2FpZblv/L1gZ2PZI+
-         01zQ==
-X-Gm-Message-State: AOJu0Yx5PrXKT2egd3jOEXzcgyWEMIdkBYr2XnIy4V1p1qAPSR74z1E0
-	pBW7v2Ngv3YtaQM5rcYL/DIfYoVkC19YA6HMOh873HFM4dNTdZ2AWmeSK/UEayY=
-X-Gm-Gg: ASbGncuUStlZ7LmR84V3UQ4fRktnlUsclPY9B+ozMjQ2CYpc2fqpdg33x4igMz5/NbF
-	PEWZVXP5rN8pFJ9LPg+Fg/W/6nqK2I66WGlPmmJtDxmrJHhrn/6g6pgZ+FGycnVBmKZnFVY1Lf8
-	IMY1pwW2n5EA7XTlh77PwXsDi0mmkIZGB8xt/f9ElHxG9BPnkXX5GZlP3NQvtJ7OttjX80JwQlE
-	9l6VeynOAAnCw9RUjezAPZJwMwG1vLB7+2G50BURlOZQ8B8E96fRSZTNCdNcGdKg/EuyjGDtqVR
-	FFzapkoRF/14hvct3NkwJNGr1vJFs2JmliiMp7uYRyeq4BU6N0FISCicqmOP7/1eyMybGQYI2ya
-	FybcY15rY9C6V
-X-Google-Smtp-Source: AGHT+IENJTPFrtUtd6VJdXkDkgrq22aps6TJzTD2cxIzyhjUNb9bqGYfAJF8QfDWlw0yczjQtprszg==
-X-Received: by 2002:a05:6000:4020:b0:386:3213:5b9d with SMTP id ffacd0b85a97d-38a8733a1e3mr24689914f8f.41.1736891102495;
-        Tue, 14 Jan 2025 13:45:02 -0800 (PST)
+        bh=NAqKQzoRYr9uWTsfSDflRSE8JjpVQVKg6ZNKn4jLnR0=;
+        b=RutLzJG2UUwQaEYpC6UukT4Ms28p/4PEunQp6RBowpReyTENyTgpzUpEa/jKNXRTCB
+         s+JU4ghgxnaW/hzJOOJFE2GL1t8GCDlMtwRTaibxf65UFlHHrujwhurnRr0gEPWQlTcf
+         0HC6yTmaU+JHQunRSdVvP4sEk5LvT/D/XZLU1pjF28xL4A01k4xkVe9BIGMi1XHWVvOU
+         mQcMlVMaqtz3dVw9jaFYeXSuWaiAJfQCce1fLjFIOVVE4V4v4zIaRCmieUjXv2eiUWol
+         C9lEGlGkiifbthwF8nI297gZJg6DFXJwQZbSHEUQc11R5H2Jsf9B+gomBS0ZiXg2fgqC
+         iB9Q==
+X-Gm-Message-State: AOJu0YxLqJiAlKwCbMWCqfnYej7qS2zAmub7E3897XkTy/hamGu7Z2pY
+	NHgMukWFSL/CVbImDCpNFBvvcXhOST3h+scZiwKuW6gCyQ/q5OaCoxlJowI5e1U=
+X-Gm-Gg: ASbGncuCboa2nJxXq9uT3y29yBfK3ls6AmAvpzptdEbIa5rh+2uBNqcORCRJP4s0/V4
+	p1tQuxiEpcnu1KM5wQKIPSYMvCRAWuManAuvM9M59l/ii1XxUSZpl4DeIW+uXz98E29wwKfXU29
+	a49yBQy5ahrRs7Sm+xTRSt5VAE9CuWn+QkMUonFrINJbDNQjPuyLHOvgDlXVoqR/0DSHGrUu2dO
+	3e5UznQNGd2gOwGwFtkHI4du/iot3Trt5QVcJeL1R1IFfHuuC6Lo2JcnyI1vA4c4C9ggJ8l1kL/
+	mfy1yDvlbks/B7HsnjTpnjEDYTet4TlyGZqSOsQDIRIzpEK9bzyWYL+c9ufwBLSw+BY+J+gvnDz
+	w6CtgjXnTw4mz
+X-Google-Smtp-Source: AGHT+IGYv9DdN33IU2Ag5SWwEentf7GS34FU5aJ1Ctwg3OW2e8wuVlmJrKYMV05BULUztReTuPBkYA==
+X-Received: by 2002:a05:6402:50d0:b0:5d3:d917:dd90 with SMTP id 4fb4d7f45d1cf-5d972dfb3d9mr26882699a12.6.1736893419949;
+        Tue, 14 Jan 2025 14:23:39 -0800 (PST)
 Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-38a8e4b81d7sm15932501f8f.73.2025.01.14.13.45.01
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5d99008c29fsm6547811a12.9.2025.01.14.14.23.38
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Jan 2025 13:45:01 -0800 (PST)
-Message-ID: <dc1c3b7755ba4e438ff7ee580c91bc9b5890b6da.camel@suse.com>
-Subject: Re: [PATCH] libmultipath/foreign: fix memory leak in nvme foreign
- handler
+        Tue, 14 Jan 2025 14:23:39 -0800 (PST)
+Message-ID: <bcf6b2a386e4e4057b5fedbb2dbca2864d8b9d53.camel@suse.com>
+Subject: Re: [PATCH 0/2] multipath: set rport port_state on NVMe FPIN events
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Tue, 14 Jan 2025 22:45:01 +0100
-In-Reply-To: <20250109000653.2469651-1-bmarzins@redhat.com>
-References: <20250109000653.2469651-1-bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>, Muneendra Kumar
+	 <muneendra.kumar@broadcom.com>
+Date: Tue, 14 Jan 2025 23:23:38 +0100
+In-Reply-To: <20241220020235.1759375-1-bmarzins@redhat.com>
+References: <20241220020235.1759375-1-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.54.2 
@@ -77,13 +77,46 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Wed, 2025-01-08 at 19:06 -0500, Benjamin Marzinski wrote:
-> _find_controllers() needs to free the udev device if it doesn't get
-> added to a path. Otherwise it can leak memory whenever
-> check_foreign()
-> is called, causing multipathd's memory usage to continually grow.
+On Thu, 2024-12-19 at 21:02 -0500, Benjamin Marzinski wrote:
+> When multipathd handles link integrity FPIN events, it sets the rport
+> associated with the effected SCSI paths to Marginal. These patches
+> make
+> it do the same thing for NVMe paths.
 >=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> I actually have a stupid Fibre Channel question. Does the host number
+> and the target wwpn uniquely identfy an rport? I never see the
+> channel
+> set to anything other than 0, but I don't think that it MUST be 0.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+IMO, yes. As the WWPN is unique, it's by itself sufficient to identify
+the physical remote port. By adding the host number,
+which corresponds to a unique WWPN on the host, you uniquely identify
+the Linux fc_remote_port. =20
+
+This also fits the fc symlinks that udev creates under by-path.
+
+> But
+> if we knew that there was only one rport for a given host number and
+> target WWPN, we could stop checking as soon as we found one. These
+> patches don't do that. They check all the rports.
+
+I think we could stop if the WWPN is found.
+
+Martin
+
+>=20
+> Benjamin Marzinski (2):
+> =C2=A0 libmultipath: export udev pthread cleanup functions
+> =C2=A0 multipathd: set rport port_state to marginal for NVMe devices
+>=20
+> =C2=A0libmultipath/discovery.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 |=C2=A0 4 +-
+> =C2=A0libmultipath/discovery.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 |=C2=A0 2 +
+> =C2=A0libmultipath/libmultipath.version |=C2=A0 6 +++
+> =C2=A0multipathd/fpin_handlers.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 | 74 ++++++++++++++++++++++++++++-
+> --
+> =C2=A04 files changed, 78 insertions(+), 8 deletions(-)
+>=20
 
