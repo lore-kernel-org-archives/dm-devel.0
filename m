@@ -1,72 +1,77 @@
-Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
+Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15FEE4644E
-	for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 22:23:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC5C5213258
+	for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 22:31:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736893425; cv=none; b=bDMOpoM0BiR57ib1ixJOhl5sI7fNoqIaSj+ningQkxsRwOrEXx1Uh3Wjjc2B1x7iIMm2H9+yQPA12cJKU9RUePtsgxsI6GcIzI7RPFkExDS9BTZ1yUa5h9JIaKmdwtGGJnQ8F4r5jIu98sYG89J3KEdW6+6qKV00x8PU1gQsCr0=
+	t=1736893868; cv=none; b=iXU0mjMJsB+PVV544EpAswoXK7Rf4z70KQTijlmKGePrD/ecW+194uube4phu3OfiUrWqjRjbX+FdbRwJ+WENJIpWIsFzVVrabMm1bc0MyR0DMX0Rk+vht2e+bQGnKsgh+Fj5FtGi6+3GmhwxJXp/DRH1BJJq4XeUpwI791H2Ko=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736893425; c=relaxed/simple;
-	bh=NAqKQzoRYr9uWTsfSDflRSE8JjpVQVKg6ZNKn4jLnR0=;
+	s=arc-20240116; t=1736893868; c=relaxed/simple;
+	bh=RW5BwFLHYxBg+dOmJySzx8icvTaXy3mUHys8ejadWr0=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=TMNm6VurfSMGLneQkm4kMq65+Eiz7HdFz4t/A9eZRb9xXzZ/hpzTkAvmQl/Odm2rjMVAzA+wz3m98DRKmV+ZX7wW0ZtfDqjFWBn3BICRbDqX3M4KACiZQ3ozz11gD9Dawa8D8VXyUXzEmZq5bQ8izHvvJ5z6QQU2Qs5bmvEbAYk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Zg3xdzbp; arc=none smtp.client-ip=209.85.208.52
+	 Content-Type:MIME-Version; b=QxFdtsQDwDYkdyuiaaTePQZqoFrpBS4KgjjN05Q1ZV7XLuqpNJgg1SaQWJxyG2/plmTBE/bRwmXVf/SdEGfC+aXY+Ey7+iPUb+iH2sMAUDwU+Px6OrcKVjCRe5FF7lfAiGViL+wvCvDWVeB/L+4tVig/zARyYMxr7L/p8wTVw5U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=WeCf5NcY; arc=none smtp.client-ip=209.85.218.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Zg3xdzbp"
-Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-5d3cf094768so10443574a12.0
-        for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 14:23:41 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="WeCf5NcY"
+Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-aa6c0dbce1fso869570566b.2
+        for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 14:31:03 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1736893420; x=1737498220; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1736893862; x=1737498662; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=NAqKQzoRYr9uWTsfSDflRSE8JjpVQVKg6ZNKn4jLnR0=;
-        b=Zg3xdzbpRco8ngEU7Op5Ub/onotCuRHZV5n6+DY1M5XX8KBk9Cv73+JaqeZfXByMZL
-         vQcg00OhLS/7wNRTFd0QAL2e88MaVr5GYlbYTc+f9gBDrxSratR87RIZT18E34jqw7fP
-         QntYPPMc6zR+U2mZqK//cdM0Y0g0Rna7dPtbnbFP6aJ7fOTsyYwCOb53TBewn9RaRgiJ
-         hn/yvHlGC3laCqDTMjr/+95hYcsmomJiSCDbNwq9oQ0bwVMmxX0+Wsqj6qmsE4Nd7mC8
-         6MmSO4pygFnDsJP818YQfZXiAl0RIvQ/wtRaGPG4Z6QxrYvUuc5x0Ei/X2a6yBrQNVl6
-         PzZA==
+        bh=RW5BwFLHYxBg+dOmJySzx8icvTaXy3mUHys8ejadWr0=;
+        b=WeCf5NcYHzbjCQHdJx8qeRVNJ2bCYA2twdDcrkYf7+Y2/I1y/H/Q9T0PfSYYVOJ/Ai
+         gtZvHZapbyzhGUEePNV18/C5Gs9YRPsStZ3u6KHOOzuO9dFDptJNdEBEAkYrcUlotWfb
+         klZRKHIYo17dt8XyOnWuWxvCugMxCeABTFDu+4Z/s1kYkzMuKR+AK9RoEEX0tHUsKUgK
+         mceQFEMR7q5gJ7rKCD44IpEEgg+ulqji74RXb5a8t9NYUrK+F7AoYaiM4Ekl7Y0a2ptp
+         nLhAHH9hAMc7RWCJNLXFpDbly1AHd0p+cXUat/vKTKZHhUMSMw1DSP3DvqgIR0pZuxlT
+         cS8A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736893420; x=1737498220;
+        d=1e100.net; s=20230601; t=1736893862; x=1737498662;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=NAqKQzoRYr9uWTsfSDflRSE8JjpVQVKg6ZNKn4jLnR0=;
-        b=RutLzJG2UUwQaEYpC6UukT4Ms28p/4PEunQp6RBowpReyTENyTgpzUpEa/jKNXRTCB
-         s+JU4ghgxnaW/hzJOOJFE2GL1t8GCDlMtwRTaibxf65UFlHHrujwhurnRr0gEPWQlTcf
-         0HC6yTmaU+JHQunRSdVvP4sEk5LvT/D/XZLU1pjF28xL4A01k4xkVe9BIGMi1XHWVvOU
-         mQcMlVMaqtz3dVw9jaFYeXSuWaiAJfQCce1fLjFIOVVE4V4v4zIaRCmieUjXv2eiUWol
-         C9lEGlGkiifbthwF8nI297gZJg6DFXJwQZbSHEUQc11R5H2Jsf9B+gomBS0ZiXg2fgqC
-         iB9Q==
-X-Gm-Message-State: AOJu0YxLqJiAlKwCbMWCqfnYej7qS2zAmub7E3897XkTy/hamGu7Z2pY
-	NHgMukWFSL/CVbImDCpNFBvvcXhOST3h+scZiwKuW6gCyQ/q5OaCoxlJowI5e1U=
-X-Gm-Gg: ASbGncuCboa2nJxXq9uT3y29yBfK3ls6AmAvpzptdEbIa5rh+2uBNqcORCRJP4s0/V4
-	p1tQuxiEpcnu1KM5wQKIPSYMvCRAWuManAuvM9M59l/ii1XxUSZpl4DeIW+uXz98E29wwKfXU29
-	a49yBQy5ahrRs7Sm+xTRSt5VAE9CuWn+QkMUonFrINJbDNQjPuyLHOvgDlXVoqR/0DSHGrUu2dO
-	3e5UznQNGd2gOwGwFtkHI4du/iot3Trt5QVcJeL1R1IFfHuuC6Lo2JcnyI1vA4c4C9ggJ8l1kL/
-	mfy1yDvlbks/B7HsnjTpnjEDYTet4TlyGZqSOsQDIRIzpEK9bzyWYL+c9ufwBLSw+BY+J+gvnDz
-	w6CtgjXnTw4mz
-X-Google-Smtp-Source: AGHT+IGYv9DdN33IU2Ag5SWwEentf7GS34FU5aJ1Ctwg3OW2e8wuVlmJrKYMV05BULUztReTuPBkYA==
-X-Received: by 2002:a05:6402:50d0:b0:5d3:d917:dd90 with SMTP id 4fb4d7f45d1cf-5d972dfb3d9mr26882699a12.6.1736893419949;
-        Tue, 14 Jan 2025 14:23:39 -0800 (PST)
+        bh=RW5BwFLHYxBg+dOmJySzx8icvTaXy3mUHys8ejadWr0=;
+        b=GtC5+P+zTjUl4vQcykURcUWef5pPgV41KV215WTaNTKLprL/6wMZGM67rMFUpkPV0k
+         Oac3EydLlsznWWJNPb21zcPNLtZTecnosXubgeNMDP1VpuKoW1v+1X4hgZpJquln6J5n
+         I5/P5a2irXc5v5A/p45V3t8I2fi/43ExZOd0reiotDrB+wUq6MHpisNd9NzjWH8Esub1
+         v9cLBN/1coITirVAhgz4REH9ponxJE5TcfTB1HAjl2CXEH/7L0d9IYK2Hf9iPwGkX5ne
+         LrQYFRyOlvrIoa8g7P1Y/+lPMGtLl+R4WwNIzrAGzMKqmb/QxG1BSTjfeyoz23C3i5G8
+         josQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWV2Y7QIBM7I9dGC24LFQvlbkMwxXm9NMhGfUh/Hj74j8rVBJhj79bo5t8k2wwQZKte8Nf0TjMTIA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzYKvU/B2WAHtPsjlvkuiE1qDS4MgEoKMW+nz2zqqEYPN/IauAI
+	PJS/dnElf/iEwtYI8Xqu2h9QtyCAOp44cIn1/Q8JZnVCcMYqR4R/HiGkOhhm0Jo=
+X-Gm-Gg: ASbGnctkCbbHorZAYv0ch0gSSpBygImCaJiLhDgEReSOfdU0KtMhr5QyCei05sBcavs
+	ANrUeHMOvqcn3UKplYZdJbu8HwO3GbZVudWysdSnANO3y9qZUgOnqmab0gI5zRpmTpTCQ+poCfc
+	aYb8nEUpkYUtt9ezqqwwTq+lJgfNW5oitD8tjGgrlfPiMYbAKu7haiqheI3yBZ6B+D2w6XuGbqT
+	7F1RjbWdB34byLE4IHQBt0smSLQjPYsVDKYLE3aaR1r/FAE74zDaKrADBi6qWt3XtBj84Zsn9z7
+	n4H224FGQjGIy7vnZaE/VFAzYS2tEFTeL35UhE9ES9S8/9s7C/mjLVK+uv97RXAjw+Pat+XiSGv
+	6YLsNU4Bf3fWx
+X-Google-Smtp-Source: AGHT+IE4c3RZVOXQzWSdu0voEKUwJaewfjUE7ARePvClVFAvkoLzzUsplSsNLmqFVj7hD3qXoD9WcA==
+X-Received: by 2002:a05:6402:50d4:b0:5d0:9054:b119 with SMTP id 4fb4d7f45d1cf-5d972e63dd4mr58780984a12.21.1736893861751;
+        Tue, 14 Jan 2025 14:31:01 -0800 (PST)
 Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5d99008c29fsm6547811a12.9.2025.01.14.14.23.38
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-ab2c905ecb7sm677466566b.26.2025.01.14.14.31.00
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Jan 2025 14:23:39 -0800 (PST)
-Message-ID: <bcf6b2a386e4e4057b5fedbb2dbca2864d8b9d53.camel@suse.com>
-Subject: Re: [PATCH 0/2] multipath: set rport port_state on NVMe FPIN events
+        Tue, 14 Jan 2025 14:31:01 -0800 (PST)
+Message-ID: <7fd13eec94452ac1128158aa7fb79ea08367641f.camel@suse.com>
+Subject: Re: [PATCH 2/2] multipathd: set rport port_state to marginal for
+ NVMe devices
 From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>, Muneendra Kumar
+To: Benjamin Marzinski <bmarzins@redhat.com>, Muneendra Kumar M
 	 <muneendra.kumar@broadcom.com>
-Date: Tue, 14 Jan 2025 23:23:38 +0100
-In-Reply-To: <20241220020235.1759375-1-bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
+ development <dm-devel@lists.linux.dev>
+Date: Tue, 14 Jan 2025 23:31:00 +0100
+In-Reply-To: <Z3wVVg0AgLLq4EUN@redhat.com>
 References: <20241220020235.1759375-1-bmarzins@redhat.com>
+	 <20241220020235.1759375-3-bmarzins@redhat.com>
+	 <c7641dfc68b568dc78297c60c56a9ee8@mail.gmail.com>
+	 <Z3wVVg0AgLLq4EUN@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.54.2 
@@ -77,46 +82,63 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Thu, 2024-12-19 at 21:02 -0500, Benjamin Marzinski wrote:
-> When multipathd handles link integrity FPIN events, it sets the rport
-> associated with the effected SCSI paths to Marginal. These patches
-> make
-> it do the same thing for NVMe paths.
+On Mon, 2025-01-06 at 12:39 -0500, Benjamin Marzinski wrote:
+> On Fri, Dec 20, 2024 at 04:25:22PM +0530, Muneendra Kumar M wrote:
+> > Hi Benjamin,
+> > Thanks for the changes.
+> > But below is the reason why we didn't add support to set the rport
+> > port_state to marginal for NVMe devices
+> >=20
+> > In the case of SCSI=C2=A0 once rport-state is set to Marginal ,
+> > If any pending I/O's on the marginal path hit's the scsi-timeout
+> > (after
+> > abort success) the scsi-layer checks the rport-state=C2=A0 and If the
+> > rport-state is set to Marginal it will not do any retries on the
+> > Marginal
+> > path instead the I/O
+> > Will be retried on the other Active paths.
+> >=20
+> >=20
+> > This particular functionality(checking the rport-state and acting
+> > accordingly) we didn't add( as far I know) in the case of NVME and
+> > we need
+> > to check how we can handle this in the case of NVME .
+> > That's the reason we didn't set the port state to Marginal in the
+> > case of
+> > NVMe.
+> >=20
+> >=20
+> > In a brief SCSI layer handles the case when the rport-state is set
+> > to
+> > Marginal whereas in NVMe it doesn't(AFIK).
+> >=20
+> > Atleast with the below changes we make sure that once we get the
+> > FPIN-LI
+> > notification we will set the affected path , as well as the rport-
+> > state to
+> > Marginal irrespective of SCSI and NVMe.
+> >=20
+> > I am just thinking that until we have some changes in the NVME
+> > driver to
+> > handle (the rport-state to marginal) this changes doesn't show any
+> > impact
+> > in the case of NVMe
+> > =C2=A0other then keeping it=C2=A0 on par with SCSI implementation.
+> >=20
+> > Please let me know your opinion on the same.
 >=20
-> I actually have a stupid Fibre Channel question. Does the host number
-> and the target wwpn uniquely identfy an rport? I never see the
-> channel
-> set to anything other than 0, but I don't think that it MUST be 0.
+> The request to do this came because the user wanted to see which
+> target
+> ports were effected, but when they looked, none of them we in the
+> Marginal state. So there is some value in this for users, even if the
+> systems behavior doesn't change because of it.
 
-IMO, yes. As the WWPN is unique, it's by itself sufficient to identify
-the physical remote port. By adding the host number,
-which corresponds to a unique WWPN on the host, you uniquely identify
-the Linux fc_remote_port. =20
+Please add a note to the commit message explaining this.
 
-This also fits the fc symlinks that udev creates under by-path.
+I'm actually a bit concerned about it ... won't other users be even
+more confused when they see the path devices as marginal but don't
+observe any change in the system's usage of these paths?
 
-> But
-> if we knew that there was only one rport for a given host number and
-> target WWPN, we could stop checking as soon as we found one. These
-> patches don't do that. They check all the rports.
-
-I think we could stop if the WWPN is found.
-
+Regards,
 Martin
-
->=20
-> Benjamin Marzinski (2):
-> =C2=A0 libmultipath: export udev pthread cleanup functions
-> =C2=A0 multipathd: set rport port_state to marginal for NVMe devices
->=20
-> =C2=A0libmultipath/discovery.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 |=C2=A0 4 +-
-> =C2=A0libmultipath/discovery.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 |=C2=A0 2 +
-> =C2=A0libmultipath/libmultipath.version |=C2=A0 6 +++
-> =C2=A0multipathd/fpin_handlers.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0 | 74 ++++++++++++++++++++++++++++-
-> --
-> =C2=A04 files changed, 78 insertions(+), 8 deletions(-)
->=20
 
