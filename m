@@ -1,74 +1,72 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3BB6320CCF5
-	for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 21:40:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46D2D213246
+	for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 21:45:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736890818; cv=none; b=oxd86WjQ9vUXXj421Q4LFg00Dy6rTTVWqYP6WgwxRasQoQAkooNXxkHY/DGI5v5F28waEWRjgJDU5Ab3gMpUCy2SfZfYd/r/hTn+b/fCouR17NAqyhB+0yHUKoSoIs14sGbfMqJckQYWRDp1GD1kqOzePUcw4kkeubdYGG0A0xo=
+	t=1736891106; cv=none; b=GdTzCY/vMTKGJfb5WNh5GdNbddZDG2wKEAQMvm0ZGTGxhDaWwoRir61gCeKyn4QLS9U9VZKZXYj1nXBQFS7gU6122FDITq50oPd4h6s9umslO3mfScgkA9pMPF/UHshFqkI5koSMeSJ3XvOhtexaSgElgJQaDpdZ5y5I+EKlJvc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736890818; c=relaxed/simple;
-	bh=NqglY6eIzKuSv1/VaeqWUR1b8/6Yf9Pk3xiRCA+VQCM=;
+	s=arc-20240116; t=1736891106; c=relaxed/simple;
+	bh=zGXnw+i1i7TKU3wgniRuqaVSkfXsQxGAs0xvFF6Zyxg=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=S0/2ylwzXw9bchIYH5Pe5WpjJPGB9g6c9jQWuqeD1P6B/0yMvxYfio6k3JZgA7ICiOvLiEpIA2fwgAJBfipPJcBLpuyjf5syEuXJ1vT6WE3OTgAAPgJcQVbtJc1ENvLrunPX7IBGpdGMm7nJZvosInCLH66aCzk3SPFK1sD26xU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=XTtWI+wB; arc=none smtp.client-ip=209.85.128.51
+	 Content-Type:MIME-Version; b=YO+oBOn3BIWTe+MtVLWTV3esiOoICzYbucavInQ9HEKrNsV3tpjfCcKFima6bpIgu0VWF7pgQ4n0RutpWhwyuWd+lRDK5qXsQ/toL0csanPeYz9sb6UbgMEvdZmPJ/a9QsU/oxu5KInhukNRdy4AeOacFHiC1CNMHq07sXdyHHY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Nz5K1zFV; arc=none smtp.client-ip=209.85.221.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="XTtWI+wB"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-4361f664af5so68493185e9.1
-        for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 13:40:15 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Nz5K1zFV"
+Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-385d7f19f20so3084272f8f.1
+        for <dm-devel@lists.linux.dev>; Tue, 14 Jan 2025 13:45:04 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1736890814; x=1737495614; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1736891102; x=1737495902; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=IgrZcDCWhdArDGL7+vmJnwtZ2QHbdODzunuil7Rb8jI=;
-        b=XTtWI+wBJO4UW98tSUWLXDJPLWh7WCoCBG+837kVHdS04lSXhE7nh3JS4+GN7/1p+y
-         uoLx2dxL15xroGsE3ICyGSisTKEd4m8eyjWtFQmy6bxWXsIdw2CEhTswsqXYPWVm6xQW
-         looA9hCD05tpWsKh6MOQwiVOAklC+3l1BJpW8autQAPTGwlbrYe3Bq/MJdLAMLj+nWBm
-         ugFf4x1tUMD7FONLTPOz4QHxRPAyBDICY2/DllvRdGw+AvQmrfvBKLQeeg+lE1uLZMJf
-         Rg4QkC6DzJu71pskq5h4eclUdwjlAsdvToSPOVAape3M30iaTsNNG54Mn3wn/djZZKjo
-         hGtw==
+        bh=zGXnw+i1i7TKU3wgniRuqaVSkfXsQxGAs0xvFF6Zyxg=;
+        b=Nz5K1zFVMTA+e1CQ71J0Zbikrsq2krRmlNlkTwZed11CH50B/sA3il2soeY+UpUltm
+         am0vq8PqGAAKU/UzVICCTKwX6FZ1KYs2OnkLM/WcGrQeTaXpC+9KxWhhhmihwZNsd981
+         J7OtEoHb9e2II54DWtBAy0f31mfgXG7GLGCVicivQid2yGjr3hOFXcBXhU/cK160IGsI
+         PZdzYtWKocehQ1SXriSceQvUZfDRhlDDolJNJ0+aVUMB8004o+uDqHe0yBbOxBuo8adV
+         M8d5hrz3M+x04K7XHZk/3YoDbchFUSXVZPS8U+qymcemAL7S9KY7PZoFFpCWKwCMGW6d
+         vhDA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736890814; x=1737495614;
+        d=1e100.net; s=20230601; t=1736891102; x=1737495902;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=IgrZcDCWhdArDGL7+vmJnwtZ2QHbdODzunuil7Rb8jI=;
-        b=Lm1RaYnGQSrF6IykDgVGSrFlZUQ4Y1NYGeAQZq2ngIzP/oPID96x5BAIX+J8u3WV5l
-         sxjSKxYvQIwYnwBs3huCpJ4QhG+25l0gwONfbv894aQzDLcNeWAsaJ3nzYBrEyYfgBoJ
-         GYJdcwKWDm2lobKOre8doIm/BIn3l5Rz9m51KZid4HFaVBAOemSDxP9IiWCctwLa/L/L
-         VEoiF01iYBvEL+L35uQE7WsGFiD8DsBlHiNrNMKOHgKinXzmnCtMJil7FI5qfGcoJ2DR
-         FXiEEQgGUvRUvcltuCohy58YuYY5+ncBhk4LNuK2Ckv5Cb9O4YY75L7e2ZALtNJEbNNW
-         0W7g==
-X-Forwarded-Encrypted: i=1; AJvYcCUdSSFzOrjvP8E+CUSe21xBIr4TR8ZppYj8eXEN1OWFP4N5fVNKsbTIHxmogyzqDkt+ZB2uiYDixw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzT5P4kOJLkDOGOeiF3wN7PfI1N41I5B0vCK90khd8FKBvrPZsk
-	5lHoIZ5O/QexBpKGGafWYQyGzkLwtYpRRJv7rKEOIbkdfOCwTaWy4KLVD3kqEUE=
-X-Gm-Gg: ASbGncvanluhP8X2aZuWOw9SZyC6Q5gYAO6Ua3ngdmYLJ7Yi0VMtfGT7PjqPeZ8YXmS
-	0rgJRLAR+rgf8Tb77ZukZ/UgLSCYeg0OqhCTbfcf3BYzPyDK1n6xF89mHweuoXF3oKKVIE8tUAq
-	i6RQKIYgZ65KaNO6AjfPTgcmOMU0wUu09SpV1vx2gcmLOfJcvWBJ6zNU02ng/raQ3lnSEXfHn3+
-	Z0eWZAq1/eyIFUS+hRnHCFLaFg1K6FdBaU1tL8mjS48UyWbpbMebcDOFqAMqMN72mdkojdERHPM
-	yzhN6WpDA09wZSHsv5DIzLOE2lzoVKWCIQVgvyniBz52990eOUoA0dWrvJk0ewxN8iTHaZ+FEcx
-	phpnE0Bp+za6V
-X-Google-Smtp-Source: AGHT+IHxrh1UjxhAjFIvNzbiDk70QnqMod1XX1l2kiJwcNOjjM5BRsRpXVRvdjhdG14RMSYcq3UAMQ==
-X-Received: by 2002:a05:6000:4617:b0:385:f220:f779 with SMTP id ffacd0b85a97d-38a873392e7mr22089315f8f.49.1736890814192;
-        Tue, 14 Jan 2025 13:40:14 -0800 (PST)
+        bh=zGXnw+i1i7TKU3wgniRuqaVSkfXsQxGAs0xvFF6Zyxg=;
+        b=rivRgmHrQe1CTHIX6IQbJbbnBGHbTnxB+radieHm+FL2nETpMM5o8FWur0P+coDiN9
+         1RjmE8wiie/bZydBjaSANlSUWIqAGrRsTUiCMFCRBZY8bGt5htkbV/WrCK/guSSUYnqU
+         lJ4pA7QISyacgD59PGzaXThGv1UHuAb/js3rMaWd5MSW3jDSd6JoMMsfTDolOCJZN/w+
+         xjOxKTq9rQJoalkWPG9TAEeFbdszfygDN0I9fz8zXcFhFdt6xdmtmvr9a38Nqhn64KCf
+         50npBXWm6G65OBAcGeWumQ8sCV73jkZ3B+JzmPa/t1EfpS4PQGF2FpZblv/L1gZ2PZI+
+         01zQ==
+X-Gm-Message-State: AOJu0Yx5PrXKT2egd3jOEXzcgyWEMIdkBYr2XnIy4V1p1qAPSR74z1E0
+	pBW7v2Ngv3YtaQM5rcYL/DIfYoVkC19YA6HMOh873HFM4dNTdZ2AWmeSK/UEayY=
+X-Gm-Gg: ASbGncuUStlZ7LmR84V3UQ4fRktnlUsclPY9B+ozMjQ2CYpc2fqpdg33x4igMz5/NbF
+	PEWZVXP5rN8pFJ9LPg+Fg/W/6nqK2I66WGlPmmJtDxmrJHhrn/6g6pgZ+FGycnVBmKZnFVY1Lf8
+	IMY1pwW2n5EA7XTlh77PwXsDi0mmkIZGB8xt/f9ElHxG9BPnkXX5GZlP3NQvtJ7OttjX80JwQlE
+	9l6VeynOAAnCw9RUjezAPZJwMwG1vLB7+2G50BURlOZQ8B8E96fRSZTNCdNcGdKg/EuyjGDtqVR
+	FFzapkoRF/14hvct3NkwJNGr1vJFs2JmliiMp7uYRyeq4BU6N0FISCicqmOP7/1eyMybGQYI2ya
+	FybcY15rY9C6V
+X-Google-Smtp-Source: AGHT+IENJTPFrtUtd6VJdXkDkgrq22aps6TJzTD2cxIzyhjUNb9bqGYfAJF8QfDWlw0yczjQtprszg==
+X-Received: by 2002:a05:6000:4020:b0:386:3213:5b9d with SMTP id ffacd0b85a97d-38a8733a1e3mr24689914f8f.41.1736891102495;
+        Tue, 14 Jan 2025 13:45:02 -0800 (PST)
 Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-38a9362947dsm14316996f8f.40.2025.01.14.13.40.13
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-38a8e4b81d7sm15932501f8f.73.2025.01.14.13.45.01
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 14 Jan 2025 13:40:13 -0800 (PST)
-Message-ID: <f99bc4d20e5135adf8599e6c8280451a236e9983.camel@suse.com>
-Subject: Re: [PATCH v2 08/14] multipathd: don't call reload_and_sync_map()
- from deferred_failback_tick()
+        Tue, 14 Jan 2025 13:45:01 -0800 (PST)
+Message-ID: <dc1c3b7755ba4e438ff7ee580c91bc9b5890b6da.camel@suse.com>
+Subject: Re: [PATCH] libmultipath/foreign: fix memory leak in nvme foreign
+ handler
 From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
-	dm-devel@lists.linux.dev
-Date: Tue, 14 Jan 2025 22:40:12 +0100
-In-Reply-To: <Z2SYZtAkLuqK-h6x@redhat.com>
-References: <20241211225909.298770-1-mwilck@suse.com>
-	 <20241211225909.298770-9-mwilck@suse.com> <Z2SYZtAkLuqK-h6x@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Tue, 14 Jan 2025 22:45:01 +0100
+In-Reply-To: <20250109000653.2469651-1-bmarzins@redhat.com>
+References: <20250109000653.2469651-1-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.54.2 
@@ -79,79 +77,13 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Thu, 2024-12-19 at 17:04 -0500, Benjamin Marzinski wrote:
-> On Wed, Dec 11, 2024 at 11:59:03PM +0100, Martin Wilck wrote:
-> > Instead, move the call inside the existing loop over vecs->mpvec
-> > and call
-> > reload_and_sync_map() from checker_finished(). Note that we can't
-> > simply
-> > put the call deferred_failback_tick() in the "if" condition,
-> > because we
-> > need to adjust the ticks even if update_mpp_prio() returns true.
-> > For
-> > consistency, use separate bool variables for each condition that
-> > would
-> > necessitate a reload.
-> >=20
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> > =C2=A0multipathd/main.c | 39 ++++++++++++++-------------------------
-> > =C2=A01 file changed, 14 insertions(+), 25 deletions(-)
-> >=20
-> > diff --git a/multipathd/main.c b/multipathd/main.c
-> > index b045f8b..b1f0f81 100644
-> > --- a/multipathd/main.c
-> > +++ b/multipathd/main.c
-> > @@ -2076,32 +2076,20 @@ ghost_delay_tick(struct vectors *vecs)
-> > =C2=A0	}
-> > =C2=A0}
-> > =C2=A0
-> > -static void
-> > -deferred_failback_tick (struct vectors *vecs)
-> > +static bool deferred_failback_tick(struct multipath *mpp)
-> > =C2=A0{
-> > -	struct multipath * mpp;
-> > -	int i;
-> > =C2=A0	bool need_reload;
-> > =C2=A0
-> > -	vector_foreach_slot (vecs->mpvec, mpp, i) {
-> > -		/*
-> > -		 * deferred failback getting sooner
-> > -		 */
-> > -		if (mpp->pgfailback > 0 && mpp->failback_tick > 0)
-> > {
-> > -			mpp->failback_tick--;
-> > +	if (mpp->pgfailback <=3D 0 || mpp->failback_tick <=3D 0)
-> > +		return false;
-> > =C2=A0
-> > -			if (!mpp->failback_tick &&
-> > -			=C2=A0=C2=A0=C2=A0 need_switch_pathgroup(mpp,
-> > &need_reload)) {
-> > -				if (need_reload) {
-> > -					if
-> > (reload_and_sync_map(mpp, vecs) =3D=3D 2) {
-> > -						/* multipath
-> > device removed */
-> > -						i--;
-> > -					}
-> > -				} else
-> > -					switch_pathgroup(mpp);
-> > -			}
-> > -		}
-> > -	}
-> > +	mpp->failback_tick--;
-> > +	if (!mpp->failback_tick &&
-> > +	=C2=A0=C2=A0=C2=A0 need_switch_pathgroup(mpp, &need_reload) &&
-> > +	=C2=A0=C2=A0=C2=A0 need_reload)
-> > +		return true;
-> > +	else
+On Wed, 2025-01-08 at 19:06 -0500, Benjamin Marzinski wrote:
+> _find_controllers() needs to free the udev device if it doesn't get
+> added to a path. Otherwise it can leak memory whenever
+> check_foreign()
+> is called, causing multipathd's memory usage to continually grow.
 >=20
-> If (!mpp->failback_tick && need_switch_pathgroup(mpp, &need_reload)
-> is
-> true by need_reload isn't, don't we still need to call
-> switch_pathgroup(mpp);
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Ups. Good call, thanks!
-
-Martin
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
