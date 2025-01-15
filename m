@@ -1,74 +1,123 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E2B1189F54;
-	Wed, 15 Jan 2025 17:37:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3041D3BB54
+	for <dm-devel@lists.linux.dev>; Wed, 15 Jan 2025 18:48:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736962658; cv=none; b=IxFXtKPj9wsjRGAAhAQAn6pueeWo63+Af4w0n/493Lmh4Hj7Xx6nZq50Qd/IKboBeYAAMtzxoIKP2+JyoFfk4YC7aHo2jPVK/FJBTfDKIrUxQ3R9qDVfq+TITrVpwdSzHMeCUKClVFjG3l8LCOHRnjVjYuztSSp+xblkktUyMBw=
+	t=1736966910; cv=none; b=V+Rh9Mg3EnvQ8VLTKSiADy1qOTNbEYZmaQqClKLEtIh9ibi63Jc60qXvqcOWlC0DjogYEhvyUyjSP6zn8VB00oh6DN0x3EkaazgEN1sLaEvkQRjU14zdPK6M1B+xTz/zV8JN+8ECwDkJ76VFd5D/G5mz/a+XkX+5NRNj6IJR3Wc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736962658; c=relaxed/simple;
-	bh=3xWAnLBBl4w+4tJ92QXCBo72mV+FDrquZ1Z2BUPASco=;
+	s=arc-20240116; t=1736966910; c=relaxed/simple;
+	bh=9lxpPuEmxPs08ykj7M8ShtzHIVY/1SnSJgVQldGaPk8=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=fUYoqE29bnOdMgBP5lPPRhqEN1Gtpat/qF6oLgLTosIq3tckhBuwy7c0bg6eVugCW5g8zs0wDSgCJe+Q3ouFEcdorq7m3eC7kSblA7yoEsFMKKo5d432SC9LjHTRwxrBdgWr5D7mPUVWdCaqQxojdjk7FccEeyUoIAX8Ej/ABJg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=IyAzogz9; arc=none smtp.client-ip=10.30.226.201
+	 In-Reply-To:Content-Type:Content-Disposition; b=MTb+wTQwNPrcBTiPb9wpWsR2LnVGdbPz2k/n+CrYrj/6l6+4e791sOBRCwbTFlcU/oq2XcIAGNvCb7vh5OJ/68zFD/UzXp5XjkLJ7d++cAQGItCIxF+Hois+rvh5nyF98wNQlh4lajy9YB0G7VnuMdVXJzabhkFm9qs2XNL6j04=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=YefiPBRh; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="IyAzogz9"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F203EC4CEE0;
-	Wed, 15 Jan 2025 17:37:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1736962658;
-	bh=3xWAnLBBl4w+4tJ92QXCBo72mV+FDrquZ1Z2BUPASco=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=IyAzogz9tuvRrqfK+PIY46Dv0v5IBZUhZl1OSl+U3AFLjqXXVs5ewjZmA3OcmsiQd
-	 Y3JjDLgujWqclLtGNZlkF05IOWiHJ7J0oS1CjEbOqnIIjt/82DjN3cmOEfbsj4OM2W
-	 p/YFkoXwlzrC5ewOBFHXog2WmcjYYHyHIhrDkd6L4KklhYSHpXtY4/x7ib/DQpaO7z
-	 LBav9lNelV71LnwHzUxYBBRWRD2f5QKQ5rezf4mcSeJ+iNI9gs/yApbP3h6anW+VhW
-	 NkPhwR8ClIhRH8n7Kb8YkccnRE4H094twlkH5nYJJncqzPyIT48jEAZW5r33kj5ciM
-	 +3mmrlLKEgwxg==
-Date: Wed, 15 Jan 2025 17:37:36 +0000
-From: Eric Biggers <ebiggers@kernel.org>
-To: Harald Freudenberger <freude@linux.ibm.com>
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
-	ifranzki@linux.ibm.com, linux-s390@vger.kernel.org,
-	dm-devel@lists.linux.dev, herbert@gondor.apana.org.au,
-	dengler@linux.ibm.com
-Subject: Re: [PATCH v1 1/1] dm-integrity: Implement asynch digest support
-Message-ID: <20250115173736.GA3712753@google.com>
-References: <20250115164657.84650-1-freude@linux.ibm.com>
- <20250115164657.84650-2-freude@linux.ibm.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YefiPBRh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1736966907;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=QqJ+d0YXnAV5ljM7iMY3vXI0KvUmW5mcTffBs8QKoH4=;
+	b=YefiPBRhzUGGSrPZPLX7kHZx9ZV5sII45dpwW45MmO2GkSy1hxcT4CDKtvv01xEaLlOH+L
+	Jhd5Plj1zOwWeFcgkOfrjDAh3ukkG7q97aOD6gxXhlRYmfC098vmSaf5NCXHIZDN1jy7cz
+	i0BS5aF/7ms2YkfdUU6wF/gQ0r1ctkk=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-661-XHlGDNJ8N668rUcxTmLejA-1; Wed,
+ 15 Jan 2025 13:48:24 -0500
+X-MC-Unique: XHlGDNJ8N668rUcxTmLejA-1
+X-Mimecast-MFC-AGG-ID: XHlGDNJ8N668rUcxTmLejA
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C735A1956058;
+	Wed, 15 Jan 2025 18:48:22 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6CD2730001BE;
+	Wed, 15 Jan 2025 18:48:22 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 50FImKpE2715781
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 15 Jan 2025 13:48:20 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 50FImKIE2715780;
+	Wed, 15 Jan 2025 13:48:20 -0500
+Date: Wed, 15 Jan 2025 13:48:20 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev
+Subject: Re: [PATCH v2 04/14] multipathd: quickly re-sync if a map is
+ inconsistent
+Message-ID: <Z4gC9P2SCbIhy2gV@redhat.com>
+References: <20241211225909.298770-1-mwilck@suse.com>
+ <20241211225909.298770-5-mwilck@suse.com>
+ <Z2SW3m9qq9ZBTLa7@redhat.com>
+ <c640c8116e252d18fa89c4dfa6aa8ebb600e3c16.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+In-Reply-To: <c640c8116e252d18fa89c4dfa6aa8ebb600e3c16.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 5_t6IPbJSv7Flut2CkPX-TvwhEzH13nu1wE6uJPHajc_1736966903
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
-In-Reply-To: <20250115164657.84650-2-freude@linux.ibm.com>
+Content-Transfer-Encoding: 8bit
 
-On Wed, Jan 15, 2025 at 05:46:57PM +0100, Harald Freudenberger wrote:
-> Use the async digest in-kernel crypto API instead of the
-> synchronous digest API. This has the advantage of being able
-> to use synchronous as well as asynchronous digest implementations
-> as the in-kernel API has an automatic wrapping mechanism
-> to provide all synchronous digests via the asynch API.
+On Tue, Jan 14, 2025 at 10:37:24PM +0100, Martin Wilck wrote:
+> On Thu, 2024-12-19 at 16:57 -0500, Benjamin Marzinski wrote:
+> > On Wed, Dec 11, 2024 at 11:58:59PM +0100, Martin Wilck wrote:
+> > > After reading the kernel device-mapper table,
+> > > update_pathvec_from_dm()
+> > > sets the mpp->need_reload flag if an inconsistent state was found
+> > > (often a
+> > > path with wrong WWID). We expect reload_and_sync_map() to fix this
+> > > situation.
+> > > However, schedule a quick resync in this case, to be double-check
+> > > that the
+> > > inconsistency has been fixed.
+> > 
+> > I'm not too sure about this. My biggest worry with handling
+> > mpp->need_reload in the checkerloop is what happens if for some
+> > reason
+> > multipathd and the kernel keep disagreeing on something. You would
+> > just
+> > keep reloading the device. That seems unlikely, so I've o.k. with
+> > handling it here, but if that does happen, this would make it much
+> > worse.  Instead of reloading every path check, you would reload every
+> > loop.
+> > 
+> > If you do detect an inconsistent state, and trigger a reload, and the
+> > state is still inconsistent after that, I would argue that yet
+> > another
+> > reload is more likely to remain inconsistent than it is to fix the
+> > problem. So I would rather not speed it up.
+> > 
 > 
-> Tested with crc32, sha256, hmac-sha256 and the s390 specific
-> implementations for hmac-sha256 and protected key phmac-sha256.
+> Please see my reply to 03/14.
+
+Fine. Since I can see situations where a cascade of device changes would
+make an inconsistency appear immediately after a reload and I can't
+actually come up with a case (excluding bugs and ENOMEM) where nothing
+changed, and we reloaded to fix and inconsistency, but it still isn't
+fixed, we should probably handle the case that we know can actually
+happen. Warning on inconsistent states should be good enough, and I
+think we already do that in update_pathvec_from_dm().
+
+-Ben
+
 > 
-> Signed-off-by: Harald Freudenberger <freude@linux.ibm.com>
+> Martin
 
-As Mikulas mentioned, this reduces performance for everyone else, which is not
-great.  It also makes the code more complicated.
-
-I also see that you aren't actually using the algorithm in an async manner, but
-rather waiting for it synchronously each time.  Thus the ability to operate
-asynchronously provides no benefit in this case, and this change is purely about
-allowing a particular driver to be used, presumably the s390 phmac one from your
-recent patchset.  Since s390 phmac seems to be new code, and furthermore it is
-CPU-based and thus uses virtual addresses (which makes the use of scatterlists
-entirely pointless), wouldn't it be easier to just make it implement shash
-instead of ahash, moving any wait that may be necessary into the driver itself?
-
-- Eric
