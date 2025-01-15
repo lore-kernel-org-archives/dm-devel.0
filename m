@@ -1,543 +1,218 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 24FAF19CC2A
-	for <dm-devel@lists.linux.dev>; Wed, 15 Jan 2025 17:29:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91A431CCEC8
+	for <dm-devel@lists.linux.dev>; Wed, 15 Jan 2025 17:33:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736962167; cv=none; b=gAGNT0cB3WJUcSVIsH+qnvM7/w/AtQRAQkugZWWOpImGj7vaJMHRXlpTqPSVorgr6nf+BpL/0XDXMerqrsNwOdlMkVfgyt7EacW9psRhFAjO3GEarZ06Wn8GHUJkAfaIjoawwTXoK36ZZneJ09C5ezHmySjEWjbXPlnl9xaCWH8=
+	t=1736962422; cv=none; b=McPQ3FuX7AgL07PVOKjOw5xm0ZQ/EJtBjkSAhuThjDaH57b1Nq6PUAqappMNdK3ajQwtAkOJJWubHNNwpm9/QzsYjObXcrX7cF/dr0LKI1ZaiIWYO1t6FqflyNB5BdKzy9pLWJI+Dikr1mx+Jk170ZPYIuC5Z4vvYCT1BwOb8DU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736962167; c=relaxed/simple;
-	bh=aYqI53SHvI3rS5kNUE6AwfSX7EPn5maWQIfOHkahuBg=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=WWKT2fcNmUqRehK7PUTyDvDvaf+1jhiK0a4M2N02ISXaTALPIDDDy4KJuklLz7LTR6h9l0BH+GRjyLl2oWWDbX7yEXcD5t0l76JcwM5koKbV9DJV1ukQ0Q0sO1/SAZWoQ/Ea5x6aohQM2uSoXuhOJbpJbL3NgEGWQg8fASwXFFs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KC3uWZCM; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1736962422; c=relaxed/simple;
+	bh=aYAZ5kNi6yRr6CQl70BMOaOmrPKzSxzr5E2u6gwuLzg=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=fiXxTOQXV0JvREfG3fAmBTMCAqkvLsvNOSqIRHwMuFviSQcRVeXQCrZRuYGU/tX3+pzCbo0sr6H0H1GNOHxBs7IbTUjDcRs3DNUT6oqLCKyHxsQCwspw+hykCLvOblhzLci9yDm7oR9Rvif7ZEp2NwTotvWyvS6Q1hj74GFwAH0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X5jJ+PWt; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KC3uWZCM"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X5jJ+PWt"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1736962164;
+	s=mimecast20190719; t=1736962419;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=hqspFn4o1sRmiv0CX8rWSP1oqa1kUHJ7QKOQd4maeVE=;
-	b=KC3uWZCMIy6BxdU32ALzMfwywEd1kr2ZZq4qp45wO5J7lT2aybXGzx4m+7AGIilxEBKspI
-	PC3gmsiJ7r384oEuG93u4K2BBDl2A8VVC8or7Ib1OiSfS/1bGXmSromhsQFrs5hfFl+vVp
-	KP3RPgc42mRwfoi3tKjkkchB3dMVWeU=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=JnfG6IENZZpfcMk2VeV8dyc8aI9HbqUzEJjj5TWh+Hw=;
+	b=X5jJ+PWtY8XltitdMvHuGiBksXVG07AcBVHHrmeQ2VyCxmS94JO+Mybl3JqxK1WlQAWuTC
+	48eNnUMZK5Cg2gx/dAPEP261ZqwVA7z2MxXFEIanhXDf0JT+nR/WIPahXarDpmpbjV4opN
+	N8gAaVUOqOEBe/dMZpBztUQqBBPJYYk=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-608-U_1SCGM4NXivrflg3Oxnww-1; Wed,
- 15 Jan 2025 12:29:22 -0500
-X-MC-Unique: U_1SCGM4NXivrflg3Oxnww-1
-X-Mimecast-MFC-AGG-ID: U_1SCGM4NXivrflg3Oxnww
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-547-XQr7vHhGO5aPeetSbwWKYg-1; Wed,
+ 15 Jan 2025 12:33:36 -0500
+X-MC-Unique: XQr7vHhGO5aPeetSbwWKYg-1
+X-Mimecast-MFC-AGG-ID: XQr7vHhGO5aPeetSbwWKYg
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A29451955DDE;
-	Wed, 15 Jan 2025 17:29:20 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5B13A19560BB;
+	Wed, 15 Jan 2025 17:33:35 +0000 (UTC)
 Received: from [10.45.224.117] (unknown [10.45.224.117])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0435E19560AB;
-	Wed, 15 Jan 2025 17:29:17 +0000 (UTC)
-Date: Wed, 15 Jan 2025 18:29:13 +0100 (CET)
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6537730001BE;
+	Wed, 15 Jan 2025 17:33:33 +0000 (UTC)
+Date: Wed, 15 Jan 2025 18:33:30 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Harald Freudenberger <freude@linux.ibm.com>
-cc: agk@redhat.com, snitzer@kernel.org, ifranzki@linux.ibm.com, 
-    linux-s390@vger.kernel.org, dm-devel@lists.linux.dev, 
-    herbert@gondor.apana.org.au, dengler@linux.ibm.com
-Subject: Re: [PATCH v1 1/1] dm-integrity: Implement asynch digest support
-In-Reply-To: <20250115164657.84650-2-freude@linux.ibm.com>
-Message-ID: <b541f1bb-5287-7600-77ce-ceed5903e554@redhat.com>
-References: <20250115164657.84650-1-freude@linux.ibm.com> <20250115164657.84650-2-freude@linux.ibm.com>
+To: Meir Elisha <meir.elisha@volumez.com>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Joe Thornber <ejt@redhat.com>, dm-devel@lists.linux.dev
+Subject: [PATCH] dm-transaction-manager: use red-black trees instead of linear
+ lists
+Message-ID: <e23022ee-6ea9-a7b5-e05a-fed23150e617@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: QszvahG_iLYhUA7Sv9c4duwve2C2JWw2swa9oHGrpXM_1736962415
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-Hi
+Hi Meir
 
-The ahash interface is slower than the shash interface for synchronous 
-implementations, so the patch is basically slowing down the common case. 
-See the upstream commit b76ad8844234bd0d394105d7d784cd05f1bf269a for an 
-explanation in dm-verity.
-
-Do you have some benchmark that shows how much does it help on s390x? So, 
-that we can evaluate whether the added complexity is worth the performance 
-improvement or not.
+Could you test this patch, if it improves performance for your case?
 
 Mikulas
 
 
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-On Wed, 15 Jan 2025, Harald Freudenberger wrote:
+There was reported performance degradation when the shadow map contained
+too many entries [1]. The shadow map uses 256-bucket hash with linear
+lists - when there are too many entries, it has quadratic complexity.
 
-> Use the async digest in-kernel crypto API instead of the
-> synchronous digest API. This has the advantage of being able
-> to use synchronous as well as asynchronous digest implementations
-> as the in-kernel API has an automatic wrapping mechanism
-> to provide all synchronous digests via the asynch API.
-> 
-> Tested with crc32, sha256, hmac-sha256 and the s390 specific
-> implementations for hmac-sha256 and protected key phmac-sha256.
-> 
-> Signed-off-by: Harald Freudenberger <freude@linux.ibm.com>
-> ---
->  drivers/md/dm-integrity.c | 220 ++++++++++++++++++++++++--------------
->  1 file changed, 138 insertions(+), 82 deletions(-)
-> 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index ee9f7cecd78e..1504db9276d1 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -195,7 +195,7 @@ struct dm_integrity_c {
->  	struct scatterlist **journal_io_scatterlist;
->  	struct skcipher_request **sk_requests;
->  
-> -	struct crypto_shash *journal_mac;
-> +	struct crypto_ahash *journal_mac;
->  
->  	struct journal_node *journal_tree;
->  	struct rb_root journal_tree_root;
-> @@ -221,7 +221,7 @@ struct dm_integrity_c {
->  
->  	int failed;
->  
-> -	struct crypto_shash *internal_hash;
-> +	struct crypto_ahash *internal_hash;
->  
->  	struct dm_target *ti;
->  
-> @@ -488,11 +488,14 @@ static void sb_set_version(struct dm_integrity_c *ic)
->  
->  static int sb_mac(struct dm_integrity_c *ic, bool wr)
->  {
-> -	SHASH_DESC_ON_STACK(desc, ic->journal_mac);
-> -	int r;
-> -	unsigned int mac_size = crypto_shash_digestsize(ic->journal_mac);
-> +	unsigned int mac_size = crypto_ahash_digestsize(ic->journal_mac);
->  	__u8 *sb = (__u8 *)ic->sb;
->  	__u8 *mac = sb + (1 << SECTOR_SHIFT) - mac_size;
-> +	struct ahash_request *req;
-> +	DECLARE_CRYPTO_WAIT(wait);
-> +	struct scatterlist sg;
-> +	unsigned int nbytes;
-> +	int r;
->  
->  	if (sizeof(struct superblock) + mac_size > 1 << SECTOR_SHIFT ||
->  	    mac_size > HASH_MAX_DIGESTSIZE) {
-> @@ -500,29 +503,44 @@ static int sb_mac(struct dm_integrity_c *ic, bool wr)
->  		return -EINVAL;
->  	}
->  
-> -	desc->tfm = ic->journal_mac;
-> +	req = ahash_request_alloc(ic->journal_mac, GFP_KERNEL);
-> +	if (unlikely(!req)) {
-> +		dm_integrity_io_error(ic, "ahash_request_alloc", -ENOMEM);
-> +		return -ENOMEM;
-> +	}
-> +	ahash_request_set_callback(req, 0, crypto_req_done, &wait);
-> +
-> +	sg_init_table(&sg, 1);
-> +	nbytes = mac - sb;
-> +	sg_set_buf(&sg, sb, nbytes);
->  
->  	if (likely(wr)) {
-> -		r = crypto_shash_digest(desc, sb, mac - sb, mac);
-> -		if (unlikely(r < 0)) {
-> -			dm_integrity_io_error(ic, "crypto_shash_digest", r);
-> +		ahash_request_set_crypt(req, &sg, mac, nbytes);
-> +		r = crypto_wait_req(crypto_ahash_digest(req), &wait);
-> +		if (unlikely(r)) {
-> +			dm_integrity_io_error(ic, "crypto_ahash_digest", r);
-> +			ahash_request_free(req);
->  			return r;
->  		}
->  	} else {
->  		__u8 actual_mac[HASH_MAX_DIGESTSIZE];
->  
-> -		r = crypto_shash_digest(desc, sb, mac - sb, actual_mac);
-> -		if (unlikely(r < 0)) {
-> -			dm_integrity_io_error(ic, "crypto_shash_digest", r);
-> +		ahash_request_set_crypt(req, &sg, actual_mac, nbytes);
-> +		r = crypto_wait_req(crypto_ahash_digest(req), &wait);
-> +		if (unlikely(r)) {
-> +			dm_integrity_io_error(ic, "crypto_ahash_digest", r);
-> +			ahash_request_free(req);
->  			return r;
->  		}
->  		if (memcmp(mac, actual_mac, mac_size)) {
->  			dm_integrity_io_error(ic, "superblock mac", -EILSEQ);
->  			dm_audit_log_target(DM_MSG_PREFIX, "mac-superblock", ic->ti, 0);
-> +			ahash_request_free(req);
->  			return -EILSEQ;
->  		}
->  	}
->  
-> +	ahash_request_free(req);
->  	return 0;
->  }
->  
-> @@ -775,51 +793,62 @@ static struct journal_sector *access_journal_data(struct dm_integrity_c *ic, uns
->  
->  static void section_mac(struct dm_integrity_c *ic, unsigned int section, __u8 result[JOURNAL_MAC_SIZE])
->  {
-> -	SHASH_DESC_ON_STACK(desc, ic->journal_mac);
-> +	unsigned int j, size, nsg, nbytes = 0;
-> +	struct scatterlist *sg = NULL, *s;
-> +	struct ahash_request *req = NULL;
-> +	DECLARE_CRYPTO_WAIT(wait);
-> +	__le64 *section_le = NULL;
->  	int r;
-> -	unsigned int j, size;
->  
-> -	desc->tfm = ic->journal_mac;
-> +	req = ahash_request_alloc(ic->journal_mac, GFP_KERNEL);
-> +	if (unlikely(!req)) {
-> +		dm_integrity_io_error(ic, "ahash_request_alloc", -ENOMEM);
-> +		goto err;
-> +	}
-> +	ahash_request_set_callback(req, 0, crypto_req_done, &wait);
->  
-> -	r = crypto_shash_init(desc);
-> -	if (unlikely(r < 0)) {
-> -		dm_integrity_io_error(ic, "crypto_shash_init", r);
-> +	nsg = ic->journal_section_entries;
-> +	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC))
-> +		nsg += 2;
-> +	sg = kmalloc_array(nsg, sizeof(*sg), GFP_KERNEL);
-> +	if (unlikely(!sg)) {
-> +		dm_integrity_io_error(ic, "kmalloc_array", -ENOMEM);
->  		goto err;
->  	}
-> +	sg_init_table(sg, nsg);
-> +	s = sg;
->  
->  	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-> -		__le64 section_le;
-> -
-> -		r = crypto_shash_update(desc, (__u8 *)&ic->sb->salt, SALT_SIZE);
-> -		if (unlikely(r < 0)) {
-> -			dm_integrity_io_error(ic, "crypto_shash_update", r);
-> -			goto err;
-> -		}
-> +		sg_set_buf(s, (__u8 *)&ic->sb->salt, SALT_SIZE);
-> +		nbytes += SALT_SIZE;
-> +		s++;
->  
-> -		section_le = cpu_to_le64(section);
-> -		r = crypto_shash_update(desc, (__u8 *)&section_le, sizeof(section_le));
-> -		if (unlikely(r < 0)) {
-> -			dm_integrity_io_error(ic, "crypto_shash_update", r);
-> +		section_le = kmalloc(sizeof(__le64), GFP_KERNEL);
-> +		if (unlikely(!section_le)) {
-> +			dm_integrity_io_error(ic, "kmalloc(sizeof(__le64))", -ENOMEM);
->  			goto err;
->  		}
-> +		*section_le = cpu_to_le64(section);
-> +		sg_set_buf(s, (__u8 *)section_le, sizeof(*section_le));
-> +		nbytes += sizeof(*section_le);
-> +		s++;
->  	}
->  
->  	for (j = 0; j < ic->journal_section_entries; j++) {
->  		struct journal_entry *je = access_journal_entry(ic, section, j);
->  
-> -		r = crypto_shash_update(desc, (__u8 *)&je->u.sector, sizeof(je->u.sector));
-> -		if (unlikely(r < 0)) {
-> -			dm_integrity_io_error(ic, "crypto_shash_update", r);
-> -			goto err;
-> -		}
-> +		sg_set_buf(s, (__u8 *)&je->u.sector, sizeof(je->u.sector));
-> +		nbytes += sizeof(je->u.sector);
-> +		s++;
->  	}
->  
-> -	size = crypto_shash_digestsize(ic->journal_mac);
-> +	size = crypto_ahash_digestsize(ic->journal_mac);
->  
->  	if (likely(size <= JOURNAL_MAC_SIZE)) {
-> -		r = crypto_shash_final(desc, result);
-> -		if (unlikely(r < 0)) {
-> -			dm_integrity_io_error(ic, "crypto_shash_final", r);
-> +		ahash_request_set_crypt(req, sg, result, nbytes);
-> +		r = crypto_wait_req(crypto_ahash_digest(req), &wait);
-> +		if (unlikely(r)) {
-> +			dm_integrity_io_error(ic, "crypto_ahash_digest", r);
->  			goto err;
->  		}
->  		memset(result + size, 0, JOURNAL_MAC_SIZE - size);
-> @@ -830,16 +859,24 @@ static void section_mac(struct dm_integrity_c *ic, unsigned int section, __u8 re
->  			dm_integrity_io_error(ic, "digest_size", -EINVAL);
->  			goto err;
->  		}
-> -		r = crypto_shash_final(desc, digest);
-> -		if (unlikely(r < 0)) {
-> -			dm_integrity_io_error(ic, "crypto_shash_final", r);
-> +		ahash_request_set_crypt(req, sg, digest, nbytes);
-> +		r = crypto_wait_req(crypto_ahash_digest(req), &wait);
-> +		if (unlikely(r)) {
-> +			dm_integrity_io_error(ic, "crypto_ahash_digest", r);
->  			goto err;
->  		}
->  		memcpy(result, digest, JOURNAL_MAC_SIZE);
->  	}
->  
-> +	ahash_request_free(req);
-> +	kfree(section_le);
-> +	kfree(sg);
->  	return;
-> +
->  err:
-> +	ahash_request_free(req);
-> +	kfree(section_le);
-> +	kfree(sg);
->  	memset(result, 0, JOURNAL_MAC_SIZE);
->  }
->  
-> @@ -1637,53 +1674,65 @@ static void integrity_end_io(struct bio *bio)
->  static void integrity_sector_checksum(struct dm_integrity_c *ic, sector_t sector,
->  				      const char *data, char *result)
->  {
-> -	__le64 sector_le = cpu_to_le64(sector);
-> -	SHASH_DESC_ON_STACK(req, ic->internal_hash);
-> -	int r;
-> +	struct ahash_request *req = NULL;
-> +	struct scatterlist sg[3], *s;
-> +	DECLARE_CRYPTO_WAIT(wait);
-> +	__le64 *sector_le = NULL;
->  	unsigned int digest_size;
-> +	unsigned int nbytes = 0;
-> +	int r;
->  
-> -	req->tfm = ic->internal_hash;
-> -
-> -	r = crypto_shash_init(req);
-> -	if (unlikely(r < 0)) {
-> -		dm_integrity_io_error(ic, "crypto_shash_init", r);
-> +	req = ahash_request_alloc(ic->internal_hash, GFP_KERNEL);
-> +	if (unlikely(!req)) {
-> +		dm_integrity_io_error(ic, "ahash_request_alloc", -ENOMEM);
->  		goto failed;
->  	}
-> +	ahash_request_set_callback(req, 0, crypto_req_done, &wait);
->  
-> +	s = sg;
->  	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-> -		r = crypto_shash_update(req, (__u8 *)&ic->sb->salt, SALT_SIZE);
-> -		if (unlikely(r < 0)) {
-> -			dm_integrity_io_error(ic, "crypto_shash_update", r);
-> -			goto failed;
-> -		}
-> +		sg_init_table(sg, 3);
-> +		sg_set_buf(s, (const __u8 *)&ic->sb->salt, SALT_SIZE);
-> +		nbytes += SALT_SIZE;
-> +		s++;
-> +	} else {
-> +		sg_init_table(sg, 2);
->  	}
->  
-> -	r = crypto_shash_update(req, (const __u8 *)&sector_le, sizeof(sector_le));
-> -	if (unlikely(r < 0)) {
-> -		dm_integrity_io_error(ic, "crypto_shash_update", r);
-> +	sector_le = kmalloc(sizeof(__le64), GFP_KERNEL);
-> +	if (unlikely(!sector_le)) {
-> +		dm_integrity_io_error(ic, "kmalloc(sizeof(__le64))", -ENOMEM);
->  		goto failed;
->  	}
-> +	*sector_le = cpu_to_le64(sector);
-> +	sg_set_buf(s, (const __u8 *)sector_le, sizeof(*sector_le));
-> +	nbytes += sizeof(*sector_le);
-> +	s++;
->  
-> -	r = crypto_shash_update(req, data, ic->sectors_per_block << SECTOR_SHIFT);
-> -	if (unlikely(r < 0)) {
-> -		dm_integrity_io_error(ic, "crypto_shash_update", r);
-> -		goto failed;
-> -	}
-> +	sg_set_buf(s, data, ic->sectors_per_block << SECTOR_SHIFT);
-> +	nbytes += ic->sectors_per_block << SECTOR_SHIFT;
-> +
-> +	ahash_request_set_crypt(req, sg, result, nbytes);
->  
-> -	r = crypto_shash_final(req, result);
-> -	if (unlikely(r < 0)) {
-> -		dm_integrity_io_error(ic, "crypto_shash_final", r);
-> +	r = crypto_wait_req(crypto_ahash_digest(req), &wait);
-> +	if (r) {
-> +		dm_integrity_io_error(ic, "crypto_ahash_digest", r);
->  		goto failed;
->  	}
->  
-> -	digest_size = crypto_shash_digestsize(ic->internal_hash);
-> +	digest_size = crypto_ahash_digestsize(ic->internal_hash);
->  	if (unlikely(digest_size < ic->tag_size))
->  		memset(result + digest_size, 0, ic->tag_size - digest_size);
->  
-> +	ahash_request_free(req);
-> +	kfree(sector_le);
-> +
->  	return;
->  
->  failed:
->  	/* this shouldn't happen anyway, the hash functions have no reason to fail */
-> +	ahash_request_free(req);
-> +	kfree(sector_le);
->  	get_random_bytes(result, ic->tag_size);
->  }
->  
-> @@ -1776,7 +1825,7 @@ static void integrity_metadata(struct work_struct *w)
->  	if (ic->internal_hash) {
->  		struct bvec_iter iter;
->  		struct bio_vec bv;
-> -		unsigned int digest_size = crypto_shash_digestsize(ic->internal_hash);
-> +		unsigned int digest_size = crypto_ahash_digestsize(ic->internal_hash);
->  		struct bio *bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
->  		char *checksums;
->  		unsigned int extra_space = unlikely(digest_size > ic->tag_size) ? digest_size - ic->tag_size : 0;
-> @@ -2124,7 +2173,7 @@ static bool __journal_read_write(struct dm_integrity_io *dio, struct bio *bio,
->  				} while (++s < ic->sectors_per_block);
->  
->  				if (ic->internal_hash) {
-> -					unsigned int digest_size = crypto_shash_digestsize(ic->internal_hash);
-> +					unsigned int digest_size = crypto_ahash_digestsize(ic->internal_hash);
->  
->  					if (unlikely(digest_size > ic->tag_size)) {
->  						char checksums_onstack[HASH_MAX_DIGESTSIZE];
-> @@ -2428,7 +2477,7 @@ static int dm_integrity_map_inline(struct dm_integrity_io *dio, bool from_map)
->  	if (!dio->integrity_payload) {
->  		unsigned digest_size, extra_size;
->  		dio->payload_len = ic->tuple_size * (bio_sectors(bio) >> ic->sb->log2_sectors_per_block);
-> -		digest_size = crypto_shash_digestsize(ic->internal_hash);
-> +		digest_size = crypto_ahash_digestsize(ic->internal_hash);
->  		extra_size = unlikely(digest_size > ic->tag_size) ? digest_size - ic->tag_size : 0;
->  		dio->payload_len += extra_size;
->  		dio->integrity_payload = kmalloc(dio->payload_len, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> @@ -2595,7 +2644,7 @@ static void dm_integrity_inline_recheck(struct work_struct *w)
->  		bio_put(outgoing_bio);
->  
->  		integrity_sector_checksum(ic, dio->bio_details.bi_iter.bi_sector, outgoing_data, digest);
-> -		if (unlikely(memcmp(digest, dio->integrity_payload, min(crypto_shash_digestsize(ic->internal_hash), ic->tag_size)))) {
-> +		if (unlikely(memcmp(digest, dio->integrity_payload, min(crypto_ahash_digestsize(ic->internal_hash), ic->tag_size)))) {
->  			DMERR_LIMIT("%pg: Checksum failed at sector 0x%llx",
->  				ic->dev->bdev, dio->bio_details.bi_iter.bi_sector);
->  			atomic64_inc(&ic->number_of_mismatches);
-> @@ -2635,7 +2684,7 @@ static int dm_integrity_end_io(struct dm_target *ti, struct bio *bio, blk_status
->  				//memset(mem, 0xff, ic->sectors_per_block << SECTOR_SHIFT);
->  				integrity_sector_checksum(ic, dio->bio_details.bi_iter.bi_sector, mem, digest);
->  				if (unlikely(memcmp(digest, dio->integrity_payload + pos,
-> -						min(crypto_shash_digestsize(ic->internal_hash), ic->tag_size)))) {
-> +						min(crypto_ahash_digestsize(ic->internal_hash), ic->tag_size)))) {
->  					kunmap_local(mem);
->  					dm_integrity_free_payload(dio);
->  					INIT_WORK(&dio->work, dm_integrity_inline_recheck);
-> @@ -3017,8 +3066,8 @@ static void integrity_recalc(struct work_struct *w)
->  		goto free_ret;
->  	}
->  	recalc_tags_size = (recalc_sectors >> ic->sb->log2_sectors_per_block) * ic->tag_size;
-> -	if (crypto_shash_digestsize(ic->internal_hash) > ic->tag_size)
-> -		recalc_tags_size += crypto_shash_digestsize(ic->internal_hash) - ic->tag_size;
-> +	if (crypto_ahash_digestsize(ic->internal_hash) > ic->tag_size)
-> +		recalc_tags_size += crypto_ahash_digestsize(ic->internal_hash) - ic->tag_size;
->  	recalc_tags = kvmalloc(recalc_tags_size, GFP_NOIO);
->  	if (!recalc_tags) {
->  		vfree(recalc_buffer);
-> @@ -3177,8 +3226,8 @@ static void integrity_recalc_inline(struct work_struct *w)
->  	}
->  
->  	recalc_tags_size = (recalc_sectors >> ic->sb->log2_sectors_per_block) * ic->tuple_size;
-> -	if (crypto_shash_digestsize(ic->internal_hash) > ic->tuple_size)
-> -		recalc_tags_size += crypto_shash_digestsize(ic->internal_hash) - ic->tuple_size;
-> +	if (crypto_ahash_digestsize(ic->internal_hash) > ic->tuple_size)
-> +		recalc_tags_size += crypto_ahash_digestsize(ic->internal_hash) - ic->tuple_size;
->  	recalc_tags = kmalloc(recalc_tags_size, GFP_NOIO | __GFP_NOWARN);
->  	if (!recalc_tags) {
->  		kfree(recalc_buffer);
-> @@ -4187,6 +4236,8 @@ static int get_alg_and_key(const char *arg, struct alg_spec *a, char **error, ch
->  	if (!a->alg_string)
->  		goto nomem;
->  
-> +	DEBUG_print("%s: alg_string=%s\n", __func__, a->alg_string);
-> +
->  	k = strchr(a->alg_string, ':');
->  	if (k) {
->  		*k = 0;
-> @@ -4198,6 +4249,9 @@ static int get_alg_and_key(const char *arg, struct alg_spec *a, char **error, ch
->  		a->key = kmalloc(a->key_size, GFP_KERNEL);
->  		if (!a->key)
->  			goto nomem;
-> +
-> +		DEBUG_print("%s: key=%s\n", __func__, a->key_string);
-> +
->  		if (hex2bin(a->key, a->key_string, a->key_size))
->  			goto inval;
->  	}
-> @@ -4211,13 +4265,15 @@ static int get_alg_and_key(const char *arg, struct alg_spec *a, char **error, ch
->  	return -ENOMEM;
->  }
->  
-> -static int get_mac(struct crypto_shash **hash, struct alg_spec *a, char **error,
-> +static int get_mac(struct crypto_ahash **hash, struct alg_spec *a, char **error,
->  		   char *error_alg, char *error_key)
->  {
->  	int r;
->  
-> +	DEBUG_print(">%s\n", __func__);
-> +
->  	if (a->alg_string) {
-> -		*hash = crypto_alloc_shash(a->alg_string, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
-> +		*hash = crypto_alloc_ahash(a->alg_string, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
->  		if (IS_ERR(*hash)) {
->  			*error = error_alg;
->  			r = PTR_ERR(*hash);
-> @@ -4226,12 +4282,12 @@ static int get_mac(struct crypto_shash **hash, struct alg_spec *a, char **error,
->  		}
->  
->  		if (a->key) {
-> -			r = crypto_shash_setkey(*hash, a->key, a->key_size);
-> +			r = crypto_ahash_setkey(*hash, a->key, a->key_size);
->  			if (r) {
->  				*error = error_key;
->  				return r;
->  			}
-> -		} else if (crypto_shash_get_flags(*hash) & CRYPTO_TFM_NEED_KEY) {
-> +		} else if (crypto_ahash_get_flags(*hash) & CRYPTO_TFM_NEED_KEY) {
->  			*error = error_key;
->  			return -ENOKEY;
->  		}
-> @@ -4707,7 +4763,7 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
->  			r = -EINVAL;
->  			goto bad;
->  		}
-> -		ic->tag_size = crypto_shash_digestsize(ic->internal_hash);
-> +		ic->tag_size = crypto_ahash_digestsize(ic->internal_hash);
->  	}
->  	if (ic->tag_size > MAX_TAG_SIZE) {
->  		ti->error = "Too big tag size";
-> @@ -5226,7 +5282,7 @@ static void dm_integrity_dtr(struct dm_target *ti)
->  		free_pages_exact(ic->sb, SB_SECTORS << SECTOR_SHIFT);
->  
->  	if (ic->internal_hash)
-> -		crypto_free_shash(ic->internal_hash);
-> +		crypto_free_ahash(ic->internal_hash);
->  	free_alg(&ic->internal_hash_alg);
->  
->  	if (ic->journal_crypt)
-> @@ -5234,7 +5290,7 @@ static void dm_integrity_dtr(struct dm_target *ti)
->  	free_alg(&ic->journal_crypt_alg);
->  
->  	if (ic->journal_mac)
-> -		crypto_free_shash(ic->journal_mac);
-> +		crypto_free_ahash(ic->journal_mac);
->  	free_alg(&ic->journal_mac_alg);
->  
->  	kfree(ic);
-> -- 
-> 2.43.0
-> 
+Meir Elisha proposed to add a module parameter that could configure the
+size of the hash array - however, this is not ideal because users don't
+know that they should increase the parameter when they get bad
+performance.
+
+This commit replaces the linear lists with rb-trees (so that there's a
+hash of rb-trees), they have logarithmic complexity, so it solves the
+performance degradation.
+
+Link: https://patchwork.kernel.org/project/dm-devel/patch/20241014134944.1264991-1-meir.elisha@volumez.com/ [1]
+Reported-by: Meir Elisha <meir.elisha@volumez.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/persistent-data/dm-transaction-manager.c |   54 +++++++++++++-------
+ 1 file changed, 37 insertions(+), 17 deletions(-)
+
+Index: linux-2.6/drivers/md/persistent-data/dm-transaction-manager.c
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-transaction-manager.c	2024-11-05 12:11:40.000000000 +0100
++++ linux-2.6/drivers/md/persistent-data/dm-transaction-manager.c	2025-01-15 14:18:25.000000000 +0100
+@@ -13,6 +13,7 @@
+ #include <linux/export.h>
+ #include <linux/mutex.h>
+ #include <linux/hash.h>
++#include <linux/rbtree.h>
+ #include <linux/slab.h>
+ #include <linux/device-mapper.h>
+ 
+@@ -77,7 +78,7 @@ static void prefetch_issue(struct prefet
+ /*----------------------------------------------------------------*/
+ 
+ struct shadow_info {
+-	struct hlist_node hlist;
++	struct rb_node node;
+ 	dm_block_t where;
+ };
+ 
+@@ -95,7 +96,7 @@ struct dm_transaction_manager {
+ 	struct dm_space_map *sm;
+ 
+ 	spinlock_t lock;
+-	struct hlist_head buckets[DM_HASH_SIZE];
++	struct rb_root buckets[DM_HASH_SIZE];
+ 
+ 	struct prefetch_set prefetches;
+ };
+@@ -106,14 +107,22 @@ static int is_shadow(struct dm_transacti
+ {
+ 	int r = 0;
+ 	unsigned int bucket = dm_hash_block(b, DM_HASH_MASK);
+-	struct shadow_info *si;
++	struct rb_node **node;
+ 
+ 	spin_lock(&tm->lock);
+-	hlist_for_each_entry(si, tm->buckets + bucket, hlist)
+-		if (si->where == b) {
++	node = &tm->buckets[bucket].rb_node;
++	while (*node) {
++		struct shadow_info *si =
++			rb_entry(*node, struct shadow_info, node);
++		if (b == si->where) {
+ 			r = 1;
+ 			break;
+ 		}
++		if (b < si->where)
++			node = &si->node.rb_left;
++		else
++			node = &si->node.rb_right;
++	}
+ 	spin_unlock(&tm->lock);
+ 
+ 	return r;
+@@ -130,30 +139,41 @@ static void insert_shadow(struct dm_tran
+ 
+ 	si = kmalloc(sizeof(*si), GFP_NOIO);
+ 	if (si) {
++		struct rb_node **node, *parent;
+ 		si->where = b;
+ 		bucket = dm_hash_block(b, DM_HASH_MASK);
++
+ 		spin_lock(&tm->lock);
+-		hlist_add_head(&si->hlist, tm->buckets + bucket);
++		node = &tm->buckets[bucket].rb_node;
++		parent = NULL;
++		while (*node) {
++			struct shadow_info *si =
++				rb_entry(*node, struct shadow_info, node);
++			parent = *node;
++			if (b < si->where)
++				node = &si->node.rb_left;
++			else
++				node = &si->node.rb_right;
++		}
++		rb_link_node(&si->node, parent, node);
++		rb_insert_color(&si->node, &tm->buckets[bucket]);
+ 		spin_unlock(&tm->lock);
+ 	}
+ }
+ 
+ static void wipe_shadow_table(struct dm_transaction_manager *tm)
+ {
+-	struct shadow_info *si;
+-	struct hlist_node *tmp;
+-	struct hlist_head *bucket;
+-	int i;
++	unsigned int i;
+ 
+ 	spin_lock(&tm->lock);
+ 	for (i = 0; i < DM_HASH_SIZE; i++) {
+-		bucket = tm->buckets + i;
+-		hlist_for_each_entry_safe(si, tmp, bucket, hlist)
++		while (!RB_EMPTY_ROOT(&tm->buckets[i])) {
++			struct shadow_info *si =
++				rb_entry(tm->buckets[i].rb_node, struct shadow_info, node);
++			rb_erase(&si->node, &tm->buckets[i]);
+ 			kfree(si);
+-
+-		INIT_HLIST_HEAD(bucket);
++		}
+ 	}
+-
+ 	spin_unlock(&tm->lock);
+ }
+ 
+@@ -162,7 +182,7 @@ static void wipe_shadow_table(struct dm_
+ static struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
+ 						   struct dm_space_map *sm)
+ {
+-	int i;
++	unsigned int i;
+ 	struct dm_transaction_manager *tm;
+ 
+ 	tm = kmalloc(sizeof(*tm), GFP_KERNEL);
+@@ -176,7 +196,7 @@ static struct dm_transaction_manager *dm
+ 
+ 	spin_lock_init(&tm->lock);
+ 	for (i = 0; i < DM_HASH_SIZE; i++)
+-		INIT_HLIST_HEAD(tm->buckets + i);
++		tm->buckets[i] = RB_ROOT;
+ 
+ 	prefetch_init(&tm->prefetches);
+ 
 
