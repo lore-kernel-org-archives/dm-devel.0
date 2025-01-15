@@ -1,220 +1,193 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09E3E242273
-	for <dm-devel@lists.linux.dev>; Wed, 15 Jan 2025 11:52:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFCCF33DB
+	for <dm-devel@lists.linux.dev>; Wed, 15 Jan 2025 16:45:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736941938; cv=none; b=sZiVjPlwXvLAZMrLhZlDC5DsuxdRy9DR8qmoAu3AYc5scHpIPOTf0jPq44jxSVPiSjpWbAW8ipcXRAwvoVWEWUIeEBVrGjyTzHnSIt8qNmzF7O9CpQmpEfkHxs0xigePJ/LoEEQGnYENJAMqH/fONj7+S1VZ+iIN7zgT/bIM7dQ=
+	t=1736959547; cv=none; b=uuANEFDcAdWXsPTb8XhZGR18HUCewWNW22vXZ5hGhTtxPsFfxSdESRmece98eLCuBYla2yR+f4XtWr+SDaWe7ahPxREoSQNBm2KoUPhEXCvXrOH1BfMatz0NOpUpsxgm/H3XxSBp985zSsLIPIUFeMBDsbaTN0s5DQKHBOB/VV8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736941938; c=relaxed/simple;
-	bh=JgsJW573ldrbF6x31hKKXz0mNmXN80sqUcdXYcBP948=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=Jnf8j//8GM9eDQSTocpw+byijxM1w93uRt1HuW2WDLdrazwiR2dILF2gy3Mmd94Yi6XhqnGLdeSUIN0yN+yR4eaeCpCV/XNsOkWyKoRt9QT1pxC3Qgu75VnpoqacR9SbSSEmtzpMawlj+z4/9bDL/Zw4aw6wxDTA+oohy7+BQHw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4YY4924jHDz4f3jLg
-	for <dm-devel@lists.linux.dev>; Wed, 15 Jan 2025 19:51:50 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 4D0841A08F5
-	for <dm-devel@lists.linux.dev>; Wed, 15 Jan 2025 19:52:12 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgC3Gl9aoYdnvK0ZBA--.21959S12;
-	Wed, 15 Jan 2025 19:52:12 +0800 (CST)
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-To: linux-fsdevel@vger.kernel.org,
-	linux-ext4@vger.kernel.org,
-	linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org,
-	hch@lst.de,
-	tytso@mit.edu,
-	djwong@kernel.org,
-	yi.zhang@huawei.com,
-	yi.zhang@huaweicloud.com,
-	chengzhihao1@huawei.com,
-	yukuai3@huawei.com,
-	yangerkun@huawei.com
-Subject: [RFC PATCH v2 8/8] ext4: add FALLOC_FL_WRITE_ZEROES support
-Date: Wed, 15 Jan 2025 19:46:37 +0800
-Message-Id: <20250115114637.2705887-9-yi.zhang@huaweicloud.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20250115114637.2705887-1-yi.zhang@huaweicloud.com>
-References: <20250115114637.2705887-1-yi.zhang@huaweicloud.com>
+	s=arc-20240116; t=1736959547; c=relaxed/simple;
+	bh=jKYyhLaS5XHYqBlNZx8mQ7ayouhxgF1ksm8Dky7milc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=PdHRLdlMLYvuVIe5Td+KNdHFEljUTihzamgoptI5Wh/paNaYkWGixKgNIISW7lvWxukAKFzBYs9+pE7LrD24mQuDoTPohq+AaBArXH6MdMl9zXEi4+y1fhVToMI/gOvxpAO5URYXx9aCLU7UTowKAbZNlWfsOXaq6/qp6sc3lfI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fcpotMpj; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fcpotMpj"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1736959544;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YEWRBrQAtYlXkK8kaUkLugzkqfluOSj4tvOiL1jOwuk=;
+	b=fcpotMpjz/upYZALpnqrREYejFrhfdPpMGEBmjLTI2nVsjAYtd5zf/OCCGrrsBU0ZQA0r8
+	s5ZV++0DUoIAmV1hKrLEVi5BcCjvvoQKFM0dpnDijI1f5ccsfJHKdSj+krIGfXV6zGaucr
+	JA4fJwre26R0e4CjKOtFnuhMGI1G1Ps=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-85-17NII2gNMCqlhpkbHUJFnQ-1; Wed,
+ 15 Jan 2025 11:45:39 -0500
+X-MC-Unique: 17NII2gNMCqlhpkbHUJFnQ-1
+X-Mimecast-MFC-AGG-ID: 17NII2gNMCqlhpkbHUJFnQ
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4DF6E195605F;
+	Wed, 15 Jan 2025 16:45:38 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DE7CB195608A;
+	Wed, 15 Jan 2025 16:45:37 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 50FGja3A2712846
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 15 Jan 2025 11:45:36 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 50FGjZM82712845;
+	Wed, 15 Jan 2025 11:45:35 -0500
+Date: Wed, 15 Jan 2025 11:45:35 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev
+Subject: Re: [PATCH v2 03/14] multipathd: sync maps at end of checkerloop
+Message-ID: <Z4fmL_jRQg8C-xFA@redhat.com>
+References: <20241211225909.298770-1-mwilck@suse.com>
+ <20241211225909.298770-4-mwilck@suse.com>
+ <Z2Smet8-Smj8Oyj_@redhat.com>
+ <5ae128660980dcc037e97a607668498408958638.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <5ae128660980dcc037e97a607668498408958638.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: DVHFHTRtIUT1qqSiL0figgGaouzsqi9SsbxYxBpHbQY_1736959538
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgC3Gl9aoYdnvK0ZBA--.21959S12
-X-Coremail-Antispam: 1UD129KBjvJXoW3Xry7Ar13Xw13XFy8XFW3GFg_yoW7GF4UpF
-	Z8XF1rKFWIq3429r4fCw4kurn0q3WkKry5WrWSgry093yUJr1fKFn09Fy8uas0gFW8AF45
-	Xa1Y9ryDK3W7A37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
-	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
-	z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
-	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
-	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
-	IYx2IY67AKxVWUXVWUAwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
-	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
-	kIc2xKxwCY1x0262kKe7AKxVWUtVW8ZwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkE
-	bVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67
-	AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI
-	42IY6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF
-	4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBI
-	daVFxhVjvjDU0xZFpf9x0JUljgxUUUUU=
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-From: Zhang Yi <yi.zhang@huawei.com>
+On Tue, Jan 14, 2025 at 10:36:06PM +0100, Martin Wilck wrote:
+> On Thu, 2024-12-19 at 18:04 -0500, Benjamin Marzinski wrote:
+> > On Wed, Dec 11, 2024 at 11:58:58PM +0100, Martin Wilck wrote:
+> > > @@ -3032,11 +3026,13 @@ checkerloop (void *ap)
+> > >  							    
+> > > start_time.tv_sec);
+> > >  			if (checker_state == CHECKER_FINISHED) {
+> > >  				vector_foreach_slot(vecs->mpvec,
+> > > mpp, i) {
+> > > -					if ((update_mpp_prio(mpp)
+> > > ||
+> > > -					     (mpp->need_reload &&
+> > > mpp->synced_count > 0)) &&
+> > 
+> > When you call reload_and_sync_map(), it will automatically resync the
+> > map via setup_multipath() -> refresh_multipath() ->
+> > update_multipath_strings().
+> > 
+> > This means that if for some reason multipathd and the kernel disagree
+> > about a map, and reloading it doesn't fix the problem, you will
+> > immediately set mpp->need_reload again. With the old mpp-
+> > >synced_count
+> > check, you only reload maps with need_reload() when a path is
+> > checked.
+> > Without this check, or a (mpp->checker_count > 0) check to replace
+> > it,
+> > you will keep reloading these maps every loop, roughly once a second.
+> > I
+> > would rather not do this.
+> > 
+> > If you want to make sure to immediately handle a need_reload that
+> > wasn't
+> > triggered by this call to reload_and_sync_map() which was because of
+> > an
+> > earlier need_reload, we could make need_reload have three states, to
+> > distinguish between a reload we want done immediately, and one we
+> > would
+> > like to wait on because we just did a reload and it didn't fix the
+> > problem. Then we could remember if need_reload was set before calling
+> > reload_and_sync_map(), and if it was, and if it is still set after,
+> > we
+> > could switch it to the delayed version.
+> > 
+> > Or perhaps I'm just being paranoid here. 
+> 
+> As you probably know and as I recently verified, reloading the kernel
+> from the checker loop will hardly ever fail except with -ENOMEM [1]. We
+> can pass non-existing or failed devices to the kernel, it will happily
+> accept them.
+> 
+> update_pathvec_from_dm() never adds any devices to the map, it just
+> removes some. If need_reload is set, it means that it has removed
+> either a path or an entire pathgroup. When the map is reloaded, it will
+> only reference (a subset of) the devices that were already mapped. I
+> see no way how this could fail unless either multipathd or the kernel
+> are really badly malfunctioning, in which case we don't need to bother
+> about reloading too frequently.
+> 
+> But *if* the reload succeeds, the set of devices in the kernel is
+> guaranteed to be identical to the table that we've just used for
+> reloading. So only way that another difference between kernel and
+> multipath state could occur between the reload and
+> update_pathvec_from_dm() running again is that another device has just
+> diappeared from the system, in which case a quick reload would be a
+> reasonable action. (Well I guess another possibility would be a 3rd
+> party maliciously adding wrong path devices to the maps we maintain,
+> but that's not something we can do much about).
+> 
+> If need_reload is indeed set again in this situation, I would indeed
+> prefer to double-check this map quickly. As argued above, I strongly
+> believe that such a situation will not persist. IMO a detected
+> inconsistency between the kernel and multipathd is a very bad thing
+> that we should try to fix rather sooner than later. It's at least as
+> bad as a failed path, which we'll check every second, too.
+> 
+> Bottom line: I think re-checking this quickly is actually the right
+> thing to do. Would you accept this if I add a warning in the
+> "inconsistent" case, so that in the event that we actually run into a
+> persistent discrepancy situation, we will notice?
+> 
 
-Add support for FALLOC_FL_WRITE_ZEROES. This first allocates blocks as
-unwritten, then issues a zero command outside of the running journal
-handle, and finally converts them to a written state.
+Sure. This is probably just my paranoia here, since I can't actually
+come up with a concrete case where there would be a persistent
+discrepancy. If it ever happens, it's almost definitely a bug in the
+multipath code.
 
-Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
----
- fs/ext4/extents.c           | 59 ++++++++++++++++++++++++++++++-------
- include/trace/events/ext4.h |  3 +-
- 2 files changed, 50 insertions(+), 12 deletions(-)
+-Ben
 
-diff --git a/fs/ext4/extents.c b/fs/ext4/extents.c
-index 1b028be19193..e937a714085c 100644
---- a/fs/ext4/extents.c
-+++ b/fs/ext4/extents.c
-@@ -4483,6 +4483,8 @@ static int ext4_alloc_file_blocks(struct file *file, ext4_lblk_t offset,
- 	struct ext4_map_blocks map;
- 	unsigned int credits;
- 	loff_t epos, old_size = i_size_read(inode);
-+	unsigned int blkbits = inode->i_blkbits;
-+	bool alloc_zero = false;
- 
- 	BUG_ON(!ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS));
- 	map.m_lblk = offset;
-@@ -4495,6 +4497,17 @@ static int ext4_alloc_file_blocks(struct file *file, ext4_lblk_t offset,
- 	if (len <= EXT_UNWRITTEN_MAX_LEN)
- 		flags |= EXT4_GET_BLOCKS_NO_NORMALIZE;
- 
-+	/*
-+	 * Do the actual write zero during a running journal transaction
-+	 * costs a lot. First allocate an unwritten extent and then
-+	 * convert it to written after zeroing it out.
-+	 */
-+	if (flags & EXT4_GET_BLOCKS_ZERO) {
-+		flags &= ~EXT4_GET_BLOCKS_ZERO;
-+		flags |= EXT4_GET_BLOCKS_UNWRIT_EXT;
-+		alloc_zero = true;
-+	}
-+
- 	/*
- 	 * credits to insert 1 extent into extent tree
- 	 */
-@@ -4531,9 +4544,7 @@ static int ext4_alloc_file_blocks(struct file *file, ext4_lblk_t offset,
- 		 * allow a full retry cycle for any remaining allocations
- 		 */
- 		retries = 0;
--		map.m_lblk += ret;
--		map.m_len = len = len - ret;
--		epos = (loff_t)map.m_lblk << inode->i_blkbits;
-+		epos = (loff_t)(map.m_lblk + ret) << blkbits;
- 		inode_set_ctime_current(inode);
- 		if (new_size) {
- 			if (epos > new_size)
-@@ -4553,6 +4564,21 @@ static int ext4_alloc_file_blocks(struct file *file, ext4_lblk_t offset,
- 		ret2 = ret3 ? ret3 : ret2;
- 		if (unlikely(ret2))
- 			break;
-+
-+		if (alloc_zero &&
-+		    (map.m_flags & (EXT4_MAP_MAPPED | EXT4_MAP_UNWRITTEN))) {
-+			ret2 = ext4_issue_zeroout(inode, map.m_lblk, map.m_pblk,
-+						  map.m_len);
-+			if (likely(!ret2))
-+				ret2 = ext4_convert_unwritten_extents(NULL,
-+					inode, (loff_t)map.m_lblk << blkbits,
-+					(loff_t)map.m_len << blkbits);
-+			if (ret2)
-+				break;
-+		}
-+
-+		map.m_lblk += ret;
-+		map.m_len = len = len - ret;
- 	}
- 	if (ret == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
- 		goto retry;
-@@ -4618,7 +4644,11 @@ static long ext4_zero_range(struct file *file, loff_t offset,
- 	if (end_lblk > start_lblk) {
- 		ext4_lblk_t zero_blks = end_lblk - start_lblk;
- 
--		flags |= (EXT4_GET_BLOCKS_CONVERT_UNWRITTEN | EXT4_EX_NOCACHE);
-+		if (mode & FALLOC_FL_WRITE_ZEROES)
-+			flags = EXT4_GET_BLOCKS_CREATE_ZERO | EXT4_EX_NOCACHE;
-+		else
-+			flags |= (EXT4_GET_BLOCKS_CONVERT_UNWRITTEN |
-+				  EXT4_EX_NOCACHE);
- 		ret = ext4_alloc_file_blocks(file, start_lblk, zero_blks,
- 					     new_size, flags);
- 		if (ret)
-@@ -4730,8 +4760,8 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 
- 	/* Return error if mode is not supported */
- 	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |
--		     FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_ZERO_RANGE |
--		     FALLOC_FL_INSERT_RANGE))
-+		     FALLOC_FL_ZERO_RANGE | FALLOC_FL_COLLAPSE_RANGE |
-+		     FALLOC_FL_INSERT_RANGE | FALLOC_FL_WRITE_ZEROES))
- 		return -EOPNOTSUPP;
- 
- 	inode_lock(inode);
-@@ -4762,16 +4792,23 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	if (ret)
- 		goto out_invalidate_lock;
- 
--	if (mode & FALLOC_FL_PUNCH_HOLE)
-+	switch (mode & FALLOC_FL_MODE_MASK) {
-+	case FALLOC_FL_PUNCH_HOLE:
- 		ret = ext4_punch_hole(file, offset, len);
--	else if (mode & FALLOC_FL_COLLAPSE_RANGE)
-+		break;
-+	case FALLOC_FL_COLLAPSE_RANGE:
- 		ret = ext4_collapse_range(file, offset, len);
--	else if (mode & FALLOC_FL_INSERT_RANGE)
-+		break;
-+	case FALLOC_FL_INSERT_RANGE:
- 		ret = ext4_insert_range(file, offset, len);
--	else if (mode & FALLOC_FL_ZERO_RANGE)
-+		break;
-+	case FALLOC_FL_ZERO_RANGE:
-+	case FALLOC_FL_WRITE_ZEROES:
- 		ret = ext4_zero_range(file, offset, len, mode);
--	else
-+		break;
-+	default:
- 		ret = -EOPNOTSUPP;
-+	}
- 
- out_invalidate_lock:
- 	filemap_invalidate_unlock(mapping);
-diff --git a/include/trace/events/ext4.h b/include/trace/events/ext4.h
-index 156908641e68..6f9cf2811733 100644
---- a/include/trace/events/ext4.h
-+++ b/include/trace/events/ext4.h
-@@ -92,7 +92,8 @@ TRACE_DEFINE_ENUM(ES_REFERENCED_B);
- 	{ FALLOC_FL_KEEP_SIZE,		"KEEP_SIZE"},		\
- 	{ FALLOC_FL_PUNCH_HOLE,		"PUNCH_HOLE"},		\
- 	{ FALLOC_FL_COLLAPSE_RANGE,	"COLLAPSE_RANGE"},	\
--	{ FALLOC_FL_ZERO_RANGE,		"ZERO_RANGE"})
-+	{ FALLOC_FL_ZERO_RANGE,		"ZERO_RANGE"},		\
-+	{ FALLOC_FL_WRITE_ZEROES,	"WRITE_ZEROES"})
- 
- TRACE_DEFINE_ENUM(EXT4_FC_REASON_XATTR);
- TRACE_DEFINE_ENUM(EXT4_FC_REASON_CROSS_RENAME);
--- 
-2.39.2
+> Regards,
+> Martin
+> 
+> [1]
+> https://lore.kernel.org/dm-devel/ee6fcbda31fd1f13969653782417fbed748f5bc7.camel@suse.com/
+> 
+> > -Ben
+> > 
+> > > -					   
+> > > reload_and_sync_map(mpp, vecs) == 2)
+> > > +					sync_mpp(vecs, mpp,
+> > > ticks);
+> > > +					if ((update_mpp_prio(mpp)
+> > > || mpp->need_reload) &&
+> > > +					   
+> > > reload_and_sync_map(mpp, vecs) == 2) {
+> > >  						/* multipath
+> > > device deleted */
+> > >  						i--;
+> > > +						continue;
+> > > +					}
+> > >  				}
+> > >  			}
+> > >  			lock_cleanup_pop(vecs->lock);
+> > > -- 
+> > > 2.47.0
+> > 
 
