@@ -1,135 +1,146 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE6DE243349
-	for <dm-devel@lists.linux.dev>; Thu, 16 Jan 2025 20:22:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B0E92419E2
+	for <dm-devel@lists.linux.dev>; Thu, 16 Jan 2025 23:04:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737058964; cv=none; b=mNTbuEc8Bd8AthIiujxcV3pWTuQvVRY4HplyMH4IDzW3cAlPFPbYbbGf9vDI26KOR4ARPCiSFCXLKRLBOB+0suHmBbzZwSEOsElUaf76XfWNm0MJpKA7+v6OZ0eTaRIX0dDOqyGYcytYGGpbUi5WM4yoXsNsVG6dmF3025SLUs0=
+	t=1737068674; cv=none; b=HPtrOhljn8ma2wbZ/Tixr4+klOxrRkT3xjuuoiLTaa+p5jnqj5xvZZ+f/7Lp2RwqoR38CoodLlrlQXu29ZQNkfpe7gWTzn4HK1naRotME1rOBw293v0nzNf6dp/RoMK8aSwaFVoYSobWFHUET/ZX/F9Txo+xLB8eoVNI8GcqP/Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737058964; c=relaxed/simple;
-	bh=YfhyS2dd1eaJJwkvp1oq99qfinaZbaa6f33AnLwicj0=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=eJ5E1GAbONzelv2CkYrUee9kzjEtwzdOTO/inGSBypkuhL+7Uyhg7D/1vOL1vTqxP6KsJlzNj4JIikVZSQObja2GEnZHLgmxYuG5Cb9aCz0OlqAkmMowtmtDnixcAvS8N7l01bm2lZeQN0kiBmN/grAkq1odhk2smTfThj15vkc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fuK9tYVV; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1737068674; c=relaxed/simple;
+	bh=hKjA797WcJv6yR3X7coZ2NHVzaXFvowlmzS4c2PsvXI=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=HIjjVTx3bJ9cC8m+/QkcgaZbPJRqLvzGGWn8HmIQlmDH1vRN3SMmavmhfIXUMHlzZRCZrbStQOLejvF0MIvVB8pJYcEG98ea3b8A+ALZrNAC42COePiuaOdnjnK2jJOMaaka9Yek3i73BWgDlVOlSkm5DlSmZGA7dCj//CHU6ss=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gI/D4J/j; arc=none smtp.client-ip=209.85.128.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fuK9tYVV"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1737058961;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ON63+6XxsoOcW04Jo3gAFoymXoX3NR+7FUO1m3Kd1A8=;
-	b=fuK9tYVVZl7OJUJvlRuEVoJq3LnPwDGoE4VvUyFgkXRofZfUSZe8ObstTaANLKKFqGhAQC
-	pTDJ3pIxYM25vYiN55z0fSMa5LxJyLtL3F+6ECHwIrDkPhfpYAEtsmxUZTr1I5pMsXrmj5
-	L/2TSSBhLzdQCVyC69LYGVuNC9GNox4=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-70-dyAYAG0YNzufBUwr88fZwA-1; Thu,
- 16 Jan 2025 15:22:38 -0500
-X-MC-Unique: dyAYAG0YNzufBUwr88fZwA-1
-X-Mimecast-MFC-AGG-ID: dyAYAG0YNzufBUwr88fZwA
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 01C9319560BB;
-	Thu, 16 Jan 2025 20:22:37 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9AB0630001BE;
-	Thu, 16 Jan 2025 20:22:36 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 50GKMZMd2753975
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 16 Jan 2025 15:22:35 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 50GKMZnO2753974;
-	Thu, 16 Jan 2025 15:22:35 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 1/2] libmultipath: export udev pthread cleanup functions
-Date: Thu, 16 Jan 2025 15:22:33 -0500
-Message-ID: <20250116202234.2753960-2-bmarzins@redhat.com>
-In-Reply-To: <20250116202234.2753960-1-bmarzins@redhat.com>
-References: <20250116202234.2753960-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gI/D4J/j"
+Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4361f09be37so1877225e9.1
+        for <dm-devel@lists.linux.dev>; Thu, 16 Jan 2025 15:04:32 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1737068671; x=1737673471; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=QW0j5Zu2cHpu67hAXUYJ9Odw8QjX7lk5ntuwB5ZGLWg=;
+        b=gI/D4J/jmlnA3T9S3Ux1Y+0ANbxVOx7Ysufre2Lzbqsx6XLS/JYjisg1o/3CpDam94
+         zoDczXvizEUqjSb1TobPR9jQTx0NcDsCOZB3Hhx47oBq4g+Ms2ErHtQVjPtFPXBB0Piw
+         71V1PNKOrfdEqJwbadeJGd+Vjg442kYeRTRM4ZbkfX6flDCsKaze3Gusz3inVdNYXqAg
+         Rhf2t9DleXBMg8XgyiWAbRQfgATHRvp65x5eHWNk2Lmmu2VZWEvJVSqC2hTH0e4IoMNb
+         xscIy4iWwpG9ML+4QNV8cDXHy8RhMbyvG+6FiEcFncsGhyUmR9/ppfIGEG1KBPb/Ijrw
+         kU/g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1737068671; x=1737673471;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=QW0j5Zu2cHpu67hAXUYJ9Odw8QjX7lk5ntuwB5ZGLWg=;
+        b=LXf7l2E5YM4ypbHNI5XWIEwDN5nvLnDc2PIX5E9+vkyFHqOvaNAdvjY+Xs4q17kPER
+         9ANdmAEaKigIj9+Yas8lu7bHXhVAuImuN3PAWphJZ3E9TiuOBaCFGYfnKUYD6I/NhHqi
+         uT14OeteQoiKVVtbglf+wqD8AXlWxogbwzlhfMQF/dV4A9YW2hWDmvFd262FyRDGP0x2
+         FOiSohBF+i+TORbslrfQZPbVBo/XGE7DtA37KR0wV7cRvfsBoax3bozLtwQYEwHrpvn9
+         coWxob9WnGujSC/S/mpuAWZSwF1uay3i7IhbhDjYuaLEZ3NiMBcYsXsc87XzkIjzX8zW
+         c73Q==
+X-Forwarded-Encrypted: i=1; AJvYcCWRHWfEteoX89kmWPyN712i1Sd/Jl8mM7A2G7Xr5VkCng9N3HTpMSNpBKuwx2yyaLx4T86gcBlOgQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yyl2p8wwckB8hPX30j9h/VVvczGYVA3wumcjJvm0X0UmYUjjhWX
+	wQ+W19V149JfPwFzVUxCX2ewzYrEtP+a+94relHHY+516Qlow34=
+X-Gm-Gg: ASbGncvnPvGrF32ppxAvCYXpjMV4DeZsiMl0PFJ5GNr75EO7oyReM+mP6+xw/8S9WjD
+	+DkL1c1Q5FJ45zcgHZXnva4r7Jr3MejI6kwdxgjJUrZIMw/Dw5oNBGou1p8e7HqLd73wbiBFyW+
+	ZIl62g5QB6j/4lIwEIoydXAn2P0FuSiApozefqNcXQm1IFJzdn6NqyBfB11RYo2weXt6X39rQ6j
+	ZP1e5G9Vj5xrO9yTtiY+HW3QBRBMNcvWgqOo0vJtZoOZOalAZFsTw==
+X-Google-Smtp-Source: AGHT+IHGyQ8z8icM0C+dKx37GRI7/l5BAPn8MaE1WfMlVK9sWjdmItwjFv1BasSTR5uFEef/+LxTBw==
+X-Received: by 2002:a5d:5d11:0:b0:38a:a037:a5fa with SMTP id ffacd0b85a97d-38bf566b46dmr96704f8f.5.1737068670545;
+        Thu, 16 Jan 2025 15:04:30 -0800 (PST)
+Received: from localhost ([84.39.177.14])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-38bf3221b7fsm951249f8f.27.2025.01.16.15.04.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 16 Jan 2025 15:04:29 -0800 (PST)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: [PATCH] multipath-tools: Merge Infinidat with Lenovo in hwtable
+Date: Fri, 17 Jan 2025 00:04:26 +0100
+Message-ID: <20250116230427.17740-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.48.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: BVtkRLLICkHAWKAy3iQYy6CjM4RANQaCr_Whau1Re4Y_1737058957
-X-Mimecast-Originator: redhat.com
+X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
 
-A future patch will make use of cleanup_udev_enumerate_ptr() and
-cleanup_udev_device_ptr().
+Lenovo to acquire Infinidat:
+https://www.infinidat.com/en/news/press-releases/lenovo-acquire-infinidat-further-expanding-enterprise-storage-portfolio
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/discovery.c          | 4 ++--
- libmultipath/discovery.h          | 2 ++
- libmultipath/libmultipath.version | 6 ++++++
- 3 files changed, 10 insertions(+), 2 deletions(-)
+ libmultipath/hwtable.c | 37 ++++++++++++++++++-------------------
+ 1 file changed, 18 insertions(+), 19 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index b5851561..72ea0c98 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -146,7 +146,7 @@ path_discover (vector pathvec, struct config * conf,
- 		return pathinfo(pp, conf, flag);
- }
- 
--static void cleanup_udev_enumerate_ptr(void *arg)
-+void cleanup_udev_enumerate_ptr(void *arg)
- {
- 	struct udev_enumerate *ue;
- 
-@@ -157,7 +157,7 @@ static void cleanup_udev_enumerate_ptr(void *arg)
- 		(void)udev_enumerate_unref(ue);
- }
- 
--static void cleanup_udev_device_ptr(void *arg)
-+void cleanup_udev_device_ptr(void *arg)
- {
- 	struct udev_device *ud;
- 
-diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
-index 7d42eae5..1f7a6e20 100644
---- a/libmultipath/discovery.h
-+++ b/libmultipath/discovery.h
-@@ -59,6 +59,8 @@ bool has_uid_fallback(struct path *pp);
- int get_uid(struct path * pp, int path_state, struct udev_device *udev,
- 	    int allow_fallback);
- bool is_vpd_page_supported(int fd, int pg);
-+void cleanup_udev_enumerate_ptr(void *arg);
-+void cleanup_udev_device_ptr(void *arg);
- 
- /*
-  * discovery bitmask
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 6bdf6944..63f970b7 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -244,3 +244,9 @@ global:
- local:
- 	*;
- };
-+
-+LIBMULTIPATH_27.1.0 {
-+global:
-+	cleanup_udev_enumerate_ptr;
-+	cleanup_udev_device_ptr;
-+} LIBMULTIPATH_27.0.0;
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 543f0bc1..2c26b42a 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -788,6 +788,24 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.no_path_retry = 30,
+ 	},
++	{
++		/*
++		 * Infinidat InfiniBox
++		 *
++		 * Maintainer: Arnon Yaari <arnony@infinidat.com>
++		 */
++		.vendor        = "NFINIDAT",
++		.product       = "InfiniBox",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = 30,
++		.prio_name     = PRIO_ALUA,
++		.selector      = "round-robin 0",
++		.rr_weight     = RR_WEIGHT_PRIO,
++		.no_path_retry = NO_PATH_RETRY_FAIL,
++		.minio         = 1,
++		.minio_rq      = 1,
++		.fast_io_fail  = 15,
++	},
+ 	/*
+ 	 * NetApp
+ 	 */
+@@ -1121,25 +1139,6 @@ static struct hwentry default_hw[] = {
+ 		.product       = "XPD",
+ 		.pgpolicy      = MULTIBUS,
+ 	},
+-	/*
+-	 * Infinidat
+-	 *
+-	 * Maintainer: Arnon Yaari <arnony@infinidat.com>
+-	 */
+-	{
+-		/* InfiniBox */
+-		.vendor        = "NFINIDAT",
+-		.product       = "InfiniBox",
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = 30,
+-		.prio_name     = PRIO_ALUA,
+-		.selector      = "round-robin 0",
+-		.rr_weight     = RR_WEIGHT_PRIO,
+-		.no_path_retry = NO_PATH_RETRY_FAIL,
+-		.minio         = 1,
+-		.minio_rq      = 1,
+-		.fast_io_fail  = 15,
+-	},
+ 	/*
+ 	 * Kaminario
+ 	 */
 -- 
-2.46.2
+2.48.1
 
