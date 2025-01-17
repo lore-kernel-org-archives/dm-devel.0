@@ -1,146 +1,123 @@
-Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B0E92419E2
-	for <dm-devel@lists.linux.dev>; Thu, 16 Jan 2025 23:04:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A39B91F7586;
+	Fri, 17 Jan 2025 06:21:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737068674; cv=none; b=HPtrOhljn8ma2wbZ/Tixr4+klOxrRkT3xjuuoiLTaa+p5jnqj5xvZZ+f/7Lp2RwqoR38CoodLlrlQXu29ZQNkfpe7gWTzn4HK1naRotME1rOBw293v0nzNf6dp/RoMK8aSwaFVoYSobWFHUET/ZX/F9Txo+xLB8eoVNI8GcqP/Y=
+	t=1737094892; cv=none; b=ciBheQNbGqdIKA5GU14tJ8WZ7gERHn2P3nTZVcOVysU7zSpxZf35bcczZtSVhOAUwCh6jHnpdIQ9zzreNHqwubFk7dqtWSzB3ke7Qmc6riq4PBwyM0PfELRT5t7kR/gkHHta2AIfvHjBdyaGF2QNfxV4j5g03ms8IPvs0q6qvys=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737068674; c=relaxed/simple;
-	bh=hKjA797WcJv6yR3X7coZ2NHVzaXFvowlmzS4c2PsvXI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=HIjjVTx3bJ9cC8m+/QkcgaZbPJRqLvzGGWn8HmIQlmDH1vRN3SMmavmhfIXUMHlzZRCZrbStQOLejvF0MIvVB8pJYcEG98ea3b8A+ALZrNAC42COePiuaOdnjnK2jJOMaaka9Yek3i73BWgDlVOlSkm5DlSmZGA7dCj//CHU6ss=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gI/D4J/j; arc=none smtp.client-ip=209.85.128.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1737094892; c=relaxed/simple;
+	bh=2OhMBDtEbXwTAHkNsEe6HamiyrxZuT3/v53V5ZG8wcc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=sr+QGd523cL+Ea0Nir8kzSXzUw7QWo4oaplxCn7i0LoW1mwNXGH05BxzA4sZWMxzZSmzUBAjxGcTRyu+bB2hSWfeel8qXyeCdMEDMmDWH5oop96P5yzKN/Z5RJYEbi84DrF06gcdyR0Y4AvteQv8aWfAx8pDbLXh+zzefCTHx1c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=WJMf0cJT; arc=none smtp.client-ip=144.6.53.87
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gI/D4J/j"
-Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4361f09be37so1877225e9.1
-        for <dm-devel@lists.linux.dev>; Thu, 16 Jan 2025 15:04:32 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1737068671; x=1737673471; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=QW0j5Zu2cHpu67hAXUYJ9Odw8QjX7lk5ntuwB5ZGLWg=;
-        b=gI/D4J/jmlnA3T9S3Ux1Y+0ANbxVOx7Ysufre2Lzbqsx6XLS/JYjisg1o/3CpDam94
-         zoDczXvizEUqjSb1TobPR9jQTx0NcDsCOZB3Hhx47oBq4g+Ms2ErHtQVjPtFPXBB0Piw
-         71V1PNKOrfdEqJwbadeJGd+Vjg442kYeRTRM4ZbkfX6flDCsKaze3Gusz3inVdNYXqAg
-         Rhf2t9DleXBMg8XgyiWAbRQfgATHRvp65x5eHWNk2Lmmu2VZWEvJVSqC2hTH0e4IoMNb
-         xscIy4iWwpG9ML+4QNV8cDXHy8RhMbyvG+6FiEcFncsGhyUmR9/ppfIGEG1KBPb/Ijrw
-         kU/g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1737068671; x=1737673471;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=QW0j5Zu2cHpu67hAXUYJ9Odw8QjX7lk5ntuwB5ZGLWg=;
-        b=LXf7l2E5YM4ypbHNI5XWIEwDN5nvLnDc2PIX5E9+vkyFHqOvaNAdvjY+Xs4q17kPER
-         9ANdmAEaKigIj9+Yas8lu7bHXhVAuImuN3PAWphJZ3E9TiuOBaCFGYfnKUYD6I/NhHqi
-         uT14OeteQoiKVVtbglf+wqD8AXlWxogbwzlhfMQF/dV4A9YW2hWDmvFd262FyRDGP0x2
-         FOiSohBF+i+TORbslrfQZPbVBo/XGE7DtA37KR0wV7cRvfsBoax3bozLtwQYEwHrpvn9
-         coWxob9WnGujSC/S/mpuAWZSwF1uay3i7IhbhDjYuaLEZ3NiMBcYsXsc87XzkIjzX8zW
-         c73Q==
-X-Forwarded-Encrypted: i=1; AJvYcCWRHWfEteoX89kmWPyN712i1Sd/Jl8mM7A2G7Xr5VkCng9N3HTpMSNpBKuwx2yyaLx4T86gcBlOgQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyl2p8wwckB8hPX30j9h/VVvczGYVA3wumcjJvm0X0UmYUjjhWX
-	wQ+W19V149JfPwFzVUxCX2ewzYrEtP+a+94relHHY+516Qlow34=
-X-Gm-Gg: ASbGncvnPvGrF32ppxAvCYXpjMV4DeZsiMl0PFJ5GNr75EO7oyReM+mP6+xw/8S9WjD
-	+DkL1c1Q5FJ45zcgHZXnva4r7Jr3MejI6kwdxgjJUrZIMw/Dw5oNBGou1p8e7HqLd73wbiBFyW+
-	ZIl62g5QB6j/4lIwEIoydXAn2P0FuSiApozefqNcXQm1IFJzdn6NqyBfB11RYo2weXt6X39rQ6j
-	ZP1e5G9Vj5xrO9yTtiY+HW3QBRBMNcvWgqOo0vJtZoOZOalAZFsTw==
-X-Google-Smtp-Source: AGHT+IHGyQ8z8icM0C+dKx37GRI7/l5BAPn8MaE1WfMlVK9sWjdmItwjFv1BasSTR5uFEef/+LxTBw==
-X-Received: by 2002:a5d:5d11:0:b0:38a:a037:a5fa with SMTP id ffacd0b85a97d-38bf566b46dmr96704f8f.5.1737068670545;
-        Thu, 16 Jan 2025 15:04:30 -0800 (PST)
-Received: from localhost ([84.39.177.14])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-38bf3221b7fsm951249f8f.27.2025.01.16.15.04.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 16 Jan 2025 15:04:29 -0800 (PST)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM-DEVEL ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: Merge Infinidat with Lenovo in hwtable
-Date: Fri, 17 Jan 2025 00:04:26 +0100
-Message-ID: <20250116230427.17740-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.48.1
+	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="WJMf0cJT"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
+	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
+	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+	List-Post:List-Owner:List-Archive;
+	bh=r7RI9c0BSk3l3t8JX4/mNeWOAa5x0JyXCYROE80NAvc=; b=WJMf0cJTy4A+vmd+ziwjC3L4Uw
+	k6uRHGtuEi+vLo5lzIR0YEH7fxIJ36GYTZx40p1sDHNioHGokk7xN00P9WJpoJXMUyPRRQkFcZT2A
+	+6Zxa/Fk7afBQIf144U4A69ch2nRucMol7dyHJOX9cZG6tI3vffFD7wboSzFn91kMdd4DOHw6kMNm
+	YpNqbIPqvZ8bYkOZyDy/gtxFbZgoqpWXXHAJokH/P3ppjuz6ofGIo7lKBEfhr92tLvCs6hRTsGKJh
+	noHQVadYqpD9V/7hidg/RKRUH631eDPhOw85GWmNUOqgyE4KulYQGivJZdCzxaNgaaA5vKTXjneKe
+	QzAQI/Xg==;
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1tYfWQ-00A33I-2S;
+	Fri, 17 Jan 2025 14:21:20 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Fri, 17 Jan 2025 14:21:19 +0800
+Date: Fri, 17 Jan 2025 14:21:19 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Harald Freudenberger <freude@linux.ibm.com>, mpatocka@redhat.com,
+	agk@redhat.com, snitzer@kernel.org, ifranzki@linux.ibm.com,
+	linux-s390@vger.kernel.org, dm-devel@lists.linux.dev,
+	dengler@linux.ibm.com
+Subject: Re: [PATCH v1 1/1] dm-integrity: Implement asynch digest support
+Message-ID: <Z4n238ML4fdFsFAw@gondor.apana.org.au>
+References: <20250115164657.84650-1-freude@linux.ibm.com>
+ <20250115164657.84650-2-freude@linux.ibm.com>
+ <20250115173736.GA3712753@google.com>
+ <85ea487d37ec320ec5707bd249352b02@linux.ibm.com>
+ <20250116080324.GA3910@sol.localdomain>
+ <94e11912f1e1413ac2d13c7e5dc0ed35@linux.ibm.com>
+ <Z4jNmdb4Bacom3-j@gondor.apana.org.au>
+ <20250116175451.GA3772706@google.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20250116175451.GA3772706@google.com>
 
-Lenovo to acquire Infinidat:
-https://www.infinidat.com/en/news/press-releases/lenovo-acquire-infinidat-further-expanding-enterprise-storage-portfolio
+On Thu, Jan 16, 2025 at 05:54:51PM +0000, Eric Biggers wrote:
+>
+> But in practice it's the opposite.  Making it an ahash forces users who would
+> otherwise just be using shash to use ahash instead.
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 37 ++++++++++++++++++-------------------
- 1 file changed, 18 insertions(+), 19 deletions(-)
+I think that's a good thing.  shash was a mistake and I intend to
+get rid of it.  But we should not do the ahash conversion right now.
+Let me finish adding virtual address support first and then we could
+reassess whether this makes sense or not.
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 543f0bc1..2c26b42a 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -788,6 +788,24 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
- 	},
-+	{
-+		/*
-+		 * Infinidat InfiniBox
-+		 *
-+		 * Maintainer: Arnon Yaari <arnony@infinidat.com>
-+		 */
-+		.vendor        = "NFINIDAT",
-+		.product       = "InfiniBox",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = 30,
-+		.prio_name     = PRIO_ALUA,
-+		.selector      = "round-robin 0",
-+		.rr_weight     = RR_WEIGHT_PRIO,
-+		.no_path_retry = NO_PATH_RETRY_FAIL,
-+		.minio         = 1,
-+		.minio_rq      = 1,
-+		.fast_io_fail  = 15,
-+	},
- 	/*
- 	 * NetApp
- 	 */
-@@ -1121,25 +1139,6 @@ static struct hwentry default_hw[] = {
- 		.product       = "XPD",
- 		.pgpolicy      = MULTIBUS,
- 	},
--	/*
--	 * Infinidat
--	 *
--	 * Maintainer: Arnon Yaari <arnony@infinidat.com>
--	 */
--	{
--		/* InfiniBox */
--		.vendor        = "NFINIDAT",
--		.product       = "InfiniBox",
--		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = 30,
--		.prio_name     = PRIO_ALUA,
--		.selector      = "round-robin 0",
--		.rr_weight     = RR_WEIGHT_PRIO,
--		.no_path_retry = NO_PATH_RETRY_FAIL,
--		.minio         = 1,
--		.minio_rq      = 1,
--		.fast_io_fail  = 15,
--	},
- 	/*
- 	 * Kaminario
- 	 */
+> No one is asking for it to be available to IPsec.  And this is just a MAC, not a
+> cipher.  But more generally, sleepable algorithms could still be used via an
+> adapter using cryptd, or by making IPsec support using a workqueue like all the
+> storage encryption/integrity systems already do.  In any case this would be a
+> rare (or nonexistent?) use case and should be treated as such.
+
+If it was possible to shoehorn phmac/paes into a synchronous
+algorithm I'd love to do it.  But the fact is that this requires
+asynchronous communication in the *unlikely* case which means
+that the best way to model is with an optional async interface.
+
+	if (unlikely(crypto_ahash_op(...) == -EINPROGRESS))
+		do async
+	else
+		op completed synchronously
+
+> That won't solve all the problems with ahash, for example the per-request
+> allocation.  We'll still end up with something that is worse for 99% of users,
+> while also doing a very poor job supporting the 1% (even assuming it's 1% and
+> not 0% which it very well might be) who actually think they want off-CPU
+> hardware crypto acceleration.  Not to mention the nonsense like having
+> "synchronous asynchronous hashes".
+
+I disagree.  I want the users to start feeding ahash with more
+than one unit of input.  So rather than splitting up a folio
+into page-size or sector-size units, you feed the whole thing
+to ahash and the data should be split up automatically and hashed
+in parallel.
+
+> I think it's time to admit that the approach you're trying to take with the
+> crypto API is wrong.  This has been known for years.
+
+The only thing I agree with you here is that an SG list-based input
+format is inappropriate.  And that is why I'm adding virtual address
+support to ahash (and later to skcipher).
+
+> The primary API needs to be designed around and optimized for software crypto,
+> which is what nearly everyone wants.
+
+I agree with that completely.  However, what triggered this thread
+is in fact something that is not purely software crypto because it
+involves system-wide communication which could take seconds to
+complete.  The original patch tried to shoehorn this into a
+synchronous implementation that would just fail randomly after
+waiting.
+
+Cheers,
 -- 
-2.48.1
-
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
