@@ -1,110 +1,115 @@
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F048D1A83E4
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 20:31:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 125801ACDE7
+	for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 21:27:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737145921; cv=none; b=ahfiMxWG/t6q+ieNiCR7HxupB1FPLKKl440WPiCMSF2zkofRRr7ESR0U5xQxMpbclWiH3l4xFmXD28/3ZmQMBGKEnWlCBws/DxRXoT5lH9ilGVVQbxG6Yhla/eDrgT+7Bbh8LKoJUTBhx3BJ+4yqp2E1q6metmBndGdBI9exnek=
+	t=1737149264; cv=none; b=VdVRvTr3zHc5sx8NLj90bvbqUy0WEjCcV7HZfEUoY8otFcBQFEEUawn8JPY0ghuYiGqU8jtjFdZI78m6a81M5ORF4aRe3CuOwvqJ8BlOFe4K3UcGHsLt5DvSDXI7cp/KSQfADD0ZwdnwHJPHV3hm3SnbC/54eN37YIZoPuaJM1c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737145921; c=relaxed/simple;
-	bh=flbCUDmVP6s0lQdmr37xAAe4IcPwbRBgv+LxjAXOvjM=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=jDBDNgJlgznCiGjdTXVYbG93gSVMDQooMJuEGGy75cPbBMtoxL4XuxB+Sl93SAqXOGwjDoej6ZhYj14T3PsPMnnHWNHaIh3Z5+GNn7VNY01MOdD1e8V8nwjZwS68yc+zgqRRk9ni0YoaaO8Eeg90CjWyyS6j8k0T17cY1T20eNs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=W2peV5nk; arc=none smtp.client-ip=209.85.221.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1737149264; c=relaxed/simple;
+	bh=gHtROKOtw49TMpUTn1AbSc7CDbzBv0kMZ9gHKZs7a4M=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=Pnb6YoqP9WIuQEm2xi9UGuO1sfz+Gi4PjhX4udXl5ghbLsQhlsERTJr2fwwtFUCngJ3WAmqygCRg0J7L8HRUsTH0sJ/8Da7JmH05M/Qm4KAWF4cvBIKixlOk3jJOs60rsGzEzGTrPaosEsMgX4JoVRrac+/l0LCK0yllu4OXHYs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TWeebfAH; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="W2peV5nk"
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-3862d161947so1406601f8f.3
-        for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 12:31:59 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1737145918; x=1737750718; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=flbCUDmVP6s0lQdmr37xAAe4IcPwbRBgv+LxjAXOvjM=;
-        b=W2peV5nkAs9GK6mWX4u7A0LuMJlklbnxmCj0b+v7cAbYfvpNHfqMGX8E3+yDKPtxv4
-         WxD1nzGaNHakA9I54+1xw2uNxzVmSPrlGWe5+RmLGfuY/2rRLzA+No5nsMncl03V3mpj
-         w6KkjAkrPFDR0/yQL6eIWbVVsmmAUq22mhAh71csWAugVcmpMlsWMKXtKtSCb4NVU8Uo
-         7btfI0qFvIR0ltR4YfmdvY/5jk0a62HBE90K8CBXQfzunI7+D+Zw7gOqaJpFHvW8Ns3k
-         xJCfFN74/NFZmu2MFl7a1+URd4gwhnANjNLqPSOhPLEca/nvLcSToRBhZa4s7VKNqv+a
-         GKIA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1737145918; x=1737750718;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=flbCUDmVP6s0lQdmr37xAAe4IcPwbRBgv+LxjAXOvjM=;
-        b=Vm88Nw4u09eJQ3HTK/kuss5hLZcUBdTytfy8T/8n2mFo+5thYSZ7/mn+ACXa9m+YOE
-         gDcPhJdK/uItBKpMSvZSAO98XEkCfGVlO2At6I5E1UcaZJ5XET+dsm5OTDG4Muu4EhRa
-         g83B242IM+z9K3QnpdcyZWQ2quF+spEA0xNnJNnACep4/tjGPfpWY0SG2iCEcMBm+yaV
-         UK8yW0quYL6BmxxQmvqTGFUBm8e7mdu2wKWef/JOPGXUniQTW3MS/AtYYtTfEePGW9od
-         hwjQzr2B+E2FtMjCXVEYEdp26teS6B4svrGQeCjjN8x4lIi0KEuuUvBVUaoiZ/U+GyY5
-         BCdg==
-X-Gm-Message-State: AOJu0YzeV+T9WhV9Zc6EIboT902GhObXjmeZYxX54/1F3oXqyD5Qer5A
-	1Sj8VzNBK7g94oLaF5YgMQ+kuUWPxlzxWhZRdIPkOxjUww3OP3zd2d4KQ3NtpchUhGDPbQHo8cJ
-	V
-X-Gm-Gg: ASbGncvuIwR6KYkSRSUmOHYHwRfO1lAIKKshnG7fyefNKG44uVU0wtQ00iXLimmlMhU
-	GJIlLB7miNNHSCP0nygdF8UUwayetWwGiseJZb/XR8lkcxhiO/uRMCP4bwCOUzX5si0JUD7w7Jq
-	5cf8mqxd2s/r+jxz+58cqF8OaaOcXWIbUBd+RkZHYqju1hYneUAAgR49bl+wsyuZIchVNwxQWVN
-	av6QtL4i1zlGfQuaXPmEr+dM8qwD7oVio/59ZnAFqfjju4E9BZ5P5N1ChFQsRiQ3BM8khKiuot1
-	qlcSfJxArP0Tdjm6ysBcDiSIzmR5ktG9eLNlCVOf0vXf/auqKs22PTy7WvjXl0PQP2Q7I0s+GOM
-	T2DZTHXjnYGhy
-X-Google-Smtp-Source: AGHT+IEbi1o0q7WYyvyBxTPSiXFrsl6XjBXSSw2IqrU0uTrRNJ9IEvl9t4l7IpxGD59C7bk6MhV22A==
-X-Received: by 2002:a05:6000:1bca:b0:386:4a0d:bb21 with SMTP id ffacd0b85a97d-38bf5663c0emr3396697f8f.22.1737145918157;
-        Fri, 17 Jan 2025 12:31:58 -0800 (PST)
-Received: from ?IPv6:2003:de:3746:4600:ac00:378:25cc:9f2c? (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-38bf3221b70sm3308576f8f.26.2025.01.17.12.31.57
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 17 Jan 2025 12:31:57 -0800 (PST)
-Message-ID: <d367bc44ef71db074b8a57a7552651539e336495.camel@suse.com>
-Subject: Re: [PATCH v2 0/2] multipath: set rport port_state on NVMe FPIN
- events
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Fri, 17 Jan 2025 21:31:57 +0100
-In-Reply-To: <20250116202234.2753960-1-bmarzins@redhat.com>
-References: <20250116202234.2753960-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.54.3 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TWeebfAH"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1737149260;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=pgV+zu79hN75oKX15LFXTDKwUbzMzhPDf2yqirzHSkk=;
+	b=TWeebfAHO6+g24McDka7DLf4fCsTcNJPIe7YTgez++9Sxa8R4b4bucDgrGMwBZWt3eZJh0
+	MP0PrbUKlWZyEWU1RcL6IM0zCanb4ecFEpI4LoQ0PWJGayBM9hwc6DSLa2epOt3WlUu6G1
+	8tkrh/r8xBJR8zb4KYn/rVTF2iCS+ZI=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-662-WwH0T1MENuyUjWdIi_lucQ-1; Fri,
+ 17 Jan 2025 16:27:36 -0500
+X-MC-Unique: WwH0T1MENuyUjWdIi_lucQ-1
+X-Mimecast-MFC-AGG-ID: WwH0T1MENuyUjWdIi_lucQ
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 635381956050;
+	Fri, 17 Jan 2025 21:27:33 +0000 (UTC)
+Received: from [10.45.224.57] (unknown [10.45.224.57])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A764019560A3;
+	Fri, 17 Jan 2025 21:27:26 +0000 (UTC)
+Date: Fri, 17 Jan 2025 22:27:22 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+cc: John Garry <john.g.garry@oracle.com>, axboe@kernel.dk, agk@redhat.com, 
+    hch@lst.de, song@kernel.org, yukuai3@huawei.com, kbusch@kernel.org, 
+    sagi@grimberg.me, James.Bottomley@hansenpartnership.com, 
+    martin.petersen@oracle.com, linux-block@vger.kernel.org, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+    linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, 
+    linux-scsi@vger.kernel.org
+Subject: Re: [PATCH RFC v2 0/8] device mapper atomic write support
+In-Reply-To: <Z4q45sjEih8vIC-V@kernel.org>
+Message-ID: <4c5d02d6-a798-a390-2743-088c31c8965f@redhat.com>
+References: <20250116170301.474130-1-john.g.garry@oracle.com> <Z4q45sjEih8vIC-V@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-On Thu, 2025-01-16 at 15:22 -0500, Benjamin Marzinski wrote:
-> When multipathd handles link integrity FPIN events, it sets the rport
-> associated with the effected SCSI paths to Marginal. These patches
-> make
-> it do the same thing for NVMe paths.
->=20
-> Changes in v2:
-> - commit message change to add more detail
-> - multipathd now stops looking as soon as it finds the matching
-> rport.
->=20
-> Benjamin Marzinski (2):
-> =C2=A0 libmultipath: export udev pthread cleanup functions
-> =C2=A0 multipathd: set rport port_state to marginal for NVMe devices
->=20
 
-For the series:
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-> =C2=A0libmultipath/discovery.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 |=C2=A0 4 +-
-> =C2=A0libmultipath/discovery.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0 |=C2=A0 2 +
-> =C2=A0libmultipath/libmultipath.version |=C2=A0 6 +++
-> =C2=A0multipathd/fpin_handlers.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0 | 79 ++++++++++++++++++++++++++++-
-> --
-> =C2=A04 files changed, 83 insertions(+), 8 deletions(-)
->=20
+On Fri, 17 Jan 2025, Mike Snitzer wrote:
+
+> On Thu, Jan 16, 2025 at 05:02:53PM +0000, John Garry wrote:
+> > This series introduces initial device mapper atomic write support.
+> > 
+> > Since we already support stacking atomic writes limits, it's quite
+> > straightforward to support.
+> > 
+> > Personalities dm-linear, dm-stripe, and dm-raid1 are supported here, and
+> > more personalities could be supported in future.
+> > 
+> > This is still an RFC as I would like to test further.
+> > 
+> > Based on 3d9a9e9a77c5 (block/for-6.14/block) block: limit disk max
+> > sectors to (LLONG_MAX >> 9)
+> > 
+> > Changes to v1:
+> > - Generic block layer atomic writes enable flag and dm-table rework
+> > - Add dm-stripe and dm-raid1 support
+> > - Add bio_trim() patch
+> 
+> This all looks good.
+> 
+> Mikulas, we need Jens to pick up patches 1 and 2.  I wouldn't be
+> opposed to him taking the entire set but I did notice the DM core
+> (ioctl) version and the 3 DM targets that have had atomic support
+> added need their version numbers bumped.  Given that, likely best for
+> you (Mikulas) to pick up patches 3-8 after rebasing on Jens' latest
+> for-6.14/block branch (once Jens picks up patches 1 and 2).
+> 
+> Jens, you cool with picking up patches 1+2 for 6.14?  Or too late and
+> we circle back to this for 6.15?
+> 
+> Either way, for the series:
+> 
+> Reviewed-by: Mike Snitzer <snitzer@kernel.org>
+
+Hi
+
+I rebased on Jens' block tree, applied the patches 3-8, increased 
+DM_VERSION_MINOR, DM_VERSION_EXTRA, increased version numbers in 
+dm-linear, dm-stripe, dm-raid1 and uploaded it to git.kernel.org.
+
+You can check it if it's correct.
+
+Mikulas
 
