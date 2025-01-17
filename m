@@ -1,71 +1,70 @@
-Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36A7F1AA1EC
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 20:27:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D64701AAE13
+	for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 20:27:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737145678; cv=none; b=LAMBtqcihTKUu/Ucfl7f3rSO2HBWnGSmR+elopJ2w/5zUNMOvd6/xwvJ3dDMh4u7KcWtKbPwW/nqezTTr3MHZdkLRu/pPXn5KKwii2fraBZPu6LOzAIG9qKqDSz0TuvOB1e3Nw/f6QEWwKV+FAOEP4M0u7MFViRI1Vk9+GVC7g0=
+	t=1737145679; cv=none; b=TlV9EXL0PSzofLvFvYKeZAmAPhrik6zVxPfzRhf5GJZsJBuPtuWK9VcB+atYyHMpS+vzOtZ0NtReiFyC8k20EBIZ2QXyXXuRt3fALkmHU1Ip3j7EKv/QOqmq/CkStGNzQrl/RIZACvOAtkeljwhwSlKICcNwGW60y4b8OkBDvvE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737145678; c=relaxed/simple;
-	bh=+zTaLe2bFCzQIAa1A0FI90UlKpQIZD0lCAuUmCPuTJ0=;
+	s=arc-20240116; t=1737145679; c=relaxed/simple;
+	bh=myGFqqHcQLi1SYKR3C+dvtXbPkaXowosnZeITNlEB5E=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=JDORReJXiF9KeQL9DABYkhy6TvzpulOF8XnGgXpvbmzuDT1u8KDdv+xcaP2+uzfTfRZEUCpDD7KnkadouViNds3aP1qlasp9KHxaUH8JGUq4NDf+nCSjgawiXOe90lgZxTJHTmNDAnnRM4UxmwLSlTfAogfIv6bVij2t6S84GC4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=WkZOqpSr; arc=none smtp.client-ip=209.85.128.47
+	 MIME-Version; b=KaYr0sdtdBOw2rKsDi7az1etVh8JrLhyS0QJzQ0v8kfv2tseJDU+9yWrMFbccYL/Ul4Q6N4fg2mxsZg87xQa5rA5j+T4+nDKGpSJmV3RraQryqxfBvZW7/Y5MOOzmdkc4m8RyeQRIOD+Twh0e4ui847zzui9qvP4Hz65SxCtsts=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=M0+g66Ix; arc=none smtp.client-ip=209.85.128.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="WkZOqpSr"
-Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4361f796586so26842625e9.3
-        for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 12:27:55 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="M0+g66Ix"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-4361815b96cso17215315e9.1
+        for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 12:27:57 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1737145674; x=1737750474; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1737145676; x=1737750476; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=bmsdbMUdXouyCIUvFDb9rT9Wa7Cn3qSpvlZNyHArD78=;
-        b=WkZOqpSrGuBjGXsA6b8M6ubZ5mnwQy2HepPtBkI42eOrCL02GjqS+rrfP32bnR3RkE
-         awgz8hPxpyq+4j/c6x2okGuz1SBPWjhFHvTI7if9m8VUxC48cvAuRmWaoFh3V98Pm9yk
-         9PO3/aKg8BQr3LlqI8TujrIujcAknGfp5/x/6hdDnNsK5yLonqlk/IjBT1jsd4F6wK4w
-         8kq2+BsBCSVupquvyBevrxgackbjDo5PNrwWy6jhF0AsHv40LnNw9LWVUWPeXIuzb0gv
-         n2v29MlLKwTZT8XozCT6A9sAP5kvGoQrmjWsEYEm/jkKFaQusmOqwIonZKGKsQnfMZ1d
-         xESA==
+        bh=fitHqImlk5TTJDF74Epkv/FvsB4bp2n7kksfYCUEsMY=;
+        b=M0+g66Ixqk6N0fPeom3p5JA2AiNFhhqvEFEdonZ7DyyNKqRS/xk1YyeYHRaanFXsaH
+         5Z5Qc295CRJWu7ltzcDOwlb8Str+vJJinAE4sI1L+gfQ9Jr8MYEISGNn9+g9yRO2gcdy
+         Ul8DpGQh/OgO2zqovXiy8ydzJdGAYYl4HPuY6i59r43HFl8vjEdE/ztXWvUZxxkVlUpf
+         Cc7+oxt2dOrTHkZ5thLglHTuXBTYb+UAY9j8TRXe/NmdLv+6r6eLsM1UhHgkL3kQE1UO
+         m50C8Mhxd5zq5L2LmnTF6qpXjZVXZ9uttBVhNM/V02eLdoMkTD0XIAD0qL6XjnAYxb9d
+         x3+A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1737145674; x=1737750474;
+        d=1e100.net; s=20230601; t=1737145676; x=1737750476;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=bmsdbMUdXouyCIUvFDb9rT9Wa7Cn3qSpvlZNyHArD78=;
-        b=lLgr80eoIuiTQCPj++/GLmxRIO0xyytdG1iwjHweaKyRQ4p74DxQCxAVOpmlYUbpr9
-         hO+hajzJ9l+0JSxQI52m8ddOiVHQSW1gdslNM3CM56RrA3w0+H995D+NY9g6qMlOMZM0
-         H6Y6o14BvWzFB5Gp6RjE101iFqHot9NrgQmIRidQPO3yoN2jjT46IW2q72moK5hpsG9k
-         1uPIRSrpi9heNDSx13XtdoyEJngKWVLe3BYTJctPMPQma32o/8Yzp2l2JdL4ph2NnQQv
-         uy8U3ARKmUboLpOxlkg73+Q2RIWoOlH6CsP/MT77HaEjAmKci2V6iXi33KczpD9KmYhB
-         gkhg==
-X-Gm-Message-State: AOJu0Yx3yiBu7FyAA9PvzlTepNCYD9/TgGJjEtgf0lXv77/4flnOgBSn
-	HZmmVcwj4lVPlr96eYytTwA4iSqxOSK7xKj0Cfj1mKfxSWFJ+th+BL2VhJ2QmBrAR+RywaRKqeg
-	C
-X-Gm-Gg: ASbGnctw+bKggGAS58GxN8YfT4Jpu814Hoyxme+kN43zl/8fP06n0bPaACQKW9b4MMs
-	5zlCQOxVCBaNbnhZ5otjNue4Nfy2bbWyYQUmAT0JX3jkOMCOfYb89ptvvkPdcS+3DIHwNnYbg7R
-	hCGyrw0ZI0cUxSm5cgYsbA7zrnvRz0e9cq4gYb8s/oQysqM7tJ1p6GOgO+K973ojIvyRhDH5F2q
-	vcPIfW2aPxTDzwITNMQZJFwQmDXmo9tmnyP38FivUCBVar/cxZViRpwFwzdZlhk8roN6iwtgjCq
-	SvLngWI9paCmfBfQGeNT7r9BMM+RTGAD5L6NLmUnqBE=
-X-Google-Smtp-Source: AGHT+IHlGm64DYoPx0sySMqMkF1D1e1fw10DdJrs77iOW79NsRyIKqpzhLEfETixTYR6s/gkKJ1iSw==
-X-Received: by 2002:a05:600c:4ed4:b0:434:f586:7520 with SMTP id 5b1f17b1804b1-438913c5d53mr42709405e9.6.1737145674315;
-        Fri, 17 Jan 2025 12:27:54 -0800 (PST)
+        bh=fitHqImlk5TTJDF74Epkv/FvsB4bp2n7kksfYCUEsMY=;
+        b=TYX7GagUbDUfxJ2GNIJWmVK+5yqVhnJNGfHW/qt+NFt+vybY7XWzXJfjXBRswxI4Lt
+         UQK0QQJJ5sZ+LxYIxTIJ/+rOcawiQq/fXXxazJ84uqVnRZiM55hJ8cw1dRzKErp8s4RM
+         KtR7NrwP6/ZAVsd7GOFjCSxx7uj2RdN717F29uW5tMi9NSz2vhPP2lArupS3BhnfSpuz
+         Mbnt/sC/V4VoNrwGarHsNCm5jMicOpj1hU4I5HXEYVM04fsC5v3KPJrew+PlKzhMtWgi
+         aqDLMhB2baNxhMeHLh42sRrAgKIx/JT4b63MaRMKxHx1sDkWYeRuBRYoAGy65zAQEltY
+         4klw==
+X-Gm-Message-State: AOJu0YwZZafvsT2c+5aUl2IC4y121CqPCPmej1NMVZjk7d+/0RK559tT
+	8gBoNN+Q8OeEDyby1UC/wjn8Z+5DQG9kKKHJ6MXYNMxOEudE1JxPakO/GbHP0Us=
+X-Gm-Gg: ASbGnctBiQsqP72ua6fWNGoufV/NpCqexyL8rzR3sD5+oJGhgGTLt/sJDjZ2XccIosL
+	yJ+CiSBfrbI/2VQ+q55dvKZ1NRkAXCcojQwDKshNk8jPT2MDS3OUfgiJFqokT35vOurXpTXpSjb
+	smwhQ9a4O/mCnDp2CtheNjcDbhLOzrRMB3/ztLCyQN/JU8GNje8O9TtFJDJYbfYpwMEc+pWAKfd
+	rYXbSkusQxH4sgZdaa7TvAhm/HsFdGnxRxmlOYNyifWU8gqm9kyHnHRXZGfm9iGhxb8D3HK5NMo
+	IBgVJwUcX8UxNf2IKXsvH58E9eLtCxwUqSKr3/AwJnw=
+X-Google-Smtp-Source: AGHT+IEo8D6vQqhSxLEUWxVEW/J/Nc7DGJ2ysFZPzso+QRmG7SwfLkb+Gb+XY7iccHsHXENq5+EgfQ==
+X-Received: by 2002:a05:600c:1386:b0:434:f2f4:4c07 with SMTP id 5b1f17b1804b1-438913de07cmr43028395e9.15.1737145675882;
+        Fri, 17 Jan 2025 12:27:55 -0800 (PST)
 Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-437c752910esm106956115e9.28.2025.01.17.12.27.53
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-437c753ca42sm102105685e9.35.2025.01.17.12.27.54
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 17 Jan 2025 12:27:54 -0800 (PST)
+        Fri, 17 Jan 2025 12:27:55 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 04/15] multipathd: emit a warning if a map remains inconsistent after reload
-Date: Fri, 17 Jan 2025 21:27:27 +0100
-Message-ID: <20250117202738.126196-5-mwilck@suse.com>
+Subject: [PATCH v3 05/15] multipathd: move yielding for waiters to start of checkerloop
+Date: Fri, 17 Jan 2025 21:27:28 +0100
+Message-ID: <20250117202738.126196-6-mwilck@suse.com>
 X-Mailer: git-send-email 2.47.1
 In-Reply-To: <20250117202738.126196-1-mwilck@suse.com>
 References: <20250117202738.126196-1-mwilck@suse.com>
@@ -77,43 +76,53 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-After reading the kernel device-mapper table, update_pathvec_from_dm()
-sets the mpp->need_reload flag if an inconsistent state was found (often a
-path with wrong WWID). We expect reload_and_sync_map() to fix this situation.
-If this is not the case (need_reload still set after map reloading), it's
-most probably a bug.
+This simplifies the lock-taking logic and prepares the following
+patch.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+ multipathd/main.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index e4e6bf7..ff3031e 100644
+index ff3031e..25aab09 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -3026,13 +3026,20 @@ checkerloop (void *ap)
- 							     start_time.tv_sec);
- 			if (checker_state == CHECKER_FINISHED) {
- 				vector_foreach_slot(vecs->mpvec, mpp, i) {
-+					bool inconsistent;
+@@ -3007,6 +3007,16 @@ checkerloop (void *ap)
+ 			struct multipath *mpp;
+ 			int i;
+ 
++			if (checker_state != CHECKER_STARTING) {
++				struct timespec wait = { .tv_nsec = 10000, };
++				if (checker_state == CHECKER_WAITING_FOR_PATHS) {
++					/* wait 5ms */
++					wait.tv_nsec = 5 * 1000 * 1000;
++					checker_state = CHECKER_UPDATING_PATHS;
++				}
++				nanosleep(&wait, NULL);
++			}
 +
- 					sync_mpp(vecs, mpp, ticks);
--					if ((update_mpp_prio(mpp) || mpp->need_reload) &&
-+					inconsistent = mpp->need_reload;
-+					if ((update_mpp_prio(mpp) || inconsistent) &&
- 					    reload_and_sync_map(mpp, vecs) == 2) {
- 						/* multipath device deleted */
- 						i--;
- 						continue;
- 					}
-+					/* need_reload was cleared in dm_addmap and then set again */
-+					if (inconsistent && mpp->need_reload)
-+						condlog(1, "BUG: %s; map remained in inconsistent state after reload",
-+							mpp->alias);
+ 			pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 			lock(&vecs->lock);
+ 			pthread_testcancel();
+@@ -3043,16 +3053,6 @@ checkerloop (void *ap)
  				}
  			}
  			lock_cleanup_pop(vecs->lock);
+-			if (checker_state != CHECKER_FINISHED) {
+-				/* Yield to waiters */
+-				struct timespec wait = { .tv_nsec = 10000, };
+-				if (checker_state == CHECKER_WAITING_FOR_PATHS) {
+-					/* wait 5ms */
+-					wait.tv_nsec = 5 * 1000 * 1000;
+-					checker_state = CHECKER_UPDATING_PATHS;
+-				}
+-				nanosleep(&wait, NULL);
+-			}
+ 		}
+ 
+ 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
 -- 
 2.47.1
 
