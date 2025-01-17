@@ -1,120 +1,107 @@
-Received: from mail-io1-f43.google.com (mail-io1-f43.google.com [209.85.166.43])
+Received: from mail-io1-f51.google.com (mail-io1-f51.google.com [209.85.166.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C5FC1A3AAD
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 20:12:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C98C21A9B35
+	for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 20:17:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737144753; cv=none; b=mPLcr3lfq+EKWA5ud3hj5CFNguZ8yy8l9sazjMbS/JUBhYIrTERoTQXrB33cigsjY7ljGOpV2p/J+FST5Zkdh0teiWICOMgQXcfGW8FdbgigihAXbpxcOHdLUoFnQpmrETPGZ7dMXMIQfO7KrsYl8GyVIMhxSZlOqS/pDvxDxgU=
+	t=1737145068; cv=none; b=gcWBHpslVO4hV9NQ8Zr25wl1yE+ZrWcEXFP+RAFxGfygwTqqPErJ5Br8dUOFJqnJCaifbbvEuvoyzxOGuRqw3AOtD9cQ2eAF1uE93EzdPw/NttDXpGp6goR+9AdCtGYn8Lrs/VAaJ18NpSWCDW7NdPPtAo34fVdwsO6+dt8UTmE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737144753; c=relaxed/simple;
-	bh=PeeGUPJl2smRX6KHteAej2YYpAbICq/sJBn/TI61EJI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=DQvRixfUX5qp9kGwqvE3x6KQpVlUwUDH282y5jqNxFvyea4/gSKYIRAdy2t/S4sY/lzo6iPP0Xi7ZXb931kuO+kmiPvg03vypzlZv9LFb9/3IzumyUp9ppW9Duda2B+6jM1ptpEycoPwcZPRnxJnpBxCjeU2Yvb/LA0jlMIkQO8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=nuxxBjeV; arc=none smtp.client-ip=209.85.166.43
+	s=arc-20240116; t=1737145068; c=relaxed/simple;
+	bh=dVzqiFcZBuXVHk6HLMWLRs+HLmmoRxUiHymSqqkdtKw=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type; b=lEWM1YRar/K249OJh2FlCEDZnn92D+FtOyope7ePM0FNX2CzxvhfvmZQ4QisGvg4SHWPJtl1HGxU/+VZweyUbXG77SVNtT9iWmhb2Gd9txwZUDeu2nkw7nX3rUnExKzSR8KGUID730yPILztSNpTTQaS0GEAo9dnHH/CWl4QTrE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=K4BOc5HZ; arc=none smtp.client-ip=209.85.166.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="nuxxBjeV"
-Received: by mail-io1-f43.google.com with SMTP id ca18e2360f4ac-84a1ce51187so80445239f.1
-        for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 12:12:31 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="K4BOc5HZ"
+Received: by mail-io1-f51.google.com with SMTP id ca18e2360f4ac-844d7f81dd1so91202839f.2
+        for <dm-devel@lists.linux.dev>; Fri, 17 Jan 2025 12:17:46 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1737144750; x=1737749550; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=zMbCrPJzL8yTFIs1neOfn76l0nRWVY5b3AebkpdHLgM=;
-        b=nuxxBjeVJDTlXzBSx/sYgWO8NG/xAIMF0OaYfx3y70XKxep1ISC2hcxaiPhM1nyk3I
-         zztJRZrgbI7YEvocMpwGyluRPflYhyP9X+o+24u202KEYsp/Jd17cw+OgxeIk8bp5SW2
-         tPzObWa1FYTdylLHqbEvazk61ChL51UqMJvKr/S4ehep+QtpaOCaurm/l85GG80HISNG
-         GRBFtS/L2DLu/Hocq1loXUx2PD0TSLYTvjIGUbNAqfbv4R5SKEUhrexc8Zv2I0e6KXdo
-         3Dc7iFx7/brHbtOUiiUeHoyy4E6fJCUvpo462TM5LVkA/kEH5OFNE0GWtMlxpI2uDj/9
-         3mwA==
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1737145066; x=1737749866; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=cLxmCJlbafkuvfH6Qxktog1C8CaKggnWioDyBY6DGok=;
+        b=K4BOc5HZWvBfqM4eCKWT3XkeLXlL/RC2zCYnKYVIF/inuhOdG1KqPAFhnlUq3RI1Jl
+         Ig3r5e+95tELae28WDZwvbGsiJW5CkEZ/C1a+2IdUxjJV5VaBqV6ZwmDbAfgEY3zlFIF
+         fSmII/0n4BqK7Vxuntg0doq9hBOLSH00JF0S0kyrTG3xyJWO/CTIiYnOUMnPCvM1lBgv
+         SKEiKawCHFAhVVLcrcUfy75zWEzgGFL9fxZpc+jwwbt3KSzO/T6qgoW8Y5RNPHe/KMkG
+         HFVCEhKpR9wVyvOiU7ifLyGfwckveQrEU4SnVz03felg2cMwTVhUwXcFv/T1tr7Ss+4W
+         R5ww==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1737144750; x=1737749550;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=zMbCrPJzL8yTFIs1neOfn76l0nRWVY5b3AebkpdHLgM=;
-        b=QtPlRIHKkYSeMyWVnoJgQZs88l3S9IrIW8PUEvoxADqM1mPpKGJhhrukSsTOzM0faW
-         LPab3V5X4Q7Bai4UVE9JeWRzjbMk42gtg+8LtmAbz9x3WB8n5T8AqbZT6Yuu3SqS9VwL
-         /HuoKgAGSArhW70YNlCVzxkMYTyu8AavgFOKcQJ28hOkVrysTFo58y0N/WkhaGX7DUt5
-         41ja+O4PFtqsc7DZ9V1/bSbcExjR1DfRBzJGUQ25Du0k933IJfKqky1Pof3BYRktUvJ0
-         G1W4ljJDVx/uxjq/C7GnxNNXiOCkxDlV3gyFxBNo3tgkUVxC0i0sUi9DjD9kuow6vPwv
-         Y2+A==
-X-Forwarded-Encrypted: i=1; AJvYcCX4llOcdt+bYvzLu90PNNGnBWmP5R267I4NCWkA2XyrcZ+1H2FxaYZtzcVL6T+palu1h/DmhtMqkA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzZg7Q3MkTrEuxv/zd0If5kL9gG3DH5noIGNP2eTsCVuidTjlD4
-	tT6NJu/mltaKMDEbzHMH8lLx6lpS7JeUACHktyI0Kf2CGlDD/U3/o1sI5pp5GM8=
-X-Gm-Gg: ASbGnctPBY1UhprnzaM2aewfiMF1aEYr5a1PoPm3dEL7sfSXDaUzlH7Efg73VowpDwA
-	p3AqlmAxHElb5gFliSb7Z0dZ+SzrfKvUOtLCwdJQMAuYBT0roxesp3NWpV6H1gFsDF7gxKGcN9L
-	t28voLRAQVyA0znPi98lfEyMJW/tXFR+KmmfJ6LVwJM1DFp/t1OzlENQ4N1bdoMhYRt5RtDkCee
-	ep+dkIAXXw2JG81JmSMev3vKO8dI55G+U6njLwArnEGwL7dFon3qw==
-X-Google-Smtp-Source: AGHT+IH0zo8wsg4X+Ob1gtuGKlznRlHPjHWRlLXjUWO5neR5ZhhSCiPRfv9A+0zKwVoXupgXoXN8hw==
-X-Received: by 2002:a05:6602:6402:b0:841:a678:de3f with SMTP id ca18e2360f4ac-851b602f359mr303626939f.0.1737144750350;
-        Fri, 17 Jan 2025 12:12:30 -0800 (PST)
-Received: from [192.168.1.150] ([198.8.77.157])
-        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4ea754964basm810406173.59.2025.01.17.12.12.28
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 17 Jan 2025 12:12:29 -0800 (PST)
-Message-ID: <fe80050f-a887-452b-b8f1-86f2ea816228@kernel.dk>
-Date: Fri, 17 Jan 2025 13:12:28 -0700
+        d=1e100.net; s=20230601; t=1737145066; x=1737749866;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=cLxmCJlbafkuvfH6Qxktog1C8CaKggnWioDyBY6DGok=;
+        b=PSmwUbc6WajnIJMtHGC1RbOBIIva6JSIgaRYpWpgi1kDh9lNoqSKQDypAXMPWWqF1m
+         5Xwnuw76k5sa7/AgG3gqo/7tJr7zQNlPS4os1uaWpA9wIZs+TKRD4+sVeHXy6PcS5AKP
+         xMBl5YzUGxJJUjr4Hxz/z9SQMEdI14FS5+SpJfXQgcF1VK2MZcLEEX+SVMN30NzN2vSq
+         L/cvYRagasUb3eNh8bzilSH5kOAcuLncu2NQuRB+XUsjvzkEex8LM7vR6zY7o4nuRYn9
+         1tcBrmeSYFvScuCOVUHpdsmluWgyqiKcqRlXQi5CZSFuhZrbQ68wDPZAH+p+v9Yd2GXL
+         DgUg==
+X-Forwarded-Encrypted: i=1; AJvYcCXFy8TIW5scKVEMHqfU5EiydX9ZdbUnHM1O17qXg109M18Vm/e11Paw6CCTfSVN2uxEg2f43wc2Rg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyrPcQ094iXj5gY3aTm9kGZaYWjq0nIsQGr2h9euhCgOk27oOSg
+	EE3w3A5Hyu9uQ4PfzL5Xp9E39LnEw/kMYFJlHarsHJKWtLl5jLyP8eyFRK1dfj4=
+X-Gm-Gg: ASbGncsfwi794pdBdrroRc8+3GPiYugEW5H/qYXEqJJhOuEwrE6dQwYrRL1khYW1nmM
+	vO+Y/o0m/K3JLe+MpCFjRtZGN6QZQpGRHvt/slCQjG4ZW7vbq5w0E9IHvTEWGQqcUSCe2GGRrlS
+	9jUJxNs6RVtXBnMax17w8e8riyCjV/J1I7BHTGa9og8TBepL1K1RqhLmygZUs/5Ub0iTIx3mhrq
+	34gM7uMN/da/5nfKtEe2A2t4oy5rxZKIq7O8heWcyWGyTC5
+X-Google-Smtp-Source: AGHT+IFKrGW/S+uGv2I4EYYiUbyKoOPoxLNw8UsgVKt5gU/rDXc3yKG6eiPIIz1vOQY4yFiQfe+oBQ==
+X-Received: by 2002:a05:6e02:16cd:b0:3ce:f1b5:6d19 with SMTP id e9e14a558f8ab-3cf7447859dmr36866315ab.18.1737145065752;
+        Fri, 17 Jan 2025 12:17:45 -0800 (PST)
+Received: from [127.0.0.1] ([198.8.77.157])
+        by smtp.gmail.com with ESMTPSA id e9e14a558f8ab-3cf71b441e5sm7336155ab.57.2025.01.17.12.17.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 17 Jan 2025 12:17:45 -0800 (PST)
+From: Jens Axboe <axboe@kernel.dk>
+To: agk@redhat.com, mpatocka@redhat.com, hch@lst.de, 
+ John Garry <john.g.garry@oracle.com>
+Cc: song@kernel.org, yukuai3@huawei.com, kbusch@kernel.org, 
+ sagi@grimberg.me, James.Bottomley@HansenPartnership.com, 
+ martin.petersen@oracle.com, linux-block@vger.kernel.org, 
+ dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org, 
+ linux-scsi@vger.kernel.org
+In-Reply-To: <20250116170301.474130-1-john.g.garry@oracle.com>
+References: <20250116170301.474130-1-john.g.garry@oracle.com>
+Subject: Re: (subset) [PATCH RFC v2 0/8] device mapper atomic write support
+Message-Id: <173714506441.181264.7271209320638609494.b4-ty@kernel.dk>
+Date: Fri, 17 Jan 2025 13:17:44 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH RFC v2 0/8] device mapper atomic write support
-To: Mike Snitzer <snitzer@kernel.org>, John Garry <john.g.garry@oracle.com>,
- mpatocka@redhat.com
-Cc: agk@redhat.com, hch@lst.de, song@kernel.org, yukuai3@huawei.com,
- kbusch@kernel.org, sagi@grimberg.me, James.Bottomley@hansenpartnership.com,
- martin.petersen@oracle.com, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org,
- linux-scsi@vger.kernel.org
-References: <20250116170301.474130-1-john.g.garry@oracle.com>
- <Z4q45sjEih8vIC-V@kernel.org>
-Content-Language: en-US
-From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <Z4q45sjEih8vIC-V@kernel.org>
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.14.3-dev-14bd6
 
-On 1/17/25 1:09 PM, Mike Snitzer wrote:
-> On Thu, Jan 16, 2025 at 05:02:53PM +0000, John Garry wrote:
->> This series introduces initial device mapper atomic write support.
->>
->> Since we already support stacking atomic writes limits, it's quite
->> straightforward to support.
->>
->> Personalities dm-linear, dm-stripe, and dm-raid1 are supported here, and
->> more personalities could be supported in future.
->>
->> This is still an RFC as I would like to test further.
->>
->> Based on 3d9a9e9a77c5 (block/for-6.14/block) block: limit disk max
->> sectors to (LLONG_MAX >> 9)
->>
->> Changes to v1:
->> - Generic block layer atomic writes enable flag and dm-table rework
->> - Add dm-stripe and dm-raid1 support
->> - Add bio_trim() patch
-> 
-> This all looks good.
-> 
-> Mikulas, we need Jens to pick up patches 1 and 2.  I wouldn't be
-> opposed to him taking the entire set but I did notice the DM core
-> (ioctl) version and the 3 DM targets that have had atomic support
-> added need their version numbers bumped.  Given that, likely best for
-> you (Mikulas) to pick up patches 3-8 after rebasing on Jens' latest
-> for-6.14/block branch (once Jens picks up patches 1 and 2).
-> 
-> Jens, you cool with picking up patches 1+2 for 6.14?  Or too late and
-> we circle back to this for 6.15?
 
-I can do 1+2 for 6.14, they are pretty trivial.
+On Thu, 16 Jan 2025 17:02:53 +0000, John Garry wrote:
+> This series introduces initial device mapper atomic write support.
+> 
+> Since we already support stacking atomic writes limits, it's quite
+> straightforward to support.
+> 
+> Personalities dm-linear, dm-stripe, and dm-raid1 are supported here, and
+> more personalities could be supported in future.
+> 
+> [...]
 
+Applied, thanks!
+
+[1/8] block: Add common atomic writes enable flag
+      commit: 6a7e17b22062c84a111d7073c67cc677c4190f32
+[2/8] block: Don't trim an atomic write
+      commit: 554b22864cc79e28cd65e3a6e1d0d1dfa8581c68
+
+Best regards,
 -- 
 Jens Axboe
+
+
+
