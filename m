@@ -1,91 +1,128 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pj1-f52.google.com (mail-pj1-f52.google.com [209.85.216.52])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D95EE1E3791
-	for <dm-devel@lists.linux.dev>; Mon, 20 Jan 2025 15:16:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5322B1F2380
+	for <dm-devel@lists.linux.dev>; Mon, 20 Jan 2025 17:21:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737386201; cv=none; b=VYDnJzcyE3M8d5Xrs/gxqVJhqrsdbQpMqJZN6H82uS311svS48tZtwdP2SeSZt/JYa80G3Msl+0S/EOFqlpu2/dZIU7OD6wT8sUhCJetohrYiO0gURVrfIoxpL0Y9uDAOxQYc5QBiQjqComgVaw+lVlHkuBQUiHoMGy+tRjDkDk=
+	t=1737393706; cv=none; b=AJVAXxZCjHe11oDdYrKbYAUMRztkUtaumy8RuJZuhaPnzMCzN3NztK99VmWwB8u6hFhF7fvmgf+LPI+0bvDqxzJx12FrAM1I2apCchTGSNUOdoP+lTB1iSiR/UkIZcP7ShBAhTwYc8cPd9S7WcrHL/CERljTF8vVjct3x2pQLRk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737386201; c=relaxed/simple;
-	bh=N/09wP0BL+H92OwKbasER3ehiHFLHhxOkwKi4aXhZqU=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=GHQAFdBQC8HrH1OeG224q1+XyfuSygKv7jFts0M9p1APkn0baBxGGQQWr8jQoUYp8XHnS70QJ1xUZf5H9k48PnsJPJJuiY3AQvYBXJJxjvu9tTk1F6v+PeBuS46RzRPhdFwgm4P0srZb1Nzu8M4n/E7UaatAWT9xpPN1NIYfo04=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cUo11nGJ; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1737393706; c=relaxed/simple;
+	bh=XBszVvBOIF+9uHPexwNKsHLE7SGVCYrgbc9wwbOSMXI=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=kXG/PgPqxQMTtjb3iX21izKfnJAQP4eiytw9W37h7aIpdbkqRIaGvWPckkZXgeVYRBaVuOp7IHocjE7Qa7BuJzaeDHdIBqlG2447MRgycxYZK3OTcp2k4Z1dWOHGPA7GvfHy+pisc9HGYswIZB4ASKIQeR/7l3E7Xp3PrxsXYCA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cloudflare.com; spf=pass smtp.mailfrom=cloudflare.com; dkim=pass (2048-bit key) header.d=cloudflare.com header.i=@cloudflare.com header.b=exw+QNd9; arc=none smtp.client-ip=209.85.216.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cloudflare.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cloudflare.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cUo11nGJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1737386198;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=DtCbR8FTF1GLHpSQcORCkWOKw6JmrqvTdAcRj4GwZpE=;
-	b=cUo11nGJwdm9HUwntsf0pHC3k4Z8qd53ysJpYvMPoW8keHLZWHZoYAUlrkK3ID6yNRFusT
-	NHp2FrC/tpbeCjPk/H8r7N+ftDpBZejbNAT0WXAIuT0vXGMk8dBsQKSHtomK+mEX9Rx3c/
-	79cG2B/N9pSESyQhPJT/1LxuZRqhWIE=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-530-JwY416IONamA_MimYDbvow-1; Mon,
- 20 Jan 2025 10:16:35 -0500
-X-MC-Unique: JwY416IONamA_MimYDbvow-1
-X-Mimecast-MFC-AGG-ID: JwY416IONamA_MimYDbvow
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 977971955DCD;
-	Mon, 20 Jan 2025 15:16:33 +0000 (UTC)
-Received: from [10.45.224.57] (unknown [10.45.224.57])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C08C53003E7F;
-	Mon, 20 Jan 2025 15:16:31 +0000 (UTC)
-Date: Mon, 20 Jan 2025 16:16:26 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Jens Axboe <axboe@kernel.dk>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Zdenek Kabelac <zkabelac@redhat.com>, linux-block@vger.kernel.org, 
-    dm-devel@lists.linux.dev
-Subject: [PATCH] blk-settings: round down io_opt to at least 4K
-Message-ID: <81b399f6-55f5-4aa2-0f31-8b4f8a44e6a4@redhat.com>
+	dkim=pass (2048-bit key) header.d=cloudflare.com header.i=@cloudflare.com header.b="exw+QNd9"
+Received: by mail-pj1-f52.google.com with SMTP id 98e67ed59e1d1-2ee9a780de4so5960568a91.3
+        for <dm-devel@lists.linux.dev>; Mon, 20 Jan 2025 09:21:43 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=cloudflare.com; s=google09082023; t=1737393703; x=1737998503; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=7juRAO5chmvvm4H2sah2Lvcs3nr+XEf+HYnJJzhzQiE=;
+        b=exw+QNd9/EiCkZjwhnMpOIE74cfzZiOC5aPekXO9B8RMv3Rf/uR4nTyOEfEhlyzxdC
+         i+wf9qoi+Kl75vMSfPYpg0uzLJuplvdh5HG1Firt7o0XvzbbrZ8N4i1qU1NuMMZvpa2I
+         AIWnYGbd2+Ac2P6V2s/Z4JsDxTfdRaYMkP/Pua/8pj1cMKNQDlP4l5iV7w5kq36eAdbS
+         Me+5KZam0EKKkTJej6AeW/winASO7Lj7UN0QgVQkCNnJi+kXTVUlUyilpTWHgnJ6fEZ7
+         WgqbeNOIFvXPvc3PRxvYVbcUMPp2f7fkpCpg2/94MF9pWvfs54flg444I/j0vMeHRGr+
+         GlCw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1737393703; x=1737998503;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=7juRAO5chmvvm4H2sah2Lvcs3nr+XEf+HYnJJzhzQiE=;
+        b=Mab3CmIRXjuDy2CbaSVL779zKwhKsW6EtX9i4En257S0HafM+KijRns//i9GUribbc
+         xYwSfO/WgkwTK+XlglV8JEUfjtTvRBZyJ0pPjjtEUUm4/MR8GE00IP3wLYfeTyGZ3vJx
+         3Ip5Qn0PX/vyC8qUk20rsEOZp2VzHiSN/XwhtnpueEPiBtDn9wxt/dK1XGLbnj+dUAjB
+         psPG4mvmxNPsPU7PKS4r6KeDqwxPNiKd/a3K37jN3lu25niKCw1o38IoNf4/oio1h2I9
+         IRZwXX7HlncGSP44VvnLE3klHlrpYTZ/He83vACCjjmVUoOaC0R9AWdjdVr/WR97em3m
+         bFow==
+X-Forwarded-Encrypted: i=1; AJvYcCUO+aOMdcTKYv5UZv360qpV30UAPYC622lwYiEJNpck/p1yoYWVi7dXNbTUe+ZvBPtncEFotbRNLQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyS7g4qWsciRlOt4BtD+uZdwB2ClPP5V5mvBH2YIBnTM3i6/qYR
+	5Jdxz4vZ5oU3GvB9H2fSNhxDzN6IyAZo7lDFZZeCHpSSXyj+Zyhjy+1NbPtRA8+Twih16j41AfI
+	xeSYPS8dg1vhKg1yb/gKVvxOVGuxASLkT2p/Oig==
+X-Gm-Gg: ASbGnct1TU+K3/YSYRTW6BzK4oNe6AGl9OC06LN6Qht3Z2N7VWsM7RTm4g79/wUxKU/
+	n6+Tak7jIZbBQH1SfYH6Odz3gCdx/HAWUVPCainXu5PjTCQLyOsV91zwXD4dcrxeic1QH
+X-Google-Smtp-Source: AGHT+IFqU9lcvkEmYEV5eXzbAiK5Sx0YMKws1A1OG3WKLU0er5zsMlfH3RABrCnFKBygyPXrRpyROmcHKTsUQiEE+1E=
+X-Received: by 2002:a17:90a:c2c7:b0:2ef:2d9f:8e55 with SMTP id
+ 98e67ed59e1d1-2f782ca1fffmr22208380a91.17.1737393703442; Mon, 20 Jan 2025
+ 09:21:43 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+References: <20250120082951.1423804-1-houtao@huaweicloud.com> <20250120082951.1423804-2-houtao@huaweicloud.com>
+In-Reply-To: <20250120082951.1423804-2-houtao@huaweicloud.com>
+From: Ignat Korchagin <ignat@cloudflare.com>
+Date: Mon, 20 Jan 2025 17:21:32 +0000
+X-Gm-Features: AbW1kvZJvXZ4TOOPfOa-hITRAFg5qVevRcVwBQk4bUQdDgISLVDmAhkhjTPBcgo
+Message-ID: <CALrw=nGZfDkMrmPTt4byirpaPD9oGbx8OJS1JNk79h1h=wwHRA@mail.gmail.com>
+Subject: Re: [PATCH 1/6] dm-crypt: set atomic as false when calling
+ crypt_convert() in kworker
+To: Hou Tao <houtao@huaweicloud.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, 
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+	Mikulas Patocka <mpatocka@redhat.com>, houtao1@huawei.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Some SATA SSDs and most NVMe SSDs report physical block size 512 bytes,
-but they use 4K remapping table internally and they do slow
-read-modify-write cycle for requests that are not aligned on 4K boundary.
-Therefore, io_opt should be aligned on 4K.
+Hi,
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Fixes: a23634644afc ("block: take io_opt and io_min into account for max_sectors")
-Fixes: 9c0ba14828d6 ("blk-settings: round down io_opt to physical_block_size")
-Cc: stable@vger.kernel.org	# v6.11+
+On Mon, Jan 20, 2025 at 8:18=E2=80=AFAM Hou Tao <houtao@huaweicloud.com> wr=
+ote:
+>
+> From: Hou Tao <houtao1@huawei.com>
+>
+> Both kcryptd_crypt_write_continue() and kcryptd_crypt_read_continue()
+> are running in the kworker context, it is OK to call cond_resched(),
 
----
- block/blk-settings.c |    6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+yes, indeed
 
-Index: linux-2.6/block/blk-settings.c
-===================================================================
---- linux-2.6.orig/block/blk-settings.c	2025-01-03 21:10:56.000000000 +0100
-+++ linux-2.6/block/blk-settings.c	2025-01-20 15:59:13.000000000 +0100
-@@ -269,8 +269,12 @@ int blk_validate_limits(struct queue_lim
- 	 * The optimal I/O size may not be aligned to physical block size
- 	 * (because it may be limited by dma engines which have no clue about
- 	 * block size of the disks attached to them), so we round it down here.
-+	 *
-+	 * Note that some SSDs erroneously report physical_block_size 512
-+	 * despite the fact that they have remapping table granularity 4K and
-+	 * they perform read-modify-write for unaligned requests.
- 	 */
--	lim->io_opt = round_down(lim->io_opt, lim->physical_block_size);
-+	lim->io_opt = round_down(lim->io_opt, max(4096, lim->physical_block_size));
- 
- 	/*
- 	 * max_hw_sectors has a somewhat weird default for historical reason,
+> Therefore, set atomic as false when invoking crypt_convert() under
+> kworker context.
+>
+> Signed-off-by: Hou Tao <houtao1@huawei.com>
 
+Maybe add Fixes: 8abec36d1274 ("dm crypt: do not wait for backlogged
+crypto request completion in softirq")?
+
+Reviewed-by: Ignat Korchagin <ignat@cloudflare.com>
+
+> ---
+>  drivers/md/dm-crypt.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+>
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 1ae2c71bb383b..424c8fc3f0ada 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -2098,7 +2098,7 @@ static void kcryptd_crypt_write_continue(struct wor=
+k_struct *work)
+>         wait_for_completion(&ctx->restart);
+>         reinit_completion(&ctx->restart);
+>
+> -       r =3D crypt_convert(cc, &io->ctx, true, false);
+> +       r =3D crypt_convert(cc, &io->ctx, false, false);
+>         if (r)
+>                 io->error =3D r;
+>         crypt_finished =3D atomic_dec_and_test(&ctx->cc_pending);
+> @@ -2203,7 +2203,7 @@ static void kcryptd_crypt_read_continue(struct work=
+_struct *work)
+>         wait_for_completion(&io->ctx.restart);
+>         reinit_completion(&io->ctx.restart);
+>
+> -       r =3D crypt_convert(cc, &io->ctx, true, false);
+> +       r =3D crypt_convert(cc, &io->ctx, false, false);
+>         if (r)
+>                 io->error =3D r;
+>
+> --
+> 2.29.2
+>
