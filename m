@@ -1,156 +1,98 @@
-Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1547B1B425A
-	for <dm-devel@lists.linux.dev>; Tue, 21 Jan 2025 11:46:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 952A519342F
+	for <dm-devel@lists.linux.dev>; Tue, 21 Jan 2025 12:31:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737459969; cv=none; b=li4sDuUIeD6koPk2XhVXUffiOFvqOM0UqzuWvvL2+idiOobjeuDG+5P2h6v32GKt8JGToGk37thciRsGbZ1r2dmRwICwGdChm0sUUk4K2VU0eaFKxFqigbLidF1QMMMWRw1jOjDJ401mCLIDucgk+dLa1O88GIGHCgPrprrWlEY=
+	t=1737462677; cv=none; b=HmLtCDg7wCi5kH+pGaCrz2J0DfZ1UoKvKrnyNgNmFwPQ1nm2jAe1OuUPTIO7Z1yHIK1yklHJzVp0XJ74pjLhncpLiRlLW4zuwiWvscavQGlc/XvacmiBZIn3NdCSXhOpxs1YCgc0btIq6sH/WQ31yAWyfhD3+T8V+3SYPmZDZ50=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737459969; c=relaxed/simple;
-	bh=Bw+SZTbGoucliq+u8aiJTw4W/6zWrst/BtF4sUb8YPA=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Rf32FLvR8RY1deMuAveA6uv+P7W08fkLt/w4Y+CERvvH5xXOZUL+bfLbrhcACnAJkLh32STuUTWqM7Byx45srwLqllrVkupq/E5wz3PcztbkB9vex95pWhBBxVO1ttNyPjZSuFxx3cYZ2xg5mG2AvNcgcLxOb6ZOVtMq/xLcR/E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Q8zTDMeU; arc=none smtp.client-ip=209.85.218.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1737462677; c=relaxed/simple;
+	bh=eQQSI7aX8teQ/PlHD6j2OduY1n+DoVmDJmwE1vLJeQI=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=nrIGuAKvo+EhYtCriB6SMCYDL8RW8hhlCi+GHx3CrBlIclxcX0mHv5L5x5IgYbfbDB5jgciYdtILfzBuuxbPp3ugt2cleMKCICIimIkceMYofRxa5uSdwowsgCKsQxpstx52BZTX5Q5KwW6kfGZCNbIylhSwe425xuCcerUDXoY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EaVh727P; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Q8zTDMeU"
-Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-ab2aea81cd8so929086766b.2
-        for <dm-devel@lists.linux.dev>; Tue, 21 Jan 2025 03:46:06 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1737459965; x=1738064765; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=iuWGvHoE0pZwhH+DFNsjgXXtXS6FOkY/gXA30+toKiI=;
-        b=Q8zTDMeUlY7FZTrdw0Mtc4zPcxFtSNadh5gLDnEQ+1U7YIae1W6O5Xdq8zJqDZCs7D
-         oCRxiRWfcVzLY2DpVzXBU91zZVmjqI70wimyNj2pVkgJTpLZuBR/PAfMGHvVNQWFdVyd
-         fZqoykeX0UZ8o6NOe4ORVXBb7U8PJzBDiW3gGD0WqWowARlY0a+OPiEPyQb49hBGhe3o
-         OsQpMKm2j1V4JtMh4e2YoSdih2Th2Q3sGSxapyyFxOhSTwRZELXtdRoa+ZIIzB39EORD
-         R7n+sWXI3h5+eWJ2lkXVsTAgCrG/MTPkUSpe/lOeFqbSL+VV6pu8y/EFhUeNfBhndkRz
-         CLlg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1737459965; x=1738064765;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=iuWGvHoE0pZwhH+DFNsjgXXtXS6FOkY/gXA30+toKiI=;
-        b=C6lGvvsBLiKbiiwX9V2TC08xLcjCPRlHqJyEDC6fJ7b5muN8+paDfBfWW2uBL9KF81
-         X5kOnEUvU41Hv3Bb1NlW54UbO3yokPpwpPlYB+bqrj8ixrkseE+65y1zHeAnKZK8IRpM
-         k4ioln7Bdjk0XOyGtAD/LHDIiMoRdSN4jW8y/+NNtlp2SQcFt8Fxlp2oLuwp9Lt1QE4W
-         q7zY8/MdXl9JUmBcZHeWUD4V0tm0weYZ34Uy06vwPDGWCcdhPf/ekKFH4MySk+VSafLY
-         MkQG78iNCJrKTaikfUTmwNgqu4bMIjAPWZIxk3blGpRo2hkUmuIl7I79HgZnZFTuR6X2
-         yJ6g==
-X-Gm-Message-State: AOJu0YzlFAQ4Wo+d0d0CjnIaq2uoTHVzDDCQM3lIhptVmdiAP2RcA7r8
-	oOj7HU2arKbjB9lCfQfKXdSdVKgzAFxNaL4P34hGUXyVwbaDU8qQBh59zNjbiz7nLX0Z6mTpkeX
-	K
-X-Gm-Gg: ASbGnctiFynpx+Q+Mk2YSI2EI7b8MH5iJ7HM4yWanVRygFPjZBiLFRTcTrrkF40rEnx
-	lCcsp+FI/DKmFYj8OW73X4WD7dR5Lkr+0Cr6H9Wejms91G1CahDn/lRyFfCCrkdBouDlvc1/SUS
-	LqVeTOMm54tiZvGZjsUQ32wdWlyClkC/koeKVZQVFPJTSd6j+rSyILIZtDzRniY8iB4oq5mQ1d1
-	KuPBMPvlGxbVs67vp96lwcC7yLW3mR+rifrz7iaiuRB6C4djiMDzRnqvsFA/6cNvWE6fyvyvgfl
-	q15MshG7rzhglJDIs7jbaRC+0mmD6rQ1R0Cx4PY+eMP2U9PYEdhU994U
-X-Google-Smtp-Source: AGHT+IFMxOPcUpxPfIGbJjm9k8JGUzZajyQZL8DDO/UJVN2NPIekkrXWGtWhe7OcZjN7zzmFgjC8rw==
-X-Received: by 2002:a17:907:3e1e:b0:aab:eefd:4ceb with SMTP id a640c23a62f3a-ab38b0a2b92mr1668327366b.10.1737459964987;
-        Tue, 21 Jan 2025 03:46:04 -0800 (PST)
-Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-ab384ce0172sm732868666b.44.2025.01.21.03.46.03
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 21 Jan 2025 03:46:04 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@lists.linux.dev
-Subject: [PATCH v4 15/15] multipathd: enable pathgroups in checker_finished()
-Date: Tue, 21 Jan 2025 12:45:38 +0100
-Message-ID: <20250121114538.31963-2-mwilck@suse.com>
-X-Mailer: git-send-email 2.48.0
-In-Reply-To: <20250121114538.31963-1-mwilck@suse.com>
-References: <20250121114538.31963-1-mwilck@suse.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EaVh727P"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1737462674;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=TVwRDbUYkhH5Lk2TvvJR8UKk+yuKxoLllxy+r28q7wI=;
+	b=EaVh727P+qtPd+8K2/WnCiHabl415Ier+eAjTAy3jIg9E5wiks2u+b6UPyykPmS+F6VuE0
+	3RE6fgjzFMvzvgZBapM1X/Q7qL35BUB/Q+l0HfMKFjaz4Ac9sWq1M2VD58YOse1O2jOszC
+	f2+cE/D/VX8wUJ4dGeqid23yVIE53Hg=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-116-vvCSyuy6Pg2vqBoSs-HqXQ-1; Tue,
+ 21 Jan 2025 07:31:10 -0500
+X-MC-Unique: vvCSyuy6Pg2vqBoSs-HqXQ-1
+X-Mimecast-MFC-AGG-ID: vvCSyuy6Pg2vqBoSs-HqXQ
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 60DE919560A3;
+	Tue, 21 Jan 2025 12:31:08 +0000 (UTC)
+Received: from [10.45.224.57] (unknown [10.45.224.57])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3529719560A7;
+	Tue, 21 Jan 2025 12:31:05 +0000 (UTC)
+Date: Tue, 21 Jan 2025 13:31:01 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Hou Tao <houtao@huaweicloud.com>
+cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Ignat Korchagin <ignat@cloudflare.com>, houtao1@huawei.com
+Subject: Re: [PATCH 0/6] dm-crypt: misc cleanups and fixes
+In-Reply-To: <20250120082951.1423804-1-houtao@huaweicloud.com>
+Message-ID: <a0c0eed2-a068-551f-9c86-2a07bd4e3eca@redhat.com>
+References: <20250120082951.1423804-1-houtao@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-multipathd calls enable_group() from update_path_state() if a path in a
-previously disabled pathgroup is reinstated. This call may be mistakenly
-skipped if the path group status wasn't up-to-date while update_path_state()
-was executed. This can happen after applying the previous patch "multipathd:
-sync maps at end of checkerloop", if the kernel has disabled the group during
-the last checker interval.
 
-Therefore add another check in checker_finished() after calling sync_mpp(),
-and enable groups if necessary. This step can be skipped if the map was
-reloaded, because after a reload, all pathgroups are enabled by default.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 36 +++++++++++++++++++++++++++++++++++-
- 1 file changed, 35 insertions(+), 1 deletion(-)
+On Mon, 20 Jan 2025, Hou Tao wrote:
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 310d7ef..2052ede 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2917,6 +2917,36 @@ update_paths(struct vectors *vecs, int *num_paths_p, time_t start_secs)
- 	return CHECKER_FINISHED;
- }
- 
-+static void enable_pathgroups(struct multipath *mpp)
-+{
-+	struct pathgroup *pgp;
-+	int i;
-+
-+	vector_foreach_slot(mpp->pg, pgp, i) {
-+		struct path *pp;
-+		int j;
-+
-+		if (pgp->status != PGSTATE_DISABLED)
-+			continue;
-+
-+		vector_foreach_slot(pgp->paths, pp, j) {
-+			if (!(pp->state == PATH_UP &&
-+			      (pp->is_checked == CHECK_PATH_CHECKED ||
-+			       pp->is_checked == CHECK_PATH_NEW_UP)))
-+				continue;
-+
-+			if (dm_enablegroup(mpp->alias, i + 1) == 0) {
-+				condlog(2, "%s: enabled pathgroup #%i",
-+					mpp->alias, i + 1);
-+				pgp->status = PGSTATE_ENABLED;
-+			} else
-+				condlog(2, "%s: failed to enable pathgroup #%i",
-+					mpp->alias, i + 1);
-+			break;
-+		}
-+	}
-+}
-+
- static void checker_finished(struct vectors *vecs, unsigned int ticks)
- {
- 	struct multipath *mpp;
-@@ -2943,12 +2973,16 @@ static void checker_finished(struct vectors *vecs, unsigned int ticks)
- 				i--;
- 				continue;
- 			}
--		} else if (prio_reload || failback_reload || ghost_reload || inconsistent)
-+		} else if (prio_reload || failback_reload || ghost_reload || inconsistent) {
- 			if (reload_and_sync_map(mpp, vecs) == 2) {
- 				/* multipath device deleted */
- 				i--;
- 				continue;
- 			}
-+		} else
-+			/* not necessary after map reloads */
-+			enable_pathgroups(mpp);
-+
- 		/* need_reload was cleared in dm_addmap and then set again */
- 		if (inconsistent && mpp->need_reload)
- 			condlog(1, "BUG: %s; map remained in inconsistent state after reload",
--- 
-2.48.0
+> From: Hou Tao <houtao1@huawei.com>
+> 
+> Hi,
+> 
+> The patchset contains misc cleanups and minor fixes for dm-crypt. These
+> problem were spotted during the code inspection. The patchset have been
+> tested by running fio on dm-crypt devices (both with and without
+> integrity feature). Patch #6 is tested by asynchronizing the
+> crypt/decrypt algorithm when using random IV.
+> 
+> Please see individual patches for more details. Comments are always
+> welcome.
+> 
+> Hou Tao (6):
+>   dm-crypt: set atomic as false when calling crypt_convert() in kworker
+>   dm-crypt: fully initialize clone->bi_iter in crypt_alloc_buffer()
+>   dm-crypt: use bi_sector in bio when initialize integrity seed
+>   dm-crypt: don't update io->sector after
+>     kcryptd_crypt_write_io_submit()
+>   dm-crypt: don't initialize cc_sector again
+>   dm-crypt: track tag_offset in convert_context
+> 
+>  drivers/md/dm-crypt.c | 42 ++++++++++++++++--------------------------
+>  1 file changed, 16 insertions(+), 26 deletions(-)
+> 
+> -- 
+> 2.29.2
+
+I applied the patches. Thanks.
+
+Mikulas
 
