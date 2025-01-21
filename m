@@ -1,98 +1,119 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.7])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 952A519342F
-	for <dm-devel@lists.linux.dev>; Tue, 21 Jan 2025 12:31:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B455129A78;
+	Tue, 21 Jan 2025 20:06:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.7
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737462677; cv=none; b=HmLtCDg7wCi5kH+pGaCrz2J0DfZ1UoKvKrnyNgNmFwPQ1nm2jAe1OuUPTIO7Z1yHIK1yklHJzVp0XJ74pjLhncpLiRlLW4zuwiWvscavQGlc/XvacmiBZIn3NdCSXhOpxs1YCgc0btIq6sH/WQ31yAWyfhD3+T8V+3SYPmZDZ50=
+	t=1737489981; cv=none; b=bTM9eOVZpSc483C0IlDRGukKNcfa/lNo7p1Pnj+74cUPbwBK6jQXQTGiUEHkTwoMjV3KZmuYEDYblZhrumtzM2jUVDw/w/Undfk2PeMM3Rb7HRbHM+yXvPj1Vod/x8Ussz/2VA/O/go3m0NoYfL9gb65fk0Q4tpYMyLKGUjElPY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737462677; c=relaxed/simple;
-	bh=eQQSI7aX8teQ/PlHD6j2OduY1n+DoVmDJmwE1vLJeQI=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=nrIGuAKvo+EhYtCriB6SMCYDL8RW8hhlCi+GHx3CrBlIclxcX0mHv5L5x5IgYbfbDB5jgciYdtILfzBuuxbPp3ugt2cleMKCICIimIkceMYofRxa5uSdwowsgCKsQxpstx52BZTX5Q5KwW6kfGZCNbIylhSwe425xuCcerUDXoY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EaVh727P; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1737489981; c=relaxed/simple;
+	bh=YpYSr0sNI7VGc4t/23Xo75gHQdbw7uGgLeeJy+bmquI=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=rlb9DV10k6BBnYju9WgyFqmObfeHMiSa3TI1zgii1e6UxU39D79qOmfYxdYxYeSqCmqYoCSFd+3QkAF4Zzj62X1v+rSMBNyOJ+sY2sdEFD2vW/RT1JPQPF2OQTOGJLF4fP7mgAL1vsc84Bh87H9csIvM3/DOuF7UlCnrV4dGJok=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=OViNjFJh; arc=none smtp.client-ip=192.198.163.7
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EaVh727P"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1737462674;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TVwRDbUYkhH5Lk2TvvJR8UKk+yuKxoLllxy+r28q7wI=;
-	b=EaVh727P+qtPd+8K2/WnCiHabl415Ier+eAjTAy3jIg9E5wiks2u+b6UPyykPmS+F6VuE0
-	3RE6fgjzFMvzvgZBapM1X/Q7qL35BUB/Q+l0HfMKFjaz4Ac9sWq1M2VD58YOse1O2jOszC
-	f2+cE/D/VX8wUJ4dGeqid23yVIE53Hg=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-116-vvCSyuy6Pg2vqBoSs-HqXQ-1; Tue,
- 21 Jan 2025 07:31:10 -0500
-X-MC-Unique: vvCSyuy6Pg2vqBoSs-HqXQ-1
-X-Mimecast-MFC-AGG-ID: vvCSyuy6Pg2vqBoSs-HqXQ
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 60DE919560A3;
-	Tue, 21 Jan 2025 12:31:08 +0000 (UTC)
-Received: from [10.45.224.57] (unknown [10.45.224.57])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3529719560A7;
-	Tue, 21 Jan 2025 12:31:05 +0000 (UTC)
-Date: Tue, 21 Jan 2025 13:31:01 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Hou Tao <houtao@huaweicloud.com>
-cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Ignat Korchagin <ignat@cloudflare.com>, houtao1@huawei.com
-Subject: Re: [PATCH 0/6] dm-crypt: misc cleanups and fixes
-In-Reply-To: <20250120082951.1423804-1-houtao@huaweicloud.com>
-Message-ID: <a0c0eed2-a068-551f-9c86-2a07bd4e3eca@redhat.com>
-References: <20250120082951.1423804-1-houtao@huaweicloud.com>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="OViNjFJh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1737489980; x=1769025980;
+  h=date:from:to:cc:subject:message-id:mime-version;
+  bh=YpYSr0sNI7VGc4t/23Xo75gHQdbw7uGgLeeJy+bmquI=;
+  b=OViNjFJhu0xpLkMuZTeZJskUcbaLIMEbFNohwiHVZIBqqzMnR4+q/AVT
+   SSEJmLlPNmT6b0nUJAAsb3y5OQIB3H0wSvrhqHdbK12yR8NCfyRwNdBtH
+   e886ZDgxGBL5VTkYqyFXqCgXvund10r4vNqD3F4jvAbYNzYyz+qxkSwOp
+   crAfBWOTZzoVpRHuBn3juZj1fmF/nI9TeYXC/zbW2Dkoind9nLsv2YgI+
+   TABqTyT+c3B4xi4JdliXElu0+Lb++gBtdXt5mrWAnQU1qIQyvpgD5RNAy
+   kPw97ehTdpKjzfJJRP2kXIh5tvzuF5tSNzyjogLtM31TrVNCo1qCd8okT
+   g==;
+X-CSE-ConnectionGUID: Sceno0zYSC2XanS0XTZCkw==
+X-CSE-MsgGUID: Rp0eYCB8QdqtUBw6Au33DA==
+X-IronPort-AV: E=McAfee;i="6700,10204,11322"; a="63283176"
+X-IronPort-AV: E=Sophos;i="6.13,223,1732608000"; 
+   d="scan'208";a="63283176"
+Received: from orviesa002.jf.intel.com ([10.64.159.142])
+  by fmvoesa101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 Jan 2025 12:06:18 -0800
+X-CSE-ConnectionGUID: 3uuEipCBR8uyMkKFyifsAQ==
+X-CSE-MsgGUID: /JoZeA/AQsOADqqDlkfCSg==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.13,223,1732608000"; 
+   d="scan'208";a="137742533"
+Received: from lkp-server01.sh.intel.com (HELO d63d4d77d921) ([10.239.97.150])
+  by orviesa002.jf.intel.com with ESMTP; 21 Jan 2025 12:06:17 -0800
+Received: from kbuild by d63d4d77d921 with local (Exim 4.96)
+	(envelope-from <lkp@intel.com>)
+	id 1taKVp-000Yut-2z;
+	Tue, 21 Jan 2025 20:06:13 +0000
+Date: Wed, 22 Jan 2025 04:06:03 +0800
+From: kernel test robot <lkp@intel.com>
+To: Hou Tao <houtao1@huawei.com>
+Cc: oe-kbuild-all@lists.linux.dev, dm-devel@lists.linux.dev,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: [device-mapper-dm:for-next 14/17] drivers/md/dm-crypt.c:1190:9:
+ error: implicit declaration of function 'bip_set_seed'; did you mean
+ 'bio_set_dev'?
+Message-ID: <202501220353.25OWE3tE-lkp@intel.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+head:   cc5c4135da9584aa2ccbd0453cccfe52891f172e
+commit: e3baf2b47a93f6d27beb0a94df8b912e57f3534f [14/17] dm-crypt: use bi_sector in bio when initialize integrity seed
+config: riscv-randconfig-002-20250122 (https://download.01.org/0day-ci/archive/20250122/202501220353.25OWE3tE-lkp@intel.com/config)
+compiler: riscv32-linux-gcc (GCC) 14.2.0
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20250122/202501220353.25OWE3tE-lkp@intel.com/reproduce)
+
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202501220353.25OWE3tE-lkp@intel.com/
+
+All errors (new ones prefixed by >>):
+
+   drivers/md/dm-crypt.c: In function 'dm_crypt_integrity_io_alloc':
+>> drivers/md/dm-crypt.c:1190:9: error: implicit declaration of function 'bip_set_seed'; did you mean 'bio_set_dev'? [-Wimplicit-function-declaration]
+    1190 |         bip_set_seed(bip, bio->bi_iter.bi_sector);
+         |         ^~~~~~~~~~~~
+         |         bio_set_dev
 
 
+vim +1190 drivers/md/dm-crypt.c
 
-On Mon, 20 Jan 2025, Hou Tao wrote:
+  1174	
+  1175	static int dm_crypt_integrity_io_alloc(struct dm_crypt_io *io, struct bio *bio)
+  1176	{
+  1177		struct bio_integrity_payload *bip;
+  1178		unsigned int tag_len;
+  1179		int ret;
+  1180	
+  1181		if (!bio_sectors(bio) || !io->cc->tuple_size)
+  1182			return 0;
+  1183	
+  1184		bip = bio_integrity_alloc(bio, GFP_NOIO, 1);
+  1185		if (IS_ERR(bip))
+  1186			return PTR_ERR(bip);
+  1187	
+  1188		tag_len = io->cc->tuple_size * (bio_sectors(bio) >> io->cc->sector_shift);
+  1189	
+> 1190		bip_set_seed(bip, bio->bi_iter.bi_sector);
+  1191	
+  1192		ret = bio_integrity_add_page(bio, virt_to_page(io->integrity_metadata),
+  1193					     tag_len, offset_in_page(io->integrity_metadata));
+  1194		if (unlikely(ret != tag_len))
+  1195			return -ENOMEM;
+  1196	
+  1197		return 0;
+  1198	}
+  1199	
 
-> From: Hou Tao <houtao1@huawei.com>
-> 
-> Hi,
-> 
-> The patchset contains misc cleanups and minor fixes for dm-crypt. These
-> problem were spotted during the code inspection. The patchset have been
-> tested by running fio on dm-crypt devices (both with and without
-> integrity feature). Patch #6 is tested by asynchronizing the
-> crypt/decrypt algorithm when using random IV.
-> 
-> Please see individual patches for more details. Comments are always
-> welcome.
-> 
-> Hou Tao (6):
->   dm-crypt: set atomic as false when calling crypt_convert() in kworker
->   dm-crypt: fully initialize clone->bi_iter in crypt_alloc_buffer()
->   dm-crypt: use bi_sector in bio when initialize integrity seed
->   dm-crypt: don't update io->sector after
->     kcryptd_crypt_write_io_submit()
->   dm-crypt: don't initialize cc_sector again
->   dm-crypt: track tag_offset in convert_context
-> 
->  drivers/md/dm-crypt.c | 42 ++++++++++++++++--------------------------
->  1 file changed, 16 insertions(+), 26 deletions(-)
-> 
-> -- 
-> 2.29.2
-
-I applied the patches. Thanks.
-
-Mikulas
-
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
