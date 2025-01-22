@@ -1,194 +1,193 @@
-Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C9811369B4
-	for <dm-devel@lists.linux.dev>; Wed, 22 Jan 2025 17:00:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B063C215767
+	for <dm-devel@lists.linux.dev>; Wed, 22 Jan 2025 18:15:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737565239; cv=none; b=fMt9gi+cEZHj6U3q1Wem1HYLM7Cb/g6GEfg7uyqEOKpafgc/52Zuzp8znEG4h2NnDePgBEtm2VPQgr5IFqmXkA4nY0woKXXaEN81hbEsSHsKi1zXco5cg6z9yayxPxBGhOe/wHH6oCyKhu6cSkIQUCUNdEpjURr5VSRE9XH/2BY=
+	t=1737569713; cv=none; b=UfcKrZElwzCXP7pfvKc0tRr94tYjMQIOBk7JhZv0sRx9sB3+fKLT2fQc0x7p0yQ3jdpWsdcrDnlJkJ0lSnEu6v3UrA0JDMRehuR1LapnrubSiRBIOCpnyHR03RaoUIzvbJLhR2YVAPHxeRGDwHT9sTidrZqqtAXD6LBPMg8ZAJY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737565239; c=relaxed/simple;
-	bh=h67XZZ5BeVjdu7Js8a+o4Yi06Tufx+fnexA9XMWw2A8=;
-	h=MIME-Version:Date:From:To:Cc:Subject:In-Reply-To:References:
-	 Message-ID:Content-Type; b=QSas7jAbBfH5U+1cCF9a6b/69DnlqV01FzUaa08OlCm4UnM83Is7uZhcqvzVgSNA4cEiGq2zGc+KQ5RtsfXtlrODDNUZn0TgyZRsB7bt2MT5N1WIcR9eGTt3c8xhF0BSq5f0izzl+xGOhBTxf5YlRSHpvSsmILmahHBXF6zl2Mw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=PFpgrJwv; arc=none smtp.client-ip=148.163.158.5
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1737569713; c=relaxed/simple;
+	bh=av6DQjzIWOKRx+hewf1XE/KXJk/uFbwZsrTrJbSV/mY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=V1OJNvbjn8LCdw8kO1G2QIpsTVTvI3GdQoUYpr7prcGPAddLJQUgbFs7qKsz+72m62xLo76WeABedCiQtl5O5/Tk4qgYo9GgsM42YoLN6orlPLtW0QW8dneVG4b1UrX9mw1ErdnG8GHcWAL7yWNtXzBUwpLVSifaBabmlL1+nhI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=a0K4k3vC; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="PFpgrJwv"
-Received: from pps.filterd (m0356516.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 50MFdXR7016933;
-	Wed, 22 Jan 2025 17:00:29 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:reply-to:subject:to; s=pp1;
-	 bh=W4gP+K9F4UCt2y9K/DfO4yUbHfb1rdpjakUW3NTjSAk=; b=PFpgrJwv8Ty+
-	YaQvlhZ5eQequO9wqNl3R77FY+Me1bvW/5ygIG+G9sqGSSSWRZ1HpE2xVahwt7ZS
-	04FUvD9ud2ZYhMmQXZ1wMrK0aP93Pt44acE8VDDRCEMuxaXDbF4Knu94JXQr6oma
-	oOL0qlWeva05+9nXtZQwYrZt6wmvaG5u7s8jRkrgfdI8A3L2s0wFrG2I8I8iiUjM
-	XV0ASBvai2uVe0S/ZYfbXZ/Z7VmaPxvD3St1CtgeAG4n5Bt+/Yn7oF/bfKdjvKCa
-	A0id8zqlgQm4ssP5idggA+z8D0o4VFRapJOo0IjmPre51ROK/qi/cgktJN4egKLe
-	Q63MaAjb/A==
-Received: from ppma11.dal12v.mail.ibm.com (db.9e.1632.ip4.static.sl-reverse.com [50.22.158.219])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 44b3gtrdj4-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Wed, 22 Jan 2025 17:00:29 +0000 (GMT)
-Received: from pps.filterd (ppma11.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma11.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 50MFfvjK021063;
-	Wed, 22 Jan 2025 17:00:28 GMT
-Received: from smtprelay05.wdc07v.mail.ibm.com ([172.16.1.72])
-	by ppma11.dal12v.mail.ibm.com (PPS) with ESMTPS id 448sb1h0um-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Wed, 22 Jan 2025 17:00:28 +0000
-Received: from smtpav06.dal12v.mail.ibm.com (smtpav06.dal12v.mail.ibm.com [10.241.53.105])
-	by smtprelay05.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 50MH0RnS30015892
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 22 Jan 2025 17:00:27 GMT
-Received: from smtpav06.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 0BE6758055;
-	Wed, 22 Jan 2025 17:00:27 +0000 (GMT)
-Received: from smtpav06.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id A2CDB58043;
-	Wed, 22 Jan 2025 17:00:26 +0000 (GMT)
-Received: from ltc.linux.ibm.com (unknown [9.5.196.140])
-	by smtpav06.dal12v.mail.ibm.com (Postfix) with ESMTP;
-	Wed, 22 Jan 2025 17:00:26 +0000 (GMT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="a0K4k3vC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1737569710;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=JAO1OsADZVekxtDltwlIQpQR7kI7qhm27ghzkPCWvJQ=;
+	b=a0K4k3vCWHQWaPBaFSMeQddNsOPOk+WKTsBGL/7HuWi1AF9zf6HzMYe9hlx6uhsDhWqK34
+	dCNUeNIC2lVPaPGW7kvjRQXwtKpIWiNOi5T5TducovjV1N1QuV5dPZoaToo/Li9Rro9As1
+	m4tsQpHkvbAWTQPiFw1xGFUlwWRgGfI=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-510-U6Pt4InNPdiiC2V4wYOpdQ-1; Wed,
+ 22 Jan 2025 13:15:06 -0500
+X-MC-Unique: U6Pt4InNPdiiC2V4wYOpdQ-1
+X-Mimecast-MFC-AGG-ID: U6Pt4InNPdiiC2V4wYOpdQ
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 006EB1956050;
+	Wed, 22 Jan 2025 18:15:05 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 76CB43003E7F;
+	Wed, 22 Jan 2025 18:15:04 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.1) with ESMTPS id 50MIF3PD3003932
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 22 Jan 2025 13:15:03 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.17.2/8.17.2/Submit) id 50MIF2xQ3003931;
+	Wed, 22 Jan 2025 13:15:02 -0500
+Date: Wed, 22 Jan 2025 13:15:02 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3 03/15] multipathd: sync maps at end of checkerloop
+Message-ID: <Z5E1pvEjzv-wnK6h@redhat.com>
+References: <20250117202738.126196-1-mwilck@suse.com>
+ <20250117202738.126196-4-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Date: Wed, 22 Jan 2025 18:00:26 +0100
-From: Harald Freudenberger <freude@linux.ibm.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: agk@redhat.com, snitzer@kernel.org, ifranzki@linux.ibm.com,
-        linux-s390@vger.kernel.org, dm-devel@lists.linux.dev,
-        herbert@gondor.apana.org.au, dengler@linux.ibm.com
-Subject: Re: [PATCH v1 1/1] dm-integrity: Implement asynch digest support
-Reply-To: freude@linux.ibm.com
-Mail-Reply-To: freude@linux.ibm.com
-In-Reply-To: <b541f1bb-5287-7600-77ce-ceed5903e554@redhat.com>
-References: <20250115164657.84650-1-freude@linux.ibm.com>
- <20250115164657.84650-2-freude@linux.ibm.com>
- <b541f1bb-5287-7600-77ce-ceed5903e554@redhat.com>
-Message-ID: <5a8a09387c0fef59629707937297a0a4@linux.ibm.com>
-X-Sender: freude@linux.ibm.com
-Content-Type: text/plain; charset=US-ASCII;
- format=flowed
-Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-ORIG-GUID: 6pT4E4ijpoetzdmAQo9Ih1EsjWTK3p-b
-X-Proofpoint-GUID: 6pT4E4ijpoetzdmAQo9Ih1EsjWTK3p-b
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1057,Hydra:6.0.680,FMLib:17.12.68.34
- definitions=2025-01-22_07,2025-01-22_02,2024-11-22_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 clxscore=1015 suspectscore=0
- bulkscore=0 mlxscore=0 malwarescore=0 priorityscore=1501
- lowpriorityscore=0 impostorscore=0 mlxlogscore=720 phishscore=0
- spamscore=0 adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2411120000 definitions=main-2501220125
+In-Reply-To: <20250117202738.126196-4-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: OAOaYnOU8HCsuOBlP563g7G8OiRvwr0NrgL2B0f30gQ_1737569705
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On 2025-01-15 18:29, Mikulas Patocka wrote:
-> Hi
+On Fri, Jan 17, 2025 at 09:27:26PM +0100, Martin Wilck wrote:
+> Rather than calling sync_mpp early in the checkerloop and tracking
+> map synchronization with synced_count, call sync_mpp() in the CHECKER_FINISHED
+> state, if either at least one path of the map has been checked in the current
+> iteration, or the sync tick has expired. This avoids potentially deleting
+> paths from the pathvec through the do_sync_mpp() -> update_multipath_strings()
+> -> sync_paths -> check_removed_paths() call chain while we're iterating over
+> the pathvec. Also, the time gap between obtaining path states and syncing
+> the state with the kernel is smaller this way.
 > 
-> The ahash interface is slower than the shash interface for synchronous
-> implementations, so the patch is basically slowing down the common 
-> case.
-> See the upstream commit b76ad8844234bd0d394105d7d784cd05f1bf269a for an
-> explanation in dm-verity.
+> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+> ---
+>  libmultipath/structs.h     |  2 +-
+>  libmultipath/structs_vec.c |  1 -
+>  multipathd/main.c          | 26 +++++++++++---------------
+>  3 files changed, 12 insertions(+), 17 deletions(-)
 > 
-> Do you have some benchmark that shows how much does it help on s390x? 
-> So,
-> that we can evaluate whether the added complexity is worth the 
-> performance
-> improvement or not.
-> 
-> Mikulas
-> 
-> ...
+> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> index 6a30c59..9d22bdd 100644
+> --- a/libmultipath/structs.h
+> +++ b/libmultipath/structs.h
+> @@ -471,7 +471,7 @@ struct multipath {
+>  	int ghost_delay_tick;
+>  	int queue_mode;
+>  	unsigned int sync_tick;
+> -	int synced_count;
+> +	int checker_count;
+>  	enum prio_update_type prio_update;
+>  	uid_t uid;
+>  	gid_t gid;
+> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+> index 7a4e3eb..6aa744d 100644
+> --- a/libmultipath/structs_vec.c
+> +++ b/libmultipath/structs_vec.c
+> @@ -530,7 +530,6 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
+>  	conf = get_multipath_config();
+>  	mpp->sync_tick = conf->max_checkint;
+>  	put_multipath_config(conf);
+> -	mpp->synced_count++;
+>  
+>  	r = libmp_mapinfo(DM_MAP_BY_NAME | MAPINFO_MPATH_ONLY,
+>  			  (mapid_t) { .str = mpp->alias },
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 4a28fbb..e4e6bf7 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2470,7 +2470,7 @@ sync_mpp(struct vectors * vecs, struct multipath *mpp, unsigned int ticks)
+>  	if (mpp->sync_tick)
+>  		mpp->sync_tick -= (mpp->sync_tick > ticks) ? ticks :
+>  				  mpp->sync_tick;
+> -	if (mpp->sync_tick)
+> +	if (mpp->sync_tick && !mpp->checker_count)
+>  		return;
+>  
+>  	do_sync_mpp(vecs, mpp);
+> @@ -2513,12 +2513,6 @@ update_path_state (struct vectors * vecs, struct path * pp)
+>  		return handle_path_wwid_change(pp, vecs)? CHECK_PATH_REMOVED :
+>  							  CHECK_PATH_SKIPPED;
+>  	}
+> -	if (pp->mpp->synced_count == 0) {
+> -		do_sync_mpp(vecs, pp->mpp);
+> -		/* if update_multipath_strings orphaned the path, quit early */
+> -		if (!pp->mpp)
+> -			return CHECK_PATH_SKIPPED;
+> -	}
+>  	if ((newstate != PATH_UP && newstate != PATH_GHOST &&
+>  	     newstate != PATH_PENDING) && (pp->state == PATH_DELAYED)) {
+>  		/* If path state become failed again cancel path delay state */
+> @@ -2918,9 +2912,11 @@ check_paths(struct vectors *vecs, unsigned int ticks)
+>  	vector_foreach_slot(vecs->pathvec, pp, i) {
+>  		if (pp->is_checked != CHECK_PATH_UNCHECKED)
+>  			continue;
+> -		if (pp->mpp)
+> +		if (pp->mpp) {
+>  			pp->is_checked = check_path(pp, ticks);
+> -		else
+> +			if (pp->is_checked == CHECK_PATH_STARTED)
+> +				pp->mpp->checker_count++;
+> +		} else
+>  			pp->is_checked = check_uninitialized_path(pp, ticks);
+>  		if (pp->is_checked == CHECK_PATH_STARTED &&
+>  		    checker_need_wait(&pp->checker))
+> @@ -3014,12 +3010,10 @@ checkerloop (void *ap)
+>  			pthread_cleanup_push(cleanup_lock, &vecs->lock);
+>  			lock(&vecs->lock);
+>  			pthread_testcancel();
+> -			vector_foreach_slot(vecs->mpvec, mpp, i)
+> -				mpp->synced_count = 0;
+>  			if (checker_state == CHECKER_STARTING) {
+>  				vector_foreach_slot(vecs->mpvec, mpp, i) {
+> -					sync_mpp(vecs, mpp, ticks);
+>  					mpp->prio_update = PRIO_UPDATE_NONE;
+> +					mpp->checker_count = 0;
+>  				}
+>  				vector_foreach_slot(vecs->pathvec, pp, i)
+>  					pp->is_checked = CHECK_PATH_UNCHECKED;
+> @@ -3032,11 +3026,13 @@ checkerloop (void *ap)
+>  							     start_time.tv_sec);
+>  			if (checker_state == CHECKER_FINISHED) {
+>  				vector_foreach_slot(vecs->mpvec, mpp, i) {
+> -					if ((update_mpp_prio(mpp) ||
+> -					     (mpp->need_reload && mpp->synced_count > 0)) &&
+> -					    reload_and_sync_map(mpp, vecs) == 2)
+> +					sync_mpp(vecs, mpp, ticks);
+> +					if ((update_mpp_prio(mpp) || mpp->need_reload) &&
+> +					    reload_and_sync_map(mpp, vecs) == 2) {
+>  						/* multipath device deleted */
+>  						i--;
+> +						continue;
+> +					}
+>  				}
+>  			}
+>  			lock_cleanup_pop(vecs->lock);
+> -- 
+> 2.47.1
 
-Hi Mikulas,
-
-So finally some benchmarks measured on my development system:
-A LPAR on a z16 with 16 CPUs, 32G memory, with a fresh build linux 
-6.13.0-rc7
-kernel with and without just my dm-integrity ahash patch.
-
-For the dm-integrity format measurements I used a 16G file located in 
-tempfs
-as the backing file for a loopback device. The backing file totally 
-written
-with random data from /dev/urandom. The dm-integrity format command was
-
-   integritysetup format /dev/loop0 --integrity <alg> --sector-size 4096
-
-6.13.0-rc7 with dm-integrity using shash:
-
-sha256		Finished, time 00m09s,   15 GiB written, speed   1.8 GiB/s
-hmac-sha256	Finished, time 00m09s,   15 GiB written, speed   1.7 GiB/s
-
-6.13.0-rc7 with dm-integrity with my ahash patch:
-
-sha256	       Finished, time 00m09s,   15 GiB written, speed   1.7 GiB/s
-hmac-sha256    Finished, time 00m09s,   15 GiB written, speed   1.6 
-GiB/s
-
-In practice the read and write performance may be of more importance. I 
-set
-up a 8G file located in tempfs as the backing file for a loopback device 
-and
-dm-integrity formatted and opened it. Then I created a random file with 
-4G
-via dd if=/dev/urandom which was located in tempfs. For the write I used
-
-   dd if=<myrandomfile> of=/dev/mapper/<dm-inintegrity-name> 
-oflag=direct,sync bs=4096 count=1M
-
-to copy the 4G random into the dm-crypt-block device.
-For the read I used
-
-   dd if=/dev/mapper/<dm-inintegrity-name> of=/dev/null iflag=direct,sync 
-bs=4096 count=1M
-
-to copy 4G from the dm-crypt-block device to /dev/null.
-
-6.13.0-rc7 with dm-integrity using shash:
-
-sha256
-   WRITE: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 45.5 s, 94.4 MB/s
-   READ: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 19.2137 s, 224 MB/s
-hmac-sha256
-   WRITE: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 45.2026 s, 95.0 MB/s
-   READ: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 19.2082 s, 224 MB/s
-
-6.13.0-rc7 with dm-integrity with my ahash patch:
-
-sha256
-   WRITE: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 41.5273 s, 103 MB/s
-   READ: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 16.2558 s, 264 MB/s
-hmac-sha256
-   WRITE: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 44.063 s, 97.5 MB/s
-   READ: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 16.5381 s, 260 MB/s
-
-I checked these results several times. They vary but always the 
-dm-integrity
-with the ahash patch gives the better figures. I ran some measurements 
-with
-an isolated cpu and used this cpu to pin the format or the dd task to 
-this
-cpu. Pinning is not a good idea as very much of the work is done via 
-workqueues
-in dm-integrity and so the communication overhead between the cpus 
-increases.
-However, I would have expected a slight penalty with the ahash patch 
-like
-it is to see with the dm-integrity format but read and write seem to 
-benefit
-from this simple ahash patch. It would be very interesting how a real 
-asynch
-implementation of dm-integrity really performs.
-
-If someone is interested, I can share my scripts for these measurements.
-
-Harald Freudenberger
