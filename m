@@ -1,27 +1,28 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E87A1A28D
-	for <dm-devel@lists.linux.dev>; Thu, 23 Jan 2025 02:13:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 70F321D555
+	for <dm-devel@lists.linux.dev>; Thu, 23 Jan 2025 02:13:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737598404; cv=none; b=uZDWHgXW9/5jwt/00WVxs1mvCbG623p2tSJQck21/1kuXuFjn6uWyn/3gGNua6nOSI3g2Jv+W8pcxYHOR9ySobBHBV1IhYM6O4w/wGEYkdsk623xP993AZoL6/32kdcBOnMZPeJ1RmdgMIIjMdMPp0PyezIV2Bpihqw5HMXuIHM=
+	t=1737598404; cv=none; b=rZOufwmPs/QCyvhZRmrp1jBPQqC+Q4yvyGKnv7Dyw7BAgjGrlzIbwKutjaQUSFj59P6wKFYXlMGYJr7C3mvAhv3bsV0DL3Fjxr9gTkgOMzfDaMuNB/bQ9jlVdjtFM1RTi+3bUQVo6zgY+bBAJ1UT2YdXVIkJtv21uPMj1dBoy8Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1737598404; c=relaxed/simple;
-	bh=KyOBfOupSyBvtsJrPdTalMfEoJ+GPlWtGQBkeawHOJQ=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=aSuh4Er8DiLUzwc7Ygvq5i3DIJ4sTkj994szebRCf3pFIr9UbBSAm/oLUlrzebD7WM6fX29fpnUmlJ3qcxhknJ0ilGovf5k+fHUhu78FQLNT2IeGOh7mMZpuujOt604Kj4vk+1EEOHYE5RhT5erWmmTofmX39QUCJ/g5sM90ZnY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+	bh=I4LoQebpJtSEWMHcIa2fOqc5/lBWAgZgbxhkGwxwOkQ=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=i+maV99DoEngcsXa24+1yPc7dfFcbsm8z/lVuvK238JvS4IzgcYOCIomLaTdhnvcVAxvAO+k9zb29bjegYsBR8ANX0+eQK3m9QgGgq/2VIWSA7b4BcKoY0LGl+/0OYn4LeiyK3FtD/dDtj508q/+EuBMZ4HCSK5fS6aYyl7HFSQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4YdkxN2sV1z4f3khk
-	for <dm-devel@lists.linux.dev>; Thu, 23 Jan 2025 10:12:56 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4YdkxW6znXz4f3jqZ
+	for <dm-devel@lists.linux.dev>; Thu, 23 Jan 2025 10:13:03 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 0FE071A0898
-	for <dm-devel@lists.linux.dev>; Thu, 23 Jan 2025 10:13:17 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 711DC1A1092
+	for <dm-devel@lists.linux.dev>; Thu, 23 Jan 2025 10:13:19 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgA3m1+7pZFno+znBg--.59488S4;
-	Thu, 23 Jan 2025 10:13:16 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgA3m1+7pZFno+znBg--.59488S9;
+	Thu, 23 Jan 2025 10:13:19 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: song@kernel.org,
 	yukuai3@huawei.com,
@@ -34,10 +35,12 @@ Cc: linux-raid@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH v3 md-6.15 00/11] md/md-bitmap: introduce CONFIG_MD_BITMAP
-Date: Thu, 23 Jan 2025 10:07:19 +0800
-Message-Id: <20250123020730.2003602-1-yukuai1@huaweicloud.com>
+Subject: [PATCH v3 md-6.15 05/11] md/md-bitmap: handle the case bitmap is not enabled before end_sync()
+Date: Thu, 23 Jan 2025 10:07:24 +0800
+Message-Id: <20250123020730.2003602-6-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20250123020730.2003602-1-yukuai1@huaweicloud.com>
+References: <20250123020730.2003602-1-yukuai1@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -45,73 +48,138 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgA3m1+7pZFno+znBg--.59488S4
-X-Coremail-Antispam: 1UD129KBjvJXoW7Ww1ftF4xXF1UGw1UAF47Arb_yoW8Cw13pa
-	9xt343uw15JFWavFnxJrykCFyrX3s7Ja9Fkrn7Cw4rWFyDZF9xXr48GFW0y34qgryfX3Zr
-	Jr15tF1xGr18Xa7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
-	Y2ka0xkIwI1lc7CjxVAaw2AFwI0_Jw0_GFyl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
-	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
-	zVAF1VAY17CE14v26r1q6r43MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
-	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWU
-	CwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
-	nIWIevJa73UjIFyTuYvjfUonmRUUUUU
+X-CM-TRANSID:gCh0CgA3m1+7pZFno+znBg--.59488S9
+X-Coremail-Antispam: 1UD129KBjvJXoWxXryfuF1DXryxKr4rJrW3trb_yoWrGw4xp3
+	9rJFW3uw1UWFW5X3WUZrykuFyFvwnrtr9rtFyxW3s3uFyrXF9rJF4rGFyjqw1qka4fAFZ8
+	X34YkrW5CF1UWrJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUmI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
+	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
+	z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
+	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
+	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
+	IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
+	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
+	kIc2xKxwCY1x0262kKe7AKxVWUtVW8ZwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkE
+	bVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67
+	AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI
+	42IY6xIIjxv20xvEc7CjxVAFwI0_Cr0_Gr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCw
+	CI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnI
+	WIevJa73UjIFyTuYvjfUOyIUUUUUU
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-Changes in v2:
- - don't export apis, and don't support build md-bitmap as module
-Changes in v3:
- - update commit message.
+This case can be handled without knowing internal implementation.
 
-Due to known performance issues with md-bitmap and the unreasonable
-implementations like following:
+Prepare to introduce CONFIG_MD_BITMAP.
 
- - self-managed pages, bitmap_storage->filemap;
- - self-managed IO submitting like filemap_write_page();
- - global spin_lock
- ...
+Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+---
+ drivers/md/md-bitmap.c |  4 ----
+ drivers/md/md-bitmap.h | 11 +++++++++++
+ drivers/md/raid1.c     |  6 +++---
+ drivers/md/raid10.c    |  8 +++-----
+ drivers/md/raid5.c     |  4 ++--
+ 5 files changed, 19 insertions(+), 14 deletions(-)
 
-I have decided not to continue optimizing based on the current bitmap
-implementation, and plan to invent a new lock-less bitmap. And a new
-kconfig option is a good way for isolation. However, we still
-encourage anyone who wants to continue optimizing the current
-implementation, the new bitmap will take some time to be ready.
-
-Yu Kuai (11):
-  md/md-bitmap: remove the parameter 'init' for bitmap_ops->resize()
-  md/md-bitmap: merge md_bitmap_group into bitmap_operations
-  md/md-bitmap: add md_bitmap_registered/enabled() helper
-  md/md-bitmap: handle the case bitmap is not enabled before
-    start_sync()
-  md/md-bitmap: handle the case bitmap is not enabled before end_sync()
-  md/raid1: check bitmap before behind write
-  md/raid1: check before deferencing mddev->bitmap_ops
-  md/raid10: check before deferencing mddev->bitmap_ops
-  md/raid5: check before deferencing mddev->bitmap_ops
-  md: check before deferencing mddev->bitmap_ops
-  md/md-bitmap: introduce CONFIG_MD_BITMAP
-
- drivers/md/Kconfig      |  18 +++++
- drivers/md/dm-raid.c    |   2 +-
- drivers/md/md-bitmap.c  |  65 ++++++++---------
- drivers/md/md-bitmap.h  |  66 +++++++++++++++--
- drivers/md/md-cluster.c |   2 +-
- drivers/md/md.c         | 154 +++++++++++++++++++++++++++++++---------
- drivers/md/md.h         |   2 -
- drivers/md/raid1-10.c   |   2 +-
- drivers/md/raid1.c      |  79 ++++++++++++---------
- drivers/md/raid10.c     |  48 ++++++-------
- drivers/md/raid5.c      |  30 ++++----
- 11 files changed, 322 insertions(+), 146 deletions(-)
-
+diff --git a/drivers/md/md-bitmap.c b/drivers/md/md-bitmap.c
+index 33f952c78397..a92e3c52bfcf 100644
+--- a/drivers/md/md-bitmap.c
++++ b/drivers/md/md-bitmap.c
+@@ -1820,10 +1820,6 @@ static void __bitmap_end_sync(struct bitmap *bitmap, sector_t offset,
+ 	bitmap_counter_t *bmc;
+ 	unsigned long flags;
+ 
+-	if (bitmap == NULL) {
+-		*blocks = 1024;
+-		return;
+-	}
+ 	spin_lock_irqsave(&bitmap->counts.lock, flags);
+ 	bmc = md_bitmap_get_counter(&bitmap->counts, offset, blocks, 0);
+ 	if (bmc == NULL)
+diff --git a/drivers/md/md-bitmap.h b/drivers/md/md-bitmap.h
+index 6a5806ebb11a..fefa00bc438e 100644
+--- a/drivers/md/md-bitmap.h
++++ b/drivers/md/md-bitmap.h
+@@ -145,4 +145,15 @@ static inline bool md_bitmap_start_sync(struct mddev *mddev, sector_t offset,
+ 	return mddev->bitmap_ops->start_sync(mddev, offset, blocks, degraded);
+ }
+ 
++static inline void md_bitmap_end_sync(struct mddev *mddev, sector_t offset,
++				      sector_t *blocks)
++{
++	if (!md_bitmap_enabled(mddev)) {
++		*blocks = 1024;
++		return;
++	}
++
++	mddev->bitmap_ops->end_sync(mddev, offset, blocks);
++}
++
+ #endif
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index f6943849f34a..a94f71e79783 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -2060,7 +2060,7 @@ static void abort_sync_write(struct mddev *mddev, struct r1bio *r1_bio)
+ 
+ 	/* make sure these bits don't get cleared. */
+ 	do {
+-		mddev->bitmap_ops->end_sync(mddev, s, &sync_blocks);
++		md_bitmap_end_sync(mddev, s, &sync_blocks);
+ 		s += sync_blocks;
+ 		sectors_to_go -= sync_blocks;
+ 	} while (sectors_to_go > 0);
+@@ -2802,8 +2802,8 @@ static sector_t raid1_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 		 * We can find the current addess in mddev->curr_resync
+ 		 */
+ 		if (mddev->curr_resync < max_sector) /* aborted */
+-			mddev->bitmap_ops->end_sync(mddev, mddev->curr_resync,
+-						    &sync_blocks);
++			md_bitmap_end_sync(mddev, mddev->curr_resync,
++					   &sync_blocks);
+ 		else /* completed sync */
+ 			conf->fullsync = 0;
+ 
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index ca594d56f8d0..f448b5d9faf3 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -3228,15 +3228,13 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 
+ 		if (mddev->curr_resync < max_sector) { /* aborted */
+ 			if (test_bit(MD_RECOVERY_SYNC, &mddev->recovery))
+-				mddev->bitmap_ops->end_sync(mddev,
+-							    mddev->curr_resync,
+-							    &sync_blocks);
++				md_bitmap_end_sync(mddev, mddev->curr_resync,
++						   &sync_blocks);
+ 			else for (i = 0; i < conf->geo.raid_disks; i++) {
+ 				sector_t sect =
+ 					raid10_find_virt(conf, mddev->curr_resync, i);
+ 
+-				mddev->bitmap_ops->end_sync(mddev, sect,
+-							    &sync_blocks);
++				md_bitmap_end_sync(mddev, sect, &sync_blocks);
+ 			}
+ 		} else {
+ 			/* completed sync */
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 5b825c196b56..9098762ccfa6 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -6501,8 +6501,8 @@ static inline sector_t raid5_sync_request(struct mddev *mddev, sector_t sector_n
+ 		}
+ 
+ 		if (mddev->curr_resync < max_sector) /* aborted */
+-			mddev->bitmap_ops->end_sync(mddev, mddev->curr_resync,
+-						    &sync_blocks);
++			md_bitmap_end_sync(mddev, mddev->curr_resync,
++					   &sync_blocks);
+ 		else /* completed sync */
+ 			conf->fullsync = 0;
+ 		mddev->bitmap_ops->close_sync(mddev);
 -- 
 2.39.2
 
