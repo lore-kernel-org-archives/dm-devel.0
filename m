@@ -1,107 +1,234 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF98B18C337
-	for <dm-devel@lists.linux.dev>; Mon, 27 Jan 2025 17:57:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D7017134D4;
+	Mon, 27 Jan 2025 22:16:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738000657; cv=none; b=Xor/q7So3SX309kHOaQ2f88wZVp6f/Gnh4iOK4IyYxolCA8uQmWCkfezw0hUOP0LVEFV2ghecvQ7VtZ5uaTE64iWNNe+rZ0rjG4LFEbNm1PnLt7fcRPLamhvhgEsNIcqKbE5SAa3PyILMboR6IYLlRGz/H110lW01evtUBU5feA=
+	t=1738016168; cv=none; b=AVSk9Owqmlto96EmBEEPl4vnPuVdGm3Sw6IGyeD+V8nC6myscy+rogFzNssKkqnP9KkQm6K3/p5Zu1v1GQbop7fb7GveApB6uGlSR56sF5Tw0Jb1OU8aRPKVLxs/0pDIe6oy8TuXx88DJU/Uj79CIkbQP+LaDYFpfXN1tkdkeCM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738000657; c=relaxed/simple;
-	bh=Da/Mo6lc9KrmvCQJHGNrMkn9XdDwOdxWpBKxPrOgGA0=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=ovnhfzJuYHAOqR6j+mxJdnYy4u3pHh//8cd2oWUU7shnVHQL4wSF53dQN8rlFvckJlhgqqQXhtLZkD1ulbGrCmcoyJoOWpI4bSUprQF+ybGiTYowrb3bQYladz/7pUhnwnqKO44w07W5+sWxMrP6J0zwTkgiZ7XH8DzgxThqgBY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Rke8+kCu; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1738016168; c=relaxed/simple;
+	bh=K6c1om5w3IYKgGKZqHjx+AgeGT5ms3TVZSTf1hSeH3o=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=it0DV7fJd0wZUqLftfO/PxgCh3vP8f6UJIXvFcETlN908GeH6+GxVVCSXkwENWHT2HN6l3BdVDXTixYiwDewDZDzJq1CKnclY4w2cAhK+ZmkG6DNVMYOTxljTixOP9jhed9MMbaF87Z0T/sL6LA2N0vEkOOyNKqE3ZDfYAb6Ab4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=dbpEj4XE; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Rke8+kCu"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1738000655;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=6FkhrzKrV06UD8gv8drmi1i5znhVKcH4EdaDtq7gHPQ=;
-	b=Rke8+kCuBoOi7O0bMPhg2bFff8SfeRTuGfszLr84PUoR82kHldSeB5EOnHyFIHjyAYVEJw
-	RpXTYuZR2cDv0qbfOpWX/IFowI3jFf57E9CEOW4UN6vrBpZNPuz8mjvsbAP6D6d+2HsiOI
-	yx1SsmqeWYQmWTBu9MP9/QnuFICdpp4=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-553-rBQa59sANb6K_EgZ4fXOUg-1; Mon,
- 27 Jan 2025 12:57:32 -0500
-X-MC-Unique: rBQa59sANb6K_EgZ4fXOUg-1
-X-Mimecast-MFC-AGG-ID: rBQa59sANb6K_EgZ4fXOUg
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2ABC41801F16;
-	Mon, 27 Jan 2025 17:57:31 +0000 (UTC)
-Received: from [10.45.224.57] (unknown [10.45.224.57])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5EC7E195608A;
-	Mon, 27 Jan 2025 17:57:28 +0000 (UTC)
-Date: Mon, 27 Jan 2025 18:57:24 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Harald Freudenberger <freude@linux.ibm.com>
-cc: agk@redhat.com, snitzer@kernel.org, ifranzki@linux.ibm.com, 
-    linux-s390@vger.kernel.org, dm-devel@lists.linux.dev, 
-    herbert@gondor.apana.org.au, dengler@linux.ibm.com
-Subject: Re: [PATCH v1 1/1] dm-integrity: Implement asynch digest support
-In-Reply-To: <5a8a09387c0fef59629707937297a0a4@linux.ibm.com>
-Message-ID: <1f3c94f0-1149-70cf-8bb8-756a5c3e8a2d@redhat.com>
-References: <20250115164657.84650-1-freude@linux.ibm.com> <20250115164657.84650-2-freude@linux.ibm.com> <b541f1bb-5287-7600-77ce-ceed5903e554@redhat.com> <5a8a09387c0fef59629707937297a0a4@linux.ibm.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="dbpEj4XE"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 403F3C4CED2;
+	Mon, 27 Jan 2025 22:16:08 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1738016168;
+	bh=K6c1om5w3IYKgGKZqHjx+AgeGT5ms3TVZSTf1hSeH3o=;
+	h=From:To:Cc:Subject:Date:From;
+	b=dbpEj4XEs3eUwCR41h26okupNUVvRypuwxdy5wxIra2Ncg2CJ9EWd3h23Xt/5fQQS
+	 EuMSjLojebO9hM70FdzITnsLex9QLvM2wCUamzP2HgD55jk1q6R/QaLTSLFAAs4Hnx
+	 5wW6suGQCQFMRy3hk5g538xYYxRF1dQ2YBKDY55rKH555sfWy4eKg3MnCX9Gpfzza3
+	 rQJ+B3AMCG5Gag3hZoBPo9u0LFDfjSX21VYh1dhjGSbtd7/Q6FfNXd1QAoPsiYBgHz
+	 +94E7VbL/oeUs6R23enRwYVKS1OnfJvYiAORqxLOzCnfY3iBHB6kuiDFXemfxWxCYF
+	 +yQah0vd3tSKQ==
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev
+Cc: linux-kernel@vger.kernel.org
+Subject: [PATCH] dm-crypt: switch to using the crc32 library
+Date: Mon, 27 Jan 2025 14:15:33 -0800
+Message-ID: <20250127221533.58298-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.48.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+Content-Transfer-Encoding: 8bit
 
-Hi
+From: Eric Biggers <ebiggers@google.com>
 
+Now that the crc32() library function takes advantage of
+architecture-specific optimizations, it is unnecessary to go through the
+crypto API.  Just use crc32().  This is much simpler, and it improves
+performance due to eliminating the crypto API overhead.  (However, this
+only affects the TCW IV mode of dm-crypt, which is a compatibility mode
+that is rarely used compared to other dm-crypt modes.)
 
-On Wed, 22 Jan 2025, Harald Freudenberger wrote:
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ drivers/md/Kconfig    |  1 +
+ drivers/md/dm-crypt.c | 41 ++++++++++-------------------------------
+ 2 files changed, 11 insertions(+), 31 deletions(-)
 
-> 
-> 6.13.0-rc7 with dm-integrity using shash:
-> 
-> sha256
->   WRITE: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 45.5 s, 94.4 MB/s
->   READ: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 19.2137 s, 224 MB/s
-> hmac-sha256
->   WRITE: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 45.2026 s, 95.0 MB/s
->   READ: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 19.2082 s, 224 MB/s
-> 
-> 6.13.0-rc7 with dm-integrity with my ahash patch:
-> 
-> sha256
->   WRITE: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 41.5273 s, 103 MB/s
->   READ: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 16.2558 s, 264 MB/s
-> hmac-sha256
->   WRITE: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 44.063 s, 97.5 MB/s
->   READ: 4294967296 bytes (4.3 GB, 4.0 GiB) copied, 16.5381 s, 260 MB/s
-> 
-> I checked these results several times. They vary but always the dm-integrity
-> with the ahash patch gives the better figures. I ran some measurements with
-> an isolated cpu and used this cpu to pin the format or the dd task to this
-> cpu. Pinning is not a good idea as very much of the work is done via
-> workqueues
-> in dm-integrity and so the communication overhead between the cpus increases.
-> However, I would have expected a slight penalty with the ahash patch like
-> it is to see with the dm-integrity format but read and write seem to benefit
-> from this simple ahash patch. It would be very interesting how a real asynch
-> implementation of dm-integrity really performs.
-> 
-> If someone is interested, I can share my scripts for these measurements.
-> 
-> Harald Freudenberger
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 0b1870a09e1fd..06f809e70f153 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -265,10 +265,11 @@ config DM_UNSTRIPED
+ config DM_CRYPT
+ 	tristate "Crypt target support"
+ 	depends on BLK_DEV_DM
+ 	depends on (ENCRYPTED_KEYS || ENCRYPTED_KEYS=n)
+ 	depends on (TRUSTED_KEYS || TRUSTED_KEYS=n)
++	select CRC32
+ 	select CRYPTO
+ 	select CRYPTO_CBC
+ 	select CRYPTO_ESSIV
+ 	help
+ 	  This device-mapper target allows you to create a device that
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 1ae2c71bb383b..c726cddd310c8 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -15,10 +15,11 @@
+ #include <linux/kernel.h>
+ #include <linux/key.h>
+ #include <linux/bio.h>
+ #include <linux/blkdev.h>
+ #include <linux/blk-integrity.h>
++#include <linux/crc32.h>
+ #include <linux/mempool.h>
+ #include <linux/slab.h>
+ #include <linux/crypto.h>
+ #include <linux/workqueue.h>
+ #include <linux/kthread.h>
+@@ -122,11 +123,10 @@ struct iv_lmk_private {
+ 	u8 *seed;
+ };
+ 
+ #define TCW_WHITENING_SIZE 16
+ struct iv_tcw_private {
+-	struct crypto_shash *crc32_tfm;
+ 	u8 *iv_seed;
+ 	u8 *whitening;
+ };
+ 
+ #define ELEPHANT_MAX_KEY_SIZE 32
+@@ -604,14 +604,10 @@ static void crypt_iv_tcw_dtr(struct crypt_config *cc)
+ 
+ 	kfree_sensitive(tcw->iv_seed);
+ 	tcw->iv_seed = NULL;
+ 	kfree_sensitive(tcw->whitening);
+ 	tcw->whitening = NULL;
+-
+-	if (tcw->crc32_tfm && !IS_ERR(tcw->crc32_tfm))
+-		crypto_free_shash(tcw->crc32_tfm);
+-	tcw->crc32_tfm = NULL;
+ }
+ 
+ static int crypt_iv_tcw_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 			    const char *opts)
+ {
+@@ -625,17 +621,10 @@ static int crypt_iv_tcw_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 	if (cc->key_size <= (cc->iv_size + TCW_WHITENING_SIZE)) {
+ 		ti->error = "Wrong key size for TCW";
+ 		return -EINVAL;
+ 	}
+ 
+-	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0,
+-					    CRYPTO_ALG_ALLOCATES_MEMORY);
+-	if (IS_ERR(tcw->crc32_tfm)) {
+-		ti->error = "Error initializing CRC32 in TCW";
+-		return PTR_ERR(tcw->crc32_tfm);
+-	}
+-
+ 	tcw->iv_seed = kzalloc(cc->iv_size, GFP_KERNEL);
+ 	tcw->whitening = kzalloc(TCW_WHITENING_SIZE, GFP_KERNEL);
+ 	if (!tcw->iv_seed || !tcw->whitening) {
+ 		crypt_iv_tcw_dtr(cc);
+ 		ti->error = "Error allocating seed storage in TCW";
+@@ -665,85 +654,75 @@ static int crypt_iv_tcw_wipe(struct crypt_config *cc)
+ 	memset(tcw->whitening, 0, TCW_WHITENING_SIZE);
+ 
+ 	return 0;
+ }
+ 
+-static int crypt_iv_tcw_whitening(struct crypt_config *cc,
+-				  struct dm_crypt_request *dmreq,
+-				  u8 *data)
++static void crypt_iv_tcw_whitening(struct crypt_config *cc,
++				   struct dm_crypt_request *dmreq, u8 *data)
+ {
+ 	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+ 	__le64 sector = cpu_to_le64(dmreq->iv_sector);
+ 	u8 buf[TCW_WHITENING_SIZE];
+-	SHASH_DESC_ON_STACK(desc, tcw->crc32_tfm);
+-	int i, r;
++	int i;
+ 
+ 	/* xor whitening with sector number */
+ 	crypto_xor_cpy(buf, tcw->whitening, (u8 *)&sector, 8);
+ 	crypto_xor_cpy(&buf[8], tcw->whitening + 8, (u8 *)&sector, 8);
+ 
+ 	/* calculate crc32 for every 32bit part and xor it */
+-	desc->tfm = tcw->crc32_tfm;
+-	for (i = 0; i < 4; i++) {
+-		r = crypto_shash_digest(desc, &buf[i * 4], 4, &buf[i * 4]);
+-		if (r)
+-			goto out;
+-	}
++	for (i = 0; i < 4; i++)
++		put_unaligned_le32(crc32(0, &buf[i * 4], 4), &buf[i * 4]);
+ 	crypto_xor(&buf[0], &buf[12], 4);
+ 	crypto_xor(&buf[4], &buf[8], 4);
+ 
+ 	/* apply whitening (8 bytes) to whole sector */
+ 	for (i = 0; i < ((1 << SECTOR_SHIFT) / 8); i++)
+ 		crypto_xor(data + i * 8, buf, 8);
+-out:
+ 	memzero_explicit(buf, sizeof(buf));
+-	return r;
+ }
+ 
+ static int crypt_iv_tcw_gen(struct crypt_config *cc, u8 *iv,
+ 			    struct dm_crypt_request *dmreq)
+ {
+ 	struct scatterlist *sg;
+ 	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
+ 	__le64 sector = cpu_to_le64(dmreq->iv_sector);
+ 	u8 *src;
+-	int r = 0;
+ 
+ 	/* Remove whitening from ciphertext */
+ 	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE) {
+ 		sg = crypt_get_sg_data(cc, dmreq->sg_in);
+ 		src = kmap_local_page(sg_page(sg));
+-		r = crypt_iv_tcw_whitening(cc, dmreq, src + sg->offset);
++		crypt_iv_tcw_whitening(cc, dmreq, src + sg->offset);
+ 		kunmap_local(src);
+ 	}
+ 
+ 	/* Calculate IV */
+ 	crypto_xor_cpy(iv, tcw->iv_seed, (u8 *)&sector, 8);
+ 	if (cc->iv_size > 8)
+ 		crypto_xor_cpy(&iv[8], tcw->iv_seed + 8, (u8 *)&sector,
+ 			       cc->iv_size - 8);
+ 
+-	return r;
++	return 0;
+ }
+ 
+ static int crypt_iv_tcw_post(struct crypt_config *cc, u8 *iv,
+ 			     struct dm_crypt_request *dmreq)
+ {
+ 	struct scatterlist *sg;
+ 	u8 *dst;
+-	int r;
+ 
+ 	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE)
+ 		return 0;
+ 
+ 	/* Apply whitening on ciphertext */
+ 	sg = crypt_get_sg_data(cc, dmreq->sg_out);
+ 	dst = kmap_local_page(sg_page(sg));
+-	r = crypt_iv_tcw_whitening(cc, dmreq, dst + sg->offset);
++	crypt_iv_tcw_whitening(cc, dmreq, dst + sg->offset);
+ 	kunmap_local(dst);
+ 
+-	return r;
++	return 0;
+ }
+ 
+ static int crypt_iv_random_gen(struct crypt_config *cc, u8 *iv,
+ 				struct dm_crypt_request *dmreq)
+ {
 
-If ahash helps for you, you can add it in a similar way to the dm-verity 
-target - so that it is only used when it makes sense - see the function 
-verity_setup_hash_alg.
-
-Mikulas
+base-commit: 805ba04cb7ccfc7d72e834ebd796e043142156ba
+-- 
+2.48.1
 
