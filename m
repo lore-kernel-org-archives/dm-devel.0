@@ -1,329 +1,353 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9910518B476
-	for <dm-devel@lists.linux.dev>; Tue, 28 Jan 2025 08:39:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738053592; cv=none; b=edSp890Ags/NJaifZouKEDIGayifzN1Q653CRXYVRM3wdJ4EElmu1DZLEZ8YJySjW+Ihlc2wSbgWJvkiICXY7ybbwHTVhjBX9T7v1Ol70XDEnZhCx12zS4SFLRfax5ZTaHSeRCkjPrAHPe/i5Bp9lii8ZeZziUNUHSqoSZ1otAk=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738053592; c=relaxed/simple;
-	bh=3mOMUFt1fctyfMdgEXCswlK7yVj+ifmSBTUSTSSwJqM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=J/Z0RWJ7cUYPrv38xs8WTMNOT4o3llqyboVBlKZyJ4m5osE8xTp2yEKEKKZqikTjoeYc7ajp4uIqxB2fsAPOexnF5iB647kStg6Z5BrqswIfmLQzBq9zv4bqwkQOc3JGp+iNhTZb5xMXDVuLG0WSsLLdgcYF8VSXRPubItU34As=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=nhIoDgrs; arc=none smtp.client-ip=209.85.128.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B1E61A38F9
+	for <dm-devel@lists.linux.dev>; Tue, 28 Jan 2025 16:47:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1738082856; cv=fail; b=XsCVDvYlDNVcbmG4LidHtaCuJpHOJ7sq5ulSOV+smONLgkfuSCcl/Bog2m4IGj/09Otc9Q2hifgKc82XtPp1Js0dymo4/ABl6/p0MAygiJZo1f2DxJPJU+8knmgYSNE8mp8TwaYsxUXM/i7YOZQA2gyYAQNy3JoH8dvwIQ4t/KI=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1738082856; c=relaxed/simple;
+	bh=QyzbBxYZZ/nd3y6NIeawjnAhPVGSS+PJMaXtjXz1UfE=;
+	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
+	 Content-Type:MIME-Version; b=ctE7+jqHPva+3y/QrujkrbmMGSJ1nyUR04xh0lXbj0SuN1aV8RGteqt6l6PdVdxi/a9We3Otx1hdwBGv7P2/NXSGCqKy+GopdV5UcT8KfrEFc7uslZrj4f+TaS63uWXYxCZo8/lMe09rhazXpS3gLfDvNhf3ew8nC61wLFM1XiU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=V6OfJuej; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=E8R8ui41; arc=fail smtp.client-ip=205.220.177.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="nhIoDgrs"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-436ce2ab251so34681135e9.1
-        for <dm-devel@lists.linux.dev>; Tue, 28 Jan 2025 00:39:50 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="V6OfJuej";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="E8R8ui41"
+Received: from pps.filterd (m0333520.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 50SGMrwA022211;
+	Tue, 28 Jan 2025 16:47:08 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=
+	corp-2023-11-20; bh=k7Z2fhFvPINW8jAE9y4l7Z+dsviJJKNR7p7fSzBB7GY=; b=
+	V6OfJuejyg0Cw5s2Qo0SmoW8sxlgmjrbCsOYfx56DqRTHQM14lvCaLF5zFugeqd9
+	N/ZDcFmqLTFo4kQGBjEcUmYp1bYS4LtZaeUrJ7y6rwv8aYN35rKqMA08JtE8fJUp
+	MpkhH5ibvZxRIjqjeIvMwI2u7CGvVjGl5Memw0TGFdQHlnLEqaYRKdxfD1PtwXhu
+	YeTTS4n0IqPW8eM1uLSIn2cZ6WURkwZVKWgCGsVwD/R5Gddxhof5ZU+klvXRqAxp
+	+dUdV+4URuNVhlqp1HPgtnX1uMiYwIVtsE37rAX+EvKTKNnyVEuFZ61i6UVTCCE/
+	6Vpm+9yw0JJLIIs1b8GamA==
+Received: from phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta03.appoci.oracle.com [138.1.37.129])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 44f0mwresb-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 28 Jan 2025 16:47:08 +0000 (GMT)
+Received: from pps.filterd (phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+	by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 50SGXfiR036792;
+	Tue, 28 Jan 2025 16:47:07 GMT
+Received: from nam11-co1-obe.outbound.protection.outlook.com (mail-co1nam11lp2171.outbound.protection.outlook.com [104.47.56.171])
+	by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 44cpd8kecb-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 28 Jan 2025 16:47:07 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=YtsPt7jDkxzR7B50ahpk77vh8lgZCslFtz8n8gY4up5ZTbMq6qufbVwKATAU9s2scvHYhqlT18OVSBxr4kmi3MYDAsFSGIi7Z1MuYuTVHyV6tcrPnhLAoAiMutoFu7zO3PB4pwSnHiZFW7ieKWEZTSa5D1sMmo2kTBPwD0kbdA1yf2c535yeoVsUP6jCvp8zBXxNy0QHHjeCoACbXlgWiBN9GEJA8fumH7vjxIicklNL51Mi0shZTnnzrE5bd9oQaA5Xde31/BgFUtyMcC1NacnBccLFVQHqmRfEM6hsxLU5nRSH6McnHehrWDwgxSqm7ZwPm2e/v124BAxnzP+Dbg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=k7Z2fhFvPINW8jAE9y4l7Z+dsviJJKNR7p7fSzBB7GY=;
+ b=cxlO20285NOPC+v83zHF0n9WZT18JCfC/NLghN8U0KNfrPI/V1j7hj4U4EhiKFzpwk2qfyxnRCTKPDhTfr3dVD1qah9OL3gU/P9KlGCRfHNL1bkfXGY+D/3QkiwOm5kynhRarq+iAWwIXMYP5ym0RY1RiDEKRYsf75wZUSXDNGshP2qi0cvch2CCVsT3MmeX6wc8WdCKQafKVpN7muzCL8h21kDKj6GAB0It+VKY9qEq0NBHuWpyCeedNOmcYbb30ju0zCZnyNIvG6/FKVC4FzxHxqkTEI+Zj8molyG+u7e0hgsdVWnlJhedu3SmilarmIV/6LvCUakYuKy9wJfpTg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1738053589; x=1738658389; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=pAuQlIiR0lJsFia1xtkk31hB3U5kathS6ftHL10BRlM=;
-        b=nhIoDgrsWH5LeksTp6EgRjWUt4qcO+xH8IUmDY/XEMZUyuNldYcbu5S4RPO59rjoO9
-         9HM2dqUJxoWfySFt0/XibPUndOXgFnYC0k8GgkSlRDGEdZCbaAlhGkb+iWt/8jimM2VJ
-         6J9xQ1uBaQCurQUZCHYMNNcN4fyMAp7svbJKQRYyQcwRKTXgAJYncHpUEysq5VmJ721Z
-         eYFi0KWs/2MmMnu3P7BKP3w4QVzl4NR37b6XCIvmt/UPHb4M+pZKt+cyW7oc5se9H8BD
-         hueafeiCZkEKDO2NixODES+lijNJBbgrYMe+e7Nu4Q9P7byfeGT0owZNnvwoBwUlSDmn
-         niVg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1738053589; x=1738658389;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=pAuQlIiR0lJsFia1xtkk31hB3U5kathS6ftHL10BRlM=;
-        b=JuvJq2BGLWjI1xgd+3NIEGDbKEibw/+jOER/zDWP0Rvnk9uwmGAjBJn4ToupjrCvv2
-         as8CLFY7HNEwMHPwlrjatbkRk0swpZdKrBrkWxmiMsZr2rrTnVXL31V3DXBmxo6+f1w9
-         A/379nOf95bsir1vqvVluA0yqpw2V42deVbdSPVfzBnbvnP2J9xPhEIscHtBYcVs5kOz
-         gOWWJkoDxsp28psVvj8jXjre1L0QXx3DueoczhExB2Im2upMSfHDx1z+cS+a5omloijs
-         NShzChuAwGG8qHLBEmE4tgL1923nOrUFjCTvlGKsxkvz1lAOhf+pOcKjSXsKm3xTzvN4
-         jeLg==
-X-Forwarded-Encrypted: i=1; AJvYcCVihzVhmR2cjgEYjLczZqIauOQjpxGxumtvMb4eDsi4ic6gN06I8dKnpdzR+LBHs/hee0x7UZ59OA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzR8FNOqwydopDkcSI1GFTqCfdaesKRLQamSIqL58eVfFbVgISM
-	uo4MIVpudYy7dafjXnWsitPdiIiBjb6m48m2ny6KSHLlxGBtFFEg
-X-Gm-Gg: ASbGncswExLjbuDKcD1Hh+9UoPXKlHknYnrD3cjhrdE6iQ0Wff0hzScHOdDxzhbid7a
-	8agbhjey0ef8L9iISu72sPHEufP6mHOuQho5bAcVxN12+EVHac72vjh4uXlOlZr9t5RKnsF0EiA
-	WFl3OkJ+zDiZgYv8oc4CzmKg27JOqwwRrMcJIt5ZOMy8DNk7X9QjGfyVeEkqsgHiTWErpyIKluz
-	QEcLmCKwzSdYcE7eF+MLwmCHS7RVdLDTMA4iXr8TzPb1OcQC6wrin6BJiNG2EU6esPcMxnJz8BS
-	3fhVvz38jp8RUnzAkByyzuf68twr7V7c3VStBV4=
-X-Google-Smtp-Source: AGHT+IHrEjtGxlI5f5yabAvAQ+78/+AfKvRi9fM5tFgRx4evScKHouP9StrtnD5V+p1QLGLR09x8AQ==
-X-Received: by 2002:a05:600c:524f:b0:436:1b7a:c0b4 with SMTP id 5b1f17b1804b1-438913bed33mr336997065e9.1.1738053588601;
-        Tue, 28 Jan 2025 00:39:48 -0800 (PST)
-Received: from [147.251.42.106] (fosforos.fi.muni.cz. [147.251.42.106])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-438d75de282sm6821035e9.2.2025.01.28.00.39.47
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 28 Jan 2025 00:39:48 -0800 (PST)
-Message-ID: <bd38b6c0-9334-4a6b-ab42-db4b7da76333@gmail.com>
-Date: Tue, 28 Jan 2025 09:39:47 +0100
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=k7Z2fhFvPINW8jAE9y4l7Z+dsviJJKNR7p7fSzBB7GY=;
+ b=E8R8ui41NwPvqwFc03QJxl8Zw9xvuIWOgtY9VnGb9dobfNywF+CMP+1qcLwCnf8wYoU1w9uzVXPAVGd2BAWYE4PzCV8rGszcRgyz9EYCyHlDOgv2qSi1pFBOT9t80eGJiJTxDxo5GAArTD4NYALRZJBOxMG8M10QTLmJtf4/CFk=
+Received: from DM6PR10MB4313.namprd10.prod.outlook.com (2603:10b6:5:212::20)
+ by BL3PR10MB6041.namprd10.prod.outlook.com (2603:10b6:208:3b1::20) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8398.17; Tue, 28 Jan
+ 2025 16:47:04 +0000
+Received: from DM6PR10MB4313.namprd10.prod.outlook.com
+ ([fe80::4f45:f4ab:121:e088]) by DM6PR10MB4313.namprd10.prod.outlook.com
+ ([fe80::4f45:f4ab:121:e088%5]) with mapi id 15.20.8377.021; Tue, 28 Jan 2025
+ 16:47:04 +0000
+Message-ID: <d0f8315b-e006-498a-b3e8-77542f352d40@oracle.com>
+Date: Tue, 28 Jan 2025 16:46:58 +0000
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH v2 1/8] block: introduce BLK_FEAT_WRITE_ZEROES_UNMAP
+ to queue limits features
+To: Zhang Yi <yi.zhang@huaweicloud.com>, linux-fsdevel@vger.kernel.org,
+        linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
+        dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, hch@lst.de, tytso@mit.edu, djwong@kernel.org,
+        yi.zhang@huawei.com, chengzhihao1@huawei.com, yukuai3@huawei.com,
+        yangerkun@huawei.com
+References: <20250115114637.2705887-1-yi.zhang@huaweicloud.com>
+ <20250115114637.2705887-2-yi.zhang@huaweicloud.com>
+Content-Language: en-US
+From: John Garry <john.g.garry@oracle.com>
+Organization: Oracle Corporation
+In-Reply-To: <20250115114637.2705887-2-yi.zhang@huaweicloud.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: AS4PR10CA0019.EURPRD10.PROD.OUTLOOK.COM
+ (2603:10a6:20b:5d8::19) To DM6PR10MB4313.namprd10.prod.outlook.com
+ (2603:10b6:5:212::20)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] dm-crypt: switch to using the crc32 library
-To: Eric Biggers <ebiggers@kernel.org>, dm-devel@lists.linux.dev
-Cc: linux-kernel@vger.kernel.org
-References: <20250127221533.58298-1-ebiggers@kernel.org>
-Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- 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
-In-Reply-To: <20250127221533.58298-1-ebiggers@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: DM6PR10MB4313:EE_|BL3PR10MB6041:EE_
+X-MS-Office365-Filtering-Correlation-Id: 817b9dbd-e8c9-4208-0168-08dd3fbb64b5
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;ARA:13230040|7416014|376014|1800799024|366016;
+X-Microsoft-Antispam-Message-Info:
+	=?utf-8?B?NWdYSG5KaldmZHNxSS81b1N0Q1ZRTjJvOWt4ckpweGFTV0RvSWtGOWxEZkZx?=
+ =?utf-8?B?MXR5S1BJN3VGZklOdkJITGFHaXVPeXRjejRyMmczSlBaSW5TQ1RtS1FleTE4?=
+ =?utf-8?B?UUNNRlhWdXFqTkxYUTdvbVVQem52b2dPcGhabWw4RnA2MzBDV2d2blkwMkVY?=
+ =?utf-8?B?Tzd5bUIreDh6MVJnWjBROWlkSmlwYWtoUllKdmtDVVdvY21XUmdpTXViMktm?=
+ =?utf-8?B?dG93MGNvZ0pjWExTYTNUdG5YN29OMFMvVXFkMnZxcEJOT1dMTVRwbkU3NkVR?=
+ =?utf-8?B?bE55dmN6VGdwQmxOWHM2T0lPRFFESU8rR1AyNjBucXM0SE9FVHFIN3JHWHQ1?=
+ =?utf-8?B?alR5UUwzZHIwOUF4dTJYV21QVFZDNmVZUWlBanRDVTBZSERMMDdZMWFTTUh6?=
+ =?utf-8?B?WFE1UENBWkhTMVV1ZDU0NFA2dTZQeU5uVkgyK0dINDBsaUZjWGRabXdYa0Iw?=
+ =?utf-8?B?OHBrTGVkOWw4MjZCZ0d2Mm5GNldtbFhFeTBNYUtJWmRzMDk1aGpvalNrelF3?=
+ =?utf-8?B?aWxFcm9scmhNWkZOS2Vka3A3OXVySGRtY1diai90d0ZsaGJNeTVlNGI3Wmtz?=
+ =?utf-8?B?Nm9LSG9TMXZPTmNkSU5Fc2k3ZGJIUUR4S3ZtMEh4S0FHZ3FmM08rZCtjVFdy?=
+ =?utf-8?B?UHU1eU5lTU5RL256SEliQlcrVmdLN3NkZ0haRHJxelVhMmkwTUJZWHR6Tnpl?=
+ =?utf-8?B?ZnpjZUtOQmx3MUJXcEdtbExJYkxJNzNGaUVycTllOU5uYnR6cWd5YkF4REE4?=
+ =?utf-8?B?NVJjYkg5aThKQTJVREhVVUZySGhKbWVuSU5JNzI0b1J2ZEQyd0J4TXNkSEFO?=
+ =?utf-8?B?ak9vR3lab3dPVW9LT3lYWnEzZkt0dWFQZExac01wMmNMTUlDS2U4TjRTU2tH?=
+ =?utf-8?B?MGFqNWphYUFnNHk1cis1S25XUHNRTTQvZ09YYkl1UnBRaG1nSkpTY05HOUNO?=
+ =?utf-8?B?cVJPZWVjNjRtWXZhbkxsR2gzK0VQK2VYa0RYUkVTT1krSlpXVzFMcGtETzlS?=
+ =?utf-8?B?VGg1UkpOakc4MEJ4TXFlaUt5dlJlQjRKRFZTa0VPY2lCenlueXY3alZxUzBj?=
+ =?utf-8?B?cmxXRGUySkt3aDhZVTlISUM2MTNmRlEvUG9ZcDZ3NlR5T0ZTZEdpQ3JuOStY?=
+ =?utf-8?B?OGlWRGlJcitML0w2THRkRUJ5cTY0UDQybDI1YnBISVhJMlJYNCs0VWRsLytK?=
+ =?utf-8?B?dXY5U2JjZzUwT1B0ZUlmeWk1dkNkTDJNVjYzbEYrQ2NuaEp5dkhmaEZVTVRy?=
+ =?utf-8?B?cnpkaCtCZU5zYThraXg2Q0IvK2hhRUdIWDliNmRZZzR1S3p1cDZDcVBrUmZv?=
+ =?utf-8?B?NE1jZXNPMlAwNXdMSHZhZ3laWXN3ZEJMVStZdzRrMmRGNEUxWEJ0SzJ1bnUv?=
+ =?utf-8?B?NFV0c1EzNkt3bFV4eC8ybCtvQVlJZmk5VTJrY3YwaVhzN3YyaHpiajVjdU1w?=
+ =?utf-8?B?OURteXdYdkxDSzErZWlFcUtjZVU3SDVoVEw4bGVLZEgyZHYvM2lMSGZsNUoz?=
+ =?utf-8?B?K0tXamwzTXR3aTJ4SXk5bUN0WlFpcVcyYlFRa3RJbkdoQXhLQXZJODRZUmxG?=
+ =?utf-8?B?MmZhWWJ4L0grRmYzcWRRWjlHeklLaHJ1dEdTKzVPc0JuMHY0SHBRS0krMkhI?=
+ =?utf-8?B?R0FnRU4xU1JXM3JnTmgzWm9EM21JZDlvejdjbmk3NS9CM29GQTBmQWdwUmtt?=
+ =?utf-8?B?Z2YrWkdodVd6d2hzcEtiS0JhYytqTmozZXhqbDY5V2JwWUFDbGVlZlBuQVFp?=
+ =?utf-8?B?WGNjWmpGQ1Jsa2RtUWJDbS96RkdOSE14THAzaUhZWXBRUHU2Y08vOWZ2NjNJ?=
+ =?utf-8?B?NE1POHpCcEVjTllqNXNtclBWaVVrQVJIYzhuZ2RJK2pzYVUzTndyb2FRQ1ZB?=
+ =?utf-8?Q?qD1lysDc8O4EZ?=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM6PR10MB4313.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(7416014)(376014)(1800799024)(366016);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?utf-8?B?TDRzMXRoVHF5TjNodkdkTjlrSjdBYmhtcjJyb3BGVno2WVdtVDJRM1FIMHBt?=
+ =?utf-8?B?SS9FRjJoS2xYL0Q2NWVYenA4cEU4L2s2eEE2WEY1N0h0bnIwU3pHaGVJdE9j?=
+ =?utf-8?B?K21tUkd5ZVZhOXFaTUxEWkF2V0paQ0JMMVVQQ0hsUWNETSs3dDd4WWFHOGov?=
+ =?utf-8?B?aUNoR2xuaUhDOWZMTGpzeitHdWhHUFRMaWhTRitjRkhKS3FOeUtjQnNNa0li?=
+ =?utf-8?B?RGhmT3htdmpYNVBIZUJVaHlnQ1dDV01iMWVMOERFWTd0b0k3T3MxT2Evcksv?=
+ =?utf-8?B?Ty9KaFVLeGpmY0VRZTRNY3dkb290OWIvMDNCTDF3ckpacUVZUER6eFRvenY2?=
+ =?utf-8?B?VmJFVXV6Ynd0TnpwYnZ0UE5Wb1RJb3VkQ2dGS2R3OXROazM4Y2laNldjYVYz?=
+ =?utf-8?B?dWRuYVVUb054a2haWU4zM3VkazR6TTA5TWRRZWJJNTIyYyswN0VNejFpQVYv?=
+ =?utf-8?B?NGpUWDBueSt6am0vMGprWTBMZ2J2UllDdWQ5T0U3SG4vZjZ4cElkNDBNY0xw?=
+ =?utf-8?B?eHZaazBrMUlhSnBVTG95cDJZM3BXdjVRRlM1ajM2VENOQlFSZ3B6dEw1L3hr?=
+ =?utf-8?B?cWVCT3lQQ1R3T3pYZGZBMHQvVG1Ra01hT01vOFFPaVZBV2E2UFZ0NkRwYXkv?=
+ =?utf-8?B?dGxjZVBxck9mNWk4Rkp5bmdDNlZuZ0lpWmlvRFlMRE1TazFENys5Y1E4Mnk4?=
+ =?utf-8?B?bzJSVEg3ek5OYlI1YWVEVi91R3FuM1BWMVVJSDdMWXEwTG1kQ0hBcXh3akkx?=
+ =?utf-8?B?RU94NFVHYk1uVjJqZ2NpMmYwNk02d00vQmJqRnIyNHJzYVE4Y2w5a1dxczc0?=
+ =?utf-8?B?dFJUN3AzRzNnZGdqRDZLV21hRmJrcFpjTEJEMzBrUXVzS3ZqSzJKZEhpVkhR?=
+ =?utf-8?B?MzNkMzhva2NwMHl0aStRVDY3WFlNVG1sdHRBb0pzOW5lTUZXU3ArOEw5dUkx?=
+ =?utf-8?B?TmwxZXBHRWdreStMemQvR1oydW8zLzJ2MXdYaGsyRkU5Y3ZweHhSaFczV1hy?=
+ =?utf-8?B?dUlkdGNDSDZmT0h1dzdNUGhMa3dQeDlFU1VKd1lQK3R3SHNEMDJwOFNTZnhH?=
+ =?utf-8?B?bzdJRnI1VWt4bFZlS0Q4TnlFNitVcW1rcWpwM3BoU3NvWWRvNzE0Z2QxZ3JV?=
+ =?utf-8?B?cFhqMXBhWmppdnI4eEtXNzlPaEJ2RzJqeUJnS0JBell3eTQrMDJuWlVtZm5h?=
+ =?utf-8?B?ZHc1Ykg3QWxVY0NsV3l3YnlLWUFGa2NvbHFBUk5PZ0VZaHFmZHF0a21zMG1w?=
+ =?utf-8?B?V0hZWnN3Ri9qVVo3REhpSmR5eHNtNWpVZ0QzdzdQS0NxZDF4VFJEck0zMllt?=
+ =?utf-8?B?VzZ1bU04V2hRTUNlUXdVV3QrcjBtb3ZGcnFNdGMyUC9UYitOMVVTL1VrRTV3?=
+ =?utf-8?B?S0lKakdPeGdJNUYyS0lTWkdYaFpqVjFVeDRHUDg1L1VFZFNSY3FFSlFKcHZK?=
+ =?utf-8?B?NDhTWFlLR2R5RlFOYitMMGl6b1RwdWlBSWtQYmJWOVZyLy8yMWlRMGI3dlcx?=
+ =?utf-8?B?WTI4eFN1SWh6aGJEZ2UvU21abjBVQTV4V1BaalA3c3NScHpkOHFqaW9IVndm?=
+ =?utf-8?B?MzRRaVd2RmhlbkJKWDZ5ZnZlQnVWYWc2RmVmU1pDUlVOWlBGOUlPVSs5RXh1?=
+ =?utf-8?B?SDJyUC8vemJDb1FMK2wrOUxWUS93aWlyd2grZ3A1MnJKM1F6Wm91OVE4MDly?=
+ =?utf-8?B?QjZJMTFhL1NjUUNCb0cza2UrOUlSUXR1K25EaU1aTk56V2ZMZWoxQm94Tkpp?=
+ =?utf-8?B?Q0E5K291QkF0MWw0bUc1QWF4TFJzditXYjI0emhEanBGSTUvQ3FERFVxODM5?=
+ =?utf-8?B?TkpsMVZ3M3h6cGdPcVp0a3lSUTdmMGpxQ3A5b3J2ZWtacEV1bDY4Rk5sMmhP?=
+ =?utf-8?B?amhZTUp5TWJnL2V6Z0RObThDS25QbExIQWRkcUJCVUFoYUd2cDkxSWl1eWFP?=
+ =?utf-8?B?M3o3K3RUMmY0aEpxVFh3RDlZVDBJT292Y2lFRDlZcDQ1YnBtZ2Y4VGU4VFhW?=
+ =?utf-8?B?ZVlJNEY5YjAwS0ZGRDJybkRFUWRLTHV3WDBYVFMvT0ZNYmRVMDJKa0pHQmRO?=
+ =?utf-8?B?VVZ0Tk93NFFITnRodnlRZ004Wlg1Uk1qc2Y2SHc5ZTNsOTdCUHVPeUJoelAy?=
+ =?utf-8?Q?ut/b4+P1dzQtMQ9AZxMxlDiuk?=
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
+	cUyPmbXRujMXMKztSoPVGTnoMR/R9+CaKpAGabXurzyBHVoQdfsYBdmoiILiCigolBoUw7mKMPMJxsVBW/vO+ZtaZ6i/xVGN5BMZcQiuGLIoEO6iL52g+7nxNJg9W3FHqpWn5zBs+v098al68DKN6JJy1yhn9Gho/s/pkIHcfIbjrEMXNy+AovR4AQhNJkHtgw4NxHsGPS7zpH/aiomxkeXYMu1fOGil+OhKWcG97Eb24hwGStBDSaRvE4EB/XBX7C46lF3atdapAMQ21GMfJo/LrNzwFGes0YRzYEhrNOmvcgCf5s15QyBBCocF2BJQkaWeut9q5fx9aByOUw0kL3/TGONz0QawM9B7hPW9Fwf4rciqHh96sxl+WJXA1vXJ/ynIWBDWmm3yTF0DMiKhR3xUeTEMByFluAqbACYu7Xcav2ssdKPblf29mCGiv2q8NL/gLC+CMtqGSgZ3ntzR76Tyi1IH+WMaEvDs1ZwRXCm51xboVat+CZrJRdagQSVx5VxcgebnYesWaHtj6YMEcrxGA0yhNWpE3wA0b18qDxijSubbEApMh9vA0H8HFlNI+jX1kRPpGegWXNoiq1hFRKC8sy7zaZbjvZ5slMHkQ+8=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 817b9dbd-e8c9-4208-0168-08dd3fbb64b5
+X-MS-Exchange-CrossTenant-AuthSource: DM6PR10MB4313.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 28 Jan 2025 16:47:04.0060
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: ZgooFErCEgsAUjvE1ZWqm/SYvoX2soJOqcYzI1LfG1fnYCNPozUOEy76EmMWyepZ1iUPW/V+czyj8KQD8klfOA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BL3PR10MB6041
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1057,Hydra:6.0.680,FMLib:17.12.68.34
+ definitions=2025-01-28_04,2025-01-27_01,2024-11-22_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0 bulkscore=0 suspectscore=0
+ mlxlogscore=999 phishscore=0 adultscore=0 mlxscore=0 malwarescore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2411120000
+ definitions=main-2501280124
+X-Proofpoint-GUID: P-M738-bvt5oXYqVRl9aVydHlH2nd53Q
+X-Proofpoint-ORIG-GUID: P-M738-bvt5oXYqVRl9aVydHlH2nd53Q
 
-On 1/27/25 11:15 PM, Eric Biggers wrote:
-> From: Eric Biggers <ebiggers@google.com>
+On 15/01/2025 11:46, Zhang Yi wrote:
+> From: Zhang Yi <yi.zhang@huawei.com>
 > 
-> Now that the crc32() library function takes advantage of
-> architecture-specific optimizations, it is unnecessary to go through the
-> crypto API.  Just use crc32().  This is much simpler, and it improves
-> performance due to eliminating the crypto API overhead.  (However, this
-> only affects the TCW IV mode of dm-crypt, which is a compatibility mode
-> that is rarely used compared to other dm-crypt modes.)
+> Currently, it's hard to know whether the storage device supports unmap
+> write zeroes. We cannot determine it only by checking if the disk
+> supports the write zeroes command, as for some HDDs that do submit
+> actual zeros to the disk media even if they claim to support the write
+> zeroes command, but that should be very slow.
 
-Yes, these are only used to be compatible with old TrueCrypt CBC images
-(except chained ciphers requiring modified CBC mode).
-I would like to keep this for the ability to access legacy images,
-but it should not be used by anything else.
-
-I tested the patch below with the images we have in the cryptsetup
-testsuite, and it works ok.
-
-So if you want, add
-
-Tested-and-reviewed-by: Milan Broz <gmazyland@gmail.com>
-
-Milan
-
+This second sentence is too long, such that your meaning is hard to 
+understand.
 
 > 
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
+> Therefor, add a new queue limit feature, BLK_FEAT_WRITE_ZEROES_UNMAP and
+
+Therefore?
+
+> the corresponding sysfs entry, to indicate whether the block device
+> explicitly supports the unmapped write zeroes command. Each device
+> driver should set this bit if it is certain that the attached disk
+> supports this command. 
+
+How can they be certain? You already wrote that some claim to support 
+it, yet don't really. Well, I think that is what you meant.
+
+> If the bit is not set, the disk either does not
+> support it, or its support status is unknown.
+> 
+> For the stacked devices cases, the BLK_FEAT_WRITE_ZEROES_UNMAP should be
+> supported both by the stacking driver and all underlying devices.
+> 
+> Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
 > ---
->   drivers/md/Kconfig    |  1 +
->   drivers/md/dm-crypt.c | 41 ++++++++++-------------------------------
->   2 files changed, 11 insertions(+), 31 deletions(-)
+>   Documentation/ABI/stable/sysfs-block | 14 ++++++++++++++
+>   block/blk-settings.c                 |  6 ++++++
+>   block/blk-sysfs.c                    |  3 +++
+>   include/linux/blkdev.h               |  3 +++
+>   4 files changed, 26 insertions(+)
 > 
-> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-> index 0b1870a09e1fd..06f809e70f153 100644
-> --- a/drivers/md/Kconfig
-> +++ b/drivers/md/Kconfig
-> @@ -265,10 +265,11 @@ config DM_UNSTRIPED
->   config DM_CRYPT
->   	tristate "Crypt target support"
->   	depends on BLK_DEV_DM
->   	depends on (ENCRYPTED_KEYS || ENCRYPTED_KEYS=n)
->   	depends on (TRUSTED_KEYS || TRUSTED_KEYS=n)
-> +	select CRC32
->   	select CRYPTO
->   	select CRYPTO_CBC
->   	select CRYPTO_ESSIV
->   	help
->   	  This device-mapper target allows you to create a device that
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 1ae2c71bb383b..c726cddd310c8 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -15,10 +15,11 @@
->   #include <linux/kernel.h>
->   #include <linux/key.h>
->   #include <linux/bio.h>
->   #include <linux/blkdev.h>
->   #include <linux/blk-integrity.h>
-> +#include <linux/crc32.h>
->   #include <linux/mempool.h>
->   #include <linux/slab.h>
->   #include <linux/crypto.h>
->   #include <linux/workqueue.h>
->   #include <linux/kthread.h>
-> @@ -122,11 +123,10 @@ struct iv_lmk_private {
->   	u8 *seed;
+> diff --git a/Documentation/ABI/stable/sysfs-block b/Documentation/ABI/stable/sysfs-block
+> index 0cceb2badc83..ab4117cefd9a 100644
+> --- a/Documentation/ABI/stable/sysfs-block
+> +++ b/Documentation/ABI/stable/sysfs-block
+> @@ -722,6 +722,20 @@ Description:
+>   		0, write zeroes is not supported by the device.
+>   
+>   
+> +What:		/sys/block/<disk>/queue/write_zeroes_unmap
+> +Date:		January 2025
+> +Contact:	Zhang Yi <yi.zhang@huawei.com>
+> +Description:
+> +		[RO] Devices that explicitly support the unmap write zeroes
+> +		operation in which a single write zeroes request with the unmap
+> +		bit set to zero out the range of contiguous blocks on storage
+
+which bit are you referring to?
+
+> +		by freeing blocks, rather than writing physical zeroes to the
+> +		media. If write_zeroes_unmap is 1, this indicates that the
+> +		device explicitly supports the write zero command. Otherwise,
+> +		the device either does not support it, or its support status is
+> +		unknown.
+
+I am struggling to understand the full meaning of a value of '0'.
+
+Does it means that either:
+a. it does not support write zero
+b. it does support write zero, yet just did not set 
+BLK_FEAT_WRITE_ZEROES_UNMAP
+
+
+> +
+> +
+>   What:		/sys/block/<disk>/queue/zone_append_max_bytes
+>   Date:		May 2020
+>   Contact:	linux-block@vger.kernel.org
+> diff --git a/block/blk-settings.c b/block/blk-settings.c
+> index 8f09e33f41f6..a8bf2f8f0634 100644
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -652,6 +652,8 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+>   		t->features &= ~BLK_FEAT_NOWAIT;
+>   	if (!(b->features & BLK_FEAT_POLL))
+>   		t->features &= ~BLK_FEAT_POLL;
+> +	if (!(b->features & BLK_FEAT_WRITE_ZEROES_UNMAP))
+> +		t->features &= ~BLK_FEAT_WRITE_ZEROES_UNMAP;
+
+Why not just set this in BLK_FEAT_INHERIT_MASK? It's seems like a 
+sensible thing to do...
+
+>   
+>   	t->flags |= (b->flags & BLK_FLAG_MISALIGNED);
+>   
+> @@ -774,6 +776,10 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+>   		t->zone_write_granularity = 0;
+>   		t->max_zone_append_sectors = 0;
+>   	}
+> +
+> +	if (!t->max_write_zeroes_sectors)
+> +		t->features &= ~BLK_FEAT_WRITE_ZEROES_UNMAP;
+> +
+>   	blk_stack_atomic_writes_limits(t, b);
+>   
+>   	return ret;
+> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+> index 767598e719ab..13f22bee19d2 100644
+> --- a/block/blk-sysfs.c
+> +++ b/block/blk-sysfs.c
+> @@ -248,6 +248,7 @@ static ssize_t queue_##_name##_show(struct gendisk *disk, char *page)	\
+>   QUEUE_SYSFS_FEATURE_SHOW(poll, BLK_FEAT_POLL);
+>   QUEUE_SYSFS_FEATURE_SHOW(fua, BLK_FEAT_FUA);
+>   QUEUE_SYSFS_FEATURE_SHOW(dax, BLK_FEAT_DAX);
+> +QUEUE_SYSFS_FEATURE_SHOW(write_zeroes_unmap, BLK_FEAT_WRITE_ZEROES_UNMAP);
+>   
+>   static ssize_t queue_zoned_show(struct gendisk *disk, char *page)
+>   {
+> @@ -468,6 +469,7 @@ QUEUE_RO_ENTRY(queue_atomic_write_unit_min, "atomic_write_unit_min_bytes");
+>   
+>   QUEUE_RO_ENTRY(queue_write_same_max, "write_same_max_bytes");
+>   QUEUE_RO_ENTRY(queue_max_write_zeroes_sectors, "write_zeroes_max_bytes");
+> +QUEUE_RO_ENTRY(queue_write_zeroes_unmap, "write_zeroes_unmap");
+>   QUEUE_RO_ENTRY(queue_max_zone_append_sectors, "zone_append_max_bytes");
+>   QUEUE_RO_ENTRY(queue_zone_write_granularity, "zone_write_granularity");
+>   
+> @@ -615,6 +617,7 @@ static struct attribute *queue_attrs[] = {
+>   	&queue_poll_delay_entry.attr,
+>   	&queue_virt_boundary_mask_entry.attr,
+>   	&queue_dma_alignment_entry.attr,
+> +	&queue_write_zeroes_unmap_entry.attr,
+>   	NULL,
 >   };
 >   
->   #define TCW_WHITENING_SIZE 16
->   struct iv_tcw_private {
-> -	struct crypto_shash *crc32_tfm;
->   	u8 *iv_seed;
->   	u8 *whitening;
->   };
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 378d3a1a22fc..14ba1e2709bb 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -335,6 +335,9 @@ typedef unsigned int __bitwise blk_features_t;
+>   #define BLK_FEAT_ATOMIC_WRITES_STACKED \
+>   	((__force blk_features_t)(1u << 16))
 >   
->   #define ELEPHANT_MAX_KEY_SIZE 32
-> @@ -604,14 +604,10 @@ static void crypt_iv_tcw_dtr(struct crypt_config *cc)
->   
->   	kfree_sensitive(tcw->iv_seed);
->   	tcw->iv_seed = NULL;
->   	kfree_sensitive(tcw->whitening);
->   	tcw->whitening = NULL;
-> -
-> -	if (tcw->crc32_tfm && !IS_ERR(tcw->crc32_tfm))
-> -		crypto_free_shash(tcw->crc32_tfm);
-> -	tcw->crc32_tfm = NULL;
->   }
->   
->   static int crypt_iv_tcw_ctr(struct crypt_config *cc, struct dm_target *ti,
->   			    const char *opts)
->   {
-> @@ -625,17 +621,10 @@ static int crypt_iv_tcw_ctr(struct crypt_config *cc, struct dm_target *ti,
->   	if (cc->key_size <= (cc->iv_size + TCW_WHITENING_SIZE)) {
->   		ti->error = "Wrong key size for TCW";
->   		return -EINVAL;
->   	}
->   
-> -	tcw->crc32_tfm = crypto_alloc_shash("crc32", 0,
-> -					    CRYPTO_ALG_ALLOCATES_MEMORY);
-> -	if (IS_ERR(tcw->crc32_tfm)) {
-> -		ti->error = "Error initializing CRC32 in TCW";
-> -		return PTR_ERR(tcw->crc32_tfm);
-> -	}
-> -
->   	tcw->iv_seed = kzalloc(cc->iv_size, GFP_KERNEL);
->   	tcw->whitening = kzalloc(TCW_WHITENING_SIZE, GFP_KERNEL);
->   	if (!tcw->iv_seed || !tcw->whitening) {
->   		crypt_iv_tcw_dtr(cc);
->   		ti->error = "Error allocating seed storage in TCW";
-> @@ -665,85 +654,75 @@ static int crypt_iv_tcw_wipe(struct crypt_config *cc)
->   	memset(tcw->whitening, 0, TCW_WHITENING_SIZE);
->   
->   	return 0;
->   }
->   
-> -static int crypt_iv_tcw_whitening(struct crypt_config *cc,
-> -				  struct dm_crypt_request *dmreq,
-> -				  u8 *data)
-> +static void crypt_iv_tcw_whitening(struct crypt_config *cc,
-> +				   struct dm_crypt_request *dmreq, u8 *data)
->   {
->   	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
->   	__le64 sector = cpu_to_le64(dmreq->iv_sector);
->   	u8 buf[TCW_WHITENING_SIZE];
-> -	SHASH_DESC_ON_STACK(desc, tcw->crc32_tfm);
-> -	int i, r;
-> +	int i;
->   
->   	/* xor whitening with sector number */
->   	crypto_xor_cpy(buf, tcw->whitening, (u8 *)&sector, 8);
->   	crypto_xor_cpy(&buf[8], tcw->whitening + 8, (u8 *)&sector, 8);
->   
->   	/* calculate crc32 for every 32bit part and xor it */
-> -	desc->tfm = tcw->crc32_tfm;
-> -	for (i = 0; i < 4; i++) {
-> -		r = crypto_shash_digest(desc, &buf[i * 4], 4, &buf[i * 4]);
-> -		if (r)
-> -			goto out;
-> -	}
-> +	for (i = 0; i < 4; i++)
-> +		put_unaligned_le32(crc32(0, &buf[i * 4], 4), &buf[i * 4]);
->   	crypto_xor(&buf[0], &buf[12], 4);
->   	crypto_xor(&buf[4], &buf[8], 4);
->   
->   	/* apply whitening (8 bytes) to whole sector */
->   	for (i = 0; i < ((1 << SECTOR_SHIFT) / 8); i++)
->   		crypto_xor(data + i * 8, buf, 8);
-> -out:
->   	memzero_explicit(buf, sizeof(buf));
-> -	return r;
->   }
->   
->   static int crypt_iv_tcw_gen(struct crypt_config *cc, u8 *iv,
->   			    struct dm_crypt_request *dmreq)
->   {
->   	struct scatterlist *sg;
->   	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
->   	__le64 sector = cpu_to_le64(dmreq->iv_sector);
->   	u8 *src;
-> -	int r = 0;
->   
->   	/* Remove whitening from ciphertext */
->   	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE) {
->   		sg = crypt_get_sg_data(cc, dmreq->sg_in);
->   		src = kmap_local_page(sg_page(sg));
-> -		r = crypt_iv_tcw_whitening(cc, dmreq, src + sg->offset);
-> +		crypt_iv_tcw_whitening(cc, dmreq, src + sg->offset);
->   		kunmap_local(src);
->   	}
->   
->   	/* Calculate IV */
->   	crypto_xor_cpy(iv, tcw->iv_seed, (u8 *)&sector, 8);
->   	if (cc->iv_size > 8)
->   		crypto_xor_cpy(&iv[8], tcw->iv_seed + 8, (u8 *)&sector,
->   			       cc->iv_size - 8);
->   
-> -	return r;
-> +	return 0;
->   }
->   
->   static int crypt_iv_tcw_post(struct crypt_config *cc, u8 *iv,
->   			     struct dm_crypt_request *dmreq)
->   {
->   	struct scatterlist *sg;
->   	u8 *dst;
-> -	int r;
->   
->   	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE)
->   		return 0;
->   
->   	/* Apply whitening on ciphertext */
->   	sg = crypt_get_sg_data(cc, dmreq->sg_out);
->   	dst = kmap_local_page(sg_page(sg));
-> -	r = crypt_iv_tcw_whitening(cc, dmreq, dst + sg->offset);
-> +	crypt_iv_tcw_whitening(cc, dmreq, dst + sg->offset);
->   	kunmap_local(dst);
->   
-> -	return r;
-> +	return 0;
->   }
->   
->   static int crypt_iv_random_gen(struct crypt_config *cc, u8 *iv,
->   				struct dm_crypt_request *dmreq)
->   {
-> 
-> base-commit: 805ba04cb7ccfc7d72e834ebd796e043142156ba
+> +/* supports unmap write zeroes command */
+> +#define BLK_FEAT_WRITE_ZEROES_UNMAP	((__force blk_features_t)(1u << 17))
+
+Is this flag ever checked within the kernel?
+
+If not, I assume your idea is that the user checks this flag via sysfs 
+for the block device which the fs is mounted on just to know if 
+FALLOC_FL_WRITE_ZEROES is definitely fast, right?
+
+> +
+>   /*
+>    * Flags automatically inherited when stacking limits.
+>    */
 
