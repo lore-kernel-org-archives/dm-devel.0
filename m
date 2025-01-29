@@ -1,53 +1,54 @@
-Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D2F81DE2D5
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 106161DE8BE
 	for <dm-devel@lists.linux.dev>; Wed, 29 Jan 2025 16:25:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738167941; cv=none; b=IdHPzQ/gVFzLRKx6evWJMPoBVJhqRR7q1Mk5SZVusmwkcgEg/sUJnUkelAl70qkB1pnrEQpoyrdgFPE3DOvG9cwDvwvcuPtmCJw+PtkSQHCGF1Y+MyoBXTRMhgrIfVItKyuZ0F/zZ52cGXIhLs4mkiCjHGZBAENFk80Q5nrLWfM=
+	t=1738167941; cv=none; b=BMR3WFJBsgZzi+bXbJ3DCMF4nLGeWcZm6Wc18KRDQx5C48SJ3XZ28VIunYyJtB9UnNt4kAn9AgqaEtH70jYSrhXKRFyZrbP/F0sCuDLrVWB+Ebld9LGCAGGw2MHCvUo5lrsJDG4o+uFocjeS0Nuai0m13yEH89K58YZv8EHANKc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1738167941; c=relaxed/simple;
-	bh=Pcq1xP4ase3TR7+I7WC3Xk0oeGrravZbwvQwkweXK04=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=iIWdJ4IiibTenaPVM5frXb/5vvrPM+Px8afQvIDWqqPDYgHn1itsgcvF5T7mG382P/rm/SN1nRTk+6D7W3rkTC666miArpVgJNj+gjbww8p2COviZ6Bmf89HIelDHiSj5/3in/aML4KGHUagq4ebX0uFWsSrHw6zUcVQrRuxWiQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=B4KRoa3+; arc=none smtp.client-ip=148.163.158.5
+	bh=et7diaJtCk/LuV5JsdjZk5JDvqspM6G7OXEgp72sPZQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=YwL5foSD9biXyC+0fMvjoB/wuMfNzvfWEFbUtn+6CzHw6TbYQUhQA/676q7PJ6XdqMn1hJLWX7btm34991RYc491aKOJE2k3I6y+P259orDcMOby3MbBo8CH9xpkCQICeQB1KbwSSGr66Kn4T8ysBu0OxwJMNztmDuJkZ+4tzIg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=pn0N9swN; arc=none smtp.client-ip=148.163.156.1
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="B4KRoa3+"
-Received: from pps.filterd (m0356516.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 50TFdS3X008446;
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="pn0N9swN"
+Received: from pps.filterd (m0356517.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 50TF1XSf024168;
 	Wed, 29 Jan 2025 16:25:34 GMT
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:date:from:message-id:mime-version
-	:subject:to; s=pp1; bh=r2dGeDT2YMdi1knJj7IVMYQB+3u7OSG2GCkcgg921
-	ss=; b=B4KRoa3+oQsjfAXdnQQCqQ2Vu5UanpRrPfIvntukQsmzAsM83q0gQ7cN8
-	vqUN9Rm06mDq5CKPEwJv6niSjvR/dIXn5lgPZRtvQclfiCGgbc32jc1t9N6unTSh
-	IWtWw6GGeVB26pI2t3HMHkfkZslL6HWan8wVahl0AdJ7kLyh7YzkCbPPj3Zo3UKO
-	l/b7zlW2JKimArlYOaczjDfKnQqhFuU0BYDXqIcQHIxsWEl24Z8P4k1n2PL3N8c7
-	72ZkddgY+W+Gji38Ag0MV+5EgM+9arV0L1YWT7Mb6E1+lnQTFiV0aPcjhmEuKQky
-	B4Jcw75gIBE73uOudeQ+pzMX6gY1g==
-Received: from ppma21.wdc07v.mail.ibm.com (5b.69.3da9.ip4.static.sl-reverse.com [169.61.105.91])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 44fq5tr99v-1
+	:content-transfer-encoding:date:from:in-reply-to:message-id
+	:mime-version:references:subject:to; s=pp1; bh=zLCPMveFANUCzMGzK
+	9e6rtaVJh3sxntGi6Br014wCBI=; b=pn0N9swNY2yY2NwASvDxmfgPyq72yZtga
+	C1s9lVTq3hcIodoAfEnRM38HSEqirJlVGABiwPX/5zWh/ys9Hmp88/iolafgrNYK
+	PIUbcN3FVjWadsYpfYIe3ZPp7OnL8bxDPYKW21HZu5WAzqYShLrWNk4stFeVopfU
+	oZLKqYL4Sh91qsbpLc0Myk1wO/1znpmMpuSynC+tr17xfaDSvGLjnrFdMRTWTzJb
+	1YjwHahSWEChMT9N+rhi/Y48qQqTjMhhLS/XU5hVj2DZeJSSs4XgYrlVgfCpj/GN
+	PQK/bmGZyVaXYyy2dQRJ8B/x8mspyLoJhZX3FqmQVT5atsF4wUO3g==
+Received: from ppma22.wdc07v.mail.ibm.com (5c.69.3da9.ip4.static.sl-reverse.com [169.61.105.92])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 44fpm1gf7g-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Wed, 29 Jan 2025 16:25:33 +0000 (GMT)
-Received: from pps.filterd (ppma21.wdc07v.mail.ibm.com [127.0.0.1])
-	by ppma21.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 50TDCkAo019276;
+	Wed, 29 Jan 2025 16:25:34 +0000 (GMT)
+Received: from pps.filterd (ppma22.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma22.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 50TFkZGA012328;
 	Wed, 29 Jan 2025 16:25:33 GMT
 Received: from smtprelay05.fra02v.mail.ibm.com ([9.218.2.225])
-	by ppma21.wdc07v.mail.ibm.com (PPS) with ESMTPS id 44db9n1g2v-1
+	by ppma22.wdc07v.mail.ibm.com (PPS) with ESMTPS id 44dany9p2w-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Wed, 29 Jan 2025 16:25:32 +0000
+	Wed, 29 Jan 2025 16:25:33 +0000
 Received: from smtpav03.fra02v.mail.ibm.com (smtpav03.fra02v.mail.ibm.com [10.20.54.102])
-	by smtprelay05.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 50TGPTXm56426824
+	by smtprelay05.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 50TGPTV656426828
 	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
 	Wed, 29 Jan 2025 16:25:29 GMT
 Received: from smtpav03.fra02v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id ECEFD20119;
-	Wed, 29 Jan 2025 16:25:28 +0000 (GMT)
+	by IMSVA (Postfix) with ESMTP id 5074620118;
+	Wed, 29 Jan 2025 16:25:29 +0000 (GMT)
 Received: from smtpav03.fra02v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id A243A20118;
-	Wed, 29 Jan 2025 16:25:28 +0000 (GMT)
+	by IMSVA (Postfix) with ESMTP id 070E12011B;
+	Wed, 29 Jan 2025 16:25:29 +0000 (GMT)
 Received: from funtu2.fritz.box?044ibm.com (unknown [9.171.56.44])
 	by smtpav03.fra02v.mail.ibm.com (Postfix) with ESMTP;
 	Wed, 29 Jan 2025 16:25:28 +0000 (GMT)
@@ -56,10 +57,12 @@ To: dengler@linux.ibm.com, ifranzki@linux.ibm.com, agk@redhat.com,
         snitzer@kernel.org, mpatocka@redhat.com
 Cc: linux-s390@vger.kernel.org, dm-devel@lists.linux.dev,
         herbert@gondor.apana.org.au
-Subject: [PATCH v2 0/2] dm-integrity: Implement asynch digest support
-Date: Wed, 29 Jan 2025 17:25:26 +0100
-Message-ID: <20250129162528.57124-1-freude@linux.ibm.com>
+Subject: [PATCH v2 1/2] dm-integrity: use internal variable for digestsize
+Date: Wed, 29 Jan 2025 17:25:27 +0100
+Message-ID: <20250129162528.57124-2-freude@linux.ibm.com>
 X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20250129162528.57124-1-freude@linux.ibm.com>
+References: <20250129162528.57124-1-freude@linux.ibm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -68,44 +71,125 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-TM-AS-GCONF: 00
-X-Proofpoint-GUID: EuKrmckJXge4HMZgJ239DZN4csRawlWE
-X-Proofpoint-ORIG-GUID: EuKrmckJXge4HMZgJ239DZN4csRawlWE
+X-Proofpoint-ORIG-GUID: p9LNZjLN15IuyIum0LJLqEsnaOMVQro5
+X-Proofpoint-GUID: p9LNZjLN15IuyIum0LJLqEsnaOMVQro5
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.293,Aquarius:18.0.1057,Hydra:6.0.680,FMLib:17.12.68.34
  definitions=2025-01-29_03,2025-01-29_01,2024-11-22_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 suspectscore=0
- mlxlogscore=999 lowpriorityscore=0 impostorscore=0 phishscore=0
- adultscore=0 priorityscore=1501 clxscore=1015 mlxscore=0 malwarescore=0
- spamscore=0 bulkscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501
+ impostorscore=0 lowpriorityscore=0 malwarescore=0 suspectscore=0
+ mlxscore=0 bulkscore=0 phishscore=0 mlxlogscore=999 spamscore=0
+ adultscore=0 clxscore=1015 classifier=spam adjust=0 reason=mlx scancount=1
  engine=8.19.0-2411120000 definitions=main-2501290129
 
-Support for ahashes in dm-integrity.
+Instead of calling digestsize() each time the digestsize for
+the internal hash is needed, store the digestsize in a new
+field internal_hash_digestsize within struct dm_integrity_c
+once and use this value when needed.
 
-Please note this code is elementary tested but needs some more
-test coverage before integration. I can't do that as I only have
-a s390 platform but I assume someone from dmcrypt/dmintegrity will
-run a more sophisticated test suite on this.
+Signed-off-by: Harald Freudenberger <freude@linux.ibm.com>
+---
+ drivers/md/dm-integrity.c | 24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
 
-Changelog:
-
-v1: First implementation. Tested with crc32, sha256, hmac-sha256 and
-    the s390 specific implementations for hmac-sha256 and protected
-    key phmac-sha256. Also ran with some instrumented code (in the digest
-    implementation) to verify that in fact now the code runs asynchronous.
-v2: Support shash and ahash. Based on Mikulas' idea about implementing
-    ahash support similar to dm-verity this version now adds support
-    for ahash but does not replace the shash support. For more details
-    see the text of the patch header.
-
-Harald Freudenberger (2):
-  dm-integrity: use internal variable for digestsize
-  dm-integrity: introduce ahash support for the internal hash
-
- drivers/md/dm-integrity.c | 237 +++++++++++++++++++++++++++++---------
- 1 file changed, 180 insertions(+), 57 deletions(-)
-
-
-base-commit: fac04efc5c793dccbd07e2d59af9f90b7fc0dca4
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index ee9f7cecd78e..af0276ad84bd 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -222,6 +222,7 @@ struct dm_integrity_c {
+ 	int failed;
+ 
+ 	struct crypto_shash *internal_hash;
++	unsigned int internal_hash_digestsize;
+ 
+ 	struct dm_target *ti;
+ 
+@@ -1676,7 +1677,7 @@ static void integrity_sector_checksum(struct dm_integrity_c *ic, sector_t sector
+ 		goto failed;
+ 	}
+ 
+-	digest_size = crypto_shash_digestsize(ic->internal_hash);
++	digest_size = ic->internal_hash_digestsize;
+ 	if (unlikely(digest_size < ic->tag_size))
+ 		memset(result + digest_size, 0, ic->tag_size - digest_size);
+ 
+@@ -1776,7 +1777,7 @@ static void integrity_metadata(struct work_struct *w)
+ 	if (ic->internal_hash) {
+ 		struct bvec_iter iter;
+ 		struct bio_vec bv;
+-		unsigned int digest_size = crypto_shash_digestsize(ic->internal_hash);
++		unsigned int digest_size = ic->internal_hash_digestsize;
+ 		struct bio *bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
+ 		char *checksums;
+ 		unsigned int extra_space = unlikely(digest_size > ic->tag_size) ? digest_size - ic->tag_size : 0;
+@@ -2124,7 +2125,7 @@ static bool __journal_read_write(struct dm_integrity_io *dio, struct bio *bio,
+ 				} while (++s < ic->sectors_per_block);
+ 
+ 				if (ic->internal_hash) {
+-					unsigned int digest_size = crypto_shash_digestsize(ic->internal_hash);
++					unsigned int digest_size = ic->internal_hash_digestsize;
+ 
+ 					if (unlikely(digest_size > ic->tag_size)) {
+ 						char checksums_onstack[HASH_MAX_DIGESTSIZE];
+@@ -2428,7 +2429,7 @@ static int dm_integrity_map_inline(struct dm_integrity_io *dio, bool from_map)
+ 	if (!dio->integrity_payload) {
+ 		unsigned digest_size, extra_size;
+ 		dio->payload_len = ic->tuple_size * (bio_sectors(bio) >> ic->sb->log2_sectors_per_block);
+-		digest_size = crypto_shash_digestsize(ic->internal_hash);
++		digest_size = ic->internal_hash_digestsize;
+ 		extra_size = unlikely(digest_size > ic->tag_size) ? digest_size - ic->tag_size : 0;
+ 		dio->payload_len += extra_size;
+ 		dio->integrity_payload = kmalloc(dio->payload_len, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+@@ -2595,7 +2596,8 @@ static void dm_integrity_inline_recheck(struct work_struct *w)
+ 		bio_put(outgoing_bio);
+ 
+ 		integrity_sector_checksum(ic, dio->bio_details.bi_iter.bi_sector, outgoing_data, digest);
+-		if (unlikely(memcmp(digest, dio->integrity_payload, min(crypto_shash_digestsize(ic->internal_hash), ic->tag_size)))) {
++		if (unlikely(memcmp(digest, dio->integrity_payload,
++				    min(ic->internal_hash_digestsize, ic->tag_size)))) {
+ 			DMERR_LIMIT("%pg: Checksum failed at sector 0x%llx",
+ 				ic->dev->bdev, dio->bio_details.bi_iter.bi_sector);
+ 			atomic64_inc(&ic->number_of_mismatches);
+@@ -2635,7 +2637,7 @@ static int dm_integrity_end_io(struct dm_target *ti, struct bio *bio, blk_status
+ 				//memset(mem, 0xff, ic->sectors_per_block << SECTOR_SHIFT);
+ 				integrity_sector_checksum(ic, dio->bio_details.bi_iter.bi_sector, mem, digest);
+ 				if (unlikely(memcmp(digest, dio->integrity_payload + pos,
+-						min(crypto_shash_digestsize(ic->internal_hash), ic->tag_size)))) {
++						min(ic->internal_hash_digestsize, ic->tag_size)))) {
+ 					kunmap_local(mem);
+ 					dm_integrity_free_payload(dio);
+ 					INIT_WORK(&dio->work, dm_integrity_inline_recheck);
+@@ -3017,8 +3019,8 @@ static void integrity_recalc(struct work_struct *w)
+ 		goto free_ret;
+ 	}
+ 	recalc_tags_size = (recalc_sectors >> ic->sb->log2_sectors_per_block) * ic->tag_size;
+-	if (crypto_shash_digestsize(ic->internal_hash) > ic->tag_size)
+-		recalc_tags_size += crypto_shash_digestsize(ic->internal_hash) - ic->tag_size;
++	if (ic->internal_hash_digestsize > ic->tag_size)
++		recalc_tags_size += ic->internal_hash_digestsize - ic->tag_size;
+ 	recalc_tags = kvmalloc(recalc_tags_size, GFP_NOIO);
+ 	if (!recalc_tags) {
+ 		vfree(recalc_buffer);
+@@ -3177,8 +3179,8 @@ static void integrity_recalc_inline(struct work_struct *w)
+ 	}
+ 
+ 	recalc_tags_size = (recalc_sectors >> ic->sb->log2_sectors_per_block) * ic->tuple_size;
+-	if (crypto_shash_digestsize(ic->internal_hash) > ic->tuple_size)
+-		recalc_tags_size += crypto_shash_digestsize(ic->internal_hash) - ic->tuple_size;
++	if (ic->internal_hash_digestsize > ic->tuple_size)
++		recalc_tags_size += ic->internal_hash_digestsize - ic->tuple_size;
+ 	recalc_tags = kmalloc(recalc_tags_size, GFP_NOIO | __GFP_NOWARN);
+ 	if (!recalc_tags) {
+ 		kfree(recalc_buffer);
+@@ -4707,7 +4709,7 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
+ 			r = -EINVAL;
+ 			goto bad;
+ 		}
+-		ic->tag_size = crypto_shash_digestsize(ic->internal_hash);
++		ic->tag_size = ic->internal_hash_digestsize;
+ 	}
+ 	if (ic->tag_size > MAX_TAG_SIZE) {
+ 		ti->error = "Too big tag size";
 -- 
 2.43.0
 
