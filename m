@@ -1,105 +1,115 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09E141B87C9
-	for <dm-devel@lists.linux.dev>; Wed, 29 Jan 2025 23:27:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74664145A18
+	for <dm-devel@lists.linux.dev>; Fri, 31 Jan 2025 10:03:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738193238; cv=none; b=hiWhYi/wDUrjewwFyin6oB/4SvdFEORawsxB2o+ZNbD16kiJhz2VMCHxX1PfCrU0kh0c4ylQ6ff7DX6/7vMh1wQo3OePJQyMaa33TNEJvc0ZN55floRIysUWnKwNvE2kiRQJK0+3v3TXaTilQ4Zx8hBgbci0S1RtFwvRsH/M0lA=
+	t=1738317797; cv=none; b=sSQJduSTB2/uh7tyajOYuKWp8s5rL5NZ094fT/JqcaQXsW98WGoEXX8CiazacOlCsuQi9lywnKPj7rWwRMX/ud9Vy2S+i3/z8ptgF2v/7aljolUxMCYERHA0etLLdmUwWVD/kOlQLNd1zsWKSIVRD22NcEETZjy1G2CBle14WV8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738193238; c=relaxed/simple;
-	bh=yTgySz8oQcTvXEXXZVt2zLZ1VEB/wz4gK8R12Z31ic4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=qVd1ztOWV6Y7AX2dujg0PsR0S6d+99bQ8c2hUX6/kuAOlE8gaqQmKrqvjpBI8j5rRY/J+4m5P1f89K3yHWspD93Npy6IU3bsfdlDUvbDDOoG3bJghgPBvz3KE0WsTdXgVasr3MbGlm2e0bQKI8v3/32vWPBNn7QRyNDeU7qRF+I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Duu/dwJ4; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1738317797; c=relaxed/simple;
+	bh=gnUcDOjx2/FypPBCMu8I+I+MklAW7ltHyx8+1CdfxgA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=JIgSZ0v+234UnpLUdC3/F6xAYrSH5a5qeLFuoRdNuqUmDeQXAQQ0CfsBS6MwOT73bbd2sVJ5TpvMf7vSyZMfY0tBHQ0DYzpLRJTGZQM5Hqgw45PtMK43pBWxOfpwbQSTzuCYMe/G4z4ztkgkEwA/ueUZ/MDNUaHLJBY9xJRRrRQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=Qw+woroA; arc=none smtp.client-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Duu/dwJ4"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1738193235;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=s/MuxfcEfHYDrJP5hPew2dC9ZKjTbw1+8ciDe13n0gw=;
-	b=Duu/dwJ4Xz0+4dQtPh/VuMT1jwyhIGl2nTWH3+vvKFbKF9BaVnj9tFPHSZPSeMYoz8YFKV
-	Saq8v1Subzmy6UAt1LhvH+fe6zOLOP3SB0i5FxweMrTjpCssoMUEtsLy1hD+T0H4k6bA35
-	uxi0WUiFv/ydsF1clT0rayEEYPn8Uz8=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-611-Y0cSka9kOBS1vuQLkP59Lg-1; Wed,
- 29 Jan 2025 18:27:14 -0500
-X-MC-Unique: Y0cSka9kOBS1vuQLkP59Lg-1
-X-Mimecast-MFC-AGG-ID: Y0cSka9kOBS1vuQLkP59Lg
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A21C91801F0F
-	for <dm-devel@lists.linux.dev>; Wed, 29 Jan 2025 23:27:13 +0000 (UTC)
-Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 804BB1800352;
-	Wed, 29 Jan 2025 23:27:13 +0000 (UTC)
-Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id D01B45F0CC; Wed, 29 Jan 2025 18:27:12 -0500 (EST)
-From: Matthew Sakai <msakai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: Chung Chung <cchung@redhat.com>,
-	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH] dm vdo indexer: prevent unterminated string warning
-Date: Wed, 29 Jan 2025 18:27:12 -0500
-Message-ID: <8694ea5954b4f1018d69099bb7522228f3d46bef.1738192369.git.msakai@redhat.com>
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="Qw+woroA"
+Received: from pps.filterd (m0353725.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 50V2ONWP021914;
+	Fri, 31 Jan 2025 10:03:09 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:date:from:message-id:mime-version
+	:subject:to; s=pp1; bh=YE3731Ke4dSm3jcCIIqXviB/CmwuCXIaXdR990sG4
+	aA=; b=Qw+woroAJ3RzMwhpVMN7aItApJ8janYroJ8A2tG31yt22viewk/V8Cfdt
+	O3pEr5tUi5KixTJMIPeHWiXWOqJ0z8+gNuqReY2rZ+EOBgzWsvZRuhhQKL95sLb2
+	GB0M1gpGJDBUDBiN45nhmLl/mMDjBkunUsig5KovEq+IDUAW06UEP7FMz1Phvk/P
+	+odZ9Ul7MlNwztD1ENRugogLGKzzgG6zANkK0h/CSvXW80A8rbApf0+XIJZm594a
+	BYbSQ0PLcP/KL0QNqIEkSxkiqqvRTlSz9E/FruL0/f7uhDLQyQRtvp2JxSokjF5q
+	LYgr9XVFKOwfr5+IbFUZ44mDXF06Q==
+Received: from ppma21.wdc07v.mail.ibm.com (5b.69.3da9.ip4.static.sl-reverse.com [169.61.105.91])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 44gnby9n4t-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 31 Jan 2025 10:03:09 +0000 (GMT)
+Received: from pps.filterd (ppma21.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma21.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 50V873PS024576;
+	Fri, 31 Jan 2025 10:03:08 GMT
+Received: from smtprelay03.fra02v.mail.ibm.com ([9.218.2.224])
+	by ppma21.wdc07v.mail.ibm.com (PPS) with ESMTPS id 44gf9131ju-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 31 Jan 2025 10:03:08 +0000
+Received: from smtpav05.fra02v.mail.ibm.com (smtpav05.fra02v.mail.ibm.com [10.20.54.104])
+	by smtprelay03.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 50VA345b52494778
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 31 Jan 2025 10:03:05 GMT
+Received: from smtpav05.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id E284B200EB;
+	Fri, 31 Jan 2025 10:03:04 +0000 (GMT)
+Received: from smtpav05.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 8AFD6200E9;
+	Fri, 31 Jan 2025 10:03:04 +0000 (GMT)
+Received: from funtu2.fritz.box?044ibm.com (unknown [9.171.80.148])
+	by smtpav05.fra02v.mail.ibm.com (Postfix) with ESMTP;
+	Fri, 31 Jan 2025 10:03:04 +0000 (GMT)
+From: Harald Freudenberger <freude@linux.ibm.com>
+To: dengler@linux.ibm.com, ifranzki@linux.ibm.com, agk@redhat.com,
+        snitzer@kernel.org, mpatocka@redhat.com
+Cc: linux-s390@vger.kernel.org, dm-devel@lists.linux.dev,
+        herbert@gondor.apana.org.au
+Subject: [PATCH v3 0/2] dm-integrity: Implement asynch digest support
+Date: Fri, 31 Jan 2025 11:03:02 +0100
+Message-ID: <20250131100304.932064-1-freude@linux.ibm.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: jbDU9VUVT9z4_klFAu7uM5HhS_T6HzXNP2GXYFuBMvE_1738193233
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-ORIG-GUID: msnWmx-6azlgx6tYkoeLq2hqf0ydC0Pv
+X-Proofpoint-GUID: msnWmx-6azlgx6tYkoeLq2hqf0ydC0Pv
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1057,Hydra:6.0.680,FMLib:17.12.68.34
+ definitions=2025-01-31_04,2025-01-31_01,2024-11-22_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 spamscore=0
+ priorityscore=1501 lowpriorityscore=0 impostorscore=0 mlxscore=0
+ malwarescore=0 suspectscore=0 phishscore=0 mlxlogscore=999 clxscore=1015
+ bulkscore=0 adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2501170000 definitions=main-2501310075
 
-From: Chung Chung <cchung@redhat.com>
+Support for ahashes in dm-integrity.
 
-Fix array initialization that triggers a warning:
+Please note this code is elementary tested but needs some more
+test coverage before integration. I can't do that as I only have
+a s390 platform but I assume someone from dmcrypt/dmintegrity will
+run a more sophisticated test suite on this.
 
-error: initializer-string for array of ‘unsigned char’ is too long
- [-Werror=unterminated-string-initialization]
+Changelog:
 
-Signed-off-by: Chung Chung <cchung@redhat.com>
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
----
- drivers/md/dm-vdo/indexer/index-layout.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+v1: First implementation. Tested with crc32, sha256, hmac-sha256 and
+    the s390 specific implementations for hmac-sha256 and protected
+    key phmac-sha256. Also ran with some instrumented code (in the digest
+    implementation) to verify that in fact now the code runs asynchronous.
+v2: Support shash and ahash. Based on Mikulas' idea about implementing
+    ahash support similar to dm-verity this version now adds support
+    for ahash but does not replace the shash support. For more details
+    see the text of the patch header.
+v3: The line to store the digestsize into the new internal variable
+    did not make it into the patch set which was sent out. So now
+    this important code piece is also there. Also rebuilded, sparse
+    checked and tested to make sure the patches are ok.
 
-diff --git a/drivers/md/dm-vdo/indexer/index-layout.c b/drivers/md/dm-vdo/indexer/index-layout.c
-index 627adc24af3b..053b7845d1f3 100644
---- a/drivers/md/dm-vdo/indexer/index-layout.c
-+++ b/drivers/md/dm-vdo/indexer/index-layout.c
-@@ -54,7 +54,6 @@
-  * Each save also has a unique nonce.
-  */
- 
--#define MAGIC_SIZE 32
- #define NONCE_INFO_SIZE 32
- #define MAX_SAVES 2
- 
-@@ -98,9 +97,11 @@ enum region_type {
- #define SUPER_VERSION_CURRENT 3
- #define SUPER_VERSION_MAXIMUM 7
- 
--static const u8 LAYOUT_MAGIC[MAGIC_SIZE] = "*ALBIREO*SINGLE*FILE*LAYOUT*001*";
-+static const u8 LAYOUT_MAGIC[] = "*ALBIREO*SINGLE*FILE*LAYOUT*001*";
- static const u64 REGION_MAGIC = 0x416c6252676e3031; /* 'AlbRgn01' */
- 
-+#define MAGIC_SIZE (sizeof(LAYOUT_MAGIC) - 1)
-+
- struct region_header {
- 	u64 magic;
- 	u64 region_blocks;
--- 
-2.45.2
+Harald Freudenberger (2):
+  dm-integrity: use internal variable for digestsize
+  dm-integrity: introduce ahash support for the internal hash
+
+ drivers/md/dm-integrity.c | 241 +++++++++++++++++++++++++++++---------
+ 1 file changed, 184 insertions(+), 57 deletions(-)
+
+
+base-commit: fac04efc5c793dccbd07e2d59af9f90b7fc0dca4
+--
+2.43.0
 
