@@ -1,138 +1,114 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 658671E261F
-	for <dm-devel@lists.linux.dev>; Fri,  7 Feb 2025 12:31:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F0191B4159
+	for <dm-devel@lists.linux.dev>; Fri,  7 Feb 2025 22:14:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738931485; cv=none; b=svmxIAC842OY7DNYqfLR0A2vexBC5tzcirGVIRg+RrGxl59a6ijBlJD06XhDVIi+JafnXsU9pG9knymgvhd+NFYRrQP0tbQaDm6q7IKv2Uhv0NHgglliipUgCcggq23Z8yrRT1pKAdH/iW/0q6g1gngib54W/xDER5MAnhRhfHs=
+	t=1738966467; cv=none; b=fEWxbhRRiBvsVlhSxaLQaSfIu06neotzRrWgDGASA3vEiQFDS3AH6ikB7BMmo8lNkp1uS8YznSPcV+WOHSTb7uw11910zKlUnY+yrAo4Volbs9VNngeKxp6gacADIzcTOFm4JK8N/jFTBEyX0IJTuMdFRi2s25tmcqTR1k8Lu7g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738931485; c=relaxed/simple;
-	bh=ZSK3tTd78SFDrWY+mZUtcmMtccUuEPDk96bqa5dR+YU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Dkp/nQKFk7RtGQZYP52ePK9ntaZwD10pcE1RlY5uwgA9mGIoX/tPOX15lSzOFKT7IDL7wxZR7yET589gJrXJ9lkwZlySQk9xdr4+nDpmk3FgCNtpeLgreL/5ouiV6rBASRKiqE9ZnsxY2/Hg9HciuAH95Y8a3xLKmPV2dOUN4KY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4YqCxW3Bpnz4f3lDF
-	for <dm-devel@lists.linux.dev>; Fri,  7 Feb 2025 20:30:55 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 022091A1422
-	for <dm-devel@lists.linux.dev>; Fri,  7 Feb 2025 20:31:18 +0800 (CST)
-Received: from [10.174.179.80] (unknown [10.174.179.80])
-	by APP4 (Coremail) with SMTP id gCh0CgD3Wl8V_aVnR2qtDA--.49471S3;
-	Fri, 07 Feb 2025 20:31:17 +0800 (CST)
-Message-ID: <5e4cfa32-83bc-4025-a5db-298b7c080037@huaweicloud.com>
-Date: Fri, 7 Feb 2025 20:31:16 +0800
+	s=arc-20240116; t=1738966467; c=relaxed/simple;
+	bh=v3E7aOAj1RolbZ+G8rpmqWsn67q8WYxDr1SczyjymHg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=gCg4H/eXHGIvSu5nx83rEJZ5sA70dCkDuq74qMTe2AHieBWich890idtJJ742ii/g+LsKH8KWEnxOFHaUUXgCkQsgjUvrByNGDSTgpUmhFmxyP/50e9C5Ne13ktEMeO+5BxWIVa38n2cuT3O/MLyihIZg5/P+K7jCOr67dHefqc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IgQ8iGLG; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IgQ8iGLG"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1738966464;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5JQYDZ5jzno7rrMD91/odghBo6lSgHHkIDBVq0SzOmo=;
+	b=IgQ8iGLG/XwMn04U2eJOH6pIGQI5QllbHgKjYyBN0hlvWtSqq0X6H8cSqzaqG6U8TeaAZf
+	y8dkQpOV6nGQzEKx/B5a6eCAvtRuaPnuC9lUSkfACDjQR752bTJaM8hZq++a56YqLFQlVm
+	45HnKefYn+8NMVhvD9Ek3Cv05bTKTEc=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-194-QyO-n5Z1MT68fscLH0adPg-1; Fri,
+ 07 Feb 2025 17:14:19 -0500
+X-MC-Unique: QyO-n5Z1MT68fscLH0adPg-1
+X-Mimecast-MFC-AGG-ID: QyO-n5Z1MT68fscLH0adPg
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 437711956095;
+	Fri,  7 Feb 2025 22:14:16 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 56BCE1800360;
+	Fri,  7 Feb 2025 22:14:14 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 517MEDga725105
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 7 Feb 2025 17:14:13 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 517MECmM725090;
+	Fri, 7 Feb 2025 17:14:12 -0500
+Date: Fri, 7 Feb 2025 17:14:12 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Zhang Yi <yi.zhang@huaweicloud.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+        linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+        linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
+        linux-kernel@vger.kernel.org, hch@lst.de, tytso@mit.edu,
+        djwong@kernel.org, yi.zhang@huawei.com, chengzhihao1@huawei.com,
+        yukuai3@huawei.com, yangerkun@huawei.com
+Subject: Re: [RFC PATCH v2 4/8] dm: add BLK_FEAT_WRITE_ZEROES_UNMAP support
+Message-ID: <Z6aFtJzGWMNhILJW@redhat.com>
+References: <20250115114637.2705887-1-yi.zhang@huaweicloud.com>
+ <20250115114637.2705887-5-yi.zhang@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH v2 1/8] block: introduce BLK_FEAT_WRITE_ZEROES_UNMAP
- to queue limits features
-To: John Garry <john.g.garry@oracle.com>
-Cc: linux-kernel@vger.kernel.org, hch@lst.de, tytso@mit.edu,
- djwong@kernel.org, chengzhihao1@huawei.com, yukuai3@huawei.com,
- yangerkun@huawei.com, Zhang Yi <yi.zhang@huawei.com>,
- linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org
-References: <20250115114637.2705887-1-yi.zhang@huaweicloud.com>
- <20250115114637.2705887-2-yi.zhang@huaweicloud.com>
- <d0f8315b-e006-498a-b3e8-77542f352d40@oracle.com>
- <dfd16793-f1fb-4ce6-8ad8-86de0818ff4e@huaweicloud.com>
-Content-Language: en-US
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-In-Reply-To: <dfd16793-f1fb-4ce6-8ad8-86de0818ff4e@huaweicloud.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-CM-TRANSID:gCh0CgD3Wl8V_aVnR2qtDA--.49471S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxCFWrKF18ZryfJryUAr4Utwb_yoW5WF4rpF
-	yvgFyDtr93tF1xAwn2vanFgFW5Zws3Aa4fGwn8tryj9rs8ZFySgFW0gFy5u347Wryfuw18
-	tFWYvr9xCa10yF7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUvjb4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Gr0_Xr1l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Cr0_Gr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I
-	0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40E
-	x7xfMcIj6xIIjxv20xvE14v26r1Y6r17McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x
-	0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lFIxGxcIEc7CjxVA2Y2ka0xkIwI1lc7CjxVAaw2AF
-	wI0_Jw0_GFyl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4
-	xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43
-	MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I
-	0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWU
-	JVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjxUrs
-	qXDUUUU
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20250115114637.2705887-5-yi.zhang@huaweicloud.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-On 2025/2/7 20:22, Zhang Yi wrote:
-> On 2025/1/29 0:46, John Garry wrote:
->> On 15/01/2025 11:46, Zhang Yi wrote:
->>> From: Zhang Yi <yi.zhang@huawei.com>
->>>
->>> Currently, it's hard to know whether the storage device supports unmap
->>> write zeroes. We cannot determine it only by checking if the disk
->>> supports the write zeroes command, as for some HDDs that do submit
->>> actual zeros to the disk media even if they claim to support the write
->>> zeroes command, but that should be very slow.
->>
->> This second sentence is too long, such that your meaning is hard to understand.
->>
->>>
->>> Therefor, add a new queue limit feature, BLK_FEAT_WRITE_ZEROES_UNMAP and
->>
->> Therefore?
->>
->>> the corresponding sysfs entry, to indicate whether the block device
->>> explicitly supports the unmapped write zeroes command. Each device
->>> driver should set this bit if it is certain that the attached disk
->>> supports this command. 
->>
->> How can they be certain? You already wrote that some claim to support it, yet don't really. Well, I think that is what you meant.
->>
+On Wed, Jan 15, 2025 at 07:46:33PM +0800, Zhang Yi wrote:
+> From: Zhang Yi <yi.zhang@huawei.com>
 > 
-> Hi, John. thanks for your reply!
+> Set the BLK_FEAT_WRITE_ZEROES_UNMAP feature on stacking queue limits by
+> default. This feature shall be disabled if any underlying device does
+> not support it.
 > 
-> Sorry for the late and not make it clear enough earlier. Currently, there
-> are four situations of write zeroes command (aka REQ_OP_WRITE_ZEROES)
-> supported by various disks and backend storage devices.
+> Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+> ---
+>  drivers/md/dm-table.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
 > 
-> A. Devices that do not support the write zeroes command
->    These devices have bdev_limits(bdev)->max_write_zeroes_sectors set to
->    zero.
-> B. Devices that support the write zeroes command
->    These devices have bdev_limits(bdev)->max_write_zeroes_sectors set to a
->    non-zero value. They can be further categorized into three
->    sub-situations:
-> B.1. Devices that write physical zeroes to the media
->      These devices perform the write zeroes operation by physically writing
->      zeroes to the storage media, which can be very slow (e.g., HDDs).
-> B.2. Devices that support unmap write zeroes
->      These devices can offload the write zeroes operation by unmapping the
->      logical blocks, effectively putting them into a deallocated state
->      (e.g., SSDs). This operation is typically very fast, allowing
->      filesystems to use this command to quickly create zeroed files. NVMe
->      and SCSI disk drivers already support this and can query the attached
->      disks to determine whether they support unmap write zeroes (please see
->      patches 2 and 3 for details).
-> B.3. The implementation of write zeroes on disks are unknown
->      This category includes non-standard disks and some network storage
->      devices where the exact implementation of the write zeroes command is
->      unclear.
-> 
-> Currently, users can only distinguish A and B through querying
-> 
->    /sys/block/<disk>/queue/write_zeroes_unmap
-                             ^^^^^^^^^^^^^^^^^^
-Oh, sorry, it should be 'write_zeroes_max_bytes'
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index bd8b796ae683..58cce31bcc1e 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -598,7 +598,8 @@ int dm_split_args(int *argc, char ***argvp, char *input)
+>  static void dm_set_stacking_limits(struct queue_limits *limits)
+>  {
+>  	blk_set_stacking_limits(limits);
+> -	limits->features |= BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT | BLK_FEAT_POLL;
+> +	limits->features |= BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT | BLK_FEAT_POLL |
+> +			    BLK_FEAT_WRITE_ZEROES_UNMAP;
+>  }
+>  
 
-     /sys/block/<disk>/queue/write_zeroes_max_bytes
+dm_table_set_restrictions() can set limits->max_write_zeroes_sectors to
+0, and it's called after dm_calculate_queue_limits(), which calls
+blk_stack_limits(). Just to avoid having the BLK_FEAT_WRITE_ZEROES_UNMAP
+still set while a device's max_write_zeroes_sectors is 0, it seems like
+you would want to clear it as well if dm_table_set_restrictions() sets
+limits->max_write_zeroes_sectors to 0.
 
-Thanks,
-Yi.
+-Ben
 
+>  /*
+> -- 
+> 2.39.2
+> 
 
