@@ -1,152 +1,127 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07AE4156C6A
-	for <dm-devel@lists.linux.dev>; Mon, 10 Feb 2025 16:46:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0BBD9256C8E
+	for <dm-devel@lists.linux.dev>; Mon, 10 Feb 2025 16:58:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739206001; cv=none; b=jg5/cUaa8syo6U4usBWFX1oim/ForE+IldaRuSrZNPiARQw+ERBfIajPHG4PWF40/WbR6Ep1xJctOUvutXZou7A8c1kZkK4RK0dZW2oVB/+eB1NMPKnEeagn+Ys/CehO0xCQYZNxw/v2RVg/iqXJvuMkW+UXZyhHayOB8SKhDMc=
+	t=1739206715; cv=none; b=EabeR1dcw8u1T1ka6k62AnFK3cLzxCJfv1h+GMbjXEeP1Z6W4+4eRTUL1mm8ZGuWM9Btidv/9n+x/jzjclNPLiF39PHy21aRSyhA++xPTaYgtd974xkClUPjP6OO2vwYuAfWuRdwHHvdZQvjGjj+Wi49GTijqT/8ThW/wFH87Us=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739206001; c=relaxed/simple;
-	bh=1Uui0LP+dRy/nF/7kQOgRby59OEfk0bdqA8gUXuO9fI=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=ZVZtl+srnxOFOWK3IhIKCuPW7ZAiAs8eavcLjqiOsCIL2dJEn6iTjiQvNwiSgr9Lxl1MJDP9VQpe40cusSfIpqSxnQNsr2KBOpyd9nH+1ObXSUjLkW2f6FfQjY3+2UWTGKC+XN3HFq97Y7ZZLETZawjn5DKLhAE2PUmZXA+N03g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Q13AjmEB; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1739206715; c=relaxed/simple;
+	bh=+EYxoO/4eaTKKnUK7wm1jcos/P6WRb0f5cS36rove7U=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=ZJ7czAoK7dv3PdWm9b+f1KAdqXXRktNIGlCzh/JGEAr1Qp33au1OHUcFsTVCwSczQ8tyfiSRyJ8QVRGf0GjNez921Sr736Wg2RR8WZV6cuiwZ4tXX4tTyLZQgjXAGvXJTbQ+zd7ZPeAiF2uvJuGW++DGmT7D6u3u6NiB9BxOW+s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=OHMhQgyb; arc=none smtp.client-ip=209.85.208.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q13AjmEB"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1739205998;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9tKkdtm92j2d1e6fcm2f9ZD5mkyDaEahDExQkA7AKaA=;
-	b=Q13AjmEBgPfi/KMiw/DWf9ghYyivTs4rVbDPuVz8DnQheWpRz+qOawG1WTYi+GqmFftFsx
-	+Uclu5826/7+y8myA+KSXKSTmXNiokgqpILowkZ54QA0SgcQ+4tAuo0YJ2uKTtGJX/AcYw
-	7ymddMYUR5ZgruhiFADdYH+8mjAHpiU=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-609-fbVD1i7LMmiof3r_x1bnJg-1; Mon,
- 10 Feb 2025 11:46:35 -0500
-X-MC-Unique: fbVD1i7LMmiof3r_x1bnJg-1
-X-Mimecast-MFC-AGG-ID: fbVD1i7LMmiof3r_x1bnJg
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4C45C1955D5C;
-	Mon, 10 Feb 2025 16:46:34 +0000 (UTC)
-Received: from [10.45.225.131] (unknown [10.45.225.131])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 22C651800358;
-	Mon, 10 Feb 2025 16:46:30 +0000 (UTC)
-Date: Mon, 10 Feb 2025 17:46:26 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Milan Broz <gmazyland@gmail.com>
-cc: Akilesh Kailash <akailash@google.com>, 
-    Sami Tolvanen <samitolvanen@google.com>, kernel-team@android.com, 
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v2] dm-verity: do forward error correction on metadata
- I/O errors
-In-Reply-To: <60c1acde-839d-4d23-8270-2acf032a4ef9@gmail.com>
-Message-ID: <4dc8f521-e6ca-b80c-eee8-060158a38407@redhat.com>
-References: <629167c1-9be0-6128-8605-eb02391e821d@redhat.com> <60c1acde-839d-4d23-8270-2acf032a4ef9@gmail.com>
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="OHMhQgyb"
+Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-5dbfc122b82so14247a12.0
+        for <dm-devel@lists.linux.dev>; Mon, 10 Feb 2025 08:58:33 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1739206712; x=1739811512; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=cm57wNvbQ2vdjEciVDp1te7Id5gFdsUL8knVkzn6Sqk=;
+        b=OHMhQgybnEEK3k8qs/e6RVWSSywMBc9LL+IC2QeVOkZj0V2YvOCb9OfrLPGgQBpPTp
+         OJF0nS1XdkvpCF67WCLIcOSAP0dBMGH0Xd62s52R0uXzhNn4IisOZiblNv2O16VJlmAW
+         t/7KaU06l4CtWxfYWN8CYInIWDzL+zRASLPI4e5uBRkTP3IlKRDjpcjyqIvCwKGlSTWR
+         7tUH8AqzB4zj3I5vzh0a797l2/AscKklledfayEr1HI7+ErJUjH0Y/OIJVvbtA3ZZnR5
+         v0dTWOUUtzW56T2ZmDxKrNnY8hPxq5WHXA3GgUWZL6UskOJTMy8ZMXD0ANF7az5lqvaf
+         NH5w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1739206712; x=1739811512;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=cm57wNvbQ2vdjEciVDp1te7Id5gFdsUL8knVkzn6Sqk=;
+        b=rFzi/bLFC3Ncx3pcN0HxyqN3+u729azEQJA5xWzP5mqrakuHE7cMwYDwsszx3rRXZs
+         jMDC/qkhRZAfpDME3rc2RjVvB/2ITBI6w75rkY9r/O4tQqBTEDxZD5bg5PDdOfrkAhEz
+         +IiSZKB68lUMOarSA0FZG3iqBbarKuhHw7UKmbrkqjSwCuEt6mm2tADicLkT0fkJgEZw
+         01imODtjjjtxHZTeXb0Tg8BMRip0pvfc5VjjA/YU87URA73QCyNHjNyoH/vDS6i4U4Wd
+         o6Hom8vqqm6czOvgayG13OMW8qZhoifehd9vVaY4UBBonxqkjvgtyqD1xktIVUAIthuz
+         GLoA==
+X-Forwarded-Encrypted: i=1; AJvYcCU6Upo4lxCj/22nK8DEH2GyQSNI6d+/HtnyA5mie5uHUOUqcF3FSzWBGA2kOS9zMO/JOz+i1v5v6w==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzU1IGxaIPRilbWXgOnBMsbv5xSYMK8qe644JzhRrzPHs3q4Ptg
+	KENln29Nv+BTY3OA2WTeWS6C8gHNzdjzi/D97gqCFiWVCt8khiXzHw4MCFAEQZqoAODBTaGzwRO
+	Ve/Zsc6PAkI91Zn9Nm6jwwfwLM3Ei/stkEMma
+X-Gm-Gg: ASbGncvshu3wVwM6sfVPaj39V+hS26L7QZIrsJMgc/y0qDpFQmuNOBxq/sSYKfyv0rm
+	AGJVUaunmvTwQOloMt2x7ehv1vBUP2v9idTnW/OgKuyvkar/xyinSesttp1GJ5ey0GgY9XQ==
+X-Google-Smtp-Source: AGHT+IFnw841MFqZMe6UVhOR0RXEyOzas0we/b8udxrzoxTVjI3QHNpgdB6s5ClL8XfbUoDdeSPb0JGGXaFyvlKzHfw=
+X-Received: by 2002:a05:6402:2054:b0:5dc:e09f:d069 with SMTP id
+ 4fb4d7f45d1cf-5de5bf43e67mr177841a12.6.1739206712123; Mon, 10 Feb 2025
+ 08:58:32 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+References: <629167c1-9be0-6128-8605-eb02391e821d@redhat.com>
+In-Reply-To: <629167c1-9be0-6128-8605-eb02391e821d@redhat.com>
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Mon, 10 Feb 2025 08:57:55 -0800
+X-Gm-Features: AWEUYZmZq810A2nkZIkAKPj4stps_q_lRKH-4FpQTq4FT9GxN7r_QaAqRE1hH8U
+Message-ID: <CABCJKucmOTVF1jY3vM7VKHuLkDeUxK1EU7YK=C+vgfWvgZFWPQ@mail.gmail.com>
+Subject: Re: [PATCH] dm-verity: do forward error correction on metadata I/O errors
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Akilesh Kailash <akailash@google.com>, kernel-team@android.com, 
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Milan Broz <gmazyland@gmail.com>, 
+	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
+Hi Mikulas,
 
+On Mon, Feb 10, 2025 at 7:04=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
+>
+> Do forward error correction if metadata I/O fails.
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>
+> ---
+>  drivers/md/dm-verity-target.c |   19 +++++++++++++++++--
+>  1 file changed, 17 insertions(+), 2 deletions(-)
+>
+> Index: linux-2.6/drivers/md/dm-verity-target.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/drivers/md/dm-verity-target.c        2025-02-04 13:52:=
+45.000000000 +0100
+> +++ linux-2.6/drivers/md/dm-verity-target.c     2025-02-10 15:55:42.00000=
+0000 +0100
+> @@ -324,8 +324,22 @@ static int verity_verify_level(struct dm
+>                                                 &buf, bio->bi_ioprio);
+>         }
+>
+> -       if (IS_ERR(data))
+> -               return PTR_ERR(data);
+> +       if (IS_ERR(data)) {
+> +               r =3D PTR_ERR(data);
+> +               data =3D dm_bufio_new(v->bufio, hash_block, &buf);
+> +               if (IS_ERR(data))
+> +                       return r;
+> +               if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_METADAT=
+A,
+> +                                     hash_block, data) =3D=3D 0) {
+> +                       aux =3D dm_bufio_get_aux_data(buf);
+> +                       aux->hash_verified =3D 1;
+> +                       goto release_ok;
+> +               } else {
+> +                       dm_bufio_release(buf);
+> +                       dm_bufio_forget(v->bufio, hash_block);
+> +                       return r;
+> +               }
+> +       }
 
-On Mon, 10 Feb 2025, Milan Broz wrote:
+Don't we still have to check for io->in_bh before trying to correct the err=
+or?
 
-> On 2/10/25 4:04 PM, Mikulas Patocka wrote:
-> > Do forward error correction if metadata I/O fails.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> Not directly related to this patch, but...
-> please could you also increase the dm-verity version?
-> 
-> I just implemented support for the errors-as-corruption
-> dm-verity flags in veritysetup.
-> 
-> The version of dm-verity stayed at 1.10 for a very long, and
-> the IO error processing change was a functional change that we
-> would like to detect.
-> We cannot set version retrospectively, but at least now with other
-> changes.
-> 
-> (Veritysetup tries the requested flags; if activation fails,
-> it displays a better error message based on the detected
-> target version. That way it works even with backports.)
-> 
-> Thanks,
-> Milan
+Overall, it would be nice not to duplicate code here. Should the
+metadata error correction / handling be moved to a separate function
+similar to verity_handle_data_hash_mismatch?
 
-OK.
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-Do forward error correction if metadata I/O fails.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-verity-target.c |   21 ++++++++++++++++++---
- 1 file changed, 18 insertions(+), 3 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-verity-target.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-verity-target.c	2025-02-10 16:24:56.000000000 +0100
-+++ linux-2.6/drivers/md/dm-verity-target.c	2025-02-10 17:43:50.000000000 +0100
-@@ -324,8 +324,22 @@ static int verity_verify_level(struct dm
- 						&buf, bio->bi_ioprio);
- 	}
- 
--	if (IS_ERR(data))
--		return PTR_ERR(data);
-+	if (IS_ERR(data)) {
-+		r = PTR_ERR(data);
-+		data = dm_bufio_new(v->bufio, hash_block, &buf);
-+		if (IS_ERR(data))
-+			return r;
-+		if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_METADATA,
-+				      hash_block, data) == 0) {
-+			aux = dm_bufio_get_aux_data(buf);
-+			aux->hash_verified = 1;
-+			goto release_ok;
-+		} else {
-+			dm_bufio_release(buf);
-+			dm_bufio_forget(v->bufio, hash_block);
-+			return r;
-+		}
-+	}
- 
- 	aux = dm_bufio_get_aux_data(buf);
- 
-@@ -366,6 +380,7 @@ static int verity_verify_level(struct dm
- 		}
- 	}
- 
-+release_ok:
- 	data += offset;
- 	memcpy(want_digest, data, v->digest_size);
- 	r = 0;
-@@ -1761,7 +1776,7 @@ static struct target_type verity_target
- 	.name		= "verity",
- /* Note: the LSMs depend on the singleton and immutable features */
- 	.features	= DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
--	.version	= {1, 10, 0},
-+	.version	= {1, 11, 0},
- 	.module		= THIS_MODULE,
- 	.ctr		= verity_ctr,
- 	.dtr		= verity_dtr,
-
+Sami
