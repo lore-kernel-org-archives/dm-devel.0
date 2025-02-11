@@ -1,86 +1,110 @@
-Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AEB41D88CA
-	for <dm-devel@lists.linux.dev>; Tue, 11 Feb 2025 20:48:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 04BA6263C97
+	for <dm-devel@lists.linux.dev>; Tue, 11 Feb 2025 21:12:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739306892; cv=none; b=QsCPXtPuV8DiN0Hk4Wcaj7s9gq5uJpCpHL367jjVfqDf6+3L2Yz8gSbFtLJZ0A7ayTi1yFjOG96QKQ94CMRfnot5oFFYCfub5lw4BjhKIM04kUrh6txTLHas88oUtKHHCKHIvgRhaWbYWzFlceyQ2fHcQ4yPyGwMh7aaJPPpFm8=
+	t=1739308376; cv=none; b=NKkwkhEKUngZs+EFkkwkLafc/rWKMqxX9BFopyzwMQcn1CC7AHKEOOysJXGqSH9ekDseociPFdwdfLVflws3K3c0TipWuOebSGuLfPpiJNvShQyW61C0r4yf41+oAsGcx9TK/69BKycFSRZI24ABoDoibk98xZz+8dwRbSsQk1E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739306892; c=relaxed/simple;
-	bh=yFXyFnIi+52VN+pYxbpLfYVx6cICjiaB+HsAULoXBaI=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Wg1YdJPbYheS8fDJgylCbtRkW+dh83Ces9Q+RNU6bHX3JTP38Y6GC/v+/NxuenJZIo7sjQlZol07mJamKReClkD6PZWwtYHTczt9sYfiXBO5J/AXHzwdrmiSkMLuf8R6laWHSiZM/Qr7gLfkJajKe9bMu8dLA0Y948V+w1bIM80=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=EttDNwcc; arc=none smtp.client-ip=209.85.218.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1739308376; c=relaxed/simple;
+	bh=ETajzHwys4K2y4d0vGHwt+JCZaQXqVODT+LCC+VqiPg=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=CEsXsx71P4XwwwvOdk3ptRTbVxjSNiETi7793xZXcS5t2RhCNvNCRPsf8csNkXs9zYzHdop5k5DSlGED3+D8V1VW3NgREA3YDHaJtcBcbbsxhGBaf0EaDNCLWUYfCBWLYlAlfSxAkyNMdJz/tN6+gLHhZFKam7Ro9G9cdpAYKyk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=g8wqklrH; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="EttDNwcc"
-Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-aaf900cc7fbso986429766b.3
-        for <dm-devel@lists.linux.dev>; Tue, 11 Feb 2025 12:48:09 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1739306888; x=1739911688; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=yFXyFnIi+52VN+pYxbpLfYVx6cICjiaB+HsAULoXBaI=;
-        b=EttDNwcc8XDe6VlW+4h2S/V5nn4AD+F37+f51mDlgNiCMocmMJkVNMd3XK7mdsi7kn
-         rBUoNjTqK79MmyTRddVwUJAprwcYsbE4seX985yuBSR9UfQaJrRv0VTYKN7rDWajgQJI
-         ptElRb+COL0TX4FhrfpcncG+yAGuoLWpidQSsdjE0zYuFKD9FoJ40gs+U5Jm0hZhWQ51
-         aqDJAXUziSju6gp+ExQAll76xIeiEC3MDMXDq7orBqg+4+fCO2RgL/S1rWX+pULVr3Ux
-         oezlc1xic2o90qvzYG/YQNKZVnAaD0NncIq9HClvbILR1yrmZKjcaLg9rmS+kPs6rv/Y
-         H1NA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1739306888; x=1739911688;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=yFXyFnIi+52VN+pYxbpLfYVx6cICjiaB+HsAULoXBaI=;
-        b=hiX6yUwkcWWFDK9ODpT8v4gCqZEeNyEFF60CtWCRHUnGLFXEy36cEV54IhL3bLfPR4
-         +XCOKMD3irqST5Zojs5phYCda1d8cjx9jxzdC+Cn5IGWPYCB7vtGaXBSeEjJ0HYmgs7j
-         NJ8VMqLgSc+1OSbkag1MlyHmwGqgyr71ODvtsfP8R7oYB+VHza1w6Tw5QwA3tVJNonzR
-         t/4vU0sxHG9opyYcCYHeoGKBwvJlVIH+gsWUIwuY9oqVZ50P/b/2P5GeOXkfYXmmIklL
-         FEo5BWt8b6PYVR7wqMjuZbqNaQQpEVjcEJ29gt1xcf5pETAkGCVlWPpJtbMCukd6c2f9
-         sw3g==
-X-Gm-Message-State: AOJu0YyQghmKtdEEhsFYeHwaiMUiOAaKPbgEo+H4+dUuMbZoVNnxXXi9
-	AZ2KGymTyWl5ICe4GNJEsj3xopWPixrpkshF1sMDjylyUzRKfP/qpt2I5RnIZzWKFjj2/eBvpMW
-	w
-X-Gm-Gg: ASbGncveIVMuQowRiW1/J7LQLjKA5uFDS2LkPTUm0e6fLBCDBW0FDOxwDA1OUlMfL4J
-	TTeY7j0Bcj3lMSd2G0Lqw4PJ1JXQ2EJeLPSRMqtSHAsJwPerrl/o6jKPNPD/TsryoJKvDVnvCSv
-	W6+OMTBY03mLwXE7E6XMbaew9yVulo80hyHlcT1ekOStd6ZftzRfAwME9Zx/B/azWdPx9ITO8ew
-	8LGEr/7Etd7r2SYZepq5T7w/6QQ1H+d5EPM28W0C2FMithQYArcSc0U9Nrfps1G60kvynoxtdBt
-	fOY3/xh/xJK7o+nkqRbqeg6UoOlbfPF1dPk+oUXL5pH1cgT2bsxeFpE=
-X-Google-Smtp-Source: AGHT+IE3hdKhpUI0Gnd7elIrykn6obGWnvBQGKfQklYmXWnON/yvrRK2IXuB7gQT5P7a7+D0QrIwig==
-X-Received: by 2002:a17:907:6d11:b0:ab2:f8e9:5f57 with SMTP id a640c23a62f3a-ab7f33bb639mr31994866b.21.1739306887712;
-        Tue, 11 Feb 2025 12:48:07 -0800 (PST)
-Received: from apollon.wilcks.net (p5ddd307c.dip0.t-ipconnect.de. [93.221.48.124])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-ab79a07398esm822976766b.40.2025.02.11.12.48.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 11 Feb 2025 12:48:07 -0800 (PST)
-Message-ID: <a36ea8de4893538694df9b5bdefe23831ba3759e.camel@suse.com>
-Subject: Re: [PATCH] libmultipath: include urcu.h before urcu/atomic.h
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Tue, 11 Feb 2025 21:48:06 +0100
-In-Reply-To: <20250211181103.1506768-1-bmarzins@redhat.com>
-References: <20250211181103.1506768-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.54.3 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="g8wqklrH"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1739308373;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=DmNQh91kRSxS11hDHkiPtXbJ8c1QH4ChicwasoVZWPg=;
+	b=g8wqklrH9MrxeaKohMJTcAD0puzBlNbNIHU6Z1cUekTbXjo21S5k3X4GYKqPpRAO6a3Wfq
+	qShAakmFemP1LW0Q9UMQAkcHYOphwJjSRx8awDlqJ3ZSPZNzW6NSc++6J6Qevxy2m85QYT
+	ewEdgidLBtVDWDlE4P4jqnjMDJFpTPY=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-30-bQIkgdYlNjSU-DRHg5iY5A-1; Tue,
+ 11 Feb 2025 16:12:50 -0500
+X-MC-Unique: bQIkgdYlNjSU-DRHg5iY5A-1
+X-Mimecast-MFC-AGG-ID: bQIkgdYlNjSU-DRHg5iY5A_1739308369
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 90A541801216;
+	Tue, 11 Feb 2025 21:12:40 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AC53B1955F21;
+	Tue, 11 Feb 2025 21:12:39 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 51BLCcON1671018
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 11 Feb 2025 16:12:38 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 51BLCcj01671017;
+	Tue, 11 Feb 2025 16:12:38 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v2] libmultipath: include urcu.h before urcu/atomic.h
+Date: Tue, 11 Feb 2025 16:12:37 -0500
+Message-ID: <20250211211237.1671009-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: k6BeEdVsjhCLZKub_kB7UzU5EW6noHRMa8OryDSRD6I_1739308369
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Tue, 2025-02-11 at 13:11 -0500, Benjamin Marzinski wrote:
-> urcu/atomic.h requires some header files included by urcu.h. Make
-> sure
-> to include it first.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+urcu/atomic.h requires some header files included by urcu.h. Make sure
+to include it first.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Fixes: https://github.com/opensvc/multipath-tools/issues/112
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+
+Differences from v1:
+  Added a Fixes trailer.
+
+ libmultipath/checkers/tur.c | 1 +
+ libmultipath/lock.h         | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index e70a2e11..0010acf8 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -15,6 +15,7 @@
+ #include <errno.h>
+ #include <sys/time.h>
+ #include <pthread.h>
++#include <urcu.h>
+ #include <urcu/uatomic.h>
+ 
+ #include "checkers.h"
+diff --git a/libmultipath/lock.h b/libmultipath/lock.h
+index 38473a8c..5f323055 100644
+--- a/libmultipath/lock.h
++++ b/libmultipath/lock.h
+@@ -2,6 +2,7 @@
+ #define LOCK_H_INCLUDED
+ 
+ #include <pthread.h>
++#include <urcu.h>
+ #include <urcu/uatomic.h>
+ #include <stdbool.h>
+ 
+-- 
+2.48.1
+
