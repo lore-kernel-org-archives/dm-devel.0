@@ -1,134 +1,172 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D193921018A;
-	Wed, 12 Feb 2025 15:20:58 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E1D5F21B1BE;
+	Wed, 12 Feb 2025 15:48:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739373659; cv=none; b=ElzX+ppErpb8lmkeWjBFn0YRCNPRzGQwQdv+HsqlsMu5VHbhrr2oiePXT9bekv+uEPsPweR4GhEb5GWv5ZUMk8ctjcUaYF5X8g1VuELlDlzacLVdpC/Ww2kaFPT280f0wgb5JjlQut2jfFH7j5LKz/PEjOjP6ww/5GlFMbZI9N4=
+	t=1739375300; cv=none; b=TWIIZiWvH6BwJjJzR9C4C9/xfj0jK3SHCD/RJNYx7FbQqGG/fSRT9D4fu1vsS7cr2pH1pT3tNuksOWYsoIeR46DCh3HH6vHJnZI45K4IQ7ZwvGtCZpTq7OAURTKtgNgEdeZkuYn3PowyTw5Qz0cn/kImE2g9gzhx7Bez4sfVr08=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739373659; c=relaxed/simple;
-	bh=l70dMKRZZuIcTN7P7KYGeI54CkmfOAguGwGNr3boZ6o=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JIge2/Ul0m0/eLMQzoR4051SS8+oTiCg1BX0Az4RBPyKxn9InRp+1dH9fb2MsYSADCS3YeDoyvKYP6oShBu+jd+VoX7mjMdR91lejhPUNeGQew0TQl7+APngark+z6uMZ0k2pDWMC7tiXE4L0EFTdT3hRN31gwK+X4xlqhX5+fI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=gQw1dYcA; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1739375300; c=relaxed/simple;
+	bh=jGTcO7uOKoo9Sew7/PnGEbprmSHHDRcuUgN9YyNsgpk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=UfwoJYS2YqxPdVKHssJeJAvQXwUt9JD0g6sZKv1bQw2n770VrKmq8upBOpBAYBlhUk6dmW+Vl4gTgZRJ94q+ngHLybG5D+KLIS9DSjDSi2Qe36heIhJCErj5MSOyu4fSvKrYcw5/7SjuP0dxWElWPe2L4pzJWWk3Dgps2Ktyqm8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LpKfe7nh; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="gQw1dYcA"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 75818C4CEDF;
-	Wed, 12 Feb 2025 15:20:58 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LpKfe7nh"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DFE85C4CEDF;
+	Wed, 12 Feb 2025 15:48:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1739373658;
-	bh=l70dMKRZZuIcTN7P7KYGeI54CkmfOAguGwGNr3boZ6o=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=gQw1dYcANs1L+I6pI6LMs0z3EhXQQ20a41aWQcrsTE6vEtMYSnoC0vvf4psAphxBF
-	 dHGaKMpWKlyVGMr10FKYAnwcN5NcHxYzIW+vWZwWvKTokAfaBslGTqbYyOFC5p3FAv
-	 afijLUbuFPg609q6nBnUIMc7CFIOyfB4qBVEBxLwYD1uclpKrDWBUg5YCiz/R2yr8N
-	 nJCzfv1LLpYeQxUhRWxHEQAsfGahfRGqM45tb+q3ay3QYhyzwvLrZgK028CusANr6L
-	 kupL48i8z3ujPqJivFu3FKEv7heU2XaEoG9LVtqSBG/JAYYVjscaWKolfoD3qtMDYf
-	 3yrr66V8+TdTw==
-Date: Wed, 12 Feb 2025 07:20:56 -0800
+	s=k20201202; t=1739375299;
+	bh=jGTcO7uOKoo9Sew7/PnGEbprmSHHDRcuUgN9YyNsgpk=;
+	h=From:To:Cc:Subject:Date:From;
+	b=LpKfe7nhCwi7G2IBXWHGfrifPCjdBtpx5STvudjspOxexJrzMWCekZRcSy+b9Vbp+
+	 q23nMNet1qLz58BEZ7ZJD8Od5x3hBDTSM3JPm7qU44xp3eGoyc8iDo8CdUcyssUwv7
+	 ucT4r7Gg/OrMxzjjmuKXivISpXYBEXztV/dyfH5UdVJmNLRpjs2QZFPCXKxPg/2m73
+	 xaoF0NsbIXnwxVpu9Gejxt/KRvD6osrOClBaVLbZMUK3VuGKQtBnT+vx7JNinCz6ks
+	 qTQj4l3I4sNeubtfDCs5JH0CeW6fK+HH1wJC3P4sDY2e7e90cBJ+tkB6i1nnKWrFL1
+	 WIc/dou+/Dh1w==
 From: Eric Biggers <ebiggers@kernel.org>
-To: Harald Freudenberger <freude@linux.ibm.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, davem@davemloft.net,
-	dengler@linux.ibm.com, linux-s390@vger.kernel.org,
-	linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev
-Subject: Re: [PATCH v10 2/5] s390/crypto: New s390 specific protected key
- hash phmac
-Message-ID: <20250212152056.GA1256@sol.localdomain>
-References: <20250115162231.83516-1-freude@linux.ibm.com>
- <20250115162231.83516-3-freude@linux.ibm.com>
- <Z6hrvQzb5G_wqlni@gondor.apana.org.au>
- <20250209163430.GB1230@sol.localdomain>
- <9971160da17b1d18d4bdc87fc1297fda@linux.ibm.com>
+To: fsverity@lists.linux.dev
+Cc: linux-crypto@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	linux-kernel@vger.kernel.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH v8 0/7] Optimize dm-verity and fsverity using multibuffer hashing
+Date: Wed, 12 Feb 2025 07:47:11 -0800
+Message-ID: <20250212154718.44255-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.48.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <9971160da17b1d18d4bdc87fc1297fda@linux.ibm.com>
+Content-Transfer-Encoding: 8bit
 
-On Wed, Feb 12, 2025 at 12:17:46PM +0100, Harald Freudenberger wrote:
-> On 2025-02-09 17:34, Eric Biggers wrote:
-> > On Sun, Feb 09, 2025 at 04:47:57PM +0800, Herbert Xu wrote:
-> > > On Wed, Jan 15, 2025 at 05:22:28PM +0100, Harald Freudenberger wrote:
-> > > >
-> > > > +static int s390_phmac_init(struct ahash_request *req)
-> > > > +{
-> > > > +	struct s390_phmac_req_ctx *req_ctx = ahash_request_ctx(req);
-> > > > +	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-> > > > +	struct s390_kmac_sha2_ctx *ctx = &req_ctx->sha2_ctx;
-> > > > +	int rc;
-> > > > +
-> > > > +	/*
-> > > > +	 * First try synchronous. If this fails for any reason
-> > > > +	 * schedule this request asynchronous via workqueue.
-> > > > +	 */
-> > > > +
-> > > > +	rc = phmac_init(tfm, ctx, false);
-> > > > +	if (!rc)
-> > > > +		goto out;
-> > > > +
-> > > > +	req_ctx->req = req;
-> > > > +	INIT_DELAYED_WORK(&req_ctx->work, phmac_wq_init_fn);
-> > > > +	schedule_delayed_work(&req_ctx->work, 0);
-> > > > +	rc = -EINPROGRESS;
-> > > 
-> > > This creates a resource problem because there is no limit on how
-> > > many requests that can be delayed in this manner for a given tfm.
-> > > 
-> > > When we hit this case, I presume this is a system-wide issue and
-> > > all requests would go pending? If that is the case, I suggest
-> > > allocating a system-wide queue through crypto_engine and using
-> > > that to limit how many requests that can become EINPROGRESS.
-> > 
-> > Or just make it synchronous which would be way easier, and the calling
-> > code uses
-> > it synchronously anyway.
-> > 
-> > - Eric
-> 
-> A word about synchronous vs asynchronous...
-> 
-> As a synchronous hash (or chipher or whatever) MUST NOT sleep I can't
-> really implement the pkey stuff in a synchronous way:
+[ This patchset keeps getting rejected by Herbert, who prefers a
+  complex, buggy, and slow alternative that shoehorns CPU-based hashing
+  into the asynchronous hash API which is designed for off-CPU offload:
+  https://lore.kernel.org/linux-crypto/cover.1730021644.git.herbert@gondor.apana.org.au/
+  This patchset is a much better way to do it though, and I've already
+  been maintaining it downstream as it would not be reasonable to go the
+  asynchronous hash route instead.  Let me know if there are any
+  objections to me taking this patchset through the fsverity tree, or at
+  least patches 1-5 as the dm-verity patches could go in separately. ]
 
-As I said at
-https://lore.kernel.org/dm-devel/20250116080324.GA3910@sol.localdomain/, shash
-could fairly easily be fixed to support sleepable algorithms (e.g.
-CRYPTO_ALG_SLEEPABLE).
+[ This patchset applies to v6.14-rc2 ]
 
-This would be *much* simpler than doing it with ahash.
+On many modern CPUs, it is possible to compute the SHA-256 hash of two
+equal-length messages in about the same time as a single message, if all
+the instructions are interleaved.  This is because each SHA-256 (and
+also most other cryptographic hash functions) is inherently serialized
+and therefore can't always take advantage of the CPU's full throughput.
 
-You even had it as a shash already in the first version of your patchset, just
-missing the bits that add the support for sleepable algorithms.
+An earlier attempt to support multibuffer hashing in Linux was based
+around the ahash API.  That approach had some major issues, as does the
+alternative ahash-based approach proposed by Herbert (e.g. see my
+responses at
+https://lore.kernel.org/linux-crypto/20240610164258.GA3269@sol.localdomain/
+and
+https://lore.kernel.org/linux-crypto/20241028190045.GA1408@sol.localdomain/,
+and the other discussion on v4
+https://lore.kernel.org/linux-crypto/20240603183731.108986-1-ebiggers@kernel.org/T/#t)
+This patchset instead takes a much simpler approach of just adding a
+synchronous API for hashing equal-length messages.
 
-I am trying to help you by suggesting an approach that would be much easier.
-There is no need to shoehorn CPU-based crypto into ahash, which is designed for
-off-CPU offload.
+This works well for dm-verity and fsverity, which use Merkle trees and
+therefore hash large numbers of equal-length messages.
 
-> The issue with pkey (We call it "protected key") is that it is some kind
-> of hardware based key. As such it needs some special preparation action
-> to be done upfront in the hardware/firmware to use such a pkey.
-> Now think about KVM live guest migration where a guest suddenly awakes
-> (Well the guest is not even aware of this) on a new machine with another
-> hardware. So out of the sudden a hardware based crypto operation fails
-> with an indication that the hardware/firmware can't deal with this
-> key object and needs re-preparation. Usually this preparation step is
-> some kind of asynchronous operation (write some pci registers or run
-> some DMA sequences or refresh the working key material via an HSM
-> communication...) and as such may take some time and involve even
-> sleeping on a mutex or completion until another kernel thread is done.
-> Please note this is not unique to pkey on system z but may apply
-> to all kinds of hardware/firmware based keys in situations like
-> KVM live guest migration or suspend/resume.
+This patchset is organized as follows:
 
-I.e. it already uses a kernel thread that does the operation synchronously (as
-opposed to being actual hardware offload that does not consume a thread and
-signals completion to the CPU via an interrupt), in addition to the caller's
-thread which also waits synchronously via crypto_wait_req().  There is really no
-need to make it async, nor to use scatterlists.
+- Patch 1-2 add crypto_shash_finup_mb() and tests for it.
+- Patch 3-4 implement finup_mb on x86_64 and arm64, using an
+  interleaving factor of 2.
+- Patch 5 adds multibuffer hashing support to fsverity.
+- Patch 6-7 add multibuffer hashing support to dm-verity.
 
-- Eric
+This patchset increases raw SHA-256 hashing throughput by up to 98%,
+depending on the CPU (see patches for per-CPU results).  The throughput
+of cold-cache reads from dm-verity and fsverity increases by around 35%.
+
+Changed in v8:
+  - Rebased onto v6.14-rc2 and updated cover letter.
+
+Changed in v7:
+  - Rebased onto v6.12-rc1 and dropped patches that were upstreamed.
+  - Added performance results for more CPUs.
+
+Changed in v6:
+  - All patches: added Reviewed-by and Acked-by tags
+  - "crypto: testmgr - add tests for finup_mb": Whitespace fix
+  - "crypto: testmgr - generate power-of-2 lengths more often":
+    Fixed undefined behavior
+  - "fsverity: improve performance by using multibuffer hashing":
+    Simplified a comment
+  - "dm-verity: reduce scope of real and wanted digests":
+    Fixed mention of nonexistent function in commit message
+  - "dm-verity: improve performance by using multibuffer hashing":
+    Two small optimizations, and simplified a comment
+
+Changed in v5:
+  - Reworked the dm-verity patches again.  Split the preparation work
+    into separate patches, fixed two bugs, and added some new cleanups.
+  - Other small cleanups
+
+Changed in v4:
+  - Reorganized the fsverity and dm-verity code to have a unified code
+    path for single-block vs. multi-block processing.  For data blocks
+    they now use only crypto_shash_finup_mb().
+
+Changed in v3:
+  - Change API from finup2x to finup_mb.  It now takes arrays of data
+    buffer and output buffers, avoiding hardcoding 2x in the API.
+
+Changed in v2:
+  - Rebase onto cryptodev/master
+  - Add more comments to assembly
+  - Reorganize some of the assembly slightly
+  - Fix the claimed throughput improvement on arm64
+  - Fix incorrect kunmap order in fs/verity/verify.c
+  - Adjust testmgr generation logic slightly
+  - Explicitly check for INT_MAX before casting unsigned int to int
+  - Mention SHA3 based parallel hashes
+  - Mention AVX512-based approach
+
+Eric Biggers (7):
+  crypto: shash - add support for finup_mb
+  crypto: testmgr - add tests for finup_mb
+  crypto: x86/sha256-ni - add support for finup_mb
+  crypto: arm64/sha256-ce - add support for finup_mb
+  fsverity: improve performance by using multibuffer hashing
+  dm-verity: reduce scope of real and wanted digests
+  dm-verity: improve performance by using multibuffer hashing
+
+ arch/arm64/crypto/sha2-ce-core.S    | 281 ++++++++++++++++++++-
+ arch/arm64/crypto/sha2-ce-glue.c    |  40 +++
+ arch/x86/crypto/sha256_ni_asm.S     | 368 ++++++++++++++++++++++++++++
+ arch/x86/crypto/sha256_ssse3_glue.c |  39 +++
+ crypto/shash.c                      |  58 +++++
+ crypto/testmgr.c                    |  73 +++++-
+ drivers/md/dm-verity-fec.c          |  19 +-
+ drivers/md/dm-verity-fec.h          |   5 +-
+ drivers/md/dm-verity-target.c       | 192 +++++++++++----
+ drivers/md/dm-verity.h              |  34 +--
+ fs/verity/fsverity_private.h        |   7 +
+ fs/verity/hash_algs.c               |   8 +-
+ fs/verity/verify.c                  | 169 ++++++++++---
+ include/crypto/hash.h               |  52 +++-
+ 14 files changed, 1224 insertions(+), 121 deletions(-)
+
+
+base-commit: a64dcfb451e254085a7daee5fe51bf22959d52d3
+-- 
+2.48.1
+
