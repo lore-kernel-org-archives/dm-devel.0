@@ -1,59 +1,66 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41B01BA2D;
-	Thu, 13 Feb 2025 06:33:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3A29211A2A;
+	Thu, 13 Feb 2025 10:10:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739428387; cv=none; b=hfWXhCnOpKhpnf8yxdsHK7o7ZfS7ZZ0nC2REU2N46DxXSGQ8XRiDzEmoQm5UVm09hMvqXvMgLG+bL4ODNYJGhga3aBjiF4FbUgyy+R8iKLPsqWy7gqJ6KO7jzZ2qOXl868wY5xLIBme5qr/4II6+RPSpt00BPo407beDxFMVFz4=
+	t=1739441423; cv=none; b=O2cLktU/ypQMSZvBxBnQ+UznrWnMD7k6ib5cg8eI3QZpBzMxpJPY5vTryX1mwpJEqArDgodk2itubV5OdNfaKN1RBxQu7iKvu8ra27fhAJUZrqYpZ5Lcdf7ohe3dqFKmPvlHYlV4U4cpli78sRkH1VmgCKScLFCOUR20GplWTtA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739428387; c=relaxed/simple;
-	bh=EYlzHzMqG7RCe6q7JFcYu+FiAfG2RPpXS8EZEEWgLsw=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=GSEi15aSsSaEFJlhYeAyzY61crE3W4aYaclAdm82lotK1fwlmVV+YWEegp+OgKqhAX5tgC7eVn1Nf2scq07fO6VrtdxLWl8g8HYmPnGkQRQjyZkA92UN57kWMWJLtqKQieOOb5blaWvCqr71yQ5bUFAMa2aUhy+z9lkaNTkxjiU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=UkS4A/KV; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1739441423; c=relaxed/simple;
+	bh=42FVAKglSdA4GCM9HFlOhDKZOpyrLuyiIonz/DiE3L8=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=TFHKZJ5Fc/rWuU0ijpwao0zkxDmdFi33Rm42+nusNneoEeYuMLIM2nYFbtX6dfLTesl8iewXyRr39v8eX1Hajx/i6SsBhG/YWCt4/b1DIO9CNIdO0jUBLaYXjKedplpVwJWNMT9HI1lpZpjoErCs5ep4p09VZVZw8M/pHQvotNE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=QduZ+V/D; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="UkS4A/KV"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 46F2DC4CED1;
-	Thu, 13 Feb 2025 06:33:06 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="QduZ+V/D"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4D6C5C4AF0B;
+	Thu, 13 Feb 2025 10:10:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1739428386;
-	bh=EYlzHzMqG7RCe6q7JFcYu+FiAfG2RPpXS8EZEEWgLsw=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=UkS4A/KV+3NNKiQjsxvFOCzRdT8eWvlDjxM2q4kcb2BJO337OWJX9LiciToHB4H5D
-	 betsxIK36VXW3NHNoB4lRt0NJXBcNvvIRD4TdwxZiVuUg3QYAeOYlV1HlcU0EOe6Iq
-	 PZLtnwxTCnRM2qsfunBg9CIOm9UrYC0WezluyZS+0WZx/wi4xyYmqrxjQWRSRydQv3
-	 JAKdnQbYR1WC1r7H2ZTQHeKSXHaJKzo/J/55xlp6TGxwvoKepy/NpWl6mEE7OkYIg4
-	 oMQ9JVu3HAPS0/XGVqxfYxi4AA4Ae/S7xImljyKO0EBVNzSAITvpy/EH7dB6z6x2NI
-	 wBiVk20+/3H9Q==
-Date: Wed, 12 Feb 2025 22:33:04 -0800
-From: Eric Biggers <ebiggers@kernel.org>
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: fsverity@lists.linux.dev, linux-crypto@vger.kernel.org,
-	dm-devel@lists.linux.dev, x86@kernel.org,
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-	Ard Biesheuvel <ardb@kernel.org>,
-	Sami Tolvanen <samitolvanen@google.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	David Howells <dhowells@redhat.com>, netdev@vger.kernel.org
-Subject: Re: [PATCH v8 0/7] Optimize dm-verity and fsverity using multibuffer
- hashing
-Message-ID: <20250213063304.GA11664@sol.localdomain>
-References: <20250212154718.44255-1-ebiggers@kernel.org>
- <Z61yZjslWKmDGE_t@gondor.apana.org.au>
+	s=k20201202; t=1739441423;
+	bh=42FVAKglSdA4GCM9HFlOhDKZOpyrLuyiIonz/DiE3L8=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=QduZ+V/DRRjp2YWO++Ujfw3lygiGvik5JyzHxwkbzuCCpkjDQA2xTe9472qCN+Nmm
+	 g8UPJBRO1x11HRM2ivIE8CcqfDWwXrogX25VnK26nn9dKYYSxVlODPp0HlmILK/i/p
+	 ILEi1lvFLnbPFZ1RBFxCyUR9zSS2JVm7RVMD5EUeUO5vRTsL2pHLncYcwgGow9yA1I
+	 mYmv3jE4woQi5p93XX32ny0y8aYTG6xUG+cNojoNuN4gr//3nWs+4xcMdeJ3iK/26I
+	 8RMuhd8w68G4+i9xGt3TiXQciFWBB6LoanAcebArn+JtR6Jr1P+7tTOJogzdZMgjnR
+	 bu3Pc5MrK9oNg==
+Received: by mail-lf1-f48.google.com with SMTP id 2adb3069b0e04-5450f2959f7so625061e87.2;
+        Thu, 13 Feb 2025 02:10:23 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCVGGon4+sA73cFtthPtvmsdFAz0z08Fm176hlLEKqVF15o0PrToYcVJpw+dz28locfEVfjp6Zm3Lg==@lists.linux.dev, AJvYcCVjZZAbVmXjBVwpykzxWmyjzzLMWMhRhR9rWcyNi2EPbd27SxroqdtGq6vQIhOnrOKUJvLnOD7hnbg=@lists.linux.dev
+X-Gm-Message-State: AOJu0YzDeXe5g3TuebW27wZ20PQaDSKS4ePjR8h6ItLp5TwY+oeM0DuL
+	yJTYM/5kyG/w25BYJ1umLsaxvNp3iv7JTeB0xseSE5/YQu8wE3dgLNK2o3IEb/+FOZoj5f79+hN
+	k86TvGw/QRqJnzMP8K5k5ZVQK8Ag=
+X-Google-Smtp-Source: AGHT+IHR+xr20cYmx6lgB9lVJM3c3+XAiEna+ZFlbjgJt6DHiy1GJEpnHOR+KpKMxfjEGw7dyQYgQ9iz1/SKleqfvSQ=
+X-Received: by 2002:a05:6512:159b:b0:545:4d1:64c0 with SMTP id
+ 2adb3069b0e04-5451dd9e2admr736305e87.27.1739441421532; Thu, 13 Feb 2025
+ 02:10:21 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+References: <20250212154718.44255-1-ebiggers@kernel.org> <Z61yZjslWKmDGE_t@gondor.apana.org.au>
 In-Reply-To: <Z61yZjslWKmDGE_t@gondor.apana.org.au>
+From: Ard Biesheuvel <ardb@kernel.org>
+Date: Thu, 13 Feb 2025 11:10:10 +0100
+X-Gmail-Original-Message-ID: <CAMj1kXE+K4XbmxkXwzj9tHE2DP_A5pKLPPFv6+Fa=CtH8rD24Q@mail.gmail.com>
+X-Gm-Features: AWEUYZkVud9S7L-5xo9HDDz6-H1l2qn4wDw7iDL4qi7FjFF8ciQmJoIc0opMONg
+Message-ID: <CAMj1kXE+K4XbmxkXwzj9tHE2DP_A5pKLPPFv6+Fa=CtH8rD24Q@mail.gmail.com>
+Subject: Re: [PATCH v8 0/7] Optimize dm-verity and fsverity using multibuffer hashing
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Eric Biggers <ebiggers@kernel.org>, fsverity@lists.linux.dev, 
+	linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev, x86@kernel.org, 
+	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, 
+	Sami Tolvanen <samitolvanen@google.com>, Alasdair Kergon <agk@redhat.com>, 
+	Mike Snitzer <snitzer@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, 
+	Mikulas Patocka <mpatocka@redhat.com>, David Howells <dhowells@redhat.com>, netdev@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 
-On Thu, Feb 13, 2025 at 12:17:42PM +0800, Herbert Xu wrote:
+On Thu, 13 Feb 2025 at 05:17, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+>
 > On Wed, Feb 12, 2025 at 07:47:11AM -0800, Eric Biggers wrote:
 > > [ This patchset keeps getting rejected by Herbert, who prefers a
 > >   complex, buggy, and slow alternative that shoehorns CPU-based hashing
@@ -64,67 +71,46 @@ On Thu, Feb 13, 2025 at 12:17:42PM +0800, Herbert Xu wrote:
 > >   asynchronous hash route instead.  Let me know if there are any
 > >   objections to me taking this patchset through the fsverity tree, or at
 > >   least patches 1-5 as the dm-verity patches could go in separately. ]
-> 
+>
 > Yes I object.  While I very much like this idea of parallel hashing
 > that you're introducing, shoehorning it into shash is restricting
 > this to storage-based users.
-> 
+>
 > Networking is equally able to benefit from paralell hashing, and
 > parallel crypto (in particular, AEAD) in general.  In fact, both
 > TLS and IPsec can benefit directly from bulk submission instead
 > of the current scheme where a single packet is processed at a time.
+>
+> But thanks for the reminder and I will be posting my patches
+> soon.
+>
 
-I've already covered this extensively, but here we go again.  First there are
-more users of shash than ahash in the kernel, since shash is much easier to use
-and also a bit faster.  There is nothing storage specific about it.  You've
-claimed that shash is deprecated, but that reflects a misunderstanding of what
-users actually want and need.  Users want simple, fast, easy-to-use APIs.  Not
-APIs that are optimized for an obsolete form of hardware offload and have
-CPU-based crypto support bolted on as an afterthought.
+I have to second Eric here, simply because his work has been ready to
+go for a year now, while you keep rejecting it on the basis that
+you're creating something better, and the only thing you have managed
+to produce in the meantime didn't even work.
 
-Second, these days TLS and IPsec usually use AES-GCM, which is inherently
-parallelizable so does not benefit from multibuffer crypto.  This is a major
-difference between the AEADs and message digest algorithms in common use.  And
-it happens that I recently did a lot of work to optimize AES-GCM on x86_64; see
-my commits in v6.11 that made AES-GCM 2-3x as fast on VAES-capable CPUs.
+I strongly urge you to accept Eric's work, and if your approach is
+really superior, it should be fairly easy making that point with
+working code once you get around to producing it, and we can switch
+over the users then.
 
-So anyone who cares about TLS or IPsec performance should of course be using
-AES-GCM, as it's the fastest by far, and it has no need for multibuffer.  But
-even for the rare case where someone is still using a legacy algorithm like
-"authenc(hmac(sha256),cbc(aes))" for some reason, as I've explained before there
-are much lower hanging fruit to optimizing it.  For example x86_64 still has no
-implementation of the authenc template, let alone one that interleaves the
-encryption with the MAC.  Both could be done today with the current crypto API.
-Meanwhile multibuffer crypto would be very hard to apply to that use case (much
-harder than the cases where I've applied it) and would not be very effective,
-for reasons such as the complexity of that combination of algorithms vs. just
-SHA-256.  Again, see
-https://lore.kernel.org/linux-crypto/20240605191410.GB1222@sol.localdomain/,
-https://lore.kernel.org/linux-crypto/20240606052801.GA324380@sol.localdomain/,
-https://lore.kernel.org/linux-crypto/20240610164258.GA3269@sol.localdomain/,
-https://lore.kernel.org/linux-crypto/20240611203209.GB128642@sol.localdomain/,
-https://lore.kernel.org/linux-crypto/20240611201858.GA128642@sol.localdomain/
-where I've already explained this in detail.
+The increased flexibility you claim your approach will have does not
+mesh with my understanding of where the opportunities for improvement
+are: CPU-based SHA can be tightly interleaved at the instruction level
+to have a performance gain of almost 2x. Designing a more flexible
+ahash based multibuffer API that can still take advantage of this to
+the same extent is not straight-forward, and you going off and cooking
+up something by yourself for months at a time does not inspire
+confidence that this will converge any time soon, if at all.
 
-You've drawn an analogy to TSO and claimed that submitting multiple requests to
-the crypto API at once would significantly improve performance even without
-support from the underlying algorithm.  But that is incorrect.  TSO saves a
-significant amount of time due to how the networking stack works.  In contrast,
-the equivalent in the crypto API would do very little.  It would at best save
-one indirect call per message, at the cost of adding the overhead of multi
-request support.  Even assuming it was beneficial at all, it would be a very
-minor optimization, and not worth it over other optimization opportunities that
-would not require making complex and error-prone extensions to the crypto API.
+Also, your network use case is fairly theoretical, whereas the
+fsverity and dm-verity code runs on 100s of millions of mobile phones
+in the field, so sacrificing any performance of the latter to serve
+the former seems misguided to me.
 
-I remain quite puzzled by your position here, as it makes no sense.  TBH, I
-think your opinions would be more informed if you had more experience with
-actually implementing and optimizing the various crypto algorithms.
+So could you please remove yourself from the critical path here, and
+merge this while we wait for your better alternative to materialize?
 
-> But thanks for the reminder and I will be posting my patches soon.
-
-I am not really interested in using your patches, sorry.  They just seem like
-really poor engineering and a continuation of many of the worst practices of the
-kernel crypto API that we *know* are not working.  Especially for cryptography
-code, we need to do better.  (And I've even already done it!)
-
-- Eric
+Thanks,
+Ard.
