@@ -1,95 +1,142 @@
-Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5E248635A;
-	Fri, 14 Feb 2025 02:44:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC99A1519AC
+	for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 03:01:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739501099; cv=none; b=AUHZ2c/W66T9EsS1VhqvBmU+sdAURpMeD8U4rWteYYNwN0a5eVzvIZXteKc8Yx8YvgbXFe9i0xk9wuymyv2KBBGy78xOndIfiZFETUFinUQWK8Tsw7Hu6/kOXoNg/4qReylSMokAws2VbGGbMRtTXhAazVqgMlwnm20VaTutnAs=
+	t=1739502103; cv=none; b=ELeJ0w8NZOk2wDuPW8JcM8UsuONBz6/dnYLUppDtWG+etUoukP7eCpbP9+QmjySGsxe0jsAXv2t2HoEpN/xpoaNdl85R8CyaWjykNcw2HdiG0GO4ada1F8ta1koiNKmDohlTtOtfqzu9ePtAEwIyjVo2+zyHOPAdniuIqk535Y4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739501099; c=relaxed/simple;
-	bh=WGPoqVRqUNUupOPvcUF75S6imIM0F94i8SNoD5PoDN4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=XLOicXx/kXG+VH6kdbetg/gv9f6iMsXC+9TRky2w9v1dHd1NfOg6xVtlJPE/NNwSD7tBEhgqNavW7BWoghdLRsJfMFwxX3FT0Vz6mTGd6tgU5vqJWaLYvR7eGFeZBfo69F1iZhnrG37DBBNOiT+999v+jZJrfC4t6FNKiUGk3BA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=crG3z6Nx; arc=none smtp.client-ip=144.6.53.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="crG3z6Nx"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
-	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
-	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
-	List-Post:List-Owner:List-Archive;
-	bh=65T4rBQvy6mFilnie1q3glh+nsrM26bK761iT5MKkEQ=; b=crG3z6NxOhqIo4edos2ddK19x9
-	hWQSi3nAdhK010ZkcRwyeT/b7++m63S5YNZcODozEpBJOgP/hasAC3UwlWnFjWlOcuxZl6tHYs4l6
-	6CdnKwqrBKWVhX/71+itsWvFCZPIi5xG1gs60s6n4iM2+RSM+EG2zasTj5Py8FPoAqUifwAFUeSF7
-	jz3SIn2+ft0+9dsPngX+XYAY40kD7KeiEKr2GMLKn4zN7UML+XlDViVY9nEWPOxDqUIKfr4y2IiG8
-	uHyVA8/XvOed0PTCNxcEp+sHeenwZAK2TFyGrWhXuNWJe+/SMmo5c/8xDxp+RWJ+TWkWRU6yqFsJt
-	i0IQW4xQ==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
-	id 1tilUE-000DGZ-2e;
-	Fri, 14 Feb 2025 10:44:48 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Fri, 14 Feb 2025 10:44:47 +0800
-Date: Fri, 14 Feb 2025 10:44:47 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: fsverity@lists.linux.dev, linux-crypto@vger.kernel.org,
-	dm-devel@lists.linux.dev, x86@kernel.org,
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-	Ard Biesheuvel <ardb@kernel.org>,
-	Sami Tolvanen <samitolvanen@google.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	David Howells <dhowells@redhat.com>, netdev@vger.kernel.org
-Subject: Re: [PATCH v8 0/7] Optimize dm-verity and fsverity using multibuffer
- hashing
-Message-ID: <Z66uH_aeKc7ubONg@gondor.apana.org.au>
-References: <20250212154718.44255-1-ebiggers@kernel.org>
- <Z61yZjslWKmDGE_t@gondor.apana.org.au>
- <20250213063304.GA11664@sol.localdomain>
+	s=arc-20240116; t=1739502103; c=relaxed/simple;
+	bh=15IRzAhxRAQrT8Dl0CxkcNAaO8CmkIYwIa3eHZ10E7w=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=U8OEI2mGa0E7MpEVR58sEgC73q1h3ZgHig7gShORFKUQ3tA3yYGW/qV16qKmkywm+w1ejSHIq4m+65HQd2/ZDY8Me+qmR4qO8zZyV/IxEHzj/OWtUQQBeNmmg8jH8ZuzwbrYA+wTSYrS4z68Pus/M3umuLOXxBJxgPydQ6fvmN0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4YvGyt4tCDz4f3kFT
+	for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 11:01:10 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.252])
+	by mail.maildlp.com (Postfix) with ESMTP id 191111A14C4
+	for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 11:01:32 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP3 (Coremail) with SMTP id _Ch0CgB3ysQKsq5nzY3yDg--.17850S3;
+	Fri, 14 Feb 2025 11:01:31 +0800 (CST)
+Subject: Re: [PATCH v3 md-6.15 11/11] md/md-bitmap: introducet
+ CONFIG_MD_BITMAP
+To: Yu Kuai <yukuai1@huaweicloud.com>, song@kernel.org, agk@redhat.com,
+ snitzer@kernel.org, mpatocka@redhat.com
+Cc: linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-kernel@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20250123020730.2003602-1-yukuai1@huaweicloud.com>
+ <20250123020730.2003602-12-yukuai1@huaweicloud.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <4e113774-e74f-874f-0e80-256c7bf1b508@huaweicloud.com>
+Date: Fri, 14 Feb 2025 11:01:30 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250213063304.GA11664@sol.localdomain>
+In-Reply-To: <20250123020730.2003602-12-yukuai1@huaweicloud.com>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:_Ch0CgB3ysQKsq5nzY3yDg--.17850S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7uFy7tFWkJF4DJr1xGFWruFg_yoW8uw43pF
+	4UG34fCrW5XF4jga1UJFWUCFySkwn2grZrArWrGwnakF9rX3sxXa1kWFWjvwn5GrWfJFsx
+	Zr4rKr4Duw4DZaUanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUBF14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCY1x0262kKe7AKxVWUtVW8ZwCF04k20xvY0x
+	0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E
+	7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcV
+	C0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF
+	04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7
+	CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUd-B_UUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Wed, Feb 12, 2025 at 10:33:04PM -0800, Eric Biggers wrote:
-> 
-> I've already covered this extensively, but here we go again.  First there are
-> more users of shash than ahash in the kernel, since shash is much easier to use
-> and also a bit faster.  There is nothing storage specific about it.  You've
-> claimed that shash is deprecated, but that reflects a misunderstanding of what
-> users actually want and need.  Users want simple, fast, easy-to-use APIs.  Not
-> APIs that are optimized for an obsolete form of hardware offload and have
-> CPU-based crypto support bolted on as an afterthought.
+Hi,
 
-The ahash interface was not designed for hardware offload, it's
-exactly the same as the skcipher interface which caters for all
-users.  The shash interface was a mistake, one which I've only
-come to realise after adding the corresponding lskcipher interface.
+ÔÚ 2025/01/23 10:07, Yu Kuai Ð´µÀ:
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index 264756a54f59..9451cc5cc574 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -83,6 +83,9 @@ static const char *action_name[NR_SYNC_ACTIONS] = {
+>   static LIST_HEAD(pers_list);
+>   static DEFINE_SPINLOCK(pers_lock);
+>   
+> +static LIST_HEAD(bitmap_list);
+> +static DEFINE_SPINLOCK(bitmap_lock);
+> +
+>   static const struct kobj_type md_ktype;
+>   
+>   const struct md_cluster_operations *md_cluster_ops;
+> @@ -100,7 +103,6 @@ static struct workqueue_struct *md_wq;
+>    * workqueue whith reconfig_mutex grabbed.
+>    */
+>   static struct workqueue_struct *md_misc_wq;
+> -struct workqueue_struct *md_bitmap_wq;
+>   
+>   static int remove_and_add_spares(struct mddev *mddev,
+>   				 struct md_rdev *this);
+> @@ -650,15 +652,73 @@ static void active_io_release(struct percpu_ref *ref)
+>   
+>   static void no_op(struct percpu_ref *r) {}
+>   
+> +void register_md_bitmap(struct bitmap_operations *op)
+> +{
+> +	pr_info("md: bitmap version %d registered\n", op->version);
+> +
+> +	spin_lock(&bitmap_lock);
+> +	list_add_tail(&op->list, &bitmap_list);
+> +	spin_unlock(&bitmap_lock);
+> +}
+> +
+> +void unregister_md_bitmap(struct bitmap_operations *op)
+> +{
+> +	pr_info("md: bitmap version %d unregistered\n", op->version);
+> +
+> +	spin_lock(&bitmap_lock);
+> +	list_del_init(&op->list);
+> +	spin_unlock(&bitmap_lock);
+> +}
+> +
+> +static struct bitmap_operations *find_bitmap(int version)
+> +{
+> +	struct bitmap_operations *op = NULL;
+> +	struct bitmap_operations *tmp;
+> +
+> +	spin_lock(&bitmap_lock);
+> +	list_for_each_entry(tmp, &bitmap_list, list) {
+> +		if (tmp->version == version) {
+> +			op = tmp;
+> +			break;
+> +		}
+> +	}
+> +	spin_unlock(&bitmap_lock);
+> +
+> +	return op;
+> +}
 
+Noted that, we already have pers_lock and pers_list for personalities,
+md_cluster_ops and md_cluster_mod for md-cluster. Now, add bitmap_lock
+and bitmap_list is a bit ugly.
 
-> Second, these days TLS and IPsec usually use AES-GCM, which is inherently
-> parallelizable so does not benefit from multibuffer crypto.  This is a major
-> difference between the AEADs and message digest algorithms in common use.  And
-> it happens that I recently did a lot of work to optimize AES-GCM on x86_64; see
-> my commits in v6.11 that made AES-GCM 2-3x as fast on VAES-capable CPUs.
+I decided to refactor this a bit, by adding a new struct
+md_submodule_head and unify all sub modules registeration,
+unregisteration and lookup. Will send a set soon :)
 
-Bravo to your efforts on improving GCM.  But that does not mean that
-GCM is not amenable to parallel processing.  While CTR itself is
-obviously already parallel, the GHASH algorithm can indeed benefit
-from parallel processing like any other hashing algorithm.
+Thanks,
+Kuai
 
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
