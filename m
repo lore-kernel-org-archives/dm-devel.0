@@ -1,142 +1,128 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC99A1519AC
-	for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 03:01:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0BE1978F34;
+	Fri, 14 Feb 2025 03:35:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739502103; cv=none; b=ELeJ0w8NZOk2wDuPW8JcM8UsuONBz6/dnYLUppDtWG+etUoukP7eCpbP9+QmjySGsxe0jsAXv2t2HoEpN/xpoaNdl85R8CyaWjykNcw2HdiG0GO4ada1F8ta1koiNKmDohlTtOtfqzu9ePtAEwIyjVo2+zyHOPAdniuIqk535Y4=
+	t=1739504121; cv=none; b=B1PO/MLHefGNyx58z0KLtWMEUl2gdS8+sNFAZ3tlTYnZrB43gmGuH14QcTiHNFAUaapEjuvH4obminY20ea2/Xu3F2Tk3TAmqTU1DZjjSWw786vedhoEKrpdslHdJnIpFzdkx7S8Sfkn5LBvkSMvtyrwWQfRQWy/saskrsmheK8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739502103; c=relaxed/simple;
-	bh=15IRzAhxRAQrT8Dl0CxkcNAaO8CmkIYwIa3eHZ10E7w=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=U8OEI2mGa0E7MpEVR58sEgC73q1h3ZgHig7gShORFKUQ3tA3yYGW/qV16qKmkywm+w1ejSHIq4m+65HQd2/ZDY8Me+qmR4qO8zZyV/IxEHzj/OWtUQQBeNmmg8jH8ZuzwbrYA+wTSYrS4z68Pus/M3umuLOXxBJxgPydQ6fvmN0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4YvGyt4tCDz4f3kFT
-	for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 11:01:10 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.252])
-	by mail.maildlp.com (Postfix) with ESMTP id 191111A14C4
-	for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 11:01:32 +0800 (CST)
-Received: from [10.174.179.143] (unknown [10.174.179.143])
-	by APP3 (Coremail) with SMTP id _Ch0CgB3ysQKsq5nzY3yDg--.17850S3;
-	Fri, 14 Feb 2025 11:01:31 +0800 (CST)
-Subject: Re: [PATCH v3 md-6.15 11/11] md/md-bitmap: introducet
- CONFIG_MD_BITMAP
-To: Yu Kuai <yukuai1@huaweicloud.com>, song@kernel.org, agk@redhat.com,
- snitzer@kernel.org, mpatocka@redhat.com
-Cc: linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-kernel@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20250123020730.2003602-1-yukuai1@huaweicloud.com>
- <20250123020730.2003602-12-yukuai1@huaweicloud.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <4e113774-e74f-874f-0e80-256c7bf1b508@huaweicloud.com>
-Date: Fri, 14 Feb 2025 11:01:30 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+	s=arc-20240116; t=1739504121; c=relaxed/simple;
+	bh=GHXJGGSXmO3XdJUVBTnqgXpdPTGoAWBnUJGaHHmw8is=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=dGbvkMi+ecXBfpNTbMflui6HGppxOzs3joThOJdtMq88hWr/B1yXwyw1YANNSJtDkUJrXsDsTgU5z7mVOVcLxZP2FwUy1xzxNCWnDoB+HmlrqPlCviJtIk3zz+jkYEGZBbFpeoayFucVuawxOZh8HMqpqe32m9Ib5+5sQZytrCk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=mGyDKVt7; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="mGyDKVt7"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id ED176C4CED1;
+	Fri, 14 Feb 2025 03:35:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1739504120;
+	bh=GHXJGGSXmO3XdJUVBTnqgXpdPTGoAWBnUJGaHHmw8is=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=mGyDKVt7O7hWki5SZw8ElAlXetpN0kOsRzduxYor4iWe1QnJQ85VsefWpe44PiY4M
+	 P47TB51v1WwrqxRGhQg2d/uBRc50Fouh0MY6djzFipYz6npZxpbc08LMijaZsGpL4P
+	 rQNSWB2jMm0h6sRZrv/MdxqCgqJSThsyH/bCy5O0dGfk5rKLwnKvUPAAX0+vra9uzr
+	 aj+xzi04tOoYx3OrRL4gWF/HI4AXcbV9BSGWRBqwuIhHk4tGlzLjOhI5RmM1/9dr8i
+	 pq9I2YOjlYE6fzyDEK79ukA5F5qcLCaWcZ+P34aQhdLFqCj1bjJpzL/d2QpKskawNE
+	 S/KnXdysA74bA==
+Date: Thu, 13 Feb 2025 19:35:18 -0800
+From: Eric Biggers <ebiggers@kernel.org>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: fsverity@lists.linux.dev, linux-crypto@vger.kernel.org,
+	dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	David Howells <dhowells@redhat.com>, netdev@vger.kernel.org
+Subject: Re: [PATCH v8 0/7] Optimize dm-verity and fsverity using multibuffer
+ hashing
+Message-ID: <20250214033518.GA2771@sol.localdomain>
+References: <20250212154718.44255-1-ebiggers@kernel.org>
+ <Z61yZjslWKmDGE_t@gondor.apana.org.au>
+ <20250213063304.GA11664@sol.localdomain>
+ <Z66uH_aeKc7ubONg@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250123020730.2003602-12-yukuai1@huaweicloud.com>
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:_Ch0CgB3ysQKsq5nzY3yDg--.17850S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7uFy7tFWkJF4DJr1xGFWruFg_yoW8uw43pF
-	4UG34fCrW5XF4jga1UJFWUCFySkwn2grZrArWrGwnakF9rX3sxXa1kWFWjvwn5GrWfJFsx
-	Zr4rKr4Duw4DZaUanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUBF14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCY1x0262kKe7AKxVWUtVW8ZwCF04k20xvY0x
-	0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E
-	7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcV
-	C0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF
-	04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7
-	CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUd-B_UUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <Z66uH_aeKc7ubONg@gondor.apana.org.au>
 
-Hi,
+On Fri, Feb 14, 2025 at 10:44:47AM +0800, Herbert Xu wrote:
+> On Wed, Feb 12, 2025 at 10:33:04PM -0800, Eric Biggers wrote:
+> > 
+> > I've already covered this extensively, but here we go again.  First there are
+> > more users of shash than ahash in the kernel, since shash is much easier to use
+> > and also a bit faster.  There is nothing storage specific about it.  You've
+> > claimed that shash is deprecated, but that reflects a misunderstanding of what
+> > users actually want and need.  Users want simple, fast, easy-to-use APIs.  Not
+> > APIs that are optimized for an obsolete form of hardware offload and have
+> > CPU-based crypto support bolted on as an afterthought.
+> 
+> The ahash interface was not designed for hardware offload, it's
+> exactly the same as the skcipher interface which caters for all
+> users.  The shash interface was a mistake, one which I've only
+> come to realise after adding the corresponding lskcipher interface.
 
-ÔÚ 2025/01/23 10:07, Yu Kuai Ð´µÀ:
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 264756a54f59..9451cc5cc574 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -83,6 +83,9 @@ static const char *action_name[NR_SYNC_ACTIONS] = {
->   static LIST_HEAD(pers_list);
->   static DEFINE_SPINLOCK(pers_lock);
->   
-> +static LIST_HEAD(bitmap_list);
-> +static DEFINE_SPINLOCK(bitmap_lock);
-> +
->   static const struct kobj_type md_ktype;
->   
->   const struct md_cluster_operations *md_cluster_ops;
-> @@ -100,7 +103,6 @@ static struct workqueue_struct *md_wq;
->    * workqueue whith reconfig_mutex grabbed.
->    */
->   static struct workqueue_struct *md_misc_wq;
-> -struct workqueue_struct *md_bitmap_wq;
->   
->   static int remove_and_add_spares(struct mddev *mddev,
->   				 struct md_rdev *this);
-> @@ -650,15 +652,73 @@ static void active_io_release(struct percpu_ref *ref)
->   
->   static void no_op(struct percpu_ref *r) {}
->   
-> +void register_md_bitmap(struct bitmap_operations *op)
-> +{
-> +	pr_info("md: bitmap version %d registered\n", op->version);
-> +
-> +	spin_lock(&bitmap_lock);
-> +	list_add_tail(&op->list, &bitmap_list);
-> +	spin_unlock(&bitmap_lock);
-> +}
-> +
-> +void unregister_md_bitmap(struct bitmap_operations *op)
-> +{
-> +	pr_info("md: bitmap version %d unregistered\n", op->version);
-> +
-> +	spin_lock(&bitmap_lock);
-> +	list_del_init(&op->list);
-> +	spin_unlock(&bitmap_lock);
-> +}
-> +
-> +static struct bitmap_operations *find_bitmap(int version)
-> +{
-> +	struct bitmap_operations *op = NULL;
-> +	struct bitmap_operations *tmp;
-> +
-> +	spin_lock(&bitmap_lock);
-> +	list_for_each_entry(tmp, &bitmap_list, list) {
-> +		if (tmp->version == version) {
-> +			op = tmp;
-> +			break;
-> +		}
-> +	}
-> +	spin_unlock(&bitmap_lock);
-> +
-> +	return op;
-> +}
+It absolutely is designed for an obsolete form of hardware offload.  Have you
+ever tried actually using it?  Here's how to hash a buffer of data with shash:
 
-Noted that, we already have pers_lock and pers_list for personalities,
-md_cluster_ops and md_cluster_mod for md-cluster. Now, add bitmap_lock
-and bitmap_list is a bit ugly.
+	return crypto_shash_tfm_digest(tfm, data, size, out)
 
-I decided to refactor this a bit, by adding a new struct
-md_submodule_head and unify all sub modules registeration,
-unregisteration and lookup. Will send a set soon :)
+... and here's how to do it with the SHA-256 library, for what it's worth:
 
-Thanks,
-Kuai
+	sha256(data, size, out)
 
+and here's how to do it with ahash:
+
+	struct ahash_request *req;
+	struct scatterlist sg;
+	DECLARE_CRYPTO_WAIT(wait);
+	int err;
+
+	req = ahash_request_alloc(alg, GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
+
+	sg_init_one(&sg, data, size);
+	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
+					CRYPTO_TFM_REQ_MAY_BACKLOG,
+				   crypto_req_done, &wait);
+	ahash_request_set_crypt(req, &sg, out, size);
+
+	err = crypto_wait_req(crypto_ahash_digest(req), &wait);
+
+	ahash_request_free(req);
+	return err;
+
+Hmm, I wonder which API users would rather use?
+
+The extra complexity is from supporting an obsolete form of hardware offload.
+
+Yes, skcipher and aead have the same problem, but that doesn't mean it is right.
+
+> > Second, these days TLS and IPsec usually use AES-GCM, which is inherently
+> > parallelizable so does not benefit from multibuffer crypto.  This is a major
+> > difference between the AEADs and message digest algorithms in common use.  And
+> > it happens that I recently did a lot of work to optimize AES-GCM on x86_64; see
+> > my commits in v6.11 that made AES-GCM 2-3x as fast on VAES-capable CPUs.
+> 
+> Bravo to your efforts on improving GCM.  But that does not mean that
+> GCM is not amenable to parallel processing.  While CTR itself is
+> obviously already parallel, the GHASH algorithm can indeed benefit
+> from parallel processing like any other hashing algorithm.
+
+What?  GHASH is a polynomial hash function, so it is easily parallelizable.  If
+you precompute N powers of the hash key then you can process N blocks in
+parallel.  Check how the AES-GCM assembly code works; that's exactly what it
+does.  This is fundamentally different from message digests like SHA-* where the
+blocks have to be processed serially.
+
+- Eric
