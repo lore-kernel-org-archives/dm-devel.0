@@ -1,116 +1,95 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3A29211A2A;
-	Thu, 13 Feb 2025 10:10:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5E248635A;
+	Fri, 14 Feb 2025 02:44:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739441423; cv=none; b=O2cLktU/ypQMSZvBxBnQ+UznrWnMD7k6ib5cg8eI3QZpBzMxpJPY5vTryX1mwpJEqArDgodk2itubV5OdNfaKN1RBxQu7iKvu8ra27fhAJUZrqYpZ5Lcdf7ohe3dqFKmPvlHYlV4U4cpli78sRkH1VmgCKScLFCOUR20GplWTtA=
+	t=1739501099; cv=none; b=AUHZ2c/W66T9EsS1VhqvBmU+sdAURpMeD8U4rWteYYNwN0a5eVzvIZXteKc8Yx8YvgbXFe9i0xk9wuymyv2KBBGy78xOndIfiZFETUFinUQWK8Tsw7Hu6/kOXoNg/4qReylSMokAws2VbGGbMRtTXhAazVqgMlwnm20VaTutnAs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739441423; c=relaxed/simple;
-	bh=42FVAKglSdA4GCM9HFlOhDKZOpyrLuyiIonz/DiE3L8=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=TFHKZJ5Fc/rWuU0ijpwao0zkxDmdFi33Rm42+nusNneoEeYuMLIM2nYFbtX6dfLTesl8iewXyRr39v8eX1Hajx/i6SsBhG/YWCt4/b1DIO9CNIdO0jUBLaYXjKedplpVwJWNMT9HI1lpZpjoErCs5ep4p09VZVZw8M/pHQvotNE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=QduZ+V/D; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1739501099; c=relaxed/simple;
+	bh=WGPoqVRqUNUupOPvcUF75S6imIM0F94i8SNoD5PoDN4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=XLOicXx/kXG+VH6kdbetg/gv9f6iMsXC+9TRky2w9v1dHd1NfOg6xVtlJPE/NNwSD7tBEhgqNavW7BWoghdLRsJfMFwxX3FT0Vz6mTGd6tgU5vqJWaLYvR7eGFeZBfo69F1iZhnrG37DBBNOiT+999v+jZJrfC4t6FNKiUGk3BA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=crG3z6Nx; arc=none smtp.client-ip=144.6.53.87
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="QduZ+V/D"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4D6C5C4AF0B;
-	Thu, 13 Feb 2025 10:10:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1739441423;
-	bh=42FVAKglSdA4GCM9HFlOhDKZOpyrLuyiIonz/DiE3L8=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=QduZ+V/DRRjp2YWO++Ujfw3lygiGvik5JyzHxwkbzuCCpkjDQA2xTe9472qCN+Nmm
-	 g8UPJBRO1x11HRM2ivIE8CcqfDWwXrogX25VnK26nn9dKYYSxVlODPp0HlmILK/i/p
-	 ILEi1lvFLnbPFZ1RBFxCyUR9zSS2JVm7RVMD5EUeUO5vRTsL2pHLncYcwgGow9yA1I
-	 mYmv3jE4woQi5p93XX32ny0y8aYTG6xUG+cNojoNuN4gr//3nWs+4xcMdeJ3iK/26I
-	 8RMuhd8w68G4+i9xGt3TiXQciFWBB6LoanAcebArn+JtR6Jr1P+7tTOJogzdZMgjnR
-	 bu3Pc5MrK9oNg==
-Received: by mail-lf1-f48.google.com with SMTP id 2adb3069b0e04-5450f2959f7so625061e87.2;
-        Thu, 13 Feb 2025 02:10:23 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCVGGon4+sA73cFtthPtvmsdFAz0z08Fm176hlLEKqVF15o0PrToYcVJpw+dz28locfEVfjp6Zm3Lg==@lists.linux.dev, AJvYcCVjZZAbVmXjBVwpykzxWmyjzzLMWMhRhR9rWcyNi2EPbd27SxroqdtGq6vQIhOnrOKUJvLnOD7hnbg=@lists.linux.dev
-X-Gm-Message-State: AOJu0YzDeXe5g3TuebW27wZ20PQaDSKS4ePjR8h6ItLp5TwY+oeM0DuL
-	yJTYM/5kyG/w25BYJ1umLsaxvNp3iv7JTeB0xseSE5/YQu8wE3dgLNK2o3IEb/+FOZoj5f79+hN
-	k86TvGw/QRqJnzMP8K5k5ZVQK8Ag=
-X-Google-Smtp-Source: AGHT+IHR+xr20cYmx6lgB9lVJM3c3+XAiEna+ZFlbjgJt6DHiy1GJEpnHOR+KpKMxfjEGw7dyQYgQ9iz1/SKleqfvSQ=
-X-Received: by 2002:a05:6512:159b:b0:545:4d1:64c0 with SMTP id
- 2adb3069b0e04-5451dd9e2admr736305e87.27.1739441421532; Thu, 13 Feb 2025
- 02:10:21 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="crG3z6Nx"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
+	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
+	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+	List-Post:List-Owner:List-Archive;
+	bh=65T4rBQvy6mFilnie1q3glh+nsrM26bK761iT5MKkEQ=; b=crG3z6NxOhqIo4edos2ddK19x9
+	hWQSi3nAdhK010ZkcRwyeT/b7++m63S5YNZcODozEpBJOgP/hasAC3UwlWnFjWlOcuxZl6tHYs4l6
+	6CdnKwqrBKWVhX/71+itsWvFCZPIi5xG1gs60s6n4iM2+RSM+EG2zasTj5Py8FPoAqUifwAFUeSF7
+	jz3SIn2+ft0+9dsPngX+XYAY40kD7KeiEKr2GMLKn4zN7UML+XlDViVY9nEWPOxDqUIKfr4y2IiG8
+	uHyVA8/XvOed0PTCNxcEp+sHeenwZAK2TFyGrWhXuNWJe+/SMmo5c/8xDxp+RWJ+TWkWRU6yqFsJt
+	i0IQW4xQ==;
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1tilUE-000DGZ-2e;
+	Fri, 14 Feb 2025 10:44:48 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Fri, 14 Feb 2025 10:44:47 +0800
+Date: Fri, 14 Feb 2025 10:44:47 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: fsverity@lists.linux.dev, linux-crypto@vger.kernel.org,
+	dm-devel@lists.linux.dev, x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	David Howells <dhowells@redhat.com>, netdev@vger.kernel.org
+Subject: Re: [PATCH v8 0/7] Optimize dm-verity and fsverity using multibuffer
+ hashing
+Message-ID: <Z66uH_aeKc7ubONg@gondor.apana.org.au>
+References: <20250212154718.44255-1-ebiggers@kernel.org>
+ <Z61yZjslWKmDGE_t@gondor.apana.org.au>
+ <20250213063304.GA11664@sol.localdomain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20250212154718.44255-1-ebiggers@kernel.org> <Z61yZjslWKmDGE_t@gondor.apana.org.au>
-In-Reply-To: <Z61yZjslWKmDGE_t@gondor.apana.org.au>
-From: Ard Biesheuvel <ardb@kernel.org>
-Date: Thu, 13 Feb 2025 11:10:10 +0100
-X-Gmail-Original-Message-ID: <CAMj1kXE+K4XbmxkXwzj9tHE2DP_A5pKLPPFv6+Fa=CtH8rD24Q@mail.gmail.com>
-X-Gm-Features: AWEUYZkVud9S7L-5xo9HDDz6-H1l2qn4wDw7iDL4qi7FjFF8ciQmJoIc0opMONg
-Message-ID: <CAMj1kXE+K4XbmxkXwzj9tHE2DP_A5pKLPPFv6+Fa=CtH8rD24Q@mail.gmail.com>
-Subject: Re: [PATCH v8 0/7] Optimize dm-verity and fsverity using multibuffer hashing
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Eric Biggers <ebiggers@kernel.org>, fsverity@lists.linux.dev, 
-	linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev, x86@kernel.org, 
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, 
-	Sami Tolvanen <samitolvanen@google.com>, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, David Howells <dhowells@redhat.com>, netdev@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20250213063304.GA11664@sol.localdomain>
 
-On Thu, 13 Feb 2025 at 05:17, Herbert Xu <herbert@gondor.apana.org.au> wrote:
->
-> On Wed, Feb 12, 2025 at 07:47:11AM -0800, Eric Biggers wrote:
-> > [ This patchset keeps getting rejected by Herbert, who prefers a
-> >   complex, buggy, and slow alternative that shoehorns CPU-based hashing
-> >   into the asynchronous hash API which is designed for off-CPU offload:
-> >   https://lore.kernel.org/linux-crypto/cover.1730021644.git.herbert@gondor.apana.org.au/
-> >   This patchset is a much better way to do it though, and I've already
-> >   been maintaining it downstream as it would not be reasonable to go the
-> >   asynchronous hash route instead.  Let me know if there are any
-> >   objections to me taking this patchset through the fsverity tree, or at
-> >   least patches 1-5 as the dm-verity patches could go in separately. ]
->
-> Yes I object.  While I very much like this idea of parallel hashing
-> that you're introducing, shoehorning it into shash is restricting
-> this to storage-based users.
->
-> Networking is equally able to benefit from paralell hashing, and
-> parallel crypto (in particular, AEAD) in general.  In fact, both
-> TLS and IPsec can benefit directly from bulk submission instead
-> of the current scheme where a single packet is processed at a time.
->
-> But thanks for the reminder and I will be posting my patches
-> soon.
->
+On Wed, Feb 12, 2025 at 10:33:04PM -0800, Eric Biggers wrote:
+> 
+> I've already covered this extensively, but here we go again.  First there are
+> more users of shash than ahash in the kernel, since shash is much easier to use
+> and also a bit faster.  There is nothing storage specific about it.  You've
+> claimed that shash is deprecated, but that reflects a misunderstanding of what
+> users actually want and need.  Users want simple, fast, easy-to-use APIs.  Not
+> APIs that are optimized for an obsolete form of hardware offload and have
+> CPU-based crypto support bolted on as an afterthought.
 
-I have to second Eric here, simply because his work has been ready to
-go for a year now, while you keep rejecting it on the basis that
-you're creating something better, and the only thing you have managed
-to produce in the meantime didn't even work.
+The ahash interface was not designed for hardware offload, it's
+exactly the same as the skcipher interface which caters for all
+users.  The shash interface was a mistake, one which I've only
+come to realise after adding the corresponding lskcipher interface.
 
-I strongly urge you to accept Eric's work, and if your approach is
-really superior, it should be fairly easy making that point with
-working code once you get around to producing it, and we can switch
-over the users then.
 
-The increased flexibility you claim your approach will have does not
-mesh with my understanding of where the opportunities for improvement
-are: CPU-based SHA can be tightly interleaved at the instruction level
-to have a performance gain of almost 2x. Designing a more flexible
-ahash based multibuffer API that can still take advantage of this to
-the same extent is not straight-forward, and you going off and cooking
-up something by yourself for months at a time does not inspire
-confidence that this will converge any time soon, if at all.
+> Second, these days TLS and IPsec usually use AES-GCM, which is inherently
+> parallelizable so does not benefit from multibuffer crypto.  This is a major
+> difference between the AEADs and message digest algorithms in common use.  And
+> it happens that I recently did a lot of work to optimize AES-GCM on x86_64; see
+> my commits in v6.11 that made AES-GCM 2-3x as fast on VAES-capable CPUs.
 
-Also, your network use case is fairly theoretical, whereas the
-fsverity and dm-verity code runs on 100s of millions of mobile phones
-in the field, so sacrificing any performance of the latter to serve
-the former seems misguided to me.
+Bravo to your efforts on improving GCM.  But that does not mean that
+GCM is not amenable to parallel processing.  While CTR itself is
+obviously already parallel, the GHASH algorithm can indeed benefit
+from parallel processing like any other hashing algorithm.
 
-So could you please remove yourself from the critical path here, and
-merge this while we wait for your better alternative to materialize?
-
-Thanks,
-Ard.
+Cheers,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
