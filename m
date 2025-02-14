@@ -1,63 +1,63 @@
-Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
+Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B2C81FC10E
-	for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 22:10:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F6301DC198
+	for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 22:10:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739571036; cv=none; b=P5ElV3MLI3h8/dZuboi3pn1v6eaOsjrTX07w+0P0pGA/RmlVxm7SirMEMwY/cvJR7/f0HjW7MSMABs3d6nOa3th77ehjJp5otdtNuZGyKSIOocUvcl6J/VWxJHW8s2BsMrpGY/Jx7ZWn/dAT4vd6p5/QYFDc7p8b6buJZBRivTo=
+	t=1739571038; cv=none; b=hGFrHlFCyFpdIp+jhCY7B2Ybe6RAaYRq7Wak0PF5Lex/oXRrnsnw2ezAkn5AxopOGiOCG4H7G9xffMEhSTahBIzblP4mdETzXefK4n11oxncjwUxRjrukyIZU+GRL4PTIMOLVPhBwui+1opz30coNnvGji6cf7uQlYGG2OUai2M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739571036; c=relaxed/simple;
-	bh=DYrMSk4AQU1u4X9YborFmHHmLE57qCojBRuK8ma87e4=;
+	s=arc-20240116; t=1739571038; c=relaxed/simple;
+	bh=Sgs7G2XbjhR17uH6if9QSsZzItfemXzPZt0IiWGNQWs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=LFieiWuDZAkD34rRdGMYV/oIgmXhMdcQFYk+yuo9qJc5Cx9xeU5RuB7UdJwwq8CikcPv97LzdIKbrv+yeKFEvS065r6sQttDDAdgRdTE4BwS8Svot6LQHbo1PCDAMWZi66XVwWDka4Yf/hMss/KWxrflaXOPWOQjUeiC0odocVw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=FvygshSH; arc=none smtp.client-ip=209.85.218.53
+	 MIME-Version; b=o59wqnDUb40dllMGvs8t3VqIeErC5chYUUDDjXqpmUIBPpocMBP8F4sq0VtKX9ExVcV5CbdPaZcgg+Gfjw9nvB9mBTmyb4WN5Grn5uto7ytpO/1hTZI02RSl1us42Dxo/Qi522skNQtwReSjeeBU6ptOl9fQAtkmbH7oVz1fkmc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=YoN0Gick; arc=none smtp.client-ip=209.85.208.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="FvygshSH"
-Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-aaee2c5ee6eso428794566b.1
-        for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 14:10:34 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="YoN0Gick"
+Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-5dedae49c63so2824002a12.0
+        for <dm-devel@lists.linux.dev>; Fri, 14 Feb 2025 14:10:35 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1739571033; x=1740175833; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1739571034; x=1740175834; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=578YEZjvQAxwKHK6SmUl2Er8XRp1rjU3E8RBIObEcbQ=;
-        b=FvygshSHoddJL69Bow2cYDMvzBJV1ADlM5KT6eVM3xDLY5wm1rh7Q2Fb7GrNrm1k/t
-         0++Rk/qf270u8ArM2YBWEK4opTNTjngT2zCZJLLb6ylHCUwIP2PjBTxxsI20JgpWpQV6
-         +7ryrPcAPdtdBewAGovG8hIY7tSpuXBEebKm5wRQutF1VV/vvWQRPbmRAto43mcjVd20
-         we5toadlAz2f+CrvgLihWQ7ZMhgx8k0d8Ul3zWVIDTr3Q0E7lL6zkHS6pghLsDsdaFSN
-         gDd3fKfh1U1EhQ09x1TkH7BphYBPkPPuMzyDwgVd0vn1Y/n0K8oq3M4yvKc9NWmgy0g8
-         5aow==
+        bh=dTz2EEocUipq1j838IYHG+vuxnn0i4KvU6vOXOtzbBM=;
+        b=YoN0Gickqo7XaWbe+iQdsBmwvZCMKpOkq+sR6+XoPuCiSLUn/BVbQb69bAnMb+ubrk
+         qHmR+i/kyf2xM8bWa1agdgUnI6LgyVD2F+hBgde8zxQMxMKWKAIbMoBzJHgiXSu2VWcz
+         06lvUkzaKHHyGGoXzD5bEiqIFhx2O5cACFCG7y2iEq/U3urCLLv87LDQKFrdyInu1LdL
+         miWSIP0vXbjXZ311wGOBtXRqjyt5Eu0FlN2ZUZjmSA1r80HzUlUDJAMn+z/YkKmI6Bbt
+         SGmuYiBGXW70G6DywmG4YTDdD8ntWcR+TMSuiTq/Jqaqk0b+E7LkdTMGgc+fQZCD7VWr
+         UnpQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1739571033; x=1740175833;
+        d=1e100.net; s=20230601; t=1739571034; x=1740175834;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=578YEZjvQAxwKHK6SmUl2Er8XRp1rjU3E8RBIObEcbQ=;
-        b=i9soUMwvqTulQ4KfFRgKwFRW0NjVkYl8BqQ3VtHyNsPPzhNa3nswc6mR3QyGEBP3yl
-         22UT4V8afdAIV0OqElPX4q5Wwh804zaABUuc1X81IvE3TXWuN5JFJdWIW0m0wFHvWuWS
-         ZWjA+Hg72wxevhr2pJIb5jUdGJm6yKPrWzwEuj8yAHcgx0BWTEcIUsVMeA0MWNA29Fm+
-         3lzsEuIVS/SnVQHJk84SXq35tL1kWb64LOZ8DgUZX0X2mDdoieL0ryClakNrEGkTkxR6
-         iHXNU+qWvWdCcdeQwAjvy82cXGFrj56kgMWFJlrv8oK1ONRoDR5J5cdcvZYWj7a09JPx
-         2LNQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVRstMnSqKc7JjGlGn2LjZ7Z2ylPM+Sj2y3CbuD3zAZHUVqDcahatuW4yLjVGEQzHWj5Ts1Z78uWA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz0KvVi06oFqs+Oc7ZL6hENbu9s+U/I5Ol+qwzW2iUYq9KBT0+j
-	Mo/kdqTQfaQykovu+XpJy8L9JmiwuqWYBHK1gaoAR3jTPfkyOocoxXix9PZr9ys=
-X-Gm-Gg: ASbGncuvSlXYVP7LUkCShDJpEbYAmf94DbafeWQq//1S0A8CO9pjqT5pvR7OuEFTjQQ
-	h7Zvh6TiRjNbZcuTSScNcW0YocBr8jxvRT56o0pygK+j/VWFn/N164rkeDjJ9XDQkGyjPeKUMz3
-	3mBG5vASxKfymLCRiE9DzYhAAskmfcEtFevtEsOTpwXn8Pd4sEdDdLTam+GQGSG16Ms7e+ebu3k
-	vyQqFP4+NuCm3Aebfc9KQjY5rD9XhTcmAZVnIT5XQE8WLjb7Q6Zixt3zt/VEsLbtuCeACP8LGJY
-	yMwm8QXxoG8R/y1GInIJL8+FMI709Dv4r2bnDUH0rpjk/GddUTjRiM1NlmYAbG9aETnbTPSe4e2
-	CLw==
-X-Google-Smtp-Source: AGHT+IGtSvvU3m6U5nA6BfW0izenQ7l/evdQGm0vPKeoRw6c4PPouExRIwsjgBUgK62RjTmZQX68gA==
-X-Received: by 2002:a17:907:9802:b0:ab7:bcc0:9067 with SMTP id a640c23a62f3a-abb70dd72f8mr81775566b.40.1739571032498;
-        Fri, 14 Feb 2025 14:10:32 -0800 (PST)
+        bh=dTz2EEocUipq1j838IYHG+vuxnn0i4KvU6vOXOtzbBM=;
+        b=vLZKPIZ5JT3dRDafrF1zClmTi0KSIn7sivbLrhsqA9M+xElQ0PsIfzbvRt6FoKxI1i
+         qWCSZWRXtX7ZFJ7IbrxTgRBoqVY5Z2Q+UF4NvFSW1pBuQK+0k+myz406IpBLaiAij0Gp
+         yHXHO/ArSNoN5Vnohk2PKJEby3BhHc0J1UM8nh6gVtXxvzwePWlZQZyPI0H7W0V5ypHK
+         aQP5fofz9J8k9xZunUy7x1ldKh+wU9vAJitJttwuJfZiL5B8xsiKFHFEQDKhPCrxHDza
+         ZukFOqadzCpotmpCyxpZI/5PfEZ/XpPoNoLg/fmKXUfHaQUh1SUudCaYc/7LvaaqCUSi
+         ERvA==
+X-Forwarded-Encrypted: i=1; AJvYcCV71YxQXfp7+NZyTCnk3ZWUDCwAnFkmTUsCMEWKSi0QpxefLUidmx+JDJSsTaiKlYumytlYSIdnnw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyINTVMFrozsT9nPt6QPvmmzQ/WuMazKevBIYJb8fX1we7ghUGH
+	uTAKbnRmv6d0Ih1kprITTZX2B/F6tzPYnPqgEcuSnPHXENbR4pV5OMkSxF2DzL0=
+X-Gm-Gg: ASbGncskNB2NcEcvQX9S3HKjXMQhzaj30pmnQEovmEG63yzce+poGvypUH1vVJtnBI2
+	WbxUPNZ8oBxD5ATXr6+MjMLLU+VfBiKyWd2pp1SSgT+TxAnU1exYEgbwClPIy9O4PoVm918V8si
+	E/7E6+td50KTW9kyiNmi/dpJgdcM9DwO2pExc1yR/MkcXx3wQdnFzHPtBmR2N3VBywM1Z3wp7TO
+	yDv7+s1+kKGe9I+1Pz4/cUsSFCVJaOz04qFhLZlcEKGboP9Ncy34wcIVoxP5yOe7MvBJKdkzyHY
+	y2attIOSb/uWDN2y1mQz3/uxqHNpPp75pnvKC0Ek+rHtoNaRnxpOdUgnmJrKzkEjtmITHAQwVsS
+	Umg==
+X-Google-Smtp-Source: AGHT+IGjL9y7SNiMgizSPC8SkyhY6UjgldTD8oCLSub80zJEiVdnB4CMIVgz8zsO71ce2WuulJ+2Pw==
+X-Received: by 2002:a05:6402:51ca:b0:5de:d313:d059 with SMTP id 4fb4d7f45d1cf-5e036112946mr1218070a12.18.1739571034274;
+        Fri, 14 Feb 2025 14:10:34 -0800 (PST)
 Received: from localhost (p200300de37464600ac00037825cc9f2c.dip0.t-ipconnect.de. [2003:de:3746:4600:ac00:378:25cc:9f2c])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-aba53258215sm415720266b.53.2025.02.14.14.10.31
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5dece270affsm3451038a12.54.2025.02.14.14.10.33
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 14 Feb 2025 14:10:31 -0800 (PST)
+        Fri, 14 Feb 2025 14:10:33 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -66,9 +66,9 @@ Cc: Alice Frosi <afrosi@redhat.com>,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	Martin Wilck <mwilck@suse.com>,
 	dm-devel@lists.linux.dev
-Subject: [PATCH v3 07/10] multipathd: listen on pathname and abstract socket by default
-Date: Fri, 14 Feb 2025 23:10:08 +0100
-Message-ID: <20250214221011.136762-8-mwilck@suse.com>
+Subject: [PATCH v3 08/10] libmpathcmd: try both abstract and pathname sockets
+Date: Fri, 14 Feb 2025 23:10:09 +0100
+Message-ID: <20250214221011.136762-9-mwilck@suse.com>
 X-Mailer: git-send-email 2.48.1
 In-Reply-To: <20250214221011.136762-1-mwilck@suse.com>
 References: <20250214221011.136762-1-mwilck@suse.com>
@@ -80,66 +80,51 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Pass both ABSTRACT_SOCKET and PATHNAME_SOCKET to the compiler at
-build time, and listen on both sockets by default.
+When connecting to the multipathd socket, try the pathname socket
+first, then the abstract socket. Fail only if both connection attempts
+fail.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- Makefile.inc            |  2 +-
- libmpathcmd/mpath_cmd.c |  2 +-
- multipathd/main.c       | 11 ++++++-----
- 3 files changed, 8 insertions(+), 7 deletions(-)
+ libmpathcmd/mpath_cmd.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index d0fecc3..9e3dc46 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -118,7 +118,7 @@ CPPFLAGS	:= $(FORTIFY_OPT) $(CPPFLAGS) $(D_URCU_VERSION) \
- 		   -DRUNTIME_DIR=\"$(runtimedir)\" -DCONFIG_DIR=\"$(TGTDIR)$(configdir)\" \
- 		   -DDEFAULT_CONFIGFILE=\"$(TGTDIR)$(configfile)\" -DSTATE_DIR=\"$(TGTDIR)$(statedir)\" \
- 		   -DEXTRAVERSION=\"$(EXTRAVERSION)\" \
--		   -DDEFAULT_SOCKET=\"$(abstract_socket)\" \
-+		   -DABSTRACT_SOCKET=\"$(abstract_socket)\" -DPATHNAME_SOCKET=\"$(pathname_socket)\" \
- 		   -DWSTRINGOP_TRUNCATION=$(if $(WSTRINGOP_TRUNCATION),1,0) \
- 		   -MMD -MP
- CFLAGS		:= -std=$(C_STD) $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
 diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index 5a39471..c7cf954 100644
+index c7cf954..ba5bb31 100644
 --- a/libmpathcmd/mpath_cmd.c
 +++ b/libmpathcmd/mpath_cmd.c
-@@ -113,7 +113,7 @@ int mpath_connect__(int nonblocking)
+@@ -102,7 +102,10 @@ int mpath_connect__(int nonblocking)
+ 	size_t len;
+ 	struct sockaddr_un addr;
+ 	int flags = 0;
++	const char *names[2] = {PATHNAME_SOCKET, ABSTRACT_SOCKET};
++	int name_idx = 0;
+ 
++retry:
+ 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+ 	if (fd == -1)
+ 		return -1;
+@@ -113,13 +116,17 @@ int mpath_connect__(int nonblocking)
  			(void)fcntl(fd, F_SETFL, flags|O_NONBLOCK);
  	}
  
--	len = mpath_fill_sockaddr__(&addr, DEFAULT_SOCKET);
-+	len = mpath_fill_sockaddr__(&addr, ABSTRACT_SOCKET);
+-	len = mpath_fill_sockaddr__(&addr, ABSTRACT_SOCKET);
++	len = mpath_fill_sockaddr__(&addr, names[name_idx]);
  	if (connect(fd, (struct sockaddr *)&addr, len) == -1) {
  		int err = errno;
  
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ac204b2..b41c181 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1899,13 +1899,14 @@ uxlsnrloop (void * ap)
- 	pthread_cleanup_push(rcu_unregister, NULL);
- 	rcu_register_thread();
+ 		close(fd);
+-		errno = err;
+-		return -1;
++		if (err == ECONNREFUSED && ++name_idx == 1)
++			goto retry;
++		else {
++			errno = err;
++			return -1;
++		}
+ 	}
  
--	num = get_systemd_sockets(&ux_sock);
-+	num = get_systemd_sockets(ux_sock);
- 	if (num < 1) {
--		ux_sock[0] = ux_socket_listen(DEFAULT_SOCKET);
--		num = 1;
-+		ux_sock[0] = ux_socket_listen(ABSTRACT_SOCKET);
-+		ux_sock[1] = ux_socket_listen(PATHNAME_SOCKET);
-+		num = 2;
- 	}
--	if (ux_sock[0] == -1) {
--		condlog(1, "could not create uxsock: %d", errno);
-+	if (ux_sock[0] == -1 && ux_sock[1] == -1) {
-+		condlog(1, "could not create sockets: %d", errno);
- 		exit_daemon();
- 		goto out;
- 	}
+ 	if (nonblocking && flags != -1)
 -- 
 2.48.1
 
