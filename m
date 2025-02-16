@@ -1,90 +1,128 @@
-Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f48.google.com (mail-ej1-f48.google.com [209.85.218.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0460FC8CE;
-	Sun, 16 Feb 2025 03:29:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3565E17E473
+	for <dm-devel@lists.linux.dev>; Sun, 16 Feb 2025 10:42:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739676575; cv=none; b=EwoPRlOz7I8RX9KASMK+3wQAWGHbZgKKRUbtREnUPt6jlHoJcMQ/oPwuQsJ1Y291dRpXWJi5Zhy4gmH3MzkJuJSxoxOmO6AO4nzyRkMq6oUaMFeQz+KAX23CQgesEJYEf0Dn+YlrDcEnwbZMcLrA9J0i4Kxf6bp8RbGx2yA12Wo=
+	t=1739702549; cv=none; b=IouLW5apAvQMAerhGVCszBtCXeyGl3iJOXs2bzc6UffHGuSQsmAgYyC0csRGnBzUexwIZWL0SeFTSUFG325spxz48Uo8NKG3aV+Kqybpl9GOXd7Ktsp3X3Sze01EagEbecXTTlmmaCHo0vTlnu7ZYQcbYBdW+5rPcVVFKeL0l20=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739676575; c=relaxed/simple;
-	bh=iUhWftYdo9T8UrzE6GeB1DWNOpDcX5qptKrCMHfnN7Q=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=UWLtFhibBiDTGEGK7c3PjVOTdUPTxAUFq8UEdoJRoism6rZtXezSceqQhqnnqV2R5KSZMzOUStEDa4/Z8JLiw7X6CxS1mWXh+qJCjQ2ALHP8rGDJJKL39FwzmrdkoC+Wg+Qm6ulDR43Z++QsRHXvZ1f/zM8rq+vzHQ3tard/N0Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=jYOUT/DN; arc=none smtp.client-ip=144.6.53.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	s=arc-20240116; t=1739702549; c=relaxed/simple;
+	bh=iM7tEPV48U8WJ+hezDZwfYvVDUsqDAGnZaQFMo/SmcA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=TVAdMuVacbC8271kn33z6ulV/wXj0L26w4rTBOMRBLPlHg35PlOedozyNgSPJCpD2Y5BoP9wEF5Qtg+PoS02aHHzl/aDq/UnIjIB/kOI6Glcm3znZkPQfFoz5QiMcuPVjfPs7p1hPIdekR2LefH20s6r5TwHvNlj2YNr/1MjcpE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SwA0bRIj; arc=none smtp.client-ip=209.85.218.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="jYOUT/DN"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
-	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
-	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
-	List-Post:List-Owner:List-Archive;
-	bh=rc0BQgcYMwktFIfCc+amXmngzIQoye0cjtheqjw53zQ=; b=jYOUT/DNQz6ndVzPKDPcgy6BGS
-	Sbrt/uk1tV1ZGFwl6P5x2Q0ZbtQ8hF6wdBbCCJVtZytfAdZhcm66YhQttvb2L0D6RFTl2ABbNRTKr
-	PyewzxHJ2VUArIHg2dlw8DGS3maCYle5MQ5xZjzTLmB0eVGLkUE6WIAYlt2sCgAnS7zExJ7rxRQyz
-	U8F6Ug5NkRI6vnr2vuCgI9vZERbyczYpL5ho2vbI74+Zg0pD3ctbwn7lnZwjZfrdnEZSG0e+RmSKe
-	rSkCpeXURirWd+jIhugHpG0ydOLYDBkIsu9aTMFz5H3a9BHzmDR+NJMdg66akqLtLTXry4svUdCZx
-	tgk088Yw==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
-	id 1tjV8X-000gj6-2y;
-	Sun, 16 Feb 2025 11:29:27 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Sun, 16 Feb 2025 11:29:26 +0800
-Date: Sun, 16 Feb 2025 11:29:26 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Jakub Kicinski <kuba@kernel.org>, fsverity@lists.linux.dev,
-	linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev,
-	x86@kernel.org, linux-arm-kernel@lists.infradead.org,
-	linux-kernel@vger.kernel.org, Ard Biesheuvel <ardb@kernel.org>,
-	Sami Tolvanen <samitolvanen@google.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	David Howells <dhowells@redhat.com>, netdev@vger.kernel.org
-Subject: Re: [PATCH v8 0/7] Optimize dm-verity and fsverity using multibuffer
- hashing
-Message-ID: <Z7FblsbOQnJ7sYOA@gondor.apana.org.au>
-References: <20250212154718.44255-1-ebiggers@kernel.org>
- <Z61yZjslWKmDGE_t@gondor.apana.org.au>
- <20250213063304.GA11664@sol.localdomain>
- <20250215090412.46937c11@kernel.org>
- <Z7FM9rhEA7n476EJ@gondor.apana.org.au>
- <20250216032616.GA90952@quark.localdomain>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SwA0bRIj"
+Received: by mail-ej1-f48.google.com with SMTP id a640c23a62f3a-ab771575040so890103966b.1
+        for <dm-devel@lists.linux.dev>; Sun, 16 Feb 2025 02:42:27 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1739702546; x=1740307346; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=LazUEOej5l43+bfR9AUy50EmWM7TfpervdeFxQxk4LA=;
+        b=SwA0bRIjDkjdNMGPf/qNyiZTtuUa0t0nvf9W1rz8QuQlI5Bb35qdOvvBlbKPPN7EdH
+         KkA3uDpkB0Yps8fHqbMmV1jTEmVkIt8Mukj38G8QU5Yf/iDTulFj7zN+MKndeWvqi8rc
+         YkdqEvmsFXXRD0hEHtOc7yz7BY6nhqAWPE0piep+KNjt25W4fJ26otnzpoMhVbpJIShY
+         eVP4spsaNa9M0Kc00YZ1LIWWQ/nFq1LHoNhZ13gmon9M6ObOuFv6AJVtlM5giP36regN
+         WdxeN7R+OFjq8DEqRNDNvnbkMe1xHrifPLT0xHQevAg5v0hkAQEOYHHZcKTbMpuWX+C6
+         d4ZA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1739702546; x=1740307346;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=LazUEOej5l43+bfR9AUy50EmWM7TfpervdeFxQxk4LA=;
+        b=aQzt+yPJsgKcp2auWMjpLQO3VreyZZlYoPTpGQ22+IwZhxH35YErkyzT5++WZgATv0
+         LCbHmsBs/q08nhq3NU8cLWBxwI6UNv6v1C5IIFZd/NsLxyqITt8adzgacWvjHGlowpnV
+         vePQGQpLD4kaZ8fIWEiuLfpP/XHPlsC60vuRxb7wIO1OWpNsx6OTRMDcM/do7iOnhhne
+         9nS969c77ik6p1W+Yom1e7dQ1CZCso4tgiB7PHmdtnRchftWSQ6KJAFQQVKbGIzcdd0p
+         wj2DeFJ4SokbnSvP5lPV+2QNkqmk2xkkbpnBIf2bHXAgY8dh12/XeghD5JXAtNd6i3lV
+         Pg2A==
+X-Gm-Message-State: AOJu0YwKKGI/7cwMoPtv/AelJv8VN2KO5KP7OSmwQnKofiw5EI/5kKbq
+	g0TL6xUzLVjv7izFPvRVhRYJfnK+cL4R9dVFotK/PwaL6shOFH8YQliFc22h
+X-Gm-Gg: ASbGncvPUV0OgfGRLQTuGo9MDTFA6oA92XBZIxMJcVMWr2dHgoRuPMpvgmAaXKeo9+y
+	rRW9/R2cCETEXux4y0mwrPJNHGfN2vZQwoj2HtGa0gmDmt1YVDLFWuu2tqLoyM8eOM8JB7RiNRb
+	RxV2bVz+hTZeRJ/5ApCcnF09zNu7TbEmZqDYC/u2xIE4tkMzcua8T1STG3dEVEnx/DJm91YqS6t
+	qvnwSVNdWXyKgNojLwqFZJQjQ9k8udopC4m5xcOdscbCEI8mRG6RbCYAnmwTrN8oHpxKF1DifMz
+	w8vxHP4Tb+I/tLj2L9LloPCgrh4pdo33NBOXhs/tTQ+Bu7vtAVT1r8v4co8QDCrZYCS/4dFAtsP
+	MaoBdv2G/y+iNLB5XtBk=
+X-Google-Smtp-Source: AGHT+IFGsa6CU1hUaEyWwVxvCEXG7v9unr8N3BR0cdRTJKOLWeylkLU0jSqXZL/xTVSVEDqTPm07DQ==
+X-Received: by 2002:a17:906:3ca9:b0:ab2:f6e5:3f1 with SMTP id a640c23a62f3a-abb70848a57mr463921566b.8.1739702546150;
+        Sun, 16 Feb 2025 02:42:26 -0800 (PST)
+Received: from syrah.mazyland.net (dynamic-2a00-1028-8d1a-5dc6-7184-2e63-0011-e253.ipv6.o2.cz. [2a00:1028:8d1a:5dc6:7184:2e63:11:e253])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aba78ef6ed8sm422755166b.73.2025.02.16.02.42.25
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 16 Feb 2025 02:42:25 -0800 (PST)
+From: Milan Broz <gmazyland@gmail.com>
+To: dm-devel@lists.linux.dev
+Cc: mpatocka@redhat.com,
+	snitzer@kernel.org,
+	Milan Broz <gmazyland@gmail.com>,
+	stable@vger.kernel.org
+Subject: [PATCH 1/2] dm-integrity: Avoid divide by zero in table status in Inline mode
+Date: Sun, 16 Feb 2025 11:42:09 +0100
+Message-ID: <20250216104210.572120-1-gmazyland@gmail.com>
+X-Mailer: git-send-email 2.47.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250216032616.GA90952@quark.localdomain>
+Content-Transfer-Encoding: 8bit
 
-On Sat, Feb 15, 2025 at 07:26:16PM -0800, Eric Biggers wrote:
->
-> Well, the async fallback (using cryptd) occurs only when a kernel-mode FPU
-> section in process context is interrupted by a hardirq and at the end of it a
-> softirq also tries to use kernel-mode FPU.  It's generally a rare case but also
-> a terrible implementation that is really bad for performance; this should never
+In Inline mode, the journal is unused, and journal_sectors is zero.
 
-It may not be rare if the kernel is busy doing bidirectional
-TX/RX with crypto.  The process context will be the TX-side
-encrypting while the softirq context will do RX-side decryption.
+Calculating the journal watermark requires dividing by journal_sectors,
+which should be done only if the journal is configured.
 
-> have been implemented this way.  I am planning to fix it so that softirqs on x86
+Otherwise, a simple table query (dmsetup table) can cause OOPS.
 
-Sure but it's way better than falling back to the C implementation
-on the RX-side.
+This bug did not show on some systems, perhaps only due to
+compiler optimization.
 
-> will always be able to use the FPU, like they can on some of the other arches
-> like arm64 and riscv.
+On my 32-bit testing machine, this reliably crashes with the following:
 
-That's great news.  Thanks!
+ : Oops: divide error: 0000 [#1] PREEMPT SMP
+ : CPU: 0 UID: 0 PID: 2450 Comm: dmsetup Not tainted 6.14.0-rc2+ #959
+ : EIP: dm_integrity_status+0x2f8/0xab0 [dm_integrity]
+ ...
+
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+Fixes: fb0987682c62 ("dm-integrity: introduce the Inline mode")
+Cc: stable@vger.kernel.org # 6.11+
+---
+ drivers/md/dm-integrity.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index ee9f7cecd78e..555dc06b9422 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -3790,10 +3790,6 @@ static void dm_integrity_status(struct dm_target *ti, status_type_t type,
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE: {
+-		__u64 watermark_percentage = (__u64)(ic->journal_entries - ic->free_sectors_threshold) * 100;
+-
+-		watermark_percentage += ic->journal_entries / 2;
+-		do_div(watermark_percentage, ic->journal_entries);
+ 		arg_count = 3;
+ 		arg_count += !!ic->meta_dev;
+ 		arg_count += ic->sectors_per_block != 1;
+@@ -3826,6 +3822,10 @@ static void dm_integrity_status(struct dm_target *ti, status_type_t type,
+ 		DMEMIT(" interleave_sectors:%u", 1U << ic->sb->log2_interleave_sectors);
+ 		DMEMIT(" buffer_sectors:%u", 1U << ic->log2_buffer_sectors);
+ 		if (ic->mode == 'J') {
++			__u64 watermark_percentage = (__u64)(ic->journal_entries - ic->free_sectors_threshold) * 100;
++
++			watermark_percentage += ic->journal_entries / 2;
++			do_div(watermark_percentage, ic->journal_entries);
+ 			DMEMIT(" journal_watermark:%u", (unsigned int)watermark_percentage);
+ 			DMEMIT(" commit_time:%u", ic->autocommit_msec);
+ 		}
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.47.2
+
