@@ -1,73 +1,60 @@
-Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com [209.85.218.47])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mailgw02.mediatek.com (unknown [210.61.82.184])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BA2818DB08
-	for <dm-devel@lists.linux.dev>; Sun, 16 Feb 2025 10:42:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8D6819047A
+	for <dm-devel@lists.linux.dev>; Sun, 16 Feb 2025 14:44:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=210.61.82.184
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739702551; cv=none; b=AM1fYMn5gziZA0PeBSxO0P8SQf+JaI/tz8BfUHOIRDVILLvQxM6DZFT6TOw24q8/ZQYrN35SWCVC5hhQEt4OEyVuyJPKNyoDgR3HZtVH0hnW0LdXP+OJJF/UiqaD3rADyiWB0MiIKfs1TXoaU5Dc4UcCmYItIPRvwGsXq1ntDWU=
+	t=1739717061; cv=none; b=YRMd1/mV4cJuXlFY57rHrfwxDHNf4vXoGyRglUs2GUAYLyD1pDrpwzjeAp2tYlFgNEGjUVqa+D7wElF/wA628J0cB5uH+q0FLxEZpMuCGDRp3TMdyqgH1BBEzqqlpwcGWPqkTZHbpfeXcYa3HkHOVqK7O9Le7wjAEu6R+W3HkeQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739702551; c=relaxed/simple;
-	bh=1u8/QRvZIAfdaS2QYst0uvhwDu/wf0BSfX6i/cR7NA8=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=RuSG96eRs9DOwcCwbb1HA/IWEmN3gqCdr8L611RvkTNHznoiXplVUetCiuZp9bwosPrDLsvDcMQyr8aEWtDrnFlc8VYWkE0aw/LPpUHEAn/Mhkj9U54s5PbGrWG3SZ6RU9OZZd8tyOcjglqD+AxRkTCCxldyHGlOu8Vz8We8M3s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ld9tY9M+; arc=none smtp.client-ip=209.85.218.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1739717061; c=relaxed/simple;
+	bh=eEXisePiItVInqXP8r8mz0G1g91CunOEy+VSQmiT/sw=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=TUpkRnXVfXtbZX1EDofJAEFQsuAlEl0erRNyShkmWFXhv/jtgjMIoaRhF2h6rKptH7BPUdl+ZiQP2Yhipd7jaB61zNh4dohL1G1nACh+xAYtm9jiGsvqX+LmYtj54EFeKHfhoH9Kt8YMrynyLC2tH4rrkM/Zh11ZQACUrJ2QS2I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=mediatek.com; spf=pass smtp.mailfrom=mediatek.com; dkim=pass (1024-bit key) header.d=mediatek.com header.i=@mediatek.com header.b=GHS+PHwD; arc=none smtp.client-ip=210.61.82.184
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=mediatek.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mediatek.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ld9tY9M+"
-Received: by mail-ej1-f47.google.com with SMTP id a640c23a62f3a-ab7e80c4b55so639747666b.0
-        for <dm-devel@lists.linux.dev>; Sun, 16 Feb 2025 02:42:29 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1739702548; x=1740307348; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=tKKKFX5+mxjRmMV997r53l3FrILYg6kyCOTBHDZ2vaA=;
-        b=ld9tY9M+7QYNwidFl2qXAZVxO77/Xw9Xdv9+0jbdDMQN7Qwi7vUZvzwhceANVTtbws
-         vHYN2aLO67MV2xwQKyPukxvmlYrnqe+qPZy1R6P4x0cVInF8qYEZ+Bo0K+YqvOurRuep
-         Ys8YwaYScMghQKrVE12jZgY+NQWRgq3p41M5wwG13n0ZoeXUXagCUzl59qWR4psw89OF
-         T9e5BiyctHzkLywA+P+vpCLnsdF5cUwNiPPiEA7nG4ctWdCA6FB5V6AR8Y0EGieUDXG7
-         OpH8fgq/q7TNwLmk5uWjqskRfvlE6L5w+M7KsRcb7+dnDSfxD0wY4J8hXNypediVgvS1
-         Ftkg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1739702548; x=1740307348;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=tKKKFX5+mxjRmMV997r53l3FrILYg6kyCOTBHDZ2vaA=;
-        b=H+y+4Bs2BIPe4BgtYtYpmVw3k6LOwX4irbRtkflnwZPzxA3X9a/dhzepJuN/iSXMCf
-         VdFNO+QY6/Ai79K2Iq1mMmrKicExYWOGFVKel4lov0v0hVkel9INVummFcOvy3qRKrla
-         hZuPmGYgVaduWGivG775uN6gI5rtqo4WtMqZskZRvS8GgqVbRILJ2eNyiAzyCxN7qP0v
-         ZoNwQkXopHxE6kdtXtCGZo5QCfvJCWT3/Txbsz1a2S+3VElwO+PSLRWw9Kyipul5PrSp
-         rnBKS19mMpfi6Zu/J39BoSYOjHXOlG769ds6Io5ogt/qWXvIZp/Q0KkxiTw9mcZAGQCU
-         nT9g==
-X-Gm-Message-State: AOJu0YzYJCkmJQRIhrPSz629jjbKcPIEho3AGkhBkDNVSOxYt4Ud6YR6
-	dIQQWZpZlENe03CCBIUFpgIvTutup6rCopP9pc3pB18SZFxbyesh54+KjYFm
-X-Gm-Gg: ASbGncuzzf4mIOZSNScPbaDUpcPGOe8pg5XHHoDtnOP8bqTwbgEnaoT1TSGk8+/bIcY
-	w4xcg/Wa+xlYWFPzoHIHytZUx6QzDeknip5b6xaKEF+cE0vslKmB5EFRXb+c5RTmg0LqX9Xc+7X
-	Q6SDs6qalU5onA7WtP8wC+xo7jaUj0OSsKWo4DLENPkBFa8zXgbPS458hYt7TXZfamhCTEoFyCf
-	m+eSh8MjQHXi5W20eKBTMtLDFUqzy8Hk2DIGMq6Ni8G+2AjiW9LBvbmYM2sefjBiJoPph56MLDr
-	xPbyj9r+6B9HnAB4Rv5vSjv+Yqpi3/HFMg/pnFABGB50O3ylqBPpi8iQOS0mT4uLSy043cFEsfA
-	1QDqcAaZPcZEMh/CNzDs=
-X-Google-Smtp-Source: AGHT+IHTm9RXoJVzvCSsKPfEkd7hDRszmzDsgvTx36XEqM9IjwbpdF7uRknqphU/26XUqUfl0t9g5A==
-X-Received: by 2002:a17:906:4794:b0:ab7:e52a:1467 with SMTP id a640c23a62f3a-abb70dad218mr574718166b.30.1739702547437;
-        Sun, 16 Feb 2025 02:42:27 -0800 (PST)
-Received: from syrah.mazyland.net (dynamic-2a00-1028-8d1a-5dc6-7184-2e63-0011-e253.ipv6.o2.cz. [2a00:1028:8d1a:5dc6:7184:2e63:11:e253])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-aba78ef6ed8sm422755166b.73.2025.02.16.02.42.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 16 Feb 2025 02:42:27 -0800 (PST)
-From: Milan Broz <gmazyland@gmail.com>
-To: dm-devel@lists.linux.dev
-Cc: mpatocka@redhat.com,
-	snitzer@kernel.org,
-	Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH 2/2] dm-integrity: Do not emit journal configuration in DM table for Inline mode
-Date: Sun, 16 Feb 2025 11:42:10 +0100
-Message-ID: <20250216104210.572120-2-gmazyland@gmail.com>
-X-Mailer: git-send-email 2.47.2
-In-Reply-To: <20250216104210.572120-1-gmazyland@gmail.com>
-References: <20250216104210.572120-1-gmazyland@gmail.com>
+	dkim=pass (1024-bit key) header.d=mediatek.com header.i=@mediatek.com header.b="GHS+PHwD"
+X-UUID: 7a31ec88ec7411ef8eb9c36241bbb6fb-20250216
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=mediatek.com; s=dk;
+	h=Content-Type:Content-Transfer-Encoding:MIME-Version:Message-ID:Date:Subject:CC:To:From; bh=k/dEYJoO4Qk0W2/aYoTFiGpV/VHj1MHfhfjKfCBVoWg=;
+	b=GHS+PHwDdBkVw5ixuvT5jV7YqGuYx+/Y6VBHs2HaZ6d6CMolbwLE9Fx7nNyIM9+cGTDSbklVU5y9z/wr5siYOBozK+7MwxcvXDYAwAAdVENzIt4e7d4V/3Qjz+dADfR1mGhF2Yt3aD2u56DQ6lUEDs8q6yHiGbsoMNKSSI6YYzA=;
+X-CID-P-RULE: Release_Ham
+X-CID-O-INFO: VERSION:1.1.46,REQID:f77fecc7-e59b-4c26-a5ba-d6462e77df15,IP:0,U
+	RL:0,TC:0,Content:0,EDM:0,RT:0,SF:0,FILE:0,BULK:0,RULE:Release_Ham,ACTION:
+	release,TS:0
+X-CID-META: VersionHash:60aa074,CLOUDID:b711d524-96bd-4ac5-8f2e-15aa1ef9defa,B
+	ulkID:nil,BulkQuantity:0,Recheck:0,SF:102,TC:nil,Content:0|50,EDM:-3,IP:ni
+	l,URL:0,File:nil,RT:nil,Bulk:nil,QS:nil,BEC:nil,COL:0,OSI:0,OSA:0,AV:0,LES
+	:1,SPR:NO,DKR:0,DKP:0,BRR:0,BRE:0,ARC:0
+X-CID-BVR: 0,NGT
+X-CID-BAS: 0,NGT,0,_
+X-CID-FACTOR: TF_CID_SPAM_SNR
+X-UUID: 7a31ec88ec7411ef8eb9c36241bbb6fb-20250216
+Received: from mtkmbs14n2.mediatek.inc [(172.21.101.76)] by mailgw02.mediatek.com
+	(envelope-from <ed.tsai@mediatek.com>)
+	(Generic MTA with TLSv1.2 ECDHE-RSA-AES256-GCM-SHA384 256/256)
+	with ESMTP id 574062639; Sun, 16 Feb 2025 22:44:08 +0800
+Received: from mtkmbs13n2.mediatek.inc (172.21.101.108) by
+ MTKMBS14N1.mediatek.inc (172.21.101.75) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1258.28; Sun, 16 Feb 2025 22:44:06 +0800
+Received: from mtksitap99.mediatek.inc (10.233.130.16) by
+ mtkmbs13n2.mediatek.inc (172.21.101.73) with Microsoft SMTP Server id
+ 15.2.1258.28 via Frontend Transport; Sun, 16 Feb 2025 22:44:06 +0800
+From: <ed.tsai@mediatek.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>, Matthias Brugger
+	<matthias.bgg@gmail.com>, AngeloGioacchino Del Regno
+	<angelogioacchino.delregno@collabora.com>
+CC: <linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	<linux-arm-kernel@lists.infradead.org>, <linux-mediatek@lists.infradead.org>,
+	<chun-hung.wu@mediatek.com>, Ed Tsai <ed.tsai@mediatek.com>,
+	<dm-devel@lists.linux.dev>
+Subject: [PATCH 1/1] dm: Enable inline crypto passthrough for striped target
+Date: Sun, 16 Feb 2025 22:42:21 +0800
+Message-ID: <20250216144224.1702385-2-ed.tsai@mediatek.com>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -75,66 +62,33 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-MTK: N
 
-The Inline mode does not use a journal; it makes no sense to print
-journal information in DM table. Print it only if the journal is used.
+From: Ed Tsai <ed.tsai@mediatek.com>
 
-The same applies to interleave_sectors (unused for Inline mode).
+Added DM_TARGET_PASSES_CRYPTO feature to the striped target to utilize
+the hardware encryption of the underlying storage devices, preventing
+fallback to the crypto API.
 
-Also, add comments for arg_count, as the current calculation
-is quite obscure.
-
-Signed-off-by: Milan Broz <gmazyland@gmail.com>
+Signed-off-by: Ed Tsai <ed.tsai@mediatek.com>
 ---
- drivers/md/dm-integrity.c | 17 ++++++++++-------
- 1 file changed, 10 insertions(+), 7 deletions(-)
+ drivers/md/dm-stripe.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 555dc06b9422..c45464b6576a 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -3790,16 +3790,18 @@ static void dm_integrity_status(struct dm_target *ti, status_type_t type,
- 		break;
- 
- 	case STATUSTYPE_TABLE: {
--		arg_count = 3;
-+		arg_count = 1; /* buffer_sectors */
- 		arg_count += !!ic->meta_dev;
- 		arg_count += ic->sectors_per_block != 1;
- 		arg_count += !!(ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING));
- 		arg_count += ic->reset_recalculate_flag;
- 		arg_count += ic->discard;
--		arg_count += ic->mode == 'J';
--		arg_count += ic->mode == 'J';
--		arg_count += ic->mode == 'B';
--		arg_count += ic->mode == 'B';
-+		arg_count += ic->mode != 'I'; /* interleave_sectors */
-+		arg_count += ic->mode == 'J'; /* journal_sectors */
-+		arg_count += ic->mode == 'J'; /* journal_watermark */
-+		arg_count += ic->mode == 'J'; /* commit_time */
-+		arg_count += ic->mode == 'B'; /* sectors_per_bit */
-+		arg_count += ic->mode == 'B'; /* bitmap_flush_interval */
- 		arg_count += !!ic->internal_hash_alg.alg_string;
- 		arg_count += !!ic->journal_crypt_alg.alg_string;
- 		arg_count += !!ic->journal_mac_alg.alg_string;
-@@ -3818,14 +3820,15 @@ static void dm_integrity_status(struct dm_target *ti, status_type_t type,
- 			DMEMIT(" reset_recalculate");
- 		if (ic->discard)
- 			DMEMIT(" allow_discards");
--		DMEMIT(" journal_sectors:%u", ic->initial_sectors - SB_SECTORS);
--		DMEMIT(" interleave_sectors:%u", 1U << ic->sb->log2_interleave_sectors);
-+		if (ic->mode != 'I')
-+			DMEMIT(" interleave_sectors:%u", 1U << ic->sb->log2_interleave_sectors);
- 		DMEMIT(" buffer_sectors:%u", 1U << ic->log2_buffer_sectors);
- 		if (ic->mode == 'J') {
- 			__u64 watermark_percentage = (__u64)(ic->journal_entries - ic->free_sectors_threshold) * 100;
- 
- 			watermark_percentage += ic->journal_entries / 2;
- 			do_div(watermark_percentage, ic->journal_entries);
-+			DMEMIT(" journal_sectors:%u", ic->initial_sectors - SB_SECTORS);
- 			DMEMIT(" journal_watermark:%u", (unsigned int)watermark_percentage);
- 			DMEMIT(" commit_time:%u", ic->autocommit_msec);
- 		}
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 3786ac67cefe..a1b7535c508a 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -467,7 +467,7 @@ static struct target_type stripe_target = {
+ 	.name   = "striped",
+ 	.version = {1, 7, 0},
+ 	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
+-		    DM_TARGET_ATOMIC_WRITES,
++		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_PASSES_CRYPTO,
+ 	.module = THIS_MODULE,
+ 	.ctr    = stripe_ctr,
+ 	.dtr    = stripe_dtr,
 -- 
-2.47.2
+2.45.2
 
