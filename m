@@ -1,95 +1,97 @@
-Received: from mail-pl1-f170.google.com (mail-pl1-f170.google.com [209.85.214.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F157C227BAA
-	for <dm-devel@lists.linux.dev>; Mon, 17 Feb 2025 20:05:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35685226545
+	for <dm-devel@lists.linux.dev>; Mon, 17 Feb 2025 21:04:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739822712; cv=none; b=GMe6GfVmSADOKNA8qrIPk30FLj12e2hTOQow0sl3eAMZjYeNZ+HuqDv6dFpgEerW2qIFSdw4k3lfIfIMKwee+8vnmuRXYrxZ7EVW/FR68kWhUdJKS3+wi1xk1kTR6DDb3CTM39LHUFhDN2zHf8/RVEn7e5hQXDTTwjBaKQ2YdkQ=
+	t=1739826244; cv=none; b=GNQGNmCxK4S4eoRFATYjJamJ3oSfCFGOGQRuoIjn6zIUrreDQ6DAQRY2+XxGLnO4v2946VrLV+hD61x4HrgAKwbKMJ504K+Qhycusk6QMQ01J4IN+m8wTETMU7s2C4KZUeO9yI1AnhqdZub2xrpZm98O3fG9UTOSICU+7klC2Gg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739822712; c=relaxed/simple;
-	bh=+Qkry+oK6OIkbsQ5GdK7pFOYbNkZvqDC+QYzATjY2pU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=U3FLVr7ImDAlZWqzGHU24lL8m5yir9uPMoJ8aUUWGOS4nqRdnCl1sZ7VjGyoggvop8vYz52cGf1JL0WSBVxQqXQaVpRI56Qilw9L/AzoeqRdXKZ5qrW0g/AYT9bAEpqTgODcolvbLk0mxIcEmmUPl6PWvA0wA/Kj4otJcQGLPwY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RDdkBSIa; arc=none smtp.client-ip=209.85.214.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1739826244; c=relaxed/simple;
+	bh=dGSuUXhSLu9hKXSLe1UgYWjkkwp5PdIxjETsD1GuYgo=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=Qli7Qjt0jfXcLKint+WCmRKJQiePkKfTmAtemj9toOEwK/Wp4kqjzYUxux+fCRme8pSoVf9knNo/i8vBilTXMG3A3K/WUCUbF8+Kastwwr/X+YviJ8AxSghF9+kqetOegWQRuwbVcXCA5zcnyF3iGKnac/XCwjrOzjNNeXGrPQM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fQ7zNHnw; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RDdkBSIa"
-Received: by mail-pl1-f170.google.com with SMTP id d9443c01a7336-22114b800f7so31143305ad.2
-        for <dm-devel@lists.linux.dev>; Mon, 17 Feb 2025 12:05:10 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1739822710; x=1740427510; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=+Qkry+oK6OIkbsQ5GdK7pFOYbNkZvqDC+QYzATjY2pU=;
-        b=RDdkBSIa6hvTwbODZeMeDUbUQRBYTEi4cz7GBATgms+yFZfuWnZZw5t/8Bj4o+b0MM
-         nJogkEPT4ouf5hFnaQsUA3LqaunfrdUhnRnLs2/MCCtRLGAQPgfeoW+watvpJp6QSgSt
-         zEGJ4T9S/AmTUzVLdjW2ywdLkeXctKBBPGIoVAD1Zlpsj+QvsPY2vGRISgUBdlt1jMiy
-         7H3oq9Re9M/jUpc2HvbzG48C32cUENsvgifRtwwvWgKSL9eDFXCWY900XYExqwOhVTl3
-         zPrYl9uMjgRJ9uzwIfezq8WK3J5D3IoR6pOalFnn8JdWF2BJcVmVToi5ksmMM/dGusAv
-         g1rw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1739822710; x=1740427510;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=+Qkry+oK6OIkbsQ5GdK7pFOYbNkZvqDC+QYzATjY2pU=;
-        b=O4vBvc4UAOlfnAkitgaC4xWx4S0y/34N9jrhW8ECLAfvcZcrgS3uT+7KvE5NRIsTod
-         cuofnLuaeJXVRBLopg/0ywa1nAwlIq38nRPPk/Ikv9ivwTOpFwE1sYCq9D2pGGr51b72
-         jyWP+OLZ3M681v/qJzMJn04c2WbZoIcAf/2X3bbaLB0d41kslg729NAxb1f3zYhoYf34
-         3RmrgrpfPa0yYRD8zR6g3AeOySUKNtdYuB+MIsFBhgkpVNvBzPAaqRPz05gZbdzKywLN
-         c72+W7kxlVopUp8ZagtVPXIlGeX2xinfKvxLuJyNK8i05umAhcFTw7G7tYyL3jq4rq2T
-         t5fg==
-X-Gm-Message-State: AOJu0YxRKaKgAJEnjPrf6FoAuasZ/A3xMp1yZErbSXNYRAZ06zku4RPO
-	vPMJk7Gv1uHfvEddEnbvxTZO6kB8JLMmjPGdsnzFVerKtucmjIlXrVn3U+Pp
-X-Gm-Gg: ASbGncvolb5R8rUefJPO5r5usjqVI8o/EUAPFyRJHR2QtXSUfI1Jud0R7i0dGfwZ9UP
-	M6wP7U6ounY4ecdYDypbxR3LUisYCv9jGkXQ9hJ/c8uqw4OCWucodJ87o134P3PZ9ZnAgG2GzI9
-	0pVgoAgWTda3OCoyZU+yky1S/crN9pGvggQ7s1N/M7AdUpwzzBD2RZlTkh1a+5Y39RA8qlK2w9u
-	UNdjui5uZCPACaovwgTjeyxQ92ZuIGwOYtFw9uRoJ3UvTLieoyfB3vSdzj8PCsb3Jhk9+aOhWGF
-	5ngnVlY=
-X-Google-Smtp-Source: AGHT+IHdD8r6da8XQRRmbFU40t3qfhN/IZGvmZOwpehNK3AC9sbXA2v6NSqVcc98qq0RLTKOQ7+eTg==
-X-Received: by 2002:a05:6a00:18a4:b0:730:9567:c3d4 with SMTP id d2e1a72fcca58-7326177fc46mr22354556b3a.3.1739822708375;
-        Mon, 17 Feb 2025 12:05:08 -0800 (PST)
-Received: from apollo.localdomain ([2601:646:8201:fd20::dd76])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-7324f22fd95sm7196236b3a.11.2025.02.17.12.05.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 17 Feb 2025 12:05:07 -0800 (PST)
-From: Khem Raj <raj.khem@gmail.com>
-To: dm-devel@lists.linux.dev
-Cc: Khem Raj <raj.khem@gmail.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] libmpathutils/uxsock.c: Include string.h for memcpy
-Date: Mon, 17 Feb 2025 12:05:03 -0800
-Message-ID: <20250217200503.4166910-1-raj.khem@gmail.com>
-X-Mailer: git-send-email 2.48.1
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fQ7zNHnw"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1739826242;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=GmhH52TmqXGyxkhb0Z9d5QJXrPPACfE0k2Xkkb9Y0oo=;
+	b=fQ7zNHnwp6hv0+88ik/PCJAqnL7LZe7/Rjf83USAJJnIHXQIf0FOUocq7/J2sIxW/fGu4g
+	Du6DtyoxfuZ2VUoLS2yFe8ebbcbFAow620+EuzDU93/peCEe5I3zhNLMTyKiSVQBfKdTu8
+	R/cfW8OnS42WLsIQUudVPoGRbZzk/s8=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-65-6oAwxc1fOY-nzwTIY0vgiw-1; Mon,
+ 17 Feb 2025 16:03:59 -0500
+X-MC-Unique: 6oAwxc1fOY-nzwTIY0vgiw-1
+X-Mimecast-MFC-AGG-ID: 6oAwxc1fOY-nzwTIY0vgiw_1739826239
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 04622196E078;
+	Mon, 17 Feb 2025 21:03:59 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 94CEC1800352;
+	Mon, 17 Feb 2025 21:03:58 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 51HL3vgN3047012
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 17 Feb 2025 16:03:57 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 51HL3vdL3047011;
+	Mon, 17 Feb 2025 16:03:57 -0500
+Date: Mon, 17 Feb 2025 16:03:57 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Khem Raj <raj.khem@gmail.com>
+Cc: dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] libmpathutils/uxsock.c: Include string.h for memcpy
+Message-ID: <Z7OkPcrX9dhWUPSn@redhat.com>
+References: <20250217200503.4166910-1-raj.khem@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20250217200503.4166910-1-raj.khem@gmail.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 3OTWzWxEjnV-MFLzIqUnjy3u5tXRsD0VP4lAFBpdLRk_1739826239
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Fixes
-uxsock.c:72:2: error: call to undeclared library function 'memcpy' with type 'void *(void *, const void *, unsigned long)'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+On Mon, Feb 17, 2025 at 12:05:03PM -0800, Khem Raj wrote:
+> Fixes
+> uxsock.c:72:2: error: call to undeclared library function 'memcpy' with type 'void *(void *, const void *, unsigned long)'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
 
-Signed-off-by: Khem Raj <raj.khem@gmail.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
----
- libmpathutil/uxsock.c | 1 +
- 1 file changed, 1 insertion(+)
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> 
+> Signed-off-by: Khem Raj <raj.khem@gmail.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmpathutil/uxsock.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/libmpathutil/uxsock.c b/libmpathutil/uxsock.c
+> index 2135476d..a474874e 100644
+> --- a/libmpathutil/uxsock.c
+> +++ b/libmpathutil/uxsock.c
+> @@ -8,6 +8,7 @@
+>  #include <stdlib.h>
+>  #include <unistd.h>
+>  #include <stdarg.h>
+> +#include <string.h>
+>  #include <fcntl.h>
+>  #include <sys/ioctl.h>
+>  #include <sys/types.h>
 
-diff --git a/libmpathutil/uxsock.c b/libmpathutil/uxsock.c
-index 2135476d..a474874e 100644
---- a/libmpathutil/uxsock.c
-+++ b/libmpathutil/uxsock.c
-@@ -8,6 +8,7 @@
- #include <stdlib.h>
- #include <unistd.h>
- #include <stdarg.h>
-+#include <string.h>
- #include <fcntl.h>
- #include <sys/ioctl.h>
- #include <sys/types.h>
