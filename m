@@ -1,94 +1,90 @@
-Received: from mailgw02.mediatek.com (unknown [210.61.82.184])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8D6819047A
-	for <dm-devel@lists.linux.dev>; Sun, 16 Feb 2025 14:44:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=210.61.82.184
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FACF217F48
+	for <dm-devel@lists.linux.dev>; Mon, 17 Feb 2025 10:37:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739717061; cv=none; b=YRMd1/mV4cJuXlFY57rHrfwxDHNf4vXoGyRglUs2GUAYLyD1pDrpwzjeAp2tYlFgNEGjUVqa+D7wElF/wA628J0cB5uH+q0FLxEZpMuCGDRp3TMdyqgH1BBEzqqlpwcGWPqkTZHbpfeXcYa3HkHOVqK7O9Le7wjAEu6R+W3HkeQ=
+	t=1739788664; cv=none; b=E+6yXk0R0bi8ire1vpx34N2XKkWgcKU6TCu8QYXWL3DnyuCaJMXCzjOndetMb/E0NZY5kQODJ1i5ehQ2XxYvqR1zoaFVJScmY6nZKxg+H9pdii//eYtHZLCYNeImF3O18FglEMeOoB/IaDjsDj3fquqtTW8FdeiGZHfR5pHmD9s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739717061; c=relaxed/simple;
-	bh=eEXisePiItVInqXP8r8mz0G1g91CunOEy+VSQmiT/sw=;
-	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=TUpkRnXVfXtbZX1EDofJAEFQsuAlEl0erRNyShkmWFXhv/jtgjMIoaRhF2h6rKptH7BPUdl+ZiQP2Yhipd7jaB61zNh4dohL1G1nACh+xAYtm9jiGsvqX+LmYtj54EFeKHfhoH9Kt8YMrynyLC2tH4rrkM/Zh11ZQACUrJ2QS2I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=mediatek.com; spf=pass smtp.mailfrom=mediatek.com; dkim=pass (1024-bit key) header.d=mediatek.com header.i=@mediatek.com header.b=GHS+PHwD; arc=none smtp.client-ip=210.61.82.184
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=mediatek.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mediatek.com
+	s=arc-20240116; t=1739788664; c=relaxed/simple;
+	bh=/bzErt8G8FR8t19khjbds1mKwjOt8namzpNBNSdxkO8=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=IXmFqwcA7LV36m/s+C2MqurKDOL+lr8VwmUhHDjKSp7ZekgGRlULU0/SsXIctbwg9VJT0FCjAx/oe7louMtKAEkjYIOdOyNx8A9a9VVppqiqwATrYC6e5EAcQZ94PrBPzTUGdRVfgFfzJVJtNC6bJic5xvBrjuTPZQ4yR/XWmeM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RqyYHqUb; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=mediatek.com header.i=@mediatek.com header.b="GHS+PHwD"
-X-UUID: 7a31ec88ec7411ef8eb9c36241bbb6fb-20250216
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=mediatek.com; s=dk;
-	h=Content-Type:Content-Transfer-Encoding:MIME-Version:Message-ID:Date:Subject:CC:To:From; bh=k/dEYJoO4Qk0W2/aYoTFiGpV/VHj1MHfhfjKfCBVoWg=;
-	b=GHS+PHwDdBkVw5ixuvT5jV7YqGuYx+/Y6VBHs2HaZ6d6CMolbwLE9Fx7nNyIM9+cGTDSbklVU5y9z/wr5siYOBozK+7MwxcvXDYAwAAdVENzIt4e7d4V/3Qjz+dADfR1mGhF2Yt3aD2u56DQ6lUEDs8q6yHiGbsoMNKSSI6YYzA=;
-X-CID-P-RULE: Release_Ham
-X-CID-O-INFO: VERSION:1.1.46,REQID:f77fecc7-e59b-4c26-a5ba-d6462e77df15,IP:0,U
-	RL:0,TC:0,Content:0,EDM:0,RT:0,SF:0,FILE:0,BULK:0,RULE:Release_Ham,ACTION:
-	release,TS:0
-X-CID-META: VersionHash:60aa074,CLOUDID:b711d524-96bd-4ac5-8f2e-15aa1ef9defa,B
-	ulkID:nil,BulkQuantity:0,Recheck:0,SF:102,TC:nil,Content:0|50,EDM:-3,IP:ni
-	l,URL:0,File:nil,RT:nil,Bulk:nil,QS:nil,BEC:nil,COL:0,OSI:0,OSA:0,AV:0,LES
-	:1,SPR:NO,DKR:0,DKP:0,BRR:0,BRE:0,ARC:0
-X-CID-BVR: 0,NGT
-X-CID-BAS: 0,NGT,0,_
-X-CID-FACTOR: TF_CID_SPAM_SNR
-X-UUID: 7a31ec88ec7411ef8eb9c36241bbb6fb-20250216
-Received: from mtkmbs14n2.mediatek.inc [(172.21.101.76)] by mailgw02.mediatek.com
-	(envelope-from <ed.tsai@mediatek.com>)
-	(Generic MTA with TLSv1.2 ECDHE-RSA-AES256-GCM-SHA384 256/256)
-	with ESMTP id 574062639; Sun, 16 Feb 2025 22:44:08 +0800
-Received: from mtkmbs13n2.mediatek.inc (172.21.101.108) by
- MTKMBS14N1.mediatek.inc (172.21.101.75) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1258.28; Sun, 16 Feb 2025 22:44:06 +0800
-Received: from mtksitap99.mediatek.inc (10.233.130.16) by
- mtkmbs13n2.mediatek.inc (172.21.101.73) with Microsoft SMTP Server id
- 15.2.1258.28 via Frontend Transport; Sun, 16 Feb 2025 22:44:06 +0800
-From: <ed.tsai@mediatek.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Matthias Brugger
-	<matthias.bgg@gmail.com>, AngeloGioacchino Del Regno
-	<angelogioacchino.delregno@collabora.com>
-CC: <linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-	<linux-arm-kernel@lists.infradead.org>, <linux-mediatek@lists.infradead.org>,
-	<chun-hung.wu@mediatek.com>, Ed Tsai <ed.tsai@mediatek.com>,
-	<dm-devel@lists.linux.dev>
-Subject: [PATCH 1/1] dm: Enable inline crypto passthrough for striped target
-Date: Sun, 16 Feb 2025 22:42:21 +0800
-Message-ID: <20250216144224.1702385-2-ed.tsai@mediatek.com>
-X-Mailer: git-send-email 2.45.2
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RqyYHqUb"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1739788659;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=o3QnuqXmgdzniJaLsLCeMzB55GWfy15gVerT6MR0b5Q=;
+	b=RqyYHqUbq9fy825f1w3BKHZkx/wN5kbJt+GM8ont03t63Pjo4ZKnTS1i86UUxc4UUaZ32n
+	lOPthM4PyrBG1Ro5VSwmvRVUS/2NnzmmkcrYU/ywkXclvvAAqhGcfBHCOvEc8iM9/alU2B
+	5xu5bgCpaphuolZ2oSyYjhlMLDee1Mc=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-159-a8Jdl3BLPTupGR9toQtJGA-1; Mon,
+ 17 Feb 2025 05:37:37 -0500
+X-MC-Unique: a8Jdl3BLPTupGR9toQtJGA-1
+X-Mimecast-MFC-AGG-ID: a8Jdl3BLPTupGR9toQtJGA_1739788656
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6B4D21800873;
+	Mon, 17 Feb 2025 10:37:36 +0000 (UTC)
+Received: from [10.45.224.44] (unknown [10.45.224.44])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9B885300018D;
+	Mon, 17 Feb 2025 10:37:34 +0000 (UTC)
+Date: Mon, 17 Feb 2025 11:37:30 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+cc: dm-devel@lists.linux.dev, snitzer@kernel.org, stable@vger.kernel.org
+Subject: Re: [PATCH 1/2] dm-integrity: Avoid divide by zero in table status
+ in Inline mode
+In-Reply-To: <20250216104210.572120-1-gmazyland@gmail.com>
+Message-ID: <457c7061-2e0a-6a33-ab3c-3a69b7be47c5@redhat.com>
+References: <20250216104210.572120-1-gmazyland@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-MTK: N
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-From: Ed Tsai <ed.tsai@mediatek.com>
 
-Added DM_TARGET_PASSES_CRYPTO feature to the striped target to utilize
-the hardware encryption of the underlying storage devices, preventing
-fallback to the crypto API.
 
-Signed-off-by: Ed Tsai <ed.tsai@mediatek.com>
----
- drivers/md/dm-stripe.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On Sun, 16 Feb 2025, Milan Broz wrote:
 
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index 3786ac67cefe..a1b7535c508a 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -467,7 +467,7 @@ static struct target_type stripe_target = {
- 	.name   = "striped",
- 	.version = {1, 7, 0},
- 	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
--		    DM_TARGET_ATOMIC_WRITES,
-+		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_PASSES_CRYPTO,
- 	.module = THIS_MODULE,
- 	.ctr    = stripe_ctr,
- 	.dtr    = stripe_dtr,
--- 
-2.45.2
+> In Inline mode, the journal is unused, and journal_sectors is zero.
+> 
+> Calculating the journal watermark requires dividing by journal_sectors,
+> which should be done only if the journal is configured.
+> 
+> Otherwise, a simple table query (dmsetup table) can cause OOPS.
+> 
+> This bug did not show on some systems, perhaps only due to
+> compiler optimization.
+> 
+> On my 32-bit testing machine, this reliably crashes with the following:
+> 
+>  : Oops: divide error: 0000 [#1] PREEMPT SMP
+>  : CPU: 0 UID: 0 PID: 2450 Comm: dmsetup Not tainted 6.14.0-rc2+ #959
+>  : EIP: dm_integrity_status+0x2f8/0xab0 [dm_integrity]
+>  ...
+> 
+> Signed-off-by: Milan Broz <gmazyland@gmail.com>
+> Fixes: fb0987682c62 ("dm-integrity: introduce the Inline mode")
+> Cc: stable@vger.kernel.org # 6.11+
+
+Both patches applied, thanks.
+
+Mikulas
 
