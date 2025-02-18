@@ -1,136 +1,160 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F8E21A5B9F
-	for <dm-devel@lists.linux.dev>; Mon, 17 Feb 2025 22:58:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDFB8653
+	for <dm-devel@lists.linux.dev>; Tue, 18 Feb 2025 00:05:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739833137; cv=none; b=gQX57f8z+5rTNfEEGrtZ6vyH/rDR2/j4oTT6qV/OzfDQR/cNC51W4Cuk+3GZvSevaSu+H/6ApPrPnNkCrw9T6l2fE4PlbwRkYBLwAOBq8gIS2hK5qA1rPOq9vuq9aINEOvjoJM77BGi5gfV9wpyPzP6IHFASXw/8yJ+U2ZJnxTM=
+	t=1739837118; cv=none; b=JqSU+ETE2D5Qlog/0mnUKfB+fCjWOSvJq5Kmx3rVUihNMfFHUn22TpffsHYHcuOkMRMzWyhbExrALPDFHx8iizE52YH+QxcFsHNGG3B0kA8oKLMsHixJIdkOQ7cTQ4dehnI5+2uzqX01FgvC0lClZ3uWoNIOGQHL6IZFeWYL0nk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739833137; c=relaxed/simple;
-	bh=wdrSC51F+chIvLlf5UcfIlou0+B9Wn3inEFAJFQSF5U=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=BqS2XMtJFpSslO70RK5r5kcFDX6tNPSc/xnrBICJIxFVYILuf7PXzZbodaNIPtEI0qDb1aBAx6rzR9Kt7hI/uyP+08nD4uj9fDqKIOzc28q80NQs4523HMnYvwxFCKhwzTE7VhaNq1+Hk36ffJAD/fZF2vnelgrwI4rZQUGyt4s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=C8B3jlYp; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1739837118; c=relaxed/simple;
+	bh=fKMNDtPgBWzewNP09wt6qdo5POjU4+tmK81tOVQYEtk=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=tAFnQQWTgoLfALSloCd8ccFF0PmRfN62VcCjEStTiJuLCTcDMRH0KgyER4dfdjiXGJoytJ6vaW8xcoe17JnGyuRBdS0WFAUNsoJ9m79F6ns8POX1EHfYOMDZ0hyd7cH2uNXWKnaLJJoeUBgfOlsKsZlEsMYHJUpnM/ObloaoezA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=FDq3qyY8; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=FDq3qyY8; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="C8B3jlYp"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1739833132;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=X7r4eArzXb17ybeUEA09lln1I/w4yPcV1oMEyMlYx9s=;
-	b=C8B3jlYpygfaLRETlyzHc/44XsYyy6iFEwTwcOhhQlhqoNlxrW4t7NulPe4+2iuiT0d0FZ
-	MZ80FXCEp96tuzg00LODoCeDZMClKh6LApaKvu+OFQepaCrv5GnGmoiST/2x36G2x0brjE
-	S6vhlXvfWYQF6b7VtRMSDWv7hJ7InXQ=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-144-oEg4keAaOZuaRsC7t0jdwg-1; Mon,
- 17 Feb 2025 17:58:49 -0500
-X-MC-Unique: oEg4keAaOZuaRsC7t0jdwg-1
-X-Mimecast-MFC-AGG-ID: oEg4keAaOZuaRsC7t0jdwg_1739833128
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="FDq3qyY8";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="FDq3qyY8"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E04691955F28;
-	Mon, 17 Feb 2025 22:58:47 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5468C1956094;
-	Mon, 17 Feb 2025 22:58:47 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 51HMwktA3050130
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 17 Feb 2025 17:58:46 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 51HMwjsO3050129;
-	Mon, 17 Feb 2025 17:58:45 -0500
-Date: Mon, 17 Feb 2025 17:58:45 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        Alice Frosi <afrosi@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>,
-        Martin Wilck <mwilck@suse.com>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH v3 00/10]  multipath-tools: provide pathname and abstract
+	by smtp-out1.suse.de (Postfix) with ESMTPS id B709A2116B;
+	Tue, 18 Feb 2025 00:05:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1739837113; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2WCri/s0M23ZNlWeq5gSIF/n/r8w36fuAV/XIN/F4M8=;
+	b=FDq3qyY8traJqj+dTT+eI7AiLnChTkfCzTcKxA7cE6ID2WxDCgef9OoeHfuRtcpeJj46xg
+	LVw0r9CxnNM1LDYwG/2k30pHfMdwGAcz0jhW6CZj3guD6S6801KsfhGMMW76O3DOgi45DS
+	Ay8Bp+3+4ZupTV8t2kxPbJ2sNe3JaVM=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1739837113; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2WCri/s0M23ZNlWeq5gSIF/n/r8w36fuAV/XIN/F4M8=;
+	b=FDq3qyY8traJqj+dTT+eI7AiLnChTkfCzTcKxA7cE6ID2WxDCgef9OoeHfuRtcpeJj46xg
+	LVw0r9CxnNM1LDYwG/2k30pHfMdwGAcz0jhW6CZj3guD6S6801KsfhGMMW76O3DOgi45DS
+	Ay8Bp+3+4ZupTV8t2kxPbJ2sNe3JaVM=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 815F2136CF;
+	Tue, 18 Feb 2025 00:05:13 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id dDzuHbnOs2dkTAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Tue, 18 Feb 2025 00:05:13 +0000
+Message-ID: <1679e707f126d96229353865e1185f85b638ebaf.camel@suse.com>
+Subject: Re: [PATCH v3 08/10] libmpathcmd: try both abstract and pathname
  sockets
-Message-ID: <Z7O_Jecl1zz51xh0@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, Alice Frosi
+	 <afrosi@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>, 
+	dm-devel@lists.linux.dev
+Date: Tue, 18 Feb 2025 01:05:12 +0100
+In-Reply-To: <Z7O-zzUk0tP1Tv-N@redhat.com>
 References: <20250214221011.136762-1-mwilck@suse.com>
+	 <20250214221011.136762-9-mwilck@suse.com> <Z7O-zzUk0tP1Tv-N@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250214221011.136762-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: fKyJrtAFiW45GlYnpMQanAQOPDya7nPq_VwBFlpLVi0_1739833128
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+X-Spam-Score: -4.30
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	TO_DN_SOME(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_FIVE(0.00)[5];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:mid,suse.com:email]
+X-Spam-Flag: NO
+X-Spam-Level: 
 
-On Fri, Feb 14, 2025 at 11:10:01PM +0100, Martin Wilck wrote:
-> This set is an attempt to fix https://github.com/opensvc/multipath-tools/issues/111
+On Mon, 2025-02-17 at 17:57 -0500, Benjamin Marzinski wrote:
+> On Fri, Feb 14, 2025 at 11:10:09PM +0100, Martin Wilck wrote:
+> > When connecting to the multipathd socket, try the pathname socket
+> > first, then the abstract socket. Fail only if both connection
+> > attempts
+> > fail.
+> >=20
+> > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > ---
+> > =C2=A0libmpathcmd/mpath_cmd.c | 13 ++++++++++---
+> > =C2=A01 file changed, 10 insertions(+), 3 deletions(-)
+> >=20
+> > diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
+> > index c7cf954..ba5bb31 100644
+> > --- a/libmpathcmd/mpath_cmd.c
+> > +++ b/libmpathcmd/mpath_cmd.c
+> > @@ -102,7 +102,10 @@ int mpath_connect__(int nonblocking)
+> > =C2=A0	size_t len;
+> > =C2=A0	struct sockaddr_un addr;
+> > =C2=A0	int flags =3D 0;
+> > +	const char *names[2] =3D {PATHNAME_SOCKET, ABSTRACT_SOCKET};
+> > +	int name_idx =3D 0;
+> > =C2=A0
+> > +retry:
+> > =C2=A0	fd =3D socket(AF_LOCAL, SOCK_STREAM, 0);
+> > =C2=A0	if (fd =3D=3D -1)
+> > =C2=A0		return -1;
+> > @@ -113,13 +116,17 @@ int mpath_connect__(int nonblocking)
+> > =C2=A0			(void)fcntl(fd, F_SETFL,
+> > flags|O_NONBLOCK);
+> > =C2=A0	}
+> > =C2=A0
+> > -	len =3D mpath_fill_sockaddr__(&addr, ABSTRACT_SOCKET);
+> > +	len =3D mpath_fill_sockaddr__(&addr, names[name_idx]);
+> > =C2=A0	if (connect(fd, (struct sockaddr *)&addr, len) =3D=3D -1) {
+> > =C2=A0		int err =3D errno;
+> > =C2=A0
+> > =C2=A0		close(fd);
+> > -		errno =3D err;
+> > -		return -1;
+> > +		if (err =3D=3D ECONNREFUSED && ++name_idx =3D=3D 1)
+>=20
+> Most of the connect() return codes are things that could presumably
+> be
+> fixed by trying a different address (not the errors related to a
+> problem
+> with sockfd, but we just created the socket, so those seem pretty
+> impossible). Is there a reason why we don't just retry on any error?
 
-For all patches except for 08, which I have a question about:
+I've done some testing and when I was using a wrong address name, I=20
+always got ECONNREFUSED. So I thought it might be cleaner to not
+blindly assume retrying might help for other error codes. But I can see
+your point, it's just a single retry and can't really hurt to just try
+the other socket name.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+I'll remove that condition.
 
-> 
-> Changes v2 -> v3:
-> 
-> Many, as a result of further discussions on GitHub. multipathd will now open
-> both the abstract socket and the pathname socket /run/multipathd.socket by
-> default, and client programs will try both sockets before giving up.  The
-> "use_regular_socket=1" build parameter is not necessary any more.
-> 
-> Note that we'd switched from the regular socket "/var/run/multipath.sock" to
-> an abstract socket in bb89077 ("multipathd: switch to abstract sockets for CLI
-> commands") in multipath-tools 0.5.0. The rationale back then was that creating
-> a pathname socket might fail if the directory structure isn't set up yet. As
-> we now create both, and fail only if neither could be created, and as there is
-> the early /run directory on modern systems, this argument shouldn't apply to
-> this patch set. The name of the socket has been changed in order to indicate
-> that the new approach is different from the old one.
-> 
-> Changes v1 -> v2:
-> 
-> - Introduced the mpath_fill_sockaddr() helper to cleanup struct sockaddr_un handling,
-> in response to comments from Ben Marzinski on GitHub.
-> - Fixed double remove of multipathd.socket during "make clean" (Ben).
-> 
-> Martin Wilck (10):
->   multipath-tools: move DEFAULT_SOCKET definition into Makefile.inc
->   multipath-tools: add helper mpath_fill_sockaddr__()
->   libmpathutil: add support for Unix pathname sockets
->   libmpathutil: move systemd_listen_fds() support into multipathd
->   multipathd: make uxsock_listen() take a pointer to fd
->   multipathd: allow receiving two socket fds from systemd
->   multipathd: listen on pathname and abstract socket by default
->   libmpathcmd: try both abstract and pathname sockets
->   libmpathcmd: honor MULTIPATH_SOCKET_NAME environment variable
->   multipathd: honor MULTIPATH_SOCKET_NAME environment variable
-> 
->  .gitignore                                    |  1 +
->  Makefile.inc                                  | 10 +++-
->  create-config.mk                              |  1 +
->  libmpathcmd/mpath_cmd.c                       | 25 ++++++----
->  libmpathcmd/mpath_cmd.h                       |  1 -
->  libmpathcmd/mpath_fill_sockaddr.c             | 32 +++++++++++++
->  libmpathutil/uxsock.c                         | 41 +++++++---------
->  libmultipath/defaults.h                       |  1 -
->  multipathd/Makefile                           |  4 +-
->  multipathd/main.c                             | 48 +++++++++++++++++--
->  ...multipathd.socket => multipathd.socket.in} |  3 +-
->  multipathd/uxlsnr.c                           | 34 +++++++++----
->  multipathd/uxlsnr.h                           |  3 +-
->  13 files changed, 149 insertions(+), 55 deletions(-)
->  create mode 100644 libmpathcmd/mpath_fill_sockaddr.c
->  rename multipathd/{multipathd.socket => multipathd.socket.in} (84%)
-> 
-> -- 
-> 2.48.1
+Regards
+Martin
+
 
