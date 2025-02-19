@@ -1,60 +1,60 @@
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
+Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0D581C6FFD
-	for <dm-devel@lists.linux.dev>; Wed, 19 Feb 2025 11:34:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.34
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B6A41D8DE1
+	for <dm-devel@lists.linux.dev>; Wed, 19 Feb 2025 11:34:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.33
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739964857; cv=none; b=BNTJruP/pillaD5NzKS+3w8sP9QbrEbBfhpe2OPCu2sf0fVfA8rJYenDoD7NjpuTRLCMTZtdtIeHHZ5z3TYIqN4I62ZG0Hc9oT+iFtbQ0auWezIxKqLUzPLXrt1AOuqzvyMg+GqIioy02ARZSw9Rh+HwSMV5Ab5VZwxup1EnJNU=
+	t=1739964889; cv=none; b=t9nZnt8ExhMJcEqr7TLV90Nrn8Onp647y7+01bXPlp9UKN4NuguaAVwyOQ40uQXp3CV0uymsv0i4PGMyfO7HsAFyIDp1l9q1HRazMEQ4b59okLoBQnfmQ85MAfWeMZ3uPuZ935KezHL2w3fqFmW2MvjBayaGje0dFGFKxR5FEg0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1739964857; c=relaxed/simple;
-	bh=q3QKNAD1HbPIZobbO74e+99+Af0xmx9FbtiKI1359x4=;
+	s=arc-20240116; t=1739964889; c=relaxed/simple;
+	bh=atq6Pu3VmSN8V1TtYuU5IFio1ZAWTUJ6Kh4eRB/77Vc=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:From:In-Reply-To:
-	 Content-Type:References; b=qWXbWl36wtMckOudpt+j0bKbHPP1LiGC3p3g5J7qaCKkwFrd8kE6RbfoFMREJ5MHsi5hQjRBukVSxlrvgR9t5ED1+vYJ6yn9cxzRZwkPIHjZnYWiYwB0HnLby+Xo/a5xRM8wpItJnqt+rQB3IgnyK1lshcueuUdJay48uYxnMfc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=bQZ7Ub1j; arc=none smtp.client-ip=203.254.224.34
+	 Content-Type:References; b=UESbyESpJhlbC3yfxyUtJdbIKuXMABg3FB81+MXDmQjoMcFbllhd5ZKoZJBWgJQ0fsDhrKDE8zRRmMYlzC6u5ohWatXIAcKKyBuyBAmyoVAoIIwsYttcZz0ipFDGNuy7zn7FVsBrsZdvKlu8kBLbAnNu5pFno7WYE1ck3Xg8qvU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=en22y91V; arc=none smtp.client-ip=203.254.224.33
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="bQZ7Ub1j"
-Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
-	by mailout4.samsung.com (KnoxPortal) with ESMTP id 20250219113406epoutp044dec8c88e44cde9be1c4681413d243b5~lmM8yDVPp2697526975epoutp04U
-	for <dm-devel@lists.linux.dev>; Wed, 19 Feb 2025 11:34:06 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com 20250219113406epoutp044dec8c88e44cde9be1c4681413d243b5~lmM8yDVPp2697526975epoutp04U
+	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="en22y91V"
+Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
+	by mailout3.samsung.com (KnoxPortal) with ESMTP id 20250219113445epoutp0304c3d52e85c602c778d962f8506f71cf~lmNhKK9mM2835728357epoutp03s
+	for <dm-devel@lists.linux.dev>; Wed, 19 Feb 2025 11:34:45 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com 20250219113445epoutp0304c3d52e85c602c778d962f8506f71cf~lmNhKK9mM2835728357epoutp03s
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1739964846;
-	bh=PqKn35gzT2r3v5tfRxbCbfThiaGkSqsVYoyLWVULZOY=;
+	s=mail20170921; t=1739964885;
+	bh=jwNHhrc1AfEiAb6CfqYbzTGi3Z6uacM31m3mp1/sNpg=;
 	h=Date:Subject:To:Cc:From:In-Reply-To:References:From;
-	b=bQZ7Ub1jSTGq154ckB8C7e1pXJ9gsB4Etq9myUNocZmU7bSrmM9lPQX6q1Qm/juiK
-	 5V9Bu8+Q/pEXxeyTYYufmYnDFI1Oqx+dWaap+tiX7iFyLJ+psRpp0KKz/aiWvW/97y
-	 qEpbL82+w47CsYvvokdKNaoQZD76vb0j37P17ULg=
-Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
-	epcas5p3.samsung.com (KnoxPortal) with ESMTP id
-	20250219113405epcas5p30367f78dc4aeb2935edd2743124675a4~lmM8Ea5Hu1304413044epcas5p3v;
-	Wed, 19 Feb 2025 11:34:05 +0000 (GMT)
-Received: from epsmges5p1new.samsung.com (unknown [182.195.38.178]) by
-	epsnrtp1.localdomain (Postfix) with ESMTP id 4YyZ6N0JPRz4x9Q2; Wed, 19 Feb
-	2025 11:34:04 +0000 (GMT)
-Received: from epcas5p1.samsung.com ( [182.195.41.39]) by
-	epsmges5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	EA.AC.20052.9A1C5B76; Wed, 19 Feb 2025 20:34:01 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
-	epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
-	20250219113400epcas5p394cd7569eadc76acfa4a7e10f0b93109~lmM3KSst11304413044epcas5p3j;
-	Wed, 19 Feb 2025 11:34:00 +0000 (GMT)
-Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
-	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
-	20250219113400epsmtrp1e77fa577e43aa500ed817eb728b376fe~lmM3I4ZCj3182931829epsmtrp1k;
-	Wed, 19 Feb 2025 11:34:00 +0000 (GMT)
-X-AuditID: b6c32a49-3d20270000004e54-2a-67b5c1a9d0b7
+	b=en22y91VBfEHieRFCgFdcesS4pokbX/0k4qHIengDUwB50PlUYqtsey3CBk/gux5i
+	 /mQMGAY7TEGVT3f9WB7kyFWYldHKNRT9fkkWvlWbfAB4we1+MnRrBUQ07WGz/Mhh6A
+	 suRC4Ya148CXVunWhzWAJmJRRxoivfDEA/DsxZq0=
+Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
+	epcas5p1.samsung.com (KnoxPortal) with ESMTP id
+	20250219113445epcas5p11312275f4c4bde61cd23e06884c8810f~lmNgy_C3m1895018950epcas5p1Q;
+	Wed, 19 Feb 2025 11:34:45 +0000 (GMT)
+Received: from epsmgec5p1-new.samsung.com (unknown [182.195.38.177]) by
+	epsnrtp3.localdomain (Postfix) with ESMTP id 4YyZ772dSSz4x9Q0; Wed, 19 Feb
+	2025 11:34:43 +0000 (GMT)
+Received: from epcas5p4.samsung.com ( [182.195.41.42]) by
+	epsmgec5p1-new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	F5.19.29212.3D1C5B76; Wed, 19 Feb 2025 20:34:43 +0900 (KST)
+Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
+	epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
+	20250219113443epcas5p24cac6deafccb8ab2c57db303a210c63f~lmNelRYhl3021030210epcas5p2E;
+	Wed, 19 Feb 2025 11:34:43 +0000 (GMT)
+Received: from epsmgms1p2new.samsung.com (unknown [182.195.42.42]) by
+	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
+	20250219113442epsmtrp29464c6861e4e1cce592f111e46f0e91e~lmNekltbG1970019700epsmtrp2B;
+	Wed, 19 Feb 2025 11:34:42 +0000 (GMT)
+X-AuditID: b6c32a50-801fa7000000721c-31-67b5c1d38ee5
 Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
-	epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	2A.4F.18729.8A1C5B76; Wed, 19 Feb 2025 20:34:00 +0900 (KST)
+	epsmgms1p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	DB.56.18949.2D1C5B76; Wed, 19 Feb 2025 20:34:42 +0900 (KST)
 Received: from [107.122.11.51] (unknown [107.122.11.51]) by
 	epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
-	20250219113359epsmtip2d080602954c02a311242f790a6c46f66~lmM1my5hY1503015030epsmtip2P;
-	Wed, 19 Feb 2025 11:33:58 +0000 (GMT)
-Message-ID: <12365e80-90c2-4f85-9b74-1df0173ad6ec@samsung.com>
-Date: Wed, 19 Feb 2025 17:03:58 +0530
+	20250219113441epsmtip27b6b238127c5172151328483d649ca14~lmNc7j6R81617716177epsmtip2T;
+	Wed, 19 Feb 2025 11:34:41 +0000 (GMT)
+Message-ID: <3161bd56-71ee-4f7e-a988-de51caedb567@samsung.com>
+Date: Wed, 19 Feb 2025 17:04:40 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -62,8 +62,7 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 2/3] block: move the block layer auto-integrity code
- into a new file
+Subject: Re: [PATCH 3/3] block: split struct bio_integrity_data
 To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
 Cc: Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
 	<mpatocka@redhat.com>, Song Liu <song@kernel.org>, Yu Kuai
@@ -72,80 +71,71 @@ Cc: Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
 	linux-raid@vger.kernel.org, target-devel@vger.kernel.org
 Content-Language: en-US
 From: Kanchan Joshi <joshi.k@samsung.com>
-In-Reply-To: <20250218182207.3982214-3-hch@lst.de>
+In-Reply-To: <20250218182207.3982214-4-hch@lst.de>
 Content-Transfer-Encoding: 7bit
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFtrBJsWRmVeSWpSXmKPExsWy7bCmuu7Kg1vTDV6cY7FYfbefzWLBorks
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFtrFJsWRmVeSWpSXmKPExsWy7bCmlu7lg1vTDQ7e4LNYfbefzWLBorks
 	FitXH2Wy2HtL26J9/i5Gi+XH/zFZTOy4ymRx4pa0xfHlf9ksWpe+ZbKYs5DNgduj5chbVo/L
 	Z0s9Nq3qZPN4sXkmo8fumw1sHh+f3mLxeL/vKpvH501yARxR2TYZqYkpqUUKqXnJ+SmZeem2
 	St7B8c7xpmYGhrqGlhbmSgp5ibmptkouPgG6bpk5QFcqKZQl5pQChQISi4uV9O1sivJLS1IV
-	MvKLS2yVUgtScgpMCvSKE3OLS/PS9fJSS6wMDQyMTIEKE7Iz+o6eYC5o5Kg4+W0+cwPjfrYu
-	Rk4OCQETiYOPTzJ2MXJxCAnsZpS4PXESK0hCSOATo8TLXnaIxDdGiaP7XjLCdFze8o8FIrGX
-	UaK1eSMzhPOWUeJW7zugDAcHr4CdxMLliSANLAKqEode3GAHsXkFBCVOznzCAmKLCshL3L81
-	AywuLBAlMfthI5gtIuAgMXvDUjaQmcwCm5gkvreuYAJJMAuIS9x6Mp8JZD6bgKbEhcmlIGFO
-	ASOJjYeOQ5XIS2x/OwfsHgmBAxwSbQ0trBBXu0hsfr2FHcIWlnh1HMaWknjZ3wZlZ0s8ePSA
-	BcKukdixuQ+q116i4c8NVpC9zEB71+/Sh9jFJ9H7+wnYORICvBIdbUIQ1YoS9yY9heoUl3g4
-	YwkrRImHxMuHTJCQWssosf78E9YJjAqzkEJlFpInZyH5ZhbC4gWMLKsYJVMLinPTU4tNCwzz
-	Usvh0Z2cn7uJEZyEtTx3MN598EHvECMTB+MhRgkOZiUR3rb6LelCvCmJlVWpRfnxRaU5qcWH
-	GE2B0TORWUo0OR+YB/JK4g1NLA1MzMzMTCyNzQyVxHmbd7akCwmkJ5akZqemFqQWwfQxcXBK
-	NTAVSa6LCFZ8wqEwT11zg+MDrh+9hbtObDOsNRQ5uvmdk03TN7mS53en1+yvF5z1Y0utV+n1
-	M2sM69U52UXKY63SvTMK3M4+bNKbLR647LfVRK/JstY6D4sqmO+UsgpNbH/Bmv+Z6zn/I516
-	n32x9hm8Z9TNE3KXFWY/fZFis+i5fI1tzIfql8J+cs9fs7DM/ffm9tnVspf3nOa52nd94Vq9
-	1bbXCn7Pnh8qnr2wrsCeaY1giNmjADXnw5W912OFl+vpNktrHt9Q3VcdlLBy+ae58rJ8E5LW
-	dF01T2I7uSrt8FHlrPOnojlWe2za5S/IvSDrZ9ve31k/TusueXy93z3SXOqZfuqaI7tj5hwV
-	s1BiKc5INNRiLipOBADgpvZjSwQAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprKIsWRmVeSWpSXmKPExsWy7bCSvO6Kg1vTDbZOVrVYfbefzWLBorks
-	FitXH2Wy2HtL26J9/i5Gi+XH/zFZTOy4ymRx4pa0xfHlf9ksWpe+ZbKYs5DNgduj5chbVo/L
-	Z0s9Nq3qZPN4sXkmo8fumw1sHh+f3mLxeL/vKpvH501yARxRXDYpqTmZZalF+nYJXBl9R08w
-	FzRyVJz8Np+5gXE/WxcjJ4eEgInE5S3/WLoYuTiEBHYzSpxecoMVIiEu0XztBzuELSyx8t9z
-	doii14wSt1dvASri4OAVsJNYuDwRpIZFQFXi0IsbYPW8AoISJ2c+YQGxRQXkJe7fmsEOUi4s
-	ECXx/J4dSFhEwEFi9oalbCAjmQU2MUns2L8cav5aRom+FZfAjmAGOuLWk/lMIM1sApoSFyaX
-	goQ5BYwkNh46zgRRYibRtbWLEcKWl9j+dg7zBEahWUjOmIVk0iwkLbOQtCxgZFnFKJlaUJyb
-	nltsWGCYl1quV5yYW1yal66XnJ+7iREcc1qaOxi3r/qgd4iRiYPxEKMEB7OSCG9b/ZZ0Id6U
-	xMqq1KL8+KLSnNTiQ4zSHCxK4rziL3pThATSE0tSs1NTC1KLYLJMHJxSDUz+1bsTmNJ6FGfa
-	vN0c9+yb65OO2r4H7idCZUOr9cU2agdH/txkvzC5x7+pTTlw6/3zUVXNT34tzpdZ7rvk7YJC
-	Sf2j3ebvs6TOTJDNf9w9/d76H+c3ySiu+NVTM8nWsEr/appj/rJVOaan1WdfVP4nfPbkFQ3L
-	NUbGuW0/n2ippN2J0T+SFeprI6jnee3y1X4Gdw5dx5knRX5dmy5y6F8bz47amT4+rxliHXdt
-	O8j45niEULZLbqDx9OcX1+24L/giJuKLyNb/n9sef1UTzYhQ+by94sj8EqkJThXH407pcOwv
-	Znpn+5RJWT1sXzVfiMTcUMWdP3aq1G1bm6he/bhFcEHqJIsrrnErFzO2WyuxFGckGmoxFxUn
-	AgB/6vkSKAMAAA==
-X-CMS-MailID: 20250219113400epcas5p394cd7569eadc76acfa4a7e10f0b93109
+	MvKLS2yVUgtScgpMCvSKE3OLS/PS9fJSS6wMDQyMTIEKE7IzdjXOZCu4yFZx/c1stgbGpaxd
+	jJwcEgImElM6vzJ3MXJxCAnsYZT4fvckO4TziVFi/5GJbBDON0aJG5N+M8K0HHs5iwUisZdR
+	4smaTVBVbxklNuydxAxSxStgJ/H52X2wDhYBVYk3v9vYIeKCEidnPmEBsUUF5CXu35oBFhcW
+	sJdofrkArFdEwEFi9oalYEOZBTYxSXxvXcEEkmAWEJe49WQ+kM3BwSagKXFhcilImFPASOL5
+	40aoEnmJ7W/ngD0kIbCHQ2J660NmkHoJAReJHV2WEB8IS7w6voUdwpaS+PxuLxuEnS3x4NED
+	Fgi7RmLH5j5oINlLNPy5wQoyhhlo7fpd+hCr+CR6fz9hgpjOK9HRJgRRrShxb9JTqE5xiYcz
+	lkDZHhJvj10Au1JIYC2jxM7jzBMYFWYhBcosJD/OQvLMLITFCxhZVjFKpRYU56anJpsWGOrm
+	pZbDIzw5P3cTIzgRawXsYFy94a/eIUYmDsZDjBIczEoivG31W9KFeFMSK6tSi/Lji0pzUosP
+	MZoCo2cis5Rocj4wF+SVxBuaWBqYmJmZmVgamxkqifM272xJFxJITyxJzU5NLUgtgulj4uCU
+	amDqkZ5yWWHT0j91e+uOvQzQT7JZqvyx9MwBM/FVlzcrb9Ez5MiSdmx6wzLBoj15W/BEg09/
+	jhzUP/+a5e/hyH0x3S/2Gcj33XEuXrrG9NYsk74V7KtnXxDcqv12R6ytWbmL/vM7XPt8mrjf
+	Pbp7fbFsgrRCmQ/fyxvOxif9pJTXugc7VvwW35z8h/1Jc9O+74Wq+SXMX/bMmXtuD29ue771
+	G6aCz/zHfj6Piwi7cCPetS67ZGnklStsU4OFVZzbC4Sn3X3dJ/hmd/vhqw9S1hjLbw/+3JPO
+	fL37lrD7y60/jIQ/S1n0Hvjfxnlld164sO3aWW23LzEHWLMqnE9Izr8Zc6ckL9ar4/6/paWq
+	ClJKLMUZiYZazEXFiQB7iG0mTQQAAA==
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprGIsWRmVeSWpSXmKPExsWy7bCSvO6lg1vTDfpOGlusvtvPZrFg0VwW
+	i5WrjzJZ7L2lbdE+fxejxfLj/5gsJnZcZbI4cUva4vjyv2wWrUvfMlnMWcjmwO3RcuQtq8fl
+	s6Uem1Z1snm82DyT0WP3zQY2j49Pb7F4vN93lc3j8ya5AI4oLpuU1JzMstQifbsEroxdjTPZ
+	Ci6yVVx/M5utgXEpaxcjJ4eEgInEsZezWEBsIYHdjBKXzypCxMUlmq/9YIewhSVW/nsOZHMB
+	1bxmlDj3ogesmVfATuLzs/uMIDaLgKrEm99t7BBxQYmTM5+ADRUVkJe4f2sGWFxYwF6i+eUC
+	ZhBbRMBBYvaGpWwgQ5kFNjFJ7Ni/HGrDWkaJFY03wTqYgc649WQ+UxcjBwebgKbEhcmlIGFO
+	ASOJ548bmSBKzCS6tnYxQtjyEtvfzmGewCg0C8kds5BMmoWkZRaSlgWMLKsYJVMLinPTc4sN
+	C4zyUsv1ihNzi0vz0vWS83M3MYKjTktrB+OeVR/0DjEycTAeYpTgYFYS4W2r35IuxJuSWFmV
+	WpQfX1Sak1p8iFGag0VJnPfb694UIYH0xJLU7NTUgtQimCwTB6dUA1NTzOrK/ovPLgsciDzv
+	HPDyXcTBGVpsUxwbDi8WZNKu0OdayRuavj7K+VovW6+L7PUpbRHfOk4LPto4+YK862z93mXB
+	6t0Md9b7POjXO7Dhbaus5+/j5z7EX3+Qt3Xx5Z9BYTLTXorO+LtK6GtKhNPXs3OfWZaYH9l4
+	6HfWxpW3C8/Ur+vpO8A18YTYxymfdOQyvnYGyLbNc7n0eiX3afFXK/++S7/0JknCVXCDWv6D
+	k+XAVHUmnjMjQDdOa785n6wVX7aNReDxg3WXeNtredytzym3ak5+fj3skGPZ7UjtiSwv92hW
+	7D37LOt2Y1bENb//UrM/OqyZYhPG0zHNZ2Lp/PUz6k2Eoso2GH8KcVViKc5INNRiLipOBABN
+	3CFWKQMAAA==
+X-CMS-MailID: 20250219113443epcas5p24cac6deafccb8ab2c57db303a210c63f
 X-Msg-Generator: CA
 Content-Type: text/plain; charset="utf-8"
 CMS-TYPE: 105P
 DLP-Filter: Pass
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20250218182222epcas5p2aef15a84f37fab0c69af5d53dfeed240
+X-CMS-RootMailID: 20250218182226epcas5p1220b8916a79937e8bcea46a993647694
 References: <20250218182207.3982214-1-hch@lst.de>
-	<CGME20250218182222epcas5p2aef15a84f37fab0c69af5d53dfeed240@epcas5p2.samsung.com>
-	<20250218182207.3982214-3-hch@lst.de>
+	<CGME20250218182226epcas5p1220b8916a79937e8bcea46a993647694@epcas5p1.samsung.com>
+	<20250218182207.3982214-4-hch@lst.de>
 
 On 2/18/2025 11:51 PM, Christoph Hellwig wrote:
-> The code that automatically creates a integrity payload and generates /
-> verifies the checksums for bios that don't have submitter-provided
-> integrity payload currently sits right in the middle of the block
-> integrity metadata infrastruture.
+> Many of the fields in struct bio_integrity_data
 
-nit: s/infrastruture/infrastructure.
+Patch title and this should say - struct bio_integrity_payload.
 
-> +static int __init blk_integrity_default_init(void)
-> +{
-> +	/*
-> +	 * kintegrityd won't block much but may burn a lot of CPU cycles.
-> +	 * Make it highpri CPU intensive wq with max concurrency of 1.
-> +	 */
-> +	kintegrityd_wq = alloc_workqueue("kintegrityd", WQ_MEM_RECLAIM |
-> +					 WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
-> +	if (!kintegrityd_wq)
-> +		panic("Failed to create kintegrityd\n");
-> +	return 0;
-> +}
-> +subsys_initcall(blk_integrity_default_init);
+  are only needed for
+> the default integrity buffer in the block layer, and the variable
+> sized array at the end of the structure makes it very hard to embed
+> into caller allocated structures.
+> 
+> Reduce struct bio_integrity_data to the minimal structure needed in
+> common code,
 
-Now that you are using the term auto (in place of default), maybe this 
-should also be renamed to blk_integrity_auto_init.
+Same here. Seems bio_integrity_data is not meant to be used in common code.
 
-Looks good otherwise.
-Reviewed-by: Kanchan Joshi <joshi.k@samsung.com>
+  and create containing structures for the payload + bvec
+> allocation for submitter provided buffers, and the default integrity
+> code.  Stop using mempools for the submitter buffers as they don't sit
+> below the I/O stack,
 
-
-
+Maybe it's just me, but I am yet to parse sitting below the I/O stack part.
