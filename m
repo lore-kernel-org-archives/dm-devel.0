@@ -1,91 +1,100 @@
-Received: from mail-ed1-f51.google.com (mail-ed1-f51.google.com [209.85.208.51])
+Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ABDCE1FBEB0
-	for <dm-devel@lists.linux.dev>; Fri, 21 Feb 2025 06:08:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD472204F83;
+	Fri, 21 Feb 2025 10:38:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740118103; cv=none; b=STbTJ4LYUm6vBZlAXxbTvJX2hHinbqlCVUp3ZE90M49bDacHsM2kxv00eD6xh8ou7KDBFvNP823QBxaLHVFkdXpXBYX8G++uPT3yLCwToomV+CbsBYbRgOqdx1T8kY3am/4ftSUc1UAcDrLqowtoTb+dAhY+L181imzI51MWCzk=
+	t=1740134315; cv=none; b=BeluTWavOzKNQ3gPAX0d3Yz+gtMc4vM+RTsnIdZ7mBwCu1egWAZkUt5ujpvBJ8HpNAtvuyJ7Dlqdd1qDl6UZFusDf7sj8yn+0WvtN6v0MfsvqZrqqvi6xWnHTYZLnRqb+qOxt103CI4JBTbRfl4gwmFhtEs4CTAx7uaJHof/7Og=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740118103; c=relaxed/simple;
-	bh=EEUMHT+MXWjcUhxvJADFxvqGCYi33zuKXrJ0i9XJBVE=;
+	s=arc-20240116; t=1740134315; c=relaxed/simple;
+	bh=DQ7fsWXnr81TGCvxwT39yv85kiLQ5gpPRFYuWpRLa98=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=EGtVA9jYXN2lPw7pvXutT7cOmlazPgz6hKqYLcNyIP8Ph+bsM5TJT62VtgRCFixIO0oUlgN7JCZAl4yo/YqHEvDJhg4cBzci5REVmGHmNqoqxNI7l6CO9KsuAxhM0c7l9y8Q/fmDKOtU5okFBXuhOxxlEY/ilW+imYeeTmtz3yo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iF3qHUmr; arc=none smtp.client-ip=209.85.208.51
+	 To:Cc:Content-Type; b=Ke5/D8yN1qw4gIGbaA6ZDyl6HSDvgBhotT9HJFmULFJ8yoaI0vQOQg+YKfC+B9ndAWzpCglrrz3GaYKJFmeGevrm8oW62/5p9TK13ewCtMPGeQGrlXLod/QxSdc0oJ41HThIKvd8yG2YfF0F6yPCfP6MOf9dsctt0ZuY7p+Exnc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KYVcjHps; arc=none smtp.client-ip=209.85.208.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iF3qHUmr"
-Received: by mail-ed1-f51.google.com with SMTP id 4fb4d7f45d1cf-5e04cb346eeso2817704a12.2
-        for <dm-devel@lists.linux.dev>; Thu, 20 Feb 2025 22:08:21 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KYVcjHps"
+Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-5e04f87584dso2982624a12.3;
+        Fri, 21 Feb 2025 02:38:33 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1740118100; x=1740722900; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1740134312; x=1740739112; darn=lists.linux.dev;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=rXIAsbh7aHz7zxtPXm+IGu5FLVtJIRSaOQX3D3d9lVk=;
-        b=iF3qHUmrT5vXtrX7gmfJ7AfGQjmmJZkOKVB8iognW/idKyrt5SlD/3WPTZ52ZGTfI2
-         IFHc9sOh+vV+LjVgjNgd7JPxJ3v9KvJT3+MHbx9BSw1wSZKkOjh3mNQ/zAVxpZhMqKAi
-         C0I/3IocVydWnZV39nOEWwQ+qUw7mJEGOBrONoKdS13seBtbctwnc1waFJGhSwT5NaQe
-         CW6WmgVFQVvfTSp7USm8XmcFMzb4BiI5CJvrO6uv8Bkdz7s0KmieaNue9njM7rOMsLo1
-         BYykmE/i8+AWas0QDNzf/8dCaMX9S70NfrtL5gEOJPucNs0Yvmif36R1jn2hAbOgHQKZ
-         s6zQ==
+        bh=DQ7fsWXnr81TGCvxwT39yv85kiLQ5gpPRFYuWpRLa98=;
+        b=KYVcjHpsJQ3FmOe8w78jDgY+uB099V9ysMpSeUIEhNE/UpVn1yy0OiDj3k2WtOnB+F
+         jVi3p7k/HzKugvtnUftGWiDAj6mVusGKtcnUd422hOvCA7r9HmIob7pDfdmccBnULAzi
+         038I3QI998jfzks4Oz8IHzHOPC8/EBFgUbaEEHp1ZnSxZNS3O/ddU1OAVPNkTVasfc3/
+         DNGtwt6eqF62Dsc3EnYZNBuc8Jfkiw0uAaXbLUsQyrIcFetr98S5XwsnmUS+6RpcsP9q
+         MPrMaKPkUoajyaVVA9qkdllQVm1IHNCFN4B1P6DVEX5qDRCNz9gXn3sZtyWhJ2NYRxPC
+         gL9g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1740118100; x=1740722900;
+        d=1e100.net; s=20230601; t=1740134312; x=1740739112;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=rXIAsbh7aHz7zxtPXm+IGu5FLVtJIRSaOQX3D3d9lVk=;
-        b=D+WDsZtZBISgSRd8uoNKNRx2DuNiKTPIu0kyRtkhymsnD8sPqApeGB1ysqBxGB3wf+
-         sQCSo9MlURP+m8jei0qCKqvQE3rgTwbx9YVlO6xfrkkZWFKiCVwgaUZpyN/Jb4XS/Qyw
-         N6Vz01XykEYrNZeTIMLQQ667KcmRPchp+ZNIAu0Yk9qNEpe50HV2I4ysAT/zZvaFhyd+
-         CjJZHGUoE93RzMIguiiQP1+E3gbeKQVLOhZUO1fISeTOc6hdY1nQJmqap0FVuS06Q/bG
-         Z7ATiJJcBRSO/A8/ZEGNv5oweVuGE32rmLAleB+jjIlG7mnLDTIV2tjOZYw5Z0qtr8lL
-         lbtQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWSUXqGBz2mnHBpCF71eXtrk6JsO23yqcdWJOBaySPKHcediumCMLstyNeiV+4Mj7QIzDR2w8H4NA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yzta3Vw/pRjQAWn6nN+7xH6/wYjewDrRmsRxAxDPvlr6vrSrJA3
-	JRmgZVt5udPcbsVqDHPtHowMl/qMnKMcU7tBY36bkUaQX3AdowXPisrzJknQG05E4ngV/rm6GnX
-	CldM2FIjT/8gKzQ2ZoNO6q9X02g==
-X-Gm-Gg: ASbGncusyTZe00yGS1VTLBs0Z9ZYRK60Ml4f2oLq1Qp/iTE8n62DuLd1RQwP7/0pyYk
-	LAETezkjGI08orCo53zHinZdv2zLGwf7kxg3X/O/btcOu6ldOE1wyCmkFgD235+3AbhQw+hwCdk
-	2KlajC7C5PyPduFeVChsJkEoNE
-X-Google-Smtp-Source: AGHT+IGSAJUMw9Sp7hFY2WSXAN+Y4fq4PMpBrLP5G4AqJ4vrGshfCGfm1O5FpHInDxMpuH2GdwnOkP66SmpgZvdDGeQ=
-X-Received: by 2002:a05:6402:5109:b0:5e0:82a0:50e6 with SMTP id
- 4fb4d7f45d1cf-5e0b722e6d9mr1358230a12.20.1740118099837; Thu, 20 Feb 2025
- 22:08:19 -0800 (PST)
+        bh=DQ7fsWXnr81TGCvxwT39yv85kiLQ5gpPRFYuWpRLa98=;
+        b=NgpLIQY92fTKuQ5pKphdKCcdwGxQmZPqDgL+wvDUpSX3gjzO4xI+Fbyyo0i43Y8Asx
+         kfu7HsDDBG2EQ6A1Cta0QaAdCgjORp/6j8MGXgUodB3JT9q16evR5edDhQbQtnNVpfr9
+         8QTQKx/K3UgGoHery2B7bY8xYxpyR6JWkmXAEsIexhnwcf9tpgURMu8PZPuD0mCgGO+t
+         9GSA+R/XvTtrrXqTYq5hJou03DTHa6K2GEIQylQMzsFjj5oZEhjNCIkPX7QWVMBRcQ1D
+         NIG7xPktTQHSxoXMY7ZhY55hMH15NAoSY3a15KvHb96IQsxxjiMZhWXgYEPV4qNX9dff
+         18sg==
+X-Forwarded-Encrypted: i=1; AJvYcCUj5ttBtNdWISWoUDBnObR09dktu/xvQ18E3Tv2PaoGyIRXWapEMIGpm7DnbkdV9rVmH7UcP/TE@lists.linux.dev, AJvYcCVFAG9Ol2xx6+ms8NAdThCp1ek0uNJ+qbn7On/DVfSMlT23aYbijosIJZYUJGXbkMVIAT3h+1mYsA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx0N0OK2dSP0Qu0CXcnLQviqv9ZHRKU+Dmjo8juplU8hABRG2N3
+	efK5rBYOBpNC9t/tvro7oBf5QMqH6Q0/knQGymsxYSSh0S3mPWNr9vi3/zFw72+Yy3CPJk8HS3j
+	FPVmp6zi2Ho7RkuAeev2RIkekVA==
+X-Gm-Gg: ASbGncsp7CP5olr7lHp6oibwF9iMWqb6JZp5RWQGqzjL7fY+VQp9Y2EPtg/qzMLlouV
+	emDfxRSMFnReSYyGIiOBziTA1FFukvXRpsYU9gaYjp+wFuYghsDk3Gylk16/G8NgbNjZ4YkmdcG
+	Cu5NUp4AFw0tKVqBprvWxgWUYD
+X-Google-Smtp-Source: AGHT+IGD6YiP0dN6ELvQItWtcLSNC+C4YCLGwsEEcWIRRLLW5oS18HX8IlkEy6wochtZC/R6v/sJf4VACOoM2CreUjM=
+X-Received: by 2002:a17:907:2d22:b0:ab7:9b86:598d with SMTP id
+ a640c23a62f3a-abc09a4b7c6mr248969566b.17.1740134311947; Fri, 21 Feb 2025
+ 02:38:31 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20250218182207.3982214-1-hch@lst.de> <20250218182207.3982214-4-hch@lst.de>
-In-Reply-To: <20250218182207.3982214-4-hch@lst.de>
+References: <f6130475-3ccd-45d2-abde-3ccceada0f0a@linux.ibm.com> <yq18qsjdz0r.fsf@ca-mkp.ca.oracle.com>
+In-Reply-To: <yq18qsjdz0r.fsf@ca-mkp.ca.oracle.com>
 From: Anuj gupta <anuj1072538@gmail.com>
-Date: Fri, 21 Feb 2025 11:37:43 +0530
-X-Gm-Features: AWEUYZnDTwkGMWyCUgvudiybYOkTa2ek7SZeupMzTfedY5-h6_e7HuSEjs9i1cY
-Message-ID: <CACzX3AsGgjJOtOo-y-oJ9K+PKm+EgSxTjOJ+UyozYguzhxpe9Q@mail.gmail.com>
-Subject: Re: [PATCH 3/3] block: split struct bio_integrity_data
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>, Yu Kuai <yukuai3@huawei.com>, 
-	"Martin K. Petersen" <martin.petersen@oracle.com>, Kanchan Joshi <joshi.k@samsung.com>, 
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
-	linux-raid@vger.kernel.org, target-devel@vger.kernel.org
+Date: Fri, 21 Feb 2025 16:07:55 +0530
+X-Gm-Features: AWEUYZmpH0Apw5ilSxEp1rdIgRl0iRXIb7970HtruWNGBkcA04c-5zyfLHhEwZI
+Message-ID: <CACzX3AvbM4qG+ZOWJoCTNMMgSz8gMjoRcQ10_HJbMyi0Nv9qvQ@mail.gmail.com>
+Subject: Re: Change in reported values of some block integrity sysfs attributes
+To: "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@lst.de>, 
+	Anuj Gupta <anuj20.g@samsung.com>
+Cc: M Nikhil <nikh1092@linux.ibm.com>, linux-block@vger.kernel.org, 
+	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, nvdimm@lists.linux.dev, 
+	linux-scsi@vger.kernel.org, hare@suse.de, steffen Maier <maier@linux.ibm.com>, 
+	Benjamin Block <bblock@linux.ibm.com>, Nihar Panda <niharp@linux.ibm.com>
 Content-Type: text/plain; charset="UTF-8"
 
-> Many of the fields in struct bio_integrity_data are only needed for
-> the default integrity buffer in the block layer, and the variable
-> sized array at the end of the structure makes it very hard to embed
-> into caller allocated structures.
->
-> Reduce struct bio_integrity_data to the minimal structure needed in
-> common code, and create containing structures for the payload + bvec
-> allocation for submitter provided buffers, and the default integrity
-> code.  Stop using mempools for the submitter buffers as they don't sit
-> below the I/O stack, and instead always use the mempool for automatic
-> integrity metadata instead of depending on bio_set that is submitter
-> controlled and thus often doesn't have the mempool initialized.
->
-Like Kanchan already pointed out, it seems you are referring to
-bio_integrity_payload instead of bio_integrity data in patch title and
-commit description.
+> I don't see any change in what's reported with block/for-next in a
+> regular SCSI HBA/disk setup. Will have to look at whether there is a
+> stacking issue wrt. multipathing.
+
+Hi Martin, Christoph,
+
+It seems this change in behaviour is not limited to SCSI only. As Nikhil
+mentioned an earlier commit
+[9f4aa46f2a74 ("block: invert the BLK_INTEGRITY_{GENERATE,VERIFY} flags")]
+causes this change in behaviour. On my setup with a NVMe drive not formatted
+with PI, I see that:
+
+Without this commit:
+Value reported by read_verify and write_generate sysfs entries is 0.
+
+With this commit:
+Value reported by read_verify and write_generate sysfs entries is 1.
+
+Diving a bit deeper, both these flags got inverted due to this commit.
+But during init (in nvme_init_integrity) these values get initialized to 0,
+inturn setting the sysfs entries to 1. In order to fix this, the driver has to
+initialize both these flags to 1 in nvme_init_integrity if PI is not supported.
+That way, the value in sysfs for these entries would become 0 again. Tried this
+approach in my setup, and I am able to see the right values now. Then something
+like this would also need to be done for SCSI too.
