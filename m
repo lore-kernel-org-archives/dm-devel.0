@@ -1,194 +1,139 @@
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87A9E2080E3
-	for <dm-devel@lists.linux.dev>; Fri, 21 Feb 2025 12:16:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.34
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A16B200114
+	for <dm-devel@lists.linux.dev>; Fri, 21 Feb 2025 20:41:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740140219; cv=none; b=ldP+cHpJrzTSWxiRjTvma5K9ovc+bKJQeAhTzo9GJBBdbUm3e0VPE0dABBBlQ8fOwQ3I3lbbO9gjzqy8C6Gb1bmOABHULViOUQN1SMNzB9iqu7k9U7VScTACtU95/4HhYjs6tYjvC3eqNOl/DkWCW8Pb2QYw8UTNbEqyuO3PhRA=
+	t=1740170483; cv=none; b=MW866GyqGtGEs6wso2awMfBaFV4KWXF4VYTZnxTcWd257b4IeXcHtjZlscwwS3tJQJ1pmzc/GCo9jxfgZ0x7HO3uVCWLJQCijYVs1ah/VvaMX26gbSIIMEJgP7b+hgUM7WaQAU53B1lLc3vSrOSWvClOfX0KKd2kBcHMvI7X77M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740140219; c=relaxed/simple;
-	bh=AytNe/HlUvovzNVPebv72028JhoBKwW3ZkXVgYp23rE=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:In-Reply-To:
-	 Content-Type:References; b=SR2M0Evb8x1/nuEvqb74lfHPct/u1oaXawJBqseDrrfxOxNsNDm7ldCg+NvoiK6uAyad7+dUDRkG4laMDAD6PWgIsLlWOjTk3dsvkzhj4eiA26QDwiUgdpsYsw9LH96HPO74wfvSnB1DbbtvbsUxfKMgcPBTBYFmX/I9vdrcLLw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=JQr9xBzj; arc=none smtp.client-ip=203.254.224.34
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
+	s=arc-20240116; t=1740170483; c=relaxed/simple;
+	bh=MFAWGGU7GmZ9x6twU3l+A+tqjjazFVdo4aSOJEGK8sQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=TgZFsQEAd0Uxz6xK2M1FhJBJQLQva+v5T9e+mmroeve9C9Y8TvPbdNWXWcqGGc99P0EWzwtlklLQq33Bux/FyEOWikT//5A6S1thwcrCsD9cpjUr1wmaUxLaZx8AF/5HiNR5mC02wv1w0Vso1lcBNBpGRTmKUqXpw4/LaKiqdWM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=fat2FoI+; arc=none smtp.client-ip=209.85.208.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="JQr9xBzj"
-Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
-	by mailout4.samsung.com (KnoxPortal) with ESMTP id 20250221121654epoutp049d2e3e90ea07ac38f6f61d8074c5cba4~mOE4wKNS52039720397epoutp04y
-	for <dm-devel@lists.linux.dev>; Fri, 21 Feb 2025 12:16:54 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com 20250221121654epoutp049d2e3e90ea07ac38f6f61d8074c5cba4~mOE4wKNS52039720397epoutp04y
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1740140214;
-	bh=vHEeLZ2yQAJD7Zb6AS+MprdQT+oGOwFu1priVptQrqg=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=JQr9xBzjPiR4AoCTEwmDsP/nssLrYemKMooWpgxhoF1vnNGZg/8/LUU9G1fxO6MsS
-	 TP+YC+3WpPyAoFDKq8O3VhZMr3WUKOOVOlvp+ODlQubVXmmfUVPQ792ZGU07a+TSI6
-	 M6qYuM0ehvmM5amS4VAMgxUGPjBuviLVXwg/j3j4=
-Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
-	epcas5p2.samsung.com (KnoxPortal) with ESMTP id
-	20250221121653epcas5p2c61096e52a754bbbd806a89cca6c083d~mOE4QPd1o0224102241epcas5p2J;
-	Fri, 21 Feb 2025 12:16:53 +0000 (GMT)
-Received: from epsmgec5p1new.samsung.com (unknown [182.195.38.174]) by
-	epsnrtp1.localdomain (Postfix) with ESMTP id 4Yzpyq6sj9z4x9Ps; Fri, 21 Feb
-	2025 12:16:51 +0000 (GMT)
-Received: from epcas5p1.samsung.com ( [182.195.41.39]) by
-	epsmgec5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	1F.C5.19710.3BE68B76; Fri, 21 Feb 2025 21:16:51 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
-	epcas5p1.samsung.com (KnoxPortal) with ESMTPA id
-	20250221121541epcas5p163deb1f82a4775da19f3a57eb0bee55f~mOD1GC7XC1966519665epcas5p13;
-	Fri, 21 Feb 2025 12:15:41 +0000 (GMT)
-Received: from epsmgmcp1.samsung.com (unknown [182.195.42.82]) by
-	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20250221121541epsmtrp2b427fbb704630cc61b96c670b176b1d0~mOD1AIUkK1401914019epsmtrp26;
-	Fri, 21 Feb 2025 12:15:41 +0000 (GMT)
-X-AuditID: b6c32a44-363dc70000004cfe-2b-67b86eb36ea3
-Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
-	epsmgmcp1.samsung.com (Symantec Messaging Gateway) with SMTP id
-	A3.1C.33707.D6E68B76; Fri, 21 Feb 2025 21:15:41 +0900 (KST)
-Received: from green245 (unknown [107.99.41.245]) by epsmtip2.samsung.com
-	(KnoxPortal) with ESMTPA id
-	20250221121539epsmtip22f2d2c43dd807a3d03f7ec968dab5328~mODzLy2gf0040200402epsmtip2U;
-	Fri, 21 Feb 2025 12:15:39 +0000 (GMT)
-Date: Fri, 21 Feb 2025 17:37:29 +0530
-From: Anuj Gupta <anuj20.g@samsung.com>
-To: Anuj gupta <anuj1072538@gmail.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig
-	<hch@lst.de>, M Nikhil <nikh1092@linux.ibm.com>,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-raid@vger.kernel.org, nvdimm@lists.linux.dev,
-	linux-scsi@vger.kernel.org, hare@suse.de, steffen Maier
-	<maier@linux.ibm.com>, Benjamin Block <bblock@linux.ibm.com>, Nihar Panda
-	<niharp@linux.ibm.com>
-Subject: Re: Change in reported values of some block integrity sysfs
- attributes
-Message-ID: <20250221120729.GA5233@green245>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="fat2FoI+"
+Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-5e05780509dso3629260a12.2
+        for <dm-devel@lists.linux.dev>; Fri, 21 Feb 2025 12:41:19 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1740170478; x=1740775278; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=n2Q8hnSaH1rgXhVw+fSRuUSRgVRGzVzTgl8E3QJ7l6o=;
+        b=fat2FoI+4wwIZzDjSV3ky+0lg8AUPriNcRcY0fYfbdEqiCtOnnHBPnsY94KKGlfqIQ
+         kMI93OeS7Re/NM6JVlfHldCy3JGf5bzNtnyY+IsCw0+vqiYe1hafn8SPwdqs258iaZ/U
+         YcMBke/5z0RnyT3vvCoF/dahnye1juRjeut0nmFQnQcEZbYrfmENVNDor4HexsXKMKwX
+         0kIZp4hpBWuNZyP6MdIZUT7KEsfgTtq47Zi9z6RiNkqO3yfLManV2cMoRi3PDltsAwhs
+         5gYhmiJTUAvkscv02chfD//RRGb0CkM8wbr9uFXjVuAa9a9wGygeAQ/T3Smn1F/PlaXm
+         YKvw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1740170478; x=1740775278;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=n2Q8hnSaH1rgXhVw+fSRuUSRgVRGzVzTgl8E3QJ7l6o=;
+        b=cC3uf25um96EskQvDVf/pNo5yyz1SJpJFyOkv22/jXIWeH/1r7MdCMU5WiBjX+Lsze
+         ziqOvQrQ7BsANx9p466IK1lPrckNfzaf5vsebtVRlyZMKFcQUCLKVlqOwDszJAF1/WnD
+         wIpzb/2cjxFYkeKF7MDEH6T8AH+ioAc8CK5Waw1neLUVzUeaTAs2Os7KjRnCtGeIVDKO
+         bz3fScFoFk8f5/wUaAiVAIcjWYvg/b73uccCAABwP8wr8Vabe9KnoSwPBAAAFHou4Ty2
+         YZXTBrDDqYlgzswCJnaoRs+E8ch1xCIrHP7sGJpTXwZMdJwJ1m/00RPZSo5wovOfxCaT
+         r/dQ==
+X-Gm-Message-State: AOJu0YyK+iM+N2zyykh4I12ernZv2bB3+IF9aFESyrjTiqrqAd4HoXcL
+	4bHu7BKRmXIyQGJ9L5rp87c/GdDFnN2h0MZ7tZFFqAlC43UfnP8ts3wZPTi3FnA=
+X-Gm-Gg: ASbGnctJF9NOEO1wuyyHo2s9QYqt1iZ31UKTov557xE/IFnztW1CyTz7RMDb2usQRU9
+	hWlRcNapG+99RQezMXEXdW/Z8JxL+shdQ6qqh5hlKbDyjqEFQj/5cyluaBze8uL/1LP752SfK4I
+	FW8xzh/0bXvzN4sCSEArRFR63Ompyo8lQBihyDB/8ADTGeIXAAv8tV0YlJ+ndNv0RwlpEypXZf3
+	evriE5ddgT/3DTsl9ZOGoK4+A5AliPbzQsdahjE4jFdGJdw9YxPilZOSNZ9RSt7kDxiCaUaHQgg
+	CuURZSCB9/EIRXqx+yGliW+dSe771OVJN4pl4Vi7vB9HA9w9c3y1DLTbj5xoeTRlI3uFRGWziT9
+	5BCesWSNPnMwi
+X-Google-Smtp-Source: AGHT+IGfOs4j8lI++aU8lu+q3FuEyis0rdvDdM90FGjxp+JTJj6s6oqbmqCpKdkvF8jTn/V1F4ZMIw==
+X-Received: by 2002:a17:907:2d06:b0:ab7:d7fd:6250 with SMTP id a640c23a62f3a-abc09c1113amr419873066b.43.1740170478249;
+        Fri, 21 Feb 2025 12:41:18 -0800 (PST)
+Received: from localhost (p200300de374627004d16a5f447740583.dip0.t-ipconnect.de. [2003:de:3746:2700:4d16:a5f4:4774:583])
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-abbb73a108bsm803535066b.141.2025.02.21.12.41.17
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 21 Feb 2025 12:41:17 -0800 (PST)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Martin Wilck <mwilck@suse.com>,
+	Alice Frosi <afrosi@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>
+Subject: [PATCH v4 00/10] multipath-tools: provide pathname and abstract sockets
+Date: Fri, 21 Feb 2025 21:41:06 +0100
+Message-ID: <20250221204108.70631-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.48.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CACzX3AvbM4qG+ZOWJoCTNMMgSz8gMjoRcQ10_HJbMyi0Nv9qvQ@mail.gmail.com>
-User-Agent: Mutt/1.9.4 (2018-02-28)
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFjrMJsWRmVeSWpSXmKPExsWy7bCmuu7mvB3pBp1zTC0+fv3NYnFp3QVm
-	iwWL5rJY7Fk0icli5eqjTBZ7b2lbtM/fxWjRfX0Hm8XF3q/MFsuP/2Oy+Nbxkd3i7sWnzBYr
-	f/xhdeD12DnrLrvHhEUHGD1ebJ7J6LH7ZgObx8ent1g8Np+u9vi8SS6APSrbJiM1MSW1SCE1
-	Lzk/JTMv3VbJOzjeOd7UzMBQ19DSwlxJIS8xN9VWycUnQNctMwfoWCWFssScUqBQQGJxsZK+
-	nU1RfmlJqkJGfnGJrVJqQUpOgUmBXnFibnFpXrpeXmqJlaGBgZEpUGFCdsb9rTOYCppFK1Yf
-	fsvSwDhHsIuRk0NCwERi7a9FLF2MXBxCArsZJWa1bWGFcD4xSrTOXofgnDi+lxmm5dLFBnaI
-	xE5GiZOHXrJBOM8YJXbO+cIGUsUioCrxZfEedhCbTUBd4sjzVkYQW0RATeLptu1gDcwCncwS
-	0zqngDUICwRKfN3wG6yIV0BHYmPzSnYIW1Di5MwnLCA2J1DNl+/NYGeICihLHNh2nAlkkITA
-	Wg6J87+OMkHc5yKxc8ZVNghbWOLV8S3sELaUxOd3e6Hi6RI/Lj+Fqi+QaD62jxHCtpdoPdUP
-	toBZIEPi98d9UD/LSkw9tY4JIs4n0fv7CVQvr8SOeTC2kkT7yjlQtoTE3nMNULaHxJfdF8Hm
-	CAm0MEk0XWeawCg/C8lvs5Csg7B1JBbs/sQ2i5EDyJaWWP6PA8LUlFi/S38BI+sqRsnUguLc
-	9NRk0wLDvNRyeJQn5+duYgSnZi2XHYw35v/TO8TIxMF4iFGCg1lJhLetfku6EG9KYmVValF+
-	fFFpTmrxIUZTYGRNZJYSTc4HZoe8knhDE0sDEzMzMxNLYzNDJXHe5p0t6UIC6YklqdmpqQWp
-	RTB9TBycUg1MevssYmZ9O7Jk3ZHED2WzZGZNjOq03xp6oJFbpVHebcNhrZ8Hr7Mt2vb6SG62
-	lNQNhnTTWQULTn9R6fjEdTLNYa6/ybLjUy+lpgWtmptQVeUtZCmZw37DmS3gyHxXvlXeB3R0
-	3V6esZ1rVj8t5a0syyIJ2x1nZ8p6rZ256vrSSDujCXveMHyaVyLwuGH/1suWD9LrBBpWPJTp
-	vXJ+75Q4b+XbE9QW5XHtNstceGtmI+dmW67s2C8e8UWuRx4ebYq+fvzNoaCK0Ng/JvNnblyS
-	mDdX6ea3B9FLunlDNsxbzXqlUGLVWeG5f/Js0np4f256dPzTFYUEfsbjZc2JslpqKp5b87U6
-	51wUOGaXw/ZsvhJLcUaioRZzUXEiAM9HXrVWBAAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFmpkkeLIzCtJLcpLzFFi42LZdlhJXjc3b0e6QWOXqsXHr79ZLC6tu8Bs
-	sWDRXBaLPYsmMVmsXH2UyWLvLW2L9vm7GC26r+9gs7jY+5XZYvnxf0wW3zo+slvcvfiU2WLl
-	jz+sDrweO2fdZfeYsOgAo8eLzTMZPXbfbGDz+Pj0FovH5tPVHp83yQWwR3HZpKTmZJalFunb
-	JXBlNF5+ylJwWKji7ZtpLA2MX/m6GDk5JARMJC5dbGDvYuTiEBLYzihx+cd8RoiEhMSpl8ug
-	bGGJlf+eQxU9YZTYdbCBBSTBIqAq8WXxHnYQm01AXeLI81awBhEBNYmn27azgTQwC3QzSyzd
-	vB+sQVggUOLrht9gRbwCOhIbm1dCTW1hkti+6QYrREJQ4uTMJ2ANzAJaEjf+vWTqYuQAsqUl
-	lv/jAAlzAs358r2ZGcQWFVCWOLDtONMERsFZSLpnIemehdC9gJF5FaNoakFxbnpucoGhXnFi
-	bnFpXrpecn7uJkZwLGkF7WBctv6v3iFGJg7GQ4wSHMxKIrxt9VvShXhTEiurUovy44tKc1KL
-	DzFKc7AoifMq53SmCAmkJ5akZqemFqQWwWSZODilGpjMVyt0WmzlOlQoEOAx513p7Evvo5VV
-	+Tdef8qz59AS/obVCgJXnTWVZebvmWz+MV3zv97sFJUA40vr9pxYPTvkuepCscB5HPUp3yTL
-	9izXPnfOW7D354oTH0P3F5o/1fT5+OtB9Ex2sxz2hj7jSSf5NE8IHt1cdqB3o665gdeeF6o+
-	RuzRk2WWaa9Qapz0Z8KBKdnblnCq3zt7tL+oT+7Vg5p5C5uOXJxy8MGbmqTS8DjPaqMO78hz
-	kx1cZGMj15xctUvRPezPgk/cZ0UfS4kf3LZhStLu/qnTGJWbbivo7Pm0780l8dV7UmTF5fcE
-	2qhNXt3P9mFqufJKhvd1fB82rFOMnsS1Kl1G6UaAmdUSJZbijERDLeai4kQAfQSPIBQDAAA=
-X-CMS-MailID: 20250221121541epcas5p163deb1f82a4775da19f3a57eb0bee55f
-X-Msg-Generator: CA
-Content-Type: multipart/mixed;
-	boundary="----BPpCInZN70AS5XN_6T9hoGDuzhCf8U2LGtknTi7-jKSoGEoM=_74df3_"
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20250221103836epcas5p2158071e3449f10b80b44b43595d18704
-References: <f6130475-3ccd-45d2-abde-3ccceada0f0a@linux.ibm.com>
-	<yq18qsjdz0r.fsf@ca-mkp.ca.oracle.com>
-	<CGME20250221103836epcas5p2158071e3449f10b80b44b43595d18704@epcas5p2.samsung.com>
-	<CACzX3AvbM4qG+ZOWJoCTNMMgSz8gMjoRcQ10_HJbMyi0Nv9qvQ@mail.gmail.com>
+Content-Transfer-Encoding: 8bit
 
-------BPpCInZN70AS5XN_6T9hoGDuzhCf8U2LGtknTi7-jKSoGEoM=_74df3_
-Content-Type: text/plain; charset="us-ascii"
-Content-Disposition: inline
+This set is an attempt to fix https://github.com/opensvc/multipath-tools/issues/111
 
-On Fri, Feb 21, 2025 at 04:07:55PM +0530, Anuj gupta wrote:
-> > I don't see any change in what's reported with block/for-next in a
-> > regular SCSI HBA/disk setup. Will have to look at whether there is a
-> > stacking issue wrt. multipathing.
-> 
-> Hi Martin, Christoph,
-> 
-> It seems this change in behaviour is not limited to SCSI only. As Nikhil
-> mentioned an earlier commit
-> [9f4aa46f2a74 ("block: invert the BLK_INTEGRITY_{GENERATE,VERIFY} flags")]
-> causes this change in behaviour. On my setup with a NVMe drive not formatted
-> with PI, I see that:
-> 
-> Without this commit:
-> Value reported by read_verify and write_generate sysfs entries is 0.
-> 
-> With this commit:
-> Value reported by read_verify and write_generate sysfs entries is 1.
-> 
-> Diving a bit deeper, both these flags got inverted due to this commit.
-> But during init (in nvme_init_integrity) these values get initialized to 0,
-> inturn setting the sysfs entries to 1. In order to fix this, the driver has to
-> initialize both these flags to 1 in nvme_init_integrity if PI is not supported.
-> That way, the value in sysfs for these entries would become 0 again. Tried this
-> approach in my setup, and I am able to see the right values now. Then something
-> like this would also need to be done for SCSI too.
-> 
+Changes v3 -> v4:
 
-I tried to make it work for SCSI too. However my testing is limited as I
-don't have a SCSI device. With scsi_debug I see this currently:
+- 08/10: retry independently of error condition (Ben Marzinski)
+- 08/10: add a const qualifier
+- 09/10: adapt to 08/10
 
-# modprobe scsi_debug dev_size_mb=128 dix=0 dif=0
-# cat /sys/block/sda/integrity/write_generate
-1
-# cat /sys/block/sda/integrity/read_verify
-1
-# cat /sys/class/scsi_host/host0/prot_capabilities
-0
+Changes v2 -> v3:
 
-To fix this, I added this. Nikhil can you try below patch? Martin, can
-you please take a look as well.
+Many, as a result of further discussions on GitHub. multipathd will now open
+both the abstract socket and the pathname socket /run/multipathd.socket by
+default, and client programs will try both sockets before giving up.  The
+"use_regular_socket=1" build parameter is not necessary any more.
 
-After this patch, with the same scsi_debug device, I see sysfs entries
-populated as 0.
+Note that we'd switched from the regular socket "/var/run/multipath.sock" to
+an abstract socket in bb89077 ("multipathd: switch to abstract sockets for CLI
+commands") in multipath-tools 0.5.0. The rationale back then was that creating
+a pathname socket might fail if the directory structure isn't set up yet. As
+we now create both, and fail only if neither could be created, and as there is
+the early /run directory on modern systems, this argument shouldn't apply to
+this patch set. The name of the socket has been changed in order to indicate
+that the new approach is different from the old one.
 
-diff --git a/drivers/scsi/sd_dif.c b/drivers/scsi/sd_dif.c
-index ae6ce6f5d622..be2cd06f500b 100644
---- a/drivers/scsi/sd_dif.c
-+++ b/drivers/scsi/sd_dif.c
-@@ -40,8 +40,10 @@ void sd_dif_config_host(struct scsi_disk *sdkp, struct queue_limits *lim)
- 		dif = 0; dix = 1;
- 	}
- 
--	if (!dix)
-+	if (!dix) {
-+		bi->flags |= BLK_INTEGRITY_NOGENERATE | BLK_INTEGRITY_NOVERIFY;
- 		return;
-+	}
- 
- 	/* Enable DMA of protection information */
- 	if (scsi_host_get_guard(sdkp->device->host) & SHOST_DIX_GUARD_IP)
+Changes v1 -> v2:
 
-------BPpCInZN70AS5XN_6T9hoGDuzhCf8U2LGtknTi7-jKSoGEoM=_74df3_
-Content-Type: text/plain; charset="utf-8"
+- Introduced the mpath_fill_sockaddr() helper to cleanup struct sockaddr_un handling,
+in response to comments from Ben Marzinski on GitHub.
+- Fixed double remove of multipathd.socket during "make clean" (Ben).
 
+Martin Wilck (10):
+  multipath-tools: move DEFAULT_SOCKET definition into Makefile.inc
+  multipath-tools: add helper mpath_fill_sockaddr__()
+  libmpathutil: add support for Unix pathname sockets
+  libmpathutil: move systemd_listen_fds() support into multipathd
+  multipathd: make uxsock_listen() take a pointer to fd
+  multipathd: allow receiving two socket fds from systemd
+  multipathd: listen on pathname and abstract socket by default
+  libmpathcmd: try both abstract and pathname sockets
+  libmpathcmd: honor MULTIPATH_SOCKET_NAME environment variable
+  multipathd: honor MULTIPATH_SOCKET_NAME environment variable
 
-------BPpCInZN70AS5XN_6T9hoGDuzhCf8U2LGtknTi7-jKSoGEoM=_74df3_--
+ .gitignore                                    |  1 +
+ Makefile.inc                                  | 10 +++-
+ create-config.mk                              |  1 +
+ libmpathcmd/mpath_cmd.c                       | 25 ++++++----
+ libmpathcmd/mpath_cmd.h                       |  1 -
+ libmpathcmd/mpath_fill_sockaddr.c             | 32 +++++++++++++
+ libmpathutil/uxsock.c                         | 41 +++++++---------
+ libmultipath/defaults.h                       |  1 -
+ multipathd/Makefile                           |  4 +-
+ multipathd/main.c                             | 48 +++++++++++++++++--
+ ...multipathd.socket => multipathd.socket.in} |  3 +-
+ multipathd/uxlsnr.c                           | 34 +++++++++----
+ multipathd/uxlsnr.h                           |  3 +-
+ 13 files changed, 149 insertions(+), 55 deletions(-)
+ create mode 100644 libmpathcmd/mpath_fill_sockaddr.c
+ rename multipathd/{multipathd.socket => multipathd.socket.in} (84%)
+
+-- 
+2.48.1
+
