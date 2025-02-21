@@ -1,195 +1,98 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E2D7E1EE006
-	for <dm-devel@lists.linux.dev>; Thu, 20 Feb 2025 23:33:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77E6E1917E3;
+	Fri, 21 Feb 2025 06:01:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740094396; cv=none; b=aCLKWCevk1QM5IyCW0CNshk9Sj1BVajWMed63xqi+6fpm+T7//7loSAh2nsPuzwN/rpJDpwk1H07KvZRAwF6RUxyxwwzCNBHJuIykIqW5nYWw+RnZn/0vFBcQvDyaxVOYTOFUwWnYvpIoqfeEMS9lanR/5R2HAl+WD57nxcxS4U=
+	t=1740117688; cv=none; b=KNFUsUMvPSpSZDZTsAh/m862VCf5vUaOR/vQn4yj6+idwGpK4/1V9TjnyEAlZgdaMpVbe9Ea4qCB7wK6UEGe/6Lek75v4HqjmiM6z2SWd9Fg30FAZjEXDEKh+t3KVNKQm0x0R/O+UwrFU+JT9ICrtAe3EtXE4Y955PsqXuk1b4k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740094396; c=relaxed/simple;
-	bh=C8t27BV2VXMlLD6CcK4EpcPbKWo+JxK8StRyJsHFHqk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=rsVkiz8pxxJbt2PWdtyKIXout3ItBa4p/uWXfC/DOHOxKKJeNPF1UJ9/UZ4LYxRh87Ijq7U0glVbKLSxWhf0Ix98k4UDhBF6S2MARdL2Mya+BJeKlQQqjTjjIRABe2TejK1dQGmNxcngWjvC4ZHVQoJLrdpSeq9Xc9uXlV1cx4A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=F8LWClr7; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1740117688; c=relaxed/simple;
+	bh=fCzc/nNMh2KfoFPRA/XbYY9gHWRIDSlx5rH678Vgm/o=;
+	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
+	 In-Reply-To:Content-Type; b=eepA6u3yw835P4DAVVrJvwKv6egTMhiPGQplRzrnXRifZYs6ITwmStHXWuFKSaeItpo3Om95BSXrEoazOpjXjPeW06FYhj3idLngUKzDfpZVMpev6ALAQBOMtb7HvkomkFOP1uM+k1n/lcChdZJ7VLyIt0MnGTsxd9DtwNWMsOI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=OCOHGOcg; arc=none smtp.client-ip=148.163.156.1
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="F8LWClr7"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1740094393;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=wBGHAqG3qZnjDi/A9mDCk4bg1ubE65WNciioHRx7HTU=;
-	b=F8LWClr7SU9YSe8Q35a6JOcs06tQtwBTot8TNwkPUd2WErKs8KBG/a6y/dM0mmHjy7pMkW
-	LEXA5cDqS3BVmhB2DuTo0LORyPMF+gbYIvMOFB6FCqDUd9ES1fiAGZjgidJBXWj2bH5C0F
-	L9oD6hxkMMpRWnhE52BjBEijCAkZplY=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-543-FNFyeSvEN_Kp3cUw3cg_2w-1; Thu,
- 20 Feb 2025 18:33:12 -0500
-X-MC-Unique: FNFyeSvEN_Kp3cUw3cg_2w-1
-X-Mimecast-MFC-AGG-ID: FNFyeSvEN_Kp3cUw3cg_2w_1740094391
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9409219560B5
-	for <dm-devel@lists.linux.dev>; Thu, 20 Feb 2025 23:33:11 +0000 (UTC)
-Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 32FE119412A3;
-	Thu, 20 Feb 2025 23:33:10 +0000 (UTC)
-Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 39E7E60487; Thu, 20 Feb 2025 18:33:10 -0500 (EST)
-From: Matthew Sakai <msakai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: Ken Raeburn <raeburn@redhat.com>,
-	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH] dm vdo indexer: reorder uds_request to reduce padding
-Date: Thu, 20 Feb 2025 18:33:10 -0500
-Message-ID: <20250220233310.1342059-1-msakai@redhat.com>
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="OCOHGOcg"
+Received: from pps.filterd (m0353729.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 51L5P45s003571;
+	Fri, 21 Feb 2025 06:01:26 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=d4FmSe
+	9M3mZq4yCy32/8QHZt9cN5EPgh9r7qE2bLzdc=; b=OCOHGOcgdKmfZCTNoj9LQX
+	ajTY+gxx8a9BeumZM6wrDYOwTU/L6t0GLLRDZXRlg6waNOcvr7Tp8hv+FSHsPydZ
+	gHJsiRVTQP77+RcAi5KbQeJno0Q30BiDnEtU8W5T9+nSerJusRF1xVXQZU++ufyb
+	eobpb4tEPRbxaMe4CduxaezUTymQEshiTvwveiJNjnHJV76TPc3ZHCgQ7G1lO7qT
+	6VTjoGTJMkycbNX03ic4PlcVNKj0zNZ8KGijjTUGdhjC09AVQv5XXBUG11bDaETF
+	T1TBZXmSyKrIp+AUmA3t3zbkB6lAp8i4B+z6clOTDUfMw2vXdMS6XFatS9UjiHqQ
+	==
+Received: from ppma13.dal12v.mail.ibm.com (dd.9e.1632.ip4.static.sl-reverse.com [50.22.158.221])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 44xka8g4bn-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 21 Feb 2025 06:01:26 +0000 (GMT)
+Received: from pps.filterd (ppma13.dal12v.mail.ibm.com [127.0.0.1])
+	by ppma13.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 51L5CtZa027050;
+	Fri, 21 Feb 2025 06:01:25 GMT
+Received: from smtprelay04.dal12v.mail.ibm.com ([172.16.1.6])
+	by ppma13.dal12v.mail.ibm.com (PPS) with ESMTPS id 44w025e86v-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 21 Feb 2025 06:01:25 +0000
+Received: from smtpav03.wdc07v.mail.ibm.com (smtpav03.wdc07v.mail.ibm.com [10.39.53.230])
+	by smtprelay04.dal12v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 51L61ODj28902054
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 21 Feb 2025 06:01:24 GMT
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 5514458062;
+	Fri, 21 Feb 2025 06:01:24 +0000 (GMT)
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 9BAA55805A;
+	Fri, 21 Feb 2025 06:01:20 +0000 (GMT)
+Received: from [9.109.211.178] (unknown [9.109.211.178])
+	by smtpav03.wdc07v.mail.ibm.com (Postfix) with ESMTP;
+	Fri, 21 Feb 2025 06:01:20 +0000 (GMT)
+Message-ID: <21af17ce-e125-4c6c-8826-f6cf6b2448d3@linux.ibm.com>
+Date: Fri, 21 Feb 2025 11:31:19 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: yMw0YHxGAyyIBlYZIZ6DEYMwGdrrLShfhlqcJqqvIq0_1740094391
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+User-Agent: Mozilla Thunderbird
+Subject: Re: Change in reported values of some block integrity sysfs
+ attributes
+From: M Nikhil <nikh1092@linux.ibm.com>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+        linux-raid@vger.kernel.org, nvdimm@lists.linux.dev,
+        linux-scsi@vger.kernel.org, hare@suse.de, hch@lst.de,
+        steffen Maier <maier@linux.ibm.com>,
+        Benjamin Block <bblock@linux.ibm.com>,
+        Nihar Panda <niharp@linux.ibm.com>
+References: <f6130475-3ccd-45d2-abde-3ccceada0f0a@linux.ibm.com>
+ <yq18qsjdz0r.fsf@ca-mkp.ca.oracle.com>
+ <a39d25d3-e6ac-4166-a75e-58a258da4101@linux.ibm.com>
+Content-Language: en-US
+In-Reply-To: <a39d25d3-e6ac-4166-a75e-58a258da4101@linux.ibm.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-GUID: ntn5dI55lF0o7GPFgeztaTKLqIk3V94R
+X-Proofpoint-ORIG-GUID: ntn5dI55lF0o7GPFgeztaTKLqIk3V94R
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1057,Hydra:6.0.680,FMLib:17.12.68.34
+ definitions=2025-02-21_01,2025-02-20_02,2024-11-22_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0 clxscore=1015
+ priorityscore=1501 mlxscore=0 suspectscore=0 lowpriorityscore=0
+ adultscore=0 phishscore=0 spamscore=0 malwarescore=0 impostorscore=0
+ mlxlogscore=807 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2502100000 definitions=main-2502210044
 
-From: Ken Raeburn <raeburn@redhat.com>
+gentle ping!!!
 
-Reorder fields and make uds_request_type and uds_zone_message packed,
-to squeeze out some space. Use struct_group so the request reset code
-no longer needs to care about field order.
-
-On x86_64 this reduces the struct size from 144 to 120, which saves 48
-kB (about 12%) per VDO hash zone.
-
-Signed-off-by: Ken Raeburn <raeburn@redhat.com>
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
----
- drivers/md/dm-vdo/indexer/index-session.c |  6 +--
- drivers/md/dm-vdo/indexer/indexer.h       | 53 +++++++++++------------
- 2 files changed, 27 insertions(+), 32 deletions(-)
-
-diff --git a/drivers/md/dm-vdo/indexer/index-session.c b/drivers/md/dm-vdo/indexer/index-session.c
-index aee0914d604a..aa575a24e0b2 100644
---- a/drivers/md/dm-vdo/indexer/index-session.c
-+++ b/drivers/md/dm-vdo/indexer/index-session.c
-@@ -100,7 +100,6 @@ static int get_index_session(struct uds_index_session *index_session)
- 
- int uds_launch_request(struct uds_request *request)
- {
--	size_t internal_size;
- 	int result;
- 
- 	if (request->callback == NULL) {
-@@ -121,10 +120,7 @@ int uds_launch_request(struct uds_request *request)
- 	}
- 
- 	/* Reset all internal fields before processing. */
--	internal_size =
--		sizeof(struct uds_request) - offsetof(struct uds_request, zone_number);
--	// FIXME should be using struct_group for this instead
--	memset((char *) request + sizeof(*request) - internal_size, 0, internal_size);
-+	memset(&request->internal, 0, sizeof(request->internal));
- 
- 	result = get_index_session(request->session);
- 	if (result != UDS_SUCCESS)
-diff --git a/drivers/md/dm-vdo/indexer/indexer.h b/drivers/md/dm-vdo/indexer/indexer.h
-index 3744aaf625b0..d765f24328eb 100644
---- a/drivers/md/dm-vdo/indexer/indexer.h
-+++ b/drivers/md/dm-vdo/indexer/indexer.h
-@@ -8,6 +8,7 @@
- 
- #include <linux/mutex.h>
- #include <linux/sched.h>
-+#include <linux/stddef.h>
- #include <linux/types.h>
- #include <linux/wait.h>
- 
-@@ -73,7 +74,7 @@ enum uds_request_type {
- 	/* Remove any mapping for a name. */
- 	UDS_DELETE,
- 
--};
-+} __packed;
- 
- enum uds_open_index_type {
- 	/* Create a new index. */
-@@ -226,7 +227,7 @@ struct uds_zone_message {
- 	enum uds_zone_message_type type;
- 	/* The virtual chapter number to which the message applies */
- 	u64 virtual_chapter;
--};
-+} __packed;
- 
- struct uds_index_session;
- struct uds_index;
-@@ -253,34 +254,32 @@ struct uds_request {
- 
- 	/* The existing data associated with the request name, if any */
- 	struct uds_record_data old_metadata;
--	/* Either UDS_SUCCESS or an error code for the request */
--	int status;
- 	/* True if the record name had an existing entry in the index */
- 	bool found;
-+	/* Either UDS_SUCCESS or an error code for the request */
-+	int status;
- 
--	/*
--	 * The remaining fields are used internally and should not be altered by clients. The index
--	 * relies on zone_number being the first field in this section.
--	 */
--
--	/* The number of the zone which will process this request*/
--	unsigned int zone_number;
--	/* A link for adding a request to a lock-free queue */
--	struct funnel_queue_entry queue_link;
--	/* A link for adding a request to a standard linked list */
--	struct uds_request *next_request;
--	/* A pointer to the index processing this request */
--	struct uds_index *index;
--	/* Control message for coordinating between zones */
--	struct uds_zone_message zone_message;
--	/* If true, process request immediately by waking the worker thread */
--	bool unbatched;
--	/* If true, continue this request before processing newer requests */
--	bool requeued;
--	/* The virtual chapter containing the record name, if known */
--	u64 virtual_chapter;
--	/* The region of the index containing the record name */
--	enum uds_index_region location;
-+	/* The remaining fields are used internally and should not be altered by clients. */
-+	struct_group(internal,
-+		     /* The virtual chapter containing the record name, if known */
-+		     u64 virtual_chapter;
-+		     /* The region of the index containing the record name */
-+		     enum uds_index_region location;
-+		     /* If true, process request immediately by waking the worker thread */
-+		     bool unbatched;
-+		     /* If true, continue this request before processing newer requests */
-+		     bool requeued;
-+		     /* Control message for coordinating between zones */
-+		     struct uds_zone_message zone_message;
-+		     /* The number of the zone which will process this request*/
-+		     unsigned int zone_number;
-+		     /* A link for adding a request to a lock-free queue */
-+		     struct funnel_queue_entry queue_link;
-+		     /* A link for adding a request to a standard linked list */
-+		     struct uds_request *next_request;
-+		     /* A pointer to the index processing this request */
-+		     struct uds_index *index;
-+		     );
- };
- 
- /* Compute the number of bytes needed to store an index. */
--- 
-2.45.2
+Hopefully I haven't missed anything. I was wondering if you could find 
+out something and if I can provide more information.
 
