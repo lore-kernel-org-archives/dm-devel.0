@@ -1,131 +1,212 @@
-Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com [209.85.208.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45257204581
-	for <dm-devel@lists.linux.dev>; Fri, 21 Feb 2025 20:41:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0304F25A32B
+	for <dm-devel@lists.linux.dev>; Mon, 24 Feb 2025 11:34:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740170485; cv=none; b=V3iXFLtaB8XZWvgmnZ6bKNHtr5nS1L4GQZs4zWHwEbsYXs74XBzz0zdaaxpNAD7uCFGAJzomiQnPkxxoydOM3aOLdxevq/q8v3mPZ9yXVEdsmDTg/h4jitQyMEppREfR1kphRYQJpQr+jdGcjCcNoBwgOnVtasbQUbRG8SfvJEQ=
+	t=1740396843; cv=none; b=n2Yznl+eYH3SZFfbEBgYdRH+h9Fd5Dva0IfYt9c5Ifkq3qIMGUJPrMVybs89dPsLqg1bJvYb+ZMsx9KzB5BFKNil/PDPlHov1cDXeVgzUfUWklZ89AZ80BX5kdKXw5UEZHvXuKLm3B5+bpRreHxQ//rw1FOht0+wNzm77IDLQ8o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740170485; c=relaxed/simple;
-	bh=jALSHQRwY6WENsfkHN10Mtxm3FZvRYuhlxUwSRJ3G+Q=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=risHcx26twgeG+VhVaNFtYnRPGe5mI/etMPOamTlQs4YWmAZcqmcH2CpR2WFWSDjff25wR7t0h8xJQFC2LhQCkgwNTG6sQz0WJNuAJbeLP1JjA5kSrN/WgE2X2+fdyxAyzqF8RS9fia2zWdhqnMNQNRVCFQm4YgfFxPxqksCOfo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=X7FdUD3x; arc=none smtp.client-ip=209.85.208.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1740396843; c=relaxed/simple;
+	bh=bp4uaaBC4meBSJVsWeWntpVgr1Y/cRxGDDCc1a5wLUQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=nuAqrDEY+9TNGY/1+ThWiVMw2qCUI94LKGCuhQwj/COI87fuCO1rQV5Ypa9qs4O18NCpP2AwkYSrsvbPML6mD6KYczRN591c0odXY2ypo4HlNw1vbyqX73shMLjU36MI182qPG8CDTu3/JR5SVDfpydeHGNS2yXPyI1/XjDcFVQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JfaMH2HC; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="X7FdUD3x"
-Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-5e050b1491eso6332179a12.0
-        for <dm-devel@lists.linux.dev>; Fri, 21 Feb 2025 12:41:22 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1740170481; x=1740775281; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=nADAy1jfNjFH9+8Gvf9EzcQJTHlmsRJNM1NW/VbbtYY=;
-        b=X7FdUD3xx7QWJa3AGcnMTrRZUssKOUT51O6kfG2tBsguaAnsLcvfDYo1AEMCRB76mp
-         pJBouQF3ix0HWeivsVuHXvjq7uUFS4l4o0mig3qQxHV/QKkch/eiGDDWaLL4aSVgJ8L8
-         PWkjvhvaDQD5NADpWRNX0INEw7nVZssPf8WQ2Es4EE4JhciQGyFoTNtncg0Ll2T/faFK
-         t/WxhDVACVjcu16VPyHO+YVu3h/NS1/9ubAfAnSm41avECtuugCH78DniRXPQ6mUT2KJ
-         zEGRyH+rtmCPMbY2ZSe9fWXBd92juonhqmNWBlGWxBbhNTzH8weDFdksnc1mbpuTyGHK
-         A1QA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1740170481; x=1740775281;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=nADAy1jfNjFH9+8Gvf9EzcQJTHlmsRJNM1NW/VbbtYY=;
-        b=gKUQDTSMUKK5zFOZavhWLbTvLrWCoTKUO92CFkxUKbfiu1X9Uw1u7L6mqQWFyY7XJO
-         ZRsENvcB5b0dCLsty9sL43FTaS6NAlWr9qju3Ile5XdCkPZNTBXYfBr1pNSX7Yn9olUx
-         t6T0JeNOEXeDVCifS3uOFLzZW+2lYlgOlQjA8XijfMwQehKVG6nisRSUHiOuI+/uXOvX
-         AQp4ql5hcKinr8twy9aN3aw9r7GbcimEFKcO5zPPLbeNM2122UgzhY8msDUo1zbTqxzA
-         eM84xoPVZMQeKQlTcu0K45zGhff3mI+eGTI0PuIJP98+2gcaRIAZNLNvSU134SuNETGx
-         QfnQ==
-X-Gm-Message-State: AOJu0YxDqLubozg2UkwLWSzGQEz7w17hBnz9cW2fPso/H94kU8Im0G4F
-	enxPKDdzyqcDbad6hqAKYazACtxIGN3fDwJah7aPqXuSTBljUvg/uERVJqy1JmI=
-X-Gm-Gg: ASbGncvpH7zEXQ+1Oq8SBUYyWjHnatE6QENzl4O7CM9OMehVIS8ItrxQ5QTm9JYF7wX
-	caGU0dSHwTH4zbLLvCzkX8vtzmTkfc1uhVb3+WQhaHliZkeZCCGyOhCpjUjb+H+/JBFZsIqCmcn
-	v5KRo/lS4ZG+/Mz08IRJtNZFiiifenvxZQiRUZMZrpwbfg17+X2NYl265egNWIhZCQiA2YcOOtX
-	Gk1OsLHF2UO8Q2gO2YHysKtO98U1ef6EblsRzVVSpOwqT70P/4DGbLGc9c6gksxhYU/bCR+StSg
-	GYg38z29rZcnbeaC5nOsBlfPt3Msw8FIH2ti8HL/eNsajVCofuy9BhFeHREdE9j2sJGMwnb1Dwe
-	+n89X4soyfUsl
-X-Google-Smtp-Source: AGHT+IEdsCgja35Qo6suabESYJs4hqNvOM5QCY5vsmZSU/moysPFCjYkjRg25lbnyWGmifDS9g+Xzg==
-X-Received: by 2002:a05:6402:2103:b0:5de:5939:6c34 with SMTP id 4fb4d7f45d1cf-5e0a12d7bf1mr8765210a12.15.1740170481195;
-        Fri, 21 Feb 2025 12:41:21 -0800 (PST)
-Received: from localhost (p200300de374627004d16a5f447740583.dip0.t-ipconnect.de. [2003:de:3746:2700:4d16:a5f4:4774:583])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5dece1d3624sm14478969a12.40.2025.02.21.12.41.20
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 21 Feb 2025 12:41:20 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>,
-	Alice Frosi <afrosi@redhat.com>,
-	Paolo Bonzini <pbonzini@redhat.com>
-Subject: [PATCH v4 09/10] libmpathcmd: honor MULTIPATH_SOCKET_NAME environment variable
-Date: Fri, 21 Feb 2025 21:41:08 +0100
-Message-ID: <20250221204108.70631-3-mwilck@suse.com>
-X-Mailer: git-send-email 2.48.1
-In-Reply-To: <20250221204108.70631-1-mwilck@suse.com>
-References: <20250221204108.70631-1-mwilck@suse.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JfaMH2HC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1740396839;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=4JSj2VPq2tLwqSR9Ob1jBRYIH43Q/zJEDjGXdQYNoAM=;
+	b=JfaMH2HCVvYcXRvMgAQsMETIXuvpY8SgKViNbJzg6XzwYO9ync68Io4ynJePX1A8BMLoTo
+	Q7EDjBwqP7Yqme3t+ryogK2SPJandCv7b0g4lwZ7Keyfx1DIooQLbk/wVKeYhqpI8dm2wa
+	IkUXs6LZBGslMjan/INjS7LVSjL6PII=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-652-ieTZKqmjNVmLzJEYdfQZbA-1; Mon,
+ 24 Feb 2025 06:33:58 -0500
+X-MC-Unique: ieTZKqmjNVmLzJEYdfQZbA-1
+X-Mimecast-MFC-AGG-ID: ieTZKqmjNVmLzJEYdfQZbA_1740396837
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B6B451800264
+	for <dm-devel@lists.linux.dev>; Mon, 24 Feb 2025 11:33:57 +0000 (UTC)
+Received: from [10.45.224.44] (unknown [10.45.224.44])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 720371800352;
+	Mon, 24 Feb 2025 11:33:56 +0000 (UTC)
+Date: Mon, 24 Feb 2025 12:33:52 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Matthew Sakai <msakai@redhat.com>
+cc: dm-devel@lists.linux.dev, Ken Raeburn <raeburn@redhat.com>
+Subject: Re: [PATCH] dm vdo indexer: reorder uds_request to reduce padding
+In-Reply-To: <20250220233310.1342059-1-msakai@redhat.com>
+Message-ID: <90acf9f1-3133-e8b3-650f-f0c669cd2a43@redhat.com>
+References: <20250220233310.1342059-1-msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: bw4JwbdfRuGP0jiPiTZ0VUv1bKl3iBAlHmVimMq3XzY_1740396837
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-In systemd installments, users can already override the socket names
-that systemd listens on. With this patch, clients using libmpathcmd
-can be customized to use a non-standard socket by setting an environment
-variable.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmpathcmd/mpath_cmd.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index 83cb6ad..5a23236 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -20,6 +20,7 @@
- #include <stdlib.h>
- #include <unistd.h>
- #include <stdio.h>
-+#include <stdlib.h>
- #include <sys/types.h>
- #include <sys/socket.h>
- #include <sys/un.h>
-@@ -104,6 +105,7 @@ int mpath_connect__(int nonblocking)
- 	int flags = 0;
- 	const char *const names[2] = {PATHNAME_SOCKET, ABSTRACT_SOCKET};
- 	int name_idx = 0;
-+	const char *env_name = getenv("MULTIPATH_SOCKET_NAME"), *name;
- 
- retry:
- 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-@@ -116,12 +118,13 @@ retry:
- 			(void)fcntl(fd, F_SETFL, flags|O_NONBLOCK);
- 	}
- 
--	len = mpath_fill_sockaddr__(&addr, names[name_idx]);
-+	name = env_name ? env_name : names[name_idx];
-+	len = mpath_fill_sockaddr__(&addr, name);
- 	if (connect(fd, (struct sockaddr *)&addr, len) == -1) {
- 		int err = errno;
- 
- 		close(fd);
--		if (++name_idx == 1)
-+		if (name != env_name && +name_idx == 1)
- 			goto retry;
- 		else {
- 			errno = err;
--- 
-2.48.1
+On Thu, 20 Feb 2025, Matthew Sakai wrote:
+
+> From: Ken Raeburn <raeburn@redhat.com>
+> 
+> Reorder fields and make uds_request_type and uds_zone_message packed,
+> to squeeze out some space. Use struct_group so the request reset code
+> no longer needs to care about field order.
+> 
+> On x86_64 this reduces the struct size from 144 to 120, which saves 48
+> kB (about 12%) per VDO hash zone.
+> 
+> Signed-off-by: Ken Raeburn <raeburn@redhat.com>
+> Signed-off-by: Matthew Sakai <msakai@redhat.com>
+
+Hi
+
+This patch doesn't apply due to conflicts. Please resend this patch 
+against 
+git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git
+branch remotes/origin/for-next
+
+I accepted the other 3 patches.
+
+Mikulas
+
+> ---
+>  drivers/md/dm-vdo/indexer/index-session.c |  6 +--
+>  drivers/md/dm-vdo/indexer/indexer.h       | 53 +++++++++++------------
+>  2 files changed, 27 insertions(+), 32 deletions(-)
+> 
+> diff --git a/drivers/md/dm-vdo/indexer/index-session.c b/drivers/md/dm-vdo/indexer/index-session.c
+> index aee0914d604a..aa575a24e0b2 100644
+> --- a/drivers/md/dm-vdo/indexer/index-session.c
+> +++ b/drivers/md/dm-vdo/indexer/index-session.c
+> @@ -100,7 +100,6 @@ static int get_index_session(struct uds_index_session *index_session)
+>  
+>  int uds_launch_request(struct uds_request *request)
+>  {
+> -	size_t internal_size;
+>  	int result;
+>  
+>  	if (request->callback == NULL) {
+> @@ -121,10 +120,7 @@ int uds_launch_request(struct uds_request *request)
+>  	}
+>  
+>  	/* Reset all internal fields before processing. */
+> -	internal_size =
+> -		sizeof(struct uds_request) - offsetof(struct uds_request, zone_number);
+> -	// FIXME should be using struct_group for this instead
+> -	memset((char *) request + sizeof(*request) - internal_size, 0, internal_size);
+> +	memset(&request->internal, 0, sizeof(request->internal));
+>  
+>  	result = get_index_session(request->session);
+>  	if (result != UDS_SUCCESS)
+> diff --git a/drivers/md/dm-vdo/indexer/indexer.h b/drivers/md/dm-vdo/indexer/indexer.h
+> index 3744aaf625b0..d765f24328eb 100644
+> --- a/drivers/md/dm-vdo/indexer/indexer.h
+> +++ b/drivers/md/dm-vdo/indexer/indexer.h
+> @@ -8,6 +8,7 @@
+>  
+>  #include <linux/mutex.h>
+>  #include <linux/sched.h>
+> +#include <linux/stddef.h>
+>  #include <linux/types.h>
+>  #include <linux/wait.h>
+>  
+> @@ -73,7 +74,7 @@ enum uds_request_type {
+>  	/* Remove any mapping for a name. */
+>  	UDS_DELETE,
+>  
+> -};
+> +} __packed;
+>  
+>  enum uds_open_index_type {
+>  	/* Create a new index. */
+> @@ -226,7 +227,7 @@ struct uds_zone_message {
+>  	enum uds_zone_message_type type;
+>  	/* The virtual chapter number to which the message applies */
+>  	u64 virtual_chapter;
+> -};
+> +} __packed;
+>  
+>  struct uds_index_session;
+>  struct uds_index;
+> @@ -253,34 +254,32 @@ struct uds_request {
+>  
+>  	/* The existing data associated with the request name, if any */
+>  	struct uds_record_data old_metadata;
+> -	/* Either UDS_SUCCESS or an error code for the request */
+> -	int status;
+>  	/* True if the record name had an existing entry in the index */
+>  	bool found;
+> +	/* Either UDS_SUCCESS or an error code for the request */
+> +	int status;
+>  
+> -	/*
+> -	 * The remaining fields are used internally and should not be altered by clients. The index
+> -	 * relies on zone_number being the first field in this section.
+> -	 */
+> -
+> -	/* The number of the zone which will process this request*/
+> -	unsigned int zone_number;
+> -	/* A link for adding a request to a lock-free queue */
+> -	struct funnel_queue_entry queue_link;
+> -	/* A link for adding a request to a standard linked list */
+> -	struct uds_request *next_request;
+> -	/* A pointer to the index processing this request */
+> -	struct uds_index *index;
+> -	/* Control message for coordinating between zones */
+> -	struct uds_zone_message zone_message;
+> -	/* If true, process request immediately by waking the worker thread */
+> -	bool unbatched;
+> -	/* If true, continue this request before processing newer requests */
+> -	bool requeued;
+> -	/* The virtual chapter containing the record name, if known */
+> -	u64 virtual_chapter;
+> -	/* The region of the index containing the record name */
+> -	enum uds_index_region location;
+> +	/* The remaining fields are used internally and should not be altered by clients. */
+> +	struct_group(internal,
+> +		     /* The virtual chapter containing the record name, if known */
+> +		     u64 virtual_chapter;
+> +		     /* The region of the index containing the record name */
+> +		     enum uds_index_region location;
+> +		     /* If true, process request immediately by waking the worker thread */
+> +		     bool unbatched;
+> +		     /* If true, continue this request before processing newer requests */
+> +		     bool requeued;
+> +		     /* Control message for coordinating between zones */
+> +		     struct uds_zone_message zone_message;
+> +		     /* The number of the zone which will process this request*/
+> +		     unsigned int zone_number;
+> +		     /* A link for adding a request to a lock-free queue */
+> +		     struct funnel_queue_entry queue_link;
+> +		     /* A link for adding a request to a standard linked list */
+> +		     struct uds_request *next_request;
+> +		     /* A pointer to the index processing this request */
+> +		     struct uds_index *index;
+> +		     );
+>  };
+>  
+>  /* Compute the number of bytes needed to store an index. */
+> -- 
+> 2.45.2
+> 
+> 
 
