@@ -1,70 +1,67 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A5B2A1A2397
-	for <dm-devel@lists.linux.dev>; Mon, 24 Feb 2025 21:49:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E609715886C
+	for <dm-devel@lists.linux.dev>; Mon, 24 Feb 2025 22:03:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740433770; cv=none; b=FkYHKMzrlD/Du6V2FCJ1u0Rkk6afz2PJW7F63gBVzaa3tLJXuszIfy7seiEFMJ7KPwYpDTvDcEhmkHoH+05IBjrusr/P5IkuYXq1fZo1JOpfGMcoJPGlOEItdPqNoi6dfL54NWegw4WlU+tQCRanHXGM3snGAc/yu/MnERCneEw=
+	t=1740434606; cv=none; b=DioQiEPaRUSB2DPCcT2J/ZvidoZlgS7kkIN7y12LmeBQosBw5j7AZZ2X1JUvIlAWGGCCDJV5mhXwEbLF71uXEQfVA6eIsMco4A/0HsJoBzHypaXiGVvu6FZSb5hIetB0Xx5ELgKadsB4YD4x+UASSYG7c0AuKjRofmGOzZ3+jtU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740433770; c=relaxed/simple;
-	bh=KCGI8Bnai1dk0eVxTgL7CFb9br1XQ3Qkk4898Kq1a6w=;
+	s=arc-20240116; t=1740434606; c=relaxed/simple;
+	bh=HdphhnkJ/blxxdCLXWXaEk7bi3rwRWbREBvdHwgbn9Q=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=RrRkGrt7uQ8yjx5Fk/0q4MexjLq+0L2MmRGJKkEm5jPP8DmiAkLVxlhZQIoTJWMrpw1GYnn+sAYubzDcfG8pf/4eV8tO4t3qY+ZBe61UutBjHvZ+psZLw/qeBwu/CTbbnYfeKP+aOv75D64hVrKWjkjx8vwaTpvF6KLQd7adAKs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=LWD7Ixq4; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=LWD7Ixq4; arc=none smtp.client-ip=195.135.223.130
+	 Content-Type:MIME-Version; b=N/rkh0NW6gxIZQz+3c4eWpaE/wWhGqk3WKuEgSN1VbR0od45vGZi8yF0+1bvOCp11dJJ5nlQsKirBMs2PLdaMxa7JeKmcKnlTejZupVkwI/PBK2sasAqF1bCoNpU2VNnc9cG0ZjSffEZ+oDQUwaL1nBUbL+U4lXBalPW995DuUM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=LhgLRiwW; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=UCfbczfN; arc=none smtp.client-ip=195.135.223.131
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="LWD7Ixq4";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="LWD7Ixq4"
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="LhgLRiwW";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="UCfbczfN"
 Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 858B32117A;
-	Mon, 24 Feb 2025 21:49:26 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id E4FAD1F44E;
+	Mon, 24 Feb 2025 22:03:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1740433766; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1740434602; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=eOyIi/z+ya+m76/JMC12tQPgO+s6n7qyU7DDlBmO+qw=;
-	b=LWD7Ixq46otwN5N6bcZMpKf3HgzjH/eRrdis1xIc1+s7OyoM3mYvDjR1370kQK/Y0HKveC
-	OeLP5EFC4FIUaNAsxVf9ghKzoDO+0z0ylrS1q73Srt9QV6RYEwir0qLDYzbzAkxgKr2V1Z
-	VO0rXUtxNibD8hTU0QGYULgt7G/ZAAw=
-Authentication-Results: smtp-out1.suse.de;
+	bh=HdphhnkJ/blxxdCLXWXaEk7bi3rwRWbREBvdHwgbn9Q=;
+	b=LhgLRiwWvpvtwVUOp9L1h4N7l1RuYxIJdkVFbKAMBsaxqshs666OETwK/cz85uu63FQugX
+	ql5Jbu972KD4I91Kq6ovX8OlAVpgZCCbwDaBCZlt8kHNSt3jeD2Xne4Iq+7fLZoj8MYrhb
+	2HX1/6/lrv6tpeIhGh6CHPq4GeVygVM=
+Authentication-Results: smtp-out2.suse.de;
 	none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1740433766; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1740434601; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=eOyIi/z+ya+m76/JMC12tQPgO+s6n7qyU7DDlBmO+qw=;
-	b=LWD7Ixq46otwN5N6bcZMpKf3HgzjH/eRrdis1xIc1+s7OyoM3mYvDjR1370kQK/Y0HKveC
-	OeLP5EFC4FIUaNAsxVf9ghKzoDO+0z0ylrS1q73Srt9QV6RYEwir0qLDYzbzAkxgKr2V1Z
-	VO0rXUtxNibD8hTU0QGYULgt7G/ZAAw=
+	bh=HdphhnkJ/blxxdCLXWXaEk7bi3rwRWbREBvdHwgbn9Q=;
+	b=UCfbczfNK0eEoDlRp+vq6MJA7Zbh7+mC7oqP4gMpcdq8riFBbSxgQHQaq3fD1cSZlMNXj2
+	e0y8X1s86kUN55sSMywvK0hGqBi0r5zvEmXJbMKzovHTzeWnWhbHbfkaGOS4qIbAU76223
+	wwICBQ9WuZio/YQU4RqEryjK9LDdPog=
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 52DA913707;
-	Mon, 24 Feb 2025 21:49:26 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id BE28313AA4;
+	Mon, 24 Feb 2025 22:03:21 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id 3UamEmbpvGdGTwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 24 Feb 2025 21:49:26 +0000
-Message-ID: <bd1ae3c37733c3ad90236faf6ef7dcf0b8bf950b.camel@suse.com>
-Subject: Re: [PATCH v4 09/10] libmpathcmd: honor MULTIPATH_SOCKET_NAME
- environment variable
+	id 0sbELKnsvGdHUwAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 24 Feb 2025 22:03:21 +0000
+Message-ID: <c021e98981f5dd3e95bbff3ac16f3081536335dc.camel@suse.com>
+Subject: Re: [PATCH] libmpathutils/uxsock.c: Include string.h for memcpy
 From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
-	dm-devel@lists.linux.dev, Alice Frosi <afrosi@redhat.com>, Paolo Bonzini
-	 <pbonzini@redhat.com>
-Date: Mon, 24 Feb 2025 22:49:25 +0100
-In-Reply-To: <Z7yt0vTRWUa1Bj3M@redhat.com>
-References: <20250221204108.70631-1-mwilck@suse.com>
-	 <20250221204108.70631-3-mwilck@suse.com> <Z7yt0vTRWUa1Bj3M@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Khem Raj <raj.khem@gmail.com>
+Cc: dm-devel@lists.linux.dev
+Date: Mon, 24 Feb 2025 23:03:21 +0100
+In-Reply-To: <Z7OkPcrX9dhWUPSn@redhat.com>
+References: <20250217200503.4166910-1-raj.khem@gmail.com>
+	 <Z7OkPcrX9dhWUPSn@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.54.3 
@@ -77,80 +74,64 @@ MIME-Version: 1.0
 X-Spam-Score: -4.30
 X-Spamd-Result: default: False [-4.30 / 50.00];
 	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	NEURAL_HAM_LONG(-1.00)[-0.999];
+	NEURAL_HAM_SHORT(-0.20)[-0.999];
 	MIME_GOOD(-0.10)[text/plain];
-	MID_RHS_MATCH_FROM(0.00)[];
+	TAGGED_RCPT(0.00)[];
 	RCVD_VIA_SMTP_AUTH(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
 	MIME_TRACE(0.00)[0:+];
 	ARC_NA(0.00)[];
 	TO_DN_SOME(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
+	FREEMAIL_TO(0.00)[redhat.com,gmail.com];
+	MID_RHS_MATCH_FROM(0.00)[];
 	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[5];
 	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	RCVD_TLS_ALL(0.00)[];
 	TO_MATCH_ENVRCPT_ALL(0.00)[];
 	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:email]
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:email,imap1.dmz-prg2.suse.org:helo]
 X-Spam-Flag: NO
 X-Spam-Level: 
 
-On Mon, 2025-02-24 at 12:35 -0500, Benjamin Marzinski wrote:
-> On Fri, Feb 21, 2025 at 09:41:08PM +0100, Martin Wilck wrote:
-> > In systemd installments, users can already override the socket
-> > names
-> > that systemd listens on. With this patch, clients using libmpathcmd
-> > can be customized to use a non-standard socket by setting an
-> > environment
-> > variable.
+On Mon, 2025-02-17 at 16:03 -0500, Benjamin Marzinski wrote:
+> On Mon, Feb 17, 2025 at 12:05:03PM -0800, Khem Raj wrote:
+> > Fixes
+> > uxsock.c:72:2: error: call to undeclared library function 'memcpy'
+> > with type 'void *(void *, const void *, unsigned long)'; ISO C99
+> > and later do not support implicit function declarations [-
+> > Wimplicit-function-declaration]
+>=20
+> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+Thanks, it turns out that we have this include already in the queue
+branch, but I applied your patch on stable-0.11.y and stable-0.10.y.
+
+Regards
+Martin
+
 > >=20
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > Signed-off-by: Khem Raj <raj.khem@gmail.com>
+> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> > Cc: Martin Wilck <mwilck@suse.com>
 > > ---
-> > =C2=A0libmpathcmd/mpath_cmd.c | 7 +++++--
-> > =C2=A01 file changed, 5 insertions(+), 2 deletions(-)
+> > =C2=A0libmpathutil/uxsock.c | 1 +
+> > =C2=A01 file changed, 1 insertion(+)
 > >=20
-> > diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-> > index 83cb6ad..5a23236 100644
-> > --- a/libmpathcmd/mpath_cmd.c
-> > +++ b/libmpathcmd/mpath_cmd.c
-> > @@ -20,6 +20,7 @@
+> > diff --git a/libmpathutil/uxsock.c b/libmpathutil/uxsock.c
+> > index 2135476d..a474874e 100644
+> > --- a/libmpathutil/uxsock.c
+> > +++ b/libmpathutil/uxsock.c
+> > @@ -8,6 +8,7 @@
 > > =C2=A0#include <stdlib.h>
 > > =C2=A0#include <unistd.h>
-> > =C2=A0#include <stdio.h>
-> > +#include <stdlib.h>
+> > =C2=A0#include <stdarg.h>
+> > +#include <string.h>
+> > =C2=A0#include <fcntl.h>
+> > =C2=A0#include <sys/ioctl.h>
 > > =C2=A0#include <sys/types.h>
-> > =C2=A0#include <sys/socket.h>
-> > =C2=A0#include <sys/un.h>
-> > @@ -104,6 +105,7 @@ int mpath_connect__(int nonblocking)
-> > =C2=A0	int flags =3D 0;
-> > =C2=A0	const char *const names[2] =3D {PATHNAME_SOCKET,
-> > ABSTRACT_SOCKET};
-> > =C2=A0	int name_idx =3D 0;
-> > +	const char *env_name =3D getenv("MULTIPATH_SOCKET_NAME"),
-> > *name;
-> > =C2=A0
-> > =C2=A0retry:
-> > =C2=A0	fd =3D socket(AF_LOCAL, SOCK_STREAM, 0);
-> > @@ -116,12 +118,13 @@ retry:
-> > =C2=A0			(void)fcntl(fd, F_SETFL,
-> > flags|O_NONBLOCK);
-> > =C2=A0	}
-> > =C2=A0
-> > -	len =3D mpath_fill_sockaddr__(&addr, names[name_idx]);
-> > +	name =3D env_name ? env_name : names[name_idx];
-> > +	len =3D mpath_fill_sockaddr__(&addr, name);
-> > =C2=A0	if (connect(fd, (struct sockaddr *)&addr, len) =3D=3D -1) {
-> > =C2=A0		int err =3D errno;
-> > =C2=A0
-> > =C2=A0		close(fd);
-> > -		if (++name_idx =3D=3D 1)
->=20
-> You lost a "+" from ++name_idx
 >=20
 
-Ouch, thanks a bunch for spotting that.
-
-Martin
