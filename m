@@ -1,105 +1,144 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDDF52571A1
-	for <dm-devel@lists.linux.dev>; Mon, 24 Feb 2025 12:49:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA3752571A1
+	for <dm-devel@lists.linux.dev>; Mon, 24 Feb 2025 12:53:59 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740401350; cv=none; b=GAUqOeRRTK2xw5JIeALfDuEWePqrUnbOQdAm1OJ6zRteq/9OPm/gFhoI/GjrOtFOu6S0Lrn6on6S2+zcT0PZoXWSt9cktIUf1rUITrYIjvZftFdCPc4b8FPJziZn2jkkhQfr96Aim6jED1hNvpzbS0lQa1slbArI8la2UfOPLDY=
+	t=1740401641; cv=none; b=AtUbeLgKGhZbh6DgV06HmRcfAWeO5iDgMuTLJBlpxjC51rsSTxRBXJ50f0Y+/FAsjrCwD6ugg/SkuV1chzjFm0YNd6Xsg4/r3j9NYaRlWK+ui1j7R+xy5UBggxpX4GUF+o1/sA9RQeztWkW5qNei8dw08D+iaVZUZxO5Fcf9dFg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740401350; c=relaxed/simple;
-	bh=n77Sv0za7CGRBq3rqjRvfDbwS7FOBbZBmcTY0dTkOtw=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=UmXsPvQwNAroNqohzBvYwT2hNngeTAWdnzm/ZPq8AquBqfm7OPzrVqxK2AQGgRo0AB1zFzp3AyOap0DVBozIScBgpgwtz94krMw6/PTeRMC2kSDG8iS8FbD6aPr6GRseVlHRPP5+AJMODt8zs1mnN2p0kqfS1CwcMRvF94DlA3w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BJ7IwI0q; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1740401641; c=relaxed/simple;
+	bh=cPqFlN9hhPH5PUCieVKmof6OSDpqARoal3nq00GKLP0=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=MIMh0oBd1kBRkDors/OWPacB8/tTN5C6RQpo/LhcPwlsqG16owR1DgEJXXI3XWPYmkQdsQKch8SOHKoAegbd5q49TjUwWBV/W5tVEIEImjTct16xhqdMmRHer9Pw24Eth5QEtXQRXxLboscvvBrrpJ+PGfHNj6H2zvGbqy5W1F8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SjWzaUZ/; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BJ7IwI0q"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SjWzaUZ/"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1740401347;
+	s=mimecast20190719; t=1740401638;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=trrO072s26o42y/7/skeNOeG9YbcSngz/Ed5VtEccKY=;
-	b=BJ7IwI0qpgh7cPYHYsQDJhhTuWfHRzIOG3MB7WuljKZlP11fTddKuvmNga38RhnfSf8H71
-	iLzQsqRkSm4AI/3GR86NnwebCuMJyukogUDBT1vQaIZdFZwK2UK/2Sc8qQMSa3JKy1QZFR
-	bl7kMGn6Ds/+mtnjr7EjRPmmMJOfLTM=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=RyZKAT7kvX4bnRDx3j7DvsDLJEcrsNoetXZGX7kmB2s=;
+	b=SjWzaUZ/4GEtgUpfawY7h2oAntozUHI4qTQFj0DxYi71k3YS9XrLhlBJ347FlI/PjsGC3S
+	OzIjk+0oUz0TvXqwgFyPdL3Vq3c9pPhNiJAQore5WDyEkSA0XeylEPoH/nzJFllIriqD/e
+	3XEE6TpG81UXeS0g5c/gJRRX4YjmelI=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-652-2Rac6o_gMi-n-WW44cDzSQ-1; Mon,
- 24 Feb 2025 07:49:02 -0500
-X-MC-Unique: 2Rac6o_gMi-n-WW44cDzSQ-1
-X-Mimecast-MFC-AGG-ID: 2Rac6o_gMi-n-WW44cDzSQ_1740401341
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-650-sr5YoVDqONGmoayMPwNkzw-1; Mon,
+ 24 Feb 2025 07:53:56 -0500
+X-MC-Unique: sr5YoVDqONGmoayMPwNkzw-1
+X-Mimecast-MFC-AGG-ID: sr5YoVDqONGmoayMPwNkzw_1740401634
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 36C561800875;
-	Mon, 24 Feb 2025 12:49:01 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E23A51800874;
+	Mon, 24 Feb 2025 12:53:53 +0000 (UTC)
 Received: from [10.45.224.44] (unknown [10.45.224.44])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9FBDB1800352;
-	Mon, 24 Feb 2025 12:48:58 +0000 (UTC)
-Date: Mon, 24 Feb 2025 13:48:54 +0100 (CET)
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A1C9D300018D;
+	Mon, 24 Feb 2025 12:53:50 +0000 (UTC)
+Date: Mon, 24 Feb 2025 13:53:47 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-cc: Ken Raeburn <raeburn@redhat.com>, Matthew Sakai <msakai@redhat.com>, 
-    Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>, 
-    device-mapper development <dm-devel@lists.linux.dev>
-Subject: [git pull] device mapper fixes for 6.14
-Message-ID: <21cb8031-3dd4-9cb0-94b3-4be4b19b53f1@redhat.com>
+To: Jinliang Zheng <alexjlzheng@gmail.com>
+cc: agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev, 
+    linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, 
+    flyingpeng@tencent.com, txpeng@tencent.com, dchinner@redhat.com, 
+    Jinliang Zheng <alexjlzheng@tencent.com>
+Subject: Re: [PATCH] dm: fix unconditional IO throttle caused by
+ REQ_PREFLUSH
+In-Reply-To: <20250220112014.3209940-1-alexjlzheng@tencent.com>
+Message-ID: <1931a9db-a81d-daf2-2e89-d1f183946618@redhat.com>
+References: <20250220112014.3209940-1-alexjlzheng@tencent.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: WI3aG09HlnmUh-5Z_wBQf_v05UbGtJmhxYXkCTUKnRg_1740401341
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-Hi Linus
+Applied, thanks.
 
-The following changes since commit 0ad2507d5d93f39619fc42372c347d6006b64319:
-
-  Linux 6.14-rc3 (2025-02-16 14:02:44 -0800)
-
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.14/dm-fixes
-
-for you to fetch changes up to 36e1b81f599a093ec7477e4593e110104adcfb96:
-
-  dm vdo: add missing spin_lock_init (2025-02-24 12:07:02 +0100)
-
-Please, pull, thanks
 Mikulas
 
-----------------------------------------------------------------
-- dm-vdo: add missing spin_lock_init
 
-- dm-integrity: divide-by-zero fix
 
-- dm-integrity: do not report unused entries in the table line
------BEGIN PGP SIGNATURE-----
+On Thu, 20 Feb 2025, Jinliang Zheng wrote:
 
-iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCZ7xnCRQcbXBhdG9ja2FA
-cmVkaGF0LmNvbQAKCRATAyx9YGnhbVueAP47A+AczQa868MpFc2p8w5AmqqF6jyW
-s303VCS9wUCtBwD/TkFcYz5AtIRvIIdZiwtOKALPekjeLeOZaOSnrdJVkw0=
-=x00V
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Ken Raeburn (1):
-      dm vdo: add missing spin_lock_init
-
-Milan Broz (2):
-      dm-integrity: Avoid divide by zero in table status in Inline mode
-      dm-integrity: Do not emit journal configuration in DM table for Inline mode
-
- drivers/md/dm-integrity.c  | 25 ++++++++++++++-----------
- drivers/md/dm-vdo/dedupe.c |  1 +
- 2 files changed, 15 insertions(+), 11 deletions(-)
+> When a bio with REQ_PREFLUSH is submitted to dm, __send_empty_flush()
+> generates a flush_bio with REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC,
+> which causes the flush_bio to be throttled by wbt_wait().
+> 
+> An example from v5.4, similar problem also exists in upstream:
+> 
+>     crash> bt 2091206
+>     PID: 2091206  TASK: ffff2050df92a300  CPU: 109  COMMAND: "kworker/u260:0"
+>      #0 [ffff800084a2f7f0] __switch_to at ffff80004008aeb8
+>      #1 [ffff800084a2f820] __schedule at ffff800040bfa0c4
+>      #2 [ffff800084a2f880] schedule at ffff800040bfa4b4
+>      #3 [ffff800084a2f8a0] io_schedule at ffff800040bfa9c4
+>      #4 [ffff800084a2f8c0] rq_qos_wait at ffff8000405925bc
+>      #5 [ffff800084a2f940] wbt_wait at ffff8000405bb3a0
+>      #6 [ffff800084a2f9a0] __rq_qos_throttle at ffff800040592254
+>      #7 [ffff800084a2f9c0] blk_mq_make_request at ffff80004057cf38
+>      #8 [ffff800084a2fa60] generic_make_request at ffff800040570138
+>      #9 [ffff800084a2fae0] submit_bio at ffff8000405703b4
+>     #10 [ffff800084a2fb50] xlog_write_iclog at ffff800001280834 [xfs]
+>     #11 [ffff800084a2fbb0] xlog_sync at ffff800001280c3c [xfs]
+>     #12 [ffff800084a2fbf0] xlog_state_release_iclog at ffff800001280df4 [xfs]
+>     #13 [ffff800084a2fc10] xlog_write at ffff80000128203c [xfs]
+>     #14 [ffff800084a2fcd0] xlog_cil_push at ffff8000012846dc [xfs]
+>     #15 [ffff800084a2fda0] xlog_cil_push_work at ffff800001284a2c [xfs]
+>     #16 [ffff800084a2fdb0] process_one_work at ffff800040111d08
+>     #17 [ffff800084a2fe00] worker_thread at ffff8000401121cc
+>     #18 [ffff800084a2fe70] kthread at ffff800040118de4
+> 
+> After commit 2def2845cc33 ("xfs: don't allow log IO to be throttled"),
+> the metadata submitted by xlog_write_iclog() should not be throttled.
+> But due to the existence of the dm layer, throttling flush_bio indirectly
+> causes the metadata bio to be throttled.
+> 
+> Fix this by conditionally adding REQ_IDLE to flush_bio.bi_opf, which makes
+> wbt_should_throttle() return false to avoid wbt_wait().
+> 
+> Signed-off-by: Jinliang Zheng <alexjlzheng@tencent.com>
+> Reviewed-by: Tianxiang Peng <txpeng@tencent.com>
+> Reviewed-by: Hao Peng <flyingpeng@tencent.com>
+> ---
+>  drivers/md/dm.c | 8 ++++++--
+>  1 file changed, 6 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 4d1e42891d24..5ab7574c0c76 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1540,14 +1540,18 @@ static void __send_empty_flush(struct clone_info *ci)
+>  {
+>  	struct dm_table *t = ci->map;
+>  	struct bio flush_bio;
+> +	blk_opf_t opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
+> +
+> +	if ((ci->io->orig_bio->bi_opf & (REQ_IDLE | REQ_SYNC)) ==
+> +	    (REQ_IDLE | REQ_SYNC))
+> +		opf |= REQ_IDLE;
+>  
+>  	/*
+>  	 * Use an on-stack bio for this, it's safe since we don't
+>  	 * need to reference it after submit. It's just used as
+>  	 * the basis for the clone(s).
+>  	 */
+> -	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0,
+> -		 REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC);
+> +	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0, opf);
+>  
+>  	ci->bio = &flush_bio;
+>  	ci->sector_count = 0;
+> -- 
+> 2.41.1
+> 
 
