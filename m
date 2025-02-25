@@ -1,60 +1,65 @@
-Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07A641885B8
-	for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 10:44:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.33
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3DD126A1BB
+	for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 11:03:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740480257; cv=none; b=jB/ACKCr41XdY06jJ7ctf8M6xALDUp6XnI28c7tY8MDvaVkMVXGB1hb7vX/fiJXVrWCC6cCVqgO3CHrjw/w9Aj0vQlhMffj2QQ5zab1A2A50tybRW9zGDXDADBdILBQTyiz4/9u71/tAdRrtvLCDWWQ09mSysPvW1Epl0YjIdb0=
+	t=1740481387; cv=none; b=nRYaoHNHXjmXlpdFlLVvwSJJbwSvtDFTuSi/kPOh2ozl+1tzxp46kvUSQoy09bWS0Kqz3hq596Q+PfEJubhE5eusNYjLdasvL8eQwyYAbpVtMGBd9qT6EC/txum61XQkUCzId6EHXeiI3x5Td2d754WmVrses7iCAzfC52eCbqQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740480257; c=relaxed/simple;
-	bh=+YCvgfJY8kmdCGckU3ZYn9jaBRDU4SyDgXCEvstDpWo=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:In-Reply-To:
-	 Content-Type:References; b=M9hO+k+iAPZ7eWCuawDbkokfrms6C20+Snep3DwOcLFQNf4j1SiqDUgbfO8qzsqC9utEkifIn52wu8ip0jB7fOwPMe9ZojIUwyrL40aPmI3ey9BmSwuDGDTtx/gRulzkfZ9XXGv3VVDxRzBUBMX2Vn7zlwXYEUONZyPNn5pEFlE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=qWZu7bA3; arc=none smtp.client-ip=203.254.224.33
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
+	s=arc-20240116; t=1740481387; c=relaxed/simple;
+	bh=LHbv0ySp7xfDxrK4xHapFhpfYe+OzWaL/Jp6LJ1qBUw=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=gZFKSauQUPz7zRY40aufsxpdZ9ZlXNzqTpUF3nF8N73F/qczqWZTB2Y1ZfeCx6qTvyctG3nSAnfP2i6bXnuGGc4tABnu6xYAyHUQIPmaR7X92/Sd59XXghjwW4It7XIOPVVIwsUVJJS35AhDIbe3P/iA7HVv6wU53ooboMdBvBI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GaOwrVl0; arc=none smtp.client-ip=209.85.208.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="qWZu7bA3"
-Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
-	by mailout3.samsung.com (KnoxPortal) with ESMTP id 20250225104412epoutp03cecc3b0d31a5fdae1e046cc26c48376e~nbZGOP8-90515405154epoutp03F
-	for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 10:44:12 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com 20250225104412epoutp03cecc3b0d31a5fdae1e046cc26c48376e~nbZGOP8-90515405154epoutp03F
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1740480252;
-	bh=RSnoOOU6uHj4f6zITlTwry2XlgyGNMAfQvzi7dVo7o0=;
-	h=Date:Subject:From:To:Cc:In-Reply-To:References:From;
-	b=qWZu7bA3sESQMI5HQx3HILT2CU6gSDYgsQ6ndxxm2SkMWgPp379YZSObOAdL/Kj3e
-	 BOIQWXwMtk+qsqUEJnl8u3dcEuqVlvFh7FLTIytQJGayhVhKkDxIbDZimiIcA8nG4X
-	 TeZNfYs9ERc/1tBEoHr74BgURaiktTSKuyyIpkVw=
-Received: from epsnrtp4.localdomain (unknown [182.195.42.165]) by
-	epcas5p1.samsung.com (KnoxPortal) with ESMTP id
-	20250225104412epcas5p1f4ab699d4c248d3d4bf273a57039ca77~nbZGC7F3I1439714397epcas5p1l;
-	Tue, 25 Feb 2025 10:44:12 +0000 (GMT)
-Received: from epsmges5p3new.samsung.com (unknown [182.195.38.177]) by
-	epsnrtp4.localdomain (Postfix) with ESMTP id 4Z2Dk32SJsz4x9Q2; Tue, 25 Feb
-	2025 10:44:11 +0000 (GMT)
-Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
-	epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	9B.17.19956.BFE9DB76; Tue, 25 Feb 2025 19:44:11 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
-	epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
-	20250225104411epcas5p2ffaf2c1ed42c9df33ce1188d205bf8fc~nbZEgnNY11012510125epcas5p2o;
-	Tue, 25 Feb 2025 10:44:11 +0000 (GMT)
-Received: from epsmgmc1p1new.samsung.com (unknown [182.195.42.40]) by
-	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
-	20250225104411epsmtrp1ed34d150aef35e25a6a1466a94882170~nbZEgApoj2829528295epsmtrp1a;
-	Tue, 25 Feb 2025 10:44:11 +0000 (GMT)
-X-AuditID: b6c32a4b-fe9f470000004df4-ca-67bd9efbe13d
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
-	epsmgmc1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	05.98.23488.AFE9DB76; Tue, 25 Feb 2025 19:44:10 +0900 (KST)
-Received: from [107.122.11.51] (unknown [107.122.11.51]) by
-	epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
-	20250225104405epsmtip1094d4f1c2bd87a459a9a52020f9e4ec6~nbY-Si5eP1574915749epsmtip1g;
-	Tue, 25 Feb 2025 10:44:04 +0000 (GMT)
-Message-ID: <f6949dd3-220a-4ae8-93aa-d2dd90a3abbd@samsung.com>
-Date: Tue, 25 Feb 2025 16:14:03 +0530
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GaOwrVl0"
+Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-5dec817f453so9124364a12.2
+        for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 03:03:05 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1740481384; x=1741086184; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
+        bh=X9PhBCHuwMSAmBjmzYgRXFDACJ3K4AQ8Leyj9gnJygE=;
+        b=GaOwrVl01HV1ZI7vkmZSRkehB1FbhqJ9ZiimTU3ij35t8WHzeIQXReYUO4Dpi1RoCB
+         1SXfxwRVYCAkPtDhxoVWzDhliU/TwyOvSe1c7igXhSXublcW7uTGcBG/hF9H70ayUWbP
+         pcqkMT6srfkL9Rwf8uLAyBILlrSvA+NgGmT49nk9qPv8Csa/h6gnsJVNsb6kTwmW/FEa
+         cf58WeUqaKiRSz0cFcWKVYcZFcdzstjd3h15jYYLGGXMdLZaMsqmFYObtpdoMOA8ZwLf
+         8QU2vVFmn/16bJftKyqhFctaGxUrzmPoSiJWIj/JoulewO2OxrnEYO9TXpE+olc6p6Dn
+         uROA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1740481384; x=1741086184;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=X9PhBCHuwMSAmBjmzYgRXFDACJ3K4AQ8Leyj9gnJygE=;
+        b=LKYEbUNRzyihZZRJQ7eA2y8DbaVdOiBxsNMf9hTxq+u5e1x/F1HjVbCyZlODcaQqOO
+         xu+4RXyxiv7J1LUTPVOZ6eF4dW3QjRsrQaykJTUxrtKwOaAcrl3AjEnkz9e/KlkpJKu0
+         0ReiaNmiSDiscmdfn3pOwswpWjpqAliKTN9KQ2w7jtyyf+MJ5BpW+Q6Cmh4nF4gg/rG+
+         o0Q2w5sBVn9t5ImS0zIwp5VkRUt1x4HGcxyNPpBFkJ8hXY5e9Z7qo77ys9NMe7Bv7fJG
+         KxnPFXMesgxsyRRtVjbdWHf07nOGKN+AWd0U3hCjXAxhpbA2aD9BTLfutXSG3hFjthZN
+         keLw==
+X-Forwarded-Encrypted: i=1; AJvYcCWynyBtTgR58TNeUdPaPM8IV5odmYAk7yP8gcyeWQ9AqoKp0hHci1j9WLevNDWtAkHHwXDX7BhPww==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzW0R9GW2lQccuu3xBibfiCO9GCmgWiILEnIRue+VqtYPlk+eKi
+	yfOVQn2FKdBUset2CuWt5zhC6CAcZ3LJ2t6KGaM831OC0VZeQO8e
+X-Gm-Gg: ASbGncvqEiHLGFMSH+WK1Pm5aOOghtWXOrDUkR5MOEbnhv2ImZ8wtgfBoSBjwFDbKrB
+	fK90hOZ1bECTOv7AoEQAwY/LOAIKYgklSKbIPZxLm2QdwPcEsPHsTuPITGkgkN5yv0ycSCADSyB
+	9dBr2afhRrvnv0Ps4M+ZD6KzFSXoyLyh1CmIv44YQKi/fi6vKnS6umlx82hEQj+j5ip2DSYZYXB
+	EAYkUILBUojPznULwqIhKZFUZ01AszVvIwhjhOmG+iRXCEjwNJIkUCRny3s6MZ3P7dOJhpkdZyh
+	RzZv1fiQCAFB9u3fRmitlKBqDROOqJI5S0IslFHfRZ9+hn5XOg==
+X-Google-Smtp-Source: AGHT+IEfWZbLPMPl4xzpoUMh28dOs0f97cyZOw21N18EzeoLdRVruBnMgEdxH2T6RxcFsIF+5yrnJA==
+X-Received: by 2002:a05:6402:2b88:b0:5de:d6c3:111a with SMTP id 4fb4d7f45d1cf-5e0b70d034bmr14495875a12.3.1740481383698;
+        Tue, 25 Feb 2025 03:03:03 -0800 (PST)
+Received: from [147.251.42.106] (fosforos.fi.muni.cz. [147.251.42.106])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5e460d1bcb6sm1042969a12.55.2025.02.25.03.03.03
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 25 Feb 2025 03:03:03 -0800 (PST)
+Message-ID: <ba3840dd-e3a7-4896-89c9-0f131bb46fa5@gmail.com>
+Date: Tue, 25 Feb 2025 12:03:02 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -63,66 +68,119 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
 Subject: Re: sysfs integrity fields use
-From: Kanchan Joshi <joshi.k@samsung.com>
-To: Milan Broz <gmazyland@gmail.com>, linux-block
-	<linux-block@vger.kernel.org>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig
-	<hch@infradead.org>, "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
-Content-Language: en-US
-In-Reply-To: <823d3261-671d-41cb-ab15-10a361c48bca@samsung.com>
-Content-Transfer-Encoding: 8bit
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFupjk+LIzCtJLcpLzFFi42LZdlhTQ/f3vL3pBmsmC1ksWDSXxeLY/lns
-	FqcnLGKy2HtL22L58X9MDqweO2fdZffYvELL48XmmYweH5/eYvH4vEkugDUq2yYjNTEltUgh
-	NS85PyUzL91WyTs43jne1MzAUNfQ0sJcSSEvMTfVVsnFJ0DXLTMHaLWSQlliTilQKCCxuFhJ
-	386mKL+0JFUhI7+4xFYptSAlp8CkQK84Mbe4NC9dLy+1xMrQwMDIFKgwITtj0dLHrAUTWSrW
-	TL7C0sC4jrmLkZNDQsBE4uG9HywgtpDAbkaJ190qXYxcQPYnRokj53+yQzjfGCUaJ55kgel4
-	s2ANK0RiL6PErcbJUM5bRomzm3ewgVTxCthJTL34EcxmEVCVODrhCxNEXFDi5MwnYJNEBeQl
-	7t+awQ5iCwuoSzzY+oCxi5GDg01AU+LC5FKQsIhAoETjzjtgVzALTGWUWPL9CNgcZgFxiVtP
-	5oPZnAL2En0377BDxOUlmrfOZgZpkBD4yS6xa3YrE8TZLhKtG36zQtjCEq+Ob2GHsKUkXva3
-	QdnZEg8ePYB6s0Zix+Y+qHp7iYY/N1hBjmMGOm79Ln2IXXwSvb+fMIGEJQR4JTrahCCqFSXu
-	TXoK1Sku8XDGEijbQ+L6mdNMkKA+yijxYwrjBEaFWUihMgvJZ7OQfDMLYfECRpZVjJKpBcW5
-	6anFpgXGeanl8PhOzs/dxAhOmFreOxgfPfigd4iRiYPxEKMEB7OSCC9n5p50Id6UxMqq1KL8
-	+KLSnNTiQ4ymwOiZyCwlmpwPTNl5JfGGJpYGJmZmZiaWxmaGSuK8zTtb0oUE0hNLUrNTUwtS
-	i2D6mDg4pRqYttpJSm5Uar/mX/7QySNJ//x10S0GfffurV1WseVJ+xbzfzNY5HZJftrhUqM/
-	/5NNI9ebF1U8gtybfjpsPF2k5KymMm/N3U0LFY0z7vf+qFUPsFleXJn5pe2m2nd1ow1qWdyJ
-	gaqTXua2b3m/3Vvmy6qe5RGOHZnzHs9TuXdpm6flf4O4xgjlxcubL2Yc2JRmfPcr27omddn5
-	bRUX8o4W1u2wlDZcP+OfumvKAb+3V57yLJtqyLP6UFzYiuMXWeadmGHiWig/aY3IwYZzoUyy
-	U65WrEh5lnx/w+KiWHHJrRn/smW/B+0qy1AV+5z/7/XdNZ4Lt/tOepCqaTa7hlVWW32ugqIu
-	j0j4kWTRIm5fJZbijERDLeai4kQAAhi6UCEEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrNLMWRmVeSWpSXmKPExsWy7bCSnO7veXvTDZ4mWixYNJfF4tj+WewW
-	pycsYrLYe0vbYvnxf0wOrB47Z91l99i8QsvjxeaZjB4fn95i8fi8SS6ANYrLJiU1J7MstUjf
-	LoErY9HSx6wFE1kq1ky+wtLAuI65i5GTQ0LAROLNgjWsXYxcHEICuxklNh1bxgqREJdovvaD
-	HcIWllj57zk7RNFrRolJD+aDdfMK2ElMvfiRDcRmEVCVODrhCxNEXFDi5MwnLCC2qIC8xP1b
-	M8AGCQuoSzzY+oCxi5GDg01AU+LC5FKQsIhAoMS/ufPB5jMLTGeU2H9tFRvEsqNAzoH3YIOY
-	gS669WQ+2AJOAXuJvpt32CHiZhJdW7sYIWx5ieats5knMArNQnLHLCTts5C0zELSsoCRZRWj
-	ZGpBcW56brJhgWFearlecWJucWleul5yfu4mRnB8aGnsYHz3rUn/ECMTB+MhRgkOZiURXs7M
-	PelCvCmJlVWpRfnxRaU5qcWHGKU5WJTEeVcaRqQLCaQnlqRmp6YWpBbBZJk4OKUamJQ+2BZ1
-	t+T/2rVMWarMZ4bEm5ym6dzFi5+/2FOxWsHcPGOe9HtBlQ1ns/Yd5++3FhB2XcB9+oOi99q8
-	S42rp8hxeOsclzxt6xmylTOyvlLmNpvEu287P5Yc+Rm3VSyjgvfqlhivH84RT/p+hUw7GM7m
-	X3+f4b0C4yYhVpf0P2d4Si9FTIhnfyU4b7XAehXrLtFIz9m3j0Tqdtznq0k7envTifbcTBWl
-	SxXd96UXcjJLPZifwzb/eIyh/YWFqQllG1oa0zk15LIXHNAUP7DE83ff31MxhzeeuHH3d+Od
-	IwUL59xlXlLPtOIwe6Jl0t+Ena2tS1xDuNYX5s+Illg2Y470uxdBMh0bXt/RkWcTUGIpzkg0
-	1GIuKk4EAHKXfur+AgAA
-X-CMS-MailID: 20250225104411epcas5p2ffaf2c1ed42c9df33ce1188d205bf8fc
-X-Msg-Generator: CA
-Content-Type: text/plain; charset="utf-8"
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20250225092525epcas5p31dd0a19ffdfb39f3f2ce4acd1c6da7ee
+To: Kanchan Joshi <joshi.k@samsung.com>,
+ linux-block <linux-block@vger.kernel.org>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>,
+ Christoph Hellwig <hch@infradead.org>,
+ "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
 References: <CGME20250225092525epcas5p31dd0a19ffdfb39f3f2ce4acd1c6da7ee@epcas5p3.samsung.com>
-	<67795955-93a4-405b-b0b7-e6b5d921f35e@gmail.com>
-	<823d3261-671d-41cb-ab15-10a361c48bca@samsung.com>
+ <67795955-93a4-405b-b0b7-e6b5d921f35e@gmail.com>
+ <823d3261-671d-41cb-ab15-10a361c48bca@samsung.com>
+Content-Language: en-US
+From: Milan Broz <gmazyland@gmail.com>
+Autocrypt: addr=gmazyland@gmail.com; keydata=
+ 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
+In-Reply-To: <823d3261-671d-41cb-ab15-10a361c48bca@samsung.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On 2/25/2025 3:40 PM, Kanchan Joshi wrote:
+On 2/25/25 11:10 AM, Kanchan Joshi wrote:
+> On 2/25/2025 2:53 PM, Milan Broz wrote:
+>> Hi,
+>>
+>> I tried to add some support for using devices with PI/DIF metadata
+>> and checked (through sysfs) how large metadata space per sector
+>> is available.
+>>
+>> The problem is that some values behave differently than I expected.
+>>
+>> For an NVMe drive, reformatted to 4096 + 64 profile, I see this:
+>>
+>> - /sys/block/<disk>/integrity/device_is_integrity_capable
+>>     Contains 0 (?)
+>>     According to docs, this field
+>>    "Indicates whether a storage device is capable of storing integrity
+>> metadata.
+>>    Set if the device is T10 PI-capable."
+>>
+>> - /sys/block/<disk>/integrity/format
+>>    Contains expected "nop" (not "none")
+>>
+>> - /sys/block/<disk>/integrity/tag_size
+>>     Contains 0 (?)
+> 
+> This and "nop" indicates that pi-type was configured to be 0?
+> Maybe you can share the nvme format command as well.
+
+Sure, it is formatted to 4k data + 64 bytes metadata profile:
+
+# nvme id-ns -H /dev/nvme0n1
+...
+
+LBA Format  0 : Metadata Size: 0   bytes - Data Size: 512 bytes - Relative Performance: 0 Best
+LBA Format  1 : Metadata Size: 8   bytes - Data Size: 512 bytes - Relative Performance: 0 Best
+LBA Format  2 : Metadata Size: 0   bytes - Data Size: 4096 bytes - Relative Performance: 0 Best
+LBA Format  3 : Metadata Size: 64  bytes - Data Size: 4096 bytes - Relative Performance: 0 Best (in use)
+
+formatted with
+# nvme format --lbaf=3 --force /dev/nvme0n1
+
 >>     According to docs, this is "Number of bytes of integrity tag space
 >>     available per 512 bytes of data."
 >>     (I think 512 bytes is incorrect; it should be sector size, or perhaps
 >>      value in protection_interval_bytes, though.)
 >>
 >> Then we have new (undocumented) value for NVMe in
->> -/sys/block/<nvme>/integrity/metadata_bytes
+>> - /sys/block/<nvme>/integrity/metadata_bytes
 >>     This contains the correct 64.
+> 
 > Maybe you mean "/sys/block/>/metadata_bytes"?
 
-/sys/block/<nvme>/metadata_bytes.
+Yes, it is not under integrity subdir, just copy& paste error, sorry.
+
+Just to add - I would like to add these integrity fields also to lsblk, but there we need exact
+specification where to get integrity info.
+
+Milan
+
