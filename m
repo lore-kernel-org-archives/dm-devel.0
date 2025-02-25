@@ -1,33 +1,33 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDD213FE4
-	for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 15:06:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78C1B26A0AD
+	for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 15:07:58 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740496002; cv=none; b=TU+ADwvmESsCE+ZO/C7t6YfXxAXz2VQ9qBD85v2qJ5W/eIHoB5zQXMjw6oWBUnl2qgwcVGz1+Wzh4KaLLPVdUnMtJln3X9BYZrgIGdlzge0oBV5fh2q2zkR9FT9qQ+0ki047jF93fSuM6GwqMIeDfw1wULggPxP0EdksoKouh/k=
+	t=1740496080; cv=none; b=E1UhHMIK4Lq8NY1BQORRy6N8n6r3kNhcfkblNzvvDwk5Y2HM4IZY27HzzWttRBXrkydnvGrk62VnnMEPEeUGl4s7RsdDmztZmSdU+UvjdsECjaS+l+rToSEx365lJqaBFPb8zzL5wYT+qtEp/L0Q+ZsLFQG6pQc6X0gwXF8gR7M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740496002; c=relaxed/simple;
-	bh=wxCjwY2IPeYFCaeJ3Ei+L8XPqFtp766dRGefmJ2mAF4=;
+	s=arc-20240116; t=1740496080; c=relaxed/simple;
+	bh=XOZtUF0f3op4qCgTNJ7ufH2wcZyTZQaZySaKmdTYvuI=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=WcFwDJQZO08gfu1Kt0+91FcOCyFo6UqYkwNqvbFugChgpKQ4Co+Npbwq/1obT0kWjy9D8o5ARdIM7AZ2oM0LAjIyvHneL+ZRaXlz+FikZfN2aaFs5312wFyekTpK9spTioz7lkAgx5hO5sZCTd8sMBPc3+FC4XXk7LNQgbixjIw=
+	 Content-Type:Content-Disposition:In-Reply-To; b=MCHKZXWuUB124IvdoSszSrsCsvYpsVuLIwTF00FyzoLRwE06dAz1JIla74VWnaBFQ/MBXkuK9k7u7NumjOOPB7Ww2QXgvNss/1QqWcwKRQ8BjewY01nbeUu69y8kuo4invc8XbM1ZKd+VjrhJHBE25ehs2YLuTT3XSz1wLWh5Fo=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id 15B3268D07; Tue, 25 Feb 2025 16:06:27 +0100 (CET)
-Date: Tue, 25 Feb 2025 16:06:26 +0100
+	id 5899C68D05; Tue, 25 Feb 2025 16:07:54 +0100 (CET)
+Date: Tue, 25 Feb 2025 16:07:53 +0100
 From: Christoph Hellwig <hch@lst.de>
 To: Anuj Gupta <anuj20.g@samsung.com>
 Cc: axboe@kernel.dk, hch@lst.de, kbusch@kernel.org,
 	martin.petersen@oracle.com, anuj1072538@gmail.com,
 	nikh1092@linux.ibm.com, linux-nvme@lists.infradead.org,
 	linux-block@vger.kernel.org, linux-scsi@vger.kernel.org,
-	dm-devel@lists.linux.dev, M Nikhil <nikhilm@linux.ibm.com>
-Subject: Re: [PATCH v1 1/3] block: Fix incorrect integrity sysfs reporting
- for DM devices
-Message-ID: <20250225150626.GA6099@lst.de>
-References: <20250225044653.6867-1-anuj20.g@samsung.com> <CGME20250225045514epcas5p10d06ab361a4125a94933fa8235fe3fa8@epcas5p1.samsung.com> <20250225044653.6867-2-anuj20.g@samsung.com>
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH v1 2/3] nvme: Fix incorrect block integrity sysfs
+ values for non-PI namespaces
+Message-ID: <20250225150753.GB6099@lst.de>
+References: <20250225044653.6867-1-anuj20.g@samsung.com> <CGME20250225045516epcas5p3fa5712152300bf976d1bc0ab26211633@epcas5p3.samsung.com> <20250225044653.6867-3-anuj20.g@samsung.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -36,64 +36,26 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250225044653.6867-2-anuj20.g@samsung.com>
+In-Reply-To: <20250225044653.6867-3-anuj20.g@samsung.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Tue, Feb 25, 2025 at 10:16:51AM +0530, Anuj Gupta wrote:
-> The integrity stacking logic in device-mapper currently does not
-> explicitly mark the device with BLK_INTEGRITY_NOGENERATE and
-> BLK_INTEGRITY_NOVERIFY when the underlying device(s) do not support
-> integrity. This can lead to incorrect sysfs reporting of integrity
-> attributes.
-> 
-> Additionally, queue_limits_stack_integrity() incorrectly sets
-> BLK_INTEGRITY_DEVICE_CAPABLE for a DM device even when none of its
-> underlying devices support integrity. This happens because the flag is
-> blindly inherited from the first base device, even if it lacks integrity
-> support.
-> 
-> This patch ensures:
-> 1. BLK_INTEGRITY_NOGENERATE and BLK_INTEGRITY_NOVERIFY are set correctly:
->    - When the underlying device does not support integrity.
->    - When integrity stacking fails due to incompatible profiles.
-> 2. device_is_integrity_capable is correctly propagated to reflect the
-> actual capability of the stacked device.
-> 
-> Reported-by: M Nikhil <nikhilm@linux.ibm.com>
-> Link: https://lore.kernel.org/linux-block/f6130475-3ccd-45d2-abde-3ccceada0f0a@linux.ibm.com/
-> Fixes: c6e56cf6b2e7 ("block: move integrity information into queue_limits")
-> Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
-> ---
->  block/blk-settings.c | 9 +++++++--
->  1 file changed, 7 insertions(+), 2 deletions(-)
-> 
-> diff --git a/block/blk-settings.c b/block/blk-settings.c
-> index c44dadc35e1e..c32517c8bc2e 100644
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> @@ -861,7 +861,8 @@ bool queue_limits_stack_integrity(struct queue_limits *t,
+On Tue, Feb 25, 2025 at 10:16:52AM +0530, Anuj Gupta wrote:
+>  	memset(bi, 0, sizeof(*bi));
 >  
->  	if (!ti->tuple_size) {
->  		/* inherit the settings from the first underlying device */
-> -		if (!(ti->flags & BLK_INTEGRITY_STACKED)) {
-> +		if (!(ti->flags & BLK_INTEGRITY_STACKED) &&
-> +		    (bi->flags & BLK_INTEGRITY_DEVICE_CAPABLE)) {
->  			ti->flags = BLK_INTEGRITY_DEVICE_CAPABLE |
->  				(bi->flags & BLK_INTEGRITY_REF_TAG);
->  			ti->csum_type = bi->csum_type;
+> +	bi->flags = BLK_INTEGRITY_NOGENERATE | BLK_INTEGRITY_NOVERIFY;
+>  	if (!head->ms)
+>  		return true;
+>  
+> @@ -1850,6 +1851,9 @@ static bool nvme_init_integrity(struct nvme_ns_head *head,
+>  		break;
+>  	}
+>  
+> +	if (bi->flags & BLK_INTEGRITY_DEVICE_CAPABLE)
+> +		bi->flags &= ~(BLK_INTEGRITY_NOGENERATE |
+> +			       BLK_INTEGRITY_NOVERIFY);
 
-Hmm.  I wonder if this is the correct logic.  Basically we do not want to
-allow mixing integrity capable and not integrity devices, do we?
-
-So maybe the logic should be more something like:
-
-	if (!IS_ENABLED(CONFIG_BLK_DEV_INTEGRITY))
-		return true;
-
-	if (ti->flags & BLK_INTEGRITY_STACKED) {
-		/* check blk_integrity compatibility */
-	} else {
-		ti->flags = BLK_INTEGRITY_STACKED;
-		/* inherit blk_integrity, including the empty one  */
-	}
+I don't think the driver is the proper place to do this, this should
+be done in blk_validate_integrity_limits.  That should also take care
+or the stacked devices and remove the need for the last hunk in the
+previous patch.
 
