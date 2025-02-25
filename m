@@ -1,186 +1,204 @@
-Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3DD126A1BB
-	for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 11:03:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DE94A433CE
+	for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 13:19:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740481387; cv=none; b=nRYaoHNHXjmXlpdFlLVvwSJJbwSvtDFTuSi/kPOh2ozl+1tzxp46kvUSQoy09bWS0Kqz3hq596Q+PfEJubhE5eusNYjLdasvL8eQwyYAbpVtMGBd9qT6EC/txum61XQkUCzId6EHXeiI3x5Td2d754WmVrses7iCAzfC52eCbqQ=
+	t=1740489583; cv=none; b=oWcQy6oKomVYfdjOv8Emhs2nf3MiXZpkP+Hac5lClqNiuG3AYXPQdxz8pa3oJCo1C6whZOlJ1oIfz3nWimduK6glPM4VNhxvBIk8ntrQ9U+RENXkauyyNlLn0xFDLNvISkfxvO+kCzr1Yc3mGChKZyazwS1pm66FfNdB2NTq2ec=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740481387; c=relaxed/simple;
-	bh=LHbv0ySp7xfDxrK4xHapFhpfYe+OzWaL/Jp6LJ1qBUw=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=gZFKSauQUPz7zRY40aufsxpdZ9ZlXNzqTpUF3nF8N73F/qczqWZTB2Y1ZfeCx6qTvyctG3nSAnfP2i6bXnuGGc4tABnu6xYAyHUQIPmaR7X92/Sd59XXghjwW4It7XIOPVVIwsUVJJS35AhDIbe3P/iA7HVv6wU53ooboMdBvBI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GaOwrVl0; arc=none smtp.client-ip=209.85.208.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1740489583; c=relaxed/simple;
+	bh=0ggrhJSxPybcZa4f6wv/7IqH6z1Hvq938RslWCnM8BE=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=o1j0jotDDhM3sxMT3GkU9coi1BPfpHCXpJX/SSrEFVzamY7nNJuxtVPaY+RZ1yGCOw6oHq9+Wb+aUAkoYSi1x7DPrWHsC2BupE1EKlViPyGjrgdGUbdyIeiT33V5ODvwEAivaaadRY9OzNgajhJzeNPAB4+paKiH2qZz//iQ2rQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XUfakMdc; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GaOwrVl0"
-Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-5dec817f453so9124364a12.2
-        for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 03:03:05 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1740481384; x=1741086184; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=X9PhBCHuwMSAmBjmzYgRXFDACJ3K4AQ8Leyj9gnJygE=;
-        b=GaOwrVl01HV1ZI7vkmZSRkehB1FbhqJ9ZiimTU3ij35t8WHzeIQXReYUO4Dpi1RoCB
-         1SXfxwRVYCAkPtDhxoVWzDhliU/TwyOvSe1c7igXhSXublcW7uTGcBG/hF9H70ayUWbP
-         pcqkMT6srfkL9Rwf8uLAyBILlrSvA+NgGmT49nk9qPv8Csa/h6gnsJVNsb6kTwmW/FEa
-         cf58WeUqaKiRSz0cFcWKVYcZFcdzstjd3h15jYYLGGXMdLZaMsqmFYObtpdoMOA8ZwLf
-         8QU2vVFmn/16bJftKyqhFctaGxUrzmPoSiJWIj/JoulewO2OxrnEYO9TXpE+olc6p6Dn
-         uROA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1740481384; x=1741086184;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=X9PhBCHuwMSAmBjmzYgRXFDACJ3K4AQ8Leyj9gnJygE=;
-        b=LKYEbUNRzyihZZRJQ7eA2y8DbaVdOiBxsNMf9hTxq+u5e1x/F1HjVbCyZlODcaQqOO
-         xu+4RXyxiv7J1LUTPVOZ6eF4dW3QjRsrQaykJTUxrtKwOaAcrl3AjEnkz9e/KlkpJKu0
-         0ReiaNmiSDiscmdfn3pOwswpWjpqAliKTN9KQ2w7jtyyf+MJ5BpW+Q6Cmh4nF4gg/rG+
-         o0Q2w5sBVn9t5ImS0zIwp5VkRUt1x4HGcxyNPpBFkJ8hXY5e9Z7qo77ys9NMe7Bv7fJG
-         KxnPFXMesgxsyRRtVjbdWHf07nOGKN+AWd0U3hCjXAxhpbA2aD9BTLfutXSG3hFjthZN
-         keLw==
-X-Forwarded-Encrypted: i=1; AJvYcCWynyBtTgR58TNeUdPaPM8IV5odmYAk7yP8gcyeWQ9AqoKp0hHci1j9WLevNDWtAkHHwXDX7BhPww==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzW0R9GW2lQccuu3xBibfiCO9GCmgWiILEnIRue+VqtYPlk+eKi
-	yfOVQn2FKdBUset2CuWt5zhC6CAcZ3LJ2t6KGaM831OC0VZeQO8e
-X-Gm-Gg: ASbGncvqEiHLGFMSH+WK1Pm5aOOghtWXOrDUkR5MOEbnhv2ImZ8wtgfBoSBjwFDbKrB
-	fK90hOZ1bECTOv7AoEQAwY/LOAIKYgklSKbIPZxLm2QdwPcEsPHsTuPITGkgkN5yv0ycSCADSyB
-	9dBr2afhRrvnv0Ps4M+ZD6KzFSXoyLyh1CmIv44YQKi/fi6vKnS6umlx82hEQj+j5ip2DSYZYXB
-	EAYkUILBUojPznULwqIhKZFUZ01AszVvIwhjhOmG+iRXCEjwNJIkUCRny3s6MZ3P7dOJhpkdZyh
-	RzZv1fiQCAFB9u3fRmitlKBqDROOqJI5S0IslFHfRZ9+hn5XOg==
-X-Google-Smtp-Source: AGHT+IEfWZbLPMPl4xzpoUMh28dOs0f97cyZOw21N18EzeoLdRVruBnMgEdxH2T6RxcFsIF+5yrnJA==
-X-Received: by 2002:a05:6402:2b88:b0:5de:d6c3:111a with SMTP id 4fb4d7f45d1cf-5e0b70d034bmr14495875a12.3.1740481383698;
-        Tue, 25 Feb 2025 03:03:03 -0800 (PST)
-Received: from [147.251.42.106] (fosforos.fi.muni.cz. [147.251.42.106])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-5e460d1bcb6sm1042969a12.55.2025.02.25.03.03.03
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 25 Feb 2025 03:03:03 -0800 (PST)
-Message-ID: <ba3840dd-e3a7-4896-89c9-0f131bb46fa5@gmail.com>
-Date: Tue, 25 Feb 2025 12:03:02 +0100
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XUfakMdc"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1740489580;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Z3jmBNvKNRWpsHJ387b19G/5slHOu1mZmCFu8jLnghQ=;
+	b=XUfakMdcI56VY9YlFfyAFjwHnQdA94OniAlZDRzu8nfQx8CXpk9RjCy2BseLm+HKCrkOk0
+	fFkyjf5Vonevu2jVmQLhH1r0XtnCkr89/O06YAPu7rVuq0Qdo+uA15Gx/LWGMbmTxdnVTe
+	VuBWXnVtffTHjYaClVOsKcRLGmmyX1E=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-458-jQLgAjinOU64s_VTZxIUaA-1; Tue,
+ 25 Feb 2025 08:19:39 -0500
+X-MC-Unique: jQLgAjinOU64s_VTZxIUaA-1
+X-Mimecast-MFC-AGG-ID: jQLgAjinOU64s_VTZxIUaA_1740489578
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8B94E1903080
+	for <dm-devel@lists.linux.dev>; Tue, 25 Feb 2025 13:19:38 +0000 (UTC)
+Received: from [10.45.224.44] (unknown [10.45.224.44])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2951E1800359;
+	Tue, 25 Feb 2025 13:19:36 +0000 (UTC)
+Date: Tue, 25 Feb 2025 14:19:33 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Matthew Sakai <msakai@redhat.com>
+cc: dm-devel@lists.linux.dev, Ken Raeburn <raeburn@redhat.com>
+Subject: Re: [PATCH v2] dm vdo indexer: reorder uds_request to reduce
+ padding
+In-Reply-To: <20250224213603.1353256-1-msakai@redhat.com>
+Message-ID: <dd6ddfea-9745-a374-5d49-b2541af333f3@redhat.com>
+References: <20250224213603.1353256-1-msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: sysfs integrity fields use
-To: Kanchan Joshi <joshi.k@samsung.com>,
- linux-block <linux-block@vger.kernel.org>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>,
- Christoph Hellwig <hch@infradead.org>,
- "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
-References: <CGME20250225092525epcas5p31dd0a19ffdfb39f3f2ce4acd1c6da7ee@epcas5p3.samsung.com>
- <67795955-93a4-405b-b0b7-e6b5d921f35e@gmail.com>
- <823d3261-671d-41cb-ab15-10a361c48bca@samsung.com>
-Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- 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
-In-Reply-To: <823d3261-671d-41cb-ab15-10a361c48bca@samsung.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Xt0SuWr2zHnjKg3JY--mCTc6arbmS8NK9GYX1JUhqVA_1740489578
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On 2/25/25 11:10 AM, Kanchan Joshi wrote:
-> On 2/25/2025 2:53 PM, Milan Broz wrote:
->> Hi,
->>
->> I tried to add some support for using devices with PI/DIF metadata
->> and checked (through sysfs) how large metadata space per sector
->> is available.
->>
->> The problem is that some values behave differently than I expected.
->>
->> For an NVMe drive, reformatted to 4096 + 64 profile, I see this:
->>
->> - /sys/block/<disk>/integrity/device_is_integrity_capable
->>     Contains 0 (?)
->>     According to docs, this field
->>    "Indicates whether a storage device is capable of storing integrity
->> metadata.
->>    Set if the device is T10 PI-capable."
->>
->> - /sys/block/<disk>/integrity/format
->>    Contains expected "nop" (not "none")
->>
->> - /sys/block/<disk>/integrity/tag_size
->>     Contains 0 (?)
+Applied, thanks.
+
+Mikulas
+
+
+On Mon, 24 Feb 2025, Matthew Sakai wrote:
+
+> From: Ken Raeburn <raeburn@redhat.com>
 > 
-> This and "nop" indicates that pi-type was configured to be 0?
-> Maybe you can share the nvme format command as well.
-
-Sure, it is formatted to 4k data + 64 bytes metadata profile:
-
-# nvme id-ns -H /dev/nvme0n1
-...
-
-LBA Format  0 : Metadata Size: 0   bytes - Data Size: 512 bytes - Relative Performance: 0 Best
-LBA Format  1 : Metadata Size: 8   bytes - Data Size: 512 bytes - Relative Performance: 0 Best
-LBA Format  2 : Metadata Size: 0   bytes - Data Size: 4096 bytes - Relative Performance: 0 Best
-LBA Format  3 : Metadata Size: 64  bytes - Data Size: 4096 bytes - Relative Performance: 0 Best (in use)
-
-formatted with
-# nvme format --lbaf=3 --force /dev/nvme0n1
-
->>     According to docs, this is "Number of bytes of integrity tag space
->>     available per 512 bytes of data."
->>     (I think 512 bytes is incorrect; it should be sector size, or perhaps
->>      value in protection_interval_bytes, though.)
->>
->> Then we have new (undocumented) value for NVMe in
->> - /sys/block/<nvme>/integrity/metadata_bytes
->>     This contains the correct 64.
+> Reorder fields and make uds_request_type and uds_zone_message packed,
+> to squeeze out some space. Use struct_group so the request reset code
+> no longer needs to care about field order.
 > 
-> Maybe you mean "/sys/block/>/metadata_bytes"?
-
-Yes, it is not under integrity subdir, just copy& paste error, sorry.
-
-Just to add - I would like to add these integrity fields also to lsblk, but there we need exact
-specification where to get integrity info.
-
-Milan
+> On x86_64 this reduces the struct size from 144 to 120, which saves 48
+> kB (about 12%) per VDO hash zone.
+> 
+> Signed-off-by: Ken Raeburn <raeburn@redhat.com>
+> Signed-off-by: Matthew Sakai <msakai@redhat.com>
+> ---
+>  drivers/md/dm-vdo/indexer/index-session.c |  6 +--
+>  drivers/md/dm-vdo/indexer/indexer.h       | 53 +++++++++++------------
+>  2 files changed, 27 insertions(+), 32 deletions(-)
+> 
+> diff --git a/drivers/md/dm-vdo/indexer/index-session.c b/drivers/md/dm-vdo/indexer/index-session.c
+> index aee0914d604a..aa575a24e0b2 100644
+> --- a/drivers/md/dm-vdo/indexer/index-session.c
+> +++ b/drivers/md/dm-vdo/indexer/index-session.c
+> @@ -100,7 +100,6 @@ static int get_index_session(struct uds_index_session *index_session)
+>  
+>  int uds_launch_request(struct uds_request *request)
+>  {
+> -	size_t internal_size;
+>  	int result;
+>  
+>  	if (request->callback == NULL) {
+> @@ -121,10 +120,7 @@ int uds_launch_request(struct uds_request *request)
+>  	}
+>  
+>  	/* Reset all internal fields before processing. */
+> -	internal_size =
+> -		sizeof(struct uds_request) - offsetof(struct uds_request, zone_number);
+> -	// FIXME should be using struct_group for this instead
+> -	memset((char *) request + sizeof(*request) - internal_size, 0, internal_size);
+> +	memset(&request->internal, 0, sizeof(request->internal));
+>  
+>  	result = get_index_session(request->session);
+>  	if (result != UDS_SUCCESS)
+> diff --git a/drivers/md/dm-vdo/indexer/indexer.h b/drivers/md/dm-vdo/indexer/indexer.h
+> index 3744aaf625b0..d765f24328eb 100644
+> --- a/drivers/md/dm-vdo/indexer/indexer.h
+> +++ b/drivers/md/dm-vdo/indexer/indexer.h
+> @@ -8,6 +8,7 @@
+>  
+>  #include <linux/mutex.h>
+>  #include <linux/sched.h>
+> +#include <linux/stddef.h>
+>  #include <linux/types.h>
+>  #include <linux/wait.h>
+>  
+> @@ -73,7 +74,7 @@ enum uds_request_type {
+>  	/* Remove any mapping for a name. */
+>  	UDS_DELETE,
+>  
+> -};
+> +} __packed;
+>  
+>  enum uds_open_index_type {
+>  	/* Create a new index. */
+> @@ -226,7 +227,7 @@ struct uds_zone_message {
+>  	enum uds_zone_message_type type;
+>  	/* The virtual chapter number to which the message applies */
+>  	u64 virtual_chapter;
+> -};
+> +} __packed;
+>  
+>  struct uds_index_session;
+>  struct uds_index;
+> @@ -253,34 +254,32 @@ struct uds_request {
+>  
+>  	/* The existing data associated with the request name, if any */
+>  	struct uds_record_data old_metadata;
+> -	/* Either UDS_SUCCESS or an error code for the request */
+> -	int status;
+>  	/* True if the record name had an existing entry in the index */
+>  	bool found;
+> +	/* Either UDS_SUCCESS or an error code for the request */
+> +	int status;
+>  
+> -	/*
+> -	 * The remaining fields are used internally and should not be altered by clients. The index
+> -	 * relies on zone_number being the first field in this section.
+> -	 */
+> -
+> -	/* The number of the zone which will process this request*/
+> -	unsigned int zone_number;
+> -	/* A link for adding a request to a lock-free queue */
+> -	struct funnel_queue_entry queue_link;
+> -	/* A link for adding a request to a standard linked list */
+> -	struct uds_request *next_request;
+> -	/* A pointer to the index processing this request */
+> -	struct uds_index *index;
+> -	/* Control message for coordinating between zones */
+> -	struct uds_zone_message zone_message;
+> -	/* If true, process request immediately by waking the worker thread */
+> -	bool unbatched;
+> -	/* If true, continue this request before processing newer requests */
+> -	bool requeued;
+> -	/* The virtual chapter containing the record name, if known */
+> -	u64 virtual_chapter;
+> -	/* The region of the index containing the record name */
+> -	enum uds_index_region location;
+> +	/* The remaining fields are used internally and should not be altered by clients. */
+> +	struct_group(internal,
+> +		     /* The virtual chapter containing the record name, if known */
+> +		     u64 virtual_chapter;
+> +		     /* The region of the index containing the record name */
+> +		     enum uds_index_region location;
+> +		     /* If true, process request immediately by waking the worker thread */
+> +		     bool unbatched;
+> +		     /* If true, continue this request before processing newer requests */
+> +		     bool requeued;
+> +		     /* Control message for coordinating between zones */
+> +		     struct uds_zone_message zone_message;
+> +		     /* The number of the zone which will process this request*/
+> +		     unsigned int zone_number;
+> +		     /* A link for adding a request to a lock-free queue */
+> +		     struct funnel_queue_entry queue_link;
+> +		     /* A link for adding a request to a standard linked list */
+> +		     struct uds_request *next_request;
+> +		     /* A pointer to the index processing this request */
+> +		     struct uds_index *index;
+> +		     );
+>  };
+>  
+>  /* A session is required for most index operations. */
+> -- 
+> 2.45.2
+> 
+> 
 
