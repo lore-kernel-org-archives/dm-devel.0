@@ -1,117 +1,166 @@
-Received: from mail-il1-f179.google.com (mail-il1-f179.google.com [209.85.166.179])
+Received: from mail-ej1-f52.google.com (mail-ej1-f52.google.com [209.85.218.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8720E22154E
-	for <dm-devel@lists.linux.dev>; Wed, 26 Feb 2025 14:38:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 264441DF250
+	for <dm-devel@lists.linux.dev>; Thu, 27 Feb 2025 17:41:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740580739; cv=none; b=aULbxwhfn7WSHrp16UpZiQT7Qkid59vRE9JjJcQEoyAb10bz9Emm+Xs0sMqdvqjqR6AfExJIHPdDW4m8l5tmFHtw7VzodKQQ5Qgszv91RyArDajCoQipBseXTSgTBXJzky3PXigBM1D4JdgzMOQsaiQzE6GuLKfQh5u1YWlon+I=
+	t=1740678075; cv=none; b=h1xhaYGN/F1N9BaJhmt66PJWIuIEhdRxpHmTj8cf4eQwVZ/HP/inTw9zGN3HGw4eO1y55R19gfOqePm51HTvuNPb3zHQE4/JJHzCZ8QqF+5JC0NDmDqDLR8PKU9EN6xS9HjxdGQ7FmYvhPKTlyaOZsNaFRiTCwjuH/MgQo/CDQA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740580739; c=relaxed/simple;
-	bh=4HzSOBJ7v/xi/lFkR0PWK9gzb3mxTpLXn2xOOncdSSk=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=S66cnmOmZG4OOb0+pcxAdXb/nWI084yg6+69BsT1lByBeYY1+1lMBFEfmBfNz7v79dfrYV8rfBe3AuayoMggNEXJPuM6B5kc7+vk77PG8qeo39hvczf5cO0+C8BENeClr58+cxa8V7fUQgAb5RMDOf6CjSeYxRb7FxzFqGIDwPE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=g5kGKJE2; arc=none smtp.client-ip=209.85.166.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1740678075; c=relaxed/simple;
+	bh=OamnMigjZiZHTp5WgGXsnhgvwVWGavFTGkxLt97NIIU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DHy2FhPI3Gq6A6LjPgG1EkZzP2mh2+p0m1zdvwWsIOI3N4MHUcIzJ4OZWjdMwNrxXqXnheJOvXvCd6xEFp1RI+FD/e7LJ1Ho/YpRiFnk7P1DJzRAqGzamIqEJAI80PIQzaGw6OCvgPjkzxI1D9p2iy89j7q+byhoF9EGdlq6jsM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=cK+QaM3z; arc=none smtp.client-ip=209.85.218.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="g5kGKJE2"
-Received: by mail-il1-f179.google.com with SMTP id e9e14a558f8ab-3d19d214f0aso47220685ab.1
-        for <dm-devel@lists.linux.dev>; Wed, 26 Feb 2025 06:38:57 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="cK+QaM3z"
+Received: by mail-ej1-f52.google.com with SMTP id a640c23a62f3a-aaedd529ba1so132889166b.1
+        for <dm-devel@lists.linux.dev>; Thu, 27 Feb 2025 09:41:12 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1740580736; x=1741185536; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=KjfGHR3mANWfNEqN0oG3qrm9QtKnyMkYTku5fjSXWXk=;
-        b=g5kGKJE2XhnNPDDq4ukLSKRqdsbGA6n5mhxzLPL9C/RKnchgMnNGoDNdTOkywvpNLs
-         KK8nRL6XgiA1hxY+BrlJY9mxrAqket7Lq0XVysywjgWp9R39Y9GsrLfNwk5g1DqGscMb
-         lqUfNgYPSt2jj/E0QyX3BpyGWzAnMr04eMnlW5VkWPH+U37PVlvY2rZoXfpCi9BWWZVW
-         REr5ex8Uly14uonP1w1DKXL7fj1hBmAKXnsbGxFt3v7pmbUsaMraoQ0wfltG88e5YrjW
-         GHMXnjxoxKTSV6hMYF9KewIuOBT5byvmVtTOVoH9gET3vBbFx3fHrr6UuivbfrBCZ5eo
-         fEFQ==
+        d=suse.com; s=google; t=1740678071; x=1741282871; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=sAbzlDAlvs4+8flTbVcWrMbblnVcjgIfTKeFqgvSglE=;
+        b=cK+QaM3zPX/dsif36AzsMwVrFLXJpKeCiau1RyPgDdwF+433C3k6/YR1uAC1AsC60O
+         2Q1xugBHZ15/nqIIoYEgmPVAeq+l8pV8LSIpIN5A7Dic2vgrFVBFtBuAD0+d62LAdHnf
+         PQX5VnUry4WSHmsPAWetu9anFg6zi+yCF92PqUpQMVbFNVS4f4JBlU+rLD3NoQ/7u0ag
+         WLEJr3fQaxm9TgdGZ41W8JvhPvuUsR9O3RrS18UAwJZUbdiAP0slKb/gZJRUWsBNTErw
+         hSXkCJ22ngr2/3W4sjfamTUtVpd2l0YTbj6IIvhc3jcQacWB0UBNX+2nhn4/9ofu05yh
+         Ti6g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1740580736; x=1741185536;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=KjfGHR3mANWfNEqN0oG3qrm9QtKnyMkYTku5fjSXWXk=;
-        b=hGXgY8IrLFmByLQL/Txq8f2mybuT32c2DztblgQCdl1s9mAazc7uUsUVILyCcxcydX
-         uAXE14baYb6l9NcEi5YMDIyYNgYIWKMN8pAfT5yIiRasRJ30dmF63SDTr7LqzxM0nUeF
-         XG1wKixtsU+EXQHuqSX0tchdz49lR5zicL42vwX1dfITFiRWakT4NoNZr4emEQcSBwM4
-         Fz1Lv4KFUky2IzQw+fNplyzNTaSKDwHVSevUkGvwz3JAkyjhgpy7Uib4zS5PI6UAjVZp
-         W3NWqUWDKPvXAW2hmHoNzAmaAsQSKQLlh/mvhSvDvT907FbMFevswLR6jFA0dVz4rFuD
-         PcFA==
-X-Forwarded-Encrypted: i=1; AJvYcCWu4f5KsIjKQ3/eeFD8lyTjdmT/zNgzRI/8YbTUhVu5Qo0lNPjn5EsoTdKLh5MXneDAd1X36oPy2w==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwdDVRI9p00u6jUyl3y06I9aIBGUlpMvWoSEwJXtIHOoH4VXyI6
-	C0Nh/aKgI3eyLyEdDxV+LI25dS/7yaQKzyoZHxk27LJzcMoNP+8Ge68ISGk4L6uYpsiJyC95VFV
-	L
-X-Gm-Gg: ASbGncv0KJp+q1BY5jcKGU1soWP4KgjxFiLV7gL6UNTi1muymYSWaqqbG833qxv9E1h
-	8FBEtTWFMBf/bS2Pl29aPKfl/nal9QY/k8Ik2EFbahAlkUfmnHNVxx4Gh7uSogeSisCZTbA9DT1
-	JOlJ42WW1pEWhOF2cFuefe2k4y1Px1H/62Pn2nxQkEf4YZFVqhGRzmUHZQRKzSPR+ndEuZfzDt4
-	2HSgM7kI61sg4ubcEZ3wHbL6o8rpEWkLbKJzT4ML7sSpmMtMsD3EuS9fqlEDevQhzSgmfxKyxxW
-	8D4Qe8A2T3M6tfZw
-X-Google-Smtp-Source: AGHT+IHflMMR06CSDj0x1e+Hr7qg7IFtXxL9jnnQbF/txci+w+Cb8i5OqK2W58Pz8WpyNLiBoDGK+Q==
-X-Received: by 2002:a05:6e02:3d83:b0:3d2:b930:ab5b with SMTP id e9e14a558f8ab-3d2cb473053mr193915355ab.10.1740580736635;
-        Wed, 26 Feb 2025 06:38:56 -0800 (PST)
-Received: from [127.0.0.1] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4f04744db05sm945841173.1.2025.02.26.06.38.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 26 Feb 2025 06:38:55 -0800 (PST)
-From: Jens Axboe <axboe@kernel.dk>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>, 
- Yu Kuai <yukuai3@huawei.com>, 
- "Martin K. Petersen" <martin.petersen@oracle.com>, 
- Kanchan Joshi <joshi.k@samsung.com>, linux-block@vger.kernel.org, 
- dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, 
- target-devel@vger.kernel.org
-In-Reply-To: <20250225154449.422989-1-hch@lst.de>
-References: <20250225154449.422989-1-hch@lst.de>
-Subject: Re: split out the auto-PI code and data structures v2
-Message-Id: <174058073532.2232453.9396018019259516741.b4-ty@kernel.dk>
-Date: Wed, 26 Feb 2025 07:38:55 -0700
+        d=1e100.net; s=20230601; t=1740678071; x=1741282871;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=sAbzlDAlvs4+8flTbVcWrMbblnVcjgIfTKeFqgvSglE=;
+        b=VZZN6NjKGWiV/umM903esQdCoaC+b1atJqtm3MAtOQ8Pf6WmwxrE89owZrb1O+lAO2
+         dieZLBw68I2xbWAVInZp1mNdqP6wj1P6SyPdD4wT4vA6hX59RNBYNXfB3+guqS3EEhZo
+         Vq9Z7u/zN7UoNSRAtJFw48P2DczbtVHmS1aN7jn3uosna9f9bUJjTxYuPLa/UV5vtyHJ
+         lrXaVH4Tnh51lCZjMY3hU2BcXQueSTQEZUDG59r6cMyboOxOrQ70NR2z8IUAyj+7wKe4
+         Gq/9tWp8l9k35KnFtin45u7NM0H2KNwH6WdhRzlH7LO+daN8WDfbnol5hjCqkivpgpyO
+         9d2g==
+X-Gm-Message-State: AOJu0YxbxKyCmWgk+Wigfk57l+AuJgLu/x05tT4ZgpQWU/LzLQHnNXqC
+	XxMmWVnde8CFQH93S0A6JntR/dw5nNl8ek759cHib3nWmeRTI6gzU1n0MFmvRjPqeff22HYRnn9
+	9
+X-Gm-Gg: ASbGncsSE9ed8Ljs3Tu8fgs7QYmB6v5gH9TviN2b0CJcDhrd98vTe73cDNf36bqgVlq
+	jWF4H4g6R4u10knxZjMMXvOKxsaIE8EoqT4ZG2ip40gNKzRJI76N1Tn5DRPPKP2pp+g7bTbBj83
+	dav2oKNtkQ5Ujo0+URA8fZE3kVe0G1m4GQ4YBlSctat/2O+t2bXbScGaQ5QkA9comttWaE1R4/A
+	R2CVAX/AQq2tTwVv5OrhF5HTjHlWg8RIkD1q36UxBypb+EfYzgRotsDIWwppb8DRZDnhbAuMGvF
+	HhuPpV14eWl5nULP6ERQm/MnbI/EmIGy+BNFIn/4a7OAKcB3hKLi9cdT27bdJ5G2ms34KP0yURC
+	4Ndh86ZsUXJgw
+X-Google-Smtp-Source: AGHT+IEWFlY/amdqJMFtmG+9quJOsKMiqrHprmQt9MPjE6XcSchrz3O049vnnxAEAJl1FXv6Y883tA==
+X-Received: by 2002:a05:6402:1ecf:b0:5dc:7374:261d with SMTP id 4fb4d7f45d1cf-5e4448537bbmr32099252a12.7.1740678071066;
+        Thu, 27 Feb 2025 09:41:11 -0800 (PST)
+Received: from localhost (p200300de374627004d16a5f447740583.dip0.t-ipconnect.de. [2003:de:3746:2700:4d16:a5f4:4774:583])
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-5e4c43a7a1fsm1378478a12.80.2025.02.27.09.41.10
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 27 Feb 2025 09:41:10 -0800 (PST)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] multipathd: fix hang during shutdown with queuing maps
+Date: Thu, 27 Feb 2025 18:41:04 +0100
+Message-ID: <20250227174104.206721-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.48.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.14.3-dev-94c79
+Content-Transfer-Encoding: 8bit
 
+Since c9689b6 ("multipathd: Remove dependency on
+systemd-udev-settle.service"), multipathd.service starts very early during
+boot, which in systemd's service ordering logic means that it is stopped
+late. While this is generally a good thing, it means that, when systemd
+unmounts file systems and tears down the block device stack, multipathd
+is still running. Therefore our "queue_without_daemon" logic, which disables
+queuing when multipathd exits, isn't effective yet. If there are any
+multipath maps that are in queueing state at this point in time, the system
+may hang indefinitely.
 
-On Tue, 25 Feb 2025 07:44:30 -0800, Christoph Hellwig wrote:
-> this is the tip of the iceberg of some of the PI work I've done a while
-> ago, and given the current discussions it might be a good time to send it
-> out.
-> 
-> The idea is to:
-> 
->  a) make the auto-PI code stand out more clearly as it seems to lead to
->     a lot of confusion
->  b) optimize the size of the integrity payload to prepare for usage in
->     file systems
->  c) make sure the mempool backing actually works for auto-PI.  We'll still
->     need a mempool for the actual metadata buffer, but that is left for the
->     next series.
-> 
-> [...]
+To fix that, add a new service which starts later (and thus stops earlier) and
+disables queueing on all multipath maps during shutdown. Similar to lvm2's
+blk-availability.service, the service does nothing when started.
 
-Applied, thanks!
+Fixes: c9689b6 ("multipathd: Remove dependency on systemd-udev-settle.service")
 
-[1/3] block: mark bounce buffering as incompatible with integrity
-      commit: e9945facd48d2d5da87fa247f5d6a19c23d935fd
-[2/3] block: move the block layer auto-integrity code into a new file
-      commit: d2cfe5ceca59b74ef96bfe00632e3927d00c9918
-[3/3] block: split struct bio_integrity_payload
-      commit: 1972a1faaa026eb34322a2b4fcbb3c28d68cc5e2
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/Makefile                       | 6 ++++--
+ multipathd/multipathd-queueing.service.in | 9 +++++++++
+ multipathd/multipathd.service.in          | 2 +-
+ 3 files changed, 14 insertions(+), 3 deletions(-)
+ create mode 100644 multipathd/multipathd-queueing.service.in
 
-Best regards,
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index 61cf1af..4bcee6b 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -41,7 +41,7 @@ ifeq ($(FPIN_SUPPORT),1)
+ OBJS += fpin_handlers.o
+ endif
+ 
+-all : $(EXEC) $(CLI) $(MANPAGES) $(EXEC).service $(EXEC).socket
++all : $(EXEC) $(CLI) $(MANPAGES) $(EXEC).service $(EXEC).socket $(EXEC)-queueing.service
+ 
+ $(EXEC): $(OBJS) $(multipathdir)/libmultipath.so $(mpathcmddir)/libmpathcmd.so
+ 	@echo building $@ because of $?
+@@ -64,6 +64,7 @@ install:
+ ifdef SYSTEMD
+ 	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(unitdir)
+ 	$(Q)$(INSTALL_PROGRAM) -m 644 $(EXEC).service $(DESTDIR)$(unitdir)
++	$(Q)$(INSTALL_PROGRAM) -m 644 $(EXEC)-queueing.service $(DESTDIR)$(unitdir)
+ 	$(Q)$(INSTALL_PROGRAM) -m 644 $(EXEC).socket $(DESTDIR)$(unitdir)
+ endif
+ 	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)/man8
+@@ -74,11 +75,12 @@ uninstall:
+ 	$(Q)$(RM) $(DESTDIR)$(bindir)/$(EXEC) $(DESTDIR)$(bindir)/$(CLI)
+ 	$(Q)$(RM) $(DESTDIR)$(mandir)/man8/$(EXEC).8
+ 	$(Q)$(RM) $(DESTDIR)$(mandir)/man8/$(CLI).8
++	$(Q)$(RM) $(DESTDIR)$(unitdir)/$(EXEC)-queueing.service
+ 	$(Q)$(RM) $(DESTDIR)$(unitdir)/$(EXEC).service
+ 	$(Q)$(RM) $(DESTDIR)$(unitdir)/$(EXEC).socket
+ 
+ clean: dep_clean
+-	$(Q)$(RM) core *.o $(EXEC) $(CLI) $(MANPAGES) $(EXEC).service $(EXEC).socket
++	$(Q)$(RM) core *.o $(EXEC) $(CLI) $(MANPAGES) $(EXEC).service $(EXEC)-queueing.service $(EXEC).socket
+ 
+ include $(wildcard $(OBJS:.o=.d) $(CLI_OBJS:.o=.d))
+ 
+diff --git a/multipathd/multipathd-queueing.service.in b/multipathd/multipathd-queueing.service.in
+new file mode 100644
+index 0000000..18b0ca6
+--- /dev/null
++++ b/multipathd/multipathd-queueing.service.in
+@@ -0,0 +1,9 @@
++[Unit]
++Description=Enable queuing for multipath maps
++After=local-fs.target remote-fs.target multipathd.service
++
++[Service]
++Type=oneshot
++RemainAfterExit=yes
++ExecStart=/bin/true
++ExecStop=@BINDIR@/multipathd disablequeueing maps
+diff --git a/multipathd/multipathd.service.in b/multipathd/multipathd.service.in
+index b6a25b3..eb58943 100644
+--- a/multipathd/multipathd.service.in
++++ b/multipathd/multipathd.service.in
+@@ -2,7 +2,7 @@
+ Description=Device-Mapper Multipath Device Controller
+ Before=lvm2-activation-early.service
+ Before=local-fs-pre.target blk-availability.service shutdown.target
+-Wants=systemd-udevd-kernel.socket @MODPROBE_UNIT@
++Wants=systemd-udevd-kernel.socket multipathd-queueing.service @MODPROBE_UNIT@
+ After=systemd-udevd-kernel.socket @MODPROBE_UNIT@
+ After=multipathd.socket systemd-remount-fs.service
+ Before=initrd-cleanup.service
 -- 
-Jens Axboe
-
-
+2.48.1
 
