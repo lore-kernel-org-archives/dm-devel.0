@@ -1,33 +1,48 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF9381F4183
-	for <dm-devel@lists.linux.dev>; Mon,  3 Mar 2025 14:12:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C7AD92144D0;
+	Mon,  3 Mar 2025 15:13:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741011162; cv=none; b=P3/QSHMzWL9DBYtWgwsza74Rf2DqHFFdRHlPDBrlBrnN/nl5RxQrAPmTbrp1h4/niCKnibBwljMMjdy5uu9HHT+IPdWSpN6PR6Xh94nOsjSJ1BPL1gUeqMxJBaRp4NXxxPg6RBHXp9kn6Tqb9FFs0PrPE3VsFlYVb28cmU1IDR0=
+	t=1741014832; cv=none; b=bXP1dLDpvhuCWVDcMW7aCPeEBPkuNOk928aDBlGI6MnJGg2SvRgROi7/WKd80sQkHCGawyPwflhQP6w3fHXJmfaQBjZNk/s7wLERmLZYUf4c8XXV4SqMDQxsN5W+sGYUCYZW+EPqyK0ZANA5xGkLvsqR2ELexNKOYUXvABJhj9Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741011162; c=relaxed/simple;
-	bh=qQNrRd43JGK5k8mEPTU990AE8TuK5KRKLOf8ppbTrwc=;
+	s=arc-20240116; t=1741014832; c=relaxed/simple;
+	bh=1Xzmv2RcDkj+UiUk11nbRmDeV8ULe9YNCvXFiY/maR8=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=j+fEmfjmk0wY95OSIrYkCtUk6m72xe6w2W0atOdQFHw0njXcN6dAJjhrEpej3CrUI5zDbsbYAgr+PIHeR4hB3EcaDFXdpdF6ex2uRFDNGws0MH1bwtmJAUfzQhDZzVddMYTCPVk8V10L3+WwV52GVyIRdlj2d660SXfxCvNURjU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id C891568CFE; Mon,  3 Mar 2025 15:12:36 +0100 (CET)
-Date: Mon, 3 Mar 2025 15:12:36 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Anuj Gupta <anuj20.g@samsung.com>
-Cc: axboe@kernel.dk, hch@lst.de, martin.petersen@oracle.com,
-	anuj1072538@gmail.com, nikh1092@linux.ibm.com,
-	linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
-	linux-scsi@vger.kernel.org, dm-devel@lists.linux.dev,
-	M Nikhil <nikhilm@linux.ibm.com>
-Subject: Re: [PATCH v2 1/2] block: ensure correct integrity capability
- propagation in stacked devices
-Message-ID: <20250303141236.GB16268@lst.de>
-References: <20250226112035.2571-1-anuj20.g@samsung.com> <CGME20250226112857epcas5p1654e62b5fff4551926622f19269c6ff4@epcas5p1.samsung.com> <20250226112035.2571-2-anuj20.g@samsung.com>
+	 Content-Type:Content-Disposition:In-Reply-To; b=PIn+aidEtwgKUdEhr8emVvqupZkme4PnQSpzNAqgX8Ghhs9lNhl61DX8a6vOKqKUqFQMSU3DaDHkCE+s7ZgECZGvbgECphTzM3OvRGDe1Uy9KMzJDlIfiFe2XpeU8bNOdpMqXZXoaM0hALgMvVNudWGYUUGYG9cBwc4kGhmoht4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=MylLpo6j; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="MylLpo6j"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=i9mR4xyoj/FydC5/oouF1SUJM0/ZBGR59EGvwEO5nU4=; b=MylLpo6j6Tcxj/f/MM5fZBVEQc
+	d1iLD+TvMdmgRFsmkBwC7X+ZWD3T23iymmAYT2Z7OEIVxqnAfOmjdsLruM837m3Hh9sHp71Qo3/Ci
+	gc3EqZiFYuinAw8lY80hPiNV4Tii337m731/0+YIVAe7xZj4p8hshkLNUrgeItKnqxfOSEvqaI3r2
+	edPFhykbPt+33MsPWv6u/+69pXuqNf4B+oL6+aB70n8fTUt1mrIUUOm7nxEJlSjVUphIV9OmX6WDj
+	X0rTxXd8QN9oPmS1ce6jrcbfPZmoJ38CatKSqFxaig2x0LKd7dq6E4Qr0/SeJm8I0VjZxJG2ZUZ4v
+	J4GB6LRw==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
+	id 1tp7UL-00000001FEm-0gG0;
+	Mon, 03 Mar 2025 15:13:49 +0000
+Date: Mon, 3 Mar 2025 07:13:49 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>, zkabelac@redhat.com,
+	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH] the dm-loop target
+Message-ID: <Z8XHLdh_YT1Z7ZSC@infradead.org>
+References: <7d6ae2c9-df8e-50d0-7ad6-b787cb3cfab4@redhat.com>
+ <Z8W1q6OYKIgnfauA@infradead.org>
+ <CAM23VxprhJgOPfhxQf6QNWzHd6+-ZwbjSo-oMHCD2WDQiKntMg@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -36,27 +51,29 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250226112035.2571-2-anuj20.g@samsung.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <CAM23VxprhJgOPfhxQf6QNWzHd6+-ZwbjSo-oMHCD2WDQiKntMg@mail.gmail.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Wed, Feb 26, 2025 at 04:50:34PM +0530, Anuj Gupta wrote:
-> diff --git a/block/blk-settings.c b/block/blk-settings.c
-> index c44dadc35e1e..8bd0d0f1479c 100644
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> @@ -861,7 +861,8 @@ bool queue_limits_stack_integrity(struct queue_limits *t,
->  
->  	if (!ti->tuple_size) {
->  		/* inherit the settings from the first underlying device */
-> -		if (!(ti->flags & BLK_INTEGRITY_STACKED)) {
-> +		if (!(ti->flags & BLK_INTEGRITY_STACKED) &&
-> +		    (bi->flags & BLK_INTEGRITY_DEVICE_CAPABLE)) {
->  			ti->flags = BLK_INTEGRITY_DEVICE_CAPABLE |
->  				(bi->flags & BLK_INTEGRITY_REF_TAG);
->  			ti->csum_type = bi->csum_type;
+On Mon, Mar 03, 2025 at 03:57:23PM +0100, Heinz Mauelshagen wrote:
+> dm-loop avoids the file system abstraction, thus gains the resulting
+> performance advantage versus the loop driver.
 
-As mentioned last round this still does the wrong thing if the first
-device(s) is/are not PI-capable but the next one(s) is/are.  Please
-look into the pseudocode I posted in reply to the previous iteration
-on how to fix it.
+How?
+
+> dm-loop obviously requires full provisioning, thus sparse files are being
+> detected and error handled.
+> 
+> Additionally, block relocation on CoW filesystems has to be prevented.
+> dm-loop uses S_SWAPFILE to do so but that flag's limited to swap semantics
+> and is overloaded as such.
+> 
+> Should we avoid the flag and enforce use of non-CoW filesystems for backing
+> or checks on non-CoW files (inode->i_flags)?
+
+No, ->bmap is fundamentally flawed.  No new code should be using it, and
+we need to move the places still using it (most notably swap and the md
+bitmap code) off it.  It can't deal with any kind of changes to the file
+system topology and is a risk to data corruption because if used in the
+I/O path it bypasses the file system entirely..  If it wasn't we'd use it
+in the loop driver.
 
