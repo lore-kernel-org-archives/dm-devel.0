@@ -1,55 +1,57 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E662314900B
-	for <dm-devel@lists.linux.dev>; Sun,  2 Mar 2025 19:31:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC97B1F0E34
+	for <dm-devel@lists.linux.dev>; Mon,  3 Mar 2025 10:22:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740943911; cv=none; b=Q8NJ0DR8NHSUge8HQEdsLE2CqmC6M5gLo9Z789joJxAOn/bxy0GQAcGAXED6KNyuwCYgml6NaqkvU5GFbj2rUTkgvpP8054m2mPNr62wHeB2eMyEqrpHC+XU/TSoZ5zyeH1QR15yd/1F7yxBeCb6Wiapbx+8Slv0WOBOJT+RlXI=
+	t=1740997323; cv=none; b=BrnaiCiSDeq4WhrwaDg2JnS8jXTGjnacoeXPU8z5nll1yB33mKmFjMZ2Pr7eiyPNu4w3KF4iRu9vsr3E4g0urGnii3WQcTxUgLAnQBj4LJDpxMoIA/vrJVUgWj/bId0f0JpuEezPuphgCXbryeACbI2r1Z038HLnUS+8fkZCo9w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740943911; c=relaxed/simple;
-	bh=g200j+RqZWunRfqI2hMOpba4xtVfNv7DKKvwkNP3bp4=;
+	s=arc-20240116; t=1740997323; c=relaxed/simple;
+	bh=RtvIrhiNHKaXaSmnFIMfUWDpr0+DmF1U/oiou9GGElM=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=sBtRGofQQ7Fbnu+SfRCQ/qWIovmf82w+pITkW+/MgElowqKDqeUI1Cc3CIHL4JmRiY1V8ulnyTPbdD+kx8oBV4wkQeu924pICYkBAePfV7kAmXdT7o9MWk4z+AzDd79n8++Rf6c/F+WSAovT0cTtSL2H+u5wUepdQgOk6QOi+mg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Na4ut8iZ; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=Ec8W9PUQTPvz0we/04hz7M/mKBlf/TF031kwAxNlrgNn1Z+vowoMOc2oV8PV7L4BkEBEMBiOLpFuMGP0lzKZRspl0yqRldgGMe3Zf/OK3mjtn4kaAoGO4ca52+WvA9+Z0Eo56pA8jGqA0/pvtL5bL+OeWOqVZmjyRMY2tMzqIAI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RrNuOmG4; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Na4ut8iZ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RrNuOmG4"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1740943908;
+	s=mimecast20190719; t=1740997320;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=eUNFq54iwM9YK2nNf18rwx3qAq3poVSqT3r3PkcBknw=;
-	b=Na4ut8iZeNaQjwmN6nqbxt8LIdli8Y84OzM1hd+mtDjbCjqhzTGmdfwQZuBkTR4su0IF17
-	qpmml/lQj6NtV6fHumDL/hCNzDgIeYslwPm8/H3n3LeHJA9aABL9ikuDykYMO1m0qn4PC3
-	ojEbNCOe4a2vOKPEKERYoC3rEps4Iu4=
+	bh=VXnQNNA7piQ3hw4C0AqbVV0Ymy22beYvtZAvK/osYJ8=;
+	b=RrNuOmG4snRV3yf/NqokSbRqXFQHh3Q95XrnFZtjd0mR8DnIdLXvPKRFl/bIg2BfQyEhN2
+	dvqGyiF1+oe3ufTaMnnqDwMdO3nYvsqpcl7AxW0W2PD0iiQADEuWKG/+xr/2eaZq/KDz56
+	9qh412H1FKc5hDCEcRJUHDIeP60q4b8=
 Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-616-dNPOpblLNs6GvVbrXiw2Vw-1; Sun,
- 02 Mar 2025 14:31:47 -0500
-X-MC-Unique: dNPOpblLNs6GvVbrXiw2Vw-1
-X-Mimecast-MFC-AGG-ID: dNPOpblLNs6GvVbrXiw2Vw_1740943906
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-654-1a9-bE5mPnehTsBDWm2M5w-1; Mon,
+ 03 Mar 2025 05:21:54 -0500
+X-MC-Unique: 1a9-bE5mPnehTsBDWm2M5w-1
+X-Mimecast-MFC-AGG-ID: 1a9-bE5mPnehTsBDWm2M5w_1740997313
 Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2AC7418004A7;
-	Sun,  2 Mar 2025 19:31:46 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 693C3180087E;
+	Mon,  3 Mar 2025 10:21:53 +0000 (UTC)
 Received: from [10.45.224.44] (unknown [10.45.224.44])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C14FE1800361;
-	Sun,  2 Mar 2025 19:31:43 +0000 (UTC)
-Date: Sun, 2 Mar 2025 20:31:39 +0100 (CET)
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8B17E1800371;
+	Mon,  3 Mar 2025 10:21:51 +0000 (UTC)
+Date: Mon, 3 Mar 2025 11:21:46 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Ming-Hung Tsai <mtsai@redhat.com>
-cc: dm-devel@lists.linux.dev, Joe Thornber <thornber@redhat.com>, 
-    Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <snitzer@kernel.org>
-Subject: Re: [PATCH 0/2] dm cache: support shrinking the origin device
-In-Reply-To: <20250228094131.132061-1-mtsai@redhat.com>
-Message-ID: <4585427c-4d3a-f161-7e9c-40eb1589fd56@redhat.com>
-References: <20250228094131.132061-1-mtsai@redhat.com>
+To: Jooyung Han <jooyung@google.com>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    zkabelac@redhat.com, dm-devel@lists.linux.dev
+Subject: Re: [PATCH] dm: make it possible to open underlying devices in
+ shareable mode
+In-Reply-To: <CAO-8PLbbsn=6KQ19oi7WpW2PcVHLfy13RT2Ce-5ePp-0j0sYEA@mail.gmail.com>
+Message-ID: <40160815-d4b4-668e-389c-134c75ac87f1@redhat.com>
+References: <CAO-8PLb0azRAuu2yJ3=K1EwiSXASDJ8nVBttbuOUV77==Xd2ug@mail.gmail.com> <94c895e2-0a71-73b2-2692-af8bf62fb340@redhat.com> <CAO-8PLYMFd3YLvfue_an7mc-O19fixJY4ZKybvjehxcm2tRYvA@mail.gmail.com> <CAO-8PLa3Qxhy1M1C_ZDTpOyXrhQ=UQKeKoDOmy-bbShb4rV03A@mail.gmail.com>
+ <dcaed20c-2132-d453-9c04-b22417ba4010@redhat.com> <CAO-8PLbTAMO867ifaHOdSWQrErV+vfsg2udWF27PK_VKmrMFgw@mail.gmail.com> <aa42a2ba-ae99-c209-1289-a2b22dd3b6e8@redhat.com> <CAO-8PLbbsn=6KQ19oi7WpW2PcVHLfy13RT2Ce-5ePp-0j0sYEA@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -58,29 +60,57 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: kQC50VlFcCf-04uKzOB1gP7_CLLjCn2iOKb6HPSXfSM_1740943906
+X-Mimecast-MFC-PROC-ID: J7xnsdxfUKVzeDmZyZ612ZPwHjtqJz7F_zV2cKllIJg_1740997313
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Fri, 28 Feb 2025, Ming-Hung Tsai wrote:
+On Thu, 14 Nov 2024, Jooyung Han wrote:
 
-> This patch series introduces formal support for shrinking the cache
-> origin and ensures that failed resume attempts, such as those caused
-> by shrinking failures, do not trigger BUG_ON.
+> Thank you Mikulas and Alasdair for your thoughts and ideas about alternatives.
 > 
-> Ming-Hung Tsai (2):
->   dm cache: prevent BUG_ON by blocking retries on failed device resumes
->   dm cache: support shrinking the origin device
+> I'm aware of those alternatives. Android already uses DIO for loop
+> devices for read performance for APEX mounts. Having an extra DM
+> device was in fact our immediate fallback solution when I found this
+> issue. Then, I thought that, if DM-device owned by another DM-device
+> can be shared, why not share it with another read-only filesystem.
 > 
->  drivers/md/dm-cache-target.c | 94 +++++++++++++++++++++++++++++++++++-
->  1 file changed, 92 insertions(+), 2 deletions(-)
+> > confuse dependencies in udev,
 > 
-> -- 
-> 2.47.0
+> What would it be like when a DM device is shared by two other DM
+> devices like your suggestion #1 or #3? In #1 for example, a dm-verity
+> device is shared by two dm-linear devices: one for /system filesystem
+> mount and the other for APEX mount. I hope we can fix the issue around
+> udev dependencies if there's any.
+> 
+> > Will there be some performance degradation due to the extra linear device?
+> > Could you measure it?
+> 
+> I'll! There're two aspects: device creation and read performance. Both
+> will affect syshealth. Fewer devices should definitely be a win.
+> That's why I brought this to you ;-) If your patch can't make it, #1
+> is most likely the only option I have so I hope there's not much
+> degradation.
+> 
+> Thanks again.
 
-I applied the patches, thanks.
+Hi Jooyung
+
+I revived the old dm-loop target (I'm sending it in the next email). It 
+works as a regular loop driver, but it has better performance because it 
+builds a map of the file in the constructor and then it just remaps bios. 
+It doesn't bounce the bios through a workqueue like the existing loop 
+driver.
+
+It'd like to ask you to test if the dm-loop driver fits your needs of 
+mounting the APEX images.
+
+You can create a mapping of a file "/root/file" with this command:
+dmsetup create loop --table '0 524288 loop /root/file 0'
+
+The last number on the constructor line is the byte offset into the file 
+where the mapping starts.
 
 Mikulas
 
