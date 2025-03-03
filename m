@@ -1,58 +1,54 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 021741C863C
-	for <dm-devel@lists.linux.dev>; Mon,  3 Mar 2025 15:54:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3E05226D05
+	for <dm-devel@lists.linux.dev>; Mon,  3 Mar 2025 16:10:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741017254; cv=none; b=eJvCRHLEZZ2TRKejy8TOMtxRtjjkvWhTn5YmjVMcqcButcCzvsEBqTYkPnUeTVgK33bOw/1oS8nB9sIho9/SyK4bt4rMB0z3+Moa1FRlU0Ctzc6Vee3cwZ9IOfyyNf2OFSrA9V0oSMCdpcsU0vX1n6T80DaTzBdfq5zRwvHv1LA=
+	t=1741018248; cv=none; b=cHjgkRBgXRXVVLOwzzwm8JLvtZ5jWuQvaebrfFHFVCNHXm2w39qAAxqk8/LqRJ8zP3NCH4xCIkvU9lxUmxPFHCOgK3VzkYuAVUqIjbjpdiBUir2XWhbFiFohfXk/OTdALDXDyvlKtOgZ5Y/JQaltUbhWdh0VsTFZLvDWt7HPJi8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741017254; c=relaxed/simple;
-	bh=jm7aIl8nOFsL5ItJM+cBSG4sszkA3K90YhVshVT4GKM=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=rsOg3h1xfs2csxPuzDPE3NzUnJZHidKaK8eodeXWlFaPgHUluyC1EGrRJxMiowNYK5xu33v4LQ8PbbvdTiEZwTyuK3UfyO/B2tlHkl0R37mZE2fXPBRNYSd8lj2B1L2R7Ca7dvD/wSgrw6TjW2np9+S6sHuuYd4cAKVKDyGJqVs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PIWMEjYl; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1741018248; c=relaxed/simple;
+	bh=lTiBD0Nb5wgFh0cqwOiHEIg6CbN4WvJ97FKBo4L2wGg=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=HF6HCZ9tQPaVKPWt5WwR9qky3kzDeZ12Db+n2cG9kcOCiQxrhHRfbd2802SXFTeYvqlkV4SjOCkXnkUHeVNV4E15WlJp54+xEqYuGyYuBneVfW/5KV4beLChG6AvkS1W3qDLOxONDl8ynez0DV8+aObLd+b/GCTmRiaquS5z1XQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TypuzGSb; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PIWMEjYl"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TypuzGSb"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741017251;
+	s=mimecast20190719; t=1741018245;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=HNffPMV8rKLIpBOzlE41dr+5ILVNOFt5focK9WlBSLg=;
-	b=PIWMEjYlvziDiIjvISWotkVhX1qsNiYA2CHln5NG8F1JkllI3aOycgnmOLBYrEBhAOK1kv
-	maaX2UI/GIN2fOOXRhgQig4nh3jmlpK03EEgN+EnjJXEQX/MKJXoYCboBciJ97XBwXA2kx
-	Pj2uKl8IEcszT4jg4hRMsGtzWkqbzGQ=
+	bh=mNh7Kci5c/4oXZJmvCbC7SBx/UyvEwxV3D7Je6nSjLo=;
+	b=TypuzGSbG+yiMwVfj596pXirMw0hDp8ZWYnJ2BaGnJQUxLFGWRwuLgrLyIeM1+z9RmCLFI
+	ERZcKRRhLuR6NqEEt+Q5h4lcDJLLhBlYqqskP2/XoIPsTOfJVAukNq4Ima5Id2Ub8iVbm7
+	2dPnv5jFuZ5Su6L3yxhcp1lYtR1HxqA=
 Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-292-M_mdD6ZDPCiP-fvzIdqoLw-1; Mon,
- 03 Mar 2025 10:54:10 -0500
-X-MC-Unique: M_mdD6ZDPCiP-fvzIdqoLw-1
-X-Mimecast-MFC-AGG-ID: M_mdD6ZDPCiP-fvzIdqoLw_1741017249
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-395-Xe6mJXQ2OgaPBUW78ni5wQ-1; Mon,
+ 03 Mar 2025 11:10:39 -0500
+X-MC-Unique: Xe6mJXQ2OgaPBUW78ni5wQ-1
+X-Mimecast-MFC-AGG-ID: Xe6mJXQ2OgaPBUW78ni5wQ_1741018238
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E1C5F1801A1F;
-	Mon,  3 Mar 2025 15:54:08 +0000 (UTC)
-Received: from thinkpad.redhat.com (unknown [10.67.24.31])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5CA7B180087D;
-	Mon,  3 Mar 2025 15:54:03 +0000 (UTC)
-From: Ming-Hung Tsai <mtsai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-	Joe Thornber <thornber@redhat.com>,
-	Heinz Mauelshagen <heinzm@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Ming-Hung Tsai <mtsai@redhat.com>
-Subject: [PATCH v2 2/2] dm cache: support shrinking the origin device
-Date: Mon,  3 Mar 2025 23:53:32 +0800
-Message-ID: <20250303155332.45339-3-mtsai@redhat.com>
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8FDAD1801A1D;
+	Mon,  3 Mar 2025 16:10:38 +0000 (UTC)
+Received: from [10.45.224.44] (unknown [10.45.224.44])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C185119560AA;
+	Mon,  3 Mar 2025 16:10:36 +0000 (UTC)
+Date: Mon, 3 Mar 2025 17:10:32 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Ming-Hung Tsai <mtsai@redhat.com>
+cc: dm-devel@lists.linux.dev, Joe Thornber <thornber@redhat.com>, 
+    Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+Subject: Re: [PATCH v2 0/2] dm cache: support shrinking the origin device
 In-Reply-To: <20250303155332.45339-1-mtsai@redhat.com>
+Message-ID: <b1219fb2-b60f-5a04-6b63-462a92e46b29@redhat.com>
 References: <20250303155332.45339-1-mtsai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -60,195 +56,33 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 1f6E-jpUIk4WW3WkMhmzmAwVsPUtCCVKuVmNvZ57Qc4_1741017249
+X-Mimecast-MFC-PROC-ID: E6Z0ZV39VgkhLYGVH5qq7_p7lqV1KlgmH-lAhx8cZPo_1741018238
 X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset=US-ASCII
 
-This patch introduces formal support for shrinking the cache origin by
-reducing the cache target length via table reloads. Cache blocks mapped
-beyond the new target length must be clean and are invalidated during
-preresume. If any dirty blocks exist in the area being removed, the
-preresume operation fails without setting the NEEDS_CHECK flag in
-superblock, and the resume ioctl returns EFBIG. The cache device remains
-suspended until a table reload with target length that fits existing
-mappings is performed.
 
-Without this patch, reducing the cache target length could result in
-io errors (RHBZ: 2134334), out-of-bounds memory access to the discard
-bitset, and security concerns regarding data leakage.
 
-Verification steps:
+On Mon, 3 Mar 2025, Ming-Hung Tsai wrote:
 
-1. create a cache metadata with some cached blocks mapped to the tail
-   of the origin device. Here we use cache_restore v1.0 to build a
-   metadata with one clean block mapped to the last origin block.
+> This patch series introduces formal support for shrinking the cache
+> origin and ensures that failed resume attempts, such as those caused
+> by shrinking failures, do not trigger BUG_ON.
+> 
+> The only change in v2 patchset is the updated dm-cache's version number.
+> 
+> Ming-Hung Tsai (2):
+>   dm cache: prevent BUG_ON by blocking retries on failed device resumes
+>   dm cache: support shrinking the origin device
+> 
+>  drivers/md/dm-cache-target.c | 96 ++++++++++++++++++++++++++++++++++--
+>  1 file changed, 93 insertions(+), 3 deletions(-)
+> 
+> -- 
+> 2.47.0
 
-cat <<EOF >> cmeta.xml
-<superblock uuid="" block_size="128" nr_cache_blocks="512" \
-policy="smq" hint_width="4">
-  <mappings>
-    <mapping cache_block="0" origin_block="4095" dirty="false"/>
-  </mappings>
-</superblock>
-EOF
-dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-cache_restore -i cmeta.xml -o /dev/mapper/cmeta --metadata-version=2
-dmsetup remove cmeta
+Ok, I increased the version number.
 
-2. bring up the cache whilst shrinking the cache origin by one block:
-
-dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-dmsetup create cdata --table "0 65536 linear /dev/sdc 8192"
-dmsetup create corig --table "0 524160 linear /dev/sdc 262144"
-dmsetup create cache --table "0 524160 cache /dev/mapper/cmeta \
-/dev/mapper/cdata /dev/mapper/corig 128 2 metadata2 writethrough smq 0"
-
-3. check the number of cached data blocks via dmsetup status. It is
-   expected to be zero.
-
-dmsetup status cache | cut -d ' ' -f 7
-
-In addition to the script above, this patch can be verified using the
-"cache/resize" tests in dmtest-python:
-
-./dmtest run --rx cache/resize/shrink_origin --result-set default
-
-Signed-off-by: Ming-Hung Tsai <mtsai@redhat.com>
----
- drivers/md/dm-cache-target.c | 72 ++++++++++++++++++++++++++++++++++--
- 1 file changed, 69 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 6cee5eac8b9e..9634c9f2143a 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -406,6 +406,12 @@ struct cache {
- 	mempool_t migration_pool;
- 
- 	struct bio_set bs;
-+
-+	/*
-+	 * Cache_size entries. Set bits indicate blocks mapped beyond the
-+	 * target length, which are marked for invalidation.
-+	 */
-+	unsigned long *invalid_bitset;
- };
- 
- struct per_bio_data {
-@@ -1922,6 +1928,9 @@ static void __destroy(struct cache *cache)
- 	if (cache->discard_bitset)
- 		free_bitset(cache->discard_bitset);
- 
-+	if (cache->invalid_bitset)
-+		free_bitset(cache->invalid_bitset);
-+
- 	if (cache->copier)
- 		dm_kcopyd_client_destroy(cache->copier);
- 
-@@ -2510,6 +2519,13 @@ static int cache_create(struct cache_args *ca, struct cache **result)
- 	}
- 	clear_bitset(cache->discard_bitset, from_dblock(cache->discard_nr_blocks));
- 
-+	cache->invalid_bitset = alloc_bitset(from_cblock(cache->cache_size));
-+	if (!cache->invalid_bitset) {
-+		*error = "could not allocate bitset for invalid blocks";
-+		goto bad;
-+	}
-+	clear_bitset(cache->invalid_bitset, from_cblock(cache->cache_size));
-+
- 	cache->copier = dm_kcopyd_client_create(&dm_kcopyd_throttle);
- 	if (IS_ERR(cache->copier)) {
- 		*error = "could not create kcopyd client";
-@@ -2808,6 +2824,24 @@ static int load_mapping(void *context, dm_oblock_t oblock, dm_cblock_t cblock,
- 	return policy_load_mapping(cache->policy, oblock, cblock, dirty, hint, hint_valid);
- }
- 
-+static int load_filtered_mapping(void *context, dm_oblock_t oblock, dm_cblock_t cblock,
-+				 bool dirty, uint32_t hint, bool hint_valid)
-+{
-+	struct cache *cache = context;
-+
-+	if (oblock >= cache->origin_blocks) {
-+		if (dirty) {
-+			DMERR("%s: unable to shrink origin; cache block %u is dirty",
-+			      cache_device_name(cache), from_cblock(cblock));
-+			return -EFBIG;
-+		}
-+		set_bit(from_cblock(cblock), cache->invalid_bitset);
-+		return 0;
-+	}
-+
-+	return load_mapping(context, oblock, cblock, dirty, hint, hint_valid);
-+}
-+
- /*
-  * The discard block size in the on disk metadata is not
-  * necessarily the same as we're currently using.  So we have to
-@@ -2962,6 +2996,24 @@ static int resize_cache_dev(struct cache *cache, dm_cblock_t new_size)
- 	return 0;
- }
- 
-+static int truncate_oblocks(struct cache *cache)
-+{
-+	uint32_t nr_blocks = from_cblock(cache->cache_size);
-+	uint32_t i;
-+	int r;
-+
-+	for_each_set_bit(i, cache->invalid_bitset, nr_blocks) {
-+		r = dm_cache_remove_mapping(cache->cmd, to_cblock(i));
-+		if (r) {
-+			DMERR_LIMIT("%s: invalidation failed; couldn't update on disk metadata",
-+				    cache_device_name(cache));
-+			return r;
-+		}
-+	}
-+
-+	return 0;
-+}
-+
- static int cache_preresume(struct dm_target *ti)
- {
- 	int r = 0;
-@@ -2986,11 +3038,25 @@ static int cache_preresume(struct dm_target *ti)
- 	}
- 
- 	if (!cache->loaded_mappings) {
-+		/*
-+		 * The fast device could have been resized since the last
-+		 * failed preresume attempt.  To be safe we start by a blank
-+		 * bitset for cache blocks.
-+		 */
-+		clear_bitset(cache->invalid_bitset, from_cblock(cache->cache_size));
-+
- 		r = dm_cache_load_mappings(cache->cmd, cache->policy,
--					   load_mapping, cache);
-+					   load_filtered_mapping, cache);
- 		if (r) {
- 			DMERR("%s: could not load cache mappings", cache_device_name(cache));
--			metadata_operation_failed(cache, "dm_cache_load_mappings", r);
-+			if (r != -EFBIG)
-+				metadata_operation_failed(cache, "dm_cache_load_mappings", r);
-+			return r;
-+		}
-+
-+		r = truncate_oblocks(cache);
-+		if (r) {
-+			metadata_operation_failed(cache, "dm_cache_remove_mapping", r);
- 			return r;
- 		}
- 
-@@ -3450,7 +3516,7 @@ static void cache_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 
- static struct target_type cache_target = {
- 	.name = "cache",
--	.version = {2, 2, 0},
-+	.version = {2, 3, 0},
- 	.module = THIS_MODULE,
- 	.ctr = cache_ctr,
- 	.dtr = cache_dtr,
--- 
-2.47.0
+Mikulas
 
