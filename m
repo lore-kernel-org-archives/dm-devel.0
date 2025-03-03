@@ -1,110 +1,81 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6594B215058
-	for <dm-devel@lists.linux.dev>; Mon,  3 Mar 2025 17:18:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 212318489;
+	Mon,  3 Mar 2025 17:24:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741022304; cv=none; b=sNuyXWkE26iPzKE4znkpdtoYDlGCq/rV8IbEhq59oVb8WBZ+4MdHezhiewt245e63iEutfUaUGV8xZF6QSZVe/hRGTWpORnb6Ay0MvFvUE0pYZABEdQNP+fjxaF6EWBjVLmr9d2ZKuY9MXrRmfODGe1mUgKPCfhnl7u+weGpHH4=
+	t=1741022656; cv=none; b=Xig9MK8l7h6O3Krx7Lfa+ma6EjJuGeZjcZJbKe40QvRR5fEB971huwX9nfYTbs2p692QbcPr4TQrJxZCVF74zpqhghYJ85Vw+IY3+zm4v2PB5WN1UR9SBZOy7hT+MB9PMuRbO/1PBEEmkDX0nJvkzV1bVmZ5x9dfW9x0UiGE09Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741022304; c=relaxed/simple;
-	bh=tEbl9Z0LHEelJx/aBMH20V1zwfdMngeOka83kgkcoHM=;
+	s=arc-20240116; t=1741022656; c=relaxed/simple;
+	bh=C2ckK8bQNDcbcsSG2G21/Gbr8CgvuAOuCYZlkUnoJzM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=kNryejJPy3JWhkj248s1NHwmrLVDCmp+/sSVohFh97RzRodgnw/75KzS6aptD2TqYjlKcAyM7yz+mxCsYu74zx3JvIn5a3+xyGU6BEXCoG6aWwmfDEVkrBAIhrWLgRVao/dbGAoZ7wivvJLbktOFhc5Fxo3dSe32eIMQ73/rMQk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I8Vo0Rs7; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=eLSij6ixTublHiZClU7uHdwSdAF3wyK1NYXuNVhuhpIKlcPvmzQPVvspki70lJ5PBtZWz1SulDivKiAcPN4mLpKpEem3sn7ICShM20eTwmND7RfzbVynDDjb3Y7PyP7P7SegYA+1P4/uC68cepMUyukwbqAd69zduIEzN3Bves0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=4uQGxSas; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I8Vo0Rs7"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741022301;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9zzxoP24nmh82oHSaWc5helnKokGr310kh8VjOMYcbk=;
-	b=I8Vo0Rs7WNT6gMpTTFgQilAKJNR8BWeuG+e1q96tQvo+ikrzwx7Lt8mPHYvZ178zw5Wu6m
-	rqXo9rExeaMv60JHOfJctX5GXtMT/vLL+Th6SUeGpb3OIqyHSHhz3JHZ8kakkHZpET2Wa3
-	tWuBwJO1lAzLtomTrRplPYu7XteQ1f8=
-Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com
- [209.85.221.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-480-mwWBLGVHMFSgHOnuXsTYlA-1; Mon, 03 Mar 2025 12:18:20 -0500
-X-MC-Unique: mwWBLGVHMFSgHOnuXsTYlA-1
-X-Mimecast-MFC-AGG-ID: mwWBLGVHMFSgHOnuXsTYlA_1741022299
-Received: by mail-wr1-f69.google.com with SMTP id ffacd0b85a97d-390e62ef5f6so1701442f8f.2
-        for <dm-devel@lists.linux.dev>; Mon, 03 Mar 2025 09:18:19 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1741022298; x=1741627098;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=9zzxoP24nmh82oHSaWc5helnKokGr310kh8VjOMYcbk=;
-        b=joAbkG2z3sDIZi9T2SL43pRM4pAG2hYEkAM1SnM27mhhoI8OTahvYtyAXKussY5xAw
-         8RJqbt05qoR2FR/vChfycs5LCS923h/4/OyecrczG5bd6WloAJ1urxPQ/dK93sy9XoYN
-         7QFaAdTJugRIQgM+D/soiiQV+tt+otU9doBQsEVqDe6Gz7cAZnWJUQMcUGiKdlS+CxIO
-         gNuhOzc/wGpYrFDuFmiPyQTPw10Lrzl9CnLWVZTSY9AJFmrTcEMm+D0F/i1pgeOcIn88
-         1m0Ejo6lk8wQjQakExb2lrnMSo3ChsQX/rcY7N+bbOVcBLAwireSuX6m44DafZ6DgNqo
-         E20Q==
-X-Forwarded-Encrypted: i=1; AJvYcCUkfq3agiKfbFEiHnz8X/FXp8PVohKNYomxNvAgsKKELkEbzNVpPN5C8LQWkniOcz+1muXn1YHFjw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyiqVzhHSAP3QMc+38fX2H+9FDsqdUKrmitYCeVqymoJXXq7vG4
-	BHXbl2khksPK1RfEO8M2xjQJ7/B4ycl16kGY0WgWwIa2rLYH285wdbOc/fvEYHp5Me7NqSvPNol
-	UHVaHOXLmkzKKlfeKf/xXuakCKO88VinC8iVGhpRX/ANpklQFwqTTNSNc
-X-Gm-Gg: ASbGnctqBLpKyGOkANTxFnISBORvD4VrInJfsZ9Y8oOLUhX5Act3aAKSHSO7DFq0eyc
-	YgxLfLloZy2QuofGWGePyO692zU0qf/rcHfuLJT5HEHGRRGQhjqU/p2l/nTENm9F2hR7fl8S+tu
-	+xZSHsHY+VtmIhOeMLAGsb1po2Jk2xeE4btRYzNPRXBd3AXeGjeslF6kyG0t89lOpPryfdUrsRB
-	CJpx8jeqe9kIbuTLTjNmxMl6O6oaSg7e/f8GjZVwW/yDe6c43M7RCBQVhH6uSCodLMMFMLfKkkG
-	UDMIm3IYfb9g/Q4HCDNJMd8MRByPoGM3Ri194w==
-X-Received: by 2002:a05:6000:1ac6:b0:391:13f7:92ad with SMTP id ffacd0b85a97d-39113f7954fmr1323066f8f.27.1741022298582;
-        Mon, 03 Mar 2025 09:18:18 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IE5d/hEIDGqC62p/7+/rM5orGav0jyhJDcMmBAMbJkNL7PGTfOYy0B6v19rbsYDULNx/C1wLg==
-X-Received: by 2002:a05:6000:1ac6:b0:391:13f7:92ad with SMTP id ffacd0b85a97d-39113f7954fmr1323045f8f.27.1741022298295;
-        Mon, 03 Mar 2025 09:18:18 -0800 (PST)
-Received: from redhat.com (128.19.187.81.in-addr.arpa. [81.187.19.128])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-390e47a6a78sm14792252f8f.23.2025.03.03.09.18.17
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 03 Mar 2025 09:18:17 -0800 (PST)
-Date: Mon, 3 Mar 2025 17:18:16 +0000
-From: "Bryn M. Reeves" <breeves@redhat.com>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="4uQGxSas"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=W8TcBwyxADhLGVfNgYnLKlgRAFc493awa18FegwhHx8=; b=4uQGxSasnvdUe0VwB9hxz63WQu
+	O3W5iHQirJAb0LlJ8nST9aR2VPRfy9NVZH/b9AmAl06WsDr6iWozOdBQvOBikaxrDwhITAvKXEBGR
+	4k1Os81aX6xhVZ/FIvp2o+36HOxMHXO15SORYtaLWUU6+1vxPeWeqwtgjuEDnpYoSL3h/G701zhdR
+	FpP9PBBgEH7VzhG8ATqt9zkazF5zF+5C62CX3OV+VUN2JlZ2NOX2PTDgmyDxrup65AILiFJrt0WeX
+	b9VDVuolET3U2wU/HKpZzOSTUN9MkHkV2+Wg5saBndPjAv+H6ksAFPvbX9XDzesHxjrxVf694SE6g
+	EdqvXLgA==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
+	id 1tp9WX-00000001jSm-2duk;
+	Mon, 03 Mar 2025 17:24:13 +0000
+Date: Mon, 3 Mar 2025 09:24:13 -0800
+From: Christoph Hellwig <hch@infradead.org>
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, zkabelac@redhat.com,
-	dm-devel@lists.linux.dev
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>,
+	Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Heinz Mauelshagen <heinzm@redhat.com>, zkabelac@redhat.com,
+	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org
 Subject: Re: [PATCH] the dm-loop target
-Message-ID: <Z8XkWA_aWDNQ-giK@redhat.com>
+Message-ID: <Z8XlvU0o3C5hAAaM@infradead.org>
 References: <7d6ae2c9-df8e-50d0-7ad6-b787cb3cfab4@redhat.com>
- <Z8Xe9bJQYs9TiUrO@redhat.com>
- <0690d480-1bb9-a586-6b3b-976b9bf2ec1d@redhat.com>
+ <Z8W1q6OYKIgnfauA@infradead.org>
+ <b3caee06-c798-420e-f39f-f500b3ea68ca@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <0690d480-1bb9-a586-6b3b-976b9bf2ec1d@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: ZQpA2IgKUbGLdZUCyWG2rjLbKt6aaM6PXfa03Mpu5iY_1741022299
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <b3caee06-c798-420e-f39f-f500b3ea68ca@redhat.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Mon, Mar 03, 2025 at 06:06:36PM +0100, Mikulas Patocka wrote:
-> The dm-loop driver does the same thing as swapfile activation - so I 
-> presume that if swapfile activation is correct, then dm-loop is also 
-> correct.
+On Mon, Mar 03, 2025 at 05:16:48PM +0100, Mikulas Patocka wrote:
+> What should I use instead of bmap? Is fiemap exported for use in the 
+> kernel?
+
+You can't do an ahead of time mapping.  It's a broken concept.
+
+> Would Jens Axboe agree to merge the dm-loop logic into the existing loop 
+> driver?
+
+What logic?
+
+> Dm-loop is significantly faster than the regular loop:
 > 
-> The S_SWAPFILE flag prevents the kernel from truncating, extending or 
-> deleting the file - it just returns "Text file busy".
+> # modprobe brd rd_size=1048576
+> # dd if=/dev/zero of=/dev/ram0 bs=1048576
+> # mkfs.ext4 /dev/ram0
+> # mount -t ext4 /dev/ram0 /mnt/test
+> # dd if=/dev/zero of=/mnt/test/test bs=1048576 count=512
 
-Right: that was the idea, and it was lifted wholesale from swapfile.c.
+All of this needs to be in a commit log.  Also note that the above:
 
-In my testing it seemed reliable, but we had reports from users of
-very occasional memory or file corruption iirc that we were never
-able to pin down and resolve.
-
-One user in the UK was running it in production for a couple of years on
-multiple systems - in that time they had a handful of crashes that we
-were never able to make much sense of. 
-
-Regards,
-Bryn.
+ a) does not use direct I/O which any sane loop user should
+ b) is not on a file but a block device, rendering the use of a loop
+    device entirely pointless.
 
