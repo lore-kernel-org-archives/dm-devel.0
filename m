@@ -1,72 +1,81 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 089CC22098;
-	Mon,  3 Mar 2025 15:31:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 560A71CAA90
+	for <dm-devel@lists.linux.dev>; Mon,  3 Mar 2025 15:53:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741015921; cv=none; b=pUQesX1mxf/+3wdxtXnq74dTtq+TpD692IQNB9MrN/QVCRzTJ+ffCInT3L430jP/Xc3vrHbVzxuYxQRHl9xbcZLF4vY+Gf5CGCt4gAHU/A63bIMw4vZKjOolfK0L/D5tru5q25GJPqNmpJotB5b76Ate9kuRPkdwoQpIJyc20Rw=
+	t=1741017234; cv=none; b=T1YG5kRJwbdrSiqVOrKAhhRiWc93MQWuhVu/ET2hRPzZxxapw2dxjgNfpaXohjYKnA5iYKvY+pvmJJRbIRVZPCi/QYyzVuAg72QnIoT6XfDyN0wTluBOkmEb3CvGlMXvEuaOrG0PlNPzjym2OdjP832cJzps0eCV/4Sf9bFjcbc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741015921; c=relaxed/simple;
-	bh=dcw7/Wg389gBfk+L6HK4NCC9yUYaH9SNp9/QspVAY9U=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=NwDQZTF2UHeF9fOjFO0tFALBeYAzJKhRF+g+sVKHeTKoMOXRPr1biesi9YkI9JkLLaLspjUup2ZR+rn8PG29+0yXP3wbKhmcrC0XiKbD253Vnztl5qk5nk4E6qQpHOBuJ7By1/CEOk2Dpez0XUFSHUTwoug48HxsL3jM3fE8NTw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=W2n6JX3/; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1741017234; c=relaxed/simple;
+	bh=bpH6+5JG33eXMLrvJySy80W3RMQEkTyr6YnQT8akLvI=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=B7glbHOGTCe8yKJmpLJu7mPVLbmjnLvv3FzleR5D6mbpXidI163gkIm5BlIULqhV3NrMtYC1QAZzFm5T1eLadsbDQszJzpqrljI0W4ezctnKT5Ij+um5WhQQCwXJxLUmS//CaWLGaCIcCAlWnl4Pa37IVMnleioCz4NBOSduFqU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EGT6nvdV; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="W2n6JX3/"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=0HCj62e3BVbAJjKmBPN5KgNHVvDUyyOEB6y36R9K+/U=; b=W2n6JX3/0+Qmr30XQdZNZyV80l
-	EfNTJz8rbR+IK/gmOkpdX1ngk3B7h8pj9jgUFrtRJjsX/htjA4npQ5HaTuTxD2yu0imay08aOdKlm
-	s6NG+BAGnHWNBuuQ+qD9Es9SuyQDf8z0WVqChoOmPOT+krXj4pIdBaJGoSkDE6mjsfJD+UI6LCrDv
-	r0XTKjySecckRI+NzYidVBF1mY91N9N2+YvQhD3VxCiqqx1StxG6t91qL1HYxaGkXosP5Jm8tdiJZ
-	KkNfgbjHMtTEy3FASBVkXdKopamNnJy+rf2awCF0NvUatTImE9NMCqV8uE4AbeTC7lz/UuM8Dcfo+
-	rdkBx5iQ==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
-	id 1tp7lt-00000001KMD-0hyP;
-	Mon, 03 Mar 2025 15:31:57 +0000
-Date: Mon, 3 Mar 2025 07:31:57 -0800
-From: Christoph Hellwig <hch@infradead.org>
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Christoph Hellwig <hch@infradead.org>,
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EGT6nvdV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1741017231;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=gskn3/hLpx11SGo8L6DYqd1yKvZ882jyL89m0QkYe9c=;
+	b=EGT6nvdV0hCFTV8tgO9BAPf9u26s70xmM8CshXERHtHT8WLirnDJzsMD0vNYgIZtA7UHoP
+	4WFsjzf0bFWe19NEFVuIYwnXpCTri6CDZFu4vhCYPZkQEvnSG2pL4iTfiXqCRcMTqL2B+y
+	aNBYc6NQKPrTeoNFxU10N7fq0XuA5II=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-491--QBLHiaNO52Ems53peNT-Q-1; Mon,
+ 03 Mar 2025 10:53:49 -0500
+X-MC-Unique: -QBLHiaNO52Ems53peNT-Q-1
+X-Mimecast-MFC-AGG-ID: -QBLHiaNO52Ems53peNT-Q_1741017228
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C06E21975AFC;
+	Mon,  3 Mar 2025 15:53:48 +0000 (UTC)
+Received: from thinkpad.redhat.com (unknown [10.67.24.31])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 15E031800944;
+	Mon,  3 Mar 2025 15:53:43 +0000 (UTC)
+From: Ming-Hung Tsai <mtsai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Mikulas Patocka <mpatocka@redhat.com>,
+	Joe Thornber <thornber@redhat.com>,
 	Heinz Mauelshagen <heinzm@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, zkabelac@redhat.com,
-	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org
-Subject: Re: [PATCH] the dm-loop target
-Message-ID: <Z8XLbaXUywNburXu@infradead.org>
-References: <7d6ae2c9-df8e-50d0-7ad6-b787cb3cfab4@redhat.com>
- <Z8W1q6OYKIgnfauA@infradead.org>
- <CAM23VxprhJgOPfhxQf6QNWzHd6+-ZwbjSo-oMHCD2WDQiKntMg@mail.gmail.com>
- <Z8XHLdh_YT1Z7ZSC@infradead.org>
- <Z8XJSL-rSLUtx-NL@casper.infradead.org>
+	Mike Snitzer <snitzer@kernel.org>,
+	Ming-Hung Tsai <mtsai@redhat.com>
+Subject: [PATCH v2 0/2] dm cache: support shrinking the origin device
+Date: Mon,  3 Mar 2025 23:53:30 +0800
+Message-ID: <20250303155332.45339-1-mtsai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <Z8XJSL-rSLUtx-NL@casper.infradead.org>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Ll9owexyU4exvRuNi2RWCaUU0dr2CqmpzGMXM5oVlcs_1741017228
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Mon, Mar 03, 2025 at 03:22:48PM +0000, Matthew Wilcox wrote:
-> Funnily, I was looking at the md bitmap code too.  It's the last part of
-> the kernel using buffer heads with not-a-pagecache page, so it's the
-> only caller of alloc_page_buffers() remaining.
-> 
-> I think it should just use the page cache to read/write the file data,
-> but I haven't looked into it in detail.
+This patch series introduces formal support for shrinking the cache
+origin and ensures that failed resume attempts, such as those caused
+by shrinking failures, do not trigger BUG_ON.
 
-The md bitmap code is awful as it abuses it's own buffer heads in a
-way that is non-coherent with the underlying fs.  It should just be
-using the vfs read/write helpers for in-kernel direct I/O with a
-scoped nofs context.
+The only change in v2 patchset is the updated dm-cache's version number.
+
+Ming-Hung Tsai (2):
+  dm cache: prevent BUG_ON by blocking retries on failed device resumes
+  dm cache: support shrinking the origin device
+
+ drivers/md/dm-cache-target.c | 96 ++++++++++++++++++++++++++++++++++--
+ 1 file changed, 93 insertions(+), 3 deletions(-)
+
+-- 
+2.47.0
 
