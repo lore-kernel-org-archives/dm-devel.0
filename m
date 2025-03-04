@@ -1,112 +1,163 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f173.google.com (mail-pl1-f173.google.com [209.85.214.173])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1D83C1E9B3D
-	for <dm-devel@lists.linux.dev>; Mon,  3 Mar 2025 21:04:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D77F1552E0
+	for <dm-devel@lists.linux.dev>; Tue,  4 Mar 2025 02:14:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741035861; cv=none; b=odbfTip5vKeimnMLOKNMOdqvZkEFesEs1XLVk9OfaPhs6oG5nFtuOnkCbHL2U0xXra/TKnZrPSk26pTjIgvbBZD0g+n58Gh6XSVXA3TFLtethCf99e4QKUjoFFwSXm0lNBta351bTMOkz0xUt1arDL4fbMyF5l4ktrp0Fg6XSFQ=
+	t=1741054443; cv=none; b=tA4dE8rRkZiCDD83YLFq2966rwl/IAxyEbGAlXR8YJJBNwCuBOQfpIlKen5Tbiyvpgx2IZuxPoaDNi34LhkaBsFEJjXJoDz8+9c9+5orbffb36Brs83lKQ85ug/zJ8bJQG0I414HMwoFGbUbW7YvNgbV/B0q378Ng/tJ/j19bbA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741035861; c=relaxed/simple;
-	bh=YyUEqbG8RQHyX8fBvFc8Vh7nzq9Xu9KmRwdJTNGv54c=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=iBRilLp7KLkxdB4T55hH4VUtZnP5sEOP2KTBFDcZiNpPvi7PWy14MoPz89bK5JY+lW9QsXKvlBdQRn4jbxKpXiYDFNKaqFPh9i/hvOnFidpOJkEJ2juojDaJ4ef94X1PIFeHudXRNVCVJ6SOYEg3aoHTBuSj9fAmGKUcPvqx72c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TyrT36kb; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1741054443; c=relaxed/simple;
+	bh=65qteFEhlJkfEJHajsEeIUVaNND/sMGS27EzH//MlBg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=lWY5tNkYH9CpApNFNkMOrDeaqOmL+HkTEBb92yh3GAa4eS54q4r2Dtr9KTTwbj5r3IaNvfIggwxg11Qj1BEEnGihyvr5PRAXPjtYPX15KVzMFrNL1h7PjyRC3/QsPvf9YIyF3EJKOmtBKICeGSZg4LBE1Kw5o+fSjY5BAo1lJ2Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fromorbit.com; spf=pass smtp.mailfrom=fromorbit.com; dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b=NmjinMaE; arc=none smtp.client-ip=209.85.214.173
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fromorbit.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fromorbit.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TyrT36kb"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741035859;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Ys4JNLGyErR7JxC1BDaK7BQRhc1U8Vdx80t+A0LJfXw=;
-	b=TyrT36kbOjDUq7iARxsGadT4TBA4ztoszLueDp0zy54oAm86Ecr48XbzcE2dDd1lXMX5vl
-	roCuV8B3desxFdnsOw0S4Akcme53lNHTKpLRyaIBW+xnX9HrFtl0bgrBkOobnUU5YKnvlt
-	jRn38NgQjDL5bFXF8er7TVobKWL5rI8=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-586-JCnYpTmDM8aeGCkRpfys5w-1; Mon,
- 03 Mar 2025 16:03:58 -0500
-X-MC-Unique: JCnYpTmDM8aeGCkRpfys5w-1
-X-Mimecast-MFC-AGG-ID: JCnYpTmDM8aeGCkRpfys5w_1741035837
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5492A1800878;
-	Mon,  3 Mar 2025 21:03:51 +0000 (UTC)
-Received: from [10.45.224.44] (unknown [10.45.224.44])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 117601800362;
-	Mon,  3 Mar 2025 21:03:46 +0000 (UTC)
-Date: Mon, 3 Mar 2025 22:03:42 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Christoph Hellwig <hch@infradead.org>
-cc: Jens Axboe <axboe@kernel.dk>, Jooyung Han <jooyung@google.com>, 
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Heinz Mauelshagen <heinzm@redhat.com>, zkabelac@redhat.com, 
-    dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
-    linux-fsdevel@vger.kernel.org
+	dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b="NmjinMaE"
+Received: by mail-pl1-f173.google.com with SMTP id d9443c01a7336-22113560c57so97252385ad.2
+        for <dm-devel@lists.linux.dev>; Mon, 03 Mar 2025 18:14:01 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=fromorbit-com.20230601.gappssmtp.com; s=20230601; t=1741054441; x=1741659241; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=sK0gfp+tfIRPtJrzvnT/QgeAtUCdjlbqmvBwODDMg9Q=;
+        b=NmjinMaEueH1vR5U19gDtckE51nTd2kelrwH1SrAZ/3h+qTvd5kl5B+Kq9IPWsNwUu
+         j3zc+q0qkAkXpmzJRQ+lSJp98ktb1pnWyvVh4Ozs4/wM0kek1yY8FDELIBocETdCz3iP
+         WJY+4i1v3+/FGcdSgFwIu0FqHfN8FUaZin5oob7iXGc2j6wTo6mXl+pMgiCZ4aOfRRhM
+         d4xv6vRomluRHtxjpLcBjW85PK+neHxU8Sz5if7PetDefZik3elMPgbQ4hx2pbAMMxdl
+         21rFFEi0ciNe3V9tcdP26xi5N/Jd5WSejRZZfDk4kpkpXdWpiLeFCKKhVhgG2VC5Oi8h
+         7Yfg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1741054441; x=1741659241;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=sK0gfp+tfIRPtJrzvnT/QgeAtUCdjlbqmvBwODDMg9Q=;
+        b=ssoikk598LQuA08qLEufor94cAOYWXIoL63ivmUz2QwNNClZNJKdqkDeQlQngqHl5t
+         +ZLM9MB1TYjsG0ReFZhVTw3+qk+MSfXYWi/EMfdNJodisq4jy9o2TWZ0HIZSMRKTNPPQ
+         BL8Jn7JYq0aoTfLfHuU1OHJHvg7lTrPUCnhjxF79Vlpn07QTFGb4GEtWjMo79V+AwOy/
+         8zjm9ZPYklzXpg+jvR3uXXVVVWND0q6TToL0RRZTMY8fnZAsTf9oAA2Ukpm7x5un6qwi
+         K35H9rn2r/e34Z8cdzbjiJDSi4rlcD1N/HSz3Jzv/EKUYapPnQ0thINzK6QKXZfyxPwU
+         sQUw==
+X-Forwarded-Encrypted: i=1; AJvYcCUuaZc7oHfIAWT7lMraT2d68Y4bc9kkevGBbfGJD0a42KpeFX7/0V4bWu3otKhvTb/kYCKW++/cZQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx+FOCM9sq8Ap9kBmNQTSPLUVO675DjiCGbx65ekDy+dZ7U4LDj
+	BA3llxpbHtdP7AmcPSbujuzP2ll7cRcYtp0nYa4pMIFHvcq0yvp+dOqUSF6Rcb0=
+X-Gm-Gg: ASbGncuDj2iYWzq0G1ldaC+8qy768pAoT5WlXgBZGlH/3q2Nxvd5BLqgnagiRCcg6PV
+	VzG53XtrUxJizEABkE1KhzBLkVAx4NHSI7XnOO8MrIPqBTG2VKO5sKEqRnblz4Rn30P/SBjiR4g
+	7AItLqSOJEUwgMj/3rEnPl0wUwWWAA5ucjomCOT2K/nEU42uUMxNLeGwcDL4cQBBK5ly0TgVDaP
+	bTQiCkuq6/x3MS+vKqDeTfks/BHekJTs5gIdBd42tawzLTuAVtDKQdQSaZb9JvrkFr5Evhc3zeT
+	Jm+FvAVJFK6HGulBaGRJGPMlolmzyzQBTPUnBIyHSJA00j1NxukiACyLLkN2cvp6zZUL0bPXqj8
+	oscXdWS3j7Q==
+X-Google-Smtp-Source: AGHT+IHyS8XI7dQracLy9dzzwN9VnTebYLZcAjwtproeAmBp0VUFPFDoIsd/L7rBrZtQKzPw1kpc7Q==
+X-Received: by 2002:a17:903:3b85:b0:220:caf9:d027 with SMTP id d9443c01a7336-22368fbeb7cmr225661495ad.23.1741054440675;
+        Mon, 03 Mar 2025 18:14:00 -0800 (PST)
+Received: from dread.disaster.area (pa49-186-89-135.pa.vic.optusnet.com.au. [49.186.89.135])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-223504c5bd2sm84882545ad.111.2025.03.03.18.14.00
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 03 Mar 2025 18:14:00 -0800 (PST)
+Received: from dave by dread.disaster.area with local (Exim 4.98)
+	(envelope-from <david@fromorbit.com>)
+	id 1tpHnB-00000008Ys6-2dlU;
+	Tue, 04 Mar 2025 13:13:57 +1100
+Date: Tue, 4 Mar 2025 13:13:57 +1100
+From: Dave Chinner <david@fromorbit.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>,
+	Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Heinz Mauelshagen <heinzm@redhat.com>, zkabelac@redhat.com,
+	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org
 Subject: Re: [PATCH] the dm-loop target
-In-Reply-To: <Z8XlvU0o3C5hAAaM@infradead.org>
-Message-ID: <8adb8df2-0c75-592d-bc3e-5609bb8de8d8@redhat.com>
-References: <7d6ae2c9-df8e-50d0-7ad6-b787cb3cfab4@redhat.com> <Z8W1q6OYKIgnfauA@infradead.org> <b3caee06-c798-420e-f39f-f500b3ea68ca@redhat.com> <Z8XlvU0o3C5hAAaM@infradead.org>
+Message-ID: <Z8Zh5T9ZtPOQlDzX@dread.disaster.area>
+References: <7d6ae2c9-df8e-50d0-7ad6-b787cb3cfab4@redhat.com>
+ <Z8W1q6OYKIgnfauA@infradead.org>
+ <b3caee06-c798-420e-f39f-f500b3ea68ca@redhat.com>
+ <Z8XlvU0o3C5hAAaM@infradead.org>
+ <8adb8df2-0c75-592d-bc3e-5609bb8de8d8@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <8adb8df2-0c75-592d-bc3e-5609bb8de8d8@redhat.com>
 
-
-
-On Mon, 3 Mar 2025, Christoph Hellwig wrote:
-
-> On Mon, Mar 03, 2025 at 05:16:48PM +0100, Mikulas Patocka wrote:
-> > What should I use instead of bmap? Is fiemap exported for use in the 
-> > kernel?
+On Mon, Mar 03, 2025 at 10:03:42PM +0100, Mikulas Patocka wrote:
 > 
-> You can't do an ahead of time mapping.  It's a broken concept.
-
-Swapfile does ahead of time mapping. And I just looked at what swapfile 
-does and copied the logic into dm-loop. If swapfile is not broken, how 
-could dm-loop be broken?
-
-> > Would Jens Axboe agree to merge the dm-loop logic into the existing loop 
-> > driver?
 > 
-> What logic?
-
-The ahead-of-time mapping.
-
-> > Dm-loop is significantly faster than the regular loop:
+> On Mon, 3 Mar 2025, Christoph Hellwig wrote:
+> 
+> > On Mon, Mar 03, 2025 at 05:16:48PM +0100, Mikulas Patocka wrote:
+> > > What should I use instead of bmap? Is fiemap exported for use in the 
+> > > kernel?
 > > 
-> > # modprobe brd rd_size=1048576
-> > # dd if=/dev/zero of=/dev/ram0 bs=1048576
-> > # mkfs.ext4 /dev/ram0
-> > # mount -t ext4 /dev/ram0 /mnt/test
-> > # dd if=/dev/zero of=/mnt/test/test bs=1048576 count=512
+> > You can't do an ahead of time mapping.  It's a broken concept.
 > 
-> All of this needs to be in a commit log.  Also note that the above:
-> 
->  a) does not use direct I/O which any sane loop user should
->  b) is not on a file but a block device, rendering the use of a loop
->     device entirely pointless.
+> Swapfile does ahead of time mapping. And I just looked at what swapfile 
+> does and copied the logic into dm-loop. If swapfile is not broken, how 
+> could dm-loop be broken?
 
-With "losetup --direct-io=on /dev/loop0 /mnt/test/test", it is even slower 
-than without:
+Swap files cannot be accessed/modified by user code once the
+swapfile is activated.  See all the IS_SWAPFILE() checked throughout
+the VFS and filesystem code.
 
-   READ: bw=217MiB/s (227MB/s), 217MiB/s-217MiB/s (227MB/s-227MB/s), io=2170MiB (2275MB), run=10003-10003msec
-  WRITE: bw=217MiB/s (227MB/s), 217MiB/s-217MiB/s (227MB/s-227MB/s), io=2169MiB (2274MB), run=10003-10003msec
+Swap files must be fully allocated (i.e. not sparse), nor contan
+shared extents. This is required so that writes to the swapfile do
+not require block allocation which would change the mapping...
 
-with --direct-io=off
+Hence we explicitly prevent modification of the underlying file
+mapping once a swapfile is owned and mapped by the kernel as a
+swapfile.
 
-   READ: bw=398MiB/s (417MB/s), 398MiB/s-398MiB/s (417MB/s-417MB/s), io=3978MiB (4171MB), run=10003-10003msec
-  WRITE: bw=398MiB/s (417MB/s), 398MiB/s-398MiB/s (417MB/s-417MB/s), io=3981MiB (4175MB), run=10003-10003msec
+That's not how loop devices/image files work - we actually rely on
+them being:
 
-Mikulas
+a) sparse; and
+b) the mapping being mutable via direct access to the loop file
+whilst there is an active mounted filesystem on that loop file.
 
+and so every IO needs to be mapped through the filesystem at
+submission time.
+
+The reason for a) is obvious: we don't need to allocate space for
+the filesystem so it's effectively thin provisioned. Also, fstrim on
+the mounted loop device can punch out unused space in the mounted
+filesytsem.
+
+The reason for b) is less obvious: snapshots via file cloning,
+deduplication via extent sharing.
+
+The clone operaiton is an atomic modification of the underlying file
+mapping, which then triggers COW on future writes to those mappings,
+which causes the mapping to the change at write IO time.
+
+IOWs, the whole concept that there is a "static mapping" for a loop
+device image file for the life of the image file is fundamentally
+flawed.
+
+> > > Dm-loop is significantly faster than the regular loop:
+> > > 
+> > > # modprobe brd rd_size=1048576
+> > > # dd if=/dev/zero of=/dev/ram0 bs=1048576
+> > > # mkfs.ext4 /dev/ram0
+> > > # mount -t ext4 /dev/ram0 /mnt/test
+> > > # dd if=/dev/zero of=/mnt/test/test bs=1048576 count=512
+
+Urk. ram disks are terrible for IO benchmarking. The IO is
+synchronous (i.e. always completes in the submitter context) and
+performance is -always CPU bound- due to the requirement for all
+data copying to be marshalled through the CPU.
+
+Please benchmark performance on NVMe SSDs - it will give a much more
+accurate deomonstration of the performance differences we'll see in
+real world usage of loop device functionality...
+
+-Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
